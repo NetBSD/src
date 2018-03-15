@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.510.4.8.2.1 2017/12/22 19:13:18 snj Exp $
+.\"	$NetBSD: main,v 1.510.4.8.2.2 2018/03/15 05:14:39 snj Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -50,7 +50,7 @@
 .as MACHINE_LIST " sgimips shark sparc sparc64 sun2 sun3 vax x68k xen zaurus .
 .so \*[.CURDIR]/../common/macros
 .
-.Dd December 22, 2017
+.Dd March 15, 2018
 .Dt INSTALL 8
 .Os NetBSD
 .Sh NAME
@@ -480,21 +480,21 @@ possible,
 would not exist.
 .
 .if \n[FOR_RELEASE] \{\
-.Ss Changes Between The NetBSD 7.1 and 7.1.1 Releases
+.Ss Changes Between The NetBSD 7.1.1 and 7.1.2 Releases
 .Pp
 .Nx
 \*V
-is the first security/critical update of the NetBSD 7.1 release branch.
+is the second security/critical update of the NetBSD 7.1 release branch.
 It represents a selected subset of fixes deemed important for security
 or stability reasons.
 .Pp
 The complete list of changes can be found in the
-CHANGES-7.1.1 file in the top level directory of the NetBSD 7.1.1
+CHANGES-7.1.2 file in the top level directory of the NetBSD 7.1.2
 release tree:
-.Lk http://ftp.NetBSD.org/pub/NetBSD/NetBSD-7.1.1/CHANGES-7.1.1
+.Lk http://ftp.NetBSD.org/pub/NetBSD/NetBSD-7.1.2/CHANGES-7.1.2
 .Pp
 See
-.Lk http://www.NetBSD.org/releases/formal-7/NetBSD-7.1.1.html
+.Lk http://www.NetBSD.org/releases/formal-7/NetBSD-7.1.2.html
 for some of the more noteworthy changes in this release.
 .\} \" \n[FOR_RELEASE]
 .
@@ -566,6 +566,8 @@ Changes between the initial 7.0 branch and the final release of 7.0.
 Changes between the final release of 7.0 and the final release of 7.1.
 .It Li CHANGES-7.1.1
 Changes between the final release of 7.1 and the final release of 7.1.1.
+.It Li CHANGES-7.1.2
+Changes between the final release of 7.1.1 and the final release of 7.1.2.
 .It Li CHANGES.prev
 Changes in previous
 .Nx
@@ -845,12 +847,24 @@ _gpio
 _rtadvd
 .bullet)
 .
-.if \n[i386] \{\
 .Ss2 Issues affecting an upgrade from NetBSD 7.1
 .Pp
-The VM86 option has been disabled by default in the GENERIC kernel.
-.
+The following modules have been removed from the autoload list: compat_freebsd,  compat_ibcs2, compat_svr4, compat_svr4_32.
+.if \n[amiga]:\n[i386]:\n[sparc]:\n[sparc64] \{\
+.Pp
+The COMPAT_SVR4 kernel option has been disabled by default.
 \}
+.if \n[sparc64] \{\
+.Pp
+The COMPAT_SVR4_32 kernel option has been disabled by default.
+\}
+.if \n[i386] \{\
+.Pp
+The COMPAT_IBCS2 kernel option has been disabled by default.
+.Pp
+The VM86 kernel option has been disabled by default.
+\}
+.
 .Ss "Using online NetBSD documentation"
 .Pp
 Documentation is available if you installed the manual
