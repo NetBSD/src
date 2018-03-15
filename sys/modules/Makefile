@@ -1,8 +1,19 @@
-#	$NetBSD: Makefile,v 1.202.2.3 2018/03/15 05:10:05 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.202.2.4 2018/03/15 23:23:35 pgoyette Exp $
 
 .include <bsd.own.mk>
 
 # For all platforms
+
+# Modules for compatability with earlier versions of NetBSD
+
+SUBDIR+=	compat    compat_70 compat_60
+.ifdef NOTYET
+SUBDIR+=	compat_50 compat_40 compat_30 compat_20 compat_16
+SUBDIR+=	compat_14 compat_13 compat_12 compat_10 compat_09
+.endif
+SUBDIR+=	compat_ossaudio
+SUBDIR+=	compat_sysv
+
 
 SUBDIR=		accf_dataready
 SUBDIR+=	accf_httpready
@@ -27,13 +38,6 @@ SUBDIR+=	clockctl
 SUBDIR+=	crypto
 SUBDIR+=	coda
 SUBDIR+=	coda5
-SUBDIR+=	compat    compat_70
-#ifdef NOTYET
-SUBDIR+=	compat_60 compat_50 compat_40 compat_30 compat_20 compat_16
-SUBDIR+=	compat_14 compat_13 compat_12 compat_10 compat_09
-#endif
-SUBDIR+=	compat_ossaudio
-SUBDIR+=	compat_sysv
 SUBDIR+=	coredump
 SUBDIR+=	dbcool
 SUBDIR+=	des
