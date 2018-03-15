@@ -1,4 +1,4 @@
-/* $NetBSD: imc.c,v 1.1 2018/03/01 04:45:06 pgoyette Exp $ */
+/* $NetBSD: imc.c,v 1.2 2018/03/15 23:57:17 maya Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imc.c,v 1.1 2018/03/01 04:45:06 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imc.c,v 1.2 2018/03/15 23:57:17 maya Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -394,10 +394,8 @@ imc_modcmd(modcmd_t cmd, void *opaque)
 			mutex_destroy(&imc_access_mutex);
 		break;
 	default:
-#ifdef _MODULE
 		error = ENOTTY;
 		break;
-#endif
 	}
 
 	return error;
