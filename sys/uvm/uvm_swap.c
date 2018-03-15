@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.175.2.3 2018/03/15 09:12:07 pgoyette Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.175.2.4 2018/03/15 11:17:55 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 2009 Matthew R. Green
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.175.2.3 2018/03/15 09:12:07 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.175.2.4 2018/03/15 11:17:55 pgoyette Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_compat_netbsd.h"
@@ -116,6 +116,35 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.175.2.3 2018/03/15 09:12:07 pgoyette 
  */
 
 /*
+ * swapdev: describes a single swap partition/file
+ *
+ * note the following should be true:
+ * swd_inuse <= swd_nblks  [number of blocks in use is <= total blocks]
+ * swd_nblks <= swd_mapsize [because mapsize includes miniroot+disklabel]
+ */
+struct swapdev {
+	dev_t			swd_dev;	/* device id */
+	int			swd_flags;	/* flags:inuse/enable/fake */
+	int			swd_priority;	/* our priority */
+	int			swd_nblks;	/* blocks in this device */
+	char			*swd_path;	/* saved pathname of device */
+	int			swd_pathlen;	/* length of pathname */
+	int			swd_npages;	/* #pages we can use */
+	int			swd_npginuse;	/* #pages in use */
+	int			swd_npgbad;	/* #pages bad */
+	int			swd_drumoffset;	/* page0 offset in drum */
+	int			swd_drumsize;	/* #pages in drum */
+	blist_t			swd_blist;	/* blist for this swapdev */
+	struct vnode		*swd_vp;	/* backing vnode */
+	TAILQ_ENTRY(swapdev)	swd_next;	/* priority tailq */
+
+	int			swd_bsize;	/* blocksize (bytes) */
+	int			swd_maxactive;	/* max active i/o reqs */
+	struct bufq_state	*swd_tab;	/* buffer list */
+	int			swd_active;	/* number of active buffers */
+};
+
+/*
  * swap device priority entry; the list is kept sorted on `spi_priority'.
  */
 struct swappri {
@@ -189,40 +218,6 @@ static void sw_reg_iodone(struct work *wk, void *dummy);
 static void sw_reg_start(struct swapdev *);
 
 static int uvm_swap_io(struct vm_page **, int, int, int);
-
-/*
- * vectored routines for COMPAT_13 and COMPAT_50
- */
-
-size_t swapstats_len_13 = 0;
-
-static void stub_swapstats13_copy(int, int, struct swapdev *,
-    struct swapent13 *);
-void (*vec_swapstats_copy_13)(int, int, struct swapdev *, struct swapent13 *) =
-    stub_swapstats13_copy;
-
-size_t swapstats_len_50 = 0;
-
-static void stub_swapstats50_copy(int, int, struct swapdev *,
-    struct swapent50 *);
-void (*vec_swapstats_copy_50)(int, int, struct swapdev *, struct swapent50 *) =
-    stub_swapstats50_copy;
-
-static void
-stub_swapstats13_copy(int cmd, int inuse, struct swapdev *sdp,
-    struct swapent13 *sep13)
-{
-
-	/* nothing */
-}
-
-static void
-stub_swapstats50_copy(int cmd, int inuse, struct swapdev *sdp,
-    struct swapent50 *sep50)
-{
-
-	/* nothing */
-}
 
 /*
  * uvm_swap_init: init the swap system data structures and locks
@@ -432,7 +427,7 @@ swapent_cvt(struct swapent *se, const struct swapdev *sdp, int inuse)
 	strcpy(se->se_path, sdp->swd_path);
 }
 
-int (*uvm_swap_stats13)(const struct sys_swapctl_args *, register_t *) =
+int (*uvm_swap_stats13)(const struct sys_swapctl_args *, register_t *) =  
     (void *)enosys;
 int (*uvm_swap_stats50)(const struct sys_swapctl_args *, register_t *) =
     (void *)enosys;

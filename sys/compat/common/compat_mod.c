@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_mod.c,v 1.24.14.7 2018/03/15 09:12:05 pgoyette Exp $	*/
+/*	$NetBSD: compat_mod.c,v 1.24.14.8 2018/03/15 11:17:54 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.24.14.7 2018/03/15 09:12:05 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.24.14.8 2018/03/15 11:17:54 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -254,10 +254,6 @@ compat_modcmd(modcmd_t cmd, void *arg)
 #ifdef COMPAT_40
 		if_40_init();
 #endif
-#ifdef COMPAT_50
-		if_50_init();
-		swapstats_50_init();
-#endif
 #ifdef COMPAT_13
 		uvm_13_init();
 #endif
@@ -279,6 +275,7 @@ compat_modcmd(modcmd_t cmd, void *arg)
 		compat_sysctl_init();
 #ifdef COMPAT_50
 		uvm_50_init();
+		if_50_init();
 #endif
 		return 0;
 
@@ -342,20 +339,14 @@ compat_modcmd(modcmd_t cmd, void *arg)
 		rw_exit(&exec_lock);
 #endif
 #endif	/* COMPAT_16 */
-#ifdef COMPAT_13
-		swapstats_13_fini();
-#endif
 #ifdef COMPAT_40
 		if_40_fini();
 #endif
 #ifdef COMPAT_50
 		if_50_fini();
-		swapstats_50_fini();
-#endif
-		compat_sysctl_fini();
-#ifdef COMPAT_50
 		uvm_50_fini();
 #endif
+		compat_sysctl_fini();
 		return 0;
 
 	default:

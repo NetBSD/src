@@ -1,4 +1,4 @@
-#	$NetBSD: files.common,v 1.1.2.9 2018/03/14 22:04:27 pgoyette Exp $
+#	$NetBSD: files.common,v 1.1.2.10 2018/03/15 11:17:54 pgoyette Exp $
 
 #
 # Generic files, used by all compat options.
@@ -35,7 +35,7 @@ file	compat/common/vm_12.c			compat_12
 
 # Compatibility code for NetBSD 1.3
 file	compat/common/kern_sig_13.c		compat_13
-file	compat/common/uvm_stats_13.c		compat_13
+file	compat/common/uvm_13.c			compat_13
 
 # Compatibility code for NetBSD 1.4
 file	compat/common/rtsock_14.c		compat_14
@@ -63,7 +63,7 @@ file	compat/common/rndpseudo_50.c		compat_50
 file	compat/common/rtsock_50.c		compat_50
 file	compat/common/vfs_syscalls_50.c		compat_50
 file	compat/common/uipc_syscalls_50.c	compat_50
-file	compat/common/uvm_stats_50.c		compat_50
+file	compat/common/uvm_50.c			compat_50
 
 # Compatibility code for NetBSD 6.0
 file	compat/common/kern_sa_60.c		compat_60
