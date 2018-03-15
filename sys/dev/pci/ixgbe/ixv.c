@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.87 2018/03/09 06:27:53 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.88 2018/03/15 06:48:51 msaitoh Exp $*/
 
 /******************************************************************************
 
@@ -828,10 +828,9 @@ ixv_init_locked(struct adapter *adapter)
 	return;
 } /* ixv_init_locked */
 
-/*
- * MSI-X Interrupt Handlers and Tasklets
- */
-
+/************************************************************************
+ * ixv_enable_queue
+ ************************************************************************/
 static inline void
 ixv_enable_queue(struct adapter *adapter, u32 vector)
 {
@@ -850,6 +849,9 @@ out:
 	mutex_exit(&que->im_mtx);
 } /* ixv_enable_queue */
 
+/************************************************************************
+ * ixv_disable_queue
+ ************************************************************************/
 static inline void
 ixv_disable_queue(struct adapter *adapter, u32 vector)
 {
@@ -1053,8 +1055,6 @@ ixv_media_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 	ifp->if_baudrate = ifmedia_baudrate(ifmr->ifm_active);
 
 	IXGBE_CORE_UNLOCK(adapter);
-
-	return;
 } /* ixv_media_status */
 
 /************************************************************************
@@ -1147,8 +1147,6 @@ ixv_set_multi(struct adapter *adapter)
 
 	adapter->hw.mac.ops.update_mc_addr_list(&adapter->hw, update_ptr, mcnt,
 	    ixv_mc_array_itr, TRUE);
-
-	return;
 } /* ixv_set_multi */
 
 /************************************************************************
@@ -1163,6 +1161,7 @@ ixv_mc_array_itr(struct ixgbe_hw *hw, u8 **update_ptr, u32 *vmdq)
 {
 	u8 *addr = *update_ptr;
 	u8 *newptr;
+
 	*vmdq = 0;
 
 	newptr = addr + IXGBE_ETH_LENGTH_OF_ADDRESS;
@@ -1336,8 +1335,6 @@ ixv_update_link_status(struct adapter *adapter)
 			adapter->link_active = FALSE;
 		}
 	}
-
-	return;
 } /* ixv_update_link_status */
 
 
@@ -1789,6 +1786,7 @@ ixv_initialize_receive_units(struct adapter *adapter)
 		wmb();
 
 		/* Set the Tail Pointer */
+#ifdef DEV_NETMAP
 		/*
 		 * In netmap mode, we must preserve the buffers made
 		 * available to userspace before the if_init()
@@ -1805,7 +1803,6 @@ ixv_initialize_receive_units(struct adapter *adapter)
 		 * RDT points to the last slot available for reception (?),
 		 * so RDT = num_rx_desc - 1 means the whole ring is available.
 		 */
-#ifdef DEV_NETMAP
 		if ((adapter->feat_en & IXGBE_FEATURE_NETMAP) &&
 		    (ifp->if_capenable & IFCAP_NETMAP)) {
 			struct netmap_adapter *na = NA(adapter->ifp);
@@ -1835,8 +1832,6 @@ ixv_initialize_receive_units(struct adapter *adapter)
 		rxcsum |= IXGBE_RXCSUM_IPPCSE;
 
 	IXGBE_WRITE_REG(hw, IXGBE_RXCSUM, rxcsum);
-
-	return;
 } /* ixv_initialize_receive_units */
 
 /************************************************************************
@@ -2066,8 +2061,6 @@ ixv_enable_intr(struct adapter *adapter)
 		ixv_enable_queue(adapter, que->msix);
 
 	IXGBE_WRITE_FLUSH(hw);
-
-	return;
 } /* ixv_enable_intr */
 
 /************************************************************************
@@ -2087,8 +2080,6 @@ ixv_disable_intr(struct adapter *adapter)
 		ixv_disable_queue(adapter, que->msix);
 
 	IXGBE_WRITE_FLUSH(&adapter->hw);
-
-	return;
 } /* ixv_disable_intr */
 
 /************************************************************************
@@ -2230,13 +2221,13 @@ ixv_update_stats(struct adapter *adapter)
 	struct ixgbe_hw *hw = &adapter->hw;
 	struct ixgbevf_hw_stats *stats = &adapter->stats.vf;
 
-        UPDATE_STAT_32(IXGBE_VFGPRC, stats->last_vfgprc, stats->vfgprc);
-        UPDATE_STAT_32(IXGBE_VFGPTC, stats->last_vfgptc, stats->vfgptc);
-        UPDATE_STAT_36(IXGBE_VFGORC_LSB, IXGBE_VFGORC_MSB, stats->last_vfgorc,
+	UPDATE_STAT_32(IXGBE_VFGPRC, stats->last_vfgprc, stats->vfgprc);
+	UPDATE_STAT_32(IXGBE_VFGPTC, stats->last_vfgptc, stats->vfgptc);
+	UPDATE_STAT_36(IXGBE_VFGORC_LSB, IXGBE_VFGORC_MSB, stats->last_vfgorc,
 	    stats->vfgorc);
-        UPDATE_STAT_36(IXGBE_VFGOTC_LSB, IXGBE_VFGOTC_MSB, stats->last_vfgotc,
+	UPDATE_STAT_36(IXGBE_VFGOTC_LSB, IXGBE_VFGOTC_MSB, stats->last_vfgotc,
 	    stats->vfgotc);
-        UPDATE_STAT_32(IXGBE_VFMPRC, stats->last_vfmprc, stats->vfmprc);
+	UPDATE_STAT_32(IXGBE_VFMPRC, stats->last_vfmprc, stats->vfmprc);
 
 	/* Fill out the OS statistics structure */
 	/*

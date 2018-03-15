@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_type.h,v 1.31 2018/02/20 07:24:37 msaitoh Exp $ */
+/* $NetBSD: ixgbe_type.h,v 1.32 2018/03/15 06:48:51 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -293,6 +293,47 @@
 #define IXGBE_I2C_CLK_OE_N_EN_BY_MAC(_hw) IXGBE_BY_MAC((_hw), I2C_CLK_OE_N_EN)
 #define IXGBE_I2C_CLOCK_STRETCHING_TIMEOUT	500
 
+
+
+#define NVM_OROM_OFFSET		0x17
+#define NVM_OROM_BLK_LOW	0x83
+#define NVM_OROM_BLK_HI		0x84
+#define NVM_OROM_PATCH_MASK	0xFF
+#define NVM_OROM_SHIFT		8
+
+#define NVM_VER_MASK		0x00FF /* version mask */
+#define NVM_VER_SHIFT		8     /* version bit shift */
+#define NVM_OEM_PROD_VER_PTR	0x1B  /* OEM Product version block pointer */
+#define NVM_OEM_PROD_VER_CAP_OFF 0x1  /* OEM Product version format offset */
+#define NVM_OEM_PROD_VER_OFF_L	0x2   /* OEM Product version offset low */
+#define NVM_OEM_PROD_VER_OFF_H	0x3   /* OEM Product version offset high */
+#define NVM_OEM_PROD_VER_CAP_MASK 0xF /* OEM Product version cap mask */
+#define NVM_OEM_PROD_VER_MOD_LEN 0x3  /* OEM Product version module length */
+#define NVM_ETK_OFF_LOW		0x2D  /* version low order word */
+#define NVM_ETK_OFF_HI		0x2E  /* version high order word */
+#define NVM_ETK_SHIFT		16    /* high version word shift */
+#define NVM_VER_INVALID		0xFFFF
+#define NVM_ETK_VALID		0x8000
+#define NVM_INVALID_PTR		0xFFFF
+#define NVM_VER_SIZE		32    /* version sting size */
+
+struct ixgbe_nvm_version {
+	u32 etk_id;
+	u8  nvm_major;
+	u16 nvm_minor;
+	u8  nvm_id;
+
+	bool oem_valid;
+	u8   oem_major;
+	u8   oem_minor;
+	u16  oem_release;
+
+	bool or_valid;
+	u8  or_major;
+	u16 or_build;
+	u8  or_patch;
+
+};
 
 /* Interrupt Registers */
 #define IXGBE_EICR		0x00800
@@ -1596,7 +1637,7 @@ struct ixgbe_dmac_config {
 #define IXGBE_MDIO_GLOBAL_ALARM_1		0xCC00 /* Global alarm 1 */
 #define IXGBE_MDIO_GLOBAL_ALM_1_DEV_FAULT	0x0010 /* device fault */
 #define IXGBE_MDIO_GLOBAL_ALM_1_HI_TMP_FAIL	0x4000 /* high temp failure */
-#define IXGBE_MDIO_GLOBAL_FAULT_MSG	0xC850 /* Global Fault Message */
+#define IXGBE_MDIO_GLOBAL_FAULT_MSG		0xC850 /* Global Fault Message */
 #define IXGBE_MDIO_GLOBAL_FAULT_MSG_HI_TMP	0x8007 /* high temp failure */
 #define IXGBE_MDIO_GLOBAL_INT_MASK		0xD400 /* Global int mask */
 #define IXGBE_MDIO_GLOBAL_AN_VEN_ALM_INT_EN	0x1000 /* autoneg vendor alarm int enable */
