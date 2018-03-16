@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.174 2018/02/19 10:31:53 wiz Exp $
+.\"	$NetBSD: ddb.4,v 1.175 2018/03/16 04:37:55 ozaki-r Exp $
 .\"
 .\" Copyright (c) 1997 - 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,7 +56,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd February 17, 2018
+.Dd March 16, 2018
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -648,6 +648,10 @@ be displayed.
 .It Ic show lock Ar address
 Display information about a lock at
 .Ar address .
+This command is useful only if a kernel is compiled with
+.Cd options LOCKDEBUG .
+.It Ic show lockstat
+Display information about statistics of locks.
 This command is useful only if a kernel is compiled with
 .Cd options LOCKDEBUG .
 .It Ic show map Ns Oo Cm /f Oc Ar address
