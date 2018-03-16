@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_mod.c,v 1.24.14.11 2018/03/15 23:34:53 pgoyette Exp $	*/
+/*	$NetBSD: compat_mod.c,v 1.24.14.12 2018/03/16 01:16:29 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.24.14.11 2018/03/15 23:34:53 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.24.14.12 2018/03/16 01:16:29 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -236,9 +236,6 @@ static const struct syscall_package compat_syscalls[] = {
 	{ SYS_compat_50_aio_suspend, 0, (sy_call_t *)compat_50_sys_aio_suspend },
 	{ SYS_compat_50_quotactl, 0, (sy_call_t *)compat_50_sys_quotactl },
 #endif
-#if defined(COMPAT_60)
-	{ SYS_compat_60__lwp_park, 0, (sy_call_t *)compat_60_sys__lwp_park },
-#endif
 	{ 0, 0, NULL },
 };
 
@@ -287,16 +284,20 @@ compat_modcmd(modcmd_t cmd, void *arg)
 		uvm_50_init();
 		if_50_init();
 #endif
+#ifdef COMPAT_60
+		compat_60_init();
+#endif
 #ifdef COMPAT_70
-		vec_ocreds_valid = true;
-		rtsock_70_init();
+		compat_70_init();
 #endif
 		return 0;
 
 	case MODULE_CMD_FINI:
 #ifdef COMPAT_70
-		rtsock_70_fini();
-		vec_ocreds_valid = false;
+		compat_70_fini();
+#endif
+#ifdef COMPAT_60
+		compat_60_fini();
 #endif
 #ifdef COMPAT_10
 		vfs_syscalls_10_fini();

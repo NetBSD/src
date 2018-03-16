@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: kern_sa_60.c,v 1.1 2012/02/19 17:40:46 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: kern_sa_60.c,v 1.1.42.1 2018/03/16 01:16:29 pgoyette Exp $");
 
 #include <sys/systm.h>
 #include <sys/syscall.h>
@@ -82,3 +82,23 @@ compat_60_sys_sa_preempt(lwp_t *l,
 {
 	return sys_nosys(l, uap, retval);
 }
+
+static const struct syscall_package compat__60_syscalls[] = {
+	{ SYS_compat_60_sa_register, 0,
+	    (sy_call_t *)compat_60_sys_sa_register },
+	{ SYS_compat_60_sa_stacks, 0, (sy_call_t *)compat_60_sys_sa_stacks },
+	{ SYS_compat_60_sa_enable, 0, (sy_call_t *)compat_60_sys_sa_enable },
+	{ SYS_compat_60_sa_setconcurrency, 0,
+	    (sy_call_t *)compat_60_sys_sa_setconcurrency },
+	{ SYS_compat_60_sa_yield, 0, (sy_call_t *)compat_60_sys_sa_yield },
+	{ SYS_compat_60_sa_preempt, 0, (sy_call_t *)compat_60_sys_sa_preempt },
+	{ SYS_compat_60_lwp_park, 0, (sy_call_t *)
+
+
+62      COMPAT_43 MODULAR compat        \
+                { int|sys||fstat(int fd, struct stat43 *sb); } fstat43
+
+	{ SYS_compat_43_fstat43, 0, (sy_call_t *)compat_43_sys_fstat },
+
+
+

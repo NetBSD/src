@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_70_mod.c,v 1.1.2.2 2018/03/15 23:14:21 pgoyette Exp $	*/
+/*	$NetBSD: compat_70_mod.c,v 1.1.2.3 2018/03/16 01:16:29 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_70_mod.c,v 1.1.2.2 2018/03/15 23:14:21 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_70_mod.c,v 1.1.2.3 2018/03/16 01:16:29 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -56,19 +56,31 @@ __KERNEL_RCSID(0, "$NetBSD: compat_70_mod.c,v 1.1.2.2 2018/03/15 23:14:21 pgoyet
 
 MODULE(MODULE_CLASS_EXEC, compat_70, NULL);	/* XXX No compat_80 yet */
 
+void compat_70_init(void)
+{
+
+	vec_ocreds_valid = true;
+	rtsock_70_init();
+}
+
+void compat_70_fini(void)
+{
+
+	rtsock_70_fini();
+	vec_ocreds_valid = false;
+}
+
 static int
 compat_70_modcmd(modcmd_t cmd, void *arg)
 {
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		vec_ocreds_valid = true;
-		rtsock_70_init();
+		compat_70_init();
 		return 0;
 
 	case MODULE_CMD_FINI:
-		rtsock_70_fini();
-		vec_ocreds_valid = false;
+		compat_70_fini();
 		return 0;
 
 	default:
