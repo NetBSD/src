@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c2xx0_space.c,v 1.9 2011/07/01 20:31:39 dyoung Exp $ */
+/*	$NetBSD: s3c2xx0_space.c,v 1.10 2018/03/16 17:56:32 ryo Exp $ */
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2xx0_space.c,v 1.9 2011/07/01 20:31:39 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2xx0_space.c,v 1.10 2018/03/16 17:56:32 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,79 +91,79 @@ bs_protos(bs_notimpl);
 
 struct bus_space s3c2xx0_bs_tag = {
 	/* cookie */
-	(void *) 0,
+	.bs_cookie = (void *) 0,
 
 	/* mapping/unmapping */
-	s3c2xx0_bs_map,
-	s3c2xx0_bs_unmap,
-	s3c2xx0_bs_subregion,
+	.bs_map = s3c2xx0_bs_map,
+	.bs_unmap = s3c2xx0_bs_unmap,
+	.bs_subregion = s3c2xx0_bs_subregion,
 
 	/* allocation/deallocation */
-	s3c2xx0_bs_alloc,	/* not implemented */
-	s3c2xx0_bs_free,	/* not implemented */
+	.bs_alloc = s3c2xx0_bs_alloc,	/* not implemented */
+	.bs_free = s3c2xx0_bs_free,	/* not implemented */
 
 	/* get kernel virtual address */
-	s3c2xx0_bs_vaddr,
+	.bs_vaddr = s3c2xx0_bs_vaddr,
 
 	/* mmap */
-	bs_notimpl_bs_mmap,
+	.bs_mmap = bs_notimpl_bs_mmap,
 
 	/* barrier */
-	s3c2xx0_bs_barrier,
+	.bs_barrier = s3c2xx0_bs_barrier,
 
 	/* read (single) */
-	generic_bs_r_1,
-	generic_armv4_bs_r_2,
-	generic_bs_r_4,
-	bs_notimpl_bs_r_8,
+	.bs_r_1 = generic_bs_r_1,
+	.bs_r_2 = generic_armv4_bs_r_2,
+	.bs_r_4 = generic_bs_r_4,
+	.bs_r_8 = bs_notimpl_bs_r_8,
 
 	/* read multiple */
-	generic_bs_rm_1,
-	generic_armv4_bs_rm_2,
-	generic_bs_rm_4,
-	bs_notimpl_bs_rm_8,
+	.bs_rm_1 = generic_bs_rm_1,
+	.bs_rm_2 = generic_armv4_bs_rm_2,
+	.bs_rm_4 = generic_bs_rm_4,
+	.bs_rm_8 = bs_notimpl_bs_rm_8,
 
 	/* read region */
-	generic_bs_rr_1,
-	generic_armv4_bs_rr_2,
-	generic_bs_rr_4,
-	bs_notimpl_bs_rr_8,
+	.bs_rr_1 = generic_bs_rr_1,
+	.bs_rr_2 = generic_armv4_bs_rr_2,
+	.bs_rr_4 = generic_bs_rr_4,
+	.bs_rr_8 = bs_notimpl_bs_rr_8,
 
 	/* write (single) */
-	generic_bs_w_1,
-	generic_armv4_bs_w_2,
-	generic_bs_w_4,
-	bs_notimpl_bs_w_8,
+	.bs_w_1 = generic_bs_w_1,
+	.bs_w_2 = generic_armv4_bs_w_2,
+	.bs_w_4 = generic_bs_w_4,
+	.bs_w_8 = bs_notimpl_bs_w_8,
 
 	/* write multiple */
-	generic_bs_wm_1,
-	generic_armv4_bs_wm_2,
-	generic_bs_wm_4,
-	bs_notimpl_bs_wm_8,
+	.bs_wm_1 = generic_bs_wm_1,
+	.bs_wm_2 = generic_armv4_bs_wm_2,
+	.bs_wm_4 = generic_bs_wm_4,
+	.bs_wm_8 = bs_notimpl_bs_wm_8,
 
 	/* write region */
-	generic_bs_wr_1,
-	generic_armv4_bs_wr_2,
-	generic_bs_wr_4,
-	bs_notimpl_bs_wr_8,
+	.bs_wr_1 = generic_bs_wr_1,
+	.bs_wr_2 = generic_armv4_bs_wr_2,
+	.bs_wr_4 = generic_bs_wr_4,
+	.bs_wr_8 = bs_notimpl_bs_wr_8,
 
 	/* set multiple */
-	bs_notimpl_bs_sm_1,
-	bs_notimpl_bs_sm_2,
-	bs_notimpl_bs_sm_4,
-	bs_notimpl_bs_sm_8,
+	.bs_sm_1 = bs_notimpl_bs_sm_1,
+	.bs_sm_2 = bs_notimpl_bs_sm_2,
+	.bs_sm_4 = bs_notimpl_bs_sm_4,
+	.bs_sm_8 = bs_notimpl_bs_sm_8,
 
 	/* set region */
-	generic_bs_sr_1,
-	generic_armv4_bs_sr_2,
-	bs_notimpl_bs_sr_4,
-	bs_notimpl_bs_sr_8,
+	.bs_sr_1 = generic_bs_sr_1,
+	.bs_sr_2 = generic_armv4_bs_sr_2,
+	.bs_sr_4 = bs_notimpl_bs_sr_4,
+	.bs_sr_8 = bs_notimpl_bs_sr_8,
 
 	/* copy */
-	bs_notimpl_bs_c_1,
-	generic_armv4_bs_c_2,
-	bs_notimpl_bs_c_4,
-	bs_notimpl_bs_c_8,
+	.bs_c_1 = bs_notimpl_bs_c_1,
+	.bs_c_2 = generic_armv4_bs_c_2,
+	.bs_c_4 = bs_notimpl_bs_c_4,
+	.bs_c_8 = bs_notimpl_bs_c_8,
 };
 
 int
