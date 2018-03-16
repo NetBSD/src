@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.142 2017/12/06 07:40:16 ozaki-r Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.143 2018/03/16 17:12:04 tih Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.142 2017/12/06 07:40:16 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.143 2018/03/16 17:12:04 tih Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -555,6 +555,11 @@ tun_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 
 	bpf_mtap_af(ifp, dst->sa_family, m0);
 
+	if ((error = pfil_run_hooks(ifp->if_pfil, &m0, ifp, PFIL_OUT)) != 0)
+		goto out;
+	if (m0 == NULL)
+		goto out;
+
 	switch(dst->sa_family) {
 #ifdef INET6
 	case AF_INET6:
@@ -624,10 +629,10 @@ tun_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 
 	mutex_exit(&tp->tun_lock);
 out:
-	if (error && m0) {
+	if (error && m0)
 		m_freem(m0);
-	}
-	return 0;
+
+	return error;
 }
 
 static void
@@ -940,6 +945,11 @@ tunwrite(dev_t dev, struct uio *uio, int ioflag)
 	m_set_rcvif(top, ifp);
 
 	bpf_mtap_af(ifp, dst.sa_family, top);
+
+	if ((error = pfil_run_hooks(ifp->if_pfil, &top, ifp, PFIL_IN)) != 0)
+		goto out0;
+	if (top == NULL)
+		goto out0;
 
 	mutex_enter(&tp->tun_lock);
 	if ((tp->tun_flags & TUN_INITED) == 0) {
