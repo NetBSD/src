@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.130.2.3 2018/03/08 11:33:15 martin Exp $	*/
+/*	$NetBSD: cpu.c,v 1.130.2.4 2018/03/16 13:17:56 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000-2012 NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.130.2.3 2018/03/08 11:33:15 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.130.2.4 2018/03/16 13:17:56 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -232,6 +232,36 @@ cpu_match(device_t parent, cfdata_t match, void *aux)
 	return 1;
 }
 
+#ifdef __HAVE_PCPU_AREA
+void
+cpu_pcpuarea_init(struct cpu_info *ci)
+{
+	struct vm_page *pg;
+	size_t i, npages;
+	vaddr_t base, va;
+	paddr_t pa;
+
+	CTASSERT(sizeof(struct pcpu_entry) % PAGE_SIZE == 0);
+
+	npages = sizeof(struct pcpu_entry) / PAGE_SIZE;
+	base = (vaddr_t)&pcpuarea->ent[cpu_index(ci)];
+
+	for (i = 0; i < npages; i++) {
+		pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_ZERO);
+		if (pg == NULL) {
+			panic("failed to allocate pcpu PA");
+		}
+
+		va = base + i * PAGE_SIZE;
+		pa = VM_PAGE_TO_PHYS(pg);
+
+		pmap_kenter_pa(va, pa, VM_PROT_READ|VM_PROT_WRITE, 0);
+	}
+
+	pmap_update(pmap_kernel());
+}
+#endif
+
 static void
 cpu_vm_init(struct cpu_info *ci)
 {
@@ -372,6 +402,9 @@ cpu_attach(device_t parent, device_t self, void *aux)
 			    "mi_cpu_attach failed with %d\n", error);
 			return;
 		}
+#ifdef __HAVE_PCPU_AREA
+		cpu_pcpuarea_init(ci);
+#endif
 		cpu_init_tss(ci);
 	} else {
 		KASSERT(ci->ci_data.cpu_idlelwp != NULL);

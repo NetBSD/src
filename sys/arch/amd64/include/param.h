@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.21 2017/02/02 19:09:08 maxv Exp $	*/
+/*	$NetBSD: param.h,v 1.21.6.1 2018/03/16 13:17:56 martin Exp $	*/
 
 #ifdef __x86_64__
 
@@ -58,7 +58,6 @@
 #define	UPAGES		3		/* pages of u-area */
 #endif
 #define	USPACE		(UPAGES * NBPG)	/* total size of u-area */
-#define	INTRSTACKSIZE	4096
 
 #ifndef MSGBUFSIZE
 #define MSGBUFSIZE	(8*NBPG)	/* default message buffer size */
