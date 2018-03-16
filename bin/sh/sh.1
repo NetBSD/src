@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.197 2018/03/16 23:36:13 uwe Exp $
+.\"	$NetBSD: sh.1,v 1.198 2018/03/16 23:56:13 uwe Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -466,7 +466,7 @@ is also performed upon
 but not the converse.
 .It Fl x Em xtrace
 Write each command to standard error (preceded by the expanded value of
-.Dq $PS4 )
+.Li $PS4 )
 before it is executed.
 Unless
 .Fl X
@@ -3902,9 +3902,9 @@ This value is set at shell startup, ignoring
 any value in the environment, and then made readonly.
 .It Ev PS1
 The primary prompt string, which defaults to
-.Dq $ \  ,
+.Dq Li "$ " ,
 unless you are the superuser, in which case it defaults to
-.Dq # \  .
+.Dq Li "# " .
 This string is subject to parameter, arithmetic, and if
 enabled by setting the
 .Ic promptcmds
@@ -3922,7 +3922,7 @@ For other expansion errors, a message will be output,
 and the unexpanded string will then be used as the prompt.
 .It Ev PS2
 The secondary prompt string, which defaults to
-.Dq > \  .
+.Dq Li "> " .
 After expansion (as for
 .Ev PS1 )
 it is written whenever more input is required to complete the
@@ -3935,7 +3935,7 @@ before each line when execution trace
 is enabled.
 .Ev PS4
 defaults to
-.Dq + \  .
+.Dq Li "+ " .
 .It Ev PSc
 Initialized by the shell, ignoring any value from the environment,
 to a single character string, either
