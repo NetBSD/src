@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme.c,v 1.32 2018/02/27 12:59:53 christos Exp $	*/
+/*	$NetBSD: nvme.c,v 1.33 2018/03/16 18:49:18 jdolecek Exp $	*/
 /*	$OpenBSD: nvme.c,v 1.49 2016/04/18 05:59:50 dlg Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.32 2018/02/27 12:59:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.33 2018/03/16 18:49:18 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1149,12 +1149,6 @@ nvme_q_complete(struct nvme_softc *sc, struct nvme_queue *q)
 
 	mutex_exit(&q->q_cq_mtx);
 
-	if (rv) {
-		mutex_enter(&q->q_ccb_mtx);
-		q->q_nccbs_avail += rv;
-		mutex_exit(&q->q_ccb_mtx);
-	}
-
 	return rv;
 }
 
@@ -1367,7 +1361,6 @@ nvme_ccbs_alloc(struct nvme_queue *q, uint16_t nccbs)
 	q->q_ccbs = kmem_alloc(sizeof(*ccb) * nccbs, KM_SLEEP);
 
 	q->q_nccbs = nccbs;
-	q->q_nccbs_avail = nccbs;
 	q->q_ccb_prpls = nvme_dmamem_alloc(sc,
 	    sizeof(*prpl) * sc->sc_max_sgl * nccbs);
 
@@ -1407,11 +1400,8 @@ nvme_ccb_get(struct nvme_queue *q)
 	struct nvme_ccb *ccb = NULL;
 
 	mutex_enter(&q->q_ccb_mtx);
-	if (q->q_nccbs_avail > 0) {
-		ccb = SIMPLEQ_FIRST(&q->q_ccb_list);
-		KASSERT(ccb != NULL);
-		q->q_nccbs_avail--;
-
+	ccb = SIMPLEQ_FIRST(&q->q_ccb_list);
+	if (ccb != NULL) {
 		SIMPLEQ_REMOVE_HEAD(&q->q_ccb_list, ccb_entry);
 #ifdef DEBUG
 		ccb->ccb_cookie = NULL;
