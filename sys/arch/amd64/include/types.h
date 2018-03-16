@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.52 2017/01/26 15:55:09 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.52.6.1 2018/03/16 13:17:56 martin Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -102,6 +102,7 @@ typedef	unsigned char		__cpu_simple_lock_nv_t;
 
 #include "opt_xen.h"
 #if defined(__x86_64__) && !defined(XEN)
+#define	__HAVE_PCPU_AREA 1
 #define	__HAVE_DIRECT_MAP 1
 #define	__HAVE_MM_MD_DIRECT_MAPPED_IO
 #define	__HAVE_MM_MD_DIRECT_MAPPED_PHYS

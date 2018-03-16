@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.101.2.2 2018/03/13 15:47:45 martin Exp $	*/
+/*	$NetBSD: intr.c,v 1.101.2.3 2018/03/16 13:17:56 martin Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.101.2.2 2018/03/13 15:47:45 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.101.2.3 2018/03/16 13:17:56 martin Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -233,8 +233,10 @@ static void intr_disestablish_xcall(void *, void *);
 
 static const char *legacy_intr_string(int, char *, size_t, struct pic *);
 
+#if defined(INTRSTACKSIZE)
 static inline bool redzone_const_or_false(bool);
 static inline int redzone_const_or_zero(int);
+#endif
 
 static void intr_redistribute_xc_t(void *, void *);
 static void intr_redistribute_xc_s1(void *, void *);
@@ -1269,6 +1271,7 @@ struct intrhand fake_preempt_intrhand;
 static const char *x86_ipi_names[X86_NIPI] = X86_IPI_NAMES;
 #endif
 
+#if defined(INTRSTACKSIZE)
 static inline bool
 redzone_const_or_false(bool x)
 {
@@ -1284,6 +1287,7 @@ redzone_const_or_zero(int x)
 {
 	return redzone_const_or_false(true) ? x : 0;
 }
+#endif
 
 /*
  * Initialize all handlers that aren't dynamically allocated, and exist
@@ -1296,9 +1300,6 @@ cpu_intr_init(struct cpu_info *ci)
 #if NLAPIC > 0 && defined(MULTIPROCESSOR)
 	int i;
 	static int first = 1;
-#endif
-#ifdef INTRSTACKSIZE
-	vaddr_t istack;
 #endif
 
 #if NLAPIC > 0
@@ -1340,28 +1341,30 @@ cpu_intr_init(struct cpu_info *ci)
 	intr_calculatemasks(ci);
 
 #if defined(INTRSTACKSIZE)
+	vaddr_t istack;
+
 	/*
 	 * If the red zone is activated, protect both the top and
 	 * the bottom of the stack with an unmapped page.
 	 */
 	istack = uvm_km_alloc(kernel_map,
 	    INTRSTACKSIZE + redzone_const_or_zero(2 * PAGE_SIZE), 0,
-	    UVM_KMF_WIRED);
+	    UVM_KMF_WIRED|UVM_KMF_ZERO);
 	if (redzone_const_or_false(true)) {
 		pmap_kremove(istack, PAGE_SIZE);
 		pmap_kremove(istack + INTRSTACKSIZE + PAGE_SIZE, PAGE_SIZE);
 		pmap_update(pmap_kernel());
 	}
-	/* 33 used to be 1.  Arbitrarily reserve 32 more register_t's
+
+	/*
+	 * 33 used to be 1.  Arbitrarily reserve 32 more register_t's
 	 * of space for ddb(4) to examine some subroutine arguments
 	 * and to hunt for the next stack frame.
 	 */
 	ci->ci_intrstack = (char *)istack + redzone_const_or_zero(PAGE_SIZE) +
 	    INTRSTACKSIZE - 33 * sizeof(register_t);
-#if defined(__x86_64__)
-	ci->ci_tss->tss.tss_ist[0] = (uintptr_t)ci->ci_intrstack & ~0xf;
-#endif /* defined(__x86_64__) */
-#endif /* defined(INTRSTACKSIZE) */
+#endif
+
 	ci->ci_idepth = -1;
 }
 
@@ -1655,7 +1658,7 @@ intr_redistribute(struct cpu_info *oci)
 	where = xc_unicast(0, intr_redistribute_xc_t, isp,
 	    (void *)(intptr_t)nslot, nci);
 	xc_wait(where);
-	
+
 	/*
 	 * We're ready to go on the target CPU.  Run a cross call to
 	 * reroute the interrupt away from the source CPU.

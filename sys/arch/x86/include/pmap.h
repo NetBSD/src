@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.64 2017/03/23 18:08:06 maxv Exp $	*/
+/*	$NetBSD: pmap.h,v 1.64.6.1 2018/03/16 13:17:56 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -110,6 +110,31 @@
 #if defined(_KERNEL)
 #include <sys/kcpuset.h>
 #include <uvm/pmap/pmap_pvt.h>
+
+/*
+ * NetBSD-8: MAXGDTSIZ is 8192 on i386, unlike NetBSD-current. We define
+ * _MAXGDTSIZ as 65536, which is the size of the GDT in bytes, as opposed
+ * to in number of slots.
+ */
+#ifndef _MAXGDTSIZ
+#define _MAXGDTSIZ 65536 /* XXX */
+#endif
+
+struct pcpu_entry {
+	uint8_t gdt[_MAXGDTSIZ];
+	uint8_t tss[PAGE_SIZE];
+	uint8_t ist0[PAGE_SIZE];
+	uint8_t ist1[PAGE_SIZE];
+	uint8_t ist2[PAGE_SIZE];
+} __packed;
+
+struct pcpu_area {
+	uint8_t idt[PAGE_SIZE];
+	uint8_t ldt[PAGE_SIZE];
+	struct pcpu_entry ent[MAXCPUS];
+} __packed;
+
+extern struct pcpu_area *pcpuarea;
 
 /*
  * pmap data structures: see pmap.c for details of locking.
@@ -482,6 +507,12 @@ void	pmap_free_ptps(struct vm_page *);
  * Hooks for the pool allocator.
  */
 #define	POOL_VTOPHYS(va)	vtophys((vaddr_t) (va))
+
+#ifdef __HAVE_PCPU_AREA
+extern struct pcpu_area *pcpuarea;
+#define PDIR_SLOT_PCPU		384
+#define PMAP_PCPU_BASE		(VA_SIGN_NEG((PDIR_SLOT_PCPU * NBPD_L4)))
+#endif
 
 #ifdef __HAVE_DIRECT_MAP
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.245.6.4 2018/03/13 15:47:45 martin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.245.6.5 2018/03/16 13:17:56 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.245.6.4 2018/03/13 15:47:45 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.245.6.5 2018/03/16 13:17:56 martin Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -322,6 +322,8 @@ long nkptp[] = NKPTP_INITIALIZER;
 
 struct pmap_head pmaps;
 kmutex_t pmaps_lock;
+
+struct pcpu_area *pcpuarea __read_mostly;
 
 static vaddr_t pmap_maxkvaddr;
 
@@ -542,6 +544,9 @@ extern vaddr_t pentium_idt_vaddr;
  * Local prototypes
  */
 
+#ifdef __HAVE_PCPU_AREA
+static void pmap_init_pcpu(void);
+#endif
 #ifdef __HAVE_DIRECT_MAP
 static void pmap_init_directmap(struct pmap *);
 #endif
@@ -1316,6 +1321,10 @@ pmap_bootstrap(vaddr_t kva_start)
 	pmap_init_lapic();
 #endif /* !XEN */
 
+#ifdef __HAVE_PCPU_AREA
+	pmap_init_pcpu();
+#endif
+
 #ifdef __HAVE_DIRECT_MAP
 	pmap_init_directmap(kpm);
 #else
@@ -1365,13 +1374,21 @@ pmap_bootstrap(vaddr_t kva_start)
 	/*
 	 * Allocate space for the IDT, GDT and LDT.
 	 */
+#ifdef __HAVE_PCPU_AREA
+	idt_vaddr = (vaddr_t)&pcpuarea->idt;
+#else
 	idt_vaddr = pmap_bootstrap_valloc(1);
+#endif
 	idt_paddr = pmap_bootstrap_palloc(1);
 
 	gdt_vaddr = pmap_bootstrap_valloc(1);
 	gdt_paddr = pmap_bootstrap_palloc(1);
 
+#ifdef __HAVE_PCPU_AREA
+	ldt_vaddr = (vaddr_t)&pcpuarea->ldt;
+#else
 	ldt_vaddr = pmap_bootstrap_valloc(1);
+#endif
 	ldt_paddr = pmap_bootstrap_palloc(1);
 
 #if !defined(__x86_64__) && !defined(XEN)
@@ -1424,6 +1441,103 @@ pmap_init_lapic(void)
 	 */
 	local_apic_va = pmap_bootstrap_valloc(1);
 	local_apic_pa = pmap_bootstrap_palloc(1);
+}
+#endif
+
+#ifdef __HAVE_PCPU_AREA
+static size_t
+pmap_pagetree_nentries_range(vaddr_t startva, vaddr_t endva, size_t pgsz)
+{
+	size_t npages;
+	npages = (roundup(endva, pgsz) / pgsz) -
+	    (rounddown(startva, pgsz) / pgsz);
+	return npages;
+}
+
+static void
+pmap_init_pcpu(void)
+{
+	const vaddr_t startva = PMAP_PCPU_BASE;
+	size_t nL4e, nL3e, nL2e, nL1e;
+	size_t L4e_idx, L3e_idx, L2e_idx, L1e_idx __diagused;
+	paddr_t pa;
+	vaddr_t endva;
+	vaddr_t tmpva;
+	pt_entry_t *pte;
+	size_t size;
+	int i;
+
+	const pd_entry_t pteflags = PG_V | PG_KW | pmap_pg_nx;
+
+	size = sizeof(struct pcpu_area);
+
+	endva = startva + size;
+
+	/* We will use this temporary va. */
+	tmpva = (KERNBASE + NKL2_KIMG_ENTRIES * NBPD_L2);
+	pte = PTE_BASE + pl1_i(tmpva);
+
+	/* Build L4 */
+	L4e_idx = pl4_i(startva);
+	nL4e = pmap_pagetree_nentries_range(startva, endva, NBPD_L4);
+	KASSERT(nL4e  == 1);
+	for (i = 0; i < nL4e; i++) {
+		KASSERT(L4_BASE[L4e_idx+i] == 0);
+
+		pa = pmap_bootstrap_palloc(1);
+		*pte = (pa & PG_FRAME) | pteflags;
+		pmap_update_pg(tmpva);
+		memset((void *)tmpva, 0, PAGE_SIZE);
+
+		L4_BASE[L4e_idx+i] = pa | pteflags | PG_U;
+	}
+
+	/* Build L3 */
+	L3e_idx = pl3_i(startva);
+	nL3e = pmap_pagetree_nentries_range(startva, endva, NBPD_L3);
+	for (i = 0; i < nL3e; i++) {
+		KASSERT(L3_BASE[L3e_idx+i] == 0);
+
+		pa = pmap_bootstrap_palloc(1);
+		*pte = (pa & PG_FRAME) | pteflags;
+		pmap_update_pg(tmpva);
+		memset((void *)tmpva, 0, PAGE_SIZE);
+
+		L3_BASE[L3e_idx+i] = pa | pteflags | PG_U;
+	}
+
+	/* Build L2 */
+	L2e_idx = pl2_i(startva);
+	nL2e = pmap_pagetree_nentries_range(startva, endva, NBPD_L2);
+	for (i = 0; i < nL2e; i++) {
+
+		KASSERT(L2_BASE[L2e_idx+i] == 0);
+
+		pa = pmap_bootstrap_palloc(1);
+		*pte = (pa & PG_FRAME) | pteflags;
+		pmap_update_pg(tmpva);
+		memset((void *)tmpva, 0, PAGE_SIZE);
+
+		L2_BASE[L2e_idx+i] = pa | pteflags | PG_U;
+	}
+
+	/* Build L1 */
+	L1e_idx = pl1_i(startva);
+	nL1e = pmap_pagetree_nentries_range(startva, endva, NBPD_L1);
+	for (i = 0; i < nL1e; i++) {
+		/*
+		 * Nothing to do, the PTEs will be entered via
+		 * pmap_kenter_pa.
+		 */
+		KASSERT(L1_BASE[L1e_idx+i] == 0);
+	}
+
+	*pte = 0;
+	pmap_update_pg(tmpva);
+
+	pcpuarea = (struct pcpu_area *)startva;
+
+	tlbflush();
 }
 #endif
 
@@ -2168,6 +2282,9 @@ pmap_pdp_ctor(void *arg, void *v, int flags)
 		pdir[idx] = PDP_BASE[idx];
 	}
 
+#ifdef __HAVE_PCPU_AREA
+	pdir[PDIR_SLOT_PCPU] = PDP_BASE[PDIR_SLOT_PCPU];
+#endif
 #ifdef __HAVE_DIRECT_MAP
 	pdir[PDIR_SLOT_DIRECT] = PDP_BASE[PDIR_SLOT_DIRECT];
 #endif
