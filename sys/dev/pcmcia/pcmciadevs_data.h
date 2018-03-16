@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.233 2016/06/01 23:33:24 pgoyette Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.234 2018/03/16 01:58:42 sevan Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.232 2016/06/01 23:31:53 pgoyette Exp
+ *	NetBSD: pcmciadevs,v 1.234 2018/03/16 01:49:15 sevan Exp
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -90,6 +90,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "3Com Corporation",
 	    "3Com 3CRWB60-A Bluetooth PC Card",	}
+	,
+	{
+	    PCMCIA_VENDOR_3COM, PCMCIA_PRODUCT_3COM_3CRWB6096B,
+	    PCMCIA_CIS_3COM_3CRWB6096B,
+	    0,
+	    "3Com Corporation",
+	    "3Com Wireless Bluetooth PC Card",	}
 	,
 	{
 	    PCMCIA_VENDOR_3COM, PCMCIA_PRODUCT_3COM_3CCFEM556BI,
