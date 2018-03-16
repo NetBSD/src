@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.235 2017/04/17 08:32:01 hannken Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.236 2018/03/16 17:25:04 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.235 2017/04/17 08:32:01 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.236 2018/03/16 17:25:04 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfs.h"
@@ -670,7 +670,8 @@ nfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		goto free_hst;
 	memset(&hst[len], 0, MNAMELEN - len);
 	/* sockargs() call must be after above copyin() calls */
-	error = sockargs(&nam, args->addr, args->addrlen, MT_SONAME);
+	error = sockargs(&nam, args->addr, args->addrlen, UIO_USERSPACE,
+	    MT_SONAME);
 	if (error)
 		goto free_hst;
 	MCLAIM(nam, &nfs_mowner);

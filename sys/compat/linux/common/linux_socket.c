@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.139 2017/11/22 10:19:14 ozaki-r Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.140 2018/03/16 17:25:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.139 2017/11/22 10:19:14 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.140 2018/03/16 17:25:04 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -401,6 +401,7 @@ linux_sys_sendto(struct lwp *l, const struct linux_sys_sendto_args *uap, registe
 	struct msghdr   msg;
 	struct iovec    aiov;
 	struct sockaddr_big nam;
+	struct mbuf *m;
 	int bflags;
 	int error;
 
@@ -419,9 +420,13 @@ linux_sys_sendto(struct lwp *l, const struct linux_sys_sendto_args *uap, registe
 		error = linux_get_sa(l, SCARG(uap, s), &nam, SCARG(uap, to),
 		    SCARG(uap, tolen));
 		if (error)
-			return (error);
-		msg.msg_name = &nam;
-		msg.msg_namelen = SCARG(uap, tolen);
+			return error;
+		error = sockargs(&m, &nam, nam.sb_len, UIO_SYSSPACE, MT_SONAME);
+		if (error)
+			return error;
+		msg.msg_flags |= MSG_NAMEMBUF;
+		msg.msg_name = m;
+		msg.msg_namelen = nam.sb_len;
 	}
 
 	msg.msg_iov = &aiov;

@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.146 2018/01/04 01:42:25 christos Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.147 2018/03/16 17:25:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -249,11 +249,13 @@ struct msghdr;
 struct stat;
 struct knote;
 struct sockaddr_big;
+enum uio_seg;
 
 struct	mbuf *getsombuf(struct socket *, int);
 
-/* 0x400 is SO_OTIMESTAMP */
-#define SOOPT_TIMESTAMP(o)	((o) & (SO_TIMESTAMP | 0x400))
+#define SOOPT_TIMESTAMP(o)				\
+    ((o) & (SO_TIMESTAMP | 0x400 /*SO_OTIMESTAMP*/ |	\
+    SO_TIMESTAMPNS | SO_TIMESTAMPING))
 
 /*
  * File operations on sockets.
@@ -330,7 +332,7 @@ int	so_setsockopt(struct lwp *, struct socket *, int, int, const void *, size_t)
 int	soshutdown(struct socket *, int);
 void	sorestart(struct socket *);
 void	sowakeup(struct socket *, struct sockbuf *, int);
-int	sockargs(struct mbuf **, const void *, size_t, int);
+int	sockargs(struct mbuf **, const void *, size_t, enum uio_seg, int);
 int	sopoll(struct socket *, int);
 struct	socket *soget(bool);
 void	soput(struct socket *);
