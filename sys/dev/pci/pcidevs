@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1319 2018/03/04 13:24:17 jdolecek Exp $
+$NetBSD: pcidevs,v 1.1320 2018/03/16 08:40:06 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -3304,12 +3304,12 @@ product INTEL I219_V2		0x15b8	I219-V Ethernet Connection
 product INTEL I219_LM3		0x15b9	I219-LM Ethernet Connection
 product INTEL C3K_X553_KRKX	0x15c2	C3000 X553 Backplane (KR/KX 10G SKU)
 product INTEL C3K_X553_KX_25G	0x15c3	C3000 X553 Backplane (KX 2.5G)
-product INTEL C3K_X553_SFI_SFP	0x15c4	C3000 X553 10G SFP+
+product INTEL C3K_X553_SFI_SFP	0x15c4	C3000 X553 10G SFP+ (SFI)
 product INTEL C3K_X553_VF	0x15c5	C3000 X553 VF
 product INTEL C3K_X553_SGMII_BP	0x15c6	C3000 X553 1GbE SGMII Backplane (10G SKU)
 product INTEL C3K_X553_SGMII_BP_L 0x15c7 C3000 X553 1GbE SGMII Backplane (non-10G SKU)
 product INTEL C3K_X553_10G_T	0x15c8	C3000 X553 10GBASE-T (X557)
-product INTEL C3K_X553_KR_SFP	0x15ce	C3000 X553 10G SFP+
+product INTEL C3K_X553_KR_SFP	0x15ce	C3000 X553 10G SFP+ (KR)
 product INTEL X550T1	 	0x15d1	X550 10G Ethernet
 product INTEL I219_V5		0x15d6	I219-V Ethernet Connection
 product INTEL I219_LM4		0x15d7	I219-LM Ethernet Connection
