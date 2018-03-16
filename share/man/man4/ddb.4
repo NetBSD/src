@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.176 2018/03/16 04:44:51 ozaki-r Exp $
+.\"	$NetBSD: ddb.4,v 1.177 2018/03/16 10:42:20 wiz Exp $
 .\"
 .\" Copyright (c) 1997 - 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -250,7 +250,7 @@ is taken to be 1 for printing commands, and infinity for stack traces.
 .Pp
 The syntax:
 .Bd -ragged -offset indent
-.Cm , Ns Ar count
+.Cm \&, Ns Ar count
 .Ed
 .Pp
 repeats the previous command, just as a blank line does, but with
@@ -560,8 +560,8 @@ for more information on callouts.
 Display details information about all active locks.
 If
 .Cm /t
-is specified, stack traces of LWPs holding locks are printed additionally.
-This command is useful only if a kernel is compiled with
+is specified, stack traces of LWPs holding locks are also printed.
+This command is only useful if a kernel is compiled with
 .Cd options LOCKDEBUG .
 .It Ic show all pages
 Display basic information about all physical pages managed by the VM system.
@@ -655,11 +655,11 @@ be displayed.
 .It Ic show lock Ar address
 Display information about a lock at
 .Ar address .
-This command is useful only if a kernel is compiled with
+This command is only useful if a kernel is compiled with
 .Cd options LOCKDEBUG .
 .It Ic show lockstat
-Display information about statistics of locks.
-This command is useful only if a kernel is compiled with
+Display information about lock statistics.
+This command is only useful if a kernel is compiled with
 .Cd options LOCKDEBUG .
 .It Ic show map Ns Oo Cm /f Oc Ar address
 Print the vm_map at
