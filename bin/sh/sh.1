@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.194 2018/03/16 11:19:24 kre Exp $
+.\"	$NetBSD: sh.1,v 1.195 2018/03/16 11:53:57 kre Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -286,7 +286,7 @@ Read commands from the
 .Ar command_string
 operand instead of, or in addition to, from the standard input.
 Special parameter
-.Dv 0
+.Dv 0	\" $0
 will be set from the
 .Ar command_name
 operand if given, and the positional parameters
@@ -1005,7 +1005,7 @@ They each are executed in a different way.
 .Pp
 When a shell function is executed, all of the shell positional parameters
 (note: excluding
-.Li 0 ,
+.Li 0 ,	\" $0
 which is a special, not positional, parameter, and remains unchanged)
 are set to the arguments of the shell function.
 The variables which are explicitly placed in the environment of
@@ -1593,7 +1593,7 @@ Without the braces, a digit following
 .Dq $
 can only refer to one of the first 9 positional parameters,
 or the special parameter
-.Dv 0 .
+.Dv 0 .	\" $0
 The word
 .Dq Li $10
 is treated identically to
@@ -1618,13 +1618,13 @@ variable, or by a
 if
 .Ev IFS
 is unset.
-.It Dv @
+.It Dv @	\" $@
 Expands to the positional parameters, starting from one.
 When the expansion occurs within double quotes, each positional
 parameter expands as a separate argument.
 If there are no positional parameters, the
 expansion of @ generates zero arguments, even when
-.Dv @
+.Dv $@
 is double-quoted.
 What this basically means, for example, is
 if
@@ -1667,7 +1667,7 @@ will be unset.
 Once set, the value of
 .Dq Dv \&!
 will be retained until another background command is started.
-.It Dv 0 No (zero)
+.It Dv 0 No (zero)	\" $0
 Expands to the name of the shell or shell script.
 .El
 .\"
@@ -1684,7 +1684,7 @@ It is only field splitting or pathname expansion that can
 create multiple fields from a single word.
 The single exception to this
 rule is the expansion of the special parameter
-.Dv @
+.Dv @	\" $@
 within double quotes, as was described above.
 .Pp
 The order of word expansion is:
@@ -1765,7 +1765,7 @@ pathname expansion is not performed on the results of the expansion;
 .It
 field splitting is not performed on the results of the
 expansion, with the exception of the special rules for
-.Dv @ .
+.Dv @ .	\" $@
 .El
 .Pp
 In addition, a parameter expansion where braces are used,
@@ -1839,7 +1839,7 @@ rather than regular expression notation, is used to evaluate the patterns.
 If parameter is
 .Dv *
 or
-.Dv @ ,
+.Dv @ ,	\" $@
 the result of the expansion is unspecified.
 Enclosing the full parameter expansion string in double quotes does not
 cause the following four varieties of pattern characters to be quoted,
@@ -2877,15 +2877,15 @@ command has run, the values and attributes of the variables might
 be altered, and later, when the function completes, be restored.
 .Pp
 Note that the positional parameters
-.Li 1 ,
-.Li 2 ,
+.Li 1 ,	\" $1
+.Li 2 ,	\" $2
 \&... (see
 .Sx Positional Parameters ) ,
 and the special parameters
-.Li \&# ,
-.Li \&*
+.Li \&# ,	\" $#
+.Li \&*		\" $*
 and
-.Li \&@
+.Li \&@		\" $@
 (see
 .Sx Special Parameters ) ,
 are always made local in all functions, and are reset inside the
@@ -3172,7 +3172,7 @@ The signals are specified by signal number or as the name of the signal.
 If
 .Ar signal
 is
-.Li 0
+.Li 0	\" $0
 or its equivalent,
 .Li EXIT ,
 the action is executed when the shell exits.
