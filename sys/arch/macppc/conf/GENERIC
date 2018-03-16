@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.345 2018/03/16 01:12:46 sevan Exp $
+# $NetBSD: GENERIC,v 1.346 2018/03/16 03:19:38 sevan Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.345 $"
+#ident 		"GENERIC-$Revision: 1.346 $"
 
 maxusers	32
 
@@ -671,6 +671,8 @@ pseudo-device	nsmb			# SMB requester
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
 pseudo-device	putter			# for puffs and pud
+pseudo-device	bcsp			# BlueCore Serial Protocol
+pseudo-device	btuart			# Bluetooth HCI UART (H4)
 
 # userland interface to drivers, including autoconf and properties retrieval
 pseudo-device   drvctl
