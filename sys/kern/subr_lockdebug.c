@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_lockdebug.c,v 1.62 2018/03/16 04:44:51 ozaki-r Exp $	*/
+/*	$NetBSD: subr_lockdebug.c,v 1.63 2018/03/16 08:21:45 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.62 2018/03/16 04:44:51 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.63 2018/03/16 08:21:45 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -863,7 +863,6 @@ lockdebug_show_all_locks_lwp(void (*pr)(const char *, ...), bool show_trace)
 				ksyms_getname(NULL, &sym,
 				    (vaddr_t)ld->ld_initaddr,
 				    KSYMS_CLOSEST|KSYMS_PROC|KSYMS_ANY);
-				(*pr)("Initialized at %s\n", sym);
 				(*pr)("Lock %d (initialized at %s)\n", i++, sym);
 				lockdebug_dump(ld, pr);
 			}
