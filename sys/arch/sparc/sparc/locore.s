@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.269 2017/11/25 04:11:37 maya Exp $	*/
+/*	$NetBSD: locore.s,v 1.270 2018/03/16 09:29:24 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -5331,7 +5331,6 @@ ENTRY(qzero)
 
 ENTRY(bcopy)
 	cmp	%o2, BCOPY_SMALL
-Lbcopy_start:
 	bge,a	Lbcopy_fancy	! if >= this many, go be fancy.
 	btst	7, %o0		! (part of being fancy)
 
@@ -5494,164 +5493,6 @@ Lbcopy_done:
 1:
 	retl
 	 stb	%o4,[%o1]
-/*
- * ovbcopy(src, dst, len): like bcopy, but regions may overlap.
- */
-ENTRY(ovbcopy)
-	cmp	%o0, %o1	! src < dst?
-	bgeu	Lbcopy_start	! no, go copy forwards as via bcopy
-	cmp	%o2, BCOPY_SMALL! (check length for doublecopy first)
-
-	/*
-	 * Since src comes before dst, and the regions might overlap,
-	 * we have to do the copy starting at the end and working backwards.
-	 */
-	add	%o2, %o0, %o0	! src += len
-	add	%o2, %o1, %o1	! dst += len
-	bge,a	Lback_fancy	! if len >= BCOPY_SMALL, go be fancy
-	btst	3, %o0
-
-	/*
-	 * Not much to copy, just do it a byte at a time.
-	 */
-	deccc	%o2		! while (--len >= 0)
-	bl	1f
-	 .empty
-0:
-	dec	%o0		!	*--dst = *--src;
-	ldsb	[%o0], %o4
-	dec	%o1
-	deccc	%o2
-	bge	0b
-	stb	%o4, [%o1]
-1:
-	retl
-	nop
-
-	/*
-	 * Plenty to copy, try to be optimal.
-	 * We only bother with word/halfword/byte copies here.
-	 */
-Lback_fancy:
-!	btst	3, %o0		! done already
-	bnz	1f		! if ((src & 3) == 0 &&
-	btst	3, %o1		!     (dst & 3) == 0)
-	bz,a	Lback_words	!	goto words;
-	dec	4, %o2		! (done early for word copy)
-
-1:
-	/*
-	 * See if the low bits match.
-	 */
-	xor	%o0, %o1, %o3	! t = src ^ dst;
-	btst	1, %o3
-	bz,a	3f		! if (t & 1) == 0, can do better
-	btst	1, %o0
-
-	/*
-	 * Nope; gotta do byte copy.
-	 */
-2:
-	dec	%o0		! do {
-	ldsb	[%o0], %o4	!	*--dst = *--src;
-	dec	%o1
-	deccc	%o2		! } while (--len != 0);
-	bnz	2b
-	stb	%o4, [%o1]
-	retl
-	nop
-
-3:
-	/*
-	 * Can do halfword or word copy, but might have to copy 1 byte first.
-	 */
-!	btst	1, %o0		! done earlier
-	bz,a	4f		! if (src & 1) {	/* copy 1 byte */
-	btst	2, %o3		! (done early)
-	dec	%o0		!	*--dst = *--src;
-	ldsb	[%o0], %o4
-	dec	%o1
-	stb	%o4, [%o1]
-	dec	%o2		!	len--;
-	btst	2, %o3		! }
-
-4:
-	/*
-	 * See if we can do a word copy ((t&2) == 0).
-	 */
-!	btst	2, %o3		! done earlier
-	bz,a	6f		! if (t & 2) == 0, can do word copy
-	btst	2, %o0		! (src&2, done early)
-
-	/*
-	 * Gotta do halfword copy.
-	 */
-	dec	2, %o2		! len -= 2;
-5:
-	dec	2, %o0		! do {
-	ldsh	[%o0], %o4	!	src -= 2;
-	dec	2, %o1		!	dst -= 2;
-	deccc	2, %o0		!	*(short *)dst = *(short *)src;
-	bge	5b		! } while ((len -= 2) >= 0);
-	sth	%o4, [%o1]
-	b	Lback_mopb	! goto mop_up_byte;
-	btst	1, %o2		! (len&1, done early)
-
-6:
-	/*
-	 * We can do word copies, but we might have to copy
-	 * one halfword first.
-	 */
-!	btst	2, %o0		! done already
-	bz	7f		! if (src & 2) {
-	dec	4, %o2		! (len -= 4, done early)
-	dec	2, %o0		!	src -= 2, dst -= 2;
-	ldsh	[%o0], %o4	!	*(short *)dst = *(short *)src;
-	dec	2, %o1
-	sth	%o4, [%o1]
-	dec	2, %o2		!	len -= 2;
-				! }
-
-7:
-Lback_words:
-	/*
-	 * Do word copies (backwards), then mop up trailing halfword
-	 * and byte if any.
-	 */
-!	dec	4, %o2		! len -= 4, done already
-0:				! do {
-	dec	4, %o0		!	src -= 4;
-	dec	4, %o1		!	src -= 4;
-	ld	[%o0], %o4	!	*(int *)dst = *(int *)src;
-	deccc	4, %o2		! } while ((len -= 4) >= 0);
-	bge	0b
-	st	%o4, [%o1]
-
-	/*
-	 * Check for trailing shortword.
-	 */
-	btst	2, %o2		! if (len & 2) {
-	bz,a	1f
-	btst	1, %o2		! (len&1, done early)
-	dec	2, %o0		!	src -= 2, dst -= 2;
-	ldsh	[%o0], %o4	!	*(short *)dst = *(short *)src;
-	dec	2, %o1
-	sth	%o4, [%o1]	! }
-	btst	1, %o2
-
-	/*
-	 * Check for trailing byte.
-	 */
-1:
-Lback_mopb:
-!	btst	1, %o2		! (done already)
-	bnz,a	1f		! if (len & 1) {
-	ldsb	[%o0 - 1], %o4	!	b = src[-1];
-	retl
-	nop
-1:
-	retl			!	dst[-1] = b;
-	stb	%o4, [%o1 - 1]	! }
 
 /*
  * kcopy() is exactly like bcopy except that it set pcb_onfault such that
