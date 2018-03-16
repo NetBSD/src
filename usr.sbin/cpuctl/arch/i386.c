@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.74.6.1 2017/11/21 15:03:20 martin Exp $	*/
+/*	$NetBSD: i386.c,v 1.74.6.2 2018/03/16 13:05:32 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.74.6.1 2017/11/21 15:03:20 martin Exp $");
+__RCSID("$NetBSD: i386.c,v 1.74.6.2 2018/03/16 13:05:32 martin Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1900,6 +1900,12 @@ identifycpu(int fd, const char *cpuname)
 	if (cpu_vendor == CPUVENDOR_INTEL)
 		print_bits(cpuname, "features6", CPUID_SEF_FLAGS1,
 		    ci->ci_feat_val[6]);
+
+	if ((cpu_vendor == CPUVENDOR_INTEL) && (ci->ci_cpuid_level >= 7)) {
+		x86_cpuid(7, descs);
+		print_bits(cpuname, "SEF edx", CPUID_SEF_FLAGS2, descs[3]);
+	}
+
 	print_bits(cpuname, "xsave features", XCR0_FLAGS1, ci->ci_feat_val[7]);
 	print_bits(cpuname, "xsave instructions", CPUID_PES1_FLAGS,
 	    ci->ci_feat_val[8]);
