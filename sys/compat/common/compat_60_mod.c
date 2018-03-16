@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_60_mod.c,v 1.1.2.1 2018/03/15 23:23:36 pgoyette Exp $	*/
+/*	$NetBSD: compat_60_mod.c,v 1.1.2.2 2018/03/16 01:16:29 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_60_mod.c,v 1.1.2.1 2018/03/15 23:23:36 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_60_mod.c,v 1.1.2.2 2018/03/16 01:16:29 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -51,21 +51,49 @@ __KERNEL_RCSID(0, "$NetBSD: compat_60_mod.c,v 1.1.2.1 2018/03/15 23:23:36 pgoyet
 #include <compat/common/compat_util.h>
 #include <compat/common/compat_mod.h>
 
+static const struct syscall_package compat_60_syscalls[] = {
+	{ SYS_compat_60_lwp_park, 0, (sy_call_t *)compat_60_sys__lwp_park },
+	{ NULL, 0, NULL }
+};
+
 #define REQUIRED_60 "compat_70"		/* XXX No compat_80 yet */
 MODULE(MODULE_CLASS_EXEC, compat_60, REQUIRED_60);
+
+#ifdef CPU_UCODE
+int (*orig_compat_6_cpu_ucode)(struct compat6_cpu_ucode *);
+int (*orig_compat6_cpu_ucode_apply)(const struct compat6_cpu_ucode *);
+#endif
 
 static int
 compat_60_modcmd(modcmd_t cmd, void *arg)
 {
+	int error;
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
+		error = syscall_establish(NULL, compat_60_syscalls);
+		if (error != 0)
+			return error;
+#ifdef CPU_UCODE
+		orig_get_version = vec_compat6_cpu_ucode_get_version;
+		*vec_compat6_cpu_ucode_get_version =
+		    compat6_cpu_ucode_get_version;
+		orig_apply = vec_compat6_cpu_ucode_apply;
+		*vec_compat6_cpu_ucode_apply = compat6_cpu_ucode_apply;
+#endif
 		return 0;
 
 	case MODULE_CMD_FINI:
+		*vec_compat6_cpu_ucode_get_version = orig_get_version;
+		*vec_compat6_cpu_ucode_apply = orig_apply;
+		error = syscall_disestablish(NULL, compat_60_syscalls);
+		if (error != 0)
+			return error;
 		return 0;
 
 	default:
 		return ENOTTY;
 	}
 }
+
+
