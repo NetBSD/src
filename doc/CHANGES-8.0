@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.144 2018/03/15 11:28:24 bouyer Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.145 2018/03/16 13:19:38 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -10337,4 +10337,37 @@ sys/netinet6/in6_gif.c				1.91
 
 	Fix potential NULL dereference
 	[knakahara, ticket #632]
+
+sys/arch/x86/include/cacheinfo.h		1.23
+sys/arch/x86/include/specialreg.h		1.106-1.114
+sys/arch/x86/x86/identcpu.c			1.70
+usr.sbin/cpuctl/arch/i386.c			1.79
+
+	Add Intel cpuid 7 IBPB/STIBP Speculation Control bits.
+	Fix swapped comments for EFER LME and LMA.
+	Add Intel Deterministic Address Translation Parameter definitions.
+	[msaitoh, ticket #633]
+
+sys/arch/x86/x86/procfs_machdep.c		1.22
+
+	- Add AMD CPUID leaf 0x80000008 ebx's xsaveerptr, ibpb, ibrs, stibp.
+	- Add Intel CPUID leaf 7 ebx's umip, avx512_vbmi2, gfni, vaes,
+	   vpclmulqdq, avx512_vnni and avx512_bitalg.
+	- Add Intel CPUID leaf 7 edx's avx512_4vnniw, avx512_4fmaps and
+	   arch_capabilities.
+	[msaitoh, ticket #634]
+
+sys/arch/amd64/amd64/gdt.c		1.39-1.45 (patch)
+sys/arch/amd64/amd64/amd64/machdep.c	1.284,1.287,1.288 (patch)
+sys/arch/amd64/amd64/include/param.h	1.23 (patch)
+sys/arch/amd64/include/types.h		1.53 (patch)
+sys/arch/x86/include/cpu.h		1.87 (patch)
+sys/arch/x86/include/pmap.h		1.73,1.74 (patch)
+sys/arch/x86/x86/cpu.c			1.142 (patch)
+sys/arch/x86/x86/intr.c			1.117 (partial),1.120 (patch)
+sys/arch/x86/x86/pmap.c			1.276 (patch)
+
+	Initialize ist0 in cpu_init_tss.
+	Backport __HAVE_PCPU_AREA.
+	[maxv, #635]
 
