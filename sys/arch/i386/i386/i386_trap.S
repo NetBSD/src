@@ -1,4 +1,4 @@
-/*	$NetBSD: i386_trap.S,v 1.12 2017/08/30 15:34:57 maxv Exp $	*/
+/*	$NetBSD: i386_trap.S,v 1.13 2018/03/16 12:48:54 maxv Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -66,7 +66,7 @@
 
 #if 0
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: i386_trap.S,v 1.12 2017/08/30 15:34:57 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i386_trap.S,v 1.13 2018/03/16 12:48:54 maxv Exp $");
 #endif
 
 /*
@@ -83,19 +83,13 @@ __KERNEL_RCSID(0, "$NetBSD: i386_trap.S,v 1.12 2017/08/30 15:34:57 maxv Exp $");
 #define TRAP(a)		pushl $(a) ; jmp _C_LABEL(alltraps)
 #define ZTRAP(a)	pushl $0 ; TRAP(a)
 
-#ifdef IPKDB
-#define BPTTRAP(a)	pushl $0; pushl $(a); jmp _C_LABEL(bpttraps)
-#else
-#define BPTTRAP(a)	ZTRAP(a)
-#endif
-
 	.text
 IDTVEC(trap00)
 	ZTRAP(T_DIVIDE)
 IDTVEC_END(trap00)
 
 IDTVEC(trap01)
-	BPTTRAP(T_TRCTRAP)
+	ZTRAP(T_TRCTRAP)
 IDTVEC_END(trap01)
 
 /*
@@ -121,7 +115,7 @@ IDTVEC(trap02)
 IDTVEC_END(trap02)
 
 IDTVEC(trap03)
-	BPTTRAP(T_BPTFLT)
+	ZTRAP(T_BPTFLT)
 IDTVEC_END(trap03)
 
 IDTVEC(trap04)
