@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.803 2018/01/13 14:12:57 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.804 2018/03/16 12:48:54 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009, 2017
@@ -67,14 +67,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.803 2018/01/13 14:12:57 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.804 2018/03/16 12:48:54 maxv Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_freebsd.h"
 #include "opt_compat_netbsd.h"
 #include "opt_cpureset_delay.h"
 #include "opt_ddb.h"
-#include "opt_ipkdb.h"
 #include "opt_kgdb.h"
 #include "opt_mtrr.h"
 #include "opt_modular.h"
@@ -108,10 +107,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.803 2018/01/13 14:12:57 bouyer Exp $")
 #include <sys/ras.h>
 #include <sys/ksyms.h>
 #include <sys/device.h>
-
-#ifdef IPKDB
-#include <ipkdb/ipkdb.h>
-#endif
 
 #ifdef KGDB
 #include <sys/kgdb.h>
@@ -1426,11 +1421,6 @@ init386(paddr_t first_avail)
 #ifdef DDB
 	if (boothowto & RB_KDB)
 		Debugger();
-#endif
-#ifdef IPKDB
-	ipkdb_init();
-	if (boothowto & RB_KDB)
-		ipkdb_connect(0);
 #endif
 #ifdef KGDB
 	kgdb_port_init();
