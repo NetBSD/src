@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_pci_space.c,v 1.13 2014/02/24 10:50:40 martin Exp $ */
+/*	$NetBSD: ixp425_pci_space.c,v 1.14 2018/03/16 17:56:32 ryo Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_pci_space.c,v 1.13 2014/02/24 10:50:40 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_pci_space.c,v 1.14 2018/03/16 17:56:32 ryo Exp $");
 
 /*
  * bus_space PCI functions for ixp425
@@ -72,79 +72,79 @@ void _pci_io_bs_w_4(void *, bus_space_handle_t, bus_size_t, uint32_t);
 
 struct bus_space ixp425_pci_bs_tag_template = {
 	/* cookie */
-	(void *) 0,
+	.bs_cookie = (void *) 0,
 
 	/* mapping/unmapping */
-	NULL,
-	NULL,
-	ixp425_pci_bs_subregion,
+	.bs_map = NULL,
+	.bs_unmap = NULL,
+	.bs_subregion = ixp425_pci_bs_subregion,
 
 	/* allocation/deallocation */
-	NULL,
-	NULL,
+	.bs_alloc = NULL,
+	.bs_free = NULL,
 
 	/* get kernel virtual address */
-	NULL,
+	.bs_vaddr = NULL,
 
 	/* mmap bus space for userland */
-	ixp425_pci_bs_mmap,
+	.bs_mmap = ixp425_pci_bs_mmap,
 
 	/* barrier */
-	ixp425_pci_bs_barrier,
+	.bs_barrier = ixp425_pci_bs_barrier,
 
 	/* read (single) */
-	bs_notimpl_bs_r_1,
-	bs_notimpl_bs_r_2,
-	bs_notimpl_bs_r_4,
-	bs_notimpl_bs_r_8,
+	.bs_r_1 = bs_notimpl_bs_r_1,
+	.bs_r_2 = bs_notimpl_bs_r_2,
+	.bs_r_4 = bs_notimpl_bs_r_4,
+	.bs_r_8 = bs_notimpl_bs_r_8,
 
 	/* read multiple */
-	bs_notimpl_bs_rm_1,
-	bs_notimpl_bs_rm_2,
-	bs_notimpl_bs_rm_4,
-	bs_notimpl_bs_rm_8,
+	.bs_rm_1 = bs_notimpl_bs_rm_1,
+	.bs_rm_2 = bs_notimpl_bs_rm_2,
+	.bs_rm_4 = bs_notimpl_bs_rm_4,
+	.bs_rm_8 = bs_notimpl_bs_rm_8,
 
 	/* read region */
-	bs_notimpl_bs_rr_1,
-	bs_notimpl_bs_rr_2,
-	bs_notimpl_bs_rr_4,
-	bs_notimpl_bs_rr_8,
+	.bs_rr_1 = bs_notimpl_bs_rr_1,
+	.bs_rr_2 = bs_notimpl_bs_rr_2,
+	.bs_rr_4 = bs_notimpl_bs_rr_4,
+	.bs_rr_8 = bs_notimpl_bs_rr_8,
 
 	/* write (single) */
-	bs_notimpl_bs_w_1,
-	bs_notimpl_bs_w_2,
-	bs_notimpl_bs_w_4,
-	bs_notimpl_bs_w_8,
+	.bs_w_1 = bs_notimpl_bs_w_1,
+	.bs_w_2 = bs_notimpl_bs_w_2,
+	.bs_w_4 = bs_notimpl_bs_w_4,
+	.bs_w_8 = bs_notimpl_bs_w_8,
 
 	/* write multiple */
-	bs_notimpl_bs_wm_1,
-	bs_notimpl_bs_wm_2,
-	bs_notimpl_bs_wm_4,
-	bs_notimpl_bs_wm_8,
+	.bs_wm_1 = bs_notimpl_bs_wm_1,
+	.bs_wm_2 = bs_notimpl_bs_wm_2,
+	.bs_wm_4 = bs_notimpl_bs_wm_4,
+	.bs_wm_8 = bs_notimpl_bs_wm_8,
 
 	/* write region */
-	bs_notimpl_bs_wr_1,
-	bs_notimpl_bs_wr_2,
-	bs_notimpl_bs_wr_4,
-	bs_notimpl_bs_wr_8,
+	.bs_wr_1 = bs_notimpl_bs_wr_1,
+	.bs_wr_2 = bs_notimpl_bs_wr_2,
+	.bs_wr_4 = bs_notimpl_bs_wr_4,
+	.bs_wr_8 = bs_notimpl_bs_wr_8,
 
 	/* set multiple */
-	bs_notimpl_bs_sm_1,
-	bs_notimpl_bs_sm_2,
-	bs_notimpl_bs_sm_4,
-	bs_notimpl_bs_sm_8,
+	.bs_sm_1 = bs_notimpl_bs_sm_1,
+	.bs_sm_2 = bs_notimpl_bs_sm_2,
+	.bs_sm_4 = bs_notimpl_bs_sm_4,
+	.bs_sm_8 = bs_notimpl_bs_sm_8,
 
 	/* set region */
-	bs_notimpl_bs_sr_1,
-	bs_notimpl_bs_sr_2,
-	bs_notimpl_bs_sr_4,
-	bs_notimpl_bs_sr_8,
+	.bs_sr_1 = bs_notimpl_bs_sr_1,
+	.bs_sr_2 = bs_notimpl_bs_sr_2,
+	.bs_sr_4 = bs_notimpl_bs_sr_4,
+	.bs_sr_8 = bs_notimpl_bs_sr_8,
 
 	/* copy */
-	bs_notimpl_bs_c_1,
-	bs_notimpl_bs_c_2,
-	bs_notimpl_bs_c_4,
-	bs_notimpl_bs_c_8,
+	.bs_c_1 = bs_notimpl_bs_c_1,
+	.bs_c_2 = bs_notimpl_bs_c_2,
+	.bs_c_4 = bs_notimpl_bs_c_4,
+	.bs_c_8 = bs_notimpl_bs_c_8,
 };
 
 void
