@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_lockdebug.c,v 1.60 2018/02/20 03:34:52 ozaki-r Exp $	*/
+/*	$NetBSD: subr_lockdebug.c,v 1.61 2018/03/16 04:43:37 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.60 2018/02/20 03:34:52 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.61 2018/03/16 04:43:37 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -834,6 +834,56 @@ lockdebug_lock_print(void *addr, void (*pr)(const char *, ...))
 		(*pr)("Sorry, no record of a lock with address %p found.\n",
 		    addr);
 	}
+#else
+	(*pr)("Sorry, kernel not built with the LOCKDEBUG option.\n");
+#endif	/* LOCKDEBUG */
+}
+
+void
+lockdebug_show_lockstat(void (*pr)(const char *, ...))
+{
+#ifdef LOCKDEBUG
+	lockdebug_t *ld;
+	void *_ld;
+	uint32_t n_null = 0;
+	uint32_t n_spin_mutex = 0;
+	uint32_t n_adaptive_mutex = 0;
+	uint32_t n_rwlock = 0;
+	uint32_t n_cv = 0;
+	uint32_t n_others = 0;
+
+	RB_TREE_FOREACH(_ld, &ld_rb_tree) {
+		ld = _ld;
+		if (ld->ld_lock == NULL) {
+			n_null++;
+			continue;
+		}
+		if (ld->ld_lockops->lo_type == LOCKOPS_CV) {
+			n_cv++;
+			continue;
+		}
+		if (ld->ld_lockops->lo_name[0] == 'M') {
+			if (ld->ld_lockops->lo_type == LOCKOPS_SLEEP)
+				n_adaptive_mutex++;
+			else
+				n_spin_mutex++;
+			continue;
+		}
+		if (ld->ld_lockops->lo_name[0] == 'R') {
+			n_rwlock++;
+			continue;
+		}
+		n_others++;
+	}
+	(*pr)(
+	    "condvar: %u\n"
+	    "spin mutex: %u\n"
+	    "adaptive mutex: %u\n"
+	    "rwlock: %u\n"
+	    "null locks: %u\n"
+	    "others: %u\n",
+	    n_cv,  n_spin_mutex, n_adaptive_mutex, n_rwlock,
+	    n_null, n_others);
 #else
 	(*pr)("Sorry, kernel not built with the LOCKDEBUG option.\n");
 #endif	/* LOCKDEBUG */
