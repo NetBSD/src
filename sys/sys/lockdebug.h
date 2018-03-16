@@ -1,4 +1,4 @@
-/*	$NetBSD: lockdebug.h,v 1.17 2018/03/16 04:37:55 ozaki-r Exp $	*/
+/*	$NetBSD: lockdebug.h,v 1.18 2018/03/16 04:44:51 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -58,6 +58,8 @@ void	lockdebug_abort(const char *, size_t, const volatile void *,
 
 void	lockdebug_lock_print(void *, void (*)(const char *, ...)
     __printflike(1, 2));
+void	lockdebug_show_all_locks(void (*)(const char *, ...) __printflike(1, 2),
+	    const char *);
 void	lockdebug_show_lockstat(void (*)(const char *, ...) __printflike(1, 2));
 
 #ifdef LOCKDEBUG

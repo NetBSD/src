@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_lockdebug.c,v 1.61 2018/03/16 04:43:37 ozaki-r Exp $	*/
+/*	$NetBSD: subr_lockdebug.c,v 1.62 2018/03/16 04:44:51 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.61 2018/03/16 04:43:37 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.62 2018/03/16 04:44:51 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.61 2018/03/16 04:43:37 ozaki-r 
 #include <sys/atomic.h>
 #include <sys/lock.h>
 #include <sys/rbtree.h>
+#include <sys/ksyms.h>
 
 #include <machine/lock.h>
 
@@ -815,6 +816,9 @@ lockdebug_abort1(const char *func, size_t line, lockdebug_t *ld, int s,
  *	Handle the DDB 'show lock' command.
  */
 #ifdef DDB
+#include <machine/db_machdep.h>
+#include <ddb/db_interface.h>
+
 void
 lockdebug_lock_print(void *addr, void (*pr)(const char *, ...))
 {
@@ -834,6 +838,93 @@ lockdebug_lock_print(void *addr, void (*pr)(const char *, ...))
 		(*pr)("Sorry, no record of a lock with address %p found.\n",
 		    addr);
 	}
+#else
+	(*pr)("Sorry, kernel not built with the LOCKDEBUG option.\n");
+#endif	/* LOCKDEBUG */
+}
+
+#ifdef LOCKDEBUG
+static void
+lockdebug_show_all_locks_lwp(void (*pr)(const char *, ...), bool show_trace)
+{
+	struct proc *p;
+
+	LIST_FOREACH(p, &allproc, p_list) {
+		struct lwp *l;
+		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
+			lockdebug_t *ld;
+			const char *sym;
+			int i = 0;
+			if (TAILQ_EMPTY(&l->l_ld_locks))
+				continue;
+			(*pr)("Locks held by an LWP (%s):\n",
+			    l->l_name ? l->l_name : p->p_comm);
+			TAILQ_FOREACH(ld, &l->l_ld_locks, ld_chain) {
+				ksyms_getname(NULL, &sym,
+				    (vaddr_t)ld->ld_initaddr,
+				    KSYMS_CLOSEST|KSYMS_PROC|KSYMS_ANY);
+				(*pr)("Initialized at %s\n", sym);
+				(*pr)("Lock %d (initialized at %s)\n", i++, sym);
+				lockdebug_dump(ld, pr);
+			}
+			if (show_trace) {
+				db_stack_trace_print((db_expr_t)(intptr_t)l,
+				    true,
+				    32 /* Limit just in case */,
+				    "a", pr);
+			}
+			(*pr)("\n");
+		}
+	}
+}
+
+static void
+lockdebug_show_all_locks_cpu(void (*pr)(const char *, ...), bool show_trace)
+{
+	lockdebug_t *ld;
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
+	const char *sym;
+
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		int i = 0;
+		if (TAILQ_EMPTY(&ci->ci_data.cpu_ld_locks))
+			continue;
+		(*pr)("Locks held on CPU %u:\n", ci->ci_index);
+		TAILQ_FOREACH(ld, &ci->ci_data.cpu_ld_locks, ld_chain) {
+			ksyms_getname(NULL, &sym,
+			    (vaddr_t)ld->ld_initaddr,
+			    KSYMS_CLOSEST|KSYMS_PROC|KSYMS_ANY);
+			(*pr)("Lock %d (initialized at %s)\n", i++, sym);
+			lockdebug_dump(ld, pr);
+			if (show_trace) {
+				db_stack_trace_print(
+				    (db_expr_t)(intptr_t)ci->ci_curlwp,
+				    true,
+				    32 /* Limit just in case */,
+				    "a", pr);
+			}
+			(*pr)("\n");
+		}
+	}
+}
+#endif	/* LOCKDEBUG */
+
+void
+lockdebug_show_all_locks(void (*pr)(const char *, ...), const char *modif)
+{
+#ifdef LOCKDEBUG
+	bool show_trace = false;
+	if (modif[0] == 't')
+		show_trace = true;
+
+	(*pr)("[Locks tracked through LWPs]\n");
+	lockdebug_show_all_locks_lwp(pr, show_trace);
+	(*pr)("\n");
+
+	(*pr)("[Locks tracked through CPUs]\n");
+	lockdebug_show_all_locks_cpu(pr, show_trace);
+	(*pr)("\n");
 #else
 	(*pr)("Sorry, kernel not built with the LOCKDEBUG option.\n");
 #endif	/* LOCKDEBUG */
