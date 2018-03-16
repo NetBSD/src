@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.54 2018/01/11 09:00:04 maxv Exp $	*/
+/*	$NetBSD: types.h,v 1.55 2018/03/16 12:19:35 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -106,7 +106,6 @@ typedef	unsigned char		__cpu_simple_lock_nv_t;
 #define	__HAVE_DIRECT_MAP 1
 #define	__HAVE_MM_MD_DIRECT_MAPPED_IO
 #define	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
-/* #define	__HAVE_CPU_UAREA_ROUTINES */
 #if !defined(NO_PCI_MSI_MSIX)
 #define	__HAVE_PCI_MSI_MSIX
 #endif
