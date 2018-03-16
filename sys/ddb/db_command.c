@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.149 2018/03/04 07:14:50 mlelstv Exp $	*/
+/*	$NetBSD: db_command.c,v 1.150 2018/03/16 04:37:55 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2009 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.149 2018/03/04 07:14:50 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.150 2018/03/16 04:37:55 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_aio.h"
@@ -190,6 +190,7 @@ static void	db_event_print_cmd(db_expr_t, bool, db_expr_t, const char *);
 static void	db_fncall(db_expr_t, bool, db_expr_t, const char *);
 static void     db_help_print_cmd(db_expr_t, bool, db_expr_t, const char *);
 static void	db_lock_print_cmd(db_expr_t, bool, db_expr_t, const char *);
+static void	db_show_lockstat(db_expr_t, bool, db_expr_t, const char *);
 static void	db_mount_print_cmd(db_expr_t, bool, db_expr_t, const char *);
 static void	db_mbuf_print_cmd(db_expr_t, bool, db_expr_t, const char *);
 static void	db_map_print_cmd(db_expr_t, bool, db_expr_t, const char *);
@@ -248,6 +249,9 @@ static const struct db_command db_show_cmds[] = {
 	    "Print the files open by process at address",
 	    "[/f] address", NULL) },
 	{ DDB_ADD_CMD("lock",	db_lock_print_cmd,	0,NULL,NULL,NULL) },
+	{ DDB_ADD_CMD("lockstat",
+				db_show_lockstat,	0,
+	    "Print statistics of locks", NULL, NULL) },
 	{ DDB_ADD_CMD("map",	db_map_print_cmd,	0,
 	    "Print the vm_map at address.", "[/f] address",NULL) },
 	{ DDB_ADD_CMD("module", db_show_module_cmd,	0,
@@ -1223,6 +1227,16 @@ db_lock_print_cmd(db_expr_t addr, bool have_addr,
 
 #ifdef _KERNEL	/* XXX CRASH(8) */
 	lockdebug_lock_print((void *)(uintptr_t)addr, db_printf);
+#endif
+}
+
+static void
+db_show_lockstat(db_expr_t addr, bool have_addr,
+    db_expr_t count, const char *modif)
+{
+
+#ifdef _KERNEL	/* XXX CRASH(8) */
+	lockdebug_show_lockstat(db_printf);
 #endif
 }
 
