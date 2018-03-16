@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.71.16.1 2018/03/16 01:16:29 pgoyette Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.71.16.2 2018/03/16 08:10:27 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010, 2012 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.71.16.1 2018/03/16 01:16:29 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.71.16.2 2018/03/16 08:10:27 pgoyette Exp $");
 
 #include "opt_cpu_ucode.h"
 #include "opt_compat_netbsd.h"
@@ -131,6 +131,7 @@ kcpuset_t *	kcpuset_running		__read_mostly	= NULL;
 
 static char cpu_model[128];
 
+#ifdef CPU_UCODE
 /*
  * routine vectors for compat code
  */
@@ -143,6 +144,7 @@ int (*vec_compat6_cpu_ucode_get_version)(struct compat6_cpu_ucode *) =
     stub_compat_6_cpu_ucode;
 int (*vec_compat6_cpu_ucode_apply(const struct compat6_cpu_ucode *) =
     stub_compat_6_cpu_ucode;
+#endif
 
 /*
  * mi_cpu_init: early initialisation of MI CPU related structures.

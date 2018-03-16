@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_70_mod.c,v 1.1.2.3 2018/03/16 01:16:29 pgoyette Exp $	*/
+/*	$NetBSD: compat_70_mod.c,v 1.1.2.4 2018/03/16 08:10:26 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_70_mod.c,v 1.1.2.3 2018/03/16 01:16:29 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_70_mod.c,v 1.1.2.4 2018/03/16 08:10:26 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -54,8 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: compat_70_mod.c,v 1.1.2.3 2018/03/16 01:16:29 pgoyet
 #include <compat/net/route.h>
 #include <compat/net/route_70.h>
 
-MODULE(MODULE_CLASS_EXEC, compat_70, NULL);	/* XXX No compat_80 yet */
-
 void compat_70_init(void)
 {
 
@@ -69,6 +67,10 @@ void compat_70_fini(void)
 	rtsock_70_fini();
 	vec_ocreds_valid = false;
 }
+
+#ifdef _MODULE
+
+MODULE(MODULE_CLASS_EXEC, compat_70, NULL);	/* XXX No compat_80 yet */
 
 static int
 compat_70_modcmd(modcmd_t cmd, void *arg)
@@ -87,3 +89,4 @@ compat_70_modcmd(modcmd_t cmd, void *arg)
 		return ENOTTY;
 	}
 }
+#endif /* _MODULE */

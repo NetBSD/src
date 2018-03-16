@@ -1,4 +1,4 @@
-/*	$NetBSD: route_70.h,v 1.1.2.1 2018/03/15 05:10:05 pgoyette Exp $	*/
+/*	$NetBSD: route_70.h,v 1.1.2.2 2018/03/16 08:10:26 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -31,6 +31,8 @@
 
 #ifndef _COMPAT_NET_ROUTE_70_H_
 #define _COMPAT_NET_ROUTE_70_H_
+
+#include <net/route.h>
 
 /* compat interfaces */
 
