@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.151 2018/03/16 04:44:51 ozaki-r Exp $	*/
+/*	$NetBSD: db_command.c,v 1.152 2018/03/16 04:45:20 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2009 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.151 2018/03/16 04:44:51 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.152 2018/03/16 04:45:20 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_aio.h"
@@ -1229,7 +1229,8 @@ db_lock_print_cmd(db_expr_t addr, bool have_addr,
 {
 
 #ifdef _KERNEL	/* XXX CRASH(8) */
-	lockdebug_lock_print((void *)(uintptr_t)addr, db_printf);
+	lockdebug_lock_print(have_addr ? (void *)(uintptr_t)addr : NULL,
+	    db_printf);
 #endif
 }
 
