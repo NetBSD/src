@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_common.c,v 1.17 2018/03/15 06:48:51 msaitoh Exp $ */
+/* $NetBSD: ixgbe_common.c,v 1.18 2018/03/16 07:54:08 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -5126,7 +5126,7 @@ void ixgbe_get_oem_prod_version(struct ixgbe_hw *hw,
 	hw->eeprom.ops.read(hw, NVM_OEM_PROD_VER_PTR, &offset);
 
 	/* Return is offset to OEM Product Version block is invalid */
-	if (offset == 0x0 && offset == NVM_INVALID_PTR)
+	if (offset == 0x0 || offset == NVM_INVALID_PTR)
 		return;
 
 	/* Read product version block */
