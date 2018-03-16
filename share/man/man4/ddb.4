@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.175 2018/03/16 04:37:55 ozaki-r Exp $
+.\"	$NetBSD: ddb.4,v 1.176 2018/03/16 04:44:51 ozaki-r Exp $
 .\"
 .\" Copyright (c) 1997 - 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -556,6 +556,13 @@ Display information about callouts in the system.
 See
 .Xr callout 9
 for more information on callouts.
+.It Ic show all locks Ns Op Cm /t
+Display details information about all active locks.
+If
+.Cm /t
+is specified, stack traces of LWPs holding locks are printed additionally.
+This command is useful only if a kernel is compiled with
+.Cd options LOCKDEBUG .
 .It Ic show all pages
 Display basic information about all physical pages managed by the VM system.
 For more detailed information about a single page, use
