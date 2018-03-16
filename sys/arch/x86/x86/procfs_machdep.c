@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_machdep.c,v 1.15.2.3 2018/01/13 21:44:20 snj Exp $ */
+/*	$NetBSD: procfs_machdep.c,v 1.15.2.4 2018/03/16 13:08:14 martin Exp $ */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.15.2.3 2018/01/13 21:44:20 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.15.2.4 2018/03/16 13:08:14 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,9 +151,9 @@ static const char * const x86_features[][32] = {
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
 
-	{ /* (13) 0x80000008 ebx */
-	"clzero", "irperf", NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	{ /* (13) AMD 0x80000008 ebx */
+	"clzero", "irperf", "xsaveerptr", NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, "ibpb", NULL, "ibrs", "stibp",
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
 
@@ -173,8 +173,10 @@ static const char * const x86_features[][32] = {
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
 
 	{ /* (16) 0x00000007:0 ecx */
-	NULL, "avx512vbmi", NULL, "pku", "ospke", NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, "avx512_vpopcntdq", NULL,
+	NULL, "avx512vbmi", "umip", "pku",
+	"ospke", NULL, "avx512_vbmi2", NULL,
+	"gfni", "vaes", "vpclmulqdq", "avx512_vnni",
+	"avx512_bitalg", NULL, "avx512_vpopcntdq", NULL,
 	"la57", NULL, NULL, NULL, NULL, NULL, "rdpid", NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
 
@@ -183,6 +185,12 @@ static const char * const x86_features[][32] = {
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
+
+	{ /* (18) Intel 0x00000007 edx */
+	NULL, NULL, "avx512_4vnniw", "avx512_4fmaps", NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, "arch_capabilities", NULL, NULL},
 };
 
 static int	procfs_getonecpu(int, struct cpu_info *, char *, size_t *);
@@ -332,6 +340,14 @@ procfs_getonecpufeatures(struct cpu_info *ci, char *p, size_t *left)
 	    && (ci->ci_max_ext_cpuid >= 0x80000007)) {
 		x86_cpuid(0x80000007, descs);
 		procfs_getonefeatreg(descs[1], x86_features[17], p + diff,
+		    left);
+		diff = last - *left;
+	}
+
+	if ((cpu_vendor == CPUVENDOR_INTEL)
+	    && (ci->ci_max_cpuid >= 0x00000007)) {
+		x86_cpuid(0x00000007, descs);
+		procfs_getonefeatreg(descs[3], x86_features[18], p + diff,
 		    left);
 		diff = last - *left;
 	}
