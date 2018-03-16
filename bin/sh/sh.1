@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.193 2018/03/15 01:20:43 uwe Exp $
+.\"	$NetBSD: sh.1,v 1.194 2018/03/16 11:19:24 kre Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -286,11 +286,11 @@ Read commands from the
 .Ar command_string
 operand instead of, or in addition to, from the standard input.
 Special parameter
-.Dv 0 \" $0
+.Dv 0
 will be set from the
 .Ar command_name
 operand if given, and the positional parameters
-.Li ( $1 , $2 ,
+.Li ( 1 , 2 ,
 etc.)
 set from the remaining argument operands, if any.
 .Fl c
@@ -1004,10 +1004,10 @@ in its name is always a normal program.
 They each are executed in a different way.
 .Pp
 When a shell function is executed, all of the shell positional parameters
-(except
-.Li $0 ,
-which remains unchanged) are set to the arguments of the shell
-function.
+(note: excluding
+.Li 0 ,
+which is a special, not positional, parameter, and remains unchanged)
+are set to the arguments of the shell function.
 The variables which are explicitly placed in the environment of
 the command (by placing assignments to them before the function name) are
 made local to the function and are set to the values given,
@@ -1016,7 +1016,8 @@ Then the command given in the function definition is executed.
 The positional parameters, and local variables, are restored to
 their original values when the command completes.
 This all occurs within the current shell, and the function
-can alter variables, or other settings, of the shell.
+can alter variables, or other settings, of the shell, but
+not the positional parameters nor their related special parameters.
 .Pp
 Shell built-ins are executed internally to the shell, without spawning a
 new process.
@@ -1592,7 +1593,7 @@ Without the braces, a digit following
 .Dq $
 can only refer to one of the first 9 positional parameters,
 or the special parameter
-.Dv 0 . \" $0
+.Dv 0 .
 The word
 .Dq Li $10
 is treated identically to
@@ -1683,7 +1684,7 @@ It is only field splitting or pathname expansion that can
 create multiple fields from a single word.
 The single exception to this
 rule is the expansion of the special parameter
-.Dv @ \" $@
+.Dv @
 within double quotes, as was described above.
 .Pp
 The order of word expansion is:
@@ -1764,7 +1765,7 @@ pathname expansion is not performed on the results of the expansion;
 .It
 field splitting is not performed on the results of the
 expansion, with the exception of the special rules for
-.Dv @ . \" $@
+.Dv @ .
 .El
 .Pp
 In addition, a parameter expansion where braces are used,
@@ -2875,16 +2876,16 @@ but while the function is active, after the
 command has run, the values and attributes of the variables might
 be altered, and later, when the function completes, be restored.
 .Pp
-Note that the parameters
-.Li $1 ,
-.Li $2 ,
+Note that the positional parameters
+.Li 1 ,
+.Li 2 ,
 \&... (see
 .Sx Positional Parameters ) ,
+and the special parameters
+.Li \&# ,
+.Li \&*
 and
-.Li $# ,
-.Li $*
-and
-.Li $@
+.Li \&@
 (see
 .Sx Special Parameters ) ,
 are always made local in all functions, and are reset inside the
@@ -2894,7 +2895,7 @@ Note that
 however retains the value it had outside the function,
 as do all the other special parameters.
 .Pp
-The only other special parameter that can be made local is
+The only special parameter that can optionally be made local is
 .Dq Li \- .
 Making
 .Dq Li \-
