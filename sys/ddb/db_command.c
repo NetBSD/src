@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.150 2018/03/16 04:37:55 ozaki-r Exp $	*/
+/*	$NetBSD: db_command.c,v 1.151 2018/03/16 04:44:51 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2009 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.150 2018/03/16 04:37:55 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.151 2018/03/16 04:44:51 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_aio.h"
@@ -190,6 +190,7 @@ static void	db_event_print_cmd(db_expr_t, bool, db_expr_t, const char *);
 static void	db_fncall(db_expr_t, bool, db_expr_t, const char *);
 static void     db_help_print_cmd(db_expr_t, bool, db_expr_t, const char *);
 static void	db_lock_print_cmd(db_expr_t, bool, db_expr_t, const char *);
+static void	db_show_all_locks(db_expr_t, bool, db_expr_t, const char *);
 static void	db_show_lockstat(db_expr_t, bool, db_expr_t, const char *);
 static void	db_mount_print_cmd(db_expr_t, bool, db_expr_t, const char *);
 static void	db_mbuf_print_cmd(db_expr_t, bool, db_expr_t, const char *);
@@ -226,6 +227,8 @@ static const struct db_command db_show_cmds[] = {
 	    0 ,"List all processes.",NULL,NULL) },
 	{ DDB_ADD_CMD("pools",	db_show_all_pools,
 	    0 ,"Show all pools",NULL,NULL) },
+	{ DDB_ADD_CMD("locks",	db_show_all_locks,
+	    0 ,"Show all held locks", "[/t]", NULL) },
 #ifdef AIO
 	/*added from all sub cmds*/
 	{ DDB_ADD_CMD("aio_jobs",	db_show_aio_jobs,	0,
@@ -1227,6 +1230,16 @@ db_lock_print_cmd(db_expr_t addr, bool have_addr,
 
 #ifdef _KERNEL	/* XXX CRASH(8) */
 	lockdebug_lock_print((void *)(uintptr_t)addr, db_printf);
+#endif
+}
+
+static void
+db_show_all_locks(db_expr_t addr, bool have_addr,
+    db_expr_t count, const char *modif)
+{
+
+#ifdef _KERNEL	/* XXX CRASH(8) */
+	lockdebug_show_all_locks(db_printf, modif);
 #endif
 }
 
