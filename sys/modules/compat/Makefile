@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14.14.1 2018/03/08 09:54:36 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.14.14.2 2018/03/17 00:48:20 pgoyette Exp $
 
 .include "../Makefile.inc"
 
@@ -43,6 +43,16 @@ SRCS+=	compat_13_machdep.c
     (exists(${S}/arch/${MACHINE_ARCH}/${MACHINE_ARCH}/compat_16_machdep.c)) || \
     (exists(${S}/arch/${MACHINE_CPU}/${MACHINE_CPU}/compat_16_machdep.c))
 SRCS+=	compat_16_machdep.c
+.endif
+
+.if ${MACHINE_ARCH} == "x86_64" || ${MACHINE_ARCH} == "i386"
+
+CPPFLAGS+=      -DCPU_UCODE
+
+.PATH:  ${S}/arch/x86/x86
+
+SRCS+=  cpu_ucode.c
+
 .endif
 
 .include <bsd.kmodule.mk>
