@@ -1,6 +1,6 @@
-/*	$NetBSD: process_machdep.c,v 1.32 2017/02/23 03:34:22 kamil Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.32.6.1 2018/03/17 11:23:18 martin Exp $	*/
 
-/*-
+/*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -71,13 +71,13 @@
  *
  * process_set_pc(proc)
  *	Set the process's program counter.
- *
  */
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.32 2017/02/23 03:34:22 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.32.6.1 2018/03/17 11:23:18 martin Exp $");
 
+#include "opt_xen.h"
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/time.h>
@@ -93,33 +93,39 @@ __KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.32 2017/02/23 03:34:22 kamil E
 #include <x86/fpu.h>
 
 static inline struct trapframe *process_frame(struct lwp *);
-#if 0
-static inline int verr_gdt(struct pmap *, int sel);
-static inline int verr_ldt(struct pmap *, int sel);
-#endif
 
 static inline struct trapframe *
 process_frame(struct lwp *l)
 {
 
-	return (l->l_md.md_regs);
+	return l->l_md.md_regs;
 }
 
 int
 process_read_regs(struct lwp *l, struct reg *regs)
 {
 	struct trapframe *tf = process_frame(l);
+	struct proc *p = l->l_proc;
+
+	if (p->p_flag & PK_32) {
+		return EINVAL;
+	}
 
 #define copy_to_reg(reg, REG, idx) regs->regs[_REG_##REG] = tf->tf_##reg;
 	_FRAME_GREG(copy_to_reg)
 #undef copy_to_reg
 
-	return (0);
+	return 0;
 }
 
 int
 process_read_fpregs(struct lwp *l, struct fpreg *regs, size_t *sz)
 {
+	struct proc *p = l->l_proc;
+
+	if (p->p_flag & PK_32) {
+		return EINVAL;
+	}
 
 	process_read_fpregs_xmm(l, &regs->fxstate);
 
@@ -129,6 +135,11 @@ process_read_fpregs(struct lwp *l, struct fpreg *regs, size_t *sz)
 int
 process_read_dbregs(struct lwp *l, struct dbreg *regs, size_t *sz)
 {
+	struct proc *p = l->l_proc;
+
+	if (p->p_flag & PK_32) {
+		return EINVAL;
+	}
 
 	x86_dbregs_read(l, regs);
 
@@ -139,8 +150,14 @@ int
 process_write_regs(struct lwp *l, const struct reg *regp)
 {
 	struct trapframe *tf = process_frame(l);
+	struct proc *p = l->l_proc;
 	int error;
 	const long *regs = regp->regs;
+	int err, trapno;
+
+	if (p->p_flag & PK_32) {
+		return EINVAL;
+	}
 
 	/*
 	 * Check for security violations.
@@ -151,16 +168,33 @@ process_write_regs(struct lwp *l, const struct reg *regp)
 	if (error != 0)
 		return error;
 
+	err = tf->tf_err;
+	trapno = tf->tf_trapno;
+
 #define copy_to_frame(reg, REG, idx) tf->tf_##reg = regs[_REG_##REG];
 	_FRAME_GREG(copy_to_frame)
 #undef copy_to_frame
 
-	return (0);
+	tf->tf_err = err;
+	tf->tf_trapno = trapno;
+
+#ifdef XEN
+	/* see comment in cpu_setmcontext */
+	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
+#endif
+
+	return 0;
 }
 
 int
 process_write_fpregs(struct lwp *l, const struct fpreg *regs, size_t sz)
 {
+	struct proc *p = l->l_proc;
+
+	if (p->p_flag & PK_32) {
+		return EINVAL;
+	}
 
 	process_write_fpregs_xmm(l, &regs->fxstate);
 	return 0;
@@ -169,7 +203,12 @@ process_write_fpregs(struct lwp *l, const struct fpreg *regs, size_t sz)
 int
 process_write_dbregs(struct lwp *l, const struct dbreg *regs, size_t sz)
 {
+	struct proc *p = l->l_proc;
 	int error;
+
+	if (p->p_flag & PK_32) {
+		return EINVAL;
+	}
 
 	/*
 	 * Check for security violations.
@@ -193,17 +232,22 @@ process_sstep(struct lwp *l, int sstep)
 	else
 		tf->tf_rflags &= ~PSL_T;
 	
-	return (0);
+	return 0;
 }
 
 int
 process_set_pc(struct lwp *l, void *addr)
 {
 	struct trapframe *tf = process_frame(l);
+	struct proc *p = l->l_proc;
 
-	if ((uint64_t)addr > VM_MAXUSER_ADDRESS)
+	if (p->p_flag & PK_32) {
+		return EINVAL;
+	}
+
+	if ((uint64_t)addr >= VM_MAXUSER_ADDRESS)
 		return EINVAL;
 	tf->tf_rip = (uint64_t)addr;
 
-	return (0);
+	return 0;
 }

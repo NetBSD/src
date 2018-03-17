@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.60 2012/01/21 16:48:56 chs Exp $	*/
+/*	$NetBSD: cpu.h,v 1.60.40.1 2018/03/17 11:23:18 martin Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -88,9 +88,6 @@ cpu_set_curpri(int pri)
 #define CLKF_PC(frame)		((frame)->cf_if.if_tf.tf_rip)
 #define CLKF_INTR(frame)	(curcpu()->ci_idepth > 0)
 #define LWP_PC(l)		((l)->l_md.md_regs->tf_rip)
-
-void	*cpu_uarea_alloc(bool);
-bool	cpu_uarea_free(void *);
 
 #endif	/* _KERNEL */
 
