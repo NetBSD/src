@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.3 2015/01/02 19:43:13 abs Exp $	*/
+/*	$NetBSD: md.c,v 1.4 2018/03/17 22:27:04 jmcneill Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -68,11 +68,11 @@ md_init_set_status(int flags)
          * enable the installation of the corresponding GENERIC kernel.
          */
         uname(&instsys);
-        if (strstr(instsys.version, "(INSTALL32_IP3x)"))
+        if (strstr(instsys.version, "(INSTALL32_IP3x"))
                 set_kernel_set(SET_KERNEL_2);
-        else if (strstr(instsys.version, "(INSTALL32_IP2x)"))
+        else if (strstr(instsys.version, "(INSTALL32_IP2x"))
                 set_kernel_set(SET_KERNEL_1);
-	else if (strstr(instsys.version, "(GENERIC32_IP12)"))
+	else if (strstr(instsys.version, "(GENERIC32_IP12"))
 		set_kernel_set(SET_KERNEL_3);
 }
 
@@ -156,12 +156,12 @@ md_pre_disklabel(void)
 int
 md_post_disklabel(void)
 {
-    if (strstr(instsys.version, "(INSTALL32_IP3x)"))
+    if (strstr(instsys.version, "(INSTALL32_IP3x"))
 		return run_program(RUN_DISPLAY,
 		    "%s %s", "/usr/mdec/sgivol -f -w boot /usr/mdec/ip3xboot",
 		    pm->diskdev);
 
-	if (strstr(instsys.version, "(INSTALL32_IP2x)")) {
+	if (strstr(instsys.version, "(INSTALL32_IP2x")) {
 		run_program(RUN_DISPLAY,
 		  "%s %s", "/usr/mdec/sgivol -f -w aoutboot /usr/mdec/aoutboot",
 		  pm->diskdev);
@@ -198,7 +198,7 @@ md_cleanup_install(void)
 	enable_rc_conf();
 #endif
 
-	if (strstr(instsys.version, "(GENERIC32_IP12)"))
+	if (strstr(instsys.version, "(GENERIC32_IP12"))
 		run_program(0, "/usr/mdec/sgivol -f -w netbsd %s %s",
 			    target_expand("/netbsd.ecoff"), pm->diskdev);
 }
