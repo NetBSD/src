@@ -1,4 +1,4 @@
-/* $NetBSD: vexpress_platform.c,v 1.6 2017/12/19 09:04:19 skrll Exp $ */
+/* $NetBSD: vexpress_platform.c,v 1.7 2018/03/17 18:34:09 ryo Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_fdt_arm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vexpress_platform.c,v 1.6 2017/12/19 09:04:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vexpress_platform.c,v 1.7 2018/03/17 18:34:09 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -63,7 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: vexpress_platform.c,v 1.6 2017/12/19 09:04:19 skrll 
 
 extern struct bus_space armv7_generic_bs_tag;
 extern struct bus_space armv7_generic_a4x_bs_tag;
-extern struct arm32_bus_dma_tag armv7_generic_dma_tag;
+extern struct arm32_bus_dma_tag arm_generic_dma_tag;
 
 #define	SYSREG_BASE		0x1c010000
 #define	SYSREG_SIZE		0x1000
@@ -172,7 +172,7 @@ vexpress_platform_init_attach_args(struct fdt_attach_args *faa)
 {
 	faa->faa_bst = &armv7_generic_bs_tag;
 	faa->faa_a4x_bst = &armv7_generic_a4x_bs_tag;
-	faa->faa_dmat = &armv7_generic_dma_tag;
+	faa->faa_dmat = &arm_generic_dma_tag;
 }
 
 static void
