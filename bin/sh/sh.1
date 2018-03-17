@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.202 2018/03/17 01:40:28 uwe Exp $
+.\"	$NetBSD: sh.1,v 1.203 2018/03/17 01:53:06 uwe Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -3283,6 +3283,7 @@ The choice between hard limit (which no process is allowed to
 violate, and which may not be raised once it has been lowered) and soft
 limit (which causes processes to be signaled but not necessarily killed,
 and which may be raised) is made with these flags:
+.Pp
 .Bl -tag -width Fl
 .It Fl H
 set or inquire about hard limits
@@ -3299,40 +3300,41 @@ If both are specified, the last one wins.
 .Pp
 The limit to be interrogated or set, then, is chosen by specifying
 any one of these flags:
+.Pp
 .Bl -tag -width Fl
 .It Fl a
 show all the current limits
 .It Fl b
-show or set the limit on the socket buffer size of a process (in bytes)
+the socket buffer size of a process (bytes)
 .It Fl c
-show or set the limit on the largest core dump size that can be produced
-(in 512-byte blocks)
+the largest core dump size that can be produced
+(512-byte blocks)
 .It Fl d
-show or set the limit on the data segment size of a process (in kilobytes)
+the data segment size of a process (kilobytes)
 .It Fl f
-show or set the limit on the largest file that can be created
-(in 512-byte blocks)
+the largest file that can be created
+(512-byte blocks)
 .It Fl l
-show or set the limit on how much memory a process can lock with
+how much memory a process can lock with
 .Xr mlock 2
-(in kilobytes)
+(kilobytes)
 .It Fl m
-show or set the limit on the total physical memory that can be
-in use by a process (in kilobytes)
+the total physical memory that can be
+in use by a process (kilobytes)
 .It Fl n
-show or set the limit on the number of files a process can have open at once
+the number of files a process can have open at once
 .It Fl p
-show or set the limit on the number of processes this user can
+the number of processes this user can
 have at one time
 .It Fl r
-show or set the limit on the number of threads this user can
+the number of threads this user can
 have at one time
 .It Fl s
-show or set the limit on the stack size of a process (in kilobytes)
+the stack size of a process (kilobytes)
 .It Fl t
-show or set the limit on CPU time (in seconds)
+CPU time (seconds)
 .It Fl v
-show or set the limit on how large a process address space can be
+how large a process address space can be
 .El
 .Pp
 If none of these is specified, it is the limit on file size that is shown
