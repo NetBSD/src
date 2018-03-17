@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.442.4.2 2017/09/11 05:13:45 snj Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.442.4.3 2018/03/17 11:19:27 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.442.4.2 2017/09/11 05:13:45 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.442.4.3 2018/03/17 11:19:27 martin Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -420,10 +420,10 @@ check_exec(struct lwp *l, struct exec_package *epp, struct pathbuf *pb)
 
 		if (!newerror) {
 			/* Seems ok: check that entry point is not too high */
-			if (epp->ep_entry > epp->ep_vm_maxaddr) {
+			if (epp->ep_entry >= epp->ep_vm_maxaddr) {
 #ifdef DIAGNOSTIC
 				printf("%s: rejecting %p due to "
-				    "too high entry address (> %p)\n",
+				    "too high entry address (>= %p)\n",
 					 __func__, (void *)epp->ep_entry,
 					 (void *)epp->ep_vm_maxaddr);
 #endif
