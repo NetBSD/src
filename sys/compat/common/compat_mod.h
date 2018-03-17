@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_mod.h,v 1.1.42.2 2018/03/16 08:10:26 pgoyette Exp $	*/
+/*	$NetBSD: compat_mod.h,v 1.1.42.3 2018/03/17 00:44:38 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -38,8 +38,8 @@ void compat_sysctl_fini(void);
 void compat_sysctl_time(struct sysctllog **);
 void compat_sysctl_vfs(struct sysctllog **);
 
-void compat_70_init(void);
-void compat_70_fini(void);
+int compat_70_init(void);
+int compat_70_fini(void);
 
 int compat_60_init(void);
 int compat_60_fini(void);
