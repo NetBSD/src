@@ -1,4 +1,4 @@
-/* $NetBSD: xen_ucode.c,v 1.5 2015/01/07 07:05:48 ozaki-r Exp $ */
+/* $NetBSD: xen_ucode.c,v 1.6 2018/03/17 18:22:23 christos Exp $ */
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_ucode.c,v 1.5 2015/01/07 07:05:48 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_ucode.c,v 1.6 2018/03/17 18:22:23 christos Exp $");
 
 #include "opt_cpu_ucode.h"
 #include "opt_compat_netbsd.h"
@@ -50,34 +50,30 @@ static struct cpu_ucode_softc ucode_softc;
 int
 cpu_ucode_get_version(struct cpu_ucode_version *data)
 {
+	union {
+		struct cpu_ucode_version_amd a;
+		struct cpu_ucode_version_intel1 i;
+	} v;
+	size_t l;
+	int error;
+
+	if (!data->data)
+		return 0;
 
 	switch (cpu_vendor) {
 	case CPUVENDOR_AMD:
-		return cpu_ucode_amd_get_version(data);
+		error = cpu_ucode_amd_get_version(data, &v, l = sizeof(v.a));
 	case CPUVENDOR_INTEL:
-		return cpu_ucode_intel_get_version(data);
+		error = cpu_ucode_intel_get_version(data, &v, l = sizeof(v.i));
 	default:
 		return EOPNOTSUPP;
 	}
 
-	return 0;
+	if (error)
+		return error;
+
+	return copyout(&v, data->data, l);
 }
-
-#ifdef COMPAT_60
-int
-compat6_cpu_ucode_get_version(struct compat6_cpu_ucode *data)
-{
-
-	switch (cpu_vendor) {
-	case CPUVENDOR_AMD:
-		return compat6_cpu_ucode_amd_get_version(data);
-	default:
-		return EOPNOTSUPP;
-	}
-
-	return 0;
-}
-#endif /* COMPAT_60 */
 
 int
 cpu_ucode_md_open(firmware_handle_t *fwh, int loader_version, const char *fwname)
@@ -122,6 +118,21 @@ cpu_ucode_apply(const struct cpu_ucode *data)
 }
 
 #ifdef COMPAT_60
+int
+compat6_cpu_ucode_get_version(struct compat6_cpu_ucode *data)
+{
+	struct cpu_ucode_version ndata;
+
+	switch (cpu_vendor) {
+	case CPUVENDOR_AMD:
+		ndata.loader_version = CPU_UCODE_LOADER_AMD;
+		return cpu_ucode_amd_get_version(&ndata, &data->version,
+		    sizeof(data->version));
+	default:
+		return EOPNOTSUPP;
+	}
+}
+
 int
 compat6_cpu_ucode_apply(const struct compat6_cpu_ucode *data)
 {
