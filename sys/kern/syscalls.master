@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.291.2.3 2018/03/16 00:35:40 pgoyette Exp $
+	$NetBSD: syscalls.master,v 1.291.2.4 2018/03/17 06:49:57 pgoyette Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -878,7 +878,7 @@
 		{ ssize_t|sys|50|mq_timedreceive(mqd_t mqdes, \
 			    char *msg_ptr, size_t msg_len, unsigned *msg_prio, \
 			    const struct timespec *abs_timeout); }
-434	COMPAT_60 MODULAR compat_60 \
+434	COMPAT_60 MODULAR compat \
 		{ int|sys||_lwp_park(const struct timespec *ts, \
 				lwpid_t unpark, const void *hint, \
 				const void *unparkhint); }
