@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.301 2018/02/22 13:27:17 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.302 2018/03/17 17:12:39 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.301 2018/02/22 13:27:17 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.302 2018/03/17 17:12:39 maxv Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -122,6 +122,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.301 2018/02/22 13:27:17 maxv Exp $");
 #include "opt_mtrr.h"
 #include "opt_realmem.h"
 #include "opt_xen.h"
+#include "opt_svs.h"
 #include "opt_kaslr.h"
 #ifndef XEN
 #include "opt_physmem.h"
