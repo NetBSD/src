@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.199 2018/03/17 00:03:25 uwe Exp $
+.\"	$NetBSD: sh.1,v 1.200 2018/03/17 01:03:08 uwe Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -3480,7 +3480,10 @@ is identical to
 wait 100
 .Ed
 .El
+.\"
+.\"
 .Ss Job Control
+.\"
 Each process (or set of processes) started by
 .Nm
 is created as a
@@ -3489,7 +3492,7 @@ and added to the jobs table.
 When enabled by the
 .Fl m
 option
-.Pq aka Fl o Ar monitor
+.Pq aka Fl o Cm monitor
 when the job is created,
 .Nm
 places each job (if run from the top level shell)
@@ -3514,36 +3517,38 @@ built-in command.
 Jobs are identified using either the process identifier
 of the lead process of the job (the value available in
 the special parameter
-.Sq \&$!
+.Dq Dv \&!
 if the job is started in the background), or using percent
 notation.
 Each job is given a
 .Dq job number
 which is a small integer, starting from 1, and can be
 referenced as
-.Sq \&%n
-where n is that number.
+.Dq Li \&% Ns Ar n
+where
+.Ar n
+is that number.
 Note that this applies to jobs both with and without their own process groups.
 Job numbers are shown in the output from the
 .Ic jobs
 command enclosed in brackets
 .Po
-.Sq \&[
+.Sq Li \&[
 and
-.Sq \&]
+.Sq Li \&]
 .Pc .
 Whenever the job table becomes empty, the numbers begin at one again.
 In addition, there is the concept of a current, and a previous job,
 identified by
-.Sq \&%+
+.Dq Li \&%+
 .Po
 or
-.Sq \&%%
+.Dq Li \&%%
 or even just
-.Sq \&%
+.Dq Li \&%
 .Pc ,
 and a previous job, identified by
-.Sq \&%\- .
+.Dq Li \&%\- .
 Whenever a background job is started,
 or a job is resumed in the background,
 it becomes the current job.
@@ -3553,13 +3558,13 @@ becomes the previous job.
 When the current job terminates, the previous job is
 promoted to be the current job.
 In addition the form
-.Dq %string
+.Dq Li \&% Ns Ar string\^
 finds the job for which the command starts with
-.Dq string
+.Ar string
 and the form
-.Dq %?string
+.Dq Li \&%? Ns Ar string\^
 finds the job which contains the
-.Dq string
+.Ar string
 in its command somewhere.
 Both forms require the result to be unambiguous.
 For this purpose the
@@ -3584,7 +3589,8 @@ section above, and
 .Xr kill 1 ,
 for more details of those commands.
 In addition, a job identifier
-.Pq using one of the Sq \&% forms
+(using one of the
+.Dq \&% forms )
 issued as a command, without arguments, is interpreted as
 if it had been given as the argument to the
 .Ic fg
@@ -3597,8 +3603,8 @@ To cause a background process to stop, send it a
 .Dv STOP
 signal, using the kill command.
 A useful function to define is
-.Bd -literal -compact
-        stop() { kill -s STOP "${@:-%%}"; }
+.Bd -literal -offset indent
+stop() { kill -s STOP "${@:-%%}"; }
 .Ed
 .Pp
 The
@@ -3615,16 +3621,22 @@ and the process group identifier, for a job.
 Whenever a sub-shell is created, the jobs table becomes invalid
 (the sub-shell has no children.)
 However, to enable uses like
-.Bd -literal -compact
-        PID=$(jobid -p %1)
+.Bd -literal -offset indent
+PID=$(jobid -p %1)
 .Ed
+.Pp
 the table is only actually cleared in a sub-shell when needed to
 create the first job there (built-in commands run in the foreground
 do not create jobs.)
 Note that in this environment, there is no useful current job
-(%% actually refers to the sub-shell itself, but is not accessible)
-but the job which is the current job in the parent can be accessed as %\-.
+.Dq ( Li \&%%
+actually refers to the sub-shell itself, but is not accessible)
+but the job which is the current job in the parent can be accessed as
+.Dq Li \&%\- .
+.\"
+.\"
 .Ss Command Line Editing
+.\"
 When
 .Nm
 is being used interactively from a terminal, the current command
