@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.200 2018/03/17 01:03:08 uwe Exp $
+.\"	$NetBSD: sh.1,v 1.201 2018/03/17 01:32:42 uwe Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -3648,19 +3648,22 @@ section)
 can be edited using emacs-mode or vi-mode command-line editing.
 The command
 .Ql set -o emacs
+(or
+.Fl E
+option)
 enables emacs-mode editing.
 The command
 .Ql set -o vi
+(or
+.Fl V
+option)
 enables vi-mode editing and places the current shell process into
-.Ar vi
-insert mode.
+vi insert mode.
 (See the
 .Sx Argument List Processing
 section above.)
 .Pp
-The
-.Ar vi
-mode uses commands similar to a subset of those described in the
+The vi-mode uses commands similar to a subset of those described in the
 .Xr vi 1
 man page.
 With vi-mode
@@ -3668,17 +3671,15 @@ enabled,
 .Nm sh
 can be switched between insert mode and command mode.
 It's similar to
-.Xr vi 1 :
+.Ic vi :
 pressing the
 .Aq ESC
-key will throw you into command VI command mode.
+key will throw you into vi command mode.
 Pressing the
 .Aq return
 key while in command mode will pass the line to the shell.
 .Pp
-The
-.Ar emacs
-mode uses commands similar to a subset available in the
+The emacs-mode uses commands similar to a subset available in the
 .Ic emacs
 editor.
 With emacs-mode enabled, special keys can be used to modify the text
@@ -3691,11 +3692,7 @@ library.
 See
 .Xr editline 7
 for a list of the possible command bindings,
-and the default settings in
-.Ar emacs
-and
-.Ar vi
-modes.
+and the default settings in emacs and vi modes.
 Also see
 .Xr editrc 5
 for the commands that can be given to configure
@@ -3729,53 +3726,55 @@ This is done, when needed, by choosing a character that
 is not needed anywhere in the prompt, including in the mode
 setting sequences, any single character is acceptable,
 and assigning it to the shell parameter
-.Ev PSlit .
+.Dv PSlit .
 Then that character should be used, in pairs, in the
 prompt string.
 Between each pair of
-.Ev PSlit
+.Dv PSlit
 characters are mode setting sequences, which affect the printing
 attributes of the following (normal) characters of the prompt,
 but do not themselves appear visibly, nor change the terminal's
 cursor position.
 .Pp
 Each such sequence, that is
-.Ev PSlit
+.Dv PSlit
 character, mode setting character sequence, and another
-.Ev PSlit
+.Dv PSlit
 character, must currently be followed by at least one following
 normal prompt character, or it will be ignored.
 That is, a
-.Ev PSlit
+.Dv PSlit
 character cannot be the final character of
 .Ev PS1
 or
 .Ev PS2 ,
 nor may two
-.Ev PSlit
+.Dv PSlit
 delimited sequences appear adjacent to each other.
 Each sequence can contain as many mode altering sequences as are
 required however.
 Only the first character from
-.Ev PSlit
+.Dv PSlit
 will be used.
 When set
-.Ev PSlit
+.Dv PSlit
 should usually be set to a string containing just one
 character, then it can simply be embedded in
 .Ev PS1
 (or
 .Ev PS2 )
 as in
-.Dl PS1="${PSlit}mset${PSlit}XYZ${PSlit}mclr${PSlit}ABC"
+.Pp
+.D1 Li PS1=\*q${PSlit} Ns Ar mset\^ Ns Li ${PSlit}XYZ${PSlit} Ns Ar mclr\^ Ns Li ${PSlit}ABC\*q
+.Pp
 The prompt visible will be
 .Dq XYZABC
 with the
 .Dq XYZ
 part shown according as defined by the mode setting characters
-.Dq mset ,
+.Ar mset ,
 and then cleared again by
-.Dq mclr .
+.Ar mclr .
 See
 .Xr tput 1
 for one method to generate appropriate mode sequences.
@@ -3783,7 +3782,7 @@ Note that both parts, XYZ and ABC, must each contain at least one
 character.
 .Pp
 If
-.Ev PSlit
+.Dv PSlit
 is unset, which is its initial state, or set to a null string,
 no literal character will be defined,
 and all characters of the prompt strings will be assumed
@@ -3795,13 +3794,17 @@ ignored by the terminal if received, as when
 .Xr editline 7
 is not in use, the prompt strings are simply written to the terminal.
 For example, setting:
-.Bd -literal -offset left -compact
+.\" XXX: PS1 line is too long for -offset indent
+.Bd -literal -offset left
   PSlit="$(printf\ '\e1')"
   PS1="${PSlit}$(tput\ bold\ blink)${PSlit}\e$${PSlit}$(tput\ sgr0)${PSlit}\ "
 .Ed
+.Pp
 will arrange for the primary prompt to be a bold blinking dollar sign,
 if supported by the current terminal, followed by an (ordinary) space,
-and, as the SOH (Control-A) character ('\e1') will not normally affect
+and, as the SOH (control-A) character
+.Pq Sq \e1
+will not normally affect
 a terminal, this same prompt will usually work with
 .Xr editline 7
 enabled or disabled.
@@ -3965,7 +3968,7 @@ or
 to indicate to
 .Xr editline 7
 that the characters between each pair of occurrences of the
-.Ev PSlit
+.Dv PSlit
 character will not appear in the visible prompt, and will not
 cause the terminal's cursor to change position, but rather set terminal
 attributes for the following prompt character(s) at least one of
