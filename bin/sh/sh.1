@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.198 2018/03/16 23:56:13 uwe Exp $
+.\"	$NetBSD: sh.1,v 1.199 2018/03/17 00:03:25 uwe Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -356,12 +356,12 @@ Force the shell to behave interactively.
 .It Fl L Em local_lineno
 When set, before a function is defined,
 causes the variable
-.Ev LINENO
+.Dv LINENO
 when used within the function,
 to refer to the line number defined such that
 first line of the function is line 1.
 When reset,
-.Ev LINENO
+.Dv LINENO
 in a function refers to the line number within the file
 within which the definition of the function occurs.
 This option defaults to
@@ -2930,7 +2930,7 @@ is an extension not implemented by most shells.
 See the section
 .Sx LINENO
 below for details of the effects of making the variable
-.Ev LINENO
+.Dv LINENO
 local.
 .It Ic pwd Op Fl \&LP
 Print the current directory.
@@ -3859,7 +3859,7 @@ The string used to specify localization information that allows users
 to work with different culture-specific and language conventions.
 See
 .Xr nls 7 .
-.It Ev LINENO
+.It Dv LINENO
 The current line number in the script or function.
 See the section
 .Sx LINENO
@@ -4058,49 +4058,49 @@ that were used when building the shell will be listed.
 behaves like any other variable that has the read-only
 and un-exportable attributes set.
 .El
-.Ss Ev LINENO
-.Ev LINENO
+.Ss Dv LINENO
+.Dv LINENO
 is in many respects a normal shell variable, containing an
 integer value. and can be expanded using any of the forms
 mentioned above which can be used for any other variable.
 .Pp
-.Ev LINENO
+.Dv LINENO
 can be exported, made readonly, or unset, as with any other
 variable, with similar effects.
 Note that while being readonly prevents later attempts to
 set, or unset,
-.Ev LINENO ,
+.Dv LINENO ,
 it does not prevent its value changing.
 References to
-.Ev LINENO
+.Dv LINENO
 .Pq "when not unset"
 always obtain the current line number.
 However,
-.Ev LINENO
+.Dv LINENO
 should normally not ever be set or unset.
 In this shell setting
-.Ev LINENO
+.Dv LINENO
 reverses the effect of an earlier
 .Ic unset ,
 but does not otherwise affect the value obtained.
 If unset,
-.Ev LINENO
+.Dv LINENO
 should not normally be set again, doing so is not portable.
 If
-.Ev LINENO
+.Dv LINENO
 is set or unset, different shells act differently.
 The value of
-.Ev LINENO
+.Dv LINENO
 is never imported from the environment when the shell is
 started, though if present there, as with any other variable,
-.Ev LINENO
+.Dv LINENO
 will be exported by this shell.
 .Pp
-.Ev LINENO
+.Dv LINENO
 is set automatically by the shell to be the number of the source
 line on which it occurs.
 When exported,
-.Ev LINENO
+.Dv LINENO
 is exported with its value set to the line number it would have
 had had it been referenced on the command line of the command to
 which it is exported.
@@ -4111,14 +4111,14 @@ the user's terminal, is just another file and lines are counted
 there as well.
 However note that not all shells count interactive
 lines this way, it is not wise to rely upon
-.Ev LINENO
+.Dv LINENO
 having a useful value, except in a script, or a function.
 .Pp
 The role of
-.Ev LINENO
+.Dv LINENO
 in functions is less clear.
 In some shells,
-.Ev LINENO
+.Dv LINENO
 continues to refer to the line number in the script which defines
 the function,
 in others lines count from one within the function, always (and
@@ -4142,7 +4142,7 @@ flag is not set, the shell counts lines in a function definition
 in the same continuous sequence as the lines that surround the
 function definition.
 Further, if
-.Ev LINENO
+.Dv LINENO
 is made local
 (see
 .Sx Built-ins
@@ -4150,52 +4150,52 @@ above)
 inside the function, the function can decide which
 behavior it prefers.
 If
-.Ev LINENO
+.Dv LINENO
 is made local and inherited, and not given a value, as in
-.Dl local Fl I Ev LINENO
+.Dl local Fl I Dv LINENO
 then from that point in the function,
-.Ev LINENO
+.Dv LINENO
 will give the line number as if lines are counted in sequence
 with the lines that surround the function definition (and
 any other function definitions in which this is nested.)
 If
-.Ev LINENO
+.Dv LINENO
 is made local, and in that same command, given a value, as
-.Dl local Oo Fl I Ns | Ns Fl N Oc Ev LINENO Ns = Ns Ar value
+.Dl local Oo Fl I Ns | Ns Fl N Oc Dv LINENO Ns = Ns Ar value
 then
-.Ev LINENO
+.Dv LINENO
 will give the line number as if lines are counted from one
 from the beginning of the function.
 The value nominally assigned in this case is irrelevant, and ignored.
 For completeness, if lineno is made local and unset, as in
-.Dl local Fl N Ev LINENO
+.Dl local Fl N Dv LINENO
 then
-.Ev LINENO
+.Dv LINENO
 is simply unset inside the function, and gives no value at all.
 .Pp
 Now for some technical details.
 The line on which
-.Ev LINENO
+.Dv LINENO
 occurs in a parameter expansion, is the line that contains the
 .Sq \&$
 that begins the expansion of
-.Ev LINENO .
+.Dv LINENO .
 In the case of nested expansions, that
 .Sq \&$
 is the one that actually has
-.Ev LINENO
+.Dv LINENO
 as its parameter.
 In an arithmetic expansion, where no
 .Sq \&$
 is used to evaluate
-.Ev LINENO
+.Dv LINENO
 but
-.Ev LINENO
+.Dv LINENO
 is simply referenced as a variable, then the value is the
 line number of the line that contains the
 .Sq L
 of
-.Ev LINENO .
+.Dv LINENO .
 For functions line one of the function definition (when relevant)
 is the line that contains the first character of the
 function name in the definition.
@@ -4212,7 +4212,7 @@ the line number starts at the line on which the string starts,
 and then if the string contains internal newline characters,
 those characters increase the line number.
 This means that references to
-.Ev LINENO
+.Dv LINENO
 in such a case can produce values larger than would be
 produced by a reference on the line after the
 .Ic eval .
