@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme.c,v 1.35 2018/03/17 00:28:03 jdolecek Exp $	*/
+/*	$NetBSD: nvme.c,v 1.36 2018/03/17 09:36:32 jdolecek Exp $	*/
 /*	$OpenBSD: nvme.c,v 1.49 2016/04/18 05:59:50 dlg Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.35 2018/03/17 00:28:03 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.36 2018/03/17 09:36:32 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1443,6 +1443,7 @@ nvme_fill_identify(struct nvme_queue *q, struct nvme_ccb *ccb, void *slot)
 static int
 nvme_get_number_of_queues(struct nvme_softc *sc, u_int *nqap)
 {
+	struct nvme_pt_state state;
 	struct nvme_pt_command pt;
 	struct nvme_ccb *ccb;
 	uint16_t ncqa, nsqa;
@@ -1455,8 +1456,12 @@ nvme_get_number_of_queues(struct nvme_softc *sc, u_int *nqap)
 	pt.cmd.opcode = NVM_ADMIN_GET_FEATURES;
 	pt.cmd.cdw10 = NVM_FEATURE_NUMBER_OF_QUEUES;
 
+	memset(&state, 0, sizeof(state));
+	state.pt = &pt;
+	state.finished = false;
+
 	ccb->ccb_done = nvme_pt_done;
-	ccb->ccb_cookie = &pt;
+	ccb->ccb_cookie = &state;
 
 	rv = nvme_poll(sc, sc->sc_admin_q, ccb, nvme_pt_fill, NVME_TIMO_QOP);
 
