@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.145 2018/03/16 13:19:38 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.146 2018/03/17 11:32:15 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -10370,4 +10370,25 @@ sys/arch/x86/x86/pmap.c			1.276 (patch)
 	Initialize ist0 in cpu_init_tss.
 	Backport __HAVE_PCPU_AREA.
 	[maxv, #635]
+
+sys/dev/ic/nvme.c				1.33
+sys/dev/ic/nvmevar.h				1.14
+
+	Fix accounting for available CCBs.
+	[jdolecek, ticket #636]
+
+sys/arch/amd64/amd64/process_machdep.c	1.33,1.34,1.35 (patch)
+sys/arch/amd64/include/types.h		1.55 (patch)
+sys/arch/x86/x86/vm_machdep.c		1.33 (patch)
+sys/arch/kern/kern_exec.c		1.456
+
+	- Reduce the number of places where segment register faults can
+	  occur.
+	- Remove __HAVE_CPU_UAREA_ROUTINES.
+	[maxv, ticket #637]
+
+sys/net/if_tun.c				1.143
+
+	Add packet filtering to tun(4) interfaces.
+	[tih, ticket #638]
 
