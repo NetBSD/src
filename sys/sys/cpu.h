@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.42.2.1 2018/03/16 08:10:27 pgoyette Exp $	*/
+/*	$NetBSD: cpu.h,v 1.42.2.2 2018/03/17 00:11:13 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007 YAMAMOTO Takashi,
@@ -130,9 +130,8 @@ struct cpu_ucode_softc {
 int cpu_ucode_get_version(struct cpu_ucode_version *);
 int cpu_ucode_apply(const struct cpu_ucode *);
 
-int (*vec_compat6_cpu_ucode_get_version)(struct compat6_cpu_ucode *);
-int (*vec_compat6_cpu_ucode_apply(const struct compat6_cpu_ucode *);
-    stub_compat_6_cpu_ucode;
+extern int (*vec_compat6_cpu_ucode_get_version)(struct compat6_cpu_ucode *);
+extern int (*vec_compat6_cpu_ucode_apply)(const struct compat6_cpu_ucode *);
 
 #ifdef COMPAT_60
 int compat6_cpu_ucode_get_version(struct compat6_cpu_ucode *);
