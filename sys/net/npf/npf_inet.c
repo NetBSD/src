@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_inet.c,v 1.41 2018/03/13 16:23:40 maxv Exp $	*/
+/*	$NetBSD: npf_inet.c,v 1.42 2018/03/17 10:21:09 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.41 2018/03/13 16:23:40 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.42 2018/03/17 10:21:09 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -215,7 +215,8 @@ npf_tcpsaw(const npf_cache_t *npc, tcp_seq *seq, tcp_seq *ack, uint32_t *win)
 		return ntohs(ip->ip_len) - npc->npc_hlen - thlen;
 	} else if (npf_iscached(npc, NPC_IP6)) {
 		const struct ip6_hdr *ip6 = npc->npc_ip.v6;
-		return ntohs(ip6->ip6_plen) - thlen;
+		return ntohs(ip6->ip6_plen) -
+		    (npc->npc_hlen - sizeof(*ip6)) - thlen;
 	}
 	return 0;
 }
