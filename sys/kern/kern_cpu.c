@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.71.16.4 2018/03/17 00:58:01 pgoyette Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.71.16.5 2018/03/17 02:56:36 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010, 2012 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.71.16.4 2018/03/17 00:58:01 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.71.16.5 2018/03/17 02:56:36 pgoyette Exp $");
 
 #include "opt_cpu_ucode.h"
 #include "opt_compat_netbsd.h"
@@ -135,15 +135,21 @@ static char cpu_model[128];
 /*
  * routine vectors for compat code
  */
-static int stub_compat_6_cpu_ucode(const struct compat6_cpu_ucode *ucode)
+static int stub_compat_6_cpu_ucode_get_version(struct compat6_cpu_ucode *ucode)
+{
+
+	return ENOTTY;
+}
+
+static int stub_compat_6_cpu_ucode_apply(const struct compat6_cpu_ucode *ucode)
 {
 
 	return ENOTTY;
 }
 int (*vec_compat6_cpu_ucode_get_version)(struct compat6_cpu_ucode *) =
-    stub_compat_6_cpu_ucode;
+    stub_compat_6_cpu_ucode_get_version;
 int (*vec_compat6_cpu_ucode_apply)(const struct compat6_cpu_ucode *) =
-    stub_compat_6_cpu_ucode;
+    stub_compat_6_cpu_ucode_apply;
 #endif
 
 /*
