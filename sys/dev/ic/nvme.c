@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme.c,v 1.36 2018/03/17 09:36:32 jdolecek Exp $	*/
+/*	$NetBSD: nvme.c,v 1.37 2018/03/17 09:45:44 jdolecek Exp $	*/
 /*	$OpenBSD: nvme.c,v 1.49 2016/04/18 05:59:50 dlg Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.36 2018/03/17 09:36:32 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.37 2018/03/17 09:45:44 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1464,8 +1464,6 @@ nvme_get_number_of_queues(struct nvme_softc *sc, u_int *nqap)
 	ccb->ccb_cookie = &state;
 
 	rv = nvme_poll(sc, sc->sc_admin_q, ccb, nvme_pt_fill, NVME_TIMO_QOP);
-
-	nvme_ccb_put(sc->sc_admin_q, ccb);
 
 	if (rv != 0) {
 		*nqap = 0;
