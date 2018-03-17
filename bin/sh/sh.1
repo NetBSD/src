@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.201 2018/03/17 01:32:42 uwe Exp $
+.\"	$NetBSD: sh.1,v 1.202 2018/03/17 01:40:28 uwe Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -3276,7 +3276,7 @@ command, tracked alias and not found.
 For aliases the alias expansion is
 printed; for commands and tracked aliases the complete pathname of the
 command is printed.
-.It Ic ulimit Oo Fl H \*(Ba Fl S Oc Op Fl a \*(Ba Fl btfdscmlrpnv Op Ar value
+.It Ic ulimit Oo Fl H Ns \*(Ba Ns Fl S Oc Op Fl a \*(Ba Fl btfdscmlrpnv Op Ar value
 Inquire about or set the hard or soft limits on processes or set new
 limits.
 The choice between hard limit (which no process is allowed to
@@ -3288,13 +3288,14 @@ and which may be raised) is made with these flags:
 set or inquire about hard limits
 .It Fl S
 set or inquire about soft limits.
+.El
+.Pp
 If neither
 .Fl H
 nor
 .Fl S
 is specified, the soft limit is displayed or both limits are set.
 If both are specified, the last one wins.
-.El
 .Pp
 The limit to be interrogated or set, then, is chosen by specifying
 any one of these flags:
