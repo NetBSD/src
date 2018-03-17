@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmevar.h,v 1.13 2017/04/05 20:15:49 jdolecek Exp $	*/
+/*	$NetBSD: nvmevar.h,v 1.13.6.1 2018/03/17 08:11:18 martin Exp $	*/
 /*	$OpenBSD: nvmevar.h,v 1.8 2016/04/14 11:18:32 dlg Exp $ */
 
 /*
@@ -88,7 +88,6 @@ struct nvme_queue {
 
 	kmutex_t		q_ccb_mtx;
 	uint16_t		q_nccbs;	/* total number of ccbs */
-	uint16_t		q_nccbs_avail;	/* available ccbs */
 	struct nvme_ccb		*q_ccbs;
 	SIMPLEQ_HEAD(, nvme_ccb) q_ccb_list;
 	struct nvme_dmamem	*q_ccb_prpls;
