@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_ucode.c,v 1.5 2015/01/07 07:05:48 ozaki-r Exp $ */
+/* $NetBSD: cpu_ucode.c,v 1.5.16.1 2018/03/17 00:41:33 pgoyette Exp $ */
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,10 +29,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_ucode.c,v 1.5 2015/01/07 07:05:48 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_ucode.c,v 1.5.16.1 2018/03/17 00:41:33 pgoyette Exp $");
 
+#if defined(_KERNEL_OPT)
 #include "opt_cpu_ucode.h"
 #include "opt_compat_netbsd.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/cpuio.h>
@@ -46,6 +48,8 @@ __KERNEL_RCSID(0, "$NetBSD: cpu_ucode.c,v 1.5 2015/01/07 07:05:48 ozaki-r Exp $"
 #include <x86/cpu_ucode.h>
 
 static struct cpu_ucode_softc ucode_softc;
+
+#ifndef _MODULE
 
 int
 cpu_ucode_get_version(struct cpu_ucode_version *data)
@@ -62,6 +66,7 @@ cpu_ucode_get_version(struct cpu_ucode_version *data)
 
 	return 0;
 }
+#endif /* ! _MODULE */
 
 #ifdef COMPAT_60
 int
@@ -79,6 +84,7 @@ compat6_cpu_ucode_get_version(struct compat6_cpu_ucode *data)
 }
 #endif /* COMPAT60 */
 
+#ifndef _MODULE
 int
 cpu_ucode_md_open(firmware_handle_t *fwh, int loader_version, const char *fwname)
 {
@@ -121,6 +127,7 @@ cpu_ucode_apply(const struct cpu_ucode *data)
 	sc->sc_blobsize = 0;
 	return error;
 }
+#endif /* ! _MODULE */
 
 #ifdef COMPAT_60
 int
