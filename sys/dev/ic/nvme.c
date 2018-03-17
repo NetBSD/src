@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme.c,v 1.34 2018/03/16 23:31:19 jdolecek Exp $	*/
+/*	$NetBSD: nvme.c,v 1.35 2018/03/17 00:28:03 jdolecek Exp $	*/
 /*	$OpenBSD: nvme.c,v 1.49 2016/04/18 05:59:50 dlg Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.34 2018/03/16 23:31:19 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.35 2018/03/17 00:28:03 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -929,12 +929,18 @@ nvme_ns_free(struct nvme_softc *sc, uint16_t nsid)
 		kmem_free(identify, sizeof(*identify));
 }
 
+struct nvme_pt_state {
+	struct nvme_pt_command *pt;
+	bool finished;
+};
+
 static void
 nvme_pt_fill(struct nvme_queue *q, struct nvme_ccb *ccb, void *slot)
 {
 	struct nvme_softc *sc = q->q_sc;
 	struct nvme_sqe *sqe = slot;
-	struct nvme_pt_command *pt = ccb->ccb_cookie;
+	struct nvme_pt_state *state = ccb->ccb_cookie;
+	struct nvme_pt_command *pt = state->pt;
 	bus_dmamap_t dmap = ccb->ccb_dmamap;
 	int i;
 
@@ -976,7 +982,8 @@ static void
 nvme_pt_done(struct nvme_queue *q, struct nvme_ccb *ccb, struct nvme_cqe *cqe)
 {
 	struct nvme_softc *sc = q->q_sc;
-	struct nvme_pt_command *pt = ccb->ccb_cookie;
+	struct nvme_pt_state *state = ccb->ccb_cookie;
+	struct nvme_pt_command *pt = state->pt;
 	bus_dmamap_t dmap = ccb->ccb_dmamap;
 
 	if (pt->buf != NULL && pt->len > 0) {
@@ -995,6 +1002,18 @@ nvme_pt_done(struct nvme_queue *q, struct nvme_ccb *ccb, struct nvme_cqe *cqe)
 
 	pt->cpl.cdw0 = lemtoh32(&cqe->cdw0);
 	pt->cpl.flags = lemtoh16(&cqe->flags) & ~NVME_CQE_PHASE;
+
+	state->finished = true;
+
+	nvme_ccb_put(q, ccb);
+}
+
+static bool
+nvme_pt_finished(void *cookie)
+{
+	struct nvme_pt_state *state = cookie;
+
+	return state->finished;
 }
 
 static int
@@ -1004,6 +1023,7 @@ nvme_command_passthrough(struct nvme_softc *sc, struct nvme_pt_command *pt,
 	struct nvme_queue *q;
 	struct nvme_ccb *ccb;
 	void *buf = NULL;
+	struct nvme_pt_state state;
 	int error;
 
 	/* limit command size to maximum data transfer size */
@@ -1034,24 +1054,30 @@ nvme_command_passthrough(struct nvme_softc *sc, struct nvme_pt_command *pt,
 		    pt->is_read ? BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
 	}
 
+	memset(&state, 0, sizeof(state));
+	state.pt = pt;
+	state.finished = false;
+
 	ccb->ccb_done = nvme_pt_done;
-	ccb->ccb_cookie = pt;
+	ccb->ccb_cookie = &state;
 
 	pt->cmd.nsid = nsid;
-	if (nvme_poll(sc, q, ccb, nvme_pt_fill, NVME_TIMO_PT)) {
-		error = EIO;
-		goto out;
-	}
+
+	nvme_q_submit(sc, q, ccb, nvme_pt_fill);
+
+	/* wait for completion */
+	nvme_q_wait_complete(sc, q, nvme_pt_finished, &state);
+	KASSERT(state.finished);
 
 	error = 0;
-out:
+
 	if (buf != NULL) {
 		if (error == 0 && pt->is_read)
 			error = copyout(buf, pt->buf, pt->len);
 kmem_free:
 		kmem_free(buf, pt->len);
 	}
-	nvme_ccb_put(q, ccb);
+
 	return error;
 }
 
