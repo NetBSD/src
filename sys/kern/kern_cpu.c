@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.71.16.6 2018/03/17 06:49:57 pgoyette Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.71.16.7 2018/03/17 21:37:53 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010, 2012 The NetBSD Foundation, Inc.
@@ -56,10 +56,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.71.16.6 2018/03/17 06:49:57 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.71.16.7 2018/03/17 21:37:53 pgoyette Exp $");
 
 #include "opt_cpu_ucode.h"
-#include "opt_compat_netbsd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,6 +127,7 @@ struct cpu_info **cpu_infos		__read_mostly;
 kcpuset_t *	kcpuset_attached	__read_mostly	= NULL;
 kcpuset_t *	kcpuset_running		__read_mostly	= NULL;
 
+int (*compat_cpuctl_ioctl)(u_long, void *) = (void *)enosys;
 
 static char cpu_model[128];
 
@@ -285,12 +285,6 @@ cpuctl_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 		error = cpu_ucode_get_version((struct cpu_ucode_version *)data);
 		break;
 
-#ifdef COMPAT_60
-	case OIOC_CPU_UCODE_GET_VERSION:
-		error = compat6_cpu_ucode_get_version((struct compat6_cpu_ucode *)data);
-		break;
-#endif
-
 	case IOC_CPU_UCODE_APPLY:
 		error = kauth_authorize_machdep(l->l_cred,
 		    KAUTH_MACHDEP_CPU_UCODE_APPLY,
@@ -299,21 +293,10 @@ cpuctl_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 			break;
 		error = cpu_ucode_apply((const struct cpu_ucode *)data);
 		break;
-
-#ifdef COMPAT_60
-	case OIOC_CPU_UCODE_APPLY:
-		error = kauth_authorize_machdep(l->l_cred,
-		    KAUTH_MACHDEP_CPU_UCODE_APPLY,
-		    NULL, NULL, NULL, NULL);
-		if (error != 0)
-			break;
-		error = compat6_cpu_ucode_apply((const struct compat6_cpu_ucode *)data);
-		break;
-#endif
 #endif
 
 	default:
-		error = ENOTTY;
+		error = (*compat_cpuctl_ioctl)(cmd, data);
 		break;
 	}
 	mutex_exit(&cpu_lock);

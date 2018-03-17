@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_ucode.h,v 1.3 2012/10/17 20:19:55 drochner Exp $ */
+/* $NetBSD: cpu_ucode.h,v 1.3.36.1 2018/03/17 21:37:52 pgoyette Exp $ */
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -47,14 +47,11 @@ struct cpu_ucode_version_intel1 {
 #include <sys/cpuio.h>
 #include <dev/firmload.h>
 
-int cpu_ucode_amd_get_version(struct cpu_ucode_version *);
-#ifdef COMPAT_60
-int compat6_cpu_ucode_amd_get_version(struct compat6_cpu_ucode *);
-#endif
+int cpu_ucode_amd_get_version(struct cpu_ucode_version *, void *, size_t);
 int cpu_ucode_amd_firmware_open(firmware_handle_t *, const char *);
 int cpu_ucode_amd_apply(struct cpu_ucode_softc *, int);
 
-int cpu_ucode_intel_get_version(struct cpu_ucode_version *);
+int cpu_ucode_intel_get_version(struct cpu_ucode_version *, void *, size_t);
 int cpu_ucode_intel_firmware_open(firmware_handle_t *, const char *);
 int cpu_ucode_intel_apply(struct cpu_ucode_softc *, int);
 #endif /* _KERNEL */

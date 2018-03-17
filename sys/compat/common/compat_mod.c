@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_mod.c,v 1.24.14.13 2018/03/16 08:10:26 pgoyette Exp $	*/
+/*	$NetBSD: compat_mod.c,v 1.24.14.14 2018/03/17 21:37:52 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.24.14.13 2018/03/16 08:10:26 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.24.14.14 2018/03/17 21:37:52 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -64,6 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.24.14.13 2018/03/16 08:10:26 pgoyet
 #include <compat/common/compat_mod.h>
 #include <compat/common/if_43.h>
 #include <compat/sys/uvm.h>
+#include <compat/sys/cpuio.h>
 
 #if defined(COMPAT_09) || defined(COMPAT_43) || defined(COMPAT_50)
 static struct sysctllog *compat_clog = NULL;
@@ -291,6 +292,12 @@ compat_modcmd(modcmd_t cmd, void *arg)
 #endif
 #ifdef COMPAT_70
 		compat_70_init();
+#endif
+#ifdef COMPAT_60
+		kern_cpu_60_init();
+#endif
+#ifdef COMPAT_60
+		kern_cpu_60_fini();
 #endif
 		return 0;
 
