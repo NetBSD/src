@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.745 2017/12/22 14:03:39 jakllsch Exp $
+$NetBSD: usbdevs,v 1.746 2018/03/17 19:37:11 jdolecek Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -3095,6 +3095,9 @@ product SMSC 2512HUB		0x2512	USB 2.0 2-Port Hub
 product SMSC 2513HUB		0x2513	USB 2.0 3-Port Hub
 product SMSC 2514HUB		0x2514	USB 2.0 4-Port Hub
 product SMSC LAN7500		0x7500	LAN7500 USB 2.0 gigabit ethernet device
+product SMSC LAN7800		0x7800	LAN7800 USB 3.1 gigabit ethernet device
+product SMSC LAN7801		0x7801	LAN7801 USB 3.1 gigabit ethernet device
+product SMSC LAN7850		0x7850	LAN7850 USB 2.0 gigabit ethernet device
 product SMSC SMSC9500		0x9500	SMSC9500 Ethernet device
 product SMSC SMSC9505		0x9505	SMSC9505 Ethernet device
 product SMSC SMSC9512		0x9512	SMSC9512 USB Hub & Ethernet device
