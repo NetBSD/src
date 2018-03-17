@@ -1,4 +1,4 @@
-#	$NetBSD: files.vexpress,v 1.4 2018/02/19 16:10:42 jmcneill Exp $
+#	$NetBSD: files.vexpress,v 1.5 2018/03/17 18:34:09 ryo Exp $
 #
 # Configuration info for ARM Ltd. Versatile Express peripherals
 #
@@ -12,7 +12,7 @@ file	arch/arm/arm32/arm32_kvminit.c
 file	arch/arm/arm32/arm32_reboot.c
 file	arch/arm/arm32/irq_dispatch.S
 file	arch/arm/arm32/armv7_generic_space.c
-file	arch/arm/arm32/armv7_generic_dma.c
+file	arch/arm/arm/arm_generic_dma.c
 file	arch/arm/arm/bus_space_a4x.S
 
 file	arch/arm/vexpress/vexpress_platform.c
