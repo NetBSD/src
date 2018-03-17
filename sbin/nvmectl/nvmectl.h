@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmectl.h,v 1.4 2017/05/03 01:37:16 christos Exp $	*/
+/*	$NetBSD: nvmectl.h,v 1.5 2018/03/17 11:07:26 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 2012-2013 Intel Corporation
@@ -48,14 +48,14 @@ struct nvme_function {
 #define NVME_NS_PREFIX		"ns"
 
 #define DEVLIST_USAGE							       \
-"       nvmectl devlist\n"
+"devlist\n"
 
 #define IDENTIFY_USAGE							       \
-"       nvmectl identify [-x [-v]] <controller id|namespace id>\n"
+"identify [-x [-v]] <controller id|namespace id>\n"
 
 #if 0
 #define PERFTEST_USAGE							       \
-"       nvmectl perftest <-n num_threads> <-o read|write>\n"		       \
+"perftest <-n num_threads> <-o read|write>\n"		       \
 "                        <-s size_in_bytes> <-t time_in_seconds>\n"	       \
 "                        <-i intr|wait> [-f refthread] [-p]\n"		       \
 "                        <namespace id>\n"
@@ -63,23 +63,23 @@ struct nvme_function {
 
 #if 0
 #define RESET_USAGE							       \
-"       nvmectl reset <controller id>\n"
+"reset <controller id>\n"
 #endif
 
 #define LOGPAGE_USAGE							       \
-"       nvmectl logpage <-p page_id> [-b] [-v vendor] [-x] "		       \
+"logpage <-p page_id> [-b] [-v vendor] [-x] "		       \
     "<controller id|namespace id>\n"
 
 #if 0
 #define FIRMWARE_USAGE							       \
-"       nvmectl firmware [-s slot] [-f path_to_firmware] [-a] <controller id>\n"
+"firmware [-s slot] [-f path_to_firmware] [-a] <controller id>\n"
 #endif
 
 #define POWER_USAGE							       \
-"       nvmectl power [-l] [-p new-state [-w workload-hint]] <controller id>\n"
+"power [-l] [-p new-state [-w workload-hint]] <controller id>\n"
 
 #define WDC_USAGE							       \
-"       nvmecontrol wdc (cap-diag|drive-log|get-crash-dump|purge|purge-montior)\n"
+"wdc (cap-diag|drive-log|get-crash-dump|purge|purge-montior)\n"
 
 void devlist(int, char *[]) __dead;
 void identify(int, char *[]) __dead;
@@ -102,7 +102,7 @@ void read_controller_data(int, struct nvm_identify_controller *);
 void read_namespace_data(int, int, struct nvm_identify_namespace *);
 void print_hex(void *, uint32_t);
 void read_logpage(int, uint8_t, int, void *, uint32_t);
-__dead void dispatch(int argc, char *argv[], struct nvme_function *f);
+__dead void dispatch(int argc, char *argv[], const struct nvme_function *f);
 void nvme_strvis(uint8_t *, int, const uint8_t *, int);
 
 #endif	/* __NVMECTL_H__ */
