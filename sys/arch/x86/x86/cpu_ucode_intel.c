@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_ucode_intel.c,v 1.12 2017/06/01 02:45:08 chs Exp $ */
+/* $NetBSD: cpu_ucode_intel.c,v 1.13 2018/03/17 15:56:32 christos Exp $ */
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,11 +29,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_ucode_intel.c,v 1.12 2017/06/01 02:45:08 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_ucode_intel.c,v 1.13 2018/03/17 15:56:32 christos Exp $");
 
 #include "opt_xen.h"
 #include "opt_cpu_ucode.h"
-#include "opt_compat_netbsd.h"
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -65,20 +64,21 @@ intel_getcurrentucode(uint32_t *ucodeversion, int *platformid)
 }
 
 int
-cpu_ucode_intel_get_version(struct cpu_ucode_version *ucode)
+cpu_ucode_intel_get_version(struct cpu_ucode_version *ucode,
+    void *ptr, size_t len)
 {
 	struct cpu_info *ci = curcpu();
-	struct cpu_ucode_version_intel1 data;
+	struct cpu_ucode_version_intel1 *data = ptr;
 
 	if (ucode->loader_version != CPU_UCODE_LOADER_INTEL1 ||
 	    CPUID_TO_FAMILY(ci->ci_signature) < 6)
 		return EOPNOTSUPP;
-	if (!ucode->data)
-		return 0;
 
-	intel_getcurrentucode(&data.ucodeversion, &data.platformid);
+	if (len < sizeof(*data))
+		return ENOSPC;
 
-	return copyout(&data, ucode->data, sizeof(data));
+	intel_getcurrentucode(&data->ucodeversion, &data->platformid);
+	return 0;
 }
 
 int

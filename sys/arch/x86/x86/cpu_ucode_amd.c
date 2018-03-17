@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_ucode_amd.c,v 1.7 2013/11/15 08:47:55 msaitoh Exp $ */
+/* $NetBSD: cpu_ucode_amd.c,v 1.8 2018/03/17 15:56:32 christos Exp $ */
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,11 +29,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_ucode_amd.c,v 1.7 2013/11/15 08:47:55 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_ucode_amd.c,v 1.8 2018/03/17 15:56:32 christos Exp $");
 
 #include "opt_xen.h"
 #include "opt_cpu_ucode.h"
-#include "opt_compat_netbsd.h"
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -101,33 +100,21 @@ amd_cpufamily(void)
 }
 
 int
-cpu_ucode_amd_get_version(struct cpu_ucode_version *ucode)
+cpu_ucode_amd_get_version(struct cpu_ucode_version *ucode, void *ptr,
+    size_t len)
 {
-	struct cpu_ucode_version_amd data;
+	struct cpu_ucode_version_amd *data = ptr;
 
-	if (ucode->loader_version != CPU_UCODE_LOADER_AMD || amd_cpufamily() < 0x10)
-		return EOPNOTSUPP;
-	if (!ucode->data)
-		return 0;
-
-	data.version = rdmsr(MSR_UCODE_AMD_PATCHLEVEL);
-	return copyout(&data, ucode->data, sizeof(data));
-}
-
-#ifdef COMPAT_60
-int
-compat6_cpu_ucode_amd_get_version(struct compat6_cpu_ucode *ucode)
-{
-	uint64_t uclevel;
-
-	if (amd_cpufamily() < 0x10)
+	if (ucode->loader_version != CPU_UCODE_LOADER_AMD
+	    || amd_cpufamily() < 0x10)
 		return EOPNOTSUPP;
 
-	uclevel = rdmsr(MSR_UCODE_AMD_PATCHLEVEL);
-	ucode->version = uclevel;
+	if (len < sizeof(*data))
+		return ENOSPC;
+
+	data->version = rdmsr(MSR_UCODE_AMD_PATCHLEVEL);
 	return 0;
 }
-#endif /* COMPAT60 */
 
 int
 cpu_ucode_amd_firmware_open(firmware_handle_t *fwh, const char *fwname)
