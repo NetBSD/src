@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_ucode.c,v 1.6 2018/03/17 15:56:32 christos Exp $ */
+/* $NetBSD: cpu_ucode.c,v 1.7 2018/03/17 20:02:32 christos Exp $ */
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,9 +29,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_ucode.c,v 1.6 2018/03/17 15:56:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_ucode.c,v 1.7 2018/03/17 20:02:32 christos Exp $");
 
 #include "opt_cpu_ucode.h"
+#include "opt_xen.h"
+
 #include "opt_compat_netbsd.h"
 
 #include <sys/param.h>
@@ -44,6 +46,11 @@ __KERNEL_RCSID(0, "$NetBSD: cpu_ucode.c,v 1.6 2018/03/17 15:56:32 christos Exp $
 #include <machine/cputypes.h>
 
 #include <x86/cpu_ucode.h>
+
+#ifdef XEN
+#include <xen/xen-public/xen.h>
+#include <xen/hypervisor.h>
+#endif
 
 static struct cpu_ucode_softc ucode_softc;
 
@@ -88,6 +95,7 @@ cpu_ucode_md_open(firmware_handle_t *fwh, int loader_version, const char *fwname
 	}
 }
 
+#ifndef XEN
 int
 cpu_ucode_apply(const struct cpu_ucode *data)
 {
@@ -108,7 +116,7 @@ cpu_ucode_apply(const struct cpu_ucode *data)
 		error = cpu_ucode_intel_apply(sc, data->cpu_nr);
 		break;
 	default:
-		return EOPNOTSUPP;
+		error = EOPNOTSUPP;
 	}
 
 	if (sc->sc_blob != NULL)
@@ -117,6 +125,36 @@ cpu_ucode_apply(const struct cpu_ucode *data)
 	sc->sc_blobsize = 0;
 	return error;
 }
+#else
+int
+cpu_ucode_apply(const struct cpu_ucode *data)
+{
+	struct cpu_ucode_softc *sc = &ucode_softc;
+	struct xen_platform_op op;
+	int error;
+
+	/* Xen updates all??? */
+	if (data->cpu_nr != CPU_UCODE_ALL_CPUS)
+		return EOPNOTSUPP;
+
+	sc->loader_version = data->loader_version;
+	error = cpu_ucode_load(sc, data->fwname);
+	if (error)
+		return error;
+
+	op.cmd = XENPF_microcode_update;
+	set_xen_guest_handle(op.u.microcode.data, sc->sc_blob);
+	op.u.microcode.length = sc->sc_blobsize;
+
+	error = -HYPERVISOR_platform_op(&op);
+
+	if (sc->sc_blob)
+		firmware_free(sc->sc_blob, sc->sc_blobsize);
+	sc->sc_blob = NULL;
+	sc->sc_blobsize = 0;
+	return error;
+}
+#endif
 
 #ifdef COMPAT_60
 int
@@ -135,25 +173,18 @@ compat6_cpu_ucode_get_version(struct compat6_cpu_ucode *data)
 }
 
 int
-compat6_cpu_ucode_apply(const struct compat6_cpu_ucode *data)
+compat6_cpu_ucode_apply(const struct compat6_cpu_ucode *data6)
 {
-	struct cpu_ucode_softc *sc = &ucode_softc;
-	int error;
 
 	if (cpu_vendor != CPUVENDOR_AMD)
 		return EOPNOTSUPP;
 
-	sc->loader_version = CPU_UCODE_LOADER_AMD;
-	error = cpu_ucode_load(sc, data->fwname);
-	if (error)
-		return error;
+	struct cpu_ucode data;
 
-	error = cpu_ucode_amd_apply(sc, CPU_UCODE_ALL_CPUS);
+	data.loader_version = CPU_UCODE_LOADER_AMD;
+	data.cpu_nr = CPU_UCODE_ALL_CPUS;
+	strcpy(data.fwname, data6->fwname);
 
-	if (sc->sc_blob != NULL)
-		firmware_free(sc->sc_blob, sc->sc_blobsize);
-	sc->sc_blob = NULL;
-	sc->sc_blobsize = 0;
-	return error;
+	return cpu_ucode_apply(&data);
 }
 #endif /* COMPAT60 */
