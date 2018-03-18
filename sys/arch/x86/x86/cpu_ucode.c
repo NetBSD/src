@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_ucode.c,v 1.5.16.3 2018/03/17 21:37:52 pgoyette Exp $ */
+/* $NetBSD: cpu_ucode.c,v 1.5.16.4 2018/03/18 00:35:26 pgoyette Exp $ */
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,13 +29,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_ucode.c,v 1.5.16.3 2018/03/17 21:37:52 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_ucode.c,v 1.5.16.4 2018/03/18 00:35:26 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_xen.h"
-
 #include "opt_cpu_ucode.h"
-#include "opt_compat_netbsd.h"
 #endif
 
 #include <sys/param.h>
@@ -157,36 +155,3 @@ cpu_ucode_apply(const struct cpu_ucode *data)
 	return error;
 }
 #endif
-
-#ifdef COMPAT_60
-int
-compat6_cpu_ucode_get_version(struct compat6_cpu_ucode *data)
-{
-	struct cpu_ucode_version ndata;
-
-	switch (cpu_vendor) {
-	case CPUVENDOR_AMD:
-		ndata.loader_version = CPU_UCODE_LOADER_AMD;
-		return cpu_ucode_amd_get_version(&ndata, &data->version,
-		    sizeof(data->version));
-	default:
-		return EOPNOTSUPP;
-	}
-}
-
-int
-compat6_cpu_ucode_apply(const struct compat6_cpu_ucode *data6)
-{
-
-	if (cpu_vendor != CPUVENDOR_AMD)
-		return EOPNOTSUPP;
-
-	struct cpu_ucode data;
-
-	data.loader_version = CPU_UCODE_LOADER_AMD;
-	data.cpu_nr = CPU_UCODE_ALL_CPUS;
-	strcpy(data.fwname, data6->fwname);
-
-	return cpu_ucode_apply(&data);
-}
-#endif /* COMPAT60 */
