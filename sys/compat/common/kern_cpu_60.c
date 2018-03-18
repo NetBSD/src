@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu_60.c,v 1.1.2.3 2018/03/18 01:17:29 pgoyette Exp $	*/
+/*	$NetBSD: kern_cpu_60.c,v 1.1.2.4 2018/03/18 09:00:55 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu_60.c,v 1.1.2.3 2018/03/18 01:17:29 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu_60.c,v 1.1.2.4 2018/03/18 09:00:55 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_cpu_ucode.h"
@@ -44,9 +44,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_cpu_60.c,v 1.1.2.3 2018/03/18 01:17:29 pgoyette
 #include <sys/kauth.h>
 #include <sys/lwp.h>
 #include <sys/cpu.h>
-#include <sys/cpuio.h>
 
-#include <compat/common/compat_mod.h>
+#include <compat/sys/cpuio.h>
 
 static int
 compat6_cpuctl_ioctl(struct lwp *l, u_long cmd, void *data)

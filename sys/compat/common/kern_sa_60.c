@@ -29,11 +29,26 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: kern_sa_60.c,v 1.1.42.2 2018/03/16 08:10:26 pgoyette Exp $");
+__KERNEL_RCSID(1, "$NetBSD: kern_sa_60.c,v 1.1.42.3 2018/03/18 09:00:55 pgoyette Exp $");
 
 #include <sys/systm.h>
 #include <sys/syscall.h>
+#include <sys/syscallvar.h>
 #include <sys/syscallargs.h>
+
+#include <compat/common/compat_mod.h>
+
+static const struct syscall_package kern_sa_60_syscalls[] = {
+	{ SYS_compat_60_sa_register, 0,
+	     (sy_call_t *)compat_60_sys_sa_register },
+	{ SYS_compat_60_sa_stacks, 0, (sy_call_t *)compat_60_sys_sa_stacks },
+	{ SYS_compat_60_sa_enable, 0, (sy_call_t *)compat_60_sys_sa_enable },
+	{ SYS_compat_60_sa_setconcurrency, 0,
+	     (sy_call_t *)compat_60_sys_sa_setconcurrency },
+	{ SYS_compat_60_sa_yield, 0, (sy_call_t *)compat_60_sys_sa_yield },
+	{ SYS_compat_60_sa_preempt, 0, (sy_call_t *)compat_60_sys_sa_preempt },
+	{ 0, 0, NULL }
+};
 
 int
 compat_60_sys_sa_register(lwp_t *l,
@@ -81,4 +96,18 @@ compat_60_sys_sa_preempt(lwp_t *l,
 	register_t *retval)
 {
 	return sys_nosys(l, uap, retval);
+}
+
+int
+kern_sa_60_init(void)
+{
+
+	return syscall_establish(NULL, kern_sa_60_syscalls);
+}
+
+int
+kern_sa_60_fini(void)
+{
+
+	return syscall_disestablish(NULL, kern_sa_60_syscalls);
 }

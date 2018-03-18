@@ -1,4 +1,4 @@
-/* $NetBSD: cpuio.h,v 1.5.16.3 2018/03/18 01:17:29 pgoyette Exp $ */
+/* $NetBSD: cpuio.h,v 1.5.16.4 2018/03/18 09:00:55 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -43,5 +43,8 @@ extern int (*compat_cpuctl_ioctl)(struct lwp *, u_long, void *);
 
 #define OIOC_CPU_UCODE_GET_VERSION      _IOR('c', 4, struct compat6_cpu_ucode)
 #define OIOC_CPU_UCODE_APPLY            _IOW('c', 5, struct compat6_cpu_ucode)
+
+int kern_cpu_60_init(void);
+int kern_cpu_60_fini(void);
 
 #endif /* _COMPAT_SYS_CPUIO_H */
