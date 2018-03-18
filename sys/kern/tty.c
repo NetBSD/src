@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.275 2017/10/25 08:12:39 maya Exp $	*/
+/*	$NetBSD: tty.c,v 1.275.2.1 2018/03/18 12:06:59 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.275 2017/10/25 08:12:39 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.275.2.1 2018/03/18 12:06:59 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -209,7 +209,7 @@ struct ttylist_head ttylist = TAILQ_HEAD_INITIALIZER(ttylist);
 int tty_count;
 kmutex_t tty_lock;
 krwlock_t ttcompat_lock;
-int (*ttcompatvec)(struct tty *, u_long, void *, int, struct lwp *);
+int (*vec_compat_ttioctl_60)(struct tty *, u_long, void *, int, struct lwp *);
 
 uint64_t tk_cancc;
 uint64_t tk_nin;
@@ -1408,24 +1408,19 @@ ttioctl(struct tty *tp, u_long cmd, void *data, int flag, struct lwp *l)
 		default:
 			break;
 		}
-#ifdef COMPAT_60
-		error = compat_60_ttioctl(tp, cmd, data, flag, l);
-		if (error != EPASSTHROUGH)
-			return error;
-#endif /* COMPAT_60 */
 		/* We may have to load the compat module for this. */
 		for (;;) {
 			rw_enter(&ttcompat_lock, RW_READER);
-			if (ttcompatvec != NULL) {
+			if (vec_compat_ttioctl_60 != NULL) {
 				break;
 			}
 			rw_exit(&ttcompat_lock);
-			(void)module_autoload("compat", MODULE_CLASS_ANY);
-			if (ttcompatvec == NULL) {
+			(void)module_autoload("compat", MODULE_CLASS_EXEC);
+			if (vec_compat_ttioctl_60 == NULL) {
 				return EPASSTHROUGH;
 			}
 		}
-		error = (*ttcompatvec)(tp, cmd, data, flag, l);
+		error = (*vec_compat_ttioctl_60)(tp, cmd, data, flag, l);
 		rw_exit(&ttcompat_lock);
 		return error;
 	}

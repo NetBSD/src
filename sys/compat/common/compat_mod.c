@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_mod.c,v 1.24.14.15 2018/03/18 02:05:21 pgoyette Exp $	*/
+/*	$NetBSD: compat_mod.c,v 1.24.14.16 2018/03/18 12:06:59 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.24.14.15 2018/03/18 02:05:21 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.24.14.16 2018/03/18 12:06:59 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -92,7 +92,6 @@ static const char * const compat_includes[] = {
 
 MODULE_WITH_ALIASES(MODULE_CLASS_EXEC, compat, NULL, &compat_includes);
 
-int	ttcompat(struct tty *, u_long, void *, int, struct lwp *);
 
 #ifdef _MODULE
 #ifdef COMPAT_16
@@ -255,11 +254,21 @@ compat_modcmd(modcmd_t cmd, void *arg)
 		if (error != 0) {
 			return error;
 		}
+#ifdef NOTYET /* XXX */
 #ifdef COMPAT_43
+/* XXX
+ * XXX This would mean that compat_43 and compat_60 are mutually
+ * XXX exclusive.  Rather we should save the original vector
+ * XXX value, and retore it if we unload.  Note that compat_43
+ * XXX should "require" compat_60 to provide a definitive order
+ * XXX of initialization (ie, compat_60 first, then compat_43).
+ * XXX
 		KASSERT(ttcompatvec == NULL);
 		ttcompatvec = ttcompat;
 		if_43_init();
+ * XXX */
 #endif
+#endif /* XXX NOTYET */
 #ifdef COMPAT_40
 		if_40_init();
 #endif
@@ -333,6 +342,7 @@ compat_modcmd(modcmd_t cmd, void *arg)
 		if (error != 0) {
 			return error;
 		}
+#ifdef NOTYET /* XXX */
 #ifdef COMPAT_43
 		/* Unlink ttcompatvec. */
 		if (rw_tryenter(&ttcompat_lock, RW_WRITER)) {
@@ -344,6 +354,7 @@ compat_modcmd(modcmd_t cmd, void *arg)
 			return EBUSY;
 		}
 #endif
+#endif /* NOTYET XXX */
 #ifdef COMPAT_16
 #if defined(COMPAT_SIGCONTEXT)
 		/*

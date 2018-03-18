@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.h,v 1.94 2017/10/31 10:45:19 martin Exp $	*/
+/*	$NetBSD: tty.h,v 1.94.2.1 2018/03/18 12:07:00 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -313,7 +313,8 @@ bool	 ttypull(struct tty *);
 int	clalloc(struct clist *, int, int);
 void	clfree(struct clist *);
 
-extern int (*ttcompatvec)(struct tty *, u_long, void *, int, struct lwp *);
+extern int (*vec_compat_ttioctl_60)(struct tty *, u_long, void *, int,
+    struct lwp *);
 
 unsigned char tty_getctrlchar(struct tty *, unsigned /*which*/);
 void tty_setctrlchar(struct tty *, unsigned /*which*/, unsigned char /*val*/);
