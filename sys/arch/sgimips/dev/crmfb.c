@@ -1,4 +1,4 @@
-/* $NetBSD: crmfb.c,v 1.44 2017/05/19 19:25:53 macallan Exp $ */
+/* $NetBSD: crmfb.c,v 1.44.2.1 2018/03/18 11:08:04 martin Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.44 2017/05/19 19:25:53 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.44.2.1 2018/03/18 11:08:04 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.44 2017/05/19 19:25:53 macallan Exp $");
 #include <dev/i2c/i2c_bitbang.h>
 #include <dev/i2c/ddcvar.h>
 #include <dev/videomode/videomode.h>
+#include <dev/videomode/vesagtf.h>
 #include <dev/videomode/edidvar.h>
 
 #include <arch/sgimips/dev/crmfbreg.h>
@@ -232,6 +233,7 @@ static void crmfb_setup_ddc(struct crmfb_softc *);
 /* mode setting stuff */
 static uint32_t calc_pll(int);	/* frequency in kHz */
 static int crmfb_set_mode(struct crmfb_softc *, const struct videomode *);
+static int crmfb_parse_mode(const char *, struct videomode *);
 
 CFATTACH_DECL_NEW(crmfb, sizeof(struct crmfb_softc),
     crmfb_match, crmfb_attach, NULL, NULL);
@@ -254,6 +256,8 @@ crmfb_attach(device_t parent, device_t self, void *opaque)
 	unsigned long v;
 	long defattr;
 	const char *consdev;
+	const char *modestr;
+	struct videomode mode, *pmode;
 	int rv, i;
 
 	sc = device_private(self);
@@ -305,11 +309,16 @@ crmfb_attach(device_t parent, device_t self, void *opaque)
 	sc->sc_console_depth = 8;
 
 	crmfb_setup_ddc(sc);
-	if ((sc->sc_edid_info.edid_preferred_mode != NULL)) {
-		if (crmfb_set_mode(sc, sc->sc_edid_info.edid_preferred_mode))
-			aprint_normal_dev(sc->sc_dev, "using %dx%d\n",
-			    sc->sc_width, sc->sc_height);
-	}
+	pmode = sc->sc_edid_info.edid_preferred_mode;
+
+	modestr = arcbios_GetEnvironmentVariable("crmfb_mode");
+	if (crmfb_parse_mode(modestr, &mode) == 0)
+		pmode = &mode;
+
+	if (pmode != NULL && crmfb_set_mode(sc, pmode))
+		aprint_normal_dev(sc->sc_dev, "using %dx%d\n",
+		    sc->sc_width, sc->sc_height);
+
 	/*
 	 * first determine how many tiles we need
 	 * in 32bit each tile is 128x128 pixels
@@ -1858,4 +1867,35 @@ crmfb_set_mode(struct crmfb_softc *sc, const struct videomode *mode)
 	sc->sc_height = mode->vdisplay;
 
 	return TRUE;
+}
+
+/*
+ * Parse a mode string in the form WIDTHxHEIGHT[@REFRESH] and return
+ * monitor timings generated using the VESA GTF formula.
+ */
+static int
+crmfb_parse_mode(const char *modestr, struct videomode *mode)
+{
+	char *x, *at;
+	int width, height, refresh;
+
+	if (modestr == NULL)
+		return EINVAL;
+
+	x = strchr(modestr, 'x');
+	at = strchr(modestr, '@');
+
+	if (x == NULL || (at != NULL && at < x))
+		return EINVAL;
+
+	width = strtoul(modestr, NULL, 10);
+	height = strtoul(x + 1, NULL, 10);
+	refresh = at ? strtoul(at + 1, NULL, 10) : 60;
+
+	if (width == 0 || height == 0 || refresh == 0)
+		return EINVAL;
+
+	vesagtf_mode(width, height, refresh, mode);
+
+	return 0;
 }
