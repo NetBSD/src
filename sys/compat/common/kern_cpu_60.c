@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu_60.c,v 1.1.2.2 2018/03/17 21:37:52 pgoyette Exp $	*/
+/*	$NetBSD: kern_cpu_60.c,v 1.1.2.3 2018/03/18 01:17:29 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,21 +30,31 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu_60.c,v 1.1.2.2 2018/03/17 21:37:52 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu_60.c,v 1.1.2.3 2018/03/18 01:17:29 pgoyette Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_cpu_ucode.h"
+#include "opt_compat_netbsd.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/systm.h>
 #include <sys/errno.h>
 #include <sys/kauth.h>
+#include <sys/lwp.h>
 #include <sys/cpu.h>
 #include <sys/cpuio.h>
 
-#include <compat/sys/cpuio.h>
+#include <compat/common/compat_mod.h>
 
 static int
-compat6_cpuctl_ioctl(u_long cmd, void *data)
+compat6_cpuctl_ioctl(struct lwp *l, u_long cmd, void *data)
 {
+#if defined(CPU_UCODE) && defined(COMPAT_60)
+	int error;
+#endif
+
 	switch (cmd) {
 #if defined(CPU_UCODE) && defined(COMPAT_60)
 	case OIOC_CPU_UCODE_GET_VERSION:
@@ -62,14 +72,18 @@ compat6_cpuctl_ioctl(u_long cmd, void *data)
  	}
 }
 
-void
+int
 kern_cpu_60_init(void)
 {
+
 	compat_cpuctl_ioctl = compat6_cpuctl_ioctl;
+	return 0;
 }
 
-void
+int
 kern_cpu_60_fini(void)
 {
+
 	compat_cpuctl_ioctl = (void *)enosys;
+	return 0;
 }
