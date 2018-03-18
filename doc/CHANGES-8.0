@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.147 2018/03/18 10:20:38 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.148 2018/03/18 11:22:59 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -10391,4 +10391,48 @@ sys/net/if_tun.c				1.143
 
 	Add packet filtering to tun(4) interfaces.
 	[tih, ticket #638]
+
+share/man/man4/ip.4				1.41,1.42
+share/man/man9/sockopt.9			1.11
+sys/kern/uipc_socket.c				1.258,1.259
+sys/kern/uipc_syscalls.c			1.189,1.190
+sys/netinet/in.h				1.102
+sys/netinet/in_pcb.c				1.181
+sys/netinet/in_pcb.h				1.65
+sys/netinet/ip_input.c				1.364 (patch)
+sys/netinet/ip_output.c				1.289,1.290
+sys/sys/socketvar.h				1.146
+
+	Make the IP_PKTINFO and IP_RECVPKTINFO compatible with
+	Linux and Solaris, and add IP_RECVDSTADDR and IP_SENDSRCADDR
+	compatible wth FreeBSD.
+	[tih, ticket #639]
+
+external/bsd/mdocml/include/config.h		1.4
+
+	Disable wchar_t support since our C library does not treat wchar_t
+	as UCS-4 in the case of non-UTF-8 locales.
+	[nakayama, ticket #640]
+
+sys/dev/ic/ld_nvme.c				1.19
+sys/dev/ic/nvme.c				1.34-1.37
+sys/dev/ic/nvmevar.h				1.15
+
+	Fix DIOCCACHESYNC for nvme(4) to wait for sync command completion.
+	Fix panic in nvme(4) on repeated invocation of 'nvmectl identify'.
+	[jdolecek, ticket #641]
+
+
+sys/arch/sgimips/dev/crmfb.c			1.45
+
+	Add support for overriding the video mode by setting an ARCS
+	environment variable.
+	[jmcneill, ticket #642]
+
+usr.sbin/sysinst/arch/sgimips/md.c		1.4
+
+	Official builds now append the "reproducable build timestamp"
+	to the kernel config name, adjust kernel name matching
+	to deal with this.
+	[jmcneill, ticket #643]
 
