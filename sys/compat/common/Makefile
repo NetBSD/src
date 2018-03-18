@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.63 2017/12/20 04:46:19 maya Exp $
+#	$NetBSD: Makefile,v 1.63.2.1 2018/03/18 02:05:21 pgoyette Exp $
 
 LIB=		compat
 NOPIC=		# defined
@@ -32,6 +32,10 @@ lib${LIB}.po:: ${POBJS:O}
 	@echo building profiled ${LIB} library
 	@rm -f lib${LIB}.po
 	@${LD} -r -o lib${LIB}.po ${LDFLAGS} `NM=${NM} ${LORDER} ${POBJS} | ${TSORT}`
+
+.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
+CPPFLAGS+=	-DCPU_UCODE
+.endif
 
 showsources: ${SRCS}
 	@echo ${.ALLSRC}

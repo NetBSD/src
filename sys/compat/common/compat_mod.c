@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_mod.c,v 1.24.14.14 2018/03/17 21:37:52 pgoyette Exp $	*/
+/*	$NetBSD: compat_mod.c,v 1.24.14.15 2018/03/18 02:05:21 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.24.14.14 2018/03/17 21:37:52 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.24.14.15 2018/03/18 02:05:21 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -286,28 +286,22 @@ compat_modcmd(modcmd_t cmd, void *arg)
 		uvm_50_init();
 		if_50_init();
 #endif
-#ifdef COMPAT_60
-		if ((error = compat_60_init()) != 0)
-			return error;
-#endif
 #ifdef COMPAT_70
 		compat_70_init();
 #endif
 #ifdef COMPAT_60
-		kern_cpu_60_init();
-#endif
-#ifdef COMPAT_60
-		kern_cpu_60_fini();
+		if ((error = compat_60_init()) != 0)
+			return error;
 #endif
 		return 0;
 
 	case MODULE_CMD_FINI:
-#ifdef COMPAT_70
-		compat_70_fini();
-#endif
 #ifdef COMPAT_60
 		if ((error = compat_60_fini()) != 0)
 			return error;
+#endif
+#ifdef COMPAT_70
+		compat_70_fini();
 #endif
 #ifdef COMPAT_10
 		vfs_syscalls_10_fini();

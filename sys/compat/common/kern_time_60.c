@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time_60.c,v 1.1 2013/03/29 01:02:50 christos Exp $	*/
+/*	$NetBSD: kern_time_60.c,v 1.1.38.1 2018/03/18 02:05:21 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -29,17 +29,23 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time_60.c,v 1.1 2013/03/29 01:02:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time_60.c,v 1.1.38.1 2018/03/18 02:05:21 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/lwp.h>
 #include <sys/time.h>
-#include <sys/sysctl.h>
+#include <sys/syscall.h>
+#include <sys/syscallvar.h>
 #include <sys/syscallargs.h>
 
 #include <compat/common/compat_util.h>
 #include <compat/common/compat_mod.h>
+
+static const struct syscall_package compat_60_syscalls[] = {
+	{ SYS_compat_60__lwp_park, 0, (sy_call_t *)compat_60_sys__lwp_park },
+	{ 0, 0, NULL }
+};
 
 int
 compat_60_sys__lwp_park(struct lwp *l,
@@ -71,4 +77,18 @@ compat_60_sys__lwp_park(struct lwp *l,
 	}
 
 	return lwp_park(CLOCK_REALTIME, TIMER_ABSTIME, tsp, SCARG(uap, hint));
+}
+
+int
+kern_time_60_init(void)
+{
+
+	return syscall_establish(NULL, compat_60_syscalls);
+}
+
+int
+kern_time_60_fini(void)
+{
+
+	return syscall_disestablish(NULL, compat_60_syscalls);
 }
