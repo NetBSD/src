@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_60.c,v 1.4.16.2 2018/03/18 12:06:59 pgoyette Exp $	*/
+/*	$NetBSD: tty_60.c,v 1.4.16.3 2018/03/18 23:34:25 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_60.c,v 1.4.16.2 2018/03/18 12:06:59 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_60.c,v 1.4.16.3 2018/03/18 23:34:25 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -117,20 +117,17 @@ compat_60_ptmioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	}
 }
 
-int
+void
 kern_tty_60_init(void)
 {
 
 	vec_compat_ttioctl_60 = compat_60_ttioctl;
 /*	vec_compat_ptmioctl_60 = compat_60_ptmioctl;	XXX NOT-YET */
-	return 0;
 }
 
-int
+void
 kern_tty_60_fini(void)
 {
 	vec_compat_ttioctl_60 = NULL;
 /*	vec_compat_ptmioctl_60 = NULL;			XXX NOT-YET */
-
-	return 0;
 }
