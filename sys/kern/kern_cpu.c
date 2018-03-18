@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.72 2018/03/17 19:03:25 christos Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.73 2018/03/18 00:51:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010, 2012 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.72 2018/03/17 19:03:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.73 2018/03/18 00:51:46 christos Exp $");
 
 #include "opt_cpu_ucode.h"
 
@@ -127,7 +127,7 @@ struct cpu_info **cpu_infos		__read_mostly;
 kcpuset_t *	kcpuset_attached	__read_mostly	= NULL;
 kcpuset_t *	kcpuset_running		__read_mostly	= NULL;
 
-int (*compat_cpuctl_ioctl)(u_long, void *) = (void *)enosys;
+int (*compat_cpuctl_ioctl)(struct lwp *, u_long, void *) = (void *)enosys;
 
 static char cpu_model[128];
 
@@ -296,7 +296,7 @@ cpuctl_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 #endif
 
 	default:
-		error = (*compat_cpuctl_ioctl)(cmd, data);
+		error = (*compat_cpuctl_ioctl)(l, cmd, data);
 		break;
 	}
 	mutex_exit(&cpu_lock);
