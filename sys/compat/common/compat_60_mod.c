@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_60_mod.c,v 1.1.2.9 2018/03/18 21:41:31 pgoyette Exp $	*/
+/*	$NetBSD: compat_60_mod.c,v 1.1.2.10 2018/03/18 23:34:25 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_60_mod.c,v 1.1.2.9 2018/03/18 21:41:31 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_60_mod.c,v 1.1.2.10 2018/03/18 23:34:25 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: compat_60_mod.c,v 1.1.2.9 2018/03/18 21:41:31 pgoyet
 #include <compat/common/compat_util.h>
 #include <compat/common/compat_mod.h>
 
+#include <compat/sys/ccdvar.h>
 #include <compat/sys/cpuio.h>
 
 #define REQUIRED_60 "compat_70"		/* XXX No compat_80 yet */
@@ -71,30 +72,10 @@ compat_60_init(void)
 		return 0;
 	}
 
-	error = kern_tty_60_init();
-	if (error != 0) {
-		kern_sa_60_fini();
-		kern_time_60_fini();
-		return 0;
-	}
-
-	error = ccd_60_init();
-	if (error != 0) {
-		kern_tty_60_fini();
-		kern_sa_60_fini();
-		kern_time_60_fini();
-		return 0;
-	}
-
+	kern_tty_60_init();
+	ccd_60_init();
 #ifdef CPU_UCODE
-	error = kern_cpu_60_init();
-	if (error != 0) {
-		ccd_60_fini();
-		kern_tty_60_fini();
-		kern_sa_60_fini();
-		kern_time_60_fini();
-		return 0;
-	}
+	kern_cpu_60_init();
 #endif
 
 	return error;
@@ -106,27 +87,11 @@ compat_60_fini(void)
 	int error = 0;
 
 #ifdef CPU_UCODE
-	error = kern_cpu_60_fini();
-	if (error != 0)
-		return error;
+	kern_cpu_60_fini();
 #endif
+	ccd_60_fini();
+	kern_tty_60_fini();
 
-	error = ccd_60_fini():
-	if (error != 0) {
-#ifdef CPU_UCODE
-		kern_cpu_60_init();
-		return error;
-#endif
-	}
-
-	error = kern_tty_60_fini();
-	if (error != 0) {
-		ccd_60_init();
-#ifdef CPU_UCODE
-		kern_cpu_60_init();
-#endif
-		return error;
-	}
 
 	error = kern_sa_60_fini();
 	if (error != 0) {
@@ -140,8 +105,8 @@ compat_60_fini(void)
 
 	error = kern_time_60_fini();
 	if (error != 0) {
-		kern_tty_60_init();
 		kern_sa_60_init();
+		kern_tty_60_init();
 		ccd_60_init();
 #ifdef CPU_UCODE
 		kern_cpu_60_init();

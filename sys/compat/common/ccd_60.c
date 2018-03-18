@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd_60.c,v 1.1.2.3 2018/03/18 22:49:26 pgoyette Exp $	*/
+/*	$NetBSD: ccd_60.c,v 1.1.2.4 2018/03/18 23:34:25 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd_60.c,v 1.1.2.3 2018/03/18 22:49:26 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd_60.c,v 1.1.2.4 2018/03/18 23:34:25 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -50,10 +50,8 @@ compat_60_ccdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l,
     int (*f)(dev_t, u_long, void *, int, struct lwp *))
 {
 	switch (cmd) {
-#if defined(COMPAT_60) && !defined(_LP64)
+#ifdef CCDIOCSET_60
 	case CCDIOCSET_60: {
-		int error;
-
 		if (data == NULL)
 			return 0;
 		
@@ -65,7 +63,7 @@ compat_60_ccdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l,
 		ccio.ccio_ileave = ccio60->ccio_ileave;
 		ccio.ccio_flags = ccio60->ccio_flags;
 		ccio.ccio_unit = ccio60->ccio_unit;
-		error = (*f)(dev, CCDIOCSET, &ccio, flag, l);
+		int error = (*f)(dev, CCDIOCSET, &ccio, flag, l);
 		if (!error) {
 			/* Copy data back, adjust types if necessary */
 			ccio60->ccio_disks = ccio.ccio_disks;
@@ -79,31 +77,27 @@ compat_60_ccdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l,
 	}
 
 	case CCDIOCCLR_60:
-		int error;
-
 		if (data == NULL)
 			return ENOSYS;
 		/*
 		 * ccio_size member not used, so existing struct OK
 		 * drop through to existing non-compat version
 		 */
-		return (*f)(dev, CCDIOCLR, data, flag, l);
-#endif /* COMPAT_60 && !_LP64*/
+		return (*f)(dev, CCDIOCCLR, data, flag, l);
+#endif
 	default:
 		return ENOSYS;
 	}
 }
 
-int
+void
 ccd_60_init(void)
 {
 	compat_ccd_ioctl_60 = compat_60_ccdioctl;
-	return 0;
 }
 
-int
+void
 ccd_60_fini(void)
 {
 	compat_ccd_ioctl_60 = (void *)enosys;
-	return 0;
 }

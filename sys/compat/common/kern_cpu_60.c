@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu_60.c,v 1.1.2.4 2018/03/18 09:00:55 pgoyette Exp $	*/
+/*	$NetBSD: kern_cpu_60.c,v 1.1.2.5 2018/03/18 23:34:25 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu_60.c,v 1.1.2.4 2018/03/18 09:00:55 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu_60.c,v 1.1.2.5 2018/03/18 23:34:25 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_cpu_ucode.h"
@@ -71,18 +71,16 @@ compat6_cpuctl_ioctl(struct lwp *l, u_long cmd, void *data)
  	}
 }
 
-int
+void
 kern_cpu_60_init(void)
 {
 
 	compat_cpuctl_ioctl = compat6_cpuctl_ioctl;
-	return 0;
 }
 
-int
+void
 kern_cpu_60_fini(void)
 {
 
 	compat_cpuctl_ioctl = (void *)enosys;
-	return 0;
 }
