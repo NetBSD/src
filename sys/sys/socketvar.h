@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.148 2018/03/16 17:35:13 christos Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.149 2018/03/18 15:32:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@ struct sockbuf {
 	u_long	sb_hiwat;		/* max actual char count */
 	u_long	sb_mbcnt;		/* chars of mbufs used */
 	u_long	sb_mbmax;		/* max chars of mbufs to use */
-	long	sb_lowat;		/* low water mark */
+	u_long	sb_lowat;		/* low water mark */
 	struct mbuf *sb_mb;		/* the mbuf chain */
 	struct mbuf *sb_mbtail;		/* the last mbuf in the chain */
 	struct mbuf *sb_lastrecord;	/* first mbuf of last record in
@@ -301,6 +301,7 @@ int	sofamily(const struct socket *);
 int	sobind(struct socket *, struct sockaddr *, struct lwp *);
 void	socantrcvmore(struct socket *);
 void	socantsendmore(struct socket *);
+void	soroverflow(struct socket *);
 int	soclose(struct socket *);
 int	soconnect(struct socket *, struct sockaddr *, struct lwp *);
 int	soconnect2(struct socket *, struct socket *);
@@ -335,8 +336,8 @@ int	sockargs(struct mbuf **, const void *, size_t, enum uio_seg, int);
 int	sopoll(struct socket *, int);
 struct	socket *soget(bool);
 void	soput(struct socket *);
-bool	solocked(struct socket *);
-bool	solocked2(struct socket *, struct socket *);
+bool	solocked(const struct socket *);
+bool	solocked2(const struct socket *, const struct socket *);
 int	sblock(struct sockbuf *, int);
 void	sbunlock(struct sockbuf *);
 int	sowait(struct socket *, bool, int);
@@ -399,22 +400,21 @@ sb_notify(struct sockbuf *sb)
 
 /*
  * How much space is there in a socket buffer (so->so_snd or so->so_rcv)?
- * This is problematical if the fields are unsigned, as the space might
- * still be negative (cc > hiwat or mbcnt > mbmax).  Should detect
- * overflow and return 0.
+ * Since the fields are unsigned, detect overflow and return 0.
  */
-static inline long
-sbspace(struct sockbuf *sb)
+static inline u_long
+sbspace(const struct sockbuf *sb)
 {
 
 	KASSERT(solocked(sb->sb_so));
-
+	if (sb->sb_hiwat <= sb->sb_cc || sb->sb_mbmax <= sb->sb_mbcnt)
+		return 0;
 	return lmin(sb->sb_hiwat - sb->sb_cc, sb->sb_mbmax - sb->sb_mbcnt);
 }
 
 /* do we have to send all at once on a socket? */
 static inline int
-sosendallatonce(struct socket *so)
+sosendallatonce(const struct socket *so)
 {
 
 	return so->so_proto->pr_flags & PR_ATOMIC;
@@ -422,7 +422,7 @@ sosendallatonce(struct socket *so)
 
 /* can we read something from so? */
 static inline int
-soreadable(struct socket *so)
+soreadable(const struct socket *so)
 {
 
 	KASSERT(solocked(so));
@@ -434,7 +434,7 @@ soreadable(struct socket *so)
 
 /* can we write something to so? */
 static inline int
-sowritable(struct socket *so)
+sowritable(const struct socket *so)
 {
 
 	KASSERT(solocked(so));
