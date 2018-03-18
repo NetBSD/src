@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.186 2017/02/03 16:06:45 christos Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.186.6.1 2018/03/18 10:57:01 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.186 2017/02/03 16:06:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.186.6.1 2018/03/18 10:57:01 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pipe.h"
@@ -1235,7 +1235,10 @@ sys_getsockopt(struct lwp *l, const struct sys_getsockopt_args *uap,
 	if ((error = fd_getsock1(SCARG(uap, s), &so, &fp)) != 0)
 		return (error);
 
-	sockopt_init(&sopt, SCARG(uap, level), SCARG(uap, name), 0);
+	if (valsize > MCLBYTES)
+		return EINVAL;
+
+	sockopt_init(&sopt, SCARG(uap, level), SCARG(uap, name), valsize);
 
 	if (fp->f_flag & FNOSIGPIPE)
 		so->so_options |= SO_NOSIGPIPE;
@@ -1246,7 +1249,7 @@ sys_getsockopt(struct lwp *l, const struct sys_getsockopt_args *uap,
 		goto out;
 
 	if (valsize > 0) {
-		len = min(valsize, sopt.sopt_size);
+		len = min(valsize, sopt.sopt_retsize);
 		error = copyout(sopt.sopt_data, SCARG(uap, val), len);
 		if (error)
 			goto out;

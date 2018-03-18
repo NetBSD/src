@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.100.6.2 2018/02/11 21:17:34 snj Exp $	*/
+/*	$NetBSD: in.h,v 1.100.6.3 2018/03/18 10:57:01 martin Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -289,8 +289,10 @@ struct ip_opts {
 #define	IP_IPSEC_POLICY		22   /* struct; get/set security policy */
 #define	IP_RECVTTL		23   /* bool; receive IP TTL w/dgram */
 #define	IP_MINTTL		24   /* minimum TTL for packet or drop */
-#define	IP_PKTINFO		25   /* int; send interface and src addr */
-#define	IP_RECVPKTINFO		26   /* int; send interface and dst addr */
+#define	IP_PKTINFO		25   /* struct; set default src if/addr */
+#define	IP_RECVPKTINFO		26   /* int; receive dst if/addr w/dgram */
+
+#define IP_SENDSRCADDR IP_RECVDSTADDR /* FreeBSD compatibility */
 
 /*
  * Information sent in the control message of a datagram socket for
@@ -300,6 +302,8 @@ struct in_pktinfo {
 	struct in_addr	ipi_addr;	/* src/dst address */
 	unsigned int ipi_ifindex;	/* interface index */
 };
+
+#define ipi_spec_dst ipi_addr	/* Solaris/Linux compatibility */
 
 /*
  * Defaults and limits for options
