@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_60_mod.c,v 1.1.2.7 2018/03/18 09:00:55 pgoyette Exp $	*/
+/*	$NetBSD: compat_60_mod.c,v 1.1.2.8 2018/03/18 12:06:59 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_60_mod.c,v 1.1.2.7 2018/03/18 09:00:55 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_60_mod.c,v 1.1.2.8 2018/03/18 12:06:59 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -71,9 +71,18 @@ compat_60_init(void)
 		return 0;
 	}
 
+	error = kern_tty_60_init();
+	if (error != 0) {
+		kern_sa_60_fini();
+		kern_time_60_fini();
+		return 0;
+	}
+
 #ifdef CPU_UCODE
 	error = kern_cpu_60_init();
 	if (error != 0) {
+		kern_tty_60_fini();
+		kern_sa_60_fini();
 		kern_time_60_fini();
 		return 0;
 	}
@@ -93,8 +102,17 @@ compat_60_fini(void)
 		return error;
 #endif
 
+	error = kern_tty_60_fini();
+	if (error != 0) {
+#ifdef CPU_UCODE
+		kern_cpu_60_init();
+#endif
+		return error;
+	}
+
 	error = kern_sa_60_fini();
 	if (error != 0) {
+		kern_tty_60_init();
 #ifdef CPU_UCODE
 		kern_cpu_60_init();
 #endif
@@ -103,13 +121,13 @@ compat_60_fini(void)
 
 	error = kern_time_60_fini();
 	if (error != 0) {
+		kern_tty_60_init();
 		kern_sa_60_init();
 #ifdef CPU_UCODE
 		kern_cpu_60_init();
 #endif
 		return error;
 	}
-
 
 	return error;
 }
