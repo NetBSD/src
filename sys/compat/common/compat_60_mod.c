@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_60_mod.c,v 1.1.2.5 2018/03/17 06:49:57 pgoyette Exp $	*/
+/*	$NetBSD: compat_60_mod.c,v 1.1.2.6 2018/03/18 02:05:21 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_60_mod.c,v 1.1.2.5 2018/03/17 06:49:57 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_60_mod.c,v 1.1.2.6 2018/03/18 02:05:21 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -51,44 +51,47 @@ __KERNEL_RCSID(0, "$NetBSD: compat_60_mod.c,v 1.1.2.5 2018/03/17 06:49:57 pgoyet
 #include <compat/common/compat_util.h>
 #include <compat/common/compat_mod.h>
 
-static const struct syscall_package compat_60_syscalls[] = {
-	{ SYS_compat_60__lwp_park, 0, (sy_call_t *)compat_60_sys__lwp_park },
-	{ 0, 0, NULL }
-};
-
-#ifdef _MODULE
-
 #define REQUIRED_60 "compat_70"		/* XXX No compat_80 yet */
 MODULE(MODULE_CLASS_EXEC, compat_60, REQUIRED_60);
 
-static const struct syscall_package compat__60_syscalls[] = {
-        { SYS_compat_60__lwp_park, 0, (sy_call_t *)compat_60_sys__lwp_park },  
-        NULL, 0, NULL }
-};
-#endif	/* _MODULE */
-
 int
-compat_60_init(void)
+compat_60_init()
 {
 	int error = 0;
 
-	error = syscall_establish(NULL, compat_60_syscalls);
+	error = kern_time_60_init();
 	if (error != 0)
 		return error;
-	return 0;
-}
 
-int
-compat_60_fini(void)
-{
-	int error = 0;
-
-	error = syscall_disestablish(NULL, compat_60_syscalls);
+#ifdef CPU_UCODE
+	error = kern_cpu_60_init();
+	if (error != 0) {
+		kern_time_60_fini();
+		return 0;
+	}
+#endif
 
 	return error;
 }
 
-#ifdef _MODULE
+int
+compat_60_fini()
+{
+	int error = 0;
+
+#ifdef CPU_UCODE
+	error = kern_cpu_60_fini();
+	if (error != 0)
+		return error;
+#endif
+
+	error = kern_time_60_fini();
+	if (error != 0)
+		kern_cpu_60_init();
+
+	return error;
+}
+
 static int
 compat_60_modcmd(modcmd_t cmd, void *arg)
 {
@@ -102,4 +105,3 @@ compat_60_modcmd(modcmd_t cmd, void *arg)
 		return ENOTTY;
 	}
 }
-#endif	/* _MODULE */

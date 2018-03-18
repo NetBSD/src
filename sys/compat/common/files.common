@@ -1,4 +1,4 @@
-#	$NetBSD: files.common,v 1.1.2.11 2018/03/16 08:10:26 pgoyette Exp $
+#	$NetBSD: files.common,v 1.1.2.12 2018/03/18 02:05:21 pgoyette Exp $
 
 #
 # Generic files, used by all compat options.
@@ -70,6 +70,7 @@ file	compat/common/compat_60_mod.c		compat_60
 file	compat/common/kern_sa_60.c		compat_60
 file	compat/common/tty_60.c			compat_60
 file	compat/common/kern_time_60.c		compat_60
+file	compat/common/kern_cpu_60.c		compat_60
 
 # Compatibility code for NetBSD 7.0
 file	compat/common/compat_70_mod.c		compat_70
