@@ -1,4 +1,4 @@
-/* $NetBSD: cpuio.h,v 1.6 2018/03/17 19:00:23 christos Exp $ */
+/* $NetBSD: cpuio.h,v 1.7 2018/03/18 00:51:45 christos Exp $ */
 
 #include <sys/ioccom.h>
 
@@ -7,7 +7,7 @@ struct compat6_cpu_ucode {
 	char fwname[PATH_MAX];
 };
 
-extern int (*compat_cpuctl_ioctl)(u_long, void *);
+extern int (*compat_cpuctl_ioctl)(struct lwp *, u_long, void *);
 
 #define OIOC_CPU_UCODE_GET_VERSION      _IOR('c', 4, struct compat6_cpu_ucode)
 #define OIOC_CPU_UCODE_APPLY            _IOW('c', 5, struct compat6_cpu_ucode)
