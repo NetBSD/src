@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.175 2018/01/23 22:42:29 pgoyette Exp $	*/
+/*	$NetBSD: ccd.c,v 1.175.2.1 2018/03/18 21:41:31 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2007, 2009 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.175 2018/01/23 22:42:29 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.175.2.1 2018/03/18 21:41:31 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -1076,6 +1076,9 @@ ccdwrite(dev_t dev, struct uio *uio, int flags)
 	return (physio(ccdstrategy, NULL, dev, B_WRITE, minphys, uio));
 }
 
+int (*compat_ccd_ioctl_60)(dev_t, u_long, void *, int, struct lwp *,
+    int (*)(dev_t, u_long, void *, int, struct lwp *)) = (void *)enosys;
+
 static int
 ccdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
@@ -1093,14 +1096,14 @@ ccdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 #endif
 
 	switch (cmd) {
-#if defined(COMPAT_60) && !defined(_LP64)
-	case CCDIOCSET_60:
-#endif
 	case CCDIOCSET:
 		make = 1;
 		break;
 	default:
-		make = 0;
+		if ((*compat_ccd_ioctl_60)(0, cmd, NULL, 0, NULL, NULL) == 0)
+			make = 1;
+		else
+			make = 0;
 		break;
 	}
 
@@ -1108,45 +1111,9 @@ ccdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		return ENOENT;
 	uc = kauth_cred_get();
 
-/*
- * Compat code must not be called if on a platform where
- * sizeof (size_t) == sizeof (uint64_t) as CCDIOCSET will
- * be the same as CCDIOCSET_60
- */
-#if defined(COMPAT_60) && !defined(_LP64)
-	switch (cmd) {
-	case CCDIOCSET_60: {
-		struct ccd_ioctl ccionew;
-       		struct ccd_ioctl_60 *ccio60 =
-       		    (struct ccd_ioctl_60 *)data;
-		ccionew.ccio_disks = ccio->ccio_disks;
-		ccionew.ccio_ndisks = ccio->ccio_ndisks;
-		ccionew.ccio_ileave = ccio->ccio_ileave;
-		ccionew.ccio_flags = ccio->ccio_flags;
-		ccionew.ccio_unit = ccio->ccio_unit;
-		error = ccdioctl(dev, CCDIOCSET, &ccionew, flag, l);
-		if (!error) {
-			/* Copy data back, adjust types if necessary */
-			ccio60->ccio_disks = ccionew.ccio_disks;
-			ccio60->ccio_ndisks = ccionew.ccio_ndisks;
-			ccio60->ccio_ileave = ccionew.ccio_ileave;
-			ccio60->ccio_flags = ccionew.ccio_flags;
-			ccio60->ccio_unit = ccionew.ccio_unit;
-			ccio60->ccio_size = (size_t)ccionew.ccio_size;
-		}
+	error = (*compat_ccd_ioctl_60)(dev, cmd, data, flag, l, ccdioctl);
+	if (error != ENOSYS)
 		return error;
-		}
-		break;
-
-	case CCDIOCCLR_60:
-		/*
-		 * ccio_size member not used, so existing struct OK
-		 * drop through to existing non-compat version
-		 */
-		cmd = CCDIOCCLR;
-		break;
-	}
-#endif /* COMPAT_60 && !_LP64*/
 
 	/* Must be open for writes for these commands... */
 	switch (cmd) {
