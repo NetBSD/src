@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.14 2017/07/03 21:31:00 wiz Exp $
+.\"	$NetBSD: boot.8,v 1.15 2018/03/18 10:54:54 ragge Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -292,7 +292,7 @@ On an 11/750 with patchable control store,
 microcode patches will be installed by
 .Em boot
 if the file
-.Pa psc750.bin
+.Pa pcs750.bin
 exists in the root of the filesystem from which the system is booted.
 .Pp
 In an emergency, the bootstrap methods described in the paper
@@ -305,9 +305,7 @@ system code
 .It Pa /boot
 system bootstrap
 .It Pa /usr/mdec/xxboot
-sector-0 boot block for 750, xx is disk type
-.It Pa /usr/mdec/bootxx
-second-stage boot for 750, xx is disk type
+sector 0-15 boot block
 .It Pa /pcs750.bin
 microcode patch file on 750
 .El
