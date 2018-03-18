@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2016/11/03 04:26:58 riastradh Exp $
+#	$NetBSD: Makefile,v 1.15 2018/03/18 00:51:46 christos Exp $
 
 .include "../Makefile.inc"
 
@@ -24,6 +24,13 @@ CPPFLAGS+=	-DCOMPAT_20
 CPPFLAGS+=	-DCOMPAT_30 -DCOMPAT_40 -DCOMPAT_50
 CPPFLAGS+=	-DCOMPAT_60 -DCOMPAT_70 -DCOMPAT_80
 CPPFLAGS+=	-DCOMPAT_43
+.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
+CPPFLAGS+=	-DCPU_UCODE
+# pick up more for bsd.klinks.mk as needed.
+MACHINE_EXTRA=	x86
+.else
+MACHINE_EXTRA=	none
+.endif
 
 .include "../../compat/common/Makefile.sysio"
 
@@ -32,17 +39,15 @@ SRCS+=	compat_mod.c
 .PATH:	${S}/arch/${MACHINE}/${MACHINE}
 .PATH:	${S}/arch/${MACHINE_ARCH}/${MACHINE_ARCH}
 .PATH:	${S}/arch/${MACHINE_CPU}/${MACHINE_CPU}
+.PATH:	${S}	${S}/arch/${MACHINE_EXTRA}/${MACHINE_EXTRA}
 
-.if (exists(${S}/arch/${MACHINE}/${MACHINE}/compat_13_machdep.c)) || \
-    (exists(${S}/arch/${MACHINE_ARCH}/${MACHINE_ARCH}/compat_13_machdep.c)) || \
-    (exists(${S}/arch/${MACHINE_CPU}/${MACHINE_CPU}/compat_13_machdep.c))
-SRCS+=	compat_13_machdep.c
-.endif
-
-.if (exists(${S}/arch/${MACHINE}/${MACHINE}/compat_16_machdep.c)) || \
-    (exists(${S}/arch/${MACHINE_ARCH}/${MACHINE_ARCH}/compat_16_machdep.c)) || \
-    (exists(${S}/arch/${MACHINE_CPU}/${MACHINE_CPU}/compat_16_machdep.c))
-SRCS+=	compat_16_machdep.c
-.endif
+.for i in compat_13_machdep.c compat_16_machdep.c compat_60_cpu_ucode.c
+.   if	exists(${S}/arch/${MACHINE}/${MACHINE}/${i}) || \
+	exists(${S}/arch/${MACHINE_ARCH}/${MACHINE_ARCH}/${i}) || \
+	exists(${S}/arch/${MACHINE_CPU}/${MACHINE_CPU}/${i}) || \
+	exists(${S}/arch/${MACHINE_EXTRA}/${MACHINE_EXTRA}/${i})
+SRCS+=	${i}
+.   endif
+.endfor
 
 .include <bsd.kmodule.mk>
