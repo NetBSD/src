@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_mod.h,v 1.1.42.4 2018/03/18 02:05:21 pgoyette Exp $	*/
+/*	$NetBSD: compat_mod.h,v 1.1.42.5 2018/03/18 09:00:55 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -50,8 +50,8 @@ int compat_60_init(void);
 int compat_60_fini(void);
 int kern_time_60_init(void);
 int kern_time_60_fini(void);
-int kern_cpu_60_init(void);
-int kern_cpu_60_fini(void);
+int kern_sa_60_init(void);
+int kern_sa_60_fini(void);
 int kern_tty_60_init(void);
 int kern_tty_60_fini(void);
 #endif
