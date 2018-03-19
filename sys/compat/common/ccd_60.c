@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd_60.c,v 1.5 2018/03/19 00:21:50 christos Exp $	*/
+/*	$NetBSD: ccd_60.c,v 1.6 2018/03/19 13:04:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd_60.c,v 1.5 2018/03/19 00:21:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd_60.c,v 1.6 2018/03/19 13:04:01 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -93,11 +93,12 @@ compat_60_ccdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l,
 void
 ccd_60_init(void)
 {
-    compat_ccd_ioctl_60 = compat_60_ccdioctl;
+	(void)compat_50_ccdioctl;
+//	compat_ccd_ioctl_60 = compat_60_ccdioctl;
 }
 
 void
 ccd_60_fini(void)
 {
-    compat_ccd_ioctl_60 = (void *)enosys;
+//	compat_ccd_ioctl_60 = (void *)enosys;
 }
