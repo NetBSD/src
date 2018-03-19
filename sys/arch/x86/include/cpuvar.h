@@ -1,4 +1,4 @@
-/* 	$NetBSD: cpuvar.h,v 1.46 2012/04/20 22:23:24 rmind Exp $ */
+/* 	$NetBSD: cpuvar.h,v 1.46.18.1 2018/03/19 16:54:58 martin Exp $ */
 
 /*-
  * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@ void	pat_init(struct cpu_info *);
 extern int cpu_vendor;
 extern bool x86_mp_online;
 
-extern uint32_t cpu_feature[5];
+extern uint32_t cpu_feature[7];
 
 #endif /* _KERNEL */
 
