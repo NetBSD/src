@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_lockdebug.c,v 1.63 2018/03/16 08:21:45 ozaki-r Exp $	*/
+/*	$NetBSD: subr_lockdebug.c,v 1.64 2018/03/19 08:41:21 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.63 2018/03/16 08:21:45 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.64 2018/03/19 08:41:21 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -930,7 +930,7 @@ lockdebug_show_all_locks(void (*pr)(const char *, ...), const char *modif)
 }
 
 void
-lockdebug_show_lockstat(void (*pr)(const char *, ...))
+lockdebug_show_lockstats(void (*pr)(const char *, ...))
 {
 #ifdef LOCKDEBUG
 	lockdebug_t *ld;
