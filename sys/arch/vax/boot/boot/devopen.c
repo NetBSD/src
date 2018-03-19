@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.18 2017/05/22 16:59:32 ragge Exp $ */
+/*	$NetBSD: devopen.c,v 1.19 2018/03/19 15:43:45 ragge Exp $ */
 /*
  * Copyright (c) 1997 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -27,6 +27,7 @@
 #include <lib/libsa/stand.h>
 #include <lib/libkern/libkern.h>
 
+#include <machine/param.h>
 #include <machine/rpb.h>
 #include <machine/sid.h>
 #include <machine/pte.h>
@@ -38,7 +39,12 @@
 #include "vaxstand.h"
 
 int nexaddr, csrbase;
+static int *mapaddr;
 
+/*
+ * Boot device syntax:
+ * device(adapter, controller, unit, partition)file
+ */
 int
 devopen(struct open_file *f, const char *fname, char **file)
 {
@@ -127,6 +133,7 @@ devopen(struct open_file *f, const char *fname, char **file)
 		if (adapt < 0)
 			break;
 		nexaddr = (NEX750 + NEXSIZE * adapt);
+		mapaddr = (int *)nexaddr + VAX_NBPG;
 		csrbase = (adapt == 8 ? 0xffe000 : 0xfbe000);
 		break;
 	case VAX_BTYP_780:
@@ -135,6 +142,7 @@ devopen(struct open_file *f, const char *fname, char **file)
 		if (adapt < 0)
 			break;
 		nexaddr = ((int)NEX780 + NEXSIZE * adapt);
+		mapaddr = (int *)nexaddr + VAX_NBPG;
 		csrbase = 0x2007e000 + 0x40000 * adapt;
 		break;
 	case VAX_BTYP_9CC: /* 6000/200 */
@@ -176,6 +184,7 @@ devopen(struct open_file *f, const char *fname, char **file)
 		mapregs = (void *)0x20088000;
 		if (bootrpb.adpphy == 0x20087800) {
 			nexaddr = bootrpb.adpphy;
+			mapaddr = (int *)nexaddr + VAX_NBPG;
 			for (i = 0; i < 8192; i++)
 				mapregs[i] = PG_V | i;
 		}
@@ -194,4 +203,25 @@ devopen(struct open_file *f, const char *fname, char **file)
 usage:
 	printf("usage: dev(adapter,controller,unit,partition)file -asd\n");
 	return -1;
+}
+
+/*
+ * Map in virtual address vaddr of size vsize starting with map mapno.
+ * Returns the unibus address of the mapped area.
+ */
+int
+ubmap(int mapno, int vaddr, int size)
+{
+	int voff = (vaddr & VAX_PGOFSET);
+	int rv = (mapno << VAX_PGSHIFT) + voff;
+	int vpag, npag;
+
+	if (mapaddr == 0)
+		return vaddr; /* no map, phys == virt */
+
+	npag = (voff + size) / VAX_NBPG;
+	vpag = vaddr >> VAX_PGSHIFT;
+	while (npag-- >= 0)
+		mapaddr[mapno++] = vpag++ | PG_V;
+	return rv;
 }
