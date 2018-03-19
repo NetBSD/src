@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.127 2018/03/18 15:32:48 christos Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.128 2018/03/19 16:26:26 roy Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.127 2018/03/18 15:32:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.128 2018/03/19 16:26:26 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
@@ -491,6 +491,20 @@ socantrcvmore(struct socket *so)
 	KASSERT(solocked(so));
 
 	so->so_state |= SS_CANTRCVMORE;
+	sorwakeup(so);
+}
+
+/*
+ * soroverflow(): indicates that data was attempted to be sent
+ * but the receiving buffer overflowed.
+ */
+void
+soroverflow(struct socket *so)
+{
+	KASSERT(solocked(so));
+
+	so->so_rcv.sb_overflowed++;
+	so->so_error = ENOBUFS;
 	sorwakeup(so);
 }
 
