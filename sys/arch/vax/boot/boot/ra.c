@@ -1,4 +1,4 @@
-/*	$NetBSD: ra.c,v 1.20 2017/05/22 16:59:32 ragge Exp $ */
+/*	$NetBSD: ra.c,v 1.21 2018/03/19 15:43:45 ragge Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -67,7 +67,6 @@ static struct disklabel ralabel;
 static char io_buf[DEV_BSIZE];
 static int dpart, dunit, remap, is_tmscp, curblock;
 static volatile u_short *ra_ip, *ra_sa, *ra_sw;
-static volatile u_int *mapregs;
 
 int
 raopen(struct open_file *f, int adapt, int ctlr, int unit, int part)
@@ -102,14 +101,9 @@ raopen(struct open_file *f, int adapt, int ctlr, int unit, int part)
 			csrbase += (ctlr ? 000334 : 012150);
 		ra_ip = (u_short *)csrbase;
 		ra_sa = ra_sw = (u_short *)csrbase + 1;
-		if (nexaddr) { /* have map registers */
-			mapregs = (u_int *)nexaddr + 512;
-			mapregs[494] = PG_V | (((u_int)&uda) >> 9);
-			mapregs[495] = mapregs[494] + 1;
-			ubauda = (struct uda *)((char*)0x3dc00 +
-			    (((u_int)(&uda))&0x1ff));
-		} else
-			ubauda = &uda;
+		
+		ubauda = (struct uda *)ubmap(494,
+		    (int)&uda, sizeof(struct uda));
 		johan = (((u_int)ubauda) & 0xffff) + 8;
 		johan2 = (((u_int)ubauda) >> 16) & 077;
 		*ra_ip = 0; /* Start init */
@@ -258,21 +252,13 @@ int
 rastrategy(void *f, int func, daddr_t dblk,
     size_t size, void *buf, size_t *rsize)
 {
-	u_int	pfnum, mapnr, nsize;
 
 #ifdef DEV_DEBUG
 	printf("rastrategy: buf %p remap %d is_tmscp %d\n",
 	    buf, remap, is_tmscp);
 #endif
-	if (remap) {
-		pfnum = (u_int)buf >> VAX_PGSHIFT;
 
-		for(mapnr = 0, nsize = size; (nsize + VAX_NBPG) > 0;
-		    nsize -= VAX_NBPG)
-			mapregs[mapnr++] = PG_V | pfnum++;
-		uda.uda_cmd.mscp_seq.seq_buffer = ((u_int)buf) & 0x1ff;
-	} else
-		uda.uda_cmd.mscp_seq.seq_buffer = ((u_int)buf);
+	uda.uda_cmd.mscp_seq.seq_buffer = ubmap(0, (int)buf, size);
 
 	if (is_tmscp) {
 		int i;
