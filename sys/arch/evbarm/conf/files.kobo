@@ -1,12 +1,9 @@
-#	$NetBSD: files.kobo,v 1.2 2015/05/07 04:13:47 hkenken Exp $
+#	$NetBSD: files.kobo,v 1.3 2018/03/19 17:11:24 ryo Exp $
 #
 # KOBO evaluation board configuration info
 #
 
 file	arch/evbarm/kobo/kobo_machdep.c
-
-# Kernel boot arguments
-defparam opt_machdep.h				BOOT_ARGS
 
 # CPU support and integrated peripherals
 include	"arch/arm/imx/files.imx51"
