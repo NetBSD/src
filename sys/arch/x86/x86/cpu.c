@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.111.2.1.2.1 2015/11/08 00:15:47 riz Exp $	*/
+/*	$NetBSD: cpu.c,v 1.111.2.1.2.2 2018/03/19 16:54:58 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000-2012 NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.111.2.1.2.1 2015/11/08 00:15:47 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.111.2.1.2.2 2018/03/19 16:54:58 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -177,13 +177,15 @@ static void	tss_init(struct i386tss *, void *, void *);
 
 static void	cpu_init_idle_lwp(struct cpu_info *);
 
-uint32_t cpu_feature[5]; /* X86 CPUID feature bits
-			  *	[0] basic features %edx
-			  *	[1] basic features %ecx
-			  *	[2] extended features %edx
-			  *	[3] extended features %ecx
-			  *	[4] VIA padlock features
-			  */
+uint32_t cpu_feature[7]; /* X86 CPUID feature bits */
+			/* [0] basic features cpuid.1:%edx
+			 * [1] basic features cpuid.1:%ecx (CPUID2_xxx bits)
+			 * [2] extended features cpuid:80000001:%edx
+			 * [3] extended features cpuid:80000001:%ecx
+			 * [4] VIA padlock features
+			 * [5] structured extended features cpuid.7:%ebx
+			 * [6] structured extended features cpuid.7:%ecx
+			 */
 
 extern char x86_64_doubleflt_stack[];
 
@@ -784,7 +786,7 @@ cpu_boot_secondary(struct cpu_info *ci)
 }
 
 /*
- * The CPU ends up here when its ready to run
+ * The CPU ends up here when it's ready to run.
  * This is called from code in mptramp.s; at this point, we are running
  * in the idle pcb/idle stack of the new CPU.  When this function returns,
  * this processor will enter the idle loop and start looking for work.
