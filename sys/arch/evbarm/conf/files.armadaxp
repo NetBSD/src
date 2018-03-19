@@ -1,4 +1,4 @@
-#	$NetBSD: files.armadaxp,v 1.3 2014/03/29 14:13:17 matt Exp $
+#	$NetBSD: files.armadaxp,v 1.4 2018/03/19 17:11:24 ryo Exp $
 #
 # Marvell Armada XP configuration info
 #
@@ -8,8 +8,6 @@ file	arch/arm/arm32/arm32_reboot.c
 
 file	arch/evbarm/armadaxp/armadaxp_machdep.c
 
-# Kernel boot arguments
-defparam opt_machdep.h			BOOT_ARGS
 defflag	opt_cputypes.h			L2CACHE_ENABLE
 defflag	opt_cputypes.h			AURORA_IO_CACHE_COHERENCY AURORA_L2_PT_WALK
 
