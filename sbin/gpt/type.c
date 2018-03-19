@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/remove.c,v 1.10 2006/10/04 18:20:25 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: type.c,v 1.13 2015/12/06 00:39:26 christos Exp $");
+__RCSID("$NetBSD: type.c,v 1.14 2018/03/19 09:06:20 mlelstv Exp $");
 #endif
 
 #include <sys/types.h>
@@ -61,7 +61,7 @@ struct gpt_cmd c_type = {
 	"type",
 	cmd_type,
 	typehelp, __arraycount(typehelp),
-	0,
+	GPT_OPTDEV,
 };
 
 #define usage() gpt_usage(NULL, &c_type)
@@ -91,17 +91,17 @@ cmd_type(gpt_t gpt, int argc, char *argv[])
 			gpt_uuid_help("\t");
 			return 0;
 		case 'T':
-			if (gpt_uuid_get(gpt, &newtype) == -1)
+			if (gpt == NULL || gpt_uuid_get(gpt, &newtype) == -1)
 				return -1;
 			break;
 		default:
-			if (gpt_add_find(gpt, &find, ch) == -1)
+			if (gpt == NULL || gpt_add_find(gpt, &find, ch) == -1)
 				return usage();
 			break;
 		}
 	}
 
-	if (gpt_uuid_is_nil(newtype) || argc != optind)
+	if (gpt == NULL || gpt_uuid_is_nil(newtype) || argc != optind)
 		return usage();
 
 	return gpt_change_ent(gpt, &find, change, &newtype);
