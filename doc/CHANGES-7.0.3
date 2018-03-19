@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.3,v 1.1.2.91 2018/03/10 16:12:07 snj Exp $
+# $NetBSD: CHANGES-7.0.3,v 1.1.2.92 2018/03/19 16:55:50 martin Exp $
 
 A complete list of changes from the NetBSD 7.0.2 release to the NetBSD 7.0.3
 release:
@@ -5308,4 +5308,12 @@ etc/namedb/bind.keys				1.2
 	Update the keys file to the latest version from
 	https://ftp.isc.org/isc/bind9/keys/9.11/bind.keys.v9_11
 	[maya, ticket #1583]
+
+sys/arch/x86/include/cpu.h			1.67
+sys/arch/x86/include/cpuvar.h			1.47
+sys/arch/x86/x86/cpu.c				1.117
+sys/arch/x86/x86/identcpu.c			1.49
+
+	Retrieve cpuid7 (Structured Extended Features) into ci_feat_val.
+	[msaitoh, ticket #1118]
 
