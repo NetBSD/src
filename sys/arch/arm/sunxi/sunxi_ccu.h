@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_ccu.h,v 1.15 2017/10/28 13:13:45 jmcneill Exp $ */
+/* $NetBSD: sunxi_ccu.h,v 1.16 2018/03/19 16:18:30 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -63,6 +63,7 @@ enum sunxi_ccu_clktype {
 	SUNXI_CCU_DIV,
 	SUNXI_CCU_PHASE,
 	SUNXI_CCU_FIXED_FACTOR,
+	SUNXI_CCU_FRACTIONAL,
 };
 
 struct sunxi_ccu_gate {
@@ -342,6 +343,50 @@ const char *sunxi_ccu_fixed_factor_get_parent(struct sunxi_ccu_softc *,
 		.get_parent = sunxi_ccu_fixed_factor_get_parent,	\
 	}
 
+struct sunxi_ccu_fractional {
+	bus_size_t	reg;
+	const char	*parent;
+	uint32_t	m;
+	uint32_t	m_min;
+	uint32_t	m_max;
+	uint32_t	frac_en;
+	uint32_t	frac_sel;
+	uint32_t	frac[2];
+	uint32_t	prediv;
+	uint32_t	enable;
+};
+
+int	sunxi_ccu_fractional_enable(struct sunxi_ccu_softc *,
+			    struct sunxi_ccu_clk *, int);
+u_int	sunxi_ccu_fractional_get_rate(struct sunxi_ccu_softc *,
+			      struct sunxi_ccu_clk *);
+int	sunxi_ccu_fractional_set_rate(struct sunxi_ccu_softc *,
+			      struct sunxi_ccu_clk *, u_int);
+const char *sunxi_ccu_fractional_get_parent(struct sunxi_ccu_softc *,
+				    struct sunxi_ccu_clk *);
+
+#define	SUNXI_CCU_FRACTIONAL(_id, _name, _parent, _reg, _m, _m_min, _m_max, \
+		     _frac_en, _frac_sel, _frac0, _frac1, _prediv, _enable) \
+	[_id] = {							\
+		.type = SUNXI_CCU_FRACTIONAL,				\
+		.base.name = (_name),					\
+		.u.fractional.reg = (_reg),				\
+		.u.fractional.parent = (_parent),			\
+		.u.fractional.m = (_m),					\
+		.u.fractional.m_min = (_m_min),				\
+		.u.fractional.m_max = (_m_max),				\
+		.u.fractional.prediv = (_prediv),			\
+		.u.fractional.frac_en = (_frac_en),			\
+		.u.fractional.frac_sel = (_frac_sel),			\
+		.u.fractional.frac[0] = (_frac0),			\
+		.u.fractional.frac[1] = (_frac1),			\
+		.u.fractional.enable = (_enable),			\
+		.enable = sunxi_ccu_fractional_enable,			\
+		.get_rate = sunxi_ccu_fractional_get_rate,		\
+		.set_rate = sunxi_ccu_fractional_set_rate,		\
+		.get_parent = sunxi_ccu_fractional_get_parent,		\
+	}
+
 struct sunxi_ccu_clk {
 	struct clk	base;
 	enum sunxi_ccu_clktype type;
@@ -353,6 +398,7 @@ struct sunxi_ccu_clk {
 		struct sunxi_ccu_div div;
 		struct sunxi_ccu_phase phase;
 		struct sunxi_ccu_fixed_factor fixed_factor;
+		struct sunxi_ccu_fractional fractional;
 	} u;
 
 	int		(*enable)(struct sunxi_ccu_softc *,

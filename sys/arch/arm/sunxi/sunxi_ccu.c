@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_ccu.c,v 1.7 2017/09/30 12:48:58 jmcneill Exp $ */
+/* $NetBSD: sunxi_ccu.c,v 1.8 2018/03/19 16:18:30 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "opt_fdt_arm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_ccu.c,v 1.7 2017/09/30 12:48:58 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_ccu.c,v 1.8 2018/03/19 16:18:30 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -331,6 +331,7 @@ sunxi_ccu_print(struct sunxi_ccu_softc *sc)
 		case SUNXI_CCU_DIV:		type = "div"; break;
 		case SUNXI_CCU_PHASE:		type = "phase"; break;
 		case SUNXI_CCU_FIXED_FACTOR:	type = "fixed-factor"; break;
+		case SUNXI_CCU_FRACTIONAL:	type = "fractional"; break;
 		default:			type = "???"; break;
 		}
 

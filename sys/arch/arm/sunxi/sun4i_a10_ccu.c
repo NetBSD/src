@@ -1,4 +1,4 @@
-/* $NetBSD: sun4i_a10_ccu.c,v 1.6 2017/12/16 16:40:33 jmcneill Exp $ */
+/* $NetBSD: sun4i_a10_ccu.c,v 1.7 2018/03/19 16:18:30 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sun4i_a10_ccu.c,v 1.6 2017/12/16 16:40:33 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun4i_a10_ccu.c,v 1.7 2018/03/19 16:18:30 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -43,7 +43,10 @@ __KERNEL_RCSID(1, "$NetBSD: sun4i_a10_ccu.c,v 1.6 2017/12/16 16:40:33 jmcneill E
 
 #define	PLL1_CFG_REG		0x000
 #define	PLL2_CFG_REG		0x008
+#define	PLL3_CFG_REG		0x010
+#define	PLL5_CFG_REG		0x020
 #define	PLL6_CFG_REG		0x028
+#define	PLL7_CFG_REG		0x030
 #define	OSC24M_CFG_REG		0x050
 #define	CPU_AHB_APB0_CFG_REG	0x054
 #define	APB1_CLK_DIV_REG	0x058
@@ -58,11 +61,20 @@ __KERNEL_RCSID(1, "$NetBSD: sun4i_a10_ccu.c,v 1.6 2017/12/16 16:40:33 jmcneill E
 #define	SD3_SCLK_CFG_REG	0x094
 #define	SATA_CFG_REG		0x0c8
 #define	USBPHY_CFG_REG		0x0cc
-#define	BE_CFG_REG		0x104
-#define	FE_CFG_REG		0x10c
+#define	DRAM_GATING_REG		0x100
+#define	BE0_CFG_REG		0x104
+#define	BE1_CFG_REG		0x108
+#define	FE0_CFG_REG		0x10c
+#define	FE1_CFG_REG		0x110
+#define	MP_CFG_REG		0x114
+#define	LCD0CH0_CFG_REG		0x118
+#define	LCD1CH0_CFG_REG		0x11c
+#define LCD0CH1_CFG_REG		0x12c
+#define LCD1CH1_CFG_REG		0x130
 #define	CSI_CFG_REG		0x134
 #define	VE_CFG_REG		0x13c
 #define	AUDIO_CODEC_SCLK_CFG_REG 0x140
+#define	HDMI_CLOCK_CFG_REG	0x150
 #define	MALI_CLOCK_CFG_REG	0x154
 #define	IEP_SCLK_CFG_REG	0x160
 
@@ -87,6 +99,13 @@ static struct sunxi_ccu_reset sun4i_a10_ccu_resets[] = {
 	SUNXI_CCU_RESET(A10_RST_USB_PHY0, USBPHY_CFG_REG, 0),
 	SUNXI_CCU_RESET(A10_RST_USB_PHY1, USBPHY_CFG_REG, 1),
 	SUNXI_CCU_RESET(A10_RST_USB_PHY2, USBPHY_CFG_REG, 2),
+	SUNXI_CCU_RESET(A10_RST_DE_BE0, BE0_CFG_REG, 30),
+	SUNXI_CCU_RESET(A10_RST_DE_BE1, BE1_CFG_REG, 30),
+	SUNXI_CCU_RESET(A10_RST_DE_FE0, FE0_CFG_REG, 30),
+	SUNXI_CCU_RESET(A10_RST_DE_FE1, FE1_CFG_REG, 30),
+	SUNXI_CCU_RESET(A10_RST_DE_MP, MP_CFG_REG, 30),
+	SUNXI_CCU_RESET(A10_RST_TCON0, LCD0CH0_CFG_REG, 30),
+	SUNXI_CCU_RESET(A10_RST_TCON1, LCD1CH0_CFG_REG, 30),
 };
 
 static const char *cpu_parents[] = { "losc", "osc24m", "pll_core", "pll_periph" };
@@ -94,8 +113,13 @@ static const char *axi_parents[] = { "cpu" };
 static const char *ahb_parents[] = { "axi", "pll_periph", "pll_periph_base" };
 static const char *apb0_parents[] = { "ahb" };
 static const char *apb1_parents[] = { "osc24m", "pll_periph", "losc" };
-static const char *mod_parents[] = { "osc24m", "pll_periph", "pll_ddr" };
+static const char *mod_parents[] = { "osc24m", "pll_periph", "pll_ddr_other" };
 static const char *sata_parents[] = { "pll6_periph_sata", "external" };
+static const char *de_parents[] = { "pll_video0", "pll_video1", "pll_ddr_other" };
+static const char *lcd0_parents[] = { "pll_video0", "pll_video1", "pll_video0x2" };
+static const char *lcd1_parents[] = { "pll_video0", "pll_video1", "pll_video0x2", "pll_video1x2" };
+static const char *lcd0ch1c2[] = { "tcon0-ch1-clk2" };
+static const char *lcd1ch1c2[] = { "tcon1-ch1-clk2" };
 
 static const struct sunxi_ccu_nkmp_tbl sun4i_a10_pll1_table[] = {
 	{ 1008000000, 21, 1, 0, 0 },
@@ -169,6 +193,24 @@ static struct sunxi_ccu_clk sun4i_a10_ccu_clks[] = {
 	    __BIT(24),			/* sel */
 	    __BIT(31),			/* enable */
 	    0),
+
+	SUNXI_CCU_NKMP(A10_CLK_PLL_DDR_BASE, "pll_ddr_other", "osc24m",
+	    PLL5_CFG_REG,		/* reg */
+	    __BITS(12, 8),		/* n */
+	    __BITS(5,4),		/* k */
+	    0,				/* m */
+	    __BITS(17,16),		/* p */
+	    __BIT(31),			/* enable */
+	    SUNXI_CCU_NKMP_FACTOR_N_EXACT | SUNXI_CCU_NKMP_FACTOR_P_POW2),
+
+	SUNXI_CCU_NKMP(A10_CLK_PLL_DDR, "pll_ddr", "osc24m",
+	    PLL5_CFG_REG,		/* reg */
+	    __BITS(12, 8),		/* n */
+	    __BITS(5,4),		/* k */
+	    __BITS(1,0),		/* m */
+	    0,				/* p */
+	    __BIT(31),			/* enable */
+	    SUNXI_CCU_NKMP_FACTOR_N_EXACT),
 
 	SUNXI_CCU_DIV(A10_CLK_CPU, "cpu", cpu_parents,
 	    CPU_AHB_APB0_CFG_REG,	/* reg */
@@ -254,6 +296,113 @@ static struct sunxi_ccu_clk sun4i_a10_ccu_clks[] = {
 	    SD3_SCLK_CFG_REG, __BITS(22,20)),
 	SUNXI_CCU_PHASE(A10_CLK_MMC3_OUTPUT, "mmc3_output", "mmc3",
 	    SD3_SCLK_CFG_REG, __BITS(10,8)),
+
+	SUNXI_CCU_FRACTIONAL(A10_CLK_PLL_VIDEO0, "pll_video0", "osc24m",
+	    PLL3_CFG_REG,		/* reg */
+	    __BITS(7,0),		/* m */
+	    9,				/* m_min */
+	    127,			/* m_max */
+	    __BIT(15),			/* frac_en */
+	    __BIT(14),			/* frac_sel */
+	    270000000, 297000000,	/* frac values */
+	    8,				/* prediv */
+	    __BIT(31)			/* enable */
+	    ),
+	SUNXI_CCU_FRACTIONAL(A10_CLK_PLL_VIDEO1, "pll_video1", "osc24m",
+	    PLL7_CFG_REG,		/* reg */
+	    __BITS(7,0),		/* m */
+	    9,				/* m_min */
+	    127,			/* m_max */
+	    __BIT(15),			/* frac_en */
+	    __BIT(14),			/* frac_sel */
+	    270000000, 297000000,	/* frac values */
+	    8,				/* prediv */
+	    __BIT(31)			/* enable */
+	    ),
+	SUNXI_CCU_FIXED_FACTOR(A10_CLK_PLL_VIDEO0_2X,
+	    "pll_video0x2", "pll_video0",
+	    1, 2),
+	SUNXI_CCU_FIXED_FACTOR(A10_CLK_PLL_VIDEO1_2X,
+	    "pll_video1x2", "pll_video1",
+	    1, 2),
+
+	SUNXI_CCU_DIV_GATE(A10_CLK_DE_BE0, "debe0-mod", de_parents,
+	    BE0_CFG_REG,		/* reg */
+	    __BITS(3,0),		/* div */
+	    __BITS(25,24),		/* sel */
+	    __BIT(31),			/* enable */
+	    0				/* flags */
+	    ),
+	SUNXI_CCU_DIV_GATE(A10_CLK_DE_BE1, "debe1-mod", de_parents,
+	    BE1_CFG_REG,		/* reg */
+	    __BITS(3,0),		/* div */
+	    __BITS(25,24),		/* sel */
+	    __BIT(31),			/* enable */
+	    0				/* flags */
+	    ),
+	SUNXI_CCU_DIV_GATE(A10_CLK_DE_FE0, "defe0-mod", de_parents,
+	    FE0_CFG_REG,		/* reg */
+	    __BITS(3,0),		/* div */
+	    __BITS(25,24),		/* sel */
+	    __BIT(31),			/* enable */
+	    0				/* flags */
+	    ),
+	SUNXI_CCU_DIV_GATE(A10_CLK_DE_FE1, "defe1-mod", de_parents,
+	    FE1_CFG_REG,		/* reg */
+	    __BITS(3,0),		/* div */
+	    __BITS(25,24),		/* sel */
+	    __BIT(31),			/* enable */
+	    0				/* flags */
+	    ),
+	SUNXI_CCU_DIV_GATE(A10_CLK_TCON0_CH0, "tcon0-ch0", lcd0_parents,
+	    LCD0CH0_CFG_REG,		/* reg */
+	    0,				/* div */
+	    __BITS(25,24),		/* sel */
+	    __BIT(31),			/* enable */
+	    SUNXI_CCU_DIV_SET_RATE_PARENT /* flags */
+	    ),
+	SUNXI_CCU_DIV_GATE(A10_CLK_TCON1_CH0, "tcon1-ch0", lcd1_parents,
+	    LCD1CH0_CFG_REG,		/* reg */
+	    0,				/* div */
+	    __BITS(25,24),		/* sel */
+	    __BIT(31),			/* enable */
+	    SUNXI_CCU_DIV_SET_RATE_PARENT /* flags */
+	    ),
+	SUNXI_CCU_DIV_GATE(A10_CLK_TCON0_CH1_SCLK2, "tcon0-ch1-clk2", lcd1_parents,
+	    LCD0CH1_CFG_REG,		/* reg */
+	    __BITS(3,0),		/* div */
+	    __BITS(25,24),		/* sel */
+	    __BIT(31),			/* enable */
+	    SUNXI_CCU_DIV_SET_RATE_PARENT /* flags */
+	    ),
+	SUNXI_CCU_DIV_GATE(A10_CLK_TCON0_CH1, "tcon0-ch1", lcd0ch1c2,
+	    LCD0CH1_CFG_REG,		/* reg */
+	    __BIT(11),			/* div */
+	    0,				/* sel */
+	    __BIT(15),			/* enable */
+	    SUNXI_CCU_DIV_SET_RATE_PARENT /* flags */
+	    ),
+	SUNXI_CCU_DIV_GATE(A10_CLK_TCON1_CH1_SCLK2, "tcon1-ch1-clk2", lcd1_parents,
+	    LCD1CH1_CFG_REG,		/* reg */
+	    __BITS(3,0),		/* div */
+	    __BITS(25,24),		/* sel */
+	    __BIT(31),			/* enable */
+	    SUNXI_CCU_DIV_SET_RATE_PARENT /* flags */
+	    ),
+	SUNXI_CCU_DIV_GATE(A10_CLK_TCON1_CH1, "tcon1-ch1", lcd1ch1c2,
+	    LCD1CH1_CFG_REG,		/* reg */
+	    __BIT(11),			/* div */
+	    0,				/* sel */
+	    __BIT(15),			/* enable */
+	    SUNXI_CCU_DIV_SET_RATE_PARENT /* flags */
+	    ),
+	SUNXI_CCU_DIV_GATE(A10_CLK_HDMI, "hdmi-mod", lcd1_parents,
+	    HDMI_CLOCK_CFG_REG,		/* reg */
+	    __BITS(3,0),		/* div */
+	    __BITS(25,24),		/* sel */
+	    __BIT(31),			/* enable */
+	    0				/* flags */
+	    ),
 
 	/* AHB_GATING_REG0 */
 	SUNXI_CCU_GATE(A10_CLK_AHB_OTG, "ahb-otg", "ahb",
@@ -398,6 +547,16 @@ static struct sunxi_ccu_clk sun4i_a10_ccu_clks[] = {
 	    APB1_GATING_REG, 22),
 	SUNXI_CCU_GATE(A10_CLK_APB1_UART7, "apb1-uart7", "apb1",
 	    APB1_GATING_REG, 23),
+
+	/* DRAM GATING */
+	SUNXI_CCU_GATE(A10_CLK_DRAM_DE_BE0, "dram-de-be0", "pll_ddr_other",
+	    DRAM_GATING_REG, 26),
+	SUNXI_CCU_GATE(A10_CLK_DRAM_DE_BE1, "dram-de-be1", "pll_ddr_other",
+	    DRAM_GATING_REG, 27),
+	SUNXI_CCU_GATE(A10_CLK_DRAM_DE_FE0, "dram-de-fe0", "pll_ddr_other",
+	    DRAM_GATING_REG, 25),
+	SUNXI_CCU_GATE(A10_CLK_DRAM_DE_FE1, "dram-de-fe1", "pll_ddr_other",
+	    DRAM_GATING_REG, 24),
 
 	/* AUDIO_CODEC_SCLK_CFG_REG */
 	SUNXI_CCU_GATE(A10_CLK_CODEC, "codec", "pll_audio",
