@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.152 2018/03/08 06:48:23 ozaki-r Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.153 2018/03/19 03:14:08 ozaki-r Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.152 2018/03/08 06:48:23 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.153 2018/03/19 03:14:08 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -459,11 +459,14 @@ nd6_ns_output(struct ifnet *ifp, const struct in6_addr *daddr6,
 		 * Otherwise, we perform the source address selection as usual.
 		 */
 		s = pserialize_read_enter();
-		if (hsrc && in6ifa_ifpwithaddr(ifp, hsrc))
+		if (hsrc && in6ifa_ifpwithaddr(ifp, hsrc)) {
+			pserialize_read_exit(s);
 			src = hsrc;
-		else {
+		} else {
 			int error;
 			struct sockaddr_in6 dst_sa;
+
+			pserialize_read_exit(s);
 
 			sockaddr_in6_init(&dst_sa, &ip6->ip6_dst, 0, 0, 0);
 
@@ -480,7 +483,6 @@ nd6_ns_output(struct ifnet *ifp, const struct in6_addr *daddr6,
 			}
 			src = &src_in;
 		}
-		pserialize_read_exit(s);
 	} else {
 		/*
 		 * Source address for DAD packet must always be IPv6
