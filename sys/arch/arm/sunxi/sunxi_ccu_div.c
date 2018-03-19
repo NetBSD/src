@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_ccu_div.c,v 1.4 2017/10/09 14:01:59 jmcneill Exp $ */
+/* $NetBSD: sunxi_ccu_div.c,v 1.5 2018/03/19 16:19:17 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_ccu_div.c,v 1.4 2017/10/09 14:01:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_ccu_div.c,v 1.5 2018/03/19 16:19:17 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -104,6 +104,7 @@ sunxi_ccu_div_set_rate(struct sunxi_ccu_softc *sc,
 {
 	struct sunxi_ccu_div *div = &clk->u.div;
 	struct clk *clkp, *clkp_parent;
+	int parent_rate;
 	uint32_t val, raw_div;
 	int ratio;
 
@@ -123,16 +124,22 @@ sunxi_ccu_div_set_rate(struct sunxi_ccu_softc *sc,
 
 	val = CCU_READ(sc, div->reg);
 
+	parent_rate = clk_get_rate(clkp_parent);
+	if (parent_rate == 0)
+		return (new_rate == 0) ? 0 : ERANGE;
+
+	ratio = howmany(parent_rate, new_rate);
 	if ((div->flags & SUNXI_CCU_DIV_TIMES_TWO) != 0) {
-		ratio = howmany(clk_get_rate(clkp_parent), new_rate);
 		if (ratio > 1 && (ratio & 1) != 0)
 			ratio++;
 		raw_div = ratio >> 1;
-		if (raw_div > __SHIFTOUT_MASK(div->div))
-			return ERANGE;
-	} else {
+	} else if ((div->flags & SUNXI_CCU_DIV_POWER_OF_TWO) != 0) {
 		return EINVAL;
+	} else {
+		raw_div = (ratio > 0 ) ? ratio - 1 : 0;
 	}
+	if (raw_div > __SHIFTOUT_MASK(div->div))
+		return ERANGE;
 
 	val &= ~div->div;
 	val |= __SHIFTIN(raw_div, div->div);
