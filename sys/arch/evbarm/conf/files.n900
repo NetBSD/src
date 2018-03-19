@@ -1,4 +1,4 @@
-#	$NetBSD: files.n900,v 1.5 2013/05/06 22:56:55 khorben Exp $
+#	$NetBSD: files.n900,v 1.6 2018/03/19 17:11:24 ryo Exp $
 #
 # Nokia N900 configuration info
 #
@@ -8,9 +8,6 @@ file	arch/arm/arm32/arm32_kvminit.c
 file	arch/arm/arm32/arm32_reboot.c
 
 file	arch/evbarm/beagle/beagle_machdep.c
-
-# Kernel boot arguments
-defparam opt_machdep.h				BOOT_ARGS
 
 # CPU support and integrated peripherals
 include "arch/arm/omap/files.omap2"
