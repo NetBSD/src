@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_mod.h,v 1.1.42.6 2018/03/18 23:34:25 pgoyette Exp $	*/
+/*	$NetBSD: compat_mod.h,v 1.1.42.7 2018/03/19 21:54:43 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -37,7 +37,6 @@
 void compat_sysctl_init(void);
 void compat_sysctl_fini(void);
 
-void compat_sysctl_time(struct sysctllog **);
 void compat_sysctl_vfs(struct sysctllog **);
 
 #ifdef COMPAT_70
@@ -54,6 +53,23 @@ int kern_sa_60_init(void);
 int kern_sa_60_fini(void);
 void kern_tty_60_init(void);
 void kern_tty_60_fini(void);
+#endif
+
+#ifdef COMPAT_50
+int compat_50_init(void);
+int compat_50_fini(void);
+int kern_50_init(void);
+int kern_50_fini(void);
+int kern_time_50_init(void);
+int kern_time_50_fini(void);
+int kern_select_50_init(void);
+int kern_select_50_fini(void);
+void uvm_50_init(void);
+void uvm_50_fini(void);
+int vfs_syscalls_50_init(void);
+int vfs_syscalls_50_fini(void);
+void if_50_init(void);
+void if_50_fini(void);
 #endif
 
 #endif /* !_COMPAT_MOD_H_ */

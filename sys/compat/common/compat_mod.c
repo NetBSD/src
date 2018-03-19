@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_mod.c,v 1.24.14.16 2018/03/18 12:06:59 pgoyette Exp $	*/
+/*	$NetBSD: compat_mod.c,v 1.24.14.17 2018/03/19 21:54:43 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.24.14.16 2018/03/18 12:06:59 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.24.14.17 2018/03/19 21:54:43 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -66,17 +66,12 @@ __KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.24.14.16 2018/03/18 12:06:59 pgoyet
 #include <compat/sys/uvm.h>
 #include <compat/sys/cpuio.h>
 
-#if defined(COMPAT_09) || defined(COMPAT_43) || defined(COMPAT_50)
+#if defined(COMPAT_09) || defined(COMPAT_43)
 static struct sysctllog *compat_clog = NULL;
 #endif
 
 #ifdef COMPAT_40
 #include <compat/common/if_40.h>
-#endif
-
-#ifdef COMPAT_50
-void if_50_init(void);
-void if_50_fini(void);
 #endif
 
 #ifdef COMPAT_70
@@ -86,7 +81,7 @@ void if_50_fini(void);
 #endif
 
 static const char * const compat_includes[] = {
-	"compat_70", "compat_60",
+	"compat_70", "compat_60", "compat_50", 
 	NULL
 };
 
@@ -198,46 +193,22 @@ static const struct syscall_package compat_syscalls[] = {
 #if defined(COMPAT_40)
 	{ SYS_compat_40_mount, 0, (sy_call_t *)compat_40_sys_mount },
 #endif
-#if defined(COMPAT_50)
-	{ SYS_compat_50_wait4, 0, (sy_call_t *)compat_50_sys_wait4 },
-	{ SYS_compat_50_mknod, 0, (sy_call_t *)compat_50_sys_mknod },
-	{ SYS_compat_50_setitimer, 0, (sy_call_t *)compat_50_sys_setitimer },
-	{ SYS_compat_50_getitimer, 0, (sy_call_t *)compat_50_sys_getitimer },
-	{ SYS_compat_50_select, 0, (sy_call_t *)compat_50_sys_select },
-	{ SYS_compat_50_gettimeofday, 0, (sy_call_t *)compat_50_sys_gettimeofday },
-	{ SYS_compat_50_getrusage, 0, (sy_call_t *)compat_50_sys_getrusage },
-	{ SYS_compat_50_settimeofday, 0, (sy_call_t *)compat_50_sys_settimeofday },
-	{ SYS_compat_50_utimes, 0, (sy_call_t *)compat_50_sys_utimes },
-	{ SYS_compat_50_adjtime, 0, (sy_call_t *)compat_50_sys_adjtime },
-#ifdef LFS
-	{ SYS_compat_50_lfs_segwait, 0, (sy_call_t *)compat_50_sys_lfs_segwait },
-#endif
-	{ SYS_compat_50_futimes, 0, (sy_call_t *)compat_50_sys_futimes },
-	{ SYS_compat_50_clock_gettime, 0, (sy_call_t *)compat_50_sys_clock_gettime },
-	{ SYS_compat_50_clock_settime, 0, (sy_call_t *)compat_50_sys_clock_settime },
-	{ SYS_compat_50_clock_getres, 0, (sy_call_t *)compat_50_sys_clock_getres },
-	{ SYS_compat_50_timer_settime, 0, (sy_call_t *)compat_50_sys_timer_settime },
-	{ SYS_compat_50_timer_gettime, 0, (sy_call_t *)compat_50_sys_timer_gettime },
-	{ SYS_compat_50_nanosleep, 0, (sy_call_t *)compat_50_sys_nanosleep },
-	{ SYS_compat_50___sigtimedwait, 0, (sy_call_t *)compat_50_sys___sigtimedwait },
-	{ SYS_compat_50_mq_timedsend, 0, (sy_call_t *)compat_50_sys_mq_timedsend },
-	{ SYS_compat_50_mq_timedreceive, 0, (sy_call_t *)compat_50_sys_mq_timedreceive },
-	{ SYS_compat_50_lutimes, 0, (sy_call_t *)compat_50_sys_lutimes },
-	{ SYS_compat_50__lwp_park, 0, (sy_call_t *)compat_50_sys__lwp_park },
-	{ SYS_compat_50_kevent, 0, (sy_call_t *)compat_50_sys_kevent },
-	{ SYS_compat_50_pselect, 0, (sy_call_t *)compat_50_sys_pselect },
-	{ SYS_compat_50_pollts, 0, (sy_call_t *)compat_50_sys_pollts },
-	{ SYS_compat_50___stat30, 0, (sy_call_t *)compat_50_sys___stat30 },
-	{ SYS_compat_50___fstat30, 0, (sy_call_t *)compat_50_sys___fstat30 },
-	{ SYS_compat_50___lstat30, 0, (sy_call_t *)compat_50_sys___lstat30 },
-# if defined(NTP)
-	{ SYS_compat_50___ntp_gettime30, 0, (sy_call_t *)compat_50_sys___ntp_gettime30 },
-# endif
-	{ SYS_compat_50___fhstat40, 0, (sy_call_t *)compat_50_sys___fhstat40 },
-	{ SYS_compat_50_aio_suspend, 0, (sy_call_t *)compat_50_sys_aio_suspend },
-	{ SYS_compat_50_quotactl, 0, (sy_call_t *)compat_50_sys_quotactl },
-#endif
 	{ 0, 0, NULL },
+};
+
+struct compat_init_fini {
+	int (*init)(void);
+	int (*fini)(void);
+} init_fini_list[] = {
+#ifdef COMPAT_70
+	{ compat_70_init, compat_70_fini },
+#endif
+#ifdef COMPAT_60
+	{ compat_60_init, compat_60_fini },
+#endif
+#ifdef COMPAT_50
+	{ compat_50_init, compat_50_fini },
+#endif
 };
 
 static int
@@ -247,9 +218,26 @@ compat_modcmd(modcmd_t cmd, void *arg)
 	proc_t *p;
 #endif
 	int error;
+	int i, j;
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
+		/*
+		 * Call the init() routine for all components;  if
+		 * any component fails, disable (via fini() routine)
+		 * those which had already been disabled before we
+		 * return to prevent partial module initialization.
+		 */
+		for (i = 0; i < __arraycount(init_fini_list); i++) {
+			error = (*init_fini_list[i].init)();
+			if (error != 0) {
+				for (j = i - 1; j >= 0; j--) {
+					(*init_fini_list[j].fini)();
+				}
+				return error;
+			}
+		}
+
 		error = syscall_establish(NULL, compat_syscalls);
 		if (error != 0) {
 			return error;
@@ -291,27 +279,9 @@ compat_modcmd(modcmd_t cmd, void *arg)
 		vfs_syscalls_10_init();
 #endif
 		compat_sysctl_init();
-#ifdef COMPAT_50
-		uvm_50_init();
-		if_50_init();
-#endif
-#ifdef COMPAT_70
-		compat_70_init();
-#endif
-#ifdef COMPAT_60
-		if ((error = compat_60_init()) != 0)
-			return error;
-#endif
 		return 0;
 
 	case MODULE_CMD_FINI:
-#ifdef COMPAT_60
-		if ((error = compat_60_fini()) != 0)
-			return error;
-#endif
-#ifdef COMPAT_70
-		compat_70_fini();
-#endif
 #ifdef COMPAT_10
 		vfs_syscalls_10_fini();
 #endif
@@ -376,11 +346,23 @@ compat_modcmd(modcmd_t cmd, void *arg)
 #ifdef COMPAT_40
 		if_40_fini();
 #endif
-#ifdef COMPAT_50
-		if_50_fini();
-		uvm_50_fini();
-#endif
+		/*
+		 * Disable included components in reverse order;
+		 * if any component fails to fini(), re-init those
+		 * components which had already been disabled
+		 */
 		compat_sysctl_fini();
+		for (i = __arraycount(init_fini_list) - 1; i >= 0; i--) {
+			error = (*init_fini_list[i].fini)();
+			if (error != 0) {
+				for (j = i + 1;
+				     j < __arraycount(init_fini_list); j++) {
+					(*init_fini_list[j].init)();
+				}
+				return error;
+			}
+		}
+
 		return 0;
 
 	default:
@@ -395,22 +377,16 @@ compat_sysctl_init(void)
 #if defined(COMPAT_09) || defined(COMPAT_43)
 	compat_sysctl_vfs(&compat_clog);
 #endif
-#if defined(COMPAT_50)
-	compat_sysctl_time(&compat_clog);
-#endif
 }
 
 void
 compat_sysctl_fini(void)
 {
  
-#if defined(COMPAT_09) || defined(COMPAT_43) || defined(COMPAT_50)
+#if defined(COMPAT_09) || defined(COMPAT_43)
         sysctl_teardown(&compat_clog);
 #endif
 #if defined(COMPAT_43)
 	if_43_fini();
-#endif
-#ifdef COMPAT_50
-	if_50_fini();
 #endif
 }
