@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_60_mod.c,v 1.1.2.11 2018/03/19 21:54:43 pgoyette Exp $	*/
+/*	$NetBSD: compat_50_mod.c,v 1.1.2.1 2018/03/19 21:54:43 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_60_mod.c,v 1.1.2.11 2018/03/19 21:54:43 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_50_mod.c,v 1.1.2.1 2018/03/19 21:54:43 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -51,83 +51,99 @@ __KERNEL_RCSID(0, "$NetBSD: compat_60_mod.c,v 1.1.2.11 2018/03/19 21:54:43 pgoye
 #include <compat/common/compat_util.h>
 #include <compat/common/compat_mod.h>
 
-#include <compat/sys/ccdvar.h>
-#include <compat/sys/cpuio.h>
-
 int
-compat_60_init(void)
+compat_50_init(void)
 {
 	int error = 0;
 
-	error = kern_time_60_init();
+	error = kern_50_init();
 	if (error != 0)
 		return error;
 
-	error = kern_sa_60_init();
-	if (error != 0) {
-		kern_time_60_fini();
-		return 0;
-	}
+	error = kern_time_50_init();
+	if (error != 0)
+		goto err1;
 
-	kern_tty_60_init();
-	ccd_60_init();
-#ifdef CPU_UCODE
-	kern_cpu_60_init();
-#endif
+	error = kern_select_50_init();
+	if (error != 0)
+		goto err2;
+
+	error = vfs_syscalls_50_init();
+	if (error != 0)
+		goto err3;
+
+	uvm_50_init();
+	if_50_init();
+
+	return error;
+
+/* If an error occured, undo all previous set-up before returning */
+
+ err3:
+	kern_select_50_fini();
+ err2:
+	kern_time_50_fini();
+ err1:
+	kern_50_fini();
 
 	return error;
 }
 
 int
-compat_60_fini(void)
+compat_50_fini(void)
 {
 	int error = 0;
 
-#ifdef CPU_UCODE
-	kern_cpu_60_fini();
-#endif
-	ccd_60_fini();
-	kern_tty_60_fini();
+	if_50_fini();
+	uvm_50_fini();
 
+	error = vfs_syscalls_50_fini();
+	if (error != 0)
+		goto err1;
 
-	error = kern_sa_60_fini();
-	if (error != 0) {
-		kern_tty_60_init();
-		ccd_60_init();
-#ifdef CPU_UCODE
-		kern_cpu_60_init();
-#endif
-		return error;
-	}
+	error = kern_select_50_fini();
+	if (error != 0)
+		goto err2;
 
-	error = kern_time_60_fini();
-	if (error != 0) {
-		kern_sa_60_init();
-		kern_tty_60_init();
-		ccd_60_init();
-#ifdef CPU_UCODE
-		kern_cpu_60_init();
-#endif
-		return error;
-	}
+	error = kern_time_50_fini();
+	if (error != 0)
+		goto err3;
+
+	error = kern_50_fini();
+	if (error != 0)
+		goto err4;
+
+	return error;
+
+/* If an error occurred while removing something, restore everything! */
+ err4:
+	kern_time_50_init();
+ err3:
+	kern_select_50_init();
+ err2:
+	vfs_syscalls_50_init();
+ err1:
+	uvm_50_init();
+	if_50_init();
 
 	return error;
 }
 
 #ifdef _MODULE
 
-#define REQUIRED_60 "compat_70"		/* XXX No compat_80 yet */
-MODULE(MODULE_CLASS_EXEC, compat_60, REQUIRED_60);
+#define REQUIRED_50	"compat_70,compat_60"	/* XXX No compat_80 yet */
+
+MODULE(MODULE_CLASS_EXEC, compat_50, REQUIRED_50);
 
 static int
-compat_60_modcmd(modcmd_t cmd, void *arg)
+compat_50_modcmd(modcmd_t cmd, void *arg)
 {
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		return compat_60_init();
+		return compat_50_init();
 	case MODULE_CMD_FINI:
-		return compat_60_init();
+		return compat_50_init();
 	default:
 		return ENOTTY;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_select_50.c,v 1.1 2011/01/17 15:57:04 pooka Exp $	*/
+/*	$NetBSD: kern_select_50.c,v 1.1.60.1 2018/03/19 21:54:43 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -29,16 +29,27 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_select_50.c,v 1.1 2011/01/17 15:57:04 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_select_50.c,v 1.1.60.1 2018/03/19 21:54:43 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/event.h>
 #include <sys/poll.h>
 #include <sys/select.h>
 #include <sys/time.h>
+#include <sys/syscall.h>
+#include <sys/syscallvar.h>
 #include <sys/syscallargs.h>
 
 #include <compat/sys/time.h>
+#include <compat/common/compat_mod.h>
+
+static const struct syscall_package kern_select_50_syscalls[] = {
+	{ SYS_compat_50_kevent, 0, (sy_call_t *)compat_50_sys_kevent },
+	{ SYS_compat_50_select, 0, (sy_call_t *)compat_50_sys_select },
+	{ SYS_compat_50_pselect, 0, (sy_call_t *)compat_50_sys_pselect },
+	{ SYS_compat_50_pollts, 0, (sy_call_t *)compat_50_sys_pollts },
+	{ 0, 0, NULL }
+};
 
 static int
 compat_50_kevent_fetch_timeout(const void *src, void *dest, size_t length)
@@ -173,4 +184,18 @@ compat_50_sys_pollts(struct lwp *l, const struct compat_50_sys_pollts_args *uap,
 	}
 
 	return pollcommon(retval, SCARG(uap, fds), SCARG(uap, nfds), ts, mask);
+}
+
+int             
+kern_select_50_init(void)
+{               
+        
+return syscall_establish(NULL, kern_select_50_syscalls);
+}       
+        
+int
+kern_select_50_fini(void)
+{               
+
+return syscall_disestablish(NULL, kern_select_50_syscalls);
 }
