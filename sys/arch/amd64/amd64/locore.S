@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.158 2018/03/20 14:26:49 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.159 2018/03/20 18:27:58 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1548,14 +1548,14 @@ END(pagezero)
  * documentation in amd64_trap.S for an explanation.
  */
 
-#define TF_BACKW(val, reg)	(val - TF_REGSIZE)(reg)
+#define TF_BACKW(val, reg)	(val - (TF_REGSIZE+16))(reg)
 
 	_ALIGN_TEXT
 LABEL(intrfastexit)
 	NOT_XEN(cli;)
 	SVS_LEAVE
 	INTR_RESTORE_GPRS
-	addq	$TF_REGSIZE,%rsp	/* iret frame */
+	addq	$(TF_REGSIZE+16),%rsp	/* iret frame */
 
 	testb	$SEL_UPL,TF_BACKW(TF_CS, %rsp)
 	jz	.Lkexit
@@ -1586,7 +1586,6 @@ do_mov_gs:
 	SWAPGS
 
 .Lkexit:
-	addq	$16,%rsp	/* 16 = T_xxx + error code */
 do_iret:
 	iretq
 END(intrfastexit)
