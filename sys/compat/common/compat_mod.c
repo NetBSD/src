@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_mod.c,v 1.24.14.17 2018/03/19 21:54:43 pgoyette Exp $	*/
+/*	$NetBSD: compat_mod.c,v 1.24.14.18 2018/03/20 06:23:36 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.24.14.17 2018/03/19 21:54:43 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.24.14.18 2018/03/20 06:23:36 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -209,6 +209,38 @@ struct compat_init_fini {
 #ifdef COMPAT_50
 	{ compat_50_init, compat_50_fini },
 #endif
+#if 0	/* NOT YET */
+#ifdef COMPAT_40
+	{ compat_40_init, compat_40_fini },
+#endif
+#ifdef COMPAT_30
+	{ compat_30_init, compat_30_fini },
+#endif
+#ifdef COMPAT_20
+	{ compat_20_init, compat_20_fini },
+#endif
+#ifdef COMPAT_16
+	{ compat_16_init, compat_16_fini },
+#endif
+#ifdef COMPAT_14
+	{ compat_14_init, compat_14_fini },
+#endif
+#ifdef COMPAT_13
+	{ compat_13_init, compat_13_fini },
+#endif
+#ifdef COMPAT_12
+	{ compat_12_init, compat_12_fini },
+#endif
+#ifdef COMPAT_10
+	{ compat_10_init, compat_10_fini },
+#endif
+#ifdef COMPAT_09
+	{ compat_09_init, compat_09_fini },
+#endif
+#ifdef COMPAT_43
+	{ compat_43_init, compat_43_fini },
+#endif
+#endif /* 0 NOT YET */
 };
 
 static int
