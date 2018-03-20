@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_util.c,v 1.10 2017/12/10 18:52:41 bouyer Exp $ */
+/*	$NetBSD: acpi_util.c,v 1.11 2018/03/20 12:14:52 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_util.c,v 1.10 2017/12/10 18:52:41 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_util.c,v 1.11 2018/03/20 12:14:52 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -517,7 +517,7 @@ struct acpi_irq_handler {
 
 void *
 acpi_intr_establish(device_t dev, uint64_t c,
-    unsigned int (*intr)(void *), void *iarg)
+    unsigned int (*intr)(void *), void *iarg, const char *xname)
 {
 	ACPI_STATUS rv;
 	ACPI_HANDLE hdl = (void *)(uintptr_t)c;
@@ -540,7 +540,7 @@ acpi_intr_establish(device_t dev, uint64_t c,
 
 	aih->aih_hdl = hdl;
 	aih->aih_irq = irq->ar_irq;
-	rv = AcpiOsInstallInterruptHandler(irq->ar_irq, intr, iarg);
+	rv = AcpiOsInstallInterruptHandler_xname(irq->ar_irq, intr, iarg, xname);
 	if (ACPI_FAILURE(rv)) {
 		kmem_free(aih, sizeof(struct acpi_irq_handler));
 		aih = NULL;

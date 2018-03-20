@@ -1,4 +1,4 @@
-/*	$NetBSD: acpica.h,v 1.5 2011/02/17 07:34:42 jruoho Exp $	*/
+/*	$NetBSD: acpica.h,v 1.6 2018/03/20 12:14:52 bouyer Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -45,5 +45,9 @@
 
 #include <external/bsd/acpica/dist/include/acpi.h>
 #include <external/bsd/acpica/dist/include/accommon.h>
+
+/* extention to the ACPICA API */
+ACPI_STATUS AcpiOsInstallInterruptHandler_xname(
+    UINT32, ACPI_OSD_HANDLER, void *, const char *);
 
 #endif	/* !_SYS_DEV_ACPI_ACPICA_H */
