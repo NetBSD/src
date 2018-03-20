@@ -1,4 +1,4 @@
-/*	$NetBSD: amd64_trap.S,v 1.37 2018/02/25 12:37:16 maxv Exp $	*/
+/*	$NetBSD: amd64_trap.S,v 1.38 2018/03/20 14:26:49 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008, 2017 The NetBSD Foundation, Inc.
@@ -377,9 +377,8 @@ IDTVEC_END(intrspurious)
 
 /*
  * It is possible that we received a trap in kernel mode, but with the user
- * context loaded. There are six cases where this can happen:
+ * context loaded. There are five cases where this can happen:
  *
- *  o Execution of SYSRETQ.
  *  o Execution of IRETQ.
  *  o Reload of ES.
  *  o Reload of DS.
@@ -446,12 +445,7 @@ LABEL(kernuser_reenter)
 	/* We will clobber %rdi */
 	pushq	%rdi
 
-	/* Case 1: fault on sysretq? */
-	leaq	do_sysret(%rip),%rdi
-	cmpq	%rdi,TF_SMALL_REGPUSHED(TF_RIP, %rsp)
-	je	.Lkernelmode_but_user
-
-	/* Case 2: fault on iretq? */
+	/* Case 1: fault on iretq? */
 	leaq	do_iret(%rip),%rdi
 	cmpq	%rdi,TF_SMALL_REGPUSHED(TF_RIP, %rsp)
 	jne	5f
@@ -461,22 +455,22 @@ LABEL(kernuser_reenter)
 	jmp	.Lkernelmode_but_user	/* to user - must restore %gs */
 5:
 
-	/* Case 3: move to %es? */
+	/* Case 2: move to %es? */
 	leaq	do_mov_es(%rip),%rdi
 	cmpq	%rdi,TF_SMALL_REGPUSHED(TF_RIP, %rsp)
 	je	.Lkernelmode_but_user
 
-	/* Case 4: move to %ds? */
+	/* Case 3: move to %ds? */
 	leaq	do_mov_ds(%rip),%rdi
 	cmpq	%rdi,TF_SMALL_REGPUSHED(TF_RIP, %rsp)
 	je	.Lkernelmode_but_user
 
-	/* Case 5: move to %fs? */
+	/* Case 4: move to %fs? */
 	leaq	do_mov_fs(%rip),%rdi
 	cmpq	%rdi,TF_SMALL_REGPUSHED(TF_RIP, %rsp)
 	je	.Lkernelmode_but_user
 
-	/* Case 6: move to %gs? */
+	/* Case 5: move to %gs? */
 	leaq	do_mov_gs(%rip),%rdi
 	cmpq	%rdi,TF_SMALL_REGPUSHED(TF_RIP, %rsp)
 	je	.Lkernelmode_but_user

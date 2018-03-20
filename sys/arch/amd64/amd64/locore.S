@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.157 2018/02/25 12:37:16 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.158 2018/03/20 14:26:49 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -330,7 +330,6 @@
 	.globl	_C_LABEL(biosbasemem)
 	.globl	_C_LABEL(biosextmem)
 	.globl	_C_LABEL(lwp0uarea)
-	.globl	do_sysret
 	.globl	do_mov_es
 	.globl	do_mov_ds
 	.globl	do_mov_fs
@@ -1471,7 +1470,6 @@ LABEL(syscall_sysret)
 	movq	TF_RIP(%rsp),%rcx	/* %rip for sysret */
 	movq	TF_RFLAGS(%rsp),%r11	/* %flags for sysret */
 	movq	TF_RSP(%rsp),%rsp
-do_sysret:
 	sysretq
 #else
 	addq	$TF_RIP,%rsp
