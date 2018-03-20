@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdInterrupt.c,v 1.8 2009/08/18 16:41:02 jmcneill Exp $	*/
+/*	$NetBSD: OsdInterrupt.c,v 1.9 2018/03/20 12:14:52 bouyer Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdInterrupt.c,v 1.8 2009/08/18 16:41:02 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdInterrupt.c,v 1.9 2018/03/20 12:14:52 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -86,6 +86,14 @@ ACPI_STATUS
 AcpiOsInstallInterruptHandler(UINT32 InterruptNumber,
     ACPI_OSD_HANDLER ServiceRoutine, void *Context)
 {
+	return AcpiOsInstallInterruptHandler_xname(InterruptNumber,
+	    ServiceRoutine, Context, "acpi SCI");
+}
+
+ACPI_STATUS
+AcpiOsInstallInterruptHandler_xname(UINT32 InterruptNumber,
+    ACPI_OSD_HANDLER ServiceRoutine, void *Context, const char *xname)
+{
 	struct acpi_interrupt_handler *aih;
 	ACPI_STATUS rv;
 
@@ -102,7 +110,7 @@ AcpiOsInstallInterruptHandler(UINT32 InterruptNumber,
 	aih->aih_func = ServiceRoutine;
 
 	rv = acpi_md_OsInstallInterruptHandler(InterruptNumber,
-	    ServiceRoutine, Context, &aih->aih_ih);
+	    ServiceRoutine, Context, &aih->aih_ih, xname);
 	if (rv == AE_OK) {
 		mutex_enter(&acpi_interrupt_list_mtx);
 		LIST_INSERT_HEAD(&acpi_interrupt_list, aih, aih_list);
