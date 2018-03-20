@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.170 2017/07/25 05:01:25 ozaki-r Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.170.2.1 2018/03/20 08:11:25 pgoyette Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -67,6 +67,7 @@ SRCS+=	devsw.c
 #
 # sys/kern
 SRCS+=	init_sysctl_base.c	\
+	compat_stub.c		\
 	kern_auth.c		\
 	kern_cfglock.c		\
 	kern_clock.c		\

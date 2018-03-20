@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time_50.c,v 1.31.16.1 2018/03/19 21:54:43 pgoyette Exp $	*/
+/*	$NetBSD: kern_time_50.c,v 1.31.16.2 2018/03/20 08:11:25 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time_50.c,v 1.31.16.1 2018/03/19 21:54:43 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time_50.c,v 1.31.16.2 2018/03/20 08:11:25 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_aio.h"
@@ -61,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_time_50.c,v 1.31.16.1 2018/03/19 21:54:43 pgoye
 #include <sys/syscallvar.h>
 #include <sys/sysctl.h>
 #include <sys/resource.h>
+#include <sys/compat_stub.h>
 
 #include <compat/common/compat_util.h>
 #include <compat/common/compat_mod.h>
@@ -101,12 +102,9 @@ static const struct syscall_package kern_time_50_syscalls[] = {
 	    (sy_call_t *)compat_50_sys_timer_gettime },
 	{ SYS_compat_50___ntp_gettime30, 0,
 	    (sy_call_t *)compat_50_sys___ntp_gettime30 },
+	{ SYS_compat_50___ntp_gettime30, 0,
+	    (sy_call_t *)compat_50_sys___ntp_gettime30 },
 	{ 0, 0, NULL }
-	
-	   
-	   
-	   
-	   
 }; 
 
 int
@@ -556,10 +554,9 @@ int
 compat_50_sys___ntp_gettime30(struct lwp *l,
     const struct compat_50_sys___ntp_gettime30_args *uap, register_t *retval)
 {
-/* XXX
- * XXX need to detect if kernel has NTP at run-time!
- * XXX */
-#ifdef NTP
+	if (vec_ntp_gettime == NULL)
+		return ENOSYS;		/* No NTP available in kernel */
+
 	/* {
 		syscallarg(struct ntptimeval *) ntvp;
 	} */
@@ -568,7 +565,7 @@ compat_50_sys___ntp_gettime30(struct lwp *l,
 	int error;
 
 	if (SCARG(uap, ntvp)) {
-		ntp_gettime(&ntv);
+		(*vec_ntp_gettime)(&ntv);
 		timespec_to_timespec50(&ntv.time, &ntv50.time);
 		ntv50.maxerror = ntv.maxerror;
 		ntv50.esterror = ntv.esterror;
@@ -579,11 +576,8 @@ compat_50_sys___ntp_gettime30(struct lwp *l,
 		if (error)
 			return error;
 	}
-	*retval = ntp_timestatus();
+	*retval = (*vec_ntp_timestatus)();
 	return 0;
-#else
-	return ENOSYS;
-#endif
 }
 
 static void
