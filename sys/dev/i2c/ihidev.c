@@ -1,4 +1,4 @@
-/* $NetBSD: ihidev.c,v 1.1 2017/12/10 17:05:54 bouyer Exp $ */
+/* $NetBSD: ihidev.c,v 1.2 2018/03/20 12:14:52 bouyer Exp $ */
 /* $OpenBSD ihidev.c,v 1.13 2017/04/08 02:57:23 deraadt Exp $ */
 
 /*-
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ihidev.c,v 1.1 2017/12/10 17:05:54 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ihidev.c,v 1.2 2018/03/20 12:14:52 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -208,7 +208,8 @@ ihidev_attach(device_t parent, device_t self, void *aux)
 	{
 		char buf[100];
 
-		sc->sc_ih = acpi_intr_establish(self, sc->sc_phandle, ihidev_intr, sc);
+		sc->sc_ih = acpi_intr_establish(self,
+		    sc->sc_phandle, ihidev_intr, sc, device_xname(self));
 		if (sc->sc_ih == NULL)
 			aprint_error_dev(self, "can't establish interrupt\n");
 		aprint_normal_dev(self, "interrupting at %s\n",
