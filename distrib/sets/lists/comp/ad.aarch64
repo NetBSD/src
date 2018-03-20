@@ -1,4 +1,4 @@
-# $NetBSD: ad.aarch64,v 1.16 2018/01/24 09:51:26 wiz Exp $
+# $NetBSD: ad.aarch64,v 1.17 2018/03/20 10:14:29 ryo Exp $
 ./usr/include/aarch64				comp-c-include
 ./usr/include/aarch64/ansi.h			comp-c-include
 ./usr/include/aarch64/aout_machdep.h		comp-c-include
@@ -72,6 +72,7 @@
 ./usr/include/arm/cdefs.h			comp-c-include
 ./usr/include/arm/cpu.h				comp-c-include
 ./usr/include/arm/cpuconf.h			comp-c-include
+./usr/include/arm/cputypes.h			comp-c-include
 ./usr/include/arm/disklabel.h			comp-c-include
 ./usr/include/arm/elf_machdep.h			comp-c-include
 ./usr/include/arm/endian.h			comp-c-include
