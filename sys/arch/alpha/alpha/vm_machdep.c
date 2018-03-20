@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.113 2014/05/16 19:18:21 matt Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.113.20.1 2018/03/20 09:15:33 bouyer Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.113 2014/05/16 19:18:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.113.20.1 2018/03/20 09:15:33 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -227,11 +227,8 @@ cpu_uarea_alloc(bool system)
 	 * direct-mapped.
 	 */
 	error = uvm_pglistalloc(USPACE, 0, ptoa(physmem), 0, 0, &pglist, 1, 1);
-	if (error) {
-		if (!system)
-			return NULL;
-		panic("%s: uvm_pglistalloc failed: %d", __func__, error);
-	}
+	if (error)
+		return NULL;
 
 	/*
 	 * Get the physical address from the first page.
