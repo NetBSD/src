@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.135 2018/03/15 06:48:51 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.136 2018/03/20 09:46:25 knakahara Exp $ */
 
 /******************************************************************************
 
@@ -4486,6 +4486,8 @@ ixgbe_update_link_status(struct adapter *adapter)
 	device_t        dev = adapter->dev;
 	struct ixgbe_hw *hw = &adapter->hw;
 
+	KASSERT(mutex_owned(&adapter->core_mtx));
+
 	if (adapter->link_up) {
 		if (adapter->link_active == FALSE) {
 			if (adapter->link_speed == IXGBE_LINK_SPEED_10GB_FULL){
@@ -6338,11 +6340,15 @@ ixgbe_handle_link(void *context)
 	struct adapter  *adapter = context;
 	struct ixgbe_hw *hw = &adapter->hw;
 
+	IXGBE_CORE_LOCK(adapter);
+
 	ixgbe_check_link(hw, &adapter->link_speed, &adapter->link_up, 0);
 	ixgbe_update_link_status(adapter);
 
 	/* Re-enable link interrupts */
 	IXGBE_WRITE_REG(hw, IXGBE_EIMS, IXGBE_EIMS_LSC);
+
+	IXGBE_CORE_UNLOCK(adapter);
 } /* ixgbe_handle_link */
 
 /************************************************************************
