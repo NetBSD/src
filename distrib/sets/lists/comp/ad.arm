@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.83 2018/02/03 21:27:45 mrg Exp $
+# $NetBSD: ad.arm,v 1.84 2018/03/20 10:14:29 ryo Exp $
 ./usr/include/acorn26				comp-obsolete		obsolete
 ./usr/include/acorn26/ansi.h			comp-obsolete		obsolete
 ./usr/include/acorn26/aout_machdep.h		comp-obsolete		obsolete
@@ -133,6 +133,7 @@
 ./usr/include/arm/cdefs.h			comp-c-include
 ./usr/include/arm/cpu.h				comp-c-include
 ./usr/include/arm/cpuconf.h			comp-c-include
+./usr/include/arm/cputypes.h			comp-c-include
 ./usr/include/arm/db_machdep.h			comp-obsolete		obsolete
 ./usr/include/arm/disklabel.h			comp-c-include
 ./usr/include/arm/disklabel_acorn.h		comp-obsolete		obsolete
