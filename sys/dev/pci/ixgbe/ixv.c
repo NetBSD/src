@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.88 2018/03/15 06:48:51 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.89 2018/03/20 09:50:33 knakahara Exp $*/
 
 /******************************************************************************
 
@@ -1292,6 +1292,8 @@ ixv_update_link_status(struct adapter *adapter)
 {
 	struct ifnet *ifp = adapter->ifp;
 	device_t     dev = adapter->dev;
+
+	KASSERT(mutex_owned(&adapter->core_mtx));
 
 	if (adapter->link_up) {
 		if (adapter->link_active == FALSE) {
@@ -3080,9 +3082,13 @@ ixv_handle_link(void *context)
 {
 	struct adapter *adapter = context;
 
+	IXGBE_CORE_LOCK(adapter);
+
 	adapter->hw.mac.ops.check_link(&adapter->hw, &adapter->link_speed,
 	    &adapter->link_up, FALSE);
 	ixv_update_link_status(adapter);
+
+	IXGBE_CORE_UNLOCK(adapter);
 } /* ixv_handle_link */
 
 /************************************************************************
@@ -3091,6 +3097,9 @@ ixv_handle_link(void *context)
 static void
 ixv_check_link(struct adapter *adapter)
 {
+
+	KASSERT(mutex_owned(&adapter->core_mtx));
+
 	adapter->hw.mac.get_link_status = TRUE;
 
 	adapter->hw.mac.ops.check_link(&adapter->hw, &adapter->link_speed,
