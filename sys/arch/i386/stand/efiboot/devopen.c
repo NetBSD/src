@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.2 2018/03/08 10:34:33 nonaka Exp $	 */
+/*	$NetBSD: devopen.c,v 1.3 2018/03/20 10:16:17 nonaka Exp $	 */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@ dev2bios(char *devname, int unit, int *biosdev)
 
 	if (strcmp(devname, "hd") == 0)
 		*biosdev = 0x80 + unit;
-	if (strcmp(devname, "cd") == 0)
+	else if (strcmp(devname, "cd") == 0)
 		*biosdev = 0x80 + get_harddrives() + unit;
 	else
 		return ENXIO;
