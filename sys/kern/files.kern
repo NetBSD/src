@@ -1,4 +1,4 @@
-#	$NetBSD: files.kern,v 1.16.2.4 2018/03/07 09:33:26 pgoyette Exp $
+#	$NetBSD: files.kern,v 1.16.2.5 2018/03/20 08:11:25 pgoyette Exp $
 
 #
 # kernel sources
@@ -11,6 +11,7 @@ file	kern/bufq_disksort.c		bufq_disksort
 file	kern/bufq_fcfs.c		bufq_fcfs
 file	kern/bufq_priocscan.c		bufq_priocscan
 file	kern/bufq_readprio.c		bufq_readprio | new_bufq_strategy
+file	kern/compat_stub.c		kern
 file	kern/core_elf32.c		exec_elf32
 file	kern/core_elf64.c		exec_elf64
 file	kern/core_netbsd.c		exec_aout | exec_coff | exec_ecoff
