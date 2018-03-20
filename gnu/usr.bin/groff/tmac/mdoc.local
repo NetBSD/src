@@ -1,4 +1,4 @@
-.\" $NetBSD: mdoc.local,v 1.75.4.5.2.4 2018/03/15 05:14:39 snj Exp $
+.\" $NetBSD: mdoc.local,v 1.75.4.5.2.5 2018/03/20 17:49:24 martin Exp $
 .\"
 .\" Copyright (c) 2003, 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -44,9 +44,9 @@
 .as doc-str-St--ieee1275-94     " (\*[Lq]\*[doc-Tn-font-size]Open Firmware\*[doc-str-St]\*[Rq])
 .
 .\" Default .Os value
-.ds doc-operating-system NetBSD\~7.1.2
+.ds doc-operating-system NetBSD\~7.1.2_PATCH
 .\" Default footer operating system value
-.ds doc-default-operating-system NetBSD\~7.1.2
+.ds doc-default-operating-system NetBSD\~7.1.2_PATCH
 .\" Other known versions, not yet in groff distribution
 .ds doc-operating-system-NetBSD-1.3.3  1.3.3
 .ds doc-operating-system-NetBSD-1.6.3  1.6.3
