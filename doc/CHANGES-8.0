@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.148 2018/03/18 11:22:59 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.149 2018/03/20 09:18:49 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -10435,4 +10435,29 @@ usr.sbin/sysinst/arch/sgimips/md.c		1.4
 	to the kernel config name, adjust kernel name matching
 	to deal with this.
 	[jmcneill, ticket #643]
+
+sys/kern/exec_elf.c				1.95, 1.96
+
+	Turn KASSERTS that check alignment which are user triggerable
+	into errors.
+	[alnsn, ticket #644]
+
+sys/netinet6/nd6_nbr.c                          1.153
+  
+	fix a constraint violation of pserialize.
+	[ozaki-r, ticket #645]
+
+sys/arch/alpha/alpha/vm_machdep.c		1.114
+
+	Nowadays we can create new kernel threads late after boot, so if we are
+	unable to find physically continous pages for their uarea, just
+	allocate them via uvm_km_alloc(), that is: make cpu_uarea_alloc() fail
+	instead of panic. cpu_uarea_free() already deals with this.
+	Should fix PR port-alpha/53077.
+	[martin, ticket #646]
+
+share/mk/bsd.own.mk				1.1051
+
+	Don't barf if the ctf tools are not installed.
+	[martin, ticket #647]
 
