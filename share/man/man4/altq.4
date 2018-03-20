@@ -1,4 +1,4 @@
-.\" $NetBSD: altq.4,v 1.5 2018/03/20 17:13:54 sevan Exp $
+.\" $NetBSD: altq.4,v 1.6 2018/03/20 20:13:33 sevan Exp $
 .\"
 .\" Copyright (c) 2011 Jukka Ruohonen <jruohonen@iki.fi>
 .\"
@@ -87,3 +87,11 @@ system first appeared in March 1997 and found home in the KAME project
 (http://www.kame.net). It was imported to
 .Nx
 in 1.6 .
+.Sh CAVEATS
+Please note that you must compile
+.Xr pf 4
+in the kernel, using the PF
+.Xr module 7
+alongside
+.Nm
+built in the kernel will not work.
