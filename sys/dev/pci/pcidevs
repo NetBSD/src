@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1320 2018/03/16 08:40:06 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1321 2018/03/20 11:23:06 nonaka Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -3738,6 +3738,7 @@ product INTEL WIFI_LINK_3168	0x24fb	Dual Band Wireless AC 3168
 product INTEL WIFI_LINK_8265	0x24fd	Dual Band Wireless AC 8265
 product INTEL 82820_MCH		0x2501	82820 MCH (Camino)
 product INTEL 82820_AGP		0x250f	82820 AGP
+product INTEL WIFI_LINK_9260	0x2526	Wireless AC 9260
 product INTEL 82850_HB		0x2530	82850 Host
 product INTEL 82860_HB		0x2531	82860 Host
 product INTEL 82850_AGP		0x2532	82850/82860 AGP
