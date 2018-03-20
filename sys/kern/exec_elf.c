@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.90 2017/04/21 13:17:42 kamil Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.90.4.1 2018/03/20 09:10:57 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005, 2015 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.90 2017/04/21 13:17:42 kamil Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.90.4.1 2018/03/20 09:10:57 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -101,7 +101,7 @@ extern struct emul emul_netbsd;
 static int
 elf_load_interp(struct lwp *, struct exec_package *, char *,
     struct exec_vmcmd_set *, u_long *, Elf_Addr *);
-static void
+static int
 elf_load_psection(struct exec_vmcmd_set *, struct vnode *, const Elf_Phdr *,
     Elf_Addr *, u_long *, int);
 
@@ -123,25 +123,30 @@ static void	elf_free_emul_arg(void *);
 #define	ELF_ROUND(a, b)		(((a) + (b) - 1) & ~((b) - 1))
 #define	ELF_TRUNC(a, b)		((a) & ~((b) - 1))
 
-static void
+static int
 elf_placedynexec(struct exec_package *epp, Elf_Ehdr *eh, Elf_Phdr *ph)
 {
 	Elf_Addr align, offset;
 	int i;
 
-	for (align = i = 0; i < eh->e_phnum; i++)
+	for (align = 1, i = 0; i < eh->e_phnum; i++)
 		if (ph[i].p_type == PT_LOAD && ph[i].p_align > align)
 			align = ph[i].p_align;
 
 	offset = (Elf_Addr)pax_aslr_exec_offset(epp, align);
 	if (offset < epp->ep_vm_minaddr)
 		offset = roundup(epp->ep_vm_minaddr, align);
-	KASSERT((offset & (align - 1)) == 0);
+	if ((offset & (align - 1)) != 0) {
+		DPRINTF("bad offset=%#jx align=%#jx",
+		    (uintmax_t)offset, (uintmax_t)align);
+		return EINVAL;
+	}
 
 	for (i = 0; i < eh->e_phnum; i++)
 		ph[i].p_vaddr += offset;
 	epp->ep_entryoffset = offset;
 	eh->e_entry += offset;
+	return 0;
 }
 
 /*
@@ -305,7 +310,7 @@ elf_check_header(Elf_Ehdr *eh)
  *
  * Load a psection at the appropriate address
  */
-static void
+static int
 elf_load_psection(struct exec_vmcmd_set *vcset, struct vnode *vp,
     const Elf_Phdr *ph, Elf_Addr *addr, u_long *size, int flags)
 {
@@ -324,7 +329,12 @@ elf_load_psection(struct exec_vmcmd_set *vcset, struct vnode *vp,
 		 * Make sure we are virtually aligned as we are supposed to be.
 		 */
 		diff = ph->p_vaddr - ELF_TRUNC(ph->p_vaddr, ph->p_align);
-		KASSERT(*addr - diff == ELF_TRUNC(*addr, ph->p_align));
+		if (*addr - diff != ELF_TRUNC(*addr, ph->p_align)) {
+			DPRINTF("bad alignment %#jx != %#jx\n",
+			    (uintptr_t)(*addr - diff),
+			    (uintptr_t)ELF_TRUNC(*addr, ph->p_align));
+			return EINVAL;
+		}
 		/*
 		 * But make sure to not map any pages before the start of the
 		 * psection by limiting the difference to within a page.
@@ -383,6 +393,7 @@ elf_load_psection(struct exec_vmcmd_set *vcset, struct vnode *vp,
 		    0, vmprot, flags & VMCMD_RELATIVE);
 		*size = msize;
 	}
+	return 0;
 }
 
 /*
@@ -580,8 +591,9 @@ elf_load_interp(struct lwp *l, struct exec_package *epp, char *path,
 				flags = VMCMD_RELATIVE;
 			}
 			last_ph = &ph[i];
-			elf_load_psection(vcset, vp, &ph[i], &addr,
-			    &size, flags);
+			if ((error = elf_load_psection(vcset, vp, &ph[i], &addr,
+			    &size, flags)) != 0)
+				goto bad;
 			/*
 			 * If entry is within this psection then this
 			 * must contain the .text section.  *entryoff is
@@ -719,8 +731,8 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 		pos = (Elf_Addr)startp;
 	}
 
-	if (is_dyn)
-		elf_placedynexec(epp, eh, ph);
+	if (is_dyn && (error = elf_placedynexec(epp, eh, ph)) != 0)
+		goto bad;
 
 	/*
 	 * Load all the necessary sections
@@ -731,8 +743,10 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 
 		switch (ph[i].p_type) {
 		case PT_LOAD:
-			elf_load_psection(&epp->ep_vmcmds, epp->ep_vp,
-			    &ph[i], &addr, &size, VMCMD_FIXED);
+			if ((error = elf_load_psection(&epp->ep_vmcmds,
+			    epp->ep_vp, &ph[i], &addr, &size, VMCMD_FIXED))
+			    != 0)
+				goto bad;
 
 			/*
 			 * Consider this as text segment, if it is executable.
