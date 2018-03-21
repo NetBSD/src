@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.179 2018/03/09 11:57:38 maxv Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.180 2018/03/21 17:03:09 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -200,10 +200,7 @@ struct pkthdr {
 	void	*pattr_hdr;		/* ALTQ: saved header position in mbuf */
 };
 
-/*
- * Note: These bits are carefully arranged so that the compiler can have
- * a prayer of generating a jump table.
- */
+/* Checksumming flags. */
 #define	M_CSUM_TCPv4		0x00000001	/* TCP header/payload */
 #define	M_CSUM_UDPv4		0x00000002	/* UDP header/payload */
 #define	M_CSUM_TCP_UDP_BAD	0x00000004	/* TCP/UDP checksum bad */
@@ -365,7 +362,6 @@ MBUF_DEFINE(mbuf, MHLEN, MLEN);
 #define	M_LINK0		0x00001000	/* link layer specific flag */
 #define	M_LINK1		0x00002000	/* link layer specific flag */
 #define	M_LINK2		0x00004000	/* link layer specific flag */
-
 #define	M_LINK3		0x00008000	/* link layer specific flag */
 #define	M_LINK4		0x00010000	/* link layer specific flag */
 #define	M_LINK5		0x00020000	/* link layer specific flag */
@@ -859,7 +855,6 @@ int	m_apply(struct mbuf *, int, int,
     int (*)(void *, void *, unsigned int), void *);
 void	m_cat(struct mbuf *,struct mbuf *);
 void	m_clget(struct mbuf *, int);
-int	m_mballoc(int, int);
 void	m_copyback(struct mbuf *, int, int, const void *);
 struct	mbuf *m_copyback_cow(struct mbuf *, int, int, const void *, int);
 int	m_makewritable(struct mbuf **, int, int, int);
@@ -870,7 +865,6 @@ void	m_freem(struct mbuf *);
 void	m_reclaim(void *, int);
 void	mbinit(void);
 void	m_ext_free(struct mbuf *);
-char *	m_mapin(struct mbuf *);
 void	m_move_pkthdr(struct mbuf *, struct mbuf *);
 
 bool	m_ensure_contig(struct mbuf **, int);
@@ -933,22 +927,6 @@ m_length(const struct mbuf *m)
 }
 
 static __inline void
-m_hdr_init(struct mbuf *m, short type, struct mbuf *next, char *data, int len)
-{
-
-	KASSERT(m != NULL);
-
-	mowner_init(m, type);
-	m->m_ext_ref = m; /* default */
-	m->m_type = type;
-	m->m_len = len;
-	m->m_next = next;
-	m->m_nextpkt = NULL; /* default */
-	m->m_data = data;
-	m->m_flags = 0; /* default */
-}
-
-static __inline void
 m_set_rcvif(struct mbuf *m, const struct ifnet *ifp)
 {
 
@@ -969,26 +947,6 @@ m_copy_rcvif(struct mbuf *m, const struct mbuf *n)
 {
 
 	m->m_pkthdr.rcvif_index = n->m_pkthdr.rcvif_index;
-}
-
-static __inline void
-m_pkthdr_init(struct mbuf *m)
-{
-
-	KASSERT(m != NULL);
-
-	m->m_data = m->m_pktdat;
-	m->m_flags = M_PKTHDR;
-
-	m_reset_rcvif(m);
-	m->m_pkthdr.len = 0;
-	m->m_pkthdr.csum_flags = 0;
-	m->m_pkthdr.csum_data = 0;
-	SLIST_INIT(&m->m_pkthdr.tags);
-
-	m->m_pkthdr.pattr_class = NULL;
-	m->m_pkthdr.pattr_af = AF_UNSPEC;
-	m->m_pkthdr.pattr_hdr = NULL;
 }
 
 void m_print(const struct mbuf *, const char *, void (*)(const char *, ...)

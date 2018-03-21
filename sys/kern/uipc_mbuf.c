@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.183 2018/03/21 16:26:04 maxv Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.184 2018/03/21 17:03:09 maxv Exp $	*/
 
 /*
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.183 2018/03/21 16:26:04 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.184 2018/03/21 17:03:09 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
@@ -606,7 +606,14 @@ m_get(int nowait, int type)
 
 	mbstat_type_add(type, 1);
 
-	m_hdr_init(m, type, NULL, m->m_dat, 0);
+	mowner_init(m, type);
+	m->m_ext_ref = m; /* default */
+	m->m_type = type;
+	m->m_len = 0;
+	m->m_next = NULL;
+	m->m_nextpkt = NULL; /* default */
+	m->m_data = m->m_dat;
+	m->m_flags = 0; /* default */
 
 	return m;
 }
@@ -620,7 +627,18 @@ m_gethdr(int nowait, int type)
 	if (m == NULL)
 		return NULL;
 
-	m_pkthdr_init(m);
+	m->m_data = m->m_pktdat;
+	m->m_flags = M_PKTHDR;
+
+	m_reset_rcvif(m);
+	m->m_pkthdr.len = 0;
+	m->m_pkthdr.csum_flags = 0;
+	m->m_pkthdr.csum_data = 0;
+	SLIST_INIT(&m->m_pkthdr.tags);
+
+	m->m_pkthdr.pattr_class = NULL;
+	m->m_pkthdr.pattr_af = AF_UNSPEC;
+	m->m_pkthdr.pattr_hdr = NULL;
 
 	return m;
 }
