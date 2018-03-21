@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.92 2013/11/16 23:54:01 mrg Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.92.4.1 2018/03/21 11:54:47 martin Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@ struct cpu_info {
 	 * the pending register to avoid a hardware bug.
 	 */
 #define raise_ipi(cpi,lvl)	do {			\
-	int x;						\
+	volatile int x;					\
 	(cpi)->intreg_4m->pi_set = PINTR_SINTRLEV(lvl);	\
 	x = (cpi)->intreg_4m->pi_pend; __USE(x);	\
 } while (0)
@@ -340,6 +340,8 @@ struct cpu_info {
 	struct evcnt ci_savefpstate_null;
 	struct evcnt ci_xpmsg_mutex_fail;
 	struct evcnt ci_xpmsg_mutex_fail_call;
+	struct evcnt ci_xpmsg_mutex_not_held;
+	struct evcnt ci_xpmsg_bogus;
 	struct evcnt ci_intrcnt[16];
 	struct evcnt ci_sintrcnt[16];
 };
