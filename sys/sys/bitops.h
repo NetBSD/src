@@ -1,4 +1,4 @@
-/*	$NetBSD: bitops.h,v 1.11 2012/12/07 02:27:58 christos Exp $	*/
+/*	$NetBSD: bitops.h,v 1.11.12.1 2018/03/21 11:08:05 martin Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2010 The NetBSD Foundation, Inc.
@@ -271,8 +271,8 @@ fast_divide32_prepare(uint32_t _div, uint32_t * __restrict _m,
 	_l = fls32(_div - 1);
 	_mt = (uint64_t)(0x100000000ULL * ((1ULL << _l) - _div));
 	*_m = (uint32_t)(_mt / _div + 1);
-	*_s1 = (_l > 1) ? 1 : _l;
-	*_s2 = (_l == 0) ? 0 : _l - 1;
+	*_s1 = (_l > 1) ? 1U : (uint8_t)_l;
+	*_s2 = (_l == 0) ? 0 : (uint8_t)(_l - 1);
 }
 
 /* ARGSUSED */
@@ -304,7 +304,7 @@ fast_remainder32(uint32_t _v, uint32_t _div, uint32_t _m, uint8_t _s1,
 #define __BITMAP_SIZE(__t, __n) \
     (((__n) + (__BITMAP_BITS(__t) - 1)) / __BITMAP_BITS(__t))
 #define __BITMAP_BIT(__n, __v) \
-    (1 << ((__n) & __BITMAP_MASK(*(__v)->_b)))
+    ((__typeof__((__v)->_b[0]))1 << ((__n) & __BITMAP_MASK(*(__v)->_b)))
 #define __BITMAP_WORD(__n, __v) \
     ((__n) >> __BITMAP_SHIFT(*(__v)->_b))
 
