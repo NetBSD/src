@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_80_mod.c,v 1.1.2.1 2018/03/21 10:01:04 pgoyette Exp $	*/
+/*	$NetBSD: compat_80_mod.c,v 1.1.2.2 2018/03/21 10:12:48 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_80_mod.c,v 1.1.2.1 2018/03/21 10:01:04 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_80_mod.c,v 1.1.2.2 2018/03/21 10:12:48 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -54,20 +54,24 @@ __KERNEL_RCSID(0, "$NetBSD: compat_80_mod.c,v 1.1.2.1 2018/03/21 10:01:04 pgoyet
 #include <compat/net/route.h>
 #include <compat/net/route_70.h>
 
-int compat_70_init(void)
+int compat_80_init(void)
 {
+	int error;
 
-	vec_ocreds_valid = true;
-	rtsock_70_init();
+	error = raidframe_80_init();
+	if (error != 0)
+		return error;
 
 	return 0;
 }
 
-int compat_70_fini(void)
+int compat_80_fini(void)
 {
+	int error;
 
-	rtsock_70_fini();
-	vec_ocreds_valid = false;
+	error = raidframe_80_fini();
+	if (error != 0)
+		return error;
 
 	return 0;
 }
@@ -83,10 +87,10 @@ compat_70_modcmd(modcmd_t cmd, void *arg)
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		return compat_70_init();
+		return compat_80_init();
 
 	case MODULE_CMD_FINI:
-		return compat_70_fini();
+		return compat_80_fini();
 
 	default:
 		return ENOTTY;

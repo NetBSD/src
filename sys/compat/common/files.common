@@ -1,4 +1,4 @@
-#	$NetBSD: files.common,v 1.1.2.15 2018/03/21 04:48:31 pgoyette Exp $
+#	$NetBSD: files.common,v 1.1.2.16 2018/03/21 10:12:48 pgoyette Exp $
 
 #
 # Generic files, used by all compat options.
@@ -65,6 +65,7 @@ file	compat/common/rtsock_50.c		compat_50
 file	compat/common/vfs_syscalls_50.c		compat_50
 file	compat/common/uipc_syscalls_50.c	compat_50
 file	compat/common/clockctl_50.c		compat_50 & clockctl
+file	compat/common/if_spppsubr50.c		compat_50 & sppp
 file	compat/common/uvm_50.c			compat_50
 
 # Compatibility code for NetBSD 6.0
@@ -79,6 +80,10 @@ file	compat/common/ccd_60.c			compat_60 & ccd
 file	compat/common/compat_70_mod.c		compat_70
 file	compat/common/rtsock_70.c		compat_70
 file	compat/common/uipc_usrreq_70.c		compat_70
+
+# Compatability code for NetBSD 8.0
+file	compat/common/compat_80_mod.c		compat_80
+file	compat/common/raidframe80.c		compat_80 & raid
 
 #
 # Sources for sysv ipc compatibility across the versions.

@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.h,v 1.1.2.3 2018/03/21 10:12:49 pgoyette Exp $	*/
+/* $NetBSD: if_spppsubr50.h,v 1.1.2.1 2018/03/21 10:12:48 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -29,37 +29,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _SYS_COMPAT_STUB_H
-#define _SYS_COMPAT_STUB_H
+#ifndef _COMPAT_IF_SPPPSUBR40_H_
+#define _COMPAT_IF_SPPPSUBR40_H_
 
-/*
- * Routine vectors for compat_50___sys_ntp_gettime
- */
+void if_spppsubr_50_init(void);
+void if_spppsubr_50_fini(void);
 
-#include <sys/timespec.h>
-#include <sys/timex.h>
-
-extern void (*vec_ntp_gettime)(struct ntptimeval *);
-extern int (*vec_ntp_timestatus)(void);
-
-/*
- * Routine vector for dev/ccd ioctl()
- */
-
-extern int (*compat_ccd_ioctl_60)(dev_t, u_long, void *, int, struct lwp *,
-    int (*f)(dev_t, u_long, void *, int, struct lwp *));
-
-/*
- * Routine vector for dev/clockctl ioctl()
- */
-
-extern int (*compat_clockctl_ioctl_50)(dev_t, u_long, void *, int,
-    struct lwp *);
-
-/*
- * if_sppp device compatability ioctl subroutine
- */
-struct sppp;
-extern int (*sppp_params50)(struct sppp *, u_long, void *);
-
-#endif	/* _SYS_COMPAT_STUB_H */
+#endif /* _COMPAT_IF_SPPPSUBR40_H_ */
