@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.3,v 1.1.2.93 2018/03/20 17:18:56 martin Exp $
+# $NetBSD: CHANGES-7.0.3,v 1.1.2.94 2018/03/21 08:11:25 martin Exp $
 
 A complete list of changes from the NetBSD 7.0.2 release to the NetBSD 7.0.3
 release:
@@ -5318,4 +5318,8 @@ sys/arch/xen/x86/cpu.c				1.102-1.103
 	Retrieve cpuid7 (Structured Extended Features) into ci_feat_val.
 	[msaitoh, ticket #1118]
 
+sys/dev/ppbus/if_plip.c				1.28
+
+	Fix an spl(9) leak.
+	[msaitoh, ticket #1579]
 
