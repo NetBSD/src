@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_inet.c,v 1.42 2018/03/17 10:21:09 maxv Exp $	*/
+/*	$NetBSD: npf_inet.c,v 1.43 2018/03/21 10:08:16 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.42 2018/03/17 10:21:09 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.43 2018/03/21 10:08:16 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -323,6 +323,10 @@ npf_cache_ip(npf_cache_t *npc, nbuf_t *nbuf)
 	const uint8_t ver = *(const uint8_t *)nptr;
 	int flags = 0;
 
+	/*
+	 * We intentionally don't read the L4 payload after IPPROTO_AH.
+	 */
+
 	switch (ver >> 4) {
 	case IPVERSION: {
 		struct ip *ip;
@@ -403,9 +407,6 @@ npf_cache_ip(npf_cache_t *npc, nbuf_t *nbuf)
 				hlen = 0;
 				flags |= NPC_IPFRAG;
 
-				break;
-			case IPPROTO_AH:
-				hlen = (ip6e->ip6e_len + 2) << 2;
 				break;
 			default:
 				hlen = 0;
