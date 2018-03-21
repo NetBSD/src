@@ -1,4 +1,4 @@
-/*	$NetBSD: ra.c,v 1.21 2018/03/19 15:43:45 ragge Exp $ */
+/*	$NetBSD: ra.c,v 1.22 2018/03/21 18:27:27 ragge Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -65,7 +65,7 @@ static volatile struct uda {
 
 static struct disklabel ralabel;
 static char io_buf[DEV_BSIZE];
-static int dpart, dunit, remap, is_tmscp, curblock;
+static int dpart, dunit, is_tmscp, curblock;
 static volatile u_short *ra_ip, *ra_sa, *ra_sw;
 
 int
@@ -90,7 +90,6 @@ raopen(struct open_file *f, int adapt, int ctlr, int unit, int part)
 	dpart = part;
 	if (ctlr < 0)
 		ctlr = 0;
-	remap = csrbase && nexaddr;
 	curblock = 0;
 	if (csrbase) { /* On a uda-alike adapter */
 		if (askname == 0) {
@@ -254,8 +253,8 @@ rastrategy(void *f, int func, daddr_t dblk,
 {
 
 #ifdef DEV_DEBUG
-	printf("rastrategy: buf %p remap %d is_tmscp %d\n",
-	    buf, remap, is_tmscp);
+	printf("rastrategy: buf %p is_tmscp %d\n",
+	    buf, is_tmscp);
 #endif
 
 	uda.uda_cmd.mscp_seq.seq_buffer = ubmap(0, (int)buf, size);

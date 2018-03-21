@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.19 2018/03/19 15:43:45 ragge Exp $ */
+/*	$NetBSD: devopen.c,v 1.20 2018/03/21 18:27:27 ragge Exp $ */
 /*
  * Copyright (c) 1997 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -49,7 +49,6 @@ int
 devopen(struct open_file *f, const char *fname, char **file)
 {
 	int dev, unit, ctlr, part, adapt, i, a[4], x;
-	int *mapregs;
 	struct devsw *dp;
 	extern int cnvtab[];
 	char *s, *c;
@@ -130,19 +129,19 @@ devopen(struct open_file *f, const char *fname, char **file)
 	switch (vax_boardtype) {
 	case VAX_BTYP_750:
 		csrbase = (nexaddr == 0xf30000 ? 0xffe000 : 0xfbe000);
+		mapaddr = (int *)nexaddr + VAX_NBPG;
 		if (adapt < 0)
 			break;
 		nexaddr = (NEX750 + NEXSIZE * adapt);
-		mapaddr = (int *)nexaddr + VAX_NBPG;
 		csrbase = (adapt == 8 ? 0xffe000 : 0xfbe000);
 		break;
 	case VAX_BTYP_780:
 	case VAX_BTYP_790:
 		csrbase = 0x2007e000 + 0x40000 * ((nexaddr & 0x1e000) >> 13);
+		mapaddr = (int *)nexaddr + VAX_NBPG;
 		if (adapt < 0)
 			break;
 		nexaddr = ((int)NEX780 + NEXSIZE * adapt);
-		mapaddr = (int *)nexaddr + VAX_NBPG;
 		csrbase = 0x2007e000 + 0x40000 * adapt;
 		break;
 	case VAX_BTYP_9CC: /* 6000/200 */
@@ -180,13 +179,9 @@ devopen(struct open_file *f, const char *fname, char **file)
 	default:
 		nexaddr = 0; /* No map regs */
 		csrbase = 0x20000000;
-		/* Always map in the lowest 4M on qbus-based machines */
-		mapregs = (void *)0x20088000;
 		if (bootrpb.adpphy == 0x20087800) {
 			nexaddr = bootrpb.adpphy;
 			mapaddr = (int *)nexaddr + VAX_NBPG;
-			for (i = 0; i < 8192; i++)
-				mapregs[i] = PG_V | i;
 		}
 		break;
 	}
