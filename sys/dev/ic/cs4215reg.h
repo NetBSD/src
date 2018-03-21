@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4215reg.h,v 1.4 2008/05/05 00:21:47 jmcneill Exp $	*/
+/*	$NetBSD: cs4215reg.h,v 1.4.62.1 2018/03/21 12:04:35 martin Exp $	*/
 
 /*
  * Copyright (c) 2001 Jared D. McNeill <jmcneill@NetBSD.org>
@@ -30,7 +30,7 @@
 /* time slot 1: status register */
 #define	CS4215_CLB	(1<<2)	/* control latch bit */
 #define	CS4215_MLB	(1<<4)	/* 1: mic: 20 dB gain disabled */
-#define	CS4215_RSRVD_1	(1<<5)
+#define	CS4215_ONE	(1<<5)	/* always one */
 
 /* time slot 2: data format register */
 #define	CS4215_DFR_LINEAR16	0
