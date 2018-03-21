@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.c,v 1.1.2.1 2018/03/20 08:11:25 pgoyette Exp $	*/
+/* $NetBSD: compat_stub.c,v 1.1.2.2 2018/03/21 04:48:32 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -50,6 +50,16 @@ void (*vec_ntp_gettime)(struct ntptimeval *) = NULL;
 int (*vec_ntp_timestatus)(void) = NULL;
 #endif
 
+/*
+ * ccd device compatability ioctl
+ */
 int (*compat_ccd_ioctl_60)(dev_t dev, u_long cmd, void *data, int flag,
     struct lwp *l, int (*f)(dev_t, u_long, void *, int, struct lwp *)) =
 	(void *)enosys;
+
+/*
+ * clockctl device compatability ioctl
+ */
+int (*compat_clockctl_ioctl_50)(dev_t dev, u_long cmd, void *data, int flag,
+    struct lwp *l) = (void *)enosys;
+

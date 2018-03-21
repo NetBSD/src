@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2015/12/07 03:25:57 pgoyette Exp $
+# $NetBSD: Makefile,v 1.1.20.1 2018/03/21 04:48:32 pgoyette Exp $
 
 .include "../Makefile.inc"
 
@@ -7,7 +7,5 @@
 KMOD=		clockctl
 IOCONF=		clockctl.ioconf
 SRCS=		clockctl.c
-
-CPPFLAGS+=	-DNTP -DCOMPAT_50
 
 .include <bsd.kmodule.mk>

@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_50_mod.c,v 1.1.2.1 2018/03/19 21:54:43 pgoyette Exp $	*/
+/*	$NetBSD: compat_50_mod.c,v 1.1.2.2 2018/03/21 04:48:31 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_50_mod.c,v 1.1.2.1 2018/03/19 21:54:43 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_50_mod.c,v 1.1.2.2 2018/03/21 04:48:31 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -47,6 +47,8 @@ __KERNEL_RCSID(0, "$NetBSD: compat_50_mod.c,v 1.1.2.1 2018/03/19 21:54:43 pgoyet
 #include <sys/syscall.h>
 #include <sys/syscallvar.h>
 #include <sys/syscallargs.h>
+
+#include <compat/sys/clockctl.h>
 
 #include <compat/common/compat_util.h>
 #include <compat/common/compat_mod.h>
@@ -74,6 +76,7 @@ compat_50_init(void)
 
 	uvm_50_init();
 	if_50_init();
+	clockctl_50_init();
 
 	return error;
 
@@ -94,6 +97,7 @@ compat_50_fini(void)
 {
 	int error = 0;
 
+	clockctl_50_fini();
 	if_50_fini();
 	uvm_50_fini();
 
@@ -125,6 +129,7 @@ compat_50_fini(void)
  err1:
 	uvm_50_init();
 	if_50_init();
+	clockctl_50_init();
 
 	return error;
 }

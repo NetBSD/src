@@ -1,4 +1,4 @@
-#	$NetBSD: files.common,v 1.1.2.14 2018/03/19 21:54:43 pgoyette Exp $
+#	$NetBSD: files.common,v 1.1.2.15 2018/03/21 04:48:31 pgoyette Exp $
 
 #
 # Generic files, used by all compat options.
@@ -64,6 +64,7 @@ file	compat/common/rndpseudo_50.c		compat_50
 file	compat/common/rtsock_50.c		compat_50
 file	compat/common/vfs_syscalls_50.c		compat_50
 file	compat/common/uipc_syscalls_50.c	compat_50
+file	compat/common/clockctl_50.c		compat_50 & clockctl
 file	compat/common/uvm_50.c			compat_50
 
 # Compatibility code for NetBSD 6.0
@@ -72,7 +73,7 @@ file	compat/common/kern_sa_60.c		compat_60
 file	compat/common/tty_60.c			compat_60
 file	compat/common/kern_time_60.c		compat_60
 file	compat/common/kern_cpu_60.c		compat_60
-file	compat/common/ccd_60.c			compat_60
+file	compat/common/ccd_60.c			compat_60 & ccd
 
 # Compatibility code for NetBSD 7.0
 file	compat/common/compat_70_mod.c		compat_70
