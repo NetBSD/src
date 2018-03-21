@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.182 2018/03/09 11:57:38 maxv Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.183 2018/03/21 16:26:04 maxv Exp $	*/
 
 /*
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.182 2018/03/09 11:57:38 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.183 2018/03/21 16:26:04 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
@@ -707,8 +707,6 @@ m_prepend(struct mbuf *m, int len, int how)
  * continuing for "len" bytes.  If len is M_COPYALL, copy to end of mbuf.
  * The wait parameter is a choice of M_WAIT/M_DONTWAIT from caller.
  */
-int MCFail;
-
 struct mbuf *
 m_copym(struct mbuf *m, int off0, int len, int wait)
 {
@@ -812,14 +810,10 @@ m_copym0(struct mbuf *m, int off0, int len, int wait, bool deep)
 		np = &n->m_next;
 	}
 
-	if (top == NULL)
-		MCFail++;
-
 	return top;
 
 nospace:
 	m_freem(top);
-	MCFail++;
 	return NULL;
 }
 
@@ -871,7 +865,6 @@ m_copypacket(struct mbuf *m, int how)
 
 nospace:
 	m_freem(top);
-	MCFail++;
 	return NULL;
 }
 
@@ -1082,8 +1075,6 @@ m_ensure_contig(struct mbuf **m0, int len)
 /*
  * m_pullup: same as m_ensure_contig(), but destroys mbuf chain on error.
  */
-int MPFail;
-
 struct mbuf *
 m_pullup(struct mbuf *n, int len)
 {
@@ -1093,7 +1084,6 @@ m_pullup(struct mbuf *n, int len)
 	if (!m_ensure_contig(&m, len)) {
 		KASSERT(m != NULL);
 		m_freem(m);
-		MPFail++;
 		m = NULL;
 	}
 	return m;
@@ -1104,8 +1094,6 @@ m_pullup(struct mbuf *n, int len)
  * the amount of empty space before the data in the new mbuf to be specified
  * (in the event that the caller expects to prepend later).
  */
-int MSFail;
-
 struct mbuf *
 m_copyup(struct mbuf *n, int len, int dstoff)
 {
@@ -1145,7 +1133,6 @@ m_copyup(struct mbuf *n, int len, int dstoff)
 	return (m);
  bad:
 	m_freem(n);
-	MSFail++;
 	return (NULL);
 }
 
