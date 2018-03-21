@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.c,v 1.1.2.2 2018/03/21 04:48:32 pgoyette Exp $	*/
+/* $NetBSD: compat_stub.c,v 1.1.2.3 2018/03/21 10:12:49 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -63,3 +63,7 @@ int (*compat_ccd_ioctl_60)(dev_t dev, u_long cmd, void *data, int flag,
 int (*compat_clockctl_ioctl_50)(dev_t dev, u_long cmd, void *data, int flag,
     struct lwp *l) = (void *)enosys;
 
+/*
+ * if_sppp device compatability ioctl subroutine
+ */
+int (*sppp_params50)(struct sppp *sp, u_long cmd, void *data) = (void *)enosys;
