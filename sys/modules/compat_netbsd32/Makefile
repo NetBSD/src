@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2017/01/26 01:32:34 christos Exp $
+#	$NetBSD: Makefile,v 1.20.12.1 2018/03/21 02:01:34 pgoyette Exp $
 
 .include "../Makefile.inc"
 .include "../Makefile.assym"
@@ -39,6 +39,7 @@ SRCS+=	netbsd32_sem.c netbsd32_signal.c
 SRCS+=	netbsd32_socket.c netbsd32_syscalls.c
 SRCS+=	netbsd32_sysctl.c netbsd32_sysent.c
 SRCS+=	netbsd32_time.c netbsd32_wait.c
+SRCS+=	netbsd32_rndpseudo_50.c
 SRCS+=	netbsd32_mod.c netbsd32_module.c
 
 .if ${MACHINE_CPU} != "mips" && ${MACHINE_CPU} != "powerpc"

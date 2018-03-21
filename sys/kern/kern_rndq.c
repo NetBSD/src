@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.89 2016/05/21 15:27:15 riastradh Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.89.16.1 2018/03/21 02:01:34 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.89 2016/05/21 15:27:15 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.89.16.1 2018/03/21 02:01:34 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.89 2016/05/21 15:27:15 riastradh Exp
 #include <sys/rndsink.h>
 #include <sys/rndsource.h>
 #include <sys/rngtest.h>
+#include <sys/file.h>
 #include <sys/systm.h>
 
 #include <dev/rnd_private.h>
@@ -175,6 +176,11 @@ static uint8_t		rnd_testbits[sizeof(rnd_rt.rt_b)];
 #endif
 
 static rndsave_t	*boot_rsp;
+
+int (*vec_compat_50_rnd_ioctl)(struct file *, u_long, void *) =
+    (void *)enosys;
+int (*vec_compat32_50_rnd_ioctl)(struct file *, u_long, void *) =
+    (void *)enosys;
 
 static inline void
 rnd_printf(const char *fmt, ...)
@@ -1481,11 +1487,14 @@ rnd_system_ioctl(struct file *fp, u_long cmd, void *addr)
 		break;
 
 	default:
-#ifdef COMPAT_50
-		return compat_50_rnd_ioctl(fp, cmd, addr);
-#else
-		return ENOTTY;
+		ret = (*vec_compat_50_rnd_ioctl)(fp, cmd, addr);
+#if defined(_LP64)
+		if (ret == ENOSYS)
+			ret = (*vec_compat32_50_rnd_ioctl)(fp, cmd, addr);
 #endif
+		if (ret == ENOSYS)
+			ret = ENOTTY;
+		return ret;
 	}
 
 	switch (cmd) {
