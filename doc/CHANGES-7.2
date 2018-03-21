@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.2,v 1.1.2.78 2018/03/10 16:12:24 snj Exp $
+# $NetBSD: CHANGES-7.2,v 1.1.2.79 2018/03/21 12:19:30 martin Exp $
 
 A complete list of changes from the NetBSD 7.1 release to the NetBSD 7.2
 release:
@@ -5306,4 +5306,59 @@ etc/namedb/bind.keys				1.2
 	Update the keys file to the latest version from
 	https://ftp.isc.org/isc/bind9/keys/9.11/bind.keys.v9_11
 	[maya, ticket #1583]
+
+sys/dev/ppbus/if_plip.c				1.28
+
+	Fix an spl(9) leak.
+	[msaitoh, ticket #1579]
+
+share/man/man4/altq.4				1.3
+
+	Update URL for the cited paper.
+	[sevan, ticket #1580]
+
+sys/sys/bitops.h				1.12-1.14
+
+	Fix sign issues.
+	Avoid undefined behaviour when a left shift may be greater than
+	the size of the bitmap type.
+	[mrg, ticket #1582]
+
+usr.sbin/sysinst/arch/sgimips/md.c		1.4
+
+	Official builds now append the "reproducable build timestamp"
+	to the kernel config name, adjust kernel name matching
+	to deal with this.
+	[jmcneill, ticket #1584]
+
+sys/arch/sparc/include/cpu.h			1.99 (via patch, -> cpuvar.h)
+sys/arch/sparc/sparc/cpu.c			1.250 (via patch)
+sys/arch/sparc/sparc/intr.c			1.119 (via patch)
+
+	- return early in xcall() if the function is sparc_noop() instead
+	  of triggering the IPI and then ignoring responses (or lack thereof)
+	- write the .tag field last to avoid a race when polling for an
+	  incoming IPI
+	- add event counters for IPIs being caught with the mutex not held,
+	   and for messages that are already marked as completed
+	[mrg, ticket #1585]
+
+sys/dev/ic/cs4215reg.h				1.5
+sys/dev/sbus/dbri.c				1.36-1.38
+sys/dev/sbus/dbrivar.h				1.14-1.15
+
+	Make audio work again on some sparc machines.
+	[mrg, ticket #1586]
+
+usr.bin/m4/eval.c				1.25-1.26
+
+	Missing argument check caused m4 to core in ifelse().
+	[mrg, ticket #1587]
+
+usr.bin/audiocfg/audiodev.c			(patch)
+
+	Make 'audiocfg list' work even if /dev/audio is in use.
+	(This change is not necessary on newer branches due to the
+	in-kernel audio mixer)
+	[mrg, ticket #1588]
 
