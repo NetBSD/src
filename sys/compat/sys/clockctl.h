@@ -1,4 +1,4 @@
-/*      $NetBSD: clockctl.h,v 1.4 2015/09/06 06:00:59 dholland Exp $ */
+/*      $NetBSD: clockctl.h,v 1.4.16.1 2018/03/21 04:48:31 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -70,6 +70,9 @@ struct clockctl50_ntp_adjtime {
 #ifdef _KERNEL
 struct lwp;
 int compat50_clockctlioctl(dev_t, u_long, void *, int, struct lwp *);
+
+void clockctl_50_init(void);
+void clockctl_50_fini(void);
 #endif
 
 #endif /* _COMPAT_SYS_CLOCKCTL_H_ */
