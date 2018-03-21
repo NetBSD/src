@@ -1,4 +1,4 @@
-/* $NetBSD: t_ucontext.c,v 1.1.34.2 2018/02/26 04:32:31 snj Exp $ */
+/* $NetBSD: t_ucontext.c,v 1.1.34.3 2018/03/21 10:08:03 martin Exp $ */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,11 +29,12 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_ucontext.c,v 1.1.34.2 2018/02/26 04:32:31 snj Exp $");
+__RCSID("$NetBSD: t_ucontext.c,v 1.1.34.3 2018/03/21 10:08:03 martin Exp $");
 
 #include <atf-c.h>
 #include <stdio.h>
 #include <ucontext.h>
+#include <inttypes.h>
 
 ATF_TC(ucontext_basic);
 ATF_TC_HEAD(ucontext_basic, tc)
@@ -68,9 +69,73 @@ ATF_TC_BODY(ucontext_basic, tc)
 	ATF_REQUIRE_EQ(y, 21);
 }
 
+ATF_TC(ucontext_sp);
+ATF_TC_HEAD(ucontext_sp, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Retrieve _UC_MACHINE_SP()");
+}
+
+ATF_TC_BODY(ucontext_sp, tc)
+{
+	ucontext_t u;
+
+	getcontext(&u);
+
+	printf("_UC_MACHINE_SP(u)=%" PRIxREGISTER "\n", (register_t)_UC_MACHINE_SP(&u));
+}
+
+ATF_TC(ucontext_fp);
+ATF_TC_HEAD(ucontext_fp, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Retrieve _UC_MACHINE_FP()");
+}
+
+ATF_TC_BODY(ucontext_fp, tc)
+{
+	ucontext_t u;
+
+	getcontext(&u);
+
+	printf("_UC_MACHINE_FP(u)=%" PRIxREGISTER "\n", (register_t)_UC_MACHINE_FP(&u));
+}
+
+ATF_TC(ucontext_pc);
+ATF_TC_HEAD(ucontext_pc, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Retrieve _UC_MACHINE_PC()");
+}
+
+ATF_TC_BODY(ucontext_pc, tc)
+{
+	ucontext_t u;
+
+	getcontext(&u);
+
+	printf("_UC_MACHINE_PC(u)=%" PRIxREGISTER "\n", (register_t)_UC_MACHINE_PC(&u));
+}
+
+ATF_TC(ucontext_intrv);
+ATF_TC_HEAD(ucontext_intrv, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Retrieve _UC_MACHINE_INTRV()");
+}
+
+ATF_TC_BODY(ucontext_intrv, tc)
+{
+	ucontext_t u;
+
+	getcontext(&u);
+
+	printf("_UC_MACHINE_INTRV(u)=%" PRIxREGISTER "\n", (register_t)_UC_MACHINE_INTRV(&u));
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 	ATF_TP_ADD_TC(tp, ucontext_basic);
+	ATF_TP_ADD_TC(tp, ucontext_sp);
+	ATF_TP_ADD_TC(tp, ucontext_fp);
+	ATF_TP_ADD_TC(tp, ucontext_pc);
+	ATF_TP_ADD_TC(tp, ucontext_intrv);
 
 	return atf_no_error();
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.8.22.2 2018/02/26 04:32:29 snj Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.8.22.3 2018/03/21 10:08:02 martin Exp $	*/
 
 #ifndef _HPPA_MCONTEXT_H_
 #define	_HPPA_MCONTEXT_H_
@@ -50,12 +50,14 @@ typedef struct {
 } mcontext_t;
 
 #define	_UC_MACHINE_SP(uc)	((uc)->uc_mcontext.__gregs[_REG_SP])
+#define	_UC_MACHINE_FP(uc)	((uc)->uc_mcontext.__gregs[3])
 #define	_UC_MACHINE_PC(uc) 	((uc)->uc_mcontext.__gregs[_REG_PCOQH])
 #define	_UC_MACHINE_SET_PC(uc, pc)					\
 do {									\
 	(uc)->uc_mcontext.__gregs[_REG_PCOQH] = (pc);			\
 	(uc)->uc_mcontext.__gregs[_REG_PCOQT] = (pc) + 4;		\
 } while (/*CONSTCOND*/0)
+#define	_UC_MACHINE_INTRV(uc) 	((uc)->uc_mcontext.__gregs[_REG_RET0])
 
 static __inline void *
 __lwp_getprivate_fast(void)

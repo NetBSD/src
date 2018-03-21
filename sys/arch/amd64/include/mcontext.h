@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.18.20.2 2018/02/26 04:32:29 snj Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.18.20.3 2018/03/21 10:08:02 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -68,6 +68,7 @@ typedef struct {
 
 /* AMD64 ABI 128-bytes "red zone". */
 #define _UC_MACHINE_SP(uc)	((uc)->uc_mcontext.__gregs[_REG_RSP] - 128)
+#define _UC_MACHINE_FP(uc)	((uc)->uc_mcontext.__gregs[_REG_RBP])
 #define _UC_MACHINE_PC(uc)	((uc)->uc_mcontext.__gregs[_REG_RIP])
 #define _UC_MACHINE_INTRV(uc)	((uc)->uc_mcontext.__gregs[_REG_RAX])
 
