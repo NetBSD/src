@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.149 2018/03/20 09:18:49 bouyer Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.150 2018/03/21 10:52:15 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -10460,4 +10460,51 @@ share/mk/bsd.own.mk				1.1051
 
 	Don't barf if the ctf tools are not installed.
 	[martin, ticket #647]
+
+external/gpl3/gcc{.old}/dist/libsanitizer/asan/asan_linux.cc 1.4
+sys/arch/aarch64/include/mcontext.h             1.2
+sys/arch/alpha/include/mcontext.h               1.9
+sys/arch/amd64/include/mcontext.h               1.19
+sys/arch/arm/include/mcontext.h                 1.19
+sys/arch/hppa/include/mcontext.h                1.9
+sys/arch/i386/include/mcontext.h                1.14
+sys/arch/ia64/include/mcontext.h                1.6
+sys/arch/m68k/include/mcontext.h                1.10
+sys/arch/mips/include/mcontext.h                1.22
+sys/arch/or1k/include/mcontext.h                1.2
+sys/arch/powerpc/include/mcontext.h             1.18
+sys/arch/riscv/include/mcontext.h               1.5
+sys/arch/sh3/include/mcontext.h                 1.11
+sys/arch/sparc/include/mcontext.h               1.14-1.17
+sys/arch/sparc64/include/mcontext.h             1.10
+sys/arch/vax/include/mcontext.h                 1.9
+tests/lib/libc/sys/Makefile                     1.50
+tests/lib/libc/sys/t_ucontext.c                 1.2-1.5
+sys/arch/hppa/include/mcontext.h		1.10
+sys/arch/ia64/include/mcontext.h		1.7
+
+	- Introduce _UC_MACHINE_FP().  _UC_MACHINE_FP() is a helper
+	  macro to extract from mcontext a frame pointer.
+	- Add new tests in lib/libc/sys/t_ucontext:
+	  * ucontext_sp (testing _UC_MACHINE_SP)
+	  * ucontext_fp (testing _UC_MACHINE_FP)
+	  * ucontext_pc (testing _UC_MACHINE_PC)
+	  * ucontext_intrv (testing _UC_MACHINE_INTRV)
+	Add a dummy implementation of _UC_MACHINE_INTRV() for ia64.
+	Implement _UC_MACHINE_INTRV() for hppa.
+	Make the t_ucontext.c test more portable.
+	We now have _UC_MACHINE_FP.
+	[kamil, ticket #552]
+
+sys/arch/i386/stand/efiboot/boot.c		1.7
+sys/arch/i386/stand/efiboot/devopen.c		1.3
+sys/arch/i386/stand/efiboot/efidisk.c		1.3
+sys/arch/i386/stand/lib/biosdisk.c		1.48
+
+	efiboot:
+	 - fix booting from HDD
+	 - add the "more" pager.
+	 - boot device is always efi_distlist first element.
+	 - fix boot partition lookup.
+	[nonaka, ticket #648]
 
