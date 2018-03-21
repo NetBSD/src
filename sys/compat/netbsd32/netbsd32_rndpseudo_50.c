@@ -1,4 +1,4 @@
-/*	$NetBSD: rndpseudo_50.c,v 1.2.38.1 2018/03/21 02:01:34 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_rndpseudo_50.c,v 1.1.2.1 2018/03/21 02:01:34 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -30,10 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rndpseudo_50.c,v 1.2.38.1 2018/03/21 02:01:34 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_rndpseudo_50.c,v 1.1.2.1 2018/03/21 02:01:34 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
+#include "opt_compat_netbsd32.h"
 #endif
 
 #include <sys/param.h>
@@ -46,66 +47,71 @@ __KERNEL_RCSID(0, "$NetBSD: rndpseudo_50.c,v 1.2.38.1 2018/03/21 02:01:34 pgoyet
  * Convert from rndsource_t to rndsource50_t, for the results from
  * RNDGETNUM50 and RNDGETNAME50.
  */
-static void
-rndsource_to_rndsource50(rndsource_t *r, rndsource50_t *r50)
-{
-	memset(r50, 0, sizeof(*r50));
-	strlcpy(r50->name, r->name, sizeof(r50->name));
-	r50->total = r->total;
-	r50->type = r->type;
-	r50->flags = r->flags;
-}
 
 /*
- * COMPAT_50 handling for rnd_ioctl.  This is called from rnd_ioctl.
- *
+ * Convert from rndsource_t to rndsource50_32_t, for the results from
+ * RNDGETNUM50_32 and RNDGETNAME50_32.
+ */
+static void
+rndsource_to_rndsource50_32(rndsource_t *r, rndsource50_32_t *r50_32)
+{
+	memset(r50_32, 0, sizeof(*r50_32));
+	strlcpy(r50_32->name, r->name, sizeof(r50_32->name));
+	r50_32->total = r->total;
+	r50_32->type = r->type;
+	r50_32->flags = r->flags;
+}
+
+/* 
+ * COMPAT32_50 handling for rnd_ioctl.  This is called from rnd_ioctl.
+ * 
  * It also handles the case of (COMPAT_50 && COMPAT_NETBSD32).
  */
 int
-compat_50_rnd_ioctl(struct file *fp, u_long cmd, void *addr)
-{
+compat32_50_rnd_ioctl(struct file *fp, u_long cmd, void *addr)
+{ 
 	int ret = 0;
 
 	switch (cmd) {
-
-	case RNDGETSRCNUM50:
+	case RNDGETSRCNUM50_32:
 	{
 		rndstat_t rstbuf = {.start = 0};
-		rndstat50_t *rst50 = (rndstat50_t *)addr;
+		rndstat50_32_t *rst50_32 = (rndstat50_32_t *)addr;
 		int count;
 
-		if (rst50->count > RND_MAXSTATCOUNT50)
-			return EINVAL;
+		if (rst50_32->count > RND_MAXSTATCOUNT50)
+			return (EINVAL);
 
-		rstbuf.start = rst50->start;
-		rstbuf.count = rst50->count;
+		rstbuf.start = rst50_32->start;
+		rstbuf.count = rst50_32->count;
 
 		ret = (fp->f_ops->fo_ioctl)(fp, RNDGETSRCNUM, &rstbuf);
 		if (ret != 0)
 			return ret;
 
-		for (count = 0; count < rst50->count; count++) {
-			rndsource_to_rndsource50(&rstbuf.source[count],
-			    &rst50->source[count]);
+		for (count = 0; count < rst50_32->count; count++) {
+			rndsource_to_rndsource50_32(&rstbuf.source[count],
+			    &rst50_32->source[count]);
 		}
-		rst50->count = rstbuf.count;
+		rst50_32->count = rstbuf.count;
 
 		break;
 	}
 
-	case RNDGETSRCNAME50:
+	case RNDGETSRCNAME50_32:
 	{
 		rndstat_name_t rstnmbuf = {.name[0] = 0};
-		rndstat_name50_t *rstnm50;
-		rstnm50 = (rndstat_name50_t *)addr;
+		rndstat_name50_32_t *rstnm50_32;
+		rstnm50_32 = (rndstat_name50_32_t *)addr;
 
-		strlcpy(rstnmbuf.name, rstnm50->name, sizeof(rstnmbuf.name));
+		strlcpy(rstnmbuf.name, rstnm50_32->name, sizeof(rstnmbuf.name));
 
 		ret = (fp->f_ops->fo_ioctl)(fp, RNDGETSRCNAME, &rstnmbuf);
 		if (ret != 0)
 			return ret;
 
-		rndsource_to_rndsource50(&rstnmbuf.source, &rstnm50->source);
+		rndsource_to_rndsource50_32(&rstnmbuf.source,
+		    &rstnm50_32->source);
 
 		break;
 	}

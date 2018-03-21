@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.h,v 1.49 2015/04/14 12:51:30 riastradh Exp $	*/
+/*	$NetBSD: rnd.h,v 1.49.16.1 2018/03/21 02:01:34 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -48,6 +48,9 @@ void		rnd_seed(void *, size_t);
 int		rnd_system_ioctl(struct file *, u_long, void *);
 
 extern int	rnd_initial_entropy;
+
+extern int (*vec_compat_50_rnd_ioctl)(struct file *, u_long, void *);
+extern int (*vec_compat32_50_rnd_ioctl)(struct file *, u_long, void *);
 
 #endif /* _KERNEL */
 
