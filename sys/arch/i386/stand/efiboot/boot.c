@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.5.2.1 2018/03/13 14:54:52 martin Exp $	*/
+/*	$NetBSD: boot.c,v 1.5.2.2 2018/03/21 10:50:49 martin Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -627,6 +627,12 @@ command_devpath(char *arg)
 			break;
 
 		Print(L"DevicePathType %d\n", DevicePathType(dp0));
+		if (++row >= rows) {
+			row = 0;
+			Print(L"Press Any Key to continue :");
+			(void) awaitkey(-1, 0);
+			Print(L"\n");
+		}
 		for (dp = dp0;
 		     !IsDevicePathEnd(dp);
 		     dp = NextDevicePathNode(dp)) {
