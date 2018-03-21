@@ -1,11 +1,11 @@
-/*	$NetBSD: compat_60_mod.c,v 1.1.2.11 2018/03/19 21:54:43 pgoyette Exp $	*/
+/*	$NetBSD: compat_60_mod.c,v 1.1.2.12 2018/03/21 10:01:04 pgoyette Exp $	*/
 
 /*-
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2018 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software developed for The NetBSD Foundation
- * by Andrew Doran.
+ * by Paul Goyette
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_60_mod.c,v 1.1.2.11 2018/03/19 21:54:43 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_60_mod.c,v 1.1.2.12 2018/03/21 10:01:04 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -116,7 +116,7 @@ compat_60_fini(void)
 
 #ifdef _MODULE
 
-#define REQUIRED_60 "compat_70"		/* XXX No compat_80 yet */
+#define REQUIRED_60 "compat_70,compat_80"
 MODULE(MODULE_CLASS_EXEC, compat_60, REQUIRED_60);
 
 static int
