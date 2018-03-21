@@ -1,4 +1,4 @@
-/* $NetBSD: fcu.c,v 1.2 2018/03/16 22:11:53 macallan Exp $ */
+/* $NetBSD: fcu.c,v 1.3 2018/03/21 15:41:34 macallan Exp $ */
 
 /*-
  * Copyright (c) 2018 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fcu.c,v 1.2 2018/03/16 22:11:53 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fcu.c,v 1.3 2018/03/21 15:41:34 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -163,10 +163,10 @@ fcu_attach(device_t parent, device_t self, void *aux)
 
 	/* init zones */
 	sc->sc_zones[FCU_ZONE_CPU_A].filter = is_cpu_a;
-	sc->sc_zones[FCU_ZONE_CPU_A].threshold = 45;
+	sc->sc_zones[FCU_ZONE_CPU_A].threshold = 50;
 	sc->sc_zones[FCU_ZONE_CPU_A].nfans = 0;
 	sc->sc_zones[FCU_ZONE_CPU_B].filter = is_cpu_b;
-	sc->sc_zones[FCU_ZONE_CPU_B].threshold = 45;
+	sc->sc_zones[FCU_ZONE_CPU_B].threshold = 50;
 	sc->sc_zones[FCU_ZONE_CPU_B].nfans = 0;
 	sc->sc_zones[FCU_ZONE_CASE].filter = is_case;
 	sc->sc_zones[FCU_ZONE_CASE].threshold = 50;
@@ -401,13 +401,14 @@ fcu_set_fan_rpm(struct fcu_softc *sc, fcu_fan_t *f, int speed)
 	int error;
 	uint8_t cmd;
 
+	if (speed > f->max_rpm) speed = f->max_rpm;
+	if (speed < f->base_rpm) speed = f->base_rpm;
+
 	if (f->reg < 0x30) {
 		uint16_t data;
 		/* simple rpm fan, just poke the register */
 
 		if (f->target == speed) return;
-		speed = min(speed, f->max_rpm);
-		speed = max(speed, f->base_rpm);
 		iic_acquire_bus(sc->sc_i2c, 0);
 		cmd = f->reg;
 		data = (speed << 3);
@@ -469,7 +470,8 @@ fcu_adjust_zone(struct fcu_softc *sc, int which)
 	}
 
 	temp = (temp - 273150000) / 1000000;
-	diff = (temp - z->threshold);
+	diff = temp - z->threshold;
+	if (diff < 0) diff = 0;
 
 	/* now adjust each fan to the new duty cycle */
 	for (i = 0; i < z->nfans; i++) {
@@ -479,6 +481,7 @@ fcu_adjust_zone(struct fcu_softc *sc, int which)
 		}
 		f = &sc->sc_fans[z->fans[i]];
 		speed = f->base_rpm + diff * f->step;
+		DPRINTF("diff %d base %d sp %d\n", diff, f->base_rpm, speed);
 		fcu_set_fan_rpm(sc, f, speed);
 	}
 }
