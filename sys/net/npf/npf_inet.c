@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_inet.c,v 1.43 2018/03/21 10:08:16 maxv Exp $	*/
+/*	$NetBSD: npf_inet.c,v 1.44 2018/03/21 15:36:28 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.43 2018/03/21 10:08:16 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.44 2018/03/21 15:36:28 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -369,6 +369,10 @@ npf_cache_ip(npf_cache_t *npc, nbuf_t *nbuf)
 			return NPC_FMTERR;
 		}
 
+		/*
+		 * XXX: We don't handle IPv6 Jumbograms.
+		 */
+
 		/* Set initial next-protocol value. */
 		hlen = sizeof(struct ip6_hdr);
 		npc->npc_proto = ip6->ip6_nxt;
@@ -433,7 +437,7 @@ npf_cache_ip(npf_cache_t *npc, nbuf_t *nbuf)
 		/* Cache: layer 3 - IPv6. */
 		npc->npc_alen = sizeof(struct in6_addr);
 		npc->npc_ips[NPF_SRC] = (npf_addr_t *)&ip6->ip6_src;
-		npc->npc_ips[NPF_DST]= (npf_addr_t *)&ip6->ip6_dst;
+		npc->npc_ips[NPF_DST] = (npf_addr_t *)&ip6->ip6_dst;
 
 		npc->npc_ip.v6 = ip6;
 		flags |= NPC_IP6;
