@@ -1,11 +1,11 @@
-/*	$NetBSD: compat_70_mod.c,v 1.1.2.5 2018/03/17 00:44:38 pgoyette Exp $	*/
+/*	$NetBSD: compat_70_mod.c,v 1.1.2.6 2018/03/21 10:01:04 pgoyette Exp $	*/
 
 /*-
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2018 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software developed for The NetBSD Foundation
- * by Andrew Doran.
+ * by Paul Goyette
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_70_mod.c,v 1.1.2.5 2018/03/17 00:44:38 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_70_mod.c,v 1.1.2.6 2018/03/21 10:01:04 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -74,7 +74,8 @@ int compat_70_fini(void)
 
 #ifdef _MODULE
 
-MODULE(MODULE_CLASS_EXEC, compat_70, NULL);	/* XXX No compat_80 yet */
+#define REQD_70 "compat_80"
+MODULE(MODULE_CLASS_EXEC, compat_70, REQD_70);
 
 static int
 compat_70_modcmd(modcmd_t cmd, void *arg)

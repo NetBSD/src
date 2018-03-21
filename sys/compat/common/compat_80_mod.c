@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_50_mod.c,v 1.1.2.3 2018/03/21 10:01:04 pgoyette Exp $	*/
+/*	$NetBSD: compat_80_mod.c,v 1.1.2.1 2018/03/21 10:01:04 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_50_mod.c,v 1.1.2.3 2018/03/21 10:01:04 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_80_mod.c,v 1.1.2.1 2018/03/21 10:01:04 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -43,118 +43,53 @@ __KERNEL_RCSID(0, "$NetBSD: compat_50_mod.c,v 1.1.2.3 2018/03/21 10:01:04 pgoyet
 
 #include <sys/systm.h>
 #include <sys/module.h>
-#include <sys/sysctl.h>
-#include <sys/syscall.h>
-#include <sys/syscallvar.h>
-#include <sys/syscallargs.h>
 
-#include <compat/sys/clockctl.h>
+#include <net/if.h>
+#include <net/route.h>
 
 #include <compat/common/compat_util.h>
 #include <compat/common/compat_mod.h>
-#include <compat/common/if_spppsubr50.h>
+#include <compat/sys/sockio.h>
 
-int
-compat_50_init(void)
+#include <compat/net/route.h>
+#include <compat/net/route_70.h>
+
+int compat_70_init(void)
 {
-	int error = 0;
 
-	error = kern_50_init();
-	if (error != 0)
-		return error;
+	vec_ocreds_valid = true;
+	rtsock_70_init();
 
-	error = kern_time_50_init();
-	if (error != 0)
-		goto err1;
-
-	error = kern_select_50_init();
-	if (error != 0)
-		goto err2;
-
-	error = vfs_syscalls_50_init();
-	if (error != 0)
-		goto err3;
-
-	uvm_50_init();
-	if_50_init();
-	clockctl_50_init();
-	if_spppsubr_50_init();
-
-	return error;
-
-/* If an error occured, undo all previous set-up before returning */
-
- err3:
-	kern_select_50_fini();
- err2:
-	kern_time_50_fini();
- err1:
-	kern_50_fini();
-
-	return error;
+	return 0;
 }
 
-int
-compat_50_fini(void)
+int compat_70_fini(void)
 {
-	int error = 0;
 
-	if_spppsubr_50_fini();
-	clockctl_50_fini();
-	if_50_fini();
-	uvm_50_fini();
+	rtsock_70_fini();
+	vec_ocreds_valid = false;
 
-	error = vfs_syscalls_50_fini();
-	if (error != 0)
-		goto err1;
-
-	error = kern_select_50_fini();
-	if (error != 0)
-		goto err2;
-
-	error = kern_time_50_fini();
-	if (error != 0)
-		goto err3;
-
-	error = kern_50_fini();
-	if (error != 0)
-		goto err4;
-
-	return error;
-
-/* If an error occurred while removing something, restore everything! */
- err4:
-	kern_time_50_init();
- err3:
-	kern_select_50_init();
- err2:
-	vfs_syscalls_50_init();
- err1:
-	uvm_50_init();
-	if_50_init();
-	clockctl_50_init();
-	if_spppsubr_50_init();
-
-	return error;
+	return 0;
 }
 
 #ifdef _MODULE
 
-#define REQD_50	"compat_80,compat_70,compat_60"
-
-MODULE(MODULE_CLASS_EXEC, compat_50, REQD_50);
+#define REQD_80 NULL
+MODULE(MODULE_CLASS_EXEC, compat_80, REQD_80);
 
 static int
-compat_50_modcmd(modcmd_t cmd, void *arg)
+compat_70_modcmd(modcmd_t cmd, void *arg)
 {
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		return compat_50_init();
+		return compat_70_init();
+
 	case MODULE_CMD_FINI:
-		return compat_50_init();
+		return compat_70_fini();
+
 	default:
 		return ENOTTY;
 	}
 }
-#endif
+#endif /* _MODULE */
