@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_alg_icmp.c,v 1.28 2018/03/22 08:57:47 maxv Exp $	*/
+/*	$NetBSD: npf_alg_icmp.c,v 1.29 2018/03/22 12:16:11 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_alg_icmp.c,v 1.28 2018/03/22 08:57:47 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_alg_icmp.c,v 1.29 2018/03/22 12:16:11 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/module.h>
@@ -252,7 +252,7 @@ npfa_icmp_conn(npf_cache_t *npc, int di)
 	 * modified, so no need to recache npc.
 	 */
 	if (npf_iscached(npc, NPC_ICMP_ID)) {
-		KASSERT(!nbuf_flag_p(nbuf, NBUF_DATAREF_RESET));
+		KASSERT(!nbuf_flag_p(npc->npc_nbuf, NBUF_DATAREF_RESET));
 		return NULL;
 	}
 
@@ -341,7 +341,7 @@ npfa_icmp_nat(npf_cache_t *npc, npf_nat_t *nt, bool forw)
 	 * modified, so no need to recache npc.
 	 */
 	if (npf_iscached(npc, NPC_ICMP_ID)) {
-		KASSERT(!nbuf_flag_p(nbuf, NBUF_DATAREF_RESET));
+		KASSERT(!nbuf_flag_p(npc->npc_nbuf, NBUF_DATAREF_RESET));
 		return false;
 	}
 
