@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.385 2018/03/22 21:10:17 maxv Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.386 2018/03/22 21:19:28 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.385 2018/03/22 21:10:17 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.386 2018/03/22 21:19:28 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -390,7 +390,7 @@ extern struct evcnt tcp_reass_fragdup;
 #endif /* TCP_REASS_COUNTERS */
 
 static int tcp_reass(struct tcpcb *, const struct tcphdr *, struct mbuf *,
-    int *);
+    int);
 static int tcp_dooptions(struct tcpcb *, const u_char *, int,
     struct tcphdr *, struct mbuf *, int, struct tcp_opt_info *);
 
@@ -441,7 +441,7 @@ tcpipqent_free(struct ipqent *ipqe)
 }
 
 static int
-tcp_reass(struct tcpcb *tp, const struct tcphdr *th, struct mbuf *m, int *tlen)
+tcp_reass(struct tcpcb *tp, const struct tcphdr *th, struct mbuf *m, int tlen)
 {
 	struct ipqent *p, *q, *nq, *tiqe = NULL;
 	struct socket *so = NULL;
@@ -473,13 +473,13 @@ tcp_reass(struct tcpcb *tp, const struct tcphdr *th, struct mbuf *m, int *tlen)
 
 	m_claimm(m, &tcp_reass_mowner);
 
-	rcvoobyte = *tlen;
+	rcvoobyte = tlen;
 	/*
 	 * Copy these to local variables because the tcpiphdr
 	 * gets munged while we are collapsing mbufs.
 	 */
 	pkt_seq = th->th_seq;
-	pkt_len = *tlen;
+	pkt_len = tlen;
 	pkt_flags = th->th_flags;
 
 	TCP_REASS_COUNTER_INCR(&tcp_reass_);
@@ -2183,7 +2183,7 @@ after_listen:
 				tp->rcv_scale = tp->request_r_scale;
 			}
 			TCP_REASS_LOCK(tp);
-			(void) tcp_reass(tp, NULL, NULL, &tlen);
+			(void)tcp_reass(tp, NULL, NULL, tlen);
 			/*
 			 * if we didn't have to retransmit the SYN,
 			 * use its rtt as our initial srtt & rtt var.
@@ -2511,7 +2511,7 @@ after_listen:
 			tp->rcv_scale = tp->request_r_scale;
 		}
 		TCP_REASS_LOCK(tp);
-		(void) tcp_reass(tp, NULL, NULL, &tlen);
+		(void)tcp_reass(tp, NULL, NULL, tlen);
 		tp->snd_wl1 = th->th_seq - 1;
 		/* fall into ... */
 
@@ -2847,7 +2847,7 @@ dodata:							/* XXX */
 			sorwakeup(so);
 		} else {
 			m_adj(m, hdroptlen);
-			tiflags = tcp_reass(tp, th, m, &tlen);
+			tiflags = tcp_reass(tp, th, m, tlen);
 			tp->t_flags |= TF_ACKNOW;
 		}
 
