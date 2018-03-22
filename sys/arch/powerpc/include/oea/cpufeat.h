@@ -1,4 +1,4 @@
-/* $NetBSD: cpufeat.h,v 1.4 2008/04/28 20:23:32 martin Exp $ */
+/* $NetBSD: cpufeat.h,v 1.5 2018/03/22 21:26:27 macallan Exp $ */
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -50,6 +50,10 @@
 #ifdef _KERNEL
 void cpu_model_init(void);
 extern unsigned long oeacpufeat;
+
+#define oea_mapiodev(addr, size) ((oeacpufeat & OEACPU_NOBAT) ? \
+			mapiodev((paddr_t)(addr), (size), 0) : (void *)(addr))
+
 #endif
 
 #endif /* _POWERPC_OEA_OEAFEAT_H_ */
