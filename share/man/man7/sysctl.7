@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.113.4.1 2017/07/24 06:11:39 snj Exp $
+.\"	$NetBSD: sysctl.7,v 1.113.4.2 2018/03/22 16:38:31 martin Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd July 2, 2017
+.Dd February 22, 2018
 .Dt SYSCTL 7
 .Os
 .Sh NAME
@@ -787,7 +787,7 @@ The third level names for the settings are described below.
 .It Sy Third level name Ta Sy Type Ta Sy Changeable
 .It kern.module.autoload	integer	yes
 .It kern.module.autotime	integer	yes
-.It kern.module.verbose	integer	yes
+.It kern.module.verbose	boolean	yes
 .El
 .Pp
 The variables are as follows:
@@ -2458,30 +2458,31 @@ The information available for the
 level is detailed below.
 The changeable column shows whether a process with appropriate
 privilege may change the value.
-.\" XXX sort
 .Bl -column "Second level name" "integer" "Changeable" -offset indent
 .It Sy Second level name Ta Sy Type Ta Sy Changeable
-.It ddb.radix	integer	yes
+.It ddb.commandonenter	string	yes
+.It ddb.fromconsole	integer	yes
+.It ddb.lines	integer	yes
 .It ddb.maxoff	integer	yes
 .It ddb.maxwidth	integer	yes
-.It ddb.lines	integer	yes
-.It ddb.tabstops	integer	yes
 .It ddb.onpanic	integer	yes
-.It ddb.fromconsole	integer	yes
+.It ddb.radix	integer	yes
+.It ddb.tabstops	integer	yes
 .It ddb.tee_msgbuf	integer	yes
-.It ddb.commandonenter	string	yes
 .El
 .Bl -tag -width "123456"
-.It Li ddb.radix ( Dv DDBCTL_RADIX )
-The input and output radix.
+.It Li ddb.commandonenter
+If not empty, the string is used as the DDB command to be executed each time
+DDB is entered.
+.It Li ddb.fromconsole ( Dv DDBCTL_FROMCONSOLE )
+If not zero, DDB may be entered by sending a break on a serial
+console or by a special key sequence on a graphics console.
+.It Li ddb.lines ( Dv DDBCTL_LINES )
+Number of display lines.
 .It Li ddb.maxoff ( Dv DDBCTL_MAXOFF )
 The maximum symbol offset.
 .It Li ddb.maxwidth ( Dv DDBCTL_MAXWIDTH )
 The maximum output line width.
-.It Li ddb.lines ( Dv DDBCTL_LINES )
-Number of display lines.
-.It Li ddb.tabstops ( Dv DDBCTL_TABSTOPS )
-Tab width.
 .It Li ddb.onpanic ( Dv DDBCTL_ONPANIC )
 If greater than zero, DDB will be entered if the kernel panics.
 A value of 1 causes the system to enter DDB on panic, while a value of 2
@@ -2489,14 +2490,12 @@ causes the kernel to attempt to print out a stack trace before entering DDB.
 A value of 0 causes the kernel to attempt to print a stack trace, then
 reboot, while a value of \-1 means neither a stack trace will be printed
 nor DDB entered.
-.It Li ddb.fromconsole ( Dv DDBCTL_FROMCONSOLE )
-If not zero, DDB may be entered by sending a break on a serial
-console or by a special key sequence on a graphics console.
+.It Li ddb.radix ( Dv DDBCTL_RADIX )
+The input and output radix.
+.It Li ddb.tabstops ( Dv DDBCTL_TABSTOPS )
+Tab width.
 .It Li ddb.tee_msgbuf
 If not zero, DDB will output also to the kernel message buffer.
-.It Li ddb.commandonenter
-If not empty, a command to be executed on each enter to the
-.Tn DDB .
 .\"
 .\" XXX: (a) ddb.commandonenter is missing in ddb(4);
 .\"	 (b) No DDBCTL definitions for tee_msgbuf and commandonenter.
