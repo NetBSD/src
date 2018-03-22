@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_alg_icmp.c,v 1.27 2018/03/22 07:32:07 maxv Exp $	*/
+/*	$NetBSD: npf_alg_icmp.c,v 1.28 2018/03/22 08:57:47 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_alg_icmp.c,v 1.27 2018/03/22 07:32:07 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_alg_icmp.c,v 1.28 2018/03/22 08:57:47 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/module.h>
@@ -120,13 +120,15 @@ npfa_icmp_match(npf_cache_t *npc, npf_nat_t *nt, int di)
 /*
  * npfa_icmp{4,6}_inspect: retrieve unique identifiers - either ICMP query
  * ID or TCP/UDP ports of the original packet, which is embedded.
+ *
+ * => Sets hasqid=true if the packet has a Query Id. In this case neither
+ *    the nbuf nor npc is touched.
  */
 
 static bool
-npfa_icmp4_inspect(const int type, npf_cache_t *npc)
+npfa_icmp4_inspect(const int type, npf_cache_t *npc, bool *hasqid)
 {
 	nbuf_t *nbuf = npc->npc_nbuf;
-	u_int offby;
 
 	/* Per RFC 792. */
 	switch (type) {
@@ -147,12 +149,8 @@ npfa_icmp4_inspect(const int type, npf_cache_t *npc)
 	case ICMP_TSTAMPREPLY:
 	case ICMP_IREQ:
 	case ICMP_IREQREPLY:
-		/* Should contain ICMP query ID - ensure. */
-		offby = offsetof(struct icmp, icmp_id);
-		if (!nbuf_advance(nbuf, offby, sizeof(uint16_t))) {
-			return false;
-		}
-		npc->npc_info |= NPC_ICMP_ID;
+		/* Contains ICMP query ID. */
+		*hasqid = true;
 		return true;
 	default:
 		break;
@@ -161,10 +159,9 @@ npfa_icmp4_inspect(const int type, npf_cache_t *npc)
 }
 
 static bool
-npfa_icmp6_inspect(const int type, npf_cache_t *npc)
+npfa_icmp6_inspect(const int type, npf_cache_t *npc, bool *hasqid)
 {
 	nbuf_t *nbuf = npc->npc_nbuf;
-	u_int offby;
 
 	/* Per RFC 4443. */
 	switch (type) {
@@ -180,12 +177,8 @@ npfa_icmp6_inspect(const int type, npf_cache_t *npc)
 
 	case ICMP6_ECHO_REQUEST:
 	case ICMP6_ECHO_REPLY:
-		/* Should contain ICMP query ID - ensure. */
-		offby = offsetof(struct icmp6_hdr, icmp6_id);
-		if (!nbuf_advance(nbuf, offby, sizeof(uint16_t))) {
-			return false;
-		}
-		npc->npc_info |= NPC_ICMP_ID;
+		/* Contains ICMP query ID. */
+		*hasqid = true;
 		return true;
 	default:
 		break;
@@ -196,13 +189,13 @@ npfa_icmp6_inspect(const int type, npf_cache_t *npc)
 /*
  * npfa_icmp_inspect: ALG ICMP inspector.
  *
- * => Returns true if "enpc" is filled.
+ * => Returns false if there is a problem with the format.
  */
 static bool
 npfa_icmp_inspect(npf_cache_t *npc, npf_cache_t *enpc)
 {
 	nbuf_t *nbuf = npc->npc_nbuf;
-	bool ret;
+	bool ret, hasqid = false;
 
 	KASSERT(npf_iscached(npc, NPC_IP46));
 	KASSERT(npf_iscached(npc, NPC_ICMP));
@@ -222,10 +215,10 @@ npfa_icmp_inspect(npf_cache_t *npc, npf_cache_t *enpc)
 	 */
 	if (npf_iscached(npc, NPC_IP4)) {
 		const struct icmp *ic = npc->npc_l4.icmp;
-		ret = npfa_icmp4_inspect(ic->icmp_type, enpc);
+		ret = npfa_icmp4_inspect(ic->icmp_type, enpc, &hasqid);
 	} else if (npf_iscached(npc, NPC_IP6)) {
 		const struct icmp6_hdr *ic6 = npc->npc_l4.icmp6;
-		ret = npfa_icmp6_inspect(ic6->icmp6_type, enpc);
+		ret = npfa_icmp6_inspect(ic6->icmp6_type, enpc, &hasqid);
 	} else {
 		ret = false;
 	}
@@ -234,12 +227,10 @@ npfa_icmp_inspect(npf_cache_t *npc, npf_cache_t *enpc)
 	}
 
 	/* ICMP ID is the original packet, just indicate it. */
-	if (npf_iscached(enpc, NPC_ICMP_ID)) {
+	if (hasqid) {
 		npc->npc_info |= NPC_ICMP_ID;
-		return false;
 	}
 
-	/* Indicate that embedded packet is in the cache. */
 	return true;
 }
 
@@ -248,12 +239,22 @@ npfa_icmp_conn(npf_cache_t *npc, int di)
 {
 	npf_conn_t *conn = NULL;
 	npf_cache_t enpc;
+	bool hasqid = false;
 
 	/* Inspect ICMP packet for an embedded packet. */
 	if (!npf_iscached(npc, NPC_ICMP))
 		return NULL;
 	if (!npfa_icmp_inspect(npc, &enpc))
 		goto out;
+
+	/*
+	 * If the ICMP packet had a Query Id, leave now. The packet didn't get
+	 * modified, so no need to recache npc.
+	 */
+	if (npf_iscached(npc, NPC_ICMP_ID)) {
+		KASSERT(!nbuf_flag_p(nbuf, NBUF_DATAREF_RESET));
+		return NULL;
+	}
 
 	/*
 	 * Invert the identifiers of the embedded packet.
@@ -281,16 +282,18 @@ npfa_icmp_conn(npf_cache_t *npc, int di)
 		break;
 	case IPPROTO_ICMP: {
 		const struct icmp *ic = enpc.npc_l4.icmp;
-		ret = npfa_icmp4_inspect(ic->icmp_type, &enpc);
-		if (!ret || !npf_iscached(&enpc, NPC_ICMP_ID))
+		ret = npfa_icmp4_inspect(ic->icmp_type, &enpc, &hasqid);
+		if (!ret || !hasqid)
 			goto out;
+		enpc.npc_info |= NPC_ICMP_ID;
 		break;
 	}
 	case IPPROTO_ICMPV6: {
 		const struct icmp6_hdr *ic6 = enpc.npc_l4.icmp6;
-		ret = npfa_icmp6_inspect(ic6->icmp6_type, &enpc);
-		if (!ret || !npf_iscached(&enpc, NPC_ICMP_ID))
+		ret = npfa_icmp6_inspect(ic6->icmp6_type, &enpc, &hasqid);
+		if (!ret || !hasqid)
 			goto out;
+		enpc.npc_info |= NPC_ICMP_ID;
 		break;
 	}
 	default:
@@ -332,6 +335,15 @@ npfa_icmp_nat(npf_cache_t *npc, npf_nat_t *nt, bool forw)
 
 	if (!npfa_icmp_inspect(npc, &enpc))
 		goto err;
+
+	/*
+	 * If the ICMP packet had a Query Id, leave now. The packet didn't get
+	 * modified, so no need to recache npc.
+	 */
+	if (npf_iscached(npc, NPC_ICMP_ID)) {
+		KASSERT(!nbuf_flag_p(nbuf, NBUF_DATAREF_RESET));
+		return false;
+	}
 
 	KASSERT(npf_iscached(&enpc, NPC_IP46));
 	KASSERT(npf_iscached(&enpc, NPC_LAYER4));
