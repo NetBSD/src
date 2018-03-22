@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_inet.c,v 1.45 2018/03/22 08:57:47 maxv Exp $	*/
+/*	$NetBSD: npf_inet.c,v 1.46 2018/03/22 09:04:25 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.45 2018/03/22 08:57:47 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.46 2018/03/22 09:04:25 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -336,10 +336,15 @@ npf_cache_ip(npf_cache_t *npc, nbuf_t *nbuf)
 			return NPC_FMTERR;
 		}
 
-		/* Check header length and fragment offset. */
+		/* Retrieve the complete header. */
 		if ((u_int)(ip->ip_hl << 2) < sizeof(struct ip)) {
 			return NPC_FMTERR;
 		}
+		ip = nbuf_ensure_contig(nbuf, (u_int)(ip->ip_hl << 2));
+		if (ip == NULL) {
+			return NPC_FMTERR;
+		}
+
 		if (ip->ip_off & ~htons(IP_DF | IP_RF)) {
 			/* Note fragmentation. */
 			flags |= NPC_IPFRAG;
@@ -422,6 +427,10 @@ npf_cache_ip(npf_cache_t *npc, nbuf_t *nbuf)
 			}
 			npc->npc_proto = ip6e->ip6e_nxt;
 			npc->npc_hlen += hlen;
+		}
+
+		if (ip6e == NULL) {
+			return NPC_FMTERR;
 		}
 
 		/*
