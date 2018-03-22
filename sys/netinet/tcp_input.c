@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.383 2018/03/01 06:08:43 maxv Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.384 2018/03/22 20:48:38 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.383 2018/03/01 06:08:43 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.384 2018/03/22 20:48:38 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1505,6 +1505,8 @@ findpcb:
 #endif
 	}
 
+	tcp_fields_to_host(th);
+
 	/*
 	 * If the state is CLOSED (i.e., TCB does not exist) then
 	 * all data in the incoming segment is discarded.
@@ -1529,26 +1531,18 @@ findpcb:
 #endif
 	else if (vestige.valid) {
 		/* We do not support the resurrection of vtw tcpcps. */
-		if (tcp_input_checksum(af, m, th, toff, off, tlen))
-			goto badcsum;
-
-		tcp_fields_to_host(th);
 		tcp_vtw_input(th, &vestige, m, tlen);
 		m = NULL;
 		goto drop;
 	}
 
-	if (tp == NULL) {
-		tcp_fields_to_host(th);
+	if (tp == NULL)
 		goto dropwithreset_ratelim;
-	}
 	if (tp->t_state == TCPS_CLOSED)
 		goto drop;
 
 	KASSERT(so->so_lock == softnet_lock);
 	KASSERT(solocked(so));
-
-	tcp_fields_to_host(th);
 
 	/* Unscale the window into a 32-bit value. */
 	if ((tiflags & TH_SYN) == 0)
