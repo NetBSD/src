@@ -1,4 +1,4 @@
-#	$NetBSD: files.imx51,v 1.17 2017/09/08 05:29:12 hkenken Exp $
+#	$NetBSD: files.imx51,v 1.17.2.1 2018/03/22 01:44:42 pgoyette Exp $
 #
 # Configuration info for the Freescale i.MX5x
 #
@@ -16,7 +16,7 @@ file	arch/arm/arm32/irq_dispatch.S
 
 define	bus_dma_generic
 file	arch/arm/arm32/armv7_generic_space.c
-file	arch/arm/arm32/armv7_generic_dma.c	bus_dma_generic needs-flag
+file	arch/arm/arm/arm_generic_dma.c		bus_dma_generic needs-flag
 file	arch/arm/arm/bus_space_a4x.S
 
 # iMX51 AXI/AHB bus interface and SoC domains

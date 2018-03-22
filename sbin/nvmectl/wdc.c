@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.1 2017/04/29 00:08:46 nonaka Exp $	*/
+/*	$NetBSD: wdc.c,v 1.1.10.1 2018/03/22 01:44:40 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2017 Netflix, Inc
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: wdc.c,v 1.1 2017/04/29 00:08:46 nonaka Exp $");
+__RCSID("$NetBSD: wdc.c,v 1.1.10.1 2018/03/22 01:44:40 pgoyette Exp $");
 #if 0
 __FBSDID("$FreeBSD: head/sbin/nvmecontrol/wdc.c 316105 2017-03-28 20:34:02Z ngie $");
 #endif
@@ -72,13 +72,13 @@ static void wdc_get_crash_dump(int argc, char *argv[]);
 static void wdc_purge(int argc, char *argv[]);
 static void wdc_purge_monitor(int argc, char *argv[]);
 
-#define WDC_CAP_DIAG_USAGE	"\tnvmecontrol wdc cap-diag [-o path-template]\n"
-#define WDC_DRIVE_LOG_USAGE	"\tnvmecontrol wdc drive-log [-o path-template]\n"
-#define WDC_GET_CRASH_DUMP_USAGE "\tnvmecontrol wdc get-crash-dump [-o path-template]\n"
-#define WDC_PURGE_USAGE		"\tnvmecontrol wdc purge [-o path-template]\n"
-#define WDC_PURGE_MONITOR_USAGE	"\tnvmecontrol wdc purge-monitor\n"
+#define WDC_CAP_DIAG_USAGE	"wdc cap-diag [-o path-template]\n"
+#define WDC_DRIVE_LOG_USAGE	"wdc drive-log [-o path-template]\n"
+#define WDC_GET_CRASH_DUMP_USAGE "wdc get-crash-dump [-o path-template]\n"
+#define WDC_PURGE_USAGE		"wdc purge [-o path-template]\n"
+#define WDC_PURGE_MONITOR_USAGE	"wdc purge-monitor\n"
 
-static struct nvme_function wdc_funcs[] = {
+static const struct nvme_function wdc_funcs[] = {
 	{"cap-diag",		wdc_cap_diag,		WDC_CAP_DIAG_USAGE},
 	{"drive-log",		wdc_drive_log,		WDC_DRIVE_LOG_USAGE},
 	{"get-crash-dump",	wdc_get_crash_dump,	WDC_GET_CRASH_DUMP_USAGE},
@@ -193,7 +193,7 @@ __dead static void
 wdc_cap_diag_usage(void)
 {
 	fprintf(stderr, "usage:\n");
-	fprintf(stderr, WDC_CAP_DIAG_USAGE);
+	fprintf(stderr, "\t%s " WDC_CAP_DIAG_USAGE, getprogname());
 	exit(1);
 }
 
@@ -230,7 +230,7 @@ __dead static void
 wdc_drive_log_usage(void)
 {
 	fprintf(stderr, "usage:\n");
-	fprintf(stderr, WDC_DRIVE_LOG_USAGE);
+	fprintf(stderr, "\t%s " WDC_DRIVE_LOG_USAGE, getprogname());
 	exit(1);
 }
 
@@ -267,7 +267,7 @@ __dead static void
 wdc_get_crash_dump_usage(void)
 {
 	fprintf(stderr, "usage:\n");
-	fprintf(stderr, WDC_CAP_DIAG_USAGE);
+	fprintf(stderr, "\t%s " WDC_CAP_DIAG_USAGE, getprogname());
 	exit(1);
 }
 

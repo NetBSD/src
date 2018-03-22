@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.19 2011/06/20 06:35:40 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.19.52.1 2018/03/22 01:44:46 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995-1997 Wolfgang Solfrank.
@@ -36,6 +36,7 @@
 #if defined(_KERNEL) && !defined(_MODULE)
 #define	CPU_MAXNUM	2
 extern char bootpath[];
+int get_cpuid(int, uint8_t *);
 #endif /* _KERNEL */
 
 #include <powerpc/cpu.h>

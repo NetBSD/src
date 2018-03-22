@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.165.2.2 2018/03/18 00:35:26 pgoyette Exp $
+#	$NetBSD: files.xen,v 1.165.2.3 2018/03/22 01:44:47 pgoyette Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -47,7 +47,6 @@ file	arch/i386/i386/db_interface.c	ddb
 file	arch/i386/i386/db_machdep.c	ddb
 file	arch/i386/i386/dumpsys.c
 file	arch/i386/i386/gdt.c
-file	arch/i386/i386/ipkdb_glue.c	ipkdb
 file	arch/i386/i386/kobj_machdep.c	modular
 file	arch/i386/i386/machdep.c
 file	arch/i386/i386/longrun.c

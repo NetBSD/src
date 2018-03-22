@@ -1,12 +1,9 @@
-#	$NetBSD: files.tisdp24xx,v 1.2 2008/04/27 18:58:46 matt Exp $
+#	$NetBSD: files.tisdp24xx,v 1.2.86.1 2018/03/22 01:44:44 pgoyette Exp $
 #
 # TI OMAP2 evaluation board configuration info
 #
 
 file	arch/evbarm/tisdp24xx/sdp24xx_machdep.c
-
-# Kernel boot arguments
-defparam opt_machdep.h				BOOT_ARGS
 
 # CPU support and integrated peripherals
 include "arch/arm/omap/files.omap2"

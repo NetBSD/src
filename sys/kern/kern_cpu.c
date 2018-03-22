@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.71.16.8 2018/03/18 01:17:29 pgoyette Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.71.16.9 2018/03/22 01:44:50 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010, 2012 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.71.16.8 2018/03/18 01:17:29 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.71.16.9 2018/03/22 01:44:50 pgoyette Exp $");
 
 #include "opt_cpu_ucode.h"
 

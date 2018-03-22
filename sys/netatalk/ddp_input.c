@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_input.c,v 1.30 2018/02/17 19:10:18 rjs Exp $	 */
+/*	$NetBSD: ddp_input.c,v 1.30.2.1 2018/03/22 01:44:51 pgoyette Exp $	 */
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_input.c,v 1.30 2018/02/17 19:10:18 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_input.c,v 1.30.2.1 2018/03/22 01:44:51 pgoyette Exp $");
 #include "opt_atalk.h"
 
 #include <sys/param.h>
@@ -316,6 +316,7 @@ ddp_input(struct mbuf *m, struct ifnet *ifp, struct elaphdr *elh, int phase)
 	if (sbappendaddr(&ddp->ddp_socket->so_rcv, (struct sockaddr *) & from,
 			 m, (struct mbuf *) 0) == 0) {
 		DDP_STATINC(DDP_STAT_NOSOCKSPACE);
+		soroverflow(ddp->ddp_socket);
 		m_freem(m);
 		return;
 	}

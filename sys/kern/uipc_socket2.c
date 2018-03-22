@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.126 2017/07/06 17:42:39 christos Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.126.4.1 2018/03/22 01:44:50 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.126 2017/07/06 17:42:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.126.4.1 2018/03/22 01:44:50 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
@@ -491,6 +491,20 @@ socantrcvmore(struct socket *so)
 	KASSERT(solocked(so));
 
 	so->so_state |= SS_CANTRCVMORE;
+	sorwakeup(so);
+}
+
+/*
+ * soroverflow(): indicates that data was attempted to be sent
+ * but the receiving buffer overflowed.
+ */
+void
+soroverflow(struct socket *so)
+{
+	KASSERT(solocked(so));
+
+	so->so_rcv.sb_overflowed++;
+	so->so_error = ENOBUFS;
 	sorwakeup(so);
 }
 
@@ -1427,16 +1441,16 @@ solockretry(struct socket *so, kmutex_t *lock)
 }
 
 bool
-solocked(struct socket *so)
+solocked(const struct socket *so)
 {
 
 	return mutex_owned(so->so_lock);
 }
 
 bool
-solocked2(struct socket *so1, struct socket *so2)
+solocked2(const struct socket *so1, const struct socket *so2)
 {
-	kmutex_t *lock;
+	const kmutex_t *lock;
 
 	lock = so1->so_lock;
 	if (lock != so2->so_lock)

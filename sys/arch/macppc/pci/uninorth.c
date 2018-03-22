@@ -1,4 +1,4 @@
-/*	$NetBSD: uninorth.c,v 1.18 2015/10/02 05:22:51 msaitoh Exp $	*/
+/*	$NetBSD: uninorth.c,v 1.18.16.1 2018/03/22 01:44:46 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uninorth.c,v 1.18 2015/10/02 05:22:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uninorth.c,v 1.18.16.1 2018/03/22 01:44:46 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -287,7 +287,11 @@ uninorth_conf_read_v3(void *cookie, pcitag_t tag, int reg)
 
 	pci_decompose_tag(pc, tag, &bus, &dev, &func);
 
-	x = (bus << 16) | (dev << 11) | (func << 8) | (reg & 0xfc) | 1;
+	if (bus == 0) {
+		if (dev < 11) return 0xffffffff;
+		x = (1 << dev) | (func << 8) | reg;
+	} else
+		x = (bus << 16) | (dev << 11) | (func << 8) | (reg & 0xfc) | 1;
 	/* Set extended register bits */
 	x |= (reg >> 8) << 28;
 
@@ -296,8 +300,9 @@ uninorth_conf_read_v3(void *cookie, pcitag_t tag, int reg)
 	out32rb(pc->pc_addr, x);
 	in32rb(pc->pc_addr);
 	data = 0xffffffff;
-	if (!badaddr(daddr, 4))
+	if (!badaddr(daddr, 4)) {
 		data = in32rb(daddr);
+	}
 	out32rb(pc->pc_addr, 0);
 	in32rb(pc->pc_addr);
 	splx(s);
@@ -322,7 +327,11 @@ uninorth_conf_write_v3(void *cookie, pcitag_t tag, int reg, pcireg_t data)
 
 	pci_decompose_tag(pc, tag, &bus, &dev, &func);
 
-	x = (bus << 16) | (dev << 11) | (func << 8) | (reg & 0xfc) | 1;
+	if (bus == 0) {
+		if (dev < 11) return;
+		x = (1 << dev) | (func << 8) | reg;
+	} else
+		x = (bus << 16) | (dev << 11) | (func << 8) | (reg & 0xfc) | 1;
 	/* Set extended register bits */
 	x |= (reg >> 8) << 28;
 

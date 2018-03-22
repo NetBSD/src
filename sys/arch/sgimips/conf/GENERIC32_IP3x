@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP3x,v 1.115 2018/01/23 14:47:56 sevan Exp $
+#	$NetBSD: GENERIC32_IP3x,v 1.115.2.1 2018/03/22 01:44:46 pgoyette Exp $
 #
 # GENERIC32_IP3x machine description file
 # 
@@ -28,7 +28,7 @@ makeoptions	TEXTADDR="0x80069000"	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32_IP3x-$Revision: 1.115 $"
+#ident		"GENERIC32_IP3x-$Revision: 1.115.2.1 $"
 
 maxusers	32
 
@@ -55,7 +55,7 @@ options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 # Alternate buffer queue strategies for better responsiveness under high
 # disk I/O load.
 #options 	BUFQ_READPRIO
-#options 	BUFQ_PRIOCSCAN
+options 	BUFQ_PRIOCSCAN
 
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC	# expensive kernel consistency checks

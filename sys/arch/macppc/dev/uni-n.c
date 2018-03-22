@@ -1,4 +1,4 @@
-/*	$NetBSD: uni-n.c,v 1.8 2018/03/01 13:55:25 macallan Exp $	*/
+/*	$NetBSD: uni-n.c,v 1.8.2.1 2018/03/22 01:44:46 pgoyette Exp $	*/
 
 /*-
  * Copyright (C) 2005 Michael Lorenz.
@@ -31,7 +31,7 @@
  */
  
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uni-n.c,v 1.8 2018/03/01 13:55:25 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uni-n.c,v 1.8.2.1 2018/03/22 01:44:46 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,6 +42,8 @@ __KERNEL_RCSID(0, "$NetBSD: uni-n.c,v 1.8 2018/03/01 13:55:25 macallan Exp $");
 #include <dev/ofw/ofw_pci.h>
 
 #include <machine/autoconf.h>
+
+#include "fcu.h"
 
 static void uni_n_attach(device_t, device_t, void *);
 static int uni_n_match(device_t, cfdata_t, void *);
@@ -55,6 +57,11 @@ struct uni_n_softc {
 
 CFATTACH_DECL_NEW(uni_n, sizeof(struct uni_n_softc),
     uni_n_match, uni_n_attach, NULL, NULL);
+
+#if NFCU > 0
+/* storage for CPUID SEEPROM contents found on some G5 */
+static uint8_t eeprom[2][160];
+#endif
 
 int
 uni_n_match(device_t parent, cfdata_t cf, void *aux)
@@ -85,6 +92,9 @@ uni_n_attach(device_t parent, device_t self, void *aux)
 	struct confargs *our_ca = aux;
 	struct confargs ca;
 	int node, child, namelen;
+#if NFCU > 0
+	int cpuid;
+#endif
 	u_int reg[20];
 	int intr[6];
 	char name[32];
@@ -92,7 +102,25 @@ uni_n_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	node = our_ca->ca_node;
 	sc->sc_node = node;
-	printf(" address 0x%08x\n",our_ca->ca_reg[0]);
+	printf(" address 0x%08x\n",
+	    our_ca->ca_reg[our_ca->ca_nreg > 8 ? 1 : 0]);
+
+#if NFCU > 0
+	/*
+	 * zero out eeprom blocks, then see if we have valid data
+	 * doing this here because the EEPROMs are dangling from out i2c bus
+	 * but we can get all the data just from looking at the properties
+	 */
+	memset(eeprom, 0, sizeof(eeprom));
+	cpuid = OF_finddevice("/u3/i2c/cpuid@a0");
+	OF_getprop(cpuid, "cpuid", eeprom[0], sizeof(eeprom[0]));
+	if (eeprom[0][1] != 0)
+		aprint_normal_dev(self, "found EEPROM data for CPU 0\n");
+	cpuid = OF_finddevice("/u3/i2c/cpuid@a2");
+	OF_getprop(cpuid, "cpuid", eeprom[1], sizeof(eeprom[1]));
+	if (eeprom[1][1] != 0)
+		aprint_normal_dev(self, "found EEPROM data for CPU 1\n");
+#endif
 
 	memset(&sc->sc_memt, 0, sizeof(struct powerpc_bus_space));
 	sc->sc_memt.pbs_flags = _BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE;
@@ -137,3 +165,14 @@ uni_n_print(void *aux, const char *uni_n)
 
 	return UNCONF;
 }
+
+#if NFCU > 0
+int
+get_cpuid(int cpu, uint8_t *buf)
+{
+	if ((cpu < 0) || (cpu > 1)) return -1;
+	if (eeprom[cpu][1] == 0) return 0;
+	memcpy(buf, eeprom[cpu], sizeof(eeprom[cpu]));
+	return sizeof(eeprom[cpu]);
+}
+#endif

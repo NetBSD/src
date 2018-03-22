@@ -1,4 +1,4 @@
-/*	$NetBSD: identify.c,v 1.2 2016/06/04 20:59:49 joerg Exp $	*/
+/*	$NetBSD: identify.c,v 1.2.14.1 2018/03/22 01:44:40 pgoyette Exp $	*/
 
 /*-
  * Copyright (C) 2012-2013 Intel Corporation
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: identify.c,v 1.2 2016/06/04 20:59:49 joerg Exp $");
+__RCSID("$NetBSD: identify.c,v 1.2.14.1 2018/03/22 01:44:40 pgoyette Exp $");
 #if 0
 __FBSDID("$FreeBSD: head/sbin/nvmecontrol/identify.c 253476 2013-07-19 21:40:57Z jimharris $");
 #endif
@@ -170,7 +170,7 @@ __dead static void
 identify_usage(void)
 {
 	fprintf(stderr, "usage:\n");
-	fprintf(stderr, IDENTIFY_USAGE);
+	fprintf(stderr, "\t%s " IDENTIFY_USAGE, getprogname());
 	exit(1);
 }
 

@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_machdep.c,v 1.18 2017/02/14 13:29:09 nonaka Exp $ */
+/* $NetBSD: acpi_machdep.c,v 1.18.12.1 2018/03/22 01:44:47 pgoyette Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.18 2017/02/14 13:29:09 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.18.12.1 2018/03/22 01:44:47 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,7 +147,8 @@ acpi_md_findoverride(ACPI_SUBTABLE_HEADER *hdrp, void *aux)
 
 ACPI_STATUS
 acpi_md_OsInstallInterruptHandler(uint32_t InterruptNumber,
-    ACPI_OSD_HANDLER ServiceRoutine, void *Context, void **cookiep)
+    ACPI_OSD_HANDLER ServiceRoutine, void *Context, void **cookiep,
+    const char *xname)
 {
 	void *ih;
 	struct pic *pic;
@@ -242,7 +243,7 @@ acpi_md_OsInstallInterruptHandler(uint32_t InterruptNumber,
 	 * XXX probably, IPL_BIO is enough.
 	 */
 	ih = intr_establish_xname(irq, pic, pin, type, IPL_TTY,
-	    (int (*)(void *)) ServiceRoutine, Context, false, "acpi SCI");
+	    (int (*)(void *)) ServiceRoutine, Context, false, xname);
 
 #if NIOAPIC > 0
 	if (mipp) {

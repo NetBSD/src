@@ -1,4 +1,4 @@
-/* $NetBSD: adadc.c,v 1.2.2.2 2018/03/15 09:12:05 pgoyette Exp $ */
+/* $NetBSD: adadc.c,v 1.2.2.3 2018/03/22 01:44:48 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2018 Michael Lorenz
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adadc.c,v 1.2.2.2 2018/03/15 09:12:05 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adadc.c,v 1.2.2.3 2018/03/22 01:44:48 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,7 +126,7 @@ adadc_attach(device_t parent, device_t self, void *aux)
 	struct adadc_softc *sc = device_private(self);
 	struct i2c_attach_args *ia = aux;
 	envsys_data_t *s;
-	int error, ch, cpuid;
+	int error, ch;
 	uint32_t eeprom[40];
 	char loc[256];
 	int which_cpu;
@@ -186,11 +186,7 @@ adadc_attach(device_t parent, device_t self, void *aux)
 		ch = OF_peer(ch);
 	}
 	aprint_debug_dev(self, "monitoring CPU %d\n", which_cpu);
-	if (which_cpu == 0) {
-		cpuid = OF_finddevice("/u3/i2c/cpuid@a0");
-	} else
-		cpuid = OF_finddevice("/u3/i2c/cpuid@a2");
-	error = OF_getprop(cpuid, "cpuid", eeprom, sizeof(eeprom));
+	error = get_cpuid(which_cpu, (uint8_t *)eeprom);
 	if (error >= 0) {
 		sc->sc_diode_slope = eeprom[0x11] >> 16;
 		sc->sc_diode_offset = (int16_t)(eeprom[0x11] & 0xffff) << 12;

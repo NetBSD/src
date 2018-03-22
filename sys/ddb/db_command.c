@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.149 2018/03/04 07:14:50 mlelstv Exp $	*/
+/*	$NetBSD: db_command.c,v 1.149.2.1 2018/03/22 01:44:47 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2009 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.149 2018/03/04 07:14:50 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.149.2.1 2018/03/22 01:44:47 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_aio.h"
@@ -190,6 +190,8 @@ static void	db_event_print_cmd(db_expr_t, bool, db_expr_t, const char *);
 static void	db_fncall(db_expr_t, bool, db_expr_t, const char *);
 static void     db_help_print_cmd(db_expr_t, bool, db_expr_t, const char *);
 static void	db_lock_print_cmd(db_expr_t, bool, db_expr_t, const char *);
+static void	db_show_all_locks(db_expr_t, bool, db_expr_t, const char *);
+static void	db_show_lockstats(db_expr_t, bool, db_expr_t, const char *);
 static void	db_mount_print_cmd(db_expr_t, bool, db_expr_t, const char *);
 static void	db_mbuf_print_cmd(db_expr_t, bool, db_expr_t, const char *);
 static void	db_map_print_cmd(db_expr_t, bool, db_expr_t, const char *);
@@ -225,6 +227,8 @@ static const struct db_command db_show_cmds[] = {
 	    0 ,"List all processes.",NULL,NULL) },
 	{ DDB_ADD_CMD("pools",	db_show_all_pools,
 	    0 ,"Show all pools",NULL,NULL) },
+	{ DDB_ADD_CMD("locks",	db_show_all_locks,
+	    0 ,"Show all held locks", "[/t]", NULL) },
 #ifdef AIO
 	/*added from all sub cmds*/
 	{ DDB_ADD_CMD("aio_jobs",	db_show_aio_jobs,	0,
@@ -248,6 +252,9 @@ static const struct db_command db_show_cmds[] = {
 	    "Print the files open by process at address",
 	    "[/f] address", NULL) },
 	{ DDB_ADD_CMD("lock",	db_lock_print_cmd,	0,NULL,NULL,NULL) },
+	{ DDB_ADD_CMD("lockstats",
+				db_show_lockstats,	0,
+	    "Print statistics of locks", NULL, NULL) },
 	{ DDB_ADD_CMD("map",	db_map_print_cmd,	0,
 	    "Print the vm_map at address.", "[/f] address",NULL) },
 	{ DDB_ADD_CMD("module", db_show_module_cmd,	0,
@@ -1222,7 +1229,28 @@ db_lock_print_cmd(db_expr_t addr, bool have_addr,
 {
 
 #ifdef _KERNEL	/* XXX CRASH(8) */
-	lockdebug_lock_print((void *)(uintptr_t)addr, db_printf);
+	lockdebug_lock_print(have_addr ? (void *)(uintptr_t)addr : NULL,
+	    db_printf);
+#endif
+}
+
+static void
+db_show_all_locks(db_expr_t addr, bool have_addr,
+    db_expr_t count, const char *modif)
+{
+
+#ifdef _KERNEL	/* XXX CRASH(8) */
+	lockdebug_show_all_locks(db_printf, modif);
+#endif
+}
+
+static void
+db_show_lockstats(db_expr_t addr, bool have_addr,
+    db_expr_t count, const char *modif)
+{
+
+#ifdef _KERNEL	/* XXX CRASH(8) */
+	lockdebug_show_lockstats(db_printf);
 #endif
 }
 

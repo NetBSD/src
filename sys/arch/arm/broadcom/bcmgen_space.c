@@ -1,4 +1,4 @@
-/*	$NetBSD: bcmgen_space.c,v 1.5 2015/02/25 13:52:42 joerg Exp $	*/
+/*	$NetBSD: bcmgen_space.c,v 1.5.16.1 2018/03/22 01:44:42 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcmgen_space.c,v 1.5 2015/02/25 13:52:42 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcmgen_space.c,v 1.5.16.1 2018/03/22 01:44:42 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,116 +55,116 @@ bs_protos(bs_notimpl);
 
 struct bus_space bcmgen_bs_tag = {
 	/* cookie */
-	(void *) 0,
+	.bs_cookie = (void *) 0,
 
 	/* mapping/unmapping */
-	bcmgen_bs_map,
-	bcmgen_bs_unmap,
-	bcmgen_bs_subregion,
+	.bs_map = bcmgen_bs_map,
+	.bs_unmap = bcmgen_bs_unmap,
+	.bs_subregion = bcmgen_bs_subregion,
 
 	/* allocation/deallocation */
-	bcmgen_bs_alloc,	/* not implemented */
-	bcmgen_bs_free,	/* not implemented */
+	.bs_alloc = bcmgen_bs_alloc,	/* not implemented */
+	.bs_free = bcmgen_bs_free,	/* not implemented */
 
 	/* get kernel virtual address */
-	bcmgen_bs_vaddr,
+	.bs_vaddr = bcmgen_bs_vaddr,
 
 	/* mmap */
-	bs_notimpl_bs_mmap,
+	.bs_mmap = bs_notimpl_bs_mmap,
 
 	/* barrier */
-	bcmgen_bs_barrier,
+	.bs_barrier = bcmgen_bs_barrier,
 
 	/* read (single) */
-	generic_bs_r_1,
-	NSWAP(generic_armv4_bs_r_2),
-	NSWAP(generic_bs_r_4),
-	bs_notimpl_bs_r_8,
+	.bs_r_1 = generic_bs_r_1,
+	.bs_r_2 = NSWAP(generic_armv4_bs_r_2),
+	.bs_r_4 = NSWAP(generic_bs_r_4),
+	.bs_r_8 = bs_notimpl_bs_r_8,
 
 	/* read multiple */
-	generic_bs_rm_1,
-	NSWAP(generic_armv4_bs_rm_2),
-	NSWAP(generic_bs_rm_4),
-	bs_notimpl_bs_rm_8,
+	.bs_rm_1 = generic_bs_rm_1,
+	.bs_rm_2 = NSWAP(generic_armv4_bs_rm_2),
+	.bs_rm_4 = NSWAP(generic_bs_rm_4),
+	.bs_rm_8 = bs_notimpl_bs_rm_8,
 
 	/* read region */
-	generic_bs_rr_1,
-	NSWAP(generic_armv4_bs_rr_2),
-	NSWAP(generic_bs_rr_4),
-	bs_notimpl_bs_rr_8,
+	.bs_rr_1 = generic_bs_rr_1,
+	.bs_rr_2 = NSWAP(generic_armv4_bs_rr_2),
+	.bs_rr_4 = NSWAP(generic_bs_rr_4),
+	.bs_rr_8 = bs_notimpl_bs_rr_8,
 
 	/* write (single) */
-	generic_bs_w_1,
-	NSWAP(generic_armv4_bs_w_2),
-	NSWAP(generic_bs_w_4),
-	bs_notimpl_bs_w_8,
+	.bs_w_1 = generic_bs_w_1,
+	.bs_w_2 = NSWAP(generic_armv4_bs_w_2),
+	.bs_w_4 = NSWAP(generic_bs_w_4),
+	.bs_w_8 = bs_notimpl_bs_w_8,
 
 	/* write multiple */
-	generic_bs_wm_1,
-	NSWAP(generic_armv4_bs_wm_2),
-	NSWAP(generic_bs_wm_4),
-	bs_notimpl_bs_wm_8,
+	.bs_wm_1 = generic_bs_wm_1,
+	.bs_wm_2 = NSWAP(generic_armv4_bs_wm_2),
+	.bs_wm_4 = NSWAP(generic_bs_wm_4),
+	.bs_wm_8 = bs_notimpl_bs_wm_8,
 
 	/* write region */
-	generic_bs_wr_1,
-	NSWAP(generic_armv4_bs_wr_2),
-	NSWAP(generic_bs_wr_4),
-	bs_notimpl_bs_wr_8,
+	.bs_wr_1 = generic_bs_wr_1,
+	.bs_wr_2 = NSWAP(generic_armv4_bs_wr_2),
+	.bs_wr_4 = NSWAP(generic_bs_wr_4),
+	.bs_wr_8 = bs_notimpl_bs_wr_8,
 
 	/* set multiple */
-	bs_notimpl_bs_sm_1,
-	bs_notimpl_bs_sm_2,
-	bs_notimpl_bs_sm_4,
-	bs_notimpl_bs_sm_8,
+	.bs_sm_1 = bs_notimpl_bs_sm_1,
+	.bs_sm_2 = bs_notimpl_bs_sm_2,
+	.bs_sm_4 = bs_notimpl_bs_sm_4,
+	.bs_sm_8 = bs_notimpl_bs_sm_8,
 
 	/* set region */
-	generic_bs_sr_1,
-	NSWAP(generic_armv4_bs_sr_2),
-	bs_notimpl_bs_sr_4,
-	bs_notimpl_bs_sr_8,
+	.bs_sr_1 = generic_bs_sr_1,
+	.bs_sr_2 = NSWAP(generic_armv4_bs_sr_2),
+	.bs_sr_4 = bs_notimpl_bs_sr_4,
+	.bs_sr_8 = bs_notimpl_bs_sr_8,
 
 	/* copy */
-	bs_notimpl_bs_c_1,
-	generic_armv4_bs_c_2,
-	bs_notimpl_bs_c_4,
-	bs_notimpl_bs_c_8,
+	.bs_c_1 = bs_notimpl_bs_c_1,
+	.bs_c_2 = generic_armv4_bs_c_2,
+	.bs_c_4 = bs_notimpl_bs_c_4,
+	.bs_c_8 = bs_notimpl_bs_c_8,
 
 #ifdef __BUS_SPACE_HAS_STREAM_METHODS
 	/* read (single) */
-	generic_bs_r_1,
-	NSWAP(generic_armv4_bs_r_2),
-	NSWAP(generic_bs_r_4),
-	bs_notimpl_bs_r_8,
+	.bs_r_1_s = generic_bs_r_1,
+	.bs_r_2_s = NSWAP(generic_armv4_bs_r_2),
+	.bs_r_4_s = NSWAP(generic_bs_r_4),
+	.bs_r_8_s = bs_notimpl_bs_r_8,
 
 	/* read multiple */
-	generic_bs_rm_1,
-	NSWAP(generic_armv4_bs_rm_2),
-	NSWAP(generic_bs_rm_4),
-	bs_notimpl_bs_rm_8,
+	.bs_rm_1_s = generic_bs_rm_1,
+	.bs_rm_2_s = NSWAP(generic_armv4_bs_rm_2),
+	.bs_rm_4_s = NSWAP(generic_bs_rm_4),
+	.bs_rm_8_s = bs_notimpl_bs_rm_8,
 
 	/* read region */
-	generic_bs_rr_1,
-	NSWAP(generic_armv4_bs_rr_2),
-	NSWAP(generic_bs_rr_4),
-	bs_notimpl_bs_rr_8,
+	.bs_rr_1_s = generic_bs_rr_1,
+	.bs_rr_2_s = NSWAP(generic_armv4_bs_rr_2),
+	.bs_rr_4_s = NSWAP(generic_bs_rr_4),
+	.bs_rr_8_s = bs_notimpl_bs_rr_8,
 
 	/* write (single) */
-	generic_bs_w_1,
-	NSWAP(generic_armv4_bs_w_2),
-	NSWAP(generic_bs_w_4),
-	bs_notimpl_bs_w_8,
+	.bs_w_1_s = generic_bs_w_1,
+	.bs_w_2_s = NSWAP(generic_armv4_bs_w_2),
+	.bs_w_4_s = NSWAP(generic_bs_w_4),
+	.bs_w_8_s = bs_notimpl_bs_w_8,
 
 	/* write multiple */
-	generic_bs_wm_1,
-	NSWAP(generic_armv4_bs_wm_2),
-	NSWAP(generic_bs_wm_4),
-	bs_notimpl_bs_wm_8,
+	.bs_wm_1_s = generic_bs_wm_1,
+	.bs_wm_2_s = NSWAP(generic_armv4_bs_wm_2),
+	.bs_wm_4_s = NSWAP(generic_bs_wm_4),
+	.bs_wm_8_s = bs_notimpl_bs_wm_8,
 
 	/* write region */
-	generic_bs_wr_1,
-	NSWAP(generic_armv4_bs_wr_2),
-	NSWAP(generic_bs_wr_4),
-	bs_notimpl_bs_wr_8,
+	.bs_wr_1_s = generic_bs_wr_1,
+	.bs_wr_2_s = NSWAP(generic_armv4_bs_wr_2),
+	.bs_wr_4_s = NSWAP(generic_bs_wr_4),
+	.bs_wr_8_s = bs_notimpl_bs_wr_8,
 #endif
 };
 

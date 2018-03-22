@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus_io.c,v 1.23 2014/02/22 20:33:00 matt Exp $	*/
+/*	$NetBSD: mainbus_io.c,v 1.23.28.1 2018/03/22 01:44:43 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus_io.c,v 1.23 2014/02/22 20:33:00 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus_io.c,v 1.23.28.1 2018/03/22 01:44:43 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,116 +57,116 @@ bs_protos(bs_notimpl);
 
 struct bus_space mainbus_bs_tag = {
 	/* cookie */
-	NULL,
+	.bs_cookie = NULL,
 
 	/* mapping/unmapping */
-	mainbus_bs_map,
-	mainbus_bs_unmap,
-	mainbus_bs_subregion,
+	.bs_map = mainbus_bs_map,
+	.bs_unmap = mainbus_bs_unmap,
+	.bs_subregion = mainbus_bs_subregion,
 
 	/* allocation/deallocation */
-	mainbus_bs_alloc,
-	mainbus_bs_free,
+	.bs_alloc = mainbus_bs_alloc,
+	.bs_free = mainbus_bs_free,
 
 	/* get kernel virtual address */
-	0, /* there is no linear mapping */
+	.bs_vaddr = NULL, /* there is no linear mapping */
 
 	/* Mmap bus space for user */
-	mainbus_bs_mmap,
+	.bs_mmap = mainbus_bs_mmap,
 
 	/* barrier */
-	mainbus_bs_barrier,
+	.bs_barrier = mainbus_bs_barrier,
 
 	/* read (single) */
-	mainbus_bs_r_1,
-	mainbus_bs_r_2,
-	mainbus_bs_r_4,
-	bs_notimpl_bs_r_8,
+	.bs_r_1 = mainbus_bs_r_1,
+	.bs_r_2 = mainbus_bs_r_2,
+	.bs_r_4 = mainbus_bs_r_4,
+	.bs_r_8 = bs_notimpl_bs_r_8,
 
 	/* read multiple */
-	bs_notimpl_bs_rm_1,
-	mainbus_bs_rm_2,
-	bs_notimpl_bs_rm_4,
-	bs_notimpl_bs_rm_8,
+	.bs_rm_1 =bs_notimpl_bs_rm_1,
+	.bs_rm_2 = mainbus_bs_rm_2,
+	.bs_rm_4 = bs_notimpl_bs_rm_4,
+	.bs_rm_8 = bs_notimpl_bs_rm_8,
 
 	/* read region */
-	bs_notimpl_bs_rr_1,
-	bs_notimpl_bs_rr_2,
-	bs_notimpl_bs_rr_4,
-	bs_notimpl_bs_rr_8,
+	.bs_rr_1 = bs_notimpl_bs_rr_1,
+	.bs_rr_2 = bs_notimpl_bs_rr_2,
+	.bs_rr_4 = bs_notimpl_bs_rr_4,
+	.bs_rr_8 = bs_notimpl_bs_rr_8,
 
 	/* write (single) */
-	mainbus_bs_w_1,
-	mainbus_bs_w_2,
-	mainbus_bs_w_4,
-	bs_notimpl_bs_w_8,
+	.bs_w_1 = mainbus_bs_w_1,
+	.bs_w_2 = mainbus_bs_w_2,
+	.bs_w_4 = mainbus_bs_w_4,
+	.bs_w_8 = bs_notimpl_bs_w_8,
 
 	/* write multiple */
-	mainbus_bs_wm_1,
-	mainbus_bs_wm_2,
-	bs_notimpl_bs_wm_4,
-	bs_notimpl_bs_wm_8,
+	.bs_wm_1 = mainbus_bs_wm_1,
+	.bs_wm_2 = mainbus_bs_wm_2,
+	.bs_wm_4 = bs_notimpl_bs_wm_4,
+	.bs_wm_8 = bs_notimpl_bs_wm_8,
 
 	/* write region */
-	bs_notimpl_bs_wr_1,
-	bs_notimpl_bs_wr_2,
-	bs_notimpl_bs_wr_4,
-	bs_notimpl_bs_wr_8,
+	.bs_wr_1 = bs_notimpl_bs_wr_1,
+	.bs_wr_2 = bs_notimpl_bs_wr_2,
+	.bs_wr_4 = bs_notimpl_bs_wr_4,
+	.bs_wr_8 = bs_notimpl_bs_wr_8,
 
-	bs_notimpl_bs_sm_1,
-	bs_notimpl_bs_sm_2,
-	bs_notimpl_bs_sm_4,
-	bs_notimpl_bs_sm_8,
+	.bs_sm_1 = bs_notimpl_bs_sm_1,
+	.bs_sm_2 = bs_notimpl_bs_sm_2,
+	.bs_sm_4 = bs_notimpl_bs_sm_4,
+	.bs_sm_8 = bs_notimpl_bs_sm_8,
 
 	/* set region */
-	bs_notimpl_bs_sr_1,
-	bs_notimpl_bs_sr_2,
-	bs_notimpl_bs_sr_4,
-	bs_notimpl_bs_sr_8,
+	.bs_sr_1 = bs_notimpl_bs_sr_1,
+	.bs_sr_2 = bs_notimpl_bs_sr_2,
+	.bs_sr_4 = bs_notimpl_bs_sr_4,
+	.bs_sr_8 = bs_notimpl_bs_sr_8,
 
 	/* copy */
-	bs_notimpl_bs_c_1,
-	bs_notimpl_bs_c_2,
-	bs_notimpl_bs_c_4,
-	bs_notimpl_bs_c_8,
+	.bs_c_1 = bs_notimpl_bs_c_1,
+	.bs_c_2 = bs_notimpl_bs_c_2,
+	.bs_c_4 = bs_notimpl_bs_c_4,
+	.bs_c_8 = bs_notimpl_bs_c_8,
 
 #ifdef __BUS_SPACE_HAS_STREAM_METHODS
 	/* stream methods */
 	/* read (single) */
-	mainbus_bs_r_1,
-	mainbus_bs_r_2,
-	mainbus_bs_r_4,
-	bs_notimpl_bs_r_8,
+	.bs_r_1_s = mainbus_bs_r_1,
+	.bs_r_2_s = mainbus_bs_r_2,
+	.bs_r_4_s = mainbus_bs_r_4,
+	.bs_r_8_s = bs_notimpl_bs_r_8,
 
 	/* read multiple */
-	bs_notimpl_bs_rm_1,
-	mainbus_bs_rm_2,
-	bs_notimpl_bs_rm_4,
-	bs_notimpl_bs_rm_8,
+	.bs_rm_1_s = bs_notimpl_bs_rm_1,
+	.bs_rm_2_s = mainbus_bs_rm_2,
+	.bs_rm_4_s = bs_notimpl_bs_rm_4,
+	.bs_rm_8_s = bs_notimpl_bs_rm_8,
 
 	/* read region */
-	bs_notimpl_bs_rr_1,
-	bs_notimpl_bs_rr_2,
-	bs_notimpl_bs_rr_4,
-	bs_notimpl_bs_rr_8,
+	.bs_rr_1_s = bs_notimpl_bs_rr_1,
+	.bs_rr_2_s = bs_notimpl_bs_rr_2,
+	.bs_rr_4_s = bs_notimpl_bs_rr_4,
+	.bs_rr_8_s = bs_notimpl_bs_rr_8,
 
 	/* write (single) */
-	mainbus_bs_w_1,
-	mainbus_bs_w_2,
-	mainbus_bs_w_4,
-	bs_notimpl_bs_w_8,
+	.bs_w_1_s = mainbus_bs_w_1,
+	.bs_w_2_s = mainbus_bs_w_2,
+	.bs_w_4_s = mainbus_bs_w_4,
+	.bs_w_8_s = bs_notimpl_bs_w_8,
 
 	/* write multiple */
-	mainbus_bs_wm_1,
-	mainbus_bs_wm_2,
-	bs_notimpl_bs_wm_4,
-	bs_notimpl_bs_wm_8,
+	.bs_wm_1_s = mainbus_bs_wm_1,
+	.bs_wm_2_s = mainbus_bs_wm_2,
+	.bs_wm_4_s = bs_notimpl_bs_wm_4,
+	.bs_wm_8_s = bs_notimpl_bs_wm_8,
 
 	/* write region */
-	bs_notimpl_bs_wr_1,
-	bs_notimpl_bs_wr_2,
-	bs_notimpl_bs_wr_4,
-	bs_notimpl_bs_wr_8,
+	.bs_wr_1_s = bs_notimpl_bs_wr_1,
+	.bs_wr_2_s = bs_notimpl_bs_wr_2,
+	.bs_wr_4_s = bs_notimpl_bs_wr_4,
+	.bs_wr_8_s = bs_notimpl_bs_wr_8,
 #endif
 };
 

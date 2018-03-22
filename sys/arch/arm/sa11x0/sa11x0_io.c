@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_io.c,v 1.20 2014/02/22 20:33:00 matt Exp $	*/
+/*	$NetBSD: sa11x0_io.c,v 1.20.28.1 2018/03/22 01:44:43 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_io.c,v 1.20 2014/02/22 20:33:00 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_io.c,v 1.20.28.1 2018/03/22 01:44:43 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,79 +61,79 @@ bs_protos(bs_notimpl);
 
 struct bus_space sa11x0_bs_tag = {
 	/* cookie */
-	NULL,
+	.bs_cookie = NULL,
 
 	/* mapping/unmapping */
-	sa11x0_bs_map,
-	sa11x0_bs_unmap,
-	sa11x0_bs_subregion,
+	.bs_map = sa11x0_bs_map,
+	.bs_unmap = sa11x0_bs_unmap,
+	.bs_subregion = sa11x0_bs_subregion,
 
 	/* allocation/deallocation */
-	sa11x0_bs_alloc,
-	sa11x0_bs_free,
+	.bs_alloc = sa11x0_bs_alloc,
+	.bs_free = sa11x0_bs_free,
 
 	/* get kernel virtual address */
-	sa11x0_bs_vaddr,
+	.bs_vaddr = sa11x0_bs_vaddr,
 
 	/* mmap bus space for userland */
-	sa11x0_bs_mmap,
+	.bs_mmap = sa11x0_bs_mmap,
 
 	/* barrier */
-	sa11x0_bs_barrier,
+	.bs_barrier = sa11x0_bs_barrier,
 
 	/* read (single) */
-	sa11x0_bs_r_1,
-	sa11x0_bs_r_2,
-	sa11x0_bs_r_4,
-	bs_notimpl_bs_r_8,
+	.bs_r_1 = sa11x0_bs_r_1,
+	.bs_r_2 = sa11x0_bs_r_2,
+	.bs_r_4 = sa11x0_bs_r_4,
+	.bs_r_8 = bs_notimpl_bs_r_8,
 
 	/* read multiple */
-	sa11x0_bs_rm_1,
-	sa11x0_bs_rm_2,
-	sa11x0_bs_rm_4,
-	bs_notimpl_bs_rm_8,
+	.bs_rm_1 = sa11x0_bs_rm_1,
+	.bs_rm_2 = sa11x0_bs_rm_2,
+	.bs_rm_4 = sa11x0_bs_rm_4,
+	.bs_rm_8 = bs_notimpl_bs_rm_8,
 
 	/* read region */
-	bs_notimpl_bs_rr_1,
-	sa11x0_bs_rr_2,
-	bs_notimpl_bs_rr_4,
-	bs_notimpl_bs_rr_8,
+	.bs_rr_1 = bs_notimpl_bs_rr_1,
+	.bs_rr_2 = sa11x0_bs_rr_2,
+	.bs_rr_4 = bs_notimpl_bs_rr_4,
+	.bs_rr_8 = bs_notimpl_bs_rr_8,
 
 	/* write (single) */
-	sa11x0_bs_w_1,
-	sa11x0_bs_w_2,
-	sa11x0_bs_w_4,
-	bs_notimpl_bs_w_8,
+	.bs_w_1 = sa11x0_bs_w_1,
+	.bs_w_2 = sa11x0_bs_w_2,
+	.bs_w_4 = sa11x0_bs_w_4,
+	.bs_w_8 = bs_notimpl_bs_w_8,
 
 	/* write multiple */
-	sa11x0_bs_wm_1,
-	sa11x0_bs_wm_2,
-	sa11x0_bs_wm_4,
-	bs_notimpl_bs_wm_8,
+	.bs_wm_1 = sa11x0_bs_wm_1,
+	.bs_wm_2 = sa11x0_bs_wm_2,
+	.bs_wm_4 = sa11x0_bs_wm_4,
+	.bs_wm_8 = bs_notimpl_bs_wm_8,
 
 	/* write region */
-	bs_notimpl_bs_wr_1,
-	sa11x0_bs_wr_2,
-	bs_notimpl_bs_wr_4,
-	bs_notimpl_bs_wr_8,
+	.bs_wr_1 = bs_notimpl_bs_wr_1,
+	.bs_wr_2 = sa11x0_bs_wr_2,
+	.bs_wr_4 = bs_notimpl_bs_wr_4,
+	.bs_wr_8 = bs_notimpl_bs_wr_8,
 
 	/* set multiple */
-	bs_notimpl_bs_sm_1,
-	bs_notimpl_bs_sm_2,
-	bs_notimpl_bs_sm_4,
-	bs_notimpl_bs_sm_8,
+	.bs_sm_1 = bs_notimpl_bs_sm_1,
+	.bs_sm_2 = bs_notimpl_bs_sm_2,
+	.bs_sm_4 = bs_notimpl_bs_sm_4,
+	.bs_sm_8 = bs_notimpl_bs_sm_8,
 
 	/* set region */
-	bs_notimpl_bs_sr_1,
-	sa11x0_bs_sr_2,
-	bs_notimpl_bs_sr_4,
-	bs_notimpl_bs_sr_8,
+	.bs_sr_1 = bs_notimpl_bs_sr_1,
+	.bs_sr_2 = sa11x0_bs_sr_2,
+	.bs_sr_4 = bs_notimpl_bs_sr_4,
+	.bs_sr_8 = bs_notimpl_bs_sr_8,
 
 	/* copy */
-	bs_notimpl_bs_c_1,
-	sa11x0_bs_c_2,
-	bs_notimpl_bs_c_4,
-	bs_notimpl_bs_c_8,
+	.bs_c_1 = bs_notimpl_bs_c_1,
+	.bs_c_2 = sa11x0_bs_c_2,
+	.bs_c_4 = bs_notimpl_bs_c_4,
+	.bs_c_8 = bs_notimpl_bs_c_8,
 };
 
 /* bus space functions */

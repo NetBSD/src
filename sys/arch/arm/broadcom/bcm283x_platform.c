@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm283x_platform.c,v 1.2 2017/12/20 14:35:12 skrll Exp $	*/
+/*	$NetBSD: bcm283x_platform.c,v 1.2.2.1 2018/03/22 01:44:42 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.2 2017/12/20 14:35:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.2.2.1 2018/03/22 01:44:42 pgoyette Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bcm283x.h"
@@ -118,7 +118,7 @@ static int rpi_ioctl(void *, void *, u_long, void *, int, lwp_t *);
 
 extern struct bus_space armv7_generic_bs_tag;
 extern struct bus_space armv7_generic_a4x_bs_tag;
-extern struct arm32_bus_dma_tag armv7_generic_dma_tag;
+extern struct arm32_bus_dma_tag arm_generic_dma_tag;
 
 /* Prototypes for all the bus_space structure functions */
 bs_protos(bcm2835);

@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.175.2.1 2018/03/15 09:11:52 pgoyette Exp $
+.\"	$NetBSD: sh.1,v 1.175.2.2 2018/03/22 01:44:39 pgoyette Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -176,18 +176,12 @@ and
 .Dq Ic esac
 below (these commands are described later):
 .Pp
-.Bl -item -compact -offset indent
-.It
-.Li case $- in *i*)
-.Bl -item -compact -offset indent
-.It
-.Li # commands for interactive use only
-.It
-.Li ...
-.El
-.It
-.Li esac
-.El
+.Bd -literal -offset indent
+case $- in *i*)
+        # commands for interactive use only
+        ...
+esac
+.Ed
 .Pp
 If command line arguments besides the options have been specified, and
 neither
@@ -286,11 +280,11 @@ Read commands from the
 .Ar command_string
 operand instead of, or in addition to, from the standard input.
 Special parameter
-.Dv 0 \" $0
+.Dv 0 \" $0	(comments like this for searching sources only)
 will be set from the
 .Ar command_name
 operand if given, and the positional parameters
-.Li ( $1 , $2 ,
+.Dv ( 1 , 2 ,
 etc.)
 set from the remaining argument operands, if any.
 .Fl c
@@ -362,12 +356,12 @@ Force the shell to behave interactively.
 .It Fl L Em local_lineno
 When set, before a function is defined,
 causes the variable
-.Ev LINENO
+.Dv LINENO
 when used within the function,
 to refer to the line number defined such that
 first line of the function is line 1.
 When reset,
-.Ev LINENO
+.Dv LINENO
 in a function refers to the line number within the file
 within which the definition of the function occurs.
 This option defaults to
@@ -472,7 +466,7 @@ is also performed upon
 but not the converse.
 .It Fl x Em xtrace
 Write each command to standard error (preceded by the expanded value of
-.Dq $PS4 )
+.Li $PS4 )
 before it is executed.
 Unless
 .Fl X
@@ -1004,10 +998,10 @@ in its name is always a normal program.
 They each are executed in a different way.
 .Pp
 When a shell function is executed, all of the shell positional parameters
-(except
-.Li $0 ,
-which remains unchanged) are set to the arguments of the shell
-function.
+(note: excluding
+.Li 0 , \" $0
+which is a special, not positional, parameter, and remains unchanged)
+are set to the arguments of the shell function.
 The variables which are explicitly placed in the environment of
 the command (by placing assignments to them before the function name) are
 made local to the function and are set to the values given,
@@ -1016,7 +1010,8 @@ Then the command given in the function definition is executed.
 The positional parameters, and local variables, are restored to
 their original values when the command completes.
 This all occurs within the current shell, and the function
-can alter variables, or other settings, of the shell.
+can alter variables, or other settings, of the shell, but
+not the positional parameters nor their related special parameters.
 .Pp
 Shell built-ins are executed internally to the shell, without spawning a
 new process.
@@ -1617,13 +1612,13 @@ variable, or by a
 if
 .Ev IFS
 is unset.
-.It Dv @
+.It Dv @ \" $@
 Expands to the positional parameters, starting from one.
 When the expansion occurs within double quotes, each positional
 parameter expands as a separate argument.
 If there are no positional parameters, the
 expansion of @ generates zero arguments, even when
-.Dv @
+.Dv $@
 is double-quoted.
 What this basically means, for example, is
 if
@@ -1666,7 +1661,7 @@ will be unset.
 Once set, the value of
 .Dq Dv \&!
 will be retained until another background command is started.
-.It Dv 0 No (zero)
+.It Dv 0 No (zero) \" $0
 Expands to the name of the shell or shell script.
 .El
 .\"
@@ -1838,7 +1833,7 @@ rather than regular expression notation, is used to evaluate the patterns.
 If parameter is
 .Dv *
 or
-.Dv @ ,
+.Dv @ , \" $@
 the result of the expansion is unspecified.
 Enclosing the full parameter expansion string in double quotes does not
 cause the following four varieties of pattern characters to be quoted,
@@ -2875,16 +2870,16 @@ but while the function is active, after the
 command has run, the values and attributes of the variables might
 be altered, and later, when the function completes, be restored.
 .Pp
-Note that the parameters
-.Li $1 ,
-.Li $2 ,
+Note that the positional parameters
+.Dv 1 ,  \" $1
+.Dv 2 ,  \" $2
 \&... (see
 .Sx Positional Parameters ) ,
+and the special parameters
+.Dv \&# , \" $#
+.Dv \&*   \" $*
 and
-.Li $# ,
-.Li $*
-and
-.Li $@
+.Dv \&@   \" $@
 (see
 .Sx Special Parameters ) ,
 are always made local in all functions, and are reset inside the
@@ -2894,7 +2889,7 @@ Note that
 however retains the value it had outside the function,
 as do all the other special parameters.
 .Pp
-The only other special parameter that can be made local is
+The only special parameter that can optionally be made local is
 .Dq Li \- .
 Making
 .Dq Li \-
@@ -2935,7 +2930,7 @@ is an extension not implemented by most shells.
 See the section
 .Sx LINENO
 below for details of the effects of making the variable
-.Ev LINENO
+.Dv LINENO
 local.
 .It Ic pwd Op Fl \&LP
 Print the current directory.
@@ -3171,7 +3166,7 @@ The signals are specified by signal number or as the name of the signal.
 If
 .Ar signal
 is
-.Li 0
+.Li 0 \" $0
 or its equivalent,
 .Li EXIT ,
 the action is executed when the shell exits.
@@ -3281,62 +3276,65 @@ command, tracked alias and not found.
 For aliases the alias expansion is
 printed; for commands and tracked aliases the complete pathname of the
 command is printed.
-.It Ic ulimit Oo Fl H \*(Ba Fl S Oc Op Fl a \*(Ba Fl btfdscmlrpnv Op Ar value
+.It Ic ulimit Oo Fl H Ns \*(Ba Ns Fl S Oc Op Fl a \*(Ba Fl btfdscmlrpnv Op Ar value
 Inquire about or set the hard or soft limits on processes or set new
 limits.
 The choice between hard limit (which no process is allowed to
 violate, and which may not be raised once it has been lowered) and soft
 limit (which causes processes to be signaled but not necessarily killed,
 and which may be raised) is made with these flags:
+.Pp
 .Bl -tag -width Fl
 .It Fl H
 set or inquire about hard limits
 .It Fl S
 set or inquire about soft limits.
+.El
+.Pp
 If neither
 .Fl H
 nor
 .Fl S
 is specified, the soft limit is displayed or both limits are set.
 If both are specified, the last one wins.
-.El
 .Pp
 The limit to be interrogated or set, then, is chosen by specifying
 any one of these flags:
+.Pp
 .Bl -tag -width Fl
 .It Fl a
 show all the current limits
 .It Fl b
-show or set the limit on the socket buffer size of a process (in bytes)
+the socket buffer size of a process (bytes)
 .It Fl c
-show or set the limit on the largest core dump size that can be produced
-(in 512-byte blocks)
+the largest core dump size that can be produced
+(512-byte blocks)
 .It Fl d
-show or set the limit on the data segment size of a process (in kilobytes)
+the data segment size of a process (kilobytes)
 .It Fl f
-show or set the limit on the largest file that can be created
-(in 512-byte blocks)
+the largest file that can be created
+(512-byte blocks)
 .It Fl l
-show or set the limit on how much memory a process can lock with
+how much memory a process can lock with
 .Xr mlock 2
-(in kilobytes)
+(kilobytes)
 .It Fl m
-show or set the limit on the total physical memory that can be
-in use by a process (in kilobytes)
+the total physical memory that can be
+in use by a process (kilobytes)
 .It Fl n
-show or set the limit on the number of files a process can have open at once
+the number of files a process can have open at once
 .It Fl p
-show or set the limit on the number of processes this user can
+the number of processes this user can
 have at one time
 .It Fl r
-show or set the limit on the number of threads this user can
+the number of threads this user can
 have at one time
 .It Fl s
-show or set the limit on the stack size of a process (in kilobytes)
+the stack size of a process (kilobytes)
 .It Fl t
-show or set the limit on CPU time (in seconds)
+CPU time (seconds)
 .It Fl v
-show or set the limit on how large a process address space can be
+how large a process address space can be
 .El
 .Pp
 If none of these is specified, it is the limit on file size that is shown
@@ -3485,7 +3483,10 @@ is identical to
 wait 100
 .Ed
 .El
+.\"
+.\"
 .Ss Job Control
+.\"
 Each process (or set of processes) started by
 .Nm
 is created as a
@@ -3494,7 +3495,7 @@ and added to the jobs table.
 When enabled by the
 .Fl m
 option
-.Pq aka Fl o Ar monitor
+.Pq aka Fl o Cm monitor
 when the job is created,
 .Nm
 places each job (if run from the top level shell)
@@ -3519,36 +3520,38 @@ built-in command.
 Jobs are identified using either the process identifier
 of the lead process of the job (the value available in
 the special parameter
-.Sq \&$!
+.Dq Dv \&!
 if the job is started in the background), or using percent
 notation.
 Each job is given a
 .Dq job number
 which is a small integer, starting from 1, and can be
 referenced as
-.Sq \&%n
-where n is that number.
+.Dq Li \&% Ns Ar n
+where
+.Ar n
+is that number.
 Note that this applies to jobs both with and without their own process groups.
 Job numbers are shown in the output from the
 .Ic jobs
 command enclosed in brackets
 .Po
-.Sq \&[
+.Sq Li \&[
 and
-.Sq \&]
+.Sq Li \&]
 .Pc .
 Whenever the job table becomes empty, the numbers begin at one again.
 In addition, there is the concept of a current, and a previous job,
 identified by
-.Sq \&%+
+.Dq Li \&%+
 .Po
 or
-.Sq \&%%
+.Dq Li \&%%
 or even just
-.Sq \&%
+.Dq Li \&%
 .Pc ,
 and a previous job, identified by
-.Sq \&%\- .
+.Dq Li \&%\- .
 Whenever a background job is started,
 or a job is resumed in the background,
 it becomes the current job.
@@ -3558,13 +3561,13 @@ becomes the previous job.
 When the current job terminates, the previous job is
 promoted to be the current job.
 In addition the form
-.Dq %string
+.Dq Li \&% Ns Ar string\^
 finds the job for which the command starts with
-.Dq string
+.Ar string
 and the form
-.Dq %?string
+.Dq Li \&%? Ns Ar string\^
 finds the job which contains the
-.Dq string
+.Ar string
 in its command somewhere.
 Both forms require the result to be unambiguous.
 For this purpose the
@@ -3589,7 +3592,8 @@ section above, and
 .Xr kill 1 ,
 for more details of those commands.
 In addition, a job identifier
-.Pq using one of the Sq \&% forms
+(using one of the
+.Dq \&% forms )
 issued as a command, without arguments, is interpreted as
 if it had been given as the argument to the
 .Ic fg
@@ -3602,8 +3606,8 @@ To cause a background process to stop, send it a
 .Dv STOP
 signal, using the kill command.
 A useful function to define is
-.Bd -literal -compact
-        stop() { kill -s STOP "${@:-%%}"; }
+.Bd -literal -offset indent
+stop() { kill -s STOP "${@:-%%}"; }
 .Ed
 .Pp
 The
@@ -3620,16 +3624,22 @@ and the process group identifier, for a job.
 Whenever a sub-shell is created, the jobs table becomes invalid
 (the sub-shell has no children.)
 However, to enable uses like
-.Bd -literal -compact
-        PID=$(jobid -p %1)
+.Bd -literal -offset indent
+PID=$(jobid -p %1)
 .Ed
+.Pp
 the table is only actually cleared in a sub-shell when needed to
 create the first job there (built-in commands run in the foreground
 do not create jobs.)
 Note that in this environment, there is no useful current job
-(%% actually refers to the sub-shell itself, but is not accessible)
-but the job which is the current job in the parent can be accessed as %\-.
+.Dq ( Li \&%%
+actually refers to the sub-shell itself, but is not accessible)
+but the job which is the current job in the parent can be accessed as
+.Dq Li \&%\- .
+.\"
+.\"
 .Ss Command Line Editing
+.\"
 When
 .Nm
 is being used interactively from a terminal, the current command
@@ -3641,19 +3651,22 @@ section)
 can be edited using emacs-mode or vi-mode command-line editing.
 The command
 .Ql set -o emacs
+(or
+.Fl E
+option)
 enables emacs-mode editing.
 The command
 .Ql set -o vi
+(or
+.Fl V
+option)
 enables vi-mode editing and places the current shell process into
-.Ar vi
-insert mode.
+vi insert mode.
 (See the
 .Sx Argument List Processing
 section above.)
 .Pp
-The
-.Ar vi
-mode uses commands similar to a subset of those described in the
+The vi-mode uses commands similar to a subset of those described in the
 .Xr vi 1
 man page.
 With vi-mode
@@ -3661,17 +3674,15 @@ enabled,
 .Nm sh
 can be switched between insert mode and command mode.
 It's similar to
-.Xr vi 1 :
+.Ic vi :
 pressing the
 .Aq ESC
-key will throw you into command VI command mode.
+key will throw you into vi command mode.
 Pressing the
 .Aq return
 key while in command mode will pass the line to the shell.
 .Pp
-The
-.Ar emacs
-mode uses commands similar to a subset available in the
+The emacs-mode uses commands similar to a subset available in the
 .Ic emacs
 editor.
 With emacs-mode enabled, special keys can be used to modify the text
@@ -3684,11 +3695,7 @@ library.
 See
 .Xr editline 7
 for a list of the possible command bindings,
-and the default settings in
-.Ar emacs
-and
-.Ar vi
-modes.
+and the default settings in emacs and vi modes.
 Also see
 .Xr editrc 5
 for the commands that can be given to configure
@@ -3722,53 +3729,55 @@ This is done, when needed, by choosing a character that
 is not needed anywhere in the prompt, including in the mode
 setting sequences, any single character is acceptable,
 and assigning it to the shell parameter
-.Ev PSlit .
+.Dv PSlit .
 Then that character should be used, in pairs, in the
 prompt string.
 Between each pair of
-.Ev PSlit
+.Dv PSlit
 characters are mode setting sequences, which affect the printing
 attributes of the following (normal) characters of the prompt,
 but do not themselves appear visibly, nor change the terminal's
 cursor position.
 .Pp
 Each such sequence, that is
-.Ev PSlit
+.Dv PSlit
 character, mode setting character sequence, and another
-.Ev PSlit
+.Dv PSlit
 character, must currently be followed by at least one following
 normal prompt character, or it will be ignored.
 That is, a
-.Ev PSlit
+.Dv PSlit
 character cannot be the final character of
 .Ev PS1
 or
 .Ev PS2 ,
 nor may two
-.Ev PSlit
+.Dv PSlit
 delimited sequences appear adjacent to each other.
 Each sequence can contain as many mode altering sequences as are
 required however.
 Only the first character from
-.Ev PSlit
+.Dv PSlit
 will be used.
 When set
-.Ev PSlit
+.Dv PSlit
 should usually be set to a string containing just one
 character, then it can simply be embedded in
 .Ev PS1
 (or
 .Ev PS2 )
 as in
-.Dl PS1="${PSlit}mset${PSlit}XYZ${PSlit}mclr${PSlit}ABC"
+.Pp
+.D1 Li PS1=\*q${PSlit} Ns Ar mset\^ Ns Li ${PSlit}XYZ${PSlit} Ns Ar mclr\^ Ns Li ${PSlit}ABC\*q
+.Pp
 The prompt visible will be
 .Dq XYZABC
 with the
 .Dq XYZ
 part shown according as defined by the mode setting characters
-.Dq mset ,
+.Ar mset ,
 and then cleared again by
-.Dq mclr .
+.Ar mclr .
 See
 .Xr tput 1
 for one method to generate appropriate mode sequences.
@@ -3776,7 +3785,7 @@ Note that both parts, XYZ and ABC, must each contain at least one
 character.
 .Pp
 If
-.Ev PSlit
+.Dv PSlit
 is unset, which is its initial state, or set to a null string,
 no literal character will be defined,
 and all characters of the prompt strings will be assumed
@@ -3788,13 +3797,17 @@ ignored by the terminal if received, as when
 .Xr editline 7
 is not in use, the prompt strings are simply written to the terminal.
 For example, setting:
-.Bd -literal -offset left -compact
+.\" XXX: PS1 line is too long for -offset indent
+.Bd -literal -offset left
   PSlit="$(printf\ '\e1')"
   PS1="${PSlit}$(tput\ bold\ blink)${PSlit}\e$${PSlit}$(tput\ sgr0)${PSlit}\ "
 .Ed
+.Pp
 will arrange for the primary prompt to be a bold blinking dollar sign,
 if supported by the current terminal, followed by an (ordinary) space,
-and, as the SOH (Control-A) character ('\e1') will not normally affect
+and, as the SOH (control-A) character
+.Pq Sq \e1
+will not normally affect
 a terminal, this same prompt will usually work with
 .Xr editline 7
 enabled or disabled.
@@ -3864,7 +3877,7 @@ The string used to specify localization information that allows users
 to work with different culture-specific and language conventions.
 See
 .Xr nls 7 .
-.It Ev LINENO
+.It Dv LINENO
 The current line number in the script or function.
 See the section
 .Sx LINENO
@@ -3907,9 +3920,9 @@ This value is set at shell startup, ignoring
 any value in the environment, and then made readonly.
 .It Ev PS1
 The primary prompt string, which defaults to
-.Dq $ \  ,
+.Dq Li "$ " ,
 unless you are the superuser, in which case it defaults to
-.Dq # \  .
+.Dq Li "# " .
 This string is subject to parameter, arithmetic, and if
 enabled by setting the
 .Ic promptcmds
@@ -3927,7 +3940,7 @@ For other expansion errors, a message will be output,
 and the unexpanded string will then be used as the prompt.
 .It Ev PS2
 The secondary prompt string, which defaults to
-.Dq > \  .
+.Dq Li "> " .
 After expansion (as for
 .Ev PS1 )
 it is written whenever more input is required to complete the
@@ -3940,7 +3953,7 @@ before each line when execution trace
 is enabled.
 .Ev PS4
 defaults to
-.Dq + \  .
+.Dq Li "+ " .
 .It Ev PSc
 Initialized by the shell, ignoring any value from the environment,
 to a single character string, either
@@ -3958,7 +3971,7 @@ or
 to indicate to
 .Xr editline 7
 that the characters between each pair of occurrences of the
-.Ev PSlit
+.Dv PSlit
 character will not appear in the visible prompt, and will not
 cause the terminal's cursor to change position, but rather set terminal
 attributes for the following prompt character(s) at least one of
@@ -4063,49 +4076,49 @@ that were used when building the shell will be listed.
 behaves like any other variable that has the read-only
 and un-exportable attributes set.
 .El
-.Ss Ev LINENO
-.Ev LINENO
+.Ss Dv LINENO
+.Dv LINENO
 is in many respects a normal shell variable, containing an
 integer value. and can be expanded using any of the forms
 mentioned above which can be used for any other variable.
 .Pp
-.Ev LINENO
+.Dv LINENO
 can be exported, made readonly, or unset, as with any other
 variable, with similar effects.
 Note that while being readonly prevents later attempts to
 set, or unset,
-.Ev LINENO ,
+.Dv LINENO ,
 it does not prevent its value changing.
 References to
-.Ev LINENO
+.Dv LINENO
 .Pq "when not unset"
 always obtain the current line number.
 However,
-.Ev LINENO
+.Dv LINENO
 should normally not ever be set or unset.
 In this shell setting
-.Ev LINENO
+.Dv LINENO
 reverses the effect of an earlier
 .Ic unset ,
 but does not otherwise affect the value obtained.
 If unset,
-.Ev LINENO
+.Dv LINENO
 should not normally be set again, doing so is not portable.
 If
-.Ev LINENO
+.Dv LINENO
 is set or unset, different shells act differently.
 The value of
-.Ev LINENO
+.Dv LINENO
 is never imported from the environment when the shell is
 started, though if present there, as with any other variable,
-.Ev LINENO
+.Dv LINENO
 will be exported by this shell.
 .Pp
-.Ev LINENO
+.Dv LINENO
 is set automatically by the shell to be the number of the source
 line on which it occurs.
 When exported,
-.Ev LINENO
+.Dv LINENO
 is exported with its value set to the line number it would have
 had had it been referenced on the command line of the command to
 which it is exported.
@@ -4116,14 +4129,14 @@ the user's terminal, is just another file and lines are counted
 there as well.
 However note that not all shells count interactive
 lines this way, it is not wise to rely upon
-.Ev LINENO
+.Dv LINENO
 having a useful value, except in a script, or a function.
 .Pp
 The role of
-.Ev LINENO
+.Dv LINENO
 in functions is less clear.
 In some shells,
-.Ev LINENO
+.Dv LINENO
 continues to refer to the line number in the script which defines
 the function,
 in others lines count from one within the function, always (and
@@ -4147,7 +4160,7 @@ flag is not set, the shell counts lines in a function definition
 in the same continuous sequence as the lines that surround the
 function definition.
 Further, if
-.Ev LINENO
+.Dv LINENO
 is made local
 (see
 .Sx Built-ins
@@ -4155,52 +4168,52 @@ above)
 inside the function, the function can decide which
 behavior it prefers.
 If
-.Ev LINENO
+.Dv LINENO
 is made local and inherited, and not given a value, as in
-.Dl local Fl I Ev LINENO
+.Dl local Fl I Dv LINENO
 then from that point in the function,
-.Ev LINENO
+.Dv LINENO
 will give the line number as if lines are counted in sequence
 with the lines that surround the function definition (and
 any other function definitions in which this is nested.)
 If
-.Ev LINENO
+.Dv LINENO
 is made local, and in that same command, given a value, as
-.Dl local Oo Fl I Ns | Ns Fl N Oc Ev LINENO Ns = Ns Ar value
+.Dl local Oo Fl I Ns | Ns Fl N Oc Dv LINENO Ns = Ns Ar value
 then
-.Ev LINENO
+.Dv LINENO
 will give the line number as if lines are counted from one
 from the beginning of the function.
 The value nominally assigned in this case is irrelevant, and ignored.
 For completeness, if lineno is made local and unset, as in
-.Dl local Fl N Ev LINENO
+.Dl local Fl N Dv LINENO
 then
-.Ev LINENO
+.Dv LINENO
 is simply unset inside the function, and gives no value at all.
 .Pp
 Now for some technical details.
 The line on which
-.Ev LINENO
+.Dv LINENO
 occurs in a parameter expansion, is the line that contains the
 .Sq \&$
 that begins the expansion of
-.Ev LINENO .
+.Dv LINENO .
 In the case of nested expansions, that
 .Sq \&$
 is the one that actually has
-.Ev LINENO
+.Dv LINENO
 as its parameter.
 In an arithmetic expansion, where no
 .Sq \&$
 is used to evaluate
-.Ev LINENO
+.Dv LINENO
 but
-.Ev LINENO
+.Dv LINENO
 is simply referenced as a variable, then the value is the
 line number of the line that contains the
 .Sq L
 of
-.Ev LINENO .
+.Dv LINENO .
 For functions line one of the function definition (when relevant)
 is the line that contains the first character of the
 function name in the definition.
@@ -4217,7 +4230,7 @@ the line number starts at the line on which the string starts,
 and then if the string contains internal newline characters,
 those characters increase the line number.
 This means that references to
-.Ev LINENO
+.Dv LINENO
 in such a case can produce values larger than would be
 produced by a reference on the line after the
 .Ic eval .

@@ -1,12 +1,9 @@
-#	$NetBSD: files.netwalker,v 1.10 2015/12/21 04:26:29 hkenken Exp $
+#	$NetBSD: files.netwalker,v 1.10.16.1 2018/03/22 01:44:44 pgoyette Exp $
 #
 # Sharp Netwalker configuration info
 #
 
 file	arch/evbarm/netwalker/netwalker_machdep.c
-
-# Kernel boot arguments
-defparam opt_machdep.h				BOOT_ARGS
 
 # CPU support and integrated peripherals
 include "arch/arm/imx/files.imx51"

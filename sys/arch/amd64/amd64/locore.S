@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.157 2018/02/25 12:37:16 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.157.2.1 2018/03/22 01:44:41 pgoyette Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -330,7 +330,6 @@
 	.globl	_C_LABEL(biosbasemem)
 	.globl	_C_LABEL(biosextmem)
 	.globl	_C_LABEL(lwp0uarea)
-	.globl	do_sysret
 	.globl	do_mov_es
 	.globl	do_mov_ds
 	.globl	do_mov_fs
@@ -1471,7 +1470,6 @@ LABEL(syscall_sysret)
 	movq	TF_RIP(%rsp),%rcx	/* %rip for sysret */
 	movq	TF_RFLAGS(%rsp),%r11	/* %flags for sysret */
 	movq	TF_RSP(%rsp),%rsp
-do_sysret:
 	sysretq
 #else
 	addq	$TF_RIP,%rsp
@@ -1550,14 +1548,14 @@ END(pagezero)
  * documentation in amd64_trap.S for an explanation.
  */
 
-#define TF_BACKW(val, reg)	(val - TF_REGSIZE)(reg)
+#define TF_BACKW(val, reg)	(val - (TF_REGSIZE+16))(reg)
 
 	_ALIGN_TEXT
 LABEL(intrfastexit)
 	NOT_XEN(cli;)
 	SVS_LEAVE
 	INTR_RESTORE_GPRS
-	addq	$TF_REGSIZE,%rsp	/* iret frame */
+	addq	$(TF_REGSIZE+16),%rsp	/* iret frame */
 
 	testb	$SEL_UPL,TF_BACKW(TF_CS, %rsp)
 	jz	.Lkexit
@@ -1588,7 +1586,6 @@ do_mov_gs:
 	SWAPGS
 
 .Lkexit:
-	addq	$16,%rsp	/* 16 = T_xxx + error code */
 do_iret:
 	iretq
 END(intrfastexit)

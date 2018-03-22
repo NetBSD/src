@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_machdep.h,v 1.6 2012/09/23 00:31:05 chs Exp $	*/
+/*	$NetBSD: acpi_machdep.h,v 1.6.36.1 2018/03/22 01:44:45 pgoyette Exp $	*/
 
 ACPI_STATUS		acpi_md_OsInitialize(void);
 ACPI_PHYSICAL_ADDRESS	acpi_md_OsGetRootPointer(void);
@@ -12,7 +12,7 @@ ACPI_PHYSICAL_ADDRESS	acpi_md_OsGetRootPointer(void);
 #define acpi_md_OsOut32(x, v)	outl((x), (v))
 
 ACPI_STATUS acpi_md_OsInstallInterruptHandler(UINT32, ACPI_OSD_HANDLER,
-					      void *, void **);
+					      void *, void **, const char *);
 void acpi_md_OsRemoveInterruptHandler(void *);
 
 ACPI_STATUS acpi_md_OsMapMemory(ACPI_PHYSICAL_ADDRESS, UINT32, void **);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_nvme.c,v 1.18 2018/01/23 22:42:29 pgoyette Exp $	*/
+/*	$NetBSD: ld_nvme.c,v 1.18.2.1 2018/03/22 01:44:48 pgoyette Exp $	*/
 
 /*-
  * Copyright (C) 2016 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_nvme.c,v 1.18 2018/01/23 22:42:29 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_nvme.c,v 1.18.2.1 2018/03/22 01:44:48 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,14 +49,6 @@ struct ld_nvme_softc {
 	struct nvme_softc	*sc_nvme;
 
 	uint16_t		sc_nsid;
-
-	/* getcache handling */
-	kmutex_t		sc_getcache_lock;
-	kcondvar_t		sc_getcache_cv;
-	kcondvar_t		sc_getcache_ready_cv;
-	bool			sc_getcache_waiting;
-	bool			sc_getcache_ready;
-	int			sc_getcache_result;
 };
 
 static int	ld_nvme_match(device_t, cfdata_t, void *);
@@ -73,8 +65,6 @@ static int	ld_nvme_getcache(struct ld_softc *, int *);
 static int	ld_nvme_ioctl(struct ld_softc *, u_long, void *, int32_t, bool);
 
 static void	ld_nvme_biodone(void *, struct buf *, uint16_t, uint32_t);
-static void	ld_nvme_syncdone(void *, struct buf *, uint16_t, uint32_t);
-static void	ld_nvme_getcache_done(void *, struct buf *, uint16_t, uint32_t);
 
 static int
 ld_nvme_match(device_t parent, cfdata_t match, void *aux)
@@ -102,10 +92,6 @@ ld_nvme_attach(device_t parent, device_t self, void *aux)
 	ld->sc_dv = self;
 	sc->sc_nvme = nsc;
 	sc->sc_nsid = naa->naa_nsid;
-
-	mutex_init(&sc->sc_getcache_lock, MUTEX_DEFAULT, IPL_SOFTBIO);
-	cv_init(&sc->sc_getcache_cv, "nvmegcq");
-	cv_init(&sc->sc_getcache_ready_cv, "nvmegcr");
 
 	aprint_naive("\n");
 	aprint_normal("\n");
@@ -203,116 +189,16 @@ ld_nvme_flush(struct ld_softc *ld, bool poll)
 {
 	struct ld_nvme_softc *sc = device_private(ld->sc_dv);
 
-	if (!nvme_has_volatile_write_cache(sc->sc_nvme)) {
-		/* cache not present, no value in trying to flush it */
-		return 0;
-	}
-
-	return nvme_ns_sync(sc->sc_nvme, sc->sc_nsid, sc,
-	    poll ? NVME_NS_CTX_F_POLL : 0,
-	    ld_nvme_syncdone);
-}
-
-static void
-ld_nvme_syncdone(void *xc, struct buf *bp, uint16_t cmd_status, uint32_t cdw0)
-{
-	/* nothing to do */
+	return nvme_ns_sync(sc->sc_nvme, sc->sc_nsid,
+	    poll ? NVME_NS_CTX_F_POLL : 0);
 }
 
 static int
 ld_nvme_getcache(struct ld_softc *ld, int *addr)
 {
-	int error;
 	struct ld_nvme_softc *sc = device_private(ld->sc_dv);
 
-	/*
-	 * DPO not supported, Dataset Management (DSM) field doesn't specify
-	 * the same semantics.
-	 */ 
-	*addr = DKCACHE_FUA;
-
-	if (!nvme_has_volatile_write_cache(sc->sc_nvme)) {
-		/* cache simply not present */
-		return 0;
-	}
-
-	/*
-	 * This is admin queue request. The queue is relatively limited in size,
-	 * and this is not performance critical call, so have at most one pending
-	 * cache request at a time to avoid spurious EWOULDBLOCK failures.
-	 */ 
-	mutex_enter(&sc->sc_getcache_lock);
-	while (sc->sc_getcache_waiting) {
-		error = cv_wait_sig(&sc->sc_getcache_cv, &sc->sc_getcache_lock);
-		if (error)
-			goto out;
-	}
-	sc->sc_getcache_waiting = true;
-	sc->sc_getcache_ready = false;
-	mutex_exit(&sc->sc_getcache_lock);
-
-	error = nvme_admin_getcache(sc->sc_nvme, sc, ld_nvme_getcache_done);
-	if (error) {
-		mutex_enter(&sc->sc_getcache_lock);
-		goto out;
-	}
-
-	mutex_enter(&sc->sc_getcache_lock);
-	while (!sc->sc_getcache_ready) {
-		error = cv_wait_sig(&sc->sc_getcache_ready_cv,
-		    &sc->sc_getcache_lock);
-		if (error)
-			goto out;
-	}
-
-	KDASSERT(sc->sc_getcache_ready);
-
-	if (sc->sc_getcache_result >= 0)
-		*addr |= sc->sc_getcache_result;
-	else
-		error = EINVAL;
-
-    out:
-	sc->sc_getcache_waiting = false;
-
-	/* wake one of eventual waiters */
-	cv_signal(&sc->sc_getcache_cv);
-
-	mutex_exit(&sc->sc_getcache_lock);
-
-	return error;
-}
-
-static void
-ld_nvme_getcache_done(void *xc, struct buf *bp, uint16_t cmd_status, uint32_t cdw0)
-{
-	struct ld_nvme_softc *sc = xc;
-	uint16_t status = NVME_CQE_SC(cmd_status);
-	int result;
-
-	if (status == NVME_CQE_SC_SUCCESS) {
-		result = 0;
-
-		if (cdw0 & NVME_CQE_CDW0_VWC_WCE)
-			result |= DKCACHE_WRITE;
-
-		/*
-		 * If volatile write cache is present, the flag shall also be
-		 * settable.
-		 */
-		result |= DKCACHE_WCHANGE;
-	} else {
-		result = -1;
-	}
-
-	mutex_enter(&sc->sc_getcache_lock);
-	sc->sc_getcache_result = result;
-	sc->sc_getcache_ready = true;
-
-	/* wake up the waiter */
-	cv_signal(&sc->sc_getcache_ready_cv);
-
-	mutex_exit(&sc->sc_getcache_lock);
+	return nvme_admin_getcache(sc->sc_nvme, addr);
 }
 
 static int

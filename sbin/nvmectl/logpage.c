@@ -1,4 +1,4 @@
-/*	$NetBSD: logpage.c,v 1.4 2017/04/29 00:06:40 nonaka Exp $	*/
+/*	$NetBSD: logpage.c,v 1.4.8.1 2018/03/22 01:44:40 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2013 EMC Corp.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: logpage.c,v 1.4 2017/04/29 00:06:40 nonaka Exp $");
+__RCSID("$NetBSD: logpage.c,v 1.4.8.1 2018/03/22 01:44:40 pgoyette Exp $");
 #if 0
 __FBSDID("$FreeBSD: head/sbin/nvmecontrol/logpage.c 314230 2017-02-25 00:09:16Z imp $");
 #endif
@@ -899,7 +899,7 @@ __dead static void
 logpage_usage(void)
 {
 	fprintf(stderr, "usage:\n");
-	fprintf(stderr, LOGPAGE_USAGE);
+	fprintf(stderr, "\t%s " LOGPAGE_USAGE, getprogname());
 	exit(1);
 }
 

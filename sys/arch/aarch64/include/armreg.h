@@ -1,4 +1,4 @@
-/* $NetBSD: armreg.h,v 1.3.2.1 2018/03/15 09:12:02 pgoyette Exp $ */
+/* $NetBSD: armreg.h,v 1.3.2.2 2018/03/22 01:44:41 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -34,6 +34,7 @@
 
 #ifdef __aarch64__
 
+#include <arm/cputypes.h>
 #include <sys/types.h>
 
 #define AARCH64REG_READ_INLINE2(regname, regdesc)		\

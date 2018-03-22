@@ -1,4 +1,4 @@
-/*	$NetBSD: amd64_trap.S,v 1.37 2018/02/25 12:37:16 maxv Exp $	*/
+/*	$NetBSD: amd64_trap.S,v 1.37.2.1 2018/03/22 01:44:41 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008, 2017 The NetBSD Foundation, Inc.
@@ -377,9 +377,8 @@ IDTVEC_END(intrspurious)
 
 /*
  * It is possible that we received a trap in kernel mode, but with the user
- * context loaded. There are six cases where this can happen:
+ * context loaded. There are five cases where this can happen:
  *
- *  o Execution of SYSRETQ.
  *  o Execution of IRETQ.
  *  o Reload of ES.
  *  o Reload of DS.
@@ -389,8 +388,8 @@ IDTVEC_END(intrspurious)
  * When this happens, the kernel is re-entered in kernel mode, but the
  * previous context is in kernel mode too.
  *
- * We have two iret frames in the stack. In the first one, the 'rsp' field
- * points to the outer iret frame:
+ * We have two iret frames in the stack. In the first one, we also pushed
+ * 'trapno' and 'err'. The 'rsp' field points to the outer iret frame:
  *
  * +---------------------------------------------------+
  * | trapno | err | rip | cs=ring0 | rflags | rsp | ss |
@@ -398,18 +397,18 @@ IDTVEC_END(intrspurious)
  *                                             |
  *           +---------------------------------+
  *           |
- *           |    +---------------------------------------------------+
- *           +--> | trapno | err | rip | cs=ring3 | rflags | rsp | ss |
- *                +---------------------------------------------------+
+ *           |    +------------------------------------+
+ *           +--> | rip | cs=ring3 | rflags | rsp | ss |
+ *                +------------------------------------+
  *
  * We perform a three-step procedure:
- *
- *  o We copy the 'trapno' field of the current frame into the 'trapno'
- *    field of the outer frame.
  *
  *  o We update RSP to point to the outer frame. This outer frame is in the
  *    same stack as the current frame, and likely just after the current
  *    frame.
+ *
+ *  o We push, in this outer frame, the 'err' and 'trapno' fields of the
+ *    CURRENT frame.
  *
  *  o We do a normal INTRENTRY. Now that RSP points to the outer frame,
  *    everything behaves as if we had received a trap from the outer frame,
@@ -430,7 +429,7 @@ IDTVEC_END(intrspurious)
  *    stack (nested), and would double-fault because it touches the redzone
  *    below the stack (see the documentation in x86/x86/svs.c). By popping
  *    the GPR part of the stack, we leave enough stack for the CPU to push
- *    an iret frame, and for us to push two 8-byte registers too.
+ *    an iret frame, and for us to push one 8-byte register (%rdi) too.
  */
 	_ALIGN_TEXT
 LABEL(kernuser_reenter)
@@ -446,12 +445,7 @@ LABEL(kernuser_reenter)
 	/* We will clobber %rdi */
 	pushq	%rdi
 
-	/* Case 1: fault on sysretq? */
-	leaq	do_sysret(%rip),%rdi
-	cmpq	%rdi,TF_SMALL_REGPUSHED(TF_RIP, %rsp)
-	je	.Lkernelmode_but_user
-
-	/* Case 2: fault on iretq? */
+	/* Case 1: fault on iretq? */
 	leaq	do_iret(%rip),%rdi
 	cmpq	%rdi,TF_SMALL_REGPUSHED(TF_RIP, %rsp)
 	jne	5f
@@ -461,22 +455,22 @@ LABEL(kernuser_reenter)
 	jmp	.Lkernelmode_but_user	/* to user - must restore %gs */
 5:
 
-	/* Case 3: move to %es? */
+	/* Case 2: move to %es? */
 	leaq	do_mov_es(%rip),%rdi
 	cmpq	%rdi,TF_SMALL_REGPUSHED(TF_RIP, %rsp)
 	je	.Lkernelmode_but_user
 
-	/* Case 4: move to %ds? */
+	/* Case 3: move to %ds? */
 	leaq	do_mov_ds(%rip),%rdi
 	cmpq	%rdi,TF_SMALL_REGPUSHED(TF_RIP, %rsp)
 	je	.Lkernelmode_but_user
 
-	/* Case 5: move to %fs? */
+	/* Case 4: move to %fs? */
 	leaq	do_mov_fs(%rip),%rdi
 	cmpq	%rdi,TF_SMALL_REGPUSHED(TF_RIP, %rsp)
 	je	.Lkernelmode_but_user
 
-	/* Case 6: move to %gs? */
+	/* Case 5: move to %gs? */
 	leaq	do_mov_gs(%rip),%rdi
 	cmpq	%rdi,TF_SMALL_REGPUSHED(TF_RIP, %rsp)
 	je	.Lkernelmode_but_user
@@ -486,14 +480,19 @@ LABEL(kernuser_reenter)
 	jmp	.Lnormal_entry
 
 .Lkernelmode_but_user:
-	movq	TF_SMALL_REGPUSHED(TF_RSP, %rsp),%rdi
+	/*
+	 * Here we have %rdi pushed on the stack, hence 8+.
+	 */
+	movq	%rsp,%rdi
+	movq	TF_SMALL_REGPUSHED(TF_RSP, %rsp),%rsp
 
-	pushq	%rax
-	movq	16(%rsp),%rax	/* 16(%rsp) = current TF_TRAPNO */
-	movq	%rax,(%rdi)	/* (%rdi) = outer TF_TRAPNO */
-	popq	%rax
+	/* Push tf_err and tf_trapno */
+	pushq	8+8(%rdi)	/* 8+8(%rdi) = current TF_ERR */
+	pushq	8+0(%rdi)	/* 8+0(%rdi) = current TF_TRAPNO */
 
-	movq	%rdi,%rsp
+	/* Restore %rdi */
+	movq	(%rdi),%rdi
+
 	jmp	.Lnormal_entry
 END(kernuser_reenter)
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.238.2.1 2018/03/15 05:10:06 pgoyette Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.238.2.2 2018/03/22 01:44:51 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.238.2.1 2018/03/15 05:10:06 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.238.2.2 2018/03/22 01:44:51 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2126,6 +2126,7 @@ COMPATNAME(route_enqueue)(struct mbuf *m, int family)
 
 	IFQ_LOCK(&ri->ri_intrq);
 	if (IF_QFULL(&ri->ri_intrq)) {
+		printf("%s: queue full, dropped message\n", __func__);
 		IF_DROP(&ri->ri_intrq);
 		IFQ_UNLOCK(&ri->ri_intrq);
 		m_freem(m);
