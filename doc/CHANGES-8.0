@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.151 2018/03/22 11:05:47 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.152 2018/03/22 17:04:45 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -10513,4 +10513,44 @@ external/cddl/osnet/sys/sys/kmem.h		1.7-1.9
 	Our pool code needs either PR_SLEEP or PR_NOWAIT; arrange for
 	that explaining the current choice.
 	[maya, ticket #651]
+
+share/man/man7/sysctl.7				1.121,1.122,1.124 (patch)
+
+	kern.module.verbose is a boolean, not an integer.
+	Sort ddb section in alphabetical order.
+	Improve description of ddb.commandonenter.
+	[sevan, ticket #574]
+
+sys/arch/amd64/amd64/amd64_trap.S	upto 1.39 (partial, patch)
+sys/arch/amd64/amd64/db_machdep.c	1.6 (patch)
+sys/arch/amd64/amd64/genassym.cf	1.65,1.66,1.67 (patch)
+sys/arch/amd64/amd64/locore.S		upto 1.159 (partial, patch)
+sys/arch/amd64/amd64/machdep.c		1.299-1.302 (patch)
+sys/arch/amd64/amd64/trap.c		upto 1.113 (partial, patch)
+sys/arch/amd64/amd64/amd64/vector.S	upto 1.61 (partial, patch)
+sys/arch/amd64/conf/GENERIC		1.477,1.478 (patch)
+sys/arch/amd64/conf/kern.ldscript	1.26 (patch)
+sys/arch/amd64/include/frameasm.h	upto 1.37 (partial, patch)
+sys/arch/amd64/include/param.h		1.25 (patch)
+sys/arch/amd64/include/pmap.h		1.41,1.43,1.44 (patch)
+sys/arch/x86/conf/files.x86		1.91,1.93 (patch)
+sys/arch/x86/include/cpu.h		1.88,1.89 (patch)
+sys/arch/x86/include/pmap.h		1.75 (patch)
+sys/arch/x86/x86/cpu.c			1.144,1.146,1.148,1.149 (patch)
+sys/arch/x86/x86/pmap.c			upto 1.289 (partial, patch)
+sys/arch/x86/x86/vm_machdep.c		1.31,1.32 (patch)
+sys/arch/x86/x86/x86_machdep.c		1.104,1.106,1.108 (patch)
+sys/arch/x86/x86/svs.c			1.1-1.14
+sys/arch/xen/conf/files.compat		1.30 (patch)
+
+	Backport SVS. Not enabled yet.
+	[maxv, ticket #652]
+
+sys/arch/i386/include/profile.h			1.36,1.37
+
+	- Prevent optimization from omitting the frame pointer
+	- Convert to C a little assembly to make the code more
+	  understandable.
+	- Use compiler builtins to compute addresses.
+	[christos, ticket #653]
 
