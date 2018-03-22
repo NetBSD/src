@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.96.4.1 2018/03/07 14:50:56 martin Exp $	*/
+/*	$NetBSD: trap.c,v 1.96.4.2 2018/03/22 16:59:03 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.96.4.1 2018/03/07 14:50:56 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.96.4.2 2018/03/22 16:59:03 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -266,9 +266,6 @@ trap(struct trapframe *frame)
 	extern char fusuintrfailure[], kcopy_fault[];
 	extern char IDTVEC(osyscall)[];
 	extern char IDTVEC(syscall32)[];
-#ifndef XEN
-	struct trapframe *vframe;
-#endif
 	ksiginfo_t ksi;
 	void *onfault;
 	int type, error;
@@ -357,92 +354,7 @@ copyfault:
 			return;
 		}
 
-		/*
-		 * Check for failure during return to user mode.
-		 * This can happen loading invalid values into the segment
-		 * registers, or during the 'iret' itself.
-		 *
-		 * We do this by looking at the instruction we faulted on.
-		 * The specific instructions we recognize only happen when
-		 * returning from a trap, syscall, or interrupt.
-		 */
-
-kernelfault:
-#ifdef XEN
-		/*
-		 * XXX: there has to be an equivalent 'problem'
-		 * but I (dsl) don't know exactly what happens!
-		 * For now panic the kernel.
-		 */
 		goto we_re_toast;
-#else
-		KSI_INIT_TRAP(&ksi);
-		ksi.ksi_signo = SIGSEGV;
-		ksi.ksi_code = SEGV_ACCERR;
-		ksi.ksi_trap = type;
-
-		/* Get %rsp value before fault - there may be a pad word
-		 * below the trap frame. */
-		vframe = (void *)frame->tf_rsp;
-		if (frame->tf_rip == 0) {
-			/*
-			 * Assume that if we jumped to null we
-			 * probably did it via a null function
-			 * pointer, so print the return address.
-			 */
-			printf("kernel jumped to null; return addr was %p\n",
-			       *(void **)frame->tf_rsp);
-			goto we_re_toast;
-		}
-		switch (*(uint16_t *)frame->tf_rip) {
-		case 0xcf48:	/* iretq */
-			/*
-			 * The 'iretq' instruction faulted, so we have the
-			 * 'user' registers saved after the kernel
-			 * %rip:%cs:%fl:%rsp:%ss of the iret, and below that
-			 * the user %rip:%cs:%fl:%rsp:%ss the 'iret' was
-			 * processing.
-			 * We must copy the user register back over the
-			 * kernel fault frame to generate a normal stack
-			 * frame (eg for sending a SIGSEGV).
-			 */
-			vframe = (void *)((char *)vframe
-			    - offsetof(struct trapframe, tf_rip));
-			memmove(vframe, frame,
-			    offsetof(struct trapframe, tf_rip));
-			/* Set the faulting address to the user %eip */
-			ksi.ksi_addr = (void *)vframe->tf_rip;
-			break;
-		case 0x848e:	/* mov 0xa8(%rsp),%es (8e 84 24 a8 00 00 00) */
-		case 0x9c8e:	/* mov 0xb0(%rsp),%ds (8e 9c 24 b0 00 00 00) */
-#ifdef USER_LDT
-		case 0xa48e:	/* mov 0xa0(%rsp),%fs (8e a4 24 a0 00 00 00) */
-		case 0xac8e:	/* mov 0x98(%rsp),%gs (8e ac 24 98 00 00 00) */
-#endif
-			/*
-			 * We faulted loading one of the user segment registers.
-			 * The stack frame containing the user registers is
-			 * still valid and pointed to by tf_rsp.
-			 * Maybe we should check the iretq follows.
-			 */
-			if (KERNELMODE(vframe->tf_cs, vframe->tf_eflags))
-				goto we_re_toast;
-			/* There is no valid address for the fault */
-			break;
-
-		default:
-			goto we_re_toast;
-		}
-
-		/* XXX: worry about on-stack trampolines for nested
-		 * handlers?? */
-		/* Save outer frame for any signal return */
-		l->l_md.md_regs = vframe;
-		(*p->p_emul->e_trapsignal)(l, &ksi);
-		/* Return to user by reloading the user frame */
-		trap_return_fault_return(vframe);
-		/* NOTREACHED */
-#endif
 
 	case T_PROTFLT|T_USER:		/* protection fault */
 #if defined(COMPAT_NETBSD32) && defined(COMPAT_10)
@@ -700,7 +612,7 @@ faultcommon:
 				goto copyfault;
 			printf("uvm_fault(%p, 0x%lx, %d) -> %x\n",
 			    map, va, ftype, error);
-			goto kernelfault;
+			goto we_re_toast;
 		}
 
 		KSI_INIT_TRAP(&ksi);

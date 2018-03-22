@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.39 2016/11/11 12:06:31 maxv Exp $	*/
+/*	$NetBSD: pmap.h,v 1.39.8.1 2018/03/22 16:59:03 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -217,6 +217,12 @@
  * Used to avoid false sharing of cache lines.
  */
 #define NPTECL		8
+
+void svs_pmap_sync(struct pmap *, int);
+void svs_lwp_switch(struct lwp *, struct lwp *);
+void svs_pdir_switch(struct pmap *);
+void svs_init(void);
+extern bool svs_enabled;
 
 #include <x86/pmap.h>
 

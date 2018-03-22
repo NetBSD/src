@@ -1,4 +1,4 @@
-/*	$NetBSD: amd64_trap.S,v 1.5.6.1 2018/03/07 14:50:56 martin Exp $	*/
+/*	$NetBSD: amd64_trap.S,v 1.5.6.2 2018/03/22 16:59:03 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008, 2017 The NetBSD Foundation, Inc.
@@ -95,12 +95,18 @@
 #define	PRE_TRAP
 #endif
 
+#define TRAPENTRY			\
+	INTRENTRY			; \
+	jmp	.Lalltraps_noentry
+
 #define	TRAP_NJ(a)	PRE_TRAP ; pushq $(a)
 #define	ZTRAP_NJ(a)	PRE_TRAP ; pushq $0 ; pushq $(a)
-#define	TRAP(a)		TRAP_NJ(a) ; jmp _C_LABEL(alltraps)
-#define	ZTRAP(a)	ZTRAP_NJ(a) ; jmp _C_LABEL(alltraps)
+#define	TRAP(a)		TRAP_NJ(a) ; TRAPENTRY
+#define	ZTRAP(a)	ZTRAP_NJ(a) ; TRAPENTRY
 
 	.text
+
+	TEXT_USER_BEGIN
 
 IDTVEC(trap00)
 	ZTRAP(T_DIVIDE)
@@ -128,6 +134,7 @@ IDTVEC(trap02)
 	ZTRAP_NJ(T_NMI)
 	subq	$TF_REGSIZE,%rsp
 	INTR_SAVE_GPRS
+	SVS_ENTER_ALTSTACK
 	cld
 	movw	%gs,TF_GS(%rsp)
 	movw	%fs,TF_FS(%rsp)
@@ -143,6 +150,7 @@ IDTVEC(trap02)
 	movq	%rsp,%rdi
 	incq	CPUVAR(NTRAP)
 	call	_C_LABEL(nmitrap)
+	SVS_LEAVE_ALTSTACK
 	swapgs
 	jmp	.Lnmileave
 
@@ -150,6 +158,7 @@ IDTVEC(trap02)
 	movq	%rsp,%rdi
 	incq	CPUVAR(NTRAP)
 	call	_C_LABEL(nmitrap)
+	SVS_LEAVE_ALTSTACK
 
 .Lnmileave:
 	INTR_RESTORE_GPRS
@@ -221,6 +230,7 @@ IDTVEC(trap08)
 	TRAP_NJ(T_DOUBLEFLT)
 	subq	$TF_REGSIZE,%rsp
 	INTR_SAVE_GPRS
+	SVS_ENTER_ALTSTACK
 	testb	$SEL_UPL,TF_CS(%rsp)
 	jz	1f
 	swapgs
@@ -235,6 +245,7 @@ IDTVEC(trap08)
 	incq	CPUVAR(NTRAP)
 	call	_C_LABEL(doubletrap)
 
+	SVS_LEAVE_ALTSTACK
 	INTR_RESTORE_GPRS
 
 	testb	$SEL_UPL,TF_CS(%rsp)
@@ -260,22 +271,22 @@ IDTVEC_END(trap10)
  * equivalent of iret, if it does this code would be needed
  * in order to copy the user segment registers into the fault frame.
  */
-#define check_swapgs alltraps
+#define kernuser_reenter alltraps
 #endif
 
 IDTVEC(trap11)		/* #NP() Segment not present */
 	TRAP_NJ(T_SEGNPFLT)
-	jmp	check_swapgs
+	jmp	kernuser_reenter
 IDTVEC_END(trap11)
 
 IDTVEC(trap12)		/* #SS() Stack exception */
 	TRAP_NJ(T_STKFLT)
-	jmp	check_swapgs
+	jmp	kernuser_reenter
 IDTVEC_END(trap12)
 
 IDTVEC(trap13)		/* #GP() General protection */
 	TRAP_NJ(T_PROTFLT)
-	jmp	check_swapgs
+	jmp	kernuser_reenter
 IDTVEC_END(trap13)
 
 IDTVEC(trap14)
@@ -352,61 +363,127 @@ IDTVEC(intrspurious)
 	jmp	.Lalltraps_checkusr
 IDTVEC_END(intrspurious)
 
-
-/*
- * trap() calls here when it detects a fault in INTRFASTEXIT (loading the
- * segment registers or during the iret itself). The address of the (possibly
- * reconstructed) user trap frame is passed as an argument.
- *
- * Typically the code will have raised a SIGSEGV which will be actioned
- * by the code below.
- */
-	.type	_C_LABEL(trap_return_fault_return), @function
-LABEL(trap_return_fault_return)
-	mov	%rdi,%rsp		/* frame for user return */
-#ifdef DIAGNOSTIC
-	/* We can't recover the saved %rbx, so suppress warning */
-	movl	CPUVAR(ILEVEL),%ebx
-#endif
-	jmp	.Lalltraps_checkusr
-END(trap_return_fault_return)
-
-#ifndef check_swapgs
+#ifndef kernuser_reenter
 /*
  * We need to worry about traps in kernel mode while the kernel %gs isn't
- * loaded. These are either faults on iretq during return to user or loads to
- * %gs.
- *
- * When such traps happen, we have CPL=0 and %gs=userland, and we must perform
- * an additional swapgs to get %gs=kernel.
+ * loaded. When such traps happen, we have CPL=0 and %gs=userland, and we
+ * must perform an additional swapgs to get %gs=kernel.
  */
-NENTRY(check_swapgs)
-	INTRENTRY_L(3f,1:)
-2:
+
+#define TF_SMALL(val, reg)		(val - TF_REGSIZE)(reg)
+#define TF_SMALL_REGPUSHED(val, reg)	(val - (TF_REGSIZE - 8))(reg)
+
+/*
+ * It is possible that we received a trap in kernel mode, but with the user
+ * context loaded. There are three cases where this can happen:
+ *
+ *  o Execution of IRETQ.
+ *  o Reload of ES.
+ *  o Reload of DS.
+ *
+ * When this happens, the kernel is re-entered in kernel mode, but the
+ * previous context is in kernel mode too.
+ *
+ * We have two iret frames in the stack. In the first one, we also pushed
+ * 'trapno' and 'err'. The 'rsp' field points to the outer iret frame:
+ *
+ * +---------------------------------------------------+
+ * | trapno | err | rip | cs=ring0 | rflags | rsp | ss |
+ * +-------------------------------------------|-------+
+ *                                             |
+ *           +---------------------------------+
+ *           |
+ *           |    +------------------------------------+
+ *           +--> | rip | cs=ring3 | rflags | rsp | ss |
+ *                +------------------------------------+
+ *
+ * We perform a three-step procedure:
+ *
+ *  o We update RSP to point to the outer frame. This outer frame is in the
+ *    same stack as the current frame, and likely just after the current
+ *    frame.
+ *
+ *  o We push, in this outer frame, the 'err' and 'trapno' fields of the
+ *    CURRENT frame.
+ *
+ *  o We do a normal INTRENTRY. Now that RSP points to the outer frame,
+ *    everything behaves as if we had received a trap from the outer frame,
+ *    that is to say, from userland directly.
+ *
+ * Finally, we jump to 'calltrap' and handle the trap smoothly.
+ *
+ * Two notes regarding SVS:
+ *
+ *  o With SVS, we will receive the trap while the user page tables are
+ *    loaded. That's not a problem, we don't touch anything unmapped here.
+ *
+ *  o With SVS, when the user page tables are loaded, the stack is really
+ *    small, and can contain only one trapframe structure. Therefore, in
+ *    intrfastexit, we must save the GPRs and pop their part of the stack
+ *    right away. If we weren't doing that, and the reload of ES faulted for
+ *    example, then the CPU would try to push an iret frame on the current
+ *    stack (nested), and would double-fault because it touches the redzone
+ *    below the stack (see the documentation in x86/x86/svs.c). By popping
+ *    the GPR part of the stack, we leave enough stack for the CPU to push
+ *    an iret frame, and for us to push one 8-byte register (%rdi) too.
+ */
+	_ALIGN_TEXT
+LABEL(kernuser_reenter)
+	testb	$SEL_UPL,TF_SMALL(TF_CS, %rsp)
+	jz	.Lkernelmode
+
+.Lnormal_entry:
+	INTRENTRY
 	sti
 	jmp	calltrap
-3:
-	/*
-	 * Trap in kernel mode.
-	 */
+
+.Lkernelmode:
+	/* We will clobber %rdi */
+	pushq	%rdi
+
 	/* Case 1: fault on iretq? */
-	movq	TF_RIP(%rsp),%rax
-	cmpw	$0xcf48,(%rax)		/* Faulting instruction is iretq ? */
-	jne	5f			/* Jump if not */
-	movq	TF_RSP(%rsp),%rax	/* Must read %rsp, may be a pad word */
-	testb	$SEL_UPL,8(%rax)	/* Check %cs of outer iret frame */
-	je	2b			/* jump if iret was to kernel  */
-	jmp	1b			/* to user - must restore %gs */
+	leaq	do_iret(%rip),%rdi
+	cmpq	%rdi,TF_SMALL_REGPUSHED(TF_RIP, %rsp)
+	jne	5f
+	movq	TF_SMALL_REGPUSHED(TF_RSP, %rsp),%rdi	/* get %rsp */
+	testb	$SEL_UPL,8(%rdi)	/* check %cs of outer iret frame */
+	je	.Lnormal_entry		/* jump if iret was to kernel  */
+	jmp	.Lkernelmode_but_user	/* to user - must restore %gs */
 5:
 
-	/* Case 2: move to %gs? */
-	movw	(%rax),%ax
-	andb	$070,%ah		/* mask mod/rm from mod/reg/rm */
-	cmpw	$0x8e+050*256,%ax	/* Any move to %gs (reg 5) */
-	jne	2b			/* No - normal kernel fault */
-	jmp	1b			/* Yes - restore %gs */
-END(check_swapgs)
+	/* Case 2: move to %es? */
+	leaq	do_mov_es(%rip),%rdi
+	cmpq	%rdi,TF_SMALL_REGPUSHED(TF_RIP, %rsp)
+	je	.Lkernelmode_but_user
+
+	/* Case 3: move to %ds? */
+	leaq	do_mov_ds(%rip),%rdi
+	cmpq	%rdi,TF_SMALL_REGPUSHED(TF_RIP, %rsp)
+	je	.Lkernelmode_but_user
+
+	/* None of the above cases: normal kernel fault */
+	popq	%rdi
+	jmp	.Lnormal_entry
+
+.Lkernelmode_but_user:
+	/*
+	 * Here we have %rdi pushed on the stack, hence 8+.
+	 */
+	movq	%rsp,%rdi
+	movq	TF_SMALL_REGPUSHED(TF_RSP, %rsp),%rsp
+
+	/* Push tf_err and tf_trapno */
+	pushq	8+8(%rdi)	/* 8+8(%rdi) = current TF_ERR */
+	pushq	8+0(%rdi)	/* 8+0(%rdi) = current TF_TRAPNO */
+
+	/* Restore %rdi */
+	movq	(%rdi),%rdi
+
+	jmp	.Lnormal_entry
+END(kernuser_reenter)
 #endif
+
+	TEXT_USER_END
 
 /*
  * All traps go through here. Call the generic trap handler, and
@@ -414,6 +491,7 @@ END(check_swapgs)
  */
 NENTRY(alltraps)
 	INTRENTRY
+.Lalltraps_noentry:
 	STI(si)
 
 calltrap:

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.245.6.5 2018/03/16 13:17:56 martin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.245.6.6 2018/03/22 16:59:04 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -171,12 +171,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.245.6.5 2018/03/16 13:17:56 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.245.6.6 2018/03/22 16:59:04 martin Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
+#include "opt_svs.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2051,31 +2052,30 @@ pmap_free_ptp(struct pmap *pmap, struct vm_page *ptp, vaddr_t va,
 	do {
 		index = pl_i(va, level + 1);
 		opde = pmap_pte_testset(&pdes[level - 1][index], 0);
-#if defined(XEN)
-#  if defined(__x86_64__)
+
 		/*
-		 * If ptp is a L3 currently mapped in kernel space,
-		 * on any cpu, clear it before freeing
+		 * On Xen-amd64 or SVS, we need to sync the top level page
+		 * directory on each CPU.
 		 */
+#if defined(XEN) && defined(__x86_64__)
 		if (level == PTP_LEVELS - 1) {
-			/*
-			 * Update the per-cpu PD on all cpus the current
-			 * pmap is active on
-			 */
 			xen_kpm_sync(pmap, index);
 		}
-#  endif /*__x86_64__ */
+#elif defined(SVS)
+		if (svs_enabled && level == PTP_LEVELS - 1) {
+			svs_pmap_sync(pmap, index);
+		}
+#endif
+
 		invaladdr = level == 1 ? (vaddr_t)ptes :
 		    (vaddr_t)pdes[level - 2];
 		pmap_tlb_shootdown(pmap, invaladdr + index * PAGE_SIZE,
 		    opde, TLBSHOOT_FREE_PTP1);
+
+#if defined(XEN)
 		pmap_tlb_shootnow();
-#else	/* XEN */
-		invaladdr = level == 1 ? (vaddr_t)ptes :
-		    (vaddr_t)pdes[level - 2];
-		pmap_tlb_shootdown(pmap, invaladdr + index * PAGE_SIZE,
-		    opde, TLBSHOOT_FREE_PTP1);
-#endif	/* XEN */
+#endif
+
 		pmap_freepage(pmap, ptp, level);
 		if (level < PTP_LEVELS - 1) {
 			ptp = pmap_find_ptp(pmap, va, (paddr_t)-1, level + 1);
@@ -2157,14 +2157,18 @@ pmap_get_ptp(struct pmap *pmap, vaddr_t va, pd_entry_t * const *pdes, int flags)
 		pa = VM_PAGE_TO_PHYS(ptp);
 		pmap_pte_set(&pva[index], (pd_entry_t)
 		    (pmap_pa2pte(pa) | PG_u | PG_RW | PG_V));
+
+		/*
+		 * On Xen-amd64 or SVS, we need to sync the top level page
+		 * directory on each CPU.
+		 */
 #if defined(XEN) && defined(__x86_64__)
 		if (i == PTP_LEVELS) {
-
-			/*
-			 * Update the per-cpu PD on all cpus the current
-			 * pmap is active on
-			 */
 			xen_kpm_sync(pmap, index);
+		}
+#elif defined(SVS)
+		if (svs_enabled && i == PTP_LEVELS) {
+			svs_pmap_sync(pmap, index);
 		}
 #endif
 		pmap_pte_flush();

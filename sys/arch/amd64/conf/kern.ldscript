@@ -1,4 +1,4 @@
-/*	$NetBSD: kern.ldscript,v 1.22.6.2 2018/03/06 10:17:11 martin Exp $	*/
+/*	$NetBSD: kern.ldscript,v 1.22.6.3 2018/03/22 16:59:03 martin Exp $	*/
 
 #include "assym.h"
 
@@ -15,6 +15,12 @@ SECTIONS
 {
 	.text :
 	{
+		. = ALIGN(__PAGE_SIZE);
+		__text_user_start = . ;
+		*(.text.user)
+		. = ALIGN(__PAGE_SIZE);
+		__text_user_end = . ;
+
 		*(.text)
 		*(.text.*)
 		*(.stub)

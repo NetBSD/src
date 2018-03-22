@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.255.6.5 2018/03/16 13:17:56 martin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.255.6.6 2018/03/22 16:59:03 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.255.6.5 2018/03/16 13:17:56 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.255.6.6 2018/03/22 16:59:03 martin Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -123,6 +123,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.255.6.5 2018/03/16 13:17:56 martin Exp
 #include "opt_mtrr.h"
 #include "opt_realmem.h"
 #include "opt_xen.h"
+#include "opt_svs.h"
 #ifndef XEN
 #include "opt_physmem.h"
 #endif
@@ -1544,6 +1545,9 @@ init_x86_64(paddr_t first_avail)
 #endif /* XEN */
 
 	cpu_probe(&cpu_info_primary);
+#ifdef SVS
+	svs_init();
+#endif
 	cpu_init_msrs(&cpu_info_primary, true);
 
 	use_pae = 1; /* PAE always enabled in long mode */

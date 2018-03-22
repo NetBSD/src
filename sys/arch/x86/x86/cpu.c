@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.130.2.4 2018/03/16 13:17:56 martin Exp $	*/
+/*	$NetBSD: cpu.c,v 1.130.2.5 2018/03/22 16:59:04 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000-2012 NetBSD Foundation, Inc.
@@ -62,12 +62,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.130.2.4 2018/03/16 13:17:56 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.130.2.5 2018/03/22 16:59:04 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
 #include "opt_mtrr.h"
 #include "opt_multiprocessor.h"
+#include "opt_svs.h"
 
 #include "lapic.h"
 #include "ioapic.h"
@@ -410,6 +411,10 @@ cpu_attach(device_t parent, device_t self, void *aux)
 		KASSERT(ci->ci_data.cpu_idlelwp != NULL);
 	}
 
+#ifdef SVS
+	cpu_svs_init(ci);
+#endif
+
 	pmap_reference(pmap_kernel());
 	ci->ci_pmap = pmap_kernel();
 	ci->ci_tlbstate = TLBSTATE_STALE;
@@ -597,6 +602,9 @@ cpu_init(struct cpu_info *ci)
 	 * hardware supports it.
 	 */
 	if (cpu_feature[0] & CPUID_PGE)
+#ifdef SVS
+		if (!svs_enabled)
+#endif
 		cr4 |= CR4_PGE;	/* enable global TLB caching */
 
 	/*
@@ -1071,7 +1079,7 @@ mp_cpu_start_cleanup(struct cpu_info *ci)
 
 #ifdef __x86_64__
 typedef void (vector)(void);
-extern vector Xsyscall, Xsyscall32;
+extern vector Xsyscall, Xsyscall32, Xsyscall_svs;
 #endif
 
 void
@@ -1084,6 +1092,11 @@ cpu_init_msrs(struct cpu_info *ci, bool full)
 	wrmsr(MSR_LSTAR, (uint64_t)Xsyscall);
 	wrmsr(MSR_CSTAR, (uint64_t)Xsyscall32);
 	wrmsr(MSR_SFMASK, PSL_NT|PSL_T|PSL_I|PSL_C|PSL_D);
+
+#ifdef SVS
+	if (svs_enabled)
+		wrmsr(MSR_LSTAR, (uint64_t)Xsyscall_svs);
+#endif
 
 	if (full) {
 		wrmsr(MSR_FSBASE, 0);
@@ -1245,6 +1258,10 @@ x86_cpu_idle_halt(void)
 void
 cpu_load_pmap(struct pmap *pmap, struct pmap *oldpmap)
 {
+#ifdef SVS
+	svs_pdir_switch(pmap);
+#endif
+
 #ifdef PAE
 	struct cpu_info *ci = curcpu();
 	bool interrupts_enabled;

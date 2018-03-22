@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.49.2.1 2018/03/07 14:50:56 martin Exp $	*/
+/*	$NetBSD: vector.S,v 1.49.2.2 2018/03/22 16:59:03 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -114,10 +114,7 @@ IDTVEC(recurse_lapic_ipi)
 	INTRENTRY
 	jmp	1f
 IDTVEC_END(recurse_lapic_ipi)
-IDTVEC(intr_x2apic_ipi)
-	pushq	$0
-	pushq	$T_ASTFLT
-	INTRENTRY
+IDTVEC(handle_x2apic_ipi)
 	movl	$(MSR_X2APIC_BASE + MSR_X2APIC_EOI),%ecx
 	xorl	%eax,%eax
 	xorl	%edx,%edx
@@ -126,17 +123,14 @@ IDTVEC(intr_x2apic_ipi)
 	cmpl	$IPL_HIGH,%ebx
 	jae	2f
 	jmp	1f
-IDTVEC_END(intr_x2apic_ipi)
-IDTVEC(intr_lapic_ipi)
-	pushq	$0
-	pushq	$T_ASTFLT
-	INTRENTRY
+IDTVEC_END(handle_x2apic_ipi)
+IDTVEC(handle_lapic_ipi)
 	movq	_C_LABEL(local_apic_va),%rbx
 	movl	$0,LAPIC_EOI(%rbx)
 	movl	CPUVAR(ILEVEL),%ebx
 	cmpl	$IPL_HIGH,%ebx
 	jae	2f
-IDTVEC_END(intr_lapic_ipi)
+IDTVEC_END(handle_lapic_ipi)
 IDTVEC(resume_lapic_ipi)
 1:
 	incl	CPUVAR(IDEPTH)
@@ -150,12 +144,23 @@ IDTVEC(resume_lapic_ipi)
 	INTRFASTEXIT
 IDTVEC_END(resume_lapic_ipi)
 
-#if defined(DDB)
-IDTVEC(intrddb)
-1:
+	TEXT_USER_BEGIN
+IDTVEC(intr_x2apic_ipi)
 	pushq	$0
-	pushq	$T_BPTFLT
+	pushq	$T_ASTFLT
 	INTRENTRY
+	jmp	_C_LABEL(Xhandle_x2apic_ipi)
+IDTVEC_END(intr_x2apic_ipi)
+IDTVEC(intr_lapic_ipi)
+	pushq	$0
+	pushq	$T_ASTFLT
+	INTRENTRY
+	jmp	_C_LABEL(Xhandle_lapic_ipi)
+IDTVEC_END(intr_lapic_ipi)
+	TEXT_USER_END
+
+#if defined(DDB)
+IDTVEC(handle_intrddbipi)
 	movl	$0xf,%eax
 	movq	%rax,%cr8
 	movq	_C_LABEL(local_apic_va),%rbx
@@ -165,13 +170,8 @@ IDTVEC(intrddb)
 	xorl	%eax,%eax
 	movq	%rax,%cr8
 	INTRFASTEXIT
-IDTVEC_END(intrddb)
-
-IDTVEC(x2apic_intrddb)
-1:
-	pushq	$0
-	pushq	$T_BPTFLT
-	INTRENTRY
+IDTVEC_END(handle_intrddbipi)
+IDTVEC(handle_x2apic_intrddbipi)
 	movl	$0xf,%eax
 	movq	%rax,%cr8
 	movl	$(MSR_X2APIC_BASE + MSR_X2APIC_EOI),%ecx
@@ -183,7 +183,23 @@ IDTVEC(x2apic_intrddb)
 	xorl	%eax,%eax
 	movq	%rax,%cr8
 	INTRFASTEXIT
+IDTVEC_END(handle_x2apic_intrddbipi)
+
+	TEXT_USER_BEGIN
+IDTVEC(intrddb)
+	pushq	$0
+	pushq	$T_BPTFLT
+	INTRENTRY
+	jmp	_C_LABEL(Xhandle_intrddbipi)
+IDTVEC_END(intrddb)
+IDTVEC(x2apic_intrddb)
+	pushq	$0
+	pushq	$T_BPTFLT
+	INTRENTRY
+	jmp	_C_LABEL(Xhandle_x2apic_intrddbipi)
 IDTVEC_END(x2apic_intrddb)
+	TEXT_USER_END
+
 #endif /* DDB */
 #endif /* MULTIPROCESSOR */
 
@@ -197,10 +213,7 @@ IDTVEC(recurse_lapic_ltimer)
 	INTRENTRY
 	jmp	1f
 IDTVEC_END(recurse_lapic_ltimer)
-IDTVEC(intr_x2apic_ltimer)
-	pushq	$0
-	pushq	$T_ASTFLT
-	INTRENTRY
+IDTVEC(handle_x2apic_ltimer)
 	movl	$(MSR_X2APIC_BASE + MSR_X2APIC_EOI),%ecx
 	xorl	%eax,%eax
 	xorl	%edx,%edx
@@ -209,11 +222,8 @@ IDTVEC(intr_x2apic_ltimer)
 	cmpl	$IPL_CLOCK,%ebx
 	jae	2f
 	jmp	1f
-IDTVEC_END(intr_x2apic_ltimer)
-IDTVEC(intr_lapic_ltimer)
-	pushq	$0
-	pushq	$T_ASTFLT
-	INTRENTRY
+IDTVEC_END(handle_x2apic_ltimer)
+IDTVEC(handle_lapic_ltimer)
 	movq	_C_LABEL(local_apic_va),%rbx
 	movl	$0,LAPIC_EOI(%rbx)
 	movl	CPUVAR(ILEVEL),%ebx
@@ -234,33 +244,57 @@ IDTVEC(resume_lapic_ltimer)
 	orl	$(1 << LIR_TIMER),CPUVAR(IPENDING)
 	INTRFASTEXIT
 IDTVEC_END(resume_lapic_ltimer)
+
+	TEXT_USER_BEGIN
+IDTVEC(intr_x2apic_ltimer)
+	pushq	$0
+	pushq	$T_ASTFLT
+	INTRENTRY
+	jmp	_C_LABEL(Xhandle_x2apic_ltimer)
+IDTVEC_END(intr_x2apic_ltimer)
+IDTVEC(intr_lapic_ltimer)
+	pushq	$0
+	pushq	$T_ASTFLT
+	INTRENTRY
+	jmp	_C_LABEL(Xhandle_lapic_ltimer)
+IDTVEC_END(intr_lapic_ltimer)
+	TEXT_USER_END
+
 #endif /* NLAPIC > 0 */
 
 #ifndef XEN
 /*
  * TLB shootdown handler.
  */
-IDTVEC(intr_lapic_tlb)
-	pushq	$0
-	pushq	$T_ASTFLT
-	INTRENTRY
+IDTVEC(handle_lapic_tlb)
 	movq	_C_LABEL(local_apic_va),%rax
 	movl	$0,LAPIC_EOI(%rax)
 	callq	_C_LABEL(pmap_tlb_intr)
 	INTRFASTEXIT
-IDTVEC_END(intr_lapic_tlb)
-
-IDTVEC(intr_x2apic_tlb)
-	pushq	$0
-	pushq	$T_ASTFLT
-	INTRENTRY
+IDTVEC_END(handle_lapic_tlb)
+IDTVEC(handle_x2apic_tlb)
 	movl	$(MSR_X2APIC_BASE + MSR_X2APIC_EOI),%ecx
 	xorl	%eax,%eax
 	xorl	%edx,%edx
 	wrmsr
 	callq	_C_LABEL(pmap_tlb_intr)
 	INTRFASTEXIT
+IDTVEC_END(handle_x2apic_tlb)
+
+	TEXT_USER_BEGIN
+IDTVEC(intr_lapic_tlb)
+	pushq	$0
+	pushq	$T_ASTFLT
+	INTRENTRY
+	jmp	_C_LABEL(Xhandle_lapic_tlb)
+IDTVEC_END(intr_lapic_tlb)
+IDTVEC(intr_x2apic_tlb)
+	pushq	$0
+	pushq	$T_ASTFLT
+	INTRENTRY
+	jmp	_C_LABEL(Xhandle_x2apic_tlb)
 IDTVEC_END(intr_x2apic_tlb)
+	TEXT_USER_END
 
 #endif /* !XEN */
 
@@ -269,7 +303,7 @@ IDTVEC_END(intr_x2apic_tlb)
 #ifndef XEN
 
 /*
- * This macro defines the generic stub code. Its arguments modifiy it
+ * This macro defines the generic stub code. Its arguments modify it
  * for specific PICs.
  */
 
@@ -285,10 +319,7 @@ IDTVEC(resume_ ## name ## num)						\
 	movq	CPUVAR(ISOURCES) + (num) * 8,%r14			;\
 	movl	IS_MAXLEVEL(%r14),%ebx					;\
 	jmp	1f							;\
-IDTVEC(intr_ ## name ## num)						;\
-	pushq	$0			/* dummy error code */		;\
-	pushq	$T_ASTFLT		/* trap # for doing ASTs */	;\
-	INTRENTRY							;\
+IDTVEC(handle_ ## name ## num)						;\
 	movq	CPUVAR(ISOURCES) + (num) * 8,%r14			;\
 	mask(num)			/* mask it in hardware */	;\
 	early_ack(num)			/* and allow other intrs */	;\
@@ -339,7 +370,16 @@ IDTVEC(intr_ ## name ## num)						;\
 9:									\
 	unmask(num)							;\
 	late_ack(num)							;\
-	INTRFASTEXIT
+	INTRFASTEXIT							;\
+IDTVEC_END(handle_ ## name ## num)					;\
+	TEXT_USER_BEGIN							;\
+IDTVEC(intr_ ## name ## num)						;\
+	pushq	$0			/* dummy error code */		;\
+	pushq	$T_ASTFLT		/* trap # for doing ASTs */	;\
+	INTRENTRY							;\
+	jmp	_C_LABEL(Xhandle_ ## name ## num)			;\
+IDTVEC_END(intr_ ## name ## num)					;\
+	TEXT_USER_END
 
 #define ICUADDR IO_ICU1
 
