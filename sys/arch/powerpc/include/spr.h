@@ -1,4 +1,4 @@
-/*	$NetBSD: spr.h,v 1.50 2018/01/21 09:25:45 mrg Exp $	*/
+/*	$NetBSD: spr.h,v 1.51 2018/03/22 15:18:05 macallan Exp $	*/
 
 /*
  * Copyright (c) 2001, The NetBSD Foundation, Inc.
@@ -37,22 +37,22 @@ static inline uint64_t
 mfspr64(int reg)
 {
 	uint64_t ret;
-	register_t h, l;
+	register_t hi, l;
 
 	__asm volatile( "mfspr %0,%2;"
 			"srdi %1,%0,32;"
-			 : "=r"(l), "=r"(h) : "K"(reg));
-	ret = ((uint64_t)h << 32) | l;
+			 : "=r"(l), "=r"(hi) : "K"(reg));
+	ret = ((uint64_t)hi << 32) | l;
 	return ret;
 }
 
 /* This as an inline breaks as 'reg' ends up not being an immediate */
 #define mtspr64(reg, v)						\
 ( {								\
-	volatile register_t h, l;				\
+	volatile register_t hi, l;				\
 								\
 	uint64_t val = v;					\
-	h = (val >> 32);					\
+	hi = (val >> 32);					\
 	l = val & 0xffffffff;					\
 	__asm volatile(	"sldi %2,%2,32;"			\
 			"or %2,%2,%1;"				\
@@ -64,7 +64,7 @@ mfspr64(int reg)
 			"mfspr %2,%0;"				\
 			"mfspr %2,%0;"				\
 			"mfspr %2,%0;"				\
-			 : : "K"(reg), "r"(l), "r"(h));		\
+			 : : "K"(reg), "r"(l), "r"(hi));		\
 } )
 #endif /* PPC_OEA64_BRIDGE || _ARCH_PPC64 */
 
