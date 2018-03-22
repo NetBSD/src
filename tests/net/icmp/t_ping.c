@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ping.c,v 1.18 2018/03/22 17:16:05 roy Exp $	*/
+/*	$NetBSD: t_ping.c,v 1.19 2018/03/22 17:27:34 roy Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: t_ping.c,v 1.18 2018/03/22 17:16:05 roy Exp $");
+__RCSID("$NetBSD: t_ping.c,v 1.19 2018/03/22 17:27:34 roy Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -182,8 +182,14 @@ doping(const char *target, int loops, u_int pktsize)
 		icmp->icmp_seq = htons(loop);
 		icmp->icmp_cksum = 0;
 		icmp->icmp_cksum = in_cksum(icmp, pktsize);
-		RL(rump_sys_sendto(s, icmp, pktsize, 0,
-		    (struct sockaddr *)&dst, sizeof(dst)));
+
+		n = rump_sys_sendto(s, icmp, pktsize, 0,
+		    (struct sockaddr *)&dst, sizeof(dst));
+		if (n == -1) {
+			if (errno == ENOBUFS)
+				continue;
+			atf_tc_fail_errno("sendto failed");
+		}
 
 		RL(rump_sys_fcntl(s, F_SETFL, xnon));
 		while ((n = rump_sys_recvfrom(s, recvbuf, sizeof(recvbuf), 0,
