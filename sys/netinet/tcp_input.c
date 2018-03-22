@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.384 2018/03/22 20:48:38 maxv Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.385 2018/03/22 21:10:17 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.384 2018/03/22 20:48:38 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.385 2018/03/22 21:10:17 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1499,7 +1499,7 @@ findpcb:
 		if (ipsec_used && in6p && ipsec_in_reject(m, in6p)) {
 			goto drop;
 		}
-#endif /*IPSEC*/
+#endif
 		break;
 	    }
 #endif
@@ -1630,7 +1630,7 @@ nosave:;
 			dst.sin6.sin6_addr = ip6->ip6_dst;
 			dst.sin6.sin6_port = th->th_dport;
 			break;
-#endif /* INET6 */
+#endif
 		}
 
 		if ((tiflags & (TH_RST|TH_ACK|TH_SYN)) != TH_SYN) {
@@ -1798,8 +1798,7 @@ nosave:;
 
 after_listen:
 	/*
-	 * Should not happen now that all embryonic connections
-	 * are handled with compressed state.
+	 * From here on, we're dealing with !LISTEN.
 	 */
 	KASSERT(tp->t_state != TCPS_LISTEN);
 
@@ -2083,17 +2082,16 @@ after_listen:
 	hdroptlen = toff + off;
 
 	/*
-	 * Calculate amount of space in receive window,
-	 * and then do TCP input processing.
-	 * Receive window is amount of space in rcv queue,
-	 * but not less than advertised window.
+	 * Calculate amount of space in receive window. Receive window is
+	 * amount of space in rcv queue, but not less than advertised
+	 * window.
 	 */
-	{ int win;
-
-	win = sbspace(&so->so_rcv);
-	if (win < 0)
-		win = 0;
-	tp->rcv_wnd = imax(win, (int)(tp->rcv_adv - tp->rcv_nxt));
+	{
+		int win;
+		win = sbspace(&so->so_rcv);
+		if (win < 0)
+			win = 0;
+		tp->rcv_wnd = imax(win, (int)(tp->rcv_adv - tp->rcv_nxt));
 	}
 
 	/* Reset receive buffer auto scaling when not in bulk receive mode. */
@@ -2229,7 +2227,12 @@ after_listen:
 	}
 
 	/*
-	 * States other than LISTEN or SYN_SENT.
+	 * From here on, we're dealing with !LISTEN and !SYN_SENT.
+	 */
+	KASSERT(tp->t_state != TCPS_LISTEN &&
+	    tp->t_state != TCPS_SYN_SENT);
+
+	/*
 	 * First check timestamp, if present.
 	 * Then check that at least some bytes of segment are within
 	 * receive window.  If segment begins before rcv_nxt,
@@ -2240,7 +2243,6 @@ after_listen:
 	 */
 	if (opti.ts_present && (tiflags & TH_RST) == 0 && tp->ts_recent &&
 	    TSTMP_LT(opti.ts_val, tp->ts_recent)) {
-
 		/* Check to see if ts_recent is over 24 days old.  */
 		if (tcp_now - tp->ts_recent_age > TCP_PAWS_IDLE) {
 			/*
@@ -2419,13 +2421,13 @@ after_listen:
 
 	/*
 	 * If the RST bit is set examine the state:
-	 *    SYN_RECEIVED STATE:
-	 *	If passive open, return to LISTEN state.
-	 *	If active open, inform user that connection was refused.
-	 *    ESTABLISHED, FIN_WAIT_1, FIN_WAIT2, CLOSE_WAIT STATES:
-	 *	Inform user that connection was reset, and close tcb.
-	 *    CLOSING, LAST_ACK, TIME_WAIT STATES
-	 *	Close the tcb.
+	 *    RECEIVED state:
+	 *        If passive open, return to LISTEN state.
+	 *        If active open, inform user that connection was refused.
+	 *    ESTABLISHED, FIN_WAIT_1, FIN_WAIT2, CLOSE_WAIT states:
+	 *        Inform user that connection was reset, and close tcb.
+	 *    CLOSING, LAST_ACK, TIME_WAIT states:
+	 *        Close the tcb.
 	 */
 	if (tiflags & TH_RST) {
 		if (th->th_seq != tp->rcv_nxt)
@@ -2787,11 +2789,8 @@ step6:
 		 * but if two URG's are pending at once, some out-of-band
 		 * data may creep in... ick.
 		 */
-		if (th->th_urp <= (u_int16_t) tlen
-#ifdef SO_OOBINLINE
-		     && (so->so_options & SO_OOBINLINE) == 0
-#endif
-		     )
+		if (th->th_urp <= (u_int16_t)tlen &&
+		    (so->so_options & SO_OOBINLINE) == 0)
 			tcp_pulloutofband(so, th, m, hdroptlen);
 	} else
 		/*
