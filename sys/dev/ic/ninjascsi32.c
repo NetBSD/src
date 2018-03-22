@@ -1,4 +1,4 @@
-/*	$NetBSD: ninjascsi32.c,v 1.25 2018/03/22 12:20:55 rin Exp $	*/
+/*	$NetBSD: ninjascsi32.c,v 1.26 2018/03/22 14:07:42 rin Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ninjascsi32.c,v 1.25 2018/03/22 12:20:55 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ninjascsi32.c,v 1.26 2018/03/22 14:07:42 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -645,6 +645,9 @@ njsc32_attach(struct njsc32_softc *sc)
 
 	sc->sc_sync_max = 1;	/* XXX look up EEPROM configuration? */
 
+	/* initialize hardware and target structure */
+	njsc32_init(sc, cold);
+
 	/* setup adapter */
 	sc->sc_adapter.adapt_dev = sc->sc_dev;
 	sc->sc_adapter.adapt_nchannels = 1;
@@ -664,9 +667,6 @@ njsc32_attach(struct njsc32_softc *sc)
 	sc->sc_channel.chan_id = NJSC32_INITIATOR_ID;
 
 	sc->sc_scsi = config_found(sc->sc_dev, &sc->sc_channel, scsiprint);
-
-	/* initialize hardware and target structure */
-	njsc32_init(sc, cold);
 }
 
 int
@@ -1369,13 +1369,15 @@ njsc32_reset_bus(struct njsc32_softc *sc)
 	/* initialize target structure */
 	njsc32_init_targets(sc);
 
-	/* XXXSMP scsipi */
-	KERNEL_LOCK(1, curlwp);
-	s = splbio();
-	scsipi_async_event(&sc->sc_channel, ASYNC_EVENT_RESET, NULL);
-	splx(s);
-	/* XXXSMP scsipi */
-	KERNEL_UNLOCK_ONE(curlwp);
+	if (sc->sc_scsi != NULL) {
+		/* XXXSMP scsipi */
+		KERNEL_LOCK(1, curlwp);
+		s = splbio();
+		scsipi_async_event(&sc->sc_channel, ASYNC_EVENT_RESET, NULL);
+		splx(s);
+		/* XXXSMP scsipi */
+		KERNEL_UNLOCK_ONE(curlwp);
+	}
 
 	/* release SCSI bus reset */
 	njsc32_write_1(sc, NJSC32_REG_SCSI_BUS_CONTROL, 0);
