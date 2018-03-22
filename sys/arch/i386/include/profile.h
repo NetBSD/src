@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.35 2017/05/31 01:50:19 christos Exp $	*/
+/*	$NetBSD: profile.h,v 1.35.2.1 2018/03/22 17:03:02 martin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -71,12 +71,11 @@ mcount(void)								\
 	 *								\
 	 * selfpc = pc pushed by mcount call				\
 	 */								\
-	__asm volatile("movl 4(%%ebp),%0" : "=r" (selfpc));		\
+	selfpc = (int)__builtin_return_address(0);			\
 	/*								\
-	 * frompcindex = pc pushed by call into self.			\
+	 * frompcindex = stack frame of caller, assuming frame pointer	\
 	 */								\
-	__asm volatile("movl (%%ebp),%0;movl 4(%0),%0"			\
-	    : "=r" (frompcindex));					\
+	frompcindex = ((int *)__builtin_frame_address(1))[1];		\
 	_mcount((u_long)frompcindex, (u_long)selfpc);			\
 									\
 	__asm volatile("movl %0,%%edx" : : "g" (edx));			\
