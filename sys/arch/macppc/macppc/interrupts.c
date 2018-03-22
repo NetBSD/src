@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupts.c,v 1.5 2013/04/18 16:42:46 macallan Exp $ */
+/*	$NetBSD: interrupts.c,v 1.6 2018/03/22 21:28:58 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupts.c,v 1.5 2013/04/18 16:42:46 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupts.c,v 1.6 2018/03/22 21:28:58 macallan Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: interrupts.c,v 1.5 2013/04/18 16:42:46 macallan Exp 
 #include <powerpc/pic/picvar.h>
 #include <powerpc/pic/ipivar.h>
 #include <dev/ofw/openfirm.h>
+#include <powerpc/oea/cpufeat.h>
 
 #include "opt_interrupt.h"
 #include "pic_openpic.h"
@@ -100,7 +101,7 @@ init_openpic(int pass_through)
 	aprint_debug("pic-base: %08x\n", pic_base);
 
 	aprint_normal("found openpic PIC at %08x\n", pic_base);
-	setup_openpic((void *)pic_base, pass_through);
+	setup_openpic(oea_mapiodev(pic_base, 0x40000), pass_through);
 
 	return TRUE;
 }
