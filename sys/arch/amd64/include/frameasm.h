@@ -1,10 +1,11 @@
-/*	$NetBSD: frameasm.h,v 1.20.32.1 2018/03/07 14:50:57 martin Exp $	*/
+/*	$NetBSD: frameasm.h,v 1.20.32.2 2018/03/22 16:59:03 martin Exp $	*/
 
 #ifndef _AMD64_MACHINE_FRAMEASM_H
 #define _AMD64_MACHINE_FRAMEASM_H
 
 #ifdef _KERNEL_OPT
 #include "opt_xen.h"
+#include "opt_svs.h"
 #endif
 
 /*
@@ -34,6 +35,19 @@
 #define CLI(temp_reg) cli
 #define STI(temp_reg) sti
 #endif	/* XEN */
+
+#define HP_NAME_SVS_ENTER	5
+#define HP_NAME_SVS_LEAVE	6
+#define HP_NAME_SVS_ENTER_ALT	7
+#define HP_NAME_SVS_LEAVE_ALT	8
+
+#define HOTPATCH(name, size) \
+123:						; \
+	.pushsection	.rodata.hotpatch, "a"	; \
+	.byte		name			; \
+	.byte		size			; \
+	.quad		123b			; \
+	.popsection
 
 #define	SWAPGS	NOT_XEN(swapgs)
 
@@ -74,21 +88,68 @@
 	movq	TF_RBX(%rsp),%rbx	; \
 	movq	TF_RAX(%rsp),%rax
 
-#define	INTRENTRY_L(kernel_trap, usertrap) \
+#define TEXT_USER_BEGIN	.pushsection	.text.user, "ax"
+#define TEXT_USER_END	.popsection
+
+#ifdef SVS
+
+/* XXX: put this somewhere else */
+#define SVS_UTLS		0xffffc00000000000 /* PMAP_PCPU_BASE */
+#define UTLS_KPDIRPA		0
+#define UTLS_SCRATCH		8
+#define UTLS_RSP0		16
+
+#define SVS_ENTER_BYTES	22
+#define NOSVS_ENTER \
+	.byte 0xEB, (SVS_ENTER_BYTES-2)	/* jmp */	; \
+	.fill	(SVS_ENTER_BYTES-2),1,0xCC
+#define SVS_ENTER \
+	HOTPATCH(HP_NAME_SVS_ENTER, SVS_ENTER_BYTES)	; \
+	NOSVS_ENTER
+
+#define SVS_LEAVE_BYTES	31
+#define NOSVS_LEAVE \
+	.byte 0xEB, (SVS_LEAVE_BYTES-2)	/* jmp */	; \
+	.fill	(SVS_LEAVE_BYTES-2),1,0xCC
+#define SVS_LEAVE \
+	HOTPATCH(HP_NAME_SVS_LEAVE, SVS_LEAVE_BYTES)	; \
+	NOSVS_LEAVE
+
+#define SVS_ENTER_ALT_BYTES	23
+#define NOSVS_ENTER_ALTSTACK \
+	.byte 0xEB, (SVS_ENTER_ALT_BYTES-2)	/* jmp */	; \
+	.fill	(SVS_ENTER_ALT_BYTES-2),1,0xCC
+#define SVS_ENTER_ALTSTACK \
+	HOTPATCH(HP_NAME_SVS_ENTER_ALT, SVS_ENTER_ALT_BYTES)	; \
+	NOSVS_ENTER_ALTSTACK
+
+#define SVS_LEAVE_ALT_BYTES	22
+#define NOSVS_LEAVE_ALTSTACK \
+	.byte 0xEB, (SVS_LEAVE_ALT_BYTES-2)	/* jmp */	; \
+	.fill	(SVS_LEAVE_ALT_BYTES-2),1,0xCC
+#define SVS_LEAVE_ALTSTACK \
+	HOTPATCH(HP_NAME_SVS_LEAVE_ALT, SVS_LEAVE_ALT_BYTES)	; \
+	NOSVS_LEAVE_ALTSTACK
+
+#else
+#define SVS_ENTER	/* nothing */
+#define SVS_LEAVE	/* nothing */
+#define SVS_ENTER_ALTSTACK	/* nothing */
+#define SVS_LEAVE_ALTSTACK	/* nothing */
+#endif
+
+#define	INTRENTRY \
 	subq	$TF_REGSIZE,%rsp	; \
 	INTR_SAVE_GPRS			; \
 	cld				; \
 	testb	$SEL_UPL,TF_CS(%rsp)	; \
-	je	kernel_trap		; \
-usertrap				; \
+	je	98f			; \
 	SWAPGS				; \
+	SVS_ENTER			; \
 	movw	%gs,TF_GS(%rsp)		; \
 	movw	%fs,TF_FS(%rsp)		; \
 	movw	%es,TF_ES(%rsp)		; \
-	movw	%ds,TF_DS(%rsp)	
-
-#define	INTRENTRY \
-	INTRENTRY_L(98f,)		; \
+	movw	%ds,TF_DS(%rsp)		; \
 98:
 
 #define INTRFASTEXIT \

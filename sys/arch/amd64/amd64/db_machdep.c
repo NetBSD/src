@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.4 2012/10/03 17:43:22 riastradh Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.4.30.1 2018/03/22 16:59:03 martin Exp $	*/
 
 /* 
  * Mach Operating System
@@ -26,7 +26,7 @@
  * rights to redistribute these changes.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.4 2012/10/03 17:43:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.4.30.1 2018/03/22 16:59:03 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -213,11 +213,13 @@ db_frame_info(long *frame, db_addr_t callpc, const char **namep,
 		if (!strcmp(name, "trap")) {
 			*is_trap = TRAP;
 			narg = 0;
-		} else if (!strcmp(name, "syscall")) {
+		} else if (!strcmp(name, "syscall") ||
+		    !strcmp(name, "handle_syscall")) {
 			*is_trap = SYSCALL;
 			narg = 0;
 		} else if (name[0] == 'X') {
 			if (!strncmp(name, "Xintr", 5) ||
+			    !strncmp(name, "Xhandle", 7) ||
 			    !strncmp(name, "Xresume", 7) ||
 			    !strncmp(name, "Xstray", 6) ||
 			    !strncmp(name, "Xhold", 5) ||

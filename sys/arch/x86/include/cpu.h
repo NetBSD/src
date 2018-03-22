@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.71.2.3 2018/03/16 13:17:56 martin Exp $	*/
+/*	$NetBSD: cpu.h,v 1.71.2.4 2018/03/22 16:59:04 martin Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -47,6 +47,7 @@
 #if defined(_KERNEL) || defined(_KMEMUSER)
 #if defined(_KERNEL_OPT)
 #include "opt_xen.h"
+#include "opt_svs.h"
 #ifdef i386
 #include "opt_user_ldt.h"
 #include "opt_vm86.h"
@@ -197,6 +198,18 @@ struct cpu_info {
 	pd_entry_t *	ci_pae_l3_pdir; /* VA pointer to L3 PD */
 #endif
 
+#ifdef SVS
+	pd_entry_t *	ci_svs_updir;
+	paddr_t		ci_svs_updirpa;
+	paddr_t		ci_svs_kpdirpa;
+	kmutex_t	ci_svs_mtx;
+	pd_entry_t *	ci_svs_rsp0_pte;
+	vaddr_t		ci_svs_rsp0;
+	vaddr_t		ci_svs_ursp0;
+	vaddr_t		ci_svs_krsp0;
+	vaddr_t		ci_svs_utls;
+#endif
+
 #if defined(XEN) && (defined(PAE) || defined(__x86_64__))
 	/* Currently active user PGD (can't use rcr3() with Xen) */
 	pd_entry_t *	ci_kpm_pdir;	/* per-cpu PMD (va) */
@@ -342,6 +355,7 @@ void cpu_broadcast_halt(void);
 void cpu_kick(struct cpu_info *);
 
 void cpu_pcpuarea_init(struct cpu_info *);
+void cpu_svs_init(struct cpu_info *);
 
 #define	curcpu()		x86_curcpu()
 #define	curlwp			x86_curlwp()
