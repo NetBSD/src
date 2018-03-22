@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_alg_icmp.c,v 1.26 2018/03/12 12:45:26 maxv Exp $	*/
+/*	$NetBSD: npf_alg_icmp.c,v 1.27 2018/03/22 07:32:07 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_alg_icmp.c,v 1.26 2018/03/12 12:45:26 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_alg_icmp.c,v 1.27 2018/03/22 07:32:07 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/module.h>
@@ -246,13 +246,14 @@ npfa_icmp_inspect(npf_cache_t *npc, npf_cache_t *enpc)
 static npf_conn_t *
 npfa_icmp_conn(npf_cache_t *npc, int di)
 {
+	npf_conn_t *conn = NULL;
 	npf_cache_t enpc;
 
 	/* Inspect ICMP packet for an embedded packet. */
 	if (!npf_iscached(npc, NPC_ICMP))
 		return NULL;
 	if (!npfa_icmp_inspect(npc, &enpc))
-		return NULL;
+		goto out;
 
 	/*
 	 * Invert the identifiers of the embedded packet.
@@ -282,22 +283,30 @@ npfa_icmp_conn(npf_cache_t *npc, int di)
 		const struct icmp *ic = enpc.npc_l4.icmp;
 		ret = npfa_icmp4_inspect(ic->icmp_type, &enpc);
 		if (!ret || !npf_iscached(&enpc, NPC_ICMP_ID))
-			return false;
+			goto out;
 		break;
 	}
 	case IPPROTO_ICMPV6: {
 		const struct icmp6_hdr *ic6 = enpc.npc_l4.icmp6;
 		ret = npfa_icmp6_inspect(ic6->icmp6_type, &enpc);
 		if (!ret || !npf_iscached(&enpc, NPC_ICMP_ID))
-			return false;
+			goto out;
 		break;
 	}
 	default:
-		return false;
+		goto out;
 	}
 
 	/* Lookup a connection using the embedded packet. */
-	return npf_conn_lookup(&enpc, di, &forw);
+	conn = npf_conn_lookup(&enpc, di, &forw);
+
+out:
+	/*
+	 * Recache npc. The nbuf may have been updated as a result of
+	 * caching enpc.
+	 */
+	npf_recache(npc);
+	return conn;
 }
 
 /*
@@ -309,20 +318,23 @@ npfa_icmp_nat(npf_cache_t *npc, npf_nat_t *nt, bool forw)
 {
 	const u_int which = NPF_SRC;
 	npf_cache_t enpc;
+	struct icmp *ic;
+	uint16_t cksum;
 
 	if (forw || !npf_iscached(npc, NPC_ICMP))
 		return false;
-	if (!npfa_icmp_inspect(npc, &enpc))
-		return false;
-
-	KASSERT(npf_iscached(&enpc, NPC_IP46));
-	KASSERT(npf_iscached(&enpc, NPC_LAYER4));
 
 	/*
 	 * ICMP: fetch the current checksum we are going to fixup.
 	 */
-	struct icmp *ic = npc->npc_l4.icmp;
-	uint16_t cksum = ic->icmp_cksum;
+	ic = npc->npc_l4.icmp;
+	cksum = ic->icmp_cksum;
+
+	if (!npfa_icmp_inspect(npc, &enpc))
+		goto err;
+
+	KASSERT(npf_iscached(&enpc, NPC_IP46));
+	KASSERT(npf_iscached(&enpc, NPC_LAYER4));
 
 	CTASSERT(offsetof(struct icmp, icmp_cksum) ==
 	    offsetof(struct icmp6_hdr, icmp6_cksum));
@@ -356,7 +368,7 @@ npfa_icmp_nat(npf_cache_t *npc, npf_nat_t *nt, bool forw)
 	case IPPROTO_ICMPV6:
 		break;
 	default:
-		return false;
+		goto err;
 	}
 
 	/*
@@ -385,7 +397,7 @@ npfa_icmp_nat(npf_cache_t *npc, npf_nat_t *nt, bool forw)
 	 * npfa_icmp_match() matches only for the PFIL_OUT traffic.
 	 */
 	if (npf_napt_rwr(&enpc, which, addr, port)) {
-		return false;
+		goto err;
 	}
 
 	/*
@@ -409,8 +421,19 @@ npfa_icmp_nat(npf_cache_t *npc, npf_nat_t *nt, bool forw)
 		}
 		break;
 	}
+	npf_recache(npc);
+	KASSERT(npf_iscached(npc, NPC_ICMP));
+	ic = npc->npc_l4.icmp;
 	ic->icmp_cksum = cksum;
 	return true;
+
+err:
+	/*
+	 * Recache npc. The nbuf may have been updated as a result of
+	 * caching enpc.
+	 */
+	npf_recache(npc);
+	return false;
 }
 
 /*
