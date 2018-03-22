@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.150 2018/03/21 10:52:15 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.151 2018/03/22 11:05:47 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -10507,4 +10507,10 @@ sys/arch/i386/stand/lib/biosdisk.c		1.48
 	 - boot device is always efi_distlist first element.
 	 - fix boot partition lookup.
 	[nonaka, ticket #648]
+
+external/cddl/osnet/sys/sys/kmem.h		1.7-1.9
+
+	Our pool code needs either PR_SLEEP or PR_NOWAIT; arrange for
+	that explaining the current choice.
+	[maya, ticket #651]
 
