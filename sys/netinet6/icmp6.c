@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.223 2018/02/28 11:23:24 maxv Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.223.2.1 2018/03/22 01:44:51 pgoyette Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.223 2018/02/28 11:23:24 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.223.2.1 2018/03/22 01:44:51 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2014,7 +2014,7 @@ icmp6_rip6_input(struct mbuf **mp, int off)
 				m_adj(n, off);
 				if (sbappendaddr(&last->in6p_socket->so_rcv,
 				    sin6tosa(&rip6src), n, opts) == 0) {
-					/* should notify about lost packet */
+					soroverflow(last->in6p_socket);
 					m_freem(n);
 					if (opts)
 						m_freem(opts);
@@ -2040,6 +2040,7 @@ icmp6_rip6_input(struct mbuf **mp, int off)
 		m_adj(m, off);
 		if (sbappendaddr(&last->in6p_socket->so_rcv,
 		    sin6tosa(&rip6src), m, opts) == 0) {
+			soroverflow(last->in6p_socket);
 			m_freem(m);
 			if (opts)
 				m_freem(opts);

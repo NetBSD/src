@@ -1,4 +1,4 @@
-/*	$NetBSD: becc_space.c,v 1.5 2011/07/01 20:32:51 dyoung Exp $	*/
+/*	$NetBSD: becc_space.c,v 1.5.52.1 2018/03/22 01:44:44 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: becc_space.c,v 1.5 2011/07/01 20:32:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: becc_space.c,v 1.5.52.1 2018/03/22 01:44:44 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,79 +65,79 @@ bs_protos(bs_notimpl);
  */
 const struct bus_space becc_bs_tag_template = {
 	/* cookie */
-	(void *) 0,
+	.bs_cookie = (void *) 0,
 
 	/* mapping/unmapping */
-	NULL,
-	NULL,
-	becc_bs_subregion,
+	.bs_map = NULL,
+	.bs_unmap = NULL,
+	.bs_subregion = becc_bs_subregion,
 
 	/* allocation/deallocation */
-	NULL,
-	NULL,
+	.bs_alloc = NULL,
+	.bs_free = NULL,
 
 	/* get kernel virtual address */
-	becc_bs_vaddr,
+	.bs_vaddr = becc_bs_vaddr,
 
 	/* mmap */
-	becc_bs_mmap,
+	.bs_mmap = becc_bs_mmap,
 
 	/* barrier */
-	becc_bs_barrier,
+	.bs_barrier = becc_bs_barrier,
 
 	/* read (single) */
-	becc_pci_bs_r_1,
-	becc_pci_bs_r_2,
-	becc_pci_bs_r_4,
-	bs_notimpl_bs_r_8,
+	.bs_r_1 = becc_pci_bs_r_1,
+	.bs_r_2 = becc_pci_bs_r_2,
+	.bs_r_4 = becc_pci_bs_r_4,
+	.bs_r_8 = bs_notimpl_bs_r_8,
 
 	/* read multiple */
-	bs_notimpl_bs_rm_1,
-	bs_notimpl_bs_rm_2,
-	bs_notimpl_bs_rm_4,
-	bs_notimpl_bs_rm_8,
+	.bs_rm_1 = bs_notimpl_bs_rm_1,
+	.bs_rm_2 = bs_notimpl_bs_rm_2,
+	.bs_rm_4 = bs_notimpl_bs_rm_4,
+	.bs_rm_8 = bs_notimpl_bs_rm_8,
 
 	/* read region */
-	bs_notimpl_bs_rr_1,
-	bs_notimpl_bs_rr_2,
-	bs_notimpl_bs_rr_4,
-	bs_notimpl_bs_rr_8,
+	.bs_rr_1 = bs_notimpl_bs_rr_1,
+	.bs_rr_2 = bs_notimpl_bs_rr_2,
+	.bs_rr_4 = bs_notimpl_bs_rr_4,
+	.bs_rr_8 = bs_notimpl_bs_rr_8,
 
 	/* write (single) */
-	becc_pci_bs_w_1,
-	becc_pci_bs_w_2,
-	becc_pci_bs_w_4,
-	bs_notimpl_bs_w_8,
+	.bs_w_1 = becc_pci_bs_w_1,
+	.bs_w_2 = becc_pci_bs_w_2,
+	.bs_w_4 = becc_pci_bs_w_4,
+	.bs_w_8 = bs_notimpl_bs_w_8,
 
 	/* write multiple */
-	bs_notimpl_bs_wm_1,
-	bs_notimpl_bs_wm_2,
-	bs_notimpl_bs_wm_4,
-	bs_notimpl_bs_wm_8,
+	.bs_wm_1 = bs_notimpl_bs_wm_1,
+	.bs_wm_2 = bs_notimpl_bs_wm_2,
+	.bs_wm_4 = bs_notimpl_bs_wm_4,
+	.bs_wm_8 = bs_notimpl_bs_wm_8,
 
 	/* write region */
-	bs_notimpl_bs_wr_1,
-	bs_notimpl_bs_wr_2,
-	bs_notimpl_bs_wr_4,
-	bs_notimpl_bs_wr_8,
+	.bs_wr_1 = bs_notimpl_bs_wr_1,
+	.bs_wr_2 = bs_notimpl_bs_wr_2,
+	.bs_wr_4 = bs_notimpl_bs_wr_4,
+	.bs_wr_8 = bs_notimpl_bs_wr_8,
 
 	/* set multiple */
-	bs_notimpl_bs_sm_1,
-	bs_notimpl_bs_sm_2,
-	bs_notimpl_bs_sm_4,
-	bs_notimpl_bs_sm_8,
+	.bs_sm_1 = bs_notimpl_bs_sm_1,
+	.bs_sm_2 = bs_notimpl_bs_sm_2,
+	.bs_sm_4 = bs_notimpl_bs_sm_4,
+	.bs_sm_8 = bs_notimpl_bs_sm_8,
 
 	/* set region */
-	bs_notimpl_bs_sr_1,
-	bs_notimpl_bs_sr_2,
-	bs_notimpl_bs_sr_4,
-	bs_notimpl_bs_sr_8,
+	.bs_sr_1 = bs_notimpl_bs_sr_1,
+	.bs_sr_2 = bs_notimpl_bs_sr_2,
+	.bs_sr_4 = bs_notimpl_bs_sr_4,
+	.bs_sr_8 = bs_notimpl_bs_sr_8,
 
 	/* copy */
-	bs_notimpl_bs_c_1,
-	bs_notimpl_bs_c_2,
-	bs_notimpl_bs_c_4,
-	bs_notimpl_bs_c_8,
+	.bs_c_1 = bs_notimpl_bs_c_1,
+	.bs_c_2 = bs_notimpl_bs_c_2,
+	.bs_c_4 = bs_notimpl_bs_c_4,
+	.bs_c_8 = bs_notimpl_bs_c_8,
 };
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.24 2018/02/19 13:02:47 sborrill Exp $	*/
+/*	$NetBSD: param.h,v 1.24.2.1 2018/03/22 01:44:41 pgoyette Exp $	*/
 
 #ifdef __x86_64__
 
@@ -58,9 +58,9 @@
 #define	SSIZE		1		/* initial stack size/NBPG */
 #define	SINCR		1		/* increment of stack/NBPG */
 #ifdef DIAGNOSTIC
-#define	UPAGES		4		/* pages of u-area (1 for redzone) */
+#define	UPAGES		5		/* pages of u-area (1 for redzone) */
 #else
-#define	UPAGES		3		/* pages of u-area */
+#define	UPAGES		4		/* pages of u-area */
 #endif
 #define	USPACE		(UPAGES * NBPG)	/* total size of u-area */
 

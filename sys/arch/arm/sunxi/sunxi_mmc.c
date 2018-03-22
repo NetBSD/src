@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_mmc.c,v 1.20 2018/02/19 20:26:51 jmcneill Exp $ */
+/* $NetBSD: sunxi_mmc.c,v 1.20.2.1 2018/03/22 01:44:43 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_sunximmc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_mmc.c,v 1.20 2018/02/19 20:26:51 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_mmc.c,v 1.20.2.1 2018/03/22 01:44:43 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -87,7 +87,7 @@ static const struct sunxi_mmc_delay sun9i_mmc_delays[] = {
 	[SUNXI_MMC_TIMING_50M_DDR_8BIT]	= {  72,	 72 },
 };
 
-#define SUNXI_MMC_NDESC		16
+#define SUNXI_MMC_NDESC		64
 
 struct sunxi_mmc_softc;
 
@@ -954,8 +954,9 @@ sunxi_mmc_dma_prepare(struct sunxi_mmc_softc *sc, struct sdmmc_command *cmd)
 	}
 	if (desc == sc->sc_idma_ndesc) {
 		aprint_error_dev(sc->sc_dev,
-		    "not enough descriptors for %d byte transfer!\n",
-		    cmd->c_datalen);
+		    "not enough descriptors for %d byte transfer! "
+		    "there are %u segments with a max xfer length of %u\n",
+		    cmd->c_datalen, map->dm_nsegs, sc->sc_config->idma_xferlen);
 		return EIO;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.75 2018/02/17 18:51:53 maxv Exp $	*/
+/*	$NetBSD: vector.S,v 1.75.2.1 2018/03/22 01:44:45 pgoyette Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -65,11 +65,10 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.75 2018/02/17 18:51:53 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.75.2.1 2018/03/22 01:44:45 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
-#include "opt_ipkdb.h"
 #include "opt_xen.h"
 #include "opt_dtrace.h"
 
@@ -1002,9 +1001,6 @@ END(xenev_stubs)
 #endif /* XEN */
 
 #include "i386_trap.S"
-#ifdef IPKDB
-#include "i386_trap_ipkdb.S"
-#endif
 
 #ifdef XEN
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.94 2017/12/06 09:54:47 ozaki-r Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.94.2.1 2018/03/22 01:44:51 pgoyette Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.94 2017/12/06 09:54:47 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.94.2.1 2018/03/22 01:44:51 pgoyette Exp $");
 
 /*
  * TODO:
@@ -201,7 +201,7 @@ static void	carp_setroute(struct carp_softc *, int);
 static void	carp_proto_input_c(struct mbuf *, struct carp_header *,
 		    sa_family_t);
 static void	carpdetach(struct carp_softc *);
-static int	carp_prepare_ad(struct mbuf *, struct carp_softc *,
+static void	carp_prepare_ad(struct mbuf *, struct carp_softc *,
 		    struct carp_header *);
 static void	carp_send_ad_all(void);
 static void	carp_send_ad(void *);
@@ -969,7 +969,7 @@ carp_ifdetach(struct ifnet *ifp)
 	}
 }
 
-static int
+static void
 carp_prepare_ad(struct mbuf *m, struct carp_softc *sc,
     struct carp_header *ch)
 {
@@ -983,8 +983,6 @@ carp_prepare_ad(struct mbuf *m, struct carp_softc *sc,
 	ch->carp_counter[1] = htonl(sc->sc_counter&0xffffffff);
 
 	carp_hmac_generate(sc, ch->carp_counter, ch->carp_md);
-
-	return (0);
 }
 
 static void
@@ -1110,8 +1108,7 @@ carp_send_ad(void *v)
 
 		ch_ptr = (struct carp_header *)(&ip[1]);
 		memcpy(ch_ptr, &ch, sizeof(ch));
-		if (carp_prepare_ad(m, sc, ch_ptr))
-			goto retry_later;
+		carp_prepare_ad(m, sc, ch_ptr);
 
 		m->m_data += sizeof(*ip);
 		ch_ptr->carp_cksum = carp_cksum(m, len - sizeof(*ip));
@@ -1200,8 +1197,7 @@ carp_send_ad(void *v)
 
 		ch_ptr = (struct carp_header *)(&ip6[1]);
 		memcpy(ch_ptr, &ch, sizeof(ch));
-		if (carp_prepare_ad(m, sc, ch_ptr))
-			goto retry_later;
+		carp_prepare_ad(m, sc, ch_ptr);
 
 		ch_ptr->carp_cksum = carp6_cksum(m, sizeof(*ip6),
 		    len - sizeof(*ip6));

@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_a4x_space.c,v 1.2 2011/07/01 19:32:28 dyoung Exp $	*/
+/*	$NetBSD: gemini_a4x_space.c,v 1.2.52.1 2018/03/22 01:44:42 pgoyette Exp $	*/
 
 /* adapted from:
  *	NetBSD: pxa2x0_a4x_space.c,v 1.4 2006/07/28 08:15:29 simonb Exp
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_a4x_space.c,v 1.2 2011/07/01 19:32:28 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_a4x_space.c,v 1.2.52.1 2018/03/22 01:44:42 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,77 +61,77 @@ bs_protos(bs_notimpl);
 
 struct bus_space gemini_a4x_bs_tag = {
 	/* cookie */
-	(void *) 0,
+	.bs_cookie = (void *) 0,
 
 	/* mapping/unmapping */
-	gemini_bs_map,
-	gemini_bs_unmap,
-	gemini_bs_subregion,
+	.bs_map = gemini_bs_map,
+	.bs_unmap = gemini_bs_unmap,
+	.bs_subregion = gemini_bs_subregion,
 
 	/* allocation/deallocation */
-	gemini_bs_alloc,	/* not implemented */
-	gemini_bs_free,		/* not implemented */
+	.bs_alloc = gemini_bs_alloc,	/* not implemented */
+	.bs_free = gemini_bs_free,	/* not implemented */
 
 	/* get kernel virtual address */
-	gemini_bs_vaddr,
+	.bs_vaddr = gemini_bs_vaddr,
 
 	/* mmap */
-	bs_notimpl_bs_mmap,
+	.bs_mmap = bs_notimpl_bs_mmap,
 
 	/* barrier */
-	gemini_bs_barrier,
+	.bs_barrier = gemini_bs_barrier,
 
 	/* read (single) */
-	a4x_bs_r_1,
-	a4x_bs_r_2,
-	a4x_bs_r_4,
-	bs_notimpl_bs_r_8,
+	.bs_r_1 = a4x_bs_r_1,
+	.bs_r_2 = a4x_bs_r_2,
+	.bs_r_4 = a4x_bs_r_4,
+	.bs_r_8 = bs_notimpl_bs_r_8,
 
 	/* read multiple */
-	a4x_bs_rm_1,
-	a4x_bs_rm_2,
-	bs_notimpl_bs_rm_4,
-	bs_notimpl_bs_rm_8,
+	.bs_rm_1 = a4x_bs_rm_1,
+	.bs_rm_2 = a4x_bs_rm_2,
+	.bs_rm_4 = bs_notimpl_bs_rm_4,
+	.bs_rm_8 = bs_notimpl_bs_rm_8,
 
 	/* read region */
-	bs_notimpl_bs_rr_1,
-	bs_notimpl_bs_rr_2,
-	bs_notimpl_bs_rr_4,
-	bs_notimpl_bs_rr_8,
+	.bs_rr_1 = bs_notimpl_bs_rr_1,
+	.bs_rr_2 = bs_notimpl_bs_rr_2,
+	.bs_rr_4 = bs_notimpl_bs_rr_4,
+	.bs_rr_8 = bs_notimpl_bs_rr_8,
 
 	/* write (single) */
-	a4x_bs_w_1,
-	a4x_bs_w_2,
-	a4x_bs_w_4,
-	bs_notimpl_bs_w_8,
+	.bs_w_1 = a4x_bs_w_1,
+	.bs_w_2 = a4x_bs_w_2,
+	.bs_w_4 = a4x_bs_w_4,
+	.bs_w_8 = bs_notimpl_bs_w_8,
 
 	/* write multiple */
-	a4x_bs_wm_1,
-	a4x_bs_wm_2,
-	bs_notimpl_bs_wm_4,
-	bs_notimpl_bs_wm_8,
+	.bs_wm_1 = a4x_bs_wm_1,
+	.bs_wm_2 = a4x_bs_wm_2,
+	.bs_wm_4 = bs_notimpl_bs_wm_4,
+	.bs_wm_8 = bs_notimpl_bs_wm_8,
 
 	/* write region */
-	bs_notimpl_bs_wr_1,
-	bs_notimpl_bs_wr_2,
-	bs_notimpl_bs_wr_4,
-	bs_notimpl_bs_wr_8,
+	.bs_wr_1 = bs_notimpl_bs_wr_1,
+	.bs_wr_2 = bs_notimpl_bs_wr_2,
+	.bs_wr_4 = bs_notimpl_bs_wr_4,
+	.bs_wr_8 = bs_notimpl_bs_wr_8,
 
 	/* set multiple */
-	bs_notimpl_bs_sm_1,
-	bs_notimpl_bs_sm_2,
-	bs_notimpl_bs_sm_4,
-	bs_notimpl_bs_sm_8,
+	.bs_sm_1 = bs_notimpl_bs_sm_1,
+	.bs_sm_2 = bs_notimpl_bs_sm_2,
+	.bs_sm_4 = bs_notimpl_bs_sm_4,
+	.bs_sm_8 = bs_notimpl_bs_sm_8,
 
 	/* set region */
-	bs_notimpl_bs_sr_1,
-	bs_notimpl_bs_sr_2,
-	bs_notimpl_bs_sr_4,
-	bs_notimpl_bs_sr_8,
+	.bs_sr_1 = bs_notimpl_bs_sr_1,
+	.bs_sr_2 = bs_notimpl_bs_sr_2,
+	.bs_sr_4 = bs_notimpl_bs_sr_4,
+	.bs_sr_8 = bs_notimpl_bs_sr_8,
 
 	/* copy */
-	bs_notimpl_bs_c_1,
-	bs_notimpl_bs_c_2,
-	bs_notimpl_bs_c_4,
-	bs_notimpl_bs_c_8,
+	.bs_c_1 = bs_notimpl_bs_c_1,
+	.bs_c_2 = bs_notimpl_bs_c_2,
+	.bs_c_4 = bs_notimpl_bs_c_4,
+	.bs_c_8 = bs_notimpl_bs_c_8,
 };

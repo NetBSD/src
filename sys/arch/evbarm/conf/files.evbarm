@@ -1,4 +1,4 @@
-#	$NetBSD: files.evbarm,v 1.28 2017/12/18 15:53:38 skrll Exp $
+#	$NetBSD: files.evbarm,v 1.28.2.1 2018/03/22 01:44:44 pgoyette Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -36,6 +36,10 @@ include "dev/pcmcia/files.pcmcia"		# PCMCIA devices
 include "dev/sdmmc/files.sdmmc"			# SD/MMC devices
 include "dev/scsipi/files.scsipi"		# SCSI devices
 include "dev/usb/files.usb"			# USB devices
+
+
+# Kernel boot arguments
+defparam	opt_machdep.h			BOOT_ARGS
 
 #
 # ARM evaluation board specific devices

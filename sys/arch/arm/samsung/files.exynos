@@ -1,4 +1,4 @@
-#	$NetBSD: files.exynos,v 1.24 2017/06/20 13:21:45 jmcneill Exp $
+#	$NetBSD: files.exynos,v 1.24.4.1 2018/03/22 01:44:43 pgoyette Exp $
 #
 # Configuration info for Samsung Exynos SoC ARM Peripherals
 #
@@ -13,7 +13,7 @@ file	arch/arm/arm32/arm32_kvminit.c
 file	arch/arm/arm32/arm32_reboot.c
 file	arch/arm/arm32/irq_dispatch.S
 file	arch/arm/arm32/armv7_generic_space.c
-file	arch/arm/arm32/armv7_generic_dma.c
+file	arch/arm/arm/arm_generic_dma.c
 file	arch/arm/arm/bus_space_a4x.S
 
 file	arch/arm/samsung/exynos_soc.c

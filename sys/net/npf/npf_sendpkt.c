@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_sendpkt.c,v 1.16.14.1 2018/03/15 09:12:06 pgoyette Exp $	*/
+/*	$NetBSD: npf_sendpkt.c,v 1.16.14.2 2018/03/22 01:44:51 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2010-2011 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_sendpkt.c,v 1.16.14.1 2018/03/15 09:12:06 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_sendpkt.c,v 1.16.14.2 2018/03/22 01:44:51 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -213,6 +213,18 @@ npf_return_icmp(const npf_cache_t *npc)
 		icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_ADMIN_PROHIBIT, 0, 0);
 		return 0;
 	} else if (npf_iscached(npc, NPC_IP6)) {
+		/* Handle IPv6 scopes */
+		const struct ifnet *rcvif = npc->npc_nbuf->nb_ifp;
+		struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
+		if (in6_clearscope(&ip6->ip6_src) ||
+		    in6_clearscope(&ip6->ip6_dst)) {
+			return EINVAL;
+		}
+		if (in6_setscope(&ip6->ip6_src, rcvif, NULL) ||
+		    in6_setscope(&ip6->ip6_dst, rcvif, NULL)) {
+			return EINVAL;
+		}
+
 		icmp6_error(m, ICMP6_DST_UNREACH, ICMP6_DST_UNREACH_ADMIN, 0);
 		return 0;
 	}

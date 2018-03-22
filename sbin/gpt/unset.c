@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/add.c,v 1.14 2006/06/22 22:05:28 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: unset.c,v 1.13 2015/12/29 16:45:04 christos Exp $");
+__RCSID("$NetBSD: unset.c,v 1.13.14.1 2018/03/22 01:44:40 pgoyette Exp $");
 #endif
 
 #include <sys/types.h>
@@ -53,13 +53,14 @@ static int cmd_unset(gpt_t, int, char *[]);
 
 static const char *unsethelp[] = {
 	"-a attribute -i index",
+	"-l",
 };
 
 struct gpt_cmd c_unset = {
 	"unset",
 	cmd_unset,
 	unsethelp, __arraycount(unsethelp),
-	0,
+	GPT_OPTDEV,
 };
 
 #define usage() gpt_usage(NULL, &c_unset)
@@ -74,11 +75,11 @@ cmd_unset(gpt_t gpt, int argc, char *argv[])
 	while ((ch = getopt(argc, argv, "a:i:l")) != -1) {
 		switch(ch) {
 		case 'a':
-			if (gpt_attr_get(gpt, &attributes) == -1)
+			if (gpt == NULL || gpt_attr_get(gpt, &attributes) == -1)
 				return usage();
 			break;
 		case 'i':
-			if (gpt_uint_get(gpt, &entry) == -1)
+			if (gpt == NULL || gpt_uint_get(gpt, &entry) == -1)
 				return usage();
 			break;
 		case 'l':
@@ -89,7 +90,7 @@ cmd_unset(gpt_t gpt, int argc, char *argv[])
 		}
 	}
 
-	if (argc != optind)
+	if (gpt == NULL || argc != optind)
 		return usage();
 
 	return gpt_attr_update(gpt, entry, 0, attributes);

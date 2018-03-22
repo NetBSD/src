@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.175.2.2 2018/03/20 08:11:25 pgoyette Exp $	*/
+/*	$NetBSD: ccd.c,v 1.175.2.3 2018/03/22 01:44:48 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2007, 2009 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.175.2.2 2018/03/20 08:11:25 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.175.2.3 2018/03/22 01:44:48 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -1076,6 +1076,9 @@ ccdwrite(dev_t dev, struct uio *uio, int flags)
 
 	return (physio(ccdstrategy, NULL, dev, B_WRITE, minphys, uio));
 }
+
+int (*compat_ccd_ioctl_60)(dev_t, u_long, void *, int, struct lwp *,
+    int (*)(dev_t, u_long, void *, int, struct lwp *)) = (void *)enosys;
 
 static int
 ccdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)

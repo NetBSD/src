@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls_43.c,v 1.47 2016/09/13 07:01:07 martin Exp $	*/
+/*	$NetBSD: uipc_syscalls_43.c,v 1.47.14.1 2018/03/22 01:44:47 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_43.c,v 1.47 2016/09/13 07:01:07 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_43.c,v 1.47.14.1 2018/03/22 01:44:47 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -343,7 +343,8 @@ compat_43_sys_sendmsg(struct lwp *l, const struct compat_43_sys_sendmsg_args *ua
 	msg.msg_iovlen = omsg.msg_iovlen;
 	msg.msg_iov = omsg.msg_iov;
 
-	error = sockargs(&nam, omsg.msg_name, omsg.msg_namelen, MT_SONAME);
+	error = sockargs(&nam, omsg.msg_name, omsg.msg_namelen,
+	    UIO_USERSPACE, MT_SONAME);
 	if (error != 0)
 		return (error);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmectl.c,v 1.4 2017/05/03 01:37:16 christos Exp $	*/
+/*	$NetBSD: nvmectl.c,v 1.4.8.1 2018/03/22 01:44:40 pgoyette Exp $	*/
 
 /*-
  * Copyright (C) 2012-2013 Intel Corporation
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: nvmectl.c,v 1.4 2017/05/03 01:37:16 christos Exp $");
+__RCSID("$NetBSD: nvmectl.c,v 1.4.8.1 2018/03/22 01:44:40 pgoyette Exp $");
 #if 0
 __FBSDID("$FreeBSD: head/sbin/nvmecontrol/nvmecontrol.c 314229 2017-02-25 00:09:12Z imp $");
 #endif
@@ -52,7 +52,7 @@ __FBSDID("$FreeBSD: head/sbin/nvmecontrol/nvmecontrol.c 314229 2017-02-25 00:09:
 
 #include "nvmectl.h"
 
-static struct nvme_function funcs[] = {
+static const struct nvme_function funcs[] = {
 	{"devlist",	devlist,	DEVLIST_USAGE},
 	{"identify",	identify,	IDENTIFY_USAGE},
 #ifdef PERFTEST_USAGE
@@ -71,21 +71,21 @@ static struct nvme_function funcs[] = {
 };
 
 static __dead void
-gen_usage(struct nvme_function *f)
+gen_usage(const struct nvme_function *f)
 {
 
 	fprintf(stderr, "usage:\n");
 	while (f->name != NULL) {
-		fprintf(stderr, "%s", f->usage);
+		fprintf(stderr, "\t%s %s", getprogname(), f->usage);
 		f++;
 	}
 	exit(1);
 }
 
 __dead void
-dispatch(int argc, char *argv[], struct nvme_function *tbl)
+dispatch(int argc, char *argv[], const struct nvme_function *tbl)
 {
-	struct nvme_function *f = tbl;
+	const struct nvme_function *f = tbl;
 
 	if (argv[1] == NULL)
 		gen_usage(tbl);
@@ -280,6 +280,7 @@ nvme_strvis(u_char *dst, int dlen, const u_char *src, int slen)
 int
 main(int argc, char *argv[])
 {
+	setprogname(argv[0]);
 
 	if (argc < 2)
 		gen_usage(funcs);

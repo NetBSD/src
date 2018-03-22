@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.233 2016/06/01 23:33:24 pgoyette Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.233.16.1 2018/03/22 01:44:50 pgoyette Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.232 2016/06/01 23:31:53 pgoyette Exp
+ *	NetBSD: pcmciadevs,v 1.234 2018/03/16 01:49:15 sevan Exp
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -38,7 +38,7 @@
  */
 
 /*
- * Use "make -f Makefile.pcmicadevs" to regenerate pcmicadevs.h and
+ * Use "make -f Makefile.pcmciadevs" to regenerate pcmicadevs.h and
  * pcmicadevs_data.h
  */
 
@@ -143,6 +143,8 @@
 #define	PCMCIA_PRODUCT_3COM_3CXEM556INT	0x003d
 #define	PCMCIA_CIS_3COM_3CRWB6096	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_3COM_3CRWB6096	0x0040
+#define	PCMCIA_CIS_3COM_3CRWB6096B	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_3COM_3CRWB6096B	0x0041
 #define	PCMCIA_CIS_3COM_3CCFEM556BI	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_3COM_3CCFEM556BI	0x0556
 #define	PCMCIA_CIS_3COM_3C562	{ NULL, NULL, NULL, NULL }

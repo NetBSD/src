@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.193.2.1 2018/03/15 09:12:07 pgoyette Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.193.2.2 2018/03/22 01:44:51 pgoyette Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.193.2.1 2018/03/15 09:12:07 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.193.2.2 2018/03/22 01:44:51 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -1298,8 +1298,8 @@ ip6_notify_pmtu(struct in6pcb *in6p, const struct sockaddr_in6 *dst,
 
 	if (sbappendaddr(&so->so_rcv, (const struct sockaddr *)dst, NULL, m_mtu)
 	    == 0) {
+		soroverflow(so);
 		m_freem(m_mtu);
-		/* XXX: should count statistics */
 	} else
 		sorwakeup(so);
 

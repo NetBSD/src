@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsoc_space.c,v 1.9 2017/03/10 15:44:24 skrll Exp $	*/
+/*	$NetBSD: mvsoc_space.c,v 1.9.12.1 2018/03/22 01:44:43 pgoyette Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsoc_space.c,v 1.9 2017/03/10 15:44:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsoc_space.c,v 1.9.12.1 2018/03/22 01:44:43 pgoyette Exp $");
 
 #include "opt_mvsoc.h"
 #include "mvpex.h"
@@ -51,84 +51,121 @@ bs_protos(bs_notimpl);
 
 #define MVSOC_BUS_SPACE_NORMAL_FUNCS		\
 	/* read (single) */			\
-	generic_bs_r_1,				\
-	generic_armv4_bs_r_2,			\
-	generic_bs_r_4,				\
-	bs_notimpl_bs_r_8,			\
+	.bs_r_1 = generic_bs_r_1,		\
+	.bs_r_2 = generic_armv4_bs_r_2,		\
+	.bs_r_4 = generic_bs_r_4,		\
+	.bs_r_8 = bs_notimpl_bs_r_8,		\
 						\
 	/* read multiple */			\
-	generic_bs_rm_1,			\
-	generic_armv4_bs_rm_2,			\
-	generic_bs_rm_4,			\
-	bs_notimpl_bs_rm_8,			\
+	.bs_rm_1 = generic_bs_rm_1,		\
+	.bs_rm_2 = generic_armv4_bs_rm_2,	\
+	.bs_rm_4 = generic_bs_rm_4,		\
+	.bs_rm_8 = bs_notimpl_bs_rm_8,		\
 						\
 	/* read region */			\
-	generic_bs_rr_1,			\
-	generic_armv4_bs_rr_2,			\
-	generic_bs_rr_4,			\
-	bs_notimpl_bs_rr_8,			\
+	.bs_rr_1 = generic_bs_rr_1,		\
+	.bs_rr_2 = generic_armv4_bs_rr_2,	\
+	.bs_rr_4 = generic_bs_rr_4,		\
+	.bs_rr_8 = bs_notimpl_bs_rr_8,		\
 						\
 	/* write (single) */			\
-	generic_bs_w_1,				\
-	generic_armv4_bs_w_2,			\
-	generic_bs_w_4,				\
-	bs_notimpl_bs_w_8,			\
+	.bs_w_1 = generic_bs_w_1,		\
+	.bs_w_2 = generic_armv4_bs_w_2,		\
+	.bs_w_4 = generic_bs_w_4,		\
+	.bs_w_8 = bs_notimpl_bs_w_8,		\
 						\
 	/* write multiple */			\
-	generic_bs_wm_1,			\
-	generic_armv4_bs_wm_2,			\
-	generic_bs_wm_4,			\
-	bs_notimpl_bs_wm_8,			\
+	.bs_wm_1 = generic_bs_wm_1,		\
+	.bs_wm_2 = generic_armv4_bs_wm_2,	\
+	.bs_wm_4 = generic_bs_wm_4,		\
+	.bs_wm_8 = bs_notimpl_bs_wm_8,		\
 						\
 	/* write region */			\
-	generic_bs_wr_1,			\
-	generic_armv4_bs_wr_2,			\
-	generic_bs_wr_4,			\
-	bs_notimpl_bs_wr_8
+	.bs_wr_1 = generic_bs_wr_1,		\
+	.bs_wr_2 = generic_armv4_bs_wr_2,	\
+	.bs_wr_4 = generic_bs_wr_4,		\
+	.bs_wr_8 = bs_notimpl_bs_wr_8
+
+#define MVSOC_BUS_SPACE_STREAM_FUNCS		\
+	/* read stream (single) */		\
+	.bs_r_1_s = generic_bs_r_1,		\
+	.bs_r_2_s = generic_armv4_bs_r_2,	\
+	.bs_r_4_s = generic_bs_r_4,		\
+	.bs_r_8_s = bs_notimpl_bs_r_8,		\
+						\
+	/* read multiple stream */		\
+	.bs_rm_1_s = generic_bs_rm_1,		\
+	.bs_rm_2_s = generic_armv4_bs_rm_2,	\
+	.bs_rm_4_s = generic_bs_rm_4,		\
+	.bs_rm_8_s = bs_notimpl_bs_rm_8,	\
+						\
+	/* read region stream */		\
+	.bs_rr_1_s = generic_bs_rr_1,		\
+	.bs_rr_2_s = generic_armv4_bs_rr_2,	\
+	.bs_rr_4_s = generic_bs_rr_4,		\
+	.bs_rr_8_s = bs_notimpl_bs_rr_8,	\
+						\
+	/* write stream (single) */		\
+	.bs_w_1_s = generic_bs_w_1,		\
+	.bs_w_2_s = generic_armv4_bs_w_2,	\
+	.bs_w_4_s = generic_bs_w_4,		\
+	.bs_w_8_s = bs_notimpl_bs_w_8,		\
+						\
+	/* write multiple stream */		\
+	.bs_wm_1_s = generic_bs_wm_1,		\
+	.bs_wm_2_s = generic_armv4_bs_wm_2,	\
+	.bs_wm_4_s = generic_bs_wm_4,		\
+	.bs_wm_8_s = bs_notimpl_bs_wm_8,	\
+						\
+	/* write region stream */		\
+	.bs_wr_1_s = generic_bs_wr_1,		\
+	.bs_wr_2_s = generic_armv4_bs_wr_2,	\
+	.bs_wr_4_s = generic_bs_wr_4,		\
+	.bs_wr_8_s = bs_notimpl_bs_wr_8
 
 #define MVSOC_BUS_SPACE_DEFAULT_FUNCS		\
 	/* mapping/unmapping */			\
-	mvsoc_bs_map,				\
-	mvsoc_bs_unmap,				\
-	mvsoc_bs_subregion,			\
+	.bs_map = mvsoc_bs_map,			\
+	.bs_unmap = mvsoc_bs_unmap,		\
+	.bs_subregion = mvsoc_bs_subregion,	\
 						\
 	/* allocation/deallocation */		\
-	mvsoc_bs_alloc,				\
-	mvsoc_bs_free,				\
+	.bs_alloc =mvsoc_bs_alloc,		\
+	.bs_free = mvsoc_bs_free,		\
 						\
 	/* get kernel virtual address */	\
-	mvsoc_bs_vaddr,				\
+	.bs_vaddr = mvsoc_bs_vaddr,		\
 						\
 	/* mmap bus space for userland */	\
-	bs_notimpl_bs_mmap,			\
+	.bs_mmap = bs_notimpl_bs_mmap,		\
 						\
 	/* barrier */				\
-	mvsoc_bs_barrier,			\
+	.bs_barrier = mvsoc_bs_barrier,		\
 						\
 	MVSOC_BUS_SPACE_NORMAL_FUNCS,		\
 						\
 	/* set multiple */			\
-	bs_notimpl_bs_sm_1,			\
-	bs_notimpl_bs_sm_2,			\
-	bs_notimpl_bs_sm_4,			\
-	bs_notimpl_bs_sm_8,			\
+	.bs_sm_1 = bs_notimpl_bs_sm_1,		\
+	.bs_sm_2 = bs_notimpl_bs_sm_2,		\
+	.bs_sm_4 = bs_notimpl_bs_sm_4,		\
+	.bs_sm_8 = bs_notimpl_bs_sm_8,		\
 						\
 	/* set region */			\
-	bs_notimpl_bs_sr_1,			\
-	generic_armv4_bs_sr_2,			\
-	generic_bs_sr_4,			\
-	bs_notimpl_bs_sr_8,			\
+	.bs_sr_1 = bs_notimpl_bs_sr_1,		\
+	.bs_sr_2 = generic_armv4_bs_sr_2,	\
+	.bs_sr_4 = generic_bs_sr_4,		\
+	.bs_sr_8 = bs_notimpl_bs_sr_8,		\
 						\
 	/* copy */				\
-	bs_notimpl_bs_c_1,			\
-	generic_armv4_bs_c_2,			\
-	bs_notimpl_bs_c_4,			\
-	bs_notimpl_bs_c_8
+	.bs_c_1 = bs_notimpl_bs_c_1,		\
+	.bs_c_2 = generic_armv4_bs_c_2,		\
+	.bs_c_4 = bs_notimpl_bs_c_4,		\
+	.bs_c_8 = bs_notimpl_bs_c_8
 
 
 struct bus_space mvsoc_bs_tag = {
 	/* cookie */
-	(void *)0,
+	.bs_cookie = (void *)0,
 
 	MVSOC_BUS_SPACE_DEFAULT_FUNCS,
 #ifdef __BUS_SPACE_HAS_STREAM_METHODS
@@ -140,7 +177,7 @@ struct bus_space mvsoc_bs_tag = {
 #if defined(ORION)
 struct bus_space orion_pex0_mem_bs_tag = {
 	/* cookie */
-	(void *)ORION_TAG_PEX0_MEM,
+	.bs_cookie = (void *)ORION_TAG_PEX0_MEM,
 
 	MVSOC_BUS_SPACE_DEFAULT_FUNCS,
 #ifdef __BUS_SPACE_HAS_STREAM_METHODS
@@ -149,7 +186,7 @@ struct bus_space orion_pex0_mem_bs_tag = {
 };
 struct bus_space orion_pex0_io_bs_tag = {
 	/* cookie */
-	(void *)ORION_TAG_PEX0_IO,
+	.bs_cookie = (void *)ORION_TAG_PEX0_IO,
 
 	MVSOC_BUS_SPACE_DEFAULT_FUNCS,
 #ifdef __BUS_SPACE_HAS_STREAM_METHODS
@@ -158,7 +195,7 @@ struct bus_space orion_pex0_io_bs_tag = {
 };
 struct bus_space orion_pex1_mem_bs_tag = {
 	/* cookie */
-	(void *)ORION_TAG_PEX1_MEM,
+	.bs_cookie = (void *)ORION_TAG_PEX1_MEM,
 
 	MVSOC_BUS_SPACE_DEFAULT_FUNCS,
 #ifdef __BUS_SPACE_HAS_STREAM_METHODS
@@ -167,7 +204,7 @@ struct bus_space orion_pex1_mem_bs_tag = {
 };
 struct bus_space orion_pex1_io_bs_tag = {
 	/* cookie */
-	(void *)ORION_TAG_PEX1_IO,
+	.bs_cookie = (void *)ORION_TAG_PEX1_IO,
 
 	MVSOC_BUS_SPACE_DEFAULT_FUNCS,
 #ifdef __BUS_SPACE_HAS_STREAM_METHODS
@@ -179,7 +216,7 @@ struct bus_space orion_pex1_io_bs_tag = {
 #if defined(KIRKWOOD)
 struct bus_space kirkwood_pex_mem_bs_tag = {
 	/* cookie */
-	(void *)KIRKWOOD_TAG_PEX_MEM,
+	.bs_cookie = (void *)KIRKWOOD_TAG_PEX_MEM,
 
 	MVSOC_BUS_SPACE_DEFAULT_FUNCS,
 #ifdef __BUS_SPACE_HAS_STREAM_METHODS
@@ -188,7 +225,7 @@ struct bus_space kirkwood_pex_mem_bs_tag = {
 };
 struct bus_space kirkwood_pex_io_bs_tag = {
 	/* cookie */
-	(void *)KIRKWOOD_TAG_PEX_IO,
+	.bs_cookie = (void *)KIRKWOOD_TAG_PEX_IO,
 
 	MVSOC_BUS_SPACE_DEFAULT_FUNCS,
 #ifdef __BUS_SPACE_HAS_STREAM_METHODS
@@ -197,7 +234,7 @@ struct bus_space kirkwood_pex_io_bs_tag = {
 };
 struct bus_space kirkwood_pex1_mem_bs_tag = {
 	/* cookie */
-	(void *)KIRKWOOD_TAG_PEX1_MEM,
+	.bs_cookie = (void *)KIRKWOOD_TAG_PEX1_MEM,
 
 	MVSOC_BUS_SPACE_DEFAULT_FUNCS,
 #ifdef __BUS_SPACE_HAS_STREAM_METHODS
@@ -206,7 +243,7 @@ struct bus_space kirkwood_pex1_mem_bs_tag = {
 };
 struct bus_space kirkwood_pex1_io_bs_tag = {
 	/* cookie */
-	(void *)KIRKWOOD_TAG_PEX1_IO,
+	.bs_cookie = (void *)KIRKWOOD_TAG_PEX1_IO,
 
 	MVSOC_BUS_SPACE_DEFAULT_FUNCS,
 #ifdef __BUS_SPACE_HAS_STREAM_METHODS
@@ -218,7 +255,7 @@ struct bus_space kirkwood_pex1_io_bs_tag = {
 #if defined(DOVE)
 struct bus_space dove_pex0_mem_bs_tag = {
 	/* cookie */
-	(void *)DOVE_TAG_PEX0_MEM,
+	.bs_cookie = (void *)DOVE_TAG_PEX0_MEM,
 
 	MVSOC_BUS_SPACE_DEFAULT_FUNCS,
 #ifdef __BUS_SPACE_HAS_STREAM_METHODS
@@ -227,7 +264,7 @@ struct bus_space dove_pex0_mem_bs_tag = {
 };
 struct bus_space dove_pex0_io_bs_tag = {
 	/* cookie */
-	(void *)DOVE_TAG_PEX0_IO,
+	.bs_cookie = (void *)DOVE_TAG_PEX0_IO,
 
 	MVSOC_BUS_SPACE_DEFAULT_FUNCS,
 #ifdef __BUS_SPACE_HAS_STREAM_METHODS
@@ -236,7 +273,7 @@ struct bus_space dove_pex0_io_bs_tag = {
 };
 struct bus_space dove_pex1_mem_bs_tag = {
 	/* cookie */
-	(void *)DOVE_TAG_PEX1_MEM,
+	.bs_cookie = (void *)DOVE_TAG_PEX1_MEM,
 
 	MVSOC_BUS_SPACE_DEFAULT_FUNCS,
 #ifdef __BUS_SPACE_HAS_STREAM_METHODS
@@ -245,7 +282,7 @@ struct bus_space dove_pex1_mem_bs_tag = {
 };
 struct bus_space dove_pex1_io_bs_tag = {
 	/* cookie */
-	(void *)DOVE_TAG_PEX1_IO,
+	.bs_cookie = (void *)DOVE_TAG_PEX1_IO,
 
 	MVSOC_BUS_SPACE_DEFAULT_FUNCS,
 #ifdef __BUS_SPACE_HAS_STREAM_METHODS
@@ -257,85 +294,85 @@ struct bus_space dove_pex1_io_bs_tag = {
 #if defined(ARMADAXP)
 struct bus_space armadaxp_pex00_mem_bs_tag = {
 	/* cookie */
-	(void *)ARMADAXP_TAG_PEX00_MEM,
+	.bs_cookie = (void *)ARMADAXP_TAG_PEX00_MEM,
 
 	MVSOC_BUS_SPACE_DEFAULT_FUNCS
 };
 struct bus_space armadaxp_pex00_io_bs_tag = {
 	/* cookie */
-	(void *)ARMADAXP_TAG_PEX00_IO,
+	.bs_cookie = (void *)ARMADAXP_TAG_PEX00_IO,
 
 	MVSOC_BUS_SPACE_DEFAULT_FUNCS
 };
 struct bus_space armadaxp_pex01_mem_bs_tag = {
 	/* cookie */
-	(void *)ARMADAXP_TAG_PEX01_MEM,
+	.bs_cookie = (void *)ARMADAXP_TAG_PEX01_MEM,
 
 	MVSOC_BUS_SPACE_DEFAULT_FUNCS
 };
 struct bus_space armadaxp_pex01_io_bs_tag = {
 	/* cookie */
-	(void *)ARMADAXP_TAG_PEX01_IO,
+	.bs_cookie = (void *)ARMADAXP_TAG_PEX01_IO,
 
 	MVSOC_BUS_SPACE_DEFAULT_FUNCS
 };
 struct bus_space armadaxp_pex02_mem_bs_tag = {
 	/* cookie */
-	(void *)ARMADAXP_TAG_PEX02_MEM,
+	.bs_cookie = (void *)ARMADAXP_TAG_PEX02_MEM,
 
 	MVSOC_BUS_SPACE_DEFAULT_FUNCS
 };
 struct bus_space armadaxp_pex02_io_bs_tag = {
 	/* cookie */
-	(void *)ARMADAXP_TAG_PEX02_IO,
+	.bs_cookie = (void *)ARMADAXP_TAG_PEX02_IO,
 
 	MVSOC_BUS_SPACE_DEFAULT_FUNCS
 };
 struct bus_space armadaxp_pex03_mem_bs_tag = {
 	/* cookie */
-	(void *)ARMADAXP_TAG_PEX03_MEM,
+	.bs_cookie = (void *)ARMADAXP_TAG_PEX03_MEM,
 
 	MVSOC_BUS_SPACE_DEFAULT_FUNCS
 };
 struct bus_space armadaxp_pex03_io_bs_tag = {
 	/* cookie */
-	(void *)ARMADAXP_TAG_PEX03_IO,
+	.bs_cookie = (void *)ARMADAXP_TAG_PEX03_IO,
 
 	MVSOC_BUS_SPACE_DEFAULT_FUNCS
 };
 struct bus_space armadaxp_pex10_mem_bs_tag = {
 	/* cookie */
-	(void *)ARMADAXP_TAG_PEX10_MEM,
+	.bs_cookie = (void *)ARMADAXP_TAG_PEX10_MEM,
 
 	MVSOC_BUS_SPACE_DEFAULT_FUNCS
 };
 struct bus_space armadaxp_pex10_io_bs_tag = {
 	/* cookie */
-	(void *)ARMADAXP_TAG_PEX10_IO,
+	.bs_cookie = (void *)ARMADAXP_TAG_PEX10_IO,
 
 	MVSOC_BUS_SPACE_DEFAULT_FUNCS
 };
 struct bus_space armadaxp_pex2_mem_bs_tag = {
 	/* cookie */
-	(void *)ARMADAXP_TAG_PEX2_MEM,
+	.bs_cookie = (void *)ARMADAXP_TAG_PEX2_MEM,
 
 	MVSOC_BUS_SPACE_DEFAULT_FUNCS
 };
 struct bus_space armadaxp_pex2_io_bs_tag = {
 	/* cookie */
-	(void *)ARMADAXP_TAG_PEX2_IO,
+	.bs_cookie = (void *)ARMADAXP_TAG_PEX2_IO,
 
 	MVSOC_BUS_SPACE_DEFAULT_FUNCS
 };
 struct bus_space armadaxp_pex3_mem_bs_tag = {
 	/* cookie */
-	(void *)ARMADAXP_TAG_PEX3_MEM,
+	.bs_cookie = (void *)ARMADAXP_TAG_PEX3_MEM,
 
 	MVSOC_BUS_SPACE_DEFAULT_FUNCS
 };
 struct bus_space armadaxp_pex3_io_bs_tag = {
 	/* cookie */
-	(void *)ARMADAXP_TAG_PEX3_IO,
+	.bs_cookie = (void *)ARMADAXP_TAG_PEX3_IO,
 
 	MVSOC_BUS_SPACE_DEFAULT_FUNCS
 };
@@ -346,7 +383,7 @@ struct bus_space armadaxp_pex3_io_bs_tag = {
 #if defined(ORION)
 struct bus_space orion_pci_mem_bs_tag = {
 	/* cookie */
-	(void *)ORION_TAG_PCI_MEM,
+	.bs_cookie = (void *)ORION_TAG_PCI_MEM,
 
 	MVSOC_BUS_SPACE_DEFAULT_FUNCS,
 #ifdef __BUS_SPACE_HAS_STREAM_METHODS
@@ -355,7 +392,7 @@ struct bus_space orion_pci_mem_bs_tag = {
 };
 struct bus_space orion_pci_io_bs_tag = {
 	/* cookie */
-	(void *)ORION_TAG_PCI_IO,
+	.bs_cookie = (void *)ORION_TAG_PCI_IO,
 
 	MVSOC_BUS_SPACE_DEFAULT_FUNCS,
 #ifdef __BUS_SPACE_HAS_STREAM_METHODS

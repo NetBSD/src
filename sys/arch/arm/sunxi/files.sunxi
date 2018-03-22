@@ -1,4 +1,4 @@
-#	$NetBSD: files.sunxi,v 1.42.2.1 2018/03/15 09:12:02 pgoyette Exp $
+#	$NetBSD: files.sunxi,v 1.42.2.2 2018/03/22 01:44:43 pgoyette Exp $
 #
 # Configuration info for Allwinner sunxi family SoCs
 #
@@ -12,7 +12,7 @@ file	arch/arm/arm32/arm32_kvminit.c
 file	arch/arm/arm32/arm32_reboot.c
 file	arch/arm/arm32/irq_dispatch.S
 file	arch/arm/arm32/armv7_generic_space.c
-file	arch/arm/arm32/armv7_generic_dma.c
+file	arch/arm/arm/arm_generic_dma.c
 file	arch/arm/arm/bus_space_a4x.S
 
 file	arch/arm/sunxi/sunxi_platform.c		soc_sunxi
@@ -22,6 +22,7 @@ define	sunxi_ccu
 file	arch/arm/sunxi/sunxi_ccu.c		sunxi_ccu
 file	arch/arm/sunxi/sunxi_ccu_div.c		sunxi_ccu
 file	arch/arm/sunxi/sunxi_ccu_fixed_factor.c	sunxi_ccu
+file	arch/arm/sunxi/sunxi_ccu_fractional.c	sunxi_ccu
 file	arch/arm/sunxi/sunxi_ccu_gate.c		sunxi_ccu
 file	arch/arm/sunxi/sunxi_ccu_nm.c		sunxi_ccu
 file	arch/arm/sunxi/sunxi_ccu_nkmp.c		sunxi_ccu

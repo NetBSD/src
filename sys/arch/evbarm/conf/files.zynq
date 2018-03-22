@@ -1,12 +1,9 @@
-#	$NetBSD: files.zynq,v 1.1 2015/01/23 12:34:09 hkenken Exp $
+#	$NetBSD: files.zynq,v 1.1.22.1 2018/03/22 01:44:44 pgoyette Exp $
 #
 # ZYNQ evaluation board configuration info
 #
 
 file	arch/evbarm/zynq/zynq_machdep.c
-
-# Kernel boot arguments
-defparam opt_machdep.h				BOOT_ARGS
 
 # CPU support and integrated peripherals
 include "arch/arm/zynq/files.zynq"

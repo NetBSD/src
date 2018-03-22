@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.390 2018/01/08 09:33:53 maxv Exp $
+#	$NetBSD: files.i386,v 1.390.2.1 2018/03/22 01:44:45 pgoyette Exp $
 #
 # new style config file for i386 architecture
 #
@@ -65,7 +65,6 @@ file	kern/subr_disk_mbr.c		disk
 file	kern/subr_spldebug.c		spldebug
 file	arch/i386/i386/gdt.c
 file	arch/i386/i386/i386func.S
-file	arch/i386/i386/ipkdb_glue.c	ipkdb
 file	arch/i386/i386/kobj_machdep.c	modular
 file	arch/i386/i386/machdep.c
 file 	arch/i386/i386/longrun.c

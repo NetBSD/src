@@ -1,4 +1,4 @@
-#	$NetBSD: files.x86,v 1.97.2.1 2018/03/18 00:35:26 pgoyette Exp $
+#	$NetBSD: files.x86,v 1.97.2.2 2018/03/22 01:44:47 pgoyette Exp $
 
 # options for MP configuration through the MP spec
 defflag opt_mpbios.h MPBIOS MPVERBOSE MPDEBUG MPBIOS_SCANPCI

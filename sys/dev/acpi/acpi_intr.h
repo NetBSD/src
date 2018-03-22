@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_intr.h,v 1.1 2017/12/10 16:51:30 bouyer Exp $ */
+/* $NetBSD: acpi_intr.h,v 1.1.2.1 2018/03/22 01:44:48 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -29,6 +29,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 void *		acpi_intr_establish(device_t, uint64_t,
-		    unsigned int (*intr)(void *), void *);
+		    unsigned int (*intr)(void *), void *, const char *);
 void 		acpi_intr_disestablish(void *, unsigned int (*intr)(void *));
 const char * 	acpi_intr_string(void *, char *, size_t len);

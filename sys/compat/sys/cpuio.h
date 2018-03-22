@@ -1,4 +1,4 @@
-/* $NetBSD: cpuio.h,v 1.5.16.5 2018/03/18 23:34:25 pgoyette Exp $ */
+/* $NetBSD: cpuio.h,v 1.5.16.6 2018/03/22 01:44:47 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -29,8 +29,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _COMPAT_SYS_CPUIO_H
-#define _COMPAT_SYS_CPUIO_H
+#ifndef _SYS_COMPAT_CPUIO_H_
+#define _SYS_COMPAT_CPUIO_H_
 
 #include <sys/ioccom.h>
 
@@ -47,4 +47,4 @@ extern int (*compat_cpuctl_ioctl)(struct lwp *, u_long, void *);
 void kern_cpu_60_init(void);
 void kern_cpu_60_fini(void);
 
-#endif /* _COMPAT_SYS_CPUIO_H */
+#endif /* _SYS_COMPAT_CPUIO_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_inet.c,v 1.37.12.1 2018/03/15 09:12:06 pgoyette Exp $	*/
+/*	$NetBSD: npf_inet.c,v 1.37.12.2 2018/03/22 01:44:51 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.37.12.1 2018/03/15 09:12:06 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.37.12.2 2018/03/22 01:44:51 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -215,7 +215,8 @@ npf_tcpsaw(const npf_cache_t *npc, tcp_seq *seq, tcp_seq *ack, uint32_t *win)
 		return ntohs(ip->ip_len) - npc->npc_hlen - thlen;
 	} else if (npf_iscached(npc, NPC_IP6)) {
 		const struct ip6_hdr *ip6 = npc->npc_ip.v6;
-		return ntohs(ip6->ip6_plen) - thlen;
+		return ntohs(ip6->ip6_plen) -
+		    (npc->npc_hlen - sizeof(*ip6)) - thlen;
 	}
 	return 0;
 }
@@ -322,6 +323,10 @@ npf_cache_ip(npf_cache_t *npc, nbuf_t *nbuf)
 	const uint8_t ver = *(const uint8_t *)nptr;
 	int flags = 0;
 
+	/*
+	 * We intentionally don't read the L4 payload after IPPROTO_AH.
+	 */
+
 	switch (ver >> 4) {
 	case IPVERSION: {
 		struct ip *ip;
@@ -364,6 +369,10 @@ npf_cache_ip(npf_cache_t *npc, nbuf_t *nbuf)
 			return NPC_FMTERR;
 		}
 
+		/*
+		 * XXX: We don't handle IPv6 Jumbograms.
+		 */
+
 		/* Set initial next-protocol value. */
 		hlen = sizeof(struct ip6_hdr);
 		npc->npc_proto = ip6->ip6_nxt;
@@ -403,9 +412,6 @@ npf_cache_ip(npf_cache_t *npc, nbuf_t *nbuf)
 				flags |= NPC_IPFRAG;
 
 				break;
-			case IPPROTO_AH:
-				hlen = (ip6e->ip6e_len + 2) << 2;
-				break;
 			default:
 				hlen = 0;
 				break;
@@ -431,7 +437,7 @@ npf_cache_ip(npf_cache_t *npc, nbuf_t *nbuf)
 		/* Cache: layer 3 - IPv6. */
 		npc->npc_alen = sizeof(struct in6_addr);
 		npc->npc_ips[NPF_SRC] = (npf_addr_t *)&ip6->ip6_src;
-		npc->npc_ips[NPF_DST]= (npf_addr_t *)&ip6->ip6_dst;
+		npc->npc_ips[NPF_DST] = (npf_addr_t *)&ip6->ip6_dst;
 
 		npc->npc_ip.v6 = ip6;
 		flags |= NPC_IP6;

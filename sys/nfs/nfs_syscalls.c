@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.159 2018/01/25 17:14:36 riastradh Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.159.2.1 2018/03/22 01:44:52 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.159 2018/01/25 17:14:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.159.2.1 2018/03/22 01:44:52 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -332,7 +332,7 @@ do_nfssvc(struct nfssvc_copy_ops *ops, struct lwp *l, int flag, void *argp, regi
 			nam = (struct mbuf *)0;
 		else {
 			error = sockargs(&nam, nfsdarg.name, nfsdarg.namelen,
-				MT_SONAME);
+				UIO_USERSPACE, MT_SONAME);
 			if (error) {
 				fd_putfile(nfsdarg.sock);
 				return (error);

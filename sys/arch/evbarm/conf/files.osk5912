@@ -1,12 +1,9 @@
-#	$NetBSD: files.osk5912,v 1.1 2007/01/06 08:16:26 christos Exp $
+#	$NetBSD: files.osk5912,v 1.1.140.1 2018/03/22 01:44:44 pgoyette Exp $
 #
 # TI OSK5912 evaluation board configuration info
 #
 
 file	arch/evbarm/osk5912/osk5912_machdep.c
-
-# Kernel boot arguments
-defparam opt_machdep.h				BOOT_ARGS
 
 # CPU support and integrated peripherals
 include "arch/arm/omap/files.omap"

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.10 2017/02/16 22:40:19 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.10.10.1 2018/03/22 01:44:40 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2002 Marcel Moolenaar
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: main.c,v 1.10 2017/02/16 22:40:19 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.10.10.1 2018/03/22 01:44:40 pgoyette Exp $");
 #endif
 
 #include <stdio.h>
@@ -241,6 +241,9 @@ main(int argc, char *argv[])
 		if (gpt == NULL)
 			return EXIT_FAILURE;
 	} else {
+		if ((cmdsw[i]->flags & GPT_OPTDEV) == 0)
+			errx(EXIT_FAILURE,
+			     "Command %s needs a device parameter", cmd);
 		argc++;
 		gpt = NULL;
 	}

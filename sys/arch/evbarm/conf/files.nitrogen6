@@ -1,13 +1,10 @@
-#	$NetBSD: files.nitrogen6,v 1.2 2015/07/30 08:09:36 ryo Exp $
+#	$NetBSD: files.nitrogen6,v 1.2.18.1 2018/03/22 01:44:44 pgoyette Exp $
 #
 # Nitrogen6X
 #
 
 file	arch/evbarm/nitrogen6/nitrogen6_machdep.c
 file	arch/evbarm/nitrogen6/nitrogen6_iomux.c
-
-# Kernel boot arguments
-defparam opt_machdep.h				BOOT_ARGS
 
 # CPU support and integrated peripherals
 include "arch/arm/imx/files.imx6"

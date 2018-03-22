@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.82 2018/02/25 22:00:22 pgoyette Exp $
+# $NetBSD: ALL,v 1.82.2.1 2018/03/22 01:44:41 pgoyette Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"ALL-$Revision: 1.82 $"
+#ident		"ALL-$Revision: 1.82.2.1 $"
 
 maxusers	64		# estimated number of users
 
@@ -118,8 +118,6 @@ options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 options 	DDB_VERBOSE_HELP
 options 	KGDB		# remote debugger
 options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x3f8,KGDB_DEVRATE=9600
-#options 	IPKDB		# IP Kernel Debugger
-#options 	IPKDBKEY="\"Pass_phrase_to_debug_over_network\""
 makeoptions	COPTS="-O2 -fno-omit-frame-pointer"
 makeoptions	DEBUG="-g"	# compile full symbol table
 options 	SYSCALL_STATS	# per syscall counts

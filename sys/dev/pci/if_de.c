@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.150 2016/12/15 09:33:25 ozaki-r Exp $	*/
+/*	$NetBSD: if_de.c,v 1.150.14.1 2018/03/22 01:44:48 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -37,7 +37,7 @@
  *   board which support 21040, 21041, or 21140 (mostly).
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.150 2016/12/15 09:33:25 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.150.14.1 2018/03/22 01:44:48 pgoyette Exp $");
 
 #define	TULIP_HDR_DATA
 
@@ -1148,7 +1148,7 @@ tulip_21041_media_poll(
     }
 
     /*
-     * If we've been been asked to start a poll or link change interrupt
+     * If we've been asked to start a poll or link change interrupt
      * restart the probe (and reset the tulip to a known state).
      */
     if (event == TULIP_MEDIAPOLL_START) {

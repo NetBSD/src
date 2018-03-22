@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_43.c,v 1.54 2016/09/13 07:01:07 martin Exp $	*/
+/*	$NetBSD: netbsd32_compat_43.c,v 1.54.14.1 2018/03/22 01:44:47 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_43.c,v 1.54 2016/09/13 07:01:07 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_43.c,v 1.54.14.1 2018/03/22 01:44:47 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_43.h"
@@ -529,7 +529,7 @@ compat_43_netbsd32_osendmsg(struct lwp *l, const struct compat_43_netbsd32_osend
 	msg.msg_flags = MSG_NAMEMBUF;
 
 	error = sockargs(&nam, NETBSD32PTR64(omsg.msg_name), omsg.msg_namelen,
-	    MT_SONAME);
+	    UIO_USERSPACE, MT_SONAME);
 	if (error != 0)
 		goto out;
 

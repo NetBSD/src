@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.45 2017/04/08 19:53:23 christos Exp $
+#	$NetBSD: Makefile,v 1.45.12.1 2018/03/22 01:44:46 pgoyette Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -17,8 +17,6 @@ LIBCRTBEGIN=
 LIBCRTEND=
 
 CLEANFILES+=${PROG} ${PROG}.sym
-# XXX - hack, doesn't work with -O2 and gcc 4.8
-CFLAGS+=-O1
 CPPFLAGS+=-DSUPPORT_BOOTPARAMS -DSUPPORT_BOOTP -DSUPPORT_DHCP -D_STANDALONE \
 	-DNO_MID_CHECK
 CPPFLAGS+=-DLIBSA_CREAD_NOCRC

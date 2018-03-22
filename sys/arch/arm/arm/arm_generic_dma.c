@@ -1,4 +1,4 @@
-/* $NetBSD: armv7_generic_dma.c,v 1.1 2017/05/28 00:34:51 jmcneill Exp $ */
+/* $NetBSD: arm_generic_dma.c,v 1.1.2.2 2018/03/22 01:44:41 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,13 +27,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armv7_generic_dma.c,v 1.1 2017/05/28 00:34:51 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_generic_dma.c,v 1.1.2.2 2018/03/22 01:44:41 pgoyette Exp $");
 
 #define	_ARM32_BUS_DMA_PRIVATE
+
 #include <sys/param.h>
 #include <sys/bus.h>
 
-struct arm32_bus_dma_tag armv7_generic_dma_tag = {
+struct arm32_bus_dma_tag arm_generic_dma_tag = {
 	_BUS_DMAMAP_FUNCS,
 	_BUS_DMAMEM_FUNCS,
 	_BUS_DMATAG_FUNCS,

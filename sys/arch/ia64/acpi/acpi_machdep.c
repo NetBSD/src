@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_machdep.c,v 1.6 2012/09/23 00:31:05 chs Exp $	*/
+/*	$NetBSD: acpi_machdep.c,v 1.6.36.1 2018/03/22 01:44:45 pgoyette Exp $	*/
 /*
  * Copyright (c) 2009 KIYOHARA Takashi
  * All rights reserved.
@@ -28,7 +28,7 @@
  * Machine-dependent routines for ACPICA.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.6 2012/09/23 00:31:05 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.6.36.1 2018/03/22 01:44:45 pgoyette Exp $");
 
 #include <sys/param.h>
 
@@ -77,7 +77,8 @@ acpi_md_OsGetRootPointer(void)
 ACPI_STATUS
 acpi_md_OsInstallInterruptHandler(UINT32 InterruptNumber,
 				  ACPI_OSD_HANDLER ServiceRoutine,
-				  void *Context, void **cookiep)
+				  void *Context, void **cookiep,
+				  const char *xname)
 {
 	static int isa_irq_to_vector_map[16] = {
 	        /* i8259 IRQ translation, first 16 entries */

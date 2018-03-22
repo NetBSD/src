@@ -1,4 +1,4 @@
-.\"	$NetBSD: recv.2,v 1.37 2017/06/11 17:34:54 abhinav Exp $
+.\"	$NetBSD: recv.2,v 1.37.4.1 2018/03/22 01:44:40 pgoyette Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)recv.2	8.3 (Berkeley) 2/21/94
 .\"
-.Dd June 22, 2012
+.Dd March 19, 2018
 .Dt RECV 2
 .Os
 .Sh NAME
@@ -319,6 +319,8 @@ any data were available.
 .It Bq Er EINVAL
 The total length of the I/O is more than can be expressed by the ssize_t
 return value.
+.It Bq Er ENOBUFS
+A message was not delivered because it would have overflowed the buffer.
 .It Bq Er ENOTCONN
 The socket is associated with a connection-oriented protocol
 and has not been connected (see

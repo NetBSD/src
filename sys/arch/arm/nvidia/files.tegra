@@ -1,4 +1,4 @@
-#	$NetBSD: files.tegra,v 1.46 2017/12/26 14:54:52 jmcneill Exp $
+#	$NetBSD: files.tegra,v 1.46.2.1 2018/03/22 01:44:43 pgoyette Exp $
 #
 # Configuration info for NVIDIA Tegra ARM Peripherals
 #
@@ -11,7 +11,7 @@ file	arch/arm/arm32/arm32_kvminit.c
 file	arch/arm/arm32/arm32_reboot.c
 file	arch/arm/arm32/irq_dispatch.S
 file	arch/arm/arm32/armv7_generic_space.c
-file	arch/arm/arm32/armv7_generic_dma.c
+file	arch/arm/arm/arm_generic_dma.c
 file	arch/arm/arm/bus_space_a4x.S
 
 file	arch/arm/nvidia/tegra_platform.c

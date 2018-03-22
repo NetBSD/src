@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.181.2.1 2018/03/15 09:12:06 pgoyette Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.181.2.2 2018/03/22 01:44:50 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.181.2.1 2018/03/15 09:12:06 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.181.2.2 2018/03/22 01:44:50 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
@@ -606,7 +606,14 @@ m_get(int nowait, int type)
 
 	mbstat_type_add(type, 1);
 
-	m_hdr_init(m, type, NULL, m->m_dat, 0);
+	mowner_init(m, type);
+	m->m_ext_ref = m; /* default */
+	m->m_type = type;
+	m->m_len = 0;
+	m->m_next = NULL;
+	m->m_nextpkt = NULL; /* default */
+	m->m_data = m->m_dat;
+	m->m_flags = 0; /* default */
 
 	return m;
 }
@@ -620,7 +627,18 @@ m_gethdr(int nowait, int type)
 	if (m == NULL)
 		return NULL;
 
-	m_pkthdr_init(m);
+	m->m_data = m->m_pktdat;
+	m->m_flags = M_PKTHDR;
+
+	m_reset_rcvif(m);
+	m->m_pkthdr.len = 0;
+	m->m_pkthdr.csum_flags = 0;
+	m->m_pkthdr.csum_data = 0;
+	SLIST_INIT(&m->m_pkthdr.tags);
+
+	m->m_pkthdr.pattr_class = NULL;
+	m->m_pkthdr.pattr_af = AF_UNSPEC;
+	m->m_pkthdr.pattr_hdr = NULL;
 
 	return m;
 }
@@ -707,8 +725,6 @@ m_prepend(struct mbuf *m, int len, int how)
  * continuing for "len" bytes.  If len is M_COPYALL, copy to end of mbuf.
  * The wait parameter is a choice of M_WAIT/M_DONTWAIT from caller.
  */
-int MCFail;
-
 struct mbuf *
 m_copym(struct mbuf *m, int off0, int len, int wait)
 {
@@ -812,14 +828,10 @@ m_copym0(struct mbuf *m, int off0, int len, int wait, bool deep)
 		np = &n->m_next;
 	}
 
-	if (top == NULL)
-		MCFail++;
-
 	return top;
 
 nospace:
 	m_freem(top);
-	MCFail++;
 	return NULL;
 }
 
@@ -871,7 +883,6 @@ m_copypacket(struct mbuf *m, int how)
 
 nospace:
 	m_freem(top);
-	MCFail++;
 	return NULL;
 }
 
@@ -1082,8 +1093,6 @@ m_ensure_contig(struct mbuf **m0, int len)
 /*
  * m_pullup: same as m_ensure_contig(), but destroys mbuf chain on error.
  */
-int MPFail;
-
 struct mbuf *
 m_pullup(struct mbuf *n, int len)
 {
@@ -1093,7 +1102,6 @@ m_pullup(struct mbuf *n, int len)
 	if (!m_ensure_contig(&m, len)) {
 		KASSERT(m != NULL);
 		m_freem(m);
-		MPFail++;
 		m = NULL;
 	}
 	return m;
@@ -1104,8 +1112,6 @@ m_pullup(struct mbuf *n, int len)
  * the amount of empty space before the data in the new mbuf to be specified
  * (in the event that the caller expects to prepend later).
  */
-int MSFail;
-
 struct mbuf *
 m_copyup(struct mbuf *n, int len, int dstoff)
 {
@@ -1145,7 +1151,6 @@ m_copyup(struct mbuf *n, int len, int dstoff)
 	return (m);
  bad:
 	m_freem(n);
-	MSFail++;
 	return (NULL);
 }
 

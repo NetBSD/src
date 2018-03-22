@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2010/04/12 17:58:40 joerg Exp $
+#	$NetBSD: Makefile,v 1.2.46.1 2018/03/22 01:44:40 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -23,10 +23,11 @@ INCSDIR=/usr/include
 make-manpages:
 	pod2man --section=3 --center=libdes --release=0.9.6j des.pod | \
 	sed -e 's/[[:space:]]*$$//' > ${.CURDIR}/des.3
-	pod2man --section=7 --center=libdes --release=0.9.6j des_modes.pod | \
-	sed -e 's/[[:space:]]*$$//' > ${.CURDIR}/des_modes.7
+#	Use the OpenSSL Version
+#	pod2man --section=7 --center=libdes --release=0.9.6j des_modes.pod | \
+#	sed -e 's/[[:space:]]*$$//' > ${.CURDIR}/des_modes.7
 
-MAN=	des.3 des_modes.7
+MAN=	des.3 # des_modes.7
 
 MLINKS+=des.3 des_cbc_cksum.3 \
 	des.3 des_cfb64_encrypt.3 \

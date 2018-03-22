@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_ucode.h,v 1.3.36.1 2018/03/17 21:37:52 pgoyette Exp $ */
+/* $NetBSD: cpu_ucode.h,v 1.3.36.2 2018/03/22 01:44:47 pgoyette Exp $ */
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.

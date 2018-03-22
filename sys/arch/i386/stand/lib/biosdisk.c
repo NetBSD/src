@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk.c,v 1.46.12.1 2018/03/15 09:12:03 pgoyette Exp $	*/
+/*	$NetBSD: biosdisk.c,v 1.46.12.2 2018/03/22 01:44:45 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998
@@ -802,20 +802,21 @@ biosdisk_findpartition(int biosdev, daddr_t sector)
 			if (d->part[partition].fstype == FS_UNUSED)
 				continue;
 #ifdef EFIBOOT
-			if (d->part[partition].attr & GPT_ENT_ATTR_BOOTME) {
-				switch (d->part[partition].fstype) {
-				case FS_BSDFFS:
-				case FS_BSDLFS:
-				case FS_RAID:
-				case FS_CCD:
-				case FS_CGD:
-				case FS_ISO9660:
-					break;
+			switch (d->part[partition].fstype) {
+			case FS_BSDFFS:
+			case FS_BSDLFS:
+			case FS_RAID:
+			case FS_CCD:
+			case FS_CGD:
+			case FS_ISO9660:
+				if (d->part[partition].attr & GPT_ENT_ATTR_BOOTME)
+					goto found;
+				candidate = partition;
+				break;
 
-				default:
+			default:
+				if (d->part[partition].attr & GPT_ENT_ATTR_BOOTME)
 					candidate = partition;
-					continue;
-				}
 				break;
 			}
 #else
@@ -824,6 +825,7 @@ biosdisk_findpartition(int biosdev, daddr_t sector)
 #endif
 		}
 #ifdef EFIBOOT
+found:
 		if (partition == 0 && candidate != 0)
 			partition = candidate;
 #endif

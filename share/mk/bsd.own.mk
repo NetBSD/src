@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1046.2.1 2018/03/15 09:12:01 pgoyette Exp $
+#	$NetBSD: bsd.own.mk,v 1.1046.2.2 2018/03/22 01:44:41 pgoyette Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1594,7 +1594,8 @@ TARGETS+=	lintmanpages
 TESTSBASE=	/usr/tests${MLIBDIR:D/${MLIBDIR}}
 
 # Override with tools versions if needed
-.if ${MKCTF:Uno} != "no" && !defined(NOCTF)
+.if ${MKCTF:Uno} != "no" && !defined(NOCTF) && \
+    (exists(${TOOL_CTFCONVERT}) || exists(/usr/bin/${TOOL_CTFCONVERT}))
 CTFCONVERT=	${TOOL_CTFCONVERT}
 CTFMERGE=	${TOOL_CTFMERGE}
 .endif

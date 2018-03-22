@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.104 2014/09/13 18:09:50 matt Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.104.18.1 2018/03/22 01:44:45 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.104 2014/09/13 18:09:50 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.104.18.1 2018/03/22 01:44:45 pgoyette Exp $");
 
 #include "opt_cputypes.h"
 #include "opt_kloader.h"
@@ -303,7 +303,7 @@ initarm(int argc, char **argv, struct bootinfo *bi)
 }
 
 #ifdef BOOT_DUMP
-static void
+void
 dumppages(char *start, int nbytes)
 {
 	char *p = start;

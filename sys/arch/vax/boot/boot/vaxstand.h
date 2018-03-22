@@ -1,4 +1,4 @@
-/*	$NetBSD: vaxstand.h,v 1.9 2017/05/22 16:59:32 ragge Exp $ */
+/*	$NetBSD: vaxstand.h,v 1.9.8.1 2018/03/22 01:44:46 pgoyette Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -46,6 +46,7 @@ extern int csrbase, nexaddr;
 struct netif_driver;
 
 int net_devinit(struct open_file *f, struct netif_driver *drv, u_char *eaddr);
+int ubmap(int mapno, int vaddr, int size);
 
 /* device calls */
 int	raopen(struct open_file *, int, int, int, int),

@@ -1,4 +1,4 @@
-/*	$NetBSD: hp.c,v 1.10 2017/05/22 16:59:32 ragge Exp $ */
+/*	$NetBSD: hp.c,v 1.10.8.1 2018/03/22 01:44:46 pgoyette Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -108,13 +108,9 @@ int
 hpstrategy(void *f, int func, daddr_t dblk,
     size_t size, void *buf, size_t *rsize)
 {
-	unsigned int pfnum, mapnr, nsize, bn, cn, sn, tn;
+	unsigned int bn, cn, sn, tn;
 
-	pfnum = (u_int)buf >> VAX_PGSHIFT;
-
-	for(mapnr = 0, nsize = size; (nsize + VAX_NBPG) > 0;
-	    nsize -= VAX_NBPG, mapnr++, pfnum++)
-		MBA_WCSR(MAPREG(mapnr), PG_V | pfnum);
+	(void)ubmap(0, (int)buf, size);
 
 	MBA_WCSR(MBA_VAR, ((u_int)buf & VAX_PGOFSET));
 	MBA_WCSR(MBA_BC, (~size) + 1);
