@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ping.c,v 1.17 2017/01/13 21:30:42 christos Exp $	*/
+/*	$NetBSD: t_ping.c,v 1.18 2018/03/22 17:16:05 roy Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: t_ping.c,v 1.17 2017/01/13 21:30:42 christos Exp $");
+__RCSID("$NetBSD: t_ping.c,v 1.18 2018/03/22 17:16:05 roy Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -190,7 +190,7 @@ doping(const char *target, int loops, u_int pktsize)
 		    (struct sockaddr *)&pingee, &slen)) > 0) {
 			succ++;
 		}
-		if (n == -1 && errno == EAGAIN)
+		if (n == -1 && (errno == EAGAIN || errno == ENOBUFS))
 			continue;
 		atf_tc_fail_errno("recv failed");
 	}
