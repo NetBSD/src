@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.386 2018/03/22 21:19:28 maxv Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.387 2018/03/23 08:57:40 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.386 2018/03/22 21:19:28 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.387 2018/03/23 08:57:40 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1381,18 +1381,20 @@ tcp_input(struct mbuf *m, ...)
 		KASSERT(TCP_HDR_ALIGNED_P(th));
 		optlen = off - sizeof(struct tcphdr);
 		optp = ((u_int8_t *)th) + sizeof(struct tcphdr);
+
 		/*
-		 * Do quick retrieval of timestamp options ("options
-		 * prediction?").  If timestamp is the only option and it's
-		 * formatted as recommended in RFC 1323 appendix A, we
-		 * quickly get the values now and not bother calling
-		 * tcp_dooptions(), etc.
+		 * Do quick retrieval of timestamp options.
+		 *
+		 * If timestamp is the only option and it's formatted as
+		 * recommended in RFC 1323 appendix A, we quickly get the
+		 * values now and don't bother calling tcp_dooptions(),
+		 * etc.
 		 */
 		if ((optlen == TCPOLEN_TSTAMP_APPA ||
 		     (optlen > TCPOLEN_TSTAMP_APPA &&
-			optp[TCPOLEN_TSTAMP_APPA] == TCPOPT_EOL)) &&
-		     *(u_int32_t *)optp == htonl(TCPOPT_TSTAMP_HDR) &&
-		     (th->th_flags & TH_SYN) == 0) {
+		      optp[TCPOLEN_TSTAMP_APPA] == TCPOPT_EOL)) &&
+		    *(u_int32_t *)optp == htonl(TCPOPT_TSTAMP_HDR) &&
+		    (th->th_flags & TH_SYN) == 0) {
 			opti.ts_present = 1;
 			opti.ts_val = ntohl(*(u_int32_t *)(optp + 4));
 			opti.ts_ecr = ntohl(*(u_int32_t *)(optp + 8));
@@ -2343,7 +2345,7 @@ after_listen:
 	 * If segment ends after window, drop trailing data
 	 * (and PUSH and FIN); if nothing left, just ACK.
 	 */
-	todrop = (th->th_seq + tlen) - (tp->rcv_nxt+tp->rcv_wnd);
+	todrop = (th->th_seq + tlen) - (tp->rcv_nxt + tp->rcv_wnd);
 	if (todrop > 0) {
 		TCP_STATINC(TCP_STAT_RCVPACKAFTERWIN);
 		if (todrop >= tlen) {
@@ -2354,26 +2356,28 @@ after_listen:
 			 * th->th_seq >= tp->rcv_nxt + tp->rcv_wnd
 			 */
 			TCP_STATADD(TCP_STAT_RCVBYTEAFTERWIN, tlen);
+
 			/*
-			 * If a new connection request is received
-			 * while in TIME_WAIT, drop the old connection
-			 * and start over if the sequence numbers
-			 * are above the previous ones.
+			 * If a new connection request is received while in
+			 * TIME_WAIT, drop the old connection and start over
+			 * if the sequence numbers are above the previous
+			 * ones.
 			 *
-			 * NOTE: We will checksum the packet again, and
-			 * so we need to put the header fields back into
-			 * network order!
+			 * NOTE: We need to put the header fields back into
+			 * network order.
+			 *
 			 * XXX This kind of sucks, but we don't expect
 			 * XXX this to happen very often, so maybe it
 			 * XXX doesn't matter so much.
 			 */
-			if (tiflags & TH_SYN &&
+			if ((tiflags & TH_SYN) &&
 			    tp->t_state == TCPS_TIME_WAIT &&
 			    SEQ_GT(th->th_seq, tp->rcv_nxt)) {
 				tp = tcp_close(tp);
 				tcp_fields_to_net(th);
 				goto findpcb;
 			}
+
 			/*
 			 * If window is closed can only take segments at
 			 * window edge, and have to drop data and PUSH from
@@ -2384,10 +2388,12 @@ after_listen:
 			if (tp->rcv_wnd == 0 && th->th_seq == tp->rcv_nxt) {
 				tp->t_flags |= TF_ACKNOW;
 				TCP_STATINC(TCP_STAT_RCVWINPROBE);
-			} else
+			} else {
 				goto dropafterack;
-		} else
+			}
+		} else {
 			TCP_STATADD(TCP_STAT_RCVBYTEAFTERWIN, todrop);
+		}
 		m_adj(m, -todrop);
 		tlen -= todrop;
 		tiflags &= ~(TH_PUSH|TH_FIN);
@@ -3199,7 +3205,7 @@ tcp_dooptions(struct tcpcb *tp, const u_char *cp, int cnt, struct tcphdr *th,
 				continue;
 			if (TCPS_HAVERCVDSYN(tp->t_state))
 				continue;
-			bcopy(cp + 2, &mss, sizeof(mss));
+			memcpy(&mss, cp + 2, sizeof(mss));
 			oi->maxseg = ntohs(mss);
 			break;
 
@@ -3240,9 +3246,9 @@ tcp_dooptions(struct tcpcb *tp, const u_char *cp, int cnt, struct tcphdr *th,
 			if (optlen != TCPOLEN_TIMESTAMP)
 				continue;
 			oi->ts_present = 1;
-			bcopy(cp + 2, &oi->ts_val, sizeof(oi->ts_val));
+			memcpy(&oi->ts_val, cp + 2, sizeof(oi->ts_val));
 			NTOHL(oi->ts_val);
-			bcopy(cp + 6, &oi->ts_ecr, sizeof(oi->ts_ecr));
+			memcpy(&oi->ts_ecr, cp + 6, sizeof(oi->ts_ecr));
 			NTOHL(oi->ts_ecr);
 
 			if (!(th->th_flags & TH_SYN))
@@ -3347,13 +3353,13 @@ tcp_pulloutofband(struct socket *so, struct tcphdr *th,
 
 			tp->t_iobc = *cp;
 			tp->t_oobflags |= TCPOOB_HAVEDATA;
-			bcopy(cp+1, cp, (unsigned)(m->m_len - cnt - 1));
+			memmove(cp, cp + 1, (unsigned)(m->m_len - cnt - 1));
 			m->m_len--;
 			return;
 		}
 		cnt -= m->m_len;
 		m = m->m_next;
-		if (m == 0)
+		if (m == NULL)
 			break;
 	}
 	panic("tcp_pulloutofband");
@@ -4228,9 +4234,7 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 	switch (src->sa_family) {
 #ifdef INET
 	case AF_INET:
-		/*
-		 * Remember the IP options, if any.
-		 */
+		/* Remember the IP options, if any. */
 		ipopts = ip_srcroute(m);
 		break;
 #endif
@@ -4280,8 +4284,8 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 	 */
 	memset(sc, 0, sizeof(struct syn_cache));
 	callout_init(&sc->sc_timer, CALLOUT_MPSAFE);
-	bcopy(src, &sc->sc_src, src->sa_len);
-	bcopy(dst, &sc->sc_dst, dst->sa_len);
+	memcpy(&sc->sc_src, src, src->sa_len);
+	memcpy(&sc->sc_dst, dst, dst->sa_len);
 	sc->sc_flags = 0;
 	sc->sc_ipopts = ipopts;
 	sc->sc_irs = th->th_seq;
