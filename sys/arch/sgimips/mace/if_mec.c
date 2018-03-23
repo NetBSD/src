@@ -1,4 +1,4 @@
-/* $NetBSD: if_mec.c,v 1.55 2016/12/15 09:28:04 ozaki-r Exp $ */
+/* $NetBSD: if_mec.c,v 1.56 2018/03/23 09:43:33 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2004, 2008 Izumi Tsutsui.  All rights reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.55 2016/12/15 09:28:04 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.56 2018/03/23 09:43:33 jmcneill Exp $");
 
 #include "opt_ddb.h"
 
@@ -1599,7 +1599,6 @@ mec_intr(void *arg)
 		    (MEC_INT_TX_LINK_FAIL |
 		     MEC_INT_TX_MEM_ERROR |
 		     MEC_INT_TX_ABORT |
-		     MEC_INT_RX_FIFO_UNDERFLOW |
 		     MEC_INT_RX_DMA_UNDERFLOW)) {
 			printf("%s: %s: interrupt status = 0x%08x\n",
 			    device_xname(sc->sc_dev), __func__, statreg);
