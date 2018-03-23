@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_alg_icmp.c,v 1.29 2018/03/22 12:16:11 maxv Exp $	*/
+/*	$NetBSD: npf_alg_icmp.c,v 1.30 2018/03/23 08:34:57 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_alg_icmp.c,v 1.29 2018/03/22 12:16:11 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_alg_icmp.c,v 1.30 2018/03/23 08:34:57 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/module.h>
@@ -213,10 +213,12 @@ npfa_icmp_inspect(npf_cache_t *npc, npf_cache_t *enpc)
 	 * Inspect the ICMP packet.  The relevant data might be in the
 	 * embedded packet.  Fill the "enpc" cache, if so.
 	 */
-	if (npf_iscached(npc, NPC_IP4)) {
+	if (npf_iscached(npc, NPC_IP4) &&
+	    npc->npc_proto == IPPROTO_ICMP) {
 		const struct icmp *ic = npc->npc_l4.icmp;
 		ret = npfa_icmp4_inspect(ic->icmp_type, enpc, &hasqid);
-	} else if (npf_iscached(npc, NPC_IP6)) {
+	} else if (npf_iscached(npc, NPC_IP6) &&
+	    npc->npc_proto == IPPROTO_ICMPV6) {
 		const struct icmp6_hdr *ic6 = npc->npc_l4.icmp6;
 		ret = npfa_icmp6_inspect(ic6->icmp6_type, enpc, &hasqid);
 	} else {
