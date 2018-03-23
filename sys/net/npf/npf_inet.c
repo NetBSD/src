@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_inet.c,v 1.46 2018/03/22 09:04:25 maxv Exp $	*/
+/*	$NetBSD: npf_inet.c,v 1.47 2018/03/23 08:28:54 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.46 2018/03/22 09:04:25 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.47 2018/03/23 08:28:54 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -485,9 +485,7 @@ again:
 	flags = npf_cache_ip(npc, nbuf);
 	if ((flags & NPC_IP46) == 0 || (flags & NPC_IPFRAG) != 0 ||
 	    (flags & NPC_FMTERR) != 0) {
-		nbuf_unset_flag(nbuf, NBUF_DATAREF_RESET);
-		npc->npc_info |= flags;
-		return flags;
+		goto out;
 	}
 	hlen = npc->npc_hlen;
 
@@ -526,14 +524,23 @@ again:
 		break;
 	}
 
+	/* Error out if nbuf_advance failed. */
+	if (l4flags && npc->npc_l4.hdr == NULL) {
+		goto err;
+	}
+
 	if (nbuf_flag_p(nbuf, NBUF_DATAREF_RESET)) {
 		goto again;
 	}
 
-	/* Add the L4 flags if nbuf_advance() succeeded. */
-	if (l4flags && npc->npc_l4.hdr) {
-		flags |= l4flags;
-	}
+	flags |= l4flags;
+	npc->npc_info |= flags;
+	return flags;
+
+err:
+	flags = NPC_FMTERR;
+out:
+	nbuf_unset_flag(nbuf, NBUF_DATAREF_RESET);
 	npc->npc_info |= flags;
 	return flags;
 }
