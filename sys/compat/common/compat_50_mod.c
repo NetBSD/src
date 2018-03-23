@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_50_mod.c,v 1.1.2.3 2018/03/21 10:01:04 pgoyette Exp $	*/
+/*	$NetBSD: compat_50_mod.c,v 1.1.2.4 2018/03/23 09:41:10 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_50_mod.c,v 1.1.2.3 2018/03/21 10:01:04 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_50_mod.c,v 1.1.2.4 2018/03/23 09:41:10 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -47,6 +47,8 @@ __KERNEL_RCSID(0, "$NetBSD: compat_50_mod.c,v 1.1.2.3 2018/03/21 10:01:04 pgoyet
 #include <sys/syscall.h>
 #include <sys/syscallvar.h>
 #include <sys/syscallargs.h>
+
+#include <opencrypto/ocryptodev.h>
 
 #include <compat/sys/clockctl.h>
 
@@ -79,6 +81,7 @@ compat_50_init(void)
 	if_50_init();
 	clockctl_50_init();
 	if_spppsubr_50_init();
+	cryptodev_50_init();
 
 	return error;
 
@@ -99,6 +102,7 @@ compat_50_fini(void)
 {
 	int error = 0;
 
+	cryptodev_50_fini();
 	if_spppsubr_50_fini();
 	clockctl_50_fini();
 	if_50_fini();
@@ -134,6 +138,7 @@ compat_50_fini(void)
 	if_50_init();
 	clockctl_50_init();
 	if_spppsubr_50_init();
+	cryptodev_50_init();
 
 	return error;
 }
