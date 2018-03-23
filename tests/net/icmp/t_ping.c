@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ping.c,v 1.19 2018/03/22 17:27:34 roy Exp $	*/
+/*	$NetBSD: t_ping.c,v 1.20 2018/03/23 10:05:45 roy Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: t_ping.c,v 1.19 2018/03/22 17:27:34 roy Exp $");
+__RCSID("$NetBSD: t_ping.c,v 1.20 2018/03/23 10:05:45 roy Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -198,7 +198,7 @@ doping(const char *target, int loops, u_int pktsize)
 		}
 		if (n == -1 && (errno == EAGAIN || errno == ENOBUFS))
 			continue;
-		atf_tc_fail_errno("recv failed");
+		atf_tc_fail_errno("recv failed (n == %d)", n);
 	}
 
 	rump_sys_close(s);
@@ -334,7 +334,7 @@ ATF_TC_BODY(ping_of_death, tc)
 	char ifname[IFNAMSIZ];
 	pid_t cpid;
 	size_t tot, frag;
-	int s, x, loop;
+	int s, x, loop, error;
 
 	cpid = fork();
 	rump_init();
@@ -418,15 +418,18 @@ ATF_TC_BODY(ping_of_death, tc)
 				ip->ip_off |= IP_MF;
 			}
 
-			RL(rump_sys_sendto(s, data, frag, 0,
-			    (struct sockaddr *)&dst, sizeof(dst)));
+			error = rump_sys_sendto(s, data, frag, 0,
+			    (struct sockaddr *)&dst, sizeof(dst));
+			if (error == -1 && errno == ENOBUFS)
+				continue;
+			atf_tc_fail_errno("sendto failed");
 		}
 		if (waitpid(-1, &status, WNOHANG) > 0) {
 			if (WIFEXITED(status) && WEXITSTATUS(status) == 0)
 				break;
 			atf_tc_fail("child did not exit clean");
 		}
-			
+
 		usleep(10000);
 	}
 }
