@@ -1,4 +1,4 @@
-/*	$NetBSD: ocryptodev.h,v 1.3 2015/09/06 06:01:02 dholland Exp $ */
+/*	$NetBSD: ocryptodev.h,v 1.3.16.1 2018/03/23 09:41:10 pgoyette Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.h,v 1.2.2.6 2003/07/02 17:04:50 sam Exp $	*/
 /*	$OpenBSD: cryptodev.h,v 1.33 2002/07/17 23:52:39 art Exp $	*/
 
@@ -171,5 +171,10 @@ struct ocrypt_mop {
 #define OCIOCNCRYPTM	_IOWR('c', 107, struct ocrypt_mop)
 
 int ocryptof_ioctl(struct file *, u_long, void *);
+
+extern int (*ocryptof50_ioctl)(struct file *, u_long, void *);
+
+void cryptodev_50_init(void);
+void cryptodev_50_fini(void);
 
 #endif /* _CRYPTO_OCRYPTODEV_H_ */

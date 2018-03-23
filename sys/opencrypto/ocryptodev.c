@@ -1,4 +1,4 @@
-/*	$NetBSD: ocryptodev.c,v 1.11 2017/07/28 17:14:04 riastradh Exp $ */
+/*	$NetBSD: ocryptodev.c,v 1.11.2.1 2018/03/23 09:41:10 pgoyette Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ocryptodev.c,v 1.11 2017/07/28 17:14:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ocryptodev.c,v 1.11.2.1 2018/03/23 09:41:10 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -282,4 +282,18 @@ ocryptodev_msession(struct fcrypt *fcr, struct osession_n_op *osn_ops,
 	}
 
 	return 0;
+}
+
+void
+cryptodev_50_init(void)
+{
+
+	ocryptof50_ioctl = ocryptof_ioctl;
+}
+
+void
+cryptodev_50_fini(void)
+{
+
+	ocryptof50_ioctl = (void *)enosys;
 }
