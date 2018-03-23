@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.387 2018/03/23 08:57:40 maxv Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.388 2018/03/23 09:30:55 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.387 2018/03/23 08:57:40 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.388 2018/03/23 09:30:55 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -187,9 +187,6 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.387 2018/03/23 08:57:40 maxv Exp $")
 #include <netinet/in_offload.h>
 
 #ifdef INET6
-#ifndef INET
-#include <netinet/in.h>
-#endif
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
 #include <netinet6/in6_pcb.h>
@@ -222,7 +219,7 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.387 2018/03/23 08:57:40 maxv Exp $")
 #if defined(NFAITH) && NFAITH > 0
 #include <net/if_faith.h>
 #endif
-#endif	/* INET6 */
+#endif
 
 #ifdef IPSEC
 #include <netipsec/ipsec.h>
@@ -343,12 +340,10 @@ tcp_fields_to_net(struct tcphdr *th)
 #ifdef TCP_CSUM_COUNTERS
 #include <sys/device.h>
 
-#if defined(INET)
 extern struct evcnt tcp_hwcsum_ok;
 extern struct evcnt tcp_hwcsum_bad;
 extern struct evcnt tcp_hwcsum_data;
 extern struct evcnt tcp_swcsum;
-#endif /* defined(INET) */
 #if defined(INET6)
 extern struct evcnt tcp6_hwcsum_ok;
 extern struct evcnt tcp6_hwcsum_bad;
@@ -394,9 +389,7 @@ static int tcp_reass(struct tcpcb *, const struct tcphdr *, struct mbuf *,
 static int tcp_dooptions(struct tcpcb *, const u_char *, int,
     struct tcphdr *, struct mbuf *, int, struct tcp_opt_info *);
 
-#ifdef INET
 static void tcp4_log_refused(const struct ip *, const struct tcphdr *);
-#endif
 #ifdef INET6
 static void tcp6_log_refused(const struct ip6_hdr *, const struct tcphdr *);
 #endif
@@ -845,7 +838,6 @@ tcp6_input(struct mbuf **mp, int *offp, int proto)
 }
 #endif
 
-#ifdef INET
 static void
 tcp4_log_refused(const struct ip *ip, const struct tcphdr *th)
 {
@@ -865,7 +857,6 @@ tcp4_log_refused(const struct ip *ip, const struct tcphdr *th)
 	    dst, ntohs(th->th_dport),
 	    src, ntohs(th->th_sport));
 }
-#endif
 
 #ifdef INET6
 static void
@@ -909,7 +900,6 @@ tcp_input_checksum(int af, struct mbuf *m, const struct tcphdr *th,
 		goto badcsum; /* XXX */
 
 	switch (af) {
-#ifdef INET
 	case AF_INET:
 		switch (m->m_pkthdr.csum_flags &
 			((rcvif->if_csum_flags_rx & M_CSUM_TCPv4) |
@@ -955,7 +945,6 @@ tcp_input_checksum(int af, struct mbuf *m, const struct tcphdr *th,
 			break;
 		}
 		break;
-#endif /* INET4 */
 
 #ifdef INET6
 	case AF_INET6:
@@ -1285,7 +1274,6 @@ tcp_input(struct mbuf *m, ...)
 	 */
 	ip = mtod(m, struct ip *);
 	switch (ip->ip_v) {
-#ifdef INET
 	case 4:
 #ifdef INET6
 		ip6 = NULL;
@@ -1302,7 +1290,6 @@ tcp_input(struct mbuf *m, ...)
 		tlen = len - toff;
 		iptos = ip->ip_tos;
 		break;
-#endif
 #ifdef INET6
 	case 6:
 		ip = NULL;
@@ -1418,7 +1405,6 @@ findpcb:
 	in6p = NULL;
 #endif
 	switch (af) {
-#ifdef INET
 	case AF_INET:
 		inp = in_pcblookup_connect(&tcbtable, ip->ip_src, th->th_sport,
 		    ip->ip_dst, th->th_dport, &vestige);
@@ -1470,7 +1456,6 @@ findpcb:
 		}
 #endif /*IPSEC*/
 		break;
-#endif /*INET*/
 #ifdef INET6
 	case AF_INET6:
 	    {
@@ -1607,7 +1592,6 @@ nosave:;
 		memset(&src, 0, sizeof(src));
 		memset(&dst, 0, sizeof(dst));
 		switch (af) {
-#ifdef INET
 		case AF_INET:
 			src.sin.sin_len = sizeof(struct sockaddr_in);
 			src.sin.sin_family = AF_INET;
@@ -1619,7 +1603,6 @@ nosave:;
 			dst.sin.sin_addr = ip->ip_dst;
 			dst.sin.sin_port = th->th_dport;
 			break;
-#endif
 #ifdef INET6
 		case AF_INET6:
 			src.sin6.sin6_len = sizeof(struct sockaddr_in6);
@@ -1675,12 +1658,10 @@ nosave:;
 					in6p = NULL;
 #endif
 					switch (so->so_proto->pr_domain->dom_family) {
-#ifdef INET
 					case AF_INET:
 						inp = sotoinpcb(so);
 						tp = intotcpcb(inp);
 						break;
-#endif
 #ifdef INET6
 					case AF_INET6:
 						in6p = sotoin6pcb(so);
@@ -1767,11 +1748,9 @@ nosave:;
 				int eq = 0;
 
 				switch (af) {
-#ifdef INET
 				case AF_INET:
 					eq = in_hosteq(ip->ip_src, ip->ip_dst);
 					break;
-#endif
 #ifdef INET6
 				case AF_INET6:
 					eq = IN6_ARE_ADDR_EQUAL(&ip6->ip6_src,
@@ -2155,10 +2134,8 @@ after_listen:
 			tp->snd_cwnd = tp->t_peermss;
 		else {
 			int ss = tcp_init_win;
-#ifdef INET
 			if (inp != NULL && in_localaddr(inp->inp_faddr))
 				ss = tcp_init_win_local;
-#endif
 #ifdef INET6
 			if (in6p != NULL && in6_localaddr(&in6p->in6p_faddr))
 				ss = tcp_init_win_local;
@@ -3103,7 +3080,7 @@ tcp_signature(struct mbuf *m, struct tcphdr *th, int thoff,
 #ifdef INET6
 	struct ip6_hdr *ip6;
 	struct ip6_hdr_pseudo ip6pseudo;
-#endif /* INET6 */
+#endif
 	struct ippseudo ippseudo;
 	struct tcphdr th0;
 	int l, tcphdrlen;
@@ -3139,7 +3116,7 @@ tcp_signature(struct mbuf *m, struct tcphdr *th, int thoff,
 		ip6pseudo.ip6ph_nxt = IPPROTO_TCP;
 		MD5Update(&ctx, (char *)&ip6pseudo, sizeof(ip6pseudo));
 		break;
-#endif /* INET6 */
+#endif
 	default:
 		return (-1);
 	}
@@ -3873,11 +3850,9 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
 		goto resetandabort;
 
 	switch (so->so_proto->pr_domain->dom_family) {
-#ifdef INET
 	case AF_INET:
 		inp = sotoinpcb(so);
 		break;
-#endif
 #ifdef INET6
 	case AF_INET6:
 		in6p = sotoin6pcb(so);
@@ -3885,7 +3860,6 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
 #endif
 	}
 	switch (src->sa_family) {
-#ifdef INET
 	case AF_INET:
 		if (inp) {
 			inp->inp_laddr = ((struct sockaddr_in *)dst)->sin_addr;
@@ -3915,7 +3889,6 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
 		}
 #endif
 		break;
-#endif
 #ifdef INET6
 	case AF_INET6:
 		if (in6p) {
@@ -4061,10 +4034,8 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
 		tp->snd_cwnd = tp->t_peermss;
 	else {
 		int ss = tcp_init_win;
-#ifdef INET
 		if (inp != NULL && in_localaddr(inp->inp_faddr))
 			ss = tcp_init_win_local;
-#endif
 #ifdef INET6
 		if (in6p != NULL && in6_localaddr(&in6p->in6p_faddr))
 			ss = tcp_init_win_local;
@@ -4232,12 +4203,10 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 		tb.t_flags = 0;
 
 	switch (src->sa_family) {
-#ifdef INET
 	case AF_INET:
 		/* Remember the IP options, if any. */
 		ipopts = ip_srcroute(m);
 		break;
-#endif
 	default:
 		ipopts = NULL;
 	}
@@ -4290,7 +4259,6 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 	sc->sc_ipopts = ipopts;
 	sc->sc_irs = th->th_seq;
 	switch (src->sa_family) {
-#ifdef INET
 	case AF_INET:
 	    {
 		struct sockaddr_in *srcin = (void *)src;
@@ -4301,7 +4269,6 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 		    srcin->sin_port, sizeof(dstin->sin_addr), 0);
 		break;
 	    }
-#endif /* INET */
 #ifdef INET6
 	case AF_INET6:
 	    {
@@ -4313,7 +4280,7 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 		    srcin6->sin6_port, sizeof(dstin6->sin6_addr), 0);
 		break;
 	    }
-#endif /* INET6 */
+#endif
 	}
 	sc->sc_peermaxseg = oi->maxseg;
 	sc->sc_ourmaxseg = tcp_mss_to_advertise(m->m_flags & M_PKTHDR ?
@@ -4618,11 +4585,9 @@ syn_cache_respond(struct syn_cache *sc)
 		 */
 
 		switch (sc->sc_src.sa.sa_family) {
-#ifdef INET
 		case AF_INET:
 			ip->ip_tos |= IPTOS_ECN_ECT0;
 			break;
-#endif
 #ifdef INET6
 		case AF_INET6:
 			ip6->ip6_flow |= htonl(IPTOS_ECN_ECT0 << 20);
@@ -4654,13 +4619,11 @@ syn_cache_respond(struct syn_cache *sc)
 	 * ip_len to be in host order, for convenience.
 	 */
 	switch (sc->sc_src.sa.sa_family) {
-#ifdef INET
 	case AF_INET:
 		ip->ip_len = htons(tlen);
 		ip->ip_ttl = ip_defttl;
 		/* XXX tos? */
 		break;
-#endif
 #ifdef INET6
 	case AF_INET6:
 		ip6->ip6_vfc &= ~IPV6_VERSION_MASK;
@@ -4676,13 +4639,11 @@ syn_cache_respond(struct syn_cache *sc)
 	tp = sc->sc_tp;
 
 	switch (sc->sc_src.sa.sa_family) {
-#ifdef INET
 	case AF_INET:
 		error = ip_output(m, sc->sc_ipopts, ro,
 		    (ip_mtudisc ? IP_MTUDISC : 0),
 		    NULL, tp ? tp->t_inpcb : NULL);
 		break;
-#endif
 #ifdef INET6
 	case AF_INET6:
 		ip6->ip6_hlim = in6_selecthlim(NULL,
