@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_compat.c,v 1.4 2015/04/22 17:07:24 pooka Exp $	*/
+/*	$NetBSD: puffs_compat.c,v 1.4.16.1 2018/03/24 08:24:40 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_compat.c,v 1.4 2015/04/22 17:07:24 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_compat.c,v 1.4.16.1 2018/03/24 08:24:40 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: puffs_compat.c,v 1.4 2015/04/22 17:07:24 pooka Exp $
 #include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/atomic.h>
+#include <sys/compat_stub.h>
 
 #include <dev/putter/putter_sys.h>
 
@@ -157,7 +158,6 @@ struct puffs50_vnmsg_symlink {
  * vattr translation routines
  */
 
-#ifdef COMPAT_50
 static void
 vattr_to_50(const struct vattr *va, struct vattr50 *va50)
 {
@@ -207,7 +207,6 @@ vattr_from_50(const struct vattr50 *va50, struct vattr *va)
 	va->va_filerev = va50->va_filerev;
 	va->va_vaflags = va50->va_flags;
 }
-#endif /* COMPAT_50 */
 
 /*
  * XXX: cannot assert that sleeping is possible
@@ -223,12 +222,11 @@ vattr_from_50(const struct vattr50 *va50, struct vattr *va)
 #define ASSIGN(field)							\
 	cmsg->field = omsg->field;
 
-bool
+int
 puffs_compat_outgoing(struct puffs_req *oreq,
 	struct puffs_req **creqp, ssize_t *deltap)
 {
-	bool rv = false;
-#ifdef COMPAT_50
+	int rv = ENOSYS;	/* non-zero return ==> false */
 	struct puffs_req *creq = NULL;
 	ssize_t delta = 0;
 
@@ -331,9 +329,8 @@ puffs_compat_outgoing(struct puffs_req *oreq,
 	if (creq) {
 		*creqp = creq;
 		*deltap = delta;
-		rv = true;
+		rv = 0;
 	}
-#endif
 
 	return rv;
 }
@@ -350,7 +347,6 @@ void
 puffs_compat_incoming(struct puffs_req *preq, struct puffs_req *creq)
 {
 
-#ifdef COMPAT_50
 	if (PUFFSOP_OPCLASS(preq->preq_opclass) == PUFFSOP_VFS
 	    && preq->preq_optype == PUFFS_VFS_FHTOVP) {
 		INIT(vfsmsg_fhtonode);
@@ -438,5 +434,18 @@ puffs_compat_incoming(struct puffs_req *preq, struct puffs_req *creq)
 			panic("puffs compat ops come in pairs");
 		}
 	}
-#endif /* COMPAT_50 */
+}
+
+void puffs_50_init(void)
+{
+
+	puffs50_compat_outgoing = puffs_compat_outgoing;
+	puffs50_compat_incoming = puffs_compat_incoming;
+}
+
+void puffs_50_fini(void)
+{
+
+	puffs50_compat_outgoing = (void *)enosys;
+	puffs50_compat_incoming = (void *)voidop;
 }

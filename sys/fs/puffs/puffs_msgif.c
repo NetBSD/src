@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.101 2017/04/17 08:31:01 hannken Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.101.10.1 2018/03/24 08:24:40 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.101 2017/04/17 08:31:01 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.101.10.1 2018/03/24 08:24:40 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -348,7 +348,8 @@ puffs_msg_enqueue(struct puffs_mount *pmp, struct puffs_msgpark *park)
 
 #if 1
 	/* check if we do compat adjustments */
-	if (pmp->pmp_docompat && puffs_compat_outgoing(preq, &creq, &delta)) {
+	if (pmp->pmp_docompat &&
+	    puffs_compat_outgoing(preq, &creq, &delta) == 0) {
 		park->park_creq = park->park_preq;
 		park->park_creqlen = park->park_maxlen;
 

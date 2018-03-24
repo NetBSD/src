@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.2.5 2018/03/24 01:59:16 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.1.2.6 2018/03/24 08:24:40 pgoyette Exp $
 
 .include "../Makefile.inc"
 
@@ -21,5 +21,9 @@ SRCS+=	ocryptodev.c
 .PATH:	${S}/dev/raidframe
 
 SRCS+=	rf_compat50.c
+
+.PATH:	${S}/fs/puffs
+
+SRCS+=	puffs_compat.c
 
 .include <bsd.kmodule.mk>

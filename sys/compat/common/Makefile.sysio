@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sysio,v 1.7.18.10 2018/03/24 01:59:15 pgoyette Exp $
+#	$NetBSD: Makefile.sysio,v 1.7.18.11 2018/03/24 08:24:40 pgoyette Exp $
 
 # Sources for syscall and ioctl compatibility across the versions.
 
@@ -53,3 +53,6 @@ SRCS+=	ocryptodev.c
 SRCS+=	rf_compat50.c
 SRCS+=	rf_compat80.c
 
+# Puffs compatability code for NetBSD 5.0
+.PATH:	${S}/fs/puffs
+SRCS+=	puffs_compat.c
