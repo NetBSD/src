@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_80_mod.c,v 1.1.2.5 2018/03/24 05:25:59 pgoyette Exp $	*/
+/*	$NetBSD: compat_80_mod.c,v 1.1.2.6 2018/03/24 08:10:49 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -34,44 +34,27 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_80_mod.c,v 1.1.2.5 2018/03/24 05:25:59 pgoyette Exp $");
-
-#ifdef _KERNEL_OPT
-#include "opt_compat_netbsd.h"
-#include "opt_compat_43.h"
-#endif
+__KERNEL_RCSID(0, "$NetBSD: compat_80_mod.c,v 1.1.2.6 2018/03/24 08:10:49 pgoyette Exp $");
 
 #include <sys/systm.h>
 #include <sys/module.h>
 
-#include <net/if.h>
-#include <net/route.h>
-
 #include <compat/common/compat_util.h>
 #include <compat/common/compat_mod.h>
-#include <compat/sys/sockio.h>
-
-#include <compat/net/route.h>
-#include <compat/net/route_70.h>
+#include <dev/raidframe/rf_compat80_mod.h>
 
 int compat_80_init(void)
 {
-	int error;
 
-	error = raidframe_80_init();
-	if (error != 0)
-		return error;
+	raidframe_80_init();
 
 	return 0;
 }
 
 int compat_80_fini(void)
 {
-	int error;
 
-	error = raidframe_80_fini();
-	if (error != 0)
-		return error;
+	raidframe_80_fini();
 
 	return 0;
 }
