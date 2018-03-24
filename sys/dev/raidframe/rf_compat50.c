@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_compat50.c,v 1.3 2018/01/18 00:32:49 mrg Exp $	*/
+/*	$NetBSD: rf_compat50.c,v 1.3.2.1 2018/03/24 01:59:15 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -39,6 +39,8 @@
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
+
+#include <sys/compat_stub.h>
 
 #include <dev/raidframe/raidframeio.h>
 #include <dev/raidframe/raidframevar.h>
@@ -213,4 +215,39 @@ rf_get_info50(RF_Raid_t *raidPtr, void *data)
 out:
 	RF_Free(d_cfg, sizeof(RF_DeviceConfig50_t));
 	return error;
+}
+
+int
+raidframe_ioctl_50(int cmd, int initted, RF_Raid_t *raidPtr, int unit,
+    void *data, RF_Config_t **k_cfg)
+{
+	int error;
+
+	switch (cmd) {
+	case RAIDFRAME_GET_INFO50:
+		if (initted == 0)
+			return ENXIO;
+		return rf_get_info50(raidPtr, data);
+
+	case RAIDFRAME_CONFIGURE50:
+		error = rf_config50(raidPtr, unit, data, k_cfg);
+		if (error != 0)
+			return error;
+		return EAGAIN;	/* flag mainline to call generic config */
+	}
+	return EPASSTHROUGH;
+}
+
+void
+raidframe_50_init(void)
+{
+
+	raidframe50_ioctl = raidframe_ioctl_50;
+}
+
+void
+raidframe_50_fini(void)
+{
+
+	raidframe50_ioctl = (void *)enosys;
 }

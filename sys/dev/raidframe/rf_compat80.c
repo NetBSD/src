@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_compat80.c,v 1.2 2018/01/20 01:32:45 mrg Exp $	*/
+/*	$NetBSD: rf_compat80.c,v 1.2.2.1 2018/03/24 01:59:15 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2017 Matthew R. Green
@@ -31,6 +31,8 @@
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
+
+#include <sys/compat_stub.h>
 
 #include <dev/raidframe/raidframeio.h>
 #include <dev/raidframe/raidframevar.h>
@@ -217,3 +219,61 @@ rf_config80(RF_Raid_t *raidPtr, int unit, void *data, RF_Config_t **k_cfgp)
 	*k_cfgp = k_cfg;
 	return 0;
 }
+
+int
+raidframe_ioctl_80(int cmd, int initted, RF_Raid_t *raidPtr, int unit,
+    void *data, RF_Config_t **k_cfg)  
+{
+int error;
+ 
+	switch (cmd) {
+	case RAIDFRAME_CHECK_RECON_STATUS_EXT80:
+	case RAIDFRAME_CHECK_PARITYREWRITE_STATUS_EXT80:
+	case RAIDFRAME_CHECK_COPYBACK_STATUS_EXT80:
+	case RAIDFRAME_GET_INFO80:
+	case RAIDFRAME_GET_COMPONENT_LABEL80:
+		if (initted == 0)
+			return ENXIO;
+		break;
+	case RAIDFRAME_CONFIGURE80:
+		break;
+	case RAIDFRAME_FAIL_DISK80:
+		return EPASSTHROUGH;
+	default:
+		return EINVAL;
+	}
+
+	switch (cmd) {
+	case RAIDFRAME_CHECK_RECON_STATUS_EXT80:
+		return rf_check_recon_status_ext80(raidPtr, data);
+	case RAIDFRAME_CHECK_PARITYREWRITE_STATUS_EXT80:
+		return rf_check_parityrewrite_status_ext80(raidPtr, data);
+	case RAIDFRAME_CHECK_COPYBACK_STATUS_EXT80:
+		return rf_check_copyback_status_ext80(raidPtr, data);
+	case RAIDFRAME_GET_INFO80:
+		return rf_get_info80(raidPtr, data);
+	case RAIDFRAME_GET_COMPONENT_LABEL80:
+		return rf_get_component_label80(raidPtr, data);
+	case RAIDFRAME_CONFIGURE80:
+		error = rf_config80(raidPtr, unit, data, k_cfg);
+		if (error != 0)
+			return error;
+		return EAGAIN;  /* flag mainline to call generic config */ 
+	}
+	return EPASSTHROUGH;
+}
+ 
+void  
+raidframe_80_init(void)
+{ 
+ 
+	raidframe80_ioctl = raidframe_ioctl_80;
+}
+ 
+void
+raidframe_80_fini(void)
+{
+ 
+	raidframe80_ioctl = (void *)enosys;
+}
+

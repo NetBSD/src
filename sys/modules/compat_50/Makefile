@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.2.4 2018/03/23 09:41:10 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.1.2.5 2018/03/24 01:59:16 pgoyette Exp $
 
 .include "../Makefile.inc"
 
@@ -17,5 +17,9 @@ SRCS+=	rndpseudo_50.c clockctl_50.c if_spppsubr50.c
 .PATH:	${S}/opencrypto
 
 SRCS+=	ocryptodev.c
+
+.PATH:	${S}/dev/raidframe
+
+SRCS+=	rf_compat50.c
 
 .include <bsd.kmodule.mk>

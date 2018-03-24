@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.h,v 1.1.2.4 2018/03/23 09:41:10 pgoyette Exp $	*/
+/* $NetBSD: compat_stub.h,v 1.1.2.5 2018/03/24 01:59:16 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -65,7 +65,19 @@ extern int (*sppp_params50)(struct sppp *, u_long, void *);
 /*
  * cryptodev compatability ioctl
  */
-extern
-int (*ocryptof50_ioctl)(struct file *, u_long, void *);
+extern int (*ocryptof50_ioctl)(struct file *, u_long, void *);
+
+/*
+ * raidframe compatability
+ */
+
+struct RF_Raid_s;
+struct RF_Config_s;
+struct raid_softc;
+
+extern int (*raidframe50_ioctl)(int, int, struct RF_Raid_s *, int, void *,
+    struct RF_Config_s **);
+extern int (*raidframe80_ioctl)(int, int, struct RF_Raid_s *, int, void *,
+    struct RF_Config_s **);
 
 #endif	/* _SYS_COMPAT_STUB_H */

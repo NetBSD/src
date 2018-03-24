@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.c,v 1.1.2.4 2018/03/23 09:41:10 pgoyette Exp $	*/
+/* $NetBSD: compat_stub.c,v 1.1.2.5 2018/03/24 01:59:15 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -53,23 +53,29 @@ int (*vec_ntp_timestatus)(void) = NULL;
 /*
  * ccd device compatability ioctl
  */
-int (*compat_ccd_ioctl_60)(dev_t dev, u_long cmd, void *data, int flag,
-    struct lwp *l, int (*f)(dev_t, u_long, void *, int, struct lwp *)) =
-	(void *)enosys;
+int (*compat_ccd_ioctl_60)(dev_t, u_long, void *, int, struct lwp *,
+    int (*f)(dev_t, u_long, void *, int, struct lwp *)) = (void *)enosys;
 
 /*
  * clockctl device compatability ioctl
  */
-int (*compat_clockctl_ioctl_50)(dev_t dev, u_long cmd, void *data, int flag,
-    struct lwp *l) = (void *)enosys;
+int (*compat_clockctl_ioctl_50)(dev_t, u_long, void *, int, struct lwp *) =
+    (void *)enosys;
 
 /*
  * if_sppp device compatability ioctl subroutine
  */
-int (*sppp_params50)(struct sppp *sp, u_long cmd, void *data) = (void *)enosys;
+int (*sppp_params50)(struct sppp *, u_long, void *) = (void *)enosys;
 
 /*
  * cryptodev compatability ioctl
  */
 int (*ocryptof50_ioctl)(struct file *, u_long, void *) = (void *)enosys;
 
+/*
+ * raidframe compatability
+ */
+int (*raidframe50_ioctl)(int, int, struct RF_Raid_s *, int, void *,
+    struct RF_Config_s **) = (void *)enosys;
+int (*raidframe80_ioctl)(int, int, struct RF_Raid_s *, int, void *,
+    struct RF_Config_s **) = (void *)enosys;
