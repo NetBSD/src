@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.18 2017/05/22 16:59:32 ragge Exp $ */
+/*	$NetBSD: devopen.c,v 1.18.2.1 2018/03/24 18:06:51 snj Exp $ */
 /*
  * Copyright (c) 1997 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -27,6 +27,7 @@
 #include <lib/libsa/stand.h>
 #include <lib/libkern/libkern.h>
 
+#include <machine/param.h>
 #include <machine/rpb.h>
 #include <machine/sid.h>
 #include <machine/pte.h>
@@ -38,12 +39,16 @@
 #include "vaxstand.h"
 
 int nexaddr, csrbase;
+static int *mapaddr;
 
+/*
+ * Boot device syntax:
+ * device(adapter, controller, unit, partition)file
+ */
 int
 devopen(struct open_file *f, const char *fname, char **file)
 {
 	int dev, unit, ctlr, part, adapt, i, a[4], x;
-	int *mapregs;
 	struct devsw *dp;
 	extern int cnvtab[];
 	char *s, *c;
@@ -124,6 +129,7 @@ devopen(struct open_file *f, const char *fname, char **file)
 	switch (vax_boardtype) {
 	case VAX_BTYP_750:
 		csrbase = (nexaddr == 0xf30000 ? 0xffe000 : 0xfbe000);
+		mapaddr = (int *)nexaddr + VAX_NBPG;
 		if (adapt < 0)
 			break;
 		nexaddr = (NEX750 + NEXSIZE * adapt);
@@ -132,6 +138,7 @@ devopen(struct open_file *f, const char *fname, char **file)
 	case VAX_BTYP_780:
 	case VAX_BTYP_790:
 		csrbase = 0x2007e000 + 0x40000 * ((nexaddr & 0x1e000) >> 13);
+		mapaddr = (int *)nexaddr + VAX_NBPG;
 		if (adapt < 0)
 			break;
 		nexaddr = ((int)NEX780 + NEXSIZE * adapt);
@@ -172,12 +179,9 @@ devopen(struct open_file *f, const char *fname, char **file)
 	default:
 		nexaddr = 0; /* No map regs */
 		csrbase = 0x20000000;
-		/* Always map in the lowest 4M on qbus-based machines */
-		mapregs = (void *)0x20088000;
 		if (bootrpb.adpphy == 0x20087800) {
 			nexaddr = bootrpb.adpphy;
-			for (i = 0; i < 8192; i++)
-				mapregs[i] = PG_V | i;
+			mapaddr = (int *)nexaddr + VAX_NBPG;
 		}
 		break;
 	}
@@ -194,4 +198,25 @@ devopen(struct open_file *f, const char *fname, char **file)
 usage:
 	printf("usage: dev(adapter,controller,unit,partition)file -asd\n");
 	return -1;
+}
+
+/*
+ * Map in virtual address vaddr of size vsize starting with map mapno.
+ * Returns the unibus address of the mapped area.
+ */
+int
+ubmap(int mapno, int vaddr, int size)
+{
+	int voff = (vaddr & VAX_PGOFSET);
+	int rv = (mapno << VAX_PGSHIFT) + voff;
+	int vpag, npag;
+
+	if (mapaddr == 0)
+		return vaddr; /* no map, phys == virt */
+
+	npag = (voff + size) / VAX_NBPG;
+	vpag = vaddr >> VAX_PGSHIFT;
+	while (npag-- >= 0)
+		mapaddr[mapno++] = vpag++ | PG_V;
+	return rv;
 }

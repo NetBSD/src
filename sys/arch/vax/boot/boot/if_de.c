@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.9 2017/05/22 16:59:32 ragge Exp $	*/
+/*	$NetBSD: if_de.c,v 1.9.2.1 2018/03/24 18:06:51 snj Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -86,7 +86,7 @@ static int crx, ctx;
 int
 deopen(struct open_file *f, int adapt, int ctlr, int unit, int part)
 {
-	int i, cdata, *map, npgs;
+	int i;
 	u_char eaddr[6];
 
 	/* point to the device in memory */
@@ -108,14 +108,8 @@ deopen(struct open_file *f, int adapt, int ctlr, int unit, int part)
 
 	/* Map in the control structures and buffers */
 	dc = alloc(sizeof(struct de_cdata));
-	pdc = (struct de_cdata *)((int)dc & VAX_PGOFSET);
-	map = (int *)nexaddr + 512;
-	npgs = (sizeof(struct de_cdata) >> VAX_PGSHIFT) + 1;
-	cdata = (int)dc >> VAX_PGSHIFT;
-	for (i = 0; i < npgs; i++) {
-		map[i] = PG_V | (cdata + i);
-	}
 
+	pdc = (struct de_cdata *)ubmap(0, (int)dc, sizeof(struct de_cdata));
 	memset((char *)dc, 0, sizeof(struct de_cdata));
 	
 	/* Tell the DEUNA about our PCB */
