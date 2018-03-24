@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_sys.h,v 1.90 2016/07/07 06:55:42 msaitoh Exp $	*/
+/*	$NetBSD: puffs_sys.h,v 1.90.16.1 2018/03/24 08:24:40 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -290,7 +290,7 @@ void	puffs_gop_markupdate(struct vnode *, int);
 void	puffs_senderr(struct puffs_mount *, int, int, const char *,
 		      puffs_cookie_t);
 
-bool	puffs_compat_outgoing(struct puffs_req *, struct puffs_req**, ssize_t*);
+int	puffs_compat_outgoing(struct puffs_req *, struct puffs_req**, ssize_t*);
 void	puffs_compat_incoming(struct puffs_req *, struct puffs_req *);
 
 void	puffs_updatenode(struct puffs_node *, int, voff_t);
@@ -358,5 +358,12 @@ do {									\
 	puffs_msg_enqueue(pmp, park);					\
 	var = puffs_msg_wait2(pmp, park, vp1, vp2);			\
 } while (/*CONSTCOND*/0)
+
+/*
+ * compat50 init/fini 
+ */
+
+void puffs_50_init(void);
+void puffs_50_fini(void);
 
 #endif /* _PUFFS_SYS_H_ */

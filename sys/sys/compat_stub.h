@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.h,v 1.1.2.5 2018/03/24 01:59:16 pgoyette Exp $	*/
+/* $NetBSD: compat_stub.h,v 1.1.2.6 2018/03/24 08:24:40 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -79,5 +79,15 @@ extern int (*raidframe50_ioctl)(int, int, struct RF_Raid_s *, int, void *,
     struct RF_Config_s **);
 extern int (*raidframe80_ioctl)(int, int, struct RF_Raid_s *, int, void *,
     struct RF_Config_s **);
+
+/*
+ * puffs compatability
+ */
+
+struct puffs_req;
+
+extern int (*puffs50_compat_outgoing)(struct puffs_req *, struct puffs_req **,
+    ssize_t *);
+extern void (*puffs50_compat_incoming)(struct puffs_req *, struct puffs_req *);
 
 #endif	/* _SYS_COMPAT_STUB_H */
