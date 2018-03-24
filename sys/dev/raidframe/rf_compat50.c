@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_compat50.c,v 1.3.2.1 2018/03/24 01:59:15 pgoyette Exp $	*/
+/*	$NetBSD: rf_compat50.c,v 1.3.2.2 2018/03/24 08:23:20 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -47,6 +47,7 @@
 
 #include "rf_raid.h"
 #include "rf_compat50.h"
+#include "rf_compat50_mod.h"
 #include "rf_debugMem.h"
 
 typedef struct RF_Config50_s {
