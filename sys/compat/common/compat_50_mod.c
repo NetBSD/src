@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_50_mod.c,v 1.1.2.5 2018/03/24 05:24:10 pgoyette Exp $	*/
+/*	$NetBSD: compat_50_mod.c,v 1.1.2.6 2018/03/24 08:11:12 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -34,12 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_50_mod.c,v 1.1.2.5 2018/03/24 05:24:10 pgoyette Exp $");
-
-#ifdef _KERNEL_OPT
-#include "opt_compat_netbsd.h"
-#include "opt_compat_43.h"
-#endif
+__KERNEL_RCSID(0, "$NetBSD: compat_50_mod.c,v 1.1.2.6 2018/03/24 08:11:12 pgoyette Exp $");
 
 #include <sys/systm.h>
 #include <sys/module.h>
@@ -55,6 +50,10 @@ __KERNEL_RCSID(0, "$NetBSD: compat_50_mod.c,v 1.1.2.5 2018/03/24 05:24:10 pgoyet
 #include <compat/common/compat_util.h>
 #include <compat/common/compat_mod.h>
 #include <compat/common/if_spppsubr50.h>
+
+#include <dev/raidframe/rf_compat50_mod.h>
+
+#include <fs/puffs/puffs_sys.h>
 
 int
 compat_50_init(void)
@@ -83,6 +82,7 @@ compat_50_init(void)
 	if_spppsubr_50_init();
 	cryptodev_50_init();
 	raidframe_50_init();
+	puffs_50_init();
 
 	return error;
 
@@ -103,6 +103,7 @@ compat_50_fini(void)
 {
 	int error = 0;
 
+	puffs_50_fini();
 	raidframe_50_fini();
 	cryptodev_50_fini();
 	if_spppsubr_50_fini();
@@ -142,6 +143,7 @@ compat_50_fini(void)
 	if_spppsubr_50_init();
 	cryptodev_50_init();
 	raidframe_50_init();
+	puffs_50_init();
 
 	return error;
 }
