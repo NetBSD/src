@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_isa.c,v 1.68 2009/11/23 02:13:47 rmind Exp $	*/
+/*	$NetBSD: lpt_isa.c,v 1.69 2018/03/24 18:34:43 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_isa.c,v 1.68 2009/11/23 02:13:47 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_isa.c,v 1.69 2018/03/24 18:34:43 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -247,8 +247,8 @@ lpt_isa_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_ic = ia->ia_ic;
 	if (sc->sc_irq != -1)
-		lsc->sc_ih = isa_intr_establish(sc->sc_ic, sc->sc_irq,
-		    IST_EDGE, IPL_TTY, lptintr, lsc);
+		lsc->sc_ih = isa_intr_establish_xname(sc->sc_ic, sc->sc_irq,
+		    IST_EDGE, IPL_TTY, lptintr, lsc, device_xname(lsc->sc_dev));
 }
 
 static int
