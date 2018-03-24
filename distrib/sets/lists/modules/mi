@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.114.2.5 2018/03/19 21:55:17 pgoyette Exp $
+# $NetBSD: mi,v 1.114.2.6 2018/03/24 01:59:15 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -74,6 +74,8 @@
 ./@MODULEDIR@/compat_60/compat_60.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/compat_70				base-kernel-modules	kmod
 ./@MODULEDIR@/compat_70/compat_70.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/compat_80				base-kernel-modules	kmod
+./@MODULEDIR@/compat_80/compat_80.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/compat_ossaudio			base-kernel-modules	kmod
 ./@MODULEDIR@/compat_ossaudio/compat_ossaudio.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/compat_sysv			base-kernel-modules	kmod

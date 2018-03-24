@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_80_mod.c,v 1.1.2.3 2018/03/23 09:38:48 pgoyette Exp $	*/
+/*	$NetBSD: compat_80_mod.c,v 1.1.2.4 2018/03/24 01:59:15 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_80_mod.c,v 1.1.2.3 2018/03/23 09:38:48 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_80_mod.c,v 1.1.2.4 2018/03/24 01:59:15 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -86,7 +86,7 @@ int compat_80_fini(void)
 MODULE(MODULE_CLASS_EXEC, compat_80, REQD_80);
 
 static int
-compat_70_modcmd(modcmd_t cmd, void *arg)
+compat_80_modcmd(modcmd_t cmd, void *arg)
 {
 
 	switch (cmd) {
