@@ -23,9 +23,9 @@ DONE
    other modules could depend on specific compat levels rather than on
    the entirety of compat.
 
-7. Reconfirmed all compat-module dependencies, and update the files *
-   def lines as needed, to insure that built-in dependencies get
-   resolved.
+7. Reconfirmed existing compat-module dependencies, and update the
+   defopt/defflag lines in the config files* as needed, to insure that
+   built-in dependencies get resolved.
 
 
 TODO
@@ -34,11 +34,14 @@ TODO
    COMPAT_xx.  When found, move the actual compat code into the compat
    hierarchy and replace originals with indirect (vectored) calls.
 
-   (There are several instances of this in the net routing table code.)
-
 2. Using the alias mechanism, split compat (and perhaps compat_sysv)
    into multiple version-specific modules.  Note that in addition to
    updating the module code, this would also require changes to
    syscalls.master files to change the names of the modules associated
    with module-provided syscalls.
+
+   Update:  These are being done simultaneously, with compat code being
+   moved directly to a version-specific module.  All of COMPAT_80 and
+   COMPAT_70, most of COMPAT_60, and much of COMPAT_50 are finished.
+   Need to decide how to handle the COMPAT_BSDPTY stuff.
 
