@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.152 2018/03/22 17:04:45 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.153 2018/03/24 18:13:25 snj Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -10553,4 +10553,51 @@ sys/arch/i386/include/profile.h			1.36,1.37
 	  understandable.
 	- Use compiler builtins to compute addresses.
 	[christos, ticket #653]
+
+doc/3RDPARTY					1.1506 via patch
+external/public-domain/tz/dist/CONTRIBUTING     up to 1.1.1.5
+external/public-domain/tz/dist/Makefile         up to 1.1.1.20
+external/public-domain/tz/dist/NEWS             up to 1.1.1.21
+external/public-domain/tz/dist/TZDATA_VERSION   up to 1.11
+external/public-domain/tz/dist/africa           up to 1.1.1.14
+external/public-domain/tz/dist/antarctica       up to 1.1.1.10
+external/public-domain/tz/dist/asia             up to 1.1.1.19
+external/public-domain/tz/dist/australasia      up to 1.1.1.14
+external/public-domain/tz/dist/backzone         up to 1.1.1.14
+external/public-domain/tz/dist/checktab.awk     up to 1.1.1.9
+external/public-domain/tz/dist/europe           up to 1.1.1.20
+external/public-domain/tz/dist/northamerica     up to 1.1.1.19
+external/public-domain/tz/dist/southamerica     up to 1.1.1.14
+external/public-domain/tz/dist/theory.html      up to 1.1.1.3
+external/public-domain/tz/dist/version          up to 1.1.1.8
+external/public-domain/tz/dist/ziguard.awk      up to 1.1.1.1
+external/public-domain/tz/dist/zishrink.awk     up to 1.1.1.3
+external/public-domain/tz/dist/zone.tab         up to 1.1.1.14
+external/public-domain/tz/dist/zone1970.tab     up to 1.1.1.16
+external/public-domain/tz/tzdata2netbsd         up to 1.12
+
+	Update tzdata to 2018d.
+	[kre, ticket #654]
+
+sys/arch/vax/boot/boot/devopen.c		1.19-1.20
+sys/arch/vax/boot/boot/hp.c			1.11
+sys/arch/vax/boot/boot/if_de.c			1.10
+sys/arch/vax/boot/boot/if_qe.c			1.10
+sys/arch/vax/boot/boot/ra.c			1.21-1.22
+sys/arch/vax/boot/boot/vaxstand.h		1.10
+
+	Add support to the vax boot loader for qbus remapping.  This
+	allows for kernels larger than 4MB to be loaded.
+	[ragge, ticket #655]
+
+sys/arch/vax/boot/common/srt0.S			1.6
+
+	Fix a problem if the boot loader (data+text) exceeds 64k.
+	[ragge, ticket #656]
+
+sys/arch/vax/boot/Makefile.inc			1.18
+
+	Let boot relocate to just below 8MB.  This solves the problem
+	with booting a kernel larger than below 4MB.
+	[ragge, ticket #657]
 
