@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.c,v 1.1.2.6 2018/03/24 08:24:40 pgoyette Exp $	*/
+/* $NetBSD: compat_stub.c,v 1.1.2.7 2018/03/24 23:52:19 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -87,3 +87,9 @@ int (*puffs50_compat_outgoing)(struct puffs_req *, struct puffs_req **,
     ssize_t *) = (void *)enosys;
 void (*puffs50_compat_incoming)(struct puffs_req *, struct puffs_req *) =
     (void *)voidop;
+
+/*
+ * wsevents compatability
+ */
+int (*wsevent_50_copyout_events)(const struct wscons_event *, int,
+    struct uio *) = (void *)enosys;

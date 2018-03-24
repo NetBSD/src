@@ -1,4 +1,4 @@
-/* $NetBSD: wsevent.c,v 1.37 2017/10/25 08:12:39 maya Exp $ */
+/* $NetBSD: wsevent.c,v 1.37.2.1 2018/03/24 23:52:19 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2006, 2008 The NetBSD Foundation, Inc.
@@ -104,12 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsevent.c,v 1.37 2017/10/25 08:12:39 maya Exp $");
-
-#ifdef _KERNEL_OPT
-#include "opt_compat_netbsd.h"
-#include "opt_modular.h"
-#endif
+__KERNEL_RCSID(0, "$NetBSD: wsevent.c,v 1.37.2.1 2018/03/24 23:52:19 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -120,6 +115,7 @@ __KERNEL_RCSID(0, "$NetBSD: wsevent.c,v 1.37 2017/10/25 08:12:39 maya Exp $");
 #include <sys/vnode.h>
 #include <sys/select.h>
 #include <sys/poll.h>
+#include <sys/compat_stub.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wseventvar.h>
@@ -188,47 +184,18 @@ wsevent_fini(struct wseventvar *ev)
 	softint_disestablish(ev->sih);
 }
 
-#if defined(COMPAT_50) || defined(MODULAR)
-static int
-wsevent_copyout_events50(const struct wscons_event *events, int cnt,
-    struct uio *uio)
-{
-	int i;
-
-	for (i = 0; i < cnt; i++) {
-		const struct wscons_event *ev = &events[i];
-		struct owscons_event ev50;
-		int error;
-
-		ev50.type = ev->type;
-		ev50.value = ev->value;
-		timespec_to_timespec50(&ev->time, &ev50.time);
-
-		error = uiomove(&ev50, sizeof(ev50), uio);
-		if (error) {
-			return error;
-		}
-	}
-	return 0;
-}
-#else /* defined(COMPAT_50) || defined(MODULAR) */
-static int
-wsevent_copyout_events50(const struct wscons_event *events, int cnt,
-    struct uio *uio)
-{
-
-	return EINVAL;
-}
-#endif /* defined(COMPAT_50) || defined(MODULAR) */
-
 static int
 wsevent_copyout_events(const struct wscons_event *events, int cnt,
     struct uio *uio, int ver)
 {
+	int error;
 
 	switch (ver) {
 	case 0:
-		return wsevent_copyout_events50(events, cnt, uio);
+		error = (*wsevent_50_copyout_events)(events, cnt, uio);
+		if (error == ENOSYS)
+			error = EINVAL;
+		return error;
 	case WSEVENT_VERSION:
 		return uiomove(__UNCONST(events), cnt * sizeof(*events), uio);
 	default:
