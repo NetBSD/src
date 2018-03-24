@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ping.c,v 1.21 2018/03/24 00:06:32 kamil Exp $	*/
+/*	$NetBSD: t_ping.c,v 1.22 2018/03/24 15:51:57 roy Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: t_ping.c,v 1.21 2018/03/24 00:06:32 kamil Exp $");
+__RCSID("$NetBSD: t_ping.c,v 1.22 2018/03/24 15:51:57 roy Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -420,6 +420,8 @@ ATF_TC_BODY(ping_of_death, tc)
 
 			error = rump_sys_sendto(s, data, frag, 0,
 			    (struct sockaddr *)&dst, sizeof(dst));
+			if (error == sizeof(dst))
+				continue;
 			if (error == -1 && errno == ENOBUFS)
 				continue;
 			atf_tc_fail_errno("sendto failed");
