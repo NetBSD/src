@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_compat80.c,v 1.2.2.1 2018/03/24 01:59:15 pgoyette Exp $	*/
+/*	$NetBSD: rf_compat80.c,v 1.2.2.2 2018/03/24 08:22:44 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2017 Matthew R. Green
@@ -39,6 +39,7 @@
 
 #include "rf_raid.h"
 #include "rf_compat80.h"
+#include "rf_compat80_mod.h"
 #include "rf_kintf.h"
 
 int
