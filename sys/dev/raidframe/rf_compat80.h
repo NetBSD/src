@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_compat80.h,v 1.2.2.1 2018/03/24 01:59:15 pgoyette Exp $	*/
+/*	$NetBSD: rf_compat80.h,v 1.2.2.2 2018/03/24 08:22:44 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2017 Matthew R. Green
@@ -131,10 +131,5 @@ int rf_check_copyback_status_ext80(RF_Raid_t *, void *);
 int rf_get_info80(RF_Raid_t *, void *);
 int rf_get_component_label80(RF_Raid_t *, void *);
 int rf_config80(RF_Raid_t *, int, void *, RF_Config_t **);
-
-int raidframe_ioctl_80(int, int, RF_Raid_t *, int, void *, RF_Config_t **);
-
-void raidframe_80_init(void);
-void raidframe_80_fini(void);
 
 #endif /* _RF_COMPAT80_H_ */
