@@ -1,4 +1,4 @@
-/*	$NetBSD: srt0.S,v 1.5 2017/05/22 17:00:19 ragge Exp $ */
+/*	$NetBSD: srt0.S,v 1.5.2.1 2018/03/24 18:08:06 snj Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -49,7 +49,9 @@ ALTENTRY(start)
 	movl	$_C_LABEL(start), %r3 # get where we want to be
 	cmpl	%r1,%r3		# are we where we want to be?
 	beql	relocated	# already relocated, skip copy
-	movc3	%r0,(%r1),(%r3)	# copy
+1:	movb	(%r1)+,(%r3)+	# copy
+	sobgtr	%r0,1b
+
 	subl3	$_C_LABEL(edata), $_C_LABEL(end), %r2
 	movc5	$0,(%r3),$0,%r2,(%r3) # Zero bss
 
