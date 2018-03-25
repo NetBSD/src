@@ -1,4 +1,4 @@
-/*	$NetBSD: audit.c,v 1.2 2017/04/20 13:18:23 joerg Exp $	*/
+/*	$NetBSD: audit.c,v 1.3 2018/03/25 04:04:36 sevan Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: audit.c,v 1.2 2017/04/20 13:18:23 joerg Exp $");
+__RCSID("$NetBSD: audit.c,v 1.3 2018/03/25 04:04:36 sevan Exp $");
 
 /*-
  * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -73,13 +73,14 @@ __RCSID("$NetBSD: audit.c,v 1.2 2017/04/20 13:18:23 joerg Exp $");
 #include "admin.h"
 #include "lib.h"
 
+static int check_ignored_advisories = 0;
 static int check_signature = 0;
 static const char *limit_vul_types = NULL;
 static int update_pkg_vuln = 0;
 
 static struct pkg_vulnerabilities *pv;
 
-static const char audit_options[] = "est:";
+static const char audit_options[] = "eist:";
 
 static void
 parse_options(int argc, char **argv, const char *options)
@@ -100,6 +101,9 @@ parse_options(int argc, char **argv, const char *options)
 		switch (ch) {
 		case 'e':
 			check_eol = "yes";
+			break;
+		case 'i':
+			check_ignored_advisories = 1;
 			break;
 		case 's':
 			check_signature = 1;
@@ -122,7 +126,8 @@ parse_options(int argc, char **argv, const char *options)
 static int
 check_exact_pkg(const char *pkg)
 {
-	return audit_package(pv, pkg, limit_vul_types, quiet ? 0 : 1);
+	return audit_package(pv, pkg, limit_vul_types,
+			     check_ignored_advisories, quiet ? 0 : 1);
 }
 
 static int

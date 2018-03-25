@@ -47,18 +47,20 @@ OOPPTTIIOONNSS
 
      The following commands are supported:
 
-     aauuddiitt [--eess] [--tt _t_y_p_e] [_p_k_g] ...
+     aauuddiitt [--eeiiss] [--tt _t_y_p_e] [_p_k_g] ...
              Check the listed installed packages for vulnerabilities.  If no
              package is given, check all installed packages.  If --ee is given,
              override the CHECK_END_OF_LIFE option from pkg_install.conf(5)
-             with "yes".  If --ss is given, check the signature of the pkg-
-             vulnerabilities file before using it.  --tt restricts the reported
-             vulnerabilities to type _t_y_p_e.
+             with "yes".  If --ii is given, any advisory ignored by IGNORE_URL
+             in pkg_install.conf(5) is included but flagged as "ignored".  If
+             --ss is given, check the signature of the pkg-vulnerabilities file
+             before using it.  --tt restricts the reported vulnerabilities to
+             type _t_y_p_e.
 
-     aauuddiitt--ppkkgg [--eess] [--tt _t_y_p_e] [_p_k_g] ...
+     aauuddiitt--ppkkgg [--eeiiss] [--tt _t_y_p_e] [_p_k_g] ...
              Like aauuddiitt, but check only the given package names or patterns.
 
-     aauuddiitt--bbaattcchh [--eess] [--tt _t_y_p_e] [_p_k_g_-_l_i_s_t] ...
+     aauuddiitt--bbaattcchh [--eeiiss] [--tt _t_y_p_e] [_p_k_g_-_l_i_s_t] ...
              Like aauuddiitt--ppkkgg, but read the package names or patterns one per
              line from the given files.
 
@@ -204,4 +206,4 @@ HHIISSTTOORRYY
 AAUUTTHHOORRSS
      The ppkkgg__aaddmmiinn command was written by Hubert Feyrer.
 
-pkgsrc                         December 27, 2014                        pkgsrc
+pkgsrc                         February 25, 2018                        pkgsrc

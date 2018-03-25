@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_add.1,v 1.2 2017/04/20 13:18:23 joerg Exp $
+.\" $NetBSD: pkg_add.1,v 1.3 2018/03/25 04:04:36 sevan Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -17,7 +17,7 @@
 .\"
 .\"     @(#)pkg_add.1
 .\"
-.Dd December 27, 2014
+.Dd March 21, 2018
 .Dt PKG_ADD 1
 .Os
 .Sh NAME
@@ -25,7 +25,7 @@
 .Nd a utility for installing and upgrading software package distributions
 .Sh SYNOPSIS
 .Nm
-.Op Fl AfInRUuVv
+.Op Fl AfhInRUuVv
 .Op Fl C Ar config
 .Op Fl K Ar pkg_dbdir
 .Op Fl m Ar machine
@@ -119,6 +119,11 @@ removed.
 Read the configuration file from
 .Ar config
 instead of the system default.
+.It Fl D
+Force updating even if the dependencies of depending packages are not
+satisfied by the new package.
+This is used by "make replace", after which one would typically
+replace the depending packages.
 .It Fl f
 Force installation to proceed even if prerequisite packages are not
 installed or the install script fails.
@@ -128,11 +133,8 @@ will still try to find and auto-install missing prerequisite packages,
 a failure to find one will not be fatal.
 This flag also overrides the fatal error when the operating system or
 architecture the package was built on differ from that of the host.
-.It Fl D
-Force updating even if the dependencies of depending packages are not
-satisfied by the new package.
-This is used by "make replace", after which one would typically
-replace the depending packages.
+.It Fl h
+Display help and exit.
 .It Fl I
 If an installation script exists for a given package, do not execute it.
 .It Fl K Ar pkg_dbdir
