@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sysio,v 1.7.18.15 2018/03/25 10:38:51 pgoyette Exp $
+#	$NetBSD: Makefile.sysio,v 1.7.18.16 2018/03/25 21:27:51 pgoyette Exp $
 
 # Sources for syscall and ioctl compatibility across the versions.
 
@@ -61,9 +61,3 @@ SRCS+=	puffs_compat.c
 .PATH:	${S}/dev/wscons
 SRCS+=	wsevent_50.c
 
-# x86-specific compatability code for NetBSD 6.0
-.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
-CPPFLAGS+=      -DCPU_UCODE
-.PATH:  ${S}/arch/x86/x86
-SRCS+=  compat_60_cpu_ucode.c
-.endif
