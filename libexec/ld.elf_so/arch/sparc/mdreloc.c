@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.52 2017/08/12 09:03:27 joerg Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.53 2018/03/25 18:56:01 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.52 2017/08/12 09:03:27 joerg Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.53 2018/03/25 18:56:01 joerg Exp $");
 #endif /* not lint */
 
 #include <errno.h>
@@ -395,9 +395,6 @@ int
 _rtld_relocate_plt_lazy(Obj_Entry *obj)
 {
 	const Elf_Rela *rela;
-
-	if (!obj->relocbase)
-		return 0;
 
 	for (rela = obj->pltrelalim; rela-- > obj->pltrela; ) {
 		if (ELF_R_TYPE(rela->r_info) == R_TYPE(JMP_IREL))
