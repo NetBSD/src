@@ -1,4 +1,4 @@
-/*	$NetBSD: uts.c,v 1.8 2017/12/10 17:03:07 bouyer Exp $	*/
+/*	$NetBSD: uts.c,v 1.9 2018/03/25 09:34:02 ryoon Exp $	*/
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uts.c,v 1.8 2017/12/10 17:03:07 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uts.c,v 1.9 2018/03/25 09:34:02 ryoon Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -144,7 +144,7 @@ uts_attach(device_t parent, device_t self, void *aux)
 	struct hid_data * d;
 	struct hid_item item;
 
-	aprint_naive("\n");
+	aprint_normal("\n");
 
 	sc->sc_hdev.sc_dev = self;
 	sc->sc_hdev.sc_intr = uts_intr;
