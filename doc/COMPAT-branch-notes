@@ -46,3 +46,7 @@ TODO
    Need to decide how to handle the COMPAT_BSDPTY stuff.
 
 3. XXX The compat_60 module still needs some work for XEN systems.
+
+4. Update syscalls.master to point the compat calls at the specific
+   modules rather than the monolithic compat module.  Update the
+   "required" lists of other modules, too.
