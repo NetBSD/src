@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.291.2.4 2018/03/17 06:49:57 pgoyette Exp $
+	$NetBSD: syscalls.master,v 1.291.2.5 2018/03/25 07:19:13 pgoyette Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -656,13 +656,19 @@
 328	UNIMPL
 329	UNIMPL
 ; SA system calls.
-330	COMPAT_60 	{ int|sys||sa_register(void *newv, void **oldv, \
+330	COMPAT_60 MODULAR compat	\
+		 	{ int|sys||sa_register(void *newv, void **oldv, \
 				int flags, ssize_t stackinfo_offset); }
-331	COMPAT_60 	{ int|sys||sa_stacks(int num, stack_t *stacks); }
-332	COMPAT_60 	{ int|sys||sa_enable(void); }
-333	COMPAT_60 	{ int|sys||sa_setconcurrency(int concurrency); }
-334	COMPAT_60 	{ int|sys||sa_yield(void); }
-335	COMPAT_60 	{ int|sys||sa_preempt(int sa_id); }
+331	COMPAT_60 MODULAR compat	\
+			{ int|sys||sa_stacks(int num, stack_t *stacks); }
+332	COMPAT_60 MODULAR compat	\
+			{ int|sys||sa_enable(void); }
+333	COMPAT_60 MODULAR compat	\
+			{ int|sys||sa_setconcurrency(int concurrency); }
+334	COMPAT_60 MODULAR compat	\
+			{ int|sys||sa_yield(void); }
+335	COMPAT_60 MODULAR compat	\
+			{ int|sys||sa_preempt(int sa_id); }
 336	OBSOL 		sys_sa_unblockyield
 ;
 ; Syscalls 337-339 are reserved for other scheduler activation syscalls.
