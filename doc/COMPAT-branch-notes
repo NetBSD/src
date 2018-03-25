@@ -45,3 +45,4 @@ TODO
    COMPAT_70, most of COMPAT_60, and much of COMPAT_50 are finished.
    Need to decide how to handle the COMPAT_BSDPTY stuff.
 
+3. XXX The compat_60 module still needs some work for XEN systems.
