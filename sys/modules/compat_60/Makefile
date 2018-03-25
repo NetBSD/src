@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.2.7 2018/03/18 21:41:31 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.1.2.8 2018/03/25 08:17:42 pgoyette Exp $
 
 .include "../Makefile.inc"
 
@@ -12,6 +12,7 @@ CPPFLAGS+=	-DCOMPAT_60 -DCOMPAT_70 -DCOMPAT_80
 CPPFLAGS+=	-DCPU_UCODE
 .endif
 
-SRCS+=	compat_60_mod.c kern_sa_60.c tty_60.c kern_time_60.c ccd_60.c
+SRCS+=	compat_60_mod.c kern_sa_60.c tty_60.c kern_time_60.c ccd_60.c \
+	kern_cpu_60.c
 
 .include <bsd.kmodule.mk>
