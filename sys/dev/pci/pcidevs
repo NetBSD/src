@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1321 2018/03/20 11:23:06 nonaka Exp $
+$NetBSD: pcidevs,v 1.1322 2018/03/26 02:56:45 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -7107,6 +7107,8 @@ product VIATECH CHROME9_HC	0x3371	Chrome9 HC IGP
 product VIATECH VT8237S_ISA	0x3372	VT8237S PCI-ISA Bridge
 product VIATECH VT8237A_PPB	0x337a	VT8237A PCI-PCI Bridge
 product VIATECH VT8237A_HB	0x337b	VT8237A Host Bridge
+product VIATECH VL80x_XHCI 	0x3432	VL80x xHCI
+product	VIATECH	VL805_XHCI	0x3483	VL805 xHCI
 product VIATECH KT880_4		0x4269	KT880 CPU to PCI Bridge
 product VIATECH VT3351_HB_4351	0x4351	VT3351 Host Bridge
 product VIATECH P4M900_4	0x4364	CN896/P4M900 Host Bridge
