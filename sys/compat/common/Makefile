@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.63.2.1 2018/03/18 02:05:21 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.63.2.2 2018/03/26 10:49:45 pgoyette Exp $
 
 LIB=		compat
 NOPIC=		# defined
@@ -33,8 +33,10 @@ lib${LIB}.po:: ${POBJS:O}
 	@rm -f lib${LIB}.po
 	@${LD} -r -o lib${LIB}.po ${LDFLAGS} `NM=${NM} ${LORDER} ${POBJS} | ${TSORT}`
 
+.if NOTYET
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 CPPFLAGS+=	-DCPU_UCODE
+.endif
 .endif
 
 showsources: ${SRCS}
