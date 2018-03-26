@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.136 2018/03/20 09:46:25 knakahara Exp $ */
+/* $NetBSD: ixgbe.c,v 1.137 2018/03/26 06:40:28 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -173,7 +173,7 @@ static void     ixgbe_media_status(struct ifnet *, struct ifmediareq *);
 static int      ixgbe_media_change(struct ifnet *);
 static int      ixgbe_allocate_pci_resources(struct adapter *,
 		    const struct pci_attach_args *);
-static void      ixgbe_free_softint(struct adapter *);
+static void     ixgbe_free_softint(struct adapter *);
 static void	ixgbe_get_slot_info(struct adapter *);
 static int      ixgbe_allocate_msix(struct adapter *,
 		    const struct pci_attach_args *);
@@ -1707,6 +1707,14 @@ ixgbe_add_hw_stats(struct adapter *adapter)
 	    NULL, xname, "TSO errors");
 	evcnt_attach_dynamic(&adapter->link_irq, EVCNT_TYPE_INTR,
 	    NULL, xname, "Link MSI-X IRQ Handled");
+	evcnt_attach_dynamic(&adapter->link_sicount, EVCNT_TYPE_INTR,
+	    NULL, xname, "Link softint");
+	evcnt_attach_dynamic(&adapter->mod_sicount, EVCNT_TYPE_INTR,
+	    NULL, xname, "module softint");
+	evcnt_attach_dynamic(&adapter->msf_sicount, EVCNT_TYPE_INTR,
+	    NULL, xname, "multimode softint");
+	evcnt_attach_dynamic(&adapter->phy_sicount, EVCNT_TYPE_INTR,
+	    NULL, xname, "external PHY softint");
 
 	for (int i = 0; i < adapter->num_queues; i++, rxr++, txr++) {
 #ifdef LRO
@@ -1984,6 +1992,10 @@ ixgbe_clear_evcnt(struct adapter *adapter)
 	adapter->tso_err.ev_count = 0;
 	adapter->watchdog_events.ev_count = 0;
 	adapter->link_irq.ev_count = 0;
+	adapter->link_sicount.ev_count = 0;
+	adapter->mod_sicount.ev_count = 0;
+	adapter->msf_sicount.ev_count = 0;
+	adapter->phy_sicount.ev_count = 0;
 
 	txr = adapter->tx_rings;
 	for (int i = 0; i < adapter->num_queues; i++, rxr++, txr++) {
@@ -3396,6 +3408,10 @@ ixgbe_detach(device_t dev, int flags)
 	evcnt_detach(&adapter->watchdog_events);
 	evcnt_detach(&adapter->tso_err);
 	evcnt_detach(&adapter->link_irq);
+	evcnt_detach(&adapter->link_sicount);
+	evcnt_detach(&adapter->mod_sicount);
+	evcnt_detach(&adapter->msf_sicount);
+	evcnt_detach(&adapter->phy_sicount);
 
 	txr = adapter->tx_rings;
 	for (int i = 0; i < adapter->num_queues; i++, rxr++, txr++) {
@@ -4336,6 +4352,7 @@ ixgbe_handle_mod(void *context)
 	device_t	dev = adapter->dev;
 	u32             err, cage_full = 0;
 
+	++adapter->mod_sicount.ev_count;
 	if (adapter->hw.need_crosstalk_fix) {
 		switch (hw->mac.type) {
 		case ixgbe_mac_82599EB:
@@ -4383,6 +4400,7 @@ ixgbe_handle_msf(void *context)
 	u32             autoneg;
 	bool            negotiate;
 
+	++adapter->msf_sicount.ev_count;
 	/* get_supported_phy_layer will call hw->phy.ops.identify_sfp() */
 	adapter->phy_layer = ixgbe_get_supported_physical_layer(hw);
 
@@ -4410,6 +4428,7 @@ ixgbe_handle_phy(void *context)
 	struct ixgbe_hw *hw = &adapter->hw;
 	int error;
 
+	++adapter->phy_sicount.ev_count;
 	error = hw->phy.ops.handle_lasi(hw);
 	if (error == IXGBE_ERR_OVERTEMP)
 		device_printf(adapter->dev,
@@ -6341,7 +6360,7 @@ ixgbe_handle_link(void *context)
 	struct ixgbe_hw *hw = &adapter->hw;
 
 	IXGBE_CORE_LOCK(adapter);
-
+	++adapter->link_sicount.ev_count;
 	ixgbe_check_link(hw, &adapter->link_speed, &adapter->link_up, 0);
 	ixgbe_update_link_status(adapter);
 
