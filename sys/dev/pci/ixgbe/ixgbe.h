@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.h,v 1.36 2018/03/15 06:48:51 msaitoh Exp $ */
+/* $NetBSD: ixgbe.h,v 1.37 2018/03/26 06:40:28 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -576,6 +576,10 @@ struct adapter {
 	struct evcnt	   	tso_err;
 	struct evcnt	   	watchdog_events;
 	struct evcnt		link_irq;
+	struct evcnt		link_sicount;
+	struct evcnt		mod_sicount;
+	struct evcnt		msf_sicount;
+	struct evcnt		phy_sicount;
 
 	union {
 		struct ixgbe_hw_stats pf;
