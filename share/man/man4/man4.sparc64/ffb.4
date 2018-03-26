@@ -1,4 +1,4 @@
-.\"	$NetBSD: ffb.4,v 1.2 2011/04/09 21:53:58 wiz Exp $
+.\"	$NetBSD: ffb.4,v 1.3 2018/03/26 10:54:31 jdc Exp $
 .\"
 .\" Copyright (c) 2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -156,8 +156,12 @@ The
 .Nm
 driver supports reading
 .Dv EDID
-data from connected monitors, and will automatically set a resolution that is
-supported by both the card and the monitor if the
+data from connected monitors on
+.Sq Series 2
+and
+.Sq Series 3
+cards, and will automatically set a resolution that is supported by both the
+card and the monitor if the
 .Dv EDID
 data can be read.
 This can be overridden for the console frame buffer, by setting the
