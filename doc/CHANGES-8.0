@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.153 2018/03/24 18:13:25 snj Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.154 2018/03/26 11:20:48 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -10600,4 +10600,9 @@ sys/arch/vax/boot/Makefile.inc			1.18
 	Let boot relocate to just below 8MB.  This solves the problem
 	with booting a kernel larger than below 4MB.
 	[ragge, ticket #657]
+
+sys/arch/x86/x86/intr.c				1.124
+
+	Avoid a panic from "intrctl list" during attach of MSI/MSI-X devices.
+	[knakahara, ticket #658]
 
