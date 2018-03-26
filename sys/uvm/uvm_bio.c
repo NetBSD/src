@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.92 2018/02/09 09:07:13 maxv Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.93 2018/03/26 21:43:30 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.92 2018/02/09 09:07:13 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.93 2018/03/26 21:43:30 jdolecek Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ubc.h"
@@ -112,8 +112,8 @@ const struct uvm_pagerops ubc_pager = {
 };
 
 int ubc_nwins = UBC_NWINS;
-int ubc_winshift = UBC_WINSHIFT;
-int ubc_winsize;
+int ubc_winshift __read_mostly = UBC_WINSHIFT;
+int ubc_winsize __read_mostly;
 #if defined(PMAP_PREFER)
 int ubc_nqueues;
 #define UBC_NQUEUES ubc_nqueues
