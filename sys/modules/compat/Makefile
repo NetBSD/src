@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14.14.5 2018/03/22 01:44:51 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.14.14.6 2018/03/26 00:00:39 pgoyette Exp $
 
 .include "../Makefile.inc"
 
@@ -24,13 +24,6 @@ CPPFLAGS+=	-DCOMPAT_20
 CPPFLAGS+=	-DCOMPAT_30 -DCOMPAT_40 -DCOMPAT_50
 CPPFLAGS+=	-DCOMPAT_60 -DCOMPAT_70 -DCOMPAT_80
 CPPFLAGS+=	-DCOMPAT_43
-.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
-CPPFLAGS+=	-DCPU_UCODE
-# pick up more for bsd.klinks.mk as needed.
-MACHINE_EXTRA=	x86
-.else
-MACHINE_EXTRA=	none
-.endif
 
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 CPPFLAGS+=	-DCPU_UCODE
@@ -38,7 +31,6 @@ CPPFLAGS+=	-DCPU_UCODE
 MACHINE_EXTRA= x86
 .else
 MACHINE_EXTRA= none
-
 .endif
 
 .include "../../compat/common/Makefile.sysio"
