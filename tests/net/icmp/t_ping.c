@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ping.c,v 1.22 2018/03/24 15:51:57 roy Exp $	*/
+/*	$NetBSD: t_ping.c,v 1.23 2018/03/26 09:11:15 roy Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: t_ping.c,v 1.22 2018/03/24 15:51:57 roy Exp $");
+__RCSID("$NetBSD: t_ping.c,v 1.23 2018/03/26 09:11:15 roy Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -334,7 +334,8 @@ ATF_TC_BODY(ping_of_death, tc)
 	char ifname[IFNAMSIZ];
 	pid_t cpid;
 	size_t tot, frag;
-	int s, x, loop, error;
+	int s, x, loop;
+	ssize_t error;
 
 	cpid = fork();
 	rump_init();
@@ -420,11 +421,13 @@ ATF_TC_BODY(ping_of_death, tc)
 
 			error = rump_sys_sendto(s, data, frag, 0,
 			    (struct sockaddr *)&dst, sizeof(dst));
-			if (error == sizeof(dst))
-				continue;
-			if (error == -1 && errno == ENOBUFS)
-				continue;
-			atf_tc_fail_errno("sendto failed");
+			if (error == -1) {
+				if (errno == ENOBUFS)
+					continue;
+				atf_tc_fail_errno("sendto failed");
+			}
+			if ((size_t)error != frag)
+				atf_tc_fail("sendto did not write all data");
 		}
 		if (waitpid(-1, &status, WNOHANG) > 0) {
 			if (WIFEXITED(status) && WEXITSTATUS(status) == 0)
