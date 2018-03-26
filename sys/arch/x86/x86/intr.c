@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.123 2018/02/17 18:51:53 maxv Exp $	*/
+/*	$NetBSD: intr.c,v 1.124 2018/03/26 02:30:08 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.123 2018/02/17 18:51:53 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.124 2018/03/26 02:30:08 knakahara Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -2012,6 +2012,9 @@ intr_get_affinity(struct intrsource *isp, kcpuset_t *cpuset)
 		return;
 	}
 
+	KASSERTMSG(isp->is_handlers != NULL,
+	    "Don't get affinity for the device which is not established.");
+
 	ci = isp->is_handlers->ih_cpu;
 	if (ci == NULL) {
 		kcpuset_zero(cpuset);
@@ -2064,6 +2067,9 @@ intr_set_affinity(struct intrsource *isp, const kcpuset_t *cpuset)
 	}
 
 	ih = isp->is_handlers;
+	KASSERTMSG(ih != NULL,
+	    "Don't set affinity for the device which is not established.");
+
 	oldci = ih->ih_cpu;
 	if (newci == oldci) /* nothing to do */
 		return 0;
@@ -2129,6 +2135,13 @@ intr_is_affinity_intrsource(struct intrsource *isp, const kcpuset_t *cpuset)
 	struct cpu_info *ci;
 
 	KASSERT(mutex_owned(&cpu_lock));
+
+	/*
+	 * The device is already pci_intr_alloc'ed, however it is not
+	 * established yet.
+	 */
+	if (isp->is_handlers == NULL)
+		return false;
 
 	ci = isp->is_handlers->ih_cpu;
 	KASSERT(ci != NULL);
