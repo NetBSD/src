@@ -1,7 +1,7 @@
 PKG_INFO(1)                 General Commands Manual                PKG_INFO(1)
 
 NNAAMMEE
-     ppkkgg__iinnffoo -- a utility for displaying information on software packages
+     ppkkgg__iinnffoo - a utility for displaying information on software packages
 
 SSYYNNOOPPSSIISS
      ppkkgg__iinnffoo [--BBbbccDDddFFffhhIIiikkLLmmNNnnppqqRRrrSSssVVvvXX] [--EE _p_k_g_-_n_a_m_e] [--ee _p_k_g_-_n_a_m_e]
@@ -26,15 +26,15 @@ DDEESSCCRRIIPPTTIIOONN
              --uu.  When neither --aa nor --uu is given, the former is assumed.
 
      --BB      Show some of the important definitions used when building the
-             binary package (the ``Build information'') for each package.
+             binary package (the "Build information") for each package.
              Additionally, any installation information variables (lowercase)
              can be queried, too.  In particular, _a_u_t_o_m_a_t_i_c tells if a package
              was installed automatically as a dependency of another package.
 
      --bb      Show the NetBSD RCS Id strings from the files used in the
-             construction of the binary package (the ``Build version'') for
-             each package.  These files are the package Makefile, any patch
-             files, any checksum files, and the packing list file.
+             construction of the binary package (the "Build version") for each
+             package.  These files are the package Makefile, any patch files,
+             any checksum files, and the packing list file.
 
      --cc      Show the one-line comment field for each package.
 
@@ -105,8 +105,8 @@ DDEESSCCRRIIPPTTIIOONN
              each package.  An empty string is returned if no such variable
              definition is found for the package(s).
 
-     --qq      Be ``quiet'' in emitting report headers and such, just dump the
-             raw info (basically, assume a non-human reading).
+     --qq      Be "quiet" in emitting report headers and such, just dump the raw
+             info (basically, assume a non-human reading).
 
      --RR      For each package, show the packages that require it.
 
@@ -143,7 +143,7 @@ TTEECCHHNNIICCAALL DDEETTAAIILLSS
      database.  The filename must be absolute, as in the output of
            pkg_info -aF.
      For example,
-           pkg_info -eF /path/to/file
+           pkg_info -Fe /path/to/file
      can be used to display the package the given file belongs to, and
            pkg_info -LF /path/to/file
      can be used to display all files belonging to the package the given file
@@ -157,32 +157,30 @@ PPAACCKKAAGGEE WWIILLDDCCAARRDDSS
 
      Package wildcards use fnmatch(3).  In addition, csh(1) style {,}
      alternates have been implemented.  Package version numbers can also be
-     matched in a relational manner using the ``>='', ``<='', ``>'', and ``<''
+     matched in a relational manner using the ">=", "<=", ">", and "<"
      operators.  For example,
            pkg_info -e 'name>=1.3'
-     will match versions 1.3 and later of the ``name'' package.  (Make sure to
+     will match versions 1.3 and later of the "name" package.  (Make sure to
      use shell quoting.)  Additionally, ranges can be defined, by giving both
-     a lower bound (with ``>'' or ``>='') as well as an upper bound (with
-     ``<'' or ``<='').  The lower bound has to come first.  For example,
+     a lower bound (with ">" or ">=") as well as an upper bound (with "<" or
+     "<=").  The lower bound has to come first.  For example,
            pkg_info -e 'name>=1.3<2.0'
-     will match versions 1.3 (inclusive) to 2.0 (exclusive) of package
-     ``name''.
+     will match versions 1.3 (inclusive) to 2.0 (exclusive) of package "name".
 
      The collating sequence of the various package version numbers is unusual,
-     but strives to be consistent.  The magic string ``alpha'' equates to
-     ``alpha version'', and sorts before a beta version.  The magic string
-     ``beta'' equates to ``beta version'', and sorts before a release
-     candidate.  The magic string ``rc'' equates to ``release candidate'', and
-     sorts before a release.  The magic string ``pre'', short for
-     ``pre-release'', is a synonym for ``rc''.  For example,
-     ``name-1.3alpha2'' will sort before ``name-1.3beta1'', and they both sort
-     before ``name-1.3rc1''.  Similarly, ``name-1.3rc3'' will sort before
-     ``name-1.3'', and after ``name-1.2.9''.  The magic string ``pl'' equates
-     to ``patch level'', and has the same value as a dot (`.') in the dewey-
-     decimal ordering schemes, as does the underscore (`_').  Additionally,
-     alphabetic characters sort in the same place as their numeric
-     counterparts, so that ``name-1.2e'' has the same sorting value as
-     ``name-1.2.5''.
+     but strives to be consistent.  The magic string "alpha" equates to "alpha
+     version", and sorts before a beta version.  The magic string "beta"
+     equates to "beta version", and sorts before a release candidate.  The
+     magic string "rc" equates to "release candidate", and sorts before a
+     release.  The magic string "pre", short for "pre-release", is a synonym
+     for "rc".  For example, "name-1.3alpha2" will sort before
+     "name-1.3beta1", and they both sort before "name-1.3rc1".  Similarly,
+     "name-1.3rc3" will sort before "name-1.3", and after "name-1.2.9".  The
+     magic string "pl" equates to "patch level", and has the same value as a
+     dot (`.') in the dewey-decimal ordering schemes, as does the underscore
+     (`_').  Additionally, alphabetic characters sort in the same place as
+     their numeric counterparts, so that "name-1.2e" has the same sorting
+     value as "name-1.2.5".
 
 EENNVVIIRROONNMMEENNTT
      See pkg_install.conf(5) for options, that can also be specified using the
@@ -201,4 +199,4 @@ AAUUTTHHOORRSS
              NetBSD wildcard dependency processing, pkgdb, depends displaying,
              pkg size display, and more.
 
-pkgsrc                         December 14, 2012                        pkgsrc
+pkgsrc                         January 11, 2015                         pkgsrc

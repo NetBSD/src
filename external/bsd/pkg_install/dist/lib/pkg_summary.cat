@@ -1,7 +1,7 @@
 PKG_SUMMARY(5)                File Formats Manual               PKG_SUMMARY(5)
 
 NNAAMMEE
-     ppkkgg__ssuummmmaarryy -- summary of binary package repository
+     ppkkgg__ssuummmmaarryy - summary of binary package repository
 
 DDEESSCCRRIIPPTTIIOONN
      The file ppkkgg__ssuummmmaarryy contains information about each package in a binary
