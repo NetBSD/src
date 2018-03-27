@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_mod.c,v 1.24.14.20 2018/03/25 08:03:26 pgoyette Exp $	*/
+/*	$NetBSD: compat_mod.c,v 1.24.14.21 2018/03/27 07:29:43 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.24.14.20 2018/03/25 08:03:26 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.24.14.21 2018/03/27 07:29:43 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -68,10 +68,6 @@ __KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.24.14.20 2018/03/25 08:03:26 pgoyet
 
 #if defined(COMPAT_09) || defined(COMPAT_43)
 static struct sysctllog *compat_clog = NULL;
-#endif
-
-#ifdef COMPAT_40
-#include <compat/common/if_40.h>
 #endif
 
 #ifdef COMPAT_70
@@ -189,10 +185,6 @@ static const struct syscall_package compat_syscalls[] = {
 	{ SYS_compat_30_getfh, 0, (sy_call_t *)compat_30_sys_getfh },
 	{ SYS_compat_30_socket, 0, (sy_call_t *)compat_30_sys_socket },
 #endif
-
-#if defined(COMPAT_40)
-	{ SYS_compat_40_mount, 0, (sy_call_t *)compat_40_sys_mount },
-#endif
 	{ 0, 0, NULL },
 };
 
@@ -209,10 +201,10 @@ struct compat_init_fini {
 #ifdef COMPAT_50
 	{ compat_50_init, compat_50_fini },
 #endif
-#if 0	/* NOT YET */
 #ifdef COMPAT_40
 	{ compat_40_init, compat_40_fini },
 #endif
+#if 0	/* NOT YET */
 #ifdef COMPAT_30
 	{ compat_30_init, compat_30_fini },
 #endif
@@ -289,9 +281,6 @@ compat_modcmd(modcmd_t cmd, void *arg)
  * XXX */
 #endif
 #endif /* XXX NOTYET */
-#ifdef COMPAT_40
-		if_40_init();
-#endif
 #ifdef COMPAT_13
 		uvm_13_init();
 #endif
@@ -375,9 +364,6 @@ compat_modcmd(modcmd_t cmd, void *arg)
 		rw_exit(&exec_lock);
 #endif
 #endif	/* COMPAT_16 */
-#ifdef COMPAT_40
-		if_40_fini();
-#endif
 		/*
 		 * Disable included components in reverse order;
 		 * if any component fails to fini(), re-init those

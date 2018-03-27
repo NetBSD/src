@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.h,v 1.1.2.7 2018/03/24 23:52:19 pgoyette Exp $	*/
+/* $NetBSD: compat_stub.h,v 1.1.2.8 2018/03/27 07:29:44 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -99,5 +99,15 @@ struct uio;
 
 extern int (*wsevent_50_copyout_events)(const struct wscons_event *, int,
     struct uio *);
+
+/*
+ * sysmon_power compatability
+ */
+
+struct power_event;
+struct sysmon_pswitch;
+
+extern void (*compat_sysmon_power_40)(struct power_event
+    *, struct sysmon_pswitch *, int);
 
 #endif	/* _SYS_COMPAT_STUB_H */

@@ -1,4 +1,4 @@
-#	$NetBSD: files.common,v 1.1.2.18 2018/03/24 01:59:15 pgoyette Exp $
+#	$NetBSD: files.common,v 1.1.2.19 2018/03/27 07:29:44 pgoyette Exp $
 
 #
 # Generic files, used by all compat options.
@@ -52,8 +52,10 @@ file	compat/common/vfs_syscalls_30.c		compat_30
 file	compat/common/uipc_syscalls_30.c	compat_30
 
 # Compatibility code for NetBSD 4.0
+file	compat/common/compat_40_mod.c		compat_40
 file	compat/common/vfs_syscalls_40.c		compat_40
 file	compat/common/uipc_syscalls_40.c	compat_40
+file	compat/common/sysmon_power_40.c		compat_40
 
 # Compatibility code for NetBSD 5.0
 file	compat/common/compat_50_mod.c		compat_50
