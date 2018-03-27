@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.291.2.5 2018/03/25 07:19:13 pgoyette Exp $
+	$NetBSD: syscalls.master,v 1.291.2.6 2018/03/27 23:08:44 pgoyette Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -381,7 +381,8 @@
 174	STD 	 RUMP	{ ssize_t|sys||pwrite(int fd, const void *buf, \
 			    size_t nbyte, int PAD, off_t offset); }
 ; For some reason, ntp_gettime doesn't want to raise SIGSYS when it's excluded.
-175	COMPAT_30	{ int|sys||ntp_gettime(struct ntptimeval30 *ntvp); }
+175	COMPAT_30 MODULAR compat_30	\
+			{ int|sys||ntp_gettime(struct ntptimeval30 *ntvp); }
 #if defined(NTP) || !defined(_KERNEL_OPT)
 176	STD 		{ int|sys||ntp_adjtime(struct timex *tp); }
 #else
