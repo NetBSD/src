@@ -1040,6 +1040,7 @@ if_ifa(struct dhcpcd_ctx *ctx, const struct ifa_msghdr *ifam)
 	struct interface *ifp;
 	const struct sockaddr *rti_info[RTAX_MAX];
 	int addrflags;
+	pid_t pid;
 
 	if ((ifp = if_findindex(ctx->ifaces, ifam->ifam_index)) == NULL)
 		return;
@@ -1068,6 +1069,9 @@ if_ifa(struct dhcpcd_ctx *ctx, const struct ifa_msghdr *ifam)
 		}
 #endif
 	}
+	pid = ifam->ifam_pid;
+#else
+	pid = 0;
 #endif
 
 #ifdef HAVE_IFAM_ADDRFLAGS
@@ -1140,7 +1144,7 @@ if_ifa(struct dhcpcd_ctx *ctx, const struct ifa_msghdr *ifam)
 #endif
 
 		ipv4_handleifa(ctx, ifam->ifam_type, NULL, ifp->name,
-		    &addr, &mask, &bcast, addrflags);
+		    &addr, &mask, &bcast, addrflags, pid);
 		break;
 	}
 #endif
@@ -1171,7 +1175,7 @@ if_ifa(struct dhcpcd_ctx *ctx, const struct ifa_msghdr *ifam)
 #endif
 
 		ipv6_handleifa(ctx, ifam->ifam_type, NULL,
-		    ifp->name, &addr6, ipv6_prefixlen(&mask6), addrflags);
+		    ifp->name, &addr6, ipv6_prefixlen(&mask6), addrflags, pid);
 		break;
 	}
 #endif
@@ -1206,6 +1210,11 @@ if_dispatch(struct dhcpcd_ctx *ctx, const struct rt_msghdr *rtm)
 	case RTM_NEWADDR:
 		if_ifa(ctx, (const void *)rtm);
 		break;
+#ifdef RTM_DESYNC
+	case RTM_DESYNC:
+		dhcpcd_linkoverflow(ctx);
+		break;
+#endif
 	}
 }
 
@@ -1219,7 +1228,8 @@ if_handlelink(struct dhcpcd_ctx *ctx)
 	msg.msg_iov = ctx->iov;
 	msg.msg_iovlen = 1;
 
-	if ((len = recvmsg_realloc(ctx->link_fd, &msg, 0)) == -1)
+	len = recvmsg_realloc(ctx->link_fd, &msg, 0);
+	if (len == -1)
 		return -1;
 	if (len != 0)
 		if_dispatch(ctx, ctx->iov[0].iov_base);
@@ -1248,7 +1258,8 @@ if_machinearch(char *str, size_t len)
 }
 
 #ifdef INET6
-#ifdef IPV6CTL_ACCEPT_RTADV
+#if (defined(IPV6CTL_ACCEPT_RTADV) && !defined(ND6_IFF_ACCEPT_RTADV)) || \
+    defined(IPV6CTL_USETEMPADDR) || defined(IPV6CTL_TEMPVLTIME)
 #define get_inet6_sysctl(code) inet6_sysctl(code, 0, 0)
 #define set_inet6_sysctl(code, val) inet6_sysctl(code, val, 1)
 static int
@@ -1358,21 +1369,21 @@ set_ifxflags(int s, const struct interface *ifp)
 #ifdef IFXF_NOINET6
 	flags &= ~IFXF_NOINET6;
 #endif
-	if (!(ifp->ctx->options & DHCPCD_TEST))
+	/*
+	 * If not doing autoconf, don't disable the kernel from doing it.
+	 * If we need to, we should have another option actively disable it.
+	 */
+	if (ifp->options->options & DHCPCD_IPV6RS)
 		flags &= ~IFXF_AUTOCONF6;
 	if (ifr.ifr_flags == flags)
 		return 0;
-	if (ifp->ctx->options & DHCPCD_TEST) {
-		errno = EPERM;
-		return -1;
-	}
 	ifr.ifr_flags = flags;
 	return ioctl(s, SIOCSIFXFLAGS, (void *)&ifr);
 }
 #endif
 
 /* OpenBSD removed ND6 flags entirely, so we need to check for their
- * existnance. */
+ * existance. */
 #if defined(ND6_IFF_AUTO_LINKLOCAL) || \
     defined(ND6_IFF_PERFORMNUD) || \
     defined(ND6_IFF_ACCEPT_RTADV) || \
@@ -1381,147 +1392,107 @@ set_ifxflags(int s, const struct interface *ifp)
 #define	ND6_NDI_FLAGS
 #endif
 
-int
-if_checkipv6(struct dhcpcd_ctx *ctx, const struct interface *ifp)
+void
+if_setup_inet6(const struct interface *ifp)
 {
 	struct priv *priv;
-	int s, ra;
+	int s;
+#ifdef ND6_NDI_FLAGS
+	struct in6_ndireq nd;
+	int flags;
+#endif
 
-	priv = (struct priv *)ctx->priv;
+	priv = (struct priv *)ifp->ctx->priv;
 	s = priv->pf_inet6_fd;
 
-	if (ifp) {
 #ifdef ND6_NDI_FLAGS
-		struct in6_ndireq nd;
-		int flags;
-
-		memset(&nd, 0, sizeof(nd));
-		strlcpy(nd.ifname, ifp->name, sizeof(nd.ifname));
-		if (ioctl(s, SIOCGIFINFO_IN6, &nd) == -1)
-			return -1;
-		flags = (int)nd.ndi.flags;
+	memset(&nd, 0, sizeof(nd));
+	strlcpy(nd.ifname, ifp->name, sizeof(nd.ifname));
+	if (ioctl(s, SIOCGIFINFO_IN6, &nd) == -1)
+		logerr("%s: SIOCGIFINFO_FLAGS", ifp->name);
+	flags = (int)nd.ndi.flags;
 #endif
 
 #ifdef ND6_IFF_AUTO_LINKLOCAL
-		if (!(ctx->options & DHCPCD_TEST) &&
-		    flags & ND6_IFF_AUTO_LINKLOCAL)
-		{
-			logdebugx("%s: disabling Kernel IPv6 auto "
-			    "link-local support",
-			    ifp->name);
-			flags &= ~ND6_IFF_AUTO_LINKLOCAL;
-		}
+	/* Unlike the kernel,
+	 * dhcpcd make make a stable private address. */
+	flags &= ~ND6_IFF_AUTO_LINKLOCAL;
 #endif
 
 #ifdef ND6_IFF_PERFORMNUD
-		if ((flags & ND6_IFF_PERFORMNUD) == 0) {
-			/* NUD is kind of essential. */
-			flags |= ND6_IFF_PERFORMNUD;
-		}
-#endif
-
-#ifdef ND6_IFF_ACCEPT_RTADV
-		if (!(ctx->options & DHCPCD_TEST) &&
-		    flags & ND6_IFF_ACCEPT_RTADV)
-		{
-			logdebugx("%s: disabling Kernel IPv6 RA support",
-			    ifp->name);
-			flags &= ~ND6_IFF_ACCEPT_RTADV;
-		}
-#ifdef ND6_IFF_OVERRIDE_RTADV
-		if (!(ctx->options & DHCPCD_TEST) &&
-		    flags & ND6_IFF_OVERRIDE_RTADV)
-			flags &= ~ND6_IFF_OVERRIDE_RTADV;
-#endif
+	/* NUD is kind of essential. */
+	flags |= ND6_IFF_PERFORMNUD;
 #endif
 
 #ifdef ND6_IFF_IFDISABLED
-		flags &= ~ND6_IFF_IFDISABLED;
+	/* Ensure the interface is not disabled. */
+	flags &= ~ND6_IFF_IFDISABLED;
+#endif
+
+	/*
+	 * If not doing autoconf, don't disable the kernel from doing it.
+	 * If we need to, we should have another option actively disable it.
+	 */
+#ifdef ND6_IFF_ACCEPT_RTADV
+	if (ifp->options->options & DHCPCD_IPV6RS)
+		flags &= ~ND6_IFF_ACCEPT_RTADV;
+#ifdef ND6_IFF_OVERRIDE_RTADV
+	if (ifp->options->options & DHCPCD_IPV6RS)
+		flags |= ND6_IFF_OVERRIDE_RTADV;
+#endif
 #endif
 
 #ifdef ND6_NDI_FLAGS
-		if (nd.ndi.flags != (uint32_t)flags) {
-			if (ctx->options & DHCPCD_TEST) {
-				logwarnx("%s: interface not IPv6 enabled",
-				    ifp->name);
-				return -1;
-			}
-			nd.ndi.flags = (uint32_t)flags;
-			if (ioctl(s, SIOCSIFINFO_FLAGS, &nd) == -1) {
-				logerr("%s: SIOCSIFINFO_FLAGS", ifp->name);
-				return -1;
-			}
-		}
+	if (nd.ndi.flags != (uint32_t)flags) {
+		nd.ndi.flags = (uint32_t)flags;
+		if (ioctl(s, SIOCSIFINFO_FLAGS, &nd) == -1)
+			logerr("%s: SIOCSIFINFO_FLAGS", ifp->name);
+	}
 #endif
 
-		/* Enabling IPv6 by whatever means must be the
-		 * last action undertaken to ensure kernel RS and
-		 * LLADDR auto configuration are disabled where applicable. */
+	/* Enabling IPv6 by whatever means must be the
+	 * last action undertaken to ensure kernel RS and
+	 * LLADDR auto configuration are disabled where applicable. */
 #ifdef SIOCIFAFATTACH
-		if (af_attach(s, ifp, AF_INET6) == -1) {
-			logerr("%s: af_attach", ifp->name);
-			return -1;
-		}
+	if (af_attach(s, ifp, AF_INET6) == -1)
+		logerr("%s: af_attach", ifp->name);
 #endif
 
 #ifdef SIOCGIFXFLAGS
-		if (set_ifxflags(s, ifp) == -1) {
-			logerr("%s: set_ifxflags", ifp->name);
-			return -1;
-		}
+	if (set_ifxflags(s, ifp) == -1)
+		logerr("%s: set_ifxflags", ifp->name);
 #endif
 
-#ifdef ND6_IFF_ACCEPT_RTADV
-#ifdef ND6_IFF_OVERRIDE_RTADV
-		switch (flags & (ND6_IFF_ACCEPT_RTADV|ND6_IFF_OVERRIDE_RTADV)) {
-		case (ND6_IFF_ACCEPT_RTADV|ND6_IFF_OVERRIDE_RTADV):
-			return 1;
-		case ND6_IFF_ACCEPT_RTADV:
-			return ctx->ra_global;
-		default:
-			return 0;
+#if defined(IPV6CTL_ACCEPT_RTADV) && !defined(ND6_IFF_ACCEPT_RTADV)
+	/* If we cannot control ra per interface, disable it globally. */
+	if (ifp->options->options & DHCPCD_IPV6RS) {
+		int ra = get_inet6_sysctl(IPV6CTL_ACCEPT_RTADV);
+
+		if (ra == -1) {
+			if (errno != ENOENT)
+				logerr("IPV6CTL_ACCEPT_RTADV");
+		else if (ra != 0)
+			if (set_inet6_sysctl(IPV6CTL_ACCEPT_RTADV, 0) == -1)
+				logerr("IPV6CTL_ACCEPT_RTADV");
 		}
-#else
-		return flags & ND6_IFF_ACCEPT_RTADV ? 1 : 0;
-#endif
-#else
-		return ctx->ra_global;
-#endif
 	}
-
-#ifdef IPV6CTL_ACCEPT_RTADV
-	ra = get_inet6_sysctl(IPV6CTL_ACCEPT_RTADV);
-	if (ra == -1)
-		if (errno == ENOENT)
-			ra = 0;
-		else
-			logerr("IPV6CTL_ACCEPT_RTADV");
-	else if (ra != 0 && !(ctx->options & DHCPCD_TEST)) {
-		logdebugx("disabling Kernel IPv6 RA support");
-		if (set_inet6_sysctl(IPV6CTL_ACCEPT_RTADV, 0) == -1) {
-			logerr("IPV6CTL_ACCEPT_RTADV");
-			return ra;
-		}
-		ra = 0;
-#else
-	ra = 0;
-	if (!(ctx->options & DHCPCD_TEST)) {
 #endif
+
 #if defined(IPV6CTL_ACCEPT_RTADV) || defined(ND6_IFF_ACCEPT_RTADV)
-		/* Flush the kernel knowledge of advertised routers
-		 * and prefixes so the kernel does not expire prefixes
-		 * and default routes we are trying to own. */
-		char dummy[IFNAMSIZ + 8];
+	/* Flush the kernel knowledge of advertised routers
+	 * and prefixes so the kernel does not expire prefixes
+	 * and default routes we are trying to own. */
+	if (ifp->options->options & DHCPCD_IPV6RS) {
+		char ifname[IFNAMSIZ + 8];
 
-		strlcpy(dummy, "lo0", sizeof(dummy));
-		if (ioctl(s, SIOCSRTRFLUSH_IN6, (void *)&dummy) == -1)
+		strlcpy(ifname, ifp->name, sizeof(ifname));
+		if (ioctl(s, SIOCSRTRFLUSH_IN6, (void *)&ifname) == -1 &&
+		    errno != ENOTSUP)
 			logwarn("SIOCSRTRFLUSH_IN6");
-		if (ioctl(s, SIOCSPFXFLUSH_IN6, (void *)&dummy) == -1)
+		if (ioctl(s, SIOCSPFXFLUSH_IN6, (void *)&ifname) == -1 &&
+		    errno != ENOTSUP)
 			logwarn("SIOCSPFXFLUSH_IN6");
-#endif
 	}
-
-	ctx->ra_global = ra;
-	return ra;
+#endif
 }
 #endif
