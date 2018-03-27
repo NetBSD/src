@@ -1,7 +1,7 @@
 PKGSRC(7)              Miscellaneous Information Manual              PKGSRC(7)
 
 NNAAMMEE
-     ppkkggssrrcc -- NetBSD packages collection (framework for third-party software)
+     ppkkggssrrcc - NetBSD packages collection (framework for third-party software)
 
 DDEESSCCRRIIPPTTIIOONN
      The NetBSD Packages Collection (pkgsrc) is a framework for building and
