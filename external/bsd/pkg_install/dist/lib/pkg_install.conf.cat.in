@@ -1,7 +1,7 @@
 PKG_INSTALL.CONF(5)           File Formats Manual          PKG_INSTALL.CONF(5)
 
 NNAAMMEE
-     ppkkgg__iinnssttaallll..ccoonnff -- configuration file for package installation tools
+     ppkkgg__iinnssttaallll..ccoonnff - configuration file for package installation tools
 
 DDEESSCCRRIIPPTTIIOONN
      The file ppkkgg__iinnssttaallll..ccoonnff contains system defaults for the package
