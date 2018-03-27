@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14.14.6 2018/03/26 00:00:39 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.14.14.7 2018/03/27 03:41:51 pgoyette Exp $
 
 .include "../Makefile.inc"
 
@@ -42,7 +42,7 @@ SRCS+=	compat_mod.c compat_exec.c compat_util.c
 .PATH:	${S}/arch/${MACHINE_CPU}/${MACHINE_CPU}
 .PATH:	${S}	${S}/arch/${MACHINE_EXTRA}/${MACHINE_EXTRA}
 
-.for i in compat_13_machdep.c compat_16_machdep.c compat_60_cpu_ucode.c
+.for i in compat_13_machdep.c compat_16_machdep.c # compat_60_cpu_ucode.c
 .   if	exists(${S}/arch/${MACHINE}/${MACHINE}/${i}) || \
 	exists(${S}/arch/${MACHINE_ARCH}/${MACHINE_ARCH}/${i}) || \
 	exists(${S}/arch/${MACHINE_CPU}/${MACHINE_CPU}/${i}) || \
