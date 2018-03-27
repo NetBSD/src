@@ -799,6 +799,27 @@ else
 	fi
 fi
 
+if [ -z "$SETPROCTITLE" ]; then
+	printf "Testing for setproctitle ... "
+	cat << EOF >_setproctitle.c
+#include <stdlib.h>
+int main(void) {
+	setproctitle("foo");
+	return 0;
+}
+EOF
+	if $XCC _setproctitle.c -o _setproctitle 2>&3; then
+		SETPROCTITLE=yes
+	else
+		SETPROCTITLE=no
+	fi
+	echo "$SETPROCTITLE"
+	rm -f _setproctitle.c _setproctitle
+fi
+if [ "$SETPROCTITLE" = yes ]; then
+	echo "#define	HAVE_SETPROCTITLE" >>$CONFIG_H
+fi
+
 if [ -z "$STRTOI" ]; then
 	printf "Testing for strtoi ... "
 	cat <<EOF >_strtoi.c
