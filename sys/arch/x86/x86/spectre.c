@@ -1,4 +1,4 @@
-/*	$NetBSD: spectre.c,v 1.1 2018/03/28 14:56:59 maxv Exp $	*/
+/*	$NetBSD: spectre.c,v 1.2 2018/03/28 16:02:49 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spectre.c,v 1.1 2018/03/28 14:56:59 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spectre.c,v 1.2 2018/03/28 16:02:49 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: spectre.c,v 1.1 2018/03/28 14:56:59 maxv Exp $");
 #include <machine/cpufunc.h>
 #include <machine/cpuvar.h>
 #include <machine/specialreg.h>
+#include <machine/frameasm.h>
 
 #include <x86/cputypes.h>
 
@@ -57,13 +58,46 @@ enum spec_mitigation {
 bool spec_mitigation_enabled __read_mostly = false;
 static enum spec_mitigation mitigation_method = MITIGATION_NONE;
 
+void speculation_barrier(struct lwp *, struct lwp *);
+
+void
+speculation_barrier(struct lwp *oldlwp, struct lwp *newlwp)
+{
+	if (!spec_mitigation_enabled)
+		return;
+
+	/*
+	 * From kernel thread to kernel thread, no need for a barrier.
+	 */
+	if ((oldlwp->l_flag & LW_SYSTEM) &&
+	    (newlwp->l_flag & LW_SYSTEM))
+		return;
+
+	switch (mitigation_method) {
+	case MITIGATION_INTEL_IBRS:
+		wrmsr(MSR_IA32_PRED_CMD, IA32_PRED_CMD_IBPB);
+		break;
+	default:
+		/* nothing */
+		break;
+	}
+}
+
 static void
 speculation_detect_method(void)
 {
 	struct cpu_info *ci = curcpu();
+	u_int descs[4];
 
 	if (cpu_vendor == CPUVENDOR_INTEL) {
-		/* TODO: detect MITIGATION_INTEL_IBRS */
+		if (cpuid_level >= 7) {
+			x86_cpuid(7, descs);
+			if (descs[3] & CPUID_SEF_IBRS) {
+				/* descs[3] = %edx */
+				mitigation_method = MITIGATION_INTEL_IBRS;
+				return;
+			}
+		}
 		mitigation_method = MITIGATION_NONE;
 	} else if (cpu_vendor == CPUVENDOR_AMD) {
 		/*
@@ -88,6 +122,118 @@ speculation_detect_method(void)
 	}
 }
 
+/* -------------------------------------------------------------------------- */
+
+#ifdef __x86_64__
+static volatile unsigned long ibrs_cpu_barrier1 __cacheline_aligned;
+static volatile unsigned long ibrs_cpu_barrier2 __cacheline_aligned;
+
+static void
+ibrs_enable_hotpatch(void)
+{
+	extern uint8_t ibrs_enter, ibrs_enter_end;
+	extern uint8_t ibrs_leave, ibrs_leave_end;
+	u_long psl, cr0;
+	uint8_t *bytes;
+	size_t size;
+
+	x86_patch_window_open(&psl, &cr0);
+
+	bytes = &ibrs_enter;
+	size = (size_t)&ibrs_enter_end - (size_t)&ibrs_enter;
+	x86_hotpatch(HP_NAME_IBRS_ENTER, bytes, size);
+
+	bytes = &ibrs_leave;
+	size = (size_t)&ibrs_leave_end - (size_t)&ibrs_leave;
+	x86_hotpatch(HP_NAME_IBRS_LEAVE, bytes, size);
+
+	x86_patch_window_close(psl, cr0);
+}
+
+static void
+ibrs_change_cpu(void *arg1, void *arg2)
+{
+	struct cpu_info *ci = curcpu();
+	bool enabled = (bool)arg1;
+	u_long psl;
+
+	psl = x86_read_psl();
+	x86_disable_intr();
+
+	atomic_dec_ulong(&ibrs_cpu_barrier1);
+	while (atomic_cas_ulong(&ibrs_cpu_barrier1, 0, 0) != 0) {
+		x86_pause();
+	}
+
+	/* cpu0 is the one that does the hotpatch job */
+	if (ci == &cpu_info_primary) {
+		if (enabled) {
+			ibrs_enable_hotpatch();
+		} else {
+			/* TODO */
+		}
+	}
+
+	atomic_dec_ulong(&ibrs_cpu_barrier2);
+	while (atomic_cas_ulong(&ibrs_cpu_barrier2, 0, 0) != 0) {
+		x86_pause();
+	}
+
+	/* Write back and invalidate cache, flush pipelines. */
+	wbinvd();
+	x86_flush();
+
+	x86_write_psl(psl);
+}
+
+static int
+ibrs_change(bool enabled)
+{
+	struct cpu_info *ci = NULL;
+	CPU_INFO_ITERATOR cii;
+	uint64_t xc;
+
+	mutex_enter(&cpu_lock);
+
+	/*
+	 * We expect all the CPUs to be online.
+	 */
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		struct schedstate_percpu *spc = &ci->ci_schedstate;
+		if (spc->spc_flags & SPCF_OFFLINE) {
+			printf("[!] cpu%d offline, IBRS not changed\n",
+			    cpu_index(ci));
+			mutex_exit(&cpu_lock);
+			return EOPNOTSUPP;
+		}
+	}
+
+	ibrs_cpu_barrier1 = ncpu;
+	ibrs_cpu_barrier2 = ncpu;
+
+	printf("[+] %s SpectreV2 Mitigation (IBRS)...",
+	    (enabled == true) ? "Enabling" : "Disabling");
+	xc = xc_broadcast(0, ibrs_change_cpu, (void *)enabled, NULL);
+	xc_wait(xc);
+	printf(" done!\n");
+
+	mutex_exit(&cpu_lock);
+
+	return 0;
+}
+#else
+/*
+ * TODO: i386
+ */
+static int
+ibrs_change(bool enabled)
+{
+	panic("not supported");
+}
+#endif
+
+/* -------------------------------------------------------------------------- */
+
 static void
 mitigation_disable_cpu(void *arg1, void *arg2)
 {
@@ -95,15 +241,13 @@ mitigation_disable_cpu(void *arg1, void *arg2)
 
 	switch (mitigation_method) {
 	case MITIGATION_NONE:
+	case MITIGATION_INTEL_IBRS:
 		panic("impossible");
 		break;
 	case MITIGATION_AMD_DIS_IND:
 		msr = rdmsr(MSR_IC_CFG);
 		msr &= ~IC_CFG_DIS_IND;
 		wrmsr(MSR_IC_CFG, msr);
-		break;
-	case MITIGATION_INTEL_IBRS:
-		/* ibrs_disable() TODO */
 		break;
 	}
 }
@@ -115,15 +259,13 @@ mitigation_enable_cpu(void *arg1, void *arg2)
 
 	switch (mitigation_method) {
 	case MITIGATION_NONE:
+	case MITIGATION_INTEL_IBRS:
 		panic("impossible");
 		break;
 	case MITIGATION_AMD_DIS_IND:
 		msr = rdmsr(MSR_IC_CFG);
 		msr |= IC_CFG_DIS_IND;
 		wrmsr(MSR_IC_CFG, msr);
-		break;
-	case MITIGATION_INTEL_IBRS:
-		/* ibrs_enable() TODO */
 		break;
 	}
 }
@@ -132,6 +274,7 @@ static int
 mitigation_disable(void)
 {
 	uint64_t xc;
+	int error;
 
 	speculation_detect_method();
 
@@ -148,7 +291,10 @@ mitigation_disable(void)
 		spec_mitigation_enabled = false;
 		return 0;
 	case MITIGATION_INTEL_IBRS:
-		/* TODO */
+		error = ibrs_change(false);
+		if (error)
+			return error;
+		spec_mitigation_enabled = false;
 		return 0;
 	default:
 		panic("impossible");
@@ -159,6 +305,7 @@ static int
 mitigation_enable(void)
 {
 	uint64_t xc;
+	int error;
 
 	speculation_detect_method();
 
@@ -175,7 +322,10 @@ mitigation_enable(void)
 		spec_mitigation_enabled = true;
 		return 0;
 	case MITIGATION_INTEL_IBRS:
-		/* TODO */
+		error = ibrs_change(true);
+		if (error)
+			return error;
+		spec_mitigation_enabled = true;
 		return 0;
 	default:
 		panic("impossible");
