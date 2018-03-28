@@ -1,4 +1,4 @@
-/*	$NetBSD: pmu.c,v 1.30 2018/02/16 18:07:05 macallan Exp $ */
+/*	$NetBSD: pmu.c,v 1.31 2018/03/28 15:34:29 macallan Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.30 2018/02/16 18:07:05 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.31 2018/03/28 15:34:29 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -990,7 +990,8 @@ pmu_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *_send,
 		DPRINTF("resp3(%d): %2x %2x %2x\n", len, resp[0], resp[1],
 			resp[2]);
 		if ((len - 2) != recv_len) {
-			aprint_error_dev(sc->sc_dev, "%s(%d) - got %d\n",
+			DPRINTF("%s: %s(%d) - got %d\n",
+			    device_xname(sc->sc_dev),
 			    __func__, recv_len, len - 2);
 			return -1;
 		}
