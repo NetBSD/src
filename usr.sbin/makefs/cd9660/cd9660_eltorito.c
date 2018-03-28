@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_eltorito.c,v 1.22 2017/11/09 01:28:05 nonaka Exp $	*/
+/*	$NetBSD: cd9660_eltorito.c,v 1.23 2018/03/28 06:48:55 nonaka Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660_eltorito.c,v 1.22 2017/11/09 01:28:05 nonaka Exp $");
+__RCSID("$NetBSD: cd9660_eltorito.c,v 1.23 2018/03/28 06:48:55 nonaka Exp $");
 #endif  /* !__lint */
 
 #ifdef DEBUG
@@ -497,6 +497,12 @@ cd9660_setup_boot(iso9660_disk *diskStructure, int first_sector)
 		LIST_INSERT_AFTER(head, temp, ll_struct);
 	}
 
+	/* Find the last Section Header entry and mark it as the last. */
+	head = NULL;
+	LIST_FOREACH(next, &diskStructure->boot_entries, ll_struct) {
+		if (next->entry_type == ET_ENTRY_SH)
+			head = next;
+	}
 	if (head != NULL)
 		head->entry_data.SH.header_indicator[0] = ET_SECTION_HEADER_LAST;
 
