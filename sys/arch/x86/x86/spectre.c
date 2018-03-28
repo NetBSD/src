@@ -1,4 +1,4 @@
-/*	$NetBSD: spectre.c,v 1.2 2018/03/28 16:02:49 maxv Exp $	*/
+/*	$NetBSD: spectre.c,v 1.3 2018/03/28 19:50:57 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spectre.c,v 1.2 2018/03/28 16:02:49 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spectre.c,v 1.3 2018/03/28 19:50:57 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,7 +69,7 @@ speculation_barrier(struct lwp *oldlwp, struct lwp *newlwp)
 	/*
 	 * From kernel thread to kernel thread, no need for a barrier.
 	 */
-	if ((oldlwp->l_flag & LW_SYSTEM) &&
+	if ((oldlwp != NULL && (oldlwp->l_flag & LW_SYSTEM)) &&
 	    (newlwp->l_flag & LW_SYSTEM))
 		return;
 
