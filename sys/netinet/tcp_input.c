@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.389 2018/03/28 13:50:14 maxv Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.390 2018/03/28 14:16:59 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.389 2018/03/28 13:50:14 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.390 2018/03/28 14:16:59 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -335,6 +335,17 @@ tcp_fields_to_net(struct tcphdr *th)
 	HTONL(th->th_ack);
 	HTONS(th->th_win);
 	HTONS(th->th_urp);
+}
+
+static void
+tcp_urp_drop(struct tcphdr *th, int todrop, int *tiflags)
+{
+	if (th->th_urp > 1) {
+		th->th_urp -= todrop;
+	} else {
+		*tiflags &= ~TH_URG;
+		th->th_urp = 0;
+	}
 }
 
 #ifdef TCP_CSUM_COUNTERS
@@ -1008,14 +1019,9 @@ static void tcp_vtw_input(struct tcphdr *th, vestigial_inpcb_t *vp,
 	if (todrop > 0) {
 		if (tiflags & TH_SYN) {
 			tiflags &= ~TH_SYN;
-			++th->th_seq;
-			if (th->th_urp > 1)
-				--th->th_urp;
-			else {
-				tiflags &= ~TH_URG;
-				th->th_urp = 0;
-			}
-			--todrop;
+			th->th_seq++;
+			tcp_urp_drop(th, 1, &tiflags);
+			todrop--;
 		}
 		if (todrop > tlen ||
 		    (todrop == tlen && (tiflags & TH_FIN) == 0)) {
@@ -1057,13 +1063,7 @@ static void tcp_vtw_input(struct tcphdr *th, vestigial_inpcb_t *vp,
 
 		th->th_seq += todrop;
 		tlen -= todrop;
-
-		if (th->th_urp > todrop)
-			th->th_urp -= todrop;
-		else {
-			tiflags &= ~TH_URG;
-			th->th_urp = 0;
-		}
+		tcp_urp_drop(th, todrop, &tiflags);
 	}
 
 	/*
@@ -2264,12 +2264,7 @@ after_listen:
 		if (tiflags & TH_SYN) {
 			tiflags &= ~TH_SYN;
 			th->th_seq++;
-			if (th->th_urp > 1)
-				th->th_urp--;
-			else {
-				tiflags &= ~TH_URG;
-				th->th_urp = 0;
-			}
+			tcp_urp_drop(th, 1, &tiflags);
 			todrop--;
 		}
 		if (todrop > tlen ||
@@ -2310,12 +2305,7 @@ after_listen:
 		hdroptlen += todrop;	/* drop from head afterwards */
 		th->th_seq += todrop;
 		tlen -= todrop;
-		if (th->th_urp > todrop)
-			th->th_urp -= todrop;
-		else {
-			tiflags &= ~TH_URG;
-			th->th_urp = 0;
-		}
+		tcp_urp_drop(th, todrop, &tiflags);
 	}
 
 	/*
