@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.h,v 1.1.2.8 2018/03/27 07:29:44 pgoyette Exp $	*/
+/* $NetBSD: compat_stub.h,v 1.1.2.9 2018/03/28 04:18:25 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -107,7 +107,13 @@ extern int (*wsevent_50_copyout_events)(const struct wscons_event *, int,
 struct power_event;
 struct sysmon_pswitch;
 
-extern void (*compat_sysmon_power_40)(struct power_event
-    *, struct sysmon_pswitch *, int);
+extern void (*compat_sysmon_power_40)(struct power_event *,
+    struct sysmon_pswitch *, int);
+
+/*
+ * compat_30 indirect function pointer
+ */
+extern int (*compat_bio_30)(void *, u_long, void *,
+    int(*)(void *, u_long, void *));
 
 #endif	/* _SYS_COMPAT_STUB_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_mod.c,v 1.24.14.21 2018/03/27 07:29:43 pgoyette Exp $	*/
+/*	$NetBSD: compat_mod.c,v 1.24.14.22 2018/03/28 04:18:24 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.24.14.21 2018/03/27 07:29:43 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.24.14.22 2018/03/28 04:18:24 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -172,19 +172,6 @@ static const struct syscall_package compat_syscalls[] = {
 	{ SYS_compat_20_getfsstat, 0, (sy_call_t *)compat_20_sys_getfsstat },
 	{ SYS_compat_20_statfs, 0, (sy_call_t *)compat_20_sys_statfs },
 #endif
-
-#if defined(COMPAT_30)
-	{ SYS_compat_30___fhstat30, 0, (sy_call_t *)compat_30_sys___fhstat30 },
-	{ SYS_compat_30___fstat13, 0, (sy_call_t *)compat_30_sys___fstat13 },
-	{ SYS_compat_30___lstat13, 0, (sy_call_t *)compat_30_sys___lstat13 },
-	{ SYS_compat_30___stat13, 0, (sy_call_t *)compat_30_sys___stat13 },
-	{ SYS_compat_30_fhopen, 0, (sy_call_t *)compat_30_sys_fhopen },
-	{ SYS_compat_30_fhstat, 0, (sy_call_t *)compat_30_sys_fhstat },
-	{ SYS_compat_30_fhstatvfs1, 0, (sy_call_t *)compat_30_sys_fhstatvfs1 },
-	{ SYS_compat_30_getdents, 0, (sy_call_t *)compat_30_sys_getdents },
-	{ SYS_compat_30_getfh, 0, (sy_call_t *)compat_30_sys_getfh },
-	{ SYS_compat_30_socket, 0, (sy_call_t *)compat_30_sys_socket },
-#endif
 	{ 0, 0, NULL },
 };
 
@@ -204,10 +191,10 @@ struct compat_init_fini {
 #ifdef COMPAT_40
 	{ compat_40_init, compat_40_fini },
 #endif
-#if 0	/* NOT YET */
 #ifdef COMPAT_30
 	{ compat_30_init, compat_30_fini },
 #endif
+#if 0	/* NOT YET */
 #ifdef COMPAT_20
 	{ compat_20_init, compat_20_fini },
 #endif
