@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.159 2018/03/20 18:27:58 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.160 2018/03/28 16:02:49 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1098,6 +1098,10 @@ ENTRY(cpu_switchto)
 	popq	%rdx
 #endif
 
+	pushq	%rdx
+	callq	_C_LABEL(speculation_barrier)
+	popq	%rdx
+
 	/* Switch to newlwp's stack. */
 	movq	L_PCB(%r12),%r14
 	movq	PCB_RSP(%r14),%rsp
@@ -1413,6 +1417,7 @@ IDTVEC(\name)
 	cld
 #endif
 	INTR_SAVE_GPRS
+	IBRS_ENTER
 	movw	$GSEL(GUDATA_SEL, SEL_UPL),TF_DS(%rsp)
 	movw	$GSEL(GUDATA_SEL, SEL_UPL),TF_ES(%rsp)
 	movw	$0,TF_FS(%rsp)
@@ -1464,6 +1469,7 @@ IDTVEC_END(osyscall)
 	_ALIGN_TEXT
 LABEL(syscall_sysret)
 	SVS_LEAVE
+	IBRS_LEAVE
 	INTR_RESTORE_GPRS
 	SWAPGS
 #ifndef XEN
@@ -1554,6 +1560,7 @@ END(pagezero)
 LABEL(intrfastexit)
 	NOT_XEN(cli;)
 	SVS_LEAVE
+	IBRS_LEAVE
 	INTR_RESTORE_GPRS
 	addq	$(TF_REGSIZE+16),%rsp	/* iret frame */
 
@@ -1649,3 +1656,25 @@ LABEL(nosvs_leave_altstack)
 	NOSVS_LEAVE_ALTSTACK
 LABEL(nosvs_leave_altstack_end)
 #endif
+
+	.globl	ibrs_enter, ibrs_enter_end
+	.globl	ibrs_leave, ibrs_leave_end
+
+	/* IBRS <- 1 */
+LABEL(ibrs_enter)
+	movl	$MSR_IA32_SPEC_CTRL,%ecx
+	movl	$IA32_SPEC_CTRL_IBRS,%eax
+	movl	$(IA32_SPEC_CTRL_IBRS >> 32),%edx
+	wrmsr
+LABEL(ibrs_enter_end)
+
+	/* IBRS <- 0 */
+LABEL(ibrs_leave)
+	testb	$SEL_UPL,TF_CS(%rsp)
+	jz	1234f
+	movl	$MSR_IA32_SPEC_CTRL,%ecx
+	xorl	%eax,%eax
+	xorl	%edx,%edx
+	wrmsr
+1234:
+LABEL(ibrs_leave_end)
