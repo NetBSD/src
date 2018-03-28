@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.h,v 1.1.2.9 2018/03/28 04:18:25 pgoyette Exp $	*/
+/* $NetBSD: compat_stub.h,v 1.1.2.10 2018/03/28 07:51:09 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -115,5 +115,13 @@ extern void (*compat_sysmon_power_40)(struct power_event *,
  */
 extern int (*compat_bio_30)(void *, u_long, void *,
     int(*)(void *, u_long, void *));
+
+/*
+ * vnd_30 ioctl compatability
+ */
+struct vattr;
+
+extern int (*compat_vndioctl_30)(u_long, struct lwp *, void *, int,
+    struct vattr *, int (*)(struct lwp *, void *, int, struct vattr *));
 
 #endif	/* _SYS_COMPAT_STUB_H */
