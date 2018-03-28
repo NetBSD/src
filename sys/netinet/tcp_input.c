@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.392 2018/03/28 14:30:42 maxv Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.393 2018/03/28 14:43:55 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.392 2018/03/28 14:30:42 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.393 2018/03/28 14:43:55 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -4370,7 +4370,7 @@ syn_cache_respond(struct syn_cache *sc)
 #ifdef INET6
 	struct ip6_hdr *ip6 = NULL;
 #endif
-	struct tcpcb *tp = NULL;
+	struct tcpcb *tp;
 	struct tcphdr *th;
 	struct mbuf *m;
 	u_int hlen;
@@ -4393,17 +4393,13 @@ syn_cache_respond(struct syn_cache *sc)
 		return EAFNOSUPPORT;
 	}
 
-	/* worst case scanario, since we don't know the option size yet  */
+	/* Worst case scanario, since we don't know the option size yet. */
 	tlen = hlen + sizeof(struct tcphdr) + MAX_TCPOPTLEN;
+	KASSERT(max_linkhdr + tlen <= MCLBYTES);
 
 	/*
 	 * Create the IP+TCP header from scratch.
 	 */
-#ifdef DIAGNOSTIC
-	if (max_linkhdr + tlen > MCLBYTES)
-		return ENOBUFS;
-#endif  
-
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m && (max_linkhdr + tlen) > MHLEN) {
 		MCLGET(m, M_DONTWAIT);
@@ -4416,12 +4412,12 @@ syn_cache_respond(struct syn_cache *sc)
 		return ENOBUFS;
 	MCLAIM(m, &tcp_tx_mowner);
 
+	tp = sc->sc_tp;
+
 	/* Fixup the mbuf. */
 	m->m_data += max_linkhdr;
-	if (sc->sc_tp)
-		tp = sc->sc_tp;
 	m_reset_rcvif(m);
-	memset(mtod(m, u_char *), 0, tlen);
+	memset(mtod(m, void *), 0, tlen);
 
 	switch (sc->sc_src.sa.sa_family) {
 	case AF_INET:
@@ -4448,7 +4444,7 @@ syn_cache_respond(struct syn_cache *sc)
 		break;
 #endif
 	default:
-		return ENOBUFS;
+		panic("%s: impossible (1)", __func__);
 	}
 
 	th->th_seq = htonl(sc->sc_iss);
@@ -4590,34 +4586,26 @@ syn_cache_respond(struct syn_cache *sc)
 	}
 
 
-	/* Compute the packet's checksum. */
-	switch (sc->sc_src.sa.sa_family) {
-	case AF_INET:
-		ip->ip_len = htons(tlen - hlen);
-		th->th_sum = 0;
-		th->th_sum = in4_cksum(m, IPPROTO_TCP, hlen, tlen - hlen);
-		break;
-#ifdef INET6
-	case AF_INET6:
-		ip6->ip6_plen = htons(tlen - hlen);
-		th->th_sum = 0;
-		th->th_sum = in6_cksum(m, IPPROTO_TCP, hlen, tlen - hlen);
-		break;
-#endif
-	}
-
 	/*
+	 * Compute the packet's checksum.
+	 *
 	 * Fill in some straggling IP bits.  Note the stack expects
 	 * ip_len to be in host order, for convenience.
 	 */
 	switch (sc->sc_src.sa.sa_family) {
 	case AF_INET:
+		ip->ip_len = htons(tlen - hlen);
+		th->th_sum = 0;
+		th->th_sum = in4_cksum(m, IPPROTO_TCP, hlen, tlen - hlen);
 		ip->ip_len = htons(tlen);
 		ip->ip_ttl = ip_defttl;
 		/* XXX tos? */
 		break;
 #ifdef INET6
 	case AF_INET6:
+		ip6->ip6_plen = htons(tlen - hlen);
+		th->th_sum = 0;
+		th->th_sum = in6_cksum(m, IPPROTO_TCP, hlen, tlen - hlen);
 		ip6->ip6_vfc &= ~IPV6_VERSION_MASK;
 		ip6->ip6_vfc |= IPV6_VERSION;
 		ip6->ip6_plen = htons(tlen - hlen);
@@ -4647,8 +4635,7 @@ syn_cache_respond(struct syn_cache *sc)
 		break;
 #endif
 	default:
-		error = EAFNOSUPPORT;
-		break;
+		panic("%s: impossible (2)", __func__);
 	}
 
 	return error;
