@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.160 2018/03/28 16:02:49 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.161 2018/03/28 19:56:40 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1096,6 +1096,10 @@ ENTRY(cpu_switchto)
 	callq	_C_LABEL(svs_lwp_switch)
 .Lskip_svs:
 	popq	%rdx
+
+	/* Restore rdi/rsi for speculation_barrier */
+	movq	%r13,%rdi
+	movq	%r12,%rsi
 #endif
 
 	pushq	%rdx
