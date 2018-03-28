@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.217 2018/03/07 20:48:00 maya Exp $	*/
+/*	$NetBSD: locore.S,v 1.218 2018/03/28 17:56:52 maya Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -63,7 +63,7 @@
 #include <mips/trap.h>
 #include <mips/locore.h>
 
-RCSID("$NetBSD: locore.S,v 1.217 2018/03/07 20:48:00 maya Exp $")
+RCSID("$NetBSD: locore.S,v 1.218 2018/03/28 17:56:52 maya Exp $")
 
 #include "assym.h"
 
@@ -73,16 +73,18 @@ RCSID("$NetBSD: locore.S,v 1.217 2018/03/07 20:48:00 maya Exp $")
 	.globl	_C_LABEL(kernel_text)		# libkvm refers this
 start:
 _C_LABEL(kernel_text):
-	/* First disable the interrupts only, for safety */
 	mfc0	k0, MIPS_COP_0_STATUS
 	MFC0_HAZARD
+
+	/* First disable the interrupts only, for safety */
 	and	k0, ~MIPS_SR_INT_IE
 	mtc0	k0, MIPS_COP_0_STATUS
 	COP0_SYNC
 
-	/* Known state: BEV, coprocessors disabled */
-	mtc0	zero, MIPS_COP_0_STATUS
-	mtc0	zero, MIPS_COP_0_CAUSE
+	/* Known state: BEV, coprocessors disabled. */
+	/* Leaving TS | RE alone (for emips) */
+	and	k0, MIPS_SR_TS | MIPS3_SR_RE
+	mtc0	k0, MIPS_COP_0_STATUS
 	COP0_SYNC
 
 #ifdef _LP64
