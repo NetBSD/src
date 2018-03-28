@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.c,v 1.1.2.9 2018/03/28 04:18:24 pgoyette Exp $	*/
+/* $NetBSD: compat_stub.c,v 1.1.2.10 2018/03/28 07:51:09 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -106,3 +106,10 @@ void (*compat_sysmon_power_40)(struct power_event *, struct sysmon_pswitch *,
 
 int (*compat_bio_30)(void *, u_long, void *, int(*)(void *, u_long, void *)) =
     (void *)enosys;
+
+/*
+ * vnd ioctl compatability
+ */
+int (*compat_vndioctl_30)(u_long cmd, struct lwp *l, void *data, int unit,
+    struct vattr *vattr_p, int (*get)(struct lwp *, void *, int,
+    struct vattr *)) = (void *)enosys;

@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.263 2017/10/28 03:47:24 riastradh Exp $	*/
+/*	$NetBSD: vnd.c,v 1.263.2.1 2018/03/28 07:51:09 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.263 2017/10/28 03:47:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.263.2.1 2018/03/28 07:51:09 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -119,6 +119,7 @@ __KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.263 2017/10/28 03:47:24 riastradh Exp $");
 #include <sys/conf.h>
 #include <sys/kauth.h>
 #include <sys/module.h>
+#include <sys/compat_stub.h>
 
 #include <net/zlib.h>
 
@@ -1135,17 +1136,6 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 #endif
 	/* Do the get's first; they don't need initialization or verification */
 	switch (cmd) {
-#ifdef COMPAT_30
-	case VNDIOCGET30: {
-		if ((error = vndioctl_get(l, data, unit, &vattr)) != 0)
-			return error;
-
-		struct vnd_user30 *vnu = data;
-		vnu->vnu_dev = vattr.va_fsid;
-		vnu->vnu_ino = vattr.va_fileid;
-		return 0;
-	}
-#endif
 #ifdef COMPAT_50
 	case VNDIOCGET50: {
 		if ((error = vndioctl_get(l, data, unit, &vattr)) != 0)
@@ -1168,7 +1158,13 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		return 0;
 	}
 	default:
-		break;
+		error = (*compat_vndioctl_30)(cmd, l, data, unit, &vattr,
+		    vndioctl_get);
+		if (error == ENOSYS) {
+			error = 0;
+			break;
+		}
+		return error;
 	}
 
 	vnd = device_lookup_private(&vnd_cd, unit);
