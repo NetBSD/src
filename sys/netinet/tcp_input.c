@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.391 2018/03/28 14:22:16 maxv Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.392 2018/03/28 14:30:42 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.391 2018/03/28 14:22:16 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.392 2018/03/28 14:30:42 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -4167,12 +4167,9 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 	struct syn_cache *sc;
 	struct syn_cache_head *scp;
 	struct mbuf *ipopts;
-	struct tcp_opt_info opti;
 	int s;
 
 	tp = sototcpcb(so);
-
-	memset(&opti, 0, sizeof(opti));
 
 	/*
 	 * Initialize some local state.
