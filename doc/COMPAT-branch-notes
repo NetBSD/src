@@ -43,7 +43,10 @@ TODO
    Update:  These are being done simultaneously, with compat code being
    moved directly to a version-specific module.  All of COMPAT_80 and
    COMPAT_70, most of COMPAT_60, and much of COMPAT_50 are finished.
-   Need to decide how to handle the COMPAT_BSDPTY stuff.
+   Still need to decide how to handle the COMPAT_BSDPTY stuff.
+
+   COMPAT_40 is also finished, except for some arch/sh3 MD code.  There
+   is also some arch/m68k MD-specific code remaining for COMPAT_50.
 
 3. XXX The compat_60 module still needs some work for XEN systems.
 
