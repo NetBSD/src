@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_ioctl.c,v 1.60 2015/08/24 22:21:26 pooka Exp $	*/
+/*	$NetBSD: ieee80211_ioctl.c,v 1.60.16.1 2018/03/28 00:30:05 pgoyette Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_ioctl.c,v 1.35 2005/08/30 14:27:47 avatar Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.60 2015/08/24 22:21:26 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.60.16.1 2018/03/28 00:30:05 pgoyette Exp $");
 #endif
 
 /*
@@ -72,12 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.60 2015/08/24 22:21:26 pooka E
 
 #include <dev/ic/wi_ieee.h>
 
-#if defined(COMPAT_09) || defined(COMPAT_10) || defined(COMPAT_11) || \
-    defined(COMPAT_12) || defined(COMPAT_13) || defined(COMPAT_14) || \
-    defined(COMPAT_15) || defined(COMPAT_16) || defined(COMPAT_20) || \
-    defined(COMPAT_30) || defined(COMPAT_40)
 #include <compat/sys/sockio.h>
-#endif
 
 #ifdef __FreeBSD__
 #define	IS_UP(_ic) \
