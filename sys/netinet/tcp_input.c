@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.388 2018/03/23 09:30:55 maxv Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.389 2018/03/28 13:50:14 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.388 2018/03/23 09:30:55 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.389 2018/03/28 13:50:14 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -458,10 +458,10 @@ tcp_reass(struct tcpcb *tp, const struct tcphdr *th, struct mbuf *m, int tlen)
 	TCP_REASS_LOCK_CHECK(tp);
 
 	/*
-	 * Call with th==0 after become established to
+	 * Call with th==NULL after become established to
 	 * force pre-ESTABLISHED data up to user socket.
 	 */
-	if (th == 0)
+	if (th == NULL)
 		goto present;
 
 	m_claimm(m, &tcp_reass_mowner);
@@ -847,8 +847,7 @@ tcp4_log_refused(const struct ip *ip, const struct tcphdr *th)
 	if (ip) {
 		in_print(src, sizeof(src), &ip->ip_src);
 		in_print(dst, sizeof(dst), &ip->ip_dst);
-	}
-	else {
+	} else {
 		strlcpy(src, "(unknown)", sizeof(src));
 		strlcpy(dst, "(unknown)", sizeof(dst));
 	}
@@ -868,8 +867,7 @@ tcp6_log_refused(const struct ip6_hdr *ip6, const struct tcphdr *th)
 	if (ip6) {
 		in6_print(src, sizeof(src), &ip6->ip6_src);
 		in6_print(dst, sizeof(dst), &ip6->ip6_dst);
-	}
-	else {
+	} else {
 		strlcpy(src, "(unknown v6)", sizeof(src));
 		strlcpy(dst, "(unknown v6)", sizeof(dst));
 	}
@@ -990,16 +988,19 @@ badcsum:
 	return -1;
 }
 
-/* When a packet arrives addressed to a vestigial tcpbp, we
+/*
+ * When a packet arrives addressed to a vestigial tcpbp, we
  * nevertheless have to respond to it per the spec.
+ *
+ * This code is duplicated from the one in tcp_input().
  */
 static void tcp_vtw_input(struct tcphdr *th, vestigial_inpcb_t *vp,
     struct mbuf *m, int tlen)
 {
-	int		tiflags;
-	int		todrop;
-	uint32_t	t_flags = 0;
-	uint64_t	*tcps;
+	int tiflags;
+	int todrop;
+	uint32_t t_flags = 0;
+	uint64_t *tcps;
 
 	tiflags = th->th_flags;
 	todrop  = vp->rcv_nxt - th->th_seq;
@@ -1026,6 +1027,7 @@ static void tcp_vtw_input(struct tcphdr *th, vestigial_inpcb_t *vp,
 			if (tiflags & TH_RST)
 				goto drop;
 			tiflags &= ~(TH_FIN|TH_RST);
+
 			/*
 			 * Send an ACK to resynchronize and drop any data.
 			 * But keep on processing for RST or ACK.
@@ -1036,8 +1038,8 @@ static void tcp_vtw_input(struct tcphdr *th, vestigial_inpcb_t *vp,
 			tcps[TCP_STAT_RCVDUPPACK] += 1;
 			tcps[TCP_STAT_RCVDUPBYTE] += todrop;
 			TCP_STAT_PUTREF();
-		} else if ((tiflags & TH_RST)
-			   && th->th_seq != vp->rcv_nxt) {
+		} else if ((tiflags & TH_RST) &&
+		    th->th_seq != vp->rcv_nxt) {
 			/*
 			 * Test for reset before adjusting the sequence
 			 * number for overlapping data.
@@ -1077,7 +1079,7 @@ static void tcp_vtw_input(struct tcphdr *th, vestigial_inpcb_t *vp,
 	 * If segment ends after window, drop trailing data
 	 * (and PUSH and FIN); if nothing left, just ACK.
 	 */
-	todrop = (th->th_seq + tlen) - (vp->rcv_nxt+vp->rcv_wnd);
+	todrop = (th->th_seq + tlen) - (vp->rcv_nxt + vp->rcv_wnd);
 
 	if (todrop > 0) {
 		TCP_STATINC(TCP_STAT_RCVPACKAFTERWIN);
@@ -1089,19 +1091,22 @@ static void tcp_vtw_input(struct tcphdr *th, vestigial_inpcb_t *vp,
 			 * th->th_seq >= vp->rcv_nxt + vp->rcv_wnd
 			 */
 			TCP_STATADD(TCP_STAT_RCVBYTEAFTERWIN, tlen);
+
 			/*
 			 * If a new connection request is received
 			 * while in TIME_WAIT, drop the old connection
 			 * and start over if the sequence numbers
 			 * are above the previous ones.
 			 */
-			if ((tiflags & TH_SYN)
-			    && SEQ_GT(th->th_seq, vp->rcv_nxt)) {
-				/* We only support this in the !NOFDREF case, which
+			if ((tiflags & TH_SYN) &&
+			    SEQ_GT(th->th_seq, vp->rcv_nxt)) {
+				/*
+				 * We only support this in the !NOFDREF case, which
 				 * is to say: not here.
 				 */
 				goto dropwithreset;
 			}
+
 			/*
 			 * If window is closed can only take segments at
 			 * window edge, and have to drop data and PUSH from
@@ -1112,10 +1117,12 @@ static void tcp_vtw_input(struct tcphdr *th, vestigial_inpcb_t *vp,
 			if (vp->rcv_wnd == 0 && th->th_seq == vp->rcv_nxt) {
 				t_flags |= TF_ACKNOW;
 				TCP_STATINC(TCP_STAT_RCVWINPROBE);
-			} else
+			} else {
 				goto dropafterack;
-		} else
+			}
+		} else {
 			TCP_STATADD(TCP_STAT_RCVBYTEAFTERWIN, todrop);
+		}
 		m_adj(m, -todrop);
 		tlen -= todrop;
 		tiflags &= ~(TH_PUSH|TH_FIN);
@@ -1161,15 +1168,14 @@ dropafterack_ratelim:
 	 * We may want to rate-limit ACKs against SYN/RST attack.
 	 */
 	if (ppsratecheck(&tcp_ackdrop_ppslim_last, &tcp_ackdrop_ppslim_count,
-			 tcp_ackdrop_ppslim) == 0) {
+	    tcp_ackdrop_ppslim) == 0) {
 		/* XXX stat */
 		goto drop;
 	}
 	/* ...fall into dropafterack2... */
 
 dropafterack2:
-	(void)tcp_respond(0, m, m, th, th->th_seq + tlen, th->th_ack,
-			  TH_ACK);
+	(void)tcp_respond(0, m, m, th, th->th_seq + tlen, th->th_ack, TH_ACK);
 	return;
 
 dropwithreset:
@@ -1180,13 +1186,13 @@ dropwithreset:
 	if (tiflags & TH_RST)
 		goto drop;
 
-	if (tiflags & TH_ACK)
+	if (tiflags & TH_ACK) {
 		tcp_respond(0, m, m, th, (tcp_seq)0, th->th_ack, TH_RST);
-	else {
+	} else {
 		if (tiflags & TH_SYN)
 			++tlen;
 		(void)tcp_respond(0, m, m, th, th->th_seq + tlen, (tcp_seq)0,
-				  TH_RST|TH_ACK);
+		    TH_RST|TH_ACK);
 	}
 	return;
 drop:
@@ -1858,18 +1864,24 @@ after_listen:
 	}
 
 	/*
-	 * Header prediction: check for the two common cases
-	 * of a uni-directional data xfer.  If the packet has
-	 * no control flags, is in-sequence, the window didn't
-	 * change and we're not retransmitting, it's a
-	 * candidate.  If the length is zero and the ack moved
-	 * forward, we're the sender side of the xfer.  Just
-	 * free the data acked & wake any higher level process
-	 * that was blocked waiting for space.  If the length
-	 * is non-zero and the ack didn't move, we're the
-	 * receiver side.  If we're getting packets in-order
-	 * (the reassembly queue is empty), add the data to
-	 * the socket buffer and note that we need a delayed ack.
+	 * Fast path: check for the two common cases of a uni-directional
+	 * data transfer. If:
+	 *    o We are in the ESTABLISHED state, and
+	 *    o The packet has no control flags, and
+	 *    o The packet is in-sequence, and
+	 *    o The window didn't change, and
+	 *    o We are not retransmitting
+	 * It's a candidate.
+	 *
+	 * If the length (tlen) is zero and the ack moved forward, we're
+	 * the sender side of the transfer. Just free the data acked and
+	 * wake any higher level process that was blocked waiting for
+	 * space.
+	 *
+	 * If the length is non-zero and the ack didn't move, we're the
+	 * receiver side. If we're getting packets in-order (the reassembly
+	 * queue is empty), add the data to the socket buffer and note
+	 * that we need a delayed ack.
 	 */
 	if (tp->t_state == TCPS_ESTABLISHED &&
 	    (tiflags & (TH_SYN|TH_FIN|TH_RST|TH_URG|TH_ECE|TH_CWR|TH_ACK))
@@ -1888,8 +1900,7 @@ after_listen:
 		 * note that we already know
 		 *	TSTMP_GEQ(opti.ts_val, tp->ts_recent)
 		 */
-		if (opti.ts_present &&
-		    SEQ_LEQ(th->th_seq, tp->last_ack_sent)) {
+		if (opti.ts_present && SEQ_LEQ(th->th_seq, tp->last_ack_sent)) {
 			tp->ts_recent_age = tcp_now;
 			tp->ts_recent = opti.ts_val;
 		}
@@ -1949,7 +1960,7 @@ after_listen:
 				sowwakeup(so);
 				if (so->so_snd.sb_cc) {
 					KERNEL_LOCK(1, NULL);
-					(void) tcp_output(tp);
+					(void)tcp_output(tp);
 					KERNEL_UNLOCK_ONE(NULL);
 				}
 				if (tcp_saveti)
@@ -1959,7 +1970,7 @@ after_listen:
 		} else if (th->th_ack == tp->snd_una &&
 		    TAILQ_FIRST(&tp->segq) == NULL &&
 		    tlen <= sbspace(&so->so_rcv)) {
-			int newsize = 0;	/* automatic sockbuf scaling */
+			int newsize = 0;
 
 			/*
 			 * this is a pure, in-sequence data packet
@@ -2030,9 +2041,9 @@ after_listen:
 			 * Drop TCP, IP headers and TCP options then add data
 			 * to socket buffer.
 			 */
-			if (so->so_state & SS_CANTRCVMORE)
+			if (so->so_state & SS_CANTRCVMORE) {
 				m_freem(m);
-			else {
+			} else {
 				/*
 				 * Set new socket buffer size.
 				 * Give up when limit is reached.
@@ -2048,7 +2059,7 @@ after_listen:
 			tcp_setup_ack(tp, th);
 			if (tp->t_flags & TF_ACKNOW) {
 				KERNEL_LOCK(1, NULL);
-				(void) tcp_output(tp);
+				(void)tcp_output(tp);
 				KERNEL_UNLOCK_ONE(NULL);
 			}
 			if (tcp_saveti)
@@ -2118,7 +2129,6 @@ after_listen:
 				tp->t_flags |= TF_ECN_PERMIT;
 				TCP_STATINC(TCP_STAT_ECN_SHS);
 			}
-
 		}
 		tp->irs = th->th_seq;
 		tcp_rcvseqinit(tp);
@@ -2169,8 +2179,9 @@ after_listen:
 			 */
 			if (tp->t_rtttime)
 				tcp_xmit_timer(tp, tcp_now - tp->t_rtttime);
-		} else
+		} else {
 			tp->t_state = TCPS_SYN_RECEIVED;
+		}
 
 		/*
 		 * Advance th->th_seq to correspond to first data byte.
@@ -2212,13 +2223,8 @@ after_listen:
 	    tp->t_state != TCPS_SYN_SENT);
 
 	/*
-	 * First check timestamp, if present.
-	 * Then check that at least some bytes of segment are within
-	 * receive window.  If segment begins before rcv_nxt,
-	 * drop leading data (and SYN); if nothing left, just ack.
-	 *
-	 * RFC 1323 PAWS: If we have a timestamp reply on this segment
-	 * and it's less than ts_recent, drop it.
+	 * RFC1323 PAWS: if we have a timestamp reply on this segment and
+	 * it's less than ts_recent, drop it.
 	 */
 	if (opti.ts_present && (tiflags & TH_RST) == 0 && tp->ts_recent &&
 	    TSTMP_LT(opti.ts_val, tp->ts_recent)) {
@@ -2247,6 +2253,11 @@ after_listen:
 		}
 	}
 
+	/*
+	 * Check that at least some bytes of the segment are within the
+	 * receive window. If segment begins before rcv_nxt, drop leading
+	 * data (and SYN); if nothing left, just ack.
+	 */
 	todrop = tp->rcv_nxt - th->th_seq;
 	dupseg = false;
 	if (todrop > 0) {
@@ -2271,6 +2282,7 @@ after_listen:
 			if (tiflags & TH_RST)
 				goto drop;
 			tiflags &= ~(TH_FIN|TH_RST);
+
 			/*
 			 * Send an ACK to resynchronize and drop any data.
 			 * But keep on processing for RST or ACK.
@@ -2282,8 +2294,7 @@ after_listen:
 			tcps[TCP_STAT_RCVDUPPACK]++;
 			tcps[TCP_STAT_RCVDUPBYTE] += todrop;
 			TCP_STAT_PUTREF();
-		} else if ((tiflags & TH_RST) &&
-			   th->th_seq != tp->rcv_nxt) {
+		} else if ((tiflags & TH_RST) && th->th_seq != tp->rcv_nxt) {
 			/*
 			 * Test for reset before adjusting the sequence
 			 * number for overlapping data.
@@ -2296,7 +2307,7 @@ after_listen:
 			TCP_STAT_PUTREF();
 		}
 		tcp_new_dsack(tp, th->th_seq, todrop);
-		hdroptlen += todrop;	/*drop from head afterwards*/
+		hdroptlen += todrop;	/* drop from head afterwards */
 		th->th_seq += todrop;
 		tlen -= todrop;
 		if (th->th_urp > todrop)
@@ -2308,8 +2319,8 @@ after_listen:
 	}
 
 	/*
-	 * If new data are received on a connection after the
-	 * user processes are gone, then RST the other end.
+	 * If new data is received on a connection after the user processes
+	 * are gone, then RST the other end.
 	 */
 	if ((so->so_state & SS_NOFDREF) &&
 	    tp->t_state > TCPS_CLOSE_WAIT && tlen) {
@@ -2319,8 +2330,8 @@ after_listen:
 	}
 
 	/*
-	 * If segment ends after window, drop trailing data
-	 * (and PUSH and FIN); if nothing left, just ACK.
+	 * If the segment ends after the window, drop trailing data (and
+	 * PUSH and FIN); if nothing left, just ACK.
 	 */
 	todrop = (th->th_seq + tlen) - (tp->rcv_nxt + tp->rcv_wnd);
 	if (todrop > 0) {
@@ -2342,10 +2353,6 @@ after_listen:
 			 *
 			 * NOTE: We need to put the header fields back into
 			 * network order.
-			 *
-			 * XXX This kind of sucks, but we don't expect
-			 * XXX this to happen very often, so maybe it
-			 * XXX doesn't matter so much.
 			 */
 			if ((tiflags & TH_SYN) &&
 			    tp->t_state == TCPS_TIME_WAIT &&
@@ -2397,7 +2404,7 @@ after_listen:
 	if (opti.ts_present &&
 	    SEQ_LEQ(th->th_seq, tp->last_ack_sent) &&
 	    SEQ_LEQ(tp->last_ack_sent, th->th_seq + tlen +
-		    ((tiflags & (TH_SYN|TH_FIN)) != 0))) {
+	         ((tiflags & (TH_SYN|TH_FIN)) != 0))) {
 		tp->ts_recent_age = tcp_now;
 		tp->ts_recent = opti.ts_val;
 	}
@@ -2471,10 +2478,10 @@ after_listen:
 	}
 
 	/*
-	 * Ack processing.
+	 * From here on, we're doing ACK processing.
 	 */
-	switch (tp->t_state) {
 
+	switch (tp->t_state) {
 	/*
 	 * In SYN_RECEIVED state if the ack ACKs our SYN then enter
 	 * ESTABLISHED state and continue processing, otherwise
@@ -2496,7 +2503,7 @@ after_listen:
 		TCP_REASS_LOCK(tp);
 		(void)tcp_reass(tp, NULL, NULL, tlen);
 		tp->snd_wl1 = th->th_seq - 1;
-		/* fall into ... */
+		/* FALLTHROUGH */
 
 	/*
 	 * In ESTABLISHED state: drop duplicate ACKs; ACK out of range
@@ -2513,7 +2520,6 @@ after_listen:
 	case TCPS_CLOSING:
 	case TCPS_LAST_ACK:
 	case TCPS_TIME_WAIT:
-
 		if (SEQ_LEQ(th->th_ack, tp->snd_una)) {
 			if (tlen == 0 && !dupseg && tiwin == tp->snd_wnd) {
 				TCP_STATINC(TCP_STAT_RCVDUPACK);
@@ -2533,8 +2539,8 @@ after_listen:
 				    th->th_ack != tp->snd_una)
 					tp->t_dupacks = 0;
 				else if (tp->t_partialacks < 0 &&
-					 (++tp->t_dupacks == tcprexmtthresh ||
-					 TCP_FACK_FASTRECOV(tp))) {
+				    (++tp->t_dupacks == tcprexmtthresh ||
+				     TCP_FACK_FASTRECOV(tp))) {
 					/*
 					 * Do the fast retransmit, and adjust
 					 * congestion control paramenters.
@@ -2547,7 +2553,7 @@ after_listen:
 				} else if (tp->t_dupacks > tcprexmtthresh) {
 					tp->snd_cwnd += tp->t_segsz;
 					KERNEL_LOCK(1, NULL);
-					(void) tcp_output(tp);
+					(void)tcp_output(tp);
 					KERNEL_UNLOCK_ONE(NULL);
 					goto drop;
 				}
@@ -2743,6 +2749,7 @@ step6:
 			tiflags &= ~TH_URG;		/* XXX */
 			goto dodata;			/* XXX */
 		}
+
 		/*
 		 * If this segment advances the known urgent pointer,
 		 * then mark the data stream.  This should not happen
@@ -2766,6 +2773,7 @@ step6:
 			sohasoutofband(so);
 			tp->t_oobflags &= ~(TCPOOB_HAVEDATA | TCPOOB_HADDATA);
 		}
+
 		/*
 		 * Remove out of band data so doesn't get presented to user.
 		 * This can happen independent of advancing the URG pointer,
@@ -2775,7 +2783,7 @@ step6:
 		if (th->th_urp <= (u_int16_t)tlen &&
 		    (so->so_options & SO_OOBINLINE) == 0)
 			tcp_pulloutofband(so, th, m, hdroptlen);
-	} else
+	} else {
 		/*
 		 * If no out of band data is expected,
 		 * pull receive urgent pointer along
@@ -2783,7 +2791,8 @@ step6:
 		 */
 		if (SEQ_GT(tp->rcv_nxt, tp->rcv_up))
 			tp->rcv_up = tp->rcv_nxt;
-dodata:							/* XXX */
+	}
+dodata:
 
 	/*
 	 * Process the segment text, merging it into the TCP sequencing queue,
@@ -2820,9 +2829,9 @@ dodata:							/* XXX */
 			tcps[TCP_STAT_RCVBYTE] += tlen;
 			TCP_STAT_PUTREF();
 			nd6_hint(tp);
-			if (so->so_state & SS_CANTRCVMORE)
+			if (so->so_state & SS_CANTRCVMORE) {
 				m_freem(m);
-			else {
+			} else {
 				m_adj(m, hdroptlen);
 				sbappendstream(&(so)->so_rcv, m);
 			}
@@ -2904,7 +2913,7 @@ dodata:							/* XXX */
 	 */
 	if (needoutput || (tp->t_flags & TF_ACKNOW)) {
 		KERNEL_LOCK(1, NULL);
-		(void) tcp_output(tp);
+		(void)tcp_output(tp);
 		KERNEL_UNLOCK_ONE(NULL);
 	}
 	if (tcp_saveti)
@@ -2947,13 +2956,12 @@ dropafterack_ratelim:
 		/* XXX stat */
 		goto drop;
 	}
-	/* ...fall into dropafterack2... */
 
 dropafterack2:
 	m_freem(m);
 	tp->t_flags |= TF_ACKNOW;
 	KERNEL_LOCK(1, NULL);
-	(void) tcp_output(tp);
+	(void)tcp_output(tp);
 	KERNEL_UNLOCK_ONE(NULL);
 	if (tcp_saveti)
 		m_freem(tcp_saveti);
@@ -2971,7 +2979,6 @@ dropwithreset_ratelim:
 		/* XXX stat */
 		goto drop;
 	}
-	/* ...fall into dropwithreset... */
 
 dropwithreset:
 	/*
@@ -3139,12 +3146,11 @@ tcp_signature(struct mbuf *m, struct tcphdr *th, int thoff,
 #endif
 
 /*
- * tcp_dooptions: parse and process tcp options.
+ * Parse and process tcp options.
  *
- * returns -1 if this segment should be dropped.  (eg. wrong signature)
- * otherwise returns 0.
+ * Returns -1 if this segment should be dropped.  (eg. wrong signature)
+ * Otherwise returns 0.
  */
-
 static int
 tcp_dooptions(struct tcpcb *tp, const u_char *cp, int cnt, struct tcphdr *th,
     struct mbuf *m, int toff, struct tcp_opt_info *oi)
@@ -3769,11 +3775,10 @@ syn_cache_lookup(const struct sockaddr *src, const struct sockaddr *dst,
 }
 
 /*
- * This function gets called when we receive an ACK for a
- * socket in the LISTEN state.  We look up the connection
- * in the syn cache, and if its there, we pull it out of
- * the cache and turn it into a full-blown connection in
- * the SYN-RECEIVED state.
+ * This function gets called when we receive an ACK for a socket in the
+ * LISTEN state. We look up the connection in the syn cache, and if it's
+ * there, we pull it out of the cache and turn it into a full-blown
+ * connection in the SYN-RECEIVED state.
  *
  * The return values may not be immediately obvious, and their effects
  * can be subtle, so here they are:
@@ -3783,7 +3788,7 @@ syn_cache_lookup(const struct sockaddr *src, const struct sockaddr *dst,
  *
  *	-1	We were unable to create the new connection, and are
  *		aborting it.  An ACK,RST is being sent to the peer
- *		(unless we got screwey sequence numbners; see below),
+ *		(unless we got screwey sequence numbers; see below),
  *		because the 3-way handshake has been completed.  Caller
  *		should not free the mbuf, since we may be using it.  If
  *		we are not, we will free it.
@@ -3802,14 +3807,14 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
 #ifdef INET6
 	struct in6pcb *in6p = NULL;
 #endif
-	struct tcpcb *tp = 0;
+	struct tcpcb *tp;
 	int s;
 	struct socket *oso;
 
 	s = splsoftnet();
 	if ((sc = syn_cache_lookup(src, dst, &scp)) == NULL) {
 		splx(s);
-		return (NULL);
+		return NULL;
 	}
 
 	/*
@@ -3859,6 +3864,7 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
 		break;
 #endif
 	}
+
 	switch (src->sa_family) {
 	case AF_INET:
 		if (inp) {
@@ -3899,6 +3905,7 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
 		break;
 #endif
 	}
+
 #ifdef INET6
 	if (in6p && in6totcpcb(in6p)->t_family == AF_INET6 && sotoinpcb(oso)) {
 		struct in6pcb *oin6p = sotoin6pcb(oso);
@@ -3906,10 +3913,10 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
 		in6p->in6p_flags |= (oin6p->in6p_flags & IN6P_CONTROLOPTS);
 		if (in6p->in6p_flags & IN6P_CONTROLOPTS) {
 			m_freem(in6p->in6p_options);
-			in6p->in6p_options = 0;
+			in6p->in6p_options = NULL;
 		}
 		ip6_savecontrol(in6p, &in6p->in6p_options,
-			mtod(m, struct ip6_hdr *), m);
+		    mtod(m, struct ip6_hdr *), m);
 	}
 #endif
 
@@ -3982,6 +3989,7 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
 #endif
 	else
 		tp = NULL;
+
 	tp->t_flags = sototcpcb(oso)->t_flags & TF_NODELAY;
 	if (sc->sc_request_r_scale != 15) {
 		tp->requested_s_scale = sc->sc_requested_s_scale;
@@ -4064,7 +4072,7 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
 	s = splsoftnet();
 	syn_cache_put(sc);
 	splx(s);
-	return (so);
+	return so;
 
 resetandabort:
 	(void)tcp_respond(NULL, m, m, th, (tcp_seq)0, th->th_ack, TH_RST);
@@ -4123,7 +4131,7 @@ syn_cache_unreach(const struct sockaddr *src, const struct sockaddr *dst,
 		return;
 	}
 	/* If the sequence number != sc_iss, then it's a bogus ICMP msg */
-	if (ntohl (th->th_seq) != sc->sc_iss) {
+	if (ntohl(th->th_seq) != sc->sc_iss) {
 		splx(s);
 		return;
 	}
@@ -4149,8 +4157,8 @@ syn_cache_unreach(const struct sockaddr *src, const struct sockaddr *dst,
 }
 
 /*
- * Given a LISTEN socket and an inbound SYN request, add
- * this to the syn cache, and send back a segment:
+ * Given a LISTEN socket and an inbound SYN request, add this to the syn
+ * cache, and send back a segment:
  *	<SEQ=ISS><ACK=RCV_NXT><CTL=SYN,ACK>
  * to the source.
  *
@@ -4360,7 +4368,7 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 /*
  * syn_cache_respond: (re)send SYN+ACK.
  *
- * returns 0 on success.  otherwise returns an errno, typically ENOBUFS.
+ * Returns 0 on success.
  */
 
 int
@@ -4397,7 +4405,7 @@ syn_cache_respond(struct syn_cache *sc)
 		break;
 #endif
 	default:
-		return (EAFNOSUPPORT);
+		return EAFNOSUPPORT;
 	}
 
 	/* worst case scanario, since we don't know the option size yet  */
@@ -4489,10 +4497,10 @@ syn_cache_respond(struct syn_cache *sc)
 	}
 
 	if (sc->sc_flags & SCF_TIMESTAMP) {
-                while (optlen % 4 != 2) {
-                        optlen += TCPOLEN_NOP;
-                        *optp++ = TCPOPT_NOP;
-                }
+		while (optlen % 4 != 2) {
+			optlen += TCPOLEN_NOP;
+			*optp++ = TCPOPT_NOP;
+		}
 		*optp++ = TCPOPT_TIMESTAMP;
 		*optp++ = TCPOLEN_TIMESTAMP;
 		u_int32_t *lp = (u_int32_t *)(optp);
@@ -4507,9 +4515,8 @@ syn_cache_respond(struct syn_cache *sc)
 	if (sc->sc_flags & SCF_SIGNATURE) {
 		sav = tcp_signature_getsav(m);
 		if (sav == NULL) {
-			if (m)
-				m_freem(m);
-			return (EPERM);
+			m_freem(m);
+			return EPERM;
 		}
 
 		*optp++ = TCPOPT_SIGNATURE;
@@ -4518,26 +4525,26 @@ syn_cache_respond(struct syn_cache *sc)
 		memset(optp, 0, TCP_SIGLEN);
 		optp += TCP_SIGLEN;
 		optlen += TCPOLEN_SIGNATURE;
-
 	}
 #endif
-	/* Terminate and pad TCP options to a 4 byte boundary. */
+
+	/*
+	 * Terminate and pad TCP options to a 4 byte boundary.
+	 *
+	 * According to RFC793: "The content of the header beyond the
+	 * End-of-Option option must be header padding (i.e., zero)."
+	 * And later: "The padding is composed of zeros."
+	 */
 	if (optlen % 4) {
 		optlen += TCPOLEN_EOL;
 		*optp++ = TCPOPT_EOL;
 	}
-	/*
-	 * According to RFC 793 (STD0007):
-	 *   "The content of the header beyond the End-of-Option option
-	 *    must be header padding (i.e., zero)."
-	 *   and later: "The padding is composed of zeros."
-	 */
 	while (optlen % 4) {
 		optlen += TCPOLEN_PAD;
 		*optp++ = TCPOPT_PAD;
 	}
 
-	/* compute the actual values now that we've added the options */
+	/* Compute the actual values now that we've added the options. */
 	tlen = hlen + sizeof(struct tcphdr) + optlen;
 	m->m_len = m->m_pkthdr.len = tlen;
 	th->th_off = (sizeof(struct tcphdr) + optlen) >> 2;
@@ -4658,5 +4665,6 @@ syn_cache_respond(struct syn_cache *sc)
 		error = EAFNOSUPPORT;
 		break;
 	}
-	return (error);
+
+	return error;
 }
