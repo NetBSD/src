@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_ucode.c,v 1.5.16.5 2018/03/22 01:44:47 pgoyette Exp $ */
+/* $NetBSD: cpu_ucode.c,v 1.5.16.6 2018/03/28 22:10:15 pgoyette Exp $ */
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_ucode.c,v 1.5.16.5 2018/03/22 01:44:47 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_ucode.c,v 1.5.16.6 2018/03/28 22:10:15 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_cpu_ucode.h"
@@ -69,9 +69,13 @@ cpu_ucode_get_version(struct cpu_ucode_version *data)
 
 	switch (cpu_vendor) {
 	case CPUVENDOR_AMD:
-		error = cpu_ucode_amd_get_version(data, &v, l = sizeof(v.a));
+		l = sizeof(v.a);
+		error = cpu_ucode_amd_get_version(data, &v, l);
+		break;
 	case CPUVENDOR_INTEL:
-		error = cpu_ucode_intel_get_version(data, &v, l = sizeof(v.i));
+		l = sizeof(v.i);
+		error = cpu_ucode_intel_get_version(data, &v, l);
+		break;
 	default:
 		return EOPNOTSUPP;
 	}
