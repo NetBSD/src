@@ -5419,6 +5419,25 @@ Specify which floating-point unit to use.  You must specify the
 @code{target("fpmath=sse,387")} option as
 @code{target("fpmath=sse+387")} because the comma would separate
 different options.
+
+@item indirect_branch("@var{choice}")
+@cindex @code{indirect_branch} function attribute, x86
+On x86 targets, the @code{indirect_branch} attribute causes the compiler
+to convert indirect call and jump with @var{choice}.  @samp{keep}
+keeps indirect call and jump unmodified.  @samp{thunk} converts indirect
+call and jump to call and return thunk.  @samp{thunk-inline} converts
+indirect call and jump to inlined call and return thunk.
+@samp{thunk-extern} converts indirect call and jump to external call
+and return thunk provided in a separate object file.
+
+@item function_return("@var{choice}")
+@cindex @code{function_return} function attribute, x86
+On x86 targets, the @code{function_return} attribute causes the compiler
+to convert function return with @var{choice}.  @samp{keep} keeps function
+return unmodified.  @samp{thunk} converts function return to call and
+return thunk.  @samp{thunk-inline} converts function return to inlined
+call and return thunk.  @samp{thunk-extern} converts function return to
+external call and return thunk provided in a separate object file.
 @end table
 
 On the x86, the inliner does not inline a
