@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_mod.h,v 1.1.42.9 2018/03/27 07:29:44 pgoyette Exp $	*/
+/*	$NetBSD: compat_mod.h,v 1.1.42.10 2018/03/28 04:18:24 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -86,6 +86,19 @@ int vfs_syscalls_40_init(void);
 int vfs_syscalls_40_fini(void);
 void sysmon_power_40_init(void);
 void sysmon_power_40_fini(void);
+#endif
+
+#ifdef COMPAT_30
+int compat_30_init(void);
+int compat_30_fini(void);
+int kern_time_30_init(void);
+int kern_time_30_fini(void);
+int vfs_syscalls_30_init(void);
+int vfs_syscalls_30_fini(void);
+int uipc_syscalls_30_init(void);
+int uipc_syscalls_30_fini(void);
+void bio_30_init(void);
+void bio_30_fini(void);
 #endif
 
 #endif /* !_COMPAT_MOD_H_ */

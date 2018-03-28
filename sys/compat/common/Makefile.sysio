@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sysio,v 1.7.18.16 2018/03/25 21:27:51 pgoyette Exp $
+#	$NetBSD: Makefile.sysio,v 1.7.18.17 2018/03/28 04:18:24 pgoyette Exp $
 
 # Sources for syscall and ioctl compatibility across the versions.
 
@@ -28,7 +28,7 @@ SRCS+=	rtsock_14.c
 SRCS+=	vfs_syscalls_20.c
 
 # Compatibility code for NetBSD 3.0
-SRCS+=	kern_time_30.c vfs_syscalls_30.c uipc_syscalls_30.c
+SRCS+=	kern_time_30.c vfs_syscalls_30.c uipc_syscalls_30.c bio_30.c
 
 # Compatibility code for NetBSD 4.0
 SRCS+=	vfs_syscalls_40.c uipc_syscalls_40.c
