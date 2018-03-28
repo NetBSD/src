@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.390 2018/03/28 14:16:59 maxv Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.391 2018/03/28 14:22:16 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.390 2018/03/28 14:16:59 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.391 2018/03/28 14:22:16 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1635,8 +1635,7 @@ nosave:;
 				 */
 				goto badsyn;
 			} else if (tiflags & TH_ACK) {
-				so = syn_cache_get(&src.sa, &dst.sa,
-				    th, toff, tlen, so, m);
+				so = syn_cache_get(&src.sa, &dst.sa, th, so, m);
 				if (so == NULL) {
 					/*
 					 * We don't have a SYN for this ACK;
@@ -3788,8 +3787,7 @@ syn_cache_lookup(const struct sockaddr *src, const struct sockaddr *dst,
  */
 struct socket *
 syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
-    struct tcphdr *th, unsigned int hlen, unsigned int tlen,
-    struct socket *so, struct mbuf *m)
+    struct tcphdr *th, struct socket *so, struct mbuf *m)
 {
 	struct syn_cache *sc;
 	struct syn_cache_head *scp;
