@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.67 2017/12/25 17:00:15 joerg Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.68 2018/03/29 13:23:39 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo Horvath.
@@ -32,8 +32,10 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.67 2017/12/25 17:00:15 joerg Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.68 2018/03/29 13:23:39 joerg Exp $");
 #endif /* not lint */
+
+#include <machine/elf_support.h>
 
 #include <errno.h>
 #include <stdio.h>
@@ -192,19 +194,6 @@ static const long reloc_target_bitmask[] = {
 /*
  * Instruction templates:
  */
-#define	BAA	0x30680000	/*	ba,a	%xcc, 0 */
-#define	SETHI	0x03000000	/*	sethi	%hi(0), %g1 */
-#define	JMP	0x81c06000	/*	jmpl	%g1+%lo(0), %g0 */
-#define	NOP	0x01000000	/*	sethi	%hi(0), %g0 */
-#define	OR	0x82106000	/*	or	%g1, 0, %g1 */
-#define	XOR	0x82186000	/*	xor	%g1, 0, %g1 */
-#define	MOV71	0x8213e000	/*	or	%o7, 0, %g1 */
-#define	MOV17	0x9e106000	/*	or	%g1, 0, %o7 */
-#define	CALL	0x40000000	/*	call	0 */
-#define	SLLX	0x83287000	/*	sllx	%g1, 0, %g1 */
-#define	NEG	0x82200001	/*	neg	%g1 */
-#define	SETHIG5	0x0b000000	/*	sethi	%hi(0), %g5 */
-#define	ORG5	0x82104005	/*	or	%g1, %g5, %g1 */
 
 
 /* %hi(v)/%lo(v) with variable shift */
@@ -589,34 +578,6 @@ static inline void
 _rtld_write_plt(Elf_Word *where, Elf_Addr value, const Elf_Rela *rela,
     const Obj_Entry *obj)
 {
-	Elf_Addr offset, offBAA;
-
-	/*
-	 * At the PLT entry pointed at by `where', we now construct a direct
-	 * transfer to the now fully resolved function address.
-	 *
-	 * A PLT entry is supposed to start by looking like this:
-	 *
-	 *	sethi	%hi(. - .PLT0), %g1
-	 *	ba,a	%xcc, .PLT1
-	 *	nop
-	 *	nop
-	 *	nop
-	 *	nop
-	 *	nop
-	 *	nop
-	 *
-	 * When we replace these entries we start from the last instruction
-	 * and do it in reverse order so the last thing we do is replace the
-	 * branch.  That allows us to change this atomically.
-	 *
-	 * We now need to find out how far we need to jump.  We have a choice
-	 * of several different relocation techniques which are increasingly
-	 * expensive.
-	 */
-
-	offset = ((Elf_Addr)where) - value;
-	offBAA = value - (((Elf_Addr)where) + 4);	/* ba,a at where[1] */
 	if (rela && rela->r_addend) {
 		Elf_Addr *ptr = (Elf_Addr *)where;
 		/*
@@ -625,169 +586,8 @@ _rtld_write_plt(Elf_Word *where, Elf_Addr value, const Elf_Rela *rela,
 		 * PLT section.  Update it to point to the target function.
 		 */
 		ptr[0] += value - (Elf_Addr)obj->pltgot;
-	} else if (offBAA <= (1L<<20) && (Elf_SOff)offBAA >= -(1L<<20)) {
-		/* 
-		 * We're within 1MB -- we can use a direct branch insn.
-		 *
-		 * We can generate this pattern:
-		 *
-		 *	sethi	%hi(. - .PLT0), %g1
-		 *	ba,a	%xcc, addr
-		 *	nop
-		 *	nop
-		 *	nop
-		 *	nop
-		 *	nop
-		 *	nop
-		 *
-		 */
-		where[1] = BAA | ((offBAA >> 2) & 0x7ffff);
-		__asm volatile("iflush %0+4" : : "r" (where));
-	} else if (value < (1L<<32)) {
-		/* 
-		 * We're within 32-bits of address zero.
-		 *
-		 * The resulting code in the jump slot is:
-		 *
-		 *	sethi	%hi(. - .PLT0), %g1
-		 *	sethi	%hi(addr), %g1
-		 *	jmp	%g1+%lo(addr)
-		 *	nop
-		 *	nop
-		 *	nop
-		 *	nop
-		 *	nop
-		 *
-		 */
-		where[2] = JMP   | LOVAL(value, 0);
-		where[1] = SETHI | HIVAL(value, 10);
-		__asm volatile("iflush %0+8" : : "r" (where));
-		__asm volatile("iflush %0+4" : : "r" (where));
-	} else if ((Elf_SOff)value <= 0 && (Elf_SOff)value > -(1L<<32)) {
-		/* 
-		 * We're within 32-bits of address -1.
-		 *
-		 * The resulting code in the jump slot is:
-		 *
-		 *	sethi	%hi(. - .PLT0), %g1
-		 *	sethi	%hix(addr), %g1
-		 *	xor	%g1, %lox(addr), %g1
-		 *	jmp	%g1
-		 *	nop
-		 *	nop
-		 *	nop
-		 *	nop
-		 *
-		 */
-		where[3] = JMP;
-		where[2] = XOR | (value & 0x00003ff) | 0x1c00;
-		where[1] = SETHI | HIVAL(~value, 10);
-		__asm volatile("iflush %0+12" : : "r" (where));
-		__asm volatile("iflush %0+8" : : "r" (where));
-		__asm volatile("iflush %0+4" : : "r" (where));
-	} else if ((offset+8) <= (1L<<31) &&
-	    (Elf_SOff)(offset+8) >= -((1L<<31) - 4)) {
-		/* 
-		 * We're within 32-bits -- we can use a direct call insn 
-		 *
-		 * The resulting code in the jump slot is:
-		 *
-		 *	sethi	%hi(. - .PLT0), %g1
-		 *	mov	%o7, %g1
-		 *	call	(.+offset)
-		 *	 mov	%g1, %o7
-		 *	nop
-		 *	nop
-		 *	nop
-		 *	nop
-		 *
-		 */
-		offset += 8;	/* call is at where[2], 8 byte further */
-		where[3] = MOV17;
-		where[2] = CALL	  | ((-offset >> 2) & 0x3fffffff);
-		where[1] = MOV71;
-		__asm volatile("iflush %0+12" : : "r" (where));
-		__asm volatile("iflush %0+8" : : "r" (where));
-		__asm volatile("iflush %0+4" : : "r" (where));
-	} else if ((Elf_SOff)value > 0 && value < (1L<<44)) {
-		/* 
-		 * We're within 44 bits.  We can generate this pattern:
-		 *
-		 * The resulting code in the jump slot is:
-		 *
-		 *	sethi	%hi(. - .PLT0), %g1
-		 *	sethi	%h44(addr), %g1
-		 *	or	%g1, %m44(addr), %g1
-		 *	sllx	%g1, 12, %g1	
-		 *	jmp	%g1+%l44(addr)	
-		 *	nop
-		 *	nop
-		 *	nop
-		 *
-		 */
-		where[4] = JMP   | LOVAL(value, 0);
-		where[3] = SLLX  | 12;
-		where[2] = OR    | (((value) >> 12) & 0x00001fff);
-		where[1] = SETHI | HIVAL(value, 22);
-		__asm volatile("iflush %0+16" : : "r" (where));
-		__asm volatile("iflush %0+12" : : "r" (where));
-		__asm volatile("iflush %0+8" : : "r" (where));
-		__asm volatile("iflush %0+4" : : "r" (where));
-	} else if ((Elf_SOff)value < 0 && (Elf_SOff)value > -(1L<<44)) {
-		/*
-		 *  We're within 44 bits.  We can generate this pattern:
-		 *
-		 * The resulting code in the jump slot is:
-		 *
-		 *	sethi	%hi(. - .PLT0), %g1
-		 *	sethi	%hi((-addr)>>12), %g1
-		 *	or	%g1, %lo((-addr)>>12), %g1
-		 *	neg	%g1
-		 *	sllx	%g1, 12, %g1
-		 *	jmp	%g1+(addr&0x0fff)
-		 *	nop
-		 *	nop
-		 *
-		 */
-		Elf_Addr neg = (~value+1)>>12;
-		where[5] = JMP   | (value & 0x0fff);
-		where[4] = SLLX  | 12;
-		where[3] = NEG;
-		where[2] = OR    | (LOVAL(neg, 0)+1);
-		where[1] = SETHI | HIVAL(neg, 10);
-		__asm volatile("iflush %0+20" : : "r" (where));
-		__asm volatile("iflush %0+16" : : "r" (where));
-		__asm volatile("iflush %0+12" : : "r" (where));
-		__asm volatile("iflush %0+8" : : "r" (where));
-		__asm volatile("iflush %0+4" : : "r" (where));
 	} else {
-		/* 
-		 * We need to load all 64-bits
-		 *
-		 * The resulting code in the jump slot is:
-		 *
-		 *	sethi	%hi(. - .PLT0), %g1
-		 *	sethi	%hh(addr), %g1
-		 *	sethi	%lm(addr), %g5
-		 *	or	%g1, %hm(addr), %g1
-		 *	sllx	%g1, 32, %g1
-		 *	or	%g1, %g5, %g1
-		 *	jmp	%g1+%lo(addr)
-		 *	nop
-		 *
-		 */
-		where[6] = JMP     | LOVAL(value, 0);
-		where[5] = ORG5;
-		where[4] = SLLX    | 32;
-		where[3] = OR      | LOVAL(value, 32);
-		where[2] = SETHIG5 | HIVAL(value, 10);
-		where[1] = SETHI   | HIVAL(value, 42);
-		__asm volatile("iflush %0+24" : : "r" (where));
-		__asm volatile("iflush %0+20" : : "r" (where));
-		__asm volatile("iflush %0+16" : : "r" (where));
-		__asm volatile("iflush %0+12" : : "r" (where));
-		__asm volatile("iflush %0+8" : : "r" (where));
-		__asm volatile("iflush %0+4" : : "r" (where));
+		sparc_write_branch(where + 1, (void *)value);
 	}
 }
 
@@ -851,7 +651,7 @@ _rtld_call_ifunc(Obj_Entry *obj, sigset_t *mask, u_int cur_objgen)
 		_rtld_exclusive_exit(mask);
 		target = _rtld_resolve_ifunc2(obj, target);
 		_rtld_exclusive_enter(mask);
-		_rtld_write_plt(where2, target, NULL, obj);
+		sparc_write_branch(where2 + 1, (void *)target);
 	}
 
 	while (obj->ifunc_remaining_nonplt > 0 && _rtld_objgen == cur_objgen) {
