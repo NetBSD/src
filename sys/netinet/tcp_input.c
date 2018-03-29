@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.399 2018/03/29 17:46:17 maxv Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.400 2018/03/29 18:54:48 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.399 2018/03/29 17:46:17 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.400 2018/03/29 18:54:48 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -559,11 +559,6 @@ tcp_reass(struct tcpcb *tp, const struct tcphdr *th, struct mbuf *m, int tlen)
 		 * for further overlaps.
 		 */
 		if (q->ipqe_seq + q->ipqe_len == pkt_seq) {
-#ifdef TCPREASS_DEBUG
-			printf("tcp_reass[%p]: concat %u:%u(%u) to %u:%u(%u)\n",
-			       tp, pkt_seq, pkt_seq + pkt_len, pkt_len,
-			       q->ipqe_seq, q->ipqe_seq + q->ipqe_len, q->ipqe_len);
-#endif
 			pkt_len += q->ipqe_len;
 			pkt_flags |= q->ipqe_flags;
 			pkt_seq = q->ipqe_seq;
@@ -632,11 +627,6 @@ tcp_reass(struct tcpcb *tp, const struct tcphdr *th, struct mbuf *m, int tlen)
 		if (SEQ_LT(q->ipqe_seq, pkt_seq) &&
 		    SEQ_GT(q->ipqe_seq + q->ipqe_len, pkt_seq))  {
 			int overlap = q->ipqe_seq + q->ipqe_len - pkt_seq;
-#ifdef TCPREASS_DEBUG
-			printf("tcp_reass[%p]: trim starting %d bytes of %u:%u(%u)\n",
-			       tp, overlap,
-			       pkt_seq, pkt_seq + pkt_len, pkt_len);
-#endif
 			m_adj(m, overlap);
 			rcvpartdupbyte += overlap;
 			m_cat(q->ipre_mlast, m);
@@ -658,11 +648,6 @@ tcp_reass(struct tcpcb *tp, const struct tcphdr *th, struct mbuf *m, int tlen)
 		if (SEQ_GT(q->ipqe_seq, pkt_seq) &&
 		    SEQ_LT(q->ipqe_seq, pkt_seq + pkt_len))  {
 			int overlap = pkt_seq + pkt_len - q->ipqe_seq;
-#ifdef TCPREASS_DEBUG
-			printf("tcp_reass[%p]: trim trailing %d bytes of %u:%u(%u)\n",
-			       tp, overlap,
-			       pkt_seq, pkt_seq + pkt_len, pkt_len);
-#endif
 			m_adj(m, -overlap);
 			pkt_len -= overlap;
 			rcvpartdupbyte += overlap;
@@ -676,11 +661,6 @@ tcp_reass(struct tcpcb *tp, const struct tcphdr *th, struct mbuf *m, int tlen)
 		 * and reinsert the data.
 		 */
 		if (q->ipqe_seq == pkt_seq + pkt_len) {
-#ifdef TCPREASS_DEBUG
-			printf("tcp_reass[%p]: append %u:%u(%u) to %u:%u(%u)\n",
-			       tp, q->ipqe_seq, q->ipqe_seq + q->ipqe_len, q->ipqe_len,
-			       pkt_seq, pkt_seq + pkt_len, pkt_len);
-#endif
 			pkt_len += q->ipqe_len;
 			pkt_flags |= q->ipqe_flags;
 			m_cat(m, q->ipqe_m);
@@ -776,18 +756,8 @@ insert_it:
 	tiqe->ipqe_flags = pkt_flags;
 	if (p == NULL) {
 		TAILQ_INSERT_HEAD(&tp->segq, tiqe, ipqe_q);
-#ifdef TCPREASS_DEBUG
-		if (tiqe->ipqe_seq != tp->rcv_nxt)
-			printf("tcp_reass[%p]: insert %u:%u(%u) at front\n",
-			       tp, pkt_seq, pkt_seq + pkt_len, pkt_len);
-#endif
 	} else {
 		TAILQ_INSERT_AFTER(&tp->segq, p, tiqe, ipqe_q);
-#ifdef TCPREASS_DEBUG
-		printf("tcp_reass[%p]: insert %u:%u(%u) after %u:%u(%u)\n",
-		       tp, pkt_seq, pkt_seq + pkt_len, pkt_len,
-		       p->ipqe_seq, p->ipqe_seq + p->ipqe_len, p->ipqe_len);
-#endif
 	}
 	tp->t_segqlen++;
 
