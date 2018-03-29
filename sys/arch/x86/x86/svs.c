@@ -1,4 +1,4 @@
-/*	$NetBSD: svs.c,v 1.14 2018/03/13 16:45:52 maxv Exp $	*/
+/*	$NetBSD: svs.c,v 1.15 2018/03/29 07:15:12 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.14 2018/03/13 16:45:52 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.15 2018/03/29 07:15:12 maxv Exp $");
 
 #include "opt_svs.h"
 
@@ -720,9 +720,10 @@ int
 sysctl_machdep_svs_enabled(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node;
-	int error, val;
+	int error;
+	bool val;
 
-	val = *(int *)rnode->sysctl_data;
+	val = *(bool *)rnode->sysctl_data;
 
 	node = *rnode;
 	node.sysctl_data = &val;
