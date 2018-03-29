@@ -1,4 +1,4 @@
-/*	$NetBSD: svs.c,v 1.15 2018/03/29 07:15:12 maxv Exp $	*/
+/*	$NetBSD: svs.c,v 1.16 2018/03/29 07:24:26 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.15 2018/03/29 07:15:12 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.16 2018/03/29 07:24:26 maxv Exp $");
 
 #include "opt_svs.h"
 
@@ -733,7 +733,10 @@ sysctl_machdep_svs_enabled(SYSCTLFN_ARGS)
 		return error;
 
 	if (val == 1) {
-		error = EINVAL;
+		if (svs_enabled)
+			error = 0;
+		else
+			error = EOPNOTSUPP;
 	} else {
 		if (svs_enabled)
 			error = svs_disable();
