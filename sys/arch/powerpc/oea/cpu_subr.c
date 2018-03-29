@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.91 2018/03/22 15:18:06 macallan Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.92 2018/03/29 16:19:46 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.91 2018/03/22 15:18:06 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.92 2018/03/29 16:19:46 macallan Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_ppccache.h"
@@ -1430,9 +1430,11 @@ cpu_hatch(void)
 		__asm ("mtdbatl 3,%0" :: "r"(h->hatch_dbatl[3]));
 	}
 
+#ifdef PPC_OEA64_BRIDGE
 	if ((oeacpufeat & OEACPU_64_BRIDGE) != 0) {
 		mtspr64(SPR_HID0, h->hatch_hid0);
 	} else
+#endif
 		mtspr(SPR_HID0, h->hatch_hid0);
 
 	if ((oeacpufeat & OEACPU_NOBAT) == 0) {
