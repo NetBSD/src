@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.393 2018/03/28 14:43:55 maxv Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.394 2018/03/29 16:54:59 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.393 2018/03/28 14:43:55 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.394 2018/03/29 16:54:59 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1774,7 +1774,7 @@ nosave:;
 			 * state for it.
 			 */
 			if (so->so_qlen <= so->so_qlimit &&
-			    syn_cache_add(&src.sa, &dst.sa, th, tlen,
+			    syn_cache_add(&src.sa, &dst.sa, th, toff,
 			    so, m, optp, optlen, &opti))
 				m = NULL;
 		}
@@ -4159,7 +4159,7 @@ syn_cache_unreach(const struct sockaddr *src, const struct sockaddr *dst,
  */
 int
 syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
-    unsigned int hlen, struct socket *so, struct mbuf *m, u_char *optp,
+    unsigned int toff, struct socket *so, struct mbuf *m, u_char *optp,
     int optlen, struct tcp_opt_info *oi)
 {
 	struct tcpcb tb, *tp;
@@ -4189,8 +4189,7 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 		tb.t_flags |= (tp->t_flags & TF_SIGNATURE);
 #endif
 		tb.t_state = TCPS_LISTEN;
-		if (tcp_dooptions(&tb, optp, optlen, th, m, m->m_pkthdr.len -
-		    sizeof(struct tcphdr) - optlen - hlen, oi) < 0)
+		if (tcp_dooptions(&tb, optp, optlen, th, m, toff, oi) < 0)
 			return 0;
 	} else
 		tb.t_flags = 0;
