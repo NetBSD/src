@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.h,v 1.92 2016/08/14 14:42:22 skrll Exp $	*/
+/*	$NetBSD: usbdi.h,v 1.92.14.1 2018/03/29 11:20:03 pgoyette Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.h,v 1.18 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -156,10 +156,6 @@ usbd_status usbd_get_interface(struct usbd_interface *, uint8_t *);
 int usbd_get_no_alts(usb_config_descriptor_t *, int);
 
 void usbd_fill_deviceinfo(struct usbd_device *, struct usb_device_info *, int);
-#ifdef COMPAT_30
-void usbd_fill_deviceinfo_old(struct usbd_device *, struct usb_device_info_old *,
-    int);
-#endif
 int usbd_get_interface_altindex(struct usbd_interface *);
 
 usb_interface_descriptor_t *usbd_find_idesc(usb_config_descriptor_t *,
@@ -230,6 +226,12 @@ const struct usb_devno *usb_match_device(const struct usb_devno *,
 #define usb_lookup(tbl, vendor, product) \
 	usb_match_device((const struct usb_devno *)(tbl), sizeof(tbl) / sizeof((tbl)[0]), sizeof((tbl)[0]), (vendor), (product))
 #define	USB_PRODUCT_ANY		0xffff
+
+/* compat callbacks */
+void usbd_devinfo_vp(struct usbd_device *, char *, size_t, char *, size_t,
+    int, int);
+int usbd_printBCD(char *, size_t, int);
+
 
 /* NetBSD attachment information */
 

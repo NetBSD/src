@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.h,v 1.1.2.10 2018/03/28 07:51:09 pgoyette Exp $	*/
+/* $NetBSD: compat_stub.h,v 1.1.2.11 2018/03/29 11:20:03 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -123,5 +123,30 @@ struct vattr;
 
 extern int (*compat_vndioctl_30)(u_long, struct lwp *, void *, int,
     struct vattr *, int (*)(struct lwp *, void *, int, struct vattr *));
+
+/*
+ * usb devinfo compatability
+ */
+
+#include <dev/usb/usb.h>
+#include <dev/usb/usbdi.h>
+
+struct usbd_device;
+struct usb_device_info;
+struct usb_device_info_old;
+struct usb_event;
+struct usb_event_old;
+struct uio;
+
+extern int (*usbd30_fill_deviceinfo_old)(struct usbd_device *,
+    struct usb_device_info_old *, int);
+
+extern int (*usb30_copy_to_old)(struct usb_event *ue, struct usb_event_old *ueo,
+    struct uio *uio);
+
+extern void (*vec_usbd_devinfo_vp)(struct usbd_device *, char *, size_t, char *,
+    size_t, int, int);
+
+extern int (*vec_usbd_printBCD)(char *cp, size_t l, int bcd);
 
 #endif	/* _SYS_COMPAT_STUB_H */

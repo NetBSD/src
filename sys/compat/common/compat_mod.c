@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_mod.c,v 1.24.14.22 2018/03/28 04:18:24 pgoyette Exp $	*/
+/*	$NetBSD: compat_mod.c,v 1.24.14.23 2018/03/29 11:20:02 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.24.14.22 2018/03/28 04:18:24 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.24.14.23 2018/03/29 11:20:02 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -77,7 +77,8 @@ static struct sysctllog *compat_clog = NULL;
 #endif
 
 static const char * const compat_includes[] = {
-	"compat_80", "compat_70", "compat_60", "compat_50", 
+	"compat_80", "compat_70", "compat_60", "compat_50", "compat_40",
+	"compat_30",
 	NULL
 };
 
