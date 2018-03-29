@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.139 2018/03/05 09:35:01 ws Exp $	*/
+/*	$NetBSD: ugen.c,v 1.139.2.1 2018/03/29 11:20:02 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.139 2018/03/05 09:35:01 ws Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.139.2.1 2018/03/29 11:20:02 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.139 2018/03/05 09:35:01 ws Exp $");
 #include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/poll.h>
+#include <sys/compat_stub.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
@@ -1835,13 +1836,11 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
 		usbd_fill_deviceinfo(sc->sc_udev,
 				     (struct usb_device_info *)addr, 0);
 		break;
-#ifdef COMPAT_30
 	case USB_GET_DEVICEINFO_OLD:
-		usbd_fill_deviceinfo_old(sc->sc_udev,
-					 (struct usb_device_info_old *)addr, 0);
-
-		break;
-#endif
+		if ((*usbd30_fill_deviceinfo_old)(sc->sc_udev,
+			     (struct usb_device_info_old *)addr, 0) == 0)
+			return 0;
+		return EINVAL;
 	default:
 		return EINVAL;
 	}

@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.c,v 1.1.2.10 2018/03/28 07:51:09 pgoyette Exp $	*/
+/* $NetBSD: compat_stub.c,v 1.1.2.11 2018/03/29 11:20:03 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -33,6 +33,7 @@
 
 #ifdef _KERNEL_OPT
 #include "opt_ntp.h"
+#include "usb.h"
 #endif
 
 #include <sys/systm.h>
@@ -110,6 +111,26 @@ int (*compat_bio_30)(void *, u_long, void *, int(*)(void *, u_long, void *)) =
 /*
  * vnd ioctl compatability
  */
-int (*compat_vndioctl_30)(u_long cmd, struct lwp *l, void *data, int unit,
-    struct vattr *vattr_p, int (*get)(struct lwp *, void *, int,
-    struct vattr *)) = (void *)enosys;
+int (*compat_vndioctl_30)(u_long, struct lwp *, void *, int, struct vattr *,
+    int (*get)(struct lwp *, void *, int, struct vattr *)) = (void *)enosys;
+
+/*
+ * usb device_info compatability
+ */
+int (*usbd30_fill_deviceinfo_old)(struct usbd_device *,
+    struct usb_device_info_old *, int) = (void *)enosys;
+
+int (*usb30_copy_to_old)(struct usb_event *, struct usb_event_old *,
+    struct uio *) = (void *)enosys;
+
+#if NUSB > 0
+void (*vec_usbd_devinfo_vp)(struct usbd_device *, char *, size_t, char *,
+    size_t, int, int) = usbd_devinfo_vp;
+int (*vec_usbd_printBCD)(char *cp, size_t l, int bcd) = usbd_printBCD;
+
+#else
+void (*vec_usbd_devinfo_vp)(struct usbd_device *, char *, size_t, char *,
+    size_t, int, int) = NULL;
+int (*vec_usbd_printBCD)(char *cp, size_t l, int bcd) = NULL;
+#endif
+

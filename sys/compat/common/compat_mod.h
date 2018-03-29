@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_mod.h,v 1.1.42.11 2018/03/28 07:51:09 pgoyette Exp $	*/
+/*	$NetBSD: compat_mod.h,v 1.1.42.12 2018/03/29 11:20:02 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -101,6 +101,8 @@ void bio_30_init(void);
 void bio_30_fini(void);
 void vnd_30_init(void);
 void vnd_30_fini(void);
+void usb_30_init(void);
+void usb_30_fini(void);
 #endif
 
 #endif /* !_COMPAT_MOD_H_ */
