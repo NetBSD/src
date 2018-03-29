@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.394 2018/03/29 16:54:59 maxv Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.395 2018/03/29 16:59:38 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.394 2018/03/29 16:54:59 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.395 2018/03/29 16:59:38 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2359,6 +2359,7 @@ after_listen:
 			 * and (if not RST) ack.
 			 */
 			if (tp->rcv_wnd == 0 && th->th_seq == tp->rcv_nxt) {
+				KASSERT(todrop == tlen);
 				tp->t_flags |= TF_ACKNOW;
 				TCP_STATINC(TCP_STAT_RCVWINPROBE);
 			} else {
