@@ -1,4 +1,4 @@
-/*	$NetBSD: spectre.c,v 1.3 2018/03/28 19:50:57 maxv Exp $	*/
+/*	$NetBSD: spectre.c,v 1.4 2018/03/29 07:15:12 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spectre.c,v 1.3 2018/03/28 19:50:57 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spectre.c,v 1.4 2018/03/29 07:15:12 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -338,9 +338,10 @@ int
 sysctl_machdep_spectreV2_mitigated(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node;
-	int error, val;
+	int error;
+	bool val;
 
-	val = *(int *)rnode->sysctl_data;
+	val = *(bool *)rnode->sysctl_data;
 
 	node = *rnode;
 	node.sysctl_data = &val;
