@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.114.12.1 2018/03/29 10:15:20 pgoyette Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.114.12.2 2018/03/29 10:27:27 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -68,9 +68,6 @@
  *    usb_start_next()
  *
  */
-
-#ifndef _USBDIVAR_H_
-#define _USBDIVAR_H_
 
 #include <sys/callout.h>
 #include <sys/mutex.h>
@@ -329,7 +326,6 @@ usbd_status	usbd_reattach_device(device_t, struct usbd_device *,
 				     int, const int *);
 
 void		usbd_remove_device(struct usbd_device *, struct usbd_port *);
-int		usbd_printBCD(char *, size_t, int);
 usbd_status	usbd_fill_iface_data(struct usbd_device *, int, int);
 void		usb_free_device(struct usbd_device *);
 
@@ -371,5 +367,3 @@ usb_addr2dindex(int addr)
 
 #define usbd_lock_pipe(p)	mutex_enter((p)->up_dev->ud_bus->ub_lock)
 #define usbd_unlock_pipe(p)	mutex_exit((p)->up_dev->ud_bus->ub_lock)
-
-#endif /* _USBDIVAR_H_ */
