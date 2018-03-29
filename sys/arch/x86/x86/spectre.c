@@ -1,4 +1,4 @@
-/*	$NetBSD: spectre.c,v 1.4 2018/03/29 07:15:12 maxv Exp $	*/
+/*	$NetBSD: spectre.c,v 1.5 2018/03/29 07:21:24 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spectre.c,v 1.4 2018/03/29 07:15:12 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spectre.c,v 1.5 2018/03/29 07:21:24 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,6 +129,28 @@ static volatile unsigned long ibrs_cpu_barrier1 __cacheline_aligned;
 static volatile unsigned long ibrs_cpu_barrier2 __cacheline_aligned;
 
 static void
+ibrs_disable_hotpatch(void)
+{
+	extern uint8_t noibrs_enter, noibrs_enter_end;
+	extern uint8_t noibrs_leave, noibrs_leave_end;
+	u_long psl, cr0;
+	uint8_t *bytes;
+	size_t size;
+
+	x86_patch_window_open(&psl, &cr0);
+
+	bytes = &noibrs_enter;
+	size = (size_t)&noibrs_enter_end - (size_t)&noibrs_enter;
+	x86_hotpatch(HP_NAME_IBRS_ENTER, bytes, size);
+
+	bytes = &noibrs_leave;
+	size = (size_t)&noibrs_leave_end - (size_t)&noibrs_leave;
+	x86_hotpatch(HP_NAME_IBRS_LEAVE, bytes, size);
+
+	x86_patch_window_close(psl, cr0);
+}
+
+static void
 ibrs_enable_hotpatch(void)
 {
 	extern uint8_t ibrs_enter, ibrs_enter_end;
@@ -170,8 +192,12 @@ ibrs_change_cpu(void *arg1, void *arg2)
 		if (enabled) {
 			ibrs_enable_hotpatch();
 		} else {
-			/* TODO */
+			ibrs_disable_hotpatch();
 		}
+	}
+
+	if (!enabled) {
+		wrmsr(MSR_IA32_SPEC_CTRL, 0);
 	}
 
 	atomic_dec_ulong(&ibrs_cpu_barrier2);

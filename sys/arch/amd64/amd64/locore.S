@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.161 2018/03/28 19:56:40 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.162 2018/03/29 07:21:24 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1682,3 +1682,11 @@ LABEL(ibrs_leave)
 	wrmsr
 1234:
 LABEL(ibrs_leave_end)
+
+LABEL(noibrs_enter)
+	NOIBRS_ENTER
+LABEL(noibrs_enter_end)
+
+LABEL(noibrs_leave)
+	NOIBRS_LEAVE
+LABEL(noibrs_leave_end)
