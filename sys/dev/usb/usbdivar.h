@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.114 2017/01/19 16:05:00 skrll Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.114.12.1 2018/03/29 10:15:20 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -68,6 +68,9 @@
  *    usb_start_next()
  *
  */
+
+#ifndef _USBDIVAR_H_
+#define _USBDIVAR_H_
 
 #include <sys/callout.h>
 #include <sys/mutex.h>
@@ -368,3 +371,5 @@ usb_addr2dindex(int addr)
 
 #define usbd_lock_pipe(p)	mutex_enter((p)->up_dev->ud_bus->ub_lock)
 #define usbd_unlock_pipe(p)	mutex_exit((p)->up_dev->ud_bus->ub_lock)
+
+#endif /* _USBDIVAR_H_ */
