@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.397 2018/03/29 17:09:00 maxv Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.398 2018/03/29 17:12:36 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.397 2018/03/29 17:09:00 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.398 2018/03/29 17:12:36 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1142,8 +1142,7 @@ static void tcp_vtw_input(struct tcphdr *th, vestigial_inpcb_t *vp,
 	if ((tiflags & TH_ACK) == 0) {
 		if (t_flags & TF_ACKNOW)
 			goto dropafterack;
-		else
-			goto drop;
+		goto drop;
 	}
 
 	/*
@@ -2539,8 +2538,8 @@ after_listen:
 					if (tp->t_congctl->fast_retransmit(tp, th)) {
 						/* False fast retransmit */
 						break;
-					} else
-						goto drop;
+					}
+					goto drop;
 				} else if (tp->t_dupacks > tcprexmtthresh) {
 					tp->snd_cwnd += tp->t_segsz;
 					KERNEL_LOCK(1, NULL);
