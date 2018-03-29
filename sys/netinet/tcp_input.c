@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.398 2018/03/29 17:12:36 maxv Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.399 2018/03/29 17:46:17 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.398 2018/03/29 17:12:36 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.399 2018/03/29 17:46:17 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -444,6 +444,11 @@ tcpipqent_free(struct ipqent *ipqe)
 	splx(s);
 }
 
+/*
+ * Insert segment ti into reassembly queue of tcp with
+ * control block tp.  Return TH_FIN if reassembly now includes
+ * a segment with FIN.
+ */
 static int
 tcp_reass(struct tcpcb *tp, const struct tcphdr *th, struct mbuf *m, int tlen)
 {
@@ -479,8 +484,8 @@ tcp_reass(struct tcpcb *tp, const struct tcphdr *th, struct mbuf *m, int tlen)
 
 	rcvoobyte = tlen;
 	/*
-	 * Copy these to local variables because the tcpiphdr
-	 * gets munged while we are collapsing mbufs.
+	 * Copy these to local variables because the TCP header gets munged
+	 * while we are collapsing mbufs.
 	 */
 	pkt_seq = th->th_seq;
 	pkt_len = tlen;
@@ -547,6 +552,7 @@ tcp_reass(struct tcpcb *tp, const struct tcphdr *th, struct mbuf *m, int tlen)
 #ifdef TCP_REASS_COUNTERS
 		count++;
 #endif
+
 		/*
 		 * If the received segment is just right after this
 		 * fragment, merge the two together and then check
@@ -567,14 +573,16 @@ tcp_reass(struct tcpcb *tp, const struct tcphdr *th, struct mbuf *m, int tlen)
 			TCP_REASS_COUNTER_INCR(&tcp_reass_append);
 			goto free_ipqe;
 		}
+
 		/*
 		 * If the received segment is completely past this
-		 * fragment, we need to go the next fragment.
+		 * fragment, we need to go to the next fragment.
 		 */
 		if (SEQ_LT(q->ipqe_seq + q->ipqe_len, pkt_seq)) {
 			p = q;
 			continue;
 		}
+
 		/*
 		 * If the fragment is past the received segment,
 		 * it (or any following) can't be concatenated.
@@ -586,7 +594,7 @@ tcp_reass(struct tcpcb *tp, const struct tcphdr *th, struct mbuf *m, int tlen)
 
 		/*
 		 * We've received all the data in this segment before.
-		 * mark it as a duplicate and return.
+		 * Mark it as a duplicate and return.
 		 */
 		if (SEQ_LEQ(q->ipqe_seq, pkt_seq) &&
 		    SEQ_GEQ(q->ipqe_seq + q->ipqe_len, pkt_seq + pkt_len)) {
@@ -602,6 +610,7 @@ tcp_reass(struct tcpcb *tp, const struct tcphdr *th, struct mbuf *m, int tlen)
 			TCP_REASS_COUNTER_INCR(&tcp_reass_segdup);
 			goto out;
 		}
+
 		/*
 		 * Received segment completely overlaps this fragment
 		 * so we drop the fragment (this keeps the temporal
@@ -614,11 +623,11 @@ tcp_reass(struct tcpcb *tp, const struct tcphdr *th, struct mbuf *m, int tlen)
 			TCP_REASS_COUNTER_INCR(&tcp_reass_fragdup);
 			goto free_ipqe;
 		}
+
 		/*
-		 * RX'ed segment extends past the end of the
-		 * fragment.  Drop the overlapping bytes.  Then
-		 * merge the fragment and segment then treat as
-		 * a longer received packet.
+		 * Received segment extends past the end of the fragment.
+		 * Drop the overlapping bytes, merge the fragment and
+		 * segment, and treat as a longer received packet.
 		 */
 		if (SEQ_LT(q->ipqe_seq, pkt_seq) &&
 		    SEQ_GT(q->ipqe_seq + q->ipqe_len, pkt_seq))  {
@@ -639,11 +648,12 @@ tcp_reass(struct tcpcb *tp, const struct tcphdr *th, struct mbuf *m, int tlen)
 			TCP_REASS_COUNTER_INCR(&tcp_reass_overlaptail);
 			goto free_ipqe;
 		}
+
 		/*
-		 * RX'ed segment extends past the front of the
-		 * fragment.  Drop the overlapping bytes on the
-		 * received packet.  The packet will then be
-		 * contatentated with this fragment a bit later.
+		 * Received segment extends past the front of the fragment.
+		 * Drop the overlapping bytes on the received packet. The
+		 * packet will then be concatenated with this fragment a
+		 * bit later.
 		 */
 		if (SEQ_GT(q->ipqe_seq, pkt_seq) &&
 		    SEQ_LT(q->ipqe_seq, pkt_seq + pkt_len))  {
@@ -659,8 +669,9 @@ tcp_reass(struct tcpcb *tp, const struct tcphdr *th, struct mbuf *m, int tlen)
 			TCP_REASS_COUNTER_INCR(&tcp_reass_overlapfront);
 			rcvoobyte -= overlap;
 		}
+
 		/*
-		 * If the received segment immediates precedes this
+		 * If the received segment immediately precedes this
 		 * fragment then tack the fragment onto this segment
 		 * and reinsert the data.
 		 */
@@ -688,11 +699,12 @@ tcp_reass(struct tcpcb *tp, const struct tcphdr *th, struct mbuf *m, int tlen)
 			TCP_REASS_COUNTER_INCR(&tcp_reass_prepend);
 			break;
 		}
+
 		/*
 		 * If the fragment is before the segment, remember it.
 		 * When this loop is terminated, p will contain the
-		 * pointer to fragment that is right before the received
-		 * segment.
+		 * pointer to the fragment that is right before the
+		 * received segment.
 		 */
 		if (SEQ_LEQ(q->ipqe_seq, pkt_seq))
 			p = q;
@@ -724,14 +736,13 @@ tcp_reass(struct tcpcb *tp, const struct tcphdr *th, struct mbuf *m, int tlen)
 		TCP_REASS_COUNTER_INCR(&tcp_reass_iteration[count]);
 #endif
 
-    insert_it:
-
+insert_it:
 	/*
-	 * Allocate a new queue entry since the received segment did not
-	 * collapse onto any other out-of-order block; thus we are allocating
-	 * a new block.  If it had collapsed, tiqe would not be NULL and
-	 * we would be reusing it.
-	 * XXX If we can't, just drop the packet.  XXX
+	 * Allocate a new queue entry (block) since the received segment
+	 * did not collapse onto any other out-of-order block. If it had
+	 * collapsed, tiqe would not be NULL and we would be reusing it.
+	 *
+	 * If the allocation fails, drop the packet.
 	 */
 	if (tiqe == NULL) {
 		tiqe = tcpipqent_alloc();
@@ -781,7 +792,6 @@ tcp_reass(struct tcpcb *tp, const struct tcphdr *th, struct mbuf *m, int tlen)
 	tp->t_segqlen++;
 
 skip_replacement:
-
 	TAILQ_INSERT_HEAD(&tp->timeq, tiqe, ipqe_timeq);
 
 present:
@@ -814,10 +824,11 @@ present:
 	tcpipqent_free(q);
 	TCP_REASS_UNLOCK(tp);
 	sorwakeup(so);
-	return (pkt_flags);
+	return pkt_flags;
+
 out:
 	TCP_REASS_UNLOCK(tp);
-	return (0);
+	return 0;
 }
 
 #ifdef INET6
@@ -2300,7 +2311,7 @@ after_listen:
 			TCP_STAT_PUTREF();
 		}
 		tcp_new_dsack(tp, th->th_seq, todrop);
-		hdroptlen += todrop;	/* drop from head afterwards */
+		hdroptlen += todrop;	/* drop from head afterwards (m_adj) */
 		th->th_seq += todrop;
 		tlen -= todrop;
 		tcp_urp_drop(th, todrop, &tiflags);
@@ -2795,18 +2806,16 @@ dodata:
 	if ((tlen || (tiflags & TH_FIN)) &&
 	    TCPS_HAVERCVDFIN(tp->t_state) == 0) {
 		/*
-		 * Insert segment ti into reassembly queue of tcp with
-		 * control block tp.  Return TH_FIN if reassembly now includes
-		 * a segment with FIN.  The macro form does the common case
-		 * inline (segment is the next to be received on an
-		 * established connection, and the queue is empty),
-		 * avoiding linkage into and removal from the queue and
-		 * repetition of various conversions.
-		 * Set DELACK for segments received in order, but ack
-		 * immediately when segments are out of order
-		 * (so fast retransmit can work).
+		 * Handle the common case:
+		 *  o Segment is the next to be received, and
+		 *  o The queue is empty, and
+		 *  o The connection is established
+		 * In this case, we avoid calling tcp_reass.
+		 *
+		 * tcp_setup_ack: set DELACK for segments received in order,
+		 * but ack immediately when segments are out of order (so that
+		 * fast retransmit can work).
 		 */
-		/* NOTE: this was TCP_REASS() macro, but used only once */
 		TCP_REASS_LOCK(tp);
 		if (th->th_seq == tp->rcv_nxt &&
 		    TAILQ_FIRST(&tp->segq) == NULL &&
