@@ -1,4 +1,4 @@
-/* $NetBSD: tcp_sack.c,v 1.33 2016/12/13 08:29:03 ozaki-r Exp $ */
+/* $NetBSD: tcp_sack.c,v 1.34 2018/03/29 07:46:43 maxv Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_sack.c,v 1.33 2016/12/13 08:29:03 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_sack.c,v 1.34 2018/03/29 07:46:43 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -135,9 +135,6 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_sack.c,v 1.33 2016/12/13 08:29:03 ozaki-r Exp $"
 #include <netinet/ip_var.h>
 
 #ifdef INET6
-#ifndef INET
-#include <netinet/in.h>
-#endif
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
 #include <netinet6/in6_pcb.h>
