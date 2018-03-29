@@ -1,4 +1,4 @@
-/*	$NetBSD: snapper.c,v 1.45 2018/03/29 06:56:54 macallan Exp $	*/
+/*	$NetBSD: snapper.c,v 1.46 2018/03/29 18:34:32 macallan Exp $	*/
 /*	Id: snapper.c,v 1.11 2002/10/31 17:42:13 tsubai Exp	*/
 /*	Id: i2s.c,v 1.12 2005/01/15 14:32:35 tsubai Exp		*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.45 2018/03/29 06:56:54 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.46 2018/03/29 18:34:32 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -2064,13 +2064,17 @@ snapper_init(struct snapper_softc *sc, int node)
 {
 	int gpio;
 	int headphone_detect_intr;
-	uint32_t gpio_base, reg[1];
+	uint32_t gpio_base, reg[1], fcreg;
 #ifdef SNAPPER_DEBUG
 	char fcr[32];
 
 	snprintb(fcr, sizeof(fcr),  FCR3C_BITMASK, obio_read_4(KEYLARGO_FCR1));
 	printf("FCR(0x3c) %s\n", fcr);
 #endif
+	fcreg = obio_read_4(KEYLARGO_FCR1);
+	fcreg |= I2S0CLKEN | I2S0EN;
+	obio_write_4(KEYLARGO_FCR1, fcreg);
+
 	headphone_detect_intr = -1;
 
 	gpio = of_getnode_byname(OF_parent(node), "gpio");
