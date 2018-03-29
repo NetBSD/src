@@ -1,4 +1,4 @@
-/* $NetBSD: crt0-common.c,v 1.15 2018/03/09 20:20:47 joerg Exp $ */
+/* $NetBSD: crt0-common.c,v 1.16 2018/03/29 13:23:39 joerg Exp $ */
 
 /*
  * Copyright (c) 1998 Christos Zoulas
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: crt0-common.c,v 1.15 2018/03/09 20:20:47 joerg Exp $");
+__RCSID("$NetBSD: crt0-common.c,v 1.16 2018/03/29 13:23:39 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/exec.h>
@@ -140,6 +140,14 @@ static void fix_iplt(void) __noinline;
 #include <stdio.h>
 extern const Elf_Rela __rela_iplt_start[] __dso_hidden __weak;
 extern const Elf_Rela __rela_iplt_end[] __dso_hidden __weak;
+#ifdef __sparc__
+#define IFUNC_RELOCATION R_TYPE(JMP_IREL)
+#include <machine/elf_support.h>
+#define write_plt(where, value) sparc_write_branch((void *)where, (void *)value)
+#else
+#define IFUNC_RELOCATION R_TYPE(IRELATIVE)
+#define write_plt(where, value) *where = value
+#endif
 
 static void
 fix_iplta(void)
@@ -150,31 +158,20 @@ fix_iplta(void)
 
 	rela = __rela_iplt_start;
 	relalim = __rela_iplt_end;
-#if DEBUG
-	printf("%p - %p\n", rela, relalim);
-#endif
 	for (; rela < relalim; ++rela) {
-		if (ELF_R_TYPE(rela->r_info) != R_TYPE(IRELATIVE))
+		if (ELF_R_TYPE(rela->r_info) != IFUNC_RELOCATION)
 			abort();
 		where = (Elf_Addr *)(relocbase + rela->r_offset);
-#if DEBUG
-		printf("location: %p\n", where);
-#endif
 		target = (Elf_Addr)(relocbase + rela->r_addend);
-#if DEBUG
-		printf("target: %p\n", (void *)target);
-#endif
 		target = ((Elf_Addr(*)(void))target)();
-#if DEBUG
-		printf("...resolves to: %p\n", (void *)target);
-#endif
-		*where = target;
+		write_plt(where, target);
 	}
 }
 #endif
 #ifdef HAS_IPLT
 extern const Elf_Rel __rel_iplt_start[] __dso_hidden __weak;
 extern const Elf_Rel __rel_iplt_end[] __dso_hidden __weak;
+#define IFUNC_RELOCATION R_TYPE(IRELATIVE)
 
 static void
 fix_iplt(void)
@@ -186,7 +183,7 @@ fix_iplt(void)
 	rel = __rel_iplt_start;
 	rellim = __rel_iplt_end;
 	for (; rel < rellim; ++rel) {
-		if (ELF_R_TYPE(rel->r_info) != R_TYPE(IRELATIVE))
+		if (ELF_R_TYPE(rel->r_info) != IFUNC_RELOCATION)
 			abort();
 		where = (Elf_Addr *)(relocbase + rel->r_offset);
 		target = ((Elf_Addr(*)(void))*where)();
