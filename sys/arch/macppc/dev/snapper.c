@@ -1,4 +1,4 @@
-/*	$NetBSD: snapper.c,v 1.44 2018/03/24 16:22:48 macallan Exp $	*/
+/*	$NetBSD: snapper.c,v 1.45 2018/03/29 06:56:54 macallan Exp $	*/
 /*	Id: snapper.c,v 1.11 2002/10/31 17:42:13 tsubai Exp	*/
 /*	Id: i2s.c,v 1.12 2005/01/15 14:32:35 tsubai Exp		*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.44 2018/03/24 16:22:48 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.45 2018/03/29 06:56:54 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -763,12 +763,29 @@ snapper_attach(device_t parent, device_t self, void *aux)
 	sc->sc_baseaddr = ca->ca_baseaddr;
 
 	OF_getprop(soundbus, "reg", reg, sizeof reg);
+	/* deal with messed up properties on PowerMac7,3 abd friends */
+	if (reg[0] == 0) {
+		reg[0] += ca->ca_reg[0];
+		reg[2] += ca->ca_reg[2];
+		reg[4] += ca->ca_reg[2];
+	}
 	reg[0] += ca->ca_baseaddr;
 	reg[2] += ca->ca_baseaddr;
 	reg[4] += ca->ca_baseaddr;
 
 	sc->sc_node = ca->ca_node;
 	sc->sc_tag = ca->ca_tag;
+
+#ifdef SNAPPER_DEBUG
+	{
+		int i;
+		printf("\n");
+		for (i = 0; i < 6; i++) {
+			printf(" %08x", reg[i]);
+		}
+		printf("\n");
+	}
+#endif
 
 	bus_space_map(sc->sc_tag, reg[0], reg[1], 0, &sc->sc_bsh);
 	bus_space_map(sc->sc_tag, reg[2], reg[3],
@@ -778,6 +795,8 @@ snapper_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_odma = bus_space_vaddr(sc->sc_tag, sc->sc_odmah);
 	sc->sc_idma = bus_space_vaddr(sc->sc_tag, sc->sc_idmah);
+
+	DPRINTF("reg %08x odma %08x\n", (uint32_t)sc->sc_bsh, (uint32_t)sc->sc_odmah);
 
 	OF_getprop(soundbus, "interrupts", intr, sizeof intr);
 	cirq = intr[0];
