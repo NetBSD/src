@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.275 2018/03/29 08:11:41 maxv Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.276 2018/03/29 18:54:48 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.275 2018/03/29 08:11:41 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.276 2018/03/29 18:54:48 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1236,18 +1236,10 @@ tcp_freeq(struct tcpcb *tp)
 {
 	struct ipqent *qe;
 	int rv = 0;
-#ifdef TCPREASS_DEBUG
-	int i = 0;
-#endif
 
 	TCP_REASS_LOCK_CHECK(tp);
 
 	while ((qe = TAILQ_FIRST(&tp->segq)) != NULL) {
-#ifdef TCPREASS_DEBUG
-		printf("tcp_freeq[%p,%d]: %u:%u(%u) 0x%02x\n",
-			tp, i++, qe->ipqe_seq, qe->ipqe_seq + qe->ipqe_len,
-			qe->ipqe_len, qe->ipqe_flags & (TH_SYN|TH_FIN|TH_RST));
-#endif
 		TAILQ_REMOVE(&tp->segq, qe, ipqe_q);
 		TAILQ_REMOVE(&tp->timeq, qe, ipqe_timeq);
 		m_freem(qe->ipqe_m);
