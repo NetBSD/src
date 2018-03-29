@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.169 2018/02/03 21:27:45 mrg Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.170 2018/03/29 04:19:55 snj Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -18,10 +18,6 @@
 ./etc/X11/fs
 ./etc/X11/lbxproxy
 ./etc/X11/proxymngr
-./etc/X11/rstart
-./etc/X11/rstart/commands
-./etc/X11/rstart/commands/x11r6
-./etc/X11/rstart/contexts
 ./etc/X11/twm
 ./etc/X11/ctwm
 ./etc/X11/xdm
