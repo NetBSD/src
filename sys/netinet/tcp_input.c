@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.396 2018/03/29 17:01:46 maxv Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.397 2018/03/29 17:09:00 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.396 2018/03/29 17:01:46 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.397 2018/03/29 17:09:00 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2348,6 +2348,8 @@ after_listen:
 			    SEQ_GT(th->th_seq, tp->rcv_nxt)) {
 				tp = tcp_close(tp);
 				tcp_fields_to_net(th);
+				m_freem(tcp_saveti);
+				tcp_saveti = NULL;
 				goto findpcb;
 			}
 
