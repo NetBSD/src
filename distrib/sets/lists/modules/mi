@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.114.2.8 2018/03/28 04:18:24 pgoyette Exp $
+# $NetBSD: mi,v 1.114.2.9 2018/03/30 02:28:25 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -68,6 +68,8 @@
 ./@MODULEDIR@/coda5/coda5.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/compat				base-kernel-modules	kmod
 ./@MODULEDIR@/compat/compat.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/compat_20				base-kernel-modules	kmod
+./@MODULEDIR@/compat_20/compat_20.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/compat_30				base-kernel-modules	kmod
 ./@MODULEDIR@/compat_30/compat_30.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/compat_40				base-kernel-modules	kmod
