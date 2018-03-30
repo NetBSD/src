@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.118 2018/03/30 09:28:37 msaitoh Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.119 2018/03/30 09:30:56 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -498,6 +498,8 @@
 #define CPUID_MPC	0x00080000	/* Multiprocessing Capable */
 #define CPUID_NOX	0x00100000	/* No Execute Page Protection */
 #define CPUID_MMXX	0x00400000	/* AMD MMX Extensions */
+/*	CPUID_MMX			   MMX supported */
+/*	CPUID_FXSR			   fast FP/MMX save/restore */
 #define CPUID_FFXSR	0x02000000	/* FXSAVE/FXSTOR Extensions */
 /*	CPUID_P1GB			   1GB Large Page Support */
 /*	CPUID_RDTSCP			   Read TSC Pair Instruction */
@@ -506,9 +508,11 @@
 #define CPUID_3DNOW	0x80000000	/* 3DNow! Instructions */
 
 #define CPUID_EXT_FLAGS	"\20" \
-	"\14" "SYSCALL/SYSRET"		"\24" "MPC"	"\25" "NOX" \
-	"\27" "MMXX"	"\32" "FFXSR"	"\33" "P1GB"	"\34" "RDTSCP" \
-	"\36" "LONG"	"\37" "3DNOW2"	"\40" "3DNOW"
+						"\14" "SYSCALL/SYSRET"	\
+							"\24" "MPC"	\
+	"\25" "NOX"			"\27" "MMXX"	"\30" "MMX"	\
+	"\31" "FXSR"	"\32" "FFXSR"	"\33" "P1GB"	"\34" "RDTSCP"	\
+			"\36" "LONG"	"\37" "3DNOW2"	"\40" "3DNOW"
 
 /* AMD Fn80000001 extended features - %ecx */
 /* 	CPUID_LAHF			   LAHF/SAHF instruction */
