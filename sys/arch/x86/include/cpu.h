@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.89 2018/01/18 07:25:34 maxv Exp $	*/
+/*	$NetBSD: cpu.h,v 1.90 2018/03/30 19:51:53 maxv Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -167,7 +167,7 @@ struct cpu_info {
 	uint32_t	ci_max_ext_cpuid; /* cpuid.80000000:%eax */
 	volatile uint32_t	ci_lapic_counter;
 
-	uint32_t	ci_feat_val[7]; /* X86 CPUID feature bits */
+	uint32_t	ci_feat_val[8]; /* X86 CPUID feature bits */
 			/* [0] basic features cpuid.1:%edx
 			 * [1] basic features cpuid.1:%ecx (CPUID2_xxx bits)
 			 * [2] extended features cpuid:80000001:%edx
@@ -175,6 +175,7 @@ struct cpu_info {
 			 * [4] VIA padlock features
 			 * [5] structured extended features cpuid.7:%ebx
 			 * [6] structured extended features cpuid.7:%ecx
+			 * [7] structured extended features cpuid.7:%edx
 			 */
 	
 	const struct cpu_functions *ci_func;  /* start/stop functions */
