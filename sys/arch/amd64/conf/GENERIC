@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.485.2.2 2018/03/30 06:20:11 pgoyette Exp $
+# $NetBSD: GENERIC,v 1.485.2.3 2018/03/30 10:09:07 pgoyette Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.485.2.2 $"
+#ident		"GENERIC-$Revision: 1.485.2.3 $"
 
 maxusers	64		# estimated number of users
 
@@ -124,7 +124,7 @@ options 	KDTRACE_HOOKS	# kernel DTrace hooks
 # NetBSD backward compatibility. Support goes from COMPAT_15 up until
 # the latest release. Note that really old compat (< COMPAT_16) is only
 # useful for 32-bit i386 binaries.
-include 	"conf/compat_netbsd15.config"
+include 	"conf/compat_netbsd09.config"	# XXX PRG XXX usually 15
 
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 

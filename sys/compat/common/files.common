@@ -1,4 +1,4 @@
-#	$NetBSD: files.common,v 1.1.2.26 2018/03/30 06:34:00 pgoyette Exp $
+#	$NetBSD: files.common,v 1.1.2.27 2018/03/30 10:09:07 pgoyette Exp $
 
 #
 # Generic files, used by all compat options.
@@ -38,6 +38,7 @@ file	compat/common/kern_sig_13.c		compat_13
 file	compat/common/uvm_13.c			compat_13
 
 # Compatibility code for NetBSD 1.4
+file	compat/common/compat_14_mod.c		compat_14
 file	compat/common/rtsock_14.c		compat_14
 
 # Compatibility code for NetBSD 1.6
