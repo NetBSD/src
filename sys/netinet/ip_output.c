@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.298 2018/03/03 09:39:29 maxv Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.299 2018/03/30 22:54:37 maya Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.298 2018/03/03 09:39:29 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.299 2018/03/30 22:54:37 maya Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -548,7 +548,7 @@ ip_output(struct mbuf *m0, struct mbuf *opt, struct route *ro, int flags,
 	}
 
 	/*
-	 * Look for broadcast address and and verify user is allowed to
+	 * Look for broadcast address and verify user is allowed to
 	 * send such a packet.
 	 */
 	if (isbroadcast) {
