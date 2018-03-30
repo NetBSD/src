@@ -1,4 +1,4 @@
-/* $NetBSD: ix_txrx.c,v 1.24.2.7 2018/03/13 14:59:06 martin Exp $ */
+/* $NetBSD: ix_txrx.c,v 1.24.2.8 2018/03/30 12:07:34 martin Exp $ */
 
 /******************************************************************************
 
@@ -865,23 +865,23 @@ ixgbe_tx_ctx_setup(struct tx_ring *txr, struct mbuf *mp,
 
 	/* No support for offloads for non-L4 next headers */
  	switch (ipproto) {
- 		case IPPROTO_TCP:
-			if (mp->m_pkthdr.csum_flags &
-			    (M_CSUM_TCPv4 | M_CSUM_TCPv6))
-				type_tucmd_mlhl |= IXGBE_ADVTXD_TUCMD_L4T_TCP;
-			else
-				offload = false;
-			break;
-		case IPPROTO_UDP:
-			if (mp->m_pkthdr.csum_flags &
-			    (M_CSUM_UDPv4 | M_CSUM_UDPv6))
-				type_tucmd_mlhl |= IXGBE_ADVTXD_TUCMD_L4T_UDP;
-			else
-				offload = false;
-			break;
-		default:
+	case IPPROTO_TCP:
+		if (mp->m_pkthdr.csum_flags &
+		    (M_CSUM_TCPv4 | M_CSUM_TCPv6))
+			type_tucmd_mlhl |= IXGBE_ADVTXD_TUCMD_L4T_TCP;
+		else
 			offload = false;
-			break;
+		break;
+	case IPPROTO_UDP:
+		if (mp->m_pkthdr.csum_flags &
+		    (M_CSUM_UDPv4 | M_CSUM_UDPv6))
+			type_tucmd_mlhl |= IXGBE_ADVTXD_TUCMD_L4T_UDP;
+		else
+			offload = false;
+		break;
+	default:
+		offload = false;
+		break;
 	}
 
 	if (offload) /* Insert L4 checksum into data descriptors */
