@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.h,v 1.38 2018/03/30 03:56:38 knakahara Exp $ */
+/* $NetBSD: ixgbe.h,v 1.39 2018/03/30 03:58:20 knakahara Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -339,8 +339,13 @@ struct ix_queue {
 	char             namebuf[32];
 	char             evnamebuf[32];
 
-	kmutex_t         im_mtx;	/* lock for im_nest and this queue's EIMS/EIMC bit */
-	int              im_nest;
+	kmutex_t         dc_mtx;	/* lock for disabled_count and this queue's EIMS/EIMC bit */
+	int              disabled_count;/*
+					 * means
+					 *     0   : this queue is enabled
+					 *     > 0 : this queue is disabled
+					 *           the value is ixgbe_disable_queue() called count
+					 */
 };
 
 /*

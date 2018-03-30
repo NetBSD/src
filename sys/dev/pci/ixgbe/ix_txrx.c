@@ -1,4 +1,4 @@
-/* $NetBSD: ix_txrx.c,v 1.36 2018/03/15 06:48:51 msaitoh Exp $ */
+/* $NetBSD: ix_txrx.c,v 1.37 2018/03/30 03:58:20 knakahara Exp $ */
 
 /******************************************************************************
 
@@ -2298,8 +2298,8 @@ ixgbe_allocate_queues(struct adapter *adapter)
 		que->txr = &adapter->tx_rings[i];
 		que->rxr = &adapter->rx_rings[i];
 
-		mutex_init(&que->im_mtx, MUTEX_DEFAULT, IPL_NET);
-		que->im_nest = 0;
+		mutex_init(&que->dc_mtx, MUTEX_DEFAULT, IPL_NET);
+		que->disabled_count = 0;
 	}
 
 	return (0);
