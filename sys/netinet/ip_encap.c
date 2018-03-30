@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_encap.c,v 1.65.2.1 2017/12/10 09:41:31 snj Exp $	*/
+/*	$NetBSD: ip_encap.c,v 1.65.2.2 2018/03/30 11:12:15 martin Exp $	*/
 /*	$KAME: ip_encap.c,v 1.73 2001/10/02 08:30:58 itojun Exp $	*/
 
 /*
@@ -68,7 +68,7 @@
 #define USE_RADIX
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.65.2.1 2017/12/10 09:41:31 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.65.2.2 2018/03/30 11:12:15 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mrouting.h"
@@ -822,7 +822,7 @@ encap_attach_func(int af, int proto,
 
 	error = encap_add(ep);
 	if (error)
-		goto fail;
+		goto gc;
 
 	error = 0;
 #ifndef ENCAP_MPSAFE
@@ -830,6 +830,8 @@ encap_attach_func(int af, int proto,
 #endif
 	return ep;
 
+gc:
+	kmem_free(ep, sizeof(*ep));
 fail:
 #ifndef ENCAP_MPSAFE
 	splx(s);
