@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.154 2018/03/26 11:20:48 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.155 2018/03/30 12:11:07 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -10605,4 +10605,97 @@ sys/arch/x86/x86/intr.c				1.124
 
 	Avoid a panic from "intrctl list" during attach of MSI/MSI-X devices.
 	[knakahara, ticket #658]
+
+usr.sbin/makefs/cd9660/cd9660_eltorito.c	1.22,1.23
+
+	Initialize boot_catalog_entry's entry_type properly.
+	Correctly mark the last El Torito section header.
+	[nonaka, ticket #660]
+
+sys/netinet/ip_encap.c				1.67
+
+	Fix memory leak.
+	[maxv, ticket #661]
+
+sys/netinet/tcp_input.c				1.383 (patch)
+
+	Enforce the IPsec policy on TCP-RST packets.
+	[maxv, ticket #662]
+
+sys/netinet6/frag6.c				1.64
+
+	Kick zero-sized fragments.
+	[maxv, ticket #663]
+
+sys/netinet6/dest6.c				1.21
+
+	Fix the calculation of the ICMP6 error pointer.
+	[maxv, ticket #664]
+
+sys/netinet6/raw_ip6.c				1.161
+
+	Fix use-after-free.
+	[maxv, ticket #666]
+
+sys/netipsec/ipsec_input.c			1.54
+
+	Fix (harmless) use-after-free.
+	[maxv, ticket #667]
+
+sys/netinet/ip_reass.c				1.12
+
+	ip_reass_packet(): make sure that the end of each fragment does
+	not exceed IP_MAXPACKET.
+	[maxv, ticket #668]
+
+sys/netipsec/ipsec.c				1.134
+
+	Fix ipsec4_get_ulp().
+	[maxv, ticket #669]
+
+sys/netipsec/xform_esp.c			1.73
+
+	Add missing NULL check.
+	[maxv, ticket #670]
+
+sys/netinet6/ip6_forward.c			1.91
+
+	Fix two IPv6 ipsec use-after-free issues.
+	[maxv, ticket #671]
+
+sys/netinet6/in6_proto.c			1.120
+
+	Change ip6_hdrnestlimit to be 15 instead of 50.
+	[maxv, ticket #672]
+
+sys/dev/pci/ixgbe/if_bypass.c			1.3
+sys/dev/pci/ixgbe/if_sriov.c			1.2
+sys/dev/pci/ixgbe/ix_txrx.c			1.36
+sys/dev/pci/ixgbe/ixgbe.c			1.135-1.137
+sys/dev/pci/ixgbe/ixgbe.h			1.36-1.37
+sys/dev/pci/ixgbe/ixgbe_common.c		1.17-1.18
+sys/dev/pci/ixgbe/ixgbe_common.h		1.10
+sys/dev/pci/ixgbe/ixgbe_osdep.c			1.3
+sys/dev/pci/ixgbe/ixgbe_osdep.h			1.20
+sys/dev/pci/ixgbe/ixgbe_phy.c			1.15
+sys/dev/pci/ixgbe/ixgbe_sriov.h			1.2
+sys/dev/pci/ixgbe/ixgbe_type.h			1.32
+sys/dev/pci/ixgbe/ixgbe_vf.h			1.12
+sys/dev/pci/ixgbe/ixgbe_x540.c			1.13
+sys/dev/pci/ixgbe/ixgbe_x550.c			1.8-1.9
+sys/dev/pci/ixgbe/ixv.c				1.88-1.89
+
+	- Initialize firmware command buffer correctly in
+	   ixgbe_read_ee_hostif_X550() and ixgbe_read_ee_hostif_buffer_X550().
+	- Fix a bug that ixgbe_mng_present() misunderstand management
+	  capability on X550 and newer on some environment.
+	- Fix checksum calculation in ixgbe_set_fw_drv_ver_generic()
+	  (not used).			 
+	- Check offset correctly in ixgbe_get_oem_prod_version() (not used).
+	- Set PHY correctly in ixgbe_setup_mac_link_sfp_x550a() if a device is
+	  a C3000 KR SFP+.		        
+	- Fix race about writing adapter->link_active for ixg(4) and ixv(4).
+	- Add some unused funtions.  
+	- Whitespace fix.
+	[msaitoh, ticket #673]
 
