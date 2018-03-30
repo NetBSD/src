@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig_13.c,v 1.20 2011/01/19 10:21:16 tsutsui Exp $	*/
+/*	$NetBSD: kern_sig_13.c,v 1.20.56.1 2018/03/30 11:18:34 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig_13.c,v 1.20 2011/01/19 10:21:16 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig_13.c,v 1.20.56.1 2018/03/30 11:18:34 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -38,6 +38,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sig_13.c,v 1.20 2011/01/19 10:21:16 tsutsui Exp
 #include <sys/signalvar.h>
 #include <sys/systm.h>
 
+#include <sys/syscall.h>
+#include <sys/syscallvar.h>
 #include <sys/syscallargs.h>
 
 #include <machine/limits.h>
@@ -46,6 +48,22 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sig_13.c,v 1.20 2011/01/19 10:21:16 tsutsui Exp
 #include <compat/sys/signalvar.h>
 #include <compat/common/compat_util.h>
 #include <compat/common/compat_sigaltstack.h>
+#include <compat/common/compat_mod.h>
+
+static const struct syscall_package kern_sig_13_syscalls[] = {
+        { SYS_compat_13_sigaction13, 0, (sy_call_t *)compat_13_sys_sigaction },
+        { SYS_compat_13_sigaltstack13, 0,
+	    (sy_call_t *)compat_13_sys_sigaltstack },
+        { SYS_compat_13_sigpending13, 0,
+	    (sy_call_t *)compat_13_sys_sigpending },
+        { SYS_compat_13_sigprocmask13, 0,
+	    (sy_call_t *)compat_13_sys_sigprocmask },
+        { SYS_compat_13_sigsuspend13, 0,
+	    (sy_call_t *)compat_13_sys_sigsuspend },
+	/* compat_13_sigreturn13 is in MD code! */
+        { SYS_compat_13_sigreturn13, 0, (sy_call_t *)compat_13_sys_sigreturn },
+	{ 0, 0, NULL }
+};
 
 void
 native_sigset13_to_sigset(const sigset13_t *oss, sigset_t *ss)
@@ -172,4 +190,18 @@ compat_13_sys_sigsuspend(struct lwp *l, const struct compat_13_sys_sigsuspend_ar
 	ess = SCARG(uap, mask);
 	native_sigset13_to_sigset(&ess, &bss);
 	return (sigsuspend1(l, &bss));
+}
+
+int
+kern_sig_13_init(void)
+{
+
+	return syscall_establish(NULL, kern_sig_13_syscalls);
+}
+
+int
+kern_sig_13_fini(void)
+{
+
+	return syscall_disestablish(NULL, kern_sig_13_syscalls);
 }
