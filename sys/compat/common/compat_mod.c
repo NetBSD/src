@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_mod.c,v 1.24.14.27 2018/03/30 10:09:07 pgoyette Exp $	*/
+/*	$NetBSD: compat_mod.c,v 1.24.14.28 2018/03/30 11:18:34 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.24.14.27 2018/03/30 10:09:07 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.24.14.28 2018/03/30 11:18:34 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -140,15 +140,6 @@ static const struct syscall_package compat_syscalls[] = {
 	{ SYS_compat_12_stat12, 0, (sy_call_t *)compat_12_sys_stat },
 #endif
 
-#if defined(COMPAT_13)
-	{ SYS_compat_13_sigaction13, 0, (sy_call_t *)compat_13_sys_sigaction },
-	{ SYS_compat_13_sigaltstack13, 0, (sy_call_t *)compat_13_sys_sigaltstack },
-	{ SYS_compat_13_sigpending13, 0, (sy_call_t *)compat_13_sys_sigpending },
-	{ SYS_compat_13_sigprocmask13, 0, (sy_call_t *)compat_13_sys_sigprocmask },
-	{ SYS_compat_13_sigreturn13, 0, (sy_call_t *)compat_13_sys_sigreturn },
-	{ SYS_compat_13_sigsuspend13, 0, (sy_call_t *)compat_13_sys_sigsuspend },
-#endif
-
 	{ 0, 0, NULL },
 };
 
@@ -180,10 +171,10 @@ struct compat_init_fini {
 #ifdef COMPAT_14
 	{ compat_14_init, compat_14_fini },
 #endif
-#if 0	/* NOT YET */
 #ifdef COMPAT_13
 	{ compat_13_init, compat_13_fini },
 #endif
+#if 0	/* NOT YET */
 #ifdef COMPAT_12
 	{ compat_12_init, compat_12_fini },
 #endif
@@ -242,9 +233,6 @@ compat_modcmd(modcmd_t cmd, void *arg)
  * XXX */
 #endif
 #endif /* XXX NOTYET */
-#ifdef COMPAT_13
-		uvm_13_init();
-#endif
 #ifdef COMPAT_10
 		vfs_syscalls_10_init();
 #endif
@@ -254,9 +242,6 @@ compat_modcmd(modcmd_t cmd, void *arg)
 	case MODULE_CMD_FINI:
 #ifdef COMPAT_10
 		vfs_syscalls_10_fini();
-#endif
-#ifdef COMPAT_13
-		uvm_13_fini();
 #endif
 		/* Unlink the system calls. */
 		error = syscall_disestablish(NULL, compat_syscalls);
