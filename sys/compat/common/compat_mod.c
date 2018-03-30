@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_mod.c,v 1.24.14.23 2018/03/29 11:20:02 pgoyette Exp $	*/
+/*	$NetBSD: compat_mod.c,v 1.24.14.24 2018/03/30 02:28:49 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.24.14.23 2018/03/29 11:20:02 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.24.14.24 2018/03/30 02:28:49 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -167,12 +167,6 @@ static const struct syscall_package compat_syscalls[] = {
 #endif
 #endif
 
-#if defined(COMPAT_20)
-	{ SYS_compat_20_fhstatfs, 0, (sy_call_t *)compat_20_sys_fhstatfs },
-	{ SYS_compat_20_fstatfs, 0, (sy_call_t *)compat_20_sys_fstatfs },
-	{ SYS_compat_20_getfsstat, 0, (sy_call_t *)compat_20_sys_getfsstat },
-	{ SYS_compat_20_statfs, 0, (sy_call_t *)compat_20_sys_statfs },
-#endif
 	{ 0, 0, NULL },
 };
 
@@ -195,10 +189,10 @@ struct compat_init_fini {
 #ifdef COMPAT_30
 	{ compat_30_init, compat_30_fini },
 #endif
-#if 0	/* NOT YET */
 #ifdef COMPAT_20
 	{ compat_20_init, compat_20_fini },
 #endif
+#if 0	/* NOT YET */
 #ifdef COMPAT_16
 	{ compat_16_init, compat_16_fini },
 #endif

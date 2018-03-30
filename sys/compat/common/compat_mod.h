@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_mod.h,v 1.1.42.12 2018/03/29 11:20:02 pgoyette Exp $	*/
+/*	$NetBSD: compat_mod.h,v 1.1.42.13 2018/03/30 02:28:49 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -103,6 +103,17 @@ void vnd_30_init(void);
 void vnd_30_fini(void);
 void usb_30_init(void);
 void usb_30_fini(void);
+#endif
+
+#ifdef COMPAT_20
+int compat_20_init(void);
+int compat_20_fini(void);
+int vfs_syscalls_20_init(void);
+int vfs_syscalls_20_fini(void);
+void ieee80211_20_init(void);
+void ieee80211_20_fini(void);
+void if43_20_init(void);
+void if43_20_fini(void);
 #endif
 
 #endif /* !_COMPAT_MOD_H_ */
