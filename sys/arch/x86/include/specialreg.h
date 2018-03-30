@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.117 2018/03/14 15:03:16 maxv Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.118 2018/03/30 09:28:37 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -300,12 +300,19 @@
 #define CPUID_DSPM_HWP_PLR __BIT(11)	/* HWP Package Level Request */
 #define CPUID_DSPM_HDC	__BIT(13)	/* Hardware Duty Cycling */
 #define CPUID_DSPM_TBMT3 __BIT(14)	/* Turbo Boost Max Technology 3.0 */
+#define CPUID_DSPM_HWP_CAP    __BIT(15)	/* HWP Capabilities */
+#define CPUID_DSPM_HWP_PECI   __BIT(16)	/* HWP PECI override */
+#define CPUID_DSPM_HWP_FLEX   __BIT(17)	/* Flexible HWP */
+#define CPUID_DSPM_HWP_FAST   __BIT(18)	/* Fast access for IA32_HWP_REQUEST */
+#define CPUID_DSPM_HWP_IGNIDL __BIT(20)	/* Ignore Idle Logical Processor HWP */
 
 #define CPUID_DSPM_FLAGS	"\20" \
 	"\1" "DTS"	"\2" "IDA"	"\3" "ARAT" 			\
 	"\5" "PLN"	"\6" "ECMD"	"\7" "PTM"	"\10" "HWP"	\
 	"\11" "HWP_NOTIFY" "\12" "HWP_ACTWIN" "\13" "HWP_EPP" "\14" "HWP_PLR" \
-			"\16" "HDC"	"\17" "TBM3"
+			"\16" "HDC"	"\17" "TBM3"	"\20" "HWP_CAP" \
+	"\21" "HWP_PECI" "\22" "HWP_FLEX" "\23" "HWP_FAST"		\
+	"25" "HWP_IGNIDL"
 
 /*
  * Intel Digital Thermal Sensor and
@@ -381,7 +388,7 @@
 #define CPUID_SEF_AVX512_VNNI	__BIT(11) /* Vector neural Network Instruction */
 #define CPUID_SEF_AVX512_BITALG	__BIT(12)
 #define CPUID_SEF_AVX512_VPOPCNTDQ __BIT(14)
-#define CPUID_SEF_RDPID		__BIT(22) /* ReaD Processor ID */
+#define CPUID_SEF_RDPID		__BIT(22) /* RDPID and IA32_TSC_AUX */
 #define CPUID_SEF_SGXLC		__BIT(30) /* SGX Launch Configuration */
 
 #define CPUID_SEF_FLAGS1	"\20" \
