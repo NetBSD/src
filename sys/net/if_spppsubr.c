@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.179.2.1 2018/03/21 10:12:49 pgoyette Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.179.2.2 2018/03/30 23:56:18 pgoyette Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.179.2.1 2018/03/21 10:12:49 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.179.2.2 2018/03/30 23:56:18 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -2275,6 +2275,7 @@ sppp_lcp_down(struct sppp *sp)
 			    "%s: Down event (carrier loss)\n",
 			    ifp->if_xname);
 	}
+	sp->fail_counter[IDX_LCP] = 0;
 	sp->pp_flags &= ~PP_CALLIN;
 	if (sp->state[IDX_LCP] != STATE_INITIAL)
 		lcp.Close(sp);
