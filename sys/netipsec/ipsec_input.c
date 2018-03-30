@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_input.c,v 1.43.2.3 2018/03/06 09:21:35 martin Exp $	*/
+/*	$NetBSD: ipsec_input.c,v 1.43.2.4 2018/03/30 11:45:58 martin Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec_input.c,v 1.2.4.2 2003/03/28 20:32:53 sam Exp $	*/
 /*	$OpenBSD: ipsec_input.c,v 1.63 2003/02/20 18:35:43 deraadt Exp $	*/
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.43.2.3 2018/03/06 09:21:35 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.43.2.4 2018/03/30 11:45:58 martin Exp $");
 
 /*
  * IPsec input processing.
@@ -370,6 +370,7 @@ cantpull:
 		ip->ip_sum = 0;
 		ip->ip_sum = in_cksum(m, ip->ip_hl << 2);
 	} else {
+		/* XXX this branch is never taken */
 		ip = mtod(m, struct ip *);
 	}
 
@@ -381,6 +382,7 @@ cantpull:
 	m = ipsec4_fixup_checksum(m);
 	if (m == NULL)
 		goto cantpull;
+	ip = mtod(m, struct ip *);
 
 	prot = ip->ip_p;
 
