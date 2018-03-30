@@ -1,4 +1,4 @@
-.\"	$NetBSD: obio.4,v 1.9 2018/03/30 13:54:24 sevan Exp $
+.\"	$NetBSD: obio.4,v 1.10 2018/03/30 14:21:04 wiz Exp $
 .\"
 .\" Copyright (c) 2003 Alex Zepeda <zipzippy@sonic.net>
 .\" All rights reserved.
@@ -44,19 +44,13 @@ system to help find and attach devices (e.g. the Ethernet or disk
 controllers) connected to the Macintosh onboard I/O bus.
 .Sh HARDWARE
 .Nx
-includes machine-dependent
-.Tn On-Board
-drivers, sorted by device type and driver name:
+includes machine-dependent On-Board drivers, sorted by device type and driver name:
 .Ss SCSI interfaces
 .Bl -tag -width burgundy -offset indent
 .It esp
-NCR 53C9x
-.Tn SCSI
-interfaces.
+NCR 53C9x SCSI interfaces.
 .It mesh
-Apple Macintosh Enhanced SCSI Hardware
-.Tn SCSI
-interfaces.
+Apple Macintosh Enhanced SCSI Hardware SCSI interfaces.
 .El
 .Ss Disk and tape controllers
 .Bl -tag -width burgundy -offset indent
@@ -105,7 +99,7 @@ Placeholder device for the persistent system settings.
 .Xr macppc/intro 4 ,
 .Xr macppc/mesh 4 ,
 .Xr mc 4 ,
-.Xr mediabay 4 ,
+.\" .Xr mediabay 4 ,
 .Xr wdc 4 ,
 .Xr wi 4 ,
 .Xr zsc 4
