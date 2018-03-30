@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_esp.c,v 1.55.2.2 2018/02/26 13:10:52 martin Exp $	*/
+/*	$NetBSD: xform_esp.c,v 1.55.2.3 2018/03/30 11:53:13 martin Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_esp.c,v 1.2.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_esp.c,v 1.69 2001/06/26 06:18:59 angelos Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.55.2.2 2018/02/26 13:10:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.55.2.3 2018/03/30 11:53:13 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -319,6 +319,10 @@ esp_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 
 	/* XXX don't pullup, just copy header */
 	IP6_EXTHDR_GET(esp, struct newesp *, m, skip, sizeof(struct newesp));
+	if (esp == NULL) {
+		/* m already freed */
+		return EINVAL;
+	}
 
 	esph = sav->tdb_authalgxform;
 	espx = sav->tdb_encalgxform;
