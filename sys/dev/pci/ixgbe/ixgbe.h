@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.h,v 1.24.6.7 2018/03/13 14:59:06 martin Exp $ */
+/* $NetBSD: ixgbe.h,v 1.24.6.8 2018/03/30 12:07:34 martin Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -114,7 +114,6 @@
 #include "ixgbe_netbsd.h"
 #include "ixgbe_api.h"
 #include "ixgbe_common.h"
-#include "ixgbe_phy.h"
 #include "ixgbe_vf.h"
 #include "ixgbe_features.h"
 
@@ -254,7 +253,6 @@
 #define IXGBE_LINK_ITR_QUANTA  0x1FF
 #define IXGBE_LINK_ITR         ((IXGBE_LINK_ITR_QUANTA << 3) & \
                                 IXGBE_EITR_ITR_INT_MASK)
-
 
 
 /************************************************************************
@@ -578,6 +576,10 @@ struct adapter {
 	struct evcnt	   	tso_err;
 	struct evcnt	   	watchdog_events;
 	struct evcnt		link_irq;
+	struct evcnt		link_sicount;
+	struct evcnt		mod_sicount;
+	struct evcnt		msf_sicount;
+	struct evcnt		phy_sicount;
 
 	union {
 		struct ixgbe_hw_stats pf;
@@ -604,7 +606,6 @@ struct adapter {
 	const struct sysctlnode *sysctltop;
 	ixgbe_extmem_head_t jcl_head;
 };
-
 
 /* Precision Time Sync (IEEE 1588) defines */
 #define ETHERTYPE_IEEE1588      0x88F7
@@ -681,10 +682,10 @@ static __inline int
 drbr_needs_enqueue(struct ifnet *ifp, struct buf_ring *br)
 {
 #ifdef ALTQ
-        if (ALTQ_IS_ENABLED(&ifp->if_snd))
-                return (1);
+	if (ALTQ_IS_ENABLED(&ifp->if_snd))
+		return (1);
 #endif
-        return (!buf_ring_empty(br));
+	return (!buf_ring_empty(br));
 }
 #endif
 
@@ -752,7 +753,6 @@ bool ixgbe_rxeof(struct ix_queue *);
 const struct sysctlnode *ixgbe_sysctl_instance(struct adapter *);
 
 #include "ixgbe_bypass.h"
-#include "ixgbe_sriov.h"
 #include "ixgbe_fdir.h"
 #include "ixgbe_rss.h"
 #include "ixgbe_netmap.h"
