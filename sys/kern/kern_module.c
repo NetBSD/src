@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.130.2.4 2018/03/11 11:47:45 pgoyette Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.130.2.5 2018/03/30 23:49:42 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.130.2.4 2018/03/11 11:47:45 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.130.2.5 2018/03/30 23:49:42 pgoyette Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -902,13 +902,19 @@ module_do_load(const char *name, bool isdep, int flags,
 	       prop_dictionary_t props, module_t **modp, modclass_t modclass,
 	       bool autoload)
 {
-#define MODULE_MAX_DEPTH 6
-
+	/* The pending list for this level of recursion */
 	TAILQ_HEAD(pending_t, module);
-	static int depth = 0;
-	static struct pending_t *pending_lists[MODULE_MAX_DEPTH];
 	struct pending_t *pending;
 	struct pending_t new_pending = TAILQ_HEAD_INITIALIZER(new_pending);
+
+	/* The stack of pending lists */
+	static SLIST_HEAD(pend_head, pend_entry) pend_stack =
+		SLIST_HEAD_INITIALIZER(pend_stack);
+	struct pend_entry {
+		SLIST_ENTRY(pend_entry) pe_entry;
+		struct pending_t *pe_pending;
+	} *my_pend_entry;
+
 	modinfo_t *mi;
 	module_t *mod, *mod2, *prev_active;
 	prop_dictionary_t filedict;
@@ -924,27 +930,21 @@ module_do_load(const char *name, bool isdep, int flags,
 	error = 0;
 
 	/*
-	 * Avoid recursing too far.
-	 */
-	if (++depth > MODULE_MAX_DEPTH) {
-		module_error("recursion too deep for `%s' %d > %d", name,
-		    depth, MODULE_MAX_DEPTH);
-		depth--;
-		return EMLINK;
-	}
-
-	/*
-	 * Set up the pending list for this depth.  If this is a
-	 * recursive entry, then use same list as for outer call,
-	 * else use the locally allocated list.  In either case,
-	 * remember which one we're using.
+	 * Set up the pending list for this entry.  If this is an
+	 * internal entry (for a dependency), then use the same list
+	 * as for the outer call;  otherwise, it's an external entry
+	 * (possibly recursive, ie a module's xxx_modcmd(init, ...)
+	 * routine called us), so use the locally allocated list.  In
+	 * either case, add it to our stack.
 	 */
 	if (isdep) {
-		KASSERT(depth > 1);
-		pending = pending_lists[depth - 2];
+		KASSERT(SLIST_FIRST(&pend_stack) != NULL);
+		pending = SLIST_FIRST(&pend_stack)->pe_pending;
 	} else
 		pending = &new_pending;
-	pending_lists[depth - 1] = pending;
+	my_pend_entry = kmem_zalloc(sizeof(*my_pend_entry), KM_SLEEP);
+	my_pend_entry->pe_pending = pending;
+	SLIST_INSERT_HEAD(&pend_stack, my_pend_entry, pe_entry);
 
 	/*
 	 * Search the list of disabled builtins first.
@@ -961,11 +961,13 @@ module_do_load(const char *name, bool isdep, int flags,
 				module_error("use -f to reinstate "
 				    "builtin module `%s'", name);
 			}
-			depth--;
+			SLIST_REMOVE_HEAD(&pend_stack, pe_entry);
+			kmem_free(my_pend_entry, sizeof(*my_pend_entry));
 			return EPERM;
 		} else {
+			SLIST_REMOVE_HEAD(&pend_stack, pe_entry);
+			kmem_free(my_pend_entry, sizeof(*my_pend_entry));
 			error = module_do_builtin(mod, name, modp, props);
-			depth--;
 			return error;
 		}
 	}
@@ -993,14 +995,16 @@ module_do_load(const char *name, bool isdep, int flags,
 			}
 			module_print("%s module `%s' already loaded",
 			    isdep ? "dependent" : "requested", name);
-			depth--;
+			SLIST_REMOVE_HEAD(&pend_stack, pe_entry);
+			kmem_free(my_pend_entry, sizeof(*my_pend_entry));
 			return EEXIST;
 		}
 
 		mod = module_newmodule(MODULE_SOURCE_FILESYS);
 		if (mod == NULL) {
 			module_error("out of memory for `%s'", name);
-			depth--;
+			SLIST_REMOVE_HEAD(&pend_stack, pe_entry);
+			kmem_free(my_pend_entry, sizeof(*my_pend_entry));
 			return ENOMEM;
 		}
 
@@ -1020,7 +1024,8 @@ module_do_load(const char *name, bool isdep, int flags,
 				    "error %d", name, error);
 #endif
 			kmem_free(mod, sizeof(*mod));
-			depth--;
+			SLIST_REMOVE_HEAD(&pend_stack, pe_entry);
+			kmem_free(my_pend_entry, sizeof(*my_pend_entry));
 			return error;
 		}
 		TAILQ_INSERT_TAIL(pending, mod, mod_chain);
@@ -1235,7 +1240,8 @@ module_do_load(const char *name, bool isdep, int flags,
 		mod->mod_flags |= MODFLG_AUTO_LOADED;
 		module_thread_kick();
 	}
-	depth--;
+	SLIST_REMOVE_HEAD(&pend_stack, pe_entry);
+	kmem_free(my_pend_entry, sizeof(*my_pend_entry));
 	module_print("module `%s' loaded successfully", mi->mi_name);
 	return 0;
 
@@ -1250,7 +1256,8 @@ module_do_load(const char *name, bool isdep, int flags,
 	}
 	TAILQ_REMOVE(pending, mod, mod_chain);
 	kmem_free(mod, sizeof(*mod));
-	depth--;
+	SLIST_REMOVE_HEAD(&pend_stack, pe_entry);
+	kmem_free(my_pend_entry, sizeof(*my_pend_entry));
 	return error;
 }
 
