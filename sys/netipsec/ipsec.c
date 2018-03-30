@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.99.2.4 2018/02/16 16:35:18 martin Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.99.2.5 2018/03/30 11:50:56 martin Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.99.2.4 2018/02/16 16:35:18 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.99.2.5 2018/03/30 11:50:56 martin Exp $");
 
 /*
  * IPsec controller part.
@@ -1070,7 +1070,7 @@ ipsec4_get_ulp(struct mbuf *m, struct secpolicyindex *spidx, int needport)
 		case IPPROTO_ICMP:
 			spidx->ul_proto = nxt;
 			if (off + sizeof(struct icmp) > m->m_pkthdr.len)
-				return;
+				goto done;
 			m_copydata(m, off, sizeof(icmph), &icmph);
 			((struct sockaddr_in *)&spidx->src)->sin_port =
 			    htons((uint16_t)icmph.icmp_type);
