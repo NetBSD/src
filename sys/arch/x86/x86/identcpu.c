@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.70 2018/03/12 07:12:54 msaitoh Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.71 2018/03/30 19:51:53 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.70 2018/03/12 07:12:54 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.71 2018/03/30 19:51:53 maxv Exp $");
 
 #include "opt_xen.h"
 
@@ -883,6 +883,7 @@ cpu_probe(struct cpu_info *ci)
 		x86_cpuid(7, descs);
 		ci->ci_feat_val[5] = descs[1]; /* %ebx */
 		ci->ci_feat_val[6] = descs[2]; /* %ecx */
+		ci->ci_feat_val[7] = descs[3]; /* %edx */
 	}
 
 	cpu_probe_intel(ci);
