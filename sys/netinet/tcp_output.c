@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.201 2018/03/30 08:53:51 maxv Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.202 2018/03/30 08:57:32 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -135,7 +135,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.201 2018/03/30 08:53:51 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.202 2018/03/30 08:57:32 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -193,10 +193,6 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.201 2018/03/30 08:53:51 maxv Exp $"
 #include <netinet/tcp_debug.h>
 #include <netinet/in_offload.h>
 #include <netinet6/in6_offload.h>
-
-#ifdef notyet
-extern struct mbuf *m_copypack();
-#endif
 
 /*
  * Knob to enable Congestion Window Monitoring, and control
@@ -428,16 +424,7 @@ tcp_build_datapkt(struct tcpcb *tp, struct socket *so, int off,
 		tcps[TCP_STAT_SNDBYTE] += len;
 	}
 	TCP_STAT_PUTREF();
-#ifdef notyet
-	if ((m = m_copypack(so->so_snd.sb_mb, off,
-	    (int)len, max_linkhdr + hdrlen)) == 0)
-		return ENOBUFS;
-	/*
-	 * m_copypack left space for our hdr; use it.
-	 */
-	m->m_len += hdrlen;
-	m->m_data -= hdrlen;
-#else
+
 	MGETHDR(m, M_DONTWAIT, MT_HEADER);
 	if (__predict_false(m == NULL))
 		return ENOBUFS;
@@ -514,7 +501,6 @@ tcp_build_datapkt(struct tcpcb *tp, struct socket *so, int off,
 			TCP_OUTPUT_COUNTER_INCR(&tcp_output_copybig);
 #endif
 	}
-#endif
 
 	*mp = m;
 	return 0;
