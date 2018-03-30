@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_reass.c,v 1.11 2017/01/11 13:08:29 ozaki-r Exp $	*/
+/*	$NetBSD: ip_reass.c,v 1.11.8.1 2018/03/30 11:10:14 martin Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_reass.c,v 1.11 2017/01/11 13:08:29 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_reass.c,v 1.11.8.1 2018/03/30 11:10:14 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -625,6 +625,11 @@ ip_reass_packet(struct mbuf **m0, struct ip *ip)
 	 */
 	off = (ntohs(ip->ip_off) & IP_OFFMASK) << 3;
 	if ((off > 0 ? off + hlen : len) < IP_MINFRAGSIZE - 1) {
+		IP_STATINC(IP_STAT_BADFRAGS);
+		return EINVAL;
+	}
+
+	if (off + len > IP_MAXPACKET) {
 		IP_STATINC(IP_STAT_BADFRAGS);
 		return EINVAL;
 	}
