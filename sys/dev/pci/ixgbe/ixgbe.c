@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.137 2018/03/26 06:40:28 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.138 2018/03/30 03:56:38 knakahara Exp $ */
 
 /******************************************************************************
 
@@ -4012,6 +4012,13 @@ ixgbe_configure_ivars(struct adapter *adapter)
 		ixgbe_set_ivar(adapter, txr->me, que->msix, 1);
 		/* Set an Initial EITR value */
 		ixgbe_eitr_write(que, newitr);
+		/*
+		 * To eliminate influence of the previous state.
+		 * At this point, Tx/Rx interrupt handler
+		 * (ixgbe_msix_que()) cannot be called, so  both
+		 * IXGBE_TX_LOCK and IXGBE_RX_LOCK are not required.
+		 */
+		que->eitr_setting = 0;
 	}
 
 	/* For the Link interrupt */
@@ -4509,6 +4516,14 @@ ixgbe_update_link_status(struct adapter *adapter)
 
 	if (adapter->link_up) {
 		if (adapter->link_active == FALSE) {
+			/*
+			 * To eliminate influence of the previous state
+			 * in the same way as ixgbe_init_locked().
+			 */
+			struct ix_queue	*que = adapter->queues;
+			for (int i = 0; i < adapter->num_queues; i++, que++)
+				que->eitr_setting = 0;
+
 			if (adapter->link_speed == IXGBE_LINK_SPEED_10GB_FULL){
 				/*
 				 *  Discard count for both MAC Local Fault and

@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.h,v 1.37 2018/03/26 06:40:28 msaitoh Exp $ */
+/* $NetBSD: ixgbe.h,v 1.38 2018/03/30 03:56:38 knakahara Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -370,8 +370,8 @@ struct tx_ring {
 	u16			atr_sample;
 	u16			atr_count;
 
-	u32			bytes;  /* used for AIM */
-	u32			packets;
+	u64			bytes;  /* used for AIM */
+	u64			packets;
 	/* Soft Stats */
 	struct evcnt	   	tso_tx;
 	struct evcnt		no_desc_avail;
@@ -413,8 +413,8 @@ struct rx_ring {
 	struct ixgbe_rx_buf	*rx_buffers;
 	ixgbe_dma_tag_t		*ptag;
 
-	u32			bytes; /* Used for AIM calc */
-	u32			packets;
+	u64			bytes; /* Used for AIM calc */
+	u64			packets;
 
 	/* Soft stats */
 	struct evcnt		rx_copies;
