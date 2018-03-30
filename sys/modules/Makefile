@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.202.2.13 2018/03/30 02:28:49 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.202.2.14 2018/03/30 05:35:47 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -7,7 +7,7 @@
 # Modules for compatability with earlier versions of NetBSD
 
 SUBDIR+=	compat    compat_80 compat_70 compat_60 compat_50
-SUBDIR+=	compat_40 compat_30 compat_20 #compat_16 compat_14
+SUBDIR+=	compat_40 compat_30 compat_20 compat_16 #compat_14
 #SUBDIR+=	compat_13 compat_12 compat_10 compat_09
 SUBDIR+=	compat_ossaudio
 SUBDIR+=	compat_sysv

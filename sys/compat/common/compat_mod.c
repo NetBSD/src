@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_mod.c,v 1.24.14.25 2018/03/30 02:52:06 pgoyette Exp $	*/
+/*	$NetBSD: compat_mod.c,v 1.24.14.26 2018/03/30 05:35:47 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.24.14.25 2018/03/30 02:52:06 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.24.14.26 2018/03/30 05:35:47 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -78,24 +78,13 @@ static struct sysctllog *compat_clog = NULL;
 
 static const char * const compat_includes[] = {
 	"compat_80", "compat_70", "compat_60", "compat_50", "compat_40",
-	"compat_30","compat_20",
+	"compat_30", "compat_20",
 	NULL
 };
 
 MODULE_WITH_ALIASES(MODULE_CLASS_EXEC, compat, NULL, &compat_includes);
 
 
-#ifdef _MODULE
-#ifdef COMPAT_16
-#if !defined(__amd64__) || defined(COMPAT_NETBSD32)
-#define COMPAT_SIGCONTEXT
-extern char sigcode[], esigcode[];
-struct uvm_object *emul_netbsd_object;
-#endif
-#endif
-#endif /* _MODULE */
-
-extern krwlock_t exec_lock;
 extern krwlock_t ttcompat_lock;
 
 static const struct syscall_package compat_syscalls[] = {
@@ -160,13 +149,6 @@ static const struct syscall_package compat_syscalls[] = {
 	{ SYS_compat_13_sigsuspend13, 0, (sy_call_t *)compat_13_sys_sigsuspend },
 #endif
 
-#if defined(COMPAT_16)
-#if defined(COMPAT_SIGCONTEXT)
-	{ SYS_compat_16___sigaction14, 0, (sy_call_t *)compat_16_sys___sigaction14 },
-	{ SYS_compat_16___sigreturn14, 0, (sy_call_t *)compat_16_sys___sigreturn14 },
-#endif
-#endif
-
 	{ 0, 0, NULL },
 };
 
@@ -192,10 +174,10 @@ struct compat_init_fini {
 #ifdef COMPAT_20
 	{ compat_20_init, compat_20_fini },
 #endif
-#if 0	/* NOT YET */
 #ifdef COMPAT_16
 	{ compat_16_init, compat_16_fini },
 #endif
+#if 0	/* NOT YET */
 #ifdef COMPAT_14
 	{ compat_14_init, compat_14_fini },
 #endif
@@ -220,9 +202,6 @@ struct compat_init_fini {
 static int
 compat_modcmd(modcmd_t cmd, void *arg)
 {
-#ifdef COMPAT_16
-	proc_t *p;
-#endif
 	int error;
 	int i, j;
 
@@ -266,18 +245,6 @@ compat_modcmd(modcmd_t cmd, void *arg)
 #ifdef COMPAT_13
 		uvm_13_init();
 #endif
-#ifdef COMPAT_16
-#if defined(COMPAT_SIGCONTEXT)
-		KASSERT(emul_netbsd.e_sigobject == NULL);
-		rw_enter(&exec_lock, RW_WRITER);
-		emul_netbsd.e_sigcode = sigcode;
-		emul_netbsd.e_esigcode = esigcode;
-		emul_netbsd.e_sigobject = &emul_netbsd_object;
-		rw_exit(&exec_lock);
-		KASSERT(sendsig_sigcontext_vec == NULL);
-		sendsig_sigcontext_vec = sendsig_sigcontext;
-#endif
-#endif
 #ifdef COMPAT_10
 		vfs_syscalls_10_init();
 #endif
@@ -290,25 +257,6 @@ compat_modcmd(modcmd_t cmd, void *arg)
 #endif
 #ifdef COMPAT_13
 		uvm_13_fini();
-#endif
-#ifdef COMPAT_16
-		/*
-		 * Ensure sendsig_sigcontext() is not being used.
-		 * module_lock prevents the flag being set on any
-		 * further processes while we are here.  See
-		 * sigaction1() for the opposing half.
-		 */
-		mutex_enter(proc_lock);
-		PROCLIST_FOREACH(p, &allproc) {
-			if ((p->p_lflag & PL_SIGCOMPAT) != 0) {
-				break;
-			}
-		}
-		mutex_exit(proc_lock);
-		if (p != NULL) {
-			return EBUSY;
-		}
-		sendsig_sigcontext_vec = NULL;
 #endif
 		/* Unlink the system calls. */
 		error = syscall_disestablish(NULL, compat_syscalls);
@@ -328,24 +276,6 @@ compat_modcmd(modcmd_t cmd, void *arg)
 		}
 #endif
 #endif /* NOTYET XXX */
-#ifdef COMPAT_16
-#if defined(COMPAT_SIGCONTEXT)
-		/*
-		 * The sigobject may persist if still in use, but
-		 * is reference counted so will die eventually.
-		 */
-		rw_enter(&exec_lock, RW_WRITER);
-		if (emul_netbsd_object != NULL) {
-			(*emul_netbsd_object->pgops->pgo_detach)
-			    (emul_netbsd_object);
-		}
-		emul_netbsd_object = NULL;
-		emul_netbsd.e_sigcode = NULL;
-		emul_netbsd.e_esigcode = NULL;
-		emul_netbsd.e_sigobject = NULL;
-		rw_exit(&exec_lock);
-#endif
-#endif	/* COMPAT_16 */
 		/*
 		 * Disable included components in reverse order;
 		 * if any component fails to fini(), re-init those

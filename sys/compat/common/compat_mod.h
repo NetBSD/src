@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_mod.h,v 1.1.42.13 2018/03/30 02:28:49 pgoyette Exp $	*/
+/*	$NetBSD: compat_mod.h,v 1.1.42.14 2018/03/30 05:35:47 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -114,6 +114,13 @@ void ieee80211_20_init(void);
 void ieee80211_20_fini(void);
 void if43_20_init(void);
 void if43_20_fini(void);
+#endif
+
+#ifdef COMPAT_16
+int compat_16_init(void);
+int compat_16_fini(void);
+int kern_sig_16_init(void);
+int kern_sig_16_fini(void);
 #endif
 
 #endif /* !_COMPAT_MOD_H_ */
