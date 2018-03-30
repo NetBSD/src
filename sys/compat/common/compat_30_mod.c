@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_30_mod.c,v 1.1.2.3 2018/03/29 11:20:02 pgoyette Exp $	*/
+/*	$NetBSD: compat_30_mod.c,v 1.1.2.4 2018/03/30 23:57:59 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_30_mod.c,v 1.1.2.3 2018/03/29 11:20:02 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_30_mod.c,v 1.1.2.4 2018/03/30 23:57:59 pgoyette Exp $");
 
 #include <sys/systm.h>
 #include <sys/module.h>
@@ -100,7 +100,7 @@ compat_30_fini(void)
 
 #ifdef _MODULE
 
-#define REQD_30	"compat_80,compat_70,compat_60,compat_50,compat_40"
+#define REQD_30	"compat_util,compat_80,compat_70,compat_60,compat_50,compat_40"
 
 MODULE(MODULE_CLASS_EXEC, compat_30, REQD_30);
 
