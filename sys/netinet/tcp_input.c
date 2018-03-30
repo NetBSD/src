@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.402 2018/03/30 07:11:40 maxv Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.403 2018/03/30 08:25:06 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.402 2018/03/30 07:11:40 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.403 2018/03/30 08:25:06 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -3176,16 +3176,23 @@ tcp_dooptions(struct tcpcb *tp, const u_char *cp, int cnt, struct tcphdr *th,
 #ifdef INET6
 				struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
 #endif
-				if (ip)
+
+				switch (ip->ip_v) {
+				case 4:
 					in_print(buf, sizeof(buf),
 					    &ip->ip_src);
+					break;
 #ifdef INET6
-				else if (ip6)
+				case 6:
 					in6_print(buf, sizeof(buf),
 					    &ip6->ip6_src);
+					break;
 #endif
-				else
+				default:
 					strlcpy(buf, "(unknown)", sizeof(buf));
+					break;
+				}
+
 				log(LOG_ERR, "TCP: invalid wscale %d from %s, "
 				    "assuming %d\n",
 				    tp->requested_s_scale, buf,
