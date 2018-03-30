@@ -1,4 +1,4 @@
-/*	$NetBSD: eficons.c,v 1.4 2017/05/01 13:03:01 nonaka Exp $	*/
+/*	$NetBSD: eficons.c,v 1.4.10.1 2018/03/30 06:20:11 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -40,13 +40,42 @@ struct btinfo_console btinfo_console;
 
 static EFI_GRAPHICS_OUTPUT_PROTOCOL *efi_gop;
 static int efi_gop_mode = -1;
-
 static CHAR16 keybuf[16];
 static int keybuf_read = 0;
 static int keybuf_write = 0;
 
+static SERIAL_IO_INTERFACE *serios[4];
+static int default_comspeed =
+#if defined(CONSPEED)
+    CONSPEED;
+#else
+    9600;
+#endif
+static u_char serbuf[16];
+static int serbuf_read = 0;
+static int serbuf_write = 0;
+
 static void eficons_init_video(void);
 static void efi_switch_video_to_text_mode(void);
+
+static int efi_cons_getc(void);
+static int efi_cons_putc(int);
+static int efi_cons_iskey(int);
+static int efi_cons_waitforinputevent(uint64_t);
+
+static void efi_com_probe(void);
+static bool efi_valid_com(int);
+static int efi_com_init(int, int);
+static int efi_com_getc(void);
+static int efi_com_putc(int);
+static int efi_com_status(int);
+static int efi_com_waitforinputevent(uint64_t);
+
+static int iodev;
+static int (*internal_getchar)(void) = efi_cons_getc;
+static int (*internal_putchar)(int) = efi_cons_putc;
+static int (*internal_iskey)(int) = efi_cons_iskey;
+static int (*internal_waitforinputevent)(uint64_t) = efi_cons_waitforinputevent;
 
 static int
 getcomaddr(int idx)
@@ -64,33 +93,48 @@ getcomaddr(int idx)
 void
 consinit(int dev, int ioport, int speed)
 {
-	int iodev;
+	int i;
 
-#if defined(CONSPEED)
-	btinfo_console.speed = CONSPEED;
-#else
-	btinfo_console.speed = 9600;
-#endif
+	btinfo_console.speed = default_comspeed;
 
 	switch (dev) {
 	case CONSDEV_AUTO:
-		/* XXX comport */
+		for (i = 0; i < __arraycount(serios); i++) {
+			iodev = CONSDEV_COM0 + i;
+			if (!efi_valid_com(iodev))
+				continue;
+			btinfo_console.addr = getcomaddr(i);
+
+			efi_cons_putc('0' + i);
+			efi_com_init(btinfo_console.addr, btinfo_console.speed);
+			/* check for:
+			 *  1. successful output
+			 *  2. optionally, keypress within 7s
+			 */
+			if (efi_com_putc(':') &&
+			    efi_com_putc('-') &&
+			    efi_com_putc('(') &&
+			    awaitkey(7, 0))
+				goto ok;
+		}
 		goto nocom;
+ok:
+		break;
 
 	case CONSDEV_COM0:
 	case CONSDEV_COM1:
 	case CONSDEV_COM2:
 	case CONSDEV_COM3:
 		iodev = dev;
-comport:
 		btinfo_console.addr = ioport;
 		if (btinfo_console.addr == 0) {
-			btinfo_console.addr = getcomaddr(iodev - CONSDEV_COM0);
-			if (btinfo_console.addr == 0)
+			if (!efi_valid_com(iodev))
 				goto nocom;
+			btinfo_console.addr = getcomaddr(iodev - CONSDEV_COM0);
 		}
 		if (speed != 0)
 			btinfo_console.speed = speed;
+		efi_com_init(btinfo_console.addr, btinfo_console.speed);
 		break;
 
 	case CONSDEV_COM0KBD:
@@ -98,12 +142,33 @@ comport:
 	case CONSDEV_COM2KBD:
 	case CONSDEV_COM3KBD:
 		iodev = dev - CONSDEV_COM0KBD + CONSDEV_COM0;
-		goto comport;	/* XXX kbd */
+		if (!efi_valid_com(iodev))
+			goto nocom;
+		btinfo_console.addr = getcomaddr(iodev - CONSDEV_COM0);
 
+		efi_cons_putc('0' + iodev - CONSDEV_COM0);
+		efi_com_init(btinfo_console.addr, btinfo_console.speed);
+		/* check for:
+		 *  1. successful output
+		 *  2. optionally, keypress within 7s
+		 */
+		if (efi_com_putc(':') &&
+		    efi_com_putc('-') &&
+		    efi_com_putc('(') &&
+		    awaitkey(7, 0))
+			goto kbd;
+		/*FALLTHROUGH*/
 	case CONSDEV_PC:
 	default:
 nocom:
 		iodev = CONSDEV_PC;
+		internal_putchar = efi_cons_putc;
+kbd:
+		internal_getchar = efi_cons_getc;
+		internal_iskey = efi_cons_iskey;
+		internal_waitforinputevent = efi_cons_waitforinputevent;
+		memset(keybuf, 0, sizeof(keybuf));
+		keybuf_read = keybuf_write = 0;
 		break;
 	}
 
@@ -116,6 +181,7 @@ cninit(void)
 
 	efi_switch_video_to_text_mode();
 	eficons_init_video();
+	efi_com_probe();
 
 	consinit(boot_params.bp_consdev, boot_params.bp_consaddr,
 	    boot_params.bp_conspeed);
@@ -123,8 +189,50 @@ cninit(void)
 	return 0;
 }
 
-int
-getchar(void)
+void
+efi_cons_show(void)
+{
+	const bool pc_is_console = strcmp(btinfo_console.devname, "pc") == 0;
+	const bool com_is_console = strcmp(btinfo_console.devname, "com") == 0;
+	bool first = true;
+	bool found = false;
+	int i;
+
+	if (efi_gop != NULL) {
+		printf("pc");
+		if (pc_is_console)
+			printf("*");
+		first = false;
+	}
+
+	for (i = 0; i < __arraycount(serios); i++) {
+		if (serios[i] != NULL) {
+			if (!first)
+				printf(" ");
+			first = false;
+
+			printf("com%d", i);
+			if (com_is_console &&
+			    btinfo_console.addr == getcomaddr(i)) {
+				printf(",%d*", btinfo_console.speed);
+				found = true;
+			}
+		}
+	}
+	if (!found && com_is_console) {
+		if (!first)
+			printf(" ");
+		first = false;
+
+		printf("com,0x%x,%d*", btinfo_console.addr,
+		    btinfo_console.speed);
+	}
+
+	printf("\n");
+}
+
+static int
+efi_cons_getc(void)
 {
 	EFI_STATUS status;
 	EFI_INPUT_KEY key;
@@ -146,23 +254,21 @@ getchar(void)
 	return key.UnicodeChar;
 }
 
-void
-putchar(int c)
+static int
+efi_cons_putc(int c)
 {
 	CHAR16 buf[2];
 
-	buf[1] = 0;
-	if (c == '\n') {
-		buf[0] = '\r';
-		Output(buf);
-	}
 	buf[0] = c;
+	buf[1] = 0;
 	Output(buf);
+
+	return 1;
 }
 
 /*ARGSUSED*/
-int
-iskey(int intr)
+static int
+efi_cons_iskey(int intr)
 {
 	EFI_STATUS status;
 	EFI_INPUT_KEY key;
@@ -180,13 +286,49 @@ iskey(int intr)
 	return 1;
 }
 
+static int
+efi_cons_waitforinputevent(uint64_t timeout)
+{
+	EFI_STATUS status;
+
+	status = WaitForSingleEvent(ST->ConIn->WaitForKey, timeout);
+	if (!EFI_ERROR(status))
+		return 0;
+	if (status == EFI_TIMEOUT)
+		return ETIMEDOUT;
+	return EINVAL;
+}
+
+int
+getchar(void)
+{
+
+	return internal_getchar();
+}
+
+void
+putchar(int c)
+{
+
+	if (c == '\n')
+		internal_putchar('\r');
+	internal_putchar(c);
+}
+
+int
+iskey(int intr)
+{
+
+	return internal_iskey(intr);
+}
+
 char
 awaitkey(int timeout, int tell)
 {
 	char c = 0;
 
 	for (;;) {
-		if (tell) {
+		if (tell && timeout) {
 			char numbuf[32];
 			int len;
 
@@ -210,7 +352,7 @@ awaitkey(int timeout, int tell)
 			goto out;
 		}
 		if (timeout--)
-			WaitForSingleEvent(ST->ConIn->WaitForKey, 10000000);
+			internal_waitforinputevent(10000000);
 		else
 			break;
 	}
@@ -307,7 +449,8 @@ bi_framebuffer(void)
 		status = uefi_call_wrapper(efi_gop->SetMode, 2, efi_gop,
 		    bestmode);
 		if (EFI_ERROR(status) || efi_gop->Mode->Mode != bestmode)
-			Print(L"GOP setmode failed: %r\n", status);
+			printf("GOP setmode failed: %" PRIxMAX "\n",
+			    (uintmax_t)status);
 	}
 
 	info = efi_gop->Mode->Info;
@@ -350,7 +493,7 @@ bi_framebuffer(void)
 
 	case PixelBltOnly:
 	case PixelFormatMax:
-		Panic(L"Error: invalid pixel format (%d)", info->PixelFormat);
+		panic("Error: invalid pixel format (%d)", info->PixelFormat);
 		break;
 	}
 
@@ -378,8 +521,8 @@ print_text_modes(void)
 		    ST->ConOut, i, &cols, &rows);
 		if (EFI_ERROR(status))
 			continue;
-		Print(L"%c%d: %dx%d\n", i == curmode ? '*' : ' ',
-		    i, cols, rows);
+		printf("%c%d: %" PRIxMAX "x%" PRIxMAX "\n",
+		    i == curmode ? '*' : ' ', i, (uintmax_t)cols, (uintmax_t)rows);
 	}
 }
 
@@ -396,7 +539,8 @@ efi_find_text_mode(char *arg)
 		    ST->ConOut, i, &cols, &rows);
 		if (EFI_ERROR(status))
 			continue;
-		snprintf(mode, sizeof(mode), "%lux%lu", (long)cols, (long)rows);
+		snprintf(mode, sizeof(mode), "%" PRIuMAX "x%" PRIuMAX,
+		    (uintmax_t)cols, (uintmax_t)rows);
 		if (strcmp(arg, mode) == 0)
 			return i;
 	}
@@ -456,36 +600,36 @@ print_gop_modes(void)
 		if (EFI_ERROR(status))
 			continue;
 
-		Print(L"%c%d: %dx%d ",
+		printf("%c%d: %dx%d ",
 		    memcmp(info, efi_gop->Mode->Info, sizeof(*info)) == 0 ?
 		      '*' : ' ',
 		      i, info->HorizontalResolution, info->VerticalResolution);
 		switch (info->PixelFormat) {
 		case PixelRedGreenBlueReserved8BitPerColor:
-			Print(L"RGBR");
+			printf("RGBR");
 			break;
 		case PixelBlueGreenRedReserved8BitPerColor:
-			Print(L"BGRR");
+			printf("BGRR");
 			break;
 		case PixelBitMask:
-			Print(L"R:%08x G:%08x B:%08x X:%08x",
+			printf("R:%08x G:%08x B:%08x X:%08x",
 			    info->PixelInformation.RedMask,
 			    info->PixelInformation.GreenMask,
 			    info->PixelInformation.BlueMask,
 			    info->PixelInformation.ReservedMask);
 			break;
 		case PixelBltOnly:
-			Print(L"(blt only)");
+			printf("(blt only)");
 			break;
 		default:
-			Print(L"(Invalid pixel format)");
+			printf("(Invalid pixel format)");
 			break;
 		}
-		Print(L" pitch %d", info->PixelsPerScanLine);
+		printf(" pitch %d", info->PixelsPerScanLine);
 		depth = getdepth(info);
 		if (depth > 0)
-			Print(L" bpp %d", depth);
-		Print(L"\n");
+			printf(" bpp %d", depth);
+		printf("\n");
 	}
 
 	return 0;
@@ -622,4 +766,247 @@ efi_switch_video_to_text_mode(void)
 		uefi_call_wrapper(cci->SetMode, 2, cci,
 		    EfiConsoleControlScreenText);
 	}
+}
+
+/*
+ * serial port
+ */
+static void
+efi_com_probe(void)
+{
+	EFI_STATUS status;
+	UINTN i, nhandles;
+	EFI_HANDLE *handles;
+	EFI_DEVICE_PATH	*dp, *dp0;
+	EFI_DEV_PATH_PTR dpp;
+	SERIAL_IO_INTERFACE *serio;
+	int uid = -1;
+
+	status = LibLocateHandle(ByProtocol, &SerialIoProtocol, NULL,
+	    &nhandles, &handles);
+	if (EFI_ERROR(status))
+		return;
+
+	for (i = 0; i < nhandles; i++) {
+		/*
+		 * Identify port number of the handle.  This assumes ACPI
+		 * UID 0-3 map to legacy COM[1-4] and they use the legacy
+		 * port address.
+		 */
+		status = uefi_call_wrapper(BS->HandleProtocol, 3, handles[i],
+		    &DevicePathProtocol, (void **)&dp0);
+		if (EFI_ERROR(status))
+			continue;
+
+		for (uid = -1, dp = dp0;
+		     !IsDevicePathEnd(dp);
+		     dp = NextDevicePathNode(dp)) {
+
+			if (DevicePathType(dp) == ACPI_DEVICE_PATH &&
+			    DevicePathSubType(dp) == ACPI_DP) {
+				dpp = (EFI_DEV_PATH_PTR)dp;
+				if (dpp.Acpi->HID == EISA_PNP_ID(0x0501)) {
+					uid = dpp.Acpi->UID;
+					break;
+				}
+			}
+		}
+		if (uid < 0 || __arraycount(serios) <= uid)
+			continue;
+
+		/* Prepare SERIAL_IO_INTERFACE */
+		status = uefi_call_wrapper(BS->HandleProtocol, 3, handles[i],
+		    &SerialIoProtocol, (void **)&serio);
+		if (EFI_ERROR(status))
+			continue;
+
+		serios[uid] = serio;
+	}
+
+	FreePool(handles);
+
+}
+
+static bool
+efi_valid_com(int dev)
+{
+	int idx;
+
+	switch (dev) {
+	default:
+	case CONSDEV_PC:
+		return false;
+
+	case CONSDEV_COM0:
+	case CONSDEV_COM1:
+	case CONSDEV_COM2:
+	case CONSDEV_COM3:
+		idx = dev - CONSDEV_COM0;
+		break;
+	}
+
+	return idx < __arraycount(serios) &&
+	    serios[idx] != NULL &&
+	    getcomaddr(idx) != 0;
+}
+
+static int
+efi_com_init(int addr, int speed)
+{
+	EFI_STATUS status;
+	SERIAL_IO_INTERFACE *serio;
+
+	if (speed <= 0)
+		return 0;
+
+	if (!efi_valid_com(iodev))
+		return 0;
+
+	serio = serios[iodev - CONSDEV_COM0];
+
+	if (serio->Mode->BaudRate != btinfo_console.speed) {
+		status = uefi_call_wrapper(serio->SetAttributes, 7, serio,
+		    speed, serio->Mode->ReceiveFifoDepth,
+		    serio->Mode->Timeout, serio->Mode->Parity,
+		    serio->Mode->DataBits, serio->Mode->StopBits);
+		if (EFI_ERROR(status)) {
+			printf("com%d: SetAttribute() failed with status=%" PRIxMAX
+			    "\n", iodev - CONSDEV_COM0, (uintmax_t)status);
+			return 0;
+		}
+	}
+
+	default_comspeed = speed;
+	internal_getchar = efi_com_getc;
+	internal_putchar = efi_com_putc;
+	internal_iskey = efi_com_status;
+	internal_waitforinputevent = efi_com_waitforinputevent;
+	memset(serbuf, 0, sizeof(serbuf));
+	serbuf_read = serbuf_write = 0;
+
+	return speed;
+}
+
+static int
+efi_com_getc(void)
+{
+	EFI_STATUS status;
+	SERIAL_IO_INTERFACE *serio;
+	UINTN sz;
+	u_char c;
+
+	if (!efi_valid_com(iodev))
+		panic("Invalid serial port: iodev=%d", iodev);
+
+	if (serbuf_read != serbuf_write) {
+		c = serbuf[serbuf_read];
+		serbuf_read = (serbuf_read + 1) % __arraycount(serbuf);
+		return c;
+	}
+
+	serio = serios[iodev - CONSDEV_COM0];
+
+	for (;;) {
+		sz = 1;
+		status = uefi_call_wrapper(serio->Read, 3, serio, &sz, &c);
+		if (!EFI_ERROR(status) && sz > 0)
+			break;
+		if (status != EFI_TIMEOUT && EFI_ERROR(status))
+			panic("Error reading from serial status=%"PRIxMAX,
+			    (uintmax_t)status);
+	}
+	return c;
+}
+
+static int
+efi_com_putc(int c)
+{
+	EFI_STATUS status;
+	SERIAL_IO_INTERFACE *serio;
+	UINTN sz = 1;
+	u_char buf;
+
+	if (!efi_valid_com(iodev))
+		return 0;
+
+	serio = serios[iodev - CONSDEV_COM0];
+	buf = c;
+	status = uefi_call_wrapper(serio->Write, 3, serio, &sz, &buf);
+	if (EFI_ERROR(status) || sz < 1)
+		return 0;
+	return 1;
+}
+
+/*ARGSUSED*/
+static int
+efi_com_status(int intr)
+{
+	EFI_STATUS status;
+	SERIAL_IO_INTERFACE *serio;
+	UINTN sz;
+	u_char c;
+
+	if (!efi_valid_com(iodev))
+		panic("Invalid serial port: iodev=%d", iodev);
+
+	if (serbuf_read != serbuf_write)
+		return 1;
+
+	serio = serios[iodev - CONSDEV_COM0];
+	sz = 1;
+	status = uefi_call_wrapper(serio->Read, 3, serio, &sz, &c);
+	if (EFI_ERROR(status) || sz < 1)
+		return 0;
+
+	serbuf[serbuf_write] = c;
+	serbuf_write = (serbuf_write + 1) % __arraycount(serbuf);
+	return 1;
+}
+
+static void
+efi_com_periodic_event(EFI_EVENT event, void *ctx)
+{
+	EFI_EVENT timer = ctx;
+
+	if (efi_com_status(0)) {
+		uefi_call_wrapper(BS->SetTimer, 3, event, TimerCancel, 0);
+		uefi_call_wrapper(BS->SignalEvent, 1, timer);
+	}
+}
+
+static int
+efi_com_waitforinputevent(uint64_t timeout)
+{
+	EFI_STATUS status;
+	EFI_EVENT timer, periodic;
+
+	status = uefi_call_wrapper(BS->CreateEvent, 5, EVT_TIMER, 0, NULL, NULL,
+	    &timer);
+	if (EFI_ERROR(status))
+		return EINVAL;
+
+        status = uefi_call_wrapper(BS->CreateEvent, 5,
+	    EVT_TIMER | EVT_NOTIFY_SIGNAL, TPL_CALLBACK, efi_com_periodic_event,
+	    timer, &periodic);
+	if (EFI_ERROR(status)) {
+		uefi_call_wrapper(BS->CloseEvent, 1, timer);
+		return EINVAL;
+	}
+
+	status = uefi_call_wrapper(BS->SetTimer, 3, periodic, TimerPeriodic,
+	    1000000);	/* 100ms */
+	if (EFI_ERROR(status)) {
+		uefi_call_wrapper(BS->CloseEvent, 1, periodic);
+		uefi_call_wrapper(BS->CloseEvent, 1, timer);
+		return EINVAL;
+	}
+	status = WaitForSingleEvent(&timer, timeout);
+	uefi_call_wrapper(BS->SetTimer, 3, periodic, TimerCancel, 0);
+	uefi_call_wrapper(BS->CloseEvent, 1, periodic);
+	uefi_call_wrapper(BS->CloseEvent, 1, timer);
+	if (!EFI_ERROR(status))
+		return 0;
+	if (status == EFI_TIMEOUT)
+		return ETIMEDOUT;
+	return EINVAL;
 }

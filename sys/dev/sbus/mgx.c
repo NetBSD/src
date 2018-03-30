@@ -1,4 +1,4 @@
-/*	$NetBSD: mgx.c,v 1.12 2017/08/04 23:54:46 macallan Exp $ */
+/*	$NetBSD: mgx.c,v 1.12.4.1 2018/03/30 06:20:15 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -29,7 +29,7 @@
 /* a console driver for the SSB 4096V-MGX graphics card */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mgx.c,v 1.12 2017/08/04 23:54:46 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mgx.c,v 1.12.4.1 2018/03/30 06:20:15 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -941,7 +941,8 @@ mgx_init_screen(void *cookie, struct vcons_screen *scr,
 
 	rasops_init(ri, 0, 0);
 
-	ri->ri_caps = WSSCREEN_REVERSE | WSSCREEN_WSCOLORS | WSSCREEN_UNDERLINE;
+	ri->ri_caps = WSSCREEN_REVERSE | WSSCREEN_WSCOLORS |
+		      WSSCREEN_UNDERLINE | WSSCREEN_RESIZE;
 
 	rasops_reconfig(ri, ri->ri_height / ri->ri_font->fontheight,
 		    ri->ri_width / ri->ri_font->fontwidth);

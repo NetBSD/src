@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.17 2016/03/13 17:48:53 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.17.16.1 2018/03/30 06:20:12 pgoyette Exp $
 
 NOSSP=
 NOFORTIFY=
@@ -7,7 +7,7 @@ NODEBUG=
 
 .include <bsd.klinks.mk>
 
-RELOC=0x3f0000
+RELOC=0x7f0000
 .PATH:	${.CURDIR}/../../vax ${.CURDIR}/../common
 
 CPPFLAGS+=-I.

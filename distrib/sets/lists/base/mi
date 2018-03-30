@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1172 2018/02/03 21:27:45 mrg Exp $
+# $NetBSD: mi,v 1.1172.2.1 2018/03/30 06:20:05 pgoyette Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -81,10 +81,10 @@
 ./etc/X11/fs					base-x11-root
 ./etc/X11/lbxproxy				base-x11-root
 ./etc/X11/proxymngr				base-x11-root
-./etc/X11/rstart				base-x11-root
-./etc/X11/rstart/commands			base-x11-root
-./etc/X11/rstart/commands/x11r6			base-x11-root
-./etc/X11/rstart/contexts			base-x11-root
+./etc/X11/rstart				base-x11-root		obsolete
+./etc/X11/rstart/commands			base-x11-root		obsolete
+./etc/X11/rstart/commands/x11r6			base-x11-root		obsolete
+./etc/X11/rstart/contexts			base-x11-root		obsolete
 ./etc/X11/twm					base-x11-root
 ./etc/X11/xdm					base-x11-root
 ./etc/X11/xinit					base-x11-root

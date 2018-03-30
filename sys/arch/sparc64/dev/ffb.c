@@ -1,4 +1,4 @@
-/*	$NetBSD: ffb.c,v 1.61 2017/05/19 19:25:53 macallan Exp $	*/
+/*	$NetBSD: ffb.c,v 1.61.8.1 2018/03/30 06:20:12 pgoyette Exp $	*/
 /*	$OpenBSD: creator.c,v 1.20 2002/07/30 19:48:15 jason Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.61 2017/05/19 19:25:53 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.61.8.1 2018/03/30 06:20:12 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -260,7 +260,7 @@ ffb_attach(device_t self)
 
 	/* Check if a console resolution "<device>:r<res>" is set. */
 	if (sc->sc_console) {
-		out_dev = prom_getpropstring(sc->sc_node, "output_device");
+		out_dev = prom_getpropstring(sc->sc_node, "output-device");
 		if (out_dev != NULL && strlen(out_dev) != 0 &&
 		    strstr(out_dev, ":r") != NULL)
 			try_edid = 0;

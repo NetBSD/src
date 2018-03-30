@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.216 2017/08/15 09:21:48 christos Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.216.2.1 2018/03/30 06:20:16 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.216 2017/08/15 09:21:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.216.2.1 2018/03/30 06:20:16 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -136,9 +136,6 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.216 2017/08/15 09:21:48 christos Ex
 #include <netinet/in_offload.h>
 
 #ifdef INET6
-#ifndef INET
-#include <netinet/in.h>
-#endif
 #include <netinet/ip6.h>
 #include <netinet6/in6_pcb.h>
 #include <netinet6/ip6_var.h>
@@ -190,14 +187,12 @@ tcp_getpcb(struct socket *so, struct inpcb **inp,
 	 * structure will point at a subsidary (struct tcpcb).
 	 */
 	switch (so->so_proto->pr_domain->dom_family) {
-#ifdef INET
 	case PF_INET:
 		*inp = sotoinpcb(so);
 		if (*inp == NULL)
 			return EINVAL;
 		*tp = intotcpcb(*inp);
 		break;
-#endif
 #ifdef INET6
 	case PF_INET6:
 		*in6p = sotoin6pcb(so);
@@ -316,14 +311,12 @@ tcp_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 
 	s = splsoftnet();
 	switch (family) {
-#ifdef INET
 	case PF_INET:
 		inp = sotoinpcb(so);
 #ifdef INET6
 		in6p = NULL;
 #endif
 		break;
-#endif
 #ifdef INET6
 	case PF_INET6:
 		inp = NULL;
@@ -345,11 +338,9 @@ tcp_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 	}
 	if (level != IPPROTO_TCP) {
 		switch (family) {
-#ifdef INET
 		case PF_INET:
 			error = ip_ctloutput(op, so, sopt);
 			break;
-#endif
 #ifdef INET6
 		case PF_INET6:
 			error = ip6_ctloutput(op, so, sopt);
@@ -534,14 +525,12 @@ tcp_attach(struct socket *so, int proto)
 
 	family = so->so_proto->pr_domain->dom_family;
 	switch (family) {
-#ifdef INET
 	case PF_INET:
 		inp = sotoinpcb(so);
 #ifdef INET6
 		in6p = NULL;
 #endif
 		break;
-#endif
 #ifdef INET6
 	case PF_INET6:
 		inp = NULL;
@@ -573,7 +562,6 @@ tcp_attach(struct socket *so, int proto)
 	so->so_snd.sb_flags |= SB_AUTOSIZE;
 
 	switch (family) {
-#ifdef INET
 	case PF_INET:
 		error = in_pcballoc(so, &tcbtable);
 		if (error)
@@ -583,7 +571,6 @@ tcp_attach(struct socket *so, int proto)
 		in6p = NULL;
 #endif
 		break;
-#endif
 #ifdef INET6
 	case PF_INET6:
 		error = in6_pcballoc(so, &tcbtable);
@@ -610,10 +597,8 @@ tcp_attach(struct socket *so, int proto)
 		int nofd = so->so_state & SS_NOFDREF;	/* XXX */
 
 		so->so_state &= ~SS_NOFDREF;	/* don't free the socket yet */
-#ifdef INET
 		if (inp)
 			in_pcbdetach(inp);
-#endif
 #ifdef INET6
 		if (in6p)
 			in6_pcbdetach(in6p);
@@ -669,11 +654,9 @@ tcp_accept(struct socket *so, struct sockaddr *nam)
 	 * of the peer, storing through addr.
 	 */
 	s = splsoftnet();
-#ifdef INET
 	if (inp) {
 		in_setpeeraddr(inp, (struct sockaddr_in *)nam);
 	}
-#endif
 #ifdef INET6
 	if (in6p) {
 		in6_setpeeraddr(in6p, (struct sockaddr_in6 *)nam);
@@ -709,11 +692,9 @@ tcp_bind(struct socket *so, struct sockaddr *nam, struct lwp *l)
 	 */
 	s = splsoftnet();
 	switch (so->so_proto->pr_domain->dom_family) {
-#ifdef INET
 	case PF_INET:
 		error = in_pcbbind(inp, sin, l);
 		break;
-#endif
 #ifdef INET6
 	case PF_INET6:
 		error = in6_pcbbind(in6p, sin6, l);
@@ -752,13 +733,11 @@ tcp_listen(struct socket *so, struct lwp *l)
 	 * Prepare to accept connections.
 	 */
 	s = splsoftnet();
-#ifdef INET
 	if (inp && inp->inp_lport == 0) {
 		error = in_pcbbind(inp, NULL, l);
 		if (error)
 			goto release;
 	}
-#endif
 #ifdef INET6
 	if (in6p && in6p->in6p_lport == 0) {
 		error = in6_pcbbind(in6p, NULL, l);
@@ -798,7 +777,7 @@ tcp_connect(struct socket *so, struct sockaddr *nam, struct lwp *l)
 	 * Send initial segment on connection.
 	 */
 	s = splsoftnet();
-#ifdef INET
+
 	if (inp) {
 		if (inp->inp_lport == 0) {
 			error = in_pcbbind(inp, NULL, l);
@@ -807,7 +786,6 @@ tcp_connect(struct socket *so, struct sockaddr *nam, struct lwp *l)
 		}
 		error = in_pcbconnect(inp, (struct sockaddr_in *)nam, l);
 	}
-#endif
 #ifdef INET6
 	if (in6p) {
 		if (in6p->in6p_lport == 0) {
@@ -829,10 +807,8 @@ tcp_connect(struct socket *so, struct sockaddr *nam, struct lwp *l)
 		goto release;
 	tp->t_template = tcp_template(tp);
 	if (tp->t_template == 0) {
-#ifdef INET
 		if (inp)
 			in_pcbdisconnect(inp);
-#endif
 #ifdef INET6
 		if (in6p)
 			in6_pcbdisconnect(in6p);
@@ -975,10 +951,8 @@ static int
 tcp_ioctl(struct socket *so, u_long cmd, void *nam, struct ifnet *ifp)
 {
 	switch (so->so_proto->pr_domain->dom_family) {
-#ifdef INET
 	case PF_INET:
 		return in_control(so, cmd, nam, ifp);
-#endif
 #ifdef INET6
 	case PF_INET6:
 		return in6_control(so, cmd, nam, ifp);
@@ -1013,11 +987,9 @@ tcp_peeraddr(struct socket *so, struct sockaddr *nam)
 	ostate = tcp_debug_capture(tp, PRU_PEERADDR);
 
 	s = splsoftnet();
-#ifdef INET
 	if (inp) {
 		in_setpeeraddr(inp, (struct sockaddr_in *)nam);
 	}
-#endif
 #ifdef INET6
 	if (in6p) {
 		in6_setpeeraddr(in6p, (struct sockaddr_in6 *)nam);
@@ -1045,11 +1017,9 @@ tcp_sockaddr(struct socket *so, struct sockaddr *nam)
 	ostate = tcp_debug_capture(tp, PRU_SOCKADDR);
 
 	s = splsoftnet();
-#ifdef INET
 	if (inp) {
 		in_setsockaddr(inp, (struct sockaddr_in *)nam);
 	}
-#endif
 #ifdef INET6
 	if (in6p) {
 		in6_setsockaddr(in6p, (struct sockaddr_in6 *)nam);
@@ -1222,7 +1192,6 @@ tcp_purgeif(struct socket *so, struct ifnet *ifp)
 
 	mutex_enter(softnet_lock);
 	switch (so->so_proto->pr_domain->dom_family) {
-#ifdef INET
 	case PF_INET:
 		in_pcbpurgeif0(&tcbtable, ifp);
 #ifdef NET_MPSAFE
@@ -1234,7 +1203,6 @@ tcp_purgeif(struct socket *so, struct ifnet *ifp)
 #endif
 		in_pcbpurgeif(&tcbtable, ifp);
 		break;
-#endif
 #ifdef INET6
 	case PF_INET6:
 		in6_pcbpurgeif0(&tcbtable, ifp);
@@ -1440,7 +1408,6 @@ sysctl_net_inet_ip_ports(SYSCTLFN_ARGS)
 		return (EINVAL);
 
 	switch (name[-3]) {
-#ifdef INET
 	    case PF_INET:
 		apmin = anonportmin;
 		apmax = anonportmax;
@@ -1449,7 +1416,6 @@ sysctl_net_inet_ip_ports(SYSCTLFN_ARGS)
 		lpmax = lowportmax;
 #endif /* IPNOPRIVPORTS */
 		break;
-#endif /* INET */
 #ifdef INET6
 	    case PF_INET6:
 		apmin = ip6_anonportmin;
@@ -1637,12 +1603,10 @@ inet6_ident_core(struct in6_addr *raddr, u_int rport,
 static int
 sysctl_net_inet_tcp_ident(SYSCTLFN_ARGS)
 {
-#ifdef INET
 	struct sockaddr_in *si4[2];
-#endif /* INET */
 #ifdef INET6
 	struct sockaddr_in6 *si6[2];
-#endif /* INET6 */
+#endif
 	struct sockaddr_storage sa[2];
 	int error, pf, dodrop;
 
@@ -1663,7 +1627,6 @@ sysctl_net_inet_tcp_ident(SYSCTLFN_ARGS)
 
 	/* old style lookup, ipv4 only */
 	if (namelen == 4) {
-#ifdef INET
 		struct in_addr laddr, raddr;
 		u_int lport, rport;
 
@@ -1679,9 +1642,6 @@ sysctl_net_inet_tcp_ident(SYSCTLFN_ARGS)
 		    oldp, oldlenp, l, dodrop);
 		mutex_exit(softnet_lock);
 		return error;
-#else /* INET */
-		return EINVAL;
-#endif /* INET */
 	}
 
 	if (newp == NULL || newlen != sizeof(sa))
@@ -1730,7 +1690,6 @@ sysctl_net_inet_tcp_ident(SYSCTLFN_ARGS)
 		in6_sin6_2_sin_in_sock((struct sockaddr *)&sa[1]);
 		/*FALLTHROUGH*/
 #endif /* INET6 */
-#ifdef INET
 	case PF_INET:
 		si4[0] = (struct sockaddr_in*)&sa[0];
 		si4[1] = (struct sockaddr_in*)&sa[1];
@@ -1744,7 +1703,6 @@ sysctl_net_inet_tcp_ident(SYSCTLFN_ARGS)
 		    oldp, oldlenp, l, dodrop);
 		mutex_exit(softnet_lock);
 		return error;
-#endif /* INET */
 	default:
 		return EPROTONOSUPPORT;
 	}
@@ -1759,10 +1717,8 @@ sysctl_net_inet_tcp_ident(SYSCTLFN_ARGS)
 int
 sysctl_inpcblist(SYSCTLFN_ARGS)
 {
-#ifdef INET
 	struct sockaddr_in *in;
 	const struct inpcb *inp;
-#endif
 #ifdef INET6
 	struct sockaddr_in6 *in6;
 	const struct in6pcb *in6p;
@@ -1807,9 +1763,7 @@ sysctl_inpcblist(SYSCTLFN_ARGS)
 	mutex_enter(softnet_lock);
 
 	TAILQ_FOREACH(inph, &pcbtbl->inpt_queue, inph_queue) {
-#ifdef INET
 		inp = (const struct inpcb *)inph;
-#endif
 #ifdef INET6
 		in6p = (const struct in6pcb *)inph;
 #endif
@@ -1831,7 +1785,6 @@ sysctl_inpcblist(SYSCTLFN_ARGS)
 		case 0:
 			/* just probing for size */
 			break;
-#ifdef INET
 		case PF_INET:
 			pcb.ki_family = inp->inp_socket->so_proto->
 			    pr_domain->dom_family;
@@ -1869,7 +1822,6 @@ sysctl_inpcblist(SYSCTLFN_ARGS)
 				in->sin_addr = inp->inp_faddr;
 			}
 			break;
-#endif
 #ifdef INET6
 		case PF_INET6:
 			pcb.ki_family = in6p->in6p_socket->so_proto->
@@ -2477,9 +2429,7 @@ void
 tcp_usrreq_init(void)
 {
 
-#ifdef INET
 	sysctl_net_inet_tcp_setup2(NULL, PF_INET, "inet", "tcp");
-#endif
 #ifdef INET6
 	sysctl_net_inet_tcp_setup2(NULL, PF_INET6, "inet6", "tcp6");
 #endif

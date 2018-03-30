@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.2 2017/04/20 13:18:23 joerg Exp $	*/
+/*	$NetBSD: main.c,v 1.2.10.1 2018/03/30 06:20:07 pgoyette Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: main.c,v 1.2 2017/04/20 13:18:23 joerg Exp $");
+__RCSID("$NetBSD: main.c,v 1.2.10.1 2018/03/30 06:20:07 pgoyette Exp $");
 
 /*-
  * Copyright (c) 1999-2009 The NetBSD Foundation, Inc.
@@ -112,9 +112,9 @@ usage(void)
 	    " pmatch pattern pkg          - returns true if pkg matches pattern, otherwise false\n"
 	    " fetch-pkg-vulnerabilities [-s] - fetch new vulnerability file\n"
 	    " check-pkg-vulnerabilities [-s] <file> - check syntax and checksums of the vulnerability file\n"
-	    " audit [-es] [-t type] ...       - check installed packages for vulnerabilities\n"
-	    " audit-pkg [-es] [-t type] ...   - check listed packages for vulnerabilities\n"
-	    " audit-batch [-es] [-t type] ... - check packages in listed files for vulnerabilities\n"
+	    " audit [-eis] [-t type] ...       - check installed packages for vulnerabilities\n"
+	    " audit-pkg [-eis] [-t type] ...   - check listed packages for vulnerabilities\n"
+	    " audit-batch [-eis] [-t type] ... - check packages in listed files for vulnerabilities\n"
 	    " audit-history [-t type] ...     - print all advisories for package names\n"
 	    " check-license <condition>       - check if condition is acceptable\n"
 	    " check-single-license <license>  - check if license is acceptable\n"

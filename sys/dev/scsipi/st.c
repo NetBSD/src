@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.231 2017/06/17 22:35:50 mlelstv Exp $ */
+/*	$NetBSD: st.c,v 1.231.4.1 2018/03/30 06:20:15 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.231 2017/06/17 22:35:50 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.231.4.1 2018/03/30 06:20:15 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_scsi.h"
@@ -343,6 +343,7 @@ static int	st_mount_tape(dev_t, int);
 static void	st_unmount(struct st_softc *, boolean);
 static int	st_decide_mode(struct st_softc *, boolean);
 static void	ststart(struct scsipi_periph *);
+static int	ststart1(struct scsipi_periph *, struct buf *);
 static void	strestart(void *);
 static void	stdone(struct scsipi_xfer *, int);
 static int	st_read(struct st_softc *, char *, int, int);
@@ -392,9 +393,11 @@ stattach(device_t parent, device_t self, void *aux)
 	/* Set initial flags  */
 	st->flags = ST_INIT_FLAGS;
 
-	/* Set up the buf queue for this device */
+	/* Set up the buf queues for this device */
 	bufq_alloc(&st->buf_queue, "fcfs", 0);
+	bufq_alloc(&st->buf_defer, "fcfs", 0);
 	callout_init(&st->sc_callout, 0);
+	mutex_init(&st->sc_iolock, MUTEX_DEFAULT, IPL_VM);
 
 	/*
 	 * Check if the drive is a known criminal and take
@@ -445,6 +448,7 @@ stdetach(device_t self, int flags)
 	mutex_enter(chan_mtx(chan));
 
 	/* Kill off any queued buffers. */
+	bufq_drain(st->buf_defer);
 	bufq_drain(st->buf_queue);
 
 	/* Kill off any pending commands. */
@@ -452,7 +456,9 @@ stdetach(device_t self, int flags)
 
 	mutex_exit(chan_mtx(chan));
 
+	bufq_free(st->buf_defer);
 	bufq_free(st->buf_queue);
+	mutex_destroy(&st->sc_iolock);
 
 	/* Nuke the vnodes for any open instances */
 	mn = STUNIT(device_unit(self));
@@ -609,6 +615,8 @@ stopen(dev_t dev, int flags, int mode, struct lwp *l)
 		 */
 		if ((st->flags & ST_MOUNTED) || ST_MOUNT_DELAY == 0 ||
 		    (st->mt_key != SKEY_NOT_READY)) {
+			device_printf(st->sc_dev, "mount error (key=%d)\n",
+				st->mt_key);
 			goto bad;
 		}
 
@@ -629,10 +637,10 @@ stopen(dev_t dev, int flags, int mode, struct lwp *l)
 
 		periph->periph_flags = oflags;	/* restore flags */
 		if (slpintr != 0 && slpintr != EWOULDBLOCK) {
+			device_printf(st->sc_dev, "load interrupted\n");
 			goto bad;
 		}
 	}
-
 
 	/*
 	 * If the mode is 3 (e.g. minor = 3,7,11,15) then the device has
@@ -642,7 +650,9 @@ stopen(dev_t dev, int flags, int mode, struct lwp *l)
 	 * as to whether or not we got a NOT READY for the above
 	 * unit attention). If a tape is there, go do a mount sequence.
 	 */
-	if (stmode == CTRL_MODE && st->mt_key == SKEY_NOT_READY) {
+	if (stmode == CTRL_MODE &&
+	    st->mt_key != SKEY_NO_SENSE &&
+	    st->mt_key != SKEY_UNIT_ATTENTION) {
 		periph->periph_flags |= PERIPH_OPEN;
 		return 0;
 	}
@@ -1107,160 +1117,187 @@ abort:
 
 /*
  * ststart looks to see if there is a buf waiting for the device
- * and that the device is not already busy. If both are true,
- * It dequeues the buf and creates a scsi command to perform the
- * transfer required. The transfer request will call scsipi_done
- * on completion, which will in turn call this routine again
- * so that the next queued transfer is performed.
- * The bufs are queued by the strategy routine (ststrategy)
+ * and that the device is not already busy. If the device is busy,
+ * the request is deferred and retried on the next attempt.
+ * If both are true, ststart creates a scsi command to perform
+ * the transfer required.
+ *
+ * The transfer request will call scsipi_done on completion,
+ * which will in turn call this routine again so that the next
+ * queued transfer is performed. The bufs are queued by the
+ * strategy routine (ststrategy)
  *
  * This routine is also called after other non-queued requests
  * have been made of the scsi driver, to ensure that the queue
  * continues to be drained.
  * ststart() is called with channel lock held
  */
+static int
+ststart1(struct scsipi_periph *periph, struct buf *bp)
+{
+	struct st_softc *st = device_private(periph->periph_dev);
+        struct scsipi_channel *chan = periph->periph_channel;
+	struct scsi_rw_tape cmd;
+	struct scsipi_xfer *xs;
+	int flags, error;
+
+	SC_DEBUG(periph, SCSIPI_DB2, ("ststart1 "));
+
+	mutex_enter(chan_mtx(chan));
+
+	if (periph->periph_active >= periph->periph_openings) {
+		error = EAGAIN;
+		goto out;
+	}
+
+	/* if a special awaits, let it proceed first */
+	if (periph->periph_flags & PERIPH_WAITING) {
+		periph->periph_flags &= ~PERIPH_WAITING;
+		cv_broadcast(periph_cv_periph(periph));
+		error = EAGAIN;
+		goto out;
+	}
+
+	/*
+	 * If the device has been unmounted by the user
+	 * then throw away all requests until done.
+	 */
+	if (__predict_false((st->flags & ST_MOUNTED) == 0 ||
+	    (periph->periph_flags & PERIPH_MEDIA_LOADED) == 0)) {
+		error = EIO;
+		goto out;
+	}
+
+	/*
+	 * only FIXEDBLOCK devices have pending I/O or space operations.
+	 */
+	if (st->flags & ST_FIXEDBLOCKS) {
+		/*
+		 * If we are at a filemark but have not reported it yet
+		 * then we should report it now
+		 */
+		if (st->flags & ST_AT_FILEMARK) {
+			if ((bp->b_flags & B_READ) == B_WRITE) {
+				/*
+				 * Handling of ST_AT_FILEMARK in
+				 * st_space will fill in the right file
+				 * mark count.
+				 * Back up over filemark
+				 */
+				if (st_space(st, 0, SP_FILEMARKS, 0)) {
+					error = EIO;
+					goto out;
+				}
+			} else {
+				bp->b_resid = bp->b_bcount;
+				error = 0;
+				st->flags &= ~ST_AT_FILEMARK;
+				goto out;
+			}
+		}
+	}
+	/*
+	 * If we are at EOM but have not reported it
+	 * yet then we should report it now.
+	 */
+	if (st->flags & (ST_EOM_PENDING|ST_EIO_PENDING)) {
+		error = EIO;
+		goto out;
+	}
+
+	/* Fill out the scsi command */
+	memset(&cmd, 0, sizeof(cmd));
+	flags = XS_CTL_NOSLEEP | XS_CTL_ASYNC;
+	if ((bp->b_flags & B_READ) == B_WRITE) {
+		cmd.opcode = WRITE;
+		st->flags &= ~ST_FM_WRITTEN;
+		flags |= XS_CTL_DATA_OUT;
+	} else {
+		cmd.opcode = READ;
+		flags |= XS_CTL_DATA_IN;
+	}
+
+	/*
+	 * Handle "fixed-block-mode" tape drives by using the
+	 * block count instead of the length.
+	 */
+	if (st->flags & ST_FIXEDBLOCKS) {
+		cmd.byte2 |= SRW_FIXED;
+		_lto3b(bp->b_bcount / st->blksize, cmd.len);
+	} else
+		_lto3b(bp->b_bcount, cmd.len);
+
+	/* Clear 'position updated' indicator */
+	st->flags &= ~ST_POSUPDATED;
+
+	/* go ask the adapter to do all this for us */
+	xs = scsipi_make_xs_locked(periph,
+	    (struct scsipi_generic *)&cmd, sizeof(cmd),
+	    (u_char *)bp->b_data, bp->b_bcount,
+	    0, ST_IO_TIME, bp, flags);
+	if (__predict_false(xs == NULL)) {
+		/*
+		 * out of memory. Keep this buffer in the queue, and
+		 * retry later.
+		 */
+		callout_reset(&st->sc_callout, hz / 2, strestart,
+		    periph);
+		error = EAGAIN;
+		goto out;
+	}
+
+	error = scsipi_execute_xs(xs);
+	/* with a scsipi_xfer preallocated, scsipi_command can't fail */
+	KASSERT(error == 0);
+
+out:
+	mutex_exit(chan_mtx(chan));
+
+	return error;
+}
+
 static void
 ststart(struct scsipi_periph *periph)
 {
 	struct st_softc *st = device_private(periph->periph_dev);
+        struct scsipi_channel *chan = periph->periph_channel;
 	struct buf *bp;
-	struct scsi_rw_tape cmd;
-	struct scsipi_xfer *xs;
-	int flags, error __diagused;
+	int error;
 
 	SC_DEBUG(periph, SCSIPI_DB2, ("ststart "));
-	/* See if there is a buf to do and we are not already  doing one */
-	while (periph->periph_active < periph->periph_openings) {
-		/* if a special awaits, let it proceed first */
-		if (periph->periph_flags & PERIPH_WAITING) {
-			periph->periph_flags &= ~PERIPH_WAITING;
-			cv_broadcast(periph_cv_periph(periph));
-			return;
-		}
 
-		/*
-		 * If the device has been unmounted by the user
-		 * then throw away all requests until done.
-		 */
-		if (__predict_false((st->flags & ST_MOUNTED) == 0 ||
-		    (periph->periph_flags & PERIPH_MEDIA_LOADED) == 0)) {
-			if ((bp = bufq_get(st->buf_queue)) != NULL) {
-				/* make sure that one implies the other.. */
-				periph->periph_flags &= ~PERIPH_MEDIA_LOADED;
-				bp->b_error = EIO;
-				bp->b_resid = bp->b_bcount;
-				biodone(bp);
-				continue;
-			} else
-				return;
-		}
+	mutex_exit(chan_mtx(chan));
+	mutex_enter(&st->sc_iolock);
 
-		if ((bp = bufq_peek(st->buf_queue)) == NULL)
-			return;
+	while ((bp = bufq_get(st->buf_defer)) != NULL
+	       || (bp = bufq_get(st->buf_queue)) != NULL) {
 
 		iostat_busy(st->stats);
+		mutex_exit(&st->sc_iolock);
 
-		/*
-		 * only FIXEDBLOCK devices have pending I/O or space operations.
-		 */
-		if (st->flags & ST_FIXEDBLOCKS) {
-			/*
-			 * If we are at a filemark but have not reported it yet
-			 * then we should report it now
-			 */
-			if (st->flags & ST_AT_FILEMARK) {
-				if ((bp->b_flags & B_READ) == B_WRITE) {
-					/*
-					 * Handling of ST_AT_FILEMARK in
-					 * st_space will fill in the right file
-					 * mark count.
-					 * Back up over filemark
-					 */
-					if (st_space(st, 0, SP_FILEMARKS, 0)) {
-						bufq_get(st->buf_queue);
-						bp->b_error = EIO;
-						bp->b_resid = bp->b_bcount;
-						biodone(bp);
-						continue;
-					}
-				} else {
-					bufq_get(st->buf_queue);
-					bp->b_resid = bp->b_bcount;
-					bp->b_error = 0;
-					st->flags &= ~ST_AT_FILEMARK;
-					biodone(bp);
-					continue;	/* seek more work */
-				}
-			}
+		error = ststart1(periph, bp);
+
+		mutex_enter(&st->sc_iolock);
+		if (error != 0)
+			iostat_unbusy(st->stats, 0,
+			              ((bp->b_flags & B_READ) == B_READ));
+		if (error == EAGAIN) {
+			bufq_put(st->buf_defer, bp);
+			break;
 		}
-		/*
-		 * If we are at EOM but have not reported it
-		 * yet then we should report it now.
-		 */
-		if (st->flags & (ST_EOM_PENDING|ST_EIO_PENDING)) {
-			bufq_get(st->buf_queue);
+		mutex_exit(&st->sc_iolock);
+
+		if (error != 0) {
+			bp->b_error = error;
 			bp->b_resid = bp->b_bcount;
-			if (st->flags & ST_EIO_PENDING)
-				bp->b_error = EIO;
-			st->flags &= ~(ST_EOM_PENDING|ST_EIO_PENDING);
 			biodone(bp);
-			continue;	/* seek more work */
 		}
 
-		/* Fill out the scsi command */
-		memset(&cmd, 0, sizeof(cmd));
-		flags = XS_CTL_NOSLEEP | XS_CTL_ASYNC;
-		if ((bp->b_flags & B_READ) == B_WRITE) {
-			cmd.opcode = WRITE;
-			st->flags &= ~ST_FM_WRITTEN;
-			flags |= XS_CTL_DATA_OUT;
-		} else {
-			cmd.opcode = READ;
-			flags |= XS_CTL_DATA_IN;
-		}
+		mutex_enter(&st->sc_iolock);
+	}
 
-		/*
-		 * Handle "fixed-block-mode" tape drives by using the
-		 * block count instead of the length.
-		 */
-		if (st->flags & ST_FIXEDBLOCKS) {
-			cmd.byte2 |= SRW_FIXED;
-			_lto3b(bp->b_bcount / st->blksize, cmd.len);
-		} else
-			_lto3b(bp->b_bcount, cmd.len);
-
-		/* Clear 'position updated' indicator */
-		st->flags &= ~ST_POSUPDATED;
-
-		/* go ask the adapter to do all this for us */
-		xs = scsipi_make_xs_locked(periph,
-		    (struct scsipi_generic *)&cmd, sizeof(cmd),
-		    (u_char *)bp->b_data, bp->b_bcount,
-		    0, ST_IO_TIME, bp, flags);
-		if (__predict_false(xs == NULL)) {
-			/*
-			 * out of memory. Keep this buffer in the queue, and
-			 * retry later.
-			 */
-			callout_reset(&st->sc_callout, hz / 2, strestart,
-			    periph);
-			return;
-		}
-		/*
-		 * need to dequeue the buffer before queuing the command,
-		 * because cdstart may be called recursively from the
-		 * HBA driver
-		 */
-#ifdef DIAGNOSTIC
-		if (bufq_get(st->buf_queue) != bp)
-			panic("ststart(): dequeued wrong buf");
-#else
-		bufq_get(st->buf_queue);
-#endif
-		error = scsipi_execute_xs(xs);
-		/* with a scsipi_xfer preallocated, scsipi_command can't fail */
-		KASSERT(error == 0);
-	} /* go back and see if we can cram more work in.. */
+	mutex_exit(&st->sc_iolock);
+	mutex_enter(chan_mtx(chan));
 }
 
 static void
@@ -1291,6 +1328,8 @@ stdone(struct scsipi_xfer *xs, int error)
 		if (bp->b_resid > bp->b_bcount || bp->b_resid < 0)
 			bp->b_resid = bp->b_bcount;
 
+		mutex_enter(&st->sc_iolock);
+
 		if ((bp->b_flags & B_READ) == B_WRITE)
 			st->flags |= ST_WRITTEN;
 		else
@@ -1298,8 +1337,6 @@ stdone(struct scsipi_xfer *xs, int error)
 
 		iostat_unbusy(st->stats, bp->b_bcount,
 			     ((bp->b_flags & B_READ) == B_READ));
-
-		rnd_add_uint32(&st->rnd_source, bp->b_blkno);
 
 		if ((st->flags & ST_POSUPDATED) == 0) {
 			if (error) {
@@ -1312,6 +1349,11 @@ stdone(struct scsipi_xfer *xs, int error)
 					st->blkno++;
 			}
 		}
+
+		mutex_exit(&st->sc_iolock);
+
+		rnd_add_uint32(&st->rnd_source, bp->b_blkno);
+
 		biodone(bp);
 	}
 }

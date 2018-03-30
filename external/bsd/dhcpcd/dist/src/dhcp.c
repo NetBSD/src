@@ -3653,6 +3653,7 @@ dhcp_start1(void *arg)
 
 	state = D_STATE(ifp);
 	clock_gettime(CLOCK_MONOTONIC, &state->started);
+	state->interval = 0;
 	free(state->offer);
 	state->offer = NULL;
 	state->offer_len = 0;
@@ -3891,7 +3892,7 @@ dhcp_abort(struct interface *ifp)
 }
 
 void
-dhcp_handleifa(int cmd, struct ipv4_addr *ia)
+dhcp_handleifa(int cmd, struct ipv4_addr *ia, pid_t pid)
 {
 	struct interface *ifp;
 	struct dhcp_state *state;
@@ -3905,12 +3906,13 @@ dhcp_handleifa(int cmd, struct ipv4_addr *ia)
 
 	if (cmd == RTM_DELADDR) {
 		if (state->addr == ia) {
-			loginfox("%s: deleted IP address %s",
-			    ifp->name, ia->saddr);
+			loginfox("%s: pid %d deleted IP address %s",
+			    ifp->name, pid, ia->saddr);
 			state->addr = NULL;
 			/* Don't clear the added state as we need
 			 * to drop the lease. */
 			dhcp_drop(ifp, "EXPIRE");
+			dhcp_start1(ifp);
 		}
 		return;
 	}

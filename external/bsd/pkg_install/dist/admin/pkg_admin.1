@@ -1,4 +1,4 @@
-.\"	$NetBSD: pkg_admin.1,v 1.2 2017/04/20 13:18:23 joerg Exp $
+.\"	$NetBSD: pkg_admin.1,v 1.2.10.1 2018/03/30 06:20:07 pgoyette Exp $
 .\"
 .\" Copyright (c) 1999-2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 27, 2014
+.Dd February 25, 2018
 .Dt PKG_ADMIN 1
 .Os
 .Sh NAME
@@ -106,7 +106,7 @@ Be more verbose.
 .Pp
 The following commands are supported:
 .Bl -tag -width indent
-.It Cm audit Oo Fl es Oc Oo Fl t Ar type Oc Oo Ar pkg Oc ...
+.It Cm audit Oo Fl eis Oc Oo Fl t Ar type Oc Oo Ar pkg Oc ...
 Check the listed installed packages for vulnerabilities.
 If no package is given, check all installed packages.
 If
@@ -118,16 +118,25 @@ option from
 with
 .Qq Li yes .
 If
+.Fl i
+is given,
+any advisory ignored by
+.Dv IGNORE_URL
+in
+.Xr pkg_install.conf 5
+is included but flagged as
+.Qq ignored .
+If
 .Fl s
 is given, check the signature of the pkg-vulnerabilities file before using it.
 .Fl t
 restricts the reported vulnerabilities to type
 .Ar type .
-.It Cm audit-pkg Oo Fl es Oc Oo Fl t Ar type Oc Oo Ar pkg Oc ...
+.It Cm audit-pkg Oo Fl eis Oc Oo Fl t Ar type Oc Oo Ar pkg Oc ...
 Like
 .Cm audit ,
 but check only the given package names or patterns.
-.It Cm audit-batch Oo Fl es Oc Oo Fl t Ar type Oc Oo Ar pkg-list Oc ...
+.It Cm audit-batch Oo Fl eis Oc Oo Fl t Ar type Oc Oo Ar pkg-list Oc ...
 Like
 .Cm audit-pkg ,
 but read the package names or patterns one per line from the given files.

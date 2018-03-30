@@ -1,4 +1,4 @@
-/*	$NetBSD: efiboot.c,v 1.4.18.1 2018/03/15 09:12:03 pgoyette Exp $	*/
+/*	$NetBSD: efiboot.c,v 1.4.18.2 2018/03/30 06:20:11 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -68,11 +68,13 @@ efi_main(EFI_HANDLE imageHandle, EFI_SYSTEM_TABLE *systemTable)
 	status = uefi_call_wrapper(BS->HandleProtocol, 3, IH,
 	    &LoadedImageProtocol, (void **)&efi_li);
 	if (EFI_ERROR(status))
-		Panic(L"HandleProtocol(LoadedImageProtocol): %r", status);
+		panic("HandleProtocol(LoadedImageProtocol): %" PRIxMAX,
+		    (uintmax_t)status);
 	status = uefi_call_wrapper(BS->HandleProtocol, 3, efi_li->DeviceHandle,
 	    &DevicePathProtocol, (void **)&dp0);
 	if (EFI_ERROR(status))
-		Panic(L"HandleProtocol(DevicePathProtocol): %r", status);
+		panic("HandleProtocol(DevicePathProtocol): %" PRIxMAX,
+		    (uintmax_t)status);
 	efi_bootdp = dp0;
 	for (dp = dp0; !IsDevicePathEnd(dp); dp = NextDevicePathNode(dp)) {
 		if (DevicePathType(dp) == MEDIA_DEVICE_PATH &&
@@ -86,7 +88,7 @@ efi_main(EFI_HANDLE imageHandle, EFI_SYSTEM_TABLE *systemTable)
 
 	status = uefi_call_wrapper(BS->SetWatchdogTimer, 4, 0, 0, 0, NULL);
 	if (EFI_ERROR(status))
-		Panic(L"SetWatchdogTimer: %r", status);
+		panic("SetWatchdogTimer: %" PRIxMAX, (uintmax_t)status);
 
 	boot();
 
@@ -122,7 +124,7 @@ efi_cleanup(void)
 		    &DescriptorVersion, true);
 		status = uefi_call_wrapper(BS->ExitBootServices, 2, IH, MapKey);
 		if (EFI_ERROR(status))
-			Panic(L"ExitBootServices failed");
+			panic("ExitBootServices failed");
 	}
 	efi_cleanuped = true;
 

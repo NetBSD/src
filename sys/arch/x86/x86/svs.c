@@ -1,4 +1,4 @@
-/*	$NetBSD: svs.c,v 1.13.2.1 2018/03/15 09:12:04 pgoyette Exp $	*/
+/*	$NetBSD: svs.c,v 1.13.2.2 2018/03/30 06:20:13 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.13.2.1 2018/03/15 09:12:04 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.13.2.2 2018/03/30 06:20:13 pgoyette Exp $");
 
 #include "opt_svs.h"
 
@@ -720,9 +720,10 @@ int
 sysctl_machdep_svs_enabled(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node;
-	int error, val;
+	int error;
+	bool val;
 
-	val = *(int *)rnode->sysctl_data;
+	val = *(bool *)rnode->sysctl_data;
 
 	node = *rnode;
 	node.sysctl_data = &val;
@@ -732,7 +733,10 @@ sysctl_machdep_svs_enabled(SYSCTLFN_ARGS)
 		return error;
 
 	if (val == 1) {
-		error = EINVAL;
+		if (svs_enabled)
+			error = 0;
+		else
+			error = EOPNOTSUPP;
 	} else {
 		if (svs_enabled)
 			error = svs_disable();

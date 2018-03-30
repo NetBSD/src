@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.60 2014/03/26 17:45:16 christos Exp $	*/
+/*	$NetBSD: cpu.c,v 1.60.28.1 2018/03/30 06:20:11 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.60 2014/03/26 17:45:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.60.28.1 2018/03/30 06:20:11 pgoyette Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -209,7 +209,7 @@ md_setup_trampoline(volatile struct cpu_hatch_data *h, struct cpu_info *ci)
 {
 #ifdef OPENPIC
 	if (openpic_base) {
-		uint32_t kl_base = 0x80000000;	/* XXX */
+		uint32_t kl_base = (uint32_t)oea_mapiodev(0x80000000, 0x1000);
 		uint32_t gpio = kl_base + 0x5c;	/* XXX */
 		u_int node, off;
 		char cpupath[32];

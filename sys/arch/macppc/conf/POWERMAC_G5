@@ -138,7 +138,7 @@ ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 obio0		at pci? dev ? function ?
 zsc*		at obio?
 zstty*		at zsc? channel ?
-#snapper* 	at obio?
+snapper* 	at obio?
 ki2c*		at obio?	# Keywest I2C
 iic*		at i2cbus?
 
@@ -152,13 +152,13 @@ deq* 		at iic?
 pmu* 		at obio?	# Apple PMU
 
 # Audio support
-#audio*	at audiobus?
+audio*	at audiobus?
 
-#spkr*	at audio?		# PC speaker (synthesized)
-#wsbell* at spkr?
+spkr*	at audio?		# PC speaker (synthesized)
+wsbell* at spkr?
 
 gem*	at pci? dev ? function ?	# gmac ethernet
-options 	GEM_DEBUG
+#options 	GEM_DEBUG
 bge*	at pci? dev ? function ?	# borgcom ethernet
 bmtphy*	at mii? phy ?			# Broadcom BCM5201/BCM5202 PHYs
 brgphy*	at mii? phy ?			# Broadcom BCM5400 PHYs

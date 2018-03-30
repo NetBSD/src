@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.h,v 1.32.2.1 2018/03/15 09:12:05 pgoyette Exp $ */
+/* $NetBSD: ixgbe.h,v 1.32.2.2 2018/03/30 06:20:15 pgoyette Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -339,8 +339,13 @@ struct ix_queue {
 	char             namebuf[32];
 	char             evnamebuf[32];
 
-	kmutex_t         im_mtx;	/* lock for im_nest and this queue's EIMS/EIMC bit */
-	int              im_nest;
+	kmutex_t         dc_mtx;	/* lock for disabled_count and this queue's EIMS/EIMC bit */
+	int              disabled_count;/*
+					 * means
+					 *     0   : this queue is enabled
+					 *     > 0 : this queue is disabled
+					 *           the value is ixgbe_disable_queue() called count
+					 */
 };
 
 /*
@@ -370,8 +375,8 @@ struct tx_ring {
 	u16			atr_sample;
 	u16			atr_count;
 
-	u32			bytes;  /* used for AIM */
-	u32			packets;
+	u64			bytes;  /* used for AIM */
+	u64			packets;
 	/* Soft Stats */
 	struct evcnt	   	tso_tx;
 	struct evcnt		no_desc_avail;
@@ -413,8 +418,8 @@ struct rx_ring {
 	struct ixgbe_rx_buf	*rx_buffers;
 	ixgbe_dma_tag_t		*ptag;
 
-	u32			bytes; /* Used for AIM calc */
-	u32			packets;
+	u64			bytes; /* Used for AIM calc */
+	u64			packets;
 
 	/* Soft stats */
 	struct evcnt		rx_copies;
@@ -576,6 +581,10 @@ struct adapter {
 	struct evcnt	   	tso_err;
 	struct evcnt	   	watchdog_events;
 	struct evcnt		link_irq;
+	struct evcnt		link_sicount;
+	struct evcnt		mod_sicount;
+	struct evcnt		msf_sicount;
+	struct evcnt		phy_sicount;
 
 	union {
 		struct ixgbe_hw_stats pf;

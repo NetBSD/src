@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.84.2.2 2018/03/22 01:44:50 pgoyette Exp $*/
+/*$NetBSD: ixv.c,v 1.84.2.3 2018/03/30 06:20:15 pgoyette Exp $*/
 
 /******************************************************************************
 
@@ -694,7 +694,7 @@ ixv_detach(device_t dev, int flags)
 	ixgbe_free_receive_structures(adapter);
 	for (int i = 0; i < adapter->num_queues; i++) {
 		struct ix_queue *lque = &adapter->queues[i];
-		mutex_destroy(&lque->im_mtx);
+		mutex_destroy(&lque->dc_mtx);
 	}
 	free(adapter->queues, M_DEVBUF);
 
@@ -839,14 +839,14 @@ ixv_enable_queue(struct adapter *adapter, u32 vector)
 	u32             queue = 1 << vector;
 	u32             mask;
 
-	mutex_enter(&que->im_mtx);
-	if (que->im_nest > 0 && --que->im_nest > 0)
+	mutex_enter(&que->dc_mtx);
+	if (que->disabled_count > 0 && --que->disabled_count > 0)
 		goto out;
 
 	mask = (IXGBE_EIMS_RTX_QUEUE & queue);
 	IXGBE_WRITE_REG(hw, IXGBE_VTEIMS, mask);
 out:
-	mutex_exit(&que->im_mtx);
+	mutex_exit(&que->dc_mtx);
 } /* ixv_enable_queue */
 
 /************************************************************************
@@ -860,14 +860,14 @@ ixv_disable_queue(struct adapter *adapter, u32 vector)
 	u64             queue = (u64)(1 << vector);
 	u32             mask;
 
-	mutex_enter(&que->im_mtx);
-	if (que->im_nest++ > 0)
+	mutex_enter(&que->dc_mtx);
+	if (que->disabled_count++ > 0)
 		goto  out;
 
 	mask = (IXGBE_EIMS_RTX_QUEUE & queue);
 	IXGBE_WRITE_REG(hw, IXGBE_VTEIMC, mask);
 out:
-	mutex_exit(&que->im_mtx);
+	mutex_exit(&que->dc_mtx);
 } /* ixv_disable_queue */
 
 static inline void

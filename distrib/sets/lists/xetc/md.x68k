@@ -1,3 +1,2 @@
-# $NetBSD: md.x68k,v 1.4 2014/03/01 19:46:43 tsutsui Exp $
-./etc/X11/X68kConfig					-unknown-	x11
+# $NetBSD: md.x68k,v 1.4.24.1 2018/03/30 06:20:06 pgoyette Exp $
 ./etc/X11/X68kConfig					-unknown-	xorg

@@ -1,4 +1,4 @@
-#	$NetBSD: majors.vax,v 1.27 2017/06/22 17:51:22 flxd Exp $
+#	$NetBSD: majors.vax,v 1.27.4.1 2018/03/30 06:20:13 pgoyette Exp $
 #
 # Device majors for vax
 #
@@ -38,7 +38,7 @@ device-major	lpa		char 26			lpa
 device-major	ps		char 27			ps
 device-major	racd		char 28  block 28	racd
 device-major	ad		char 29			ad
-device-major	rx		char 30  block 12	rx
+device-major	rx		char 30  block 30	rx
 device-major	ik		char 31			ik
 device-major	rl		char 32  block 14	rl
 device-major	log		char 33

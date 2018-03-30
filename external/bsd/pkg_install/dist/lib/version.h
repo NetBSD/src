@@ -1,4 +1,4 @@
-/*	$NetBSD: version.h,v 1.12 2018/02/04 09:00:51 maya Exp $	*/
+/*	$NetBSD: version.h,v 1.12.2.1 2018/03/30 06:20:07 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2001 Thomas Klausner.  All rights reserved.
@@ -27,6 +27,6 @@
 #ifndef _INST_LIB_VERSION_H_
 #define _INST_LIB_VERSION_H_
 
-#define PKGTOOLS_VERSION 20171030
+#define PKGTOOLS_VERSION 20180325
 
 #endif /* _INST_LIB_VERSION_H_ */

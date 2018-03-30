@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.8 2017/04/20 13:18:23 joerg Exp $ */
+/* $NetBSD: lib.h,v 1.8.10.1 2018/03/30 06:20:07 pgoyette Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -374,7 +374,7 @@ struct pkg_vulnerabilities *read_pkg_vulnerabilities_file(const char *, int, int
 struct pkg_vulnerabilities *read_pkg_vulnerabilities_memory(void *, size_t, int);
 void free_pkg_vulnerabilities(struct pkg_vulnerabilities *);
 int audit_package(struct pkg_vulnerabilities *, const char *, const char *,
-    int);
+    int, int);
 
 /* Parse configuration file */
 void pkg_install_config(void);

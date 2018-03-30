@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.206 2018/01/30 11:01:04 ozaki-r Exp $	*/
+/*	$NetBSD: route.c,v 1.206.2.1 2018/03/30 06:20:16 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.206 2018/01/30 11:01:04 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.206.2.1 2018/03/30 06:20:16 pgoyette Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -2147,13 +2147,21 @@ rt_delete_matched_entries(sa_family_t family, int (*f)(struct rtentry *, void *)
 	}
 }
 
+static int
+rt_walktree_locked(sa_family_t family, int (*f)(struct rtentry *, void *),
+    void *v)
+{
+
+	return rtbl_walktree(family, f, v);
+}
+
 int
 rt_walktree(sa_family_t family, int (*f)(struct rtentry *, void *), void *v)
 {
 	int error;
 
 	RT_RLOCK();
-	error = rtbl_walktree(family, f, v);
+	error = rt_walktree_locked(family, f, v);
 	RT_UNLOCK();
 
 	return error;
@@ -2246,6 +2254,8 @@ void
 db_show_routes(db_expr_t addr, bool have_addr,
     db_expr_t count, const char *modif)
 {
-	rt_walktree(AF_INET, db_show_rtentry, NULL);
+
+	/* Taking RT_LOCK will fail if LOCKDEBUG is enabled. */
+	rt_walktree_locked(AF_INET, db_show_rtentry, NULL);
 }
 #endif

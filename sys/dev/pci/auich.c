@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.151 2017/06/01 02:45:11 chs Exp $	*/
+/*	$NetBSD: auich.c,v 1.151.8.1 2018/03/30 06:20:13 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2008 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.151 2017/06/01 02:45:11 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.151.8.1 2018/03/30 06:20:13 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -538,8 +538,8 @@ map_done:
 		return;
 	}
 	intrstr = pci_intr_string(pa->pa_pc, sc->intrh, intrbuf, sizeof(intrbuf));
-	sc->sc_ih = pci_intr_establish(pa->pa_pc, sc->intrh, IPL_AUDIO,
-	    auich_intr, sc);
+	sc->sc_ih = pci_intr_establish_xname(pa->pa_pc, sc->intrh, IPL_AUDIO,
+	    auich_intr, sc, device_xname(sc->sc_dev));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "can't establish interrupt");
 		if (intrstr != NULL)
