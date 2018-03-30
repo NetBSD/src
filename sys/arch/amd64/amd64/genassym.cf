@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.67 2018/01/18 07:25:34 maxv Exp $
+#	$NetBSD: genassym.cf,v 1.68 2018/03/30 10:01:36 maxv Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -358,7 +358,6 @@ define EVTCHN_UPCALL_MASK	offsetof(struct vcpu_info, evtchn_upcall_mask)
 define XEN_PT_BASE		offsetof(struct start_info, pt_base)    
 define XEN_NR_PT_FRAMES		offsetof(struct start_info, nr_pt_frames)
 define __HYPERVISOR_iret	__HYPERVISOR_iret
-define FLAT_RING3_CS64		FLAT_RING3_CS64
 endif
 
 define	NKL4_KIMG_ENTRIES	NKL4_KIMG_ENTRIES
