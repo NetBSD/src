@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_eltorito.c,v 1.21 2017/01/24 11:22:43 nonaka Exp $	*/
+/*	$NetBSD: cd9660_eltorito.c,v 1.21.4.1 2018/03/30 11:07:12 martin Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660_eltorito.c,v 1.21 2017/01/24 11:22:43 nonaka Exp $");
+__RCSID("$NetBSD: cd9660_eltorito.c,v 1.21.4.1 2018/03/30 11:07:12 martin Exp $");
 #endif  /* !__lint */
 
 #ifdef DEBUG
@@ -247,6 +247,7 @@ cd9660_boot_setup_validation_entry(char sys)
 	size_t i;
 	entry = cd9660_init_boot_catalog_entry();
 
+	entry->entry_type = ET_ENTRY_VE;
 	ve = &entry->entry_data.VE;
 
 	ve->header_id[0] = 1;
@@ -281,6 +282,7 @@ cd9660_boot_setup_default_entry(struct cd9660_boot_image *disk)
 	if (default_entry == NULL)
 		return NULL;
 
+	default_entry->entry_type = ET_ENTRY_IE;
 	ie = &default_entry->entry_data.IE;
 
 	ie->boot_indicator[0] = disk->bootable;
@@ -308,6 +310,7 @@ cd9660_boot_setup_section_head(char platform)
 	if (entry == NULL)
 		return NULL;
 
+	entry->entry_type = ET_ENTRY_SH;
 	sh = &entry->entry_data.SH;
 	/* More by default. The last one will manually be set to 0x91 */
 	sh->header_indicator[0] = ET_SECTION_HEADER_MORE;
@@ -324,6 +327,7 @@ cd9660_boot_setup_section_entry(struct cd9660_boot_image *disk)
 	if ((entry = cd9660_init_boot_catalog_entry()) == NULL)
 		return NULL;
 
+	entry->entry_type = ET_ENTRY_SE;
 	se = &entry->entry_data.SE;
 
 	se->boot_indicator[0] = ET_BOOTABLE;
@@ -493,6 +497,12 @@ cd9660_setup_boot(iso9660_disk *diskStructure, int first_sector)
 		LIST_INSERT_AFTER(head, temp, ll_struct);
 	}
 
+	/* Find the last Section Header entry and mark it as the last. */
+	head = NULL;
+	LIST_FOREACH(next, &diskStructure->boot_entries, ll_struct) {
+		if (next->entry_type == ET_ENTRY_SH)
+			head = next;
+	}
 	if (head != NULL)
 		head->entry_data.SH.header_indicator[0] = ET_SECTION_HEADER_LAST;
 
