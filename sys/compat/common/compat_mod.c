@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_mod.c,v 1.24.14.26 2018/03/30 05:35:47 pgoyette Exp $	*/
+/*	$NetBSD: compat_mod.c,v 1.24.14.27 2018/03/30 10:09:07 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.24.14.26 2018/03/30 05:35:47 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.24.14.27 2018/03/30 10:09:07 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -177,10 +177,10 @@ struct compat_init_fini {
 #ifdef COMPAT_16
 	{ compat_16_init, compat_16_fini },
 #endif
-#if 0	/* NOT YET */
 #ifdef COMPAT_14
 	{ compat_14_init, compat_14_fini },
 #endif
+#if 0	/* NOT YET */
 #ifdef COMPAT_13
 	{ compat_13_init, compat_13_fini },
 #endif

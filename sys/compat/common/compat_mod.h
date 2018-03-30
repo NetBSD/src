@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_mod.h,v 1.1.42.14 2018/03/30 05:35:47 pgoyette Exp $	*/
+/*	$NetBSD: compat_mod.h,v 1.1.42.15 2018/03/30 10:09:07 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -121,6 +121,13 @@ int compat_16_init(void);
 int compat_16_fini(void);
 int kern_sig_16_init(void);
 int kern_sig_16_fini(void);
+#endif
+
+#ifdef COMPAT_14
+int compat_14_init(void);
+int compat_14_fini(void);
+void rtsock_14_init(void);
+void rtsock_14_fini(void);
 #endif
 
 #endif /* !_COMPAT_MOD_H_ */

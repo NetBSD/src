@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.157.2.2 2018/03/30 06:20:11 pgoyette Exp $	*/
+/*	$NetBSD: locore.S,v 1.157.2.3 2018/03/30 10:09:07 pgoyette Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1102,9 +1102,11 @@ ENTRY(cpu_switchto)
 	movq	%r12,%rsi
 #endif
 
+#ifndef XEN
 	pushq	%rdx
 	callq	_C_LABEL(speculation_barrier)
 	popq	%rdx
+#endif
 
 	/* Switch to newlwp's stack. */
 	movq	L_PCB(%r12),%r14

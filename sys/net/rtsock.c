@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.238.2.2 2018/03/22 01:44:51 pgoyette Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.238.2.3 2018/03/30 10:09:08 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.238.2.2 2018/03/22 01:44:51 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.238.2.3 2018/03/30 10:09:08 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -83,6 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.238.2.2 2018/03/22 01:44:51 pgoyette Ex
 #include <sys/kmem.h>
 #include <sys/intr.h>
 #include <sys/condvar.h>
+#include <sys/compat_stub.h>
 
 #include <net/if.h>
 #include <net/if_llatbl.h>
@@ -1524,9 +1525,7 @@ COMPATNAME(rt_ifmsg)(struct ifnet *ifp)
 	if (m == NULL)
 		return;
 	COMPATNAME(route_enqueue)(m, 0);
-#ifdef COMPAT_14
-	compat_14_rt_oifmsg(ifp);
-#endif
+	(*rtsock14_oifmsg)(ifp);
 #ifdef COMPAT_50
 	compat_50_rt_oifmsg(ifp);
 #endif
@@ -1892,12 +1891,10 @@ sysctl_iflist(int af, struct rt_walkarg *w, int type)
 		cmd = RTM_IFINFO;
 		iflist_if = sysctl_iflist_if;
 		break;
-#ifdef COMPAT_14
 	case NET_RT_OOOIFLIST:
 		cmd = RTM_OOIFINFO;
-		iflist_if = compat_14_iflist;
+		iflist_if = rtsock14_iflist;
 		break;
-#endif
 #ifdef COMPAT_50
 	case NET_RT_OOIFLIST:
 		cmd = RTM_OIFINFO;
@@ -1936,8 +1933,11 @@ sysctl_iflist(int af, struct rt_walkarg *w, int type)
 			goto release_exit;
 		info.rti_info[RTAX_IFP] = NULL;
 		if (w->w_where && w->w_tmem && w->w_needed <= 0) {
-			if ((error = iflist_if(ifp, w, &info, len)) != 0)
+			if ((error = iflist_if(ifp, w, &info, len)) != 0) {
+				if (error == ENOSYS)
+					error = EINVAL;
 				goto release_exit;
+			}
 		}
 		_s = pserialize_read_enter();
 		IFADDR_READER_FOREACH(ifa, ifp) {

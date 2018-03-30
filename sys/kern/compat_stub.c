@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.c,v 1.1.2.12 2018/03/30 02:28:49 pgoyette Exp $	*/
+/* $NetBSD: compat_stub.c,v 1.1.2.13 2018/03/30 10:09:08 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -142,3 +142,9 @@ int (*ieee80211_get_ostats_20)(struct ieee80211_ostats *,
 
 int (*if43_20_cvtcmd)(int) = (void *)enosys;
 
+/*
+ * rtsock 14 compatability
+ */
+void (*rtsock14_oifmsg)(struct ifnet *) = (void *)voidop;
+int (*rtsock14_iflist)(struct ifnet *, struct rt_walkarg *,
+    struct rt_addrinfo *, size_t) = (void *)enosys;

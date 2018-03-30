@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock_14.c,v 1.5 2016/11/03 03:37:06 riastradh Exp $	*/
+/*	$NetBSD: rtsock_14.c,v 1.5.14.1 2018/03/30 10:09:07 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock_14.c,v 1.5 2016/11/03 03:37:06 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock_14.c,v 1.5.14.1 2018/03/30 10:09:07 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -77,6 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: rtsock_14.c,v 1.5 2016/11/03 03:37:06 riastradh Exp 
 #include <sys/protosw.h>
 #include <sys/sysctl.h>
 #include <sys/kauth.h>
+#include <sys/compat_stub.h>
 #ifdef RTSOCK_DEBUG
 #include <netinet/in.h>
 #endif /* RTSOCK_DEBUG */
@@ -87,6 +88,8 @@ __KERNEL_RCSID(0, "$NetBSD: rtsock_14.c,v 1.5 2016/11/03 03:37:06 riastradh Exp 
 
 #include <compat/net/if.h>
 #include <compat/net/route.h>
+
+#include <compat/common/compat_mod.h>
 
 void
 compat_14_rt_oifmsg(struct ifnet *ifp)
@@ -164,4 +167,20 @@ compat_14_iflist(struct ifnet *ifp, struct rt_walkarg *w,
 		return error;
 	w->w_where = (char *)w->w_where + len;
 	return 0;
+}
+
+void
+rtsock_14_init(void)
+{
+
+	rtsock14_oifmsg = compat_14_rt_oifmsg;
+	rtsock14_iflist = compat_14_iflist;
+}
+
+void
+rtsock_14_fini(void)
+{
+
+	rtsock14_oifmsg = (void *)voidop;
+	rtsock14_iflist = (void *)enosys;
 }
