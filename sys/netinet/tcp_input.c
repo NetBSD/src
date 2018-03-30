@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.401 2018/03/29 21:40:53 rmind Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.402 2018/03/30 07:11:40 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.401 2018/03/29 21:40:53 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.402 2018/03/30 07:11:40 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -3236,7 +3236,8 @@ tcp_dooptions(struct tcpcb *tp, const u_char *cp, int cnt, struct tcphdr *th,
 		case TCPOPT_SIGNATURE:
 			if (optlen != TCPOLEN_SIGNATURE)
 				continue;
-			if (sigp && memcmp(sigp, cp + 2, TCP_SIGLEN))
+			if (sigp &&
+			    !consttime_memequal(sigp, cp + 2, TCP_SIGLEN))
 				return (-1);
 
 			sigp = sigbuf;
@@ -3269,7 +3270,7 @@ tcp_dooptions(struct tcpcb *tp, const u_char *cp, int cnt, struct tcphdr *th,
 		}
 		tcp_fields_to_host(th);
 
-		if (memcmp(sig, sigp, TCP_SIGLEN)) {
+		if (!consttime_memequal(sig, sigp, TCP_SIGLEN)) {
 			TCP_STATINC(TCP_STAT_BADSIG);
 			goto out;
 		} else
