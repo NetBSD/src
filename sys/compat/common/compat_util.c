@@ -1,4 +1,4 @@
-/* 	$NetBSD: compat_util.c,v 1.46.18.1 2018/03/06 10:37:41 pgoyette Exp $	*/
+/* 	$NetBSD: compat_util.c,v 1.46.18.2 2018/03/30 23:57:59 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_util.c,v 1.46.18.1 2018/03/06 10:37:41 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_util.c,v 1.46.18.2 2018/03/30 23:57:59 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,6 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: compat_util.c,v 1.46.18.1 2018/03/06 10:37:41 pgoyet
 #include <sys/vnode.h>
 #include <sys/syslog.h>
 #include <sys/mount.h>
+#include <sys/module.h>
 
 #include <compat/common/compat_util.h>
 
@@ -155,3 +156,21 @@ compat_elf_check_interp(struct exec_package *epp,
 	}
 	return error;
 }
+
+#ifdef _MODULE
+
+MODULE(MODULE_CLASS_MISC, compat_util, NULL);
+
+int
+compat_util_modcmd(modcmd_t cmd, void *arg)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+	case MODULE_CMD_FINI:
+		return 0;
+	default:
+		return ENOTTY;
+	}
+}
+#endif	/* _MODULE */
