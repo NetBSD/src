@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_common.c,v 1.19 2018/03/30 03:58:20 knakahara Exp $ */
+/* $NetBSD: ixgbe_common.c,v 1.20 2018/03/30 06:44:30 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -5427,6 +5427,13 @@ s32 ixgbe_setup_mac_link_multispeed_fiber(struct ixgbe_hw *hw,
 			goto out;
 	}
 
+	if (speed == 0) {
+		/* Disable the Tx laser for media none */
+		ixgbe_disable_tx_laser(hw);
+
+		goto out;
+	}
+	
 	/* We didn't get link.  Configure back to the highest speed we tried,
 	 * (if there was more than one).  We call ourselves back with just the
 	 * single highest speed that the user requested.

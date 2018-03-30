@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_common.h,v 1.10 2018/03/15 06:48:51 msaitoh Exp $ */
+/* $NetBSD: ixgbe_common.h,v 1.11 2018/03/30 06:44:30 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -177,7 +177,6 @@ s32 ixgbe_bypass_set_generic(struct ixgbe_hw *hw, u32 ctrl, u32 event,
 			     u32 action);
 s32 ixgbe_bypass_rd_eep_generic(struct ixgbe_hw *hw, u32 addr, u8 *value);
 
-extern s32 ixgbe_reset_pipeline_82599(struct ixgbe_hw *hw);
 extern void ixgbe_stop_mac_link_on_d3_82599(struct ixgbe_hw *hw);
 bool ixgbe_mng_present(struct ixgbe_hw *hw);
 bool ixgbe_mng_enabled(struct ixgbe_hw *hw);

@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.139 2018/03/30 03:58:20 knakahara Exp $ */
+/* $NetBSD: ixgbe.c,v 1.140 2018/03/30 06:44:30 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -1377,6 +1377,8 @@ ixgbe_add_media_types(struct adapter *adapter)
 
 #define	ADD(mm, dd)							\
 	ifmedia_add(&adapter->media, IFM_ETHER | (mm), (dd), NULL);
+
+	ADD(IFM_NONE, 0);
 
 	/* Media types with matching NetBSD media defines */
 	if (layer & IXGBE_PHYSICAL_LAYER_10GBASE_T) {
@@ -2828,6 +2830,8 @@ ixgbe_media_change(struct ifnet *ifp)
 		break;
 	case IFM_10_T:
 		speed |= IXGBE_LINK_SPEED_10_FULL;
+		break;
+	case IFM_NONE:
 		break;
 	default:
 		goto invalid;
