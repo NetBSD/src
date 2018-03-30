@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.275 2017/10/25 08:12:39 maya Exp $	*/
+/*	$NetBSD: tty.c,v 1.276 2018/03/30 22:59:43 maya Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.275 2017/10/25 08:12:39 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.276 2018/03/30 22:59:43 maya Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -302,8 +302,8 @@ sysctl_kern_tty_setup(void)
 	sysctl_createv(&kern_tkstat_sysctllog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "tkstat",
-		       SYSCTL_DESCR("Number of characters sent and and "
-				    "received on ttys"),
+		       SYSCTL_DESCR("Number of characters sent and received "
+				    "on ttys"),
 		       NULL, 0, NULL, 0,
 		       CTL_KERN, KERN_TKSTAT, CTL_EOL);
 
