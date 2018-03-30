@@ -1,4 +1,4 @@
-/*	$NetBSD: amd64_trap.S,v 1.37.2.1 2018/03/22 01:44:41 pgoyette Exp $	*/
+/*	$NetBSD: amd64_trap.S,v 1.37.2.2 2018/03/30 06:20:10 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008, 2017 The NetBSD Foundation, Inc.
@@ -134,6 +134,7 @@ IDTVEC(trap02)
 	ZTRAP_NJ(T_NMI)
 	subq	$TF_REGSIZE,%rsp
 	INTR_SAVE_GPRS
+	IBRS_ENTER
 	SVS_ENTER_ALTSTACK
 	cld
 	SMAP_ENABLE
@@ -162,6 +163,7 @@ IDTVEC(trap02)
 	SVS_LEAVE_ALTSTACK
 
 .Lnmileave:
+	IBRS_LEAVE
 	INTR_RESTORE_GPRS
 	addq	$TF_REGSIZE+16,%rsp
 	iretq
@@ -231,6 +233,7 @@ IDTVEC(trap08)
 	TRAP_NJ(T_DOUBLEFLT)
 	subq	$TF_REGSIZE,%rsp
 	INTR_SAVE_GPRS
+	IBRS_ENTER
 	SVS_ENTER_ALTSTACK
 	testb	$SEL_UPL,TF_CS(%rsp)
 	jz	1f
@@ -248,6 +251,7 @@ IDTVEC(trap08)
 	call	_C_LABEL(doubletrap)
 
 	SVS_LEAVE_ALTSTACK
+	IBRS_LEAVE
 	INTR_RESTORE_GPRS
 
 	testb	$SEL_UPL,TF_CS(%rsp)

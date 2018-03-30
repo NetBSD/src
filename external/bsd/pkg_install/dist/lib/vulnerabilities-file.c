@@ -1,4 +1,4 @@
-/*	$NetBSD: vulnerabilities-file.c,v 1.2 2017/04/20 13:18:23 joerg Exp $	*/
+/*	$NetBSD: vulnerabilities-file.c,v 1.2.10.1 2018/03/30 06:20:07 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -38,7 +38,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: vulnerabilities-file.c,v 1.2 2017/04/20 13:18:23 joerg Exp $");
+__RCSID("$NetBSD: vulnerabilities-file.c,v 1.2.10.1 2018/03/30 06:20:07 pgoyette Exp $");
 
 #if HAVE_SYS_STAT_H
 #include <sys/stat.h>
@@ -608,18 +608,19 @@ check_ignored_entry(struct pkg_vulnerabilities *pv, size_t i)
 
 int
 audit_package(struct pkg_vulnerabilities *pv, const char *pkgname,
-    const char *limit_vul_types, int output_type)
+    const char *limit_vul_types, int include_ignored, int output_type)
 {
 	FILE *output = output_type == 1 ? stdout : stderr;
 	size_t i;
-	int retval, do_eol;
+	int retval, do_eol, ignored;
 
 	retval = 0;
 
 	do_eol = (strcasecmp(check_eol, "yes") == 0);
 
 	for (i = 0; i < pv->entries; ++i) {
-		if (check_ignored_entry(pv, i))
+		ignored = check_ignored_entry(pv, i);
+		if (ignored && !include_ignored)
 			continue;
 		if (limit_vul_types != NULL &&
 		    strcmp(limit_vul_types, pv->classification[i]))
@@ -642,11 +643,13 @@ audit_package(struct pkg_vulnerabilities *pv, const char *pkgname,
 		}
 		retval = 1;
 		if (output_type == 0) {
-			puts(pkgname);
+			fprintf(stdout, "%s%s\n",
+				pkgname, ignored ? " (ignored)" : "");
 		} else {
 			fprintf(output,
-			    "Package %s has a %s vulnerability, see %s\n",
-			    pkgname, pv->classification[i], pv->advisory[i]);
+			    "Package %s has a%s %s vulnerability, see %s\n",
+			    pkgname, ignored ? "n ignored" : "",
+			    pv->classification[i], pv->advisory[i]);
 		}
 	}
 	return retval;

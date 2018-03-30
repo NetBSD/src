@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ping.c,v 1.17 2017/01/13 21:30:42 christos Exp $	*/
+/*	$NetBSD: t_ping.c,v 1.17.12.1 2018/03/30 06:20:16 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: t_ping.c,v 1.17 2017/01/13 21:30:42 christos Exp $");
+__RCSID("$NetBSD: t_ping.c,v 1.17.12.1 2018/03/30 06:20:16 pgoyette Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -182,17 +182,23 @@ doping(const char *target, int loops, u_int pktsize)
 		icmp->icmp_seq = htons(loop);
 		icmp->icmp_cksum = 0;
 		icmp->icmp_cksum = in_cksum(icmp, pktsize);
-		RL(rump_sys_sendto(s, icmp, pktsize, 0,
-		    (struct sockaddr *)&dst, sizeof(dst)));
+
+		n = rump_sys_sendto(s, icmp, pktsize, 0,
+		    (struct sockaddr *)&dst, sizeof(dst));
+		if (n == -1) {
+			if (errno == ENOBUFS)
+				continue;
+			atf_tc_fail_errno("sendto failed");
+		}
 
 		RL(rump_sys_fcntl(s, F_SETFL, xnon));
 		while ((n = rump_sys_recvfrom(s, recvbuf, sizeof(recvbuf), 0,
 		    (struct sockaddr *)&pingee, &slen)) > 0) {
 			succ++;
 		}
-		if (n == -1 && errno == EAGAIN)
+		if (n == -1 && (errno == EAGAIN || errno == ENOBUFS))
 			continue;
-		atf_tc_fail_errno("recv failed");
+		atf_tc_fail_errno("recv failed (n == %zd)", n);
 	}
 
 	rump_sys_close(s);
@@ -329,6 +335,7 @@ ATF_TC_BODY(ping_of_death, tc)
 	pid_t cpid;
 	size_t tot, frag;
 	int s, x, loop;
+	ssize_t error;
 
 	cpid = fork();
 	rump_init();
@@ -412,15 +419,22 @@ ATF_TC_BODY(ping_of_death, tc)
 				ip->ip_off |= IP_MF;
 			}
 
-			RL(rump_sys_sendto(s, data, frag, 0,
-			    (struct sockaddr *)&dst, sizeof(dst)));
+			error = rump_sys_sendto(s, data, frag, 0,
+			    (struct sockaddr *)&dst, sizeof(dst));
+			if (error == -1) {
+				if (errno == ENOBUFS)
+					continue;
+				atf_tc_fail_errno("sendto failed");
+			}
+			if ((size_t)error != frag)
+				atf_tc_fail("sendto did not write all data");
 		}
 		if (waitpid(-1, &status, WNOHANG) > 0) {
 			if (WIFEXITED(status) && WEXITSTATUS(status) == 0)
 				break;
 			atf_tc_fail("child did not exit clean");
 		}
-			
+
 		usleep(10000);
 	}
 }

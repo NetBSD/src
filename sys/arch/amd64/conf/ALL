@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.82.2.1 2018/03/22 01:44:41 pgoyette Exp $
+# $NetBSD: ALL,v 1.82.2.2 2018/03/30 06:20:11 pgoyette Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"ALL-$Revision: 1.82.2.1 $"
+#ident		"ALL-$Revision: 1.82.2.2 $"
 
 maxusers	64		# estimated number of users
 
@@ -2257,7 +2257,6 @@ options TC5165DEBUG
 options TCICDEBUG
 options TCICISADEBUG
 options TCPISS_DEBUG
-options TCPREASS_DEBUG
 options TCTRLDEBUG
 options TIMECOUNTER_DEBUG
 options TIMEKEEPER_DEBUG

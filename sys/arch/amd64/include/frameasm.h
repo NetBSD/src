@@ -1,4 +1,4 @@
-/*	$NetBSD: frameasm.h,v 1.37 2018/02/25 13:14:27 maxv Exp $	*/
+/*	$NetBSD: frameasm.h,v 1.37.2.1 2018/03/30 06:20:11 pgoyette Exp $	*/
 
 #ifndef _AMD64_MACHINE_FRAMEASM_H
 #define _AMD64_MACHINE_FRAMEASM_H
@@ -44,6 +44,8 @@
 #define HP_NAME_SVS_LEAVE	6
 #define HP_NAME_SVS_ENTER_ALT	7
 #define HP_NAME_SVS_LEAVE_ALT	8
+#define HP_NAME_IBRS_ENTER	9
+#define HP_NAME_IBRS_LEAVE	10
 
 #define HOTPATCH(name, size) \
 123:						; \
@@ -60,6 +62,26 @@
 #define SMAP_DISABLE \
 	HOTPATCH(HP_NAME_STAC, 3)		; \
 	.byte 0x0F, 0x1F, 0x00			; \
+
+/*
+ * IBRS
+ */
+
+#define IBRS_ENTER_BYTES	17
+#define IBRS_ENTER \
+	HOTPATCH(HP_NAME_IBRS_ENTER, IBRS_ENTER_BYTES)		; \
+	NOIBRS_ENTER
+#define NOIBRS_ENTER \
+	.byte 0xEB, (IBRS_ENTER_BYTES-2)	/* jmp */	; \
+	.fill	(IBRS_ENTER_BYTES-2),1,0xCC
+
+#define IBRS_LEAVE_BYTES	21
+#define IBRS_LEAVE \
+	HOTPATCH(HP_NAME_IBRS_LEAVE, IBRS_LEAVE_BYTES)		; \
+	NOIBRS_LEAVE
+#define NOIBRS_LEAVE \
+	.byte 0xEB, (IBRS_LEAVE_BYTES-2)	/* jmp */	; \
+	.fill	(IBRS_LEAVE_BYTES-2),1,0xCC
 
 #define	SWAPGS	NOT_XEN(swapgs)
 
@@ -158,6 +180,7 @@
 	testb	$SEL_UPL,TF_CS(%rsp)	; \
 	je	98f			; \
 	SWAPGS				; \
+	IBRS_ENTER			; \
 	SVS_ENTER			; \
 	movw	%gs,TF_GS(%rsp)		; \
 	movw	%fs,TF_FS(%rsp)		; \

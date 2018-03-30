@@ -1,4 +1,4 @@
-/*	$NetBSD: snapper.c,v 1.43 2018/01/29 19:33:39 macallan Exp $	*/
+/*	$NetBSD: snapper.c,v 1.43.2.1 2018/03/30 06:20:11 pgoyette Exp $	*/
 /*	Id: snapper.c,v 1.11 2002/10/31 17:42:13 tsubai Exp	*/
 /*	Id: i2s.c,v 1.12 2005/01/15 14:32:35 tsubai Exp		*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.43 2018/01/29 19:33:39 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.43.2.1 2018/03/30 06:20:11 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -145,8 +145,8 @@ static void snapper_set_bass(struct snapper_softc *, u_int);
 static void snapper_write_mixers(struct snapper_softc *);
 
 static int tas3004_write(struct snapper_softc *, u_int, const void *);
-static int gpio_read(char *);
-static void gpio_write(char *, int);
+static int gpio_read(bus_size_t);
+static void gpio_write(bus_size_t, int);
 static void snapper_mute_speaker(struct snapper_softc *, int);
 static void snapper_mute_headphone(struct snapper_softc *, int);
 static int snapper_cint(void *);
@@ -549,11 +549,11 @@ static const struct audio_format tumbler_formats[TUMBLER_NFORMATS] = {
 	 2, AUFMT_STEREO, 4, {32000, 44100, 48000, 96000}},
 };
 
-static u_char *amp_mute;
-static u_char *headphone_mute;
-static u_char *audio_hw_reset;
-static u_char *headphone_detect;
-static int headphone_detect_active;
+static bus_size_t amp_mute;
+static bus_size_t headphone_mute;
+static bus_size_t audio_hw_reset;
+static bus_size_t headphone_detect;
+static uint8_t headphone_detect_active;
 
 
 /* I2S registers */
@@ -761,13 +761,31 @@ snapper_attach(device_t parent, device_t self, void *aux)
 				     sizeof(struct dbdma_command), NULL);
 
 	sc->sc_baseaddr = ca->ca_baseaddr;
+
 	OF_getprop(soundbus, "reg", reg, sizeof reg);
+	/* deal with messed up properties on PowerMac7,3 abd friends */
+	if (reg[0] == 0) {
+		reg[0] += ca->ca_reg[0];
+		reg[2] += ca->ca_reg[2];
+		reg[4] += ca->ca_reg[2];
+	}
 	reg[0] += ca->ca_baseaddr;
 	reg[2] += ca->ca_baseaddr;
 	reg[4] += ca->ca_baseaddr;
 
 	sc->sc_node = ca->ca_node;
 	sc->sc_tag = ca->ca_tag;
+
+#ifdef SNAPPER_DEBUG
+	{
+		int i;
+		printf("\n");
+		for (i = 0; i < 6; i++) {
+			printf(" %08x", reg[i]);
+		}
+		printf("\n");
+	}
+#endif
 
 	bus_space_map(sc->sc_tag, reg[0], reg[1], 0, &sc->sc_bsh);
 	bus_space_map(sc->sc_tag, reg[2], reg[3],
@@ -777,6 +795,8 @@ snapper_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_odma = bus_space_vaddr(sc->sc_tag, sc->sc_odmah);
 	sc->sc_idma = bus_space_vaddr(sc->sc_tag, sc->sc_idmah);
+
+	DPRINTF("reg %08x odma %08x\n", (uint32_t)sc->sc_bsh, (uint32_t)sc->sc_odmah);
 
 	OF_getprop(soundbus, "interrupts", intr, sizeof intr);
 	cirq = intr[0];
@@ -1894,24 +1914,23 @@ tas3004_write(struct snapper_softc *sc, u_int reg, const void *data)
 }
 
 static int
-gpio_read(char *addr)
+gpio_read(bus_size_t addr)
 {
 
-	if (*addr & GPIO_DATA)
+	if (obio_read_1(addr) & GPIO_DATA)
 		return 1;
 	return 0;
 }
 
 static void
-gpio_write(char *addr, int val)
+gpio_write(bus_size_t addr, int val)
 {
-	u_int data;
+	uint8_t data;
 
 	data = GPIO_DDR_OUTPUT;
 	if (val)
 		data |= GPIO_DATA;
-	*addr = data;
-	__asm volatile ("eieio");
+	obio_write_1(addr, data);
 }
 
 #define headphone_active 0	/* XXX OF */
@@ -1920,7 +1939,7 @@ gpio_write(char *addr, int val)
 static void
 snapper_mute_speaker(struct snapper_softc *sc, int mute)
 {
-	u_int x;
+	int x;
 
 	if (amp_mute) {
 		DPRINTF("ampmute %d --> ", gpio_read(amp_mute));
@@ -1941,7 +1960,7 @@ snapper_mute_headphone(struct snapper_softc *sc, int mute)
 {
 	u_int x;
 
-	if (headphone_mute != NULL) {
+	if (headphone_mute != 0) {
 		DPRINTF("headphonemute %d --> ", gpio_read(headphone_mute));
 
 		if (mute)
@@ -1961,9 +1980,9 @@ snapper_cint(void *v)
 	struct snapper_softc *sc;
 	u_int sense;
 
-	if (headphone_detect != NULL) {
+	if (headphone_detect != 0) {
 		sc = v;
-		sense = *headphone_detect;
+		sense = obio_read_1(headphone_detect);
 		DPRINTF("headphone detect = 0x%x\n", sense);
 
 		if (((sense & 0x02) >> 1) == headphone_detect_active) {
@@ -1992,7 +2011,7 @@ tas3004_init(struct snapper_softc *sc)
 {
 
 	/* No reset port.  Nothing to do. */
-	if (audio_hw_reset == NULL)
+	if (audio_hw_reset == 0)
 		goto noreset;
 
 	/* Reset TAS3004. */
@@ -2045,13 +2064,17 @@ snapper_init(struct snapper_softc *sc, int node)
 {
 	int gpio;
 	int headphone_detect_intr;
-	uint32_t gpio_base, reg[1];
+	uint32_t gpio_base, reg[1], fcreg;
 #ifdef SNAPPER_DEBUG
 	char fcr[32];
 
 	snprintb(fcr, sizeof(fcr),  FCR3C_BITMASK, obio_read_4(KEYLARGO_FCR1));
 	printf("FCR(0x3c) %s\n", fcr);
 #endif
+	fcreg = obio_read_4(KEYLARGO_FCR1);
+	fcreg |= I2S0CLKEN | I2S0EN;
+	obio_write_4(KEYLARGO_FCR1, fcreg);
+
 	headphone_detect_intr = -1;
 
 	gpio = of_getnode_byname(OF_parent(node), "gpio");
@@ -2065,7 +2088,7 @@ snapper_init(struct snapper_softc *sc, int node)
 	while (gpio) {
 		char name[64], audio_gpio[64];
 		int intr[2];
-		char *addr;
+		bus_size_t addr;
 
 		memset(name, 0, sizeof name);
 		memset(audio_gpio, 0, sizeof audio_gpio);
@@ -2075,9 +2098,14 @@ snapper_init(struct snapper_softc *sc, int node)
 		if (OF_getprop(gpio, "AAPL,address", &addr, sizeof addr) == -1)
 			if (OF_getprop(gpio, "reg", reg, sizeof reg)
 			    == sizeof reg)
-				addr = (char *)sc->sc_baseaddr +
-				    gpio_base + reg[0];
-		DPRINTF(" 0x%x %s %s\n", gpio, name, audio_gpio);
+				addr = gpio_base + reg[0];
+		/*
+		 * XXX
+		 * APL,address contains the absolute address, we only want the
+		 * offset from mac-io's base address
+		 */
+		addr &= 0x7fff;
+		DPRINTF(" 0x%x %s %s %08x\n", gpio, name, audio_gpio, addr);
 
 		/* gpio5 */
 		if (strcmp(audio_gpio, "headphone-mute") == 0 ||
@@ -2105,12 +2133,12 @@ snapper_init(struct snapper_softc *sc, int node)
 		gpio = OF_peer(gpio);
 	}
 
-	DPRINTF(" headphone-mute %p\n", headphone_mute);
-	DPRINTF(" amp-mute %p\n", amp_mute);
-	DPRINTF(" headphone-detect %p\n", headphone_detect);
+	DPRINTF(" headphone-mute %x\n", headphone_mute);
+	DPRINTF(" amp-mute %x\n", amp_mute);
+	DPRINTF(" headphone-detect %x\n", headphone_detect);
 	DPRINTF(" headphone-detect active %x\n", headphone_detect_active);
 	DPRINTF(" headphone-detect intr %x\n", headphone_detect_intr);
-	DPRINTF(" audio-hw-reset %p\n", audio_hw_reset);
+	DPRINTF(" audio-hw-reset %x\n", audio_hw_reset);
 
 	if (headphone_detect_intr != -1)
 		intr_establish(headphone_detect_intr, IST_EDGE, IPL_AUDIO,
@@ -2120,9 +2148,9 @@ snapper_init(struct snapper_softc *sc, int node)
 	sc->sc_bitspersample = 16;
 
 	/* Enable headphone interrupt? */
-	if (headphone_detect != NULL) {
-		*headphone_detect |= 0x80;
-		__asm volatile ("eieio");
+	if (headphone_detect != 0) {
+		obio_write_1(headphone_detect,
+		    obio_read_1(headphone_detect) | 0x80);
 	}
 
 	if (tas3004_init(sc))

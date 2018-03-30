@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1504.2.1 2018/03/22 01:44:40 pgoyette Exp $
+#	$NetBSD: 3RDPARTY,v 1.1504.2.2 2018/03/30 06:20:06 pgoyette Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -334,8 +334,8 @@ Notes:
 Use the dhcp2netbsd script.
 
 Package:	dhcpcd
-Version:	7.0.1
-Current Vers:	7.0.1
+Version:	7.0.2
+Current Vers:	7.0.2
 Maintainer:	roy
 Archive Site:	ftp://roy.marples.name/pub/dhcpcd/
 Home Page:	http://roy.marples.name/projects/dhcpcd/
@@ -1411,8 +1411,8 @@ Notes:
 Added changes from a5 -> a12 manually.
 
 Package:	tz
-Version:	tzcode2018c / tzdata2018c
-Current Vers:	tzcode2018c / tzdata2018c
+Version:	tzcode2018c / tzdata2018d
+Current Vers:	tzcode2018d / tzdata2018d
 Maintainer:	Paul Eggert <eggert@cs.ucla.edu>
 Archive Site:	ftp://ftp.iana.org/tz/releases/
 Archive Site:	ftp://munnari.oz.au/pub/oldtz/

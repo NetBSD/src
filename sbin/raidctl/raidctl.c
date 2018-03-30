@@ -1,4 +1,4 @@
-/*      $NetBSD: raidctl.c,v 1.66 2018/01/18 00:32:49 mrg Exp $   */
+/*      $NetBSD: raidctl.c,v 1.66.2.1 2018/03/30 06:20:10 pgoyette Exp $   */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: raidctl.c,v 1.66 2018/01/18 00:32:49 mrg Exp $");
+__RCSID("$NetBSD: raidctl.c,v 1.66.2.1 2018/03/30 06:20:10 pgoyette Exp $");
 #endif
 
 
@@ -653,7 +653,7 @@ rf_output_configuration(int fd, const char *name)
 	component_label.row = component_num / num_cols;
 	component_label.column = component_num % num_cols;
 	label_ptr = &component_label;
-	do_ioctl(fd, RAIDFRAME_GET_COMPONENT_LABEL, &label_ptr,
+	do_ioctl(fd, RAIDFRAME_GET_COMPONENT_LABEL, label_ptr,
 		  "RAIDFRAME_GET_COMPONENT_LABEL");
 
 	printf("START layout\n");
@@ -753,7 +753,7 @@ get_component_label(int fd, char *component)
 	component_label.column = component_num % num_cols;
 
 	label_ptr = &component_label;
-	do_ioctl( fd, RAIDFRAME_GET_COMPONENT_LABEL, &label_ptr,
+	do_ioctl( fd, RAIDFRAME_GET_COMPONENT_LABEL, label_ptr,
 		  "RAIDFRAME_GET_COMPONENT_LABEL");
 
 	printf("Component label for %s:\n",component);
@@ -1027,7 +1027,7 @@ do_meter(int fd, u_long option)
 	pInfoPtr=&progressInfo;
 
 	percent_done = 0;
-	do_ioctl(fd, option, &pInfoPtr, "");
+	do_ioctl(fd, option, pInfoPtr, "");
 	start_value = progressInfo.completed;
 	current_time = start_time;
 	simple_eta = 0;
@@ -1090,7 +1090,7 @@ do_meter(int fd, u_long option)
 		if (gettimeofday(&current_time,NULL) == -1)
 			err(1, "gettimeofday failed!?!?");
 
-		do_ioctl( fd, option, &pInfoPtr, "");
+		do_ioctl( fd, option, pInfoPtr, "");
 		
 
 	}

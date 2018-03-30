@@ -1,4 +1,4 @@
-/*	$NetBSD: uninorth.c,v 1.18.16.1 2018/03/22 01:44:46 pgoyette Exp $	*/
+/*	$NetBSD: uninorth.c,v 1.18.16.2 2018/03/30 06:20:12 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uninorth.c,v 1.18.16.1 2018/03/22 01:44:46 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uninorth.c,v 1.18.16.2 2018/03/30 06:20:12 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -36,6 +36,7 @@ __KERNEL_RCSID(0, "$NetBSD: uninorth.c,v 1.18.16.1 2018/03/22 01:44:46 pgoyette 
 #include <dev/pci/pcivar.h>
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_pci.h>
+#include <powerpc/oea/cpufeat.h>
 
 #include <machine/autoconf.h>
 #include <machine/pio.h>
@@ -161,13 +162,13 @@ uninorth_attach(device_t parent, device_t self, void *aux)
 	pc->pc_memt = &sc->sc_memt;
 
 	if (ver < 3) {
-		pc->pc_addr = mapiodev(reg[0] + 0x800000, 4, false);
-		pc->pc_data = mapiodev(reg[0] + 0xc00000, 8, false);
+		pc->pc_addr = oea_mapiodev(reg[0] + 0x800000, 4);
+		pc->pc_data = oea_mapiodev(reg[0] + 0xc00000, 8);
 		pc->pc_conf_read = uninorth_conf_read;
 		pc->pc_conf_write = uninorth_conf_write;
 	} else {
-		pc->pc_addr = mapiodev(reg[1] + 0x800000, 4, false);
-		pc->pc_data = mapiodev(reg[1] + 0xc00000, 8, false);
+		pc->pc_addr = oea_mapiodev(reg[1] + 0x800000, 4);
+		pc->pc_data = oea_mapiodev(reg[1] + 0xc00000, 8);
 		pc->pc_conf_read = uninorth_conf_read_v3;
 		pc->pc_conf_write = uninorth_conf_write_v3;
 	}

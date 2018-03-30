@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.103 2017/12/17 17:18:34 chs Exp $	*/
+/*	$NetBSD: cpu.h,v 1.103.2.1 2018/03/30 06:20:12 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -162,7 +162,11 @@ struct cpu_hatch_data {
 	struct cpu_info *hatch_ci;
 	uint32_t hatch_tbu;
 	uint32_t hatch_tbl;
+#if defined(PPC_OEA64_BRIDGE) || defined (_ARCH_PPC64)
+	uint64_t hatch_hid0;
+#else
 	uint32_t hatch_hid0;
+#endif
 	uint32_t hatch_pir;
 #if defined(PPC_OEA) || defined(PPC_OEA64_BRIDGE)
 	uintptr_t hatch_asr;

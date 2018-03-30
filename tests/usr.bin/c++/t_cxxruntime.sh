@@ -1,4 +1,4 @@
-#	$NetBSD: t_cxxruntime.sh,v 1.2 2017/05/14 01:13:44 kamil Exp $
+#	$NetBSD: t_cxxruntime.sh,v 1.2.10.1 2018/03/30 06:20:16 pgoyette Exp $
 #
 # Copyright (c) 2017 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -34,9 +34,45 @@ cxxruntime_head() {
 	atf_set "require.progs" "c++"
 }
 
+atf_test_case cxxruntime_profile
+cxxruntime_profile_head() {
+	atf_set "descr" "compile and run \"hello world\" with profiling option"
+	atf_set "require.progs" "c++"
+}
+
+atf_test_case cxxruntime_profile_32
+cxxruntime_profile_32_head() {
+	atf_set "descr" "compile and run 32-bit \"hello world\" with profiling option"
+	atf_set "require.progs" "c++"
+}
+
+atf_test_case cxxruntime_static
+cxxruntime_static_head() {
+	atf_set "descr" "compile and run \"hello world\" with static flags"
+	atf_set "require.progs" "c++"
+}
+
 atf_test_case cxxruntime_pic
 cxxruntime_pic_head() {
 	atf_set "descr" "compile and run PIC \"hello world\""
+	atf_set "require.progs" "c++"
+}
+
+atf_test_case cxxruntime_pic_32
+cxxruntime_pic_32_head() {
+	atf_set "descr" "compile and run 32-bit PIC \"hello world\""
+	atf_set "require.progs" "c++"
+}
+
+atf_test_case cxxruntime_pic_profile
+cxxruntime_pic_profile_head() {
+	atf_set "descr" "compile and run PIC \"hello world\" with profiling option"
+	atf_set "require.progs" "c++"
+}
+
+atf_test_case cxxruntime_pic_profile_32
+cxxruntime_pic_profile_32_head() {
+	atf_set "descr" "compile and run 32-bit PIC \"hello world\" with profiling option"
 	atf_set "require.progs" "c++"
 }
 
@@ -62,6 +98,48 @@ EOF
 	atf_check -s exit:0 -o inline:"hello world\n" ./hello
 }
 
+cxxruntime_profile_body() {
+	cat > test.cpp << EOF
+#include <cstdlib>
+#include <iostream>
+int main(void) {std::cout << "hello world" << std::endl;exit(0);}
+EOF
+	atf_check -s exit:0 -o ignore -e ignore c++ -pg -o hello test.cpp
+	atf_check -s exit:0 -o inline:"hello world\n" ./hello
+}
+
+cxxruntime_profile_32_body() {
+	# check whether this arch is 64bit
+	if ! c++ -dM -E - < /dev/null | fgrep -q _LP64; then
+		atf_skip "this is not a 64 bit architecture"
+	fi
+	if ! c++ -m32 -dM -E - < /dev/null 2>/dev/null > ./def32; then
+		atf_skip "c++ -m32 not supported on this architecture"
+	else
+		if fgrep -q _LP64 ./def32; then
+			atf_fail "c++ -m32 does not generate netbsd32 binaries"
+		fi
+	fi
+
+	cat > test.cpp << EOF
+#include <cstdlib>
+#include <iostream>
+int main(void) {std::cout << "hello world" << std::endl;exit(0);}
+EOF
+	atf_check -s exit:0 -o ignore -e ignore c++ -m32 -pg -o hello test.cpp
+	atf_check -s exit:0 -o inline:"hello world\n" ./hello
+}
+
+cxxruntime_static_body() {
+	cat > test.cpp << EOF
+#include <cstdlib>
+#include <iostream>
+int main(void) {std::cout << "hello world" << std::endl;exit(0);}
+EOF
+	atf_check -s exit:0 -o ignore -e ignore c++ -static -o hello test.cpp
+	atf_check -s exit:0 -o inline:"hello world\n" ./hello
+}
+
 cxxruntime_pic_body() {
 	cat > test.cpp << EOF
 #include <cstdlib>
@@ -77,6 +155,90 @@ EOF
 	    c++ -fPIC -shared -o libtest.so pic.cpp
 	atf_check -s exit:0 -o ignore -e ignore \
 	    c++ -o hello test.cpp -L. -ltest
+
+	export LD_LIBRARY_PATH=.
+	atf_check -s exit:0 -o inline:"hello world\n" ./hello
+}
+
+cxxruntime_pic_32_body() {
+	# check whether this arch is 64bit
+	if ! c++ -dM -E - < /dev/null | fgrep -q _LP64; then
+		atf_skip "this is not a 64 bit architecture"
+	fi
+	if ! c++ -m32 -dM -E - < /dev/null 2>/dev/null > ./def32; then
+		atf_skip "c++ -m32 not supported on this architecture"
+	else
+		if fgrep -q _LP64 ./def32; then
+			atf_fail "c++ -m32 does not generate netbsd32 binaries"
+		fi
+	fi
+
+	cat > test.cpp << EOF
+#include <cstdlib>
+int callpic(void);
+int main(void) {callpic();exit(0);}
+EOF
+	cat > pic.cpp << EOF
+#include <iostream>
+int callpic(void) {std::cout << "hello world" << std::endl;return 0;}
+EOF
+
+	atf_check -s exit:0 -o ignore -e ignore \
+	    c++ -m32 -fPIC -shared -o libtest.so pic.cpp
+	atf_check -s exit:0 -o ignore -e ignore \
+	    c++ -m32 -o hello test.cpp -L. -ltest
+
+	export LD_LIBRARY_PATH=.
+	atf_check -s exit:0 -o inline:"hello world\n" ./hello
+}
+
+cxxruntime_pic_profile_body() {
+	cat > test.cpp << EOF
+#include <cstdlib>
+int callpic(void);
+int main(void) {callpic();exit(0);}
+EOF
+	cat > pic.cpp << EOF
+#include <iostream>
+int callpic(void) {std::cout << "hello world" << std::endl;return 0;}
+EOF
+
+	atf_check -s exit:0 -o ignore -e ignore \
+	    c++ -pg -fPIC -shared -o libtest.so pic.cpp
+	atf_check -s exit:0 -o ignore -e ignore \
+	    c++ -pg -o hello test.cpp -L. -ltest
+
+	export LD_LIBRARY_PATH=.
+	atf_check -s exit:0 -o inline:"hello world\n" ./hello
+}
+
+cxxruntime_pic_profile_32_body() {
+	# check whether this arch is 64bit
+	if ! c++ -dM -E - < /dev/null | fgrep -q _LP64; then
+		atf_skip "this is not a 64 bit architecture"
+	fi
+	if ! c++ -m32 -dM -E - < /dev/null 2>/dev/null > ./def32; then
+		atf_skip "c++ -m32 not supported on this architecture"
+	else
+		if fgrep -q _LP64 ./def32; then
+			atf_fail "c++ -m32 does not generate netbsd32 binaries"
+		fi
+	fi
+
+	cat > test.cpp << EOF
+#include <cstdlib>
+int callpic(void);
+int main(void) {callpic();exit(0);}
+EOF
+	cat > pic.cpp << EOF
+#include <iostream>
+int callpic(void) {std::cout << "hello world" << std::endl;return 0;}
+EOF
+
+	atf_check -s exit:0 -o ignore -e ignore \
+	    c++ -m32 -pg -fPIC -shared -o libtest.so pic.cpp
+	atf_check -s exit:0 -o ignore -e ignore \
+	    c++ -m32 -pg -o hello test.cpp -L. -ltest
 
 	export LD_LIBRARY_PATH=.
 	atf_check -s exit:0 -o inline:"hello world\n" ./hello
@@ -140,9 +302,14 @@ EOF
 
 atf_init_test_cases()
 {
-
 	atf_add_test_case cxxruntime
+	atf_add_test_case cxxruntime_profile
 	atf_add_test_case cxxruntime_pic
 	atf_add_test_case cxxruntime_pie
 	atf_add_test_case cxxruntime32
+	atf_add_test_case cxxruntime_static
+	atf_add_test_case cxxruntime_pic_32
+	atf_add_test_case cxxruntime_pic_profile
+	atf_add_test_case cxxruntime_pic_profile_32
+	atf_add_test_case cxxruntime_profile_32
 }

@@ -1,4 +1,4 @@
-#	$NetBSD: t_tap.sh,v 1.7 2018/02/01 05:22:02 ozaki-r Exp $
+#	$NetBSD: t_tap.sh,v 1.7.2.1 2018/03/30 06:20:16 pgoyette Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -82,10 +82,6 @@ tap_stand_alone_body()
 	atf_check -s exit:0 rump.ifconfig shmif0 $IP4_LOCAL
 	atf_check -s exit:0 rump.ifconfig shmif0 inet6 $IP6_LOCAL
 	atf_check -s exit:0 rump.ifconfig shmif0 up
-	atf_check -s exit:0 rump.ifconfig tap0 create
-	atf_check -s exit:0 rump.ifconfig tap0 $IP4_TAP
-	atf_check -s exit:0 rump.ifconfig tap0 inet6 $IP6_TAP
-	atf_check -s exit:0 rump.ifconfig tap0 up
 	atf_check -s exit:0 rump.ifconfig -w 10
 
 	export RUMP_SERVER=${SOCK_REMOTE}
@@ -96,14 +92,23 @@ tap_stand_alone_body()
 	atf_check -s exit:0 rump.ifconfig -w 10
 
 	atf_check -s exit:0 -o ignore rump.ping -n -w $TIMEOUT -c 1 $IP4_LOCAL
-	# Cannot reach to an alone tap
-	atf_check -s not-exit:0 -o ignore -e ignore \
-	    rump.ping -n -w $TIMEOUT -c 1 $IP4_TAP
-
 	atf_check -s exit:0 -o ignore rump.ping6 -n -X $TIMEOUT -c 1 $IP6_LOCAL
+
+	export RUMP_SERVER=${SOCK_LOCAL}
+	atf_check -s exit:0 rump.ifconfig shmif0 $IP4_LOCAL delete
+	atf_check -s exit:0 rump.ifconfig shmif0 inet6 $IP6_LOCAL delete
+	atf_check -s exit:0 rump.ifconfig tap0 create
+	atf_check -s exit:0 rump.ifconfig tap0 $IP4_TAP
+	atf_check -s exit:0 rump.ifconfig tap0 inet6 $IP6_TAP
+	atf_check -s exit:0 rump.ifconfig tap0 up
+	atf_check -s exit:0 rump.ifconfig -w 10
+
+	export RUMP_SERVER=${SOCK_REMOTE}
 	# Cannot reach to an alone tap
 	atf_check -s not-exit:0 -o ignore -e ignore \
 	    rump.ping6 -n -X $TIMEOUT -c 1 $IP6_TAP
+	atf_check -s not-exit:0 -o ignore -e ignore \
+	    rump.ping -n -w $TIMEOUT -c 1 $IP4_TAP
 
 	rump_server_destroy_ifaces
 }

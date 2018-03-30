@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.52 2017/08/12 09:03:27 joerg Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.52.2.1 2018/03/30 06:20:10 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -31,8 +31,10 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.52 2017/08/12 09:03:27 joerg Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.52.2.1 2018/03/30 06:20:10 pgoyette Exp $");
 #endif /* not lint */
+
+#include <machine/elf_support.h>
 
 #include <errno.h>
 #include <stdio.h>
@@ -396,40 +398,12 @@ _rtld_relocate_plt_lazy(Obj_Entry *obj)
 {
 	const Elf_Rela *rela;
 
-	if (!obj->relocbase)
-		return 0;
-
 	for (rela = obj->pltrelalim; rela-- > obj->pltrela; ) {
 		if (ELF_R_TYPE(rela->r_info) == R_TYPE(JMP_IREL))
 			obj->ifunc_remaining = obj->pltrelalim - rela + 1;
 	}
 
 	return 0;
-}
-
-static inline void
-_rtld_write_plt(Elf_Word *where, Elf_Addr value)
-{
-	/*
-	 * At the PLT entry pointed at by `where', we now construct
-	 * a direct transfer to the now fully resolved function
-	 * address.  The resulting code in the jump slot is:
-	 *
-	 *	sethi	%hi(roffset), %g1
-	 *	sethi	%hi(addr), %g1
-	 *	jmp	%g1+%lo(addr)
-	 *
-	 * We write the third instruction first, since that leaves the
-	 * previous `b,a' at the second word in place. Hence the whole
-	 * PLT slot can be atomically change to the new sequence by
-	 * writing the `sethi' instruction at word 2.
-	 */
-	const uint32_t SETHI = 0x03000000U;
-	const uint32_t JMP = 0x81c06000U;
-	where[2] = JMP   | (value & 0x000003ff);
-	where[1] = SETHI | ((value >> 10) & 0x003fffff);
-	__asm volatile("iflush %0+8" : : "r" (where));
-	__asm volatile("iflush %0+4" : : "r" (where));
 }
 
 void
@@ -447,7 +421,7 @@ _rtld_call_ifunc(Obj_Entry *obj, sigset_t *mask, u_int cur_objgen)
 		_rtld_exclusive_exit(mask);
 		target = _rtld_resolve_ifunc2(obj, target);
 		_rtld_exclusive_enter(mask);
-		_rtld_write_plt(where, target);
+		sparc_write_branch(where + 1, (void *)target);
 	}
 
 	while (obj->ifunc_remaining_nonplt > 0 && _rtld_objgen == cur_objgen) {
@@ -524,7 +498,7 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela, Elf_Addr *
 	rdbg(("bind now/fixup in %s --> new=%p", 
 	    defobj->strtab + def->st_name, (void *)value));
 
-	_rtld_write_plt(where, value);
+	sparc_write_branch(where + 1, (void *)value);
 
 	if (tp)
 		*tp = value;
