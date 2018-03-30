@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_ioctl.c,v 1.60.16.1 2018/03/28 00:30:05 pgoyette Exp $	*/
+/*	$netBSD: ieee80211_ioctl.c,v 1.60.16.1 2018/03/28 00:30:05 pgoyette Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_ioctl.c,v 1.35 2005/08/30 14:27:47 avatar Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.60.16.1 2018/03/28 00:30:05 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.60.16.2 2018/03/30 02:28:49 pgoyette Exp $");
 #endif
 
 /*
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.60.16.1 2018/03/28 00:30:05 pg
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/kauth.h>
+#include <sys/compat_stub.h>
  
 #include <net/if.h>
 #include <net/if_arp.h>
@@ -2554,28 +2555,6 @@ ieee80211_ioctl(struct ieee80211com *ic, u_long cmd, void *data)
 }
 #endif /* __FreeBSD__ */
 
-#ifdef COMPAT_20
-static void
-ieee80211_get_ostats(struct ieee80211_ostats *ostats,
-    struct ieee80211_stats *stats)
-{
-#define	COPYSTATS1(__ostats, __nstats, __dstmemb, __srcmemb, __lastmemb)\
-	(void)memcpy(&(__ostats)->__dstmemb, &(__nstats)->__srcmemb,	\
-	    offsetof(struct ieee80211_stats, __lastmemb) -		\
-	    offsetof(struct ieee80211_stats, __srcmemb))
-#define	COPYSTATS(__ostats, __nstats, __dstmemb, __lastmemb)		\
-	COPYSTATS1(__ostats, __nstats, __dstmemb, __dstmemb, __lastmemb)
-
-	COPYSTATS(ostats, stats, is_rx_badversion, is_rx_unencrypted);
-	COPYSTATS(ostats, stats, is_rx_wepfail, is_rx_beacon);
-	COPYSTATS(ostats, stats, is_rx_rstoobig, is_rx_auth_countermeasures);
-	COPYSTATS(ostats, stats, is_rx_assoc_bss, is_rx_assoc_badwpaie);
-	COPYSTATS(ostats, stats, is_rx_deauth, is_rx_unauth);
-	COPYSTATS1(ostats, stats, is_tx_nombuf, is_tx_nobuf, is_tx_badcipher);
-	COPYSTATS(ostats, stats, is_scan_active, is_crypto_tkip);
-}
-#endif /* COMPAT_20 */
-
 #ifdef __NetBSD__
 int
 ieee80211_ioctl(struct ieee80211com *ic, u_long cmd, void *data)
@@ -2591,9 +2570,6 @@ ieee80211_ioctl(struct ieee80211com *ic, u_long cmd, void *data)
 	struct ieee80211chanreq *chanreq;
 	struct ieee80211_channel *chan;
 	uint32_t oflags;
-#ifdef COMPAT_20
-	struct ieee80211_ostats ostats;
-#endif /* COMPAT_20 */
 	static const u_int8_t zerobssid[IEEE80211_ADDR_LEN];
 	u_int8_t tmpkey[IEEE80211_WEP_NKID][IEEE80211_KEYBUF_SIZE];
 
@@ -2872,18 +2848,23 @@ ieee80211_ioctl(struct ieee80211com *ic, u_long cmd, void *data)
 			break;
 		error = ieee80211_cfgset(ic, cmd, data);
 		break;
-#ifdef COMPAT_20
 	case OSIOCG80211STATS:
 	case OSIOCG80211ZSTATS:
+	    {
+		struct ieee80211_ostats ostats;
+
 		ifr = (struct ifreq *)data;
 		s = splnet();
-		ieee80211_get_ostats(&ostats, &ic->ic_stats);
-		error = copyout(&ostats, ifr->ifr_data, sizeof(ostats));
+		error = (*ieee80211_get_ostats_20)(&ostats, &ic->ic_stats);
+		if (error == ENOSYS)
+			error = EINVAL;
+		if (error == 0)
+			error = copyout(&ostats, ifr->ifr_data, sizeof(ostats));
 		if (error == 0 && cmd == OSIOCG80211ZSTATS)
 			(void)memset(&ic->ic_stats, 0, sizeof(ic->ic_stats));
 		splx(s);
 		break;
-#endif /* COMPAT_20 */
+	    }
 	case SIOCG80211ZSTATS:
 	case SIOCG80211STATS:
 		ifr = (struct ifreq *)data;

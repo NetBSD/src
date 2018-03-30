@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_20.c,v 1.40 2017/04/13 09:41:28 hannken Exp $	*/
+/*	$NetBSD: vfs_syscalls_20.c,v 1.40.10.1 2018/03/30 02:28:49 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_20.c,v 1.40 2017/04/13 09:41:28 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_20.c,v 1.40.10.1 2018/03/30 02:28:49 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -57,8 +57,12 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_20.c,v 1.40 2017/04/13 09:41:28 hannken
 #include <sys/malloc.h>
 #include <sys/dirent.h>
 #include <sys/sysctl.h>
+#include <sys/syscall.h>
+#include <sys/syscallvar.h>
 #include <sys/syscallargs.h>
 #include <sys/kauth.h>
+
+#include <compat/common/compat_mod.h>
 
 #include <compat/sys/mount.h>
 
@@ -84,6 +88,14 @@ static const struct {
 	{ MOUNT_FDESC, MOUNTNO_FDESC },
 	{ MOUNT_KERNFS, MOUNTNO_KERNFS },
 	{ MOUNT_AFS, MOUNTNO_AFS },
+};
+
+static const struct syscall_package vfs_syscalls_20_syscalls[] = {
+	{ SYS_compat_20_fhstatfs, 0, (sy_call_t *)compat_20_sys_fhstatfs },
+	{ SYS_compat_20_fstatfs, 0, (sy_call_t *)compat_20_sys_fstatfs },
+	{ SYS_compat_20_getfsstat, 0, (sy_call_t *)compat_20_sys_getfsstat }, 
+	{ SYS_compat_20_statfs, 0, (sy_call_t *)compat_20_sys_statfs },
+	{ 0, 0, NULL }
 };
 
 static int
@@ -286,4 +298,18 @@ out:
 	vrele(vp);
 	free(sbuf, M_TEMP);
 	return error;
+}
+
+int
+vfs_syscalls_20_init(void)
+{
+
+	return syscall_establish(NULL, vfs_syscalls_20_syscalls);
+}
+
+int
+vfs_syscalls_20_fini(void)
+{
+
+	return syscall_disestablish(NULL, vfs_syscalls_20_syscalls);
 }

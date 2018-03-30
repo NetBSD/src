@@ -1,4 +1,4 @@
-/*	$NetBSD: if_43.c,v 1.14 2017/07/29 04:08:47 riastradh Exp $	*/
+/*	$NetBSD: if_43.c,v 1.14.2.1 2018/03/30 02:28:49 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_43.c,v 1.14 2017/07/29 04:08:47 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_43.c,v 1.14.2.1 2018/03/30 02:28:49 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_43.c,v 1.14 2017/07/29 04:08:47 riastradh Exp $")
 #include <sys/resourcevar.h>
 #include <sys/mbuf.h>		/* for MLEN */
 #include <sys/protosw.h>
+#include <sys/compat_stub.h>
 
 #include <sys/syscallargs.h>
 
@@ -146,10 +147,6 @@ compat_cvtcmd(u_long cmd)
 		case GRESADDRS:
 		case GRESPROTO:
 		case GRESSOCK:
-#ifdef COMPAT_20
-		case OSIOCG80211STATS:
-		case OSIOCG80211ZSTATS:
-#endif /* COMPAT_20 */
 		case SIOCADDMULTI:
 		case SIOCDELMULTI:
 		case SIOCDIFADDR:
@@ -205,7 +202,10 @@ compat_cvtcmd(u_long cmd)
 		case TAPGIFNAME:
 			return ncmd;
 		default:
-			return cmd;
+			if ((*if43_20_cvtcmd)(ncmd) == 0)
+				return ncmd;
+			else
+				return cmd;
 		}
 	}
 }

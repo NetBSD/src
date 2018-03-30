@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.h,v 1.1.2.11 2018/03/29 11:20:03 pgoyette Exp $	*/
+/* $NetBSD: compat_stub.h,v 1.1.2.12 2018/03/30 02:28:49 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -148,5 +148,16 @@ extern void (*vec_usbd_devinfo_vp)(struct usbd_device *, char *, size_t, char *,
     size_t, int, int);
 
 extern int (*vec_usbd_printBCD)(char *cp, size_t l, int bcd);
+
+/*
+ * ieee80211 ioctl compatability
+ */
+struct ieee80211_ostats;
+struct ieee80211_stats; 
+
+extern int (*ieee80211_get_ostats_20)(struct ieee80211_ostats *, 
+    struct ieee80211_stats *);
+
+extern int (*if43_20_cvtcmd)(int);
 
 #endif	/* _SYS_COMPAT_STUB_H */

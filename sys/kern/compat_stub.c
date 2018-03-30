@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.c,v 1.1.2.11 2018/03/29 11:20:03 pgoyette Exp $	*/
+/* $NetBSD: compat_stub.c,v 1.1.2.12 2018/03/30 02:28:49 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -133,4 +133,12 @@ void (*vec_usbd_devinfo_vp)(struct usbd_device *, char *, size_t, char *,
     size_t, int, int) = NULL;
 int (*vec_usbd_printBCD)(char *cp, size_t l, int bcd) = NULL;
 #endif
+
+/*
+ * ieee80211 ioctl compatability
+ */
+int (*ieee80211_get_ostats_20)(struct ieee80211_ostats *,
+    struct ieee80211_stats *) = (void *)enosys;
+
+int (*if43_20_cvtcmd)(int) = (void *)enosys;
 
