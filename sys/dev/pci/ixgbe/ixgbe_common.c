@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_common.c,v 1.18 2018/03/16 07:54:08 msaitoh Exp $ */
+/* $NetBSD: ixgbe_common.c,v 1.19 2018/03/30 03:58:20 knakahara Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -1130,7 +1130,27 @@ s32 ixgbe_stop_adapter_generic(struct ixgbe_hw *hw)
 	ixgbe_disable_rx(hw);
 
 	/* Clear interrupt mask to stop interrupts from being generated */
-	IXGBE_WRITE_REG(hw, IXGBE_EIMC, IXGBE_IRQ_CLEAR_MASK);
+	/*
+	 * XXX
+	 * This function is called in the state of both interrupt disabled
+	 * and interrupt enabled, e.g.
+	 * + interrupt disabled case:
+	 *   - ixgbe_stop()
+	 *     - ixgbe_disable_intr() // interrupt disabled here
+	 *     - ixgbe_stop_adapter()
+	 *       - hw->mac.ops.stop_adapter()
+	 *         == this function
+	 * + interrupt enabled case:
+	 *   - ixgbe_local_timer1()
+	 *     - ixgbe_init_locked()
+	 *       - ixgbe_stop_adapter()
+	 *         - hw->mac.ops.stop_adapter()
+	 *           == this function
+	 * Therefore, it causes nest status breaking to nest the status
+	 * (that is, que->im_nest++) at all times. So, this function must
+	 * use ixgbe_ensure_disabled_intr() instead of ixgbe_disable_intr().
+	 */
+	ixgbe_ensure_disabled_intr(hw->back);
 
 	/* Clear any pending interrupts, flush previous writes */
 	IXGBE_READ_REG(hw, IXGBE_EICR);
