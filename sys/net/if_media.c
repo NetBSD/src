@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.c,v 1.35 2017/11/22 03:03:18 ozaki-r Exp $	*/
+/*	$NetBSD: if_media.c,v 1.36 2018/03/30 13:21:24 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_media.c,v 1.35 2017/11/22 03:03:18 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_media.c,v 1.36 2018/03/30 13:21:24 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,6 +88,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_media.c,v 1.35 2017/11/22 03:03:18 ozaki-r Exp $"
 #include <net/if.h>
 #include <net/if_media.h>
 #include <net/netisr.h>
+
+static void	ifmedia_status(struct ifmedia *, struct ifnet *, struct ifmediareq *);
+static int	_ifmedia_ioctl(struct ifnet *, struct ifreq *, struct ifmedia *, u_long);
 
 /*
  * Compile-time options:
@@ -122,7 +125,20 @@ ifmedia_init(struct ifmedia *ifm, int dontcare_mask,
 int
 ifmedia_change(struct ifmedia *ifm, struct ifnet *ifp)
 {
+
+	if (ifm->ifm_change == NULL)
+		return -1;
 	return (*ifm->ifm_change)(ifp);
+}
+
+static void
+ifmedia_status(struct ifmedia *ifm, struct ifnet *ifp,
+	struct ifmediareq *ifmr)
+{
+
+	if (ifm->ifm_status == NULL)
+		return;
+	(*ifm->ifm_status)(ifp, ifmr);
 }
 
 /*
@@ -317,8 +333,7 @@ _ifmedia_ioctl(struct ifnet *ifp, struct ifreq *ifr, struct ifmedia *ifm,
 		    ifm->ifm_cur->ifm_media : IFM_NONE;
 		ifmr->ifm_mask = ifm->ifm_mask;
 		ifmr->ifm_status = 0;
-		/* ifmedia_status */
-		(*ifm->ifm_status)(ifp, ifmr);
+		ifmedia_status(ifm, ifp, ifmr);
 
 		/*
 		 * Count them so we know a-priori how much is the max we'll
