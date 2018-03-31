@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1322 2018/03/26 02:56:45 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1323 2018/03/31 14:39:47 sevan Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1150,7 +1150,7 @@ product APPLE OHARE		0x0007	OHare I/O Controller
 product APPLE BANDIT2		0x0008	Bandit Host-PCI Bridge
 product APPLE HEATHROW		0x0010	Heathrow I/O Controller
 product APPLE PADDINGTON	0x0017	Paddington I/O Controller
-product APPLE PBG3_FW		0x0018  PowerBook G3 Firewire
+product APPLE UNINORTH_FW	0x0018  UniNorth Firewire
 product APPLE KEYLARGO_USB	0x0019	KeyLargo USB Controller
 product APPLE UNINORTH1		0x001e	UniNorth Host-PCI Bridge
 product APPLE UNINORTH2		0x001f	UniNorth Host-PCI Bridge
@@ -1167,7 +1167,7 @@ product APPLE UNINORTH_AGP2	0x002d	UniNorth AGP Interface
 product APPLE UNINORTH3		0x002e	UniNorth Host-PCI Bridge
 product APPLE UNINORTH4		0x002f	UniNorth Host-PCI Bridge
 product APPLE PANGEA_FW		0x0030	Pangea Firewire
-product APPLE UNINORTH_FW	0x0031	UniNorth Firewire
+product APPLE UNINORTH2_FW	0x0031	UniNorth Firewire
 product APPLE GMAC3		0x0032	GMAC Ethernet
 product APPLE UNINORTH_ATA	0x0033	UniNorth ATA/100 Controller
 product APPLE UNINORTH_AGP3	0x0034	UniNorth AGP Bridge
