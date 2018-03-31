@@ -1,4 +1,4 @@
-/*	$NetBSD: spectre.c,v 1.6 2018/03/31 07:15:47 maxv Exp $	*/
+/*	$NetBSD: spectre.c,v 1.7 2018/03/31 08:30:01 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spectre.c,v 1.6 2018/03/31 07:15:47 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spectre.c,v 1.7 2018/03/31 08:30:01 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,10 +129,10 @@ speculation_detect_method(void)
 
 /* -------------------------------------------------------------------------- */
 
-#ifdef __x86_64__
 static volatile unsigned long ibrs_cpu_barrier1 __cacheline_aligned;
 static volatile unsigned long ibrs_cpu_barrier2 __cacheline_aligned;
 
+#ifdef __x86_64__
 static void
 ibrs_disable_hotpatch(void)
 {
@@ -176,53 +176,101 @@ ibrs_enable_hotpatch(void)
 
 	x86_patch_window_close(psl, cr0);
 }
+#else
+/* IBRS not supported on i386 */
+static void
+ibrs_disable_hotpatch(void)
+{
+	panic("%s: impossible", __func__);
+}
+static void
+ibrs_enable_hotpatch(void)
+{
+	panic("%s: impossible", __func__);
+}
+#endif
+
+/* -------------------------------------------------------------------------- */
 
 static void
-ibrs_change_cpu(void *arg1, void *arg2)
+mitigation_apply_cpu(struct cpu_info *ci, bool enabled)
+{
+	uint64_t msr;
+
+	switch (mitigation_method) {
+	case MITIGATION_NONE:
+		panic("impossible");
+	case MITIGATION_INTEL_IBRS:
+		/* cpu0 is the one that does the hotpatch job */
+		if (ci == &cpu_info_primary) {
+			if (enabled) {
+				ibrs_enable_hotpatch();
+			} else {
+				ibrs_disable_hotpatch();
+			}
+		}
+		if (!enabled) {
+			wrmsr(MSR_IA32_SPEC_CTRL, 0);
+		}
+		break;
+	case MITIGATION_AMD_DIS_IND:
+		msr = rdmsr(MSR_IC_CFG);
+		if (enabled) {
+			msr |= IC_CFG_DIS_IND;
+		} else {
+			msr &= ~IC_CFG_DIS_IND;
+		}
+		wrmsr(MSR_IC_CFG, msr);
+		break;
+	}
+}
+
+/*
+ * Note: IBRS requires hotpatching, so we need barriers.
+ */
+static void
+mitigation_change_cpu(void *arg1, void *arg2)
 {
 	struct cpu_info *ci = curcpu();
 	bool enabled = (bool)arg1;
-	u_long psl;
+	u_long psl = 0;
 
-	psl = x86_read_psl();
-	x86_disable_intr();
+	/* Rendez-vous 1 (IBRS only). */
+	if (mitigation_method == MITIGATION_INTEL_IBRS) {
+		psl = x86_read_psl();
+		x86_disable_intr();
 
-	atomic_dec_ulong(&ibrs_cpu_barrier1);
-	while (atomic_cas_ulong(&ibrs_cpu_barrier1, 0, 0) != 0) {
-		x86_pause();
-	}
-
-	/* cpu0 is the one that does the hotpatch job */
-	if (ci == &cpu_info_primary) {
-		if (enabled) {
-			ibrs_enable_hotpatch();
-		} else {
-			ibrs_disable_hotpatch();
+		atomic_dec_ulong(&ibrs_cpu_barrier1);
+		while (atomic_cas_ulong(&ibrs_cpu_barrier1, 0, 0) != 0) {
+			x86_pause();
 		}
 	}
 
-	if (!enabled) {
-		wrmsr(MSR_IA32_SPEC_CTRL, 0);
+	mitigation_apply_cpu(ci, enabled);
+
+	/* Rendez-vous 2 (IBRS only). */
+	if (mitigation_method == MITIGATION_INTEL_IBRS) {
+		atomic_dec_ulong(&ibrs_cpu_barrier2);
+		while (atomic_cas_ulong(&ibrs_cpu_barrier2, 0, 0) != 0) {
+			x86_pause();
+		}
+
+		/* Write back and invalidate cache, flush pipelines. */
+		wbinvd();
+		x86_flush();
+
+		x86_write_psl(psl);
 	}
-
-	atomic_dec_ulong(&ibrs_cpu_barrier2);
-	while (atomic_cas_ulong(&ibrs_cpu_barrier2, 0, 0) != 0) {
-		x86_pause();
-	}
-
-	/* Write back and invalidate cache, flush pipelines. */
-	wbinvd();
-	x86_flush();
-
-	x86_write_psl(psl);
 }
 
 static int
-ibrs_change(bool enabled)
+mitigation_change(bool enabled)
 {
 	struct cpu_info *ci = NULL;
 	CPU_INFO_ITERATOR cii;
 	uint64_t xc;
+
+	speculation_detect_method();
 
 	mutex_enter(&cpu_lock);
 
@@ -232,131 +280,33 @@ ibrs_change(bool enabled)
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		struct schedstate_percpu *spc = &ci->ci_schedstate;
 		if (spc->spc_flags & SPCF_OFFLINE) {
-			printf("[!] cpu%d offline, IBRS not changed\n",
+			printf("[!] cpu%d offline, SpectreV2 not changed\n",
 			    cpu_index(ci));
 			mutex_exit(&cpu_lock);
 			return EOPNOTSUPP;
 		}
 	}
 
-	ibrs_cpu_barrier1 = ncpu;
-	ibrs_cpu_barrier2 = ncpu;
-
-	printf("[+] %s SpectreV2 Mitigation (IBRS)...",
-	    (enabled == true) ? "Enabling" : "Disabling");
-	xc = xc_broadcast(0, ibrs_change_cpu, (void *)enabled, NULL);
-	xc_wait(xc);
-	printf(" done!\n");
-
-	mutex_exit(&cpu_lock);
-
-	return 0;
-}
-#else
-/*
- * TODO: i386
- */
-static int
-ibrs_change(bool enabled)
-{
-	panic("not supported");
-}
-#endif
-
-/* -------------------------------------------------------------------------- */
-
-static void
-mitigation_disable_cpu(void *arg1, void *arg2)
-{
-	uint64_t msr;
-
-	switch (mitigation_method) {
-	case MITIGATION_NONE:
-	case MITIGATION_INTEL_IBRS:
-		panic("impossible");
-		break;
-	case MITIGATION_AMD_DIS_IND:
-		msr = rdmsr(MSR_IC_CFG);
-		msr &= ~IC_CFG_DIS_IND;
-		wrmsr(MSR_IC_CFG, msr);
-		break;
-	}
-}
-
-static void
-mitigation_enable_cpu(void *arg1, void *arg2)
-{
-	uint64_t msr;
-
-	switch (mitigation_method) {
-	case MITIGATION_NONE:
-	case MITIGATION_INTEL_IBRS:
-		panic("impossible");
-		break;
-	case MITIGATION_AMD_DIS_IND:
-		msr = rdmsr(MSR_IC_CFG);
-		msr |= IC_CFG_DIS_IND;
-		wrmsr(MSR_IC_CFG, msr);
-		break;
-	}
-}
-
-static int
-mitigation_disable(void)
-{
-	uint64_t xc;
-	int error;
-
-	speculation_detect_method();
-
 	switch (mitigation_method) {
 	case MITIGATION_NONE:
 		printf("[!] No mitigation available\n");
+		mutex_exit(&cpu_lock);
 		return EOPNOTSUPP;
 	case MITIGATION_AMD_DIS_IND:
-		printf("[+] Disabling SpectreV2 Mitigation...");
-		xc = xc_broadcast(0, mitigation_disable_cpu,
-		    NULL, NULL);
+	case MITIGATION_INTEL_IBRS:
+		/* Initialize the barriers */
+		ibrs_cpu_barrier1 = ncpu;
+		ibrs_cpu_barrier2 = ncpu;
+
+		printf("[+] %s SpectreV2 Mitigation...",
+		    enabled ? "Enabling" : "Disabling");
+		xc = xc_broadcast(0, mitigation_change_cpu,
+		    (void *)enabled, NULL);
 		xc_wait(xc);
 		printf(" done!\n");
-		spec_mitigation_enabled = false;
-		return 0;
-	case MITIGATION_INTEL_IBRS:
-		error = ibrs_change(false);
-		if (error)
-			return error;
-		spec_mitigation_enabled = false;
-		return 0;
-	default:
-		panic("impossible");
-	}
-}
+		spec_mitigation_enabled = enabled;
 
-static int
-mitigation_enable(void)
-{
-	uint64_t xc;
-	int error;
-
-	speculation_detect_method();
-
-	switch (mitigation_method) {
-	case MITIGATION_NONE:
-		printf("[!] No mitigation available\n");
-		return EOPNOTSUPP;
-	case MITIGATION_AMD_DIS_IND:
-		printf("[+] Enabling SpectreV2 Mitigation...");
-		xc = xc_broadcast(0, mitigation_enable_cpu,
-		    NULL, NULL);
-		xc_wait(xc);
-		printf(" done!\n");
-		spec_mitigation_enabled = true;
-		return 0;
-	case MITIGATION_INTEL_IBRS:
-		error = ibrs_change(true);
-		if (error)
-			return error;
-		spec_mitigation_enabled = true;
+		mutex_exit(&cpu_lock);
 		return 0;
 	default:
 		panic("impossible");
@@ -385,12 +335,12 @@ sysctl_machdep_spectreV2_mitigated(SYSCTLFN_ARGS)
 		if (!spec_mitigation_enabled)
 			error = 0;
 		else
-			error = mitigation_disable();
+			error = mitigation_change(false);
 	} else {
 		if (spec_mitigation_enabled)
 			error = 0;
 		else
-			error = mitigation_enable();
+			error = mitigation_change(true);
 	}
 
 	return error;
