@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_input.c,v 1.43.2.4 2018/03/30 11:45:58 martin Exp $	*/
+/*	$NetBSD: ipsec_input.c,v 1.43.2.5 2018/03/31 10:46:20 martin Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec_input.c,v 1.2.4.2 2003/03/28 20:32:53 sam Exp $	*/
 /*	$OpenBSD: ipsec_input.c,v 1.63 2003/02/20 18:35:43 deraadt Exp $	*/
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.43.2.4 2018/03/30 11:45:58 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.43.2.5 2018/03/31 10:46:20 martin Exp $");
 
 /*
  * IPsec input processing.
@@ -507,6 +507,8 @@ ipsec6_common_input(struct mbuf **mp, int *offp, int proto)
 
 			if (nxt == IPPROTO_AH)
 				l = (ip6e.ip6e_len + 2) << 2;
+			else if (nxt == IPPROTO_FRAGMENT)
+				l = sizeof(struct ip6_frag);
 			else
 				l = (ip6e.ip6e_len + 1) << 3;
 			KASSERT(l > 0);
