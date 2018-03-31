@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.191 2014/12/16 11:23:11 jklos Exp $	 */
+/* $NetBSD: machdep.c,v 1.192 2018/03/31 06:32:47 ragge Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.191 2014/12/16 11:23:11 jklos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.192 2018/03/31 06:32:47 ragge Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -764,4 +764,15 @@ mm_md_readwrite(dev_t dev, struct uio *uio)
 	default:
 		return ENXIO;
 	}
+}
+
+/*
+ * Set max virtual size a process may allocate.
+ * This could be tuned based on amount of physical memory.
+ */
+void
+machdep_init(void)
+{
+	proc0.p_rlimit[RLIMIT_AS].rlim_cur = DFLDSIZ;
+	proc0.p_rlimit[RLIMIT_AS].rlim_max = MAXDSIZ;
 }
