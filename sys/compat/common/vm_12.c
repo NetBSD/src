@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_12.c,v 1.20 2011/01/19 10:21:16 tsutsui Exp $	*/
+/*	$NetBSD: vm_12.c,v 1.20.56.1 2018/03/31 09:17:35 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green
@@ -27,17 +27,28 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_12.c,v 1.20 2011/01/19 10:21:16 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_12.c,v 1.20.56.1 2018/03/31 09:17:35 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/syscall.h>
+#include <sys/syscallvar.h>
 #include <sys/syscallargs.h>
 
 #include <sys/swap.h>
 #include <sys/mman.h>
 
+#include <compat/common/compat_mod.h>
+
+static const struct syscall_package vm_12_syscalls[] = {
+	{ SYS_compat_12_msync, 0, (sy_call_t *)compat_12_sys_msync },
+	{ SYS_compat_12_oswapon, 0, (sy_call_t *)compat_12_sys_swapon },
+	{ 0, 0, NULL }
+};
+
 int
-compat_12_sys_swapon(struct lwp *l, const struct compat_12_sys_swapon_args *uap, register_t *retval)
+compat_12_sys_swapon(struct lwp *l,
+    const struct compat_12_sys_swapon_args *uap, register_t *retval)
 {
 	/* {
 		syscallarg(const char *) name;
@@ -52,7 +63,8 @@ compat_12_sys_swapon(struct lwp *l, const struct compat_12_sys_swapon_args *uap,
 }
 
 int
-compat_12_sys_msync(struct lwp *l, const struct compat_12_sys_msync_args *uap, register_t *retval)
+compat_12_sys_msync(struct lwp *l,
+    const struct compat_12_sys_msync_args *uap, register_t *retval)
 {
 	/* {
 		syscallarg(void *) addr;
@@ -64,4 +76,18 @@ compat_12_sys_msync(struct lwp *l, const struct compat_12_sys_msync_args *uap, r
 	SCARG(&ua, len) = SCARG(uap, len);
 	SCARG(&ua, flags) = MS_SYNC | MS_INVALIDATE;
 	return (sys___msync13(l, &ua, retval));
+}
+
+int
+vm_12_init(void)
+{
+
+	return syscall_establish(NULL, vm_12_syscalls);
+}
+
+int
+vm_12_fini(void)
+{
+
+	return syscall_disestablish(NULL, vm_12_syscalls);
 }

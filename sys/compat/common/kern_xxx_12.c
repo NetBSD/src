@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_xxx_12.c,v 1.15 2011/01/19 10:21:16 tsutsui Exp $	*/
+/*	$NetBSD: kern_xxx_12.c,v 1.15.56.1 2018/03/31 09:17:35 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -33,20 +33,28 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_xxx_12.c,v 1.15 2011/01/19 10:21:16 tsutsui Exp $");
-
-/*#ifdef COMPAT_12*/
+__KERNEL_RCSID(0, "$NetBSD: kern_xxx_12.c,v 1.15.56.1 2018/03/31 09:17:35 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/reboot.h>
+#include <sys/syscall.h>
+#include <sys/syscallvar.h>
 #include <sys/syscallargs.h>
 #include <sys/kauth.h>
 
+#include <compat/common/compat_mod.h>
+
+static const struct syscall_package kern_xxx_12_syscalls[] = {
+	{ SYS_compat_12_oreboot, 0, (sy_call_t *)compat_12_sys_reboot },
+	{ 0, 0, NULL }
+};
+
 /* ARGSUSED */
 int
-compat_12_sys_reboot(struct lwp *l, const struct compat_12_sys_reboot_args *uap, register_t *retval)
+compat_12_sys_reboot(struct lwp *l,
+    const struct compat_12_sys_reboot_args *uap, register_t *retval)
 {
 	/* {
 		syscallarg(int) opt;
@@ -61,4 +69,17 @@ compat_12_sys_reboot(struct lwp *l, const struct compat_12_sys_reboot_args *uap,
 	KERNEL_UNLOCK_ONE(NULL);
 	return (0);
 }
-/*#endif COMPAT_12 */
+
+int
+kern_xxx_12_init(void)
+{
+
+	return syscall_establish(NULL, kern_xxx_12_syscalls);
+}
+
+int
+kern_xxx_12_fini(void)
+{
+
+	return syscall_disestablish(NULL, kern_xxx_12_syscalls);
+}
