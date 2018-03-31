@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci_pci.c,v 1.45 2018/03/31 15:14:47 sevan Exp $	*/
+/*	$NetBSD: fwohci_pci.c,v 1.46 2018/03/31 17:54:53 sevan Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci_pci.c,v 1.45 2018/03/31 15:14:47 sevan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci_pci.c,v 1.46 2018/03/31 17:54:53 sevan Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -75,9 +75,11 @@ fwohci_pci_match(device_t parent, cfdata_t match, void *aux)
 
 	/*
 	 * XXX
-	 * Firewire controllers used in some G3 PowerBooks hang the system
+	 * UniNorth Firewire controller commonly found in Pismo G3 PowerBooks, 
+	 * G4 Titanium PowerBooks and some iMac G3s, hang the system
 	 * when trying to discover devices - don't attach to those for now
-	 * until someone with the right hardware can investigate
+	 * until someone with the right hardware can investigate.
+	 * These controllers are based on the Ti TSB41AB1 chipset.
 	 */
 	if ((PCI_VENDOR(pa->pa_id) == PCI_VENDOR_APPLE) &&
 	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_UNINORTH_FW))
