@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu_60.c,v 1.1.2.5 2018/03/18 23:34:25 pgoyette Exp $	*/
+/*	$NetBSD: kern_cpu_60.c,v 1.1.2.6 2018/03/31 01:20:44 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu_60.c,v 1.1.2.5 2018/03/18 23:34:25 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu_60.c,v 1.1.2.6 2018/03/31 01:20:44 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_cpu_ucode.h"
@@ -50,9 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_cpu_60.c,v 1.1.2.5 2018/03/18 23:34:25 pgoyette
 static int
 compat6_cpuctl_ioctl(struct lwp *l, u_long cmd, void *data)
 {
-#if defined(CPU_UCODE) && defined(COMPAT_60)
-	int error;
-#endif
 
 	switch (cmd) {
 #if defined(CPU_UCODE) && defined(COMPAT_60)
@@ -60,11 +57,15 @@ compat6_cpuctl_ioctl(struct lwp *l, u_long cmd, void *data)
 		return compat6_cpu_ucode_get_version(data);
 
 	case OIOC_CPU_UCODE_APPLY:
+	    {
+		int error;
+
 		error = kauth_authorize_machdep(l->l_cred,
 		    KAUTH_MACHDEP_CPU_UCODE_APPLY, NULL, NULL, NULL, NULL);
 		if (error)
 			return error;
 		return compat6_cpu_ucode_apply(data);
+	    }
 #endif
  	default:
 		return ENOTTY;
