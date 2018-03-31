@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.157 2018/03/31 11:21:10 bouyer Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.158 2018/03/31 11:22:06 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -10739,7 +10739,7 @@ sys/arch/x86/include/specialreg.h		1.115-1.117,1.120
 
 lib/libm/src/s_scalbn.c				1.19
 
-	Add missing alias for ldexpl on ! __HAVE_LONG_DOUBLE architectures.
-	Pointed out by Hal Murray on port-arm.
+	Add ldexpl(3) for architectures where double has the same
+	size as long double.
 	[martin, ticket #659]
 
