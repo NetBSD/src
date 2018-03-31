@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.155 2018/03/30 12:11:07 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.156 2018/03/31 10:52:34 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -10632,6 +10632,15 @@ sys/netinet6/dest6.c				1.21
 	Fix the calculation of the ICMP6 error pointer.
 	[maxv, ticket #664]
 
+sys/netinet6/icmp6.c				1.215
+
+	Remove the (disabled) IPPROTO_ESP check.
+	Memory leaks in icmp6_error2.
+	Fix miscomputation in _icmp6_input, the ICMP6 header is not guaranteed
+	to be located right after the IP6 header.
+	Memory leak in _icmp6_input.
+	[maxv, ticket #665]
+
 sys/netinet6/raw_ip6.c				1.161
 
 	Fix use-after-free.
@@ -10698,4 +10707,33 @@ sys/dev/pci/ixgbe/ixv.c				1.88-1.89
 	- Add some unused funtions.  
 	- Whitespace fix.
 	[msaitoh, ticket #673]
+
+share/man/man4/man4.macppc/snapper.4		1.5
+
+	Add email addresses to author names.
+	Remove obsolete bug section.
+	[sevan, ticket #674]
+
+sys/netinet/ip_icmp.c				1.168
+
+	Fix a possible buffer overflow in the IPv4 _ctlinput functions.
+	[maxv, ticket #675]
+
+sys/netinet/in_proto.c				1.127
+sys/netinet6/in6_proto.c			1.122
+
+	Add the PR_LASTHDR flag on the PFsync and CARP entries. Otherwise a
+	"require" IPsec policy is not enforced on them, and unauthenticated
+	packets will be accepted.
+	[maxv, ticket #676]
+
+sys/netipsec/ipsec_input.c			1.55
+
+	Fix the iteration over IPPROTO_FRAGMENT options.
+	[maxv, ticket #677]
+
+sys/arch/x86/include/specialreg.h		1.115-1.117,1.120
+
+	Add various spectre/meltdown related cpu MSRs and bits.
+	[maxv, ticket #678]
 
