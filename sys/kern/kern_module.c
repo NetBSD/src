@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.130.2.5 2018/03/30 23:49:42 pgoyette Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.130.2.6 2018/03/31 08:34:17 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.130.2.5 2018/03/30 23:49:42 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.130.2.6 2018/03/31 08:34:17 pgoyette Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -913,7 +913,7 @@ module_do_load(const char *name, bool isdep, int flags,
 	struct pend_entry {
 		SLIST_ENTRY(pend_entry) pe_entry;
 		struct pending_t *pe_pending;
-	} *my_pend_entry;
+	} my_pend_entry;
 
 	modinfo_t *mi;
 	module_t *mod, *mod2, *prev_active;
@@ -942,9 +942,8 @@ module_do_load(const char *name, bool isdep, int flags,
 		pending = SLIST_FIRST(&pend_stack)->pe_pending;
 	} else
 		pending = &new_pending;
-	my_pend_entry = kmem_zalloc(sizeof(*my_pend_entry), KM_SLEEP);
-	my_pend_entry->pe_pending = pending;
-	SLIST_INSERT_HEAD(&pend_stack, my_pend_entry, pe_entry);
+	my_pend_entry.pe_pending = pending;
+	SLIST_INSERT_HEAD(&pend_stack, &my_pend_entry, pe_entry);
 
 	/*
 	 * Search the list of disabled builtins first.
@@ -962,11 +961,9 @@ module_do_load(const char *name, bool isdep, int flags,
 				    "builtin module `%s'", name);
 			}
 			SLIST_REMOVE_HEAD(&pend_stack, pe_entry);
-			kmem_free(my_pend_entry, sizeof(*my_pend_entry));
 			return EPERM;
 		} else {
 			SLIST_REMOVE_HEAD(&pend_stack, pe_entry);
-			kmem_free(my_pend_entry, sizeof(*my_pend_entry));
 			error = module_do_builtin(mod, name, modp, props);
 			return error;
 		}
@@ -996,7 +993,6 @@ module_do_load(const char *name, bool isdep, int flags,
 			module_print("%s module `%s' already loaded",
 			    isdep ? "dependent" : "requested", name);
 			SLIST_REMOVE_HEAD(&pend_stack, pe_entry);
-			kmem_free(my_pend_entry, sizeof(*my_pend_entry));
 			return EEXIST;
 		}
 
@@ -1004,7 +1000,6 @@ module_do_load(const char *name, bool isdep, int flags,
 		if (mod == NULL) {
 			module_error("out of memory for `%s'", name);
 			SLIST_REMOVE_HEAD(&pend_stack, pe_entry);
-			kmem_free(my_pend_entry, sizeof(*my_pend_entry));
 			return ENOMEM;
 		}
 
@@ -1025,7 +1020,6 @@ module_do_load(const char *name, bool isdep, int flags,
 #endif
 			kmem_free(mod, sizeof(*mod));
 			SLIST_REMOVE_HEAD(&pend_stack, pe_entry);
-			kmem_free(my_pend_entry, sizeof(*my_pend_entry));
 			return error;
 		}
 		TAILQ_INSERT_TAIL(pending, mod, mod_chain);
@@ -1241,7 +1235,6 @@ module_do_load(const char *name, bool isdep, int flags,
 		module_thread_kick();
 	}
 	SLIST_REMOVE_HEAD(&pend_stack, pe_entry);
-	kmem_free(my_pend_entry, sizeof(*my_pend_entry));
 	module_print("module `%s' loaded successfully", mi->mi_name);
 	return 0;
 
@@ -1257,7 +1250,6 @@ module_do_load(const char *name, bool isdep, int flags,
 	TAILQ_REMOVE(pending, mod, mod_chain);
 	kmem_free(mod, sizeof(*mod));
 	SLIST_REMOVE_HEAD(&pend_stack, pe_entry);
-	kmem_free(my_pend_entry, sizeof(*my_pend_entry));
 	return error;
 }
 
