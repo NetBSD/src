@@ -1,4 +1,4 @@
-/*	$NetBSD: spectre.c,v 1.5 2018/03/29 07:21:24 maxv Exp $	*/
+/*	$NetBSD: spectre.c,v 1.6 2018/03/31 07:15:47 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spectre.c,v 1.5 2018/03/29 07:21:24 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spectre.c,v 1.6 2018/03/31 07:15:47 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,7 +94,12 @@ speculation_detect_method(void)
 			x86_cpuid(7, descs);
 			if (descs[3] & CPUID_SEF_IBRS) {
 				/* descs[3] = %edx */
+#ifdef __x86_64__
 				mitigation_method = MITIGATION_INTEL_IBRS;
+#else
+				/* IBRS not supported on i386. */
+				mitigation_method = MITIGATION_NONE;
+#endif
 				return;
 			}
 		}
