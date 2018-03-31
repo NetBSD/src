@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_mod.c,v 1.24.14.30 2018/03/31 09:17:35 pgoyette Exp $	*/
+/*	$NetBSD: compat_mod.c,v 1.24.14.31 2018/03/31 10:01:58 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.24.14.30 2018/03/31 09:17:35 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.24.14.31 2018/03/31 10:01:58 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -79,7 +79,7 @@ static struct sysctllog *compat_clog = NULL;
 static const char * const compat_includes[] = {
 	"compat_80", "compat_70", "compat_60", "compat_50", "compat_40",
 	"compat_30", "compat_20", "compat_16", "compat_14", "compat_13",
-	NULL
+	"compat_12", NULL
 };
 
 MODULE_WITH_ALIASES(MODULE_CLASS_EXEC, compat, NULL, &compat_includes);
@@ -137,6 +137,9 @@ struct compat_init_fini {
 	int (*init)(void);
 	int (*fini)(void);
 } init_fini_list[] = {
+#ifdef COMPAT_80
+	{ compat_80_init, compat_80_fini },
+#endif
 #ifdef COMPAT_70
 	{ compat_70_init, compat_70_fini },
 #endif
