@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.211.6.3 2017/11/08 22:24:55 snj Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.211.6.4 2018/03/31 10:27:40 martin Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.211.6.3 2017/11/08 22:24:55 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.211.6.4 2018/03/31 10:27:40 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -292,8 +292,7 @@ icmp6_error2(struct mbuf *m, int type, int code, int param,
 {
 	struct ip6_hdr *ip6;
 
-	if (ifp == NULL)
-		return;
+	KASSERT(ifp != NULL);
 
 	if (m->m_len < sizeof(struct ip6_hdr)) {
 		m = m_pullup(m, sizeof(struct ip6_hdr));
@@ -304,11 +303,15 @@ icmp6_error2(struct mbuf *m, int type, int code, int param,
 	ip6 = mtod(m, struct ip6_hdr *);
 
 	if (in6_setscope(&ip6->ip6_src, ifp, NULL) != 0)
-		return;
+		goto out;
 	if (in6_setscope(&ip6->ip6_dst, ifp, NULL) != 0)
-		return;
+		goto out;
 
 	icmp6_error(m, type, code, param);
+	return;
+
+out:
+	m_freem(m);
 }
 
 /*
@@ -344,7 +347,7 @@ icmp6_error(struct mbuf *m, int type, int code, int param)
 	 * we should basically suppress sending an error (RFC 2463, Section
 	 * 2.4).
 	 * We have two exceptions (the item e.2 in that section):
-	 * - the Pakcet Too Big message can be sent for path MTU discovery.
+	 * - the Packet Too Big message can be sent for path MTU discovery.
 	 * - the Parameter Problem Message that can be allowed an icmp6 error
 	 *   in the option type field.  This check has been done in
 	 *   ip6_unknown_opt(), so we can just check the type and code.
@@ -391,18 +394,7 @@ icmp6_error(struct mbuf *m, int type, int code, int param)
 		} else {
 			/* ICMPv6 informational - send the error */
 		}
-	}
-#if 0 /* controversial */
-	else if (off >= 0 && nxt == IPPROTO_ESP) {
-		/*
-		 * It could be ICMPv6 error inside ESP.  Take a safer side,
-		 * don't respond.
-		 */
-		ICMP6_STATINC(ICMP6_STAT_CANTERROR);
-		goto freeit;
-	}
-#endif
-	else {
+	} else {
 		/* non-ICMPv6 - send the error */
 	}
 
@@ -452,11 +444,13 @@ icmp6_error(struct mbuf *m, int type, int code, int param)
 	m_reset_rcvif(m);
 
 	ICMP6_STATINC(ICMP6_STAT_OUTHIST + type);
-	icmp6_reflect(m, sizeof(struct ip6_hdr)); /* header order: IPv6 - ICMPv6 */
+
+	/* header order: IPv6 - ICMPv6 */
+	icmp6_reflect(m, sizeof(struct ip6_hdr));
 
 	return;
 
-  freeit:
+freeit:
 	/*
 	 * If we can't tell whether or not we can generate ICMP6, free it.
 	 */
@@ -473,7 +467,7 @@ _icmp6_input(struct mbuf *m, int off, int proto)
 	struct ip6_hdr *ip6, *nip6;
 	struct icmp6_hdr *icmp6, *nicmp6;
 	int icmp6len = m->m_pkthdr.len - off;
-	int code, sum, noff;
+	int code, sum;
 	struct ifnet *rcvif;
 	struct psref psref;
 	char ip6buf[INET6_ADDRSTRLEN], ip6buf2[INET6_ADDRSTRLEN];
@@ -513,6 +507,7 @@ _icmp6_input(struct mbuf *m, int off, int proto)
 		icmp6_ifstat_inc(rcvif, ifs6_in_error);
 		goto freeit;
 	}
+
 	/*
 	 * Enforce alignment requirements that are violated in
 	 * some cases, see kern/50766 for details.
@@ -525,7 +520,7 @@ _icmp6_input(struct mbuf *m, int off, int proto)
 			goto freeit;
 		}
 		ip6 = mtod(m, struct ip6_hdr *);
-		icmp6 = (struct icmp6_hdr *)(ip6 + 1);
+		icmp6 = (struct icmp6_hdr *)(mtod(m, char *) + off);
 	}
 	KASSERT(IP6_HDR_ALIGNED_P(icmp6));
 
@@ -739,8 +734,6 @@ _icmp6_input(struct mbuf *m, int off, int proto)
 			n = m_copym(m, 0, M_COPYALL, M_DONTWAIT);
 			if (n)
 				n = ni6_input(n, off);
-			/* XXX meaningless if n == NULL */
-			noff = sizeof(struct ip6_hdr);
 		} else {
 			u_char *p;
 			int maxhlen;
@@ -765,34 +758,36 @@ _icmp6_input(struct mbuf *m, int off, int proto)
 			m_reset_rcvif(n);
 			n->m_len = 0;
 			maxhlen = M_TRAILINGSPACE(n) - ICMP6_MAXLEN;
-			if (maxhlen < 0)
+			if (maxhlen < 0) {
+				m_free(n);
 				break;
+			}
 			if (maxhlen > hostnamelen)
 				maxhlen = hostnamelen;
 			/*
 			 * Copy IPv6 and ICMPv6 only.
 			 */
 			nip6 = mtod(n, struct ip6_hdr *);
-			bcopy(ip6, nip6, sizeof(struct ip6_hdr));
+			memcpy(nip6, ip6, sizeof(struct ip6_hdr));
 			nicmp6 = (struct icmp6_hdr *)(nip6 + 1);
-			bcopy(icmp6, nicmp6, sizeof(struct icmp6_hdr));
+			memcpy(nicmp6, icmp6, sizeof(struct icmp6_hdr));
+
 			p = (u_char *)(nicmp6 + 1);
 			memset(p, 0, 4);
-			bcopy(hostname, p + 4, maxhlen); /* meaningless TTL */
-			noff = sizeof(struct ip6_hdr);
+			memcpy(p + 4, hostname, maxhlen); /* meaningless TTL */
+
 			M_COPY_PKTHDR(n, m); /* just for rcvif */
 			n->m_pkthdr.len = n->m_len = sizeof(struct ip6_hdr) +
 				sizeof(struct icmp6_hdr) + 4 + maxhlen;
 			nicmp6->icmp6_type = ICMP6_WRUREPLY;
 			nicmp6->icmp6_code = 0;
 		}
-#undef hostnamelen
 		if (n) {
 			uint64_t *icmp6s = ICMP6_STAT_GETREF();
 			icmp6s[ICMP6_STAT_REFLECT]++;
 			icmp6s[ICMP6_STAT_OUTHIST + ICMP6_WRUREPLY]++;
 			ICMP6_STAT_PUTREF();
-			icmp6_reflect(n, noff);
+			icmp6_reflect(n, sizeof(struct ip6_hdr));
 		}
 		break;
 	    }
@@ -1128,7 +1123,7 @@ icmp6_notify_error(struct mbuf *m, int off, int icmp6len, int code)
 		ctlfunc = (void (*)(int, struct sockaddr *, void *))
 			(inet6sw[ip6_protox[nxt]].pr_ctlinput);
 		if (ctlfunc) {
-			(void) (*ctlfunc)(code, sin6tosa(&icmp6dst),
+			(void)(*ctlfunc)(code, sin6tosa(&icmp6dst),
 					  &ip6cp);
 		}
 	}
@@ -1177,8 +1172,7 @@ icmp6_mtudisc_update(struct ip6ctlparam *ip6cp, int validated)
 		if (0 <= icmp6_mtudisc_hiwat && rtcount > icmp6_mtudisc_hiwat) {
 			mutex_exit(&icmp6_mtx);
 			return;
-		}
-		else if (0 <= icmp6_mtudisc_lowat &&
+		} else if (0 <= icmp6_mtudisc_lowat &&
 		    rtcount > icmp6_mtudisc_lowat) {
 			/*
 			 * XXX nuke a victim, install the new one.
@@ -2121,14 +2115,14 @@ icmp6_reflect(struct mbuf *m, size_t off)
 				return;
 		}
 		bcopy((void *)&nip6, mtod(m, void *), sizeof(nip6));
-	} else /* off == sizeof(struct ip6_hdr) */ {
-		size_t l;
-		l = sizeof(struct ip6_hdr) + sizeof(struct icmp6_hdr);
+	} else {
+		size_t l = sizeof(struct ip6_hdr) + sizeof(struct icmp6_hdr);
 		if (m->m_len < l) {
 			if ((m = m_pullup(m, l)) == NULL)
 				return;
 		}
 	}
+
 	plen = m->m_pkthdr.len - sizeof(struct ip6_hdr);
 	ip6 = mtod(m, struct ip6_hdr *);
 	ip6->ip6_nxt = IPPROTO_ICMPV6;
