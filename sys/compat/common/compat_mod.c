@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_mod.c,v 1.24.14.29 2018/03/30 11:29:53 pgoyette Exp $	*/
+/*	$NetBSD: compat_mod.c,v 1.24.14.30 2018/03/31 09:17:35 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.24.14.29 2018/03/30 11:29:53 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.24.14.30 2018/03/31 09:17:35 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -130,16 +130,6 @@ static const struct syscall_package compat_syscalls[] = {
 	{ SYS_compat_09_ouname, 0, (sy_call_t *)compat_09_sys_uname },
 #endif
 
-#if defined(COMPAT_12)
-	{ SYS_compat_12_fstat12, 0, (sy_call_t *)compat_12_sys_fstat },
-	{ SYS_compat_12_getdirentries, 0, (sy_call_t *)compat_12_sys_getdirentries },
-	{ SYS_compat_12_lstat12, 0, (sy_call_t *)compat_12_sys_lstat },
-	{ SYS_compat_12_msync, 0, (sy_call_t *)compat_12_sys_msync },
-	{ SYS_compat_12_oreboot, 0, (sy_call_t *)compat_12_sys_reboot },
-	{ SYS_compat_12_oswapon, 0, (sy_call_t *)compat_12_sys_swapon },
-	{ SYS_compat_12_stat12, 0, (sy_call_t *)compat_12_sys_stat },
-#endif
-
 	{ 0, 0, NULL },
 };
 
@@ -174,10 +164,10 @@ struct compat_init_fini {
 #ifdef COMPAT_13
 	{ compat_13_init, compat_13_fini },
 #endif
-#if 0	/* NOT YET */
 #ifdef COMPAT_12
 	{ compat_12_init, compat_12_fini },
 #endif
+#if 0	/* NOT YET */
 #ifdef COMPAT_10
 	{ compat_10_init, compat_10_fini },
 #endif

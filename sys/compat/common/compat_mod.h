@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_mod.h,v 1.1.42.16 2018/03/30 11:18:34 pgoyette Exp $	*/
+/*	$NetBSD: compat_mod.h,v 1.1.42.17 2018/03/31 09:17:35 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -137,6 +137,17 @@ int kern_sig_13_init(void);
 int kern_sig_13_fini(void);
 void uvm_13_init(void);
 void uvm_13_fini(void);
+#endif
+
+#ifdef COMPAT_12
+int compat_12_init(void);
+int compat_12_fini(void);
+int kern_xxx_12_init(void);
+int kern_xxx_12_fini(void);
+int vm_12_init(void);
+int vm_12_fini(void);
+int vfs_syscalls_12_init(void);
+int vfs_syscalls_12_fini(void);
 #endif
 
 #endif /* !_COMPAT_MOD_H_ */
