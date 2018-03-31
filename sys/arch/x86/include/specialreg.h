@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.98.2.2 2018/03/16 13:05:31 martin Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.98.2.3 2018/03/31 10:51:05 martin Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -630,7 +630,10 @@
 #define MSR_EBC_FREQUENCY_ID	0x02c	/* PIV only */
 #define MSR_TEST_CTL		0x033
 #define MSR_IA32_SPEC_CTRL	0x048
+#define 	IA32_SPEC_CTRL_IBRS	0x01
+#define 	IA32_SPEC_CTRL_STIBP	0x02
 #define MSR_IA32_PRED_CMD	0x049
+#define 	IA32_PRED_CMD_IBPB	0x01
 #define MSR_BIOS_UPDT_TRIG	0x079
 #define MSR_BBL_CR_D0		0x088	/* PII+ only */
 #define MSR_BBL_CR_D1		0x089	/* PII+ only */
@@ -644,6 +647,8 @@
 #define MSR_IA32_EXT_CONFIG	0x0ee	/* Undocumented. Core Solo/Duo only */
 #define MSR_MTRRcap		0x0fe
 #define MSR_IA32_ARCH_CAPABILITIES 0x10a
+#define 	IA32_ARCH_RDCL_NO	0x01
+#define 	IA32_ARCH_IBRS_ALL	0x02
 #define MSR_BBL_CR_ADDR		0x116	/* PII+ only */
 #define MSR_BBL_CR_DECC		0x118	/* PII+ only */
 #define MSR_BBL_CR_CTL		0x119	/* PII+ only */
@@ -842,6 +847,7 @@
 
 #define MSR_IC_CFG	0xc0011021
 #define 	IC_CFG_DIS_SEQ_PREFETCH	0x00000800
+#define 	IC_CFG_DIS_IND		0x00004000
 
 #define MSR_DC_CFG	0xc0011022
 #define 	DC_CFG_DIS_CNV_WC_SSO	0x00000008
