@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.162 2017/10/27 12:25:15 joerg Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.163 2018/03/31 23:12:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.162 2017/10/27 12:25:15 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.163 2018/03/31 23:12:01 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -307,7 +307,7 @@ vpanic(const char *fmt, va_list ap)
 
 	doing_shutdown = 1;
 
-	if (msgbufenabled && msgbufp->msg_magic == MSG_MAGIC)
+	if (logenabled(msgbufp))
 		panicstart = msgbufp->msg_bufx;
 
 	printf("panic: ");
@@ -323,7 +323,7 @@ vpanic(const char *fmt, va_list ap)
 	}
 	printf("\n");
 
-	if (msgbufenabled && msgbufp->msg_magic == MSG_MAGIC)
+	if (logenabled(msgbufp))
 		panicend = msgbufp->msg_bufx;
 
 #ifdef IPKDB

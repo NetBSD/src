@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_log.c,v 1.56 2017/10/25 08:12:39 maya Exp $	*/
+/*	$NetBSD: subr_log.c,v 1.57 2018/03/31 23:12:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_log.c,v 1.56 2017/10/25 08:12:39 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_log.c,v 1.57 2018/03/31 23:12:01 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -382,6 +382,28 @@ logioctl(dev_t dev, u_long com, void *data, int flag, struct lwp *lwp)
 	return (0);
 }
 
+static void
+logskip(struct kern_msgbuf *mbp)
+{
+	/*
+	 * Move forward read pointer to the next line
+	 * in the buffer.  Note that the buffer is
+	 * a ring buffer so we should reset msg_bufr
+	 * to 0 when msg_bufr exceeds msg_bufs.
+	 *
+	 * To prevent to loop forever, give up if we
+	 * cannot find a newline in mbp->msg_bufs
+	 * characters (the max size of the buffer).
+	 */
+	for (int i = 0; i < mbp->msg_bufs; i++) {
+		char c0 = mbp->msg_bufc[mbp->msg_bufr];
+		if (++mbp->msg_bufr >= mbp->msg_bufs)
+			mbp->msg_bufr = 0;
+		if (c0 == '\n')
+			break;
+	}
+}
+
 void
 logputchar(int c)
 {
@@ -389,48 +411,35 @@ logputchar(int c)
 
 	if (!cold)
 		mutex_spin_enter(&log_lock);
-	if (msgbufenabled) {
-		mbp = msgbufp;
-		if (mbp->msg_magic != MSG_MAGIC) {
-			/*
-			 * Arguably should panic or somehow notify the
-			 * user...  but how?  Panic may be too drastic,
-			 * and would obliterate the message being kicked
-			 * out (maybe a panic itself), and printf
-			 * would invoke us recursively.  Silently punt
-			 * for now.  If syslog is running, it should
-			 * notice.
-			 */
-			msgbufenabled = 0;
-		} else {
-			mbp->msg_bufc[mbp->msg_bufx++] = c;
-			if (mbp->msg_bufx < 0 || mbp->msg_bufx >= mbp->msg_bufs)
-				mbp->msg_bufx = 0;
-			/* If the buffer is full, keep the most recent data. */
-			if (mbp->msg_bufr == mbp->msg_bufx) {
-				char c0;
-				int i;
 
-				/*
-				 * Move forward read pointer to the next line
-				 * in the buffer.  Note that the buffer is
-				 * a ring buffer so we should reset msg_bufr
-				 * to 0 when msg_bufr exceeds msg_bufs.
-				 *
-				 * To prevent to loop forever, give up if we
-				 * cannot find a newline in mbp->msg_bufs
-				 * characters (the max size of the buffer).
-				 */
-				for (i = 0; i < mbp->msg_bufs; i++) {
-					c0 = mbp->msg_bufc[mbp->msg_bufr];
-					if (++mbp->msg_bufr >= mbp->msg_bufs)
-						mbp->msg_bufr = 0;
-					if (c0 == '\n')
-						break;
-				}
-			}
-		}
+	if (!msgbufenabled)
+		goto out;
+
+	mbp = msgbufp;
+	if (mbp->msg_magic != MSG_MAGIC) {
+		/*
+		 * Arguably should panic or somehow notify the
+		 * user...  but how?  Panic may be too drastic,
+		 * and would obliterate the message being kicked
+		 * out (maybe a panic itself), and printf
+		 * would invoke us recursively.  Silently punt
+		 * for now.  If syslog is running, it should
+		 * notice.
+		 */
+		msgbufenabled = 0;
+		goto out;
+
 	}
+
+	mbp->msg_bufc[mbp->msg_bufx++] = c;
+	if (mbp->msg_bufx < 0 || mbp->msg_bufx >= mbp->msg_bufs)
+		mbp->msg_bufx = 0;
+
+	/* If the buffer is full, keep the most recent data. */
+	if (mbp->msg_bufr == mbp->msg_bufx)
+		logskip(mbp);
+
+out:
 	if (!cold)
 		mutex_spin_exit(&log_lock);
 }
@@ -449,7 +458,7 @@ sysctl_msgbuf(SYSCTLFN_ARGS)
 	extern kmutex_t log_lock;
 	int error;
 
-	if (!msgbufenabled || msgbufp->msg_magic != MSG_MAGIC) {
+	if (!logenabled(msgbufp)) {
 		msgbufenabled = 0;
 		return (ENXIO);
 	}
