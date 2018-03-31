@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci_pci.c,v 1.44 2017/05/10 02:46:33 msaitoh Exp $	*/
+/*	$NetBSD: fwohci_pci.c,v 1.45 2018/03/31 15:14:47 sevan Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci_pci.c,v 1.44 2017/05/10 02:46:33 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci_pci.c,v 1.45 2018/03/31 15:14:47 sevan Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -80,7 +80,7 @@ fwohci_pci_match(device_t parent, cfdata_t match, void *aux)
 	 * until someone with the right hardware can investigate
 	 */
 	if ((PCI_VENDOR(pa->pa_id) == PCI_VENDOR_APPLE) &&
-	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_PBG3_FW))
+	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_UNINORTH_FW))
 		return 0;
 	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_SERIALBUS &&
 	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_SERIALBUS_FIREWIRE &&
