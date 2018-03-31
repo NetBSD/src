@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.158 2017/05/26 14:21:01 riastradh Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.159 2018/03/31 23:12:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.158 2017/05/26 14:21:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.159 2018/03/31 23:12:01 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -381,7 +381,7 @@ kernfs_xread(struct kernfs_node *kfs, int off, char **bufp, size_t len, size_t *
 		 * deal with cases where the message buffer has
 		 * become corrupted.
 		 */
-		if (!msgbufenabled || msgbufp->msg_magic != MSG_MAGIC) {
+		if (!logenabled(msgbufp)) {
 			msgbufenabled = 0;
 			return (ENXIO);
 		}
@@ -942,8 +942,7 @@ kernfs_readdir(void *v)
 				vrele(fvp);
 			}
 			if (kt->kt_tag == KFSmsgbuf) {
-				if (!msgbufenabled
-				    || msgbufp->msg_magic != MSG_MAGIC) {
+				if (!logenabled(msgbufp)) {
 					continue;
 				}
 			}
