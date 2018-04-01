@@ -1,4 +1,4 @@
-#	$NetBSD: files.sunxi,v 1.46 2018/04/01 04:35:04 ryo Exp $
+#	$NetBSD: files.sunxi,v 1.47 2018/04/01 21:19:17 bouyer Exp $
 #
 # Configuration info for Allwinner sunxi family SoCs
 #
@@ -17,6 +17,7 @@ file	arch/arm/sunxi/sunxi_ccu_nm.c		sunxi_ccu
 file	arch/arm/sunxi/sunxi_ccu_nkmp.c		sunxi_ccu
 file	arch/arm/sunxi/sunxi_ccu_phase.c	sunxi_ccu
 file	arch/arm/sunxi/sunxi_ccu_prediv.c	sunxi_ccu
+file	arch/arm/sunxi/sunxi_ccu_display.c	sunxi_ccu
 
 # CCU (A10/A20)
 device	sun4ia10ccu: sunxi_ccu
