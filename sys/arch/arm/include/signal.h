@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.14 2017/01/07 19:04:24 christos Exp $	*/
+/*	$NetBSD: signal.h,v 1.15 2018/04/01 04:35:04 ryo Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -52,6 +52,8 @@
 #ifndef _LOCORE
 typedef int sig_atomic_t;
 #endif
+
+#if defined(__arm__)
 
 #if defined(_NETBSD_SOURCE)
 
@@ -155,6 +157,7 @@ struct sigcontext {
 #define SIG_CODE_SEGV_TYPE_MASK	SIG_CODE_BUS_TYPE_MASK
 
 #endif	/* _NETBSD_SOURCE */
+#endif	/* __arm__ */
 #endif	/* !_ARM_SIGNAL_H_ */
 
 /* End of signal.h */

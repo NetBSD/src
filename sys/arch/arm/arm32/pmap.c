@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.364 2018/01/22 13:22:40 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.365 2018/04/01 04:35:03 ryo Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -217,7 +217,7 @@
 
 #include <arm/locore.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.364 2018/01/22 13:22:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.365 2018/04/01 04:35:03 ryo Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -3881,11 +3881,19 @@ pmap_kremove(vaddr_t va, vsize_t len)
 bool
 pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pap)
 {
+
+	return pmap_extract_coherency(pm, va, pap, NULL);
+}
+
+bool
+pmap_extract_coherency(pmap_t pm, vaddr_t va, paddr_t *pap, bool *coherentp)
+{
 	struct l2_dtable *l2;
 	pd_entry_t *pdep, pde;
 	pt_entry_t *ptep, pte;
 	paddr_t pa;
 	u_int l1slot;
+	bool coherent;
 
 	pmap_acquire_pmap_lock(pm);
 
@@ -3905,6 +3913,7 @@ pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pap)
 		} else
 #endif
 			pa = (pde & L1_S_FRAME) | (va & L1_S_OFFSET);
+		coherent = (pde & L1_S_CACHE_MASK) == 0;
 	} else {
 		/*
 		 * Note that we can't rely on the validity of the L1
@@ -3928,16 +3937,21 @@ pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pap)
 		switch (pte & L2_TYPE_MASK) {
 		case L2_TYPE_L:
 			pa = (pte & L2_L_FRAME) | (va & L2_L_OFFSET);
+			coherent = (pte & L2_L_CACHE_MASK) == 0;
 			break;
 
 		default:
 			pa = (pte & ~PAGE_MASK) | (va & PAGE_MASK);
+			coherent = (pte & L2_S_CACHE_MASK) == 0;
 			break;
 		}
 	}
 
 	if (pap != NULL)
 		*pap = pa;
+
+	if (coherentp != NULL)
+		*coherentp = (pm == pmap_kernel() && coherent);
 
 	return true;
 }

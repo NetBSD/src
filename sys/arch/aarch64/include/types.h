@@ -1,4 +1,4 @@
-/* $NetBSD: types.h,v 1.5 2016/02/28 22:19:01 joerg Exp $ */
+/* $NetBSD: types.h,v 1.6 2018/04/01 04:35:03 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -36,9 +36,10 @@
 
 #include <sys/cdefs.h>
 #include <sys/featuretest.h>
-#include <aarch64/int_types.h>
+#include <arm/int_types.h>
 
-#if defined(_KERNEL) || defined(_KMEMUSER) || defined(_KERNTYPES) || defined(_STANDALONE)
+#if defined(_KERNEL) || defined(_KMEMUSER) || defined(_KERNTYPES) ||	\
+    defined(_STANDALONE)
 typedef	unsigned long	vm_offset_t;	/* depreciated */
 typedef	unsigned long	vm_size_t;	/* depreciated */
 
@@ -64,13 +65,27 @@ typedef unsigned long	pmc_ctr_t;
 typedef unsigned short	tlb_asid_t;
 
 #if defined(_KERNEL)
+#define LBL_X19	0
+#define LBL_X20	1
+#define LBL_X21	2
+#define LBL_X22	3
+#define LBL_X23	4
+#define LBL_X24	5
+#define LBL_X25	6
+#define LBL_X26	7
+#define LBL_X27	8
+#define LBL_X28	9
+#define LBL_X29	10
+#define LBL_LR	11
+#define LBL_SP	12
+#define LBL_MAX	13
 typedef struct label_t {	/* Used by setjmp & longjmp */
-        register_t lb_reg[13];	/* x19 .. x30, sp */
+	register_t lb_reg[LBL_MAX];	/* x19 .. x30, sp */
 } label_t;
 #endif
 
 #endif
-         
+
 /*
  * This should have always been an 8-bit type.
  */
@@ -87,6 +102,7 @@ typedef unsigned long long int __register_t;
 #define __HAVE_NEW_STYLE_BUS_H
 #define __HAVE_MINIMAL_EMUL
 #define __HAVE_CPU_DATA_FIRST
+#define __HAVE_CPU_LWP_SETPRIVATE
 #define __HAVE___LWP_GETPRIVATE_FAST
 #define __HAVE_COMMON___TLS_GET_ADDR
 #define __HAVE_TLS_VARIANT_I
