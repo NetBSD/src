@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_forward.c,v 1.73.2.2 2018/02/12 18:37:51 snj Exp $	*/
+/*	$NetBSD: ip6_forward.c,v 1.73.2.3 2018/04/01 09:09:04 martin Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.109 2002/09/11 08:10:17 sakane Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.73.2.2 2018/02/12 18:37:51 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.73.2.3 2018/04/01 09:09:04 martin Exp $");
 
 #include "opt_gateway.h"
 #include "opt_ipsec.h"
@@ -166,6 +166,7 @@ ip6_forward(struct mbuf *m, int srcrt)
 			 */
 			if (error == -EINVAL)
 				error = 0;
+			m_freem(m);
 			goto freecopy;
 		}
 	}
@@ -264,8 +265,10 @@ ip6_forward(struct mbuf *m, int srcrt)
 		int s = splsoftnet();
 		error = ipsec6_process_packet(m, sp->req);
 		splx(s);
+		/* m is freed */
 		if (mcopy)
 			goto freecopy;
+		return;
 	}
 #endif   
 
