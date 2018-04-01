@@ -1,4 +1,4 @@
-/*	$NetBSD: debugrm.c,v 1.3 2006/09/09 16:22:09 manu Exp $	*/
+/*	$NetBSD: debugrm.c,v 1.4 2018/04/01 22:35:22 christos Exp $	*/
 
 /*	$KAME: debugrm.c,v 1.6 2001/12/13 16:07:46 sakane Exp $	*/
 
@@ -51,37 +51,38 @@
 #define DRMLISTSIZE 1024
 
 struct drm_list_t {
-	void *ptr;
+	const void *ptr;
 	char msg[100];
 };
 static struct drm_list_t drmlist[DRMLISTSIZE];
 
 static int drm_unknown;
 
-static void DRM_add __P((void *, char *));
-static void DRM_del __P((void *));
-static void DRM_setmsg __P((char *, int, void *, int, char *, int, char *));
+static void DRM_add(const void *, const char *);
+static void DRM_del(const void *);
+static void DRM_setmsg(char *, size_t, const void *, size_t, const char *,
+    size_t, const char *);
 
 void 
-DRM_init()
+DRM_init(void)
 {
-	int i;
+	size_t i;
 	drm_unknown = 0;
-	for (i = 0; i < sizeof(drmlist)/sizeof(drmlist[0]); i++)
+	for (i = 0; i < __arraycount(drmlist); i++)
 		drmlist[i].ptr = 0;
 }
 
 void
-DRM_dump()
+DRM_dump(void)
 {
 	FILE *fp;
-	int i;
+	size_t i;
 
 	fp = fopen(DRMDUMPFILE, "w");
 	if (fp == NULL)
 		err(1, "fopen");	/*XXX*/
 	fprintf(fp, "drm_unknown=%d\n", drm_unknown);
-	for (i = 0; i < sizeof(drmlist)/sizeof(drmlist[0]); i++) {
+	for (i = 0; i < __arraycount(drmlist); i++) {
 		if (drmlist[i].ptr)
 			fprintf(fp, "%s\n", drmlist[i].msg);
 	}
@@ -89,12 +90,10 @@ DRM_dump()
 }
 
 static void 
-DRM_add(p, msg)
-	void *p;
-	char *msg;
+DRM_add(const void *p, const char *msg)
 {
-	int i;
-	for (i = 0; i < sizeof(drmlist)/sizeof(drmlist[0]); i++) {
+	size_t i;
+	for (i = 0; i < __arraycount(drmlist); i++) {
 		if (!drmlist[i].ptr) {
 			drmlist[i].ptr = p;
 			strlcpy(drmlist[i].msg, msg, sizeof(drmlist[i].msg));
@@ -104,15 +103,14 @@ DRM_add(p, msg)
 }
 
 static void
-DRM_del(p)
-	void *p;
+DRM_del(const void *p)
 {
-	int i;
+	size_t i;
 
 	if (!p)
 		return;
 
-	for (i = 0; i < sizeof(drmlist)/sizeof(drmlist[0]); i++) {
+	for (i = 0; i < __arraycount(drmlist); i++) {
 		if (drmlist[i].ptr == p) {
 			drmlist[i].ptr = 0;
 			return;
@@ -122,10 +120,8 @@ DRM_del(p)
 }
 
 static void
-DRM_setmsg(buf, buflen, ptr, size, file, line, func)
-	char *buf, *file, *func;
-	int buflen, size, line;
-	void *ptr;
+DRM_setmsg(char *buf, size_t buflen, const void *ptr, size_t size,
+    const char *file, size_t line, const char *func)
 {
 	time_t t;
 	struct tm *tm;
@@ -136,14 +132,11 @@ DRM_setmsg(buf, buflen, ptr, size, file, line, func)
 	len = strftime(buf, buflen, "%Y/%m/%d:%T ", tm);
 
 	snprintf(buf + len, buflen - len, "%p %6d %s:%d:%s",
-		ptr, size, file , line, func);
+		ptr, size, file, line, func);
 }
 
 void *
-DRM_malloc(file, line, func, size)
-	char *file, *func;
-	int line;
-	size_t size;
+DRM_malloc(const char *file, size_t line, const char *func, size_t size)
 {
 	void *p;
 
@@ -158,10 +151,8 @@ DRM_malloc(file, line, func, size)
 }
 
 void *
-DRM_calloc(file, line, func, number, size)
-	char *file, *func;
-	int line;
-	size_t number, size;
+DRM_calloc(const char *file, size_t line, const char *func, size_t number,
+    size_t size)
 {
 	void *p;
 
@@ -175,11 +166,8 @@ DRM_calloc(file, line, func, number, size)
 }
 
 void *
-DRM_realloc(file, line, func, ptr, size)
-	char *file, *func;
-	int line;
-	void *ptr;
-	size_t size;
+DRM_realloc(const char *file, size_t line, const char *func, void *ptr,
+    size_t size)
 {
 	void *p;
 
@@ -197,20 +185,14 @@ DRM_realloc(file, line, func, ptr, size)
 }
 
 void
-DRM_free(file, line, func, ptr)
-	char *file, *func;
-	int line;
-	void *ptr;
+DRM_free(const char *file, size_t line, const char *func, void *ptr)
 {
 	DRM_del(ptr);
 	free(ptr);
 }
 
 char *
-DRM_strdup(file, line, func, str)
-	char *file, *func;
-	int line;
-	const char *str;
+DRM_strdup(const char *file, size_t line, const char *func, const char *str)
 {
 	char *p;
 
@@ -218,7 +200,7 @@ DRM_strdup(file, line, func, str)
 
 	if (p) {
 		char buf[1024];
-		DRM_setmsg(buf, sizeof(buf), p, size, file, line, func);
+		DRM_setmsg(buf, sizeof(buf), p, strlen(p), file, line, func);
 		DRM_add(p, buf);
 	}
 
@@ -229,10 +211,7 @@ DRM_strdup(file, line, func, str)
  * mask vmbuf.c functions.
  */
 void *
-DRM_vmalloc(file, line, func, size)
-	char *file, *func;
-	int line;
-	size_t size;
+DRM_vmalloc(const char *file, size_t line, const char *func, size_t size)
 {
 	void *p;
 
@@ -247,11 +226,8 @@ DRM_vmalloc(file, line, func, size)
 }
 
 void *
-DRM_vrealloc(file, line, func, ptr, size)
-	char *file, *func;
-	int line;
-	void *ptr;
-	size_t size;
+DRM_vrealloc(const char *file, size_t line, const char *func, void *ptr,
+    size_t size)
 {
 	void *p;
 
@@ -269,20 +245,14 @@ DRM_vrealloc(file, line, func, ptr, size)
 }
 
 void
-DRM_vfree(file, line, func, ptr)
-	char *file, *func;
-	int line;
-	void *ptr;
+DRM_vfree(const char *file, size_t line, const char *func, void *ptr)
 {
 	DRM_del(ptr);
 	vfree(ptr);
 }
 
 void *
-DRM_vdup(file, line, func, ptr)
-	char *file, *func;
-	int line;
-	void *ptr;
+DRM_vdup(const char *file, size_t line, const char *func, void *ptr)
 {
 	void *p;
 
