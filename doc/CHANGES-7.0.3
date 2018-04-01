@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.3,v 1.1.2.96 2018/03/25 14:12:19 martin Exp $
+# $NetBSD: CHANGES-7.0.3,v 1.1.2.97 2018/04/01 09:15:43 martin Exp $
 
 A complete list of changes from the NetBSD 7.0.2 release to the NetBSD 7.0.3
 release:
@@ -5356,4 +5356,14 @@ doc/3RDPARTY					1.1506 (patch)
 
 	Updated tzdata to 2018d.
 	[kre, ticket #1589]
+
+sys/netinet6/ip6_forward.c			1.91 (patch)
+
+	Fix two IPv6 ipsec use-after-free issues.
+	[maxv, ticket #1590]
+
+sys/netinet6/raw_ip6.c				1.161
+
+	Fix use-after-free.
+	[maxv, ticket #1591]
 
