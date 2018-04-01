@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.164 2018/04/01 19:28:17 christos Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.165 2018/04/01 19:29:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.164 2018/04/01 19:28:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.165 2018/04/01 19:29:43 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -482,6 +482,25 @@ putlogpri(int level)
 	putone('>', TOLOG, NULL);
 }
 
+#ifdef KLOG_TIMESTAMP
+static int needtstamp = 1;
+
+static void
+addtstamp(int flags, struct tty *tp)
+{
+	char buf[64];
+	struct timespec ts;
+	int n;
+
+	getnanouptime(&ts);
+	n = snprintf(buf, sizeof(buf), "[% 9jd.%.9ld] ",
+	    (intptr_t)ts.tv_sec, ts.tv_nsec);
+
+	for (int i = 0; i < n; i++)
+		putone(buf[i], flags, tp);
+}
+#endif
+
 /*
  * putchar: print a single character on console or user terminal.
  *
@@ -497,6 +516,15 @@ putchar(int c, int flags, struct tty *tp)
 		return;
 	}
 
+#ifdef KLOG_TIMESTAMP
+	if (needtstamp) {
+		addtstamp(flags, tp);
+		needtstamp = 0;
+	}
+
+	if (c == '\n')
+		needtstamp++;
+#endif
 	putone(c, flags, tp);
 
 #ifdef DDB
