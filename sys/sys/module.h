@@ -1,4 +1,4 @@
-/*	$NetBSD: module.h,v 1.41.14.6 2018/03/11 07:25:59 pgoyette Exp $	*/
+/*	$NetBSD: module.h,v 1.41.14.7 2018/04/01 23:06:11 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -87,8 +87,9 @@ typedef struct module {
 	const modinfo_t		*mod_info;
 	struct kobj		*mod_kobj;
 	TAILQ_ENTRY(module)	mod_chain;
-	struct module		*mod_required[MAXMODDEPS];
+	struct module		*(*mod_required)[MAXMODDEPS];
 	u_int			mod_nrequired;
+	u_int			mod_arequired;
 	modsrc_t		mod_source;
 	time_t			mod_autotime;
 	void 			*mod_ctf;
