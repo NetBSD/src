@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.1 2014/08/10 05:47:37 matt Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.2 2018/04/01 04:35:03 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.1 2014/08/10 05:47:37 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.2 2018/04/01 04:35:03 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,8 +45,10 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.1 2014/08/10 05:47:37 matt Exp $");
 
 #include <uvm/uvm_extern.h>
 
-#include <aarch64/locore.h>
 #include <aarch64/pcb.h>
+#include <aarch64/frame.h>
+#include <aarch64/machdep.h>
+#include <aarch64/armreg.h>
 
 /*
  * Special compilation symbols:
@@ -80,10 +82,10 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	const struct pcb * const pcb1 = lwp_getpcb(l1);
 	struct pcb * const pcb2 = lwp_getpcb(l2);
 
-#ifdef PMAP_DEBUG
-	if (pmap_debug_level > 0)
-		printf("cpu_lwp_fork: %p %p %p %p\n", l1, l2, curlwp, &lwp0);
-#endif	/* PMAP_DEBUG */
+#if 0
+	printf("cpu_lwp_fork: lwp1=%p, lwp2=%p, curlwp=%p, lwp0=%p\n",
+	    l1, l2, curlwp, &lwp0);
+#endif
 
 	/* Copy the pcb */
 	*pcb2 = *pcb1;
@@ -99,27 +101,34 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	 * Note: this stack is not in use if we are forking from p1
 	 */
 	vaddr_t uv = uvm_lwp_getuarea(l2);
+
+#ifdef STACKCHECKS
+#define PCB_END(l)	((char *)lwp_getpcb((l)) + sizeof(struct pcb))
+#define UAREA_END(l)	((char *)uvm_lwp_getuarea((l)) + USPACE)
+	/* fill 0xdd for STACKCHECKS */
+	memset(PCB_END(l2), 0xdd, UAREA_END(l2) - PCB_END(l2));
+	printf("lwp %p: pcb=%p, stack=%p-%p\n", l2, lwp_getpcb(l2),
+	    PCB_END(l2), UAREA_END(l2));
+#endif
+
 	struct trapframe * const utf = (struct trapframe *)(uv + USPACE) - 1;
 	l2->l_md.md_utf = utf;
 
 	*utf = *l1->l_md.md_utf;
 
 	/*
-	 * If specified, give the child a different stack (make sure
-	 * it's 16-byte aligned).
+	 * If specified, give the child a different stack
+	 * (make sure it's 16-byte aligned).
 	 */
 	if (stack != NULL)
 		utf->tf_sp = ((vaddr_t)(stack) + stacksize) & -16;
 
-	utf->tf_spsr = SPSR_M_EL0T;		/* for returning to userspace */
-
+	/* build a new switchframe */
 	struct trapframe * const ktf = utf - 1;
-	ktf->tf_chain = utf;
-	ktf->tf_reg[27] = (u_int)func;
-	ktf->tf_reg[28] = (u_int)arg;
+	ktf->tf_reg[27] = func;
+	ktf->tf_reg[28] = arg;
 	ktf->tf_reg[29] = 0;
 	KASSERT(reg_daif_read() == 0);
-	ktf->tf_spsr = SPSR_M_EL1T;
 	ktf->tf_lr = (uintptr_t)lwp_trampoline;
 
 	l2->l_md.md_ktf = ktf;
@@ -132,10 +141,21 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
  * argument.  switch_exit() first switches to lwp0's context, and finally
  * jumps into switch() to wait for another process to wake up.
  */
-
 void
 cpu_lwp_free(struct lwp *l, int proc)
 {
+#ifdef STACKCHECKS
+	/* Report how much stack has been used - debugging */
+	u_char *stop, *sbottom, *ptr;
+	u_int cnt;
+
+	stop = PCB_END(l);
+	sbottom = UAREA_END(l);
+	for (cnt = 0, ptr = stop; *ptr == 0xdd && ptr <= sbottom; cnt++, ptr++)
+		;
+	log(LOG_INFO, "lwp %p: %u/%ld bytes are used for EL1 stack\n",
+	    l, cnt, sbottom - stop);
+#endif
 }
 
 void
@@ -171,10 +191,11 @@ vmapbuf(struct buf *bp, vsize_t len)
 	 * non-NULL.
 	 */
 	while (len) {
-		(void) pmap_extract(vm_map_pmap(&bp->b_proc->p_vmspace->vm_map),
+		(void)pmap_extract(vm_map_pmap(&bp->b_proc->p_vmspace->vm_map),
 		    faddr, &fpa);
 		pmap_enter(pmap_kernel(), taddr, fpa,
-			VM_PROT_READ|VM_PROT_WRITE, VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
+		    VM_PROT_READ | VM_PROT_WRITE,
+		    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
 		faddr += PAGE_SIZE;
 		taddr += PAGE_SIZE;
 		len -= PAGE_SIZE;

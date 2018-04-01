@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1052 2018/03/31 14:24:54 kamil Exp $
+#	$NetBSD: bsd.own.mk,v 1.1053 2018/04/01 04:35:02 ryo Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -600,7 +600,7 @@ FC=		${TOOL_FC.${ACTIVE_FC}}
 OBJC=		${TOOL_OBJC.${ACTIVE_OBJC}}
 
 # For each ${MACHINE_CPU}, list the ports that use it.
-MACHINES.aarch64=	evbarm64
+MACHINES.aarch64=	evbarm
 MACHINES.alpha=		alpha
 MACHINES.arm=		acorn32 cats epoc32 evbarm hpcarm \
 			iyonix netwinder shark zaurus
@@ -1201,8 +1201,8 @@ MKXORG_SERVER=yes
 MKRADEONFIRMWARE=		yes
 .endif
 
-# Only install the tegra firmware on evbarm and evbarm64.
-.if ${MACHINE} == "evbarm" || ${MACHINE} == "evbarm64"
+# Only install the tegra firmware on evbarm.
+.if ${MACHINE} == "evbarm"
 MKTEGRAFIRMWARE=		yes
 .endif
 
