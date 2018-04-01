@@ -1,4 +1,4 @@
-/* $NetBSD: fpu.c,v 1.1 2014/08/10 05:47:37 matt Exp $ */
+/* $NetBSD: fpu.c,v 1.2 2018/04/01 04:35:03 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,39 +31,92 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: fpu.c,v 1.1 2014/08/10 05:47:37 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: fpu.c,v 1.2 2018/04/01 04:35:03 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
+#include <sys/lwp.h>
+#include <sys/evcnt.h>
 
-#include <aarch64/locore.h>
+#include <aarch64/reg.h>
 #include <aarch64/pcb.h>
+#include <aarch64/armreg.h>
+#include <aarch64/machdep.h>
 
-static void fpu_state_load(lwp_t *, u_int);
-static void fpu_state_save(lwp_t *, u_int);
-static void fpu_state_release(lwp_t *, u_int);
+static void fpu_state_load(lwp_t *, unsigned int);
+static void fpu_state_save(lwp_t *);
+static void fpu_state_release(lwp_t *);
 
 const pcu_ops_t pcu_fpu_ops = {
 	.pcu_id = PCU_FPU,
 	.pcu_state_load = fpu_state_load,
 	.pcu_state_save = fpu_state_save,
-	.pcu_state_release = fpu_state_release,
+	.pcu_state_release = fpu_state_release
 };
 
-static void
-fpu_state_load(lwp_t *l, u_int flags)
+void
+fpu_attach(struct cpu_info *ci)
 {
-
+	evcnt_attach_dynamic(&ci->ci_vfp_use, EVCNT_TYPE_MISC, NULL,
+	    ci->ci_cpuname, "vfp use");
+	evcnt_attach_dynamic(&ci->ci_vfp_reuse, EVCNT_TYPE_MISC, NULL,
+	    ci->ci_cpuname, "vfp reuse");
+	evcnt_attach_dynamic(&ci->ci_vfp_save, EVCNT_TYPE_MISC, NULL,
+	    ci->ci_cpuname, "vfp save");
+	evcnt_attach_dynamic(&ci->ci_vfp_release, EVCNT_TYPE_MISC, NULL,
+	    ci->ci_cpuname, "vfp release");
 }
-static void
-fpu_state_save(lwp_t *l, u_int flags)
-{
 
-}
 static void
-fpu_state_release(lwp_t *l, u_int flags)
+fpu_state_load(lwp_t *l, unsigned int flags)
 {
+	struct pcb * const pcb = lwp_getpcb(l);
+
+	KASSERT(l == curlwp);
+
+	if (__predict_false((flags & PCU_VALID) == 0)) {
+		/* initialize fpregs */
+		memset(&pcb->pcb_fpregs, 0, sizeof(pcb->pcb_fpregs));
+		pcb->pcb_fpregs.fpcr =
+		    FPCR_DN | FPCR_FZ | __SHIFTIN(FPCR_RN, FPCR_RMODE);
+
+		curcpu()->ci_vfp_use.ev_count++;
+	} else {
+		curcpu()->ci_vfp_reuse.ev_count++;
+	}
+
+	/* allow user process to use FP */
+	l->l_md.md_cpacr = CPACR_FPEN_ALL;
+	reg_cpacr_el1_write(CPACR_FPEN_ALL);
+	__asm __volatile ("isb");
+
+	if ((flags & PCU_REENABLE) == 0)
+		load_fpregs(&pcb->pcb_fpregs);
+}
+
+static void
+fpu_state_save(lwp_t *l)
+{
+	struct pcb * const pcb = lwp_getpcb(l);
+
+	curcpu()->ci_vfp_save.ev_count++;
+
+	reg_cpacr_el1_write(CPACR_FPEN_EL1);	/* fpreg access enable */
+	__asm __volatile ("isb");
+
+	save_fpregs(&pcb->pcb_fpregs);
+
+	reg_cpacr_el1_write(CPACR_FPEN_NONE);	/* fpreg access disable */
+	__asm __volatile ("isb");
+}
+
+static void
+fpu_state_release(lwp_t *l)
+{
+	curcpu()->ci_vfp_release.ev_count++;
+
+	/* disallow user process to use FP */
 	l->l_md.md_cpacr = CPACR_FPEN_NONE;
-	if (l == curlwp)
-		reg_cpacr_el1_write(l->l_md.md_cpacr);
+	reg_cpacr_el1_write(CPACR_FPEN_NONE);
+	__asm __volatile ("isb");
 }

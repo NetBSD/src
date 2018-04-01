@@ -1,4 +1,4 @@
-# $NetBSD: genassym.cf,v 1.1 2014/08/10 05:47:37 matt Exp $
+# $NetBSD: genassym.cf,v 1.2 2018/04/01 04:35:03 ryo Exp $
 #-
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -45,8 +45,11 @@ include <netinet/ip_var.h>
 
 include <uvm/uvm_extern.h>
 
-include <aarch64/locore.h>
+include <arm/bus_defs.h>
+
 include <aarch64/vmparam.h>
+include <aarch64/frame.h>
+include <aarch64/armreg.h>
 
 if defined(_KERNEL_OPT)
 include "opt_multiprocessor.h"
@@ -60,8 +63,13 @@ define	__HAVE_FAST_SOFTINTS	1
 #define	__HAVE_PIC_FAST_SOFTINTS	1
 #endif
 
-define	VM_MIN_ADDRESS		VM_MIN_ADDRESS
-define	VM_MAXUSER_ADDRESS	VM_MAXUSER_ADDRESS
+define	MAXCPUS			MAXCPUS
+define	VM_MIN_KERNEL_ADDRESS	VM_MIN_KERNEL_ADDRESS
+define	VM_MAX_KERNEL_ADDRESS	VM_MAX_KERNEL_ADDRESS
+define	VM_KERNEL_IO_ADDRESS	VM_KERNEL_IO_ADDRESS
+define	AARCH64_KSEG_START	AARCH64_KSEG_START
+define	UPAGES			UPAGES
+define	USPACE			(UPAGES * PAGE_SIZE)
 
 #define	PV_PA			offsetof(pv_addr_t, pv_pa)
 #define	PMAP_DOMAIN_KERNEL	PMAP_DOMAIN_KERNEL
@@ -96,9 +104,8 @@ define	VM_MAXUSER_ADDRESS	VM_MAXUSER_ADDRESS
 
 define	EFAULT			EFAULT
 
-define	PAGE_MASK		PAGE_MASK
 define	PAGE_SIZE		PAGE_SIZE
-define	UPAGES			UPAGES
+define	PAGE_MASK		PAGE_MASK
 define	PGSHIFT			PGSHIFT
 
 # Important offsets into the lwp and proc structs & associated constants
@@ -115,6 +122,37 @@ define	L_MD_UTF		offsetof(struct lwp, l_md.md_utf)
 define	L_MD_KTF		offsetof(struct lwp, l_md.md_ktf)
 define	L_MD_CPACR		offsetof(struct lwp, l_md.md_cpacr)
 define	L_MD_ONFAULT		offsetof(struct lwp, l_md.md_onfault)
+
+define	FB_X19			FB_X19
+define	FB_X20			FB_X20
+define	FB_X21			FB_X21
+define	FB_X22			FB_X22
+define	FB_X23			FB_X23
+define	FB_X24			FB_X24
+define	FB_X25			FB_X25
+define	FB_X26			FB_X26
+define	FB_X27			FB_X27
+define	FB_X28			FB_X28
+define	FB_X29			FB_X29
+define	FB_LR			FB_LR
+define	FB_SP			FB_SP
+define	FB_MAX			FB_MAX
+define	FB_T_SIZE		roundup(sizeof(struct faultbuf), 16)
+
+define	LBL_X19			LBL_X19
+define	LBL_X20			LBL_X20
+define	LBL_X21			LBL_X21
+define	LBL_X22			LBL_X22
+define	LBL_X23			LBL_X23
+define	LBL_X24			LBL_X24
+define	LBL_X25			LBL_X25
+define	LBL_X26			LBL_X26
+define	LBL_X27			LBL_X27
+define	LBL_X28			LBL_X28
+define	LBL_X29			LBL_X29
+define	LBL_LR			LBL_LR
+define	LBL_SP			LBL_SP
+define	LBL_MAX			LBL_MAX
 
 define	P_RASLIST		offsetof(struct proc, p_raslist)
 define	P_MD_SYSCALL		offsetof(struct proc, p_md.md_syscall)
@@ -164,21 +202,54 @@ define	TF_X30			offsetof(struct trapframe, tf_reg[30])
 define	TF_SP			offsetof(struct trapframe, tf_sp)
 define	TF_PC			offsetof(struct trapframe, tf_pc)
 define	TF_SPSR			offsetof(struct trapframe, tf_spsr)
-define	TF_TPIDR		offsetof(struct trapframe, tf_tpidr)
 define	TF_ESR			offsetof(struct trapframe, tf_esr)
 define	TF_FAR			offsetof(struct trapframe, tf_far)
-define	TF_CHAIN		offsetof(struct trapframe, tf_chain)
-define	TF_SIZE			roundup(sizeof(struct trapframe), 16)
+define	TF_SIZE			TF_SIZE
 
+define	FPREG_Q0		offsetof(struct fpreg, fp_reg[0])
+define	FPREG_Q1		offsetof(struct fpreg, fp_reg[1])
+define	FPREG_Q2		offsetof(struct fpreg, fp_reg[2])
+define	FPREG_Q3		offsetof(struct fpreg, fp_reg[3])
+define	FPREG_Q4		offsetof(struct fpreg, fp_reg[4])
+define	FPREG_Q5		offsetof(struct fpreg, fp_reg[5])
+define	FPREG_Q6		offsetof(struct fpreg, fp_reg[6])
+define	FPREG_Q7		offsetof(struct fpreg, fp_reg[7])
+define	FPREG_Q8		offsetof(struct fpreg, fp_reg[8])
+define	FPREG_Q9		offsetof(struct fpreg, fp_reg[9])
+define	FPREG_Q10		offsetof(struct fpreg, fp_reg[10])
+define	FPREG_Q11		offsetof(struct fpreg, fp_reg[11])
+define	FPREG_Q12		offsetof(struct fpreg, fp_reg[12])
+define	FPREG_Q13		offsetof(struct fpreg, fp_reg[13])
+define	FPREG_Q14		offsetof(struct fpreg, fp_reg[14])
+define	FPREG_Q15		offsetof(struct fpreg, fp_reg[15])
+define	FPREG_Q16		offsetof(struct fpreg, fp_reg[16])
+define	FPREG_Q17		offsetof(struct fpreg, fp_reg[17])
+define	FPREG_Q18		offsetof(struct fpreg, fp_reg[18])
+define	FPREG_Q19		offsetof(struct fpreg, fp_reg[19])
+define	FPREG_Q20		offsetof(struct fpreg, fp_reg[20])
+define	FPREG_Q21		offsetof(struct fpreg, fp_reg[21])
+define	FPREG_Q22		offsetof(struct fpreg, fp_reg[22])
+define	FPREG_Q23		offsetof(struct fpreg, fp_reg[23])
+define	FPREG_Q24		offsetof(struct fpreg, fp_reg[24])
+define	FPREG_Q25		offsetof(struct fpreg, fp_reg[25])
+define	FPREG_Q26		offsetof(struct fpreg, fp_reg[26])
+define	FPREG_Q27		offsetof(struct fpreg, fp_reg[27])
+define	FPREG_Q28		offsetof(struct fpreg, fp_reg[28])
+define	FPREG_Q29		offsetof(struct fpreg, fp_reg[29])
+define	FPREG_Q30		offsetof(struct fpreg, fp_reg[30])
+define	FPREG_Q31		offsetof(struct fpreg, fp_reg[31])
+define	FPREG_FPCR		offsetof(struct fpreg, fpcr)
+define	FPREG_FPSR		offsetof(struct fpreg, fpsr)
 
 define	CI_CURPRIORITY		offsetof(struct cpu_info, ci_schedstate.spc_curpriority)
 define	CI_CURLWP		offsetof(struct cpu_info, ci_curlwp)
 define	CI_CPL			offsetof(struct cpu_info, ci_cpl)
+define	CI_CPUID		offsetof(struct cpu_info, ci_cpuid)
 define	CI_ASTPENDING		offsetof(struct cpu_info, ci_astpending)
 define	CI_WANT_RESCHED		offsetof(struct cpu_info, ci_want_resched)
 define	CI_INTR_DEPTH		offsetof(struct cpu_info, ci_intr_depth)
 define	CI_MTX_COUNT		offsetof(struct cpu_info, ci_mtx_count)
-define	CI_SOFTINTS		offsetof(struct cpu_info, ci_data.cpu_softints)
+define	CI_SOFTINTS		offsetof(struct cpu_info, ci_softints)
 define	CI_IDLELWP		offsetof(struct cpu_info, ci_data.cpu_idlelwp)
 define	CI_CC_NTRAP		offsetof(struct cpu_info, ci_data.cpu_ntrap)
 define	CI_CC_NINTR		offsetof(struct cpu_info, ci_data.cpu_nintr)
@@ -189,6 +260,68 @@ define	V_RESCHED_KPREEMPT	ilog2(RESCHED_KPREEMPT)
 define	SPSR_M_EL1T		SPSR_M_EL1T
 define	DAIF_I			DAIF_I
 define	DAIF_F			DAIF_F
+define	DAIF_SETCLR_SHIFT	DAIF_SETCLR_SHIFT
+
+define	CNTHCTL_EL1PCTEN	CNTHCTL_EL1PCTEN
+define	CNTHCTL_EL1PCEN		CNTHCTL_EL1PCEN
+define	SPSR_F			SPSR_F
+define	SPSR_I			SPSR_I
+define	SPSR_A			SPSR_A
+define	SPSR_A64_D		SPSR_A64_D
+define	SPSR_M_EL1H		SPSR_M_EL1H
+
+define	CPACR_FPEN		CPACR_FPEN
+define	CPACR_TTA		CPACR_TTA
+define	CPACR_FPEN		CPACR_FPEN
+define	CPACR_FPEN_NONE		CPACR_FPEN_NONE
+define	CPACR_FPEN_EL1		CPACR_FPEN_EL1
+define	CPACR_FPEN_NONE_2	CPACR_FPEN_NONE_2
+define	CPACR_FPEN_ALL		CPACR_FPEN_ALL
+
+define	ID_AA64PFR0_EL1_GIC		ID_AA64PFR0_EL1_GIC
+define	ID_AA64PFR0_EL1_GIC_SHIFT	ID_AA64PFR0_EL1_GIC_SHIFT
+define	ID_AA64PFR0_EL1_GIC_CPUIF_EN	ID_AA64PFR0_EL1_GIC_CPUIF_EN
+
+define	MAIR_ATTR0		MAIR_ATTR0
+define	MAIR_ATTR1		MAIR_ATTR1
+define	MAIR_ATTR2		MAIR_ATTR2
+define	MAIR_ATTR3		MAIR_ATTR3
+define	MAIR_DEVICE_nGnRnE	MAIR_DEVICE_nGnRnE
+define	MAIR_NORMAL_NC		MAIR_NORMAL_NC
+define	MAIR_NORMAL_WT		MAIR_NORMAL_WT
+define	MAIR_NORMAL_WB		MAIR_NORMAL_WB
+
+define	SCTLR_RES1		SCTLR_RES1
+define	SCTLR_M			SCTLR_M
+define	SCTLR_A			SCTLR_A
+define	SCTLR_C			SCTLR_C
+define	SCTLR_SA		SCTLR_SA
+define	SCTLR_SA0		SCTLR_SA0
+define	SCTLR_CP15BEN		SCTLR_CP15BEN
+define	SCTLR_THEE		SCTLR_THEE
+define	SCTLR_ITD		SCTLR_ITD
+define	SCTLR_SED		SCTLR_SED
+define	SCTLR_UMA		SCTLR_UMA
+define	SCTLR_I			SCTLR_I
+define	SCTLR_DZE		SCTLR_DZE
+define	SCTLR_UCT		SCTLR_UCT
+define	SCTLR_nTWI		SCTLR_nTWI
+define	SCTLR_nTWE		SCTLR_nTWE
+define	SCTLR_WXN		SCTLR_WXN
+define	SCTLR_IESB		SCTLR_IESB
+define	SCTLR_SPAN		SCTLR_SPAN
+define	SCTLR_EOE		SCTLR_EOE
+define	SCTLR_EE		SCTLR_EE
+define	SCTLR_UCI		SCTLR_UCI
+define	SCTLR_nTLSMD		SCTLR_nTLSMD
+define	SCTLR_LSMAOE		SCTLR_LSMAOE
+
+define	ICC_SRE_EL2_EN		ICC_SRE_EL2_EN
+define	ICC_SRE_EL2_SRE		ICC_SRE_EL2_SRE
+
+
+# for bus_space_asm
+define	BS_STRIDE		offsetof(struct bus_space, bs_stride)
 
 # Constants required for in_cksum() and friends.
 define	M_LEN			offsetof(struct mbuf, m_len)

@@ -1,4 +1,4 @@
-/*	$NetBSD: gic.c,v 1.32 2018/02/07 20:42:17 jmcneill Exp $	*/
+/*	$NetBSD: gic.c,v 1.33 2018/04/01 04:35:04 ryo Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.32 2018/02/07 20:42:17 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.33 2018/04/01 04:35:04 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -45,8 +45,9 @@ __KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.32 2018/02/07 20:42:17 jmcneill Exp $");
 #include <sys/proc.h>
 
 #include <arm/armreg.h>
-#include <arm/cpufunc.h>
 #include <arm/atomic.h>
+#include <arm/cpufunc.h>
+#include <arm/locore.h>
 
 #include <arm/cortex/gic_reg.h>
 #include <arm/cortex/mpcore_var.h>

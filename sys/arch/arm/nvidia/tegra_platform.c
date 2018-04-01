@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_platform.c,v 1.10 2018/03/17 18:34:09 ryo Exp $ */
+/* $NetBSD: tegra_platform.c,v 1.11 2018/04/01 04:35:04 ryo Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "ukbd.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_platform.c,v 1.10 2018/03/17 18:34:09 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_platform.c,v 1.11 2018/04/01 04:35:04 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: tegra_platform.c,v 1.10 2018/03/17 18:34:09 ryo Exp 
 
 #include <arm/nvidia/tegra_reg.h>
 #include <arm/nvidia/tegra_var.h>
+#include <arm/nvidia/tegra_platform.h>
 
 #include <arm/fdt/arm_fdtvar.h>
 
@@ -61,6 +62,8 @@ __KERNEL_RCSID(0, "$NetBSD: tegra_platform.c,v 1.10 2018/03/17 18:34:09 ryo Exp 
 #include <dev/ic/comreg.h>
 
 #define	PLLP_OUT0_FREQ	408000000
+
+void tegra_platform_early_putchar(char);
 
 static const struct pmap_devmap *
 tegra_platform_devmap(void)
@@ -89,7 +92,9 @@ tegra124_platform_bootstrap(void)
 {
 	tegra_bootstrap();
 
+#ifdef MULTIPROCESSOR
 	tegra124_mpinit();
+#endif
 }
 
 static void
@@ -97,27 +102,32 @@ tegra210_platform_bootstrap(void)
 {
 	tegra_bootstrap();
 
+#ifdef MULTIPROCESSOR
 	tegra210_mpinit();
+#endif
 }
 
 static void
 tegra_platform_init_attach_args(struct fdt_attach_args *faa)
 {
-	extern struct bus_space armv7_generic_bs_tag;
-	extern struct bus_space armv7_generic_a4x_bs_tag;
+	extern struct bus_space arm_generic_bs_tag;
+	extern struct bus_space arm_generic_a4x_bs_tag;
 	extern struct arm32_bus_dma_tag arm_generic_dma_tag;
 
-	faa->faa_bst = &armv7_generic_bs_tag;
-	faa->faa_a4x_bst = &armv7_generic_a4x_bs_tag;
+	faa->faa_bst = &arm_generic_bs_tag;
+	faa->faa_a4x_bst = &arm_generic_a4x_bs_tag;
 	faa->faa_dmat = &arm_generic_dma_tag;
 }
 
-static void
+void
 tegra_platform_early_putchar(char c)
 {
 #ifdef CONSADDR
 #define CONSADDR_VA	(CONSADDR - TEGRA_APB_BASE + TEGRA_APB_VBASE)
-	volatile uint32_t *uartaddr = (volatile uint32_t *)CONSADDR_VA;
+
+	volatile uint32_t *uartaddr = cpu_earlydevice_va_p() ?
+	    (volatile uint32_t *)CONSADDR_VA :
+	    (volatile uint32_t *)CONSADDR;
 
 	while ((uartaddr[com_lsr] & LSR_TXRDY) == 0)
 		;
