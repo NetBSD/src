@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto_openssl.c,v 1.27 2018/02/07 03:59:03 christos Exp $	*/
+/*	$NetBSD: crypto_openssl.c,v 1.28 2018/04/01 22:59:57 christos Exp $	*/
 
 /* Id: crypto_openssl.c,v 1.47 2006/05/06 20:42:09 manubsd Exp */
 
@@ -2331,6 +2331,7 @@ eay_dh_generate(prime, ig, publen, pub, priv)
 		goto end;
 	if (!DH_set0_pqg(dh, p, NULL, g))
 		goto end;
+	p = g = NULL;
 
 	if (publen != 0)
 		DH_set_length(dh, publen);
@@ -2395,9 +2396,11 @@ eay_dh_compute(prime, ig, pub, priv, pub2, key)
 
 	if (!DH_set0_pqg(dh, p, NULL, g))
 		goto end;
+	p = g = NULL;
 
 	if (!DH_set0_key(dh, pub_key, priv_key))
 		goto end;
+	pub_key = priv_key = NULL;
 
 	if ((v = racoon_calloc(prime->l, sizeof(u_char))) == NULL)
 		goto end;
@@ -2564,7 +2567,6 @@ binbuf_pubkey2rsa(vchar_t *binbuf)
 
 	return rsa_pub;
 out:
-	BN_free(exp);
 	BN_free(exp);
 	RSA_free(rsa_pub);
 	return NULL;
