@@ -1,4 +1,4 @@
-# $NetBSD: ad.aarch64,v 1.17 2018/03/20 10:14:29 ryo Exp $
+# $NetBSD: ad.aarch64,v 1.18 2018/04/01 04:35:02 ryo Exp $
 ./usr/include/aarch64				comp-c-include
 ./usr/include/aarch64/ansi.h			comp-c-include
 ./usr/include/aarch64/aout_machdep.h		comp-c-include
@@ -22,7 +22,7 @@
 ./usr/include/aarch64/int_limits.h		comp-c-include
 ./usr/include/aarch64/int_mwgwtypes.h		comp-c-include
 ./usr/include/aarch64/int_types.h		comp-c-include
-./usr/include/aarch64/intr.h			comp-c-include
+./usr/include/aarch64/intr.h			comp-obsolete		obsolete
 ./usr/include/aarch64/kcore.h			comp-c-include
 ./usr/include/aarch64/limits.h			comp-c-include
 ./usr/include/aarch64/lock.h			comp-c-include
@@ -32,10 +32,10 @@
 ./usr/include/aarch64/param.h			comp-c-include
 ./usr/include/aarch64/pcb.h			comp-c-include
 ./usr/include/aarch64/pmap.h			comp-c-include
-./usr/include/aarch64/pmc.h			comp-c-include
+./usr/include/aarch64/pmc.h			comp-obsolete		obsolete
 ./usr/include/aarch64/proc.h			comp-c-include
 ./usr/include/aarch64/profile.h			comp-c-include
-./usr/include/aarch64/psl.h			comp-c-include
+./usr/include/aarch64/psl.h			comp-obsolete		obsolete
 ./usr/include/aarch64/pte.h			comp-c-include
 ./usr/include/aarch64/ptrace.h			comp-c-include
 ./usr/include/aarch64/reg.h			comp-c-include
@@ -43,7 +43,7 @@
 ./usr/include/aarch64/setjmp.h			comp-c-include
 ./usr/include/aarch64/signal.h			comp-c-include
 ./usr/include/aarch64/sysarch.h			comp-c-include
-./usr/include/aarch64/trap.h			comp-c-include
+./usr/include/aarch64/trap.h			comp-obsolete		obsolete
 ./usr/include/aarch64/types.h			comp-c-include
 ./usr/include/aarch64/vmparam.h			comp-c-include
 ./usr/include/aarch64/wchar_limits.h		comp-c-include
@@ -114,9 +114,13 @@
 ./usr/include/arm/vfpreg.h			comp-c-include
 ./usr/include/arm/vmparam.h			comp-c-include
 ./usr/include/arm/wchar_limits.h		comp-c-include
-./usr/include/evbarm64				comp-c-include
-./usr/include/evbarm64/disklabel.h		comp-c-include
-./usr/include/evbarm64/intr.h			comp-c-include
+./usr/include/evbarm				comp-c-include
+./usr/include/evbarm/disklabel.h		comp-c-include
+./usr/include/evbarm/intr.h			comp-c-include
+./usr/include/evbarm/sljit_machdep.h		comp-c-include
+./usr/include/evbarm64				comp-obsolete		obsolete
+./usr/include/evbarm64/disklabel.h		comp-obsolete		obsolete
+./usr/include/evbarm64/intr.h			comp-obsolete		obsolete
 ./usr/include/gcc-4.8/arm_neon.h		comp-c-include		gcccmds,gcc
 ./usr/include/gcc-4.8/mmintrin.h		comp-c-include		gcccmds,gcc
 ./usr/include/gcc-4.8/tgmath.h			comp-c-include		gcccmds,gcc
