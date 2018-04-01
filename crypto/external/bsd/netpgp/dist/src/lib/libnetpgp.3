@@ -1,4 +1,4 @@
-.\" $NetBSD: libnetpgp.3,v 1.16 2014/02/17 07:23:18 agc Exp $
+.\" $NetBSD: libnetpgp.3,v 1.17 2018/04/01 23:25:27 sevan Exp $
 .\"
 .\" Copyright (c) 2009,2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 16, 2014
+.Dd April 02, 2018
 .Dt LIBNETPGP 3
 .Os
 .Sh NAME
@@ -41,11 +41,11 @@
 The following functions relate to initialisations and finalisations:
 .Ft int
 .Fo netpgp_init
-.Fa "netpgp_t *netpgp"
+.Fa "struct netpgp_t *netpgp"
 .Fc
 .Ft int
 .Fo netpgp_end
-.Fa "netpgp_t *netpgp"
+.Fa "struct netpgp_t *netpgp"
 .Fc
 .Pp
 The following functions are for debugging, reflection and information:
@@ -63,99 +63,99 @@ The following functions are for debugging, reflection and information:
 .Fc
 .Ft int
 .Fo netpgp_list_packets
-.Fa "netpgp_t *netpgp" "char *filename" "int armour" "char *pubringname"
+.Fa "struct netpgp_t *netpgp" "char *filename" "int armour" "char *pubringname"
 .Fc
 .Pp
 The following functions are for variable management:
 .Ft int
 .Fo netpgp_setvar
-.Fa "netpgp_t *netpgp" "const char *name" "const char *value"
+.Fa "struct netpgp_t *netpgp" "const char *name" "const char *value"
 .Fc
 .Ft char *
 .Fo netpgp_getvar
-.Fa "netpgp_t *netpgp" "const char *name"
+.Fa "struct netpgp_t *netpgp" "const char *name"
 .Fc
 .Ft int
 .Fo netpgp_incvar
-.Fa "netpgp_t *netpgp" "const char *name" "const int delta"
+.Fa "struct netpgp_t *netpgp" "const char *name" "const int delta"
 .Fc
 .Pp
 The following function sets the home directory:
 .Ft int
 .Fo netpgp_set_homedir
-.Fa "netpgp_t *netpgp" "char *homedir" "char *subdir" "const int quiet"
+.Fa "struct netpgp_t *netpgp" "char *homedir" "char *subdir" "const int quiet"
 .Fc
 .Pp
 The following functions are used for key management:
 .Ft int
 .Fo netpgp_list_keys
-.Fa "netpgp_t *netpgp" "const int printsigs"
+.Fa "struct netpgp_t *netpgp" "const int printsigs"
 .Fc
 .Ft int
 .Fo netpgp_match_list_keys
-.Fa "netpgp_t *netpgp" "char *pattern"
+.Fa "struct netpgp_t *netpgp" "char *pattern"
 .Fc
 .Ft int
 .Fo netpgp_find_key
-.Fa "netpgp_t *netpgp" "char *userid"
+.Fa "struct netpgp_t *netpgp" "char *userid"
 .Fc
 .Ft char *
 .Fo netpgp_get_key
-.Fa "netpgp_t *netpgp" "const char *id"
+.Fa "struct netpgp_t *netpgp" "const char *id"
 .Fc
 .Ft int
 .Fo netpgp_export_key
-.Fa "netpgp_t *netpgp" "char *userid"
+.Fa "struct netpgp_t *netpgp" "char *userid"
 .Fc
 .Ft int
 .Fo netpgp_import_key
-.Fa "netpgp_t *netpgp" "char *file"
+.Fa "struct netpgp_t *netpgp" "char *file"
 .Fc
 .Ft int
 .Fo netpgp_generate_key
-.Fa "netpgp_t *netpgp" "char *userid" "int numbits"
+.Fa "struct netpgp_t *netpgp" "char *userid" "int numbits"
 .Fc
 .Pp
 The following functions are used for file management:
 .Ft int
 .Fo netpgp_encrypt_file
-.Fa "netpgp_t *netpgp" "char *userid" "char *filename" "char *out"
+.Fa "struct netpgp_t *netpgp" "char *userid" "char *filename" "char *out"
 .Fa "int armored"
 .Fc
 .Ft int
 .Fo netpgp_decrypt_file
-.Fa "netpgp_t *netpgp" "char *filename" "char *out" "int armored"
+.Fa "struct netpgp_t *netpgp" "char *filename" "char *out" "int armored"
 .Fc
 .Ft int
 .Fo netpgp_sign_file
-.Fa "netpgp_t *netpgp" "char *userid" "char *filename" "char *out"
+.Fa "struct netpgp_t *netpgp" "char *userid" "char *filename" "char *out"
 .Fa "int armored" "int cleartext" "int detached"
 .Fc
 .Ft int
 .Fo netpgp_verify_file
-.Fa "netpgp_t *netpgp" "char *f" "int armored"
+.Fa "struct netpgp_t *netpgp" "char *f" "int armored"
 .Fc
 .Pp
 The following functions are used for memory signing and encryption:
 .Ft int
 .Fo netpgp_encrypt_memory
-.Fa "netpgp_t *netpgp" "char *userid" "void *in" "const size_t insize"
+.Fa "struct netpgp_t *netpgp" "char *userid" "void *in" "const size_t insize"
 .Fa "char *out" "size_t outsize" "int armored"
 .Fc
 .Ft int
 .Fo netpgp_decrypt_memory
-.Fa "netpgp_t *netpgp" "const void *input" "const size_t insize"
+.Fa "struct netpgp_t *netpgp" "const void *input" "const size_t insize"
 .Fa "char *out" "size_t outsize" "const int armored"
 .Fc
 .Ft int
 .Fo netpgp_sign_memory
-.Fa "netpgp_t *netpgp" "const char *userid" "char *mem"
+.Fa "struct netpgp_t *netpgp" "const char *userid" "char *mem"
 .Fa "size_t size" "char *out" "size_t outsize"
 .Fa "const unsigned armored" "const unsigned cleartext"
 .Fc
 .Ft int
 .Fo netpgp_verify_memory
-.Fa "netpgp_t *netpgp" "const void *in" "const size_t insize"
+.Fa "struct netpgp_t *netpgp" "const void *in" "const size_t insize"
 .Fa "void *out" "size_t outsize" "const int armored"
 .Fc
 .Sh DESCRIPTION
