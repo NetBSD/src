@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.163 2018/03/31 23:12:01 christos Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.164 2018/04/01 19:28:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.163 2018/03/31 23:12:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.164 2018/04/01 19:28:17 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -93,6 +93,7 @@ static bool kprintf_inited = false;
 /*
  * defines
  */
+#define KLOG_PRI	0x80000000
 
 
 /*
@@ -417,14 +418,9 @@ logpri(int level)
 void
 klogpri(int level)
 {
-	char *p;
-	char snbuf[KPRINTF_BUFSIZE];
+	KASSERT((level & KLOG_PRI) == 0);
 
-	putchar('<', TOLOG, NULL);
-	snprintf(snbuf, sizeof(snbuf), "%d", level);
-	for (p = snbuf ; *p ; p++)
-		putchar(*p, TOLOG, NULL);
-	putchar('>', TOLOG, NULL);
+	putchar(level | KLOG_PRI, TOLOG, NULL);
 }
 
 /*
@@ -452,23 +448,12 @@ addlog(const char *fmt, ...)
 	logwakeup();
 }
 
-
-/*
- * putchar: print a single character on console or user terminal.
- *
- * => if console, then the last MSGBUFS chars are saved in msgbuf
- *	for inspection later (e.g. dmesg/syslog)
- * => we must already be in the mutex!
- */
 static void
-putchar(int c, int flags, struct tty *tp)
+putone(int c, int flags, struct tty *tp)
 {
-#ifdef RND_PRINTF
-	uint8_t rbuf[SHA512_BLOCK_LENGTH];
-	static int cursor;
-#endif
 	if (panicstr)
 		constty = NULL;
+
 	if ((flags & TOCONS) && tp == NULL && constty) {
 		tp = constty;
 		flags |= TOTTY;
@@ -482,6 +467,38 @@ putchar(int c, int flags, struct tty *tp)
 	    	logputchar(c);
 	if ((flags & TOCONS) && constty == NULL && c != '\0')
 		(*v_putc)(c);
+}
+
+static void
+putlogpri(int level)
+{
+	char *p;
+	char snbuf[KPRINTF_BUFSIZE];
+
+	putone('<', TOLOG, NULL);
+	snprintf(snbuf, sizeof(snbuf), "%d", level);
+	for (p = snbuf ; *p ; p++)
+		putone(*p, TOLOG, NULL);
+	putone('>', TOLOG, NULL);
+}
+
+/*
+ * putchar: print a single character on console or user terminal.
+ *
+ * => if console, then the last MSGBUFS chars are saved in msgbuf
+ *	for inspection later (e.g. dmesg/syslog)
+ * => we must already be in the mutex!
+ */
+static void
+putchar(int c, int flags, struct tty *tp)
+{
+	if (c & KLOG_PRI) {
+		putlogpri(c & ~KLOG_PRI);
+		return;
+	}
+
+	putone(c, flags, tp);
+
 #ifdef DDB
 	if (flags & TODDB) {
 		db_putchar(c);
@@ -491,6 +508,9 @@ putchar(int c, int flags, struct tty *tp)
 
 #ifdef RND_PRINTF
 	if (__predict_true(kprintf_inited)) {
+		static uint8_t rbuf[SHA512_BLOCK_LENGTH];
+		static int cursor;
+
 		rbuf[cursor] = c;
 		if (cursor == sizeof(rbuf) - 1) {
 			SHA512_Update(&kprnd_sha, rbuf, sizeof(rbuf));
