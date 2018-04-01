@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_module.c,v 1.23.2.3 2018/03/11 08:32:21 pgoyette Exp $	*/
+/*	$NetBSD: sys_module.c,v 1.23.2.4 2018/04/01 10:47:53 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_module.c,v 1.23.2.3 2018/03/11 08:32:21 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_module.c,v 1.23.2.4 2018/04/01 10:47:53 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_modular.h"
@@ -110,6 +110,17 @@ out1:
 	return error;
 }
 
+static void
+copy_alias(modstat_t ms, const char * const *aliasp, modinfo_t mi, module_t mod)
+{
+
+	strlcpy(ms->ms_name, *aliasp, sizeof(ms->ms_name));
+	strlcpy(ms->ms_required, mi->mi_name, sizeof(ms->ms_required));
+	ms->ms_class = mi->mi_class;
+	ms->ms_source = mod->mod_source;
+	ms->ms_flags = mod->mod_flags | MODFLG_IS_ALIAS;
+}
+
 static int
 handle_modctl_stat(struct iovec *iov, void *arg)
 {
@@ -163,12 +174,7 @@ handle_modctl_stat(struct iovec *iov, void *arg)
 		if (aliasp == NULL)
 			continue;
 		while (*aliasp) {
-			strlcpy(ms->ms_name, *aliasp, sizeof(ms->ms_name));
-			strlcpy(ms->ms_required, mi->mi_name,
-			    sizeof(ms->ms_required));
-			ms->ms_class = mi->mi_class;
-			ms->ms_source = mod->mod_source;
-			ms->ms_flags = mod->mod_flags | MODFLG_IS_ALIAS;
+			copy_alias(ms, aliasp, mi, mod);
 			aliasp++;
 			ms++;
 		}
@@ -190,6 +196,14 @@ handle_modctl_stat(struct iovec *iov, void *arg)
 		KASSERT(mod->mod_source == MODULE_SOURCE_KERNEL);
 		ms->ms_source = mod->mod_source;
 		ms++;
+		aliasp = *mi->mi_aliases;
+		if (aliasp == NULL)
+			continue;
+		while (*aliasp) {
+			copy_alias(ms, aliasp, mi, mod);
+			aliasp++;
+			ms++;
+		}
 	}
 	kernconfig_unlock();
 	error = copyout(mso, iov->iov_base,
