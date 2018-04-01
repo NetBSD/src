@@ -1,4 +1,4 @@
-/*	$NetBSD: debugrm.h,v 1.4 2006/09/09 16:22:09 manu Exp $	*/
+/*	$NetBSD: debugrm.h,v 1.5 2018/04/01 22:35:22 christos Exp $	*/
 
 /* Id: debugrm.h,v 1.4 2006/04/06 14:00:06 manubsd Exp */
 
@@ -75,13 +75,13 @@
 #endif
 #endif /*NONEED_DRM*/
 
-extern void DRM_init __P((void));
-extern void DRM_dump __P((void));
-extern void *DRM_malloc __P((char *, int, char *, size_t));
-extern void *DRM_calloc __P((char *, int, char *, size_t, size_t));
-extern void *DRM_realloc __P((char *, int, char *, void *, size_t));
-extern void DRM_free __P((char *, int, char *, void *));
-extern char *DRM_strdup __P((char *, int, char *, const char *));
+extern void DRM_init(void);
+extern void DRM_dump(void);
+extern void *DRM_malloc(const char *, size_t, const char *, size_t);
+extern void *DRM_calloc(const char *, size_t, const char *, size_t, size_t);
+extern void *DRM_realloc(const char *, size_t, const char *, void *, size_t);
+extern void DRM_free(const char *, size_t, const char *, void *);
+extern char *DRM_strdup(const char *, size_t, const char *, const char *);
 
 #ifndef NONEED_DRM
 #define	vmalloc(sz)	\
@@ -94,9 +94,9 @@ extern char *DRM_strdup __P((char *, int, char *, const char *));
 	DRM_vfree(__FILE__, __LINE__, __func__, (p))
 #endif
 
-extern void *DRM_vmalloc __P((char *, int, char *, size_t));
-extern void *DRM_vrealloc __P((char *, int, char *, void *, size_t));
-extern void DRM_vfree __P((char *, int, char *, void *));
-extern void *DRM_vdup __P((char *, int, char *, void *));
+extern void *DRM_vmalloc(const char *, size_t, const char *, size_t);
+extern void *DRM_vrealloc(const char *, size_t, const char *, void *, size_t);
+extern void DRM_vfree(const char *, size_t, const char *, void *);
+extern void *DRM_vdup(const char *, size_t, const char *, void *);
 
 #endif /* _DEBUGRM_H */
