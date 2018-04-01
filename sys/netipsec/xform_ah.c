@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ah.c,v 1.54.2.5 2018/02/26 18:42:49 martin Exp $	*/
+/*	$NetBSD: xform_ah.c,v 1.54.2.6 2018/04/01 08:48:39 martin Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ah.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ah.c,v 1.63 2001/06/26 06:18:58 angelos Exp $ */
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.54.2.5 2018/02/26 18:42:49 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.54.2.6 2018/04/01 08:48:39 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -491,54 +491,48 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 
 		nxt = ip6.ip6_nxt & 0xff; /* Next header type. */
 
-		for (off = 0; off < skip - sizeof(struct ip6_hdr);)
+		for (off = 0; off < skip - sizeof(struct ip6_hdr);) {
+			int noff;
+
 			switch (nxt) {
 			case IPPROTO_HOPOPTS:
 			case IPPROTO_DSTOPTS:
-				ip6e = (struct ip6_ext *) (ptr + off);
+				ip6e = (struct ip6_ext *)(ptr + off);
+				noff = off + ((ip6e->ip6e_len + 1) << 3);
+
+				/* Sanity check. */
+				if (noff > skip - sizeof(struct ip6_hdr)) {
+					goto error6;
+				}
 
 				/*
-				 * Process the mutable/immutable
-				 * options -- borrows heavily from the
-				 * KAME code.
+				 * Zero out mutable options.
 				 */
 				for (count = off + sizeof(struct ip6_ext);
-				     count < off + ((ip6e->ip6e_len + 1) << 3);) {
+				     count < noff;) {
 					if (ptr[count] == IP6OPT_PAD1) {
 						count++;
-						continue; /* Skip padding. */
+						continue;
 					}
 
-					/* Sanity check. */
-					if (count > off +
-					    ((ip6e->ip6e_len + 1) << 3)) {
-						m_freem(m);
-
-						/* Free, if we allocated. */
-						if (alloc)
-							free(ptr, M_XDATA);
-						return EINVAL;
+					if (count + 1 >= noff) {
+						goto error6;
 					}
-
 					ad = ptr[count + 1] + 2;
 
-					/* If mutable option, zeroize. */
-					if (ptr[count] & IP6OPT_MUTABLE)
-						memcpy(ptr + count, ipseczeroes,
-						    ad);
+					if (count + ad > noff) {
+						goto error6;
+					}
+
+					if (ptr[count] & IP6OPT_MUTABLE) {
+						memset(ptr + count, 0, ad);
+					}
 
 					count += ad;
+				}
 
-					/* Sanity check. */
-					if (count >
-					    skip - sizeof(struct ip6_hdr)) {
-						m_freem(m);
-
-						/* Free, if we allocated. */
-						if (alloc)
-							free(ptr, M_XDATA);
-						return EINVAL;
-					}
+				if (count != noff) {
+					goto error6;
 				}
 
 				/* Advance. */
@@ -551,7 +545,7 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 				 * Always include routing headers in
 				 * computation.
 				 */
-				ip6e = (struct ip6_ext *) (ptr + off);
+				ip6e = (struct ip6_ext *)(ptr + off);
 				rh = (struct ip6_rthdr *)(ptr + off);
 				/*
 				 * must adjust content to make it look like
@@ -592,11 +586,13 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 			default:
 				DPRINTF(("%s: unexpected IPv6 header type %d\n",
 				    __func__, off));
+error6:
 				if (alloc)
 					free(ptr, M_XDATA);
 				m_freem(m);
 				return EINVAL;
 			}
+		}
 
 		/* Copyback and free, if we allocated. */
 		if (alloc) {
