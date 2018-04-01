@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_forward.c,v 1.69.6.1 2018/03/13 16:43:03 snj Exp $	*/
+/*	$NetBSD: ip6_forward.c,v 1.69.6.2 2018/04/01 09:20:22 martin Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.109 2002/09/11 08:10:17 sakane Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.69.6.1 2018/03/13 16:43:03 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.69.6.2 2018/04/01 09:20:22 martin Exp $");
 
 #include "opt_gateway.h"
 #include "opt_ipsec.h"
@@ -361,9 +361,10 @@ ip6_forward(struct mbuf *m, int srcrt)
 		 * because we asked key management for an SA and
 		 * it was delayed (e.g. kicked up to IKE).
 		 */
-	if (error == -EINVAL)
-		error = 0;
-	goto freecopy;
+		if (error == -EINVAL)
+			error = 0;
+		m_freem(m);
+		goto freecopy;
 	}
 #endif /* FAST_IPSEC */
 
@@ -467,8 +468,10 @@ ip6_forward(struct mbuf *m, int srcrt)
 		s = splsoftnet();
 		error = ipsec6_process_packet(m,sp->req);
 		splx(s);
+		/* m is freed */
 		if (mcopy)
 			goto freecopy;
+		return;
     }
 #endif   
 
