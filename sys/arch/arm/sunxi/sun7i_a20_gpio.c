@@ -1,4 +1,4 @@
-/* $NetBSD: sun7i_a20_gpio.c,v 1.1 2017/10/06 21:20:59 jmcneill Exp $ */
+/* $NetBSD: sun7i_a20_gpio.c,v 1.2 2018/04/01 21:05:55 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2016 Emmanuel Vadot <manu@freebsd.org>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sun7i_a20_gpio.c,v 1.1 2017/10/06 21:20:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sun7i_a20_gpio.c,v 1.2 2018/04/01 21:05:55 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,16 +118,16 @@ static const struct sunxi_gpio_pins a20_pins[] = {
 	{"PD7",  3, 7,  {"gpio_in", "gpio_out", "lcd0", "lvds0", NULL, NULL, NULL, NULL}},
 	{"PD8",  3, 8,  {"gpio_in", "gpio_out", "lcd0", "lvds0", NULL, NULL, NULL, NULL}},
 	{"PD9",  3, 9,  {"gpio_in", "gpio_out", "lcd0", "lvds0", NULL, NULL, NULL, NULL}},
-	{"PD10", 3, 10, {"gpio_in", "gpio_out", "lcd0", "lvds0", NULL, NULL, NULL, NULL}},
-	{"PD11", 3, 11, {"gpio_in", "gpio_out", "lcd0", "lvds0", NULL, NULL, NULL, NULL}},
-	{"PD12", 3, 12, {"gpio_in", "gpio_out", "lcd0", "lvds0", NULL, NULL, NULL, NULL}},
-	{"PD13", 3, 13, {"gpio_in", "gpio_out", "lcd0", "lvds0", NULL, NULL, NULL, NULL}},
-	{"PD14", 3, 14, {"gpio_in", "gpio_out", "lcd0", "lvds0", NULL, NULL, NULL, NULL}},
-	{"PD15", 3, 15, {"gpio_in", "gpio_out", "lcd0", "lvds0", NULL, NULL, NULL, NULL}},
-	{"PD16", 3, 16, {"gpio_in", "gpio_out", "lcd0", "lvds0", NULL, NULL, NULL, NULL}},
-	{"PD17", 3, 17, {"gpio_in", "gpio_out", "lcd0", "lvds0", NULL, NULL, NULL, NULL}},
-	{"PD18", 3, 18, {"gpio_in", "gpio_out", "lcd0", "lvds0", NULL, NULL, NULL, NULL}},
-	{"PD19", 3, 19, {"gpio_in", "gpio_out", "lcd0", "lvds0", NULL, NULL, NULL, NULL}},
+	{"PD10", 3, 10, {"gpio_in", "gpio_out", "lcd0", "lvds1", NULL, NULL, NULL, NULL}},
+	{"PD11", 3, 11, {"gpio_in", "gpio_out", "lcd0", "lvds1", NULL, NULL, NULL, NULL}},
+	{"PD12", 3, 12, {"gpio_in", "gpio_out", "lcd0", "lvds1", NULL, NULL, NULL, NULL}},
+	{"PD13", 3, 13, {"gpio_in", "gpio_out", "lcd0", "lvds1", NULL, NULL, NULL, NULL}},
+	{"PD14", 3, 14, {"gpio_in", "gpio_out", "lcd0", "lvds1", NULL, NULL, NULL, NULL}},
+	{"PD15", 3, 15, {"gpio_in", "gpio_out", "lcd0", "lvds1", NULL, NULL, NULL, NULL}},
+	{"PD16", 3, 16, {"gpio_in", "gpio_out", "lcd0", "lvds1", NULL, NULL, NULL, NULL}},
+	{"PD17", 3, 17, {"gpio_in", "gpio_out", "lcd0", "lvds1", NULL, NULL, NULL, NULL}},
+	{"PD18", 3, 18, {"gpio_in", "gpio_out", "lcd0", "lvds1", NULL, NULL, NULL, NULL}},
+	{"PD19", 3, 19, {"gpio_in", "gpio_out", "lcd0", "lvds1", NULL, NULL, NULL, NULL}},
 	{"PD20", 3, 20, {"gpio_in", "gpio_out", "lcd0", "csi1", NULL, NULL, NULL, NULL}},
 	{"PD21", 3, 21, {"gpio_in", "gpio_out", "lcd0", "sim", NULL, NULL, NULL, NULL}},
 	{"PD22", 3, 22, {"gpio_in", "gpio_out", "lcd0", "sim", NULL, NULL, NULL, NULL}},
