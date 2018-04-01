@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_mod.c,v 1.1.2.1 2018/03/30 11:18:34 pgoyette Exp $	*/
+/*	$NetBSD: compat_13_mod.c,v 1.1.2.2 2018/04/01 23:07:57 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_13_mod.c,v 1.1.2.1 2018/03/30 11:18:34 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_13_mod.c,v 1.1.2.2 2018/04/01 23:07:57 pgoyette Exp $");
 
 #include <sys/systm.h>
 #include <sys/module.h>
@@ -76,10 +76,11 @@ compat_13_fini(void)
 
 #ifdef _MODULE
 
-#define REQD_13_1	"compat_70,compat_60,compat_50,compat_40,"
-#define REQD_13_2	"compat_30,compat_20,compat_16,compat_14"
+#define REQD_13_1	"compat_80,compat_70,compat_60,compat_50,"
+#define REQD_13_2	"compat_40,compat_30,compat_20,compat_16,"
+#define REQD_13_3	"compat_14"
 
-MODULE(MODULE_CLASS_EXEC, compat_13, REQD_13_1 REQD_13_2);
+MODULE(MODULE_CLASS_EXEC, compat_13, REQD_13_1 REQD_13_2 REQD_13_3);
 
 static int
 compat_13_modcmd(modcmd_t cmd, void *arg)
