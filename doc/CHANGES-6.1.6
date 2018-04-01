@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1.6,v 1.1.2.133 2018/03/26 12:20:00 martin Exp $
+# $NetBSD: CHANGES-6.1.6,v 1.1.2.134 2018/04/01 09:24:07 martin Exp $
 
 A complete list of changes from the NetBSD 6.1.5 release to the NetBSD 6.1.6
 release:
@@ -15089,3 +15089,14 @@ distrib/sets/lists/base/mi			1.1164
 
 	Updated tzdata to 2018d.
 	[kre, ticket #1539]
+
+sys/netinet6/ip6_forward.c			1.91 (patch)
+
+	Fix two IPv6 ipsec use-after-free issues.
+	[maxv, ticket #1540]
+
+sys/netinet6/raw_ip6.c				1.161
+
+	Fix use-after-free.
+	[maxv, ticket #1541]
+
