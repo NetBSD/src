@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_log.c,v 1.57 2018/03/31 23:12:01 christos Exp $	*/
+/*	$NetBSD: subr_log.c,v 1.58 2018/04/01 19:01:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_log.c,v 1.57 2018/03/31 23:12:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_log.c,v 1.58 2018/04/01 19:01:08 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -404,6 +404,18 @@ logskip(struct kern_msgbuf *mbp)
 	}
 }
 
+static void
+logaddchar(struct kern_msgbuf *mbp, int c)
+{
+	mbp->msg_bufc[mbp->msg_bufx++] = c;
+	if (mbp->msg_bufx < 0 || mbp->msg_bufx >= mbp->msg_bufs)
+		mbp->msg_bufx = 0;
+
+	/* If the buffer is full, keep the most recent data. */
+	if (mbp->msg_bufr == mbp->msg_bufx)
+		logskip(mbp);
+}
+
 void
 logputchar(int c)
 {
@@ -431,13 +443,7 @@ logputchar(int c)
 
 	}
 
-	mbp->msg_bufc[mbp->msg_bufx++] = c;
-	if (mbp->msg_bufx < 0 || mbp->msg_bufx >= mbp->msg_bufs)
-		mbp->msg_bufx = 0;
-
-	/* If the buffer is full, keep the most recent data. */
-	if (mbp->msg_bufr == mbp->msg_bufx)
-		logskip(mbp);
+	logaddchar(mbp, c);
 
 out:
 	if (!cold)
