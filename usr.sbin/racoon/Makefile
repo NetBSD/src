@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.34 2018/02/25 00:16:49 mrg Exp $
+# $NetBSD: Makefile,v 1.35 2018/04/01 23:00:40 christos Exp $
 
 WARNS?=	0	# XXX third-party program, many issues
 NOCLANGERROR=	# defined
@@ -60,6 +60,12 @@ CPPFLAGS+=-DINET6
 
 LDADD+= -lcrypto -lcrypt
 DPADD+= ${LIBIPSEC} ${LIBCRYPT}
+
+#CPPFLAGS+= -DDEBUG_RECORD_MALLOCATION
+#SRCS+= debugrm.c
+
+#CFLAGS+=-fsanitize=address
+#LDFLAGS+=-fsanitize=address
 
 .PATH:  ${NETBSDSRCDIR}/lib/libipsec ${DIST}/src/racoon
 
