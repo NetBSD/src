@@ -1,4 +1,4 @@
-/* $NetBSD: vmparam.h,v 1.2 2014/08/11 22:08:34 matt Exp $ */
+/* $NetBSD: vmparam.h,v 1.3 2018/04/01 04:35:03 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -34,6 +34,8 @@
 
 #ifdef __aarch64__
 
+#define	__USE_TOPDOWN_VM
+
 /*
  * AARCH64 supports 3 page sizes: 4KB, 16KB, 64KB.  Each page table can
  * even have its own page size.
@@ -51,7 +53,7 @@
 #define PAGE_MASK	(PAGE_SIZE - 1)
 
 #if PAGE_SHIFT <= 14
-#define USPACE		16384
+#define USPACE		32768
 #else
 #define USPACE		65536
 #endif
@@ -61,15 +63,10 @@
  * USRSTACK is the top (end) of the user stack.  The user VA space is a
  * 48-bit address space starting at 0.  Place the stack at its top end.
  */
-#define USRSTACK	((vaddr_t) 0x0000ffffffff0000)
-#define USRSTACK32	((vaddr_t) 0x7ffff000)
+#define USRSTACK	VM_MAXUSER_ADDRESS
 
 #ifndef MAXTSIZ
 #define	MAXTSIZ		(1L << 30)	/* max text size (1GB) */
-#endif
-
-#ifndef MAXTSIZ32
-#define	MAXTSIZ32	(1L << 26)	/* 32bit max text size (64MB) */
 #endif
 
 #ifndef MAXDSIZ
@@ -84,12 +81,26 @@
 #define	DFLDSIZ		(1L << 32)	/* default data size (4GB) */
 #endif
 
-#ifndef DFLDSIZ32
-#define	DFLDSIZ32	(1L << 27)	/* 32bit default data size (128MB) */
-#endif
-
 #ifndef DFLSSIZ
 #define	DFLSSIZ		(1L << 23)	/* default stack size (8MB) */
+#endif
+
+#define USRSTACK32	VM_MAXUSER_ADDRESS32
+
+#ifndef MAXTSIZ32
+#define	MAXTSIZ32	(1L << 26)	/* 32bit max text size (64MB) */
+#endif
+
+#ifndef	MAXDSIZ32
+#define	MAXDSIZ32	(1536*1024*1024)	/* max data size */
+#endif
+
+#ifndef	MAXSSIZ32
+#define	MAXSSIZ32	(64*1024*1024)		/* max stack size */
+#endif
+
+#ifndef DFLDSIZ32
+#define	DFLDSIZ32	(1L << 27)	/* 32bit default data size (128MB) */
 #endif
 
 #ifndef DFLSSIZ32
@@ -104,10 +115,17 @@
 
 /*
  * Give ourselves 64GB of mappable kernel space.  That leaves the rest
- * to be user for directly mapped (block addressable) addresses. 
+ * to be user for directly mapped (block addressable) addresses.
  */
 #define VM_MIN_KERNEL_ADDRESS	((vaddr_t) 0xffffffc000000000L)
-#define VM_MAX_KERNEL_ADDRESS	((vaddr_t) 0xffffffffffff0000L)
+#define VM_MAX_KERNEL_ADDRESS	((vaddr_t) 0xffffffffffe00000L)
+
+/*
+ * last 254MB of kernel vm area (0xfffffffff0000000-0xffffffffffe00000)
+ * may be used for devmap. address must be aligned 2MB (L2_SIZE)
+ * see also aarch64/pmap.c:pmap_devmap_*
+ */
+#define VM_KERNEL_IO_ADDRESS	0xfffffffff0000000L
 
 /* virtual sizes (bytes) for various kernel submaps */
 #define USRIOSIZE		(PAGE_SIZE / 8)
@@ -118,30 +136,24 @@
  * using block page table entries.
  */
 #define AARCH64_KSEG_MASK	((vaddr_t) 0xffff000000000000L)
+#define AARCH64_KSEG_SIZE	(1UL << 39)	/* 512GB */
 #define AARCH64_KSEG_START	AARCH64_KSEG_MASK
-#define	AARCH64_KMEMORY_BASE	AARCH64_KSEG_MASK
+#define AARCH64_KSEG_END	(AARCH64_KSEG_START + AARCH64_KSEG_SIZE)
+#define AARCH64_KMEMORY_BASE	AARCH64_KSEG_MASK
 #define AARCH64_KVA_P(va)	(((vaddr_t) (va) & AARCH64_KSEG_MASK) != 0)
 #define AARCH64_PA_TO_KVA(pa)	((vaddr_t) ((pa) | AARCH64_KSEG_START))
-#define AARCH64_KVA_TO_PA(va)	((paddr_t) ((pa) & ~AARCH64_KSEG_MASK))
+#define AARCH64_KVA_TO_PA(va)	((paddr_t) ((va) & ~AARCH64_KSEG_MASK))
 
 /* */
 #define VM_PHYSSEG_MAX		16              /* XXX */
 #define VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
 
-#define VM_NFREELIST		2
-#define	VM_FREELIST_DEFAULT	0
+#define VM_NFREELIST		3
+#define VM_FREELIST_DEFAULT	0
 #define VM_FREELIST_FIRST4GB	1
+#define VM_FREELIST_HIGHMEM	2
 
 #elif defined(__arm__)
-
-// These exist for building the RUMP libraries with MKCOMPAT
-
-#define KERNEL_BASE		0x80000000
-#define PGSHIFT			12
-#define	NBPG			(1 << PGSHIFT)
-#define VM_PHYSSEG_MAX		1
-#define VM_NFREELIST		1
-#define	VM_FREELIST_DEFAULT	0
 
 #include <arm/vmparam.h>
 

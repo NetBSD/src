@@ -1,4 +1,4 @@
-/* $NetBSD: sig_machdep.c,v 1.1 2014/08/10 05:47:37 matt Exp $ */
+/* $NetBSD: sig_machdep.c,v 1.2 2018/04/01 04:35:03 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sig_machdep.c,v 1.1 2014/08/10 05:47:37 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sig_machdep.c,v 1.2 2018/04/01 04:35:03 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -40,7 +40,7 @@ __KERNEL_RCSID(1, "$NetBSD: sig_machdep.c,v 1.1 2014/08/10 05:47:37 matt Exp $")
 #include <sys/signalvar.h>
 #include <sys/siginfo.h>
 
-#include <aarch64/locore.h>
+#include <aarch64/frame.h>
 
 void
 sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)

@@ -1,4 +1,4 @@
-# $NetBSD: genassym.cf,v 1.3 2017/12/10 21:38:27 skrll Exp $
+# $NetBSD: genassym.cf,v 1.4 2018/04/01 04:35:05 ryo Exp $
 
 #-
 # Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,6 +30,7 @@
 #
 
 include <arm/broadcom/bcm2835reg.h>
+include <arm/broadcom/bcm283x_platform.h>
 
 define	BCM2836_PERIPHERALS_VBASE	BCM2836_PERIPHERALS_VBASE
 define	BCM2835_PERIPHERALS_VBASE	BCM2835_PERIPHERALS_VBASE

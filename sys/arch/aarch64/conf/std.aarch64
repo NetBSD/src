@@ -1,13 +1,10 @@
-#	$NetBSD: std.aarch64,v 1.2 2015/05/07 19:14:56 mrg Exp $
+#	$NetBSD: std.aarch64,v 1.3 2018/04/01 04:35:03 ryo Exp $
 #
 # standard NetBSD/aarch64 options
-
-#maxpartitions	16
-
-options 	MULTIPROCESSOR
 
 options 	EXEC_ELF64
 options 	EXEC_SCRIPT
 
-options 	CHILD_MAX=1024	# 160 is too few
-options 	OPEN_MAX=1024	# 128 is too few
+options 	AARCH64_EL0_STACK_ALIGNMENT_CHECK
+options 	AARCH64_EL1_STACK_ALIGNMENT_CHECK
+#options 	AARCH64_ALIGNMENT_CHECK
