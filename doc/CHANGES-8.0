@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.158 2018/03/31 11:22:06 bouyer Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.159 2018/04/01 09:02:51 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -10742,4 +10742,40 @@ lib/libm/src/s_scalbn.c				1.19
 	Add ldexpl(3) for architectures where double has the same
 	size as long double.
 	[martin, ticket #659]
+
+sys/kern/kern_proc.c				1.211
+
+	Make sysctl_doeproc() more predictable.
+	[kamil, ticket #679]
+
+
+sys/netipsec/xform_ah.c				1.77,1.87
+
+	Reinforce and clarify.
+	[maxv, ticket #680]
+
+sys/arch/x86/include/cpu.h			1.90
+sys/arch/x86/x86/identcpu.c			1.71
+
+	Retrieve cpuid.7:%edx.
+	[maxv, ticket #681]
+
+external/gpl3/gcc.old/dist/gcc/config/i386/constraints.md 1.6
+external/gpl3/gcc.old/dist/gcc/config/i386/i386-opts.h 1.4
+external/gpl3/gcc.old/dist/gcc/config/i386/i386-protos.h 1.6
+external/gpl3/gcc.old/dist/gcc/config/i386/i386.c 1.10
+external/gpl3/gcc.old/dist/gcc/config/i386/i386.h 1.7
+external/gpl3/gcc.old/dist/gcc/config/i386/i386.md 1.7
+external/gpl3/gcc.old/dist/gcc/config/i386/i386.opt 1.7
+external/gpl3/gcc.old/dist/gcc/config/i386/predicates.md 1.6
+external/gpl3/gcc.old/dist/gcc/doc/extend.texi	1.7
+external/gpl3/gcc.old/dist/gcc/doc/invoke.texi	1.7
+	(with external/gpl3/gcc.old/ -> external/gpl3/gcc/)
+tools/gcc/gcc-version.mk			1.10 (patch)
+
+	Add the spectre mitigation options for x86:
+	  -mindirect-branch=<choice>
+	  -mfunction-return=<choice>
+	  -mindirect-branch-register
+	[mrg, ticket #682]
 
