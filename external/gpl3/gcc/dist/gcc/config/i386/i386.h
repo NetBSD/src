@@ -1210,6 +1210,9 @@ extern const char *host_detect_local_cpu (int argc, const char **argv);
 /* Base register for access to local variables of the function.  */
 #define FRAME_POINTER_REGNUM 20
 
+#define FIRST_INT_REG  AX_REG
+#define LAST_INT_REG  SP_REG
+
 /* First floating point reg */
 #define FIRST_FLOAT_REG 8
 
@@ -1445,6 +1448,8 @@ enum reg_class
    but prevents the compiler from extending the lifetime of these
    registers.  */
 #define TARGET_SMALL_REGISTER_CLASSES_FOR_MODE_P hook_bool_mode_true
+
+#define LEGACY_INT_REGNO_P(N) (IN_RANGE ((N), FIRST_INT_REG, LAST_INT_REG))
 
 #define QI_REG_P(X) (REG_P (X) && QI_REGNO_P (REGNO (X)))
 #define QI_REGNO_P(N) IN_RANGE ((N), AX_REG, BX_REG)
@@ -2390,9 +2395,56 @@ enum avx_u128_state
 
 #define FASTCALL_PREFIX '@'
 
+#ifndef USED_FOR_TARGET
+/* Structure describing stack frame layout.
+   Stack grows downward:
+
+   [arguments]
+					<- ARG_POINTER
+   saved pc
+
+   saved static chain			if ix86_static_chain_on_stack
+
+   saved frame pointer			if frame_pointer_needed
+					<- HARD_FRAME_POINTER
+   [saved regs]
+					<- regs_save_offset
+   [padding0]
+
+   [saved SSE regs]
+					<- sse_regs_save_offset
+   [padding1]          |
+		       |		<- FRAME_POINTER
+   [va_arg registers]  |
+		       |
+   [frame]	       |
+		       |
+   [padding2]	       | = to_allocate
+					<- STACK_POINTER
+  */
+struct GTY(()) ix86_frame
+{
+  int nsseregs;
+  int nregs;
+  int va_arg_size;
+  int red_zone_size;
+  int outgoing_arguments_size;
+
+  /* The offsets relative to ARG_POINTER.  */
+  HOST_WIDE_INT frame_pointer_offset;
+  HOST_WIDE_INT hard_frame_pointer_offset;
+  HOST_WIDE_INT stack_pointer_offset;
+  HOST_WIDE_INT hfp_save_offset;
+  HOST_WIDE_INT reg_save_offset;
+  HOST_WIDE_INT sse_reg_save_offset;
+
+  /* When save_regs_using_mov is set, emit prologue using
+     move instead of push instructions.  */
+  bool save_regs_using_mov;
+};
+
 /* Machine specific frame tracking during prologue/epilogue generation.  */
 
-#ifndef USED_FOR_TARGET
 struct GTY(()) machine_frame_state
 {
   /* This pair tracks the currently active CFA as reg+offset.  When reg
@@ -2438,6 +2490,9 @@ struct GTY(()) machine_function {
   int varargs_fpr_size;
   int optimize_mode_switching[MAX_386_ENTITIES];
 
+  /* Cached initial frame layout for the current function.  */
+  struct ix86_frame frame;
+
   /* Number of saved registers USE_FAST_PROLOGUE_EPILOGUE
      has been computed for.  */
   int use_fast_prologue_epilogue_nregs;
@@ -2481,6 +2536,16 @@ struct GTY(()) machine_function {
   /* If true, it is safe to not save/restore DRAP register.  */
   BOOL_BITFIELD no_drap_save_restore : 1;
 
+  /* How to generate indirec branch.  */
+  ENUM_BITFIELD(indirect_branch) indirect_branch_type : 3;
+
+  /* If true, the current function has local indirect jumps, like
+     "indirect_jump" or "tablejump".  */
+  BOOL_BITFIELD has_local_indirect_jump : 1;
+
+  /* How to generate function return.  */
+  ENUM_BITFIELD(indirect_branch) function_return_type : 3;
+
   /* During prologue/epilogue generation, the current frame state.
      Otherwise, the frame state at the end of the prologue.  */
   struct machine_frame_state fs;
@@ -2505,6 +2570,7 @@ struct GTY(()) machine_function {
 #define ix86_current_function_calls_tls_descriptor \
   (ix86_tls_descriptor_calls_expanded_in_cfun && df_regs_ever_live_p (SP_REG))
 #define ix86_static_chain_on_stack (cfun->machine->static_chain_on_stack)
+#define ix86_red_zone_size (cfun->machine->frame.red_zone_size)
 
 /* Control behavior of x86_file_start.  */
 #define X86_FILE_START_VERSION_DIRECTIVE false
