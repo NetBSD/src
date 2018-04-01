@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.202 2018/03/30 08:57:32 maxv Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.203 2018/04/01 12:46:50 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -135,7 +135,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.202 2018/03/30 08:57:32 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.203 2018/04/01 12:46:50 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -239,6 +239,7 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep,
 	int optlen;
 
 	*alwaysfragp = false;
+	size = tcp_mssdflt;
 
 	KASSERT(!(tp->t_inpcb && tp->t_in6pcb));
 
@@ -252,7 +253,6 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep,
 		break;
 #endif
 	default:
-		size = tcp_mssdflt;
 		goto out;
 	}
 
@@ -268,13 +268,11 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep,
 	}
 #endif
 	if (rt == NULL) {
-		size = tcp_mssdflt;
 		goto out;
 	}
 
 	ifp = rt->rt_ifp;
 
-	size = tcp_mssdflt;
 	if (tp->t_mtudisc && rt->rt_rmx.rmx_mtu != 0) {
 #ifdef INET6
 		if (in6p && rt->rt_rmx.rmx_mtu < IPV6_MMTU) {
@@ -373,15 +371,17 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep,
 	 * I'm not quite sure about this (could someone comment).
 	 */
 	*txsegsizep = min(tp->t_peermss - optlen, size);
+	*rxsegsizep = min(tp->t_ourmss - optlen, size);
+
 	/*
 	 * Never send more than half a buffer full.  This insures that we can
 	 * always keep 2 packets on the wire, no matter what SO_SNDBUF is, and
 	 * therefore acks will never be delayed unless we run out of data to
 	 * transmit.
 	 */
-	if (so)
+	if (so) {
 		*txsegsizep = min(so->so_snd.sb_hiwat >> 1, *txsegsizep);
-	*rxsegsizep = min(tp->t_ourmss - optlen, size);
+	}
 
 	if (*txsegsizep != tp->t_segsz) {
 		/*
@@ -395,9 +395,9 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep,
 		 */
 		if (*txsegsizep < tp->t_segsz) {
 			tp->snd_cwnd = max((tp->snd_cwnd / tp->t_segsz)
-					   * *txsegsizep, *txsegsizep);
+			    * *txsegsizep, *txsegsizep);
 			tp->snd_ssthresh = max((tp->snd_ssthresh / tp->t_segsz)
-						* *txsegsizep, *txsegsizep);
+			    * *txsegsizep, *txsegsizep);
 		}
 		tp->t_segsz = *txsegsizep;
 	}
