@@ -1,4 +1,4 @@
-/*	$NetBSD: fbt.c,v 1.23 2017/11/06 04:43:50 christos Exp $	*/
+/*	$NetBSD: fbt.c,v 1.23.2.1 2018/04/01 23:06:51 pgoyette Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -957,7 +957,7 @@ fbt_provide_module(void *arg, dtrace_modctl_t *mod)
 	 * dependency are ineligible for FBT tracing.
 	 */
 	for (i = 0; i < mod->mod_nrequired; i++) {
-		if (strncmp(mod->mod_required[i]->mod_info->mi_name,
+		if (strncmp((*mod->mod_required)[i]->mod_info->mi_name,
 			    "dtrace", 6) == 0)
 			return;
 	}
