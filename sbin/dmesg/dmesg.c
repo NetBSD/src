@@ -1,4 +1,4 @@
-/*	$NetBSD: dmesg.c,v 1.27 2011/08/29 14:34:59 joerg Exp $	*/
+/*	$NetBSD: dmesg.c,v 1.28 2018/04/01 19:31:16 christos Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,7 +38,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)dmesg.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: dmesg.c,v 1.27 2011/08/29 14:34:59 joerg Exp $");
+__RCSID("$NetBSD: dmesg.c,v 1.28 2018/04/01 19:31:16 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -48,6 +48,7 @@ __RCSID("$NetBSD: dmesg.c,v 1.27 2011/08/29 14:34:59 joerg Exp $");
 
 #include <err.h>
 #include <fcntl.h>
+#include <time.h>
 #include <kvm.h>
 #include <nlist.h>
 #include <stdio.h>
@@ -73,22 +74,39 @@ int
 main(int argc, char *argv[])
 {
 	struct kern_msgbuf cur;
-	int ch, newl, skip, i;
+	int ch, newl, log, i;
+	size_t tstamp, size;
 	char *p, *bufdata;
-#ifndef SMALL
-	char *memf, *nlistf;
-#endif
 	char buf[5];
-
 #ifndef SMALL
+	char tbuf[64];
+	char *memf, *nlistf;
+	struct timeval boottime;
+	int ptime = 0;
+	
+	static const int bmib[] = { CTL_KERN, KERN_BOOTTIME };
+	size = sizeof(boottime);
+
+	boottime.tv_sec = 0;
+	boottime.tv_usec = 0;
+	ptime = 0;
+
+        (void)sysctl(bmib, 2, &boottime, &size, NULL, 0);
+
 	memf = nlistf = NULL;
-	while ((ch = getopt(argc, argv, "M:N:")) != -1)
+	while ((ch = getopt(argc, argv, "M:N:qt")) != -1)
 		switch(ch) {
 		case 'M':
 			memf = optarg;
 			break;
 		case 'N':
 			nlistf = optarg;
+			break;
+		case 'q':
+			ptime = -1;
+			break;
+		case 't':
+			ptime = 1;
 			break;
 		case '?':
 		default:
@@ -99,15 +117,11 @@ main(int argc, char *argv[])
 
 	if (memf == NULL) {
 #endif
-		size_t size;
-		int mib[2];
+		static const int mmib[2] = { CTL_KERN, KERN_MSGBUF };
 
-		mib[0] = CTL_KERN;
-		mib[1] = KERN_MSGBUF;
-
-		if (sysctl(mib, 2, NULL, &size, NULL, 0) == -1 ||
+		if (sysctl(mmib, 2, NULL, &size, NULL, 0) == -1 ||
 		    (bufdata = malloc(size)) == NULL ||
-		    sysctl(mib, 2, bufdata, &size, NULL, 0) == -1)
+		    sysctl(mmib, 2, bufdata, &size, NULL, 0) == -1)
 			err(1, "can't get msgbuf");
 
 		/* make a dummy struct msgbuf for the display logic */
@@ -159,22 +173,70 @@ main(int argc, char *argv[])
 	 * over cur.msg_bufs times.  Unused area is skipped since it
 	 * contains nul.
 	 */
-	for (newl = skip = i = 0, p = bufdata + cur.msg_bufx;
+	for (tstamp = 0, newl = 1, log = i = 0, p = bufdata + cur.msg_bufx;
 	    i < cur.msg_bufs; i++, p++) {
 #ifndef SMALL
 		if (p == bufdata + cur.msg_bufs)
 			p = bufdata;
+#define ADDC(c)				\
+    do 					\
+	if (tstamp < sizeof(tbuf) - 1)	\
+		tbuf[tstamp++] = (c);	\
+    while (/*CONSTCOND*/0)
+#else
+#define ADDC(c)
 #endif
 		ch = *p;
 		/* Skip "\n<.*>" syslog sequences. */
-		if (skip) {
-			if (ch == '>')
-				newl = skip = 0;
-			continue;
-		}
-		if (newl && ch == '<') {
-			skip = 1;
-			continue;
+		/* Gather timestamp sequences */
+		if (newl) {
+			switch (ch) {
+			case '[':
+				ADDC(ch);
+				continue;
+			case '<':
+				log = 1;
+				continue;
+			case '>':
+				log = newl = 0;
+				continue;
+			case ']':
+				ADDC(ch);
+				ADDC('\0');
+				tstamp = 0;
+#ifndef SMALL
+				if (ptime == 1) {
+					intmax_t sec;
+					time_t t;
+					long nsec;
+					struct tm tm;
+
+					sscanf(tbuf, "[%jd.%ld]", &sec, &nsec);
+					t = boottime.tv_sec + sec;
+					if (localtime_r(&t, &tm) != NULL) {
+						strftime(tbuf, sizeof(tbuf),
+						    "[%a %b %e %H:%M:%S %Z %Y]",
+						     &tm);
+						printf("%s ", tbuf);
+					}
+					continue;
+				} else if (ptime != -1)
+					printf("%s ", tbuf);
+#endif
+				continue;
+			case ' ':
+				if (!tstamp)
+					continue;	
+				/*FALLTHROUGH*/
+			default:
+				if (tstamp) {
+				    ADDC(ch);
+				    continue;
+				}
+				if (log)
+					continue;
+				break;
+			}
 		}
 		if (ch == '\0')
 			continue;
@@ -189,7 +251,7 @@ main(int argc, char *argv[])
 	}
 	if (!newl)
 		(void)putchar('\n');
-	exit(0);
+	return EXIT_SUCCESS;
 }
 
 #ifndef SMALL
@@ -197,7 +259,8 @@ static void
 usage(void)
 {
 
-	(void)fprintf(stderr, "usage: dmesg [-M core] [-N system]\n");
-	exit(1);
+	(void)fprintf(stderr, "Usage: %s [-qt] [-M core] [-N system]\n",
+		getprogname());
+	exit(EXIT_FAILURE);
 }
 #endif
