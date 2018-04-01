@@ -1,4 +1,4 @@
-/* $NetBSD: clk_backend.h,v 1.2 2017/04/16 12:28:21 jmcneill Exp $ */
+/* $NetBSD: clk_backend.h,v 1.3 2018/04/01 21:11:01 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -49,6 +49,7 @@ struct clk_funcs {
 
 	u_int (*get_rate)(void *, struct clk *);
 	int (*set_rate)(void *, struct clk *, u_int);
+	u_int (*round_rate)(void *, struct clk *, u_int);
 	int (*enable)(void *, struct clk *);
 	int (*disable)(void *, struct clk *);
 	int (*set_parent)(void *, struct clk *, struct clk *);
