@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_ccu.c,v 1.8 2018/03/19 16:18:30 bouyer Exp $ */
+/* $NetBSD: sunxi_ccu.c,v 1.9 2018/04/01 21:19:17 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "opt_fdt_arm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_ccu.c,v 1.8 2018/03/19 16:18:30 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_ccu.c,v 1.9 2018/04/01 21:19:17 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -184,6 +184,28 @@ sunxi_ccu_clock_set_rate(void *priv, struct clk *clkp, u_int rate)
 	return ENXIO;
 }
 
+static u_int
+sunxi_ccu_clock_round_rate(void *priv, struct clk *clkp, u_int rate)
+{
+	struct sunxi_ccu_softc * const sc = priv;
+	struct sunxi_ccu_clk *clk = (struct sunxi_ccu_clk *)clkp;
+	struct clk *clkp_parent;
+
+	if (clkp->flags & CLK_SET_RATE_PARENT) {
+		clkp_parent = clk_get_parent(clkp);
+		if (clkp_parent == NULL) {
+			aprint_error("%s: no parent for %s\n", __func__, clk->base.name);
+			return 0;
+		}
+		return clk_round_rate(clkp_parent, rate);
+	}
+
+	if (clk->round_rate)
+		return clk->round_rate(sc, clk, rate);
+
+	return 0;
+}
+
 static int
 sunxi_ccu_clock_enable(void *priv, struct clk *clkp)
 {
@@ -259,6 +281,7 @@ static const struct clk_funcs sunxi_ccu_clock_funcs = {
 	.put = sunxi_ccu_clock_put,
 	.get_rate = sunxi_ccu_clock_get_rate,
 	.set_rate = sunxi_ccu_clock_set_rate,
+	.round_rate = sunxi_ccu_clock_round_rate,
 	.enable = sunxi_ccu_clock_enable,
 	.disable = sunxi_ccu_clock_disable,
 	.set_parent = sunxi_ccu_clock_set_parent,
