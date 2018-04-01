@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2014/08/10 05:47:37 matt Exp $
+# $NetBSD: Makefile,v 1.2 2018/04/01 04:35:03 ryo Exp $
 
 INCSDIR= /usr/include/aarch64
 
@@ -10,15 +10,14 @@ INCS=	ansi.h aout_machdep.h armreg.h asm.h \
 	fenv.h float.h frame.h \
 	ieee.h ieeefp.h \
 	int_const.h int_fmtio.h int_limits.h int_mwgwtypes.h int_types.h \
-	intr.h \
 	kcore.h \
 	limits.h lock.h \
 	math.h mcontext.h mutex.h \
-	param.h pcb.h pmap.h pmc.h \
-	proc.h profile.h psl.h pte.h ptrace.h \
+	param.h pcb.h pmap.h \
+	proc.h profile.h pte.h ptrace.h \
 	reg.h rwlock.h \
 	setjmp.h signal.h sysarch.h \
-	trap.h types.h \
+	types.h \
 	vmparam.h \
 	wchar_limits.h
 

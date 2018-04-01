@@ -1,4 +1,4 @@
-/* $NetBSD: bcm2835_genfb.c,v 1.8 2017/12/10 21:38:26 skrll Exp $ */
+/* $NetBSD: bcm2835_genfb.c,v 1.9 2018/04/01 04:35:03 ryo Exp $ */
 
 /*-
  * Copyright (c) 2013 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_genfb.c,v 1.8 2017/12/10 21:38:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_genfb.c,v 1.9 2018/04/01 04:35:03 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -182,7 +182,10 @@ bcmgenfb_shutdown(device_t self, int flags)
 void
 bcmgenfb_set_console_dev(device_t dev)
 {
-	KASSERT(bcmgenfb_console_dev == NULL);
+	/* skip if already set. called from each genfb0,genfb1,... */
+	if (bcmgenfb_console_dev != NULL)
+		return;
+
 	bcmgenfb_console_dev = dev;
 }
 

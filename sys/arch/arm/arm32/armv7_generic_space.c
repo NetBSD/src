@@ -1,4 +1,4 @@
-/*	$NetBSD: armv7_generic_space.c,v 1.7 2018/03/16 17:56:31 ryo Exp $	*/
+/*	$NetBSD: armv7_generic_space.c,v 1.8 2018/04/01 04:35:03 ryo Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armv7_generic_space.c,v 1.7 2018/03/16 17:56:31 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armv7_generic_space.c,v 1.8 2018/04/01 04:35:03 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,6 +53,9 @@ bs_protos(generic_armv4);
 #else
 #define NSWAP(n)	n
 #endif
+
+__strong_alias(arm_generic_bs_tag,armv7_generic_bs_tag);
+__strong_alias(arm_generic_a4x_bs_tag,armv7_generic_a4x_bs_tag);
 
 struct bus_space armv7_generic_bs_tag = {
 	/* cookie */

@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835var.h,v 1.3 2017/12/10 21:38:26 skrll Exp $	*/
+/*	$NetBSD: bcm2835var.h,v 1.4 2018/04/01 04:35:03 ryo Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -35,10 +35,6 @@
 #include <sys/types.h>
 #include <sys/bus.h>
 
-extern struct bus_space bcm2835_bs_tag;
-extern struct bus_space bcm2835_a4x_bs_tag;
-extern struct bus_space bcm2836_bs_tag;
-extern struct bus_space bcm2836_a4x_bs_tag;
 extern struct arm32_bus_dma_tag bcm2835_bus_dma_tag;
 
 extern bus_space_tag_t al_iot;

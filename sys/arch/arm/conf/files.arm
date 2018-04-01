@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm,v 1.138 2018/01/24 09:04:44 skrll Exp $
+#	$NetBSD: files.arm,v 1.139 2018/04/01 04:35:04 ryo Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defflag				ARM32
@@ -83,6 +83,7 @@ defflag	opt_arm_debug.h		VERBOSE_INIT_ARM
 
 # Board-specific bus_space(9)/bus_dma(9) definitions
 defflag  opt_arm_bus_space.h	__BUS_SPACE_HAS_STREAM_METHODS
+				__BUS_SPACE_HAS_PROBING_METHODS
 				_ARM32_NEED_BUS_DMA_BOUNCE
 				BUSDMA_COUNTERS
 

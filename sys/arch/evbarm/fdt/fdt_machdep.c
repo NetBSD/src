@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.20 2018/03/03 13:46:32 skrll Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.21 2018/04/01 04:35:04 ryo Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,9 +27,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.20 2018/03/03 13:46:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.21 2018/04/01 04:35:04 ryo Exp $");
 
 #include "opt_machdep.h"
+#include "opt_bootconfig.h"
 #include "opt_ddb.h"
 #include "opt_md.h"
 #include "opt_arm_debug.h"
@@ -65,7 +66,13 @@ __KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.20 2018/03/03 13:46:32 skrll Exp $
 #include <machine/bootconfig.h>
 #include <arm/armreg.h>
 
+#include <arm/cpufunc.h>
+#ifdef __aarch64__
+#include <aarch64/machdep.h>
+#else
 #include <arm/arm32/machdep.h>
+#endif
+
 
 #include <evbarm/include/autoconf.h>
 #include <evbarm/fdt/platform.h>
@@ -128,9 +135,9 @@ fdt_putstr(const char *s)
 }
 
 static void
-fdt_printn(u_int n, int base)
+fdt_printn(unsigned long n, int base)
 {
-	char *p, buf[(sizeof(u_int) * NBBY / 3) + 1 + 2 /* ALT + SIGN */];
+	char *p, buf[(sizeof(unsigned long) * NBBY / 3) + 1 + 2 /* ALT + SIGN */];
 
 	p = buf;
 	do {
@@ -151,30 +158,40 @@ fdt_printn(u_int n, int base)
 #endif
 
 /*
- * Get the first physically contiguous region of memory.
+ * ARM: Get the first physically contiguous region of memory.
+ * ARM64: Get all of physical memory, including holes.
  */
 static void
-fdt_get_memory(uint64_t *paddr, uint64_t *psize)
+fdt_get_memory(uint64_t *pstart, uint64_t *pend)
 {
 	const int memory = OF_finddevice("/memory");
 	uint64_t cur_addr, cur_size;
 	int index;
 
 	/* Assume the first entry is the start of memory */
-	if (fdtbus_get_reg64(memory, 0, paddr, psize) != 0)
+	if (fdtbus_get_reg64(memory, 0, &cur_addr, &cur_size) != 0)
 		panic("Cannot determine memory size");
 
-	DPRINTF("FDT /memory [%d] @ 0x%" PRIx64 " size 0x%" PRIx64 "\n",
-	    0, *paddr, *psize);
+	*pstart = cur_addr;
+	*pend = cur_addr + cur_size;
 
-	/* If subsequent entries follow the previous one, append them. */
+	DPRINTF("FDT /memory [%d] @ 0x%" PRIx64 " size 0x%" PRIx64 "\n",
+	    0, *pstart, *pend - *pstart);
+
 	for (index = 1;
 	     fdtbus_get_reg64(memory, index, &cur_addr, &cur_size) == 0;
 	     index++) {
 		DPRINTF("FDT /memory [%d] @ 0x%" PRIx64 " size 0x%" PRIx64 "\n",
 		    index, cur_addr, cur_size);
-		if (*paddr + *psize == cur_addr)
-			*psize += cur_size;
+
+#ifdef __aarch64__
+		if (cur_addr + cur_size > *pend)
+			*pend = cur_addr + cur_size;
+#else
+		/* If subsequent entries follow the previous, append them. */
+		if (*pend == cur_addr)
+			*pend = cur_addr + cur_size;
+#endif
 	}
 }
 
@@ -220,25 +237,24 @@ fdt_add_reserved_memory(uint64_t max_addr)
  * Define usable memory regions.
  */
 static void
-fdt_build_bootconfig(uint64_t mem_addr, uint64_t mem_size)
+fdt_build_bootconfig(uint64_t mem_start, uint64_t mem_end)
 {
 	const int memory = OF_finddevice("/memory");
-	const uint64_t max_addr = mem_addr + mem_size;
 	BootConfig *bc = &bootconfig;
 	struct extent_region *er;
 	uint64_t addr, size;
 	int index, error;
 
-	fdt_memory_ext = extent_create("FDT Memory", mem_addr, max_addr,
+	fdt_memory_ext = extent_create("FDT Memory", mem_start, mem_end,
 	    fdt_memory_ext_storage, sizeof(fdt_memory_ext_storage), EX_EARLY);
 
 	for (index = 0;
 	     fdtbus_get_reg64(memory, index, &addr, &size) == 0;
 	     index++) {
-		if (addr >= max_addr || size == 0)
+		if (addr >= mem_end || size == 0)
 			continue;
-		if (addr + size > max_addr)
-			size = max_addr - addr;
+		if (addr + size > mem_end)
+			size = mem_end - addr;
 
 		error = extent_alloc_region(fdt_memory_ext, addr, size,
 		    EX_NOWAIT);
@@ -248,7 +264,7 @@ fdt_build_bootconfig(uint64_t mem_addr, uint64_t mem_size)
 		DPRINTF("MEM: add %llx-%llx\n", addr, addr + size);
 	}
 
-	fdt_add_reserved_memory(max_addr);
+	fdt_add_reserved_memory(mem_end);
 
 	const uint64_t initrd_size = initrd_end - initrd_start;
 	if (initrd_size > 0)
@@ -330,11 +346,13 @@ fdt_setup_initrd(void)
 #endif
 }
 
+u_int initarm(void *arg);
+
 u_int
 initarm(void *arg)
 {
 	const struct arm_platform *plat;
-	uint64_t memory_addr, memory_size;
+	uint64_t memory_start, memory_end;
 
 	/* Load FDT */
 	int error = fdt_check_header(fdt_addr_r);
@@ -364,6 +382,9 @@ initarm(void *arg)
 
 	DPRINT(" devmap");
 	pmap_devmap_register(plat->devmap());
+#ifdef __aarch64__
+	pmap_devmap_bootstrap(plat->devmap());
+#endif
 
 	/* Heads up ... Setup the CPU / MMU / TLB functions. */
 	DPRINT(" cpufunc");
@@ -384,7 +405,7 @@ initarm(void *arg)
 
 	DPRINTF(" ok\n");
 
-	DPRINTF("uboot: args %#x, %#x, %#x, %#x\n",
+	DPRINTF("uboot: args %#lx, %#lx, %#lx, %#lx\n",
 	    uboot_args[0], uboot_args[1], uboot_args[2], uboot_args[3]);
 
 	cpu_reset_address = fdt_reset;
@@ -399,6 +420,7 @@ initarm(void *arg)
 	parse_mi_bootargs(mi_bootargs);
 #endif
 
+#ifndef __aarch64__
 	DPRINTF("KERNEL_BASE=0x%x, "
 		"KERNEL_VM_BASE=0x%x, "
 		"KERNEL_VM_BASE - KERNEL_BASE=0x%x, "
@@ -407,15 +429,19 @@ initarm(void *arg)
 		KERNEL_VM_BASE,
 		KERNEL_VM_BASE - KERNEL_BASE,
 		KERNEL_BASE_VOFFSET);
+#endif
 
-	fdt_get_memory(&memory_addr, &memory_size);
+	fdt_get_memory(&memory_start, &memory_end);
 
 #if !defined(_LP64)
 	/* Cannot map memory above 4GB */
-	if (memory_addr + memory_size >= 0x100000000)
-		memory_size = 0x100000000 - memory_addr - PAGE_SIZE;
+	if (memory_end >= 0x100000000ULL)
+		memory_end = 0x100000000ULL - PAGE_SIZE;
+
+	uint64_t memory_size = memory_end - memory_start;
 #endif
 
+#ifndef __aarch64__
 #ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
 	const bool mapallmem_p = true;
 #ifndef PMAP_NEED_ALLOC_POOLPAGE
@@ -429,6 +455,7 @@ initarm(void *arg)
 #else
 	const bool mapallmem_p = false;
 #endif
+#endif
 
 	/* Parse ramdisk info */
 	fdt_probe_initrd(&initrd_start, &initrd_end);
@@ -437,11 +464,27 @@ initarm(void *arg)
 	 * Populate bootconfig structure for the benefit of
 	 * dodumpsys
 	 */
-	fdt_build_bootconfig(memory_addr, memory_size);
+	fdt_build_bootconfig(memory_start, memory_end);
 
-	arm32_bootmem_init(memory_addr, memory_size, KERNEL_BASE_PHYS);
+#ifdef __aarch64__
+	extern char __kernel_text[];
+	extern char _end[];
+
+	vaddr_t kernstart = trunc_page((vaddr_t)__kernel_text);
+	vaddr_t kernend = round_page((vaddr_t)_end);
+
+	paddr_t	kernstart_phys = KERN_VTOPHYS(kernstart);
+	paddr_t kernend_phys = KERN_VTOPHYS(kernend);
+
+	DPRINTF("%s: kernel phys start %lx end %lx\n", __func__, kernstart_phys, kernend_phys);
+
+        fdt_add_reserved_memory_range(kernstart_phys,
+	     kernend_phys - kernstart_phys);
+#else
+	arm32_bootmem_init(memory_start, memory_size, KERNEL_BASE_PHYS);
 	arm32_kernel_vm_init(KERNEL_VM_BASE, ARM_VECTORS_HIGH, 0,
 	    plat->devmap(), mapallmem_p);
+#endif
 
 	DPRINTF("bootargs: %s\n", bootargs);
 
@@ -460,6 +503,11 @@ initarm(void *arg)
 		bp->bp_start = atop(er->er_start);
 		bp->bp_pages = atop(er->er_end - er->er_start);
 		bp->bp_freelist = VM_FREELIST_DEFAULT;
+
+#ifdef _LP64
+		if (er->er_end > 0x100000000)
+			bp->bp_freelist = VM_FREELIST_HIGHMEM;
+#endif
 
 #ifdef PMAP_NEED_ALLOC_POOLPAGE
 		if (atop(memory_size) > bp->bp_pages) {

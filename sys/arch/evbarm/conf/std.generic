@@ -1,0 +1,33 @@
+#	$NetBSD: std.generic,v 1.1 2018/04/01 04:35:04 ryo Exp $
+#
+# 	generic NetBSD/evbarm with FDT support
+
+machine		evbarm arm
+include		"conf/std"
+include		"arch/arm/conf/std.arm"		# arch standard options
+
+# Architecture opions
+options 	ARM32
+
+options 	__BUS_SPACE_HAS_STREAM_METHODS
+options 	__HAVE_CPU_COUNTER
+options 	__HAVE_CPU_UAREA_ALLOC_IDLELWP
+options 	__HAVE_FAST_SOFTINTS		# should be in types.h
+options 	__HAVE_PCI_CONF_HOOK
+options 	ARM_HAS_VBAR
+options 	ARM_INTR_IMPL="<arch/arm/fdt/fdt_intr.h>"
+options 	ARM_GENERIC_TODR
+options 	DRAM_BLOCKS=256
+options 	EVBARM_BOARDTYPE="evbarm"
+options 	FDT				# Flattened Device Tree support
+options 	FPU_VFP
+options 	MODULAR
+options 	MODULAR_DEFAULT_AUTOLOAD
+options 	PCI_NETBSD_CONFIGURE
+options 	TPIDRPRW_IS_CURCPU
+makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.generic"
+
+# General options
+options 	CHILD_MAX=1024	# 160 is too few
+options 	OPEN_MAX=1024	# 128 is too few
+

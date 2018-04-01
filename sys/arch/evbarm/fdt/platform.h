@@ -1,4 +1,4 @@
-/* $NetBSD: platform.h,v 1.3 2018/03/14 06:35:31 ryo Exp $ */
+/* $NetBSD: platform.h,v 1.4 2018/04/01 04:35:04 ryo Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -33,6 +33,18 @@
 void fdt_add_reserved_memory_range(uint64_t, uint64_t);
 #endif
 
+#ifdef __aarch64__
+
+#define KERNEL_IO_VBASE		VM_KERNEL_IO_ADDRESS
+
+#define KERNEL_VM_BASE		VM_MIN_KERNEL_ADDRESS
+#define KERNEL_VM_SIZE		(VM_MAX_KERNEL_ADDRESS - VM_MIN_KERNEL_ADDRESS)
+
+#else /* __aarch64__ */
+
+#define KERNEL_IO_VBASE		0xf0000000
+#define KERNEL_IO_VSIZE		(KERNEL_IO_VBASE - VM_MAX_KERNEL_ADDRESS)
+
 #ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
 #define KERNEL_VM_BASE		0xc0000000
 #define KERNEL_VM_SIZE		0x20000000 /* 0x20000000 = 512MB */
@@ -40,5 +52,7 @@ void fdt_add_reserved_memory_range(uint64_t, uint64_t);
 #define KERNEL_VM_BASE		0x90000000
 #define KERNEL_VM_SIZE		0x50000000 /* 0x50000000 = 1.25GB */
 #endif
+
+#endif /* !__aarch64 */
 
 #endif /* _EVBARM_FDT_PLATFORM_H */

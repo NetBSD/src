@@ -1,0 +1,266 @@
+#
+#	$NetBSD: GENERIC,v 1.1 2018/04/01 04:35:04 ryo Exp $
+#
+#	GENERIC ARM (aarch32) kernel
+#
+
+include	"arch/evbarm/conf/std.generic"
+include "arch/evbarm/conf/files.generic"
+include	"arch/evbarm/conf/GENERIC.common"
+
+#
+# FDT files supported by this kernel - add to DTSSUBDIR and DTS as
+# appropriate
+#
+makeoptions 	DTSARCH="arm"
+makeoptions	DTSGNUARCH="arm"
+makeoptions	DTSSUBDIR="allwinner nvidia"
+makeoptions	DTS="
+	tegra124-apalis-eval.dts
+	tegra124-jetson-tk1.dts
+	tegra124-nyan-big.dts
+	tegra124-nyan-blaze.dts
+	tegra124-venice2.dts
+"
+
+options 	CPU_CORTEXA15
+options 	CPU_CORTEXA57
+options 	SOC_TEGRA124
+options 	SOC_SUN4I_A10
+options 	SOC_SUN5I_A13
+options 	SOC_SUN6I_A31
+options 	SOC_SUN7I_A20
+options 	SOC_SUN8I_A83T
+options 	SOC_SUN8I_H3
+options 	SOC_SUN9I_A80
+options 	MULTIPROCESSOR
+
+pseudo-device 	openfirm	# /dev/openfirm
+
+#options 	DIAGNOSTIC	# internal consistency checks
+#options 	DEBUG
+#options 	LOCKDEBUG
+#options 	PMAP_DEBUG	# Enable pmap_debug_level code
+#options 	IPKDB		# remote kernel debugging
+options 	VERBOSE_INIT_ARM # verbose bootstrapping messages
+# EARLYCONS is required for early init messages from VERBOSE_INIT_ARM.
+#options        EARLYCONS=sunxi, CONSADDR=0x01c28000
+#options        EARLYCONS=tegra, CONSADDR=0x70006000
+
+makeoptions	DEBUG="-g"	# compile full symbol table
+makeoptions	COPY_SYMTAB=1
+
+config		netbsd		root on ? type ?
+
+# Device tree support
+armfdt0		at root
+fdt*		at fdtbus?
+
+# CPUs
+cpus*		at fdt? pass 0
+cpu*		at cpus?
+
+# CPU frequency scaling
+cpufreqdt*	at cpu?
+
+# Power State Coordination Interface (PSCI)
+psci*		at fdt?
+
+fclock*		at fdt? pass 1
+ffclock*	at fdt? pass 1
+fregulator*	at fdt? pass 4
+gregulator*	at fdt? pass 4
+gpiokeys*	at fdt?
+wskbd*		at gpiokeys? console ? mux 1
+gpioleds*	at fdt?
+
+# Timer
+gtmr*		at fdt? pass 1		# ARM Generic Timer
+armgtmr0	at gtmr?
+tegratimer*	at fdt?			# Timers
+
+# Watchdog
+sunxiwdt*	at fdt?			# Allwinner watchdog
+
+# Interrupt controller
+tegralic*	at fdt? pass 1		# NVIDIA Tegra LIC
+gic*		at fdt? pass 1		# ARM GIC
+armgic0		at gic?
+
+# Memory controller
+tegramc*	at fdt?	pass 4		# NVIDIA Tegra MC
+
+# DMA controller
+sun6idma*	at fdt?			# Allwinner DMA controller (sun6i)
+tegraapbdma*	at fdt? pass 4		# NVIDIA Tegra APB DMA
+
+# FUSE controller
+tegrafuse*	at fdt? pass 4		# NVIDIA Tegra FUSE
+
+# Power management controller
+tegrapmc*	at fdt? pass 4		# NVIDIA Tegra PMC
+
+# Clock and Reset controller
+sun8ih3ccu*	at fdt? pass 2		# Allwinner H3/H5 CCU
+sun8ih3rccu*	at fdt? pass 2		# Allwinner H3/H5 CCU (PRCM)
+sun50ia64ccu*	at fdt? pass 2		# Allwinner A64 CCU
+sunxiresets*	at fdt? pass 1		# Allwinner misc. resets
+sunxigates*	at fdt? pass 1		# Allwinner misc. gates
+sunxigmacclk*	at fdt? pass 2		# Allwinner GMAC MII/RGMII clock mux
+tegra210car*	at fdt? pass 3		# NVIDIA Tegra CAR (T210)
+
+# GPIO controller
+sunxigpio*	at fdt? pass 3		# Allwinner GPIO
+tegragpio*	at fdt? pass 2		# NVIDIA Tegra GPIO
+gpio*		at gpiobus?
+
+# MPIO / Pinmux
+tegrapinmux*	at fdt?			# NVIDIA Tegra MPIO
+
+# XUSB PADCTL
+tegra210xpad*	at fdt?			# NVIDIA Tegra XUSB PADCTL (T210)
+tegra210xphy*	at tegra210xpad?
+
+# PCIE
+# XXXNH not yet
+#tegrapcie0	at fdt?			# NVIDIA Tegra PCIE
+#pci*		at tegrapcie0
+#ppb*		at pci? dev ? function ?
+#pci*		at ppb?
+
+# Ethernet
+emac*		at fdt?			# Allwinner Gigabit Ethernet (EMAC)
+#re*		at pci? dev ? function ?	# Realtek RTL8111GS
+
+# MII/PHY support
+exphy* 		at mii? phy ?		# 3Com internal PHYs
+gentbi* 	at mii? phy ?		# Generic Ten-Bit 1000BASE-[CLS]X PHYs
+glxtphy*	at mii? phy ?		# Level One LXT-1000 PHYs
+gphyter* 	at mii? phy ?		# NS83861 Gig-E PHY
+icsphy*		at mii? phy ?		# Integrated Circuit Systems ICS189x
+igphy*		at mii? phy ?		# Intel IGP01E1000
+ihphy*		at mii? phy ?		# Intel 82577 PHYs
+ikphy*		at mii? phy ?		# Intel 82563 PHYs
+inphy*		at mii? phy ?		# Intel 82555 PHYs
+iophy*		at mii? phy ?		# Intel 82553 PHYs
+lxtphy*		at mii? phy ?		# Level One LXT-970 PHYs
+makphy*		at mii? phy ?		# Marvell Semiconductor 88E1000 PHYs
+nsphy*		at mii? phy ?		# NS83840 PHYs
+nsphyter*	at mii? phy ? 		# NS83843 PHYs
+pnaphy*		at mii? phy ?		# generic HomePNA PHYs
+qsphy*		at mii? phy ?		# Quality Semiconductor QS6612 PHYs
+rdcphy*		at mii? phy ?		# RDC R6040 10/100 PHY
+rgephy*		at mii? phy ?		# Realtek 8169S/8110S internal PHYs
+rlphy*		at mii? phy ?		# Realtek 8139/8201L PHYs
+sqphy*		at mii? phy ?		# Seeq 80220/80221/80223 PHYs
+tlphy*		at mii? phy ?		# ThunderLAN PHYs
+tqphy*		at mii? phy ?		# TDK Semiconductor PHYs
+urlphy*		at mii? phy ?		# Realtek RTL8150L internal PHYs
+ukphy*		at mii? phy ?		# generic unknown PHYs
+
+# Mini-PCIe Wireless
+#options 	ATHHAL_AR5212,ATHHAL_RF2425	# AR5BHB63
+#ath*		at pci? dev ? function ?	# Atheros IEEE 802.11
+#athn*		at pci? dev ? function ?	# Atheros IEEE 802.11
+
+# UART
+com*		at fdt?			# UART
+plcom*		at fdt?			# ARM PL011 UART
+
+# I2C controllers
+sunxirsb*	at fdt?			# Allwinner RSB
+sunxitwi*	at fdt?			# Allwinner TWI
+tegrai2c*	at fdt? pass 4		# NVIDIA Tegra I2C
+iic*		at i2cbus?
+
+# I2C devices
+titemp*		at iic?
+seeprom*	at iic?
+as3722pmic*	at iic?
+as3722reg*	at as3722pmic?
+max77620pmic*	at iic?
+tcagpio*	at iic?
+
+# Random number generators
+
+# RTC
+sunxirtc*	at fdt?			# Allwinner RTC
+tegrartc*	at fdt?			# NVIDIA Tegra RTC
+
+# SDMMC
+mmcpwrseq*	at fdt?			# Simple MMC power sequence provider
+sdhc*		at fdt?			# SD Host Controller Interface
+sunximmc*	at fdt?			# Allwinner SD/MMC
+sdmmc*		at sdmmcbus?
+ld0		at sdmmc0
+ld1		at sdmmc1
+ld2		at sdmmc2
+ld3		at sdmmc3
+ld*		at sdmmc?
+
+# SATA
+ahcisata*	at fdt?			# AHCI SATA
+atabus*		at ata?
+atapibus*	at atapi?
+wd*		at atabus? drive ?
+cd*		at atapibus? drive ?
+
+# SPI controllers
+#spi*		at spibus?
+
+# Audio support
+hdaudio*	at fdt?			# Intel HDA
+hdafg*		at hdaudiobus?
+options 	HDAUDIOVERBOSE
+options 	HDAUDIO_32BIT_ACCESS
+options 	HDAUDIO_ENABLE_HDMI
+options 	HDAUDIO_ENABLE_DISPLAYPORT
+sunxicodec*	at fdt?			# Allwinner audio codec
+h3codec*	at fdt?			# Allwinner H3 audio codec (analog part)
+audio*		at audiobus?
+
+spkr*		at audio?		# PC speaker (synthesized)
+
+# HDMI CEC
+tegracec0	at fdt?			# NVIDIA Tegra HDMI CEC
+hdmicec*	at hdmicecbus?
+
+# Display
+#tegradrm*	at fdt?			# NVIDIA Tegra Display
+#tegrafb*	at tegrafbbus?
+genfb*		at fdt?			# Simple Framebuffer
+wsdisplay*	at wsemuldisplaydev?
+options 	VCONS_DRAW_INTR
+options 	WSEMUL_VT100
+options 	WS_DEFAULT_FG=WSCOL_WHITE
+options 	WS_DEFAULT_BG=WSCOL_BLACK
+options 	WS_KERNEL_FG=WSCOL_GREEN
+options 	WS_KERNEL_BG=WSCOL_BLACK
+options 	WSDISPLAY_COMPAT_PCVT
+options 	WSDISPLAY_COMPAT_SYSCONS
+options 	WSDISPLAY_COMPAT_USL
+options 	WSDISPLAY_COMPAT_RAWKBD
+options 	WSDISPLAY_DEFAULTSCREENS=4
+pseudo-device	wsmux
+pseudo-device	wsfont
+
+# GPU
+#nouveau*	at fdt?			# NVIDIA GPU
+
+# Thermal throttling controller
+tegrasoctherm*	at fdt?			# NVIDIA Tegra SOC_THERM
+
+# USB
+sunxiusbphy*	at fdt? pass 9		# Allwinner USB PHY
+tegrausbphy*	at fdt?			# NVIDIA Tegra USB PHY
+#dwctwo*		at fdt?			# Designware USB DRD
+ehci*		at fdt?			# EHCI
+#motg*		at fdt?			# Mentor Graphics USB OTG
+ohci*		at fdt?			# OHCI
+xhci*		at fdt?			# XHCI
+usb*		at usbus?
+
+include "dev/usb/usbdevices.config"
+midi*		at midibus?
+
+cinclude "arch/evbarm/conf/GENERIC.local"

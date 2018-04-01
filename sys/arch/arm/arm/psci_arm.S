@@ -1,4 +1,4 @@
-/* $NetBSD: psci_arm.S,v 1.1 2017/06/28 23:48:23 jmcneill Exp $ */
+/* $NetBSD: psci_arm.S,v 1.2 2018/04/01 04:35:03 ryo Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,11 +28,13 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: psci_arm.S,v 1.1 2017/06/28 23:48:23 jmcneill Exp $");
+RCSID("$NetBSD: psci_arm.S,v 1.2 2018/04/01 04:35:03 ryo Exp $");
 
+#if defined(__arm__)
 	.arch		armv7a
 	.arch_extension	sec
 	.arch_extension	virt
+#endif
 
 /* Invoke PSCI function using Secure Monitor Call interface */
 ENTRY(psci_call_smc)

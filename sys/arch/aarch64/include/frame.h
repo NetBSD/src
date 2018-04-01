@@ -1,4 +1,4 @@
-/* $NetBSD: frame.h,v 1.1 2014/08/10 05:47:38 matt Exp $ */
+/* $NetBSD: frame.h,v 1.2 2018/04/01 04:35:03 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -40,13 +40,36 @@ struct trapframe {
 	struct reg tf_regs __aligned(16);
 	uint64_t tf_esr;		// 32-bit register
 	uint64_t tf_far;		// 64-bit register
-	struct trapframe *tf_chain;
 #define tf_reg		tf_regs.r_reg
 #define tf_lr		tf_regs.r_reg[30]
 #define tf_pc		tf_regs.r_pc
 #define tf_sp		tf_regs.r_sp
 #define tf_spsr		tf_regs.r_spsr
-#define tf_tpidr	tf_regs.r_tpidr
+};
+
+#ifdef _KERNEL
+/* size of trapframe (stack pointer) must be 16byte aligned */
+__CTASSERT((sizeof(struct trapframe) & 15) == 0);
+#endif
+
+#define TF_SIZE		sizeof(struct trapframe)
+
+#define FB_X19	0
+#define FB_X20	1
+#define FB_X21	2
+#define FB_X22	3
+#define FB_X23	4
+#define FB_X24	5
+#define FB_X25	6
+#define FB_X26	7
+#define FB_X27	8
+#define FB_X28	9
+#define FB_X29	10
+#define FB_LR	11
+#define FB_SP	12
+#define FB_MAX	13
+struct faultbuf {
+	register_t fb_reg[FB_MAX];
 };
 
 #elif defined(__arm__)

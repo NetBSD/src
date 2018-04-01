@@ -1,7 +1,18 @@
-#	$NetBSD: files.tegra,v 1.3 2017/05/30 10:27:53 jmcneill Exp $
+#	$NetBSD: files.tegra,v 1.4 2018/04/01 04:35:04 ryo Exp $
 #
 # NVIDIA Tegra configuration info
 #
+
+include "arch/arm/pic/files.pic"
+include "arch/arm/cortex/files.cortex"
+
+file	arch/arm/arm32/arm32_boot.c
+file	arch/arm/arm32/arm32_kvminit.c
+file	arch/arm/arm32/arm32_reboot.c
+file	arch/arm/arm32/irq_dispatch.S
+file	arch/arm/arm32/armv7_generic_space.c
+file	arch/arm/arm/arm_generic_dma.c
+file	arch/arm/arm/bus_space_a4x.S
 
 include "arch/evbarm/conf/files.fdt"
 

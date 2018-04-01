@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_timer.c,v 1.7 2017/06/02 00:16:27 jmcneill Exp $ */
+/* $NetBSD: tegra_timer.c,v 1.8 2018/04/01 04:35:04 ryo Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_timer.c,v 1.7 2017/06/02 00:16:27 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_timer.c,v 1.8 2018/04/01 04:35:04 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -164,7 +164,8 @@ void
 tegra_timer_delay(u_int us)
 {
 	static bool timerus_configured = false;
-	bus_space_tag_t bst = &armv7_generic_bs_tag;
+	extern struct bus_space arm_generic_bs_tag;
+	bus_space_tag_t bst = &arm_generic_bs_tag;
 	bus_space_handle_t bsh;
 
 	bus_space_subregion(bst, tegra_ppsb_bsh, TEGRA_TIMER_OFFSET,

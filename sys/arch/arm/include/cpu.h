@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.95 2018/01/24 09:04:45 skrll Exp $	*/
+/*	$NetBSD: cpu.h,v 1.96 2018/04/01 04:35:04 ryo Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -47,6 +47,8 @@
 
 #ifndef _ARM_CPU_H_
 #define _ARM_CPU_H_
+
+#ifdef __arm__
 
 /*
  * User-visible definitions
@@ -307,5 +309,11 @@ void	cpu_attach(device_t, cpuid_t);
 #endif /* !_LOCORE */
 
 #endif /* _KERNEL */
+
+#elif defined(__aarch64__)
+
+#include <aarch64/cpu.h>
+
+#endif /* __arm__/__aarch64__ */
 
 #endif /* !_ARM_CPU_H_ */

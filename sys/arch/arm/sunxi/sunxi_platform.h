@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_platform.h,v 1.2 2017/10/08 18:00:36 jmcneill Exp $ */
+/* $NetBSD: sunxi_platform.h,v 1.3 2018/04/01 04:35:04 ryo Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 
 #include <arch/evbarm/fdt/platform.h>
 
-#define	SUNXI_CORE_VBASE	(KERNEL_VM_BASE + KERNEL_VM_SIZE)
+#define	SUNXI_CORE_VBASE	KERNEL_IO_VBASE
 #define	SUNXI_CORE_PBASE	0x01c00000
 #define	SUNXI_CORE_SIZE		0x06400000
 

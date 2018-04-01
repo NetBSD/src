@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.h,v 1.29 2018/01/24 09:04:45 skrll Exp $	*/
+/*	$NetBSD: locore.h,v 1.30 2018/04/01 04:35:04 ryo Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -47,6 +47,8 @@
 
 #ifndef _ARM_LOCORE_H_
 #define _ARM_LOCORE_H_
+
+#ifdef __arm__
 
 #ifdef _KERNEL_OPT
 #include "opt_cpuoptions.h"
@@ -302,5 +304,11 @@ bool	vfp_used_p(const lwp_t *);
 extern const pcu_ops_t arm_vfp_ops;
 
 #endif	/* !_LOCORE */
+
+#elif defined(__aarch64__)
+
+#include <aarch64/locore.h>
+
+#endif /* __arm__/__aarch64__ */
 
 #endif /* !_ARM_LOCORE_H_ */

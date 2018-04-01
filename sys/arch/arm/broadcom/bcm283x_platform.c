@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm283x_platform.c,v 1.3 2018/03/17 18:34:09 ryo Exp $	*/
+/*	$NetBSD: bcm283x_platform.c,v 1.4 2018/04/01 04:35:03 ryo Exp $	*/
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.3 2018/03/17 18:34:09 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.4 2018/04/01 04:35:03 ryo Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bcm283x.h"
@@ -64,14 +64,17 @@ __KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.3 2018/03/17 18:34:09 ryo Exp
 #include <uvm/uvm_extern.h>
 
 #include <machine/bootconfig.h>
+#ifdef __aarch64__
+#include <aarch64/machdep.h>
+#endif
+#include <arm/armreg.h>
 #include <arm/cpufunc.h>
 
 #include <libfdt.h>
 
-#include <arm/arm32/machdep.h>
-
 #include <arm/broadcom/bcm2835reg.h>
 #include <arm/broadcom/bcm2835var.h>
+#include <arm/broadcom/bcm283x_platform.h>
 #include <arm/broadcom/bcm2835_intr.h>
 #include <arm/broadcom/bcm2835_mbox.h>
 #include <arm/broadcom/bcm2835_pmwdogvar.h>
@@ -116,19 +119,111 @@ void bcmgenfb_set_ioctl(int(*)(void *, void *, u_long, void *, int, struct lwp *
 extern void bcmgenfb_ddb_trap_callback(int where);
 static int rpi_ioctl(void *, void *, u_long, void *, int, lwp_t *);
 
-extern struct bus_space armv7_generic_bs_tag;
-extern struct bus_space armv7_generic_a4x_bs_tag;
-extern struct arm32_bus_dma_tag arm_generic_dma_tag;
+extern struct bus_space arm_generic_bs_tag;
+extern struct bus_space arm_generic_a4x_bs_tag;
 
 /* Prototypes for all the bus_space structure functions */
+bs_protos(arm_generic);
+bs_protos(arm_generic_a4x);
 bs_protos(bcm2835);
 bs_protos(bcm2835_a4x);
-bs_protos(armv7_generic);
-bs_protos(armv7_generic_a4x);
-bs_protos(generic);
-bs_protos(generic_armv4);
-bs_protos(a4x);
-bs_protos(bs_notimpl);
+bs_protos(bcm2836);
+bs_protos(bcm2836_a4x);
+
+struct bus_space bcm2835_bs_tag;
+struct bus_space bcm2835_a4x_bs_tag;
+struct bus_space bcm2836_bs_tag;
+struct bus_space bcm2836_a4x_bs_tag;
+
+int bcm283x_bs_map(void *, bus_addr_t, bus_size_t, int, bus_space_handle_t *);
+
+int
+bcm283x_bs_map(void *t, bus_addr_t ba, bus_size_t size, int flag,
+    bus_space_handle_t *bshp)
+{
+	u_long startpa, endpa, pa;
+	vaddr_t va;
+
+	/* Convert BA to PA */
+	pa = ba & ~BCM2835_BUSADDR_CACHE_MASK;
+
+	startpa = trunc_page(pa);
+	endpa = round_page(pa + size);
+
+	/* XXX use extent manager to check duplicate mapping */
+
+	va = uvm_km_alloc(kernel_map, endpa - startpa, 0,
+	    UVM_KMF_VAONLY | UVM_KMF_NOWAIT | UVM_KMF_COLORMATCH);
+	if (!va)
+		return ENOMEM;
+
+	*bshp = (bus_space_handle_t)(va + (pa - startpa));
+
+	const int pmapflags =
+	    (flag & (BUS_SPACE_MAP_CACHEABLE|BUS_SPACE_MAP_PREFETCHABLE))
+		? 0
+		: PMAP_NOCACHE;
+	for (pa = startpa; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
+		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE, pmapflags);
+	}
+	pmap_update(pmap_kernel());
+
+	return 0;
+}
+
+int
+bcm2835_bs_map(void *t, bus_addr_t ba, bus_size_t size, int flag,
+    bus_space_handle_t *bshp)
+{
+	const struct pmap_devmap *pd;
+	bool match = false;
+	u_long pa;
+
+	/* Attempt to find the PA device mapping */
+	if (ba >= BCM2835_PERIPHERALS_BASE_BUS &&
+	    ba < BCM2835_PERIPHERALS_BASE_BUS + BCM2835_PERIPHERALS_SIZE) {
+		match = true;
+		pa = BCM2835_PERIPHERALS_BUS_TO_PHYS(ba);
+	}
+
+	if (match && (pd = pmap_devmap_find_pa(pa, size)) != NULL) {
+		/* Device was statically mapped. */
+		*bshp = pd->pd_va + (pa - pd->pd_pa);
+		return 0;
+	}
+
+	return bcm283x_bs_map(t, ba, size, flag, bshp);
+}
+
+int
+bcm2836_bs_map(void *t, bus_addr_t ba, bus_size_t size, int flag,
+    bus_space_handle_t *bshp)
+{
+	const struct pmap_devmap *pd;
+	bool match = false;
+	u_long pa;
+
+	/* Attempt to find the PA device mapping */
+	if (ba >= BCM2835_PERIPHERALS_BASE_BUS &&
+	    ba < BCM2835_PERIPHERALS_BASE_BUS + BCM2835_PERIPHERALS_SIZE) {
+		match = true;
+		pa = BCM2836_PERIPHERALS_BUS_TO_PHYS(ba);
+	}
+
+	if (ba >= BCM2836_ARM_LOCAL_BASE &&
+	    ba < BCM2836_ARM_LOCAL_BASE + BCM2836_ARM_LOCAL_SIZE) {
+		match = true;
+		pa = ba;
+	}
+
+	if (match && (pd = pmap_devmap_find_pa(pa, size)) != NULL) {
+		/* Device was statically mapped. */
+		*bshp = pd->pd_va + (pa - pd->pd_pa);
+		return 0;
+	}
+
+	return bcm283x_bs_map(t, ba, size, flag, bshp);
+}
 
 struct arm32_dma_range bcm2835_dma_ranges[] = {
 	[0] = {
@@ -177,16 +272,19 @@ bcm2836_platform_devmap(void)
 	return devmap;
 }
 #endif
-
 /*
  * Macros to translate between physical and virtual for a subset of the
  * kernel address space.  *Not* for general use.
  */
 
+/*
+ * AARCH64 defines its own
+ */
+#if !(defined(KERN_VTOPHYS) && defined(KERN_PHYSTOV))
 #define KERN_VTOPDIFF	KERNEL_BASE_VOFFSET
 #define KERN_VTOPHYS(va) ((paddr_t)((vaddr_t)va - KERN_VTOPDIFF))
 #define KERN_PHYSTOV(pa) ((vaddr_t)((paddr_t)pa + KERN_VTOPDIFF))
-
+#endif
 
 #ifndef RPI_FB_WIDTH
 #define RPI_FB_WIDTH	1280
@@ -643,17 +741,29 @@ bcm2836_bootparams(void)
 static void
 bcm2836_bootstrap(void)
 {
-	arm_cpu_max = 4;
+#define RPI_CPU_MAX	4
+
+#ifdef MULTIPROCESSOR
 	extern int cortex_mmuinfo;
 
+	arm_cpu_max = RPI_CPU_MAX;
 	cortex_mmuinfo = armreg_ttbr_read();
 #ifdef VERBOSE_INIT_ARM
+	printf("%s: %d cpus present\n", __func__, arm_cpu_max);
 	printf("%s: cortex_mmuinfo %x\n", __func__, cortex_mmuinfo);
 #endif
+#endif
 
+#ifndef __aarch64__
+	/*
+	 * Even if no options MULTIPROCESSOR,
+	 * It is need to initialize the secondary CPU,
+	 * and go into wfi loop (cortex_mpstart),
+	 * otherwise system would be freeze...
+	 */
 	extern void cortex_mpstart(void);
 
-	for (size_t i = 1; i < arm_cpu_max; i++) {
+	for (size_t i = 1; i < RPI_CPU_MAX; i++) {
 		bus_space_tag_t iot = &bcm2836_bs_tag;
 		bus_space_handle_t ioh = BCM2836_ARM_LOCAL_VBASE;
 
@@ -661,7 +771,8 @@ bcm2836_bootstrap(void)
 		    BCM2836_LOCAL_MAILBOX3_SETN(i),
 		    (uint32_t)cortex_mpstart);
 	}
-
+#endif
+#ifdef MULTIPROCESSOR
 	/* Wake up AP in case firmware has placed it in WFE state */
 	__asm __volatile("sev" ::: "memory");
 
@@ -677,6 +788,7 @@ bcm2836_bootstrap(void)
 			    __func__, i);
 		}
 	}
+#endif
 }
 
 #endif	/* SOC_BCM2836 */
@@ -1047,6 +1159,12 @@ static void
 bcm2835_platform_bootstrap(void)
 {
 
+	bcm2835_bs_tag = arm_generic_bs_tag;
+	bcm2835_a4x_bs_tag = arm_generic_a4x_bs_tag;
+
+	bcm2835_bs_tag.bs_map = bcm2835_bs_map;
+	bcm2835_a4x_bs_tag.bs_map = bcm2835_bs_map;
+
 	fdtbus_set_decoderegprop(false);
 
 	bcm2835_uartinit();
@@ -1059,6 +1177,12 @@ bcm2835_platform_bootstrap(void)
 static void
 bcm2836_platform_bootstrap(void)
 {
+
+	bcm2836_bs_tag = arm_generic_bs_tag;
+	bcm2836_a4x_bs_tag = arm_generic_a4x_bs_tag;
+
+	bcm2836_bs_tag.bs_map = bcm2836_bs_map;
+	bcm2836_a4x_bs_tag.bs_map = bcm2836_bs_map;
 
 	fdtbus_set_decoderegprop(false);
 
@@ -1105,7 +1229,7 @@ void
 bcm283x_platform_early_putchar(vaddr_t va, paddr_t pa, char c)
 {
 	volatile uint32_t *uartaddr =
-	    (armreg_sctlr_read() & CPU_CONTROL_MMU_ENABLE) ?
+	    cpu_earlydevice_va_p() ?
 		(volatile uint32_t *)va :
 		(volatile uint32_t *)pa;
 
@@ -1144,7 +1268,7 @@ bcm2837_platform_early_putchar(char c)
 #define AUCONSADDR_PA	BCM2836_PERIPHERALS_BUS_TO_PHYS(BCM2835_AUX_UART_BASE)
 #define AUCONSADDR_VA	BCM2835_IOPHYSTOVIRT(AUCONSADDR_PA)
 	volatile uint32_t *uartaddr =
-	    (armreg_sctlr_read() & CPU_CONTROL_MMU_ENABLE) ?
+	    cpu_earlydevice_va_p() ?
 		(volatile uint32_t *)AUCONSADDR_VA :
 		(volatile uint32_t *)AUCONSADDR_PA;
 

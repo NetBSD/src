@@ -1,3 +1,5 @@
-/*	$NetBSD: pmc.h,v 1.1 2002/08/07 05:15:12 briggs Exp $	*/
+/*	$NetBSD: pmc.h,v 1.2 2018/04/01 04:35:05 ryo Exp $	*/
 
+#ifndef __aarch64__
 #include <arm/pmc.h>
+#endif

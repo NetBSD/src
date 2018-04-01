@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.119 2018/03/20 10:14:29 ryo Exp $	*/
+/*	$NetBSD: armreg.h,v 1.120 2018/04/01 04:35:04 ryo Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -40,6 +40,8 @@
 #define _ARM_ARMREG_H
 
 #include <arm/cputypes.h>
+
+#ifdef __arm__
 
 /*
  * ARM Process Status Register
@@ -544,24 +546,24 @@
 #define PJ4B_MPIDR_CPUID	__BITS(0,3)	/* AFF0 = core id */
 
 /* Defines for ARM Generic Timer */
-#define ARM_CNTCTL_ISTATUS	__BIT(2)	// Interrupt is pending
-#define ARM_CNTCTL_IMASK	__BIT(1)	// Mask Interrupt
-#define ARM_CNTCTL_ENABLE	__BIT(0)	// Timer Enabled
+#define CNTCTL_ISTATUS		__BIT(2)	// Interrupt is pending
+#define CNTCTL_IMASK		__BIT(1)	// Mask Interrupt
+#define CNTCTL_ENABLE		__BIT(0)	// Timer Enabled
 
-#define ARM_CNTKCTL_PL0PTEN	__BIT(9)	/* PL0 Physical Timer Enable */
-#define ARM_CNTKCTL_PL0VTEN	__BIT(8)	/* PL0 Virtual Timer Enable */
-#define ARM_CNTKCTL_EVNTI	__BITS(7,4)	/* CNTVCT Event Bit Select */
-#define ARM_CNTKCTL_EVNTDIR	__BIT(3)	/* CNTVCT Event Dir (1->0) */
-#define ARM_CNTKCTL_EVNTEN	__BIT(2)	/* CNTVCT Event Enable */
-#define ARM_CNTKCTL_PL0VCTEN	__BIT(1)	/* PL0 Virtual Counter Enable */
-#define ARM_CNTKCTL_PL0PCTEN	__BIT(0)	/* PL0 Physical Counter Enable */
+#define CNTKCTL_PL0PTEN		__BIT(9)	/* PL0 Physical Timer Enable */
+#define CNTKCTL_PL0VTEN		__BIT(8)	/* PL0 Virtual Timer Enable */
+#define CNTKCTL_EVNTI		__BITS(7,4)	/* CNTVCT Event Bit Select */
+#define CNTKCTL_EVNTDIR		__BIT(3)	/* CNTVCT Event Dir (1->0) */
+#define CNTKCTL_EVNTEN		__BIT(2)	/* CNTVCT Event Enable */
+#define CNTKCTL_PL0VCTEN	__BIT(1)	/* PL0 Virtual Counter Enable */
+#define CNTKCTL_PL0PCTEN	__BIT(0)	/* PL0 Physical Counter Enable */
 
 /* CNCHCTL, Timer PL2 Control register, Virtualization Extensions */
-#define ARM_CNTHCTL_EVNTI	__BITS(7,4)
-#define ARM_CNTHCTL_EVNTDIR	__BIT(3)
-#define ARM_CNTHCTL_EVNTEN	__BIT(2)
-#define ARM_CNTHCTL_PL1PCEN	__BIT(1)
-#define ARM_CNTHCTL_PL1PCTEN	__BIT(0)
+#define CNTHCTL_EVNTI		__BITS(7,4)
+#define CNTHCTL_EVNTDIR		__BIT(3)
+#define CNTHCTL_EVNTEN		__BIT(2)
+#define CNTHCTL_PL1PCEN		__BIT(1)
+#define CNTHCTL_PL1PCTEN	__BIT(0)
 
 #define ARM_A5_TLBDATA_DOM		__BITS(62,59)
 #define ARM_A5_TLBDATA_AP		__BITS(58,56)
@@ -898,6 +900,99 @@ ARMREG_WRITE_INLINE(tlbdataop, "p15,3,%0,c15,c4,2") /* TLB Data Read Operation (
 ARMREG_READ_INLINE(sheeva_xctrl, "p15,1,%0,c15,c1,0") /* Sheeva eXtra Control register */
 ARMREG_WRITE_INLINE(sheeva_xctrl, "p15,1,%0,c15,c1,0") /* Sheeva eXtra Control register */
 
+/*
+ * GENERIC TIMER register access
+ */
+static inline uint32_t
+gtmr_cntfrq_read(void)
+{
+
+	return armreg_cnt_frq_read();
+}
+
+static inline uint32_t
+gtmr_cntk_ctl_read(void)
+{
+
+	return armreg_cntk_ctl_read();
+}
+
+static inline void
+gtmr_cntk_ctl_write(uint32_t val)
+{
+
+	armreg_cntk_ctl_write(val);
+}
+
+static inline uint64_t
+gtmr_cntpct_read(void)
+{
+
+	return armreg_cntp_ct_read();
+}
+
+/*
+ * Counter-timer Virtual Count timer
+ */
+static inline uint64_t
+gtmr_cntvct_read(void)
+{
+
+	return armreg_cntv_ct_read();
+}
+
+/*
+ * Counter-timer Virtual Timer Control register
+ */
+static inline uint32_t
+gtmr_cntv_ctl_read(void)
+{
+
+	return armreg_cntv_ctl_read();
+}
+
+static inline void
+gtmr_cntv_ctl_write(uint32_t val)
+{
+
+	armreg_cntv_ctl_write(val);
+}
+
+static inline void
+gtmr_cntp_ctl_write(uint32_t val)
+{
+
+	armreg_cntp_ctl_write(val);
+}
+
+
+/*
+ * Counter-timer Virtual Timer TimerValue register
+ */
+static inline void
+gtmr_cntv_tval_write(uint32_t val)
+{
+
+	armreg_cntv_tval_write(val);
+}
+
+
+/*
+ * Counter-timer Virtual Timer CompareValue register
+ */
+static inline uint64_t
+gtmr_cntv_cval_read(void)
+{
+
+	return armreg_cntv_cval_read();
+}
+
 #endif /* !__ASSEMBLER__ */
+
+#elif defined(__aarch64__)
+
+#include <aarch64/armreg.h>
+
+#endif /* __arm__/__aarch64__ */
 
 #endif	/* _ARM_ARMREG_H */

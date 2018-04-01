@@ -1,4 +1,4 @@
-#	$NetBSD: files.evbarm,v 1.29 2018/03/19 17:11:24 ryo Exp $
+#	$NetBSD: files.evbarm,v 1.30 2018/04/01 04:35:04 ryo Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -21,7 +21,6 @@ file	kern/subr_disk_mbr.c			disk
 file	arch/arm32/fpe-arm/armfpe_glue.S	armfpe
 file	arch/arm32/fpe-arm/armfpe_init.c	armfpe
 file	arch/arm32/fpe-arm/armfpe.s		armfpe
-
 
 #
 # Machine-independent drivers
@@ -55,6 +54,10 @@ file	arch/evbarm/dev/plcom.c			plcom needs-flag
 #
 # Maximum number of memory ranges
 #
-defparam	opt_machdep.h			DRAM_BLOCKS
+defparam	opt_bootconfig.h		DRAM_BLOCKS
 
+ifdef arm32
 include "arch/arm/conf/majors.arm32"
+else
+include "arch/aarch64/conf/majors.aarch64"
+endif

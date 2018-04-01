@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.1 2014/08/10 05:47:38 matt Exp $ */
+/* $NetBSD: cpu.h,v 1.2 2018/04/01 04:35:03 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -34,16 +34,22 @@
 
 #ifdef __aarch64__
 
+#ifdef _KERNEL_OPT
+#include "opt_multiprocessor.h"
+#endif
+
 #if defined(_KERNEL) || defined(_KMEMUSER)
+#include <sys/evcnt.h>
+#include <aarch64/frame.h>
+
 struct clockframe {
-	uintptr_t cf_pc;
-	uint32_t cf_psr;
-	int cf_intr_depth;
+	struct trapframe cf_tf;
 };
 
-#define CLKF_USERMODE(cf)	(((cf)->cf_psr & 0x0f) == 0)
-#define CLKF_PC(cf)		((cf)->cf_pc)
-#define CLKF_INTR(cf)		((cf)->cf_intr_depth > 0)
+/* (spsr & 15) == SPSR_M_EL0T(64bit,0) or USER(32bit,0) */
+#define CLKF_USERMODE(cf)	((((cf)->cf_tf.tf_spsr) & 0x0f) == 0)
+#define CLKF_PC(cf)		((cf)->cf_tf.tf_pc)
+#define CLKF_INTR(cf)		((void)(cf), curcpu()->ci_intr_depth > 1)
 
 #include <sys/cpu_data.h>
 #include <sys/device_if.h>
@@ -53,7 +59,6 @@ struct cpu_info {
 	struct cpu_data ci_data;
 	device_t ci_dev;
 	cpuid_t ci_cpuid;
-	cpuid_t ci_gicid;		// used for IPIs
 	struct lwp *ci_curlwp;
 	struct lwp *ci_softlwps[SOFTINT_COUNT];
 
@@ -64,52 +69,76 @@ struct cpu_info {
 
 	int ci_want_resched;
 	int ci_cpl;
-	u_int ci_softints;
+	volatile u_int ci_softints;
 	volatile u_int ci_astpending;
 	volatile u_int ci_intr_depth;
+
+	/* event counters */
+	struct evcnt ci_vfp_use;
+	struct evcnt ci_vfp_reuse;
+	struct evcnt ci_vfp_save;
+	struct evcnt ci_vfp_release;
 };
 
 static inline struct cpu_info *
 curcpu(void)
 {
 	struct cpu_info *ci;
-	__asm __volatile("mrs %0, tpidr_el1" : "=r"(ci));
+	__asm __volatile ("mrs %0, tpidr_el1" : "=r"(ci));
 	return ci;
 }
+#define curlwp			(curcpu()->ci_curlwp)
 
-#define curlwp		(curcpu()->ci_curlwp)
+#define setsoftast(ci)		atomic_or_uint(&(ci)->ci_astpending, __BIT(0))
+#define cpu_signotify(l)	setsoftast((l)->l_cpu)
+void cpu_set_curpri(int);
+void cpu_proc_fork(struct proc *, struct proc *);
+void cpu_need_proftick(struct lwp *l);
+void cpu_boot_secondary_processors(void);
 
-static inline cpuid_t
-cpu_number(void)
-{
-	return curcpu()->ci_gicid;
-}
-
-void	cpu_set_curpri(int);
-void	cpu_proc_fork(struct proc *, struct proc *);
-void	cpu_signotify(struct lwp *);
-void	cpu_need_proftick(struct lwp *l);
-void	cpu_boot_secondary_processors(void);
+extern struct cpu_info *cpu_info[];
+extern struct cpu_info cpu_info_store;	/* MULTIPROCESSOR */
+extern volatile u_int arm_cpu_hatched;	/* MULTIPROCESSOR */
 
 #define CPU_INFO_ITERATOR	cpuid_t
-#define CPU_INFO_FOREACH(cii, ci) \
-	(cii) = 0; ((ci) = cpu_infos[cii]) != NULL; (cii)++
+#ifdef MULTIPROCESSOR
+#define cpu_number()		(curcpu()->ci_index)
+#define CPU_IS_PRIMARY(ci)	((ci)->ci_index == 0)
+#define CPU_INFO_FOREACH(cii, ci)				\
+	cii = 0, ci = cpu_info[0];				\
+	cii < ncpu && (ci = cpu_info[cii]) != NULL;		\
+	cii++
+#else /* MULTIPROCESSOR */
+#define cpu_number()		0
+#define CPU_IS_PRIMARY(ci)	true
+#define CPU_INFO_FOREACH(cii, ci)				\
+	cii = 0, __USE(cii), ci = curcpu(); ci != NULL; ci = NULL
+#endif /* MULTIPROCESSOR */
+
 
 static inline void
 cpu_dosoftints(void)
 {
-	extern void dosoftints(void);
-        struct cpu_info * const ci = curcpu();
-        if (ci->ci_intr_depth == 0
-	    && (ci->ci_data.cpu_softints >> ci->ci_cpl) > 0)
-                dosoftints();
+#if defined(__HAVE_FAST_SOFTINTS) && !defined(__HAVE_PIC_FAST_SOFTINTS)
+	void dosoftints(void);
+	struct cpu_info * const ci = curcpu();
+
+	if (ci->ci_intr_depth == 0 && (ci->ci_softints >> ci->ci_cpl) > 0)
+		dosoftints();
+#endif
 }
 
 static inline bool
 cpu_intr_p(void)
 {
+#ifdef __HAVE_PIC_FAST_SOFTINTS
+	if (ci->ci_cpl < IPL_VM)
+		return false;
+#endif
 	return curcpu()->ci_intr_depth > 0;
 }
+
+void	cpu_attach(device_t, cpuid_t);
 
 #endif /* _KERNEL || _KMEMUSER */
 

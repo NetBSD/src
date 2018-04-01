@@ -1,4 +1,4 @@
-/* $NetBSD: exec_machdep.c,v 1.1 2014/08/10 05:47:37 matt Exp $ */
+/* $NetBSD: exec_machdep.c,v 1.2 2018/04/01 04:35:03 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: exec_machdep.c,v 1.1 2014/08/10 05:47:37 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_machdep.c,v 1.2 2018/04/01 04:35:03 ryo Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_netbsd32.h"
@@ -50,7 +50,8 @@ __KERNEL_RCSID(1, "$NetBSD: exec_machdep.c,v 1.1 2014/08/10 05:47:37 matt Exp $"
 #include <compat/netbsd32/netbsd32_exec.h>
 #endif
 
-#include <aarch64/locore.h>
+#include <aarch64/armreg.h>
+#include <aarch64/frame.h>
 
 #if EXEC_ELF64
 int
@@ -70,11 +71,12 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	memset(tf, 0, sizeof(*tf));
 
 	/*
-	 * void __start(void (*cleanup)(void), const Obj_Entry *obj,  
-	 *	struct ps_strings *ps_strings);
+	 * void __start(void (*cleanup)(void), const Obj_Entry *obj,
+	 *    struct ps_strings *ps_strings);
 	 */
 
 	tf->tf_reg[2] = p->p_psstrp;
 	tf->tf_pc = pack->ep_entry;
 	tf->tf_sp = stack & -16L;
+	tf->tf_spsr = SPSR_M_EL0T;
 }

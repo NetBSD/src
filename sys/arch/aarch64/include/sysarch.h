@@ -1,7 +1,3 @@
-/* $NetBSD: sysarch.h,v 1.1 2014/08/10 05:47:38 matt Exp $ */
+/* $NetBSD: sysarch.h,v 1.2 2018/04/01 04:35:03 ryo Exp $ */
 
-#ifdef __aarch64__
-/* nothing */
-#elif defined(__arm__)
 #include <arm/sysarch.h>
-#endif

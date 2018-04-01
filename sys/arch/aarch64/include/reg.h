@@ -1,4 +1,4 @@
-/* $NetBSD: reg.h,v 1.1 2014/08/10 05:47:38 matt Exp $ */
+/* $NetBSD: reg.h,v 1.2 2018/04/01 04:35:03 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 struct reg {
 	uint64_t r_reg[31];
 	uint64_t r_sp;
-	uint64_t r_pc;
+	uint64_t r_pc;	/* aka elr */
 	uint64_t r_spsr;
 	uint64_t r_tpidr;
 };
