@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_module.c,v 1.23.2.4 2018/04/01 10:47:53 pgoyette Exp $	*/
+/*	$NetBSD: sys_module.c,v 1.23.2.5 2018/04/01 23:06:11 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_module.c,v 1.23.2.4 2018/04/01 10:47:53 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_module.c,v 1.23.2.5 2018/04/01 23:06:11 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_modular.h"
@@ -111,7 +111,8 @@ out1:
 }
 
 static void
-copy_alias(modstat_t ms, const char * const *aliasp, modinfo_t mi, module_t mod)
+copy_alias(modstat_t *ms, const char * const *aliasp, modinfo_t *mi,
+    module_t *mod)
 {
 
 	strlcpy(ms->ms_name, *aliasp, sizeof(ms->ms_name));
@@ -130,10 +131,12 @@ handle_modctl_stat(struct iovec *iov, void *arg)
 	vaddr_t addr;
 	size_t size;
 	size_t mslen;
+	size_t used;
 	int error;
 	int mscnt;
 	bool stataddr;
 	const char * const *aliasp;
+	const char *suffix = "...";
 
 	/* If not privileged, don't expose kernel addresses. */
 	error = kauth_authorize_system(kauth_cred_get(), KAUTH_SYSTEM_MODULE,
@@ -157,8 +160,14 @@ handle_modctl_stat(struct iovec *iov, void *arg)
 		mi = mod->mod_info;
 		strlcpy(ms->ms_name, mi->mi_name, sizeof(ms->ms_name));
 		if (mi->mi_required != NULL) {
-			strlcpy(ms->ms_required, mi->mi_required,
+			used = strlcpy(ms->ms_required, mi->mi_required,
 			    sizeof(ms->ms_required));
+			if (used >= sizeof(ms->ms_required)) {
+				ms->ms_required[sizeof(ms->ms_required) -
+				    strlen(suffix) - 1] = '\0';
+				strlcat(ms->ms_required, suffix,
+				    sizeof(ms->ms_required));
+			}
 		}
 		if (mod->mod_kobj != NULL && stataddr) {
 			kobj_stat(mod->mod_kobj, &addr, &size);
@@ -183,8 +192,12 @@ handle_modctl_stat(struct iovec *iov, void *arg)
 		mi = mod->mod_info;
 		strlcpy(ms->ms_name, mi->mi_name, sizeof(ms->ms_name));
 		if (mi->mi_required != NULL) {
-			strlcpy(ms->ms_required, mi->mi_required,
-			    sizeof(ms->ms_required));
+			*ms->ms_required = '\0';
+			used = strlcat(ms->ms_required, mi->mi_required,
+			    sizeof(ms->ms_required) - 6);
+			if (used > sizeof(ms->ms_required) - 6)
+				strlcat(ms->ms_required, ", ...",
+				    sizeof(ms->ms_required));
 		}
 		if (mod->mod_kobj != NULL && stataddr) {
 			kobj_stat(mod->mod_kobj, &addr, &size);
