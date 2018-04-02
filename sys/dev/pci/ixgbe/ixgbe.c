@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.141 2018/04/02 05:02:55 knakahara Exp $ */
+/* $NetBSD: ixgbe.c,v 1.142 2018/04/02 10:51:35 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -4405,7 +4405,11 @@ ixgbe_handle_mod(void *context)
 		return;
 	}
 
-	err = hw->mac.ops.setup_sfp(hw);
+	if (hw->mac.type == ixgbe_mac_82598EB)
+		err = hw->phy.ops.reset(hw);
+	else
+		err = hw->mac.ops.setup_sfp(hw);
+
 	if (err == IXGBE_ERR_SFP_NOT_SUPPORTED) {
 		device_printf(dev,
 		    "Setup failure - unsupported SFP+ module type.\n");
