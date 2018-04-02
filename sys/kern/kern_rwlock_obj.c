@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rwlock_obj.c,v 1.3 2011/05/13 22:16:43 rmind Exp $	*/
+/*	$NetBSD: kern_rwlock_obj.c,v 1.3.48.1 2018/04/02 09:07:52 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock_obj.c,v 1.3 2011/05/13 22:16:43 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock_obj.c,v 1.3.48.1 2018/04/02 09:07:52 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -87,9 +87,10 @@ krwlock_t *
 rw_obj_alloc(void)
 {
 	struct krwobj *ro;
+	extern void _rw_init(krwlock_t *, uintptr_t);
 
 	ro = pool_cache_get(rw_obj_cache, PR_WAITOK);
-	rw_init(&ro->ro_lock);
+	_rw_init(&ro->ro_lock, (uintptr_t)__builtin_return_address(0));
 	ro->ro_refcnt = 1;
 
 	return (krwlock_t *)ro;
