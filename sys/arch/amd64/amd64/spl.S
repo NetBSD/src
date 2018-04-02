@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.32 2018/04/02 20:54:47 christos Exp $	*/
+/*	$NetBSD: spl.S,v 1.33 2018/04/02 22:29:33 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -311,7 +311,7 @@ IDTVEC(spllower)
 	popq	%r13
 	popq	%rbx
 	ret
-ITDVEC_END(spllower)
+IDTVEC_END(spllower)
 
 /*
  * void Xdoreti(void);
