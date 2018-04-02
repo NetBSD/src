@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk.h,v 1.9 2018/03/08 10:34:33 nonaka Exp $	*/
+/*	$NetBSD: biosdisk.h,v 1.10 2018/04/02 09:44:18 nonaka Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -44,3 +44,9 @@ int biosdisk_close(struct open_file *);
 int biosdisk_ioctl(struct open_file *, u_long, void *);
 int biosdisk_findpartition(int, daddr_t);
 int biosdisk_readpartition(int, struct biosdisk_partition **, int *);
+
+#if !defined(NO_GPT)
+struct uuid;
+bool guid_is_nil(const struct uuid *);
+bool guid_is_equal(const struct uuid *, const struct uuid *);
+#endif

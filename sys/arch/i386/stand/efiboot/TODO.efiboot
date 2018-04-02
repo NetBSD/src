@@ -1,6 +1,5 @@
 - efiboot
  * handle UEFI variables
- * load boot.cfg from EFI system partition (FAT32)
 
 - kernel
  * handle UEFI variables (/dev/efivar)
