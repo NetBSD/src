@@ -1,4 +1,4 @@
-/*	$NetBSD: efiboot.h,v 1.5.2.1 2018/03/13 14:54:52 martin Exp $	*/
+/*	$NetBSD: efiboot.h,v 1.5.2.2 2018/04/02 08:50:33 martin Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -54,9 +54,15 @@ extern u_long efi_kernel_size;
 extern bool efi_cleanuped;
 void efi_cleanup(void);
 
+/* efichar.c */
+size_t ucs2len(const CHAR16 *);
+int ucs2_to_utf8(const CHAR16 *, char **);
+int utf8_to_ucs2(const char *, CHAR16 **, size_t *);
+
 /* eficons.c */
 int cninit(void);
 void consinit(int, int, int);
+void efi_cons_show(void);
 void command_text(char *);
 void command_gop(char *);
 
