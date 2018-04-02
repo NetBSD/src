@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.140 2018/03/30 06:44:30 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.141 2018/04/02 05:02:55 knakahara Exp $ */
 
 /******************************************************************************
 
@@ -4600,6 +4600,7 @@ ixgbe_update_link_status(struct adapter *adapter)
 			adapter->link_active = FALSE;
 			if (adapter->feat_en & IXGBE_FEATURE_SRIOV)
 				ixgbe_ping_all_vfs(adapter);
+			ixgbe_drain_all(adapter);
 		}
 	}
 } /* ixgbe_update_link_status */
