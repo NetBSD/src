@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.746 2018/03/17 19:37:11 jdolecek Exp $
+$NetBSD: usbdevs,v 1.747 2018/04/02 00:45:06 jakllsch Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -547,6 +547,7 @@ vendor MPMAN		0x1cae	MPMan
 vendor 4GSYSTEMS	0x1c9e	4G Systems
 vendor PEGATRON		0x1d4d	Pegatron
 vendor FUTUREBITS	0x1d50	Future Bits
+vendor LINUXFOUNDATION	0x1d6b  Linux Foundation
 vendor AIRTIES		0x1eda	AirTies
 vendor DLINK		0x2001	D-Link
 vendor PLANEX2		0x2019	Planex Communications
@@ -2067,6 +2068,10 @@ product LINKSYS4 WUSB54GC_2	0x0073	WUSB54GC v2
 product LINKSYS4 WUSB54GC_3	0x0077	WUSB54GC v3
 product LINKSYS4 RT3070		0x0078	RT3070
 product LINKSYS4 WUSB600NV2	0x0079	WUSB600N v2
+
+product LINUXFOUNDATION ROOT_HUB_11	0x0001	1.1 root hub
+product LINUXFOUNDATION ROOT_HUB_20	0x0002	2.0 root hub
+product LINUXFOUNDATION ROOT_HUB_30	0x0003	3.0 root hub
 
 /* Lite-On Technology */
 product LITEON AR9271		0x4605	AR9271
