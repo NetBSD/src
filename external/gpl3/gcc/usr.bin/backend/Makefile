@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.44 2018/04/02 22:34:22 mrg Exp $
+#	$NetBSD: Makefile,v 1.45 2018/04/02 22:35:26 mrg Exp $
 
 LIBISPRIVATE=	yes
 
@@ -516,7 +516,7 @@ COPTS.convert.c+=-O0
 COPTS.dwarf2out.c+=-O0
 COPTS.dse.c+=-O0					# XXX port-vax/51967
 COPTS.expmed.c+=-O0
-COPTS.expr.c+=-O0
+COPTS.expr.c+=-O0 -Wno-error=tautological-compare
 COPTS.fixed-value.c+=-O0
 COPTS.fold-const.c+=-O0
 COPTS.gimple-fold.c+=-O0
@@ -535,6 +535,7 @@ COPTS.tree-affine.c+=-O0
 COPTS.tree-cfg.c+=-O0
 COPTS.tree-eh.c+=-O0
 COPTS.tree-object-size.c+=-O0
+COPTS.tree-parloops.c+=-O0
 COPTS.tree-predcom.c+=-O0
 COPTS.tree-pretty-print.c+=-O0
 COPTS.tree-ssa-alias.c+=-O0
@@ -556,7 +557,7 @@ COPTS.tree-vrp.c+=-O0
 COPTS.tree.c+=-O0
 COPTS.ubsan.c+=-O0
 COPTS.varasm.c+=-O0
-COPTS.wide-int.c+=-O0
+COPTS.wide-int.cc+=-O0
 .else
 COPTS.tree.c=	${${ACTIVE_CC} == "clang" :? -O0 :}
 .endif
