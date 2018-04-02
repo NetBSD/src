@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.65.2.1 2018/01/13 21:57:11 snj Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.65.2.2 2018/04/02 09:07:52 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.65.2.1 2018/01/13 21:57:11 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.65.2.2 2018/04/02 09:07:52 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -326,8 +326,10 @@ mutex_abort(const char *func, size_t line, kmutex_t *mtx, const char *msg)
  *	sleeps - see comments in mutex_vector_enter() about releasing
  *	mutexes unlocked.
  */
+void _mutex_init(kmutex_t *, kmutex_type_t, int, uintptr_t);
 void
-mutex_init(kmutex_t *mtx, kmutex_type_t type, int ipl)
+_mutex_init(kmutex_t *mtx, kmutex_type_t type, int ipl,
+    uintptr_t return_address)
 {
 	bool dodebug;
 
@@ -353,24 +355,30 @@ mutex_init(kmutex_t *mtx, kmutex_type_t type, int ipl)
 
 	switch (type) {
 	case MUTEX_NODEBUG:
-		dodebug = LOCKDEBUG_ALLOC(mtx, NULL,
-		    (uintptr_t)__builtin_return_address(0));
+		dodebug = LOCKDEBUG_ALLOC(mtx, NULL, return_address);
 		MUTEX_INITIALIZE_SPIN(mtx, dodebug, ipl);
 		break;
 	case MUTEX_ADAPTIVE:
 		dodebug = LOCKDEBUG_ALLOC(mtx, &mutex_adaptive_lockops,
-		    (uintptr_t)__builtin_return_address(0));
+		    return_address);
 		MUTEX_INITIALIZE_ADAPTIVE(mtx, dodebug);
 		break;
 	case MUTEX_SPIN:
 		dodebug = LOCKDEBUG_ALLOC(mtx, &mutex_spin_lockops,
-		    (uintptr_t)__builtin_return_address(0));
+		    return_address);
 		MUTEX_INITIALIZE_SPIN(mtx, dodebug, ipl);
 		break;
 	default:
 		panic("mutex_init: impossible type");
 		break;
 	}
+}
+
+void
+mutex_init(kmutex_t *mtx, kmutex_type_t type, int ipl)
+{
+
+	_mutex_init(mtx, type, ipl, (uintptr_t)__builtin_return_address(0));
 }
 
 /*

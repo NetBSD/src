@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rwlock.c,v 1.46.6.1 2018/01/13 21:57:11 snj Exp $	*/
+/*	$NetBSD: kern_rwlock.c,v 1.46.6.2 2018/04/02 09:07:52 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.46.6.1 2018/01/13 21:57:11 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.46.6.2 2018/04/02 09:07:52 martin Exp $");
 
 #define	__RWLOCK_PRIVATE
 
@@ -197,16 +197,23 @@ rw_abort(const char *func, size_t line, krwlock_t *rw, const char *msg)
  *
  *	Initialize a rwlock for use.
  */
+void _rw_init(krwlock_t *, uintptr_t);
 void
-rw_init(krwlock_t *rw)
+_rw_init(krwlock_t *rw, uintptr_t return_address)
 {
 	bool dodebug;
 
 	memset(rw, 0, sizeof(*rw));
 
-	dodebug = LOCKDEBUG_ALLOC(rw, &rwlock_lockops,
-	    (uintptr_t)__builtin_return_address(0));
+	dodebug = LOCKDEBUG_ALLOC(rw, &rwlock_lockops, return_address);
 	RW_SETDEBUG(rw, dodebug);
+}
+
+void
+rw_init(krwlock_t *rw)
+{
+
+	_rw_init(rw, (uintptr_t)__builtin_return_address(0));
 }
 
 /*
