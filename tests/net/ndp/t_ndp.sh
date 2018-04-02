@@ -1,4 +1,4 @@
-#	$NetBSD: t_ndp.sh,v 1.19.2.1 2017/07/07 13:57:26 martin Exp $
+#	$NetBSD: t_ndp.sh,v 1.19.2.2 2018/04/02 09:51:58 martin Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -490,7 +490,7 @@ ndp_purge_on_route_change_body()
 
 	rump_server_add_iface $SOCKSRC shmif1 bus1
 	export RUMP_SERVER=$SOCKSRC
-	atf_check -s exit:0 rump.ifconfig shmif1 inet6 $IP6SRC2
+	atf_check -s exit:0 rump.ifconfig shmif1 inet6 fc00:1::1
 	atf_check -s exit:0 rump.ifconfig -w 10
 
 	$DEBUG && rump.netstat -nr -f inet6
