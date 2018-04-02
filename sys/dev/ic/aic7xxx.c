@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.133 2018/04/02 10:32:47 rin Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.134 2018/04/02 10:44:06 rin Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -39,7 +39,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxx.c,v 1.133 2018/04/02 10:32:47 rin Exp $
+ * $Id: aic7xxx.c,v 1.134 2018/04/02 10:44:06 rin Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx.c#112 $
  *
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.133 2018/04/02 10:32:47 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.134 2018/04/02 10:44:06 rin Exp $");
 
 #include <dev/ic/aic7xxx_osm.h>
 #include <dev/ic/aic7xxx_inline.h>
@@ -3922,12 +3922,9 @@ ahc_free(struct ahc_softc *ahc)
 		/* TAILQ_REMOVE(&ahc_tailq, ahc, links); XXX */
 		/* FALLTHROUGH */
 	case 1:
-		bus_dmamap_unload(ahc->parent_dmat, ahc->shared_data_dmamap);
-		bus_dmamap_destroy(ahc->parent_dmat, ahc->shared_data_dmamap);
-		bus_dmamem_unmap(ahc->parent_dmat, (void *)ahc->qoutfifo,
-		    ahc->shared_data_size);
-		bus_dmamem_free(ahc->parent_dmat, &ahc->shared_data_seg,
-		    ahc->shared_data_nseg);
+		ahc_freedmamem(ahc->parent_dmat, ahc->shared_data_size,
+		    ahc->shared_data_dmamap, (void *)ahc->qoutfifo,
+		    &ahc->shared_data_seg, ahc->shared_data_nseg);
 		break;
 	case 0:
 		break;
