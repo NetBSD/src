@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_ccu_display.c,v 1.1 2018/04/01 21:19:17 bouyer Exp $ */
+/* $NetBSD: sunxi_ccu_display.c,v 1.2 2018/04/02 20:55:49 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2018 Manuel Bouyer <bouyer@antioche.eu.org>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_ccu_display.c,v 1.1 2018/04/01 21:19:17 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_ccu_display.c,v 1.2 2018/04/02 20:55:49 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -46,18 +46,32 @@ sunxi_ccu_lcdxch0_set_rate(struct sunxi_ccu_softc *sc,
 {
 	struct clk *clkp;
 	int error;
+	int diff, diff_x2;
+	int rate, rate_x2;
 
 	clkp = &pllclk->base;
-	error = clk_set_rate(clkp, new_rate);
-	if (error) {
+	rate = clk_round_rate(clkp, new_rate);
+	diff = abs(new_rate - rate);
+
+	rate_x2 = (clk_round_rate(clkp, new_rate / 2) * 2);
+	diff_x2 = abs(new_rate - rate_x2);
+
+	if (rate == 0 && rate_x2 == 0)
+		return ERANGE;
+
+	if (diff_x2 < diff) {
 		error = clk_set_rate(clkp, new_rate / 2);
-		if (error != 0)
-			return error;
-		clkp = &pllclk_x2->base;
+		KASSERT(error == 0);
+		error = clk_set_parent(&clk->base, &pllclk_x2->base);
+		KASSERT(error == 0);
+	} else {
+		error = clk_set_rate(clkp, new_rate);
+		KASSERT(error == 0);
+		error = clk_set_parent(&clk->base, clkp);
+		KASSERT(error == 0);
 	}
-	error = clk_set_parent(&clk->base, clkp);
-	KASSERT(error == 0);
-	return error;
+	(void)error;
+	return 0;
 }
 
 u_int
@@ -121,6 +135,8 @@ sunxi_ccu_lcdxch1_set_rate(struct sunxi_ccu_softc *sc,
 	error = clk_set_rate(pllclkp, best_parent_rate);
 	KASSERT(error == 0);
 	error = clk_set_parent(&clk->base, clkp);
+	KASSERT(error == 0);
+	error = clk_enable(clkp);
 	KASSERT(error == 0);
 	error = sunxi_ccu_div_set_rate(sc, clk, new_rate);
 	KASSERT(error == 0);
