@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1323 2018/03/31 14:39:47 sevan Exp $
+$NetBSD: pcidevs,v 1.1324 2018/04/02 07:30:34 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -5178,6 +5178,8 @@ product INTEL 2HS_LPC_Z27	0xa2c5	Z270 LPC
 product INTEL 2HS_LPC_Q27	0xa2c6	Q270 LPC
 product INTEL 2HS_LPC_Q25	0xa2c7	Q250 LPC
 product INTEL 2HS_LPC_B25	0xa2c8	B250 LPC
+product INTEL 2HS_LPC_Z37	0xa2c9	Z370 LPC
+product INTEL 2HS_LPC_X29	0xa2d2	X299 LPC
 product INTEL 2HS_I2C_0		0xa2e0	200 Series I2C 0
 product INTEL 2HS_I2C_1		0xa2e1	200 Series I2C 1
 product INTEL 2HS_I2C_2		0xa2e2	200 Series I2C 2
