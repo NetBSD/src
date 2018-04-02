@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.132 2015/02/07 04:27:54 christos Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.133 2018/04/02 10:32:47 rin Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -39,7 +39,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxx.c,v 1.132 2015/02/07 04:27:54 christos Exp $
+ * $Id: aic7xxx.c,v 1.133 2018/04/02 10:32:47 rin Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx.c#112 $
  *
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.132 2015/02/07 04:27:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.133 2018/04/02 10:32:47 rin Exp $");
 
 #include <dev/ic/aic7xxx_osm.h>
 #include <dev/ic/aic7xxx_inline.h>
@@ -4511,8 +4511,9 @@ ahc_init(struct ahc_softc *ahc)
 	if ((ahc->features & AHC_TARGETMODE) != 0)
 		driver_data_size += AHC_TMODE_CMDS * sizeof(struct target_cmd)
 				 + /*DMA WideOdd Bug Buffer*/1;
+	ahc->shared_data_size = driver_data_size;
 
-	if (ahc_createdmamem(ahc->parent_dmat, driver_data_size,
+	if (ahc_createdmamem(ahc->parent_dmat, ahc->shared_data_size,
 			     ahc->sc_dmaflags,
 			     &ahc->shared_data_dmamap, (void **)&ahc->qoutfifo,
 			     &ahc->shared_data_busaddr, &ahc->shared_data_seg,
@@ -4526,7 +4527,7 @@ ahc_init(struct ahc_softc *ahc)
 		ahc->targetcmds = (struct target_cmd *)ahc->qoutfifo;
 		ahc->qoutfifo = (uint8_t *)&ahc->targetcmds[AHC_TMODE_CMDS];
 		ahc->dma_bug_buf = ahc->shared_data_busaddr
-				 + driver_data_size - 1;
+				 + ahc->shared_data_size - 1;
 		/* All target command blocks start out invalid. */
 		for (i = 0; i < AHC_TMODE_CMDS; i++)
 			ahc->targetcmds[i].cmd_valid = 0;
