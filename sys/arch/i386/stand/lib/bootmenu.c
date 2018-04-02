@@ -1,4 +1,4 @@
-/*	$NetBSD: bootmenu.c,v 1.16 2016/06/11 06:20:11 dholland Exp $	*/
+/*	$NetBSD: bootmenu.c,v 1.17 2018/04/02 09:44:18 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,10 +63,10 @@ do_bootcfg_command(const char *cmd, char *arg)
 		userconf_add(arg);
 }
 
-void
+int
 parsebootconf(const char *conf)
 {
-	perform_bootcfg(conf, &do_bootcfg_command, 32768);
+	return perform_bootcfg(conf, &do_bootcfg_command, 32768);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: bootcfg.c,v 1.2 2014/08/10 07:40:49 isaki Exp $	*/
+/*	$NetBSD: bootcfg.c,v 1.3 2018/04/02 09:44:19 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -94,7 +94,7 @@ bootcfg_do_noop(const char *cmd, char *arg)
  * consdev=com0
  * default=1
 */
-void
+int
 perform_bootcfg(const char *conf, bootcfg_command command, const off_t maxsz)
 {
 	char *bc, *c;
@@ -114,25 +114,25 @@ perform_bootcfg(const char *conf, bootcfg_command command, const off_t maxsz)
 
 	fd = open(conf, 0);
 	if (fd < 0)
-		return;
+		return ENOENT;
 
 	err = fstat(fd, &st);
 	if (err == -1) {
 		close(fd);
-		return;
+		return EIO;
 	}
 
 	/* if a maximum size is being requested for the boot.cfg enforce it. */
 	if (0 < maxsz && st.st_size > maxsz) {
 		close(fd);
-		return;
+		return EFBIG;
 	}
 
 	bc = alloc(st.st_size + 1);
 	if (bc == NULL) {
 		printf("Could not allocate memory for boot configuration\n");
 		close(fd);
-		return;
+		return ENOMEM;
 	}
 
 	/*
@@ -269,4 +269,6 @@ perform_bootcfg(const char *conf, bootcfg_command command, const off_t maxsz)
 		bootcfg_info.def = 0;
 	if (bootcfg_info.def >= cmenu)
 		bootcfg_info.def = cmenu - 1;
+
+	return 0;
 }
