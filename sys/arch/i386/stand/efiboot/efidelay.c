@@ -1,4 +1,4 @@
-/*	$NetBSD: efidelay.c,v 1.1 2017/01/24 11:09:14 nonaka Exp $	*/
+/*	$NetBSD: efidelay.c,v 1.1.12.1 2018/04/02 08:50:33 martin Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -32,10 +32,22 @@ void
 delay(int us)
 {
 	EFI_STATUS status;
+	CHAR16 errmsg[128];
+	char *uerrmsg;
+	int rv;
 
 	status = uefi_call_wrapper(BS->Stall, 1, us);
-	if (EFI_ERROR(status))
-		Panic(L"%a: couldn't delay %d us: %r\n", __func__, us, status);
+	if (EFI_ERROR(status)) {
+		StatusToString(errmsg, status);
+		uerrmsg = NULL;
+		rv = ucs2_to_utf8(errmsg, &uerrmsg);
+		if (rv)
+			uerrmsg = "";
+		panic("couldn't delay %d us: %s(%" PRIxMAX ")\n", us, uerrmsg,
+		    (uintmax_t)status);
+		if (rv == 0)
+			FreePool(uerrmsg);
+	}
 }
 
 void

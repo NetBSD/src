@@ -1,4 +1,4 @@
-/*	$NetBSD: efibootia32.c,v 1.3 2017/04/29 00:05:35 nonaka Exp $	*/
+/*	$NetBSD: efibootia32.c,v 1.3.2.1 2018/04/02 08:50:33 martin Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -46,8 +46,8 @@ efi_md_init(void)
 	status = uefi_call_wrapper(BS->AllocatePages, 4, AllocateMaxAddress,
 	    EfiLoaderData, sz, &addr);
 	if (EFI_ERROR(status))
-		Panic(L"%a: AllocatePages() failed: %d page(s): %r",
-		    __func__, sz, status);
+		panic("%s: AllocatePages() failed: %d page(s): %" PRIxMAX,
+		    __func__, sz, (uintmax_t)status);
 	startprog32 = (void *)(u_long)addr;
 	CopyMem(startprog32, startprog32_start, startprog32_size);
 }
@@ -67,5 +67,5 @@ startprog(physaddr_t entry, uint32_t argc, uint32_t *argv, physaddr_t sp)
 void
 multiboot(physaddr_t entry, physaddr_t header, physaddr_t sp)
 {
-	Panic(L"%a: not implemented", __func__);
+	panic("%s: not implemented", __func__);
 }

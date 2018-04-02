@@ -1,4 +1,4 @@
-/*	$NetBSD: efidisk.c,v 1.1.12.2 2018/03/21 10:50:49 martin Exp $	*/
+/*	$NetBSD: efidisk.c,v 1.1.12.3 2018/04/02 08:50:33 martin Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -57,7 +57,8 @@ efi_disk_probe(void)
 	status = LibLocateHandle(ByProtocol, &BlockIoProtocol, NULL,
 	    &nhandles, &handles);
 	if (EFI_ERROR(status))
-		Panic(L"LocateHandle(BlockIoProtocol): %r", status);
+		panic("LocateHandle(BlockIoProtocol): %" PRIxMAX,
+		    (uintmax_t)status);
 
 	if (efi_bootdp != NULL)
 		depth = efi_device_path_depth(efi_bootdp, MEDIA_DEVICE_PATH);
@@ -75,7 +76,8 @@ efi_disk_probe(void)
 		status = uefi_call_wrapper(BS->HandleProtocol, 3, handles[i],
 		    &BlockIoProtocol, (void **)&bio);
 		if (EFI_ERROR(status))
-			Panic(L"HandleProtocol(BlockIoProtocol): %r", status);
+			panic("HandleProtocol(BlockIoProtocol): %" PRIxMAX,
+			    (uintmax_t)status);
 
 		media = bio->Media;
 		if (media->LogicalPartition || !media->MediaPresent)

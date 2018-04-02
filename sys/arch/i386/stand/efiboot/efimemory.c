@@ -1,4 +1,4 @@
-/*	$NetBSD: efimemory.c,v 1.4 2017/02/14 13:29:09 nonaka Exp $	*/
+/*	$NetBSD: efimemory.c,v 1.4.10.1 2018/04/02 08:50:33 martin Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -110,7 +110,7 @@ efi_memory_get_map(UINTN *NoEntries, UINTN *MapKey, UINTN *DescriptorSize,
 	desc = LibMemoryMap(NoEntries, MapKey, DescriptorSize,
 	    DescriptorVersion);
 	if (desc == NULL)
-		Panic(L"efi_memory_get_map failed");
+		panic("efi_memory_get_map failed");
 
 	if (!sorted)
 		return desc;
@@ -238,7 +238,7 @@ efi_memory_probe(void)
 	mdtop = efi_memory_get_map(&NoEntries, &MapKey, &DescriptorSize,
 	    &DescriptorVersion, false);
 
-	Print(L" mem[");
+	printf(" mem[");
 	for (i = 0, n = 0, md = mdtop; i < NoEntries; i++, md = next) {
 		next = NextMemoryDescriptor(md, DescriptorSize);
 
@@ -251,11 +251,11 @@ efi_memory_probe(void)
 			continue;
 
 		if (n++ > 0)
-			Print(L" ");
-		Print(L"0x%lx-0x%lx", md->PhysicalStart,
-		    md->PhysicalStart + MappingSize - 1);
+			printf(" ");
+		printf("0x%" PRIxMAX "-0x%" PRIxMAX, (uintmax_t)md->PhysicalStart,
+		    (uintmax_t)(md->PhysicalStart + MappingSize - 1));
 	}
-	Print(L"]");
+	printf("]\n");
 
 	FreePool(mdtop);
 }
@@ -302,9 +302,9 @@ efi_memory_show_map(bool sorted)
 
 		if (++row >= rows) {
 			row = 0;
-			Print(L"Press Any Key to continue :");
+			printf("Press Any Key to continue :");
 			(void) awaitkey(-1, 0);
-			Print(L"\n");
+			printf("\n");
 		}
 	}
 
