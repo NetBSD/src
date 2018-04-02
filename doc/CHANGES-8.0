@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.159 2018/04/01 09:02:51 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.160 2018/04/02 09:11:54 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -10778,4 +10778,54 @@ tools/gcc/gcc-version.mk			1.10 (patch)
 	  -mfunction-return=<choice>
 	  -mindirect-branch-register
 	[mrg, ticket #682]
+
+sys/arch/x86/x86/svs.c		1.15-1.17
+
+	Change the type of sysctl machdep.svs.enabled to bool.
+	If machdep.svs.enabled can not be set to 1, return EOPNOTSUPP.
+	Improve feature detection. Future generations of Intel CPUs will
+	have a bit to say they are not affected by Meltdown.
+	[maxv, #683]
+
+sys/arch/i386/stand/efiboot/Makefile.efiboot	1.11
+sys/arch/i386/stand/efiboot/boot.c		1.8
+sys/arch/i386/stand/efiboot/bootia32/efibootia32.c 1.4
+sys/arch/i386/stand/efiboot/bootx64/efibootx64.c 1.4
+sys/arch/i386/stand/efiboot/efiboot.c		1.6
+sys/arch/i386/stand/efiboot/efiboot.h		1.7
+sys/arch/i386/stand/efiboot/efichar.c		1.1
+sys/arch/i386/stand/efiboot/eficons.c		1.5
+sys/arch/i386/stand/efiboot/efidelay.c		1.2
+sys/arch/i386/stand/efiboot/efidisk.c		1.4
+sys/arch/i386/stand/efiboot/efimemory.c		1.5
+
+	efiboot: Add serial console support.
+	[nonaka, ticket #685]
+
+sys/netinet/if_arp.c				1.271 (patch)
+sys/netinet6/nd6_nbr.c				1.151,1.152 (patch)
+
+	Avoid passing NULL to nd6_dad_duplicated.
+	Fix a race condition on DAD destructions.
+	[ozaki-r, ticket #686]
+
+share/man/man4/ddb.4				1.175 (patch)-1.178
+sys/arch/x86/x86/db_memrw.c			1.5,1.6
+sys/ddb/db_command.c				1.150-1.153
+sys/kern/kern_mutex.c				1.71
+sys/kern/kern_mutex_obj.c			1.6
+sys/kern/kern_rwlock.c				1.50
+sys/kern/kern_rwlock_obj.c			1.4
+sys/kern/subr_lockdebug.c			1.61-1.64
+sys/kern/subr_xcall.c				1.26
+sys/rump/librump/rumpkern/locks.c		1.80
+sys/sys/lockdebug.h				1.17-1.19
+
+	- Provide proper initialization addresses of
+	  mutex and rwlock that are initialized by
+	  *_obj_alloc APIs
+	- Add ASSERT_SLEEPABLEs to xcall functions
+	- Add new commands to ddb, which show statistics
+	  of lock objects and details of active locks 
+	[ozaki-r, ticket #687]
 
