@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.160 2018/04/02 09:11:54 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.161 2018/04/02 09:53:08 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -10828,4 +10828,10 @@ sys/sys/lockdebug.h				1.17-1.19
 	- Add new commands to ddb, which show statistics
 	  of lock objects and details of active locks 
 	[ozaki-r, ticket #687]
+
+tests/net/if_tap/t_tap.sh			1.8
+tests/net/ndp/t_ndp.sh				1.31
+
+	Avoid setting IP addresses of the same subnet on different interface.
+	[ozaki-r, ticket #688]
 
