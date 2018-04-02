@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.250.2.7 2018/03/13 13:27:10 martin Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.250.2.8 2018/04/02 08:54:35 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.250.2.7 2018/03/13 13:27:10 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.250.2.8 2018/04/02 08:54:35 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1539,14 +1539,24 @@ arp_dad_starttimer(struct dadq *dp, int ticks)
 }
 
 static void
+arp_dad_stoptimer(struct dadq *dp)
+{
+
+	KASSERT(mutex_owned(&arp_dad_lock));
+
+	TAILQ_REMOVE(&dadq, dp, dad_list);
+	/* Tell the timer that dp is being destroyed. */
+	dp->dad_ifa = NULL;
+	callout_halt(&dp->dad_timer_ch, &arp_dad_lock);
+}
+
+static void
 arp_dad_destroytimer(struct dadq *dp)
 {
 
-	TAILQ_REMOVE(&dadq, dp, dad_list);
-	/* Request the timer to destroy dp. */
-	dp->dad_ifa = NULL;
-	callout_reset(&dp->dad_timer_ch, 0,
-	    (void (*)(void *))arp_dad_timer, dp);
+	callout_destroy(&dp->dad_timer_ch);
+	KASSERT(dp->dad_ifa == NULL);
+	kmem_intr_free(dp, sizeof(*dp));
 }
 
 static void
@@ -1665,11 +1675,11 @@ arp_dad_stop(struct ifaddr *ifa)
 		return;
 	}
 
-	/* Prevent the timer from running anymore. */
-	arp_dad_destroytimer(dp);
+	arp_dad_stoptimer(dp);
 
 	mutex_exit(&arp_dad_lock);
 
+	arp_dad_destroytimer(dp);
 	ifafree(ifa);
 }
 
@@ -1681,15 +1691,12 @@ arp_dad_timer(struct dadq *dp)
 	char ipbuf[INET_ADDRSTRLEN];
 	bool need_free = false;
 
-	SOFTNET_KERNEL_LOCK_UNLESS_NET_MPSAFE();
+	KERNEL_LOCK_UNLESS_NET_MPSAFE();
 	mutex_enter(&arp_dad_lock);
 
 	ifa = dp->dad_ifa;
 	if (ifa == NULL) {
-		/*
-		 * ifa is being deleted and the callout is already scheduled
-		 * again, so we cannot destroy dp in this run.
-		 */
+		/* dp is being destroyed by someone.  Do nothing. */
 		goto done;
 	}
 
@@ -1713,7 +1720,7 @@ arp_dad_timer(struct dadq *dp)
 		ARPLOG(LOG_INFO, "%s: could not run DAD, driver problem?\n",
 		    if_name(ifa->ifa_ifp));
 
-		TAILQ_REMOVE(&dadq, dp, dad_list);
+		arp_dad_stoptimer(dp);
 		need_free = true;
 		goto done;
 	}
@@ -1762,19 +1769,18 @@ announce:
 		    if_name(ifa->ifa_ifp), ARPLOGADDR(&ia->ia_addr.sin_addr));
 	}
 
-	TAILQ_REMOVE(&dadq, dp, dad_list);
+	arp_dad_stoptimer(dp);
 	need_free = true;
 done:
 	mutex_exit(&arp_dad_lock);
 
 	if (need_free) {
-		callout_destroy(&dp->dad_timer_ch);
-		kmem_intr_free(dp, sizeof(*dp));
-		if (ifa != NULL)
-			ifafree(ifa);
+		arp_dad_destroytimer(dp);
+		KASSERT(ifa != NULL);
+		ifafree(ifa);
 	}
 
-	SOFTNET_KERNEL_UNLOCK_UNLESS_NET_MPSAFE();
+	KERNEL_UNLOCK_UNLESS_NET_MPSAFE();
 }
 
 static void
