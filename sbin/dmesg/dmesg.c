@@ -1,4 +1,4 @@
-/*	$NetBSD: dmesg.c,v 1.29 2018/04/01 19:36:13 christos Exp $	*/
+/*	$NetBSD: dmesg.c,v 1.30 2018/04/02 01:15:31 christos Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,7 +38,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)dmesg.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: dmesg.c,v 1.29 2018/04/01 19:36:13 christos Exp $");
+__RCSID("$NetBSD: dmesg.c,v 1.30 2018/04/02 01:15:31 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -187,6 +187,8 @@ main(int argc, char *argv[])
 #define ADDC(c)
 #endif
 		ch = *p;
+		if (ch == '\0')
+			continue;
 		/* Skip "\n<.*>" syslog sequences. */
 		/* Gather timestamp sequences */
 		if (newl) {
@@ -239,8 +241,6 @@ main(int argc, char *argv[])
 			}
 			newl = 0;
 		}
-		if (ch == '\0')
-			continue;
 		newl = ch == '\n';
 		(void)vis(buf, ch, VIS_NOSLASH, 0);
 #ifndef SMALL
