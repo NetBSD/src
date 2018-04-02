@@ -1,4 +1,4 @@
-/* $NetBSD: sun4i_a10_ccu.c,v 1.8 2018/04/01 21:19:17 bouyer Exp $ */
+/* $NetBSD: sun4i_a10_ccu.c,v 1.9 2018/04/02 20:57:18 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sun4i_a10_ccu.c,v 1.8 2018/04/01 21:19:17 bouyer Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun4i_a10_ccu.c,v 1.9 2018/04/02 20:57:18 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -74,6 +74,7 @@ __KERNEL_RCSID(1, "$NetBSD: sun4i_a10_ccu.c,v 1.8 2018/04/01 21:19:17 bouyer Exp
 #define	CSI_CFG_REG		0x134
 #define	VE_CFG_REG		0x13c
 #define	AUDIO_CODEC_SCLK_CFG_REG 0x140
+#define	LVDS_CFG_REG 		0x14c
 #define	HDMI_CLOCK_CFG_REG	0x150
 #define	MALI_CLOCK_CFG_REG	0x154
 #define	IEP_SCLK_CFG_REG	0x160
@@ -106,6 +107,7 @@ static struct sunxi_ccu_reset sun4i_a10_ccu_resets[] = {
 	SUNXI_CCU_RESET(A10_RST_DE_MP, MP_CFG_REG, 30),
 	SUNXI_CCU_RESET(A10_RST_TCON0, LCD0CH0_CFG_REG, 30),
 	SUNXI_CCU_RESET(A10_RST_TCON1, LCD1CH0_CFG_REG, 30),
+	SUNXI_CCU_RESET(A10_RST_LVDS, LVDS_CFG_REG, 0),
 };
 
 static const char *cpu_parents[] = { "losc", "osc24m", "pll_core", "pll_periph" };
@@ -132,7 +134,7 @@ static const struct sunxi_ccu_nkmp_tbl sun4i_a10_pll1_table[] = {
 };
 
 static const struct sunxi_ccu_nkmp_tbl sun4i_a10_ac_dig_table[] = {
-	{ 24576000, 86, 0, 21, 3 },
+	{ 24576000, 86, 0, 21, 4 },
 	{ 0 }
 };
 
