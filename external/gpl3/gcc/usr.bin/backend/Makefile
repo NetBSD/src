@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.43 2018/02/11 02:12:28 christos Exp $
+#	$NetBSD: Makefile,v 1.44 2018/04/02 22:34:22 mrg Exp $
 
 LIBISPRIVATE=	yes
 
@@ -398,16 +398,23 @@ CLEANFILES+=	tree-check.h
 BUILDSYMLINKS+= insn-check.h tree-check.h
 
 # genattrtab has three output files
-# XXX fix me
-insn-attrtab.c insn-dfatab.c insn-latencytab.c: genattrtab ${G_md_file} insn-conditions.md 
+insn-dfatab.c insn-latencytab.c: insn-attrtab.c
+	cp -p ${.TARGET}.tmp ${.TARGET}
+insn-attrtab.c: genattrtab ${G_md_file} insn-conditions.md 
 	${_MKTARGET_CREATE}
-	./genattrtab ${G_md_file} insn-conditions.md -Ainsn-attrtab.c -Dinsn-dfatab.c -Linsn-latencytab.c
+	./genattrtab ${G_md_file} insn-conditions.md \
+		-A${.TARGET}.tmp -Dinsn-dfatab.c.tmp -Linsn-latencytab.c.tmp && \
+	mv ${.TARGET}.tmp ${.TARGET}
 CLEANFILES+=	insn-attrtab.c insn-dfatab.c insn-latencytab.c
 
 # genopinit has two output files
-insn-opinit.c insn-opinit.h: genopinit ${G_md_file} insn-conditions.md
+insn-opinit.h: insn-opinit.c
+	cp -p ${.TARGET}.tmp ${.TARGET}
+insn-opinit.c: genopinit ${G_md_file} insn-conditions.md
 	${_MKTARGET_CREATE}
-	./genopinit ${G_md_file} insn-conditions.md -hinsn-opinit.h -cinsn-opinit.c
+	./genopinit ${G_md_file} insn-conditions.md \
+		-hinsn-opinit.h.tmp -c${.TARGET}.tmp && \
+	mv ${.TARGET}.tmp ${.TARGET}
 CLEANFILES+=	insn-opinit.h insn-opinit.c
 
 LDFLAGS.genautomata+=	-lm
