@@ -1,4 +1,4 @@
-/*	$NetBSD: ctu.c,v 1.36 2017/05/22 16:39:41 ragge Exp $ */
+/*	$NetBSD: ctu.c,v 1.37 2018/04/02 22:49:48 mrg Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ctu.c,v 1.36 2017/05/22 16:39:41 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ctu.c,v 1.37 2018/04/02 22:49:48 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -376,16 +376,20 @@ cturintr(void *arg)
 #ifdef TUDEBUG
 		printf("Writing byte %d\n", tu_sc.sc_xbytes);
 #endif
-		WAIT; mtpr(RSP_TYP_DATA, PR_CSTD);
-		WAIT; mtpr(128, PR_CSTD);
+		WAIT;
+		mtpr(RSP_TYP_DATA, PR_CSTD);
+		WAIT;
+		mtpr(128, PR_CSTD);
 		for (i = 0; i < 128; i++) {
 			WAIT;
 			mtpr(buf[tu_sc.sc_xbytes++], PR_CSTD);
 		}
 		tck = ctu_cksum((void *)&buf[tu_sc.sc_xbytes-128], 64);
 		tck += 0x8001; if (tck > 0xffff) tck -= 0xffff;
-		WAIT; mtpr(tck & 0xff, PR_CSTD);
-		WAIT; mtpr((tck >> 8) & 0xff, PR_CSTD);
+		WAIT;
+		mtpr(tck & 0xff, PR_CSTD);
+		WAIT;
+		mtpr((tck >> 8) & 0xff, PR_CSTD);
 		bp->b_resid = 0;
 		if (tu_sc.sc_xbytes == bp->b_bcount)
 			tu_sc.sc_state = TU_ENDPACKET;
