@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_tcon.c,v 1.2 2018/04/03 13:38:13 bouyer Exp $ */
+/* $NetBSD: sunxi_tcon.c,v 1.3 2018/04/03 16:17:59 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2018 Manuel Bouyer <bouyer@antioche.eu.org>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_tcon.c,v 1.2 2018/04/03 13:38:13 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_tcon.c,v 1.3 2018/04/03 16:17:59 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -219,6 +219,10 @@ sunxi_tcon_attach(device_t parent, device_t self, void *aux)
 	TCON_WRITE(sc, SUNXI_TCON0_IO_TRI_REG, 0xffffffff);
 	TCON_WRITE(sc, SUNXI_TCON1_CTL_REG, 0);
 	TCON_WRITE(sc, SUNXI_TCON1_IO_TRI_REG, 0xffffffff);
+	if (clk_disable(sc->sc_clk_ahb) != 0) {
+		aprint_error(": couldn't disable ahb clock\n");
+		return;
+	}
 }
 
 static void
@@ -304,6 +308,10 @@ sunxi_tcon_ep_activate(device_t dev, struct fdt_endpoint *ep, bool activate)
 	if (!activate)
 		return EOPNOTSUPP;
 
+	if (clk_enable(sc->sc_clk_ahb) != 0) {
+		aprint_error_dev(dev, "couldn't enable ahb clock\n");
+		return EIO;
+	}
 	sc->sc_in_ep = ep;
 	sc->sc_in_rep = fdt_endpoint_remote(ep);
 	/* check that our other input is not active */
@@ -565,6 +573,11 @@ sunxi_tcon0_enable(struct sunxi_tcon_softc *sc, bool enable)
 		return error;
 	delay(20000);
 	if (enable) {
+		if ((error = clk_enable(sc->sc_clk_ch0)) != 0) {
+			device_printf(sc->sc_dev,
+			    ": couldn't enable ch0 clock\n");
+			return error;
+		}
 		val = TCON_READ(sc, SUNXI_TCON_GCTL_REG);
 		val |= SUNXI_TCON_GCTL_EN;
 		TCON_WRITE(sc, SUNXI_TCON_GCTL_REG, val);
@@ -586,6 +599,11 @@ sunxi_tcon0_enable(struct sunxi_tcon_softc *sc, bool enable)
 		val = TCON_READ(sc, SUNXI_TCON_GCTL_REG);
 		val &= ~SUNXI_TCON_GCTL_EN;
 		TCON_WRITE(sc, SUNXI_TCON_GCTL_REG, val);
+		if ((error = clk_disable(sc->sc_clk_ch0)) != 0) {
+			device_printf(sc->sc_dev,
+			    ": couldn't disable ch0 clock\n");
+			return error;
+		}
 	}
 #ifdef SUNXI_TCON_DEBUG
 	sunxi_tcon_dump_regs(device_unit(sc->sc_dev));
@@ -597,6 +615,7 @@ static int
 sunxi_tcon1_enable(struct sunxi_tcon_softc *sc, bool enable)
 {
 	uint32_t val;
+	int error;
 
 	KASSERT((sc->sc_output_type == OUTPUT_HDMI) || 
 		    (sc->sc_output_type == OUTPUT_VGA));
@@ -604,6 +623,11 @@ sunxi_tcon1_enable(struct sunxi_tcon_softc *sc, bool enable)
 	fdt_endpoint_enable(sc->sc_in_ep, enable);
 	delay(20000);
 	if (enable) {
+		if ((error = clk_enable(sc->sc_clk_ch1)) != 0) {
+			device_printf(sc->sc_dev,
+			    ": couldn't enable ch1 clock\n");
+			return error;
+		}
 		val = TCON_READ(sc, SUNXI_TCON_GCTL_REG);
 		val |= SUNXI_TCON_GCTL_EN;
 		TCON_WRITE(sc, SUNXI_TCON_GCTL_REG, val);
@@ -622,6 +646,11 @@ sunxi_tcon1_enable(struct sunxi_tcon_softc *sc, bool enable)
 		val = TCON_READ(sc, SUNXI_TCON_GCTL_REG);
 		val &= ~SUNXI_TCON_GCTL_EN;
 		TCON_WRITE(sc, SUNXI_TCON_GCTL_REG, val);
+		if ((error = clk_disable(sc->sc_clk_ch1)) != 0) {
+			device_printf(sc->sc_dev,
+			    ": couldn't disable ch1 clock\n");
+			return error;
+		}
 	}
 
 	KASSERT(tcon_mux_inited);
