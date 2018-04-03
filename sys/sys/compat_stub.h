@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.h,v 1.1.2.13 2018/03/30 10:09:08 pgoyette Exp $	*/
+/* $NetBSD: compat_stub.h,v 1.1.2.14 2018/04/03 08:29:44 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -171,4 +171,10 @@ extern void (*rtsock14_oifmsg)(struct ifnet *);
 extern int (*rtsock14_iflist)(struct ifnet *, struct rt_walkarg *,
     struct rt_addrinfo *, size_t);
 
+/*
+ * modctl handler for old style OSTAT
+ */
+struct iovec;
+
+extern int (*compat_modstat_80)(int, struct iovec *, void *);
 #endif	/* _SYS_COMPAT_STUB_H */

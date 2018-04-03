@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.24.12.1 2018/03/10 10:33:40 pgoyette Exp $	*/
+/*	$NetBSD: main.c,v 1.24.12.2 2018/04/03 08:29:44 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.24.12.1 2018/03/10 10:33:40 pgoyette Exp $");
+__RCSID("$NetBSD: main.c,v 1.24.12.2 2018/04/03 08:29:44 pgoyette Exp $");
 #endif /* !lint */
 
 #include <sys/module.h>
@@ -81,6 +81,7 @@ main(int argc, char **argv)
 	int ch, rc, modauto = 1;
 	size_t maxnamelen = 16, i, modautolen;
 	char loadable = '\0';
+	const char *reqoff, *req;
 	bool address = false;
 
 	name = NULL;
@@ -177,28 +178,35 @@ main(int argc, char **argv)
 		len = iov.iov_len;
 	}
 
-	len = iov.iov_len / sizeof(modstat_t);
-	qsort(iov.iov_base, len, sizeof(modstat_t), modstatcmp);
-	for (i = 0, ms = iov.iov_base; i < len; i++, ms++) {
+	len = *(int *)iov.iov_base;
+	ms = (modstat_t *)((char *)iov.iov_base + sizeof(int));
+
+	qsort(ms, len, sizeof(modstat_t), modstatcmp);
+	for (i = 0; i < len; i++, ms++) {
 		size_t namelen = strlen(ms->ms_name);
 		if (maxnamelen < namelen)
 			maxnamelen = namelen;
 	}
+	ms = (modstat_t *)((char *)iov.iov_base + sizeof(int));
+	reqoff = (char *)(&ms[len]);
+
 	printf("%-*s %-8s %-8s %-4s %5s ",
 	    (int)maxnamelen, "NAME", "CLASS", "SOURCE", "FLAG", "REFS");
 	if (address)
 		printf("%-16s ", "ADDRESS");
 	printf("%7s %s \n", "SIZE", "REQUIRES");
-	for (ms = iov.iov_base; len != 0; ms++, len--) {
+
+	for (; len != 0; ms++, len--) {
 		const char *class;
 		const char *source;
 
+		if (ms->ms_reqoffset == 0)
+			req = "-";
+		else {
+			req = &reqoff[ms->ms_reqoffset];
+		}
 		if (name != NULL && strcmp(ms->ms_name, name) != 0) {
 			continue;
-		}
-		if (ms->ms_required[0] == '\0') {
-			ms->ms_required[0] = '-';
-			ms->ms_required[1] = '\0';
 		}
 		if (ms->ms_size == 0) {
 			sbuf[0] = '-';
@@ -221,7 +229,7 @@ main(int argc, char **argv)
 		    ms->ms_refcnt);
 		if (address)
 			printf("%-16" PRIx64 " ", ms->ms_addr);
-		printf("%7s %s\n", sbuf, ms->ms_required);
+		printf("%7s %s\n", sbuf, (req));
 	}
 
 	exit(EXIT_SUCCESS);

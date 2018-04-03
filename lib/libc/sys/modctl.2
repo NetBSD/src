@@ -1,4 +1,4 @@
-.\"	$NetBSD: modctl.2,v 1.13 2017/07/03 21:32:50 wiz Exp $
+.\"	$NetBSD: modctl.2,v 1.13.4.1 2018/04/03 08:29:44 pgoyette Exp $
 .\"
 .\" Copyright (c) 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -74,9 +74,19 @@ In this case, the
 argument should be a
 .Em struct iovec
 pointing to a suitable block of memory.
-The kernel will fill this block with an array of
+The kernel will fill this block with
+.Bl -bullet 
+.It
+a count of the number of modules loaded (including aliases),
+.It
+an array of
 .Em modstat_t
-structures, one per loaded module.
+structures, one per loaded module, and
+.It
+a series of NUL-terminated strings containing the modules'
+required modules lists.
+.El
+.Pp
 If the block is not large enough, the data returned will be truncated
 to fit.
 The kernel will then update the
@@ -146,9 +156,6 @@ contains the following elements, which are filled in by the kernel:
 .Bl -tag -width aaaaaaaa
 .It Fa "char ms_name[MAXMODNAME]"
 The name of the module.
-.It Fa "char ms_required[MAXMODNAME * MAXMODDEPS]"
-The list of modules required by this module
-as a comma-delimited list of module names.
 .It Fa "modsrc_t ms_source"
 One of the following enumerated constants:
 .Bl -tag -compact -width "MODULE_SOURCE_FILESYS"
@@ -172,14 +179,13 @@ Device driver.
 Executable file format.
 .It Dv MODULE_CLASS_MISC
 Miscellaneous.
-.It Dv MODULE_CLASS_ANY
-Any module class.
-.\" XXX: is MODULE_CLASS_ANY ever returned by this interface?
 .El
 .It Fa "uint64_t ms_addr"
 The load address within the kernel.
+(This value is available only for privileged users.)
 .It Fa "u_int ms_size"
 Loaded size of the module.
+(This value is available only for privileged users.)
 .It Fa "u_int ms_refcnt"
 Current number of live references to this module.
 .It Fa "u_int ms_flags"
@@ -190,6 +196,8 @@ The "force" flag must be specified to reload this module.
 .It Dv MODFLAG_AUTO_LOADED
 The module was auto-loaded by the operating system.
 .El
+.It Fa "uint_ms_reqoffset"
+The offset (in bytes) from the beginning of the required-module data.
 .El
 .Sh RETURN VALUES
 Upon successful completion, the value returned is 0.
