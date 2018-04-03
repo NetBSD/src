@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_debe.c,v 1.4 2018/04/03 13:38:13 bouyer Exp $ */
+/* $NetBSD: sunxi_debe.c,v 1.5 2018/04/03 16:17:59 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2018 Manuel Bouyer <bouyer@antioche.eu.org>
@@ -38,7 +38,7 @@
 #define SUNXI_DEBE_CURMAX	64
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_debe.c,v 1.4 2018/04/03 13:38:13 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_debe.c,v 1.5 2018/04/03 16:17:59 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -204,10 +204,12 @@ sunxi_debe_attach(device_t parent, device_t self, void *aux)
 	}
 
 	if (clk_enable(sc->sc_clk_ahb) != 0 ||
-	    clk_enable(sc->sc_clk_mod) != 0 ||
-	    clk_enable(sc->sc_clk_ram) != 0) {
+	    clk_enable(sc->sc_clk_mod) != 0) {
 		aprint_error(": couldn't enable clocks\n");
 		return;
+	}
+	if (clk_disable(sc->sc_clk_ram) != 0) {
+		aprint_error(": couldn't disable ram clock\n");
 	}
 
 	sc->sc_type = of_search_compatible(faa->faa_phandle, compat_data)->data;
@@ -278,6 +280,12 @@ sunxi_debe_attach(device_t parent, device_t self, void *aux)
 #ifdef AWIN_DEBE_FWINIT
 	sunxi_debe_set_videomode(device_unit(self), &mode);
 	sunxi_debe_enable(device_unit(self), true);
+#else
+	if (clk_disable(sc->sc_clk_ahb) != 0 ||
+	    clk_disable(sc->sc_clk_mod) != 0) {
+		aprint_error(": couldn't disable clocks\n");
+		return;
+	}
 #endif
 }
 
@@ -520,6 +528,10 @@ sunxi_debe_ep_enable(device_t dev, struct fdt_endpoint *ep, bool enable)
 	sc = device_private(dev);
 
 	if (enable) {
+		if (clk_enable(sc->sc_clk_ram) != 0) {
+			device_printf(dev,
+			    ": warning: failed to enable ram clock\n");
+		}
 		val = DEBE_READ(sc, SUNXI_DEBE_REGBUFFCTL_REG);
 		val |= SUNXI_DEBE_REGBUFFCTL_REGLOADCTL;
 		DEBE_WRITE(sc, SUNXI_DEBE_REGBUFFCTL_REG, val);
@@ -534,6 +546,10 @@ sunxi_debe_ep_enable(device_t dev, struct fdt_endpoint *ep, bool enable)
 		val = DEBE_READ(sc, SUNXI_DEBE_MODCTL_REG);
 		val &= ~SUNXI_DEBE_MODCTL_START_CTL;
 		DEBE_WRITE(sc, SUNXI_DEBE_MODCTL_REG, val);
+		if (clk_disable(sc->sc_clk_ram) != 0) {
+			device_printf(dev,
+			    ": warning: failed to disable ram clock\n");
+		}
 	}
 #if 0
 	for (int i = 0; i < 0x1000; i += 4) {
@@ -860,6 +876,11 @@ sunxi_debe_pipeline(int phandle, bool active)
 			break;
 	}
 	aprint_normal("activate %s\n", device_xname(dev));
+	if (clk_enable(sc->sc_clk_ahb) != 0 ||
+	    clk_enable(sc->sc_clk_mod) != 0) {
+		aprint_error_dev(dev, "couldn't enable clocks\n");
+		return EIO;
+	}
 	/* connect debd0 to tcon0, debe1 to tcon1 */
 	ep = fdt_endpoint_get_from_index(&sc->sc_ports, SUNXI_PORT_OUTPUT,
 	    sc->sc_unit);
