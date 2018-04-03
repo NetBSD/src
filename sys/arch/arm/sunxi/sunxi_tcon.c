@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_tcon.c,v 1.1 2018/04/03 12:52:16 bouyer Exp $ */
+/* $NetBSD: sunxi_tcon.c,v 1.2 2018/04/03 13:38:13 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2018 Manuel Bouyer <bouyer@antioche.eu.org>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_tcon.c,v 1.1 2018/04/03 12:52:16 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_tcon.c,v 1.2 2018/04/03 13:38:13 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -54,7 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_tcon.c,v 1.1 2018/04/03 12:52:16 bouyer Exp $"
 
 enum sunxi_tcon_type {
 	TCON_A10 = 1,
-	TCON_A20,
 };
 
 struct sunxi_tcon_softc {
@@ -95,7 +94,7 @@ void sunxi_tcon_dump_regs(int);
 
 static const struct of_compat_data compat_data[] = {
 	{"allwinner,sun4i-a10-tcon", TCON_A10},
-	{"allwinner,sun7i-a20-tcon", TCON_A20},
+	{"allwinner,sun7i-a20-tcon", TCON_A10},
 	{NULL}
 };
 
