@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.76 2018/03/16 12:48:54 maxv Exp $	*/
+/*	$NetBSD: vector.S,v 1.77 2018/04/03 07:20:52 christos Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.76 2018/03/16 12:48:54 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.77 2018/04/03 07:20:52 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -221,7 +221,7 @@ IDTVEC_END(intr_x2apic_tlb)
  * No need to use INTRENTRY, since we were brought here through a task-gate
  * which triggered a hardware context switch and saved the GPRs in the TSS.
  */
-IDTVEC(intrddbipi)
+IDTVEC(intr_ddbipi)
 1:
 	str	%ax
 	GET_TSS
@@ -239,9 +239,9 @@ IDTVEC(intrddbipi)
 	movl	$0,LAPIC_TPRI(%ebx)
 	iret
 	jmp	1b
-IDTVEC_END(intrddbipi)
+IDTVEC_END(intr_ddbipi)
 
-IDTVEC(x2apic_intrddbipi)
+IDTVEC(intr_x2apic_ddbipi)
 1:
 	str	%ax
 	GET_TSS
@@ -265,7 +265,7 @@ IDTVEC(x2apic_intrddbipi)
 	wrmsr
 	iret
 	jmp	1b
-IDTVEC_END(x2apic_intrddbipi)
+IDTVEC_END(intr_x2apic_ddbipi)
 #endif /* DDB */
 #endif /* MULTIPROCESSOR */
 
