@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.204 2018/04/01 12:58:47 maxv Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.205 2018/04/03 08:02:34 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -135,7 +135,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.204 2018/04/01 12:58:47 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.205 2018/04/03 08:02:34 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -299,7 +299,7 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep,
 		if (IN6_IS_ADDR_V4MAPPED(&in6p->in6p_faddr)) {
 			/* mapped addr case */
 			struct in_addr d;
-			bcopy(&in6p->in6p_faddr.s6_addr32[3], &d, sizeof(d));
+			memcpy(&d, &in6p->in6p_faddr.s6_addr32[3], sizeof(d));
 			if (tp->t_mtudisc || in_localaddr(d))
 				size = ifp->if_mtu - hdrlen;
 		} else {
@@ -1400,7 +1400,7 @@ reset:			TCP_REASS_UNLOCK(tp);
 	}
 	th->th_ack = htonl(tp->rcv_nxt);
 	if (optlen) {
-		bcopy((void *)opt, (void *)(th + 1), optlen);
+		memcpy(th + 1, opt, optlen);
 		th->th_off = (sizeof (struct tcphdr) + optlen) >> 2;
 	}
 	th->th_flags = flags;
