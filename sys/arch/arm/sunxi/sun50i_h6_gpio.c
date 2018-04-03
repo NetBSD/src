@@ -1,4 +1,4 @@
-/* $NetBSD: sun50i_h6_gpio.c,v 1.1 2018/02/18 10:28:37 jmcneill Exp $ */
+/* $NetBSD: sun50i_h6_gpio.c,v 1.2 2018/04/03 16:01:25 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2016 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sun50i_h6_gpio.c,v 1.1 2018/02/18 10:28:37 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sun50i_h6_gpio.c,v 1.2 2018/04/03 16:01:25 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,53 +91,53 @@ static const struct sunxi_gpio_pins h6_pins[] = {
 	{ "PF5",  5, 5,   { "gpio_in", "gpio_out", "mmc0", "jtag" } },
 	{ "PF6",  5, 6,   { "gpio_in", "gpio_out" } },
 
-	{ "PG0",  6, 0,   { "gpio_in", "gpio_out", "mmc1", NULL, NULL, NULL, "pg_eint0" }, 6, 0 },
-	{ "PG1",  6, 1,   { "gpio_in", "gpio_out", "mmc1", NULL, NULL, NULL, "pg_eint1" }, 6, 1 },
-	{ "PG2",  6, 2,   { "gpio_in", "gpio_out", "mmc1", NULL, NULL, NULL, "pg_eint2" }, 6, 2 },
-	{ "PG3",  6, 3,   { "gpio_in", "gpio_out", "mmc1", NULL, NULL, NULL, "pg_eint3" }, 6, 3 },
-	{ "PG4",  6, 4,   { "gpio_in", "gpio_out", "mmc1", NULL, NULL, NULL, "pg_eint4" }, 6, 4 },
-	{ "PG5",  6, 5,   { "gpio_in", "gpio_out", "mmc1", NULL, NULL, NULL, "pg_eint5" }, 6, 5 },
-	{ "PG6",  6, 6,   { "gpio_in", "gpio_out", "uart1", NULL, NULL, NULL, "pg_eint6" }, 6, 6 },
-	{ "PG7",  6, 7,   { "gpio_in", "gpio_out", "uart1", NULL, NULL, NULL, "pg_eint7" }, 6, 7 },
-	{ "PG8",  6, 8,   { "gpio_in", "gpio_out", "uart1", "sim0", NULL, NULL, "pg_eint8" }, 6, 8 },
-	{ "PG9",  6, 9,   { "gpio_in", "gpio_out", "uart1", "sim0", NULL, NULL, "pg_eint9" }, 6, 9 },
-	{ "PG10", 6, 10,  { "gpio_in", "gpio_out", "i2s2", "h_i2s2", "sim0", NULL, "pg_eint10" }, 6, 10 },
-	{ "PG11", 6, 11,  { "gpio_in", "gpio_out", "i2s2", "h_i2s2", "sim0", NULL, "pg_eint11" }, 6, 11 },
-	{ "PG12", 6, 12,  { "gpio_in", "gpio_out", "i2s2", "h_i2s2", "sim0", NULL, "pg_eint12" }, 6, 12 },
-	{ "PG13", 6, 13,  { "gpio_in", "gpio_out", "i2s2", "h_i2s2", "sim0", NULL, "pg_eint13" }, 6, 13 },
-	{ "PG14", 6, 14,  { "gpio_in", "gpio_out", "i2s2", "h_i2s2", "sim0", NULL, "pg_eint14" }, 6, 13 },
+	{ "PG0",  6, 0,   { "gpio_in", "gpio_out", "mmc1", NULL, NULL, NULL, "irq" }, 6, 0 },
+	{ "PG1",  6, 1,   { "gpio_in", "gpio_out", "mmc1", NULL, NULL, NULL, "irq" }, 6, 1 },
+	{ "PG2",  6, 2,   { "gpio_in", "gpio_out", "mmc1", NULL, NULL, NULL, "irq" }, 6, 2 },
+	{ "PG3",  6, 3,   { "gpio_in", "gpio_out", "mmc1", NULL, NULL, NULL, "irq" }, 6, 3 },
+	{ "PG4",  6, 4,   { "gpio_in", "gpio_out", "mmc1", NULL, NULL, NULL, "irq" }, 6, 4 },
+	{ "PG5",  6, 5,   { "gpio_in", "gpio_out", "mmc1", NULL, NULL, NULL, "irq" }, 6, 5 },
+	{ "PG6",  6, 6,   { "gpio_in", "gpio_out", "uart1", NULL, NULL, NULL, "irq" }, 6, 6 },
+	{ "PG7",  6, 7,   { "gpio_in", "gpio_out", "uart1", NULL, NULL, NULL, "irq" }, 6, 7 },
+	{ "PG8",  6, 8,   { "gpio_in", "gpio_out", "uart1", "sim0", NULL, NULL, "irq" }, 6, 8 },
+	{ "PG9",  6, 9,   { "gpio_in", "gpio_out", "uart1", "sim0", NULL, NULL, "irq" }, 6, 9 },
+	{ "PG10", 6, 10,  { "gpio_in", "gpio_out", "i2s2", "h_i2s2", "sim0", NULL, "irq" }, 6, 10 },
+	{ "PG11", 6, 11,  { "gpio_in", "gpio_out", "i2s2", "h_i2s2", "sim0", NULL, "irq" }, 6, 11 },
+	{ "PG12", 6, 12,  { "gpio_in", "gpio_out", "i2s2", "h_i2s2", "sim0", NULL, "irq" }, 6, 12 },
+	{ "PG13", 6, 13,  { "gpio_in", "gpio_out", "i2s2", "h_i2s2", "sim0", NULL, "irq" }, 6, 13 },
+	{ "PG14", 6, 14,  { "gpio_in", "gpio_out", "i2s2", "h_i2s2", "sim0", NULL, "irq" }, 6, 13 },
 
-	{ "PH0",  7, 0,   { "gpio_in", "gpio_out", "uart0", "i2s0", "h_i2s0", "sim1", "ph_eint0" }, 6, 0 },
-	{ "PH1",  7, 1,   { "gpio_in", "gpio_out", "uart0", "i2s0", "h_i2s0", "sim1", "ph_eint1" }, 6, 1 },
-	{ "PH2",  7, 2,   { "gpio_in", "gpio_out", "cir", "i2s0", "h_i2s0", "sim1", "ph_eint2" }, 6, 2 },
-	{ "PH3",  7, 3,   { "gpio_in", "gpio_out", "spi1", "i2s0", "h_i2s0", "sim1", "ph_eint3" }, 6, 3 },
-	{ "PH4",  7, 4,   { "gpio_in", "gpio_out", "spi1", "i2s0", "h_i2s0", "sim1", "ph_eint4" }, 6, 4 },
-	{ "PH5",  7, 5,   { "gpio_in", "gpio_out", "spi1", "spdif", "i2c1", "sim1", "ph_eint5" }, 6, 5 },
-	{ "PH6",  7, 6,   { "gpio_in", "gpio_out", "spi1", "spdif", "i2c1", "sim1", "ph_eint6" }, 6, 6 },
-	{ "PH7",  7, 7,   { "gpio_in", "gpio_out", NULL, "spdif", NULL, NULL, "ph_eint7" }, 6, 7 },
-	{ "PH8",  7, 8,   { "gpio_in", "gpio_out", "hdmi", NULL, NULL, NULL, "ph_eint8" }, 6, 8 },
-	{ "PH9",  7, 9,   { "gpio_in", "gpio_out", "hdmi", NULL, NULL, NULL, "ph_eint9" }, 6, 9 },
-	{ "PH10", 7, 10,  { "gpio_in", "gpio_out", "hdmi", NULL, NULL, NULL, "ph_eint10" }, 6, 10 },
+	{ "PH0",  7, 0,   { "gpio_in", "gpio_out", "uart0", "i2s0", "h_i2s0", "sim1", "irq" }, 6, 0 },
+	{ "PH1",  7, 1,   { "gpio_in", "gpio_out", "uart0", "i2s0", "h_i2s0", "sim1", "irq" }, 6, 1 },
+	{ "PH2",  7, 2,   { "gpio_in", "gpio_out", "cir", "i2s0", "h_i2s0", "sim1", "irq" }, 6, 2 },
+	{ "PH3",  7, 3,   { "gpio_in", "gpio_out", "spi1", "i2s0", "h_i2s0", "sim1", "irq" }, 6, 3 },
+	{ "PH4",  7, 4,   { "gpio_in", "gpio_out", "spi1", "i2s0", "h_i2s0", "sim1", "irq" }, 6, 4 },
+	{ "PH5",  7, 5,   { "gpio_in", "gpio_out", "spi1", "spdif", "i2c1", "sim1", "irq" }, 6, 5 },
+	{ "PH6",  7, 6,   { "gpio_in", "gpio_out", "spi1", "spdif", "i2c1", "sim1", "irq" }, 6, 6 },
+	{ "PH7",  7, 7,   { "gpio_in", "gpio_out", NULL, "spdif", NULL, NULL, "irq" }, 6, 7 },
+	{ "PH8",  7, 8,   { "gpio_in", "gpio_out", "hdmi", NULL, NULL, NULL, "irq" }, 6, 8 },
+	{ "PH9",  7, 9,   { "gpio_in", "gpio_out", "hdmi", NULL, NULL, NULL, "irq" }, 6, 9 },
+	{ "PH10", 7, 10,  { "gpio_in", "gpio_out", "hdmi", NULL, NULL, NULL, "irq" }, 6, 10 },
 };
 
 static const struct sunxi_gpio_pins h6_r_pins[] = {
-	{ "PL0",   0, 0,  { "gpio_in", "gpio_out", NULL, "s_i2c", NULL, NULL, "pl_eint0" }, 6, 0 },
-	{ "PL1",   0, 1,  { "gpio_in", "gpio_out", NULL, "s_i2c", NULL, NULL, "pl_eint1" }, 6, 1 },
-	{ "PL2",   0, 2,  { "gpio_in", "gpio_out", "s_uart", NULL, NULL, NULL, "pl_eint2" }, 6, 2 },
-	{ "PL3",   0, 3,  { "gpio_in", "gpio_out", "s_uart", NULL, NULL, NULL, "pl_eint3" }, 6, 3 },
-	{ "PL4",   0, 4,  { "gpio_in", "gpio_out", "s_jtag", NULL, NULL, NULL, "pl_eint4" }, 6, 4 },
-	{ "PL5",   0, 5,  { "gpio_in", "gpio_out", "s_jtag", NULL, NULL, NULL, "pl_eint5" }, 6, 5 },
-	{ "PL6",   0, 6,  { "gpio_in", "gpio_out", "s_jtag", NULL, NULL, NULL, "pl_eint6" }, 6, 6 },
-	{ "PL7",   0, 7,  { "gpio_in", "gpio_out", "s_jtag", NULL, NULL, NULL, "pl_eint7" }, 6, 7 },
-	{ "PL8",   0, 8,  { "gpio_in", "gpio_out", "s_i2s", NULL, NULL, NULL, "pl_eint8" }, 6, 8 },
-	{ "PL9",   0, 9,  { "gpio_in", "gpio_out", "s_cir", NULL, NULL, NULL, "pl_eint9" }, 6, 9 },
-	{ "PL10",  0, 10, { "gpio_in", "gpio_out", "s_spdif", NULL, NULL, NULL, "pl_eint10" }, 6, 10 },
+	{ "PL0",   0, 0,  { "gpio_in", "gpio_out", NULL, "s_i2c", NULL, NULL, "irq" }, 6, 0 },
+	{ "PL1",   0, 1,  { "gpio_in", "gpio_out", NULL, "s_i2c", NULL, NULL, "irq" }, 6, 1 },
+	{ "PL2",   0, 2,  { "gpio_in", "gpio_out", "s_uart", NULL, NULL, NULL, "irq" }, 6, 2 },
+	{ "PL3",   0, 3,  { "gpio_in", "gpio_out", "s_uart", NULL, NULL, NULL, "irq" }, 6, 3 },
+	{ "PL4",   0, 4,  { "gpio_in", "gpio_out", "s_jtag", NULL, NULL, NULL, "irq" }, 6, 4 },
+	{ "PL5",   0, 5,  { "gpio_in", "gpio_out", "s_jtag", NULL, NULL, NULL, "irq" }, 6, 5 },
+	{ "PL6",   0, 6,  { "gpio_in", "gpio_out", "s_jtag", NULL, NULL, NULL, "irq" }, 6, 6 },
+	{ "PL7",   0, 7,  { "gpio_in", "gpio_out", "s_jtag", NULL, NULL, NULL, "irq" }, 6, 7 },
+	{ "PL8",   0, 8,  { "gpio_in", "gpio_out", "s_i2s", NULL, NULL, NULL, "irq" }, 6, 8 },
+	{ "PL9",   0, 9,  { "gpio_in", "gpio_out", "s_cir", NULL, NULL, NULL, "irq" }, 6, 9 },
+	{ "PL10",  0, 10, { "gpio_in", "gpio_out", "s_spdif", NULL, NULL, NULL, "irq" }, 6, 10 },
 
-	{ "PM0",   1, 0,  { "gpio_in", "gpio_out", NULL, NULL, NULL, NULL, "pm_eint0" }, 6, 0 },
-	{ "PM1",   1, 1,  { "gpio_in", "gpio_out", NULL, NULL, NULL, NULL, "pm_eint1" }, 6, 1 },
-	{ "PM2",   1, 2,  { "gpio_in", "gpio_out", NULL, NULL, NULL, NULL, "pm_eint2" }, 6, 2 },
-	{ "PM3",   1, 3,  { "gpio_in", "gpio_out", NULL, NULL, NULL, NULL, "pm_eint3" }, 6, 3 },
-	{ "PM4",   1, 4,  { "gpio_in", "gpio_out", NULL, NULL, NULL, NULL, "pm_eint4" }, 6, 4 },
+	{ "PM0",   1, 0,  { "gpio_in", "gpio_out", NULL, NULL, NULL, NULL, "irq" }, 6, 0 },
+	{ "PM1",   1, 1,  { "gpio_in", "gpio_out", NULL, NULL, NULL, NULL, "irq" }, 6, 1 },
+	{ "PM2",   1, 2,  { "gpio_in", "gpio_out", NULL, NULL, NULL, NULL, "irq" }, 6, 2 },
+	{ "PM3",   1, 3,  { "gpio_in", "gpio_out", NULL, NULL, NULL, NULL, "irq" }, 6, 3 },
+	{ "PM4",   1, 4,  { "gpio_in", "gpio_out", NULL, NULL, NULL, NULL, "irq" }, 6, 4 },
 };
 
 const struct sunxi_gpio_padconf sun50i_h6_padconf = {
