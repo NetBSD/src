@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_hdmi.c,v 1.2 2018/04/03 13:38:13 bouyer Exp $ */
+/* $NetBSD: sunxi_hdmi.c,v 1.3 2018/04/03 16:17:59 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_hdmi.c,v 1.2 2018/04/03 13:38:13 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_hdmi.c,v 1.3 2018/04/03 16:17:59 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -237,6 +237,10 @@ sunxi_hdmi_attach(device_t parent, device_t self, void *aux)
 	mutex_init(&sc->sc_pwr_lock, MUTEX_DEFAULT, IPL_NONE);
 	sunxi_hdmi_i2c_init(sc);
 
+	if (clk_disable(sc->sc_clk_ahb) != 0) {
+		aprint_error(": couldn't disable ahb clock\n");
+		return;
+	}
 }
 
 static void
@@ -580,6 +584,10 @@ sunxi_hdmi_do_enable(struct sunxi_hdmi_softc *sc)
 	int error;
 	uint32_t dbg0_reg;
 
+	if (clk_enable(sc->sc_clk_ahb) != 0) {
+		aprint_error_dev(sc->sc_dev, "couldn't enable ahb clock\n");
+		return;
+	}
 	/* assume tcon0 uses pll3, tcon1 uses pll7 */
 	switch(fdt_endpoint_index(sc->sc_in_ep)) {
 	case 0:
@@ -805,6 +813,7 @@ sunxi_hdmi_video_enable(struct sunxi_hdmi_softc *sc, bool enable)
 	uint32_t val;
 
 	fdt_endpoint_enable(sc->sc_out_ep, enable);
+
 	val = HDMI_READ(sc, SUNXI_HDMI_VID_CTRL_REG);
 	val &= ~SUNXI_HDMI_VID_CTRL_SRC_SEL;
 #ifdef SUNXI_HDMI_CBGEN
