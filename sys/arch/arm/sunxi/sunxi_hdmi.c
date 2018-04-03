@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_hdmi.c,v 1.1 2018/04/03 12:52:16 bouyer Exp $ */
+/* $NetBSD: sunxi_hdmi.c,v 1.2 2018/04/03 13:38:13 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_hdmi.c,v 1.1 2018/04/03 12:52:16 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_hdmi.c,v 1.2 2018/04/03 13:38:13 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -55,7 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_hdmi.c,v 1.1 2018/04/03 12:52:16 bouyer Exp $"
 
 enum sunxi_hdmi_type {
 	HDMI_A10 = 1,
-	HDMI_A20,
 	HDMI_A31,
 };
 
@@ -107,7 +106,7 @@ struct sunxi_hdmi_softc {
 
 static const struct of_compat_data compat_data[] = {
 	{"allwinner,sun4i-a10-hdmi", HDMI_A10},
-	{"allwinner,sun7i-a20-hdmi", HDMI_A20},
+	{"allwinner,sun7i-a20-hdmi", HDMI_A10},
 	{NULL}
 };
 
@@ -618,7 +617,7 @@ sunxi_hdmi_do_enable(struct sunxi_hdmi_softc *sc)
 
 	HDMI_WRITE(sc, SUNXI_HDMI_CTRL_REG, SUNXI_HDMI_CTRL_MODULE_EN);
 	delay(1000);
-	if (sc->sc_type == HDMI_A20) {
+	if (sc->sc_type == HDMI_A10) {
 		HDMI_WRITE(sc, SUNXI_HDMI_PAD_CTRL0_REG, 0xfe800000);
 		HDMI_WRITE(sc, SUNXI_HDMI_PAD_CTRL1_REG, 0x00d8c830);
 	} else if (sc->sc_type == HDMI_A31) {

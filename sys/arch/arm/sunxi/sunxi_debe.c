@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_debe.c,v 1.3 2018/04/03 12:52:16 bouyer Exp $ */
+/* $NetBSD: sunxi_debe.c,v 1.4 2018/04/03 13:38:13 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2018 Manuel Bouyer <bouyer@antioche.eu.org>
@@ -38,7 +38,7 @@
 #define SUNXI_DEBE_CURMAX	64
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_debe.c,v 1.3 2018/04/03 12:52:16 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_debe.c,v 1.4 2018/04/03 13:38:13 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -61,7 +61,6 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_debe.c,v 1.3 2018/04/03 12:52:16 bouyer Exp $"
 
 enum sunxi_debe_type {
 	DEBE_A10 = 1,
-	DEBE_A20,
 };
 
 struct sunxi_debe_softc {
@@ -100,7 +99,7 @@ struct sunxi_debe_softc {
 
 static const struct of_compat_data compat_data[] = {
 	{"allwinner,sun4i-a10-display-backend", DEBE_A10},
-	{"allwinner,sun7i-a20-display-backend", DEBE_A20},
+	{"allwinner,sun7i-a20-display-backend", DEBE_A10},
 	{NULL}
 };
 

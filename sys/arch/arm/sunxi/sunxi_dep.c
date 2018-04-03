@@ -1,4 +1,4 @@
-/*	$NetBSD: sunxi_dep.c,v 1.1 2018/04/03 12:52:16 bouyer Exp $	*/
+/*	$NetBSD: sunxi_dep.c,v 1.2 2018/04/03 13:38:13 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sunxi_dep.c,v 1.1 2018/04/03 12:52:16 bouyer Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sunxi_dep.c,v 1.2 2018/04/03 13:38:13 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -52,6 +52,7 @@ struct sunxi_dep_softc {
 };
 
 static const struct of_compat_data compat_data[] = {
+	{"allwinner,sun4i-a10-display-engine", 0},
 	{"allwinner,sun7i-a20-display-engine", 0},
 	{NULL}
 };
