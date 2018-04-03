@@ -1,4 +1,4 @@
-/*	$NetBSD: ppc_reloc.c,v 1.56 2018/03/09 20:19:11 joerg Exp $	*/
+/*	$NetBSD: ppc_reloc.c,v 1.57 2018/04/03 21:10:27 joerg Exp $	*/
 
 /*-
  * Copyright (C) 1998	Tsubai Masanari
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ppc_reloc.c,v 1.56 2018/03/09 20:19:11 joerg Exp $");
+__RCSID("$NetBSD: ppc_reloc.c,v 1.57 2018/04/03 21:10:27 joerg Exp $");
 #endif /* not lint */
 
 #include <stdarg.h>
@@ -289,7 +289,7 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 			/* IFUNC relocations are handled in _rtld_call_ifunc */
 			if (obj->ifunc_remaining_nonplt == 0) {
 				obj->ifunc_remaining_nonplt =
-				    rela - obj->rela + 1;
+				    obj->relalim - rela;
 			}
 			break;
 
@@ -369,40 +369,6 @@ _rtld_relocate_plt_lazy(Obj_Entry *obj)
 #endif /* !_LP64 */
 
 	return 0;
-}
-
-void
-_rtld_call_ifunc(Obj_Entry *obj, sigset_t *mask, u_int cur_objgen)
-{
-	const Elf_Rela *rela;
-	Elf_Addr *where, target;
-
-	while (obj->ifunc_remaining > 0 && _rtld_objgen == cur_objgen) {
-		rela = obj->pltrelalim - obj->ifunc_remaining;
-		--obj->ifunc_remaining;
-		if (ELF_R_TYPE(rela->r_info) == R_TYPE(IRELATIVE)) {
-			where = (Elf_Addr *)(obj->relocbase + rela->r_offset);
-			target = (Elf_Addr)(obj->relocbase + rela->r_addend);
-			_rtld_exclusive_exit(mask);
-			target = _rtld_resolve_ifunc2(obj, target);
-			_rtld_exclusive_enter(mask);
-			if (*where != target)
-				*where = target;
-		}
-	}
-
-	while (obj->ifunc_remaining_nonplt > 0 && _rtld_objgen == cur_objgen) {
-		rela = obj->relalim - --obj->ifunc_remaining_nonplt;
-		if (ELF_R_TYPE(rela->r_info) != R_TYPE(IRELATIVE))
-			continue;
-		where = (Elf_Addr *)(obj->relocbase + rela->r_offset);
-		target = (Elf_Addr)(obj->relocbase + rela->r_addend);
-		_rtld_exclusive_exit(mask);
-		target = _rtld_resolve_ifunc2(obj, target);
-		_rtld_exclusive_enter(mask);
-		if (*where != target)
-			*where = target;
-	}
 }
 
 static int
