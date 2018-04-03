@@ -1,4 +1,4 @@
-/* $NetBSD: ipsec.c,v 1.152 2018/03/31 19:27:14 maxv Exp $ */
+/* $NetBSD: ipsec.c,v 1.153 2018/04/03 09:03:59 maxv Exp $ */
 /* $FreeBSD: src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $ */
 /* $KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $ */
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.152 2018/03/31 19:27:14 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.153 2018/04/03 09:03:59 maxv Exp $");
 
 /*
  * IPsec controller part.
@@ -179,9 +179,6 @@ static void ipsec6_get_ulp(struct mbuf *m, struct secpolicyindex *, int);
 static int ipsec6_setspidx_ipaddr(struct mbuf *, struct secpolicyindex *);
 #endif
 static void ipsec_delpcbpolicy(struct inpcbpolicy *);
-#if 0 /* unused */
-static struct secpolicy *ipsec_deepcopy_policy(const struct secpolicy *);
-#endif
 static void ipsec_destroy_policy(struct secpolicy *);
 static int ipsec_sp_reject(const struct secpolicy *, const struct mbuf *);
 static void vshiftl(unsigned char *, int, int);
@@ -1130,78 +1127,6 @@ ipsec_init_policy(struct socket *so, struct inpcbpolicy **policy)
 
 	return 0;
 }
-
-#if 0 /* unused */
-/* copy old ipsec policy into new */
-int
-ipsec_copy_policy(const struct inpcbpolicy *old, struct inpcbpolicy *new)
-{
-	struct secpolicy *sp;
-
-	sp = ipsec_deepcopy_policy(old->sp_in);
-	if (sp) {
-		KEY_SP_UNREF(&new->sp_in);
-		new->sp_in = sp;
-	} else
-		return ENOBUFS;
-
-	sp = ipsec_deepcopy_policy(old->sp_out);
-	if (sp) {
-		KEY_SP_UNREF(&new->sp_out);
-		new->sp_out = sp;
-	} else
-		return ENOBUFS;
-
-	new->priv = old->priv;
-
-	return 0;
-}
-
-/* deep-copy a policy in PCB */
-static struct secpolicy *
-ipsec_deepcopy_policy(const struct secpolicy *src)
-{
-	struct ipsecrequest *newchain = NULL;
-	const struct ipsecrequest *p;
-	struct ipsecrequest **q;
-	struct secpolicy *dst;
-
-	if (src == NULL)
-		return NULL;
-	dst = KEY_NEWSP();
-	if (dst == NULL)
-		return NULL;
-
-	/*
-	 * deep-copy IPsec request chain.  This is required since struct
-	 * ipsecrequest is not reference counted.
-	 */
-	q = &newchain;
-	for (p = src->req; p; p = p->next) {
-		*q = kmem_zalloc(sizeof(**q), KM_SLEEP);
-		(*q)->next = NULL;
-
-		(*q)->saidx.proto = p->saidx.proto;
-		(*q)->saidx.mode = p->saidx.mode;
-		(*q)->level = p->level;
-		(*q)->saidx.reqid = p->saidx.reqid;
-
-		memcpy(&(*q)->saidx.src, &p->saidx.src, sizeof((*q)->saidx.src));
-		memcpy(&(*q)->saidx.dst, &p->saidx.dst, sizeof((*q)->saidx.dst));
-
-		(*q)->sp = dst;
-
-		q = &((*q)->next);
-	}
-
-	dst->req = newchain;
-	dst->state = src->state;
-	dst->policy = src->policy;
-	/* do not touch the refcnt fields */
-
-	return dst;
-}
-#endif
 
 static void
 ipsec_destroy_policy(struct secpolicy *sp)
