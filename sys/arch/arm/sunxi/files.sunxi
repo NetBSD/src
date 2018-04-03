@@ -1,4 +1,4 @@
-#	$NetBSD: files.sunxi,v 1.47 2018/04/01 21:19:17 bouyer Exp $
+#	$NetBSD: files.sunxi,v 1.48 2018/04/03 12:52:16 bouyer Exp $
 #
 # Configuration info for Allwinner sunxi family SoCs
 #
@@ -188,6 +188,28 @@ file	arch/arm/sunxi/sun8i_h3_codec.c		h3_codec needs-flag
 # Display controller
 attach	genfb at fdt with simplefb
 file	dev/fdt/simplefb.c			simplefb
+
+# A10/A20 LCD/TV timing controller (TCON)
+device	sunxitcon
+attach	sunxitcon at fdt with sunxi_tcon
+file	arch/arm/sunxi/sunxi_tcon.c		sunxi_tcon needs-flag
+
+# A10/A20 Display engine backend (DE-BE)
+device	sunxidebe { }
+attach	sunxidebe at fdt with sunxi_debe
+file	arch/arm/sunxi/sunxi_debe.c		sunxi_debe needs-flag
+
+attach	genfb at sunxidebe with sunxi_befb
+
+# A10/A20 HDMI
+device	sunxihdmi: edid, videomode
+attach	sunxihdmi at fdt with sunxi_hdmi
+file	arch/arm/sunxi/sunxi_hdmi.c		sunxi_hdmi needs-flag
+
+# A10/A20 display engine pipeline
+device sunxidep
+attach	sunxidep at fdt with sunxi_dep
+file	arch/arm/sunxi/sunxi_dep.c		sunxi_dep
 
 # Touch Screen controller
 device	sunxits: wsmousedev, tpcalib, sysmon_envsys
