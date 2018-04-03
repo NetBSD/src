@@ -1,4 +1,4 @@
-#	$NetBSD: files.common,v 1.1.2.29 2018/03/31 09:17:35 pgoyette Exp $
+#	$NetBSD: files.common,v 1.1.2.30 2018/04/03 08:29:44 pgoyette Exp $
 
 #
 # Generic files, used by all compat options.
@@ -96,6 +96,7 @@ file	compat/common/uipc_usrreq_70.c		compat_70
 
 # Compatability code for NetBSD 8.0
 file	compat/common/compat_80_mod.c		compat_80
+file	compat/common/kern_mod_80.c		compat_80
 
 #
 # Sources for sysv ipc compatibility across the versions.

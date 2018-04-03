@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_module.c,v 1.6 2018/01/18 13:31:21 maxv Exp $	*/
+/*	$NetBSD: netbsd32_module.c,v 1.6.2.1 2018/04/03 08:29:44 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_module.c,v 1.6 2018/01/18 13:31:21 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_module.c,v 1.6.2.1 2018/04/03 08:29:44 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -42,17 +42,37 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_module.c,v 1.6 2018/01/18 13:31:21 maxv Exp
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 #include <compat/netbsd32/netbsd32_conv.h>
 
-static int
-modctl32_handle_stat(struct netbsd32_iovec *iov, void *arg)
+#ifdef COMPAT_80
+static void
+copy_oalias(omodstat_t *oms, const char * const *aliasp, modinfo_t *mi,
+    module_t *mod)
 {
-	modstat_t *ms, *mso;
+
+	strlcpy(oms->oms_name, *aliasp, sizeof(oms->oms_name));
+	strlcpy(oms->oms_required, mi->mi_name, sizeof(oms->oms_required));
+	oms->oms_class = mi->mi_class;
+	oms->oms_source = mod->mod_source;
+	oms->oms_flags = mod->mod_flags | MODFLG_IS_ALIAS;
+}
+
+static int
+modctl32_handle_ostat(int cmd, struct netbsd32_iovec *iov, void *arg)
+{
+	omodstat_t *oms, *omso;
 	modinfo_t *mi;
 	module_t *mod;
 	vaddr_t addr;
 	size_t size;
-	size_t mslen;
+	size_t omslen;
+	size_t used;
 	int error;
+	int omscnt;
 	bool stataddr;
+	const char * const *aliasp;
+	const char *suffix = "...";
+
+	if (cmd != MODCTL_OSTAT)
+		return EINVAL;
 
 	/* If not privileged, don't expose kernel addresses. */
 	error = kauth_authorize_system(kauth_cred_get(), KAUTH_SYSTEM_MODULE,
@@ -60,34 +80,229 @@ modctl32_handle_stat(struct netbsd32_iovec *iov, void *arg)
 	stataddr = (error == 0);
 
 	kernconfig_lock();
-	mslen = (module_count+module_builtinlist+1) * sizeof(modstat_t);
-	mso = kmem_zalloc(mslen, KM_SLEEP);
-	ms = mso;
+	omscnt = 0;
+	TAILQ_FOREACH(mod, &module_list, mod_chain) {
+		omscnt++;
+		mi = mod->mod_info;
+		if ((aliasp = *mi->mi_aliases) != NULL) {
+			while (*aliasp++ != NULL)
+			omscnt++;
+		}
+	}
+	TAILQ_FOREACH(mod, &module_builtins, mod_chain) {
+		omscnt++;
+		mi = mod->mod_info;
+		if ((aliasp = *mi->mi_aliases) != NULL) {
+			while (*aliasp++ != NULL)
+			omscnt++;
+		}
+	}
+	omslen = omscnt * sizeof(omodstat_t);
+	omso = kmem_zalloc(omslen, KM_SLEEP);
+	oms = omso;
 	TAILQ_FOREACH(mod, &module_list, mod_chain) {
 		mi = mod->mod_info;
-		strlcpy(ms->ms_name, mi->mi_name, sizeof(ms->ms_name));
+		strlcpy(oms->oms_name, mi->mi_name, sizeof(oms->oms_name));
 		if (mi->mi_required != NULL) {
-			strlcpy(ms->ms_required, mi->mi_required,
-			    sizeof(ms->ms_required));
+			used = strlcpy(oms->oms_required, mi->mi_required,
+			    sizeof(oms->oms_required));
+			if (used >= sizeof(oms->oms_required)) { 
+				oms->oms_required[sizeof(oms->oms_required) -
+				    strlen(suffix) - 1] = '\0';
+				strlcat(oms->oms_required, suffix,
+				    sizeof(oms->oms_required));
+                        }
 		}
 		if (mod->mod_kobj != NULL && stataddr) {
 			kobj_stat(mod->mod_kobj, &addr, &size);
-			ms->ms_addr = addr;
-			ms->ms_size = size;
+			oms->oms_addr = addr;
+			oms->oms_size = size;
 		}
-		ms->ms_class = mi->mi_class;
-		ms->ms_refcnt = mod->mod_refcnt;
-		ms->ms_source = mod->mod_source;
-		ms->ms_flags = mod->mod_flags;
+		oms->oms_class = mi->mi_class;
+		oms->oms_refcnt = mod->mod_refcnt;
+		oms->oms_source = mod->mod_source;
+		oms->oms_flags = mod->mod_flags;
+		oms++;
+		aliasp = *mi->mi_aliases;
+		if (aliasp == NULL)
+			continue;
+		while (*aliasp) {
+			copy_oalias(oms, aliasp, mi, mod);
+			aliasp++;
+			oms++;
+		}
+	}
+	TAILQ_FOREACH(mod, &module_builtins, mod_chain) {
+		mi = mod->mod_info;
+		strlcpy(oms->oms_name, mi->mi_name, sizeof(oms->oms_name));
+		if (mi->mi_required != NULL) {
+			used = strlcpy(oms->oms_required, mi->mi_required,
+			    sizeof(oms->oms_required));
+			if (used >= sizeof(oms->oms_required)) { 
+				oms->oms_required[sizeof(oms->oms_required) -
+				    strlen(suffix) - 1] = '\0';
+				strlcat(oms->oms_required, suffix,
+				    sizeof(oms->oms_required));
+                        }
+		}
+		if (mod->mod_kobj != NULL && stataddr) {
+			kobj_stat(mod->mod_kobj, &addr, &size);
+			oms->oms_addr = addr;
+			oms->oms_size = size;
+		}
+		oms->oms_class = mi->mi_class;
+		oms->oms_refcnt = -1;
+		KASSERT(mod->mod_source == MODULE_SOURCE_KERNEL);
+		oms->oms_source = mod->mod_source;
+		oms++;
+		aliasp = *mi->mi_aliases;
+		if (aliasp == NULL)
+			continue;
+		while (*aliasp) {
+			copy_oalias(oms, aliasp, mi, mod);
+			aliasp++;
+			oms++;
+		}
+	}
+	kernconfig_unlock();
+	error = copyout(omso, NETBSD32PTR64(iov->iov_base),
+	    min(omslen - sizeof(modstat_t), iov->iov_len));
+	kmem_free(omso, omslen);
+	if (error == 0) {
+		iov->iov_len = omslen - sizeof(modstat_t);
+		error = copyout(iov, arg, sizeof(*iov));
+	}
+
+	return error;
+}
+#endif	/* COMPAT_80 */
+
+static void
+copy_alias(modstat_t *ms, const char * const *aliasp, modinfo_t *mi,
+    module_t *mod)
+{
+
+	strlcpy(ms->ms_name, *aliasp, sizeof(ms->ms_name));
+	ms->ms_class = mi->mi_class;
+	ms->ms_source = mod->mod_source;
+	ms->ms_flags = mod->mod_flags | MODFLG_IS_ALIAS;
+	ms->ms_reqoffset = 0;
+}
+
+static int
+modctl32_handle_stat(struct netbsd32_iovec *iov, void *arg)
+{
+	int ms_cnt;
+	modstat_t *ms, *mso;
+	size_t ms_len;
+	int req_cnt;
+	char *req, *reqo;
+	size_t req_len;
+	char *out_p;
+	size_t out_s;
+
+	modinfo_t *mi;
+	module_t *mod;
+	vaddr_t addr;
+	size_t size;
+	size_t used;
+	int off;
+	int error;
+	bool stataddr;
+	const char * const *aliasp;
+
+	/* If not privileged, don't expose kernel addresses. */
+	error = kauth_authorize_system(kauth_cred_get(), KAUTH_SYSTEM_MODULE,
+	    0, (void *)(uintptr_t)MODCTL_STAT, NULL, NULL);
+	stataddr = (error == 0);
+
+	kernconfig_lock();
+	ms_cnt = 0;
+	req_len = 1;
+
+	/*
+	 * Count up the number of modstat_t needed, and total size of
+	 * require_module lists on both active and built-in lists
+	 */
+	TAILQ_FOREACH(mod, &module_list, mod_chain) {
+		ms_cnt++;
+		mi = mod->mod_info;
+		if ((aliasp = *mi->mi_aliases) != NULL) {
+			while (*aliasp++ != NULL)
+				ms_cnt++;
+		}
+		if (mi->mi_required != NULL) {
+			req_cnt++;
+			req_len += strlen(mi->mi_required) + 1;
+		}
+	}
+	TAILQ_FOREACH(mod, &module_builtins, mod_chain) {
+	ms_cnt++;
+	mi = mod->mod_info;
+	if ((aliasp = *mi->mi_aliases) != NULL) {
+		while (*aliasp++ != NULL)
+			ms_cnt++;
+		}
+		if (mi->mi_required != NULL) {
+			req_cnt++;
+			req_len += strlen(mi->mi_required) + 1;
+		}
+	}
+
+	/* Allocate internal buffers to hold all the output data */
+	ms_len = ms_cnt * sizeof(modstat_t);
+	ms = kmem_zalloc(ms_len, KM_SLEEP);
+	req = kmem_zalloc(req_len, KM_SLEEP);
+
+	mso = ms;
+	reqo = req++;
+	off = 1;
+
+	/*
+	 * Load data into our internal buffers for both active and
+	 * build-in module lists
+	 */
+	TAILQ_FOREACH(mod, &module_list, mod_chain) {
+	mi = mod->mod_info;
+	strlcpy(ms->ms_name, mi->mi_name, sizeof(ms->ms_name));
+	if (mi->mi_required != NULL) {
+		ms->ms_reqoffset = off;
+		used = strlcpy(req,  mi->mi_required, req_len - off);
+		KASSERTMSG(used < req_len - off, "reqlist grew!");
+		off = used + 1;
+		req += used + 1;
+	} else
+		ms->ms_reqoffset = 0;
+	if (mod->mod_kobj != NULL && stataddr) {
+		kobj_stat(mod->mod_kobj, &addr, &size);
+		ms->ms_addr = addr;
+		ms->ms_size = size;
+	}
+	ms->ms_class = mi->mi_class;
+	ms->ms_refcnt = mod->mod_refcnt;
+	ms->ms_source = mod->mod_source;
+	ms->ms_flags = mod->mod_flags;
+	ms++;
+	aliasp = *mi->mi_aliases;
+	if (aliasp == NULL)
+		continue;
+	while (*aliasp) {
+		copy_alias(ms, aliasp, mi, mod);
+		aliasp++;
 		ms++;
+		}
 	}
 	TAILQ_FOREACH(mod, &module_builtins, mod_chain) {
 		mi = mod->mod_info;
 		strlcpy(ms->ms_name, mi->mi_name, sizeof(ms->ms_name));
 		if (mi->mi_required != NULL) {
-			strlcpy(ms->ms_required, mi->mi_required,
-			    sizeof(ms->ms_required));
-		}
+			ms->ms_reqoffset = off;
+			used = strlcpy(req,  mi->mi_required, req_len - off);
+			KASSERTMSG(used < req_len - off, "reqlist grew!");
+			off += used + 1;
+			req += used + 1;
+		} else
+			ms->ms_reqoffset = 0;
 		if (mod->mod_kobj != NULL && stataddr) {
 			kobj_stat(mod->mod_kobj, &addr, &size);
 			ms->ms_addr = addr;
@@ -98,18 +313,57 @@ modctl32_handle_stat(struct netbsd32_iovec *iov, void *arg)
 		KASSERT(mod->mod_source == MODULE_SOURCE_KERNEL);
 		ms->ms_source = mod->mod_source;
 		ms++;
+		aliasp = *mi->mi_aliases;
+		if (aliasp == NULL)
+			continue;
+		while (*aliasp) {
+			copy_alias(ms, aliasp, mi, mod);
+			aliasp++;
+			ms++;
+		}
 	}
 	kernconfig_unlock();
-	error = copyout(mso, NETBSD32PTR64(iov->iov_base),
-	    min(mslen - sizeof(modstat_t), iov->iov_len));
-	kmem_free(mso, mslen);
+
+	/*
+	 * Now copyout our internal buffers back to userland
+	 */
+	out_p = NETBSD32PTR64(iov->iov_base);
+	out_s = iov->iov_len;
+	size = sizeof(ms_cnt);
+
+	/* Copy out the count of modstat_t */
+	if (out_s) {
+		size = min(sizeof(ms_cnt), out_s);
+		error = copyout(&ms_cnt, out_p, size);
+		out_p += size;
+		out_s -= size;
+	}
+	/* Copy out the modstat_t array */
+	if (out_s && error == 0) {
+		size = min(ms_len, out_s);
+		error = copyout(mso, out_p, size);
+		out_p += size;
+		out_s -= size;
+	}
+	/* Copy out the "required" strings */
+	if (out_s && error == 0) {
+		size = min(req_len, out_s);
+		error = copyout(reqo, out_p, size);
+		out_p += size;
+		out_s -= size;
+	}
+	kmem_free(mso, ms_len);
+	kmem_free(reqo, req_len);
+
+	/* Finally, update the userland copy of the iovec's length */
 	if (error == 0) {
-		iov->iov_len = mslen - sizeof(modstat_t);
+		iov->iov_len = ms_len + req_len + sizeof(ms_cnt);
 		error = copyout(iov, arg, sizeof(*iov));
 	}
 
 	return error;
 }
+
 
 int
 netbsd32_modctl(struct lwp *lwp, const struct netbsd32_modctl_args *uap,
@@ -145,6 +399,16 @@ netbsd32_modctl(struct lwp *lwp, const struct netbsd32_modctl_args *uap,
 			error = module_unload(buf);
 		}
 		break;
+
+#ifdef COMPAT_80
+	case MODCTL_OSTAT:
+		error = copyin(arg, &iov, sizeof(iov));
+		if (error != 0) {
+			break;
+		}
+		error = modctl32_handle_ostat(SCARG(uap, cmd), &iov, arg);
+		break;
+#endif
 
 	case MODCTL_STAT:
 		error = copyin(arg, &iov, sizeof(iov));

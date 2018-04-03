@@ -27,6 +27,11 @@ DONE
    defopt/defflag lines in the config files* as needed, to insure that
    built-in dependencies get resolved.
 
+8. Fixed limits on the number of module depedencies and maximum
+   recursion level have been removed.  Previous code for reporting
+   module status to userland has been versioned and moved to the
+   compat_80 module.
+
 
 TODO
 ----

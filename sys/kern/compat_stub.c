@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.c,v 1.1.2.13 2018/03/30 10:09:08 pgoyette Exp $	*/
+/* $NetBSD: compat_stub.c,v 1.1.2.14 2018/04/03 08:29:44 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -148,3 +148,8 @@ int (*if43_20_cvtcmd)(int) = (void *)enosys;
 void (*rtsock14_oifmsg)(struct ifnet *) = (void *)voidop;
 int (*rtsock14_iflist)(struct ifnet *, struct rt_walkarg *,
     struct rt_addrinfo *, size_t) = (void *)enosys;
+
+/*
+ * modctl handler for old style OSTAT
+ */
+int (*compat_modstat_80)(int, struct iovec *, void *) = (void *)enosys;

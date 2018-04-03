@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sysio,v 1.7.18.19 2018/03/29 23:23:03 pgoyette Exp $
+#	$NetBSD: Makefile.sysio,v 1.7.18.20 2018/04/03 08:29:44 pgoyette Exp $
 
 # Sources for syscall and ioctl compatibility across the versions.
 
@@ -44,6 +44,9 @@ SRCS+=	kern_sa_60.c tty_60.c kern_time_60.c kern_cpu_60.c ccd_60.c
 
 # Compatibility code for NetBSD 7.0
 SRCS+=	rtsock_70.c uipc_usrreq_70.c
+
+# Compatability code for NetBSD 8.0
+SRCS+=	kern_mod_80.c
 
 # More compatibility code for NetBSD 5.0
 .PATH:	${S}/opencrypto

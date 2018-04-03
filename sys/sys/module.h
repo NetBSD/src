@@ -1,4 +1,4 @@
-/*	$NetBSD: module.h,v 1.41.14.7 2018/04/01 23:06:11 pgoyette Exp $	*/
+/*	$NetBSD: module.h,v 1.41.14.8 2018/04/03 08:29:44 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -240,24 +240,41 @@ typedef struct modctl_load {
 typedef enum modctl {
 	MODCTL_LOAD,		/* modctl_load_t *ml */
 	MODCTL_UNLOAD,		/* char *name */
-	MODCTL_STAT,		/* struct iovec *buffer */
-	MODCTL_EXISTS		/* enum: 0: load, 1: autoload */
+	MODCTL_OSTAT,		/* struct iovec *buffer */
+	MODCTL_EXISTS,		/* enum: 0: load, 1: autoload */
+	MODCTL_STAT		/* struct iovec *buffer */
 } modctl_t;
 
 /*
  * This structure intentionally has the same layout for 32 and 64
  * bit builds.
  */
+typedef struct omodstat {
+	char		oms_name[MAXMODNAME];
+	char		oms_required[MAXMODNAME * MAXMODDEPS];
+	uint64_t	oms_addr;
+	modsrc_t	oms_source;
+	modclass_t	oms_class;
+	u_int		oms_size;
+	u_int		oms_refcnt;
+	u_int		oms_flags;
+	u_int		oms_reserved[3];
+} omodstat_t;
+
+/*
+ * This structure is used with the newer version of MODCTL_STAT, which
+ * exports strings of arbitrary length for the list of required modules.
+ */
 typedef struct modstat {
 	char		ms_name[MAXMODNAME];
-	char		ms_required[MAXMODNAME * MAXMODDEPS];
 	uint64_t	ms_addr;
 	modsrc_t	ms_source;
 	modclass_t	ms_class;
 	u_int		ms_size;
 	u_int		ms_refcnt;
 	u_int		ms_flags;
-	u_int		ms_reserved[3];
+	u_int		ms_reqoffset;	/* offset to module's required list
+					   from beginning of iovec buffer! */
 } modstat_t;
 
 int	modctl(int, void *);
