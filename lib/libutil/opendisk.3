@@ -1,4 +1,4 @@
-.\"	$NetBSD: opendisk.3,v 1.14 2017/01/29 05:13:55 snj Exp $
+.\"	$NetBSD: opendisk.3,v 1.15 2018/04/04 04:43:46 kre Exp $
 .\"
 .\" Copyright (c) 1997, 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,11 +27,12 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 6, 2016
+.Dd April 4, 2018
 .Dt OPENDISK 3
 .Os
 .Sh NAME
-.Nm opendisk
+.Nm opendisk ,
+.Nm opendisk1
 .Nd open a disk partition
 .Sh LIBRARY
 .Lb libutil
@@ -44,6 +45,15 @@
 .Fa "char *buf"
 .Fa "size_t buflen"
 .Fa "int iscooked"
+.Fc
+.Ft int
+.Fo opendisk1
+.Fa "const char *path"
+.Fa "int flags"
+.Fa "char *buf"
+.Fa "size_t buflen"
+.Fa "int iscooked"
+.Fa "int (*ofn)(const char *, int, ...))"
 .Fc
 .Sh DESCRIPTION
 .Fn opendisk
@@ -137,15 +147,33 @@ where
 represents the raw partition of the device, as determined by
 .Xr getrawpartition 3 ,
 usually
-.Dq c .
+.Dq c
+or
+.Dq d .
 .El
 .El
+.Pp
+.Fn opendisk1
+is identical to
+.Fn opendisk
+except uses the supplied
+.Fa ofn
+function instead of
+.Xr open 2 .
+This function must be compatible
+with
+.Xr open 2
+in the parameters it takes,
+the value it returns,
+and way that errors are indicated.
 .Sh RETURN VALUES
 An open file descriptor, or -1 if the
 .Xr open 2
 failed.
 .Sh ERRORS
 .Fn opendisk
+and
+.Fn opendisk1
 may set
 .Va errno
 to one of the following values:
@@ -172,6 +200,14 @@ may also set
 to any value specified by the
 .Xr open 2
 function.
+.PP
+The
+.Fn opendisk1
+function may also set
+.Va errno
+to any value set by the
+.Fa ofn
+function.
 .Sh SEE ALSO
 .Xr open 2 ,
 .Xr getrawpartition 3
@@ -180,6 +216,13 @@ The
 .Fn opendisk
 function first appeared in
 .Nx 1.3 .
+.br
+The
+.Fn opendisk1
+function first appeared in
+.Nx 6.0 ,
+and was documented in
+.Nx 8.0 .
 .Pp
 The lookup order of
 .Fn opendisk
