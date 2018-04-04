@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1324 2018/04/02 07:30:34 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1325 2018/04/04 10:17:22 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -4465,6 +4465,12 @@ product INTEL E5_UNICAST	0x3ce8	E5 Unicast
 product INTEL E5_SAD_1		0x3cf4	E5 SAD
 product INTEL E5_BROADCAST	0x3cf5	E5 Broadcast
 product INTEL E5_SAD_2		0x3cf6	E5 SAD
+product INTEL COFLK_IGD_1	0x3e90	UHD Graphics 610
+product INTEL COFLK_IGD_2	0x3e91	UHD Graphics 630
+product INTEL COFLK_IGD_3	0x3e92	UHD Graphics 630
+product INTEL COFLK_IGD_4	0x3e93	UHD Graphics 610
+product INTEL COFLK_IGD_5	0x3e9b	UHD Graphics 630
+product INTEL COFLK_IGD_6	0x3ea5	Iris Plus Graphics 655
 product INTEL 5400_HB		0x4000	5400 Host
 product INTEL 5400A_HB		0x4001	5400A Host
 product INTEL 5400B_HB		0x4003	5400B Host
