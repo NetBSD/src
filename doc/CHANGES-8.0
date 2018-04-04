@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.161 2018/04/02 09:53:08 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.162 2018/04/04 16:29:24 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -10834,4 +10834,36 @@ tests/net/ndp/t_ndp.sh				1.31
 
 	Avoid setting IP addresses of the same subnet on different interface.
 	[ozaki-r, ticket #688]
+
+etc/rc.subr					1.101
+
+	Use posix command line arguments for ps(1) to enhance portability.
+	[kre, ticket #689]
+
+sys/dev/pci/ixgbe/ix_txrx.c			1.37,1.38
+sys/dev/pci/ixgbe/ixgbe.c			1.138-1.143
+sys/dev/pci/ixgbe/ixgbe.h			1.38-1.40
+sys/dev/pci/ixgbe/ixgbe_82599.c			1.17
+sys/dev/pci/ixgbe/ixgbe_api.h			1.12
+sys/dev/pci/ixgbe/ixgbe_common.c		1.19,1.20
+sys/dev/pci/ixgbe/ixgbe_common.h		1.11
+sys/dev/pci/ixgbe/ixgbe_x550.c			1.10,1.11
+sys/dev/pci/ixgbe/ixgbe_x550.h			1.4
+sys/dev/pci/ixgbe/ixv.c				1.90
+
+	- Fix EITR setting to prevent hangup when link speed changed.
+	- Don't write EIMC directly. It is required to manage with struct
+	  ix_queue status. It's also required to stop queue 16 to 63 correctly.
+	- Add missing IFM_NONE support. If a interface support linkdown,
+	  "ifconfig ixgN media none" drops link.  Not all interface can do
+	  link down.
+	- Avoid issues caused by sending old packets at next link-up time.
+	- Fix a long standing bug that 82598 SFP+ panics in ixgbe_handle_mod().
+	[msaitoh, ticket #690]
+
+sys/arch/amd64/conf/GENERIC			1.485
+
+	Enable SVS by default.
+	[maxv, #ticket #691]
+
 
