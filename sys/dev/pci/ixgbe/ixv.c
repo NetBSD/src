@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.91 2018/04/04 08:13:07 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.92 2018/04/04 08:59:22 msaitoh Exp $*/
 
 /******************************************************************************
 
@@ -32,8 +32,7 @@
   POSSIBILITY OF SUCH DAMAGE.
 
 ******************************************************************************/
-/*$FreeBSD: head/sys/dev/ixgbe/if_ixv.c 328265 2018-01-22 20:56:21Z erj $*/
-
+/*$FreeBSD: head/sys/dev/ixgbe/if_ixv.c 331224 2018-03-19 20:55:05Z erj $*/
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -47,7 +46,7 @@
 /************************************************************************
  * Driver version
  ************************************************************************/
-char ixv_driver_version[] = "1.5.13-k";
+char ixv_driver_version[] = "2.0.1-k";
 
 /************************************************************************
  * PCI Device ID Table
@@ -747,6 +746,7 @@ ixv_init_locked(struct adapter *adapter)
 
 	/* Reset VF and renegotiate mailbox API version */
 	hw->mac.ops.reset_hw(hw);
+	hw->mac.ops.start_hw(hw);
 	error = ixv_negotiate_api(adapter);
 	if (error)
 		device_printf(dev,
