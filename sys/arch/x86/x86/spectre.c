@@ -1,4 +1,4 @@
-/*	$NetBSD: spectre.c,v 1.8 2018/04/04 12:59:49 maxv Exp $	*/
+/*	$NetBSD: spectre.c,v 1.9 2018/04/04 16:23:27 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spectre.c,v 1.8 2018/04/04 12:59:49 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spectre.c,v 1.9 2018/04/04 16:23:27 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,6 +57,7 @@ enum spec_mitigation {
 
 bool spec_mitigation_enabled __read_mostly = false;
 static enum spec_mitigation mitigation_method = MITIGATION_NONE;
+char spec_mitigation_name[64] = "(none)";
 
 void speculation_barrier(struct lwp *, struct lwp *);
 
@@ -269,6 +270,7 @@ mitigation_change(bool enabled)
 	struct cpu_info *ci = NULL;
 	CPU_INFO_ITERATOR cii;
 	uint64_t xc;
+	const char *name;
 
 	speculation_detect_method();
 
@@ -305,8 +307,18 @@ mitigation_change(bool enabled)
 		xc_wait(xc);
 		printf(" done!\n");
 		spec_mitigation_enabled = enabled;
-
 		mutex_exit(&cpu_lock);
+
+		if (!enabled) {
+			name = "(none)";
+		} else if (mitigation_method == MITIGATION_AMD_DIS_IND) {
+			name = "AMD DIS_IND";
+		} else {
+			name = "Intel IBRS";
+		}
+		strlcpy(spec_mitigation_name, name,
+		    sizeof(spec_mitigation_name));
+
 		return 0;
 	default:
 		panic("impossible");
