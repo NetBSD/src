@@ -569,8 +569,15 @@ static s32 ixgbe_get_phy_id_fw(struct ixgbe_hw *hw)
 		if (phy_speeds & ixgbe_fw_map[i].fw_speed)
 			hw->phy.speeds_supported |= ixgbe_fw_map[i].phy_speed;
 	}
+
+#if 0
+	/*
+	 *  Don't set autoneg_advertised here to not to be inconsistent with
+	 * if_media value.
+	 */
 	if (!hw->phy.autoneg_advertised)
 		hw->phy.autoneg_advertised = hw->phy.speeds_supported;
+#endif
 
 	hw->phy.id = info[0] & FW_PHY_INFO_ID_HI_MASK;
 	phy_id_lo = info[1] & FW_PHY_INFO_ID_LO_MASK;
