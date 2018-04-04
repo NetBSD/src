@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.90 2018/03/30 19:51:53 maxv Exp $	*/
+/*	$NetBSD: cpu.h,v 1.91 2018/04/04 12:59:49 maxv Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -348,6 +348,7 @@ void cpu_kick(struct cpu_info *);
 
 void cpu_pcpuarea_init(struct cpu_info *);
 void cpu_svs_init(struct cpu_info *);
+void cpu_speculation_init(struct cpu_info *);
 
 #define	curcpu()		x86_curcpu()
 #define	curlwp			x86_curlwp()

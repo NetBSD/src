@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.153 2018/03/28 14:56:59 maxv Exp $	*/
+/*	$NetBSD: cpu.c,v 1.154 2018/04/04 12:59:49 maxv Exp $	*/
 
 /*
  * Copyright (c) 2000-2012 NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.153 2018/03/28 14:56:59 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.154 2018/04/04 12:59:49 maxv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -848,6 +848,9 @@ cpu_hatch(void *v)
 
 	cpu_init_msrs(ci, true);
 	cpu_probe(ci);
+#ifdef __x86_64__
+	cpu_speculation_init(ci);
+#endif
 
 	ci->ci_data.cpu_cc_freq = cpu_info_primary.ci_data.cpu_cc_freq;
 	/* cpu_get_tsc_freq(ci); */
