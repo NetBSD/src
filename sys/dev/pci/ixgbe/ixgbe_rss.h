@@ -30,7 +30,7 @@
   POSSIBILITY OF SUCH DAMAGE.
 
 ******************************************************************************/
-/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_rss.h 320688 2017-07-05 17:27:03Z erj $*/
+/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_rss.h 324518 2017-10-11 05:55:52Z sephe $*/
 
 #ifndef _IXGBE_RSS_H_
 #define _IXGBE_RSS_H_
