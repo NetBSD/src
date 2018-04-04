@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_tcon.c,v 1.3 2018/04/03 16:17:59 bouyer Exp $ */
+/* $NetBSD: sunxi_tcon.c,v 1.4 2018/04/04 16:01:05 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2018 Manuel Bouyer <bouyer@antioche.eu.org>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_tcon.c,v 1.3 2018/04/03 16:17:59 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_tcon.c,v 1.4 2018/04/04 16:01:05 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -210,18 +210,23 @@ sunxi_tcon_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ports.dp_ep_enable = sunxi_tcon_ep_enable;
 	fdt_ports_register(&sc->sc_ports, self, phandle, EP_OTHER);
 
-	TCON_WRITE(sc, SUNXI_TCON_GCTL_REG, 0);
 	TCON_WRITE(sc, SUNXI_TCON_GINT0_REG, 0);
 	TCON_WRITE(sc, SUNXI_TCON_GINT1_REG,
 	    __SHIFTIN(0x20, SUNXI_TCON_GINT1_TCON0_LINENO));
 	TCON_WRITE(sc, SUNXI_TCON0_DCLK_REG, 0xf0000000);
+	TCON_WRITE(sc, SUNXI_TCON0_LVDS_IF_REG, 0x0);
 	TCON_WRITE(sc, SUNXI_TCON0_CTL_REG, 0);
 	TCON_WRITE(sc, SUNXI_TCON0_IO_TRI_REG, 0xffffffff);
 	TCON_WRITE(sc, SUNXI_TCON1_CTL_REG, 0);
 	TCON_WRITE(sc, SUNXI_TCON1_IO_TRI_REG, 0xffffffff);
-	if (clk_disable(sc->sc_clk_ahb) != 0) {
-		aprint_error(": couldn't disable ahb clock\n");
-		return;
+	TCON_WRITE(sc, SUNXI_TCON_GCTL_REG, 0);
+
+	/* clock needed for the mux in unit 0 */
+	if (sc->sc_unit != 0) {
+		if (clk_disable(sc->sc_clk_ahb) != 0) {
+			aprint_error(": couldn't disable ahb clock\n");
+			return;
+		}
 	}
 }
 
@@ -268,9 +273,17 @@ sunxi_tcon_ep_connect(device_t self, struct fdt_endpoint *ep, bool connect)
 			aprint_verbose_dev(self, "tcon unit %d\n", sc->sc_unit);
 		if (!tcon_mux_inited && sc->sc_unit == 0) {
 			/* the mux register is only in LCD0 */
+			if (clk_enable(sc->sc_clk_ahb) != 0) {
+				aprint_error_dev(self,
+				    "couldn't enable ahb clock\n");
+				return;
+			}
 			bus_space_subregion(sc->sc_bst, sc->sc_bsh,
 			    SUNXI_TCON_MUX_CTL_REG, 4, &tcon_mux_bsh);
 			tcon_mux_inited = true;
+			bus_space_write_4(sc->sc_bst, tcon_mux_bsh, 0,
+			    __SHIFTIN(SUNXI_TCON_MUX_CTL_HDMI_OUTPUT_SRC_CLOSE,
+			    SUNXI_TCON_MUX_CTL_HDMI_OUTPUT_SRC));
 		}
 	} else if (fdt_endpoint_port_index(ep) == 1) {
 		device_t rep_dev = fdt_endpoint_device(rep);
@@ -347,6 +360,8 @@ sunxi_tcon_ep_activate(device_t dev, struct fdt_endpoint *ep, bool activate)
 			sc->sc_out_ep = out_ep;
 			if (outi == 0)
 				return sunxi_tcon0_set_video(sc);
+			/* XXX should check VGA here */
+			sc->sc_output_type = OUTPUT_HDMI;
 			return 0;
 		}
 	}
@@ -414,6 +429,7 @@ sunxi_tcon0_set_video(struct sunxi_tcon_softc *sc)
 	KASSERT(panel != NULL);
 	KASSERT(panel->panel_type == PANEL_DUAL_LVDS ||
 	    panel->panel_type == PANEL_LVDS);
+	sc->sc_output_type = OUTPUT_LVDS;
 
 	lcd_x = panel->panel_timing.hactive;
 	lcd_y = panel->panel_timing.vactive;
@@ -505,7 +521,6 @@ sunxi_tcon0_set_video(struct sunxi_tcon_softc *sc)
 	if (panel->panel_lvds_format == LVDS_JEIDA_18)
 		val |= SUNXI_TCON0_LVDS_IF_18BITS;
 	TCON_WRITE(sc, SUNXI_TCON0_LVDS_IF_REG, val);
-
 
 	TCON_WRITE(sc, SUNXI_TCON0_IO_POL_REG, lcd_io_cfg0);
 	TCON_WRITE(sc, SUNXI_TCON0_IO_TRI_REG, 0);
@@ -691,7 +706,6 @@ sunxi_tcon1_set_videomode(device_t dev, const struct videomode *mode)
 	int error;
 
 	KASSERT(device_is_a(dev, "sunxitcon"));
-	sc = device_private(dev);
 	KASSERT((sc->sc_output_type == OUTPUT_HDMI) || 
 		    (sc->sc_output_type == OUTPUT_VGA));
 
