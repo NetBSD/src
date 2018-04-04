@@ -1,4 +1,4 @@
-/*	$NetBSD: spectre.c,v 1.7 2018/03/31 08:30:01 maxv Exp $	*/
+/*	$NetBSD: spectre.c,v 1.8 2018/04/04 12:59:49 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spectre.c,v 1.7 2018/03/31 08:30:01 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spectre.c,v 1.8 2018/04/04 12:59:49 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -310,6 +310,24 @@ mitigation_change(bool enabled)
 		return 0;
 	default:
 		panic("impossible");
+	}
+}
+
+void
+cpu_speculation_init(struct cpu_info *ci)
+{
+	/*
+	 * cpu0 is the one that detects the method and sets the global
+	 * variable.
+	 */
+	if (ci == &cpu_info_primary) {
+		speculation_detect_method();
+		spec_mitigation_enabled =
+		    (mitigation_method != MITIGATION_NONE);
+	}
+
+	if (mitigation_method != MITIGATION_NONE) {
+		mitigation_apply_cpu(ci, true);
 	}
 }
 
