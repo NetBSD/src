@@ -30,7 +30,7 @@
   POSSIBILITY OF SUCH DAMAGE.
 
 ******************************************************************************/
-/*$FreeBSD: head/sys/dev/ixgbe/if_bypass.c 320688 2017-07-05 17:27:03Z erj $*/
+/*$FreeBSD: head/sys/dev/ixgbe/if_bypass.c 327031 2017-12-20 18:15:06Z erj $*/
 
 
 #include "ixgbe.h"
@@ -168,13 +168,13 @@ ixgbe_bp_set_state(SYSCTLFN_ARGS)
 	error = hw->mac.ops.bypass_rw(hw,
 	    BYPASS_PAGE_CTL0, &state);
 	ixgbe_bypass_mutex_clear(adapter);
-	if (error)
+	if (error != 0)
 		return (error);
 	state = (state >> BYPASS_STATUS_OFF_SHIFT) & 0x3;
 
 	node.sysctl_data = &state;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
-	if ((error) || (newp == NULL))
+	if ((error != 0) || (newp == NULL))
 		return (error);
 
 	/* Sanity check new state */
@@ -452,7 +452,7 @@ ixgbe_bp_wd_set(SYSCTLFN_ARGS)
 	struct ixgbe_hw *hw = &adapter->hw;
 	int             error, tmp;
 	static int      timeout = 0;
-	u32             mask, arg = BYPASS_PAGE_CTL0;
+	u32             mask, arg;
 
 	/* Get the current hardware value */
 	ixgbe_bypass_mutex_enter(adapter);
@@ -472,48 +472,38 @@ ixgbe_bp_wd_set(SYSCTLFN_ARGS)
 	if ((error) || (newp == NULL))
 		return (error);
 
-	mask = BYPASS_WDT_ENABLE_M;
+	arg = 0x1 << BYPASS_WDT_ENABLE_SHIFT;
+	mask = BYPASS_WDT_ENABLE_M | BYPASS_WDT_VALUE_M;
 	switch (timeout) {
 	case 0: /* disables the timer */
+		arg = BYPASS_PAGE_CTL0;
+		mask = BYPASS_WDT_ENABLE_M;
 		break;
 	case 1:
-		arg = BYPASS_WDT_1_5 << BYPASS_WDT_TIME_SHIFT;
-		arg |= 0x1 << BYPASS_WDT_ENABLE_SHIFT;
-		mask |= BYPASS_WDT_VALUE_M;
+		arg |= BYPASS_WDT_1_5 << BYPASS_WDT_TIME_SHIFT;
 		break;
 	case 2:
-		arg = BYPASS_WDT_2 << BYPASS_WDT_TIME_SHIFT;
-		arg |= 0x1 << BYPASS_WDT_ENABLE_SHIFT;
-		mask |= BYPASS_WDT_VALUE_M;
+		arg |= BYPASS_WDT_2 << BYPASS_WDT_TIME_SHIFT;
 		break;
 	case 3:
-		arg = BYPASS_WDT_3 << BYPASS_WDT_TIME_SHIFT;
-		arg |= 0x1 << BYPASS_WDT_ENABLE_SHIFT;
-		mask |= BYPASS_WDT_VALUE_M;
+		arg |= BYPASS_WDT_3 << BYPASS_WDT_TIME_SHIFT;
 		break;
 	case 4:
-		arg = BYPASS_WDT_4 << BYPASS_WDT_TIME_SHIFT;
-		arg |= 0x1 << BYPASS_WDT_ENABLE_SHIFT;
-		mask |= BYPASS_WDT_VALUE_M;
+		arg |= BYPASS_WDT_4 << BYPASS_WDT_TIME_SHIFT;
 		break;
 	case 8:
-		arg = BYPASS_WDT_8 << BYPASS_WDT_TIME_SHIFT;
-		arg |= 0x1 << BYPASS_WDT_ENABLE_SHIFT;
-		mask |= BYPASS_WDT_VALUE_M;
+		arg |= BYPASS_WDT_8 << BYPASS_WDT_TIME_SHIFT;
 		break;
 	case 16:
-		arg = BYPASS_WDT_16 << BYPASS_WDT_TIME_SHIFT;
-		arg |= 0x1 << BYPASS_WDT_ENABLE_SHIFT;
-		mask |= BYPASS_WDT_VALUE_M;
+		arg |= BYPASS_WDT_16 << BYPASS_WDT_TIME_SHIFT;
 		break;
 	case 32:
-		arg = BYPASS_WDT_32 << BYPASS_WDT_TIME_SHIFT;
-		arg |= 0x1 << BYPASS_WDT_ENABLE_SHIFT;
-		mask |= BYPASS_WDT_VALUE_M;
+		arg |= BYPASS_WDT_32 << BYPASS_WDT_TIME_SHIFT;
 		break;
 	default:
 		return (EINVAL);
 	}
+
 	/* Set the new watchdog */
 	ixgbe_bypass_mutex_enter(adapter);
 	error = hw->mac.ops.bypass_set(hw, BYPASS_PAGE_CTL0, mask, arg);
@@ -559,7 +549,8 @@ ixgbe_bp_wd_reset(SYSCTLFN_ARGS)
 			error = IXGBE_BYPASS_FW_WRITE_FAILURE;
 			break;
 		}
-		if (hw->mac.ops.bypass_rw(hw, BYPASS_PAGE_CTL1, &reset_wd)) {
+		error = hw->mac.ops.bypass_rw(hw, BYPASS_PAGE_CTL1, &reset_wd);
+		if (error != 0) {
 			error = IXGBE_ERR_INVALID_ARGUMENT;
 			break;
 		}
@@ -724,7 +715,7 @@ ixgbe_bp_log(SYSCTLFN_ARGS)
 	/* Another log command can now run */
 	while (atomic_cas_uint(&adapter->bypass.log, 1, 0) == 0)
 		usec_delay(3000);
-	return(error);
+	return (error);
 
 unlock_err:
 	ixgbe_bypass_mutex_clear(adapter);
@@ -745,9 +736,9 @@ ixgbe_bypass_init(struct adapter *adapter)
 {
 	struct ixgbe_hw        *hw = &adapter->hw;
 	device_t               dev = adapter->dev;
-	u32                    mask, value, sec, year;
 	struct                 sysctllog **log;
 	const struct sysctlnode *rnode, *cnode;
+	u32                    mask, value, sec, year;
 
 	if (!(adapter->feat_cap & IXGBE_FEATURE_BYPASS))
 		return;
@@ -825,7 +816,5 @@ ixgbe_bypass_init(struct adapter *adapter)
 	    ixgbe_bp_wd_reset, 0, (void *)adapter, 0, CTL_CREATE, CTL_EOL);
 
 	adapter->feat_en |= IXGBE_FEATURE_BYPASS;
-
-	return;
 } /* ixgbe_bypass_init */
 

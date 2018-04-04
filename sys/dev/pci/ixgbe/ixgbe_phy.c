@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_phy.c,v 1.15 2018/03/15 06:48:51 msaitoh Exp $ */
+/* $NetBSD: ixgbe_phy.c,v 1.16 2018/04/04 08:13:07 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -33,7 +33,7 @@
   POSSIBILITY OF SUCH DAMAGE.
 
 ******************************************************************************/
-/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_phy.c 320688 2017-07-05 17:27:03Z erj $*/
+/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_phy.c 327031 2017-12-20 18:15:06Z erj $*/
 
 #include "ixgbe_api.h"
 #include "ixgbe_common.h"
