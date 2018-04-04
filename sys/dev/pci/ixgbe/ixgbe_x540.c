@@ -31,7 +31,7 @@
   POSSIBILITY OF SUCH DAMAGE.
 
 ******************************************************************************/
-/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_x540.c 326022 2017-11-20 19:36:21Z pfg $*/
+/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_x540.c 331224 2018-03-19 20:55:05Z erj $*/
 
 #include "ixgbe_x540.h"
 #include "ixgbe_type.h"
