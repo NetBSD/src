@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.142 2018/04/02 10:51:35 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.143 2018/04/04 06:30:09 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -1511,13 +1511,21 @@ ixgbe_config_link(struct adapter *adapter)
 			kpreempt_enable();
 		}
 	} else {
+		struct ifmedia  *ifm = &adapter->media;
+
 		if (hw->mac.ops.check_link)
 			err = ixgbe_check_link(hw, &adapter->link_speed,
 			    &adapter->link_up, FALSE);
 		if (err)
 			goto out;
+
+		/*
+		 * Check if it's the first call. If it's the first call,
+		 * get value for auto negotiation.
+		 */
 		autoneg = hw->phy.autoneg_advertised;
-		if ((!autoneg) && (hw->mac.ops.get_link_capabilities))
+		if ((IFM_SUBTYPE(ifm->ifm_cur->ifm_media) != IFM_NONE)
+		    && ((!autoneg) && (hw->mac.ops.get_link_capabilities)))
                 	err = hw->mac.ops.get_link_capabilities(hw, &autoneg,
 			    &negotiate);
 		if (err)
