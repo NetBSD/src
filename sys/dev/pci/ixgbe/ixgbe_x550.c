@@ -41,6 +41,9 @@
 #include <dev/mii/mii.h>
 
 static s32 ixgbe_setup_ixfi_x550em(struct ixgbe_hw *hw, ixgbe_link_speed *speed);
+static s32 ixgbe_setup_mac_link_sfp_x550a(struct ixgbe_hw *hw,
+				    ixgbe_link_speed speed,
+				    bool autoneg_wait_to_complete);
 static s32 ixgbe_acquire_swfw_sync_X550a(struct ixgbe_hw *, u32 mask);
 static void ixgbe_release_swfw_sync_X550a(struct ixgbe_hw *, u32 mask);
 static s32 ixgbe_read_mng_if_sel_x550em(struct ixgbe_hw *hw);
@@ -566,8 +569,15 @@ static s32 ixgbe_get_phy_id_fw(struct ixgbe_hw *hw)
 		if (phy_speeds & ixgbe_fw_map[i].fw_speed)
 			hw->phy.speeds_supported |= ixgbe_fw_map[i].phy_speed;
 	}
+
+#if 0
+	/*
+	 *  Don't set autoneg_advertised here to not to be inconsistent with
+	 * if_media value.
+	 */
 	if (!hw->phy.autoneg_advertised)
 		hw->phy.autoneg_advertised = hw->phy.speeds_supported;
+#endif
 
 	hw->phy.id = info[0] & FW_PHY_INFO_ID_HI_MASK;
 	phy_id_lo = info[1] & FW_PHY_INFO_ID_LO_MASK;
@@ -2840,6 +2850,9 @@ static s32 ixgbe_setup_sfi_x550a(struct ixgbe_hw *hw, ixgbe_link_speed *speed)
 	case IXGBE_LINK_SPEED_1GB_FULL:
 		reg_val |= IXGBE_KRM_PMD_FLX_MASK_ST20_SPEED_1G;
 		break;
+	case 0:
+		/* media none (linkdown) */
+		break;
 	default:
 		/* Other link speeds are not supported by internal PHY. */
 		return IXGBE_ERR_LINK_SETUP;
@@ -2861,7 +2874,7 @@ static s32 ixgbe_setup_sfi_x550a(struct ixgbe_hw *hw, ixgbe_link_speed *speed)
  *
  *  Configure the the integrated PHY for SFP support.
  **/
-s32 ixgbe_setup_mac_link_sfp_x550a(struct ixgbe_hw *hw,
+static s32 ixgbe_setup_mac_link_sfp_x550a(struct ixgbe_hw *hw,
 				    ixgbe_link_speed speed,
 				    bool autoneg_wait_to_complete)
 {
