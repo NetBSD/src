@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.33 2018/04/02 22:29:33 mlelstv Exp $	*/
+/*	$NetBSD: spl.S,v 1.34 2018/04/04 22:52:58 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -156,25 +156,25 @@ END(softint_trigger)
 
 
 /*
- * Xpreemptrecurse()
+ * Xrecurse_preempt()
  *
  * Handles preemption interrupts via Xspllower().
  */
-IDTVEC(preemptrecurse)
+IDTVEC(recurse_preempt)
 	movl	$IPL_PREEMPT,CPUVAR(ILEVEL)
 	sti
 	xorq	%rdi,%rdi
 	call	_C_LABEL(kpreempt)
 	cli
 	jmp	*%r13			/* back to Xspllower */
-IDTVEC_END(preemptrecurse)
+IDTVEC_END(recurse_preempt)
 
 /*
- * Xpreemptresume()
+ * Xresume_preempt()
  *
  * Handles preemption interrupts via Xdoreti().
  */
-IDTVEC(preemptresume)
+IDTVEC(resume_preempt)
 	movl	$IPL_PREEMPT,CPUVAR(ILEVEL)
 	sti
 	testq	$SEL_RPL,TF_CS(%rsp)
@@ -187,7 +187,7 @@ IDTVEC(preemptresume)
 	call	_C_LABEL(preempt)	/* from user */
 	cli
 	jmp	*%r13			/* back to Xdoreti */
-IDTVEC_END(preemptresume)
+IDTVEC_END(resume_preempt)
 
 /*
  * int splraise(int s);

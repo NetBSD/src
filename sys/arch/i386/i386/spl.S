@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.42 2018/01/27 18:44:19 maxv Exp $	*/
+/*	$NetBSD: spl.S,v 1.43 2018/04/04 22:52:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.42 2018/01/27 18:44:19 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.43 2018/04/04 22:52:58 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_spldebug.h"
@@ -389,11 +389,11 @@ ENTRY(softint_trigger)
 END(softint_trigger)
 
 /*
- * Xpreemptrecurse()
+ * Xrecurse_preempt()
  *
  * Handles preemption interrupts via Xspllower().
  */
-IDTVEC(preemptrecurse)
+IDTVEC(recurse_preempt)
 	movl	$IPL_PREEMPT,CPUVAR(ILEVEL)
 	sti
 	pushl	$0
@@ -401,14 +401,14 @@ IDTVEC(preemptrecurse)
 	addl	$4,%esp
 	cli
 	jmp	*%esi
-IDTVEC_END(preemptrecurse)
+IDTVEC_END(recurse_preempt)
 
 /*
- * Xpreemptresume()
+ * Xresume_preempt()
  *
  * Handles preemption interrupts via Xdoreti().
  */
-IDTVEC(preemptresume)
+IDTVEC(resume_preempt)
 	movl	$IPL_PREEMPT,CPUVAR(ILEVEL)
 	sti
 	testb	$CHK_UPL,TF_CS(%esp)
@@ -423,5 +423,5 @@ IDTVEC(preemptresume)
 	call	_C_LABEL(preempt)		/* from user */
 	cli
 	jmp	*%esi
-IDTVEC_END(preemptresume)
+IDTVEC_END(resume_preempt)
 #endif /* !XEN */
