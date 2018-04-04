@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2185 2018/02/25 12:28:18 kamil Exp $
+#	$NetBSD: mi,v 1.2186 2018/04/04 04:43:46 kre Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -8387,6 +8387,7 @@
 ./usr/share/man/cat3/open_wmemstream.0		comp-c-catman		.cat
 ./usr/share/man/cat3/opendir.0			comp-c-catman		.cat
 ./usr/share/man/cat3/opendisk.0			comp-c-catman		.cat
+./usr/share/man/cat3/opendisk1.0		comp-c-catman		.cat
 ./usr/share/man/cat3/openlog.0			comp-c-catman		.cat
 ./usr/share/man/cat3/openlog_r.0		comp-c-catman		.cat
 ./usr/share/man/cat3/openpam.0			comp-c-catman		.cat,pam
@@ -16127,6 +16128,7 @@
 ./usr/share/man/html3/open_wmemstream.html	comp-c-htmlman		html
 ./usr/share/man/html3/opendir.html		comp-c-htmlman		html
 ./usr/share/man/html3/opendisk.html		comp-c-htmlman		html
+./usr/share/man/html3/opendisk1.html		comp-c-htmlman		html
 ./usr/share/man/html3/openlog.html		comp-c-htmlman		html
 ./usr/share/man/html3/openlog_r.html		comp-c-htmlman		html
 ./usr/share/man/html3/openpam.html		comp-c-htmlman		html,pam
@@ -23879,6 +23881,7 @@
 ./usr/share/man/man3/open_wmemstream.3		comp-c-man		.man
 ./usr/share/man/man3/opendir.3			comp-c-man		.man
 ./usr/share/man/man3/opendisk.3			comp-c-man		.man
+./usr/share/man/man3/opendisk1.3		comp-c-man		.man
 ./usr/share/man/man3/openlog.3			comp-c-man		.man
 ./usr/share/man/man3/openlog_r.3		comp-c-man		.man
 ./usr/share/man/man3/openpam.3			comp-c-man		.man,pam
