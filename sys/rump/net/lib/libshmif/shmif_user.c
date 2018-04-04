@@ -1,4 +1,4 @@
-/*      $NetBSD: shmif_user.c,v 1.1 2014/03/13 01:42:59 pooka Exp $	*/
+/*      $NetBSD: shmif_user.c,v 1.2 2018/04/04 09:19:33 martin Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -29,6 +29,7 @@
 #include <sys/mman.h>
 
 #include <errno.h>
+#include <unistd.h>
 
 #include <rump/rumpuser_component.h>
 
@@ -102,7 +103,6 @@ rumpcomp_shmif_watchwait(int kq)
 
 #include <limits.h>
 #include <stdio.h>
-#include <unistd.h>
 
 int
 rumpcomp_shmif_watchsetup(int *inotifyp, int fd)
@@ -171,7 +171,6 @@ rumpcomp_shmif_watchwait(int kq)
 
 #else
 #include <stdio.h>
-#include <unistd.h>
 
 /* a polling default implementation */
 int
