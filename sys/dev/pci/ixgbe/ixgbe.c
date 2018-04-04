@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.88.2.15 2018/03/30 12:07:34 martin Exp $ */
+/* $NetBSD: ixgbe.c,v 1.88.2.16 2018/04/04 16:18:49 martin Exp $ */
 
 /******************************************************************************
 
@@ -1378,6 +1378,8 @@ ixgbe_add_media_types(struct adapter *adapter)
 #define	ADD(mm, dd)							\
 	ifmedia_add(&adapter->media, IFM_ETHER | (mm), (dd), NULL);
 
+	ADD(IFM_NONE, 0);
+
 	/* Media types with matching NetBSD media defines */
 	if (layer & IXGBE_PHYSICAL_LAYER_10GBASE_T) {
 		ADD(IFM_10G_T | IFM_FDX, 0);
@@ -1509,13 +1511,21 @@ ixgbe_config_link(struct adapter *adapter)
 			kpreempt_enable();
 		}
 	} else {
+		struct ifmedia  *ifm = &adapter->media;
+
 		if (hw->mac.ops.check_link)
 			err = ixgbe_check_link(hw, &adapter->link_speed,
 			    &adapter->link_up, FALSE);
 		if (err)
 			goto out;
+
+		/*
+		 * Check if it's the first call. If it's the first call,
+		 * get value for auto negotiation.
+		 */
 		autoneg = hw->phy.autoneg_advertised;
-		if ((!autoneg) && (hw->mac.ops.get_link_capabilities))
+		if ((IFM_SUBTYPE(ifm->ifm_cur->ifm_media) != IFM_NONE)
+		    && ((!autoneg) && (hw->mac.ops.get_link_capabilities)))
                 	err = hw->mac.ops.get_link_capabilities(hw, &autoneg,
 			    &negotiate);
 		if (err)
@@ -2410,8 +2420,8 @@ ixgbe_enable_queue(struct adapter *adapter, u32 vector)
 	u64             queue = (u64)(1ULL << vector);
 	u32             mask;
 
-	mutex_enter(&que->im_mtx);
-	if (que->im_nest > 0 && --que->im_nest > 0)
+	mutex_enter(&que->dc_mtx);
+	if (que->disabled_count > 0 && --que->disabled_count > 0)
 		goto out;
 
 	if (hw->mac.type == ixgbe_mac_82598EB) {
@@ -2426,23 +2436,28 @@ ixgbe_enable_queue(struct adapter *adapter, u32 vector)
 			IXGBE_WRITE_REG(hw, IXGBE_EIMS_EX(1), mask);
 	}
 out:
-	mutex_exit(&que->im_mtx);
+	mutex_exit(&que->dc_mtx);
 } /* ixgbe_enable_queue */
 
 /************************************************************************
- * ixgbe_disable_queue
+ * ixgbe_disable_queue_internal
  ************************************************************************/
 static inline void
-ixgbe_disable_queue(struct adapter *adapter, u32 vector)
+ixgbe_disable_queue_internal(struct adapter *adapter, u32 vector, bool nestok)
 {
 	struct ixgbe_hw *hw = &adapter->hw;
 	struct ix_queue *que = &adapter->queues[vector];
 	u64             queue = (u64)(1ULL << vector);
 	u32             mask;
 
-	mutex_enter(&que->im_mtx);
-	if (que->im_nest++ > 0)
-		goto  out;
+	mutex_enter(&que->dc_mtx);
+
+	if (que->disabled_count > 0) {
+		if (nestok)
+			que->disabled_count++;
+		goto out;
+	}
+	que->disabled_count++;
 
 	if (hw->mac.type == ixgbe_mac_82598EB) {
 		mask = (IXGBE_EIMS_RTX_QUEUE & queue);
@@ -2456,7 +2471,17 @@ ixgbe_disable_queue(struct adapter *adapter, u32 vector)
 			IXGBE_WRITE_REG(hw, IXGBE_EIMC_EX(1), mask);
 	}
 out:
-	mutex_exit(&que->im_mtx);
+	mutex_exit(&que->dc_mtx);
+} /* ixgbe_disable_queue_internal */
+
+/************************************************************************
+ * ixgbe_disable_queue
+ ************************************************************************/
+static inline void
+ixgbe_disable_queue(struct adapter *adapter, u32 vector)
+{
+
+	ixgbe_disable_queue_internal(adapter, vector, true);
 } /* ixgbe_disable_queue */
 
 /************************************************************************
@@ -2813,6 +2838,8 @@ ixgbe_media_change(struct ifnet *ifp)
 		break;
 	case IFM_10_T:
 		speed |= IXGBE_LINK_SPEED_10_FULL;
+		break;
+	case IFM_NONE:
 		break;
 	default:
 		goto invalid;
@@ -3511,7 +3538,7 @@ ixgbe_detach(device_t dev, int flags)
 	ixgbe_free_receive_structures(adapter);
 	for (int i = 0; i < adapter->num_queues; i++) {
 		struct ix_queue * que = &adapter->queues[i];
-		mutex_destroy(&que->im_mtx);
+		mutex_destroy(&que->dc_mtx);
 	}
 	free(adapter->queues, M_DEVBUF);
 	free(adapter->mta, M_DEVBUF);
@@ -4012,6 +4039,13 @@ ixgbe_configure_ivars(struct adapter *adapter)
 		ixgbe_set_ivar(adapter, txr->me, que->msix, 1);
 		/* Set an Initial EITR value */
 		ixgbe_eitr_write(que, newitr);
+		/*
+		 * To eliminate influence of the previous state.
+		 * At this point, Tx/Rx interrupt handler
+		 * (ixgbe_msix_que()) cannot be called, so  both
+		 * IXGBE_TX_LOCK and IXGBE_RX_LOCK are not required.
+		 */
+		que->eitr_setting = 0;
 	}
 
 	/* For the Link interrupt */
@@ -4288,11 +4322,11 @@ ixgbe_local_timer1(void *arg)
 	else if (queues != 0) { /* Force an IRQ on queues with work */
 		que = adapter->queues;
 		for (i = 0; i < adapter->num_queues; i++, que++) {
-			mutex_enter(&que->im_mtx);
-			if (que->im_nest == 0)
+			mutex_enter(&que->dc_mtx);
+			if (que->disabled_count == 0)
 				ixgbe_rearm_queues(adapter,
 				    queues & ((u64)1 << i));
-			mutex_exit(&que->im_mtx);
+			mutex_exit(&que->dc_mtx);
 		}
 	}
 
@@ -4379,7 +4413,11 @@ ixgbe_handle_mod(void *context)
 		return;
 	}
 
-	err = hw->mac.ops.setup_sfp(hw);
+	if (hw->mac.type == ixgbe_mac_82598EB)
+		err = hw->phy.ops.reset(hw);
+	else
+		err = hw->mac.ops.setup_sfp(hw);
+
 	if (err == IXGBE_ERR_SFP_NOT_SUPPORTED) {
 		device_printf(dev,
 		    "Setup failure - unsupported SFP+ module type.\n");
@@ -4509,6 +4547,14 @@ ixgbe_update_link_status(struct adapter *adapter)
 
 	if (adapter->link_up) {
 		if (adapter->link_active == FALSE) {
+			/*
+			 * To eliminate influence of the previous state
+			 * in the same way as ixgbe_init_locked().
+			 */
+			struct ix_queue	*que = adapter->queues;
+			for (int i = 0; i < adapter->num_queues; i++, que++)
+				que->eitr_setting = 0;
+
 			if (adapter->link_speed == IXGBE_LINK_SPEED_10GB_FULL){
 				/*
 				 *  Discard count for both MAC Local Fault and
@@ -4566,6 +4612,7 @@ ixgbe_update_link_status(struct adapter *adapter)
 			adapter->link_active = FALSE;
 			if (adapter->feat_en & IXGBE_FEATURE_SRIOV)
 				ixgbe_ping_all_vfs(adapter);
+			ixgbe_drain_all(adapter);
 		}
 	}
 } /* ixgbe_update_link_status */
@@ -4682,10 +4729,10 @@ ixgbe_enable_intr(struct adapter *adapter)
 } /* ixgbe_enable_intr */
 
 /************************************************************************
- * ixgbe_disable_intr
+ * ixgbe_disable_intr_internal
  ************************************************************************/
 static void
-ixgbe_disable_intr(struct adapter *adapter)
+ixgbe_disable_intr_internal(struct adapter *adapter, bool nestok)
 {
 	struct ix_queue	*que = adapter->queues;
 
@@ -4696,11 +4743,31 @@ ixgbe_disable_intr(struct adapter *adapter)
 		IXGBE_WRITE_REG(&adapter->hw, IXGBE_EIAC, 0);
 
 	for (int i = 0; i < adapter->num_queues; i++, que++)
-		ixgbe_disable_queue(adapter, que->msix);
+		ixgbe_disable_queue_internal(adapter, que->msix, nestok);
 
 	IXGBE_WRITE_FLUSH(&adapter->hw);
 
+} /* ixgbe_do_disable_intr_internal */
+
+/************************************************************************
+ * ixgbe_disable_intr
+ ************************************************************************/
+static void
+ixgbe_disable_intr(struct adapter *adapter)
+{
+
+	ixgbe_disable_intr_internal(adapter, true);
 } /* ixgbe_disable_intr */
+
+/************************************************************************
+ * ixgbe_ensure_disabled_intr
+ ************************************************************************/
+void
+ixgbe_ensure_disabled_intr(struct adapter *adapter)
+{
+
+	ixgbe_disable_intr_internal(adapter, false);
+} /* ixgbe_ensure_disabled_intr */
 
 /************************************************************************
  * ixgbe_legacy_irq - Legacy Interrupt Service routine

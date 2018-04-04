@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_82599.c,v 1.14.8.1 2017/12/21 19:28:54 snj Exp $ */
+/* $NetBSD: ixgbe_82599.c,v 1.14.8.2 2018/04/04 16:18:49 martin Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -56,6 +56,7 @@ static s32 ixgbe_read_eeprom_82599(struct ixgbe_hw *hw,
 				   u16 offset, u16 *data);
 static s32 ixgbe_read_eeprom_buffer_82599(struct ixgbe_hw *hw, u16 offset,
 					  u16 words, u16 *data);
+static s32 ixgbe_reset_pipeline_82599(struct ixgbe_hw *hw);
 static s32 ixgbe_read_i2c_byte_82599(struct ixgbe_hw *hw, u8 byte_offset,
 					u8 dev_addr, u8 *data);
 static s32 ixgbe_write_i2c_byte_82599(struct ixgbe_hw *hw, u8 byte_offset,
@@ -914,9 +915,13 @@ s32 ixgbe_setup_mac_link_82599(struct ixgbe_hw *hw,
 
 	speed &= link_capabilities;
 
-	if (speed == IXGBE_LINK_SPEED_UNKNOWN) {
-		status = IXGBE_ERR_LINK_SETUP;
-		goto out;
+	if (speed == 0) {
+		ixgbe_disable_tx_laser(hw); /* For fiber */
+		ixgbe_set_phy_power(hw, false); /* For copper */
+	} else {
+		/* In case previous media setting was none(down) */
+		ixgbe_enable_tx_laser(hw); /* for Fiber */
+		ixgbe_set_phy_power(hw, true); /* For copper */
 	}
 
 	/* Use stored value (EEPROM defaults) of AUTOC to find KR/KX4 support*/
@@ -2475,7 +2480,7 @@ static s32 ixgbe_read_eeprom_82599(struct ixgbe_hw *hw,
  * Reset pipeline by asserting Restart_AN together with LMS change to ensure
  * full pipeline reset.  This function assumes the SW/FW lock is held.
  **/
-s32 ixgbe_reset_pipeline_82599(struct ixgbe_hw *hw)
+static s32 ixgbe_reset_pipeline_82599(struct ixgbe_hw *hw)
 {
 	s32 ret_val;
 	u32 anlp1_reg = 0;

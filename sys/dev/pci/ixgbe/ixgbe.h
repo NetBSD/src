@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.h,v 1.24.6.8 2018/03/30 12:07:34 martin Exp $ */
+/* $NetBSD: ixgbe.h,v 1.24.6.9 2018/04/04 16:18:49 martin Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -339,8 +339,13 @@ struct ix_queue {
 	char             namebuf[32];
 	char             evnamebuf[32];
 
-	kmutex_t         im_mtx;	/* lock for im_nest and this queue's EIMS/EIMC bit */
-	int              im_nest;
+	kmutex_t         dc_mtx;	/* lock for disabled_count and this queue's EIMS/EIMC bit */
+	int              disabled_count;/*
+					 * means
+					 *     0   : this queue is enabled
+					 *     > 0 : this queue is disabled
+					 *           the value is ixgbe_disable_queue() called count
+					 */
 };
 
 /*
@@ -370,8 +375,8 @@ struct tx_ring {
 	u16			atr_sample;
 	u16			atr_count;
 
-	u32			bytes;  /* used for AIM */
-	u32			packets;
+	u64			bytes;  /* used for AIM */
+	u64			packets;
 	/* Soft Stats */
 	struct evcnt	   	tso_tx;
 	struct evcnt		no_desc_avail;
@@ -413,8 +418,8 @@ struct rx_ring {
 	struct ixgbe_rx_buf	*rx_buffers;
 	ixgbe_dma_tag_t		*ptag;
 
-	u32			bytes; /* Used for AIM calc */
-	u32			packets;
+	u64			bytes; /* Used for AIM calc */
+	u64			packets;
 
 	/* Soft stats */
 	struct evcnt		rx_copies;
@@ -741,6 +746,7 @@ int  ixgbe_mq_start(struct ifnet *, struct mbuf *);
 int  ixgbe_mq_start_locked(struct ifnet *, struct tx_ring *);
 void ixgbe_deferred_mq_start(void *);
 void ixgbe_deferred_mq_start_work(struct work *, void *);
+void ixgbe_drain_all(struct adapter *);
 
 int  ixgbe_allocate_queues(struct adapter *);
 int  ixgbe_setup_transmit_structures(struct adapter *);

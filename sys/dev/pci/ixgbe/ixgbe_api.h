@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_api.h,v 1.9.8.1 2017/12/21 19:28:54 snj Exp $ */
+/* $NetBSD: ixgbe_api.h,v 1.9.8.2 2018/04/04 16:18:49 martin Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -226,5 +226,7 @@ void ixgbe_disable_rx(struct ixgbe_hw *hw);
 void ixgbe_enable_rx(struct ixgbe_hw *hw);
 s32 ixgbe_negotiate_fc(struct ixgbe_hw *hw, u32 adv_reg, u32 lp_reg,
 			u32 adv_sym, u32 adv_asm, u32 lp_sym, u32 lp_asm);
+
+void ixgbe_ensure_disabled_intr(struct adapter *);
 
 #endif /* _IXGBE_API_H_ */
