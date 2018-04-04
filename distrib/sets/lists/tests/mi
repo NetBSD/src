@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.778 2018/03/24 00:26:51 kamil Exp $
+# $NetBSD: mi,v 1.779 2018/04/04 16:42:48 kamil Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3635,12 +3635,12 @@
 ./usr/tests/usr.bin/c++				tests-usr.bin-tests	compattestfile,atf,cxx
 ./usr/tests/usr.bin/c++/Atffile			tests-usr.bin-tests	compattestfile,atf,cxx
 ./usr/tests/usr.bin/c++/Kyuafile		tests-usr.bin-tests	compattestfile,atf,kyua,cxx
-./usr/tests/usr.bin/c++/t_cxxruntime		tests-usr.bin-tests	compattestfile,atf,cxx
-./usr/tests/usr.bin/c++/t_hello			tests-usr.bin-tests	compattestfile,atf,cxx
-./usr/tests/usr.bin/c++/t_static_destructor	tests-usr.bin-tests	compattestfile,atf,cxx
 ./usr/tests/usr.bin/c++/t_call_once		tests-usr.bin-tests	compattestfile,atf,cxx
 ./usr/tests/usr.bin/c++/t_call_once2		tests-usr.bin-tests	compattestfile,atf,cxx
+./usr/tests/usr.bin/c++/t_cxxruntime		tests-usr.bin-tests	compattestfile,atf,cxx
+./usr/tests/usr.bin/c++/t_hello			tests-usr.bin-tests	compattestfile,atf,cxx
 ./usr/tests/usr.bin/c++/t_pthread_once		tests-usr.bin-tests	compattestfile,atf,cxx
+./usr/tests/usr.bin/c++/t_static_destructor	tests-usr.bin-tests	compattestfile,atf,cxx
 ./usr/tests/usr.bin/cc				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/cc/Atffile			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/cc/Kyuafile			tests-usr.bin-tests	compattestfile,atf,kyua
