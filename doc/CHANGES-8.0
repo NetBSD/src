@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.164 2018/04/05 14:42:36 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.165 2018/04/05 18:18:00 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -10906,6 +10906,22 @@ sys/sys/mbuf.h					1.179
 
 	Remove M_PKTHDR from secondary mbufs when reassembling packets.
 	[maxv, ticket #695]
+
+sys/arch/amd64/amd64/db_interface.c		1.33 (patch)
+sys/arch/amd64/amd64/spl.S			1.34 (patch)
+sys/arch/amd64/amd64/vector.S			1.62 (patch)
+sys/arch/i386/i386/db_interface.c		1.82 (patch)
+sys/arch/i386/i386/machdep.c			1.805 (patch)
+sys/arch/i386/i386/spl.S			1.43 (patch)
+sys/arch/i386/i386/vector.S			1.77
+sys/arch/x86/include/intr.h			1.55
+sys/arch/x86/x86/intr.c				1.125
+sys/arch/x86/x86/lapic.c			1.66 (patch)
+
+	Rename the DDB IPI IDT vectors for consistency.
+	Rename Xpreempt{recurse,resume} -> X{recurse,resume}_preempt
+	so that they fit the pattern.
+	[christos, ticket #696]
 
 sys/net/route.c					1.208
 
