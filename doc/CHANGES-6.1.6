@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1.6,v 1.1.2.134 2018/04/01 09:24:07 martin Exp $
+# $NetBSD: CHANGES-6.1.6,v 1.1.2.135 2018/04/05 11:36:31 martin Exp $
 
 A complete list of changes from the NetBSD 6.1.5 release to the NetBSD 6.1.6
 release:
@@ -15100,3 +15100,8 @@ sys/netinet6/raw_ip6.c				1.161
 	Fix use-after-free.
 	[maxv, ticket #1541]
 
+sys/net/npf/npf.h				1.55
+
+	Fix an integer overflow that allows incoming IPv6 packets
+	to bypass a certain number of filtering rules.
+	[maxv, ticket #1542]
