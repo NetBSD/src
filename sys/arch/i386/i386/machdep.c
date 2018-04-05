@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.805 2018/04/03 07:20:52 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.806 2018/04/05 08:43:07 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009, 2017
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.805 2018/04/03 07:20:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.806 2018/04/05 08:43:07 maxv Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_freebsd.h"
@@ -1168,6 +1168,9 @@ init386(paddr_t first_avail)
 
 	cpu_probe(&cpu_info_primary);
 	cpu_init_msrs(&cpu_info_primary, true);
+#ifndef XEN
+	cpu_speculation_init(&cpu_info_primary);
+#endif
 
 #ifdef PAE
 	use_pae = 1;
