@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_debe.c,v 1.6 2018/04/05 10:19:25 jmcneill Exp $ */
+/* $NetBSD: sunxi_debe.c,v 1.7 2018/04/05 10:21:39 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Manuel Bouyer <bouyer@antioche.eu.org>
@@ -38,7 +38,7 @@
 #define SUNXI_DEBE_CURMAX	64
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_debe.c,v 1.6 2018/04/05 10:19:25 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_debe.c,v 1.7 2018/04/05 10:21:39 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -148,9 +148,6 @@ sunxi_debe_attach(device_t parent, device_t self, void *aux)
 	bus_addr_t addr;
 	bus_size_t size;
 	struct fdtbus_reset *rst;
-#ifdef AWIN_DEBE_FWINIT
-	struct videomode mode;
-#endif
 	int error;
 
 	sc->sc_dev = self;
@@ -216,32 +213,6 @@ sunxi_debe_attach(device_t parent, device_t self, void *aux)
 	    fdtbus_get_string(phandle, "name"));
 
 
-#ifdef AWIN_DEBE_FWINIT
-	const uint32_t modctl = DEBE_READ(sc, SUNXI_DEBE_MODCTL_REG);
-	const uint32_t dissize = DEBE_READ(sc, SUNXI_DEBE_DISSIZE_REG);
-	if ((modctl & SUNXI_DEBE_MODCTL_EN) == 0) {
-		aprint_error_dev(sc->sc_dev, "disabled\n");
-		return;
-	}
-	if ((modctl & SUNXI_DEBE_MODCTL_START_CTL) == 0) {
-		aprint_error_dev(sc->sc_dev, "stopped\n");
-		return;
-	}
-	memset(&mode, 0, sizeof(mode));
-	mode.hdisplay = (dissize & 0xffff) + 1;
-	mode.vdisplay = ((dissize >> 16) & 0xffff) + 1;
-
-	if (mode.hdisplay == 1 || mode.vdisplay == 1) {
-		aprint_error_dev(sc->sc_dev,
-		    "couldn't determine video mode\n");
-		return;
-	}
-
-	aprint_verbose_dev(sc->sc_dev, "using %dx%d mode from firmware\n",
-	    mode.hdisplay, mode.vdisplay);
-
-	sc->sc_dmasize = mode.hdisplay * mode.vdisplay * 4;
-#else
 	for (unsigned int reg = 0x800; reg < 0x1000; reg += 4) {
 		DEBE_WRITE(sc, reg, 0);
 	}
@@ -249,7 +220,6 @@ sunxi_debe_attach(device_t parent, device_t self, void *aux)
 	DEBE_WRITE(sc, SUNXI_DEBE_MODCTL_REG, SUNXI_DEBE_MODCTL_EN);
 
 	sc->sc_dmasize = SUNXI_DEBE_VIDEOMEM;
-#endif
 
 	DEBE_WRITE(sc, SUNXI_DEBE_HWC_PALETTE_TABLE, 0);
 
@@ -265,16 +235,11 @@ sunxi_debe_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ports.dp_ep_enable = sunxi_debe_ep_enable;
 	fdt_ports_register(&sc->sc_ports, self, phandle, EP_OTHER);
 
-#ifdef AWIN_DEBE_FWINIT
-	sunxi_debe_set_videomode(device_unit(self), &mode);
-	sunxi_debe_enable(device_unit(self), true);
-#else
 	if (clk_disable(sc->sc_clk_ahb) != 0 ||
 	    clk_disable(sc->sc_clk_mod) != 0) {
 		aprint_error(": couldn't disable clocks\n");
 		return;
 	}
-#endif
 }
 
 
