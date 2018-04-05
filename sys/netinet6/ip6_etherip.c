@@ -1,4 +1,4 @@
-/*      $NetBSD: ip6_etherip.c,v 1.21 2017/01/11 13:08:29 ozaki-r Exp $        */
+/*      $NetBSD: ip6_etherip.c,v 1.21.8.1 2018/04/05 14:31:19 martin Exp $        */
 
 /*
  *  Copyright (c) 2006, Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>
@@ -27,8 +27,9 @@
  *  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  *  OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  *  SUCH DAMAGE.
- *
- *
+ */
+
+/*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
  *
@@ -58,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_etherip.c,v 1.21 2017/01/11 13:08:29 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_etherip.c,v 1.21.8.1 2018/04/05 14:31:19 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -113,7 +114,7 @@ ip6_etherip_output(struct ifnet *ifp, struct mbuf *m)
 	sin6_src = (struct sockaddr_in6 *)sc->sc_src;
 	sin6_dst = (struct sockaddr_in6 *)sc->sc_dst;
 
-	if (sin6_src == NULL || 
+	if (sin6_src == NULL ||
 	    sin6_dst == NULL ||
 	    sin6_src->sin6_family != AF_INET6 ||
 	    sin6_dst->sin6_family != AF_INET6) {
@@ -124,7 +125,7 @@ ip6_etherip_output(struct ifnet *ifp, struct mbuf *m)
 	/* reset broadcast/multicast flags */
 	m->m_flags &= ~(M_BCAST|M_MCAST);
 
-	m->m_flags |= M_PKTHDR;
+	KASSERT((m->m_flags & M_PKTHDR) != 0);
 	proto = IPPROTO_ETHERIP;
 
 	/* fill and prepend Ethernet-in-IP header */
@@ -138,9 +139,9 @@ ip6_etherip_output(struct ifnet *ifp, struct mbuf *m)
 		if (m == NULL)
 			return ENOBUFS;
 	}
-	memcpy(mtod(m, struct etherip_header *), &eiphdr, 
-	       sizeof(struct etherip_header));
-	
+	memcpy(mtod(m, struct etherip_header *), &eiphdr,
+	    sizeof(struct etherip_header));
+
 	/* prepend new IP header */
 	M_PREPEND(m, sizeof(struct ip6_hdr), M_DONTWAIT);
 	if (m && m->m_len < sizeof(struct ip6_hdr))
@@ -207,9 +208,9 @@ ip6_etherip_input(struct mbuf **mp, int *offp, int proto)
 
 	ip6 = mtod(m, const struct ip6_hdr *);
 
-	/* find device configured for this packets src and dst */
+	/* find device configured for this packet's src and dst */
 	LIST_FOREACH(sc, &etherip_softc_list, etherip_list) {
-		if( !sc->sc_src || !sc->sc_dst)
+		if (!sc->sc_src || !sc->sc_dst)
 			continue;
 		if (sc->sc_src->sa_family != AF_INET6 ||
 		    sc->sc_dst->sa_family != AF_INET6)
