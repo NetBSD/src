@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1.3,v 1.1.2.5 2018/04/05 11:43:08 martin Exp $
+# $NetBSD: CHANGES-7.1.3,v 1.1.2.6 2018/04/05 11:52:21 martin Exp $
 
 A complete list of changes from the NetBSD 7.1.2 release to the NetBSD 7.1.3
 release:
@@ -64,3 +64,12 @@ sys/net/npf/npf.h				1.55
 	Fix an integer overflow that allows incoming IPv6 packets
 	to bypass a certain number of filtering rules.
 	[maxv, ticket #1593]
+
+sys/kern/uipc_mbuf.c				1.182
+sys/netinet/ip_reass.c				1.14
+sys/netinet6/frag6.c				1.67
+sys/sys/mbuf.h					1.179
+
+	Remove M_PKTHDR from secondary mbufs when reassembling packets.
+	[maxv, ticket #1594]
+
