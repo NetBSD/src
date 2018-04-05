@@ -1,4 +1,4 @@
-/*	$NetBSD: dbregs.c,v 1.7 2018/04/05 14:11:20 maxv Exp $	*/
+/*	$NetBSD: dbregs.c,v 1.8 2018/04/05 14:14:27 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -190,6 +190,9 @@ x86_dbregs_validate(const struct dbreg *regs)
 	for (i = 0; i < X86_DBREGS; i++)
 		if (regs->dr[i] >= (vaddr_t)VM_MAXUSER_ADDRESS)
 			return EINVAL;
+
+	if (regs->dr[7] & X86_DR7_GENERAL_DETECT_ENABLE)
+		return EINVAL;
 
 	/*
 	 * Skip checks for reserved registers (DR4-DR5, DR8-DR15).
