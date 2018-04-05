@@ -1,4 +1,4 @@
-/*	$NetBSD: spectre.c,v 1.9 2018/04/04 16:23:27 maxv Exp $	*/
+/*	$NetBSD: spectre.c,v 1.10 2018/04/05 15:04:29 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spectre.c,v 1.9 2018/04/04 16:23:27 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spectre.c,v 1.10 2018/04/05 15:04:29 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,6 +82,29 @@ speculation_barrier(struct lwp *oldlwp, struct lwp *newlwp)
 		/* nothing */
 		break;
 	}
+}
+
+static void
+speculation_set_name(void)
+{
+	const char *name;
+
+	if (!spec_mitigation_enabled) {
+		name = "(none)";
+	} else {
+		switch (mitigation_method) {
+		case MITIGATION_AMD_DIS_IND:
+			name = "AMD DIS_IND";
+			break;
+		case MITIGATION_INTEL_IBRS:
+			name = "Intel IBRS";
+			break;
+		default:
+			panic("%s: impossible", __func__);
+		}
+	}
+	strlcpy(spec_mitigation_name, name,
+	    sizeof(spec_mitigation_name));
 }
 
 static void
@@ -270,7 +293,6 @@ mitigation_change(bool enabled)
 	struct cpu_info *ci = NULL;
 	CPU_INFO_ITERATOR cii;
 	uint64_t xc;
-	const char *name;
 
 	speculation_detect_method();
 
@@ -308,17 +330,7 @@ mitigation_change(bool enabled)
 		printf(" done!\n");
 		spec_mitigation_enabled = enabled;
 		mutex_exit(&cpu_lock);
-
-		if (!enabled) {
-			name = "(none)";
-		} else if (mitigation_method == MITIGATION_AMD_DIS_IND) {
-			name = "AMD DIS_IND";
-		} else {
-			name = "Intel IBRS";
-		}
-		strlcpy(spec_mitigation_name, name,
-		    sizeof(spec_mitigation_name));
-
+		speculation_set_name();
 		return 0;
 	default:
 		panic("impossible");
@@ -336,6 +348,7 @@ cpu_speculation_init(struct cpu_info *ci)
 		speculation_detect_method();
 		spec_mitigation_enabled =
 		    (mitigation_method != MITIGATION_NONE);
+		speculation_set_name();
 	}
 
 	if (mitigation_method != MITIGATION_NONE) {
