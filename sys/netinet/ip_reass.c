@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_reass.c,v 1.11.8.1 2018/03/30 11:10:14 martin Exp $	*/
+/*	$NetBSD: ip_reass.c,v 1.11.8.2 2018/04/05 14:33:41 martin Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_reass.c,v 1.11.8.1 2018/03/30 11:10:14 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_reass.c,v 1.11.8.2 2018/04/05 14:33:41 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -389,6 +389,7 @@ insert:
 		t = q->ipqe_m;
 		nq = TAILQ_NEXT(q, ipqe_q);
 		pool_cache_put(ipfren_cache, q);
+		m_pkthdr_remove(t);
 		m_cat(m, t);
 	}
 
@@ -406,7 +407,8 @@ insert:
 	m->m_data -= (ip->ip_hl << 2);
 
 	/* Fix up mbuf.  XXX This should be done elsewhere. */
-	if (m->m_flags & M_PKTHDR) {
+	{
+		KASSERT(m->m_flags & M_PKTHDR);
 		int plen = 0;
 		for (t = m; t; t = t->m_next) {
 			plen += t->m_len;
