@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_debe.c,v 1.5 2018/04/03 16:17:59 bouyer Exp $ */
+/* $NetBSD: sunxi_debe.c,v 1.6 2018/04/05 10:19:25 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Manuel Bouyer <bouyer@antioche.eu.org>
@@ -38,7 +38,7 @@
 #define SUNXI_DEBE_CURMAX	64
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_debe.c,v 1.5 2018/04/03 16:17:59 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_debe.c,v 1.6 2018/04/05 10:19:25 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -148,9 +148,6 @@ sunxi_debe_attach(device_t parent, device_t self, void *aux)
 	bus_addr_t addr;
 	bus_size_t size;
 	struct fdtbus_reset *rst;
-#if NAWIN_MP > 0
-	device_t mpdev;
-#endif
 #ifdef AWIN_DEBE_FWINIT
 	struct videomode mode;
 #endif
@@ -263,15 +260,6 @@ sunxi_debe_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-#if NAWIN_MP > 0
-	mpdev = device_find_by_driver_unit("sunximp", 0);
-	if (mpdev) {
-		paddr_t pa = sc->sc_dmamap->dm_segs[0].ds_addr;
-		if (pa >= SUNXI_SDRAM_PBASE)
-			pa -= SUNXI_SDRAM_PBASE;
-		sunxi_mp_setbase(mpdev, pa, sc->sc_dmasize);
-	}
-#endif
 	sc->sc_unit = -1;
 	sc->sc_ports.dp_ep_connect = sunxi_debe_ep_connect;
 	sc->sc_ports.dp_ep_enable = sunxi_debe_ep_enable;
@@ -699,7 +687,6 @@ sunxi_debe_ioctl(device_t self, u_long cmd, void *data)
 struct sunxi_befb_softc {
 	struct genfb_softc sc_gen;
 	device_t sc_debedev;
-	device_t sc_mpdev;
 
 	bus_dma_tag_t sc_dmat;
 	bus_dma_segment_t *sc_dmasegs;
@@ -740,7 +727,6 @@ sunxi_befb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dmat = afb->afb_dmat;
 	sc->sc_dmasegs = afb->afb_dmasegs;
 	sc->sc_ndmasegs = afb->afb_ndmasegs;
-	sc->sc_mpdev = device_find_by_driver_unit("sunximp", 0);
 
 	prop_dictionary_set_uint32(cfg, "width", afb->afb_width);
 	prop_dictionary_set_uint32(cfg, "height", afb->afb_height);
@@ -800,10 +786,6 @@ sunxi_befb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, lwp_t *l)
 		if (error == 0) {
 			fbi->fbi_flags |= WSFB_VRAM_IS_RAM;
 			fbi->fbi_fbsize = sc->sc_dmasegs[0].ds_len;
-#if NAWIN_MP > 0
-			if (sc->sc_mpdev)
-				fbi->fbi_flags |= WSFB_ACCEL;
-#endif
 		}
 		return error;
 	case WSDISPLAYIO_SVIDEO:
@@ -813,14 +795,6 @@ sunxi_befb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, lwp_t *l)
 	case WSDISPLAYIO_GCURMAX:
 	case WSDISPLAYIO_SCURSOR:
 		return sunxi_debe_ioctl(sc->sc_debedev, cmd, data);
-#if NAWIN_MP > 0
-	case WSDISPLAYIO_FILL:
-	case WSDISPLAYIO_COPY:
-	case WSDISPLAYIO_SYNC:
-		if (sc->sc_mpdev == NULL)
-			return EPASSTHROUGH;
-		return sunxi_mp_ioctl(sc->sc_mpdev, cmd, data);
-#endif
 	default:
 		return EPASSTHROUGH;
 	}
