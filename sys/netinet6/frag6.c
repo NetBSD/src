@@ -1,4 +1,4 @@
-/*	$NetBSD: frag6.c,v 1.60.6.3 2018/03/30 11:19:45 martin Exp $	*/
+/*	$NetBSD: frag6.c,v 1.60.6.4 2018/04/05 14:33:41 martin Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.60.6.3 2018/03/30 11:19:45 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.60.6.4 2018/04/05 14:33:41 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -407,6 +407,7 @@ insert:
 			t = t->m_next;
 		t->m_next = IP6_REASS_MBUF(af6);
 		m_adj(t->m_next, af6->ip6af_offset);
+		m_pkthdr_remove(t->m_next);
 		kmem_intr_free(af6, sizeof(struct ip6asfrag));
 		af6 = af6dwn;
 	}
@@ -448,12 +449,10 @@ insert:
 	kmem_intr_free(q6, sizeof(struct ip6q));
 	frag6_nfragpackets--;
 
-	if (m->m_flags & M_PKTHDR) { /* Isn't it always true? */
+	{
+		KASSERT(m->m_flags & M_PKTHDR);
 		int plen = 0;
 		for (t = m; t; t = t->m_next) {
-			/*
-			 * XXX XXX Why don't we remove M_PKTHDR?
-			 */
 			plen += t->m_len;
 		}
 		m->m_pkthdr.len = plen;
