@@ -1,4 +1,4 @@
-/*	$NetBSD: dbregs.c,v 1.6 2017/02/23 12:01:12 martin Exp $	*/
+/*	$NetBSD: dbregs.c,v 1.7 2018/04/05 14:11:20 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -188,7 +188,7 @@ x86_dbregs_validate(const struct dbreg *regs)
 
 	/* Check that DR0-DR3 contain user-space address */
 	for (i = 0; i < X86_DBREGS; i++)
-		if (regs->dr[i] > (vaddr_t)VM_MAXUSER_ADDRESS)
+		if (regs->dr[i] >= (vaddr_t)VM_MAXUSER_ADDRESS)
 			return EINVAL;
 
 	/*
