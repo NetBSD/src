@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.163 2018/04/04 16:42:03 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.164 2018/04/05 14:42:36 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -10888,4 +10888,27 @@ sys/net/npf/npf.h				1.55
 	Fix an integer overflow that allows incoming IPv6 packets
 	to bypass a certain number of filtering rules.
 	[maxv, ticket #693]
+
+sys/net/if_etherip.c				1.41,1.42
+sys/netinet/ip_etherip.c			1.21
+sys/netinet6/ip6_etherip.c			1.22
+
+	Don't call if_attach, do if_initialize+if_register instead.
+	Style, and do not add M_PKTHDR again, instead assert that it
+	is already there.
+	Add a missing NULL check after m_pullup.
+	[maxv, ticket #694]
+
+sys/kern/uipc_mbuf.c				1.182
+sys/netinet/ip_reass.c				1.14
+sys/netinet6/frag6.c				1.67
+sys/sys/mbuf.h					1.179
+
+	Remove M_PKTHDR from secondary mbufs when reassembling packets.
+	[maxv, ticket #695]
+
+sys/net/route.c					1.208
+
+	Kill remaining rt->rt_refcnt++
+	[ozaki-r, ticket #697]
 
