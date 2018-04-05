@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.49.2.2 2018/03/22 16:59:03 martin Exp $	*/
+/*	$NetBSD: vector.S,v 1.49.2.3 2018/04/05 18:15:02 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -160,7 +160,7 @@ IDTVEC_END(intr_lapic_ipi)
 	TEXT_USER_END
 
 #if defined(DDB)
-IDTVEC(handle_intrddbipi)
+IDTVEC(handle_ddbipi)
 	movl	$0xf,%eax
 	movq	%rax,%cr8
 	movq	_C_LABEL(local_apic_va),%rbx
@@ -170,8 +170,8 @@ IDTVEC(handle_intrddbipi)
 	xorl	%eax,%eax
 	movq	%rax,%cr8
 	INTRFASTEXIT
-IDTVEC_END(handle_intrddbipi)
-IDTVEC(handle_x2apic_intrddbipi)
+IDTVEC_END(handle_ddbipi)
+IDTVEC(handle_x2apic_ddbipi)
 	movl	$0xf,%eax
 	movq	%rax,%cr8
 	movl	$(MSR_X2APIC_BASE + MSR_X2APIC_EOI),%ecx
@@ -183,21 +183,21 @@ IDTVEC(handle_x2apic_intrddbipi)
 	xorl	%eax,%eax
 	movq	%rax,%cr8
 	INTRFASTEXIT
-IDTVEC_END(handle_x2apic_intrddbipi)
+IDTVEC_END(handle_x2apic_ddbipi)
 
 	TEXT_USER_BEGIN
-IDTVEC(intrddb)
+IDTVEC(intr_ddbipi)
 	pushq	$0
 	pushq	$T_BPTFLT
 	INTRENTRY
-	jmp	_C_LABEL(Xhandle_intrddbipi)
-IDTVEC_END(intrddb)
-IDTVEC(x2apic_intrddb)
+	jmp	_C_LABEL(Xhandle_ddbipi)
+IDTVEC_END(intr_ddbipi)
+IDTVEC(intr_x2apic_ddbipi)
 	pushq	$0
 	pushq	$T_BPTFLT
 	INTRENTRY
-	jmp	_C_LABEL(Xhandle_x2apic_intrddbipi)
-IDTVEC_END(x2apic_intrddb)
+	jmp	_C_LABEL(Xhandle_x2apic_ddbipi)
+IDTVEC_END(intr_x2apic_ddbipi)
 	TEXT_USER_END
 
 #endif /* DDB */

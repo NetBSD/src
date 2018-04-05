@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.50.2.1 2018/01/13 21:50:31 snj Exp $	*/
+/*	$NetBSD: intr.h,v 1.50.2.2 2018/04/05 18:15:02 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -171,8 +171,8 @@ splraiseipl(ipl_cookie_t icookie)
  */
 
 void Xsoftintr(void);
-void Xpreemptrecurse(void);
-void Xpreemptresume(void);
+void Xrecurse_preempt(void);
+void Xresume_preempt(void);
 
 extern struct intrstub i8259_stubs[];
 extern struct intrstub ioapic_edge_stubs[];
