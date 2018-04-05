@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.155.2.1 2017/04/05 19:54:23 snj Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.155.2.2 2018/04/05 11:48:13 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -819,6 +819,8 @@ extern struct mowner revoked_mowner;
 
 MALLOC_DECLARE(M_MBUF);
 MALLOC_DECLARE(M_SONAME);
+
+void	m_pkthdr_remove(struct mbuf *);
 
 struct	mbuf *m_copym(struct mbuf *, int, int, int);
 struct	mbuf *m_copypacket(struct mbuf *, int);
