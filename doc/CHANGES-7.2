@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.2,v 1.1.2.81 2018/04/01 09:13:25 martin Exp $
+# $NetBSD: CHANGES-7.2,v 1.1.2.82 2018/04/05 11:42:03 martin Exp $
 
 A complete list of changes from the NetBSD 7.1 release to the NetBSD 7.2
 release:
@@ -5399,3 +5399,8 @@ sys/netinet6/raw_ip6.c				1.161
 	Fix use-after-free.
 	[maxv, ticket #1591]
 
+sys/net/npf/npf.h				1.55
+
+	Fix an integer overflow that allows incoming IPv6 packets
+	to bypass a certain number of filtering rules.
+	[maxv, ticket #1593]
