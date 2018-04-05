@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.207 2018/03/23 04:09:41 ozaki-r Exp $	*/
+/*	$NetBSD: route.c,v 1.208 2018/04/05 03:39:14 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.207 2018/03/23 04:09:41 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.208 2018/04/05 03:39:14 ozaki-r Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -2124,7 +2124,7 @@ rt_delete_matched_entries(sa_family_t family, int (*f)(struct rtentry *, void *)
 			RT_UNLOCK();
 			return;
 		}
-		rt->rt_refcnt++;
+		rt_ref(rt);
 		splx(s);
 		RT_UNLOCK();
 
