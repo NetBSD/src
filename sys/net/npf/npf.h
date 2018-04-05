@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.h,v 1.14.2.6.4.1 2012/12/16 18:20:09 riz Exp $	*/
+/*	$NetBSD: npf.h,v 1.14.2.6.4.2 2018/04/05 11:38:36 martin Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@ typedef struct {
 	npf_addr_t *		npc_dstip;
 	/* Size (v4 or v6) of IP addresses. */
 	int			npc_alen;
-	u_int			npc_hlen;
+	uint32_t		npc_hlen;
 	int			npc_next_proto;
 	/* IPv4, IPv6. */
 	union {
