@@ -1,4 +1,4 @@
-/*      $NetBSD: ip_etherip.c,v 1.20 2017/01/11 13:08:29 ozaki-r Exp $        */
+/*      $NetBSD: ip_etherip.c,v 1.20.8.1 2018/04/05 14:31:19 martin Exp $        */
 
 /*
  *  Copyright (c) 2006, Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>
@@ -27,8 +27,9 @@
  *  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  *  OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  *  SUCH DAMAGE.
- *
- *
+ */
+
+/*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
  *
@@ -58,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_etherip.c,v 1.20 2017/01/11 13:08:29 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_etherip.c,v 1.20.8.1 2018/04/05 14:31:19 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -107,7 +108,7 @@ ip_etherip_output(struct ifnet *ifp, struct mbuf *m)
 	sin_src = (struct sockaddr_in *)sc->sc_src;
 	sin_dst = (struct sockaddr_in *)sc->sc_dst;
 
-	if (sin_src == NULL || 
+	if (sin_src == NULL ||
 	    sin_dst == NULL ||
 	    sin_src->sin_family != AF_INET ||
 	    sin_dst->sin_family != AF_INET) {
@@ -118,7 +119,7 @@ ip_etherip_output(struct ifnet *ifp, struct mbuf *m)
 	/* reset broadcast/multicast flags */
 	m->m_flags &= ~(M_BCAST|M_MCAST);
 
-	m->m_flags |= M_PKTHDR;
+	KASSERT((m->m_flags & M_PKTHDR) != 0);
 	proto = IPPROTO_ETHERIP;
 
 	/* fill and prepend Ethernet-in-IP header */
@@ -132,8 +133,8 @@ ip_etherip_output(struct ifnet *ifp, struct mbuf *m)
 		if (m == NULL)
 			return ENOBUFS;
 	}
-	memcpy(mtod(m, struct etherip_header *), &eiphdr, 
-	       sizeof(struct etherip_header));
+	memcpy(mtod(m, struct etherip_header *), &eiphdr,
+	    sizeof(struct etherip_header));
 
 	/* fill new IP header */
 	memset(&iphdr, 0, sizeof(struct ip));
@@ -156,6 +157,8 @@ ip_etherip_output(struct ifnet *ifp, struct mbuf *m)
 		return ENOBUFS;
 	if (M_UNWRITABLE(m, sizeof(struct ip)))
 		m = m_pullup(m, sizeof(struct ip));
+	if (m == NULL)
+		return ENOBUFS;
 	memcpy(mtod(m, struct ip *), &iphdr, sizeof(struct ip));
 
 	sockaddr_in_init(&u.dst4, &sin_dst->sin_addr, 0);
@@ -201,7 +204,7 @@ ip_etherip_input(struct mbuf *m, ...)
 
 	ip = mtod(m, const struct ip *);
 
-	/* find device configured for this packets src and dst */
+	/* find device configured for this packet's src and dst */
 	LIST_FOREACH(sc, &etherip_softc_list, etherip_list) {
 		if (!sc->sc_src || !sc->sc_dst)
 			continue;
@@ -216,7 +219,7 @@ ip_etherip_input(struct mbuf *m, ...)
 		if (src->sin_addr.s_addr != ip->ip_dst.s_addr ||
 		    dst->sin_addr.s_addr != ip->ip_src.s_addr)
 			continue;
-		
+
 		ifp = &sc->sc_ec.ec_if;
 		break;
 	}

@@ -1,4 +1,4 @@
-/*      $NetBSD: if_etherip.c,v 1.38.10.2 2018/01/02 10:20:33 snj Exp $        */
+/*      $NetBSD: if_etherip.c,v 1.38.10.3 2018/04/05 14:31:19 martin Exp $        */
 
 /*
  *  Copyright (c) 2006, Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>
@@ -27,8 +27,9 @@
  *  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  *  OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  *  SUCH DAMAGE.
- *
- *
+ */
+
+/*
  *  Copyright (c) 2003, 2004, 2008 The NetBSD Foundation.
  *  All rights reserved.
  *
@@ -55,9 +56,9 @@
  *  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  *  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
- *
- *
- * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
+ */
+
+/* Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -86,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_etherip.c,v 1.38.10.2 2018/01/02 10:20:33 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_etherip.c,v 1.38.10.3 2018/04/05 14:31:19 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -227,7 +228,7 @@ etherip_attach(device_t parent, device_t self, void *aux)
 	memcpy(enaddr+3, (uint8_t *)&ui, 3);
 
 	aprint_verbose_dev(self, "Ethernet address %s\n",
-		       ether_snprintf(enaddrstr, sizeof(enaddrstr), enaddr));
+	    ether_snprintf(enaddrstr, sizeof(enaddrstr), enaddr));
 
 	/*
 	 * Why 1000baseT? Why not? You can add more.
@@ -266,14 +267,15 @@ etherip_attach(device_t parent, device_t self, void *aux)
 	 * Those steps are mandatory for an Ethernet driver, the first call
 	 * being common to all network interface drivers.
 	 */
-	error = if_attach(ifp);
+	error = if_initialize(ifp);
 	if (error != 0) {
-		aprint_error_dev(self, "if_attach failed(%d)\n", error);
+		aprint_error_dev(self, "if_initialize failed(%d)\n", error);
 		ifmedia_delete_instance(&sc->sc_im, IFM_INST_ANY);
 		pmf_device_deregister(self);
 		return;
 	}
 	ether_ifattach(ifp, enaddr);
+	if_register(ifp);
 
 	/*
 	 * Add a sysctl node for that interface.
@@ -362,7 +364,7 @@ etherip_start(struct ifnet *ifp)
 {
 	struct etherip_softc *sc = ifp->if_softc;
 
-	if(sc->sc_si)
+	if (sc->sc_si)
 		softint_schedule(sc->sc_si);
 }
 
@@ -399,10 +401,14 @@ etheripintr(void *arg)
 				break;
 #endif
 			default:
+				/* impossible */
+				m_freem(m);
 				error = ENETDOWN;
 			}
 			ifp->if_flags &= ~IFF_OACTIVE;
-		} else  m_freem(m);
+		} else {
+			m_freem(m);
+		}
 	}
 	mutex_exit(softnet_lock);
 	__USE(error);
