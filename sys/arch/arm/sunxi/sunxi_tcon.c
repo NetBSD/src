@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_tcon.c,v 1.4 2018/04/04 16:01:05 bouyer Exp $ */
+/* $NetBSD: sunxi_tcon.c,v 1.5 2018/04/06 08:23:40 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2018 Manuel Bouyer <bouyer@antioche.eu.org>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_tcon.c,v 1.4 2018/04/04 16:01:05 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_tcon.c,v 1.5 2018/04/06 08:23:40 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -140,7 +140,7 @@ sunxi_tcon_attach(device_t parent, device_t self, void *aux)
 	sc->sc_clk_ch1 = fdtbus_clock_get(phandle, "tcon-ch1");
 
 	if (sc->sc_clk_ahb == NULL || sc->sc_clk_ch0 == NULL
-	    || sc->sc_clk_ch0 == NULL) {
+	    || sc->sc_clk_ch1 == NULL) {
 		aprint_error(": couldn't get clocks\n");
 		aprint_debug_dev(self, "clk ahb %s tcon-ch0 %s tcon-ch1 %s\n",
 		    sc->sc_clk_ahb == NULL ? "missing" : "present",
