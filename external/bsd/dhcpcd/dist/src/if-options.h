@@ -230,6 +230,6 @@ struct if_options *read_config(struct dhcpcd_ctx *,
 int add_options(struct dhcpcd_ctx *, const char *,
     struct if_options *, int, char **);
 void free_dhcp_opt_embenc(struct dhcp_opt *);
-void free_options(struct if_options *);
+void free_options(struct dhcpcd_ctx *, struct if_options *);
 
 #endif

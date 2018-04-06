@@ -85,7 +85,7 @@ if_free(struct interface *ifp)
 	ipv6nd_free(ifp);
 	ipv6_free(ifp);
 	rt_freeif(ifp);
-	free_options(ifp->options);
+	free_options(ifp->ctx, ifp->options);
 	free(ifp);
 }
 
