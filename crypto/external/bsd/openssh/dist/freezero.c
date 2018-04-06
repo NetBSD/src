@@ -1,7 +1,6 @@
-/*	$NetBSD: cipher-aesctr.h,v 1.2 2018/04/06 18:59:00 christos Exp $	*/
-/* $OpenBSD: cipher-aesctr.h,v 1.1 2014/04/29 15:39:33 markus Exp $ */
+/*	$NetBSD: freezero.c,v 1.1 2018/04/06 18:59:00 christos Exp $	*/
 /*
- * Copyright (c) 2014 Markus Friedl
+ * Copyright (c) 2008, 2010, 2011, 2016 Otto Moerbeek <otto@drijf.net>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,21 +15,22 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef OPENSSH_AESCTR_H
-#define OPENSSH_AESCTR_H
+#include "includes.h"
+__RCSID("$NetBSD: freezero.c,v 1.1 2018/04/06 18:59:00 christos Exp $");
 
-#include "rijndael.h"
+#include <string.h>
+#include <stdlib.h>
 
-#define AES_BLOCK_SIZE 16
+#ifndef HAVE_FREEZERO
 
-typedef struct aesctr_ctx {
-	int	rounds;				/* keylen-dependent #rounds */
-	u32	ek[4*(AES_MAXROUNDS + 1)];	/* encrypt key schedule */
-	u8	ctr[AES_BLOCK_SIZE];		/* counter */
-} aesctr_ctx;
+void
+freezero(void *ptr, size_t sz)
+{
+	if (ptr == NULL)
+		return;
+	explicit_bzero(ptr, sz);
+	free(ptr);
+}
 
-void aesctr_keysetup(aesctr_ctx *x,const u8 *k,u32 kbits,u32 ivbits);
-void aesctr_ivsetup(aesctr_ctx *x,const u8 *iv);
-void aesctr_encrypt_bytes(aesctr_ctx *x,const u8 *m,u8 *c,u32 bytes);
+#endif /* HAVE_FREEZERO */
 
-#endif

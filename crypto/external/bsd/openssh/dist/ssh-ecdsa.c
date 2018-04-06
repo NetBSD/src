@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh-ecdsa.c,v 1.11 2018/02/05 00:13:50 christos Exp $	*/
-/* $OpenBSD: ssh-ecdsa.c,v 1.13 2016/04/21 06:08:02 djm Exp $ */
+/*	$NetBSD: ssh-ecdsa.c,v 1.12 2018/04/06 18:59:00 christos Exp $	*/
+/* $OpenBSD: ssh-ecdsa.c,v 1.14 2018/02/07 02:06:51 jsing Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  * Copyright (c) 2010 Damien Miller.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-ecdsa.c,v 1.11 2018/02/05 00:13:50 christos Exp $");
+__RCSID("$NetBSD: ssh-ecdsa.c,v 1.12 2018/04/06 18:59:00 christos Exp $");
 #include <sys/types.h>
 
 #include <openssl/bn.h>
@@ -105,8 +105,7 @@ ssh_ecdsa_sign(const struct sshkey *key, u_char **sigp, size_t *lenp,
 	explicit_bzero(digest, sizeof(digest));
 	sshbuf_free(b);
 	sshbuf_free(bb);
-	if (sig != NULL)
-		ECDSA_SIG_free(sig);
+	ECDSA_SIG_free(sig);
 	return ret;
 }
 
@@ -200,8 +199,7 @@ out_rs:
 	explicit_bzero(digest, sizeof(digest));
 	sshbuf_free(sigbuf);
 	sshbuf_free(b);
-	if (sig != NULL)
-		ECDSA_SIG_free(sig);
+	ECDSA_SIG_free(sig);
 	free(ktype);
 	return ret;
 }

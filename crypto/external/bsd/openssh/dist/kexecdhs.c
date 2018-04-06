@@ -1,5 +1,5 @@
-/*	$NetBSD: kexecdhs.c,v 1.9 2017/10/07 19:39:19 christos Exp $	*/
-/* $OpenBSD: kexecdhs.c,v 1.16 2017/05/30 14:23:52 markus Exp $ */
+/*	$NetBSD: kexecdhs.c,v 1.10 2018/04/06 18:59:00 christos Exp $	*/
+/* $OpenBSD: kexecdhs.c,v 1.17 2018/02/07 02:06:51 jsing Exp $ */
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  * Copyright (c) 2010 Damien Miller.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: kexecdhs.c,v 1.9 2017/10/07 19:39:19 christos Exp $");
+__RCSID("$NetBSD: kexecdhs.c,v 1.10 2018/04/06 18:59:00 christos Exp $");
 #include <sys/types.h>
 #include <string.h>
 #include <signal.h>
@@ -186,18 +186,14 @@ input_kex_ecdh_init(int type, u_int32_t seq, struct ssh *ssh)
 		r = kex_send_newkeys(ssh);
  out:
 	explicit_bzero(hash, sizeof(hash));
-	if (kex->ec_client_key) {
-		EC_KEY_free(kex->ec_client_key);
-		kex->ec_client_key = NULL;
-	}
-	if (server_key)
-		EC_KEY_free(server_key);
+	EC_KEY_free(kex->ec_client_key);
+	kex->ec_client_key = NULL;
+	EC_KEY_free(server_key);
 	if (kbuf) {
 		explicit_bzero(kbuf, klen);
 		free(kbuf);
 	}
-	if (shared_secret)
-		BN_clear_free(shared_secret);
+	BN_clear_free(shared_secret);
 	free(server_host_key_blob);
 	free(signature);
 	return r;
