@@ -1,4 +1,4 @@
-/*	$NetBSD: krl.c,v 1.11 2017/10/07 19:39:19 christos Exp $	*/
+/*	$NetBSD: krl.c,v 1.12 2018/04/06 18:59:00 christos Exp $	*/
 
 /*
  * Copyright (c) 2012 Damien Miller <djm@mindrot.org>
@@ -16,9 +16,10 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $OpenBSD: krl.c,v 1.40 2017/05/31 09:15:42 deraadt Exp $ */
+/* $OpenBSD: krl.c,v 1.41 2017/12/18 02:25:15 djm Exp $ */
 
 #include "includes.h"
+__RCSID("$NetBSD: krl.c,v 1.12 2018/04/06 18:59:00 christos Exp $");
 #include <sys/param.h>	/* MIN */
 #include <sys/types.h>
 #include <sys/tree.h>
@@ -1019,7 +1020,7 @@ ssh_krl_from_blob(struct sshbuf *buf, struct ssh_krl **krlp,
 		}
 		/* Check signature over entire KRL up to this point */
 		if ((r = sshkey_verify(key, blob, blen,
-		    sshbuf_ptr(buf), sig_off, 0)) != 0)
+		    sshbuf_ptr(buf), sig_off, NULL, 0)) != 0)
 			goto out;
 		/* Check if this key has already signed this KRL */
 		for (i = 0; i < nca_used; i++) {

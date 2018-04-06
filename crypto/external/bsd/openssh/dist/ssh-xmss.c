@@ -1,3 +1,4 @@
+/*	$NetBSD: ssh-xmss.c,v 1.2 2018/04/06 18:59:00 christos Exp $	*/
 /* $OpenBSD: ssh-xmss.c,v 1.1 2018/02/23 15:58:38 markus Exp $*/
 /*
  * Copyright (c) 2017 Stefan-Lukas Gazdag.
@@ -15,6 +16,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#include "includes.h"
+__RCSID("$NetBSD: ssh-xmss.c,v 1.2 2018/04/06 18:59:00 christos Exp $");
 #define SSHKEY_INTERNAL
 #include <sys/types.h>
 #include <limits.h>
