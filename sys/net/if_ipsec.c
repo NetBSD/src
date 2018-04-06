@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipsec.c,v 1.8 2018/04/06 09:24:13 knakahara Exp $  */
+/*	$NetBSD: if_ipsec.c,v 1.9 2018/04/06 09:28:26 knakahara Exp $  */
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipsec.c,v 1.8 2018/04/06 09:24:13 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipsec.c,v 1.9 2018/04/06 09:28:26 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -637,6 +637,7 @@ if_ipsec_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		error = if_ipsec_set_tunnel(&sc->ipsec_if, src, dst);
 		if (error)
 			goto bad;
+		curlwp_bindx(bound);
 		break;
 
 	case SIOCDIFPHYADDR:
@@ -769,6 +770,7 @@ if_ipsec_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			error = if_ipsec_ensure_flags(&sc->ipsec_if, oflags);
 			if (error)
 				goto bad;
+			curlwp_bindx(bound);
 		}
 		break;
 	}
