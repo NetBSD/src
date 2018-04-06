@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipsec.c,v 1.9 2018/04/06 09:28:26 knakahara Exp $  */
+/*	$NetBSD: if_ipsec.c,v 1.10 2018/04/06 09:30:09 knakahara Exp $  */
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipsec.c,v 1.9 2018/04/06 09:28:26 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipsec.c,v 1.10 2018/04/06 09:30:09 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -76,6 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ipsec.c,v 1.9 2018/04/06 09:28:26 knakahara Exp $
 #include <net/pfkeyv2.h>
 
 #include <netipsec/key.h>
+#include <netipsec/keydb.h> /* for union sockaddr_union */
 #include <netipsec/ipsec.h>
 #include <netipsec/ipsecif.h>
 
@@ -1340,10 +1341,11 @@ if_ipsec_add_mbuf_addr_port(struct mbuf *m0, struct sockaddr *addr, in_port_t po
 	if (port == 0) {
 		if_ipsec_add_mbuf_optalign(m0, addr, addr->sa_len, align);
 	} else {
-		struct sockaddr addrport;
+		union sockaddr_union addrport_u;
+		struct sockaddr *addrport = &addrport_u.sa;
 
-		if_ipsec_set_addr_port(&addrport, addr, port);
-		if_ipsec_add_mbuf_optalign(m0, &addrport, addrport.sa_len, align);
+		if_ipsec_set_addr_port(addrport, addr, port);
+		if_ipsec_add_mbuf_optalign(m0, addrport, addrport->sa_len, align);
 	}
 }
 
