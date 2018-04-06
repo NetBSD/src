@@ -1,3 +1,4 @@
+/*	$NetBSD: crypto_api.h,v 1.2 2018/04/06 18:59:00 christos Exp $	*/
 /* $OpenBSD: crypto_api.h,v 1.4 2017/12/14 21:07:39 naddy Exp $ */
 
 /*
