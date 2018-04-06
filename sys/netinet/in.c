@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.224 2018/04/06 09:19:16 ozaki-r Exp $	*/
+/*	$NetBSD: in.c,v 1.225 2018/04/06 09:20:29 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.224 2018/04/06 09:19:16 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.225 2018/04/06 09:20:29 ozaki-r Exp $");
 
 #include "arp.h"
 
@@ -1146,10 +1146,12 @@ in_ifinit(struct ifnet *ifp, struct in_ifaddr *ia,
 	if (ia->ia4_flags & IN_IFF_DUPLICATED)
 		hostIsNew = 1;
 	ia->ia4_flags = 0;
-	if (ifp->if_link_state == LINK_STATE_DOWN)
-		ia->ia4_flags |= IN_IFF_DETACHED;
-	else if (hostIsNew && if_do_dad(ifp))
-		ia->ia4_flags |= IN_IFF_TRYTENTATIVE;
+	if (ip_dad_count > 0) {
+		if (ifp->if_link_state == LINK_STATE_DOWN)
+			ia->ia4_flags |= IN_IFF_DETACHED;
+		else if (hostIsNew && if_do_dad(ifp))
+			ia->ia4_flags |= IN_IFF_TRYTENTATIVE;
+	}
 
 	/*
 	 * Give the interface a chance to initialize
