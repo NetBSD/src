@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsecif.c,v 1.5 2018/03/13 03:05:12 knakahara Exp $  */
+/*	$NetBSD: ipsecif.c,v 1.6 2018/04/06 10:31:35 knakahara Exp $  */
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsecif.c,v 1.5 2018/03/13 03:05:12 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsecif.c,v 1.6 2018/04/06 10:31:35 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -135,7 +135,10 @@ ipsecif4_prepend_hdr(struct ipsec_variant *var, struct mbuf *m,
 	ip = mtod(m, struct ip *);
 	ip->ip_v = IPVERSION;
 	ip->ip_off = htons(0);
-	ip->ip_id = 0;
+	if (m->m_pkthdr.len < IP_MINFRAGSIZE)
+		ip->ip_id = 0;
+	else
+		ip->ip_id = ip_newid(NULL);
 	ip->ip_hl = sizeof(*ip) >> 2;
 	if (ip_ipsec_copy_tos)
 		ip->ip_tos = tos;
