@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipsec.c,v 1.10 2018/04/06 09:30:09 knakahara Exp $  */
+/*	$NetBSD: if_ipsec.c,v 1.11 2018/04/06 10:38:53 knakahara Exp $  */
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipsec.c,v 1.10 2018/04/06 09:30:09 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipsec.c,v 1.11 2018/04/06 10:38:53 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -280,7 +280,7 @@ if_ipsec_fwd_ipv6(struct ipsec_softc *sc)
 int
 if_ipsec_encap_func(struct mbuf *m, int off, int proto, void *arg)
 {
-	struct ip ip;
+	uint8_t v;
 	struct ipsec_softc *sc;
 	struct ipsec_variant *var = NULL;
 	struct psref psref;
@@ -304,18 +304,39 @@ if_ipsec_encap_func(struct mbuf *m, int off, int proto, void *arg)
 		goto out;
 	}
 
-	if (m->m_pkthdr.len < sizeof(ip))
-		goto out;
+	m_copydata(m, 0, sizeof(v), &v);
+	v = (v >> 4) & 0xff;  /* Get the IP version number. */
 
-	m_copydata(m, 0, sizeof(ip), &ip);
-	switch (ip.ip_v) {
+	switch (v) {
 #ifdef INET
-	case IPVERSION:
+	case IPVERSION: {
+		struct ip ip;
+
+		if (m->m_pkthdr.len < sizeof(ip))
+			goto out;
+
+		m_copydata(m, 0, sizeof(ip), &ip);
 		if (var->iv_psrc->sa_family != AF_INET ||
 		    var->iv_pdst->sa_family != AF_INET)
 			goto out;
 		ret = ipsecif4_encap_func(m, &ip, var);
 		break;
+	}
+#endif
+#ifdef INET6
+	case (IPV6_VERSION >> 4): {
+		struct ip6_hdr ip6;
+
+		if (m->m_pkthdr.len < sizeof(ip6))
+			goto out;
+
+		m_copydata(m, 0, sizeof(ip6), &ip6);
+		if (var->iv_psrc->sa_family != AF_INET6 ||
+		    var->iv_pdst->sa_family != AF_INET6)
+			goto out;
+		ret = ipsecif6_encap_func(m, &ip6, var);
+		break;
+	}
 #endif
 	default:
 		goto out;

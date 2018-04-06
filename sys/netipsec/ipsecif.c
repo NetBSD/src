@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsecif.c,v 1.6 2018/04/06 10:31:35 knakahara Exp $  */
+/*	$NetBSD: ipsecif.c,v 1.7 2018/04/06 10:38:53 knakahara Exp $  */
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsecif.c,v 1.6 2018/04/06 10:31:35 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsecif.c,v 1.7 2018/04/06 10:38:53 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -412,6 +412,57 @@ done:
 }
 
 #ifdef INET6
+int
+ipsecif6_encap_func(struct mbuf *m, struct ip6_hdr *ip6, struct ipsec_variant *var)
+{
+	struct m_tag *mtag;
+	struct sockaddr_in6 *src, *dst;
+	u_int16_t src_port = 0;
+	u_int16_t dst_port = 0;
+
+	KASSERT(var != NULL);
+
+	src = satosin6(var->iv_psrc);
+	dst = satosin6(var->iv_pdst);
+	mtag = m_tag_find(m, PACKET_TAG_IPSEC_NAT_T_PORTS, NULL);
+	if (mtag) {
+		u_int16_t *ports;
+
+		ports = (u_int16_t *)(mtag + 1);
+		src_port = ports[0];
+		dst_port = ports[1];
+	}
+
+	/* address match */
+	if (!IN6_ARE_ADDR_EQUAL(&src->sin6_addr, &ip6->ip6_dst) ||
+	    !IN6_ARE_ADDR_EQUAL(&dst->sin6_addr, &ip6->ip6_src))
+		return 0;
+
+	/* UDP encap? */
+	if (mtag == NULL && var->iv_sport == 0 && var->iv_dport == 0)
+		goto match;
+
+	/* port match */
+	if (src_port != var->iv_dport ||
+	    dst_port != var->iv_sport) {
+#ifdef DEBUG
+		printf("%s: port mismatch: pkt(%u, %u), if(%u, %u)\n",
+		    __func__, ntohs(src_port), ntohs(dst_port),
+		    ntohs(var->iv_sport), ntohs(var->iv_dport));
+#endif
+		return 0;
+	}
+
+match:
+	/*
+	 * hide NAT-T information from encapsulated traffics.
+	 * they don't know about IPsec.
+	 */
+	if (mtag)
+		m_tag_delete(m, mtag);
+	return sizeof(src->sin6_addr) + sizeof(dst->sin6_addr);
+}
+
 static int
 ipsecif6_output(struct ipsec_variant *var, int family, struct mbuf *m)
 {
@@ -841,9 +892,7 @@ ipsecif6_attach(struct ipsec_variant *var)
 	mask6.sin6_addr.s6_addr32[0] = mask6.sin6_addr.s6_addr32[1] =
 	mask6.sin6_addr.s6_addr32[2] = mask6.sin6_addr.s6_addr32[3] = ~0;
 
-	var->iv_encap_cookie6 = encap_attach(AF_INET6, -1,
-	    var->iv_psrc, (struct sockaddr *)&mask6,
-	    var->iv_pdst, (struct sockaddr *)&mask6,
+	var->iv_encap_cookie6 = encap_attach_func(AF_INET6, -1, if_ipsec_encap_func,
 	    &ipsecif6_encapsw, sc);
 	if (var->iv_encap_cookie6 == NULL)
 		return EEXIST;
