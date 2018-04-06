@@ -1847,6 +1847,7 @@ dhcp6_checkstatusok(const struct interface *ifp,
 {
 	uint8_t *opt;
 	uint16_t opt_len, code;
+	size_t mlen;
 	void * (*f)(void *, size_t, uint16_t, uint16_t *), *farg;
 	char buf[32], *sbuf;
 	const char *status;
@@ -1872,8 +1873,8 @@ dhcp6_checkstatusok(const struct interface *ifp,
 
 	/* Anything after the code is a message. */
 	opt += sizeof(code);
-	opt_len = (uint16_t)(opt_len - sizeof(code));
-	if (opt_len == 0) {
+	mlen = opt_len - sizeof(code);
+	if (mlen == 0) {
 		sbuf = NULL;
 		if (code < sizeof(dhcp6_statuses) / sizeof(char *))
 			status = dhcp6_statuses[code];
@@ -1882,12 +1883,12 @@ dhcp6_checkstatusok(const struct interface *ifp,
 			status = buf;
 		}
 	} else {
-		if ((sbuf = malloc((size_t)opt_len + 1)) == NULL) {
+		if ((sbuf = malloc(mlen + 1)) == NULL) {
 			logerr(__func__);
 			return -1;
 		}
-		memcpy(sbuf, opt, opt_len);
-		sbuf[len] = '\0';
+		memcpy(sbuf, opt, mlen);
+		sbuf[mlen] = '\0';
 		status = sbuf;
 	}
 

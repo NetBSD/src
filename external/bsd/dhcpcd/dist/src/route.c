@@ -101,17 +101,13 @@ rt_desc(const char *cmd, const struct rt *rt)
 }
 
 void
-rt_headclear(struct rt_head *rts, int af)
+rt_headclear0(struct dhcpcd_ctx *ctx, struct rt_head *rts, int af)
 {
 	struct rt *rt, *rtn;
-	struct dhcpcd_ctx *ctx;
 
 	if (rts == NULL)
 		return;
-
-	if ((rt = TAILQ_FIRST(rts)) == NULL)
-		return;
-	ctx = rt->rt_ifp->ctx;
+	assert(ctx != NULL);
 	assert(&ctx->froutes != rts);
 
 	TAILQ_FOREACH_SAFE(rt, rts, rt_next, rtn) {
@@ -122,6 +118,16 @@ rt_headclear(struct rt_head *rts, int af)
 		TAILQ_REMOVE(rts, rt, rt_next);
 		TAILQ_INSERT_TAIL(&ctx->froutes, rt, rt_next);
 	}
+}
+
+void
+rt_headclear(struct rt_head *rts, int af)
+{
+	struct rt *rt;
+
+	if (rts == NULL || (rt = TAILQ_FIRST(rts)) == NULL)
+		return;
+	rt_headclear0(rt->rt_ifp->ctx, rts, af);
 }
 
 static void
@@ -146,13 +152,11 @@ rt_dispose(struct dhcpcd_ctx *ctx)
 }
 
 struct rt *
-rt_new(struct interface *ifp)
+rt_new0(struct dhcpcd_ctx *ctx)
 {
 	struct rt *rt;
-	struct dhcpcd_ctx *ctx;
 
-	assert(ifp != NULL);
-	ctx = ifp->ctx;
+	assert(ctx != NULL);
 	if ((rt = TAILQ_FIRST(&ctx->froutes)) != NULL)
 		TAILQ_REMOVE(&ctx->froutes, rt, rt_next);
 	else if ((rt = malloc(sizeof(*rt))) == NULL) {
@@ -160,10 +164,30 @@ rt_new(struct interface *ifp)
 		return NULL;
 	}
 	memset(rt, 0, sizeof(*rt));
+	return rt;
+}
+
+void
+rt_setif(struct rt *rt, struct interface *ifp)
+{
+
+	assert(rt != NULL);
+	assert(ifp != NULL);
 	rt->rt_ifp = ifp;
 #ifdef HAVE_ROUTE_METRIC
 	rt->rt_metric = ifp->metric;
 #endif
+}
+
+struct rt *
+rt_new(struct interface *ifp)
+{
+	struct rt *rt;
+
+	assert(ifp != NULL);
+	if ((rt = rt_new0(ifp->ctx)) == NULL)
+		return NULL;
+	rt_setif(rt, ifp);
 	return rt;
 }
 
