@@ -1,6 +1,6 @@
-/*	$NetBSD: servconf.c,v 1.25 2017/10/07 19:39:19 christos Exp $	*/
+/*	$NetBSD: servconf.c,v 1.26 2018/04/06 18:59:00 christos Exp $	*/
 
-/* $OpenBSD: servconf.c,v 1.312 2017/10/02 19:33:20 djm Exp $ */
+/* $OpenBSD: servconf.c,v 1.326 2018/03/01 20:32:16 markus Exp $ */
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -13,14 +13,16 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: servconf.c,v 1.25 2017/10/07 19:39:19 christos Exp $");
+__RCSID("$NetBSD: servconf.c,v 1.26 2018/04/06 18:59:00 christos Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/queue.h>
 #include <sys/param.h>
+#include <sys/sysctl.h>
 
 #include <netinet/in.h>
 #include <netinet/ip.h>
+#include <net/route.h>
 
 #include <ctype.h>
 #include <netdb.h>
@@ -70,8 +72,10 @@ __RCSID("$NetBSD: servconf.c,v 1.25 2017/10/07 19:39:19 christos Exp $");
 #include "myproposal.h"
 #include "digest.h"
 
-static void add_listen_addr(ServerOptions *, char *, int);
-static void add_one_listen_addr(ServerOptions *, char *, int);
+static void add_listen_addr(ServerOptions *, const char *,
+    const char *, int);
+static void add_one_listen_addr(ServerOptions *, const char *,
+    const char *, int);
 
 /* Use of privilege separation or not */
 extern int use_privsep;
@@ -93,7 +97,9 @@ initialize_server_options(ServerOptions *options)
 	options->queued_listen_addrs = NULL;
 	options->num_queued_listens = 0;
 	options->listen_addrs = NULL;
+	options->num_listen_addrs = 0;
 	options->address_family = -1;
+	options->routing_domain = NULL;
 	options->num_host_key_files = 0;
 	options->num_host_cert_files = 0;
 	options->host_key_agent = NULL;
@@ -230,6 +236,41 @@ assemble_algorithms(ServerOptions *o)
 		fatal("kex_assemble_names failed");
 }
 
+static void
+array_append(const char *file, const int line, const char *directive,
+    char ***array, u_int *lp, const char *s)
+{
+
+	if (*lp >= INT_MAX)
+		fatal("%s line %d: Too many %s entries", file, line, directive);
+
+	*array = xrecallocarray(*array, *lp, *lp + 1, sizeof(**array));
+	(*array)[*lp] = xstrdup(s);
+	(*lp)++;
+}
+
+void
+servconf_add_hostkey(const char *file, const int line,
+    ServerOptions *options, const char *path)
+{
+	char *apath = derelativise_path(path);
+
+	array_append(file, line, "HostKey",
+	    &options->host_key_files, &options->num_host_key_files, apath);
+	free(apath);
+}
+
+void
+servconf_add_hostcert(const char *file, const int line,
+    ServerOptions *options, const char *path)
+{
+	char *apath = derelativise_path(path);
+
+	array_append(file, line, "HostCertificate",
+	    &options->host_cert_files, &options->num_host_cert_files, apath);
+	free(apath);
+}
+
 void
 fill_default_server_options(ServerOptions *options)
 {
@@ -243,18 +284,20 @@ fill_default_server_options(ServerOptions *options)
 		options->use_pam = 0;
 
 	/* Standard Options */
-	int i;
+	u_int i;
 
 	if (options->num_host_key_files == 0) {
 		/* fill default hostkeys */
-		options->host_key_files[options->num_host_key_files++] =
-		    __UNCONST(_PATH_HOST_RSA_KEY_FILE);
-		options->host_key_files[options->num_host_key_files++] =
-		    __UNCONST(_PATH_HOST_DSA_KEY_FILE);
-		options->host_key_files[options->num_host_key_files++] =
-		    __UNCONST(_PATH_HOST_ECDSA_KEY_FILE);
-		options->host_key_files[options->num_host_key_files++] =
-		    __UNCONST(_PATH_HOST_ED25519_KEY_FILE);
+		servconf_add_hostkey("[default]", 0, options,
+		    _PATH_HOST_RSA_KEY_FILE);
+		servconf_add_hostkey("[default]", 0, options,
+		    _PATH_HOST_ECDSA_KEY_FILE);
+		servconf_add_hostkey("[default]", 0, options,
+		    _PATH_HOST_ED25519_KEY_FILE);
+#ifdef WITH_XMSS
+		servconf_add_hostkey("[default]", 0, options,
+		    _PATH_HOST_XMSS_KEY_FILE);
+#endif /* WITH_XMSS */
 	}
 	/* No certificates by default */
 	if (options->num_ports == 0)
@@ -262,7 +305,7 @@ fill_default_server_options(ServerOptions *options)
 	if (options->address_family == -1)
 		options->address_family = AF_UNSPEC;
 	if (options->listen_addrs == NULL)
-		add_listen_addr(options, NULL, 0);
+		add_listen_addr(options, NULL, NULL, 0);
 	if (options->pid_file == NULL)
 		options->pid_file = xstrdup(_PATH_SSH_DAEMON_PID_FILE);
 	if (options->login_grace_time == -1)
@@ -368,10 +411,14 @@ fill_default_server_options(ServerOptions *options)
 	if (options->client_alive_count_max == -1)
 		options->client_alive_count_max = 3;
 	if (options->num_authkeys_files == 0) {
-		options->authorized_keys_files[options->num_authkeys_files++] =
-		    xstrdup(_PATH_SSH_USER_PERMITTED_KEYS);
-		options->authorized_keys_files[options->num_authkeys_files++] =
-		    xstrdup(_PATH_SSH_USER_PERMITTED_KEYS2);
+		array_append("[default]", 0, "AuthorizedKeysFiles",
+		    &options->authorized_keys_files,
+		    &options->num_authkeys_files,
+		    _PATH_SSH_USER_PERMITTED_KEYS);
+		array_append("[default]", 0, "AuthorizedKeysFiles",
+		    &options->authorized_keys_files,
+		    &options->num_authkeys_files,
+		    _PATH_SSH_USER_PERMITTED_KEYS2);
 	}
 	if (options->permit_tun == -1)
 		options->permit_tun = SSH_TUNMODE_NO;
@@ -479,6 +526,7 @@ fill_default_server_options(ServerOptions *options)
 	CLEAR_ON_NONE(options->authorized_principals_file);
 	CLEAR_ON_NONE(options->adm_forced_command);
 	CLEAR_ON_NONE(options->chroot_directory);
+	CLEAR_ON_NONE(options->routing_domain);
 	for (i = 0; i < options->num_host_key_files; i++)
 		CLEAR_ON_NONE(options->host_key_files[i]);
 	for (i = 0; i < options->num_host_cert_files; i++)
@@ -532,7 +580,7 @@ typedef enum {
 	sAuthenticationMethods, sHostKeyAgent, sPermitUserRC,
 	sStreamLocalBindMask, sStreamLocalBindUnlink,
 	sAllowStreamLocalForwarding, sFingerprintHash, sDisableForwarding,
-	sExposeAuthInfo,
+	sExposeAuthInfo, sRDomain,
 	sDeprecated, sIgnore, sUnsupported
 #ifdef WITH_LDAP_PUBKEY
 	,sLdapPublickey, sLdapServers, sLdapUserDN
@@ -696,6 +744,7 @@ static struct {
 	{ "fingerprinthash", sFingerprintHash, SSHCFG_GLOBAL },
 	{ "disableforwarding", sDisableForwarding, SSHCFG_ALL },
 	{ "exposeauthinfo", sExposeAuthInfo, SSHCFG_ALL },
+	{ "rdomain", sRDomain, SSHCFG_ALL },
 	{ NULL, sBadOption, 0 }
 };
 
@@ -750,23 +799,51 @@ derelativise_path(const char *path)
 }
 
 static void
-add_listen_addr(ServerOptions *options, char *addr, int port)
+add_listen_addr(ServerOptions *options, const char *addr,
+    const char *rdomain, int port)
 {
 	u_int i;
 
-	if (port == 0)
-		for (i = 0; i < options->num_ports; i++)
-			add_one_listen_addr(options, addr, options->ports[i]);
-	else
-		add_one_listen_addr(options, addr, port);
+	if (port > 0)
+		add_one_listen_addr(options, addr, rdomain, port);
+	else {
+		for (i = 0; i < options->num_ports; i++) {
+			add_one_listen_addr(options, addr, rdomain,
+			    options->ports[i]);
+		}
+	}
 }
 
 static void
-add_one_listen_addr(ServerOptions *options, char *addr, int port)
+add_one_listen_addr(ServerOptions *options, const char *addr,
+    const char *rdomain, int port)
 {
 	struct addrinfo hints, *ai, *aitop;
 	char strport[NI_MAXSERV];
 	int gaierr;
+	u_int i;
+
+	/* Find listen_addrs entry for this rdomain */
+	for (i = 0; i < options->num_listen_addrs; i++) {
+		if (rdomain == NULL && options->listen_addrs[i].rdomain == NULL)
+			break;
+		if (rdomain == NULL || options->listen_addrs[i].rdomain == NULL)
+			continue;
+		if (strcmp(rdomain, options->listen_addrs[i].rdomain) == 0)
+			break;
+	}
+	if (i >= options->num_listen_addrs) {
+		/* No entry for this rdomain; allocate one */
+		if (i >= INT_MAX)
+			fatal("%s: too many listen addresses", __func__);
+		options->listen_addrs = xrecallocarray(options->listen_addrs,
+		    options->num_listen_addrs, options->num_listen_addrs + 1,
+		    sizeof(*options->listen_addrs));
+		i = options->num_listen_addrs++;
+		if (rdomain != NULL)
+			options->listen_addrs[i].rdomain = xstrdup(rdomain);
+	}
+	/* options->listen_addrs[i] points to the addresses for this rdomain */
 
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = options->address_family;
@@ -779,8 +856,41 @@ add_one_listen_addr(ServerOptions *options, char *addr, int port)
 		    ssh_gai_strerror(gaierr));
 	for (ai = aitop; ai->ai_next; ai = ai->ai_next)
 		;
-	ai->ai_next = options->listen_addrs;
-	options->listen_addrs = aitop;
+	ai->ai_next = options->listen_addrs[i].addrs;
+	options->listen_addrs[i].addrs = aitop;
+}
+
+/* Returns nonzero if the routing domain name is valid */
+static int
+valid_rdomain(const char *name)
+{
+#ifdef NET_RT_TABLE
+	const char *errstr;
+	long long num;
+	struct rt_tableinfo info;
+	int mib[6];
+	size_t miblen = sizeof(mib);
+
+	if (name == NULL)
+		return 1;
+
+	num = strtonum(name, 0, 255, &errstr);
+	if (errstr != NULL)
+		return 0;
+
+	/* Check whether the table actually exists */
+	memset(mib, 0, sizeof(mib));
+	mib[0] = CTL_NET;
+	mib[1] = PF_ROUTE;
+	mib[4] = NET_RT_TABLE;
+	mib[5] = (int)num;
+	if (sysctl(mib, 6, &info, &miblen, NULL, 0) == -1)
+		return 0;
+
+	return 1;
+#else
+	return 0;
+#endif
 }
 
 /*
@@ -788,18 +898,19 @@ add_one_listen_addr(ServerOptions *options, char *addr, int port)
  * and AddressFamily options.
  */
 static void
-queue_listen_addr(ServerOptions *options, char *addr, int port)
+queue_listen_addr(ServerOptions *options, const char *addr,
+    const char *rdomain, int port)
 {
-	options->queued_listen_addrs = xreallocarray(
-	    options->queued_listen_addrs, options->num_queued_listens + 1,
-	    sizeof(addr));
-	options->queued_listen_ports = xreallocarray(
-	    options->queued_listen_ports, options->num_queued_listens + 1,
-	    sizeof(port));
-	options->queued_listen_addrs[options->num_queued_listens] =
-	    xstrdup(addr);
-	options->queued_listen_ports[options->num_queued_listens] = port;
-	options->num_queued_listens++;
+	struct queued_listenaddr *qla;
+
+	options->queued_listen_addrs = xrecallocarray(
+	    options->queued_listen_addrs,
+	    options->num_queued_listens, options->num_queued_listens + 1,
+	    sizeof(*options->queued_listen_addrs));
+	qla = &options->queued_listen_addrs[options->num_queued_listens++];
+	qla->addr = xstrdup(addr);
+	qla->port = port;
+	qla->rdomain = rdomain == NULL ? NULL : xstrdup(rdomain);
 }
 
 /*
@@ -809,6 +920,7 @@ static void
 process_queued_listen_addrs(ServerOptions *options)
 {
 	u_int i;
+	struct queued_listenaddr *qla;
 
 	if (options->num_ports == 0)
 		options->ports[options->num_ports++] = SSH_DEFAULT_PORT;
@@ -816,15 +928,13 @@ process_queued_listen_addrs(ServerOptions *options)
 		options->address_family = AF_UNSPEC;
 
 	for (i = 0; i < options->num_queued_listens; i++) {
-		add_listen_addr(options, options->queued_listen_addrs[i],
-		    options->queued_listen_ports[i]);
-		free(options->queued_listen_addrs[i]);
-		options->queued_listen_addrs[i] = NULL;
+		qla = &options->queued_listen_addrs[i];
+		add_listen_addr(options, qla->addr, qla->rdomain, qla->port);
+		free(qla->addr);
+		free(qla->rdomain);
 	}
 	free(options->queued_listen_addrs);
 	options->queued_listen_addrs = NULL;
-	free(options->queued_listen_ports);
-	options->queued_listen_ports = NULL;
 	options->num_queued_listens = 0;
 }
 
@@ -878,6 +988,7 @@ get_connection_info(int populate, int use_dns)
 	ci.address = ssh_remote_ipaddr(ssh);
 	ci.laddress = ssh_local_ipaddr(ssh);
 	ci.lport = ssh_local_port(ssh);
+	ci.rdomain = ssh_packet_rdomain_in(ssh);
 	return &ci;
 }
 
@@ -942,6 +1053,13 @@ out:
 	return result;
 }
 
+static void
+match_test_missing_fatal(const char *criteria, const char *attrib)
+{
+	fatal("'Match %s' in configuration but '%s' not in connection "
+	    "test specification.", criteria, attrib);
+}
+
 /*
  * All of the attributes on a single Match line are ANDed together, so we need
  * to check every attribute and set the result to zero if any attribute does
@@ -979,20 +1097,24 @@ match_cfg_line(char **condition, int line, struct connection_info *ci)
 			return -1;
 		}
 		if (strcasecmp(attrib, "user") == 0) {
-			if (ci == NULL || ci->user == NULL) {
+			if (ci == NULL) {
 				result = 0;
 				continue;
 			}
+			if (ci->user == NULL)
+				match_test_missing_fatal("User", "user");
 			if (match_pattern_list(ci->user, arg, 0) != 1)
 				result = 0;
 			else
 				debug("user %.100s matched 'User %.100s' at "
 				    "line %d", ci->user, arg, line);
 		} else if (strcasecmp(attrib, "group") == 0) {
-			if (ci == NULL || ci->user == NULL) {
+			if (ci == NULL) {
 				result = 0;
 				continue;
 			}
+			if (ci->user == NULL)
+				match_test_missing_fatal("Group", "user");
 			switch (match_cfg_line_group(arg, line, ci->user)) {
 			case -1:
 				return -1;
@@ -1000,20 +1122,24 @@ match_cfg_line(char **condition, int line, struct connection_info *ci)
 				result = 0;
 			}
 		} else if (strcasecmp(attrib, "host") == 0) {
-			if (ci == NULL || ci->host == NULL) {
+			if (ci == NULL) {
 				result = 0;
 				continue;
 			}
+			if (ci->host == NULL)
+				match_test_missing_fatal("Host", "host");
 			if (match_hostname(ci->host, arg) != 1)
 				result = 0;
 			else
 				debug("connection from %.100s matched 'Host "
 				    "%.100s' at line %d", ci->host, arg, line);
 		} else if (strcasecmp(attrib, "address") == 0) {
-			if (ci == NULL || ci->address == NULL) {
+			if (ci == NULL) {
 				result = 0;
 				continue;
 			}
+			if (ci->address == NULL)
+				match_test_missing_fatal("Address", "addr");
 			switch (addr_match_list(ci->address, arg)) {
 			case 1:
 				debug("connection from %.100s matched 'Address "
@@ -1027,10 +1153,13 @@ match_cfg_line(char **condition, int line, struct connection_info *ci)
 				return -1;
 			}
 		} else if (strcasecmp(attrib, "localaddress") == 0){
-			if (ci == NULL || ci->laddress == NULL) {
+			if (ci == NULL) {
 				result = 0;
 				continue;
 			}
+			if (ci->laddress == NULL)
+				match_test_missing_fatal("LocalAddress",
+				    "laddr");
 			switch (addr_match_list(ci->laddress, arg)) {
 			case 1:
 				debug("connection from %.100s matched "
@@ -1050,10 +1179,12 @@ match_cfg_line(char **condition, int line, struct connection_info *ci)
 				    arg);
 				return -1;
 			}
-			if (ci == NULL || ci->lport == 0) {
+			if (ci == NULL) {
 				result = 0;
 				continue;
 			}
+			if (ci->lport == 0)
+				match_test_missing_fatal("LocalPort", "lport");
 			/* TODO support port lists */
 			if (port == ci->lport)
 				debug("connection from %.100s matched "
@@ -1061,6 +1192,16 @@ match_cfg_line(char **condition, int line, struct connection_info *ci)
 				    ci->laddress, port, line);
 			else
 				result = 0;
+		} else if (strcasecmp(attrib, "rdomain") == 0) {
+			if (ci == NULL || ci->rdomain == NULL) {
+				result = 0;
+				continue;
+			}
+			if (match_pattern_list(ci->rdomain, arg, 0) != 1)
+				result = 0;
+			else
+				debug("user %.100s matched 'RDomain %.100s' at "
+				    "line %d", ci->rdomain, arg, line);
 		} else {
 			error("Unsupported Match attribute %s", attrib);
 			return -1;
@@ -1082,6 +1223,11 @@ match_cfg_line(char **condition, int line, struct connection_info *ci)
 struct multistate {
 	const char *key;
 	int value;
+};
+static const struct multistate multistate_flag[] = {
+	{ "yes",			1 },
+	{ "no",				0 },
+	{ NULL, -1 }
 };
 static const struct multistate multistate_addressfamily[] = {
 	{ "inet",			AF_INET },
@@ -1136,6 +1282,7 @@ process_server_config_line(ServerOptions *options, char *line,
 	size_t len;
 	long long val64;
 	const struct multistate *multistate_ptr;
+	const char *errstr;
 
 	/* Strip trailing whitespace. Allow \f (form feed) at EOL only */
 	if ((len = strlen(line)) == 0)
@@ -1224,20 +1371,33 @@ process_server_config_line(ServerOptions *options, char *line,
 		/* check for bare IPv6 address: no "[]" and 2 or more ":" */
 		if (strchr(arg, '[') == NULL && (p = strchr(arg, ':')) != NULL
 		    && strchr(p+1, ':') != NULL) {
-			queue_listen_addr(options, arg, 0);
-			break;
-		}
-		p = hpdelim(&arg);
-		if (p == NULL)
-			fatal("%s line %d: bad address:port usage",
-			    filename, linenum);
-		p = cleanhostname(p);
-		if (arg == NULL)
 			port = 0;
-		else if ((port = a2port(arg)) <= 0)
-			fatal("%s line %d: bad port number", filename, linenum);
+			p = arg;
+		} else {
+			p = hpdelim(&arg);
+			if (p == NULL)
+				fatal("%s line %d: bad address:port usage",
+				    filename, linenum);
+			p = cleanhostname(p);
+			if (arg == NULL)
+				port = 0;
+			else if ((port = a2port(arg)) <= 0)
+				fatal("%s line %d: bad port number",
+				    filename, linenum);
+		}
+		/* Optional routing table */
+		arg2 = NULL;
+		if ((arg = strdelim(&cp)) != NULL) {
+			if (strcmp(arg, "rdomain") != 0 ||
+			    (arg2 = strdelim(&cp)) == NULL)
+				fatal("%s line %d: bad ListenAddress syntax",
+				    filename, linenum);
+			if (!valid_rdomain(arg2))
+				fatal("%s line %d: bad routing domain",
+				    filename, linenum);
+		}
 
-		queue_listen_addr(options, p, port);
+		queue_listen_addr(options, p, arg2, port);
 
 		break;
 
@@ -1264,22 +1424,12 @@ process_server_config_line(ServerOptions *options, char *line,
 		break;
 
 	case sHostKeyFile:
-		intptr = &options->num_host_key_files;
-		if (*intptr >= MAX_HOSTKEYS)
-			fatal("%s line %d: too many host keys specified (max %d).",
-			    filename, linenum, MAX_HOSTKEYS);
-		charptr = &options->host_key_files[*intptr];
- parse_filename:
 		arg = strdelim(&cp);
 		if (!arg || *arg == '\0')
 			fatal("%s line %d: missing file name.",
 			    filename, linenum);
-		if (*activep && *charptr == NULL) {
-			*charptr = derelativise_path(arg);
-			/* increase optional counter */
-			if (intptr != NULL)
-				*intptr = *intptr + 1;
-		}
+		if (*activep)
+			servconf_add_hostkey(filename, linenum, options, arg);
 		break;
 
 	case sHostKeyAgent:
@@ -1294,17 +1444,28 @@ process_server_config_line(ServerOptions *options, char *line,
 		break;
 
 	case sHostCertificate:
-		intptr = &options->num_host_cert_files;
-		if (*intptr >= MAX_HOSTKEYS)
-			fatal("%s line %d: too many host certificates "
-			    "specified (max %d).", filename, linenum,
-			    MAX_HOSTCERTS);
-		charptr = &options->host_cert_files[*intptr];
-		goto parse_filename;
+		arg = strdelim(&cp);
+		if (!arg || *arg == '\0')
+			fatal("%s line %d: missing file name.",
+			    filename, linenum);
+		if (*activep)
+			servconf_add_hostcert(filename, linenum, options, arg);
+		break;
 
 	case sPidFile:
 		charptr = &options->pid_file;
-		goto parse_filename;
+ parse_filename:
+		arg = strdelim(&cp);
+		if (!arg || *arg == '\0')
+			fatal("%s line %d: missing file name.",
+			    filename, linenum);
+		if (*activep && *charptr == NULL) {
+			*charptr = derelativise_path(arg);
+			/* increase optional counter */
+			if (intptr != NULL)
+				*intptr = *intptr + 1;
+		}
+		break;
 
 	case sPermitRootLogin:
 		intptr = &options->permit_root_login;
@@ -1314,21 +1475,8 @@ process_server_config_line(ServerOptions *options, char *line,
 	case sIgnoreRhosts:
 		intptr = &options->ignore_rhosts;
  parse_flag:
-		arg = strdelim(&cp);
-		if (!arg || *arg == '\0')
-			fatal("%s line %d: missing yes/no argument.",
-			    filename, linenum);
-		value = 0;	/* silence compiler */
-		if (strcmp(arg, "yes") == 0)
-			value = 1;
-		else if (strcmp(arg, "no") == 0)
-			value = 0;
-		else
-			fatal("%s line %d: Bad yes/no argument: %s",
-				filename, linenum, arg);
-		if (*activep && *intptr == -1)
-			*intptr = value;
-		break;
+		multistate_ptr = multistate_flag;
+		goto parse_multistate;
 
 	case sIgnoreRootRhosts:
 		intptr = &options->ignore_root_rhosts;
@@ -1449,10 +1597,9 @@ process_server_config_line(ServerOptions *options, char *line,
 		intptr = &options->x11_display_offset;
  parse_int:
 		arg = strdelim(&cp);
-		if (!arg || *arg == '\0')
-			fatal("%s line %d: missing integer value.",
-			    filename, linenum);
-		value = atoi(arg);
+		if ((errstr = atoi_err(arg, &value)) != NULL)
+			fatal("%s line %d: integer value %s.",
+			    filename, linenum, errstr);
 		if (*activep && *intptr == -1)
 			*intptr = value;
 		break;
@@ -1572,55 +1719,47 @@ process_server_config_line(ServerOptions *options, char *line,
 
 	case sAllowUsers:
 		while ((arg = strdelim(&cp)) && *arg != '\0') {
-			if (options->num_allow_users >= MAX_ALLOW_USERS)
-				fatal("%s line %d: too many allow users.",
-				    filename, linenum);
 			if (match_user(NULL, NULL, NULL, arg) == -1)
 				fatal("%s line %d: invalid AllowUsers pattern: "
 				    "\"%.100s\"", filename, linenum, arg);
 			if (!*activep)
 				continue;
-			options->allow_users[options->num_allow_users++] =
-			    xstrdup(arg);
+			array_append(filename, linenum, "AllowUsers",
+			    &options->allow_users, &options->num_allow_users,
+			    arg);
 		}
 		break;
 
 	case sDenyUsers:
 		while ((arg = strdelim(&cp)) && *arg != '\0') {
-			if (options->num_deny_users >= MAX_DENY_USERS)
-				fatal("%s line %d: too many deny users.",
-				    filename, linenum);
 			if (match_user(NULL, NULL, NULL, arg) == -1)
 				fatal("%s line %d: invalid DenyUsers pattern: "
 				    "\"%.100s\"", filename, linenum, arg);
 			if (!*activep)
 				continue;
-			options->deny_users[options->num_deny_users++] =
-			    xstrdup(arg);
+			array_append(filename, linenum, "DenyUsers",
+			    &options->deny_users, &options->num_deny_users,
+			    arg);
 		}
 		break;
 
 	case sAllowGroups:
 		while ((arg = strdelim(&cp)) && *arg != '\0') {
-			if (options->num_allow_groups >= MAX_ALLOW_GROUPS)
-				fatal("%s line %d: too many allow groups.",
-				    filename, linenum);
 			if (!*activep)
 				continue;
-			options->allow_groups[options->num_allow_groups++] =
-			    xstrdup(arg);
+			array_append(filename, linenum, "AllowGroups",
+			    &options->allow_groups, &options->num_allow_groups,
+			    arg);
 		}
 		break;
 
 	case sDenyGroups:
 		while ((arg = strdelim(&cp)) && *arg != '\0') {
-			if (options->num_deny_groups >= MAX_DENY_GROUPS)
-				fatal("%s line %d: too many deny groups.",
-				    filename, linenum);
 			if (!*activep)
 				continue;
-			options->deny_groups[options->num_deny_groups++] =
-			    xstrdup(arg);
+			array_append(filename, linenum, "DenyGroups",
+			    &options->deny_groups, &options->num_deny_groups,
+			    arg);
 		}
 		break;
 
@@ -1739,14 +1878,12 @@ process_server_config_line(ServerOptions *options, char *line,
 	case sAuthorizedKeysFile:
 		if (*activep && options->num_authkeys_files == 0) {
 			while ((arg = strdelim(&cp)) && *arg != '\0') {
-				if (options->num_authkeys_files >=
-				    MAX_AUTHKEYS_FILES)
-					fatal("%s line %d: "
-					    "too many authorized keys files.",
-					    filename, linenum);
-				options->authorized_keys_files[
-				    options->num_authkeys_files++] =
-				    tilde_expand_filename(arg, getuid());
+				arg = tilde_expand_filename(arg, getuid());
+				array_append(filename, linenum,
+				    "AuthorizedKeysFile",
+				    &options->authorized_keys_files,
+				    &options->num_authkeys_files, arg);
+				free(arg);
 			}
 		}
 		return 0;
@@ -1778,13 +1915,11 @@ process_server_config_line(ServerOptions *options, char *line,
 			if (strchr(arg, '=') != NULL)
 				fatal("%s line %d: Invalid environment name.",
 				    filename, linenum);
-			if (options->num_accept_env >= MAX_ACCEPT_ENV)
-				fatal("%s line %d: too many allow env.",
-				    filename, linenum);
 			if (!*activep)
 				continue;
-			options->accept_env[options->num_accept_env++] =
-			    xstrdup(arg);
+			array_append(filename, linenum, "AcceptEnv",
+			    &options->accept_env, &options->num_accept_env,
+			    arg);
 		}
 		break;
 
@@ -1823,9 +1958,9 @@ process_server_config_line(ServerOptions *options, char *line,
 		if (!arg || *arg == '\0')
 			fatal("%s line %d: missing PermitOpen specification",
 			    filename, linenum);
-		i = options->num_permitted_opens;	/* modified later */
+		value = options->num_permitted_opens;	/* modified later */
 		if (strcmp(arg, "any") == 0 || strcmp(arg, "none") == 0) {
-			if (*activep && i == 0) {
+			if (*activep && value == 0) {
 				options->num_permitted_opens = 1;
 				options->permitted_opens = xcalloc(1,
 				    sizeof(*options->permitted_opens));
@@ -1843,16 +1978,13 @@ process_server_config_line(ServerOptions *options, char *line,
 			if (arg == NULL || ((port = permitopen_port(arg)) < 0))
 				fatal("%s line %d: bad port number in "
 				    "PermitOpen", filename, linenum);
-			if (*activep && i == 0) {
-				options->permitted_opens = xrecallocarray(
-				    options->permitted_opens,
-				    options->num_permitted_opens,
-				    options->num_permitted_opens + 1,
-				    sizeof(*options->permitted_opens));
-				i = options->num_permitted_opens++;
-				options->permitted_opens[i] = arg2;
-			} else
-				free(arg2);
+			if (*activep && value == 0) {
+				array_append(filename, linenum,
+				    "PermitOpen",
+				    &options->permitted_opens,
+				    &options->num_permitted_opens, arg2);
+			}
+			free(arg2);
 		}
 		break;
 
@@ -1975,11 +2107,6 @@ process_server_config_line(ServerOptions *options, char *line,
 			value = 0; /* seen "any" pseudo-method */
 			value2 = 0; /* sucessfully parsed any method */
 			while ((arg = strdelim(&cp)) && *arg != '\0') {
-				if (options->num_auth_methods >=
-				    MAX_AUTH_METHODS)
-					fatal("%s line %d: "
-					    "too many authentication methods.",
-					    filename, linenum);
 				if (strcmp(arg, "any") == 0) {
 					if (options->num_auth_methods > 0) {
 						fatal("%s line %d: \"any\" "
@@ -2000,8 +2127,10 @@ process_server_config_line(ServerOptions *options, char *line,
 				value2 = 1;
 				if (!*activep)
 					continue;
-				options->auth_methods[
-				    options->num_auth_methods++] = xstrdup(arg);
+				array_append(filename, linenum,
+				    "AuthenticationMethods",
+				    &options->auth_methods,
+				    &options->num_auth_methods, arg);
 			}
 			if (value2 == 0) {
 				fatal("%s line %d: no AuthenticationMethods "
@@ -2042,6 +2171,20 @@ process_server_config_line(ServerOptions *options, char *line,
 	case sExposeAuthInfo:
 		intptr = &options->expose_userauth_info;
 		goto parse_flag;
+
+	case sRDomain:
+		charptr = &options->routing_domain;
+		arg = strdelim(&cp);
+		if (!arg || *arg == '\0')
+			fatal("%.200s line %d: Missing argument.",
+			    filename, linenum);
+		if (strcasecmp(arg, "none") != 0 && strcmp(arg, "%D") != 0 &&
+		    !valid_rdomain(arg))
+			fatal("%s line %d: bad routing domain",
+			    filename, linenum);
+		if (*activep && *charptr == NULL)
+			*charptr = xstrdup(arg);
+		break;
 
 	case sDeprecated:
 	case sIgnore:
@@ -2243,6 +2386,8 @@ int parse_server_match_testspec(struct connection_info *ci, char *spec)
 			ci->user = xstrdup(p + 5);
 		} else if (strncmp(p, "laddr=", 6) == 0) {
 			ci->laddress = xstrdup(p + 6);
+		} else if (strncmp(p, "rdomain=", 8) == 0) {
+			ci->rdomain = xstrdup(p + 8);
 		} else if (strncmp(p, "lport=", 6) == 0) {
 			ci->lport = a2port(p + 6);
 			if (ci->lport == -1) {
@@ -2257,19 +2402,6 @@ int parse_server_match_testspec(struct connection_info *ci, char *spec)
 		}
 	}
 	return 0;
-}
-
-/*
- * returns 1 for a complete spec, 0 for partial spec and -1 for an
- * empty spec.
- */
-int server_match_spec_complete(struct connection_info *ci)
-{
-	if (ci->user && ci->host && ci->address)
-		return 1;	/* complete */
-	if (!ci->user && !ci->host && !ci->address)
-		return -1;	/* empty */
-	return 0;	/* partial */
 }
 
 /*
@@ -2337,17 +2469,16 @@ copy_set_server_options(ServerOptions *dst, ServerOptions *src, int preauth)
 		dst->n = src->n; \
 	} \
 } while(0)
-#define M_CP_STRARRAYOPT(n, num_n) do {\
-	if (src->num_n != 0) { \
-		for (dst->num_n = 0; dst->num_n < src->num_n; dst->num_n++) \
-			dst->n[dst->num_n] = xstrdup(src->n[dst->num_n]); \
-	} \
-} while(0)
-#define M_CP_STRARRAYOPT_ALLOC(n, num_n) do { \
-	if (src->num_n != 0) { \
-		dst->n = xcalloc(src->num_n, sizeof(*dst->n)); \
-		M_CP_STRARRAYOPT(n, num_n); \
-		dst->num_n = src->num_n; \
+#define M_CP_STRARRAYOPT(s, num_s) do {\
+	u_int i; \
+	if (src->num_s != 0) { \
+		for (i = 0; i < dst->num_s; i++) \
+			free(dst->s[i]); \
+		free(dst->s); \
+		dst->s = xcalloc(src->num_s, sizeof(*dst->s)); \
+		for (i = 0; i < src->num_s; i++) \
+			dst->s[i] = xstrdup(src->s[i]); \
+		dst->num_s = src->num_s; \
 	} \
 } while(0)
 
@@ -2380,7 +2511,6 @@ copy_set_server_options(ServerOptions *dst, ServerOptions *src, int preauth)
 #undef M_CP_INTOPT
 #undef M_CP_STROPT
 #undef M_CP_STRARRAYOPT
-#undef M_CP_STRARRAYOPT_ALLOC
 
 void
 parse_server_config(ServerOptions *options, const char *filename, Buffer *conf,
@@ -2511,46 +2641,61 @@ dump_cfg_strarray_oneline(ServerOpCodes code, u_int count, char **vals)
 	printf("\n");
 }
 
-void
-dump_config(ServerOptions *o)
+static char *
+format_listen_addrs(struct listenaddr *la)
 {
-	u_int i;
-	int ret;
+	int r;
 	struct addrinfo *ai;
 	char addr[NI_MAXHOST], port[NI_MAXSERV];
-	const char *s = NULL;
 	char *laddr1 = xstrdup(""), *laddr2 = NULL;
-
-	/* these are usually at the top of the config */
-	for (i = 0; i < o->num_ports; i++)
-		printf("port %d\n", o->ports[i]);
-	dump_cfg_fmtint(sAddressFamily, o->address_family);
 
 	/*
 	 * ListenAddress must be after Port.  add_one_listen_addr pushes
 	 * addresses onto a stack, so to maintain ordering we need to
 	 * print these in reverse order.
 	 */
-	for (ai = o->listen_addrs; ai; ai = ai->ai_next) {
-		if ((ret = getnameinfo(ai->ai_addr, ai->ai_addrlen, addr,
+	for (ai = la->addrs; ai; ai = ai->ai_next) {
+		if ((r = getnameinfo(ai->ai_addr, ai->ai_addrlen, addr,
 		    sizeof(addr), port, sizeof(port),
 		    NI_NUMERICHOST|NI_NUMERICSERV)) != 0) {
-			error("getnameinfo failed: %.100s",
-			    (ret != EAI_SYSTEM) ? gai_strerror(ret) :
-			    strerror(errno));
-		} else {
-			laddr2 = laddr1;
-			if (ai->ai_family == AF_INET6)
-				xasprintf(&laddr1, "listenaddress [%s]:%s\n%s",
-				    addr, port, laddr2);
-			else
-				xasprintf(&laddr1, "listenaddress %s:%s\n%s",
-				    addr, port, laddr2);
-			free(laddr2);
+			error("getnameinfo: %.100s", ssh_gai_strerror(r));
+			continue;
 		}
+		laddr2 = laddr1;
+		if (ai->ai_family == AF_INET6) {
+			xasprintf(&laddr1, "listenaddress [%s]:%s%s%s\n%s",
+			    addr, port,
+			    la->rdomain == NULL ? "" : " rdomain ",
+			    la->rdomain == NULL ? "" : la->rdomain,
+			    laddr2);
+		} else {
+			xasprintf(&laddr1, "listenaddress %s:%s%s%s\n%s",
+			    addr, port,
+			    la->rdomain == NULL ? "" : " rdomain ",
+			    la->rdomain == NULL ? "" : la->rdomain,
+			    laddr2);
+		}
+		free(laddr2);
 	}
-	printf("%s", laddr1);
-	free(laddr1);
+	return laddr1;
+}
+
+void
+dump_config(ServerOptions *o)
+{
+	const char *s;
+	u_int i;
+
+	/* these are usually at the top of the config */
+	for (i = 0; i < o->num_ports; i++)
+		printf("port %d\n", o->ports[i]);
+	dump_cfg_fmtint(sAddressFamily, o->address_family);
+
+	for (i = 0; i < o->num_listen_addrs; i++) {
+		char *ss = format_listen_addrs(&o->listen_addrs[i]);
+		printf("%s", ss);
+		free(ss);
+	}
 
 	/* integer arguments */
 	dump_cfg_int(sLoginGraceTime, o->login_grace_time);
@@ -2632,6 +2777,7 @@ dump_config(ServerOptions *o)
 	    o->hostkeyalgorithms : KEX_DEFAULT_PK_ALG);
 	dump_cfg_string(sPubkeyAcceptedKeyTypes, o->pubkey_key_types ?
 	    o->pubkey_key_types : KEX_DEFAULT_PK_ALG);
+	dump_cfg_string(sRDomain, o->routing_domain);
 
 	/* string arguments requiring a lookup */
 	dump_cfg_string(sLogLevel, log_level_name(o->log_level));
@@ -2660,11 +2806,13 @@ dump_config(ServerOptions *o)
 	printf("maxstartups %d:%d:%d\n", o->max_startups_begin,
 	    o->max_startups_rate, o->max_startups);
 
-	for (i = 0; tunmode_desc[i].val != -1; i++)
+	s = NULL;
+	for (i = 0; tunmode_desc[i].val != -1; i++) {
 		if (tunmode_desc[i].val == o->permit_tun) {
 			s = tunmode_desc[i].text;
 			break;
 		}
+	}
 	dump_cfg_string(sPermitTunnel, s);
 
 	printf("ipqos %s ", iptos2str(o->ip_qos_interactive));

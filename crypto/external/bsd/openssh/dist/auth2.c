@@ -1,5 +1,5 @@
-/*	$NetBSD: auth2.c,v 1.15 2017/10/07 19:39:19 christos Exp $	*/
-/* $OpenBSD: auth2.c,v 1.143 2017/06/24 06:34:38 djm Exp $ */
+/*	$NetBSD: auth2.c,v 1.16 2018/04/06 18:58:59 christos Exp $	*/
+/* $OpenBSD: auth2.c,v 1.145 2018/03/03 03:15:51 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth2.c,v 1.15 2017/10/07 19:39:19 christos Exp $");
+__RCSID("$NetBSD: auth2.c,v 1.16 2018/04/06 18:58:59 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/uio.h>
@@ -150,9 +150,6 @@ auth2_read_banner(void)
 static void
 userauth_send_banner(const char *msg)
 {
-	if (datafellows & SSH_BUG_BANNER)
-		return;
-
 	packet_start(SSH2_MSG_USERAUTH_BANNER);
 	packet_put_cstring(msg);
 	packet_put_cstring("");		/* language, unused */
@@ -165,7 +162,7 @@ userauth_banner(void)
 {
 	char *banner = NULL;
 
-	if (options.banner == NULL || (datafellows & SSH_BUG_BANNER) != 0)
+	if (options.banner == NULL)
 		return;
 
 	if ((banner = PRIVSEP(auth2_read_banner())) == NULL)
@@ -328,7 +325,7 @@ userauth_finish(struct ssh *ssh, int authenticated, const char *method,
 
 	/* Special handling for root */
 	if (authenticated && authctxt->pw->pw_uid == 0 &&
-	    !auth_root_allowed(method)) {
+	    !auth_root_allowed(ssh, method)) {
 		authenticated = 0;
 #ifdef SSH_AUDIT_EVENTS
 		PRIVSEP(audit_event(SSH_LOGIN_ROOT_DENIED));

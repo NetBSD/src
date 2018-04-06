@@ -1,3 +1,4 @@
+/*	$NetBSD: xmss_hash_address.h,v 1.2 2018/04/06 18:59:00 christos Exp $	*/
 /* $OpenBSD: xmss_hash_address.h,v 1.2 2018/02/26 03:56:44 dtucker Exp $ */
 /*
 hash_address.h version 20160722

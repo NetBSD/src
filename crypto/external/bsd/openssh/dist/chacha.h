@@ -1,3 +1,4 @@
+/*	$NetBSD: chacha.h,v 1.2 2018/04/06 18:58:59 christos Exp $	*/
 /* $OpenBSD: chacha.h,v 1.4 2016/08/27 04:04:56 guenther Exp $ */
 
 /*

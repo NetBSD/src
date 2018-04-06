@@ -1,3 +1,4 @@
+/*	$NetBSD: sc25519.h,v 1.2 2018/04/06 18:59:00 christos Exp $	*/
 /* $OpenBSD: sc25519.h,v 1.3 2013/12/09 11:03:45 markus Exp $ */
 
 /*

@@ -1,3 +1,4 @@
+/*	$NetBSD: sshkey-xmss.c,v 1.2 2018/04/06 18:59:00 christos Exp $	*/
 /* $OpenBSD: sshkey-xmss.c,v 1.1 2018/02/23 15:58:38 markus Exp $ */
 /*
  * Copyright (c) 2017 Markus Friedl.  All rights reserved.
@@ -22,6 +23,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#include "includes.h"
+__RCSID("$NetBSD: sshkey-xmss.c,v 1.2 2018/04/06 18:59:00 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/uio.h>
@@ -81,7 +84,7 @@ int	 sshkey_xmss_decrypt_state(const struct sshkey *, struct sshbuf *,
 int	 sshkey_xmss_serialize_enc_key(const struct sshkey *, struct sshbuf *);
 int	 sshkey_xmss_deserialize_enc_key(struct sshkey *, struct sshbuf *);
 
-#define PRINT(s...) do { if (pr) pr(s); } while (0)
+#define PRINT(s...) do { if (pr) pr(s); } while (/*CONSTCOND*/0)
 
 int
 sshkey_xmss_init(struct sshkey *key, const char *name)
@@ -486,9 +489,9 @@ sshkey_xmss_get_state(const struct sshkey *k, sshkey_printfn *pr)
 		usleep(1000*100*tries);
 	}
 	/* XXX no longer const */
-	if ((r = sshkey_xmss_get_state_from_file((struct sshkey *)k,
+	if ((r = sshkey_xmss_get_state_from_file(__UNCONST(k),
 	    statefile, &have_state, pr)) != 0) {
-		if ((r = sshkey_xmss_get_state_from_file((struct sshkey *)k,
+		if ((r = sshkey_xmss_get_state_from_file(__UNCONST(k),
 		    ostatefile, &have_ostate, pr)) == 0) {
 			state->allow_update = 1;
 			r = sshkey_xmss_forward_state(k, 1);
@@ -619,7 +622,7 @@ sshkey_xmss_update_state(const struct sshkey *k, sshkey_printfn *pr)
 		close(fd);
 		goto done;
 	}
-	if (atomicio(vwrite, fd, (void *)sshbuf_ptr(enc), sshbuf_len(enc)) !=
+	if (atomicio(vwrite, fd, __UNCONST(sshbuf_ptr(enc)), sshbuf_len(enc)) !=
 	    sshbuf_len(enc)) {
 		ret = SSH_ERR_SYSTEM_ERROR;
 		PRINT("%s: write new state file data: %s", __func__, nstatefile);

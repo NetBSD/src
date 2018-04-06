@@ -1,6 +1,5 @@
-/*	$NetBSD: dh.c,v 1.13 2018/02/05 00:13:50 christos Exp $	*/
-/* $OpenBSD: dh.c,v 1.62 2016/12/15 21:20:41 dtucker Exp $ */
-
+/*	$NetBSD: dh.c,v 1.14 2018/04/06 18:59:00 christos Exp $	*/
+/* $OpenBSD: dh.c,v 1.63 2018/02/07 02:06:50 jsing Exp $ */
 /*
  * Copyright (c) 2000 Niels Provos.  All rights reserved.
  *
@@ -26,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: dh.c,v 1.13 2018/02/05 00:13:50 christos Exp $");
+__RCSID("$NetBSD: dh.c,v 1.14 2018/04/06 18:59:00 christos Exp $");
 
 #include <sys/param.h>	/* MIN */
 #include <openssl/bn.h>
@@ -138,10 +137,8 @@ parse_prime(int linenum, char *line, struct dhgroup *dhg)
 	return 1;
 
  fail:
-	if (dhg->g != NULL)
-		BN_clear_free(dhg->g);
-	if (dhg->p != NULL)
-		BN_clear_free(dhg->p);
+	BN_clear_free(dhg->g);
+	BN_clear_free(dhg->p);
 	dhg->g = dhg->p = NULL;
 	return 0;
 }

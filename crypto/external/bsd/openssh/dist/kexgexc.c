@@ -1,5 +1,5 @@
-/*	$NetBSD: kexgexc.c,v 1.11 2018/02/05 00:13:50 christos Exp $	*/
-/* $OpenBSD: kexgexc.c,v 1.25 2017/05/30 14:23:52 markus Exp $ */
+/*	$NetBSD: kexgexc.c,v 1.12 2018/04/06 18:59:00 christos Exp $	*/
+/* $OpenBSD: kexgexc.c,v 1.27 2018/02/07 02:06:51 jsing Exp $ */
 /*
  * Copyright (c) 2000 Niels Provos.  All rights reserved.
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: kexgexc.c,v 1.11 2018/02/05 00:13:50 christos Exp $");
+__RCSID("$NetBSD: kexgexc.c,v 1.12 2018/04/06 18:59:00 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -244,7 +244,7 @@ input_kex_dh_gex_reply(int type, u_int32_t seq, struct ssh *ssh)
 	}
 
 	if ((r = sshkey_verify(server_host_key, signature, slen, hash,
-	    hashlen, ssh->compat)) != 0)
+	    hashlen, kex->hostkey_alg, ssh->compat)) != 0)
 		goto out;
 
 	/* save session id */
@@ -264,14 +264,12 @@ input_kex_dh_gex_reply(int type, u_int32_t seq, struct ssh *ssh)
 	explicit_bzero(hash, sizeof(hash));
 	DH_free(kex->dh);
 	kex->dh = NULL;
-	if (dh_server_pub)
-		BN_clear_free(dh_server_pub);
+	BN_clear_free(dh_server_pub);
 	if (kbuf) {
 		explicit_bzero(kbuf, klen);
 		free(kbuf);
 	}
-	if (shared_secret)
-		BN_clear_free(shared_secret);
+	BN_clear_free(shared_secret);
 	sshkey_free(server_host_key);
 	free(server_host_key_blob);
 	free(signature);

@@ -1,3 +1,4 @@
+/*	$NetBSD: ssherr.h,v 1.2 2018/04/06 18:59:00 christos Exp $	*/
 /*	$OpenBSD: ssherr.h,v 1.5 2017/09/12 06:32:08 djm Exp $	*/
 /*
  * Copyright (c) 2011 Damien Miller
