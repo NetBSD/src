@@ -1,4 +1,4 @@
-#	$NetBSD: shlib_version,v 1.278 2017/10/25 06:32:59 kre Exp $
+#	$NetBSD: shlib_version,v 1.279 2018/04/06 17:03:59 dholland Exp $
 #	Remember to update distrib/sets/lists/base/shl.* when changing
 #
 # things we wish to do on next major version bump:
@@ -51,5 +51,6 @@
 # - punt gethostid/sethostid(3) to libcompat or remove entirely
 # - clean-up initialisation order between crt0.o, rtld and libc.
 # - move environ and __ps_strings from crt0.o into libc.
+# - move statfs() to libcompat since we have statvfs()
 major=12
 minor=209
