@@ -1,3 +1,4 @@
+/*	$NetBSD: sshbuf.h,v 1.9 2018/04/06 18:59:00 christos Exp $	*/
 /*	$OpenBSD: sshbuf.h,v 1.9 2017/09/12 06:32:07 djm Exp $	*/
 /*
  * Copyright (c) 2011 Damien Miller

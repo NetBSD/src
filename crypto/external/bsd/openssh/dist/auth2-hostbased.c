@@ -1,5 +1,5 @@
-/*	$NetBSD: auth2-hostbased.c,v 1.12 2017/10/07 19:39:19 christos Exp $	*/
-/* $OpenBSD: auth2-hostbased.c,v 1.31 2017/06/24 06:34:38 djm Exp $ */
+/*	$NetBSD: auth2-hostbased.c,v 1.13 2018/04/06 18:58:59 christos Exp $	*/
+/* $OpenBSD: auth2-hostbased.c,v 1.33 2018/01/23 05:27:21 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth2-hostbased.c,v 1.12 2017/10/07 19:39:19 christos Exp $");
+__RCSID("$NetBSD: auth2-hostbased.c,v 1.13 2018/04/06 18:58:59 christos Exp $");
 #include <sys/types.h>
 
 #include <pwd.h>
@@ -63,7 +63,7 @@ userauth_hostbased(struct ssh *ssh)
 	Authctxt *authctxt = ssh->authctxt;
 	struct sshbuf *b;
 	struct sshkey *key = NULL;
-	char *pkalg, *cuser, *chost, *service;
+	char *pkalg, *cuser, *chost;
 	u_char *pkblob, *sig;
 	size_t alen, blen, slen;
 	int r, pktype, authenticated = 0;
@@ -119,15 +119,13 @@ userauth_hostbased(struct ssh *ssh)
 		goto done;
 	}
 
-	service = ssh->compat & SSH_BUG_HBSERVICE ? __UNCONST("ssh-userauth") :
-	    authctxt->service;
 	if ((b = sshbuf_new()) == NULL)
 		fatal("%s: sshbuf_new failed", __func__);
 	/* reconstruct packet */
 	if ((r = sshbuf_put_string(b, session_id2, session_id2_len)) != 0 ||
 	    (r = sshbuf_put_u8(b, SSH2_MSG_USERAUTH_REQUEST)) != 0 ||
 	    (r = sshbuf_put_cstring(b, authctxt->user)) != 0 ||
-	    (r = sshbuf_put_cstring(b, service)) != 0 ||
+	    (r = sshbuf_put_cstring(b, authctxt->service)) != 0 ||
 	    (r = sshbuf_put_cstring(b, "hostbased")) != 0 ||
 	    (r = sshbuf_put_string(b, pkalg, alen)) != 0 ||
 	    (r = sshbuf_put_string(b, pkblob, blen)) != 0 ||
@@ -145,7 +143,7 @@ userauth_hostbased(struct ssh *ssh)
 	authenticated = 0;
 	if (PRIVSEP(hostbased_key_allowed(authctxt->pw, cuser, chost, key)) &&
 	    PRIVSEP(sshkey_verify(key, sig, slen,
-	    sshbuf_ptr(b), sshbuf_len(b), ssh->compat)) == 0)
+	    sshbuf_ptr(b), sshbuf_len(b), pkalg, ssh->compat)) == 0)
 		authenticated = 1;
 
 	auth2_record_key(authctxt, authenticated, key);

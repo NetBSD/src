@@ -1,3 +1,4 @@
+/*	$NetBSD: hmac.h,v 1.2 2018/04/06 18:59:00 christos Exp $	*/
 /* $OpenBSD: hmac.h,v 1.9 2014/06/24 01:13:21 djm Exp $ */
 /*
  * Copyright (c) 2014 Markus Friedl.  All rights reserved.

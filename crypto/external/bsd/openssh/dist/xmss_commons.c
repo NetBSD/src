@@ -1,3 +1,4 @@
+/*	$NetBSD: xmss_commons.c,v 1.2 2018/04/06 18:59:00 christos Exp $	*/
 /* $OpenBSD: xmss_commons.c,v 1.2 2018/02/26 03:56:44 dtucker Exp $ */
 /*
 xmss_commons.c 20160722
@@ -5,6 +6,8 @@ Andreas Hülsing
 Joost Rijneveld
 Public domain.
 */
+#include "includes.h"
+__RCSID("$NetBSD: xmss_commons.c,v 1.2 2018/04/06 18:59:00 christos Exp $");
 
 #include "xmss_commons.h"
 #include <stdlib.h>

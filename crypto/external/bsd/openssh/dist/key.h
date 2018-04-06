@@ -1,5 +1,5 @@
-/*	$NetBSD: key.h,v 1.14 2017/10/07 19:39:19 christos Exp $	*/
-/* $OpenBSD: key.h,v 1.51 2017/05/30 14:16:41 markus Exp $ */
+/*	$NetBSD: key.h,v 1.15 2018/04/06 18:59:00 christos Exp $	*/
+/* $OpenBSD: key.h,v 1.52 2017/12/18 02:25:15 djm Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
@@ -59,7 +59,6 @@ int	 key_to_blob(const Key *, u_char **, u_int *);
 
 int	 key_sign(const Key *, u_char **, u_int *, const u_char *, u_int,
     const char *);
-int	 key_verify(const Key *, const u_char *, u_int, const u_char *, u_int);
 
 /* authfile.c */
 Key	*key_load_cert(const char *);
