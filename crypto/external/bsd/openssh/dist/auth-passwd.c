@@ -1,5 +1,5 @@
-/*	$NetBSD: auth-passwd.c,v 1.7 2017/04/18 18:41:46 christos Exp $	*/
-/* $OpenBSD: auth-passwd.c,v 1.45 2016/07/21 01:39:35 dtucker Exp $ */
+/*	$NetBSD: auth-passwd.c,v 1.8 2018/04/06 18:58:59 christos Exp $	*/
+/* $OpenBSD: auth-passwd.c,v 1.46 2018/03/03 03:15:51 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -38,7 +38,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth-passwd.c,v 1.7 2017/04/18 18:41:46 christos Exp $");
+__RCSID("$NetBSD: auth-passwd.c,v 1.8 2018/04/06 18:58:59 christos Exp $");
 #include <sys/types.h>
 
 #include <login_cap.h>
@@ -60,7 +60,7 @@ __RCSID("$NetBSD: auth-passwd.c,v 1.7 2017/04/18 18:41:46 christos Exp $");
 
 extern Buffer loginmsg;
 extern ServerOptions options;
-int sys_auth_passwd(Authctxt *, const char *);
+int sys_auth_passwd(struct ssh *, const char *);
 
 #ifdef HAVE_LOGIN_CAP
 extern login_cap_t *lc;
@@ -71,24 +71,15 @@ extern login_cap_t *lc;
 
 #define MAX_PASSWORD_LEN	1024
 
-#if defined(BSD_AUTH) || defined(USE_PAM)
-void
-disable_forwarding(void)
-{
-	no_port_forwarding_flag = 1;
-	no_agent_forwarding_flag = 1;
-	no_x11_forwarding_flag = 1;
-}
-#endif
-
 /*
  * Tries to authenticate the user using password.  Returns true if
  * authentication succeeds.
  */
 int
-auth_password(Authctxt *authctxt, const char *password)
+auth_password(struct ssh *ssh, const char *password)
 {
-	struct passwd * pw = authctxt->pw;
+	Authctxt *authctxt = ssh->authctxt;
+	struct passwd *pw = authctxt->pw;
 	int ok = authctxt->valid;
 
 	if (strlen(password) > MAX_PASSWORD_LEN)
@@ -111,7 +102,7 @@ auth_password(Authctxt *authctxt, const char *password)
 	if (options.use_pam)
 		return (sshpam_auth_passwd(authctxt, password) && ok);
 #endif
-	return (sys_auth_passwd(authctxt, password) && ok);
+	return (sys_auth_passwd(ssh, password) && ok);
 }
 
 #ifdef BSD_AUTH
@@ -150,19 +141,19 @@ warn_expiry(Authctxt *authctxt, auth_session_t *as)
 }
 
 int
-sys_auth_passwd(Authctxt *authctxt, const char *password)
+sys_auth_passwd(struct ssh *ssh, const char *password)
 {
-	struct passwd *pw = authctxt->pw;
+	Authctxt *authctxt = ssh->authctxt;
 	auth_session_t *as;
 	static int expire_checked = 0;
 
-	as = auth_usercheck(pw->pw_name, authctxt->style, "auth-ssh",
+	as = auth_usercheck(authctxt->pw->pw_name, authctxt->style, "auth-ssh",
 	    (char *)password);
 	if (as == NULL)
 		return (0);
 	if (auth_getstate(as) & AUTH_PWEXPIRED) {
 		auth_close(as);
-		disable_forwarding();
+		auth_restrict_session(ssh);
 		authctxt->force_pwchange = 1;
 		return (1);
 	} else {
@@ -174,25 +165,37 @@ sys_auth_passwd(Authctxt *authctxt, const char *password)
 	}
 }
 #else
+
+#define shadow_pw(pw)	(pw)->pw_passwd
+#define xcrypt(a, b) crypt((a), (b))
+
 int
-sys_auth_passwd(Authctxt *authctxt, const char *password)
+sys_auth_passwd(struct ssh *ssh, const char *password)
 {
+	Authctxt *authctxt = ssh->authctxt;
 	struct passwd *pw = authctxt->pw;
-	char *encrypted_password;
+	char *encrypted_password, *salt = NULL;
+
+	/* Just use the supplied fake password if authctxt is invalid */
+	char *pw_password = authctxt->valid ? shadow_pw(pw) : pw->pw_passwd;
 
 	/* Check for users with no password. */
-	if (strcmp(password, "") == 0 && strcmp(pw->pw_passwd, "") == 0)
+	if (strcmp(pw_password, "") == 0 && strcmp(password, "") == 0)
 		return (1);
 
-	/* Encrypt the candidate password using the proper salt. */
-	encrypted_password = crypt(password,
-	    (pw->pw_passwd[0] && pw->pw_passwd[1]) ?
-	    pw->pw_passwd : "xx");
+	/*
+	 * Encrypt the candidate password using the proper salt, or pass a
+	 * NULL and let xcrypt pick one.
+	 */
+	if (authctxt->valid && pw_password[0] && pw_password[1])
+		salt = pw_password;
+	encrypted_password = xcrypt(password, salt);
 
 	/*
 	 * Authentication is accepted if the encrypted passwords
 	 * are identical.
 	 */
-	return (strcmp(encrypted_password, pw->pw_passwd) == 0);
+	return encrypted_password != NULL &&
+	    strcmp(encrypted_password, pw_password) == 0;
 }
 #endif

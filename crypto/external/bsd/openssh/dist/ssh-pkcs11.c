@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh-pkcs11.c,v 1.14 2018/02/05 00:13:50 christos Exp $	*/
-/* $OpenBSD: ssh-pkcs11.c,v 1.25 2017/05/31 09:15:42 deraadt Exp $ */
+/*	$NetBSD: ssh-pkcs11.c,v 1.15 2018/04/06 18:59:00 christos Exp $	*/
+/* $OpenBSD: ssh-pkcs11.c,v 1.26 2018/02/07 02:06:51 jsing Exp $ */
 /*
  * Copyright (c) 2010 Markus Friedl.  All rights reserved.
  *
@@ -16,7 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: ssh-pkcs11.c,v 1.14 2018/02/05 00:13:50 christos Exp $");
+__RCSID("$NetBSD: ssh-pkcs11.c,v 1.15 2018/04/06 18:59:00 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/queue.h>
@@ -537,8 +537,7 @@ pkcs11_fetch_keys_filter(struct pkcs11_provider *p, CK_ULONG slotidx,
 			    == NULL) {
 				error("RSAPublicKey_dup");
 			}
-			if (x509)
-				X509_free(x509);
+			X509_free(x509);
 		}
 		{
 		const BIGNUM *n, *e;
