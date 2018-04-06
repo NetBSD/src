@@ -1,4 +1,4 @@
-/* $OpenBSD: auth2.c,v 1.143 2017/06/24 06:34:38 djm Exp $ */
+/* $OpenBSD: auth2.c,v 1.145 2018/03/03 03:15:51 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -136,7 +136,7 @@ userauth_banner(void)
 {
 	char *banner = NULL;
 
-	if (options.banner == NULL || (datafellows & SSH_BUG_BANNER) != 0)
+	if (options.banner == NULL)
 		return;
 
 	if ((banner = PRIVSEP(auth2_read_banner())) == NULL)
@@ -293,7 +293,7 @@ userauth_finish(struct ssh *ssh, int authenticated, const char *method,
 
 	/* Special handling for root */
 	if (authenticated && authctxt->pw->pw_uid == 0 &&
-	    !auth_root_allowed(method))
+	    !auth_root_allowed(ssh, method))
 		authenticated = 0;
 
 	if (authenticated && options.num_auth_methods != 0) {
