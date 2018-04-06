@@ -1,4 +1,4 @@
-/*	$NetBSD: glue.c,v 1.2 2017/01/28 21:31:44 christos Exp $	*/
+/*	$NetBSD: glue.c,v 1.3 2018/04/06 19:57:03 christos Exp $	*/
 
 /*
  * Copyright (c) 2005, PADL Software Pty Ltd.
@@ -34,7 +34,7 @@
 
 #include "kcm_locl.h"
 
-__RCSID("$NetBSD: glue.c,v 1.2 2017/01/28 21:31:44 christos Exp $");
+__RCSID("$NetBSD: glue.c,v 1.3 2018/04/06 19:57:03 christos Exp $");
 
 /*
  * Server-side loopback glue for credentials cache operations; this
@@ -248,33 +248,60 @@ kcmss_get_version(krb5_context context,
     return 0;
 }
 
+static krb5_error_code
+kcmss_get_kdc_sec_offset(krb5_context context,
+			 krb5_ccache id,
+			 krb5_deltat *t)
+{
+    kcm_ccache c = KCMCACHE(id);
+
+    KCM_ASSERT_VALID(c);
+
+    *t = c->kdc_offset;
+
+    return 0;
+}
+
+static krb5_error_code
+kcmss_set_kdc_sec_offset(krb5_context context,
+			 krb5_ccache id, krb5_deltat t)
+{
+    kcm_ccache c = KCMCACHE(id);
+
+    KCM_ASSERT_VALID(c);
+
+    c->kdc_offset = t;
+
+    return 0;
+}
+
 static const krb5_cc_ops krb5_kcmss_ops = {
-    KRB5_CC_OPS_VERSION,
-    "KCM",
-    kcmss_get_name,
-    kcmss_resolve,
-    kcmss_gen_new,
-    kcmss_initialize,
-    kcmss_destroy,
-    kcmss_close,
-    kcmss_store_cred,
-    kcmss_retrieve,
-    kcmss_get_principal,
-    kcmss_get_first,
-    kcmss_get_next,
-    kcmss_end_get,
-    kcmss_remove_cred,
-    kcmss_set_flags,
-    kcmss_get_version,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
+    .version =		KRB5_CC_OPS_VERSION,
+    .prefix =		"KCM",
+    .get_name =		kcmss_get_name,
+    .resolve =		kcmss_resolve,
+    .gen_new =		kcmss_gen_new,
+    .init =		kcmss_initialize,
+    .destroy =		kcmss_destroy,
+    .close =		kcmss_close,
+    .store =		kcmss_store_cred,
+    .retrieve =		kcmss_retrieve,
+    .get_princ =	kcmss_get_principal,
+    .get_first =	kcmss_get_first,
+    .get_next =		kcmss_get_next,
+    .end_get =		kcmss_end_get,
+    .remove_cred =	kcmss_remove_cred,
+    .set_flags =	kcmss_set_flags,
+    .get_version =	kcmss_get_version,
+    .get_cache_first =	NULL,
+    .get_cache_next =	NULL,
+    .end_cache_get =	NULL,
+    .move =		NULL,
+    .get_default_name =	NULL,
+    .set_default =	NULL,
+    .lastchange =	NULL,
+    .set_kdc_offset =	kcmss_set_kdc_sec_offset,
+    .get_kdc_offset =	kcmss_get_kdc_sec_offset,
 };
 
 krb5_error_code
