@@ -1086,14 +1086,8 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 		    strncmp(arg, "ms_classless_static_routes=",
 		        strlen("ms_classless_static_routes=")) == 0)
 		{
-			struct interface *ifp;
 			struct in_addr addr3;
 
-			ifp = if_find(ctx->ifaces, ifname);
-			if (ifp == NULL) {
-				logerrx("static routes require an interface");
-				return -1;
-			}
 			fp = np = strwhite(p);
 			if (np == NULL) {
 				logerrx("all routes need a gateway");
@@ -1107,7 +1101,7 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 				*fp = ' ';
 				return -1;
 			}
-			if ((rt = rt_new(ifp)) == NULL) {
+			if ((rt = rt_new0(ctx)) == NULL) {
 				*fp = ' ';
 				return -1;
 			}
@@ -1117,16 +1111,9 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 			TAILQ_INSERT_TAIL(&ifo->routes, rt, rt_next);
 			*fp = ' ';
 		} else if (strncmp(arg, "routers=", strlen("routers=")) == 0) {
-			struct interface *ifp;
-
-			ifp = if_find(ctx->ifaces, ifname);
-			if (ifp == NULL) {
-				logerrx("static routes require an interface");
-				return -1;
-			}
 			if (parse_addr(&addr, NULL, p) == -1)
 				return -1;
-			if ((rt = rt_new(ifp)) == NULL)
+			if ((rt = rt_new0(ctx)) == NULL)
 				return -1;
 			addr2.s_addr = INADDR_ANY;
 			sa_in_init(&rt->rt_dest, &addr2);
@@ -2367,7 +2354,7 @@ read_config(struct dhcpcd_ctx *ctx,
 		buf = malloc(buflen);
 		if (buf == NULL) {
 			logerr(__func__);
-			free_options(ifo);
+			free_options(ctx, ifo);
 			return NULL;
 		}
 		ldop = edop = NULL;
@@ -2381,7 +2368,7 @@ read_config(struct dhcpcd_ctx *ctx,
 				if (nbuf == NULL) {
 					logerr(__func__);
 					free(buf);
-					free_options(ifo);
+					free_options(ctx, ifo);
 					return NULL;
 				}
 				buf = nbuf;
@@ -2545,7 +2532,7 @@ read_config(struct dhcpcd_ctx *ctx,
 	free(buf);
 
 	if (profile && !have_profile) {
-		free_options(ifo);
+		free_options(ctx, ifo);
 		errno = ENOENT;
 		return NULL;
 	}
@@ -2590,7 +2577,7 @@ add_options(struct dhcpcd_ctx *ctx, const char *ifname,
 }
 
 void
-free_options(struct if_options *ifo)
+free_options(struct dhcpcd_ctx *ctx, struct if_options *ifo)
 {
 	size_t i;
 	struct dhcp_opt *opt;
@@ -2612,7 +2599,7 @@ free_options(struct if_options *ifo)
 				free(ifo->config[i++]);
 			free(ifo->config);
 		}
-		rt_headclear(&ifo->routes, AF_UNSPEC);
+		rt_headclear0(ctx, &ifo->routes, AF_UNSPEC);
 		free(ifo->script);
 		free(ifo->arping);
 		free(ifo->blacklist);
