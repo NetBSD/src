@@ -1,0 +1,170 @@
+Current ISC DHCP uses the BIND 9 libraries for some services.
+These libraries can be embedded in the bind directory or external using
+the configuration parameter --with-libbind=PATH with PATh pointing to
+the directory where can be found includes and libraries.
+
+Using standard embedded libraries is safe but you can configure
+them with extra parameters (cf --with-bind-extra-config) or simply
+use external libraries with a different configuration.
+
+Note if you want to share libraries between bind 9 and ISC DHCP
+BIND 9 must be built and installed before ISC DHCP build is configured.
+
+Three cases are possible:
+ - everything builds and works fine
+
+ - building requires extra parameters, for instance --enable-threads
+  can require a link parameter to find  POSIX threads.
+  In this case you should look at the config.status file of the bind
+  libraries, take CC, CPPFLAGS, CFLAGS, LIBS or LDFLAGS related
+  parameters, and add them to the call to make.
+
+ - even when the previous step succeeds ISC DHCP still does not work
+  properly. We are trying to collect such cases (cf the list bellow)
+  but unfortunately you have to forget the particular feature.
+
+Below you have 3 kinds of don't use:
+ - please don't use means it should likely break ISC DHCP
+
+ - don't use means unless you don't have a good reason to use it
+
+ - by default don't use it means you should not use it for embedded
+  libraries but it doesn't lead to problems (other than possible
+  new ISC DHCP build flags and bigger binaries) when used for
+  external BIND 9 libraries
+
+Possible bind9 configuration flags (list built from bind 9.11 and bind 9.12
+various branches even ISC DHCP uses only the git v9_11 branch):
+ -h, --help, -V, --version
+    make configure to exit immediately so don't use
+
+ -q, --quiet, --silent, --cache-file, -C, --config-cache,
+ --with-make-clean
+    you have no reason to use them but they should not have bad effect
+
+ -n, --no-create
+    make configure to exit too early so don't use
+
+ --prefix, --exec-prefix
+    not used for embedded libraries but used by BIND 9
+
+ --bindir, --sbindir, --libexecdir, --sysconfdir, --sharedstatedir,
+ --localstatedir, --oldincludedir,  --datarootdir, --datadir, --infodir,
+ --localedir, --mandir, --docdir, --htmldir, --dvidir, --pdfdir, --psdir
+    not used for embedded nor BIND 9 for its includes and libraries
+
+ --libdir, --includedir
+    used for embedded libraries for the make install (cf the
+    --enable-bind-install ISC DHCP configuration parameter)
+
+ --build, --host
+    used for cross compiling and handled by ISC DHCP configure
+
+ --disable-option-checking
+    this disables a sanity check so please don't use
+
+ --enable-shared, --enable-static, --enable-fast-install
+    ignored by embedded or BIND 9 libraries configure
+
+ --disable-libtool-lock
+    parallel builds don't work for embedded or BIND 9 libraries build
+    so it should not have any effect
+
+  --enable-libbind
+    this was deprecated so please don't use
+
+  --enable-warn-shadow
+    for developers, should have no effect if compilers don't raise errors
+    (vs warnings) on this (and a shadowing was left)
+
+  --enable-warn-error, --with-sysroot
+    this likely breaks the build so please don't use
+
+  --enable-developer
+    for developers, should have no direct effect but still recommend
+    to not use it
+
+  --enable-afl
+    for developers, useless for ISC DHCP so don't use
+
+  --enable-seccomp
+    this should not have any effect for ISC DHCP?
+
+  --enable-kqueue, --enable-epoll, --enable-devpoll
+    please use them at the ISC DHCP configure level, they should work
+    but not yet fully tested so use at your own risk
+
+  --enable-threads
+    this should work but not yet fully tested so use at your own risk.
+    Note on many systems it requires an extra flag for ISC DHCP building
+    and some experiments showed a large slow down when this is enabled
+
+  --enable-native-pkcs11
+    You should not have a reason to use this and it likely won't work
+    so please don't use
+
+  --enable-openssl-version-check
+    You should never use an antic version of OpenSSL with known
+    security bugs so please don't use
+
+  --enable-openssl-hash
+    Comes with --with-openssl so if OpenSSL raises some problems with
+    hash or HMAC you can try to disable this
+
+  --enable-crypto-rand
+    Comes with --with-openssl so if OpenSSL raises some problems with
+    random number generation you can try to disable this
+
+  --enable-largefile
+    Perhaps there is no systems today where this is required so
+    by default don't use
+
+  --enable-backtrace, --enable-symtable
+    this should have no effect for ISC DHCP?
+
+  --enable-ipv6, --disable-tcp-fastopen, --enable-getifaddrs, --enable-atomic
+    please leave embedded or BIND 9 libraries configure to do its job
+    so please don't use
+
+  --disable-isc-spnego, --with-gssapi
+    this should have no effect for ISC DHCP?
+
+  --enable-full-report
+    this should have no effect for ISC DHCP but is still useful
+    to get more information about bind configuration so use it
+    if you believe it can be useful
+
+  --disable-chroot, --disable-linux-caps, --enable-fixed-rrset,
+  --disable-rpz-nsip, --disable-rpz-nsdname, --enable-filter-aaaa,
+  --enable-querytrace, --with-python, --with-python-install-dir,
+  --with-locktype, --with-pkcs11, --with-ecdsa, --with-gost,
+  --with-eddsa, --with-aes, --with-cc-alg, --with-purify,
+  --with-gperftools-profiler, --with-kame, --with-docbook-xsl,
+  --with-dlopen
+    this should have no effect for ISC DHCP
+
+  --enable-dnsrps-dl, --enable-dnsrps, --enable-dnstap, --with-geoip,
+  --with-lmdb, --with-libxml2, --with-libjson, --with-zlib,
+  --with-readline, --with-dnsrps-libname, --with-dnsrps-dir,
+  --with-protobuf-c, --with-libfstrm, --with-idn, --with-libiconv,
+  --with-iconv, --with-idnlib, --with-dlz-*
+    useless for ISC DHCP so by default don't use
+
+  --with-pic
+    this should have no effect for ISC DHCP?
+
+  --with-gnu-ld
+    this should have no effect for ISC DHCP?
+
+  --with-randomdev, --with-atf
+    please use them at the ISC DHCP configure level
+
+  --with-libtool
+    please leave the ISC DHCP configure manage this
+
+  --with-openssl
+    useless for ISC DHCP by default don't use but remember it is
+    required for DNSSEC
+
+  --with-tuning
+    by default don't use
