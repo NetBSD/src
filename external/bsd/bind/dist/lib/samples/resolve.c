@@ -1,7 +1,7 @@
-/*	$NetBSD: resolve.c,v 1.1.1.6 2017/06/15 15:22:51 christos Exp $	*/
+/*	$NetBSD: resolve.c,v 1.1.1.7 2018/04/07 21:44:13 christos Exp $	*/
 
 /*
- * Copyright (C) 2009, 2012-2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009, 2012-2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -185,7 +185,7 @@ set_key(dns_client_t *client, char *keynamestr, char *keystr,
 
 static void
 addserver(dns_client_t *client, const char *addrstr, const char *port,
-	  const char *namespace)
+	  const char *name_space)
 {
 	struct addrinfo hints, *res;
 	int gaierror;
@@ -216,9 +216,9 @@ addserver(dns_client_t *client, const char *addrstr, const char *port,
 	ISC_LIST_INIT(servers);
 	ISC_LIST_APPEND(servers, &sa, link);
 
-	if (namespace != NULL) {
-		namelen = strlen(namespace);
-		isc_buffer_constinit(&b, namespace, namelen);
+	if (name_space != NULL) {
+		namelen = strlen(name_space);
+		isc_buffer_constinit(&b, name_space, namelen);
 		isc_buffer_add(&b, namelen);
 		dns_fixedname_init(&fname);
 		name = dns_fixedname_name(&fname);

@@ -7,6 +7,8 @@
 #include "VersionInfo.h"
 #include <winver.h>
 
+#include <config.h>
+
 #ifdef _DEBUG
 #undef THIS_FILE
 static char THIS_FILE[]=__FILE__;
@@ -268,20 +270,25 @@ CString CVersionInfo::QueryStringValue(CString value)
 {
 	UINT blobLen = 0;
 	LPVOID viBlob = NULL;
+	int n;
 
 	if(m_versionInfo)
 	{
 		char queryString[256];
 
-		// This code page value is for American English.  If you change the resources to be other than that
+		// This code page value is for American English.
+		// If you change the resources to be other than that
 		// You probably should change this to match it.
 		DWORD codePage = 0x040904B0;
 
-		sprintf(queryString, "\\StringFileInfo\\%08X\\%s",
-			codePage, (LPCTSTR) value);
-
-		if(VerQueryValue(m_versionInfo, queryString, &viBlob, &blobLen))
-			return((char *)viBlob);
+		n = snprintf(queryString, sizeof(queryString),
+			     "\\StringFileInfo\\%08X\\%s",
+			     codePage, (LPCTSTR) value);
+		if (n >= 0 && (size_t)n < sizeof(queryString)) {
+			if(VerQueryValue(m_versionInfo, queryString,
+					 &viBlob, &blobLen))
+				return((char *)viBlob);
+		}
 	}	
 	return("Not Available");
 }

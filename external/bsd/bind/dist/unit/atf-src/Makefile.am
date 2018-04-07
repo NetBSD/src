@@ -1,6 +1,3 @@
-#
-# Automated Testing Framework (atf)
-#
 # Copyright (c) 2007 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
@@ -25,11 +22,11 @@
 # IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
 
 atf_aclocal_DATA =
 BUILT_SOURCES =
 CLEANFILES =
+DIST_HOOKS =
 EXTRA_DIST =
 bin_PROGRAMS =
 dist_man_MANS =
@@ -54,10 +51,7 @@ include doc/Makefile.am.inc
 include test-programs/Makefile.am.inc
 
 if ENABLE_TOOLS
-include atf-report/Makefile.am.inc
-include atf-config/Makefile.am.inc
-include atf-run/Makefile.am.inc
-include atf-version/Makefile.am.inc
+include tools/Makefile.am.inc
 endif
 
 #
@@ -74,6 +68,10 @@ EXTRA_DIST += $(doc_DATA) INSTALL README
 
 TESTS_ENVIRONMENT = PATH=$(prefix)/bin:$${PATH} \
                     PKG_CONFIG_PATH=$(prefix)/lib/pkgconfig
+
+# Allow the caller to override the configuration file to passed to our
+# test runs below.
+KYUA_TEST_CONFIG_FILE = none
 
 testsdir = $(exec_prefix)/tests
 pkgtestsdir = $(testsdir)/$(PACKAGE)
@@ -105,7 +103,8 @@ if !ENABLE_TOOLS
 INSTALLCHECK_TARGETS += installcheck-kyua
 endif
 installcheck-kyua:
-	cd $(pkgtestsdir) && $(TESTS_ENVIRONMENT) $(KYUA) test
+	cd $(pkgtestsdir) && $(TESTS_ENVIRONMENT) \
+	    $(KYUA) --config='$(KYUA_TEST_CONFIG_FILE)' test
 endif
 
 installcheck-local: $(INSTALLCHECK_TARGETS)
@@ -117,16 +116,20 @@ endif
 EXTRA_DIST += $(pkgtests_DATA)
 
 BUILD_SH_TP = \
-	echo "Creating $${dst}"; \
-	echo "\#! $(bindir)/atf-sh" >$${dst}; \
-	cat $${src} >>$${dst}; \
-	chmod +x $${dst}
+	test -d "$$(dirname "$${dst}")" || mkdir -p "$$(dirname "$${dst}")"; \
+	echo "\#! $(bindir)/atf-sh" >"$${dst}"; \
+	if [ -n "$${substs}" ]; then \
+	    cat $${src} | sed $${substs} >>"$${dst}"; \
+	else \
+	    cat $${src} >>"$${dst}"; \
+	fi; \
+	chmod +x "$${dst}"
 
 #
 # Custom targets.
 #
 
-dist-hook: forbid-dist
+DIST_HOOKS += forbid-dist
 if ENABLE_TOOLS
 forbid-dist:
 	@true
@@ -141,14 +144,16 @@ PHONY_TARGETS += clean-all
 clean-all:
 	GIT="$(GIT)" $(SH) $(srcdir)/admin/clean-all.sh
 
-PHONY_TARGETS += release
-release:
-	$(SH) $(srcdir)/admin/release.sh $(PACKAGE_VERSION) $(DIST_ARCHIVES)
-
-PHONY_TARGETS += release-test
-release-test:
-	$(SH) $(srcdir)/admin/release-test.sh $(DIST_ARCHIVES)
-
 .PHONY: $(PHONY_TARGETS)
+
+# TODO(jmmv): Remove after atf 0.22.
+install-data-hook:
+	cd $(DESTDIR)$(man3dir) && \
+	for binding in c c++ sh; do \
+	    rm -f "atf-$${binding}-api.3"; \
+	    $(LN_S) "atf-$${binding}.3" "atf-$${binding}-api.3"; \
+	done
+
+dist-hook: $(DIST_HOOKS)
 
 # vim: syntax=make:noexpandtab:shiftwidth=8:softtabstop=8

@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2011-2013, 2016  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2011-2013, 2016, 2017  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -36,14 +36,28 @@ PIDFILE="${THISDIR}/${CONFDIR}/named.pid"
 myRNDC="$RNDC -c ${THISDIR}/${CONFDIR}/rndc.conf"
 myNAMED="$NAMED -c ${THISDIR}/${CONFDIR}/named.conf -m record,size,mctx -T clienttest -T nosyslog -d 99 -U 4"
 
+# Test given condition.  If true, test again after a second.  Used for testing
+# filesystem-dependent conditions in order to prevent false negatives caused by
+# directory contents not being synchronized immediately after rename() returns.
+test_with_retry() {
+	if test "$@"; then
+		sleep 1
+		if test "$@"; then
+			return 0
+		fi
+	fi
+	return 1
+}
+
 status=0
 n=0
 
 cd $CONFDIR
 
-n=`expr $n + 1`
-echo "I:testing log file validity (named -g + only plain files allowed) ($n)"
+echo "I:testing log file validity (named -g + only plain files allowed)"
 
+n=`expr $n + 1`
+echo "I: testing plain file (named -g) ($n)"
 # First run with a known good config.
 echo > $PLAINFILE
 cp $PLAINCONF named.conf
@@ -51,9 +65,9 @@ $myRNDC reconfig > rndc.out.test$n 2>&1
 grep "reloading configuration failed" named.run > /dev/null 2>&1
 if [ $? -ne 0 ]
 then
-	echo "I: testing plain file succeeded"
+	echo "I:  testing plain file succeeded"
 else
-	echo "I: testing plain file failed (unexpected)"
+	echo "I:  testing plain file failed (unexpected)"
 	echo "I:exit status: 1"
 	exit 1 
 fi
@@ -72,14 +86,14 @@ then
 	grep "checking logging configuration failed: invalid file" named.run > /dev/null 2>&1
 	if [ $? -ne 0 ]
 	then
-		echo "I: testing directory as file succeeded (UNEXPECTED)"
+		echo "I:  testing directory as file succeeded (UNEXPECTED)"
 		echo "I:exit status: 1"
 		exit 1
 	else
-		echo "I: testing directory as log file failed (expected)"
+		echo "I:  testing directory as log file failed (expected)"
 	fi
 else
-	echo "I: skipping directory test (unable to create directory)"
+	echo "I:  skipping directory test (unable to create directory)"
 fi
 
 # Now try pipe file, expect failure
@@ -96,14 +110,14 @@ then
 	grep "checking logging configuration failed: invalid file" named.run  > /dev/null 2>&1
 	if [ $? -ne 0 ]
 	then
-		echo "I: testing pipe file as log file succeeded (UNEXPECTED)"
+		echo "I:  testing pipe file as log file succeeded (UNEXPECTED)"
 		echo "I:exit status: 1"
 		exit 1
 	else
-		echo "I: testing pipe file as log file failed (expected)"
+		echo "I:  testing pipe file as log file failed (expected)"
 	fi
 else
-	echo "I: skipping pipe test (unable to create pipe)"
+	echo "I:  skipping pipe test (unable to create pipe)"
 fi
 
 # Now try symlink file to plain file, expect success 
@@ -122,14 +136,14 @@ then
 	grep "reloading configuration failed" named.run > /dev/null 2>&1
 	if [ $? -ne 0 ]
 	then
-		echo "I: testing symlink to plain file succeeded"
+		echo "I:  testing symlink to plain file succeeded"
 	else
-		echo "I: testing symlink to plain file failed (unexpected)"
+		echo "I:  testing symlink to plain file failed (unexpected)"
 		echo "I:exit status: 1"
 		exit 1
 	fi
 else
-	echo "I: skipping symlink test (unable to create symlink)"
+	echo "I:  skipping symlink test (unable to create symlink)"
 fi
 # Stop the server and run through a series of tests with various config
 # files while controlling the stop/start of the server.
@@ -148,9 +162,10 @@ fi
 
 status=0
 
-n=`expr $n + 1`
-echo "I:testing log file validity (only plain files allowed) ($n)"
+echo "I:testing log file validity (only plain files allowed)"
 
+n=`expr $n + 1`
+echo "I: testing plain file (named -g) ($n)"
 # First run with a known good config.
 echo > $PLAINFILE
 cp $PLAINCONF named.conf
@@ -158,9 +173,9 @@ $myRNDC reconfig > rndc.out.test$n 2>&1
 grep "reloading configuration failed" named.run > /dev/null 2>&1
 if [ $? -ne 0 ]
 then
-	echo "I: testing plain file succeeded"
+	echo "I:  testing plain file succeeded"
 else
-	echo "I: testing plain file failed (unexpected)"
+	echo "I:  testing plain file failed (unexpected)"
 	echo "I:exit status: 1"
 	exit 1 
 fi
@@ -179,14 +194,14 @@ then
 	grep "configuring logging: invalid file" named.run > /dev/null 2>&1
 	if [ $? -ne 0 ]
 	then
-		echo "I: testing directory as file succeeded (UNEXPECTED)"
+		echo "I:  testing directory as file succeeded (UNEXPECTED)"
 		echo "I:exit status: 1"
 		exit 1
 	else
-		echo "I: testing directory as log file failed (expected)"
+		echo "I:  testing directory as log file failed (expected)"
 	fi
 else
-	echo "I: skipping directory test (unable to create directory)"
+	echo "I:  skipping directory test (unable to create directory)"
 fi
 
 # Now try pipe file, expect failure
@@ -203,14 +218,14 @@ then
 	grep "configuring logging: invalid file" named.run  > /dev/null 2>&1
 	if [ $? -ne 0 ]
 	then
-		echo "I: testing pipe file as log file succeeded (UNEXPECTED)"
+		echo "I:  testing pipe file as log file succeeded (UNEXPECTED)"
 		echo "I:exit status: 1"
 		exit 1
 	else
-		echo "I: testing pipe file as log file failed (expected)"
+		echo "I:  testing pipe file as log file failed (expected)"
 	fi
 else
-	echo "I: skipping pipe test (unable to create pipe)"
+	echo "I:  skipping pipe test (unable to create pipe)"
 fi
 
 # Now try symlink file to plain file, expect success 
@@ -230,20 +245,20 @@ then
 	grep "reloading configuration failed" named.run > /dev/null 2>&1
 	if [ $? -ne 0 ]
 	then
-		echo "I: testing symlink to plain file succeeded"
+		echo "I:  testing symlink to plain file succeeded"
 	else
-		echo "I: testing symlink to plain file failed (unexpected)"
+		echo "I:  testing symlink to plain file failed (unexpected)"
 		echo "I:exit status: 1"
 		exit 1
 	fi
 else
-	echo "I: skipping symlink test (unable to create symlink)"
+	echo "I:  skipping symlink test (unable to create symlink)"
 fi
 
 echo "I:testing logging functionality"
 
 n=`expr $n + 1`
-echo "I: testing explict versions ($n)"
+echo "I: testing explicit versions ($n)"
 cp $VERSCONF named.conf
 # a seconds since epoch version number
 touch $VERSFILE.1480039317
@@ -254,27 +269,27 @@ t2=`$PERL -e 'print time()."\n";'`
 t=`expr ${t2:-0} - ${t1:-0}`
 if test ${t:-1000} -gt 5
 then
-        echo "I: testing explict versions failed cleanup of old entries took too long ($t secs)"
+        echo "I:  testing explicit versions failed: cleanup of old entries took too long ($t secs)"
 	status=`expr $status + 1`
 fi 
 if ! grep "status: NOERROR" dig.out.test$n > /dev/null
 then
-	echo "I: testing explict versions failed DiG lookup failed"
+	echo "I:  testing explicit versions failed: DiG lookup failed"
 	status=`expr $status + 1`
 fi
-if test -f $VERSFILE.1480039317
+if test_with_retry -f $VERSFILE.1480039317
 then
-	echo "I: testing explict versions failed $VERSFILE.1480039317 not removed"
+	echo "I:  testing explicit versions failed: $VERSFILE.1480039317 not removed"
 	status=`expr $status + 1`
 fi
-if test -f $VERSFILE.5
+if test_with_retry -f $VERSFILE.5
 then
-	echo "I: testing explict versions failed $VERSFILE.5 exists"
+	echo "I:  testing explicit versions failed: $VERSFILE.5 exists"
 	status=`expr $status + 1`
 fi
-if test ! -f $VERSFILE.4
+if test_with_retry ! -f $VERSFILE.4
 then
-	echo "I: testing explict versions failed $VERSFILE.4 does not exist"
+	echo "I:  testing explicit versions failed: $VERSFILE.4 does not exist"
 	status=`expr $status + 1`
 fi
 
@@ -290,22 +305,22 @@ t2=`$PERL -e 'print time()."\n";'`
 t=`expr ${t2:-0} - ${t1:-0}`
 if test ${t:-1000} -gt 5
 then
-        echo "I: testing unlimited versions failed took too long ($t secs)"
+        echo "I:  testing unlimited versions failed: took too long ($t secs)"
 	status=`expr $status + 1`
 fi 
 if ! grep "status: NOERROR" dig.out.test$n > /dev/null
 then
-	echo "I: testing unlimited versions failed DiG lookup failed"
+	echo "I:  testing unlimited versions failed: DiG lookup failed"
 	status=`expr $status + 1`
 fi
-if test ! -f $UNLIMITEDFILE.1480039317
+if test_with_retry ! -f $UNLIMITEDFILE.1480039317
 then
-	echo "I: testing unlimited versions failed $UNLIMITEDFILE.1480039317 removed"
+	echo "I:  testing unlimited versions failed: $UNLIMITEDFILE.1480039317 removed"
 	status=`expr $status + 1`
 fi
-if test ! -f $UNLIMITEDFILE.4
+if test_with_retry ! -f $UNLIMITEDFILE.4
 then
-	echo "I: testing unlimited versions failed $UNLIMITEDFILE.4 does not"
+	echo "I:  testing unlimited versions failed: $UNLIMITEDFILE.4 does not exist"
 	status=`expr $status + 1`
 fi
 
