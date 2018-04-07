@@ -1,7 +1,7 @@
-/*	$NetBSD: file.h,v 1.10 2016/05/26 16:50:00 christos Exp $	*/
+/*	$NetBSD: file.h,v 1.11 2018/04/07 22:23:22 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009, 2011, 2012, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009, 2011, 2012, 2014, 2015, 2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -263,7 +263,6 @@ isc_file_progname(const char *filename, char *buf, size_t buflen);
  * \brief Given an operating system specific file name "filename"
  * referring to a program, return the canonical program name.
  *
- *
  * Any directory prefix or executable file name extension (if
  * used on the OS in case) is stripped.  On systems where program
  * names are case insensitive, the name is canonicalized to all
@@ -365,6 +364,12 @@ isc_file_munmap(void *addr, size_t len);
 /*%<
  * Portable front-end to munmap().  If munmap() is not defined on
  * this platform, then we simply free the memory.
+ */
+
+isc_boolean_t
+isc_file_isdirwritable(const char *path);
+/*%<
+ *	Return true if the path is a directory and is writable
  */
 
 ISC_LANG_ENDDECLS

@@ -1,7 +1,7 @@
-/*	$NetBSD: update.c,v 1.13 2017/06/15 15:59:37 christos Exp $	*/
+/*	$NetBSD: update.c,v 1.14 2018/04/07 22:23:14 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2018  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -820,8 +820,11 @@ typedef struct {
 	/* The signature's name if the request was signed. */
 	dns_name_t *signer;
 
-	/* The address of the client if the request was received via TCP. */
-	isc_netaddr_t *tcpaddr;
+	/* The address of the client. */
+	isc_netaddr_t *addr;
+
+	/* Whether the request was sent via TCP. */
+	isc_boolean_t tcp;
 
 	/* The ssu table to check against. */
 	dns_ssutable_t *table;
@@ -842,16 +845,17 @@ ssu_checkrule(void *data, dns_rdataset_t *rrset) {
 	if (rrset->type == dns_rdatatype_rrsig ||
 	    rrset->type == dns_rdatatype_nsec)
 		return (ISC_R_SUCCESS);
-	result = dns_ssutable_checkrules(ssuinfo->table, ssuinfo->signer,
-					 ssuinfo->name, ssuinfo->tcpaddr,
-					 rrset->type, ssuinfo->key);
+	result = dns_ssutable_checkrules2(ssuinfo->table, ssuinfo->signer,
+					  ssuinfo->name, ssuinfo->addr,
+					  ssuinfo->tcp, &ns_g_server->aclenv,
+					  rrset->type, ssuinfo->key);
 	return (result == ISC_TRUE ? ISC_R_SUCCESS : ISC_R_FAILURE);
 }
 
 static isc_boolean_t
 ssu_checkall(dns_db_t *db, dns_dbversion_t *ver, dns_name_t *name,
 	     dns_ssutable_t *ssutable, dns_name_t *signer,
-	     isc_netaddr_t *tcpaddr, dst_key_t *key)
+	     isc_netaddr_t *addr, isc_boolean_t tcp, dst_key_t *key)
 {
 	isc_result_t result;
 	ssu_check_t ssuinfo;
@@ -859,7 +863,8 @@ ssu_checkall(dns_db_t *db, dns_dbversion_t *ver, dns_name_t *name,
 	ssuinfo.name = name;
 	ssuinfo.table = ssutable;
 	ssuinfo.signer = signer;
-	ssuinfo.tcpaddr = tcpaddr;
+	ssuinfo.addr = addr;
+	ssuinfo.tcp = tcp;
 	ssuinfo.key = key;
 	result = foreach_rrset(db, ver, name, ssu_checkrule, &ssuinfo);
 	return (ISC_TF(result == ISC_R_SUCCESS));
@@ -2693,38 +2698,33 @@ update_action(isc_task_t *task, isc_event_t *event) {
 		}
 
 		if (ssutable != NULL) {
-			isc_netaddr_t *tcpaddr, netaddr;
+			isc_netaddr_t netaddr;
 			dst_key_t *tsigkey = NULL;
-			/*
-			 * If this is a TCP connection then pass the
-			 * address of the client through for tcp-self
-			 * and 6to4-self otherwise pass NULL.  This
-			 * provides weak address based authentication.
-			 */
-			if (TCPCLIENT(client)) {
-				isc_netaddr_fromsockaddr(&netaddr,
-							 &client->peeraddr);
-				tcpaddr = &netaddr;
-			} else
-				tcpaddr = NULL;
+			isc_netaddr_fromsockaddr(&netaddr, &client->peeraddr);
 
 			if (client->message->tsigkey != NULL)
 				tsigkey = client->message->tsigkey->key;
 
 			if (rdata.type != dns_rdatatype_any) {
-				if (!dns_ssutable_checkrules(ssutable,
-							     client->signer,
-							     name, tcpaddr,
-							     rdata.type,
-							     tsigkey))
+				if (!dns_ssutable_checkrules2
+				    (ssutable, client->signer, name, &netaddr,
+				     ISC_TF(TCPCLIENT(client)),
+				     &ns_g_server->aclenv,
+				     rdata.type, tsigkey))
+				{
 					FAILC(DNS_R_REFUSED,
 					      "rejected by secure update");
+				}
 			} else {
 				if (!ssu_checkall(db, ver, name, ssutable,
-						  client->signer, tcpaddr,
+						  client->signer,
+						  &netaddr,
+						  ISC_TF(TCPCLIENT(client)),
 						  tsigkey))
+				{
 					FAILC(DNS_R_REFUSED,
 					      "rejected by secure update");
+				}
 			}
 		}
 	}
@@ -2756,7 +2756,8 @@ update_action(isc_task_t *task, isc_event_t *event) {
 		if (update_class == zoneclass) {
 
 			/*
-			 * RFC1123 doesn't allow MF and MD in master zones.				 */
+			 * RFC1123 doesn't allow MF and MD in master zones.
+			 */
 			if (rdata.type == dns_rdatatype_md ||
 			    rdata.type == dns_rdatatype_mf) {
 				char typebuf[DNS_RDATATYPE_FORMATSIZE];
@@ -2845,7 +2846,9 @@ update_action(isc_task_t *task, isc_event_t *event) {
 				 * Ignore attempts to add NSEC3PARAM records
 				 * with any flags other than OPTOUT.
 				 */
-				if ((rdata.data[1] & ~DNS_NSEC3FLAG_OPTOUT) != 0) {
+				if ((rdata.data[1] &
+				     ~DNS_NSEC3FLAG_OPTOUT) != 0)
+				{
 					update_log(client, zone,
 						   LOGLEVEL_PROTOCOL,
 						   "attempt to add NSEC3PARAM "

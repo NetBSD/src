@@ -1,7 +1,7 @@
-/*	$NetBSD: t_master.c,v 1.6 2014/12/10 04:37:53 christos Exp $	*/
+/*	$NetBSD: t_master.c,v 1.7 2018/04/07 22:23:15 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009, 2011, 2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2011, 2013, 2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -65,7 +65,8 @@ t1_add_callback(void *arg, dns_name_t *owner, dns_rdataset_t *dataset) {
 }
 
 static int
-test_master(char *testfile, char *origin, char *class, isc_result_t exp_result)
+test_master(char *testfile, char *origin, char *db_class,
+	    isc_result_t exp_result)
 {
 	int			result;
 	int			len;
@@ -105,8 +106,8 @@ test_master(char *testfile, char *origin, char *class, isc_result_t exp_result)
 	dns_rdatacallbacks_init_stdio(&callbacks);
 	callbacks.add = t1_add_callback;
 
-	textregion.base = class;
-	textregion.length = strlen(class);
+	textregion.base = db_class;
+	textregion.length = strlen(db_class);
 
 	dns_result = dns_rdataclass_fromtext(&rdataclass, &textregion);
 	if (dns_result != ISC_R_SUCCESS) {

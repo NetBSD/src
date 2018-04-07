@@ -1,9 +1,6 @@
-/*	$NetBSD: error_test.c,v 1.3 2014/12/10 04:38:03 christos Exp $	*/
+/*	$NetBSD: error_test.c,v 1.4 2018/04/07 22:23:24 christos Exp $	*/
 
-/*
- * Automated Testing Framework (atf)
- *
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+/* Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,8 +23,9 @@
  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
  * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
+ * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.  */
+
+#include "atf-c/error.h"
 
 #include <errno.h>
 #include <stdint.h>
@@ -37,9 +35,6 @@
 #include <atf-c.h>
 
 #include "atf-c/defs.h"
-#include "atf-c/error.h"
-
-#include "detail/test_helpers.h"
 
 /* ---------------------------------------------------------------------
  * Auxiliary functions.
@@ -279,13 +274,6 @@ ATF_TC_BODY(no_memory_twice, tc)
 }
 
 /* ---------------------------------------------------------------------
- * Tests cases for the header file.
- * --------------------------------------------------------------------- */
-
-HEADER_TC(include, "atf-c/error.h");
-HEADER_TC(include_fwd, "atf-c/error_fwd.h");
-
-/* ---------------------------------------------------------------------
  * Main.
  * --------------------------------------------------------------------- */
 
@@ -306,10 +294,6 @@ ATF_TP_ADD_TCS(tp)
     ATF_TP_ADD_TC(tp, no_memory_new);
     ATF_TP_ADD_TC(tp, no_memory_format);
     ATF_TP_ADD_TC(tp, no_memory_twice);
-
-    /* Add the test cases for the header file. */
-    ATF_TP_ADD_TC(tp, include);
-    ATF_TP_ADD_TC(tp, include_fwd);
 
     return atf_no_error();
 }

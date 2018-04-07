@@ -1,7 +1,7 @@
-/*	$NetBSD: sockaddr.c,v 1.8 2016/05/26 16:49:59 christos Exp $	*/
+/*	$NetBSD: sockaddr.c,v 1.9 2018/04/07 22:23:22 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2010-2012, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2010-2012, 2014, 2015, 2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -504,7 +504,8 @@ isc_sockaddr_frompath(isc_sockaddr_t *sockaddr, const char *path) {
 	sockaddr->type.sunix.sun_len =
 			(unsigned char)sizeof(sockaddr->type.sunix);
 #endif
-	strcpy(sockaddr->type.sunix.sun_path, path);
+	strlcpy(sockaddr->type.sunix.sun_path, path,
+		sizeof(sockaddr->type.sunix.sun_path));
 	return (ISC_R_SUCCESS);
 #else
 	UNUSED(sockaddr);
