@@ -1,4 +1,5 @@
-/*	$NetBSD: udp.h,v 1.1.1.2 2014/07/12 11:57:57 spz Exp $	*/
+/*	$NetBSD: udp.h,v 1.1.1.3 2018/04/07 20:44:27 christos Exp $	*/
+
 /*	NetBSD: udp.h,v 1.6 1995/04/13 06:37:10 cgd Exp 	*/
 
 /*

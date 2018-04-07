@@ -1,10 +1,11 @@
-/*	$NetBSD: misc_unittest.c,v 1.1.1.1 2016/01/10 19:44:40 christos Exp $	*/
+/*	$NetBSD: misc_unittest.c,v 1.1.1.2 2018/04/07 20:44:26 christos Exp $	*/
+
 /*
- * Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
  *
- * Permission to use, copy, modify, and/or distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
  * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
@@ -154,6 +155,69 @@ ATF_TC_BODY(find_percent_adv, tc)
     return;
 }
 
+ATF_TC(print_hex_only);
+
+ATF_TC_HEAD(print_hex_only, tc)
+{
+    atf_tc_set_md_var(tc, "descr", "Verify hex data formatting.");
+}
+
+/* This test exercises the print_hex_only function
+ */
+ATF_TC_BODY(print_hex_only, tc)
+{
+    unsigned char data[] =  {0xaa,0xbb,0xcc,0xdd};
+    char* ref = "aa:bb:cc:dd";
+    char buf[14];
+    memset(buf, 'x', sizeof(buf));
+    int data_len = sizeof(data);
+    int expected_len = 12;
+
+    /* Proper input values should produce proper result */
+    print_hex_only (data_len, data, expected_len, buf);
+    if (strlen(buf) != strlen(ref)) {
+	    atf_tc_fail("len of result is wrong");
+    }
+
+    if (strcmp(buf, ref)) {
+	    atf_tc_fail("result doesn't match ref");
+    }
+
+    /* Make sure we didn't overrun the buffer */
+    if (buf[expected_len] != 'x') {
+	    atf_tc_fail("data over run detected");
+    }
+
+    /* Buffer == null doesn't crash */
+    print_hex_only (data_len, data, expected_len, NULL);
+
+    /* Limit == 0 doesn't write (or crash) */
+    *buf = '-';
+    print_hex_only (data_len, data, 0, buf);
+    if (*buf != '-') {
+	    atf_tc_fail("limit of zero, altered buffer");
+    }
+
+    /* data == NULL doesn't write (or crash) */
+    print_hex_only (data_len, NULL, expected_len, buf);
+    if (*buf != '-') {
+	    atf_tc_fail("limit of zero, altered buffer");
+    }
+
+    /* Limit too small should produce zero length string */
+    *buf = '-';
+    print_hex_only (data_len, data, expected_len - 1, buf);
+    if (*buf != 0x0) {
+	    atf_tc_fail("limit too small should have failed");
+    }
+
+    /* Data length of 0 should produce zero length string */
+    *buf = '-';
+    print_hex_only (0, data, expected_len, buf);
+    if (*buf != 0x0) {
+	    atf_tc_fail("limit too small should have failed");
+    }
+}
     	
 /* This macro defines main() method that will call specified
    test cases. tp and simple_test_case names can be whatever you want
@@ -162,6 +226,7 @@ ATF_TP_ADD_TCS(tp)
 {
     ATF_TP_ADD_TC(tp, find_percent_basic);
     ATF_TP_ADD_TC(tp, find_percent_adv);
+    ATF_TP_ADD_TC(tp, print_hex_only);
 
     return (atf_no_error());
 }

@@ -1,16 +1,16 @@
-/*	$NetBSD: connection.c,v 1.1.1.3 2014/07/12 11:57:58 spz Exp $	*/
+/*	$NetBSD: connection.c,v 1.1.1.4 2018/04/07 20:44:27 christos Exp $	*/
+
 /* connection.c
 
    Subroutines for dealing with connections. */
 
 /*
- * Copyright (c) 2009-2014 by Internet Systems Consortium, Inc. ("ISC")
- * Copyright (c) 2004,2007 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004-2017 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1999-2003 by Internet Software Consortium
  *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -29,10 +29,10 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: connection.c,v 1.1.1.3 2014/07/12 11:57:58 spz Exp $");
+__RCSID("$NetBSD: connection.c,v 1.1.1.4 2018/04/07 20:44:27 christos Exp $");
 
 #include "dhcpd.h"
-
+#include <isc/util.h>
 #include <omapip/omapip_p.h>
 #include <arpa/inet.h>
 #include <arpa/nameser.h>
@@ -154,6 +154,7 @@ isc_result_t omapi_connect_list (omapi_object_t *c,
 		if (local_addr) {
 			/* Only do TCPv4 so far. */
 			if (local_addr -> addrtype != AF_INET) {
+				close(obj->socket);
 				omapi_connection_dereference (&obj, MDL);
 				return DHCP_R_INVALIDARG;
 			}
@@ -172,6 +173,7 @@ isc_result_t omapi_connect_list (omapi_object_t *c,
 				  sizeof local_sin) < 0) {
 				omapi_connection_object_t **objp = &obj;
 				omapi_object_t **o = (omapi_object_t **)objp;
+				close(obj->socket);
 				omapi_object_dereference(o, MDL);
 				if (errno == EADDRINUSE)
 					return ISC_R_ADDRINUSE;

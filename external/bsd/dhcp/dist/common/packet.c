@@ -1,16 +1,16 @@
-/*	$NetBSD: packet.c,v 1.1.1.5 2016/01/10 19:44:40 christos Exp $	*/
+/*	$NetBSD: packet.c,v 1.1.1.6 2018/04/07 20:44:26 christos Exp $	*/
+
 /* packet.c
 
    Packet assembly code, originally contributed by Archie Cobbs. */
 
 /*
- * Copyright (c) 2009,2012,2014 by Internet Systems Consortium, Inc. ("ISC")
- * Copyright (c) 2004,2005,2007 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004-2017 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1996-2003 by Internet Software Consortium
  *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: packet.c,v 1.1.1.5 2016/01/10 19:44:40 christos Exp $");
+__RCSID("$NetBSD: packet.c,v 1.1.1.6 2018/04/07 20:44:26 christos Exp $");
 
 #include "dhcpd.h"
 
@@ -54,7 +54,7 @@ u_int32_t checksum (buf, nbytes, sum)
 	unsigned i;
 
 #ifdef DEBUG_CHECKSUM
-	log_debug ("checksum (%x %d %x)", buf, nbytes, sum);
+	log_debug ("checksum (%x %d %x)", (unsigned)buf, nbytes, sum);
 #endif
 
 	/* Checksum all the pairs of bytes first... */
@@ -172,6 +172,12 @@ void assemble_udp_ip_header (interface, buf, bufix,
 	/* Fill out the UDP header */
 	udp.uh_sport = local_port;		/* XXX */
 	udp.uh_dport = port;			/* XXX */
+#if defined(RELAY_PORT)
+	/* Change to relay port defined if sending to server */
+	if (relay_port && (port == htons(67))) {
+		udp.uh_sport = relay_port;
+	}
+#endif
 	udp.uh_ulen = htons(sizeof(udp) + len);
 	memset (&udp.uh_sum, 0, sizeof udp.uh_sum);
 
@@ -224,7 +230,28 @@ ssize_t decode_hw_header (interface, buf, bufix, from)
 	}
 }
 
-/* UDP header and IP header decoded together for convenience. */
+/*!
+ *
+ * \brief UDP header and IP header decoded together for convenience.
+ *
+ * Attempt to decode the UDP and IP headers and, if necessary, checksum
+ * the packet.
+ *
+ * \param inteface - the interface on which the packet was recevied
+ * \param buf - a pointer to the buffer for the received packet
+ * \param bufix - where to start processing the buffer, previous
+ *                routines may have processed parts of the buffer already
+ * \param from - space to return the address of the packet sender
+ * \param buflen - remaining length of the buffer, this will have been
+ *                 decremented by bufix by the caller
+ * \param rbuflen - space to return the length of the payload from the udp
+ *                  header
+ * \param csum_ready - indication if the checksum is valid for use
+ *                     non-zero indicates the checksum should be validated
+ *
+ * \return - the index to the first byte of the udp payload (that is the
+ *           start of the DHCP packet
+ */
 
 ssize_t
 decode_udp_ip_header(struct interface_info *interface,
@@ -235,7 +262,7 @@ decode_udp_ip_header(struct interface_info *interface,
   unsigned char *data;
   struct ip ip;
   struct udphdr udp;
-  unsigned char *upp, *endbuf;
+  unsigned char *upp;
   u_int32_t ip_len, ulen, pkt_len;
   static unsigned int ip_packets_seen = 0;
   static unsigned int ip_packets_bad_checksum = 0;
@@ -245,11 +272,8 @@ decode_udp_ip_header(struct interface_info *interface,
   static unsigned int udp_packets_length_overflow = 0;
   unsigned len;
 
-  /* Designate the end of the input buffer for bounds checks. */
-  endbuf = buf + bufix + buflen;
-
   /* Assure there is at least an IP header there. */
-  if ((buf + bufix + sizeof(ip)) > endbuf)
+  if (sizeof(ip) > buflen)
 	  return -1;
 
   /* Copy the IP header into a stack aligned structure for inspection.
@@ -261,13 +285,17 @@ decode_udp_ip_header(struct interface_info *interface,
   ip_len = (*upp & 0x0f) << 2;
   upp += ip_len;
 
-  /* Check the IP packet length. */
+  /* Check packet lengths are within the buffer:
+   * first the ip header (ip_len)
+   * then the packet length from the ip header (pkt_len)
+   * then the udp header (ip_len + sizeof(udp)
+   * We are liberal in what we accept, the udp payload should fit within
+   * pkt_len, but we only check against the full buffer size.
+   */
   pkt_len = ntohs(ip.ip_len);
-  if (pkt_len > buflen)
-	return -1;
-
-  /* Assure after ip_len bytes that there is enough room for a UDP header. */
-  if ((upp + sizeof(udp)) > endbuf)
+  if ((ip_len > buflen) ||
+      (pkt_len > buflen) ||
+      ((ip_len + sizeof(udp)) > buflen))
 	  return -1;
 
   /* Copy the UDP header into a stack aligned structure for inspection. */
@@ -279,7 +307,12 @@ decode_udp_ip_header(struct interface_info *interface,
 	  return -1;
 
   /* Is it to the port we're serving? */
+#if defined(RELAY_PORT)
+  if ((udp.uh_dport != local_port) &&
+      ((relay_port == 0) || (udp.uh_dport != relay_port)))
+#else
   if (udp.uh_dport != local_port)
+#endif
 	  return -1;
 #endif /* USERLAND_FILTER */
 
@@ -288,7 +321,8 @@ decode_udp_ip_header(struct interface_info *interface,
 	return -1;
 
   udp_packets_length_checked++;
-  if ((upp + ulen) > endbuf) {
+  /* verify that the payload length from the udp packet fits in the buffer */
+  if ((ip_len + ulen) > buflen) {
 	udp_packets_length_overflow++;
 	if (((udp_packets_length_checked > 4) &&
 	     (udp_packets_length_overflow != 0)) &&
@@ -347,8 +381,8 @@ decode_udp_ip_header(struct interface_info *interface,
 		udp_packets_bad_checksum++;
 		if (((udp_packets_seen > 4) && (udp_packets_bad_checksum != 0))
 		    && ((udp_packets_seen / udp_packets_bad_checksum) < 2)) {
-			log_info ("%u bad udp checksums in %u packets",
-			          udp_packets_bad_checksum, udp_packets_seen);
+			log_debug ("%u bad udp checksums in %u packets",
+			           udp_packets_bad_checksum, udp_packets_seen);
 			udp_packets_seen = udp_packets_bad_checksum = 0;
 		}
 

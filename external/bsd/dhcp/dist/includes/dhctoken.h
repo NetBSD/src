@@ -1,16 +1,16 @@
-/*	$NetBSD: dhctoken.h,v 1.1.1.5 2016/01/10 19:44:42 christos Exp $	*/
+/*	$NetBSD: dhctoken.h,v 1.1.1.6 2018/04/07 20:44:27 christos Exp $	*/
+
 /* dhctoken.h
 
    Tokens for config file lexer and parser. */
 
 /*
- * Copyright (c) 2011-2015 by Internet Systems Consortium, Inc. ("ISC")
- * Copyright (c) 2004,2007-2009 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004-2017 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1996-2003 by Internet Software Consortium
  *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -41,6 +41,8 @@ enum dhcp_token {
 	SLASH = '/',
 	LBRACE = '{',
 	RBRACE = '}',
+	LBRACKET = '[',
+	RBRACKET = ']',
 	LPAREN = '(',
 	RPAREN = ')',
 	EQUAL = '=',
@@ -369,7 +371,14 @@ enum dhcp_token {
 	POOL6 = 669,
 	V6RELAY = 670,
 	V6RELOPT = 671,
-	PARSE_VENDOR_OPT = 672
+	PARSE_VENDOR_OPT = 672,
+	AUTHORING_BYTE_ORDER = 673,
+	TOKEN_LITTLE_ENDIAN = 674,
+	TOKEN_BIG_ENDIAN = 675,
+	LEASE_ID_FORMAT = 676,
+	TOKEN_HEX = 677,
+	TOKEN_OCTAL = 678,
+	KEY_ALGORITHM = 679
 };
 
 #define is_identifier(x)	((x) >= FIRST_TOKEN &&	\

@@ -1,4 +1,5 @@
-/*	$NetBSD: ldap_casa.h,v 1.1.1.1 2016/01/10 19:44:43 christos Exp $	*/
+/*	$NetBSD: ldap_casa.h,v 1.1.1.2 2018/04/07 20:44:27 christos Exp $	*/
+
 /* ldap_casa.h
    
    Definition for CASA modules... */
