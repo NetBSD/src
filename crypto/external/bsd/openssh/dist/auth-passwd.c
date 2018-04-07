@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-passwd.c,v 1.8 2018/04/06 18:58:59 christos Exp $	*/
+/*	$NetBSD: auth-passwd.c,v 1.9 2018/04/07 00:26:12 christos Exp $	*/
 /* $OpenBSD: auth-passwd.c,v 1.46 2018/03/03 03:15:51 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -38,7 +38,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth-passwd.c,v 1.8 2018/04/06 18:58:59 christos Exp $");
+__RCSID("$NetBSD: auth-passwd.c,v 1.9 2018/04/07 00:26:12 christos Exp $");
 #include <sys/types.h>
 
 #include <login_cap.h>
@@ -189,7 +189,7 @@ sys_auth_passwd(struct ssh *ssh, const char *password)
 	 */
 	if (authctxt->valid && pw_password[0] && pw_password[1])
 		salt = pw_password;
-	encrypted_password = xcrypt(password, salt);
+	encrypted_password = xcrypt(password, salt ? salt : "xx");
 
 	/*
 	 * Authentication is accepted if the encrypted passwords
