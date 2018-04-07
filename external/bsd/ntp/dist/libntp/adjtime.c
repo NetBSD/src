@@ -1,4 +1,4 @@
-/*	$NetBSD: adjtime.c,v 1.4 2016/01/08 21:35:38 christos Exp $	*/
+/*	$NetBSD: adjtime.c,v 1.5 2018/04/07 00:19:52 christos Exp $	*/
 
 #ifdef HAVE_CONFIG_H
 # include <config.h>
@@ -316,7 +316,7 @@ adjtime (struct timeval *delta, struct timeval *olddelta)
 	/*
 	 * Get the current clock period (nanoseconds)
 	 */
-	if (ClockPeriod (CLOCK_REALTIME, 0, &period, 0) < 0)
+	if (ClockPeriod (CLOCK_REALTIME, 0, &period, 0) == -1)
 	    return -1;
 
 	/*
@@ -356,7 +356,7 @@ adjtime (struct timeval *delta, struct timeval *olddelta)
 	adj.tick_count = 0;
     }
 
-    if (ClockAdjust (CLOCK_REALTIME, &adj, &oldadj) < 0)
+    if (ClockAdjust (CLOCK_REALTIME, &adj, &oldadj) == -1)
 	return -1;
 
     /*
