@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: dhcp2netbsd,v 1.1 2018/04/07 22:31:36 christos Exp $
+#	$NetBSD: dhcp2netbsd,v 1.2 2018/04/07 22:34:51 christos Exp $
 #
 # Copyright (c) 2003, 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -97,6 +97,6 @@ done
 echo done
 
 echo You can import now.  Use the following command:
-echo cvs -d cvs.netbsd.org:/cvsroot import src/external/bsd/dhcp/dist ISC DHCPX_Y_Z
+echo cvs -d cvs.netbsd.org:/cvsroot import src/external/mpl/dhcp/dist ISC DHCPX_Y_Z
 
 exit 0
