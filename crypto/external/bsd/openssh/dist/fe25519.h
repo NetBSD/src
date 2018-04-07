@@ -1,3 +1,4 @@
+/*	$NetBSD: fe25519.h,v 1.1.1.1.22.1 2018/04/07 04:11:48 pgoyette Exp $	*/
 /* $OpenBSD: fe25519.h,v 1.3 2013/12/09 11:03:45 markus Exp $ */
 
 /*

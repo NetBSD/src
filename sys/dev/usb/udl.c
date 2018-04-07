@@ -1,4 +1,4 @@
-/*	$NetBSD: udl.c,v 1.20 2017/06/01 02:45:12 chs Exp $	*/
+/*	$NetBSD: udl.c,v 1.20.8.1 2018/04/07 04:12:18 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2009 FUKAUMI Naoki.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udl.c,v 1.20 2017/06/01 02:45:12 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udl.c,v 1.20.8.1 2018/04/07 04:12:18 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -673,7 +673,9 @@ udl_mmap(void *v, void *vs, off_t off, int prot)
 	paddr += vaddr & PGOFSET;
 
 	/* XXX we need MI paddr_t -> mmap cookie API */
-#if defined(__alpha__)
+#if defined(__aarch64__)
+#define PTOMMAP(paddr)	aarch64_btop((char *)paddr)
+#elif defined(__alpha__)
 #define PTOMMAP(paddr)	alpha_btop((char *)paddr)
 #elif defined(__arm__)
 #define PTOMMAP(paddr)	arm_btop((u_long)paddr)

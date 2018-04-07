@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.h,v 1.1 2017/01/24 11:09:14 nonaka Exp $	*/
+/*	$NetBSD: devopen.h,v 1.1.20.1 2018/04/07 04:12:14 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -27,5 +27,8 @@
  */
 
 extern int boot_biosdev;
+extern daddr_t boot_biossector;
+
+#define	MAXDEVNAME	16
 
 void bios2dev(int, daddr_t, char **, int *, int *);

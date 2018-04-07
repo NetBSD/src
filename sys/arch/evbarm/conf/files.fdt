@@ -1,8 +1,8 @@
-#	$NetBSD: files.fdt,v 1.2.4.1 2018/03/22 01:44:44 pgoyette Exp $
+#	$NetBSD: files.fdt,v 1.2.4.2 2018/04/07 04:12:12 pgoyette Exp $
 #
 # FDT-based kernel configuration info
 #
 
-file	arch/evbarm/fdt/fdt_machdep.c
+file	arch/evbarm/fdt/fdt_machdep.c		fdt
 
 include "arch/arm/fdt/files.fdt"

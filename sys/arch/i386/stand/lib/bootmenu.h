@@ -1,4 +1,4 @@
-/*	$NetBSD: bootmenu.h,v 1.5 2014/08/10 07:40:49 isaki Exp $	*/
+/*	$NetBSD: bootmenu.h,v 1.5.26.1 2018/04/07 04:12:14 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #define COMMAND_SEPARATOR ';'
 
-void parsebootconf(const char *);
+int parsebootconf(const char *);
 void doboottypemenu(void);
 void bootdefault(void);
 

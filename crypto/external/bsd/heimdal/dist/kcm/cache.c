@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.3 2017/01/28 21:31:44 christos Exp $	*/
+/*	$NetBSD: cache.c,v 1.3.10.1 2018/04/07 04:11:47 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2005, PADL Software Pty Ltd.
@@ -324,6 +324,7 @@ kcm_ccache_alloc(krb5_context context,
     slot->key.keytab = NULL;
     slot->tkt_life = 0;
     slot->renew_life = 0;
+    slot->kdc_offset = 0;
 
     if (new_slot)
 	ccache_head = slot;

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma_hacks.h,v 1.8 2015/10/17 21:11:06 jmcneill Exp $	*/
+/*	$NetBSD: bus_dma_hacks.h,v 1.8.16.1 2018/04/07 04:12:19 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #if defined(__i386__) || defined(__x86_64__)
 #include <x86/bus_private.h>
 #include <x86/machdep.h>
-#elif defined(__arm__)
+#elif defined(__arm__) || defined(__aarch64__)
 #else
 #error DRM GEM/TTM need new MI bus_dma APIs!  Halp!
 #endif

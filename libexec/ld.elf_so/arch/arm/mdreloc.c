@@ -1,8 +1,8 @@
-/*	$NetBSD: mdreloc.c,v 1.43 2017/11/06 21:16:04 joerg Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.43.2.1 2018/04/07 04:12:09 pgoyette Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.43 2017/11/06 21:16:04 joerg Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.43.2.1 2018/04/07 04:12:09 pgoyette Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -167,6 +167,12 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 			    defobj->path));
 			break;
 
+		case R_TYPE(IRELATIVE):
+			/* IFUNC relocations are handled in _rtld_call_ifunc */
+			if (obj->ifunc_remaining_nonplt == 0)
+				obj->ifunc_remaining_nonplt = obj->rellim - rel;
+			/* FALL-THROUGH */
+
 		case R_TYPE(RELATIVE):	/* word32 B + A */
 			if (__predict_true(RELOC_ALIGNED_P(where))) {
 				tmp = *where + (Elf_Addr)obj->relocbase;
@@ -272,26 +278,6 @@ _rtld_relocate_plt_lazy(Obj_Entry *obj)
 	}
 
 	return 0;
-}
-
-void
-_rtld_call_ifunc(Obj_Entry *obj, sigset_t *mask, u_int cur_objgen)
-{
-	const Elf_Rel *rel;
-	Elf_Addr *where, target;
-
-	while (obj->ifunc_remaining > 0 && _rtld_objgen == cur_objgen) {
-		rel = obj->pltrellim - obj->ifunc_remaining;
-		--obj->ifunc_remaining;
-		if (ELF_R_TYPE(rel->r_info) == R_TYPE(IRELATIVE)) {
-			where = (Elf_Addr *)(obj->relocbase + rel->r_offset);
-			_rtld_exclusive_exit(mask);
-			target = _rtld_resolve_ifunc2(obj, *where);
-			_rtld_exclusive_enter(mask);
-			if (*where != target)
-				*where = target;
-		}
-	}
 }
 
 static int

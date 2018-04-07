@@ -1,5 +1,5 @@
-/*	$NetBSD: ttymodes.c,v 1.8 2017/10/07 19:39:19 christos Exp $	*/
-/* $OpenBSD: ttymodes.c,v 1.32 2017/04/30 23:26:54 djm Exp $ */
+/*	$NetBSD: ttymodes.c,v 1.8.2.1 2018/04/07 04:11:48 pgoyette Exp $	*/
+/* $OpenBSD: ttymodes.c,v 1.33 2018/02/16 04:43:11 dtucker Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -45,7 +45,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ttymodes.c,v 1.8 2017/10/07 19:39:19 christos Exp $");
+__RCSID("$NetBSD: ttymodes.c,v 1.8.2.1 2018/04/07 04:11:48 pgoyette Exp $");
 #include <sys/types.h>
 
 #include <errno.h>
@@ -57,6 +57,7 @@ __RCSID("$NetBSD: ttymodes.c,v 1.8 2017/10/07 19:39:19 christos Exp $");
 #include "log.h"
 #include "compat.h"
 #include "buffer.h"
+#include "compat.h"
 
 #define TTY_OP_END		0
 /*
@@ -283,9 +284,15 @@ tty_make_modes(int fd, struct termios *tiop)
 	buffer_put_char(&buf, OP); \
 	buffer_put_int(&buf, tio.c_cc[NAME]);
 
+#define SSH_TTYMODE_IUTF8 42  /* for SSH_BUG_UTF8TTYMODE */
+
 #define TTYMODE(NAME, FIELD, OP) \
-	buffer_put_char(&buf, OP); \
-	buffer_put_int(&buf, ((tio.FIELD & NAME) != 0));
+	if (OP == SSH_TTYMODE_IUTF8 && (datafellows & SSH_BUG_UTF8TTYMODE)) { \
+		debug3("%s: SSH_BUG_UTF8TTYMODE", __func__); \
+	} else { \
+		buffer_put_char(&buf, OP); \
+		buffer_put_int(&buf, ((tio.FIELD & NAME) != 0)); \
+	}
 
 #include "ttymodes.h"
 

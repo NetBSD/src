@@ -1,12 +1,12 @@
 #
-# $NetBSD: MILAN-PCIIDE,v 1.94 2018/01/20 19:26:38 tsutsui Exp $
+# $NetBSD: MILAN-PCIIDE,v 1.94.2.1 2018/04/07 04:12:12 pgoyette Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
 #		NetBSD: MILAN.in,v 1.28 2018/01/20 19:24:27 tsutsui Exp $
-#		NetBSD: GENERIC.in,v 1.114 2017/09/14 07:58:39 mrg Exp $
+#		NetBSD: GENERIC.in,v 1.115 2018/01/23 14:47:54 sevan Exp $
 include "arch/atari/conf/std.milan"
 options INCLUDE_CONFIG_FILE # embed config file in kernel binary
 makeoptions COPTS="-O2 -fno-reorder-blocks" # see share/mk/sys.mk

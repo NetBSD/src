@@ -1,0 +1,33 @@
+#	$NetBSD: std.generic64,v 1.1.2.2 2018/04/07 04:12:12 pgoyette Exp $
+#
+# 	generic NetBSD/evbarm64 with FDT support
+
+machine		evbarm aarch64
+include		"conf/std"
+include		"arch/aarch64/conf/std.aarch64"	# arch standard options
+
+# Architecture options
+options 	AARCH64
+
+options 	__HAVE_PCI_CONF_HOOK
+
+options 	ARM_GENERIC_TODR
+options 	ARM_INTR_IMPL="<arch/arm/fdt/fdt_intr.h>"
+options 	FDT				# Flattened Device Tree support
+options 	FPU_VFP
+options 	DRAM_BLOCKS=256
+options 	EVBARM_BOARDTYPE="FDT"
+options 	PCI_NETBSD_CONFIGURE
+
+# XXXNH not yet
+#options 	__HAVE_CPU_UAREA_ALLOC_IDLELWP
+#options 	MODULAR
+#options 	MODULAR_DEFAULT_AUTOLOAD
+#options 	ARM_HAS_VBAR
+#options 	KERNEL_BASE_EXT=0x80000000
+
+makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.generic64"
+
+# General options
+options 	CHILD_MAX=1024	# 160 is too few
+options 	OPEN_MAX=1024	# 128 is too few

@@ -1,22 +1,48 @@
-#	$NetBSD: files.aarch64,v 1.2 2017/08/16 22:52:40 nisimura Exp $
+#	$NetBSD: files.aarch64,v 1.2.2.1 2018/04/07 04:12:10 pgoyette Exp $
 
-# CPU types.
-defflag	opt_cputypes.h		CPU_CORTEXA53
-defflag	opt_cputypes.h		CPU_CORTEXA57
+defflag opt_cpuoptions.h	AARCH64_ALIGNMENT_CHECK
+defflag opt_cpuoptions.h	AARCH64_EL0_STACK_ALIGNMENT_CHECK
+defflag opt_cpuoptions.h	AARCH64_EL1_STACK_ALIGNMENT_CHECK
+defflag opt_cpuoptions.h	AARCH64_HAVE_L2CTLR
+
+defflag	opt_cputypes.h		CPU_ARMV8
+defflag	opt_cputypes.h		CPU_CORTEX: CPU_ARMV8
+defflag	opt_cputypes.h		CPU_CORTEXA35: CPU_CORTEX
+defflag	opt_cputypes.h		CPU_CORTEXA53: CPU_CORTEX
+defflag	opt_cputypes.h		CPU_CORTEXA57: CPU_CORTEX
+
+# Interrupt implementation header definition
+defparam opt_arm_intr_impl.h	ARM_INTR_IMPL
+
+# ARM-specific debug options (for compat arch/arm/*)
+defflag opt_arm_debug.h		ARM_LOCK_CAS_DEBUG
+defflag opt_arm_debug.h		VERBOSE_INIT_ARM
+
+# Timer options
+defflag opt_arm_timer.h		__HAVE_GENERIC_CPU_INITCLOCKS
 
 # Board-specific bus_space(9)/bus_dma(9) definitions
-defflag opt_bus_space.h 	__BUS_SPACE_HAS_STREAM_METHODS
-				__BUS_DMA_NEEDS_BOUNCE
+defflag  opt_arm_bus_space.h	__BUS_SPACE_HAS_STREAM_METHODS
+				__BUS_SPACE_HAS_PROBING_METHODS
+				_ARM32_NEED_BUS_DMA_BOUNCE
 				BUSDMA_COUNTERS
 
 # FP support
 file	arch/aarch64/aarch64/fpu.c
 
+file	arch/arm/arm/arm_generic_dma.c
+file	arch/arm/arm32/bus_dma.c
+
+# Power State Coordination Interface (PSCI)
+device	psci
+file	arch/arm/arm/psci.c			psci
+file	arch/arm/arm/psci_arm.S			psci
+
 # PMAP_DEBUG (heavily abused option)
 defflag				PMAP_DEBUG
 
 # PMAP options
-defflag	opt_pmap.h		PMAPHIST : KERNHIST
+defflag opt_pmap.h		PMAPHIST : KERNHIST
 defflag opt_pmap.h		PMAPCOUNTERS PMAP_STEAL_MEMORY
 				PMAP_NEED_ALLOC_POOLPAGE
 
@@ -29,75 +55,57 @@ file	arch/aarch64/aarch64/db_disasm.c		ddb
 file	arch/aarch64/aarch64/db_interface.c		ddb|kgdb
 file	arch/aarch64/aarch64/db_trace.c			ddb
 file	arch/aarch64/aarch64/db_machdep.c		ddb
+file	arch/aarch64/aarch64/disasm.c			ddb
 file	arch/aarch64/aarch64/kgdb_machdep.c		kgdb
 
 # mainbus files
-device	mainbus { [addr = -1], [size = 0], [intr = -1], [intrbase = -1], [package = -1] }
+device	mainbus { [addr = -1], [size = 0], [intr = -1] }
 attach	mainbus at root
 file	arch/aarch64/dev/mainbus.c			mainbus
 
-device	cpunode { [core = -1] }
-attach	cpunode at mainbus with cpunode_mainbus
-file	arch/aarch64/dev/cpunode.c			cpunode_mainbus
-
-device	cpucore { [thread = -1] }
-attach	cpucore at cpunode with cpucore_cpunode
-file	arch/aarch64/dev/cpucore.c			cpucore_cpunode
-
-device	cpu
-attach	cpu at cpucore with cpu_cpucore
-file	arch/aarch64/dev/cpu.c				cpu_cpucore
-
-defparam opt_arm_intr_impl.h		PIC_MAXPICS
-					PIC_MAXSOURCES
-					PIC_MAXMAXSOURCES
-defflag opt_arm_intr_impl.h		__HAVE_PIC_SET_PRIORITY
-
-define	pic
-file	arch/arm/pic/pic.c
-file	arch/arm/pic/pic_splfuncs.c
-
-device	a64gic: pic
-attach	a64gic at mainbus
-file	arch/arm/cortex/gic.c				a64gic
-file	arch/aarch64/dev/a64gic_mainbus.c		a64gic
-
-device	a64gtmr
-attach	a64gtmr at mainbus
-file	arch/aarch64/dev/a64gtmr.c			a64gtmr
+device cpu { }
+file	arch/aarch64/aarch64/cpu.c			cpu
 
 # bus_space(9)
-#define	bus_space_generic
-#file	arch/aarch64/aarch64/bus_space_asm_generic.S	bus_space_generic
-#file	arch/aarch64/aarch64/bus_space_notimpl.S
-
-#file	arch/aarch64/aarch64/copyinout.S
-file	arch/aarch64/aarch64/cpu_in_cksum.S		inet | inet6
-file	arch/aarch64/aarch64/exception.S
-#file	arch/aarch64/aarch64/fusu.S
-file	arch/aarch64/aarch64/idle_machdep.S
-file	arch/aarch64/aarch64/pmap_page.S
-file	arch/aarch64/aarch64/vectors.S
-
-file	arch/aarch64/aarch64/bus_dma.c
+define	bus_space_generic
 file	arch/aarch64/aarch64/bus_space.c
-file	arch/aarch64/aarch64/syscall.c
-file	arch/aarch64/aarch64/trap.c
+file	arch/aarch64/aarch64/bus_space_asm_generic.S	# bus_space_generic
+file	arch/aarch64/aarch64/bus_space_notimpl.S
 
-file	arch/aarch64/aarch64/pmap.c
-file	uvm/pmap/pmap_pv.c
-
+# Standard files
+file	arch/arm/arm/bootconfig.c
 file	arch/aarch64/aarch64/aarch64_machdep.c
-#file	arch/aarch64/aarch64/cctr_machdep.c
+file	arch/aarch64/aarch64/aarch64_reboot.c
 file	arch/aarch64/aarch64/core_machdep.c
+file	arch/aarch64/aarch64/copyinout.S
+file	arch/aarch64/aarch64/cpu_in_cksum.S		(inet | inet6) & cpu_in_cksum
 file	arch/aarch64/aarch64/cpu_machdep.c
+file	arch/aarch64/aarch64/cpuswitch.S
+file	arch/aarch64/aarch64/cpufunc.c
+file	arch/aarch64/aarch64/cpufunc_asm_armv8.S
 file	arch/aarch64/aarch64/exec_machdep.c
+file	arch/aarch64/aarch64/fusu.S
+file	arch/aarch64/aarch64/idle_machdep.S
 file	arch/aarch64/aarch64/kobj_machdep.c		modular
 file	arch/aarch64/aarch64/process_machdep.c
 file	arch/aarch64/aarch64/procfs_machdep.c		procfs
 file	arch/aarch64/aarch64/sig_machdep.c
 file	arch/aarch64/aarch64/sys_machdep.c
+file	arch/aarch64/aarch64/syscall.c
+file	arch/aarch64/aarch64/trap.c
+file	arch/aarch64/aarch64/fault.c
+file	arch/aarch64/aarch64/vectors.S
 file	arch/aarch64/aarch64/vm_machdep.c
+
+# pmap
+file	arch/aarch64/aarch64/pmap.c
+file	arch/aarch64/aarch64/pmap_page.S
+#file	uvm/pmap/pmap_pvt.c
+
+# cyclecounter
+#file	arch/aarch64/aarch64/cctr_machdep.c
+#file	kern/kern_cctr.c
+
 
 # NetBSD 32-bit binary compatibility
 include "compat/netbsd32/files.netbsd32"
@@ -114,5 +122,3 @@ file	arch/aarch64/aarch64/netbsd32_machdep.c		compat_netbsd32
 #file	arch/aarch64/aarch64/linux_sigcode.S	compat_linux
 #file	arch/aarch64/aarch64/linux_syscall.c	compat_linux
 #file	arch/aarch64/aarch64/linux_trap.c	compat_linux
-
-include "arch/arm/conf/majors.arm32"

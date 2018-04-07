@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_ccu.h,v 1.15.4.1 2018/03/22 01:44:43 pgoyette Exp $ */
+/* $NetBSD: sunxi_ccu.h,v 1.15.4.2 2018/04/07 04:12:12 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -247,6 +247,18 @@ const char *sunxi_ccu_div_get_parent(struct sunxi_ccu_softc *,
 		.get_parent = sunxi_ccu_div_get_parent,		\
 	}
 
+/* special case of the div model for display clocks */
+int sunxi_ccu_lcdxch0_set_rate(struct sunxi_ccu_softc *,
+    struct sunxi_ccu_clk *, struct sunxi_ccu_clk *,
+    struct sunxi_ccu_clk *, u_int);
+u_int sunxi_ccu_lcdxch0_round_rate(struct sunxi_ccu_softc *,
+    struct sunxi_ccu_clk *, struct sunxi_ccu_clk *,
+    struct sunxi_ccu_clk *, u_int);
+
+int sunxi_ccu_lcdxch1_set_rate(struct sunxi_ccu_softc *sc,
+    struct sunxi_ccu_clk *clk, struct sunxi_ccu_clk *pclk,
+    struct sunxi_ccu_clk *pclk_x2, u_int);
+
 struct sunxi_ccu_prediv {
 	bus_size_t	reg;
 	const char	**parents;
@@ -349,7 +361,7 @@ struct sunxi_ccu_fractional {
 	uint32_t	m;
 	uint32_t	m_min;
 	uint32_t	m_max;
-	uint32_t	frac_en;
+	uint32_t	div_en;
 	uint32_t	frac_sel;
 	uint32_t	frac[2];
 	uint32_t	prediv;
@@ -362,11 +374,13 @@ u_int	sunxi_ccu_fractional_get_rate(struct sunxi_ccu_softc *,
 			      struct sunxi_ccu_clk *);
 int	sunxi_ccu_fractional_set_rate(struct sunxi_ccu_softc *,
 			      struct sunxi_ccu_clk *, u_int);
+u_int	sunxi_ccu_fractional_round_rate(struct sunxi_ccu_softc *,
+			      struct sunxi_ccu_clk *, u_int);
 const char *sunxi_ccu_fractional_get_parent(struct sunxi_ccu_softc *,
 				    struct sunxi_ccu_clk *);
 
 #define	SUNXI_CCU_FRACTIONAL(_id, _name, _parent, _reg, _m, _m_min, _m_max, \
-		     _frac_en, _frac_sel, _frac0, _frac1, _prediv, _enable) \
+		     _div_en, _frac_sel, _frac0, _frac1, _prediv, _enable) \
 	[_id] = {							\
 		.type = SUNXI_CCU_FRACTIONAL,				\
 		.base.name = (_name),					\
@@ -376,7 +390,7 @@ const char *sunxi_ccu_fractional_get_parent(struct sunxi_ccu_softc *,
 		.u.fractional.m_min = (_m_min),				\
 		.u.fractional.m_max = (_m_max),				\
 		.u.fractional.prediv = (_prediv),			\
-		.u.fractional.frac_en = (_frac_en),			\
+		.u.fractional.div_en = (_div_en),			\
 		.u.fractional.frac_sel = (_frac_sel),			\
 		.u.fractional.frac[0] = (_frac0),			\
 		.u.fractional.frac[1] = (_frac1),			\
@@ -384,6 +398,7 @@ const char *sunxi_ccu_fractional_get_parent(struct sunxi_ccu_softc *,
 		.enable = sunxi_ccu_fractional_enable,			\
 		.get_rate = sunxi_ccu_fractional_get_rate,		\
 		.set_rate = sunxi_ccu_fractional_set_rate,		\
+		.round_rate = sunxi_ccu_fractional_round_rate,		\
 		.get_parent = sunxi_ccu_fractional_get_parent,		\
 	}
 
@@ -406,6 +421,8 @@ struct sunxi_ccu_clk {
 	u_int		(*get_rate)(struct sunxi_ccu_softc *,
 				    struct sunxi_ccu_clk *);
 	int		(*set_rate)(struct sunxi_ccu_softc *,
+				    struct sunxi_ccu_clk *, u_int);
+	u_int		(*round_rate)(struct sunxi_ccu_softc *,
 				    struct sunxi_ccu_clk *, u_int);
 	const char *	(*get_parent)(struct sunxi_ccu_softc *,
 				      struct sunxi_ccu_clk *);

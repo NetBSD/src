@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1319.2.2 2018/03/30 06:20:13 pgoyette Exp $
+$NetBSD: pcidevs,v 1.1319.2.3 2018/04/07 04:12:15 pgoyette Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1150,7 +1150,7 @@ product APPLE OHARE		0x0007	OHare I/O Controller
 product APPLE BANDIT2		0x0008	Bandit Host-PCI Bridge
 product APPLE HEATHROW		0x0010	Heathrow I/O Controller
 product APPLE PADDINGTON	0x0017	Paddington I/O Controller
-product APPLE PBG3_FW		0x0018  PowerBook G3 Firewire
+product APPLE UNINORTH_FW	0x0018  UniNorth Firewire
 product APPLE KEYLARGO_USB	0x0019	KeyLargo USB Controller
 product APPLE UNINORTH1		0x001e	UniNorth Host-PCI Bridge
 product APPLE UNINORTH2		0x001f	UniNorth Host-PCI Bridge
@@ -1167,7 +1167,7 @@ product APPLE UNINORTH_AGP2	0x002d	UniNorth AGP Interface
 product APPLE UNINORTH3		0x002e	UniNorth Host-PCI Bridge
 product APPLE UNINORTH4		0x002f	UniNorth Host-PCI Bridge
 product APPLE PANGEA_FW		0x0030	Pangea Firewire
-product APPLE UNINORTH_FW	0x0031	UniNorth Firewire
+product APPLE UNINORTH2_FW	0x0031	UniNorth Firewire
 product APPLE GMAC3		0x0032	GMAC Ethernet
 product APPLE UNINORTH_ATA	0x0033	UniNorth ATA/100 Controller
 product APPLE UNINORTH_AGP3	0x0034	UniNorth AGP Bridge
@@ -4465,6 +4465,12 @@ product INTEL E5_UNICAST	0x3ce8	E5 Unicast
 product INTEL E5_SAD_1		0x3cf4	E5 SAD
 product INTEL E5_BROADCAST	0x3cf5	E5 Broadcast
 product INTEL E5_SAD_2		0x3cf6	E5 SAD
+product INTEL COFLK_IGD_1	0x3e90	UHD Graphics 610
+product INTEL COFLK_IGD_2	0x3e91	UHD Graphics 630
+product INTEL COFLK_IGD_3	0x3e92	UHD Graphics 630
+product INTEL COFLK_IGD_4	0x3e93	UHD Graphics 610
+product INTEL COFLK_IGD_5	0x3e9b	UHD Graphics 630
+product INTEL COFLK_IGD_6	0x3ea5	Iris Plus Graphics 655
 product INTEL 5400_HB		0x4000	5400 Host
 product INTEL 5400A_HB		0x4001	5400A Host
 product INTEL 5400B_HB		0x4003	5400B Host
@@ -5178,6 +5184,8 @@ product INTEL 2HS_LPC_Z27	0xa2c5	Z270 LPC
 product INTEL 2HS_LPC_Q27	0xa2c6	Q270 LPC
 product INTEL 2HS_LPC_Q25	0xa2c7	Q250 LPC
 product INTEL 2HS_LPC_B25	0xa2c8	B250 LPC
+product INTEL 2HS_LPC_Z37	0xa2c9	Z370 LPC
+product INTEL 2HS_LPC_X29	0xa2d2	X299 LPC
 product INTEL 2HS_I2C_0		0xa2e0	200 Series I2C 0
 product INTEL 2HS_I2C_1		0xa2e1	200 Series I2C 1
 product INTEL 2HS_I2C_2		0xa2e2	200 Series I2C 2

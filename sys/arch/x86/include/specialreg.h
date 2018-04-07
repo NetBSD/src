@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.112.2.1 2018/03/15 09:12:04 pgoyette Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.112.2.2 2018/04/07 04:12:14 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -300,12 +300,19 @@
 #define CPUID_DSPM_HWP_PLR __BIT(11)	/* HWP Package Level Request */
 #define CPUID_DSPM_HDC	__BIT(13)	/* Hardware Duty Cycling */
 #define CPUID_DSPM_TBMT3 __BIT(14)	/* Turbo Boost Max Technology 3.0 */
+#define CPUID_DSPM_HWP_CAP    __BIT(15)	/* HWP Capabilities */
+#define CPUID_DSPM_HWP_PECI   __BIT(16)	/* HWP PECI override */
+#define CPUID_DSPM_HWP_FLEX   __BIT(17)	/* Flexible HWP */
+#define CPUID_DSPM_HWP_FAST   __BIT(18)	/* Fast access for IA32_HWP_REQUEST */
+#define CPUID_DSPM_HWP_IGNIDL __BIT(20)	/* Ignore Idle Logical Processor HWP */
 
 #define CPUID_DSPM_FLAGS	"\20" \
 	"\1" "DTS"	"\2" "IDA"	"\3" "ARAT" 			\
 	"\5" "PLN"	"\6" "ECMD"	"\7" "PTM"	"\10" "HWP"	\
 	"\11" "HWP_NOTIFY" "\12" "HWP_ACTWIN" "\13" "HWP_EPP" "\14" "HWP_PLR" \
-			"\16" "HDC"	"\17" "TBM3"
+			"\16" "HDC"	"\17" "TBM3"	"\20" "HWP_CAP" \
+	"\21" "HWP_PECI" "\22" "HWP_FLEX" "\23" "HWP_FAST"		\
+	"25" "HWP_IGNIDL"
 
 /*
  * Intel Digital Thermal Sensor and
@@ -381,7 +388,7 @@
 #define CPUID_SEF_AVX512_VNNI	__BIT(11) /* Vector neural Network Instruction */
 #define CPUID_SEF_AVX512_BITALG	__BIT(12)
 #define CPUID_SEF_AVX512_VPOPCNTDQ __BIT(14)
-#define CPUID_SEF_RDPID		__BIT(22) /* ReaD Processor ID */
+#define CPUID_SEF_RDPID		__BIT(22) /* RDPID and IA32_TSC_AUX */
 #define CPUID_SEF_SGXLC		__BIT(30) /* SGX Launch Configuration */
 
 #define CPUID_SEF_FLAGS1	"\20" \
@@ -491,6 +498,8 @@
 #define CPUID_MPC	0x00080000	/* Multiprocessing Capable */
 #define CPUID_NOX	0x00100000	/* No Execute Page Protection */
 #define CPUID_MMXX	0x00400000	/* AMD MMX Extensions */
+/*	CPUID_MMX			   MMX supported */
+/*	CPUID_FXSR			   fast FP/MMX save/restore */
 #define CPUID_FFXSR	0x02000000	/* FXSAVE/FXSTOR Extensions */
 /*	CPUID_P1GB			   1GB Large Page Support */
 /*	CPUID_RDTSCP			   Read TSC Pair Instruction */
@@ -499,9 +508,11 @@
 #define CPUID_3DNOW	0x80000000	/* 3DNow! Instructions */
 
 #define CPUID_EXT_FLAGS	"\20" \
-	"\14" "SYSCALL/SYSRET"		"\24" "MPC"	"\25" "NOX" \
-	"\27" "MMXX"	"\32" "FFXSR"	"\33" "P1GB"	"\34" "RDTSCP" \
-	"\36" "LONG"	"\37" "3DNOW2"	"\40" "3DNOW"
+						"\14" "SYSCALL/SYSRET"	\
+							"\24" "MPC"	\
+	"\25" "NOX"			"\27" "MMXX"	"\30" "MMX"	\
+	"\31" "FXSR"	"\32" "FFXSR"	"\33" "P1GB"	"\34" "RDTSCP"	\
+			"\36" "LONG"	"\37" "3DNOW2"	"\40" "3DNOW"
 
 /* AMD Fn80000001 extended features - %ecx */
 /* 	CPUID_LAHF			   LAHF/SAHF instruction */
@@ -647,6 +658,8 @@
 #define MSR_IA32_EXT_CONFIG	0x0ee	/* Undocumented. Core Solo/Duo only */
 #define MSR_MTRRcap		0x0fe
 #define MSR_IA32_ARCH_CAPABILITIES 0x10a
+#define 	IA32_ARCH_RDCL_NO	0x01
+#define 	IA32_ARCH_IBRS_ALL	0x02
 #define MSR_BBL_CR_ADDR		0x116	/* PII+ only */
 #define MSR_BBL_CR_DECC		0x118	/* PII+ only */
 #define MSR_BBL_CR_CTL		0x119	/* PII+ only */

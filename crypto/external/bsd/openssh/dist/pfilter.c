@@ -1,3 +1,4 @@
+/*	$NetBSD: pfilter.c,v 1.4.10.1 2018/04/07 04:11:48 pgoyette Exp $	*/
 #include "namespace.h"
 #include "includes.h"
 #include "ssh.h"
@@ -9,6 +10,9 @@
 #ifndef SMALL
 static struct blacklist *blstate;
 #endif
+
+#include "includes.h"
+__RCSID("$NetBSD: pfilter.c,v 1.4.10.1 2018/04/07 04:11:48 pgoyette Exp $");
 
 void
 pfilter_init()

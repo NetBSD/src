@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.260.2.1 2018/03/15 09:12:07 pgoyette Exp $	*/
+/*	$NetBSD: in6.c,v 1.260.2.2 2018/04/07 04:12:20 pgoyette Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.260.2.1 2018/03/15 09:12:07 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.260.2.2 2018/04/07 04:12:20 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1240,8 +1240,10 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 	if (ifp->if_link_state == LINK_STATE_DOWN) {
 		ia->ia6_flags |= IN6_IFF_DETACHED;
 		ia->ia6_flags &= ~IN6_IFF_TENTATIVE;
-	} else if ((hostIsNew || was_tentative) && if_do_dad(ifp))
+	} else if ((hostIsNew || was_tentative) && if_do_dad(ifp) &&
+	           ip6_dad_count > 0) {
 		ia->ia6_flags |= IN6_IFF_TENTATIVE;
+	}
 
 	/*
 	 * backward compatibility - if IN6_IFF_DEPRECATED is set from the

@@ -1,4 +1,4 @@
-/* $NetBSD: sun8i_a83t_gpio.c,v 1.1 2017/07/06 22:10:14 jmcneill Exp $ */
+/* $NetBSD: sun8i_a83t_gpio.c,v 1.1.10.1 2018/04/07 04:12:12 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2016-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sun8i_a83t_gpio.c,v 1.1 2017/07/06 22:10:14 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sun8i_a83t_gpio.c,v 1.1.10.1 2018/04/07 04:12:12 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,17 +39,17 @@ __KERNEL_RCSID(0, "$NetBSD: sun8i_a83t_gpio.c,v 1.1 2017/07/06 22:10:14 jmcneill
 #include <arm/sunxi/sunxi_gpio.h>
 
 static const struct sunxi_gpio_pins a83t_pins[] = {
-	{ "PB0",  1, 0,   { "gpio_in", "gpio_out", "uart2", "jtag", NULL, NULL, "eint" } },
-	{ "PB1",  1, 1,   { "gpio_in", "gpio_out", "uart2", "jtag", NULL, NULL, "eint" } },
-	{ "PB2",  1, 2,   { "gpio_in", "gpio_out", "uart2", "jtag", NULL, NULL, "eint" } },
-	{ "PB3",  1, 3,   { "gpio_in", "gpio_out", "uart2", "jtag", NULL, NULL, "eint" } },
-	{ "PB4",  1, 4,   { "gpio_in", "gpio_out", "i2s0", "tdm", NULL, NULL, "eint" } },
-	{ "PB5",  1, 5,   { "gpio_in", "gpio_out", "i2s0", "tdm", NULL, NULL, "eint" } },
-	{ "PB6",  1, 6,   { "gpio_in", "gpio_out", "i2s0", "tdm", NULL, NULL, "eint" } },
-	{ "PB7",  1, 7,   { "gpio_in", "gpio_out", "i2s0", "tdm", NULL, NULL, "eint" } },
-	{ "PB8",  1, 8,   { "gpio_in", "gpio_out", "i2s0", "tdm", NULL, NULL, "eint" } },
-	{ "PB9",  1, 9,   { "gpio_in", "gpio_out", "uart0", NULL, NULL, NULL, "eint" } },
-	{ "PB10", 1, 10,  { "gpio_in", "gpio_out", "uart0", NULL, NULL, NULL, "eint" } },
+	{ "PB0",  1, 0,   { "gpio_in", "gpio_out", "uart2", "jtag", NULL, NULL, "irq" } },
+	{ "PB1",  1, 1,   { "gpio_in", "gpio_out", "uart2", "jtag", NULL, NULL, "irq" } },
+	{ "PB2",  1, 2,   { "gpio_in", "gpio_out", "uart2", "jtag", NULL, NULL, "irq" } },
+	{ "PB3",  1, 3,   { "gpio_in", "gpio_out", "uart2", "jtag", NULL, NULL, "irq" } },
+	{ "PB4",  1, 4,   { "gpio_in", "gpio_out", "i2s0", "tdm", NULL, NULL, "irq" } },
+	{ "PB5",  1, 5,   { "gpio_in", "gpio_out", "i2s0", "tdm", NULL, NULL, "irq" } },
+	{ "PB6",  1, 6,   { "gpio_in", "gpio_out", "i2s0", "tdm", NULL, NULL, "irq" } },
+	{ "PB7",  1, 7,   { "gpio_in", "gpio_out", "i2s0", "tdm", NULL, NULL, "irq" } },
+	{ "PB8",  1, 8,   { "gpio_in", "gpio_out", "i2s0", "tdm", NULL, NULL, "irq" } },
+	{ "PB9",  1, 9,   { "gpio_in", "gpio_out", "uart0", NULL, NULL, NULL, "irq" } },
+	{ "PB10", 1, 10,  { "gpio_in", "gpio_out", "uart0", NULL, NULL, NULL, "irq" } },
 
 	{ "PC0",  2, 0,   { "gpio_in", "gpio_out", "nand", "spi0" } },
 	{ "PC1",  2, 1,   { "gpio_in", "gpio_out", "nand", "spi0" } },
@@ -125,49 +125,49 @@ static const struct sunxi_gpio_pins a83t_pins[] = {
 	{ "PF5",  5, 5,   { "gpio_in", "gpio_out", "mmc0", "jtag" } },
 	{ "PF6",  5, 6,   { "gpio_in", "gpio_out" } },
 
-	{ "PG0",  6, 0,   { "gpio_in", "gpio_out", "mmc1", NULL, NULL, NULL, "eint" } },
-	{ "PG1",  6, 1,   { "gpio_in", "gpio_out", "mmc1", NULL, NULL, NULL, "eint" } },
-	{ "PG2",  6, 2,   { "gpio_in", "gpio_out", "mmc1", NULL, NULL, NULL, "eint" } },
-	{ "PG3",  6, 3,   { "gpio_in", "gpio_out", "mmc1", NULL, NULL, NULL, "eint" } },
-	{ "PG4",  6, 4,   { "gpio_in", "gpio_out", "mmc1", NULL, NULL, NULL, "eint" } },
-	{ "PG5",  6, 5,   { "gpio_in", "gpio_out", "mmc1", NULL, NULL, NULL, "eint" } },
-	{ "PG6",  6, 6,   { "gpio_in", "gpio_out", "uart1", "spi1", NULL, NULL, "eint" } },
-	{ "PG7",  6, 7,   { "gpio_in", "gpio_out", "uart1", "spi1", NULL, NULL, "eint" } },
-	{ "PG8",  6, 8,   { "gpio_in", "gpio_out", "uart1", "spi1", NULL, NULL, "eint" } },
-	{ "PG9",  6, 9,   { "gpio_in", "gpio_out", "uart1", "spi1", NULL, NULL, "eint" } },
-	{ "PG10", 6, 10,  { "gpio_in", "gpio_out", "i2s1", "uart3", NULL, NULL, "eint" } },
-	{ "PG11", 6, 11,  { "gpio_in", "gpio_out", "i2s1", "uart3", NULL, NULL, "eint" } },
-	{ "PG12", 6, 12,  { "gpio_in", "gpio_out", "i2s1", "uart3", NULL, NULL, "eint" } },
-	{ "PG13", 6, 13,  { "gpio_in", "gpio_out", "i2s1", "uart3", NULL, NULL, "eint" } },
+	{ "PG0",  6, 0,   { "gpio_in", "gpio_out", "mmc1", NULL, NULL, NULL, "irq" } },
+	{ "PG1",  6, 1,   { "gpio_in", "gpio_out", "mmc1", NULL, NULL, NULL, "irq" } },
+	{ "PG2",  6, 2,   { "gpio_in", "gpio_out", "mmc1", NULL, NULL, NULL, "irq" } },
+	{ "PG3",  6, 3,   { "gpio_in", "gpio_out", "mmc1", NULL, NULL, NULL, "irq" } },
+	{ "PG4",  6, 4,   { "gpio_in", "gpio_out", "mmc1", NULL, NULL, NULL, "irq" } },
+	{ "PG5",  6, 5,   { "gpio_in", "gpio_out", "mmc1", NULL, NULL, NULL, "irq" } },
+	{ "PG6",  6, 6,   { "gpio_in", "gpio_out", "uart1", "spi1", NULL, NULL, "irq" } },
+	{ "PG7",  6, 7,   { "gpio_in", "gpio_out", "uart1", "spi1", NULL, NULL, "irq" } },
+	{ "PG8",  6, 8,   { "gpio_in", "gpio_out", "uart1", "spi1", NULL, NULL, "irq" } },
+	{ "PG9",  6, 9,   { "gpio_in", "gpio_out", "uart1", "spi1", NULL, NULL, "irq" } },
+	{ "PG10", 6, 10,  { "gpio_in", "gpio_out", "i2s1", "uart3", NULL, NULL, "irq" } },
+	{ "PG11", 6, 11,  { "gpio_in", "gpio_out", "i2s1", "uart3", NULL, NULL, "irq" } },
+	{ "PG12", 6, 12,  { "gpio_in", "gpio_out", "i2s1", "uart3", NULL, NULL, "irq" } },
+	{ "PG13", 6, 13,  { "gpio_in", "gpio_out", "i2s1", "uart3", NULL, NULL, "irq" } },
 
-	{ "PH0",  7, 0,   { "gpio_in", "gpio_out", "i2c0", NULL, NULL, NULL, "eint" } },
-	{ "PH1",  7, 1,   { "gpio_in", "gpio_out", "i2c0", NULL, NULL, NULL, "eint" } },
-	{ "PH2",  7, 2,   { "gpio_in", "gpio_out", "i2c1", NULL, NULL, NULL, "eint" } },
-	{ "PH3",  7, 3,   { "gpio_in", "gpio_out", "i2c1", NULL, NULL, NULL, "eint" } },
-	{ "PH4",  7, 4,   { "gpio_in", "gpio_out", "i2c2", NULL, NULL, NULL, "eint" } },
-	{ "PH5",  7, 5,   { "gpio_in", "gpio_out", "i2c2", NULL, NULL, NULL, "eint" } },
-	{ "PH6",  7, 6,   { "gpio_in", "gpio_out", "hdmiddc", NULL, NULL, NULL, "eint" } },
-	{ "PH7",  7, 7,   { "gpio_in", "gpio_out", "hdmiddc", NULL, NULL, NULL, "eint" } },
-	{ "PH8",  7, 8,   { "gpio_in", "gpio_out", "hdmiddc", NULL, NULL, NULL, "eint" } },
-	{ "PH9",  7, 9,   { "gpio_in", "gpio_out", NULL, NULL, NULL, NULL, "eint" } },
-	{ "PH10", 7, 10,  { "gpio_in", "gpio_out", NULL, NULL, NULL, NULL, "eint" } },
-	{ "PH11", 7, 11,  { "gpio_in", "gpio_out", NULL, NULL, NULL, NULL, "eint" } },
+	{ "PH0",  7, 0,   { "gpio_in", "gpio_out", "i2c0", NULL, NULL, NULL, "irq" } },
+	{ "PH1",  7, 1,   { "gpio_in", "gpio_out", "i2c0", NULL, NULL, NULL, "irq" } },
+	{ "PH2",  7, 2,   { "gpio_in", "gpio_out", "i2c1", NULL, NULL, NULL, "irq" } },
+	{ "PH3",  7, 3,   { "gpio_in", "gpio_out", "i2c1", NULL, NULL, NULL, "irq" } },
+	{ "PH4",  7, 4,   { "gpio_in", "gpio_out", "i2c2", NULL, NULL, NULL, "irq" } },
+	{ "PH5",  7, 5,   { "gpio_in", "gpio_out", "i2c2", NULL, NULL, NULL, "irq" } },
+	{ "PH6",  7, 6,   { "gpio_in", "gpio_out", "hdmiddc", NULL, NULL, NULL, "irq" } },
+	{ "PH7",  7, 7,   { "gpio_in", "gpio_out", "hdmiddc", NULL, NULL, NULL, "irq" } },
+	{ "PH8",  7, 8,   { "gpio_in", "gpio_out", "hdmiddc", NULL, NULL, NULL, "irq" } },
+	{ "PH9",  7, 9,   { "gpio_in", "gpio_out", NULL, NULL, NULL, NULL, "irq" } },
+	{ "PH10", 7, 10,  { "gpio_in", "gpio_out", NULL, NULL, NULL, NULL, "irq" } },
+	{ "PH11", 7, 11,  { "gpio_in", "gpio_out", NULL, NULL, NULL, NULL, "irq" } },
 };
 
 static const struct sunxi_gpio_pins a83t_r_pins[] = {
-	{ "PL0",   0, 0,  { "gpio_in", "gpio_out", "s_rsb", "s_i2c", NULL, NULL, "eint" } },
-	{ "PL1",   0, 1,  { "gpio_in", "gpio_out", "s_rsb", "s_i2c", NULL, NULL, "eint" } },
-	{ "PL2",   0, 2,  { "gpio_in", "gpio_out", "s_uart", NULL, NULL, NULL, "eint" } },
-	{ "PL3",   0, 3,  { "gpio_in", "gpio_out", "s_uart", NULL, NULL, NULL, "eint" } },
-	{ "PL4",   0, 4,  { "gpio_in", "gpio_out", "s_jtag", NULL, NULL, NULL, "eint" } },
-	{ "PL5",   0, 5,  { "gpio_in", "gpio_out", "s_jtag", NULL, NULL, NULL, "eint" } },
-	{ "PL6",   0, 6,  { "gpio_in", "gpio_out", "s_jtag", NULL, NULL, NULL, "eint" } },
-	{ "PL7",   0, 7,  { "gpio_in", "gpio_out", "s_jtag", NULL, NULL, NULL, "eint" } },
-	{ "PL8",   0, 8,  { "gpio_in", "gpio_out", "s_i2c", NULL, NULL, NULL, "eint" } },
-	{ "PL9",   0, 9,  { "gpio_in", "gpio_out", "s_i2c", NULL, NULL, NULL, "eint" } },
-	{ "PL10",  0, 10, { "gpio_in", "gpio_out", "s_pwm", NULL, NULL, NULL, "eint" } },
-	{ "PL11",  0, 11, { "gpio_in", "gpio_out", NULL, NULL, NULL, "eint" } },
-	{ "PL12",  0, 12, { "gpio_in", "gpio_out", "s_cir", NULL, NULL, NULL, "eint" } },
+	{ "PL0",   0, 0,  { "gpio_in", "gpio_out", "s_rsb", "s_i2c", NULL, NULL, "irq" } },
+	{ "PL1",   0, 1,  { "gpio_in", "gpio_out", "s_rsb", "s_i2c", NULL, NULL, "irq" } },
+	{ "PL2",   0, 2,  { "gpio_in", "gpio_out", "s_uart", NULL, NULL, NULL, "irq" } },
+	{ "PL3",   0, 3,  { "gpio_in", "gpio_out", "s_uart", NULL, NULL, NULL, "irq" } },
+	{ "PL4",   0, 4,  { "gpio_in", "gpio_out", "s_jtag", NULL, NULL, NULL, "irq" } },
+	{ "PL5",   0, 5,  { "gpio_in", "gpio_out", "s_jtag", NULL, NULL, NULL, "irq" } },
+	{ "PL6",   0, 6,  { "gpio_in", "gpio_out", "s_jtag", NULL, NULL, NULL, "irq" } },
+	{ "PL7",   0, 7,  { "gpio_in", "gpio_out", "s_jtag", NULL, NULL, NULL, "irq" } },
+	{ "PL8",   0, 8,  { "gpio_in", "gpio_out", "s_i2c", NULL, NULL, NULL, "irq" } },
+	{ "PL9",   0, 9,  { "gpio_in", "gpio_out", "s_i2c", NULL, NULL, NULL, "irq" } },
+	{ "PL10",  0, 10, { "gpio_in", "gpio_out", "s_pwm", NULL, NULL, NULL, "irq" } },
+	{ "PL11",  0, 11, { "gpio_in", "gpio_out", NULL, NULL, NULL, "irq" } },
+	{ "PL12",  0, 12, { "gpio_in", "gpio_out", "s_cir", NULL, NULL, NULL, "irq" } },
 };
 
 const struct sunxi_gpio_padconf sun8i_a83t_padconf = {

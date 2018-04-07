@@ -1,4 +1,4 @@
-/*	$NetBSD: efidisk.c,v 1.1.20.3 2018/03/30 06:20:11 pgoyette Exp $	*/
+/*	$NetBSD: efidisk.c,v 1.1.20.4 2018/04/07 04:12:14 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -212,4 +212,38 @@ int
 get_harddrives(void)
 {
 	return nefidisks;
+}
+
+int
+efidisk_get_efi_system_partition(int dev, int *partition)
+{
+	extern const struct uuid GET_efi;
+	const struct efidiskinfo *edi;
+	struct biosdisk_partition *part;
+	int i, nparts;
+
+	edi = efidisk_getinfo(dev);
+	if (edi == NULL)
+		return ENXIO;
+
+	if (edi->type != BIOSDISK_TYPE_HD)
+		return ENOTSUP;
+
+	if (biosdisk_readpartition(edi->dev, &part, &nparts))
+		return EIO;
+
+	for (i = 0; i < nparts; i++) {
+		if (part[i].size == 0)
+			continue;
+		if (part[i].fstype == FS_UNUSED)
+			continue;
+		if (guid_is_equal(part[i].guid->guid, &GET_efi))
+			break;
+	}
+	dealloc(part, sizeof(*part) * nparts);
+	if (i == nparts)
+		return ENOENT;
+
+	*partition = i;
+	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.149.2.3 2018/03/30 06:20:13 pgoyette Exp $	*/
+/*	$NetBSD: cpu.c,v 1.149.2.4 2018/04/07 04:12:14 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2000-2012 NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.149.2.3 2018/03/30 06:20:13 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.149.2.4 2018/04/07 04:12:14 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -848,6 +848,7 @@ cpu_hatch(void *v)
 
 	cpu_init_msrs(ci, true);
 	cpu_probe(ci);
+	cpu_speculation_init(ci);
 
 	ci->ci_data.cpu_cc_freq = cpu_info_primary.ci_data.cpu_cc_freq;
 	/* cpu_get_tsc_freq(ci); */

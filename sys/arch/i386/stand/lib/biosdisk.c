@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk.c,v 1.46.12.2 2018/03/22 01:44:45 pgoyette Exp $	*/
+/*	$NetBSD: biosdisk.c,v 1.46.12.3 2018/04/07 04:12:14 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998
@@ -249,14 +249,14 @@ md5(void *hash, const void *data, size_t len)
 #endif
 
 #ifndef NO_GPT
-static bool
+bool
 guid_is_nil(const struct uuid *u)
 {
 	static const struct uuid nil = { .time_low = 0 };
 	return (memcmp(u, &nil, sizeof(*u)) == 0 ? true : false);
 }
 
-static bool
+bool
 guid_is_equal(const struct uuid *a, const struct uuid *b)
 {
 	return (memcmp(a, b, sizeof(*a)) == 0 ? true : false);

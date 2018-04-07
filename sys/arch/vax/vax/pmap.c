@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.185 2017/05/22 16:53:05 ragge Exp $	   */
+/*	$NetBSD: pmap.c,v 1.185.8.1 2018/04/07 04:12:14 pgoyette Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999, 2003 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.185 2017/05/22 16:53:05 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.185.8.1 2018/04/07 04:12:14 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
@@ -765,10 +765,8 @@ pmap_rmproc(struct pmap *pm)
 
 /*
  * Allocate space for user page tables, from ptemap.
- * This routine should never fail; use the same algorithm as when processes
- * are swapped.
  * Argument is needed space, in bytes.
- * Returns a pointer to the newly allocated space.
+ * Returns a pointer to the newly allocated space, or 0 if failed.
  */
 static vaddr_t
 pmap_getusrptes(pmap_t pm, vsize_t nsize)
@@ -781,9 +779,7 @@ pmap_getusrptes(pmap_t pm, vsize_t nsize)
 #endif
 	while (((rv = pmap_extwrap(nsize)) == 0) && (pmap_rmproc(pm) != 0))
 		;
-	if (rv)
-		return rv;
-	panic("usrptmap space leakage");
+	return rv;
 }
 
 /*
@@ -804,7 +800,7 @@ rmptep(struct pte *pte)
 	*ptpp = 0;
 }
 
-static void 
+static int 
 grow_p0(struct pmap *pm, int reqlen)
 {
 	vaddr_t nptespc;
@@ -823,6 +819,8 @@ grow_p0(struct pmap *pm, int reqlen)
 	nptespc = pmap_getusrptes(pm, len);
 	RECURSESTART;
  
+	if (nptespc == 0)
+		return 0;
 	/*
 	 * Copy the old ptes to the new space.
 	 * Done by moving on system page table.
@@ -846,10 +844,11 @@ grow_p0(struct pmap *pm, int reqlen)
 	/* Remove the old after update_pcbs() (for multi-CPU propagation) */
 	if (inuse)
 		extent_free(ptemap, p0br, p0lr*PPTESZ, EX_WAITOK);
+	return 1;
 }
 
 
-static void
+static int
 grow_p1(struct pmap *pm, int len)
 {
 	vaddr_t nptespc, optespc;
@@ -862,6 +861,9 @@ grow_p1(struct pmap *pm, int len)
 	RECURSEEND;
 	nptespc = pmap_getusrptes(pm, nlen);
 	RECURSESTART;
+	if (nptespc == 0)
+		return 0;
+
 	olen = (NPTEPERREG*PPTESZ) - (pm->pm_p1lr * PPTESZ);
 	optespc = (vaddr_t)pm->pm_p1ap;
 
@@ -881,6 +883,7 @@ grow_p1(struct pmap *pm, int len)
 
 	if (optespc)
 		extent_free(ptemap, optespc, olen, EX_WAITOK);
+	return 1;
 }
 
 /*
@@ -1096,14 +1099,16 @@ pmap_enter(pmap_t pmap, vaddr_t v, paddr_t p, vm_prot_t prot, u_int flags)
 
 	case P0SEG:
 		if (vax_btop(v) >= pmap->pm_p0lr)
-			grow_p0(pmap, vax_btop(v));
+			if (grow_p0(pmap, vax_btop(v)) == 0)
+				goto growfail;
 		pteptr = (int *)pmap->pm_p0br + vax_btop(v);
 		newpte = (prot & VM_PROT_WRITE ? PG_RW : PG_RO);
 		break;
 
 	case P1SEG:
 		if (vax_btop(v - 0x40000000) < pmap->pm_p1lr)
-			grow_p1(pmap, vax_btop(v - 0x40000000));
+			if (grow_p1(pmap, vax_btop(v - 0x40000000)) == 0)
+				goto growfail;
 		pteptr = (int *)pmap->pm_p1br + vax_btop(v - 0x40000000);
 		newpte = (prot & VM_PROT_WRITE ? PG_RW : PG_RO);
 		break;
@@ -1214,6 +1219,11 @@ pmap_enter(pmap_t pmap, vaddr_t v, paddr_t p, vm_prot_t prot, u_int flags)
 
 	mtpr(0, PR_TBIA); /* Always; safety belt */
 	return 0;
+
+growfail:
+	if (flags & PMAP_CANFAIL)
+		return ENOMEM;
+	panic("usrptmap space leakage");
 }
 
 vaddr_t

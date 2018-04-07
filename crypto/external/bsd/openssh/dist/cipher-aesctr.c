@@ -1,3 +1,4 @@
+/*	$NetBSD: cipher-aesctr.c,v 1.1.1.2.22.1 2018/04/07 04:11:48 pgoyette Exp $	*/
 /* $OpenBSD: cipher-aesctr.c,v 1.2 2015/01/14 10:24:42 markus Exp $ */
 /*
  * Copyright (c) 2003 Markus Friedl.  All rights reserved.
@@ -14,6 +15,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#include "includes.h"
+__RCSID("$NetBSD: cipher-aesctr.c,v 1.1.1.2.22.1 2018/04/07 04:11:48 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <string.h>

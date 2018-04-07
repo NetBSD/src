@@ -1,4 +1,4 @@
-/* $NetBSD: clk.c,v 1.2 2017/04/16 12:28:21 jmcneill Exp $ */
+/* $NetBSD: clk.c,v 1.2.12.1 2018/04/07 04:12:14 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clk.c,v 1.2 2017/04/16 12:28:21 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clk.c,v 1.2.12.1 2018/04/07 04:12:14 pgoyette Exp $");
 
 #include <sys/param.h>
 
@@ -63,6 +63,16 @@ clk_set_rate(struct clk *clk, u_int rate)
 	} else {
 		return EINVAL;
 	}
+}
+
+u_int
+clk_round_rate(struct clk *clk, u_int rate)
+{
+	if (clk->domain->funcs->round_rate) {
+		return clk->domain->funcs->round_rate(clk->domain->priv,
+		    clk, rate);
+	}
+	return 0;
 }
 
 int

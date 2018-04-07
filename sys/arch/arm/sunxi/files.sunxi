@@ -1,19 +1,8 @@
-#	$NetBSD: files.sunxi,v 1.42.2.2 2018/03/22 01:44:43 pgoyette Exp $
+#	$NetBSD: files.sunxi,v 1.42.2.3 2018/04/07 04:12:12 pgoyette Exp $
 #
 # Configuration info for Allwinner sunxi family SoCs
 #
 #
-
-include	"arch/arm/pic/files.pic"
-include	"arch/arm/cortex/files.cortex"
-
-file	arch/arm/arm32/arm32_boot.c
-file	arch/arm/arm32/arm32_kvminit.c
-file	arch/arm/arm32/arm32_reboot.c
-file	arch/arm/arm32/irq_dispatch.S
-file	arch/arm/arm32/armv7_generic_space.c
-file	arch/arm/arm/arm_generic_dma.c
-file	arch/arm/arm/bus_space_a4x.S
 
 file	arch/arm/sunxi/sunxi_platform.c		soc_sunxi
 
@@ -28,6 +17,7 @@ file	arch/arm/sunxi/sunxi_ccu_nm.c		sunxi_ccu
 file	arch/arm/sunxi/sunxi_ccu_nkmp.c		sunxi_ccu
 file	arch/arm/sunxi/sunxi_ccu_phase.c	sunxi_ccu
 file	arch/arm/sunxi/sunxi_ccu_prediv.c	sunxi_ccu
+file	arch/arm/sunxi/sunxi_ccu_display.c	sunxi_ccu
 
 # CCU (A10/A20)
 device	sun4ia10ccu: sunxi_ccu
@@ -103,7 +93,7 @@ file	arch/arm/sunxi/sun5i_a13_gpio.c		sunxi_gpio & soc_sun5i_a13
 file	arch/arm/sunxi/sun6i_a31_gpio.c		sunxi_gpio & soc_sun6i_a31
 file	arch/arm/sunxi/sun7i_a20_gpio.c		sunxi_gpio & soc_sun7i_a20
 file	arch/arm/sunxi/sun8i_a83t_gpio.c	sunxi_gpio & soc_sun8i_a83t
-file	arch/arm/sunxi/sun8i_h3_gpio.c		sunxi_gpio & (soc_sun8i_h3 | soc_sun50i_h5)
+file	arch/arm/sunxi/sun8i_h3_gpio.c		sunxi_gpio & soc_sun8i_h3
 file	arch/arm/sunxi/sun9i_a80_gpio.c		sunxi_gpio & soc_sun9i_a80
 file	arch/arm/sunxi/sun50i_a64_gpio.c	sunxi_gpio & soc_sun50i_a64
 file	arch/arm/sunxi/sun50i_h6_gpio.c		sunxi_gpio & soc_sun50i_h6
@@ -199,6 +189,28 @@ file	arch/arm/sunxi/sun8i_h3_codec.c		h3_codec needs-flag
 attach	genfb at fdt with simplefb
 file	dev/fdt/simplefb.c			simplefb
 
+# A10/A20 LCD/TV timing controller (TCON)
+device	sunxitcon
+attach	sunxitcon at fdt with sunxi_tcon
+file	arch/arm/sunxi/sunxi_tcon.c		sunxi_tcon needs-flag
+
+# A10/A20 Display engine backend (DE-BE)
+device	sunxidebe { }
+attach	sunxidebe at fdt with sunxi_debe
+file	arch/arm/sunxi/sunxi_debe.c		sunxi_debe needs-flag
+
+attach	genfb at sunxidebe with sunxi_befb
+
+# A10/A20 HDMI
+device	sunxihdmi: edid, videomode
+attach	sunxihdmi at fdt with sunxi_hdmi
+file	arch/arm/sunxi/sunxi_hdmi.c		sunxi_hdmi needs-flag
+
+# A10/A20 display engine pipeline
+device sunxidep
+attach	sunxidep at fdt with sunxi_dep
+file	arch/arm/sunxi/sunxi_dep.c		sunxi_dep
+
 # Touch Screen controller
 device	sunxits: wsmousedev, tpcalib, sysmon_envsys
 attach	sunxits at fdt with sunxi_ts
@@ -263,5 +275,5 @@ defflag	opt_soc.h			SOC_SUN9I: SOC_SUNXI
 defflag	opt_soc.h			SOC_SUN9I_A80: SOC_SUN9I
 defflag	opt_soc.h			SOC_SUN50I: SOC_SUNXI
 defflag	opt_soc.h			SOC_SUN50I_A64: SOC_SUN50I
-defflag	opt_soc.h			SOC_SUN50I_H5: SOC_SUN50I
+defflag	opt_soc.h			SOC_SUN50I_H5: SOC_SUN50I, SOC_SUN8I_H3
 defflag	opt_soc.h			SOC_SUN50I_H6: SOC_SUN50I

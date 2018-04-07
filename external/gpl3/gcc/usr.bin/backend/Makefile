@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.43 2018/02/11 02:12:28 christos Exp $
+#	$NetBSD: Makefile,v 1.43.2.1 2018/04/07 04:12:08 pgoyette Exp $
 
 LIBISPRIVATE=	yes
 
@@ -398,17 +398,26 @@ CLEANFILES+=	tree-check.h
 BUILDSYMLINKS+= insn-check.h tree-check.h
 
 # genattrtab has three output files
-# XXX fix me
-insn-attrtab.c insn-dfatab.c insn-latencytab.c: genattrtab ${G_md_file} insn-conditions.md 
+insn-dfatab.c insn-latencytab.c: insn-attrtab.c
+	cp -p ${.TARGET}.tmp ${.TARGET}
+insn-attrtab.c: genattrtab ${G_md_file} insn-conditions.md 
 	${_MKTARGET_CREATE}
-	./genattrtab ${G_md_file} insn-conditions.md -Ainsn-attrtab.c -Dinsn-dfatab.c -Linsn-latencytab.c
+	./genattrtab ${G_md_file} insn-conditions.md \
+		-A${.TARGET}.tmp -Dinsn-dfatab.c.tmp -Linsn-latencytab.c.tmp && \
+	mv ${.TARGET}.tmp ${.TARGET}
 CLEANFILES+=	insn-attrtab.c insn-dfatab.c insn-latencytab.c
 
 # genopinit has two output files
-insn-opinit.c insn-opinit.h: genopinit ${G_md_file} insn-conditions.md
+insn-opinit.h: insn-opinit.c
+	cp -p ${.TARGET}.tmp ${.TARGET}
+insn-opinit.c: genopinit ${G_md_file} insn-conditions.md
 	${_MKTARGET_CREATE}
-	./genopinit ${G_md_file} insn-conditions.md -hinsn-opinit.h -cinsn-opinit.c
+	./genopinit ${G_md_file} insn-conditions.md \
+		-hinsn-opinit.h.tmp -c${.TARGET}.tmp && \
+	mv ${.TARGET}.tmp ${.TARGET}
 CLEANFILES+=	insn-opinit.h insn-opinit.c
+
+DPSRCS+= insn-opinit.h
 
 LDFLAGS.genautomata+=	-lm
 
@@ -509,7 +518,7 @@ COPTS.convert.c+=-O0
 COPTS.dwarf2out.c+=-O0
 COPTS.dse.c+=-O0					# XXX port-vax/51967
 COPTS.expmed.c+=-O0
-COPTS.expr.c+=-O0
+COPTS.expr.c+=-O0 -Wno-error=tautological-compare
 COPTS.fixed-value.c+=-O0
 COPTS.fold-const.c+=-O0
 COPTS.gimple-fold.c+=-O0
@@ -528,6 +537,7 @@ COPTS.tree-affine.c+=-O0
 COPTS.tree-cfg.c+=-O0
 COPTS.tree-eh.c+=-O0
 COPTS.tree-object-size.c+=-O0
+COPTS.tree-parloops.c+=-O0
 COPTS.tree-predcom.c+=-O0
 COPTS.tree-pretty-print.c+=-O0
 COPTS.tree-ssa-alias.c+=-O0
@@ -549,7 +559,7 @@ COPTS.tree-vrp.c+=-O0
 COPTS.tree.c+=-O0
 COPTS.ubsan.c+=-O0
 COPTS.varasm.c+=-O0
-COPTS.wide-int.c+=-O0
+COPTS.wide-int.cc+=-O0
 .else
 COPTS.tree.c=	${${ACTIVE_CC} == "clang" :? -O0 :}
 .endif

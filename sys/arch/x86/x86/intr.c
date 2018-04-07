@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.123.2.1 2018/03/30 06:20:13 pgoyette Exp $	*/
+/*	$NetBSD: intr.c,v 1.123.2.2 2018/04/07 04:12:14 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.123.2.1 2018/03/30 06:20:13 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.123.2.2 2018/04/07 04:12:14 pgoyette Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -1492,8 +1492,8 @@ cpu_intr_init(struct cpu_info *ci)
 
 #if defined(__HAVE_PREEMPTION)
 	isp = kmem_zalloc(sizeof(*isp), KM_SLEEP);
-	isp->is_recurse = Xpreemptrecurse;
-	isp->is_resume = Xpreemptresume;
+	isp->is_recurse = Xrecurse_preempt;
+	isp->is_resume = Xresume_preempt;
 	fake_preempt_intrhand.ih_level = IPL_PREEMPT;
 	isp->is_handlers = &fake_preempt_intrhand;
 	isp->is_pic = &softintr_pic;

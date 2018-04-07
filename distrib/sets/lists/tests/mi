@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.775.2.2 2018/03/30 06:20:06 pgoyette Exp $
+# $NetBSD: mi,v 1.775.2.3 2018/04/07 04:11:57 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3635,16 +3635,26 @@
 ./usr/tests/usr.bin/c++				tests-usr.bin-tests	compattestfile,atf,cxx
 ./usr/tests/usr.bin/c++/Atffile			tests-usr.bin-tests	compattestfile,atf,cxx
 ./usr/tests/usr.bin/c++/Kyuafile		tests-usr.bin-tests	compattestfile,atf,kyua,cxx
-./usr/tests/usr.bin/c++/t_cxxruntime		tests-usr.bin-tests	compattestfile,atf,cxx
-./usr/tests/usr.bin/c++/t_hello			tests-usr.bin-tests	compattestfile,atf,cxx
-./usr/tests/usr.bin/c++/t_static_destructor	tests-usr.bin-tests	compattestfile,atf,cxx
+./usr/tests/usr.bin/c++/t_asan_double_free	tests-usr.bin-tests	compattestfile,atf,cxx
+./usr/tests/usr.bin/c++/t_asan_global_buffer_overflow	tests-usr.bin-tests	compattestfile,atf,cxx
+./usr/tests/usr.bin/c++/t_asan_heap_overflow	tests-usr.bin-tests	compattestfile,atf,cxx
+./usr/tests/usr.bin/c++/t_asan_off_by_one	tests-usr.bin-tests	compattestfile,atf,cxx
+./usr/tests/usr.bin/c++/t_asan_uaf		tests-usr.bin-tests	compattestfile,atf,cxx
 ./usr/tests/usr.bin/c++/t_call_once		tests-usr.bin-tests	compattestfile,atf,cxx
 ./usr/tests/usr.bin/c++/t_call_once2		tests-usr.bin-tests	compattestfile,atf,cxx
+./usr/tests/usr.bin/c++/t_cxxruntime		tests-usr.bin-tests	compattestfile,atf,cxx
+./usr/tests/usr.bin/c++/t_hello			tests-usr.bin-tests	compattestfile,atf,cxx
 ./usr/tests/usr.bin/c++/t_pthread_once		tests-usr.bin-tests	compattestfile,atf,cxx
+./usr/tests/usr.bin/c++/t_static_destructor	tests-usr.bin-tests	compattestfile,atf,cxx
 ./usr/tests/usr.bin/cc				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/cc/Atffile			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/cc/Kyuafile			tests-usr.bin-tests	compattestfile,atf,kyua
 ./usr/tests/usr.bin/cc/t_hello			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/cc/t_asan_double_free	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/cc/t_asan_global_buffer_overflow	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/cc/t_asan_heap_overflow	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/cc/t_asan_off_by_one	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/cc/t_asan_uaf		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/cmp				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/cmp/Atffile			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/cmp/Kyuafile		tests-usr.bin-tests	compattestfile,atf,kyua

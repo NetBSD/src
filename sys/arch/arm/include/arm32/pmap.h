@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.154 2018/01/24 09:04:45 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.154.2.1 2018/04/07 04:12:12 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -361,6 +361,8 @@ extern int		arm_poolpage_vmfreelist;
 u_int arm32_mmap_flags(paddr_t);
 #define ARM32_MMAP_WRITECOMBINE		0x40000000
 #define ARM32_MMAP_CACHEABLE		0x20000000
+#define ARM_MMAP_WRITECOMBINE		ARM32_MMAP_WRITECOMBINE
+#define ARM_MMAP_CACHEABLE		ARM32_MMAP_CACHEABLE
 #define pmap_mmap_flags(ppn)		arm32_mmap_flags(ppn)
 
 #define	PMAP_PTE			0x10000000 /* kenter_pa */
@@ -396,6 +398,7 @@ int	pmap_fault_fixup(pmap_t, vaddr_t, vm_prot_t, int);
 int	pmap_prefetchabt_fixup(void *);
 bool	pmap_get_pde_pte(pmap_t, vaddr_t, pd_entry_t **, pt_entry_t **);
 bool	pmap_get_pde(pmap_t, vaddr_t, pd_entry_t **);
+bool	pmap_extract_coherency(pmap_t, vaddr_t, paddr_t *, bool *);
 
 void	pmap_debug(int);
 void	pmap_postinit(void);
@@ -1089,6 +1092,12 @@ extern void (*pmap_zero_page_func)(paddr_t);
 
 #define	L2_L_MAPPABLE_P(va, pa, size)					\
 	((((va) | (pa)) & L2_L_OFFSET) == 0 && (size) >= L2_L_SIZE)
+
+#define	PMAP_MAPSIZE1	L2_L_SIZE
+#define	PMAP_MAPSIZE2	L1_S_SIZE
+#if (ARM_MMU_V6 + ARM_MMU_V7) > 0
+#define	PMAP_MAPSIZE3	L1_SS_SIZE
+#endif
 
 #ifndef _LOCORE
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_prio_q.c,v 1.1.1.3 2016/01/08 21:21:33 christos Exp $	*/
+/*	$NetBSD: ntp_prio_q.c,v 1.1.1.3.14.1 2018/04/07 04:12:07 pgoyette Exp $	*/
 
 #include "config.h"
 
@@ -29,23 +29,25 @@ typedef struct Element
 
 } element;
 
-int
+static int/*BOOL*/
 compare_elements(const void * e1, const void * e2)
 {
-	return ((element*)e1)->number < ((element*)e2)->number;
+	return ((const element*)e1)->number < ((const element*)e2)->number;
 }
 
 /* tests */
 
-void
-test_AllocateDeallocateNode(void) {
+extern void test_AllocateDeallocateNode(void);
+void test_AllocateDeallocateNode(void)
+{
 	element* e_ptr = debug_get_node(sizeof(element));
 	free_node(e_ptr);
 }
 
 
-void
-test_EmptyQueue(void) {
+extern void test_EmptyQueue(void);
+void test_EmptyQueue(void)
+{
 	queue* q = create_queue();
 
 	TEST_ASSERT_NOT_NULL(q);
@@ -58,8 +60,9 @@ test_EmptyQueue(void) {
 }
 
 
-void
-test_OneElementQueue(void) {
+extern void test_OneElementQueue(void);
+void test_OneElementQueue(void)
+{
 	queue* q = create_queue();
 
 	TEST_ASSERT_NOT_NULL(q);
@@ -86,8 +89,9 @@ test_OneElementQueue(void) {
 }
 
 
-void
-test_MultipleElementQueue(void) {
+extern void test_MultipleElementQueue(void);
+void test_MultipleElementQueue(void)
+{
 	queue* q = create_queue();
 
 	TEST_ASSERT_NOT_NULL(q);
@@ -124,8 +128,9 @@ test_MultipleElementQueue(void) {
 }
 
 
-void
-test_CustomOrderQueue(void) {
+extern void test_CustomOrderQueue(void);
+void test_CustomOrderQueue(void)
+{
 	queue* q = debug_create_priority_queue(compare_elements);
 	element *e1_ptr, *e2_ptr, *e3_ptr, *e4_ptr, *e5_ptr, *e6_ptr;
 
@@ -181,8 +186,9 @@ test_CustomOrderQueue(void) {
 }
 
 
-void
-test_DestroyNonEmptyQueue(void) {
+extern void test_DestroyNonEmptyQueue(void);
+void test_DestroyNonEmptyQueue(void)
+{
 	queue* q = create_queue();
 	element *e1_ptr, *e2_ptr, *e3_ptr, *e4_ptr, *e5_ptr, *e6_ptr;
 
@@ -203,8 +209,10 @@ test_DestroyNonEmptyQueue(void) {
 	destroy_queue(q);
 }
 
-void
-test_AppendQueues(void) {
+
+extern void test_AppendQueues(void);
+void test_AppendQueues(void)
+{
 	queue* q1 = create_queue();
 	queue* q2 = create_queue();
 	queue* q3 = create_queue();

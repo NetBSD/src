@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.167 2017/10/22 07:52:40 skrll Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.167.2.1 2018/04/07 04:12:11 pgoyette Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.167 2017/10/22 07:52:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.167.2.1 2018/04/07 04:12:11 pgoyette Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -3713,3 +3713,22 @@ sheeva_setup(char *args)
 #endif
 }
 #endif	/* CPU_SHEEVA */
+
+
+bool
+cpu_gtmr_exists_p(void)
+{
+	return armreg_pfr1_read() & ARM_PFR1_GTIMER_MASK;
+}
+
+u_int
+cpu_clusterid(void)
+{
+	return __SHIFTOUT(armreg_mpidr_read(), MPIDR_AFF1);
+}
+
+bool
+cpu_earlydevice_va_p(void)
+{
+	return armreg_sctlr_read() & CPU_CONTROL_MMU_ENABLE;
+}

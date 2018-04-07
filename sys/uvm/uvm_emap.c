@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_emap.c,v 1.11 2014/11/27 14:25:01 uebayasi Exp $	*/
+/*	$NetBSD: uvm_emap.c,v 1.11.18.1 2018/04/07 04:12:20 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  * Notes for pmap developers:
  *
  * Generic (more expensive) stubs are implemented for architectures which
- * do not support pmap.
+ * do not support emap.
  *
  * Note that uvm_emap_update() is called from lower pmap(9) layer, while
  * other functions call to pmap(9).  Typical pattern of update in pmap:
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_emap.c,v 1.11 2014/11/27 14:25:01 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_emap.c,v 1.11.18.1 2018/04/07 04:12:20 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: pic.c,v 1.41 2017/10/12 19:59:22 skrll Exp $	*/
+/*	$NetBSD: pic.c,v 1.41.2.1 2018/04/07 04:12:12 pgoyette Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,7 +33,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.41 2017/10/12 19:59:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.41.2.1 2018/04/07 04:12:12 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -47,14 +47,9 @@ __KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.41 2017/10/12 19:59:22 skrll Exp $");
 #include <sys/xcall.h>
 #include <sys/ipi.h>
 
-#if defined(__arm__)
 #include <arm/armreg.h>
 #include <arm/cpufunc.h>
-#elif defined(__aarch64__)
-#include <aarch64/locore.h>
-#define I32_bit		DAIF_I
-#define F32_bit		DAIF_F
-#endif
+#include <arm/locore.h>	/* for compat aarch64 */
 
 #ifdef DDB
 #include <arm/db_machdep.h>

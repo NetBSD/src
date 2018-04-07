@@ -1,3 +1,4 @@
+/*	$NetBSD: digest.h,v 1.1.1.3.2.1 2018/04/07 04:11:48 pgoyette Exp $	*/
 /* $OpenBSD: digest.h,v 1.8 2017/05/08 22:57:38 djm Exp $ */
 /*
  * Copyright (c) 2013 Damien Miller <djm@mindrot.org>

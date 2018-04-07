@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_scanner.c,v 1.12 2017/04/13 20:17:42 christos Exp $	*/
+/*	$NetBSD: ntp_scanner.c,v 1.12.10.1 2018/04/07 04:12:02 pgoyette Exp $	*/
 
 
 /* ntp_scanner.c
@@ -169,6 +169,7 @@ lex_getch(
 		stream->backch = EOF;
 		if (stream->fpi)
 			conf_file_sum += ch;
+		stream->curpos.ncol++;
 	} else if (stream->fpi) {
 		/* fetch next 7-bit ASCII char (or EOF) from file */
 		while ((ch = fgetc(stream->fpi)) != EOF && ch > SCHAR_MAX)

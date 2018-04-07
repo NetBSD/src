@@ -1,3 +1,4 @@
+/*	$NetBSD: sandbox-pledge.c,v 1.1.1.1.20.1 2018/04/07 04:11:48 pgoyette Exp $	*/
 /* $OpenBSD: sandbox-pledge.c,v 1.1 2015/10/09 01:37:08 deraadt Exp $ */
 /*
  * Copyright (c) 2015 Theo de Raadt <deraadt@openbsd.org>
@@ -14,6 +15,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#include "includes.h"
+__RCSID("$NetBSD: sandbox-pledge.c,v 1.1.1.1.20.1 2018/04/07 04:11:48 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/ioctl.h>

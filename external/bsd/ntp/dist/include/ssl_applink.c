@@ -1,4 +1,4 @@
-/*	$NetBSD: ssl_applink.c,v 1.5 2017/04/13 20:17:41 christos Exp $	*/
+/*	$NetBSD: ssl_applink.c,v 1.5.10.1 2018/04/07 04:12:00 pgoyette Exp $	*/
 
 /*
  * include/ssl_applink.c -- common NTP code for openssl/applink.c
@@ -29,10 +29,10 @@
 #endif
 
 #ifdef WRAP_DBG_MALLOC
-void *wrap_dbg_malloc(size_t s, const char *f, int l);
-void *wrap_dbg_realloc(void *p, size_t s, const char *f, int l);
-void wrap_dbg_free(void *p);
-void wrap_dbg_free_ex(void *p, const char *f, int l);
+static void *wrap_dbg_malloc(size_t s, const char *f, int l);
+static void *wrap_dbg_realloc(void *p, size_t s, const char *f, int l);
+static void wrap_dbg_free(void *p);
+static void wrap_dbg_free_ex(void *p, const char *f, int l);
 #endif
 
 
@@ -44,17 +44,21 @@ void
 ssl_applink(void)
 {
 #if OPENSSL_VERSION_NUMBER >= 0x10100000L
+
 #   ifdef WRAP_DBG_MALLOC
 	CRYPTO_set_mem_functions(wrap_dbg_malloc, wrap_dbg_realloc, wrap_dbg_free_ex);
 #   else
 	OPENSSL_malloc_init();
 #   endif
-#else
+
+#  else
+
 #   ifdef WRAP_DBG_MALLOC
 	CRYPTO_set_mem_ex_functions(wrap_dbg_malloc, wrap_dbg_realloc, wrap_dbg_free);
 #   else
 	CRYPTO_malloc_init();
 #   endif
+
 #endif /* OpenSSL version cascade */
 }
 #else	/* !OPENSSL || !SYS_WINNT */
@@ -68,7 +72,7 @@ ssl_applink(void)
  * for DEBUG malloc/realloc/free (lacking block type).
  * Simple wrappers convert.
  */
-void *wrap_dbg_malloc(size_t s, const char *f, int l)
+static void *wrap_dbg_malloc(size_t s, const char *f, int l)
 {
 	void *ret;
 
@@ -76,7 +80,7 @@ void *wrap_dbg_malloc(size_t s, const char *f, int l)
 	return ret;
 }
 
-void *wrap_dbg_realloc(void *p, size_t s, const char *f, int l)
+static void *wrap_dbg_realloc(void *p, size_t s, const char *f, int l)
 {
 	void *ret;
 
@@ -84,12 +88,12 @@ void *wrap_dbg_realloc(void *p, size_t s, const char *f, int l)
 	return ret;
 }
 
-void wrap_dbg_free(void *p)
+static void wrap_dbg_free(void *p)
 {
 	_free_dbg(p, _NORMAL_BLOCK);
 }
 
-void wrap_dbg_free_ex(void *p, const char *f, int l)
+static void wrap_dbg_free_ex(void *p, const char *f, int l)
 {
 	(void)f;
 	(void)l;

@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1504.2.2 2018/03/30 06:20:06 pgoyette Exp $
+#	$NetBSD: 3RDPARTY,v 1.1504.2.3 2018/04/07 04:11:57 pgoyette Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -334,8 +334,8 @@ Notes:
 Use the dhcp2netbsd script.
 
 Package:	dhcpcd
-Version:	7.0.2
-Current Vers:	7.0.2
+Version:	7.0.3
+Current Vers:	7.0.3
 Maintainer:	roy
 Archive Site:	ftp://roy.marples.name/pub/dhcpcd/
 Home Page:	http://roy.marples.name/projects/dhcpcd/
@@ -955,8 +955,8 @@ and ndbootd-raw.c.  Restore saved config.h, and force it to define
 HAVE_STRICT_ALIGNMENT.  Fix RCS IDs, import.
 
 Package:	ntp
-Version:	4.2.8p10
-Current Vers:	4.2.8p10
+Version:	4.2.8p11
+Current Vers:	4.2.8p11
 Maintainer:	David L. Mills <mills@udel.edu>
 Archive Site:	http://www.ntp.org/
 Home Page:	http://www.ntp.org/, http://support.ntp.org/
@@ -1030,8 +1030,8 @@ Notes:
 Patch applied after OpenSSH import.
 
 Package:	OpenSSH
-Version:	7.6
-Current Vers:	7.6 / portable 7.6p1
+Version:	7.7
+Current Vers:	7.7 / portable 7.7p1
 Maintainer:	OpenSSH
 Archive Site:	http://www.openssh.com/ftp.html
 Home Page:	http://www.openssh.com/portable.html
@@ -1071,8 +1071,8 @@ markus is very cooperative about it):
 - make compile with gcc-4.5; const fixes, fileno() checks, shadow fixes.
 
 Package:	OpenSSL
-Version:	1.0.2k
-Current Vers:	1.0.2k/1.1.0d
+Version:	1.0.2o/1.1.0h
+Current Vers:	1.0.2k/1.1.0h
 Maintainer:	The OpenSSL Project
 Archive Site:	ftp://ftp.openssl.org/source/
 Home Page:	http://www.openssl.org/

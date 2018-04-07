@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_cardbus.c,v 1.36 2016/07/14 04:00:45 msaitoh Exp $	*/
+/*	$NetBSD: ahc_cardbus.c,v 1.36.16.1 2018/04/07 04:12:14 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2005 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_cardbus.c,v 1.36 2016/07/14 04:00:45 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_cardbus.c,v 1.36.16.1 2018/04/07 04:12:14 pgoyette Exp $");
 
 #include "opt_ahc_cardbus.h"
 
@@ -228,8 +228,6 @@ ahc_cardbus_attach(device_t parent, device_t self, void *aux)
 		ahc_outb(ahc, SCSICONF, our_id | ENSPCHK | RESET_SCSI);
 		ahc->our_id = our_id;
 	}
-
-	printf("%s: aic7860", ahc_name(ahc));
 
 	/*
 	 * Record our termination setting for the

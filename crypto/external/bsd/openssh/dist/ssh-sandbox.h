@@ -1,3 +1,4 @@
+/*	$NetBSD: ssh-sandbox.h,v 1.1.1.1.42.1 2018/04/07 04:11:48 pgoyette Exp $	*/
 /* $OpenBSD: ssh-sandbox.h,v 1.1 2011/06/23 09:34:13 djm Exp $ */
 /*
  * Copyright (c) 2011 Damien Miller <djm@mindrot.org>

@@ -1,4 +1,4 @@
-/*	$NetBSD: keyFile.c,v 1.1.1.6 2016/05/01 15:57:23 christos Exp $	*/
+/*	$NetBSD: keyFile.c,v 1.1.1.6.14.1 2018/04/07 04:12:06 pgoyette Exp $	*/
 
 #include "config.h"
 #include "fileHandlingTest.h"
@@ -34,9 +34,9 @@ CompareKeys(
 		       expected.key_len, actual.key_len);
 		return FALSE;
 	}
-	if (strcmp(expected.type, actual.type) != 0) {
+	if (strcmp(expected.typen, actual.typen) != 0) {
 		printf("Expected key_type: %s but was: %s\n",
-		       expected.type, actual.type);
+		       expected.typen, actual.typen);
 		return FALSE;
 
 	}
@@ -61,7 +61,7 @@ CompareKeysAlternative(
 
 	temp.key_id = key_id;
 	temp.key_len = key_len;
-	strlcpy(temp.type, type, sizeof(temp.type));
+	strlcpy(temp.typen, type, sizeof(temp.typen));
 	memcpy(temp.key_seq, key_seq, key_len);
 
 	return CompareKeys(temp, actual);

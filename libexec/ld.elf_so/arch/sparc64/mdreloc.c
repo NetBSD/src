@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.67.2.1 2018/03/30 06:20:10 pgoyette Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.67.2.2 2018/04/07 04:12:09 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo Horvath.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.67.2.1 2018/03/30 06:20:10 pgoyette Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.67.2.2 2018/04/07 04:12:09 pgoyette Exp $");
 #endif /* not lint */
 
 #include <machine/elf_support.h>
@@ -323,8 +323,10 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 
 		/* IFUNC relocations are handled in _rtld_call_ifunc */
 		if (type == R_TYPE(IRELATIVE)) {
-			if (obj->ifunc_remaining_nonplt == 0)
-				obj->ifunc_remaining_nonplt = rela - obj->rela + 1;
+			if (obj->ifunc_remaining_nonplt == 0) {
+				obj->ifunc_remaining_nonplt =
+				    obj->relalim - rela;
+			}
 			continue;
 		}
 
@@ -632,38 +634,4 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela,
 		*tp = value;
 
 	return 0;
-}
-
-void
-_rtld_call_ifunc(Obj_Entry *obj, sigset_t *mask, u_int cur_objgen)
-{
-	const Elf_Rela *rela;
-	Elf_Addr *where;
-	Elf_Word *where2;
-	Elf_Addr target;
-
-	while (obj->ifunc_remaining > 0 && _rtld_objgen == cur_objgen) {
-		rela = obj->pltrelalim - --obj->ifunc_remaining;
-		if (ELF_R_TYPE(rela->r_info) != R_TYPE(JMP_IREL))
-			continue;
-		where2 = (Elf_Word *)(obj->relocbase + rela->r_offset);
-		target = (Elf_Addr)(obj->relocbase + rela->r_addend);
-		_rtld_exclusive_exit(mask);
-		target = _rtld_resolve_ifunc2(obj, target);
-		_rtld_exclusive_enter(mask);
-		sparc_write_branch(where2 + 1, (void *)target);
-	}
-
-	while (obj->ifunc_remaining_nonplt > 0 && _rtld_objgen == cur_objgen) {
-		rela = obj->relalim - --obj->ifunc_remaining_nonplt;
-		if (ELF_R_TYPE(rela->r_info) != R_TYPE(IRELATIVE))
-			continue;
-		where = (Elf_Addr *)(obj->relocbase + rela->r_offset);
-		target = (Elf_Addr)(obj->relocbase + rela->r_addend);
-		_rtld_exclusive_exit(mask);
-		target = _rtld_resolve_ifunc2(obj, target);
-		_rtld_exclusive_enter(mask);
-		if (*where != target)
-			*where = target;
-	}
 }

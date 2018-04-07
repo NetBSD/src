@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 2018/02/04 03:19:52 christos Exp $
+#	$NetBSD: Makefile,v 1.24.2.1 2018/04/07 04:11:49 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -12,7 +12,6 @@ authfd.c \
 authfile.c \
 bcrypt_pbkdf.c \
 bitmap.c \
-blocks.c \
 blowfish.c \
 bufaux.c \
 bufbn.c \
@@ -32,6 +31,7 @@ dns.c \
 ed25519.c \
 fatal.c \
 fe25519.c \
+freezero.c \
 ge25519.c \
 hash.c \
 hmac.c \
@@ -66,8 +66,10 @@ sshbuf-getput-crypto.c \
 sshbuf.c \
 ssherr.c \
 sshkey.c \
+sshkey-xmss.c \
 ssh-ed25519.c \
 ssh-pkcs11.c \
+ssh-xmss.c \
 ttymodes.c \
 uidswap.c \
 umac.c \
@@ -75,7 +77,13 @@ umac128.c \
 utf8.c \
 uuencode.c \
 verify.c \
-xmalloc.c
+xmalloc.c \
+xmss_commons.c \
+xmss_fast.c \
+xmss_hash.c \
+xmss_hash_address.c \
+xmss_wots.c
+
 
 OPENSSL_SRCS=\
 digest-openssl.c \
@@ -88,7 +96,10 @@ ssh-rsa.c
 
 SRCS+=	fmt_scaled.c
 SRCS+=	readpassphrase.c getpeereid.c getrrsetbyname.c
-COPTS.monitor_fdpass.c = -Wno-stack-protector
+COPTS.monitor_fdpass.c+=-Wno-stack-protector
+COPTS.xmss_fast.c+=	-Wno-stack-protector
+COPTS.xmss_hash.c+=	-Wno-stack-protector
+COPTS.xmss_wots.c+=	-Wno-stack-protector
 
 .if WITH_OPENSSL
 SRCS+=		${OPENSSL_SRCS}

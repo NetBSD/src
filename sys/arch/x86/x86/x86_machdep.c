@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.108.2.1 2018/03/15 09:12:04 pgoyette Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.108.2.2 2018/04/07 04:12:14 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.108.2.1 2018/03/15 09:12:04 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.108.2.2 2018/04/07 04:12:14 pgoyette Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -1274,18 +1274,43 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 #ifndef XEN
 	int sysctl_machdep_spectreV2_mitigated(SYSCTLFN_ARGS);
 	extern bool spec_mitigation_enabled;
-	const struct sysctlnode *spec_rnode = NULL;
+	extern char spec_mitigation_name[];
+	const struct sysctlnode *spec_rnode;
+
+	/* SpectreV1 */
+	spec_rnode = NULL;
 	sysctl_createv(clog, 0, NULL, &spec_rnode,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "spectreV2", NULL,
+		       CTLTYPE_NODE, "spectre_v1", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_MACHDEP, CTL_CREATE);
 	sysctl_createv(clog, 0, &spec_rnode, &spec_rnode,
+		       CTLFLAG_PERMANENT | CTLFLAG_IMMEDIATE,
+		       CTLTYPE_BOOL, "mitigated",
+		       SYSCTL_DESCR("Whether Spectre Variant 1 is mitigated"),
+		       NULL, 0 /* mitigated=0 */, NULL, 0,
+		       CTL_CREATE, CTL_EOL);
+
+	/* SpectreV2 */
+	spec_rnode = NULL;
+	sysctl_createv(clog, 0, NULL, &spec_rnode,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "spectre_v2", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_MACHDEP, CTL_CREATE);
+	sysctl_createv(clog, 0, &spec_rnode, NULL,
 		       CTLFLAG_READWRITE,
 		       CTLTYPE_BOOL, "mitigated",
 		       SYSCTL_DESCR("Whether Spectre Variant 2 is mitigated"),
 		       sysctl_machdep_spectreV2_mitigated, 0,
 		       &spec_mitigation_enabled, 0,
+		       CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &spec_rnode, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRING, "method",
+		       SYSCTL_DESCR("Mitigation method in use"),
+		       NULL, 0,
+		       spec_mitigation_name, 0,
 		       CTL_CREATE, CTL_EOL);
 #endif
 

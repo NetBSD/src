@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.31 2017/11/28 08:43:49 maxv Exp $	*/
+/*	$NetBSD: spl.S,v 1.31.2.1 2018/04/07 04:12:11 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -127,7 +127,7 @@ IDTVEC(softintr)
 	popq	%r15			/* unwind switchframe */
 	addq	$(5 * 8),%rsp
 	jmp	*%r13			/* back to Xspllower/Xdoreti */
-END(Xsoftintr)
+IDTVEC_END(softintr)
 
 /*
  * softintr_ret()
@@ -156,25 +156,25 @@ END(softint_trigger)
 
 
 /*
- * Xpreemptrecurse()
+ * Xrecurse_preempt()
  *
  * Handles preemption interrupts via Xspllower().
  */
-IDTVEC(preemptrecurse)
+IDTVEC(recurse_preempt)
 	movl	$IPL_PREEMPT,CPUVAR(ILEVEL)
 	sti
 	xorq	%rdi,%rdi
 	call	_C_LABEL(kpreempt)
 	cli
 	jmp	*%r13			/* back to Xspllower */
-END(Xpreemptrecurse)
+IDTVEC_END(recurse_preempt)
 
 /*
- * Xpreemptresume()
+ * Xresume_preempt()
  *
  * Handles preemption interrupts via Xdoreti().
  */
-IDTVEC(preemptresume)
+IDTVEC(resume_preempt)
 	movl	$IPL_PREEMPT,CPUVAR(ILEVEL)
 	sti
 	testq	$SEL_RPL,TF_CS(%rsp)
@@ -187,7 +187,7 @@ IDTVEC(preemptresume)
 	call	_C_LABEL(preempt)	/* from user */
 	cli
 	jmp	*%r13			/* back to Xdoreti */
-END(Xpreemptresume)
+IDTVEC_END(resume_preempt)
 
 /*
  * int splraise(int s);
@@ -311,7 +311,7 @@ IDTVEC(spllower)
 	popq	%r13
 	popq	%rbx
 	ret
-END(Xspllower)
+IDTVEC_END(spllower)
 
 /*
  * void Xdoreti(void);
@@ -365,4 +365,4 @@ LABEL(doreti_checkast)
 	CLI(si)
 	jmp	doreti_checkast		/* recheck ASTs */
 END(doreti_checkast)
-END(Xdoreti)
+IDTVEC_END(doreti)

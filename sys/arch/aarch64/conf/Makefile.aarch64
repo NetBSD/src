@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.aarch64,v 1.8 2017/12/10 14:29:47 christos Exp $
+#	$NetBSD: Makefile.aarch64,v 1.8.2.1 2018/04/07 04:12:10 pgoyette Exp $
 
 # Makefile for NetBSD
 #
@@ -24,7 +24,7 @@ NEED_OWN_INSTALL_TARGET?=no
 ##
 ## (1) port identification
 ##
-THISA64=	$S/arch/${MACHINE}
+THISARM=	$S/arch/${MACHINE}
 A64=		$S/arch/aarch64
 GENASSYM_CONF=	${A64}/aarch64/genassym.cf
 .-include "$S/arch/${MACHINE}/conf/Makefile.${MACHINE}.inc"
@@ -33,7 +33,12 @@ GENASSYM_CONF=	${A64}/aarch64/genassym.cf
 ## (2) compile settings
 ##
 # CPPFLAGS set by platform-specific Makefile fragment.
-CFLAGS+=	 -fomit-frame-pointer
+CFLAGS+=	-march=armv8-a+nofp+nosimd
+#CFLAGS+=	-fomit-frame-pointer
+CFLAGS+=	-fno-omit-frame-pointer
+CFLAGS+=	-mno-omit-leaf-frame-pointer
+#CFLAGS+=	-mno-unaligned-access
+
 
 ##
 ## (3) libkern and compat
@@ -45,7 +50,7 @@ KERN_AS=	obj
 ##
 MD_OBJS+=	${SYSTEM_FIRST_OBJ} locore.o
 MD_CFILES+=
-MD_SFILES+=	${SYSTEM_FIRST_SFILE} ${A64}/aarch64/locore.S
+MD_SFILES+=	${SYSTEM_FIRST_SFILE}
 
 .if defined(SYSTEM_FIRST_OBJ)
 ${SYSTEM_FIRST_OBJ}: ${SYSTEM_FIRST_SFILE} assym.h
@@ -59,7 +64,7 @@ locore.o: ${A64}/aarch64/locore.S assym.h
 ## (5) link settings
 ##
 KERNLDSCRIPT?=	${A64}/conf/kern.ldscript
-LOADADDRESS?=	0xFFFFFFFF00000000
+LOADADDRESS?=	0xffffffc000000040
 LINKFLAGS_NORMAL=	-X
 
 # Strip AArch64 mapping symbols from the kernel image, as they interfere

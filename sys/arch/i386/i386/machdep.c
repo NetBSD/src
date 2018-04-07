@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.803.2.1 2018/03/22 01:44:45 pgoyette Exp $	*/
+/*	$NetBSD: machdep.c,v 1.803.2.2 2018/04/07 04:12:13 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009, 2017
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.803.2.1 2018/03/22 01:44:45 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.803.2.2 2018/04/07 04:12:13 pgoyette Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_freebsd.h"
@@ -564,7 +564,7 @@ tss_init(struct i386tss *tss, void *stack, void *func)
 
 extern vector IDTVEC(tss_trap08);
 #if defined(DDB) && defined(MULTIPROCESSOR)
-extern vector Xintrddbipi, Xx2apic_intrddbipi;
+extern vector Xintr_ddbipi, Xintr_x2apic_ddbipi;
 extern int ddb_vec;
 #endif
 
@@ -598,7 +598,7 @@ cpu_set_tss_gates(struct cpu_info *ci)
 	ddbipi_stack = (void *)uvm_km_alloc(kernel_map, USPACE, 0,
 	    UVM_KMF_WIRED);
 	tss_init(&ci->ci_tss->ddbipi_tss, ddbipi_stack,
-	    x2apic_mode ? Xx2apic_intrddbipi : Xintrddbipi);
+	    x2apic_mode ? Xintr_x2apic_ddbipi : Xintr_ddbipi);
 
 	setsegment(&sd, &ci->ci_tss->ddbipi_tss, sizeof(struct i386tss) - 1,
 	    SDT_SYS386TSS, SEL_KPL, 0, 0);
@@ -1168,6 +1168,9 @@ init386(paddr_t first_avail)
 
 	cpu_probe(&cpu_info_primary);
 	cpu_init_msrs(&cpu_info_primary, true);
+#ifndef XEN
+	cpu_speculation_init(&cpu_info_primary);
+#endif
 
 #ifdef PAE
 	use_pae = 1;

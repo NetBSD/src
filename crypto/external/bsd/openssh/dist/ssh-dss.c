@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh-dss.c,v 1.13 2018/02/06 10:56:35 maya Exp $	*/
-/* $OpenBSD: ssh-dss.c,v 1.35 2016/04/21 06:08:02 djm Exp $ */
+/*	$NetBSD: ssh-dss.c,v 1.13.2.1 2018/04/07 04:11:48 pgoyette Exp $	*/
+/* $OpenBSD: ssh-dss.c,v 1.37 2018/02/07 02:06:51 jsing Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-dss.c,v 1.13 2018/02/06 10:56:35 maya Exp $");
+__RCSID("$NetBSD: ssh-dss.c,v 1.13.2.1 2018/04/07 04:11:48 pgoyette Exp $");
 #include <sys/types.h>
 
 #include <openssl/bn.h>
@@ -85,42 +85,28 @@ ssh_dss_sign(const struct sshkey *key, u_char **sigp, size_t *lenp,
 	BN_bn2bin(r, sigblob + SIGBLOB_LEN - INTBLOB_LEN - rlen);
 	BN_bn2bin(s, sigblob + SIGBLOB_LEN - slen);
 
-	if (compat & SSH_BUG_SIGBLOB) {
-		if (sigp != NULL) {
-			if ((*sigp = malloc(SIGBLOB_LEN)) == NULL) {
-				ret = SSH_ERR_ALLOC_FAIL;
-				goto out;
-			}
-			memcpy(*sigp, sigblob, SIGBLOB_LEN);
-		}
-		if (lenp != NULL)
-			*lenp = SIGBLOB_LEN;
-		ret = 0;
-	} else {
-		/* ietf-drafts */
-		if ((b = sshbuf_new()) == NULL) {
+	if ((b = sshbuf_new()) == NULL) {
+		ret = SSH_ERR_ALLOC_FAIL;
+		goto out;
+	}
+	if ((ret = sshbuf_put_cstring(b, "ssh-dss")) != 0 ||
+	    (ret = sshbuf_put_string(b, sigblob, SIGBLOB_LEN)) != 0)
+		goto out;
+
+	len = sshbuf_len(b);
+	if (sigp != NULL) {
+		if ((*sigp = malloc(len)) == NULL) {
 			ret = SSH_ERR_ALLOC_FAIL;
 			goto out;
 		}
-		if ((ret = sshbuf_put_cstring(b, "ssh-dss")) != 0 ||
-		    (ret = sshbuf_put_string(b, sigblob, SIGBLOB_LEN)) != 0)
-			goto out;
-		len = sshbuf_len(b);
-		if (sigp != NULL) {
-			if ((*sigp = malloc(len)) == NULL) {
-				ret = SSH_ERR_ALLOC_FAIL;
-				goto out;
-			}
-			memcpy(*sigp, sshbuf_ptr(b), len);
-		}
-		if (lenp != NULL)
-			*lenp = len;
-		ret = 0;
+		memcpy(*sigp, sshbuf_ptr(b), len);
 	}
+	if (lenp != NULL)
+		*lenp = len;
+	ret = 0;
  out:
 	explicit_bzero(digest, sizeof(digest));
-	if (sig != NULL)
-		DSA_SIG_free(sig);
+	DSA_SIG_free(sig);
 	sshbuf_free(b);
 	return ret;
 }
@@ -145,28 +131,20 @@ ssh_dss_verify(const struct sshkey *key,
 		return SSH_ERR_INTERNAL_ERROR;
 
 	/* fetch signature */
-	if (compat & SSH_BUG_SIGBLOB) {
-		if ((sigblob = malloc(signaturelen)) == NULL)
-			return SSH_ERR_ALLOC_FAIL;
-		memcpy(sigblob, signature, signaturelen);
-		len = signaturelen;
-	} else {
-		/* ietf-drafts */
-		if ((b = sshbuf_from(signature, signaturelen)) == NULL)
-			return SSH_ERR_ALLOC_FAIL;
-		if (sshbuf_get_cstring(b, &ktype, NULL) != 0 ||
-		    sshbuf_get_string(b, &sigblob, &len) != 0) {
-			ret = SSH_ERR_INVALID_FORMAT;
-			goto out;
-		}
-		if (strcmp("ssh-dss", ktype) != 0) {
-			ret = SSH_ERR_KEY_TYPE_MISMATCH;
-			goto out;
-		}
-		if (sshbuf_len(b) != 0) {
-			ret = SSH_ERR_UNEXPECTED_TRAILING_DATA;
-			goto out;
-		}
+	if ((b = sshbuf_from(signature, signaturelen)) == NULL)
+		return SSH_ERR_ALLOC_FAIL;
+	if (sshbuf_get_cstring(b, &ktype, NULL) != 0 ||
+	    sshbuf_get_string(b, &sigblob, &len) != 0) {
+		ret = SSH_ERR_INVALID_FORMAT;
+		goto out;
+	}
+	if (strcmp("ssh-dss", ktype) != 0) {
+		ret = SSH_ERR_KEY_TYPE_MISMATCH;
+		goto out;
+	}
+	if (sshbuf_len(b) != 0) {
+		ret = SSH_ERR_UNEXPECTED_TRAILING_DATA;
+		goto out;
 	}
 
 	if (len != SIGBLOB_LEN) {
@@ -213,8 +191,7 @@ ssh_dss_verify(const struct sshkey *key,
 
  out:
 	explicit_bzero(digest, sizeof(digest));
-	if (sig != NULL)
-		DSA_SIG_free(sig);
+	DSA_SIG_free(sig);
 	sshbuf_free(b);
 	free(ktype);
 	if (sigblob != NULL) {

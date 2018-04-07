@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.26 2018/01/24 09:04:45 skrll Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.26.2.1 2018/04/07 04:12:12 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1996 Scott K Stevens
@@ -30,6 +30,8 @@
 
 #ifndef	_ARM_DB_MACHDEP_H_
 #define	_ARM_DB_MACHDEP_H_
+
+#if defined(__arm__)
 
 /*
  * Machine-dependent defines for new kernel debugger.
@@ -132,4 +134,11 @@ typedef register_t	kgdb_reg_t;
  */
 extern volatile struct cpu_info *db_onproc;
 extern volatile struct cpu_info *db_newcpu;
+
+#elif defined(__aarch64__)
+
+#include <aarch64/db_machdep.h>
+
+#endif
+
 #endif	/* _ARM_DB_MACHDEP_H_ */

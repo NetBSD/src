@@ -1,4 +1,4 @@
-/* $NetBSD: kvm_aarch64.c,v 1.2 2017/06/14 12:24:51 kamil Exp $ */
+/* $NetBSD: kvm_aarch64.c,v 1.2.4.1 2018/04/07 04:12:08 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
 
 #include "kvm_private.h"
 
-__RCSID("$NetBSD: kvm_aarch64.c,v 1.2 2017/06/14 12:24:51 kamil Exp $");
+__RCSID("$NetBSD: kvm_aarch64.c,v 1.2.4.1 2018/04/07 04:12:08 pgoyette Exp $");
 
 /*ARGSUSED*/
 void
@@ -94,15 +94,15 @@ lose:
 	u_int page_shift;
 
 	switch (tg1) {
-	case TCR_TG_4KB:
+	case TCR_TG1_4KB:
 		va_bits = t1siz + 36;
 		page_shift = 12;
 		break;
-	case TCR_TG_16KB:
+	case TCR_TG1_16KB:
 		va_bits = 48;
 		page_shift = 14;
 		break;
-	case TCR_TG_64KB:
+	case TCR_TG1_64KB:
 		va_bits = t1siz + 38;
 		page_shift = 16;
 		break;

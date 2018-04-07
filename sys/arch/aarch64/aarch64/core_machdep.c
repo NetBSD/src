@@ -1,4 +1,4 @@
-/* $NetBSD: core_machdep.c,v 1.3 2018/02/25 08:24:36 skrll Exp $ */
+/* $NetBSD: core_machdep.c,v 1.3.2.1 2018/04/07 04:12:10 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: core_machdep.c,v 1.3 2018/02/25 08:24:36 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: core_machdep.c,v 1.3.2.1 2018/04/07 04:12:10 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/cpu.h>
@@ -39,9 +39,10 @@ __KERNEL_RCSID(1, "$NetBSD: core_machdep.c,v 1.3 2018/02/25 08:24:36 skrll Exp $
 #include <sys/core.h>
 #include <sys/lwp.h>
 
-#include <aarch64/frame.h>
-#include <aarch64/locore.h>
 #include <aarch64/pcb.h>
+#include <aarch64/frame.h>
+#include <aarch64/machdep.h>
+#include <aarch64/armreg.h>
 
 /*
  * Write the machine-dependent part of a core dump.
@@ -65,11 +66,8 @@ cpu_coredump(struct lwp *l, struct coredump_iostate *iocookie,
 	}
 
 	md_core.reg = l->l_md.md_utf->tf_regs;
-	if (l == curlwp) {
-		md_core.reg.r_tpidr = reg_tpidr_el0_read();
-	} else {
-		md_core.reg.r_tpidr = (uint64_t)(uintptr_t)l->l_private;
-	}
+	md_core.reg.r_tpidr = (uint64_t)(uintptr_t)l->l_private;
+
 	fpu_save(l);
 	if (fpu_used_p(l)) {
 		md_core.fpreg = pcb->pcb_fpregs;

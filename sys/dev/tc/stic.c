@@ -1,4 +1,4 @@
-/*	$NetBSD: stic.c,v 1.52 2018/01/24 05:35:58 riastradh Exp $	*/
+/*	$NetBSD: stic.c,v 1.52.2.1 2018/04/07 04:12:18 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.52 2018/01/24 05:35:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.52.2.1 2018/04/07 04:12:18 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -421,7 +421,7 @@ stic_attach(device_t self, struct stic_info *si, int console)
 
 	/*
 	 * Allocate backing for the console.  We could trawl back through
-	 * msgbuf and and fill the backing, but it's not worth the hassle.
+	 * msgbuf and fill the backing, but it's not worth the hassle.
 	 * We could also grab backing using pmap_steal_memory() early on,
 	 * but that's a little ugly.
 	 */

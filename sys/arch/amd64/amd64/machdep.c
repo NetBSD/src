@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.301.2.1 2018/03/22 01:44:41 pgoyette Exp $	*/
+/*	$NetBSD: machdep.c,v 1.301.2.2 2018/04/07 04:12:11 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.301.2.1 2018/03/22 01:44:41 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.301.2.2 2018/04/07 04:12:11 pgoyette Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -1603,6 +1603,9 @@ init_x86_64(paddr_t first_avail)
 	svs_init();
 #endif
 	cpu_init_msrs(&cpu_info_primary, true);
+#ifndef XEN
+	cpu_speculation_init(&cpu_info_primary);
+#endif
 
 	use_pae = 1; /* PAE always enabled in long mode */
 

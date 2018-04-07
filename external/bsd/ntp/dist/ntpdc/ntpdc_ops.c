@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpdc_ops.c,v 1.9 2017/04/13 20:17:42 christos Exp $	*/
+/*	$NetBSD: ntpdc_ops.c,v 1.9.10.1 2018/04/07 04:12:02 pgoyette Exp $	*/
 
 /*
  * ntpdc_ops.c - subroutines which are called to perform operations by
@@ -1685,7 +1685,7 @@ reslist(
 	const char *mask;
 	struct resflags *rf;
 	u_int32 count;
-	u_short flags;
+	u_short rflags;
 	u_short mflags;
 	char flagstr[300];
 	static const char *comma = ", ";
@@ -1732,7 +1732,7 @@ again:
 		    ((pcmd->argval->ival == 4) && (rl->v6_flag == 0)))
 			skip = 0;
 		count = ntohl(rl->count);
-		flags = ntohs(rl->flags);
+		rflags = ntohs(rl->rflags);
 		mflags = ntohs(rl->mflags);
 		flagstr[0] = '\0';
 
@@ -1755,7 +1755,7 @@ again:
 			 : &resflagsV3[0];
 
 		while (rf->bit != 0) {
-			if (flags & rf->bit) {
+			if (rflags & rf->bit) {
 				if (!res)
 					strlcat(flagstr, comma,
 						sizeof(flagstr));

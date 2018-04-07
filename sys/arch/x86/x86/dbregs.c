@@ -1,4 +1,4 @@
-/*	$NetBSD: dbregs.c,v 1.6 2017/02/23 12:01:12 martin Exp $	*/
+/*	$NetBSD: dbregs.c,v 1.6.14.1 2018/04/07 04:12:14 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -188,8 +188,11 @@ x86_dbregs_validate(const struct dbreg *regs)
 
 	/* Check that DR0-DR3 contain user-space address */
 	for (i = 0; i < X86_DBREGS; i++)
-		if (regs->dr[i] > (vaddr_t)VM_MAXUSER_ADDRESS)
+		if (regs->dr[i] >= (vaddr_t)VM_MAXUSER_ADDRESS)
 			return EINVAL;
+
+	if (regs->dr[7] & X86_DR7_GENERAL_DETECT_ENABLE)
+		return EINVAL;
 
 	/*
 	 * Skip checks for reserved registers (DR4-DR5, DR8-DR15).

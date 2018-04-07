@@ -1,5 +1,5 @@
-/*	$NetBSD: compat.c,v 1.17 2017/10/07 19:39:19 christos Exp $	*/
-/* $OpenBSD: compat.c,v 1.104 2017/07/25 09:22:25 dtucker Exp $ */
+/*	$NetBSD: compat.c,v 1.17.2.1 2018/04/07 04:11:48 pgoyette Exp $	*/
+/* $OpenBSD: compat.c,v 1.106 2018/02/16 04:43:11 dtucker Exp $ */
 /*
  * Copyright (c) 1999, 2000, 2001, 2002 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: compat.c,v 1.17 2017/10/07 19:39:19 christos Exp $");
+__RCSID("$NetBSD: compat.c,v 1.17.2.1 2018/04/07 04:11:48 pgoyette Exp $");
 #include <sys/types.h>
 
 #include <stdlib.h>
@@ -51,83 +51,20 @@ compat_datafellows(const char *version)
 		const char	*pat;
 		int	bugs;
 	} check[] = {
-		{ "OpenSSH-2.0*,"
-		  "OpenSSH-2.1*,"
-		  "OpenSSH_2.1*,"
-		  "OpenSSH_2.2*",	SSH_OLD_SESSIONID|SSH_BUG_BANNER|
-					SSH_OLD_DHGEX|SSH_BUG_NOREKEY|
-					SSH_BUG_EXTEOF|SSH_OLD_FORWARD_ADDR},
-		{ "OpenSSH_2.3.0*",	SSH_BUG_BANNER|SSH_BUG_BIGENDIANAES|
-					SSH_OLD_DHGEX|SSH_BUG_NOREKEY|
-					SSH_BUG_EXTEOF|SSH_OLD_FORWARD_ADDR},
-		{ "OpenSSH_2.3.*",	SSH_BUG_BIGENDIANAES|SSH_OLD_DHGEX|
-					SSH_BUG_NOREKEY|SSH_BUG_EXTEOF|
-					SSH_OLD_FORWARD_ADDR},
-		{ "OpenSSH_2.5.0p1*,"
-		  "OpenSSH_2.5.1p1*",
-					SSH_BUG_BIGENDIANAES|SSH_OLD_DHGEX|
-					SSH_BUG_NOREKEY|SSH_BUG_EXTEOF|
-					SSH_OLD_FORWARD_ADDR},
-		{ "OpenSSH_2.5.0*,"
-		  "OpenSSH_2.5.1*,"
-		  "OpenSSH_2.5.2*",	SSH_OLD_DHGEX|SSH_BUG_NOREKEY|
-					SSH_BUG_EXTEOF|SSH_OLD_FORWARD_ADDR},
-		{ "OpenSSH_2.5.3*",	SSH_BUG_NOREKEY|SSH_BUG_EXTEOF|
-					SSH_OLD_FORWARD_ADDR},
 		{ "OpenSSH_2.*,"
 		  "OpenSSH_3.0*,"
 		  "OpenSSH_3.1*",	SSH_BUG_EXTEOF|SSH_OLD_FORWARD_ADDR},
 		{ "OpenSSH_3.*",	SSH_OLD_FORWARD_ADDR },
 		{ "Sun_SSH_1.0*",	SSH_BUG_NOREKEY|SSH_BUG_EXTEOF},
-		{ "OpenSSH_4*",		0 },
+		{ "OpenSSH_2*,"
+		  "OpenSSH_3*,"
+		  "OpenSSH_4*",		0 },
 		{ "OpenSSH_5*",		SSH_NEW_OPENSSH|SSH_BUG_DYNAMIC_RPORT},
 		{ "OpenSSH_6.6.1*",	SSH_NEW_OPENSSH},
 		{ "OpenSSH_6.5*,"
 		  "OpenSSH_6.6*",	SSH_NEW_OPENSSH|SSH_BUG_CURVE25519PAD},
 		{ "OpenSSH*",		SSH_NEW_OPENSSH },
 		{ "*MindTerm*",		0 },
-		{ "2.1.0*",		SSH_BUG_SIGBLOB|SSH_BUG_HMAC|
-					SSH_OLD_SESSIONID|SSH_BUG_DEBUG|
-					SSH_BUG_RSASIGMD5|SSH_BUG_HBSERVICE|
-					SSH_BUG_FIRSTKEX },
-		{ "2.1 *",		SSH_BUG_SIGBLOB|SSH_BUG_HMAC|
-					SSH_OLD_SESSIONID|SSH_BUG_DEBUG|
-					SSH_BUG_RSASIGMD5|SSH_BUG_HBSERVICE|
-					SSH_BUG_FIRSTKEX },
-		{ "2.0.13*,"
-		  "2.0.14*,"
-		  "2.0.15*,"
-		  "2.0.16*,"
-		  "2.0.17*,"
-		  "2.0.18*,"
-		  "2.0.19*",		SSH_BUG_SIGBLOB|SSH_BUG_HMAC|
-					SSH_OLD_SESSIONID|SSH_BUG_DEBUG|
-					SSH_BUG_PKSERVICE|SSH_BUG_X11FWD|
-					SSH_BUG_PKOK|SSH_BUG_RSASIGMD5|
-					SSH_BUG_HBSERVICE|SSH_BUG_OPENFAILURE|
-					SSH_BUG_DUMMYCHAN|SSH_BUG_FIRSTKEX },
-		{ "2.0.11*,"
-		  "2.0.12*",		SSH_BUG_SIGBLOB|SSH_BUG_HMAC|
-					SSH_OLD_SESSIONID|SSH_BUG_DEBUG|
-					SSH_BUG_PKSERVICE|SSH_BUG_X11FWD|
-					SSH_BUG_PKAUTH|SSH_BUG_PKOK|
-					SSH_BUG_RSASIGMD5|SSH_BUG_OPENFAILURE|
-					SSH_BUG_DUMMYCHAN|SSH_BUG_FIRSTKEX },
-		{ "2.0.*",		SSH_BUG_SIGBLOB|SSH_BUG_HMAC|
-					SSH_OLD_SESSIONID|SSH_BUG_DEBUG|
-					SSH_BUG_PKSERVICE|SSH_BUG_X11FWD|
-					SSH_BUG_PKAUTH|SSH_BUG_PKOK|
-					SSH_BUG_RSASIGMD5|SSH_BUG_OPENFAILURE|
-					SSH_BUG_DERIVEKEY|SSH_BUG_DUMMYCHAN|
-					SSH_BUG_FIRSTKEX },
-		{ "2.2.0*,"
-		  "2.3.0*",		SSH_BUG_HMAC|SSH_BUG_DEBUG|
-					SSH_BUG_RSASIGMD5|SSH_BUG_FIRSTKEX },
-		{ "2.3.*",		SSH_BUG_DEBUG|SSH_BUG_RSASIGMD5|
-					SSH_BUG_FIRSTKEX },
-		{ "2.4",		SSH_OLD_SESSIONID },	/* Van Dyke */
-		{ "2.*",		SSH_BUG_DEBUG|SSH_BUG_FIRSTKEX|
-					SSH_BUG_RFWD_ADDR },
 		{ "3.0.*",		SSH_BUG_DEBUG },
 		{ "3.0 SecureCRT*",	SSH_OLD_SESSIONID },
 		{ "1.7 SecureFX*",	SSH_OLD_SESSIONID },
@@ -190,6 +127,8 @@ compat_datafellows(const char *version)
 		  "WinSCP_release_5.7.3,"
 		  "WinSCP_release_5.7.4",
 					SSH_OLD_DHGEX },
+		{ "ConfD-*",
+					SSH_BUG_UTF8TTYMODE },
 		{ NULL,			0 }
 	};
 

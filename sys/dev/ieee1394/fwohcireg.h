@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohcireg.h,v 1.18 2010/03/29 03:05:27 kiyohara Exp $	*/
+/*	$NetBSD: fwohcireg.h,v 1.18.58.1 2018/04/07 04:12:15 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
@@ -77,7 +77,7 @@
 #define		FW_DEVICE_R5C551	(0x0551 << 16)
 #define		FW_DEVICE_R5C552	(0x0552 << 16)
 #define		FW_DEVICE_PANGEA	(0x0030 << 16)
-#define		FW_DEVICE_UNINORTH	(0x0031 << 16)
+#define		FW_DEVICE_UNINORTH2	(0x0031 << 16)
 #define		FW_DEVICE_AIC5800	(0x5800 << 16)
 #define		FW_DEVICE_FW322		(0x5811 << 16)
 #define		FW_DEVICE_7007		(0x7007 << 16)

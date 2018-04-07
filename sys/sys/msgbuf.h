@@ -1,4 +1,4 @@
-/*	$NetBSD: msgbuf.h,v 1.15 2007/11/07 00:19:08 ad Exp $	*/
+/*	$NetBSD: msgbuf.h,v 1.15.104.1 2018/04/07 04:12:20 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1981, 1984, 1993
@@ -51,6 +51,12 @@ extern struct	kern_msgbuf *msgbufp;	/* the mapped buffer, itself. */
 void	initmsgbuf(void *, size_t);
 void	loginit(void);
 void	logputchar(int);
+
+static inline int
+logenabled(const struct kern_msgbuf *mbp)
+{
+	return msgbufenabled && mbp->msg_magic == MSG_MAGIC;
+}
 #endif
 
 #endif /* !_SYS_MSGBUF_H_ */

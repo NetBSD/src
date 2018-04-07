@@ -1,0 +1,16 @@
+$NetBSD: TODO,v 1.1.2.2 2018/04/07 04:12:10 pgoyette Exp $
+
+TODO list for NetBSD/aarch64
+
+- known bugs
+  - __thread attributed variables fail to work (ld_elf.so issue?)
+  - C++ stack unwinding (libunwind?)
+
+- not yet
+  - SMP
+  - kernel text/rodata segments are mapped writable. it should be mapped as RX.
+  - ucas(9), and ucas_ras_check() is not implemented yet
+  - crash(8), savecore(8) and libkvm (cpu_kcore_hdr_t)
+  - pmap should be work even if PID_MAX >= 65536
+  - TLB ASID in pmap should be randomized
+  - COMPAT_NETBSD32

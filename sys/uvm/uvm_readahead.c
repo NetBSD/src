@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_readahead.c,v 1.8 2011/06/12 03:36:04 rmind Exp $	*/
+/*	$NetBSD: uvm_readahead.c,v 1.8.52.1 2018/04/07 04:12:20 pgoyette Exp $	*/
 
 /*-
  * Copyright (c)2003, 2005, 2009 YAMAMOTO Takashi,
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_readahead.c,v 1.8 2011/06/12 03:36:04 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_readahead.c,v 1.8.52.1 2018/04/07 04:12:20 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/pool.h>
@@ -73,7 +73,7 @@ struct uvm_ractx {
 #endif
 
 #define	RA_WINSIZE_INIT	MAXPHYS			/* initial window size */
-#define	RA_WINSIZE_MAX	(MAXPHYS * 8)		/* max window size */
+#define	RA_WINSIZE_MAX	(MAXPHYS * 16)		/* max window size */
 #define	RA_WINSIZE_SEQENTIAL	RA_WINSIZE_MAX	/* fixed window size used for
 						   SEQUENTIAL hint */
 #define	RA_MINSIZE	(MAXPHYS * 2)		/* min size to start i/o */

@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.275.2.1 2018/03/18 12:06:59 pgoyette Exp $	*/
+/*	$NetBSD: tty.c,v 1.275.2.2 2018/04/07 04:12:19 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.275.2.1 2018/03/18 12:06:59 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.275.2.2 2018/04/07 04:12:19 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -302,8 +302,8 @@ sysctl_kern_tty_setup(void)
 	sysctl_createv(&kern_tkstat_sysctllog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "tkstat",
-		       SYSCTL_DESCR("Number of characters sent and and "
-				    "received on ttys"),
+		       SYSCTL_DESCR("Number of characters sent and received "
+				    "on ttys"),
 		       NULL, 0, NULL, 0,
 		       CTL_KERN, KERN_TKSTAT, CTL_EOL);
 

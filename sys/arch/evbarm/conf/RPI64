@@ -1,0 +1,262 @@
+#
+#	$NetBSD: RPI64,v 1.1.2.2 2018/04/07 04:12:12 pgoyette Exp $
+#
+#	RPI64 - Raspberry Pi 3 and Pi 2 v1.2 in AARCH64 mode
+#
+
+include "arch/evbarm/conf/std.generic64"
+include "arch/evbarm/conf/GENERIC.common"
+include "arch/evbarm/conf/files.rpi"
+
+makeoptions DTSGNUARCH="arm arm64"
+makeoptions DTSSUBDIR="broadcom"
+
+makeoptions	DTS="
+	bcm2837-rpi-3-b.dts
+"
+
+# CPU options
+options 	CPU_CORTEXA53
+options 	SOC_BCM2836
+
+# verbose bootstraping messages
+options 	EARLYCONS=bcm2837
+options 	VERBOSE_INIT_ARM
+
+# Standard system options
+options 	MSGBUFSIZE=32768
+
+# Architecture options
+
+# Development and Debugging options
+options 	DB_MAX_WIDTH=0
+options 	DB_MAX_LINE=64
+#options 	KGDB,KGDB_PLCOMUNIT=0,KGDB_DEVRATE=115200,KGDB_CONMODE=0xB00
+makeoptions	DEBUG="-g"	# compile full symbol table
+makeoptions	COPY_SYMTAB=1
+options 	PLCONSOLE
+#options 	PLCONSOLE,PLCOMCNUNIT=0,PLCONSPEED=115200,PLCONMODE=0xB00
+
+#options 	DEBUG
+options 	LOCKDEBUG
+#options 	UVMHIST,UVMHIST_PRINT
+
+# USB Debugging options
+#options 	USB_DEBUG
+#options 	DWC2_DEBUG
+#options 	UHUB_DEBUG
+
+
+# Valid options for BOOT_ARGS:
+#  single		Boot to single user only
+#  kdb			Give control to kernel debugger
+#  ask			Ask for file name to reboot from
+#  pmapdebug=<n>	If PMAP_DEBUG, set pmap_debug_level to <n>
+#  memorydisk=<n>	Set memorydisk size to <n> KB
+#  quiet		Show aprint_naive output
+#  verbose		Show aprint_normal and aprint_verbose output
+#options 		BOOT_ARGS="\"\""
+
+config		netbsd		root on ? type ?
+
+# Device tree support
+armfdt0 	at root
+fdt*		at fdtbus?
+
+# The CPU(s)
+cpus*		at fdt? pass 0
+cpu*		at cpus?
+
+gtmr*		at fdt? pass 1		# ARM Generic Timer
+armgtmr0	at gtmr?
+
+fclock* 	at fdt? pass 0
+
+# Interrupt Controller
+bcmicu* 	at fdt? pass 1
+
+# System timer
+#bcmtmr0 	at fdt? pass 1
+
+# Clock manager
+bcmcprman0	at fdt? pass 1
+
+# AUX
+bcmaux0 	at fdt? pass 2
+
+# pulse width modulator manager
+#bcmpwm0 	at fdt?
+
+fregulator*	at fdt?
+gpiokeys*	at fdt?
+
+# GPIO LEDs
+gpioleds*	at fdt?
+
+# VC Mailbox
+bcmmbox*	at fdt?
+vcmbox* 	at bcmmbox?
+
+# DMA Controller
+bcmdmac0	at fdt?
+
+# VCHIQ
+#vchiq0		at fdt?
+
+# AUDS
+#vcaudio0	at vchiq0
+#audio*		at audiobus?
+
+#spkr*		at audio?		# PC speaker (synthesized)
+
+# PL011 uart
+plcom*		at fdt?
+
+# AUX UART
+com0		at fdt?
+
+# Framebuffer console
+genfb0		at fdt?
+wsdisplay*	at genfb?
+options 	VCONS_DRAW_INTR
+#options 	RPI_HWCURSOR
+
+# Power management, Reset controller and Watchdog registers
+watchdog0	at fdt?
+
+# Random number generator
+bcmrng0 	at fdt?
+
+# GPIO
+bcmgpio*	at fdt?
+
+# Arasan SD/MMC Interface
+sdhc*		at fdt?
+sdmmc*		at sdhc?
+
+# SD host controller
+sdhost* 	at fdt?
+sdmmc*		at sdhost?
+
+ld*		at sdmmc?
+
+# On-board USB
+dwctwo* 	at fdt?
+usb*		at dwctwo?
+
+# USB device drivers
+include "dev/usb/usbdevices.config"
+
+midi*		at midibus?
+
+# MII/PHY support
+exphy*		at mii? phy ?		# 3Com internal PHYs
+gentbi* 	at mii? phy ?		# Generic Ten-Bit 1000BASE-[CLS]X PHYs
+glxtphy*	at mii? phy ?		# Level One LXT-1000 PHYs
+gphyter*	at mii? phy ?		# NS83861 Gig-E PHY
+icsphy* 	at mii? phy ?		# Integrated Circuit Systems ICS189x
+igphy*		at mii? phy ?		# Intel IGP01E1000
+ihphy*		at mii? phy ?		# Intel 82577 PHYs
+ikphy*		at mii? phy ?		# Intel 82563 PHYs
+inphy*		at mii? phy ?		# Intel 82555 PHYs
+iophy*		at mii? phy ?		# Intel 82553 PHYs
+lxtphy* 	at mii? phy ?		# Level One LXT-970 PHYs
+makphy* 	at mii? phy ?		# Marvell Semiconductor 88E1000 PHYs
+nsphy*		at mii? phy ?		# NS83840 PHYs
+nsphyter*	at mii? phy ?		# NS83843 PHYs
+pnaphy* 	at mii? phy ?		# generic HomePNA PHYs
+qsphy*		at mii? phy ?		# Quality Semiconductor QS6612 PHYs
+rdcphy* 	at mii? phy ?		# RDC R6040 10/100 PHY
+rgephy* 	at mii? phy ?		# Realtek 8169S/8110S internal PHYs
+rlphy*		at mii? phy ?		# Realtek 8139/8201L PHYs
+sqphy*		at mii? phy ?		# Seeq 80220/80221/80223 PHYs
+tlphy*		at mii? phy ?		# ThunderLAN PHYs
+tqphy*		at mii? phy ?		# TDK Semiconductor PHYs
+urlphy* 	at mii? phy ?		# Realtek RTL8150L internal PHYs
+ukphy*		at mii? phy ?		# generic unknown PHYs
+
+# Broadcom Serial Control (I2C)
+bsciic* at fdt?
+iic* at i2cbus?
+
+# 'DS3231 Raspberry Pi RTC Board Real Time Clock Module for Arduino'
+# sold by linksprite.com
+#dsrtc*		at iic1 addr 0x68 flags 3231
+
+# MCP7940 based PiFace Real Time Clock
+#dsrtc*		at iic1 addr 0x6f flags 7940
+
+# SPI controller
+bcmspi* 	at fdt?
+spi*		at spibus?
+
+# MCP3x0x ADC
+# flags selects the actual chip, refer to mcp3kadc(4)
+#mcp3kadc0	at spi? slave 0 flags 0
+
+# PIFace or other boards using that chip (needs gpio)
+#mcp23s17gpio0	at spi? slave 0 flags 0
+#mcp23s17gpio1	at spi? slave 0 flags 1
+#mcp23s17gpio2	at spi? slave 0 flags 2
+#mcp23s17gpio3	at spi? slave 0 flags 3
+
+# gpio support (e. g. mcp23s17gpio, bcmgpio)
+gpio*		at gpiobus?
+
+# various options for wscons - we try to look as much like a standard
+# sun console as possible
+options 	WSEMUL_VT100		# sun terminal emulation
+options 	WS_DEFAULT_FG=WSCOL_WHITE
+options 	WS_DEFAULT_BG=WSCOL_BLACK
+options 	WS_KERNEL_FG=WSCOL_GREEN
+options 	WS_KERNEL_BG=WSCOL_BLACK
+options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
+options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some more ioctls
+options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
+options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
+options 	WSDISPLAY_DEFAULTSCREENS=4
+
+#options 	FONT_QVSS8x15
+#options 	FONT_GALLANT12x22	# the console font
+
+# Pseudo-Devices
+
+# network pseudo-devices
+#pseudo-device	carp			# Common Address Redundancy Protocol
+#pseudo-device	ipfilter		# IP filter (firewall) and NAT
+#pseudo-device	kttcp			# network loopback
+#pseudo-device	ppp			# Point-to-Point Protocol
+#pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
+#options 	PPPOE_SERVER		# Enable PPPoE server via link0
+#pseudo-device	sl			# Serial Line IP
+#pseudo-device	strip			# Starmode Radio IP (Metricom)
+#pseudo-device	irframetty		# IrDA frame line discipline
+#pseudo-device	tap			# virtual Ethernet
+#pseudo-device	tun			# network tunneling over tty
+#pseudo-device	gre			# generic L3 over IP tunnel
+#pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC 1933)
+#pseudo-device	faith			# IPv[46] TCP relay translation i/f
+#pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
+#pseudo-device	vlan			# IEEE 802.1q encapsulation
+#pseudo-device	bridge			# simple inter-network bridging
+#options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
+#pseudo-device	agr			# IEEE 802.3ad link aggregation
+#pseudo-device	pf			# PF packet filter
+#pseudo-device	pflog			# PF log if
+
+# miscellaneous pseudo-devices
+pseudo-device	openfirm
+
+# wscons pseudo-devices
+pseudo-device	wsmux			# mouse & keyboard multiplexor
+pseudo-device	wsfont
+
+# userland interface to drivers, including autoconf and properties retrieval
+
+# local configuration
+cinclude "arch/evbarm/conf/RPI.local"
+
+# Bluetooth serial UART devices
+pseudo-device	btuart
+pseudo-device	bcsp
+pseudo-device	bthfive
