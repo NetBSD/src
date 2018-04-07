@@ -1,5 +1,5 @@
 #
-#	$NetBSD: SUNXI,v 1.62 2018/04/07 18:12:51 bouyer Exp $
+#	$NetBSD: SUNXI,v 1.63 2018/04/07 18:35:01 bouyer Exp $
 #
 #	Allwinner sunxi family
 #
@@ -290,7 +290,8 @@ sunxitcon*	at fdt? pass 4	# LCD LVDS/RGB controller
 sunxihdmi*	at fdt? pass 4	# HDMI controller
 connector*	at fdt? pass 4
 panel*		at fdt? pass 4
-sunxidep*	at fdt?		# Display Engine Pipeline
+#sunxidep must be after display pipeline elements but before genfb@fdt
+sunxidep*	at fdt? pass 5	# Display Engine Pipeline
 options 	VCONS_DRAW_INTR
 options 	WSEMUL_VT100
 options 	WS_DEFAULT_FG=WSCOL_WHITE
