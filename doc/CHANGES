@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2375 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2376 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -137,4 +137,5 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	OpenSSL: Imported 1.1.0h. [christos 20180406]
 	ntp: Import ntp 4.2.8p10. [christos 20180406]
 	acpi(4): Updated ACPICA to 20180313. [christos 20180407]
-	dhcp: Import version 4.4.1. [christos 20180407]
+	dhcp: Import version 4.4.1 (move to MPL). [christos 20180407]
+ 	bind: Import version 9.10.7. [christos 20180407]

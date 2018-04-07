@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1514 2018/04/07 21:20:45 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1515 2018/04/07 22:41:55 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -114,8 +114,8 @@ Notes:
 bc includes dc, both of which are in the NetBSD tree.
 
 Package:	bind [named and utils]
-Version:	9.10.5-P2/BSD	9.11.1-P1/MPL
-Current Vers:	9.10.5-P2/BSD
+Version:	9.10.7/BSD	9.12.1/MPL
+Current Vers:	9.10.7/BSD
 Maintainer:	Paul Vixie <vixie@vix.com>
 Archive Site:	ftp://ftp.isc.org/isc/bind9/
 Home Page:	http://www.isc.org/software/bind/
@@ -328,8 +328,8 @@ Mailing List:	dhcp-client@isc.org
 Mailing List:	dhcp-announce@isc.org
 Mailing List:	dhcp-bugs@isc.org
 Responsible:	mellon
-License:	BSD (3-clause)
-Location:	external/bsd/dhcp
+License:	MPL
+Location:	external/mpl/dhcp
 Notes:
 Use the dhcp2netbsd script.
 
