@@ -1,7 +1,7 @@
-/*	$NetBSD: rbt_test.c,v 1.1.1.6 2016/05/26 15:45:51 christos Exp $	*/
+/*	$NetBSD: rbt_test.c,v 1.1.1.7 2018/04/07 21:44:09 christos Exp $	*/
 
 /*
- * Copyright (C) 2012-2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2012-2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -904,6 +904,7 @@ insert_nodes(dns_rbt_t *mytree, char **names,
 	     size_t *names_count, isc_uint32_t num_names)
 {
 	isc_uint32_t i;
+	dns_rbtnode_t *node;
 
 	for (i = 0; i < num_names; i++) {
 		size_t *n;
@@ -931,8 +932,10 @@ insert_nodes(dns_rbt_t *mytree, char **names,
 			build_name_from_str(namebuf, &fname);
 			name = dns_fixedname_name(&fname);
 
-			result = dns_rbt_addname(mytree, name, n);
+			node = NULL;
+			result = dns_rbt_addnode(mytree, name, &node);
 			if (result == ISC_R_SUCCESS) {
+				node->data = n;
 				names[*names_count] = isc_mem_strdup(mctx,
 								     namebuf);
 				*names_count += 1;
@@ -976,12 +979,17 @@ remove_nodes(dns_rbt_t *mytree, char **names,
 }
 
 static void
-check_tree(dns_rbt_t *mytree, char **names, size_t names_count) {
+check_tree(dns_rbt_t *mytree, char **names, size_t names_count,
+	   unsigned int line)
+{
 	isc_boolean_t tree_ok;
 
 	UNUSED(names);
 
-	ATF_CHECK_EQ(names_count + 1, dns_rbt_nodecount(mytree));
+	ATF_CHECK_EQ_MSG(names_count + 1, dns_rbt_nodecount(mytree),
+			 "line:%u: %lu != %u", line,
+			 (unsigned long)(names_count + 1),
+			 dns_rbt_nodecount(mytree));
 
 	/*
 	 * The distance from each node to its sub-tree root must be less
@@ -1051,7 +1059,7 @@ ATF_TC_BODY(rbt_insert_and_remove, tc) {
 		}
 
 		insert_nodes(mytree, names, &names_count, num_names);
-		check_tree(mytree, names, names_count);
+		check_tree(mytree, names, names_count, __LINE__);
 
 		isc_random_get(&num_names);
 		if (names_count > 0) {
@@ -1062,12 +1070,12 @@ ATF_TC_BODY(rbt_insert_and_remove, tc) {
 		}
 
 		remove_nodes(mytree, names, &names_count, num_names);
-		check_tree(mytree, names, names_count);
+		check_tree(mytree, names, names_count, __LINE__);
 	}
 
 	/* Remove the rest of the nodes */
 	remove_nodes(mytree, names, &names_count, names_count);
-	check_tree(mytree, names, names_count);
+	check_tree(mytree, names, names_count, __LINE__);
 
 	for (i = 0; i < 1024; i++) {
 		if (names[i] != NULL) {

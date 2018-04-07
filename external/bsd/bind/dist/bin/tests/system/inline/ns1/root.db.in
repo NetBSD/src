@@ -1,4 +1,4 @@
-; Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
+; Copyright (C) 2011-2013, 2017  Internet Systems Consortium, Inc. ("ISC")
 ;
 ; Permission to use, copy, modify, and/or distribute this software for any
 ; purpose with or without fee is hereby granted, provided that the above
@@ -56,3 +56,9 @@ ns3.externalkey.	A	10.53.0.3
 
 retransfer3.		NS	ns3.retransfer.
 ns3.retransfer3.	A	10.53.0.3
+
+inactiveksk.		NS	ns3.inactiveksk.
+ns3.inactiveksk.	A	10.53.0.3
+
+inactivezsk.		NS	ns3.inactivezsk.
+ns3.inactivezsk.	A	10.53.0.3

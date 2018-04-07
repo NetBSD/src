@@ -1,7 +1,7 @@
-/*	$NetBSD: name_test.c,v 1.1.1.2 2016/05/26 15:45:51 christos Exp $	*/
+/*	$NetBSD: name_test.c,v 1.1.1.3 2018/04/07 21:44:09 christos Exp $	*/
 
 /*
- * Copyright (C) 2014, 2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2014, 2016-2018  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -123,6 +123,54 @@ ATF_TC_BODY(fullcompare, tc) {
 	}
 }
 
+ATF_TC(istat);
+ATF_TC_HEAD(istat, tc) {
+	atf_tc_set_md_var(tc, "descr", "is trust-anchor-telementry test");
+}
+ATF_TC_BODY(istat, tc) {
+	dns_fixedname_t fixed;
+	dns_name_t *name;
+	isc_result_t result;
+	size_t i;
+	struct {
+		const char *name;
+		isc_boolean_t istat;
+	} data[] = {
+		{ ".", ISC_FALSE },
+		{ "_ta-", ISC_FALSE },
+		{ "_ta-1234", ISC_TRUE },
+		{ "_TA-1234", ISC_TRUE },
+		{ "+TA-1234", ISC_FALSE },
+		{ "_fa-1234", ISC_FALSE },
+		{ "_td-1234", ISC_FALSE },
+		{ "_ta_1234", ISC_FALSE },
+		{ "_ta-g234", ISC_FALSE },
+		{ "_ta-1h34", ISC_FALSE },
+		{ "_ta-12i4", ISC_FALSE },
+		{ "_ta-123j", ISC_FALSE },
+		{ "_ta-1234-abcf", ISC_TRUE },
+		{ "_ta-1234-abcf-ED89", ISC_TRUE },
+		{ "_ta-12345-abcf-ED89", ISC_FALSE },
+		{ "_ta-.example", ISC_FALSE },
+		{ "_ta-1234.example", ISC_TRUE },
+		{ "_ta-1234-abcf.example", ISC_TRUE },
+		{ "_ta-1234-abcf-ED89.example", ISC_TRUE },
+		{ "_ta-12345-abcf-ED89.example", ISC_FALSE },
+		{ "_ta-1234-abcfe-ED89.example", ISC_FALSE },
+		{ "_ta-1234-abcf-EcD89.example", ISC_FALSE }
+	};
+
+	dns_fixedname_init(&fixed);
+	name = dns_fixedname_name(&fixed);
+
+	for (i = 0; i < sizeof(data)/sizeof(data[0]); i++) {
+		result = dns_name_fromstring(name, data[i].name, 0, NULL);
+		ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+		ATF_CHECK_EQ_MSG(dns_name_istat(name), data[i].istat,
+				 "testing %s - expected %u", data[i].name, data[i].istat);
+	}
+}
+
 #ifdef ISC_PLATFORM_USETHREADS
 #ifdef DNS_BENCHMARK_TESTS
 
@@ -140,7 +188,7 @@ ATF_TC_HEAD(benchmark, tc) {
 static void *
 fromwire_thread(void *arg) {
 	unsigned int maxval = 32000000;
-	uint8_t data[] = {
+	isc_uint8_t data[] = {
 		3, 'w', 'w', 'w',
 		7, 'e', 'x', 'a', 'm', 'p', 'l', 'e',
 		7, 'i', 'n', 'v', 'a', 'l', 'i', 'd',
@@ -226,6 +274,7 @@ ATF_TC_BODY(benchmark, tc) {
  */
 ATF_TP_ADD_TCS(tp) {
 	ATF_TP_ADD_TC(tp, fullcompare);
+	ATF_TP_ADD_TC(tp, istat);
 #ifdef ISC_PLATFORM_USETHREADS
 #ifdef DNS_BENCHMARK_TESTS
 	ATF_TP_ADD_TC(tp, benchmark);
@@ -234,4 +283,3 @@ ATF_TP_ADD_TCS(tp) {
 
 	return (atf_no_error());
 }
-

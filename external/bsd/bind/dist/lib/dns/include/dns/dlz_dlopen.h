@@ -1,7 +1,7 @@
-/*	$NetBSD: dlz_dlopen.h,v 1.1.1.5 2014/12/10 03:34:42 christos Exp $	*/
+/*	$NetBSD: dlz_dlopen.h,v 1.1.1.6 2018/04/07 21:44:08 christos Exp $	*/
 
 /*
- * Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2011-2013, 2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -18,7 +18,7 @@
 
 /* Id */
 
-/*! \file dns/dlz_open.h */
+/*! \file dns/dlz_dlopen.h */
 
 #ifndef DLZ_DLOPEN_H
 #define DLZ_DLOPEN_H

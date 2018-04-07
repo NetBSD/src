@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2014, 2016  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2012-2014, 2016, 2017  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -55,10 +55,11 @@ install:: ${TARGETS} installdirs
 	${INSTALL_DATA} ${srcdir}/dnssec-coverage.8 ${DESTDIR}${mandir}/man8
 	if test -n "${PYTHON}" ; then \
 		if test -n "${DESTDIR}" ; then \
-			${PYTHON} ${srcdir}/setup.py install --root=${DESTDIR} --prefix=${prefix} ; \
+			${PYTHON} ${srcdir}/setup.py install --root=${DESTDIR} --prefix=${prefix} @PYTHON_INSTALL_LIB@ ; \
 		else \
-			${PYTHON} ${srcdir}/setup.py install --prefix=${prefix} ; \
-		fi \
+			${PYTHON} ${srcdir}/setup.py install --prefix=${prefix} @PYTHON_INSTALL_LIB@ ; \
+		fi ; \
+		rm -rf build ; \
 	fi
 
 uninstall::
