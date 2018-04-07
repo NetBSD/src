@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_stdlib.h,v 1.1.1.11 2017/04/13 19:17:26 christos Exp $	*/
+/*	$NetBSD: ntp_stdlib.h,v 1.1.1.12 2018/04/07 00:15:47 christos Exp $	*/
 
 /*
  * ntp_stdlib.h - Prototypes for NTP lib.
@@ -99,8 +99,8 @@ extern	void	auth_prealloc_symkeys(int);
 extern	int	ymd2yd		(int, int, int);
 
 /* a_md5encrypt.c */
-extern	int	MD5authdecrypt	(int, const u_char *, u_int32 *, size_t, size_t);
-extern	size_t	MD5authencrypt	(int, const u_char *, u_int32 *, size_t);
+extern	int	MD5authdecrypt	(int, const u_char *, size_t, u_int32 *, size_t, size_t);
+extern	size_t	MD5authencrypt	(int, const u_char *, size_t, u_int32 *, size_t);
 extern	void	MD5auth_setkey	(keyid_t, int, const u_char *, size_t, KeyAccT *c);
 extern	u_int32	addr2refid	(sockaddr_u *);
 

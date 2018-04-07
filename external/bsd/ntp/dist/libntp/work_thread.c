@@ -1,4 +1,4 @@
-/*	$NetBSD: work_thread.c,v 1.1.1.7 2016/05/01 15:57:23 christos Exp $	*/
+/*	$NetBSD: work_thread.c,v 1.1.1.8 2018/04/07 00:15:47 christos Exp $	*/
 
 /*
  * work_thread.c - threads implementation for blocking worker child.
@@ -29,7 +29,7 @@
 #define CHILD_GONE_RESP	CHILD_EXIT_REQ
 /* Queue size increments:
  * The request queue grows a bit faster than the response queue -- the
- * deamon can push requests and pull results faster on avarage than the
+ * daemon can push requests and pull results faster on avarage than the
  * worker can process requests and push results...  If this really pays
  * off is debatable.
  */

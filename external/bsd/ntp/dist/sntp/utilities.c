@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.1.1.7 2016/01/08 21:21:29 christos Exp $	*/
+/*	$NetBSD: utilities.c,v 1.1.1.8 2018/04/07 00:15:52 christos Exp $	*/
 
 #include <config.h>
 #include "utilities.h"
@@ -25,7 +25,7 @@ pkt_output (
 		if (a > 0 && a % 8 == 0)
 			fprintf(output, "\n");
 
-		fprintf(output, "%d: %x \t", a, pkt[a]);
+		fprintf(output, "%3d: %02x  ", a, pkt[a]);
 	}
 
 	fprintf(output, "\n");

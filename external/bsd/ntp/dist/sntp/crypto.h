@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.h,v 1.1.1.8 2016/05/01 15:57:23 christos Exp $	*/
+/*	$NetBSD: crypto.h,v 1.1.1.9 2018/04/07 00:15:52 christos Exp $	*/
 
 #ifndef CRYPTO_H
 #define CRYPTO_H
@@ -22,7 +22,8 @@ struct key {
 	struct key *	next;
 	int		key_id;
 	int		key_len;
-	char		type[10];
+	int		typei;
+	char		typen[20];
 	char		key_seq[64];
 };
 

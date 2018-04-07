@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpsim.c,v 1.1.1.6 2016/01/08 21:21:26 christos Exp $	*/
+/*	$NetBSD: ntpsim.c,v 1.1.1.7 2018/04/07 00:15:48 christos Exp $	*/
 
 /* ntpdsim.c
  *
@@ -81,6 +81,7 @@ void create_server_associations(void)
 				NULL,
 				loopback_interface,
 				MODE_CLIENT,
+				-1,
 				NTP_VERSION,
 				NTP_MINDPOLL,
 				NTP_MAXDPOLL,

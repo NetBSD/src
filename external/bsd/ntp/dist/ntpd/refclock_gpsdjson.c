@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_gpsdjson.c,v 1.1.1.10 2017/04/13 19:17:28 christos Exp $	*/
+/*	$NetBSD: refclock_gpsdjson.c,v 1.1.1.11 2018/04/07 00:15:50 christos Exp $	*/
 
 /*
  * refclock_gpsdjson.c - clock driver as GPSD JSON client
@@ -1893,7 +1893,7 @@ gpsd_init_socket(
 	 */
 	ov = 1;
 	rc = setsockopt(up->fdt, IPPROTO_TCP, TCP_NODELAY,
-			(char*)&ov, sizeof(ov));
+			(void *)&ov, sizeof(ov));
 	if (-1 == rc) {
 		if (syslogok(pp, up))
 			msyslog(LOG_INFO,
@@ -2001,7 +2001,7 @@ gpsd_test_socket(
 	/* check for socket error */
 	ec = 0;
 	lc = sizeof(ec);
-	rc = getsockopt(up->fdt, SOL_SOCKET, SO_ERROR, &ec, &lc);
+	rc = getsockopt(up->fdt, SOL_SOCKET, SO_ERROR, (void *)&ec, &lc);
 	if (-1 == rc || 0 != ec) {
 		const char *errtxt;
 		if (0 == ec)
