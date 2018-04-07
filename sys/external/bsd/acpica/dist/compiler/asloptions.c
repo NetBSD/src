@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2017, Intel Corp.
+ * Copyright (C) 2000 - 2018, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -215,7 +215,7 @@ AslDoOptions (
             Gbl_IntegerOptimizationFlag = FALSE;
             Gbl_ReferenceOptimizationFlag = FALSE;
             Gbl_OptimizeTrivialParseNodes = FALSE;
-            Gbl_CaptureComments = TRUE;
+            AcpiGbl_CaptureComments = TRUE;
             AcpiGbl_DoDisassemblerOptimizations = FALSE;
             AcpiGbl_DebugAslConversion = TRUE;
             AcpiGbl_DmEmitExternalOpcodes = TRUE;
@@ -283,7 +283,7 @@ AslDoOptions (
             Gbl_IntegerOptimizationFlag = FALSE;
             Gbl_ReferenceOptimizationFlag = FALSE;
             Gbl_OptimizeTrivialParseNodes = FALSE;
-            Gbl_CaptureComments = TRUE;
+            AcpiGbl_CaptureComments = TRUE;
             AcpiGbl_DoDisassemblerOptimizations = FALSE;
             AcpiGbl_DmEmitExternalOpcodes = TRUE;
             Gbl_DoExternalsInPlace = TRUE;
@@ -308,24 +308,10 @@ AslDoOptions (
         {
         case '^':
 
-            /* Get the required argument */
-
-            if (AcpiGetoptArgument (argc, argv))
-            {
-                return (-1);
-            }
-
             Gbl_DoCompile = FALSE;
             break;
 
         case 'a':
-
-            /* Get the required argument */
-
-            if (AcpiGetoptArgument (argc, argv))
-            {
-                return (-1);
-            }
 
             Gbl_DoCompile = FALSE;
             Gbl_DisassembleAll = TRUE;
@@ -688,8 +674,8 @@ AslDoOptions (
         Gbl_IntegerOptimizationFlag = FALSE;
         Gbl_ReferenceOptimizationFlag = FALSE;
         Gbl_OptimizeTrivialParseNodes = FALSE;
-        Gbl_CaptureComments = TRUE;
         Gbl_DoExternalsInPlace = TRUE;
+        AcpiGbl_CaptureComments = TRUE;
         return (0);
 
     case 'r':   /* Override revision found in table header */
