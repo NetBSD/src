@@ -1,4 +1,4 @@
-/*	$NetBSD: nit.c,v 1.1.1.1 2018/04/07 22:34:26 christos Exp $	*/
+/*	$NetBSD: nit.c,v 1.2 2018/04/07 22:37:29 christos Exp $	*/
 
 /* nit.c
 
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: nit.c,v 1.1.1.1 2018/04/07 22:34:26 christos Exp $");
+__RCSID("$NetBSD: nit.c,v 1.2 2018/04/07 22:37:29 christos Exp $");
 
 #include "dhcpd.h"
 #if defined (USE_NIT_SEND) || defined (USE_NIT_RECEIVE)
@@ -239,7 +239,7 @@ void if_register_receive (info)
 	pf.Pf_Filter [pf.Pf_FilterLen++] = ENF_CAND;
 	pf.Pf_Filter [pf.Pf_FilterLen++] = ENF_PUSHWORD + 18;
 	pf.Pf_Filter [pf.Pf_FilterLen++] = ENF_PUSHLIT + ENF_CAND;
-	pf.Pf_Filter [pf.Pf_FilterLen++] = local_port;
+	pf.Pf_Filter [pf.Pf_FilterLen++] = *libdhcp_callbacks.local_port;
 
 	/* Install the filter... */
 	sio.ic_cmd = NIOCSETF;

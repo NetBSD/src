@@ -1,4 +1,4 @@
-/*	$NetBSD: dhcpd.h,v 1.1.1.1 2018/04/07 22:34:26 christos Exp $	*/
+/*	$NetBSD: dhcpd.h,v 1.2 2018/04/07 22:37:29 christos Exp $	*/
 
 /* dhcpd.h
 
@@ -2299,8 +2299,7 @@ int parse_option_token (struct expression **, struct parse *,
 			const char **, struct expression *, int, int);
 int parse_allow_deny (struct option_cache **, struct parse *, int);
 int parse_auth_key (struct data_string *, struct parse *);
-int parse_warn (struct parse *, const char *, ...)
-	__attribute__((__format__(__printf__,2,3)));
+int parse_warn (struct parse *, const char *, ...) __sysloglike(2, 3);
 struct expression *parse_domain_list(struct parse *cfile, int);
 
 
@@ -3856,12 +3855,12 @@ isc_result_t renew_leases(struct ia_xx *ia);
 isc_result_t release_leases(struct ia_xx *ia);
 isc_result_t decline_leases(struct ia_xx *ia);
 void schedule_lease_timeout(struct ipv6_pool *pool);
-void schedule_all_ipv6_lease_timeouts();
+void schedule_all_ipv6_lease_timeouts(void);
 
 void mark_hosts_unavailable(void);
 void mark_phosts_unavailable(void);
 void mark_interfaces_unavailable(void);
-void report_jumbo_ranges();
+void report_jumbo_ranges(void);
 
 #if defined(DHCPv6)
 int find_hosts6(struct host_decl** host, struct packet* packet,
@@ -3881,6 +3880,28 @@ void lc_delete_all(struct leasechain *lc);
 
 #define MAX_ADDRESS_STRING_LEN \
    (sizeof("ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255"))
+
+typedef struct libdhcp_callbacks {
+	uint16_t *local_port;
+	uint16_t *remote_port;
+	void (*classify) (struct packet *, struct class *);
+	int (*check_collection) (struct packet *, struct lease *,
+				 struct collection *);
+	void (*dhcp) (struct packet *);
+#ifdef DHCPv6
+	void (*dhcpv6) (struct packet *);
+#endif /* DHCPv6 */
+	void (*bootp) (struct packet *);
+	isc_result_t (*find_class) (struct class **, const char *,
+				    const char *, int);
+	int (*parse_allow_deny) (struct option_cache **, struct parse *, int);
+	isc_result_t (*dhcp_set_control_state) (control_object_state_t,
+						control_object_state_t);
+} libdhcp_callbacks_t;
+
+extern libdhcp_callbacks_t libdhcp_callbacks;
+
+void libdhcp_callbacks_register(libdhcp_callbacks_t *);
 
 /* Find the percentage of count.  We need to try two different
  * ways to avoid rounding mistakes.

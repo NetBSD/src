@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.h,v 1.1.1.1 2018/04/07 22:34:26 christos Exp $	*/
+/*	$NetBSD: ip_icmp.h,v 1.2 2018/04/07 22:37:30 christos Exp $	*/
 
 /*	NetBSD: ip_icmp.h,v 1.11 1996/08/03 15:48:18 neil Exp 	*/
 

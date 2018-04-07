@@ -1,4 +1,4 @@
-/*	$NetBSD: mdb.c,v 1.1.1.1 2018/04/07 22:34:28 christos Exp $	*/
+/*	$NetBSD: mdb.c,v 1.2 2018/04/07 22:37:30 christos Exp $	*/
 
 /* mdb.c
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mdb.c,v 1.1.1.1 2018/04/07 22:34:28 christos Exp $");
+__RCSID("$NetBSD: mdb.c,v 1.2 2018/04/07 22:37:30 christos Exp $");
 
 #include "dhcpd.h"
 #include "omapip/hash.h"
@@ -2372,7 +2372,7 @@ void hw_hash_delete (lease)
 }
 
 /* Write v4 leases to permanent storage. */
-int write_leases4(void) {
+static int write_leases4(void) {
 	struct lease *l;
 	struct shared_network *s;
 	struct pool *p;

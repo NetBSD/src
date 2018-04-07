@@ -1,4 +1,4 @@
-/*	$NetBSD: load_bal_unittest.c,v 1.1.1.1 2018/04/07 22:34:28 christos Exp $	*/
+/*	$NetBSD: load_bal_unittest.c,v 1.2 2018/04/07 22:37:30 christos Exp $	*/
 
 /*
  * Copyright (C) 2012-2017 by Internet Systems Consortium, Inc. ("ISC")

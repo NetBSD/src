@@ -1,4 +1,4 @@
-/*	$NetBSD: dhcpleasequery.c,v 1.1.1.1 2018/04/07 22:34:27 christos Exp $	*/
+/*	$NetBSD: dhcpleasequery.c,v 1.2 2018/04/07 22:37:30 christos Exp $	*/
 
 /*
  * Copyright (C) 2006-2017 by Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dhcpleasequery.c,v 1.1.1.1 2018/04/07 22:34:27 christos Exp $");
+__RCSID("$NetBSD: dhcpleasequery.c,v 1.2 2018/04/07 22:37:30 christos Exp $");
 
 
 #include "dhcpd.h"
@@ -64,7 +64,7 @@ next_uid(const struct lease *lease) {
 	return lease->n_uid;
 }
 
-void
+static void
 get_newest_lease(struct lease **retval,
 		 struct lease *lease,
 		 struct lease *(*next)(const struct lease *)) {

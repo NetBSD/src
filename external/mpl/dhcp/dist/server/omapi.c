@@ -1,4 +1,4 @@
-/*	$NetBSD: omapi.c,v 1.1.1.1 2018/04/07 22:34:27 christos Exp $	*/
+/*	$NetBSD: omapi.c,v 1.2 2018/04/07 22:37:30 christos Exp $	*/
 
 /* omapi.c
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: omapi.c,v 1.1.1.1 2018/04/07 22:34:27 christos Exp $");
+__RCSID("$NetBSD: omapi.c,v 1.2 2018/04/07 22:37:30 christos Exp $");
 
 /* Many, many thanks to Brian Murrell and BCtel for this code - BCtel
    provided the funding that resulted in this code and the entire
@@ -2115,7 +2115,7 @@ isc_result_t dhcp_class_signal_handler (omapi_object_t *h,
 /*
  * Routine to put out generic class & subclass information
  */
-isc_result_t class_stuff_values (omapi_object_t *c,
+static isc_result_t class_stuff_values (omapi_object_t *c,
 				 omapi_object_t *id,
 				 omapi_object_t *h)
 {

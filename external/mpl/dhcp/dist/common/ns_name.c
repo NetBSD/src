@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_name.c,v 1.1.1.1 2018/04/07 22:34:26 christos Exp $	*/
+/*	$NetBSD: ns_name.c,v 1.2 2018/04/07 22:37:29 christos Exp $	*/
 
 /*
  * Copyright (c) 2004-2017 by Internet Systems Consortium, Inc. ("ISC")
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ns_name.c,v 1.1.1.1 2018/04/07 22:34:26 christos Exp $");
+__RCSID("$NetBSD: ns_name.c,v 1.2 2018/04/07 22:37:29 christos Exp $");
 
 #include <sys/types.h>
 
@@ -242,6 +242,7 @@ MRns_name_pton(const char *src, u_char *dst, size_t dstsiz) {
 	return (0);
 }
 
+#ifdef notdef
 /*
  * MRns_name_ntol(src, dst, dstsiz)
  *	Convert a network strings labels into all lowercase.
@@ -288,6 +289,7 @@ MRns_name_ntol(const u_char *src, u_char *dst, size_t dstsiz) {
 	*dn++ = '\0';
 	return (dn - dst);
 }
+#endif
 
 /*
  * MRns_name_unpack(msg, eom, src, dst, dstsiz)
@@ -338,11 +340,12 @@ MRns_name_unpack(const u_char *msg, const u_char *eom, const u_char *src,
 			}
 			if (len < 0)
 				len = srcp - src + 1;
-			srcp = msg + (((n & 0x3f) << 8) | (*srcp & 0xff));
-			if (srcp < msg || srcp >= eom) {  /* Out of range. */
+			n = ((n & 0x3f) << 8) | (*srcp & 0xff);
+			if (n >= eom - msg) {  /* Out of range. */
 				errno = EMSGSIZE;
 				return (-1);
 			}
+			srcp = msg + n;
 			checked += 2;
 			/*
 			 * Check for loops in the compressed name;
@@ -475,7 +478,7 @@ cleanup:
  * note:
  *	Root domain returns as "." not "".
  */
-int
+static int
 MRns_name_uncompress(const u_char *msg, const u_char *eom, const u_char *src,
 		     char *dst, size_t dstsiz)
 {
@@ -514,6 +517,7 @@ MRns_name_compress(const char *src, u_char *dst, size_t dstsiz,
 	return (MRns_name_pack(tmp, dst, dstsiz, dnptrs, lastdnptr));
 }
 
+#ifdef notdef
 /*
  * MRns_name_skip(ptrptr, eom)
  *	Advance *ptrptr to skip over the compressed name it points at.
@@ -548,6 +552,7 @@ MRns_name_skip(const u_char **ptrptr, const u_char *eom) {
 	*ptrptr = cp;
 	return (0);
 }
+#endif
 
 /* Private. */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: discover.c,v 1.1.1.1 2018/04/07 22:34:25 christos Exp $	*/
+/*	$NetBSD: discover.c,v 1.2 2018/04/07 22:37:29 christos Exp $	*/
 
 /* discover.c
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: discover.c,v 1.1.1.1 2018/04/07 22:34:25 christos Exp $");
+__RCSID("$NetBSD: discover.c,v 1.2 2018/04/07 22:37:29 christos Exp $");
 
 #include "dhcpd.h"
 
@@ -249,7 +249,7 @@ struct iface_info {
  *
  * The iface_conf_list structure maintains state for this process.
  */
-int 
+static int 
 begin_iface_scan(struct iface_conf_list *ifaces) {
 #ifdef ISC_PLATFORM_HAVELIFNUM
 	struct lifnum lifnum;
@@ -313,7 +313,7 @@ begin_iface_scan(struct iface_conf_list *ifaces) {
  * Returns information in the info structure. 
  * Sets err to 1 if there is an error, otherwise 0.
  */
-int
+static int
 next_iface(struct iface_info *info, int *err, struct iface_conf_list *ifaces) {
 	struct LIFREQ *p;
 	struct LIFREQ tmp;
@@ -380,7 +380,7 @@ next_iface(struct iface_info *info, int *err, struct iface_conf_list *ifaces) {
 /*
  * End scan of interfaces.
  */
-void
+static void
 end_iface_scan(struct iface_conf_list *ifaces) {
 	dfree(ifaces->conf.lifc_buf, MDL);
 	close(ifaces->sock);
@@ -423,7 +423,7 @@ struct iface_info {
  *
  * The iface_conf_list structure maintains state for this process.
  */
-int 
+static int 
 begin_iface_scan(struct iface_conf_list *ifaces) {
 	if (getifaddrs(&ifaces->head) != 0) {
 		log_error("Error getting interfaces; %m");
@@ -439,7 +439,7 @@ begin_iface_scan(struct iface_conf_list *ifaces) {
  * Returns information in the info structure. 
  * Sets err to 1 if there is an error, otherwise 0.
  */
-int
+static int
 next_iface(struct iface_info *info, int *err, struct iface_conf_list *ifaces) {
 	size_t sa_len = 0;
 
@@ -481,7 +481,7 @@ next_iface(struct iface_info *info, int *err, struct iface_conf_list *ifaces) {
 /*
  * End scan of interfaces.
  */
-void
+static void
 end_iface_scan(struct iface_conf_list *ifaces) {
 	freeifaddrs(ifaces->head);
 	ifaces->head = NULL;
@@ -490,7 +490,7 @@ end_iface_scan(struct iface_conf_list *ifaces) {
 #endif 
 
 /* XXX: perhaps create drealloc() rather than do it manually */
-void
+static void
 add_ipv4_addr_to_interface(struct interface_info *iface, 
 			   const struct in_addr *addr) {
 	/*
@@ -527,7 +527,7 @@ add_ipv4_addr_to_interface(struct interface_info *iface,
 
 #ifdef DHCPv6
 /* XXX: perhaps create drealloc() rather than do it manually */
-void
+static void
 add_ipv6_addr_to_interface(struct interface_info *iface, 
 			   const struct in6_addr *addr) {
 	/*
@@ -1288,7 +1288,7 @@ isc_result_t dhcp_interface_destroy (omapi_object_t *h,
 		interface -> client = (struct client_state *)0;
 
 	if (interface -> shared_network)
-		omapi_object_dereference ((omapi_object_t **)
+		omapi_object_dereference ((void *)
 					  &interface -> shared_network, MDL);
 
 	return ISC_R_SUCCESS;

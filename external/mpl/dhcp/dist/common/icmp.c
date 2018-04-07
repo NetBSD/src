@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp.c,v 1.1.1.1 2018/04/07 22:34:26 christos Exp $	*/
+/*	$NetBSD: icmp.c,v 1.2 2018/04/07 22:37:29 christos Exp $	*/
 
 /* dhcp.c
 
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: icmp.c,v 1.1.1.1 2018/04/07 22:34:26 christos Exp $");
+__RCSID("$NetBSD: icmp.c,v 1.2 2018/04/07 22:37:29 christos Exp $");
 
 #include "dhcpd.h"
 #include "netinet/ip.h"
@@ -157,7 +157,7 @@ int icmp_echorequest (addr)
 	icmp.icmp_code = 0;
 	icmp.icmp_cksum = 0;
 	icmp.icmp_seq = 0;
-#if SIZEOF_STRUCT_IADDR_P == 8
+#ifdef _LP64
 	icmp.icmp_id = (((u_int32_t)(u_int64_t)addr) ^
   			(u_int32_t)(((u_int64_t)addr) >> 32));
 #else

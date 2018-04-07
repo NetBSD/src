@@ -1,4 +1,4 @@
-/*	$NetBSD: dhcpd.c,v 1.1.1.1 2018/04/07 22:34:27 christos Exp $	*/
+/*	$NetBSD: dhcpd.c,v 1.2 2018/04/07 22:37:30 christos Exp $	*/
 
 /* dhcpd.c
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dhcpd.c,v 1.1.1.1 2018/04/07 22:34:27 christos Exp $");
+__RCSID("$NetBSD: dhcpd.c,v 1.2 2018/04/07 22:37:30 christos Exp $");
 
 static const char copyright[] =
 "Copyright 2004-2018 Internet Systems Consortium.";
@@ -113,6 +113,23 @@ int omapi_port;
 #if defined (TRACING)
 trace_type_t *trace_srandom;
 #endif
+
+uint16_t local_port = 0;
+uint16_t remote_port = 0;
+libdhcp_callbacks_t dhcpd_callbacks = {
+	&local_port,
+	&remote_port,
+	classify,
+	check_collection,
+	dhcp,
+#ifdef DHCPv6
+	dhcpv6,
+#endif /* DHCPv6 */
+	bootp,
+	find_class,
+	parse_allow_deny,
+	dhcp_set_control_state,
+};
 
 char *progname;
 
@@ -209,7 +226,7 @@ static void omapi_listener_start (void *foo)
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dhcpd.c,v 1.1.1.1 2018/04/07 22:34:27 christos Exp $");
+__RCSID("$NetBSD: dhcpd.c,v 1.2 2018/04/07 22:37:30 christos Exp $");
 static char use_noarg[] = "No argument for command: %s ";
 
 static void
@@ -298,6 +315,8 @@ main(int argc, char **argv) {
 	char *set_group  = 0;
 	char *set_chroot = 0;
 #endif /* PARANOIA */
+
+	libdhcp_callbacks_register(&dhcpd_callbacks);
 
 #ifdef OLD_LOG_NAME
 	progname = "dhcpd";
@@ -627,6 +646,29 @@ main(int argc, char **argv) {
 		log_perror = 0;
 	}
 
+#ifndef DEBUG
+	/*
+	 * We need to fork before we call the context create
+	 * call that creates the worker threads!
+	 */
+	if (daemon) {
+		/* First part of becoming a daemon... */
+		if ((pid = fork ()) < 0)
+			log_fatal ("Can't fork daemon: %m");
+		else if (pid)
+			exit (0);
+	}
+#endif
+
+	/* Set up the isc and dns library managers */
+	status = dhcp_context_create(DHCP_CONTEXT_PRE_DB, NULL, NULL);
+	if (status != ISC_R_SUCCESS)
+		log_fatal("Can't initialize context: %s",
+		          isc_result_totext(status));
+
+	/* Set up the client classification system. */
+	classification_setup ();
+ 
 #if defined (TRACING)
 	trace_init (set_time, MDL);
 	if (traceoutfile) {

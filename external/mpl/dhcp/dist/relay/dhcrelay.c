@@ -1,4 +1,4 @@
-/*	$NetBSD: dhcrelay.c,v 1.1.1.1 2018/04/07 22:34:28 christos Exp $	*/
+/*	$NetBSD: dhcrelay.c,v 1.2 2018/04/07 22:37:30 christos Exp $	*/
 
 /* dhcrelay.c
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dhcrelay.c,v 1.1.1.1 2018/04/07 22:34:28 christos Exp $");
+__RCSID("$NetBSD: dhcrelay.c,v 1.2 2018/04/07 22:37:30 christos Exp $");
 
 #include "dhcpd.h"
 #include <syslog.h>
@@ -100,8 +100,8 @@ enum { forward_and_append,	/* Forward and append our own relay option. */
        forward_untouched,	/* Forward without changes. */
        discard } agent_relay_mode = forward_and_replace;
 
-u_int16_t local_port;
-u_int16_t remote_port;
+u_int16_t local_port = 0;
+u_int16_t remote_port = 0;
 
 /* Relay agent server list. */
 struct server_list {
@@ -131,6 +131,21 @@ static void setup_streams(void);
  */
 char *dhcrelay_sub_id = NULL;
 #endif
+
+libdhcp_callbacks_t dhcrelay_callbacks = {
+	&local_port,
+	&remote_port,
+	classify,
+	check_collection,
+	dhcp,
+#ifdef DHCPv6
+	dhcpv6,
+#endif /* DHCPv6 */
+	bootp,
+	find_class,
+	parse_allow_deny,
+	dhcp_set_control_state,
+};
 
 static void do_relay4(struct interface_info *, struct dhcp_packet *,
 	              unsigned int, unsigned int, struct iaddr,
@@ -242,7 +257,7 @@ char *progname;
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dhcrelay.c,v 1.1.1.1 2018/04/07 22:34:28 christos Exp $");
+__RCSID("$NetBSD: dhcrelay.c,v 1.2 2018/04/07 22:37:30 christos Exp $");
 static const char use_noarg[] = "No argument for command: %s";
 #ifdef RELAY_PORT
 static const char use_port_defined[] = "Port already set, %s inappropriate";
@@ -754,17 +769,6 @@ main(int argc, char **argv) {
 	}
 #endif
 
-	/* Get the current time... */
-	gettimeofday(&cur_tv, NULL);
-
-	/* Discover all the network interfaces. */
-	discover_interfaces(DISCOVER_RELAY);
-
-#ifdef DHCPv6
-	if (local_family == AF_INET6)
-		setup_streams();
-#endif
-
 	/* Become a daemon... */
 	if (!no_daemon) {
 		char buf = 0;
@@ -808,6 +812,24 @@ main(int argc, char **argv) {
 
 		IGNORE_RET (chdir("/"));
 	}
+
+	/* Set up the isc and dns library managers */
+	status = dhcp_context_create(DHCP_CONTEXT_PRE_DB | DHCP_CONTEXT_POST_DB,
+				     NULL, NULL);
+	if (status != ISC_R_SUCCESS)
+		log_fatal("Can't initialize context: %s",
+			  isc_result_totext(status));
+
+	/* Get the current time... */
+	gettimeofday(&cur_tv, NULL);
+
+	/* Discover all the network interfaces. */
+	discover_interfaces(DISCOVER_RELAY);
+
+#ifdef DHCPv6
+	if (local_family == AF_INET6)
+		setup_streams();
+#endif
 
 	/* Set up the packet handler... */
 	if (local_family == AF_INET)

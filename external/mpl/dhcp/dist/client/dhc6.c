@@ -1,4 +1,4 @@
-/*	$NetBSD: dhc6.c,v 1.1.1.1 2018/04/07 22:34:25 christos Exp $	*/
+/*	$NetBSD: dhc6.c,v 1.2 2018/04/07 22:37:29 christos Exp $	*/
 
 /* dhc6.c - DHCPv6 client routines. */
 
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dhc6.c,v 1.1.1.1 2018/04/07 22:34:25 christos Exp $");
+__RCSID("$NetBSD: dhc6.c,v 1.2 2018/04/07 22:37:29 christos Exp $");
 
 #include "dhcpd.h"
 
@@ -5582,7 +5582,7 @@ unconfigure6(struct client_state *client, const char *reason)
 	}
 }
 
-void
+static void
 refresh_info_request6(void *input)
 {
 	struct client_state *client;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mdb6.c,v 1.1.1.1 2018/04/07 22:34:28 christos Exp $	*/
+/*	$NetBSD: mdb6.c,v 1.2 2018/04/07 22:37:30 christos Exp $	*/
 
 /*
  * Copyright (C) 2007-2017 by Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mdb6.c,v 1.1.1.1 2018/04/07 22:34:28 christos Exp $");
+__RCSID("$NetBSD: mdb6.c,v 1.2 2018/04/07 22:37:30 christos Exp $");
 
 
 /*!
@@ -1814,7 +1814,7 @@ release_lease6(struct ipv6_pool *pool, struct iasubopt *lease) {
  * Create a prefix by hashing the input, and using that for
  * the part subject to allocation.
  */
-void
+static void
 build_prefix6(struct in6_addr *pref, 
 	      const struct in6_addr *net_start_pref,
 	      int pool_bits, int pref_bits,
@@ -2006,7 +2006,7 @@ prefix6_exists(const struct ipv6_pool *pool,
  *
  * This is used for host entries and the addresses of the server itself.
  */
-isc_result_t
+static isc_result_t
 mark_lease_unavailable(struct ipv6_pool *pool, const struct in6_addr *addr) {
 	struct iasubopt *dummy_iasubopt;
 	isc_result_t result;
@@ -2828,7 +2828,8 @@ report_jumbo_ranges() {
  * \return returns 0 if the value is too large
  *
 */
-int htype_bounds_check(uint16_t htype) {
+static int
+htype_bounds_check(uint16_t htype) {
 	static int log_once = 0;
 
 	if (htype & 0xFF00) {
@@ -2869,7 +2870,8 @@ int htype_bounds_check(uint16_t htype) {
  *
  * \return non-zero if a matching host was found, zero otherwise
 */
-int find_hosts_by_haddr6(struct host_decl **hp,
+static int
+find_hosts_by_haddr6(struct host_decl **hp,
 			 struct packet *packet,
 			 struct option_state *opt_state,
 			 const char *file, int line) {
@@ -2944,7 +2946,7 @@ int find_hosts_by_haddr6(struct host_decl **hp,
  * parameter from a DHCPv6 supplied DUID (client-identifier option),
  * and may seek to use client or relay supplied hardware addresses.
  */
-int
+static int
 find_hosts_by_duid_chaddr(struct host_decl **host,
 			  const struct data_string *client_id) {
 	int htype, hlen;

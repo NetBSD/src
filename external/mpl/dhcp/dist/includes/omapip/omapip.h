@@ -1,4 +1,4 @@
-/*	$NetBSD: omapip.h,v 1.1.1.1 2018/04/07 22:34:26 christos Exp $	*/
+/*	$NetBSD: omapip.h,v 1.2 2018/04/07 22:37:30 christos Exp $	*/
 
 /* omapip.h
 

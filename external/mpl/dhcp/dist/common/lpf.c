@@ -1,4 +1,4 @@
-/*	$NetBSD: lpf.c,v 1.1.1.1 2018/04/07 22:34:26 christos Exp $	*/
+/*	$NetBSD: lpf.c,v 1.2 2018/04/07 22:37:29 christos Exp $	*/
 
 /* lpf.c
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lpf.c,v 1.1.1.1 2018/04/07 22:34:26 christos Exp $");
+__RCSID("$NetBSD: lpf.c,v 1.2 2018/04/07 22:37:29 christos Exp $");
 
 #include "dhcpd.h"
 #if defined (USE_LPF_SEND) || defined (USE_LPF_RECEIVE)
@@ -314,7 +314,7 @@ static void lpf_tr_filter_setup (info)
 	   XXX to the insn number(s) used below!
 	   XXX Token ring filter is null - when/if we have a filter 
 	   XXX that's not, we'll need this code.
-	   XXX dhcp_bpf_filter [?].k = ntohs (local_port); */
+	   XXX dhcp_bpf_filter [?].k = ntohs (*libdhcp_callbacks.local_port); */
 
 	if (setsockopt (info -> rfdesc, SOL_SOCKET, SO_ATTACH_FILTER, &p,
 			sizeof p) < 0) {

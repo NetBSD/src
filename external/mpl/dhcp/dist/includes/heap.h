@@ -1,4 +1,4 @@
-/*	$NetBSD: heap.h,v 1.1.1.1 2018/04/07 22:34:26 christos Exp $	*/
+/*	$NetBSD: heap.h,v 1.2 2018/04/07 22:37:29 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2017  Internet Systems Consortium, Inc. ("ISC")

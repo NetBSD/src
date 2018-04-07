@@ -1,4 +1,4 @@
-/*	$NetBSD: client_tables.c,v 1.1.1.1 2018/04/07 22:34:25 christos Exp $	*/
+/*	$NetBSD: client_tables.c,v 1.2 2018/04/07 22:37:29 christos Exp $	*/
 
 /* client_tables.c
 
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: client_tables.c,v 1.1.1.1 2018/04/07 22:34:25 christos Exp $");
+__RCSID("$NetBSD: client_tables.c,v 1.2 2018/04/07 22:37:29 christos Exp $");
 
 #include "dhcpd.h"
 
@@ -41,7 +41,8 @@ static struct option client_options[] = {
 
 #define CLIENT_HASH_SIZE (2*(sizeof(client_options) / sizeof(struct option)))
 
-void initialize_client_option_spaces()
+void initialize_client_option_spaces(void);
+void initialize_client_option_spaces(void)
 {
 	int i;
 

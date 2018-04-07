@@ -1,4 +1,4 @@
-/*	$NetBSD: cltest.c,v 1.1.1.1 2018/04/07 22:34:26 christos Exp $	*/
+/*	$NetBSD: cltest.c,v 1.2 2018/04/07 22:37:29 christos Exp $	*/
 
 /* cltest.c
 
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cltest.c,v 1.1.1.1 2018/04/07 22:34:26 christos Exp $");
+__RCSID("$NetBSD: cltest.c,v 1.2 2018/04/07 22:37:29 christos Exp $");
 
 #include "config.h"
 
@@ -80,6 +80,23 @@ isc_result_t dhcp_set_control_state (control_object_state_t oldstate,
 	return ISC_R_SUCCESS;
 }
 
+uint16_t local_port = 0;
+uint16_t remote_port = 0;
+libdhcp_callbacks_t cltest_callbacks = {
+	&local_port,
+	&remote_port,
+	classify,
+	check_collection,
+	dhcp,
+#ifdef DHCPv6
+	dhcpv6,
+#endif /* DHCPv6 */
+	bootp,
+	find_class,
+	parse_allow_deny,
+	dhcp_set_control_state,
+};
+
 int main (int, char **);
 
 enum modes { up, down, undefined };
@@ -104,6 +121,8 @@ int main (argc, argv)
 	int mode = undefined;
 	const char *interface = 0;
 	const char *action;
+
+	libdhcp_callbacks_register(&cltest_callbacks);
 	
 	for (i = 1; i < argc; i++) {
 		if (!strcmp (argv[i], "-u")) {
