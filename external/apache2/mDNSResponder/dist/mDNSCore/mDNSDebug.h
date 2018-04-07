@@ -34,7 +34,9 @@
 //    warning: `#' flag used with `%s' printf format    (for %#s              -- pascal string format)
 //    warning: repeated `#' flag in format              (for %##s             -- DNS name string format)
 //    warning: double format, pointer arg (arg 2)       (for %.4a, %.16a, %#a -- IP address formats)
+#ifndef MDNS_CHECK_PRINTF_STYLE_FUNCTIONS
 #define MDNS_CHECK_PRINTF_STYLE_FUNCTIONS 0
+#endif
 
 typedef enum
 {
