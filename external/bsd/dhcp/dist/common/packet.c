@@ -1,16 +1,16 @@
-/*	$NetBSD: packet.c,v 1.4 2017/06/28 02:46:30 manu Exp $	*/
+/*	$NetBSD: packet.c,v 1.5 2018/04/07 21:19:31 christos Exp $	*/
+
 /* packet.c
 
    Packet assembly code, originally contributed by Archie Cobbs. */
 
 /*
- * Copyright (c) 2009,2012,2014 by Internet Systems Consortium, Inc. ("ISC")
- * Copyright (c) 2004,2005,2007 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004-2017 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1996-2003 by Internet Software Consortium
  *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: packet.c,v 1.4 2017/06/28 02:46:30 manu Exp $");
+__RCSID("$NetBSD: packet.c,v 1.5 2018/04/07 21:19:31 christos Exp $");
 
 #include "dhcpd.h"
 
@@ -54,7 +54,7 @@ u_int32_t checksum (buf, nbytes, sum)
 	unsigned i;
 
 #ifdef DEBUG_CHECKSUM
-	log_debug ("checksum (%x %d %x)", buf, nbytes, sum);
+	log_debug ("checksum (%x %d %x)", (unsigned)buf, nbytes, sum);
 #endif
 
 	/* Checksum all the pairs of bytes first... */
@@ -172,6 +172,12 @@ void assemble_udp_ip_header (interface, buf, bufix,
 	/* Fill out the UDP header */
 	udp.uh_sport = *libdhcp_callbacks.local_port;		/* XXX */
 	udp.uh_dport = port;			/* XXX */
+#if defined(RELAY_PORT)
+	/* Change to relay port defined if sending to server */
+	if (relay_port && (port == htons(67))) {
+		udp.uh_sport = relay_port;
+	}
+#endif
 	udp.uh_ulen = htons(sizeof(udp) + len);
 	memset (&udp.uh_sum, 0, sizeof udp.uh_sum);
 
@@ -301,7 +307,12 @@ decode_udp_ip_header(struct interface_info *interface,
 	  return -1;
 
   /* Is it to the port we're serving? */
-  if (udp.uh_dport != *libdhcp_callbacks.local_port)
+#if defined(RELAY_PORT)
+  if ((udp.uh_dport != local_port) &&
+      ((relay_port == 0) || (udp.uh_dport != relay_port)))
+#else
+  if (udp.uh_dport != local_port)
+#endif
 	  return -1;
 #endif /* USERLAND_FILTER */
 
@@ -370,8 +381,8 @@ decode_udp_ip_header(struct interface_info *interface,
 		udp_packets_bad_checksum++;
 		if (((udp_packets_seen > 4) && (udp_packets_bad_checksum != 0))
 		    && ((udp_packets_seen / udp_packets_bad_checksum) < 2)) {
-			log_info ("%u bad udp checksums in %u packets",
-			          udp_packets_bad_checksum, udp_packets_seen);
+			log_debug ("%u bad udp checksums in %u packets",
+			           udp_packets_bad_checksum, udp_packets_seen);
 			udp_packets_seen = udp_packets_bad_checksum = 0;
 		}
 
