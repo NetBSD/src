@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_refclock.c,v 1.10 2016/11/22 03:09:30 christos Exp $	*/
+/*	$NetBSD: ntp_refclock.c,v 1.11 2018/04/07 00:19:53 christos Exp $	*/
 
 /*
  * ntp_refclock - processing support for reference clocks
@@ -1046,7 +1046,7 @@ refclock_control(
 	clktype = (u_char)REFCLOCKTYPE(srcadr);
 	unit = REFCLOCKUNIT(srcadr);
 
-	peer = findexistingpeer(srcadr, NULL, NULL, -1, 0);
+	peer = findexistingpeer(srcadr, NULL, NULL, -1, 0, NULL);
 
 	if (NULL == peer)
 		return;
@@ -1157,7 +1157,7 @@ refclock_buginfo(
 	clktype = (u_char) REFCLOCKTYPE(srcadr);
 	unit = REFCLOCKUNIT(srcadr);
 
-	peer = findexistingpeer(srcadr, NULL, NULL, -1, 0);
+	peer = findexistingpeer(srcadr, NULL, NULL, -1, 0, NULL);
 
 	if (NULL == peer || NULL == peer->procptr)
 		return;
@@ -1249,16 +1249,24 @@ refclock_params(
 
 	/*
 	 * If flag3 is lit, select the kernel PPS if we can.
+	 *
+	 * Note: EOPNOTSUPP is the only 'legal' error code we deal with;
+	 * it is part of the 'if we can' strategy.  Any other error
+	 * indicates something more sinister and makes this function fail.
 	 */
 	if (mode & CLK_FLAG3) {
 		if (time_pps_kcbind(ap->handle, PPS_KC_HARDPPS,
 		    ap->pps_params.mode & ~PPS_TSFMT_TSPEC,
-		    PPS_TSFMT_TSPEC) < 0) {
-			msyslog(LOG_ERR,
-			    "refclock_params: time_pps_kcbind: %m");
-			return (0);
+		    PPS_TSFMT_TSPEC) < 0)
+		{
+			if (errno != EOPNOTSUPP) { 
+				msyslog(LOG_ERR,
+					"refclock_params: time_pps_kcbind: %m");
+				return (0);
+			}
+		} else {
+			hardpps_enable = 1;
 		}
-		hardpps_enable = 1;
 	}
 	return (1);
 }
