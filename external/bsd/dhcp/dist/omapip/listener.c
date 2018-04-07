@@ -1,16 +1,16 @@
-/*	$NetBSD: listener.c,v 1.1.1.3 2014/07/12 11:57:59 spz Exp $	*/
+/*	$NetBSD: listener.c,v 1.1.1.4 2018/04/07 20:44:27 christos Exp $	*/
+
 /* listener.c
 
    Subroutines that support the generic listener object. */
 
 /*
- * Copyright (c) 2012,2014 by Internet Systems Consortium, Inc. ("ISC")
- * Copyright (c) 2004,2007,2009 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004-2017 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1999-2003 by Internet Software Consortium
  *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: listener.c,v 1.1.1.3 2014/07/12 11:57:59 spz Exp $");
+__RCSID("$NetBSD: listener.c,v 1.1.1.4 2018/04/07 20:44:27 christos Exp $");
 
 #include "dhcpd.h"
 
@@ -237,7 +237,12 @@ isc_result_t omapi_accept (omapi_object_t *h)
 			return ISC_R_NORESOURCES;
 		return ISC_R_UNEXPECTED;
 	}
-	
+
+	if ((MAX_FD_VALUE != 0) && (socket > MAX_FD_VALUE)) {
+		close(socket);
+		return (ISC_R_NORESOURCES);
+	}
+
 #if defined (TRACING)
 	/* If we're recording a trace, remember the connection. */
 	if (trace_record ()) {

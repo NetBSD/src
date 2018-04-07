@@ -1,16 +1,16 @@
-/*	$NetBSD: hash.c,v 1.1.1.2 2014/07/12 11:57:59 spz Exp $	*/
+/*	$NetBSD: hash.c,v 1.1.1.3 2018/04/07 20:44:27 christos Exp $	*/
+
 /* hash.c
 
    Routines for manipulating hash tables... */
 
 /*
- * Copyright (c) 2009-2010,2014 by Internet Systems Consortium, Inc. ("ISC")
- * Copyright (c) 2004-2007 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004-2017 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1995-2003 by Internet Software Consortium
  *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hash.c,v 1.1.1.2 2014/07/12 11:57:59 spz Exp $");
+__RCSID("$NetBSD: hash.c,v 1.1.1.3 2018/04/07 20:44:27 christos Exp $");
 
 #include "dhcpd.h"
 
@@ -112,7 +112,7 @@ void free_hash_table (tp, file, line)
 	int i;
 	struct hash_bucket *hbc, *hbn = (struct hash_bucket *)0;
 
-	for (i = 0; i < ptr -> hash_count; i++) {
+	for (i = 0; ptr != NULL && i < ptr -> hash_count; i++) {
 	    for (hbc = ptr -> buckets [i]; hbc; hbc = hbn) {
 		hbn = hbc -> next;
 		if (ptr -> dereferencer && hbc -> value)

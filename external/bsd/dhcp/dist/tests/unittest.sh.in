@@ -1,10 +1,10 @@
 #!/bin/sh
 #
-# Copyright (C) 2015  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2015-2018  Internet Systems Consortium, Inc. ("ISC")
 #
-# Permission to use, copy, modify, and/or distribute this software for any
-# purpose with or without fee is hereby granted, provided that the above
-# copyright notice and this permission notice appear in all copies.
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #
 # THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
 # REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
@@ -22,6 +22,8 @@
 # Add configured path to ATF tools, atf-run and atf-report
 PATH="@ATF_BIN@:${PATH}"
 export PATH
+ATFRUN=`type atf-run 2>/dev/null | awk '{print $3}'`
+KYUA=`type kyua 2>/dev/null | awk '{print $3}'`
 
 # colors if not outputting to a dumb terminal and stdout is a tty
 if test "$TERM" != dumb && { test -t 1; } 2>/dev/null; then \
@@ -33,14 +35,14 @@ if test "$TERM" != dumb && { test -t 1; } 2>/dev/null; then \
     # (output will be "" if its supported)
     if [ -z "`echo -e`" ]
     then
-        dash_e="-e"
+	dash_e="-e"
     fi
 fi;
 
 header="===================================================="
 
 status=0
-if [ -n "@ATF_BIN@" -a -f Atffile ]
+if [ -n "@UNITTESTS@" -a -x "$ATFRUN" -a -f Atffile ]
 then
     # run the tests
     echo "Running unit tests..."
@@ -50,9 +52,9 @@ then
     # set color based on success/failure
 	if [ $status -eq 0 ]
 	then
-        color=$green
+	color=$green
 	else
-        color=$red
+	color=$red
 	fi
 
     # spit out the test report
@@ -61,19 +63,31 @@ then
     # result color.
     cat atf.out | atf-report | while read line
     do
-        cnt=`echo $line | grep -c "Summary"`
-        if [ $cnt -eq 1 ]
-        then
-            echo $dash_e $color$header
-        fi
-        echo $line;
+	cnt=`echo $line | grep -c "Summary"`
+	if [ $cnt -eq 1 ]
+	then
+	    echo $dash_e $color$header
+	fi
+	echo $line;
     done
     echo $dash_e $header$noclr
 
     # clean up unless there were test failures
     if [ $status -eq 0 ]
     then
-        rm -f atf.out
+	rm -f atf.out
+    fi
+elif [ -n "@UNITTESTS@" -a -x "$KYUA" -a -f Kyuafile ]
+then
+    echo "Running unit tests..."
+    kyua --logfile kyua.log test
+    status=$?
+
+    kyua report
+
+    if [ $status -eq 0 ]
+    then
+	rm -f kyua.log
     fi
 fi
 exit $status

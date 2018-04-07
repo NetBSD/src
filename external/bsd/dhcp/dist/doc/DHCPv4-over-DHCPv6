@@ -1,0 +1,228 @@
+Short notice about DHCPv4 over DHCPv6 aka RFC 7341
+--------------------------------------------------
+Note well: this code is still somewhat experimental and any user
+should take care when trying to use it.
+
+GENERAL
+The purpose of DHCPv4 over DHCPv6 (RFC7341) is to encapsulate
+a DHCPv4 request within a DHCPv6 request in order to transmit
+it across a v6 only network.  This feature may become useful
+when, during the transition from a v4 to a v6 network, there
+are still v4 clients at the edges and v4 servers in the center
+but the links between them are v6 only.
+
+In order to support this functionality we have chosen to use
+two processes each for the client and server.  In both pairs
+one process handles the DHCPv4 processing and the other handles
+the DHCPv6 processing.
+
+The topology is thus something like this:
+
+ Client processes    network    Server processes
+DHCPv4 <-> DHCPv6  <--ipv6-->  DHCPv6 <-> DHCPv4
+
+The v6 client and server processes can continue to process
+DHCPv6 packets as normal but will also allow a DHCPv4 process
+to connect to them via a socket.  The DHCPv4 client will pass
+a request to the DHCPv6 client which will encapsulate it within
+a DHCPv6 request which is sent to the DHCPv6 server (possibly
+via DHCPv6 relays).  When the DHCPv6 server receives the packet
+it will get the DHCPv4 query and pass it to the DHCPv4
+server.  The response will by handled in a similar fashion.
+
+When starting up the paired processes one should take care that
+they use different files for configuration, leases and process IDs.
+
+LOCALIZATION
+Normally the DHCPv4 server choose a subnet based on a number of options:
+ - follow the Relay Agent Link Selection option if exists
+ - follow the Subnet Selection option if exists
+ - use the relay address if relayed
+ - use the receiving interface
+
+With the exception of the last case the address must match a subnet address.
+Unfortunately when using DHCPv4 over DHCPv6 this information is not available
+in the packet, to quote RFC 7341:
+
+   Since the DHCPv4 message is encapsulated in the DHCPv6 message, it
+   lacks the information that is typically used by the DHCPv4 server,
+   implementing [RFC2131], to make address- allocation decisions,
+   e.g., giaddr for relayed messages and IPv4 address of the interface
+   that the server is using to communicate with a directly connected
+   client.
+
+In DHCPv4 over DHCPv6, there are a mixture of IPv6 and IPv4 addresses.
+The DHCPv4 over DHCPv6 server externally uses only IPv6 addresses,
+even on the DHCPv4 side, so shared networks associated with directly
+attached interfaces are identified by subnet6 declarations.
+For this reason, the DHCPv4 side shouldn't request an interface
+vai the command line or configuration file: all usable interfaces
+will be requested (i.e., standard behavior when no interface is
+specified in the command line or configuration file) and it is
+not an error to have an interface with an address and no matching
+subnet6 declaration, nor an error to have no usable interfaces
+(i.e., fully relayed or routed topologies are accepted).
+
+Note also there is no involved DHCPv4 relays (DHCPv4 messages are
+directly encapsulated into DHCPv6 DHCPv4-query/DHCPv4-response
+messages by clients and servers as there is no cross DHCP version
+relays specified by RFC 7341) so to get a Relay Agent option or
+a relay address are very unlikely cases.
+
+So the procedure is:
+ - follow the Relay Agent Link Selection option if exists
+ - follow the DHCPv4 Subnet Selection option if exists
+ - use the DHCPv4 relay address if DHCPv4 relayed
+ - when DHCPv6 relayed, use the first relay with an usable (i.e., not
+   unspecified or link-local) address
+ - use the receiving interface
+
+The basic network configuration is something like this:
+----
+shared-network "link1" {
+    subnet6 2001:db8:1:1::/64 { }
+
+    subnet 192.168.1.0 netmask 255.255.255.0 {
+        range 192.168.1.100 192.168.1.199;
+    }
+}
+----
+
+This groups the 2001:db8:1:1::/64 subnet with the 192.168.1.0 subnet.
+When the a DHCPv4 over DHCPv6 client uses the 2001:db8:1:1::10 IPv6 address
+it will get an address from 192.168.1.1xy assigned.
+
+There is one remaining question: on which interface should 
+a DHCPv4 over DHCPv6 client apply the assigned IPv4 address?
+RFC 7341 does not really help:
+   Before applying for an IPv4 address via a DHCPv4-query message, the
+   client must identify a suitable network interface for the address.
+   Once the request is acknowledged by the server, the client can
+   configure the address and other relevant parameters on this
+   interface.  The mechanism for determining a suitable interface is out
+   of the scope of the document.
+
+The ISC DHCP answer is the IPv4 address is (in fact is required to be)
+specified in the command line of the DHCPv4 side of the DHCPv4 over DHCPv6
+client. BTW in the usual case where the upstream interface is IPv6 only,
+the IPv4 interface will be a different one.
+
+
+                               HOW TO USE
+                               ----------
+
+
+CONFIGURATION
+By default the DHCPv4 over DHCPv6 code is disabled and in order to use
+it you will need to configure it.  Note that this code requires that the
+dhcpv6 code be enabled (it is enabled by default.)
+
+   ./configure --enable-dhcpv4o6
+
+CLIENT SETUP
+The client runs both a DHCPv6 client and a DHCPv4 client on the second
+Ethernet eth1.  The following could be used to launch them from the
+client directory. 
+
+   ./dhclient -d -v -6 -4o6 6767 -lf leases6 -pf pid6 eth1
+
+and
+
+   ./dhclient -d -v -4 -4o6 6767 -lf leases4 -pf pid4 eth1
+
+In this case we are using the port pair 6767 and 6768 for communication
+and one can start or stop either client as necessary (though if the
+v6 client is stopped the v4 client won't be able to contact a server).
+The lease files are leases4 and leases6 and the process id files are pid4 and
+pid6.  You would probably put the files elsewhere.
+
+For testing purposes it is best to run the two clients in the foreground
+and in separate windows.
+
+SERVER SETUP
+As with any DHCP servers you will need to ensure there is a path from
+the clients to the servers - any firewalls must allow DHCPv6 traffic
+through.  You should also verify no other DHCP servers are running
+and will conflict with the DHCPv4 over DHCPv6 pair.
+
+The server VM must have both IPv4 and IPv6 addresses.  On a system
+running Fedora with the second interface named eno33554984,
+the commands are:
+
+   ip addr add 10.10.10.1/24 dev eno33554984
+
+and
+
+   ip -6 addr add 2001:db8:1:1::1/64 dev eno33554984
+
+Note that in theory the IPv4 address is not required but:
+  - there are some DHCPv4 clients which refused responses with no or an
+    invalid server-id
+  - this avoids messages about being unable to find a subnet to configure or
+    something similar
+
+Both ISC DHCP and Kea use 2 processes to manage DHCPv4-over-DHCPv6, one 
+in charge of DHCPv6, the other in charge of DHCPv4. They communicate via UDP.
+
+ISC DHCP DHCPv6 SERVER
+The dhcpd.conf6 example configuration file is:
+----
+# DHCPv6 conf
+
+authoritative;
+
+default-lease-time 3600;
+max-lease-time 7200;
+
+option dhcp6.dhcp4-o-dhcp6-server 2001:db8:1:1::1;
+
+subnet6 2001:db8:1:1::/64 {
+        range6 2001:db8:1:1::1:0/112;
+}
+----
+
+The server is launched from the server directory by:
+
+  ./dhcpd -f -d -6 -4o6 6767 -cf ./dhcpd.conf6 -lf ./leases6 -pf ./pid6 eno33554984
+
+As with the client above the servers are using the port pair 6767 and 6768
+to communicate.  The leases file (leases6) must be created before attempting
+to start the server.
+
+ISC DHCP DHCPv4 SERVER
+The dhcpd.conf4 example configuration file is:
+----
+# DHCPv4o6 conf
+
+authoritative;
+
+default-lease-time 3600;
+max-lease-time 7200;
+
+shared-network "eno33554984" {
+    subnet6 2001:db8:1:1::/64 { }
+
+    subnet 10.10.10.0 netmask 255.255.255.0 {
+       range 10.10.10.100 10.10.10.199;
+    }
+}
+----
+
+The server is launched from the server directory by:
+
+   ./dhcpd -f -d -4 -4o6 6767 -cf ./dhcpd.conf4 -lf ./leases4 -pf ./pid4
+
+Note that the port specification must be the same as used with the v6 server
+and that the configuration, lease and process id files should have different
+names.  Again the The leases file (leases4) must be created before attempting
+to start the server.
+
+Finally note in the configuration file the use of the shared-network to
+connect the DHCPv4 and  DHCPv6 subnets.
+
+USE WITH DHCPv6 RELAY(s)
+If the DHCPv6 infrastructure uses one (or more) relay because the client
+and the server are not on the same link the best choice is to put the
+first (closest to client) relay address in the dhcp4-o-dhcp6-server
+option so the same path between the DHCPv6 client part and server part
+will be used for DHCPv6 and DHCPv4-over-DHCPv6 traffic.

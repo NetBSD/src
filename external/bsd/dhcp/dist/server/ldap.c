@@ -1,10 +1,11 @@
-/*	$NetBSD: ldap.c,v 1.1.1.5 2016/01/10 19:44:48 christos Exp $	*/
+/*	$NetBSD: ldap.c,v 1.1.1.6 2018/04/07 20:44:28 christos Exp $	*/
+
 /* ldap.c
 
    Routines for reading the configuration from LDAP */
 
 /*
- * Copyright (c) 2010,2015 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2010-2017 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 2003-2006 Ntelos, Inc.
  * All rights reserved.
  *
@@ -40,7 +41,8 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ldap.c,v 1.1.1.5 2016/01/10 19:44:48 christos Exp $");
+__RCSID("$NetBSD: ldap.c,v 1.1.1.6 2018/04/07 20:44:28 christos Exp $");
+
 
 #include "dhcpd.h"
 #if defined(LDAP_CONFIGURATION)
@@ -642,7 +644,7 @@ ldap_parse_subnet6 (struct ldap_config_stack *item, struct parse *cfile)
 
   ldap_value_free_len (tempbv);
 
-  if ((tempbv = ldap_get_values_len (ld, item->ldent, "dhcpRange")) != NULL)
+  if ((tempbv = ldap_get_values_len (ld, item->ldent, "dhcpRange6")) != NULL)
     {
       for (i=0; tempbv[i] != NULL; i++)
         {
@@ -706,9 +708,9 @@ ldap_parse_pool6 (struct ldap_config_stack *item, struct parse *cfile)
   struct berval **tempbv;
   int i;
 
-  x_parser_strcat (cfile, "pool {\n");
+  x_parser_strcat (cfile, "pool6 {\n");
 
-  if ((tempbv = ldap_get_values_len (ld, item->ldent, "dhcpRange")) != NULL)
+  if ((tempbv = ldap_get_values_len (ld, item->ldent, "dhcpRange6")) != NULL)
     {
       x_parser_strcat (cfile, "range6");
       for (i=0; tempbv[i] != NULL; i++)
@@ -1065,6 +1067,10 @@ add_to_config_stack (LDAPMessage * res, LDAPMessage * ent)
   struct ldap_config_stack *ns;
 
   ns = dmalloc (sizeof (*ns), MDL);
+  if (!ns) {
+    log_fatal ("no memory for add_to_config_stack()");
+  }
+
   ns->res = res;
   ns->ldent = ent;
   ns->close_brace = 0;

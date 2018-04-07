@@ -1,14 +1,13 @@
-.\"	$NetBSD: dhcpd.leases.5,v 1.1.1.4 2016/01/10 19:44:46 christos Exp $
+.\"	$NetBSD: dhcpd.leases.5,v 1.1.1.5 2018/04/07 20:44:28 christos Exp $
 .\"
 .\"	dhcpd.leases.5
 .\"
-.\" Copyright (c) 2014-2015 by Internet Systems Consortium, Inc. ("ISC")
-.\" Copyright (c) 2004,2009 by Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (c) 2004-2017 by Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (c) 1996-2003 by Internet Software Consortium
 .\"
-.\" Permission to use, copy, modify, and distribute this software for any
-.\" purpose with or without fee is hereby granted, provided that the above
-.\" copyright notice and this permission notice appear in all copies.
+.\" This Source Code Form is subject to the terms of the Mozilla Public
+.\" License, v. 2.0. If a copy of the MPL was not distributed with this
+.\" file, You can obtain one at http://mozilla.org/MPL/2.0/.
 .\"
 .\" THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
 .\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -183,6 +182,23 @@ certain event occurs.   The possible events that can occur for an
 active lease are \fBrelease\fR and \fBexpiry\fR.   More than one event
 can be specified - if so, the events are separated by '|' characters.
 .PP
+The \fIauthoring-byte-order\fR statement
+.RS 0.25i
+.PP
+.B authoring-byte-order \fR[ \fIbig-endian\fR | \fIlittle-endian\fR ] \fB;\fR
+.PP
+This statement is automatically added to the top of new lease files by
+the server. It indicates the internal byte order of the server.  This
+permits lease files generated on a server with one form of byte order
+to be read by a server with a different form.  Lease files which do not
+contain this entry are simply treated as having the same byte order as
+the server reading them.  If you are migrating lease files generated
+by a server that predates this statement and is of a different byte
+order than the your destination server, you can manually add this
+statement.  It must proceed any lease entries.  Valid values for this
+parameter are \fIlittle-endian\fR and \fIbig-endian\fR.
+.RE
+.PP
 .SH THE DHCPv4 LEASE DECLARATION
 .PP
 .B lease \fIip-address\fB { \fIstatements...\fB }
@@ -231,7 +247,8 @@ The client identifier is recorded as a colon-separated hexadecimal
 list or as a quoted string.   If it is recorded as a quoted string and
 it contains one or more non-printable characters, those characters are
 represented as octal escapes - a backslash character followed by three
-octal digits.
+octal digits.  The format used is determined by the lease-id-format
+parameter, which defaults to octal.
 .PP
 .B client-hostname "\fIhostname\fB";\fR
 .PP
@@ -312,7 +329,8 @@ The IAID_DUID value is recorded as a colon-separated hexadecimal
 list or as a quoted string.   If it is recorded as a quoted string and
 it contains one or more non-printable characters, those characters are
 represented as octal escapes - a backslash character followed by three
-octal digits.
+octal digits.  The format used is governed by the lease-id-format parameter,
+which defaults to octal.
 .PP
 .B cltt \fIdate\fB;\fR
 .PP
