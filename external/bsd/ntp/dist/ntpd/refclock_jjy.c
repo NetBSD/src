@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_jjy.c,v 1.12 2017/04/13 20:17:42 christos Exp $	*/
+/*	$NetBSD: refclock_jjy.c,v 1.13 2018/04/07 00:19:53 christos Exp $	*/
 
 /*
  * refclock_jjy - clock driver for JJY receivers
@@ -111,6 +111,11 @@
 /*  2016/05/08							      */
 /*    [Fix]    C-DEX JST2000                                          */
 /*             Thanks to Mr. Kuramatsu for the report and the patch.  */
+/*								      */
+/*  2017/04/30							      */
+/*    [Change] Avoid a wrong report of the coverity static analysis   */
+/*             tool. ( The code is harmless and has no bug. )	      */
+/*             teljjy_conn_send()				      */
 /*								      */
 /**********************************************************************/
 
@@ -395,6 +400,7 @@ struct	refclock refclock_jjy = {
 #define	JJY_CLOCKSTATS_MARK_ATTENTION	5
 #define	JJY_CLOCKSTATS_MARK_WARNING	6
 #define	JJY_CLOCKSTATS_MARK_ERROR	7
+#define	JJY_CLOCKSTATS_MARK_BUG 	8
 
 /* Local constants definition for the clockstats messages */
 
@@ -3301,6 +3307,7 @@ teljjy_conn_send ( struct peer *peer, struct refclockproc *pp, struct jjyunit *u
 
 	const char *	pCmd ;
 	int		i, iLen, iNextClockState ;
+	char	sLog [ 120 ] ;
 
 	DEBUG_TELJJY_PRINTF( "teljjy_conn_send" ) ;
 
@@ -3329,8 +3336,8 @@ teljjy_conn_send ( struct peer *peer, struct refclockproc *pp, struct jjyunit *u
 		/* Loopback character comes */
 #ifdef DEBUG
 		if ( debug ) {
-			printf( "refclock_jjy.c : teljjy_conn_send : iLoopbackCount=%d\n",
-				 up->iLoopbackCount ) ;
+			printf( "refclock_jjy.c : teljjy_conn_send : iClockCommandSeq=%d iLoopbackCount=%d\n",
+				 up->iClockCommandSeq, up->iLoopbackCount ) ;
 		}
 #endif
 
@@ -3353,8 +3360,18 @@ teljjy_conn_send ( struct peer *peer, struct refclockproc *pp, struct jjyunit *u
 
 		if ( teljjy_command_sequence[up->iClockCommandSeq].iExpectedReplyType == TELJJY_REPLY_LOOPBACK ) {
 			/* Loopback character and timestamp */
-			gettimeofday( &(up->sendTime[up->iLoopbackCount]), NULL ) ;
-			up->bLoopbackMode = TRUE ;
+			if ( up->iLoopbackCount < MAX_LOOPBACK ) {
+				gettimeofday( &(up->sendTime[up->iLoopbackCount]), NULL ) ;
+				up->bLoopbackMode = TRUE ;
+			} else {
+				/* This else-block is never come. */
+				/* This code avoid wrong report of the coverity static analysis scan tool. */
+				snprintf( sLog, sizeof(sLog)-1, "refclock_jjy.c ; teljjy_conn_send ; iClockCommandSeq=%d iLoopbackCount=%d MAX_LOOPBACK=%d",
+					  up->iClockCommandSeq, up->iLoopbackCount, MAX_LOOPBACK ) ;
+				jjy_write_clockstats( peer, JJY_CLOCKSTATS_MARK_BUG, sLog ) ;
+				msyslog ( LOG_ERR, "%s", sLog ) ;
+				up->bLoopbackMode = FALSE ;
+			}
 		} else {
 			/* Regular command */
 			up->bLoopbackMode = FALSE ;
@@ -4384,6 +4401,9 @@ jjy_write_clockstats ( struct peer *peer, int iMark, const char *pData )
 		break ;
 	case JJY_CLOCKSTATS_MARK_ERROR :
 		pMark = "-X- " ;
+		break ;
+	case JJY_CLOCKSTATS_MARK_BUG :
+		pMark = "!!! " ;
 		break ;
 	default :
 		pMark = "" ;

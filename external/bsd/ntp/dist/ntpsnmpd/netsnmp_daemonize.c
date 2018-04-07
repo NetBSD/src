@@ -1,4 +1,4 @@
-/*	$NetBSD: netsnmp_daemonize.c,v 1.5 2016/01/08 21:35:40 christos Exp $	*/
+/*	$NetBSD: netsnmp_daemonize.c,v 1.6 2018/04/07 00:19:53 christos Exp $	*/
 
 /*
  * system.c
@@ -196,7 +196,7 @@ netsnmp_daemonize(int quit_immediately, int stderr_log)
     int i = 0;
     int saved_errno;
 
-    DEBUGMSGT(("daemonize","deamonizing...\n"));
+    DEBUGMSGT(("daemonize","daemonizing...\n"));
 #ifdef HAVE_WORKING_FORK
     /*
      * Fork to return control to the invoking process and to

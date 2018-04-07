@@ -1,4 +1,4 @@
-/*	$NetBSD: keyFile.c,v 1.1.1.7 2018/04/07 00:15:53 christos Exp $	*/
+/*	$NetBSD: keyFile.c,v 1.2 2018/04/07 00:19:53 christos Exp $	*/
 
 #include "config.h"
 #include "fileHandlingTest.h"

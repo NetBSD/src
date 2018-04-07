@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_io.c,v 1.25 2017/04/13 20:17:42 christos Exp $	*/
+/*	$NetBSD: ntp_io.c,v 1.26 2018/04/07 00:19:52 christos Exp $	*/
 
 /*
  * ntp_io.c - input/output routines for ntpd.	The socket-opening code
@@ -1045,7 +1045,7 @@ remove_interface(
 	/* remove restrict interface entry */
 	SET_HOSTMASK(&resmask, AF(&ep->sin));
 	hack_restrict(RESTRICT_REMOVEIF, &ep->sin, &resmask,
-		      RESM_NTPONLY | RESM_INTERFACE, RES_IGNORE, 0);
+		      -3, RESM_NTPONLY | RESM_INTERFACE, RES_IGNORE, 0);
 }
 
 
@@ -1602,7 +1602,7 @@ set_wildcard_reuse(
 
 	if (fd != INVALID_SOCKET) {
 		if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR,
-			       (char *)&on, sizeof(on)))
+			       (void *)&on, sizeof(on)))
 			msyslog(LOG_ERR,
 				"set_wildcard_reuse: setsockopt(SO_REUSEADDR, %s) failed: %m",
 				on ? "on" : "off");
@@ -2136,7 +2136,7 @@ create_interface(
 	 */
 	SET_HOSTMASK(&resmask, AF(&iface->sin));
 	hack_restrict(RESTRICT_FLAGS, &iface->sin, &resmask,
-		      RESM_NTPONLY | RESM_INTERFACE, RES_IGNORE, 0);
+		      -4, RESM_NTPONLY | RESM_INTERFACE, RES_IGNORE, 0);
 
 	/*
 	 * set globals with the first found
@@ -2199,7 +2199,7 @@ set_excladdruse(
 #endif
 
 	failed = setsockopt(fd, SOL_SOCKET, SO_EXCLUSIVEADDRUSE,
-			    (char *)&one, sizeof(one));
+			    (void *)&one, sizeof(one));
 
 	if (!failed)
 		return;
@@ -2253,7 +2253,7 @@ set_reuseaddr(
 
 		if (ep->fd != INVALID_SOCKET) {
 			if (setsockopt(ep->fd, SOL_SOCKET, SO_REUSEADDR,
-				       (char *)&flag, sizeof(flag))) {
+				       (void *)&flag, sizeof(flag))) {
 				msyslog(LOG_ERR, "set_reuseaddr: setsockopt(%s, SO_REUSEADDR, %s) failed: %m",
 					stoa(&ep->sin), flag ? "on" : "off");
 			}
@@ -2296,7 +2296,7 @@ socket_broadcast_enable(
 	if (IS_IPV4(baddr)) {
 		/* if this interface can support broadcast, set SO_BROADCAST */
 		if (setsockopt(fd, SOL_SOCKET, SO_BROADCAST,
-			       (char *)&on, sizeof(on)))
+			       (void *)&on, sizeof(on)))
 			msyslog(LOG_ERR,
 				"setsockopt(SO_BROADCAST) enable failure on address %s: %m",
 				stoa(baddr));
@@ -2327,7 +2327,7 @@ socket_broadcast_disable(
 	int off = 0;	/* This seems to be OK as an int */
 
 	if (IS_IPV4(baddr) && setsockopt(iface->fd, SOL_SOCKET,
-	    SO_BROADCAST, (char *)&off, sizeof(off)))
+	    SO_BROADCAST, (void *)&off, sizeof(off)))
 		msyslog(LOG_ERR,
 			"setsockopt(SO_BROADCAST) disable failure on address %s: %m",
 			stoa(baddr));
@@ -2408,7 +2408,7 @@ enable_multicast_if(
 		 */
 		if (setsockopt(iface->fd, IPPROTO_IP,
 			       IP_MULTICAST_LOOP,
-			       SETSOCKOPT_ARG_CAST &off,
+			       (void *)&off,
 			       sizeof(off))) {
 
 			msyslog(LOG_ERR,
@@ -2427,7 +2427,7 @@ enable_multicast_if(
 		 */
 		if (setsockopt(iface->fd, IPPROTO_IPV6,
 			       IPV6_MULTICAST_LOOP,
-			       (char *) &off6, sizeof(off6))) {
+			       (void *) &off6, sizeof(off6))) {
 
 			msyslog(LOG_ERR,
 				"setsockopt IPV6_MULTICAST_LOOP failed: %m on socket %d, addr %s for multicast address %s",
@@ -2469,7 +2469,7 @@ socket_multicast_enable(
 		if (setsockopt(iface->fd,
 			       IPPROTO_IP,
 			       IP_ADD_MEMBERSHIP,
-			       (char *)&mreq,
+			       (void *)&mreq,
 			       sizeof(mreq))) {
 			DPRINTF(2, (
 				"setsockopt IP_ADD_MEMBERSHIP failed: %m on socket %d, addr %s for %x / %x (%s)",
@@ -2499,7 +2499,7 @@ socket_multicast_enable(
 		mreq6.ipv6mr_interface = iface->ifindex;
 
 		if (setsockopt(iface->fd, IPPROTO_IPV6,
-			       IPV6_JOIN_GROUP, (char *)&mreq6,
+			       IPV6_JOIN_GROUP, (void *)&mreq6,
 			       sizeof(mreq6))) {
 			DPRINTF(2, (
 				"setsockopt IPV6_JOIN_GROUP failed: %m on socket %d, addr %s for interface %u (%s)",
@@ -2553,7 +2553,7 @@ socket_multicast_disable(
 		mreq.imr_multiaddr = SOCK_ADDR4(maddr);
 		mreq.imr_interface = SOCK_ADDR4(&iface->sin);
 		if (setsockopt(iface->fd, IPPROTO_IP,
-			       IP_DROP_MEMBERSHIP, (char *)&mreq,
+			       IP_DROP_MEMBERSHIP, (void *)&mreq,
 			       sizeof(mreq))) {
 
 			msyslog(LOG_ERR,
@@ -2577,7 +2577,7 @@ socket_multicast_disable(
 		mreq6.ipv6mr_interface = iface->ifindex;
 
 		if (setsockopt(iface->fd, IPPROTO_IPV6,
-			       IPV6_LEAVE_GROUP, (char *)&mreq6,
+			       IPV6_LEAVE_GROUP, (void *)&mreq6,
 			       sizeof(mreq6))) {
 
 			msyslog(LOG_ERR,
@@ -2773,6 +2773,7 @@ io_multicast_add(
 	if (ep->fd != INVALID_SOCKET) {
 		ep->ignore_packets = ISC_FALSE;
 		ep->flags |= INT_MCASTIF;
+		ep->ifindex = SCOPE(addr);
 
 		strlcpy(ep->name, "multicast", sizeof(ep->name));
 		DPRINT_INTERFACE(2, (ep, "multicast add ", "\n"));
@@ -2938,7 +2939,7 @@ open_socket(
 	if (isc_win32os_versioncheck(5, 1, 0, 0) < 0)  /* before 5.1 */
 #endif
 		if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR,
-			       (char *)((turn_off_reuse)
+			       (void *)((turn_off_reuse)
 					    ? &off
 					    : &on),
 			       sizeof(on))) {
@@ -2966,7 +2967,7 @@ open_socket(
 	 */
 	if (IS_IPV4(addr)) {
 #if defined(IPPROTO_IP) && defined(IP_TOS)
-		if (setsockopt(fd, IPPROTO_IP, IP_TOS, (char*)&qos,
+		if (setsockopt(fd, IPPROTO_IP, IP_TOS, (void *)&qos,
 			       sizeof(qos)))
 			msyslog(LOG_ERR,
 				"setsockopt IP_TOS (%02x) fails on address %s: %m",
@@ -2981,7 +2982,7 @@ open_socket(
 	 */
 	if (IS_IPV6(addr)) {
 #if defined(IPPROTO_IPV6) && defined(IPV6_TCLASS)
-		if (setsockopt(fd, IPPROTO_IPV6, IPV6_TCLASS, (char*)&qos,
+		if (setsockopt(fd, IPPROTO_IPV6, IPV6_TCLASS, (void *)&qos,
 			       sizeof(qos)))
 			msyslog(LOG_ERR,
 				"setsockopt IPV6_TCLASS (%02x) fails on address %s: %m",
@@ -2990,14 +2991,14 @@ open_socket(
 #ifdef IPV6_V6ONLY
 		if (isc_net_probe_ipv6only() == ISC_R_SUCCESS
 		    && setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY,
-		    (char*)&on, sizeof(on)))
+		    (void *)&on, sizeof(on)))
 			msyslog(LOG_ERR,
 				"setsockopt IPV6_V6ONLY on fails on address %s: %m",
 				stoa(addr));
 #endif
 #ifdef IPV6_BINDV6ONLY
 		if (setsockopt(fd, IPPROTO_IPV6, IPV6_BINDV6ONLY,
-		    (char*)&on, sizeof(on)))
+		    (void *)&on, sizeof(on)))
 			msyslog(LOG_ERR,
 				"setsockopt IPV6_BINDV6ONLY on fails on address %s: %m",
 				stoa(addr));
@@ -3049,7 +3050,7 @@ open_socket(
 #ifdef HAVE_TIMESTAMP
 	{
 		if (setsockopt(fd, SOL_SOCKET, SO_TIMESTAMP,
-			       (char*)&on, sizeof(on)))
+			       (void *)&on, sizeof(on)))
 			msyslog(LOG_DEBUG,
 				"setsockopt SO_TIMESTAMP on fails on address %s: %m",
 				stoa(addr));
@@ -3061,7 +3062,7 @@ open_socket(
 #ifdef HAVE_TIMESTAMPNS
 	{
 		if (setsockopt(fd, SOL_SOCKET, SO_TIMESTAMPNS,
-			       (char*)&on, sizeof(on)))
+			       (void *)&on, sizeof(on)))
 			msyslog(LOG_DEBUG,
 				"setsockopt SO_TIMESTAMPNS on fails on address %s: %m",
 				stoa(addr));
@@ -3073,7 +3074,7 @@ open_socket(
 #ifdef HAVE_BINTIME
 	{
 		if (setsockopt(fd, SOL_SOCKET, SO_BINTIME,
-			       (char*)&on, sizeof(on)))
+			       (void *)&on, sizeof(on)))
 			msyslog(LOG_DEBUG,
 				"setsockopt SO_BINTIME on fails on address %s: %m",
 				stoa(addr));
@@ -3134,6 +3135,7 @@ sendpkt(
 	int	cc;
 	int	rc;
 	u_char	cttl;
+	l_fp	fp_zero = { { 0, }, 0, };
 
 	ismcast = IS_MCAST(dest);
 	if (!ismcast)
@@ -3217,6 +3219,19 @@ sendpkt(
 		if (ismcast)
 			src = src->mclink;
 	} while (ismcast && src != NULL);
+
+	/* HMS: pkt->rootdisp is usually random here */
+	record_raw_stats(src ? &src->sin : NULL, dest,
+			&pkt->org, &pkt->rec, &pkt->xmt, &fp_zero,
+			PKT_MODE(pkt->li_vn_mode),
+			PKT_VERSION(pkt->li_vn_mode),
+			PKT_LEAP(pkt->li_vn_mode),
+			pkt->stratum,
+			pkt->ppoll, pkt->precision,
+			pkt->rootdelay, pkt->rootdisp, pkt->refid,
+			len - MIN_V4_PKT_LEN, (u_char *)&pkt->exten);
+
+	return;
 }
 
 
@@ -4003,6 +4018,17 @@ findlocalinterface(
 	DPRINTF(4, ("Finding interface for addr %s in list of addresses\n",
 		    stoa(addr)));
 
+	/* [Bug 3437] The dummy POOL peer comes in with an AF of
+	 * zero. This is bound to fail, but on the way to nowhere it
+	 * triggers a security incident on SELinux.
+	 *
+	 * Checking the condition and failing early is probably a good
+	 * advice, and even saves us some syscalls in that case.
+	 * Thanks to Miroslav Lichvar for finding this.
+	 */
+	if (AF_UNSPEC == AF(addr))
+		return NULL;
+
 	s = socket(AF(addr), SOCK_DGRAM, 0);
 	if (INVALID_SOCKET == s)
 		return NULL;
@@ -4015,7 +4041,7 @@ findlocalinterface(
 		on = 1;
 		if (SOCKET_ERROR == setsockopt(s, SOL_SOCKET,
 						SO_BROADCAST,
-						(char *)&on,
+						(void *)&on,
 						sizeof(on))) {
 			closesocket(s);
 			return NULL;

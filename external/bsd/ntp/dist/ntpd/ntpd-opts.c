@@ -1,9 +1,9 @@
-/*	$NetBSD: ntpd-opts.c,v 1.10 2017/04/13 20:17:42 christos Exp $	*/
+/*	$NetBSD: ntpd-opts.c,v 1.11 2018/04/07 00:19:53 christos Exp $	*/
 
 /*
  *  EDIT THIS FILE WITH CAUTION  (ntpd-opts.c)
  *
- *  It has been AutoGen-ed  March 21, 2017 at 10:42:12 AM by AutoGen 5.18.5
+ *  It has been AutoGen-ed  February 27, 2018 at 05:13:19 PM by AutoGen 5.18.5
  *  From the definitions    ntpd-opts.def
  *  and the template file   options
  *
@@ -77,7 +77,7 @@ extern FILE * option_usage_fp;
  *  static const strings for ntpd options
  */
 static char const ntpd_opt_strs[3132] =
-/*     0 */ "ntpd 4.2.8p10\n"
+/*     0 */ "ntpd 4.2.8p11\n"
             "Copyright (C) 1992-2017 The University of Delaware and Network Time Foundation, all rights reserved.\n"
             "This is free software. It is licensed for use, modification and\n"
             "redistribution under the terms of the NTP License, copies of which\n"
@@ -207,12 +207,12 @@ static char const ntpd_opt_strs[3132] =
 /*  2901 */ "output version information and exit\0"
 /*  2937 */ "version\0"
 /*  2945 */ "NTPD\0"
-/*  2950 */ "ntpd - NTP daemon program - Ver. 4.2.8p10\n"
+/*  2950 */ "ntpd - NTP daemon program - Ver. 4.2.8p11\n"
             "Usage:  %s [ -<flag> [<val>] | --<name>[{=| }<val>] ]... \\\n"
             "\t\t[ <server1> ... <serverN> ]\n\0"
 /*  3082 */ "http://bugs.ntp.org, bugs@ntp.org\0"
 /*  3116 */ "\n\0"
-/*  3118 */ "ntpd 4.2.8p10";
+/*  3118 */ "ntpd 4.2.8p11";
 
 /**
  *  ipv4 option description with
@@ -1531,7 +1531,7 @@ static void bogus_function(void) {
      translate option names.
    */
   /* referenced via ntpdOptions.pzCopyright */
-  puts(_("ntpd 4.2.8p10\n\
+  puts(_("ntpd 4.2.8p11\n\
 Copyright (C) 1992-2017 The University of Delaware and Network Time Foundation, all rights reserved.\n\
 This is free software. It is licensed for use, modification and\n\
 redistribution under the terms of the NTP License, copies of which\n\
@@ -1672,7 +1672,7 @@ implied warranty.\n"));
   puts(_("output version information and exit"));
 
   /* referenced via ntpdOptions.pzUsageTitle */
-  puts(_("ntpd - NTP daemon program - Ver. 4.2.8p10\n\
+  puts(_("ntpd - NTP daemon program - Ver. 4.2.8p11\n\
 Usage:  %s [ -<flag> [<val>] | --<name>[{=| }<val>] ]... \\\n\
 \t\t[ <server1> ... <serverN> ]\n"));
 
@@ -1680,7 +1680,7 @@ Usage:  %s [ -<flag> [<val>] | --<name>[{=| }<val>] ]... \\\n\
   puts(_("\n"));
 
   /* referenced via ntpdOptions.pzFullVersion */
-  puts(_("ntpd 4.2.8p10"));
+  puts(_("ntpd 4.2.8p11"));
 
   /* referenced via ntpdOptions.pzFullUsage */
   puts(_("<<<NOT-FOUND>>>"));

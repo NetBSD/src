@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: ntp2netbsd,v 1.5 2015/04/07 17:34:18 christos Exp $
+#	$NetBSD: ntp2netbsd,v 1.6 2018/04/07 00:19:52 christos Exp $
 #
 # Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -50,7 +50,7 @@
 #	$ cd ..
 #	$ rm -r src ntp-4.x.y
 #	$ cd dist/ntpd
-#	$ cc -DOPENSSL -I../../include keyword-gen.c -I../include -I../lib/isc/unix/include -I../lib/isc/include -I../../bin/ntpd/obj.amd64 -L../../lib/libntp/obj.amd64 -lntp -L../../lib/libisc/obj.amd64 -lisc
+#	$ cc -DOPENSSL -I../../include keyword-gen.c -I../include -I../lib/isc/unix/include -I../lib/isc/include -I../../bin/ntpd/obj.amd64-x86_64 -L../../lib/libntp/obj.amd64-x86_64 -lntp -L../../lib/libisc/obj.amd64-x86_64 -lisc -lm
 #	$ ./a.out ntp_keyword.h > ntp_keyword.h
 #	- Rebuild ntp_keywords file since our parser is not bison and the
 #	  keyword numbers are different
