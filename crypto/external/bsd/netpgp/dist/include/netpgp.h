@@ -42,7 +42,7 @@
 __BEGIN_DECLS
 
 /* structure used to hold (key,value) pair information */
-typedef struct netpgp_t {
+typedef struct {
 	unsigned	  c;		/* # of elements used */
 	unsigned	  size;		/* size of array */
 	char		**name;		/* key names */

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.383.2.1 2018/03/30 06:20:16 pgoyette Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.383.2.2 2018/04/07 04:12:19 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.383.2.1 2018/03/30 06:20:16 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.383.2.2 2018/04/07 04:12:19 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -3176,16 +3176,23 @@ tcp_dooptions(struct tcpcb *tp, const u_char *cp, int cnt, struct tcphdr *th,
 #ifdef INET6
 				struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
 #endif
-				if (ip)
+
+				switch (ip->ip_v) {
+				case 4:
 					in_print(buf, sizeof(buf),
 					    &ip->ip_src);
+					break;
 #ifdef INET6
-				else if (ip6)
+				case 6:
 					in6_print(buf, sizeof(buf),
 					    &ip6->ip6_src);
+					break;
 #endif
-				else
+				default:
 					strlcpy(buf, "(unknown)", sizeof(buf));
+					break;
+				}
+
 				log(LOG_ERR, "TCP: invalid wscale %d from %s, "
 				    "assuming %d\n",
 				    tp->requested_s_scale, buf,
@@ -3236,7 +3243,8 @@ tcp_dooptions(struct tcpcb *tp, const u_char *cp, int cnt, struct tcphdr *th,
 		case TCPOPT_SIGNATURE:
 			if (optlen != TCPOLEN_SIGNATURE)
 				continue;
-			if (sigp && memcmp(sigp, cp + 2, TCP_SIGLEN))
+			if (sigp &&
+			    !consttime_memequal(sigp, cp + 2, TCP_SIGLEN))
 				return (-1);
 
 			sigp = sigbuf;
@@ -3269,7 +3277,7 @@ tcp_dooptions(struct tcpcb *tp, const u_char *cp, int cnt, struct tcphdr *th,
 		}
 		tcp_fields_to_host(th);
 
-		if (memcmp(sig, sigp, TCP_SIGLEN)) {
+		if (!consttime_memequal(sig, sigp, TCP_SIGLEN)) {
 			TCP_STATINC(TCP_STAT_BADSIG);
 			goto out;
 		} else
@@ -3885,29 +3893,6 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
 		}
 		ip6_savecontrol(in6p, &in6p->in6p_options,
 		    mtod(m, struct ip6_hdr *), m);
-	}
-#endif
-
-#if defined(IPSEC)
-	if (ipsec_used) {
-		/*
-		 * we make a copy of policy, instead of sharing the policy, for
-		 * better behavior in terms of SA lookup and dead SA removal.
-		 */
-		if (inp) {
-			/* copy old policy into new socket's */
-			if (ipsec_copy_pcbpolicy(sotoinpcb(oso)->inp_sp,
-			    inp->inp_sp))
-				printf("tcp_input: could not copy policy\n");
-		}
-#ifdef INET6
-		else if (in6p) {
-			/* copy old policy into new socket's */
-			if (ipsec_copy_pcbpolicy(sotoin6pcb(oso)->in6p_sp,
-			    in6p->in6p_sp))
-				printf("tcp_input: could not copy policy\n");
-		}
-#endif
 	}
 #endif
 

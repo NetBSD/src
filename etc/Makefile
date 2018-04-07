@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.432 2018/01/09 03:31:14 christos Exp $
+#	$NetBSD: Makefile,v 1.432.2.1 2018/04/07 04:11:58 pgoyette Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -118,7 +118,8 @@ BIN1+=	etc.${MACHINE}/disktab
 BIN1+=	disktab
 .endif
 
-.if exists(etc.${MACHINE}/ld.so.conf) && empty(MACHINE_ARCH:M*arm*hf*)
+.if exists(etc.${MACHINE}/ld.so.conf) && \
+    empty(MACHINE_ARCH:M*arm*hf*) && ${MACHINE_ARCH} != "aarch64"
 BIN1+=	etc.${MACHINE}/ld.so.conf
 .endif
 

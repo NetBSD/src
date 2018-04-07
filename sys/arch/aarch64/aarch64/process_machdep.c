@@ -1,4 +1,4 @@
-/* $NetBSD: process_machdep.c,v 1.1 2014/08/10 05:47:37 matt Exp $ */
+/* $NetBSD: process_machdep.c,v 1.1.28.1 2018/04/07 04:12:10 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,24 +31,23 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: process_machdep.c,v 1.1 2014/08/10 05:47:37 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: process_machdep.c,v 1.1.28.1 2018/04/07 04:12:10 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/ptrace.h>
+#include <sys/lwp.h>
 
-#include <aarch64/locore.h>
 #include <aarch64/pcb.h>
+#include <aarch64/frame.h>
+#include <aarch64/machdep.h>
+#include <aarch64/armreg.h>
 
 int
 process_read_regs(struct lwp *l, struct reg *regs)
 {
 	*regs = l->l_md.md_utf->tf_regs;
-	if (l == curlwp) {
-		regs->r_tpidr = reg_tpidr_el0_read();
-	} else {
-		regs->r_tpidr = (uint64_t)(uintptr_t)l->l_private;
-	}
+	regs->r_tpidr = (uint64_t)(uintptr_t)l->l_private;
 	return 0;
 }
 
@@ -62,9 +61,6 @@ process_write_regs(struct lwp *l, const struct reg *regs)
 
 	l->l_md.md_utf->tf_regs = *regs;
 	l->l_private = regs->r_tpidr;
-	if (l == curlwp) {
-		reg_tpidr_el0_write(regs->r_tpidr);
-	}
 	return 0;
 }
 
@@ -72,10 +68,10 @@ int
 process_read_fpregs(struct lwp *l, struct fpreg *fpregs, size_t *lenp)
 {
 	struct pcb * const pcb = lwp_getpcb(l);
-	KASSERT(*lenp == sizeof(*fpregs));
+	KASSERT(*lenp <= sizeof(*fpregs));
 	fpu_save(l);
 
-	*fpregs = pcb->pcb_fpregs;
+	memcpy(fpregs, &pcb->pcb_fpregs, *lenp);
 
 	return 0;
 }
@@ -84,9 +80,10 @@ int
 process_write_fpregs(struct lwp *l, const struct fpreg *fpregs, size_t len)
 {
 	struct pcb * const pcb = lwp_getpcb(l);
-	KASSERT(len == sizeof(*fpregs));
+	KASSERT(len <= sizeof(*fpregs));
 	fpu_discard(l, true);		// set used flag
-	pcb->pcb_fpregs = *fpregs;
+
+	memcpy(&pcb->pcb_fpregs, fpregs, len);
 
 	return 0;
 }

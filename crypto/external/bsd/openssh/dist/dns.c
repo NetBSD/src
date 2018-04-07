@@ -1,5 +1,5 @@
-/*	$NetBSD: dns.c,v 1.15 2017/10/07 19:39:19 christos Exp $	*/
-/* $OpenBSD: dns.c,v 1.37 2017/09/14 04:32:21 djm Exp $ */
+/*	$NetBSD: dns.c,v 1.15.2.1 2018/04/07 04:11:48 pgoyette Exp $	*/
+/* $OpenBSD: dns.c,v 1.38 2018/02/23 15:58:37 markus Exp $ */
 
 /*
  * Copyright (c) 2003 Wesley Griffin. All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: dns.c,v 1.15 2017/10/07 19:39:19 christos Exp $");
+__RCSID("$NetBSD: dns.c,v 1.15.2.1 2018/04/07 04:11:48 pgoyette Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 
@@ -103,6 +103,11 @@ dns_read_key(u_int8_t *algorithm, u_int8_t *digest_type,
 		break;
 	case KEY_ED25519:
 		*algorithm = SSHFP_KEY_ED25519;
+		if (!*digest_type)
+			*digest_type = SSHFP_HASH_SHA256;
+		break;
+	case KEY_XMSS:
+		*algorithm = SSHFP_KEY_XMSS;
 		if (!*digest_type)
 			*digest_type = SSHFP_HASH_SHA256;
 		break;

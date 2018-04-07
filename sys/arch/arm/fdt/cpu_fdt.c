@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_fdt.c,v 1.4 2017/12/10 21:38:26 skrll Exp $ */
+/* $NetBSD: cpu_fdt.c,v 1.4.2.1 2018/04/07 04:12:11 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_fdt.c,v 1.4 2017/12/10 21:38:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_fdt.c,v 1.4.2.1 2018/04/07 04:12:11 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -38,7 +38,9 @@ __KERNEL_RCSID(0, "$NetBSD: cpu_fdt.c,v 1.4 2017/12/10 21:38:26 skrll Exp $");
 
 #include <dev/fdt/fdtvar.h>
 
+#include <arm/armreg.h>
 #include <arm/cpu.h>
+#include <arm/cpufunc.h>
 
 static int	cpu_fdt_match(device_t, cfdata_t, void *);
 static void	cpu_fdt_attach(device_t, device_t, void *);
@@ -95,9 +97,10 @@ cpu_fdt_match(device_t parent, cfdata_t cf, void *aux)
 		/* XXX NetBSD requires all CPUs to be in the same cluster */
 		if (fdtbus_get_reg(phandle, 0, &mpidr, NULL) != 0)
 			return 0;
-		const uint32_t bp_mpidr = armreg_mpidr_read();
-		const u_int bp_clid = __SHIFTOUT(bp_mpidr, CORTEXA9_MPIDR_CLID);
-		const u_int clid = __SHIFTOUT(mpidr, CORTEXA9_MPIDR_CLID);
+
+		const u_int bp_clid = cpu_clusterid();
+		const u_int clid = __SHIFTOUT(mpidr, MPIDR_AFF1);
+
 		if (bp_clid != clid)
 			return 0;
 		break;
@@ -130,7 +133,8 @@ cpu_fdt_attach(device_t parent, device_t self, void *aux)
 			aprint_error(": missing 'reg' property\n");
 			return;
 		}
-		cpuid = __SHIFTOUT(mpidr, CORTEXA9_MPIDR_CPUID);
+
+		cpuid = __SHIFTOUT(mpidr, MPIDR_AFF0);
 		break;
 	default:
 		cpuid = 0;

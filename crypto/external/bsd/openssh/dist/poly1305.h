@@ -1,3 +1,4 @@
+/*	$NetBSD: poly1305.h,v 1.1.1.1.22.1 2018/04/07 04:11:48 pgoyette Exp $	*/
 /* $OpenBSD: poly1305.h,v 1.4 2014/05/02 03:27:54 djm Exp $ */
 
 /* 

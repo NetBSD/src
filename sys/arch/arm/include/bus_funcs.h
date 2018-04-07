@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_funcs.h,v 1.6 2014/01/29 00:42:15 matt Exp $	*/
+/*	$NetBSD: bus_funcs.h,v 1.6.28.1 2018/04/07 04:12:12 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -97,6 +97,13 @@
 	(*(t)->__bs_opname_s(type,sz))((t)->bs_cookie, h, o, v, c)
 #define	__bs_copy_s(sz, t, h1, o1, h2, o2, cnt)				\
 	(*(t)->__bs_opname_s(c,sz))((t)->bs_cookie, h1, o1, h2, o2, cnt)
+#endif
+
+#ifdef __BUS_SPACE_HAS_PROBING_METHODS
+#define	__bs_pe(sz, t, h, o, v)						\
+	(*(t)->__bs_opname(pe,sz))((t)->bs_cookie, h, o, v)
+#define	__bs_po(sz, t, h, o, v)						\
+	(*(t)->__bs_opname(po,sz))((t)->bs_cookie, h, o, v)
 #endif
 
 /*
@@ -294,6 +301,21 @@
 	__bs_copy(4, t, h1, o1, h2, o2, c)
 #define	bus_space_copy_region_8(t, h1, o1, h2, o2, c)				\
 	__bs_copy(8, t, h1, o1, h2, o2, c)
+
+/*
+ * Probing operations.
+ */
+#ifdef __BUS_SPACE_HAS_PROBING_METHODS
+#define	bus_space_peek_1(t, h, o, p)	__bs_pe(1,(t),(h),(o),(p))
+#define	bus_space_peek_2(t, h, o, p)	__bs_pe(2,(t),(h),(o),(p))
+#define	bus_space_peek_4(t, h, o, p)	__bs_pe(4,(t),(h),(o),(p))
+#define	bus_space_peek_8(t, h, o, p)	__bs_pe(8,(t),(h),(o),(p))
+
+#define	bus_space_poke_1(t, h, o, v)	__bs_po(1,(t),(h),(o),(v))
+#define	bus_space_poke_2(t, h, o, v)	__bs_po(2,(t),(h),(o),(v))
+#define	bus_space_poke_4(t, h, o, v)	__bs_po(4,(t),(h),(o),(v))
+#define	bus_space_poke_8(t, h, o, v)	__bs_po(8,(t),(h),(o),(v))
+#endif
 
 /*
  * Macros to provide prototypes for all the functions used in the
@@ -523,6 +545,39 @@ void	__bs_c(f,_bs_c_8)(void *t, bus_space_handle_t bsh1,		\
 	    bus_size_t offset1, bus_space_handle_t bsh2,		\
 	    bus_size_t offset2, bus_size_t count);
 
+#define	bs_pe_1_proto(f)						\
+int	__bs_c(f,_bs_pe_1)(void *t, bus_space_handle_t bsh,		\
+	    bus_size_t offset, uint8_t *datap);
+
+#define	bs_pe_2_proto(f)						\
+int	__bs_c(f,_bs_pe_2)(void *t, bus_space_handle_t bsh,		\
+	    bus_size_t offset, uint16_t *datap);			\
+
+#define	bs_pe_4_proto(f)						\
+int	__bs_c(f,_bs_pe_4)(void *t, bus_space_handle_t bsh,		\
+	    bus_size_t offset, uint32_t *datap);			\
+
+#define	bs_pe_8_proto(f)						\
+int	__bs_c(f,_bs_pe_8)(void *t, bus_space_handle_t bsh,		\
+	    bus_size_t offset, uint64_t *datap);			\
+
+#define	bs_po_1_proto(f)						\
+int	__bs_c(f,_bs_po_1)(void *t, bus_space_handle_t bsh,		\
+	    bus_size_t offset, uint8_t value);
+
+#define	bs_po_2_proto(f)						\
+int	__bs_c(f,_bs_po_2)(void *t, bus_space_handle_t bsh,		\
+	    bus_size_t offset, uint16_t value);				\
+
+#define	bs_po_4_proto(f)						\
+int	__bs_c(f,_bs_po_4)(void *t, bus_space_handle_t bsh,		\
+	    bus_size_t offset, uint32_t value);				\
+
+#define	bs_po_8_proto(f)						\
+int	__bs_c(f,_bs_po_8)(void *t, bus_space_handle_t bsh,		\
+	    bus_size_t offset, uint64_t value);				\
+
+
 #define bs_protos(f)		\
 bs_map_proto(f);		\
 bs_unmap_proto(f);		\
@@ -567,7 +622,15 @@ bs_sr_8_proto(f);		\
 bs_c_1_proto(f);		\
 bs_c_2_proto(f);		\
 bs_c_4_proto(f);		\
-bs_c_8_proto(f);
+bs_c_8_proto(f);		\
+bs_pe_1_proto(f);		\
+bs_pe_2_proto(f);		\
+bs_pe_4_proto(f);		\
+bs_pe_8_proto(f);		\
+bs_po_1_proto(f);		\
+bs_po_2_proto(f);		\
+bs_po_4_proto(f);		\
+bs_po_8_proto(f);
 
 /* Bus Space DMA macros */
 

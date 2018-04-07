@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.5.10.3 2018/03/30 06:20:11 pgoyette Exp $	*/
+/*	$NetBSD: boot.c,v 1.5.10.4 2018/04/07 04:12:14 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -55,7 +55,9 @@ static const char * const names[][2] = {
 #define NUMNAMES	__arraycount(names)
 #define DEFFILENAME	names[0][0]
 
-#define	MAXDEVNAME	16
+#ifndef	EFIBOOTCFG_FILENAME
+#define	EFIBOOTCFG_FILENAME	"esp:/EFI/NetBSD/boot.cfg"
+#endif
 
 void	command_help(char *);
 void	command_quit(char *);
@@ -273,6 +275,10 @@ boot(void)
 	default_filename = DEFFILENAME;
 
 	if (!(boot_params.bp_flags & X86_BP_FLAGS_NOBOOTCONF)) {
+#ifdef EFIBOOTCFG_FILENAME
+		int rv = parsebootconf(EFIBOOTCFG_FILENAME);
+		if (rv)
+#endif
 		parsebootconf(BOOTCFG_FILENAME);
 	} else {
 		bootcfg_info.timeout = boot_params.bp_timeout;

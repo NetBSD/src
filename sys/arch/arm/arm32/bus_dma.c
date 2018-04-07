@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.106 2018/03/04 08:04:59 skrll Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.106.2.1 2018/04/07 04:12:11 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -33,9 +33,10 @@
 #define _ARM32_BUS_DMA_PRIVATE
 
 #include "opt_arm_bus_space.h"
+#include "opt_cputypes.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.106 2018/03/04 08:04:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.106.2.1 2018/04/07 04:12:11 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -45,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.106 2018/03/04 08:04:59 skrll Exp $");
 
 #include <uvm/uvm.h>
 
+#include <arm/cpuconf.h>
 #include <arm/cpufunc.h>
 
 #ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
@@ -113,7 +115,7 @@ EVCNT_ATTACH_STATIC(bus_dma_sync_postwrite);
 
 #define	STAT_INCR(x)	(bus_dma_ ## x.ev_count++)
 #else
-#define	STAT_INCR(x)	/*(bus_dma_ ## x.ev_count++)*/
+#define	STAT_INCR(x)	__nothing
 #endif
 
 int	_bus_dmamap_load_buffer(bus_dma_tag_t, bus_dmamap_t, void *,
@@ -1378,17 +1380,31 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 #endif
 
 	size = round_page(size);
-	if (__predict_true(size > L2_L_SIZE)) {
-#if (ARM_MMU_V6 + ARM_MMU_V7) > 0
-		if (size >= L1_SS_SIZE)
-			align = L1_SS_SIZE;
-		else
+
+#ifdef PMAP_MAPSIZE1
+	if (size >= PMAP_MAPSIZE1)
+		align = PMAP_MAPSIZE1;
+
+#ifdef PMAP_MAPSIZE2
+
+#if PMAP_MAPSIZE1 > PMAP_MAPSIZE2
+#error PMAP_MAPSIZE1 must be smaller than PMAP_MAPSIZE2
 #endif
-		if (size >= L1_S_SIZE)
-			align = L1_S_SIZE;
-		else
-			align = L2_L_SIZE;
-	}
+
+	if (size >= PMAP_MAPSIZE2)
+		align = PMAP_MAPSIZE2;
+
+#ifdef PMAP_MAPSIZE3
+
+#if PMAP_MAPSIZE2 > PMAP_MAPSIZE3
+#error PMAP_MAPSIZE2 must be smaller than PMAP_MAPSIZE3
+#endif
+
+	if (size >= PMAP_MAPSIZE3)
+		align = PMAP_MAPSIZE3;
+#endif
+#endif
+#endif
 
 	va = uvm_km_alloc(kernel_map, size, align, kmflags);
 	if (__predict_false(va == 0 && align > 0)) {
@@ -1494,7 +1510,7 @@ _bus_dmamem_mmap(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 
 		map_flags = 0;
 		if (flags & BUS_DMA_PREFETCHABLE)
-			map_flags |= ARM32_MMAP_WRITECOMBINE;
+			map_flags |= ARM_MMAP_WRITECOMBINE;
 
 		return arm_btop((u_long)segs[i].ds_addr + off) | map_flags;
 
@@ -1535,45 +1551,10 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 		/*
 		 * Get the physical address for this segment.
 		 *
-		 * XXX Doesn't support checking for coherent mappings
-		 * XXX in user address space.
 		 */
 		bool coherent;
-		if (__predict_true(pmap == pmap_kernel())) {
-			pd_entry_t *pde;
-			pt_entry_t *ptep;
-			(void) pmap_get_pde_pte(pmap, vaddr, &pde, &ptep);
-			if (__predict_false(pmap_pde_section(pde))) {
-				paddr_t s_frame = L1_S_FRAME;
-				paddr_t s_offset = L1_S_OFFSET;
-#if (ARM_MMU_V6 + ARM_MMU_V7) > 0
-				if (__predict_false(pmap_pde_supersection(pde))) {
-					s_frame = L1_SS_FRAME;
-					s_offset = L1_SS_OFFSET;
-				}
-#endif
-				curaddr = (*pde & s_frame) | (vaddr & s_offset);
-				coherent = (*pde & L1_S_CACHE_MASK) == 0;
-			} else {
-				pt_entry_t pte = *ptep;
-				KDASSERTMSG((pte & L2_TYPE_MASK) != L2_TYPE_INV,
-				    "va=%#"PRIxVADDR" pde=%#x ptep=%p pte=%#x",
-				    vaddr, *pde, ptep, pte);
-				if (__predict_false((pte & L2_TYPE_MASK)
-						    == L2_TYPE_L)) {
-					curaddr = (pte & L2_L_FRAME) |
-					    (vaddr & L2_L_OFFSET);
-					coherent = (pte & L2_L_CACHE_MASK) == 0;
-				} else {
-					curaddr = (pte & ~PAGE_MASK) |
-					    (vaddr & PAGE_MASK);
-					coherent = (pte & L2_S_CACHE_MASK) == 0;
-				}
-			}
-		} else {
-			(void) pmap_extract(pmap, vaddr, &curaddr);
-			coherent = false;
-		}
+		pmap_extract_coherency(pmap, vaddr, &curaddr, &coherent);
+
 		KASSERTMSG((vaddr & PAGE_MASK) == (curaddr & PAGE_MASK),
 		    "va %#lx curaddr %#lx", vaddr, curaddr);
 

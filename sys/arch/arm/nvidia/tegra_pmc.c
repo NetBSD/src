@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_pmc.c,v 1.11 2017/07/20 01:46:15 jmcneill Exp $ */
+/* $NetBSD: tegra_pmc.c,v 1.11.4.1 2018/04/07 04:12:12 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_pmc.c,v 1.11 2017/07/20 01:46:15 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_pmc.c,v 1.11.4.1 2018/04/07 04:12:12 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -105,7 +105,10 @@ tegra_pmc_get_bs(bus_space_tag_t *pbst, bus_space_handle_t *pbsh)
 		*pbst = pmc_softc->sc_bst;
 		*pbsh = pmc_softc->sc_bsh;
 	} else {
-		*pbst = &armv7_generic_bs_tag;
+		extern struct bus_space arm_generic_bs_tag;
+
+		*pbst = &arm_generic_bs_tag;
+
 		bus_space_subregion(*pbst, tegra_apb_bsh,
 		    TEGRA_PMC_OFFSET, TEGRA_PMC_SIZE, pbsh);
 	}

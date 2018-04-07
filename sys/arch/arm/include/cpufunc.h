@@ -42,12 +42,16 @@
 #ifndef _ARM_CPUFUNC_H_
 #define _ARM_CPUFUNC_H_
 
+#ifdef __arm__
+
 #ifdef _KERNEL
 
+#if !defined(_RUMPKERNEL)
+
 #include <sys/types.h>
+
 #include <arm/armreg.h>
 #include <arm/cpuconf.h>
-#include <arm/armreg.h>
 #include <arm/cpufunc_proto.h>
 
 struct cpu_functions {
@@ -408,6 +412,9 @@ extern u_int arm_dcache_align_mask;
 
 extern struct arm_cache_info arm_pcache;
 extern struct arm_cache_info arm_scache;
+
+#endif	/* _GRRRRUMP */
+
 #endif	/* _KERNEL */
 
 #if defined(_KERNEL) || defined(_KMEMUSER)
@@ -416,6 +423,10 @@ extern struct arm_cache_info arm_scache;
  */
 
 int get_pc_str_offset	(void);
+
+bool cpu_gtmr_exists_p(void);
+u_int cpu_clusterid(void);
+bool cpu_earlydevice_va_p(void);
 
 /*
  * Functions to manipulate cpu r13
@@ -426,6 +437,12 @@ void set_stackptr	(u_int, u_int);
 u_int get_stackptr	(u_int);
 
 #endif /* _KERNEL || _KMEMUSER */
+
+#elif defined(__aarch64__)
+
+#include <aarch64/cpufunc.h>
+
+#endif /* __arm__/__aarch64__ */
 
 #endif	/* _ARM_CPUFUNC_H_ */
 

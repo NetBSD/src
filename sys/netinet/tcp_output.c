@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.198.2.2 2018/03/30 06:20:16 pgoyette Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.198.2.3 2018/04/07 04:12:19 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -135,7 +135,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.198.2.2 2018/03/30 06:20:16 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.198.2.3 2018/04/07 04:12:19 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -194,10 +194,6 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.198.2.2 2018/03/30 06:20:16 pgoyett
 #include <netinet/in_offload.h>
 #include <netinet6/in6_offload.h>
 
-#ifdef notyet
-extern struct mbuf *m_copypack();
-#endif
-
 /*
  * Knob to enable Congestion Window Monitoring, and control
  * the burst size it allows.  Default burst is 4 packets, per
@@ -227,11 +223,7 @@ extern struct evcnt tcp_output_refbig;
 
 #endif /* TCP_OUTPUT_COUNTERS */
 
-static
-#ifndef GPROF
-inline
-#endif
-int
+static int
 tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep,
     bool *alwaysfragp)
 {
@@ -247,11 +239,10 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep,
 	int optlen;
 
 	*alwaysfragp = false;
+	size = tcp_mssdflt;
 
-#ifdef DIAGNOSTIC
-	if (tp->t_inpcb && tp->t_in6pcb)
-		panic("tcp_segsize: both t_inpcb and t_in6pcb are set");
-#endif
+	KASSERT(!(tp->t_inpcb && tp->t_in6pcb));
+
 	switch (tp->t_family) {
 	case AF_INET:
 		hdrlen = sizeof(struct ip) + sizeof(struct tcphdr);
@@ -262,7 +253,6 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep,
 		break;
 #endif
 	default:
-		size = tcp_mssdflt;
 		goto out;
 	}
 
@@ -278,13 +268,11 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep,
 	}
 #endif
 	if (rt == NULL) {
-		size = tcp_mssdflt;
 		goto out;
 	}
 
 	ifp = rt->rt_ifp;
 
-	size = tcp_mssdflt;
 	if (tp->t_mtudisc && rt->rt_rmx.rmx_mtu != 0) {
 #ifdef INET6
 		if (in6p && rt->rt_rmx.rmx_mtu < IPV6_MMTU) {
@@ -311,7 +299,7 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep,
 		if (IN6_IS_ADDR_V4MAPPED(&in6p->in6p_faddr)) {
 			/* mapped addr case */
 			struct in_addr d;
-			bcopy(&in6p->in6p_faddr.s6_addr32[3], &d, sizeof(d));
+			memcpy(&d, &in6p->in6p_faddr.s6_addr32[3], sizeof(d));
 			if (tp->t_mtudisc || in_localaddr(d))
 				size = ifp->if_mtu - hdrlen;
 		} else {
@@ -370,9 +358,13 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep,
 #endif
 	size -= optlen;
 
-	/* there may not be any room for data if mtu is too small */
-	if (size < 0)
-		return (EMSGSIZE);
+	/*
+	 * There may not be any room for data if mtu is too small. This
+	 * includes zero-sized.
+	 */
+	if (size <= 0) {
+		return EMSGSIZE;
+	}
 
 	/*
 	 * *rxsegsizep holds *estimated* inbound segment size (estimation
@@ -383,15 +375,17 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep,
 	 * I'm not quite sure about this (could someone comment).
 	 */
 	*txsegsizep = min(tp->t_peermss - optlen, size);
+	*rxsegsizep = min(tp->t_ourmss - optlen, size);
+
 	/*
 	 * Never send more than half a buffer full.  This insures that we can
 	 * always keep 2 packets on the wire, no matter what SO_SNDBUF is, and
 	 * therefore acks will never be delayed unless we run out of data to
 	 * transmit.
 	 */
-	if (so)
+	if (so) {
 		*txsegsizep = min(so->so_snd.sb_hiwat >> 1, *txsegsizep);
-	*rxsegsizep = min(tp->t_ourmss - optlen, size);
+	}
 
 	if (*txsegsizep != tp->t_segsz) {
 		/*
@@ -405,21 +399,17 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep,
 		 */
 		if (*txsegsizep < tp->t_segsz) {
 			tp->snd_cwnd = max((tp->snd_cwnd / tp->t_segsz)
-					   * *txsegsizep, *txsegsizep);
+			    * *txsegsizep, *txsegsizep);
 			tp->snd_ssthresh = max((tp->snd_ssthresh / tp->t_segsz)
-						* *txsegsizep, *txsegsizep);
+			    * *txsegsizep, *txsegsizep);
 		}
 		tp->t_segsz = *txsegsizep;
 	}
 
-	return (0);
+	return 0;
 }
 
-static
-#ifndef GPROF
-inline
-#endif
-int
+static int
 tcp_build_datapkt(struct tcpcb *tp, struct socket *so, int off,
     long len, int hdrlen, struct mbuf **mp)
 {
@@ -438,19 +428,10 @@ tcp_build_datapkt(struct tcpcb *tp, struct socket *so, int off,
 		tcps[TCP_STAT_SNDBYTE] += len;
 	}
 	TCP_STAT_PUTREF();
-#ifdef notyet
-	if ((m = m_copypack(so->so_snd.sb_mb, off,
-	    (int)len, max_linkhdr + hdrlen)) == 0)
-		return (ENOBUFS);
-	/*
-	 * m_copypack left space for our hdr; use it.
-	 */
-	m->m_len += hdrlen;
-	m->m_data -= hdrlen;
-#else
+
 	MGETHDR(m, M_DONTWAIT, MT_HEADER);
 	if (__predict_false(m == NULL))
-		return (ENOBUFS);
+		return ENOBUFS;
 	MCLAIM(m, &tcp_tx_mowner);
 
 	/*
@@ -464,7 +445,7 @@ tcp_build_datapkt(struct tcpcb *tp, struct socket *so, int off,
 		MCLGET(m, M_DONTWAIT);
 		if ((m->m_flags & M_EXT) == 0) {
 			m_freem(m);
-			return (ENOBUFS);
+			return ENOBUFS;
 		}
 	}
 
@@ -508,26 +489,25 @@ tcp_build_datapkt(struct tcpcb *tp, struct socket *so, int off,
 	off = tp->t_inoff;
 
 	if (len <= M_TRAILINGSPACE(m)) {
-		m_copydata(m0, off, (int) len, mtod(m, char *) + hdrlen);
+		m_copydata(m0, off, (int)len, mtod(m, char *) + hdrlen);
 		m->m_len += len;
 		TCP_OUTPUT_COUNTER_INCR(&tcp_output_copysmall);
 	} else {
-		m->m_next = m_copym(m0, off, (int) len, M_DONTWAIT);
+		m->m_next = m_copym(m0, off, (int)len, M_DONTWAIT);
 		if (m->m_next == NULL) {
 			m_freem(m);
-			return (ENOBUFS);
+			return ENOBUFS;
 		}
 #ifdef TCP_OUTPUT_COUNTERS
 		if (m->m_next->m_flags & M_EXT)
 			TCP_OUTPUT_COUNTER_INCR(&tcp_output_refbig);
 		else
 			TCP_OUTPUT_COUNTER_INCR(&tcp_output_copybig);
-#endif /* TCP_OUTPUT_COUNTERS */
-	}
 #endif
+	}
 
 	*mp = m;
-	return (0);
+	return 0;
 }
 
 /*
@@ -568,10 +548,8 @@ tcp_output(struct tcpcb *tp)
 #endif
 	uint64_t *tcps;
 
-#ifdef DIAGNOSTIC
-	if (tp->t_inpcb && tp->t_in6pcb)
-		panic("tcp_output: both t_inpcb and t_in6pcb are set");
-#endif
+	KASSERT(!(tp->t_inpcb && tp->t_in6pcb));
+
 	so = NULL;
 	ro = NULL;
 	if (tp->t_inpcb) {
@@ -594,19 +572,19 @@ tcp_output(struct tcpcb *tp)
 		if (tp->t_in6pcb)
 			break;
 #endif
-		return (EINVAL);
+		return EINVAL;
 #ifdef INET6
 	case AF_INET6:
 		if (tp->t_in6pcb)
 			break;
-		return (EINVAL);
+		return EINVAL;
 #endif
 	default:
-		return (EAFNOSUPPORT);
+		return EAFNOSUPPORT;
 	}
 
 	if (tcp_segsize(tp, &txsegsize, &rxsegsize, &alwaysfrag))
-		return (EMSGSIZE);
+		return EMSGSIZE;
 
 	idle = (tp->snd_max == tp->snd_una);
 
@@ -739,7 +717,7 @@ again:
 	 * now, and we previously incremented snd_cwnd in tcp_input().
 	 */
 	/*
-	 * Still in sack recovery , reset rxmit flag to zero.
+	 * Still in sack recovery, reset rxmit flag to zero.
 	 */
 	sack_rxmit = 0;
 	sack_bytes_rxmt = 0;
@@ -749,12 +727,12 @@ again:
 		long cwin;
 		if (!TCP_SACK_ENABLED(tp))
 			break;
-		if (tp->t_partialacks < 0) 
+		if (tp->t_partialacks < 0)
 			break;
 		p = tcp_sack_output(tp, &sack_bytes_rxmt);
 		if (p == NULL)
 			break;
-		
+
 		cwin = min(tp->snd_wnd, tp->snd_cwnd) - sack_bytes_rxmt;
 		if (cwin < 0)
 			cwin = 0;
@@ -844,14 +822,14 @@ again:
 			/*
 			 * From FreeBSD:
 			 *  Don't remove this (len > 0) check !
-			 *  We explicitly check for len > 0 here (although it 
-			 *  isn't really necessary), to work around a gcc 
+			 *  We explicitly check for len > 0 here (although it
+			 *  isn't really necessary), to work around a gcc
 			 *  optimization issue - to force gcc to compute
 			 *  len above. Without this check, the computation
 			 *  of len is bungled by the optimizer.
 			 */
 			if (len > 0) {
-				cwin = tp->snd_cwnd - 
+				cwin = tp->snd_cwnd -
 				    (tp->snd_nxt - tp->sack_newdata) -
 				    sack_bytes_rxmt;
 				if (cwin < 0)
@@ -1081,7 +1059,7 @@ dontupdate:
 	 */
 just_return:
 	TCP_REASS_UNLOCK(tp);
-	return (0);
+	return 0;
 
 send:
 	/*
@@ -1197,7 +1175,7 @@ send:
 		 */
 		if (!OPT_FITS(TCPOLEN_SIGNATURE))
 			goto reset;
-		
+
 		*optp++ = TCPOPT_SIGNATURE;
 		*optp++ = TCPOLEN_SIGNATURE;
 		sigoff = optlen + 2;
@@ -1205,7 +1183,7 @@ send:
 		optlen += TCPOLEN_SIGNATURE;
 		optp += TCP_SIGLEN;
 	}
-#endif /* TCP_SIGNATURE */
+#endif
 
 	/*
 	 * Tack on the SACK block if it is necessary.
@@ -1351,7 +1329,7 @@ reset:			TCP_REASS_UNLOCK(tp);
 		th = NULL;
 		break;
 	}
-	if (tp->t_template == 0)
+	if (tp->t_template == NULL)
 		panic("tcp_output");
 	if (tp->t_template->m_len < iphdrlen)
 		panic("tcp_output");
@@ -1391,12 +1369,11 @@ reset:			TCP_REASS_UNLOCK(tp);
 		if (tp->t_flags & TF_ECN_SND_CWR) {
 			flags |= TH_CWR;
 			tp->t_flags &= ~TF_ECN_SND_CWR;
-		} 
+		}
 		if (tp->t_flags & TF_ECN_SND_ECE) {
 			flags |= TH_ECE;
 		}
 	}
-
 
 	/*
 	 * If we are doing retransmissions, then snd_nxt will
@@ -1423,7 +1400,7 @@ reset:			TCP_REASS_UNLOCK(tp);
 	}
 	th->th_ack = htonl(tp->rcv_nxt);
 	if (optlen) {
-		bcopy((void *)opt, (void *)(th + 1), optlen);
+		memcpy(th + 1, opt, optlen);
 		th->th_off = (sizeof (struct tcphdr) + optlen) >> 2;
 	}
 	th->th_flags = flags;
@@ -1465,7 +1442,7 @@ reset:			TCP_REASS_UNLOCK(tp);
 		if (sav == NULL) {
 			if (m)
 				m_freem(m);
-			return (EPERM);
+			return EPERM;
 		}
 
 		m->m_pkthdr.len = hdrlen + len;
@@ -1689,12 +1666,12 @@ out:
 		if (tp->t_flags & TF_DELACK)
 			TCP_RESTART_DELACK(tp);
 
-		return (error);
+		return error;
 	}
 
 	if (packetlen > tp->t_pmtud_mtu_sent)
 		tp->t_pmtud_mtu_sent = packetlen;
-	
+
 	tcps = TCP_STAT_GETREF();
 	tcps[TCP_STAT_SNDTOTAL]++;
 	if (tp->t_flags & TF_DELACK)
@@ -1718,7 +1695,7 @@ out:
 #endif
 	if (sendalot && (tp->t_congctl == &tcp_reno_ctl || --maxburst))
 		goto again;
-	return (0);
+	return 0;
 }
 
 void

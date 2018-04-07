@@ -1,3 +1,4 @@
+/*	$NetBSD: rijndael.h,v 1.1.1.1.22.1 2018/04/07 04:11:48 pgoyette Exp $	*/
 /*	$OpenBSD: rijndael.h,v 1.14 2014/04/29 15:42:07 markus Exp $ */
 
 /**

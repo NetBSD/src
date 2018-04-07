@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.7 2005/06/04 16:17:17 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.7.82.1 2018/04/07 04:12:09 pgoyette Exp $
 
 SRCS+=		rtld_start.S mdreloc.c
 
@@ -6,5 +6,6 @@ SRCS+=		rtld_start.S mdreloc.c
 CPPFLAGS+=	-fPIC
 
 CPPFLAGS+=	-DELFSIZE=64
+CPPFLAGS+=	-DRTLD_COMMON_CALL_IFUNC_RELA
 
 LDFLAGS+=	-Wl,-e,.rtld_start

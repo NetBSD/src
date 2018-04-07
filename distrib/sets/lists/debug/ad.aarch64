@@ -1,4 +1,4 @@
-# $NetBSD: ad.aarch64,v 1.26 2017/08/31 22:19:51 christos Exp $
+# $NetBSD: ad.aarch64,v 1.26.2.1 2018/04/07 04:11:57 pgoyette Exp $
 ./usr/lib/eabi/libarm_g.a					comp-sys-debug	debuglib,compat
 ./usr/lib/eabi/libc_vfp_g.a					comp-sys-debug	debuglib,compat
 ./usr/lib/eabihf/libarm_g.a					comp-sys-debug	debuglib,compat
@@ -15,3 +15,5 @@
 ./usr/libdata/debug/usr/libexec/ld.elf_so-eabi.debug		comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/libexec/ld.elf_so-eabihf.debug		comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/libexec/ld.elf_so-oabi.debug		comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/sbin/ofctl.debug			comp-util-debug		debug
+./usr/libdata/debug/usr/sbin/tpctl.debug			comp-sysutil-debug	debug

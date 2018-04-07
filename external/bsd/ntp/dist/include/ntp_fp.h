@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_fp.h,v 1.9 2017/04/13 20:17:41 christos Exp $	*/
+/*	$NetBSD: ntp_fp.h,v 1.9.10.1 2018/04/07 04:12:00 pgoyette Exp $	*/
 
 /*
  * ntp_fp.h - definitions for NTP fixed/floating-point arithmetic
@@ -366,6 +366,7 @@ extern	void	init_systime	(void);
 extern	void	get_systime	(l_fp *);
 extern	int	step_systime	(double);
 extern	int	adj_systime	(double);
+extern	int	clamp_systime	(void);
 
 extern	struct tm * ntp2unix_tm (u_int32 ntp, int local);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_msg.c,v 1.71 2016/09/05 14:13:50 christos Exp $	*/
+/*	$NetBSD: sysv_msg.c,v 1.71.14.1 2018/04/07 04:12:19 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.71 2016/09/05 14:13:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.71.14.1 2018/04/07 04:12:19 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sysv.h"
@@ -315,8 +315,8 @@ msgrealloc(int newmsgmni, int newmsgseg)
 		memcpy(nmptr, mptr, sizeof(struct msqid_ds));
 
 		/*
-		 * Go through the message headers, and and copy each
-		 * one by taking the new ones, and thus defragmenting.
+		 * Go through the message headers, and copy each one
+		 * by taking the new ones, and thus defragmenting.
 		 */
 		nmsghdr = pmsghdr = NULL;
 		msghdr = mptr->_msg_first;

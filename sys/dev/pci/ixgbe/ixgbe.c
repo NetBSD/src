@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.128.2.3 2018/03/30 06:20:15 pgoyette Exp $ */
+/* $NetBSD: ixgbe.c,v 1.128.2.4 2018/04/07 04:12:18 pgoyette Exp $ */
 
 /******************************************************************************
 
@@ -32,7 +32,7 @@
   POSSIBILITY OF SUCH DAMAGE.
 
 ******************************************************************************/
-/*$FreeBSD: head/sys/dev/ixgbe/if_ix.c 320916 2017-07-12 17:35:32Z sbruno $*/
+/*$FreeBSD: head/sys/dev/ixgbe/if_ix.c 331224 2018-03-19 20:55:05Z erj $*/
 
 /*
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
 /************************************************************************
  * Driver version
  ************************************************************************/
-char ixgbe_driver_version[] = "3.2.12-k";
+char ixgbe_driver_version[] = "4.0.1-k";
 
 
 /************************************************************************
@@ -669,7 +669,6 @@ ixgbe_initialize_receive_units(struct adapter *adapter)
 
 	IXGBE_WRITE_REG(hw, IXGBE_RXCSUM, rxcsum);
 
-	return;
 } /* ixgbe_initialize_receive_units */
 
 /************************************************************************
@@ -680,9 +679,10 @@ ixgbe_initialize_transmit_units(struct adapter *adapter)
 {
 	struct tx_ring  *txr = adapter->tx_rings;
 	struct ixgbe_hw	*hw = &adapter->hw;
+	int i;
 
 	/* Setup the Base and Length of the Tx Descriptor Ring */
-	for (int i = 0; i < adapter->num_queues; i++, txr++) {
+	for (i = 0; i < adapter->num_queues; i++, txr++) {
 		u64 tdba = txr->txdma.dma_paddr;
 		u32 txctrl = 0;
 		int j = txr->me;
@@ -827,7 +827,7 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 	/*
 	 * Initialize the shared code
 	 */
-	if (ixgbe_init_shared_code(hw)) {
+	if (ixgbe_init_shared_code(hw) != 0) {
 		aprint_error_dev(dev, "Unable to initialize the shared code\n");
 		error = ENXIO;
 		goto err_out;
@@ -1378,6 +1378,8 @@ ixgbe_add_media_types(struct adapter *adapter)
 #define	ADD(mm, dd)							\
 	ifmedia_add(&adapter->media, IFM_ETHER | (mm), (dd), NULL);
 
+	ADD(IFM_NONE, 0);
+
 	/* Media types with matching NetBSD media defines */
 	if (layer & IXGBE_PHYSICAL_LAYER_10GBASE_T) {
 		ADD(IFM_10G_T | IFM_FDX, 0);
@@ -1464,23 +1466,23 @@ ixgbe_is_sfp(struct ixgbe_hw *hw)
 	switch (hw->mac.type) {
 	case ixgbe_mac_82598EB:
 		if (hw->phy.type == ixgbe_phy_nl)
-			return TRUE;
-		return FALSE;
+			return (TRUE);
+		return (FALSE);
 	case ixgbe_mac_82599EB:
 		switch (hw->mac.ops.get_media_type(hw)) {
 		case ixgbe_media_type_fiber:
 		case ixgbe_media_type_fiber_qsfp:
-			return TRUE;
+			return (TRUE);
 		default:
-			return FALSE;
+			return (FALSE);
 		}
 	case ixgbe_mac_X550EM_x:
 	case ixgbe_mac_X550EM_a:
 		if (hw->mac.ops.get_media_type(hw) == ixgbe_media_type_fiber)
-			return TRUE;
-		return FALSE;
+			return (TRUE);
+		return (FALSE);
 	default:
-		return FALSE;
+		return (FALSE);
 	}
 } /* ixgbe_is_sfp */
 
@@ -1498,35 +1500,39 @@ ixgbe_config_link(struct adapter *adapter)
 
 	if (sfp) { 
 		if (hw->phy.multispeed_fiber) {
-			hw->mac.ops.setup_sfp(hw);
 			ixgbe_enable_tx_laser(hw);
 			kpreempt_disable();
 			softint_schedule(adapter->msf_si);
 			kpreempt_enable();
-		} else {
-			kpreempt_disable();
-			softint_schedule(adapter->mod_si);
-			kpreempt_enable();
 		}
+		kpreempt_disable();
+		softint_schedule(adapter->mod_si);
+		kpreempt_enable();
 	} else {
+		struct ifmedia  *ifm = &adapter->media;
+
 		if (hw->mac.ops.check_link)
 			err = ixgbe_check_link(hw, &adapter->link_speed,
 			    &adapter->link_up, FALSE);
 		if (err)
-			goto out;
+			return;
+
+		/*
+		 * Check if it's the first call. If it's the first call,
+		 * get value for auto negotiation.
+		 */
 		autoneg = hw->phy.autoneg_advertised;
-		if ((!autoneg) && (hw->mac.ops.get_link_capabilities))
+		if ((IFM_SUBTYPE(ifm->ifm_cur->ifm_media) != IFM_NONE)
+		    && ((!autoneg) && (hw->mac.ops.get_link_capabilities)))
                 	err = hw->mac.ops.get_link_capabilities(hw, &autoneg,
 			    &negotiate);
 		if (err)
-			goto out;
+			return;
 		if (hw->mac.ops.setup_link)
                 	err = hw->mac.ops.setup_link(hw, autoneg,
 			    adapter->link_up);
 	}
-out:
 
-	return;
 } /* ixgbe_config_link */
 
 /************************************************************************
@@ -1685,6 +1691,7 @@ ixgbe_add_hw_stats(struct adapter *adapter)
 	struct ixgbe_hw *hw = &adapter->hw;
 	struct ixgbe_hw_stats *stats = &adapter->stats.pf;
 	const char *xname = device_xname(dev);
+	int i;
 
 	/* Driver Statistics */
 	evcnt_attach_dynamic(&adapter->efbig_tx_dma_setup, EVCNT_TYPE_MISC,
@@ -1716,7 +1723,7 @@ ixgbe_add_hw_stats(struct adapter *adapter)
 	evcnt_attach_dynamic(&adapter->phy_sicount, EVCNT_TYPE_INTR,
 	    NULL, xname, "external PHY softint");
 
-	for (int i = 0; i < adapter->num_queues; i++, rxr++, txr++) {
+	for (i = 0; i < adapter->num_queues; i++, rxr++, txr++) {
 #ifdef LRO
 		struct lro_ctrl *lro = &rxr->lro;
 #endif /* LRO */
@@ -2302,7 +2309,6 @@ ixgbe_get_slot_info(struct adapter *adapter)
 	device_t		dev = adapter->dev;
 	struct ixgbe_hw		*hw = &adapter->hw;
 	u32                   offset;
-//	struct ixgbe_mac_info	*mac = &hw->mac;
 	u16			link;
 	int                   bus_info_valid = TRUE;
 
@@ -2779,7 +2785,7 @@ ixgbe_media_change(struct ifnet *ifp)
 		return (EINVAL);
 
 	if (hw->phy.media_type == ixgbe_media_type_backplane)
-		return (ENODEV);
+		return (EPERM);
 
 	/*
 	 * We don't actually need to check against the supported
@@ -2828,6 +2834,8 @@ ixgbe_media_change(struct ifnet *ifp)
 		break;
 	case IFM_10_T:
 		speed |= IXGBE_LINK_SPEED_10_FULL;
+		break;
+	case IFM_NONE:
 		break;
 	default:
 		goto invalid;
@@ -3037,8 +3045,7 @@ ixgbe_eitr_write(struct ix_queue *que, uint32_t itr)
         else
                 itr |= IXGBE_EITR_CNT_WDIS;
 
-	IXGBE_WRITE_REG(&adapter->hw, IXGBE_EITR(que->msix),
-	    itr);
+	IXGBE_WRITE_REG(&adapter->hw, IXGBE_EITR(que->msix), itr);
 }
 
 
@@ -3710,7 +3717,7 @@ ixgbe_init_locked(struct adapter *adapter)
 	u32		txdctl, mhadd;
 	u32		rxdctl, rxctrl;
 	u32             ctrl_ext;
-	int             err = 0;
+	int             i, j, err;
 
 	/* XXX check IFF_UP and IFF_RUNNING, power-saving state! */
 
@@ -3748,7 +3755,9 @@ ixgbe_init_locked(struct adapter *adapter)
 	}
 
 	ixgbe_init_hw(hw);
+
 	ixgbe_initialize_iov(adapter);
+
 	ixgbe_initialize_transmit_units(adapter);
 
 	/* Setup Multicast table */
@@ -3783,7 +3792,7 @@ ixgbe_init_locked(struct adapter *adapter)
 	}
 
 	/* Now enable all the queues */
-	for (int i = 0; i < adapter->num_queues; i++) {
+	for (i = 0; i < adapter->num_queues; i++) {
 		txr = &adapter->tx_rings[i];
 		txdctl = IXGBE_READ_REG(hw, IXGBE_TXDCTL(txr->me));
 		txdctl |= IXGBE_TXDCTL_ENABLE;
@@ -3800,7 +3809,7 @@ ixgbe_init_locked(struct adapter *adapter)
 		IXGBE_WRITE_REG(hw, IXGBE_TXDCTL(txr->me), txdctl);
 	}
 
-	for (int i = 0, j = 0; i < adapter->num_queues; i++) {
+	for (i = 0; i < adapter->num_queues; i++) {
 		rxr = &adapter->rx_rings[i];
 		rxdctl = IXGBE_READ_REG(hw, IXGBE_RXDCTL(rxr->me));
 		if (hw->mac.type == ixgbe_mac_82598EB) {
@@ -3814,7 +3823,7 @@ ixgbe_init_locked(struct adapter *adapter)
 		}
 		rxdctl |= IXGBE_RXDCTL_ENABLE;
 		IXGBE_WRITE_REG(hw, IXGBE_RXDCTL(rxr->me), rxdctl);
-		for (; j < 10; j++) {
+		for (j = 0; j < 10; j++) {
 			if (IXGBE_READ_REG(hw, IXGBE_RXDCTL(rxr->me)) &
 			    IXGBE_RXDCTL_ENABLE)
 				break;
@@ -3862,7 +3871,7 @@ ixgbe_init_locked(struct adapter *adapter)
 
 	callout_reset(&adapter->timer, hz, ixgbe_local_timer, adapter);
 
-	/* Set up MSI-X routing */
+	/* Set up MSI/MSI-X routing */
 	if (adapter->feat_en & IXGBE_FEATURE_MSIX) {
 		ixgbe_configure_ivars(adapter);
 		/* Set up auto-mask */
@@ -3895,6 +3904,9 @@ ixgbe_init_locked(struct adapter *adapter)
 
 	/* Set moderation on the Link interrupt */
 	IXGBE_WRITE_REG(hw, IXGBE_EITR(adapter->vector), IXGBE_LINK_ITR);
+
+	/* Enable power to the phy. */
+	ixgbe_set_phy_power(hw, TRUE);
 
 	/* Config/Enable Link */
 	ixgbe_config_link(adapter);
@@ -4401,7 +4413,11 @@ ixgbe_handle_mod(void *context)
 		return;
 	}
 
-	err = hw->mac.ops.setup_sfp(hw);
+	if (hw->mac.type == ixgbe_mac_82598EB)
+		err = hw->phy.ops.reset(hw);
+	else
+		err = hw->mac.ops.setup_sfp(hw);
+
 	if (err == IXGBE_ERR_SFP_NOT_SUPPORTED) {
 		device_printf(dev,
 		    "Setup failure - unsupported SFP+ module type.\n");
@@ -4585,6 +4601,7 @@ ixgbe_update_link_status(struct adapter *adapter)
 			/* Update DMA coalescing config */
 			ixgbe_config_dmac(adapter);
 			if_link_state_change(ifp, LINK_STATE_UP);
+
 			if (adapter->feat_en & IXGBE_FEATURE_SRIOV)
 				ixgbe_ping_all_vfs(adapter);
 		}
@@ -4596,6 +4613,7 @@ ixgbe_update_link_status(struct adapter *adapter)
 			adapter->link_active = FALSE;
 			if (adapter->feat_en & IXGBE_FEATURE_SRIOV)
 				ixgbe_ping_all_vfs(adapter);
+			ixgbe_drain_all(adapter);
 		}
 	}
 } /* ixgbe_update_link_status */
@@ -4708,7 +4726,6 @@ ixgbe_enable_intr(struct adapter *adapter)
 
 	IXGBE_WRITE_FLUSH(hw);
 
-	return;
 } /* ixgbe_enable_intr */
 
 /************************************************************************
@@ -4878,8 +4895,6 @@ ixgbe_free_pciintr_resources(struct adapter *adapter)
 		    adapter->osdep.nintrs);
 		adapter->osdep.intrs = NULL;
 	}
-
-	return;
 } /* ixgbe_free_pciintr_resources */
 
 /************************************************************************
@@ -4897,7 +4912,6 @@ ixgbe_free_pci_resources(struct adapter *adapter)
 		    adapter->osdep.mem_size);
 	}
 
-	return;
 } /* ixgbe_free_pci_resources */
 
 /************************************************************************

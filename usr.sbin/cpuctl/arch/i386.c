@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.82.2.1 2018/03/15 09:12:08 pgoyette Exp $	*/
+/*	$NetBSD: i386.c,v 1.82.2.2 2018/04/07 04:12:21 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.82.2.1 2018/03/15 09:12:08 pgoyette Exp $");
+__RCSID("$NetBSD: i386.c,v 1.82.2.2 2018/04/07 04:12:21 pgoyette Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -381,9 +381,9 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				[0x5f] = "Atom (Goldmont, Denverton)",
 				[0x66] = "Future Core (Cannon Lake)",
 				[0x7a] = "Atom (Goldmont Plus)",
-				[0x85] = "Future Xeon Phi (Knights Mill)",
-				[0x8e] = "7th gen Core (Kaby Lake)",
-				[0x9e] = "7th gen Core (Kaby Lake)",
+				[0x85] = "Xeon Phi 7215, 7285, 7295 (Knights Mill)",
+				[0x8e] = "7th or 8th gen Core (Kaby Lake, Coffee Lake)",
+				[0x9e] = "7th or 8th gen Core (Kaby Lake, Coffee Lake)",
 			},
 			"Pentium Pro, II or III",	/* Default */
 			NULL,

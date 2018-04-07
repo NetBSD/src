@@ -1,33 +1,21 @@
-#	$NetBSD: files.bcm2835,v 1.29.2.1 2018/03/22 01:44:42 pgoyette Exp $
+#	$NetBSD: files.bcm2835,v 1.29.2.2 2018/04/07 04:12:11 pgoyette Exp $
 #
 # Configuration info for Broadcom BCM2835 ARM Peripherals
 #
 
-include "arch/arm/pic/files.pic"
-
-file	arch/arm/arm32/arm32_boot.c
-file	arch/arm/arm32/arm32_kvminit.c
-file	arch/arm/arm32/arm32_reboot.c
-file	arch/arm/arm32/irq_dispatch.S
-file	arch/arm/arm32/armv7_generic_space.c
-file	arch/arm/arm/arm_generic_dma.c
-file	arch/arm/arm/bus_space_a4x.S
+file	arch/arm/arm32/arm32_boot.c			arm32
+file	arch/arm/arm32/arm32_kvminit.c			arm32
+file	arch/arm/arm32/arm32_reboot.c			arm32
+file	arch/arm/arm32/irq_dispatch.S			arm32
+file	arch/arm/arm32/armv7_generic_space.c		arm32
+file	arch/arm/arm/bus_space_a4x.S			arm32
+#file	arch/arm/arm/arm_generic_dma.c
 
 file	arch/arm/broadcom/bcm2835_dma.c
 file	arch/arm/broadcom/bcm2835_mbox_subr.c
-
 file	arch/arm/broadcom/bcm283x_platform.c
 
-define mpcorebus { }
-
-# ARMv7 Generic Timer
-device armgtmr
-attach armgtmr at mpcorebus
-file	arch/arm/cortex/gtmr.c                  armgtmr
-
 define bcmmboxbus { }
-
-file	arch/arm/broadcom/bcm2835_space.c
 
 # Interrupt Controller (BCM2835_ARMICU_BASE) #, pic_splfuncs
 device	bcmicu: pic, pic_splfuncs
@@ -118,7 +106,20 @@ device	bcmpwm
 attach	bcmpwm at fdt with bcmpwm
 file	arch/arm/broadcom/bcm2835_pwm.c		bcmpwm		needs-flag
 
-# SOC parameters
-defflag	opt_bcm283x.h			SOC_BCM2836
-defflag	opt_bcm283x.h			SOC_BCM2835
+# VideoCore IV property interface
+file    arch/evbarm/rpi/vcprop_subr.c		bcmmbox
+makeoptions     "COPTS.vcprop_subr.c"+="-fno-stack-protector"
 
+# Raspberry Pi Mailbox interface
+device  vcmbox: sysmon_envsys
+attach  vcmbox at bcmmboxbus
+file    arch/evbarm/rpi/rpi_vcmbox.c            vcmbox
+
+# Maximum command-line length
+defparam opt_vcprop.h                           VCPROP_MAXCMDLINE
+defflag opt_rpi.h                               RPI_HWCURSOR
+
+# SOC parameters
+defflag	opt_bcm283x.h			SOC_BCM2835
+defflag	opt_bcm283x.h			SOC_BCM2836
+defflag opt_bcm283x.h			SOC_BCM2837: SOC_BCM2836

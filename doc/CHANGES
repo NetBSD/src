@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2363.2.3 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2363.2.4 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -131,3 +131,8 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 		[sevan 20180316]
 	tzdata updated to 2017d [kre 20180324]
 	dhcpcd: Import 7.0.2. [roy 20180327]
+	aarch64: Add initial support for aarch64. [ryo 20180401]
+	dhcpcd: Import 7.0.3. [roy 20180406]
+	OpenSSH: Imported 7.7. [christos 20180406]
+	OpenSSL: Imported 1.1.0h. [christos 20180406]
+	ntp: Import ntp 4.2.8p10. [christos 20180406]

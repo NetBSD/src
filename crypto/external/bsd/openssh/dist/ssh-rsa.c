@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh-rsa.c,v 1.14 2018/02/05 00:13:50 christos Exp $	*/
-/* $OpenBSD: ssh-rsa.c,v 1.62 2017/07/01 13:50:45 djm Exp $ */
+/*	$NetBSD: ssh-rsa.c,v 1.14.2.1 2018/04/07 04:11:48 pgoyette Exp $	*/
+/* $OpenBSD: ssh-rsa.c,v 1.66 2018/02/14 16:27:24 jsing Exp $ */
 /*
  * Copyright (c) 2000, 2003 Markus Friedl <markus@openbsd.org>
  *
@@ -17,7 +17,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-rsa.c,v 1.14 2018/02/05 00:13:50 christos Exp $");
+__RCSID("$NetBSD: ssh-rsa.c,v 1.14.2.1 2018/04/07 04:11:48 pgoyette Exp $");
 #include <sys/types.h>
 
 #include <openssl/evp.h>
@@ -31,6 +31,7 @@ __RCSID("$NetBSD: ssh-rsa.c,v 1.14 2018/02/05 00:13:50 christos Exp $");
 #define SSHKEY_INTERNAL
 #include "sshkey.h"
 #include "digest.h"
+#include "log.h"
 
 static int openssh_RSA_verify(int, u_char *, size_t, u_char *, size_t, RSA *);
 
@@ -76,7 +77,6 @@ rsa_hash_alg_nid(int type)
 	}
 }
 
-/* calculate p-1 and q-1 */
 int
 ssh_rsa_generate_additional_parameters(struct sshkey *key)
 {
@@ -96,6 +96,7 @@ ssh_rsa_generate_additional_parameters(struct sshkey *key)
 		goto out;
 	}
 	rsa = key->rsa;
+	BN_set_flags(aux, BN_FLG_CONSTTIME);
 
 	{
 	const BIGNUM *q, *d, *p;
@@ -131,7 +132,7 @@ ssh_rsa_sign(const struct sshkey *key, u_char **sigp, size_t *lenp,
     const u_char *data, size_t datalen, const char *alg_ident)
 {
 	u_char digest[SSH_DIGEST_MAX_LENGTH], *sig = NULL;
-	size_t slen;
+	size_t slen = 0;
 	u_int dlen, len;
 	int nid, hash_alg, ret = SSH_ERR_INTERNAL_ERROR;
 	struct sshbuf *b = NULL;
@@ -151,7 +152,7 @@ ssh_rsa_sign(const struct sshkey *key, u_char **sigp, size_t *lenp,
 	if (RSA_bits(key->rsa) < SSH_RSA_MINIMUM_MODULUS_SIZE)
 		return SSH_ERR_KEY_LENGTH;
 	slen = RSA_size(key->rsa);
-	if (slen <= 0 || slen > SSHBUF_MAX_BIGNUM)
+	if (slen == 0 || slen > SSHBUF_MAX_BIGNUM)
 		return SSH_ERR_INVALID_ARGUMENT;
 
 	/* hash the data */
@@ -200,21 +201,19 @@ ssh_rsa_sign(const struct sshkey *key, u_char **sigp, size_t *lenp,
 	ret = 0;
  out:
 	explicit_bzero(digest, sizeof(digest));
-	if (sig != NULL) {
-		explicit_bzero(sig, slen);
-		free(sig);
-	}
+	freezero(sig, slen);
 	sshbuf_free(b);
 	return ret;
 }
 
 int
 ssh_rsa_verify(const struct sshkey *key,
-    const u_char *sig, size_t siglen, const u_char *data, size_t datalen)
+    const u_char *sig, size_t siglen, const u_char *data, size_t datalen,
+    const char *alg)
 {
-	char *ktype = NULL;
+	char *sigtype = NULL;
 	int hash_alg, ret = SSH_ERR_INTERNAL_ERROR;
-	size_t len, diff, modlen, dlen;
+	size_t len = 0, diff, modlen, dlen;
 	struct sshbuf *b = NULL;
 	u_char digest[SSH_DIGEST_MAX_LENGTH], *osigblob, *sigblob = NULL;
 
@@ -227,11 +226,19 @@ ssh_rsa_verify(const struct sshkey *key,
 
 	if ((b = sshbuf_from(sig, siglen)) == NULL)
 		return SSH_ERR_ALLOC_FAIL;
-	if (sshbuf_get_cstring(b, &ktype, NULL) != 0) {
+	if (sshbuf_get_cstring(b, &sigtype, NULL) != 0) {
 		ret = SSH_ERR_INVALID_FORMAT;
 		goto out;
 	}
-	if ((hash_alg = rsa_hash_alg_from_ident(ktype)) == -1) {
+	/* XXX djm: need cert types that reliably yield SHA-2 signatures */
+	if (alg != NULL && strcmp(alg, sigtype) != 0 &&
+	    strcmp(alg, "ssh-rsa-cert-v01@openssh.com") != 0) {
+		error("%s: RSA signature type mismatch: "
+		    "expected %s received %s", __func__, alg, sigtype);
+		ret = SSH_ERR_SIGNATURE_INVALID;
+		goto out;
+	}
+	if ((hash_alg = rsa_hash_alg_from_ident(sigtype)) == -1) {
 		ret = SSH_ERR_KEY_TYPE_MISMATCH;
 		goto out;
 	}
@@ -271,11 +278,8 @@ ssh_rsa_verify(const struct sshkey *key,
 	ret = openssh_RSA_verify(hash_alg, digest, dlen, sigblob, len,
 	    key->rsa);
  out:
-	if (sigblob != NULL) {
-		explicit_bzero(sigblob, len);
-		free(sigblob);
-	}
-	free(ktype);
+	freezero(sigblob, len);
+	free(sigtype);
 	sshbuf_free(b);
 	explicit_bzero(digest, sizeof(digest));
 	return ret;
@@ -396,9 +400,6 @@ openssh_RSA_verify(int hash_alg, u_char *hash, size_t hashlen,
 	}
 	ret = 0;
 done:
-	if (decrypted) {
-		explicit_bzero(decrypted, rsasize);
-		free(decrypted);
-	}
+	freezero(decrypted, rsasize);
 	return ret;
 }

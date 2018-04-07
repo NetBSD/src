@@ -1,4 +1,4 @@
-/* $NetBSD: simplefb.c,v 1.3 2017/12/18 19:06:32 jmcneill Exp $ */
+/* $NetBSD: simplefb.c,v 1.3.2.1 2018/04/07 04:12:14 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_wsdisplay_compat.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: simplefb.c,v 1.3 2017/12/18 19:06:32 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: simplefb.c,v 1.3.2.1 2018/04/07 04:12:14 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -146,7 +146,8 @@ simplefb_attach_genfb(struct simplefb_softc *sc)
 		return ENXIO;
 	}
 
-	if (bus_space_map(sc->sc_bst, addr, size, BUS_SPACE_MAP_LINEAR,
+	if (bus_space_map(sc->sc_bst, addr, size,
+	    BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_PREFETCHABLE,
 	    &sc->sc_bsh) != 0) {
 		aprint_error(": failed to map fb\n");
 		return ENXIO;
@@ -159,7 +160,7 @@ simplefb_attach_genfb(struct simplefb_softc *sc)
 	prop_dictionary_set_uint8(dict, "depth", depth);
 	prop_dictionary_set_uint16(dict, "linebytes", stride);
 	prop_dictionary_set_uint32(dict, "address", addr);
-	prop_dictionary_set_uint32(dict, "virtual_address",
+	prop_dictionary_set_uint64(dict, "virtual_address",
 	    (uintptr_t)bus_space_vaddr(sc->sc_bst, sc->sc_bsh));
 
 	genfb_init(&sc->sc_gen);

@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_82598.c,v 1.10 2017/12/06 04:08:50 msaitoh Exp $ */
+/* $NetBSD: ixgbe_82598.c,v 1.10.2.1 2018/04/07 04:12:18 pgoyette Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -33,7 +33,7 @@
   POSSIBILITY OF SUCH DAMAGE.
 
 ******************************************************************************/
-/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_82598.c 320688 2017-07-05 17:27:03Z erj $*/
+/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_82598.c 331224 2018-03-19 20:55:05Z erj $*/
 
 #include "ixgbe_type.h"
 #include "ixgbe_82598.h"
@@ -552,6 +552,7 @@ out:
 /**
  *  ixgbe_start_mac_link_82598 - Configures MAC link settings
  *  @hw: pointer to hardware structure
+ *  @autoneg_wait_to_complete: TRUE when waiting for completion is needed
  *
  *  Configures link settings based on values in the ixgbe_hw struct.
  *  Restarts the link.  Performs autonegotiation if needed.
@@ -1209,7 +1210,7 @@ s32 ixgbe_read_i2c_eeprom_82598(struct ixgbe_hw *hw, u8 byte_offset,
  *  ixgbe_read_i2c_sff8472_82598 - Reads 8 bit word over I2C interface.
  *  @hw: pointer to hardware structure
  *  @byte_offset: byte offset at address 0xA2
- *  @eeprom_data: value read
+ *  @sff8472_data: value read
  *
  *  Performs 8 byte read operation to SFP module's SFF-8472 data over I2C
  **/

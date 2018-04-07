@@ -1,3 +1,4 @@
+/*	$NetBSD: rijndael.c,v 1.1.1.3.20.1 2018/04/07 04:11:48 pgoyette Exp $	*/
 /*	$OpenBSD: rijndael.c,v 1.20 2015/03/16 11:09:52 djm Exp $ */
 
 /**
@@ -26,6 +27,8 @@
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "includes.h"
+__RCSID("$NetBSD: rijndael.c,v 1.1.1.3.20.1 2018/04/07 04:11:48 pgoyette Exp $");
 #include <sys/types.h>
 
 #include "rijndael.h"

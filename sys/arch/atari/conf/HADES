@@ -1,12 +1,12 @@
 #
-# $NetBSD: HADES,v 1.112 2018/01/20 16:30:57 tsutsui Exp $
+# $NetBSD: HADES,v 1.112.2.1 2018/04/07 04:12:12 pgoyette Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
-#		NetBSD: HADES.in,v 1.15 2016/12/13 20:42:16 christos Exp $
-#		NetBSD: GENERIC.in,v 1.114 2017/09/14 07:58:39 mrg Exp $
+#		NetBSD: HADES.in,v 1.16 2018/03/31 04:19:41 tsutsui Exp $
+#		NetBSD: GENERIC.in,v 1.115 2018/01/23 14:47:54 sevan Exp $
 include "arch/atari/conf/std.hades"
 options INCLUDE_CONFIG_FILE # embed config file in kernel binary
 makeoptions COPTS="-O2 -fno-reorder-blocks" # see share/mk/sys.mk
@@ -115,7 +115,3 @@ ss* at scsibus? target ? lun ? # SCSI scanners
 se* at scsibus? target ? lun ? # SCSI ethernet
 uk* at scsibus? target ? lun ? # SCSI unknown
 ne0 at isa0 port 0x300 irq 5 # NE2000 ethernet
-ep* at pci0 dev ? function 0 # 3Com 3c59x/3c90x Ethernet
-eso* at pci? dev ? function ? # ESS Solo-1 PCI AudioDrive
-audio* at eso?
-spkr* at audio? # PC speaker (synthesized)

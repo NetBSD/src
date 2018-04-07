@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.122 2018/01/10 10:56:30 knakahara Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.122.2.1 2018/04/07 04:12:19 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -68,22 +68,10 @@ struct ipflow {
 
 /*
  * IP sequence queue structure.
- *
- * XXX -- The following explains why the ipqe_m field is here, for TCP's use:
- * We want to avoid doing m_pullup on incoming packets but that
- * means avoiding dtom on the tcp reassembly code.  That in turn means
- * keeping an mbuf pointer in the reassembly queue (since we might
- * have a cluster).  As a quick hack, the source & destination
- * port numbers (which are no longer needed once we've located the
- * tcpcb) are overlayed with an mbuf pointer.
  */
 TAILQ_HEAD(ipqehead, ipqent);
 struct ipqent {
 	TAILQ_ENTRY(ipqent) ipqe_q;
-	union {
-		struct ip	*_ip;
-		struct tcpiphdr *_tcp;
-	} _ipqe_u1;
 	struct mbuf	*ipqe_m;	/* point to first mbuf */
 	struct mbuf	*ipre_mlast;	/* point to last mbuf */
 	u_int8_t	ipqe_mff;	/* for IP fragmentation */
@@ -95,7 +83,6 @@ struct ipqent {
 	u_int32_t ipqe_len;
 	u_int32_t ipqe_flags;
 };
-#define	ipqe_tcp	_ipqe_u1._tcp
 
 /*
  * Structure stored in mbuf in inpcb.ip_options

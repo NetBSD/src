@@ -30,7 +30,7 @@
   POSSIBILITY OF SUCH DAMAGE.
 
 ******************************************************************************/
-/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_x550.c 320688 2017-07-05 17:27:03Z erj $*/
+/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_x550.c 331224 2018-03-19 20:55:05Z erj $*/
 
 #include "ixgbe_x550.h"
 #include "ixgbe_x540.h"
@@ -41,6 +41,9 @@
 #include <dev/mii/mii.h>
 
 static s32 ixgbe_setup_ixfi_x550em(struct ixgbe_hw *hw, ixgbe_link_speed *speed);
+static s32 ixgbe_setup_mac_link_sfp_x550a(struct ixgbe_hw *hw,
+				    ixgbe_link_speed speed,
+				    bool autoneg_wait_to_complete);
 static s32 ixgbe_acquire_swfw_sync_X550a(struct ixgbe_hw *, u32 mask);
 static void ixgbe_release_swfw_sync_X550a(struct ixgbe_hw *, u32 mask);
 static s32 ixgbe_read_mng_if_sel_x550em(struct ixgbe_hw *hw);
@@ -566,8 +569,15 @@ static s32 ixgbe_get_phy_id_fw(struct ixgbe_hw *hw)
 		if (phy_speeds & ixgbe_fw_map[i].fw_speed)
 			hw->phy.speeds_supported |= ixgbe_fw_map[i].phy_speed;
 	}
+
+#if 0
+	/*
+	 *  Don't set autoneg_advertised here to not to be inconsistent with
+	 * if_media value.
+	 */
 	if (!hw->phy.autoneg_advertised)
 		hw->phy.autoneg_advertised = hw->phy.speeds_supported;
+#endif
 
 	hw->phy.id = info[0] & FW_PHY_INFO_ID_HI_MASK;
 	phy_id_lo = info[1] & FW_PHY_INFO_ID_LO_MASK;
@@ -1831,6 +1841,8 @@ static s32 ixgbe_restart_an_internal_phy_x550em(struct ixgbe_hw *hw)
 /**
  * ixgbe_setup_sgmii - Set up link for sgmii
  * @hw: pointer to hardware structure
+ * @speed: new link speed
+ * @autoneg_wait: TRUE when waiting for completion is needed
  */
 static s32 ixgbe_setup_sgmii(struct ixgbe_hw *hw, ixgbe_link_speed speed,
 			     bool autoneg_wait)
@@ -1898,6 +1910,8 @@ static s32 ixgbe_setup_sgmii(struct ixgbe_hw *hw, ixgbe_link_speed speed,
 /**
  * ixgbe_setup_sgmii_fw - Set up link for internal PHY SGMII auto-negotiation
  * @hw: pointer to hardware structure
+ * @speed: new link speed
+ * @autoneg_wait: TRUE when waiting for completion is needed
  */
 static s32 ixgbe_setup_sgmii_fw(struct ixgbe_hw *hw, ixgbe_link_speed speed,
 				bool autoneg_wait)
@@ -2766,6 +2780,8 @@ s32 ixgbe_setup_kr_x550em(struct ixgbe_hw *hw)
 /**
  *  ixgbe_setup_mac_link_sfp_x550em - Setup internal/external the PHY for SFP
  *  @hw: pointer to hardware structure
+ *  @speed: new link speed
+ *  @autoneg_wait_to_complete: unused
  *
  *  Configure the external PHY and the integrated KR PHY for SFP support.
  **/
@@ -2840,6 +2856,9 @@ static s32 ixgbe_setup_sfi_x550a(struct ixgbe_hw *hw, ixgbe_link_speed *speed)
 	case IXGBE_LINK_SPEED_1GB_FULL:
 		reg_val |= IXGBE_KRM_PMD_FLX_MASK_ST20_SPEED_1G;
 		break;
+	case 0:
+		/* media none (linkdown) */
+		break;
 	default:
 		/* Other link speeds are not supported by internal PHY. */
 		return IXGBE_ERR_LINK_SETUP;
@@ -2858,10 +2877,12 @@ static s32 ixgbe_setup_sfi_x550a(struct ixgbe_hw *hw, ixgbe_link_speed *speed)
 /**
  *  ixgbe_setup_mac_link_sfp_x550a - Setup internal PHY for SFP
  *  @hw: pointer to hardware structure
+ *  @speed: new link speed
+ *  @autoneg_wait_to_complete: unused
  *
  *  Configure the the integrated PHY for SFP support.
  **/
-s32 ixgbe_setup_mac_link_sfp_x550a(struct ixgbe_hw *hw,
+static s32 ixgbe_setup_mac_link_sfp_x550a(struct ixgbe_hw *hw,
 				    ixgbe_link_speed speed,
 				    bool autoneg_wait_to_complete)
 {
@@ -3479,6 +3500,8 @@ out:
  * @ptr: pointer offset in eeprom
  * @size: size of section pointed by ptr, if 0 first word will be used as size
  * @csum: address of checksum to update
+ * @buffer: pointer to buffer containing calculated checksum
+ * @buffer_size: size of buffer
  *
  * Returns error status for any failure
  */
@@ -3850,6 +3873,7 @@ s32 ixgbe_get_bus_info_X550em(struct ixgbe_hw *hw)
 
 /**
  * ixgbe_disable_rx_x550 - Disable RX unit
+ * @hw: pointer to hardware structure
  *
  * Enables the Rx DMA unit for x550
  **/
@@ -4494,6 +4518,7 @@ static void ixgbe_release_swfw_sync_X550a(struct ixgbe_hw *hw, u32 mask)
  *  ixgbe_read_phy_reg_x550a  - Reads specified PHY register
  *  @hw: pointer to hardware structure
  *  @reg_addr: 32 bit address of PHY register to read
+ *  @device_type: 5 bit device type
  *  @phy_data: Pointer to read data from PHY register
  *
  *  Reads a value from a specified PHY register using the SWFW lock and PHY

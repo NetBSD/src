@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.46 2017/11/06 21:16:04 joerg Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.46.2.1 2018/04/07 04:12:09 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -68,7 +68,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.46 2017/11/06 21:16:04 joerg Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.46.2.1 2018/04/07 04:12:09 pgoyette Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -261,6 +261,14 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 			rdbg(("COPY"));
 			break;
 
+		case R_TYPE(IRELATIVE):
+			/* IFUNC relocations are handled in _rtld_call_ifunc */
+			if (obj->ifunc_remaining_nonplt == 0) {
+				obj->ifunc_remaining_nonplt =
+				    obj->relalim - rela;
+			}
+			break;
+
 		default:
 			rdbg(("sym = %lu, type = %lu, offset = %p, "
 			    "addend = %p, contents = %p, symbol = %s",
@@ -297,27 +305,6 @@ _rtld_relocate_plt_lazy(Obj_Entry *obj)
 	}
 
 	return 0;
-}
-
-void
-_rtld_call_ifunc(Obj_Entry *obj, sigset_t *mask, u_int cur_objgen)
-{
-	const Elf_Rela *rela;
-	Elf_Addr *where, target;
-
-	while (obj->ifunc_remaining > 0 && _rtld_objgen == cur_objgen) {
-		rela = obj->pltrelalim - obj->ifunc_remaining;
-		--obj->ifunc_remaining;
-		if (ELF_R_TYPE(rela->r_info) == R_TYPE(IRELATIVE)) {
-			where = (Elf_Addr *)(obj->relocbase + rela->r_offset);
-			target = (Elf_Addr)(obj->relocbase + rela->r_addend);
-			_rtld_exclusive_exit(mask);
-			target = _rtld_resolve_ifunc2(obj, target);
-			_rtld_exclusive_enter(mask);
-			if (*where != target)
-				*where = target;
-		}
-	}
 }
 
 static inline int

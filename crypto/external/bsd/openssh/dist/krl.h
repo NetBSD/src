@@ -1,3 +1,4 @@
+/*	$NetBSD: krl.h,v 1.1.1.3.20.1 2018/04/07 04:11:48 pgoyette Exp $	*/
 /*
  * Copyright (c) 2012 Damien Miller <djm@mindrot.org>
  *

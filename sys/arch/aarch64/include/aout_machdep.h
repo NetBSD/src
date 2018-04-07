@@ -1,4 +1,4 @@
-/* $NetBSD: aout_machdep.h,v 1.1 2014/08/10 05:47:37 matt Exp $ */
+/* $NetBSD: aout_machdep.h,v 1.1.28.1 2018/04/07 04:12:11 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -32,17 +32,6 @@
 #ifndef _AARCH64_AOUT_MACHDEP_H_
 #define	_AARCH64_AOUT_MACHDEP_H_
 
-#ifdef __aarch64__
-
-#define cpu_exec_aout_makecmds(p, epp)	ENOEXEC
-
-/* Size of a page in an object file. */
-#define	AOUT_LDPGSZ	4096
-
-#elif defined(__arm__)
-
 #include <arm/aout_machdep.h>
-
-#endif
 
 #endif /* !_AARCH64_AOUT_MACHDEP_H_ */

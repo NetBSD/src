@@ -1,4 +1,4 @@
-# $NetBSD: files.fdt,v 1.22 2017/10/22 13:56:49 jmcneill Exp $
+# $NetBSD: files.fdt,v 1.22.4.1 2018/04/07 04:12:14 pgoyette Exp $
 
 include	"external/bsd/libfdt/conf/files.libfdt"
 
@@ -33,6 +33,16 @@ file	dev/fdt/gpiokeys.c			gpiokeys
 device	gpioleds: leds
 attach	gpioleds at fdt
 file	dev/fdt/gpioleds.c			gpioleds
+
+file	dev/fdt/fdt_port.c			fdt_port
+
+device	connector: fdt_port
+attach	connector at fdt with fdt_connector
+file	dev/fdt/connector_fdt.c			fdt_connector
+
+device	panel: fdt_port
+attach	panel at fdt with fdt_panel
+file	dev/fdt/panel_fdt.c			fdt_panel
 
 file	dev/fdt/fdt_openfirm.c			fdtbus
 file	dev/fdt/fdt_subr.c			fdtbus

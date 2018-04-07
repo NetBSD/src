@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.179.2.2 2018/03/30 23:56:18 pgoyette Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.179.2.3 2018/04/07 04:12:19 pgoyette Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.179.2.2 2018/03/30 23:56:18 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.179.2.3 2018/04/07 04:12:19 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"

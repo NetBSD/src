@@ -1,5 +1,5 @@
-/*	$NetBSD: misc.h,v 1.13 2017/10/07 19:39:19 christos Exp $	*/
-/* $OpenBSD: misc.h,v 1.63 2017/08/18 05:48:04 djm Exp $ */
+/*	$NetBSD: misc.h,v 1.13.2.1 2018/04/07 04:11:48 pgoyette Exp $	*/
+/* $OpenBSD: misc.h,v 1.71 2018/03/12 00:52:01 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -49,13 +49,18 @@ char	*strdelim(char **);
 int	 set_nonblock(int);
 int	 unset_nonblock(int);
 void	 set_nodelay(int);
+int	 set_reuseaddr(int);
+char	*get_rdomain(int);
+int	 set_rdomain(int, const char *);
 int	 a2port(const char *);
 int	 a2tun(const char *, int *);
 char	*put_host_port(const char *, u_short);
 char	*hpdelim(char **);
 char	*cleanhostname(char *);
 char	*colon(char *);
+int	 parse_user_host_path(const char *, char **, char **, const char **);
 int	 parse_user_host_port(const char *, char **, char **, int *);
+int	 parse_uri(const char *, const char *, char **, char **, int *, const char **);
 long	 convtime(const char *);
 char	*tilde_expand_filename(const char *, uid_t);
 char	*percent_expand(const char *, ...)
@@ -68,10 +73,16 @@ void	 sanitise_stdfd(void);
 struct timeval;
 void	 ms_subtract_diff(struct timeval *, int *);
 void	 ms_to_timeval(struct timeval *, int);
+void	 monotime_ts(struct timespec *);
+void	 monotime_tv(struct timeval *);
 time_t	 monotime(void);
 double	 monotime_double(void);
 void	 lowercase(char *s);
 int	 unix_listener(const char *, int, int);
+int	 valid_domain(char *, int, const char **);
+const char *atoi_err(const char *, int *);
+int	 parse_absolute_time(const char *, uint64_t *);
+void	 format_absolute_time(uint64_t, char *, size_t);
 
 int	bcrypt_pbkdf(const char *, size_t, const u_int8_t *, size_t,
     u_int8_t *, size_t, unsigned int);
@@ -91,7 +102,7 @@ void	 replacearg(arglist *, u_int, const char *, ...)
 	     __attribute__((format(printf, 3, 4)));
 void	 freeargs(arglist *);
 
-int	 tun_open(int, int);
+int	 tun_open(int, int, char **);
 
 /* Common definitions for ssh tunnel device forwarding */
 #define SSH_TUNMODE_NO		0x00
@@ -146,12 +157,6 @@ void	 child_set_env(char ***envp, u_int *envsizep, const char *name,
 int	 argv_split(const char *, int *, char ***);
 char	*argv_assemble(int, char **argv);
 int	 exited_cleanly(pid_t, const char *, const char *, int);
-
-#define SSH_SUBPROCESS_STDOUT_DISCARD	(1)	/* Discard stdout */
-#define SSH_SUBPROCESS_STDOUT_CAPTURE	(1<<1)	/* Redirect stdout */
-#define SSH_SUBPROCESS_STDERR_DISCARD	(1<<2)	/* Discard stderr */
-pid_t	 subprocess(const char *, struct passwd *,
-    const char *, int, char **, FILE **, u_int flags);
 
 struct stat;
 int	 safe_path(const char *, struct stat *, const char *, uid_t,

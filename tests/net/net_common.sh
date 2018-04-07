@@ -1,4 +1,4 @@
-#	$NetBSD: net_common.sh,v 1.26 2018/02/01 05:22:01 ozaki-r Exp $
+#	$NetBSD: net_common.sh,v 1.26.2.1 2018/04/07 04:12:20 pgoyette Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -319,19 +319,23 @@ rump_server_add_iface()
 rump_server_destroy_ifaces()
 {
 	local backup=$RUMP_SERVER
+	local outout=ignore
 
 	$DEBUG && cat $_rump_server_ifaces
 
 	# Try to dump states before destroying interfaces
 	for sock in $(cat $_rump_server_socks); do
 		export RUMP_SERVER=$sock
-		atf_check -s exit:0 -o ignore rump.ifconfig
-		atf_check -s exit:0 -o ignore rump.netstat -nr
+		if $DEBUG; then
+			output=save:/dev/stdout
+		fi
+		atf_check -s exit:0 -o $output rump.ifconfig
+		atf_check -s exit:0 -o $output rump.netstat -nr
 		# XXX still need hijacking
-		atf_check -s exit:0 -o ignore $HIJACKING rump.netstat -nai
-		atf_check -s exit:0 -o ignore rump.arp -na
-		atf_check -s exit:0 -o ignore rump.ndp -na
-		atf_check -s exit:0 -o ignore $HIJACKING ifmcstat
+		atf_check -s exit:0 -o $output $HIJACKING rump.netstat -nai
+		atf_check -s exit:0 -o $output rump.arp -na
+		atf_check -s exit:0 -o $output rump.ndp -na
+		atf_check -s exit:0 -o $output $HIJACKING ifmcstat
 	done
 
 	# XXX using pipe doesn't work. See PR bin/51667

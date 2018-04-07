@@ -1,4 +1,4 @@
-#	$NetBSD: t_arp.sh,v 1.34 2017/11/23 06:22:12 kre Exp $
+#	$NetBSD: t_arp.sh,v 1.34.2.1 2018/04/07 04:12:20 pgoyette Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -41,6 +41,7 @@ atf_test_case arp_cache_expiration_5s cleanup
 atf_test_case arp_cache_expiration_10s cleanup
 atf_test_case arp_command cleanup
 atf_test_case arp_garp cleanup
+atf_test_case arp_garp_without_dad cleanup
 atf_test_case arp_cache_overwriting cleanup
 atf_test_case arp_proxy_arp_pub cleanup
 atf_test_case arp_proxy_arp_pubproxy cleanup
@@ -68,6 +69,13 @@ arp_command_head()
 arp_garp_head()
 {
 	atf_set "descr" "Tests for GARP"
+	atf_set "require.progs" "rump_server"
+}
+
+arp_garp_without_dad_head()
+{
+
+	atf_set "descr" "Tests for GARP with DAD disabled"
 	atf_set "require.progs" "rump_server"
 }
 
@@ -292,48 +300,103 @@ make_pkt_str_arpreq()
 {
 	local target=$1
 	local sender=$2
-	pkt="> ff:ff:ff:ff:ff:ff, ethertype ARP (0x0806), length 42:"
+	pkt="> ff:ff:ff:ff:ff:ff, ethertype ARP \(0x0806\), length 42:"
 	pkt="$pkt Request who-has $target tell $sender, length 28"
 	echo $pkt
 }
 
-arp_garp_body()
+test_garp_common()
 {
+	local no_dad=$1
 	local pkt=
 
 	rump_server_start $SOCKSRC
 
 	export RUMP_SERVER=$SOCKSRC
 
+	if $no_dad; then
+		atf_check -s exit:0 -o match:'3 -> 0' \
+		    rump.sysctl -w net.inet.ip.dad_count=0
+	fi
+
 	# Setup an interface
 	rump_server_add_iface $SOCKSRC shmif0 bus1
 	atf_check -s exit:0 rump.ifconfig shmif0 inet 10.0.0.1/24
-	atf_check -s exit:0 rump.ifconfig shmif0 inet 10.0.0.2/24 alias
 	atf_check -s exit:0 rump.ifconfig shmif0 up
 	$DEBUG && rump.ifconfig shmif0
 
 	atf_check -s exit:0 sleep 1
-	shmif_dumpbus -p - bus1 2>/dev/null| tcpdump -n -e -r - > ./out
+	extract_new_packets bus1 > ./out
 
+	#
+	# Assign an address to an interface without IFF_UP
+	#
 	# A GARP packet is sent for the primary address
 	pkt=$(make_pkt_str_arpreq 10.0.0.1 10.0.0.1)
-	atf_check -s exit:0 -x "cat ./out |grep -q '$pkt'"
-	# No GARP packet is sent for the alias address
-	pkt=$(make_pkt_str_arpreq 10.0.0.2 10.0.0.2)
-	atf_check -s not-exit:0 -x "cat ./out |grep -q '$pkt'"
+	atf_check -s exit:0 -o match:"$pkt" cat ./out
 
-	atf_check -s exit:0 rump.ifconfig -w 10
+	atf_check -s exit:0 rump.ifconfig shmif0 down
+	atf_check -s exit:0 rump.ifconfig shmif0 inet 10.0.0.2/24 alias
+
+	atf_check -s exit:0 sleep 1
+	extract_new_packets bus1 > ./out
+
+	# A GARP packet is sent for the alias address
+	pkt=$(make_pkt_str_arpreq 10.0.0.2 10.0.0.2)
+	atf_check -s exit:0 -o match:"$pkt" cat ./out
+
+	# Clean up
+	atf_check -s exit:0 rump.ifconfig shmif0 inet 10.0.0.1/24 delete
+	atf_check -s exit:0 rump.ifconfig shmif0 inet 10.0.0.2/24 delete
+
+	#
+	# Assign an address to an interface with IFF_UP
+	#
+	atf_check -s exit:0 rump.ifconfig shmif0 up
+
+	# Primary address
 	atf_check -s exit:0 rump.ifconfig shmif0 inet 10.0.0.3/24
+
+	atf_check -s exit:0 sleep 1
+	extract_new_packets bus1 > ./out
+
+	pkt=$(make_pkt_str_arpreq 10.0.0.3 10.0.0.3)
+	if $no_dad; then
+		# A GARP packet is sent
+		atf_check -s exit:0 -o match:"$pkt" cat ./out
+	else
+		# No GARP packet is sent
+		atf_check -s exit:0 -o not-match:"$pkt" cat ./out
+	fi
+
+	# Alias address
 	atf_check -s exit:0 rump.ifconfig shmif0 inet 10.0.0.4/24 alias
 
-	# No GARP packets are sent during IFF_UP
-	shmif_dumpbus -p - bus1 2>/dev/null| tcpdump -n -e -r - > ./out
-	pkt=$(make_pkt_str_arpreq 10.0.0.3 10.0.0.3)
-	atf_check -s not-exit:0 -x "cat ./out |grep -q '$pkt'"
+	atf_check -s exit:0 sleep 1
+	extract_new_packets bus1 > ./out
+
 	pkt=$(make_pkt_str_arpreq 10.0.0.4 10.0.0.4)
-	atf_check -s not-exit:0 -x "cat ./out |grep -q '$pkt'"
+	if $no_dad; then
+		# A GARP packet is sent
+		atf_check -s exit:0 -o match:"$pkt" cat ./out
+	else
+		# No GARP packet is sent
+		atf_check -s exit:0 -o not-match:"$pkt" cat ./out
+	fi
 
 	rump_server_destroy_ifaces
+}
+
+arp_garp_body()
+{
+
+	test_garp_common false
+}
+
+arp_garp_without_dad_body()
+{
+
+	test_garp_common true
 }
 
 arp_cache_overwriting_body()
@@ -519,7 +582,7 @@ arp_link_activation_body()
 	$DEBUG && cat ./out
 
 	pkt=$(make_pkt_str_arpreq $IP4SRC $IP4SRC)
-	atf_check -s not-exit:0 -x "cat ./out |grep -q '$pkt'"
+	atf_check -s exit:0 -o not-match:"$pkt" cat ./out
 
 	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 link \
 	    b2:a1:00:00:00:02 active
@@ -529,8 +592,7 @@ arp_link_activation_body()
 	$DEBUG && cat ./out
 
 	pkt=$(make_pkt_str_arpreq $IP4SRC $IP4SRC)
-	atf_check -s exit:0 -x \
-	    "cat ./out |grep '$pkt' |grep -q 'b2:a1:00:00:00:02'"
+	atf_check -s exit:0 -o match:"b2:a1:00:00:00:02 $pkt" cat ./out
 
 	rump_server_destroy_ifaces
 }
@@ -580,6 +642,13 @@ arp_command_cleanup()
 
 arp_garp_cleanup()
 {
+	$DEBUG && dump
+	cleanup
+}
+
+arp_garp_without_dad_cleanup()
+{
+
 	$DEBUG && dump
 	cleanup
 }
@@ -880,6 +949,7 @@ atf_init_test_cases()
 	atf_add_test_case arp_cache_expiration_10s
 	atf_add_test_case arp_command
 	atf_add_test_case arp_garp
+	atf_add_test_case arp_garp_without_dad
 	atf_add_test_case arp_cache_overwriting
 	atf_add_test_case arp_proxy_arp_pub
 	atf_add_test_case arp_proxy_arp_pubproxy

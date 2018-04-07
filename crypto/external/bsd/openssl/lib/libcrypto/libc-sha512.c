@@ -27,9 +27,9 @@ unsigned char *SHA384(const unsigned char *d, size_t n, unsigned char *md)
 
 	if (md == NULL) md=m;
 	SHA384_Init(&c);
-	SHA384_Update(&c,d,n);
-	SHA384_Final(md,&c);
-	OPENSSL_cleanse(&c,sizeof(c));
+	SHA384_Update(&c, d, n); 
+	SHA384_Final(md, &c);
+	OPENSSL_cleanse(&c, sizeof(c));
 	return(md);
 	}
 

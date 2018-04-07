@@ -1,5 +1,5 @@
-/*	$NetBSD: sshconnect.h,v 1.10 2017/10/07 19:39:19 christos Exp $	*/
-/* $OpenBSD: sshconnect.h,v 1.31 2017/09/12 06:32:07 djm Exp $ */
+/*	$NetBSD: sshconnect.h,v 1.10.2.1 2018/04/07 04:11:48 pgoyette Exp $	*/
+/* $OpenBSD: sshconnect.h,v 1.32 2018/02/10 09:25:35 djm Exp $ */
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -58,7 +58,7 @@ void	 ssh_userauth2(const char *, const char *, char *, Sensitive *);
 void	 ssh_put_password(char *);
 int	 ssh_local_cmd(const char *);
 
-void	 maybe_add_key_to_agent(char *, struct sshkey *, char *, char *);
+void	 maybe_add_key_to_agent(char *, const struct sshkey *, char *, char *);
 
 /*
  * Macros to raise/lower permissions.

@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_parse.c,v 1.20 2017/04/13 20:17:42 christos Exp $	*/
+/*	$NetBSD: refclock_parse.c,v 1.20.10.1 2018/04/07 04:12:02 pgoyette Exp $	*/
 
 /*
  * /src/NTP/REPOSITORY/ntp4-dev/ntpd/refclock_parse.c,v 4.81 2009/05/01 10:15:29 kardel RELEASE_20090105_A
@@ -3616,7 +3616,9 @@ parse_control(
 		}
 		else
 		{
-			int count = tmpctl.parseformat.parse_count - 1;
+			int count = tmpctl.parseformat.parse_count;
+			if (count)
+				--count;
 
 			start = tt = add_var(&out->kv_list, 80, RO|DEF);
 			tt = ap(start, 80, tt, "refclock_format=\"");
@@ -3782,9 +3784,14 @@ parse_process(
 			}
 			else
 			{
+				unsigned int count = tmpctl.parsegettc.parse_count;
+				if (count)
+					--count;
 				ERR(ERR_BADDATA)
-					msyslog(LOG_WARNING, "PARSE receiver #%d: FAILED TIMECODE: \"%s\" (check receiver configuration / wiring)",
-						CLK_UNIT(parse->peer), mkascii(buffer, sizeof buffer, tmpctl.parsegettc.parse_buffer, (unsigned)(tmpctl.parsegettc.parse_count - 1)));
+				    msyslog(LOG_WARNING, "PARSE receiver #%d: FAILED TIMECODE: \"%s\" (check receiver configuration / wiring)",
+					    CLK_UNIT(parse->peer),
+					    mkascii(buffer, sizeof(buffer),
+						    tmpctl.parsegettc.parse_buffer, count));
 			}
 			/* copy status to show only changes in case of failures */
 			parse->timedata.parse_status = parsetime->parse_status;

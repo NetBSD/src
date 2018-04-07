@@ -1,6 +1,3 @@
-/*	$NetBSD: auth-pam.h,v 1.6 2017/04/18 18:41:46 christos Exp $	*/
-/* Id: auth-pam.h,v 1.27 2004/09/11 12:17:26 dtucker Exp  */
-
 /*
  * Copyright (c) 2000 Damien Miller.  All rights reserved.
  *
@@ -28,24 +25,23 @@
 #include "includes.h"
 #ifdef USE_PAM
 
-#if !defined(SSHD_PAM_SERVICE)
-# define SSHD_PAM_SERVICE		"sshd"
-#endif
+struct ssh;
 
 void start_pam(Authctxt *);
 void finish_pam(void);
 u_int do_pam_account(void);
-void do_pam_session(void);
-void do_pam_set_tty(const char *);
+void do_pam_session(struct ssh *);
 void do_pam_setcred(int );
 void do_pam_chauthtok(void);
-int do_pam_putenv(char *, char *);
+int do_pam_putenv(const char *, char *);
 char ** fetch_pam_environment(void);
 char ** fetch_pam_child_environment(void);
 void free_pam_environment(char **);
 void sshpam_thread_cleanup(void);
 void sshpam_cleanup(void);
 int sshpam_auth_passwd(Authctxt *, const char *);
+int sshpam_get_maxtries_reached(void);
+void sshpam_set_maxtries_reached(int);
 int is_pam_session_open(void);
 
 #endif /* USE_PAM */

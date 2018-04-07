@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_request.c,v 1.14 2016/05/01 23:32:01 christos Exp $	*/
+/*	$NetBSD: ntp_request.c,v 1.14.14.1 2018/04/07 04:12:02 pgoyette Exp $	*/
 
 /*
  * ntp_request.c - respond to information requests
@@ -89,7 +89,7 @@ static	void	list_restrict	(sockaddr_u *, endpt *, struct req_pkt *);
 static	void	do_resaddflags	(sockaddr_u *, endpt *, struct req_pkt *);
 static	void	do_ressubflags	(sockaddr_u *, endpt *, struct req_pkt *);
 static	void	do_unrestrict	(sockaddr_u *, endpt *, struct req_pkt *);
-static	void	do_restrict	(sockaddr_u *, endpt *, struct req_pkt *, int);
+static	void	do_restrict	(sockaddr_u *, endpt *, struct req_pkt *, restrict_op);
 static	void	mon_getlist	(sockaddr_u *, endpt *, struct req_pkt *);
 static	void	reset_stats	(sockaddr_u *, endpt *, struct req_pkt *);
 static	void	reset_peer	(sockaddr_u *, endpt *, struct req_pkt *);
@@ -584,6 +584,7 @@ process_private(
 		 * him.  If the wrong key was used, or packet doesn't
 		 * have mac, return.
 		 */
+		/* XXX: Use authistrustedip(), or equivalent. */
 		if (!INFO_IS_AUTH(inpkt->auth_seq) || !info_auth_keyid
 		    || ntohl(tailinpkt->keyid) != info_auth_keyid) {
 			DPRINTF(5, ("failed auth %d info_auth_keyid %u pkt keyid %u maclen %lu\n",
@@ -839,7 +840,7 @@ peer_info (
 #endif
 		datap += item_sz;
 
-		pp = findexistingpeer(&addr, NULL, NULL, -1, 0);
+		pp = findexistingpeer(&addr, NULL, NULL, -1, 0, NULL);
 		if (NULL == pp)
 			continue;
 		if (IS_IPV6(srcadr)) {
@@ -983,7 +984,7 @@ peer_stats (
 
 		datap += item_sz;
 
-		pp = findexistingpeer(&addr, NULL, NULL, -1, 0);
+		pp = findexistingpeer(&addr, NULL, NULL, -1, 0, NULL);
 		if (NULL == pp)
 			continue;
 
@@ -1152,6 +1153,8 @@ sys_stats(
 	ss->badauth = htonl((u_int32)sys_badauth);
 	ss->limitrejected = htonl((u_int32)sys_limitrejected);
 	ss->received = htonl((u_int32)sys_received);
+	ss->lamport = htonl((u_int32)sys_lamport);
+	ss->tsrounding = htonl((u_int32)sys_tsrounding);
 	(void) more_pkt();
 	flush_pkt();
 }
@@ -1368,10 +1371,13 @@ do_conf(
 		 *
 		 *   - minpoll/maxpoll, but they are treated properly
 		 *     for all cases internally. Checking not necessary.
+		 *
+		 * Note that we ignore any previously-specified ippeerlimit.
+		 * If we're told to create the peer, we create the peer.
 		 */
 		
 		/* finally create the peer */
-		if (peer_config(&peeraddr, NULL, NULL,
+		if (peer_config(&peeraddr, NULL, NULL, -1,
 		    temp_cp.hmode, temp_cp.version, temp_cp.minpoll, 
 		    temp_cp.maxpoll, fl, temp_cp.ttl, temp_cp.keyid,
 		    NULL) == 0)
@@ -1451,7 +1457,7 @@ do_unconf(
 			p = NULL;
 			do {
 				p = findexistingpeer(
-					&peeraddr, NULL, p, -1, 0);
+					&peeraddr, NULL, p, -1, 0, NULL);
 			} while (p && !(FLAG_CONFIG & p->flags));
 			
 			if (!loops && !p) {
@@ -1655,7 +1661,7 @@ list_restrict4(
 			pir->v6_flag = 0;
 		pir->mask = htonl(res->u.v4.mask);
 		pir->count = htonl(res->count);
-		pir->flags = htons(res->flags);
+		pir->rflags = htons(res->rflags);
 		pir->mflags = htons(res->mflags);
 		pir = (struct info_restrict *)more_pkt();
 	}
@@ -1686,7 +1692,7 @@ list_restrict6(
 		pir->mask6 = res->u.v6.mask;
 		pir->v6_flag = 1;
 		pir->count = htonl(res->count);
-		pir->flags = htons(res->flags);
+		pir->rflags = htons(res->rflags);
 		pir->mflags = htons(res->mflags);
 		pir = (struct info_restrict *)more_pkt();
 	}
@@ -1775,7 +1781,7 @@ do_restrict(
 	sockaddr_u *srcadr,
 	endpt *inter,
 	struct req_pkt *inpkt,
-	int op
+	restrict_op op
 	)
 {
 	char *			datap;
@@ -1785,6 +1791,18 @@ do_restrict(
 	sockaddr_u		matchaddr;
 	sockaddr_u		matchmask;
 	int			bad;
+
+	switch(op) {
+	    case RESTRICT_FLAGS:
+	    case RESTRICT_UNFLAG:
+	    case RESTRICT_REMOVE:
+	    case RESTRICT_REMOVEIF:
+	    	break;
+
+	    default:
+		req_ack(srcadr, inter, inpkt, INFO_ERR_FMT);
+		return;
+	}
 
 	/*
 	 * Do a check of the flags to make sure that only
@@ -1799,7 +1817,7 @@ do_restrict(
 		return;
 	}
 
-	bad = FALSE;
+	bad = 0;
 	while (items-- > 0 && !bad) {
 		memcpy(&cr, datap, item_sz);
 		cr.flags = ntohs(cr.flags);
@@ -1839,6 +1857,7 @@ do_restrict(
 		memcpy(&cr, datap, item_sz);
 		cr.flags = ntohs(cr.flags);
 		cr.mflags = ntohs(cr.mflags);
+		cr.ippeerlimit = ntohs(cr.ippeerlimit);
 		if (client_v6_capable && cr.v6_flag) {
 			AF(&matchaddr) = AF_INET6;
 			AF(&matchmask) = AF_INET6;
@@ -1851,7 +1870,7 @@ do_restrict(
 			NSRCADR(&matchmask) = cr.mask;
 		}
 		hack_restrict(op, &matchaddr, &matchmask, cr.mflags,
-			      cr.flags, 0);
+			      cr.ippeerlimit, cr.flags, 0);
 		datap += item_sz;
 	}
 
@@ -1977,7 +1996,7 @@ reset_peer(
 #ifdef ISC_PLATFORM_HAVESALEN
 		peeraddr.sa.sa_len = SOCKLEN(&peeraddr);
 #endif
-		p = findexistingpeer(&peeraddr, NULL, NULL, -1, 0);
+		p = findexistingpeer(&peeraddr, NULL, NULL, -1, 0, NULL);
 		if (NULL == p)
 			bad++;
 		datap += item_sz;
@@ -2010,10 +2029,10 @@ reset_peer(
 #ifdef ISC_PLATFORM_HAVESALEN
 		peeraddr.sa.sa_len = SOCKLEN(&peeraddr);
 #endif
-		p = findexistingpeer(&peeraddr, NULL, NULL, -1, 0);
+		p = findexistingpeer(&peeraddr, NULL, NULL, -1, 0, NULL);
 		while (p != NULL) {
 			peer_reset(p);
-			p = findexistingpeer(&peeraddr, NULL, p, -1, 0);
+			p = findexistingpeer(&peeraddr, NULL, p, -1, 0, NULL);
 		}
 		datap += item_sz;
 	}
@@ -2494,7 +2513,7 @@ get_clock_info(
 	while (items-- > 0 && ic) {
 		NSRCADR(&addr) = *clkaddr++;
 		if (!ISREFCLOCKADR(&addr) || NULL ==
-		    findexistingpeer(&addr, NULL, NULL, -1, 0)) {
+		    findexistingpeer(&addr, NULL, NULL, -1, 0, NULL)) {
 			req_ack(srcadr, inter, inpkt, INFO_ERR_NODATA);
 			return;
 		}
@@ -2558,7 +2577,7 @@ set_clock_fudge(
 #endif
 		SET_PORT(&addr, NTP_PORT);
 		if (!ISREFCLOCKADR(&addr) || NULL ==
-		    findexistingpeer(&addr, NULL, NULL, -1, 0)) {
+		    findexistingpeer(&addr, NULL, NULL, -1, 0, NULL)) {
 			req_ack(srcadr, inter, inpkt, INFO_ERR_NODATA);
 			return;
 		}
@@ -2633,7 +2652,7 @@ get_clkbug_info(
 	while (items-- > 0 && ic) {
 		NSRCADR(&addr) = *clkaddr++;
 		if (!ISREFCLOCKADR(&addr) || NULL ==
-		    findexistingpeer(&addr, NULL, NULL, -1, 0)) {
+		    findexistingpeer(&addr, NULL, NULL, -1, 0, NULL)) {
 			req_ack(srcadr, inter, inpkt, INFO_ERR_NODATA);
 			return;
 		}

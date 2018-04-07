@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.157.2.3 2018/03/30 10:09:07 pgoyette Exp $	*/
+/*	$NetBSD: locore.S,v 1.157.2.4 2018/04/07 04:12:11 pgoyette Exp $	*/
 
 /*
  * Copyright-o-rama!

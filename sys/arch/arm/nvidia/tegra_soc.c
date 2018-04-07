@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_soc.c,v 1.14 2017/07/20 01:46:15 jmcneill Exp $ */
+/* $NetBSD: tegra_soc.c,v 1.14.4.1 2018/04/07 04:12:12 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_soc.c,v 1.14 2017/07/20 01:46:15 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_soc.c,v 1.14.4.1 2018/04/07 04:12:12 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -55,20 +55,19 @@ bus_space_handle_t tegra_ahb_a2_bsh;
 void
 tegra_bootstrap(void)
 {
-	if (bus_space_map(&armv7_generic_bs_tag,
-	    TEGRA_HOST1X_BASE, TEGRA_HOST1X_SIZE, 0,
+	extern struct bus_space arm_generic_bs_tag;
+	bus_space_tag_t bst = &arm_generic_bs_tag;
+
+	if (bus_space_map(bst, TEGRA_HOST1X_BASE, TEGRA_HOST1X_SIZE, 0,
 	    &tegra_host1x_bsh) != 0)
 		panic("couldn't map HOST1X");
-	if (bus_space_map(&armv7_generic_bs_tag,
-	    TEGRA_PPSB_BASE, TEGRA_PPSB_SIZE, 0,
+	if (bus_space_map(bst, TEGRA_PPSB_BASE, TEGRA_PPSB_SIZE, 0,
 	    &tegra_ppsb_bsh) != 0)
 		panic("couldn't map PPSB");
-	if (bus_space_map(&armv7_generic_bs_tag,
-	    TEGRA_APB_BASE, TEGRA_APB_SIZE, 0,
+	if (bus_space_map(bst, TEGRA_APB_BASE, TEGRA_APB_SIZE, 0,
 	    &tegra_apb_bsh) != 0)
 		panic("couldn't map APB");
-	if (bus_space_map(&armv7_generic_bs_tag,
-	    TEGRA_AHB_A2_BASE, TEGRA_AHB_A2_SIZE, 0,
+	if (bus_space_map(bst, TEGRA_AHB_A2_BASE, TEGRA_AHB_A2_SIZE, 0,
 	    &tegra_ahb_a2_bsh) != 0)
 		panic("couldn't map AHB A2");
 }

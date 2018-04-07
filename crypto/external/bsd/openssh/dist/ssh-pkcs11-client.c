@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh-pkcs11-client.c,v 1.11 2018/02/05 00:13:50 christos Exp $	*/
-/* $OpenBSD: ssh-pkcs11-client.c,v 1.7 2017/05/30 08:52:19 markus Exp $ */
+/*	$NetBSD: ssh-pkcs11-client.c,v 1.11.2.1 2018/04/07 04:11:48 pgoyette Exp $	*/
+/* $OpenBSD: ssh-pkcs11-client.c,v 1.8 2018/02/05 05:37:46 tb Exp $ */
 /*
  * Copyright (c) 2010 Markus Friedl.  All rights reserved.
  *
@@ -16,7 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: ssh-pkcs11-client.c,v 1.11 2018/02/05 00:13:50 christos Exp $");
+__RCSID("$NetBSD: ssh-pkcs11-client.c,v 1.11.2.1 2018/04/07 04:11:48 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -96,7 +96,8 @@ pkcs11_init(int interactive)
 void
 pkcs11_terminate(void)
 {
-	close(fd);
+	if (fd >= 0)
+		close(fd);
 }
 
 static int

@@ -1,4 +1,4 @@
-/* $NetBSD: ix_txrx.c,v 1.34.2.2 2018/03/30 06:20:15 pgoyette Exp $ */
+/* $NetBSD: ix_txrx.c,v 1.34.2.3 2018/04/07 04:12:18 pgoyette Exp $ */
 
 /******************************************************************************
 
@@ -32,7 +32,7 @@
   POSSIBILITY OF SUCH DAMAGE.
 
 ******************************************************************************/
-/*$FreeBSD: head/sys/dev/ixgbe/ix_txrx.c 321476 2017-07-25 14:38:30Z sbruno $*/
+/*$FreeBSD: head/sys/dev/ixgbe/ix_txrx.c 327031 2017-12-20 18:15:06Z erj $*/
 
 /*
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -103,6 +103,7 @@ static void          ixgbe_free_receive_buffers(struct rx_ring *);
 static void          ixgbe_rx_checksum(u32, struct mbuf *, u32,
                                        struct ixgbe_hw_stats *);
 static void          ixgbe_refresh_mbufs(struct rx_ring *, int);
+static void          ixgbe_drain(struct ifnet *, struct tx_ring *);
 static int           ixgbe_xmit(struct tx_ring *, struct mbuf *);
 static int           ixgbe_tx_ctx_setup(struct tx_ring *,
                                         struct mbuf *, u32 *, u32 *);
@@ -135,9 +136,15 @@ ixgbe_legacy_start_locked(struct ifnet *ifp, struct tx_ring *txr)
 
 	IXGBE_TX_LOCK_ASSERT(txr);
 
-	if ((ifp->if_flags & IFF_RUNNING) == 0)
+	if (!adapter->link_active) {
+		/*
+		 * discard all packets buffered in IFQ to avoid
+		 * sending old packets at next link up timing.
+		 */
+		ixgbe_drain(ifp, txr);
 		return (ENETDOWN);
-	if (!adapter->link_active)
+	}
+	if ((ifp->if_flags & IFF_RUNNING) == 0)
 		return (ENETDOWN);
 
 	while (!IFQ_IS_EMPTY(&ifp->if_snd)) {
@@ -271,9 +278,15 @@ ixgbe_mq_start_locked(struct ifnet *ifp, struct tx_ring *txr)
 	struct mbuf    *next;
 	int            enqueued = 0, err = 0;
 
-	if ((ifp->if_flags & IFF_RUNNING) == 0)
+	if (!txr->adapter->link_active) {
+		/*
+		 * discard all packets buffered in txr_interq to avoid
+		 * sending old packets at next link up timing.
+		 */
+		ixgbe_drain(ifp, txr);
 		return (ENETDOWN);
-	if (txr->adapter->link_active == 0)
+	}
+	if ((ifp->if_flags & IFF_RUNNING) == 0)
 		return (ENETDOWN);
 
 	/* Process the queue */
@@ -342,6 +355,23 @@ ixgbe_deferred_mq_start_work(struct work *wk, void *arg)
 	ixgbe_deferred_mq_start(txr);
 } /* ixgbe_deferred_mq_start */
 
+/************************************************************************
+ * ixgbe_drain_all
+ ************************************************************************/
+void
+ixgbe_drain_all(struct adapter *adapter)
+{
+	struct ifnet *ifp = adapter->ifp;
+	struct ix_queue *que = adapter->queues;
+
+	for (int i = 0; i < adapter->num_queues; i++, que++) {
+		struct tx_ring  *txr = que->txr;
+
+		IXGBE_TX_LOCK(txr);
+		ixgbe_drain(ifp, txr);
+		IXGBE_TX_UNLOCK(txr);
+	}
+}
 
 /************************************************************************
  * ixgbe_xmit
@@ -515,6 +545,29 @@ retry:
 	return (0);
 } /* ixgbe_xmit */
 
+/************************************************************************
+ * ixgbe_drain
+ ************************************************************************/
+static void
+ixgbe_drain(struct ifnet *ifp, struct tx_ring *txr)
+{
+	struct mbuf *m;
+
+	IXGBE_TX_LOCK_ASSERT(txr);
+
+	if (txr->me == 0) {
+		while (!IFQ_IS_EMPTY(&ifp->if_snd)) {
+			IFQ_DEQUEUE(&ifp->if_snd, m);
+			m_freem(m);
+			IF_DROP(&ifp->if_snd);
+		}
+	}
+
+	while ((m = pcq_get(txr->txr_interq)) != NULL) {
+		m_freem(m);
+		txr->pcq_drops.ev_count++;
+	}
+}
 
 /************************************************************************
  * ixgbe_allocate_transmit_buffers

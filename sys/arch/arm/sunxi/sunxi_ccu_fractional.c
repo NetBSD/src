@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_ccu_fractional.c,v 1.1.2.2 2018/03/22 01:44:43 pgoyette Exp $ */
+/* $NetBSD: sunxi_ccu_fractional.c,v 1.1.2.3 2018/04/07 04:12:12 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_ccu_fractional.c,v 1.1.2.2 2018/03/22 01:44:43 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_ccu_fractional.c,v 1.1.2.3 2018/04/07 04:12:12 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -86,7 +86,7 @@ sunxi_ccu_fractional_get_rate(struct sunxi_ccu_softc *sc,
 	if (fractional->enable && !(val & fractional->enable))
 		return 0;
 
-	if (val & fractional->frac_en) {
+	if ((val & fractional->div_en) == 0) {
 		int sel = __SHIFTOUT(val, fractional->frac_sel);
 		return fractional->frac[sel];
 	}
@@ -122,14 +122,14 @@ sunxi_ccu_fractional_set_rate(struct sunxi_ccu_softc *sc,
 	val = CCU_READ(sc, fractional->reg);
 	for (i = 0; i < __arraycount(fractional->frac); i++) {
 		if (fractional->frac[i] == new_rate) {
-			val |= fractional->frac_en;
+			val &= ~fractional->div_en;
 			val &= ~fractional->frac_sel;
 			val |= __SHIFTIN(i, fractional->frac_sel);
 			CCU_WRITE(sc, fractional->reg, val);
 			return 0;
 		}
 	}
-	val &= ~fractional->frac_en;
+	val |= fractional->div_en;
 
 	best_rate = 0;
 	best_diff = INT_MAX;
@@ -141,6 +141,8 @@ sunxi_ccu_fractional_set_rate(struct sunxi_ccu_softc *sc,
 			best_diff = diff;
 			best_rate = rate;
 			best_m = m;
+			if (diff == 0)
+				break;
 		}
 	}
 
@@ -152,6 +154,52 @@ sunxi_ccu_fractional_set_rate(struct sunxi_ccu_softc *sc,
 	CCU_WRITE(sc, fractional->reg, val);
 
 	return 0;
+}
+
+u_int
+sunxi_ccu_fractional_round_rate(struct sunxi_ccu_softc *sc,
+    struct sunxi_ccu_clk *clk, u_int try_rate)
+{
+	struct sunxi_ccu_fractional *fractional = &clk->u.fractional;
+	struct clk *clkp, *clkp_parent;
+	u_int parent_rate, best_rate;
+	u_int m, rate;
+	int best_diff;
+	int i;
+
+	clkp = &clk->base;
+	clkp_parent = clk_get_parent(clkp);
+	if (clkp_parent == NULL)
+		return 0;
+
+	parent_rate = clk_get_rate(clkp_parent);
+	if (parent_rate == 0)
+		return 0;
+
+	if (fractional->prediv > 0)
+		parent_rate = parent_rate / fractional->prediv;
+
+	for (i = 0; i < __arraycount(fractional->frac); i++) {
+		if (fractional->frac[i] == try_rate) {
+			return try_rate;
+		}
+	}
+
+	best_rate = 0;
+	best_diff = INT_MAX;
+
+	for (m = fractional->m_min; m <= fractional->m_max; m++) {
+		rate = parent_rate * m;
+		const int diff = abs(try_rate - rate);
+		if (diff < best_diff) {
+			best_diff = diff;
+			best_rate = rate;
+			if (diff == 0)
+				break;
+		}
+	}
+
+	return best_rate;
 }
 
 const char *

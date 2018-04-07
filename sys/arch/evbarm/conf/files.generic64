@@ -1,0 +1,15 @@
+#	$NetBSD: files.generic64,v 1.1.2.2 2018/04/07 04:12:12 pgoyette Exp $
+#
+
+defparam opt_arm_debug.h	EARLYCONS
+
+include "arch/arm/pic/files.pic"
+include "arch/arm/cortex/files.cortex"
+
+include "arch/evbarm/conf/files.fdt"
+
+# Add other board files here
+#
+include "arch/arm/broadcom/files.bcm2835"
+include "arch/arm/nvidia/files.tegra"
+include "arch/arm/sunxi/files.sunxi"

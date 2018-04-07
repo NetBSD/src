@@ -1,3 +1,4 @@
+/*	$NetBSD: utf8.h,v 1.2.20.1 2018/04/07 04:11:48 pgoyette Exp $	*/
 /* $OpenBSD: utf8.h,v 1.1 2016/05/25 23:48:45 schwarze Exp $ */
 /*
  * Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>

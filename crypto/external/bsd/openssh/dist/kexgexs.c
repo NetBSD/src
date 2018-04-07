@@ -1,5 +1,5 @@
-/*	$NetBSD: kexgexs.c,v 1.15 2018/02/05 00:13:50 christos Exp $	*/
-/* $OpenBSD: kexgexs.c,v 1.31 2017/05/30 14:23:52 markus Exp $ */
+/*	$NetBSD: kexgexs.c,v 1.15.2.1 2018/04/07 04:11:48 pgoyette Exp $	*/
+/* $OpenBSD: kexgexs.c,v 1.32 2018/02/07 02:06:51 jsing Exp $ */
 /*
  * Copyright (c) 2000 Niels Provos.  All rights reserved.
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: kexgexs.c,v 1.15 2018/02/05 00:13:50 christos Exp $");
+__RCSID("$NetBSD: kexgexs.c,v 1.15.2.1 2018/04/07 04:11:48 pgoyette Exp $");
 
 #include <sys/param.h>	/* MIN MAX */
 #include <stdio.h>
@@ -256,14 +256,12 @@ input_kex_dh_gex_init(int type, u_int32_t seq, struct ssh *ssh)
  out:
 	DH_free(kex->dh);
 	kex->dh = NULL;
-	if (dh_client_pub)
-		BN_clear_free(dh_client_pub);
+	BN_clear_free(dh_client_pub);
 	if (kbuf) {
 		explicit_bzero(kbuf, klen);
 		free(kbuf);
 	}
-	if (shared_secret)
-		BN_clear_free(shared_secret);
+	BN_clear_free(shared_secret);
 	free(server_host_key_blob);
 	free(signature);
 	return r;

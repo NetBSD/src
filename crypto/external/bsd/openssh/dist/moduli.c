@@ -1,6 +1,5 @@
-/*	$NetBSD: moduli.c,v 1.10 2017/04/18 18:41:46 christos Exp $	*/
-/* $OpenBSD: moduli.c,v 1.31 2016/09/12 01:22:38 deraadt Exp $ */
-
+/*	$NetBSD: moduli.c,v 1.10.10.1 2018/04/07 04:11:48 pgoyette Exp $	*/
+/* $OpenBSD: moduli.c,v 1.32 2017/12/08 03:45:52 deraadt Exp $ */
 /*
  * Copyright 1994 Phil Karn <karn@qualcomm.com>
  * Copyright 1996-1998, 2003 William Allen Simpson <wsimpson@greendragon.com>
@@ -39,7 +38,7 @@
  * Second step: test primes' safety (processor intensive)
  */
 #include "includes.h"
-__RCSID("$NetBSD: moduli.c,v 1.10 2017/04/18 18:41:46 christos Exp $");
+__RCSID("$NetBSD: moduli.c,v 1.10.10.1 2018/04/07 04:11:48 pgoyette Exp $");
 
 #include <sys/types.h>
 
@@ -410,8 +409,8 @@ gen_candidates(FILE *out, u_int32_t memory, u_int32_t power, BIGNUM *start)
 
 	time(&time_stop);
 
-	logit("%.24s Sieved with %u small primes in %ld seconds",
-	    ctime(&time_stop), largetries, (long) (time_stop - time_start));
+	logit("%.24s Sieved with %u small primes in %lld seconds",
+	    ctime(&time_stop), largetries, (long long)(time_stop - time_start));
 
 	for (j = r = 0; j < largebits; j++) {
 		if (BIT_TEST(LargeSieve, j))

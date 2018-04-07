@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.15 2016/05/01 23:32:01 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.15.14.1 2018/04/07 04:12:05 pgoyette Exp $	*/
 
 #include <config.h>
 
@@ -209,9 +209,8 @@ sntp_main (
 	*/
 	kod_init_kod_db(OPT_ARG(KOD), FALSE);
 
-	// HMS: Should we use arg-defalt for this too?
-	if (HAVE_OPT(KEYFILE))
-		auth_init(OPT_ARG(KEYFILE), &keys);
+	/* HMS: Check and see what happens if KEYFILE doesn't exist */
+	auth_init(OPT_ARG(KEYFILE), &keys);
 
 	/*
 	** Considering employing a variable that prevents functions of doing
@@ -381,7 +380,6 @@ handle_lookup(
 {
 	struct addrinfo	hints;	/* Local copy is OK */
 	struct dns_ctx *ctx;
-	long		l;
 	char *		name_copy;
 	size_t		name_sz;
 	size_t		octets;
@@ -407,15 +405,19 @@ handle_lookup(
 	ctx->name = name_copy;			// point to it...
 	ctx->flags = flags;
 	ctx->timeout = response_tv;
+	ctx->key = NULL;
 
 	/* The following should arguably be passed in... */
-	if (ENABLED_OPT(AUTHENTICATION) &&
-	    atoint(OPT_ARG(AUTHENTICATION), &l)) {
-		ctx->key_id = l;
+	if (ENABLED_OPT(AUTHENTICATION)) {
+		ctx->key_id = OPT_VALUE_AUTHENTICATION;
 		get_key(ctx->key_id, &ctx->key);
+		if (NULL == ctx->key) {
+			fprintf(stderr, "%s: Authentication with keyID %d requested, but no matching keyID found in <%s>!\n",
+				progname, ctx->key_id, OPT_ARG(KEYFILE));
+			exit(1);
+		}
 	} else {
 		ctx->key_id = -1;
-		ctx->key = NULL;
 	}
 
 	++n_pending_dns;
@@ -1134,13 +1136,21 @@ generate_pkt (
 	x_pkt->ppoll = 8;
 	/* FIXME! Modus broadcast + adr. check -> bdr. pkt */
 	set_li_vn_mode(x_pkt, LEAP_NOTINSYNC, ntpver, 3);
+	if (debug > 0) {
+		printf("generate_pkt: key_id %d, key pointer %p\n", key_id, pkt_key);
+	}
 	if (pkt_key != NULL) {
 		x_pkt->exten[0] = htonl(key_id);
-		mac_size = 20; /* max room for MAC */
-		mac_size = make_mac(x_pkt, pkt_len, mac_size,
+		mac_size = make_mac(x_pkt, pkt_len, MAX_MDG_LEN,
 				    pkt_key, (char *)&x_pkt->exten[1]);
 		if (mac_size > 0)
-			pkt_len += mac_size + 4;
+			pkt_len += mac_size + KEY_MAC_LEN;
+#ifdef DEBUG
+		if (debug > 0) {
+			printf("generate_pkt: mac_size is %d\n", mac_size);
+		}
+#endif
+
 	}
 	return pkt_len;
 }

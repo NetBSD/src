@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_inet.c,v 1.37.12.3 2018/03/30 06:20:16 pgoyette Exp $	*/
+/*	$NetBSD: npf_inet.c,v 1.37.12.4 2018/04/07 04:12:19 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.37.12.3 2018/03/30 06:20:16 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.37.12.4 2018/04/07 04:12:19 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -230,6 +230,7 @@ npf_fetch_tcpopts(npf_cache_t *npc, uint16_t *mss, int *wscale)
 	nbuf_t *nbuf = npc->npc_nbuf;
 	const struct tcphdr *th = npc->npc_l4.tcp;
 	int topts_len, step;
+	bool setmss = false;
 	uint8_t *nptr;
 	uint8_t val;
 	bool ok;
@@ -244,6 +245,11 @@ npf_fetch_tcpopts(npf_cache_t *npc, uint16_t *mss, int *wscale)
 		return false;
 	}
 	KASSERT(topts_len <= MAX_TCPOPTLEN);
+
+	/* Determine if we want to set or get the mss. */
+	if (mss) {
+		setmss = (*mss != 0);
+	}
 
 	/* First step: IP and TCP header up to options. */
 	step = npc->npc_hlen + sizeof(struct tcphdr);
@@ -270,7 +276,7 @@ next:
 			goto done;
 		}
 		if (mss) {
-			if (*mss) {
+			if (setmss) {
 				memcpy(nptr + 2, mss, sizeof(uint16_t));
 			} else {
 				memcpy(mss, nptr + 2, sizeof(uint16_t));

@@ -1,3 +1,4 @@
+/*	$NetBSD: cipher-chachapoly.h,v 1.1.1.1.22.1 2018/04/07 04:11:48 pgoyette Exp $	*/
 /* $OpenBSD: cipher-chachapoly.h,v 1.4 2014/06/24 01:13:21 djm Exp $ */
 
 /*

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2002-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -45,12 +45,13 @@
 #if (defined(__unix__) || defined(unix)) && !defined(USG) && \
         (defined(OpenBSD) || defined(__FreeBSD__)) || defined(__NetBSD__)
 # include <sys/param.h>
-# if (OpenBSD >= 200112) || ((__FreeBSD_version >= 470101 && __FreeBSD_version < 500000) || __FreeBSD_version >= 500041) || defined(__NetBSD__)
-#  ifndef HAVE_CRYPTODEV
-#   define HAVE_CRYPTODEV
-#  endif
+# if (defined(OpenBSD) && (OpenBSD >= 200112)) || \
+     (defined(__FreeBSD_version) && \
+      ((__FreeBSD_version >= 470101 && __FreeBSD_version < 500000) || \
+       __FreeBSD_version >= 500041))
+#  define HAVE_CRYPTODEV
 # endif
-# if (OpenBSD >= 200110)
+# if defined(OpenBSD) && (OpenBSD >= 200110)
 #  define HAVE_SYSLOG_R
 # endif
 #endif

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.92 2017/12/11 11:38:14 jmcneill Exp $
+#	$NetBSD: Makefile.inc,v 1.92.2.1 2018/04/07 04:11:58 pgoyette Exp $
 #
 #	etc.evbarm/Makefile.inc -- evbarm-specific etc Makefile targets
 #
@@ -8,7 +8,7 @@ MKIMAGE= ${NETBSDSRCDIR}/distrib/utils/embedded/mkimage
 # If you change the list of distributed kernels, don't forget
 # to update the release documentation in distrib/notes/common/contents
 EVBARM_BOARDS=
-.for i in armv4 xscale armv5t armv6 armv7
+.for i in armv4 xscale armv5t armv6 armv7 arm64
 EVBARM_BOARDS.${i}=
 .endfor
 
@@ -116,6 +116,7 @@ EVBARM_BOARDS.armv7+=		RPI2
 EVBARM_BOARDS.armv7hf+=	 	RPI2
 KERNEL_SETS.armv7+=		SUNXI
 KERNEL_SETS.armv7hf+=		SUNXI
+KERNEL_SETS.arm64+=		GENERIC64
 .endif
 
 IMAGE.rel=	${RELEASEDIR}/${RELEASEMACHINEDIR}
@@ -158,6 +159,7 @@ ARCHES.earmv7=		armv7
 ARCHES.earmv7hf=	armv7hf
 ARCHES.earmv7eb=	armv7
 ARCHES.earmv7hfeb=	armv7hf
+ARCHES.aarch64=		arm64
 .for arch in ${ARCHES.${MACHINE_ARCH}}
 .for board in ${EVBARM_BOARDS.${arch}}
 KERNEL_SETS+=		${board}
@@ -170,6 +172,12 @@ KERNEL_SETS+=		${KERNEL_SETS.${arch}}
 smp_armv7: __mkimage
 MKI_OPTS.smp_armv7=	-K ${IMAGE.kern}
 SNAP_MD_POST_DEPS+=	smp_armv7
+.endif
+
+.if !empty(MACHINE_ARCH:Maarch64) && empty(ALL_KERNELS)
+smp_arm64: __mkimage
+MKI_OPTS.smp_arm64=	-K ${IMAGE.kern}
+SNAP_MD_POST_DEPS+=	smp_arm64
 .endif
 
 .if !empty(KERNEL_SETS:MRPI)
