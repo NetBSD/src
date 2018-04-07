@@ -1,5 +1,5 @@
 <!--
- - Copyright (C) 2010, 2013-2016  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2010, 2013-2017  Internet Systems Consortium, Inc. ("ISC")
  -
  - Permission to use, copy, modify, and/or distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
@@ -42,6 +42,7 @@
       <year>2014</year>
       <year>2015</year>
       <year>2016</year>
+      <year>2017</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
   </docinfo>
@@ -65,7 +66,7 @@
       implementations.
     </para>
     <para>
-      This bug has been fixed in BIND 9.7.  However, the fix may
+      This bug was fixed in BIND 9.7.  However, the fix may
       cause incompatibility between older and newer versions of
       BIND, when using long keys.  <command>isc-hmac-fixup</command>
       modifies those keys to restore compatibility.

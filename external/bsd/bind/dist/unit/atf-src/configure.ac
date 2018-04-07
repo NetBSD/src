@@ -1,6 +1,3 @@
-dnl
-dnl Automated Testing Framework (atf)
-dnl
 dnl Copyright (c) 2007 The NetBSD Foundation, Inc.
 dnl All rights reserved.
 dnl
@@ -25,21 +22,21 @@ dnl INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
 dnl IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
 dnl OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 dnl IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-dnl
 
 dnl -----------------------------------------------------------------------
 dnl Initialize the GNU build system.
 dnl -----------------------------------------------------------------------
 
-AC_INIT([Automated Testing Framework], [0.17], [atf-devel@NetBSD.org], [atf],
-        [http://code.google.com/p/kyua/wiki/ATF])
+AC_INIT([Automated Testing Framework], [0.21],
+	[atf-discuss@googlegroups.com], [atf],
+        [https://github.com/jmmv/atf/])
 AC_PREREQ([2.65])
 AC_COPYRIGHT([Copyright (c) 2007-2012 The NetBSD Foundation, Inc.])
 AC_DEFINE([PACKAGE_COPYRIGHT],
           ["Copyright (c) 2007-2012 The NetBSD Foundation, Inc."],
           [Define to the copyright string applicable to this package.])
 AC_CONFIG_AUX_DIR([admin])
-AC_CONFIG_HEADERS([bconfig.h])
+AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_SRCDIR([atf-c.h])
 AC_CONFIG_TESTDIR([bootstrap])
@@ -48,6 +45,7 @@ AC_CANONICAL_TARGET
 
 AM_INIT_AUTOMAKE([1.9 check-news foreign subdir-objects -Wall])
 
+AM_PROG_AR
 LT_INIT
 
 AC_ARG_ENABLE(tools,
@@ -86,11 +84,13 @@ fi
 
 KYUA_DEVELOPER_MODE([C,C++])
 
+dnl TODO(jmmv): Remove once the atf-*-api.3 symlinks are removed.
+AC_PROG_LN_S
+
 ATF_MODULE_APPLICATION
 ATF_MODULE_DEFS
 ATF_MODULE_ENV
 ATF_MODULE_FS
-ATF_MODULE_SANITY
 ATF_MODULE_SIGNALS
 
 AC_CHECK_TYPE([timer_t], [], [], [[#include <time.h>]])
@@ -137,25 +137,6 @@ dnl -----------------------------------------------------------------------
 dnl User-customizable variables.
 dnl -----------------------------------------------------------------------
 
-AC_ARG_VAR([ATF_CONFSUBDIR],
-           [Subdirectory of sysconfdir under which to look for files])
-if test x"${ATF_CONFSUBDIR-unset}" = x"unset"; then
-    ATF_CONFSUBDIR=atf
-else
-    case ${ATF_CONFSUBDIR} in
-    /*)
-        AC_MSG_ERROR([ATF_CONFSUBDIR must hold a relative path])
-        ;;
-    *)
-        ;;
-    esac
-fi
-if test x"${ATF_CONFSUBDIR}" = x""; then
-    AC_SUBST(atf_confdir, \${sysconfdir})
-else
-    AC_SUBST(atf_confdir, \${sysconfdir}/${ATF_CONFSUBDIR})
-fi
-
 AC_ARG_VAR([ATF_WORKDIR],
            [Default location to use for ATF work directories])
 if test x"${ATF_WORKDIR}" = x""; then
@@ -176,6 +157,25 @@ else
         AC_MSG_ERROR([ATF_WORKDIR must hold an absolute path])
         ;;
     esac
+fi
+
+AC_ARG_VAR([ATF_CONFSUBDIR],
+           [Subdirectory of sysconfdir under which to look for files])
+if test x"${ATF_CONFSUBDIR-unset}" = x"unset"; then
+    ATF_CONFSUBDIR=atf
+else
+    case ${ATF_CONFSUBDIR} in
+    /*)
+        AC_MSG_ERROR([ATF_CONFSUBDIR must hold a relative path])
+        ;;
+    *)
+        ;;
+    esac
+fi
+if test x"${ATF_CONFSUBDIR}" = x""; then
+    AC_SUBST(atf_confdir, \${sysconfdir})
+else
+    AC_SUBST(atf_confdir, \${sysconfdir}/${ATF_CONFSUBDIR})
 fi
 
 AC_SUBST(atf_aclocaldir, \${datadir}/aclocal)
@@ -218,7 +218,7 @@ dnl -----------------------------------------------------------------------
 dnl Finally, generate output.
 dnl -----------------------------------------------------------------------
 
-AC_OUTPUT([Makefile atf-c/defs.h])
+AC_OUTPUT([Makefile atf-c/defs.h tools/defs.hpp])
 
 if test ${enable_tools} = yes; then
     AC_MSG_WARN([Building the deprecated ATF tools (atf-run and atf-report);])

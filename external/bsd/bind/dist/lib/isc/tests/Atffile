@@ -2,4 +2,25 @@ Content-Type: application/X-atf-atffile; version="1"
 
 prop: test-suite = bind9
 
-tp-glob: *_test
+tp: aes_test
+tp: counter_test
+tp: errno_test
+tp: hash_test
+tp: heap_test
+tp: inet_ntop_test
+tp: lex_test
+tp: mem_test
+tp: netaddr_test
+tp: parse_test
+tp: pool_test
+tp: print_test
+tp: queue_test
+tp: radix_test
+tp: regex_test
+tp: safe_test
+tp: sockaddr_test
+tp: socket_test
+tp: symtab_test
+tp: task_test
+tp: taskpool_test
+tp: time_test

@@ -1,6 +1,6 @@
-.\"	$NetBSD: delv.1,v 1.1.1.5 2017/06/15 15:22:37 christos Exp $
+.\"	$NetBSD: delv.1,v 1.1.1.6 2018/04/07 21:43:28 christos Exp $
 .\"
-.\" Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 .\" 
 .\" Permission to use, copy, modify, and/or distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -49,7 +49,7 @@
 delv \- DNS lookup and validation utility
 .SH "SYNOPSIS"
 .HP \w'\fBdelv\fR\ 'u
-\fBdelv\fR [@server] [\fB\-4\fR] [\fB\-6\fR] [\fB\-a\ \fR\fB\fIanchor\-file\fR\fR] [\fB\-b\ \fR\fB\fIaddress\fR\fR] [\fB\-c\ \fR\fB\fIclass\fR\fR] [\fB\-d\ \fR\fB\fIlevel\fR\fR] [\fB\-i\fR] [\fB\-m\fR] [\fB\-p\ \fR\fB\fIport#\fR\fR] [\fB\-q\ \fR\fB\fIname\fR\fR] [\fB\-t\ \fR\fB\fItype\fR\fR] [\fB\-x\ \fR\fB\fIaddr\fR\fR] [name] [type] [class] [queryopt...]
+\fBdelv\fR [@server] [[\fB\-4\fR] | [\fB\-6\fR]] [\fB\-a\ \fR\fB\fIanchor\-file\fR\fR] [\fB\-b\ \fR\fB\fIaddress\fR\fR] [\fB\-c\ \fR\fB\fIclass\fR\fR] [\fB\-d\ \fR\fB\fIlevel\fR\fR] [\fB\-i\fR] [\fB\-m\fR] [\fB\-p\ \fR\fB\fIport#\fR\fR] [\fB\-q\ \fR\fB\fIname\fR\fR] [\fB\-t\ \fR\fB\fItype\fR\fR] [\fB\-x\ \fR\fB\fIaddr\fR\fR] [name] [type] [class] [queryopt...]
 .HP \w'\fBdelv\fR\ 'u
 \fBdelv\fR [\fB\-h\fR]
 .HP \w'\fBdelv\fR\ 'u
@@ -59,13 +59,13 @@ delv \- DNS lookup and validation utility
 .SH "DESCRIPTION"
 .PP
 \fBdelv\fR
-(Domain Entity Lookup & Validation) is a tool for sending DNS queries and validating the results, using the the same internal resolver and validator logic as
+is a tool for sending DNS queries and validating the results, using the same internal resolver and validator logic as
 \fBnamed\fR\&.
 .PP
 \fBdelv\fR
 will send to a specified name server all queries needed to fetch and validate the requested data; this includes the original requested query, subsequent queries to follow CNAME or DNAME chains, and queries for DNSKEY, DS and DLV records to establish a chain of trust for DNSSEC validation\&. It does not perform iterative resolution, but simulates the behavior of a name server configured for DNSSEC validating and forwarding\&.
 .PP
-By default, responses are validated using built\-in DNSSEC trust anchors for the root zone ("\&.") and for the ISC DNSSEC lookaside validation zone ("dlv\&.isc\&.org")\&. Records returned by
+By default, responses are validated using built\-in DNSSEC trust anchor for the root zone ("\&.")\&. Records returned by
 \fBdelv\fR
 are either fully validated or were not signed\&. If validation fails, an explanation of the failure is included in the output; the validation process can be traced in detail\&. Because
 \fBdelv\fR
@@ -145,13 +145,13 @@ will perform a lookup for an A record\&.
 Specifies a file from which to read DNSSEC trust anchors\&. The default is
 /etc/bind\&.keys, which is included with
 BIND
-9 and contains trust anchors for the root zone ("\&.") and for the ISC DNSSEC lookaside validation zone ("dlv\&.isc\&.org")\&.
+9 and contains one or more trust anchors for the root zone ("\&.")\&.
 .sp
-Keys that do not match the root or DLV trust\-anchor names are ignored; these key names can be overridden using the
-\fB+dlv=NAME\fR
-or
+Keys that do not match the root zone name are ignored\&. An alternate key name can be specified using the
 \fB+root=NAME\fR
-options\&.
+options\&. DNSSEC Lookaside Validation can also be turned on by using the
+\fB+dlv=NAME\fR
+to specify the name of a zone containing DLV records\&.
 .sp
 Note: When reading the trust anchor file,
 \fBdelv\fR
@@ -414,9 +414,9 @@ must be used to specify a file containing the key\&.
 .PP
 \fB+[no]dlv[=DLV]\fR
 .RS 4
-Indicates whether to perform DNSSEC lookaside validation, and if so, specifies the name of the DLV trust anchor\&. The default is to perform lookaside validation using a trust anchor of "dlv\&.isc\&.org", for which there is a built\-in key\&. If specifying a different name, then
+Indicates whether to perform DNSSEC lookaside validation, and if so, specifies the name of the DLV trust anchor\&. The
 \fB\-a\fR
-must be used to specify a file containing the DLV key\&.
+option must also be used to specify a file containing the DLV key\&.
 .RE
 .SH "FILES"
 .PP
@@ -437,5 +437,5 @@ RFC5155\&.
 \fBInternet Systems Consortium, Inc\&.\fR
 .SH "COPYRIGHT"
 .br
-Copyright \(co 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+Copyright \(co 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 .br

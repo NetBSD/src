@@ -1,4 +1,4 @@
-# Copyright (C) 2016  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2016, 2017  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -26,7 +26,7 @@ VERSION=@BIND9_VERSION@
 
 @BIND9_MAKE_INCLUDES@
 
-CINCLUDES =	-I. -Iinclude -I../include ${ISC_INCLUDES}
+CINCLUDES =	-I. -Iinclude -I../include ${ISC_INCLUDES} ${IRS_INCLUDES}
 CDEFINES =	-DTESTS="\"${top_builddir}/lib/irs/tests/\""
 
 CFGLIBS =	../../isccfg/libisccfg.@A@

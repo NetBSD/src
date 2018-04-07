@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2005, 2007, 2011-2014, 2016  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2005, 2007, 2011-2014, 2016, 2017  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -232,6 +232,16 @@ done
 [ $ret -eq 0 ] || echo "I:failed"
 status=`expr $status + $ret`
 
+# stomp on the file header
+echo "I:checking corrupt map files fail to load (bad file header)"
+ret=0
+./named-compilezone -D -f text -F map -o map.5 example.nil baseline.txt > /dev/null
+cp map.5 badmap
+stomp badmap 0 32 99
+./named-compilezone -D -f map -F text -o text.5 example.nil badmap > /dev/null
+[ $? = 1 ] || ret=1
+[ $ret -eq 0 ] || echo "I:failed"
+status=`expr $status + $ret`
 # stomp on the file data so it hashes differently.
 # these are small and subtle changes, so that the resulting file
 # would appear to be a legitimate map file and would not trigger an
@@ -239,7 +249,6 @@ status=`expr $status + $ret`
 # load because of a SHA1 hash mismatch.
 echo "I:checking corrupt map files fail to load (bad node header)"
 ret=0
-./named-compilezone -D -f text -F map -o map.5 example.nil baseline.txt > /dev/null
 cp map.5 badmap
 stomp badmap 2754 2 99
 ./named-compilezone -D -f map -F text -o text.5 example.nil badmap > /dev/null

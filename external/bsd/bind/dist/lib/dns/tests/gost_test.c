@@ -1,7 +1,7 @@
-/*	$NetBSD: gost_test.c,v 1.1.1.7 2015/12/17 03:22:10 christos Exp $	*/
+/*	$NetBSD: gost_test.c,v 1.1.1.8 2018/04/07 21:44:09 christos Exp $	*/
 
 /*
- * Copyright (C) 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2014, 2015, 2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -58,11 +58,9 @@
 unsigned char digest[ISC_GOST_DIGESTLENGTH];
 unsigned char buffer[1024];
 const char *s;
-char str[2 * ISC_GOST_DIGESTLENGTH + 1];
+char str[2 * ISC_GOST_DIGESTLENGTH + 3];
 int i = 0;
 
-isc_result_t
-tohexstr(unsigned char *d, unsigned int len, char *out);
 /*
  * Precondition: a hexadecimal number in *d, the length of that number in len,
  *   and a pointer to a character array to put the output (*out).
@@ -73,19 +71,17 @@ tohexstr(unsigned char *d, unsigned int len, char *out);
  *
  * Return values: ISC_R_SUCCESS if the operation is sucessful
  */
-
-isc_result_t
-tohexstr(unsigned char *d, unsigned int len, char *out) {
-
-	out[0]='\0';
+static isc_result_t
+tohexstr(unsigned char *d, unsigned int len, char *out, size_t out_size) {
 	char c_ret[] = "AA";
 	unsigned int j;
-	strcat(out, "0x");
+
+	out[0] = '\0';
+	strlcat(out, "0x", out_size);
 	for (j = 0; j < len; j++) {
-		sprintf(c_ret, "%02X", d[j]);
-		strcat(out, c_ret);
+		snprintf(c_ret, sizeof(c_ret), "%02X", d[j]);
+		strlcat(out, c_ret, out_size);
 	}
-	strcat(out, "\0");
 	return (ISC_R_SUCCESS);
 }
 
@@ -218,7 +214,7 @@ ATF_TC_BODY(isc_gost_md, tc) {
 		}
 		result = isc_gost_final(&gost, digest);
 		ATF_REQUIRE(result == ISC_R_SUCCESS);
-		tohexstr(digest, ISC_GOST_DIGESTLENGTH, str);
+		tohexstr(digest, ISC_GOST_DIGESTLENGTH, str, sizeof(str));
 		ATF_CHECK_STREQ(str, testcase->result);
 
 		testcase++;

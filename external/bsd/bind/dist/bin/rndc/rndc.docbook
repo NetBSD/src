@@ -1,5 +1,5 @@
 <!--
- - Copyright (C) 2004, 2005, 2007, 2013-2016  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2004, 2005, 2007, 2013-2018  Internet Systems Consortium, Inc. ("ISC")
  - Copyright (C) 2000, 2001  Internet Software Consortium.
  -
  - Permission to use, copy, modify, and/or distribute this software for any
@@ -45,6 +45,8 @@
       <year>2014</year>
       <year>2015</year>
       <year>2016</year>
+      <year>2017</year>
+      <year>2018</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
     <copyright>
@@ -293,14 +295,12 @@
       </varlistentry>
 
       <varlistentry>
-	<term><userinput>dumpdb <optional>-all|-cache|-zone|-adb|-bad</optional> <optional><replaceable>view ...</replaceable></optional></userinput></term>
+	<term><userinput>dumpdb <optional>-all|-cache|-zones|-adb|-bad</optional> <optional><replaceable>view ...</replaceable></optional></userinput></term>
 	<listitem>
 	  <para>
 	    Dump the server's caches (default) and/or zones to
-	    the
-	    dump file for the specified views.  If no view is
-	    specified, all
-	    views are dumped.
+	    the dump file for the specified views.  If no view
+            is specified, all views are dumped.
 	    (See the <command>dump-file</command> option in
 	    the BIND 9 Administrator Reference Manual.)
 	  </para>
@@ -423,7 +423,7 @@
       </varlistentry>
 
       <varlistentry>
-	<term><userinput>querylog</userinput> <optional>on|off</optional> </term>
+	<term><userinput>querylog</userinput> <optional> on | off </optional> </term>
 	<listitem>
 	  <para>
 	    Enable or disable query logging.  (For backward
@@ -754,7 +754,7 @@
       </varlistentry>
 
       <varlistentry>
-	<term><userinput>validation ( on | off | check ) <optional><replaceable>view ...</replaceable></optional> </userinput></term>
+	<term><userinput>validation ( on | off | status ) <optional><replaceable>view ...</replaceable></optional> </userinput></term>
 	<listitem>
 	  <para>
 	    Enable, disable, or check the current status of

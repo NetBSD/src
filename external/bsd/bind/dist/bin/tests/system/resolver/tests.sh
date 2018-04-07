@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004, 2007, 2009-2016  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2009-2017  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000, 2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -44,7 +44,7 @@ if [ -x ${RESOLVE} ] ; then
    echo "I:checking that local bound address can be set (Can't query from a denied address) ($n)"
    ret=0
    ${RESOLVE} -b 10.53.0.8 -p 5300 -t a -s 10.53.0.1 www.example.org 2> resolve.out.ns1.test${n} || ret=1
-   grep "resolution failed: SERVFAIL" resolve.out.ns1.test${n} > /dev/null || ret=1
+   grep -E "resolution failed: (SERVFAIL|failure)" resolve.out.ns1.test${n} > /dev/null || ret=1
    if [ $ret != 0 ]; then echo "I:failed"; fi
    status=`expr $status + $ret`
 
@@ -85,7 +85,7 @@ if [ -x ${RESOLVE} ] ; then
     echo "I:checking handling of bogus referrals using dns_client ($n)"
     ret=0
     ${RESOLVE} -p 5300 -t a -s 10.53.0.1 www.example.com 2> resolve.out.ns1.test${n} || ret=1
-    grep "resolution failed: SERVFAIL" resolve.out.ns1.test${n} > /dev/null || ret=1
+    grep -E "resolution failed: (SERVFAIL|failure)" resolve.out.ns1.test${n} > /dev/null || ret=1
     if [ $ret != 0 ]; then echo "I:failed"; fi
     status=`expr $status + $ret`
 fi
@@ -714,6 +714,42 @@ ret=0
 $DIG @10.53.0.7 -p 5300 zero.example.net txt > dig.out.1.${n} || ret=1
 ttl=`awk '/"A" "zero" "ttl"/ { print $2 }' dig.out.1.${n}`
 test ${ttl:-1} -eq 0 || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo "I:check that 'ad' in not returned in truncated answer with empty answer and authority sections to request with +ad (${n})"
+ret=0
+$DIG @10.53.0.6 -p 5300 dnskey ds.example.net +bufsize=512 +ad +nodnssec +ignore +norec > dig.out.$n
+grep "flags: qr aa tc; QUERY: 1, ANSWER: 0, AUTHORITY: 0" dig.out.$n > /dev/null || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo "I:check that 'ad' in not returned in truncated answer with empty answer and authority sections to request with +dnssec (${n})"
+ret=0
+$DIG @10.53.0.6 -p 5300 dnskey ds.example.net +bufsize=512 +noad +dnssec +ignore +norec > dig.out.$n
+grep "flags: qr aa tc; QUERY: 1, ANSWER: 0, AUTHORITY: 0" dig.out.$n > /dev/null || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo "I: check that the resolver accepts a reply with empty question section with TC=1 and retries over TCP ($n)"
+ret=0
+$DIG @10.53.0.5 -p 5300 truncated.no-questions. a > dig.ns5.out.${n} || ret=1
+grep "status: NOERROR" dig.ns5.out.${n} > /dev/null || ret=1
+grep "ANSWER: 1," dig.ns5.out.${n} > /dev/null || ret=1
+grep "1.2.3.4" dig.ns5.out.${n} > /dev/null || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo "I: check that the resolver rejects a reply with empty question section with TC=0 ($n)"
+ret=0
+$DIG @10.53.0.5 -p 5300 not-truncated.no-questions. a > dig.ns5.out.${n} || ret=1
+grep "status: NOERROR" dig.ns5.out.${n} > /dev/null && ret=1
+grep "ANSWER: 1," dig.ns5.out.${n} > /dev/null && ret=1
+grep "1.2.3.4" dig.ns5.out.${n} > /dev/null && ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 

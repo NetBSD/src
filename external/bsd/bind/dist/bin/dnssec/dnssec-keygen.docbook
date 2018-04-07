@@ -1,5 +1,5 @@
 <!--
- - Copyright (C) 2004, 2005, 2007-2012, 2014-2016  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2004, 2005, 2007-2012, 2014-2017  Internet Systems Consortium, Inc. ("ISC")
  - Copyright (C) 2000-2003  Internet Software Consortium.
  -
  - Permission to use, copy, modify, and/or distribute this software for any
@@ -49,6 +49,7 @@
       <year>2014</year>
       <year>2015</year>
       <year>2016</year>
+      <year>2017</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
     <copyright>
@@ -122,7 +123,7 @@
             Selects the cryptographic algorithm.  For DNSSEC keys, the value
             of <option>algorithm</option> must be one of RSAMD5, RSASHA1,
 	    DSA, NSEC3RSASHA1, NSEC3DSA, RSASHA256, RSASHA512, ECCGOST,
-	    ECDSAP256SHA256 or ECDSAP384SHA384.
+	    ECDSAP256SHA256, ECDSAP384SHA384, ED25519 or ED448.
 	    For TSIG/TKEY, the value must
             be DH (Diffie Hellman), HMAC-MD5, HMAC-SHA1, HMAC-SHA224,
             HMAC-SHA256, HMAC-SHA384, or HMAC-SHA512.  These values are
@@ -194,8 +195,8 @@
             If this option is used and no algorithm is explicitly
             set on the command line, NSEC3RSASHA1 will be used by
             default. Note that RSASHA256, RSASHA512, ECCGOST,
-	    ECDSAP256SHA256 and ECDSAP384SHA384 algorithms
-	    are NSEC3-capable.
+	    ECDSAP256SHA256, ECDSAP384SHA384, ED25519 and ED448
+	    algorithms are NSEC3-capable.
           </para>
         </listitem>
       </varlistentry>

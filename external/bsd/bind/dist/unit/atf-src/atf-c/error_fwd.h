@@ -1,9 +1,6 @@
-/*	$NetBSD: error_fwd.h,v 1.1.1.3 2014/12/10 03:34:48 christos Exp $	*/
+/*	$NetBSD: error_fwd.h,v 1.1.1.4 2018/04/07 21:44:14 christos Exp $	*/
 
-/*
- * Automated Testing Framework (atf)
- *
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+/* Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,8 +23,7 @@
  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
  * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
+ * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.  */
 
 #if !defined(ATF_C_ERROR_FWD_H)
 #define ATF_C_ERROR_FWD_H
@@ -39,4 +35,4 @@
 struct atf_error;
 typedef struct atf_error *atf_error_t;
 
-#endif /* ATF_C_ERROR_FWD_H */
+#endif /* !defined(ATF_C_ERROR_FWD_H) */

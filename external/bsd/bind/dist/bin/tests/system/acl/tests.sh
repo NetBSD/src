@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2008, 2012-2014, 2016  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2008, 2012-2014, 2016, 2017  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -13,8 +13,6 @@
 # LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
-
-# Id: tests.sh,v 1.4 2008/07/19 00:02:14 each Exp 
 
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
@@ -149,6 +147,66 @@ t=`expr $t + 1`
 $DIG +tcp soa example. \
     	@10.53.0.2 -b 10.53.0.3 -p 5300 > dig.out.${t}
 grep "status: NOERROR" dig.out.${t} > /dev/null 2>&1 || { echo "I:test $t failed" ; status=1; }
+
+# AXFR tests against ns3
+
+echo "I:testing allow-transfer ACLs against ns3 (no existing zones)"
+
+echo "I:calling addzone example.com on ns3"
+$RNDC -c ../common/rndc.conf -s 10.53.0.3 -p 9953 addzone 'example.com {type master; file "example.db"; }; '
+
+sleep 1
+
+t=`expr $t + 1`
+ret=0
+echo "I:checking AXFR of example.com from ns3 with ACL allow-transfer { none; }; (${t})"
+$DIG @10.53.0.3 -p 5300 example.com axfr > dig.out.${t} 2>&1
+grep "Transfer failed." dig.out.${t} >/dev/null 2>&1 || ret=1
+[ $ret -eq 0 ] || echo "I:failed"
+status=`expr $status + $ret`
+
+echo "I:calling rndc reconfig"
+$RNDC -c ../common/rndc.conf -s 10.53.0.3 -p 9953 reconfig
+
+sleep 1
+
+t=`expr $t + 1`
+ret=0
+echo "I:re-checking AXFR of example.com from ns3 with ACL allow-transfer { none; }; (${t})"
+$DIG @10.53.0.3 -p 5300 example.com axfr > dig.out.${t} 2>&1
+grep "Transfer failed." dig.out.${t} >/dev/null 2>&1 || ret=1
+[ $ret -eq 0 ] || echo "I:failed"
+status=`expr $status + $ret`
+
+# AXFR tests against ns4
+
+echo "I:testing allow-transfer ACLs against ns4 (1 pre-existing zone)"
+
+echo "I:calling addzone example.com on ns4"
+$RNDC -c ../common/rndc.conf -s 10.53.0.4 -p 9953 addzone 'example.com {type master; file "example.db"; }; '
+
+sleep 1
+
+t=`expr $t + 1`
+ret=0
+echo "I:checking AXFR of example.com from ns4 with ACL allow-transfer { none; }; (${t})"
+$DIG @10.53.0.4 -p 5300 example.com axfr > dig.out.${t} 2>&1
+grep "Transfer failed." dig.out.${t} >/dev/null 2>&1 || ret=1
+[ $ret -eq 0 ] || echo "I:failed"
+status=`expr $status + $ret`
+
+echo "I:calling rndc reconfig"
+$RNDC -c ../common/rndc.conf -s 10.53.0.4 -p 9953 reconfig
+
+sleep 1
+
+t=`expr $t + 1`
+ret=0
+echo "I:re-checking AXFR of example.com from ns4 with ACL allow-transfer { none; }; (${t})"
+$DIG @10.53.0.4 -p 5300 example.com axfr > dig.out.${t} 2>&1
+grep "Transfer failed." dig.out.${t} >/dev/null 2>&1 || ret=1
+[ $ret -eq 0 ] || echo "I:failed"
+status=`expr $status + $ret`
 
 echo "I:exit status: $status"
 [ $status -eq 0 ] || exit 1

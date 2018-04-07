@@ -1,4 +1,4 @@
-# Copyright (C) 2009, 2012, 2014-2016  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2009, 2012, 2014-2017  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -26,7 +26,7 @@ VERSION=@BIND9_VERSION@
 
 CINCLUDES =	-I. -I./include -I${srcdir}/include \
 		${DNS_INCLUDES} ${ISC_INCLUDES} \
-		@ISC_OPENSSL_INC@ ${ISCCFG_INCLUDES}
+		${ISCCFG_INCLUDES} @ISC_OPENSSL_INC@
 
 CDEFINES =	@CRYPTO@
 CWARNINGS =
@@ -71,6 +71,8 @@ libirs.la: ${OBJS} version.@O@
 
 timestamp: libirs.@A@
 	touch timestamp
+
+testdirs: libirs.@A@
 
 installdirs:
 	$(SHELL) ${top_srcdir}/mkinstalldirs ${DESTDIR}${libdir}

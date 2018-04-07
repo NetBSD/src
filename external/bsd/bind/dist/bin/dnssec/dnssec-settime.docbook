@@ -1,5 +1,5 @@
 <!--
- - Copyright (C) 2009-2011, 2014-2016  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2009-2011, 2014-2017  Internet Systems Consortium, Inc. ("ISC")
  -
  - Permission to use, copy, modify, and/or distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
@@ -43,6 +43,7 @@
       <year>2014</year>
       <year>2015</year>
       <year>2016</year>
+      <year>2017</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
   </docinfo>
@@ -58,6 +59,8 @@
       <arg choice="opt" rep="norepeat"><option>-R <replaceable class="parameter">date/offset</replaceable></option></arg>
       <arg choice="opt" rep="norepeat"><option>-I <replaceable class="parameter">date/offset</replaceable></option></arg>
       <arg choice="opt" rep="norepeat"><option>-D <replaceable class="parameter">date/offset</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-S <replaceable class="parameter">key</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-i <replaceable class="parameter">interval</replaceable></option></arg>
       <arg choice="opt" rep="norepeat"><option>-h</option></arg>
       <arg choice="opt" rep="norepeat"><option>-V</option></arg>
       <arg choice="opt" rep="norepeat"><option>-v <replaceable class="parameter">level</replaceable></option></arg>

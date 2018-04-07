@@ -1,4 +1,4 @@
-; Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
+; Copyright (C) 2014, 2017  Internet Systems Consortium, Inc. ("ISC")
 ;
 ; Permission to use, copy, modify, and/or distribute this software for any
 ; purpose with or without fee is hereby granted, provided that the above
@@ -19,4 +19,4 @@ ns.tld1. 60 IN A 10.53.0.1
 example.org. 60 IN NS direct.example.org.
 direct.example.org. 60 IN A 10.53.0.2
 example.net. 60 IN NS direct.example.net.
-direct.example.net. 60 IN A 10.53.0.4
+direct.example.net. 60 IN A 10.53.0.2

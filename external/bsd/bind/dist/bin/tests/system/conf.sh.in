@@ -70,21 +70,24 @@ LWTEST=$TOP/bin/tests/system/lwresd/lwtest
 MAKEJOURNAL=$TOP/bin/tests/makejournal
 SAMPLEUPDATE=$TOP/lib/samples/sample-update
 
+# we don't want a KRB5_CONFIG setting breaking the tests
+KRB5_CONFIG=/dev/null
+
 # The "stress" test is not run by default since it creates enough
 # load on the machine to make it unusable to other users.
 # v6synth
 SUBDIRS="acl additional allow_query addzone autosign builtin
-	 cacheclean case checkconf @CHECKDS@ checknames checkzone
-	 @COVERAGE@ database delv digdelv dlv dlvauto dlz dlzexternal
-	 dlzredir dname dns64 dnssec dsdigest dscp ecdsa ednscompliance
-	 emptyzones fetchlimit filter-aaaa formerr forward geoip
-	 glue gost ixfr inline integrity legacy limits logfileconfig
-	 lwresd masterfile masterformat metadata notify nslookup
-	 nsupdate pending @PKCS11_TEST@ reclimit redirect resolver
-	 rndc rpz rpzrecurse rrl rrchecker rrsetorder rsabigexponent
-	 sit smartsign sortlist spf staticstub statistics statschannel
-	 stub tcp tkey tsig tsiggss unknown upforwd verify views
-	 wildcard xfer xferquota zero zonechecks"
+	 cacheclean case chain checkconf @CHECKDS@ checknames
+	 checkzone cookie @COVERAGE@ database delv digdelv dlv
+	 dlz dlzexternal dlzredir dns64 dnssec dsdigest
+	 dscp ecdsa eddsa ednscompliance emptyzones fetchlimit filter-aaaa
+	 formerr forward geoip glue gost ixfr inline integrity
+	 legacy limits logfileconfig lwresd masterfile masterformat
+	 metadata notify nslookup nsupdate pending @PKCS11_TEST@
+	 reclimit redirect resolver rndc rpz rpzrecurse rrl rrchecker
+	 rrsetorder rsabigexponent runtime smartsign sortlist spf staticstub
+	 statistics statschannel stub tcp tkey tsig tsiggss unknown
+	 upforwd verify views wildcard xfer xferquota zero zonechecks"
 
 # Things that are different on Windows
 KILL=kill
@@ -136,6 +139,56 @@ ZLIB=@ZLIB@
 
 . ${TOP}/version
 
+#
+# Set up color-coded test output
+#
+if test -t 1 && type tput > /dev/null 2>&1 ; then
+    COLOR_FAIL=`tput setaf 1`   # red
+    COLOR_WARN=`tput setaf 3`   # yellow
+    COLOR_PASS=`tput setaf 2`   # green
+    COLOR_INFO=`tput bold`      # bold
+    COLOR_NONE=`tput sgr0`
+else
+    # set to empty strings so printf succeeds
+    COLOR_FAIL=''
+    COLOR_WARN=''
+    COLOR_PASS=''
+    COLOR_INFO=''
+    COLOR_NONE=''
+fi
+
+if type printf > /dev/null 2>&1
+then
+	echofail () {
+		printf "${COLOR_FAIL}%s${COLOR_NONE}\n" "$*"
+	}
+	echowarn () {
+		printf "${COLOR_WARN}%s${COLOR_NONE}\n" "$*"
+	}
+	echopass () {
+		printf "${COLOR_PASS}%s${COLOR_NONE}\n" "$*"
+	}
+	echoinfo () {
+		printf "${COLOR_INFO}%s${COLOR_NONE}\n" "$*"
+	}
+else
+	echofail () {
+		echo "$*"
+	}
+	echowarn () {
+		echo "$*"
+	}
+	echopass () {
+		echo "$*"
+	}
+	echoinfo () {
+		echo "$*"
+	}
+fi
+
+#
+# Export command paths
+#
 export ARPANAME
 export BIGKEY
 export CHECKZONE
@@ -149,6 +202,7 @@ export KEYFRLAB
 export KEYGEN
 export KEYSETTOOL
 export KEYSIGNER
+export KRB5_CONFIG
 export LWRESD
 export LWTEST
 export MAKEJOURNAL

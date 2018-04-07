@@ -1,6 +1,6 @@
 #!/bin/sh -e
 #
-# Copyright (C) 2010, 2012, 2014, 2016  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2010, 2012, 2014, 2016, 2017  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -24,7 +24,7 @@ zonefile="${zone}.db"
 infile="${zonefile}.in"
 cp $infile $zonefile
 ksk=`$KEYGEN -q -3 -r $RANDFILE -fk $zone`
-zsk=`$KEYGEN -q -3 -r $RANDFILE $zone`
+zsk=`$KEYGEN -q -3 -r $RANDFILE -b 2048 $zone`
 cat $ksk.key $zsk.key >> $zonefile
 $SIGNER -P -r $RANDFILE -o $zone $zonefile > /dev/null 2>&1
 

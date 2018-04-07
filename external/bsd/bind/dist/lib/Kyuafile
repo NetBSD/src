@@ -1,0 +1,7 @@
+syntax(2)
+test_suite('bind9')
+
+include('dns/Kyuafile')
+include('irs/Kyuafile')
+include('isc/Kyuafile')
+include('lwres/Kyuafile')

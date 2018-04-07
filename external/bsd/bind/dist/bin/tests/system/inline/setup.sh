@@ -1,4 +1,4 @@
-# Copyright (C) 2011-2014  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2011-2014, 2017  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -24,6 +24,8 @@ rm -f ns1/root.db.signed
 
 touch ns2/trusted.conf
 cp ns2/bits.db.in ns2/bits.db
+cp ns2/bits.db.in ns2/inactiveksk.db
+cp ns2/bits.db.in ns2/inactivezsk.db
 cp ns2/bits.db.in ns2/retransfer.db
 cp ns2/bits.db.in ns2/retransfer3.db
 rm -f ns2/bits.db.jnl
@@ -43,3 +45,4 @@ cp ns5/named.conf.pre ns5/named.conf
 
 (cd ns3; $SHELL -e sign.sh)
 (cd ns1; $SHELL -e sign.sh)
+(cd ns7; $SHELL -e sign.sh)

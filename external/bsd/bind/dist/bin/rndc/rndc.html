@@ -1,6 +1,6 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <!--
- - Copyright (C) 2004, 2005, 2007, 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2004, 2005, 2007, 2013-2018 Internet Systems Consortium, Inc. ("ISC")
  - Copyright (C) 2000, 2001 Internet Software Consortium.
  - 
  - Permission to use, copy, modify, and/or distribute this software for any
@@ -249,14 +249,12 @@
 	    See also <span class="command"><strong>rndc addzone</strong></span>.
 	  </p>
 	</dd>
-<dt><span class="term"><strong class="userinput"><code>dumpdb [<span class="optional">-all|-cache|-zone|-adb|-bad</span>] [<span class="optional"><em class="replaceable"><code>view ...</code></em></span>]</code></strong></span></dt>
+<dt><span class="term"><strong class="userinput"><code>dumpdb [<span class="optional">-all|-cache|-zones|-adb|-bad</span>] [<span class="optional"><em class="replaceable"><code>view ...</code></em></span>]</code></strong></span></dt>
 <dd>
 	  <p>
 	    Dump the server's caches (default) and/or zones to
-	    the
-	    dump file for the specified views.  If no view is
-	    specified, all
-	    views are dumped.
+	    the dump file for the specified views.  If no view
+            is specified, all views are dumped.
 	    (See the <span class="command"><strong>dump-file</strong></span> option in
 	    the BIND 9 Administrator Reference Manual.)
 	  </p>
@@ -352,7 +350,7 @@
 	    See also <span class="command"><strong>rndc trace</strong></span>.
 	  </p>
 	</dd>
-<dt><span class="term"><strong class="userinput"><code>querylog</code></strong> [<span class="optional">on|off</span>] </span></dt>
+<dt><span class="term"><strong class="userinput"><code>querylog</code></strong> [<span class="optional"> on | off </span>] </span></dt>
 <dd>
 	  <p>
 	    Enable or disable query logging.  (For backward
@@ -623,7 +621,7 @@
 	    TKEY-negotiated keys.
 	  </p>
 	</dd>
-<dt><span class="term"><strong class="userinput"><code>validation ( on | off | check ) [<span class="optional"><em class="replaceable"><code>view ...</code></em></span>] </code></strong></span></dt>
+<dt><span class="term"><strong class="userinput"><code>validation ( on | off | status ) [<span class="optional"><em class="replaceable"><code>view ...</code></em></span>] </code></strong></span></dt>
 <dd>
 	  <p>
 	    Enable, disable, or check the current status of

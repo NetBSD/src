@@ -1,4 +1,4 @@
-; Copyright (C) 2010, 2012  Internet Systems Consortium, Inc. ("ISC")
+; Copyright (C) 2010, 2012, 2017  Internet Systems Consortium, Inc. ("ISC")
 ;
 ; Permission to use, copy, modify, and/or distribute this software for any
 ; purpose with or without fee is hereby granted, provided that the above
@@ -13,12 +13,16 @@
 ; PERFORMANCE OF THIS SOFTWARE.
 
 ; Id: root.db,v 1.4 2012/01/31 23:47:32 tbox Exp 
-
-$TTL	120
 @		SOA	ns.utld hostmaster.ns.utld ( 1 3600 1200 604800 60 )
 @		NS	ns.utld
-ns.utld		A	10.53.0.1
-ns.utld		AAAA	fd92:7065:b8e:ffff::1
+ns.utld		A	10.53.0.4
+ns.utld		AAAA	fd92:7065:b8e:ffff::4
 ;
-signed		NS	ns.utld
-unsigned	NS	ns.utld
+
+signed		NS	ns.signed
+ns.signed	A	10.53.0.4
+ns.signed	AAAA	fd92:7065:b8e:ffff::4
+
+unsigned	NS	ns.unsigned
+ns.unsigned	A	10.53.0.4
+ns.unsigned	AAAA	fd92:7065:b8e:ffff::4

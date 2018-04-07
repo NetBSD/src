@@ -1,4 +1,4 @@
-# Copyright (C) 2011-2016  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2011-2017  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -166,6 +166,22 @@ test $ret -eq 1 || $CHECKZONE $q dyn.example.net zones/crashzone.db || ret=1
 test $ret -eq 1 || $CHECKZONE $q dyn.example.net zones/crashzone.db || ret=1
 test $ret -eq 1 || $CHECKZONE $q dyn.example.net zones/crashzone.db || ret=1
 test $ret -eq 1 || $CHECKZONE $q dyn.example.net zones/crashzone.db || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:checking that nameserver below DNAME is reported even with occulted address record present ($n)"
+ret=0
+$CHECKZONE example.com zones/ns-address-below-dname.db > test.out.$n 2>&1 && ret=1
+grep "is below a DNAME" test.out.$n >/dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:checking that delegating nameserver below DNAME is reported even with occulted address record present ($n)"
+ret=0
+$CHECKZONE example.com zones/delegating-ns-address-below-dname.db > test.out.$n 2>&1 || ret=1
+grep "is below a DNAME" test.out.$n >/dev/null || ret=1
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`

@@ -1,4 +1,4 @@
-# Copyright (C) 2004, 2006-2009, 2012-2016  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2006-2009, 2012-2017  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000-2002  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -28,8 +28,8 @@ READLINE_LIB = @READLINE_LIB@
 DST_GSSAPI_INC = @DST_GSSAPI_INC@
 
 CINCLUDES =	${LWRES_INCLUDES} ${DNS_INCLUDES} \
-		${BIND9_INCLUDES} @DST_OPENSSL_INC@ ${ISC_INCLUDES} \
-		${ISCCFG_INCLUDES} ${DST_GSSAPI_INC}
+		${BIND9_INCLUDES} ${ISC_INCLUDES} \
+		${ISCCFG_INCLUDES} ${DST_GSSAPI_INC} @DST_OPENSSL_INC@
 
 CDEFINES =	-DVERSION=\"${VERSION}\" @CRYPTO@ @USE_GSSAPI@
 CWARNINGS =
