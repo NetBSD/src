@@ -12577,11 +12577,13 @@ mDNSlocal void AdvertiseInterface(mDNS *const m, NetworkInterfaceInfo *set)
     NetworkInterfaceInfo *primary;
     mDNSu8 recordType;
 
+#if 0
     if (m->AutoTargetServices == 0)
     {
         LogInfo("AdvertiseInterface: Returning due to AutoTargetServices zero for %s", set->ifname);
         return;
     }
+#endif
 
     primary = FindFirstAdvertisedInterface(m);
     if (!primary) primary = set; // If no existing advertised interface, this new NetworkInterfaceInfo becomes our new primary
