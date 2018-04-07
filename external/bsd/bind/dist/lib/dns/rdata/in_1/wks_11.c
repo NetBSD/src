@@ -1,7 +1,7 @@
-/*	$NetBSD: wks_11.c,v 1.8 2017/06/15 15:59:41 christos Exp $	*/
+/*	$NetBSD: wks_11.c,v 1.9 2018/04/07 22:23:21 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007, 2009, 2011-2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007, 2009, 2011-2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -210,7 +210,7 @@ totext_in_wks(ARGS_TOTEXT) {
 	isc_region_consume(&sr, 4);
 
 	proto = uint8_fromregion(&sr);
-	sprintf(buf, "%u", proto);
+	snprintf(buf, sizeof(buf), "%u", proto);
 	RETERR(str_totext(" ", target));
 	RETERR(str_totext(buf, target));
 	isc_region_consume(&sr, 1);
@@ -220,7 +220,8 @@ totext_in_wks(ARGS_TOTEXT) {
 		if (sr.base[i] != 0)
 			for (j = 0; j < 8; j++)
 				if ((sr.base[i] & (0x80 >> j)) != 0) {
-					sprintf(buf, "%u", i * 8 + j);
+					snprintf(buf, sizeof(buf),
+						 "%u", i * 8 + j);
 					RETERR(str_totext(" ", target));
 					RETERR(str_totext(buf, target));
 				}

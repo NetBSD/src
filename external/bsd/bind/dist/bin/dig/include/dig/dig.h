@@ -1,7 +1,7 @@
-/*	$NetBSD: dig.h,v 1.13 2017/06/15 15:59:36 christos Exp $	*/
+/*	$NetBSD: dig.h,v 1.14 2018/04/07 22:23:13 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2009, 2011-2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2011-2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -163,8 +163,8 @@ isc_boolean_t	sigchase;
 	dns_rdataclass_t rdclass;
 	isc_boolean_t rdtypeset;
 	isc_boolean_t rdclassset;
-	char namespace[BUFSIZE];
-	char onamespace[BUFSIZE];
+	char name_space[BUFSIZE];
+	char oname_space[BUFSIZE];
 	isc_buffer_t namebuf;
 	isc_buffer_t onamebuf;
 	isc_buffer_t renderbuf;
@@ -199,6 +199,7 @@ isc_boolean_t	sigchase;
 	unsigned int ednsoptscnt;
 	unsigned int ednsflags;
 	dns_opcode_t opcode;
+	unsigned int eoferr;
 };
 
 /*% The dig_query structure */
@@ -400,37 +401,38 @@ void
 clean_trustedkey(void);
 #endif
 
+char *
+next_token(char **stringp, const char *delim);
+
 /*
- * Routines to be defined in dig.c, host.c, and nslookup.c.
+ * Routines to be defined in dig.c, host.c, and nslookup.c. and
+ * then assigned to the appropriate function pointer
  */
 #ifdef DIG_SIGCHASE
-isc_result_t
-printrdataset(dns_name_t *owner_name, dns_rdataset_t *rdataset,
+extern isc_result_t
+(*dighost_printrdataset)(dns_name_t *owner_name, dns_rdataset_t *rdataset,
 	      isc_buffer_t *target);
 #endif
 
-isc_result_t
-printmessage(dig_query_t *query, dns_message_t *msg, isc_boolean_t headers);
+extern isc_result_t
+(*dighost_printmessage)(dig_query_t *query, dns_message_t *msg, isc_boolean_t headers);
 /*%<
  * Print the final result of the lookup.
  */
 
-void
-received(int bytes, isc_sockaddr_t *from, dig_query_t *query);
+extern void
+(*dighost_received)(int bytes, isc_sockaddr_t *from, dig_query_t *query);
 /*%<
  * Print a message about where and when the response
  * was received from, like the final comment in the
  * output of "dig".
  */
 
-void
-trying(char *frm, dig_lookup_t *lookup);
+extern void
+(*dighost_trying)(char *frm, dig_lookup_t *lookup);
 
-void
-dighost_shutdown(void);
-
-char *
-next_token(char **stringp, const char *delim);
+extern void
+(*dighost_shutdown)(void);
 
 #ifdef DIG_SIGCHASE
 /* Chasing functions */
@@ -441,6 +443,44 @@ chase_sig(dns_message_t *msg);
 #endif
 
 void save_opt(dig_lookup_t *lookup, char *code, char *value);
+
+void setup_file_key(void);
+void setup_text_key(void);
+
+/*
+ * Routines exported from dig.c for use by dig for iOS
+ */
+
+/*%<
+ * Call once only to set up libraries, parse global
+ * parameters and initial command line query parameters
+ */
+void
+dig_setup(int argc, char **argv);
+
+/*%<
+ * Call to supply new parameters for the next lookup
+ */
+void
+dig_query_setup(isc_boolean_t, isc_boolean_t, int argc, char **argv);
+
+/*%<
+ * set the main application event cycle running
+ */
+void
+dig_startup(void);
+
+/*%<
+ * Initiates the next lookup cycle
+ */
+void
+dig_query_start(void);
+
+/*%<
+ * Cleans up the application
+ */
+void
+dig_shutdown(void);
 
 ISC_LANG_ENDDECLS
 

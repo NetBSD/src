@@ -1,7 +1,7 @@
-/*	$NetBSD: ipseckey_45.c,v 1.8 2016/05/26 16:49:59 christos Exp $	*/
+/*	$NetBSD: ipseckey_45.c,v 1.9 2018/04/07 22:23:21 christos Exp $	*/
 
 /*
- * Copyright (C) 2005, 2007, 2009, 2011, 2012, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2005, 2007, 2009, 2011, 2012, 2014, 2015, 2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -144,7 +144,7 @@ totext_ipseckey(ARGS_TOTEXT) {
 	dns_rdata_toregion(rdata, &region);
 	num = uint8_fromregion(&region);
 	isc_region_consume(&region, 1);
-	sprintf(buf, "%u ", num);
+	snprintf(buf, sizeof(buf), "%u ", num);
 	RETERR(str_totext(buf, target));
 
 	/*
@@ -152,7 +152,7 @@ totext_ipseckey(ARGS_TOTEXT) {
 	 */
 	gateway = uint8_fromregion(&region);
 	isc_region_consume(&region, 1);
-	sprintf(buf, "%u ", gateway);
+	snprintf(buf, sizeof(buf), "%u ", gateway);
 	RETERR(str_totext(buf, target));
 
 	/*
@@ -160,7 +160,7 @@ totext_ipseckey(ARGS_TOTEXT) {
 	 */
 	num = uint8_fromregion(&region);
 	isc_region_consume(&region, 1);
-	sprintf(buf, "%u ", num);
+	snprintf(buf, sizeof(buf), "%u ", num);
 	RETERR(str_totext(buf, target));
 
 	/*

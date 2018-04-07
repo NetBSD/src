@@ -1,7 +1,7 @@
-/*	$NetBSD: dst_parse.c,v 1.10 2017/06/15 15:59:40 christos Exp $	*/
+/*	$NetBSD: dst_parse.c,v 1.11 2018/04/07 22:23:20 christos Exp $	*/
 
 /*
- * Portions Copyright (C) 2004-2016  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004-2017  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -120,6 +120,10 @@ static struct parse_map map[] = {
 	{TAG_ECDSA_PRIVATEKEY, "PrivateKey:"},
 	{TAG_ECDSA_ENGINE, "Engine:" },
 	{TAG_ECDSA_LABEL, "Label:" },
+
+	{TAG_EDDSA_PRIVATEKEY, "PrivateKey:"},
+	{TAG_EDDSA_ENGINE, "Engine:" },
+	{TAG_EDDSA_LABEL, "Label:" },
 
 #ifndef PK11_MD5_DISABLE
 	{TAG_HMACMD5_KEY, "Key:"},
@@ -317,6 +321,38 @@ check_ecdsa(const dst_private_t *priv, isc_boolean_t external) {
 	return (ok ? 0 : -1 );
 }
 
+static int
+check_eddsa(const dst_private_t *priv, isc_boolean_t external) {
+	int i, j;
+	isc_boolean_t have[EDDSA_NTAGS];
+	isc_boolean_t ok;
+	unsigned int mask;
+
+	if (external)
+		return ((priv->nelements == 0) ? 0 : -1);
+
+	for (i = 0; i < EDDSA_NTAGS; i++)
+		have[i] = ISC_FALSE;
+	for (j = 0; j < priv->nelements; j++) {
+		for (i = 0; i < EDDSA_NTAGS; i++)
+			if (priv->elements[j].tag == TAG(DST_ALG_ED25519, i))
+				break;
+		if (i == EDDSA_NTAGS)
+			return (-1);
+		have[i] = ISC_TRUE;
+	}
+
+	mask = ~0;
+	mask <<= sizeof(mask) * 8 - TAG_SHIFT;
+	mask >>= sizeof(mask) * 8 - TAG_SHIFT;
+
+	if (have[TAG_EDDSA_ENGINE & mask])
+		ok = have[TAG_EDDSA_LABEL & mask];
+	else
+		ok = have[TAG_EDDSA_PRIVATEKEY & mask];
+	return (ok ? 0 : -1 );
+}
+
 #ifndef PK11_MD5_DISABLE
 static int
 check_hmac_md5(const dst_private_t *priv, isc_boolean_t old) {
@@ -394,6 +430,9 @@ check_data(const dst_private_t *priv, const unsigned int alg,
 	case DST_ALG_ECDSA256:
 	case DST_ALG_ECDSA384:
 		return (check_ecdsa(priv, external));
+	case DST_ALG_ED25519:
+	case DST_ALG_ED448:
+		return (check_eddsa(priv, external));
 #ifndef PK11_MD5_DISABLE
 	case DST_ALG_HMACMD5:
 		return (check_hmac_md5(priv, old));
@@ -614,7 +653,12 @@ dst__privstruct_parse(dst_key_t *key, unsigned int alg, isc_lex_t *lex,
 		goto fail;
 	}
 
+#ifdef PK11_MD5_DISABLE
+	check = check_data(priv, alg == DST_ALG_RSA ? DST_ALG_RSASHA1 : alg,
+			   ISC_TRUE, external);
+#else
 	check = check_data(priv, alg, ISC_TRUE, external);
+#endif
 	if (check < 0) {
 		ret = DST_R_INVALIDPRIVATEKEY;
 		goto fail;
@@ -739,6 +783,12 @@ dst__privstruct_writefile(const dst_key_t *key, const dst_private_t *priv,
 		break;
 	case DST_ALG_ECDSA384:
 		fprintf(fp, "(ECDSAP384SHA384)\n");
+		break;
+	case DST_ALG_ED25519:
+		fprintf(fp, "(ED25519)\n");
+		break;
+	case DST_ALG_ED448:
+		fprintf(fp, "(ED448)\n");
 		break;
 	case DST_ALG_HMACMD5:
 		fprintf(fp, "(HMAC_MD5)\n");

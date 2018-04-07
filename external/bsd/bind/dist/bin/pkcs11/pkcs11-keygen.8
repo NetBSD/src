@@ -1,6 +1,6 @@
-.\"	$NetBSD: pkcs11-keygen.8,v 1.7 2017/06/15 15:59:37 christos Exp $
+.\"	$NetBSD: pkcs11-keygen.8,v 1.8 2018/04/07 22:23:14 christos Exp $
 .\"
-.\" Copyright (C) 2009, 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (C) 2009, 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 .\" 
 .\" Permission to use, copy, modify, and/or distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -62,16 +62,16 @@ bits of prime\&.
 .PP
 \-a \fIalgorithm\fR
 .RS 4
-Specify the key algorithm class: Supported classes are RSA, DSA, DH, and ECC\&. In addition to these strings, the
+Specify the key algorithm class: Supported classes are RSA, DSA, DH, ECC and ECX\&. In addition to these strings, the
 \fBalgorithm\fR
-can be specified as a DNSSEC signing algorithm that will be used with this key; for example, NSEC3RSASHA1 maps to RSA, and ECDSAP256SHA256 maps to ECC\&. The default class is "RSA"\&.
+can be specified as a DNSSEC signing algorithm that will be used with this key; for example, NSEC3RSASHA1 maps to RSA, ECDSAP256SHA256 maps to ECC, and ED25519 to ECX\&. The default class is "RSA"\&.
 .RE
 .PP
 \-b \fIkeysize\fR
 .RS 4
 Create the key pair with
 \fBkeysize\fR
-bits of prime\&. For ECC keys, the only valid values are 256 and 384, and the default is 256\&.
+bits of prime\&. For ECC keys, the only valid values are 256 and 384, and the default is 256\&. For ECX kyes, the only valid values are 256 and 456, and the default is 256\&.
 .RE
 .PP
 \-e
@@ -126,5 +126,5 @@ Open the session with the given PKCS#11 slot\&. The default is slot 0\&.
 \fBInternet Systems Consortium, Inc\&.\fR
 .SH "COPYRIGHT"
 .br
-Copyright \(co 2009, 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+Copyright \(co 2009, 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 .br

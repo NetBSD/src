@@ -1,7 +1,7 @@
-/*	$NetBSD: journal.c,v 1.11 2016/05/26 16:49:58 christos Exp $	*/
+/*	$NetBSD: journal.c,v 1.12 2018/04/07 22:23:20 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007-2011, 2013-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007-2011, 2013-2015, 2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -2093,8 +2093,8 @@ dns_journal_compact(isc_mem_t *mctx, char *filename, isc_uint32_t serial,
 	unsigned int i;
 	journal_pos_t best_guess;
 	journal_pos_t current_pos;
-	dns_journal_t *j = NULL;
-	dns_journal_t *new = NULL;
+	dns_journal_t *j1 = NULL;
+	dns_journal_t *j2 = NULL;
 	journal_rawheader_t rawheader;
 	unsigned int copy_length;
 	size_t namelen;
@@ -2122,22 +2122,22 @@ dns_journal_compact(isc_mem_t *mctx, char *filename, isc_uint32_t serial,
 	if (result != ISC_R_SUCCESS)
 		return (result);
 
-	result = journal_open(mctx, filename, ISC_FALSE, ISC_FALSE, &j);
+	result = journal_open(mctx, filename, ISC_FALSE, ISC_FALSE, &j1);
 	if (result == ISC_R_NOTFOUND) {
 		is_backup = ISC_TRUE;
-		result = journal_open(mctx, backup, ISC_FALSE, ISC_FALSE, &j);
+		result = journal_open(mctx, backup, ISC_FALSE, ISC_FALSE, &j1);
 	}
 	if (result != ISC_R_SUCCESS)
 		return (result);
 
-	if (JOURNAL_EMPTY(&j->header)) {
-		dns_journal_destroy(&j);
+	if (JOURNAL_EMPTY(&j1->header)) {
+		dns_journal_destroy(&j1);
 		return (ISC_R_SUCCESS);
 	}
 
-	if (DNS_SERIAL_GT(j->header.begin.serial, serial) ||
-	    DNS_SERIAL_GT(serial, j->header.end.serial)) {
-		dns_journal_destroy(&j);
+	if (DNS_SERIAL_GT(j1->header.begin.serial, serial) ||
+	    DNS_SERIAL_GT(serial, j1->header.end.serial)) {
+		dns_journal_destroy(&j1);
 		return (ISC_R_RANGE);
 	}
 
@@ -2145,19 +2145,19 @@ dns_journal_compact(isc_mem_t *mctx, char *filename, isc_uint32_t serial,
 	 * Cope with very small target sizes.
 	 */
 	indexend = sizeof(journal_rawheader_t) +
-		   j->header.index_size * sizeof(journal_rawpos_t);
+		   j1->header.index_size * sizeof(journal_rawpos_t);
 	if (target_size < indexend * 2)
 		target_size = target_size/2 + indexend;
 
 	/*
 	 * See if there is any work to do.
 	 */
-	if ((isc_uint32_t) j->header.end.offset < target_size) {
-		dns_journal_destroy(&j);
+	if ((isc_uint32_t) j1->header.end.offset < target_size) {
+		dns_journal_destroy(&j1);
 		return (ISC_R_SUCCESS);
 	}
 
-	CHECK(journal_open(mctx, newname, ISC_TRUE, ISC_TRUE, &new));
+	CHECK(journal_open(mctx, newname, ISC_TRUE, ISC_TRUE, &j2));
 
 	/*
 	 * Remove overhead so space test below can succeed.
@@ -2168,24 +2168,24 @@ dns_journal_compact(isc_mem_t *mctx, char *filename, isc_uint32_t serial,
 	/*
 	 * Find if we can create enough free space.
 	 */
-	best_guess = j->header.begin;
-	for (i = 0; i < j->header.index_size; i++) {
-		if (POS_VALID(j->index[i]) &&
-		    DNS_SERIAL_GE(serial, j->index[i].serial) &&
-		    ((isc_uint32_t)(j->header.end.offset - j->index[i].offset)
+	best_guess = j1->header.begin;
+	for (i = 0; i < j1->header.index_size; i++) {
+		if (POS_VALID(j1->index[i]) &&
+		    DNS_SERIAL_GE(serial, j1->index[i].serial) &&
+		    ((isc_uint32_t)(j1->header.end.offset - j1->index[i].offset)
 		     >= target_size / 2) &&
-		    j->index[i].offset > best_guess.offset)
-			best_guess = j->index[i];
+		    j1->index[i].offset > best_guess.offset)
+			best_guess = j1->index[i];
 	}
 
 	current_pos = best_guess;
 	while (current_pos.serial != serial) {
-		CHECK(journal_next(j, &current_pos));
-		if (current_pos.serial == j->header.end.serial)
+		CHECK(journal_next(j1, &current_pos));
+		if (current_pos.serial == j1->header.end.serial)
 			break;
 
 		if (DNS_SERIAL_GE(serial, current_pos.serial) &&
-		   ((isc_uint32_t)(j->header.end.offset - current_pos.offset)
+		   ((isc_uint32_t)(j1->header.end.offset - current_pos.offset)
 		     >= (target_size / 2)) &&
 		    current_pos.offset > best_guess.offset)
 			best_guess = current_pos;
@@ -2193,16 +2193,16 @@ dns_journal_compact(isc_mem_t *mctx, char *filename, isc_uint32_t serial,
 			break;
 	}
 
-	INSIST(best_guess.serial != j->header.end.serial);
+	INSIST(best_guess.serial != j1->header.end.serial);
 	if (best_guess.serial != serial)
-		CHECK(journal_next(j, &best_guess));
+		CHECK(journal_next(j1, &best_guess));
 
 	/*
 	 * We should now be roughly half target_size provided
 	 * we did not reach 'serial'.  If not we will just copy
 	 * all uncommitted deltas regardless of the size.
 	 */
-	copy_length = j->header.end.offset - best_guess.offset;
+	copy_length = j1->header.end.offset - best_guess.offset;
 
 	if (copy_length != 0) {
 		/*
@@ -2217,51 +2217,51 @@ dns_journal_compact(isc_mem_t *mctx, char *filename, isc_uint32_t serial,
 			goto failure;
 		}
 
-		CHECK(journal_seek(j, best_guess.offset));
-		CHECK(journal_seek(new, indexend));
+		CHECK(journal_seek(j1, best_guess.offset));
+		CHECK(journal_seek(j2, indexend));
 		for (i = 0; i < copy_length; i += size) {
 			unsigned int len = (copy_length - i) > size ? size :
 							 (copy_length - i);
-			CHECK(journal_read(j, buf, len));
-			CHECK(journal_write(new, buf, len));
+			CHECK(journal_read(j1, buf, len));
+			CHECK(journal_write(j2, buf, len));
 		}
 
-		CHECK(journal_fsync(new));
+		CHECK(journal_fsync(j2));
 
 		/*
 		 * Compute new header.
 		 */
-		new->header.begin.serial = best_guess.serial;
-		new->header.begin.offset = indexend;
-		new->header.end.serial = j->header.end.serial;
-		new->header.end.offset = indexend + copy_length;
-		new->header.sourceserial = j->header.sourceserial;
-		new->header.serialset = j->header.serialset;
+		j2->header.begin.serial = best_guess.serial;
+		j2->header.begin.offset = indexend;
+		j2->header.end.serial = j1->header.end.serial;
+		j2->header.end.offset = indexend + copy_length;
+		j2->header.sourceserial = j1->header.sourceserial;
+		j2->header.serialset = j1->header.serialset;
 
 		/*
 		 * Update the journal header.
 		 */
-		journal_header_encode(&new->header, &rawheader);
-		CHECK(journal_seek(new, 0));
-		CHECK(journal_write(new, &rawheader, sizeof(rawheader)));
-		CHECK(journal_fsync(new));
+		journal_header_encode(&j2->header, &rawheader);
+		CHECK(journal_seek(j2, 0));
+		CHECK(journal_write(j2, &rawheader, sizeof(rawheader)));
+		CHECK(journal_fsync(j2));
 
 		/*
 		 * Build new index.
 		 */
-		current_pos = new->header.begin;
-		while (current_pos.serial != new->header.end.serial) {
-			index_add(new, &current_pos);
-			CHECK(journal_next(new, &current_pos));
+		current_pos = j2->header.begin;
+		while (current_pos.serial != j2->header.end.serial) {
+			index_add(j2, &current_pos);
+			CHECK(journal_next(j2, &current_pos));
 		}
 
 		/*
 		 * Write index.
 		 */
-		CHECK(index_to_disk(new));
-		CHECK(journal_fsync(new));
+		CHECK(index_to_disk(j2));
+		CHECK(journal_fsync(j2));
 
-		indexend = new->header.end.offset;
+		indexend = j2->header.end.offset;
 		POST(indexend);
 	}
 
@@ -2269,8 +2269,8 @@ dns_journal_compact(isc_mem_t *mctx, char *filename, isc_uint32_t serial,
 	 * Close both journals before trying to rename files (this is
 	 * necessary on WIN32).
 	 */
-	dns_journal_destroy(&j);
-	dns_journal_destroy(&new);
+	dns_journal_destroy(&j1);
+	dns_journal_destroy(&j2);
 
 	/*
 	 * With a UFS file system this should just succeed and be atomic.
@@ -2307,10 +2307,10 @@ dns_journal_compact(isc_mem_t *mctx, char *filename, isc_uint32_t serial,
 	(void)isc_file_remove(newname);
 	if (buf != NULL)
 		isc_mem_put(mctx, buf, size);
-	if (j != NULL)
-		dns_journal_destroy(&j);
-	if (new != NULL)
-		dns_journal_destroy(&new);
+	if (j1 != NULL)
+		dns_journal_destroy(&j1);
+	if (j2 != NULL)
+		dns_journal_destroy(&j2);
 	return (result);
 }
 
