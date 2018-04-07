@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.15 2012/06/14 04:14:36 riz Exp $
+$NetBSD: README,v 1.16 2018/04/07 22:39:31 christos Exp $
 
 Organization of Sources:
 
@@ -78,6 +78,9 @@ The licenses currently used are:
 
 	mit		MIT (X11) style license.
 			http://www.opensource.org/licenses/mit-license.php
+
+	mpl		Mozilla Public license.
+			https://opensource.org/licenses/MPL-2.0
 
 	public-domain	Non-license for code that has been explicitly put
 			into the Public Domain.
