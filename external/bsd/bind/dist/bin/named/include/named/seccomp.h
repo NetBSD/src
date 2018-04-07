@@ -1,4 +1,4 @@
-/*	$NetBSD: seccomp.h,v 1.1.1.4 2017/06/15 15:22:38 christos Exp $	*/
+/*	$NetBSD: seccomp.h,v 1.1.1.5 2018/04/07 21:43:30 christos Exp $	*/
 
 /*
  * Copyright (C) 2014, 2017  Internet Systems Consortium, Inc. ("ISC")
@@ -36,6 +36,8 @@
 int scmp_syscalls[] = {
 	SCMP_SYS(access),
 	SCMP_SYS(open),
+	SCMP_SYS(openat),
+	SCMP_SYS(lseek),
 	SCMP_SYS(clock_gettime),
 	SCMP_SYS(time),
 	SCMP_SYS(read),
@@ -64,6 +66,7 @@ int scmp_syscalls[] = {
 #ifdef HAVE_GETRANDOM
 	SCMP_SYS(getrandom),
 #endif
+	SCMP_SYS(rename),
 	SCMP_SYS(unlink),
 	SCMP_SYS(socket),
 	SCMP_SYS(sendto),
@@ -82,7 +85,6 @@ int scmp_syscalls[] = {
 	SCMP_SYS(getsockopt),
 	SCMP_SYS(getsockname),
 	SCMP_SYS(lstat),
-	SCMP_SYS(lseek),
 	SCMP_SYS(getgid),
 	SCMP_SYS(getegid),
 	SCMP_SYS(getuid),
@@ -93,9 +95,7 @@ int scmp_syscalls[] = {
 	SCMP_SYS(setuid),
 	SCMP_SYS(prctl),
 	SCMP_SYS(epoll_wait),
-	SCMP_SYS(openat),
 	SCMP_SYS(getdents),
-	SCMP_SYS(rename),
 	SCMP_SYS(utimes),
 	SCMP_SYS(dup),
 #endif
@@ -103,6 +103,8 @@ int scmp_syscalls[] = {
 const char *scmp_syscall_names[] = {
 	"access",
 	"open",
+	"openat",
+	"lseek",
 	"clock_gettime",
 	"time",
 	"read",
@@ -131,6 +133,7 @@ const char *scmp_syscall_names[] = {
 #ifdef HAVE_GETRANDOM
 	"getrandom",
 #endif
+	"rename",
 	"unlink",
 	"socket",
 	"sendto",
@@ -149,7 +152,6 @@ const char *scmp_syscall_names[] = {
 	"getsockopt",
 	"getsockname",
 	"lstat",
-	"lseek",
 	"getgid",
 	"getegid",
 	"getuid",
@@ -160,9 +162,7 @@ const char *scmp_syscall_names[] = {
 	"setuid",
 	"prctl",
 	"epoll_wait",
-	"openat",
 	"getdents",
-	"rename",
 	"utimes",
 	"dup",
 #endif

@@ -55,8 +55,9 @@ AC_DEFUN(DLZ_ADD_DRIVER, [
 
 AC_MSG_CHECKING(for Postgres DLZ driver)
 AC_ARG_WITH(dlz_postgres,
-[  --with-dlz-postgres[=PATH]   Build with Postgres DLZ driver [yes|no|path].
-			       (Required to use Postgres with DLZ)],
+	    AS_HELP_STRING([--with-dlz-postgres[=PATH]],
+			   [Build with Postgres DLZ driver [yes|no|path].
+			       (Required to use Postgres with DLZ)]),
     use_dlz_postgres="$withval", use_dlz_postgres="no")
 
 if test "$use_dlz_postgres" != "no"
@@ -124,8 +125,9 @@ esac
 
 AC_MSG_CHECKING(for MySQL DLZ driver)
 AC_ARG_WITH(dlz_mysql,
-[  --with-dlz-mysql[=PATH]   Build with MySQL DLZ driver [yes|no|path].
-			       (Required to use MySQL with DLZ)],
+	    AS_HELP_STRING([--with-dlz-mysql[=PATH]],
+		           [Build with MySQL DLZ driver [yes|no|path].
+			       (Required to use MySQL with DLZ)]),
     use_dlz_mysql="$withval", use_dlz_mysql="no")
 
 mysql_include=""
@@ -212,8 +214,9 @@ esac
 
 AC_MSG_CHECKING(for Berkeley DB DLZ driver...)
 AC_ARG_WITH(dlz_bdb,
-[  --with-dlz-bdb[=PATH]   Build with Berkeley DB DLZ driver [yes|no|path].
-			       (Required to use Berkeley DB with DLZ)],
+	    AS_HELP_STRING([--with-dlz-bdb[=PATH]],
+			   [Build with Berkeley DB DLZ driver [yes|no|path].
+			       (Required to use Berkeley DB with DLZ)]),
     use_dlz_bdb="$withval", use_dlz_bdb="no")
 
 case "$use_dlz_bdb" in
@@ -336,8 +339,9 @@ esac
 
 AC_MSG_CHECKING(for file system DLZ driver)
 AC_ARG_WITH(dlz_filesystem,
-[  --with-dlz-filesystem[=ARG]    Build with filesystem DLZ driver [yes|no].
-			       (Required to use file system driver with DLZ)],
+	    AS_HELP_STRING([--with-dlz-filesystem[=ARG]],
+			   [Build with filesystem DLZ driver [yes|no].
+			       (Required to use file system driver with DLZ)]),
     use_dlz_filesystem="$withval", use_dlz_filesystem="no")
 
 case "$use_dlz_filesystem" in
@@ -358,8 +362,9 @@ esac
 
 AC_MSG_CHECKING(for LDAP DLZ driver)
 AC_ARG_WITH(dlz_ldap,
-[  --with-dlz-ldap[=PATH]   Build with LDAP DLZ driver [yes|no|path].
-			       (Required to use LDAP with DLZ)],
+	    AS_HELP_STRING([--with-dlz-ldap[=PATH]],
+			   [Build with LDAP DLZ driver [yes|no|path].
+			       (Required to use LDAP with DLZ)]),
     use_dlz_ldap="$withval", use_dlz_ldap="no")
 
 if test "$use_dlz_ldap" = "yes"
@@ -404,8 +409,9 @@ esac
 
 AC_MSG_CHECKING(for ODBC DLZ driver)
 AC_ARG_WITH(dlz_odbc,
-[  --with-dlz-odbc[=PATH]   Build with ODBC DLZ driver [yes|no|path].
-			       (Required to use ODBC with DLZ)],
+	    AS_HELP_STRING([--with-dlz-odbc[=PATH]],
+			   [Build with ODBC DLZ driver [yes|no|path].
+			       (Required to use ODBC with DLZ)]),
     use_dlz_odbc="$withval", use_dlz_odbc="no")
 
 if test "$use_dlz_odbc" = "yes"
@@ -461,8 +467,9 @@ esac
 
 AC_MSG_CHECKING(for stub DLZ driver)
 AC_ARG_WITH(dlz_stub,
-[  --with-dlz-stub[=ARG]    Build with stub DLZ driver [yes|no].
-			       (Required to use stub driver with DLZ)],
+	    AS_HELP_STRING([--with-dlz-stub[=ARG]],
+			   [Build with stub DLZ driver [yes|no].
+			       (Required to use stub driver with DLZ)]),
     use_dlz_stub="$withval", use_dlz_stub="no")
 
 case "$use_dlz_stub" in

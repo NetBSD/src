@@ -1,5 +1,5 @@
 <!--
- - Copyright (C) 2010, 2015, 2016  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2010, 2015-2017  Internet Systems Consortium, Inc. ("ISC")
  -
  - Permission to use, copy, modify, and/or distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
@@ -19,11 +19,13 @@
 <!-- Converted by db4-upgrade version 1.0 -->
 <section xmlns:db="http://docbook.org/ns/docbook" version="5.0" xml:id="rfc5011.support"><info><title>Dynamic Trust Anchor Management</title></info>
 
-  <para>BIND 9.7.0 introduces support for RFC 5011, dynamic trust
-  anchor management. Using this feature allows
-  <command>named</command> to keep track of changes to critical
-  DNSSEC keys without any need for the operator to make changes to
-  configuration files.</para>
+  <para>
+    BIND is able to maintain DNSSEC trust anchors using RFC 5011 key
+    management. This feature allows <command>named</command> to keep track
+    of changes to critical DNSSEC keys without any need for the operator to
+    make changes to configuration files.
+  </para>
+
   <section><info><title>Validating Resolver</title></info>
 
     <!-- TODO: command tag is overloaded for configuration and executables -->

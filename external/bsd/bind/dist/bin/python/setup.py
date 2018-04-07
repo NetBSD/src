@@ -1,5 +1,5 @@
 ############################################################################
-# Copyright (C) 2016  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2016, 2018  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -20,6 +20,6 @@ setup(name='isc',
       description='Python functions to support BIND utilities',
       url='https://www.isc.org/bind',
       author='Internet Systems Consortium, Inc',
-      author_email='bind9-bugs@isc.org',
+      author_email='info@isc.org',
       license='ISC',
       packages=['isc'])
