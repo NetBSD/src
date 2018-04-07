@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.484 2018/04/01 04:35:02 ryo Exp $
+.\"	$NetBSD: options.4,v 1.485 2018/04/07 19:38:05 mrg Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd February 17, 2018
+.Dd April 5, 2018
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -2469,6 +2469,17 @@ base memory size to prevent programs overwriting it.
 This is correct behavior, and you should not use the
 .Em REALBASEMEM
 option to access this memory).
+.It Cd options SPECTRE_V2_GCC_MITIGATION=1
+Enable GCC-specific Spectre variant 2 mitigations.
+For 32-bit kernels this means these options:
+.Bd -literal -offset indent
+-mindirect-branch=thunk -mindirect-branch-register
+.Ed
+.Pp
+For 64-bit kernels this means these options:
+.Bd -literal -offset indent
+-mindirect-branch=thunk-inline -mindirect-branch-register
+.Ed
 .It Cd options REALEXTMEM=integer
 Overrides the extended memory size passed in from the boot block.
 (Value given in kilobytes.
@@ -2702,6 +2713,7 @@ bolded
 .\" .Sh EXAMPLES
 .Sh SEE ALSO
 .Xr config 1 ,
+.Xr gcc 1 ,
 .Xr gdb 1 ,
 .Xr ktrace 1 ,
 .Xr pmc 1 ,
