@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_tcon.c,v 1.5 2018/04/06 08:23:40 bouyer Exp $ */
+/* $NetBSD: sunxi_tcon.c,v 1.6 2018/04/07 18:09:33 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2018 Manuel Bouyer <bouyer@antioche.eu.org>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_tcon.c,v 1.5 2018/04/06 08:23:40 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_tcon.c,v 1.6 2018/04/07 18:09:33 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -810,6 +810,55 @@ sunxi_tcon1_set_videomode(device_t dev, const struct videomode *mode)
 			    error);
 		}
 	}
+}
+
+/* check if this tcon is the console chosen by firmare */
+bool
+sunxi_tcon_is_console(device_t dev, const char *pipeline)
+{
+	struct sunxi_tcon_softc *sc = device_private(dev);
+	char p[64];
+	char *e, *n = p;
+	bool is_console = false;
+
+	KASSERT(device_is_a(dev, "sunxitcon"));
+	strncpy(p, pipeline, sizeof(p) - 1);
+	p[sizeof(p) - 1] = '\0';
+
+	/*
+	 * pipeline is like "de_be0-lcd0-hdmi"
+	 * of "de_be0-lcd1".
+	 * In the first case check output type
+	 * In the second check tcon unit number
+	 */
+	 n = p;
+	 e = strsep(&n, "-");
+	 if (e == NULL || memcmp(e, "de_be", 5) != 0)
+		goto bad;
+	 e = strsep(&n, "-");
+	 if (e == NULL)
+		goto bad;
+	 if (n == NULL) {
+		/* second case */
+		if (strcmp(e, "lcd0") == 0) {
+			if (sc->sc_unit == 0)
+				is_console = true;
+		 } else if (strcmp(e, "lcd1") == 0) {
+			if (sc->sc_unit == 1)
+				is_console = true;
+		} else
+			goto bad;
+		return is_console;
+	}
+	/* first case */
+	if (strcmp(n, "hdmi") == 0) {
+		if (sc->sc_output_type == OUTPUT_HDMI)
+			is_console = true;
+		return is_console;
+	}
+bad:
+	aprint_error("warning: can't parse pipeline %s\n", pipeline);
+	return is_console;
 }
 
 #if defined(DDB) || defined(SUNXI_TCON_DEBUG)
