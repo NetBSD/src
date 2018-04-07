@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2017, Intel Corp.
+ * Copyright (C) 2000 - 2018, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -510,7 +510,7 @@ FlOpenAmlOutputFile (
     if (!Filename)
     {
         /* Create the output AML filename */
-        if (!Gbl_CaptureComments)
+        if (!AcpiGbl_CaptureComments)
         {
             Filename = FlGenerateFilename (FilenamePrefix, FILE_SUFFIX_AML_CODE);
         }
