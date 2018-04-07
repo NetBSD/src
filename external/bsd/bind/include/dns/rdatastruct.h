@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2017 Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2018 Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003 Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -2526,7 +2526,7 @@ typedef struct dns_rdata_uri {
 
 #endif /* GENERIC_URI_256_H */
 /*
- * Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2014, 2018  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -2553,7 +2553,7 @@ typedef struct dns_rdata_caa {
 	unsigned char *		tag;
 	isc_uint8_t		tag_len;
 	unsigned char		*value;
-	isc_uint8_t		value_len;
+	isc_uint16_t		value_len;
 } dns_rdata_caa_t;
 
 #endif /* GENERIC_CAA_257_H */
@@ -2592,6 +2592,38 @@ typedef struct dns_rdata_avc {
  * via rdatastructpre.h and rdatastructsuf.h.
  */
 #endif /* GENERIC_AVC_258_H */
+/*
+ * Copyright (C) 2017  Internet Systems Consortium, Inc. ("ISC")
+ *
+ * Permission to use, copy, modify, and/or distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
+ */
+
+#ifndef GENERIC_DOA_259_H
+#define GENERIC_DOA_259_H 1
+
+typedef struct dns_rdata_doa {
+	dns_rdatacommon_t	common;
+	isc_mem_t *		mctx;
+	unsigned char *		mediatype;
+	unsigned char *		data;
+	isc_uint32_t		enterprise;
+	isc_uint32_t		type;
+	isc_uint16_t		data_len;
+	isc_uint8_t		location;
+	isc_uint8_t		mediatype_len;
+} dns_rdata_doa_t;
+
+#endif /* GENERIC_DOA_259_H */
 /*
  * Copyright (C) 2015  Internet Systems Consortium, Inc. ("ISC")
  *

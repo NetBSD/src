@@ -1,7 +1,7 @@
-/*	$NetBSD: client.c,v 1.17 2017/06/15 15:59:36 christos Exp $	*/
+/*	$NetBSD: client.c,v 1.18 2018/04/07 22:23:14 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2018  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -515,6 +515,12 @@ exit_check(ns_client_t *client) {
 		client->attributes = 0;
 		client->mortal = ISC_FALSE;
 
+		if (client->keytag != NULL) {
+			isc_mem_put(client->mctx, client->keytag,
+				    client->keytag_len);
+			client->keytag_len = 0;
+		}
+
 		/*
 		 * Put the client on the inactive list.  If we are aiming for
 		 * the "freed" state, it will be removed from the inactive
@@ -579,6 +585,11 @@ exit_check(ns_client_t *client) {
 			dns_rdataset_disassociate(client->opt);
 			dns_message_puttemprdataset(client->message,
 						    &client->opt);
+		}
+		if (client->keytag != NULL) {
+			isc_mem_put(client->mctx, client->keytag,
+				    client->keytag_len);
+			client->keytag_len = 0;
 		}
 
 		dns_message_destroy(&client->message);
@@ -1760,6 +1771,23 @@ process_cookie(ns_client_t *client, isc_buffer_t *buf, size_t optlen) {
 #endif
 
 static isc_result_t
+process_keytag(ns_client_t *client, isc_buffer_t *buf, size_t optlen) {
+
+	if (optlen == 0 || (optlen % 2) != 0) {
+		isc_buffer_forward(buf, (unsigned int)optlen);
+		return (DNS_R_OPTERR);
+	}
+
+	client->keytag = isc_mem_get(client->mctx, optlen);
+	if (client->keytag != NULL) {
+		client->keytag_len = (isc_uint16_t)optlen;
+		memmove(client->keytag, isc_buffer_current(buf), optlen);
+	}
+	isc_buffer_forward(buf, (unsigned int)optlen);
+	return (ISC_R_SUCCESS);
+}
+
+static isc_result_t
 process_opt(ns_client_t *client, dns_rdataset_t *opt) {
 	dns_rdata_t rdata;
 	isc_buffer_t optbuf;
@@ -1832,6 +1860,16 @@ process_opt(ns_client_t *client, dns_rdataset_t *opt) {
 						  dns_nsstatscounter_expireopt);
 				client->attributes |= NS_CLIENTATTR_WANTEXPIRE;
 				isc_buffer_forward(&optbuf, optlen);
+				break;
+			case DNS_OPT_KEY_TAG:
+				result = process_keytag(client, &optbuf,
+							optlen);
+				if (result != ISC_R_SUCCESS) {
+					ns_client_error(client, result);
+					return (result);
+				}
+				isc_stats_increment(ns_g_server->nsstats,
+						    dns_nsstatscounter_keytagopt);
 				break;
 			default:
 				isc_stats_increment(ns_g_server->nsstats,
@@ -2159,6 +2197,8 @@ client_request(isc_task_t *task, isc_event_t *event) {
 			goto cleanup;
 		}
 	}
+
+	isc_sockaddr_fromnetaddr(&client->destsockaddr, &client->destaddr, 0);
 
 	/*
 	 * Find a view that matches the client's source address.
@@ -2590,6 +2630,8 @@ client_create(ns_clientmgr_t *manager, ns_client_t **clientp) {
 	ISC_LINK_INIT(client, link);
 	ISC_LINK_INIT(client, rlink);
 	ISC_QLINK_INIT(client, ilink);
+	client->keytag = NULL;
+	client->keytag_len = 0;
 
 	/*
 	 * We call the init routines for the various kinds of client here,
@@ -3102,6 +3144,11 @@ ns_client_getsockaddr(ns_client_t *client) {
 	return (&client->peeraddr);
 }
 
+isc_sockaddr_t *
+ns_client_getdestaddr(ns_client_t *client) {
+	return (&client->destsockaddr);
+}
+
 isc_result_t
 ns_client_checkaclsilent(ns_client_t *client, isc_netaddr_t *netaddr,
 			 dns_acl_t *acl, isc_boolean_t default_allow)
@@ -3335,8 +3382,8 @@ ns_client_dumprecursing(FILE *f, ns_clientmgr_t *manager) {
 			dns_rdataclass_format(rdataset->rdclass, classbuf,
 					      sizeof(classbuf));
 		} else {
-			strcpy(typebuf, "-");
-			strcpy(classbuf, "-");
+			strlcpy(typebuf, "-", sizeof(typebuf));
+			strlcpy(classbuf, "-", sizeof(classbuf));
 		}
 		UNLOCK(&client->query.fetchlock);
 		fprintf(f, "; client %s%s%s: id %u '%s/%s/%s'%s%s "

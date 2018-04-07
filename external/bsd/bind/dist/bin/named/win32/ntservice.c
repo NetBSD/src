@@ -1,7 +1,7 @@
-/*	$NetBSD: ntservice.c,v 1.7 2015/12/17 04:00:41 christos Exp $	*/
+/*	$NetBSD: ntservice.c,v 1.8 2018/04/07 22:23:14 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2006, 2007, 2009, 2011, 2013-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2006, 2007, 2009, 2011, 2013-2015, 2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -26,6 +26,7 @@
 #include <isc/commandline.h>
 #include <isc/log.h>
 #include <isc/print.h>
+#include <isc/string.h>
 
 #include <named/globals.h>
 #include <named/ntservice.h>
@@ -60,8 +61,8 @@ ntservice_init(void) {
 		}
 		UpdateSCM(SERVICE_RUNNING);
 	} else {
-		strcpy(ConsoleTitle, "BIND Version ");
-		strcat(ConsoleTitle, VERSION);
+		strlcpy(ConsoleTitle, "BIND Version ", sizeof(ConsoleTitle));
+		strlcat(ConsoleTitle, VERSION, sizeof(ConsoleTitle));
 		SetConsoleTitle(ConsoleTitle);
 	}
 }

@@ -1,7 +1,7 @@
-/*	$NetBSD: xfrin.c,v 1.14 2017/06/15 15:59:40 christos Exp $	*/
+/*	$NetBSD: xfrin.c,v 1.15 2018/04/07 22:23:21 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2008, 2011-2013, 2015, 2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008, 2011-2013, 2015-2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -623,6 +623,7 @@ xfr_rr(dns_xfrin_ctx_t *xfr, dns_name_t *name, isc_uint32_t ttl,
 	case XFRST_IXFR_END:
 		FAIL(DNS_R_EXTRADATA);
 		/* NOTREACHED */
+		/* FALLTHROUGH */
 	default:
 		INSIST(0);
 		break;
@@ -1024,8 +1025,9 @@ xfrin_connect_done(isc_task_t *task, isc_event_t *event) {
 	result = isc_socket_getsockname(xfr->socket, &sockaddr);
 	if (result == ISC_R_SUCCESS) {
 		isc_sockaddr_format(&sockaddr, sourcetext, sizeof(sourcetext));
-	} else
-		strcpy(sourcetext, "<UNKNOWN>");
+	} else {
+		strlcpy(sourcetext, "<UNKNOWN>", sizeof(sourcetext));
+	}
 	xfrin_log(xfr, ISC_LOG_INFO, "connected using %s", sourcetext);
 
 	dns_tcpmsg_init(xfr->mctx, xfr->socket, &xfr->tcpmsg);

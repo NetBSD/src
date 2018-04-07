@@ -1,7 +1,7 @@
-/*	$NetBSD: gen.c,v 1.8 2016/05/26 16:49:58 christos Exp $	*/
+/*	$NetBSD: gen.c,v 1.9 2018/04/07 22:23:20 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2009, 2012-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2012-2015, 2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -550,7 +550,7 @@ main(int argc, char **argv) {
 	for (i = 0; i < TYPENAMES; i++)
 		memset(&typenames[i], 0, sizeof(typenames[i]));
 
-	strcpy(srcdir, "");
+	srcdir[0] = '\0';
 	while ((c = isc_commandline_parse(argc, argv, "cdits:F:P:S:")) != -1)
 		switch (c) {
 		case 'c':
@@ -645,7 +645,8 @@ main(int argc, char **argv) {
 	} else
 		year[0] = 0;
 
-	if (!depend) fprintf(stdout, copyright, year);
+	if (!depend)
+		fprintf(stdout, copyright, year);
 
 	if (code) {
 		fputs("#ifndef DNS_CODE_H\n", stdout);

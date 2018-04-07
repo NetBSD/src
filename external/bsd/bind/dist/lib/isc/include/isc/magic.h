@@ -1,7 +1,7 @@
-/*	$NetBSD: magic.h,v 1.5 2016/05/26 16:50:00 christos Exp $	*/
+/*	$NetBSD: magic.h,v 1.6 2018/04/07 22:23:22 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2016, 2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -22,7 +22,7 @@
 #ifndef ISC_MAGIC_H
 #define ISC_MAGIC_H 1
 
-#include <isc/util.h>
+#include <isc/likely.h>
 
 /*! \file isc/magic.h */
 

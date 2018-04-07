@@ -39,11 +39,14 @@ mkdir -p $INCLUDE/isc
 
 cp $BIND/lib/isc/include/isc/platform.h $INCLUDE/isc
 
-mkdir -p $INCLUDE/lwres
-
-for i in netdb.h platform.h
+for d in irs lwres
 do
-	cp $BIND/lib/lwres/include/lwres/$i $INCLUDE/lwres
+	mkdir -p $INCLUDE/$d
+
+	for i in netdb.h platform.h
+	do
+		cp $BIND/lib/$d/include/$d/$i $INCLUDE/$d
+	done
 done
 
 cleantags $INCLUDE

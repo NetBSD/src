@@ -1,9 +1,6 @@
-/*	$NetBSD: tc.c,v 1.3 2014/12/10 04:38:03 christos Exp $	*/
+/*	$NetBSD: tc.c,v 1.4 2018/04/07 22:23:24 christos Exp $	*/
 
-/*
- * Automated Testing Framework (atf)
- *
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+/* Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,8 +23,9 @@
  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
  * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
+ * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.  */
+
+#include "atf-c/tc.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -43,14 +41,12 @@
 #include <unistd.h>
 
 #include "atf-c/defs.h"
+#include "atf-c/detail/env.h"
+#include "atf-c/detail/fs.h"
+#include "atf-c/detail/map.h"
+#include "atf-c/detail/sanity.h"
+#include "atf-c/detail/text.h"
 #include "atf-c/error.h"
-#include "atf-c/tc.h"
-
-#include "detail/env.h"
-#include "detail/fs.h"
-#include "detail/map.h"
-#include "detail/sanity.h"
-#include "detail/text.h"
 
 /* ---------------------------------------------------------------------
  * Auxiliary functions.
@@ -616,7 +612,9 @@ void
 atf_tc_fini(atf_tc_t *tc)
 {
     atf_map_fini(&tc->pimpl->m_vars);
+    atf_map_fini(&tc->pimpl->m_config);
     free(tc->pimpl);
+    tc->pimpl = NULL;
 }
 
 /*

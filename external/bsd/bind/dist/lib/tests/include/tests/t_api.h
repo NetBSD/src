@@ -1,7 +1,7 @@
-/*	$NetBSD: t_api.h,v 1.6 2014/12/10 04:38:02 christos Exp $	*/
+/*	$NetBSD: t_api.h,v 1.7 2018/04/07 22:23:24 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2010, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2010, 2013, 2014, 2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -84,7 +84,7 @@ t_main(int argc, char **argv);
 #endif
 
 void
-t_assert(const char *component, int anum, int class, const char *what, ...)
+t_assert(const char *component, int anum, int tclass, const char *what, ...)
      ISC_FORMAT_PRINTF(4, 5);
 
 void
