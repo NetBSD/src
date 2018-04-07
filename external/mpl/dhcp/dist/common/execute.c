@@ -1,4 +1,4 @@
-/*	$NetBSD: execute.c,v 1.1.1.1 2018/04/07 22:34:26 christos Exp $	*/
+/*	$NetBSD: execute.c,v 1.2 2018/04/07 22:37:29 christos Exp $	*/
 
 /* execute.c
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: execute.c,v 1.1.1.1 2018/04/07 22:34:26 christos Exp $");
+__RCSID("$NetBSD: execute.c,v 1.2 2018/04/07 22:37:29 christos Exp $");
 
 #include "dhcpd.h"
 #include <isc/util.h>
@@ -296,7 +296,7 @@ int execute_statements (result, packet, lease, client_state,
 					       ? r->data.add->name
 					       : "<unnamed class>"));
 #endif
-			classify (packet, r->data.add);
+			libdhcp_callbacks.classify (packet, r->data.add);
 			break;
 
 		      case break_statement:

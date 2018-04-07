@@ -1,4 +1,4 @@
-/*	$NetBSD: confpars.c,v 1.1.1.1 2018/04/07 22:34:27 christos Exp $	*/
+/*	$NetBSD: confpars.c,v 1.2 2018/04/07 22:37:30 christos Exp $	*/
 
 /* confpars.c
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: confpars.c,v 1.1.1.1 2018/04/07 22:34:27 christos Exp $");
+__RCSID("$NetBSD: confpars.c,v 1.2 2018/04/07 22:37:30 christos Exp $");
 
 /*! \file server/confpars.c */
 
@@ -1549,11 +1549,8 @@ void parse_lease_id_format (struct parse *cfile)
  *			     the configuration includes an "after" clause
  */
 
-void get_permit(cfile, permit_head, is_allow, valid_from, valid_until)
-	struct parse *cfile;
-	struct permit **permit_head;
-	int is_allow;
-	TIME *valid_from, *valid_until;
+static void get_permit(struct parse *cfile, struct permit **permit_head,
+	        int is_allow, TIME *valid_from, TIME *valid_until)
 {
 	enum dhcp_token token;
 	struct permit *permit;

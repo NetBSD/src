@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.1.1.1 2018/04/07 22:34:26 christos Exp $	*/
+/*	$NetBSD: options.c,v 1.2 2018/04/07 22:37:29 christos Exp $	*/
 
 /* options.c
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: options.c,v 1.1.1.1 2018/04/07 22:34:26 christos Exp $");
+__RCSID("$NetBSD: options.c,v 1.2 2018/04/07 22:37:29 christos Exp $");
 
 #define DHCP_OPTION_DATA
 #include "dhcpd.h"
@@ -4033,9 +4033,9 @@ void do_packet (interface, packet, len, from_port, from, hfrom)
 
 	if (validate_packet(decoded_packet) != 0) {
 		if (decoded_packet->packet_type)
-			dhcp(decoded_packet);
+			libdhcp_callbacks.dhcp(decoded_packet);
 		else
-			bootp(decoded_packet);
+			libdhcp_callbacks.bootp(decoded_packet);
 	}
 
 	/* If the caller kept the packet, they'll have upped the refcnt. */
@@ -4188,7 +4188,7 @@ do_packet6(struct interface_info *interface, const char *packet,
 		}
 	}
 
-	dhcpv6(decoded_packet);
+	libdhcp_callbacks.dhcpv6(decoded_packet);
 
 	packet_dereference(&decoded_packet, MDL);
 
