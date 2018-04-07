@@ -1,0 +1,4 @@
+syntax(2)
+test_suite('isc-dhcp')
+
+atf_test_program{name='duid_unittests'}
