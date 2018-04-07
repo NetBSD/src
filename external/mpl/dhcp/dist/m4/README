@@ -1,0 +1,2 @@
+Currently we have no m4 macros. This directory is here to accommodate
+some versions of ac_local() which treat its absence as an error.
