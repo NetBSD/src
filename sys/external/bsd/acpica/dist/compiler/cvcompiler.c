@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2017, Intel Corp.
+ * Copyright (C) 2000 - 2018, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -78,7 +78,7 @@ CvProcessComment (
     char                    *FinalCommentString;
 
 
-    if (Gbl_CaptureComments && CurrentState.CaptureComments)
+    if (AcpiGbl_CaptureComments && CurrentState.CaptureComments)
     {
         *StringBuffer = (char) c1;
         ++StringBuffer;
@@ -201,7 +201,7 @@ CvProcessCommentType2 (
     char                    *FinalCommentString;
 
 
-    if (Gbl_CaptureComments && CurrentState.CaptureComments)
+    if (AcpiGbl_CaptureComments && CurrentState.CaptureComments)
     {
         *StringBuffer = 0; /* null terminate */
         CvDbgPrint ("Single-line comment\n");
@@ -287,7 +287,7 @@ CvCalculateCommentLengths(
     ACPI_COMMENT_NODE       *Current = NULL;
 
 
-    if (!Gbl_CaptureComments)
+    if (!AcpiGbl_CaptureComments)
     {
         return (0);
     }
@@ -389,7 +389,7 @@ CgWriteAmlDefBlockComment(
     char                    *DirectoryPosition;
 
 
-    if (!Gbl_CaptureComments ||
+    if (!AcpiGbl_CaptureComments ||
         (Op->Asl.ParseOpcode != PARSEOP_DEFINITION_BLOCK))
     {
         return;
@@ -507,7 +507,7 @@ CgWriteAmlComment(
 
 
     if ((Op->Asl.ParseOpcode == PARSEOP_DEFINITION_BLOCK) ||
-         !Gbl_CaptureComments)
+         !AcpiGbl_CaptureComments)
     {
         return;
     }

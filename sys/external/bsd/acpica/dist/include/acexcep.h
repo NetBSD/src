@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2017, Intel Corp.
+ * Copyright (C) 2000 - 2018, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -133,8 +133,9 @@ typedef struct acpi_exception_info
 #define AE_HEX_OVERFLOW                 EXCEP_ENV (0x0020)
 #define AE_DECIMAL_OVERFLOW             EXCEP_ENV (0x0021)
 #define AE_OCTAL_OVERFLOW               EXCEP_ENV (0x0022)
+#define AE_END_OF_TABLE                 EXCEP_ENV (0x0023)
 
-#define AE_CODE_ENV_MAX                 0x0022
+#define AE_CODE_ENV_MAX                 0x0023
 
 
 /*
@@ -271,7 +272,8 @@ static const ACPI_EXCEPTION_INFO    AcpiGbl_ExceptionNames_Env[] =
     EXCEP_TXT ("AE_NUMERIC_OVERFLOW",           "Overflow during string-to-integer conversion"),
     EXCEP_TXT ("AE_HEX_OVERFLOW",               "Overflow during ASCII hex-to-binary conversion"),
     EXCEP_TXT ("AE_DECIMAL_OVERFLOW",           "Overflow during ASCII decimal-to-binary conversion"),
-    EXCEP_TXT ("AE_OCTAL_OVERFLOW",             "Overflow during ASCII octal-to-binary conversion")
+    EXCEP_TXT ("AE_OCTAL_OVERFLOW",             "Overflow during ASCII octal-to-binary conversion"),
+    EXCEP_TXT ("AE_END_OF_TABLE",               "Reached the end of table")
 };
 
 static const ACPI_EXCEPTION_INFO    AcpiGbl_ExceptionNames_Pgm[] =

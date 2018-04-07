@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2017, Intel Corp.
+ * Copyright (C) 2000 - 2018, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -58,7 +58,7 @@
 
 #define LINES_IN_LEGAL_HEADER               115+36 /* intel+dual license. See legal header above at module start */
 #define LEGAL_HEADER_SIGNATURE              " * 2.1. This is your license from Intel Corp. under its intellectual property"
-#define LINES_IN_LINUX_HEADER               34
+#define LINES_IN_LINUX_HEADER               2 /* SPDX header is 1 line Intel copyright is another line */
 #define LINUX_HEADER_SIGNATURE              " * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS"
 #define LINES_IN_ASL_HEADER                 29 /* Header as output from disassembler */
 
@@ -172,6 +172,7 @@ typedef struct acpi_conversion_table
 
     ACPI_TYPED_IDENTIFIER_TABLE *LowerCaseTable;
 
+    char                        *SourceSpdxHeader;
     ACPI_STRING_TABLE           *SourceStringTable;
     ACPI_IDENTIFIER_TABLE       *SourceLineTable;
     ACPI_IDENTIFIER_TABLE       *SourceConditionalTable;
@@ -180,6 +181,7 @@ typedef struct acpi_conversion_table
     ACPI_IDENTIFIER_TABLE       *SourceSpecialMacroTable;
     UINT32                      SourceFunctions;
 
+    char                        *HeaderSpdxHeader;
     ACPI_STRING_TABLE           *HeaderStringTable;
     ACPI_IDENTIFIER_TABLE       *HeaderLineTable;
     ACPI_IDENTIFIER_TABLE       *HeaderConditionalTable;
@@ -188,6 +190,7 @@ typedef struct acpi_conversion_table
     ACPI_IDENTIFIER_TABLE       *HeaderSpecialMacroTable;
     UINT32                      HeaderFunctions;
 
+    /* SPDX header conversion for patches is not supported */
     ACPI_STRING_TABLE           *PatchStringTable;
     ACPI_IDENTIFIER_TABLE       *PatchLineTable;
     ACPI_IDENTIFIER_TABLE       *PatchConditionalTable;
@@ -354,6 +357,11 @@ void
 AsReplaceHeader (
     char                    *Buffer,
     char                    *NewHeader);
+
+void
+AsDoSpdxHeader (
+    char                    *Buffer,
+    char                    *SpdxHeader);
 
 void
 AsConvertFile (

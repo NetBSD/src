@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2017, Intel Corp.
+ * Copyright (C) 2000 - 2018, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -813,6 +813,13 @@ AslCommonError (
     char                    *Filename,
     char                    *ExtraMessage)
 {
+    /* Check if user wants to ignore this exception */
+
+    if (AslIsExceptionIgnored (Level, MessageId))
+    {
+        return;
+    }
+
     AslLogNewError (Level, MessageId, CurrentLineNumber, LogicalLineNumber,
         LogicalByteOffset, Column, Filename, ExtraMessage,
         NULL, NULL);

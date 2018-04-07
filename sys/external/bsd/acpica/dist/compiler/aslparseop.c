@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2017, Intel Corp.
+ * Copyright (C) 2000 - 2018, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -161,7 +161,7 @@ TrCreateOp (
              * FirstChild place it in the parent. This also means that
              * legitimate comments for the child gets put to the parent.
              */
-            if (Gbl_CaptureComments &&
+            if (AcpiGbl_CaptureComments &&
                 ((ParseOpcode == PARSEOP_CONNECTION) ||
                  (ParseOpcode == PARSEOP_EXTERNAL) ||
                  (ParseOpcode == PARSEOP_OFFSET) ||
@@ -200,7 +200,7 @@ TrCreateOp (
 
         /* Get the comment from last child in the resource template call */
 
-        if (Gbl_CaptureComments &&
+        if (AcpiGbl_CaptureComments &&
             (Op->Asl.ParseOpcode == PARSEOP_RESOURCETEMPLATE))
         {
             CvDbgPrint ("Transferred current comment list to this op.\n");
@@ -686,7 +686,7 @@ TrAllocateOp (
 
     /* The following is for capturing comments */
 
-    if(Gbl_CaptureComments)
+    if (AcpiGbl_CaptureComments)
     {
         LatestOp = Gbl_CommentState.LatestParseOp;
         Op->Asl.InlineComment     = NULL;

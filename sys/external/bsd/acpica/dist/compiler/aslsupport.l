@@ -6,7 +6,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2017, Intel Corp.
+ * Copyright (C) 2000 - 2018, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -388,7 +388,7 @@ AslInsertLineBuffer (
             AslResetCurrentLineBuffer ();
         }
 
-        if (Gbl_CaptureComments)
+        if (AcpiGbl_CaptureComments)
         {
             CvProcessCommentState (SourceChar);
         }
@@ -417,7 +417,7 @@ static void
 count (
     int                 Type)
 {
-    int                 i;
+    char                *p;
 
 
     switch (Type)
@@ -439,9 +439,9 @@ count (
         break;
     }
 
-    for (i = 0; (yytext[i] != 0) && (yytext[i] != EOF); i++)
+    for (p = yytext; *p != '\0'; p++)
     {
-        AslInsertLineBuffer (yytext[i]);
+        AslInsertLineBuffer (*p);
         *Gbl_LineBufPtr = 0;
     }
 }
@@ -472,7 +472,7 @@ AslDoComment (
 
     AslInsertLineBuffer ('/');
     AslInsertLineBuffer ('*');
-    if (Gbl_CaptureComments && CurrentState.CaptureComments)
+    if (AcpiGbl_CaptureComments && CurrentState.CaptureComments)
     {
         *StringBuffer = '/';
         ++StringBuffer;
@@ -487,7 +487,7 @@ loop:
     while (((c = input ()) != '*') && (c != EOF))
     {
         AslInsertLineBuffer (c);
-        if (Gbl_CaptureComments && CurrentState.CaptureComments)
+        if (AcpiGbl_CaptureComments && CurrentState.CaptureComments)
         {
             *StringBuffer = c;
             ++StringBuffer;
@@ -515,7 +515,7 @@ loop:
     /* Comment is closed only if the NEXT character is a slash */
 
     AslInsertLineBuffer (c);
-    if (Gbl_CaptureComments && CurrentState.CaptureComments)
+    if (AcpiGbl_CaptureComments && CurrentState.CaptureComments)
     {
         *StringBuffer = c;
         ++StringBuffer;
@@ -590,7 +590,7 @@ AslDoCommentType2 (
 
     AslInsertLineBuffer ('/');
 
-    if (Gbl_CaptureComments && CurrentState.CaptureComments)
+    if (AcpiGbl_CaptureComments && CurrentState.CaptureComments)
     {
         AslInsertLineBuffer ('*');
         *StringBuffer = '/';
@@ -606,7 +606,7 @@ AslDoCommentType2 (
     while (((c = input ()) != '\n') && (c != EOF))
     {
         AslInsertLineBuffer (c);
-        if (Gbl_CaptureComments && CurrentState.CaptureComments)
+        if (AcpiGbl_CaptureComments && CurrentState.CaptureComments)
         {
             *StringBuffer = c;
             ++StringBuffer;
