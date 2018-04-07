@@ -1,7 +1,7 @@
-/*	$NetBSD: soa_6.c,v 1.8 2016/05/26 16:49:59 christos Exp $	*/
+/*	$NetBSD: soa_6.c,v 1.9 2018/04/07 22:23:21 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007, 2009, 2011, 2012, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007, 2009, 2011, 2012, 2014, 2015, 2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -139,7 +139,7 @@ totext_soa(ARGS_TOTEXT) {
 		unsigned long num;
 		num = uint32_fromregion(&dregion);
 		isc_region_consume(&dregion, 4);
-		sprintf(buf, comm ? "%-10lu ; " : "%lu", num);
+		snprintf(buf, sizeof(buf), comm ? "%-10lu ; " : "%lu", num);
 		RETERR(str_totext(buf, target));
 		if (comm) {
 			RETERR(str_totext(soa_fieldnames[i], target));

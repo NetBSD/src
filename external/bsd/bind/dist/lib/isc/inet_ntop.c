@@ -1,7 +1,7 @@
-/*	$NetBSD: inet_ntop.c,v 1.4 2014/12/10 04:37:59 christos Exp $	*/
+/*	$NetBSD: inet_ntop.c,v 1.5 2018/04/07 22:23:22 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1996-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -32,6 +32,8 @@ static char rcsid[] =
 
 #include <isc/net.h>
 #include <isc/print.h>
+#include <isc/string.h>
+#include <isc/util.h>
 
 #define NS_INT16SZ	 2
 #define NS_IN6ADDRSZ	16
@@ -91,13 +93,15 @@ inet_ntop4(const unsigned char *src, char *dst, size_t size)
 {
 	static const char *fmt = "%u.%u.%u.%u";
 	char tmp[sizeof("255.255.255.255")];
+	int n;
 
-	if ((size_t)sprintf(tmp, fmt, src[0], src[1], src[2], src[3]) >= size)
-	{
+
+	n = snprintf(tmp, sizeof(tmp), fmt, src[0], src[1], src[2], src[3]);
+	if (n < 0 || (size_t)n >= size) {
 		errno = ENOSPC;
 		return (NULL);
 	}
-	strcpy(dst, tmp);
+	strlcpy(dst, tmp, size);
 
 	return (dst);
 }
@@ -133,7 +137,9 @@ inet_ntop6(const unsigned char *src, char *dst, size_t size)
 	for (i = 0; i < NS_IN6ADDRSZ; i++)
 		words[i / 2] |= (src[i] << ((1 - (i % 2)) << 3));
 	best.base = -1;
+	best.len = 0;	/* silence compiler */
 	cur.base = -1;
+	cur.len = 0;	/* silence compiler */
 	for (i = 0; i < (NS_IN6ADDRSZ / NS_INT16SZ); i++) {
 		if (words[i] == 0) {
 			if (cur.base == -1)
@@ -180,7 +186,8 @@ inet_ntop6(const unsigned char *src, char *dst, size_t size)
 			tp += strlen(tp);
 			break;
 		}
-		tp += sprintf(tp, "%x", words[i]);
+		INSIST((size_t)(tp - tmp) < sizeof(tmp));
+		tp += snprintf(tp, sizeof(tmp) - (tp - tmp), "%x", words[i]);
 	}
 	/* Was it a trailing run of 0x00's? */
 	if (best.base != -1 && (best.base + best.len) ==
@@ -195,7 +202,7 @@ inet_ntop6(const unsigned char *src, char *dst, size_t size)
 		errno = ENOSPC;
 		return (NULL);
 	}
-	strcpy(dst, tmp);
+	strlcpy(dst, tmp, size);
 	return (dst);
 }
 #endif /* AF_INET6 */

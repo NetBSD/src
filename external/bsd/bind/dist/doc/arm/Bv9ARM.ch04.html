@@ -1,6 +1,6 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <!--
- - Copyright (C) 2004-2016 Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2004-2018 Internet Systems Consortium, Inc. ("ISC")
  - Copyright (C) 2000-2003 Internet Software Consortium.
  - 
  - Permission to use, copy, modify, and/or distribute this software for any
@@ -69,19 +69,19 @@
 </dl></dd>
 <dt><span class="section"><a href="Bv9ARM.ch04.html#dnssec.dynamic.zones">DNSSEC, Dynamic Zones, and Automatic Signing</a></span></dt>
 <dd><dl>
-<dt><span class="section"><a href="Bv9ARM.ch04.html#id-1.5.10.3">Converting from insecure to secure</a></span></dt>
-<dt><span class="section"><a href="Bv9ARM.ch04.html#id-1.5.10.8">Dynamic DNS update method</a></span></dt>
-<dt><span class="section"><a href="Bv9ARM.ch04.html#id-1.5.10.16">Fully automatic zone signing</a></span></dt>
-<dt><span class="section"><a href="Bv9ARM.ch04.html#id-1.5.10.25">Private-type records</a></span></dt>
-<dt><span class="section"><a href="Bv9ARM.ch04.html#id-1.5.10.32">DNSKEY rollovers</a></span></dt>
-<dt><span class="section"><a href="Bv9ARM.ch04.html#id-1.5.10.34">Dynamic DNS update method</a></span></dt>
-<dt><span class="section"><a href="Bv9ARM.ch04.html#id-1.5.10.39">Automatic key rollovers</a></span></dt>
-<dt><span class="section"><a href="Bv9ARM.ch04.html#id-1.5.10.41">NSEC3PARAM rollovers via UPDATE</a></span></dt>
-<dt><span class="section"><a href="Bv9ARM.ch04.html#id-1.5.10.43">Converting from NSEC to NSEC3</a></span></dt>
-<dt><span class="section"><a href="Bv9ARM.ch04.html#id-1.5.10.45">Converting from NSEC3 to NSEC</a></span></dt>
-<dt><span class="section"><a href="Bv9ARM.ch04.html#id-1.5.10.47">Converting from secure to insecure</a></span></dt>
-<dt><span class="section"><a href="Bv9ARM.ch04.html#id-1.5.10.51">Periodic re-signing</a></span></dt>
-<dt><span class="section"><a href="Bv9ARM.ch04.html#id-1.5.10.53">NSEC3 and OPTOUT</a></span></dt>
+<dt><span class="section"><a href="Bv9ARM.ch04.html#id-1.5.10.2">Converting from insecure to secure</a></span></dt>
+<dt><span class="section"><a href="Bv9ARM.ch04.html#id-1.5.10.7">Dynamic DNS update method</a></span></dt>
+<dt><span class="section"><a href="Bv9ARM.ch04.html#id-1.5.10.15">Fully automatic zone signing</a></span></dt>
+<dt><span class="section"><a href="Bv9ARM.ch04.html#id-1.5.10.24">Private-type records</a></span></dt>
+<dt><span class="section"><a href="Bv9ARM.ch04.html#id-1.5.10.31">DNSKEY rollovers</a></span></dt>
+<dt><span class="section"><a href="Bv9ARM.ch04.html#id-1.5.10.33">Dynamic DNS update method</a></span></dt>
+<dt><span class="section"><a href="Bv9ARM.ch04.html#id-1.5.10.38">Automatic key rollovers</a></span></dt>
+<dt><span class="section"><a href="Bv9ARM.ch04.html#id-1.5.10.40">NSEC3PARAM rollovers via UPDATE</a></span></dt>
+<dt><span class="section"><a href="Bv9ARM.ch04.html#id-1.5.10.42">Converting from NSEC to NSEC3</a></span></dt>
+<dt><span class="section"><a href="Bv9ARM.ch04.html#id-1.5.10.44">Converting from NSEC3 to NSEC</a></span></dt>
+<dt><span class="section"><a href="Bv9ARM.ch04.html#id-1.5.10.46">Converting from secure to insecure</a></span></dt>
+<dt><span class="section"><a href="Bv9ARM.ch04.html#id-1.5.10.50">Periodic re-signing</a></span></dt>
+<dt><span class="section"><a href="Bv9ARM.ch04.html#id-1.5.10.52">NSEC3 and OPTOUT</a></span></dt>
 </dl></dd>
 <dt><span class="section"><a href="Bv9ARM.ch04.html#rfc5011.support">Dynamic Trust Anchor Management</a></span></dt>
 <dd><dl>
@@ -1188,8 +1188,6 @@ options {
           <p>
             The logged error reads "insecurity proof failed" and
             "got insecure response; parent indicates it should be secure".
-            (Prior to BIND 9.7, the logged error was "not insecure".
-            This referred to the zone, not the response.)
           </p>
         </div>
       </div>
@@ -1200,12 +1198,9 @@ options {
 <div class="titlepage"><div><div><h2 class="title" style="clear: both">
 <a name="dnssec.dynamic.zones"></a>DNSSEC, Dynamic Zones, and Automatic Signing</h2></div></div></div>
 
-  <p>As of BIND 9.7.0 it is possible to change a dynamic zone
-  from insecure to signed and back again. A secure zone can use
-  either NSEC or NSEC3 chains.</p>
   <div class="section">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="id-1.5.10.3"></a>Converting from insecure to secure</h3></div></div></div>
+<a name="id-1.5.10.2"></a>Converting from insecure to secure</h3></div></div></div>
 
   </div>
   <p>Changing a zone from insecure to secure can be done in two
@@ -1234,7 +1229,7 @@ options {
   signing process.</p>
   <div class="section">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="id-1.5.10.8"></a>Dynamic DNS update method</h3></div></div></div>
+<a name="id-1.5.10.7"></a>Dynamic DNS update method</h3></div></div></div>
 
   </div>
   <p>To insert the keys via dynamic update:</p>
@@ -1273,7 +1268,7 @@ options {
   is happening, other updates are possible as well.</p>
   <div class="section">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="id-1.5.10.16"></a>Fully automatic zone signing</h3></div></div></div>
+<a name="id-1.5.10.15"></a>Fully automatic zone signing</h3></div></div></div>
 
   </div>
   <p>To enable automatic signing, add the
@@ -1339,7 +1334,7 @@ options {
   fail.</p>
   <div class="section">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="id-1.5.10.25"></a>Private-type records</h3></div></div></div>
+<a name="id-1.5.10.24"></a>Private-type records</h3></div></div></div>
 
   </div>
   <p>The state of the signing process is signaled by
@@ -1383,7 +1378,7 @@ options {
   </p>
   <div class="section">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="id-1.5.10.32"></a>DNSKEY rollovers</h3></div></div></div>
+<a name="id-1.5.10.31"></a>DNSKEY rollovers</h3></div></div></div>
 
   </div>
   <p>As with insecure-to-secure conversions, rolling DNSSEC
@@ -1391,7 +1386,7 @@ options {
   <span class="command"><strong>auto-dnssec</strong></span> zone option.</p>
   <div class="section">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="id-1.5.10.34"></a>Dynamic DNS update method</h3></div></div></div>
+<a name="id-1.5.10.33"></a>Dynamic DNS update method</h3></div></div></div>
 
   </div>
   <p> To perform key rollovers via dynamic update, you need to add
@@ -1416,7 +1411,7 @@ options {
   by the old key after the update completes.</p>
   <div class="section">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="id-1.5.10.39"></a>Automatic key rollovers</h3></div></div></div>
+<a name="id-1.5.10.38"></a>Automatic key rollovers</h3></div></div></div>
 
   </div>
   <p>When a new key reaches its activation date (as set by
@@ -1434,7 +1429,7 @@ options {
   old key from the DNSKEY RRset.</p>
   <div class="section">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="id-1.5.10.41"></a>NSEC3PARAM rollovers via UPDATE</h3></div></div></div>
+<a name="id-1.5.10.40"></a>NSEC3PARAM rollovers via UPDATE</h3></div></div></div>
 
   </div>
   <p>Add the new NSEC3PARAM record via dynamic update. When the
@@ -1444,7 +1439,7 @@ options {
   completes.</p>
   <div class="section">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="id-1.5.10.43"></a>Converting from NSEC to NSEC3</h3></div></div></div>
+<a name="id-1.5.10.42"></a>Converting from NSEC to NSEC3</h3></div></div></div>
 
   </div>
   <p>To do this, you just need to add an NSEC3PARAM record. When
@@ -1454,7 +1449,7 @@ options {
   destroyed.</p>
   <div class="section">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="id-1.5.10.45"></a>Converting from NSEC3 to NSEC</h3></div></div></div>
+<a name="id-1.5.10.44"></a>Converting from NSEC3 to NSEC</h3></div></div></div>
 
   </div>
   <p>To do this, use <span class="command"><strong>nsupdate</strong></span> to
@@ -1463,7 +1458,7 @@ options {
   removed.</p>
   <div class="section">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="id-1.5.10.47"></a>Converting from secure to insecure</h3></div></div></div>
+<a name="id-1.5.10.46"></a>Converting from secure to insecure</h3></div></div></div>
 
   </div>
   <p>To convert a signed zone to unsigned using dynamic DNS,
@@ -1481,7 +1476,7 @@ options {
   </p>
   <div class="section">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="id-1.5.10.51"></a>Periodic re-signing</h3></div></div></div>
+<a name="id-1.5.10.50"></a>Periodic re-signing</h3></div></div></div>
 
   </div>
   <p>In any secure zone which supports dynamic updates, named
@@ -1491,7 +1486,7 @@ options {
   all at once.</p>
   <div class="section">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="id-1.5.10.53"></a>NSEC3 and OPTOUT</h3></div></div></div>
+<a name="id-1.5.10.52"></a>NSEC3 and OPTOUT</h3></div></div></div>
 
   </div>
   <p>
@@ -1510,11 +1505,13 @@ options {
 <div class="titlepage"><div><div><h2 class="title" style="clear: both">
 <a name="rfc5011.support"></a>Dynamic Trust Anchor Management</h2></div></div></div>
 
-  <p>BIND 9.7.0 introduces support for RFC 5011, dynamic trust
-  anchor management. Using this feature allows
-  <span class="command"><strong>named</strong></span> to keep track of changes to critical
-  DNSSEC keys without any need for the operator to make changes to
-  configuration files.</p>
+  <p>
+    BIND is able to maintain DNSSEC trust anchors using RFC 5011 key
+    management. This feature allows <span class="command"><strong>named</strong></span> to keep track
+    of changes to critical DNSSEC keys without any need for the operator to
+    make changes to configuration files.
+  </p>
+
   <div class="section">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="id-1.5.11.3"></a>Validating Resolver</h3></div></div></div>
@@ -2498,6 +2495,6 @@ $ORIGIN 0.0.0.0.0.0.0.0.8.b.d.0.1.0.0.2.ip6.arpa.
 </tr>
 </table>
 </div>
-<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.10.5-P2</p>
+<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.10.7</p>
 </body>
 </html>

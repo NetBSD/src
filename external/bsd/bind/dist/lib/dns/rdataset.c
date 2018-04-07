@@ -1,4 +1,4 @@
-/*	$NetBSD: rdataset.c,v 1.11 2017/06/15 15:59:40 christos Exp $	*/
+/*	$NetBSD: rdataset.c,v 1.12 2018/04/07 22:23:20 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2012, 2014, 2015, 2017  Internet Systems Consortium, Inc. ("ISC")
@@ -327,8 +327,8 @@ towiresorted(dns_rdataset_t *rdataset, const dns_name_t *owner_name,
 	unsigned int headlen;
 	isc_boolean_t question = ISC_FALSE;
 	isc_boolean_t shuffle = ISC_FALSE;
-	dns_rdata_t *shuffled = NULL, shuffled_fixed[MAX_SHUFFLE];
-	struct towire_sort *sorted = NULL, sorted_fixed[MAX_SHUFFLE];
+	dns_rdata_t *in = NULL, in_fixed[MAX_SHUFFLE];
+	struct towire_sort *out = NULL, out_fixed[MAX_SHUFFLE];
 
 	UNUSED(state);
 
@@ -375,13 +375,13 @@ towiresorted(dns_rdataset_t *rdataset, const dns_name_t *owner_name,
 		shuffle = ISC_TRUE;
 
 	if (shuffle && count > MAX_SHUFFLE) {
-		shuffled = isc_mem_get(cctx->mctx, count * sizeof(*shuffled));
-		sorted = isc_mem_get(cctx->mctx, count * sizeof(*sorted));
-		if (shuffled == NULL || sorted == NULL)
+		in = isc_mem_get(cctx->mctx, count * sizeof(*in));
+		out = isc_mem_get(cctx->mctx, count * sizeof(*out));
+		if (in == NULL || out == NULL)
 			shuffle = ISC_FALSE;
 	} else {
-		shuffled = shuffled_fixed;
-		sorted = sorted_fixed;
+		in = in_fixed;
+		out = out_fixed;
 	}
 
 	if (shuffle) {
@@ -391,8 +391,8 @@ towiresorted(dns_rdataset_t *rdataset, const dns_name_t *owner_name,
 		i = 0;
 		do {
 			INSIST(i < count);
-			dns_rdata_init(&shuffled[i]);
-			dns_rdataset_current(rdataset, &shuffled[i]);
+			dns_rdata_init(&in[i]);
+			dns_rdataset_current(rdataset, &in[i]);
 			i++;
 			result = dns_rdataset_next(rdataset);
 		} while (result == ISC_R_SUCCESS);
@@ -409,9 +409,8 @@ towiresorted(dns_rdataset_t *rdataset, const dns_name_t *owner_name,
 			 */
 			INSIST(order != NULL);
 			for (i = 0; i < count; i++) {
-				sorted[i].key = (*order)(&shuffled[i],
-							 order_arg);
-				sorted[i].rdata = &shuffled[i];
+				out[i].key = (*order)(&in[i], order_arg);
+				out[i].rdata = &in[i];
 			}
 		} else if (WANT_RANDOM(rdataset)) {
 			/*
@@ -422,15 +421,15 @@ towiresorted(dns_rdataset_t *rdataset, const dns_name_t *owner_name,
 
 				isc_random_get(&val);
 				choice = i + (val % (count - i));
-				rdata = shuffled[i];
-				shuffled[i] = shuffled[choice];
-				shuffled[choice] = rdata;
+				rdata = in[i];
+				in[i] = in[choice];
+				in[choice] = rdata;
 				if (order != NULL)
-					sorted[i].key = (*order)(&shuffled[i],
-								 order_arg);
+					out[i].key = (*order)(&in[i],
+							      order_arg);
 				else
-					sorted[i].key = 0; /* Unused */
-				sorted[i].rdata = &shuffled[i];
+					out[i].key = 0; /* Unused */
+				out[i].rdata = &in[i];
 			}
 		} else {
 			/*
@@ -445,11 +444,11 @@ towiresorted(dns_rdataset_t *rdataset, const dns_name_t *owner_name,
 			j = val % count;
 			for (i = 0; i < count; i++) {
 				if (order != NULL)
-					sorted[i].key = (*order)(&shuffled[j],
-								 order_arg);
+					out[i].key = (*order)(&in[j],
+							      order_arg);
 				else
-					sorted[i].key = 0; /* Unused */
-				sorted[i].rdata = &shuffled[j];
+					out[i].key = 0; /* Unused */
+				out[i].rdata = &in[j];
 				j++;
 				if (j == count)
 					j = 0; /* Wrap around. */
@@ -460,8 +459,7 @@ towiresorted(dns_rdataset_t *rdataset, const dns_name_t *owner_name,
 		 * Sorted order.
 		 */
 		if (order != NULL)
-			qsort(sorted, count, sizeof(sorted[0]),
-			      towire_compare);
+			qsort(out, count, sizeof(out[0]), towire_compare);
 	}
 
 	savedbuffer = *target;
@@ -502,7 +500,7 @@ towiresorted(dns_rdataset_t *rdataset, const dns_name_t *owner_name,
 			 * Copy out the rdata
 			 */
 			if (shuffle)
-				rdata = *(sorted[i].rdata);
+				rdata = *(out[i].rdata);
 			else {
 				dns_rdata_reset(&rdata);
 				dns_rdataset_current(rdataset, &rdata);
@@ -551,10 +549,10 @@ towiresorted(dns_rdataset_t *rdataset, const dns_name_t *owner_name,
 	*target = savedbuffer;
 
  cleanup:
-	if (sorted != NULL && sorted != sorted_fixed)
-		isc_mem_put(cctx->mctx, sorted, count * sizeof(*sorted));
-	if (shuffled != NULL && shuffled != shuffled_fixed)
-		isc_mem_put(cctx->mctx, shuffled, count * sizeof(*shuffled));
+	if (out != NULL && out != out_fixed)
+		isc_mem_put(cctx->mctx, out, count * sizeof(*out));
+	if (in != NULL && in != in_fixed)
+		isc_mem_put(cctx->mctx, in, count * sizeof(*in));
 	return (result);
 }
 

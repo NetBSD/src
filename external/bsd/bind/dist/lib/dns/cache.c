@@ -1,7 +1,7 @@
-/*	$NetBSD: cache.c,v 1.10 2016/05/26 16:49:58 christos Exp $	*/
+/*	$NetBSD: cache.c,v 1.11 2018/04/07 22:23:20 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2009, 2011-2013, 2015, 2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2011-2013, 2015-2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -1420,18 +1420,24 @@ dns_cache_dumpstats(dns_cache_t *cache, FILE *fp) {
 		(isc_uint64_t) dns_db_hashsize(cache->db),
 		"cache database hash buckets");
 
-	fprintf(fp, "%20u %s\n", (unsigned int) isc_mem_total(cache->mctx),
+	fprintf(fp, "%20" ISC_PLATFORM_QUADFORMAT "u %s\n",
+		(isc_uint64_t) isc_mem_total(cache->mctx),
 		"cache tree memory total");
-	fprintf(fp, "%20u %s\n", (unsigned int) isc_mem_inuse(cache->mctx),
+	fprintf(fp, "%20" ISC_PLATFORM_QUADFORMAT "u %s\n",
+		(isc_uint64_t) isc_mem_inuse(cache->mctx),
 		"cache tree memory in use");
-	fprintf(fp, "%20u %s\n", (unsigned int) isc_mem_maxinuse(cache->mctx),
+	fprintf(fp, "%20" ISC_PLATFORM_QUADFORMAT "u %s\n",
+		(isc_uint64_t) isc_mem_maxinuse(cache->mctx),
 		"cache tree highest memory in use");
 
-	fprintf(fp, "%20u %s\n", (unsigned int) isc_mem_total(cache->hmctx),
+	fprintf(fp, "%20" ISC_PLATFORM_QUADFORMAT "u %s\n",
+		(isc_uint64_t) isc_mem_total(cache->hmctx),
 		"cache heap memory total");
-	fprintf(fp, "%20u %s\n", (unsigned int) isc_mem_inuse(cache->hmctx),
+	fprintf(fp, "%20" ISC_PLATFORM_QUADFORMAT "u %s\n",
+		(isc_uint64_t) isc_mem_inuse(cache->hmctx),
 		"cache heap memory in use");
-	fprintf(fp, "%20u %s\n", (unsigned int) isc_mem_maxinuse(cache->hmctx),
+	fprintf(fp, "%20" ISC_PLATFORM_QUADFORMAT "u %s\n",
+		(isc_uint64_t) isc_mem_maxinuse(cache->hmctx),
 		"cache heap highest memory in use");
 }
 
@@ -1553,7 +1559,7 @@ dns_cache_renderjson(dns_cache_t *cache, json_object *cstats) {
 
 	obj = json_object_new_int64(isc_mem_maxinuse(cache->mctx));
 	CHECKMEM(obj);
-	json_object_object_add(cstats, "HeapMemMax", obj);
+	json_object_object_add(cstats, "TreeMemMax", obj);
 
 	obj = json_object_new_int64(isc_mem_total(cache->hmctx));
 	CHECKMEM(obj);

@@ -1,7 +1,7 @@
-/*	$NetBSD: message.c,v 1.24 2017/06/30 11:32:34 christos Exp $	*/
+/*	$NetBSD: message.c,v 1.25 2018/04/07 22:23:20 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -1964,6 +1964,15 @@ renderset(dns_rdataset_t *rdataset, dns_name_t *owner_name,
 	return (result);
 }
 
+static void
+maybe_clear_ad(dns_message_t *msg, dns_section_t sectionid) {
+	if (msg->counts[sectionid] == 0 &&
+	    (sectionid == DNS_SECTION_ANSWER ||
+	     (sectionid == DNS_SECTION_AUTHORITY &&
+	      msg->counts[DNS_SECTION_ANSWER] == 0)))
+		msg->flags &= ~DNS_MESSAGEFLAG_AD;
+}
+
 isc_result_t
 dns_message_rendersection(dns_message_t *msg, dns_section_t sectionid,
 			  unsigned int options)
@@ -2161,6 +2170,7 @@ dns_message_rendersection(dns_message_t *msg, dns_section_t sectionid,
 					*(msg->buffer) = st;  /* rollback */
 					msg->buffer->length += msg->reserved;
 					msg->counts[sectionid] += total;
+					maybe_clear_ad(msg, sectionid);
 					return (result);
 				}
 
@@ -3482,6 +3492,22 @@ dns_message_pseudosectiontotext(dns_message_t *msg,
 				ADD_STRING(target, "; EXPIRE");
 			} else if (optcode == DNS_OPT_PAD) {
 				ADD_STRING(target, "; PAD");
+			} else if (optcode == DNS_OPT_KEY_TAG) {
+				ADD_STRING(target, "; KEY-TAG");
+				if (optlen > 0U && (optlen % 2U) == 0U) {
+					const char *sep = ": ";
+					isc_uint16_t id;
+					while (optlen > 0U) {
+					    id = isc_buffer_getuint16(&optbuf);
+					    snprintf(buf, sizeof(buf), "%s%u",
+						     sep, id);
+					    ADD_STRING(target, buf);
+					    sep = ", ";
+					    optlen -= 2;
+					}
+					ADD_STRING(target, "\n");
+					continue;
+				}
 			} else {
 				ADD_STRING(target, "; OPT=");
 				snprintf(buf, sizeof(buf), "%u", optcode);
@@ -3821,8 +3847,10 @@ dns_message_buildopt(dns_message_t *message, dns_rdataset_t **rdatasetp,
 		for (i = 0; i < count; i++)  {
 			isc_buffer_putuint16(buf, ednsopts[i].code);
 			isc_buffer_putuint16(buf, ednsopts[i].length);
-			isc_buffer_putmem(buf, ednsopts[i].value,
-					  ednsopts[i].length);
+			if (ednsopts[i].length != 0) {
+				isc_buffer_putmem(buf, ednsopts[i].value,
+						  ednsopts[i].length);
+			}
 		}
 		rdata->data = isc_buffer_base(buf);
 		rdata->length = len;

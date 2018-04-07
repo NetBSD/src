@@ -1,7 +1,7 @@
-/*	$NetBSD: rrl.c,v 1.5 2015/12/17 04:00:43 christos Exp $	*/
+/*	$NetBSD: rrl.c,v 1.6 2018/04/07 22:23:21 christos Exp $	*/
 
 /*
- * Copyright (C) 2012-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2012-2015, 2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -29,6 +29,7 @@
 #include <isc/net.h>
 #include <isc/netaddr.h>
 #include <isc/print.h>
+#include <isc/util.h>
 
 #include <dns/result.h>
 #include <dns/rcode.h>
@@ -198,18 +199,18 @@ set_age(dns_rrl_t *rrl, dns_rrl_entry_t *e, isc_stdtime_t now) {
 }
 
 static isc_result_t
-expand_entries(dns_rrl_t *rrl, int new) {
+expand_entries(dns_rrl_t *rrl, int newsize) {
 	unsigned int bsize;
 	dns_rrl_block_t *b;
 	dns_rrl_entry_t *e;
 	double rate;
 	int i;
 
-	if (rrl->num_entries + new >= rrl->max_entries &&
+	if (rrl->num_entries + newsize >= rrl->max_entries &&
 	    rrl->max_entries != 0)
 	{
-		new = rrl->max_entries - rrl->num_entries;
-		if (new <= 0)
+		newsize = rrl->max_entries - rrl->num_entries;
+		if (newsize <= 0)
 			return (ISC_R_SUCCESS);
 	}
 
@@ -226,11 +227,11 @@ expand_entries(dns_rrl_t *rrl, int new) {
 			      DNS_LOGMODULE_REQUEST, DNS_RRL_LOG_DROP,
 			      "increase from %d to %d RRL entries with"
 			      " %d bins; average search length %.1f",
-			      rrl->num_entries, rrl->num_entries+new,
+			      rrl->num_entries, rrl->num_entries+newsize,
 			      rrl->hash->length, rate);
 	}
 
-	bsize = sizeof(dns_rrl_block_t) + (new-1)*sizeof(dns_rrl_entry_t);
+	bsize = sizeof(dns_rrl_block_t) + (newsize-1)*sizeof(dns_rrl_entry_t);
 	b = isc_mem_get(rrl->mctx, bsize);
 	if (b == NULL) {
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_RRL,
@@ -243,11 +244,11 @@ expand_entries(dns_rrl_t *rrl, int new) {
 	b->size = bsize;
 
 	e = b->entries;
-	for (i = 0; i < new; ++i, ++e) {
+	for (i = 0; i < newsize; ++i, ++e) {
 		ISC_LINK_INIT(e, hlink);
 		ISC_LIST_INITANDAPPEND(rrl->lru, e, lru);
 	}
-	rrl->num_entries += new;
+	rrl->num_entries += newsize;
 	ISC_LIST_INITANDAPPEND(rrl->blocks, b, link);
 
 	return (ISC_R_SUCCESS);
@@ -427,11 +428,11 @@ make_key(const dns_rrl_t *rrl, dns_rrl_key_t *key,
 		{
 			dns_name_init(&base, base_offsets);
 			dns_name_getlabelsequence(qname, 1, labels-1, &base);
-			key->s.qname_hash = dns_name_hashbylabel(&base,
-							ISC_FALSE);
+			key->s.qname_hash =
+				dns_name_fullhash(&base, ISC_FALSE);
 		} else {
-			key->s.qname_hash = dns_name_hashbylabel(qname,
-							ISC_FALSE);
+			key->s.qname_hash =
+				dns_name_fullhash(qname, ISC_FALSE);
 		}
 	}
 

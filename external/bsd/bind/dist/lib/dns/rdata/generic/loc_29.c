@@ -1,7 +1,7 @@
-/*	$NetBSD: loc_29.c,v 1.5 2015/12/17 04:00:44 christos Exp $	*/
+/*	$NetBSD: loc_29.c,v 1.6 2018/04/07 22:23:21 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009, 2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2015, 2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -489,22 +489,31 @@ totext_loc(ARGS_TOTEXT) {
 
 	size = sr.base[1];
 	INSIST((size&0x0f) < 10 && (size>>4) < 10);
-	if ((size&0x0f)> 1)
-		sprintf(sbuf, "%lum", (size>>4) * poweroften[(size&0x0f)-2]);
-	else
-		sprintf(sbuf, "0.%02lum", (size>>4) * poweroften[(size&0x0f)]);
+	if ((size&0x0f)> 1) {
+		snprintf(sbuf, sizeof(sbuf),
+			 "%lum", (size>>4) * poweroften[(size&0x0f)-2]);
+	} else {
+		snprintf(sbuf, sizeof(sbuf),
+			 "0.%02lum", (size>>4) * poweroften[(size&0x0f)]);
+	}
 	hp = sr.base[2];
 	INSIST((hp&0x0f) < 10 && (hp>>4) < 10);
-	if ((hp&0x0f)> 1)
-		sprintf(hbuf, "%lum", (hp>>4) * poweroften[(hp&0x0f)-2]);
-	else
-		sprintf(hbuf, "0.%02lum", (hp>>4) * poweroften[(hp&0x0f)]);
+	if ((hp&0x0f)> 1) {
+		snprintf(hbuf, sizeof(hbuf),
+			"%lum", (hp>>4) * poweroften[(hp&0x0f)-2]);
+	} else {
+		snprintf(hbuf, sizeof(hbuf),
+			 "0.%02lum", (hp>>4) * poweroften[(hp&0x0f)]);
+	}
 	vp = sr.base[3];
 	INSIST((vp&0x0f) < 10 && (vp>>4) < 10);
-	if ((vp&0x0f)> 1)
-		sprintf(vbuf, "%lum", (vp>>4) * poweroften[(vp&0x0f)-2]);
-	else
-		sprintf(vbuf, "0.%02lum", (vp>>4) * poweroften[(vp&0x0f)]);
+	if ((vp&0x0f)> 1) {
+		snprintf(vbuf, sizeof(vbuf),
+			 "%lum", (vp>>4) * poweroften[(vp&0x0f)-2]);
+	} else {
+		snprintf(vbuf, sizeof(vbuf),
+			 "0.%02lum", (vp>>4) * poweroften[(vp&0x0f)]);
+	}
 	isc_region_consume(&sr, 4);
 
 	latitude = uint32_fromregion(&sr);
@@ -553,11 +562,12 @@ totext_loc(ARGS_TOTEXT) {
 		altitude -= 10000000;
 	}
 
-	sprintf(buf, "%d %d %d.%03d %s %d %d %d.%03d %s %s%ld.%02ldm %s %s %s",
-		d1, m1, s1, fs1, north ? "N" : "S",
-		d2, m2, s2, fs2, east ? "E" : "W",
-		below ? "-" : "", altitude/100, altitude % 100,
-		sbuf, hbuf, vbuf);
+	snprintf(buf, sizeof(buf),
+		 "%d %d %d.%03d %s %d %d %d.%03d %s %s%ld.%02ldm %s %s %s",
+		 d1, m1, s1, fs1, north ? "N" : "S",
+		 d2, m2, s2, fs2, east ? "E" : "W",
+		 below ? "-" : "", altitude/100, altitude % 100,
+		 sbuf, hbuf, vbuf);
 
 	return (str_totext(buf, target));
 }

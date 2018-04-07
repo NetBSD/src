@@ -1,7 +1,7 @@
-/*	$NetBSD: random.c,v 1.6 2017/06/15 15:59:41 christos Exp $	*/
+/*	$NetBSD: random.c,v 1.7 2018/04/07 22:23:22 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009, 2013, 2014, 2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2013, 2014, 2016, 2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -101,7 +101,8 @@ isc_random_get(isc_uint32_t *val)
 	 */
 #if RAND_MAX >= 0xfffff
 	/* We have at least 20 bits.  Use lower 16 excluding lower most 4 */
-	*val = ((rand() >> 4) & 0xffff) | ((rand() << 12) & 0xffff0000);
+	*val = ((((unsigned int)rand()) & 0xffff0) >> 4) |
+	       ((((unsigned int)rand()) & 0xffff0) << 12);
 #elif RAND_MAX >= 0x7fff
 	/* We have at least 15 bits.  Use lower 10/11 excluding lower most 4 */
 	*val = ((rand() >> 4) & 0x000007ff) | ((rand() << 7) & 0x003ff800) |

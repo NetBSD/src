@@ -1,7 +1,7 @@
-/*	$NetBSD: fsaccess.c,v 1.5 2014/12/10 04:38:01 christos Exp $	*/
+/*	$NetBSD: fsaccess.c,v 1.6 2018/04/07 22:23:23 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007, 2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007, 2013, 2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -40,6 +40,7 @@
 
 #include <isc/file.h>
 #include <isc/stat.h>
+#include <isc/string.h>
 
 #include "errno2result.h"
 
@@ -80,28 +81,25 @@ is_ntfs(const char * file) {
 	 */
 	if (isalpha(filename[0]) && filename[1] == ':' &&
 		(filename[2] == '\\' || filename[2] == '/')) {
-		strncpy(drive, filename, 3);
-		drive[3] = '\0';
-	}
-
-	else if ((filename[0] == '\\') && (filename[1] == '\\')) {
+		/* Copy 'c:\' or 'c:/' and NUL terminate. */
+		strlcpy(drive, filename, ISC_MIN(3 + 1, sizeof(drive)));
+	} else if ((filename[0] == '\\') && (filename[1] == '\\')) {
 		/* Find the machine and share name and rebuild the UNC */
-		strcpy(tmpbuf, filename);
+		strlcpy(tmpbuf, filename, sizeof(tmpbuf));
 		machinename = strtok(tmpbuf, "\\");
 		sharename = strtok(NULL, "\\");
-		strcpy(drive, "\\\\");
-		strcat(drive, machinename);
-		strcat(drive, "\\");
-		strcat(drive, sharename);
-		strcat(drive, "\\");
+		strlcpy(drive, "\\\\", sizeof(drive));
+		strlcat(drive, machinename, sizeof(drive));
+		strlcat(drive, "\\", sizeof(drive));
+		strlcat(drive, sharename, sizeof(drive));
+		strlcat(drive, "\\", sizeof(drive));
 
-	}
-	else /* Not determinable */
+	} else /* Not determinable */
 		return (FALSE);
 
 	GetVolumeInformation(drive, NULL, 0, NULL, 0, NULL, FSType,
 			     sizeof(FSType));
-	if(strcmp(FSType,"NTFS") == 0)
+	if (strcmp(FSType, "NTFS") == 0)
 		return (TRUE);
 	else
 		return (FALSE);

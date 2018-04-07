@@ -1,7 +1,7 @@
-/*	$NetBSD: iptable.c,v 1.6 2017/06/15 15:59:40 christos Exp $	*/
+/*	$NetBSD: iptable.c,v 1.7 2018/04/07 22:23:20 christos Exp $	*/
 
 /*
- * Copyright (C) 2007-2009, 2013, 2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2007-2009, 2013, 2016, 2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -22,6 +22,7 @@
 
 #include <isc/mem.h>
 #include <isc/radix.h>
+#include <isc/util.h>
 
 #include <dns/acl.h>
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: ttl.c,v 1.7 2014/12/10 04:37:58 christos Exp $	*/
+/*	$NetBSD: ttl.c,v 1.8 2018/04/07 22:23:21 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2011-2014, 2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -163,8 +163,8 @@ bind_ttl(isc_textregion_t *source, isc_uint32_t *ttl) {
 	 */
 	if (source->length > sizeof(buf) - 1)
 		return (DNS_R_SYNTAX);
-	strncpy(buf, source->base, source->length);
-	buf[source->length] = '\0';
+	/* Copy source->length bytes and NUL terminate. */
+	snprintf(buf, sizeof(buf), "%.*s", (int)source->length, source->base);
 	s = buf;
 
 	do {

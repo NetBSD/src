@@ -1,9 +1,6 @@
-/*	$NetBSD: utils_test.c,v 1.3 2014/12/10 04:38:03 christos Exp $	*/
+/*	$NetBSD: utils_test.c,v 1.4 2018/04/07 22:23:24 christos Exp $	*/
 
-/*
- * Automated Testing Framework (atf)
- *
- * Copyright (c) 2010 The NetBSD Foundation, Inc.
+/* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,8 +23,9 @@
  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
  * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
+ * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.  */
+
+#include "atf-c/utils.h"
 
 #include <sys/stat.h>
 #include <sys/wait.h>
@@ -41,9 +39,8 @@
 
 #include <atf-c.h>
 
-#include "atf-c/utils.h"
-
-#include "detail/test_helpers.h"
+#include "atf-c/detail/dynstr.h"
+#include "atf-c/detail/test_helpers.h"
 
 /** Reads the contents of a file into a buffer.
  *
@@ -248,11 +245,19 @@ ATF_TC_BODY(fork, tc)
     ATF_REQUIRE(WIFEXITED(status));
     ATF_REQUIRE_EQ(EXIT_SUCCESS, WEXITSTATUS(status));
 
+    atf_dynstr_t out_name;
+    RE(atf_dynstr_init_fmt(&out_name, "atf_utils_fork_%d_out.txt", (int)pid));
+    atf_dynstr_t err_name;
+    RE(atf_dynstr_init_fmt(&err_name, "atf_utils_fork_%d_err.txt", (int)pid));
+
     char buffer[1024];
-    read_file("atf_utils_fork_out.txt", buffer, sizeof(buffer));
+    read_file(atf_dynstr_cstring(&out_name), buffer, sizeof(buffer));
     ATF_REQUIRE_STREQ("Child stdout\n", buffer);
-    read_file("atf_utils_fork_err.txt", buffer, sizeof(buffer));
+    read_file(atf_dynstr_cstring(&err_name), buffer, sizeof(buffer));
     ATF_REQUIRE_STREQ("Child stderr\n", buffer);
+
+    atf_dynstr_fini(&err_name);
+    atf_dynstr_fini(&out_name);
 }
 
 ATF_TC_WITHOUT_HEAD(free_charpp__empty);
@@ -386,6 +391,7 @@ static void
 fork_and_wait(const int exitstatus, const char* expout, const char* experr)
 {
     const pid_t pid = atf_utils_fork();
+    ATF_REQUIRE(pid != -1);
     if (pid == 0) {
         fprintf(stdout, "Some output\n");
         fprintf(stderr, "Some error\n");
@@ -407,6 +413,35 @@ ATF_TC_BODY(wait__ok, tc)
         ATF_REQUIRE(waitpid(control, &status, 0) != -1);
         ATF_REQUIRE(WIFEXITED(status));
         ATF_REQUIRE_EQ(EXIT_SUCCESS, WEXITSTATUS(status));
+    }
+}
+
+ATF_TC_WITHOUT_HEAD(wait__ok_nested);
+ATF_TC_BODY(wait__ok_nested, tc)
+{
+    const pid_t parent = atf_utils_fork();
+    ATF_REQUIRE(parent != -1);
+    if (parent == 0) {
+        const pid_t child = atf_utils_fork();
+        ATF_REQUIRE(child != -1);
+        if (child == 0) {
+            fflush(stderr);
+            fprintf(stdout, "Child output\n");
+            fflush(stdout);
+            fprintf(stderr, "Child error\n");
+            exit(50);
+        } else {
+            fprintf(stdout, "Parent output\n");
+            fprintf(stderr, "Parent error\n");
+            atf_utils_wait(child, 50, "Child output\n", "Child error\n");
+            exit(40);
+        }
+    } else {
+        atf_utils_wait(parent, 40,
+                       "Parent output\n"
+                       "subprocess stdout: Child output\n"
+                       "subprocess stderr: Child error\n",
+                       "Parent error\n");
     }
 }
 
@@ -489,8 +524,6 @@ ATF_TC_BODY(wait__save_stderr, tc)
     }
 }
 
-HEADER_TC(include, "atf-c/utils.h");
-
 ATF_TP_ADD_TCS(tp)
 {
     ATF_TP_ADD_TC(tp, cat_file__empty);
@@ -528,13 +561,12 @@ ATF_TP_ADD_TCS(tp)
     ATF_TP_ADD_TC(tp, redirect__other);
 
     ATF_TP_ADD_TC(tp, wait__ok);
+    ATF_TP_ADD_TC(tp, wait__ok_nested);
     ATF_TP_ADD_TC(tp, wait__save_stdout);
     ATF_TP_ADD_TC(tp, wait__save_stderr);
     ATF_TP_ADD_TC(tp, wait__invalid_exitstatus);
     ATF_TP_ADD_TC(tp, wait__invalid_stdout);
     ATF_TP_ADD_TC(tp, wait__invalid_stderr);
-
-    ATF_TP_ADD_TC(tp, include);
 
     return atf_no_error();
 }

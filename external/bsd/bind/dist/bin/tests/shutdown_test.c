@@ -1,7 +1,7 @@
-/*	$NetBSD: shutdown_test.c,v 1.7 2014/12/10 04:37:53 christos Exp $	*/
+/*	$NetBSD: shutdown_test.c,v 1.8 2018/04/07 22:23:15 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007, 2011, 2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007, 2011, 2013, 2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -27,6 +27,7 @@
 #include <isc/app.h>
 #include <isc/mem.h>
 #include <isc/print.h>
+#include <isc/string.h>
 #include <isc/task.h>
 #include <isc/time.h>
 #include <isc/timer.h>
@@ -147,9 +148,10 @@ new_task(isc_mem_t *mctx, const char *name) {
 	ti->ticks = 0;
 	if (name != NULL) {
 		INSIST(strlen(name) < sizeof(ti->name));
-		strcpy(ti->name, name);
-	} else
-		sprintf(ti->name, "%d", task_count);
+		strlcpy(ti->name, name, sizeof(ti->name));
+	} else {
+		snprintf(ti->name, sizeof(ti->name), "%d", task_count);
+	}
 	RUNTIME_CHECK(isc_task_create(task_manager, 0, &ti->task) ==
 		      ISC_R_SUCCESS);
 	RUNTIME_CHECK(isc_task_onshutdown(ti->task, shutdown_action, ti) ==

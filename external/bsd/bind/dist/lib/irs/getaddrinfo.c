@@ -1,7 +1,7 @@
-/*	$NetBSD: getaddrinfo.c,v 1.9 2017/06/15 15:59:41 christos Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.10 2018/04/07 22:23:22 christos Exp $	*/
 
 /*
- * Copyright (C) 2009, 2012-2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009, 2012-2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -137,6 +137,7 @@
 #include <isc/buffer.h>
 #include <isc/lib.h>
 #include <isc/mem.h>
+#include <isc/print.h>
 #include <isc/sockaddr.h>
 #include <isc/string.h>
 #include <isc/util.h>
@@ -383,8 +384,7 @@ getaddrinfo(const char *hostname, const char *servname,
 		 */
 		ntmp[0] = '\0';
 		if (strchr(hostname, '%') != NULL) {
-			strncpy(ntmp, hostname, sizeof(ntmp) - 1);
-			ntmp[sizeof(ntmp) - 1] = '\0';
+			strlcpy(ntmp, hostname, sizeof(ntmp));
 			p = strchr(ntmp, '%');
 			ep = NULL;
 
@@ -691,6 +691,7 @@ process_answer(isc_task_t *task, isc_event_t *event) {
 	dns_clientresevent_t *rev = (dns_clientresevent_t *)event;
 	dns_rdatatype_t qtype;
 	dns_name_t *name;
+	isc_boolean_t wantcname;
 
 	REQUIRE(trans != NULL);
 	resstate = trans->resstate;
@@ -734,14 +735,26 @@ process_answer(isc_task_t *task, isc_event_t *event) {
 		goto done;
 	}
 
+	wantcname = ISC_TF((resstate->head->ai_flags & AI_CANONNAME) != 0);
+
 	/* Parse the response and construct the addrinfo chain */
 	for (name = ISC_LIST_HEAD(rev->answerlist); name != NULL;
 	     name = ISC_LIST_NEXT(name, link)) {
 		isc_result_t result;
 		dns_rdataset_t *rdataset;
-		isc_buffer_t b;
-		isc_region_t r;
-		char t[1024];
+		char cname[1024];
+
+		if (wantcname) {
+			isc_buffer_t b;
+
+			isc_buffer_init(&b, cname, sizeof(cname));
+			result = dns_name_totext(name, ISC_TRUE, &b);
+			if (result != ISC_R_SUCCESS) {
+				error = EAI_FAIL;
+				goto done;
+			}
+			isc_buffer_putuint8(&b, '\0');
+		}
 
 		for (rdataset = ISC_LIST_HEAD(name->list);
 		     rdataset != NULL;
@@ -750,17 +763,6 @@ process_answer(isc_task_t *task, isc_event_t *event) {
 				continue;
 			if (rdataset->type != qtype)
 				continue;
-
-			if ((resstate->head->ai_flags & AI_CANONNAME) != 0) {
-				isc_buffer_init(&b, t, sizeof(t));
-				result = dns_name_totext(name, ISC_TRUE, &b);
-				if (result != ISC_R_SUCCESS) {
-					error = EAI_FAIL;
-					goto done;
-				}
-				isc_buffer_putuint8(&b, '\0');
-				isc_buffer_usedregion(&b, &r);
-			}
 
 			for (result = dns_rdataset_first(rdataset);
 			     result == ISC_R_SUCCESS;
@@ -790,7 +792,8 @@ process_answer(isc_task_t *task, isc_event_t *event) {
 				switch (family) {
 				case AF_INET:
 					dns_rdataset_current(rdataset, &rdata);
-					result = dns_rdata_tostruct(&rdata, &rdata_a,
+					result = dns_rdata_tostruct(&rdata,
+								    &rdata_a,
 								    NULL);
 					RUNTIME_CHECK(result == ISC_R_SUCCESS);
 					SIN(ai->ai_addr)->sin_port =
@@ -801,7 +804,8 @@ process_answer(isc_task_t *task, isc_event_t *event) {
 					break;
 				case AF_INET6:
 					dns_rdataset_current(rdataset, &rdata);
-					result = dns_rdata_tostruct(&rdata, &rdata_aaaa,
+					result = dns_rdata_tostruct(&rdata,
+								    &rdata_aaaa,
 								    NULL);
 					RUNTIME_CHECK(result == ISC_R_SUCCESS);
 					SIN6(ai->ai_addr)->sin6_port =
@@ -812,10 +816,8 @@ process_answer(isc_task_t *task, isc_event_t *event) {
 					break;
 				}
 
-				if ((resstate->head->ai_flags & AI_CANONNAME)
-				    != 0) {
-					ai->ai_canonname =
-						strdup((const char *)r.base);
+				if (wantcname) {
+					ai->ai_canonname = strdup(cname);
 					if (ai->ai_canonname == NULL) {
 						error = EAI_MEMORY;
 						goto done;

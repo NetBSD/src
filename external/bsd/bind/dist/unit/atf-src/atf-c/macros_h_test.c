@@ -1,9 +1,6 @@
-/*	$NetBSD: macros_h_test.c,v 1.3 2014/12/10 04:38:03 christos Exp $	*/
+/*	$NetBSD: macros_h_test.c,v 1.4 2018/04/07 22:23:24 christos Exp $	*/
 
-/*
- * Automated Testing Framework (atf)
- *
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+/* Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,8 +23,7 @@
  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
  * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
+ * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.  */
 
 #include <atf-c/macros.h>
 
@@ -89,6 +85,7 @@ ATF_TC(TEST_MACRO_1);
 ATF_TC_HEAD(TEST_MACRO_1, tc) { if (tc != NULL) {} }
 ATF_TC_BODY(TEST_MACRO_1, tc) { if (tc != NULL) {} }
 atf_tc_t *test_name_1 = &ATF_TC_NAME(TEST_MACRO_1);
+atf_tc_pack_t *test_pack_1 = &ATF_TC_PACK_NAME(TEST_MACRO_1);
 void (*head_1)(atf_tc_t *) = ATF_TC_HEAD_NAME(TEST_MACRO_1);
 void (*body_1)(const atf_tc_t *) = ATF_TC_BODY_NAME(TEST_MACRO_1);
 ATF_TC_WITH_CLEANUP(TEST_MACRO_2);
@@ -96,10 +93,12 @@ ATF_TC_HEAD(TEST_MACRO_2, tc) { if (tc != NULL) {} }
 ATF_TC_BODY(TEST_MACRO_2, tc) { if (tc != NULL) {} }
 ATF_TC_CLEANUP(TEST_MACRO_2, tc) { if (tc != NULL) {} }
 atf_tc_t *test_name_2 = &ATF_TC_NAME(TEST_MACRO_2);
+atf_tc_pack_t *test_pack_2 = &ATF_TC_PACK_NAME(TEST_MACRO_2);
 void (*head_2)(atf_tc_t *) = ATF_TC_HEAD_NAME(TEST_MACRO_2);
 void (*body_2)(const atf_tc_t *) = ATF_TC_BODY_NAME(TEST_MACRO_2);
 void (*cleanup_2)(const atf_tc_t *) = ATF_TC_CLEANUP_NAME(TEST_MACRO_2);
 ATF_TC_WITHOUT_HEAD(TEST_MACRO_3);
 ATF_TC_BODY(TEST_MACRO_3, tc) { if (tc != NULL) {} }
 atf_tc_t *test_name_3 = &ATF_TC_NAME(TEST_MACRO_3);
+atf_tc_pack_t *test_pack_3 = &ATF_TC_PACK_NAME(TEST_MACRO_3);
 void (*body_3)(const atf_tc_t *) = ATF_TC_BODY_NAME(TEST_MACRO_3);

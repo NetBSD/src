@@ -1,7 +1,7 @@
-/*	$NetBSD: safe.h,v 1.4 2015/12/17 04:00:45 christos Exp $	*/
+/*	$NetBSD: safe.h,v 1.5 2018/04/07 22:23:22 christos Exp $	*/
 
 /*
- * Copyright (C) 2013, 2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2013, 2015, 2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -24,6 +24,7 @@
 /*! \file isc/safe.h */
 
 #include <isc/types.h>
+#include <stdlib.h>
 
 ISC_LANG_BEGINDECLS
 
@@ -39,6 +40,18 @@ int
 isc_safe_memcompare(const void *b1, const void *b2, size_t len);
 /*%<
  * Clone of libc memcmp() which is safe to differential timing attacks.
+ */
+
+void
+isc_safe_memwipe(void *ptr, size_t len);
+/*%<
+ * Clear the memory of length `len` pointed to by `ptr`.
+ *
+ * Some crypto code calls memset() on stack allocated buffers just
+ * before return so that they are wiped. Such memset() calls can be
+ * optimized away by the compiler. We provide this external non-inline C
+ * function to perform the memset operation so that the compiler cannot
+ * infer about what the function does and optimize the call away.
  */
 
 ISC_LANG_ENDDECLS

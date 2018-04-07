@@ -1,7 +1,7 @@
-/*	$NetBSD: aclconf.c,v 1.10 2017/06/15 15:59:42 christos Exp $	*/
+/*	$NetBSD: aclconf.c,v 1.11 2018/04/07 22:23:23 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -20,6 +20,7 @@
 #include <config.h>
 
 #include <isc/mem.h>
+#include <isc/print.h>
 #include <isc/string.h>		/* Required for HP/UX (and others?) */
 #include <isc/util.h>
 
@@ -423,23 +424,27 @@ geoip_can_answer(dns_aclelement_t *elt, cfg_aclconfctx_t *ctx) {
 		    ctx->geoip->country_v6 != NULL ||
 		    ctx->geoip->region != NULL)
 			return (ISC_TRUE);
+		/* FALLTHROUGH */
 	case dns_geoip_region:
 	case dns_geoip_regionname:
 		if (ctx->geoip->city_v4 != NULL ||
 		    ctx->geoip->city_v6 != NULL ||
 		    ctx->geoip->region != NULL)
 			return (ISC_TRUE);
+		/* FALLTHROUGH */
 	case dns_geoip_country_code:
 	case dns_geoip_country_code3:
 	case dns_geoip_country_name:
 		if (ctx->geoip->country_v4 != NULL ||
 		    ctx->geoip->country_v6 != NULL)
 			return (ISC_TRUE);
+		/* FALLTHROUGH */
 	case dns_geoip_region_countrycode:
 	case dns_geoip_region_code:
 	case dns_geoip_region_name:
 		if (ctx->geoip->region != NULL)
 			return (ISC_TRUE);
+		/* FALLTHROUGH */
 	case dns_geoip_city_countrycode:
 	case dns_geoip_city_countrycode3:
 	case dns_geoip_city_countryname:
@@ -454,18 +459,23 @@ geoip_can_answer(dns_aclelement_t *elt, cfg_aclconfctx_t *ctx) {
 		if (ctx->geoip->city_v4 != NULL ||
 		    ctx->geoip->city_v6 != NULL)
 			return (ISC_TRUE);
+		/* FALLTHROUGH */
 	case dns_geoip_isp_name:
 		if (ctx->geoip->isp != NULL)
 			return (ISC_TRUE);
+		/* FALLTHROUGH */
 	case dns_geoip_org_name:
 		if (ctx->geoip->org != NULL)
 			return (ISC_TRUE);
+		/* FALLTHROUGH */
 	case dns_geoip_as_asnum:
 		if (ctx->geoip->as != NULL)
 			return (ISC_TRUE);
+		/* FALLTHROUGH */
 	case dns_geoip_domain_name:
 		if (ctx->geoip->domain != NULL)
 			return (ISC_TRUE);
+		/* FALLTHROUGH */
 	case dns_geoip_netspeed_id:
 		if (ctx->geoip->netspeed != NULL)
 			return (ISC_TRUE);

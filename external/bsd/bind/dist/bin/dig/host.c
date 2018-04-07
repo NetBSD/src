@@ -1,7 +1,7 @@
-/*	$NetBSD: host.c,v 1.12 2017/06/15 15:59:36 christos Exp $	*/
+/*	$NetBSD: host.c,v 1.13 2018/04/07 22:23:13 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009-2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009-2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -172,12 +172,12 @@ show_usage(void) {
 	exit(1);
 }
 
-void
-dighost_shutdown(void) {
-	isc_app_shutdown();
+static void
+host_shutdown(void) {
+	(void) isc_app_shutdown();
 }
 
-void
+static void
 received(int bytes, isc_sockaddr_t *from, dig_query_t *query) {
 	isc_time_t now;
 	int diff;
@@ -192,7 +192,7 @@ received(int bytes, isc_sockaddr_t *from, dig_query_t *query) {
 	}
 }
 
-void
+static void
 trying(char *frm, dig_lookup_t *lookup) {
 	UNUSED(lookup);
 
@@ -236,7 +236,7 @@ say_message(dns_name_t *name, const char *msg, dns_rdata_t *rdata,
 }
 #ifdef DIG_SIGCHASE
 /* Just for compatibility : not use in host program */
-isc_result_t
+static isc_result_t
 printrdataset(dns_name_t *owner_name, dns_rdataset_t *rdataset,
 	      isc_buffer_t *target)
 {
@@ -417,7 +417,7 @@ chase_cnamechain(dns_message_t *msg, dns_name_t *qname) {
 	}
 }
 
-isc_result_t
+static isc_result_t
 printmessage(dig_query_t *query, dns_message_t *msg, isc_boolean_t headers) {
 	isc_boolean_t did_flag = ISC_FALSE;
 	dns_rdataset_t *opt, *tsig = NULL;
@@ -477,9 +477,8 @@ printmessage(dig_query_t *query, dns_message_t *msg, isc_boolean_t headers) {
 		dns_name_format(name, namestr, sizeof(namestr));
 		lookup = clone_lookup(query->lookup, ISC_FALSE);
 		if (lookup != NULL) {
-			strncpy(lookup->textname, namestr,
+			strlcpy(lookup->textname, namestr,
 				sizeof(lookup->textname));
-			lookup->textname[sizeof(lookup->textname)-1] = 0;
 			lookup->rdtype = dns_rdatatype_aaaa;
 			lookup->rdtypeset = ISC_TRUE;
 			lookup->origin = NULL;
@@ -488,9 +487,8 @@ printmessage(dig_query_t *query, dns_message_t *msg, isc_boolean_t headers) {
 		}
 		lookup = clone_lookup(query->lookup, ISC_FALSE);
 		if (lookup != NULL) {
-			strncpy(lookup->textname, namestr,
+			strlcpy(lookup->textname, namestr,
 				sizeof(lookup->textname));
-			lookup->textname[sizeof(lookup->textname)-1] = 0;
 			lookup->rdtype = dns_rdatatype_mx;
 			lookup->rdtypeset = ISC_TRUE;
 			lookup->origin = NULL;
@@ -862,14 +860,12 @@ parse_args(isc_boolean_t is_batchfile, int argc, char **argv) {
 	lookup->pending = ISC_FALSE;
 	if (get_reverse(store, sizeof(store), hostname,
 			lookup->ip6_int, ISC_TRUE) == ISC_R_SUCCESS) {
-		strncpy(lookup->textname, store, sizeof(lookup->textname));
-		lookup->textname[sizeof(lookup->textname)-1] = 0;
+		strlcpy(lookup->textname, store, sizeof(lookup->textname));
 		lookup->rdtype = dns_rdatatype_ptr;
 		lookup->rdtypeset = ISC_TRUE;
 		default_lookups = ISC_FALSE;
 	} else {
-		strncpy(lookup->textname, hostname, sizeof(lookup->textname));
-		lookup->textname[sizeof(lookup->textname)-1]=0;
+		strlcpy(lookup->textname, hostname, sizeof(lookup->textname));
 		usesearch = ISC_TRUE;
 	}
 	lookup->new_search = ISC_TRUE;
@@ -890,6 +886,15 @@ main(int argc, char **argv) {
 #ifdef WITH_IDN
 	idnoptions = IDN_ASCCHECK;
 #endif
+
+	/* setup dighost callbacks */
+#ifdef DIG_SIGCHASE
+	dighost_printrdataset = printrdataset;
+#endif
+	dighost_printmessage = printmessage;
+	dighost_received = received;
+	dighost_trying = trying;
+	dighost_shutdown = host_shutdown;
 
 	debug("main()");
 	progname = argv[0];

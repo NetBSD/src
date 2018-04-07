@@ -1,7 +1,7 @@
-/*	$NetBSD: ptr_12.c,v 1.6 2016/05/26 16:49:59 christos Exp $	*/
+/*	$NetBSD: ptr_12.c,v 1.7 2018/04/07 22:23:21 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007, 2009, 2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007, 2009, 2015, 2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -233,38 +233,17 @@ checkowner_ptr(ARGS_CHECKOWNER) {
 static unsigned char ip6_arpa_data[]  = "\003IP6\004ARPA";
 static unsigned char ip6_arpa_offsets[] = { 0, 4, 9 };
 static const dns_name_t ip6_arpa =
-{
-	DNS_NAME_MAGIC,
-	ip6_arpa_data, 10, 3,
-	DNS_NAMEATTR_READONLY | DNS_NAMEATTR_ABSOLUTE,
-	ip6_arpa_offsets, NULL,
-	{(void *)-1, (void *)-1},
-	{NULL, NULL}
-};
+	DNS_NAME_INITABSOLUTE(ip6_arpa_data, ip6_arpa_offsets);
 
 static unsigned char ip6_int_data[]  = "\003IP6\003INT";
 static unsigned char ip6_int_offsets[] = { 0, 4, 8 };
 static const dns_name_t ip6_int =
-{
-	DNS_NAME_MAGIC,
-	ip6_int_data, 9, 3,
-	DNS_NAMEATTR_READONLY | DNS_NAMEATTR_ABSOLUTE,
-	ip6_int_offsets, NULL,
-	{(void *)-1, (void *)-1},
-	{NULL, NULL}
-};
+	DNS_NAME_INITABSOLUTE(ip6_int_data, ip6_int_offsets);
 
 static unsigned char in_addr_arpa_data[]  = "\007IN-ADDR\004ARPA";
 static unsigned char in_addr_arpa_offsets[] = { 0, 8, 13 };
 static const dns_name_t in_addr_arpa =
-{
-	DNS_NAME_MAGIC,
-	in_addr_arpa_data, 14, 3,
-	DNS_NAMEATTR_READONLY | DNS_NAMEATTR_ABSOLUTE,
-	in_addr_arpa_offsets, NULL,
-	{(void *)-1, (void *)-1},
-	{NULL, NULL}
-};
+	DNS_NAME_INITABSOLUTE(in_addr_arpa_data, in_addr_arpa_offsets);
 
 static inline isc_boolean_t
 checknames_ptr(ARGS_CHECKNAMES) {
