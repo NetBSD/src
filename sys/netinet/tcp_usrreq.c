@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.217 2018/03/29 07:46:43 maxv Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.218 2018/04/07 13:48:50 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.217 2018/03/29 07:46:43 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.218 2018/04/07 13:48:50 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -156,9 +156,6 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.217 2018/03/29 07:46:43 maxv Exp $"
 static int  
 tcp_debug_capture(struct tcpcb *tp, int req)  
 {
-#ifdef KPROF
-	tcp_acounts[tp->t_state][req]++;
-#endif
 #ifdef TCP_DEBUG
 	return tp->t_state;
 #endif
