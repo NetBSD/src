@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1054 2018/04/05 22:38:58 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.1055 2018/04/07 21:38:30 mrg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -67,9 +67,6 @@ MKGCC?=		no
 .if \
     ${MACHINE_CPU} == "aarch64"
 HAVE_GCC?=	0
-.elif \
-    ${MACHINE_CPU} == "vax"
-HAVE_GCC?=	5
 .else
 HAVE_GCC?=	6
 .endif
