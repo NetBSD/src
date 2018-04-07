@@ -1,7 +1,7 @@
-/*	$NetBSD: net.h,v 1.9 2014/12/10 04:38:01 christos Exp $	*/
+/*	$NetBSD: net.h,v 1.10 2018/04/07 22:23:23 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2008, 2012, 2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2008, 2012, 2013, 2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -107,6 +107,10 @@
  * a variable
  */
 #undef interface
+
+#ifndef INADDR_ANY
+#define INADDR_ANY 0x00000000UL
+#endif
 
 #ifndef INADDR_LOOPBACK
 #define INADDR_LOOPBACK 0x7f000001UL
@@ -414,6 +418,7 @@ isc_net_getudpportrange(int af, in_port_t *low, in_port_t *high);
 #ifdef ISC_PLATFORM_NEEDNTOP
 const char *
 isc_net_ntop(int af, const void *src, char *dst, size_t size);
+#undef inet_ntop
 #define inet_ntop isc_net_ntop
 #endif
 

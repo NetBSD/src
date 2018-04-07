@@ -1,7 +1,7 @@
-/*	$NetBSD: thread.c,v 1.4 2014/12/10 04:38:00 christos Exp $	*/
+/*	$NetBSD: thread.c,v 1.5 2018/04/07 22:23:22 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007, 2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -27,4 +27,9 @@
 void
 isc_thread_setconcurrency(unsigned int level) {
 	UNUSED(level);
+}
+
+void isc_thread_setname(isc_thread_t thread, const char *name) {
+	UNUSED(thread);
+	UNUSED(name);
 }

@@ -1,7 +1,7 @@
-/*	$NetBSD: globals.h,v 1.10 2017/06/15 15:59:37 christos Exp $	*/
+/*	$NetBSD: globals.h,v 1.11 2018/04/07 22:23:14 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2014, 2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2014, 2016, 2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -173,6 +173,7 @@ EXTERN isc_boolean_t		ns_g_notcp		INIT(ISC_FALSE);
 EXTERN isc_boolean_t		ns_g_disable6		INIT(ISC_FALSE);
 EXTERN isc_boolean_t		ns_g_disable4		INIT(ISC_FALSE);
 EXTERN unsigned int		ns_g_tat_interval	INIT(24*3600);
+EXTERN isc_boolean_t		ns_g_fixedlocal		INIT(ISC_FALSE);
 
 
 #ifdef HAVE_GEOIP

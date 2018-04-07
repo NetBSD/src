@@ -1,7 +1,7 @@
-/*	$NetBSD: opensslgost_link.c,v 1.12 2017/06/15 15:59:40 christos Exp $	*/
+/*	$NetBSD: opensslgost_link.c,v 1.13 2018/04/07 22:23:20 christos Exp $	*/
 
 /*
- * Copyright (C) 2010-2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2010-2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -481,7 +481,7 @@ opensslgost_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 		pub->keydata.pkey = NULL;
 		key->key_size = pub->key_size;
 		dst__privstruct_free(&priv, mctx);
-		memset(&priv, 0, sizeof(priv));
+		isc_safe_memwipe(&priv, sizeof(priv));
 		return (ISC_R_SUCCESS);
 	}
 
@@ -533,7 +533,7 @@ opensslgost_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 	key->keydata.pkey = pkey;
 	key->key_size = EVP_PKEY_bits(pkey);
 	dst__privstruct_free(&priv, mctx);
-	memset(&priv, 0, sizeof(priv));
+	isc_safe_memwipe(&priv, sizeof(priv));
 	return (ISC_R_SUCCESS);
 
  err:
@@ -543,7 +543,7 @@ opensslgost_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 		EVP_PKEY_free(pkey);
 	opensslgost_destroy(key);
 	dst__privstruct_free(&priv, mctx);
-	memset(&priv, 0, sizeof(priv));
+	isc_safe_memwipe(&priv, sizeof(priv));
 	return (ret);
 }
 

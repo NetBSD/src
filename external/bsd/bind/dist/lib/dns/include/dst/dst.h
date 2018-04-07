@@ -1,7 +1,7 @@
-/*	$NetBSD: dst.h,v 1.11 2015/12/17 04:00:44 christos Exp $	*/
+/*	$NetBSD: dst.h,v 1.12 2018/04/07 22:23:21 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2015, 2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -66,6 +66,8 @@ typedef struct dst_context 	dst_context_t;
 #define DST_ALG_ECCGOST		12
 #define DST_ALG_ECDSA256	13
 #define DST_ALG_ECDSA384	14
+#define DST_ALG_ED25519		15
+#define DST_ALG_ED448		16
 #define DST_ALG_HMACMD5		157
 #define DST_ALG_GSSAPI		160
 #define DST_ALG_HMACSHA1	161	/* XXXMPA */
