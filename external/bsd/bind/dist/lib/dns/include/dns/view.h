@@ -1,7 +1,7 @@
-/*	$NetBSD: view.h,v 1.12 2017/06/15 15:59:40 christos Exp $	*/
+/*	$NetBSD: view.h,v 1.13 2018/04/07 22:23:21 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2014, 2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2014, 2016, 2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -1148,7 +1148,7 @@ dns_view_untrust(dns_view_t *view, dns_name_t *keyname,
  * \li	'dnskey' is valid.
  */
 
-void
+isc_result_t
 dns_view_setnewzones(dns_view_t *view, isc_boolean_t allow, void *cfgctx,
 		     void (*cfg_destroy)(void **));
 /*%<
@@ -1167,6 +1167,10 @@ dns_view_setnewzones(dns_view_t *view, isc_boolean_t allow, void *cfgctx,
  *
  * Requires:
  * \li 'view' is valid.
+ *
+ * Returns:
+ * \li ISC_R_SUCCESS
+ * \li ISC_R_NOMEMORY
  */
 
 void
@@ -1185,15 +1189,36 @@ dns_view_searchdlz(dns_view_t *view, dns_name_t *name,
  * findzone method.  If successful, '*dbp' is set to point to the
  * DLZ database.
  *
- * Returns:
- * \li ISC_R_SUCCESS
- * \li ISC_R_NOTFOUND
- *
  * Requires:
  * \li 'view' is valid.
  * \li 'name' is not NULL.
  * \li 'dbp' is not NULL and *dbp is NULL.
+ *
+ * Returns:
+ * \li ISC_R_SUCCESS
+ * \li ISC_R_NOTFOUND
  */
+
+void
+dns_view_setviewcommit(dns_view_t *view);
+/*%<
+ * Commit dns_zone_setview() calls previously made for all zones in this
+ * view.
+ *
+ * Requires:
+ *\li	'view' to be valid.
+ */
+
+void
+dns_view_setviewrevert(dns_view_t *view);
+/*%<
+ * Revert dns_zone_setview() calls previously made for all zones in this
+ * view.
+ *
+ * Requires:
+ *\li	'view' to be valid.
+ */
+
 
 ISC_LANG_ENDDECLS
 

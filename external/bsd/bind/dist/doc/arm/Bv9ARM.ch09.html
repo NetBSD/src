@@ -1,6 +1,6 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <!--
- - Copyright (C) 2004-2016 Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2004-2018 Internet Systems Consortium, Inc. ("ISC")
  - Copyright (C) 2000-2003 Internet Software Consortium.
  - 
  - Permission to use, copy, modify, and/or distribute this software for any
@@ -45,12 +45,17 @@
 <div class="toc">
 <p><b>Table of Contents</b></p>
 <dl class="toc">
-<dt><span class="section"><a href="Bv9ARM.ch09.html#id-1.10.2">Release Notes for BIND Version 9.10.5-P2</a></span></dt>
+<dt><span class="section"><a href="Bv9ARM.ch09.html#id-1.10.2">Release Notes for BIND Version 9.10.7</a></span></dt>
 <dd><dl>
 <dt><span class="section"><a href="Bv9ARM.ch09.html#relnotes_intro">Introduction</a></span></dt>
 <dt><span class="section"><a href="Bv9ARM.ch09.html#relnotes_download">Download</a></span></dt>
 <dt><span class="section"><a href="Bv9ARM.ch09.html#root_key">New DNSSEC Root Key</a></span></dt>
+<dt><span class="section"><a href="Bv9ARM.ch09.html#win_support">Legacy Windows No Longer Supported</a></span></dt>
 <dt><span class="section"><a href="Bv9ARM.ch09.html#relnotes_security">Security Fixes</a></span></dt>
+<dt><span class="section"><a href="Bv9ARM.ch09.html#relnotes_removed">Removed Features</a></span></dt>
+<dt><span class="section"><a href="Bv9ARM.ch09.html#proto_changes">Protocol Changes</a></span></dt>
+<dt><span class="section"><a href="Bv9ARM.ch09.html#relnotes_changes">Feature Changes</a></span></dt>
+<dt><span class="section"><a href="Bv9ARM.ch09.html#relnotes_bugs">Bug Fixes</a></span></dt>
 <dt><span class="section"><a href="Bv9ARM.ch09.html#end_of_life">End of Life</a></span></dt>
 <dt><span class="section"><a href="Bv9ARM.ch09.html#relnotes_thanks">Thank You</a></span></dt>
 </dl></dd>
@@ -58,25 +63,18 @@
 </div>
       <div class="section">
 <div class="titlepage"><div><div><h2 class="title" style="clear: both">
-<a name="id-1.10.2"></a>Release Notes for BIND Version 9.10.5-P2</h2></div></div></div>
+<a name="id-1.10.2"></a>Release Notes for BIND Version 9.10.7</h2></div></div></div>
   
   <div class="section">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="relnotes_intro"></a>Introduction</h3></div></div></div>
     <p>
-      This document summarizes changes since BIND 9.10.5:
-    </p>
-    <p>
-      BIND 9.10.5-P1 addresses the security issues described in
-      CVE-2017-3140 and CVE-2017-3141.
-    </p>
-    <p>
-      BIND 9.11.1-P2 addresses the security issues described in
-      CVE-2017-3142 and CVE-2017-3143. It also includes an update
-      to the address of the B root server.
+      This document summarizes changes since the last production
+      release on the BIND 9.10 branch.
+      Please see the <code class="filename">CHANGES</code> file for a further
+      list of bug fixes and other changes.
     </p>
   </div>
-
 
   <div class="section">
 <div class="titlepage"><div><div><h3 class="title">
@@ -99,16 +97,15 @@
       trust anchors, with somewhat different behaviors. If the root
       key is configured using the <span class="command"><strong>managed-keys</strong></span>
       statement, or if the pre-configured root key is enabled by using
-      <span class="command"><strong>dnssec-validation auto</strong></span>, then BIND can keep
-      keys up to date automatically. Servers configured in this way
-      will roll seamlessly to the new key when it is published in
-      the root zone. However, keys configured using the
+      <span class="command"><strong>dnssec-validation auto</strong></span>, then BIND can keep keys up
+      to date automatically. Servers configured in this way should have
+      begun the process of rolling to the new key when it was published in
+      the root zone in July 2017. However, keys configured using the
       <span class="command"><strong>trusted-keys</strong></span> statement are not automatically
-      maintained. If your server is performing DNSSEC validation
-      and is configured using <span class="command"><strong>trusted-keys</strong></span>, you are
-      advised to change your configuration before the root zone begins
-      signing with the new KSK. This is currently scheduled for
-      October 11, 2017.
+      maintained. If your server is performing DNSSEC validation and is
+      configured using <span class="command"><strong>trusted-keys</strong></span>, you are advised to
+      change your configuration before the root zone begins signing with
+      the new KSK. This is currently scheduled for October 11, 2017.
     </p>
     <p>
       This release includes an updated version of the
@@ -117,6 +114,16 @@
       <a class="link" href="https://www.isc.org/bind-keys" target="_top">
 	https://www.isc.org/bind-keys
       </a>.
+    </p>
+  </div>
+
+  <div class="section">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="win_support"></a>Legacy Windows No Longer Supported</h3></div></div></div>
+    <p>
+      As of BIND 9.10.6, Windows XP and Windows 2003 are no longer supported
+      platforms for BIND; "XP" binaries are no longer available for download
+      from ISC.
     </p>
   </div>
 
@@ -144,6 +151,204 @@
 	  could cause <span class="command"><strong>named</strong></span> to go into an infinite
 	  query loop. This flaw is disclosed in CVE-2017-3140.
 	  [RT #45181]
+	</p>
+      </li>
+<li class="listitem">
+	<p>
+	  Addresses could be referenced after being freed during resolver
+	  processing, causing an assertion failure. The chances of this
+	  happening were remote, but the introduction of a delay in
+	  resolution increased them. This bug is disclosed in
+	  CVE-2017-3145. [RT #46839]
+	</p>
+      </li>
+<li class="listitem">
+	<p>
+	  update-policy rules that otherwise ignore the name field now
+	  require that it be set to "." to ensure that any type list
+	  present is properly interpreted.  If the name field was omitted
+	  from the rule declaration and a type list was present it wouldn't
+	  be interpreted as expected.
+	</p>
+      </li>
+</ul></div>
+  </div>
+
+  <div class="section">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="relnotes_removed"></a>Removed Features</h3></div></div></div>
+    <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; ">
+<li class="listitem">
+	<p>
+	  The ISC DNSSEC Lookaside Validation (DLV) service has
+	  been shut down; all DLV records in the dlv.isc.org zone
+	  have been removed.  References to the service have been
+	  removed from BIND documentation.  Lookaside validation
+	  is no longer used by default by <span class="command"><strong>delv</strong></span>.
+	  The DLV key has been removed from <code class="filename">bind.keys</code>.
+	  Setting <span class="command"><strong>dnssec-lookaside</strong></span> to
+	  <span class="command"><strong>auto</strong></span> or to use dlv.isc.org as a trust
+	  anchor results in a warning being issued.
+	</p>
+      </li>
+<li class="listitem">
+	<p>
+	  <span class="command"><strong>named</strong></span> will now log a warning if the old
+	  root DNSSEC key is explicitly configured and has not been updated.
+	  [RT #43670]
+	</p>
+      </li>
+</ul></div>
+  </div>
+
+  <div class="section">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="proto_changes"></a>Protocol Changes</h3></div></div></div>
+    <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; ">
+<li class="listitem">
+	<p>
+	  BIND can now use the Ed25519 and Ed448 Edwards Curve DNSSEC
+	  signing algorithms described in RFC 8080. Note, however, that
+	  these algorithms must be supported in OpenSSL;
+	  currently they are only available in the development branch
+	  of OpenSSL at
+	  <a class="link" href="https://github.com/openssl/openssl" target="_top">
+	    https://github.com/openssl/openssl</a>.
+	  [RT #44696]
+	</p>
+      </li>
+<li class="listitem">
+	<p>
+	  When parsing DNS messages, EDNS KEY TAG options are checked
+	  for correctness. When printing messages (for example, in
+	  <span class="command"><strong>dig</strong></span>), EDNS KEY TAG options are printed
+	  in readable format.
+	</p>
+      </li>
+</ul></div>
+  </div>
+
+  <div class="section">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="relnotes_changes"></a>Feature Changes</h3></div></div></div>
+    <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; ">
+<li class="listitem">
+	<p>
+	  <span class="command"><strong>named</strong></span> will no longer start or accept
+	  reconfiguration if <span class="command"><strong>managed-keys</strong></span> or
+	  <span class="command"><strong>dnssec-validation auto</strong></span> are in use and
+	  the managed-keys directory (specified by
+	  <span class="command"><strong>managed-keys-directory</strong></span>, and defaulting
+	  to the working directory if not specified),
+	  is not writable by the effective user ID. [RT #46077]
+	</p>
+      </li>
+<li class="listitem">
+	<p>
+	  Previously, <span class="command"><strong>update-policy local;</strong></span> accepted
+	  updates from any source so long as they were signed by the
+	  locally-generated session key. This has been further restricted;
+	  updates are now only accepted from locally configured addresses.
+	  [RT #45492]
+	</p>
+      </li>
+<li class="listitem">
+	<p>
+	  <span class="command"><strong>dig +ednsopt</strong></span> now accepts the names
+	  for EDNS options in addition to numeric values. For example,
+	  an EDNS Client-Subnet option could be sent using
+	  <span class="command"><strong>dig +ednsopt=ecs:...</strong></span>. Thanks to
+	  John Worley of Secure64 for the contribution. [RT #44461]
+	</p>
+      </li>
+<li class="listitem">
+	<p>
+	  Threads in <span class="command"><strong>named</strong></span> are now set to human-readable
+	  names to assist debugging on operating systems that support that.
+	  Threads will have names such as "isc-timer", "isc-sockmgr",
+	  "isc-worker0001", and so on. This will affect the reporting of
+	  subsidiary thread names in <span class="command"><strong>ps</strong></span> and
+	  <span class="command"><strong>top</strong></span>, but not the main thread. [RT #43234]
+	</p>
+      </li>
+<li class="listitem">
+	<p>
+	  DiG now warns about .local queries which are reserved for
+	  Multicast DNS. [RT #44783]
+	</p>
+      </li>
+</ul></div>
+  </div>
+
+  <div class="section">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="relnotes_bugs"></a>Bug Fixes</h3></div></div></div>
+    <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; ">
+<li class="listitem">
+	<p>
+	  Attempting to validate improperly unsigned CNAME responses
+	  from secure zones could cause a validator loop. This caused
+	  a delay in returning SERVFAIL and also increased the chances
+	  of encountering the crash bug described in CVE-2017-3145.
+	  [RT #46839]
+	</p>
+      </li>
+<li class="listitem">
+	<p>
+	  When <span class="command"><strong>named</strong></span> was reconfigured, failure of some
+	  zones to load correctly could leave the system in an inconsistent
+	  state; while generally harmless, this could lead to a crash later
+	  when using <span class="command"><strong>rndc addzone</strong></span>.  Reconfiguration changes
+	  are now fully rolled back in the event of failure. [RT #45841]
+	</p>
+      </li>
+<li class="listitem">
+	<p>
+	  Fixed a bug that was introduced in an earlier development
+	  release which caused multi-packet AXFR and IXFR messages to fail
+	  validation if not all packets contained TSIG records; this
+	  caused interoperability problems with some other DNS
+	  implementations. [RT #45509]
+	</p>
+      </li>
+<li class="listitem">
+	<p>
+	  Semicolons are no longer escaped when printing CAA and
+	  URI records.  This may break applications that depend on the
+	  presence of the backslash before the semicolon. [RT #45216]
+	</p>
+      </li>
+<li class="listitem">
+	<p>
+	  AD could be set on truncated answer with no records present
+	  in the answer and authority sections. [RT #45140]
+	</p>
+      </li>
+<li class="listitem">
+	<p>
+	  Some header files included &lt;isc/util.h&gt; incorrectly as
+	  it pollutes with namespace with non ISC_ macros and this should
+	  only be done by explicitly including &lt;isc/util.h&gt;.  This
+	  has been corrected.  Some code may depend on &lt;isc/util.h&gt;
+	  being implicitly included via other header files.  Such
+	  code should explicitly include &lt;isc/util.h&gt;.
+	</p>
+      </li>
+<li class="listitem">
+	<p>
+	  Zones created with <span class="command"><strong>rndc addzone</strong></span> could
+	  temporarily fail to inherit the <span class="command"><strong>allow-transfer</strong></span>
+	  ACL set in the <span class="command"><strong>options</strong></span> section of
+	  <code class="filename">named.conf</code>. [RT #46603]
+	</p>
+      </li>
+<li class="listitem">
+	<p>
+	  <span class="command"><strong>named</strong></span> failed to properly determine whether
+	  there were active KSK and ZSK keys for an algorithm when
+	  <span class="command"><strong>update-check-ksk</strong></span> was true (which is the
+	  default setting). This could leave records unsigned
+	  when rolling keys. [RT #46743] [RT #46754] [RT #46774]
 	</p>
       </li>
 </ul></div>
@@ -189,6 +394,6 @@
 </tr>
 </table>
 </div>
-<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.10.5-P2</p>
+<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.10.7</p>
 </body>
 </html>

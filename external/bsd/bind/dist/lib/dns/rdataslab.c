@@ -1,7 +1,7 @@
-/*	$NetBSD: rdataslab.c,v 1.12 2017/06/15 15:59:40 christos Exp $	*/
+/*	$NetBSD: rdataslab.c,v 1.13 2018/04/07 22:23:20 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2014, 2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2014, 2016, 2018  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -299,7 +299,9 @@ dns_rdataslab_fromrdataset(dns_rdataset_t *rdataset, isc_mem_t *mctx,
 	region->base = rawbuf;
 	region->length = buflen;
 
+	memset(rawbuf, 0, buflen);
 	rawbuf += reservelen;
+
 #if DNS_RDATASET_FIXED
 	offsetbase = rawbuf;
 #endif
@@ -331,7 +333,7 @@ dns_rdataslab_fromrdataset(dns_rdataset_t *rdataset, isc_mem_t *mctx,
 		 * Store the per RR meta data.
 		 */
 		if (rdataset->type == dns_rdatatype_rrsig) {
-			*rawbuf++ |= (x[i].rdata.flags & DNS_RDATA_OFFLINE) ?
+			*rawbuf++ = (x[i].rdata.flags & DNS_RDATA_OFFLINE) ?
 					    DNS_RDATASLAB_OFFLINE : 0;
 		}
 		memmove(rawbuf, x[i].rdata.data, x[i].rdata.length);

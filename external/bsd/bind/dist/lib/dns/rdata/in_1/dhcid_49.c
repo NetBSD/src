@@ -1,7 +1,7 @@
-/*	$NetBSD: dhcid_49.c,v 1.6 2015/12/17 04:00:44 christos Exp $	*/
+/*	$NetBSD: dhcid_49.c,v 1.7 2018/04/07 22:23:21 christos Exp $	*/
 
 /*
- * Copyright (C) 2006, 2007, 2009, 2011, 2012, 2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2006, 2007, 2009, 2011, 2012, 2015, 2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -42,7 +42,7 @@ fromtext_in_dhcid(ARGS_FROMTEXT) {
 
 static inline isc_result_t
 totext_in_dhcid(ARGS_TOTEXT) {
-	isc_region_t sr;
+	isc_region_t sr, sr2;
 	char buf[sizeof(" ; 64000 255 64000")];
 	size_t n;
 
@@ -51,6 +51,7 @@ totext_in_dhcid(ARGS_TOTEXT) {
 	REQUIRE(rdata->length != 0);
 
 	dns_rdata_toregion(rdata, &sr);
+	sr2 = sr;
 
 	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
 		RETERR(str_totext("( " /*)*/, target));
@@ -63,8 +64,8 @@ totext_in_dhcid(ARGS_TOTEXT) {
 		RETERR(str_totext(/* ( */ " )", target));
 		if (rdata->length > 2) {
 			n = snprintf(buf, sizeof(buf), " ; %u %u %u",
-				     sr.base[0] * 256 + sr.base[1],
-				     sr.base[2], rdata->length - 3);
+				     sr2.base[0] * 256 + sr2.base[1],
+				     sr2.base[2], rdata->length - 3);
 			INSIST(n < sizeof(buf));
 			RETERR(str_totext(buf, target));
 		}

@@ -1,7 +1,7 @@
-/*	$NetBSD: int.h,v 1.4 2014/12/10 04:38:01 christos Exp $	*/
+/*	$NetBSD: int.h,v 1.5 2018/04/07 22:23:23 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2018  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -24,7 +24,7 @@
 
 /*! \file */
 
-typedef char				isc_int8_t;
+typedef signed char			isc_int8_t;
 typedef unsigned char			isc_uint8_t;
 typedef short				isc_int16_t;
 typedef unsigned short			isc_uint16_t;

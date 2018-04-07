@@ -1,7 +1,7 @@
-/*	$NetBSD: opensslecdsa_link.c,v 1.11 2017/06/15 15:59:40 christos Exp $	*/
+/*	$NetBSD: opensslecdsa_link.c,v 1.12 2018/04/07 22:23:20 christos Exp $	*/
 
 /*
- * Copyright (C) 2012-2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2012-2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -26,6 +26,7 @@
 
 #include <isc/entropy.h>
 #include <isc/mem.h>
+#include <isc/safe.h>
 #include <isc/sha2.h>
 #include <isc/string.h>
 #include <isc/util.h>
@@ -569,7 +570,7 @@ opensslecdsa_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 		key->keydata.pkey = pub->keydata.pkey;
 		pub->keydata.pkey = NULL;
 		dst__privstruct_free(&priv, mctx);
-		memset(&priv, 0, sizeof(priv));
+		isc_safe_memwipe(&priv, sizeof(priv));
 		return (ISC_R_SUCCESS);
 	}
 
@@ -611,7 +612,7 @@ opensslecdsa_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 	if (eckey != NULL)
 		EC_KEY_free(eckey);
 	dst__privstruct_free(&priv, mctx);
-	memset(&priv, 0, sizeof(priv));
+	isc_safe_memwipe(&priv, sizeof(priv));
 	return (ret);
 }
 

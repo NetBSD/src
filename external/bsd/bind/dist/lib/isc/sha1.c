@@ -1,7 +1,7 @@
-/*	$NetBSD: sha1.c,v 1.9 2017/06/15 15:59:41 christos Exp $	*/
+/*	$NetBSD: sha1.c,v 1.10 2018/04/07 22:23:22 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009, 2011, 2012, 2014, 2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2011, 2012, 2014, 2016-2018  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -41,6 +41,7 @@
 
 #include <isc/assertions.h>
 #include <isc/platform.h>
+#include <isc/safe.h>
 #include <isc/sha1.h>
 #include <isc/string.h>
 #include <isc/types.h>
@@ -52,7 +53,7 @@
 #endif
 
 #ifdef ISC_PLATFORM_OPENSSLHASH
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
+#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
 #define EVP_MD_CTX_new() &(context->_ctx)
 #define EVP_MD_CTX_free(ptr) EVP_MD_CTX_cleanup(ptr)
 #endif
@@ -64,7 +65,9 @@ isc_sha1_init(isc_sha1_t *context)
 
 	context->ctx = EVP_MD_CTX_new();
 	RUNTIME_CHECK(context->ctx != NULL);
-	RUNTIME_CHECK(EVP_DigestInit(context->ctx, EVP_sha1()) == 1);
+	if (EVP_DigestInit(context->ctx, EVP_sha1()) != 1) {
+		FATAL_ERROR(__FILE__, __LINE__, "Cannot initialize SHA1.");
+	}
 }
 
 void
@@ -117,7 +120,7 @@ isc_sha1_invalidate(isc_sha1_t *ctx) {
 	if (ctx->handle == NULL)
 		return;
 	(void) pkcs_C_DigestFinal(ctx->session, garbage, &len);
-	memset(garbage, 0, sizeof(garbage));
+	isc_safe_memwipe(garbage, sizeof(garbage));
 	pk11_return_session(ctx);
 }
 
@@ -345,7 +348,7 @@ isc_sha1_init(isc_sha1_t *context)
 
 void
 isc_sha1_invalidate(isc_sha1_t *context) {
-	memset(context, 0, sizeof(isc_sha1_t));
+	isc_safe_memwipe(context, sizeof(*context));
 }
 
 /*!
@@ -413,6 +416,47 @@ isc_sha1_final(isc_sha1_t *context, unsigned char *digest) {
 				  >> ((3 - (i & 3)) * 8)) & 255);
 	}
 
-	memset(context, 0, sizeof(isc_sha1_t));
+	isc_safe_memwipe(context, sizeof(*context));
 }
 #endif
+
+/*
+ * Check for SHA-1 support; if it does not work, raise a fatal error.
+ *
+ * Use "a" as the test vector.
+ *
+ * Standard use is testing false and result true.
+ * Testing use is testing true and result false;
+ */
+isc_boolean_t
+isc_sha1_check(isc_boolean_t testing) {
+	isc_sha1_t ctx;
+	unsigned char input = 'a';
+	unsigned char digest[ISC_SHA1_DIGESTLENGTH];
+	unsigned char expected[] = {
+		0x86, 0xf7, 0xe4, 0x37, 0xfa, 0xa5, 0xa7, 0xfc,
+		0xe1, 0x5d, 0x1d, 0xdc, 0xb9, 0xea, 0xea, 0xea,
+		0x37, 0x76, 0x67, 0xb8
+	};
+
+	INSIST(sizeof(expected) == ISC_SHA1_DIGESTLENGTH);
+
+	/*
+	 * Introduce a fault for testing.
+	 */
+	if (testing) {
+		input ^= 0x01;
+	}
+
+	/*
+	 * These functions do not return anything; any failure will be fatal.
+	 */
+	isc_sha1_init(&ctx);
+	isc_sha1_update(&ctx, &input, 1U);
+	isc_sha1_final(&ctx, digest);
+
+	/*
+	 * Must return true in standard case, should return false for testing.
+	 */
+	return (ISC_TF(memcmp(digest, expected, ISC_SHA1_DIGESTLENGTH) == 0));
+}
