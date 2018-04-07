@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.391 2018/03/16 12:48:54 maxv Exp $
+#	$NetBSD: files.i386,v 1.392 2018/04/07 19:38:06 mrg Exp $
 #
 # new style config file for i386 architecture
 #
@@ -40,6 +40,9 @@ defparam opt_pcibios.h	PCIBIOS_IRQS_HINT
 
 # splraise()/spllower() debug
 defflag	opt_spldebug.h			SPLDEBUG
+
+# Enable GCC spectre V2 mitigation options
+defflag opt_spectre.h	SPECTRE_V2_GCC_MITIGATION
 
 # Beep on halt
 defflag 	opt_beep.h		BEEP_ONHALT
