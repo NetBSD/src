@@ -1,4 +1,4 @@
-/*	$NetBSD: timevalops.c,v 1.1.1.6 2016/05/01 15:57:23 christos Exp $	*/
+/*	$NetBSD: timevalops.c,v 1.1.1.7 2018/04/07 00:15:57 christos Exp $	*/
 
 #include "config.h"
 
@@ -118,13 +118,13 @@ AssertTimevalClose(const struct timeval m, const struct timeval n, const struct 
 	diff = abs_tval(sub_tval(m, n));
 	if (cmp_tval(limit, diff) >= 0)
 		return TRUE;
-	else 
-	{
-		printf("m_expr which is %ld.%lu \nand\nn_expr which is %ld.%lu\nare not close; diff=%ld.%luusec\n", m.tv_sec, m.tv_usec, n.tv_sec, n.tv_usec, diff.tv_sec, diff.tv_usec); 
-		//I don't have variables m_expr and n_expr in unity, those are command line arguments which only getst has!!!
 
-		return FALSE;
-	}
+	printf("m_expr which is %lld.%06lu \nand\n"
+	       "n_expr which is %lld.%06lu\nare not close; diff=%lld.%06luusec\n",
+	       (long long)m.tv_sec, m.tv_usec,
+	       (long long)n.tv_sec, n.tv_usec,
+	       (long long)diff.tv_sec, diff.tv_usec); 
+	return FALSE;
 }
 
 
@@ -144,8 +144,8 @@ AssertFpClose(const l_fp m, const l_fp n, const l_fp limit)
 		return TRUE;
 	}
 	else {
-		printf("m_expr which is %s \nand\nn_expr which is %s\nare not close; diff=%susec\n", lfptoa(&m, 10), lfptoa(&n, 10), lfptoa(&diff, 10)); 
-		//printf("m_expr which is %d.%d \nand\nn_expr which is %d.%d\nare not close; diff=%d.%dusec\n", m.l_uf, m.Ul_i, n.l_uf, n.Ul_i, diff.l_uf, diff.Ul_i); 
+		printf("m_expr which is %s \nand\nn_expr which is %s\nare not close; diff=%susec\n",
+		       lfptoa(&m, 10), lfptoa(&n, 10), lfptoa(&diff, 10)); 
 		return FALSE;
 	}
 }
