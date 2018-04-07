@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2017, Intel Corp.
+ * Copyright (C) 2000 - 2018, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -314,6 +314,7 @@ AsConvertFile (
     ACPI_IDENTIFIER_TABLE   *LineTable;
     ACPI_TYPED_IDENTIFIER_TABLE *StructTable;
     ACPI_IDENTIFIER_TABLE   *SpecialMacroTable;
+    char                    *SpdxHeader=NULL;
 
 
     switch (FileType)
@@ -326,6 +327,7 @@ AsConvertFile (
         ConditionalTable    = ConversionTable->SourceConditionalTable;
         StructTable         = ConversionTable->SourceStructTable;
         SpecialMacroTable   = ConversionTable->SourceSpecialMacroTable;
+        SpdxHeader          = ConversionTable->SourceSpdxHeader;
         break;
 
     case FILE_TYPE_HEADER:
@@ -336,6 +338,7 @@ AsConvertFile (
         ConditionalTable    = ConversionTable->HeaderConditionalTable;
         StructTable         = ConversionTable->HeaderStructTable;
         SpecialMacroTable   = ConversionTable->HeaderSpecialMacroTable;
+        SpdxHeader          = ConversionTable->HeaderSpdxHeader;
         break;
 
     case FILE_TYPE_PATCH:
@@ -530,6 +533,10 @@ AsConvertFile (
     if (ConversionTable->NewHeader)
     {
         AsReplaceHeader (FileBuffer, ConversionTable->NewHeader);
+    }
+    if (SpdxHeader)
+    {
+        AsDoSpdxHeader (FileBuffer, SpdxHeader);
     }
 }
 
