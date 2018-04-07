@@ -1,4 +1,4 @@
-/*	$NetBSD: readconf.c,v 1.23 2018/04/06 18:59:00 christos Exp $	*/
+/*	$NetBSD: readconf.c,v 1.24 2018/04/07 00:36:55 christos Exp $	*/
 /* $OpenBSD: readconf.c,v 1.283 2018/02/23 15:58:37 markus Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: readconf.c,v 1.23 2018/04/06 18:59:00 christos Exp $");
+__RCSID("$NetBSD: readconf.c,v 1.24 2018/04/07 00:36:55 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
@@ -2440,7 +2440,7 @@ parse_jump(const char *s, Options *o, int active)
 int
 parse_ssh_uri(const char *uri, char **userp, char **hostp, int *portp)
 {
-	char *path;
+	const char *path;
 	int r;
 
 	r = parse_uri("ssh", uri, userp, hostp, portp, &path);
