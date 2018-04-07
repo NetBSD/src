@@ -1,4 +1,4 @@
-/*	$NetBSD: ddns.c,v 1.1.1.1 2018/04/07 22:34:27 christos Exp $	*/
+/*	$NetBSD: ddns.c,v 1.2 2018/04/07 22:37:30 christos Exp $	*/
 
 /* ddns.c
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ddns.c,v 1.1.1.1 2018/04/07 22:34:27 christos Exp $");
+__RCSID("$NetBSD: ddns.c,v 1.2 2018/04/07 22:37:30 christos Exp $");
 
 #include "dhcpd.h"
 #include <dns/result.h>
@@ -824,7 +824,7 @@ ddns_updates(struct packet *packet, struct lease *lease, struct lease *old,
  *    and return success.
  */
 
-isc_result_t
+static isc_result_t
 ddns_update_lease_text(dhcp_ddns_cb_t        *ddns_cb,
 		       struct binding_scope **inscope)
 {
@@ -939,6 +939,7 @@ ddns_update_lease_text(dhcp_ddns_cb_t        *ddns_cb,
 	return(ISC_R_SUCCESS);
 }
 
+#ifdef notdef
 /*
  * This function should be called when update_lease_ptr function fails.
  * It does inform user about the condition, provides some hints how to
@@ -1013,6 +1014,7 @@ update_lease_failed(struct lease *lease,
 		  "address %s. Lease database inconsistent. Unable to recover."
 		  " Terminating.", file, line, lease_address);
 }
+#endif
 
 /*
  * utility function to update found lease. It does extra checks
@@ -1021,7 +1023,7 @@ update_lease_failed(struct lease *lease,
  * to update wrong lease. See also safe_lease6_update.
  */
 
-void
+static void
 safe_lease_update(struct lease *lease,
 		  dhcp_ddns_cb_t *oldcb,
 		  dhcp_ddns_cb_t *newcb,
@@ -1089,7 +1091,7 @@ safe_lease_update(struct lease *lease,
 	lease->ddns_cb = newcb;
 }
 
-void
+static void
 safe_lease6_update(struct iasubopt *lease6,
 		   dhcp_ddns_cb_t *oldcb,
 		   dhcp_ddns_cb_t *newcb,
@@ -1172,7 +1174,7 @@ safe_lease6_update(struct iasubopt *lease6,
  * using the same value twice allows me more flexibility.
  */
 
-isc_result_t
+static isc_result_t
 ddns_update_lease_ptr(struct lease    *lease,
 		      struct iasubopt *lease6,
 		      dhcp_ddns_cb_t  *ddns_cb,
@@ -1305,7 +1307,7 @@ ddns_update_lease_ptr(struct lease    *lease,
 	return(ISC_R_SUCCESS);
 }
 
-void
+static void
 ddns_ptr_add(dhcp_ddns_cb_t *ddns_cb,
 	     isc_result_t    eresult)
 {
@@ -1349,7 +1351,7 @@ ddns_ptr_add(dhcp_ddns_cb_t *ddns_cb,
  * if not we cleanup and leave.
  */
 
-void
+static void
 ddns_ptr_remove(dhcp_ddns_cb_t *ddns_cb,
 		isc_result_t    eresult)
 {
@@ -1430,7 +1432,7 @@ ddns_ptr_remove(dhcp_ddns_cb_t *ddns_cb,
  *   -- "Interaction between DHCP and DNS"
  */
 
-void
+static void
 ddns_fwd_srv_add2(dhcp_ddns_cb_t *ddns_cb,
 		  isc_result_t    eresult)
 {
@@ -1522,7 +1524,7 @@ ddns_fwd_srv_add2(dhcp_ddns_cb_t *ddns_cb,
 	return;
 }
 
-void
+static void
 ddns_fwd_srv_add1(dhcp_ddns_cb_t *ddns_cb,
 		  isc_result_t    eresult)
 {
@@ -1744,7 +1746,7 @@ ddns_fwd_srv_connector(struct lease          *lease,
  *   -- "Interaction between DHCP and DNS"
  */
 
-void
+static void
 ddns_fwd_srv_rem2(dhcp_ddns_cb_t *ddns_cb,
 		  isc_result_t    eresult)
 {
@@ -1805,7 +1807,7 @@ ddns_fwd_srv_rem2(dhcp_ddns_cb_t *ddns_cb,
  * if not we cleanup and leave.
  */
 
-void
+static void
 ddns_fwd_srv_rem1(dhcp_ddns_cb_t *ddns_cb,
 		  isc_result_t    eresult)
 {
@@ -2228,7 +2230,8 @@ ddns_removals(struct lease    *lease,
 }
 
 /* Convenience function for setting flag bits in a mask */
-void set_flag (u_int16_t *flags,
+static void
+set_flag (u_int16_t *flags,
 	       u_int16_t flag,
                u_int16_t value) {
 	if (flags) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: comapi.c,v 1.1.1.1 2018/04/07 22:34:25 christos Exp $	*/
+/*	$NetBSD: comapi.c,v 1.2 2018/04/07 22:37:29 christos Exp $	*/
 
 /* omapi.c
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: comapi.c,v 1.1.1.1 2018/04/07 22:34:25 christos Exp $");
+__RCSID("$NetBSD: comapi.c,v 1.2 2018/04/07 22:37:29 christos Exp $");
 
 /* Many, many thanks to Brian Murrell and BCtel for this code - BCtel
    provided the funding that resulted in this code and the entire
@@ -453,7 +453,8 @@ isc_result_t dhcp_control_set_value  (omapi_object_t *h,
 		status = omapi_get_int_value (&newstate, value);
 		if (status != ISC_R_SUCCESS)
 			return status;
-		status = dhcp_set_control_state (control -> state, newstate);
+		status = libdhcp_callbacks.dhcp_set_control_state 
+				(control -> state, newstate);
 		if (status == ISC_R_SUCCESS)
 			control -> state = value -> u.integer;
 		return status;

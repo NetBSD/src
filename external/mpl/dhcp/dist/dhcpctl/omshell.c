@@ -1,4 +1,4 @@
-/*	$NetBSD: omshell.c,v 1.1.1.1 2018/04/07 22:34:26 christos Exp $	*/
+/*	$NetBSD: omshell.c,v 1.2 2018/04/07 22:37:29 christos Exp $	*/
 
 /* omshell.c
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: omshell.c,v 1.1.1.1 2018/04/07 22:34:26 christos Exp $");
+__RCSID("$NetBSD: omshell.c,v 1.2 2018/04/07 22:37:29 christos Exp $");
 
 #include "config.h"
 
@@ -44,6 +44,23 @@ __RCSID("$NetBSD: omshell.c,v 1.1.1.1 2018/04/07 22:34:26 christos Exp $");
 #include "dhcpctl.h"
 #include "dhcpd.h"
 #include <isc/file.h>
+
+uint16_t local_port = 0;
+uint16_t remote_port = 0;
+libdhcp_callbacks_t omshell_callbacks = {
+	&local_port,
+	&remote_port,
+	classify,
+	check_collection,
+	dhcp,
+#ifdef DHCPv6
+	dhcpv6,
+#endif /* DHCPv6 */
+	bootp,
+	find_class,
+	parse_allow_deny,
+	dhcp_set_control_state,
+};
 
 /* Fixups */
 isc_result_t find_class (struct class **c, const char *n, const char *f, int l)
@@ -112,6 +129,8 @@ main(int argc, char **argv) {
 #else
 	progname = argv[0];
 #endif
+
+	libdhcp_callbacks_register(&omshell_callbacks);
 
 	for (i = 1; i < argc; i++) {
 		usage(isc_file_basename(progname));

@@ -1,4 +1,4 @@
-/*	$NetBSD: dns.c,v 1.1.1.1 2018/04/07 22:34:26 christos Exp $	*/
+/*	$NetBSD: dns.c,v 1.2 2018/04/07 22:37:29 christos Exp $	*/
 
 /* dns.c
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dns.c,v 1.1.1.1 2018/04/07 22:34:26 christos Exp $");
+__RCSID("$NetBSD: dns.c,v 1.2 2018/04/07 22:37:29 christos Exp $");
 
 /*! \file common/dns.c
  */
@@ -230,7 +230,7 @@ dhcp_ddns_ns_t *dns_outstanding_ns = NULL;
  * incoming name must match the ending substring of the name.
  */
 
-void
+static void
 add_to_ns_queue(dhcp_ddns_ns_t *ns_cb)
 {
 	ns_cb->next = dns_outstanding_ns;
@@ -238,7 +238,7 @@ add_to_ns_queue(dhcp_ddns_ns_t *ns_cb)
 }
 
 
-void
+static void
 remove_from_ns_queue(dhcp_ddns_ns_t *ns_cb)
 {
 	dhcp_ddns_ns_t **foo;
@@ -254,7 +254,7 @@ remove_from_ns_queue(dhcp_ddns_ns_t *ns_cb)
 	ns_cb->next = NULL;
 }
 
-isc_result_t
+static isc_result_t
 find_in_ns_queue(dhcp_ddns_ns_t *ns_cb)
 {
 	dhcp_ddns_ns_t *temp_cb;
@@ -336,7 +336,7 @@ trace_type_t *trace_ddns_output;
  * 64 bits pointer of cb
  */
 
-void
+static void
 trace_ddns_input_write(dhcp_ddns_cb_t *ddns_cb, isc_result_t result)
 {
 	trace_iov_t iov[2];
@@ -437,7 +437,7 @@ trace_ddns_input_stop(trace_type_t *ttype)
  * contents of cb
  */
 
-isc_result_t
+static isc_result_t
 trace_ddns_output_write(dns_client_t *client, dns_rdataclass_t rdclass,
 			dns_name_t *zonename, dns_namelist_t *prerequisites,
 			dns_namelist_t *updates, isc_sockaddrlist_t *servers,
@@ -627,7 +627,7 @@ ddns_cb_forget_zone(dhcp_ddns_cb_t *ddns_cb)
 }
 #endif
 
-isc_result_t remove_dns_zone (struct dns_zone *zone)
+static isc_result_t remove_dns_zone (struct dns_zone *zone)
 {
 	struct dns_zone *tz = NULL;
 
@@ -758,7 +758,7 @@ int dns_zone_dereference (ptr, file, line)
  * the nameserver control block.  Mostly to avoid really long
  * lines in the nested for loops
  */
-void
+static void
 zone_addr_to_ns(dhcp_ddns_ns_t *ns_cb,
 		dns_rdataset_t *rdataset)
 {
@@ -820,7 +820,7 @@ zone_addr_to_ns(dhcp_ddns_ns_t *ns_cb,
  * a zone entry and insert it into the zone hash for the rest of the
  * DDNS code to use.
  */
-void
+static void
 find_zone_addrs(isc_task_t *taskp,
 		isc_event_t *eventp)
 {
@@ -939,7 +939,7 @@ find_zone_addrs(isc_task_t *taskp,
 				 */
 				goto cleanup;
 
-			log_error("find_zone_ns: unable to continue "
+			log_error("find_zone_addrs: unable to continue "
 				  "resolve: %s %s",
 				  ns_cb->zname,
 				  isc_result_totext(result));
@@ -988,7 +988,7 @@ find_zone_addrs(isc_task_t *taskp,
  * of nameservers to process.
  */
 
-void
+static void
 find_zone_ns(isc_task_t *taskp,
 	     isc_event_t *eventp)
 {
@@ -1132,7 +1132,7 @@ find_zone_ns(isc_task_t *taskp,
  * indicate which labels we are still using.  The rest of
  * the control block will be filled in as we continue processing.
  */
-isc_result_t
+static isc_result_t
 find_zone_start(dhcp_ddns_cb_t *ddns_cb, int direction)
 {
 	isc_result_t status = ISC_R_NOTFOUND;
@@ -1476,7 +1476,7 @@ void cache_found_zone(dhcp_ddns_ns_t *ns_cb)
  * 2 - the client DUID from a v4 or v6 client's client id option
  * This identifier is concatenated with the fqdn and the result is digested.
  */
-int get_std_dhcid(dhcp_ddns_cb_t *ddns_cb,
+static int get_std_dhcid(dhcp_ddns_cb_t *ddns_cb,
 		  int type,
 		  const u_int8_t *identifier,
 		  unsigned id_len)
@@ -1545,7 +1545,7 @@ int get_std_dhcid(dhcp_ddns_cb_t *ddns_cb,
  * already in use.
  */
 
-int get_int_dhcid (dhcp_ddns_cb_t *ddns_cb,
+static int get_int_dhcid (dhcp_ddns_cb_t *ddns_cb,
 		   int type,
 		   const u_int8_t *data,
 		   unsigned len)

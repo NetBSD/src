@@ -1,4 +1,4 @@
-/*	$NetBSD: dhcp4o6.c,v 1.1.1.1 2018/04/07 22:34:25 christos Exp $	*/
+/*	$NetBSD: dhcp4o6.c,v 1.2 2018/04/07 22:37:29 christos Exp $	*/
 
 /* dhcp4o6.c
 
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dhcp4o6.c,v 1.1.1.1 2018/04/07 22:34:25 christos Exp $");
+__RCSID("$NetBSD: dhcp4o6.c,v 1.2 2018/04/07 22:37:29 christos Exp $");
 
 #include "dhcpd.h"
 
