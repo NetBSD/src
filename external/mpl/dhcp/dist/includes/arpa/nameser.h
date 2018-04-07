@@ -1,4 +1,4 @@
-/*	$NetBSD: nameser.h,v 1.1.1.1 2018/04/07 22:34:26 christos Exp $	*/
+/*	$NetBSD: nameser.h,v 1.2 2018/04/07 22:37:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993
