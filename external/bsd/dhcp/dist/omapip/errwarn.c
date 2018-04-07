@@ -1,17 +1,17 @@
-/*	$NetBSD: errwarn.c,v 1.1.1.4 2016/01/10 19:44:43 christos Exp $	*/
+/*	$NetBSD: errwarn.c,v 1.1.1.5 2018/04/07 20:44:27 christos Exp $	*/
+
 /* errwarn.c
 
    Errors and warnings... */
 
 /*
  * Copyright (c) 1995 RadioMail Corporation.
- * Copyright (c) 2009,2014 by Internet Systems Consortium, Inc. ("ISC")
- * Copyright (c) 2004,2007 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004-2017 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1996-2003 by Internet Software Consortium
  *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: errwarn.c,v 1.1.1.4 2016/01/10 19:44:43 christos Exp $");
+__RCSID("$NetBSD: errwarn.c,v 1.1.1.5 2018/04/07 20:44:27 christos Exp $");
 
 #include "dhcpd.h"
 
@@ -83,7 +83,7 @@ void log_fatal (const char * fmt, ... )
   log_error ("than a configuration issue please read the section on submitting");
   log_error ("bugs on either our web page at www.isc.org or in the README file");
   log_error ("before submitting a bug.  These pages explain the proper");
-  log_error ("process and the information we find helpful for debugging..");
+  log_error ("process and the information we find helpful for debugging.");
   log_error ("%s", "");
   log_error ("exiting.");
 

@@ -1,9 +1,8 @@
-.\"	$NetBSD: omshell.1,v 1.1.1.3 2014/07/12 11:57:52 spz Exp $
+.\"	$NetBSD: omshell.1,v 1.1.1.4 2018/04/07 20:44:27 christos Exp $
 .\"
 .\"	Id: omshell.1,v 1.6 2009/11/24 02:06:56 sar Exp 
 .\"
-.\" Copyright (c) 2012,2014 by Internet Systems Consortium, Inc. ("ISC")
-.\" Copyright (c) 2004,2009 by Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (c) 2004-2017 by Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (c) 2001-2003 by Internet Software Consortium
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -83,7 +82,24 @@ where number is the port that OMAPI listens on.  By default, this is 7911.
 This specifies the TSIG key to use to authenticate the OMAPI transactions.
 \fIname\fR is the name of a key defined in \fIdhcpd.conf\fR with the
 \fBomapi-key\fR statement.  The \fIsecret\fR is the secret key generated from
-\fBdnssec-keygen\fR or another key generation program.
+\fBdnssec-keygen\fR or another key generation program.  The key algorithm is
+assumed to be HMAC-MD5 key. If a different algorithm was specified in dhcpd.conf
+file for the key, then it must be specified via the \fIkey-algorithm\fR statement.
+.RE
+.PP
+.B key-algorithm \fIalgorithm\fR
+.RS 0.5i
+This specifies the cryptographic algorithm for the key used when authenticating OMAPI
+transactions. Supported values for \fIalgorithm\fR are:
+.nf
+        HMAC-MD5
+        HMAC-SHA1
+        HMAC-SHA224
+        HMAC-SHA256
+        HMAC-SHA384
+        HMAC-SHA512
+fi
+The default is HMAC-MD5. (Value is not case sensitive).
 .RE
 .PP
 .B connect
@@ -255,7 +271,7 @@ name = "some-host"
 hardware-address = 00:80:c7:84:b1:94
 hardware-type = 00:00:00:01
 ip-address = c0:a8:04:28
-> 
+>
 .fi
 .PP
 Your dhcpd.leases file would then have an entry like this in it:
@@ -269,7 +285,7 @@ host some-host {
 .fi
 .PP
 The \fIdynamic;\fR line is to denote that this host entry did not come from
-dhcpd.conf, but was created dynamically via OMAPI.  
+dhcpd.conf, but was created dynamically via OMAPI.
 .SH RESETTING ATTRIBUTES
 .PP
 If you want to remove an attribute from an object, you can do this with the
@@ -290,7 +306,7 @@ name = "some-host"
 hardware-address = 00:80:c7:84:b1:94
 hardware-type = 00:00:00:01
 ip-address = <null>
-> 
+>
 .fi
 .SH REFRESHING OBJECTS
 .PP
@@ -302,7 +318,7 @@ particularly useful for hosts.
 .PP
 Any remote object that can be created can also be destroyed.  This is done by
 creating a new local object, setting attributes, associating the local and
-remote object using \fBopen\fR, and then using the \fBremove\fR command. 
+remote object using \fBopen\fR, and then using the \fBremove\fR command.
 If the host "some-host" from before was created in error, this could be
 corrected as follows:
 .nf
@@ -314,7 +330,7 @@ hardware-type = 00:00:00:01
 ip-address = c0:a8:04:28
 > remove
 obj: <null>
-> 
+>
 .fi
 .SH HELP
 .PP

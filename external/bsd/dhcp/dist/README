@@ -1,6 +1,6 @@
 	      Internet Systems Consortium DHCP Distribution
-			     Version 4.3.3
-			   03 September 2015
+			     Version 4.4.1
+			    28 February 2018
 
 			      README FILE
 
@@ -98,43 +98,6 @@ will not be correct for your operating system until after you iterate
 'make install' (so if you're reading a manpage out of the source
 directory, it may not have up-to-date information).
 
-			    RELEASE STATUS
-
-This is ISC DHCP 4.3.x  The major theme for this release is "ipv6 uplift",
-in which we enhance the v6 code to support many of the features found
-in the v4 code.  These include: support for v6, support for on_commit,
-on_expiry and on_release in v6, support for accessing v6 relay options
-and better log messages for v6 addresses.  Non v6 features include:
-support for the standard DDNS, better OMAPI class and sub-class support
-allowing for dynamic addition and removal of sub-classes, and support for
-DDNS without zone statements.
-
-In this release, the DHCPv6 server should be fully functional on Linux,
-Solaris, or any BSD.  The DHCPv6 client should be similarly functional
-except on Solaris.
-
-The DHCPv4 server, relay, and client, should be fully functional
-on Linux, Solaris, any BSD, HPUX, SCO, NextSTEP, and Irix.
-
-If you are running the DHCP distribution on a machine which is a
-firewall, or if there is a firewall between your DHCP server(s) and
-DHCP clients, please read the section on firewalls which appears later
-in this document.
-
-If you wish to run the DHCP Distribution on Linux, please see the
-Linux-specific notes later in this document.  If you wish to run on an
-SCO release, please see the SCO-specific notes later in this document.
-You particularly need to read these notes if you intend to support
-Windows 95 clients.  If you are running HP-UX or Ultrix, please read the 
-notes for those operating systems below.  If you are running NeXTSTEP, 
-please see the notes on NeXTSTEP below.
-
-If you start dhcpd and get a message, "no free bpf", that means you
-need to configure the Berkeley Packet Filter into your operating
-system kernel.   On NetBSD, FreeBSD and BSD/os, type ``man bpf'' for
-information.   On Digital Unix, type ``man pfilt''.
-
-
 		    BUILDING THE DHCP DISTRIBUTION
 
 			     UNPACKING IT
@@ -142,12 +105,12 @@ information.   On Digital Unix, type ``man pfilt''.
 To build the DHCP Distribution, unpack the compressed tar file using
 the tar utility and the gzip command - type something like:
 
-	gunzip dhcp-4.3.3.tar.gz
-	tar xvf dhcp-4.3.3.tar
+	gunzip dhcp-4.4.1.tar.gz
+	tar xvf dhcp-4.4.1.tar
 
 			    CONFIGURING IT
 
-Now, cd to the dhcp-4.3.3 subdirectory that you've just created and
+Now, cd to the dhcp-4.4.1 subdirectory that you've just created and
 configure the source tree by typing:
 
 	./configure
@@ -162,6 +125,33 @@ Several options may be enabled or disabled via the configure command.
 You can get a list of these by typing:
 
 	./configure --help
+
+If you want to use dynamic shared libraries automake, autoconf
+(aka GNU autotools) and libtool must be available. The DHCP
+distribution provides 3 configure.ac* files: the -lt version
+has no libtool support and was copied to the configure.ac
+standard file in the distribution. To enable libtool support
+you should perform these steps:
+
+	cp configure.ac+lt configure.ac
+	autoreconf -i
+
+after you can use the regenerated configure as usual
+(with libtool support (--enable-libtool) on by default):
+
+	./configure
+
+For compatibility (and people who don't read this documentation)
+the --enable-libtool configuration file is supported even by
+the distributed configure (and off by default). The previous
+steps are performed and the regenerated configure called with
+almost the same parameters (this "almost" makes the use of
+this feature not recommended).
+
+Note you can't go back from with libtool support to without libtool
+support by restoring configure.ac and rerun autoreconf. If you
+want or need to restore the without libtool support state the
+required way is to simply restore the whole distribution.
 
 			 DYNAMIC DNS UPDATES
 
@@ -198,6 +188,10 @@ as we can manage, but there are a few for which this is difficult.
 If you get errors on a system not mentioned above, you will need
 to do some programming or debugging on your own to get the DHCP
 Distribution working.
+
+If you cross compile you have to follow the instructions from
+the BIND README, in particular you must set the BUILD_CC
+environment variable.
 
 		   INSTALLING THE DHCP DISTRIBUTION
 
@@ -253,7 +247,7 @@ and the "protocol not configured" problem.
 		    LINUX: PROTOCOL NOT CONFIGURED
 
 If you get the following message, it's because your kernel doesn't
-have the linux packetfilter or raw packet socket configured:
+have the Linux packetfilter or raw packet socket configured:
 
  Make sure CONFIG_PACKET (Packet socket) and CONFIG_FILTER (Socket
  Filtering) are enabled in your kernel configuration
@@ -685,7 +679,7 @@ bug reports are more likely to get handled more quickly overall.
 	  something about your situation that we don't know.
       6.  Include your dhcpd.conf and dhcpd.leases file as MIME attachments
 	  if they're not over 100 kilobytes in size each.  If they are
-	  this large, please make them available to us eg via a hidden
+	  this large, please make them available to us, e.g., via a hidden
 	  http:// URL or FTP site.  If you're not comfortable releasing
 	  this information due to sensitive contents, you may encrypt
 	  the file to our release signing key, available on our website.

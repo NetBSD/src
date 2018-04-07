@@ -1,16 +1,16 @@
-/*	$NetBSD: bootp.c,v 1.1.1.4 2016/01/10 19:44:44 christos Exp $	*/
+/*	$NetBSD: bootp.c,v 1.1.1.5 2018/04/07 20:44:27 christos Exp $	*/
+
 /* bootp.c
 
    BOOTP Protocol support. */
 
 /*
- * Copyright (c) 2009,2012-2014 by Internet Systems Consortium, Inc. ("ISC")
- * Copyright (c) 2004,2005,2007 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004-2017 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1995-2003 by Internet Software Consortium
  *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bootp.c,v 1.1.1.4 2016/01/10 19:44:44 christos Exp $");
+__RCSID("$NetBSD: bootp.c,v 1.1.1.5 2018/04/07 20:44:27 christos Exp $");
 
 #include "dhcpd.h"
 #include <errno.h>
@@ -353,6 +353,34 @@ void bootp (packet)
 
 	/* We're done with the option state. */
 	option_state_dereference (&options, MDL);
+
+#if defined(DHCPv6) && defined(DHCP4o6)
+	if (dhcpv4_over_dhcpv6 && (packet->dhcp4o6_response != NULL)) {
+		/* Report what we're doing... */
+		log_info("%s", msgbuf);
+		log_info("DHCP4o6 BOOTREPLY for %s to %s (%s) via %s",
+			 piaddr(lease->ip_addr),
+			 ((hp != NULL) && (hp->name != NULL)) ?
+				hp -> name : "unknown",
+			 print_hw_addr (packet->raw->htype,
+					packet->raw->hlen,
+					packet->raw->chaddr),
+			 piaddr(packet->client_addr));
+
+		/* fill dhcp4o6_response */
+		packet->dhcp4o6_response->len = outgoing.packet_length;
+		packet->dhcp4o6_response->buffer = NULL;
+		if (!buffer_allocate(&packet->dhcp4o6_response->buffer,
+				     outgoing.packet_length, MDL)) {
+			log_fatal("No memory to store DHCP4o6 reply.");
+		}
+		packet->dhcp4o6_response->data =
+			packet->dhcp4o6_response->buffer->data;
+		memcpy(packet->dhcp4o6_response->buffer->data,
+		       outgoing.raw, outgoing.packet_length);
+		goto out;
+	}
+#endif
 
 	/* Set up the hardware destination address... */
 	hto.hbuf [0] = packet -> raw -> htype;

@@ -1,13 +1,13 @@
-.\"	$NetBSD: dhcpd.conf.5,v 1.1.1.4 2016/01/10 19:44:45 christos Exp $
+.\"	$NetBSD: dhcpd.conf.5,v 1.1.1.5 2018/04/07 20:44:27 christos Exp $
 .\"
 .\"	dhcpd.conf.5
 .\"
-.\" Copyright (c) 2004-2015 by Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (c) 2004-2018 by Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (c) 1996-2003 by Internet Software Consortium
 .\"
-.\" Permission to use, copy, modify, and distribute this software for any
-.\" purpose with or without fee is hereby granted, provided that the above
-.\" copyright notice and this permission notice appear in all copies.
+.\" This Source Code Form is subject to the terms of the Mozilla Public
+.\" License, v. 2.0. If a copy of the MPL was not distributed with this
+.\" file, You can obtain one at http://mozilla.org/MPL/2.0/.
 .\"
 .\" THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
 .\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -346,13 +346,12 @@ which case the server will send a DHCPNAK even though it doesn't know
 about the address.
 .PP
 There may be a host declaration matching the client's identification.
-If that host declaration contains a fixed-address declaration that 
+If that host declaration contains a fixed-address declaration that
 lists an IP address that is valid for the network segment to which the
-client is connected.  In this case, the DHCP server will never do
-dynamic address allocation.  In this case, the client is \fIrequired\fR
-to take the address specified in the host declaration.  If the
-client sends a DHCPREQUEST for some other address, the server will respond
-with a DHCPNAK.
+client is connected, the DHCP server will never do dynamic address allocation.
+In this case, the client is \fIrequired\fR to take the address specified
+in the host declaration.  If the client sends a DHCPREQUEST for some other
+address, the server will respond with a DHCPNAK.
 .PP
 When the DHCP server allocates a new address for a client (remember,
 this only happens if the client has sent a DHCPDISCOVER), it first
@@ -407,7 +406,8 @@ the lease as in use.
 If a response is received to an ICMP Echo request, the DHCP server
 assumes that there is a configuration error - the IP address is in use
 by some host on the network that is not a DHCP client.  It marks the
-address as abandoned, and will not assign it to clients.
+address as abandoned, and will not assign it to clients. The lease will
+remain abandoned for a minimum of abandon-lease-time seconds.
 .PP
 If a DHCP client tries to get an IP address, but none are available,
 but there are abandoned IP addresses, then the DHCP server will
@@ -542,9 +542,9 @@ primary server might look like this:
 .nf
 failover peer "foo" {
   primary;
-  address anthrax.rc.vix.com;
+  address anthrax.rc.example.com;
   port 519;
-  peer address trantor.rc.vix.com;
+  peer address trantor.rc.example.com;
   peer port 520;
   max-response-delay 60;
   max-unacked-updates 10;
@@ -558,7 +558,7 @@ include "/etc/dhcpd.master";
 .PP
 The statements in the peer declaration are as follows:
 .PP
-The 
+The
 .I primary
 and
 .I secondary
@@ -571,7 +571,7 @@ This determines whether the server is primary or secondary, as
 described earlier under DHCP FAILOVER.
 .RE
 .PP
-The 
+The
 .I address
 statement
 .RS 0.25i
@@ -584,7 +584,7 @@ value to use for the DHCP Failover Protocol server identifier.  Because this
 value is used as an identifier, it may not be omitted.
 .RE
 .PP
-The 
+The
 .I peer address
 statement
 .RS 0.25i
@@ -596,7 +596,7 @@ which the server should connect to reach its failover peer for failover
 messages.
 .RE
 .PP
-The 
+The
 .I port
 statement
 .RS 0.25i
@@ -609,7 +609,7 @@ may be omitted, in which case the IANA assigned port number 647 will be
 used by default.
 .RE
 .PP
-The 
+The
 .I peer port
 statement
 .RS 0.25i
@@ -653,7 +653,7 @@ to say what a good value for this is, but 10 seems to work.  This
 parameter must be specified.
 .RE
 .PP
-The 
+The
 .I mclt
 statement
 .RS 0.25i
@@ -672,7 +672,7 @@ probably reasonable, but again bear in mind that we have no real
 operational experience with this.
 .RE
 .PP
-The 
+The
 .I split
 statement
 .RS 0.25i
@@ -694,7 +694,7 @@ a value of 0 makes the secondary responsible for all clients and a value
 of 256 makes the primary responsible for all clients.
 .RE
 .PP
-The 
+The
 .I hba
 statement
 .RS 0.25i
@@ -712,7 +712,7 @@ for such fine-grained control, however.  An example hba statement:
 .fi
 .PP
 This is equivalent to a \fBsplit 128;\fR statement, and identical.  The
-following two examples are also equivalent to a \fBsplit\fR of 128, but 
+following two examples are also equivalent to a \fBsplit\fR of 128, but
 are not identical:
 .PP
 .nf
@@ -734,7 +734,7 @@ cases, the fine-grained control that \fBhba\fR offers isn't necessary, and
 \fBsplit\fR should be used.
 .RE
 .PP
-The 
+The
 .I load balance max seconds
 statement
 .RS 0.25i
@@ -751,6 +751,10 @@ failover peers gets into a state where it is responding to failover
 messages but not responding to some client requests, the other
 failover peer will take over its client load automatically as the
 clients retry.
+.PP
+It is possible to disable load balancing between peers by setting this
+value to 0 on both peers.  Bear in mind that this means both peers will
+respond to all DHCPDISCOVERs or DHCPREQUESTs.
 .RE
 .PP
 The
@@ -906,7 +910,7 @@ total number of clients within a particular class or subclass that may
 hold leases at one time, and it is possible to specify automatic
 subclassing based on the contents of the client packet.
 .PP
-Classing support for DHCPv6 clients was addded in 4.3.0.  It follows
+Classing support for DHCPv6 clients was added in 4.3.0.  It follows
 the same rules as for DHCPv4 except that support for billing classes
 has not been added yet.
 .PP
@@ -918,6 +922,12 @@ class "ras-clients" {
   match if substring (option dhcp-client-identifier, 1, 3) = "RAS";
 }
 .fi
+.PP
+Please note that the values used in match expressions may only come from
+data or options that are part of the client packet. It is not possible to
+use values constructed through one or more executable statements.  This
+stems from the fact that client classification occurs before any statements
+are executed. Attempting to do so will yield indeterminate results.
 .PP
 Note that whether you use matching expressions or add statements (or
 both) to classify clients, you must always write a class declaration
@@ -1179,7 +1189,7 @@ the FQDN Option, that implies to the client that it should perform its
 own updates if it chooses to do so.  With \fIdeny client-updates;\fR, a
 response is sent which indicates the client may not perform updates.
 .PP
-Both the standard and interim options also include a method to 
+Both the standard and interim options also include a method to
 allow more than one DHCP server to update the DNS database without
 accidentally deleting A records that shouldn\'t be deleted nor failing
 to add A records that should be added.  For the standard option the
@@ -1219,11 +1229,79 @@ updated the next time the client renews.
 .PP
 The interim DNS update scheme was written before the RFCs were finalized
 and does not quite follow them.  The RFCs call for a new DHCID RRtype
-while he interim DNS update scheme uses a TXT record.  In addition
+while the interim DNS update scheme uses a TXT record.  In addition
 the ddns-resolution draft called for the DHCP server to put a DHCID RR
 on the PTR record, but the \fIinterim\fR update method does not do this.
 In the final RFC this requirement was relaxed such that a server may
 add a DHCID RR to the PTR record.
+.PP
+.SH DDNS IN DUAL STACK ENVIRONMENTS
+As described in RFC 4703, section 5.2, in order to perform DDNS in dual
+stack environments, both IPv4 and IPv6 servers would need to be configured
+to use the standard update style and participating IPv4 clients MUST
+convey DUIDs as described in RFC 4361, section 6.1., in their
+dhcp-client-identifiers.
+.PP
+In a nutshell, this mechanism is intended to use globally unique DUIDs
+to idenfity both IPv4 and IPv6 clients, and where a device has both
+IPv4 and IPv6 leases it is identified by the same DUID.  This allows
+a dual stack client to use the same FQDN for both mappings, while
+being protected from updates for other clients by the rules of conflict
+detection.
+.PP
+However, not all IPv4 clients implement this behavior which makes
+supporting them dual stack environments problematic.  In order to
+address this issue ISC DHCP (as of 4.4.0) supports a new mode of
+DDNS conflict resolution referred to as Dual Stack Mixed Mode (DSMM).
+.PP
+The concept behind DSMM is relatively simple.  All dhcp servers of one
+protocol (IPv4 or v6) use one ddns-update-style (interim or standard)
+while all servers of the "other" protocol will use the "other"
+ddns-udpate-style.  In this way, all servers of a given protocol are
+using the same record type (TXT or DHCID) for their DHCID RR entries.
+This allows conflict detection to be enforced within each protocol
+without interferring with the other's entries.
+.PP
+DSMM modifications now ensure that IPv4 DSMM servers only ever modify
+A records, their associated PTR records and DHCID records, while DSMM
+IPv6 severs only modify AAAA records, their associated PTR records,
+and DHCID records.
+.PP
+Note that DSMM is not a perfect solution, it is a compromise that can
+work well provided all participating DNS updaters play by DSMM rules.
+As with anything else in life, it only works as well as those who
+particpate behave.
+.PP
+While conflict detection is enabled by default, DSMM is not.  To enable
+DSMM, both update-conflict-detection and ddns-dual-stack-mixed-mode must
+be true.
+.PP
+.SH PROTECTING DNS ENTRIES FOR STATIC CLIENTS
+Built into conflict resolution is the protection of manually made entries
+for static clients.  Per the rules of conflict resolution,  a DNS updater
+may not alter forward DNS entries unless there is a DHCID RR which matches
+for whom the update is being made.  Therefore, any forward DNS entries
+without a corresponding DHCID RR cannot be altered by such an updater.
+.PP
+In some environments, it may be desirable to use only this aspect of conflict
+resolution and allow DNS updaters to overwrite entries for dynamic clients
+regardless of what client owns them.  In other words, the presence or lack
+of a DHCID RR is used to determine whether entries may or may not be
+overwritten.  Whether or not the client matches the data value of the DHCID
+RR is irrelevant.   This behavior, off by default, can be configured through
+the parameter, ddns-guard-id-must-match.  As with DSMM, this behavior is
+can only be enabled if conflict resolution is enabled.   This behavior should
+be considered carefully before electing to use it.
+.PP
+There is an additional parameter that can be used with DSMM
+ddns-other-guard-is-dynamic.  When enabled along with DSMM, a server will
+regard the presence of a DHCID RR of the other style type as indicating that
+the forward DNS entries for that FQDN should be dynamic and may be overwritten.
+For example, such a server using interim style could overwrite the DNS entries
+for an FQDN if there is only a DHDID type DHDID RR for the FQDN.  Essentially,
+if there are dynamic entries for one protocol, that is enough to overcome the
+static protection of entries for the other protocol.  This behavior warrants
+careful consideration before electing to use it.
 .PP
 .SH DYNAMIC DNS UPDATE SECURITY
 .PP
@@ -1299,7 +1377,7 @@ Note that the zone declarations have to correspond to authority
 records in your name server - in the above example, there must be an
 SOA record for "example.org." and for "17.10.10.in-addr.arpa.".  For
 example, if there were a subdomain "foo.example.org" with no separate
-SOA, you could not write a zone declaration for "foo.example.org."  
+SOA, you could not write a zone declaration for "foo.example.org."
 Also keep in mind that zone names in your DHCP configuration should end in a
 "."; this is the preferred syntax.  If you do not end your zone name in a
 ".", the DHCP server will figure it out.  Also note that in the DHCP
@@ -1383,7 +1461,7 @@ The \fIinclude\fR statement is used to read in a named file, and process
 the contents of that file as though it were entered in place of the
 include statement.
 .PP
-.B The 
+.B The
 .I shared-network
 .B statement
 .PP
@@ -1413,7 +1491,7 @@ shared network.  The name may have the syntax of a valid domain name
 (although it will never be used as such), or it may be any arbitrary
 name, enclosed in quotes.
 .PP
-.B The 
+.B The
 .I subnet
 .B statement
 .PP
@@ -1434,7 +1512,7 @@ declaration.
 The
 .I subnet-number
 should be an IP address or domain name which resolves to the subnet
-number of the subnet being described.  The 
+number of the subnet being described.  The
 .I netmask
 should be an IP address or domain name which resolves to the subnet mask
 of the subnet being described.  The subnet number, together with the
@@ -1447,7 +1525,7 @@ subnet-mask option statement be used in each subnet declaration to set
 the desired subnet mask, since any subnet-mask option statement will
 override the subnet mask declared in the subnet statement.
 .PP
-.B The 
+.B The
 .I subnet6
 .B statement
 .PP
@@ -1462,7 +1540,7 @@ The \fIsubnet6\fR statement is used to provide dhcpd with enough
 information to tell whether or not an IPv6 address is on that subnet6.
 It may also be used to provide subnet-specific parameters and to
 specify what addresses may be dynamically allocated to clients booting
-on that subnet. 
+on that subnet.
 .PP
 The
 .I subnet6-number
@@ -1498,8 +1576,8 @@ single address, \fIhigh-address\fR can be omitted.
 .PP
 For any IPv6 subnet6 on which addresses will be assigned dynamically, there
 must be at least one \fIrange6\fR statement. The \fIrange6\fR statement
-can either be the lowest and highest IPv6 addresses in a \fIrange6\fR, or 
-use CIDR notation, specified as ip6-address/bits. All IP addresses 
+can either be the lowest and highest IPv6 addresses in a \fIrange6\fR, or
+use CIDR notation, specified as ip6-address/bits. All IP addresses
 in the \fIrange6\fR should be in the subnet6 in which the
 \fIrange6\fR statement is declared.
 .PP
@@ -1508,7 +1586,7 @@ for temporary (RFC 4941) addresses. A new address per prefix in the shared
 network is computed at each request with an IA_TA option. Release and Confirm
 ignores temporary addresses.
 .PP
-Any IPv6 addresses given to hosts with \fIfixed-address6\fR are excluded 
+Any IPv6 addresses given to hosts with \fIfixed-address6\fR are excluded
 from the \fIrange6\fR, as are IPv6 addresses on the server itself.
 .PP
 .PP
@@ -1556,13 +1634,13 @@ statement may be specified matching the same client.
 .PP
 The
 .I fixed-address6
-delcaration is used for v6 addresses.  At this time it only works with a single
+declaration is used for v6 addresses.  At this time it only works with a single
 address.  For multiple addresses specify multiple
 .B host
 statements.
 .PP
 If client-specific boot parameters must change based on the network
-to which the client is attached, then multiple 
+to which the client is attached, then multiple
 .B host
 declarations should be used.  The
 .B host
@@ -1781,10 +1859,8 @@ condition:
  \fBdeny client-updates;\fR
 .PP
 The \fBclient-updates\fR flag tells the DHCP server whether or not to
-honor the client's intention to do its own update of its A record.
-This is only relevant when doing \fIinterim\fR DNS updates.  See the
-documentation under the heading THE INTERIM DNS UPDATE SCHEME for
-details.
+honor the client's intention to do its own update of its A record.  See
+the documentation under the heading THE DNS UPDATE SCHEME for details.
 .PP
 .B The
 .I leasequery
@@ -1795,8 +1871,8 @@ details.
 .PP
 The \fBleasequery\fR flag tells the DHCP server whether or not to
 answer DHCPLEASEQUERY packets. The answer to a DHCPLEASEQUERY packet
-includes information about a specific lease, such as when it was 
-issued and when it will expire. By default, the server will not 
+includes information about a specific lease, such as when it was
+issued and when it will expire. By default, the server will not
 respond to these packets.
 .SH ALLOW AND DENY WITHIN POOL DECLARATIONS
 .PP
@@ -1885,6 +1961,27 @@ min-lease-time allows for a gradual change.
 4 2007/08/24 09:14:32 or a string with time zone offset in seconds
 e.g. 4 2007/08/24 11:14:32 -7200
 .SH REFERENCE: PARAMETERS
+The
+.I abandon-lease-time
+statement
+.RS 0.25i
+.PP
+.B abandon-lease-time \fItime\fR\fB;\fR
+.PP
+.I Time
+should be the maximum amount of time (in seconds) that an abandoned IPv4 lease
+remains unavailable for assignment to a client.  Abandoned leases will only be
+offered to clients if there are no free leases.  If not defined, the default
+abandon lease time is 86400 seconds (24 hours).  Note the abandoned lease time
+for a given lease is preserved across server restarts.  The parameter may only
+be set at the global scope and is evaluated only once during server startup.
+.PP
+Values less than sixty seconds are not recommended as this is below the ping
+check threshold and can cause leases once abandoned but since returned to the
+free state to not be pinged before being offered.  If the requested time is
+larger than 0x7FFFFFFF - 1 or the sum of the current time plus the abandoned time isgreater than 0x7FFFFFFF it is treated as infinite.
+.RE
+.PP
 The
 .I adaptive-lease-time-threshold
 statement
@@ -2000,6 +2097,20 @@ addresses, as long as those addresses are not restricted by
 and \fIdeny\fR statements within their \fIpool\fR declarations.
 .RE
 .PP
+The \fIcheck-secs-byte-order\fR statement
+.RS 0.25i
+.PP
+.B check-secs-byte-order \fIflag\fB;\fR
+.PP
+When \fIcheck-secs-byte-order\fR is enabled, the server will check for DHCPv4
+clients that do the byte ordering on the secs field incorrectly. This field
+should be in network byte order but some clients get it wrong. When this
+parameter is enabled the server will examine the secs field and if it looks
+wrong (high byte non zero and low byte zero) swap the bytes.  The default
+is disabled. This parameter is only useful when doing load balancing within
+failover. (Formerly, this behavior had to be enabled during compilation
+configuration via --enable-secs-byteorder).
+.PP
 The \fIdb-time-format\fR statement
 .RS 0.25i
 .PP
@@ -2035,6 +2146,34 @@ appended to the client's hostname to form a fully-qualified
 domain-name (FQDN).
 .RE
 .PP
+The \fIddns-dual-stack-mixed-mode\fR statement
+.RS 0.25i
+.PP
+.B ddns-dual-stack-mixed-mode \fIflag\fB;\fR
+.PP
+The \fIddns-dual-stack-mixed-mode\fR parameter controls whether or not the
+server applies Dual Stack Mixed Mode rules during DDNS conflict resolution.
+This parameter is off by default, has no effect unless
+update-conflict-detection is enabled, and may only be specified at the
+global scope.
+.RE
+.PP
+The \fIddns-guard-id-must-match\fR statement
+.RS 0.25i
+.PP
+.B ddns-guard-id-must-match \fIflag\fB;\fR
+.PP
+The \fIddns-guard-id-must-match\fR parameter controls whether or not a
+the client id within a DHCID RR must match that of the DNS update's client
+to permit DNS entries associated with that DHCID RR to be ovewritten.
+Proper conflict resolution requires ID matching and should only be disabled
+after careful consideration.  When disabled, it is allows any DNS updater to
+replace DNS entries that have an associated DHCID RR, regardless of client
+identity. This parameter is on by default, has no effect unless
+update-conflict-detection is enabled, and may only be specified at the global
+scope.
+.RE
+.PP
 The \fddns-local-address4\fR and \fddns-local-address6\fR statements
 .RS 0.25i
 .PP
@@ -2045,6 +2184,20 @@ The \fddns-local-address4\fR and \fddns-local-address6\fR statements
 The \fIaddress\fR parameter should be the local IPv4 or IPv6 address
 the server should use as the from address when sending DDNS update
 requests.
+.RE
+.PP
+The \fIddns-other-guard-is-dynamic\fR statement
+.RS 0.25i
+.PP
+.B ddns-other-guard-is-dynamic \fIflag\fB;\fR
+.PP
+The \fIddns-other-guard-is-dynamic\fR parameter controls whether or not a
+a server running DSMM will consider the presence of the other update style
+DHCID RR as an indcation that a DNS entries may be overwritten. It should
+only be enabled after careful study as it allows DNS entries that would
+otherwise be protected as static, to be overwritten in certain cases. This
+paramater is off by default, has no effect unless ddns-dual-stack-mixed-mode
+is enabled, and may only be specified at the global scope.
 .RE
 .PP
 The \fIddns-rev-domainname\fR statement
@@ -2080,7 +2233,7 @@ to use different DNS update styles for different clients. The default
 is \fBnone\fR.
 .RE
 .PP
-.B The  
+.B The
 .I ddns-updates
 .B statement
 .RS 0.25i
@@ -2122,28 +2275,32 @@ statements
 .B max-ack-delay \fImicroseconds\fR\fB;\fR
 .PP
 .I Count
-should be an integer value from zero to 2^16-1, and defaults to 28.  The
-count represents how many DHCPv4 replies maximum will be queued pending
-transmission until after a database commit event.  If this number is
-reached, a database commit event (commonly resulting in fsync() and
-representing a performance penalty) will be made, and the reply packets
-will be transmitted in a batch afterwards.  This preserves the RFC2131
-direction that "stable storage" be updated prior to replying to clients.
-Should the DHCPv4 sockets "go dry" (select() returns immediately with no
-read sockets), the commit is made and any queued packets are transmitted.
+should be an integer value from zero to 2^16-1 and defaults to 0, which means
+that the feature is disabled.  Otherwise, 28 may be a sensible starting point
+for many configurations (SO_SNDBUF size / 576 bytes.)  The count represents how
+many DHCPv4 replies maximum will be queued pending transmission until after a
+database commit event.  If this number is reached, a database commit event
+(commonly resulting in fsync() and representing a performance penalty) will be
+made, and the reply packets will be transmitted in a batch afterwards.  This
+preserves the RFC2131 direction that "stable storage" be updated prior to
+replying to clients.  Should the DHCPv4 sockets "go dry" (select() returns
+immediately with no read sockets), the commit is made and any queued packets
+are transmitted.
 .PP
 Similarly, \fImicroseconds\fR indicates how many microseconds are permitted
 to pass inbetween queuing a packet pending an fsync, and performing the
 fsync.  Valid values range from 0 to 2^32-1, and defaults to 250,000 (1/4 of
 a second).
 .PP
-Please note that as delayed-ack is currently experimental, the delayed-ack
-feature is not compiled in by default, but must be enabled at compile time
-with \'./configure --enable-delayed-ack\'.
+The delayed-ack feature is compiled in by default, but can be disabled
+at compile time with \'./configure --disable-delayed-ack\'.  Please note
+that the delayed-ack feature is not currently compatible with support for
+DHPCv4-over-DHCPv6 so when a 4to6 port ommand line argument enables this
+in the server the delayed-ack value is reset to 0.
 .RE
 .PP
-The 
-.I dhcp-cache-threshold 
+The
+.I dhcp-cache-threshold
 statement
 .RS 0.25i
 .PP
@@ -2154,16 +2311,28 @@ with allowed values between 0 and 100. The default value is 25 (25% of
 the lease time). This parameter expresses the percentage of the total
 lease time, measured from the beginning, during which a
 client's attempt to renew its lease will result in getting
-the already assigned lease, rather than an extended lease.
+the already assigned lease, rather than an extended lease.  This feature
+is supported for both IPv4 and IPv6 and down to the pool level and for
+IPv6 all three pool types: NA, TA and PD.
 .PP
 Clients that attempt renewal frequently can cause the server to
 update and write the database frequently resulting in a performance
 impact on the server.  The \fIdhcp-cache-threshold\fR
 statement instructs the DHCP server to avoid updating leases too
-frequently thus avoiding this behavior.  Instead the server assigns the
+frequently thus avoiding this behavior.  Instead the server replies with the
 same lease (i.e. reuses it) with no modifications except for CLTT (Client Last
-Transmission Time) which does not require disk operations. This
-feature applies to IPv4 only.
+Transmission Time) and for IPv4:
+
+    the lease time sent to the client is shortened by the age of
+    the lease
+
+while for IPv6:
+
+    the preferred and valid lifetimes sent to the client are
+    shortened by the age of the lease.
+
+None of these changes require writing the lease to disk.
+
 .PP
 When an existing lease is matched to a renewing client, it will be reused
 if all of the following conditions are true:
@@ -2175,8 +2344,19 @@ if all of the following conditions are true:
     4. The client information provided in the renewal does not alter
     any of the following:
        a. DNS information and DNS updates are enabled
-       b. Billing class to which the lease is associated
+       b. Billing class to which the lease is associated (IPv4 only)
+       c. The host declaration associated with the lease (IPv4 only)
+       d. The client id - this may happen if a client boots without
+          a client id and then starts using one in subsequent
+          requests. (IPv4 only)
 .fi
+.PP
+While lease data is not written to disk when a lease is reused, the server
+will still execute any on-commit statements.
+.PP
+Note that the lease can be reused if the options the client or relay agent
+sends are changed.  These changes will not be recorded in the in-memory or
+on-disk databases until the client renews after the threshold time is reached.
 .RE
 .PP
 The
@@ -2346,7 +2526,7 @@ If there are multiple prefixes for a given host entry the server will
 choose one that matches the requested prefix size or, if none match,
 the first one.
 .PP
-If there are multiple \fIhost\fR delcarations the server will try to
+If there are multiple \fIhost\fR declarations the server will try to
 choose a declaration where the \fIfixed-address6\fR matches the client's
 subnet.  If none match it will choose one that doesn't have a \fIfixed-address6\fR
 statement.
@@ -2372,7 +2552,7 @@ done for all addresses in the current scope.  By default, or if
 \fIflag\fR is false, no lookups are done.
 .RE
 .PP
-The 
+The
 .I hardware
 statement
 .RS 0.25i
@@ -2399,7 +2579,7 @@ separated by colons.  The \fIhardware\fR statement may also be used
 for DHCP clients.
 .RE
 .PP
-The 
+The
 .I host-identifier option
 statement
 .RS 0.25i
@@ -2414,9 +2594,9 @@ This identifies a DHCPv6 client in a
 .I host
 statement.
 .I option-name
-is any option, and 
+is any option, and
 .I option-data
-is the value for the option that the client will send. The 
+is the value for the option that the client will send. The
 .I option-data
 must be a constant value.  In the v6relopts case the additional number
 is the relay to examine for the specified option name and value.  The
@@ -2426,7 +2606,7 @@ are larger than the maximum number of relays (currently 32) indicate the
 relay closest to the server independent of number.
 .RE
 .PP
-The 
+The
 .I ignore-client-uids
 statement
 .RS 0.25i
@@ -2436,7 +2616,7 @@ statement
 If the \fIignore-client-uids\fR statement is present and has a value of
 \fItrue\fR or \fIon\fR, the UID for clients will not be recorded.
 If this statement is not present or has a value of \fIfalse\fR or
-\fIoff\fR, then client UIDs will be recorded.  
+\fIoff\fR, then client UIDs will be recorded.
 .RE
 .PP
 The
@@ -2461,15 +2641,55 @@ statement
 .B lease-file-name \fIname\fB;\fR
 .PP
 .I Name
-should be the name of the DHCP server's lease file.  By default, this
-is DBDIR/dhcpd.leases.  This statement \fBmust\fR appear in the outer
-scope of the configuration file - if it appears in some other scope,
-it will have no effect.  Furthermore, it has no effect if overridden
-by the
-.B -lf
-flag or the
-.B PATH_DHCPD_DB
-environment variable.
+Where \fIname\fR is the name of the DHCP server's lease file. By default,
+this is DBDIR/dhcpd.leases.  This statement \fBmust\fR appear in the outer
+scope of the configuration file - if it appears in some other scope, it will
+have no effect.  The value must be the absolute path of the file to use.
+The order of precedence the server uses for the lease file name
+is:
+.PP
+    1. \fBlease-file-name\fR configuration file statement.
+    2. \fB-lf\fR command line flag.
+    3. \fBPATH_DHCPD_DB\fR environment variable.
+.RE
+.PP
+The
+.I dhcpv6-lease-file-name
+statement
+.RS 0.25i
+.PP
+.B dhcpv6-lease-file-name \fIname\fB;\fR
+.PP
+Where \fIname\fR is the name of the DHCP server's lease file when the server
+is running DHCPv6. By default, this is DBDIR/dhcpd6.leases. This statement
+\fBmust\fR appear in the outer scope of the configuration file - if it appears
+in some other scope, it will have no effect.  The value must be the absolute
+path of the file to use.  The order of precedence the server uses
+for the lease file name is:
+.PP
+    1. \fBdhcpv6-lease-file-name\fR configuration file statement.
+    2. \fB-lf\fR command line flag.
+    3. \fBPATH_DHCPD6_DB\fR environment variable.
+.RE
+.PP
+The
+.I lease-id-format
+parameter
+.RS 0.25i
+.PP
+.B lease-id-format \fIformat\fB;\fR
+.PP
+The \fIformat\fR parameter must be either \fBoctal\fR or \fBhex\fR.
+This parameter governs the format used to write certain values to lease
+files. With the default format, octal, values are written as quoted strings in
+which non-printable characters are represented as octal escapes -
+a backslash character followed by three octal digits.  When the hex format
+is specified, values are written as an unquoted series of pairs of
+hexadecimal digits, separated by colons.
+
+Currently, the values written out based on lease-id-format are the server-duid,
+the uid (DHCPv4 leases), and the IAID_DUID (DHCPv6 leases).  Note the server
+automatically reads the values in either format.
 .RE
 .PP
 The
@@ -2486,30 +2706,6 @@ multiple addresses at a time, configure a larger \fInumber\fR here.
 Note that there is no present method to configure the server to forcibly
 configure the client with one IP address per each subnet on a shared network.
 This is left to future work.
-.RE
-.PP
-The
-.I dhcpv6-lease-file-name
-statement
-.RS 0.25i
-.PP
-.B dhcpv6-lease-file-name \fIname\fB;\fR
-.PP
-.I Name
-is the name of the lease file to use if and only if the server is running
-in DHCPv6 mode.  By default, this is DBDIR/dhcpd6.leases.  This statement,
-like
-.I lease-file-name,
-\fBmust\fR appear in the outer scope of the configuration file.  It
-has no effect if overridden by the
-.B -lf
-flag or the
-.B PATH_DHCPD6_DB
-environment variable.  If
-.I dhcpv6-lease-file-name
-is not specified, but
-.I lease-file-name
-is, the latter value will be used.
 .RE
 .PP
 The
@@ -2549,6 +2745,29 @@ you see lines of this format at startup:
 Note also that since this bind()s all DHCP sockets to the specified
 address, that only one address may be supported in a daemon at a given
 time.
+.RE
+.PP
+The
+.I local-address6
+and
+.I bind-local-address6
+statements
+.RS 0.25i
+.PP
+.B local-address6 \fIaddress\fB;\fR
+.PP
+.B bind-local-address6 \fIflag\fB;\fR
+.PP
+The \fIlocal-address6\fR statement causes the DHCP server to send IPv6
+packets as originating from the specified IPv6 \fIaddress\fR, rather than
+leaving the kernel to fill in the source address field.
+.PP
+When \fIbind-local-address6\fR is present and has a value of true or on,
+service sockets are bound to \fIaddress\fR too.
+.PP
+By default \fIaddress\fR is the undefined address and the
+\fIbind-local-address6\fR is disabled, both may only be set at the global
+scope.
 .RE
 .PP
 The
@@ -2598,7 +2817,7 @@ possible.
 .PP
 The
 .I log-threshold-high
-and 
+and
 .I log-threshold-low
 statements
 .RS 0.25i
@@ -2657,7 +2876,7 @@ statement
 .I Time
 should be the minimum length in seconds that will be assigned to a
 lease.
-The default is the minimum of 300 seconds or 
+The default is the minimum of 300 seconds or
 \fBmax-lease-time\fR.
 .RE
 .PP
@@ -2730,6 +2949,21 @@ or provable, so we urge caution in the use of this statement.
 .RE
 .PP
 The
+.I persist-eui-64-leases
+statement
+.RS 0.25i
+.PP
+.B persist-eui-64-leases \fIflag\fR\fB;\fR
+.PP
+When this flag is enabled, the server will write EUI-64 based leases to the
+leases file. Since such leases can only, ever be valid for a single DUID value
+it can be argued that writing them to the leases file isn't essential and not
+doing so may have perfomance advantages.  See \fIuse-eui-64\fR statement for
+more details on EUI-64 based address allocation.  The flag is enabled by
+default and may only be set at the global scope.
+.RE
+.PP
+The
 .I pid-file-name
 statement
 .RS 0.25i
@@ -2740,14 +2974,13 @@ statement
 .I Name
 should be the name of the DHCP server's process ID file.  This is the
 file in which the DHCP server's process ID is stored when the server
-starts.  By default, this is RUNDIR/dhcpd.pid.  Like the
-.I lease-file-name
-statement, this statement must appear in the outer scope
-of the configuration file.  It has no effect if overridden by the
-.B -pf
-flag or the
-.B PATH_DHCPD_PID
-environment variable.
+starts.  By default, this is RUNDIR/dhcpd.pid.  Like the \fIlease-file-name\fR
+statement, this statement must appear in the outer scope of the configuration
+file. The order of precedence used by the server is:
+.PP
+    1. \fBpid-file-name\fR configuration file statement.
+    2. \fB-lf\fR command line flag.
+    3. \fBPATH_DHCPD_PID\fR environment variable.
 .PP
 The
 .I dhcpv6-pid-file-name
@@ -2759,18 +2992,13 @@ statement
 .I Name
 is the name of the pid file to use if and only if the server is running
 in DHCPv6 mode.  By default, this is DBDIR/dhcpd6.pid.  This statement,
-like
-.I pid-file-name,
-\fBmust\fR appear in the outer scope of the configuration file.  It
-has no effect if overridden by the
-.B -pf
-flag or the
-.B PATH_DHCPD6_PID
-environment variable.  If
-.I dhcpv6-pid-file-name
-is not specified, but
-.I pid-file-name
-is, the latter value will be used.
+like \fIpid-file-name\fr, \fBmust\fR appear in the outer scope of the
+configuration file.  The order of precedence used by the server is:
+.PP
+    1. \fBdhcpv6-pid-file-name\fR configuration file statement.
+    2. \fB-lf\fR command line flag.
+    3. \fBPATH_DHCPD6_PID\fR environment variable.
+.PP
 .RE
 .PP
 The
@@ -2786,7 +3014,12 @@ address to a client, it first sends an ICMP Echo request (a \fIping\fR)
 to the address being assigned.  It waits for a second, and if no
 ICMP Echo response has been heard, it assigns the address.  If a
 response \fIis\fR heard, the lease is abandoned, and the server does
-not respond to the client.
+not respond to the client.  The lease will remain abandoned for a minimum
+of abandon-lease-time seconds.
+.PP
+If a there are no free addressses but there are abandoned IP addresses, the
+DHCP server will attempt to reclaim an abandoned IP address regardless of the
+value of abandon-lease-time.
 .PP
 This \fIping check\fR introduces a default one-second delay in responding
 to DHCPDISCOVER messages, which can be a problem for some clients.  The
@@ -2826,8 +3059,7 @@ longer useable.  A preferred lifetime is an advisory condition to help
 applications move off of the address and onto currently valid addresses
 (should there still be any open TCP sockets or similar).
 .PP
-The preferred lifetime defaults to the renew+rebind timers, or 3/4 the
-default lease time if none were specified.
+The preferred lifetime defaults to 5/8 the default lease time.
 .RE
 .PP
 The
@@ -2854,11 +3086,11 @@ available prefix.
 .PP
 2. prefer - The server will offer the first available prefix with the same
 length as the requested length.  If none are found then it will offer the
-first available prefix of any length.
+first available prefix of any length.  This is the default behavior.
 .PP
 3. exact - The server will offer the first available prefix with the same
 length as the requested length.  If none are found, it will return a status
-indicating no prefixes available.  This is the default behavior.
+indicating no prefixes available.
 .PP
 4. minimum - The server will offer the first available prefix with the same
 length as the requested length.  If none are found, it will return the first
@@ -2890,7 +3122,7 @@ subnet 3000::/64 {
 	pool6 {
 		:
 	}
-	# pool C 
+	# pool C
 	pool6 {
 		:
 	}
@@ -2902,6 +3134,27 @@ then the pools will be checked in the order A, B, C. For modes \fBprefer\fR,
 twice.  A first pass through is made looking for an available prefix of exactly
 the preferred length.  If none are found, then a second pass is performed
 starting with pool A but with appropriately adjusted length criteria.
+.RE
+.PP
+The
+.I release-on-roam
+statement
+.RS 0.25i
+.PP
+.B release-on-roam \fIflag\fB;\fR
+.PP
+When enabled and the dhcpd server detects that a DHCPv6 client (IAID+DUID)
+has roamed to a new network, it will release the pre-existing leases on the
+old network and emit a log statement similiar to the following:
+
+      "Client: <id> roamed to new network, releasing lease: <address>"
+
+The server will carry out all of the same steps that would normally occur
+when a client explicitly releases a lease.  When release-on-roam is disabled
+(the default) the server makes such leases unavailable until they expire or
+the server is restarted. Clients that need leases in multiple networks must
+supply a unique IAID in each IA.  This parameter may only be specified at
+the global level.
 .RE
 .PP
 The
@@ -3029,6 +3282,42 @@ be the name that will be provided to the client.
 .RE
 .PP
 The
+.I dhcpv6-set-tee-times
+statement
+.RS 0.25i
+.PP
+.B dhcpv6-set-tee-times\fR \fIflag\fR\fB;\fR
+.PP
+The \fIdhcpv6-set-tee-times\fR statement enables setting T1 and T2 to the
+values recommended in RFC 3315 (Section 22.4).  When setting T1 and T2, the
+server will use dhcp-renewal-time and dhcp-rebinding-time, respectively.
+A value of zero tells the client it may choose its own value.
+
+When those options are not defined then values will be set to zero unless the
+global \fIdhcpv6-set-tee-times\fR is enabled.  When this option is enabled the
+times are calculated as recommended by RFC 3315, Section 22.4:
+
+      T1 will be set to 0.5 times the shortest preferred lifetime
+      in the reply.  If the "shortest" preferred lifetime is
+      0xFFFFFFFF,  T1 will set to 0xFFFFFFFF.
+
+      T2 will be set to 0.8 times the shortest preferred lifetime
+      in the reply.  If the "shortest" preferred lifetime is
+      0xFFFFFFFF,  T2 will set to 0xFFFFFFFF.
+
+Keep in mind that given sufficiently small lease lifetimes, the above
+calculations will result in the two values being equal. For example, a 9 second
+lease lifetime would yield T1 = T2 = 4 seconds, which would cause clients to
+issue rebinds only.  In such a case it would likely be better to explicitly
+define the values.
+
+Note that dhcpv6-set-tee-times is intended to be transitional and will likely
+be removed in a future release. Once removed the behavior will be to use
+the configured values when present or calculate them per the RFC. If you want
+zeros, define them as zeros.
+.RE
+.PP
+The
 .I site-option-space
 statement
 .RS 0.25i
@@ -3079,7 +3368,8 @@ If the \fIupdate-conflict-detection\fR parameter is true, the server will
 perform standard DHCID multiple-client, one-name conflict detection.  If
 the parameter has been set false, the server will skip this check and
 instead simply tear down any previous bindings to install the new
-binding without question.  The default is true.
+binding without question.  The default is true and this parameter may only
+be specified at the global scope.
 .RE
 .PP
 The
@@ -3095,9 +3385,8 @@ client renews its lease, rather than only attempting an update when it
 appears to be necessary.  This will allow the DNS to heal from
 database inconsistencies more easily, but the cost is that the DHCP
 server must do many more DNS updates.  We recommend leaving this option
-enabled, which is the default.  This option only affects the behavior of
-the interim DNS update scheme, and has no effect on the ad-hoc DNS update
-scheme.  If this parameter is not specified, or is true, the DHCP server
+enabled, which is the default. If this parameter is not specified,
+or is true, the DHCP server
 will only update when the client information changes, the client gets a
 different lease, or the client's lease expires.
 .RE
@@ -3111,14 +3400,81 @@ statement
 .PP
 The \fIupdate-static-leases\fR flag, if enabled, causes the DHCP
 server to do DNS updates for clients even if those clients are being
-assigned their IP address using a \fIfixed-address\fR statement - that
-is, the client is being given a static assignment.  This can only
-work with the \fIinterim\fR DNS update scheme.  It is not
-recommended because the DHCP server has no way to tell that the update
-has been done, and therefore will not delete the record when it is not
-in use.  Also, the server must attempt the update each time the
-client renews its lease, which could have a significant performance
-impact in environments that place heavy demands on the DHCP server.
+assigned their IP address using a \fIfixed-address\fR or
+\fIfixed-address6\fR statement - that is, the client is being given a
+static assignment.  It is not recommended because the DHCP server has
+no way to tell that the update has been done, and therefore will not
+delete the record when it is not in use.  Also, the server must attempt
+the update each time the client renews its lease, which could have a
+significant performance impact in environments that place heavy demands
+on the DHCP server.  This feature is supported for both DHCPv4 and DHCPv6,
+and update modes standard or interim. It is disabled by default.
+.RE
+.PP
+The
+.I use-eui-64
+statement
+.RS 0.25i
+.PP
+.B use-eui-64 \fIflag\fB;\fR
+.PP
+
+(Support for this must be enabled at compile time, see EUI_64 in
+ includes/site.h)
+
+The \fIuse-eui-64\fR flag, if enabled, instructs the server to construct an
+address using the client's EUI-64 DUID (Type 3, HW Type EUI-64), rather than
+creating an address using the dynamic algorithm.  This means that a given DUID
+will always generate the same address for a given pool and further that the
+address is guaranteed to be unique to that DUID.  The IPv6 address will be
+calculated from the EUI-64 link layer address, conforming to RFC 2373, unless
+there is a host declaration for the client-id.
+
+The range6 statement for EUI-64 must define full /64 bit ranges. Invalid ranges
+will be flagged during configuration parsing as errors.  See the following
+example:
+
+    subnet6 fc00:e4::/64 {
+        use-eui-64 true;
+        range6 fc00:e4::/64;
+    }
+
+The statement may be specified down to the pool level, allowing a mixture of
+dynamic and EUI-64 based pools.
+
+During lease file parsing, any leases which map to an EUI-64 pool, that have a
+non-EUI-64 DUID or for which the lease address is not the EUI-64 address for
+that DUID in that pool, will be discarded.
+
+If a host declaration exists for the DUID, the server grants the address
+(fixed-prefix6, fixed-address6) according to the host declaration, regardless
+of the DUID type of the client (even for EUI-64 DUIDs).
+
+If a client request's an EUI-64 lease for a given network, and the resultant
+address conflicts with a fixed address reservation, the server will send the
+client a "no addresses available" response.
+
+Any client with a non-conforming DUID (not type 3 or not hw type EUI-64) that
+is not linked to a host declaration, which requests an address from an EUI-64
+enabled pool will be ignored and the event will be logged.
+
+Pools that are configured for EUI-64 will be skipped for dynamic allocation.
+If there are no pools in the shared network from which to allocate, the client
+will get back a no addresses available status.
+
+On an EUI-64 enabled pool, any client with a DUID 3, HW Type EUI-64, requesting
+a solicit/renew and including IA_NA that do not match the EUI-64 policy, they
+will be treated as though they are "outside" the subnet for a given client
+message:
+
+    Solicit - Server will advertise with EUI-64 ia suboption, but with rapid
+    commit off
+    Request - Server will send "an address not on link status", and no ia
+    suboption Renew/Rebind - Server will send the requested address ia
+    suboption with lifetimes of 0, plus an EUI-64 ia
+
+Whether or not  EUI-64 based leases are written out to the lease database
+may be controlled by \fIpersist-eui-64-leases\fR statement.
 .RE
 .PP
 The
@@ -3139,7 +3495,7 @@ hostname.  So, for example,
 
       host joe {
         hardware ethernet 08:00:2b:4c:29:32;
-        fixed-address joe.fugue.com;
+        fixed-address joe.example.com;
       }
     }
 
@@ -3147,7 +3503,7 @@ is equivalent to
 
       host joe {
         hardware ethernet 08:00:2b:4c:29:32;
-        fixed-address joe.fugue.com;
+        fixed-address joe.example.com;
         option host-name "joe";
       }
 .fi
@@ -3200,7 +3556,7 @@ the \fIVENDOR ENCAPSULATED OPTIONS\fR section.
 .SH SETTING PARAMETER VALUES USING EXPRESSIONS
 Sometimes it's helpful to be able to set the value of a DHCP server
 parameter based on some value that the client has sent.  To do this,
-you can use expression evaluation.  The 
+you can use expression evaluation.  The
 .B dhcp-eval(5)
 manual page describes how to write expressions.  To assign the result
 of an evaluation to an option, define the option as follows:
@@ -3220,7 +3576,7 @@ For example:
 It's often useful to allocate a single address to a single client, in
 approximate perpetuity.  Host statements with \fBfixed-address\fR clauses
 exist to a certain extent to serve this purpose, but because host statements
-are intended to approximate \'static configuration\', they suffer from not 
+are intended to approximate \'static configuration\', they suffer from not
 being referenced in a littany of other Server Services, such as dynamic DNS,
 failover, \'on events\' and so forth.
 .PP

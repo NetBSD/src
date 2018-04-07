@@ -1,10 +1,11 @@
-/*	$NetBSD: mdb6_unittest.c,v 1.1.1.2 2014/07/12 11:58:16 spz Exp $	*/
+/*	$NetBSD: mdb6_unittest.c,v 1.1.1.3 2018/04/07 20:44:28 christos Exp $	*/
+
 /*
- * Copyright (C) 2007-2012 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2007-2017 by Internet Systems Consortium, Inc. ("ISC")
  *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
  * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
@@ -66,8 +67,13 @@ ATF_TC_BODY(iaaddr_basic, tc)
     if (iaaddr->state != FTS_FREE) {
         atf_tc_fail("ERROR: bad state %s:%d", MDL);
     }
-    if (iaaddr->heap_index != -1) {
-        atf_tc_fail("ERROR: bad heap_index %s:%d", MDL);
+    if (iaaddr->active_index != 0) {
+        atf_tc_fail("ERROR: bad active_index :%d %s:%d",
+            iaaddr->active_index, MDL);
+    }
+    if (iaaddr->inactive_index != 0) {
+        atf_tc_fail("ERROR: bad inactive_index %d %s:%d",
+            iaaddr->inactive_index, MDL);
     }
     if (iasubopt_reference(&iaaddr_copy, iaaddr, MDL) != ISC_R_SUCCESS) {
         atf_tc_fail("ERROR: iasubopt_reference() %s:%d", MDL);

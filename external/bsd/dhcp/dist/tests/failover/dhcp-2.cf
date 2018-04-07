@@ -78,7 +78,7 @@ key FOO {
   secret ABCD;
 }
 
-zone BISBEE.FUGUE.COM. {
+zone BISBEE.EXAMPLE.COM. {
   primary 127.0.0.1;
   key FOO;
 }
@@ -147,6 +147,6 @@ subnet 10.0.0.0 netmask 255.255.255.0 {
     range 10.0.0.9 10.0.0.9;
   }
   option routers 10.0.0.1;
-  option domain-name "bisbee.fugue.com";
+  option domain-name "bisbee.example.com";
   option domain-name-servers 10.0.0.1;
 }

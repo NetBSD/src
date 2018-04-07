@@ -484,5 +484,5 @@ objectclass ( 2.16.840.1.113719.1.203.6.18
     SUP top
     MUST ( cn $ dhcpRange6 )
     MAY ( dhcpClassesDN $ dhcpPermitList $ dhcpLeasesDN $ dhcpOptionsDN $ dhcpZoneDN $dhcpKeyDN $ dhcpStatements $ dhcpComments $ dhcpOption )
-    X-NDS_CONTAINMENT ('dhcpSubnet' 'dhcpSharedNetwork') )
+    X-NDS_CONTAINMENT ('dhcpSubnet6' 'dhcpSharedNetwork') )
 

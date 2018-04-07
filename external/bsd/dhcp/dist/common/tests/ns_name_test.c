@@ -1,8 +1,22 @@
-/*	$NetBSD: ns_name_test.c,v 1.1.1.1 2016/01/10 19:44:40 christos Exp $	*/
+/*	$NetBSD: ns_name_test.c,v 1.1.1.2 2018/04/07 20:44:26 christos Exp $	*/
+
 /*
- * Copyright (c) 2014 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
  *
- * Tests the newly added functions: MRns_name_compress_list and
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
+ */
+
+/* Tests the newly added functions: MRns_name_compress_list and
  * MRns_name_uncompress_list.  These two functions rely on most of
  * the other functions in ns_name.c.  If these tests pass, then the
  * majority of those functions work.

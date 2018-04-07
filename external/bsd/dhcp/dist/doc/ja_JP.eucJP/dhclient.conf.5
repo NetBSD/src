@@ -1,8 +1,8 @@
-.\"	$NetBSD: dhclient.conf.5,v 1.1.1.3 2014/07/12 11:57:33 spz Exp $
+.\"	$NetBSD: dhclient.conf.5,v 1.1.1.4 2018/04/07 20:44:25 christos Exp $
 .\"
 .\"	Id: dhclient.conf.5,v 1.4 2009/11/24 02:06:56 sar Exp 
 .\"
-.\" Copyright (c) 2004,2009 by Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (c) 2004,2009,2016 by Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (c) 1996-2003 by Internet Software Consortium
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -22,13 +22,6 @@
 .\"   Redwood City, CA 94063
 .\"   <info@isc.org>
 .\"   https://www.isc.org/
-.\"
-.\" This software has been written for Internet Systems Consortium
-.\" by Ted Lemon in cooperation with Vixie Enterprises and Nominum, Inc.
-.\" To learn more about Internet Systems Consortium, see
-.\" ``https://www.isc.org/''.  To learn more about Vixie Enterprises,
-.\" see ``http://www.vix.com''.   To learn more about Nominum, Inc., see
-.\" ``http://www.nominum.com''.
 .\"
 .\" %FreeBSD: src/contrib/isc-dhcp/client/dhclient.conf.5,v 1.7.2.1 2002/04/11 10:16:46 murray Exp %
 .\" $FreeBSD: doc/ja_JP.eucJP/man/man5/dhclient.conf.5,v 1.6 2002/05/03 03:23:30 horikawa Exp $
@@ -239,7 +232,7 @@ DHCP プロトコルで常に送られるオプションは
 また、次のようにクライアントで fqdn オプションを設定する必要があります:
 .PP
 .nf
-  send fqdn.fqdn "grosse.fugue.com.";
+  send fqdn.fqdn "grosse.example.com.";
   send fqdn.encoded on;
   send fqdn.server-update off;
 .fi
@@ -593,10 +586,10 @@ initial-interval 2;
 reject 192.33.137.209;
 
 interface "ep0" {
-    send host-name "andare.fugue.com";
+    send host-name "andare.example.com";
     send dhcp-client-identifier 1:0:a0:24:ab:fb:9c;
     send dhcp-lease-time 3600;
-    supersede domain-name "fugue.com rc.vix.com home.vix.com";
+    supersede domain-name "example.com rc.isc.org home.isc.org";
     prepend domain-name-servers 127.0.0.1;
     request subnet-mask, broadcast-address, time-offset, routers,
 	    domain-name, domain-name-servers, host-name;

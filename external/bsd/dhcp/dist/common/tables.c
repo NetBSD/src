@@ -1,16 +1,16 @@
-/*	$NetBSD: tables.c,v 1.1.1.3 2014/07/12 11:57:47 spz Exp $	*/
+/*	$NetBSD: tables.c,v 1.1.1.4 2018/04/07 20:44:26 christos Exp $	*/
+
 /* tables.c
 
    Tables of information... */
 
 /*
- * Copyright (c) 2011-2014 by Internet Systems Consortium, Inc. ("ISC")
- * Copyright (c) 2004-2009 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004-2018 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1995-2003 by Internet Software Consortium
  *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tables.c,v 1.1.1.3 2014/07/12 11:57:47 spz Exp $");
+__RCSID("$NetBSD: tables.c,v 1.1.1.4 2018/04/07 20:44:26 christos Exp $");
 
 #include "dhcpd.h"
 
@@ -196,9 +196,9 @@ static struct option dhcp_options[] = {
 
 	{ "client-last-transaction-time", "L",  &dhcp_universe,  91, 1 },
 	{ "associated-ip", "Ia",                &dhcp_universe,  92, 1 },
-#if 0
+#if defined(RFC4578_OPTIONS)
 	/* Defined by RFC 4578 */
-	{ "pxe-system-type", "S",		&dhcp_universe,  93, 1 },
+	{ "pxe-system-type", "Sa",		&dhcp_universe,  93, 1 },
 	{ "pxe-interface-id", "BBB",		&dhcp_universe,  94, 1 },
 	{ "pxe-client-id", "BX",		&dhcp_universe,  97, 1 },
 #endif
@@ -213,6 +213,9 @@ static struct option dhcp_options[] = {
 	{ "netinfo-server-address", "Ia",	&dhcp_universe, 112, 1 },
 	{ "netinfo-server-tag", "t",		&dhcp_universe, 113, 1 },
 	{ "default-url", "t",			&dhcp_universe, 114, 1 },
+#if defined(RFC2563_OPTIONS)
+	{ "auto-config", "B",			&dhcp_universe, 116, 1 },
+#endif
 #if defined(RFC2937_OPTIONS)
 	{ "name-service-search", "Sa",		&dhcp_universe, 117, 1 },
 #endif
@@ -243,16 +246,29 @@ static struct option dhcp_options[] = {
 #if defined(RFC5417_OPTIONS)
 	{"capwap-ac-v4", "Ia",			&dhcp_universe, 138, 1 },
 #endif
+#if defined(RFC6011_OPTIONS)
+	{ "sip-ua-cs-domains", "Dc",		&dhcp_universe, 141, 1 },
+#endif
+#if defined(RFC6153_OPTIONS)
+	{ "ipv4-address-andsf", "IA",		&dhcp_universe, 142, 1 },
+#endif
 #if defined(RFC6731_OPTIONS)
         { "rdnss-selection", "BIID",		&dhcp_universe, 146, 1 },
 #endif
-#if 0
-	/* Not defined by RFC yet */
+#if defined(RFC5859_OPTIONS)
 	{ "tftp-server-address", "Ia",		&dhcp_universe, 150, 1 },
 #endif
-#if 0
-	/* PXELINUX options: defined by RFC 5071 */
+#if defined(RFC7618_OPTIONS)
+	{ "v4-portparams", "BBS",		&dhcp_universe, 159, 1 },
+#endif
+#if defined(RFC7710_OPTIONS)
+	{ "v4-captive-portal", "t",		&dhcp_universe, 160, 1 },
+#endif
+#if defined(RFC5071_OPTIONS)
+#if  0
+	/* Option 208 has been officially deprecated. Do NOT define it */
 	{ "pxelinux-magic", "BBBB",		&dhcp_universe, 208, 1 },
+#endif
 	{ "loader-configfile", "t",		&dhcp_universe, 209, 1 },
 	{ "loader-pathprefix", "t",		&dhcp_universe, 210, 1 },
 	{ "loader-reboottime", "L",		&dhcp_universe, 211, 1 },
@@ -355,10 +371,10 @@ static struct option dhcpv6_options[] = {
 	{ "relay-msg", "X",			&dhcpv6_universe,  9, 1 },
 
 	/* Option code 10 is curiously unassigned. */
-	/* 
+	/*
 	 * In draft-ietf-dhc-dhcpv6-25 there were two OPTION_CLIENT_MSG and
 	 * OPTION_SERVER_MSG options. They were eventually unified as
-	 * OPTION_RELAY_MSG, hence no option with value of 10. 
+	 * OPTION_RELAY_MSG, hence no option with value of 10.
 	 */
 #if 0
 	/* XXX: missing suitable atoms for the auth option.  We may want
@@ -548,13 +564,30 @@ static struct option dhcpv6_options[] = {
 	{ "inf-max-rt", "L",			&dhcpv6_universe, 83, 1 },
 #endif
 
+			/* RFC7341 OPTIONS */
+#if defined(RFC7341_OPTIONS)
+	{ "dhcpv4-msg", "X",			&dhcpv6_universe, 87, 1 },
+	{ "dhcp4-o-dhcp6-server", "6A",		&dhcpv6_universe, 88, 1 },
+#endif
+
+#if defined(RFC7710_OPTIONS)
+	{ "v6-captive-portal", "t",		&dhcpv6_universe, 103, 1 },
+#endif
+
+	{ "relay-source-port", "S",		&dhcpv6_universe, 135, 1 },
+
+#if defined(RFC6153_OPTIONS)
+	{ "ipv6-address-andsf", "6A",		&dhcpv6_universe, 143, 1 },
+#endif
+
 	{ NULL, NULL, NULL, 0, 0 }
 };
 
 struct enumeration_value dhcpv6_duid_type_values[] = {
-	{ "duid-llt",	DUID_LLT }, /* Link-Local Plus Time */
-	{ "duid-en",	DUID_EN },  /* DUID based upon enterprise-ID. */
-	{ "duid-ll",	DUID_LL },  /* DUID from Link Local address only. */
+	{ "duid-llt",	DUID_LLT },  /* Link-Local Plus Time */
+	{ "duid-en",	DUID_EN },   /* DUID based upon enterprise-ID. */
+	{ "duid-ll",	DUID_LL },   /* DUID from Link Local address only. */
+	{ "duid-uuid",	DUID_UUID }, /* DUID based upon UUID */
 	{ NULL, 0 }
 };
 
@@ -576,6 +609,7 @@ struct enumeration_value dhcpv6_status_code_values[] = {
 	{ "MalformedQuery", 8 }, /* Leasequery not valid.		*/
 	{ "NotConfigured", 9 }, /* The target address is not in config.	*/
 	{ "NotAllowed",  10 }, /* Server doesn't allow the leasequery.	*/
+	{ "QueryTerminated", 11 }, /* Leasequery terminated.		*/
 	{ NULL, 0 }
 };
 
@@ -588,6 +622,9 @@ struct enumeration dhcpv6_status_codes = {
 struct enumeration_value lq6_query_type_values[] = {
 	{ "query-by-address", 1 },
 	{ "query-by-clientid", 2 },
+	{ "query-by-relay-id", 3 },
+	{ "query-by-link-address", 4 },
+	{ "query-by-remote-id", 5 },
 	{ NULL, 0 }
 };
 
@@ -613,6 +650,12 @@ struct enumeration_value dhcpv6_message_values[] = {
 	{ "RELAY-REPL", 13 },
 	{ "LEASEQUERY", 14 },
 	{ "LEASEQUERY-REPLY", 15 },
+	{ "LEASEQUERY-DONE", 16 },
+	{ "LEASEQUERY-DATA", 17 },
+	{ "RECONFIGURE-REQUEST", 18 },
+	{ "RECONFIGURE-REPLY", 19 },
+	{ "DHCPV4-QUERY", 20 },
+	{ "DHCPV4-RESPONSE", 21 },
 	{ NULL, 0 }
 };
 
@@ -633,7 +676,13 @@ const char *dhcpv6_type_names[] = {
 	"Relay-forward",
 	"Relay-reply",
 	"Leasequery",
-	"Leasequery-reply"
+	"Leasequery-reply",
+	"Leasequery-done",
+	"Leasequery-data",
+	"Reconfigure-request",
+	"Reconfigure-reply",
+	"Dhcpv4-query",
+	"Dhcpv4-response"
 };
 const int dhcpv6_type_name_max =
 	(sizeof(dhcpv6_type_names) / sizeof(dhcpv6_type_names[0]));
@@ -653,7 +702,9 @@ static struct option vsio_options[] = {
 struct universe isc6_universe;
 static struct option isc6_options[] = {
 	{ "media", "t",				&isc6_universe,     1, 1 },
-	{ "update-assist", "X",			&isc6_universe,	    2, 1 },
+	{ "update-assist", "X",			&isc6_universe,     2, 1 },
+	{ "4o6-interface", "t",			&isc6_universe, 60000, 1 },
+	{ "4o6-source-address", "6",		&isc6_universe, 60001, 1 },
 	{ NULL, NULL, NULL, 0, 0 }
 };
 
@@ -1496,8 +1547,10 @@ void initialize_common_option_spaces()
 			  &vsio_universe, MDL);
 	universe_hash_add(universe_hash, isc6_universe.name, 0,
 			  &isc6_universe, MDL);
-/* This should not be necessary.  Listing here just for consistency.
- *	universe_hash_add(universe_hash, fqdn6_universe.name, 0,
- *			  &fqdn6_universe, MDL);
- */
+	/* previously this wasn't necessary, now that we can send
+	 * v6 encapsulated options it is.
+	 */
+	universe_hash_add(universe_hash, fqdn6_universe.name, 0,
+			  &fqdn6_universe, MDL);
+
 }

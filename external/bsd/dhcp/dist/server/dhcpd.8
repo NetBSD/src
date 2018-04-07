@@ -1,14 +1,13 @@
-.\"	$NetBSD: dhcpd.8,v 1.1.1.4 2016/01/10 19:44:46 christos Exp $
+.\"	$NetBSD: dhcpd.8,v 1.1.1.5 2018/04/07 20:44:28 christos Exp $
 .\"
 .\"	dhcpd.8
 .\"
-.\" Copyright (c) 2009-2012,2015 by Internet Systems Consortium, Inc. ("ISC")
-.\" Copyright (c) 2004-2007 by Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (c) 2004-2017 by Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (c) 1996-2003 by Internet Software Consortium
 .\"
-.\" Permission to use, copy, modify, and distribute this software for any
-.\" purpose with or without fee is hereby granted, provided that the above
-.\" copyright notice and this permission notice appear in all copies.
+.\" This Source Code Form is subject to the terms of the Mozilla Public
+.\" License, v. 2.0. If a copy of the MPL was not distributed with this
+.\" file, You can obtain one at http://mozilla.org/MPL/2.0/.
 .\"
 .\" THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
 .\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -59,6 +58,10 @@ dhcpd - Dynamic Host Configuration Protocol Server
 .B -4
 | 
 .B -6
+]
+[
+.B -4o6
+.I port
 ]
 [
 .B -s
@@ -210,8 +213,16 @@ Run as a DHCP server. This is the default and cannot be combined with
 .BI \-6
 Run as a DHCPv6 server. This cannot be combined with \fB\-4\fR.
 .TP
+.BI \-4o6 \ port
+Participate in the DHCPv4 over DHCPv6 protocol specified by RFC 7341.
+This associates a DHCPv4 and a DHCPv6 server to allow the v4 server to
+receive v4 requests that were encapsulated in a v6 packet.  Communication
+between the two servers is done on a pair of UDP sockets bound
+to ::1 \fIport\fR and \fIport + 1\fR. Both servers must
+be launched using the same \fIport\fR argument.
+.TP
 .BI \-p \ port
-The udp port number on which 
+The UDP port number on which 
 .B dhcpd
 should listen.  If unspecified
 .B dhcpd
@@ -260,8 +271,11 @@ automatically before installing it.
 .BI \-T
 Test the lease file.  The server tests the lease file
 for correct syntax, but will not attempt to perform any network
-operations.  This can be used to test a new lease file
-automatically before installing it.
+operations.  In addition to reading the lease file it will also
+write the leases to a temporary lease file.  The current lease
+file will not be modified and the temporary lease file will be
+removed upon completion of the test. This can be used to test a
+new lease file automatically before installing it.
 .TP
 .BI \-user \ user
 Setuid to user after completing privileged operations,
@@ -340,9 +354,9 @@ and send most DHCPv4 packets.  It also opens a fallback UDP socket
 for use in sending unicast packets.  Normally these will both
 use the well known port number for BOOTPS.
 
-For each DHCPv4 failover peer you list in the configuartion file
+For each DHCPv4 failover peer you list in the configuration file
 there will be a TCP socket listening for connections on the
-ports specififed in the configuration file.  When the peer connects
+ports specified in the configuration file.  When the peer connects
 there will be another socket for the established connection.
 For the established connection the side (primary or secondary)
 opening the connection will use a random port.
@@ -360,8 +374,8 @@ port will be used for the established connection.
 
 When DDNS is enabled at compile time (see includes/site.h)
 the server will open both a v4 and a v6 UDP socket on
-random ports.  These ports are opened even if DDNS is disabled
-in the configuration file.
+random ports, unless DDNS updates are globally disabled by
+setting ddns-update-style to none in the configuration file.
 .PP
 .SH CONFIGURATION
 The syntax of the dhcpd.conf(5) file is discussed separately.  This
@@ -464,7 +478,8 @@ look something like this:
 .sp 1
 	subnet 239.252.197.0 netmask 255.255.255.0 {
 	  range 239.252.197.10 239.252.197.250;
-	  default-lease-time 600 max-lease-time 7200;
+	  default-lease-time 600;
+	  max-lease-time 7200;
 	  option subnet-mask 255.255.255.0;
 	  option broadcast-address 239.252.197.255;
 	  option routers 239.252.197.1;
@@ -482,7 +497,7 @@ use a different name server might be declared as follows:
 	  fixed-address 239.252.197.9;
 	  filename "/tftpboot/haagen.boot";
 	  option domain-name-servers 192.5.5.1;
-	  option domain-name "vix.com";
+	  option domain-name "example.com";
 	}
 .fi
 .PP

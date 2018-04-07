@@ -1,15 +1,16 @@
-/*	$NetBSD: stables.c,v 1.1.1.3 2016/01/10 19:44:46 christos Exp $	*/
+/*	$NetBSD: stables.c,v 1.1.1.4 2018/04/07 20:44:28 christos Exp $	*/
+
 /* stables.c
 
    Tables of information only used by server... */
 
 /*
- * Copyright (c) 2004-2011,2013-2015 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004-2017 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1995-2003 by Internet Software Consortium
  *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -28,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: stables.c,v 1.1.1.3 2016/01/10 19:44:46 christos Exp $");
+__RCSID("$NetBSD: stables.c,v 1.1.1.4 2018/04/07 20:44:28 christos Exp $");
 
 #include "dhcpd.h"
 #include <syslog.h>
@@ -173,6 +174,7 @@ static struct option agent_options[] = {
 	{ "agent-id", "I",			&agent_universe,   3, 1 },
 	{ "DOCSIS-device-class", "L",		&agent_universe,   4, 1 },
 	{ "link-selection", "I",		&agent_universe,   5, 1 },
+	{ "relay-port", "Z",			&agent_universe,  19, 1 },
 	{ NULL, NULL, NULL, 0, 0 }
 };
 
@@ -279,6 +281,21 @@ static struct option server_options[] = {
 	{ "echo-client-id", "f",		&server_universe,  SV_ECHO_CLIENT_ID, 1 },
 	{ "server-id-check", "f",		&server_universe,  SV_SERVER_ID_CHECK, 1 },
 	{ "prefix-length-mode", "Nprefix_length_modes.",	&server_universe,  SV_PREFIX_LEN_MODE, 1 },
+	{ "dhcpv6-set-tee-times", "f",		&server_universe,  SV_DHCPV6_SET_TEE_TIMES, 1 },
+	{ "abandon-lease-time", "T",		&server_universe,  SV_ABANDON_LEASE_TIME, 1 },
+#ifdef EUI_64
+	{ "use-eui-64", "f",		&server_universe,  SV_USE_EUI_64, 1 },
+	{ "persist-eui-64-leases", "f",	&server_universe,  SV_PERSIST_EUI_64_LEASES, 1 },
+#endif
+#if defined (FAILOVER_PROTOCOL)
+	{ "check-secs-byte-order", "f", &server_universe, SV_CHECK_SECS_BYTE_ORDER, 1 },
+#endif
+	{ "ddns-dual-stack-mixed-mode", "f",		&server_universe,  SV_DDNS_DUAL_STACK_MIXED_MODE, 1 },
+	{ "ddns-guard-id-must-match", "f",		&server_universe,  SV_DDNS_GUARD_ID_MUST_MATCH, 1 },
+	{ "ddns-other-guard-is-dynamic", "f",		&server_universe,  SV_DDNS_OTHER_GUARD_IS_DYNAMIC, 1 },
+	{ "release-on-roam", "f",	&server_universe,  SV_RELEASE_ON_ROAM, 1 },
+	{ "local-address6", "6",	&server_universe,  SV_LOCAL_ADDRESS6, 1 },
+	{ "bind-local-address6", "f",	&server_universe,  SV_BIND_LOCAL_ADDRESS6, 1 },
 	{ NULL, NULL, NULL, 0, 0 }
 };
 

@@ -8,6 +8,9 @@
  http://www.isc.org/software/dhcp website.
 
  @section toc Table Of Contents
+  - Build
+    - @subpage libtool
+      - @subpage libtoolBuild
   - Server
     - @subpage ipv6structures
   - @subpage tests
