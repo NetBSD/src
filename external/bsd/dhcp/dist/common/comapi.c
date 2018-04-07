@@ -1,16 +1,16 @@
-/*	$NetBSD: comapi.c,v 1.2 2017/06/28 02:46:30 manu Exp $	*/
+/*	$NetBSD: comapi.c,v 1.3 2018/04/07 21:19:31 christos Exp $	*/
+
 /* omapi.c
 
    OMAPI object interfaces for the DHCP server. */
 
 /*
- * Copyright (c) 2012,2014 Internet Systems Consortium, Inc. ("ISC")
- * Copyright (c) 2004-2007,2009 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004-2017 Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1999-2003 by Internet Software Consortium
  *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: comapi.c,v 1.2 2017/06/28 02:46:30 manu Exp $");
+__RCSID("$NetBSD: comapi.c,v 1.3 2018/04/07 21:19:31 christos Exp $");
 
 /* Many, many thanks to Brian Murrell and BCtel for this code - BCtel
    provided the funding that resulted in this code and the entire
@@ -47,7 +47,6 @@ OMAPI_OBJECT_ALLOC (shared_network, struct shared_network,
 OMAPI_OBJECT_ALLOC (group_object, struct group_object, dhcp_type_group)
 OMAPI_OBJECT_ALLOC (dhcp_control, dhcp_control_object_t, dhcp_type_control)
 
-omapi_object_type_t *dhcp_type_interface;
 omapi_object_type_t *dhcp_type_group;
 omapi_object_type_t *dhcp_type_shared_network;
 omapi_object_type_t *dhcp_type_subnet;
@@ -658,16 +657,11 @@ isc_result_t dhcp_subnet_get_value (omapi_object_t *h, omapi_object_t *id,
 
 isc_result_t dhcp_subnet_destroy (omapi_object_t *h, const char *file, int line)
 {
-#if defined (DEBUG_MEMORY_LEAKAGE) || \
-		defined (DEBUG_MEMORY_LEAKAGE_ON_EXIT)
 	struct subnet *subnet;
-#endif
 
 	if (h -> type != dhcp_type_subnet)
 		return DHCP_R_INVALIDARG;
 
-#if defined (DEBUG_MEMORY_LEAKAGE) || \
-		defined (DEBUG_MEMORY_LEAKAGE_ON_EXIT)
 	subnet = (struct subnet *)h;
 	if (subnet -> next_subnet)
 		subnet_dereference (&subnet -> next_subnet, file, line);
@@ -680,7 +674,6 @@ isc_result_t dhcp_subnet_destroy (omapi_object_t *h, const char *file, int line)
 		interface_dereference (&subnet -> interface, file, line);
 	if (subnet -> group)
 		group_dereference (&subnet -> group, file, line);
-#endif
 
 	return ISC_R_SUCCESS;
 }
@@ -812,16 +805,11 @@ isc_result_t dhcp_shared_network_destroy (omapi_object_t *h,
 {
 	/* In this function h should be a (struct shared_network *) */
 
-#if defined (DEBUG_MEMORY_LEAKAGE) || \
-    defined (DEBUG_MEMORY_LEAKAGE_ON_EXIT)
 	struct shared_network *shared_network;
-#endif
 
 	if (h -> type != dhcp_type_shared_network)
 		return DHCP_R_INVALIDARG;
 
-#if defined (DEBUG_MEMORY_LEAKAGE) || \
-		defined (DEBUG_MEMORY_LEAKAGE_ON_EXIT)
 	shared_network = (struct shared_network *)h;
 	if (shared_network -> next)
 		shared_network_dereference (&shared_network -> next,
@@ -846,7 +834,6 @@ isc_result_t dhcp_shared_network_destroy (omapi_object_t *h,
 				      &shared_network -> failover_peer,
 				      file, line);
 #endif
-#endif /* DEBUG_MEMORY_LEAKAGE */
 
 	return ISC_R_SUCCESS;
 }

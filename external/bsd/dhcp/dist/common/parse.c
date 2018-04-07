@@ -1,15 +1,16 @@
-/*	$NetBSD: parse.c,v 1.2 2017/06/28 02:46:30 manu Exp $	*/
+/*	$NetBSD: parse.c,v 1.3 2018/04/07 21:19:31 christos Exp $	*/
+
 /* parse.c
 
    Common parser code for dhcpd and dhclient. */
 
 /*
- * Copyright (c) 2004-2015 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004-2017 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1995-2003 by Internet Software Consortium
  *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -28,10 +29,14 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: parse.c,v 1.2 2017/06/28 02:46:30 manu Exp $");
+__RCSID("$NetBSD: parse.c,v 1.3 2018/04/07 21:19:31 christos Exp $");
 
 #include "dhcpd.h"
+#include <isc/util.h>
 #include <syslog.h>
+
+struct collection default_collection = { NULL, "default", NULL };
+struct collection *collections = &default_collection;
 
 /* Enumerations can be specified in option formats, and are used for
    parsing, so we define the routines that manage them here. */
@@ -102,7 +107,7 @@ void skip_to_rbrace (cfile, brace_count)
 	enum dhcp_token token;
 	const char *val;
 
-#if defined (DEBUG_TOKEN)
+#if defined (DEBUG_TOKENS)
 	log_error("skip_to_rbrace: %d\n", brace_count);
 #endif
 	do {
@@ -1282,7 +1287,7 @@ parse_option_name (cfile, allocate, known, opt)
 			option_reference(opt, option, MDL);
 		} else
 			log_info("option %s has been redefined as option %s.  "
-				 "Please update your configs if neccessary.",
+				 "Please update your configs if necessary.",
 				 val, option->name);
 	/* If we've been told to allocate, that means that this
 	 * (might) be an option code definition, so we'll create

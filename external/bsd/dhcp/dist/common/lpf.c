@@ -1,18 +1,17 @@
-/*	$NetBSD: lpf.c,v 1.2 2017/06/28 02:46:30 manu Exp $	*/
+/*	$NetBSD: lpf.c,v 1.3 2018/04/07 21:19:31 christos Exp $	*/
+
 /* lpf.c
 
    Linux packet filter code, contributed by Brian Murrel at Interlinx
    Support Services in Vancouver, B.C. */
 
 /*
- * Copyright (c) 2014-2015 by Internet Systems Consortium, Inc. ("ISC")
- * Copyright (c) 2009,2012 by Internet Systems Consortium, Inc. ("ISC")
- * Copyright (c) 2004,2007 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004-2017 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1996-2003 by Internet Software Consortium
  *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -30,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lpf.c,v 1.2 2017/06/28 02:46:30 manu Exp $");
+__RCSID("$NetBSD: lpf.c,v 1.3 2018/04/07 21:19:31 christos Exp $");
 
 #include "dhcpd.h"
 #if defined (USE_LPF_SEND) || defined (USE_LPF_RECEIVE)
@@ -183,6 +182,11 @@ void if_deregister_send (info)
 extern struct sock_filter dhcp_bpf_filter [];
 extern int dhcp_bpf_filter_len;
 
+#if defined(RELAY_PORT)
+extern struct sock_filter dhcp_bpf_relay_filter [];
+extern int dhcp_bpf_relay_filter_len;
+#endif
+
 #if defined (HAVE_TR_SUPPORT)
 extern struct sock_filter dhcp_bpf_tr_filter [];
 extern int dhcp_bpf_tr_filter_len;
@@ -262,7 +266,19 @@ static void lpf_gen_filter_setup (info)
         /* Patch the server port into the LPF  program...
 	   XXX changes to filter program may require changes
 	   to the insn number(s) used below! XXX */
-	dhcp_bpf_filter [8].k = ntohs ((short)*libdhcp_callbacks.local_port);
+#if defined(RELAY_PORT)
+	if (relay_port) {
+		/*
+		 * If user defined relay UDP port, we need to filter
+		 * also on the user UDP port.
+		 */
+		p.len = dhcp_bpf_relay_filter_len;
+		p.filter = dhcp_bpf_relay_filter;
+
+		dhcp_bpf_relay_filter [10].k = ntohs (relay_port);
+	}
+#endif
+	dhcp_bpf_filter [8].k = ntohs (local_port);
 
 	if (setsockopt (info -> rfdesc, SOL_SOCKET, SO_ATTACH_FILTER, &p,
 			sizeof p) < 0) {
@@ -426,10 +442,10 @@ ssize_t receive_packet (interface, buf, len, from, hfrom)
 		if (cmsg->cmsg_level == SOL_PACKET &&
 		    cmsg->cmsg_type == PACKET_AUXDATA) {
 			struct tpacket_auxdata *aux = (void *)CMSG_DATA(cmsg);
-			/* Discard packets with stripped vlan id */
-
 #ifdef VLAN_TCI_PRESENT
-			if (aux->tp_vlan_tci != 0)
+			/* Discard packets with stripped vlan id */
+			/* VLAN ID is only bottom 12-bits of TCI */
+			if (aux->tp_vlan_tci & 0x0fff)
 				return 0;
 #endif
 

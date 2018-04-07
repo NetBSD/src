@@ -1,16 +1,16 @@
-/*	$NetBSD: omapi.c,v 1.3 2016/01/10 20:10:45 christos Exp $	*/
+/*	$NetBSD: omapi.c,v 1.4 2018/04/07 21:19:32 christos Exp $	*/
+
 /* omapi.c
 
    OMAPI object interfaces for the DHCP server. */
 
 /*
- * Copyright (c) 2012-2015 by Internet Systems Consortium, Inc. ("ISC")
- * Copyright (c) 2004-2009 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004-2017 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1999-2003 by Internet Software Consortium
  *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: omapi.c,v 1.3 2016/01/10 20:10:45 christos Exp $");
+__RCSID("$NetBSD: omapi.c,v 1.4 2018/04/07 21:19:32 christos Exp $");
 
 /* Many, many thanks to Brian Murrell and BCtel for this code - BCtel
    provided the funding that resulted in this code and the entire
@@ -44,6 +44,9 @@ __RCSID("$NetBSD: omapi.c,v 1.3 2016/01/10 20:10:45 christos Exp $");
 static isc_result_t class_lookup (omapi_object_t **,
 				  omapi_object_t *, omapi_object_t *,
 				  omapi_object_type_t *);
+
+static isc_result_t update_lease_flags(struct lease* lease,
+				       omapi_typed_data_t *value);
 
 omapi_object_type_t *dhcp_type_lease;
 omapi_object_type_t *dhcp_type_pool;
@@ -273,22 +276,7 @@ isc_result_t dhcp_lease_set_value  (omapi_object_t *h,
 		      piaddr(lease->ip_addr), old_lease_end, lease_end);
 	    return ISC_R_IOERROR;
 	} else if (!omapi_ds_strcmp(name, "flags")) {
-	    u_int8_t oldflags;
-
-	    if (value->type != omapi_datatype_data)
-		return DHCP_R_INVALIDARG;
-
-	    oldflags = lease->flags;
-	    lease->flags = (value->u.buffer.value[0] & EPHEMERAL_FLAGS) |
-			   (lease->flags & ~EPHEMERAL_FLAGS);
-	    if(oldflags == lease->flags)
-		return ISC_R_SUCCESS;
-	    if (!supersede_lease(lease, NULL, 1, 1, 1, 0)) {
-		log_error("Failed to update flags for lease %s.",
-			  piaddr(lease->ip_addr));
-		return ISC_R_IOERROR;
-	    }
-	    return ISC_R_SUCCESS;
+	    return (update_lease_flags(lease, value));
 	} else if (!omapi_ds_strcmp (name, "billing-class")) {
 	    return DHCP_R_UNCHANGED;	/* XXX carefully allow change. */
 	} else if (!omapi_ds_strcmp (name, "hardware-address")) {
@@ -323,6 +311,85 @@ isc_result_t dhcp_lease_set_value  (omapi_object_t *h,
 	if (write_lease (lease) && commit_leases ())
 		return ISC_R_SUCCESS;
 	return ISC_R_IOERROR;
+}
+
+/*
+ * \brief Updates the lease's flags to a given value
+ *
+ * In order to update the lease's flags, we make a copy of the
+ * lease, and update the copy's flags with the new value.
+ * We then use the updated copy as the second parameter to a
+ * call to supersede_lease().  This ensures that the lease
+ * moves between queues correctly.   This is critical when
+ * the RESERVED_LEASE flag is being changed.
+ *
+ * Note that only the EPHEMERAL flags are permitted to be changed.
+ *
+ * \param lease - pointer to the lease to update
+ * \param value - omapi data value containing the new flags value
+ *
+ * \return ISC_R_SUCCESS if the lease was successfully updated,
+ *  DHCP_R_UNCHANGED if new value would result in no change to the
+ *  lease's flags, or an appropriate status on other errors
+ */
+static isc_result_t update_lease_flags(struct lease* lease,
+				       omapi_typed_data_t *value)
+{
+	u_int8_t oldflags;
+	u_int8_t newflags;
+	struct lease* lupdate = NULL;
+	isc_result_t status;
+
+	/* Grab the requested flags value. We (the server) send flags
+	 * out as 1-byte, so we expect clients to do the same.  However
+	 * omshell, will send a network-ordered 4 byte integer if the
+	 * input is "set flags = <n>", so we'll accomdate that too. */
+	if (value->u.buffer.len == 1) {
+		newflags = value->u.buffer.value[0];
+	} else {
+		unsigned long tmp;
+
+		status = omapi_get_int_value (&tmp, value);
+		if (status != ISC_R_SUCCESS) {
+			return (status);
+		}
+
+		newflags = (u_int8_t)tmp;
+	}
+
+	/* Save off the current flags value. */
+	oldflags = lease->flags;
+
+	/* The new value must preserve all PERSISTANT_FLAGS */
+	newflags = ((lease->flags & ~EPHEMERAL_FLAGS) |
+		    (newflags & EPHEMERAL_FLAGS));
+
+	/* If there's no net change, we're done */
+	if (oldflags == newflags) {
+		return (DHCP_R_UNCHANGED);
+	}
+
+	/* Make a copy of the lease. */
+	if (!lease_copy(&lupdate, lease, MDL)) {
+		return (ISC_R_FAILURE);
+	}
+
+	/* Set the copy's flags to the new value */
+	lupdate->flags = newflags;
+
+	/* Attempt to update the lease */
+	if (!supersede_lease(lease, lupdate, 1, 1, 1, 0)) {
+		log_error("Failed to update flags for lease %s.",
+			  piaddr(lease->ip_addr));
+		status = ISC_R_FAILURE;
+	} else {
+		log_debug ("lease flags changed from  %x to %x for lease %s.",
+			   oldflags, newflags, piaddr(lease->ip_addr));
+		status = ISC_R_SUCCESS;
+	}
+
+	lease_dereference(&lupdate, MDL);
+	return (status);
 }
 
 
@@ -459,8 +526,6 @@ isc_result_t dhcp_lease_destroy (omapi_object_t *h, const char *file, int line)
 		class_dereference
 			(&lease->billing_class, file, line);
 
-#if defined (DEBUG_MEMORY_LEAKAGE) || \
-		defined (DEBUG_MEMORY_LEAKAGE_ON_EXIT)
 	/* We no longer check for a next pointer as that should
 	 * be cleared when we destroy the pool and as before we
 	 * should only ever be doing that on exit.
@@ -474,7 +539,6 @@ isc_result_t dhcp_lease_destroy (omapi_object_t *h, const char *file, int line)
 		lease_dereference (&lease->n_uid, file, line);
 	if (lease->next_pending)
 		lease_dereference (&lease->next_pending, file, line);
-#endif
 
 	return ISC_R_SUCCESS;
 }
@@ -1134,8 +1198,6 @@ isc_result_t dhcp_host_destroy (omapi_object_t *h, const char *file, int line)
 	if (h -> type != dhcp_type_host)
 		return DHCP_R_INVALIDARG;
 
-#if defined (DEBUG_MEMORY_LEAKAGE) || \
-		defined (DEBUG_MEMORY_LEAKAGE_ON_EXIT)
 	struct host_decl *host = (struct host_decl *)h;
 	if (host -> n_ipaddr)
 		host_dereference (&host -> n_ipaddr, file, line);
@@ -1154,7 +1216,6 @@ isc_result_t dhcp_host_destroy (omapi_object_t *h, const char *file, int line)
 		omapi_object_dereference ((omapi_object_t **)
 					  &host -> named_group, file, line);
 	data_string_forget (&host -> auth_key_id, file, line);
-#endif
 
 	return ISC_R_SUCCESS;
 }
@@ -1208,8 +1269,8 @@ isc_result_t dhcp_host_signal_handler (omapi_object_t *h,
 }
 
 isc_result_t dhcp_host_stuff_values (omapi_object_t *c,
-				      omapi_object_t *id,
-				      omapi_object_t *h)
+				     omapi_object_t *id,
+				     omapi_object_t *h)
 {
 	struct host_decl *host;
 	isc_result_t status;
@@ -1230,16 +1291,27 @@ isc_result_t dhcp_host_stuff_values (omapi_object_t *c,
 				   (struct option_state *)0,
 				   &global_scope,
 				   host -> fixed_addr, MDL)) {
+
 		status = omapi_connection_put_name (c, "ip-address");
-		if (status != ISC_R_SUCCESS)
+		if (status != ISC_R_SUCCESS) {
+			data_string_forget (&ip_addrs, MDL);
 			return status;
+		}
+
 		status = omapi_connection_put_uint32 (c, ip_addrs.len);
-		if (status != ISC_R_SUCCESS)
+		if (status != ISC_R_SUCCESS) {
+			data_string_forget (&ip_addrs, MDL);
 			return status;
+		}
+
 		status = omapi_connection_copyin (c,
 						  ip_addrs.data, ip_addrs.len);
-		if (status != ISC_R_SUCCESS)
+		if (status != ISC_R_SUCCESS) { 
+			data_string_forget (&ip_addrs, MDL);
 			return status;
+		}
+
+		data_string_forget (&ip_addrs, MDL);
 	}
 
 	if (host -> client_identifier.len) {
@@ -1586,16 +1658,11 @@ isc_result_t dhcp_pool_get_value (omapi_object_t *h, omapi_object_t *id,
 
 isc_result_t dhcp_pool_destroy (omapi_object_t *h, const char *file, int line)
 {
-#if defined (DEBUG_MEMORY_LEAKAGE) || \
-		defined (DEBUG_MEMORY_LEAKAGE_ON_EXIT)
 	struct permit *pc, *pn;
-#endif
 
 	if (h -> type != dhcp_type_pool)
 		return DHCP_R_INVALIDARG;
 
-#if defined (DEBUG_MEMORY_LEAKAGE) || \
-		defined (DEBUG_MEMORY_LEAKAGE_ON_EXIT)
 	struct pool *pool = (struct pool *)h;
 	if (pool -> next)
 		pool_dereference (&pool -> next, file, line);
@@ -1616,6 +1683,7 @@ isc_result_t dhcp_pool_destroy (omapi_object_t *h, const char *file, int line)
 		dhcp_failover_state_dereference (&pool -> failover_peer,
 						 file, line);
 #endif
+
 	for (pc = pool -> permit_list; pc; pc = pn) {
 		pn = pc -> next;
 		free_permit (pc, file, line);
@@ -1627,7 +1695,6 @@ isc_result_t dhcp_pool_destroy (omapi_object_t *h, const char *file, int line)
 		free_permit (pc, file, line);
 	}
 	pool -> prohibit_list = (struct permit *)0;
-#endif
 
 	return ISC_R_SUCCESS;
 }
@@ -2112,6 +2179,8 @@ static isc_result_t class_lookup (omapi_object_t **lp,
 	status = omapi_get_value_str(ref, id, "name", &nv);
 	if (status == ISC_R_SUCCESS) {
 		char *name = dmalloc(nv->value->u.buffer.len + 1, MDL);
+		if (name == NULL)
+			return (ISC_R_NOMEMORY);
 		memcpy (name,
 			nv->value->u.buffer.value,
 			nv->value->u.buffer.len);

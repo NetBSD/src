@@ -1,15 +1,16 @@
-/*	$NetBSD: dhcp.c,v 1.2 2016/01/10 20:10:45 christos Exp $	*/
+/*	$NetBSD: dhcp.c,v 1.3 2018/04/07 21:19:32 christos Exp $	*/
+
 /* dhcp.c
 
    DHCP Protocol engine. */
 
 /*
- * Copyright (c) 2004-2015 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004-2018 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1995-2003 by Internet Software Consortium
  *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -28,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dhcp.c,v 1.2 2016/01/10 20:10:45 christos Exp $");
+__RCSID("$NetBSD: dhcp.c,v 1.3 2018/04/07 21:19:32 christos Exp $");
 
 #include "dhcpd.h"
 #include <errno.h>
@@ -40,6 +41,9 @@ static void maybe_return_agent_options(struct packet *packet,
 static int reuse_lease (struct packet* packet, struct lease* new_lease,
 			struct lease* lease, struct lease_state *state,
 			int offer);
+#if defined(DHCPv6) && defined(DHCP4o6)
+static int locate_network6(struct packet *packet);
+#endif
 
 int outstanding_pings;
 
@@ -86,6 +90,8 @@ const int dhcp_type_name_max = ((sizeof dhcp_type_names) / sizeof (char *));
 # define send_packet trace_packet_send
 #endif
 
+static TIME leaseTimeCheck(TIME calculated, TIME alternate);
+
 void
 dhcp (struct packet *packet) {
 	int ms_nulltp = 0;
@@ -112,6 +118,20 @@ dhcp (struct packet *packet) {
 			s = typebuf;
 		}
 		
+#if defined(DHCPv6) && defined(DHCP4o6)
+		if (dhcpv4_over_dhcpv6 && (packet->dhcp4o6_response != NULL)) {
+			log_info("DHCP4o6 %s from %s via %s: %s", s,
+				 (packet->raw->htype
+				  ? print_hw_addr(packet->raw->htype,
+						  packet->raw->hlen,
+						  packet->raw->chaddr)
+				  : "<no identifier>"),
+				 piaddr(packet->client_addr),
+				 errmsg);
+			goto out;
+		}
+#endif
+
 		log_info("%s from %s via %s: %s", s,
 			 (packet->raw->htype
 			  ? print_hw_addr(packet->raw->htype,
@@ -296,6 +316,21 @@ void dhcpdiscover (packet, ms_nulltp)
 	/* %Audit% This is log output. %2004.06.17,Safe%
 	 * If we truncate we hope the user can get a hint from the log.
 	 */
+#if defined(DHCPv6) && defined(DHCP4o6)
+	if (dhcpv4_over_dhcpv6 && (packet->dhcp4o6_response != NULL)) {
+		snprintf (msgbuf, sizeof msgbuf,
+			  "DHCP4o6 DHCPDISCOVER from %s %s%s%svia %s",
+			  (packet -> raw -> htype
+			   ? print_hw_addr (packet -> raw -> htype,
+					    packet -> raw -> hlen,
+					    packet -> raw -> chaddr)
+			   : (lease
+			      ? print_hex_1(lease->uid_len, lease->uid, 60)
+			      : "<no identifier>")),
+			  s ? "(" : "", s ? s : "", s ? ") " : "",
+			  piaddr(packet->client_addr));
+	} else
+#endif
 	snprintf (msgbuf, sizeof msgbuf, "DHCPDISCOVER from %s %s%s%svia %s",
 		 (packet -> raw -> htype
 		  ? print_hw_addr (packet -> raw -> htype,
@@ -311,6 +346,12 @@ void dhcpdiscover (packet, ms_nulltp)
 
 	/* Sourceless packets don't make sense here. */
 	if (!packet -> shared_network) {
+#if defined(DHCPv6) && defined(DHCP4o6)
+		if (dhcpv4_over_dhcpv6 && (packet->dhcp4o6_response != NULL)) {
+			log_info ("DHCP4o6 packet from unknown subnet: %s",
+				  piaddr(packet->client_addr));
+		} else
+#endif
 		log_info ("Packet from unknown subnet: %s",
 		      inet_ntoa (packet -> raw -> giaddr));
 		goto out;
@@ -486,6 +527,22 @@ void dhcprequest (packet, ms_nulltp, ip_lease)
 	/* %Audit% This is log output. %2004.06.17,Safe%
 	 * If we truncate we hope the user can get a hint from the log.
 	 */
+#if defined(DHCPv6) && defined(DHCP4o6)
+	if (dhcpv4_over_dhcpv6 && (packet->dhcp4o6_response != NULL)) {
+		snprintf (msgbuf, sizeof msgbuf,
+			  "DHCP4o6 DHCPREQUEST for %s%s from %s %s%s%svia %s",
+			  piaddr (cip), smbuf,
+			  (packet -> raw -> htype
+			   ? print_hw_addr (packet -> raw -> htype,
+					    packet -> raw -> hlen,
+					    packet -> raw -> chaddr)
+			   : (lease
+			      ? print_hex_1(lease->uid_len, lease->uid, 60)
+			      : "<no identifier>")),
+			  s ? "(" : "", s ? s : "", s ? ") " : "",
+			  piaddr(packet->client_addr));
+	} else
+#endif
 	snprintf (msgbuf, sizeof msgbuf,
 		 "DHCPREQUEST for %s%s from %s %s%s%svia %s",
 		 piaddr (cip), smbuf,
@@ -805,6 +862,24 @@ void dhcprelease (packet, ms_nulltp)
 	/* %Audit% This is log output. %2004.06.17,Safe%
 	 * If we truncate we hope the user can get a hint from the log.
 	 */
+#if defined(DHCPv6) && defined(DHCP4o6)
+	if (dhcpv4_over_dhcpv6 && (packet->dhcp4o6_response != NULL)) {
+		snprintf (msgbuf, sizeof msgbuf,
+			  "DHCP4o6 DHCPRELEASE of %s from %s %s%s%svia "
+			  "%s (%sfound)",
+			  cstr,
+			  (packet -> raw -> htype
+			   ? print_hw_addr (packet -> raw -> htype,
+					    packet -> raw -> hlen,
+					    packet -> raw -> chaddr)
+			   : (lease
+			      ? print_hex_1(lease->uid_len, lease->uid, 60)
+			      : "<no identifier>")),
+			  s ? "(" : "", s ? s : "", s ? ") " : "",
+			  piaddr(packet->client_addr),
+			  lease ? "" : "not ");
+	} else
+#endif
 	snprintf (msgbuf, sizeof msgbuf,
 		 "DHCPRELEASE of %s from %s %s%s%svia %s (%sfound)",
 		 cstr,
@@ -896,6 +971,22 @@ void dhcpdecline (packet, ms_nulltp)
 	/* %Audit% This is log output. %2004.06.17,Safe%
 	 * If we truncate we hope the user can get a hint from the log.
 	 */
+#if defined(DHCPv6) && defined(DHCP4o6)
+	if (dhcpv4_over_dhcpv6 && (packet->dhcp4o6_response != NULL)) {
+		snprintf (msgbuf, sizeof msgbuf,
+			  "DHCP4o6 DHCPDECLINE of %s from %s %s%s%svia %s",
+			  piaddr (cip),
+			  (packet -> raw -> htype
+			   ? print_hw_addr (packet -> raw -> htype,
+					    packet -> raw -> hlen,
+					    packet -> raw -> chaddr)
+			   : (lease
+			      ? print_hex_1(lease->uid_len, lease->uid, 60)
+			      : "<no identifier>")),
+			  s ? "(" : "", s ? s : "", s ? ") " : "",
+			  piaddr(packet->client_addr));
+	} else
+#endif
 	snprintf (msgbuf, sizeof msgbuf,
 		 "DHCPDECLINE of %s from %s %s%s%svia %s",
 		 piaddr (cip),
@@ -977,6 +1068,20 @@ void dhcpdecline (packet, ms_nulltp)
 		lease_dereference (&lease, MDL);
 }
 
+#if defined(RELAY_PORT)
+u_int16_t dhcp_check_relayport(packet)
+	struct packet *packet;
+{
+	if (lookup_option(&agent_universe,
+			  packet->options,
+			  RAI_RELAY_PORT) != NULL) {
+		return (packet->client_port);
+	}
+
+	return (0);
+}
+#endif
+
 void dhcpinform (packet, ms_nulltp)
 	struct packet *packet;
 	int ms_nulltp;
@@ -998,6 +1103,9 @@ void dhcpinform (packet, ms_nulltp)
 	struct interface_info *interface;
 	int result, h_m_client_ip = 0;
 	struct host_decl  *host = NULL, *hp = NULL, *h;
+#if defined(RELAY_PORT)
+	u_int16_t relay_port = 0;
+#endif
 #if defined (DEBUG_INFORM_HOST)
 	int h_w_fixed_addr = 0;
 #endif
@@ -1007,9 +1115,17 @@ void dhcpinform (packet, ms_nulltp)
 	   source address if they didn't set ciaddr. */
 	if (!packet->raw->ciaddr.s_addr) {
 		zeroed_ciaddr = ISC_TRUE;
-		cip.len = 4;
-		memcpy(cip.iabuf, &packet->client_addr.iabuf, 4);
-		addr_type = "source";
+		/* With DHCPv4-over-DHCPv6 it can be an IPv6 address
+		   so we check its length. */
+		if (packet->client_addr.len == 4) {
+			cip.len = 4;
+			memcpy(cip.iabuf, &packet->client_addr.iabuf, 4);
+			addr_type = "source";
+		} else {
+			cip.len = 0;
+			memset(cip.iabuf, 0, 4);
+			addr_type = "v4o6";
+		}
 	} else {
 		zeroed_ciaddr = ISC_FALSE;
 		cip.len = 4;
@@ -1032,6 +1148,14 @@ void dhcpinform (packet, ms_nulltp)
 	/* %Audit% This is log output. %2004.06.17,Safe%
 	 * If we truncate we hope the user can get a hint from the log.
 	 */
+#if defined(DHCPv6) && defined(DHCP4o6)
+	if (dhcpv4_over_dhcpv6 && (packet->dhcp4o6_response != NULL)) {
+		snprintf(msgbuf, sizeof(msgbuf),
+			 "DHCP4o6 DHCPINFORM from %s via %s",
+			 piaddr(cip),
+			 piaddr(packet->client_addr));
+	} else
+#endif
 	snprintf(msgbuf, sizeof(msgbuf), "DHCPINFORM from %s via %s",
 		 piaddr(cip),
 		 packet->raw->giaddr.s_addr ?
@@ -1043,6 +1167,10 @@ void dhcpinform (packet, ms_nulltp)
 		log_info("%s: ignored (null source address).", msgbuf);
 		return;
 	}
+
+#if defined(RELAY_PORT)
+	relay_port = dhcp_check_relayport(packet);
+#endif
 
 	/* Find the subnet that the client is on. 
 	 * CC: Do the link selection / subnet selection
@@ -1131,11 +1259,33 @@ void dhcpinform (packet, ms_nulltp)
 
 	maybe_return_agent_options(packet, options);
 
-	/* Execute statements in scope starting with the subnet scope. */
+	/* Execute statements network statements starting at the subnet level */
 	execute_statements_in_scope(NULL, packet, NULL, NULL,
 				    packet->options, options,
 				    &global_scope, subnet->group,
 				    NULL, NULL);
+
+	/* If we have ciaddr, find its lease so we can find its pool. */
+	if (zeroed_ciaddr == ISC_FALSE) {
+		struct lease* cip_lease = NULL;
+
+		find_lease_by_ip_addr (&cip_lease, cip, MDL);
+	
+		/* Overlay with pool options if ciaddr mapped to a lease. */	
+		if (cip_lease) {
+		 	if (cip_lease->pool && cip_lease->pool->group) {
+				execute_statements_in_scope(
+					NULL, packet, NULL, NULL,
+				    	packet->options, options,
+				    	&global_scope,
+				     	cip_lease->pool->group,
+					cip_lease->pool->shared_network->group,
+					NULL);
+			}
+
+			lease_dereference (&cip_lease, MDL);
+		}
+	}
  		
 	/* Execute statements in the class scopes. */
 	for (i = packet->class_count; i > 0; i--) {
@@ -1515,6 +1665,36 @@ void dhcpinform (packet, ms_nulltp)
 	dump_raw ((unsigned char *)&raw, outgoing.packet_length);
 #endif
 
+#if defined(DHCPv6) && defined(DHCP4o6)
+	if (dhcpv4_over_dhcpv6 && (packet->dhcp4o6_response != NULL)) {
+		/* Report what we're sending. */
+		snprintf(msgbuf, sizeof msgbuf,
+			 "DHCP4o6 DHCPACK to %s (%s) via", piaddr(cip),
+			 (packet->raw->htype && packet->raw->hlen) ?
+			 print_hw_addr(packet->raw->htype, packet->raw->hlen,
+				       packet->raw->chaddr) :
+			 "<no client hardware address>");
+		log_info("%s %s", msgbuf, piaddr(packet->client_addr));
+
+		/* fill dhcp4o6_response */
+		packet->dhcp4o6_response->len = outgoing.packet_length;
+		packet->dhcp4o6_response->buffer = NULL;
+		if (!buffer_allocate(&packet->dhcp4o6_response->buffer,
+				     outgoing.packet_length, MDL)) {
+			log_fatal("No memory to store DHCP4o6 reply.");
+		}
+		packet->dhcp4o6_response->data =
+			packet->dhcp4o6_response->buffer->data;
+		memcpy(packet->dhcp4o6_response->buffer->data,
+		       outgoing.raw, outgoing.packet_length);
+
+		/* done */
+		if (subnet)
+			subnet_dereference (&subnet, MDL);
+		return;
+	}
+#endif
+
 	/* Set up the common stuff... */
 	to.sin_family = AF_INET;
 #ifdef HAVE_SA_LEN
@@ -1542,7 +1722,11 @@ void dhcpinform (packet, ms_nulltp)
 	 */
 	if (!raw.ciaddr.s_addr && gip.len) {
 		memcpy(&to.sin_addr, gip.iabuf, 4);
+#if defined(RELAY_PORT)
+		to.sin_port = relay_port ? relay_port : local_port;
+#else
 		to.sin_port = local_port;
+#endif
 		raw.flags |= htons(BOOTP_BROADCAST);
 	} else {
 		gip.len = 0;
@@ -1599,6 +1783,9 @@ void nak_lease (packet, cip, network_group)
 	unsigned char nak = DHCPNAK;
 	struct packet outgoing;
 	unsigned i;
+#if defined(RELAY_PORT)
+	u_int16_t relay_port = 0;
+#endif
 	struct option_state *options = (struct option_state *)0;
 	struct option_cache *oc = (struct option_cache *)0;
 	struct option_state *eval_options = NULL;
@@ -1627,6 +1814,10 @@ void nak_lease (packet, cip, network_group)
 	save_option (&dhcp_universe, options, oc);
 	option_cache_dereference (&oc, MDL);
 		     
+#if defined(RELAY_PORT)
+	relay_port = dhcp_check_relayport(packet);
+#endif
+
 	/* Set DHCP_MESSAGE to whatever the message is */
 	if (!option_cache_allocate (&oc, MDL)) {
 		log_error ("No memory for DHCPNAK message type.");
@@ -1715,7 +1906,21 @@ void nak_lease (packet, cip, network_group)
 	raw.hops = packet -> raw -> hops;
 	raw.op = BOOTREPLY;
 
+	/* Make sure that the packet is at least as big as a BOOTP packet. */
+	if (outgoing.packet_length < BOOTP_MIN_LEN)
+		outgoing.packet_length = BOOTP_MIN_LEN;
+
 	/* Report what we're sending... */
+#if defined(DHCPv6) && defined(DHCP4o6)
+	if (dhcpv4_over_dhcpv6 && (packet->dhcp4o6_response != NULL)) {
+		log_info ("DHCP4o6 DHCPNAK on %s to %s via %s",
+			  piaddr (*cip),
+			  print_hw_addr (packet -> raw -> htype,
+					 packet -> raw -> hlen,
+					 packet -> raw -> chaddr),
+			  piaddr(packet->client_addr));
+	} else
+#endif
 	log_info ("DHCPNAK on %s to %s via %s",
 	      piaddr (*cip),
 	      print_hw_addr (packet -> raw -> htype,
@@ -1732,6 +1937,23 @@ void nak_lease (packet, cip, network_group)
 	dump_raw ((unsigned char *)&raw, outgoing.packet_length);
 #endif
 
+#if defined(DHCPv6) && defined(DHCP4o6)
+	if (dhcpv4_over_dhcpv6 && (packet->dhcp4o6_response != NULL)) {
+		/* fill dhcp4o6_response */
+		packet->dhcp4o6_response->len = outgoing.packet_length;
+		packet->dhcp4o6_response->buffer = NULL;
+		if (!buffer_allocate(&packet->dhcp4o6_response->buffer,
+				     outgoing.packet_length, MDL)) {
+			log_fatal("No memory to store DHCP4o6 reply.");
+		}
+		packet->dhcp4o6_response->data =
+			packet->dhcp4o6_response->buffer->data;
+		memcpy(packet->dhcp4o6_response->buffer->data,
+		       outgoing.raw, outgoing.packet_length);
+		return;
+	}
+#endif
+
 	/* Set up the common stuff... */
 	to.sin_family = AF_INET;
 #ifdef HAVE_SA_LEN
@@ -1739,16 +1961,16 @@ void nak_lease (packet, cip, network_group)
 #endif
 	memset (to.sin_zero, 0, sizeof to.sin_zero);
 
-	/* Make sure that the packet is at least as big as a BOOTP packet. */
-	if (outgoing.packet_length < BOOTP_MIN_LEN)
-		outgoing.packet_length = BOOTP_MIN_LEN;
-
 	/* If this was gatewayed, send it back to the gateway.
 	   Otherwise, broadcast it on the local network. */
 	if (raw.giaddr.s_addr) {
 		to.sin_addr = raw.giaddr;
 		if (raw.giaddr.s_addr != htonl (INADDR_LOOPBACK))
+#if defined(RELAY_PORT)
+			to.sin_port = relay_port ? relay_port : local_port;
+#else
 			to.sin_port = local_port;
+#endif
 		else
 			to.sin_port = remote_port; /* for testing. */
 
@@ -2697,8 +2919,15 @@ void ack_lease (packet, lease, offer, when, msg, ms_nulltp, hp)
 			 * the desired lease time upon renewal.
 			 */
 			if (offer == DHCPACK) {
-				lt->tstp = cur_time + lease_time +
-						(new_lease_time / 2);
+				if (lease_time == INFINITE_TIME) {
+					lt->tstp = MAX_TIME;
+				} else {
+					lt->tstp =
+						leaseTimeCheck(
+						    (cur_time + lease_time
+						     + (new_lease_time / 2)),
+						    MAX_TIME - 1);
+				}
 
 				/* If we reduced the potential expiry time,
 				 * make sure we don't offer an old-expiry-time
@@ -2715,12 +2944,16 @@ void ack_lease (packet, lease, offer, when, msg, ms_nulltp, hp)
 		}
 #endif /* FAILOVER_PROTOCOL */
 
-		/* If the lease duration causes the time value to wrap,
-		   use the maximum expiry time. */
-		if (cur_time + lease_time < cur_time)
-			state -> offered_expiry = MAX_TIME - 1;
-		else
-			state -> offered_expiry = cur_time + lease_time;
+		if (lease_time == INFINITE_TIME) {
+			state->offered_expiry = MAX_TIME;
+		} else {
+			/* If the lease duration causes the time value to wrap,
+			 use the maximum expiry time. */
+			state->offered_expiry
+				= leaseTimeCheck(cur_time + lease_time,
+						 MAX_TIME - 1);
+		}
+
 		if (when)
 			lt -> ends = when;
 		else
@@ -2903,6 +3136,8 @@ void ack_lease (packet, lease, offer, when, msg, ms_nulltp, hp)
 			lt -> client_hostname [d1.len] = 0;
 		}
 		data_string_forget (&d1, MDL);
+		/* hostname changed, can't reuse lease */
+		lease->cannot_reuse = 1;
 	}
 
 	/* Record the hardware address, if given... */
@@ -2911,7 +3146,17 @@ void ack_lease (packet, lease, offer, when, msg, ms_nulltp, hp)
 	memcpy (&lt -> hardware_addr.hbuf [1], packet -> raw -> chaddr,
 		sizeof packet -> raw -> chaddr);
 
-	lt -> flags = lease -> flags & ~PERSISTENT_FLAGS;
+	/*
+	 * If client has requested the lease become infinite, then it
+	 * doens't qualify for reuse even if it's younger than the
+	 * dhcp-cache-threshold.
+	 */
+	if ((lt->flags & RESERVED_LEASE) && !(lease->flags & RESERVED_LEASE)) {
+		log_debug ("Cannot reuse: lease is changing to RESERVED");
+		lease->cannot_reuse = 1;
+	}
+
+	lt->flags |= lease->flags & ~PERSISTENT_FLAGS;
 
 	/* If there are statements to execute when the lease is
 	   committed, execute them. */
@@ -3321,7 +3566,8 @@ void ack_lease (packet, lease, offer, when, msg, ms_nulltp, hp)
 	/* If this is a DHCPOFFER, ping the lease address before actually
 	   sending the offer. */
 	if (offer == DHCPOFFER && !(lease -> flags & STATIC_LEASE) &&
-	    ((cur_time - lease_cltt) > 60) &&
+	    (((cur_time - lease_cltt) > 60) ||
+             (lease->binding_state == FTS_ABANDONED)) &&
 	    (!(oc = lookup_option (&server_universe, state -> options,
 				   SV_PING_CHECKS)) ||
 	     evaluate_boolean_option_cache (&ignorep, packet, lease,
@@ -3545,6 +3791,9 @@ void dhcp_reply (lease)
 	int result;
 	struct lease_state *state = lease -> state;
 	int nulltp, bootpp, unicastp = 1;
+#if defined(RELAY_PORT)
+	u_int16_t relay_port = 0;
+#endif
 	struct data_string d1;
 	const char *s;
 
@@ -3642,6 +3891,48 @@ void dhcp_reply (lease)
 	} else
 		s = (char *)0;
 
+	/* Make sure outgoing packets are at least as big
+	   as a BOOTP packet. */
+	if (packet_length < BOOTP_MIN_LEN)
+		packet_length = BOOTP_MIN_LEN;
+
+#if defined(DHCPv6) && defined(DHCP4o6)
+	if (dhcpv4_over_dhcpv6 && (state->packet->dhcp4o6_response != NULL)) {
+		/* Say what we're doing... */
+		log_info ("DHCP4o6 %s on %s to %s %s%s%svia %s",
+			  (state -> offer
+			   ? (state -> offer == DHCPACK
+			      ? "DHCPACK" : "DHCPOFFER")
+			   : "BOOTREPLY"),
+			  piaddr (lease -> ip_addr),
+			  (lease -> hardware_addr.hlen
+			   ? print_hw_addr (lease -> hardware_addr.hbuf [0],
+					    lease -> hardware_addr.hlen - 1,
+					    &lease -> hardware_addr.hbuf [1])
+			   : print_hex_1(lease->uid_len, lease->uid, 60)),
+			  s ? "(" : "", s ? s : "", s ? ") " : "",
+			  piaddr(state->packet->client_addr));
+
+		/* fill dhcp4o6_response */
+		state->packet->dhcp4o6_response->len = packet_length;
+		state->packet->dhcp4o6_response->buffer = NULL;
+		if (!buffer_allocate(&state->packet->dhcp4o6_response->buffer,
+				     packet_length, MDL)) {
+			log_fatal("No memory to store DHCP4o6 reply.");
+		}
+		state->packet->dhcp4o6_response->data =
+			state->packet->dhcp4o6_response->buffer->data;
+		memcpy(state->packet->dhcp4o6_response->buffer->data,
+		       &raw, packet_length);
+
+		/* done */
+		free_lease_state (state, MDL);
+		lease -> state = (struct lease_state *)0;
+
+		return;
+	}
+#endif
+
 	/* Say what we're doing... */
 	log_info ("%s on %s to %s %s%s%svia %s",
 		  (state -> offer
@@ -3658,6 +3949,10 @@ void dhcp_reply (lease)
 		   ? inet_ntoa (state -> giaddr)
 		   : state -> ip -> name));
 
+#ifdef DEBUG_PACKET
+	dump_raw ((unsigned char *)&raw, packet_length);
+#endif
+
 	/* Set up the hardware address... */
 	hto.hlen = lease -> hardware_addr.hlen;
 	memcpy (hto.hbuf, lease -> hardware_addr.hbuf, hto.hlen);
@@ -3668,20 +3963,19 @@ void dhcp_reply (lease)
 #endif
 	memset (to.sin_zero, 0, sizeof to.sin_zero);
 
-#ifdef DEBUG_PACKET
-	dump_raw ((unsigned char *)&raw, packet_length);
+#if defined(RELAY_PORT)
+	relay_port = dhcp_check_relayport(state->packet);
 #endif
-
-	/* Make sure outgoing packets are at least as big
-	   as a BOOTP packet. */
-	if (packet_length < BOOTP_MIN_LEN)
-		packet_length = BOOTP_MIN_LEN;
 
 	/* If this was gatewayed, send it back to the gateway... */
 	if (raw.giaddr.s_addr) {
 		to.sin_addr = raw.giaddr;
 		if (raw.giaddr.s_addr != htonl (INADDR_LOOPBACK))
+#if defined(RELAY_PORT)
+			to.sin_port = relay_port ? relay_port : local_port;
+#else
 			to.sin_port = local_port;
+#endif
 		else
 			to.sin_port = remote_port; /* For debugging. */
 
@@ -3943,6 +4237,7 @@ int find_lease (struct lease **lp,
 	 * preference, so the first one is the best one.
 	 */
 	while (uid_lease) {
+		isc_boolean_t do_release = !packet->raw->ciaddr.s_addr;
 #if defined (DEBUG_FIND_LEASE)
 		log_info ("trying next lease matching client id: %s",
 			  piaddr (uid_lease -> ip_addr));
@@ -3973,6 +4268,9 @@ int find_lease (struct lease **lp,
 			log_info ("wrong network segment: %s",
 				  piaddr (uid_lease -> ip_addr));
 #endif
+			/* Allow multiple leases using the same UID
+			   on different subnetworks. */
+			do_release = ISC_FALSE;
 			goto n_uid;
 		}
 
@@ -3988,7 +4286,7 @@ int find_lease (struct lease **lp,
 			if (uid_lease -> n_uid)
 				lease_reference (&next,
 						 uid_lease -> n_uid, MDL);
-			if (!packet -> raw -> ciaddr.s_addr)
+			if (do_release)
 				release_lease (uid_lease, packet);
 			lease_dereference (&uid_lease, MDL);
 			if (next) {
@@ -4353,6 +4651,7 @@ int find_lease (struct lease **lp,
 #if defined (DEBUG_FIND_LEASE)
 			log_info ("not choosing requested address (!).");
 #endif
+			lease_dereference (&ip_lease, MDL);
 		} else {
 #if defined (DEBUG_FIND_LEASE)
 			log_info ("choosing lease on requested address.");
@@ -4361,7 +4660,6 @@ int find_lease (struct lease **lp,
 			if (lease -> host)
 				host_dereference (&lease -> host, MDL);
 		}
-		lease_dereference (&ip_lease, MDL);
 	}
 
 	/* If we got a lease that matched the client identifier, we may want
@@ -4583,7 +4881,6 @@ int allocate_lease (struct lease **lp, struct packet *packet,
 {
 	struct lease *lease = NULL;
 	struct lease *candl = NULL;
-	struct lease *peerl = NULL;
 
 	for (; pool ; pool = pool -> next) {
 		if ((pool -> prohibit_list &&
@@ -4608,6 +4905,7 @@ int allocate_lease (struct lease **lp, struct packet *packet,
 		/* Skip to the most expired lease in the pool that is not
 		 * owned by a failover peer. */
 		if (pool->failover_peer != NULL) {
+			struct lease *peerl = NULL;
 			if (pool->failover_peer->i_am == primary) {
 				candl = LEASE_GET_FIRST(pool->free);
 
@@ -4665,8 +4963,11 @@ int allocate_lease (struct lease **lp, struct packet *packet,
 		 * "no free leases" error when the last lease has been
 		 * offered, but it's not exactly broken either.
 		 */
-		if (!candl || (candl -> ends > cur_time))
+		if (!candl ||
+	            (candl->binding_state != FTS_ABANDONED &&
+		     (candl->ends > cur_time))) {
 			continue;
+		}
 
 		if (!lease) {
 			lease = candl;
@@ -4793,6 +5094,132 @@ int permitted (packet, permit_list)
 	return 0;
 }
 
+#if defined(DHCPv6) && defined(DHCP4o6)
+static int locate_network6 (packet)
+	struct packet *packet;
+{
+	const struct packet *chk_packet;
+	const struct in6_addr *link_addr, *first_link_addr;
+	struct iaddr ia;
+	struct data_string data;
+	struct subnet *subnet = NULL;
+	struct option_cache *oc;
+
+	/* from locate_network() */
+
+	/* See if there's a Relay Agent Link Selection Option, or a
+	 * Subnet Selection Option.  The Link-Select and Subnet-Select
+	 * are formatted and used precisely the same, but we must prefer
+	 * the link-select over the subnet-select.
+	 * BTW in DHCPv4 over DHCPv6 no cross version relay was specified
+	 * so it is unlikely to see a link-select.
+	 */
+	if ((oc = lookup_option(&agent_universe, packet->options,
+				RAI_LINK_SELECT)) == NULL)
+		oc = lookup_option(&dhcp_universe, packet->options,
+				   DHO_SUBNET_SELECTION);
+
+	/* If there's an option indicating link connection or subnet
+	 * selection, and it's valid, use it to figure out the subnet.
+	 * If it's not valid, fail.
+	 */
+	if (oc) {
+		memset(&data, 0, sizeof data);
+		if (!evaluate_option_cache(&data, packet, NULL, NULL,
+					   packet->options, NULL,
+					   &global_scope, oc, MDL)) {
+			return (0);
+		}
+		if (data.len == 0) {
+			return (0);
+		}
+		if (data.len != 4) {
+			data_string_forget(&data, MDL);
+			return (0);
+		}
+		ia.len = 4;
+		memcpy(ia.iabuf, data.data, 4);
+		data_string_forget(&data, MDL);
+
+		if (find_subnet(&subnet, ia, MDL)) {
+			shared_network_reference(&packet->shared_network,
+						 subnet->shared_network, MDL);
+			subnet_dereference(&subnet, MDL);
+			return (1);
+		}
+		return (0);
+	}
+
+	/* See if there is a giaddr (still unlikely), if there is one
+	 * use it to figure out the subnet.  If it's not valid, fail.
+	 */
+	if (packet->raw->giaddr.s_addr) {
+		ia.len = 4;
+		memcpy(ia.iabuf, &packet->raw->giaddr, 4);
+
+		if (find_subnet(&subnet, ia, MDL)) {
+			shared_network_reference(&packet->shared_network,
+						 subnet->shared_network, MDL);
+			subnet_dereference(&subnet, MDL);
+			return (1);
+		}
+		return (0);
+	}
+
+	/* from shared_network_from_packet6() */
+
+	/* First, find the link address where the packet from the client
+	 * first appeared (if this packet was relayed).
+	 */
+	first_link_addr = NULL;
+	chk_packet = packet->dhcpv6_container_packet;
+	while (chk_packet != NULL) {
+		link_addr = &chk_packet->dhcpv6_link_address;
+		if (!IN6_IS_ADDR_UNSPECIFIED(link_addr) &&
+		    !IN6_IS_ADDR_LINKLOCAL(link_addr)) {
+			first_link_addr = link_addr;
+			break;
+		}
+		chk_packet = chk_packet->dhcpv6_container_packet;
+	}
+
+	/* If there is a relayed link address, find the subnet associated
+	 * with that, and use that to get the appropriate shared_network.
+	 */
+	if (first_link_addr != NULL) {
+		ia.len = sizeof(*first_link_addr);
+		memcpy(ia.iabuf, first_link_addr, sizeof(*first_link_addr));
+		if (find_subnet (&subnet, ia, MDL)) {
+			shared_network_reference(&packet->shared_network,
+						 subnet->shared_network, MDL);
+			subnet_dereference(&subnet, MDL);
+			return (1);
+		}
+		return (0);
+	}
+
+	/* If there is no link address, we will use the interface
+	 * that this packet came in on to pick the shared_network.
+	 */
+	if (packet->interface != NULL) {
+		if (packet->interface->shared_network == NULL)
+			return (0);
+		shared_network_reference(&packet->shared_network,
+					 packet->interface->shared_network,
+					 MDL);
+		return (1);
+	}
+
+	/* We shouldn't be able to get here but if there is no link
+	 * address and no interface we don't know where to get the
+	 * shared_network from, log an error and return an error.
+	 */
+	log_error("No interface and no link address "
+		  "can't determine DHCP4o6 shared network");
+	return (0);
+}
+#endif
+
 int locate_network (packet)
 	struct packet *packet;
 {
@@ -4800,6 +5227,12 @@ int locate_network (packet)
 	struct data_string data;
 	struct subnet *subnet = (struct subnet *)0;
 	struct option_cache *oc;
+
+#if defined(DHCPv6) && defined(DHCP4o6)
+	if (dhcpv4_over_dhcpv6 && (packet->dhcp4o6_response != NULL)) {
+		return (locate_network6 (packet));
+	}
+#endif
 
 	/* See if there's a Relay Agent Link Selection Option, or a
 	 * Subnet Selection Option.  The Link-Select and Subnet-Select
@@ -4835,7 +5268,11 @@ int locate_network (packet)
 					    &global_scope, oc, MDL)) {
 			return 0;
 		}
+		if (data.len == 0) {
+			return 0;
+		}
 		if (data.len != 4) {
+			data_string_forget (&data, MDL);
 			return 0;
 		}
 		ia.len = 4;
@@ -5177,7 +5614,10 @@ void use_host_decl_name(struct packet* packet,
  *  c. The lease "age" is less than that allowed by the threshold
  *  d. DNS updates are not being performed on the new lease.
  *  e. Lease has not been otherwise disqualified for reuse (Ex: billing class
- *  changed)
+ *  or hostname changed)
+ *  f. The host declaration has changed (either a new one was added
+ *  or an older one was found due to something like a change in the uid)
+ *  g. The UID or hardware address have changed.
  *
  * Clients may renew leases using full DORA cycles or just RAs. This means
  * that reusability must be checked when acking both DISCOVERs and REQUESTs.
@@ -5192,6 +5632,8 @@ void use_host_decl_name(struct packet* packet,
  * \param new_lease candidate new lease to associate with the client
  * \param lease current lease associated with the client
  * \param options option state to search and update
+ *
+ * \return 1 if the lease can be reused.
  */
 int
 reuse_lease (struct packet* packet,
@@ -5204,10 +5646,20 @@ reuse_lease (struct packet* packet,
 	/* To even consider reuse all of the following must be true:
 	 * 1 - reuse hasn't already disqualified
 	 * 2 - current lease is active
-	 * 3 - DNS info hasn't changed */
+	 * 3 - DNS info hasn't changed
+	 * 4 - the host declaration hasn't changed
+	 * 5 - the uid hasn't changed
+	 * 6 - the hardware address hasn't changed */
 	if ((lease->cannot_reuse == 0) &&
 	    (lease->binding_state == FTS_ACTIVE) &&
-	    (new_lease->ddns_cb == NULL)) {
+	    (new_lease->ddns_cb == NULL) &&
+	    (lease->host == new_lease->host) &&
+	    (lease->uid_len == new_lease->uid_len) &&
+	    (memcmp(lease->uid, new_lease->uid, lease->uid_len) == 0) &&
+	    (lease->hardware_addr.hlen == new_lease->hardware_addr.hlen) &&
+	    (memcmp(&lease->hardware_addr.hbuf[0],
+		    &new_lease->hardware_addr.hbuf[0],
+		    lease->hardware_addr.hlen) == 0)) {
 		int thresh = DEFAULT_CACHE_THRESHOLD;
 		struct option_cache* oc = NULL;
 		struct data_string d1;
@@ -5241,7 +5693,7 @@ reuse_lease (struct packet* packet,
 			/* Note new_lease->starts is really just cur_time */
 			lease_age = new_lease->starts - lease->starts;
 
-			/* Is the lease is young enough to reuse? */
+			/* Is the lease young enough to reuse? */
 			if (lease_age <= limit) {
 				/* Restore expiry to its original value */
 				state->offered_expiry = lease->ends;
@@ -5258,11 +5710,18 @@ reuse_lease (struct packet* packet,
 							new_lease->scope, MDL);
 				}
 
+				/* restore client hostname, fixes 42849. */
+				if (new_lease->client_hostname) {
+					lease->client_hostname =
+					  new_lease->client_hostname;
+					new_lease->client_hostname = NULL;
+				}
+
 				/* We're cleared to reuse it */
 				log_debug("reuse_lease: lease age %ld (secs)"
 					  " under %d%% threshold, reply with "
-					  "unaltered, existing lease",
-					  lease_age, thresh);
+					  "unaltered, existing lease for %s",
+					  lease_age, thresh, piaddr(lease->ip_addr));
 
 				reusable = 1;
 			}
@@ -5273,4 +5732,30 @@ reuse_lease (struct packet* packet,
 	 * ensuing REQUEST, otherwise clear the flag. */
 	lease->cannot_reuse = (!reusable && offer == DHCPOFFER);
 	return (reusable);
+}
+
+/* \brief Validates a proposed value for use as a lease time
+ *
+ * Convenience function used for catching calculeated lease
+ * times that overflow 4-byte times used in v4 protocol.
+ *
+ * We use variables of type TIME in lots of places, which on
+ * 64-bit systems is 8 bytes while on 32-bit OSs it is int32_t,
+ * so we have all sorts of fun places to mess things up.
+ * This function checks a calculated lease time for and if it
+ * is unsuitable for use as a lease time, the given alternate
+ * value is returned.
+ * \param calculated
+ * \param alternate
+ *
+ * \returen either the calculated value if it is valid, or
+ * the alternate value supplied
+ */
+TIME leaseTimeCheck(TIME calculated, TIME alternate) {
+    if ((sizeof(TIME) > 4 && calculated >= INFINITE_TIME) ||
+        (calculated < cur_time)) {
+        return (alternate);
+    }
+
+    return (calculated);
 }
