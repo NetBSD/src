@@ -1,4 +1,4 @@
-/*	$NetBSD: leasechain.c,v 1.1.1.1 2018/04/07 22:34:28 christos Exp $	*/
+/*	$NetBSD: leasechain.c,v 1.2 2018/04/07 22:37:30 christos Exp $	*/
 
 /* leasechain.c
 
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: leasechain.c,v 1.1.1.1 2018/04/07 22:34:28 christos Exp $");
+__RCSID("$NetBSD: leasechain.c,v 1.2 2018/04/07 22:37:30 christos Exp $");
 
 /*! \file server\leasechaing.c
  *

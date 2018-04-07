@@ -1,4 +1,4 @@
-/*	$NetBSD: dhclient.c,v 1.1.1.1 2018/04/07 22:34:25 christos Exp $	*/
+/*	$NetBSD: dhclient.c,v 1.2 2018/04/07 22:37:29 christos Exp $	*/
 
 /* dhclient.c
 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dhclient.c,v 1.1.1.1 2018/04/07 22:34:25 christos Exp $");
+__RCSID("$NetBSD: dhclient.c,v 1.2 2018/04/07 22:37:29 christos Exp $");
 
 #include "dhcpd.h"
 #include <isc/util.h>
@@ -58,10 +58,12 @@ const char *path_dhclient_duid = NULL;
 
 /* False (default) => we write and use a pid file */
 isc_boolean_t no_pid_file = ISC_FALSE;
+isc_boolean_t hw_mismatch_drop = ISC_TRUE;
 
 int dhcp_max_agent_option_packet_length = 0;
 
 int interfaces_requested = 0;
+int interfaces_left = 0;
 
 struct iaddr iaddr_broadcast = { 4, { 255, 255, 255, 255 } };
 struct iaddr iaddr_any = { 4, { 0, 0, 0, 0 } };
@@ -113,6 +115,21 @@ int prefix_len_hint = 0;
 int address_prefix_len = DHCLIENT_DEFAULT_PREFIX_LEN;
 char *mockup_relay = NULL;
 
+libdhcp_callbacks_t dhclient_callbacks = {
+	&local_port,
+	&remote_port,
+	classify,
+	check_collection,
+	dhcp,
+#ifdef DHCPv6
+	dhcpv6,
+#endif /* DHCPv6 */
+	bootp,
+	find_class,
+	parse_allow_deny,
+	dhcp_set_control_state,
+};
+
 char *progname = NULL;
 
 void run_stateless(int exit_mode, u_int16_t port);
@@ -127,6 +144,80 @@ static int check_option_values(struct universe *universe, unsigned int opt,
 
 static void dhclient_ddns_cb_free(dhcp_ddns_cb_t *ddns_cb,
                                    char* file, int line);
+static void
+setup(void) {
+	isc_result_t status;
+	/* Set up the isc and dns library managers */
+	status = dhcp_context_create(DHCP_CONTEXT_PRE_DB, NULL, NULL);
+	if (status != ISC_R_SUCCESS)
+		log_fatal("Can't initialize context: %s",
+			isc_result_totext(status));
+
+	/* Set up the OMAPI. */
+	status = omapi_init();
+	if (status != ISC_R_SUCCESS)
+		log_fatal("Can't initialize OMAPI: %s",
+			isc_result_totext(status));
+
+	/* Set up the OMAPI wrappers for various server database internal
+	   objects. */
+	dhcp_common_objects_setup();
+
+	dhcp_interface_discovery_hook = dhclient_interface_discovery_hook;
+	dhcp_interface_shutdown_hook = dhclient_interface_shutdown_hook;
+	dhcp_interface_startup_hook = dhclient_interface_startup_hook;
+}
+
+static void
+go_daemon(void)
+{
+	int pid;
+
+	if (pipe(dfd) == -1)
+		log_fatal("Can't get pipe: %m");
+	if ((pid = fork ()) < 0)
+		log_fatal("Can't fork daemon: %m");
+	if (pid != 0) {
+		/* Parent: wait for the child to start */
+		int n;
+
+		(void) close(dfd[1]);
+		do {
+			char buf;
+
+			n = read(dfd[0], &buf, 1);
+			if (n == 1)
+				_exit((int)buf);
+		} while (n == -1 && errno == EINTR);
+		_exit(1);
+	}
+	/* Child */
+	(void) close(dfd[0]);
+}
+
+static void
+add_interfaces(char **ifaces, int nifaces)
+{
+	isc_result_t status;
+
+	for (int i = 0; i < nifaces; i++) {
+		struct interface_info *tmp = NULL;
+		status = interface_allocate(&tmp, MDL);
+		if (status != ISC_R_SUCCESS)
+			log_fatal("Can't record interface %s:%s",
+		ifaces[i], isc_result_totext(status));
+		if (strlen(ifaces[i]) >= sizeof(tmp->name))
+			log_fatal("%s: interface name too long (is %ld)",
+		ifaces[i], (long)strlen(ifaces[i]));
+		strcpy(tmp->name, ifaces[i]);
+		if (interfaces) {
+			interface_reference(&tmp->next, interfaces, MDL);
+			interface_dereference(&interfaces, MDL);
+		}
+		interface_reference(&interfaces, tmp, MDL);
+		tmp->flags = INTERFACE_REQUESTED;
+	}
+}
 
 /*!
  *
@@ -145,7 +236,7 @@ static void dhclient_ddns_cb_free(dhcp_ddns_cb_t *ddns_cb,
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dhclient.c,v 1.1.1.1 2018/04/07 22:34:25 christos Exp $");
+__RCSID("$NetBSD: dhclient.c,v 1.2 2018/04/07 22:37:29 christos Exp $");
 
 #if defined(DHCPv6) && defined(DHCP4o6)
 static void dhcp4o6_poll(void *dummy);
@@ -217,7 +308,7 @@ usage(const char *sfmt, const char *sarg)
 		  DHCLIENT_USAGEH);
 }
 
-extern void initialize_client_option_spaces();
+extern void initialize_client_option_spaces(void);
 
 int
 main(int argc, char **argv) {
@@ -227,7 +318,6 @@ main(int argc, char **argv) {
 	struct client_state *client;
 	unsigned seed;
 	char *server = NULL;
-	isc_result_t status;
 	int exit_mode = 0;
 	int release_mode = 0;
 	struct timeval tv;
@@ -245,6 +335,9 @@ main(int argc, char **argv) {
 #endif /* DHCP4o6 */
 #endif /* DHCPv6 */
 	char *s;
+	char **ifaces;
+
+	libdhcp_callbacks_register(&dhclient_callbacks);
 
 #ifdef OLD_LOG_NAME
 	progname = "dhclient";
@@ -272,6 +365,11 @@ main(int argc, char **argv) {
 #if !(defined(DEBUG) || defined(__CYGWIN32__))
 	setlogmask(LOG_UPTO(LOG_INFO));
 #endif
+
+	if ((ifaces = malloc(sizeof(*ifaces) * argc)) == NULL) {
+		log_fatal("Can't allocate memory");
+		return 1;
+	}
 
 	/* Parse arguments changing no_daemon */
 	for (i = 1; i < argc; i++) {
@@ -312,50 +410,10 @@ main(int argc, char **argv) {
 	}
 	/* When not forbidden prepare to become a daemon */
 	if (!no_daemon) {
-		int pid;
-
-		if (pipe(dfd) == -1)
-			log_fatal("Can't get pipe: %m");
-		if ((pid = fork ()) < 0)
-			log_fatal("Can't fork daemon: %m");
-		if (pid != 0) {
-			/* Parent: wait for the child to start */
-			int n;
-
-			(void) close(dfd[1]);
-			do {
-				char buf;
-
-				n = read(dfd[0], &buf, 1);
-				if (n == 1)
-					_exit((int)buf);
-			} while (n == -1 && errno == EINTR);
-			_exit(1);
-		}
-		/* Child */
-		(void) close(dfd[0]);
+		go_daemon();
 	}
 
-	/* Set up the isc and dns library managers */
-	status = dhcp_context_create(DHCP_CONTEXT_PRE_DB | DHCP_CONTEXT_POST_DB
-				     | DHCP_DNS_CLIENT_LAZY_INIT, NULL, NULL);
-	if (status != ISC_R_SUCCESS)
-		log_fatal("Can't initialize context: %s",
-			  isc_result_totext(status));
-
-	/* Set up the OMAPI. */
-	status = omapi_init();
-	if (status != ISC_R_SUCCESS)
-		log_fatal("Can't initialize OMAPI: %s",
-			  isc_result_totext(status));
-
-	/* Set up the OMAPI wrappers for various server database internal
-	   objects. */
-	dhcp_common_objects_setup();
-
-	dhcp_interface_discovery_hook = dhclient_interface_discovery_hook;
-	dhcp_interface_shutdown_hook = dhclient_interface_shutdown_hook;
-	dhcp_interface_startup_hook = dhclient_interface_startup_hook;
+	setup();
 
 	for (i = 1; i < argc; i++) {
 		if (!strcmp(argv[i], "-r")) {
@@ -564,6 +622,8 @@ main(int argc, char **argv) {
 		} else if (!strcmp(argv[i], "-I")) {
 			/* enable standard DHCID support for DDNS updates */
 			std_dhcid = 1;
+		} else if (!strcmp(argv[i], "-m")) {
+			hw_mismatch_drop = ISC_FALSE;
 		} else if (!strcmp(argv[i], "-v")) {
 			quiet = 0;
 		} else if (argv[i][0] == '-') {
@@ -572,26 +632,19 @@ main(int argc, char **argv) {
 			usage("No interfaces comamnd -n and "
 			      " requested interface %s", argv[i]);
 		} else {
-		    struct interface_info *tmp = NULL;
-
-		    status = interface_allocate(&tmp, MDL);
-		    if (status != ISC_R_SUCCESS)
-			log_fatal("Can't record interface %s:%s",
-				  argv[i], isc_result_totext(status));
-		    if (strlen(argv[i]) >= sizeof(tmp->name))
-			    log_fatal("%s: interface name too long (is %ld)",
-				      argv[i], (long)strlen(argv[i]));
-		    strcpy(tmp->name, argv[i]);
-		    if (interfaces) {
-			    interface_reference(&tmp->next,
-						interfaces, MDL);
-			    interface_dereference(&interfaces, MDL);
-		    }
-		    interface_reference(&interfaces, tmp, MDL);
-		    tmp->flags = INTERFACE_REQUESTED;
-		    interfaces_requested++;
+		    ifaces[interfaces_requested++] = argv[i];
 		}
 	}
+
+	/*
+	 * Do this before setup, otherwise if we are using threads things
+	 * are not going to work
+	 */
+	if (interfaces_requested > 0) {
+		add_interfaces(ifaces, interfaces_requested);
+		interfaces_left = interfaces_requested;
+	}
+	free(ifaces);
 
 	if (wanted_ia_na < 0) {
 		wanted_ia_na = 1;
@@ -660,7 +713,8 @@ main(int argc, char **argv) {
 	 * to write a pid file - we assume they are controlling
 	 * the process in some other fashion.
 	 */
-	if ((release_mode || exit_mode) && (no_pid_file == ISC_FALSE)) {
+	if (path_dhclient_pid != NULL &&
+	    (release_mode || exit_mode) && (no_pid_file == ISC_FALSE)) {
 		FILE *pidfd;
 		pid_t oldpid;
 		long temp;
@@ -1170,6 +1224,9 @@ int find_subnet (struct subnet **sp,
  * can no longer legitimately use the lease.
  */
 
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: dhclient.c,v 1.2 2018/04/07 22:37:29 christos Exp $");
+
 void state_reboot (cpp)
 	void *cpp;
 {
@@ -1331,6 +1388,26 @@ void state_selecting (cpp)
 	send_request (client);
 }
 
+static isc_boolean_t
+compare_hw_address(const char *name, struct packet *packet) {
+	if (packet->interface->hw_address.hlen - 1 != packet->raw->hlen ||
+	    memcmp(&packet->interface->hw_address.hbuf[1],
+	    packet->raw->chaddr, packet->raw->hlen)) {
+		unsigned char *c  = packet->raw ->chaddr;
+		log_error ("%s raw = %d %.2x:%.2x:%.2x:%.2x:%.2x:%.2x", 
+		    name, packet->raw->hlen,
+		    c[0], c[1], c[2], c[3], c[4], c[5]);
+		c = &packet -> interface -> hw_address.hbuf [1];
+		log_error ("%s cooked = %d %.2x:%.2x:%.2x:%.2x:%.2x:%.2x", 
+		    name, packet->interface->hw_address.hlen - 1,
+		    c[0], c[1], c[2], c[3], c[4], c[5]);
+		log_error ("%s in wrong transaction (%s ignored).", name,
+		        hw_mismatch_drop ? "packet" : "error");
+		return hw_mismatch_drop;
+	}
+	return ISC_FALSE;
+}
+
 /* state_requesting is called when we receive a DHCPACK message after
    having sent out one or more DHCPREQUEST packets. */
 
@@ -1349,16 +1426,8 @@ void dhcpack (packet)
 		if (client -> xid == packet -> raw -> xid)
 			break;
 	}
-	if (!client ||
-	    (packet -> interface -> hw_address.hlen - 1 !=
-	     packet -> raw -> hlen) ||
-	    (memcmp (&packet -> interface -> hw_address.hbuf [1],
-		     packet -> raw -> chaddr, packet -> raw -> hlen))) {
-#if defined (DEBUG)
-		log_debug ("DHCPACK in wrong transaction.");
-#endif
+	if (!client || compare_hw_address("DHCPACK", packet) == ISC_TRUE)
 		return;
-	}
 
 	if (client -> state != S_REBOOTING &&
 	    client -> state != S_REQUESTING &&
@@ -2021,17 +2090,9 @@ void dhcpoffer (packet)
 
 	/* If we're not receptive to an offer right now, or if the offer
 	   has an unrecognizable transaction id, then just drop it. */
-	if (!client ||
-	    client -> state != S_SELECTING ||
-	    (packet -> interface -> hw_address.hlen - 1 !=
-	     packet -> raw -> hlen) ||
-	    (memcmp (&packet -> interface -> hw_address.hbuf [1],
-		     packet -> raw -> chaddr, packet -> raw -> hlen))) {
-#if defined (DEBUG)
-		log_debug ("%s in wrong transaction.", name);
-#endif
+	if (!client || client -> state != S_SELECTING ||
+	    compare_hw_address(name, packet) == ISC_TRUE)
 		return;
-	}
 
 	sprintf (obuf, "%s of %s from %s", name,
 		 inet_ntoa(packet->raw->yiaddr),
@@ -2271,16 +2332,8 @@ void dhcpnak (packet)
 
 	/* If we're not receptive to an offer right now, or if the offer
 	   has an unrecognizable transaction id, then just drop it. */
-	if (!client ||
-	    (packet -> interface -> hw_address.hlen - 1 !=
-	     packet -> raw -> hlen) ||
-	    (memcmp (&packet -> interface -> hw_address.hbuf [1],
-		     packet -> raw -> chaddr, packet -> raw -> hlen))) {
-#if defined (DEBUG)
-		log_debug ("DHCPNAK in wrong transaction.");
-#endif
+	if (!client || compare_hw_address("DHCPNAK", packet) == ISC_TRUE)
 		return;
-	}
 
 	if (client -> state != S_REBOOTING &&
 	    client -> state != S_REQUESTING &&
@@ -4433,11 +4486,11 @@ void detach ()
 {
 	char buf = 0;
 
-	/* Don't become a daemon if the user requested otherwise. */
-	if (no_daemon) {
-		write_client_pid_file ();
+	if (no_daemon)
 		return;
-	}
+
+	if (interfaces_left && --interfaces_left)
+		return;
 
 	/* Only do it once. */
 	if (dfd[0] == -1 || dfd[1] == -1)
@@ -4453,7 +4506,7 @@ void detach ()
 	log_perror = 0;
 
 	/* Become session leader and get pid... */
-	(void) setsid ();
+	(void) setsid();
 
 	/* Close standard I/O descriptors. */
 	(void) close(0);
@@ -4477,7 +4530,7 @@ void write_client_pid_file ()
 	int pfdesc;
 
 	/* nothing to do if the user doesn't want a pid file */
-	if (no_pid_file == ISC_TRUE) {
+	if (path_dhclient_pid == NULL || no_pid_file == ISC_TRUE) {
 		return;
 	}
 
@@ -4755,7 +4808,7 @@ static void shutdown_exit (void *foo)
  */
 
 /* The first and second stages are pretty similar so we combine them */
-void
+static void
 client_dns_remove_action(dhcp_ddns_cb_t *ddns_cb,
 			 isc_result_t    eresult)
 {
@@ -4933,7 +4986,7 @@ client_dns_update_timeout (void *cp)
  */
 
 /* The first and second stages are pretty similar so we combine them */
-void
+static void
 client_dns_update_action(dhcp_ddns_cb_t *ddns_cb,
 			 isc_result_t    eresult)
 {
