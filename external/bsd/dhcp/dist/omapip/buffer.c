@@ -1,16 +1,16 @@
-/*	$NetBSD: buffer.c,v 1.1.1.3 2014/07/12 11:57:58 spz Exp $	*/
+/*	$NetBSD: buffer.c,v 1.1.1.4 2018/04/07 20:44:27 christos Exp $	*/
+
 /* buffer.c
 
    Buffer access functions for the object management protocol... */
 
 /*
- * Copyright (c) 2009,2012-2014 by Internet Systems Consortium, Inc. ("ISC")
- * Copyright (c) 2004,2005,2007 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004-2017 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1999-2003 by Internet Software Consortium
  *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: buffer.c,v 1.1.1.3 2014/07/12 11:57:58 spz Exp $");
+__RCSID("$NetBSD: buffer.c,v 1.1.1.4 2018/04/07 20:44:27 christos Exp $");
 
 #include "dhcpd.h"
 
@@ -570,6 +570,15 @@ isc_result_t omapi_connection_writer (omapi_object_t *h)
 			omapi_buffer_dereference (&buffer, MDL);
 		}
 	}
+
+	/* If we had data left to write when we're told to disconnect,
+	* we need recall disconnect, now that we're done writing.
+	* See rt46767. */
+	if (c->out_bytes == 0 && c->state == omapi_connection_disconnecting) {
+		omapi_disconnect (h, 1);
+		return ISC_R_SHUTTINGDOWN;
+	}
+
 	return ISC_R_SUCCESS;
 }
 

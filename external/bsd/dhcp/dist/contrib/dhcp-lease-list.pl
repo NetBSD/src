@@ -15,11 +15,17 @@
 #
 # 2013-04-22 - added option to choose lease file, made manufacture information
 #              optional, sar
+#
+# 2016-01-19 - updated to better trim the manu string and output the hostnames, sar
+#
+# 2016-01-18 - Mainly cosmetics. Eliminated spurious output in "parsable" mode.
+#              Provided for the various conventional lease file locations. (cbp)
+
 use strict;
 use warnings;
 use POSIX qw(strftime);
 
-my $LEASES = '/var/db/dhcpd.leases';
+my @LEASES = ('/var/db/dhcpd.leases', '/var/lib/dhcp/dhcpd.leases', '/var/lib/dhcp3/dhcpd.leases');
 my @all_leases;
 my @leases;
 
@@ -41,7 +47,7 @@ sub get_manufactorer_for_mac($) {
     if (defined $oui) {
 	$manu = join('-', ($_[0] =~ /^(..):(..):(..):/));
 	$manu = `grep -i '$manu' $oui | cut -f3`;
-	chomp($manu);
+	$manu =~ s/^\s+|\s+$//g;
     }
 
     return $manu;
@@ -66,7 +72,16 @@ sub check_oui_file() {
 ## Read current leases file into array.
 sub read_dhcpd_leases() {
 
-    open(F, $LEASES) or die("Cannot open $LEASES: $!");
+    my $db;
+    for my $db_cand (@LEASES) {
+        if ( -r $db_cand) {
+    $db = $db_cand;
+    last;
+        }
+    }
+    die("Cannot find leases db") unless defined $db;
+    open(F, $db) or die("Cannot open $db: $!");
+    print("Reading leases from $db\n") if $opt_format eq 'human';
     my $content = join('', <F>);
     close(F);
     @all_leases = split(/lease/, $content);
@@ -83,7 +98,7 @@ sub process_leases() {
     my $gm_now = strftime("%Y/%m/%d %H:%M:%S", gmtime());
     my %tmp_leases; # for sorting and filtering
 
-    my $counter = 1;
+    my $counter = $opt_format eq 'human' ? 1 : 0;
 
     # parse entries
     foreach my $lease (@all_leases) {
@@ -92,14 +107,16 @@ sub process_leases() {
 	# skip outdated lines
 	next if ($opt_keep eq 'active'  and  $3 lt $gm_now);
 
-	my $percent = (($counter / $total_leases)*100);
-	printf "Processing: %2d%% complete\r", $percent;
-	++$counter;
+	if ($counter) {
+	    my $percent = (($counter / $total_leases)*100);
+	    printf "Processing: %2d%% complete\r", $percent;
+	    ++$counter;
+	}
 
-	 my $hostname = "-NA-";
-	 if ($6) {
-	     $hostname = $6;
-	 }
+	my $hostname = "-NA-";
+	if ($6) {
+	    $hostname = $6;
+	}
 
 	my $mac = $4;
 	my $date_end = $3;
@@ -142,7 +159,7 @@ sub output_leases() {
     }
     foreach (@leases) {
        if ($opt_format eq 'human') {
-	   printf("%-19s%-16s%-15s%-20s%-20s\n",
+	   printf("%-19s%-16s%-14.14s %-20s%-20s\n",
 		  $_->{'mac'},       # MAC
 		  $_->{'ip'},        # IP address
 		  $_->{'hostname'},  # hostname
@@ -172,7 +189,9 @@ sub cli_processing() {
 		" --last      prints the last (even if end<now) entry for every MAC\n".
 		" --all       prints all entries i.e. more than one per MAC\n".
 		" --lease     uses the next argument as the name of the lease file\n".
-		"             the default is /var/db/dhcpd.leases\n".
+		"             the default is to try /var/db/dhcpd.leases then\n".
+		"             /var/lib/dhcp/dhcpd.leases then\n".
+		"             /var/lib/dhcp3/dhcpd.leases\n".
 		"\n");
 	    exit(0);
 	} elsif ($arg eq '--parsable') {
@@ -182,7 +201,7 @@ sub cli_processing() {
 	} elsif ($arg eq '--all') {
 	    $opt_keep = 'all';
 	} elsif ($arg eq '--lease') {
-	    $LEASES = shift(@ARGV);
+	    unshift @LEASES, shift(@ARGV);
 	} else {
 	    die("Unknown option $arg");
 	}

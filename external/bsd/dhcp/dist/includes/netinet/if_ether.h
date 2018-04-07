@@ -1,4 +1,5 @@
-/*	$NetBSD: if_ether.h,v 1.1.1.2 2014/07/12 11:57:57 spz Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.1.1.3 2018/04/07 20:44:27 christos Exp $	*/
+
 /*	NetBSD: if_ether.h,v 1.20 1995/06/12 00:47:27 mycroft Exp 	*/
 
 /*

@@ -1,15 +1,16 @@
-/*	$NetBSD: ctrace.c,v 1.1.1.2 2014/07/12 11:57:40 spz Exp $	*/
+/*	$NetBSD: ctrace.c,v 1.1.1.3 2018/04/07 20:44:26 christos Exp $	*/
+
 /* trace.c
 
    Subroutines that support dhcp tracing... */
 
 /*
- * Copyright (c) 2004,2007,2009,2014 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004-2017 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 2001-2003 by Internet Software Consortium
  *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -28,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ctrace.c,v 1.1.1.2 2014/07/12 11:57:40 spz Exp $");
+__RCSID("$NetBSD: ctrace.c,v 1.1.1.3 2018/04/07 20:44:26 christos Exp $");
 
 #include "dhcpd.h"
 
@@ -88,6 +89,13 @@ void trace_interface_input (trace_type_t *ttype, unsigned len, char *buf)
 	 */
 	ip->address_count = ip->address_max = 1;
 	ip->addresses = dmalloc(sizeof(*ip->addresses), MDL);
+	if (!ip->addresses) {
+		dfree(ip->ifp, MDL); 
+		ip->ifp = NULL;
+		interface_dereference (&ip, MDL);
+		status = ISC_R_NOMEMORY;
+		goto foo;
+	}
 	memcpy(ip->addresses, &tipkt->primary_address, sizeof(*ip->addresses));
 	memcpy (ip -> name, tipkt -> name, sizeof ip -> name);
 	ip -> index = ntohl (tipkt -> index);
