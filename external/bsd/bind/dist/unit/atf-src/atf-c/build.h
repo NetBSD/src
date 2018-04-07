@@ -1,9 +1,6 @@
-/*	$NetBSD: build.h,v 1.1.1.3 2014/12/10 03:34:48 christos Exp $	*/
+/*	$NetBSD: build.h,v 1.1.1.4 2018/04/07 21:44:14 christos Exp $	*/
 
-/*
- * Automated Testing Framework (atf)
- *
- * Copyright (c) 2009 The NetBSD Foundation, Inc.
+/* Copyright (c) 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,8 +23,7 @@
  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
  * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
+ * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.  */
 
 #if !defined(ATF_C_BUILD_H)
 #define ATF_C_BUILD_H
@@ -41,4 +37,4 @@ atf_error_t atf_build_cpp(const char *, const char *, const char *const [],
 atf_error_t atf_build_cxx_o(const char *, const char *, const char *const [],
                             char ***);
 
-#endif /* ATF_C_BUILD_H */
+#endif /* !defined(ATF_C_BUILD_H) */

@@ -1,4 +1,4 @@
-# Copyright (C) 2004-2016  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004-2017  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 1998-2003  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -29,7 +29,7 @@ CINCLUDES =	-I${srcdir}/unix/include \
 		-I${srcdir}/@ISC_THREAD_DIR@/include \
 		-I${srcdir}/@ISC_ARCH_DIR@/include \
 		-I./include \
-		-I${srcdir}/include @ISC_OPENSSL_INC@ ${DNS_INCLUDES}
+		-I${srcdir}/include ${DNS_INCLUDES} @ISC_OPENSSL_INC@
 CDEFINES =	@CRYPTO@ -DPK11_LIB_LOCATION=\"${PROVIDER}\"
 CWARNINGS =
 
@@ -132,6 +132,8 @@ libisc-nosymtbl.la: ${OBJS}
 
 timestamp: libisc.@A@ libisc-nosymtbl.@A@
 	touch timestamp
+
+testdirs: libisc.@A@ libisc-nosymtbl.@A@
 
 installdirs:
 	$(SHELL) ${top_srcdir}/mkinstalldirs ${DESTDIR}${libdir}

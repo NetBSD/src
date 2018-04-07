@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004, 2007-2016  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007-2017  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000-2002  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -27,6 +27,7 @@ rm -f canonical?.*
 rm -f delv.out*
 rm -f delve.out*
 rm -f dig.out.*
+rm -f dsfromkey.out.*
 rm -f keygen.err
 rm -f named.secroots.test*
 rm -f nosign.before

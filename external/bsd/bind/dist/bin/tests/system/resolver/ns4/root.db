@@ -1,4 +1,4 @@
-; Copyright (C) 2010, 2014-2016  Internet Systems Consortium, Inc. ("ISC")
+; Copyright (C) 2010, 2014-2017  Internet Systems Consortium, Inc. ("ISC")
 ;
 ; Permission to use, copy, modify, and/or distribute this software for any
 ; purpose with or without fee is hereby granted, provided that the above
@@ -29,3 +29,5 @@ delegation-only.	NS	ns.delegation-only.
 ns.delegation-only.	A	10.53.0.6
 example.net.		NS	ns.example.net.
 ns.example.net.		A	10.53.0.6
+no-questions.		NS	ns.no-questions.
+ns.no-questions.	A	10.53.0.8
