@@ -1,18 +1,17 @@
-/*	$NetBSD: inet.c,v 1.1.1.2 2014/07/12 11:57:44 spz Exp $	*/
+/*	$NetBSD: inet.c,v 1.1.1.3 2018/04/07 20:44:26 christos Exp $	*/
+
 /* inet.c
 
    Subroutines to manipulate internet addresses and ports in a safely portable
    way... */
 
 /*
- * Copyright (c) 2011,2013,2014 by Internet Systems Consortium, Inc. ("ISC")
- * Copyright (c) 2007-2009 by Internet Systems Consortium, Inc. ("ISC")
- * Copyright (c) 2004,2005 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004-2017 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1995-2003 by Internet Software Consortium
  *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -31,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: inet.c,v 1.1.1.2 2014/07/12 11:57:44 spz Exp $");
+__RCSID("$NetBSD: inet.c,v 1.1.1.3 2018/04/07 20:44:26 christos Exp $");
 
 #include "dhcpd.h"
 
@@ -626,3 +625,45 @@ validate_port(char *port) {
 
 	return htons((u_int16_t)local_port);
 }
+
+/* \brief Validate that the string represents a valid port pair (i.e. n,n+1)
+ *
+ * \param the string to validate
+ * \return the first port number in network byte order
+ */
+
+u_int16_t
+validate_port_pair(char *port) {
+	long local_port = 0;
+	long lower = 1;
+	long upper = 65534;
+	char *endptr;
+
+	errno = 0;
+	local_port = strtol(port, &endptr, 10);
+	
+	if ((*endptr != '\0') || (errno == ERANGE) || (errno == EINVAL))
+		log_fatal ("Invalid port pair specification: %s", port);
+
+	if (local_port < lower || local_port > upper)
+		log_fatal("Port pair specified is out of range (%ld-%ld).",
+			  lower, upper);
+
+	return htons((u_int16_t)local_port);
+}
+
+#ifdef DHCPv6
+/* Print a v6 address from an in6_addr struct */
+const char *
+pin6_addr(const struct in6_addr *src){
+
+	if (!src) {
+		return ("<null>");
+	}
+
+	struct iaddr addr;
+	addr.len = 16;
+	memcpy(addr.iabuf, src->s6_addr, 16);
+	return (piaddr(addr));
+}
+#endif

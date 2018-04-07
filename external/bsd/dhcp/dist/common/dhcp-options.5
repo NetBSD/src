@@ -1,9 +1,8 @@
-.\"	$NetBSD: dhcp-options.5,v 1.1.1.4 2016/01/10 19:44:39 christos Exp $
+.\"	$NetBSD: dhcp-options.5,v 1.1.1.5 2018/04/07 20:44:26 christos Exp $
 .\"
 .\"	Id: dhcp-options.5,v 1.50 2011/05/20 13:48:32 tomasz Exp 
 .\"
-.\" Copyright (c) 2012-2015 by Internet Systems Consortium, Inc. ("ISC")
-.\" Copyright (c) 2004-2010 by Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (c) 2004-2018 by Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (c) 1996-2003 by Internet Software Consortium
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -116,7 +115,7 @@ or
 .SH SETTING OPTION VALUES USING EXPRESSIONS
 Sometimes it's helpful to be able to set the value of a DHCP option
 based on some value that the client has sent.  To do this, you can
-use expression evaluation.  The 
+use expression evaluation.  The
 .B dhcp-eval(5)
 manual page describes how to write expressions.  To assign the result
 of an evaluation to an option, define the option as follows:
@@ -137,7 +136,7 @@ will be included in the code based on the definition of an argument for
 the RFC that defines the option in includes/site.h.  This provides you
 with a method for over-riding the ISC definitions if necessary - for
 example if you have previously defined the option with a different
-format using the mechanism from DEFINING NEW OPTIONS below.  
+format using the mechanism from DEFINING NEW OPTIONS below.
 .PP
 By default all of the options are enabled.  In order to disable an option
 you would edit the includes/site.h file and comment out the definition for
@@ -583,6 +582,35 @@ forwarding, and a value of true means enable IP forwarding.
 The IRC server option specifies a list of IRC servers available
 to the client.  Servers should be listed in order of preference.
 .RE
+
+.PP
+.B option \fBloader-configfile\fR \fItext\fR
+.RS 0.25i
+.PP
+This option is used to specify a boot loading configuration file
+a PXE client should use.
+.PP
+This option is included based on RFC 5071.
+.RE
+.PP
+.B option \fBloader-pathprefix\fR \fItext\fR
+.RS 0.25i
+.PP
+This option is used to specify a path prefix a PXE client should
+use in conjunction with the boot load configuration file.
+.PP
+This option is included based on RFC 5071.
+.RE
+.PP
+.B option \fBloader-reboottime\fR \fIuint32\fR
+.RS 0.25i
+.PP
+This option is used to dictate the maximum amount of time a
+PXE client should allow itself to achieve configured network
+resources before rebooting.
+.PP
+This option is included based on RFC 5071.
+.RE
 .PP
 .B option \fBlog-servers\fR \fIip-address\fR [\fB,\fR \fIip-address\fR...
 ]\fB;\fR
@@ -812,6 +840,33 @@ NetWare/IP suboptions - see the NETWARE/IP SUBOPTIONS section for more
 information.
 .RE
 .PP
+.B option \fBpxe-system-type\fR \fIuint16\fR [\fB, \fIuint16\fR ... ]\fB;\fR
+.RS 0.25i
+.PP
+A list of one ore more 16-bit integers which allows a client to specify its 
+pre-boot architecture type(s).
+.PP
+This option is included based on RFC 4578.
+.RE
+.PP
+.B option \fBpxe-interface-id\fR \fIuint8\fR \fIuint8\fR \fIuint8\fR
+.RS 0.25i
+.PP
+A three octet value which allows a client to specify its network interface
+type.
+.PP
+This option is included based on RFC 4578.
+.RE
+.PP
+.B option \fBpxe-client-id\fR \fIuint8\fR \fIstring\fR
+.RS 0.25i
+.PP
+A single octet indicating type, followed by a string that allows a
+client to specify its PXE client identity.
+.PP
+This option is included based on RFC 4578.
+.RE
+.PP
 .B option \fBoption-6rd\fR \fIuint8 uint8 ip6-address ip-address\fR  [\fB,\fR
 .I ip-address \fR...]\fB;\fR
 .RS 0.25i
@@ -968,7 +1023,7 @@ If you have an NDS directory agent whose address you need to
 configure, the slp-directory-agent option should work.
 .RE
 .PP
-.B option slp-service-scope \fIboolean text\fR\fB;\fR
+.B option \fBslp-service-scope\fR \fIboolean text\fR\fB;\fR
 .RS 0.25i
 .PP
 The Service Location Protocol Service Scope Option specifies two
@@ -1067,6 +1122,16 @@ This option is not user configurable in the server.
 .RS 0.25i
 .PP
 This specifies the IP address of the client's swap server.
+.RE
+.PP
+.B option \fBtftp-server-address\fR \fIip-address\fR [\fB,\fR
+\fIip-address\fR... ]\fB;\fR
+.RS 0.25i
+.PP
+This option configures a list of one or more IPv4 addresses of
+tftp servers a client may use.
+.PP
+This option is included based on RFC 5859
 .RE
 .PP
 .B option \fBtcp-keepalive-garbage\fR \fIflag\fR\fB;\fR
@@ -1650,7 +1715,7 @@ rather than IPv6 addresses, please see the \fBsip-servers-names\fR option
 above.
 .RE
 .PP
-.B option 
+.B option
 .B dhcp6.name-servers
 .I ip6-address \fR[\fB,\fR
 .I ip6-address \fR... ]
@@ -1684,7 +1749,7 @@ manufactured and consumed by the software.
 .PP
 The \fBia-prefix\fR option is placed inside \fBia-pd\fR options in order
 to identify the prefix(es) allocated to the client.  It is not directly
-edited in dhcpd.conf(5) or dhclient.conf(5), but rather is  
+edited in dhcpd.conf(5) or dhclient.conf(5), but rather is
 manufactured and consumed by the software.
 .RE
 .PP
@@ -2037,7 +2102,7 @@ This option is included based on RFC 7083.
 .RE
 .SH ACCESSING DHCPV6 RELAY OPTIONS
 .PP
-.B v6relay (\fBrelay-number\f, \fBoption\f)
+.B v6relay (\fBrelay-number\fR, \fBoption\fR)
 This option allows access to an option that has been added to a packet
 by a relay agent.  Relay-number value selects the relay to examine
 and option is the option to find.  In DHCPv6 each relay encapsulates
@@ -2179,7 +2244,7 @@ option sql-server-address sql.example.com;
 .B ;
 .PP
 An option whose structure is an IPv6 address must be expressed as
-a valid IPv6 address.  The following is an example use of the 
+a valid IPv6 address.  The following is an example use of the
 ip6-address type:
 .nf
 
@@ -2317,7 +2382,7 @@ option static-routes
 	10.0.1.0 255.255.255.0 net-1-rtr.example.com 1,
 	10.2.0.0 255.255.224.0 net-2-0-rtr.example.com 3;
 
-.fi	
+.fi
 .SH VENDOR ENCAPSULATED OPTIONS
 The DHCP protocol defines the \fBvendor-encapsulated-options\fR
 option, which allows vendors to define their own options that will be
@@ -2361,7 +2426,7 @@ option dhcp6.vendor-opts
 The second way of setting the value of these options is to have the DHCP
 server generate a vendor-specific option buffer.  To do this, you
 must do four things: define an option space, define some options in
-that option space, provide values for them, and specify that that 
+that option space, provide values for them, and specify that that
 option space should be used to generate the relevant option.
 .PP
 To define a new option space in which vendor options can be stored,

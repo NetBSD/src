@@ -1,4 +1,5 @@
-/*	$NetBSD: site.h,v 1.1.1.4 2016/01/10 19:44:43 christos Exp $	*/
+/*	$NetBSD: site.h,v 1.1.1.5 2018/04/07 20:44:27 christos Exp $	*/
+
 /* Site-specific definitions.
 
    For supported systems, you shouldn't need to make any changes here.
@@ -106,7 +107,6 @@
 
 /* Define this if you want to see the requests and replies between the
    DHCP code and the DNS library code. */
-
 /* #define DEBUG_DNS_UPDATES */
 
 /* Define this if you want to debug the host part of the inform processing */
@@ -114,6 +114,13 @@
 
 /* Define this if you want to debug the binary leases (lease_chain) code */
 /* #define DEBUG_BINARY_LEASES */
+
+/* Define this if you want to debug checksum calculations */
+/* #define DEBUG_CHECKSUM */
+
+/* Define this if you want to verbosely debug checksum calculations */
+/* #define DEBUG_CHECKSUM_VERBOSE */
+
 
 /* Define this if you want DHCP failover protocol support in the DHCP
    server. */
@@ -190,6 +197,12 @@
    own risk. */
 
 /* #define USE_RAW_SOCKETS */
+
+/* Define this to keep the old program name (e.g., "dhcpd" for
+   the DHCP server) in place of the (base) name the program was
+   invoked with. */
+
+/* #define OLD_LOG_NAME */
 
 /* Define this to change the logging facility used by dhcpd. */
 
@@ -274,7 +287,7 @@
    is a host address and doesn't include any on-link information.
    64 indicates that the first 64 bits are the subnet or on-link
    prefix. */
-#define DHCLIENT_DEFAULT_PREFIX_LEN 64
+#define DHCLIENT_DEFAULT_PREFIX_LEN 128
 
 /* Enable the gentle shutdown signal handling.  Currently this
    means that on SIGINT or SIGTERM a client will release its
@@ -293,26 +306,73 @@
    this option will be removed at some time. */
 /* #define INCLUDE_OLD_DHCP_ISC_ERROR_CODES */
 
+/* Use the older factors for scoring a lease in the v6 client code.
+   The new factors cause the client to choose more bindings (IAs)
+   over more addresse within a binding.  Most uses will get a
+   single address in a single binding and only get an adverstise
+   from a single server and there won't be a difference. */
+/* #define USE_ORIGINAL_CLIENT_LEASE_WEIGHTS */
+
+/* Print out specific error messages for dhclient, dhcpd
+   or dhcrelay when processing an incorrect command line.  This
+   is included for those that might require the exact error
+   messages, as we don't expect that is necessary it is on by
+   default. */
+#define PRINT_SPECIFIC_CL_ERRORS
+
+/* Limit the value of a file descriptor the serve will use
+   when accepting a connecting request.  This can be used to
+   limit the number of TCP connections that the server will
+   allow at one time.  A value of 0 means there is no limit.*/
+#define MAX_FD_VALUE 200
+
+/* Enable EUI-64 Address assignment policy.  Instructs the server
+ * to use EUI-64 addressing instead of dynamic address allocation
+ * for IA_NA pools, if the parameter use-eui-64 is true for the
+ * pool.  Can be at all scopes down to the pool level.  Not
+ * supported by the configure script. */
+/* #define EUI_64 */
+
+/* Enable enforcement of the require option statement as documented
+ * in man page.  Instructs the dhclient, when in -6 mode, to discard
+ * offered leases that do not contain all options specified as required
+ * in the client's configuration file. The client already enforces this
+ * in -4 mode. */
+#define ENFORCE_DHCPV6_CLIENT_REQUIRE
+
+/* Enable the invocation of the client script with a FAIL state code
+ * by dhclient when running in one-try mode (-T) and the attempt to
+ * obtain the desired lease(s) fails. Applies to IPv4 mode only. */
+/* #define CALL_SCRIPT_ON_ONETRY_FAIL */
+
 /* Include definitions for various options.  In general these
    should be left as is, but if you have already defined one
-   of these and prefer your definition you can comment the 
+   of these and prefer your definition you can comment the
    RFC define out to avoid conflicts */
+#define RFC2563_OPTIONS
 #define RFC2937_OPTIONS
 #define RFC4776_OPTIONS
+#define RFC4578_OPTIONS
 #define RFC4833_OPTIONS
 #define RFC4994_OPTIONS
+#define RFC5071_OPTIONS
 #define RFC5192_OPTIONS
 #define RFC5223_OPTIONS
 #define RFC5417_OPTIONS
 #define RFC5460_OPTIONS
+#define RFC5859_OPTIONS
 #define RFC5969_OPTIONS
 #define RFC5970_OPTIONS
 #define RFC5986_OPTIONS
 #define RFC6011_OPTIONS
+#define RFC6011_OPTIONS
+#define RFC6153_OPTIONS
 #define RFC6334_OPTIONS
 #define RFC6440_OPTIONS
 #define RFC6731_OPTIONS
 #define RFC6939_OPTIONS
 #define RFC6977_OPTIONS
 #define RFC7083_OPTIONS
-
+#define RFC7341_OPTIONS
+#define RFC7618_OPTIONS
+#define RFC7710_OPTIONS

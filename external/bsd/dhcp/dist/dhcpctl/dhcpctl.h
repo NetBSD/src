@@ -1,4 +1,5 @@
-/*	$NetBSD: dhcpctl.h,v 1.1.1.4 2014/07/12 11:57:51 spz Exp $	*/
+/*	$NetBSD: dhcpctl.h,v 1.1.1.5 2018/04/07 20:44:27 christos Exp $	*/
+
 /* Id: dhcpctl.h,v 1.18 2009/11/24 02:06:56 sar Exp 
 
    Subroutines providing general support for objects. */

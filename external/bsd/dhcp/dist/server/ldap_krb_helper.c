@@ -1,10 +1,11 @@
-/*	$NetBSD: ldap_krb_helper.c,v 1.1.1.1 2016/01/10 19:44:48 christos Exp $	*/
+/*	$NetBSD: ldap_krb_helper.c,v 1.1.1.2 2018/04/07 20:44:28 christos Exp $	*/
+
 /* ldap_krb_helper.c
 
    Helper routings for allowing LDAP to read configuration with GSSAPI/krb auth */
 
 /*
- * Copyright (c) 2015 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2015-2017 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 2014 William B.
  * All rights reserved.
  *
