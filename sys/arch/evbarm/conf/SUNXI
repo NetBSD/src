@@ -1,5 +1,5 @@
 #
-#	$NetBSD: SUNXI,v 1.61 2018/04/03 12:56:21 bouyer Exp $
+#	$NetBSD: SUNXI,v 1.62 2018/04/07 18:12:51 bouyer Exp $
 #
 #	Allwinner sunxi family
 #
@@ -284,13 +284,13 @@ wd*		at atabus? drive ?
 genfb*		at fdt?
 wsdisplay*	at genfb?
 
-#sunxidebe*	at fdt? pass 4	# Display Backend
-#genfb*		at sunxidebe?
-#sunxitcon*	at fdt? pass 4	# LCD LVDS/RGB controller
-#sunxihdmi*	at fdt? pass 4	# HDMI controller
-#connector*	at fdt? pass 4
-#panel*		at fdt? pass 4
-#sunxidep*	at fdt?		# Display Engine Pipeline
+sunxidebe*	at fdt? pass 4	# Display Backend
+genfb*		at sunxidebe?
+sunxitcon*	at fdt? pass 4	# LCD LVDS/RGB controller
+sunxihdmi*	at fdt? pass 4	# HDMI controller
+connector*	at fdt? pass 4
+panel*		at fdt? pass 4
+sunxidep*	at fdt?		# Display Engine Pipeline
 options 	VCONS_DRAW_INTR
 options 	WSEMUL_VT100
 options 	WS_DEFAULT_FG=WSCOL_WHITE
