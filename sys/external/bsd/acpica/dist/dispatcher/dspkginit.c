@@ -416,7 +416,7 @@ AcpiDsResolvePackageElement (
     ACPI_OPERAND_OBJECT     *Element = *ElementPtr;
     ACPI_NAMESPACE_NODE     *ResolvedNode;
     ACPI_NAMESPACE_NODE     *OriginalNode;
-    char                    *ExternalPath = "";
+    char                    *ExternalPath = __UNCONST("");
     ACPI_OBJECT_TYPE        Type;
 
 

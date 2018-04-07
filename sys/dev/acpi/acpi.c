@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.268 2018/03/04 16:34:20 scole Exp $	*/
+/*	$NetBSD: acpi.c,v 1.269 2018/04/07 15:49:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.268 2018/03/04 16:34:20 scole Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.269 2018/04/07 15:49:52 christos Exp $");
 
 #include "pci.h"
 #include "opt_acpi.h"
@@ -897,21 +897,6 @@ acpi_rescan_nodes(struct acpi_softc *sc)
 			continue;
 
 		di = ad->ad_devinfo;
-
-		/*
-		 * We only attach devices which are present, enabled, and
-		 * functioning properly. However, if a device is enabled,
-		 * it is decoding resources and we should claim these,
-		 * if possible. This requires changes to bus_space(9).
-		 * Note: there is a possible race condition, because _STA
-		 * may have changed since di->CurrentStatus was set.
-		 */
-		if (di->Type == ACPI_TYPE_DEVICE) {
-
-			if ((di->Valid & ACPI_VALID_STA) != 0 &&
-			    (di->CurrentStatus & ACPI_STA_OK) != ACPI_STA_OK)
-				continue;
-		}
 
 		if (di->Type == ACPI_TYPE_POWER)
 			continue;
@@ -1808,22 +1793,15 @@ acpi_activate_device(ACPI_HANDLE handle, ACPI_DEVICE_INFO **di)
 	return;
 }
 #else
-	static const int valid = ACPI_VALID_STA | ACPI_VALID_HID;
+	static const int valid = ACPI_VALID_HID;
 	ACPI_DEVICE_INFO *newdi;
 	ACPI_STATUS rv;
-	uint32_t old;
 
 	/*
 	 * If the device is valid and present,
 	 * but not enabled, try to activate it.
 	 */
 	if (((*di)->Valid & valid) != valid)
-		return;
-
-	old = (*di)->CurrentStatus;
-
-	if ((old & (ACPI_STA_DEVICE_PRESENT | ACPI_STA_DEVICE_ENABLED)) !=
-	    ACPI_STA_DEVICE_PRESENT)
 		return;
 
 	rv = acpi_allocate_resources(handle);
@@ -1840,8 +1818,7 @@ acpi_activate_device(ACPI_HANDLE handle, ACPI_DEVICE_INFO **di)
 	*di = newdi;
 
 	aprint_verbose_dev(acpi_softc->sc_dev,
-	    "%s activated, STA 0x%08X -> STA 0x%08X\n",
-	    (*di)->HardwareId.String, old, (*di)->CurrentStatus);
+	    "%s activated\n", (*di)->HardwareId.String);
 
 	return;
 
