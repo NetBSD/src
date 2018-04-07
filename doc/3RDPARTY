@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1513 2018/04/07 15:50:58 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1514 2018/04/07 21:20:45 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -318,8 +318,8 @@ distribution into the netbsd format.  The script can be found in
 src/lib/libc/db/db2netbsd.
 
 Package:	dhcp
-Version:	4.3.3
-Current Vers:	4.3.6
+Version:	4.4.1
+Current Vers:	4.4.1
 Maintainer:	mellon
 Archive Site:	ftp://ftp.isc.org/isc/dhcp/
 Home Page:	http://www.isc.org/software/dhcp/
