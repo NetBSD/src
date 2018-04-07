@@ -1,7 +1,7 @@
-/*	$NetBSD: dst_internal.h,v 1.1.1.14 2017/06/15 15:22:47 christos Exp $	*/
+/*	$NetBSD: dst_internal.h,v 1.1.1.15 2018/04/07 21:44:06 christos Exp $	*/
 
 /*
- * Portions Copyright (C) 2004-2014, 2016  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004-2014, 2016, 2017  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -267,8 +267,14 @@ isc_result_t dst__gssapi_init(struct dst_func **funcp);
 #ifdef HAVE_OPENSSL_ECDSA
 isc_result_t dst__opensslecdsa_init(struct dst_func **funcp);
 #endif
+#if defined(HAVE_OPENSSL_ED25519) || defined(HAVE_OPENSSL_ED448)
+isc_result_t dst__openssleddsa_init(struct dst_func **funcp);
+#endif
 #ifdef HAVE_PKCS11_ECDSA
 isc_result_t dst__pkcs11ecdsa_init(struct dst_func **funcp);
+#endif
+#if defined(HAVE_PKCS11_ED25519) || defined(HAVE_PKCS11_ED448)
+isc_result_t dst__pkcs11eddsa_init(struct dst_func **funcp);
 #endif
 #ifdef HAVE_OPENSSL_GOST
 isc_result_t dst__opensslgost_init(struct dst_func **funcp);

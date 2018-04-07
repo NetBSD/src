@@ -1,7 +1,7 @@
-/*	$NetBSD: xfrout.c,v 1.1.1.14 2017/06/15 15:22:38 christos Exp $	*/
+/*	$NetBSD: xfrout.c,v 1.1.1.15 2018/04/07 21:43:30 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -678,6 +678,7 @@ typedef struct {
 	unsigned int		nmsg;		/* Number of messages sent */
 	dns_tsigkey_t		*tsigkey;	/* Key used to create TSIG */
 	isc_buffer_t		*lasttsig;	/* the last TSIG */
+	isc_boolean_t		verified_tsig;	/* verified request MAC */
 	isc_boolean_t		many_answers;
 	int			sends;		/* Send in progress */
 	isc_boolean_t		shuttingdown;
@@ -691,6 +692,7 @@ xfrout_ctx_create(isc_mem_t *mctx, ns_client_t *client,
 		  dns_db_t *db, dns_dbversion_t *ver, isc_quota_t *quota,
 		  rrstream_t *stream, dns_tsigkey_t *tsigkey,
 		  isc_buffer_t *lasttsig,
+		  isc_boolean_t verified_tsig,
 		  unsigned int maxtime,
 		  unsigned int idletime,
 		  isc_boolean_t many_answers,
@@ -1042,6 +1044,7 @@ ns_xfr_start(ns_client_t *client, dns_rdatatype_t reqtype) {
 					zone, db, ver, quota, stream,
 					dns_message_gettsigkey(request),
 					tsigbuf,
+					request->verified_sig,
 					3600,
 					3600,
 					(format == dns_many_answers) ?
@@ -1053,6 +1056,7 @@ ns_xfr_start(ns_client_t *client, dns_rdatatype_t reqtype) {
 					zone, db, ver, quota, stream,
 					dns_message_gettsigkey(request),
 					tsigbuf,
+					request->verified_sig,
 					dns_zone_getmaxxfrout(zone),
 					dns_zone_getidleout(zone),
 					(format == dns_many_answers) ?
@@ -1149,9 +1153,9 @@ xfrout_ctx_create(isc_mem_t *mctx, ns_client_t *client, unsigned int id,
 		  dns_rdataclass_t qclass, dns_zone_t *zone,
 		  dns_db_t *db, dns_dbversion_t *ver, isc_quota_t *quota,
 		  rrstream_t *stream, dns_tsigkey_t *tsigkey,
-		  isc_buffer_t *lasttsig, unsigned int maxtime,
-		  unsigned int idletime, isc_boolean_t many_answers,
-		  xfrout_ctx_t **xfrp)
+		  isc_buffer_t *lasttsig, isc_boolean_t verified_tsig,
+		  unsigned int maxtime, unsigned int idletime,
+		  isc_boolean_t many_answers, xfrout_ctx_t **xfrp)
 {
 	xfrout_ctx_t *xfr;
 	isc_result_t result;
@@ -1180,8 +1184,7 @@ xfrout_ctx_create(isc_mem_t *mctx, ns_client_t *client, unsigned int id,
 	xfr->end_of_stream = ISC_FALSE;
 	xfr->tsigkey = tsigkey;
 	xfr->lasttsig = lasttsig;
-	xfr->txmem = NULL;
-	xfr->txmemlen = 0;
+	xfr->verified_tsig = verified_tsig;
 	xfr->nmsg = 0;
 	xfr->many_answers = many_answers;
 	xfr->sends = 0;
@@ -1313,6 +1316,7 @@ sendstream(xfrout_ctx_t *xfr) {
 		CHECK(dns_message_setquerytsig(msg, xfr->lasttsig));
 		if (xfr->lasttsig != NULL)
 			isc_buffer_free(&xfr->lasttsig);
+		msg->verified_sig = xfr->verified_tsig;
 
 		/*
 		 * Add a EDNS option to the message?

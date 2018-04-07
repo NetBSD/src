@@ -1,7 +1,7 @@
-/*	$NetBSD: net.c,v 1.1.1.13 2017/06/15 15:22:50 christos Exp $	*/
+/*	$NetBSD: net.c,v 1.1.1.14 2018/04/07 21:44:11 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2008, 2012-2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2008, 2012-2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -148,6 +148,9 @@ try_proto(int domain) {
 		switch (errno) {
 #ifdef EAFNOSUPPORT
 		case EAFNOSUPPORT:
+#endif
+#ifdef EPFNOSUPPORT
+		case EPFNOSUPPORT:
 #endif
 #ifdef EPROTONOSUPPORT
 		case EPROTONOSUPPORT:

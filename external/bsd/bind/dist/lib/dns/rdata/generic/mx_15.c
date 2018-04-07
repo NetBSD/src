@@ -1,7 +1,7 @@
-/*	$NetBSD: mx_15.c,v 1.1.1.9 2016/05/26 15:45:51 christos Exp $	*/
+/*	$NetBSD: mx_15.c,v 1.1.1.10 2018/04/07 21:44:09 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009, 2012, 2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2012, 2015, 2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -110,7 +110,7 @@ totext_mx(ARGS_TOTEXT) {
 	dns_rdata_toregion(rdata, &region);
 	num = uint16_fromregion(&region);
 	isc_region_consume(&region, 2);
-	sprintf(buf, "%u", num);
+	snprintf(buf, sizeof(buf), "%u", num);
 	RETERR(str_totext(buf, target));
 
 	RETERR(str_totext(" ", target));

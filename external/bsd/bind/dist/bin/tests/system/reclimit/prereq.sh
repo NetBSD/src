@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2015  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2015, 2017  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -16,6 +16,20 @@
 
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
+
+if $PERL -e 'use Net::DNS;' 2>/dev/null
+then
+    if $PERL -e 'use Net::DNS; die if ($Net::DNS::VERSION <= 0.78);' 2>/dev/null
+    then
+        :
+    else
+        echo "I:Net::DNS versions up to 0.78 have a bug that causes this test to fail: please update." >&2
+        exit 1
+    fi
+else
+    echo "I:This test requires the Net::DNS library." >&2
+    exit 1
+fi
 
 if $PERL -e 'use Net::DNS::Nameserver;' 2>/dev/null
 then

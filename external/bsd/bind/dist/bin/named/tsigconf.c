@@ -1,7 +1,7 @@
-/*	$NetBSD: tsigconf.c,v 1.1.1.7 2014/12/10 03:34:25 christos Exp $	*/
+/*	$NetBSD: tsigconf.c,v 1.1.1.8 2018/04/07 21:43:30 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009, 2011, 2012, 2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -27,6 +27,7 @@
 #include <isc/buffer.h>
 #include <isc/mem.h>
 #include <isc/string.h>
+#include <isc/util.h>
 
 #include <isccfg/cfg.h>
 

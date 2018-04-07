@@ -1,7 +1,7 @@
-/*	$NetBSD: event.c,v 1.1.1.7 2014/12/10 03:34:43 christos Exp $	*/
+/*	$NetBSD: event.c,v 1.1.1.8 2018/04/07 21:44:10 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2014, 2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -101,6 +101,9 @@ isc_event_free(isc_event_t **eventp) {
 	REQUIRE(eventp != NULL);
 	event = *eventp;
 	REQUIRE(event != NULL);
+
+	REQUIRE(!ISC_LINK_LINKED(event, ev_link));
+	REQUIRE(!ISC_LINK_LINKED(event, ev_ratelink));
 
 	if (event->ev_destroy != NULL)
 		(event->ev_destroy)(event);

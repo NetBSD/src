@@ -1,0 +1,18 @@
+Copyright (C) 2017  Internet Systems Consortium, Inc. ("ISC")
+See COPYRIGHT in the source root or http://isc.org/copyright.html for terms.
+
+This Source Code Form is subject to the terms of the Mozilla Public
+License, v. 2.0. If a copy of the MPL was not distributed with this
+file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+ns1 is the root server.
+
+ns2 and ns5 are both authoritative servers.
+
+ans3 is a mock authoritative server that can return various broken
+responses.
+
+ans4 is a mock authoritative server that can return CNAME or DNAME
+responses of arbitrary size in arbitrary order.
+
+ns7 is the resolver under test.

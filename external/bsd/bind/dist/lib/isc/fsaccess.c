@@ -1,7 +1,7 @@
-/*	$NetBSD: fsaccess.c,v 1.1.1.5 2014/12/10 03:34:43 christos Exp $	*/
+/*	$NetBSD: fsaccess.c,v 1.1.1.6 2018/04/07 21:44:10 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -24,6 +24,7 @@
  * This file contains the OS-independent functionality of the API.
  */
 #include <isc/fsaccess.h>
+#include <isc/print.h>
 #include <isc/result.h>
 #include <isc/util.h>
 

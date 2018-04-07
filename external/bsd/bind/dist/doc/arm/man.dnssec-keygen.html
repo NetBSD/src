@@ -1,6 +1,6 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <!--
- - Copyright (C) 2004-2016 Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2004-2018 Internet Systems Consortium, Inc. ("ISC")
  - Copyright (C) 2000-2003 Internet Software Consortium.
  - 
  - Permission to use, copy, modify, and/or distribute this software for any
@@ -120,7 +120,7 @@
             Selects the cryptographic algorithm.  For DNSSEC keys, the value
             of <code class="option">algorithm</code> must be one of RSAMD5, RSASHA1,
 	    DSA, NSEC3RSASHA1, NSEC3DSA, RSASHA256, RSASHA512, ECCGOST,
-	    ECDSAP256SHA256 or ECDSAP384SHA384.
+	    ECDSAP256SHA256, ECDSAP384SHA384, ED25519 or ED448.
 	    For TSIG/TKEY, the value must
             be DH (Diffie Hellman), HMAC-MD5, HMAC-SHA1, HMAC-SHA224,
             HMAC-SHA256, HMAC-SHA384, or HMAC-SHA512.  These values are
@@ -183,8 +183,8 @@
             If this option is used and no algorithm is explicitly
             set on the command line, NSEC3RSASHA1 will be used by
             default. Note that RSASHA256, RSASHA512, ECCGOST,
-	    ECDSAP256SHA256 and ECDSAP384SHA384 algorithms
-	    are NSEC3-capable.
+	    ECDSAP256SHA256, ECDSAP384SHA384, ED25519 and ED448
+	    algorithms are NSEC3-capable.
           </p>
         </dd>
 <dt><span class="term">-C</span></dt>
@@ -572,6 +572,6 @@
 </tr>
 </table>
 </div>
-<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.10.5-P2</p>
+<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.10.7</p>
 </body>
 </html>

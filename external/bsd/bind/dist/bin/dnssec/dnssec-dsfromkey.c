@@ -1,7 +1,7 @@
-/*	$NetBSD: dnssec-dsfromkey.c,v 1.1.1.15 2015/12/17 03:21:51 christos Exp $	*/
+/*	$NetBSD: dnssec-dsfromkey.c,v 1.1.1.16 2018/04/07 21:43:29 christos Exp $	*/
 
 /*
- * Copyright (C) 2008-2012, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2008-2012, 2014, 2015, 2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -193,7 +193,7 @@ loadkey(char *filename, unsigned char *key_buf, unsigned int key_buf_size,
 	result = dst_key_fromnamedfile(filename, NULL, DST_TYPE_PUBLIC,
 				       mctx, &key);
 	if (result != ISC_R_SUCCESS)
-		fatal("invalid keyfile name %s: %s",
+		fatal("can't load %s.key: %s",
 		      filename, isc_result_totext(result));
 
 	if (verbose > 2) {

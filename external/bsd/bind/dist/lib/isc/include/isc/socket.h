@@ -1,7 +1,7 @@
-/*	$NetBSD: socket.h,v 1.1.1.13 2017/06/15 15:22:50 christos Exp $	*/
+/*	$NetBSD: socket.h,v 1.1.1.14 2018/04/07 21:44:11 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2009, 2011-2014, 2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2011-2014, 2016, 2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any

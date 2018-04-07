@@ -1,7 +1,7 @@
-/*	$NetBSD: log.c,v 1.1.1.7 2014/12/10 03:34:24 christos Exp $	*/
+/*	$NetBSD: log.c,v 1.1.1.8 2018/04/07 21:43:29 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009, 2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009, 2013, 2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -47,6 +47,7 @@ static isc_logcategory_t categories[] = {
 	{ "unmatched",	 		0 },
 	{ "update-security",		0 },
 	{ "query-errors",		0 },
+	{ "trust-anchor-telementry",	0 },
 	{ NULL, 			0 }
 };
 

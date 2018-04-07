@@ -1,7 +1,7 @@
-/*	$NetBSD: sdlz.c,v 1.1.1.15 2017/06/15 15:22:48 christos Exp $	*/
+/*	$NetBSD: sdlz.c,v 1.1.1.16 2018/04/07 21:44:08 christos Exp $	*/
 
 /*
- * Portions Copyright (C) 2005-2016  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2005-2017  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -1719,7 +1719,7 @@ dns_sdlzssumatch(dns_name_t *signer, dns_name_t *name, isc_netaddr_t *tcpaddr,
 	char b_type[DNS_RDATATYPE_FORMATSIZE];
 	char b_key[DST_KEY_FORMATSIZE];
 	isc_buffer_t *tkey_token = NULL;
-	isc_region_t token_region;
+	isc_region_t token_region = { NULL, 0 };
 	isc_uint32_t token_len = 0;
 	isc_boolean_t ret;
 

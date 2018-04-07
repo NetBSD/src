@@ -1,7 +1,7 @@
-/*	$NetBSD: os.c,v 1.1.1.12 2017/06/15 15:22:38 christos Exp $	*/
+/*	$NetBSD: os.c,v 1.1.1.13 2018/04/07 21:43:30 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2011, 2013, 2014, 2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2011, 2013, 2014, 2016, 2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -981,7 +981,7 @@ getuname(void) {
 
 	memset(&uts, 0, sizeof(uts));
 	if (uname(&uts) < 0) {
-		strcpy(unamebuf, "unknown architecture");
+		snprintf(unamebuf, sizeof(unamebuf), "unknown architecture");
 		return;
 	}
 
@@ -989,7 +989,7 @@ getuname(void) {
 		 "%s %s %s %s",
 		 uts.sysname, uts.machine, uts.release, uts.version);
 #else
-	strcpy(unamebuf, "unknown architecture");
+	snprintf(unamebuf, sizeof(unamebuf), "unknown architecture");
 #endif
 	unamep = unamebuf;
 }

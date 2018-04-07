@@ -1,4 +1,4 @@
-# Copyright (C) 2004-2009, 2011-2016  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004-2009, 2011-2017  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 1998-2002  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -12,8 +12,6 @@
 # LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
-
-# Id: Makefile.in,v 1.62 2011/09/06 04:06:37 marka Exp 
 
 srcdir =	@srcdir@
 VPATH =		@srcdir@
@@ -29,7 +27,7 @@ MANPAGES =	isc-config.sh.1
 
 HTMLPAGES =	isc-config.sh.html
 
-MANOBJS =	${MANPAGES} ${HTMLPAGES}
+MANOBJS =	README HISTORY OPTIONS ${MANPAGES} ${HTMLPAGES}
 
 @BIND9_MAKE_RULES@
 
@@ -100,13 +98,27 @@ test-force:
 	(test -f unit/unittest.sh && $(SHELL) unit/unittest.sh) || status=1; \
 	exit $$status
 
-FAQ: FAQ.xml
-	${XSLTPROC} doc/xsl/isc-docbook-text.xsl FAQ.xml | \
-	LC_ALL=C ${W3M} -T text/html -dump -cols 72 >$@.tmp
-	mv $@.tmp $@
+README: README.md
+	${PANDOC} --email-obfuscation=none -s -t html README.md | \
+		${W3M} -dump -cols 75 -O ascii -T text/html | \
+		sed -e '$${/^$$/d;}' > $@
+
+HISTORY: HISTORY.md
+	${PANDOC} --email-obfuscation=none -s -t html HISTORY.md | \
+		${W3M} -dump -cols 75 -O ascii -T text/html | \
+		sed -e '$${/^$$/d;}' > $@
+
+OPTIONS: OPTIONS.md
+	${PANDOC} --email-obfuscation=none -s -t html OPTIONS.md | \
+		${W3M} -dump -cols 75 -O ascii -T text/html | \
+		sed -e '$${/^$$/d;}' > $@
+
+CONTRIBUTING: CONTRIBUTING.md
+	${PANDOC} --email-obfuscation=none -s -t html CONTRIBUTING.md | \
+		${W3M} -dump -cols 75 -O ascii -T text/html | \
+		sed -e '$${/^$$/d;}' > $@
 
 unit::
 	sh ${top_srcdir}/unit/unittest.sh
 
 clean::
-	rm -f FAQ.tmp

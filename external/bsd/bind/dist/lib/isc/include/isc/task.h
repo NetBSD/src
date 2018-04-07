@@ -1,7 +1,7 @@
-/*	$NetBSD: task.h,v 1.1.1.13 2014/12/10 03:34:44 christos Exp $	*/
+/*	$NetBSD: task.h,v 1.1.1.14 2018/04/07 21:44:11 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009-2014, 2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -469,7 +469,7 @@ isc_task_onshutdown(isc_task_t *task, isc_taskaction_t action,
  *
  *\li	#ISC_R_SUCCESS
  *\li	#ISC_R_NOMEMORY
- *\li	#ISC_R_TASKSHUTTINGDOWN			Task is shutting down.
+ *\li	#ISC_R_SHUTTINGDOWN			Task is shutting down.
  */
 
 void

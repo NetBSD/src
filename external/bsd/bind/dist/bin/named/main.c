@@ -1,7 +1,7 @@
-/*	$NetBSD: main.c,v 1.1.1.19 2017/06/15 15:22:38 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.1.1.20 2018/04/07 21:43:29 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -613,17 +613,25 @@ parse_command_line(int argc, char *argv[]) {
 				dns_zone_mkey_month = atoi(p);
 				if (dns_zone_mkey_month < dns_zone_mkey_day)
 					ns_main_earlyfatal("bad mkeytimer");
-			} else if (!strcmp(isc_commandline_argument, "notcp"))
+			} else if (!strcmp(isc_commandline_argument, "notcp")) {
 				ns_g_notcp = ISC_TRUE;
-			else if (!strncmp(isc_commandline_argument, "tat=", 4))
+			} else if (!strncmp(isc_commandline_argument,
+					    "tat=", 4))
+			{
 				ns_g_tat_interval =
 					   atoi(isc_commandline_argument + 4);
-			else if (!strcmp(isc_commandline_argument,
-					 "keepstderr"))
+			} else if (!strcmp(isc_commandline_argument,
+					   "keepstderr"))
+			{
 				ns_g_keepstderr = ISC_TRUE;
-			else
+			} else if (!strcmp(isc_commandline_argument,
+					   "fixedlocal"))
+			{
+				ns_g_fixedlocal = ISC_TRUE;
+			} else {
 				fprintf(stderr, "unknown -T flag '%s\n",
 					isc_commandline_argument);
+			}
 			break;
 		case 'U':
 			ns_g_udpdisp = parse_int(isc_commandline_argument,
@@ -1180,11 +1188,11 @@ ns_main_setmemstats(const char *filename) {
 		free(memstats);
 		memstats = NULL;
 	}
+
 	if (filename == NULL)
 		return;
-	memstats = malloc(strlen(filename) + 1);
-	if (memstats)
-		strcpy(memstats, filename);
+
+	memstats = strdup(filename);
 }
 
 #ifdef HAVE_LIBSCF

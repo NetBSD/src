@@ -1,7 +1,7 @@
-/*	$NetBSD: dnssec-revoke.c,v 1.1.1.13 2016/05/26 15:45:41 christos Exp $	*/
+/*	$NetBSD: dnssec-revoke.c,v 1.1.1.14 2018/04/07 21:43:29 christos Exp $	*/
 
 /*
- * Copyright (C) 2009-2012, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009-2012, 2014, 2015, 2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -150,7 +150,7 @@ main(int argc, char **argv) {
 			if (isc_commandline_option != '?')
 				fprintf(stderr, "%s: invalid argument -%c\n",
 					program, isc_commandline_option);
-			/* Falls into */
+			/* FALLTHROUGH */
 		    case 'h':
 			/* Does not return. */
 			usage();

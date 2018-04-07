@@ -1,5 +1,5 @@
 <!--
- - Copyright (C) 2015, 2016  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2015-2017  Internet Systems Consortium, Inc. ("ISC")
  -
  - Permission to use, copy, modify, and/or distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
@@ -310,6 +310,16 @@
 	    Logs queries that have been terminated, either by dropping
 	    or responding with SERVFAIL, as a result of a fetchlimit
 	    quota being exceeded.
+	  </para>
+	</entry>
+      </row>
+      <row rowsep="0">
+	<entry colname="1">
+	  <para><command>trust-anchor-telemetry</command></para>
+	</entry>
+	<entry colname="2">
+	  <para>
+	    Logs trust-anchor-telemetry requests received by named.
 	  </para>
 	</entry>
       </row>

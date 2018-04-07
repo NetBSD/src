@@ -1,7 +1,7 @@
-/*	$NetBSD: print.c,v 1.1.1.9 2017/06/15 15:22:50 christos Exp $	*/
+/*	$NetBSD: print.c,v 1.1.1.10 2018/04/07 21:44:10 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2008, 2010, 2014-2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008, 2010, 2014-2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -641,7 +641,7 @@ isc__print_printf(void (*emit)(char, void *), void *arg,
 #else
 			assert("long doubles are not supported" == NULL);
 #endif
-			/*FALLTHROUGH*/
+			/* FALLTHROUGH */
 		case 'e':
 		case 'E':
 		case 'f':
