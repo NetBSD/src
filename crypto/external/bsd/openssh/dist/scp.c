@@ -1,4 +1,4 @@
-/*	$NetBSD: scp.c,v 1.18 2018/04/06 18:59:00 christos Exp $	*/
+/*	$NetBSD: scp.c,v 1.19 2018/04/07 00:36:55 christos Exp $	*/
 /* $OpenBSD: scp.c,v 1.195 2018/02/10 06:15:12 djm Exp $ */
 /*
  * scp - secure remote copy.  This is basically patched BSD rcp which
@@ -73,7 +73,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: scp.c,v 1.18 2018/04/06 18:59:00 christos Exp $");
+__RCSID("$NetBSD: scp.c,v 1.19 2018/04/07 00:36:55 christos Exp $");
 
 #include <sys/param.h>	/* roundup MAX */
 #include <sys/types.h>
@@ -600,7 +600,7 @@ do_times(int fd, int verb, const struct stat *sb)
 
 static int
 parse_scp_uri(const char *uri, char **userp, char **hostp, int *portp,
-     char **pathp)
+     const char **pathp)
 {
 	int r;
 
@@ -613,8 +613,10 @@ parse_scp_uri(const char *uri, char **userp, char **hostp, int *portp,
 void
 toremote(int argc, char **argv)
 {
-	char *suser = NULL, *host = NULL, *src = NULL;
-	char *bp, *tuser, *thost, *targ;
+	char *suser = NULL, *host = NULL;
+	const char *src = NULL;
+	char *bp, *tuser, *thost;
+	const char *targ;
 	int sport = -1, tport = -1;
 	arglist alist;
 	int i, r;
@@ -647,7 +649,7 @@ toremote(int argc, char **argv)
 	for (i = 0; i < argc - 1; i++) {
 		free(suser);
 		free(host);
-		free(src);
+		free(__UNCONST(src));
 		r = parse_scp_uri(argv[i], &suser, &host, &sport, &src);
 		if (r == -1) {
 			fmprintf(stderr, "%s: invalid uri\n", argv[i]);
@@ -725,16 +727,17 @@ toremote(int argc, char **argv)
 out:
 	free(tuser);
 	free(thost);
-	free(targ);
+	free(__UNCONST(targ));
 	free(suser);
 	free(host);
-	free(src);
+	free(__UNCONST(src));
 }
 
 static void
 tolocal(int argc, char **argv)
 {
-	char *bp, *host = NULL, *src = NULL, *suser = NULL;
+	char *bp, *host = NULL, *suser = NULL;
+	const char *src = NULL;
 	arglist alist;
 	int i, r, sport = -1;
 
@@ -744,7 +747,7 @@ tolocal(int argc, char **argv)
 	for (i = 0; i < argc - 1; i++) {
 		free(suser);
 		free(host);
-		free(src);
+		free(__UNCONST(src));
 		r = parse_scp_uri(argv[i], &suser, &host, &sport, &src);
 		if (r == -1) {
 			fmprintf(stderr, "%s: invalid uri\n", argv[i]);
@@ -786,7 +789,7 @@ tolocal(int argc, char **argv)
 	}
 	free(suser);
 	free(host);
-	free(src);
+	free(__UNCONST(src));
 }
 
 void
