@@ -1,4 +1,4 @@
-/*	$NetBSD: t_api.c,v 1.1.1.1 2018/04/07 22:34:28 christos Exp $	*/
+/*	$NetBSD: t_api.c,v 1.2 2018/04/07 22:37:30 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2017  Internet Systems Consortium, Inc. ("ISC")
@@ -30,6 +30,8 @@
  * and the BIND-specific parts are now wrapped with the BIND_SUPPORT
  * macro.
  */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: t_api.c,v 1.2 2018/04/07 22:37:30 christos Exp $");
 
 #include <config.h>
 
@@ -126,6 +128,23 @@ printusage(void);
 
 static int	T_int;
 
+uint16_t local_port = 0;
+uint16_t remote_port = 0;
+libdhcp_callbacks_t t_api_callbacks = {
+	&local_port,
+	&remote_port,
+	classify,
+	check_collection,
+	dhcp,
+#ifdef DHCPv6
+	dhcpv6,
+#endif /* DHCPv6 */
+	bootp,
+	find_class,
+	parse_allow_deny,
+	dhcp_set_control_state,
+};
+
 static void
 t_sighandler(int sig) {
 	T_int = sig;
@@ -149,6 +168,8 @@ main(int argc, char **argv) {
 	first = ISC_TRUE;
 	subprocs = 1;
 	T_timeout = T_TCTOUT;
+
+	libdhcp_callbacks_register(&t_api_callbacks);
 
 	/*
 	 * -a option is now default.

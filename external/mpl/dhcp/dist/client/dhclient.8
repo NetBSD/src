@@ -1,4 +1,4 @@
-.\"	$NetBSD: dhclient.8,v 1.1.1.1 2018/04/07 22:34:25 christos Exp $
+.\"	$NetBSD: dhclient.8,v 1.2 2018/04/07 22:37:29 christos Exp $
 .\"
 .\"	Id: dhclient.8,v 1.36 2011/04/15 21:58:12 sar Exp 
 .\"
@@ -87,6 +87,9 @@ dhclient - Dynamic Host Configuration Protocol Client
 [
 .B -e
 .I VAR=value
+]
+[
+.B -m
 ]
 [
 .B -q
@@ -284,6 +287,10 @@ inittab on System V systems.  This implies \fB-v\fR.
 .BI \-nw
 Become a daemon immediately (nowait) rather than waiting until an
 IP address has been acquired.
+.TP
+.BI \-m
+Don't require that the responding ethernet address of the dhcp server
+matches the one we expect.
 .TP
 .BI \-q
 Be quiet at startup, this is the default.

@@ -1,4 +1,4 @@
-/*	$NetBSD: tr.c,v 1.1.1.1 2018/04/07 22:34:26 christos Exp $	*/
+/*	$NetBSD: tr.c,v 1.2 2018/04/07 22:37:29 christos Exp $	*/
 
 /* tr.c
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tr.c,v 1.1.1.1 2018/04/07 22:34:26 christos Exp $");
+__RCSID("$NetBSD: tr.c,v 1.2 2018/04/07 22:37:29 christos Exp $");
 
 #include "dhcpd.h"
 
@@ -179,7 +179,7 @@ ssize_t decode_tr_header (interface, buf, bufix, from)
                         || ntohs(llc->ethertype) != ETHERTYPE_IP
                         || ip->ip_p != IPPROTO_UDP
                         || (ntohs (ip->ip_off) & IP_OFFMASK) != 0
-                        || udp->uh_dport != local_port)
+                        || udp->uh_dport != *libdhcp_callbacks.local_port)
                 return -1;
 
         /* only save source routing information for packets from valued hosts */

@@ -1,4 +1,4 @@
-/*	$NetBSD: isclib.h,v 1.1.1.1 2018/04/07 22:34:26 christos Exp $	*/
+/*	$NetBSD: isclib.h,v 1.2 2018/04/07 22:37:30 christos Exp $	*/
 
 /* isclib.h
 
@@ -140,6 +140,6 @@ void isclib_cleanup(void);
 void dhcp_signal_handler(int signal);
 extern int shutdown_signal;
 
-isc_result_t dns_client_init();
+isc_result_t dns_client_init(void);
 
 #endif /* ISCLIB_H */
