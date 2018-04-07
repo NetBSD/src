@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2017, Intel Corp.
+ * Copyright (C) 2000 - 2018, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -102,9 +102,9 @@ AnInitializeTableHeader (
     Header->Length = Length;
 
     Header->OemRevision = 0x1001;
-    strncpy (Header->OemId, "Intel", ACPI_OEM_ID_SIZE);
-    strncpy (Header->OemTableId, "AcpiName", ACPI_OEM_TABLE_ID_SIZE);
-    strncpy (Header->AslCompilerId, "INTL", ACPI_NAME_SIZE);
+    memcpy (Header->OemId, "Intel ", ACPI_OEM_ID_SIZE);
+    memcpy (Header->OemTableId, "AcpiExec", ACPI_OEM_TABLE_ID_SIZE);
+    ACPI_MOVE_NAME (Header->AslCompilerId, "INTL");
     Header->AslCompilerRevision = ACPI_CA_VERSION;
 
     /* Set the checksum, must set to zero first */

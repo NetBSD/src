@@ -5,7 +5,7 @@
  ******************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2017, Intel Corp.
+ * Copyright (C) 2000 - 2018, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -402,6 +402,9 @@ AcpiNsGetNormalizedPathname (
     /* Build the path in the allocated buffer */
 
     (void) AcpiNsBuildNormalizedPath (Node, NameBuffer, Size, NoTrailing);
+
+    ACPI_DEBUG_PRINT_RAW ((ACPI_DB_NAMES, "%s: Path \"%s\"\n",
+        ACPI_GET_FUNCTION_NAME, NameBuffer));
 
     return_PTR (NameBuffer);
 }
