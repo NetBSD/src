@@ -1,4 +1,5 @@
-/*	$NetBSD: ip.h,v 1.1.1.2 2014/07/12 11:57:57 spz Exp $	*/
+/*	$NetBSD: ip.h,v 1.1.1.3 2018/04/07 20:44:27 christos Exp $	*/
+
 /*	NetBSD: ip.h,v 1.9 1995/05/15 01:22:44 cgd Exp 	*/
 
 /*

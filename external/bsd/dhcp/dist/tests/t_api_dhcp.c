@@ -1,4 +1,5 @@
-/*	$NetBSD: t_api_dhcp.c,v 1.1.1.2 2014/07/12 11:58:01 spz Exp $	*/
+/*	$NetBSD: t_api_dhcp.c,v 1.1.1.3 2018/04/07 20:44:28 christos Exp $	*/
+
 /*
  * We have to have a number of symbols defined in order to build a
  * DHCP program.
@@ -17,6 +18,11 @@ dhcp(struct packet *packet) {
 
 void
 dhcpv6(struct packet *packet) {
+}
+
+isc_result_t
+dhcpv4o6_handler(omapi_object_t *h) {
+	return ISC_R_NOTIMPLEMENTED;
 }
 
 isc_result_t

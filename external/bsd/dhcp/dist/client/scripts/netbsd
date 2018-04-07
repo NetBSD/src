@@ -48,6 +48,51 @@ exit_with_hooks() {
   exit $exit_status
 }
 
+# This function was largely borrowed from dhclient-script that
+# ships with Centos, authored by Jiri Popelka and David Cantrell
+# of Redhat. Thanks guys.
+add_ipv6_addr_with_DAD() {
+    ifconfig ${interface} inet6 ${new_ip6_address}/${new_ip6_prefixlen} alias
+
+    if [ ${dad_wait_time} -le 0 ]
+    then
+        # if we're not waiting for DAD, assume we're good
+        return 0
+    fi
+
+    # Repeatedly test whether newly added address passed
+    # duplicate address detection (DAD)
+    for i in $(seq 1 ${dad_wait_time}); do
+        sleep 1 # give the DAD some time
+
+        addr=$(ifconfig ${interface} \
+            | grep "${new_ip6_address} prefixlen ${new_ip6_prefixlen}")
+
+        # tentative flag == DAD is still not complete
+        tentative=$(echo "${addr}" | grep tentative)
+        # dadfailed flag == address is already in use somewhere else
+        dadfailed=$(echo "${addr}" | grep duplicated)
+
+        if [ -n "${dadfailed}" ] ; then
+            # dad failed, remove the address
+            ifconfig ${interface} inet6 ${new_ip6_address}/${new_ip6_prefixlen} -alias
+            exit_with_hooks 3
+        fi
+
+        if [ -z "${tentative}" ] ; then
+            if [ -n "${addr}" ]; then
+                # DAD is over
+                return 0
+            else
+                # address was auto-removed (or not added at all)
+                exit_with_hooks 3
+            fi
+        fi
+    done
+
+    return 0
+}
+
 # Invoke the local dhcp client enter hooks, if they exist.
 if [ -f /etc/dhclient-enter-hooks ]; then
   exit_status=0
@@ -265,6 +310,41 @@ if [ ${reason} = PREINIT6 ] ; then
 
   # XXX: Remove any stale addresses from aborted clients.
 
+  # We need to give the kernel some time to active interface
+  interface_up_wait_time=5
+  for i in $(seq 0 ${interface_up_wait_time})
+  do
+      ifconfig ${interface} | grep inactive >/dev/null 2>&1
+      if [ $? -ne 0 ]; then
+          break;
+      fi
+      sleep 1
+  done
+
+  # Wait for duplicate address detection for this interface if the
+  # --dad-wait-time parameter has been specified and is greater than
+  # zero.
+  if [ ${dad_wait_time} -gt 0 ]; then
+      # Check if any IPv6 address on this interface is marked as
+      # tentative.
+      ifconfig ${interface} | grep inet6 | grep tentative \
+          >/dev/null 2>&1
+      if [ $? -eq 0 ]; then
+          # Wait for duplicate address detection to complete or for
+          # the timeout specified as --dad-wait-time.
+          for i in $(seq 0 $dad_wait_time)
+          do
+              # We're going to poll for the tentative flag every second.
+              sleep 1
+              ifconfig ${interface} | grep inet6 | grep tentative \
+                  >/dev/null 2>&1
+              if [ $? -ne 0 ]; then
+                  break;
+              fi
+          done
+      fi
+  fi
+
   exit_with_hooks 0
 fi
 
@@ -279,7 +359,8 @@ if [ ${reason} = BOUND6 ] ; then
     exit_with_hooks 2;
   fi
 
-  ifconfig ${interface} inet6 add ${new_ip6_address}/${new_ip6_prefixlen}
+  # Add address to interface, check for DAD if dad_wait_time > 0
+  add_ipv6_addr_with_DAD
 
   # Check for nameserver options.
   make_resolv_conf
@@ -316,7 +397,7 @@ if [ ${reason} = EXPIRE6 -o ${reason} = RELEASE6 -o ${reason} = STOP6 ] ; then
     exit_with_hooks 2;
   fi
 
-  ifconfig ${interface} inet6 delete ${old_ip6_address}/${old_ip6_prefixlen}
+  ifconfig ${interface} inet6 -alias ${old_ip6_address}/${old_ip6_prefixlen}
 
   exit_with_hooks 0
 fi

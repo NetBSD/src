@@ -1,10 +1,11 @@
-/*	$NetBSD: load_bal_unittest.c,v 1.1.1.2 2014/07/12 11:58:16 spz Exp $	*/
+/*	$NetBSD: load_bal_unittest.c,v 1.1.1.3 2018/04/07 20:44:28 christos Exp $	*/
+
 /*
- * Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2012-2017 by Internet Systems Consortium, Inc. ("ISC")
  *
- * Permission to use, copy, modify, and/or distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
  * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
@@ -53,6 +54,7 @@ ATF_TC_HEAD(load_balance, tc)
 
 ATF_TC_BODY(load_balance, tc)
 {
+#if defined(FAILOVER_PROTOCOL) 
 	struct packet packet;
 	struct dhcp_packet raw;
 	dhcp_failover_state_t pstate, sstate;
@@ -118,7 +120,9 @@ ATF_TC_BODY(load_balance, tc)
 	if (load_balance_mine(&packet, &sstate) != 1) {
 		atf_tc_fail("ERROR: secondary not accepted %s:%d", MDL);
 	}
-	
+#else
+    atf_tc_skip("failover is disabled");
+#endif
 }
 
 ATF_TC(load_balance_swap);
@@ -131,11 +135,13 @@ ATF_TC_HEAD(load_balance_swap, tc)
 
 ATF_TC_BODY(load_balance_swap, tc)
 {
-#if defined(SECS_BYTEORDER)
+#if defined(FAILOVER_PROTOCOL) 
 	struct packet packet;
 	struct dhcp_packet raw;
 	dhcp_failover_state_t pstate, sstate;
 	u_int8_t hba[256];
+
+	check_secs_byte_order = 1;
 
 	memset(&packet, 0, sizeof(struct packet));
 	memset(&raw, 0, sizeof(struct dhcp_packet));
@@ -176,9 +182,8 @@ ATF_TC_BODY(load_balance_swap, tc)
 	if (load_balance_mine(&packet, &sstate) != 1) {
 		atf_tc_fail("ERROR: secondary not accepted %s:%d", MDL);
 	}
-	
 #else
-	atf_tc_skip("SECS_BYTEORDER not defined");
+	atf_tc_skip("failover is disabled");
 #endif
 }
 
