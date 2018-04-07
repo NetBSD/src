@@ -1,4 +1,4 @@
-/*	$NetBSD: failover.c,v 1.1.1.5 2018/04/07 20:44:28 christos Exp $	*/
+/*	$NetBSD: failover.c,v 1.2 2018/04/07 21:19:32 christos Exp $	*/
 
 /* failover.c
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: failover.c,v 1.1.1.5 2018/04/07 20:44:28 christos Exp $");
+__RCSID("$NetBSD: failover.c,v 1.2 2018/04/07 21:19:32 christos Exp $");
 
 #include "cdefs.h"
 #include "dhcpd.h"
@@ -6554,7 +6554,7 @@ const char *binding_state_print (enum failover_state state)
  * non-printable bytes, returns the string "<unsuitable for printing>",
  * otherwise it returns a const pointer to value
  */
-const char *printable(const char* value) {
+static const char *printable(const char* value) {
 	const char *print_value = "<none>";
 	if (value) {
 		if ((strlen (value) <= 64) &&
