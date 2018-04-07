@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_platform.c,v 1.22 2018/04/01 04:35:04 ryo Exp $ */
+/* $NetBSD: sunxi_platform.c,v 1.23 2018/04/07 18:06:27 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "opt_fdt_arm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_platform.c,v 1.22 2018/04/01 04:35:04 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_platform.c,v 1.23 2018/04/07 18:06:27 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -176,12 +176,15 @@ sunxi_platform_uart_freq(void)
 static void
 sunxi_platform_bootstrap(void)
 {
+	void *fdt_data = __UNCONST(fdtbus_get_data());
+	const int chosen_off = fdt_path_offset(fdt_data, "/chosen");
+	if (chosen_off < 0)
+		return;
+
 	if (match_bootconf_option(boot_args, "console", "fb")) {
-		void *fdt_data = __UNCONST(fdtbus_get_data());
-		const int chosen_off = fdt_path_offset(fdt_data, "/chosen");
 		const int framebuffer_off =
 		    fdt_path_offset(fdt_data, "/chosen/framebuffer");
-		if (chosen_off >= 0 && framebuffer_off >= 0) {
+		if (framebuffer_off >= 0) {
 			const char *status = fdt_getprop(fdt_data,
 			    framebuffer_off, "status", NULL);
 			if (status == NULL || strncmp(status, "ok", 2) == 0) {
@@ -189,6 +192,9 @@ sunxi_platform_bootstrap(void)
 				    "stdout-path", "/chosen/framebuffer");
 			}
 		}
+	} else if (match_bootconf_option(boot_args, "console", "serial")) {
+		fdt_setprop_string(fdt_data, chosen_off,
+		    "stdout-path", "serial0:115200n8");
 	}
 }
 
