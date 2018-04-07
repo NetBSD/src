@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2017, Intel Corp.
+ * Copyright (C) 2000 - 2018, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -314,7 +314,7 @@ UtSetParseOpName (
     ACPI_PARSE_OBJECT       *Op)
 {
 
-    strncpy (Op->Asl.ParseOpName, UtGetOpName (Op->Asl.ParseOpcode),
+    AcpiUtSafeStrncpy (Op->Asl.ParseOpName, UtGetOpName (Op->Asl.ParseOpcode),
         ACPI_MAX_PARSEOP_NAME);
 }
 

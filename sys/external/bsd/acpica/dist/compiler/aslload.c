@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2017, Intel Corp.
+ * Copyright (C) 2000 - 2018, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -219,8 +219,8 @@ LdLoadFieldElements (
                      * The name already exists in this scope
                      * But continue processing the elements
                      */
-                    AslDualParseOpError (ASL_ERROR, ASL_MSG_NAME_EXISTS, Child,
-                        Child->Asl.Value.String, ASL_MSG_FOUND_HERE, Node->Op,
+                    AslDualParseOpError (ASL_WARNING, ASL_MSG_EXTERN_COLLISION, Child,
+                        Child->Asl.Value.String, ASL_MSG_EXTERN_FOUND_HERE, Node->Op,
                         Node->Op->Asl.ExternalName);
                 }
             }
@@ -722,8 +722,8 @@ LdNamespace1Begin (
                 if (Node->OwnerId == WalkState->OwnerId &&
                     !(Node->Flags & IMPLICIT_EXTERNAL))
                 {
-                    AslDualParseOpError (ASL_ERROR, ASL_MSG_NAME_EXISTS, Op,
-                        Op->Asl.ExternalName, ASL_MSG_FOUND_HERE, Node->Op,
+                    AslDualParseOpError (ASL_WARNING, ASL_MSG_EXTERN_COLLISION, Op,
+                        Op->Asl.ExternalName, ASL_MSG_EXTERN_FOUND_HERE, Node->Op,
                         Node->Op->Asl.ExternalName);
                 }
                 if (Node->Flags & IMPLICIT_EXTERNAL)
@@ -745,8 +745,8 @@ LdNamespace1Begin (
 
                 if (Node->OwnerId == WalkState->OwnerId)
                 {
-                    AslDualParseOpError (ASL_ERROR, ASL_MSG_NAME_EXISTS, Op,
-                        Op->Asl.ExternalName, ASL_MSG_FOUND_HERE, Node->Op,
+                    AslDualParseOpError (ASL_WARNING, ASL_MSG_EXTERN_COLLISION, Op,
+                        Op->Asl.ExternalName, ASL_MSG_EXTERN_FOUND_HERE, Node->Op,
                         Node->Op->Asl.ExternalName);
                 }
             }

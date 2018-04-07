@@ -240,7 +240,7 @@ AcpiUtSafeStrncat (
 void
 AcpiUtSafeStrncpy (
     char                    *Dest,
-    char                    *Source,
+    const char              *Source,
     ACPI_SIZE               DestSize)
 {
     /* Always terminate destination string */

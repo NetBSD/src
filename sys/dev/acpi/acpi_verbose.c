@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_verbose.c,v 1.18 2016/10/14 11:11:01 nonaka Exp $ */
+/*	$NetBSD: acpi_verbose.c,v 1.19 2018/04/07 15:49:52 christos Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2010 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_verbose.c,v 1.18 2016/10/14 11:11:01 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_verbose.c,v 1.19 2018/04/07 15:49:52 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -477,11 +477,6 @@ acpi_print_devnodes(struct acpi_softc *sc)
 		aprint_normal("UID %-4s ",
 		    ((di->Valid & ACPI_VALID_UID) != 0) ?
 		    di->UniqueId.String : "-");
-
-		if ((di->Valid & ACPI_VALID_STA) != 0)
-			aprint_normal("STA 0x%08X ", di->CurrentStatus);
-		else
-			aprint_normal("STA %10s ", "-");
 
 		if ((di->Valid & ACPI_VALID_ADR) != 0)
 			aprint_normal("ADR 0x%016" PRIX64"", di->Address);

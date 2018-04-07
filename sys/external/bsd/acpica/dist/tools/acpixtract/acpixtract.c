@@ -6,7 +6,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2017, Intel Corp.
+ * Copyright (C) 2000 - 2018, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -96,8 +96,7 @@ AxExtractTables (
 
     if (Signature)
     {
-        strncpy (UpperSignature, Signature, 4);
-        UpperSignature[4] = 0;
+        strncpy (UpperSignature, Signature, ACPI_NAME_SIZE);
         AcpiUtStrupr (UpperSignature);
 
         /* Are there enough instances of the table to continue? */

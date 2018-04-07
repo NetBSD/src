@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2017, Intel Corp.
+ * Copyright (C) 2000 - 2018, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -145,7 +145,7 @@ TrSetOpIntegerValue (
 
     /* Converter: if this is a method invocation, turn off capture comments */
 
-    if (Gbl_CaptureComments &&
+    if (AcpiGbl_CaptureComments &&
         (ParseOpcode == PARSEOP_METHODCALL))
     {
         Gbl_CommentState.CaptureComments = FALSE;
@@ -401,7 +401,7 @@ TrLinkOpChildren (
 
     /* The following is for capturing comments */
 
-    if(Gbl_CaptureComments)
+    if (AcpiGbl_CaptureComments)
     {
         /*
          * If there are "regular comments" detected at this point,
@@ -482,7 +482,7 @@ TrLinkOpChildren (
     va_end(ap);
     DbgPrint (ASL_PARSE_OUTPUT, "\n\n");
 
-    if(Gbl_CaptureComments)
+    if (AcpiGbl_CaptureComments)
     {
         Gbl_CommentState.LatestParseOp = Op;
         CvDbgPrint ("TrLinkOpChildren=====Set latest parse op to this op.\n");
@@ -660,7 +660,7 @@ TrLinkChildOp (
      * turn on capture comments as it signifies that we are done parsing
      * a method call.
      */
-    if (Gbl_CaptureComments && Op1)
+    if (AcpiGbl_CaptureComments && Op1)
     {
         if (Op1->Asl.ParseOpcode == PARSEOP_METHODCALL)
         {
