@@ -1,16 +1,16 @@
-/*	$NetBSD: dns.c,v 1.6 2016/01/10 20:10:44 christos Exp $	*/
+/*	$NetBSD: dns.c,v 1.7 2018/04/07 21:19:31 christos Exp $	*/
+
 /* dns.c
 
    Domain Name Service subroutines. */
 
 /*
- * Copyright (c) 2009-2015 by Internet Systems Consortium, Inc. ("ISC")
- * Copyright (c) 2004-2007 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004-2017 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 2001-2003 by Internet Software Consortium
  *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dns.c,v 1.6 2016/01/10 20:10:44 christos Exp $");
+__RCSID("$NetBSD: dns.c,v 1.7 2018/04/07 21:19:31 christos Exp $");
 
 /*! \file common/dns.c
  */
@@ -69,7 +69,7 @@ __RCSID("$NetBSD: dns.c,v 1.6 2016/01/10 20:10:44 christos Exp $");
  *
  * You can also include IPv6 addresses via the primary6 and secondary6
  * options.  The search order for the addresses is primary, primary6,
- * secondary and lastly secondary6, with a limit on the number of 
+ * secondary and lastly secondary6, with a limit on the number of
  * addresses used.  Currently this limit is 3.
  *
  * The DHCP server tries to find an existing zone for any given name by
@@ -94,8 +94,8 @@ __RCSID("$NetBSD: dns.c,v 1.6 2016/01/10 20:10:44 christos Exp $");
  * this while hunting up a matching zone for a name, it looks up the SOA,
  * fills in the IP addresses, and uses that record for the update.
  * If the SOA lookup returns NXRRSET, a warning is printed and the zone is
- * discarded, TSIG key and all.   The search for the zone then continues 
- * as if the zone record hadn't been found.   Zones without IP addresses 
+ * discarded, TSIG key and all.   The search for the zone then continues
+ * as if the zone record hadn't been found.   Zones without IP addresses
  * don't match when initially hunting for a zone to update.
  *
  * When an update is attempted and no predefined zone is found
@@ -157,6 +157,11 @@ typedef struct dhcp_ddns_rdata {
 	dns_rdataset_t  rdataset;
 } dhcp_ddns_data_t;
 
+/* Function pointer type for functions which build DDNS update contents */
+typedef isc_result_t (*builder_func_t)(dhcp_ddns_cb_t *ddns_cb,
+					dhcp_ddns_data_t *dataspace,
+					dns_name_t *pname, dns_name_t *uname);
+
 #if defined (NSUPDATE)
 #if defined (DNS_ZONE_LOOKUP)
 
@@ -173,7 +178,7 @@ typedef struct dhcp_ddns_rdata {
  */
 
 typedef struct dhcp_ddns_ns {
-	struct dhcp_ddns_ns *next;      
+	struct dhcp_ddns_ns *next;
 	struct data_string oname;     /* the original name for DDNS */
 	char *zname;                  /* a pointer into the original name for
 					 the zone we are checking */
@@ -181,7 +186,7 @@ typedef struct dhcp_ddns_ns {
 					 namelist, we can't free the eventp
 					 until we free the namelist */
 	dns_name_t *ns_name;          /* current name server we are examining */
-	dns_rdataset_t *rdataset; 
+	dns_rdataset_t *rdataset;
 	dns_rdatatype_t rdtype;       /* type of address we want */
 
 	struct in_addr addrs[DHCP_MAXNS];   /* space for v4 addresses */
@@ -308,8 +313,8 @@ void ddns_interlude(isc_task_t *, isc_event_t *);
 
 /*
  * Structure used to map old pointers to new pointers.
- * Old pointers are 8 bytes long as we don't know if the trace was 
- * done on a 64 bit or 32 bit machine.  
+ * Old pointers are 8 bytes long as we don't know if the trace was
+ * done on a 64 bit or 32 bit machine.
  */
 #define TRACE_PTR_LEN 8
 
@@ -337,7 +342,7 @@ trace_ddns_input_write(dhcp_ddns_cb_t *ddns_cb, isc_result_t result)
 	trace_iov_t iov[2];
 	u_int32_t old_result;
 	char old_pointer[TRACE_PTR_LEN];
-	
+
 	old_result = htonl((u_int32_t)result);
 	memset(old_pointer, 0, TRACE_PTR_LEN);
 	memcpy(old_pointer, &ddns_cb, sizeof(ddns_cb));
@@ -389,7 +394,7 @@ trace_ddns_input_read(trace_type_t *ttype, unsigned length,
 	if (ddns_map_ptr == NULL) {
 		log_error("trace_dns_input_read: unable to map cb pointer");
 		return;
-	}		
+	}
 
 	eventp = (dns_clientupdateevent_t *)
 		isc_event_allocate(dhcp_gbl_ctx.mctx,
@@ -423,7 +428,7 @@ trace_ddns_input_stop(trace_type_t *ttype)
  * If we are doing playback we read the next packet from the file
  * and compare the type.  If it matches we extract the results and pointer
  * from the trace file.  The results are returned to the caller as if
- * they had called the dns routine.  The pointer is used to construct a 
+ * they had called the dns routine.  The pointer is used to construct a
  * map for when the "reply" is processed.
  *
  * The data written to trace file is:
@@ -444,7 +449,7 @@ trace_ddns_output_write(dns_client_t *client, dns_rdataclass_t rdclass,
 	u_int32_t old_result;
 	char old_pointer[TRACE_PTR_LEN];
 	dhcp_ddns_map_t *ddns_map_ptr;
-	
+
 	if (trace_playback() != 0) {
 		/* We are doing playback, extract the entry from the file */
 		unsigned buflen = 0;
@@ -482,7 +487,7 @@ trace_ddns_output_write(dns_client_t *client, dns_rdataclass_t rdclass,
 		if (ddns_map_ptr == NULL) {
 			ddns_map_ptr = dmalloc(sizeof(*ddns_map_ptr), MDL);
 			if (ddns_map_ptr == NULL) {
-				log_error("trace_ddns_output_write: " 
+				log_error("trace_ddns_output_write: "
 					  "unable to allocate map entry");
 				return(ISC_R_FAILURE);
 				}
@@ -577,7 +582,7 @@ ddns_cb_alloc(const char *file, int line)
 
 	return(ddns_cb);
 }
-		
+
 void
 ddns_cb_free(dhcp_ddns_cb_t *ddns_cb, const char *file, int line)
 {
@@ -588,15 +593,22 @@ ddns_cb_free(dhcp_ddns_cb_t *ddns_cb, const char *file, int line)
   	data_string_forget(&ddns_cb->fwd_name, file, line);
 	data_string_forget(&ddns_cb->rev_name, file, line);
 	data_string_forget(&ddns_cb->dhcid, file, line);
-	
+
 	if (ddns_cb->zone != NULL) {
 		forget_zone((struct dns_zone **)&ddns_cb->zone);
 	}
 
 	/* Should be freed by now, check just in case. */
-	if (ddns_cb->transaction != NULL)
+	if (ddns_cb->transaction != NULL) {
 		log_error("Impossible memory leak at %s:%d (attempt to free "
 			  "DDNS Control Block before transaction).", MDL);
+	}
+
+	/* Should be freed by now, check just in case. */
+	if (ddns_cb->fixed6_ia) {
+		log_error("Possible memory leak at %s:%d (attempt to free "
+			  "DDNS Control Block before fxed6_ia).", MDL);
+	}
 
 	dfree(ddns_cb, file, line);
 }
@@ -612,55 +624,6 @@ ddns_cb_forget_zone(dhcp_ddns_cb_t *ddns_cb)
 	for (i = 0; i < DHCP_MAXNS; i++) {
 		ISC_LINK_INIT(&ddns_cb->zone_addrs[i], link);
 	}
-}
-
-isc_result_t find_tsig_key (ns_tsig_key **key, const char *zname,
-			    struct dns_zone *zone)
-{
-	ns_tsig_key *tkey;
-
-	if (!zone)
-		return ISC_R_NOTFOUND;
-
-	if (!zone -> key) {
-		return DHCP_R_KEY_UNKNOWN;
-	}
-	
-	if ((!zone -> key -> name ||
-	     strlen (zone -> key -> name) > NS_MAXDNAME) ||
-	    (!zone -> key -> algorithm ||
-	     strlen (zone -> key -> algorithm) > NS_MAXDNAME) ||
-	    (!zone -> key) ||
-	    (!zone -> key -> key) ||
-	    (zone -> key -> key -> len == 0)) {
-		return DHCP_R_INVALIDKEY;
-	}
-	tkey = dmalloc (sizeof *tkey, MDL);
-	if (!tkey) {
-	      nomem:
-		return ISC_R_NOMEMORY;
-	}
-	memset (tkey, 0, sizeof *tkey);
-	tkey -> data = dmalloc (zone -> key -> key -> len, MDL);
-	if (!tkey -> data) {
-		dfree (tkey, MDL);
-		goto nomem;
-	}
-	strcpy (tkey -> name, zone -> key -> name);
-	strcpy (tkey -> alg, zone -> key -> algorithm);
-	memcpy (tkey -> data,
-		zone -> key -> key -> value, zone -> key -> key -> len);
-	tkey -> len = zone -> key -> key -> len;
-	*key = tkey;
-	return ISC_R_SUCCESS;
-}
-
-void tkey_free (ns_tsig_key **key)
-{
-	if ((*key) -> data)
-		dfree ((*key) -> data, MDL);
-	dfree ((*key), MDL);
-	*key = (ns_tsig_key *)0;
 }
 #endif
 
@@ -729,7 +692,7 @@ isc_result_t dns_zone_lookup (struct dns_zone **zone, const char *name)
 		dns_zone_hash_delete(dns_zone_hash, (*zone)->name, 0, MDL);
 		dns_zone_dereference(zone, MDL);
 		status = ISC_R_NOTFOUND;
-	} else 
+	} else
 		status = ISC_R_SUCCESS;
 
 	if (tname)
@@ -791,7 +754,7 @@ int dns_zone_dereference (ptr, file, line)
 #if defined (NSUPDATE)
 #if defined (DNS_ZONE_LOOKUP)
 
-/* Helper function to copy the address from an rdataset to 
+/* Helper function to copy the address from an rdataset to
  * the nameserver control block.  Mostly to avoid really long
  * lines in the nested for loops
  */
@@ -802,7 +765,7 @@ zone_addr_to_ns(dhcp_ddns_ns_t *ns_cb,
 	dns_rdata_t rdata;
 	dns_rdata_in_a_t a;
 	dns_rdata_in_aaaa_t aaaa;
-	
+
 	dns_rdata_init(&rdata);
 	dns_rdataset_current(rdataset, &rdata);
 	switch (rdataset->type) {
@@ -869,7 +832,7 @@ find_zone_addrs(isc_task_t *taskp,
 	dns_name_t *name;
 	dns_rdata_t rdata = DNS_RDATA_INIT;
 	dns_rdata_ns_t ns;
-	
+
 
 	/* the transaction is done, get rid of the tag */
 	dns_client_destroyrestrans(&ns_cb->transaction);
@@ -925,7 +888,7 @@ find_zone_addrs(isc_task_t *taskp,
 		for (;
 		     rdataset != NULL;
 		     rdataset = ISC_LIST_NEXT(rdataset, link)) {
-			
+
 			if (rdataset->type != dns_rdatatype_ns)
 				continue;
 			dns_rdata_init(&rdata);
@@ -942,10 +905,10 @@ find_zone_addrs(isc_task_t *taskp,
 				}
 			} else {
 				if ((!dns_rdataset_isassociated(rdataset)) ||
-				    (dns_rdataset_first(rdataset) != 
+				    (dns_rdataset_first(rdataset) !=
 				     ISC_R_SUCCESS))
 					continue;
-			}				
+			}
 
 			dns_rdataset_current(rdataset, &rdata);
 			if (dns_rdata_tostruct(&rdata, &ns, NULL) !=
@@ -1016,7 +979,7 @@ find_zone_addrs(isc_task_t *taskp,
 	isc_event_free(&eventp);
 
 	return;
-	 
+
 }
 
 /*
@@ -1024,7 +987,7 @@ find_zone_addrs(isc_task_t *taskp,
  * This is routine is called when we are still trying to get a list
  * of nameservers to process.
  */
- 
+
 static void
 find_zone_ns(isc_task_t *taskp,
 	     isc_event_t *eventp)
@@ -1073,7 +1036,7 @@ find_zone_ns(isc_task_t *taskp,
 				  isc_result_totext(result));
 			goto cleanup;
 		}
-		
+
 		/* we have successfully started the next iteration
 		 * of this step, clean up from the call and continue */
                 dns_client_freeresanswer(dhcp_gbl_ctx.dnsclient,
@@ -1098,7 +1061,7 @@ find_zone_ns(isc_task_t *taskp,
 				continue;
 
 			if ((!dns_rdataset_isassociated(rdataset)) ||
-			    (dns_rdataset_first(rdataset) != 
+			    (dns_rdataset_first(rdataset) !=
 			     ISC_R_SUCCESS))
 				continue;
 
@@ -1158,7 +1121,7 @@ find_zone_ns(isc_task_t *taskp,
 	data_string_forget(&ns_cb->oname, MDL);
 	dfree(ns_cb, MDL);
 	return;
-	
+
 }
 
 /*
@@ -1170,7 +1133,7 @@ find_zone_ns(isc_task_t *taskp,
  * the control block will be filled in as we continue processing.
  */
 static isc_result_t
-find_zone_start(dhcp_ddns_cb_t *ddns_cb, int direction) 
+find_zone_start(dhcp_ddns_cb_t *ddns_cb, int direction)
 {
 	isc_result_t status = ISC_R_NOTFOUND;
 	dhcp_ddns_ns_t *ns_cb;
@@ -1240,7 +1203,7 @@ find_zone_start(dhcp_ddns_cb_t *ddns_cb, int direction)
 #endif
 
 isc_result_t
-find_cached_zone(dhcp_ddns_cb_t *ddns_cb, int direction) 
+find_cached_zone(dhcp_ddns_cb_t *ddns_cb, int direction)
 {
 	isc_result_t status = ISC_R_NOTFOUND;
 	const char *np;
@@ -1462,7 +1425,7 @@ void cache_found_zone(dhcp_ddns_ns_t *ns_cb)
 			goto cleanup;
 		}
 		memcpy(zone->primary->data.buffer->data, ns_cb->addrs, len);
-		zone->primary->data.data = 
+		zone->primary->data.data =
 			&zone->primary->data.buffer->data[0];
 		zone->primary->data.len = len;
 	}
@@ -1476,7 +1439,7 @@ void cache_found_zone(dhcp_ddns_ns_t *ns_cb)
 			goto cleanup;
 		}
 		memcpy(zone->primary6->data.buffer->data, ns_cb->addrs6, len);
-		zone->primary6->data.data = 
+		zone->primary6->data.data =
 			&zone->primary6->data.buffer->data[0];
 		zone->primary6->data.len = len;
 	}
@@ -1569,7 +1532,7 @@ static int get_std_dhcid(dhcp_ddns_cb_t *ddns_cb,
  * This version of the function is for the interim style.  It is retained
  * to allow users to continue using the interim style but they should
  * switch to the standard style (which uses get_std_dhcid) for better
- * interoperability.  
+ * interoperability.
  *
  * This function takes information from the type and data fields and
  * mangles it into a dhcid string which it places in ddns_cb.  It also
@@ -1606,7 +1569,7 @@ static int get_int_dhcid (dhcp_ddns_cb_t *ddns_cb,
 	id->data = id->buffer->data;
 
 	/*
-	 * We put the length into the first byte to turn 
+	 * We put the length into the first byte to turn
 	 * this into a dns text string.  This avoid needing to
 	 * copy the string to add the byte later.
 	 */
@@ -1619,7 +1582,7 @@ static int get_int_dhcid (dhcp_ddns_cb_t *ddns_cb,
 	 * to avoid disturbing customer's lease files
 	 */
 	id->buffer->data[2] = "0123456789abcdef"[type % 15];
-  
+
 	/* Mash together an MD5 hash of the identifier. */
 	isc_md5_init(&md5);
 	isc_md5_update(&md5, data, len);
@@ -1647,7 +1610,7 @@ int get_dhcid(dhcp_ddns_cb_t *ddns_cb,
 {
 	if (ddns_cb->dhcid_class == dns_rdatatype_dhcid)
 		return get_std_dhcid(ddns_cb, type, identifier, id_len);
-	else 
+	else
 		return get_int_dhcid(ddns_cb, type, identifier, id_len);
 }
 
@@ -1693,7 +1656,7 @@ dhcid_fromlease(struct data_string *dhcid,
 	return(ISC_R_SUCCESS);
 }
 
-/* 
+/*
  * Construct the dataset for this item.
  * This is a fairly simple arrangement as the operations we do are simple.
  * If there is data we simply have the rdata point to it - the formatting
@@ -1757,6 +1720,27 @@ make_dns_dataset(dns_rdataclass_t  dataclass,
 	return(ISC_R_SUCCESS);
 }
 
+#if defined (DEBUG_DNS_UPDATES)
+static void log_call(char *text, dns_name_t* pname, dns_name_t* uname) {
+    char buf1[512];
+    char buf2[512];
+    if (pname) {
+        dns_name_format(pname, buf1, 512);
+    } else {
+        *buf1=0;
+    }
+
+    if (uname) {
+        dns_name_format(uname, buf2, 512);
+    } else {
+        *buf2=0;
+    }
+
+    log_info ("DDNS: %s: pname:[%s] uname:[%s]", text, buf1, buf2);
+}
+#endif
+
+
 /*
  * When a DHCP client or server intends to update an A RR, it first
  * prepares a DNS UPDATE query which includes as a prerequisite the
@@ -1779,12 +1763,16 @@ make_dns_dataset(dns_rdataclass_t  dataclass,
  */
 
 static isc_result_t
-ddns_modify_fwd_add1(dhcp_ddns_cb_t   *ddns_cb,
+build_fwd_add1(dhcp_ddns_cb_t   *ddns_cb,
 		     dhcp_ddns_data_t *dataspace,
 		     dns_name_t       *pname,
 		     dns_name_t       *uname)
 {
 	isc_result_t result;
+
+#if defined (DEBUG_DNS_UPDATES)
+	log_call("build_fwd_add1", pname, uname);
+#endif
 
 	/* Construct the prerequisite list */
 	if ((ddns_cb->flags & DDNS_INCLUDE_RRSET) != 0) {
@@ -1818,7 +1806,7 @@ ddns_modify_fwd_add1(dhcp_ddns_cb_t   *ddns_cb,
 
 	/* Add the DHCID RR */
 	result = make_dns_dataset(dns_rdataclass_in, ddns_cb->dhcid_class,
-				  dataspace, 
+				  dataspace,
 				  (unsigned char *)ddns_cb->dhcid.data,
 				  ddns_cb->dhcid.len, ddns_cb->ttl);
 	if (result != ISC_R_SUCCESS) {
@@ -1842,8 +1830,18 @@ ddns_modify_fwd_add1(dhcp_ddns_cb_t   *ddns_cb,
  *   -- "Interaction between DHCP and DNS"
  *
  * The message for the second step depends on if we are doing conflict
- * resolution.  If we are we include a prerequisite.  If not we delete
- * the DHCID in addition to all A rrsets.
+ * resolution.  If we are we include the prerequisite.  The prerequiste
+ * will either:
+ *  A. require the data value of the DHCID RR to match that of the client
+ * or
+ *  B. required only that the DHCID RR of the configured class (DHCID or
+ * TXT) exist
+ *
+ * based on whether DDNS_GUARD_ID_MUST_MATCH is on (default) or off.
+ *
+ * The prerequisite is omitted if conflict detection is off.
+ *
+ * If not we delete the DHCID in addition to all A rrsets.
  *
  * Conflict resolution:
  * DHCID RR exists, and matches client identity.
@@ -1858,24 +1856,42 @@ ddns_modify_fwd_add1(dhcp_ddns_cb_t   *ddns_cb,
  */
 
 static isc_result_t
-ddns_modify_fwd_add2(dhcp_ddns_cb_t   *ddns_cb,
+build_fwd_add2(dhcp_ddns_cb_t   *ddns_cb,
 		     dhcp_ddns_data_t *dataspace,
 		     dns_name_t       *pname,
 		     dns_name_t       *uname)
 {
 	isc_result_t result = ISC_R_SUCCESS;
 
+#if defined (DEBUG_DNS_UPDATES)
+	log_call("build_fwd_add2", pname, uname);
+#endif
+
 	/*
-	 * If we are doing conflict resolution (unset) we use a prereq list.
+	 * If we are doing conflict detection we use a prereq list.
 	 * If not we delete the DHCID in addition to all A rrsets.
 	 */
-	if ((ddns_cb->flags & DDNS_CONFLICT_OVERRIDE) == 0) {
+	if (ddns_cb->flags & DDNS_CONFLICT_DETECTION) {
 		/* Construct the prereq list */
-		/* The DHCID RR exists and matches the client identity */
-		result = make_dns_dataset(dns_rdataclass_in, ddns_cb->dhcid_class,
-					  dataspace, 
-					  (unsigned char *)ddns_cb->dhcid.data,
-					  ddns_cb->dhcid.len, 0);
+		/* The DHCID RR exists and optionally matches the client's
+		 * identity.  If matching is turned off, we use the presence
+		 * of a DHCID RR to signal that this is a dynamic entry and
+		 * thus eligible for us to overwrite.  If matching is on
+		 * then we can only replace the entries if they belong to
+		 * this client. */
+		unsigned char *match_id = NULL;
+		int match_id_len = 0;
+		int match_class = dns_rdataclass_any;
+		if (ddns_cb->flags & DDNS_GUARD_ID_MUST_MATCH) {
+			match_id = (unsigned char*)(ddns_cb->dhcid.data);
+			match_id_len = ddns_cb->dhcid.len;
+			match_class = dns_rdataclass_in;
+		}
+
+		result = make_dns_dataset(match_class,
+					  ddns_cb->dhcid_class,
+					  dataspace,
+					  match_id, match_id_len, 0);
 		if (result != ISC_R_SUCCESS) {
 			return(result);
 		}
@@ -1893,9 +1909,10 @@ ddns_modify_fwd_add2(dhcp_ddns_cb_t   *ddns_cb,
 		ISC_LIST_APPEND(uname->list, &dataspace->rdataset, link);
 		dataspace++;
 
-		/* Add current DHCID RR */
-		result = make_dns_dataset(dns_rdataclass_in, ddns_cb->dhcid_class,
-					  dataspace, 
+		/* Add current DHCID RR, always include client id */
+		result = make_dns_dataset(dns_rdataclass_in,
+					  ddns_cb->dhcid_class,
+					  dataspace,
 					  (unsigned char *)ddns_cb->dhcid.data,
 					  ddns_cb->dhcid.len, ddns_cb->ttl);
 		if (result != ISC_R_SUCCESS) {
@@ -1906,7 +1923,7 @@ ddns_modify_fwd_add2(dhcp_ddns_cb_t   *ddns_cb,
 	}
 
 	/* Start or continue constructing the update list */
-	/* Delete the A RRset */
+	/* Delete the address RRset */
 	result = make_dns_dataset(dns_rdataclass_any, ddns_cb->address_type,
 				  dataspace, NULL, 0, 0);
 	if (result != ISC_R_SUCCESS) {
@@ -1915,9 +1932,9 @@ ddns_modify_fwd_add2(dhcp_ddns_cb_t   *ddns_cb,
 	ISC_LIST_APPEND(uname->list, &dataspace->rdataset, link);
 	dataspace++;
 
-	/* Add the A RR */
+	/* Add the address RR */
 	result = make_dns_dataset(dns_rdataclass_in, ddns_cb->address_type,
-				  dataspace, 
+				  dataspace,
 				  (unsigned char *)ddns_cb->address.iabuf,
 				  ddns_cb->address.len, ddns_cb->ttl);
 	if (result != ISC_R_SUCCESS) {
@@ -1929,46 +1946,240 @@ ddns_modify_fwd_add2(dhcp_ddns_cb_t   *ddns_cb,
 }
 
 /*
- * The entity chosen to handle the A record for this client (either the
- * client or the server) SHOULD delete the A record that was added when
- * the lease was made to the client.
+ * Creates the DNS foward update add used for DSMM add attempt #3 and
+ * ddns-other-guard-is-dynamic is off
  *
- * In order to perform this delete, the updater prepares an UPDATE
- * query which contains two prerequisites.  The first prerequisite
- * asserts that the DHCID RR exists whose data is the client identity
- * described in Section 4.3. The second prerequisite asserts that the
- * data in the A RR contains the IP address of the lease that has
- * expired or been released.
- *   -- "Interaction between DHCP and DNS"
  *
- * RFC 4703 has relaxed the prereqisites to only checking the DHCID RR
- * and we have adopted that to minizmie problems due to interruptions
- * when doing a deletion.  
+ * If the second update failed with NXRRSET, this indicates that:
  *
- * First try has:
- * DHCID RR exists, and matches client identity.
- * Delete appropriate A RR.
+ * 1. our FQDN is in use
+ * 2  no guard record (DHCID RR) for that FQDN, of our class (and optionally
+ * client id) exists
+ *
+ * In Dual Stack Mixed Mode, we need to attempt a third add, to distinguish
+ * between static entries that we cannot modify and dynamic entries belonging
+ * to the "other" side of dual stack.  The prerequisites for this add are:
+ *
+ * 1. No address record of my type exists
+ * 2. No guard record of my type exists
+ * 3. A guard record of the other type exists
+ *
+ * and updates which will add the new address and guard record:
+ *
+ * prereq nxrrset <name> <addr_t>           # no address record of my type
+ * prereq nxrrset <name> <guard_t>          # no guard record of my type
+ * prereq yxrrset <name> <other_guard_t>    # other guard type does exist
+ * update add <name> <addr_t> <address>     # add the new address record
+ * update add <name> <guard_t> <client-id>  # add the new address record
  */
-
 static isc_result_t
-ddns_modify_fwd_rem1(dhcp_ddns_cb_t   *ddns_cb,
+build_dsmm_fwd_add3(dhcp_ddns_cb_t   *ddns_cb,
 		     dhcp_ddns_data_t *dataspace,
 		     dns_name_t       *pname,
 		     dns_name_t       *uname)
 {
 	isc_result_t result = ISC_R_SUCCESS;
 
-	/* Consruct the prereq list */
-	/* The DHCID RR exists and matches the client identity */
-	result = make_dns_dataset(dns_rdataclass_in, ddns_cb->dhcid_class,
-				  dataspace, 
-				  (unsigned char *)ddns_cb->dhcid.data,
-				  ddns_cb->dhcid.len, 0);
+#if defined (DEBUG_DNS_UPDATES)
+	log_call("build_fwd_add3", pname, uname);
+#endif
+	/* Construct the prereq list */
+	/* No address record of my type exists */
+	result = make_dns_dataset(dns_rdataclass_none,
+				  ddns_cb->address_type,
+				  dataspace, NULL, 0, 0);
 	if (result != ISC_R_SUCCESS) {
 		return(result);
 	}
 	ISC_LIST_APPEND(pname->list, &dataspace->rdataset, link);
 	dataspace++;
+
+	/* No guard record of my type exists */
+	result = make_dns_dataset(dns_rdataclass_none,
+				  ddns_cb->dhcid_class,
+				  dataspace, NULL, 0, 0);
+	if (result != ISC_R_SUCCESS) {
+		return(result);
+	}
+	ISC_LIST_APPEND(pname->list, &dataspace->rdataset, link);
+	dataspace++;
+
+	/* Guard record of the other type DOES exist */
+	result = make_dns_dataset(dns_rdataclass_any,
+				  ddns_cb->other_dhcid_class,
+				  dataspace, NULL, 0, 0);
+	if (result != ISC_R_SUCCESS) {
+		return(result);
+	}
+	ISC_LIST_APPEND(pname->list, &dataspace->rdataset, link);
+	dataspace++;
+
+	/* Start constructing the update list. */
+	/* Add the address RR */
+	result = make_dns_dataset(dns_rdataclass_in, ddns_cb->address_type,
+				  dataspace,
+				  (unsigned char *)ddns_cb->address.iabuf,
+				  ddns_cb->address.len, ddns_cb->ttl);
+	if (result != ISC_R_SUCCESS) {
+		return(result);
+	}
+	ISC_LIST_APPEND(uname->list, &dataspace->rdataset, link);
+	dataspace++;
+
+	/* Add current DHCID RR */
+	result = make_dns_dataset(dns_rdataclass_in, ddns_cb->dhcid_class,
+				  dataspace,
+				  (unsigned char *)ddns_cb->dhcid.data,
+				  ddns_cb->dhcid.len, ddns_cb->ttl);
+	if (result != ISC_R_SUCCESS) {
+		return(result);
+	}
+	ISC_LIST_APPEND(uname->list, &dataspace->rdataset, link);
+
+	return(ISC_R_SUCCESS);
+}
+
+/*
+ * Creates the DNS foward update add used for DSMM add attempt #3 and
+ * ddns-other-guard-is-dynamic is ON
+ *
+ * If the second update failed with NXRRSET, this indicates that:
+ *
+ * 1. our FQDN is in use
+ * 2  no guard record (DHCID RR) for that FQDN, of our class (and optionally
+ * client id) exists
+ *
+ * When we're In Dual Stack Mixed Mode and ddns-other-guard-is-dynamic is ON
+ * we need only determine if a guard record of the other type exists, to know
+ * if we can add/replace and address record of our type.   In other words,
+ * the presence of a dynamic entry made belonging to the "other" stack means
+ * all entries for this name should be dynamic and we overwrite an unguarded
+ * address record of our type.
+ *
+ * The udpate will contain a single prequisite for a guard record of the
+ * other type, an update to delete any address records of our type, and
+ * updates to add the address and guard records:
+ *
+ * prereq yxrrset <name> <other_guard_t>   # other guard type exists
+ * update delete <name> <addr_t>           # delete existing address record
+ *                                         # (if one)
+ * update add <name> <addr_t> <address>    # add new address record
+ * update add <name> <guard_t> <client-id> # add new guard record
+ */
+static isc_result_t
+build_dsmm_fwd_add3_other(dhcp_ddns_cb_t   *ddns_cb,
+		     dhcp_ddns_data_t *dataspace,
+		     dns_name_t       *pname,
+		     dns_name_t       *uname)
+{
+	isc_result_t result = ISC_R_SUCCESS;
+
+#if defined (DEBUG_DNS_UPDATES)
+	log_call("build_fwd_add3_other", pname, uname);
+#endif
+	/* Construct the prereq list */
+	/* A guard record of the other type exists */
+	result = make_dns_dataset(dns_rdataclass_any,
+				  ddns_cb->other_dhcid_class,
+				  dataspace, NULL, 0, 0);
+	if (result != ISC_R_SUCCESS) {
+		return(result);
+	}
+	ISC_LIST_APPEND(pname->list, &dataspace->rdataset, link);
+	dataspace++;
+
+	/* Start constructing the update list. */
+	/* Delete the existing address record of my type (if one) */
+	result = make_dns_dataset(dns_rdataclass_any,
+				  ddns_cb->address_type,
+				  dataspace, NULL, 0, 0);
+	if (result != ISC_R_SUCCESS) {
+		return(result);
+	}
+	ISC_LIST_APPEND(uname->list, &dataspace->rdataset, link);
+	dataspace++;
+
+	/* Add the address RR */
+	result = make_dns_dataset(dns_rdataclass_in, ddns_cb->address_type,
+				  dataspace,
+				  (unsigned char *)ddns_cb->address.iabuf,
+				  ddns_cb->address.len, ddns_cb->ttl);
+	if (result != ISC_R_SUCCESS) {
+		return(result);
+	}
+	ISC_LIST_APPEND(uname->list, &dataspace->rdataset, link);
+	dataspace++;
+
+	/* Add current DHCID RR */
+	result = make_dns_dataset(dns_rdataclass_in, ddns_cb->dhcid_class,
+				  dataspace,
+				  (unsigned char *)ddns_cb->dhcid.data,
+				  ddns_cb->dhcid.len, ddns_cb->ttl);
+	if (result != ISC_R_SUCCESS) {
+		return(result);
+	}
+	ISC_LIST_APPEND(uname->list, &dataspace->rdataset, link);
+
+	return(ISC_R_SUCCESS);
+}
+
+/*
+ * The entity chosen to handle the A record for this client (either the
+ * client or the server) SHOULD delete the A (or AAAA) record that was
+ * added when the lease was made to the client.
+ *
+ * If we are doing conflict resolution, the udpate will contain a prequisite
+ * that will either:
+ *  A. require that a guard record of the configure class (DHCID or TXT) with
+ *  a data value matching that the client exist (per RFC 4703)
+ * or
+ *  B. require only that the guard record of the configured class exist
+ *
+ * based on whether DDNS_GUARD_ID_MUST_MATCH is on (default) or off.
+ *
+ * The prerequisite is omitted if conflict detection is off.
+ *
+ */
+static isc_result_t
+build_fwd_rem1(dhcp_ddns_cb_t   *ddns_cb,
+		     dhcp_ddns_data_t *dataspace,
+		     dns_name_t       *pname,
+		     dns_name_t       *uname)
+{
+	isc_result_t result = ISC_R_SUCCESS;
+
+#if defined (DEBUG_DNS_UPDATES)
+	log_call("build_fwd_rem1", pname, uname);
+#endif
+
+	/* If we're doing conflict detection, add the guard record pre-req */
+	if (ddns_cb->flags & DDNS_CONFLICT_DETECTION) {
+		/* Construct the prereq list */
+		/* The guard record exists and optionally matches the client's
+		 * identity.  If matching is turned off, we use the presence
+		 * of a DHCID RR to signal that this is a dynamic entry and
+		 * thus eligible for us to overwrite.  If matching is on
+		 * then we can only delete the entries if they belong to
+		 * this client. */
+		unsigned char *match_id = NULL;
+		int match_id_len = 0;
+		int match_class = dns_rdataclass_any;
+		if (ddns_cb->flags & DDNS_GUARD_ID_MUST_MATCH) {
+			match_id = (unsigned char*)(ddns_cb->dhcid.data);
+			match_id_len = ddns_cb->dhcid.len;
+			match_class = dns_rdataclass_in;
+		}
+
+		result = make_dns_dataset(match_class,
+					  ddns_cb->dhcid_class,
+					  dataspace,
+					  match_id, match_id_len, 0);
+		if (result != ISC_R_SUCCESS) {
+			return(result);
+		}
+		ISC_LIST_APPEND(pname->list, &dataspace->rdataset, link);
+		dataspace++;
+	}
 
 	/* Construct the update list */
 	/* Delete A RRset */
@@ -1996,14 +2207,20 @@ ddns_modify_fwd_rem1(dhcp_ddns_cb_t   *ddns_cb,
  * AAAA RR does not exist.
  * Delete appropriate DHCID RR.
  */
-
 static isc_result_t
-ddns_modify_fwd_rem2(dhcp_ddns_cb_t   *ddns_cb,
+build_fwd_rem2(dhcp_ddns_cb_t   *ddns_cb,
 		     dhcp_ddns_data_t *dataspace,
 		     dns_name_t       *pname,
 		     dns_name_t       *uname)
 {
 	isc_result_t result;
+	unsigned char *match_id = NULL;
+	int match_id_len = 0;
+	int match_class = dns_rdataclass_any;
+
+#if defined (DEBUG_DNS_UPDATES)
+	log_call("build_fwd_rem2", pname, uname);
+#endif
 
 	/* Construct the prereq list */
 	/* The A RR does not exist */
@@ -2026,10 +2243,143 @@ ddns_modify_fwd_rem2(dhcp_ddns_cb_t   *ddns_cb,
 
 	/* Construct the update list */
 	/* Delete DHCID RR */
-	result = make_dns_dataset(dns_rdataclass_none, ddns_cb->dhcid_class,
+
+	/* We'll specify the client id in the guard record delete if
+	 * matching is enabled, otherwise we leave it off. */
+	if (ddns_cb->flags & DDNS_GUARD_ID_MUST_MATCH) {
+		match_id = (unsigned char*)(ddns_cb->dhcid.data);
+		match_id_len = ddns_cb->dhcid.len;
+		match_class = dns_rdataclass_none;
+	}
+
+	result = make_dns_dataset(match_class, ddns_cb->dhcid_class,
 				  dataspace,
-				  (unsigned char *)ddns_cb->dhcid.data,
-				  ddns_cb->dhcid.len, 0);
+				  match_id, match_id_len, 0);
+	if (result != ISC_R_SUCCESS) {
+		return(result);
+	}
+	ISC_LIST_APPEND(uname->list, &dataspace->rdataset, link);
+
+	return(ISC_R_SUCCESS);
+}
+
+/*
+ * Constructs the second stage forward remove, when the first stage
+ * succeeds and DSMM is enabled, and ddns-other-guard-is-dynamic is OFF
+ *
+ * Normal conflict detection requires that the guard record of the
+ * configured type only be deleted if there are no address records of
+ * any type.  In Dual Stack Mixed Mode, we are only concerned with whether
+ * there any records or our configured address type remaining.
+ *
+ * This update consists of a single prequisite that there be no address
+ * records of our type followed by a delete of the guard record of our type
+ * and optionally matching client-id.
+ *
+ * prereq nxrrset name <addr_t>     # no records of this address type exist
+ * update delete name <guard_t> <client_id>  # delete the existing guard record
+ */
+static isc_result_t
+build_fwd_rem2_dsmm (dhcp_ddns_cb_t   *ddns_cb,
+		     dhcp_ddns_data_t *dataspace,
+		     dns_name_t       *pname,
+		     dns_name_t       *uname)
+{
+	isc_result_t result;
+	unsigned char *match_id = NULL;
+	int match_id_len = 0;
+	int match_class = dns_rdataclass_any;
+
+#if defined (DEBUG_DNS_UPDATES)
+	log_call("build_fwd_rem2_dsmm", pname, uname);
+#endif
+
+	/* Construct the prereq list */
+	/* The address RR does not exist */
+	result = make_dns_dataset(dns_rdataclass_none,
+				  ddns_cb->address_type,
+				  dataspace, NULL, 0, 0);
+	if (result != ISC_R_SUCCESS) {
+		return(result);
+	}
+	ISC_LIST_APPEND(pname->list, &dataspace->rdataset, link);
+	dataspace++;
+
+	/* Construct the update list */
+	/* Delete DHCID RR */
+
+	/* We'll specify the client id in the guard record delete if
+	 * matching is enabled, otherwise we leave it off. */
+	if (ddns_cb->flags & DDNS_GUARD_ID_MUST_MATCH) {
+		match_id = (unsigned char*)(ddns_cb->dhcid.data);
+		match_id_len = ddns_cb->dhcid.len;
+		match_class = dns_rdataclass_none;
+	}
+
+	result = make_dns_dataset(match_class, ddns_cb->dhcid_class,
+				  dataspace,
+				  match_id, match_id_len, 0);
+	if (result != ISC_R_SUCCESS) {
+		return(result);
+	}
+	ISC_LIST_APPEND(uname->list, &dataspace->rdataset, link);
+
+	return(ISC_R_SUCCESS);
+}
+
+/*
+ * Constructs the second stage forward remove, when the first stage
+ * succeeds and DSMM is enabled and ddns-other-guard-is-dynamic is ON
+ *
+ * This update addresses the case when an address record of our type exists
+ * without a guard record of our type, yet a dynamic entry of the other type
+ * exists.  The presence of a guard of the other type indicates that all
+ * entries for this name should be treated as dynamic, thus permitting us to
+ * remove the address record of our type.
+ *
+ * prereq nxrrset <name> <guard_t>        # my guard type does not exist
+ * prereq yxrrset <name> <other_guard_t>  # other guard type does exist
+ * update delete <name> <addr_t> address  # delete the existing address record
+ *
+ */
+static isc_result_t
+build_fwd_rem2_dsmm_other(dhcp_ddns_cb_t   *ddns_cb,
+		     dhcp_ddns_data_t *dataspace,
+		     dns_name_t       *pname,
+		     dns_name_t       *uname)
+{
+	isc_result_t result;
+
+#if defined (DEBUG_DNS_UPDATES)
+	log_call("build_fwd_rem2_dsmm_other", pname, uname);
+#endif
+
+	/* Construct the prereq list */
+	/* No guard record of my type exists */
+	result = make_dns_dataset(dns_rdataclass_none, ddns_cb->dhcid_class,
+				  dataspace, NULL, 0, 0);
+	if (result != ISC_R_SUCCESS) {
+		return(result);
+	}
+	ISC_LIST_APPEND(pname->list, &dataspace->rdataset, link);
+	dataspace++;
+
+	/* Guard record of the OTHER type DOES exist */
+	result = make_dns_dataset(dns_rdataclass_any,
+				  ddns_cb->other_dhcid_class,
+				  dataspace, NULL, 0, 0);
+	if (result != ISC_R_SUCCESS) {
+		return(result);
+	}
+	ISC_LIST_APPEND(pname->list, &dataspace->rdataset, link);
+	dataspace++;
+
+	/* Construct the update list */
+	/* Delete the address RRset */
+	result = make_dns_dataset(dns_rdataclass_none, ddns_cb->address_type,
+				  dataspace,
+				  (unsigned char *)ddns_cb->address.iabuf,
+				  ddns_cb->address.len, 0);
 	if (result != ISC_R_SUCCESS) {
 		return(result);
 	}
@@ -2080,11 +2430,11 @@ void ddns_interlude(isc_task_t  *taskp,
 		if ((ddns_cb->flags & DDNS_ABORT) == 0) {
 			log_info("DDNS: cleaning up lease pointer for a cancel "
 				 "cb=%p", ddns_cb);
-			/* 
+			/*
 			 * We shouldn't actually be able to get here but
 			 * we are.  This means we haven't cleaned up
 			 * the lease pointer so we need to do that before
-			 * freeing the cb.  
+			 * freeing the cb.
 			 */
 			ddns_cb->cur_func(ddns_cb, eresult);
 			return;
@@ -2131,7 +2481,7 @@ void ddns_interlude(isc_task_t  *taskp,
 		/* pass it along to be processed */
 		ddns_cb->cur_func(ddns_cb, eresult);
 	}
-	
+
 	return;
 }
 
@@ -2147,6 +2497,10 @@ ddns_modify_fwd(dhcp_ddns_cb_t *ddns_cb, const char *file, int line)
 	isc_result_t result;
 	dns_tsec_t *tsec_key = NULL;
 
+#if defined (DEBUG_DNS_UPDATES)
+	log_info("DDNS: ddns_modify_fwd");
+#endif
+
 	unsigned char *clientname;
 	dhcp_ddns_data_t *dataspace = NULL;
 	dns_namelist_t prereqlist, updatelist;
@@ -2154,6 +2508,12 @@ ddns_modify_fwd(dhcp_ddns_cb_t *ddns_cb, const char *file, int line)
 	dns_name_t *zname = NULL, *pname, *uname;
 
 	isc_sockaddrlist_t *zlist = NULL;
+
+	/* Creates client context if we need to */
+	result = dns_client_init();
+	if (result != ISC_R_SUCCESS) {
+		return result;
+	}
 
 	/* Get a pointer to the clientname to make things easier. */
 	clientname = (unsigned char *)ddns_cb->fwd_name.data;
@@ -2203,7 +2563,7 @@ ddns_modify_fwd(dhcp_ddns_cb_t *ddns_cb, const char *file, int line)
 
 	/*
 	 * If we have a zone try to get any information we need
-	 * from it - name, addresses and the key.  The address 
+	 * from it - name, addresses and the key.  The address
 	 * and key may be empty the name can't be.
 	 */
 	if (ddns_cb->zone) {
@@ -2221,7 +2581,7 @@ ddns_modify_fwd(dhcp_ddns_cb_t *ddns_cb, const char *file, int line)
 			/* If we have any addresses get them */
 			zlist = &ddns_cb->zone_server_list;
 		}
-		
+
 
 		if (ddns_cb->zone->key != NULL) {
 			/*
@@ -2252,7 +2612,7 @@ ddns_modify_fwd(dhcp_ddns_cb_t *ddns_cb, const char *file, int line)
 	dataspace = isc_mem_get(dhcp_gbl_ctx.mctx, sizeof(*dataspace) * 4);
 	if (dataspace == NULL) {
 		log_error("Unable to allocate memory for fwd update");
-		result = ISC_R_NOMEMORY; 
+		result = ISC_R_NOMEMORY;
 		goto cleanup;
 	}
 
@@ -2261,48 +2621,82 @@ ddns_modify_fwd(dhcp_ddns_cb_t *ddns_cb, const char *file, int line)
 
 	switch(ddns_cb->state) {
 	case DDNS_STATE_ADD_FW_NXDOMAIN:
-		result = ddns_modify_fwd_add1(ddns_cb, dataspace,
-					      pname, uname);
+		result = build_fwd_add1(ddns_cb, dataspace, pname, uname);
 		if (result != ISC_R_SUCCESS) {
 			goto cleanup;
 		}
 		ISC_LIST_APPEND(prereqlist, pname, link);
 		break;
+
 	case DDNS_STATE_ADD_FW_YXDHCID:
-		result = ddns_modify_fwd_add2(ddns_cb, dataspace,
-					       pname, uname);
+		result = build_fwd_add2(ddns_cb, dataspace, pname, uname);
 		if (result != ISC_R_SUCCESS) {
 			goto cleanup;
 		}
 
-		/* If we aren't doing conflict override we have entries
+		/* If we are doing conflict detection we have entries
 		 * in the pname list and we need to attach it to the
 		 * prereqlist */
 
-		if ((ddns_cb->flags & DDNS_CONFLICT_OVERRIDE) == 0) {
+		if (ddns_cb->flags & DDNS_CONFLICT_DETECTION) {
 			ISC_LIST_APPEND(prereqlist, pname, link);
 		}
 
 		break;
-	case DDNS_STATE_REM_FW_YXDHCID:
-		result = ddns_modify_fwd_rem1(ddns_cb, dataspace,
-					      pname, uname);
+
+	case DDNS_STATE_DSMM_FW_ADD3: {
+		/* We should only be here if we're doing DSMM */
+		builder_func_t builder;
+		if (ddns_cb->flags & DDNS_OTHER_GUARD_IS_DYNAMIC) {
+			builder = build_dsmm_fwd_add3_other;
+		} else {
+			builder = build_dsmm_fwd_add3;
+		}
+
+		result = (*builder)(ddns_cb, dataspace, pname, uname);
 		if (result != ISC_R_SUCCESS) {
 			goto cleanup;
 		}
+
 		ISC_LIST_APPEND(prereqlist, pname, link);
 		break;
-	case DDNS_STATE_REM_FW_NXRR:
-		result = ddns_modify_fwd_rem2(ddns_cb, dataspace,
-					      pname, uname);
+		}
+
+	case DDNS_STATE_REM_FW_YXDHCID:
+		result = build_fwd_rem1(ddns_cb, dataspace, pname, uname);
 		if (result != ISC_R_SUCCESS) {
 			goto cleanup;
 		}
 		ISC_LIST_APPEND(prereqlist, pname, link);
 		break;
 
+	case DDNS_STATE_REM_FW_NXRR: {
+		builder_func_t builder;
+
+		if (ddns_cb->flags & DDNS_DUAL_STACK_MIXED_MODE) {
+			builder = build_fwd_rem2_dsmm;
+		} else {
+			builder = build_fwd_rem2;
+		}
+
+		result = (*builder)(ddns_cb, dataspace, pname, uname);
+		if (result != ISC_R_SUCCESS) {
+			goto cleanup; }
+		ISC_LIST_APPEND(prereqlist, pname, link);
+		break;
+		}
+
+	case DDNS_STATE_REM_FW_DSMM_OTHER: {
+		result = build_fwd_rem2_dsmm_other(ddns_cb, dataspace,
+						  pname, uname);
+		if (result != ISC_R_SUCCESS) {
+			goto cleanup; }
+		ISC_LIST_APPEND(prereqlist, pname, link);
+		break;
+		}
+
 	default:
-		log_error("Invalid operation in ddns code.");
+		log_error("ddns_modify_fwd: Invalid state: %d", ddns_cb->state);
 		result = DHCP_R_INVALIDARG;
 		goto cleanup;
 		break;
@@ -2362,6 +2756,16 @@ ddns_modify_ptr(dhcp_ddns_cb_t *ddns_cb, const char *file, int line)
 	isc_sockaddrlist_t *zlist = NULL;
 	unsigned char buf[256];
 	int buflen;
+
+#if defined (DEBUG_DNS_UPDATES)
+	log_info("DDNS: ddns_modify_ptr");
+#endif
+
+	/* Creates client context if we need to */
+	result = dns_client_init();
+	if (result != ISC_R_SUCCESS) {
+		return result;
+	}
 
 	/*
 	 * Try to lookup the zone in the zone cache.  As with the forward
@@ -2445,7 +2849,7 @@ ddns_modify_ptr(dhcp_ddns_cb_t *ddns_cb, const char *file, int line)
 	dataspace = isc_mem_get(dhcp_gbl_ctx.mctx, sizeof(*dataspace) * 2);
 	if (dataspace == NULL) {
 		log_error("Unable to allocate memory for fwd update");
-		result = ISC_R_NOMEMORY; 
+		result = ISC_R_NOMEMORY;
 		goto cleanup;
 	}
 
@@ -2464,46 +2868,10 @@ ddns_modify_ptr(dhcp_ddns_cb_t *ddns_cb, const char *file, int line)
 	ISC_LIST_APPEND(uname->list, &dataspace[0].rdataset, link);
 
 	/*
-	 * If we are updating the pointer we then add the new one 
+	 * If we are updating the pointer we then add the new one
 	 * Add PTR RR.
 	 */
 	if (ddns_cb->state == DDNS_STATE_ADD_PTR) {
-#if 0
-		/*
-		 * I've left this dead code in the file  for now in case
-		 * we decide to try and get rid of the ns_name functions.
-		 * sar
-		 */
-
-		/*
-		 * Need to convert pointer into on the wire representation
-		 * We replace the '.' characters with the lengths of the
-		 * next name and add a length to the beginning for the first
-		 * name.
-		 */
-		if (ddns_cb->fwd_name.len == 1) {
-			/* the root */
-			buf[0] = 0;
-			buflen = 1;
-		} else {
-			unsigned char *cp;
-			buf[0] = '.';
-			memcpy(&buf[1], ddns_cb->fwd_name.data,
-			       ddns_cb->fwd_name.len);
-			for(cp = buf + ddns_cb->fwd_name.len, buflen = 0;
-			    cp != buf;
-			    cp--) {
-				if (*cp == '.') {
-					*cp = buflen;
-					buflen = 0;
-				} else {
-					buflen++;
-				}
-			}
-			*cp = buflen;
-			buflen = ddns_cb->fwd_name.len + 1;
-		}
-#endif
 		/*
 		 * Need to convert pointer into on the wire representation
 		 */
@@ -2587,3 +2955,215 @@ ddns_cancel(dhcp_ddns_cb_t *ddns_cb, const char *file, int line) {
 
 HASH_FUNCTIONS (dns_zone, const char *, struct dns_zone, dns_zone_hash_t,
 		dns_zone_reference, dns_zone_dereference, do_case_hash)
+
+#if defined (NSUPDATE)
+#if defined (DEBUG_DNS_UPDATES)
+/* Defines a type for creating list of labeled integers */
+typedef struct {
+	int val;
+	char *name;
+} LabeledInt;
+
+char*
+ddns_state_name(int state) {
+	static LabeledInt ints[] = {
+		{ DDNS_STATE_CLEANUP, "DDNS_STATE_CLEANUP" },
+		{ DDNS_STATE_ADD_FW_NXDOMAIN, "DDNS_STATE_ADD_FW_NXDOMAIN" },
+		{ DDNS_STATE_ADD_FW_YXDHCID, "DDNS_STATE_ADD_FW_YXDHCID" },
+		{ DDNS_STATE_ADD_PTR, "DDNS_STATE_ADD_PTR" },
+		{ DDNS_STATE_DSMM_FW_ADD3, "DDNS_STATE_DSMM_FW_ADD3" },
+		{ DDNS_STATE_REM_FW_YXDHCID, "DDNS_STATE_REM_FW_YXDHCID" },
+		{ DDNS_STATE_REM_FW_NXRR, "DDNS_STATE_FW_NXRR" },
+		{ DDNS_STATE_REM_PTR, "DDNS_STATE_REM_PTR" },
+		{ -1, "unknown" },
+	};
+
+	LabeledInt* li = ints;
+	while (li->val != -1 && li->val != state) {
+		++li;
+	}
+
+	return (li->name);
+}
+
+int
+add_nstring(char **orig, char *max, char *add, int add_len) {
+	if (*orig && (*orig + add_len < max)) {
+		strncpy(*orig, add, add_len);
+		*orig += add_len;
+		**orig = 0;
+		return (0);
+	}
+
+	return (-1);
+}
+
+int
+add_string(char **orig, char *max, char *add) {
+	return (add_nstring(orig, max, add, strlen(add)));
+}
+
+/*
+ * direction outbound (messages to the dns server)
+ *           inbound  (messages from the dns server)
+ * ddns_cb is the control block associated with the message
+ * result is the result from the dns code.  For outbound calls
+ * it is from the call to pass the message to the dns library.
+ * For inbound calls it is from the event returned by the library.
+ *
+ * For outbound messages we print whatever we think is interesting
+ * from the control block.
+ * For inbound messages we only print the transaction id pointer
+ * and the result and expect that the user will match them up as
+ * necessary.  Note well: the transaction information is opaque to
+ * us so we simply print the pointer to it.  This should be sufficient
+ * to match requests and replys in a short sequence but is awkward
+ * when trying to use it for longer sequences.
+ */
+void
+print_dns_status (int direction,
+		  struct dhcp_ddns_cb *ddns_cb,
+		  isc_result_t result)
+{
+	char obuf[1024];
+	char *s = obuf, *end = &obuf[sizeof(obuf)-2];
+	char *en;
+	const char *result_str;
+	char ddns_address[
+		sizeof("ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255")];
+
+	if (direction == DDNS_PRINT_INBOUND) {
+		log_info("DDNS reply: id ptr %p, result: %s",
+			 ddns_cb->transaction, isc_result_totext(result));
+		return;
+	}
+
+	/*
+	 * To avoid having to figure out if any of the strings
+	 * aren't NULL terminated, just 0 the whole string
+	 */
+	memset(obuf, 0, 1024);
+
+	en = "DDNS request: id ptr ";
+	if (s + strlen(en) + 16 < end) {
+		sprintf(s, "%s%p", en, ddns_cb->transaction);
+		s += strlen(s);
+	} else {
+		goto bailout;
+	}
+
+	en = ddns_state_name(ddns_cb->state);
+
+	switch (ddns_cb->state) {
+	case DDNS_STATE_ADD_FW_NXDOMAIN:
+	case DDNS_STATE_ADD_FW_YXDHCID:
+	case DDNS_STATE_REM_FW_YXDHCID:
+	case DDNS_STATE_REM_FW_NXRR:
+	case DDNS_STATE_DSMM_FW_ADD3:
+		strcpy(ddns_address, piaddr(ddns_cb->address));
+		if (s + strlen(en) + strlen(ddns_address) +
+		    ddns_cb->fwd_name.len + 7 < end) {
+			sprintf(s, " %s %s for %.*s", en, ddns_address,
+				ddns_cb->fwd_name.len,
+				ddns_cb->fwd_name.data);
+			s += strlen(s);
+		} else {
+			goto bailout;
+		}
+		break;
+
+	case DDNS_STATE_ADD_PTR:
+	case DDNS_STATE_REM_PTR:
+		if (s + strlen(en) + ddns_cb->fwd_name.len +
+		    ddns_cb->rev_name.len + 7 < end) {
+			sprintf(s, " %s %.*s for %.*s", en,
+				ddns_cb->fwd_name.len,
+				ddns_cb->fwd_name.data,
+				ddns_cb->rev_name.len,
+				ddns_cb->rev_name.data);
+			s += strlen(s);
+		} else {
+			goto bailout;
+		}
+		break;
+
+	case DDNS_STATE_CLEANUP:
+	default:
+		if (s + strlen(en) < end) {
+			sprintf(s, "%s", en);
+			s += strlen(s);
+		} else {
+			goto bailout;
+		}
+		break;
+	}
+
+	en = " zone: ";
+	if (s + strlen(en) + strlen((char *)ddns_cb->zone_name) < end) {
+		sprintf(s, "%s%s", en, ddns_cb->zone_name);
+		s += strlen(s);
+	} else {
+		goto bailout;
+	}
+
+	/* @todo replace with format that matches bind9 zone file */
+	if (ddns_cb->dhcid_class == dns_rdatatype_dhcid) {
+		char *idbuf = NULL;
+		if (add_string(&s, end, "dhcid: [")) {
+			goto bailout;
+		}
+
+		idbuf = buf_to_hex(ddns_cb->dhcid.data,
+				   ddns_cb->dhcid.len, MDL);
+		if (idbuf) {
+			int ret = add_string(&s, end, idbuf);
+			dfree(idbuf, MDL);
+			if (!ret) {
+				goto bailout;
+			}
+		}
+
+		if (add_string(&s, end, "]")) {
+			goto bailout;
+		}
+	} else {
+		/* 1st byte of a txt dhcid is length, so we skip printing it
+		 * In the event it's empty, we end up not adding anything */
+		int skip_length_byte = (ddns_cb->dhcid.len > 0 ? 1 : 0);
+		if (add_string (&s, end, "txt: [") ||
+		    add_nstring (&s, end,
+				(char *)ddns_cb->dhcid.data + skip_length_byte,
+				 ddns_cb->dhcid.len - skip_length_byte) ||
+		    add_string (&s, end, "]")) {
+			goto bailout;
+		}
+	}
+
+	en = " ttl: ";
+	if (s + strlen(en) + 10 < end) {
+		sprintf(s, "%s%ld", en, ddns_cb->ttl);
+		s += strlen(s);
+	} else {
+		goto bailout;
+	}
+
+	en = " result: ";
+	result_str = isc_result_totext(result);
+	if (s + strlen(en) + strlen(result_str) < end) {
+		sprintf(s, "%s%s", en, result_str);
+		s += strlen(s);
+	} else {
+		goto bailout;
+	}
+
+ bailout:
+	/*
+	 * We either finished building the string or ran out
+	 * of space, print whatever we have in case it is useful
+	 */
+	log_info("%s", obuf);
+
+	return;
+}
+#endif /* DEBUG_DNS_UPDATES */
+#endif /* NSUPDATE */

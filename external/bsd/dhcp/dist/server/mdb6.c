@@ -1,10 +1,11 @@
-/*	$NetBSD: mdb6.c,v 1.6 2016/01/10 20:10:45 christos Exp $	*/
+/*	$NetBSD: mdb6.c,v 1.7 2018/04/07 21:19:32 christos Exp $	*/
+
 /*
- * Copyright (C) 2007-2015 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2007-2017 by Internet Systems Consortium, Inc. ("ISC")
  *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
  * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
@@ -16,7 +17,8 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mdb6.c,v 1.6 2016/01/10 20:10:45 christos Exp $");
+__RCSID("$NetBSD: mdb6.c,v 1.7 2018/04/07 21:19:32 christos Exp $");
+
 
 /*!
  * \todo assert()
@@ -220,7 +222,8 @@ iasubopt_allocate(struct iasubopt **iasubopt, const char *file, int line) {
 
 	tmp->refcnt = 1;
 	tmp->state = FTS_FREE;
-	tmp->heap_index = -1;
+	tmp->active_index = 0;
+	tmp->inactive_index = 0;
 	tmp->plen = 255;
 
 	*iasubopt = tmp;
@@ -604,14 +607,18 @@ lease_older(void *a, void *b) {
 }
 
 /*
- * Helper function for lease address/prefix heaps.
+ * Helper functions for lease address/prefix heaps.
  * Callback when an address's position in the heap changes.
  */
 static void
-lease_index_changed(void *iasubopt, unsigned int new_heap_index) {
-	((struct iasubopt *)iasubopt)-> heap_index = new_heap_index;
+active_changed(void *iasubopt, unsigned int new_heap_index) {
+	((struct iasubopt *)iasubopt)->active_index = new_heap_index;
 }
 
+static void
+inactive_changed(void *iasubopt, unsigned int new_heap_index) {
+	((struct iasubopt *)iasubopt)->inactive_index = new_heap_index;
+}
 
 /*!
  *
@@ -664,13 +671,13 @@ ipv6_pool_allocate(struct ipv6_pool **pool, u_int16_t type,
 		dfree(tmp, file, line);
 		return ISC_R_NOMEMORY;
 	}
-	if (isc_heap_create(dhcp_gbl_ctx.mctx, lease_older, lease_index_changed,
+	if (isc_heap_create(dhcp_gbl_ctx.mctx, lease_older, active_changed,
 			    0, &(tmp->active_timeouts)) != ISC_R_SUCCESS) {
 		iasubopt_free_hash_table(&(tmp->leases), file, line);
 		dfree(tmp, file, line);
 		return ISC_R_NOMEMORY;
 	}
-	if (isc_heap_create(dhcp_gbl_ctx.mctx, lease_older, lease_index_changed,
+	if (isc_heap_create(dhcp_gbl_ctx.mctx, lease_older, inactive_changed,
 			    0, &(tmp->inactive_timeouts)) != ISC_R_SUCCESS) {
 		isc_heap_destroy(&(tmp->active_timeouts));
 		iasubopt_free_hash_table(&(tmp->leases), file, line);
@@ -854,6 +861,80 @@ build_address6(struct in6_addr *addr,
 	if (net_bits == 64)
 		str[8] &= ~0x02;
 }
+
+#ifdef EUI_64
+int
+valid_eui_64_duid(const struct data_string* uid, int offset) {
+	if (uid->len == (offset + EUI_64_ID_LEN)) {
+		const unsigned char* duid = uid->data + offset;
+		return (((duid[0] == 0x00 && duid[1] == 0x03)  &&
+			(duid[2] == 0x00 && duid[3] == 0x1b)));
+	}
+
+    return(0);
+}
+
+
+/*
+ * Create an EUI-64 address 
+ */
+static isc_result_t
+build_address6_eui_64(struct in6_addr *addr,
+		      const struct in6_addr *net_start_addr, int net_bits,
+		      const struct data_string *iaid_duid, int duid_beg) {
+
+	if (net_bits != 64) {
+		log_error("build_address_eui_64: network is not 64 bits");
+		return (ISC_R_FAILURE);
+	}
+
+	if (valid_eui_64_duid(iaid_duid, duid_beg)) {
+		const unsigned char *duid = iaid_duid->data + duid_beg;
+
+		/* copy network prefix to the high 64 bits */
+		memcpy(addr->s6_addr, net_start_addr->s6_addr, 8);
+
+		/* copy Link-layer address to low 64 bits */
+		memcpy(addr->s6_addr + 8, duid + 4, 8);
+
+		/* RFC-3315 Any address assigned by a server that is based
+		 * on an EUI-64 identifier MUST include an interface identifier
+		 * with the "u" (universal/local) and "g" (individual/group)
+		 * bits of the interface identifier set appropriately, as
+		 * indicated in section 2.5.1 of RFC 2373 [5]. */
+		addr->s6_addr[8] |= 0x02;
+		return (ISC_R_SUCCESS);
+	}
+
+	log_error("build_address_eui_64: iaid_duid not a valid EUI-64: %s",
+		  print_hex_1(iaid_duid->len, iaid_duid->data, 60));
+	return (ISC_R_FAILURE);
+}
+
+int
+valid_for_eui_64_pool(struct ipv6_pool* pool, struct data_string* uid,
+		      int duid_beg, struct in6_addr* ia_addr) {
+        struct in6_addr test_addr;
+	/* If it's not an EUI-64 pool bail */
+        if (!pool->ipv6_pond->use_eui_64) {
+                return (0);
+        }
+
+        if (!valid_eui_64_duid(uid, duid_beg)) {
+                /* Dynamic lease in a now eui_64 pond, toss it*/
+                return (0);
+        }
+
+        /*  Call build_address6_eui_64() and compare it's result to
+	 *  this lease and see if they match. */
+        memset (&test_addr, 0, sizeof(test_addr));
+        build_address6_eui_64(&test_addr, &pool->start_addr, pool->bits,
+                              uid, duid_beg);
+
+        return (!memcmp(ia_addr, &test_addr, sizeof(test_addr)));
+}
+#endif
+
 
 /* 
  * Create a temporary address by a variant of RFC 4941 algo.
@@ -1083,6 +1164,107 @@ create_lease6(struct ipv6_pool *pool, struct iasubopt **addr,
 	return result;
 }
 
+#ifdef EUI_64
+/*!
+ * \brief Assign an EUI-64 address from a pool for a given iaid-duid
+ *
+ *  \param pool - pool from which the address is assigned
+ *  \param iaddr - pointer to the iasubopt to contain the assigned address is
+ *  \param uid - data_string containing the iaid-duid tuple
+ *  \param soft_lifetime_end_time - lifetime of the lease for a solicit?
+ *
+ *  \return status indicating success or nature of the failure
+*/
+isc_result_t
+create_lease6_eui_64(struct ipv6_pool *pool, struct iasubopt **addr,
+	      const struct data_string *uid,
+	      time_t soft_lifetime_end_time) {
+	struct in6_addr tmp;
+	struct iasubopt *test_iaaddr;
+	struct iasubopt *iaaddr;
+	isc_result_t result;
+	static isc_boolean_t init_resiid = ISC_FALSE;
+
+	/*  Fill the reserved IIDs.  */
+	if (!init_resiid) {
+		memset(&rtany, 0, 16);
+		memset(&resany, 0, 8);
+		resany.s6_addr[8] = 0xfd;
+		memset(&resany.s6_addr[9], 0xff, 6);
+		init_resiid = ISC_TRUE;
+	}
+
+	/* Pool must be IA_NA */
+	if (pool->pool_type != D6O_IA_NA) {
+		log_error("create_lease6_eui_64: pool type is not IA_NA.");
+		return (DHCP_R_INVALIDARG);
+	}
+
+	/* Attempt to build the address */
+	if (build_address6_eui_64 (&tmp, &pool->start_addr, pool->bits,
+				   uid, IAID_LEN) != ISC_R_SUCCESS) {
+		log_error("create_lease6_eui_64: build_address6_eui_64 failed");
+		return (ISC_R_FAILURE);
+	}
+
+	/* Avoid reserved interface IDs. (cf. RFC 5453) */
+	if ((memcmp(&tmp.s6_addr[8], &rtany.s6_addr[8], 8) == 0)  ||
+	    ((memcmp(&tmp.s6_addr[8], &resany.s6_addr[8], 7) == 0) &&
+	    ((tmp.s6_addr[15] & 0x80) == 0x80))) {
+		log_error("create_lease6_eui_64: "
+			  "address conflicts with reserved IID");
+		return (ISC_R_FAILURE);
+	}
+
+	/* If this address is not in use, we're happy with it */
+	test_iaaddr = NULL;
+	if (iasubopt_hash_lookup(&test_iaaddr, pool->leases,
+				  &tmp, sizeof(tmp), MDL) != 0) {
+
+		/* See if it's ours. Static leases won't have an ia */
+		int ours = 0;
+		if (!test_iaaddr->ia) {
+			log_error("create_lease6_eui_64: "
+				  "address  %s is assigned to static lease",
+				  pin6_addr(&test_iaaddr->addr));
+		} else {
+			/* Not sure if this can actually happen */
+			struct data_string* found = &test_iaaddr->ia->iaid_duid;
+			ours = ((found->len == uid->len) &&
+				(!memcmp(found->data, uid->data, uid->len)));
+			log_error("create_lease6_eui_64: "
+				  "address  %s belongs to %s",
+				  pin6_addr(&test_iaaddr->addr),
+				  print_hex_1(found->len, found->data, 60));
+		}
+
+		iasubopt_dereference(&test_iaaddr, MDL);
+		if (!ours) {
+			/* Cant' use it */
+			return (ISC_R_FAILURE);
+		}
+	}
+
+	/* We're happy with the address, create an IAADDR to hold it. */
+	iaaddr = NULL;
+	result = iasubopt_allocate(&iaaddr, MDL);
+	if (result != ISC_R_SUCCESS) {
+		log_error("create_lease6_eui_64: could not allocate iasubop");
+		return result;
+	}
+	iaaddr->plen = 0;
+	memcpy(&iaaddr->addr, &tmp, sizeof(iaaddr->addr));
+
+	/* Add the lease to the pool and the reply */
+	result = add_lease6(pool, iaaddr, soft_lifetime_end_time);
+	if (result == ISC_R_SUCCESS) {
+		iasubopt_reference(addr, iaaddr, MDL);
+	}
+
+	iasubopt_dereference(&iaaddr, MDL);
+	return result;
+}
+#endif
 
 /*!
  *
@@ -1190,7 +1372,7 @@ cleanup_lease6(ia_hash_t *ia_table,
 	 * Remove the old lease from the active heap and from the hash table
 	 * then remove the lease from the IA and clean up the IA if necessary.
 	 */
-	isc_heap_delete(pool->active_timeouts, test_iasubopt->heap_index);
+	isc_heap_delete(pool->active_timeouts, test_iasubopt->active_index);
 	pool->num_active--;
 	if (pool->ipv6_pond)
 		pool->ipv6_pond->num_active--;
@@ -1263,7 +1445,7 @@ add_lease6(struct ipv6_pool *pool, struct iasubopt *lease,
 		if ((test_iasubopt->state == FTS_ACTIVE) ||
 		    (test_iasubopt->state == FTS_ABANDONED)) {
 			isc_heap_delete(pool->active_timeouts,
-					test_iasubopt->heap_index);
+					test_iasubopt->active_index);
 			pool->num_active--;
 			if (pool->ipv6_pond)
 				pool->ipv6_pond->num_active--;
@@ -1275,7 +1457,7 @@ add_lease6(struct ipv6_pool *pool, struct iasubopt *lease,
 			}
 		} else {
 			isc_heap_delete(pool->inactive_timeouts,
-					test_iasubopt->heap_index);
+					test_iasubopt->inactive_index);
 			pool->num_inactive--;
 		}
 
@@ -1396,14 +1578,13 @@ lease6_usable(struct iasubopt *lease) {
 static isc_result_t
 move_lease_to_active(struct ipv6_pool *pool, struct iasubopt *lease) {
 	isc_result_t insert_result;
-	int old_heap_index;
 
-	old_heap_index = lease->heap_index;
 	insert_result = isc_heap_insert(pool->active_timeouts, lease);
 	if (insert_result == ISC_R_SUCCESS) {
        		iasubopt_hash_add(pool->leases, &lease->addr, 
 				  sizeof(lease->addr), lease, MDL);
-		isc_heap_delete(pool->inactive_timeouts, old_heap_index);
+		isc_heap_delete(pool->inactive_timeouts,
+				lease->inactive_index);
 		pool->num_active++;
 		pool->num_inactive--;
 		lease->state = FTS_ACTIVE;
@@ -1453,16 +1634,16 @@ renew_lease6(struct ipv6_pool *pool, struct iasubopt *lease) {
 	if (lease->state == FTS_ACTIVE) {
 		if (old_end_time <= lease->hard_lifetime_end_time) {
 			isc_heap_decreased(pool->active_timeouts,
-					   lease->heap_index);
+					   lease->active_index);
 		} else {
 			isc_heap_increased(pool->active_timeouts,
-					   lease->heap_index);
+					   lease->active_index);
 		}
 		return ISC_R_SUCCESS;
 	} else if (lease->state == FTS_ABANDONED) {
 		char tmp_addr[INET6_ADDRSTRLEN];
                 lease->state = FTS_ACTIVE;
-                isc_heap_increased(pool->active_timeouts, lease->heap_index);
+                isc_heap_increased(pool->active_timeouts, lease->active_index);
 		log_info("Reclaiming previously abandoned address %s",
 			 inet_ntop(AF_INET6, &(lease->addr), tmp_addr,
 				   sizeof(tmp_addr)));
@@ -1484,9 +1665,7 @@ static isc_result_t
 move_lease_to_inactive(struct ipv6_pool *pool, struct iasubopt *lease, 
 		       binding_state_t state) {
 	isc_result_t insert_result;
-	int old_heap_index;
 
-	old_heap_index = lease->heap_index;
 	insert_result = isc_heap_insert(pool->inactive_timeouts, lease);
 	if (insert_result == ISC_R_SUCCESS) {
 		/*
@@ -1537,7 +1716,7 @@ move_lease_to_inactive(struct ipv6_pool *pool, struct iasubopt *lease,
 
 		iasubopt_hash_delete(pool->leases, 
 				     &lease->addr, sizeof(lease->addr), MDL);
-		isc_heap_delete(pool->active_timeouts, old_heap_index);
+		isc_heap_delete(pool->active_timeouts, lease->active_index);
 		lease->state = state;
 		pool->num_active--;
 		pool->num_inactive++;
@@ -1615,7 +1794,7 @@ decline_lease6(struct ipv6_pool *pool, struct iasubopt *lease) {
 		pool->ipv6_pond->num_abandoned++;
 
 	lease->hard_lifetime_end_time = MAX_TIME;
-	isc_heap_decreased(pool->active_timeouts, lease->heap_index);
+	isc_heap_decreased(pool->active_timeouts, lease->active_index);
 	return ISC_R_SUCCESS;
 }
 
@@ -1888,7 +2067,7 @@ cleanup_old_expired(struct ipv6_pool *pool) {
 			break;
 		}
 
-		isc_heap_delete(pool->inactive_timeouts, tmp->heap_index);
+		isc_heap_delete(pool->inactive_timeouts, tmp->inactive_index);
 		pool->num_inactive--;
 
 		if (tmp->ia != NULL) {
@@ -2498,6 +2677,56 @@ ipv6_pond_dereference(struct ipv6_pond **pond, const char *file, int line) {
 	return ISC_R_SUCCESS;
 }
 
+#ifdef EUI_64
+/*
+ * Enables/disables EUI-64 address assignment for a pond
+ *
+ * Excecutes statements down to the pond's scope and sets the pond's
+ * use_eui_64 flag accordingly. In addition it iterates over the
+ * pond's pools ensuring they are all /64.  Anything else is deemed
+ * invalid for EUI-64.  It returns the number of invalid pools
+ * detected.  This is done post-parsing as use-eui-64 can be set
+ * down to the pool scope and we can't reliably do it until the
+ * entire configuration has been parsed.
+ */
+int
+set_eui_64(struct ipv6_pond *pond) {
+	int invalid_cnt = 0;
+	struct option_state* options = NULL;
+	struct option_cache *oc = NULL;
+	option_state_allocate(&options, MDL);
+	execute_statements_in_scope(NULL, NULL, NULL, NULL, NULL, options,
+				    &global_scope, pond->group, NULL, NULL);
+
+	pond->use_eui_64 =
+		((oc = lookup_option(&server_universe, options, SV_USE_EUI_64))
+		 &&
+		 (evaluate_boolean_option_cache (NULL, NULL, NULL, NULL,
+						 options, NULL, &global_scope,
+						 oc, MDL)));
+	if (pond->use_eui_64) {
+		// Check all pools are valid
+		int i = 0;
+		struct ipv6_pool* p;
+		while((p = pond->ipv6_pools[i++]) != NULL) {
+			if (p->bits != 64) {
+				log_error("Pool %s/%d cannot use EUI-64,"
+					  " prefix must 64",
+					  pin6_addr(&p->start_addr), p->bits);
+				invalid_cnt++;
+			} else {
+				log_debug("Pool: %s/%d - will use EUI-64",
+					  pin6_addr(&p->start_addr), p->bits);
+			}
+		}
+	}
+
+        /* Don't need the options anymore. */
+        option_state_dereference(&options, MDL);
+	return (invalid_cnt);
+}
+#endif
+
 /*
  * Emits a log for each pond that has been flagged as being a "jumbo range"
  * A pond is considered a "jumbo range" when the total number of elements
@@ -2514,11 +2743,18 @@ void
 report_jumbo_ranges() {
 	struct shared_network* s;
 	char log_buf[1084];
+#ifdef EUI_64
+	int invalid_cnt = 0;
+#endif
 
 	/* Loop thru all the networks looking for jumbo range ponds */
 	for (s = shared_networks; s; s = s -> next) {
 		struct ipv6_pond* pond = s->ipv6_pond;
 		while (pond) {
+#ifdef EUI_64
+			/* while we're here, set the pond's use_eui_64 flag */
+			invalid_cnt += set_eui_64(pond);
+#endif
 			/* if its a jumbo and has pools(sanity check) */
 			if (pond->jumbo_range == 1 && (pond->ipv6_pools)) {
 				struct ipv6_pool* pool;
@@ -2561,7 +2797,233 @@ report_jumbo_ranges() {
 			}
 			pond = pond->next;
 		}
+
 	}
+
+#ifdef EUI_64
+	if (invalid_cnt) {
+		log_fatal ("%d pool(s) are invalid for EUI-64 use",
+			   invalid_cnt);
+	}
+#endif
+}
+
+
+/*
+ * \brief Tests that 16-bit hardware type is less than 256
+ *
+ * XXX: DHCPv6 gives a 16-bit field for the htype.  DHCPv4 gives an
+ * 8-bit field.  To change the semantics of the generic 'hardware'
+ * structure, we would have to adjust many DHCPv4 sources (from
+ * interface to DHCPv4 lease code), and we would have to update the
+ * 'hardware' config directive (probably being reverse compatible and
+ * providing a new upgrade/replacement primitive).  This is a little
+ * too much to change for now.  Hopefully we will revisit this before
+ * hardware types exceeding 8 bits are assigned.
+ *
+ * Uses a static variable to limit log occurence to once per startup
+ *
+ * \param htype hardware type value to test
+ *
+ * \return returns 0 if the value is too large
+ *
+*/
+static int
+htype_bounds_check(uint16_t htype) {
+	static int log_once = 0;
+
+	if (htype & 0xFF00) {
+		if (!log_once) {
+			log_error("Attention: At least one client advertises a "
+			  "hardware type of %d, which exceeds the software "
+			  "limitation of 255.", htype);
+			log_once = 1;
+		}
+
+		return(0);
+	}
+
+	return(1);
+}
+
+/*!
+ * \brief Look for hosts by MAC address if it's available
+ *
+ * Checks the inbound packet against host declarations which specified:
+ *
+ *      "hardware ethernet <MAC>;"
+ *
+ * For directly connected clients, the function will use the MAC address
+ * contained in packet:haddr if it's populated.  \TODO - While the logic is in
+ * place for this search, the socket layer does not yet populate packet:haddr,
+ * this is to be done under rt41523.
+ *
+ * For relayed clients, the function will use the MAC address from the
+ * client-linklayer-address option if it has been supplied by the relay
+ * directly connected to the client.
+ *
+ * \param hp[out] - pointer to storage for the host delcaration if found
+ * \param packet - received packet
+ * \param opt_state - option state to search
+ * \param file - source file
+ * \param line - line number
+ *
+ * \return non-zero if a matching host was found, zero otherwise
+*/
+static int
+find_hosts_by_haddr6(struct host_decl **hp,
+			 struct packet *packet,
+			 struct option_state *opt_state,
+			 const char *file, int line) {
+	int found = 0;
+	int htype;
+	int hlen;
+
+	/* For directly connected clients, use packet:haddr if populated */
+	if (packet->dhcpv6_container_packet == NULL) {
+		if (packet->haddr) {
+			htype = packet->haddr->hbuf[0];
+			hlen = packet->haddr->hlen - 1,
+			log_debug("find_hosts_by_haddr6: using packet->haddr,"
+				  " type: %d, len: %d", htype, hlen);
+			found = find_hosts_by_haddr (hp, htype,
+						     &packet->haddr->hbuf[1],
+						     hlen, MDL);
+		}
+	} else {
+		/* The first container packet is the from the relay directly
+		 * connected to the client. Per RFC 6939, that is only relay
+		 * that may supply the client linklayer address option. */
+		struct packet *relay_packet = packet->dhcpv6_container_packet;
+		struct option_state *relay_state = relay_packet->options;
+		struct data_string rel_addr;
+		struct option_cache *oc;
+
+		/* Look for the option in the first relay packet */
+		oc = lookup_option(&dhcpv6_universe, relay_state,
+				   D6O_CLIENT_LINKLAYER_ADDR);
+		if (!oc) {
+			/* Not there, so bail */
+			return (0);
+		}
+
+		/* The option is present, fetch the address data */
+		memset(&rel_addr, 0, sizeof(rel_addr));
+		if (!evaluate_option_cache(&rel_addr, relay_packet, NULL, NULL,
+					   relay_state, NULL, &global_scope,
+					   oc, MDL)) {
+			log_error("find_hosts_by_add6:"
+				  "Error evaluating option cache");
+			return (0);
+		}
+
+		/* The relay address data should be:
+		 *   byte 0 - 1 = hardware type
+		 *   bytes 2 - hlen = hardware address
+                 * where  hlen ( hardware address len) is option data len - 2 */
+		hlen = rel_addr.len - 2;
+		if (hlen > 0 && hlen <= HARDWARE_ADDR_LEN) {
+			htype = getUShort(rel_addr.data);
+			if (htype_bounds_check(htype)) {
+				/* Looks valid, let's search with it */
+				log_debug("find_hosts_by_haddr6:"
+					  "using relayed haddr"
+					  " type: %d, len: %d", htype, hlen);
+				found = find_hosts_by_haddr (hp, htype,
+							     &rel_addr.data[2],
+							     hlen, MDL);
+			}
+		}
+
+		data_string_forget(&rel_addr, MDL);
+        }
+
+	return (found);
+}
+
+/*
+ * find_host_by_duid_chaddr() synthesizes a DHCPv4-like 'hardware'
+ * parameter from a DHCPv6 supplied DUID (client-identifier option),
+ * and may seek to use client or relay supplied hardware addresses.
+ */
+static int
+find_hosts_by_duid_chaddr(struct host_decl **host,
+			  const struct data_string *client_id) {
+	int htype, hlen;
+	const unsigned char *chaddr;
+
+	/*
+	 * The DUID-LL and DUID-LLT must have a 2-byte DUID type and 2-byte
+	 * htype.
+	 */
+	if (client_id->len < 4)
+		return 0;
+
+	/*
+	 * The third and fourth octets of the DUID-LL and DUID-LLT
+	 * is the hardware type, but in 16 bits.
+	 */
+	htype = getUShort(client_id->data + 2);
+	hlen = 0;
+	chaddr = NULL;
+
+	/* The first two octets of the DUID identify the type. */
+	switch(getUShort(client_id->data)) {
+	      case DUID_LLT:
+		if (client_id->len > 8) {
+			hlen = client_id->len - 8;
+			chaddr = client_id->data + 8;
+		}
+		break;
+
+	      case DUID_LL:
+		/*
+		 * Note that client_id->len must be greater than or equal
+		 * to four to get to this point in the function.
+		 */
+		hlen = client_id->len - 4;
+		chaddr = client_id->data + 4;
+		break;
+
+	      default:
+		break;
+	}
+
+	if ((hlen == 0) || (hlen > HARDWARE_ADDR_LEN) ||
+	    !htype_bounds_check(htype)) {
+		return (0);
+	}
+
+	return find_hosts_by_haddr(host, htype, chaddr, hlen, MDL);
+}
+
+/*
+ * \brief Finds a host record that matches the packet, if any
+ *
+ * This function centralizes the logic for matching v6 client
+ * packets to host declarations.  We check in the following order
+ * for matches with:
+ *
+ * 1. client_id if specified
+ * 2. MAC address when explicitly available
+ * 3. packet option
+ * 4. synthesized hardware address - this is done last as some
+ * synthesis methods are not consided to be reliable
+ *
+ * \param[out] host - pointer to storage for the located host
+ * \param packet - inbound client packet
+ * \param client_id - client identifier (if one)
+ * \param file - source file
+ * \param line - source file line number
+ * \return non-zero if a host is found, zero otherwise
+*/
+int
+find_hosts6(struct host_decl** host, struct packet* packet,
+            const struct data_string* client_id, char* file, int line) {
+        return (find_hosts_by_uid(host, client_id->data, client_id->len, MDL)
+                || find_hosts_by_haddr6(host, packet, packet->options, MDL)
+                || find_hosts_by_option(host, packet, packet->options, MDL)
+                || find_hosts_by_duid_chaddr(host, client_id));
 }
 
 /* unittest moved to server/tests/mdb6_unittest.c */

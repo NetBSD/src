@@ -1,13 +1,14 @@
-/*	$NetBSD: result.h,v 1.3 2016/01/10 20:10:45 christos Exp $	*/
+/*	$NetBSD: result.h,v 1.4 2018/04/07 21:19:32 christos Exp $	*/
+
 /* result.h
  */
 
 /*
- * Copyright (C) 2009,2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009-2017  Internet Systems Consortium, Inc. ("ISC")
  *
- * Permission to use, copy, modify, and/or distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
  * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY

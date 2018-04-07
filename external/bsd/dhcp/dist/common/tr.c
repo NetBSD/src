@@ -1,17 +1,17 @@
-/*	$NetBSD: tr.c,v 1.2 2017/06/28 02:46:30 manu Exp $	*/
+/*	$NetBSD: tr.c,v 1.3 2018/04/07 21:19:31 christos Exp $	*/
+
 /* tr.c
 
    token ring interface support
    Contributed in May of 1999 by Andrew Chittenden */
 
 /*
- * Copyright (c) 2011 by Internet Systems Consortium, Inc. ("ISC")
- * Copyright (c) 2004-2007,2009 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004-2017 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1996-2003 by Internet Software Consortium
  *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tr.c,v 1.2 2017/06/28 02:46:30 manu Exp $");
+__RCSID("$NetBSD: tr.c,v 1.3 2018/04/07 21:19:31 christos Exp $");
 
 #include "dhcpd.h"
 

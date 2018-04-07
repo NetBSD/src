@@ -1,11 +1,12 @@
-/*	$NetBSD: t_api.c,v 1.2 2017/06/28 02:46:31 manu Exp $	*/
+/*	$NetBSD: t_api.c,v 1.3 2018/04/07 21:19:32 christos Exp $	*/
+
 /*
- * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and/or distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
  * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
@@ -29,6 +30,8 @@
  * and the BIND-specific parts are now wrapped with the BIND_SUPPORT
  * macro.
  */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: t_api.c,v 1.3 2018/04/07 21:19:32 christos Exp $");
 
 #include <config.h>
 

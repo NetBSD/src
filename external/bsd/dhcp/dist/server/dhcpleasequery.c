@@ -1,11 +1,11 @@
-/*	$NetBSD: dhcpleasequery.c,v 1.5 2014/07/12 12:09:38 spz Exp $	*/
+/*	$NetBSD: dhcpleasequery.c,v 1.6 2018/04/07 21:19:32 christos Exp $	*/
+
 /*
- * Copyright (C) 2011-2013 by Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 2006-2007,2009 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2006-2017 by Internet Systems Consortium, Inc. ("ISC")
  *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
  * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
@@ -17,7 +17,8 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dhcpleasequery.c,v 1.5 2014/07/12 12:09:38 spz Exp $");
+__RCSID("$NetBSD: dhcpleasequery.c,v 1.6 2018/04/07 21:19:32 christos Exp $");
+
 
 #include "dhcpd.h"
 
@@ -157,6 +158,9 @@ dhcpleasequery(struct packet *packet, int ms_nulltp) {
 	u_int32_t time_rebinding;
 	u_int32_t time_expiry;
 	u_int32_t client_last_transaction_time;
+#if defined(RELAY_PORT)
+	u_int16_t relay_port = 0;
+#endif
 	struct sockaddr_in to;
 	struct in_addr siaddr;
 	struct data_string prl;
@@ -175,6 +179,11 @@ dhcpleasequery(struct packet *packet, int ms_nulltp) {
 
 	/* 
 	 * We can't reply if there is no giaddr field.
+	 */
+	/*
+	 * Note: this makes DHCPv4-over-DHCPv6 always fail but it should not
+	 * really be a problem because it is not a specified use case
+	 * (or even one that makes sense).
 	 */
 	if (!packet->raw->giaddr.s_addr) {
 		log_info("%s: missing giaddr, ciaddr is %s, no reply sent", 
@@ -660,12 +669,20 @@ dhcpleasequery(struct packet *packet, int ms_nulltp) {
 #endif
 	memset(to.sin_zero, 0, sizeof(to.sin_zero));
 
+#if defined(RELAY_PORT)
+	relay_port = dhcp_check_relayport(packet);
+#endif
+
 	/* 
 	 * Leasequery packets are be sent to the gateway address.
 	 */
 	to.sin_addr = packet->raw->giaddr;
 	if (packet->raw->giaddr.s_addr != htonl(INADDR_LOOPBACK)) {
+#if defined(RELAY_PORT)
+		to.sin_port = relay_port ? relay_port : local_port;
+#else
 		to.sin_port = local_port;
+#endif
 	} else {
 		to.sin_port = remote_port; /* XXXSK: For debugging. */
 	}

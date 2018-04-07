@@ -1,13 +1,13 @@
-.\"	$NetBSD: dhclient.8,v 1.4 2016/01/10 20:10:44 christos Exp $
+.\"	$NetBSD: dhclient.8,v 1.5 2018/04/07 21:19:31 christos Exp $
 .\"
 .\"	Id: dhclient.8,v 1.36 2011/04/15 21:58:12 sar Exp 
 .\"
-.\" Copyright (c) 2004,2007-2015 by Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (c) 2004-2018 by Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (c) 1996-2003 by Internet Software Consortium
 .\"
-.\" Permission to use, copy, modify, and distribute this software for any
-.\" purpose with or without fee is hereby granted, provided that the above
-.\" copyright notice and this permission notice appear in all copies.
+.\" This Source Code Form is subject to the terms of the Mozilla Public
+.\" License, v. 2.0. If a copy of the MPL was not distributed with this
+.\" file, You can obtain one at http://mozilla.org/MPL/2.0/.
 .\"
 .\" THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
 .\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -57,11 +57,17 @@ dhclient - Dynamic Host Configuration Protocol Client
 .B -P...
 ]
 ]
+.B -R
+]
 [
 .B -i
 ]
 [
 .B -I
+]
+[
+.B -4o6
+.I port
 ]
 [
 .B -D
@@ -133,6 +139,18 @@ dhclient - Dynamic Host Configuration Protocol Client
 .B -w
 ]
 [
+.B --dad-wait-time
+.I seconds
+]
+[
+.B --prefix-len-hint
+.I length
+]
+[
+.B --decline-wait-time
+.I seconds
+]
+[
 .B -v
 ]
 [
@@ -163,7 +181,7 @@ so on.
 There are two versions of the DHCP protocol DHCPv4 and DHCPv6.  At
 startup the client may be started for one or the other via the
 .B -4
-or 
+or
 .B -6
 options.
 .PP
@@ -242,6 +260,14 @@ along with configuration parameters.  It cannot be combined with
 processing.  Note: it is not recommended to mix queries of different
 types together or even to share the lease file between them.
 .TP
+.BI \-4o6 \ port
+Participate in the DHCPv4 over DHCPv6 protocol specified by RFC 7341.
+This associates a DHCPv4 and a DHCPv6 client to allow the v4 client to
+send v4 requests encapsulated in a v6 packet.  Communication
+between the two clients is done on a pair of UDP sockets bound
+to ::1 \fIport\fR and \fIport + 1\fR. Both clients must
+be launched using the same \fIport\fR argument.
+.TP
 .BI \-1
 Try to get a lease once.  On failure exit with code 2.  In DHCPv6 this
 sets the maximum duration of the initial exchange to
@@ -292,15 +318,15 @@ combination with the
 flag.
 .TP
 .BI \-e \ VAR=value
-Define additional environment variables for the environment where 
+Define additional environment variables for the environment where
 .B dhclient-script
-executes.  You may specify multiple 
+executes.  You may specify multiple
 .B \-e
 options on the command line.
 .TP
 .BI \-r
 Release the current lease and stop the running DHCP client as previously
-recorded in the PID file.  When shutdown via this method 
+recorded in the PID file.  When shutdown via this method
 .B dhclient-script
 will be executed with the specific reason for calling the script set.
 The client normally doesn't release the current lease as this is not
@@ -312,7 +338,7 @@ to notify the server if they wish to release an assigned IP address.
 .BI \-x
 Stop the running DHCP client without releasing the current lease.
 Kills existing \fBdhclient\fR process as previously recorded in the
-PID file.  When shutdown via this method 
+PID file.  When shutdown via this method
 .B dhclient-script
 will be executed with the specific reason for calling the script set.
 .TP
@@ -327,7 +353,7 @@ one less than the specified port.
 .TP
 .BI \-s \ server-addr
 Specify the server IP address or fully qualified domain name to use as
-a destination for DHCP protocol messages before 
+a destination for DHCP protocol messages before
 .B dhclient
 has acquired an IP address.  Normally,
 .B dhclient
@@ -346,12 +372,19 @@ Use a DUID with DHCPv4 clients.  If no DUID is available in the
 lease file one will be constructed and saved.  The DUID will be
 used to construct a RFC4361 style client id that will be included
 in the client's messages.  This client id can be overridden by
-setting a client id in the configuration file.  Overridding the
+setting a client id in the configuration file.  Overriding the
 client id in this fashion is discouraged.
 .TP
 .BI \-I
-Use the standard DDNS scheme from RFCs 4701 & 4702.  
+Use the standard DDNS scheme from RFCs 4701 & 4702.
 .TP
+.TP
+.BI \--decline-wait-time \ seconds
+Specify the time (in seconds) that an IPv4 client should wait after
+declining an address before issuing a discover.  The default is
+10 seconds as recommended by RFC 2131, Section 3.1.5.  A value of
+zero equates to no wait at all.
+.PP
 .BI \--version
 Print version number and exit.
 .PP
@@ -373,7 +406,20 @@ See \fB\-N\fR to restore it.
 .BI \-P
 Enable IPv6 prefix delegation.  This implies \fB\-6\fR and also
 disables the normal address query.  See \fB\-N\fR to restore it.
+Multiple prefixes can be requested with multiple \fB\-P\fR flags.
 Note only one requested interface is allowed.
+.TP
+.BI \-R
+Require that responses include all of the items requested by any
+\fB\-N\fR, \fB\-T\fR, or \fB\-P\fR options.  Normally even if
+the command line includes a number of these the client will be willing
+to accept the best lease it can even if the lease doesn't include all
+of the requested items.  This option causes the client to only
+accept leases that include all of the requested items.
+
+Note well: enabling this may prevent the client from using any
+leases it receives if the servers aren't configured to supply
+all of the items.
 .TP
 .BI \-D \ LL\ or\ LLT
 Override the default when selecting the type of DUID to use.  By default,
@@ -390,6 +436,29 @@ overrides these default, with a value of either \fILL\fR or \fILLT\fR.
 .\" TODO: is this for telling an already running dhclient?
 Restore normal address query for IPv6. This implies \fB-6\fR.
 It is used to restore normal operation after using \fB-T\fR or \fB-P\fR.
+Multiple addresses can be requested with multiple \fB\-N\fR flags.
+.TP
+.BI \--address-prefix-len \ length
+Specify the length of the prefix for IPv6 addresses. This value is passed by
+dhclient into the client script via the environment variable, ip6_prefixlen,
+when binding IPv6 addresses.  The default value is 128.  Alternatively you may
+change the default at compile time by setting DHCLIENT_DEFAULT_PREFIX_LEN in
+includes/site.h.
+.PP
+.TP
+.BI \--dad-wait-time \ seconds
+Specify maximum time (in seconds) that the client should wait for the
+duplicate address detection (DAD) to complete on an interface. This
+value is propagated to the dhclient script in a dad_wait_time environment
+variable. If any of the IPv6 addresses on the interface are tentative
+(DAD is in progress), the script will wait for the specified number of
+seconds for DAD to complete. If the script ignores this variable the
+parameter has no effect.
+.PP
+.TP
+.BI \--prefix-len-hint \ length
+When used in conjunction with -P, it directs the client to use the given
+length to use a prefix hint of, "::/length", when requesting new prefixes.
 .PP
 .I Modifying default file locations:
 The following options can be used to modify the locations a client uses
@@ -461,8 +530,9 @@ port will be used for the established connection.
 
 When DDNS is enabled at compile time (see includes/site.h)
 the client will open both a v4 and a v6 UDP socket on
-random ports.  These ports are opened even if DDNS is disabled
-in the configuration file.
+random ports.  These ports are not opened unless/until the
+client first attempts to do an update.  If the client is not
+configured to do updates, the ports will never be opened.
 .PP
 .SH CONFIGURATION
 The syntax of the \fBdhclient.conf(5)\fR file is discussed separately.
@@ -471,7 +541,7 @@ The DHCP client provides some ability to control it while it is
 running, without stopping it.  This capability is provided using OMAPI,
 an API for manipulating remote objects.  OMAPI clients connect to the
 client using TCP/IP, authenticate, and can then examine the client's
-current status and make changes to it. 
+current status and make changes to it.
 .PP
 Rather than implementing the underlying OMAPI protocol directly, user
 programs should use the dhcpctl API or OMAPI itself.  Dhcpctl is a

@@ -1,16 +1,16 @@
-/*	$NetBSD: tree.c,v 1.2 2017/06/28 02:46:30 manu Exp $	*/
+/*	$NetBSD: tree.c,v 1.3 2018/04/07 21:19:31 christos Exp $	*/
+
 /* tree.c
 
    Routines for manipulating parse trees... */
 
 /*
- * Copyright (c) 2011-2014 by Internet Systems Consortium, Inc. ("ISC")
- * Copyright (c) 2004-2007,2009 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004-2017 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1995-2003 by Internet Software Consortium
  *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tree.c,v 1.2 2017/06/28 02:46:30 manu Exp $");
+__RCSID("$NetBSD: tree.c,v 1.3 2018/04/07 21:19:31 christos Exp $");
 
 #include "dhcpd.h"
 #include <omapip/omapip_p.h>
@@ -808,6 +808,18 @@ int evaluate_boolean_expression (result, packet, lease, client_state,
 						 in_options, cfg_options,
 						 scope,
 						 expr->data.equal[0], MDL);
+
+		/* This is annoying, regexec requires the string being processed
+		 * to be NULL terminated, but left may not be, so pass it into
+		 * the termination function to ensure it's null terminated.
+		 */
+		if (bleft && (data_string_terminate(&left, MDL) == 0)) {
+			/* failed to make a null terminated version, couldn't
+			 * create a copy, probably a memory issue, an error
+			 * message has already been logged */
+			bleft = 0;
+		}
+
 		memset(&right, 0, sizeof right);
 		bright = evaluate_data_expression(&right, packet, lease,
 						  client_state,
@@ -819,7 +831,7 @@ int evaluate_boolean_expression (result, packet, lease, client_state,
 		memset(&re, 0, sizeof(re));
 		if (bleft && bright &&
 		    (left.data != NULL) && (right.data != NULL) &&
-        	    (regcomp(&re, (char *)right.data, regflags) == 0) &&
+		    (regcomp(&re, (char *)right.data, regflags) == 0) &&
 		    (regexec(&re, (char *)left.data, (size_t)0, NULL, 0) == 0))
 				*result = 1;
 
@@ -843,7 +855,7 @@ int evaluate_boolean_expression (result, packet, lease, client_state,
 		 * If we have bleft and bright then we have a good
 		 * syntax, otherwise not.
 		 *
-		 * XXX: we don't warn on invalid regular expression 
+		 * XXX: we don't warn on invalid regular expression
 		 *      syntax, should we?
 		 */
 		return bleft && bright;
@@ -3638,7 +3650,7 @@ int write_expression (file, expr, col, indent, firstp)
 	      case expr_pick_first_value:
 		e = expr;
 		col = token_print_indent (file, col, indent, "", "",
-					  "concat");
+					  "pick-first-value");
 		col = token_print_indent (file, col, indent, " ", "",
 					  "(");
 		scol = col;

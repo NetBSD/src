@@ -1,11 +1,12 @@
-/*	$NetBSD: ns_name.c,v 1.8 2016/01/10 20:10:44 christos Exp $	*/
+/*	$NetBSD: ns_name.c,v 1.9 2018/04/07 21:19:31 christos Exp $	*/
+
 /*
- * Copyright (c) 2004,2009,2014 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004-2017 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1996-2003 by Internet Software Consortium
  *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -23,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ns_name.c,v 1.8 2016/01/10 20:10:44 christos Exp $");
+__RCSID("$NetBSD: ns_name.c,v 1.9 2018/04/07 21:19:31 christos Exp $");
 
 #include <sys/types.h>
 
@@ -34,7 +35,7 @@ __RCSID("$NetBSD: ns_name.c,v 1.8 2016/01/10 20:10:44 christos Exp $");
 #include <string.h>
 #include <ctype.h>
 
-#include "minires.h"
+#include "ns_name.h"
 #include "arpa/nameser.h"
 
 /* Data. */

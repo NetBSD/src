@@ -12,6 +12,9 @@
 /* Define to queue multiple DHCPACK replies per fsync. */
 #undef DELAYED_ACK
 
+/* Define to 1 to include DHCPv4 over DHCPv6 support. */
+#undef DHCP4o6
+
 /* Define to BIG_ENDIAN for MSB (Motorola or SPARC CPUs) or LITTLE_ENDIAN for
    LSB (Intel CPUs). */
 #undef DHCP_BYTE_ORDER
@@ -43,7 +46,7 @@
 /* Define to 1 to use the Berkeley Packet Filter interface code. */
 #undef HAVE_BPF
 
-/* Define to 1 if you have the /dev/random file. */
+/* Define to 1 if you have the /dev/random or other configured file. */
 #undef HAVE_DEV_RANDOM
 
 /* Define to 1 to use DLPI interface code. */
@@ -154,8 +157,8 @@
 /* Define to any value to include Ari's PARANOIA patch. */
 #undef PARANOIA
 
-/* Define to correct bad byteorders in secs field. */
-#undef SECS_BYTEORDER
+/* Define to 1 to include relay port support. */
+#undef RELAY_PORT
 
 /* The size of `struct iaddr *', as computed by sizeof. */
 #undef SIZEOF_STRUCT_IADDR_P
@@ -165,6 +168,9 @@
 
 /* Define to include server activity tracing support. */
 #undef TRACING
+
+/* Define to 1 if ethernet devices are in /dev/net */
+#undef USE_DEV_NET
 
 /* Define to include PIDs in syslog messages. */
 #undef USE_LOG_PID
@@ -235,6 +241,9 @@
 
 /* File for dhcpd6 process information. */
 #undef _PATH_DHCPD6_PID
+
+/* Default file containing dhcpd configuration. */
+#undef _PATH_DHCPD_CONF
 
 /* File for dhcpd leases. */
 #undef _PATH_DHCPD_DB

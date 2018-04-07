@@ -1,10 +1,11 @@
-/*	$NetBSD: isclib.c,v 1.3 2016/01/10 20:10:45 christos Exp $	*/
+/*	$NetBSD: isclib.c,v 1.4 2018/04/07 21:19:32 christos Exp $	*/
+
 /*
- * Copyright(c) 2009-2010,2013-2014 by Internet Systems Consortium, Inc.("ISC")
+ * Copyright(c) 2009-2017 by Internet Systems Consortium, Inc.("ISC")
  *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -23,10 +24,10 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: isclib.c,v 1.3 2016/01/10 20:10:45 christos Exp $");
+__RCSID("$NetBSD: isclib.c,v 1.4 2018/04/07 21:19:32 christos Exp $");
 
 /*Trying to figure out what we need to define to get things to work.
-  It looks like we want/need the export library but need the fdwatchcommand
+  It looks like we want/need the library but need the fdwatchcommand
   which may be a problem */
 
 #include "dhcpd.h"
@@ -189,16 +190,6 @@ dhcp_context_create(int flags,
 		if (result != ISC_R_SUCCESS)
 			goto cleanup;
 
-		result = isc_app_ctxstart(dhcp_gbl_ctx.actx);
-		if (result != ISC_R_SUCCESS)
-			return (result);
-		dhcp_gbl_ctx.actx_started = ISC_TRUE;
-
-		/* Not all OSs support suppressing SIGPIPE through socket
-		 * options, so set the sigal action to be ignore.  This allows
-		 * broken connections to fail gracefully with EPIPE on writes */
-		handle_signal(SIGPIPE, SIG_IGN);
-
 		result = isc_taskmgr_createinctx(dhcp_gbl_ctx.mctx,
 						 dhcp_gbl_ctx.actx,
 						 1, 0,
@@ -221,43 +212,43 @@ dhcp_context_create(int flags,
 		result = isc_task_create(dhcp_gbl_ctx.taskmgr, 0, &dhcp_gbl_ctx.task);
 		if (result != ISC_R_SUCCESS)
 			goto cleanup;
+
+		result = isc_app_ctxstart(dhcp_gbl_ctx.actx);
+		if (result != ISC_R_SUCCESS)
+			return (result);
+		dhcp_gbl_ctx.actx_started = ISC_TRUE;
+
+		/* Not all OSs support suppressing SIGPIPE through socket
+		 * options, so set the sigal action to be ignore.  This allows
+		 * broken connections to fail gracefully with EPIPE on writes */
+		handle_signal(SIGPIPE, SIG_IGN);
+
+		/* Reset handlers installed by isc_app_ctxstart()
+		 * to default for control-c and kill */
+		handle_signal(SIGINT, SIG_DFL);
+		handle_signal(SIGTERM, SIG_DFL);
 	}
 
 #if defined (NSUPDATE)
 	if ((flags & DHCP_CONTEXT_POST_DB) != 0) {
-		isc_sockaddr_t localaddr4, *localaddr4_ptr = NULL;
-		isc_sockaddr_t localaddr6, *localaddr6_ptr = NULL;
+		/* Setting addresses only.
+		 * All real work will be done later on if needed to avoid
+		 * listening on ddns port if client/server was compiled with
+		 * ddns support but not using it. */
 		if (local4 != NULL) {
-			isc_sockaddr_fromin(&localaddr4, local4, 0);
-			localaddr4_ptr = &localaddr4;
+			dhcp_gbl_ctx.use_local4 = 1;
+			isc_sockaddr_fromin(&dhcp_gbl_ctx.local4_sockaddr,
+					    local4, 0);
 		}
+
 		if (local6 != NULL) {
-			isc_sockaddr_fromin6(&localaddr6, local6, 0);
-			localaddr6_ptr = &localaddr6;
+			dhcp_gbl_ctx.use_local6 = 1;
+			isc_sockaddr_fromin6(&dhcp_gbl_ctx.local6_sockaddr,
+					     local6, 0);
 		}
 
-		result = dns_client_createx2(dhcp_gbl_ctx.mctx,
-					     dhcp_gbl_ctx.actx,
-					     dhcp_gbl_ctx.taskmgr,
-					     dhcp_gbl_ctx.socketmgr,
-					     dhcp_gbl_ctx.timermgr,
-					     0,
-					     &dhcp_gbl_ctx.dnsclient,
-					     localaddr4_ptr,
-					     localaddr6_ptr);
-		if (result != ISC_R_SUCCESS)
-			goto cleanup;
-
-		/*
-		 * If we can't set up the servers we may not be able to
-		 * do DDNS but we should continue to try and perform
-		 * our basic functions and let the user sort it out.
-		 */
-		result = dhcp_dns_client_setservers();
-		if (result != ISC_R_SUCCESS) {
-			log_error("Unable to set resolver from resolv.conf; "
-				  "startup continuing but DDNS support "
-				  "may be affected");
+		if (!(flags & DHCP_DNS_CLIENT_LAZY_INIT)) {
+			result = dns_client_init();
 		}
 	}
 #endif
@@ -363,4 +354,41 @@ void dhcp_signal_handler(int signal) {
 	if (ctx && ctx->methods && ctx->methods->ctxsuspend) {
 		(void) isc_app_ctxsuspend(ctx);
 	}
+}
+
+isc_result_t dns_client_init() {
+	isc_result_t result;
+	if (dhcp_gbl_ctx.dnsclient == NULL) {
+		result = dns_client_createx2(dhcp_gbl_ctx.mctx,
+					     dhcp_gbl_ctx.actx,
+					     dhcp_gbl_ctx.taskmgr,
+					     dhcp_gbl_ctx.socketmgr,
+					     dhcp_gbl_ctx.timermgr,
+					     0,
+					     &dhcp_gbl_ctx.dnsclient,
+					     (dhcp_gbl_ctx.use_local4 ?
+					      &dhcp_gbl_ctx.local4_sockaddr
+					      : NULL),
+					     (dhcp_gbl_ctx.use_local6 ?
+					      &dhcp_gbl_ctx.local6_sockaddr
+					      : NULL));
+
+		if (result != ISC_R_SUCCESS) {
+			log_error("Unable to create DNS client context:"
+				  " result: %d", result);
+			return result;
+		}
+
+		/* If we can't set up the servers we may not be able to
+		 * do DDNS but we should continue to try and perform
+		 * our basic functions and let the user sort it out. */
+		result = dhcp_dns_client_setservers();
+		if (result != ISC_R_SUCCESS) {
+			log_error("Unable to set resolver from resolv.conf; "
+				  "startup continuing but DDNS support "
+				  "may be affected: result %d", result);
+		}
+	}
+
+	return ISC_R_SUCCESS;
 }

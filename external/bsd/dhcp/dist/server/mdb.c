@@ -1,16 +1,16 @@
-/*	$NetBSD: mdb.c,v 1.3 2016/01/10 20:10:45 christos Exp $	*/
+/*	$NetBSD: mdb.c,v 1.4 2018/04/07 21:19:32 christos Exp $	*/
+
 /* mdb.c
 
    Server-specific in-memory database support. */
 
 /*
- * Copyright (c) 2011-2015 by Internet Systems Consortium, Inc. ("ISC")
- * Copyright (c) 2004-2009 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004-2017 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1996-2003 by Internet Software Consortium
  *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mdb.c,v 1.3 2016/01/10 20:10:45 christos Exp $");
+__RCSID("$NetBSD: mdb.c,v 1.4 2018/04/07 21:19:32 christos Exp $");
 
 #include "dhcpd.h"
 #include "omapip/hash.h"
@@ -918,6 +918,10 @@ int find_subnet (struct subnet **sp,
 	struct subnet *rv;
 
 	for (rv = subnets; rv; rv = rv -> next_subnet) {
+#if defined(DHCP4o6)
+		if (addr.len != rv->netmask.len)
+			continue;
+#endif
 		if (addr_eq (subnet_number (addr, rv -> netmask), rv -> net)) {
 			if (subnet_reference (sp, rv,
 					      file, line) != ISC_R_SUCCESS)
@@ -935,6 +939,10 @@ int find_grouped_subnet (struct subnet **sp,
 	struct subnet *rv;
 
 	for (rv = share -> subnets; rv; rv = rv -> next_sibling) {
+#if defined(DHCP4o6)
+		if (addr.len != rv->netmask.len)
+			continue;
+#endif
 		if (addr_eq (subnet_number (addr, rv -> netmask), rv -> net)) {
 			if (subnet_reference (sp, rv,
 					      file, line) != ISC_R_SUCCESS)
@@ -950,6 +958,10 @@ int
 subnet_inner_than(const struct subnet *subnet, 
 		  const struct subnet *scan,
 		  int warnp) {
+#if defined(DHCP4o6)
+	if (subnet->net.len != scan->net.len)
+		return 0;
+#endif
 	if (addr_eq(subnet_number(subnet->net, scan->netmask), scan->net) ||
 	    addr_eq(subnet_number(scan->net, subnet->netmask), subnet->net)) {
 		char n1buf[sizeof("ffff:ffff:ffff:ffff:ffff:ffff:255.255.255")];
@@ -1140,7 +1152,6 @@ int supersede_lease (comp, lease, commit, propogate, pimmediate, from_pool)
 	if (pimmediate && !commit)
 		return 0;
 #endif
-
 	/* If there is no sample lease, just do the move. */
 	if (!lease)
 		goto just_move_it;
@@ -1227,8 +1238,6 @@ int supersede_lease (comp, lease, commit, propogate, pimmediate, from_pool)
 		host_dereference (&comp -> host, MDL);
 	host_reference (&comp -> host, lease -> host, MDL);
 	comp -> hardware_addr = lease -> hardware_addr;
-	comp -> flags = ((lease -> flags & ~PERSISTENT_FLAGS) |
-			 (comp -> flags & ~EPHEMERAL_FLAGS));
 	if (comp -> scope)
 		binding_scope_dereference (&comp -> scope, MDL);
 	if (lease -> scope) {
@@ -1378,6 +1387,14 @@ int supersede_lease (comp, lease, commit, propogate, pimmediate, from_pool)
 	/* Remove the lease from its current place in its current
 	   timer sequence. */
 	LEASE_REMOVEP(lq, comp);
+
+	/* Now that we've done the flag-affected queue removal
+	 * we can update the new lease's flags, if there's an
+	 * existing lease */
+	if (lease) {
+		comp->flags = ((lease->flags & ~PERSISTENT_FLAGS) |
+				(comp->flags & ~EPHEMERAL_FLAGS));
+	}
 
 	/* Make the state transition. */
 	if (commit || !pimmediate)
@@ -1796,30 +1813,40 @@ void abandon_lease (lease, message)
 	struct lease *lease;
 	const char *message;
 {
-	struct lease *lt = (struct lease *)0;
+	struct lease *lt = NULL;
 #if defined (NSUPDATE)
 	(void) ddns_removals(lease, NULL, NULL, ISC_FALSE);
 #endif
 
-	if (!lease_copy (&lt, lease, MDL))
+	if (!lease_copy(&lt, lease, MDL)) {
 		return;
+	}
 
-	if (lt->scope)
+	if (lt->scope) {
 		binding_scope_dereference(&lt->scope, MDL);
+	}
 
-	lt -> ends = cur_time; /* XXX */
-	lt -> next_binding_state = FTS_ABANDONED;
+	/* Calculate the abandone expiry time.  If it wraps,
+ 	 * use the maximum expiry time. */
+	lt->ends = cur_time + abandon_lease_time;
+	if (lt->ends < cur_time || lt->ends > MAX_TIME) {
+		lt->ends = MAX_TIME;
+	}
 
-	log_error ("Abandoning IP address %s: %s",
-	      piaddr (lease -> ip_addr), message);
-	lt -> hardware_addr.hlen = 0;
-	if (lt -> uid && lt -> uid != lt -> uid_buf)
-		dfree (lt -> uid, MDL);
-	lt -> uid = (unsigned char *)0;
-	lt -> uid_len = 0;
-	lt -> uid_max = 0;
-	supersede_lease (lease, lt, 1, 1, 1, 0);
-	lease_dereference (&lt, MDL);
+	lt->next_binding_state = FTS_ABANDONED;
+
+	log_error ("Abandoning IP address %s: %s", piaddr(lease->ip_addr),
+                    message);
+	lt->hardware_addr.hlen = 0;
+	if (lt->uid && lt->uid != lt->uid_buf) {
+		dfree(lt->uid, MDL);
+	}
+
+	lt->uid = NULL;
+	lt->uid_len = 0;
+	lt->uid_max = 0;
+	supersede_lease(lease, lt, 1, 1, 1, 0);
+	lease_dereference(&lt, MDL);
 }
 
 #if 0
@@ -2493,10 +2520,7 @@ int write_leases ()
 }
 
 #if !defined (BINARY_LEASES)
-#if defined (DEBUG_MEMORY_LEAKAGE) || \
-		defined (DEBUG_MEMORY_LEAKAGE_ON_EXIT)
-/* Unlink all the leases in the queue.  This is only used for debugging
- */
+/* Unlink all the leases in the queue. */
 void lease_remove_all(struct lease **lq) {
 	struct lease *lp, *ln = NULL;
 
@@ -2529,7 +2553,6 @@ void lease_remove_all(struct lease **lq) {
 		ln = NULL;
 	} while (lp != NULL);
 }
-#endif /* DEBUG_MEMORY_LEAKAGE... */
 
 /*
  * This routine walks through a given lease queue (lq) looking
@@ -3179,7 +3202,9 @@ void free_everything(void)
 
 	cancel_all_timeouts ();
 	relinquish_timeouts ();
+#if defined(DELAYED_ACK)
 	relinquish_ackqueue();
+#endif
 	trace_free_all ();
 	group_dereference (&root_group, MDL);
 	executable_statement_dereference (&default_classification_rules, MDL);

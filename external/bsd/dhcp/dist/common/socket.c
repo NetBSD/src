@@ -1,15 +1,16 @@
-/*	$NetBSD: socket.c,v 1.2 2017/06/28 02:46:30 manu Exp $	*/
+/*	$NetBSD: socket.c,v 1.3 2018/04/07 21:19:31 christos Exp $	*/
+
 /* socket.c
 
    BSD socket interface code... */
 
 /*
- * Copyright (c) 2004-2015 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004-2017 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1995-2003 by Internet Software Consortium
  *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -28,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: socket.c,v 1.2 2017/06/28 02:46:30 manu Exp $");
+__RCSID("$NetBSD: socket.c,v 1.3 2018/04/07 21:19:31 christos Exp $");
 
 /* SO_BINDTODEVICE support added by Elliot Poger (poger@leland.stanford.edu).
  * This sockopt allows a socket to be bound to a particular interface,
@@ -39,6 +40,7 @@ __RCSID("$NetBSD: socket.c,v 1.2 2017/06/28 02:46:30 manu Exp $");
  */
 
 #include "dhcpd.h"
+#include <isc/util.h>
 #include <errno.h>
 #include <sys/ioctl.h>
 #include <sys/uio.h>
@@ -68,6 +70,10 @@ __RCSID("$NetBSD: socket.c,v 1.2 2017/06/28 02:46:30 manu Exp $");
 static int no_global_v6_socket = 0;
 static unsigned int global_v6_socket_references = 0;
 static int global_v6_socket = -1;
+#if defined(RELAY_PORT)
+static unsigned int relay_port_v6_socket_references = 0;
+static int relay_port_v6_socket = -1;
+#endif
 
 static void if_register_multicast(struct interface_info *info);
 #endif
@@ -159,11 +165,25 @@ if_register_socket(struct interface_info *info, int family,
 	case AF_INET6:
 		addr6 = (struct sockaddr_in6 *)&name; 
 		addr6->sin6_family = AF_INET6;
-		addr6->sin6_port = *libdhcp_callbacks.local_port;
+		addr6->sin6_port = local_port;
+#if defined(RELAY_PORT)
+		if (relay_port &&
+		    ((info->flags & INTERFACE_STREAMS) == INTERFACE_UPSTREAM))
+			addr6->sin6_port = relay_port;
+#endif
+		/* A server feature */
+		if (bind_local_address6) {
+			memcpy(&addr6->sin6_addr,
+			       &local_address6,
+			       sizeof(addr6->sin6_addr));
+		}
+		/* A client feature */
 		if (linklocal6) {
 			memcpy(&addr6->sin6_addr,
 			       linklocal6,
 			       sizeof(addr6->sin6_addr));
+		}
+		if (IN6_IS_ADDR_LINKLOCAL(&addr6->sin6_addr)) {
 			addr6->sin6_scope_id = if_nametoindex(info->name);
 		}
 #ifdef HAVE_SA_LEN
@@ -181,7 +201,7 @@ if_register_socket(struct interface_info *info, int family,
 	default:
 		addr = (struct sockaddr_in *)&name; 
 		addr->sin_family = AF_INET;
-		addr->sin_port = *libdhcp_callbacks.local_port;
+		addr->sin_port = relay_port ? relay_port : local_port;
 		memcpy(&addr->sin_addr,
 		       &local_address,
 		       sizeof(addr->sin_addr));
@@ -223,11 +243,14 @@ if_register_socket(struct interface_info *info, int family,
 	 * respective interfaces.  This does not (and should not) affect
 	 * DHCPv4 sockets; we can't yet support BSD sockets well, much
 	 * less multiple sockets. Make sense only with multicast.
+	 * RedHat defines SO_REUSEPORT with a kernel which does not support
+	 * it and returns ENOPROTOOPT so in this case ignore the error.
 	 */
 	if ((local_family == AF_INET6) && *do_multicast) {
 		flag = 1;
-		if (setsockopt(sock, SOL_SOCKET, SO_REUSEPORT,
-			       (char *)&flag, sizeof(flag)) < 0) {
+		if ((setsockopt(sock, SOL_SOCKET, SO_REUSEPORT,
+			        (char *)&flag, sizeof(flag)) < 0) &&
+		    (errno != ENOPROTOOPT)) {
 			log_fatal("Can't set SO_REUSEPORT option on dhcp "
 				  "socket: %m");
 		}
@@ -411,7 +434,6 @@ void if_deregister_receive (info)
 #if defined(IP_PKTINFO) && defined(IP_RECVPKTINFO) && defined(USE_V4_PKTINFO)
 	/* Dereference the global v4 socket. */
 	if ((info->rfdesc == global_v4_socket) &&
-	    (info->wfdesc == global_v4_socket) &&
 	    (global_v4_socket_references > 0)) {
 		global_v4_socket_references--;
 		info->rfdesc = -1;
@@ -488,6 +510,10 @@ if_register6(struct interface_info *info, int do_multicast) {
 		log_fatal("Impossible condition at %s:%d", MDL);
 	}
 
+#if defined(RELAY_PORT)
+	if (!relay_port ||
+	    ((info->flags & INTERFACE_STREAMS) == INTERFACE_DOWNSTREAM)) {
+#endif
 	if (global_v6_socket_references == 0) {
 		global_v6_socket = if_register_socket(info, AF_INET6,
 						      &req_multi, NULL);
@@ -497,15 +523,51 @@ if_register6(struct interface_info *info, int do_multicast) {
 			 * create a socket, this is just a sanity check.
 			 */
 			log_fatal("Impossible condition at %s:%d", MDL);
+		} else if (bind_local_address6) {
+			char addr6_str[INET6_ADDRSTRLEN];
+
+			if (inet_ntop(AF_INET6,
+				      &local_address6,
+				      addr6_str,
+				      sizeof(addr6_str)) == NULL) {
+				log_fatal("inet_ntop: unable to convert "
+					  "local-address6");
+			}
+			log_info("Bound to [%s]:%d",
+				 addr6_str,
+				 (int) ntohs(local_port));
 		} else {
-			log_info("Bound to *:%d",
-				 ntohs(*libdhcp_callbacks.local_port));
+			log_info("Bound to *:%d", (int) ntohs(local_port));
 		}
 	}
 		
 	info->rfdesc = global_v6_socket;
 	info->wfdesc = global_v6_socket;
 	global_v6_socket_references++;
+
+#if defined(RELAY_PORT)
+	} else {
+	/*
+	 * If relay port is defined, we need to register one
+	 * IPv6 UPD socket to handle upstream server or relay agent
+	 * with a non-547 UDP local port.
+	 */
+	if ((relay_port_v6_socket_references == 0) &&
+	    ((info->flags & INTERFACE_STREAMS) == INTERFACE_UPSTREAM)) {
+		relay_port_v6_socket = if_register_socket(info, AF_INET6,
+							  &req_multi, NULL);
+		if (relay_port_v6_socket < 0) {
+			log_fatal("Impossible condition at %s:%d", MDL);
+		} else {
+			log_info("Bound to relay port *:%d",
+				 (int) ntohs(relay_port));
+		}
+	}
+	info->rfdesc = relay_port_v6_socket;
+	info->wfdesc = relay_port_v6_socket;
+	relay_port_v6_socket_references++;
+	}
+#endif
 
 	if (req_multi)
 		if_register_multicast(info);
@@ -597,6 +659,16 @@ if_deregister6(struct interface_info *info) {
 		global_v6_socket_references--;
 		info->rfdesc = -1;
 		info->wfdesc = -1;
+#if defined(RELAY_PORT)
+	} else if (relay_port &&
+		   (info->rfdesc == relay_port_v6_socket) &&
+		   (info->wfdesc == relay_port_v6_socket) &&
+		   (relay_port_v6_socket_references > 0)) {
+		/* Dereference the relay port v6 socket. */
+		relay_port_v6_socket_references--;
+		info->rfdesc = -1;
+		info->wfdesc = -1;
+#endif
 	} else {
 		log_fatal("Impossible condition at %s:%d", MDL);
 	}
@@ -613,13 +685,23 @@ if_deregister6(struct interface_info *info) {
 		}
 	}
 
-	if (!no_global_v6_socket &&
-	    (global_v6_socket_references == 0)) {
-		close(global_v6_socket);
-		global_v6_socket = -1;
+	if (!no_global_v6_socket) {
+		if (global_v6_socket_references == 0) {
+			close(global_v6_socket);
+			global_v6_socket = -1;
 
-		log_info("Unbound from *:%d",
-			 ntohs(*libdhcp_callbacks.local_port));
+			log_info("Unbound from *:%d",
+				 (int) ntohs(local_port));
+		}
+#if defined(RELAY_PORT)
+		if (relay_port && (relay_port_v6_socket_references == 0)) {
+			close(relay_port_v6_socket);
+			relay_port_v6_socket = -1;
+
+			log_info("Unbound from relay port *:%d",
+				 (int) ntohs(relay_port));
+		}
+#endif
 	}
 }
 #endif /* DHCPv6 */
@@ -830,6 +912,7 @@ ssize_t send_packet6(struct interface_info *interface,
 	cmsg->cmsg_len = CMSG_LEN(sizeof(*pktinfo));
 	pktinfo = (struct in6_pktinfo *)CMSG_DATA(cmsg);
 	memset(pktinfo, 0, sizeof(*pktinfo));
+	pktinfo->ipi6_addr = local_address6;
 	pktinfo->ipi6_ifindex = ifindex;
 
 	result = sendmsg(interface->wfdesc, &m, 0);

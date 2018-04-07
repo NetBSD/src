@@ -1,16 +1,16 @@
-/*	$NetBSD: omshell.c,v 1.2 2017/06/28 02:46:30 manu Exp $	*/
+/*	$NetBSD: omshell.c,v 1.3 2018/04/07 21:19:31 christos Exp $	*/
+
 /* omshell.c
 
    Examine and modify omapi objects. */
 
 /*
- * Copyright (c) 2009-2011,2013,2014 by Internet Systems Consortium, Inc. ("ISC")
- * Copyright (c) 2004-2007 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004-2017 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 2001-2003 by Internet Software Consortium
  *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: omshell.c,v 1.2 2017/06/28 02:46:30 manu Exp $");
+__RCSID("$NetBSD: omshell.c,v 1.3 2018/04/07 21:19:31 christos Exp $");
 
 #include "config.h"
 
@@ -43,6 +43,7 @@ __RCSID("$NetBSD: omshell.c,v 1.2 2017/06/28 02:46:30 manu Exp $");
 #include <syslog.h>
 #include "dhcpctl.h"
 #include "dhcpd.h"
+#include <isc/file.h>
 
 uint16_t local_port = 0;
 uint16_t remote_port = 0;
@@ -76,6 +77,12 @@ void bootp (struct packet *packet) { }
 #ifdef DHCPv6
 /* XXX: should we warn or something here? */
 void dhcpv6(struct packet *packet) { }
+#ifdef DHCP4o6
+isc_result_t dhcpv4o6_handler(omapi_object_t *h)
+{
+	return ISC_R_NOTIMPLEMENTED;
+}
+#endif /* DHCP4o6 */
 #endif /* DHCPv6 */
 
 int check_collection (struct packet *p, struct lease *l, struct collection *c)
@@ -84,7 +91,7 @@ int check_collection (struct packet *p, struct lease *l, struct collection *c)
 }
 void classify (struct packet *packet, struct class *class) { }
 
-static void usage (char *s) {
+static void usage (const char *s) {
 	fprintf (stderr, "Usage: %s\n", s);
 	exit (1);
 }
@@ -115,15 +122,23 @@ main(int argc, char **argv) {
 	char s1[1024];
 	int connected = 0;
 	char hex_buf[1025];
+	char *progname;
+
+#ifdef OLD_LOG_NAME
+	progname = "omshell";
+#else
+	progname = argv[0];
+#endif
 
 	libdhcp_callbacks_register(&omshell_callbacks);
 
 	for (i = 1; i < argc; i++) {
-		usage(argv[0]);
+		usage(isc_file_basename(progname));
 	}
 
 	/* Initially, log errors to stderr as well as to syslogd. */
-	openlog ("omshell", DHCP_LOG_OPTIONS, DHCPD_LOG_FACILITY);
+	openlog (isc_file_basename(progname),
+		 DHCP_LOG_OPTIONS, DHCPD_LOG_FACILITY);
 	status = dhcpctl_initialize ();
 	if (status != ISC_R_SUCCESS) {
 		fprintf (stderr, "dhcpctl_initialize: %s\n",
@@ -330,12 +345,42 @@ main(int argc, char **argv) {
 		    }
 		    break;
 
+		  case KEY_ALGORITHM:
+		    /* Algorithm is optional */
+		    token = next_token (&val, (unsigned *)0, cfile);
+		    if (token != NAME || !is_identifier(token)) {
+			printf ("missing or invalid algorithm name\n");
+			printf ("usage: key-algoritm <algorithm name>\n");
+			skip_to_semi (cfile);
+			break;
+		    }
+
+		    s = dmalloc (strlen (val) + 1, MDL);
+		    if (!s) {
+			printf ("no memory for algorithm name.\n");
+			skip_to_semi (cfile);
+			break;
+		    }
+
+		    strcpy (s, val);
+		    algorithm = s;
+
+		    token = next_token (&val, (unsigned *)0, cfile);
+		    if (token != END_OF_FILE && token != EOL) {
+			    printf ("extra information after %s\n", algorithm);
+			    printf ("usage: key-algorithm <algorithm name>\n");
+			    skip_to_semi (cfile);
+			    break;
+		    }
+
+		    break;
+
 		  case KEY:
 		    token = peek_token(&val, (unsigned *)0, cfile);
 		    if (token == STRING) {
 			    token = next_token (&val, (unsigned *)0, cfile);
 			    if (!is_identifier (token)) {
-				    printf ("usage: key <name> <value>\n");
+			            printf ("usage: key <name> <value>\n");
 				    skip_to_semi (cfile);
 				    break;
 			    }
@@ -349,7 +394,7 @@ main(int argc, char **argv) {
 		    } else {
 			    s = parse_host_name(cfile);
 			    if (s == NULL) {
-				    printf ("usage: key <name> <value>\n");
+			            printf ("usage: key <name> <value>\n");
 				    skip_to_semi(cfile);
 				    break;
 			    }
@@ -361,12 +406,14 @@ main(int argc, char **argv) {
 			    skip_to_semi (cfile);
 			    break;
 		    }
+
 		    token = next_token (&val, (unsigned *)0, cfile);
 		    if (token != END_OF_FILE && token != EOL) {
-			    printf ("usage: key <name> <secret>\n");
+			    printf ("usage: key <name> <value>\n");
 			    skip_to_semi (cfile);
 			    break;
 		    }
+
 		    break;
 
 		  case CONNECT:

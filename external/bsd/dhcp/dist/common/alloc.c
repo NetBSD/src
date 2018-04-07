@@ -1,16 +1,16 @@
-/*	$NetBSD: alloc.c,v 1.4 2016/01/10 20:10:44 christos Exp $	*/
+/*	$NetBSD: alloc.c,v 1.5 2018/04/07 21:19:31 christos Exp $	*/
+
 /* alloc.c
 
    Memory allocation... */
 
 /*
- * Copyright (c) 2009,2013-2014 by Internet Systems Consortium, Inc. ("ISC")
- * Copyright (c) 2004-2007 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004-2017 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1996-2003 by Internet Software Consortium
  *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: alloc.c,v 1.4 2016/01/10 20:10:44 christos Exp $");
+__RCSID("$NetBSD: alloc.c,v 1.5 2018/04/07 21:19:31 christos Exp $");
 
 #include "dhcpd.h"
 #include <omapip/omapip_p.h>
@@ -244,7 +244,7 @@ int group_dereference (ptr, file, line)
 
 	if (group -> object)
 		group_object_dereference (&group -> object, file, line);
-	if (group -> subnet)	
+	if (group -> subnet)
 		subnet_dereference (&group -> subnet, file, line);
 	if (group -> shared_network)
 		shared_network_dereference (&group -> shared_network,
@@ -501,7 +501,7 @@ void relinquish_free_expressions ()
 #endif
 
 struct binding_value *free_binding_values;
-				
+
 int binding_value_allocate (cptr, file, line)
 	struct binding_value **cptr;
 	const char *file;
@@ -689,7 +689,7 @@ int buffer_allocate (ptr, len, file, line)
 {
 	struct buffer *bp;
 
-	/* XXXSK: should check for bad ptr values, otherwise we 
+	/* XXXSK: should check for bad ptr values, otherwise we
 		  leak memory if they are wrong */
 	bp = dmalloc (len + sizeof *bp, file, line);
 	if (!bp)
@@ -1283,25 +1283,25 @@ data_string_new(struct data_string *new_string,
 	if (new_string == NULL) {
 		log_error("data_string_new: new_string cannot be NULL %s(%d)",
 			  file, line);
-                return (0);
+		return (0);
 	}
 
 	if (src == NULL) {
 		log_error("data_string_new: src cannot be NULL %s(%d)",
 			  file, line);
-                return (0);
+		return (0);
 	}
 
 	memset(new_string, 0, sizeof (struct data_string));
 
 	/* If we already have a NULL back off length by one. This lets
 	 * us always just add a NULL at the end. */
-	copy_len = (len > 0 && src[len - 1 ] == 0) ? len - 1 : len;
+	copy_len = (len > 0 && src[len - 1] == 0) ? len - 1 : len;
 
 	/* Allocate the buffer, accounting for terminating null */
 	if (!buffer_allocate(&(new_string->buffer), copy_len + 1,  MDL)) {
 		log_error("data_string_new: No memory %s(%d)", file, line);
-                return (0);
+		return (0);
 	}
 
 	/* Only copy if there's something to copy */
@@ -1310,7 +1310,7 @@ data_string_new(struct data_string *new_string,
 	}
 
 	/* Always tack on the null */
-	new_string->buffer->data[copy_len + 1] = 0;
+	new_string->buffer->data[copy_len] = 0;
 
 	/* Update data_string accessor values.  Note len does NOT include
 	 * the NULL.  */
@@ -1351,7 +1351,7 @@ void data_string_forget (data, file, line)
 	memset (data, 0, sizeof *data);
 }
 
-/* If the data_string is larger than the specified length, reduce 
+/* If the data_string is larger than the specified length, reduce
    the data_string to the specified size. */
 
 void data_string_truncate (dp, len)
@@ -1363,4 +1363,50 @@ void data_string_truncate (dp, len)
 		dp -> terminated = 0;
 		dp -> len = len;
 	}
+}
+
+/* \brief Converts a data_string to a null-terminated data string
+ *
+ * If the given string isn't null-terminated, replace it with a
+ * null-terminated version and free the current string decrementing
+ * the referecne count.  If the string is null-terminated it is left
+ * as is.
+ *
+ * Currently this routine doesn't check if the string is 0 length
+ * that must be checked by the caller.
+ *
+ * \param [in/out] str the data_string to convert
+ * \param file the file this routine was called from
+ * \param line the line this routine was called from
+ *
+ * \return 1 if the string was converted successfully (or already terminated),
+ * 0 if the conversion failed.  Failure is only possible if memory for the new
+ * string could not be allocated.  If the conversion fails, the original
+ * string's content is lost.
+ */
+int data_string_terminate(str, file, line)
+	struct data_string* str;
+	const char *file;
+	int line;
+{
+	int ret_val = 1;
+
+	if (str->terminated == 0) {
+		struct data_string temp;
+		memset(&temp, 0, sizeof(temp));
+
+		data_string_copy(&temp, str, file, line);
+		data_string_forget(str, file, line);
+		if (data_string_new(str, (const char*)temp.data, temp.len,
+				    file, line) == 0) {
+			/* couldn't create a copy, probably a memory issue,
+			 * an error message has already been logged. */
+			ret_val = 0;
+		}
+
+		/* get rid of temp string */
+		data_string_forget(&temp, file, line);
+	}
+
+	return (ret_val);
 }

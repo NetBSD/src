@@ -1,16 +1,16 @@
-/*	$NetBSD: dlpi.c,v 1.2 2017/06/28 02:46:30 manu Exp $	*/
+/*	$NetBSD: dlpi.c,v 1.3 2018/04/07 21:19:31 christos Exp $	*/
+
 /* dlpi.c
  
    Data Link Provider Interface (DLPI) network interface code. */
 
 /*
- * Copyright (c) 2009-2011,2014 by Internet Systems Consortium, Inc. ("ISC")
- * Copyright (c) 2004,2007 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004-2017 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1996-2003 by Internet Software Consortium
  *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dlpi.c,v 1.2 2017/06/28 02:46:30 manu Exp $");
+__RCSID("$NetBSD: dlpi.c,v 1.3 2018/04/07 21:19:31 christos Exp $");
 
 /*
  * Based largely in part to the existing NIT code in nit.c.
@@ -134,7 +134,13 @@ static int strioctl (int fd, int cmd, int timeout, int len, char *dp);
 
 #define DLPI_MAXDLBUF		8192	/* Buffer size */
 #define DLPI_MAXDLADDR		1024	/* Max address size */
-#define DLPI_DEVDIR		"/dev/"	/* Device directory */
+
+/* Device directory */
+#if defined(USE_DEV_NET)
+#define DLPI_DEVDIR		"/dev/net/"  /* Solaris 11 + */
+#else
+#define DLPI_DEVDIR		"/dev/"      /* Pre Solaris 11 */
+#endif
 
 static int dlpiopen(const char *ifname);
 static int dlpiunit (char *ifname);
@@ -407,6 +413,10 @@ void if_deregister_send (info)
 /* Packet filter program...
    XXX Changes to the filter program may require changes to the constant
    offsets used in if_register_send to patch the NIT program! XXX */
+
+#if defined(RELAY_PORT)
+#error "Relay port is not yet supported for DLPI"
+#endif
 
 void if_register_receive (info)
 	struct interface_info *info;
@@ -798,9 +808,13 @@ dlpiopen(const char *ifname) {
 	ep = cp = ifname;
 	while (*ep)
 		ep++;
+
+/* Before Solaris 11 we strip off the digit to open the base dev name */
+#if !defined(USE_DEV_NET)
 	/* And back up to the first digit (unit number) */
 	while ((*(ep - 1) >= '0' && *(ep - 1) <= '9') || *(ep - 1) == ':')
 		ep--;
+#endif
 	
 	/* Copy everything up to the unit number */
 	while (cp < ep) {
