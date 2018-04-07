@@ -1,4 +1,4 @@
-#	$NetBSD: net_common.sh,v 1.27 2018/04/06 09:22:38 ozaki-r Exp $
+#	$NetBSD: net_common.sh,v 1.28 2018/04/07 12:36:58 ozaki-r Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -319,7 +319,7 @@ rump_server_add_iface()
 rump_server_destroy_ifaces()
 {
 	local backup=$RUMP_SERVER
-	local outout=ignore
+	local output=ignore
 
 	$DEBUG && cat $_rump_server_ifaces
 
