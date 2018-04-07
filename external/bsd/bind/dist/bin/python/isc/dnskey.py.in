@@ -1,5 +1,5 @@
 ############################################################################
-# Copyright (C) 2013-2016  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2013-2017  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -38,7 +38,7 @@ class dnskey:
     _ALGNAMES = (None, 'RSAMD5', 'DH', 'DSA', 'ECC', 'RSASHA1',
                  'NSEC3DSA', 'NSEC3RSASHA1', 'RSASHA256', None,
                  'RSASHA512', None, 'ECCGOST', 'ECDSAP256SHA256',
-                 'ECDSAP384SHA384')
+                 'ECDSAP384SHA384', 'ED25519', 'ED448')
 
     def __init__(self, key, directory=None, keyttl=None):
         # this makes it possible to use algname as a class or instance method

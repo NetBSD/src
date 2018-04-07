@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2014, 2017  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -47,6 +47,11 @@ while test "$#" -gt 0; do
                 msg1="ECDSA cryptography"
                 msg2="--with-ecdsa"
                 ;;
+	eddsa|EDDSA)
+		alg="-a ED25519"
+		msg1="EDDSA cryptography"
+		msg2="--with-eddsa"
+		;;
         *)
                 echo "${prog}: unknown argument"
                 exit 1

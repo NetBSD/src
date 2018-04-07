@@ -21,6 +21,11 @@ but reported bugs will be fixed as time permits.
       mkdane.sh generates TLSA records for use with DNS-based
       Authentication of Named Entities (DANE)
 
+    - dnspriv/
+
+      Sample configuration for setting up a DNS-over-TLS server
+      using BIND with Nginx as a TLS proxy
+
     - dlz/modules
 
       Dynamically linkable DLZ modules that can be configured into
@@ -45,21 +50,17 @@ but reported bugs will be fixed as time permits.
       Internationalized Domain Name processing.
 
     - dnsperf-2.1.0.0-1/
+    - dnsperf-patches/
 
       DNS server performance testing tools, like 'queryperf' but more
       advanced: 'dnsperf' focuses on authoritative server performance
-      and 'resperf' on recursive server performance.
+      and 'resperf' on recursive server performance.  The patch that
+      adds support for EDNS Client Subnet can be found in dnsperf-patches
+      directory.
 
-    - nslint-3.0a2
+Formerly, there was more software included in this directory, but we
+have removed it in favour of using canonical upstream locations.  You
+can find the links to the nslint, query-loc and zkt, and other software
+we find useful but do not necessarily support, at:
 
-      A lint-like tool for checking DNS files
-
-    - query-loc-0.4.0
-
-      A tool for retrieving location information stored in the DNS
-
-    - zkt-1.1.2
-
-      DNSSEC Zone Key Tools, an alternate method for managing keys
-      and signatures
-
+      https://www.isc.org/community/tools/

@@ -27,7 +27,7 @@ sub getkey ($$) {
 		last if m{^[)]};
 		$data .= $_;
 	}
-	m{ alg = (\S+); key id = (\d+)};
+	m{ alg = (\S+)\s*; key id = (\d+)};
 	$k->{alg}  = $1;
 	$k->{id}   = $2;
 	$k->{data} = $data;
@@ -43,7 +43,7 @@ sub printstatus ($) {
 	my $a = shift;
 	if ($a->{removehd} ne "19700101000000") {
 		printf " untrusted and to be removed at %s\n", ext8601 $a->{removehd};
-	} elsif ($a->{addhd} lt $now) {
+	} elsif ($a->{addhd} le $now) {
 		printf " trusted\n";
 	} else {
 		printf " waiting for %s\n", ext8601 $a->{addhd};

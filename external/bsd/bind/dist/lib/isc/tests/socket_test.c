@@ -1,7 +1,7 @@
-/*	$NetBSD: socket_test.c,v 1.1.1.8 2016/05/26 15:45:52 christos Exp $	*/
+/*	$NetBSD: socket_test.c,v 1.1.1.9 2018/04/07 21:44:11 christos Exp $	*/
 
 /*
- * Copyright (C) 2011-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2011-2015, 2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -192,7 +192,7 @@ ATF_TC_BODY(udp_sendto, tc) {
 	result = isc_task_create(taskmgr, 0, &task);
 	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
 
-	strcpy(sendbuf, "Hello");
+	snprintf(sendbuf, sizeof(sendbuf), "Hello");
 	r.base = (void *) sendbuf;
 	r.length = strlen(sendbuf) + 1;
 
@@ -270,7 +270,7 @@ ATF_TC_BODY(udp_dup, tc) {
 	result = isc_task_create(taskmgr, 0, &task);
 	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
 
-	strcpy(sendbuf, "Hello");
+	snprintf(sendbuf, sizeof(sendbuf), "Hello");
 	r.base = (void *) sendbuf;
 	r.length = strlen(sendbuf) + 1;
 
@@ -282,7 +282,7 @@ ATF_TC_BODY(udp_dup, tc) {
 	ATF_CHECK(completion.done);
 	ATF_CHECK_EQ(completion.result, ISC_R_SUCCESS);
 
-	strcpy(sendbuf, "World");
+	snprintf(sendbuf, sizeof(sendbuf), "World");
 	r.base = (void *) sendbuf;
 	r.length = strlen(sendbuf) + 1;
 
@@ -374,7 +374,7 @@ ATF_TC_BODY(udp_dscp_v4, tc) {
 	ATF_CHECK_EQ_MSG(result, ISC_R_SUCCESS, "%s",
 			   isc_result_totext(result));
 
-	strcpy(sendbuf, "Hello");
+	snprintf(sendbuf, sizeof(sendbuf), "Hello");
 	r.base = (void *) sendbuf;
 	r.length = strlen(sendbuf) + 1;
 
@@ -482,7 +482,7 @@ ATF_TC_BODY(udp_dscp_v6, tc) {
 	ATF_CHECK_EQ_MSG(result, ISC_R_SUCCESS, "%s",
 			 isc_result_totext(result));
 
-	strcpy(sendbuf, "Hello");
+	snprintf(sendbuf, sizeof(sendbuf), "Hello");
 	r.base = (void *) sendbuf;
 	r.length = strlen(sendbuf) + 1;
 
@@ -592,7 +592,7 @@ ATF_TC_BODY(tcp_dscp_v4, tc) {
 
 	isc_socket_dscp(s2, 056);  /* EF */
 
-	strcpy(sendbuf, "Hello");
+	snprintf(sendbuf, sizeof(sendbuf), "Hello");
 	r.base = (void *) sendbuf;
 	r.length = strlen(sendbuf) + 1;
 
@@ -695,7 +695,7 @@ ATF_TC_BODY(tcp_dscp_v6, tc) {
 
 	isc_socket_dscp(s2, 056);  /* EF */
 
-	strcpy(sendbuf, "Hello");
+	snprintf(sendbuf, sizeof(sendbuf), "Hello");
 	r.base = (void *) sendbuf;
 	r.length = strlen(sendbuf) + 1;
 

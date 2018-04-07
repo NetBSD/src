@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2016  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2016, 2017  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -69,6 +69,9 @@ MDIG=$TOP/Build/$VSCONF/mdig@EXEEXT@
 NZD2NZF=$TOP/Build/$VSCONF/named-nzd2nzf@EXEEXT@
 FSTRM_CAPTURE=@FSTRM_CAPTURE@
 FEATURETEST=$TOP/Build/$VSCONF/feature-test@EXEEXT@
+SAMPLEUPDATE=$TOP/Build/$VSCONF/update@EXEEXT@
+
+# to port WIRETEST=$TOP/Build/$VSCONF/wire_test@EXEEXT@
 
 # this is given as argument to native WIN32 executables
 RANDFILE=`cygpath -w $TOP/bin/tests/system/random.data`
@@ -79,13 +82,16 @@ KEYDELETE=$TOP/Build/$VSCONF/keydelete@EXEEXT@
 LWTEST=$TOP/Build/$VSCONF/lwtest@EXEEXT@
 MAKEJOURNAL=$TOP/Build/$VSCONF/makejournal@EXEEXT@
 
+# we don't want a KRB5_CONFIG setting breaking the tests
+KRB5_CONFIG=NUL
+
 # The "stress" test is not run by default since it creates enough
 # load on the machine to make it unusable to other users.
 # v6synth
 SUBDIRS="acl additional addzone allow_query autosign builtin cacheclean case
 	 catz checkconf @CHECKDS@ checknames checkzone cookie @COVERAGE@
 	 database digdelv dlv dlvauto dlz dlzexternal dname dns64 dnssec
-	 @DNSTAP@ dscp dsdigest dyndb ecdsa ednscompliance emptyzones
+	 @DNSTAP@ dscp dsdigest dyndb ecdsa eddsa ednscompliance emptyzones
 	 fetchlimit filter-aaaa formerr forward geoip glue gost inline ixfr
 	 @KEYMGR@ legacy limits logfileconfig lwresd masterfile masterformat
 	 metadata mkeys names notify nslookup nsupdate nzd2nzf pending
@@ -141,6 +147,43 @@ NZD=@NZD_TOOLS@
 
 . ${TOP}/version
 
+#
+# Set up color-coded test output
+#
+if test -t 1 && type tput > /dev/null; then
+    COLOR_FAIL=`tput setaf 1`   # red
+    COLOR_WARN=`tput setaf 3`   # yellow
+    COLOR_PASS=`tput setaf 2`   # green
+    COLOR_INFO=`tput bold`      # bold
+    COLOR_NONE=`tput sgr0`
+else
+    # set to empty strings so printf succeeds
+    COLOR_FAIL=''
+    COLOR_WARN=''
+    COLOR_PASS=''
+    COLOR_INFO=''
+    COLOR_NONE=''
+fi
+
+echofail () {
+        printf "${COLOR_FAIL}%s${COLOR_NONE}\n" "$*"
+}
+
+echowarn () {
+        printf "${COLOR_WARN}%s${COLOR_NONE}\n" "$*"
+}
+
+echopass () {
+        printf "${COLOR_PASS}%s${COLOR_NONE}\n" "$*"
+}
+
+echoinfo () {
+        printf "${COLOR_INFO}%s${COLOR_NONE}\n" "$*"
+}
+
+#
+# Export command paths
+#
 export ARPANAME
 export BIGKEY
 export CHECKZONE
@@ -154,6 +197,7 @@ export KEYFRLAB
 export KEYGEN
 export KEYSETTOOL
 export KEYSIGNER
+export KRB5_CONFIG
 export LWRESD
 export LWTEST
 export MAKEJOURNAL
@@ -170,6 +214,7 @@ export RANDFILE
 export RESOLVE
 export RNDC
 export RRCHECKER
+export SAMPLEUPDATE
 export SIGNER
 export SUBDIRS
 export TESTSOCK6

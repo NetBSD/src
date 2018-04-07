@@ -1,7 +1,7 @@
-/*	$NetBSD: csync_62.c,v 1.1.1.1 2016/05/26 15:45:51 christos Exp $	*/
+/*	$NetBSD: csync_62.c,v 1.1.1.2 2018/04/07 21:44:09 christos Exp $	*/
 
 /*
- * Copyright (C) 2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2015, 2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -66,14 +66,14 @@ totext_csync(ARGS_TOTEXT) {
 
 	num = uint32_fromregion(&sr);
 	isc_region_consume(&sr, 4);
-	sprintf(buf, "%lu", num);
+	snprintf(buf, sizeof(buf), "%lu", num);
 	RETERR(str_totext(buf, target));
 
 	RETERR(str_totext(" ", target));
 
 	num = uint16_fromregion(&sr);
 	isc_region_consume(&sr, 2);
-	sprintf(buf, "%lu", num);
+	snprintf(buf, sizeof(buf), "%lu", num);
 	RETERR(str_totext(buf, target));
 
 	return (typemap_totext(&sr, NULL, target));

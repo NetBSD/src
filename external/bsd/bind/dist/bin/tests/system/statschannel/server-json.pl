@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-# Copyright (C) 2015  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2015, 2017  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -24,12 +24,12 @@ my $text = do{local$/;<INPUT>};
 close(INPUT);
 
 my $ref = decode_json($text);
-foreach $key (keys $ref->{opcodes}) {
+foreach $key (keys %{$ref->{opcodes}}) {
     print "opcode " . $key . ": " . $ref->{opcodes}->{$key} . "\n";
 }
-foreach $key (keys $ref->{qtypes}) {
+foreach $key (keys %{$ref->{qtypes}}) {
     print "qtype " . $key . ": " . $ref->{qtypes}->{$key} . "\n";
 }
-foreach $key (keys $ref->{nsstats}) {
+foreach $key (keys %{$ref->{nsstats}}) {
     print "nsstat " . $key . ": " . $ref->{nsstats}->{$key} . "\n";
 }

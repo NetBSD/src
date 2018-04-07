@@ -1,9 +1,6 @@
-/*	$NetBSD: build_test.c,v 1.1.1.3 2014/12/10 03:34:48 christos Exp $	*/
+/*	$NetBSD: build_test.c,v 1.1.1.4 2018/04/07 21:44:14 christos Exp $	*/
 
-/*
- * Automated Testing Framework (atf)
- *
- * Copyright (c) 2009 The NetBSD Foundation, Inc.
+/* Copyright (c) 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,8 +23,9 @@
  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
  * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
+ * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.  */
+
+#include "atf-c/build.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -35,19 +33,14 @@
 
 #include <atf-c.h>
 
-#include "atf-c/build.h"
-#include "atf-c/config.h"
+#include "atf-c/detail/env.h"
+#include "atf-c/detail/test_helpers.h"
+#include "atf-c/h_build.h"
 #include "atf-c/utils.h"
-
-#include "detail/env.h"
-#include "detail/test_helpers.h"
-#include "h_build.h"
 
 /* ---------------------------------------------------------------------
  * Auxiliary functions.
  * --------------------------------------------------------------------- */
-
-void __atf_config_reinit(void);
 
 static
 bool
@@ -169,7 +162,6 @@ ATF_TC_BODY(c_o, tc)
         verbose_set_env("ATF_BUILD_CC", test->cc);
         verbose_set_env("ATF_BUILD_CFLAGS", test->cflags);
         verbose_set_env("ATF_BUILD_CPPFLAGS", test->cppflags);
-        __atf_config_reinit();
 
         {
             char **argv;
@@ -198,7 +190,6 @@ ATF_TC_BODY(cpp, tc)
 
         verbose_set_env("ATF_BUILD_CPP", test->cpp);
         verbose_set_env("ATF_BUILD_CPPFLAGS", test->cppflags);
-        __atf_config_reinit();
 
         {
             char **argv;
@@ -228,7 +219,6 @@ ATF_TC_BODY(cxx_o, tc)
         verbose_set_env("ATF_BUILD_CXX", test->cxx);
         verbose_set_env("ATF_BUILD_CXXFLAGS", test->cxxflags);
         verbose_set_env("ATF_BUILD_CPPFLAGS", test->cppflags);
-        __atf_config_reinit();
 
         {
             char **argv;
@@ -244,12 +234,6 @@ ATF_TC_BODY(cxx_o, tc)
 }
 
 /* ---------------------------------------------------------------------
- * Tests cases for the header file.
- * --------------------------------------------------------------------- */
-
-HEADER_TC(include, "atf-c/build.h");
-
-/* ---------------------------------------------------------------------
  * Main.
  * --------------------------------------------------------------------- */
 
@@ -262,9 +246,6 @@ ATF_TP_ADD_TCS(tp)
     ATF_TP_ADD_TC(tp, c_o);
     ATF_TP_ADD_TC(tp, cpp);
     ATF_TP_ADD_TC(tp, cxx_o);
-
-    /* Add the test cases for the header file. */
-    ATF_TP_ADD_TC(tp, include);
 
     return atf_no_error();
 }

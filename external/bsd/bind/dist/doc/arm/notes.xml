@@ -2,7 +2,7 @@
 <!ENTITY mdash "&#8212;">
 <!ENTITY ouml "&#xf6;">]>
 <!--
- - Copyright (C) 2014-2017  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2014-2018  Internet Systems Consortium, Inc. ("ISC")
  -
  - Permission to use, copy, modify, and/or distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
@@ -21,19 +21,12 @@
   <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="noteversion.xml"/>
   <section xml:id="relnotes_intro"><info><title>Introduction</title></info>
     <para>
-      This document summarizes changes since BIND 9.10.5:
-    </para>
-    <para>
-      BIND 9.10.5-P1 addresses the security issues described in
-      CVE-2017-3140 and CVE-2017-3141.
-    </para>
-    <para>
-      BIND 9.11.1-P2 addresses the security issues described in
-      CVE-2017-3142 and CVE-2017-3143. It also includes an update
-      to the address of the B root server.
+      This document summarizes changes since the last production
+      release on the BIND 9.10 branch.
+      Please see the <filename>CHANGES</filename> file for a further
+      list of bug fixes and other changes.
     </para>
   </section>
-
 
   <section xml:id="relnotes_download"><info><title>Download</title></info>
     <para>
@@ -52,16 +45,15 @@
       trust anchors, with somewhat different behaviors. If the root
       key is configured using the <command>managed-keys</command>
       statement, or if the pre-configured root key is enabled by using
-      <command>dnssec-validation auto</command>, then BIND can keep
-      keys up to date automatically. Servers configured in this way
-      will roll seamlessly to the new key when it is published in
-      the root zone. However, keys configured using the
+      <command>dnssec-validation auto</command>, then BIND can keep keys up
+      to date automatically. Servers configured in this way should have
+      begun the process of rolling to the new key when it was published in
+      the root zone in July 2017. However, keys configured using the
       <command>trusted-keys</command> statement are not automatically
-      maintained. If your server is performing DNSSEC validation
-      and is configured using <command>trusted-keys</command>, you are
-      advised to change your configuration before the root zone begins
-      signing with the new KSK. This is currently scheduled for
-      October 11, 2017.
+      maintained. If your server is performing DNSSEC validation and is
+      configured using <command>trusted-keys</command>, you are advised to
+      change your configuration before the root zone begins signing with
+      the new KSK. This is currently scheduled for October 11, 2017.
     </para>
     <para>
       This release includes an updated version of the
@@ -71,6 +63,14 @@
 	xlink:href="https://www.isc.org/bind-keys">
 	https://www.isc.org/bind-keys
       </link>.
+    </para>
+  </section>
+
+  <section xml:id="win_support"><info><title>Legacy Windows No Longer Supported</title></info>
+    <para>
+      As of BIND 9.10.6, Windows XP and Windows 2003 are no longer supported
+      platforms for BIND; "XP" binaries are no longer available for download
+      from ISC.
     </para>
   </section>
 
@@ -96,6 +96,197 @@
 	  could cause <command>named</command> to go into an infinite
 	  query loop. This flaw is disclosed in CVE-2017-3140.
 	  [RT #45181]
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  Addresses could be referenced after being freed during resolver
+	  processing, causing an assertion failure. The chances of this
+	  happening were remote, but the introduction of a delay in
+	  resolution increased them. This bug is disclosed in
+	  CVE-2017-3145. [RT #46839]
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  update-policy rules that otherwise ignore the name field now
+	  require that it be set to "." to ensure that any type list
+	  present is properly interpreted.  If the name field was omitted
+	  from the rule declaration and a type list was present it wouldn't
+	  be interpreted as expected.
+	</para>
+      </listitem>
+    </itemizedlist>
+  </section>
+
+  <section xml:id="relnotes_removed"><info><title>Removed Features</title></info>
+    <itemizedlist>
+      <listitem>
+	<para>
+	  The ISC DNSSEC Lookaside Validation (DLV) service has
+	  been shut down; all DLV records in the dlv.isc.org zone
+	  have been removed.  References to the service have been
+	  removed from BIND documentation.  Lookaside validation
+	  is no longer used by default by <command>delv</command>.
+	  The DLV key has been removed from <filename>bind.keys</filename>.
+	  Setting <command>dnssec-lookaside</command> to
+	  <command>auto</command> or to use dlv.isc.org as a trust
+	  anchor results in a warning being issued.
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  <command>named</command> will now log a warning if the old
+	  root DNSSEC key is explicitly configured and has not been updated.
+	  [RT #43670]
+	</para>
+      </listitem>
+    </itemizedlist>
+  </section>
+
+  <section xml:id="proto_changes"><info><title>Protocol Changes</title></info>
+    <itemizedlist>
+      <listitem>
+	<para>
+	  BIND can now use the Ed25519 and Ed448 Edwards Curve DNSSEC
+	  signing algorithms described in RFC 8080. Note, however, that
+	  these algorithms must be supported in OpenSSL;
+	  currently they are only available in the development branch
+	  of OpenSSL at
+	  <link xmlns:xlink="http://www.w3.org/1999/xlink"
+	    xlink:href="https://github.com/openssl/openssl">
+	    https://github.com/openssl/openssl</link>.
+	  [RT #44696]
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  When parsing DNS messages, EDNS KEY TAG options are checked
+	  for correctness. When printing messages (for example, in
+	  <command>dig</command>), EDNS KEY TAG options are printed
+	  in readable format.
+	</para>
+      </listitem>
+    </itemizedlist>
+  </section>
+
+  <section xml:id="relnotes_changes"><info><title>Feature Changes</title></info>
+    <itemizedlist>
+      <listitem>
+	<para>
+	  <command>named</command> will no longer start or accept
+	  reconfiguration if <command>managed-keys</command> or
+	  <command>dnssec-validation auto</command> are in use and
+	  the managed-keys directory (specified by
+	  <command>managed-keys-directory</command>, and defaulting
+	  to the working directory if not specified),
+	  is not writable by the effective user ID. [RT #46077]
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  Previously, <command>update-policy local;</command> accepted
+	  updates from any source so long as they were signed by the
+	  locally-generated session key. This has been further restricted;
+	  updates are now only accepted from locally configured addresses.
+	  [RT #45492]
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  <command>dig +ednsopt</command> now accepts the names
+	  for EDNS options in addition to numeric values. For example,
+	  an EDNS Client-Subnet option could be sent using
+	  <command>dig +ednsopt=ecs:...</command>. Thanks to
+	  John Worley of Secure64 for the contribution. [RT #44461]
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  Threads in <command>named</command> are now set to human-readable
+	  names to assist debugging on operating systems that support that.
+	  Threads will have names such as "isc-timer", "isc-sockmgr",
+	  "isc-worker0001", and so on. This will affect the reporting of
+	  subsidiary thread names in <command>ps</command> and
+	  <command>top</command>, but not the main thread. [RT #43234]
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  DiG now warns about .local queries which are reserved for
+	  Multicast DNS. [RT #44783]
+	</para>
+      </listitem>
+    </itemizedlist>
+  </section>
+
+  <section xml:id="relnotes_bugs"><info><title>Bug Fixes</title></info>
+    <itemizedlist>
+      <listitem>
+	<para>
+	  Attempting to validate improperly unsigned CNAME responses
+	  from secure zones could cause a validator loop. This caused
+	  a delay in returning SERVFAIL and also increased the chances
+	  of encountering the crash bug described in CVE-2017-3145.
+	  [RT #46839]
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  When <command>named</command> was reconfigured, failure of some
+	  zones to load correctly could leave the system in an inconsistent
+	  state; while generally harmless, this could lead to a crash later
+	  when using <command>rndc addzone</command>.  Reconfiguration changes
+	  are now fully rolled back in the event of failure. [RT #45841]
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  Fixed a bug that was introduced in an earlier development
+	  release which caused multi-packet AXFR and IXFR messages to fail
+	  validation if not all packets contained TSIG records; this
+	  caused interoperability problems with some other DNS
+	  implementations. [RT #45509]
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  Semicolons are no longer escaped when printing CAA and
+	  URI records.  This may break applications that depend on the
+	  presence of the backslash before the semicolon. [RT #45216]
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  AD could be set on truncated answer with no records present
+	  in the answer and authority sections. [RT #45140]
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  Some header files included &lt;isc/util.h&gt; incorrectly as
+	  it pollutes with namespace with non ISC_ macros and this should
+	  only be done by explicitly including &lt;isc/util.h&gt;.  This
+	  has been corrected.  Some code may depend on &lt;isc/util.h&gt;
+	  being implicitly included via other header files.  Such
+	  code should explicitly include &lt;isc/util.h&gt;.
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  Zones created with <command>rndc addzone</command> could
+	  temporarily fail to inherit the <command>allow-transfer</command>
+	  ACL set in the <command>options</command> section of
+	  <filename>named.conf</filename>. [RT #46603]
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  <command>named</command> failed to properly determine whether
+	  there were active KSK and ZSK keys for an algorithm when
+	  <command>update-check-ksk</command> was true (which is the
+	  default setting). This could leave records unsigned
+	  when rolling keys. [RT #46743] [RT #46754] [RT #46774]
 	</para>
       </listitem>
     </itemizedlist>
