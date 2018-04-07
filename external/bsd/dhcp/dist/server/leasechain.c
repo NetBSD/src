@@ -1,14 +1,15 @@
-/*	$NetBSD: leasechain.c,v 1.1.1.1 2016/01/10 19:44:48 christos Exp $	*/
+/*	$NetBSD: leasechain.c,v 1.1.1.2 2018/04/07 20:44:28 christos Exp $	*/
+
 /* leasechain.c
 
    Additional support for in-memory database support */
 
 /*
- * Copyright (c) 2015 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2015-2017 by Internet Systems Consortium, Inc. ("ISC")
  *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -27,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: leasechain.c,v 1.1.1.1 2016/01/10 19:44:48 christos Exp $");
+__RCSID("$NetBSD: leasechain.c,v 1.1.1.2 2018/04/07 20:44:28 christos Exp $");
 
 /*! \file server\leasechaing.c
  *
@@ -651,8 +652,6 @@ lc_unlink_lease(struct leasechain *lc, struct lease *lp) {
 	lc_unlink_lease_pos(lc, pos);
 }
 
-#if defined (DEBUG_MEMORY_LEAKAGE) || \
-		defined (DEBUG_MEMORY_LEAKAGE_ON_EXIT)
 /*!
  *
  * \brief Unlink all the leases in the lease chain and free the
@@ -676,12 +675,14 @@ lc_delete_all(struct leasechain *lc) {
 	}
 
 	/* and then get rid of the list itself */
-	dfree(lc->list, MDL);
-	lc->list = NULL;
+	if (lc->list != NULL) {
+		dfree(lc->list, MDL);
+		lc->list = NULL;
+	}
+
 	lc->total = 0;
 	lc->nelem = 0;
 }
-#endif
 
 /*!
  *
