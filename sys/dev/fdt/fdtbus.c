@@ -1,4 +1,4 @@
-/* $NetBSD: fdtbus.c,v 1.15 2017/08/27 19:13:31 jmcneill Exp $ */
+/* $NetBSD: fdtbus.c,v 1.16 2018/04/07 18:05:08 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.15 2017/08/27 19:13:31 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.16 2018/04/07 18:05:08 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -263,6 +263,31 @@ fdt_add_node(struct fdt_node *new_node)
 			return;
 		}
 	TAILQ_INSERT_TAIL(&fdt_nodes, new_node, n_nodes);
+}
+
+void
+fdt_remove_byhandle(int phandle)
+{
+	struct fdt_node *node;
+
+	TAILQ_FOREACH(node, &fdt_nodes, n_nodes) {
+		if (node->n_phandle == phandle) {
+			TAILQ_REMOVE(&fdt_nodes, node, n_nodes);
+			return;
+		}
+	}
+}
+
+void
+fdt_remove_bycompat(const char *compatible[])
+{
+	struct fdt_node *node, *next;
+
+	TAILQ_FOREACH_SAFE(node, &fdt_nodes, n_nodes, next) {
+		if (of_match_compatible(node->n_phandle, compatible)) {
+			TAILQ_REMOVE(&fdt_nodes, node, n_nodes);
+		}
+	}
 }
 
 static u_int

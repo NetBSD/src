@@ -1,4 +1,4 @@
-/* $NetBSD: fdtvar.h,v 1.28 2017/12/10 21:38:27 skrll Exp $ */
+/* $NetBSD: fdtvar.h,v 1.29 2018/04/07 18:05:08 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -321,6 +321,8 @@ const void *	fdtbus_get_prop(int, const char *, int *);
 const char *	fdtbus_get_string(int, const char *);
 const char *	fdtbus_get_string_index(int, const char *, u_int);
 
+void		fdt_remove_byhandle(int);
+void		fdt_remove_bycompat(const char *[]);
 int		fdtbus_print(void *, const char *);
 
 #endif /* _DEV_FDT_FDTVAR_H */
