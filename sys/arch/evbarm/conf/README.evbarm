@@ -1,4 +1,4 @@
-$NetBSD: README.evbarm,v 1.17 2018/02/19 15:39:59 jmcneill Exp $
+$NetBSD: README.evbarm,v 1.18 2018/04/08 13:19:17 jmcneill Exp $
 
 config		date		boards
 -------------------------------------------------------------------------------
@@ -9,9 +9,6 @@ BCM5301X	2012/08/31	Broadcom BCM95301X evaluation/reference board
 BEAGLEBOARD	2008/10/22	TI OMAP3530 BeagleBoard
 BEAGLEBOARDXM	2008/08/20	TI DM37xx BeagleBoard-XM
 BEAGLEBONE	2012/08/20	TI AM335x BeagleBone
-BPI		2014/09/07	Banana Pi
-CUBIEBOARD	2013/09/03	Cubietech Cubieboard 1 & 2
-CUBIETRUCK	2014/04/11	Cubietech Cubietruck
 CUBOX		2017/01/07	SolidRun Cubox
 CP3100		2006/11/08	Certance IOP321 CP-3100
 DEVKIT8000	2010/09/08	Embest OMAP3530 DevKit8000 eval Kit 
@@ -21,7 +18,6 @@ GEMINI		2008/10/24	Cortina Systems SL3516 eval board
 GUMSTIX		2006/10/16	Gumstix Inc. PXA255/270 based boards
 HDL_G		2006/04/16	I-O DATA HDL-G Giga LANDISK
 HPT5325		2012/03/31	HP t5325 Thin Client
-HUMMINGBIRD_A31	2014/10/10	Merrii Hummingbird A31
 IGEPV2		2010/06/16	IGEPv2 OMAP3530 eval board
 IMX31LITE	2008/04/27	Freescale i.M31 DEV LITE KIT
 INTEGRATOR	2001/10/27	ARM Integrator board
