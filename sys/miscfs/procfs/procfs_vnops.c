@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.197 2017/05/26 14:21:01 riastradh Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.197.2.1 2018/04/08 06:10:24 snj Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.197 2017/05/26 14:21:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.197.2.1 2018/04/08 06:10:24 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -543,11 +543,10 @@ procfs_symlink(void *v)
 }
 
 /*
- * Works out the path to (and vnode of) the target process's current
+ * Works out the path to the target process's current
  * working directory or chroot.  If the caller is in a chroot and
  * can't "reach" the target's cwd or root (or some other error
- * occurs), a "/" is returned for the path and a NULL pointer is
- * returned for the vnode.
+ * occurs), a "/" is returned for the path.
  */
 static void
 procfs_dir(pfstype t, struct lwp *caller, struct proc *target, char **bpp,
@@ -557,12 +556,12 @@ procfs_dir(pfstype t, struct lwp *caller, struct proc *target, char **bpp,
 	struct vnode *vp, *rvp;
 	char *bp;
 
-	cwdi = caller->l_proc->p_cwdi;
-	rw_enter(&cwdi->cwdi_lock, RW_READER);
-
-	rvp = cwdi->cwdi_rdir;
-	bp = bpp ? *bpp : NULL;
-
+	/*
+	 * Lock target cwdi and take a reference to the vnode
+	 * we are interested in to prevent it from disappearing
+	 * before getcwd_common() below.
+	 */
+	rw_enter(&target->p_cwdi->cwdi_lock, RW_READER);
 	switch (t) {
 	case PFScwd:
 		vp = target->p_cwdi->cwdi_cdir;
@@ -574,9 +573,18 @@ procfs_dir(pfstype t, struct lwp *caller, struct proc *target, char **bpp,
 		vp = target->p_textvp;
 		break;
 	default:
-		rw_exit(&cwdi->cwdi_lock);
+		rw_exit(&target->p_cwdi->cwdi_lock);
 		return;
 	}
+	if (vp != NULL)
+		vref(vp);
+	rw_exit(&target->p_cwdi->cwdi_lock);
+
+	cwdi = caller->l_proc->p_cwdi;
+	rw_enter(&cwdi->cwdi_lock, RW_READER);
+
+	rvp = cwdi->cwdi_rdir;
+	bp = bpp ? *bpp : NULL;
 
 	/*
 	 * XXX: this horrible kludge avoids locking panics when
@@ -587,6 +595,7 @@ procfs_dir(pfstype t, struct lwp *caller, struct proc *target, char **bpp,
 			*--bp = '/';
 			*bpp = bp;
 		}
+		vrele(vp);
 		rw_exit(&cwdi->cwdi_lock);
 		return;
 	}
@@ -595,7 +604,6 @@ procfs_dir(pfstype t, struct lwp *caller, struct proc *target, char **bpp,
 		rvp = rootvnode;
 	if (vp == NULL || getcwd_common(vp, rvp, bp ? &bp : NULL, path,
 	    len / 2, 0, caller) != 0) {
-		vp = NULL;
 		if (bpp) {
 /* 
 			if (t == PFSexe) {
@@ -611,6 +619,8 @@ procfs_dir(pfstype t, struct lwp *caller, struct proc *target, char **bpp,
 	if (bpp)
 		*bpp = bp;
 
+	if (vp != NULL)
+		vrele(vp);
 	rw_exit(&cwdi->cwdi_lock);
 }
 
