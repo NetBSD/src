@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1196 2018/02/27 14:28:01 maxv Exp $
+#	$NetBSD: files,v 1.1197 2018/04/08 13:36:37 jmcneill Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20171118
@@ -1287,7 +1287,6 @@ device	xhci: usbus, usbroothub, usb_dma
 file	dev/usb/xhci.c			xhci			needs-flag
 
 # Mentor graphics OTG IP
-defflag	opt_motg.h	MOTG_ALLWINNER
 device	motg: usbus, usbroothub
 file	dev/usb/motg.c			motg			needs-flag
 
