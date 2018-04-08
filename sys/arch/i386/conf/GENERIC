@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1176 2018/04/07 19:39:19 mrg Exp $
+# $NetBSD: GENERIC,v 1.1177 2018/04/08 00:52:38 mrg Exp $
 #
 # GENERIC machine description file
 #
@@ -22,14 +22,14 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.1176 $"
+#ident		"GENERIC-$Revision: 1.1177 $"
 
 maxusers	64		# estimated number of users
 
 # CPU-related options.
 options 	USER_LDT	# user-settable LDT; used by WINE
 #options 	PAE		# PAE mode (36 bits physical addressing)
-#makeoptions	SPECTRE_V2_GCC_MITIGATION=1	# GCC Spectre variant 2
+makeoptions	SPECTRE_V2_GCC_MITIGATION=1	# GCC Spectre variant 2
 						# migitation
 
 # CPU features
