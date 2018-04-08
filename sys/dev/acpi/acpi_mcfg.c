@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_mcfg.c,v 1.4 2016/07/12 09:45:34 hannken Exp $	*/
+/*	$NetBSD: acpi_mcfg.c,v 1.4.10.1 2018/04/08 06:06:07 snj Exp $	*/
 
 /*-
  * Copyright (C) 2015 NONAKA Kimihiro <nonaka@NetBSD.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_mcfg.c,v 1.4 2016/07/12 09:45:34 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_mcfg.c,v 1.4.10.1 2018/04/08 06:06:07 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -287,7 +287,8 @@ acpimcfg_probe(struct acpi_softc *sc)
 	nsegs = 0;
 	offset = sizeof(ACPI_TABLE_MCFG);
 	ama = ACPI_ADD_PTR(ACPI_MCFG_ALLOCATION, mcfg, offset);
-	for (i = 0; offset < mcfg->Header.Length; i++) {
+	for (i = 0; offset + sizeof(ACPI_MCFG_ALLOCATION) <=
+	    mcfg->Header.Length; i++) {
 		aprint_debug_dev(sc->sc_dev,
 		    "MCFG: segment %d, bus %d-%d, address 0x%016" PRIx64 "\n",
 		    ama->PciSegment, ama->StartBusNumber, ama->EndBusNumber,
