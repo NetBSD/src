@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1197 2018/04/08 13:36:37 jmcneill Exp $
+#	$NetBSD: files,v 1.1198 2018/04/08 13:38:31 jmcneill Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20171118
@@ -895,7 +895,7 @@ defflag	opt_com.h		COM_DEBUG
 # XXX In a perfect world, this would be done with attributes
 defflag	opt_com.h		COM_16650 COM_16750
 				COM_HAYESP COM_PXA2X0 COM_AU1X00
-				COM_REGMAP COM_FUNCMAP COM_AWIN
+				COM_REGMAP COM_FUNCMAP
 defparam opt_com.h		COM_TOLERANCE
 device	com { } : tty
 file	dev/ic/com.c			com			needs-flag
