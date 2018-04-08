@@ -1,4 +1,4 @@
-/* $NetBSD: kern_pmf.c,v 1.39 2016/07/07 06:55:43 msaitoh Exp $ */
+/* $NetBSD: kern_pmf.c,v 1.40 2018/04/08 11:46:13 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.39 2016/07/07 06:55:43 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.40 2018/04/08 11:46:13 mlelstv Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.39 2016/07/07 06:55:43 msaitoh Exp $"
 #include <sys/proc.h>
 #include <sys/reboot.h>	/* for RB_NOSYNC */
 #include <sys/sched.h>
+#include <sys/sysctl.h>
 #include <sys/vfs_syscalls.h>
 
 /* XXX ugly special case, but for now the only client */
@@ -54,16 +55,14 @@ __KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.39 2016/07/07 06:55:43 msaitoh Exp $"
 #include <dev/wscons/wsdisplayvar.h>
 #endif
 
-#ifndef	PMF_DEBUG
 #define PMF_DEBUG
-#endif
 
 #ifdef PMF_DEBUG
-int pmf_debug_event;
-int pmf_debug_suspend;
-int pmf_debug_suspensor;
-int pmf_debug_idle;
-int pmf_debug_transition;
+int  pmf_debug_event;
+int  pmf_debug_suspend;
+int  pmf_debug_suspensor;
+int  pmf_debug_idle;
+int  pmf_debug_transition;
 
 #define	PMF_SUSPENSOR_PRINTF(x)		if (pmf_debug_suspensor) printf x
 #define	PMF_SUSPEND_PRINTF(x)		if (pmf_debug_suspend) printf x
@@ -79,8 +78,6 @@ int pmf_debug_transition;
 #define	PMF_TRANSITION_PRINTF(x)	do { } while (0)
 #define	PMF_TRANSITION_PRINTF2(y,x)	do { } while (0)
 #endif
-
-/* #define PMF_DEBUG */
 
 static prop_dictionary_t pmf_platform = NULL;
 static struct workqueue *pmf_event_workqueue;
@@ -1075,6 +1072,59 @@ pmf_event_workitem_get(void)
 
 	return pool_get(&pew_pl, PR_NOWAIT);
 }
+
+SYSCTL_SETUP(sysctl_pmf_setup, "PMF subtree setup")
+{
+	const struct sysctlnode *node = NULL;
+
+	sysctl_createv(clog, 0, NULL, &node,
+		CTLFLAG_PERMANENT,
+		CTLTYPE_NODE, "pmf",
+		SYSCTL_DESCR("pmf controls"),
+		NULL, 0, NULL, 0,
+		CTL_KERN, CTL_CREATE, CTL_EOL);
+
+#ifdef PMF_DEBUG
+	sysctl_createv(clog, 0, &node, &node,
+		CTLFLAG_PERMANENT,
+		CTLTYPE_NODE, "debug",
+		SYSCTL_DESCR("debug levels"),
+		NULL, 0, NULL, 0,
+		CTL_CREATE, CTL_EOL);
+
+	sysctl_createv(clog, 0, &node, NULL,
+		CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		CTLTYPE_INT, "event",
+		SYSCTL_DESCR("event"),
+		NULL, 0,  &pmf_debug_event, sizeof(pmf_debug_event),
+		CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &node, NULL,
+		CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		CTLTYPE_INT, "suspend",
+		SYSCTL_DESCR("suspend"),
+		NULL, 0,  &pmf_debug_suspend, sizeof(pmf_debug_suspend),
+		CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &node, NULL,
+		CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		CTLTYPE_INT, "suspensor",
+		SYSCTL_DESCR("suspensor"),
+		NULL, 0,  &pmf_debug_suspensor, sizeof(pmf_debug_suspensor),
+		CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &node, NULL,
+		CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		CTLTYPE_INT, "idle",
+		SYSCTL_DESCR("idle"),
+		NULL, 0,  &pmf_debug_idle, sizeof(pmf_debug_idle),
+		CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &node, NULL,
+		CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		CTLTYPE_INT, "transition",
+		SYSCTL_DESCR("event"),
+		NULL, 0,  &pmf_debug_transition, sizeof(pmf_debug_transition),
+		CTL_CREATE, CTL_EOL);
+#endif
+}
+
 
 void
 pmf_init(void)
