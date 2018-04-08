@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.124 2018/04/08 11:50:46 maxv Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.125 2018/04/08 12:18:06 maxv Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -72,8 +72,7 @@ struct ipflow {
 TAILQ_HEAD(ipqehead, ipqent);
 struct ipqent {
 	TAILQ_ENTRY(ipqent) ipqe_q;
-	struct mbuf	*ipqe_m;	/* point to first mbuf */
-	struct mbuf	*ipre_mlast;	/* point to last mbuf */
+	struct mbuf *ipqe_m;
 	TAILQ_ENTRY(ipqent) ipqe_timeq;
 	u_int32_t ipqe_seq;
 	u_int32_t ipqe_len;
