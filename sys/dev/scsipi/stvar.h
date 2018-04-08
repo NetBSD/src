@@ -1,4 +1,4 @@
-/*	$NetBSD: stvar.h,v 1.25 2015/04/13 16:33:25 riastradh Exp $ */
+/*	$NetBSD: stvar.h,v 1.25.10.1 2018/04/08 06:11:41 snj Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -138,12 +138,15 @@ struct st_softc {
 						 */
 	struct bufq_state *buf_queue;	/* the queue of pending IO */
 					/* operations */
+	struct bufq_state *buf_defer;	/* the queue of deferred IO */
+					/* operations */
 	struct callout sc_callout;	/* restarting the queue after */
 					/* transient error */
 
 	struct io_stats *stats;		/* statistics for the drive */
 
 	krndsource_t	rnd_source;
+	kmutex_t	sc_iolock;
 };
 
 #define	ST_INFO_VALID	0x0001
