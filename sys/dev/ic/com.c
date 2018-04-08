@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.346 2017/12/04 09:55:37 bouyer Exp $ */
+/* $NetBSD: com.c,v 1.347 2018/04/08 13:38:32 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.346 2017/12/04 09:55:37 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.347 2018/04/08 13:38:32 jmcneill Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -400,8 +400,6 @@ com_attach_subr(struct com_softc *sc)
 	sc->sc_type = COM_TYPE_16650;
 #elif defined(COM_16750)
 	sc->sc_type = COM_TYPE_16750;
-#elif defined(COM_AWIN)
-	sc->sc_type = COM_TYPE_SUNXI;
 #elif defined(COM_HAYESP)
 	sc->sc_type = COM_TYPE_HAYESP;
 #elif defined(COM_PXA2X0)
