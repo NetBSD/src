@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_machdep.c,v 1.70.8.2 2017/06/21 17:50:08 snj Exp $	*/
+/*	$NetBSD: rpi_machdep.c,v 1.70.8.3 2018/04/08 06:12:53 snj Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.70.8.2 2017/06/21 17:50:08 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.70.8.3 2018/04/08 06:12:53 snj Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bcm283x.h"
@@ -577,6 +577,9 @@ rpi_bootstrap(void)
 				break;
 		}
 	}
+
+	/* Wake up APs in case firmware has placed them in WFE state */
+	__asm __volatile("sev");
 
 	for (int loop = 0; loop < 16; loop++) {
 		if (arm_cpu_hatched == __BITS(arm_cpu_max - 1, 1))
