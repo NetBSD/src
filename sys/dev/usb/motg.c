@@ -1,4 +1,4 @@
-/*	$NetBSD: motg.c,v 1.19 2017/11/17 08:22:02 skrll Exp $	*/
+/*	$NetBSD: motg.c,v 1.20 2018/04/08 13:36:37 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012, 2014 The NetBSD Foundation, Inc.
@@ -40,10 +40,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.19 2017/11/17 08:22:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.20 2018/04/08 13:36:37 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
-#include "opt_motg.h"
 #include "opt_usb.h"
 #endif
 
@@ -68,12 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.19 2017/11/17 08:22:02 skrll Exp $");
 #include <dev/usb/usb_mem.h>
 #include <dev/usb/usbhist.h>
 
-#ifdef MOTG_ALLWINNER
-#include <arch/arm/allwinner/awin_otgreg.h>
-#else
 #include <dev/usb/motgreg.h>
-#endif
-
 #include <dev/usb/motgvar.h>
 #include <dev/usb/usbroothub.h>
 
