@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.176 2017/03/24 21:43:20 pgoyette Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.177 2018/04/08 11:43:01 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.176 2017/03/24 21:43:20 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.177 2018/04/08 11:43:01 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -388,8 +388,8 @@ dosetrlimit(struct lwp *l, struct proc *p, int which, struct rlimit *limp)
 		 * moment it would try to access anything on its current stack.
 		 * This conforms to SUSv2.
 		 */
-		if (limp->rlim_cur < p->p_vmspace->vm_ssize * PAGE_SIZE ||
-		    limp->rlim_max < p->p_vmspace->vm_ssize * PAGE_SIZE) {
+		if (btoc(limp->rlim_cur) < p->p_vmspace->vm_ssize ||
+		    btoc(limp->rlim_max) < p->p_vmspace->vm_ssize) {
 			return EINVAL;
 		}
 
