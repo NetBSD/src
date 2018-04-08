@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.165 2018/04/05 18:18:00 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.166 2018/04/08 06:22:03 snj Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -10927,4 +10927,65 @@ sys/net/route.c					1.208
 
 	Kill remaining rt->rt_refcnt++
 	[ozaki-r, ticket #697]
+
+external/gpl3/binutils/dist/bfd/elflink.c	1.14
+
+	When trying to decide the status of a weak symbol, resolve any
+	indirectness first.  PR pkg/53089.
+	[joerg, ticket #698]
+
+bin/ed/ed.1					1.32-1.33
+bin/ed/main.c					1.29
+usr.bin/patch/pch.c				1.29
+
+	ed(1): add -S to disable ! commands.
+	patch(1): Pass -S to ed(1) so that patches containing ! commands
+	          don't run commands.  CVE-2018-0492.
+	[christos, ticket #699]
+
+sys/dev/acpi/acpi_mcfg.c			1.6
+
+	Change the iteration to make sure the ACPI_MCFG_ALLOCATION
+	structure we're reading fits the table we allocated.
+	[nonaka, ticket #700]
+
+sys/netinet/in.c				1.227
+sys/netinet6/in6.c				1.265
+tests/net/arp/t_arp.sh				1.35-1.36
+
+	Make GARP work again when DAD is disabled.
+	[ozaki-r, ticket #701]
+
+sys/miscfs/procfs/procfs_vnops.c		1.203
+
+	Lock the target cwdi and take an additional reference to the
+	vnode we are interested in to prevent it from disappearing
+	before getcwd_common().  PR kern/53096.
+	[hannken, ticket #702]
+
+sys/dev/scsipi/st.c				1.234
+sys/dev/scsipi/stvar.h				1.26
+
+	Use separate lock to protect internal state and release locks
+	when calling biodone.
+	[mlelstv, ticket #703]
+
+sys/arch/evbarm/rpi/rpi_machdep.c		1.81
+
+	Firmware after May 8, 2017 places APs in WFE state at boot. Add
+	a "sev" after writing the start vector, otherwise secondary CPUs
+	will not boot.
+	[mlelstv, ticket #704]
+
+sys/arch/amd64/amd64/trap.c			1.113
+
+	Don't read %cr2 here. %cr2 is initialized by the CPU only
+	during page faults (T_PAGEFLT), so here we're reading a value
+	that comes from a previous page fault.
+
+	That's a real problem; if you launch an unprivileged process, set
+	up a signal handler, make it sleep 10 seconds, and trigger a
+	T_ALIGNFLT fault, you get in si_addr the address of another LWP's
+	page - and perhaps this can be used to defeat userland ASLR.
+	[maxv, ticket #705]
 
