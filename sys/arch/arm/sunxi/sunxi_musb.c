@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_musb.c,v 1.3 2017/12/03 14:35:07 jmcneill Exp $ */
+/* $NetBSD: sunxi_musb.c,v 1.4 2018/04/08 13:36:37 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -26,13 +26,8 @@
  * SUCH DAMAGE.
  */
 
-#include "opt_motg.h"
-#ifdef MOTG_ALLWINNER
-# error Do not define MOTG_ALLWINNER when using this driver
-#endif
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_musb.c,v 1.3 2017/12/03 14:35:07 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_musb.c,v 1.4 2018/04/08 13:36:37 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
