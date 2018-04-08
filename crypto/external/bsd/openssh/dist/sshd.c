@@ -1,4 +1,4 @@
-/*	$NetBSD: sshd.c,v 1.29 2018/04/06 18:59:00 christos Exp $	*/
+/*	$NetBSD: sshd.c,v 1.30 2018/04/08 21:56:48 joerg Exp $	*/
 /* $OpenBSD: sshd.c,v 1.506 2018/03/03 03:15:51 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -44,7 +44,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshd.c,v 1.29 2018/04/06 18:59:00 christos Exp $");
+__RCSID("$NetBSD: sshd.c,v 1.30 2018/04/08 21:56:48 joerg Exp $");
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -1338,6 +1338,9 @@ check_ip_options(struct ssh *ssh)
 }
 
 /* Set the routing domain for this process */
+#if !defined(__OpenBSD__)
+__dead
+#endif
 static void
 set_process_rdomain(struct ssh *ssh, const char *name)
 {
