@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.96.4.2 2018/03/22 16:59:03 martin Exp $	*/
+/*	$NetBSD: trap.c,v 1.96.4.3 2018/04/08 06:14:18 snj Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.96.4.2 2018/03/22 16:59:03 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.96.4.3 2018/04/08 06:14:18 snj Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -389,7 +389,7 @@ copyfault:
 #endif
 		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_trap = type & ~T_USER;
-		ksi.ksi_addr = (void *)rcr2();
+		ksi.ksi_addr = (void *)frame->tf_rip;
 		switch (type) {
 		case T_SEGNPFLT|T_USER:
 		case T_STKFLT|T_USER:
