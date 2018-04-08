@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_inet.c,v 1.49 2018/04/07 09:06:26 maxv Exp $	*/
+/*	$NetBSD: npf_inet.c,v 1.50 2018/04/08 05:51:45 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.49 2018/04/07 09:06:26 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.50 2018/04/08 05:51:45 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -287,7 +287,7 @@ npf_fetch_tcpopts(npf_cache_t *npc, uint16_t *mss, int *wscale)
 			}
 			break;
 		case TCPOPT_WINDOW:
-			if (optlen != TCPOLEN_MAXSEG)
+			if (optlen != TCPOLEN_WINDOW)
 				continue;
 			val = *(cp + 2);
 			*wscale = (val > TCP_MAX_WINSHIFT) ? TCP_MAX_WINSHIFT : val;
