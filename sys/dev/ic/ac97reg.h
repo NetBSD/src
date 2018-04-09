@@ -1,4 +1,4 @@
-/*	$NetBSD: ac97reg.h,v 1.13 2005/12/11 12:21:25 christos Exp $	*/
+/*	$NetBSD: ac97reg.h,v 1.14 2018/04/09 10:15:57 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1999 Constantine Sapuntzakis
@@ -217,3 +217,19 @@ do {									\
 	(cp)[2] = ((id) >> 8)  & 0xff;					\
 	(cp)[3] = (id) & 0xff;						\
 } while (0)
+
+/* AC-link slot assignments */
+#define	AC97_SLOT_TAG			0
+#define	AC97_SLOT_ADDR			1
+#define	AC97_SLOT_DATA			2
+#define	AC97_SLOT_PCM_L			3
+#define	AC97_SLOT_PCM_R			4
+#define	AC97_SLOT_MODEM_LINE1		5
+#define	AC97_SLOT_PCM_C			6	/* output */
+#define	AC97_SLOT_MIC			6	/* input */
+#define	AC97_SLOT_PCM_SL		7	/* output */
+#define	AC97_SLOT_PCM_SR		8	/* output */
+#define	AC97_SLOT_LFE			9	/* output */
+#define	AC97_SLOT_MODEM_LINE2		10
+#define	AC97_SLOT_MODEM_HANDSET		11
+#define	AC97_SLOT_MODEM_GPIO		12	/* input */
