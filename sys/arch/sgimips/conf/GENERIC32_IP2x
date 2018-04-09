@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP2x,v 1.112 2018/01/23 14:47:56 sevan Exp $
+#	$NetBSD: GENERIC32_IP2x,v 1.113 2018/04/09 19:11:38 christos Exp $
 #
 # GENERIC32_IP2x machine description file
 # 
@@ -29,7 +29,7 @@ makeoptions	TEXTADDR=0x88069000	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32-IP2x-$Revision: 1.112 $"
+#ident		"GENERIC32-IP2x-$Revision: 1.113 $"
 
 maxusers	32
 
@@ -238,7 +238,7 @@ tlphy*		at mii? phy ?		 # ThunderLAN PHY (unused)
 sq* 		at hpc? offset ?	# On-board ethernet / E++ adapter
 wdsc* 		at hpc? offset ?	# On-board SCSI / GIO32 SCSI adapter
 haltwo*         at hpc0 offset ?	# IP22 / 24
-panel*		at hpc0 offset ?	# front panel buttons on Indy
+button*		at hpc0 offset ?	# front panel buttons on Indy
 pckbc*		at hpc0 offset ?
 
 pckbd*  	at pckbc?
