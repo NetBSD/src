@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipsec.c,v 1.3.2.4 2018/03/13 15:34:33 martin Exp $  */
+/*	$NetBSD: if_ipsec.c,v 1.3.2.5 2018/04/09 17:01:20 martin Exp $  */
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipsec.c,v 1.3.2.4 2018/03/13 15:34:33 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipsec.c,v 1.3.2.5 2018/04/09 17:01:20 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -76,6 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ipsec.c,v 1.3.2.4 2018/03/13 15:34:33 martin Exp 
 #include <net/pfkeyv2.h>
 
 #include <netipsec/key.h>
+#include <netipsec/keydb.h> /* for union sockaddr_union */
 #include <netipsec/ipsec.h>
 #include <netipsec/ipsecif.h>
 
@@ -279,7 +280,7 @@ if_ipsec_fwd_ipv6(struct ipsec_softc *sc)
 int
 if_ipsec_encap_func(struct mbuf *m, int off, int proto, void *arg)
 {
-	struct ip ip;
+	uint8_t v;
 	struct ipsec_softc *sc;
 	struct ipsec_variant *var = NULL;
 	struct psref psref;
@@ -303,18 +304,39 @@ if_ipsec_encap_func(struct mbuf *m, int off, int proto, void *arg)
 		goto out;
 	}
 
-	if (m->m_pkthdr.len < sizeof(ip))
-		goto out;
+	m_copydata(m, 0, sizeof(v), &v);
+	v = (v >> 4) & 0xff;  /* Get the IP version number. */
 
-	m_copydata(m, 0, sizeof(ip), &ip);
-	switch (ip.ip_v) {
+	switch (v) {
 #ifdef INET
-	case IPVERSION:
+	case IPVERSION: {
+		struct ip ip;
+
+		if (m->m_pkthdr.len < sizeof(ip))
+			goto out;
+
+		m_copydata(m, 0, sizeof(ip), &ip);
 		if (var->iv_psrc->sa_family != AF_INET ||
 		    var->iv_pdst->sa_family != AF_INET)
 			goto out;
 		ret = ipsecif4_encap_func(m, &ip, var);
 		break;
+	}
+#endif
+#ifdef INET6
+	case (IPV6_VERSION >> 4): {
+		struct ip6_hdr ip6;
+
+		if (m->m_pkthdr.len < sizeof(ip6))
+			goto out;
+
+		m_copydata(m, 0, sizeof(ip6), &ip6);
+		if (var->iv_psrc->sa_family != AF_INET6 ||
+		    var->iv_pdst->sa_family != AF_INET6)
+			goto out;
+		ret = ipsecif6_encap_func(m, &ip6, var);
+		break;
+	}
 #endif
 	default:
 		goto out;
@@ -637,6 +659,7 @@ if_ipsec_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		error = if_ipsec_set_tunnel(&sc->ipsec_if, src, dst);
 		if (error)
 			goto bad;
+		curlwp_bindx(bound);
 		break;
 
 	case SIOCDIFPHYADDR:
@@ -769,6 +792,7 @@ if_ipsec_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			error = if_ipsec_ensure_flags(&sc->ipsec_if, oflags);
 			if (error)
 				goto bad;
+			curlwp_bindx(bound);
 		}
 		break;
 	}
@@ -1166,6 +1190,7 @@ if_ipsec_ensure_flags(struct ifnet *ifp, short oflags)
 	if (if_ipsec_variant_is_unconfigured(ovar)) {
 		/* nothing to do */
 		mutex_exit(&sc->ipsec_lock);
+		encap_lock_exit();
 		return 0;
 	}
 
@@ -1337,10 +1362,11 @@ if_ipsec_add_mbuf_addr_port(struct mbuf *m0, struct sockaddr *addr, in_port_t po
 	if (port == 0) {
 		if_ipsec_add_mbuf_optalign(m0, addr, addr->sa_len, align);
 	} else {
-		struct sockaddr addrport;
+		union sockaddr_union addrport_u;
+		struct sockaddr *addrport = &addrport_u.sa;
 
-		if_ipsec_set_addr_port(&addrport, addr, port);
-		if_ipsec_add_mbuf_optalign(m0, &addrport, addrport.sa_len, align);
+		if_ipsec_set_addr_port(addrport, addr, port);
+		if_ipsec_add_mbuf_optalign(m0, addrport, addrport->sa_len, align);
 	}
 }
 
