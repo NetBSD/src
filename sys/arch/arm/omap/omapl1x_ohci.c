@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: omapl1x_ohci.c,v 1.2 2016/04/23 10:15:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omapl1x_ohci.c,v 1.3 2018/04/09 16:21:09 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,8 +146,6 @@ omapl1xohci_attach (struct device *parent, struct device *self, void *aux)
 		aprint_error_dev(self, "couldn't establish interrupt\n");
 		return;
 	}
-
-	strlcpy(sc->sc.sc_vendor, "OMAPL1X", sizeof sc->sc.sc_vendor);
 
 	int err = ohci_init(&sc->sc);
 	if (err) {

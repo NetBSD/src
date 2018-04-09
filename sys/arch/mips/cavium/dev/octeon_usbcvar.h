@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_usbcvar.h,v 1.3 2016/04/26 09:23:33 skrll Exp $	*/
+/*	$NetBSD: octeon_usbcvar.h,v 1.4 2018/04/09 16:21:10 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -218,9 +218,6 @@ typedef struct octeon_usbc_softc {
 	octeon_usbc_soft_td_t *sc_freestds;
 
 	SIMPLEQ_HEAD(, usbd_xfer) sc_free_xfers; /* free xfers */
-
-	char sc_vendor[16];		/* vendor string for root hub */
-	int sc_id_vendor;		/* vendor ID for root hub */
 
 	void                    *sc_ih;
 #if defined(__NetBSD__)
