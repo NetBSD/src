@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.169 2018/04/09 13:36:36 bouyer Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.170 2018/04/09 13:40:46 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -11068,4 +11068,9 @@ tests/net/icmp/t_ping.c				1.18 - 1.20, 1.22, 1.23
 	rtsock: log dropped messages that we cannot report to userland
 
 	[roy, ticket #724]
+
+sys/net/if_l2tp.c				1.21
+
+	Fix l2tp(4) alignment check. Pointed out and reviewed by k-goda@IIJ.
+	[knakahara, ticket #725]
 
