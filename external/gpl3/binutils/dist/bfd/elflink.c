@@ -2528,14 +2528,17 @@ _bfd_elf_fix_symbol_flags (struct elf_link_hash_entry *h,
      over to the real definition.  */
   if (h->u.weakdef != NULL)
     {
+      struct elf_link_hash_entry *weakdef = h->u.weakdef;
+      while (weakdef->root.type == bfd_link_hash_indirect)
+        weakdef = (struct elf_link_hash_entry *) weakdef->root.u.i.link;
+
       /* If the real definition is defined by a regular object file,
 	 don't do anything special.  See the longer description in
 	 _bfd_elf_adjust_dynamic_symbol, below.  */
-      if (h->u.weakdef->def_regular)
+      if (weakdef->def_regular)
 	h->u.weakdef = NULL;
       else
 	{
-	  struct elf_link_hash_entry *weakdef = h->u.weakdef;
 
 	  while (h->root.type == bfd_link_hash_indirect)
 	    h = (struct elf_link_hash_entry *) h->root.u.i.link;
