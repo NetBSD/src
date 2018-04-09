@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_mv.c,v 1.6 2016/04/23 10:15:31 skrll Exp $	*/
+/*	$NetBSD: ehci_mv.c,v 1.7 2018/04/09 16:21:10 jakllsch Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_mv.c,v 1.6 2016/04/23 10:15:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_mv.c,v 1.7 2018/04/09 16:21:10 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -235,9 +235,6 @@ mvusb_attach(device_t parent, device_t self, void *aux)
 	marvell_intr_establish(mva->mva_irq, IPL_USB, ehci_intr, sc);
 
 	sc->sc.sc_bus.ub_revision = USBREV_2_0;
-	/* Figure out vendor for root hub descriptor. */
-	sc->sc.sc_id_vendor = 0x0000;				/* XXXXX */
-	strcpy(sc->sc.sc_vendor, "Marvell");
 
 	sc->sc.sc_vendor_init = mvusb_vendor_init;
 	sc->sc.sc_vendor_port_status = mvusb_vendor_port_status;

@@ -1,4 +1,4 @@
-/*	$NetBSD: epohci.c,v 1.8 2016/04/23 10:15:28 skrll Exp $ */
+/*	$NetBSD: epohci.c,v 1.9 2018/04/09 16:21:09 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2004 Jesse Off
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epohci.c,v 1.8 2016/04/23 10:15:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epohci.c,v 1.9 2018/04/09 16:21:09 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -139,8 +139,6 @@ epohci_callback(device_t self)
 	/* Disable interrupts, so we don't get any spurious ones. */
 	bus_space_write_4(sc->sc.iot, sc->sc.ioh, OHCI_INTERRUPT_DISABLE,
 			  OHCI_ALL_INTRS);
-
-	strlcpy(sc->sc.sc_vendor, "Cirrus Logic", sizeof sc->sc.sc_vendor);
 
 	sc->sc_ih = ep93xx_intr_establish(sc->sc_intr, IPL_USB,
 		ohci_intr, sc);
