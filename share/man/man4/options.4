@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.485 2018/04/07 19:38:05 mrg Exp $
+.\"	$NetBSD: options.4,v 1.486 2018/04/09 07:08:43 wiz Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -543,7 +543,7 @@ If not explicitly specified, the default value is "1".
 Note that this sets the value of the
 .Em ddb.fromconsole
 .Xr sysctl 3
-variable which may be changed at run time -- see
+variable which may be changed at run time \(em see
 .Xr sysctl 8
 for details.
 .It Cd options DDB_HISTORY_SIZE=integer
@@ -564,7 +564,7 @@ it is as if DDB were not compiled into the kernel.
 Note that this sets the value of the
 .Em ddb.onpanic
 .Xr sysctl 3
-variable which may be changed at run time -- see
+variable which may be changed at run time \(em see
 .Xr sysctl 8
 for details.
 .It Cd options DDB_COMMANDONENTER=string
@@ -927,7 +927,7 @@ See
 for details.
 .It Cd file-system UMAPFS
 Includes a loopback file system in which user and group IDs may be
-remapped -- this can be useful when mounting alien file systems with
+remapped \(em this can be useful when mounting alien file systems with
 different UIDs and GIDs than the local system.
 See
 .Xr mount_umap 8
@@ -936,7 +936,7 @@ for details.
 .Bq Em EXPERIMENTAL
 Includes code for the union file system, which permits directories to
 be mounted on top of each other in such a way that both file systems
-remain visible -- this permits tricks like allowing writing (and the
+remain visible \(em this permits tricks like allowing writing (and the
 deleting of files) on a read-only file system like a CD-ROM by
 mounting a local writable file system on top of the read-only file
 system.
@@ -1701,12 +1701,12 @@ option sets this to 1 automatically.
 With this option enabled, the machine will forward IP datagrams destined
 for other machines between its interfaces.
 Note that even without this option, the kernel will
-still forward some packets (such as source routed packets) -- removing
+still forward some packets (such as source routed packets) \(em removing
 .Em GATEWAY
 and
 .Em IPFORWARDING
 is insufficient to stop all routing through a bastion host on a
-firewall -- source routing is controlled independently.
+firewall \(em source routing is controlled independently.
 Note that IP forwarding may be turned on and off independently of the
 setting of the
 .Em IPFORWARDING
@@ -2243,7 +2243,7 @@ command.
 Note that this sets the value of the
 .Em kern.dump_on_panic
 .Xr sysctl 3
-variable which may be changed at run time -- see
+variable which may be changed at run time \(em see
 .Xr sysctl 8
 for details.
 .It Cd options USE_TOPDOWN_VM
