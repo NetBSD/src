@@ -1,4 +1,4 @@
-.\"	$NetBSD: ed.1,v 1.34 2018/04/09 06:54:47 wiz Exp $
+.\"	$NetBSD: ed.1,v 1.35 2018/04/09 06:57:01 wiz Exp $
 .\"	$OpenBSD: ed.1,v 1.42 2003/07/27 13:25:43 jmc Exp $
 .\"
 .\" Copyright (c) 1993 Andrew Moore, Talke Studio.
@@ -130,17 +130,17 @@ option (deprecated).
 .It Fl E
 Enables the use of extended regular expressions instead of the basic
 regular expressions that are normally used.
-.It Fl S
-Disables using of the
-.Dq !
-command (execuring a subshell).
-Intended to be used by batch jobs like
-.Xr patch 1 .
 .It Fl p Ar string
 Specifies a command prompt.
 This may be toggled on and off with the
 .Ic P
 command.
+.It Fl S
+Disables using of the
+.Ic \&!
+command (executing a subshell).
+Intended to be used by batch jobs like
+.Xr patch 1 .
 .It Fl s
 Suppress diagnostics.
 This should be used if
