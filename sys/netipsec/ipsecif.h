@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsecif.h,v 1.1.2.2 2018/02/11 21:17:34 snj Exp $  */
+/*	$NetBSD: ipsecif.h,v 1.1.2.3 2018/04/09 17:01:20 martin Exp $  */
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -39,6 +39,7 @@ int ipsecif4_encap_func(struct mbuf *, struct ip *, struct ipsec_variant *);
 int ipsecif4_attach(struct ipsec_variant *);
 int ipsecif4_detach(struct ipsec_variant *);
 
+int ipsecif6_encap_func(struct mbuf *, struct ip6_hdr *, struct ipsec_variant *);
 int ipsecif6_attach(struct ipsec_variant *);
 int ipsecif6_detach(struct ipsec_variant *);
 void *ipsecif6_ctlinput(int, const struct sockaddr *, void *, void *);
