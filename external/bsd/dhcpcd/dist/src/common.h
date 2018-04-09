@@ -118,21 +118,12 @@
 # ifndef __packed
 #  define __packed __attribute__((__packed__))
 # endif
-# ifndef __sysloglike
-#  ifndef __syslog_attribute_
-#    define __syslog__ __printf__
-#  endif
-#  define __sysloglike(a, b) __attribute__((format(__syslog__, a, b)))
-# endif
 # ifndef __unused
 #  define __unused __attribute__((__unused__))
 # endif
 #else
 # ifndef __packed
 #  define __packed
-# endif
-# ifndef __sysloglike
-#  define __sysloglike
 # endif
 # ifndef __unused
 #  define __unused
@@ -150,7 +141,7 @@
 #  define	__CTASSERT99(x, a, b)	__CTASSERT0(x, __CONCAT(__ctassert,a), \
 					       __CONCAT(_,b))
 # endif
-# define	__CTASSERT0(x, y, z)	__CTASSERT1(x, y, z) 
+# define	__CTASSERT0(x, y, z)	__CTASSERT1(x, y, z)
 # define	__CTASSERT1(x, y, z)	typedef char y ## z[/*CONSTCOND*/(x) ? 1 : -1] __unused
 #endif
 

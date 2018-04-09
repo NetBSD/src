@@ -10,8 +10,6 @@ ypbind_dir="$state_dir/ypbind"
 
 best_domain()
 {
-	local i=
-
 	for i in "$ypbind_dir/$interface_order".*; do
 		if [ -f "$i" ]; then
 			cat "$i"
@@ -29,9 +27,9 @@ make_yp_binding()
 	if [ -z "$ypdomain_dir" ]; then
 		false
 	else
-		local cf="$ypdomain_dir/$new_nis_domain$ypdomain_suffix"
+		cf="$ypdomain_dir/$new_nis_domain$ypdomain_suffix"
 		if [ -n "$new_nis_servers" ]; then
-			local ncf="$cf.$ifname" x=
+			ncf="$cf.$ifname"
 			rm -f "$ncf"
 			for x in $new_nis_servers; do
 				echo "$x" >>"$ncf"
@@ -42,7 +40,7 @@ make_yp_binding()
 		fi
 	fi
 
-	local nd="$(best_domain)"
+	nd="$(best_domain)"
 	if [ $? = 0 -a "$nd" != "$(domainname)" ]; then
 		domainname "$nd"
 		if [ -n "$ypbind_restart_cmd" ]; then
@@ -53,9 +51,8 @@ make_yp_binding()
 
 restore_yp_binding()
 {
-
 	rm -f "$ypbind_dir/$ifname"
-	local nd="$(best_domain)"
+	nd="$(best_domain)"
 	# We need to stop ypbind if there is no best domain
 	# otherwise it will just stall as we cannot set domainname
 	# to blank :/

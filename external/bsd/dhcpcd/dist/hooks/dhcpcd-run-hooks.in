@@ -18,7 +18,7 @@ _detected_init=false
 # Ensure that all arguments are unique
 uniqify()
 {
-	local result= i=
+	result=
 	for i do
 		case " $result " in
 			*" $i "*);;
@@ -34,7 +34,7 @@ uniqify()
 # Otherwise we just use what we have.
 list_interfaces()
 {
-	local i= x= ifaces=
+	ifaces=
 	for i in $interface_order; do
 		for x in "$1"/$i.*; do
 			[ -f "$x" ] && ifaces="$ifaces${ifaces:+ }${x##*/}"
@@ -49,8 +49,7 @@ list_interfaces()
 # Trim function
 trim()
 {
-	local var="$*"
-
+	var="$*"
 	var=${var#"${var%%[![:space:]]*}"}
 	var=${var%"${var##*[![:space:]]}"}
 	if [ -z "$var" ]; then
@@ -65,9 +64,9 @@ trim()
 # but sed may not always be available at the time.
 key_get_value()
 {
-	local key="$1" value= x= line=
-
+	key="$1"
 	shift
+
 	if type sed >/dev/null 2>&1; then
 		sed -n "s/^$key//p" $@
 	else
@@ -85,7 +84,9 @@ key_get_value()
 # but sed may not always be available at the time.
 remove_markers()
 {
-	local m1="$1" m2="$2" x= line= in_marker=0
+	m1="$1"
+	m2="$2"
+	in_marker=0
 
 	shift; shift
 	if type sed >/dev/null 2>&1; then
@@ -106,7 +107,6 @@ remove_markers()
 # Compare two files.
 comp_file()
 {
-
 	[ -e "$1" -a -e "$2" ] || return 1
 
 	if type cmp >/dev/null 2>&1; then
@@ -123,7 +123,6 @@ comp_file()
 # If different, replace first with second otherwise remove second.
 change_file()
 {
-
 	if [ -e "$1" ]; then
 		if comp_file "$1" "$2"; then
 			rm -f "$2"
@@ -139,7 +138,6 @@ change_file()
 # If different, copy or link depending on target type
 copy_file()
 {
-
 	if [ -h "$2" ]; then
 		[ "$(readlink "$2")" = "$1" ] && return 1
 		ln -sf "$1" "$2"
@@ -152,7 +150,6 @@ copy_file()
 # Save a config file
 save_conf()
 {
-
 	if [ -f "$1" ]; then
 		rm -f "$1-pre.$interface"
 		cat "$1" > "$1-pre.$interface"
@@ -162,7 +159,6 @@ save_conf()
 # Restore a config file
 restore_conf()
 {
-
 	[ -f "$1-pre.$interface" ] || return 1
 	cat "$1-pre.$interface" > "$1"
 	rm -f "$1-pre.$interface"
@@ -171,7 +167,7 @@ restore_conf()
 # Write a syslog entry
 syslog()
 {
-	local lvl="$1"
+	lvl="$1"
 
 	if [ "$lvl" = debug ]; then
 		${syslog_debug} || return 0
@@ -190,8 +186,7 @@ syslog()
 # Check for a valid name as per RFC952 and RFC1123 section 2.1
 valid_domainname()
 {
-	local name="$1" label
-
+	name="$1"
 	[ -z "$name" -o ${#name} -gt 255 ] && return 1
 	
 	while [ -n "$name" ]; do
@@ -209,8 +204,6 @@ valid_domainname()
 
 valid_domainname_list()
 {
-	local name
-
 	for name do
 		valid_domainname "$name" || return $?
 	done
@@ -228,7 +221,7 @@ detect_init()
 
 	[ -n "$_service_cmd" ] && return 0
 
-	if ${_detected_init}; then
+	if $_detected_init; then
 		[ -n "$_service_cmd" ]
 		return $?
 	fi
@@ -236,7 +229,7 @@ detect_init()
 	# Detect the running init system.
 	# As systemd and OpenRC can be installed on top of legacy init
 	# systems we try to detect them first.
-	local status="@STATUSARG@"
+	status="@STATUSARG@"
 	: ${status:=status}
 	if [ -x /bin/systemctl -a -S /run/systemd/private ]; then
 		_service_exists="/bin/systemctl --quiet is-enabled \$1.service"
@@ -297,7 +290,6 @@ detect_init()
 # Check a system service exists 
 service_exists()
 {
-
 	if [ -z "$_service_exists" ]; then
 		detect_init || return 1
 	fi
@@ -307,7 +299,6 @@ service_exists()
 # Send a command to a system service
 service_cmd()
 {
-
 	if [ -z "$_service_cmd" ]; then
 		detect_init || return 1
 	fi
@@ -317,7 +308,6 @@ service_cmd()
 # Send a command to a system service if it is running
 service_status()
 {
-
 	if [ -z "$_service_cmd" ]; then
 		detect_init || return 1
 	fi
@@ -331,12 +321,10 @@ service_status()
 # Handy macros for our hooks
 service_command()
 {
-
 	service_exists $1 && service_cmd $1 $2
 }
 service_condcommand()
 {
-
 	service_exists $1 && service_status $1 && service_cmd $1 $2
 }
 

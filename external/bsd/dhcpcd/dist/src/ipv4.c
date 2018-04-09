@@ -289,10 +289,11 @@ inet_dhcproutes(struct rt_head *routes, struct interface *ifp)
 		TAILQ_FOREACH(r, &ifp->options->routes, rt_next) {
 			if (sa_is_unspecified(&r->rt_gateway))
 				break;
-			if ((rt = rt_new(ifp)) == NULL)
+			if ((rt = rt_new0(ifp->ctx)) == NULL)
 				return -1;
-			rt->rt_dflags = RTDF_STATIC;
 			memcpy(rt, r, sizeof(*rt));
+			rt_setif(rt, ifp);
+			rt->rt_dflags = RTDF_STATIC;
 			TAILQ_INSERT_TAIL(&nroutes, rt, rt_next);
 		}
 	} else {
@@ -407,6 +408,7 @@ inet_routerhostroute(struct rt_head *routes, struct interface *ifp)
 		}
 		if ((rth = rt_new(ifp)) == NULL)
 			return -1;
+		rth->rt_flags |= RTF_HOST;
 		sa_in_init(&rth->rt_dest, &gateway->sin_addr);
 		in.s_addr = INADDR_BROADCAST;
 		sa_in_init(&rth->rt_netmask, &in);
@@ -589,6 +591,7 @@ ipv4_addaddr(struct interface *ifp, const struct in_addr *addr,
 {
 	struct ipv4_state *state;
 	struct ipv4_addr *ia;
+	bool is_new = false;
 #ifdef ALIAS_ADDR
 	int replaced, blank;
 	struct ipv4_addr *replaced_ia;
@@ -607,18 +610,23 @@ ipv4_addaddr(struct interface *ifp, const struct in_addr *addr,
 		}
 	}
 
-	if ((ia = malloc(sizeof(*ia))) == NULL) {
-		logerr(__func__);
-		return NULL;
+	ia = ipv4_iffindaddr(ifp, addr, NULL);
+	if (ia == NULL) {
+		ia = malloc(sizeof(*ia));
+		if (ia == NULL) {
+			logerr(__func__);
+			return NULL;
+		}
+		ia->iface = ifp;
+		ia->addr = *addr;
+#ifdef IN_IFF_TENTATIVE
+		ia->addr_flags = IN_IFF_TENTATIVE;
+#endif
+		is_new = true;
 	}
 
-	ia->iface = ifp;
-	ia->addr = *addr;
 	ia->mask = *mask;
 	ia->brd = *bcast;
-#ifdef IN_IFF_TENTATIVE
-	ia->addr_flags = IN_IFF_TENTATIVE;
-#endif
 	snprintf(ia->saddr, sizeof(ia->saddr), "%s/%d",
 	    inet_ntoa(*addr), inet_ntocidr(*mask));
 
@@ -650,7 +658,8 @@ ipv4_addaddr(struct interface *ifp, const struct in_addr *addr,
 	}
 #endif
 
-	TAILQ_INSERT_TAIL(&state->addrs, ia, next);
+	if (is_new)
+		TAILQ_INSERT_TAIL(&state->addrs, ia, next);
 	return ia;
 }
 
@@ -762,15 +771,55 @@ ipv4_applyaddr(void *arg)
 }
 
 void
+ipv4_markaddrsstale(struct interface *ifp)
+{
+	struct ipv4_state *state;
+	struct ipv4_addr *ia;
+
+	state = IPV4_STATE(ifp);
+	if (state == NULL)
+		return;
+
+	TAILQ_FOREACH(ia, &state->addrs, next) {
+		ia->flags |= IPV4_AF_STALE;
+	}
+}
+
+void
+ipv4_deletestaleaddrs(struct interface *ifp)
+{
+	struct ipv4_state *state;
+	struct ipv4_addr *ia, *ia1;
+
+	state = IPV4_STATE(ifp);
+	if (state == NULL)
+		return;
+
+	TAILQ_FOREACH_SAFE(ia, &state->addrs, next, ia1) {
+		if (!(ia->flags & IPV4_AF_STALE))
+			continue;
+		ipv4_handleifa(ifp->ctx, RTM_DELADDR,
+		    ifp->ctx->ifaces, ifp->name,
+		    &ia->addr, &ia->mask, &ia->brd, 0, getpid());
+	}
+}
+
+void
 ipv4_handleifa(struct dhcpcd_ctx *ctx,
     int cmd, struct if_head *ifs, const char *ifname,
     const struct in_addr *addr, const struct in_addr *mask,
-    const struct in_addr *brd, const int addrflags)
+    const struct in_addr *brd, int addrflags, pid_t pid)
 {
 	struct interface *ifp;
 	struct ipv4_state *state;
 	struct ipv4_addr *ia;
 	bool ia_is_new;
+
+#if 0
+	logdebugx("%s: %s %s/%d %d", ifname,
+	    cmd == RTM_NEWADDR ? "RTM_NEWADDR" : cmd == RTM_DELADDR ? "RTM_DELADDR" : "???",
+	    inet_ntoa(*addr), inet_ntocidr(*mask), addrflags);
+#endif
 
 	if (ifs == NULL)
 		ifs = ctx->ifaces;
@@ -796,6 +845,7 @@ ipv4_handleifa(struct dhcpcd_ctx *ctx,
 			ia->iface = ifp;
 			ia->addr = *addr;
 			ia->mask = *mask;
+			ia->flags = 0;
 			ia_is_new = true;
 #ifdef ALIAS_ADDR
 			strlcpy(ia->alias, ifname, sizeof(ia->alias));
@@ -817,6 +867,7 @@ ipv4_handleifa(struct dhcpcd_ctx *ctx,
 		else
 			ia->brd.s_addr = INADDR_ANY;
 		ia->addr_flags = addrflags;
+		ia->flags &= ~IPV4_AF_STALE;
 		break;
 	case RTM_DELADDR:
 		if (ia == NULL)
@@ -831,7 +882,7 @@ ipv4_handleifa(struct dhcpcd_ctx *ctx,
 #ifdef ARP
 		arp_handleifa(cmd, ia);
 #endif
-		dhcp_handleifa(cmd, ia);
+		dhcp_handleifa(cmd, ia, pid);
 	}
 
 	if (cmd == RTM_DELADDR)
