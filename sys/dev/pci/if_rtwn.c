@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtwn.c,v 1.12.2.1 2017/12/10 10:10:24 snj Exp $	*/
+/*	$NetBSD: if_rtwn.c,v 1.12.2.2 2018/04/09 13:25:36 bouyer Exp $	*/
 /*	$OpenBSD: if_rtwn.c,v 1.5 2015/06/14 08:02:47 stsp Exp $	*/
 #define	IEEE80211_NO_HT
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtwn.c,v 1.12.2.1 2017/12/10 10:10:24 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtwn.c,v 1.12.2.2 2018/04/09 13:25:36 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -395,6 +395,8 @@ rtwn_attach(device_t parent, device_t self, void *aux)
 
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
+
+	return;
 
 fail:
 	rtwn_detach(self, 0);
