@@ -1,4 +1,4 @@
-/*	$NetBSD: if_l2tp.c,v 1.21 2018/04/09 10:06:59 knakahara Exp $	*/
+/*	$NetBSD: if_l2tp.c,v 1.22 2018/04/09 10:32:32 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.21 2018/04/09 10:06:59 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.22 2018/04/09 10:32:32 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -477,6 +477,9 @@ l2tp_input(struct mbuf *m, struct ifnet *ifp)
 		return;
 	}
 
+	/*
+	 * If the head of the payload is not aligned, align it.
+	 */
 	addr = mtod(m, vaddr_t);
 	if ((addr & 0x03) == 0) {
 		/* copy and align head of payload */
