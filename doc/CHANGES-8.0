@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.171 2018/04/09 15:59:58 bouyer Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.172 2018/04/09 16:41:35 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -10651,7 +10651,7 @@ sys/netipsec/ipsec_input.c			1.54
 	Fix (harmless) use-after-free.
 	[maxv, ticket #667]
 
-sys/netinet/ip_reass.c				1.12
+sys/netinet/ip_reass.c				1.12,1.13
 
 	ip_reass_packet(): make sure that the end of each fragment does
 	not exceed IP_MAXPACKET.
