@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.249 2018/03/02 07:37:13 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.250 2018/04/09 06:26:05 yamaguchi Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.249 2018/03/02 07:37:13 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.250 2018/04/09 06:26:05 yamaguchi Exp $");
 
 /*
  * This code is referred to RFC 2367
@@ -423,6 +423,12 @@ static const u_int saorder_state_any[] = {
 	for (int _i = 0;					\
 	    _i < __arraycount(saorder_state_any) ?		\
 	    (s) = saorder_state_any[_i], true : false;		\
+	    _i++)
+#define SASTATE_USABLE_FOREACH(s)				\
+	for (int _i = 0;					\
+	    _i < __arraycount(saorder_state_valid_prefer_new) ?	\
+	    (s) = saorder_state_valid_prefer_new[_i],		\
+	    true : false;					\
 	    _i++)
 
 static const int minsize[] = {
@@ -1196,9 +1202,8 @@ key_lookup_sa(
 {
 	struct secashead *sah;
 	struct secasvar *sav;
-	u_int stateidx, state;
-	const u_int *saorder_state_valid;
-	int arraysize, chkport;
+	u_int state;
+	int chkport;
 	int s;
 
 	int must_check_spi = 1;
@@ -1242,18 +1247,10 @@ key_lookup_sa(
 	 * IPsec tunnel packet is received.  But ESP tunnel mode is
 	 * encrypted so we can't check internal IP header.
 	 */
-	if (key_prefered_oldsa) {
-		saorder_state_valid = saorder_state_valid_prefer_old;
-		arraysize = _ARRAYLEN(saorder_state_valid_prefer_old);
-	} else {
-		saorder_state_valid = saorder_state_valid_prefer_new;
-		arraysize = _ARRAYLEN(saorder_state_valid_prefer_new);
-	}
 	s = pserialize_read_enter();
 	SAHLIST_READER_FOREACH(sah) {
 		/* search valid state */
-		for (stateidx = 0; stateidx < arraysize; stateidx++) {
-			state = saorder_state_valid[stateidx];
+		SASTATE_USABLE_FOREACH(state) {
 			SAVLIST_READER_FOREACH(sav, sah, state) {
 				KEYDEBUG_PRINTF(KEYDEBUG_MATCH,
 				    "try match spi %#x, %#x\n",
