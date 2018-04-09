@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_topology.c,v 1.9.22.1 2017/11/21 15:03:20 martin Exp $	*/
+/*	$NetBSD: cpu_topology.c,v 1.9.22.2 2018/04/09 18:12:50 martin Exp $	*/
 
 /*-
  * Copyright (c) 2009 Mindaugas Rasiukevicius <rmind at NetBSD org>,
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_topology.c,v 1.9.22.1 2017/11/21 15:03:20 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_topology.c,v 1.9.22.2 2018/04/09 18:12:50 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -108,6 +108,7 @@ x86_cpu_topology(struct cpu_info *ci)
 			core_max = lp_max;
 			break;
 		}
+
 		/* Number of Cores (NC) per package (ecx[7:0]). */
 		x86_cpuid(0x80000008, descs);
 		core_max = (descs[2] & 0xff) + 1;
@@ -116,9 +117,9 @@ x86_cpu_topology(struct cpu_info *ci)
 		if (n != 0) {
 			/*
 			 * Extended Method.
-			 * core_bits = 2 ^ n (power of two)
+			 * core_max = 2 ^ n (power of two)
 			 */
-			core_bits = 1 << n;
+			core_bits = n;
 		}
 		break;
 	default:
@@ -150,8 +151,21 @@ x86_cpu_topology(struct cpu_info *ci)
 		}
 	}
 
+	/* Family 0x17 supports SMT */
+	if (cpu_vendor == CPUVENDOR_AMD && cpu_family == 0x17) { /* XXX */
+		x86_cpuid(0x8000001e, descs);
+		const u_int threads = ((descs[1] >> 8) & 0xff) + 1;
+
+		KASSERT(smt_bits == 0 && smt_bits <= core_bits);
+		smt_bits = ilog2(threads);
+		core_bits -= smt_bits;
+	}
+
 	if (smt_bits + core_bits) {
-		ci->ci_package_id = apic_id >> (smt_bits + core_bits);
+		if (smt_bits + core_bits < sizeof(apic_id) * NBBY)
+			ci->ci_package_id = apic_id >> (smt_bits + core_bits);
+		else
+			ci->ci_package_id = 0;
 	}
 	if (core_bits) {
 		u_int core_mask = __BITS(smt_bits, smt_bits + core_bits - 1);
