@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.7,v 1.1.2.138 2018/04/05 11:40:14 martin Exp $
+# $NetBSD: CHANGES-6.0.7,v 1.1.2.139 2018/04/09 13:08:59 martin Exp $
 
 A complete list of changes from the NetBSD 6.0.6 release to the NetBSD 6.0.7
 release:
@@ -15436,3 +15436,10 @@ sys/net/npf/npf.h				1.55
 	Fix an integer overflow that allows incoming IPv6 packets
 	to bypass a certain number of filtering rules.
 	[maxv, ticket #1542]
+
+external/gpl3/binutils/dist/bfd/elflink.c	1.14 (patch)
+
+	When trying to decide the status of a weak symbol, resolve any
+	indirectness first.
+	[joerg, ticket #1543]
+
