@@ -1,4 +1,4 @@
-/*	$NetBSD: panel.c,v 1.3 2015/02/18 16:47:58 macallan Exp $ */
+/*	$NetBSD: button.c,v 1.1 2018/04/09 20:07:22 christos Exp $ */
 
 /*-
  * Copyright (c) 2009 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: panel.c,v 1.3 2015/02/18 16:47:58 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: button.c,v 1.1 2018/04/09 20:07:22 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: panel.c,v 1.3 2015/02/18 16:47:58 macallan Exp $");
 #include <sgimips/hpc/hpcvar.h>
 #include <sgimips/hpc/hpcreg.h>
 
-struct panel_softc {
+struct button_softc {
 	device_t sc_dev;
 	struct sysmon_pswitch sc_pbutton;
 	bus_space_tag_t sc_tag;
@@ -56,20 +56,20 @@ struct panel_softc {
 	int sc_last, sc_fired;
 };
 
-static int panel_match(device_t, cfdata_t, void *);
-static void panel_attach(device_t, device_t, void *);
+static int button_match(device_t, cfdata_t, void *);
+static void button_attach(device_t, device_t, void *);
 
-static int panel_intr(void *);
-static void panel_powerbutton(void *);
+static int button_intr(void *);
+static void button_powerbutton(void *);
 
-CFATTACH_DECL_NEW(panel, sizeof(struct panel_softc), 
-				panel_match, 
-				panel_attach, 
+CFATTACH_DECL_NEW(button, sizeof(struct button_softc), 
+				button_match, 
+				button_attach, 
 				NULL, 
 				NULL);
 
 static int
-panel_match(device_t parent, cfdata_t match, void *aux)
+button_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct hpc_attach_args *ha = aux;
 
@@ -83,9 +83,9 @@ panel_match(device_t parent, cfdata_t match, void *aux)
 }
 
 static void
-panel_attach(device_t parent, device_t self, void *aux)
+button_attach(device_t parent, device_t self, void *aux)
 {
-	struct panel_softc *sc;
+	struct button_softc *sc;
 	struct hpc_attach_args *haa;
 
 	sc = device_private(self);
@@ -98,12 +98,12 @@ panel_attach(device_t parent, device_t self, void *aux)
 	if (bus_space_subregion(haa->ha_st, haa->ha_sh, haa->ha_devoff,
 			0x4, 		/* just a single register */
 			&sc->sc_hreg)) {
-		aprint_error(": unable to map panel register\n");
+		aprint_error(": unable to map button register\n");
 		return;
 	}
 
 	if ((cpu_intr_establish(haa->ha_irq, IPL_BIO,
-	     panel_intr, sc)) == NULL) {
+	     button_intr, sc)) == NULL) {
 		printf(": unable to establish interrupt!\n");
 		return;
 	}
@@ -121,9 +121,9 @@ panel_attach(device_t parent, device_t self, void *aux)
 }
 
 static int
-panel_intr(void *cookie)
+button_intr(void *cookie)
 {
-	struct panel_softc *sc = cookie;
+	struct button_softc *sc = cookie;
 	uint8_t reg;
 	
 	reg = bus_space_read_4(sc->sc_tag, sc->sc_hreg, 0);
@@ -131,7 +131,7 @@ panel_intr(void *cookie)
 	    IOC_PANEL_VDOWN_IRQ | IOC_PANEL_VUP_IRQ | IOC_PANEL_POWER_IRQ);
 	if ((reg & IOC_PANEL_POWER_IRQ) == 0) {
 		if (!sc->sc_fired)
-			sysmon_task_queue_sched(0, panel_powerbutton, sc);
+			sysmon_task_queue_sched(0, button_powerbutton, sc);
 		sc->sc_fired = 1;
 	}
 	if (time_second == sc->sc_last)
@@ -146,9 +146,9 @@ panel_intr(void *cookie)
 }
 
 static void
-panel_powerbutton(void *cookie)
+button_powerbutton(void *cookie)
 {
-	struct panel_softc *sc = cookie;
+	struct button_softc *sc = cookie;
 
 	sysmon_pswitch_event(&sc->sc_pbutton, PSWITCH_EVENT_PRESSED);
 }
