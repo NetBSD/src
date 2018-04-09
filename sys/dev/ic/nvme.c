@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme.c,v 1.30.2.2 2018/03/18 11:05:27 martin Exp $	*/
+/*	$NetBSD: nvme.c,v 1.30.2.3 2018/04/09 13:23:29 bouyer Exp $	*/
 /*	$OpenBSD: nvme.c,v 1.49 2016/04/18 05:59:50 dlg Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.30.2.2 2018/03/18 11:05:27 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.30.2.3 2018/04/09 13:23:29 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -570,8 +570,10 @@ nvme_ns_identify(struct nvme_softc *sc, uint16_t nsid)
 	KASSERT(ccb != NULL); /* it's a bug if we don't have spare ccb here */
 
 	mem = nvme_dmamem_alloc(sc, sizeof(*identify));
-	if (mem == NULL)
+	if (mem == NULL) {
+		nvme_ccb_put(sc->sc_admin_q, ccb);
 		return ENOMEM;
+	}
 
 	memset(&sqe, 0, sizeof(sqe));
 	sqe.opcode = NVM_ADMIN_IDENTIFY;
@@ -601,6 +603,7 @@ nvme_ns_identify(struct nvme_softc *sc, uint16_t nsid)
 
 	ns = nvme_ns_get(sc, nsid);
 	KASSERT(ns);
+	KASSERT(ns->ident == NULL);
 	ns->ident = identify;
 
 done:
