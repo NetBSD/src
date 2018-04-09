@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1.3,v 1.1.2.6 2018/04/05 11:52:21 martin Exp $
+# $NetBSD: CHANGES-7.1.3,v 1.1.2.7 2018/04/09 13:30:08 martin Exp $
 
 A complete list of changes from the NetBSD 7.1.2 release to the NetBSD 7.1.3
 release:
@@ -72,4 +72,24 @@ sys/sys/mbuf.h					1.179
 
 	Remove M_PKTHDR from secondary mbufs when reassembling packets.
 	[maxv, ticket #1594]
+
+external/gpl3/binutils/dist/bfd/elflink.c	1.14
+
+	When trying to decide the status of a weak symbol, resolve any
+	indirectness first.
+	[joerg, ticket #1595]
+
+bin/ed/ed.1					1.32
+bin/ed/main.c					1.29
+usr.bin/patch/pch.c				1.29
+
+	patch: Pass -S to ed(1) so that patches containing ! commands
+	don't run commands.
+	ed: add -S to disable ! commands.
+	[christos, ticket #1596]
+
+sys/arch/amiga/amiga/cc.c			1.27
+
+	Fix a spl(9) leak.
+	[msaitoh, ticket #1597]
 
