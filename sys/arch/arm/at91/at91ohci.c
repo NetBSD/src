@@ -1,5 +1,5 @@
-/*	$Id: at91ohci.c,v 1.6 2016/04/23 10:15:27 skrll Exp $	*/
-/*	$NetBSD: at91ohci.c,v 1.6 2016/04/23 10:15:27 skrll Exp $	*/
+/*	$Id: at91ohci.c,v 1.7 2018/04/09 16:21:09 jakllsch Exp $	*/
+/*	$NetBSD: at91ohci.c,v 1.7 2018/04/09 16:21:09 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2007 Embedtronics Oy.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91ohci.c,v 1.6 2016/04/23 10:15:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91ohci.c,v 1.7 2018/04/09 16:21:09 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,8 +125,6 @@ at91ohci_callback(device_t self)
 	/* Disable interrupts, so we don't get any spurious ones. */
 	bus_space_write_4(sc->sc.iot, sc->sc.ioh, OHCI_INTERRUPT_DISABLE,
 			  OHCI_ALL_INTRS);
-
-	strlcpy(sc->sc.sc_vendor, "Atmel", sizeof sc->sc.sc_vendor);
 
 	sc->sc_ih = at91_intr_establish(sc->sc_pid, IPL_USB, INTR_HIGH_LEVEL, ohci_intr, sc);
 	int err = ohci_init(&sc->sc);

@@ -1,4 +1,4 @@
-/*	$NetBSD: zynq_usb.c,v 1.4 2016/04/23 10:15:29 skrll Exp $	*/
+/*	$NetBSD: zynq_usb.c,v 1.5 2018/04/09 16:21:09 jakllsch Exp $	*/
 /*-
  * Copyright (c) 2015  Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zynq_usb.c,v 1.4 2016/04/23 10:15:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zynq_usb.c,v 1.5 2018/04/09 16:21:09 jakllsch Exp $");
 
 #include "opt_zynq.h"
 
@@ -176,9 +176,6 @@ zynqusb_attach_common(device_t parent, device_t self, bus_space_tag_t iot,
 	EOWRITE4(hsc, EHCI_USBINTR, 0);
 
 	intr_establish(intr, IPL_USB, IST_LEVEL, ehci_intr, hsc);
-
-	/* Figure out vendor for root hub descriptor. */
-	strlcpy(hsc->sc_vendor, "Xilinx", sizeof(hsc->sc_vendor));
 
 	int err = ehci_init(hsc);
 	if (err) {

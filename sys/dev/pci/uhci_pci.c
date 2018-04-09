@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci_pci.c,v 1.61 2017/04/27 10:01:54 msaitoh Exp $	*/
+/*	$NetBSD: uhci_pci.c,v 1.62 2018/04/09 16:21:10 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci_pci.c,v 1.61 2017/04/27 10:01:54 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci_pci.c,v 1.62 2018/04/09 16:21:10 jakllsch Exp $");
 
 #include "ehci.h"
 
@@ -169,10 +169,6 @@ uhci_pci_attach(device_t parent, device_t self, void *aux)
 		break;
 	}
 
-	/* Figure out vendor for root hub descriptor. */
-	sc->sc.sc_id_vendor = PCI_VENDOR(pa->pa_id);
-	pci_findvendor(sc->sc.sc_vendor, sizeof(sc->sc.sc_vendor),
-	    sc->sc.sc_id_vendor);
 	int err = uhci_init(&sc->sc);
 	if (err) {
 		aprint_error_dev(self, "init failed, error=%d\n", err);

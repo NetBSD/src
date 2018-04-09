@@ -1,7 +1,7 @@
-/*	$Id: obio_ohci.c,v 1.11 2016/04/23 10:15:28 skrll Exp $	*/
+/*	$Id: obio_ohci.c,v 1.12 2018/04/09 16:21:09 jakllsch Exp $	*/
 
 /* adapted from: */
-/*	$NetBSD: obio_ohci.c,v 1.11 2016/04/23 10:15:28 skrll Exp $	*/
+/*	$NetBSD: obio_ohci.c,v 1.12 2018/04/09 16:21:09 jakllsch Exp $	*/
 /*	$OpenBSD: pxa2x0_ohci.c,v 1.19 2005/04/08 02:32:54 dlg Exp $ */
 
 /*
@@ -24,7 +24,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio_ohci.c,v 1.11 2016/04/23 10:15:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio_ohci.c,v 1.12 2018/04/09 16:21:09 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,7 +148,6 @@ obioohci_attach(device_t parent, device_t self, void *aux)
 		goto free_map;
 	}
 
-	strlcpy(sc->sc.sc_vendor, "OMAP", sizeof(sc->sc.sc_vendor));
 	int err = ohci_init(&sc->sc);
 	if (err) {
 		aprint_error_dev(self, "init failed, error=%d\n", err);
