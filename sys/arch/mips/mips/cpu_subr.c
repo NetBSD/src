@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.32 2017/05/07 04:14:20 skrll Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.32.2.1 2018/04/09 13:29:01 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.32 2017/05/07 04:14:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.32.2.1 2018/04/09 13:29:01 bouyer Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -771,8 +771,10 @@ cpu_pause(struct reg *regsp)
 	int s = splhigh();
 	cpuid_t cii = cpu_index(curcpu());
 
-	if (__predict_false(cold))
+	if (__predict_false(cold)) {
+		splx(s);
 		return;
+	}
 
 	do {
 		kcpuset_atomic_set(cpus_paused, cii);
