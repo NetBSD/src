@@ -777,6 +777,15 @@ dhcp6_makemessage(struct interface *ifp)
 		return -1;
 	}
 
+	/* In non master mode we listen and send from fixed addresses.
+	 * We should try and match an address we have to unicast to,
+	 * but for now this is the safest policy. */
+	if (unicast != NULL && !(ifp->ctx->options & DHCPCD_MASTER)) {
+		logdebugx("%s: ignoring unicast option as not master",
+		    ifp->name);
+		unicast = NULL;
+	}
+
 #ifdef AUTH
 	auth_len = 0;
 	if (ifo->auth.options & DHCPCD_AUTH_SEND) {
@@ -1092,6 +1101,8 @@ dhcp6_sendmessage(struct interface *ifp, void (*callback)(void *))
 	uint8_t neg;
 	const char *broad_uni;
 	const struct in6_addr alldhcp = IN6ADDR_LINKLOCAL_ALLDHCP_INIT;
+	struct ipv6_addr *lla;
+	int s;
 
 	if (!callback && ifp->carrier == LINK_DOWN)
 		return 0;
@@ -1104,12 +1115,13 @@ dhcp6_sendmessage(struct interface *ifp, void (*callback)(void *))
 #endif
 
 	state = D6_STATE(ifp);
+	lla = ipv6_linklocal(ifp);
 	/* We need to ensure we have sufficient scope to unicast the address */
 	/* XXX FIXME: We should check any added addresses we have like from
 	 * a Router Advertisement */
 	if (IN6_IS_ADDR_UNSPECIFIED(&state->unicast) ||
 	    (state->state == DH6S_REQUEST &&
-	    (!IN6_IS_ADDR_LINKLOCAL(&state->unicast) || !ipv6_linklocal(ifp))))
+	    (!IN6_IS_ADDR_LINKLOCAL(&state->unicast) || lla == NULL)))
 	{
 		dst.sin6_addr = alldhcp;
 		broad_uni = "broadcasting";
@@ -1251,7 +1263,16 @@ logsend:
 		ctx->sndhdr.msg_controllen = 0;
 	}
 
-	if (sendmsg(ctx->dhcp6_fd, &ctx->sndhdr, 0) == -1) {
+	if (ctx->dhcp6_fd != -1)
+		s = ctx->dhcp6_fd;
+	else if (lla != NULL && lla->dhcp6_fd != -1)
+		s = lla->dhcp6_fd;
+	else {
+		logerrx("%s: no socket to send from", ifp->name);
+		return -1;
+	}
+
+	if (sendmsg(s, &ctx->sndhdr, 0) == -1) {
 		logerr("%s: %s: sendmsg", __func__, ifp->name);
 		/* Allow DHCPv6 to continue .... the errors
 		 * would be rate limited by the protocol.
@@ -1826,6 +1847,7 @@ dhcp6_checkstatusok(const struct interface *ifp,
 {
 	uint8_t *opt;
 	uint16_t opt_len, code;
+	size_t mlen;
 	void * (*f)(void *, size_t, uint16_t, uint16_t *), *farg;
 	char buf[32], *sbuf;
 	const char *status;
@@ -1851,8 +1873,8 @@ dhcp6_checkstatusok(const struct interface *ifp,
 
 	/* Anything after the code is a message. */
 	opt += sizeof(code);
-	opt_len = (uint16_t)(opt_len - sizeof(code));
-	if (opt_len == 0) {
+	mlen = opt_len - sizeof(code);
+	if (mlen == 0) {
 		sbuf = NULL;
 		if (code < sizeof(dhcp6_statuses) / sizeof(char *))
 			status = dhcp6_statuses[code];
@@ -1861,12 +1883,12 @@ dhcp6_checkstatusok(const struct interface *ifp,
 			status = buf;
 		}
 	} else {
-		if ((sbuf = malloc((size_t)opt_len + 1)) == NULL) {
+		if ((sbuf = malloc(mlen + 1)) == NULL) {
 			logerr(__func__);
 			return -1;
 		}
-		memcpy(sbuf, opt, opt_len);
-		sbuf[len] = '\0';
+		memcpy(sbuf, opt, mlen);
+		sbuf[mlen] = '\0';
 		status = sbuf;
 	}
 
@@ -3551,19 +3573,16 @@ dhcp6_listen(struct dhcpcd_ctx *ctx, struct ipv6_addr *ia)
 	if (ia != NULL) {
 		memcpy(&sa.sin6_addr, &ia->addr, sizeof(sa.sin6_addr));
 		sa.sin6_scope_id = ia->iface->index;
-	} else if (!(ctx->options & DHCPCD_MASTER))
-		/* This socket is only used for sending. */
-		return s;
+	}
 
 	if (bind(s, (struct sockaddr *)&sa, sizeof(sa)) == -1)
 		goto errexit;
 
-	if (ia == NULL) {
-		n = 1;
-		if (setsockopt(s, IPPROTO_IPV6, IPV6_RECVPKTINFO,
-		    &n, sizeof(n)) == -1)
-			goto errexit;
-	} else {
+	n = 1;
+	if (setsockopt(s, IPPROTO_IPV6, IPV6_RECVPKTINFO, &n, sizeof(n)) == -1)
+		goto errexit;
+
+	if (ia != NULL) {
 		ia->dhcp6_fd = s;
 		eloop_event_add(ctx->eloop, s, dhcp6_recvaddr, ia);
 	}
@@ -3575,18 +3594,6 @@ errexit:
 	if (s != -1)
 		close(s);
 	return -1;
-}
-
-static int
-dhcp6_open(struct dhcpcd_ctx *ctx)
-{
-
-	/* Open an unbound socket to send from. */
-	ctx->dhcp6_fd = dhcp6_listen(ctx, NULL);
-	if (ctx->dhcp6_fd != -1 && (ctx->options & DHCPCD_MASTER))
-		eloop_event_add(ctx->eloop, ctx->dhcp6_fd, dhcp6_recvctx, ctx);
-
-	return ctx->dhcp6_fd;
 }
 
 #ifndef SMALL
@@ -3623,13 +3630,18 @@ static void
 dhcp6_start1(void *arg)
 {
 	struct interface *ifp = arg;
+	struct dhcpcd_ctx *ctx = ifp->ctx;
 	struct if_options *ifo = ifp->options;
 	struct dhcp6_state *state;
 	size_t i;
 	const struct dhcp_compat *dhc;
 
-	if (ifp->ctx->dhcp6_fd == -1 && dhcp6_open(ifp->ctx) == -1)
-		return;
+	if (ctx->dhcp6_fd == -1 && ctx->options & DHCPCD_MASTER) {
+		ctx->dhcp6_fd = dhcp6_listen(ctx, NULL);
+		if (ctx->dhcp6_fd == -1)
+			return;
+		eloop_event_add(ctx->eloop, ctx->dhcp6_fd, dhcp6_recvctx, ctx);
+	}
 
 	state = D6_STATE(ifp);
 	/* If no DHCPv6 options are configured,
@@ -3858,22 +3870,20 @@ dhcp6_free(struct interface *ifp)
 void
 dhcp6_dropnondelegates(struct interface *ifp)
 {
-#ifndef SMALL
-	struct dhcp6_state *state;
-	struct ipv6_addr *ia;
 
-	if ((state = D6_STATE(ifp)) == NULL)
+#ifndef SMALL
+	if (dhcp6_hasprefixdelegation(ifp))
 		return;
-	TAILQ_FOREACH(ia, &state->addrs, next) {
-		if (ia->flags & (IPV6_AF_DELEGATED | IPV6_AF_DELEGATEDPFX))
-			return;
-	}
 #endif
+	if (D6_CSTATE(ifp) == NULL)
+		return;
+
+	loginfox("%s: dropping DHCPv6 due to no valid routers", ifp->name);
 	dhcp6_drop(ifp, "EXPIRE6");
 }
 
 void
-dhcp6_handleifa(int cmd, struct ipv6_addr *ia)
+dhcp6_handleifa(int cmd, struct ipv6_addr *ia, pid_t pid)
 {
 	struct dhcp6_state *state;
 	struct interface *ifp = ia->iface;
@@ -3888,7 +3898,7 @@ dhcp6_handleifa(int cmd, struct ipv6_addr *ia)
 		dhcp6_listen(ia->iface->ctx, ia);
 
 	if ((state = D6_STATE(ifp)) != NULL)
-		ipv6_handleifa_addrs(cmd, &state->addrs, ia);
+		ipv6_handleifa_addrs(cmd, &state->addrs, ia, pid);
 }
 
 ssize_t

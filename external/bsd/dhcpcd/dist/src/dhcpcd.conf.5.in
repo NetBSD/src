@@ -22,7 +22,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd May 9, 2017
+.Dd February 2, 2018
 .Dt DHCPCD.CONF 5
 .Os
 .Sh NAME
@@ -225,7 +225,7 @@ If no
 is given then the first address currently assigned to the
 .Ar interface
 is used.
-.It Ic inform Op Ar address Ns Op Ar /cidr
+.It Ic inform Op Ar address Ns Op Ar /cidr Ns Op Ar /broadcast_address
 Behaves like
 .Ic request
 as above, but sends a DHCP INFORM instead of DISCOVER/REQUEST.
@@ -480,9 +480,9 @@ See
 .%T "RFC 3927"
 .Re
 .It Ic noipv6
-Don't attempt to configure an IPv6 address.
+Don't solicit or accept IPv6 Router Advertisements and DHCPv6.
 .It Ic noipv6rs
-Disable solicitation and receipt of IPv6 Router Advertisements.
+Don't solicit or accept IPv6 Router Advertisements.
 .It Ic nolink
 Don't receive link messages about carrier status.
 You should only set this for buggy interface drivers.
@@ -602,8 +602,8 @@ If you set
 .Nm dhcpcd
 will continue auto-configuation as normal.
 .Pp
-Here is an example which configures two static address, an IPv4 router, DNS
-and disables IPv6 auto-configuration.
+Here is an example which configures two static address, overriding the default
+IPv4 broadcast address, an IPv4 router, DNS and disables IPv6 auto-configuration.
 You could also use the
 .Ic inform6
 command here if you wished to obtain more information via DHCPv6.
@@ -613,6 +613,7 @@ option instead of setting a static address.
 .D1 interface eth0
 .D1 noipv6rs
 .D1 static ip_address=192.168.0.10/24
+.D1 static broadcast_address=192.168.0.63
 .D1 static ip6_address=fd51:42f8:caae:d92e::ff/64
 .D1 static routers=192.168.0.1
 .D1 static domain_name_servers=192.168.0.1 fd51:42f8:caae:d92e::1

@@ -1,6 +1,6 @@
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2015 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2018 Roy Marples <roy@marples.name>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -35,10 +35,10 @@
 
 #include <libudev.h>
 #include <string.h>
-#include <syslog.h>
 
 #include "../common.h"
 #include "../dev.h"
+#include "../logerr.h"
 
 static const char udev_name[] = "udev";
 static struct udev *udev;
@@ -80,7 +80,7 @@ udev_handle_device(void *ctx)
 
 	device = udev_monitor_receive_device(monitor);
 	if (device == NULL) {
-		syslog(LOG_ERR, "libudev: received NULL device");
+		logerrx("libudev: received NULL device");
 		return -1;
 	}
 
@@ -90,7 +90,7 @@ udev_handle_device(void *ctx)
 
 	/* udev filter documentation says "usually" so double check */
 	if (strcmp(subsystem, "net") == 0) {
-		syslog(LOG_DEBUG, "%s: libudev: %s", ifname, action);
+		logdebugx("%s: libudev: %s", ifname, action);
 		if (strcmp(action, "add") == 0 || strcmp(action, "move") == 0)
 			dhcpcd.handle_interface(ctx, 1, ifname);
 		else if (strcmp(action, "remove") == 0)
@@ -122,37 +122,36 @@ udev_start(void)
 	int fd;
 
 	if (udev) {
-		syslog(LOG_ERR, "udev: already started");
+		logerrx("udev: already started");
 		return -1;
 	}
 
-	syslog(LOG_DEBUG, "udev: starting");
+	logdebugx("udev: starting");
 	udev = udev_new();
 	if (udev == NULL) {
-		syslog(LOG_ERR, "udev_new: %m");
+		logerr("udev_new");
 		return -1;
 	}
 	monitor = udev_monitor_new_from_netlink(udev, "udev");
 	if (monitor == NULL) {
-		syslog(LOG_ERR, "udev_monitor_new_from_netlink: %m");
+		logerr("udev_monitor_new_from_netlink");
 		goto bad;
 	}
 #ifndef LIBUDEV_NOFILTER
 	if (udev_monitor_filter_add_match_subsystem_devtype(monitor,
 	    "net", NULL) != 0)
 	{
-		syslog(LOG_ERR,
-		    "udev_monitor_filter_add_match_subsystem_devtype: %m");
+		logerr("udev_monitor_filter_add_match_subsystem_devtype");
 		goto bad;
 	}
 #endif
 	if (udev_monitor_enable_receiving(monitor) != 0) {
-		syslog(LOG_ERR, "udev_monitor_enable_receiving: %m");
+		logerr("udev_monitor_enable_receiving");
 		goto bad;
 	}
 	fd = udev_monitor_get_fd(monitor);
 	if (fd == -1) {
-		syslog(LOG_ERR, "udev_monitor_get_fd: %m");
+		logerr("udev_monitor_get_fd");
 		goto bad;
 	}
 	return fd;

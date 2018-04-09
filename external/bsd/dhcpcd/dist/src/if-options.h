@@ -180,6 +180,7 @@ struct if_options {
 
 	struct in_addr req_addr;
 	struct in_addr req_mask;
+	struct in_addr req_brd;
 	struct rt_head routes;
 	struct in6_addr req_addr6;
 	uint8_t req_prefix_len;
@@ -229,6 +230,6 @@ struct if_options *read_config(struct dhcpcd_ctx *,
 int add_options(struct dhcpcd_ctx *, const char *,
     struct if_options *, int, char **);
 void free_dhcp_opt_embenc(struct dhcp_opt *);
-void free_options(struct if_options *);
+void free_options(struct dhcpcd_ctx *, struct if_options *);
 
 #endif

@@ -22,7 +22,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd November 3, 2017
+.Dd February 20, 2018
 .Dt DHCPCD-RUN-HOOKS 8
 .Os
 .Sh NAME
@@ -46,6 +46,19 @@ Your distribution may have included other hook scripts to say configure
 ntp or ypbind.
 A test hook is also supplied that simply echos the dhcp variables to the
 console from DISCOVER message.
+.Pp
+The hooks scripts are loaded into the current shell rather than executed
+in their own process.
+This allows each hook script, such as
+.Pa @SYSCONFDIR@/dhcpcd.enter-hook
+to customise environment variables or provide alternative functions to hooks
+further down the chain.
+As such, using the shell builtins
+.Ic exit ,
+.Ic exec
+or similar will cause
+.Nm
+to exit at that point.
 .Pp
 Each time
 .Nm

@@ -254,7 +254,7 @@ int dhcp_get_routes(struct rt_head *, struct interface *);
 ssize_t dhcp_env(char **, const char *, const struct bootp *, size_t,
     const struct interface *);
 
-void dhcp_handleifa(int, struct ipv4_addr *);
+void dhcp_handleifa(int, struct ipv4_addr *, pid_t pid);
 void dhcp_drop(struct interface *, const char *);
 void dhcp_start(struct interface *);
 void dhcp_abort(struct interface *);

@@ -20,8 +20,6 @@ fi
 
 wpa_supplicant_ctrldir()
 {
-	local dir
-
 	dir=$(key_get_value "[[:space:]]*ctrl_interface=" \
 		"$wpa_supplicant_conf")
 	dir=$(trim "$dir")
@@ -37,8 +35,6 @@ wpa_supplicant_ctrldir()
 
 wpa_supplicant_start()
 {
-	local dir err errn
-
 	# If the carrier is up, don't bother checking anything
 	[ "$ifcarrier" = "up" ] && return 0
 
@@ -72,8 +68,6 @@ wpa_supplicant_start()
 
 wpa_supplicant_reconfigure()
 {
-	local dir err errn
-
 	dir=$(wpa_supplicant_ctrldir)
 	[ -z "$dir" ] && return 1
 	if ! wpa_cli -p "$dir" -i "$interface" status >/dev/null 2>&1; then
@@ -92,8 +86,6 @@ wpa_supplicant_reconfigure()
 
 wpa_supplicant_stop()
 {
-	local dir err errn
-
 	dir=$(wpa_supplicant_ctrldir)
 	[ -z "$dir" ] && return 1
 	wpa_cli -p "$dir" -i "$interface" status >/dev/null 2>&1 || return 0

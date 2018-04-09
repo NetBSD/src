@@ -85,7 +85,7 @@ if_free(struct interface *ifp)
 	ipv6nd_free(ifp);
 	ipv6_free(ifp);
 	rt_freeif(ifp);
-	free_options(ifp->options);
+	free_options(ifp->ctx, ifp->options);
 	free(ifp);
 }
 
@@ -191,6 +191,21 @@ if_hasconf(struct dhcpcd_ctx *ctx, const char *ifname)
 }
 
 void
+if_markaddrsstale(struct if_head *ifs)
+{
+	struct interface *ifp;
+
+	TAILQ_FOREACH(ifp, ifs, next) {
+#ifdef INET
+		ipv4_markaddrsstale(ifp);
+#endif
+#ifdef INET6
+		ipv6_markaddrsstale(ifp, 0);
+#endif
+	}
+}
+
+void
 if_learnaddrs(struct dhcpcd_ctx *ctx, struct if_head *ifs,
     struct ifaddrs **ifaddrs)
 {
@@ -234,7 +249,7 @@ if_learnaddrs(struct dhcpcd_ctx *ctx, struct if_head *ifs,
 #endif
 			ipv4_handleifa(ctx, RTM_NEWADDR, ifs, ifa->ifa_name,
 				&addr->sin_addr, &net->sin_addr,
-				brd ? &brd->sin_addr : NULL, addrflags);
+				brd ? &brd->sin_addr : NULL, addrflags, 0);
 			break;
 #endif
 #ifdef INET6
@@ -258,7 +273,7 @@ if_learnaddrs(struct dhcpcd_ctx *ctx, struct if_head *ifs,
 #endif
 			ipv6_handleifa(ctx, RTM_NEWADDR, ifs,
 			    ifa->ifa_name, &sin6->sin6_addr,
-			    ipv6_prefixlen(&net6->sin6_addr), addrflags);
+			    ipv6_prefixlen(&net6->sin6_addr), addrflags, 0);
 			break;
 #endif
 		}
@@ -266,6 +281,21 @@ if_learnaddrs(struct dhcpcd_ctx *ctx, struct if_head *ifs,
 
 	freeifaddrs(*ifaddrs);
 	*ifaddrs = NULL;
+}
+
+void
+if_deletestaleaddrs(struct if_head *ifs)
+{
+	struct interface *ifp;
+
+	TAILQ_FOREACH(ifp, ifs, next) {
+#ifdef INET
+		ipv4_deletestaleaddrs(ifp);
+#endif
+#ifdef INET6
+		ipv6_deletestaleaddrs(ifp);
+#endif
+	}
 }
 
 bool
@@ -361,12 +391,17 @@ if_discover(struct dhcpcd_ctx *ctx, struct ifaddrs **ifaddrs,
 		}
 
 		for (i = 0; i < ctx->ifdc; i++)
-			if (!fnmatch(ctx->ifdv[i], spec.devname, 0))
+			if (fnmatch(ctx->ifdv[i], spec.devname, 0) == 0)
 				break;
 		if (i < ctx->ifdc)
 			active = IF_INACTIVE;
+		for (i = 0; i < ctx->ifc; i++)
+			if (fnmatch(ctx->ifv[i], spec.devname, 0) == 0)
+				break;
+		if (ctx->ifc && i == ctx->ifc)
+			active = IF_INACTIVE;
 		for (i = 0; i < ctx->ifac; i++)
-			if (!fnmatch(ctx->ifav[i], spec.devname, 0))
+			if (fnmatch(ctx->ifav[i], spec.devname, 0) == 0)
 				break;
 		if (ctx->ifac && i == ctx->ifac)
 			active = IF_INACTIVE;
@@ -532,15 +567,6 @@ if_discover(struct dhcpcd_ctx *ctx, struct ifaddrs **ifaddrs,
 			/* Handle any platform init for the interface */
 			if (active != IF_INACTIVE && if_init(ifp) == -1) {
 				logerr("%s: if_init", ifp->name);
-				if_free(ifp);
-				continue;
-			}
-
-			/* Ensure that the MTU is big enough for DHCP */
-			if (if_getmtu(ifp) < MTU_MIN && active &&
-			    if_setmtu(ifp, MTU_MIN) == -1)
-			{
-				logerr("%s: if_setmtu", ifp->name);
 				if_free(ifp);
 				continue;
 			}

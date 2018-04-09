@@ -22,7 +22,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd October 7, 2017
+.Dd January 8, 2018
 .Dt DHCPCD 8
 .Os
 .Sh NAME
@@ -47,7 +47,7 @@
 .Op Fl Q , Fl Fl require Ar option
 .Op Fl r , Fl Fl request Ar address
 .Op Fl S , Fl Fl static Ar value
-.Op Fl s , Fl Fl inform Ar address Ns Op Ar /cidr
+.Op Fl s , Fl Fl inform Ar address Ns Op Ar /cidr Ns Op Ar /broadcast_address
 .Op Fl Fl inform6
 .Op Fl t , Fl Fl timeout Ar seconds
 .Op Fl u , Fl Fl userclass Ar class
@@ -444,7 +444,7 @@ If no
 is given then the first address currently assigned to the
 .Ar interface
 is used.
-.It Fl s , Fl Fl inform Ar address Ns Op Ar /cidr
+.It Fl s , Fl Fl inform Ar address Ns Op Ar /cidr Ns Op Ar /broadcast_address
 Behaves like
 .Fl r , Fl Fl request
 as above, but sends a DHCP INFORM instead of DISCOVER/REQUEST.
