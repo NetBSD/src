@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.261 2018/04/09 11:05:59 maxv Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.262 2018/04/09 11:35:22 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.261 2018/04/09 11:05:59 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.262 2018/04/09 11:35:22 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -588,6 +588,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 
 	KASSERT(!cpu_intr_p());
 	KASSERT((m->m_flags & M_PKTHDR) != 0);
+	KASSERT(m->m_len >= sizeof(*eh));
 
 	if ((ifp->if_flags & IFF_UP) == 0) {
 		m_freem(m);
