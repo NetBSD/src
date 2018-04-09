@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.170 2018/04/09 13:40:46 bouyer Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.171 2018/04/09 15:59:58 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -11073,4 +11073,10 @@ sys/net/if_l2tp.c				1.21
 
 	Fix l2tp(4) alignment check. Pointed out and reviewed by k-goda@IIJ.
 	[knakahara, ticket #725]
+
+sys/dev/iscsi/iscsi_rcv.c			1.25 via patch
+sys/dev/iscsi/iscsi_send.c			1.37 via patch
+
+	sanity check and iscsi improve error handling
+	[mlelstv, ticket #709]
 
