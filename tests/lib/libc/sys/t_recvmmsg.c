@@ -1,4 +1,4 @@
-/*	$NetBSD: t_recvmmsg.c,v 1.1 2012/06/22 18:45:23 christos Exp $	*/
+/*	$NetBSD: t_recvmmsg.c,v 1.1.26.1 2018/04/09 13:34:10 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_recvmmsg.c,v 1.1 2012/06/22 18:45:23 christos Exp $");
+__RCSID("$NetBSD: t_recvmmsg.c,v 1.1.26.1 2018/04/09 13:34:10 bouyer Exp $");
 
 #include <atf-c.h>
 #include <sys/types.h>
@@ -47,6 +47,7 @@ __RCSID("$NetBSD: t_recvmmsg.c,v 1.1 2012/06/22 18:45:23 christos Exp $");
 #include <time.h>
 #include <stdint.h>
 #include <errno.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -57,7 +58,14 @@ __RCSID("$NetBSD: t_recvmmsg.c,v 1.1 2012/06/22 18:45:23 christos Exp $");
 
 #define min(a, b) ((a) < (b) ? (a) : (b))
 static int debug;
+static volatile sig_atomic_t rdied;
 
+static void
+handle_sigchld(__unused int pid)
+{
+
+	rdied = 1;
+}
 
 ATF_TC(recvmmsg_basic);
 ATF_TC_HEAD(recvmmsg_basic, tc)
@@ -75,7 +83,9 @@ ATF_TC_BODY(recvmmsg_basic, tc)
 	int status;
 	off_t off;
 	uint8_t DGRAM[1316] = { 0, 2, 3, 4, 5, 6, 7, 8, 9, };
-	
+	struct sigaction sa;
+	ssize_t overf = 0;
+
 	error = socketpair(AF_UNIX, SOCK_DGRAM, 0, fd);
 	ATF_REQUIRE_MSG(error != -1, "socketpair failed (%s)", strerror(errno));
 
@@ -98,6 +108,14 @@ ATF_TC_BODY(recvmmsg_basic, tc)
 		mmsghdr[n].msg_hdr.msg_namelen = 0;
 	}
 
+	memset(&sa, 0, sizeof(sa));
+	sa.sa_flags = SA_RESTART;
+	sa.sa_handler = &handle_sigchld;
+	sigemptyset(&sa.sa_mask);
+	error = sigaction(SIGCHLD, &sa, 0);
+	ATF_REQUIRE_MSG(error != -1, "sigaction failed (%s)",
+	    strerror(errno));
+
 	switch (fork()) {
 	case -1:
 		ATF_REQUIRE_MSG(0, "fork failed (%s)", strerror(errno));
@@ -112,6 +130,13 @@ ATF_TC_BODY(recvmmsg_basic, tc)
 			struct timespec ts = { 1, 0 };
 			cnt = recvmmsg(fd[1], mmsghdr, min(mmsgcnt, n),
 			    MSG_WAITALL, &ts);
+			if (cnt == -1 && errno == ENOBUFS) {
+				overf++;
+				if (debug)
+					printf("receive buffer overflowed"
+					    " (%zu)\n",overf);
+				continue;
+			}
 			ATF_REQUIRE_MSG(cnt != -1, "recvmmsg failed (%s)",
 			    strerror(errno));
 			ATF_REQUIRE_MSG(cnt != 0, "recvmmsg timeout");
@@ -138,16 +163,19 @@ ATF_TC_BODY(recvmmsg_basic, tc)
 				printf("sending packet %u/%u...\n", (n+1),
 				    NPKTS);
 			do {
+				if (rdied)
+					break;
 				DGRAM[0] = n;
 				error = send(fd[0], DGRAM, sizeof(DGRAM), 0);
 			} while (error == -1 && errno == ENOBUFS);
-			if (error == -1)
-				ATF_REQUIRE_MSG(error != -1, "send failed (%s)",
-				    strerror(errno));
+			ATF_REQUIRE_MSG(error != -1, "send failed (%s)",
+			    strerror(errno));
 		}
 		error = wait(&status);
 		ATF_REQUIRE_MSG(error != -1, "wait failed (%s)",
 		    strerror(errno));
+		ATF_REQUIRE_MSG(WIFEXITED(status) && WEXITSTATUS(status) == 0,
+		    "receiver died");
 		break;
 	}
 }

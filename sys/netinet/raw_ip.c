@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.164.4.1 2017/12/21 21:08:13 snj Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.164.4.2 2018/04/09 13:34:10 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.164.4.1 2017/12/21 21:08:13 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.164.4.2 2018/04/09 13:34:10 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -155,7 +155,7 @@ rip_sbappendaddr(struct inpcb *last, struct ip *ip, const struct sockaddr *sa,
 	    || last->inp_socket->so_options & SO_TIMESTAMP)
 		ip_savecontrol(last, &opts, ip, n);
 	if (sbappendaddr(&last->inp_socket->so_rcv, sa, n, opts) == 0) {
-		/* should notify about lost packet */
+		soroverflow(last->inp_socket);
 		m_freem(n);
 		if (opts)
 			m_freem(opts);

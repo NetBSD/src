@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.157.2.3 2018/03/30 11:42:59 martin Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.157.2.4 2018/04/09 13:34:10 bouyer Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.157.2.3 2018/03/30 11:42:59 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.157.2.4 2018/04/09 13:34:10 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -215,7 +215,7 @@ rip6_input(struct mbuf **mp, int *offp, int proto)
 				m_adj(n, *offp);
 				if (sbappendaddr(&last->in6p_socket->so_rcv,
 				    sin6tosa(&rip6src), n, opts) == 0) {
-					/* should notify about lost packet */
+					soroverflow(last->in6p_socket);
 					m_freem(n);
 					if (opts)
 						m_freem(opts);
@@ -248,6 +248,7 @@ rip6_input(struct mbuf **mp, int *offp, int proto)
 		m_adj(m, *offp);
 		if (sbappendaddr(&last->in6p_socket->so_rcv,
 		    sin6tosa(&rip6src), m, opts) == 0) {
+			soroverflow(last->in6p_socket);
 			m_freem(m);
 			if (opts)
 				m_freem(opts);

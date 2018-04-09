@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.129 2017/04/20 08:46:07 ozaki-r Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.129.4.1 2018/04/09 13:34:10 bouyer Exp $	*/
 /*	$KAME: udp6_usrreq.c,v 1.86 2001/05/27 17:33:00 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.129 2017/04/20 08:46:07 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.129.4.1 2018/04/09 13:34:10 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -376,8 +376,8 @@ udp6_sendup(struct mbuf *m, int off /* offset of data portion */,
 			m_freem(n);
 			if (opts)
 				m_freem(opts);
-			so->so_rcv.sb_overflowed++;
 			UDP6_STATINC(UDP6_STAT_FULLSOCK);
+			soroverflow(so);
 		} else
 			sorwakeup(so);
 	}

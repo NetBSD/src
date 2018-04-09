@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_usrreq.c,v 1.56.4.1 2017/10/21 19:43:54 snj Exp $	*/
+/*	$NetBSD: raw_usrreq.c,v 1.56.4.2 2018/04/09 13:34:10 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_usrreq.c,v 1.56.4.1 2017/10/21 19:43:54 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_usrreq.c,v 1.56.4.2 2018/04/09 13:34:10 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -106,21 +106,26 @@ raw_input(struct mbuf *m0, ...)
 			continue;
 		if (last != NULL) {
 			struct mbuf *n;
-			if ((n = m_copy(m, 0, M_COPYALL)) == NULL)
-				;
-			else if (sbappendaddr(&last->so_rcv, src, n, NULL) == 0)
-				/* should notify about lost packet */
-				m_freem(n);
-			else {
+
+			if ((n = m_copy(m, 0, M_COPYALL)) == NULL ||
+			    sbappendaddr(&last->so_rcv, src, n, NULL) == 0)
+			{
+				if (n != NULL)
+					m_freem(n);
+				soroverflow(last);
+			} else
 				sorwakeup(last);
-			}
 		}
 		last = rp->rcb_socket;
 	}
-	if (last == NULL || sbappendaddr(&last->so_rcv, src, m, NULL) == 0)
-		m_freem(m);
-	else {
-		sorwakeup(last);
+	if (last != NULL) {
+		if (sbappendaddr(&last->so_rcv, src, m, NULL) == 0) {
+			m_free(m);
+			soroverflow(last);
+		} else
+			sorwakeup(last);
+	} else {
+		m_free(m);
 	}
 }
 

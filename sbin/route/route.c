@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.155.4.2 2017/12/21 21:33:31 snj Exp $	*/
+/*	$NetBSD: route.c,v 1.155.4.3 2018/04/09 13:34:11 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.155.4.2 2017/12/21 21:33:31 snj Exp $");
+__RCSID("$NetBSD: route.c,v 1.155.4.3 2018/04/09 13:34:11 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -340,8 +340,10 @@ flushroutes(int argc, char * const argv[], int doall)
 			continue;
 		rtm->rtm_type = RTM_DELETE;
 		rtm->rtm_seq = seqno;
-		if ((rlen = prog_write(sock, next,
-		    rtm->rtm_msglen)) < 0) {
+		do {
+			rlen = prog_write(sock, next, rtm->rtm_msglen);
+		} while (rlen == -1 && errno == ENOBUFS);
+		if (rlen == -1) {
 			warnx("writing to routing socket: %s",
 			    route_strerror(errno));
 			return 1;
@@ -1138,6 +1140,10 @@ monitor(int argc, char * const *argv)
 	for(i = 0; count == 0 || i < count; i++) {
 		time_t now;
 		n = prog_read(sock, &u, sizeof(u));
+		if (n == -1) {
+			warn("read");
+			continue;
+		}
 		now = time(NULL);
 		(void)printf("got message of size %d on %s", n, ctime(&now));
 		print_rtmsg(&u.hdr, n);
@@ -1213,7 +1219,10 @@ rtmsg(int cmd, int flags, struct sou *soup)
 	}
 	if (debugonly)
 		return 0;
-	if ((rlen = prog_write(sock, (char *)&m_rtmsg, l)) < 0) {
+	do {
+		rlen = prog_write(sock, (char *)&m_rtmsg, l);
+	} while (rlen == -1 && errno == ENOBUFS);
+	if (rlen == -1) {
 		warnx("writing to routing socket: %s", route_strerror(errno));
 		return -1;
 	}

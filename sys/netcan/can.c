@@ -1,4 +1,4 @@
-/*	$NetBSD: can.c,v 1.2 2017/05/27 21:02:56 bouyer Exp $	*/
+/*	$NetBSD: can.c,v 1.2.2.1 2018/04/09 13:34:11 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: can.c,v 1.2 2017/05/27 21:02:56 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: can.c,v 1.2.2.1 2018/04/09 13:34:11 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -397,6 +397,7 @@ canintr(void)
 			if (sbappendaddr(&canp->canp_socket->so_rcv,
 					 (struct sockaddr *) &from, mc,
 					 (struct mbuf *) 0) == 0) {
+				soroverflow(canp->canp_socket);
 				m_freem(mc);
 			} else
 				sorwakeup(canp->canp_socket);

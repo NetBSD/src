@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.144.6.1 2018/03/18 10:57:01 martin Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.144.6.2 2018/04/09 13:34:10 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -295,6 +295,7 @@ int	sofamily(const struct socket *);
 int	sobind(struct socket *, struct sockaddr *, struct lwp *);
 void	socantrcvmore(struct socket *);
 void	socantsendmore(struct socket *);
+void	soroverflow(struct socket *);
 int	soclose(struct socket *);
 int	soconnect(struct socket *, struct sockaddr *, struct lwp *);
 int	soconnect2(struct socket *, struct socket *);
