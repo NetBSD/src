@@ -1,4 +1,4 @@
-.\"	$NetBSD: ed.1,v 1.33 2018/04/08 06:01:04 snj Exp $
+.\"	$NetBSD: ed.1,v 1.34 2018/04/09 06:54:47 wiz Exp $
 .\"	$OpenBSD: ed.1,v 1.42 2003/07/27 13:25:43 jmc Exp $
 .\"
 .\" Copyright (c) 1993 Andrew Moore, Talke Studio.
@@ -426,8 +426,8 @@ particular
 .Xr regex 3
 implementation.
 .Ss CHARACTER CLASSES
-A character class specifies a set of characters. It is written within
-square brackets
+A character class specifies a set of characters.
+It is written within square brackets
 .Pq []
 and in its most basic form contains just the characters in the set.
 .Pp
@@ -485,8 +485,8 @@ where
 .Em col-elm
 is a
 .Em collating element
-are interpreted according to
-.Xr locale 5
+are interpreted according to the locale
+.\" .Xr locale 5
 (not currently supported).
 See
 .Xr regex 3
@@ -958,10 +958,10 @@ If the command is entered a second time, it succeeds,
 but any changes to the buffer are lost.
 .Sh SEE ALSO
 .Xr bdes 1 ,
+.Xr patch 1 ,
 .Xr sed 1 ,
 .Xr sh 1 ,
 .Xr vi 1 ,
-.Xr patch 1 ,
 .Xr regex 3
 .Pp
 USD:09-10
