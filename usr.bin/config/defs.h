@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.102 2017/11/27 00:25:46 christos Exp $	*/
+/*	$NetBSD: defs.h,v 1.103 2018/04/09 17:46:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -277,6 +277,8 @@ struct devbase {
 	struct	deva *d_ahead;		/* first attachment, if any */
 	struct	deva **d_app;		/* used for tacking on attachments */
 	struct	attr *d_classattr;	/* device class attribute (if any) */
+	const char *d_srcfile;		/* file name where we are defined */
+	u_short	d_srcline;		/* line number where we are defined */
 };
 
 struct deva {
@@ -289,6 +291,8 @@ struct deva {
 	struct	attrlist *d_attrs;	/* attributes, if any */
 	struct	devi *d_ihead;		/* first instance, if any */
 	struct	devi **d_ipp;		/* used for tacking on more instances */
+	const char *d_srcfile;		/* file name where we are defined */
+	u_short	d_srcline;		/* line number where we are defined */
 };
 
 /*
