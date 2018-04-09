@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.27 2014/03/31 12:55:46 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.27.4.1 2018/04/09 13:21:07 martin Exp $	*/
 
 /* main.c: This file contains the main control and user-interface routines
    for the ed line editor. */
@@ -39,7 +39,7 @@ __COPYRIGHT(
 #if 0
 static char *rcsid = "@(#)main.c,v 1.1 1994/02/01 00:34:42 alm Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.27 2014/03/31 12:55:46 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.27.4.1 2018/04/09 13:21:07 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -94,6 +94,7 @@ int mutex = 0;			/* if set, signals set "sigflags" */
 int red = 0;			/* if set, restrict shell/directory access */
 int ere = 0;			/* if set, use extended regexes */
 int scripted = 0;		/* if set, suppress diagnostics */
+int secure = 0;			/* is set, ! is not allowed */
 int sigflags = 0;		/* if set, signals received while mutex set */
 int sigactive = 0;		/* if set, signal handlers are enabled */
 
@@ -105,7 +106,7 @@ const char *prompt;			/* command-line prompt */
 const char *dps = "*";		/* default command-line prompt */
 
 
-static const char usage[] = "Usage: %s [-] [-sxE] [-p string] [name]\n";
+static const char usage[] = "Usage: %s [-] [-ESsx] [-p string] [name]\n";
 
 /* ed: line editor */
 int
@@ -118,7 +119,7 @@ main(int ac, char *av[])
 
 	red = (n = strlen(argv[0])) > 2 && argv[0][n - 3] == 'r';
 top:
-	while ((c = getopt(argc, argv, "p:sxE")) != -1)
+	while ((c = getopt(argc, argv, "p:sxES")) != -1)
 		switch(c) {
 		case 'p':				/* set prompt */
 			prompt = optarg;
@@ -136,6 +137,9 @@ top:
 
 		case 'E':
 			ere = REG_EXTENDED;
+			break;
+		case 'S':				/* ! is not allowed */
+			secure = 1;
 			break;
 		default:
 			fprintf(stderr, usage, getprogname());
@@ -858,6 +862,10 @@ exec_command(void)
 		printf("%ld\n", addr_cnt ? second_addr : addr_last);
 		break;
 	case '!':
+		if (secure) {
+			seterrmsg("'!' not allowed");
+			return ERR;
+		}
 		if (addr_cnt > 0) {
 			seterrmsg("unexpected address");
 			return ERR;
