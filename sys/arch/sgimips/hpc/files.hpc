@@ -1,4 +1,4 @@
-# $NetBSD: files.hpc,v 1.15 2018/04/09 19:11:38 christos Exp $
+# $NetBSD: files.hpc,v 1.16 2018/04/09 20:07:22 christos Exp $
 
 device	sq: arp, ether, ifnet
 attach	sq at hpc
@@ -27,4 +27,4 @@ file	arch/sgimips/hpc/pi1ppc.c	pi1ppc
 
 device	button : sysmon_power, sysmon_taskq
 attach	button at hpc
-file	arch/sgimips/hpc/panel.c	button
+file	arch/sgimips/hpc/button.c	button
