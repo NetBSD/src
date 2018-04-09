@@ -1,4 +1,4 @@
-/* $NetBSD: usbroothub.c,v 1.4 2017/11/28 07:36:08 skrll Exp $ */
+/* $NetBSD: usbroothub.c,v 1.5 2018/04/09 15:26:29 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -62,6 +62,7 @@
 #include <dev/usb/usbdivar.h>
 #include <dev/usb/usbroothub.h>
 #include <dev/usb/usbhist.h>
+#include <sys/systm.h>		/* for ostype */
 
 extern int usbdebug;
 
@@ -468,7 +469,7 @@ roothub_ctrl_start(struct usbd_xfer *xfer)
 			break;
 		case C(1, UDESC_STRING):
 			/* Vendor */
-			buflen = usb_makestrdesc(sd, len, "NetBSD");
+			buflen = usb_makestrdesc(sd, len, ostype);
 			break;
 		case C(2, UDESC_STRING):
 			/* Product */
