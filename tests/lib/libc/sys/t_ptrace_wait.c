@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.26 2018/03/13 14:54:13 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.27 2018/04/09 15:45:16 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.26 2018/03/13 14:54:13 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.27 2018/04/09 15:45:16 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -134,7 +134,8 @@ ATF_TC(traceme2);
 ATF_TC_HEAD(traceme2, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
-	    "Verify SIGSTOP followed by _exit(2) in a child");
+	    "Verify that a signal emitted by a tracer to a child is caught by "
+	    "a signal handler");
 }
 
 static int traceme2_caught = 0;
