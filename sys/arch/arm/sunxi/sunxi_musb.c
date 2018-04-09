@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_musb.c,v 1.4 2018/04/08 13:36:37 jmcneill Exp $ */
+/* $NetBSD: sunxi_musb.c,v 1.5 2018/04/09 16:21:09 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_musb.c,v 1.4 2018/04/08 13:36:37 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_musb.c,v 1.5 2018/04/09 16:21:09 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -361,7 +361,6 @@ sunxi_musb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_bus.ub_hcpriv = sc;
 	sc->sc_bus.ub_dmatag = faa->faa_dmat;
-	strlcpy(sc->sc_vendor, "Allwinner", sizeof(sc->sc_vendor));
 	sc->sc_size = size;
 	sc->sc_iot = &msc->sc_bs;
 	if (bus_space_map(faa->faa_bst, addr, size, 0, &sc->sc_ioh) != 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: ahci.c,v 1.14 2017/06/01 02:45:06 chs Exp $	*/
+/*	$NetBSD: ahci.c,v 1.15 2018/04/09 16:21:10 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahci.c,v 1.14 2017/06/01 02:45:06 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahci.c,v 1.15 2018/04/09 16:21:10 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -539,27 +539,16 @@ ahci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 	switch (C(req->bRequest, req->bmRequestType)) {
 	case C(UR_GET_DESCRIPTOR, UT_READ_DEVICE):
 		switch (value) {
-		case C(0, UDESC_DEVICE): {
-			usb_device_descriptor_t devd;
-
-			DPRINTF(D_MSG, ("UDESC_DEVICE "));
-			totlen = min(buflen, sizeof(devd));
-			memcpy(&devd, buf, totlen);
-			USETW(devd.idVendor, USB_VENDOR_SCANLOGIC);
-			memcpy(buf, &devd, totlen);
-			break;
-		}
 #define sd ((usb_string_descriptor_t *)buf)
-		case C(1, UDESC_STRING):
-			/* Vendor */
-			totlen = usb_makestrdesc(sd, len, "ADMTek");
-			break;
 		case C(2, UDESC_STRING):
 			/* Product */
 			totlen = usb_makestrdesc(sd, len, "ADM5120 root hub");
 			break;
 		default:
 			printf("unknownGetDescriptor=%x", value);
+			/* FALLTHROUGH */
+		case C(0, UDESC_DEVICE):
+		case C(1, UDESC_STRING):
 			/* default from usbroothub */
 			return buflen;
 		}
