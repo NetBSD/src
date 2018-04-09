@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci_pci.c,v 1.11 2017/12/28 05:43:42 msaitoh Exp $	*/
+/*	$NetBSD: xhci_pci.c,v 1.12 2018/04/09 16:21:10 jakllsch Exp $	*/
 /*	OpenBSD: xhci_pci.c,v 1.4 2014/07/12 17:38:51 yuo Exp	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci_pci.c,v 1.11 2017/12/28 05:43:42 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci_pci.c,v 1.12 2018/04/09 16:21:10 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_xhci_pci.h"
@@ -216,11 +216,6 @@ alloc_retry:
 		}
 	}
 	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
-
-	/* Figure out vendor for root hub descriptor. */
-	sc->sc_id_vendor = PCI_VENDOR(pa->pa_id);
-	pci_findvendor(sc->sc_vendor, sizeof(sc->sc_vendor),
-	    sc->sc_id_vendor);
 
 	/* Intel chipset requires SuperSpeed enable and USB2 port routing */
 	switch (PCI_VENDOR(pa->pa_id)) {

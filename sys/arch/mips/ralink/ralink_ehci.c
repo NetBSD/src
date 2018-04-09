@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_ehci.c,v 1.6 2016/04/23 10:15:30 skrll Exp $	*/
+/*	$NetBSD: ralink_ehci.c,v 1.7 2018/04/09 16:21:10 jakllsch Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
 /* ralink_ehci.c -- Ralink EHCI USB Driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ralink_ehci.c,v 1.6 2016/04/23 10:15:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ralink_ehci.c,v 1.7 2018/04/09 16:21:10 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -152,10 +152,6 @@ ralink_ehci_attach(device_t parent, device_t self, void *aux)
 			break;
 	}
 	sc->sc_ehci.sc_ncomp = ncomp;
-
-	/* set vendor for root hub descriptor. */
-	sc->sc_ehci.sc_id_vendor = 0x1814;	/* XXX */
-	strlcpy(sc->sc_ehci.sc_vendor, "Ralink", sizeof(sc->sc_ehci.sc_vendor));
 
 	/* Initialize EHCI */
 	int err = ehci_init(&sc->sc_ehci);

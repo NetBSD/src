@@ -1,4 +1,4 @@
-/*	$NetBSD: uhcivar.h,v 1.53 2016/04/23 10:15:32 skrll Exp $	*/
+/*	$NetBSD: uhcivar.h,v 1.54 2018/04/09 16:21:11 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -187,9 +187,6 @@ typedef struct uhci_softc {
 	int sc_ival;			/* time between root hub intrs */
 	struct usbd_xfer *sc_intr_xfer;	/* root hub interrupt transfer */
 	struct callout sc_poll_handle;
-
-	char sc_vendor[32];		/* vendor string for root hub */
-	int sc_id_vendor;		/* vendor ID for root hub */
 
 	device_t sc_child;		/* /dev/usb# device */
 } uhci_softc_t;

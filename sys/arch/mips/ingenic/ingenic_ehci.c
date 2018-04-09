@@ -1,4 +1,4 @@
-/*	$NetBSD: ingenic_ehci.c,v 1.5 2016/04/23 10:15:30 skrll Exp $ */
+/*	$NetBSD: ingenic_ehci.c,v 1.6 2018/04/09 16:21:10 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2015 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ingenic_ehci.c,v 1.5 2016/04/23 10:15:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ingenic_ehci.c,v 1.6 2018/04/09 16:21:10 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -201,8 +201,6 @@ ingenic_ehci_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ncomp = 0;
 	sc->sc_npcomp = 0;
 #endif
-	sc->sc_id_vendor = USB_VENDOR_INGENIC;
-	strlcpy(sc->sc_vendor, "Ingenic", sizeof(sc->sc_vendor));
 
 	error = ehci_init(sc);
 	if (error) {

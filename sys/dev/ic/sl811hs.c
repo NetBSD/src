@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.98 2017/10/28 00:37:12 pgoyette Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.99 2018/04/09 16:21:10 jakllsch Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.98 2017/10/28 00:37:12 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.99 2018/04/09 16:21:10 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_slhci.h"
@@ -3310,12 +3310,7 @@ slhci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 		if (type == UT_READ_DEVICE) {
 			/* value is type (&0xff00) and index (0xff) */
 			if (value == (UDESC_DEVICE<<8)) {
-				usb_device_descriptor_t devd;
-
-				actlen = min(buflen, sizeof(devd));
-				memcpy(&devd, buf, actlen);
-				USETW(devd.idVendor, USB_VENDOR_SCANLOGIC);
-				memcpy(buf, &devd, actlen);
+				actlen = buflen;
 				error = USBD_NORMAL_COMPLETION;
 			} else if (value == (UDESC_CONFIG<<8)) {
 				struct usb_roothub_descriptors confd;
@@ -3329,8 +3324,7 @@ slhci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 				error = USBD_NORMAL_COMPLETION;
 			} else if (value == ((UDESC_STRING<<8)|1)) {
 				/* Vendor */
-				actlen = usb_makestrdesc((usb_string_descriptor_t *)
-				    buf, len, "ScanLogic/Cypress");
+				actlen = buflen;
 				error = USBD_NORMAL_COMPLETION;
 			} else if (value == ((UDESC_STRING<<8)|2)) {
 				/* Product */

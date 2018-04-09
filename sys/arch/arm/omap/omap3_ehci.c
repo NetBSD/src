@@ -1,4 +1,4 @@
-/* $NetBSD: omap3_ehci.c,v 1.12 2016/10/04 15:59:36 kiyohara Exp $ */
+/* $NetBSD: omap3_ehci.c,v 1.13 2018/04/09 16:21:09 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2010-2012 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap3_ehci.c,v 1.12 2016/10/04 15:59:36 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap3_ehci.c,v 1.13 2018/04/09 16:21:09 jakllsch Exp $");
 
 #include "locators.h"
 
@@ -40,8 +40,6 @@ __KERNEL_RCSID(0, "$NetBSD: omap3_ehci.c,v 1.12 2016/10/04 15:59:36 kiyohara Exp
 #include <sys/gpio.h>
 
 #include <machine/intr.h>
-
-#include <dev/pci/pcidevs.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
@@ -479,8 +477,6 @@ omap3_ehci_attach(device_t parent, device_t self, void *opaque)
 	sc->sc_uhh_size = UHH_SIZE;
 	sc->sc.sc_bus.ub_dmatag = obio->obio_dmat;
 	sc->sc.sc_bus.ub_revision = USBREV_2_0;
-	sc->sc.sc_id_vendor = PCI_VENDOR_TI;
-	strlcpy(sc->sc.sc_vendor, "OMAP3", sizeof(sc->sc.sc_vendor));
 
 #ifdef OMAP_3XXX
 	omap3_dpll5_init(sc);
