@@ -1,7 +1,7 @@
 /*
  * $OpenBSD: pch.c,v 1.37 2007/09/02 15:19:33 deraadt Exp $
  * $DragonFly: src/usr.bin/patch/pch.c,v 1.6 2008/08/10 23:35:40 joerg Exp $
- * $NetBSD: pch.c,v 1.25.8.2 2015/07/31 16:47:13 snj Exp $
+ * $NetBSD: pch.c,v 1.25.8.2.6.1 2018/04/09 13:23:51 martin Exp $
  */
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pch.c,v 1.25.8.2 2015/07/31 16:47:13 snj Exp $");
+__RCSID("$NetBSD: pch.c,v 1.25.8.2.6.1 2018/04/09 13:23:51 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -1414,8 +1414,8 @@ do_ed_script(void)
 			unlink(TMPOUTNAME);
 			fatal("can't create temp file %s", TMPOUTNAME);
 		}
-		snprintf(buf, buf_len, "%s%s%s", _PATH_ED,
-		    verbose ? " " : " -s ", TMPOUTNAME);
+		snprintf(buf, buf_len, "%s -S%s %s", _PATH_ED,
+		    verbose ? "" : "s", TMPOUTNAME);
 		pipefp = popen(buf, "w");
 	}
 	for (;;) {
