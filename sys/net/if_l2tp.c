@@ -1,4 +1,4 @@
-/*	$NetBSD: if_l2tp.c,v 1.11.2.5 2018/03/08 13:41:40 martin Exp $	*/
+/*	$NetBSD: if_l2tp.c,v 1.11.2.6 2018/04/09 13:40:20 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.11.2.5 2018/03/08 13:41:40 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.11.2.6 2018/04/09 13:40:20 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -465,18 +465,20 @@ l2tpintr(struct l2tp_variant *var)
 void
 l2tp_input(struct mbuf *m, struct ifnet *ifp)
 {
-	u_long val;
+	vaddr_t addr;
 
 	KASSERT(ifp != NULL);
 
-	if (m->m_pkthdr.len < sizeof(val)) {
+	/*
+	 * Currently, l2tp(4) supports only ethernet as inner protocol.
+	 */
+	if (m->m_pkthdr.len < sizeof(struct ether_header)) {
 		m_freem(m);
 		return;
 	}
 
-	m_copydata(m, 0, sizeof(val), &val);
-
-	if ((val & 0x03) == 0) {
+	addr = mtod(m, vaddr_t);
+	if ((addr & 0x03) == 0) {
 		/* copy and align head of payload */
 		struct mbuf *m_head;
 		int copy_length;
