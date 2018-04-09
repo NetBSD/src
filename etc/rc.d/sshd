@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: sshd,v 1.26 2018/04/07 00:41:16 christos Exp $
+# $NetBSD: sshd,v 1.27 2018/04/09 15:02:39 christos Exp $
 #
 
 # PROVIDE: sshd
@@ -23,17 +23,14 @@ sshd_keygen()
 	while read type bits filename version name;  do
 		f="/etc/ssh/$filename"
 		if [ -f "$f" ]; then
-			echo "You already have an $name host key in $f"
-			echo "Skipping protocol version $version $name" \
-			    "Key Generation"
-		else
-			case "${bits}" in
-			-1)	bitarg=;;
-			0)	bitarg="${ssh_keygen_flags}";;
-			*)	bitarg="-b ${bits}";;
-			esac
-			"${keygen}" -t "${type}" ${bitarg} -f "${f}" -N ''
+			continue
 		fi
+		case "${bits}" in
+		-1)	bitarg=;;
+		0)	bitarg="${ssh_keygen_flags}";;
+		*)	bitarg="-b ${bits}";;
+		esac
+		"${keygen}" -t "${type}" ${bitarg} -f "${f}" -N ''
 	done << _EOF
 dsa	1024	ssh_host_dsa_key	2	DSA
 ecdsa	521	ssh_host_ecdsa_key	1	ECDSA
@@ -46,12 +43,7 @@ _EOF
 
 sshd_precmd()
 {
-	if ! [ -f /etc/ssh/ssh_host_dsa_key ]	  ||
-	   ! [ -f /etc/ssh/ssh_host_ecdsa_key ]	  ||
-	   ! [ -f /etc/ssh/ssh_host_ed25519_key ] ||
-	   ! [ -f /etc/ssh/ssh_host_rsa_key ];	    then
-		run_rc_command keygen
-	fi
+	run_rc_command keygen
 }
 
 keygen_cmd=sshd_keygen
