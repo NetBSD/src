@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1173.2.4 2018/02/11 21:17:34 snj Exp $
+#	$NetBSD: files,v 1.1173.2.5 2018/04/09 12:49:31 bouyer Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20170615
@@ -516,6 +516,7 @@ file	dev/ic/ld_cac.c			ld_cac
 
 # HP/Compaq Command Interface for SCSI-3 Support
 #
+defflag	opt_ciss.h			CISS_NO_INTERRUPT_HACK
 device ciss: scsi
 file	dev/ic/ciss.c			ciss
 
