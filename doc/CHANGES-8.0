@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.168 2018/04/09 12:54:34 bouyer Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.169 2018/04/09 13:36:36 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -11011,4 +11011,61 @@ sbin/gpt/unset.c				1.14
 	Check device parameter to avoid segfaults.
 	Augment synopsis for -l option.
 	[mlelstv, ticket #710]
+
+sys/dev/ic/nvme.c				1.32
+
+	don't leak ccb on alloc failure.
+	[msaitoh, ticket #718]
+
+sys/dev/pci/if_rtwn.c				1.15
+
+	rtwn: fix attach function 
+	[msaitoh, ticket #719]
+
+sys/arch/amiga/amiga/cc.c			1.27
+
+	fix spl leak, found by mootja
+	[msaitoh, ticket #721]
+
+sys/arch/mips/mips/cpu_subr.c			1.33
+
+	fix spl leak, found by mootja
+	[msaitoh, ticket #722]
+
+lib/libc/sys/recv.2				1.38
+sbin/route/route.c				1.159
+sys/kern/uipc_socket.c				1.260, 1.261
+sys/kern/uipc_socket2.c				1.128
+sys/kern/uipc_usrreq.c				1.184
+sys/net/raw_usrreq.c				1.59
+sys/net/rtsock.c				1.239
+sys/netatalk/ddp_input.c			1.31
+sys/netcan/can.c				1.3
+sys/netinet/ip_mroute.c				1.155
+sys/netinet/raw_ip.c				1.172
+sys/netinet/udp_usrreq.c			1.246
+sys/netinet6/icmp6.c				1.224
+sys/netinet6/ip6_input.c			1.195
+sys/netinet6/ip6_mroute.c			1.123
+sys/netinet6/raw_ip6.c				1.166
+sys/netinet6/udp6_usrreq.c			1.138
+sys/netipsec/keysock.c				1.63
+sys/sys/socketvar.h				1.151
+tests/lib/libc/sys/t_recvmmsg.c			1.2
+tests/net/icmp/t_ping.c				1.18 - 1.20, 1.22, 1.23
+
+	socket: report receive buffer overflows
+
+	Add soroverflow() which increments the overflow counter, sets so_error
+	to ENOBUFS and wakes the receive socket up.
+	Replace all code that manually increments this counter with
+	soroverflow().
+	Add soroverflow() to raw_input().
+
+	This allows userland to detect route(4) overflows so it can re-sync
+	with the current state.
+
+	rtsock: log dropped messages that we cannot report to userland
+
+	[roy, ticket #724]
 
