@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_reass.c,v 1.11.8.2 2018/04/05 14:33:41 martin Exp $	*/
+/*	$NetBSD: ip_reass.c,v 1.11.8.3 2018/04/09 16:40:07 martin Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_reass.c,v 1.11.8.2 2018/04/05 14:33:41 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_reass.c,v 1.11.8.3 2018/04/09 16:40:07 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -632,7 +632,7 @@ ip_reass_packet(struct mbuf **m0, struct ip *ip)
 	}
 
 	if (off + len > IP_MAXPACKET) {
-		IP_STATINC(IP_STAT_BADFRAGS);
+		IP_STATINC(IP_STAT_TOOLONG);
 		return EINVAL;
 	}
 
