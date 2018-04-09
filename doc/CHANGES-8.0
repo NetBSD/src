@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.167 2018/04/09 04:04:41 snj Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.168 2018/04/09 12:54:34 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -10988,4 +10988,27 @@ sys/arch/amd64/amd64/trap.c			1.113
 	T_ALIGNFLT fault, you get in si_addr the address of another LWP's
 	page - and perhaps this can be used to defeat userland ASLR.
 	[maxv, ticket #705]
+
+sys/arch/amd64/conf/ALL				1.81
+sys/conf/files					1.1194
+sys/dev/ic/ciss.c				1.38
+sys/dev/ic/cissvar.h				1.7
+sys/dev/pci/ciss_pci.c				1.14
+
+	Add a new option CISS_NO_INTERRUPT_HACK for driving ciss(4) by
+	callouts.  This is intended as workaround for certain Xen issues
+	with dom0 kernels and will likely want to have a high HZ value as
+	well for decent performance.
+	[spz, ticket #708]
+
+sbin/gpt/gpt.8					1.58
+sbin/gpt/gpt.h					1.37
+sbin/gpt/main.c					1.11
+sbin/gpt/set.c					1.14
+sbin/gpt/type.c					1.14
+sbin/gpt/unset.c				1.14
+
+	Check device parameter to avoid segfaults.
+	Augment synopsis for -l option.
+	[mlelstv, ticket #710]
 
