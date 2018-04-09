@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.233.4.1 2017/12/21 21:08:13 snj Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.233.4.2 2018/04/09 13:34:10 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.233.4.1 2017/12/21 21:08:13 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.233.4.2 2018/04/09 13:34:10 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -502,8 +502,8 @@ udp4_sendup(struct mbuf *m, int off /* offset of data portion */,
 			m_freem(n);
 			if (opts)
 				m_freem(opts);
-			so->so_rcv.sb_overflowed++;
 			UDP_STATINC(UDP_STAT_FULLSOCK);
+			soroverflow(so);
 		} else
 			sorwakeup(so);
 	}

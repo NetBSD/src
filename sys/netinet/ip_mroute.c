@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.146.6.2 2018/01/02 10:20:34 snj Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.146.6.3 2018/04/09 13:34:10 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.146.6.2 2018/01/02 10:20:34 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.146.6.3 2018/04/09 13:34:10 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1282,6 +1282,7 @@ socket_send(struct socket *s, struct mbuf *mm, struct sockaddr_in *src)
 			sorwakeup(s);
 			return (0);
 		}
+		soroverflow(s);
 	}
 	m_freem(mm);
 	return (-1);
