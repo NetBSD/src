@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_sendpkt.c,v 1.18 2018/03/17 10:42:23 maxv Exp $	*/
+/*	$NetBSD: npf_sendpkt.c,v 1.19 2018/04/10 04:29:57 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2010-2011 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_sendpkt.c,v 1.18 2018/03/17 10:42:23 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_sendpkt.c,v 1.19 2018/04/10 04:29:57 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -176,6 +176,7 @@ npf_return_tcp(npf_cache_t *npc)
 		    sizeof(struct tcphdr));
 	}
 
+#if defined(INET6)
 	/* Handle IPv6 scopes */
 	if (npf_iscached(npc, NPC_IP6)) {
 		const struct ifnet *rcvif = npc->npc_nbuf->nb_ifp;
@@ -189,14 +190,17 @@ npf_return_tcp(npf_cache_t *npc)
 			goto bad;
 		}
 	}
+#endif
 
 	/* Pass to IP layer. */
 	if (npf_iscached(npc, NPC_IP4)) {
 		return ip_output(m, NULL, NULL, IP_FORWARDING, NULL, NULL);
 	}
+#if defined(INET6)
 	return ip6_output(m, NULL, NULL, IPV6_FORWARDING, NULL, NULL, NULL);
 
 bad:
+#endif
 	m_freem(m);
 	return EINVAL;
 }
@@ -212,6 +216,7 @@ npf_return_icmp(const npf_cache_t *npc)
 	if (npf_iscached(npc, NPC_IP4)) {
 		icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_ADMIN_PROHIBIT, 0, 0);
 		return 0;
+#if defined(INET6)
 	} else if (npf_iscached(npc, NPC_IP6)) {
 		/* Handle IPv6 scopes */
 		const struct ifnet *rcvif = npc->npc_nbuf->nb_ifp;
@@ -227,6 +232,7 @@ npf_return_icmp(const npf_cache_t *npc)
 
 		icmp6_error(m, ICMP6_DST_UNREACH, ICMP6_DST_UNREACH_ADMIN, 0);
 		return 0;
+#endif
 	}
 	return EINVAL;
 }
