@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ping.c,v 1.17.6.1 2018/04/09 13:34:10 bouyer Exp $	*/
+/*	$NetBSD: t_ping.c,v 1.17.6.2 2018/04/10 06:54:37 martin Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: t_ping.c,v 1.17.6.1 2018/04/09 13:34:10 bouyer Exp $");
+__RCSID("$NetBSD: t_ping.c,v 1.17.6.2 2018/04/10 06:54:37 martin Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -198,7 +198,7 @@ doping(const char *target, int loops, u_int pktsize)
 		}
 		if (n == -1 && (errno == EAGAIN || errno == ENOBUFS))
 			continue;
-		atf_tc_fail_errno("recv failed (n == %d)", n);
+		atf_tc_fail_errno("recv failed (n == %zd)", n);
 	}
 
 	rump_sys_close(s);
