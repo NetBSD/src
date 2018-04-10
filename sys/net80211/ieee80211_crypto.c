@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_crypto.c,v 1.21 2018/01/19 07:52:37 maxv Exp $	*/
+/*	$NetBSD: ieee80211_crypto.c,v 1.22 2018/04/10 07:53:36 maxv Exp $	*/
 
 /*
  * Copyright (c) 2001 Atsushi Onoe
@@ -37,7 +37,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_crypto.c,v 1.12 2005/08/08 18:46:35 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto.c,v 1.21 2018/01/19 07:52:37 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto.c,v 1.22 2018/04/10 07:53:36 maxv Exp $");
 #endif
 
 #ifdef _KERNEL_OPT
@@ -529,6 +529,11 @@ ieee80211_crypto_setkey(struct ieee80211com *ic, struct ieee80211_key *key,
 
 /*
  * Add privacy headers appropriate for the specified key.
+ *
+ * XXX XXX XXX: Here we modify 'm', and potentially reallocate it. We
+ * should pass back to the caller the updated pointer to avoid
+ * use-after-frees. This can be done by changing the argument to be **m,
+ * but many drivers will have to be changed accordingly.
  */
 struct ieee80211_key *
 ieee80211_crypto_encap(struct ieee80211com *ic, struct ieee80211_node *ni,
@@ -580,8 +585,6 @@ ieee80211_crypto_encap(struct ieee80211com *ic, struct ieee80211_node *ni,
 	}
 	hdr = mtod(m, u_int8_t *);
 	memmove(hdr, hdr + cip->ic_header, hdrlen);
-
-	/* XXX pass the updated pointer back to the caller */
 
 	return (cip->ic_encap(k, m, keyid<<6) ? k : NULL);
 }
@@ -647,7 +650,7 @@ ieee80211_crypto_decap(struct ieee80211com *ic,
 		IEEE80211_DPRINTF(ic, IEEE80211_MSG_CRYPTO,
 		    "[%s] unable to pullup %s header\n",
 		    ether_sprintf(wh->i_addr2), cip->ic_name);
-		ic->ic_stats.is_rx_wepfail++;	/* XXX */
+		ic->ic_stats.is_rx_tooshort++;
 		return NULL;
 	}
 
