@@ -1,4 +1,4 @@
-/*	$NetBSD: if_l2tp.c,v 1.22 2018/04/09 10:32:32 knakahara Exp $	*/
+/*	$NetBSD: if_l2tp.c,v 1.23 2018/04/10 11:44:13 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.22 2018/04/09 10:32:32 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.23 2018/04/10 11:44:13 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -481,10 +481,12 @@ l2tp_input(struct mbuf *m, struct ifnet *ifp)
 	 * If the head of the payload is not aligned, align it.
 	 */
 	addr = mtod(m, vaddr_t);
-	if ((addr & 0x03) == 0) {
+	if ((addr & 0x03) != 0x2) {
 		/* copy and align head of payload */
 		struct mbuf *m_head;
 		int copy_length;
+		u_int pad = roundup(sizeof(struct ether_header), 4)
+			- sizeof(struct ether_header);
 
 #define L2TP_COPY_LENGTH		60
 
@@ -507,7 +509,19 @@ l2tp_input(struct mbuf *m, struct ifnet *ifp)
 		}
 		M_COPY_PKTHDR(m_head, m);
 
-		MH_ALIGN(m_head, L2TP_COPY_LENGTH);
+		/*
+		 * m_head should be:
+		 *                             L2TP_COPY_LENGTH
+		 *                          <-  + roundup(pad, 4) - pad ->
+		 *   +-------+--------+-----+--------------+-------------+
+		 *   | m_hdr | pkthdr | ... | ether header |   payload   |
+		 *   +-------+--------+-----+--------------+-------------+
+		 *                          ^              ^
+		 *                          m_data         4 byte aligned
+		 */
+		MH_ALIGN(m_head, L2TP_COPY_LENGTH + roundup(pad, 4));
+		m_head->m_data += pad;
+
 		memcpy(mtod(m_head, void *), mtod(m, void *), copy_length);
 		m_head->m_len = copy_length;
 		m->m_data += copy_length;
