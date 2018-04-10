@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.175 2018/04/10 08:07:48 bouyer Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.176 2018/04/10 11:49:39 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -11200,4 +11200,10 @@ tests/usr.bin/shmif_dumpbus/t_basic.sh		1.9
 	Adjust golden output accordingly.
 	Fixes PR 53150.
 	[martin, ticket #726]
+
+sys/net/if_bridge.c				1.149
+tests/net/if_bridge/t_rtable.sh			1.2
+
+	Fix bridge_rtdelete and add a test case for it.
+	[ozaki-r, ticket #727]
 
