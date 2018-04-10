@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.173 2018/04/09 18:23:33 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.174 2018/04/10 06:54:58 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -11052,7 +11052,7 @@ sys/netinet6/udp6_usrreq.c			1.138
 sys/netipsec/keysock.c				1.63
 sys/sys/socketvar.h				1.151
 tests/lib/libc/sys/t_recvmmsg.c			1.2
-tests/net/icmp/t_ping.c				1.18 - 1.20, 1.22, 1.23
+tests/net/icmp/t_ping.c				1.18 - 1.23
 
 	socket: report receive buffer overflows
 
@@ -11062,11 +11062,12 @@ tests/net/icmp/t_ping.c				1.18 - 1.20, 1.22, 1.23
 	soroverflow().
 	Add soroverflow() to raw_input().
 
+	Fix a printf(3)-like format in ATF ICMP t_ping.c
+
 	This allows userland to detect route(4) overflows so it can re-sync
 	with the current state.
 
 	rtsock: log dropped messages that we cannot report to userland
-
 	[roy, ticket #724]
 
 sys/net/if_l2tp.c				1.21
