@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2186 2018/04/04 04:43:46 kre Exp $
+#	$NetBSD: mi,v 1.2187 2018/04/10 16:12:29 maxv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -11059,7 +11059,7 @@
 ./usr/share/man/cat9/m_free.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/m_freem.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/m_get.0			comp-sys-catman		.cat
-./usr/share/man/cat9/m_getclr.0			comp-sys-catman		.cat
+./usr/share/man/cat9/m_getclr.0			comp-obsolete		obsolete
 ./usr/share/man/cat9/m_gethdr.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/m_makewritable.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/m_prepend.0		comp-sys-catman		.cat
@@ -18738,7 +18738,7 @@
 ./usr/share/man/html9/m_free.html		comp-sys-htmlman	html
 ./usr/share/man/html9/m_freem.html		comp-sys-htmlman	html
 ./usr/share/man/html9/m_get.html		comp-sys-htmlman	html
-./usr/share/man/html9/m_getclr.html		comp-sys-htmlman	html
+./usr/share/man/html9/m_getclr.html		comp-obsolete	obsolete
 ./usr/share/man/html9/m_gethdr.html		comp-sys-htmlman	html
 ./usr/share/man/html9/m_makewritable.html	comp-sys-htmlman	html
 ./usr/share/man/html9/m_prepend.html		comp-sys-htmlman	html
@@ -26571,7 +26571,7 @@
 ./usr/share/man/man9/m_free.9			comp-sys-man		.man
 ./usr/share/man/man9/m_freem.9			comp-sys-man		.man
 ./usr/share/man/man9/m_get.9			comp-sys-man		.man
-./usr/share/man/man9/m_getclr.9			comp-sys-man		.man
+./usr/share/man/man9/m_getclr.9			comp-obsolete		obsolete
 ./usr/share/man/man9/m_gethdr.9			comp-sys-man		.man
 ./usr/share/man/man9/m_makewritable.9		comp-sys-man		.man
 ./usr/share/man/man9/m_prepend.9		comp-sys-man		.man
