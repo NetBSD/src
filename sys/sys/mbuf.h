@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.181 2018/04/10 15:27:35 maxv Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.182 2018/04/10 16:12:30 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -841,7 +841,6 @@ struct	mbuf *m_devget(char *, int, int, struct ifnet *,
     void (*copy)(const void *, void *, size_t));
 struct	mbuf *m_dup(struct mbuf *, int, int, int);
 struct	mbuf *m_get(int, int);
-struct	mbuf *m_getclr(int, int);
 struct	mbuf *m_gethdr(int, int);
 struct	mbuf *m_prepend(struct mbuf *,int, int);
 struct	mbuf *m_pulldown(struct mbuf *, int, int, int *);
