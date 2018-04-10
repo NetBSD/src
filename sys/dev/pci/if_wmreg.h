@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.105 2017/11/22 02:36:52 msaitoh Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.106 2018/04/10 08:18:38 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -590,8 +590,8 @@ struct livengood_tcpip_ctxdesc {
 #define	FCAL_CONST	0x00c28001	/* Flow Control MAC addr low */
 
 #define	WMREG_FEXTNVM	0x0028	/* Future Extended NVM register */
-#define	FEXTNVM_SW_CONFIG	__BIT(1)
-#define	FEXTNVM_SW_CONFIG_ICH8M	__BIT(27)
+#define	FEXTNVM_SW_CONFIG	__BIT(0)  /* SW PHY Config En (ICH8 B0) */
+#define	FEXTNVM_SW_CONFIG_ICH8M	__BIT(27) /* SW PHY Config En (>= ICH8 B1) */
 
 #define	WMREG_FCAH	0x002c	/* Flow Control Address High */
 #define	FCAH_CONST	0x00000100	/* Flow Control MAC addr high */
