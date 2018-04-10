@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.186 2018/04/10 15:29:46 maxv Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.187 2018/04/10 16:12:30 maxv Exp $	*/
 
 /*
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.186 2018/04/10 15:29:46 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.187 2018/04/10 16:12:30 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
@@ -640,18 +640,6 @@ m_gethdr(int nowait, int type)
 	m->m_pkthdr.pattr_af = AF_UNSPEC;
 	m->m_pkthdr.pattr_hdr = NULL;
 
-	return m;
-}
-
-struct mbuf *
-m_getclr(int nowait, int type)
-{
-	struct mbuf *m;
-
-	m = m_get(nowait, type);
-	if (m == NULL)
-		return NULL;
-	memset(mtod(m, void *), 0, MLEN);
 	return m;
 }
 
