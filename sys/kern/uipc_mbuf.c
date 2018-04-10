@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.184 2018/03/21 17:03:09 maxv Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.185 2018/04/10 15:27:35 maxv Exp $	*/
 
 /*
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.184 2018/03/21 17:03:09 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.185 2018/04/10 15:27:35 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
@@ -1717,12 +1717,11 @@ m_getptr(struct mbuf *m, int loc, int *off)
 }
 
 /*
- * m_ext_free: release a reference to the mbuf external storage.
+ * Release a reference to the mbuf external storage.
  *
  * => free the mbuf m itself as well.
  */
-
-void
+static void
 m_ext_free(struct mbuf *m)
 {
 	const bool embedded = MEXT_ISEMBEDDED(m);
