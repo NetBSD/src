@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.7,v 1.1.2.140 2018/04/10 11:31:14 martin Exp $
+# $NetBSD: CHANGES-6.0.7,v 1.1.2.141 2018/04/10 17:44:58 snj Exp $
 
 A complete list of changes from the NetBSD 6.0.6 release to the NetBSD 6.0.7
 release:
@@ -15447,4 +15447,10 @@ sys/arch/amiga/amiga/cc.c			1.27 (patch)
 
 	Fix a spl(9) leak.
 	[msaitoh, ticket #1544]
+
+usr.sbin/ypserv/ypserv/ypserv_proc.c		1.18 via patch
+
+	PR/47615: Always zero out the result structs in the svc
+	procs to avoid returning stale request data to the client.
+	[christos, ticket #1528]
 
