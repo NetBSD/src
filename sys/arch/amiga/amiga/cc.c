@@ -1,4 +1,4 @@
-/*	$NetBSD: cc.c,v 1.22 2010/12/20 00:25:25 matt Exp $	*/
+/*	$NetBSD: cc.c,v 1.22.14.1 2018/04/10 11:27:55 martin Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cc.c,v 1.22 2010/12/20 00:25:25 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cc.c,v 1.22.14.1 2018/04/10 11:27:55 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -504,9 +504,10 @@ alloc_chipmem(u_long size)
 	while (size > mn->size && mn != (void *)&free_list)
 		mn = mn->free_link.cqe_next;
 
-	if (mn == (void *)&free_list)
+	if (mn == (void *)&free_list) {
+		splx(s);
 		return(NULL);
-
+	}
 	if ((mn->size - size) <= sizeof (*mn)) {
 		/*
 		 * our allocation would not leave room
