@@ -1,4 +1,4 @@
-/*	$NetBSD: dmesg.c,v 1.30 2018/04/02 01:15:31 christos Exp $	*/
+/*	$NetBSD: dmesg.c,v 1.31 2018/04/10 22:21:52 christos Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,7 +38,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)dmesg.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: dmesg.c,v 1.30 2018/04/02 01:15:31 christos Exp $");
+__RCSID("$NetBSD: dmesg.c,v 1.31 2018/04/10 22:21:52 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -82,31 +82,39 @@ main(int argc, char *argv[])
 	char tbuf[64];
 	char *memf, *nlistf;
 	struct timeval boottime;
-	int ptime = 0;
+	struct timespec lasttime;
+	intmax_t sec;
+	long nsec;
+	int deltas, quiet, humantime;
 	
 	static const int bmib[] = { CTL_KERN, KERN_BOOTTIME };
 	size = sizeof(boottime);
 
 	boottime.tv_sec = 0;
 	boottime.tv_usec = 0;
-	ptime = 0;
+	lasttime.tv_sec = 0;
+	lasttime.tv_nsec = 0;
+	deltas = quiet = humantime = 0;
 
         (void)sysctl(bmib, 2, &boottime, &size, NULL, 0);
 
 	memf = nlistf = NULL;
-	while ((ch = getopt(argc, argv, "M:N:qt")) != -1)
+	while ((ch = getopt(argc, argv, "dM:N:tT")) != -1)
 		switch(ch) {
+		case 'd':
+			deltas = 1;
+			break;
 		case 'M':
 			memf = optarg;
 			break;
 		case 'N':
 			nlistf = optarg;
 			break;
-		case 'q':
-			ptime = -1;
-			break;
 		case 't':
-			ptime = 1;
+			quiet = 1;
+			break;
+		case 'T':
+			humantime = 1;
 			break;
 		case '?':
 		default:
@@ -114,6 +122,8 @@ main(int argc, char *argv[])
 		}
 	argc -= optind;
 	argv += optind;
+	if (quiet && humantime)
+		err(EXIT_FAILURE, "-t cannot be used with -T");
 
 	if (memf == NULL) {
 #endif
@@ -207,23 +217,35 @@ main(int argc, char *argv[])
 				ADDC('\0');
 				tstamp = 0;
 #ifndef SMALL
-				if (ptime == 1) {
-					intmax_t sec;
+				sscanf(tbuf, "[%jd.%ld]", &sec, &nsec);
+				if (!quiet || deltas)
+					printf("[");
+				if (humantime) {
 					time_t t;
-					long nsec;
 					struct tm tm;
-
-					sscanf(tbuf, "[%jd.%ld]", &sec, &nsec);
 					t = boottime.tv_sec + sec;
 					if (localtime_r(&t, &tm) != NULL) {
 						strftime(tbuf, sizeof(tbuf),
-						    "[%a %b %e %H:%M:%S %Z %Y]",
+						    "%a %b %e %H:%M:%S %Z %Y",
 						     &tm);
-						printf("%s ", tbuf);
+						printf("%s", tbuf);
 					}
-					continue;
-				} else if (ptime != -1)
-					printf("%s ", tbuf);
+				} else if (!quiet) {
+					printf("% 9jd.%06ld",
+					    sec, nsec / 1000);
+				}
+				if (deltas) {
+					struct timespec nt = { sec, nsec };
+					struct timespec dt;
+					timespecsub(&nt, &lasttime, &dt);
+					if (humantime || !quiet)
+						printf(" ");
+					printf("<% 4jd.%06ld>", (intmax_t)
+					    dt.tv_sec, dt.tv_nsec / 1000);
+					lasttime = nt;
+				}
+				if (!quiet || deltas)
+					printf("] ");
 #endif
 				continue;
 			case ' ':
