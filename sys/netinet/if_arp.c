@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.271 2018/03/08 06:48:23 ozaki-r Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.272 2018/04/10 08:41:14 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.271 2018/03/08 06:48:23 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.272 2018/04/10 08:41:14 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -163,9 +163,9 @@ static struct sockaddr *arp_setgate(struct rtentry *, struct sockaddr *,
     const struct sockaddr *);
 static void arptimer(void *);
 static void arp_settimer(struct llentry *, int);
-static struct llentry *arplookup(struct ifnet *, struct mbuf *,
+static struct llentry *arplookup(struct ifnet *,
     const struct in_addr *, const struct sockaddr *, int);
-static struct llentry *arpcreate(struct ifnet *, struct mbuf *,
+static struct llentry *arpcreate(struct ifnet *,
     const struct in_addr *, const struct sockaddr *, int);
 static void in_arpinput(struct mbuf *);
 static void in_revarpinput(struct mbuf *);
@@ -733,7 +733,7 @@ arpresolve(struct ifnet *ifp, const struct rtentry *rt, struct mbuf *m,
 
 	KASSERT(m != NULL);
 
-	la = arplookup(ifp, m, NULL, dst, 0);
+	la = arplookup(ifp, NULL, dst, 0);
 	if (la == NULL)
 		goto notfound;
 
@@ -1193,9 +1193,9 @@ in_arpinput(struct mbuf *m)
 		goto reply;
 
 	if (in_hosteq(itaddr, myaddr))
-		la = arpcreate(ifp, m, &isaddr, NULL, 1);
+		la = arpcreate(ifp, &isaddr, NULL, 1);
 	else
-		la = arplookup(ifp, m, &isaddr, NULL, 1);
+		la = arplookup(ifp, &isaddr, NULL, 1);
 	if (la == NULL)
 		goto reply;
 
@@ -1400,13 +1400,12 @@ out:
  * Lookup or a new address in arptab.
  */
 static struct llentry *
-arplookup(struct ifnet *ifp, struct mbuf *m, const struct in_addr *addr,
+arplookup(struct ifnet *ifp, const struct in_addr *addr,
     const struct sockaddr *sa, int wlock)
 {
 	struct sockaddr_in sin;
 	struct llentry *la;
 	int flags = wlock ? LLE_EXCLUSIVE : 0;
-
 
 	if (sa == NULL) {
 		KASSERT(addr != NULL);
@@ -1422,7 +1421,7 @@ arplookup(struct ifnet *ifp, struct mbuf *m, const struct in_addr *addr,
 }
 
 static struct llentry *
-arpcreate(struct ifnet *ifp, struct mbuf *m, const struct in_addr *addr,
+arpcreate(struct ifnet *ifp, const struct in_addr *addr,
     const struct sockaddr *sa, int wlock)
 {
 	struct sockaddr_in sin;
@@ -1435,7 +1434,7 @@ arpcreate(struct ifnet *ifp, struct mbuf *m, const struct in_addr *addr,
 		sa = sintocsa(&sin);
 	}
 
-	la = arplookup(ifp, m, addr, sa, wlock);
+	la = arplookup(ifp, addr, sa, wlock);
 
 	if (la == NULL) {
 		struct rtentry *rt;
