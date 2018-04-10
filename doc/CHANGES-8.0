@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.174 2018/04/10 06:54:58 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.175 2018/04/10 08:07:48 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -11190,4 +11190,14 @@ sys/dev/pci/pcidevs_data.h			(regen)
 	- Add Intel X299 and Z370 LPC.
 	- Add Intel Coffee Lake internal graphics devices. From ark.intel.com.
 	[msaitoh, ticket #723]
+
+tests/usr.bin/shmif_dumpbus/d_pcap.out.bz2.uue	1.3
+tests/usr.bin/shmif_dumpbus/t_basic.sh		1.9
+
+	Use tcpdump -n to avoid reverse DNS lookup. There is no point in
+	having different results from running this test in a networked vs.
+	a non-networked environment.
+	Adjust golden output accordingly.
+	Fixes PR 53150.
+	[martin, ticket #726]
 
