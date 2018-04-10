@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.148 2018/01/15 09:49:16 maxv Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.149 2018/04/10 07:05:39 ozaki-r Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.148 2018/01/15 09:49:16 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.149 2018/04/10 07:05:39 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bridge_ipf.h"
@@ -2299,6 +2299,8 @@ bridge_rtdelete(struct bridge_softc *sc, struct ifnet *ifp)
 {
 	struct bridge_rtnode *brt;
 
+	/* XXX pserialize_perform for each entry is slow */
+again:
 	BRIDGE_RT_LOCK(sc);
 	LIST_FOREACH(brt, &sc->sc_rtlist, brt_list) {
 		if (brt->brt_ifp == ifp)
@@ -2313,6 +2315,8 @@ bridge_rtdelete(struct bridge_softc *sc, struct ifnet *ifp)
 	BRIDGE_RT_UNLOCK(sc);
 
 	bridge_rtnode_destroy(brt);
+
+	goto again;
 }
 
 /*
