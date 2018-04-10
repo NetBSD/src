@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.180 2018/03/21 17:03:09 maxv Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.181 2018/04/10 15:27:35 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -864,7 +864,6 @@ struct	mbuf *m_free(struct mbuf *);
 void	m_freem(struct mbuf *);
 void	m_reclaim(void *, int);
 void	mbinit(void);
-void	m_ext_free(struct mbuf *);
 void	m_move_pkthdr(struct mbuf *, struct mbuf *);
 
 bool	m_ensure_contig(struct mbuf **, int);
