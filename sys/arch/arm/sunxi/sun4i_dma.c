@@ -1,4 +1,4 @@
-/* $NetBSD: sun4i_dma.c,v 1.1 2017/08/27 16:05:26 jmcneill Exp $ */
+/* $NetBSD: sun4i_dma.c,v 1.2 2018/04/10 00:59:55 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sun4i_dma.c,v 1.1 2017/08/27 16:05:26 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sun4i_dma.c,v 1.2 2018/04/10 00:59:55 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -90,6 +90,11 @@ __KERNEL_RCSID(0, "$NetBSD: sun4i_dma.c,v 1.1 2017/08/27 16:05:26 jmcneill Exp $
 #define	 DDMA_PARA_DST_WAIT_CLK_CYC	__BITS(23,16)
 #define	 DDMA_PARA_SRC_DATA_BLK_SIZE	__BITS(15,8)
 #define	 DDMA_PARA_SRC_WAIT_CLK_CYC	__BITS(7,0)
+#define	 DDMA_PARA_VALUE				\
+	  (__SHIFTIN(1, DDMA_PARA_DST_DATA_BLK_SIZE) |	\
+	   __SHIFTIN(1, DDMA_PARA_SRC_DATA_BLK_SIZE) |	\
+	   __SHIFTIN(2, DDMA_PARA_DST_WAIT_CLK_CYC) |	\
+	   __SHIFTIN(2, DDMA_PARA_SRC_WAIT_CLK_CYC))
 
 static const struct of_compat_data compat_data[] = {
 	{ "allwinner,sun4i-a10-dma",		1 },
@@ -259,7 +264,7 @@ sun4idma_transfer_ddma(struct sun4idma_softc *sc, struct sun4idma_channel *ch,
 	DMA_WRITE(sc, DDMA_SRC_ADDR_REG(ch->ch_index), src);
 	DMA_WRITE(sc, DDMA_DEST_ADDR_REG(ch->ch_index), dst);
 	DMA_WRITE(sc, DDMA_BC_REG(ch->ch_index), req->dreq_segs[0].ds_len);
-	DMA_WRITE(sc, DDMA_PARA_REG(ch->ch_index), 0);
+	DMA_WRITE(sc, DDMA_PARA_REG(ch->ch_index), DDMA_PARA_VALUE);
 	DMA_WRITE(sc, DDMA_CTRL_REG(ch->ch_index), cfg | DDMA_CTRL_LOAD);
 
 	return 0;
