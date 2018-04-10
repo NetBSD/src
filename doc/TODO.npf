@@ -45,3 +45,8 @@ Another TODO list is available here:
    it so that it can be added in third-party software, like:
        https://github.com/squid-cache/squid/blob/5b74111aff8948e869959113241adada0cd488c2/src/ip/Intercept.cc#L263
 
+-- support IPv6 jumbograms
+
+-- support large IPv6 options, as explained here:
+       http://mail-index.netbsd.org/tech-net/2018/04/08/msg006786.html
+   But it's not a big problem - perhaps we don't care at all.
