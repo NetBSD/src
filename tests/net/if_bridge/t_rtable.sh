@@ -1,4 +1,4 @@
-#	$NetBSD: t_rtable.sh,v 1.1 2017/03/11 04:24:52 ozaki-r Exp $
+#	$NetBSD: t_rtable.sh,v 1.1.8.1 2018/04/10 11:48:28 martin Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -342,6 +342,76 @@ bridge_rtable_maxaddr_cleanup()
 }
 
 
+atf_test_case bridge_rtable_delete_member cleanup
+bridge_rtable_delete_member_head()
+{
+
+	atf_set "descr" "Tests belonging rtable entries are removed on deleting an interface"
+	atf_set "require.progs" "rump_server"
+}
+
+bridge_rtable_delete_member_body()
+{
+	local addr10= addr30= addr11= addr31=
+	local n=
+
+	setup
+	setup_bridge
+
+	# Add extra interfaces and addresses
+	export RUMP_SERVER=$SOCK1
+	rump_server_add_iface $SOCK1 shmif1 bus1
+	atf_check -s exit:0 rump.ifconfig shmif1 10.0.0.11/24
+	atf_check -s exit:0 rump.ifconfig -w 10
+
+	export RUMP_SERVER=$SOCK3
+	rump_server_add_iface $SOCK3 shmif1 bus2
+	atf_check -s exit:0 rump.ifconfig shmif1 10.0.0.12/24
+	atf_check -s exit:0 rump.ifconfig -w 10
+
+	# Get MAC addresses of the endpoints.
+	addr10=$(get_macaddr $SOCK1 shmif0)
+	addr30=$(get_macaddr $SOCK3 shmif0)
+	addr11=$(get_macaddr $SOCK1 shmif1)
+	addr31=$(get_macaddr $SOCK3 shmif1)
+
+	# Make the bridge learn the MAC addresses of the endpoints.
+	export RUMP_SERVER=$SOCK1
+	atf_check -s exit:0 -o ignore rump.ping -n -w $TIMEOUT -c 1 10.0.0.12
+	export RUMP_SERVER=$SOCK3
+	atf_check -s exit:0 -o ignore rump.ping -n -w $TIMEOUT -c 1 10.0.0.11
+
+	export RUMP_SERVER=$SOCK2
+	export LD_PRELOAD=/usr/lib/librumphijack.so
+	$DEBUG && /sbin/brconfig bridge0
+	atf_check -s exit:0 -o match:"$addr10 shmif0" /sbin/brconfig bridge0
+	atf_check -s exit:0 -o match:"$addr11 shmif0" /sbin/brconfig bridge0
+	atf_check -s exit:0 -o match:"$addr30 shmif1" /sbin/brconfig bridge0
+	atf_check -s exit:0 -o match:"$addr31 shmif1" /sbin/brconfig bridge0
+
+	atf_check -s exit:0 -o ignore /sbin/brconfig bridge0 delete shmif0
+	atf_check -s exit:0 -o not-match:"$addr10 shmif0" /sbin/brconfig bridge0
+	atf_check -s exit:0 -o not-match:"$addr11 shmif0" /sbin/brconfig bridge0
+	atf_check -s exit:0 -o match:"$addr30 shmif1" /sbin/brconfig bridge0
+	atf_check -s exit:0 -o match:"$addr31 shmif1" /sbin/brconfig bridge0
+
+	atf_check -s exit:0 -o ignore /sbin/brconfig bridge0 delete shmif1
+	atf_check -s exit:0 -o not-match:"$addr10 shmif0" /sbin/brconfig bridge0
+	atf_check -s exit:0 -o not-match:"$addr11 shmif0" /sbin/brconfig bridge0
+	atf_check -s exit:0 -o not-match:"$addr30 shmif1" /sbin/brconfig bridge0
+	atf_check -s exit:0 -o not-match:"$addr31 shmif1" /sbin/brconfig bridge0
+
+	rump_server_destroy_ifaces
+}
+
+bridge_rtable_delete_member_cleanup()
+{
+
+	$DEBUG && dump
+	cleanup
+}
+
+
 atf_init_test_cases()
 {
 
@@ -349,5 +419,6 @@ atf_init_test_cases()
 	atf_add_test_case bridge_rtable_flush
 	atf_add_test_case bridge_rtable_timeout
 	atf_add_test_case bridge_rtable_maxaddr
+	atf_add_test_case bridge_rtable_delete_member
 	# TODO: brconfig static/flushall/discover/learn
 }
