@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1.6,v 1.1.2.136 2018/04/09 13:08:25 martin Exp $
+# $NetBSD: CHANGES-6.1.6,v 1.1.2.137 2018/04/10 11:29:28 martin Exp $
 
 A complete list of changes from the NetBSD 6.1.5 release to the NetBSD 6.1.6
 release:
@@ -15111,4 +15111,9 @@ external/gpl3/binutils/dist/bfd/elflink.c	1.14 (patch)
 	When trying to decide the status of a weak symbol, resolve any
 	indirectness first.
 	[joerg, ticket #1543]
+
+sys/arch/amiga/amiga/cc.c			1.27 (patch)
+
+	Fix a spl(9) leak.
+	[msaitoh, ticket #1544]
 
