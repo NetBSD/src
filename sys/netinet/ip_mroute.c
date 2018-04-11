@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.156 2018/04/11 05:59:42 maxv Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.157 2018/04/11 06:26:00 maxv Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.156 2018/04/11 05:59:42 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.157 2018/04/11 06:26:00 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2071,6 +2071,11 @@ priority(struct vif *vifp, struct ip *ip)
 	int prio = 50;	/* the lowest priority -- default case */
 
 	/* temporary hack; may add general packet classifier some day */
+
+	/*
+	 * XXX XXX: We're reading the UDP header, but we didn't ensure
+	 * it was present in the packet.
+	 */
 
 	/*
 	 * The UDP port space is divided up into four priority ranges:
