@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.4 2018/04/02 09:44:18 nonaka Exp $	 */
+/*	$NetBSD: devopen.c,v 1.5 2018/04/11 10:32:09 nonaka Exp $	 */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -56,6 +56,8 @@
 
 #include "efiboot.h"
 
+#include <lib/libsa/dev_net.h>
+
 #include <biosdisk.h>
 #include "devopen.h"
 #include <bootinfo.h>
@@ -81,7 +83,14 @@ bios2dev(int biosdev, daddr_t sector, char **devname, int *unit, int *partition)
 
 	*unit = biosdev & 0x7f;
 
-	if (biosdev >= 0x80 + get_harddrives()) {
+	if (efi_bootdp_type == BOOT_DEVICE_TYPE_NET) {
+		*devname = "net";
+		*unit = efi_net_get_booted_interface_unit();
+		if (*unit < 0)
+			*unit = 0;
+		*partition = 0;
+		return;
+	} else if (biosdev >= 0x80 + get_harddrives()) {
 		*devname = "cd";
 		*unit -= get_harddrives();
 	} else
@@ -99,16 +108,90 @@ extern bool kernel_loaded;
 int
 devopen(struct open_file *f, const char *fname, char **file)
 {
+#if defined(SUPPORT_NFS) || defined(SUPPORT_TFTP)
+	static const char *net_devnames[] = {
+#if defined(SUPPORT_NFS)
+	    "nfs",
+#endif
+#if defined(SUPPORT_TFTP)
+	    "tftp",
+#endif
+	};
+#endif
+	struct devdesc desc;
+	struct devsw *dev;
 	char *fsname, *devname;
 	int unit, partition;
 	int biosdev;
-	int error;
+	int i, n, error;
 
 	error = parsebootfile(fname, &fsname, &devname, &unit, &partition,
 	    (const char **) file);
 	if (error)
 		return error;
 
+	memcpy(file_system, file_system_disk, sizeof(*file_system) * nfsys);
+	nfsys = nfsys_disk;
+
+#if defined(SUPPORT_NFS) || defined(SUPPORT_TFTP)
+	for (i = 0; i < __arraycount(net_devnames); i++) {
+		if (strcmp(devname, net_devnames[i]) == 0) {
+			fsname = devname;
+			devname = "net";
+			break;
+		}
+	}
+#endif
+
+	for (i = 1; i < ndevs; i++) {
+		dev = &devsw[i];
+		if (strcmp(devname, DEV_NAME(dev)) == 0) {
+			if (strcmp(devname, "net") == 0) {
+				n = 0;
+#if defined(SUPPORT_NFS)
+				if (strcmp(fsname, "nfs") == 0) {
+					memcpy(&file_system[n++], &file_system_nfs,
+					    sizeof(file_system_nfs));
+				} else
+#endif
+#if defined(SUPPORT_TFTP)
+				if (strcmp(fsname, "tftp") == 0) {
+					memcpy(&file_system[n++], &file_system_tftp,
+					    sizeof(file_system_tftp));
+				} else
+#endif
+				{
+#if defined(SUPPORT_NFS)
+					memcpy(&file_system[n++], &file_system_nfs,
+					    sizeof(file_system_nfs));
+#endif
+#if defined(SUPPORT_TFTP)
+					memcpy(&file_system[n++], &file_system_tftp,
+					    sizeof(file_system_tftp));
+#endif
+				}
+				nfsys = n;
+
+				try_bootp = 1;
+			}
+
+			memset(&desc, 0, sizeof(desc));
+			strlcpy(desc.d_name, devname, sizeof(desc.d_name));
+			desc.d_unit = unit;
+
+			f->f_dev = dev;
+			if (!kernel_loaded) {
+				strncpy(bibp.bootpath, *file,
+				    sizeof(bibp.bootpath));
+				BI_ADD(&bibp, BTINFO_BOOTPATH, sizeof(bibp));
+			}
+			return DEV_OPEN(f->f_dev)(f, &desc);
+		}
+	}
+
+	/*
+	 * biosdisk
+	 */
 	if (strcmp(devname, "esp") == 0) {
 		bios2dev(boot_biosdev, boot_biossector, &devname, &unit,
 		    &partition);
