@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.412 2017/08/26 20:25:00 palle Exp $	*/
+/*	$NetBSD: locore.s,v 1.413 2018/04/11 19:41:18 palle Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -1147,9 +1147,12 @@ _C_LABEL(trapbase_sun4v):
 	!
 	sun4v_trap_entry 36					! 0x000-0x023
 	CLEANWIN1						! 0x24-0x27 = clean window
-	sun4v_trap_entry 9					! 0x028-0x030
-	VTRAP(T_DATA_MMU_MISS, sun4v_dtsb_miss)			! 0x031 = data MMU miss
-	sun4v_trap_entry 58					! 0x032-0x06b
+	sun4v_trap_entry 8					! 0x028-0x02F
+	VTRAP(T_DATAFAULT, sun4v_tl1_ptbl_miss)			! 0x030 = ???
+	VTRAP(T_DATA_MMU_MISS, sun4v_tl1_dtsb_miss)		! 0x031 = data MMU miss
+	VTRAP(T_DATA_ERROR, sun4v_tl1_ptbl_miss)		! 0x032 = ???
+	VTRAP(T_DATA_PROT, sun4v_tl1_ptbl_miss)			! 0x033 = ???
+	sun4v_trap_entry 56					! 0x034-0x06b
 	VTRAP(T_FDMMU_PROT, sun4v_tl1_dtsb_prot)		! 0x06c
 	sun4v_trap_entry 19					! 0x06d-0x07f
 	SPILL64(uspill8_sun4vt1,ASI_AIUS)			! 0x080 spill_0_normal -- save user windows
@@ -2858,6 +2861,79 @@ sun4v_dtsb_miss:
 	retry
 	NOTREACHED
 
+sun4v_tl1_dtsb_miss:
+	GET_MMFSA %g1				! MMU Fault status area
+	add	%g1, 0x48, %g3
+	LDPTRA	[%g3] ASI_PHYS_CACHED, %g3	! Data fault address
+	add	%g1, 0x50, %g6
+	LDPTRA	[%g6] ASI_PHYS_CACHED, %g6	! Data fault context
+
+	GET_CTXBUSY %g4
+	sllx	%g6, 3, %g6			! Make it into an offset into ctxbusy
+	LDPTR	[%g4 + %g6], %g4		! Load up our page table.
+
+	srax	%g3, HOLESHIFT, %g5		! Check for valid address
+	brz,pt	%g5, 0f				! Should be zero or -1
+	 inc	%g5				! Make -1 -> 0
+	brnz,pn	%g5, sun4v_tl1_ptbl_miss	! Error! In hole!
+0:
+	srlx	%g3, STSHIFT, %g6
+	and	%g6, STMASK, %g6		! Index into pm_segs
+	sll	%g6, 3, %g6
+	add	%g4, %g6, %g4
+	LDPTRA	[%g4] ASI_PHYS_CACHED, %g4	! Load page directory pointer
+	srlx	%g3, PDSHIFT, %g6
+	and	%g6, PDMASK, %g6
+	sll	%g6, 3, %g6
+	brz,pn	%g4, sun4v_tl1_ptbl_miss	! NULL entry? check somewhere else
+	 add	%g4, %g6, %g4
+	LDPTRA	[%g4] ASI_PHYS_CACHED, %g4	! Load page table pointer
+
+	srlx	%g3, PTSHIFT, %g6		! Convert to ptab offset
+	and	%g6, PTMASK, %g6
+	sll	%g6, 3, %g6
+	brz,pn	%g4, sun4v_tl1_ptbl_miss	! NULL entry? check somewhere else
+	 add	%g4, %g6, %g6
+1:
+	LDPTRA	[%g6] ASI_PHYS_CACHED, %g4	! Fetch TTE
+	brgez,pn %g4, sun4v_tl1_ptbl_miss	! Entry invalid?  Punt
+	 or	%g4, SUN4V_TLB_ACCESS, %g7	! Update the access bit
+
+	btst	SUN4V_TLB_ACCESS, %g4		! Need to update access bit?
+	bne,pt	%xcc, 2f
+	 nop
+	casxa	[%g6] ASI_PHYS_CACHED, %g4, %g7	! and write it out
+	cmp	%g4, %g7
+	bne,pn	%xcc, 1b
+	 or	%g4, SUN4V_TLB_ACCESS, %g4	! Update the access bit
+2:
+	GET_TSB_DMMU %g2
+
+	/* Construct TSB tag word. */
+	add	%g1, 0x50, %g6
+	LDPTRA	[%g6] ASI_PHYS_CACHED, %g6	! Data fault context
+	mov	%g3, %g1			! Data fault address
+	srlx	%g1, 22, %g1			! 63..22 of virt addr
+	sllx	%g6, 48, %g6			! context_id in 63..48
+	or	%g1, %g6, %g1			! construct TTE tag
+	srlx	%g3, PTSHIFT, %g3
+	sethi	%hi(_C_LABEL(tsbsize)), %g5
+	mov	512, %g6
+	ld	[%g5 + %lo(_C_LABEL(tsbsize))], %g5
+	sllx	%g6, %g5, %g5			! %g5 = 512 << tsbsize = TSBENTS
+	sub	%g5, 1, %g5			! TSBENTS -> offset
+	and	%g3, %g5, %g3			! mask out TTE index
+	sllx	%g3, 4, %g3			! TTE size is 16 bytes
+	add	%g2, %g3, %g2			! location of TTE in ci_tsb_dmmu
+
+	membar	#StoreStore
+
+	STPTR	%g4, [%g2 + 8]			! store TTE data
+	STPTR	%g1, [%g2]			! store TTE tag
+
+	retry
+	NOTREACHED
+	
 sun4v_datatrap:
 	GET_MMFSA %g3				! MMU Fault status area
 	add	%g3, 0x48, %g1
