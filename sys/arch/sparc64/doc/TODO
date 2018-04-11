@@ -1,4 +1,4 @@
- /* $NetBSD: TODO,v 1.25 2018/02/03 21:45:54 palle Exp $ */
+ /* $NetBSD: TODO,v 1.26 2018/04/11 19:44:47 palle Exp $ */
 
 Things to be done:
 
@@ -11,7 +11,8 @@ sun4u:
 - GENERIC.UP kernel hangs on v445 (missing interrupt?)
 
 sun4v:
- - current status: The kernel boots and starts the init process (syscalls are done, but crashes...) (*)
+ - current status: The kernel boots and starts the init process (pid 1) 
+   which spawns /bin/sh (pid 2). This is forked as a new/bin/sh (pid 3) which crashes, probably due to MMU DPROT issues.
 - 64-bit kernel support
 - 32-bit kernel support
 - libkvm
@@ -32,40 +33,4 @@ sun4v:
 - vdsk and ldc drivers: code maked with OPENBSD_BUSDMA - make the bus_dma stuff work properly
 - vbus.c: handle prom_getprop() memory leaks
 - locore.s: rft_user (sun4v specific manaul fill) - seems to work, but is it good enough (compared to openbsds rft_user?
-
-
-(*)
-The current state of the code crashes in the code path after the init process
-(pid 1) does a fork(), starting pid 2.
-A new lwp is created and lwp_trampoline() is called which in turn calls 
-return_from_trap(). Here the code path continues to rft_user().
-A trap (0x68 - this is a Hyper-Priv trap...) occurs in rft_user_fault_start()
-where the FILL() macro causes the trap trying to load the local register %l0 
-from the stack using ASI AIUS (%o6 contains 0xffffffffffffcd91).
-The Hyper-Priv trap 0x68 is transformed to a Priv trap 0x31, causing 
-sun4v_dtsb_miss() to be called, continuing to sun4v_datatrap().
-Here TRAP_SETUP() is called, 
-The windows registers are now:  %otherwin=0, %cansave=6, canrestore=0.
-Part of the TRAP_SETUP() code will do a 'save %g6, 0, %sp', 
-The windows registers are now:  %otherwin=0, %cansave=5, canrestore=1.
-TRAP_SETUP() now updates %otherwin with the values of %canrestore and clears 
-%canrestore, so the windows registers are now: %otherwin=1, %cansave=5, 
-canrestore=0.
-The execution continues to data_access_fault() and further down the call stack
-with function calls until %cansave reaches 0 causing a spill trap 
-(0xa8 - spill_2_other). The contents of the %sp register is 0x00000000e00xxxxx.
-%wstate is (octal) 26.
-The windows registers are now:  %otherwin=1, %cansave=0, canrestore=5.
-The spill code is using ASI AIUS. spill_2_other is selected since %otherwin is
-non-zero, so the index in wstate.other is 2 (spill_2_other).
-SPILLBOTH() is invoked, using ASI AIUS. While storing %l0 to %sp+0x7ff 
-(%sp is 0xffffffffffffcd91) a new trap occurs, 0x68 (Hyper-priv, e.g. 0x31 Priv)
-at trap level 2 causing the trap level to go to 3. This is above the mx trap
-level for sun4v which is 2...
-So... the first access to 0xffffffffffffcd91 causes a cyclic access to
-0xffffffffffffcd91 again causing the max trap level to exceed.
-hm....how to fix this..........
-
-
-
 
