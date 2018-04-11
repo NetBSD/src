@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_reass.c,v 1.14 2018/03/09 11:57:38 maxv Exp $	*/
+/*	$NetBSD: ip_reass.c,v 1.15 2018/04/11 07:15:12 maxv Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_reass.c,v 1.14 2018/03/09 11:57:38 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_reass.c,v 1.15 2018/04/11 07:15:12 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -211,7 +211,7 @@ ip_nmbclusters_changed(void)
  *	datagram.  If a chain for reassembly of this datagram already exists,
  *	then it is given as 'fp'; otherwise have to make a chain.
  */
-struct mbuf *
+static struct mbuf *
 ip_reass(ipfr_qent_t *ipqe, ipfr_queue_t *fp, const u_int hash)
 {
 	struct ip *ip = ipqe->ipqe_ip, *qip;
