@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.c,v 1.90 2018/04/11 18:52:05 christos Exp $	*/
+/*	$NetBSD: ps.c,v 1.91 2018/04/11 18:52:29 christos Exp $	*/
 
 /*
  * Copyright (c) 2000-2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: ps.c,v 1.90 2018/04/11 18:52:05 christos Exp $");
+__RCSID("$NetBSD: ps.c,v 1.91 2018/04/11 18:52:29 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -425,7 +425,7 @@ main(int argc, char *argv[])
 	 * select procs
 	 */
 	if (!(kinfo = getkinfo_kvm(kd, what, flag, &nentries)))
-		err(EXIT_FAILURE, "%s", kvm_geterr(kd));
+		errx(EXIT_FAILURE, "%s", kvm_geterr(kd));
 	if (nentries == 0) {
 		printheader();
 		return 1;
