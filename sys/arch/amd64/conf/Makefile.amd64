@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amd64,v 1.57 2017/02/11 16:02:11 maxv Exp $
+#	$NetBSD: Makefile.amd64,v 1.57.6.1 2018/04/11 14:23:30 martin Exp $
 
 # Makefile for NetBSD
 #
@@ -42,6 +42,11 @@ CFLAGS+=	-mno-red-zone -mno-mmx -mno-sse -mno-avx
 CFLAGS+=	-msoft-float
 # For gcc we might need this, but other compilers barf
 # CFLAGS+=	-mno-fp-ret-in-387
+
+.if !empty(SPECTRE_V2_GCC_MITIGATION) && ${HAVE_GCC:U0} > 0
+CFLAGS+=      -mindirect-branch=thunk-inline
+CFLAGS+=      -mindirect-branch-register
+.endif
 
 ##
 ## (3) libkern and compat

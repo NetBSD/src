@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.459.2.7 2018/04/04 16:25:23 martin Exp $
+# $NetBSD: GENERIC,v 1.459.2.8 2018/04/11 14:23:30 martin Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.459.2.7 $"
+#ident		"GENERIC-$Revision: 1.459.2.8 $"
 
 maxusers	64		# estimated number of users
 
@@ -75,6 +75,8 @@ options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # CPU-related options
 options 	SVS		# Separate Virtual Space
+makeoptions	SPECTRE_V2_GCC_MITIGATION=1	# GCC Spectre variant 2
+						# migitation
 
 # CPU features
 acpicpu*	at cpu?		# ACPI CPU (including frequency scaling)

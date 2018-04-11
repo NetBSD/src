@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.i386,v 1.185 2015/08/24 14:04:24 uebayasi Exp $
+#	$NetBSD: Makefile.i386,v 1.185.10.1 2018/04/11 14:23:30 martin Exp $
 
 # Makefile for NetBSD
 #
@@ -38,6 +38,11 @@ CPPFLAGS+=	-Di386
 CFLAGS+=	-msoft-float
 ## no-sse implies no-sse2 but not no-avx
 CFLAGS+=	-mno-mmx -mno-sse -mno-avx
+
+.if !empty(SPECTRE_V2_GCC_MITIGATION) && ${HAVE_GCC:U0} > 0
+CFLAGS+=	-mindirect-branch=thunk
+CFLAGS+=	-mindirect-branch-register
+.endif
 
 ##
 ## (3) libkern and compat
