@@ -12577,13 +12577,11 @@ mDNSlocal void AdvertiseInterface(mDNS *const m, NetworkInterfaceInfo *set)
     NetworkInterfaceInfo *primary;
     mDNSu8 recordType;
 
-#if 0
     if (m->AutoTargetServices == 0)
     {
         LogInfo("AdvertiseInterface: Returning due to AutoTargetServices zero for %s", set->ifname);
         return;
     }
-#endif
 
     primary = FindFirstAdvertisedInterface(m);
     if (!primary) primary = set; // If no existing advertised interface, this new NetworkInterfaceInfo becomes our new primary
@@ -14479,7 +14477,7 @@ mDNSlocal mStatus mDNS_InitStorage(mDNS *const m, mDNS_PlatformSupport *const p,
     m->WABBrowseQueriesCount    = 0;
     m->WABLBrowseQueriesCount   = 0;
     m->WABRegQueriesCount       = 0;
-    m->AutoTargetServices       = 0;
+    m->AutoTargetServices       = 1;
 
 #if BONJOUR_ON_DEMAND
     m->NumAllInterfaceRecords   = 0;
