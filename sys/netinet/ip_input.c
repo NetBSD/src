@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.378 2018/04/11 07:55:19 maxv Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.379 2018/04/11 08:11:20 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.378 2018/04/11 07:55:19 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.379 2018/04/11 08:11:20 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -729,8 +729,7 @@ ip_input(struct mbuf *m)
 #ifdef IPSEC
 		/* Check the security policy (SP) for the packet */
 		if (ipsec_used) {
-			if (ipsec4_input(m, IP_FORWARDING |
-			    (ip_directedbcast ? IP_ALLOWBROADCAST : 0)) != 0) {
+			if (ipsec4_input(m, IP_FORWARDING) != 0) {
 				goto out;
 			}
 		}
