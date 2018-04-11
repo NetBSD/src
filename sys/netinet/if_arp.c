@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.272 2018/04/10 08:41:14 maxv Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.273 2018/04/11 05:38:47 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.272 2018/04/10 08:41:14 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.273 2018/04/11 05:38:47 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1358,6 +1358,15 @@ reply:
 	}
 	ia4_release(ia, &psref_ia);
 
+	/*
+	 * XXX XXX: Here we're recycling the mbuf. But the mbuf could have
+	 * other mbufs in its chain, and just overwriting m->m_pkthdr.len
+	 * would be wrong in this case (the length becomes smaller than the
+	 * real chain size).
+	 *
+	 * This can theoretically cause bugs in the lower layers (drivers,
+	 * and L2encap), in some corner cases.
+	 */
 	memcpy(ar_tpa(ah), ar_spa(ah), ah->ar_pln);
 	memcpy(ar_spa(ah), &itaddr, ah->ar_pln);
 	ah->ar_op = htons(ARPOP_REPLY);
