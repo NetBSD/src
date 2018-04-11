@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.9 2015/10/06 20:03:05 martin Exp $ */
+/*	$NetBSD: frame.h,v 1.10 2018/04/11 19:37:58 palle Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -104,7 +104,7 @@ struct frame32 {
  * of the frame, you must first force the kernel to write any such
  * windows to the stack.
  *
- * V9 frames have an odd bias, so you can tall a v9 frame from
+ * V9 frames have an odd bias, so you can tell a v9 frame from
  * a v8 frame by testing the stack pointer's lsb.
  */
 #if !defined(_LOCORE) && !defined(_LIBC)
