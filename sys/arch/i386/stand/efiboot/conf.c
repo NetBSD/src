@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.1 2017/01/24 11:09:14 nonaka Exp $	 */
+/*	$NetBSD: conf.c,v 1.1.12.1 2018/04/11 14:51:43 martin Exp $	 */
 
 /*
  * Copyright (c) 1997
@@ -43,14 +43,51 @@
 #ifdef SUPPORT_CD9660
 #include <lib/libsa/cd9660.h>
 #endif
+#if defined(SUPPORT_NFS) || defined(SUPPORT_TFTP)
+#include <lib/libsa/net.h>
+#include <lib/libsa/dev_net.h>
+#ifdef SUPPORT_NFS
+#include <lib/libsa/nfs.h>
+#endif
+#ifdef SUPPORT_TFTP
+#include <lib/libsa/tftp.h>
+#endif
+#endif
 #include <biosdisk.h>
+#include "efinet.h"
 
 struct devsw devsw[] = {
 	{ "disk", biosdisk_strategy, biosdisk_open, biosdisk_close, biosdisk_ioctl },
+	{ "net", net_strategy, net_open, net_close, net_ioctl },
 };
 int ndevs = __arraycount(devsw);
 
+#if defined(SUPPORT_NFS) || defined(SUPPORT_TFTP)
+struct netif_driver *netif_drivers[] = {
+	&efinetif,
+};
+int n_netif_drivers = __arraycount(netif_drivers);
+#endif
+
 struct fs_ops file_system[] = {
+#ifdef SUPPORT_CD9660
+	FS_OPS(null),
+#endif
+	FS_OPS(null), FS_OPS(null),
+	FS_OPS(null), FS_OPS(null),
+#ifdef SUPPORT_EXT2FS
+	FS_OPS(null),
+#endif
+#ifdef SUPPORT_MINIXFS3
+	FS_OPS(null),
+#endif
+#ifdef SUPPORT_DOSFS
+	FS_OPS(null),
+#endif
+};
+int nfsys = __arraycount(file_system);
+
+struct fs_ops file_system_disk[] = {
 #ifdef SUPPORT_CD9660
 	FS_OPS(cd9660),
 #endif
@@ -66,4 +103,13 @@ struct fs_ops file_system[] = {
 	FS_OPS(dosfs),
 #endif
 };
-int nfsys = __arraycount(file_system);
+__CTASSERT(__arraycount(file_system) == __arraycount(file_system_disk));
+const int nfsys_disk = __arraycount(file_system_disk);
+
+struct fs_ops file_system_null = FS_OPS(null);
+#ifdef SUPPORT_NFS
+struct fs_ops file_system_nfs = FS_OPS(nfs);
+#endif
+#ifdef SUPPORT_TFTP
+struct fs_ops file_system_tftp = FS_OPS(tftp);
+#endif
