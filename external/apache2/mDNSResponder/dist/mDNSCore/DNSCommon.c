@@ -3838,7 +3838,7 @@ mDNSexport mStatus mDNSSendDNSMessage(mDNS *const m, DNSMessage *const msg, mDNS
 #pragma mark - RR List Management & Task Management
 #endif
 
-mDNSexport void mDNS_Lock_(mDNS *const m, const char * const functionname)
+mDNSexport void mDNS_Lock_(mDNS *const m, const char * const functionname, int lineno)
 {
     // MUST grab the platform lock FIRST!
     mDNSPlatformLock(m);
@@ -3848,20 +3848,20 @@ mDNSexport void mDNS_Lock_(mDNS *const m, const char * const functionname)
     // If that client callback does mDNS API calls, mDNS_reentrancy and mDNS_busy will both be one
     // If mDNS_busy != mDNS_reentrancy that's a bad sign
     if (m->mDNS_busy != m->mDNS_reentrancy)
-        LogFatalError("%s: mDNS_Lock: Locking failure! mDNS_busy (%ld) != mDNS_reentrancy (%ld)", functionname, m->mDNS_busy, m->mDNS_reentrancy);
+        LogFatalError("%s,%d: mDNS_Lock: Locking failure! mDNS_busy (%ld) != mDNS_reentrancy (%ld) (last %s,%d)", functionname, lineno, m->mDNS_busy, m->mDNS_reentrancy, m->mDNS_Lock_functionname, m->mDNS_Lock_lineno);
 
     // If this is an initial entry into the mDNSCore code, set m->timenow
     // else, if this is a re-entrant entry into the mDNSCore code, m->timenow should already be set
     if (m->mDNS_busy == 0)
     {
         if (m->timenow)
-            LogMsg("%s: mDNS_Lock: m->timenow already set (%ld/%ld)", functionname, m->timenow, mDNS_TimeNow_NoLock(m));
+            LogMsg("%s,%d: mDNS_Lock: m->timenow already set (%ld/%ld)", functionname, lineno, m->timenow, mDNS_TimeNow_NoLock(m));
         m->timenow = mDNS_TimeNow_NoLock(m);
         if (m->timenow == 0) m->timenow = 1;
     }
     else if (m->timenow == 0)
     {
-        LogMsg("%s: mDNS_Lock: m->mDNS_busy is %ld but m->timenow not set", functionname, m->mDNS_busy);
+        LogMsg("%s,%d: mDNS_Lock: m->mDNS_busy is %ld but m->timenow not set", functionname, lineno, m->mDNS_busy);
         m->timenow = mDNS_TimeNow_NoLock(m);
         if (m->timenow == 0) m->timenow = 1;
     }
@@ -3869,13 +3869,15 @@ mDNSexport void mDNS_Lock_(mDNS *const m, const char * const functionname)
     if (m->timenow_last - m->timenow > 0)
     {
         m->timenow_adjust += m->timenow_last - m->timenow;
-        LogMsg("%s: mDNSPlatformRawTime went backwards by %ld ticks; setting correction factor to %ld", functionname, m->timenow_last - m->timenow, m->timenow_adjust);
+        LogMsg("%s,%d: mDNSPlatformRawTime went backwards by %ld ticks; setting correction factor to %ld", functionname, lineno, m->timenow_last - m->timenow, m->timenow_adjust);
         m->timenow = m->timenow_last;
     }
     m->timenow_last = m->timenow;
 
     // Increment mDNS_busy so we'll recognise re-entrant calls
     m->mDNS_busy++;
+    m->mDNS_Lock_functionname = functionname;
+    m->mDNS_Lock_lineno = lineno;
 }
 
 mDNSlocal AuthRecord *AnyLocalRecordReady(const mDNS *const m)
@@ -4011,20 +4013,21 @@ mDNSexport void ShowTaskSchedulingError(mDNS *const m)
     mDNS_Unlock(m);
 }
 
-mDNSexport void mDNS_Unlock_(mDNS *const m, const char *const functionname)
+mDNSexport void mDNS_Unlock_(mDNS *const m, const char *const functionname, int lineno)
 {
     // Decrement mDNS_busy
     m->mDNS_busy--;
 
     // Check for locking failures
     if (m->mDNS_busy != m->mDNS_reentrancy)
-        LogFatalError("%s: mDNS_Unlock: Locking failure! mDNS_busy (%ld) != mDNS_reentrancy (%ld)", functionname, m->mDNS_busy, m->mDNS_reentrancy);
+        LogFatalError("%s,%d: mDNS_Unlock: Locking failure! mDNS_busy (%ld) != mDNS_reentrancy (%ld) (last %s,%d)", functionname, lineno, m->mDNS_busy,
+	    m->mDNS_reentrancy, m->mDNS_Lock_functionname, m->mDNS_Lock_lineno);
 
     // If this is a final exit from the mDNSCore code, set m->NextScheduledEvent and clear m->timenow
     if (m->mDNS_busy == 0)
     {
         m->NextScheduledEvent = GetNextScheduledEvent(m);
-        if (m->timenow == 0) LogMsg("%s: mDNS_Unlock: ERROR! m->timenow aready zero", functionname);
+        if (m->timenow == 0) LogMsg("%s,%d: mDNS_Unlock: ERROR! m->timenow aready zero", functionname, lineno);
         m->timenow = 0;
     }
 
