@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.155 2018/03/21 14:23:54 roy Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.156 2018/04/11 05:59:42 maxv Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.155 2018/03/21 14:23:54 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.156 2018/04/11 05:59:42 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1279,6 +1279,12 @@ ip_mforward(struct mbuf *m, struct ifnet *ifp)
 		log(LOG_DEBUG, "ip_mforward: src %x, dst %x, ifp %p\n",
 		    ntohl(ip->ip_src.s_addr), ntohl(ip->ip_dst.s_addr), ifp);
 
+	/*
+	 * XXX XXX: Why do we check [1] against IPOPT_LSRR? Because we
+	 * expect [0] to be IPOPT_NOP, maybe? In all cases that doesn't
+	 * make a lot of sense, a forged packet can just put two IPOPT_NOPs
+	 * followed by one IPOPT_LSRR, and bypass the check.
+	 */
 	if (ip->ip_hl < (IP_HDR_LEN + TUNNEL_LEN) >> 2 ||
 	    ((u_char *)(ip + 1))[1] != IPOPT_LSRR) {
 		/*
