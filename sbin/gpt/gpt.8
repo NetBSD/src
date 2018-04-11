@@ -1,4 +1,4 @@
-.\" $NetBSD: gpt.8,v 1.58 2018/03/19 09:06:20 mlelstv Exp $
+.\" $NetBSD: gpt.8,v 1.59 2018/04/11 07:13:18 mrg Exp $
 .\"
 .\" Copyright (c) 2002 Marcel Moolenaar
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" $FreeBSD: src/sbin/gpt/gpt.8,v 1.17 2006/06/22 22:22:32 marcel Exp $
 .\"
-.Dd January 15, 2018
+.Dd March 5, 2018
 .Dt GPT 8
 .Os
 .Sh NAME
@@ -716,6 +716,25 @@ nas# gpt show -l wd3
   3907029167           1         Sec GPT header
 nas#
 .Ed
+.Pp
+Booting from GPT on an BIOS system.
+This creates a bootable partition that can be manually installed to.
+Note that
+.Xr sysinst 8
+does not yet properly support this setup.
+.Bd -literal
+xotica# gpt create wd1
+xotica# gpt add -b 1024 -l bootroot -t ffs -s 1g wd1
+/dev/rwd1: Partition 1 added: 49f48d5a-b10e-11dc-b99b-0019d1879648 1024 2097152
+xotica ~# dmesg | tail -2
+wd1: GPT GUID: 660e0630-0a3f-47c0-bc52-c88bcec79392
+dk0 at wd1: "bootroot", 2097152 blocks at 1024, type: ffs
+xotica# gpt biosboot -L bootroot wd1
+xotica# newfs dk0
+xotica# installboot /dev/rdk0 /usr/mdec/bootxx_ffsv1
+xotica# mount /dev/dk0 /mnt
+xotica# cp /usr/mdec/boot /mnt
+.Ed
 .Sh SEE ALSO
 .Xr boot 8 ,
 .Xr dkctl 8 ,
@@ -723,7 +742,7 @@ nas#
 .Xr installboot 8 ,
 .Xr mount 8 ,
 .Xr newfs 8 ,
-.Xr swapon 8
+.Xr swapctl 8
 .Sh HISTORY
 The
 .Nm
