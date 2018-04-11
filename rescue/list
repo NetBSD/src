@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.48 2016/08/04 03:50:55 pgoyette Exp $
+#	$NetBSD: list,v 1.49 2018/04/11 00:26:38 rin Exp $
 
 SRCDIRS	bin
 
@@ -128,6 +128,7 @@ PROG	gzip		gunzip gzcat zcat
 PROG	kdump
 PROG	ktrace
 PROG	ktruss
+PROG	progress
 
 PROG	ekermit
 SPECIAL	ekermit		srcdir	external/bsd/ekermit/bin/ekermit
