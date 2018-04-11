@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.780 2018/04/04 23:51:35 kamil Exp $
+# $NetBSD: mi,v 1.781 2018/04/11 03:25:25 kamil Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3639,6 +3639,7 @@
 ./usr/tests/usr.bin/c++/t_asan_global_buffer_overflow	tests-usr.bin-tests	compattestfile,atf,cxx
 ./usr/tests/usr.bin/c++/t_asan_heap_overflow	tests-usr.bin-tests	compattestfile,atf,cxx
 ./usr/tests/usr.bin/c++/t_asan_off_by_one	tests-usr.bin-tests	compattestfile,atf,cxx
+./usr/tests/usr.bin/c++/t_asan_poison		tests-usr.bin-tests	compattestfile,atf,cxx
 ./usr/tests/usr.bin/c++/t_asan_uaf		tests-usr.bin-tests	compattestfile,atf,cxx
 ./usr/tests/usr.bin/c++/t_call_once		tests-usr.bin-tests	compattestfile,atf,cxx
 ./usr/tests/usr.bin/c++/t_call_once2		tests-usr.bin-tests	compattestfile,atf,cxx
@@ -3654,6 +3655,7 @@
 ./usr/tests/usr.bin/cc/t_asan_global_buffer_overflow	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/cc/t_asan_heap_overflow	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/cc/t_asan_off_by_one	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/cc/t_asan_poison		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/cc/t_asan_uaf		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/cmp				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/cmp/Atffile			tests-usr.bin-tests	compattestfile,atf
