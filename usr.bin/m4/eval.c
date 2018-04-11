@@ -1,5 +1,5 @@
 /*	$OpenBSD: eval.c,v 1.66 2008/08/21 21:01:47 espie Exp $	*/
-/*	$NetBSD: eval.c,v 1.24 2016/01/16 16:56:21 christos Exp $	*/
+/*	$NetBSD: eval.c,v 1.24.8.1 2018/04/11 14:27:51 martin Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@
 #include "nbtool_config.h"
 #endif
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: eval.c,v 1.24 2016/01/16 16:56:21 christos Exp $");
+__RCSID("$NetBSD: eval.c,v 1.24.8.1 2018/04/11 14:27:51 martin Exp $");
 
 #include <sys/types.h>
 #include <ctype.h>
@@ -698,6 +698,8 @@ static void
 doifelse(const char *argv[], int argc)
 {
 	cycle {
+		if (argc < 5)
+			m4errx(1, "wrong number of args for ifelse");
 		if (STREQ(argv[2], argv[3]))
 			pbstr(argv[4]);
 		else if (argc == 6)
