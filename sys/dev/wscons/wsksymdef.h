@@ -1,4 +1,4 @@
-/*	$NetBSD: wsksymdef.h,v 1.66 2012/04/22 14:32:08 khorben Exp $ */
+/*	$NetBSD: wsksymdef.h,v 1.66.32.1 2018/04/11 14:41:33 martin Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -590,6 +590,18 @@
 
 #define KS_voidSymbol		0xf500
 
+
+/*
+ * Group Latin-5 (iso8859-9)
+ */
+
+#define KS_L5_Gbreve		0xd0
+#define KS_L5_Idotabove		0xdd
+#define KS_L5_Scedilla		0xde
+#define KS_L5_gbreve		0xf0
+#define KS_L5_idotless		0xfd
+#define KS_L5_scedilla		0xfe
+
 /*ENDKEYSYMDECL*/
 
 /*
@@ -661,12 +673,13 @@ action(KB_ES,	0,	0x0b00,	"es",	,	"Spanish")	\
 action(KB_SV,	0,	0x0900,	"sv",	,	"Swedish")	\
 action(KB_SF,	0,	0x1000,	"sf",	,	"Swiss French")	\
 action(KB_SG,	0,	0x0f00,	"sg",	,	"Swiss German")	\
+action(KB_TR,	0,	0x1700,	"tr",	,	"Turkish")	\
 action(KB_UA,	0,	0x1200,	"ua",	,	"Ukrainian")	
 #define KB_NONE 0x0000
 
 /* Define all the KB_xx numeric values using above table */
 #define KBF_ENUM(tag, tagf, value, cc, ccf, country) tag=value,
-enum { KB_ENC_FUN(KBF_ENUM) KB_NEXT=0x1700 };
+enum { KB_ENC_FUN(KBF_ENUM) KB_NEXT=0x1800 };
 
 /* Define list of KB_xxx and country codes for array initialisation */
 #define KBF_ENCTAB(tag, tagf, value, cc, ccf, country) { tag, cc },
