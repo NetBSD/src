@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.177 2018/04/11 03:00:03 msaitoh Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.178 2018/04/11 14:55:24 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -11542,3 +11542,87 @@ external/bsd/ntp/scripts/mkver			up to 1.13
 
 	Update ntp to 4.2.8p11.
 	[snj, ticket #729]
+
+sys/net/if_l2tp.c				1.22,1.23
+
+	Improve comment. Fix mistake and odd unaligned case.
+	[knakahara, ticket #730]
+
+share/man/man4/options.4			1.485 (patch)
+sys/arch/amd64/conf/ALL				1.85
+sys/arch/amd64/conf/GENERIC			1.487-1.489
+sys/arch/amd64/conf/Makefile.amd64		1.67
+sys/arch/amd64/conf/files.amd64			1.102
+sys/arch/i386/conf/ALL				1.437
+sys/arch/i386/conf/GENERIC			1.1175-1.1177
+sys/arch/i386/conf/Makefile.i386		1.190
+sys/arch/i386/conf/files.i386			1.392
+
+	Add an SPECTRE_V2_GCC_MITIGATION option to x86 kernels, that turns
+	on the GCC spectre v2 mitigation options. Enable this by default.
+	[mrg, ticket #731]
+
+usr.bin/m4/eval.c				1.25,1.26
+
+	Missing argument check caused m4 to core in ifelse().
+	[mrg, ticket #732]
+
+sys/arch/amd64/include/vmparam.h		1.44,1.45
+sys/arch/sparc64/include/vmparam.h		1.38
+
+	Bump PAGER_MAP_DEFAULT_SIZE to 512 MB, to allow more
+	concurrent IOs. Fix a comment.
+	[mrg, ticket #733]
+
+usr.sbin/cpuctl/cpuctl.8			1.18
+
+	Note the default path for ucode updates can be found in sysctl.
+	[mrg, ticket #734]
+
+sys/dev/pckbport/wskbdmap_mfii.c		1.26
+sys/dev/wscons/wsksymdef.h			1.67
+
+	Add Turkish keyboard layout.
+	[maya, ticket #735]
+
+sys/arch/amd64/include/param.h			1.24
+sys/arch/i386/include/param.h			1.83
+
+	Double size of MSGBUFSIZE as existing value is not big enough to hold
+	boot dmesg on modern server-class hardware with lots of CPUs, etc.
+	[sborrill, ticket #736]
+
+sbin/dkctl/dkctl.8				1.27,1.28
+sbin/dkctl/dkctl.c				1.26
+
+	Document, and properly implement, the -q and -e options
+	to dkctl xxN listwedges.
+	[kre, ticket #737]
+
+sys/ufs/ffs/ffs_vfsops.c			1.355
+
+	"mount -u /dev/ /" triggered a kernel panic.
+	[christos, ticket #738]
+
+sys/arch/i386/stand/efiboot/Makefile.efiboot	1.12
+sys/arch/i386/stand/efiboot/boot.c		1.10
+sys/arch/i386/stand/efiboot/conf.c		1.2
+sys/arch/i386/stand/efiboot/dev_net.c		1.1
+sys/arch/i386/stand/efiboot/devopen.c		1.5
+sys/arch/i386/stand/efiboot/devopen.h		1.3
+sys/arch/i386/stand/efiboot/efiboot.c		1.7
+sys/arch/i386/stand/efiboot/efiboot.h		1.8
+sys/arch/i386/stand/efiboot/efidisk.c		1.6
+sys/arch/i386/stand/efiboot/efinet.c		1.1
+sys/arch/i386/stand/efiboot/efinet.h		1.1
+sys/arch/i386/stand/efiboot/efipxe.c		1.1
+
+	efiboot: Added network boot support.
+	[nonaka, ticket #739]
+
+sys/arch/x86/pci/pci_machdep.c			1.80
+
+	efiboot reports parent ppb bus/device/function of booted
+	network inteface.
+	[nonaka, ticket #740]
+
