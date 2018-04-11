@@ -1,4 +1,4 @@
-/*	$NetBSD: a_md5encrypt.c,v 1.1.1.6 2016/11/22 01:35:19 christos Exp $	*/
+/*	$NetBSD: a_md5encrypt.c,v 1.1.1.6.6.1 2018/04/11 02:58:45 msaitoh Exp $	*/
 
 #include "config.h"
 #include "unity.h"
@@ -54,11 +54,9 @@ test_Encrypt(void) {
 	packetPtr = emalloc_zero(totalLength * sizeof(*packetPtr));
 	memcpy(packetPtr, packet, packetLength);
 
-	cache_secretsize = keyLength;
+	length = MD5authencrypt(keytype, key, keyLength, packetPtr, packetLength);
 
-	length = MD5authencrypt(keytype, key, packetPtr, packetLength);
-
-	TEST_ASSERT_TRUE(MD5authdecrypt(keytype, key, packetPtr, packetLength, length));
+	TEST_ASSERT_TRUE(MD5authdecrypt(keytype, key, keyLength, packetPtr, packetLength, length));
 
 	TEST_ASSERT_EQUAL(20, length);
 	TEST_ASSERT_EQUAL_MEMORY(expectedPacket.u8, packetPtr, totalLength);
@@ -68,14 +66,12 @@ test_Encrypt(void) {
 
 void
 test_DecryptValid(void) {
-	cache_secretsize = keyLength;
-	TEST_ASSERT_TRUE(MD5authdecrypt(keytype, key, expectedPacket.u32, packetLength, 20));
+	TEST_ASSERT_TRUE(MD5authdecrypt(keytype, key, keyLength, expectedPacket.u32, packetLength, 20));
 }
 
 void
 test_DecryptInvalid(void) {
-	cache_secretsize = keyLength;
-	TEST_ASSERT_FALSE(MD5authdecrypt(keytype, key, invalidPacket.u32, packetLength, 20));
+	TEST_ASSERT_FALSE(MD5authdecrypt(keytype, key, keyLength, invalidPacket.u32, packetLength, 20));
 }
 
 void

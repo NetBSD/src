@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_crypto.c,v 1.14 2017/04/13 20:17:42 christos Exp $	*/
+/*	$NetBSD: ntp_crypto.c,v 1.14.4.1 2018/04/11 02:58:40 msaitoh Exp $	*/
 
 /*
  * ntp_crypto.c - NTP version 4 public key routines
@@ -270,7 +270,13 @@ session_key(
 		break;
 	}
 	ctx = EVP_MD_CTX_new();
+#   if defined(OPENSSL) && defined(EVP_MD_CTX_FLAG_NON_FIPS_ALLOW)
+	/* [Bug 3457] set flags and don't kill them again */
+	EVP_MD_CTX_set_flags(ctx, EVP_MD_CTX_FLAG_NON_FIPS_ALLOW);
+	EVP_DigestInit_ex(ctx, EVP_get_digestbynid(crypto_nid), NULL);
+#   else
 	EVP_DigestInit(ctx, EVP_get_digestbynid(crypto_nid));
+#   endif
 	EVP_DigestUpdate(ctx, (u_char *)header, hdlen);
 	EVP_DigestFinal(ctx, dgst, &len);
 	EVP_MD_CTX_free(ctx);
@@ -2089,7 +2095,13 @@ bighash(
 	ptr = emalloc(len);
 	BN_bn2bin(bn, ptr);
 	ctx = EVP_MD_CTX_new();
+#   if defined(OPENSSL) && defined(EVP_MD_CTX_FLAG_NON_FIPS_ALLOW)
+	/* [Bug 3457] set flags and don't kill them again */
+	EVP_MD_CTX_set_flags(ctx, EVP_MD_CTX_FLAG_NON_FIPS_ALLOW);
+	EVP_DigestInit_ex(ctx, EVP_md5(), NULL);
+#   else
 	EVP_DigestInit(ctx, EVP_md5());
+#   endif
 	EVP_DigestUpdate(ctx, ptr, len);
 	EVP_DigestFinal(ctx, dgst, &len);
 	EVP_MD_CTX_free(ctx);
