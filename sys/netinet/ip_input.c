@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.376 2018/02/24 07:37:09 ozaki-r Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.377 2018/04/11 07:52:25 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.376 2018/02/24 07:37:09 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.377 2018/04/11 07:52:25 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -965,8 +965,8 @@ ip_dooptions(struct mbuf *m)
 				goto bad;
 			}
 			ip->ip_dst = ipaddr.sin_addr;
-			bcopy((void *)&ia->ia_addr.sin_addr,
-			    (void *)(cp + off), sizeof(struct in_addr));
+			memcpy(cp + off, &ia->ia_addr.sin_addr,
+			    sizeof(struct in_addr));
 			ia4_release(ia, &psref);
 			cp[IPOPT_OFFSET] += sizeof(struct in_addr);
 			/*
@@ -1001,7 +1001,7 @@ ip_dooptions(struct mbuf *m)
 			off--;			/* 0 origin */
 			if ((off + sizeof(struct in_addr)) > optlen)
 				break;
-			memcpy((void *)&ipaddr.sin_addr, (void *)(&ip->ip_dst),
+			memcpy((void *)&ipaddr.sin_addr, (void *)&ip->ip_dst,
 			    sizeof(ipaddr.sin_addr));
 			/*
 			 * locate outgoing interface; if we're the destination,
@@ -1018,8 +1018,8 @@ ip_dooptions(struct mbuf *m)
 			} else {
 				ia = ifatoia(ifa);
 			}
-			bcopy((void *)&ia->ia_addr.sin_addr,
-			    (void *)(cp + off), sizeof(struct in_addr));
+			memcpy(cp + off, &ia->ia_addr.sin_addr,
+			    sizeof(struct in_addr));
 			ia4_release(ia, &psref);
 			cp[IPOPT_OFFSET] += sizeof(struct in_addr);
 			break;
@@ -1081,8 +1081,8 @@ ip_dooptions(struct mbuf *m)
 					break;
 				}
 				ia = ifatoia(ifa);
-				bcopy(&ia->ia_addr.sin_addr,
-				    cp0, sizeof(struct in_addr));
+				memcpy(cp0, &ia->ia_addr.sin_addr,
+				    sizeof(struct in_addr));
 				pserialize_read_exit(_ss);
 				ipt->ipt_ptr += sizeof(struct in_addr);
 				break;
