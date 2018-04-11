@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.353.4.1 2018/02/04 12:52:02 martin Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.353.4.2 2018/04/11 14:49:08 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.353.4.1 2018/02/04 12:52:02 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.353.4.2 2018/04/11 14:49:08 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -418,12 +418,13 @@ ffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		return EINVAL;
 	}
 
+	ump = VFSTOUFS(mp);
+	if ((mp->mnt_flag & (MNT_GETARGS|MNT_UPDATE)) && ump == NULL) {
+		DPRINTF("no ump");
+		return EIO;
+	}
+
 	if (mp->mnt_flag & MNT_GETARGS) {
-		ump = VFSTOUFS(mp);
-		if (ump == NULL) {
-			DPRINTF("no ump");
-			return EIO;
-		}
 		args->fspec = NULL;
 		*data_len = sizeof *args;
 		return 0;
@@ -432,7 +433,13 @@ ffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	update = mp->mnt_flag & MNT_UPDATE;
 
 	/* Check arguments */
-	if (args->fspec != NULL) {
+	if (args->fspec == NULL) {
+		if (!update) {
+			/* New mounts must have a filename for the device */
+			DPRINTF("no filename for mount");
+			return EINVAL;
+		}
+	} else {
 		/*
 		 * Look up the name and verify that it's sane.
 		 */
@@ -443,48 +450,43 @@ ffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 			return error;
 		}
 
-		if (!update) {
-			/*
-			 * Be sure this is a valid block device
-			 */
-			if (devvp->v_type != VBLK) {
-				DPRINTF("non block device %d", devvp->v_type);
-				error = ENOTBLK;
-			} else if (bdevsw_lookup(devvp->v_rdev) == NULL) {
-				DPRINTF("can't find block device 0x%jx",
-				    devvp->v_rdev);
-				error = ENXIO;
-			}
-		} else {
+		/*
+		 * Be sure this is a valid block device
+		 */
+		if (devvp->v_type != VBLK) {
+			DPRINTF("non block device %d", devvp->v_type);
+			error = ENOTBLK;
+			goto fail;
+		}
+
+		if (bdevsw_lookup(devvp->v_rdev) == NULL) {
+			DPRINTF("can't find block device 0x%jx",
+			    devvp->v_rdev);
+			error = ENXIO;
+			goto fail;
+		}
+
+		if (update) {
 			/*
 			 * Be sure we're still naming the same device
 			 * used for our initial mount
 			 */
-			ump = VFSTOUFS(mp);
-			if (devvp != ump->um_devvp) {
-				if (devvp->v_rdev != ump->um_devvp->v_rdev) {
-					DPRINTF("wrong device 0x%jx != 0x%jx",
-					    (uintmax_t)devvp->v_rdev,
-					    (uintmax_t)ump->um_devvp->v_rdev);
-					error = EINVAL;
-				} else {
-					vrele(devvp);
-					devvp = ump->um_devvp;
-					vref(devvp);
-				}
+			if (devvp != ump->um_devvp &&
+			    devvp->v_rdev != ump->um_devvp->v_rdev) {
+				DPRINTF("wrong device 0x%jx != 0x%jx",
+				    (uintmax_t)devvp->v_rdev,
+				    (uintmax_t)ump->um_devvp->v_rdev);
+				error = EINVAL;
+				goto fail;
 			}
+			vrele(devvp);
+			devvp = NULL;
 		}
-	} else {
-		if (!update) {
-			/* New mounts must have a filename for the device */
-			DPRINTF("no filename for mount");
-			return EINVAL;
-		} else {
-			/* Use the extant mount */
-			ump = VFSTOUFS(mp);
-			devvp = ump->um_devvp;
-			vref(devvp);
-		}
+	}
+
+	if (devvp == NULL) {
+		devvp = ump->um_devvp;
+		vref(devvp);
 	}
 
 	/*
@@ -495,25 +497,17 @@ ffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	 * updating the mount is okay (for example, as far as securelevel goes)
 	 * which leaves us with the normal check.
 	 */
-	if (error == 0) {
-		accessmode = VREAD;
-		if (update ?
-		    (mp->mnt_iflag & IMNT_WANTRDWR) != 0 :
-		    (mp->mnt_flag & MNT_RDONLY) == 0)
-			accessmode |= VWRITE;
-		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-		error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_MOUNT,
-		    KAUTH_REQ_SYSTEM_MOUNT_DEVICE, mp, devvp,
-		    KAUTH_ARG(accessmode));
-		if (error) {
-			DPRINTF("kauth returned %d", error);
-		}
-		VOP_UNLOCK(devvp);
-	}
-
+	accessmode = VREAD;
+	if (update ? (mp->mnt_iflag & IMNT_WANTRDWR) != 0 :
+	    (mp->mnt_flag & MNT_RDONLY) == 0)
+		accessmode |= VWRITE;
+	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
+	error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_MOUNT,
+	    KAUTH_REQ_SYSTEM_MOUNT_DEVICE, mp, devvp, KAUTH_ARG(accessmode));
+	VOP_UNLOCK(devvp);
 	if (error) {
-		vrele(devvp);
-		return (error);
+		DPRINTF("kauth returned %d", error);
+		goto fail;
 	}
 
 #ifdef WAPBL
