@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.377 2018/04/11 07:52:25 maxv Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.378 2018/04/11 07:55:19 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.377 2018/04/11 07:52:25 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.378 2018/04/11 07:55:19 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -569,6 +569,9 @@ ip_input(struct mbuf *m)
 	 * not fast-forwarded, they must clear the M_CANFASTFWD flag.
 	 * Note that filters must _never_ set this flag, as another filter
 	 * in the list may have previously cleared it.
+	 *
+	 * Don't call hooks if the packet has already been processed by
+	 * IPsec (encapsulated, tunnel mode).
 	 */
 #if defined(IPSEC)
 	if (!ipsec_used || !ipsec_indone(m))
