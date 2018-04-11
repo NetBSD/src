@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.166 2018/04/11 15:25:58 christos Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.167 2018/04/11 23:20:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.166 2018/04/11 15:25:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.167 2018/04/11 23:20:15 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -494,7 +494,7 @@ addtstamp(int flags, struct tty *tp)
 
 	getnanouptime(&ts);
 	n = snprintf(buf, sizeof(buf), "[% 9jd.%.9ld] ",
-	    (intptr_t)ts.tv_sec, ts.tv_nsec);
+	    (intmax_t)ts.tv_sec, ts.tv_nsec);
 
 	for (int i = 0; i < n; i++)
 		putone(buf[i], flags, tp);
