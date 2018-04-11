@@ -1,4 +1,4 @@
-/*	$NetBSD: efidisk.c,v 1.5 2018/04/02 09:44:18 nonaka Exp $	*/
+/*	$NetBSD: efidisk.c,v 1.6 2018/04/11 10:32:09 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -107,7 +107,7 @@ next:
 
 	FreePool(handles);
 
-	if (efi_bootdp_type == BIOSDISK_TYPE_CD) {
+	if (efi_bootdp_type == BOOT_DEVICE_TYPE_CD) {
 		edi = TAILQ_FIRST(&efi_disklist);
 		if (edi != NULL && edi->bootdev) {
 			edi->type = BIOSDISK_TYPE_CD;
