@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.195 2018/03/21 14:23:54 roy Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.196 2018/04/11 07:55:19 maxv Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.195 2018/03/21 14:23:54 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.196 2018/04/11 07:55:19 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -380,10 +380,9 @@ ip6_input(struct mbuf *m, struct ifnet *rcvif)
 	 * not fast-forwarded, they must clear the M_CANFASTFWD flag.
 	 * Note that filters must _never_ set this flag, as another filter
 	 * in the list may have previously cleared it.
-	 */
-	/*
-	 * let ipfilter look at packet on the wire,
-	 * not the decapsulated packet.
+	 *
+	 * Don't call hooks if the packet has already been processed by
+	 * IPsec (encapsulated, tunnel mode).
 	 */
 #if defined(IPSEC)
 	if (!ipsec_used || !ipsec_indone(m))
