@@ -1,4 +1,4 @@
-/*	$NetBSD: rc_cmdlength.c,v 1.1.1.3 2016/01/08 21:21:33 christos Exp $	*/
+/*	$NetBSD: rc_cmdlength.c,v 1.1.1.3.8.1 2018/04/11 02:58:46 msaitoh Exp $	*/
 
 #include "config.h"
 
@@ -13,9 +13,9 @@
 
 #include "test-libntp.h"
 
-
-void
-test_EvaluateCommandLength(void){
+extern void test_EvaluateCommandLength(void);
+void test_EvaluateCommandLength(void)
+{
 	size_t length, commandLength;
 	const char *command1 = "Random Command";
 	const char *command2 = "Random Command\t\t\n\t";
@@ -37,5 +37,4 @@ test_EvaluateCommandLength(void){
 	length = strlen(command4);
 	commandLength = remoteconfig_cmdlength(command4, command4+length);
 	TEST_ASSERT_EQUAL(16, commandLength );
-
 }

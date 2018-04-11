@@ -1,4 +1,4 @@
-/*	$NetBSD: packetHandling.c,v 1.1.1.6 2016/05/01 15:57:23 christos Exp $	*/
+/*	$NetBSD: packetHandling.c,v 1.1.1.6.8.1 2018/04/11 02:58:45 msaitoh Exp $	*/
 
 #include "config.h"
 #include "ntp_debug.h"
@@ -86,7 +86,8 @@ test_GenerateAuthenticatedPacket(void)
 	testkey.key_id = 30;
 	testkey.key_len = 9;
 	memcpy(testkey.key_seq, "123456789", testkey.key_len);
-	memcpy(testkey.type, "MD5", 3);
+	strlcpy(testkey.typen, "MD5", sizeof(testkey.typen));
+	testkey.typei = keytype_from_text(testkey.typen, NULL);
 
 	GETTIMEOFDAY(&xmt, NULL);
 	xmt.tv_sec += JAN_1970;
@@ -108,7 +109,7 @@ test_GenerateAuthenticatedPacket(void)
 	TEST_ASSERT_EQUAL(testkey.key_id, ntohl(testpkt.exten[0]));
 	
 	TEST_ASSERT_EQUAL(MAX_MD5_LEN - 4, /* Remove the key_id, only keep the mac. */
-			  make_mac(&testpkt, LEN_PKT_NOMAC, MAX_MD5_LEN, &testkey, expected_mac));
+			  make_mac(&testpkt, LEN_PKT_NOMAC, MAX_MD5_LEN-4, &testkey, expected_mac));
 	TEST_ASSERT_EQUAL_MEMORY(expected_mac, (char*)&testpkt.exten[1], MAX_MD5_LEN -4);
 }
 

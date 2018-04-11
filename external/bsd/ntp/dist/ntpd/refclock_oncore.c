@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_oncore.c,v 1.14 2017/04/13 20:17:42 christos Exp $	*/
+/*	$NetBSD: refclock_oncore.c,v 1.14.4.1 2018/04/11 02:58:41 msaitoh Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -3425,9 +3425,10 @@ oncore_check_leap_sec(
 		instance->Bj_day = instance->BEHa[5];
 
 		if (instance->saw_Gj < 0) {	/* -1 DONT have Gj use Bj */
-			if ((instance->BEHa[4] == 6) || (instance->BEHa[4] == 12))
+			if ((instance->BEHa[4] == 6) || (instance->BEHa[4] == 12)) {
 				oncore_sendmsg(instance, oncore_cmd_Bj, sizeof(oncore_cmd_Bj));
 				oncore_sendmsg(instance, oncore_cmd_Bl, sizeof(oncore_cmd_Bl));
+			}
 			return;
 		}
 
@@ -3868,9 +3869,10 @@ oncore_set_traim(
 			oncore_sendmsg(instance, oncore_cmd_Bnx, sizeof(oncore_cmd_Bnx));
 		else if (instance->chan == 8)
 			oncore_sendmsg(instance, oncore_cmd_Enx, sizeof(oncore_cmd_Enx));
-		else	/* chan == 12 */
+		else {	/* chan == 12 */
 			oncore_sendmsg(instance, oncore_cmd_Ge0, sizeof(oncore_cmd_Ge0));
 			oncore_sendmsg(instance, oncore_cmd_Hn0, sizeof(oncore_cmd_Hn0));
+		}
 	}
 }
 

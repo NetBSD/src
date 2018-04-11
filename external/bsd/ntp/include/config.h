@@ -8,8 +8,7 @@
 /* #undef ADJTIME_IS_ACCURATE */
 
 /* Support NTP Autokey protocol? */
-/* in the Makefile */
-/* #undef AUTOKEY */
+#define AUTOKEY 1
 
 /* why not HAVE_P_S? */
 /* #undef CALL_PTHREAD_SETCONCURRENCY */
@@ -840,8 +839,11 @@
 /* Define to 1 if you have the <stdarg.h> header file. */
 #define HAVE_STDARG_H 1
 
+/* sun2 does not have atomics */
+#ifndef __mc68010__
 /* Define to 1 if you have the <stdatomic.h> header file. */
-/* #undef HAVE_STDATOMIC_H */
+#define HAVE_STDATOMIC_H 1
+#endif
 
 /* Define to 1 if stdbool.h conforms to C99. */
 #define HAVE_STDBOOL_H 1
@@ -1352,8 +1354,7 @@
 /* Should we align with the NIST lockclock scheme? */
 /* #undef LOCKCLOCK */
 
-/* Define to the sub-directory in which libtool stores uninstalled libraries.
-   */
+/* Define to the sub-directory where libtool stores uninstalled libraries. */
 #define LT_OBJDIR ".libs/"
 
 /* Does the target support multicast IP? */
@@ -1405,9 +1406,6 @@
 /* Should we NOT read /dev/kmem? */
 #define NOKMEM 1
 
-/* Define to 1 if your C compiler doesn't accept -c and -o together. */
-/* #undef NO_MINUS_C_MINUS_O */
-
 /* Should we avoid #warning on option name collisions? */
 /* #undef NO_OPTION_NAME_WARNINGS */
 
@@ -1418,7 +1416,7 @@
 /* #undef NO_THREADS */
 
 /* Default location of crypto key info */
-#define NTP_KEYSDIR "/etc/ntp"
+#define NTP_KEYSDIR "/usr/etc"
 
 /* Path to sign daemon rendezvous socket */
 /* #undef NTP_SIGND_PATH */
@@ -1460,7 +1458,7 @@
 #define PACKAGE_NAME "ntp"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "ntp 4.2.8p9"
+#define PACKAGE_STRING "ntp 4.2.8p11"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "ntp"
@@ -1469,7 +1467,7 @@
 #define PACKAGE_URL "http://www.ntp.org./"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "4.2.8p9"
+#define PACKAGE_VERSION "4.2.8p11"
 
 /* data dir */
 #define PERLLIBDIR "/usr/local/share/ntp/lib"
@@ -1612,8 +1610,7 @@ typedef unsigned int	uintptr_t;
 /* #undef USE_FSETOWNCTTY */
 
 /* Use OpenSSL's crypto random functions */
-/* In Makefile */
-/* #undef USE_OPENSSL_CRYPTO_RAND */
+#define USE_OPENSSL_CRYPTO_RAND 1
 
 /* OK to use snprintb()? */
 #define USE_SNPRINTB 1
@@ -1625,7 +1622,7 @@ typedef unsigned int	uintptr_t;
 /* #undef USE_UDP_SIGPOLL */
 
 /* Version number of package */
-#define VERSION "4.2.8p9"
+#define VERSION "4.2.8p11"
 
 /* vsnprintf expands "%m" to strerror(errno) */
 /* #undef VSNPRINTF_PERCENT_M */
@@ -1639,20 +1636,15 @@ typedef unsigned int	uintptr_t;
 #ifndef __NetBSD__
 /* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
    significant byte first (like Motorola and SPARC, unlike Intel). */
-# if defined AC_APPLE_UNIVERSAL_BUILD
+#if defined AC_APPLE_UNIVERSAL_BUILD
 # if defined __BIG_ENDIAN__
 #  define WORDS_BIGENDIAN 1
 # endif
-# else
-#  ifndef WORDS_BIGENDIAN
- /* #  undef WORDS_BIGENDIAN */
-#  endif
-# endif
 #else
-# include <sys/endian.h>
-# if _BYTE_ORDER == _BIG_ENDIAN
-#  define WORDS_BIGENDIAN 1
+# ifndef WORDS_BIGENDIAN
+/* #  undef WORDS_BIGENDIAN */
 # endif
+#endif
 #endif
 
 /* routine worker child proc uses to exit. */

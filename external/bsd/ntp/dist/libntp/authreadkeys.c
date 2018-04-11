@@ -1,4 +1,4 @@
-/*	$NetBSD: authreadkeys.c,v 1.9 2016/05/01 23:32:00 christos Exp $	*/
+/*	$NetBSD: authreadkeys.c,v 1.9.8.1 2018/04/11 02:58:40 msaitoh Exp $	*/
 
 /*
  * authreadkeys.c - routines to support the reading of the key file
@@ -7,8 +7,8 @@
 #include <stdio.h>
 #include <ctype.h>
 
-#include "ntpd.h"	/* Only for DPRINTF */
-#include "ntp_fp.h"
+//#include "ntpd.h"	/* Only for DPRINTF */
+//#include "ntp_fp.h"
 #include "ntp.h"
 #include "ntp_syslog.h"
 #include "ntp_stdlib.h"
@@ -150,6 +150,7 @@ authreadkeys(
 	u_int   nerr;
 	KeyDataT *list = NULL;
 	KeyDataT *next = NULL;
+
 	/*
 	 * Open file.  Complain and return if it can't be opened.
 	 */
@@ -222,7 +223,8 @@ authreadkeys(
 			log_maybe(NULL,
 				  "authreadkeys: invalid type for key %d",
 				  keyno);
-		} else if (EVP_get_digestbynid(keytype) == NULL) {
+		} else if (NID_cmac != keytype &&
+				EVP_get_digestbynid(keytype) == NULL) {
 			log_maybe(NULL,
 				  "authreadkeys: no algorithm for key %d",
 				  keyno);
@@ -297,28 +299,62 @@ authreadkeys(
 		}
 
 		token = nexttok(&line);
-		DPRINTF(0, ("authreadkeys: full access list <%s>\n", (token) ? token : "NULL"));
 		if (token != NULL) {	/* A comma-separated IP access list */
 			char *tp = token;
 
 			while (tp) {
 				char *i;
+				char *snp;	/* subnet text pointer */
+				unsigned int snbits;
 				sockaddr_u addr;
 
 				i = strchr(tp, (int)',');
-				if (i)
+				if (i) {
 					*i = '\0';
-				DPRINTF(0, ("authreadkeys: access list:  <%s>\n", tp));
+				}
+				snp = strchr(tp, (int)'/');
+				if (snp) {
+					char *sp;
+
+					*snp++ = '\0';
+					snbits = 0;
+					sp = snp;
+
+					while (*sp != '\0') {
+						if (!isdigit((unsigned char)*sp))
+						    break;
+						if (snbits > 1000)
+						    break;	/* overflow */
+						snbits = 10 * snbits + (*sp++ - '0');       /* ascii dependent */
+					}
+					if (*sp != '\0') {
+						log_maybe(&nerr,
+							  "authreadkeys: Invalid character in subnet specification for <%s/%s> in key %d",
+							  sp, snp, keyno);
+						goto nextip;
+					}
+				} else {
+					snbits = UINT_MAX;
+				}
 
 				if (is_ip_address(tp, AF_UNSPEC, &addr)) {
-					next->keyacclist = keyacc_new_push(
-						next->keyacclist, &addr);
+					/* Make sure that snbits is valid for addr */
+				    if ((snbits < UINT_MAX) &&
+					( (IS_IPV4(&addr) && snbits > 32) ||
+					  (IS_IPV6(&addr) && snbits > 128))) {
+						log_maybe(NULL,
+							  "authreadkeys: excessive subnet mask <%s/%s> for key %d",
+							  tp, snp, keyno);
+				    }
+				    next->keyacclist = keyacc_new_push(
+					next->keyacclist, &addr, snbits);
 				} else {
 					log_maybe(&nerr,
 						  "authreadkeys: invalid IP address <%s> for key %d",
 						  tp, keyno);
 				}
 
+			nextip:
 				if (i) {
 					tp = i + 1;
 				} else {

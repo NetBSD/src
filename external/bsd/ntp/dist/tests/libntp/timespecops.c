@@ -1,4 +1,4 @@
-/*	$NetBSD: timespecops.c,v 1.1.1.6 2016/05/01 15:57:23 christos Exp $	*/
+/*	$NetBSD: timespecops.c,v 1.1.1.6.8.1 2018/04/11 02:58:46 msaitoh Exp $	*/
 
 #include "config.h"
 
@@ -134,7 +134,8 @@ AssertFpClose(const l_fp m, const l_fp n, const l_fp limit)
 		return TRUE;
 	}
 	else {
-		printf("m_expr which is %s \nand\nn_expr which is %s\nare not close; diff=%susec\n", lfptoa(&m, 10), lfptoa(&n, 10), lfptoa(&diff, 10)); 
+		printf("m_expr which is %s \nand\nn_expr which is %s\nare not close; diff=%susec\n",
+		       lfptoa(&m, 10), lfptoa(&n, 10), lfptoa(&diff, 10)); 
 		return FALSE;
 	}
 }
@@ -149,11 +150,13 @@ AssertTimespecClose(const struct timespec m, const struct timespec n,
 	diff = abs_tspec(sub_tspec(m, n));
 	if (cmp_tspec(limit, diff) >= 0)
 		return TRUE;
-	else
-	{
-		printf("m_expr which is %ld.%lu \nand\nn_expr which is %ld.%lu\nare not close; diff=%ld.%lunsec\n", m.tv_sec, m.tv_nsec, n.tv_sec, n.tv_nsec, diff.tv_sec, diff.tv_nsec); 
-		return FALSE;
-	}
+
+	printf("m_expr which is %lld.%09lu \nand\n"
+	       "n_expr which is %lld.%09lu\nare not close; diff=%lld.%09lunsec\n",
+	       (long long)m.tv_sec, m.tv_nsec,
+	       (long long)n.tv_sec, n.tv_nsec,
+	       (long long)diff.tv_sec, diff.tv_nsec); 
+	return FALSE;
 }
 
 //-----------------------------------------------

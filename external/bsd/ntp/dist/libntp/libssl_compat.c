@@ -1,4 +1,4 @@
-/*	$NetBSD: libssl_compat.c,v 1.1.1.2 2017/04/13 19:17:27 christos Exp $	*/
+/*	$NetBSD: libssl_compat.c,v 1.1.1.2.10.1 2018/04/11 02:58:40 msaitoh Exp $	*/
 
 /*
  * libssl_compat.c -- OpenSSL v1.1 compatibility functions
@@ -76,7 +76,10 @@ sslshimBN_GENCB_free(
 EVP_MD_CTX*
 sslshim_EVP_MD_CTX_new(void)
 {
-	return calloc(1, sizeof(EVP_MD_CTX));
+	EVP_MD_CTX *	ctx;
+	if (NULL != (ctx = calloc(1, sizeof(EVP_MD_CTX))))
+		EVP_MD_CTX_init(ctx);
+	return ctx;
 }
 
 void

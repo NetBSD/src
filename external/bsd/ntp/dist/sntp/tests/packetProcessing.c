@@ -1,4 +1,4 @@
-/*	$NetBSD: packetProcessing.c,v 1.1.1.7 2016/11/22 01:35:11 christos Exp $	*/
+/*	$NetBSD: packetProcessing.c,v 1.1.1.7.6.1 2018/04/11 02:58:45 msaitoh Exp $	*/
 
 #include "config.h"
 
@@ -6,6 +6,9 @@
 #include "networking.h"
 #include "ntp_stdlib.h"
 #include "unity.h"
+
+#define CMAC		"AES128CMAC"
+#define CMAC_LENGTH	16
 
 
 const char * Version = "stub unit test Version string";
@@ -37,6 +40,7 @@ void test_AcceptNoSentPacketBroadcastMode(void);
 void test_CorrectUnauthenticatedPacket(void);
 void test_CorrectAuthenticatedPacketMD5(void);
 void test_CorrectAuthenticatedPacketSHA1(void);
+void test_CorrectAuthenticatedPacketCMAC(void);
 
 /* [Bug 2998] There are some issues whith the definition of 'struct pkt'
  * when AUTOKEY is undefined -- the formal struct is too small to hold
@@ -78,7 +82,7 @@ PrepareAuthenticationTest(
 	key_ptr->next = NULL;
 	key_ptr->key_id = key_id;
 	key_ptr->key_len = key_len;
-	memcpy(key_ptr->type, "MD5", 3);
+	memcpy(key_ptr->typen, type, strlen(type) + 1);
 
 	TEST_ASSERT_TRUE(key_len < sizeof(key_ptr->key_seq));
 
@@ -233,7 +237,7 @@ test_AuthenticatedPacketInvalid(void)
 
 	testpkt.p.exten[0] = htonl(50);
 	int mac_len = make_mac(&testpkt.p, pkt_len,
-			       MAX_MD5_LEN, key_ptr,
+			       MAX_MD5_LEN - KEY_MAC_LEN, key_ptr,
 			       &testpkt.p.exten[1]);
 
 	pkt_len += 4 + mac_len;
@@ -261,9 +265,9 @@ test_AuthenticatedPacketUnknownKey(void)
 
 	testpkt.p.exten[0] = htonl(50);
 	int mac_len = make_mac(&testpkt.p, pkt_len,
-			       MAX_MD5_LEN, key_ptr,
+			       MAX_MD5_LEN - KEY_MAC_LEN, key_ptr,
 			       &testpkt.p.exten[1]);
-	pkt_len += 4 + mac_len;
+	pkt_len += KEY_MAC_LEN + mac_len;
 
 	TEST_ASSERT_EQUAL(SERVER_AUTH_FAIL,
 			  process_pkt(&testpkt.p, &testsock, pkt_len,
@@ -426,10 +430,10 @@ test_CorrectAuthenticatedPacketMD5(void)
 	/* Prepare the packet. */
 	testpkt.p.exten[0] = htonl(10);
 	int mac_len = make_mac(&testpkt.p, pkt_len,
-			       MAX_MD5_LEN, key_ptr,
+			       MAX_MD5_LEN - KEY_MAC_LEN, key_ptr,
 			       &testpkt.p.exten[1]);
 
-	pkt_len += 4 + mac_len;
+	pkt_len += KEY_MAC_LEN + mac_len;
 
 	TEST_ASSERT_EQUAL(pkt_len,
 			  process_pkt(&testpkt.p, &testsock, pkt_len,
@@ -448,6 +452,28 @@ test_CorrectAuthenticatedPacketSHA1(void)
 	/* Prepare the packet. */
 	testpkt.p.exten[0] = htonl(20);
 	int mac_len = make_mac(&testpkt.p, pkt_len,
+			       MAX_MDG_LEN, key_ptr,
+			       &testpkt.p.exten[1]);
+
+	pkt_len += KEY_MAC_LEN + mac_len;
+
+	TEST_ASSERT_EQUAL(pkt_len,
+			  process_pkt(&testpkt.p, &testsock, pkt_len,
+				      MODE_SERVER, &testspkt.p, "UnitTest"));
+}
+
+
+void
+test_CorrectAuthenticatedPacketCMAC(void)
+{
+	PrepareAuthenticationTest(30, CMAC_LENGTH, CMAC, "abcdefghijklmnop");
+	TEST_ASSERT_TRUE(ENABLED_OPT(AUTHENTICATION));
+
+	int pkt_len = LEN_PKT_NOMAC;
+
+	/* Prepare the packet. */
+	testpkt.p.exten[0] = htonl(30);
+	int mac_len = make_mac(&testpkt.p, pkt_len,
 			       MAX_MAC_LEN, key_ptr,
 			       &testpkt.p.exten[1]);
 
@@ -457,3 +483,4 @@ test_CorrectAuthenticatedPacketSHA1(void)
 			  process_pkt(&testpkt.p, &testsock, pkt_len,
 				      MODE_SERVER, &testspkt.p, "UnitTest"));
 }
+
