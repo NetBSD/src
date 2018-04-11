@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.30 2018/04/10 22:45:39 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.31 2018/04/11 01:52:59 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.30 2018/04/10 22:45:39 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.31 2018/04/11 01:52:59 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1328,7 +1328,7 @@ fork_test(pid_t (*fn)(void), bool trackfork, bool trackvfork,
 	const int exitval = 5;
 	const int exitval2 = 15;
 	const int sigval = SIGSTOP;
-	pid_t child, child2, wpid;
+	pid_t child, child2 = 0, wpid;
 #if defined(TWAIT_HAVE_STATUS)
 	int status;
 #endif
@@ -1388,7 +1388,7 @@ fork_test(pid_t (*fn)(void), bool trackfork, bool trackvfork,
 	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
 #if defined(TWAIT_HAVE_PID)
-	if (trackfork || trackvfork) {
+	if ((trackfork && fn == fork) || (trackvfork && fn == vfork)) {
 		DPRINTF("Before calling %s() for the child %d\n", TWAIT_FNAME,
 		        child);
 		TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0),
@@ -1398,11 +1398,11 @@ fork_test(pid_t (*fn)(void), bool trackfork, bool trackvfork,
 
 		SYSCALL_REQUIRE(ptrace(PT_GET_PROCESS_STATE, child, &state,
 		                       slen) != -1);
-		if (trackfork) {
+		if (trackfork && fn == fork) {
 			ATF_REQUIRE_EQ(state.pe_report_event & PTRACE_FORK,
 			       PTRACE_FORK);
 		}
-		if (trackvfork) {
+		if (trackvfork && fn == vfork) {
 			ATF_REQUIRE_EQ(state.pe_report_event & PTRACE_VFORK,
 			       PTRACE_VFORK);
 		}
@@ -1419,11 +1419,11 @@ fork_test(pid_t (*fn)(void), bool trackfork, bool trackvfork,
 
 		SYSCALL_REQUIRE(ptrace(PT_GET_PROCESS_STATE, child2, &state,
 		                       slen) != -1);
-		if (trackfork) {
+		if (trackfork && fn == fork) {
 			ATF_REQUIRE_EQ(state.pe_report_event & PTRACE_FORK,
 			       PTRACE_FORK);
 		}
-		if (trackvfork) {
+		if (trackvfork && fn == vfork) {
 			ATF_REQUIRE_EQ(state.pe_report_event & PTRACE_VFORK,
 			       PTRACE_VFORK);
 		}
@@ -1441,7 +1441,7 @@ fork_test(pid_t (*fn)(void), bool trackfork, bool trackvfork,
 	}
 #endif
 
-	if (trackvforkdone) {
+	if (trackvforkdone && fn == vfork) {
 		DPRINTF("Before calling %s() for the child %d\n", TWAIT_FNAME,
 		        child);
 		TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0),
@@ -1463,7 +1463,7 @@ fork_test(pid_t (*fn)(void), bool trackfork, bool trackvfork,
 	}
 
 #if defined(TWAIT_HAVE_PID)
-	if (trackfork || trackvfork) {
+	if ((trackfork && fn == fork) || (trackvfork && fn == vfork)) {
 		DPRINTF("Before calling %s() for the forkee - expected exited"
 		        "\n", TWAIT_FNAME);
 		TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child2, &status, 0),
@@ -1499,93 +1499,254 @@ fork_test(pid_t (*fn)(void), bool trackfork, bool trackvfork,
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
-#if defined(TWAIT_HAVE_PID)
 ATF_TC(fork1);
 ATF_TC_HEAD(fork1, tc)
-{
-	atf_tc_set_md_var(tc, "descr",
-	    "Verify that fork(2) is intercepted by ptrace(2) with EVENT_MASK "
-	    "set to PTRACE_FORK");
-}
-
-ATF_TC_BODY(fork1, tc)
-{
-
-	fork_test(fork, true, false, false);
-}
-#endif
-
-ATF_TC(fork2);
-ATF_TC_HEAD(fork2, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Verify that fork(2) is not intercepted by ptrace(2) with empty "
 	    "EVENT_MASK");
 }
 
-ATF_TC_BODY(fork2, tc)
+ATF_TC_BODY(fork1, tc)
 {
 
 	fork_test(fork, false, false, false);
 }
 
 #if defined(TWAIT_HAVE_PID)
-ATF_TC(vfork1);
-ATF_TC_HEAD(vfork1, tc)
+ATF_TC(fork2);
+ATF_TC_HEAD(fork2, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
-	    "Verify that vfork(2) is intercepted by ptrace(2) with EVENT_MASK "
-	    "set to PTRACE_VFORK");
+	    "Verify that fork(2) is intercepted by ptrace(2) with EVENT_MASK "
+	    "set to PTRACE_FORK");
 }
 
-ATF_TC_BODY(vfork1, tc)
+ATF_TC_BODY(fork2, tc)
 {
 
-	fork_test(vfork, false, true, false);
+	fork_test(fork, true, false, false);
 }
 #endif
 
-ATF_TC(vfork2);
-ATF_TC_HEAD(vfork2, tc)
+#if defined(TWAIT_HAVE_PID)
+ATF_TC(fork3);
+ATF_TC_HEAD(fork3, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Verify that fork(2) is not intercepted by ptrace(2) with "
+	    "EVENT_MASK set to PTRACE_VFORK");
+}
+
+ATF_TC_BODY(fork3, tc)
+{
+
+	fork_test(fork, false, true, false);
+}
+#endif
+
+#if defined(TWAIT_HAVE_PID)
+ATF_TC(fork4);
+ATF_TC_HEAD(fork4, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Verify that fork(2) is intercepted by ptrace(2) with "
+	    "EVENT_MASK set to PTRACE_FORK|PTRACE_VFORK");
+}
+
+ATF_TC_BODY(fork4, tc)
+{
+
+	fork_test(fork, true, true, false);
+}
+#endif
+
+ATF_TC(fork5);
+ATF_TC_HEAD(fork5, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Verify that fork(2) is not intercepted by ptrace(2) with "
+	    "EVENT_MASK set to PTRACE_VFORK_DONE");
+}
+
+ATF_TC_BODY(fork5, tc)
+{
+
+	fork_test(fork, false, false, true);
+}
+
+#if defined(TWAIT_HAVE_PID)
+ATF_TC(fork6);
+ATF_TC_HEAD(fork6, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Verify that fork(2) is intercepted by ptrace(2) with "
+	    "EVENT_MASK set to PTRACE_FORK|PTRACE_VFORK_DONE");
+}
+
+ATF_TC_BODY(fork6, tc)
+{
+
+	fork_test(fork, true, false, true);
+}
+#endif
+
+#if defined(TWAIT_HAVE_PID)
+ATF_TC(fork7);
+ATF_TC_HEAD(fork7, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Verify that fork(2) is not intercepted by ptrace(2) with "
+	    "EVENT_MASK set to PTRACE_VFORK|PTRACE_VFORK_DONE");
+}
+
+ATF_TC_BODY(fork7, tc)
+{
+
+	fork_test(fork, false, true, true);
+}
+#endif
+
+#if defined(TWAIT_HAVE_PID)
+ATF_TC(fork8);
+ATF_TC_HEAD(fork8, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Verify that fork(2) is intercepted by ptrace(2) with "
+	    "EVENT_MASK set to PTRACE_FORK|PTRACE_VFORK|PTRACE_VFORK_DONE");
+}
+
+ATF_TC_BODY(fork8, tc)
+{
+
+	fork_test(fork, true, true, true);
+}
+#endif
+
+
+ATF_TC(vfork1);
+ATF_TC_HEAD(vfork1, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Verify that vfork(2) is not intercepted by ptrace(2) with empty "
 	    "EVENT_MASK");
 }
 
-ATF_TC_BODY(vfork2, tc)
+ATF_TC_BODY(vfork1, tc)
 {
 
 	fork_test(vfork, false, false, false);
 }
 
-ATF_TC(vforkdone1);
-ATF_TC_HEAD(vforkdone1, tc)
+#if defined(TWAIT_HAVE_PID)
+ATF_TC(vfork2);
+ATF_TC_HEAD(vfork2, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
-	    "Verify that vfork(2) is intercepted by ptrace(2) with EVENT_MASK "
-	    "set to PTRACE_VFORK_DONE");
+	    "Verify that vfork(2) is not intercepted by ptrace(2) with "
+	    "EVENT_MASK set to PTRACE_FORK");
 }
 
-ATF_TC_BODY(vforkdone1, tc)
+ATF_TC_BODY(vfork2, tc)
+{
+
+	fork_test(vfork, true, false, false);
+}
+#endif
+
+#if defined(TWAIT_HAVE_PID)
+ATF_TC(vfork3);
+ATF_TC_HEAD(vfork3, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Verify that vfork(2) is intercepted by ptrace(2) with "
+	    "EVENT_MASK set to PTRACE_VFORK");
+}
+
+ATF_TC_BODY(vfork3, tc)
+{
+
+	fork_test(vfork, false, true, false);
+}
+#endif
+
+#if defined(TWAIT_HAVE_PID)
+ATF_TC(vfork4);
+ATF_TC_HEAD(vfork4, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Verify that vfork(2) is intercepted by ptrace(2) with "
+	    "EVENT_MASK set to PTRACE_FORK|PTRACE_VFORK");
+}
+
+ATF_TC_BODY(vfork4, tc)
+{
+
+	fork_test(vfork, true, true, false);
+}
+#endif
+
+ATF_TC(vfork5);
+ATF_TC_HEAD(vfork5, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Verify that vfork(2) is intercepted by ptrace(2) with "
+	    "EVENT_MASK set to PTRACE_VFORK_DONE");
+}
+
+ATF_TC_BODY(vfork5, tc)
 {
 
 	fork_test(vfork, false, false, true);
 }
 
-ATF_TC(vforkdone2);
-ATF_TC_HEAD(vforkdone2, tc)
+#if defined(TWAIT_HAVE_PID)
+ATF_TC(vfork6);
+ATF_TC_HEAD(vfork6, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
-	    "Verify that vfork(2) is intercepted by ptrace(2) with EVENT_MASK "
-	    "set to PTRACE_FORK | PTRACE_VFORK_DONE");
+	    "Verify that vfork(2) is intercepted by ptrace(2) with "
+	    "EVENT_MASK set to PTRACE_FORK|PTRACE_VFORK_DONE");
 }
 
-ATF_TC_BODY(vforkdone2, tc)
+ATF_TC_BODY(vfork6, tc)
+{
+
+	fork_test(vfork, true, false, true);
+}
+#endif
+
+#if defined(TWAIT_HAVE_PID)
+ATF_TC(vfork7);
+ATF_TC_HEAD(vfork7, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Verify that vfork(2) is not intercepted by ptrace(2) with "
+	    "EVENT_MASK set to PTRACE_VFORK|PTRACE_VFORK_DONE");
+}
+
+ATF_TC_BODY(vfork7, tc)
 {
 
 	fork_test(vfork, false, true, true);
 }
+#endif
+
+#if defined(TWAIT_HAVE_PID)
+ATF_TC(vfork8);
+ATF_TC_HEAD(vfork8, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Verify that vfork(2) is intercepted by ptrace(2) with "
+	    "EVENT_MASK set to PTRACE_FORK|PTRACE_VFORK|PTRACE_VFORK_DONE");
+}
+
+ATF_TC_BODY(vfork8, tc)
+{
+
+	fork_test(vfork, true, true, true);
+}
+#endif
 
 ATF_TC(io_read_d1);
 ATF_TC_HEAD(io_read_d1, tc)
@@ -6799,14 +6960,23 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, eventmask5);
 	ATF_TP_ADD_TC(tp, eventmask6);
 
-	ATF_TP_ADD_TC_HAVE_PID(tp, fork1);
-	ATF_TP_ADD_TC(tp, fork2);
+	ATF_TP_ADD_TC(tp, fork1);
+	ATF_TP_ADD_TC_HAVE_PID(tp, fork2);
+	ATF_TP_ADD_TC_HAVE_PID(tp, fork3);
+	ATF_TP_ADD_TC_HAVE_PID(tp, fork4);
+	ATF_TP_ADD_TC(tp, fork5);
+	ATF_TP_ADD_TC_HAVE_PID(tp, fork6);
+	ATF_TP_ADD_TC_HAVE_PID(tp, fork7);
+	ATF_TP_ADD_TC_HAVE_PID(tp, fork8);
 
-	ATF_TP_ADD_TC_HAVE_PID(tp, vfork1);
-	ATF_TP_ADD_TC(tp, vfork2);
-
-	ATF_TP_ADD_TC(tp, vforkdone1);
-	ATF_TP_ADD_TC(tp, vforkdone2);
+	ATF_TP_ADD_TC(tp, vfork1);
+	ATF_TP_ADD_TC_HAVE_PID(tp, vfork2);
+	ATF_TP_ADD_TC_HAVE_PID(tp, vfork3);
+	ATF_TP_ADD_TC_HAVE_PID(tp, vfork4);
+	ATF_TP_ADD_TC(tp, vfork5);
+	ATF_TP_ADD_TC_HAVE_PID(tp, vfork6);
+	ATF_TP_ADD_TC_HAVE_PID(tp, vfork7);
+	ATF_TP_ADD_TC_HAVE_PID(tp, vfork8);
 
 	ATF_TP_ADD_TC(tp, io_read_d1);
 	ATF_TP_ADD_TC(tp, io_read_d2);
