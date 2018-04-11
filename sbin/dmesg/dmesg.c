@@ -1,4 +1,4 @@
-/*	$NetBSD: dmesg.c,v 1.31 2018/04/10 22:21:52 christos Exp $	*/
+/*	$NetBSD: dmesg.c,v 1.32 2018/04/11 06:41:23 wiz Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,7 +38,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)dmesg.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: dmesg.c,v 1.31 2018/04/10 22:21:52 christos Exp $");
+__RCSID("$NetBSD: dmesg.c,v 1.32 2018/04/11 06:41:23 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -282,7 +282,7 @@ static void
 usage(void)
 {
 
-	(void)fprintf(stderr, "Usage: %s [-qt] [-M core] [-N system]\n",
+	(void)fprintf(stderr, "Usage: %s [-dTt] [-M core] [-N system]\n",
 		getprogname());
 	exit(EXIT_FAILURE);
 }
