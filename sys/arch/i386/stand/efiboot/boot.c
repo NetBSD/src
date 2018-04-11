@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.5.2.4 2018/04/04 16:34:39 martin Exp $	*/
+/*	$NetBSD: boot.c,v 1.5.2.5 2018/04/11 14:51:43 martin Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -182,6 +182,21 @@ parsebootfile(const char *fname, char **fsname, char **devname, int *unit,
 }
 
 static char *
+snprint_bootdev(char *buf, size_t bufsize, const char *devname, int unit,
+    int partition)
+{
+	static const char *no_partition_devs[] = { "esp", "net", "nfs", "tftp" };
+	int i;
+
+	for (i = 0; i < __arraycount(no_partition_devs); i++)
+		if (strcmp(devname, no_partition_devs[i]) == 0)
+			break;
+	snprintf(buf, bufsize, "%s%d%c", devname, unit,
+	    i < __arraycount(no_partition_devs) ? '\0' : 'a' + partition);
+	return buf;
+}
+
+static char *
 sprint_bootsel(const char *filename)
 {
 	char *fsname, *devname;
@@ -191,8 +206,8 @@ sprint_bootsel(const char *filename)
 
 	if (parsebootfile(filename, &fsname, &devname, &unit,
 			  &partition, &file) == 0) {
-		snprintf(buf, sizeof(buf), "%s%d%c:%s", devname, unit,
-		    'a' + partition, file);
+		snprintf(buf, sizeof(buf), "%s:%s", snprint_bootdev(buf,
+		    sizeof(buf), devname, unit, partition), file);
 		return buf;
 	}
 	return "(invalid)";
@@ -276,7 +291,9 @@ boot(void)
 
 	if (!(boot_params.bp_flags & X86_BP_FLAGS_NOBOOTCONF)) {
 #ifdef EFIBOOTCFG_FILENAME
-		int rv = parsebootconf(EFIBOOTCFG_FILENAME);
+		int rv = EINVAL;
+		if (efi_bootdp_type != BOOT_DEVICE_TYPE_NET)
+			rv = parsebootconf(EFIBOOTCFG_FILENAME);
 		if (rv)
 #endif
 		parsebootconf(BOOTCFG_FILENAME);
@@ -421,13 +438,15 @@ void
 command_dev(char *arg)
 {
 	static char savedevname[MAXDEVNAME + 1];
+	char buf[80];
 	char *fsname, *devname;
 	const char *file; /* dummy */
 
 	if (*arg == '\0') {
 		efi_disk_show();
-		printf("default %s%d%c\n", default_devname, default_unit,
-		       'a' + default_partition);
+		efi_net_show();
+		printf("default %s\n", snprint_bootdev(buf, sizeof(buf),
+		    default_devname, default_unit, default_partition));
 		return;
 	}
 

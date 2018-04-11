@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.efiboot,v 1.9.2.2 2018/04/02 08:50:33 martin Exp $
+# $NetBSD: Makefile.efiboot,v 1.9.2.3 2018/04/11 14:51:43 martin Exp $
 
 S=		${.CURDIR}/../../../../..
 
@@ -8,12 +8,12 @@ NEWVERSWHAT?=	"EFI Boot"
 
 AFLAGS.start.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 
-SOURCES?= start.S conf.c devopen.c efiboot.c self_reloc.c
-LIBI386SRCS= boot.c biosdisk.c bootinfo.c bootinfo_biosgeom.c
-LIBI386SRCS+= bootmenu.c diskbuf.c exec.c menuutils.c
-LIBI386SRCS+= panic.c parseutils.c pread.c
-LIBI386SRCS+= efichar.c eficons.c efidelay.c efidev.c efidisk.c efidisk_ll.c
-LIBI386SRCS+= efigetsecs.c efimemory.c
+SOURCES= start.S boot.c conf.c devopen.c dev_net.c self_reloc.c panic.c
+SOURCES+= efiboot.c efichar.c eficons.c efidelay.c efidev.c
+SOURCES+= efidisk.c efidisk_ll.c efigetsecs.c efimemory.c
+SOURCES+= efinet.c efipxe.c
+LIBI386SRCS= biosdisk.c bootinfo.c bootinfo_biosgeom.c bootmenu.c
+LIBI386SRCS+= diskbuf.c exec.c menuutils.c parseutils.c pread.c
 SRCS= ${SOURCES} ${EXTRA_SOURCES} ${LIBI386SRCS}
 
 PIE_CFLAGS=
@@ -57,9 +57,21 @@ CPPFLAGS+= -DSUPPORT_CD9660
 CPPFLAGS+= -D"devb2cdb(bno)=(bno)"
 CPPFLAGS+= -DSUPPORT_DOSFS
 CPPFLAGS+= -DSUPPORT_EXT2FS
+CPPFLAGS+= -DSUPPORT_BOOTP
+CPPFLAGS+= -DSUPPORT_DHCP
+CPPFLAGS+= -DSUPPORT_NFS
+#CPPFLAGS+= -DSUPPORT_TFTP
 CPPFLAGS+= -DPASS_BIOSGEOM
 CPPFLAGS+= -DBIOSDISK_DEFAULT_SECSIZE=2048	# for bootinfo_biosgeom.c
 CPPFLAGS+= -DLIBSA_ENABLE_LS_OP
+
+#CPPFLAGS+= -DARP_DEBUG
+#CPPFLAGS+= -DBOOTP_DEBUG
+#CPPFLAGS+= -DNET_DEBUG
+#CPPFLAGS+= -DNETIF_DEBUG
+#CPPFLAGS+= -DNFS_DEBUG
+#CPPFLAGS+= -DRARP_DEBUG
+#CPPFLAGS+= -DRPC_DEBUG
 
 EFIDIR= ${S}/external/bsd/gnu-efi/dist
 GNUEFIARCH?= ${MACHINE_CPU}
@@ -69,12 +81,12 @@ CPPFLAGS+= -I${EFIDIR}/inc/protocol
 SAMISCCPPFLAGS+= -DLIBSA_PRINTF_LONGLONG_SUPPORT
 SAMISCCPPFLAGS+= -DLIBSA_PRINTF_WIDTH_SUPPORT
 SAMISCCPPFLAGS+= -D"cdb2devb(bno)=(bno)"
-SAMISCMAKEFLAGS+= SA_USE_CREAD=yes      # Read compressed kernels
-SAMISCMAKEFLAGS+= SA_INCLUDE_NET=no     # Netboot via TFTP, NFS
 
 ### find out what to use for libsa
 SA_AS= library
 SAMISCMAKEFLAGS+="SA_USE_LOADFILE=yes"
+SAMISCMAKEFLAGS+="SA_USE_CREAD=yes"
+SAMISCMAKEFLAGS+="SA_INCLUDE_NET=yes"
 SAMISCMAKEFLAGS+="SA_ENABLE_LS_OP=yes"
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA= ${SALIB}
