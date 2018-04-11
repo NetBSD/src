@@ -1,4 +1,4 @@
-/*	$NetBSD: keyword.c,v 1.55 2017/12/09 14:56:54 kamil Exp $	*/
+/*	$NetBSD: keyword.c,v 1.56 2018/04/11 18:52:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)keyword.c	8.5 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: keyword.c,v 1.55 2017/12/09 14:56:54 kamil Exp $");
+__RCSID("$NetBSD: keyword.c,v 1.56 2018/04/11 18:52:05 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -308,7 +308,7 @@ parsevarlist(const char *pp, struct varlist *listptr, struct varent **pos)
 		if ((v = findvar(cp)) == NULL)
 			continue;
 		if ((vent = malloc(sizeof(struct varent))) == NULL)
-			err(1, NULL);
+			err(EXIT_FAILURE, NULL);
 		vent->var = v;
 		if (pos && *pos)
 		    SIMPLEQ_INSERT_AFTER(listptr, *pos, vent, next);
@@ -320,7 +320,7 @@ parsevarlist(const char *pp, struct varlist *listptr, struct varent **pos)
 	}
  	free(sp);
 	if (SIMPLEQ_EMPTY(listptr))
-		errx(1, "no valid keywords");
+		errx(EXIT_FAILURE, "no valid keywords");
 }
 
 void
@@ -389,9 +389,9 @@ findvar(const char *p)
 		char *newheader;
 
 		if ((newvar = malloc(sizeof(struct var))) == NULL)
-			err(1, NULL);
+			err(EXIT_FAILURE, NULL);
 		if ((newheader = strdup(hp)) == NULL)
-			err(1, NULL);
+			err(EXIT_FAILURE, NULL);
 		memcpy(newvar, v, sizeof(struct var));
 		newvar->header = newheader;
 

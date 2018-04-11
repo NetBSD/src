@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.128 2017/12/09 14:56:54 kamil Exp $	*/
+/*	$NetBSD: print.c,v 1.129 2018/04/11 18:52:05 christos Exp $	*/
 
 /*
  * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.128 2017/12/09 14:56:54 kamil Exp $");
+__RCSID("$NetBSD: print.c,v 1.129 2018/04/11 18:52:05 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -938,7 +938,7 @@ wchan(struct pinfo *pi, VARENT *ve, enum mode mode)
 			(void)asprintf(&buf, "%-*" PRIx64, v->width,
 			    l->l_wchan);
 			if (buf == NULL)
-				err(1, "%s", "");
+				err(EXIT_FAILURE, "%s", "");
 			strprintorsetwidth(v, buf, mode);
 			v->width = min(v->width, KI_WMESGLEN);
 			free(buf);
@@ -1333,7 +1333,7 @@ printval(void *bp, VAR *v, enum mode mode)
 		(void)printf(ofmt, width, CHK_INF127(GET(u_int64_t)));
 		return;
 	default:
-		errx(1, "unknown type %d", v->type);
+		errx(EXIT_FAILURE, "unknown type %d", v->type);
 	}
 #undef GET
 #undef CHK_INF127
