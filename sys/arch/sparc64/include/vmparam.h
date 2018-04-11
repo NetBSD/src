@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.37 2016/03/26 11:49:10 martin Exp $ */
+/*	$NetBSD: vmparam.h,v 1.37.10.1 2018/04/11 14:37:11 martin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,6 +56,12 @@
 #define	PAGE_SHIFT	13
 #define	PAGE_SIZE	(1 << PAGE_SHIFT)
 #define	PAGE_MASK	(PAGE_SIZE - 1)
+
+/*
+ * Default pager_map of 16MB is awfully small.  There is plenty
+ * of VA so use it.
+ */
+#define        PAGER_MAP_DEFAULT_SIZE (512 * 1024 * 1024)
 
 /*
  * The kernel itself is mapped by the boot loader with 4Mb locked VM pages,
