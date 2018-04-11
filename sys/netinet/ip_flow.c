@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_flow.c,v 1.81 2017/11/17 07:37:12 ozaki-r Exp $	*/
+/*	$NetBSD: ip_flow.c,v 1.82 2018/04/11 08:29:19 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.81 2017/11/17 07:37:12 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.82 2018/04/11 08:29:19 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -64,7 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.81 2017/11/17 07:37:12 ozaki-r Exp $")
 
 /*
  * Similar code is very well commented in netinet6/ip6_flow.c
- */ 
+ */
 
 #define	IPFLOW_HASHBITS		6	/* should not be a multiple of 8 */
 
@@ -113,7 +113,7 @@ static void ipflow_slowtimo_work(struct work *, void *);
 static struct workqueue	*ipflow_slowtimo_wq;
 static struct work	ipflow_slowtimo_wk;
 
-static size_t 
+static size_t
 ipflow_hash(const struct ip *ip)
 {
 	size_t hash = ip->ip_tos;
@@ -364,7 +364,7 @@ out:
 	mutex_exit(&ipflow_lock);
 	return ret;
 }
-
+
 static void
 ipflow_addstats(struct ipflow *ipf)
 {
@@ -376,7 +376,7 @@ ipflow_addstats(struct ipflow *ipf)
 		rt->rt_use += ipf->ipf_uses;
 		rtcache_unref(rt, &ipf->ipf_ro);
 	}
-	
+
 	ips = IP_STAT_GETREF();
 	ips[IP_STAT_CANTFORWARD] += ipf->ipf_errors + ipf->ipf_dropped;
 	ips[IP_STAT_TOTAL] += ipf->ipf_uses;
@@ -646,7 +646,7 @@ sysctl_net_inet_ip_hashsize(SYSCTLFN_ARGS)
 	} else {
 		/*
 		 * EINVAL if not a power of 2
-	         */
+		 */
 		error = EINVAL;
 	}
 
