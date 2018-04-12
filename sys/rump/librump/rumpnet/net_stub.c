@@ -1,4 +1,4 @@
-/*	$NetBSD: net_stub.c,v 1.31 2018/02/27 15:01:30 maxv Exp $	*/
+/*	$NetBSD: net_stub.c,v 1.32 2018/04/12 21:38:59 christos Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: net_stub.c,v 1.31 2018/02/27 15:01:30 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: net_stub.c,v 1.32 2018/04/12 21:38:59 christos Exp $");
 
 #include <sys/mutex.h>
 #include <sys/param.h>
@@ -109,10 +109,3 @@ __weak_alias(key_sp_unref,rumpnet_stub);
 struct ifnet_head ifnet_list;
 struct pslist_head ifnet_pslist;
 kmutex_t ifnet_mtx;
-
-int
-compat_ifconf(u_long cmd, void *data)
-{
-
-	return EOPNOTSUPP;
-}
