@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.225 2018/04/12 06:49:39 maxv Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.226 2018/04/12 07:28:10 maxv Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.225 2018/04/12 06:49:39 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.226 2018/04/12 07:28:10 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1965,7 +1965,7 @@ icmp6_rip6_input(struct mbuf **mp, int off)
 	struct in6pcb *last = NULL;
 	struct sockaddr_in6 rip6src;
 	struct icmp6_hdr *icmp6;
-	struct mbuf *opts = NULL;
+	struct mbuf *n, *opts = NULL;
 
 	IP6_EXTHDR_GET(icmp6, struct icmp6_hdr *, m, off, sizeof(*icmp6));
 	if (icmp6 == NULL) {
@@ -1995,31 +1995,36 @@ icmp6_rip6_input(struct mbuf **mp, int off)
 		if (!IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_faddr) &&
 		   !IN6_ARE_ADDR_EQUAL(&in6p->in6p_faddr, &ip6->ip6_src))
 			continue;
-		if (in6p->in6p_icmp6filt
-		    && ICMP6_FILTER_WILLBLOCK(icmp6->icmp6_type,
-				 in6p->in6p_icmp6filt))
+		if (in6p->in6p_icmp6filt &&
+		    ICMP6_FILTER_WILLBLOCK(icmp6->icmp6_type,
+		    in6p->in6p_icmp6filt))
 			continue;
-		if (last) {
-			struct	mbuf *n;
-#ifdef IPSEC
-			if (!ipsec_used || !ipsec_in_reject(m, last))
-#endif
-			if ((n = m_copy(m, 0, (int)M_COPYALL)) != NULL) {
-				if (last->in6p_flags & IN6P_CONTROLOPTS)
-					ip6_savecontrol(last, &opts, ip6, n);
-				/* strip intermediate headers */
-				m_adj(n, off);
-				if (sbappendaddr(&last->in6p_socket->so_rcv,
-				    sin6tosa(&rip6src), n, opts) == 0) {
-					soroverflow(last->in6p_socket);
-					m_freem(n);
-					if (opts)
-						m_freem(opts);
-				} else
-					sorwakeup(last->in6p_socket);
-				opts = NULL;
-			}
+
+		if (last == NULL) {
+			;
 		}
+#ifdef IPSEC
+		else if (ipsec_used && ipsec_in_reject(m, last)) {
+			/* do not inject data into pcb */
+		}
+#endif
+		else if ((n = m_copy(m, 0, (int)M_COPYALL)) != NULL) {
+			if (last->in6p_flags & IN6P_CONTROLOPTS)
+				ip6_savecontrol(last, &opts, ip6, n);
+			/* strip intermediate headers */
+			m_adj(n, off);
+			if (sbappendaddr(&last->in6p_socket->so_rcv,
+			    sin6tosa(&rip6src), n, opts) == 0) {
+				soroverflow(last->in6p_socket);
+				m_freem(n);
+				if (opts)
+					m_freem(opts);
+			} else {
+				sorwakeup(last->in6p_socket);
+			}
+			opts = NULL;
+		}
+
 		last = in6p;
 	}
 

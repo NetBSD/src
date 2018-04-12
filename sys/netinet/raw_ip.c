@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.173 2018/04/12 06:49:39 maxv Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.174 2018/04/12 07:28:10 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.173 2018/04/12 06:49:39 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.174 2018/04/12 07:28:10 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -199,11 +199,13 @@ rip_input(struct mbuf *m, ...)
 		if (!in_nullhost(inp->inp_faddr) &&
 		    !in_hosteq(inp->inp_faddr, ip->ip_src))
 			continue;
-		if (last == NULL)
+
+		if (last == NULL) {
 			;
+		}
 #if defined(IPSEC)
 		else if (ipsec_used && ipsec_in_reject(m, last)) {
-			/* do not inject data to pcb */
+			/* do not inject data into pcb */
 		}
 #endif
 		else if ((n = m_copypacket(m, M_DONTWAIT)) != NULL) {
@@ -211,6 +213,7 @@ rip_input(struct mbuf *m, ...)
 			    n);
 			opts = NULL;
 		}
+
 		last = inp;
 	}
 
@@ -218,7 +221,7 @@ rip_input(struct mbuf *m, ...)
 	if (ipsec_used && last != NULL && ipsec_in_reject(m, last)) {
 		m_freem(m);
 		IP_STATDEC(IP_STAT_DELIVERED);
-		/* do not inject data to pcb */
+		/* do not inject data into pcb */
 	} else
 #endif
 	if (last != NULL) {
