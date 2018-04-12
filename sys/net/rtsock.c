@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.239 2018/03/19 16:34:48 roy Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.240 2018/04/12 04:38:13 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.239 2018/03/19 16:34:48 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.240 2018/04/12 04:38:13 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -159,8 +159,6 @@ struct route_info COMPATNAME(route_info) = {
 	.ri_maxqlen = IFQ_MAXLEN,
 };
 
-#define	PRESERVED_RTF	(RTF_UP | RTF_GATEWAY | RTF_HOST | RTF_DONE | RTF_MASK)
-
 static void COMPATNAME(route_init)(void);
 static int COMPATNAME(route_output)(struct mbuf *, struct socket *);
 
@@ -168,7 +166,7 @@ static int rt_xaddrs(u_char, const char *, const char *, struct rt_addrinfo *);
 static struct mbuf *rt_makeifannouncemsg(struct ifnet *, int, int,
     struct rt_addrinfo *);
 static int rt_msg2(int, struct rt_addrinfo *, void *, struct rt_walkarg *, int *);
-static void rt_setmetrics(int, const struct rt_xmsghdr *, struct rtentry *);
+static void _rt_setmetrics(int, const struct rt_xmsghdr *, struct rtentry *);
 static void rtm_setmetrics(const struct rtentry *, struct rt_xmsghdr *);
 static void sysctl_net_route_setup(struct sysctllog **);
 static int sysctl_dumpentry(struct rtentry *, void *);
@@ -610,152 +608,6 @@ route_output_report(struct rtentry *rt, struct rt_addrinfo *info,
 	return 0;
 }
 
-static struct ifaddr *
-route_output_get_ifa(const struct rt_addrinfo info, const struct rtentry *rt,
-    struct ifnet **ifp, struct psref *psref_ifp, struct psref *psref)
-{
-	struct ifaddr *ifa = NULL;
-
-	*ifp = NULL;
-	if (info.rti_info[RTAX_IFP] != NULL) {
-		ifa = ifa_ifwithnet_psref(info.rti_info[RTAX_IFP], psref);
-		if (ifa == NULL)
-			goto next;
-		*ifp = ifa->ifa_ifp;
-		if_acquire(*ifp, psref_ifp);
-		if (info.rti_info[RTAX_IFA] == NULL &&
-		    info.rti_info[RTAX_GATEWAY] == NULL)
-			goto next;
-		ifa_release(ifa, psref);
-		if (info.rti_info[RTAX_IFA] == NULL) {
-			/* route change <dst> <gw> -ifp <if> */
-			ifa = ifaof_ifpforaddr_psref(info.rti_info[RTAX_GATEWAY],
-			    *ifp, psref);
-		} else {
-			/* route change <dst> -ifp <if> -ifa <addr> */
-			ifa = ifa_ifwithaddr_psref(info.rti_info[RTAX_IFA], psref);
-			if (ifa != NULL)
-				goto out;
-			ifa = ifaof_ifpforaddr_psref(info.rti_info[RTAX_IFA],
-			    *ifp, psref);
-		}
-		goto out;
-	}
-next:
-	if (info.rti_info[RTAX_IFA] != NULL) {
-		/* route change <dst> <gw> -ifa <addr> */
-		ifa = ifa_ifwithaddr_psref(info.rti_info[RTAX_IFA], psref);
-		if (ifa != NULL)
-			goto out;
-	}
-	if (info.rti_info[RTAX_GATEWAY] != NULL) {
-		/* route change <dst> <gw> */
-		ifa = ifa_ifwithroute_psref(rt->rt_flags, rt_getkey(rt),
-		    info.rti_info[RTAX_GATEWAY], psref);
-	}
-out:
-	if (ifa != NULL && *ifp == NULL) {
-		*ifp = ifa->ifa_ifp;
-		if_acquire(*ifp, psref_ifp);
-	}
-	if (ifa == NULL && *ifp != NULL) {
-		if_put(*ifp, psref_ifp);
-		*ifp = NULL;
-	}
-	return ifa;
-}
-
-static int
-route_output_change(struct rtentry *rt, struct rt_addrinfo *info,
-    struct rt_xmsghdr *rtm)
-{
-	int error = 0;
-	struct ifnet *ifp = NULL, *new_ifp = NULL;
-	struct ifaddr *ifa = NULL, *new_ifa;
-	struct psref psref_ifa, psref_new_ifa, psref_ifp, psref_new_ifp;
-	bool newgw, ifp_changed = false;
-
-	/*
-	 * New gateway could require new ifaddr, ifp;
-	 * flags may also be different; ifp may be specified
-	 * by ll sockaddr when protocol address is ambiguous
-	 */
-	newgw = info->rti_info[RTAX_GATEWAY] != NULL &&
-	    sockaddr_cmp(info->rti_info[RTAX_GATEWAY], rt->rt_gateway) != 0;
-
-	if (newgw || info->rti_info[RTAX_IFP] != NULL ||
-	    info->rti_info[RTAX_IFA] != NULL) {
-		ifp = rt_getifp(info, &psref_ifp);
-		/* info refers ifp so we need to keep a reference */
-		ifa = rt_getifa(info, &psref_ifa);
-		if (ifa == NULL) {
-			error = ENETUNREACH;
-			goto out;
-		}
-	}
-	if (newgw) {
-		error = rt_setgate(rt, info->rti_info[RTAX_GATEWAY]);
-		if (error != 0)
-			goto out;
-	}
-	if (info->rti_info[RTAX_TAG]) {
-		const struct sockaddr *tag;
-		tag = rt_settag(rt, info->rti_info[RTAX_TAG]);
-		if (tag == NULL) {
-			error = ENOBUFS;
-			goto out;
-		}
-	}
-	/*
-	 * New gateway could require new ifaddr, ifp;
-	 * flags may also be different; ifp may be specified
-	 * by ll sockaddr when protocol address is ambiguous
-	 */
-	new_ifa = route_output_get_ifa(*info, rt, &new_ifp, &psref_new_ifp,
-	    &psref_new_ifa);
-	if (new_ifa != NULL) {
-		ifa_release(ifa, &psref_ifa);
-		ifa = new_ifa;
-	}
-	if (ifa) {
-		struct ifaddr *oifa = rt->rt_ifa;
-		if (oifa != ifa && !ifa_is_destroying(ifa) &&
-		    new_ifp != NULL && !if_is_deactivated(new_ifp)) {
-			if (oifa && oifa->ifa_rtrequest)
-				oifa->ifa_rtrequest(RTM_DELETE, rt, info);
-			rt_replace_ifa(rt, ifa);
-			rt->rt_ifp = new_ifp;
-			ifp_changed = true;
-		}
-		if (new_ifa == NULL)
-			ifa_release(ifa, &psref_ifa);
-	}
-	ifa_release(new_ifa, &psref_new_ifa);
-	if (new_ifp && rt->rt_ifp != new_ifp && !if_is_deactivated(new_ifp)) {
-		rt->rt_ifp = new_ifp;
-		ifp_changed = true;
-	}
-	rt_setmetrics(rtm->rtm_inits, rtm, rt);
-	if (rt->rt_flags != info->rti_flags) {
-		rt->rt_flags = (info->rti_flags & ~PRESERVED_RTF) |
-		    (rt->rt_flags & PRESERVED_RTF);
-	}
-	if (rt->rt_ifa && rt->rt_ifa->ifa_rtrequest)
-		rt->rt_ifa->ifa_rtrequest(RTM_ADD, rt, info);
-#if defined(INET) || defined(INET6)
-	if (ifp_changed && rt_mask(rt) != NULL)
-		lltable_prefix_free(rt_getkey(rt)->sa_family, rt_getkey(rt),
-		    rt_mask(rt), 0);
-#else
-	(void)ifp_changed; /* XXX gcc */
-#endif
-out:
-	if_put(new_ifp, &psref_new_ifp);
-	if_put(ifp, &psref_ifp);
-
-	return error;
-}
-
 /*ARGSUSED*/
 int
 COMPATNAME(route_output)(struct mbuf *m, struct socket *so)
@@ -905,7 +757,7 @@ COMPATNAME(route_output)(struct mbuf *m, struct socket *so)
 #endif /* defined(INET) || defined(INET6) */
 		error = rtrequest1(rtm->rtm_type, &info, &saved_nrt);
 		if (error == 0) {
-			rt_setmetrics(rtm->rtm_inits, rtm, saved_nrt);
+			_rt_setmetrics(rtm->rtm_inits, rtm, saved_nrt);
 			rt_unref(saved_nrt);
 		}
 		break;
@@ -1035,7 +887,7 @@ COMPATNAME(route_output)(struct mbuf *m, struct socket *so)
 
 			error = rt_update_prepare(rt);
 			if (error == 0) {
-				error = route_output_change(rt, &info, rtm);
+				error = rt_update(rt, &info, rtm);
 				rt_update_finish(rt);
 			}
 
@@ -1043,7 +895,7 @@ COMPATNAME(route_output)(struct mbuf *m, struct socket *so)
 			rt_updating = false;
 			cv_broadcast(&rt_update_cv);
 #else
-			error = route_output_change(rt, &info, rtm);
+			error = rt_update(rt, &info, rtm);
 #endif
 			if (error != 0)
 				goto flush;
@@ -1171,7 +1023,7 @@ route_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 }
 
 static void
-rt_setmetrics(int which, const struct rt_xmsghdr *in, struct rtentry *out)
+_rt_setmetrics(int which, const struct rt_xmsghdr *in, struct rtentry *out)
 {
 #define metric(f, e) if (which & (f)) out->rt_rmx.e = in->rtm_rmx.e;
 	metric(RTV_RPIPE, rmx_recvpipe);
@@ -1187,6 +1039,19 @@ rt_setmetrics(int which, const struct rt_xmsghdr *in, struct rtentry *out)
 		    time_wall_to_mono(in->rtm_rmx.rmx_expire) : 0;
 	}
 }
+
+#ifndef COMPAT_RTSOCK
+/*
+ * XXX avoid using void * once msghdr compat disappears.
+ */
+void
+rt_setmetrics(void *in, struct rtentry *out)
+{
+	const struct rt_xmsghdr *rtm = in;
+
+	_rt_setmetrics(rtm->rtm_inits, rtm, out);
+}
+#endif
 
 static void
 rtm_setmetrics(const struct rtentry *in, struct rt_xmsghdr *out)
