@@ -72,7 +72,13 @@ void verify_test(void);
 void neg_test(void);
 /** unit test for regional allocator functions */
 void regional_test(void);
+#ifdef CLIENT_SUBNET
+/** Unit test for ECS functions */
+void ecs_test(void);
+#endif /* CLIENT_SUBNET */
 /** unit test for ldns functions */
 void ldns_test(void);
+/** unit test for auth zone functions */
+void authzone_test(void);
 
 #endif /* TESTCODE_UNITMAIN_H */

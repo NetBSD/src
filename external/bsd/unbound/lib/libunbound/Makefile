@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2016/08/20 15:24:29 christos Exp $
+# $NetBSD: Makefile,v 1.2.8.1 2018/04/12 01:38:58 msaitoh Exp $
 
 .include <bsd.init.mk>
 
@@ -7,6 +7,7 @@ ${UNBOUND}/cachedb \
 ${UNBOUND}/dns64 \
 ${UNBOUND}/iterator \
 ${UNBOUND}/libunbound \
+${UNBOUND}/respip \
 ${UNBOUND}/services \
 ${UNBOUND}/services/cache \
 ${UNBOUND}/sldns \
@@ -21,6 +22,7 @@ LIB=unbound
 SRCS=\
 alloc.c \
 as112.c \
+authzone.c \
 autotrust.c \
 cachedb.c \
 config_file.c \
@@ -68,6 +70,7 @@ parseutil.c \
 random.c \
 rbtree.c \
 regional.c \
+respip.c \
 rrdef.c \
 rrset.c \
 rtt.c \
@@ -87,6 +90,7 @@ val_secalgo.c \
 val_sigcrypt.c \
 val_utils.c \
 validator.c \
+view.c \
 winsock_event.c \
 wire2str.c
 

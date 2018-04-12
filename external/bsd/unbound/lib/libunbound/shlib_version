@@ -1,3 +1,3 @@
-#	$NetBSD: shlib_version,v 1.1 2016/08/20 11:20:31 christos Exp $
+#	$NetBSD: shlib_version,v 1.1.8.1 2018/04/12 01:38:58 msaitoh Exp $
 major=6
-minor=1
+minor=2
