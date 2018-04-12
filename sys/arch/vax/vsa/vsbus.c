@@ -1,4 +1,4 @@
-/*	$NetBSD: vsbus.c,v 1.63 2017/05/22 17:17:25 ragge Exp $ */
+/*	$NetBSD: vsbus.c,v 1.64 2018/04/12 18:45:57 ragge Exp $ */
 /*
  * Copyright (c) 1996, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vsbus.c,v 1.63 2017/05/22 17:17:25 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vsbus.c,v 1.64 2018/04/12 18:45:57 ragge Exp $");
 
 #include "opt_cputype.h"
 
@@ -261,6 +261,11 @@ vsbus_clrintr(int mask)
 	*sc->sc_intclr = mask;
 }
 
+#define puvtopte(va, pmap) \
+	(((vaddr_t)va < 0x40000000) ? \
+	&(((pmap)->pm_p0br)[PG_PFNUM(va)]) : \
+	&(((pmap)->pm_p1br)[PG_PFNUM(va)]))
+
 /*
  * Copy data from/to a user process' space from the DMA area.
  * Use the physical memory directly.
@@ -269,6 +274,7 @@ void
 vsbus_copytoproc(struct proc *p, void *fromv, void *tov, int len)
 {
 	char *from = fromv, *to = tov;
+	struct pmap *pm;
 	struct pte *pte;
 	paddr_t pa;
 
@@ -282,10 +288,8 @@ vsbus_copytoproc(struct proc *p, void *fromv, void *tov, int len)
 		panic("vsbus_copytoproc: no proc");
 #endif
 
-	if ((vaddr_t)to & 0x40000000)
-		pte = &p->p_vmspace->vm_map.pmap->pm_p1br[vax_btop((vaddr_t)to & ~0x40000000)];
-	else
-		pte = &p->p_vmspace->vm_map.pmap->pm_p0br[vax_btop((vaddr_t)to)];
+	pm = p->p_vmspace->vm_map.pmap;
+	pte = puvtopte(trunc_page((vaddr_t)to), pm);
 	if ((vaddr_t)to & PGOFSET) {
 		int cz = round_page((vaddr_t)to) - (vaddr_t)to;
 
@@ -310,6 +314,7 @@ void
 vsbus_copyfromproc(struct proc *p, void *fromv, void *tov, int len)
 {
 	char *from = fromv, *to = tov;
+	struct pmap *pm;
 	struct pte *pte;
 	paddr_t pa;
 
@@ -323,10 +328,8 @@ vsbus_copyfromproc(struct proc *p, void *fromv, void *tov, int len)
 		panic("vsbus_copyfromproc: no proc");
 #endif
 
-	if ((vaddr_t)from & 0x40000000)
-		pte = &p->p_vmspace->vm_map.pmap->pm_p1br[vax_btop((vaddr_t)from & ~0x40000000)];
-	else
-		pte = &p->p_vmspace->vm_map.pmap->pm_p0br[vax_btop((vaddr_t)from)];
+	pm = p->p_vmspace->vm_map.pmap;
+	pte = puvtopte(trunc_page((vaddr_t)from), pm);
 	if ((vaddr_t)from & PGOFSET) {
 		int cz = round_page((vaddr_t)from) - (vaddr_t)from;
 
