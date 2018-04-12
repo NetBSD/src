@@ -1,9 +1,9 @@
-/*	$NetBSD: uipc_syscalls_40.c,v 1.15 2017/11/22 15:25:34 martin Exp $	*/
+/*	$NetBSD: uipc_syscalls_40.c,v 1.16 2018/04/12 18:50:13 christos Exp $	*/
 
 /* written by Pavel Cahyna, 2006. Public domain. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_40.c,v 1.15 2017/11/22 15:25:34 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_40.c,v 1.16 2018/04/12 18:50:13 christos Exp $");
 
 /*
  * System call interface to the socket abstraction.
@@ -21,7 +21,6 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_40.c,v 1.15 2017/11/22 15:25:34 martin
 #include <compat/sys/socket.h>
 #include <compat/sys/sockio.h>
 
-#ifdef COMPAT_OIFREQ
 /*
  * Return interface configuration
  * of system.  List may be used
@@ -29,8 +28,8 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_40.c,v 1.15 2017/11/22 15:25:34 martin
  * other information.
  */
 /*ARGSUSED*/
-int
-compat_ifconf(u_long cmd, void *data)
+static int
+compat_ifconf(struct lwp *l, u_long cmd, void *data)
 {
 	struct oifconf *ifc = data;
 	struct ifnet *ifp;
@@ -41,6 +40,14 @@ compat_ifconf(u_long cmd, void *data)
 	int s;
 	int bound;
 	struct psref psref;
+
+	switch (cmd) {
+	case OSIOCGIFCONF:
+	case OOSIOCGIFCONF:
+		break;
+	default:
+		return ENOSYS;
+	}
 
 	if (docopy) {
 		space = ifc->ifc_len;
@@ -150,4 +157,15 @@ release_exit:
 	curlwp_bindx(bound);
 	return error;
 }
-#endif
+
+void
+uipc_syscalls_40_init(void)
+{
+	vec_compat_ifconf = compat_ifconf;
+}
+
+void
+uipc_syscalls_40_fini(void)
+{
+	vec_compat_ifconf = (void *)enosys;
+}
