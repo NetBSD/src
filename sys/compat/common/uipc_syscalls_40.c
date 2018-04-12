@@ -1,9 +1,9 @@
-/*	$NetBSD: uipc_syscalls_40.c,v 1.15.2.5 2018/03/08 09:56:05 pgoyette Exp $	*/
+/*	$NetBSD: uipc_syscalls_40.c,v 1.15.2.6 2018/04/12 22:33:41 pgoyette Exp $	*/
 
 /* written by Pavel Cahyna, 2006. Public domain. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_40.c,v 1.15.2.5 2018/03/08 09:56:05 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_40.c,v 1.15.2.6 2018/04/12 22:33:41 pgoyette Exp $");
 
 /*
  * System call interface to the socket abstraction.
@@ -43,6 +43,14 @@ compat_ifconf(u_long cmd, void *data)
 	int s;
 	int bound;
 	struct psref psref;
+
+	switch (cmd) {
+	case OSIOCGIFCONF:
+	case OOSIOCGIFCONF:
+		break;
+	default:
+		return ENOSYS;
+	}
 
 	if (docopy) {
 		space = ifc->ifc_len;
@@ -153,14 +161,10 @@ release_exit:
 	return error;
 }
 
-static int (*orig_compat_ifconf)(u_long, void *);
-static int (*orig_compat_ifconf)(u_long, void *);
- 
 void      
 if_40_init(void)
 {
  
-	orig_compat_ifconf = vec_compat_ifconf; 
 	vec_compat_ifconf = compat_ifconf;
 }
  
@@ -168,5 +172,5 @@ void
 if_40_fini(void)
 {
  
-	vec_compat_ifconf = orig_compat_ifconf;
+	vec_compat_ifconf = (void *)enosys;
 }
