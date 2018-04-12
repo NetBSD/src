@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.46 2018/04/05 05:38:59 mrg Exp $
+#	$NetBSD: Makefile,v 1.47 2018/04/12 20:44:16 mrg Exp $
 
 LIBISPRIVATE=	yes
 
@@ -463,7 +463,7 @@ genattr.lo genflags.lo genemit.lo genconfig.lo gencheck.lo: insn-constants.h gty
 genopinit.lo genrecog.lo genpreds.lo genoutput.lo genpeep.lo: insn-constants.h 
 build-ggc-none.lo: gtype-desc.h
 ggc-none.o: gtype-desc.h
-
+asan.d asan.o: insn-opinit.h
 insn-attrtab.o: insn-config.h
 insn-extract.o: insn-config.h
 toplev.d toplev.o: options.h
@@ -473,17 +473,30 @@ alias.d alias.o: insn-constants.h tm_p.h
 cgraph.d cgraphunit.d cgraphunit.o: gcov-io.h
 vec.lo: gtype-desc.h
 gtype-desc.d gtype-desc.o: insn-constants.h
-insn-emit.d insn-emit.o: tm-constrs.h
+insn-emit.d insn-emit.o: tm-constrs.h insn-opinit.h
 insn-attr.h: insn-attr-common.h
-asan.d asan.o: insn-opinit.h
-data-streamer.d data-streamer-out.d coverage.d gcov-dump.d gcov-io.d gcov-iov.d gcov.d libgcov.d lto-cgraph.d mcf.d modulo-sched.d profile.d value-prof.d: gcov-io.h
-data-streamer.o data-streamer-out.o coverage.o gcov-dump.o gcov-io.o gcov-iov.o gcov.o libgcov.o lto-cgraph.o mcf.o modulo-sched.o profile.o value-prof.o: gcov-io.h
 gcov-io.h: gcov-iov.h
 df-scan.d df-scan.o: target-hooks-def.h
 read-md.d read-md.o read-md.lo: auto-build.h
 hash-table.d hash-table.o hash-table.lo: auto-build.h gtype-desc.h
 gencfn-macros.d gencfn-macros.o gencfn-macros.lo: gtype-desc.h
 cgraphunit.d cgraphunit.o: pass-instances.def
+insn-opinit.o insn-opinit.d: insn-flags.h
+.for _f in insn-attrtab insn-automata insn-dfatab insn-latencytab insn-output
+${_f}.o ${_f}.d: insn-attr-common.h insn-attr.h
+.endfor
+.for _f in insn-attrtab insn-automata insn-dfatab insn-emit insn-extract \
+	   insn-latencytab insn-opinit insn-output insn-peep insn-preds \
+	   insn-recog
+${_f}.o ${_f}.d: insn-codes.h insn-config.h insn-constants.h insn-flags.h
+.endfor
+.for _f in insn-enums insn-modes
+${_f}.o ${_f}.d: insn-constants.h
+.endfor
+.for _f in data-streamer data-streamer-out coverage gcov-dump gcov-io \
+	   gcov-iov gcov libgcov lto-cgraph mcf modulo-sched profile value-prof
+${_f}.o ${_f}.d: gcov-io.h
+.endfor
 
 # XXX make all hooks generated for now.
 final.o: target-hooks-def.h c-family/c-target-hooks-def.h common/common-target-hooks-def.h
