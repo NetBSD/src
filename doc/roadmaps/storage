@@ -1,4 +1,4 @@
-$NetBSD: storage,v 1.25 2018/04/12 19:11:35 jdolecek Exp $
+$NetBSD: storage,v 1.26 2018/04/12 19:12:25 jdolecek Exp $
 
 NetBSD Storage Roadmap
 ======================
@@ -205,7 +205,7 @@ disk arrays and SSDs, but do not work with all hardware.
 The code is nearly done and just needs more testing and support in
 more drivers.
 
- - On October 2018 jdolecek re-synced the branch, intention is to wrap
+ - On October 2017 jdolecek re-synced the branch, intention is to wrap
    this up for future netbsd-9
  - Contact jdolecek or tls for further information.
 
