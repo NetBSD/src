@@ -1,4 +1,4 @@
-/*	$NetBSD: dbregs.c,v 1.6 2017/02/23 12:01:12 martin Exp $	*/
+/*	$NetBSD: dbregs.c,v 1.6.6.1 2018/04/12 13:08:16 martin Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -43,6 +43,18 @@ extern struct pool x86_dbregspl;
 
 static struct dbreg initdbstate;
 
+#define X86_BREAKPOINT_CONDITION_DETECTED	( \
+	X86_DR6_DR0_BREAKPOINT_CONDITION_DETECTED | \
+	X86_DR6_DR1_BREAKPOINT_CONDITION_DETECTED | \
+	X86_DR6_DR2_BREAKPOINT_CONDITION_DETECTED | \
+	X86_DR6_DR3_BREAKPOINT_CONDITION_DETECTED )
+
+#define X86_GLOBAL_BREAKPOINT	( \
+	X86_DR7_GLOBAL_DR0_BREAKPOINT | \
+	X86_DR7_GLOBAL_DR1_BREAKPOINT | \
+	X86_DR7_GLOBAL_DR2_BREAKPOINT | \
+	X86_DR7_GLOBAL_DR3_BREAKPOINT )
+
 void
 x86_dbregs_setup_initdbstate(void)
 {
@@ -56,19 +68,17 @@ x86_dbregs_setup_initdbstate(void)
 	initdbstate.dr[6] = rdr6();
 	initdbstate.dr[7] = rdr7();
 	/* DR8-DR15 are reserved - skip */
+
+	/*
+	 * Paranoid case.
+	 *
+	 * Explicitly reset some bits just in case they could be
+	 * set by brave software/hardware before the kernel boot.
+	 */
+	initdbstate.dr[6] &= ~X86_BREAKPOINT_CONDITION_DETECTED;
+
+	initdbstate.dr[7] &= ~X86_DR7_GENERAL_DETECT_ENABLE;
 }
-
-#define X86_BREAKPOINT_CONDITION_DETECTED	( \
-	X86_DR6_DR0_BREAKPOINT_CONDITION_DETECTED | \
-	X86_DR6_DR1_BREAKPOINT_CONDITION_DETECTED | \
-	X86_DR6_DR2_BREAKPOINT_CONDITION_DETECTED | \
-	X86_DR6_DR3_BREAKPOINT_CONDITION_DETECTED )
-
-#define X86_GLOBAL_BREAKPOINT	( \
-	X86_DR7_GLOBAL_DR0_BREAKPOINT | \
-	X86_DR7_GLOBAL_DR1_BREAKPOINT | \
-	X86_DR7_GLOBAL_DR2_BREAKPOINT | \
-	X86_DR7_GLOBAL_DR3_BREAKPOINT )
 
 void
 x86_dbregs_clear(struct lwp *l)
@@ -188,14 +198,14 @@ x86_dbregs_validate(const struct dbreg *regs)
 
 	/* Check that DR0-DR3 contain user-space address */
 	for (i = 0; i < X86_DBREGS; i++)
-		if (regs->dr[i] > (vaddr_t)VM_MAXUSER_ADDRESS)
+		if (regs->dr[i] >= (vaddr_t)VM_MAXUSER_ADDRESS)
 			return EINVAL;
+
+	if (regs->dr[7] & X86_DR7_GENERAL_DETECT_ENABLE)
+		return EINVAL;
 
 	/*
 	 * Skip checks for reserved registers (DR4-DR5, DR8-DR15).
-	 *
-	 * Don't validate DR6-DR7 as some bits are set by hardware and a user
-	 * cannot overwrite them.
 	 */
 
 	return 0;
