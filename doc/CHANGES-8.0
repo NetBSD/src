@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.179 2018/04/12 01:51:32 msaitoh Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.180 2018/04/12 14:16:42 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -12680,3 +12680,115 @@ share/mk/bsd.own.mk				patch
 
 	Update unbound to 1.6.8.
 	[snj, ticket #744]
+
+tests/lib/libc/sys/msg.h			1.2
+tests/lib/libc/sys/t_ptrace_wait.c		1.24-1.31
+tests/lib/libc/sys/t_ptrace_wait.h		1.2
+tests/lib/libc/sys/t_ptrace_x86_wait.h		1.4,1.5
+
+	Correct all ATF failures in t_ptrace_x86_wait.h (debug registers).
+	Correct a race in attach2 (t_ptrace_wait* and reenable it.
+	Add a new function in ATF t_ptrace_wait*: await_zombie_raw().
+	t_ptrace_wait*: Disable debug messages in msg.h.
+	Add new test race1 in t_ptrace_wait*.
+	Add check in ATF tests for security.models.extensions.user_set_dbregs.
+	Improve documentation of the ATF test t_ptrace_wait*: traceme2.
+	Merge code in tests: fork1 and vfork1 (ATF t_ptrace_wait*),
+	Merge code in fork2 and vfork2 tests with (v)fork1 ones.
+	t_ptrace_wait* refactoring: Merge vforkdone1 and vforkdone2
+	into other fork tests and reuse the same function body fork_test().
+	Merge vforkdone1 and vforkdone2 into vfork* tests.
+	[kamil, ticket #711]
+
+sys/arch/x86/x86/dbregs.c			1.7-1.9
+
+	Fix the check for userland vs. kernel addresses.
+	Do not let userland set bit 13, because this can crash the kernel.
+	Add paranoid code to X86 Debug Registers.
+	Reset certain bits in DR6 and DR7 in x86_dbregs_setup_initdbstate().
+	Reset X86_BREAKPOINT_CONDITION_DETECTED in DR6.
+	Reset X86_DR7_GENERAL_DETECT_ENABLE in DR7.
+	[kamil, ticket #712]
+
+bin/ps/ps.1					1.108
+doc/TODO.ptrace					1.29
+sbin/mount_procfs/mount_procfs.8		1.36
+share/man/man9/kauth.9				1.109
+sys/compat/linux/arch/arm/linux_ptrace.c	1.20
+sys/compat/linux/arch/i386/linux_ptrace.c	1.32
+sys/compat/linux/arch/powerpc/linux_ptrace.c	1.30
+sys/compat/netbsd32/netbsd32.h			1.115
+sys/compat/netbsd32/netbsd32_ptrace.c		1.5
+sys/compat/netbsd32/netbsd32_signal.c		1.45
+sys/kern/kern_exit.c				1.269
+sys/kern/kern_proc.c				1.207
+sys/kern/kern_sig.c				1.337
+sys/kern/sys_ptrace.c				1.5
+sys/kern/sys_ptrace_common.c			1.23-1.34,1.36
+sys/miscfs/procfs/files.procfs			1.12
+sys/miscfs/procfs/procfs.h			1.72
+sys/miscfs/procfs/procfs_ctl.c			delete
+sys/miscfs/procfs/procfs_subr.c			1.109
+sys/miscfs/procfs/procfs_vfsops.c		1.98
+sys/miscfs/procfs/procfs_vnops.c		1.198
+sys/modules/procfs/Makefile			1.4
+sys/secmodel/extensions/secmodel_extensions.c	1.8
+sys/sys/kauth.h					1.75
+sys/sys/proc.h					1.342
+sys/sys/ptrace.h				1.62
+sys/sys/sysctl.h				1.224
+
+	 - netbsd 32-bit compat fixes
+	 - code refactoring and cleanup           
+	 - add sysctl(2) security.models.extensions.user_set_dbregs
+	 - ... reduction of scenarios like handling procfs tracking + ptrace 
+	 - reduce delta with HEAD for future fixes
+	[kamil, ticket #713]
+
+etc/login.conf					1.7
+etc/man.conf					1.37
+etc/root/dot.cshrc				1.27
+etc/root/dot.profile				1.30
+etc/skel/dot.cshrc				1.8
+etc/skel/dot.profile				1.10
+share/man/man7/hier.7				1.129 (patch)
+
+	Remove references to /usr/X11R6.
+	[snj, ticket #742]
+
+usr.sbin/sysinst/arch/i386/md.c			1.7
+
+	Clear the screen after running installboot to avoid screen
+	artifacts.
+	[snj, ticket #743]
+
+sys/arch/sun3/conf/GENERIC			1.177,1.178 (patch)
+sys/arch/sun3/conf/GENERIC3X			1.131 (patch)
+sys/arch/sun3/conf/Makefile.sun3		1.106
+sys/arch/sun3/conf/Makefile.sun3		1.107
+sys/arch/sun3/include/param3.h			1.57
+sys/arch/sun3/include/vmparam3.h		1.39
+
+	- build libkern as an archive for non modular builds.  from maya@
+	- cut down GENERIC a bunch to bring below 2MB.
+	- reduce UBC_NWINS, MAXEXEC, and PAGER_MAP_DEFAULT_SIZE to recover
+	  enough lost VA to actually run basic tests.
+	Disable SYSCTL_INCLUDE_DESCR.
+	Copy sun3 disables to sun3x mostly, it has the same ufsboot 2MB limit.
+	Build compat code as .a if not MODULAR.
+	Remove some more unused functions.
+	[mrg, ticket #745]
+
+sys/arch/sun2/conf/Makefile.sun2		1.21,1.22
+
+	Build libkern as an archive for non modular builds.
+	Remove more unused functions with COMPAT_AS=library
+	[mrg, ticket #746]
+
+distrib/sets/sets.subr				1.184
+
+	Handle compatdir first whether making obsolete lists or not, to
+	make obsolete lists including compat directory (eg. ./usr/lib/i386)
+	work properly.
+	[nakayama, ticket #747]
+
