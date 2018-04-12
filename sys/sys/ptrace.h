@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.60.6.1 2018/03/06 09:52:09 martin Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.60.6.2 2018/04/12 13:42:49 martin Exp $	*/
 
 /*-
  * Copyright (c) 1984, 1993
@@ -182,8 +182,10 @@ struct fpreg;
 #endif
 
 struct ptrace_methods {
-	int (*ptm_copyinpiod)(struct ptrace_io_desc *, const void *);
-	void (*ptm_copyoutpiod)(const struct ptrace_io_desc *, void *);
+	int (*ptm_copyin_piod)(struct ptrace_io_desc *, const void *, size_t);
+	int (*ptm_copyout_piod)(const struct ptrace_io_desc *, void *, size_t);
+	int (*ptm_copyin_siginfo)(struct ptrace_siginfo *, const void *, size_t);
+	int (*ptm_copyout_siginfo)(const struct ptrace_siginfo *, void *, size_t);
 	int (*ptm_doregs)(struct lwp *, struct lwp *, struct uio *);
 	int (*ptm_dofpregs)(struct lwp *, struct lwp *, struct uio *);
 	int (*ptm_dodbregs)(struct lwp *, struct lwp *, struct uio *);

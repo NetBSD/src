@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ptrace.c,v 1.29 2015/10/13 08:24:35 pgoyette Exp $ */
+/*	$NetBSD: linux_ptrace.c,v 1.29.10.1 2018/04/12 13:42:49 martin Exp $ */
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.29 2015/10/13 08:24:35 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.29.10.1 2018/04/12 13:42:49 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -174,13 +174,10 @@ linux_sys_ptrace_arch(struct lwp *l, const struct linux_sys_ptrace_args *uap,
 		goto out;
 	}
 	/*
-	 * 2. It is being traced by procfs (which has different signal
-	 *    delivery semantics),
-	 * 3. It is not being traced by _you_, or
-	 * 4. It is not currently stopped.
+	 * 2. It is not being traced by _you_, or
+	 * 3. It is not currently stopped.
 	 */
-	if (ISSET(t->p_slflag, PSL_FSTRACE) || t->p_pptr != p ||
-	    t->p_stat != SSTOP || !t->p_waited) {
+	if (t->p_pptr != p || t->p_stat != SSTOP || !t->p_waited) {
 		mutex_exit(t->p_lock);
 		mutex_exit(proc_lock);
 		error = EBUSY;

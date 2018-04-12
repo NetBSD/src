@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.206.6.2 2018/04/01 08:45:43 martin Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.206.6.3 2018/04/12 13:42:48 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.206.6.2 2018/04/01 08:45:43 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.206.6.3 2018/04/12 13:42:48 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -1560,7 +1560,6 @@ static const u_int sysctl_sflagmap[] = {
 
 static const u_int sysctl_slflagmap[] = {
 	PSL_TRACED, P_TRACED,
-	PSL_FSTRACE, P_FSTRACE,
 	PSL_CHTRACED, P_CHTRACED,
 	PSL_SYSCALL, P_SYSCALL,
 	0

@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs.h,v 1.71 2017/03/30 20:16:29 christos Exp $	*/
+/*	$NetBSD: procfs.h,v 1.71.6.1 2018/04/12 13:42:48 martin Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -88,7 +88,6 @@ typedef enum {
 	PFSmem,		/* the process's memory image */
 	PFSregs,	/* the process's register set */
 	PFSfpregs,	/* the process's FP register set */
-	PFSctl,		/* process control */
 	PFSstat,	/* process status (if -o linux) */
 	PFSstatus,	/* process status */
 	PFSnote,	/* process notifier */
@@ -136,7 +135,6 @@ struct pfsnode {
 };
 
 #define PROCFS_NOTELEN	64	/* max length of a note (/proc/$pid/note) */
-#define PROCFS_CTLLEN 	8	/* max length of a ctl msg (/proc/$pid/ctl */
 #define PROCFS_MAXNAMLEN	255
 
 #endif /* _KERNEL */
@@ -202,8 +200,6 @@ int procfs_doregs(struct lwp *, struct lwp *, struct pfsnode *,
 int procfs_dofpregs(struct lwp *, struct lwp *, struct pfsnode *,
     struct uio *);
 int procfs_domem(struct lwp *, struct lwp *, struct pfsnode *,
-    struct uio *);
-int procfs_doctl(struct lwp *, struct lwp *, struct pfsnode *,
     struct uio *);
 int procfs_do_pid_stat(struct lwp *, struct lwp *, struct pfsnode *,
     struct uio *);

@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_procfs.8,v 1.34 2009/02/24 12:45:37 pooka Exp $
+.\"	$NetBSD: mount_procfs.8,v 1.34.38.1 2018/04/12 13:42:49 martin Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -90,38 +90,6 @@ This file is readonly and returns null-terminated strings
 corresponding to the process' command line arguments.
 For a system or zombie process, this file contains only a string
 with the name of the process.
-.It Pa ctl
-a writeonly file which supports a variety of control operations.
-Control commands are written as strings to the
-.Pa ctl
-file.
-The control commands are:
-.Bl -tag -width detach -compact
-.It attach
-stops the target process and arranges for the sending
-process to become the debug control process.
-.It detach
-continue execution of the target process and
-remove it from control by the debug process.
-.It run
-continue running the target process until
-a signal is delivered, a breakpoint is hit, or the
-target process exits.
-.It step
-single step the target process, with no signal delivery.
-.It wait
-wait for the target process to stop.
-The target process must be stopped before
-any of the run, step, or signal commands are allowed.
-.El
-.Pp
-The string can also be the name of a signal, lower case
-and without the
-.Dv SIG
-prefix,
-in which case that signal is delivered to the process
-(see
-.Xr sigaction 2 ) .
 .It Pa cwd
 A symbolic link that points to the current working directory of the
 process.
@@ -226,29 +194,10 @@ is the effective group id)
 all comma separated.
 .El
 .El
-.Pp
-In a normal debugging environment,
-where the target is fork/exec'd by the debugger,
-the debugger should fork and the child should stop
-itself (with a self-inflicted
-.Dv SIGSTOP
-for example).
-The parent should issue a
-.Dv wait
-and then an
-.Dv attach
-command via the appropriate
-.Pa ctl
-file.
-The child process will receive a
-.Dv SIGTRAP
-immediately after the call to exec (see
-.Xr execve 2 ) .
 .Sh FILES
 .Bl -tag -width /proc/curproc -compact
 .It Pa /proc/#
 .It Pa /proc/#/cmdline
-.It Pa /proc/#/ctl
 .It Pa /proc/#/cwd
 .It Pa /proc/#/exe
 .It Pa /proc/#/file

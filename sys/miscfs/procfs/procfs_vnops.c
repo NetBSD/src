@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.197.2.1 2018/04/08 06:10:24 snj Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.197.2.2 2018/04/12 13:42:48 martin Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.197.2.1 2018/04/08 06:10:24 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.197.2.2 2018/04/12 13:42:48 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -164,7 +164,6 @@ static const struct proc_target {
 	{ DT_REG, N("mem"),	PFSmem,		NULL },
 	{ DT_REG, N("regs"),	PFSregs,	procfs_validregs },
 	{ DT_REG, N("fpregs"),	PFSfpregs,	procfs_validfpregs },
-	{ DT_REG, N("ctl"),	PFSctl,		NULL },
 	{ DT_REG, N("stat"),	PFSstat,	procfs_validfile_linux },
 	{ DT_REG, N("status"),	PFSstatus,	NULL },
 	{ DT_REG, N("note"),	PFSnote,	NULL },
@@ -742,7 +741,6 @@ procfs_getattr(void *v)
 		if (procp->p_flag & PK_SUGID)
 			vap->va_mode &= ~(S_IRUSR|S_IWUSR);
 		/* FALLTHROUGH */
-	case PFSctl:
 	case PFSstatus:
 	case PFSstat:
 	case PFSnote:
@@ -888,7 +886,6 @@ procfs_getattr(void *v)
 		break;
 #endif
 
-	case PFSctl:
 	case PFSstatus:
 	case PFSstat:
 	case PFSnote:

@@ -1,4 +1,4 @@
-$NetBSD: TODO.ptrace,v 1.28 2017/04/08 01:08:36 kamil Exp $
+$NetBSD: TODO.ptrace,v 1.28.4.1 2018/04/12 13:42:49 martin Exp $
 
 Items we (currently) plan to finish in the ptrace(2) field:
 
@@ -8,11 +8,6 @@ Items we (currently) plan to finish in the ptrace(2) field:
  - reiterate over FreeBSD tests and add missing ones if applicable
  - add PT_DUMPCORE tests in the ATF framework
  - add ATF tests for PT_WRITE_I and PIOD_WRITE_I - test mprotect restrictions
- - add tests for the procfs interface covering all functions available on the
-   same level as ptrace(2)
- - remove 4.4BSD tracing with /proc, restrict /proc to Linux compat, to be
-   superseded with kevent tracing, the original purpose of /proc debugging is
-   long gone (performance issues with PT_WRITE_* and PT_READ_*)
  - research kevent support for tracing a process over a file descriptor,
    this means alternative to wait(2)-based events with passing events over the
    kqueue API - signal handlers are global per application and they clash with
