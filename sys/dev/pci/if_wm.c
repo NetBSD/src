@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.567 2018/04/12 02:48:59 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.568 2018/04/12 03:09:24 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.567 2018/04/12 02:48:59 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.568 2018/04/12 03:09:24 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -11934,23 +11934,38 @@ wm_nvm_valid_bank_detect_ich8lan(struct wm_softc *sc, unsigned int *bank)
 	uint32_t act_offset = ICH_NVM_SIG_WORD * 2 + 1;
 	uint32_t bank1_offset = sc->sc_ich8_flash_bank_size * sizeof(uint16_t);
 	uint8_t sig_byte = 0;
+	uint32_t nvm_dword = 0;
+ 	int rv;
 
 	switch (sc->sc_type) {
 	case WM_T_PCH_SPT:
-		/*
-		 * In SPT, read from the CTRL_EXT reg instead of accessing the
-		 * sector valid bits from the NVM.
-		 */
-		*bank = CSR_READ(sc, WMREG_CTRL_EXT) & CTRL_EXT_NVMVS;
-		if ((*bank == 0) || (*bank == 1)) {
-			aprint_error_dev(sc->sc_dev,
-			    "%s: no valid NVM bank present (%u)\n", __func__,
-				*bank);
-			return -1;
-		} else {
-			*bank = *bank - 2;
+		bank1_offset = sc->sc_ich8_flash_bank_size * 2;
+		act_offset = ICH_NVM_SIG_WORD * 2;
+
+		/* set bank to 0 in case flash read fails. */
+		*bank = 0;
+
+		/* Check bank 0 */
+		rv = wm_read_ich8_dword(sc, act_offset, &nvm_dword);
+		if (rv != 0)
+			return rv;
+		sig_byte = (uint8_t)((nvm_dword & 0xFF00) >> 8);
+		if ((sig_byte & ICH_NVM_VALID_SIG_MASK) == ICH_NVM_SIG_VALUE) {
+			*bank = 0;
 			return 0;
 		}
+
+		/* Check bank 1 */
+		rv = wm_read_ich8_dword(sc, act_offset + bank1_offset,
+		    &nvm_dword);
+		sig_byte = (uint8_t)((nvm_dword & 0xFF00) >> 8);
+		if ((sig_byte & ICH_NVM_VALID_SIG_MASK) == ICH_NVM_SIG_VALUE) {
+			*bank = 1;
+			return 0;
+		}
+		aprint_error_dev(sc->sc_dev,
+		    "%s: no valid NVM bank present (%u)\n", __func__, *bank);
+		return -1;
 	case WM_T_ICH8:
 	case WM_T_ICH9:
 		eecd = CSR_READ(sc, WMREG_EECD);
