@@ -1,4 +1,4 @@
-/*	$NetBSD: freopen.c,v 1.19 2012/03/27 15:05:42 christos Exp $	*/
+/*	$NetBSD: freopen.c,v 1.19.24.1 2018/04/12 01:45:57 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)freopen.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: freopen.c,v 1.19 2012/03/27 15:05:42 christos Exp $");
+__RCSID("$NetBSD: freopen.c,v 1.19.24.1 2018/04/12 01:45:57 msaitoh Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -139,21 +139,6 @@ freopen(const char *file, const char *mode, FILE *fp)
 		fp->_flags = 0;		/* set it free */
 		errno = sverrno;	/* restore in case _close clobbered */
 		return NULL;
-	}
-
-	if (oflags & O_NONBLOCK) {
-		struct stat st;
-		if (fstat(f, &st) == -1) {
-			sverrno = errno;
-			(void)close(f);
-			errno = sverrno;
-			return NULL;
-		}
-		if (!S_ISREG(st.st_mode)) {
-			(void)close(f);
-			errno = EFTYPE;
-			return NULL;
-		}
 	}
 
 	/*

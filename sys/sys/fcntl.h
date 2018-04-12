@@ -1,4 +1,4 @@
-/*	$NetBSD: fcntl.h,v 1.48.8.1 2018/02/25 23:57:51 snj Exp $	*/
+/*	$NetBSD: fcntl.h,v 1.48.8.2 2018/04/12 01:45:57 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990, 1993
@@ -120,6 +120,7 @@
 #endif
 #if defined(_NETBSD_SOURCE)
 #define	O_NOSIGPIPE	0x01000000	/* don't deliver sigpipe */
+#define	O_REGULAR	0x02000000	/* fail if not a regular file */
 #endif
 
 #ifdef _KERNEL
@@ -131,7 +132,7 @@
 #define	O_MASK		(O_ACCMODE|O_NONBLOCK|O_APPEND|O_SHLOCK|O_EXLOCK|\
 			 O_ASYNC|O_SYNC|O_CREAT|O_TRUNC|O_EXCL|O_DSYNC|\
 			 O_RSYNC|O_NOCTTY|O_ALT_IO|O_NOFOLLOW|O_DIRECT|\
-			 O_DIRECTORY|O_CLOEXEC|O_NOSIGPIPE)
+			 O_DIRECTORY|O_CLOEXEC|O_NOSIGPIPE|O_REGULAR)
 
 #define	FMARK		0x00001000	/* mark during gc() */
 #define	FDEFER		0x00002000	/* defer for next gc pass */

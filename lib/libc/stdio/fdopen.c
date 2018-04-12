@@ -1,4 +1,4 @@
-/*	$NetBSD: fdopen.c,v 1.17 2017/01/10 17:00:58 christos Exp $	*/
+/*	$NetBSD: fdopen.c,v 1.17.6.1 2018/04/12 01:45:57 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)fdopen.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fdopen.c,v 1.17 2017/01/10 17:00:58 christos Exp $");
+__RCSID("$NetBSD: fdopen.c,v 1.17.6.1 2018/04/12 01:45:57 msaitoh Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -92,7 +92,7 @@ fdopen(int fd, const char *mode)
 		return NULL;
 	}
 
-	if (oflags & O_NONBLOCK) {
+	if (oflags & O_REGULAR) {
 		struct stat st;
 		if (fstat(fd, &st) == -1) {
 			return NULL;

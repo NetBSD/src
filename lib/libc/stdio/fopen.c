@@ -1,4 +1,4 @@
-/*	$NetBSD: fopen.c,v 1.15 2012/03/15 18:22:30 christos Exp $	*/
+/*	$NetBSD: fopen.c,v 1.15.24.1 2018/04/12 01:45:57 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)fopen.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fopen.c,v 1.15 2012/03/15 18:22:30 christos Exp $");
+__RCSID("$NetBSD: fopen.c,v 1.15.24.1 2018/04/12 01:45:57 msaitoh Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -66,20 +66,6 @@ fopen(const char *file, const char *mode)
 		return NULL;
 	if ((f = open(file, oflags, DEFFILEMODE)) < 0)
 		goto release;
-	if (oflags & O_NONBLOCK) {
-		struct stat st;
-		if (fstat(f, &st) == -1) {
-			int sverrno = errno;
-			(void)close(f);
-			errno = sverrno;
-			goto release;
-		}
-		if (!S_ISREG(st.st_mode)) {
-			(void)close(f);
-			errno = EFTYPE;
-			goto release;
-		}
-	}
 	/*
 	 * File descriptors are a full int, but _file is only a short.
 	 * If we get a valid file descriptor that is greater or equal to
