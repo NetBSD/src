@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.568 2018/04/12 03:09:24 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.569 2018/04/12 03:13:04 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.568 2018/04/12 03:09:24 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.569 2018/04/12 03:13:04 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -3931,6 +3931,8 @@ wm_init_lcd_from_nvm(struct wm_softc *sc)
 	
 	reg = CSR_READ(sc, WMREG_EXTCNFSIZE);
 	cnf_size = __SHIFTOUT(reg, EXTCNFSIZE_LENGTH);
+	if (cnf_size == 0)
+		goto release;
 
 	if (((sc->sc_type == WM_T_PCH)
 		&& ((extcnfctr & EXTCNFCTR_OEM_WRITE_ENABLE) == 0))
