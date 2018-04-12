@@ -1,7 +1,7 @@
-#	$NetBSD: dot.profile,v 1.28.8.1 2017/12/08 06:10:46 msaitoh Exp $
+#	$NetBSD: dot.profile,v 1.28.8.2 2018/04/12 13:51:40 martin Exp $
 
 export PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/pkg/sbin:/usr/pkg/bin
-export PATH=${PATH}:/usr/X11R7/bin:/usr/X11R6/bin:/usr/local/sbin:/usr/local/bin
+export PATH=${PATH}:/usr/X11R7/bin:/usr/local/sbin:/usr/local/bin
 
 # Uncomment the following line(s) to install binary packages
 # from cdn.NetBSD.org via pkg_add.  (See also pkg_install.conf)
