@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_extensions.c,v 1.7 2015/12/12 14:57:52 maxv Exp $ */
+/* $NetBSD: secmodel_extensions.c,v 1.7.10.1 2018/04/12 20:09:38 snj Exp $ */
 /*-
  * Copyright (c) 2011 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_extensions.c,v 1.7 2015/12/12 14:57:52 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_extensions.c,v 1.7.10.1 2018/04/12 20:09:38 snj Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -38,6 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: secmodel_extensions.c,v 1.7 2015/12/12 14:57:52 maxv
 #include <sys/socketvar.h>
 #include <sys/sysctl.h>
 #include <sys/proc.h>
+#include <sys/ptrace.h>
 #include <sys/module.h>
 
 #include <secmodel/secmodel.h>
@@ -48,6 +49,10 @@ MODULE(MODULE_CLASS_SECMODEL, extensions, NULL);
 static int dovfsusermount;
 static int curtain;
 static int user_set_cpu_affinity;
+
+#ifdef PT_SETDBREGS
+int user_set_dbregs;
+#endif
 
 static kauth_listener_t l_system, l_process, l_network;
 
@@ -134,6 +139,17 @@ sysctl_security_extensions_setup(struct sysctllog **clog)
 		       sysctl_extensions_user_handler, 0,
 		       &user_set_cpu_affinity, 0,
 		       CTL_CREATE, CTL_EOL);
+
+#ifdef PT_SETDBREGS
+	sysctl_createv(clog, 0, &rnode, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "user_set_dbregs",
+		       SYSCTL_DESCR("Whether unprivileged users may set "\
+		       		    "CPU Debug Registers."),
+		       sysctl_extensions_user_handler, 0,
+		       &user_set_dbregs, 0,
+		       CTL_CREATE, CTL_EOL);
+#endif
 
 	/* Compatibility: vfs.generic.usermount */
 	sysctl_createv(clog, 0, NULL, NULL,
@@ -250,6 +266,9 @@ secmodel_extensions_init(void)
 
 	curtain = 0;
 	user_set_cpu_affinity = 0;
+#ifdef PT_SETDBREGS
+	user_set_dbregs = 0;
+#endif
 }
 
 static void
