@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.174 2018/04/12 07:28:10 maxv Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.175 2018/04/12 07:45:29 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.174 2018/04/12 07:28:10 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.175 2018/04/12 07:45:29 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -138,20 +138,23 @@ rip_init(void)
 
 static void
 rip_sbappendaddr(struct inpcb *last, struct ip *ip, const struct sockaddr *sa,
-    int hlen, struct mbuf *opts, struct mbuf *n)
+    int hlen, struct mbuf *n)
 {
+	struct mbuf *opts = NULL;
+
 	if (last->inp_flags & INP_NOHEADER)
 		m_adj(n, hlen);
-	if (last->inp_flags & INP_CONTROLOPTS 
-	    || SOOPT_TIMESTAMP(last->inp_socket->so_options))
+	if (last->inp_flags & INP_CONTROLOPTS ||
+	    SOOPT_TIMESTAMP(last->inp_socket->so_options))
 		ip_savecontrol(last, &opts, ip, n);
 	if (sbappendaddr(&last->inp_socket->so_rcv, sa, n, opts) == 0) {
 		soroverflow(last->inp_socket);
 		m_freem(n);
 		if (opts)
 			m_freem(opts);
-	} else
+	} else {
 		sorwakeup(last->inp_socket);
+	}
 }
 
 /*
@@ -167,7 +170,7 @@ rip_input(struct mbuf *m, ...)
 	struct inpcb_hdr *inph;
 	struct inpcb *inp;
 	struct inpcb *last = NULL;
-	struct mbuf *n, *opts = NULL;
+	struct mbuf *n;
 	struct sockaddr_in ripsrc;
 	va_list ap;
 
@@ -209,9 +212,7 @@ rip_input(struct mbuf *m, ...)
 		}
 #endif
 		else if ((n = m_copypacket(m, M_DONTWAIT)) != NULL) {
-			rip_sbappendaddr(last, ip, sintosa(&ripsrc), hlen, opts,
-			    n);
-			opts = NULL;
+			rip_sbappendaddr(last, ip, sintosa(&ripsrc), hlen, n);
 		}
 
 		last = inp;
@@ -225,7 +226,7 @@ rip_input(struct mbuf *m, ...)
 	} else
 #endif
 	if (last != NULL) {
-		rip_sbappendaddr(last, ip, sintosa(&ripsrc), hlen, opts, m);
+		rip_sbappendaddr(last, ip, sintosa(&ripsrc), hlen, m);
 	} else if (inetsw[ip_protox[ip->ip_p]].pr_input == rip_input) {
 		uint64_t *ips;
 
