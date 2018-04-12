@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2017/03/30 20:16:42 christos Exp $
+#	$NetBSD: Makefile,v 1.3.6.1 2018/04/12 13:42:48 martin Exp $
 
 .include "../Makefile.inc"
 
@@ -10,7 +10,7 @@
 .endif
 
 KMOD=	procfs
-SRCS=	procfs_ctl.c procfs_note.c procfs_status.c procfs_subr.c \
+SRCS=	procfs_note.c procfs_status.c procfs_subr.c \
 	procfs_vfsops.c procfs_vnops.c procfs_cmdline.c procfs_linux.c \
 	procfs_machdep.c procfs_map.c procfs_regs.c procfs_fpregs.c \
 	procfs_mem.c procfs_fd.c procfs_auxv.c

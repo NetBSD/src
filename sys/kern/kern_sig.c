@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.336.4.1 2017/12/21 19:41:15 snj Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.336.4.2 2018/04/12 13:42:48 martin Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.336.4.1 2017/12/21 19:41:15 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.336.4.2 2018/04/12 13:42:48 martin Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_dtrace.h"
@@ -1737,8 +1737,7 @@ issignal(struct lwp *l)
 			/* Emulation-specific handling of signal trace */
 			if (p->p_emul->e_tracesig == NULL ||
 			    (*p->p_emul->e_tracesig)(p, signo) == 0)
-				sigswitch(!(p->p_slflag & PSL_FSTRACE), 0,
-				    signo);
+				sigswitch(1, 0, signo);
 
 			/* Check for a signal from the debugger. */
 			if ((signo = sigchecktrace()) == 0)

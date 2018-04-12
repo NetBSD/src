@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vfsops.c,v 1.97 2017/03/30 20:16:29 christos Exp $	*/
+/*	$NetBSD: procfs_vfsops.c,v 1.97.6.1 2018/04/12 13:42:48 martin Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.97 2017/03/30 20:16:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.97.6.1 2018/04/12 13:42:48 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -379,7 +379,6 @@ procfs_loadvnode(struct mount *mp, struct vnode *vp,
 		vp->v_type = VREG;
 		break;
 
-	case PFSctl:	/* /proc/N/ctl = --w------ */
 	case PFSnote:	/* /proc/N/note = --w------ */
 	case PFSnotepg:	/* /proc/N/notepg = --w------ */
 		pfs->pfs_mode = S_IWUSR;
@@ -491,19 +490,13 @@ procfs_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 {
 	struct proc *p;
 	struct pfsnode *pfs;
-	enum kauth_process_req req;
 	int result;
 
 	result = KAUTH_RESULT_DEFER;
 	p = arg0;
 	pfs = arg1;
-	req = (enum kauth_process_req)(unsigned long)arg2;
 
 	if (action != KAUTH_PROCESS_PROCFS)
-		return result;
-
-	/* Privileged; let secmodel handle that. */
-	if (req == KAUTH_REQ_PROCESS_PROCFS_CTL)
 		return result;
 
 	switch (pfs->pfs_type) {

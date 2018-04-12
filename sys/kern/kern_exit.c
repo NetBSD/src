@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.268 2017/01/09 00:31:30 kamil Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.268.8.1 2018/04/12 13:42:48 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.268 2017/01/09 00:31:30 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.268.8.1 2018/04/12 13:42:48 martin Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
@@ -469,7 +469,7 @@ exit1(struct lwp *l, int exitcode, int signo)
 		if (__predict_false(child->p_slflag & PSL_TRACED)) {
 			mutex_enter(p->p_lock);
 			child->p_slflag &=
-			    ~(PSL_TRACED|PSL_FSTRACE|PSL_SYSCALL);
+			    ~(PSL_TRACED|PSL_SYSCALL);
 			mutex_exit(p->p_lock);
 			if (child->p_opptr != child->p_pptr) {
 				struct proc *t = child->p_opptr;
@@ -526,8 +526,7 @@ exit1(struct lwp *l, int exitcode, int signo)
 	/* Reload parent pointer, since p may have been reparented above */
 	new_parent = p->p_pptr;
 
-	if (__predict_false((p->p_slflag & PSL_FSTRACE) == 0 &&
-	    p->p_exitsig != 0)) {
+	if (__predict_false(p->p_exitsig != 0)) {
 		exit_psignal(p, new_parent, &ksi);
 		kpsignal(new_parent, &ksi, NULL);
 	}
@@ -1159,7 +1158,7 @@ proc_free(struct proc *p, struct wrusage *wru)
 	 */
 	if ((p->p_slflag & PSL_TRACED) != 0 && p->p_opptr != parent) {
 		mutex_enter(p->p_lock);
-		p->p_slflag &= ~(PSL_TRACED|PSL_FSTRACE|PSL_SYSCALL);
+		p->p_slflag &= ~(PSL_TRACED|PSL_SYSCALL);
 		mutex_exit(p->p_lock);
 		parent = (p->p_opptr == NULL) ? initproc : p->p_opptr;
 		proc_reparent(p, parent);
