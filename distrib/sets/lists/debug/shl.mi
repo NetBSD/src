@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.176.2.6 2018/02/11 21:17:33 snj Exp $
+# $NetBSD: shl.mi,v 1.176.2.7 2018/04/12 01:38:42 msaitoh Exp $
 ./usr/lib/libbfd_g.a						comp-c-debuglib	debuglib,compatfile,binutils
 ./usr/libdata/debug/lib						base-sys-usr	debug,dynamicroot,compatdir
 ./usr/libdata/debug/lib/libblacklist.so.0.0.debug		comp-sys-debug	debug,dynamicroot
@@ -279,7 +279,7 @@
 ./usr/libdata/debug/usr/lib/libubsan.so.1.0.debug		comp-sys-debug	debug,compatfile,gcc=53
 ./usr/libdata/debug/usr/lib/libukfs.so.1.0.debug		comp-sys-debug	debug,compatfile,rump
 ./usr/libdata/debug/usr/lib/libumem.so.0.0.debug		comp-zfs-debug	debug,compatfile,zfs
-./usr/libdata/debug/usr/lib/libunbound.so.6.1.debug 		comp-net-debug	debug,compatfile,unbound
+./usr/libdata/debug/usr/lib/libunbound.so.6.2.debug 		comp-net-debug	debug,compatfile,unbound
 ./usr/libdata/debug/usr/lib/libusbhid.so.1.0.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libutil.so.7.23.debug		comp-obsolete	debug,compatfile,obsolete,compatfile
 ./usr/libdata/debug/usr/lib/libutil.so.7.24.debug		comp-sys-debug	debug,compatfile

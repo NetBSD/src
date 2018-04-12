@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1009.2.4 2018/03/20 09:17:42 bouyer Exp $
+#	$NetBSD: bsd.own.mk,v 1.1009.2.5 2018/04/12 01:38:59 msaitoh Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -88,6 +88,9 @@ EXTERNAL_GCC_SUBDIR=	/does/not/exist
 .else
 MKGCCCMDS?=	no
 .endif
+
+HAVE_OPENSSL=			10
+EXTERNAL_OPENSSL_SUBDIR=	openssl
 
 .if !empty(MACHINE_ARCH:Mearm*)
 _LIBC_COMPILER_RT.${MACHINE_ARCH}=	yes
