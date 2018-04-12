@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.224 2018/03/21 14:23:54 roy Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.225 2018/04/12 06:49:39 maxv Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.224 2018/03/21 14:23:54 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.225 2018/04/12 06:49:39 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2002,9 +2002,6 @@ icmp6_rip6_input(struct mbuf **mp, int off)
 		if (last) {
 			struct	mbuf *n;
 #ifdef IPSEC
-			/*
-			 * Check AH/ESP integrity
-			 */
 			if (!ipsec_used || !ipsec_in_reject(m, last))
 #endif
 			if ((n = m_copy(m, 0, (int)M_COPYALL)) != NULL) {

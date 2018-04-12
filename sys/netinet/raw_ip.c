@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.172 2018/03/21 14:23:54 roy Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.173 2018/04/12 06:49:39 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.172 2018/03/21 14:23:54 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.173 2018/04/12 06:49:39 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -202,11 +202,10 @@ rip_input(struct mbuf *m, ...)
 		if (last == NULL)
 			;
 #if defined(IPSEC)
-		/* check AH/ESP integrity. */
 		else if (ipsec_used && ipsec_in_reject(m, last)) {
 			/* do not inject data to pcb */
 		}
-#endif /*IPSEC*/
+#endif
 		else if ((n = m_copypacket(m, M_DONTWAIT)) != NULL) {
 			rip_sbappendaddr(last, ip, sintosa(&ripsrc), hlen, opts,
 			    n);
@@ -214,17 +213,17 @@ rip_input(struct mbuf *m, ...)
 		}
 		last = inp;
 	}
+
 #if defined(IPSEC)
-	/* check AH/ESP integrity. */
 	if (ipsec_used && last != NULL && ipsec_in_reject(m, last)) {
 		m_freem(m);
 		IP_STATDEC(IP_STAT_DELIVERED);
 		/* do not inject data to pcb */
 	} else
-#endif /*IPSEC*/
-	if (last != NULL)
+#endif
+	if (last != NULL) {
 		rip_sbappendaddr(last, ip, sintosa(&ripsrc), hlen, opts, m);
-	else if (inetsw[ip_protox[ip->ip_p]].pr_input == rip_input) {
+	} else if (inetsw[ip_protox[ip->ip_p]].pr_input == rip_input) {
 		uint64_t *ips;
 
 		icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_PROTOCOL,
@@ -233,8 +232,10 @@ rip_input(struct mbuf *m, ...)
 		ips[IP_STAT_NOPROTO]++;
 		ips[IP_STAT_DELIVERED]--;
 		IP_STAT_PUTREF();
-	} else
+	} else {
 		m_freem(m);
+	}
+
 	return;
 }
 

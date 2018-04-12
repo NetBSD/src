@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.246 2018/03/19 16:26:25 roy Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.247 2018/04/12 06:49:39 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.246 2018/03/19 16:26:25 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.247 2018/04/12 06:49:39 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -477,7 +477,6 @@ udp4_sendup(struct mbuf *m, int off /* offset of data portion */,
 	KASSERT(inp != NULL);
 
 #if defined(IPSEC)
-	/* check AH/ESP integrity. */
 	if (ipsec_used && ipsec_in_reject(m, inp)) {
 		if ((n = m_copypacket(m, M_DONTWAIT)) != NULL)
 			icmp_error(n, ICMP_UNREACH, ICMP_UNREACH_ADMIN_PROHIBIT,
