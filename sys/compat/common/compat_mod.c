@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_mod.c,v 1.27 2018/03/18 20:33:52 christos Exp $	*/
+/*	$NetBSD: compat_mod.c,v 1.28 2018/04/12 18:50:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.27 2018/03/18 20:33:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.28 2018/04/12 18:50:13 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -63,6 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.27 2018/03/18 20:33:52 christos Exp
 #include <compat/sys/uvm.h>
 #include <compat/sys/cpuio.h>
 #include <compat/sys/ccdvar.h>
+#include <compat/sys/sockio.h>
 
 #if defined(COMPAT_09) || defined(COMPAT_43) || defined(COMPAT_50)
 static struct sysctllog *compat_clog = NULL;
@@ -257,7 +258,11 @@ compat_modcmd(modcmd_t cmd, void *arg)
 #endif
 #endif
 		compat_sysctl_init();
+#ifdef COMPAT_40
+		uipc_syscalls_40_init();
+#endif
 #ifdef COMPAT_50
+		uipc_syscalls_50_init();
 		uvm_50_init();
 #endif
 #ifdef COMPAT_60
@@ -324,7 +329,11 @@ compat_modcmd(modcmd_t cmd, void *arg)
 #endif
 #endif	/* COMPAT_16 */
 		compat_sysctl_fini();
+#ifdef COMPAT_40
+		uipc_syscalls_40_fini();
+#endif
 #ifdef COMPAT_50
+		uipc_syscalls_50_fini();
 		uvm_50_fini();
 #endif
 #ifdef COMPAT_60
