@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.h,v 1.1 2017/04/02 21:44:00 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.h,v 1.1.8.1 2018/04/12 13:02:21 martin Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -328,7 +328,7 @@ forkee_status_stopped(int status, int expected)
 
 /* This function is currently designed to be run in the main/parent process */
 static void __used
-await_zombie(pid_t process)
+await_zombie_raw(pid_t process, useconds_t ms)
 {
 	struct kinfo_proc2 p;
 	size_t len = sizeof(p);
@@ -351,8 +351,17 @@ await_zombie(pid_t process)
 		if (p.p_stat == LSZOMB)
 			break;
 
-		ATF_REQUIRE(usleep(1000) == 0);
+		if (ms > 0) {
+			ATF_REQUIRE(usleep(ms) == 0);
+		}
 	}
+}
+
+static void __used
+await_zombie(pid_t process)
+{
+
+	await_zombie_raw(process, 1000);
 }
 
 /* Happy number sequence -- this function is used to just consume cpu cycles */
