@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls_50.c,v 1.3.56.3 2018/03/08 09:56:05 pgoyette Exp $	*/
+/*	$NetBSD: uipc_syscalls_50.c,v 1.3.56.4 2018/04/12 22:33:41 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_50.c,v 1.3.56.3 2018/03/08 09:56:05 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_50.c,v 1.3.56.4 2018/04/12 22:33:41 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -57,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_50.c,v 1.3.56.3 2018/03/08 09:56:05 pg
 #include <compat/sys/if.h>
 
 /*ARGSUSED*/
-int
+static int
 compat_ifdatareq(struct lwp *l, u_long cmd, void *data)
 {
 	struct oifdatareq *ifdr = data;
@@ -92,19 +92,16 @@ compat_ifdatareq(struct lwp *l, u_long cmd, void *data)
 		return 0;
 
 	default:
-		return EINVAL;
+		return ENOSYS;
 	}
 }
 
 /* Save and restore compat vector as needed */
 
-int (*orig_compat_ifdatareq)(struct lwp *, u_long, void *);
-
 void
 if_50_init(void)
 {
 
-	orig_compat_ifdatareq = vec_compat_ifdatareq;
 	vec_compat_ifdatareq = compat_ifdatareq;
 }
 
@@ -112,5 +109,5 @@ void
 if_50_fini(void)
 {
 
-	vec_compat_ifdatareq = orig_compat_ifdatareq;
+	vec_compat_ifdatareq = (void *)enosys;
 }

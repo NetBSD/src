@@ -1,4 +1,4 @@
-/*	$NetBSD: sockio.h,v 1.10.58.1 2018/03/08 01:37:46 pgoyette Exp $	*/
+/*	$NetBSD: sockio.h,v 1.10.58.2 2018/04/12 22:33:41 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
@@ -56,8 +56,10 @@
 
 #endif /* _KERNEL_OPT */
 
+#define	OIFNAMSIZ	16
+
 struct oifreq {
-	char	ifr_name[IFNAMSIZ];		/* if name, e.g. "en0" */
+	char	ifr_name[OIFNAMSIZ];		/* if name, e.g. "en0" */
 	union {
 		struct	sockaddr ifru_addr;
 		struct	sockaddr ifru_dstaddr;
@@ -114,7 +116,7 @@ struct oif_data {
 };
 
 struct oifdatareq {
-	char	ifdr_name[IFNAMSIZ];		/* if name, e.g. "en0" */
+	char	ifdr_name[OIFNAMSIZ];		/* if name, e.g. "en0" */
 	struct	oif_data ifdr_data;
 };
 
@@ -178,7 +180,9 @@ struct oifdatareq {
 		(ni)->ifi_lastchange.tv_nsec = \
 		    (oi)->ifi_lastchange.tv_usec * 1000; \
 	} while (/*CONSTCOND*/0)
+
 #ifdef _KERNEL
+
 void if_50_init(void);
 void if_50_fini(void);
 
@@ -186,5 +190,7 @@ __BEGIN_DECLS
 int compat_ifconf(u_long, void *);
 int compat_ifdatareq(struct lwp *, u_long, void *);
 __END_DECLS
+
 #endif
+
 #endif /* _COMPAT_SYS_SOCKIO_H_ */

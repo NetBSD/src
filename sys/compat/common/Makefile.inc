@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.23.2.1 2018/03/13 08:53:06 pgoyette Exp $
+#	$NetBSD: Makefile.inc,v 1.23.2.2 2018/04/12 22:33:41 pgoyette Exp $
 #
 #	Configuration variables (default values are below):
 #
@@ -17,7 +17,11 @@
 
 # Default values:
 COMPATDST?=		${.OBJDIR}/lib/compat
+.if !empty(OPT_MODULAR)
+COMPAT_AS?=		library
+.else
 COMPAT_AS?=		obj
+.endif
 COMPATDOTDIR?= ../../.
 
 COMPATDIR=		${S:S@^.@${COMPATDOTDIR}@:Q}/compat/common
