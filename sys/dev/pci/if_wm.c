@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.566 2018/03/01 03:32:33 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.567 2018/04/12 02:48:59 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.566 2018/03/01 03:32:33 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.567 2018/04/12 02:48:59 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -11997,7 +11997,10 @@ wm_ich8_cycle_init(struct wm_softc *sc)
 	int32_t error = 1;
 	int32_t i     = 0;
 
-	hsfsts = ICH8_FLASH_READ16(sc, ICH_FLASH_HSFSTS);
+	if (sc->sc_type >= WM_T_PCH_SPT)
+		hsfsts = ICH8_FLASH_READ32(sc, ICH_FLASH_HSFSTS) & 0xffffUL;
+	else
+		hsfsts = ICH8_FLASH_READ16(sc, ICH_FLASH_HSFSTS);
 
 	/* May be check the Flash Des Valid bit in Hw status */
 	if ((hsfsts & HSFSTS_FLDVAL) == 0) {
@@ -12008,7 +12011,10 @@ wm_ich8_cycle_init(struct wm_softc *sc)
 	/* Clear DAEL in Hw status by writing a 1 */
 	hsfsts |= HSFSTS_ERR | HSFSTS_DAEL;
 
-	ICH8_FLASH_WRITE16(sc, ICH_FLASH_HSFSTS, hsfsts);
+	if (sc->sc_type >= WM_T_PCH_SPT)
+		ICH8_FLASH_WRITE32(sc, ICH_FLASH_HSFSTS, hsfsts & 0xffffUL);
+	else
+		ICH8_FLASH_WRITE16(sc, ICH_FLASH_HSFSTS, hsfsts);
 
 	/*
 	 * Either we should have a hardware SPI cycle in progress bit to check
@@ -12029,7 +12035,11 @@ wm_ich8_cycle_init(struct wm_softc *sc)
 
 		/* Begin by setting Flash Cycle Done. */
 		hsfsts |= HSFSTS_DONE;
-		ICH8_FLASH_WRITE16(sc, ICH_FLASH_HSFSTS, hsfsts);
+		if (sc->sc_type >= WM_T_PCH_SPT)
+			ICH8_FLASH_WRITE32(sc, ICH_FLASH_HSFSTS,
+			    hsfsts & 0xffffUL);
+		else
+			ICH8_FLASH_WRITE16(sc, ICH_FLASH_HSFSTS, hsfsts);
 		error = 0;
 	} else {
 		/*
@@ -12037,7 +12047,12 @@ wm_ich8_cycle_init(struct wm_softc *sc)
 		 * chance to end before giving up.
 		 */
 		for (i = 0; i < ICH_FLASH_COMMAND_TIMEOUT; i++) {
-			hsfsts = ICH8_FLASH_READ16(sc, ICH_FLASH_HSFSTS);
+			if (sc->sc_type >= WM_T_PCH_SPT)
+				hsfsts = ICH8_FLASH_READ32(sc,
+				    ICH_FLASH_HSFSTS) & 0xffffUL;
+			else
+				hsfsts = ICH8_FLASH_READ16(sc,
+				    ICH_FLASH_HSFSTS);
 			if ((hsfsts & HSFSTS_FLINPRO) == 0) {
 				error = 0;
 				break;
@@ -12050,7 +12065,12 @@ wm_ich8_cycle_init(struct wm_softc *sc)
 			 * now set the Flash Cycle Done.
 			 */
 			hsfsts |= HSFSTS_DONE;
-			ICH8_FLASH_WRITE16(sc, ICH_FLASH_HSFSTS, hsfsts);
+			if (sc->sc_type >= WM_T_PCH_SPT)
+				ICH8_FLASH_WRITE32(sc, ICH_FLASH_HSFSTS,
+				    hsfsts & 0xffffUL);
+			else
+				ICH8_FLASH_WRITE16(sc, ICH_FLASH_HSFSTS,
+				    hsfsts);
 		}
 	}
 	return error;
@@ -12070,13 +12090,24 @@ wm_ich8_flash_cycle(struct wm_softc *sc, uint32_t timeout)
 	uint32_t i = 0;
 
 	/* Start a cycle by writing 1 in Flash Cycle Go in Hw Flash Control */
-	hsflctl = ICH8_FLASH_READ16(sc, ICH_FLASH_HSFCTL);
+	if (sc->sc_type >= WM_T_PCH_SPT)
+		hsflctl = ICH8_FLASH_READ32(sc, ICH_FLASH_HSFSTS) >> 16;
+	else
+		hsflctl = ICH8_FLASH_READ16(sc, ICH_FLASH_HSFCTL);
 	hsflctl |= HSFCTL_GO;
-	ICH8_FLASH_WRITE16(sc, ICH_FLASH_HSFCTL, hsflctl);
+	if (sc->sc_type >= WM_T_PCH_SPT)
+		ICH8_FLASH_WRITE32(sc, ICH_FLASH_HSFSTS,
+		    (uint32_t)hsflctl << 16);
+	else
+		ICH8_FLASH_WRITE16(sc, ICH_FLASH_HSFCTL, hsflctl);
 
 	/* Wait till FDONE bit is set to 1 */
 	do {
-		hsfsts = ICH8_FLASH_READ16(sc, ICH_FLASH_HSFSTS);
+		if (sc->sc_type >= WM_T_PCH_SPT)
+			hsfsts = ICH8_FLASH_READ32(sc, ICH_FLASH_HSFSTS)
+			    & 0xffffUL;
+		else
+			hsfsts = ICH8_FLASH_READ16(sc, ICH_FLASH_HSFSTS);
 		if (hsfsts & HSFSTS_DONE)
 			break;
 		delay(1);
@@ -12121,18 +12152,22 @@ wm_read_ich8_data(struct wm_softc *sc, uint32_t index,
 		if (error)
 			break;
 
-		hsflctl = ICH8_FLASH_READ16(sc, ICH_FLASH_HSFCTL);
+		if (sc->sc_type >= WM_T_PCH_SPT)
+			hsflctl = ICH8_FLASH_READ32(sc, ICH_FLASH_HSFSTS)
+			    >> 16;
+		else
+			hsflctl = ICH8_FLASH_READ16(sc, ICH_FLASH_HSFCTL);
 		/* 0b/1b corresponds to 1 or 2 byte size, respectively. */
 		hsflctl |=  ((size - 1) << HSFCTL_BCOUNT_SHIFT)
 		    & HSFCTL_BCOUNT_MASK;
 		hsflctl |= ICH_CYCLE_READ << HSFCTL_CYCLE_SHIFT;
-		if (sc->sc_type == WM_T_PCH_SPT) {
+		if (sc->sc_type >= WM_T_PCH_SPT) {
 			/*
 			 * In SPT, This register is in Lan memory space, not
 			 * flash. Therefore, only 32 bit access is supported.
 			 */
-			ICH8_FLASH_WRITE32(sc, ICH_FLASH_HSFCTL,
-			    (uint32_t)hsflctl);
+			ICH8_FLASH_WRITE32(sc, ICH_FLASH_HSFSTS,
+			    (uint32_t)hsflctl << 16);
 		} else
 			ICH8_FLASH_WRITE16(sc, ICH_FLASH_HSFCTL, hsflctl);
 
@@ -12168,7 +12203,13 @@ wm_read_ich8_data(struct wm_softc *sc, uint32_t index,
 			 * detected, it won't hurt to give it another try...
 			 * ICH_FLASH_CYCLE_REPEAT_COUNT times.
 			 */
-			hsfsts = ICH8_FLASH_READ16(sc, ICH_FLASH_HSFSTS);
+			if (sc->sc_type >= WM_T_PCH_SPT)
+				hsfsts = ICH8_FLASH_READ32(sc,
+				    ICH_FLASH_HSFSTS) & 0xffffUL;
+			else
+				hsfsts = ICH8_FLASH_READ16(sc,
+				    ICH_FLASH_HSFSTS);
+					
 			if (hsfsts & HSFSTS_ERR) {
 				/* Repeat for some time before giving up. */
 				continue;
