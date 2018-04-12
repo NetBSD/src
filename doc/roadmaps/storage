@@ -1,4 +1,4 @@
-$NetBSD: storage,v 1.23 2017/10/31 19:03:32 jdolecek Exp $
+$NetBSD: storage,v 1.24 2018/04/12 19:08:02 jdolecek Exp $
 
 NetBSD Storage Roadmap
 ======================
@@ -225,14 +225,10 @@ Semi-relatedly, it is also time for scsipi to become MPSAFE.
 
  - As of May 2016 a port of OpenBSD's driver has been commited. This
    will be in -8.
- - The nvme driver is a backend to ld(4) which is MPSAFE, but we still
-   need to attend to I/O path bottlenecks. Better instrumentation
-   is needed.
- - Flush cache commands via DIOCCACHESYNC currently doesn't wait for completion;
-   it must not poll since that corrupts command queue, but it should use
-   a condition variable to wait for the flush to actually finish
- - There is no clear timeframe or release target for these points.
- - Contact msaitoh or agc for further information.
+ - The nvme driver is a backend to ld(4) and is fully is MPSAFE, but we
+   still need to attend to I/O path bottlenecks like kern/53124.
+   Better instrumentation is needed.
+ - Contact msaitoh, agc, or jdolecek for further information.
 
 
 8. lfs64
