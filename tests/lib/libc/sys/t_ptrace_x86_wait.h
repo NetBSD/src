@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_x86_wait.h,v 1.1.8.1 2018/02/25 20:59:46 snj Exp $	*/
+/*	$NetBSD: t_ptrace_x86_wait.h,v 1.1.8.2 2018/04/12 13:02:21 martin Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -56,6 +56,33 @@ union u {
 		unsigned long len_dr3 : 2;			/* 30-31 */
 	} bits;
 };
+
+static bool
+can_we_set_dbregs(void)
+{
+	static long euid = -1;
+	static int user_set_dbregs  = -1;
+	size_t user_set_dbregs_len = sizeof(user_set_dbregs);
+
+	if (euid == -1)
+		euid = geteuid();
+
+	if (euid == 0)
+		return true;
+
+	if (user_set_dbregs == -1) {
+		if (sysctlbyname("security.models.extensions.user_set_dbregs",
+			&user_set_dbregs, &user_set_dbregs_len, NULL, 0)
+			== -1) {
+			return false;
+		}
+	}
+
+	if (user_set_dbregs > 0)
+		return true;
+	else
+		return false;
+}
 
 ATF_TC(dbregs_print);
 ATF_TC_HEAD(dbregs_print, tc)
@@ -134,6 +161,11 @@ dbreg_preserve(int reg, enum dbreg_preserve_mode mode)
 	struct dbreg r2;
 	size_t i;
 	int watchme;
+
+	if (!can_we_set_dbregs()) {
+		atf_tc_skip("Either run this test as root or set sysctl(3) "
+		            "security.models.extensions.user_set_dbregs to 1");
+	}
 
 	DPRINTF("Before forking process PID=%d\n", getpid());
 	SYSCALL_REQUIRE((child = fork()) != -1);
@@ -389,6 +421,11 @@ dbregs_trap_variable(int reg, int cond, int len, bool write)
 	struct ptrace_siginfo info;
 	memset(&info, 0, sizeof(info));
 
+	if (!can_we_set_dbregs()) {
+		atf_tc_skip("Either run this test as root or set sysctl(3) "
+		            "security.models.extensions.user_set_dbregs to 1");
+	}
+
 	dr7.raw = 0;
 	switch (reg) {
 	case 0:
@@ -422,7 +459,7 @@ dbregs_trap_variable(int reg, int cond, int len, bool write)
 		if (write)
 			watchme = 1;
 		else
-			DPRINTF("watchme=%d\n", watchme);
+			printf("watchme=%d\n", watchme);
 
 		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
@@ -897,7 +934,6 @@ ATF_TC_BODY(dbregs_dr0_trap_variable_readwrite_read_byte, tc)
 	/* 0b11 -- break on data write&read */
 	/* 0b00 -- 1 byte */
 
-	atf_tc_expect_fail("wrong signal");
 	dbregs_trap_variable(0, 3, 0, false);
 }
 
@@ -914,7 +950,6 @@ ATF_TC_BODY(dbregs_dr1_trap_variable_readwrite_read_byte, tc)
 	/* 0b11 -- break on data write&read */
 	/* 0b00 -- 1 byte */
 
-	atf_tc_expect_fail("wrong signal");
 	dbregs_trap_variable(1, 3, 0, false);
 }
 
@@ -931,7 +966,6 @@ ATF_TC_BODY(dbregs_dr2_trap_variable_readwrite_read_byte, tc)
 	/* 0b11 -- break on data write&read */
 	/* 0b00 -- 1 byte */
 
-	atf_tc_expect_fail("wrong signal");
 	dbregs_trap_variable(2, 3, 0, false);
 }
 
@@ -948,7 +982,6 @@ ATF_TC_BODY(dbregs_dr3_trap_variable_readwrite_read_byte, tc)
 	/* 0b11 -- break on data write&read */
 	/* 0b00 -- 1 byte */
 
-	atf_tc_expect_fail("wrong signal");
 	dbregs_trap_variable(3, 3, 0, false);
 }
 
@@ -965,7 +998,6 @@ ATF_TC_BODY(dbregs_dr0_trap_variable_readwrite_read_2bytes, tc)
 	/* 0b11 -- break on data write&read */
 	/* 0b01 -- 2 bytes */
 
-	atf_tc_expect_fail("wrong signal");
 	dbregs_trap_variable(0, 3, 1, false);
 }
 
@@ -982,7 +1014,6 @@ ATF_TC_BODY(dbregs_dr1_trap_variable_readwrite_read_2bytes, tc)
 	/* 0b11 -- break on data write&read */
 	/* 0b01 -- 2 bytes */
 
-	atf_tc_expect_fail("wrong signal");
 	dbregs_trap_variable(1, 3, 1, false);
 }
 
@@ -999,7 +1030,6 @@ ATF_TC_BODY(dbregs_dr2_trap_variable_readwrite_read_2bytes, tc)
 	/* 0b11 -- break on data write&read */
 	/* 0b01 -- 2 bytes */
 
-	atf_tc_expect_fail("wrong signal");
 	dbregs_trap_variable(2, 3, 1, false);
 }
 
@@ -1016,7 +1046,6 @@ ATF_TC_BODY(dbregs_dr3_trap_variable_readwrite_read_2bytes, tc)
 	/* 0b11 -- break on data write&read */
 	/* 0b01 -- 2 bytes */
 
-	atf_tc_expect_fail("wrong signal");
 	dbregs_trap_variable(3, 3, 1, false);
 }
 
@@ -1033,7 +1062,6 @@ ATF_TC_BODY(dbregs_dr0_trap_variable_readwrite_read_4bytes, tc)
 	/* 0b11 -- break on data write&read */
 	/* 0b11 -- 4 bytes */
 
-	atf_tc_expect_fail("wrong signal");
 	dbregs_trap_variable(0, 3, 3, false);
 }
 
@@ -1050,7 +1078,6 @@ ATF_TC_BODY(dbregs_dr1_trap_variable_readwrite_read_4bytes, tc)
 	/* 0b11 -- break on data write&read */
 	/* 0b11 -- 4 bytes */
 
-	atf_tc_expect_fail("wrong signal");
 	dbregs_trap_variable(1, 3, 3, false);
 }
 
@@ -1067,7 +1094,6 @@ ATF_TC_BODY(dbregs_dr2_trap_variable_readwrite_read_4bytes, tc)
 	/* 0b11 -- break on data write&read */
 	/* 0b11 -- 4 bytes */
 
-	atf_tc_expect_fail("wrong signal");
 	dbregs_trap_variable(2, 3, 3, false);
 }
 
@@ -1084,7 +1110,6 @@ ATF_TC_BODY(dbregs_dr3_trap_variable_readwrite_read_4bytes, tc)
 	/* 0b11 -- break on data write&read */
 	/* 0b11 -- 4 bytes */
 
-	atf_tc_expect_fail("wrong signal");
 	dbregs_trap_variable(3, 3, 3, false);
 }
 
@@ -1110,10 +1135,13 @@ ATF_TC_BODY(dbregs_dr0_trap_code, tc)
 	volatile int watchme = 1;
 	union u dr7;
 
-	atf_tc_expect_fail("wrong signal");
-
 	struct ptrace_siginfo info;
 	memset(&info, 0, sizeof(info));
+
+	if (!can_we_set_dbregs()) {
+		atf_tc_skip("Either run this test as root or set sysctl(3) "
+		            "security.models.extensions.user_set_dbregs to 1");
+	}
 
 	dr7.raw = 0;
 	dr7.bits.global_dr0_breakpoint = 1;
@@ -1129,7 +1157,7 @@ ATF_TC_BODY(dbregs_dr0_trap_code, tc)
 		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		DPRINTF("check_happy(%d)=%d\n", watchme, check_happy(watchme));
+		printf("check_happy(%d)=%d\n", watchme, check_happy(watchme));
 
 		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
@@ -1242,7 +1270,10 @@ ATF_TC_BODY(dbregs_dr1_trap_code, tc)
 	struct ptrace_siginfo info;
 	memset(&info, 0, sizeof(info));
 
-	atf_tc_expect_fail("wrong signal");
+	if (!can_we_set_dbregs()) {
+		atf_tc_skip("Either run this test as root or set sysctl(3) "
+		            "security.models.extensions.user_set_dbregs to 1");
+	}
 
 	dr7.raw = 0;
 	dr7.bits.global_dr1_breakpoint = 1;
@@ -1258,7 +1289,7 @@ ATF_TC_BODY(dbregs_dr1_trap_code, tc)
 		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		DPRINTF("check_happy(%d)=%d\n", watchme, check_happy(watchme));
+		printf("check_happy(%d)=%d\n", watchme, check_happy(watchme));
 
 		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
@@ -1371,7 +1402,11 @@ ATF_TC_BODY(dbregs_dr2_trap_code, tc)
 	struct ptrace_siginfo info;
 	memset(&info, 0, sizeof(info));
 
-	atf_tc_expect_fail("wrong signal");
+	if (!can_we_set_dbregs()) {
+		atf_tc_skip("Either run this test as root or set sysctl(3) "
+		            "security.models.extensions.user_set_dbregs to 1");
+	}
+
 	dr7.raw = 0;
 	dr7.bits.global_dr2_breakpoint = 1;
 	dr7.bits.condition_dr2 = 0;	/* 0b00 -- break on code execution */
@@ -1386,7 +1421,7 @@ ATF_TC_BODY(dbregs_dr2_trap_code, tc)
 		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		DPRINTF("check_happy(%d)=%d\n", watchme, check_happy(watchme));
+		printf("check_happy(%d)=%d\n", watchme, check_happy(watchme));
 
 		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
@@ -1499,7 +1534,11 @@ ATF_TC_BODY(dbregs_dr3_trap_code, tc)
 	struct ptrace_siginfo info;
 	memset(&info, 0, sizeof(info));
 
-	atf_tc_expect_fail("wrong signal");
+	if (!can_we_set_dbregs()) {
+		atf_tc_skip("Either run this test as root or set sysctl(3) "
+		            "security.models.extensions.user_set_dbregs to 1");
+	}
+
 	dr7.raw = 0;
 	dr7.bits.global_dr3_breakpoint = 1;
 	dr7.bits.condition_dr3 = 0;	/* 0b00 -- break on code execution */
@@ -1514,7 +1553,7 @@ ATF_TC_BODY(dbregs_dr3_trap_code, tc)
 		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		DPRINTF("check_happy(%d)=%d\n", watchme, check_happy(watchme));
+		printf("check_happy(%d)=%d\n", watchme, check_happy(watchme));
 
 		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
@@ -1631,6 +1670,11 @@ dbregs_dont_inherit_lwp(int reg)
 	size_t i;
 	struct dbreg r1;
 	struct dbreg r2;
+
+	if (!can_we_set_dbregs()) {
+		atf_tc_skip("Either run this test as root or set sysctl(3) "
+		            "security.models.extensions.user_set_dbregs to 1");
+	}
 
 	DPRINTF("Before forking process PID=%d\n", getpid());
 	SYSCALL_REQUIRE((child = fork()) != -1);
@@ -1802,6 +1846,11 @@ dbregs_dont_inherit_execve(int reg)
 
 	struct ptrace_siginfo info;
 	memset(&info, 0, sizeof(info));
+
+	if (!can_we_set_dbregs()) {
+		atf_tc_skip("Either run this test as root or set sysctl(3) "
+		            "security.models.extensions.user_set_dbregs to 1");
+	}
 
 	DPRINTF("Before forking process PID=%d\n", getpid());
 	SYSCALL_REQUIRE((child = fork()) != -1);

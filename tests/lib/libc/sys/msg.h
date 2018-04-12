@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.h,v 1.1 2017/04/02 21:44:00 kamil Exp $	*/
+/*	$NetBSD: msg.h,v 1.1.8.1 2018/04/12 13:02:21 martin Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ msg_write_child(const char *info, struct msg_fds *fds, void *msg, size_t len)
 	CLOSEFD(fds->cfd[1]);
 	CLOSEFD(fds->pfd[0]);
 
-	printf("Send %s\n", info);
+//	printf("Send %s\n", info);
 	rv = write(fds->pfd[1], msg, len);
 	if (rv != (ssize_t)len)
 		return 1;
@@ -88,7 +88,7 @@ msg_write_parent(const char *info, struct msg_fds *fds, void *msg, size_t len)
 	CLOSEFD(fds->pfd[1]);
 	CLOSEFD(fds->cfd[0]);
 
-	printf("Send %s\n", info);
+//	printf("Send %s\n", info);
 	rv = write(fds->cfd[1], msg, len);
 	if (rv != (ssize_t)len)
 		return 1;
@@ -106,7 +106,7 @@ msg_read_parent(const char *info, struct msg_fds *fds, void *msg, size_t len)
 	CLOSEFD(fds->pfd[1]);
 	CLOSEFD(fds->cfd[0]);
 
-	printf("Wait %s\n", info);
+//	printf("Wait %s\n", info);
 	rv = read(fds->pfd[0], msg, len);
 	if (rv != (ssize_t)len)
 		return 1;
@@ -124,7 +124,7 @@ msg_read_child(const char *info, struct msg_fds *fds, void *msg, size_t len)
 	CLOSEFD(fds->cfd[1]);
 	CLOSEFD(fds->pfd[0]);
 
-	printf("Wait %s\n", info);
+//	printf("Wait %s\n", info);
 	rv = read(fds->cfd[0], msg, len);
 	if (rv != (ssize_t)len)
 		return 1;
