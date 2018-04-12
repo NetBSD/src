@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.sun3,v 1.104 2015/04/15 19:13:47 mrg Exp $
+# $NetBSD: Makefile.sun3,v 1.104.10.1 2018/04/12 14:06:14 martin Exp $
 
 # Makefile for NetBSD
 #
@@ -39,7 +39,14 @@ AFLAGS+=	-x assembler-with-cpp
 ##
 ## (3) libkern and compat
 ##
+OPT_MODULAR=   %MODULAR%
+.if !empty(OPT_MODULAR)
 KERN_AS=	obj
+COMPAT_AS=	obj
+.else
+KERN_AS=	library
+COMPAT_AS=	library
+.endif
 
 ##
 ## (4) local objects, compile rules, and dependencies
