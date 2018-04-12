@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.419 2018/01/30 10:40:02 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.420 2018/04/12 18:44:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.419 2018/01/30 10:40:02 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.420 2018/04/12 18:44:59 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -242,24 +242,12 @@ static void sysctl_net_pktq_setup(struct sysctllog **, int);
 
 static void if_sysctl_setup(struct sysctllog **);
 
-/*
- * Pointer to stub or real compat_cvtcmd() depending on presence of
- * the compat module
- */
-u_long stub_compat_cvtcmd(u_long);
-u_long (*vec_compat_cvtcmd)(u_long) = stub_compat_cvtcmd;
-
-/* Similarly, pointer to compat_ifioctl() if it is present */
-
+/* Compatibility vector functions */
+u_long (*vec_compat_cvtcmd)(u_long) = NULL;
 int (*vec_compat_ifioctl)(struct socket *, u_long, u_long, void *,
 	struct lwp *) = NULL;
-
-/* The stub version of compat_cvtcmd() */
-u_long stub_compat_cvtcmd(u_long cmd)
-{
-
-	return cmd;
-}
+int (*vec_compat_ifconf)(struct lwp *, u_long, void *) = (void *)enosys;
+int (*vec_compat_ifdatareq)(struct lwp *, u_long, void *) = (void *)enosys;
 
 static int
 if_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
@@ -3114,31 +3102,31 @@ doifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 	int bound;
 
 	switch (cmd) {
-#ifdef COMPAT_OIFREQ
-	case OSIOCGIFCONF:
-	case OOSIOCGIFCONF:
-		return compat_ifconf(cmd, data);
-#endif
-#ifdef COMPAT_OIFDATA
-	case OSIOCGIFDATA:
-	case OSIOCZIFDATA:
-		return compat_ifdatareq(l, cmd, data);
-#endif
 	case SIOCGIFCONF:
 		return ifconf(cmd, data);
 	case SIOCINITIFADDR:
 		return EPERM;
+	default:
+		error = (*vec_compat_ifconf)(l, cmd, data);
+		if (error != ENOSYS)
+			return error;
+		error = (*vec_compat_ifdatareq)(l, cmd, data);
+		if (error != ENOSYS)
+			return error;
+		break;
 	}
 
+	ifr = data;
 #ifdef COMPAT_OIFREQ
-	cmd = (*vec_compat_cvtcmd)(cmd);
-	if (cmd != ocmd) {
-		oifr = data;
-		data = ifr = &ifrb;
-		ifreqo2n(oifr, ifr);
-	} else
+	if (vec_compat_cvtcmd) {
+		cmd = (*vec_compat_cvtcmd)(cmd);
+		if (cmd != ocmd) {
+			oifr = data;
+			data = ifr = &ifrb;
+			ifreqo2n(oifr, ifr);
+		}
+	}
 #endif
-		ifr = data;
 
 	switch (cmd) {
 	case SIOCIFCREATE:
@@ -3385,21 +3373,22 @@ release_exit:
 int
 ifreq_setaddr(u_long cmd, struct ifreq *ifr, const struct sockaddr *sa)
 {
-	uint8_t len;
+	uint8_t len = sizeof(ifr->ifr_ifru.ifru_space);
 #ifdef COMPAT_OIFREQ
 	struct ifreq ifrb;
 	struct oifreq *oifr = NULL;
 	u_long ocmd = cmd;
-	cmd = (*vec_compat_cvtcmd)(cmd);
-	if (cmd != ocmd) {
-		oifr = (struct oifreq *)(void *)ifr;
-		ifr = &ifrb;
-		ifreqo2n(oifr, ifr);
-		len = sizeof(oifr->ifr_addr);
-	} else
-#endif
-		len = sizeof(ifr->ifr_ifru.ifru_space);
 
+	if (vec_compat_cvtcmd) {
+		    cmd = (*vec_compat_cvtcmd)(cmd);
+		    if (cmd != ocmd) {
+			    oifr = (struct oifreq *)(void *)ifr;
+			    ifr = &ifrb;
+			    ifreqo2n(oifr, ifr);
+			    len = sizeof(oifr->ifr_addr);
+		    }
+	}
+#endif
 	if (len < sa->sa_len)
 		return EFBIG;
 
