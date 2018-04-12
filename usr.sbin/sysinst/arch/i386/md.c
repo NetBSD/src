@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.6 2015/05/10 10:14:02 martin Exp $ */
+/*	$NetBSD: md.c,v 1.6.8.1 2018/04/12 13:54:11 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -347,11 +347,11 @@ md_post_newfs(void)
 		    "console=%s,speed=%u", consoles[boottype.bp_consdev],
 		    boottype.bp_conspeed);
 		if (pm->isspecial) {
-                	ret = run_program(RUN_DISPLAY | RUN_NO_CLEAR,                 
+                	ret = run_program(RUN_DISPLAY,
                 	    "/usr/sbin/installboot -o %s /dev/r%s %s",
 			    boot_options, pm->diskdev, bootxx_filename); 
 		} else {
-                	ret = run_program(RUN_DISPLAY | RUN_NO_CLEAR,                 
+                	ret = run_program(RUN_DISPLAY,
                 	    "/usr/sbin/installboot -o %s /dev/r%s%c %s",
 			    boot_options, pm->diskdev, 'a' + pm->rootpart,
 			    bootxx_filename); 
