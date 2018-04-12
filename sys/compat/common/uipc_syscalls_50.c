@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls_50.c,v 1.3 2011/01/19 10:21:16 tsutsui Exp $	*/
+/*	$NetBSD: uipc_syscalls_50.c,v 1.4 2018/04/12 18:50:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_50.c,v 1.3 2011/01/19 10:21:16 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_50.c,v 1.4 2018/04/12 18:50:13 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -55,9 +55,8 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_50.c,v 1.3 2011/01/19 10:21:16 tsutsui
 #include <compat/sys/socket.h>
 #include <compat/sys/sockio.h>
 
-#ifdef COMPAT_OIFDATA
 /*ARGSUSED*/
-int
+static int
 compat_ifdatareq(struct lwp *l, u_long cmd, void *data)
 {
 	struct oifdatareq *ifdr = data;
@@ -92,7 +91,18 @@ compat_ifdatareq(struct lwp *l, u_long cmd, void *data)
 		return 0;
 
 	default:
-		return EINVAL;
+		return ENOSYS;
 	}
 }
-#endif
+
+void
+uipc_syscalls_50_init(void)
+{
+	vec_compat_ifdatareq = compat_ifdatareq;
+}
+
+void
+uipc_syscalls_50_fini(void)
+{
+	vec_compat_ifdatareq = (void *)enosys;
+}
