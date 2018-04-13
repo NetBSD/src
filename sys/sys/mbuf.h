@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.183 2018/04/13 07:30:46 maxv Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.184 2018/04/13 07:36:11 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -164,17 +164,14 @@ struct m_hdr {
  * A note about csum_data:
  *
  *  o For the out-bound direction, the low 16 bits indicates the offset after
- *    the L4 header where the final L4 checksum value is to be stored
- *    (checksumming flags) and the high 16 bits is the length of the L3 header
- *    (the start of the data to be checksummed):
- *
- *                     +------------------+--------------------+
- *          csum_data: | L3 header length | Checksumming flags |
- *                     +------------------+--------------------+
+ *    the L4 header where the final L4 checksum value is to be stored and the
+ *    high 16 bits is the length of the L3 header (the start of the data to
+ *    be checksummed):
  *
  *  o For the in-bound direction, it is only valid if the M_CSUM_DATA flag is
- *    set. In this case, an L4 checksum has been calculated by hardware, but
- *    it is up to software to perform final verification.
+ *    set. In this case, an L4 checksum has been calculated by hardware and
+ *    is stored in csum_data, but it is up to software to perform final
+ *    verification.
  *
  * Note for in-bound TCP/UDP checksums: we expect the csum_data to NOT
  * be bit-wise inverted (the final step in the calculation of an IP
@@ -207,7 +204,7 @@ struct pkthdr {
 	void	*pattr_hdr;		/* ALTQ: saved header position in mbuf */
 };
 
-/* Checksumming flags. */
+/* Checksumming flags (csum_flags). */
 #define	M_CSUM_TCPv4		0x00000001	/* TCP header/payload */
 #define	M_CSUM_UDPv4		0x00000002	/* UDP header/payload */
 #define	M_CSUM_TCP_UDP_BAD	0x00000004	/* TCP/UDP checksum bad */
