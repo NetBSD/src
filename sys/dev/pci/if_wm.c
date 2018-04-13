@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.570 2018/04/12 03:25:08 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.571 2018/04/13 06:04:12 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.570 2018/04/12 03:25:08 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.571 2018/04/13 06:04:12 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -1485,7 +1485,6 @@ static const struct wm_product {
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I218_LM3,
 	  "I218 LM Ethernet Connection",
 	  WM_T_PCH_LPT,		WMP_F_COPPER },
-#if 0
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I219_V,
 	  "I219 V Ethernet Connection",
 	  WM_T_PCH_SPT,		WMP_F_COPPER },
@@ -1525,7 +1524,6 @@ static const struct wm_product {
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I219_LM7,
 	  "I219 LM Ethernet Connection",
 	  WM_T_PCH_CNP,		WMP_F_COPPER },
-#endif
 	{ 0,			0,
 	  NULL,
 	  0,			0 },
