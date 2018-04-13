@@ -1,4 +1,4 @@
-/*	$NetBSD: frag6.c,v 1.67 2018/03/09 11:57:38 maxv Exp $	*/
+/*	$NetBSD: frag6.c,v 1.68 2018/04/13 08:55:50 maxv Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.67 2018/03/09 11:57:38 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.68 2018/04/13 08:55:50 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -480,6 +480,7 @@ insert:
 			plen += t->m_len;
 		}
 		m->m_pkthdr.len = plen;
+		/* XXX XXX: clear csum_flags? */
 	}
 
 	/*
