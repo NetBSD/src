@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.300 2018/04/13 08:12:51 maxv Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.301 2018/04/13 08:47:46 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.300 2018/04/13 08:12:51 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.301 2018/04/13 08:47:46 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1822,12 +1822,13 @@ ip_add_membership(struct ip_moptions *imo, const struct sockopt *sopt)
 	bound = curlwp_bind();
 	if (sopt->sopt_size == sizeof(struct ip_mreq))
 		error = ip_get_membership(sopt, &ifp, &psref, &ia, true);
-	else
+	else {
 #ifdef INET6
 		error = ip6_get_membership(sopt, &ifp, &psref, &ia, sizeof(ia));
 #else
 		error = EINVAL;
 #endif
+	}
 
 	if (error)
 		goto out;
@@ -1902,7 +1903,6 @@ ip_drop_membership(struct ip_moptions *imo, const struct sockopt *sopt)
 		error = ip6_get_membership(sopt, &ifp, &psref, &ia, sizeof(ia));
 #else
 		error = EINVAL;
-		goto out;
 #endif
 	}
 
