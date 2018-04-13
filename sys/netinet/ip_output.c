@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.301 2018/04/13 08:47:46 maxv Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.302 2018/04/13 09:00:29 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.301 2018/04/13 08:47:46 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.302 2018/04/13 09:00:29 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -980,13 +980,11 @@ in_delayed_cksum(struct mbuf *m)
 	offset += M_CSUM_DATA_IPv4_OFFSET(m->m_pkthdr.csum_data);
 
 	if ((offset + sizeof(u_int16_t)) > m->m_len) {
-		/* This happen when ip options were inserted
-		printf("in_delayed_cksum: pullup len %d off %d proto %d\n",
-		    m->m_len, offset, ip->ip_p);
-		 */
-		m_copyback(m, offset, sizeof(csum), (void *) &csum);
-	} else
+		/* This happens when ip options were inserted */
+		m_copyback(m, offset, sizeof(csum), (void *)&csum);
+	} else {
 		*(u_int16_t *)(mtod(m, char *) + offset) = csum;
+	}
 }
 
 /*
