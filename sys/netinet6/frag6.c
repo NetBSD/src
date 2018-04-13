@@ -1,4 +1,4 @@
-/*	$NetBSD: frag6.c,v 1.68 2018/04/13 08:55:50 maxv Exp $	*/
+/*	$NetBSD: frag6.c,v 1.69 2018/04/13 11:18:08 maxv Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.68 2018/04/13 08:55:50 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.69 2018/04/13 11:18:08 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -501,15 +501,13 @@ insert:
 	IP6_STATINC(IP6_STAT_REASSEMBLED);
 	in6_ifstat_inc(dstifp, ifs6_reass_ok);
 	rtcache_unref(rt, &ro);
+	mutex_exit(&frag6_lock);
 
 	/*
-	 * Tell launch routine the next header
+	 * Tell launch routine the next header.
 	 */
-
 	*mp = m;
 	*offp = offset;
-
-	mutex_exit(&frag6_lock);
 	return nxt;
 
  dropfrag:
