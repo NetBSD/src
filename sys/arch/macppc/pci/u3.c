@@ -1,4 +1,4 @@
-/* $NetBSD: u3.c,v 1.8 2015/10/02 05:22:51 msaitoh Exp $ */
+/* $NetBSD: u3.c,v 1.9 2018/04/13 22:13:09 macallan Exp $ */
 
 /*
  * Copyright 2006 Kyma Systems LLC.
@@ -54,7 +54,11 @@ struct ibmcpc_softc
 	struct genppc_pci_chipset sc_pc[8];
 	struct powerpc_bus_space sc_iot;
 	struct powerpc_bus_space sc_memt;
+	int sc_ranges[8];	
 };
+
+/* kinda ugly but there can be only one */
+static struct ibmcpc_softc *cpc0 = NULL;
 
 static void ibmcpc_attach(device_t, device_t, void *);
 static int ibmcpc_match(device_t, cfdata_t, void *);
@@ -108,6 +112,8 @@ ibmcpc_attach(device_t parent, device_t self, void *aux)
 	    reg[1], reg[2]);
 	pc_data = mapiodev(reg[1], reg[2], false);
 
+	cpc0 = sc;
+
 	for (child = OF_child(OF_finddevice("/ht")), i = 1; child;
 	    child = OF_peer(child), i++) {
 
@@ -141,6 +147,7 @@ ibmcpc_attach(device_t parent, device_t self, void *aux)
 		macppc_pci_get_chipset_tag(pc);
 		pc->pc_node = child;
 		pc->pc_bus = busrange[0];
+		sc->sc_ranges[pc->pc_bus] = busrange[1];
 		pc->pc_addr = 0x0;
 		pc->pc_data = pc_data;
 		pc->pc_conf_read = ibmcpc_conf_read;
@@ -167,6 +174,7 @@ static pcireg_t
 ibmcpc_conf_read(void *cookie, pcitag_t tag, int reg)
 {
 	pci_chipset_tag_t pc = cookie;
+	struct ibmcpc_softc *sc = cpc0;
 	u_int32_t daddr = (u_int32_t) pc->pc_data;
 	pcireg_t data;
 	u_int32_t bus, dev, func, x, devfn;
@@ -175,6 +183,11 @@ ibmcpc_conf_read(void *cookie, pcitag_t tag, int reg)
 		return (pcireg_t) -1;
 
 	pci_decompose_tag(pc, tag, &bus, &dev, &func);
+
+	if ((bus < pc->pc_bus) || (bus > sc->sc_ranges[pc->pc_bus])) {
+		data = 0xffffffff;
+		goto done;
+	}		 
 
 	devfn = PCI_DEVFN(dev, func);
 
@@ -200,6 +213,7 @@ static void
 ibmcpc_conf_write(void *cookie, pcitag_t tag, int reg, pcireg_t data)
 {
 	pci_chipset_tag_t pc = cookie;
+	struct ibmcpc_softc *sc = cpc0;
 	int32_t *daddr = pc->pc_data;
 	u_int32_t bus, dev, func;
 	u_int32_t x, devfn;
@@ -208,6 +222,9 @@ ibmcpc_conf_write(void *cookie, pcitag_t tag, int reg, pcireg_t data)
 		return;
 
 	pci_decompose_tag(pc, tag, &bus, &dev, &func);
+
+	if ((bus < pc->pc_bus) || (bus > sc->sc_ranges[pc->pc_bus]))
+		return;
 
 	devfn = PCI_DEVFN(dev, func);
 
