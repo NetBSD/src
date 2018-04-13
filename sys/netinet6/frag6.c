@@ -1,4 +1,4 @@
-/*	$NetBSD: frag6.c,v 1.69 2018/04/13 11:18:08 maxv Exp $	*/
+/*	$NetBSD: frag6.c,v 1.70 2018/04/13 11:19:09 maxv Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.69 2018/04/13 11:18:08 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.70 2018/04/13 11:19:09 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -150,6 +150,8 @@ frag6_init(void)
  *		-> should grab it from the first fragment only
  *
  * There is no explicit reason given in the RFC.  Historical reason maybe?
+ *
+ * XXX: It would be better to use a pool, rather than kmem.
  */
 int
 frag6_input(struct mbuf **mp, int *offp, int proto)
