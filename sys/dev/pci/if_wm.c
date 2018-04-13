@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.571 2018/04/13 06:04:12 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.572 2018/04/13 09:35:10 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.571 2018/04/13 06:04:12 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.572 2018/04/13 09:35:10 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -4763,7 +4763,12 @@ wm_reset(struct wm_softc *sc)
 	/* reload sc_ctrl */
 	sc->sc_ctrl = CSR_READ(sc, WMREG_CTRL);
 
-	if ((sc->sc_type >= WM_T_I350) && (sc->sc_type <= WM_T_I211))
+	if (sc->sc_type == WM_T_I354) {
+#if 0
+		/* I354 uses an external PHY */
+		wm_set_eee_i354(sc);
+#endif
+	} else if ((sc->sc_type >= WM_T_I350) && (sc->sc_type <= WM_T_I211))
 		wm_set_eee_i350(sc);
 
 	/*
