@@ -41,7 +41,7 @@
 #define HAVE_STRTONUM 0
 #define HAVE_SYS_ENDIAN 1
 #define HAVE_VASPRINTF 1
-#define HAVE_WCHAR 0
+#define HAVE_WCHAR 1
 #define HAVE_OHASH 0
 
 #define BINM_APROPOS "apropos"
