@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.184 2018/04/13 07:36:11 maxv Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.185 2018/04/13 08:44:41 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -585,6 +585,7 @@ do {									\
  */
 #define	M_COPY_PKTHDR(to, from)						\
 do {									\
+	KASSERT(((from)->m_flags & M_PKTHDR) != 0);			\
 	(to)->m_pkthdr = (from)->m_pkthdr;				\
 	(to)->m_flags = (from)->m_flags & M_COPYFLAGS;			\
 	SLIST_INIT(&(to)->m_pkthdr.tags);				\
