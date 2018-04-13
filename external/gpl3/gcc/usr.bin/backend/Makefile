@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.47 2018/04/12 20:44:16 mrg Exp $
+#	$NetBSD: Makefile,v 1.48 2018/04/13 01:14:19 mrg Exp $
 
 LIBISPRIVATE=	yes
 
@@ -194,7 +194,8 @@ tm_p.h: Makefile tm-preds.h
 	HEADERS="$(G_tm_p_include_list)" DEFINES="" \
 	${HOST_SH} ${GNUHOSTDIST}/gcc/mkconfig.sh ${.TARGET}
 
-${G_OBJS} ${G_OBJS:.o=.d}:	tm_p.h		# XXX crude
+# XXX crude
+${G_OBJS} ${G_OBJS:.o=.d}:	tm.h tm_p.h insn-opinit.h
 
 .include "../Makefile.options"
 
@@ -394,9 +395,6 @@ tree-check.h: gencheck
 	./gencheck >${.TARGET}
 CLEANFILES+=	tree-check.h
 
-# Some generators output is not the normal name.
-BUILDSYMLINKS+= insn-check.h tree-check.h
-
 # genattrtab has three output files
 insn-dfatab.c insn-latencytab.c: insn-attrtab.c
 	cp -p ${.TARGET}.tmp ${.TARGET}
@@ -416,8 +414,6 @@ insn-opinit.c: genopinit ${G_md_file} insn-conditions.md
 		-hinsn-opinit.h.tmp -c${.TARGET}.tmp && \
 	mv ${.TARGET}.tmp ${.TARGET}
 CLEANFILES+=	insn-opinit.h insn-opinit.c
-
-DPSRCS+= insn-opinit.h
 
 LDFLAGS.genautomata+=	-lm
 
@@ -455,32 +451,32 @@ ${CASECFNDEPS}: case-cfn-macros.h
 #
 # Required hard-coded dependancies.
 #
+tm.h: insn-constants.h
 genextract.lo: insn-config.h
 gencondmd.lo: tm_p.h tm-constrs.h
-read-rtl.lo gencodes.lo genattrtab.lo genautomata.lo: insn-constants.h gtype-desc.h
-genattr-common.lo gensupport.lo genconditions.lo gentarget-def.lo: insn-constants.h
-genattr.lo genflags.lo genemit.lo genconfig.lo gencheck.lo: insn-constants.h gtype-desc.h
-genopinit.lo genrecog.lo genpreds.lo genoutput.lo genpeep.lo: insn-constants.h 
+read-rtl.lo gencodes.lo genattrtab.lo genautomata.lo: tm.h gtype-desc.h
+genattr-common.lo gensupport.lo genconditions.lo gentarget-def.lo: tm.h
+genattr.lo genflags.lo genemit.lo genconfig.lo gencheck.lo: gtype-desc.h tm.h
+genopinit.lo genrecog.lo genpreds.lo genoutput.lo genpeep.lo: tm.h
 build-ggc-none.lo: gtype-desc.h
 ggc-none.o: gtype-desc.h
-asan.d asan.o: insn-opinit.h
 insn-attrtab.o: insn-config.h
 insn-extract.o: insn-config.h
 toplev.d toplev.o: options.h
 coverage.d: gcov-iov.h
 gcov-io.h: gcov-iov.h
-alias.d alias.o: insn-constants.h tm_p.h
 cgraph.d cgraphunit.d cgraphunit.o: gcov-io.h
 vec.lo: gtype-desc.h
-gtype-desc.d gtype-desc.o: insn-constants.h
-insn-emit.d insn-emit.o: tm-constrs.h insn-opinit.h
+insn-emit.d insn-emit.o: tm-constrs.h
 insn-attr.h: insn-attr-common.h
 gcov-io.h: gcov-iov.h
 df-scan.d df-scan.o: target-hooks-def.h
 read-md.d read-md.o read-md.lo: auto-build.h
 hash-table.d hash-table.o hash-table.lo: auto-build.h gtype-desc.h
 gencfn-macros.d gencfn-macros.o gencfn-macros.lo: gtype-desc.h
-cgraphunit.d cgraphunit.o: pass-instances.def
+pass_manager.h passes.c: pass-instances.def
+context.d coverage.d lto-cgraph.d passes.d statistics.d toplev.d: pass_manager.h
+context.o coverage.o lto-cgraph.o passes.o statistics.o toplev.o: pass_manager.h
 insn-opinit.o insn-opinit.d: insn-flags.h
 .for _f in insn-attrtab insn-automata insn-dfatab insn-latencytab insn-output
 ${_f}.o ${_f}.d: insn-attr-common.h insn-attr.h
@@ -498,31 +494,24 @@ ${_f}.o ${_f}.d: insn-constants.h
 ${_f}.o ${_f}.d: gcov-io.h
 .endfor
 
+${G_out_file:T:.c=.o}: insn-target-def.h target-hooks-def.h tm-constrs.h
+
 # XXX make all hooks generated for now.
 final.o: target-hooks-def.h c-family/c-target-hooks-def.h common/common-target-hooks-def.h
 
-.if ${GCC_MACHINE_ARCH} == "alpha"
-alpha.d alpha.o: tm-constrs.h tm_p.h insn-opinit.h target-hooks-def.h
-alpha.d: pass-instances.def
-.endif
-
 .if ${MACHINE_CPU} == "arm"
-arm.d arm.o: insn-constants.h tm_p.h insn-opinit.h target-hooks-def.h
-arm-builtins.d arm-builtins.o: insn-opinit.h
 # XXX insn-recog.c:10304:7: error: this decimal constant is unsigned only in ISO C90 [-Werror]
 COPTS.insn-recog.c+=-Wno-error
+.endif
+
+.if ${GCC_MACHINE_ARCH} == "i386" || ${GCC_MACHINE_ARCH} == "x86_64"
+i386.d i386.o: pass_manager.h
 .endif
 
 .if ${MACHINE_CPU} == "mips"
 # XXX mips.md:3474:11: error: this decimal constant is unsigned only in ISO C90 [-Werror]
 COPTS.insn-recog.c+=-Wno-error
 .endif
-
-.if ${GCC_MACHINE_ARCH} == "i386" || ${GCC_MACHINE_ARCH} == "x86_64"
-i386.d i386.o: tm-constrs.h
-.endif
-
-${G_out_file:T:.c=.o}: insn-target-def.h
 
 .if ${GCC_MACHINE_ARCH} == "vax"
 CPPFLAGS+=-I${.CURDIR}/../../lib/libgcc/libgcov/arch/${GCC_MACHINE_ARCH}
