@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.299 2018/03/30 22:54:37 maya Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.300 2018/04/13 08:12:51 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.299 2018/03/30 22:54:37 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.300 2018/04/13 08:12:51 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1031,10 +1031,10 @@ ip_insertoptions(struct mbuf *m, struct mbuf *opt, int *phlen)
 		m->m_len -= sizeof(struct ip);
 		m->m_data += sizeof(struct ip);
 		n->m_next = m;
+		n->m_len = optlen + sizeof(struct ip);
+		n->m_data += max_linkhdr;
+		memcpy(mtod(n, void *), ip, sizeof(struct ip));
 		m = n;
-		m->m_len = optlen + sizeof(struct ip);
-		m->m_data += max_linkhdr;
-		bcopy((void *)ip, mtod(m, void *), sizeof(struct ip));
 	} else {
 		m->m_data -= optlen;
 		m->m_len += optlen;
@@ -1042,7 +1042,7 @@ ip_insertoptions(struct mbuf *m, struct mbuf *opt, int *phlen)
 	}
 	m->m_pkthdr.len += optlen;
 	ip = mtod(m, struct ip *);
-	bcopy((void *)p->ipopt_list, (void *)(ip + 1), (unsigned)optlen);
+	memcpy(ip + 1, p->ipopt_list, optlen);
 	*phlen = sizeof(struct ip) + optlen;
 	ip->ip_len = htons(ntohs(ip->ip_len) + optlen);
 	return m;
