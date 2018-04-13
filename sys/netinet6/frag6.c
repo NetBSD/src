@@ -1,4 +1,4 @@
-/*	$NetBSD: frag6.c,v 1.70 2018/04/13 11:19:09 maxv Exp $	*/
+/*	$NetBSD: frag6.c,v 1.71 2018/04/13 11:32:44 maxv Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.70 2018/04/13 11:19:09 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.71 2018/04/13 11:32:44 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -59,8 +59,10 @@ __KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.70 2018/04/13 11:19:09 maxv Exp $");
 #include <net/net_osdep.h>
 
 /*
- * IP6 reassembly queue structure.  Each fragment
- * being reassembled is attached to one of these structures.
+ * IPv6 reassembly queue structure. Each fragment being reassembled is
+ * attached to one of these structures.
+ *
+ * XXX: Would be better to use TAILQ.
  */
 struct	ip6q {
 	u_int32_t	ip6q_head;
@@ -93,7 +95,6 @@ struct	ip6asfrag {
 	bool		ip6af_mff;	/* more fragment bit in frag off */
 };
 
-
 static void frag6_enq(struct ip6asfrag *, struct ip6asfrag *);
 static void frag6_deq(struct ip6asfrag *);
 static void frag6_insque(struct ip6q *, struct ip6q *);
@@ -102,9 +103,9 @@ static void frag6_freef(struct ip6q *);
 
 static int frag6_drainwanted;
 
-u_int frag6_nfragpackets;
-u_int frag6_nfrags;
-struct ip6q ip6q;	/* ip6 reassembly queue */
+static u_int frag6_nfragpackets;
+static u_int frag6_nfrags;
+static struct ip6q ip6q;	/* ip6 reassembly queue */
 
 /* Protects ip6q */
 static kmutex_t	frag6_lock __cacheline_aligned;
@@ -216,6 +217,10 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 	 * a Fragment Header with the "Fragment Offset" equal to 0 and
 	 * the "M" bit equal to 0 MUST process such packet in isolation
 	 * from any other packets/fragments.
+	 *
+	 * XXX: Would be better to remove this fragment header entirely,
+	 * for us not to get confused later when looking back at the
+	 * previous headers in the chain.
 	 */
 	fragoff = ntohs(ip6f->ip6f_offlg & IP6F_OFF_MASK);
 	if (fragoff == 0 && !(ip6f->ip6f_offlg & IP6F_MORE_FRAG)) {
@@ -664,7 +669,7 @@ frag6_slowtimo(void)
 
 	mutex_enter(&frag6_lock);
 	q6 = ip6q.ip6q_next;
-	if (q6)
+	if (q6) {
 		while (q6 != &ip6q) {
 			--q6->ip6q_ttl;
 			q6 = q6->ip6q_next;
@@ -674,6 +679,8 @@ frag6_slowtimo(void)
 				frag6_freef(q6->ip6q_prev);
 			}
 		}
+	}
+
 	/*
 	 * If we are over the maximum number of fragments
 	 * (due to the limit being lowered), drain off
@@ -698,7 +705,6 @@ frag6_slowtimo(void)
 	rtcache_free(&ip6_forward_rt);
 	rtcache_free(&ipsrcchk_rt);
 #endif
-
 }
 
 void
