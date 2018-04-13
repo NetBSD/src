@@ -1,17 +1,18 @@
-	$NetBSD: README,v 1.5 2018/04/13 01:20:27 kamil Exp $
+	$NetBSD: README,v 1.6 2018/04/13 20:30:09 kamil Exp $
 
                            Kernel Developer's Manual
 
 DESCRIPTION
      The kernel example dynamic modules.
 
-     This directory contains the following example modules
+     This directory contains the following example modules:
+     * executor        - basic implementation of callout and RUN_ONCE
      * hello           - the simplest `hello world' module
-     * properties      - handle incoming properties during the module load
-     * readhappy       - basic implementation of read(9) with happy numbers
-     * ping            - basic ioctl(9)
      * luahello        - the simplest `hello world' Lua module
      * luareadhappy    - demonstrates calling Lua code from C
+     * properties      - handle incoming properties during the module load
+     * ping            - basic ioctl(9)
+     * readhappy       - basic implementation of read(9) with happy numbers
      * sysctl          - demonstrates adding a sysctl handle dynamically
 
      To build the examples you need a local copy of NetBSD sources. You also
@@ -57,8 +58,8 @@ HISTORY
      ping, luahello and luareadhappy) first appeared in NetBSD 8.0; they were
      written by Kamil Rytarowski.
 
-     The sysctl module first appeared in NetBSD 9.0 and was authored by
-     Siddharth Muralee.
+     The executor and sysctls module first appeared in NetBSD 9.0 and were
+     authored by Siddharth Muralee.
 
 AUTHORS
      This document was written by Kamil Rytarowski.
