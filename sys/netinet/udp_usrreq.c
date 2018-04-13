@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.247 2018/04/12 06:49:39 maxv Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.248 2018/04/13 09:29:04 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.247 2018/04/12 06:49:39 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.248 2018/04/13 09:29:04 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -374,8 +374,12 @@ udp_input(struct mbuf *m, ...)
 	 */
 	ip_len = ntohs(ip->ip_len);
 	len = ntohs((u_int16_t)uh->uh_ulen);
+	if (len < sizeof(struct udphdr)) {
+		UDP_STATINC(UDP_STAT_BADLEN);
+		goto bad;
+	}
 	if (ip_len != iphlen + len) {
-		if (ip_len < iphlen + len || len < sizeof(struct udphdr)) {
+		if (ip_len < iphlen + len) {
 			UDP_STATINC(UDP_STAT_BADLEN);
 			goto bad;
 		}
