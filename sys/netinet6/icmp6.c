@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.227 2018/04/14 06:45:17 maxv Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.228 2018/04/14 08:03:33 maxv Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.227 2018/04/14 06:45:17 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.228 2018/04/14 08:03:33 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -963,8 +963,6 @@ icmp6_notify_error(struct mbuf *m, int off, int icmp6len, int code)
 		int icmp6type = icmp6->icmp6_type;
 		struct ip6_frag *fh;
 		struct ip6_rthdr *rth;
-		struct ip6_rthdr0 *rth0;
-		int rthlen;
 		struct ifnet *rcvif;
 		int s;
 
@@ -989,46 +987,15 @@ icmp6_notify_error(struct mbuf *m, int off, int icmp6len, int code)
 				nxt = eh->ip6e_nxt;
 				break;
 			case IPPROTO_ROUTING:
-				/*
-				 * When the erroneous packet contains a
-				 * routing header, we should examine the
-				 * header to determine the final destination.
-				 * Otherwise, we can't properly update
-				 * information that depends on the final
-				 * destination (e.g. path MTU).
-				 */
+				/* Ignore the option. */
 				IP6_EXTHDR_GET(rth, struct ip6_rthdr *, m,
 					       eoff, sizeof(*rth));
 				if (rth == NULL) {
 					ICMP6_STATINC(ICMP6_STAT_TOOSHORT);
 					return (-1);
 				}
-				rthlen = (rth->ip6r_len + 1) << 3;
-				/*
-				 * XXX: currently there is no
-				 * officially defined type other
-				 * than type-0.
-				 * Note that if the segment left field
-				 * is 0, all intermediate hops must
-				 * have been passed.
-				 */
-				if (rth->ip6r_segleft &&
-				    rth->ip6r_type == IPV6_RTHDR_TYPE_0) {
-					int hops;
 
-					IP6_EXTHDR_GET(rth0,
-						       struct ip6_rthdr0 *, m,
-						       eoff, rthlen);
-					if (rth0 == NULL) {
-						ICMP6_STATINC(ICMP6_STAT_TOOSHORT);
-						return (-1);
-					}
-					/* just ignore a bogus header */
-					if ((rth0->ip6r0_len % 2) == 0 &&
-					    (hops = rth0->ip6r0_len/2))
-						finaldst = (struct in6_addr *)(rth0 + 1) + (hops - 1);
-				}
-				eoff += rthlen;
+				eoff += (rth->ip6r_len + 1) << 3;
 				nxt = rth->ip6r_nxt;
 				break;
 			case IPPROTO_FRAGMENT:
