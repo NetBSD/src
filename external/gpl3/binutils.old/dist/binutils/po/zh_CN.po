@@ -3,21 +3,21 @@
 # This file is distributed under the same license as the binutils package.
 # Wang Li <charles@linux.net.cn>, 2003.
 # Wei-Lun Chao <bluebat@member.fsf.org>, 2005, 2013.
-# Mingye Wang <arthur200126@gmail.com>, 2015.
+# Mingye Wang <arthur200126@gmail.com>, 2015, 2016.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: binutils 2.24.90\n"
 "Report-Msgid-Bugs-To: bug-binutils@gnu.org\n"
 "POT-Creation-Date: 2014-02-10 09:42+1030\n"
-"PO-Revision-Date: 2015-10-29 23:56-0400\n"
+"PO-Revision-Date: 2016-04-27 20:35-0400\n"
 "Last-Translator: Mingye Wang (Arthur2e5) <arthur200126@gmail.com>\n"
 "Language-Team: Chinese (simplified) <i18n-zh@googlegroups.com>\n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 1.8.4\n"
+"X-Generator: Poedit 1.8.7\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
 #: addr2line.c:81
@@ -362,7 +362,7 @@ msgstr "“u”只在使用“r”选项的时候才有意义。"
 
 #: ar.c:767
 msgid "`u' is not meaningful with the `D' option."
-msgstr " “u” 在使用 “D” 选项的时候没有意义。"
+msgstr "“u”在使用“D”选项的时候没有意义。"
 
 #: ar.c:770
 msgid "`u' modifier ignored since `D' is the default (see `U')"
@@ -1116,9 +1116,9 @@ msgid "   -y --output-delaylib <outname> Create a delay-import library.\n"
 msgstr "   -y --output-delaylib <outname> 生成延迟导入库。\n"
 
 #: dlltool.c:3933
-#, fuzzy, c-format
+#, c-format
 msgid "   -a --add-indirect         Add dll indirects to export file.\n"
-msgstr "   -a --add-indirect         间接添加 dll 至导出文件。\n"
+msgstr "   -a --add-indirect         添加 dll 间接至导出文件。\n"
 
 #: dlltool.c:3934
 #, c-format
@@ -1232,9 +1232,9 @@ msgid "   -n --no-delete            Keep temp files (repeat for extra preservati
 msgstr "   -n --no-delete            保留临时文件 (重复以保留更多)。\n"
 
 #: dlltool.c:3956
-#, fuzzy, c-format
+#, c-format
 msgid "   -t --temp-prefix <prefix> Use <prefix> to construct temp file names.\n"
-msgstr "   -t --temp-prefix <前置>   使用 <前置> 来建构临时文件名称。\n"
+msgstr "   -t --temp-prefix <前缀>   使用 <前缀> 来构造临时文件名称。\n"
 
 #: dlltool.c:3957
 #, c-format
@@ -1442,9 +1442,9 @@ msgid "   --output-lib <outname> Generate input library.\n"
 msgstr "   --output-lib <outname> 生成输入库。\n"
 
 #: dllwrap.c:497
-#, fuzzy, c-format
+#, c-format
 msgid "   --add-indirect         Add dll indirects to export file.\n"
-msgstr "   --add-indirect         间接添加 dll 至导出文件。\n"
+msgstr "   --add-indirect         添加 dll 间接至导出文件。\n"
 
 #: dllwrap.c:498
 #, c-format
@@ -1805,9 +1805,9 @@ msgid "  (Unknown inline attribute value: %s)"
 msgstr "  (未知的内嵌属性值：%s)"
 
 #: dwarf.c:1869
-#, fuzzy, c-format
+#, c-format
 msgid "(implementation defined: %s)"
-msgstr "未实现"
+msgstr "（实现决定：%s）"
 
 #: dwarf.c:1872
 #, c-format
@@ -1956,24 +1956,24 @@ msgid "   Type Offset:   0x%s\n"
 msgstr "   类型偏移量：  0x%s\n"
 
 #: dwarf.c:2333
-#, fuzzy, c-format
+#, c-format
 msgid "   Section contributions:\n"
-msgstr "区域"
+msgstr "  区段贡献：\n"
 
 #: dwarf.c:2334
-#, fuzzy, c-format
+#, c-format
 msgid "    .debug_abbrev.dwo:       0x%s  0x%s\n"
-msgstr "设置地址为 0x%s\n"
+msgstr "    .debug_abbrev.dwo:       0x%s  0x%s\n"
 
 #: dwarf.c:2337
-#, fuzzy, c-format
+#, c-format
 msgid "    .debug_line.dwo:         0x%s  0x%s\n"
-msgstr "设置地址为 0x%s\n"
+msgstr "    .debug_line.dwo:         0x%s  0x%s\n"
 
 #: dwarf.c:2340
-#, fuzzy, c-format
+#, c-format
 msgid "    .debug_loc.dwo:          0x%s  0x%s\n"
-msgstr "设置地址为 0x%s\n"
+msgstr "    .debug_loc.dwo:          0x%s  0x%s\n"
 
 #: dwarf.c:2343
 #, c-format
@@ -2078,7 +2078,7 @@ msgstr "  每个指令中最大操作码数：       %d\n"
 #: dwarf.c:2734
 #, c-format
 msgid "  Initial value of 'is_stmt':  %d\n"
-msgstr "  “is_stmt”的初始值：       %d\n"
+msgstr " “is_stmt”的初始值：       %d\n"
 
 #: dwarf.c:2735
 #, c-format
@@ -2524,14 +2524,14 @@ msgid " Unknown macro opcode %02x seen\n"
 msgstr ""
 
 #: dwarf.c:4049
-#, fuzzy, c-format
+#, c-format
 msgid " DW_MACRO_GNU_%02x\n"
-msgstr " DW_MACINFO_end_file\n"
+msgstr " DW_MACRO_GNU_%02x\n"
 
 #: dwarf.c:4052
-#, fuzzy, c-format
+#, c-format
 msgid " DW_MACRO_GNU_%02x -"
-msgstr " DW_MACINFO_end_file\n"
+msgstr " DW_MACRO_GNU_%02x -"
 
 #: dwarf.c:4100
 #, fuzzy, c-format
@@ -2680,13 +2680,13 @@ msgstr ""
 "    地址               长度\n"
 
 #: dwarf.c:4677
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "    Address    Length\n"
 msgstr ""
 "\n"
-"    地址               长度\n"
+"    地址       长度\n"
 
 #: dwarf.c:4760
 #, c-format
@@ -2776,9 +2776,9 @@ msgid "Version %ld\n"
 msgstr "版本 %ld\n"
 
 #: dwarf.c:6087
-#, fuzzy, c-format
+#, c-format
 msgid "Unsupported version %lu.\n"
-msgstr "  不支持的版本\n"
+msgstr "不支持的版本 %lu。\n"
 
 #: dwarf.c:6091
 msgid "The address table data in version 3 may be wrong.\n"
@@ -3150,7 +3150,7 @@ msgstr "%s：文件过大"
 #: elfedit.c:454 readelf.c:14603
 #, fuzzy, c-format
 msgid "Could not locate '%s'.  System error message: %s\n"
-msgstr "无法找到 “%s” 的位置。错误消息为：%s\n"
+msgstr "无法找到“%s”的位置。错误消息为：%s\n"
 
 #: elfedit.c:461 readelf.c:14610
 #, fuzzy, c-format
@@ -3401,9 +3401,8 @@ msgid "C++ static virtual method"
 msgstr "C++ 静态虚拟方法"
 
 #: ieee.c:3108
-#, fuzzy
 msgid "unrecognized C++ object overhead spec"
-msgstr "无法识别的 C++ 对象规范"
+msgstr "无法识别的 C++ 对象开销规范"
 
 #: ieee.c:3147
 msgid "undefined C++ vtable"
@@ -3710,14 +3709,14 @@ msgstr ""
 "  -A, --print-file-name  在每个符号前打印输入文件名\n"
 "  -B                     于 --format=bsd 相同\n"
 "  -C, --demangle[=STYLE] 将底层符号名解码为用户级名称\n"
-"                          如果给出 STYLE，STYLE 可能为“auto” (默认)、\n"
-"                          “gnu”、“lucid”、“arm”、“hp”、“edg”或“gnu-new-abi”\n"
+"                          如果给出 STYLE，STYLE 可能为“auto”(默认)、\n"
+"                         “gnu”、“lucid”、“arm”、“hp”、“edg”或“gnu-new-abi”\n"
 "      --no-demangle      不要解码底层符号名\n"
 "  -D, --dynamic          显示动态符号而不是普通符号\n"
 "      --defined-only     只显示已定义的符号\n"
 "  -e                     (忽略)\n"
 "  -f, --format=FORMAT    使用输出格式 FORMAT。FORMAT 可能是“bsd”、\n"
-"                           “sysv”或“posix”。默认为“bsd”\n"
+"                          “sysv”或“posix”。默认为“bsd”\n"
 "  -g, --extern-only      只显示外部符号\n"
 "  -l, --line-numbers     使用调试信息以便为每个符号寻找文件名和行号\n"
 "  -n, --numeric-sort     按地址排序符号\n"
@@ -4364,9 +4363,8 @@ msgid "error in private header data"
 msgstr "读取软件包头部错误\n"
 
 #: objcopy.c:2706
-#, fuzzy
 msgid "failed to create output section"
-msgstr "  -n, --no-output                 不创建输出文件\n"
+msgstr "未能创建输出部分"
 
 #: objcopy.c:2720
 #, fuzzy
@@ -4654,7 +4652,7 @@ msgstr ""
 "  -l, --line-numbers             在输出中给出行号和文件名\n"
 "  -C, --demangle[=STYLE]         对修饰过的 (mangled) 符号名进行解码\n"
 "                                  如果给出了 STYLE，STYLE 可能为“auto”、“gnu”、\n"
-"                                  “lucid”、“arm”、“hp”、“edg”或“gnu-new-abi”\n"
+"                                 “lucid”、“arm”、“hp”、“edg”或“gnu-new-abi”\n"
 "  -w, --wide                     以多于 80 列的宽度对输出进行格式化\n"
 "  -z, --disassemble-zeroes       反汇编时不要跳过为零的块\n"
 "      --start-address=ADDR       只有进程数据的地址 >= ADDR\n"
@@ -4832,7 +4830,7 @@ msgstr ""
 #: objdump.c:2868
 #, fuzzy, c-format
 msgid "could not determine the type of symbol number %ld\n"
-msgstr "无法确定符号号码 “%ld” 的类型\n"
+msgstr "无法确定符号号码“%ld”的类型\n"
 
 #: objdump.c:3206
 #, c-format
@@ -4970,29 +4968,29 @@ msgid "  index entry %u: type: %08x, offset: %08x\n"
 msgstr ""
 
 #: od-macho.c:772
-#, fuzzy, c-format
+#, c-format
 msgid "  version:           %08x\n"
-msgstr "标志 0x%08x：\n"
+msgstr "  版本:              %08x\n"
 
 #: od-macho.c:773
-#, fuzzy, c-format
+#, c-format
 msgid "  flags:             %08x\n"
-msgstr "标志 0x%08x：\n"
+msgstr "  旗标:              %08x\n"
 
 #: od-macho.c:774
-#, fuzzy, c-format
+#, c-format
 msgid "  hash offset:       %08x\n"
-msgstr "不支持的真理哈希偏移量。\n"
+msgstr "  哈希偏移量:         %08x\n"
 
 #: od-macho.c:776
-#, fuzzy, c-format
+#, c-format
 msgid "  ident offset:      %08x (- %08x)\n"
-msgstr "标志 0x%08x：\n"
+msgstr "  身份偏移量:         %08x (- %08x)\n"
 
 #: od-macho.c:778
-#, fuzzy, c-format
+#, c-format
 msgid "   identity: %s\n"
-msgstr "启用 Graphite 身份转换"
+msgstr "   身份:      %s\n"
 
 #: od-macho.c:779
 #, c-format
@@ -5116,9 +5114,9 @@ msgid "  time and date: 0x%08x  - "
 msgstr "回溯到 %-24.24s (0x%08x)\n"
 
 #: od-xcoff.c:422
-#, fuzzy, c-format
+#, c-format
 msgid "not set\n"
-msgstr "set"
+msgstr "未设置\n"
 
 #: od-xcoff.c:429
 #, fuzzy, c-format
@@ -6408,7 +6406,7 @@ msgstr " 组="
 #: readelf.c:5521
 #, fuzzy, c-format
 msgid "Bad sh_link in group section `%s'\n"
-msgstr "在群组区段 “%s” 中不当的 sh_link\n"
+msgstr "在群组区段“%s”中不当的 sh_link\n"
 
 #: readelf.c:5535
 #, fuzzy, c-format
@@ -6418,7 +6416,7 @@ msgstr "Corrupt header in the %s section.\n"
 #: readelf.c:5541 readelf.c:5552
 #, fuzzy, c-format
 msgid "Bad sh_info in group section `%s'\n"
-msgstr "在群组区段 “%s” 中不当的 sh_info\n"
+msgstr "在群组区段“%s”中不当的 sh_info\n"
 
 #: readelf.c:5591
 msgid "section data"
@@ -6507,7 +6505,7 @@ msgid ""
 "'%s' relocation section at offset 0x%lx contains %ld bytes:\n"
 msgstr ""
 "\n"
-" “%s” 位于偏移量 0x%lx 的重定位区段含有 %ld 个字节：\n"
+"“%s”位于偏移量 0x%lx 的重定位区段含有 %ld 个字节：\n"
 
 #: readelf.c:5932
 #, c-format
@@ -7150,7 +7148,7 @@ msgid ""
 "Symbol table '%s' contains %lu entries:\n"
 msgstr ""
 "\n"
-"符号表 “%s” 含有 %lu 个条目：\n"
+"符号表“%s”含有 %lu 个条目：\n"
 
 #: readelf.c:9854
 #, fuzzy, c-format
@@ -7249,7 +7247,7 @@ msgstr ""
 msgid "skipping invalid relocation offset 0x%lx in section %s\n"
 msgstr ""
 "\n"
-" “%s” 位于偏移量 0x%lx 的重定位区段含有 %ld 个字节：\n"
+"“%s”位于偏移量 0x%lx 的重定位区段含有 %ld 个字节：\n"
 
 #: readelf.c:10916
 #, c-format
@@ -7329,7 +7327,7 @@ msgid ""
 "Section '%s' has no debugging data.\n"
 msgstr ""
 "\n"
-" “%s” 节不含正在调试的数据。\n"
+"“%s”节不含正在调试的数据。\n"
 
 #. There is no point in dumping the contents of a debugging section
 #. which has the NOBITS type - the bits in the file will be random.
@@ -7728,15 +7726,14 @@ msgid "Address"
 msgstr "住址"
 
 #: readelf.c:13066 readelf.c:13083 readelf.c:13100
-#, fuzzy
 msgid "Access"
-msgstr "没有访问权限"
+msgstr "访问"
 
 #: readelf.c:13067 readelf.c:13084 readelf.c:13101 readelf.c:13166
 #: readelf.c:13176
 #, fuzzy
 msgid "Initial"
-msgstr "  “is_stmt”的初始值：       %d\n"
+msgstr " “is_stmt”的初始值：       %d\n"
 
 #: readelf.c:13069
 #, fuzzy, c-format
@@ -7816,7 +7813,7 @@ msgid ""
 "Library list section '%s' contains %lu entries:\n"
 msgstr ""
 "\n"
-" “%s” 函数库列表区段含有 %lu 个条目：\n"
+"“%s”函数库列表区段含有 %lu 个条目：\n"
 
 #: readelf.c:13288
 msgid "     Library              Time Stamp          Checksum   Version Flags"
@@ -8249,9 +8246,8 @@ msgid "  %-20s %10s\tDescription\n"
 msgstr "说明"
 
 #: readelf.c:13902
-#, fuzzy
 msgid "Owner"
-msgstr "软件包内没有文件拥有者/群组记录\n"
+msgstr "所有者"
 
 #: readelf.c:13902
 #, fuzzy
@@ -8680,7 +8676,7 @@ msgstr "使用临时文件“%s”以读取预处理器输出\n"
 #: resrc.c:340
 #, c-format
 msgid "can't popen `%s': %s"
-msgstr "无法 popen “%s”：%s"
+msgstr "无法 popen“%s”：%s"
 
 #: resrc.c:342
 #, c-format
@@ -8995,6 +8991,19 @@ msgid ""
 "  -h --help                 Display this information\n"
 "  -v -V --version           Print the program's version number\n"
 msgstr ""
+" 选项是：\n"
+"  -a - --all                扫描整个文件，而非只有 data 数据节\n"
+"  -f --print-file-name      在每个字符串前打印文件名\n"
+"  -n --bytes=[数字]         寻找并打印任何 NUL 结尾的、至少为 <数字>（默认 4）\n"
+"  -<数字>                     字符长的序列\n"
+"  -t --radix={o,d,x}        以 8、10 或 16 进制打印地址\n"
+"  -o                        --radix=o 的别名\n"
+"  -T --target=<BFDNAME>     指定二进制文件格式\n"
+"  -e --encoding={s,S,b,l,B,L} 选择字符大小和端序：\n"
+"                            s = 7-bit, S = 8-bit, {b,l} = 16-bit, {B,L} = 32-bit\n"
+"  @<文件>                   从 <文件> 读取选项\n"
+"  -h --help                 显示此信息\n"
+"  -v -V --version           打印本程序的版本号\n"
 
 #: sysdump.c:66
 msgid "*undefined*"
@@ -9130,9 +9139,9 @@ msgid "try to add a ill language."
 msgstr ""
 
 #: windmc.c:1116
-#, fuzzy, c-format
+#, c-format
 msgid "unable to open file `%s' for input.\n"
-msgstr "无法打开输入文件 %s"
+msgstr "无法打开输入文件‘%s’。\n"
 
 #: windmc.c:1124
 #, fuzzy, c-format
@@ -9175,9 +9184,9 @@ msgstr "%s：支持的格式："
 
 #. Otherwise, we give up.
 #: windres.c:639
-#, fuzzy, c-format
+#, c-format
 msgid "can not determine type of file `%s'; use the -J option"
-msgstr "无法确定文件 “%s” 的类型；请使用 -J 选项"
+msgstr "无法确定文件“%s”的类型；请使用 -J 选项"
 
 #: windres.c:651
 #, c-format
@@ -9185,7 +9194,7 @@ msgid "Usage: %s [option(s)] [input-file] [output-file]\n"
 msgstr "用法：%s [选项] [输入文件] [输出文件]\n"
 
 #: windres.c:653
-#, fuzzy, c-format
+#, c-format
 msgid ""
 " The options are:\n"
 "  -i --input=<file>            Name input file\n"

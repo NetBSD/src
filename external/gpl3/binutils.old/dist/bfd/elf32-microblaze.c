@@ -1,6 +1,6 @@
 /* Xilinx MicroBlaze-specific support for 32-bit ELF
 
-   Copyright (C) 2009-2015 Free Software Foundation, Inc.
+   Copyright (C) 2009-2016 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -1556,16 +1556,14 @@ microblaze_elf_relocate_section (bfd *output_bfd,
 	  switch (r)
 	    {
 	    case bfd_reloc_overflow:
-	      if (!((*info->callbacks->reloc_overflow)
-		    (info, (h ? &h->root : NULL), name, howto->name,
-		     (bfd_vma) 0, input_bfd, input_section, offset)))
-		return FALSE;
+	      (*info->callbacks->reloc_overflow)
+		(info, (h ? &h->root : NULL), name, howto->name,
+		 (bfd_vma) 0, input_bfd, input_section, offset);
 	      break;
 
 	    case bfd_reloc_undefined:
-	      if (!((*info->callbacks->undefined_symbol)
-		    (info, name, input_bfd, input_section, offset, TRUE)))
-	        return FALSE;
+	      (*info->callbacks->undefined_symbol)
+		(info, name, input_bfd, input_section, offset, TRUE);
 	      break;
 
 	    case bfd_reloc_outofrange:
@@ -1584,9 +1582,8 @@ microblaze_elf_relocate_section (bfd *output_bfd,
 	      errmsg = _("internal error: unknown error");
 	      /* Fall through.  */
 	    common_error:
-	      if (!((*info->callbacks->warning)
-		    (info, errmsg, name, input_bfd, input_section, offset)))
-	        return FALSE;
+	      (*info->callbacks->warning) (info, errmsg, name, input_bfd,
+					   input_section, offset);
 	      break;
 	    }
 	}
@@ -3288,7 +3285,7 @@ microblaze_elf_finish_dynamic_symbol (bfd *output_bfd,
       BFD_ASSERT (sgot != NULL && srela != NULL);
 
       offset = (sgot->output_section->vma + sgot->output_offset
-                       + (h->got.offset &~ (bfd_vma) 1));
+		+ (h->got.offset &~ (bfd_vma) 1));
 
       /* If this is a -Bsymbolic link, and the symbol is defined
          locally, we just want to emit a RELATIVE reloc.  Likewise if
@@ -3296,8 +3293,8 @@ microblaze_elf_finish_dynamic_symbol (bfd *output_bfd,
          The entry in the global offset table will already have been
          initialized in the relocate_section function.  */
       if (bfd_link_pic (info)
-          && (info->symbolic || h->dynindx == -1)
-          && h->def_regular)
+          && ((info->symbolic && h->def_regular)
+	      || h->dynindx == -1))
         {
           asection *sec = h->root.u.def.section;
           microblaze_elf_output_dynamic_relocation (output_bfd,
@@ -3403,13 +3400,13 @@ microblaze_elf_finish_dynamic_sections (bfd *output_bfd,
             {
               asection *s;
 
-              s = bfd_get_section_by_name (output_bfd, name);
+              s = bfd_get_linker_section (dynobj, name);
               if (s == NULL)
                 dyn.d_un.d_val = 0;
               else
                 {
                   if (! size)
-                    dyn.d_un.d_ptr = s->vma;
+                    dyn.d_un.d_ptr = s->output_section->vma + s->output_offset;
                   else
                     dyn.d_un.d_val = s->size;
                 }

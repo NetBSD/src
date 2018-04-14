@@ -1,5 +1,5 @@
 /* BFD back-end for Texas Instruments TMS320C80 Multimedia Video Processor (MVP).
-   Copyright (C) 1996-2015 Free Software Foundation, Inc.
+   Copyright (C) 1996-2016 Free Software Foundation, Inc.
 
    Written by Fred Fish (fnf@cygnus.com)
 
@@ -563,12 +563,9 @@ coff_tic80_relocate_section (bfd *output_bfd,
 	      }
 
 	  else if (! bfd_link_relocatable (info))
-	    {
-	      if (! ((*info->callbacks->undefined_symbol)
-		     (info, h->root.root.string, input_bfd, input_section,
-		      rel->r_vaddr - input_section->vma, TRUE)))
-		return FALSE;
-	    }
+	    (*info->callbacks->undefined_symbol)
+	      (info, h->root.root.string, input_bfd, input_section,
+	       rel->r_vaddr - input_section->vma, TRUE);
 	}
 
       addr = rel->r_vaddr - input_section->vma;
@@ -688,11 +685,10 @@ coff_tic80_relocate_section (bfd *output_bfd,
 		  return FALSE;
 	      }
 
-	    if (! ((*info->callbacks->reloc_overflow)
-		   (info, (h ? &h->root : NULL), name, howto->name,
-		    (bfd_vma) 0, input_bfd, input_section,
-		    rel->r_vaddr - input_section->vma)))
-	      return FALSE;
+	    (*info->callbacks->reloc_overflow)
+	      (info, (h ? &h->root : NULL), name, howto->name,
+	       (bfd_vma) 0, input_bfd, input_section,
+	       rel->r_vaddr - input_section->vma);
 	  }
 	}
     }

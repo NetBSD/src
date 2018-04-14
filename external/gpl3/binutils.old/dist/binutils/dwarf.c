@@ -1,5 +1,5 @@
 /* dwarf.c -- display DWARF contents of a BFD binary file
-   Copyright (C) 2005-2015 Free Software Foundation, Inc.
+   Copyright (C) 2005-2016 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -317,8 +317,13 @@ read_uleb128 (unsigned char * data,
 #define SAFE_BYTE_GET(VAL, PTR, AMOUNT, END)	\
   do						\
     {						\
-      int dummy [sizeof (VAL) < (AMOUNT) ? -1 : 1] ATTRIBUTE_UNUSED ; \
       unsigned int amount = (AMOUNT);		\
+      if (sizeof (VAL) < amount)		\
+	{					\
+	  error (_("internal error: attempt to read %d bytes of data in to %d sized variable"),\
+		 amount, (int) sizeof (VAL));	\
+	  amount = sizeof (VAL);		\
+	}					\
       if (((PTR) + amount) >= (END))		\
 	{					\
 	  if ((PTR) < (END))			\
@@ -4905,7 +4910,12 @@ display_debug_aranges (struct dwarf_section *section,
 
       if (arange.ar_version != 2 && arange.ar_version != 3)
 	{
-	  warn (_("Only DWARF 2 and 3 aranges are currently supported.\n"));
+	  /* PR 19872: A version number of 0 probably means that there is
+	     padding at the end of the .debug_aranges section.  Gold puts
+	     it there when performing an incremental link, for example.
+	     So do not generate a warning in this case.  */
+	  if (arange.ar_version)
+	    warn (_("Only DWARF 2 and 3 aranges are currently supported.\n"));
 	  break;
 	}
 
@@ -5454,6 +5464,30 @@ init_dwarf_regnames_aarch64 (void)
   dwarf_regnames_count = ARRAY_SIZE (dwarf_regnames_aarch64);
 }
 
+static const char *const dwarf_regnames_s390[] =
+{
+  /* Avoid saying "r5 (r5)", so omit the names of r0-r15.  */
+  NULL,  NULL,  NULL,  NULL,  NULL,  NULL,  NULL,  NULL,
+  NULL,  NULL,  NULL,  NULL,  NULL,  NULL,  NULL,  NULL,
+  "f0",  "f2",  "f4",  "f6",  "f1",  "f3",  "f5",  "f7",
+  "f8",  "f10", "f12", "f14", "f9",  "f11", "f13", "f15",
+  "cr0", "cr1", "cr2", "cr3", "cr4", "cr5", "cr6", "cr7",
+  "cr8", "cr9", "cr10", "cr11", "cr12", "cr13", "cr14", "cr15",
+  "a0",  "a1",  "a2",  "a3",  "a4",  "a5",  "a6",  "a7",
+  "a8",  "a9",  "a10", "a11", "a12", "a13", "a14", "a15",
+  "pswm", "pswa",
+  NULL, NULL,
+  "v16", "v18", "v20", "v22", "v17", "v19", "v21", "v23",
+  "v24", "v26", "v28", "v30", "v25", "v27", "v29", "v31",
+};
+
+void
+init_dwarf_regnames_s390 (void)
+{
+  dwarf_regnames = dwarf_regnames_s390;
+  dwarf_regnames_count = ARRAY_SIZE (dwarf_regnames_s390);
+}
+
 void
 init_dwarf_regnames (unsigned int e_machine)
 {
@@ -5475,6 +5509,10 @@ init_dwarf_regnames (unsigned int e_machine)
 
     case EM_AARCH64:
       init_dwarf_regnames_aarch64 ();
+      break;
+
+    case EM_S390:
+      init_dwarf_regnames_s390 ();
       break;
 
     default:
@@ -5742,6 +5780,7 @@ display_debug_frames (struct dwarf_section *section,
       unsigned int encoded_ptr_size = saved_eh_addr_size;
       unsigned int offset_size;
       unsigned int initial_length_size;
+      bfd_boolean all_nops;
 
       saved_start = start;
 
@@ -6175,6 +6214,8 @@ display_debug_frames (struct dwarf_section *section,
 	  start = tmp;
 	}
 
+      all_nops = TRUE;
+
       /* Now we know what registers are used, make a second pass over
 	 the chunk, this time actually printing out the info.  */
 
@@ -6192,6 +6233,10 @@ display_debug_frames (struct dwarf_section *section,
 	  opa = op & 0x3f;
 	  if (op & 0xc0)
 	    op &= 0xc0;
+
+	  /* Make a note if something other than DW_CFA_nop happens.  */
+	  if (op != DW_CFA_nop)
+	    all_nops = FALSE;
 
 	  /* Warning: if you add any more cases to this switch, be
 	     sure to add them to the corresponding switch above.  */
@@ -6459,7 +6504,7 @@ display_debug_frames (struct dwarf_section *section,
 
 	    case DW_CFA_def_cfa_expression:
 	      ul = LEB ();
-	      if (start >= block_end || start + ul > block_end || start + ul < start)
+	      if (start >= block_end || ul > (unsigned long) (block_end - start))
 		{
 		  printf (_("  DW_CFA_def_cfa_expression: <corrupt len %lu>\n"), ul);
 		  break;
@@ -6623,7 +6668,8 @@ display_debug_frames (struct dwarf_section *section,
 	    }
 	}
 
-      if (do_debug_frames_interp)
+      /* Interpret the CFA - as long as it is not completely full of NOPs.  */
+      if (do_debug_frames_interp && ! all_nops)
 	frame_display_row (fc, &need_col_headers, &max_regs);
 
       start = block_end;

@@ -2,7 +2,7 @@
 # It does some substitutions.
 fragment <<EOF
 /* intel coff loader emulation specific stuff
-   Copyright (C) 1991-2015 Free Software Foundation, Inc.
+   Copyright (C) 1991-2016 Free Software Foundation, Inc.
    Written by Steve Chamberlain steve@cygnus.com
 
    This file is part of the GNU Binutils.

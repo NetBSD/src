@@ -1,5 +1,5 @@
 /* V850-specific support for 32-bit ELF
-   Copyright (C) 1996-2015 Free Software Foundation, Inc.
+   Copyright (C) 1996-2016 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -2271,18 +2271,14 @@ v850_elf_relocate_section (bfd *output_bfd,
 	  switch ((int) r)
 	    {
 	    case bfd_reloc_overflow:
-	      if (! ((*info->callbacks->reloc_overflow)
-		     (info, (h ? &h->root : NULL), name, howto->name,
-		      (bfd_vma) 0, input_bfd, input_section,
-		      rel->r_offset)))
-		return FALSE;
+	      (*info->callbacks->reloc_overflow)
+		(info, (h ? &h->root : NULL), name, howto->name,
+		 (bfd_vma) 0, input_bfd, input_section, rel->r_offset);
 	      break;
 
 	    case bfd_reloc_undefined:
-	      if (! ((*info->callbacks->undefined_symbol)
-		     (info, name, input_bfd, input_section,
-		      rel->r_offset, TRUE)))
-		return FALSE;
+	      (*info->callbacks->undefined_symbol)
+		(info, name, input_bfd, input_section, rel->r_offset, TRUE);
 	      break;
 
 	    case bfd_reloc_outofrange:
@@ -2314,10 +2310,8 @@ v850_elf_relocate_section (bfd *output_bfd,
 	      /* fall through */
 
 	    common_error:
-	      if (!((*info->callbacks->warning)
-		    (info, msg, name, input_bfd, input_section,
-		     rel->r_offset)))
-		return FALSE;
+	      (*info->callbacks->warning) (info, msg, name, input_bfd,
+					   input_section, rel->r_offset);
 	      break;
 	    }
 	}
@@ -2428,10 +2422,10 @@ v850_elf_set_note (bfd * abfd, enum v850_notes note, unsigned int val)
   return TRUE;
 }
 
-/* Copy backend specific data from one object module to another.  */
+/* Copy a v850 note section from one object module to another.  */
 
-static bfd_boolean
-v850_elf_copy_private_bfd_data (bfd * ibfd, bfd * obfd)
+static void
+v850_elf_copy_notes (bfd *ibfd, bfd *obfd)
 {
   asection * onotes;
   asection * inotes;
@@ -2440,10 +2434,10 @@ v850_elf_copy_private_bfd_data (bfd * ibfd, bfd * obfd)
      skip the merge.  The normal input to output section
      copying will take care of everythng for us.  */
   if ((onotes = bfd_get_section_by_name (obfd, V850_NOTE_SECNAME)) == NULL)
-    return TRUE;
+    return;
 
   if ((inotes = bfd_get_section_by_name (ibfd, V850_NOTE_SECNAME)) == NULL)
-    return TRUE;
+    return;
 
   if (bfd_section_size (ibfd, inotes) == bfd_section_size (obfd, onotes))
     {
@@ -2459,8 +2453,15 @@ v850_elf_copy_private_bfd_data (bfd * ibfd, bfd * obfd)
       /* Copy/overwrite notes from the input to the output.  */
       memcpy (ocont, icont, bfd_section_size (obfd, onotes));
     }
+}
 
-  return TRUE;
+/* Copy backend specific data from one object module to another.  */
+
+static bfd_boolean
+v850_elf_copy_private_bfd_data (bfd *ibfd, bfd *obfd)
+{
+  v850_elf_copy_notes (ibfd, obfd);
+  return _bfd_elf_copy_private_bfd_data (ibfd, obfd);
 }
 #define bfd_elf32_bfd_copy_private_bfd_data	v850_elf_copy_private_bfd_data
 

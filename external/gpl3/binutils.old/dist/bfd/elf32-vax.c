@@ -1,5 +1,5 @@
 /* VAX series support for 32-bit ELF
-   Copyright (C) 1993-2015 Free Software Foundation, Inc.
+   Copyright (C) 1993-2016 Free Software Foundation, Inc.
    Contributed by Matt Thomas <matt@3am-software.com>.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -1770,11 +1770,9 @@ elf_vax_relocate_section (bfd *output_bfd,
 		    if (*name == '\0')
 		      name = bfd_section_name (input_bfd, sec);
 		  }
-		if (!(info->callbacks->reloc_overflow
-		      (info, (h ? &h->root : NULL), name, howto->name,
-		       (bfd_vma) 0, input_bfd, input_section,
-		       rel->r_offset)))
-		  return FALSE;
+		info->callbacks->reloc_overflow
+		  (info, (h ? &h->root : NULL), name, howto->name,
+		   (bfd_vma) 0, input_bfd, input_section, rel->r_offset);
 	      }
 	      break;
 	    }
@@ -1961,20 +1959,18 @@ elf_vax_finish_dynamic_sections (bfd *output_bfd, struct bfd_link_info *info)
 	      break;
 
 	    case DT_PLTGOT:
-	      name = ".got";
+	      name = ".got.plt";
 	      goto get_vma;
 	    case DT_JMPREL:
 	      name = ".rela.plt";
 	    get_vma:
-	      s = bfd_get_section_by_name (output_bfd, name);
-	      BFD_ASSERT (s != NULL);
-	      dyn.d_un.d_ptr = s->vma;
+	      s = bfd_get_linker_section (dynobj, name);
+	      dyn.d_un.d_ptr = s->output_section->vma + s->output_offset;
 	      bfd_elf32_swap_dyn_out (output_bfd, &dyn, dyncon);
 	      break;
 
 	    case DT_PLTRELSZ:
-	      s = bfd_get_section_by_name (output_bfd, ".rela.plt");
-	      BFD_ASSERT (s != NULL);
+	      s = bfd_get_linker_section (dynobj, ".rela.plt");
 	      dyn.d_un.d_val = s->size;
 	      bfd_elf32_swap_dyn_out (output_bfd, &dyn, dyncon);
 	      break;
@@ -1987,7 +1983,7 @@ elf_vax_finish_dynamic_sections (bfd *output_bfd, struct bfd_link_info *info)
 		 linker script arranges for .rela.plt to follow all
 		 other relocation sections, we don't have to worry
 		 about changing the DT_RELA entry.  */
-	      s = bfd_get_section_by_name (output_bfd, ".rela.plt");
+	      s = bfd_get_linker_section (dynobj, ".rela.plt");
 	      if (s != NULL)
 		dyn.d_un.d_val -= s->size;
 	      bfd_elf32_swap_dyn_out (output_bfd, &dyn, dyncon);

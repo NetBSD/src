@@ -1,5 +1,5 @@
 /* tc-m32c.c -- Assembler for the Renesas M32C.
-   Copyright (C) 2005-2015 Free Software Foundation, Inc.
+   Copyright (C) 2005-2016 Free Software Foundation, Inc.
    Contributed by RedHat.
 
    This file is part of GAS, the GNU Assembler.
@@ -105,7 +105,7 @@ set_isa (enum isa_attr isa_num)
 static void s_bss (int);
 
 int
-md_parse_option (int c, char * arg ATTRIBUTE_UNUSED)
+md_parse_option (int c, const char * arg ATTRIBUTE_UNUSED)
 {
   switch (c)
     {
@@ -200,7 +200,7 @@ m32c_md_end (void)
       /* Pad with nops for objdump.  */
       n_nops = (32 - ((insn_size) % 32)) / 8;
       for (i = 1; i <= n_nops; i++)
-	md_assemble ("nop");
+	md_assemble ((char *) "nop");
     }
 }
 
@@ -267,7 +267,7 @@ m32c_indirect_operand (char *str)
 
   operand = 1;
   ns_len = strlen (str);
-  new_str = (char*) xmalloc (ns_len);
+  new_str = XNEWVEC (char, ns_len);
   ns = new_str;
   ns_end = ns + ns_len;
 
@@ -317,11 +317,11 @@ m32c_indirect_operand (char *str)
       }
 
   if (indirection[1] != none && indirection[2] != none)
-    md_assemble ("src-dest-indirect");
+    md_assemble ((char *) "src-dest-indirect");
   else if (indirection[1] != none)
-    md_assemble ("src-indirect");
+    md_assemble ((char *) "src-indirect");
   else if (indirection[2] != none)
-    md_assemble ("dest-indirect");
+    md_assemble ((char *) "dest-indirect");
 
   md_assemble (new_str);
   free (new_str);
@@ -475,7 +475,7 @@ enum {
   M32C_MACRO_ADJNZ_3,
   M32C_MACRO_ADJNZ_4,
   M32C_MACRO_ADJNZ_5,
-} M32C_Macros;
+};
 
 static struct {
   int insn;
@@ -1064,9 +1064,9 @@ tc_gen_reloc (asection *sec, fixS *fx)
     {
       arelent * reloc;
 
-      reloc = xmalloc (sizeof (* reloc));
+      reloc = XNEW (arelent);
 
-      reloc->sym_ptr_ptr = xmalloc (sizeof (asymbol *));
+      reloc->sym_ptr_ptr = XNEW (asymbol *);
       *reloc->sym_ptr_ptr = symbol_get_bfdsym (fx->fx_addsy);
       reloc->address = fx->fx_frag->fr_address + fx->fx_where;
       reloc->howto = bfd_reloc_type_lookup (stdoutput, fx->fx_r_type);
@@ -1155,7 +1155,7 @@ md_number_to_chars (char * buf, valueT val, int n)
 /* Equal to MAX_PRECISION in atof-ieee.c.  */
 #define MAX_LITTLENUMS 6
 
-char *
+const char *
 md_atof (int type, char * litP, int * sizeP)
 {
   return ieee_md_atof (type, litP, sizeP, TRUE);

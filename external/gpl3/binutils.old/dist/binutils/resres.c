@@ -1,5 +1,5 @@
 /* resres.c: read_res_file and write_res_file implementation for windres.
-   Copyright (C) 1998-2015 Free Software Foundation, Inc.
+   Copyright (C) 1998-2016 Free Software Foundation, Inc.
    Written by Anders Norlander <anorland@hem2.passagen.se>.
    Rewritten by Kai Tietz, Onevision.
 
@@ -386,8 +386,7 @@ write_res_bin (windres_bfd *wrbfd, rc_uint_type off, const rc_res_resource *res,
 
 /* Get number of bytes needed to store an id in binary format */
 static unsigned long
-get_id_size (id)
-     const rc_res_id *id;
+get_id_size (const rc_res_id *id)
 {
   if (id->named)
     return sizeof (unichar) * (id->u.n.length + 1);

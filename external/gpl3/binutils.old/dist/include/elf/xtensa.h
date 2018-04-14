@@ -1,5 +1,5 @@
 /* Xtensa ELF support for BFD.
-   Copyright (C) 2003-2015 Free Software Foundation, Inc.
+   Copyright (C) 2003-2016 Free Software Foundation, Inc.
    Contributed by Bob Wilson (bwilson@tensilica.com) at Tensilica.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -25,6 +25,10 @@
 #define _ELF_XTENSA_H
 
 #include "elf/reloc-macros.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* Relocations.  */
 START_RELOC_NUMBERS (elf_xtensa_reloc_type)
@@ -204,5 +208,11 @@ typedef struct property_table_entry_t
     (((align) << 12) & XTENSA_PROP_ALIGNMENT_MASK))
 
 #define XTENSA_PROP_INSN_ABSLIT        0x00020000
+
+extern asection *xtensa_make_property_section (asection *, const char *);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _ELF_XTENSA_H */

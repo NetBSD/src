@@ -1,5 +1,5 @@
 /* Support for HPPA 64-bit ELF
-   Copyright (C) 1999-2015 Free Software Foundation, Inc.
+   Copyright (C) 1999-2016 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -26,7 +26,7 @@
 #include "elf/hppa.h"
 #include "libhppa.h"
 #include "elf64-hppa.h"
-
+#include "libiberty.h"
 
 #define ARCH_SIZE	       64
 
@@ -1094,20 +1094,18 @@ allocate_global_data_opd (struct elf_link_hash_entry *eh, void *data)
 	      char *new_name;
 	      struct elf_link_hash_entry *nh;
 
-	      new_name = alloca (strlen (eh->root.root.string) + 2);
-	      new_name[0] = '.';
-	      strcpy (new_name + 1, eh->root.root.string);
+	      new_name = concat (".", eh->root.root.string, NULL);
 
 	      nh = elf_link_hash_lookup (elf_hash_table (x->info),
 					 new_name, TRUE, TRUE, TRUE);
 
+	      free (new_name);
 	      nh->root.type = eh->root.type;
 	      nh->root.u.def.value = eh->root.u.def.value;
 	      nh->root.u.def.section = eh->root.u.def.section;
 
 	      if (! bfd_elf_link_record_dynamic_symbol (x->info, nh))
 		return FALSE;
-
 	     }
 	  hh->opd_offset = x->ofs;
 	  x->ofs += OPD_ENTRY_SIZE;
@@ -2205,9 +2203,7 @@ elf64_hppa_finalize_opd (struct elf_link_hash_entry *eh, void *data)
 	  char *new_name;
 	  struct elf_link_hash_entry *nh;
 
-	  new_name = alloca (strlen (eh->root.root.string) + 2);
-	  new_name[0] = '.';
-	  strcpy (new_name + 1, eh->root.root.string);
+	  new_name = concat (".", eh->root.root.string, NULL);
 
 	  nh = elf_link_hash_lookup (elf_hash_table (info),
 				     new_name, TRUE, TRUE, FALSE);
@@ -2216,6 +2212,7 @@ elf64_hppa_finalize_opd (struct elf_link_hash_entry *eh, void *data)
 	     symbol index.  */
 	  if (nh)
 	    dynindx = nh->dynindx;
+	  free (new_name);
 	}
 
       rel.r_addend = 0;
@@ -3911,12 +3908,11 @@ elf64_hppa_relocate_section (bfd *output_bfd,
 	      bfd_boolean err;
 	      err = (info->unresolved_syms_in_objects == RM_GENERATE_ERROR
 		     || ELF_ST_VISIBILITY (eh->other) != STV_DEFAULT);
-	      if (!info->callbacks->undefined_symbol (info,
-						      eh->root.root.string,
-						      input_bfd,
-						      input_section,
-						      rel->r_offset, err))
-		return FALSE;
+	      (*info->callbacks->undefined_symbol) (info,
+						    eh->root.root.string,
+						    input_bfd,
+						    input_section,
+						    rel->r_offset, err);
 	    }
 
           if (!bfd_link_relocatable (info)
@@ -3928,12 +3924,9 @@ elf64_hppa_relocate_section (bfd *output_bfd,
               if (info->unresolved_syms_in_objects == RM_IGNORE
                   && ELF_ST_VISIBILITY (eh->other) == STV_DEFAULT
                   && eh->type == STT_PARISC_MILLI)
-                {
-                  if (! info->callbacks->undefined_symbol
-                      (info, eh_name (eh), input_bfd,
-                       input_section, rel->r_offset, FALSE))
-                    return FALSE;
-                }
+		(*info->callbacks->undefined_symbol)
+		  (info, eh_name (eh), input_bfd,
+		   input_section, rel->r_offset, FALSE);
             }
 	}
 
@@ -3972,11 +3965,9 @@ elf64_hppa_relocate_section (bfd *output_bfd,
 		      sym_name = bfd_section_name (input_bfd, sym_sec);
 		  }
 
-		if (!((*info->callbacks->reloc_overflow)
-		      (info, (eh ? &eh->root : NULL), sym_name,
-		       howto->name, (bfd_vma) 0, input_bfd,
-		       input_section, rel->r_offset)))
-		  return FALSE;
+		(*info->callbacks->reloc_overflow)
+		  (info, (eh ? &eh->root : NULL), sym_name, howto->name,
+		   (bfd_vma) 0, input_bfd, input_section, rel->r_offset);
 	      }
 	      break;
 	    }

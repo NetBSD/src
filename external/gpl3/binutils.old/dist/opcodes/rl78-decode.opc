@@ -1,5 +1,5 @@
 /* -*- c -*- */
-/* Copyright (C) 2012-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2012-2016 Free Software Foundation, Inc.
    Contributed by Red Hat.
    Written by DJ Delorie.
 
@@ -882,7 +882,7 @@ rl78_decode_opcode (unsigned long pc AU,
 /** 1010 1110			movw	%0, %s1				*/
   ID(mov); W(); DR(AX); SM(None, SFR);
 
-/** 11ra 1011			movw	%0, %e!1			*/
+/** 11ra 1011			movw	%0, %es!1			*/
   ID(mov); W(); DRW(ra); SM(None, IMMU(2));
 
 /** 11ra 1010			movw	%0, %1				*/
@@ -903,8 +903,7 @@ rl78_decode_opcode (unsigned long pc AU,
 /*----------------------------------------------------------------------*/
 
 /** 1101 0110			mulu	x				*/
-  if (isa == RL78_ISA_G14)
-    ID(mulu);
+  ID(mulu);
 
 /*----------------------------------------------------------------------*/
 

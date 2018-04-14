@@ -1,5 +1,5 @@
 /* read.h - of read.c
-   Copyright (C) 1986-2015 Free Software Foundation, Inc.
+   Copyright (C) 1986-2016 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -74,7 +74,7 @@ extern const char line_comment_chars[];
 extern const char line_separator_chars[];
 
 /* Table of -I directories.  */
-extern char **include_dirs;
+extern const char **include_dirs;
 extern int include_dir_count;
 extern int include_dir_maxlen;
 
@@ -128,17 +128,17 @@ extern void emit_expr_with_reloc (expressionS *exp, unsigned int nbytes,
 				  TC_PARSE_CONS_RETURN_TYPE);
 extern void emit_expr_fix (expressionS *, unsigned int, fragS *, char *,
 			   TC_PARSE_CONS_RETURN_TYPE);
-extern void equals (char *sym_name, int reassign);
-extern void float_cons (int float_type);
+extern void equals (char *, int);
+extern void float_cons (int);
 extern void ignore_rest_of_line (void);
 #define discard_rest_of_line ignore_rest_of_line
-extern int output_leb128 (char *, valueT, int sign);
+extern unsigned output_leb128 (char *, valueT, int);
 extern void pseudo_set (symbolS * symbolP);
-extern void read_a_source_file (char *name);
+extern void read_a_source_file (const char *name);
 extern void read_begin (void);
 extern void read_print_statistics (FILE *);
 extern char *read_symbol_name (void);
-extern int sizeof_leb128 (valueT, int sign);
+extern unsigned sizeof_leb128 (valueT, int);
 extern void stabs_generate_asm_file (void);
 extern void stabs_generate_asm_lineno (void);
 extern void stabs_generate_asm_func (const char *, const char *);
@@ -153,7 +153,9 @@ extern void generate_lineno_debug (void);
 extern void s_abort (int) ATTRIBUTE_NORETURN;
 extern void s_align_bytes (int arg);
 extern void s_align_ptwo (int);
-extern void bss_alloc (symbolS *, addressT, int);
+extern void do_align (unsigned int align, char *fill, unsigned int length,
+		      unsigned int max);
+extern void bss_alloc (symbolS *, addressT, unsigned);
 extern offsetT parse_align (int);
 extern symbolS *s_comm_internal (int, symbolS *(*) (int, symbolS *, addressT));
 extern symbolS *s_lcomm_internal (int, symbolS *, addressT);

@@ -1,6 +1,6 @@
 // layout.cc -- lay out output file sections for gold
 
-// Copyright (C) 2006-2015 Free Software Foundation, Inc.
+// Copyright (C) 2006-2016 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -4722,6 +4722,15 @@ Layout::add_target_dynamic_tags(bool use_rel, const Output_data* plt_got,
       // linker at run time, and used by the debugger.
       odyn->add_constant(elfcpp::DT_DEBUG, 0);
     }
+}
+
+void
+Layout::add_target_specific_dynamic_tag(elfcpp::DT tag, unsigned int val)
+{
+  Output_data_dynamic* odyn = this->dynamic_data_;
+  if (odyn == NULL)
+    return;
+  odyn->add_constant(tag, val);
 }
 
 // Finish the .dynamic section and PT_DYNAMIC segment.

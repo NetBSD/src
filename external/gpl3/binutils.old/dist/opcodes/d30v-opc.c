@@ -1,5 +1,5 @@
 /* d30v-opc.c -- D30V opcode list
-   Copyright (C) 1997-2015 Free Software Foundation, Inc.
+   Copyright (C) 1997-2016 Free Software Foundation, Inc.
    Written by Martin Hunt, Cygnus Support
 
    This file is part of the GNU opcodes library.

@@ -1,5 +1,5 @@
 /* SuperH SH64-specific support for 64-bit ELF
-   Copyright (C) 2000-2015 Free Software Foundation, Inc.
+   Copyright (C) 2000-2016 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -1508,10 +1508,10 @@ sh_elf64_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 	     datalabel processing here.  Make sure this does not change
 	     without notice.  */
 	  if ((sym->st_other & STO_SH5_ISA32) != 0)
-	    ((*info->callbacks->reloc_dangerous)
-	     (info,
-	      _("Unexpected STO_SH5_ISA32 on local symbol is not handled"),
-	      input_bfd, input_section, rel->r_offset));
+	    (*info->callbacks->reloc_dangerous)
+	      (info,
+	       _("Unexpected STO_SH5_ISA32 on local symbol is not handled"),
+	       input_bfd, input_section, rel->r_offset);
 
 	  if (sec != NULL && discarded_section (sec))
 	    /* Handled below.  */
@@ -1650,14 +1650,11 @@ sh_elf64_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 		   && ELF_ST_VISIBILITY (h->other) == STV_DEFAULT)
 	    ;
 	  else if (!bfd_link_relocatable (info))
-	    {
-	      if (! ((*info->callbacks->undefined_symbol)
-		     (info, h->root.root.string, input_bfd,
-		      input_section, rel->r_offset,
-		      (info->unresolved_syms_in_objects == RM_GENERATE_ERROR
-		       || ELF_ST_VISIBILITY (h->other)))))
-		return FALSE;
-	    }
+	    (*info->callbacks->undefined_symbol)
+	      (info, h->root.root.string, input_bfd,
+	       input_section, rel->r_offset,
+	       (info->unresolved_syms_in_objects == RM_GENERATE_ERROR
+		|| ELF_ST_VISIBILITY (h->other)));
 	}
 
       if (sec != NULL && discarded_section (sec))
@@ -2081,11 +2078,9 @@ sh_elf64_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 		    if (*name == '\0')
 		      name = bfd_section_name (input_bfd, sec);
 		  }
-		if (! ((*info->callbacks->reloc_overflow)
-		       (info, (h ? &h->root : NULL), name, howto->name,
-			(bfd_vma) 0, input_bfd, input_section,
-			rel->r_offset)))
-		  return FALSE;
+		(*info->callbacks->reloc_overflow)
+		  (info, (h ? &h->root : NULL), name, howto->name,
+		   (bfd_vma) 0, input_bfd, input_section, rel->r_offset);
 	      }
 	      break;
 	    }
@@ -3817,21 +3812,19 @@ sh64_elf64_finish_dynamic_sections (bfd *output_bfd,
 	      break;
 
 	    case DT_PLTGOT:
-	      name = ".got";
+	      name = ".got.plt";
 	      goto get_vma;
 
 	    case DT_JMPREL:
 	      name = ".rela.plt";
 	    get_vma:
-	      s = bfd_get_section_by_name (output_bfd, name);
-	      BFD_ASSERT (s != NULL);
-	      dyn.d_un.d_ptr = s->vma;
+	      s = bfd_get_linker_section (dynobj, name);
+	      dyn.d_un.d_ptr = s->output_section->vma + s->output_offset;
 	      bfd_elf64_swap_dyn_out (output_bfd, &dyn, dyncon);
 	      break;
 
 	    case DT_PLTRELSZ:
-	      s = bfd_get_section_by_name (output_bfd, ".rela.plt");
-	      BFD_ASSERT (s != NULL);
+	      s = bfd_get_linker_section (dynobj, ".rela.plt");
 	      dyn.d_un.d_val = s->size;
 	      bfd_elf64_swap_dyn_out (output_bfd, &dyn, dyncon);
 	      break;
@@ -3846,7 +3839,7 @@ sh64_elf64_finish_dynamic_sections (bfd *output_bfd,
 		 the linker script arranges for .rela.plt to follow all
 		 other relocation sections, we don't have to worry
 		 about changing the DT_RELA entry.  */
-	      s = bfd_get_section_by_name (output_bfd, ".rela.plt");
+	      s = bfd_get_linker_section (dynobj, ".rela.plt");
 	      if (s != NULL)
 		dyn.d_un.d_val -= s->size;
 	      bfd_elf64_swap_dyn_out (output_bfd, &dyn, dyncon);

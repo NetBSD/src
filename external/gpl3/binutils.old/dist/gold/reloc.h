@@ -1,6 +1,6 @@
 // reloc.h -- relocate input files for gold   -*- C++ -*-
 
-// Copyright (C) 2006-2015 Free Software Foundation, Inc.
+// Copyright (C) 2006-2016 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -296,6 +296,14 @@ class Relocatable_relocs
     return static_cast<Reloc_strategy>(this->reloc_strategies_[i]);
   }
 
+  // Set the strategy for reloc I.
+  void
+  set_strategy(unsigned int i, Reloc_strategy strategy)
+  {
+    gold_assert(i < this->reloc_strategies_.size());
+    this->reloc_strategies_[i] = strategy;
+  }
+
   // Return the number of relocations to create in the output file.
   size_t
   output_reloc_count() const
@@ -313,406 +321,677 @@ class Relocatable_relocs
   Output_data* posd_;
 };
 
+template<int valsize>
+class Bits;
+
 // Standard relocation routines which are used on many targets.  Here
 // SIZE and BIG_ENDIAN refer to the target, not the relocation type.
 
 template<int size, bool big_endian>
 class Relocate_functions
 {
-private:
+ public:
+  typedef typename elfcpp::Elf_types<size>::Elf_Addr Address;
+  typedef typename elfcpp::Elf_types<size>::Elf_Swxword Addendtype;
+
+  enum Overflow_check
+  {
+    // No overflow checking.
+    CHECK_NONE,
+    // Check for overflow of a signed value.
+    CHECK_SIGNED,
+    // Check for overflow of an unsigned value.
+    CHECK_UNSIGNED,
+    // Check for overflow of a signed or unsigned value.
+    // (i.e., no error if either signed or unsigned fits.)
+    CHECK_SIGNED_OR_UNSIGNED
+  };
+
+  enum Reloc_status
+  {
+    RELOC_OK,
+    RELOC_OVERFLOW
+  };
+
+ private:
+  // Check for overflow.
+  template<int valsize>
+  static inline Reloc_status
+  check_overflow(Address value, Overflow_check check)
+  {
+    switch (check)
+      {
+      case CHECK_SIGNED:
+        if (size == 32)
+	  return (Bits<valsize>::has_overflow32(value)
+		  ? RELOC_OVERFLOW
+		  : RELOC_OK);
+	else
+	  return (Bits<valsize>::has_overflow(value)
+		  ? RELOC_OVERFLOW
+		  : RELOC_OK);
+      case CHECK_UNSIGNED:
+        if (size == 32)
+	  return (Bits<valsize>::has_unsigned_overflow32(value)
+		  ? RELOC_OVERFLOW
+		  : RELOC_OK);
+	else
+	  return (Bits<valsize>::has_unsigned_overflow(value)
+		  ? RELOC_OVERFLOW
+		  : RELOC_OK);
+      case CHECK_SIGNED_OR_UNSIGNED:
+        if (size == 32)
+	  return (Bits<valsize>::has_signed_unsigned_overflow32(value)
+		  ? RELOC_OVERFLOW
+		  : RELOC_OK);
+	else
+	  return (Bits<valsize>::has_signed_unsigned_overflow64(value)
+		  ? RELOC_OVERFLOW
+		  : RELOC_OK);
+      case CHECK_NONE:
+      default:
+        return RELOC_OK;
+      }
+  }
+
   // Do a simple relocation with the addend in the section contents.
   // VALSIZE is the size of the value.
   template<int valsize>
-  static inline void
-  rel(unsigned char* view,
-      typename elfcpp::Swap<valsize, big_endian>::Valtype value)
+  static inline Reloc_status
+  rel(unsigned char* view, Address value, Overflow_check check)
   {
     typedef typename elfcpp::Swap<valsize, big_endian>::Valtype Valtype;
     Valtype* wv = reinterpret_cast<Valtype*>(view);
-    Valtype x = elfcpp::Swap<valsize, big_endian>::readval(wv);
-    elfcpp::Swap<valsize, big_endian>::writeval(wv, x + value);
+    Valtype addend = elfcpp::Swap<valsize, big_endian>::readval(wv);
+    value += addend;
+    elfcpp::Swap<valsize, big_endian>::
+	writeval(wv, static_cast<Valtype>(value));
+    return check_overflow<valsize>(value, check);
   }
 
   // Like the above but for relocs at unaligned addresses.
   template<int valsize>
-  static inline void
-  rel_unaligned(unsigned char* view,
-	        typename elfcpp::Swap<valsize, big_endian>::Valtype value)
+  static inline Reloc_status
+  rel_unaligned(unsigned char* view, Address value, Overflow_check check)
   {
     typedef typename elfcpp::Swap_unaligned<valsize, big_endian>::Valtype
 	Valtype;
-    Valtype x = elfcpp::Swap_unaligned<valsize, big_endian>::readval(view);
-    elfcpp::Swap_unaligned<valsize, big_endian>::writeval(view, x + value);
+    Valtype addend = elfcpp::Swap_unaligned<valsize, big_endian>::readval(view);
+    value += addend;
+    elfcpp::Swap_unaligned<valsize, big_endian>::
+	writeval(view, static_cast<Valtype>(value));
+    return check_overflow<valsize>(value, check);
   }
 
   // Do a simple relocation using a Symbol_value with the addend in
   // the section contents.  VALSIZE is the size of the value to
   // relocate.
   template<int valsize>
-  static inline void
+  static inline Reloc_status
   rel(unsigned char* view,
       const Sized_relobj_file<size, big_endian>* object,
-      const Symbol_value<size>* psymval)
+      const Symbol_value<size>* psymval,
+      Overflow_check check)
   {
     typedef typename elfcpp::Swap<valsize, big_endian>::Valtype Valtype;
     Valtype* wv = reinterpret_cast<Valtype*>(view);
-    Valtype x = elfcpp::Swap<valsize, big_endian>::readval(wv);
-    x = psymval->value(object, x);
-    elfcpp::Swap<valsize, big_endian>::writeval(wv, x);
+    Valtype addend = elfcpp::Swap<valsize, big_endian>::readval(wv);
+    Address value = psymval->value(object, addend);
+    elfcpp::Swap<valsize, big_endian>::
+	writeval(wv, static_cast<Valtype>(value));
+    return check_overflow<valsize>(value, check);
   }
 
   // Like the above but for relocs at unaligned addresses.
   template<int valsize>
-  static inline void
+  static inline Reloc_status
   rel_unaligned(unsigned char* view,
                 const Sized_relobj_file<size, big_endian>* object,
-                const Symbol_value<size>* psymval)
+                const Symbol_value<size>* psymval,
+                Overflow_check check)
   {
     typedef typename elfcpp::Swap_unaligned<valsize, big_endian>::Valtype
         Valtype;
-    Valtype x = elfcpp::Swap_unaligned<valsize, big_endian>::readval(view);
-    x = psymval->value(object, x);
-    elfcpp::Swap_unaligned<valsize, big_endian>::writeval(view, x);
+    Valtype addend = elfcpp::Swap_unaligned<valsize, big_endian>::readval(view);
+    Address value = psymval->value(object, addend);
+    elfcpp::Swap_unaligned<valsize, big_endian>::writeval(view, value);
+    return check_overflow<valsize>(value, check);
   }
 
   // Do a simple relocation with the addend in the relocation.
   // VALSIZE is the size of the value.
   template<int valsize>
-  static inline void
-  rela(unsigned char* view,
-       typename elfcpp::Swap<valsize, big_endian>::Valtype value,
-       typename elfcpp::Swap<valsize, big_endian>::Valtype addend)
+  static inline Reloc_status
+  rela(unsigned char* view, Address value, Addendtype addend,
+       Overflow_check check)
   {
     typedef typename elfcpp::Swap<valsize, big_endian>::Valtype Valtype;
     Valtype* wv = reinterpret_cast<Valtype*>(view);
-    elfcpp::Swap<valsize, big_endian>::writeval(wv, value + addend);
+    value += addend;
+    elfcpp::Swap<valsize, big_endian>::writeval(wv, value);
+    return check_overflow<valsize>(value, check);
   }
 
   // Do a simple relocation using a symbol value with the addend in
   // the relocation.  VALSIZE is the size of the value.
   template<int valsize>
-  static inline void
+  static inline Reloc_status
   rela(unsigned char* view,
        const Sized_relobj_file<size, big_endian>* object,
        const Symbol_value<size>* psymval,
-       typename elfcpp::Swap<valsize, big_endian>::Valtype addend)
+       Addendtype addend,
+       Overflow_check check)
   {
     typedef typename elfcpp::Swap<valsize, big_endian>::Valtype Valtype;
     Valtype* wv = reinterpret_cast<Valtype*>(view);
-    Valtype x = psymval->value(object, addend);
-    elfcpp::Swap<valsize, big_endian>::writeval(wv, x);
+    Address value = psymval->value(object, addend);
+    elfcpp::Swap<valsize, big_endian>::writeval(wv, value);
+    return check_overflow<valsize>(value, check);
   }
 
   // Do a simple PC relative relocation with the addend in the section
   // contents.  VALSIZE is the size of the value.
   template<int valsize>
-  static inline void
-  pcrel(unsigned char* view,
-	typename elfcpp::Swap<valsize, big_endian>::Valtype value,
-	typename elfcpp::Elf_types<size>::Elf_Addr address)
+  static inline Reloc_status
+  pcrel(unsigned char* view, Address value, Address address,
+	Overflow_check check)
   {
     typedef typename elfcpp::Swap<valsize, big_endian>::Valtype Valtype;
     Valtype* wv = reinterpret_cast<Valtype*>(view);
-    Valtype x = elfcpp::Swap<valsize, big_endian>::readval(wv);
-    elfcpp::Swap<valsize, big_endian>::writeval(wv, x + value - address);
+    Valtype addend = elfcpp::Swap<valsize, big_endian>::readval(wv);
+    value = value + addend - address;
+    elfcpp::Swap<valsize, big_endian>::writeval(wv, value);
+    return check_overflow<valsize>(value, check);
   }
 
   // Like the above but for relocs at unaligned addresses.
   template<int valsize>
-  static inline void
-  pcrel_unaligned(unsigned char* view,
-		  typename elfcpp::Swap<valsize, big_endian>::Valtype value,
-		  typename elfcpp::Elf_types<size>::Elf_Addr address)
+  static inline Reloc_status
+  pcrel_unaligned(unsigned char* view, Address value, Address address,
+		  Overflow_check check)
   {
     typedef typename elfcpp::Swap<valsize, big_endian>::Valtype Valtype;
-    Valtype x = elfcpp::Swap_unaligned<valsize, big_endian>::readval(view);
-    elfcpp::Swap_unaligned<valsize, big_endian>::writeval(view,
-							  x + value - address);
+    Valtype addend = elfcpp::Swap_unaligned<valsize, big_endian>::readval(view);
+    value = value + addend - address;
+    elfcpp::Swap_unaligned<valsize, big_endian>::writeval(view, value);
+    return check_overflow<valsize>(value, check);
   }
 
   // Do a simple PC relative relocation with a Symbol_value with the
   // addend in the section contents.  VALSIZE is the size of the
   // value.
   template<int valsize>
-  static inline void
+  static inline Reloc_status
   pcrel(unsigned char* view,
 	const Sized_relobj_file<size, big_endian>* object,
 	const Symbol_value<size>* psymval,
-	typename elfcpp::Elf_types<size>::Elf_Addr address)
+	Address address,
+	Overflow_check check)
   {
     typedef typename elfcpp::Swap<valsize, big_endian>::Valtype Valtype;
     Valtype* wv = reinterpret_cast<Valtype*>(view);
-    Valtype x = elfcpp::Swap<valsize, big_endian>::readval(wv);
-    x = psymval->value(object, x);
-    elfcpp::Swap<valsize, big_endian>::writeval(wv, x - address);
+    Valtype addend = elfcpp::Swap<valsize, big_endian>::readval(wv);
+    Address value = psymval->value(object, addend) - address;
+    elfcpp::Swap<valsize, big_endian>::writeval(wv, value);
+    return check_overflow<valsize>(value, check);
   }
 
   // Do a simple PC relative relocation with the addend in the
   // relocation.  VALSIZE is the size of the value.
   template<int valsize>
-  static inline void
-  pcrela(unsigned char* view,
-	 typename elfcpp::Swap<valsize, big_endian>::Valtype value,
-	 typename elfcpp::Swap<valsize, big_endian>::Valtype addend,
-	 typename elfcpp::Elf_types<size>::Elf_Addr address)
+  static inline Reloc_status
+  pcrela(unsigned char* view, Address value, Addendtype addend, Address address,
+	 Overflow_check check)
   {
     typedef typename elfcpp::Swap<valsize, big_endian>::Valtype Valtype;
     Valtype* wv = reinterpret_cast<Valtype*>(view);
-    elfcpp::Swap<valsize, big_endian>::writeval(wv, value + addend - address);
+    value = value + addend - address;
+    elfcpp::Swap<valsize, big_endian>::writeval(wv, value);
+    return check_overflow<valsize>(value, check);
   }
 
   // Do a simple PC relative relocation with a Symbol_value with the
   // addend in the relocation.  VALSIZE is the size of the value.
   template<int valsize>
-  static inline void
+  static inline Reloc_status
   pcrela(unsigned char* view,
 	 const Sized_relobj_file<size, big_endian>* object,
 	 const Symbol_value<size>* psymval,
-	 typename elfcpp::Swap<valsize, big_endian>::Valtype addend,
-	 typename elfcpp::Elf_types<size>::Elf_Addr address)
+	 Addendtype addend,
+	 Address address,
+	 Overflow_check check)
   {
     typedef typename elfcpp::Swap<valsize, big_endian>::Valtype Valtype;
     Valtype* wv = reinterpret_cast<Valtype*>(view);
-    Valtype x = psymval->value(object, addend);
-    elfcpp::Swap<valsize, big_endian>::writeval(wv, x - address);
+    Address value = psymval->value(object, addend) - address;
+    elfcpp::Swap<valsize, big_endian>::writeval(wv, value);
+    return check_overflow<valsize>(value, check);
   }
 
   typedef Relocate_functions<size, big_endian> This;
 
-public:
+ public:
   // Do a simple 8-bit REL relocation with the addend in the section
   // contents.
   static inline void
-  rel8(unsigned char* view, unsigned char value)
-  { This::template rel<8>(view, value); }
+  rel8(unsigned char* view, Address value)
+  { This::template rel<8>(view, value, CHECK_NONE); }
+
+  static inline Reloc_status
+  rel8_check(unsigned char* view, Address value, Overflow_check check)
+  { return This::template rel<8>(view, value, check); }
 
   static inline void
   rel8(unsigned char* view,
        const Sized_relobj_file<size, big_endian>* object,
        const Symbol_value<size>* psymval)
-  { This::template rel<8>(view, object, psymval); }
+  { This::template rel<8>(view, object, psymval, CHECK_NONE); }
+
+  static inline Reloc_status
+  rel8_check(unsigned char* view,
+	     const Sized_relobj_file<size, big_endian>* object,
+	     const Symbol_value<size>* psymval,
+	     Overflow_check check)
+  { return This::template rel<8>(view, object, psymval, check); }
 
   // Do an 8-bit RELA relocation with the addend in the relocation.
   static inline void
-  rela8(unsigned char* view, unsigned char value, unsigned char addend)
-  { This::template rela<8>(view, value, addend); }
+  rela8(unsigned char* view, Address value, Addendtype addend)
+  { This::template rela<8>(view, value, addend, CHECK_NONE); }
+
+  static inline Reloc_status
+  rela8_check(unsigned char* view, Address value, Addendtype addend,
+	      Overflow_check check)
+  { return This::template rela<8>(view, value, addend, check); }
 
   static inline void
   rela8(unsigned char* view,
 	const Sized_relobj_file<size, big_endian>* object,
 	const Symbol_value<size>* psymval,
-	unsigned char addend)
-  { This::template rela<8>(view, object, psymval, addend); }
+	Addendtype addend)
+  { This::template rela<8>(view, object, psymval, addend, CHECK_NONE); }
+
+  static inline Reloc_status
+  rela8_check(unsigned char* view,
+	      const Sized_relobj_file<size, big_endian>* object,
+	      const Symbol_value<size>* psymval,
+	      Addendtype addend,
+	      Overflow_check check)
+  { return This::template rela<8>(view, object, psymval, addend, check); }
 
   // Do a simple 8-bit PC relative relocation with the addend in the
   // section contents.
   static inline void
-  pcrel8(unsigned char* view, unsigned char value,
-	 typename elfcpp::Elf_types<size>::Elf_Addr address)
-  { This::template pcrel<8>(view, value, address); }
+  pcrel8(unsigned char* view, unsigned char value, Address address)
+  { This::template pcrel<8>(view, value, address, CHECK_NONE); }
+
+  static inline Reloc_status
+  pcrel8_check(unsigned char* view, unsigned char value, Address address,
+	       Overflow_check check)
+  { return This::template pcrel<8>(view, value, address, check); }
 
   static inline void
   pcrel8(unsigned char* view,
 	 const Sized_relobj_file<size, big_endian>* object,
 	 const Symbol_value<size>* psymval,
-	 typename elfcpp::Elf_types<size>::Elf_Addr address)
-  { This::template pcrel<8>(view, object, psymval, address); }
+	 Address address)
+  { This::template pcrel<8>(view, object, psymval, address, CHECK_NONE); }
+
+  static inline Reloc_status
+  pcrel8_check(unsigned char* view,
+	       const Sized_relobj_file<size, big_endian>* object,
+	       const Symbol_value<size>* psymval,
+	       Address address,
+	       Overflow_check check)
+  { return This::template pcrel<8>(view, object, psymval, address, check); }
 
   // Do a simple 8-bit PC relative RELA relocation with the addend in
   // the reloc.
   static inline void
-  pcrela8(unsigned char* view, unsigned char value, unsigned char addend,
-	  typename elfcpp::Elf_types<size>::Elf_Addr address)
-  { This::template pcrela<8>(view, value, addend, address); }
+  pcrela8(unsigned char* view, Address value, Addendtype addend,
+	  Address address)
+  { This::template pcrela<8>(view, value, addend, address, CHECK_NONE); }
+
+  static inline Reloc_status
+  pcrela8_check(unsigned char* view, Address value, Addendtype addend,
+		Address address, Overflow_check check)
+  { return This::template pcrela<8>(view, value, addend, address, check); }
 
   static inline void
   pcrela8(unsigned char* view,
 	  const Sized_relobj_file<size, big_endian>* object,
 	  const Symbol_value<size>* psymval,
-	  unsigned char addend,
-	  typename elfcpp::Elf_types<size>::Elf_Addr address)
-  { This::template pcrela<8>(view, object, psymval, addend, address); }
+	  Addendtype addend,
+	  Address address)
+  { This::template pcrela<8>(view, object, psymval, addend, address,
+			     CHECK_NONE); }
+
+  static inline Reloc_status
+  pcrela8_check(unsigned char* view,
+		const Sized_relobj_file<size, big_endian>* object,
+		const Symbol_value<size>* psymval,
+		Addendtype addend,
+		Address address,
+		Overflow_check check)
+  { return This::template pcrela<8>(view, object, psymval, addend, address,
+				    check); }
 
   // Do a simple 16-bit REL relocation with the addend in the section
   // contents.
   static inline void
-  rel16(unsigned char* view, elfcpp::Elf_Half value)
-  { This::template rel<16>(view, value); }
+  rel16(unsigned char* view, Address value)
+  { This::template rel<16>(view, value, CHECK_NONE); }
+
+  static inline Reloc_status
+  rel16_check(unsigned char* view, Address value, Overflow_check check)
+  { return This::template rel<16>(view, value, check); }
 
   static inline void
   rel16(unsigned char* view,
 	const Sized_relobj_file<size, big_endian>* object,
 	const Symbol_value<size>* psymval)
-  { This::template rel<16>(view, object, psymval); }
+  { This::template rel<16>(view, object, psymval, CHECK_NONE); }
+
+  static inline Reloc_status
+  rel16_check(unsigned char* view,
+	      const Sized_relobj_file<size, big_endian>* object,
+	      const Symbol_value<size>* psymval,
+	      Overflow_check check)
+  { return This::template rel<16>(view, object, psymval, check); }
 
   // Do an 16-bit RELA relocation with the addend in the relocation.
   static inline void
-  rela16(unsigned char* view, elfcpp::Elf_Half value, elfcpp::Elf_Half addend)
-  { This::template rela<16>(view, value, addend); }
+  rela16(unsigned char* view, Address value, Addendtype addend)
+  { This::template rela<16>(view, value, addend, CHECK_NONE); }
+
+  static inline Reloc_status
+  rela16_check(unsigned char* view, Address value, Addendtype addend,
+	       Overflow_check check)
+  { return This::template rela<16>(view, value, addend, check); }
 
   static inline void
   rela16(unsigned char* view,
 	 const Sized_relobj_file<size, big_endian>* object,
 	 const Symbol_value<size>* psymval,
-	 elfcpp::Elf_Half addend)
-  { This::template rela<16>(view, object, psymval, addend); }
+	 Addendtype addend)
+  { This::template rela<16>(view, object, psymval, addend, CHECK_NONE); }
+
+  static inline Reloc_status
+  rela16_check(unsigned char* view,
+	       const Sized_relobj_file<size, big_endian>* object,
+	       const Symbol_value<size>* psymval,
+	       Addendtype addend,
+	       Overflow_check check)
+  { return This::template rela<16>(view, object, psymval, addend, check); }
 
   // Do a simple 16-bit PC relative REL relocation with the addend in
   // the section contents.
   static inline void
-  pcrel16(unsigned char* view, elfcpp::Elf_Half value,
-	  typename elfcpp::Elf_types<size>::Elf_Addr address)
-  { This::template pcrel<16>(view, value, address); }
+  pcrel16(unsigned char* view, Address value, Address address)
+  { This::template pcrel<16>(view, value, address, CHECK_NONE); }
+
+  static inline Reloc_status
+  pcrel16_check(unsigned char* view, Address value, Address address,
+		Overflow_check check)
+  { return This::template pcrel<16>(view, value, address, check); }
 
   static inline void
   pcrel16(unsigned char* view,
 	  const Sized_relobj_file<size, big_endian>* object,
 	  const Symbol_value<size>* psymval,
-	  typename elfcpp::Elf_types<size>::Elf_Addr address)
-  { This::template pcrel<16>(view, object, psymval, address); }
+	  Address address)
+  { This::template pcrel<16>(view, object, psymval, address, CHECK_NONE); }
+
+  static inline Reloc_status
+  pcrel16_check(unsigned char* view,
+		const Sized_relobj_file<size, big_endian>* object,
+		const Symbol_value<size>* psymval,
+		Address address,
+		Overflow_check check)
+  { return This::template pcrel<16>(view, object, psymval, address, check); }
 
   // Do a simple 16-bit PC relative RELA relocation with the addend in
   // the reloc.
   static inline void
-  pcrela16(unsigned char* view, elfcpp::Elf_Half value,
-	   elfcpp::Elf_Half addend,
-           typename elfcpp::Elf_types<size>::Elf_Addr address)
-  { This::template pcrela<16>(view, value, addend, address); }
+  pcrela16(unsigned char* view, Address value, Addendtype addend,
+	   Address address)
+  { This::template pcrela<16>(view, value, addend, address, CHECK_NONE); }
+
+  static inline Reloc_status
+  pcrela16_check(unsigned char* view, Address value, Addendtype addend,
+		 Address address, Overflow_check check)
+  { return This::template pcrela<16>(view, value, addend, address, check); }
 
   static inline void
   pcrela16(unsigned char* view,
 	   const Sized_relobj_file<size, big_endian>* object,
 	   const Symbol_value<size>* psymval,
-	   elfcpp::Elf_Half addend,
-	   typename elfcpp::Elf_types<size>::Elf_Addr address)
-  { This::template pcrela<16>(view, object, psymval, addend, address); }
+	   Addendtype addend,
+	   Address address)
+  { This::template pcrela<16>(view, object, psymval, addend, address,
+			      CHECK_NONE); }
+
+  static inline Reloc_status
+  pcrela16_check(unsigned char* view,
+		 const Sized_relobj_file<size, big_endian>* object,
+		 const Symbol_value<size>* psymval,
+		 Addendtype addend,
+		 Address address,
+		 Overflow_check check)
+  { return This::template pcrela<16>(view, object, psymval, addend, address,
+				     check); }
 
   // Do a simple 32-bit REL relocation with the addend in the section
   // contents.
   static inline void
-  rel32(unsigned char* view, elfcpp::Elf_Word value)
-  { This::template rel<32>(view, value); }
+  rel32(unsigned char* view, Address value)
+  { This::template rel<32>(view, value, CHECK_NONE); }
+
+  static inline Reloc_status
+  rel32_check(unsigned char* view, Address value, Overflow_check check)
+  { return This::template rel<32>(view, value, check); }
 
   // Like above but for relocs at unaligned addresses.
   static inline void
-  rel32_unaligned(unsigned char* view, elfcpp::Elf_Word value)
-  { This::template rel_unaligned<32>(view, value); }
+  rel32_unaligned(unsigned char* view, Address value)
+  { This::template rel_unaligned<32>(view, value, CHECK_NONE); }
+
+  static inline Reloc_status
+  rel32_unaligned_check(unsigned char* view, Address value,
+			Overflow_check check)
+  { return This::template rel_unaligned<32>(view, value, check); }
 
   static inline void
   rel32(unsigned char* view,
 	const Sized_relobj_file<size, big_endian>* object,
 	const Symbol_value<size>* psymval)
-  { This::template rel<32>(view, object, psymval); }
+  { This::template rel<32>(view, object, psymval, CHECK_NONE); }
+
+  static inline Reloc_status
+  rel32_check(unsigned char* view,
+	      const Sized_relobj_file<size, big_endian>* object,
+	      const Symbol_value<size>* psymval,
+	      Overflow_check check)
+  { return This::template rel<32>(view, object, psymval, check); }
 
   // Like above but for relocs at unaligned addresses.
   static inline void
   rel32_unaligned(unsigned char* view,
 	          const Sized_relobj_file<size, big_endian>* object,
 	          const Symbol_value<size>* psymval)
-  { This::template rel_unaligned<32>(view, object, psymval); }
+  { This::template rel_unaligned<32>(view, object, psymval, CHECK_NONE); }
 
-  // Do an 32-bit RELA relocation with the addend in the relocation.
+  static inline Reloc_status
+  rel32_unaligned_check(unsigned char* view,
+			const Sized_relobj_file<size, big_endian>* object,
+			const Symbol_value<size>* psymval,
+			Overflow_check check)
+  { return This::template rel_unaligned<32>(view, object, psymval, check); }
+
+  // Do a 32-bit RELA relocation with the addend in the relocation.
   static inline void
-  rela32(unsigned char* view, elfcpp::Elf_Word value, elfcpp::Elf_Word addend)
-  { This::template rela<32>(view, value, addend); }
+  rela32(unsigned char* view, Address value, Addendtype addend)
+  { This::template rela<32>(view, value, addend, CHECK_NONE); }
+
+  static inline Reloc_status
+  rela32(unsigned char* view, Address value, Addendtype addend,
+	 Overflow_check check)
+  { return This::template rela<32>(view, value, addend, check); }
 
   static inline void
   rela32(unsigned char* view,
 	 const Sized_relobj_file<size, big_endian>* object,
 	 const Symbol_value<size>* psymval,
-	 elfcpp::Elf_Word addend)
-  { This::template rela<32>(view, object, psymval, addend); }
+	 Addendtype addend)
+  { This::template rela<32>(view, object, psymval, addend, CHECK_NONE); }
+
+  static inline Reloc_status
+  rela32_check(unsigned char* view,
+	       const Sized_relobj_file<size, big_endian>* object,
+	       const Symbol_value<size>* psymval,
+	       Addendtype addend,
+	       Overflow_check check)
+  { return This::template rela<32>(view, object, psymval, addend, check); }
 
   // Do a simple 32-bit PC relative REL relocation with the addend in
   // the section contents.
   static inline void
-  pcrel32(unsigned char* view, elfcpp::Elf_Word value,
-	  typename elfcpp::Elf_types<size>::Elf_Addr address)
-  { This::template pcrel<32>(view, value, address); }
+  pcrel32(unsigned char* view, Address value, Address address)
+  { This::template pcrel<32>(view, value, address, CHECK_NONE); }
+
+  static inline Reloc_status
+  pcrel32_check(unsigned char* view, Address value, Address address,
+		Overflow_check check)
+  { return This::template pcrel<32>(view, value, address, check); }
 
   // Unaligned version of the above.
   static inline void
-  pcrel32_unaligned(unsigned char* view, elfcpp::Elf_Word value,
-		    typename elfcpp::Elf_types<size>::Elf_Addr address)
-  { This::template pcrel_unaligned<32>(view, value, address); }
+  pcrel32_unaligned(unsigned char* view, Address value, Address address)
+  { This::template pcrel_unaligned<32>(view, value, address, CHECK_NONE); }
+
+  static inline Reloc_status
+  pcrel32_unaligned_check(unsigned char* view, Address value, Address address,
+			  Overflow_check check)
+  { return This::template pcrel_unaligned<32>(view, value, address, check); }
 
   static inline void
   pcrel32(unsigned char* view,
 	  const Sized_relobj_file<size, big_endian>* object,
 	  const Symbol_value<size>* psymval,
-	  typename elfcpp::Elf_types<size>::Elf_Addr address)
-  { This::template pcrel<32>(view, object, psymval, address); }
+	  Address address)
+  { This::template pcrel<32>(view, object, psymval, address, CHECK_NONE); }
+
+  static inline Reloc_status
+  pcrel32_check(unsigned char* view,
+		const Sized_relobj_file<size, big_endian>* object,
+		const Symbol_value<size>* psymval,
+		Address address,
+		Overflow_check check)
+  { return This::template pcrel<32>(view, object, psymval, address, check); }
 
   // Do a simple 32-bit PC relative RELA relocation with the addend in
   // the relocation.
   static inline void
-  pcrela32(unsigned char* view, elfcpp::Elf_Word value,
-           elfcpp::Elf_Word addend,
-           typename elfcpp::Elf_types<size>::Elf_Addr address)
-  { This::template pcrela<32>(view, value, addend, address); }
+  pcrela32(unsigned char* view, Address value, Addendtype addend,
+           Address address)
+  { This::template pcrela<32>(view, value, addend, address, CHECK_NONE); }
+
+  static inline Reloc_status
+  pcrela32_check(unsigned char* view, Address value, Addendtype addend,
+           Address address, Overflow_check check)
+  { return This::template pcrela<32>(view, value, addend, address, check); }
 
   static inline void
   pcrela32(unsigned char* view,
 	   const Sized_relobj_file<size, big_endian>* object,
 	   const Symbol_value<size>* psymval,
-	   elfcpp::Elf_Word addend,
-	   typename elfcpp::Elf_types<size>::Elf_Addr address)
-  { This::template pcrela<32>(view, object, psymval, addend, address); }
+	   Addendtype addend,
+	   Address address)
+  { This::template pcrela<32>(view, object, psymval, addend, address,
+			      CHECK_NONE); }
+
+  static inline Reloc_status
+  pcrela32_check(unsigned char* view,
+	   const Sized_relobj_file<size, big_endian>* object,
+	   const Symbol_value<size>* psymval,
+	   Addendtype addend,
+	   Address address,
+	   Overflow_check check)
+  { return This::template pcrela<32>(view, object, psymval, addend, address,
+				     check); }
 
   // Do a simple 64-bit REL relocation with the addend in the section
   // contents.
   static inline void
-  rel64(unsigned char* view, elfcpp::Elf_Xword value)
-  { This::template rel<64>(view, value); }
+  rel64(unsigned char* view, Address value)
+  { This::template rel<64>(view, value, CHECK_NONE); }
 
   static inline void
   rel64(unsigned char* view,
 	const Sized_relobj_file<size, big_endian>* object,
 	const Symbol_value<size>* psymval)
-  { This::template rel<64>(view, object, psymval); }
+  { This::template rel<64>(view, object, psymval, CHECK_NONE); }
 
   // Do a 64-bit RELA relocation with the addend in the relocation.
   static inline void
-  rela64(unsigned char* view, elfcpp::Elf_Xword value,
-         elfcpp::Elf_Xword addend)
-  { This::template rela<64>(view, value, addend); }
+  rela64(unsigned char* view, Address value, Addendtype addend)
+  { This::template rela<64>(view, value, addend, CHECK_NONE); }
 
   static inline void
   rela64(unsigned char* view,
 	 const Sized_relobj_file<size, big_endian>* object,
 	 const Symbol_value<size>* psymval,
-	 elfcpp::Elf_Xword addend)
-  { This::template rela<64>(view, object, psymval, addend); }
+	 Addendtype addend)
+  { This::template rela<64>(view, object, psymval, addend, CHECK_NONE); }
 
   // Do a simple 64-bit PC relative REL relocation with the addend in
   // the section contents.
   static inline void
-  pcrel64(unsigned char* view, elfcpp::Elf_Xword value,
-	  typename elfcpp::Elf_types<size>::Elf_Addr address)
-  { This::template pcrel<64>(view, value, address); }
+  pcrel64(unsigned char* view, Address value, Address address)
+  { This::template pcrel<64>(view, value, address, CHECK_NONE); }
 
   static inline void
   pcrel64(unsigned char* view,
 	  const Sized_relobj_file<size, big_endian>* object,
 	  const Symbol_value<size>* psymval,
-	  typename elfcpp::Elf_types<size>::Elf_Addr address)
-  { This::template pcrel<64>(view, object, psymval, address); }
+	  Address address)
+  { This::template pcrel<64>(view, object, psymval, address, CHECK_NONE); }
 
   // Do a simple 64-bit PC relative RELA relocation with the addend in
   // the relocation.
   static inline void
-  pcrela64(unsigned char* view, elfcpp::Elf_Xword value,
-           elfcpp::Elf_Xword addend,
-           typename elfcpp::Elf_types<size>::Elf_Addr address)
-  { This::template pcrela<64>(view, value, addend, address); }
+  pcrela64(unsigned char* view, Address value, Addendtype addend,
+	   Address address)
+  { This::template pcrela<64>(view, value, addend, address, CHECK_NONE); }
 
   static inline void
   pcrela64(unsigned char* view,
 	   const Sized_relobj_file<size, big_endian>* object,
 	   const Symbol_value<size>* psymval,
-	   elfcpp::Elf_Xword addend,
-	   typename elfcpp::Elf_types<size>::Elf_Addr address)
-  { This::template pcrela<64>(view, object, psymval, addend, address); }
+	   Addendtype addend,
+	   Address address)
+  { This::template pcrela<64>(view, object, psymval, addend, address,
+			      CHECK_NONE); }
+};
+
+// Convenience class for min and max values of a given BITS length.
+
+template<int bits>
+class Limits
+{
+ public:
+  static const uint64_t MAX_UNSIGNED = (1ULL << bits) - 1;
+  static const int64_t MAX_SIGNED = MAX_UNSIGNED >> 1;
+  static const int64_t MIN_SIGNED = -MAX_SIGNED - 1;
+};
+
+template<>
+class Limits<64>
+{
+ public:
+  static const uint64_t MAX_UNSIGNED = ~0ULL;
+  static const int64_t MAX_SIGNED = MAX_UNSIGNED >> 1;
+  static const int64_t MIN_SIGNED = -MAX_SIGNED - 1;
 };
 
 // Integer manipulation functions used by various targets when
@@ -747,10 +1026,22 @@ class Bits
     gold_assert(bits > 0 && bits <= 32);
     if (bits == 32)
       return false;
-    int32_t max = (1 << (bits - 1)) - 1;
-    int32_t min = -(1 << (bits - 1));
+    const int32_t max = static_cast<int32_t>(Limits<bits>::MAX_SIGNED);
+    const int32_t min = static_cast<int32_t>(Limits<bits>::MIN_SIGNED);
     int32_t as_signed = static_cast<int32_t>(val);
     return as_signed > max || as_signed < min;
+  }
+
+  // Return true if VAL (stored in a uint32_t) has overflowed an unsigned
+  // value with BITS bits.
+  static inline bool
+  has_unsigned_overflow32(uint32_t val)
+  {
+    gold_assert(bits > 0 && bits <= 32);
+    if (bits == 32)
+      return false;
+    const uint32_t max = static_cast<uint32_t>(Limits<bits>::MAX_UNSIGNED);
+    return val > max;
   }
 
   // Return true if VAL (stored in a uint32_t) has overflowed both a
@@ -763,8 +1054,8 @@ class Bits
     gold_assert(bits > 0 && bits <= 32);
     if (bits == 32)
       return false;
-    int32_t max = static_cast<int32_t>((1U << bits) - 1);
-    int32_t min = -(1 << (bits - 1));
+    const int32_t max = static_cast<int32_t>(Limits<bits>::MAX_UNSIGNED);
+    const int32_t min = static_cast<int32_t>(Limits<bits>::MIN_SIGNED);
     int32_t as_signed = static_cast<int32_t>(val);
     return as_signed > max || as_signed < min;
   }
@@ -801,10 +1092,22 @@ class Bits
     gold_assert(bits > 0 && bits <= 64);
     if (bits == 64)
       return false;
-    int64_t max = (static_cast<int64_t>(1) << (bits - 1)) - 1;
-    int64_t min = -(static_cast<int64_t>(1) << (bits - 1));
+    const int64_t max = Limits<bits>::MAX_SIGNED;
+    const int64_t min = Limits<bits>::MIN_SIGNED;
     int64_t as_signed = static_cast<int64_t>(val);
     return as_signed > max || as_signed < min;
+  }
+
+  // Return true if VAL (stored in a uint64_t) has overflowed an unsigned
+  // value with BITS bits.
+  static inline bool
+  has_unsigned_overflow(uint64_t val)
+  {
+    gold_assert(bits > 0 && bits <= 64);
+    if (bits == 64)
+      return false;
+    const uint64_t max = Limits<bits>::MAX_UNSIGNED;
+    return val > max;
   }
 
   // Return true if VAL (stored in a uint64_t) has overflowed both a
@@ -817,8 +1120,8 @@ class Bits
     gold_assert(bits > 0 && bits <= 64);
     if (bits == 64)
       return false;
-    int64_t max = static_cast<int64_t>((static_cast<uint64_t>(1) << bits) - 1);
-    int64_t min = -(static_cast<int64_t>(1) << (bits - 1));
+    const int64_t max = static_cast<int64_t>(Limits<bits>::MAX_UNSIGNED);
+    const int64_t min = Limits<bits>::MIN_SIGNED;
     int64_t as_signed = static_cast<int64_t>(val);
     return as_signed > max || as_signed < min;
   }

@@ -1,6 +1,6 @@
 // ehframe.cc -- handle exception frame sections for gold
 
-// Copyright (C) 2006-2015 Free Software Foundation, Inc.
+// Copyright (C) 2006-2016 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -992,13 +992,68 @@ Eh_frame::read_fde(Sized_relobj_file<size, big_endian>* object,
     return false;
   Cie* cie = pcie->second;
 
+  int pc_size = 0;
+  switch (cie->fde_encoding() & 7)
+    {
+    case elfcpp::DW_EH_PE_udata2:
+      pc_size = 2;
+      break;
+    case elfcpp::DW_EH_PE_udata4:
+      pc_size = 4;
+      break;
+    case elfcpp::DW_EH_PE_udata8:
+      gold_assert(size == 64);
+      pc_size = 8;
+      break;
+    case elfcpp::DW_EH_PE_absptr:
+      pc_size = size == 32 ? 4 : 8;
+      break;
+    default:
+      // All other cases were rejected in Eh_frame::read_cie.
+      gold_unreachable();
+    }
+
   // The FDE should start with a reloc to the start of the code which
   // it describes.
   if (relocs->advance(pfde - pcontents) > 0)
     return false;
-
   if (relocs->next_offset() != pfde - pcontents)
-    return false;
+    {
+      // In an object produced by a relocatable link, gold may have
+      // discarded a COMDAT group in the previous link, but not the
+      // corresponding FDEs. In that case, gold will have discarded
+      // the relocations, so the FDE will have a non-relocatable zero
+      // (regardless of whether the PC encoding is absolute, pc-relative,
+      // or data-relative) instead of a pointer to the start of the code.
+
+      uint64_t pc_value = 0;
+      switch (pc_size)
+	{
+	case 2:
+	  pc_value = elfcpp::Swap<16, big_endian>::readval(pfde);
+	  break;
+	case 4:
+	  pc_value = elfcpp::Swap<32, big_endian>::readval(pfde);
+	  break;
+	case 8:
+	  pc_value = elfcpp::Swap_unaligned<64, big_endian>::readval(pfde);
+	  break;
+	default:
+	  gold_unreachable();
+	}
+
+      if (pc_value == 0)
+	{
+	  // This FDE applies to a discarded function.  We
+	  // can discard this FDE.
+	  object->add_merge_mapping(this, shndx, (pfde - 8) - pcontents,
+				    pfdeend - (pfde - 8), -1);
+	  return true;
+	}
+
+      // Otherwise, reject the FDE.
+      return false;
+    }
 
   unsigned int symndx = relocs->next_symndx();
   if (symndx == -1U)
@@ -1010,6 +1065,8 @@ Eh_frame::read_fde(Sized_relobj_file<size, big_endian>* object,
   // pointer to a PC relative offset when generating a shared library.
   relocs->advance(pfdeend - pcontents);
 
+  // Find the section index for code that this FDE describes.
+  // If we have discarded the section, we can also discard the FDE.
   unsigned int fde_shndx;
   const int sym_size = elfcpp::Elf_sizes<size>::sym_size;
   if (symndx >= symbols_size / sym_size)
@@ -1018,13 +1075,35 @@ Eh_frame::read_fde(Sized_relobj_file<size, big_endian>* object,
   bool is_ordinary;
   fde_shndx = object->adjust_sym_shndx(symndx, sym.get_st_shndx(),
 				       &is_ordinary);
+  bool is_discarded = (is_ordinary
+		       && fde_shndx != elfcpp::SHN_UNDEF
+		       && fde_shndx < object->shnum()
+		       && !object->is_section_included(fde_shndx));
 
-  if (is_ordinary
-      && fde_shndx != elfcpp::SHN_UNDEF
-      && fde_shndx < object->shnum()
-      && !object->is_section_included(fde_shndx))
+  // Fetch the address range field from the FDE. The offset and size
+  // of the field depends on the PC encoding given in the CIE, but
+  // it is always an absolute value. If the address range is 0, this
+  // FDE corresponds to a function that was discarded during optimization
+  // (too late to discard the corresponding FDE).
+  uint64_t address_range = 0;
+  switch (pc_size)
     {
-      // This FDE applies to a section which we are discarding.  We
+    case 2:
+      address_range = elfcpp::Swap<16, big_endian>::readval(pfde + 2);
+      break;
+    case 4:
+      address_range = elfcpp::Swap<32, big_endian>::readval(pfde + 4);
+      break;
+    case 8:
+      address_range = elfcpp::Swap_unaligned<64, big_endian>::readval(pfde + 8);
+      break;
+    default:
+      gold_unreachable();
+    }
+
+  if (is_discarded || address_range == 0)
+    {
+      // This FDE applies to a discarded function.  We
       // can discard this FDE.
       object->add_merge_mapping(this, shndx, (pfde - 8) - pcontents,
                                 pfdeend - (pfde - 8), -1);

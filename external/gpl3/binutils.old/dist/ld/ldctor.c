@@ -1,5 +1,5 @@
 /* ldctor.c -- constructor support routines
-   Copyright (C) 1991-2015 Free Software Foundation, Inc.
+   Copyright (C) 1991-2016 Free Software Foundation, Inc.
    By Steve Chamberlain <sac@cygnus.com>
 
    This file is part of the GNU Binutils.
@@ -86,12 +86,12 @@ ldctor_add_set_entry (struct bfd_link_hash_entry *h,
 	}
 
       /* Don't permit a set to be constructed from different object
-         file formats.  The same reloc may have different results.  We
-         actually could sometimes handle this, but the case is
-         unlikely to ever arise.  Sometimes constructor symbols are in
-         unusual sections, such as the absolute section--this appears
-         to be the case in Linux a.out--and in such cases we just
-         assume everything is OK.  */
+	 file formats.  The same reloc may have different results.  We
+	 actually could sometimes handle this, but the case is
+	 unlikely to ever arise.  Sometimes constructor symbols are in
+	 unusual sections, such as the absolute section--this appears
+	 to be the case in Linux a.out--and in such cases we just
+	 assume everything is OK.  */
       if (p->elements != NULL
 	  && section->owner != NULL
 	  && p->elements->section->owner != NULL
@@ -130,7 +130,7 @@ ctor_prio (const char *name)
   while (*name == '_')
     ++name;
 
-  if (! CONST_STRNEQ (name, "GLOBAL_"))
+  if (!CONST_STRNEQ (name, "GLOBAL_"))
     return -1;
 
   name += sizeof "GLOBAL_" - 1;
@@ -139,7 +139,7 @@ ctor_prio (const char *name)
     return -1;
   if (name[1] != 'I' && name[1] != 'D')
     return -1;
-  if (! ISDIGIT (name[3]))
+  if (!ISDIGIT (name[3]))
     return -1;
 
   return atoi (name + 3);
@@ -151,10 +151,10 @@ ctor_prio (const char *name)
 static int
 ctor_cmp (const void *p1, const void *p2)
 {
-  const struct set_element * const *pe1 =
-      (const struct set_element * const *) p1;
-  const struct set_element * const *pe2 =
-      (const struct set_element * const *) p2;
+  const struct set_element *const *pe1
+    = (const struct set_element *const *) p1;
+  const struct set_element *const *pe2
+    = (const struct set_element *const *) p2;
   const char *n1;
   const char *n2;
   int prio1;
@@ -332,7 +332,7 @@ ldctor_build_sets (void)
 	    {
 	      int len;
 
-	      if (! header_printed)
+	      if (!header_printed)
 		{
 		  minfo (_("\nSet                 Symbol\n\n"));
 		  header_printed = TRUE;
@@ -359,7 +359,7 @@ ldctor_build_sets (void)
 	    }
 
 	  /* Need SEC_KEEP for --gc-sections.  */
-	  if (! bfd_is_abs_section (e->section))
+	  if (!bfd_is_abs_section (e->section))
 	    e->section->flags |= SEC_KEEP;
 
 	  if (bfd_link_relocatable (&link_info))

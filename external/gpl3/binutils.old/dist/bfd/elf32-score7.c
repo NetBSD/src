@@ -1,5 +1,5 @@
 /* 32-bit ELF support for S+core.
-   Copyright (C) 2009-2015 Free Software Foundation, Inc.
+   Copyright (C) 2009-2016 Free Software Foundation, Inc.
    Contributed by
    Brain.lin (brain.lin@sunplusct.com)
    Mei Ligang (ligang@sunnorth.com.cn)
@@ -2440,12 +2440,11 @@ s7_bfd_score_elf_relocate_section (bfd *output_bfd,
             }
           else if (!bfd_link_relocatable (info))
             {
-              if (! ((*info->callbacks->undefined_symbol)
-                     (info, h->root.root.root.string, input_bfd,
-                      input_section, rel->r_offset,
-                      (info->unresolved_syms_in_objects == RM_GENERATE_ERROR)
-                      || ELF_ST_VISIBILITY (h->root.other))))
-                return bfd_reloc_undefined;
+	      (*info->callbacks->undefined_symbol)
+		(info, h->root.root.root.string, input_bfd,
+		 input_section, rel->r_offset,
+		 (info->unresolved_syms_in_objects == RM_GENERATE_ERROR)
+		 || ELF_ST_VISIBILITY (h->root.other));
               relocation = 0;
             }
         }
@@ -2528,16 +2527,14 @@ s7_bfd_score_elf_relocate_section (bfd *output_bfd,
               /* If the overflowing reloc was to an undefined symbol,
                  we have already printed one error message and there
                  is no point complaining again.  */
-              if (((!h) || (h->root.root.type != bfd_link_hash_undefined))
-                  && (!((*info->callbacks->reloc_overflow)
-                        (info, NULL, name, howto->name, (bfd_vma) 0,
-                         input_bfd, input_section, rel->r_offset))))
-                return FALSE;
+              if (!h || h->root.root.type != bfd_link_hash_undefined)
+		(*info->callbacks->reloc_overflow)
+		  (info, NULL, name, howto->name, (bfd_vma) 0,
+		   input_bfd, input_section, rel->r_offset);
               break;
             case bfd_reloc_undefined:
-              if (!((*info->callbacks->undefined_symbol)
-                    (info, name, input_bfd, input_section, rel->r_offset, TRUE)))
-                return FALSE;
+	      (*info->callbacks->undefined_symbol)
+		(info, name, input_bfd, input_section, rel->r_offset, TRUE);
               break;
 
             case bfd_reloc_outofrange:
@@ -2557,9 +2554,8 @@ s7_bfd_score_elf_relocate_section (bfd *output_bfd,
               /* fall through */
 
             common_error:
-              if (!((*info->callbacks->warning)
-                    (info, msg, name, input_bfd, input_section, rel->r_offset)))
-                return FALSE;
+	      (*info->callbacks->warning) (info, msg, name, input_bfd,
+					   input_section, rel->r_offset);
               break;
             }
         }
@@ -3429,21 +3425,19 @@ s7_bfd_score_elf_finish_dynamic_sections (bfd *output_bfd,
           switch (dyn.d_tag)
             {
             case DT_RELENT:
-              s = score_elf_rel_dyn_section (dynobj, FALSE);
-              BFD_ASSERT (s != NULL);
               dyn.d_un.d_val = SCORE_ELF_REL_SIZE (dynobj);
               break;
 
             case DT_STRSZ:
               /* Rewrite DT_STRSZ.  */
-              dyn.d_un.d_val = _bfd_elf_strtab_size (elf_hash_table (info)->dynstr);
-                    break;
+              dyn.d_un.d_val
+                = _bfd_elf_strtab_size (elf_hash_table (info)->dynstr);
+              break;
 
             case DT_PLTGOT:
               name = ".got";
-              s = bfd_get_section_by_name (output_bfd, name);
-              BFD_ASSERT (s != NULL);
-              dyn.d_un.d_ptr = s->vma;
+              s = bfd_get_linker_section (dynobj, name);
+              dyn.d_un.d_ptr = s->output_section->vma + s->output_offset;
               break;
 
             case DT_SCORE_BASE_ADDRESS:
@@ -3476,9 +3470,7 @@ s7_bfd_score_elf_finish_dynamic_sections (bfd *output_bfd,
             case DT_SCORE_SYMTABNO:
               name = ".dynsym";
               elemsize = SCORE_ELF_SYM_SIZE (output_bfd);
-              s = bfd_get_section_by_name (output_bfd, name);
-              BFD_ASSERT (s != NULL);
-
+              s = bfd_get_linker_section (dynobj, name);
               dyn.d_un.d_val = s->size / elemsize;
               break;
 
