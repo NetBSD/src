@@ -1,6 +1,6 @@
 // arm.cc -- arm target support for gold.
 
-// Copyright (C) 2009-2015 Free Software Foundation, Inc.
+// Copyright (C) 2009-2016 Free Software Foundation, Inc.
 // Written by Doug Kwan <dougkwan@google.com> based on the i386 code
 // by Ian Lance Taylor <iant@google.com>.
 // This file also contains borrowed and adapted code from
@@ -62,7 +62,10 @@ template<bool big_endian>
 class Output_data_plt_arm;
 
 template<bool big_endian>
-class Output_data_plt_arm_standard;
+class Output_data_plt_arm_short;
+
+template<bool big_endian>
+class Output_data_plt_arm_long;
 
 template<bool big_endian>
 class Stub_table;
@@ -594,7 +597,7 @@ class Reloc_stub : public Stub
 
     // Name of key.  This is mainly for debugging.
     std::string
-    name() const;
+    name() const ATTRIBUTE_UNUSED;
 
    private:
     // Stub type.
@@ -2037,9 +2040,9 @@ class Arm_output_data_got : public Output_data_got<32, big_endian>
 // bits.  The default handling of relocatable relocation cannot process these
 // relocations.  So we have to extend the default code.
 
-template<bool big_endian, int sh_type, typename Classify_reloc>
+template<bool big_endian, typename Classify_reloc>
 class Arm_scan_relocatable_relocs :
-  public Default_scan_relocatable_relocs<sh_type, Classify_reloc>
+  public Default_scan_relocatable_relocs<Classify_reloc>
 {
  public:
   // Return the strategy to use for a local symbol which is a section
@@ -2047,7 +2050,7 @@ class Arm_scan_relocatable_relocs :
   inline Relocatable_relocs::Reloc_strategy
   local_section_strategy(unsigned int r_type, Relobj*)
   {
-    if (sh_type == elfcpp::SHT_RELA)
+    if (Classify_reloc::sh_type == elfcpp::SHT_RELA)
       return Relocatable_relocs::RELOC_ADJUST_FOR_SECTION_RELA;
     else
       {
@@ -2298,6 +2301,21 @@ class Target_arm : public Sized_target<32, big_endian>
 			  const unsigned char* plocal_symbols,
 			  Relocatable_relocs*);
 
+  // Scan the relocs for --emit-relocs.
+  void
+  emit_relocs_scan(Symbol_table* symtab,
+		   Layout* layout,
+		   Sized_relobj_file<32, big_endian>* object,
+		   unsigned int data_shndx,
+		   unsigned int sh_type,
+		   const unsigned char* prelocs,
+		   size_t reloc_count,
+		   Output_section* output_section,
+		   bool needs_special_offset_handling,
+		   size_t local_symbol_count,
+		   const unsigned char* plocal_syms,
+		   Relocatable_relocs* rr);
+
   // Emit relocations for a section.
   void
   relocate_relocs(const Relocate_info<32, big_endian>*,
@@ -2307,7 +2325,6 @@ class Target_arm : public Sized_target<32, big_endian>
 		  Output_section* output_section,
 		  typename elfcpp::Elf_types<32>::Elf_Off
                     offset_in_output_section,
-		  const Relocatable_relocs*,
 		  unsigned char* view,
 		  Arm_address view_address,
 		  section_size_type view_size,
@@ -2555,7 +2572,11 @@ class Target_arm : public Sized_target<32, big_endian>
 		   Output_data_space* got_irelative)
   {
     gold_assert(got_plt != NULL && got_irelative != NULL);
-    return new Output_data_plt_arm_standard<big_endian>(
+    if (parameters->options().long_plt())
+      return new Output_data_plt_arm_long<big_endian>(
+	layout, got, got_plt, got_irelative);
+    else
+      return new Output_data_plt_arm_short<big_endian>(
 	layout, got, got_plt, got_irelative);
   }
 
@@ -2669,13 +2690,10 @@ class Target_arm : public Sized_target<32, big_endian>
     // Do a relocation.  Return false if the caller should not issue
     // any warnings about this relocation.
     inline bool
-    relocate(const Relocate_info<32, big_endian>*, Target_arm*,
-	     Output_section*,  size_t relnum,
-	     const elfcpp::Rel<32, big_endian>&,
-	     unsigned int r_type, const Sized_symbol<32>*,
-	     const Symbol_value<32>*,
-	     unsigned char*, Arm_address,
-	     section_size_type);
+    relocate(const Relocate_info<32, big_endian>*, unsigned int,
+	     Target_arm*, Output_section*, size_t, const unsigned char*,
+	     const Sized_symbol<32>*, const Symbol_value<32>*,
+	     unsigned char*, Arm_address, section_size_type);
 
     // Return whether we want to pass flag NON_PIC_REF for this
     // reloc.  This means the relocation type accesses a symbol not via
@@ -2724,12 +2742,23 @@ class Target_arm : public Sized_target<32, big_endian>
 
   };
 
-  // A class which returns the size required for a relocation type,
-  // used while scanning relocs during a relocatable link.
-  class Relocatable_size_for_reloc
+  // A class for inquiring about properties of a relocation,
+  // used while scanning relocs during a relocatable link and
+  // garbage collection.
+  class Classify_reloc :
+      public gold::Default_classify_reloc<elfcpp::SHT_REL, 32, big_endian>
   {
    public:
-    unsigned int
+    typedef typename Reloc_types<elfcpp::SHT_REL, 32, big_endian>::Reloc
+	Reltype;
+
+    // Return the explicit addend of the relocation (return 0 for SHT_REL).
+    static typename elfcpp::Elf_types<32>::Elf_Swxword
+    get_r_addend(const Reltype*)
+    { return 0; }
+
+    // Return the size of the addend of the relocation (only used for SHT_REL).
+    static unsigned int
     get_size_for_reloc(unsigned int, Relobj*);
   };
 
@@ -7719,29 +7748,14 @@ class Output_data_plt_arm_standard : public Output_data_plt_arm<big_endian>
   do_first_plt_entry_offset() const
   { return sizeof(first_plt_entry); }
 
-  // Return the size of a PLT entry.
-  virtual unsigned int
-  do_get_plt_entry_size() const
-  { return sizeof(plt_entry); }
-
   virtual void
   do_fill_first_plt_entry(unsigned char* pov,
 			  Arm_address got_address,
 			  Arm_address plt_address);
 
-  virtual void
-  do_fill_plt_entry(unsigned char* pov,
-		    Arm_address got_address,
-		    Arm_address plt_address,
-		    unsigned int got_offset,
-		    unsigned int plt_offset);
-
  private:
   // Template for the first PLT entry.
   static const uint32_t first_plt_entry[5];
-
-  // Template for subsequent PLT entries.
-  static const uint32_t plt_entry[3];
 };
 
 // ARM PLTs.
@@ -7769,7 +7783,7 @@ Output_data_plt_arm_standard<big_endian>::do_fill_first_plt_entry(
 {
   // Write first PLT entry.  All but the last word are constants.
   const size_t num_first_plt_words = (sizeof(first_plt_entry)
-				      / sizeof(plt_entry[0]));
+				      / sizeof(first_plt_entry[0]));
   for (size_t i = 0; i < num_first_plt_words - 1; i++)
     elfcpp::Swap<32, big_endian>::writeval(pov + i * 4, first_plt_entry[i]);
   // Last word in first PLT entry is &GOT[0] - .
@@ -7778,9 +7792,39 @@ Output_data_plt_arm_standard<big_endian>::do_fill_first_plt_entry(
 }
 
 // Subsequent entries in the PLT.
+// This class generates short (12-byte) entries, for displacements up to 2^28.
 
 template<bool big_endian>
-const uint32_t Output_data_plt_arm_standard<big_endian>::plt_entry[3] =
+class Output_data_plt_arm_short : public Output_data_plt_arm_standard<big_endian>
+{
+ public:
+  Output_data_plt_arm_short(Layout* layout,
+			    Arm_output_data_got<big_endian>* got,
+			    Output_data_space* got_plt,
+			    Output_data_space* got_irelative)
+    : Output_data_plt_arm_standard<big_endian>(layout, got, got_plt, got_irelative)
+  { }
+
+ protected:
+  // Return the size of a PLT entry.
+  virtual unsigned int
+  do_get_plt_entry_size() const
+  { return sizeof(plt_entry); }
+
+  virtual void
+  do_fill_plt_entry(unsigned char* pov,
+		    Arm_address got_address,
+		    Arm_address plt_address,
+		    unsigned int got_offset,
+		    unsigned int plt_offset);
+
+ private:
+  // Template for subsequent PLT entries.
+  static const uint32_t plt_entry[3];
+};
+
+template<bool big_endian>
+const uint32_t Output_data_plt_arm_short<big_endian>::plt_entry[3] =
 {
   0xe28fc600,	// add   ip, pc, #0xNN00000
   0xe28cca00,	// add   ip, ip, #0xNN000
@@ -7789,7 +7833,69 @@ const uint32_t Output_data_plt_arm_standard<big_endian>::plt_entry[3] =
 
 template<bool big_endian>
 void
-Output_data_plt_arm_standard<big_endian>::do_fill_plt_entry(
+Output_data_plt_arm_short<big_endian>::do_fill_plt_entry(
+    unsigned char* pov,
+    Arm_address got_address,
+    Arm_address plt_address,
+    unsigned int got_offset,
+    unsigned int plt_offset)
+{
+  int32_t offset = ((got_address + got_offset)
+		    - (plt_address + plt_offset + 8));
+  if (offset < 0 || offset > 0x0fffffff)
+    gold_error(_("PLT offset too large, try linking with --long-plt"));
+
+  uint32_t plt_insn0 = plt_entry[0] | ((offset >> 20) & 0xff);
+  elfcpp::Swap<32, big_endian>::writeval(pov, plt_insn0);
+  uint32_t plt_insn1 = plt_entry[1] | ((offset >> 12) & 0xff);
+  elfcpp::Swap<32, big_endian>::writeval(pov + 4, plt_insn1);
+  uint32_t plt_insn2 = plt_entry[2] | (offset & 0xfff);
+  elfcpp::Swap<32, big_endian>::writeval(pov + 8, plt_insn2);
+}
+
+// This class generates long (16-byte) entries, for arbitrary displacements.
+
+template<bool big_endian>
+class Output_data_plt_arm_long : public Output_data_plt_arm_standard<big_endian>
+{
+ public:
+  Output_data_plt_arm_long(Layout* layout,
+			   Arm_output_data_got<big_endian>* got,
+			   Output_data_space* got_plt,
+			   Output_data_space* got_irelative)
+    : Output_data_plt_arm_standard<big_endian>(layout, got, got_plt, got_irelative)
+  { }
+
+ protected:
+  // Return the size of a PLT entry.
+  virtual unsigned int
+  do_get_plt_entry_size() const
+  { return sizeof(plt_entry); }
+
+  virtual void
+  do_fill_plt_entry(unsigned char* pov,
+		    Arm_address got_address,
+		    Arm_address plt_address,
+		    unsigned int got_offset,
+		    unsigned int plt_offset);
+
+ private:
+  // Template for subsequent PLT entries.
+  static const uint32_t plt_entry[4];
+};
+
+template<bool big_endian>
+const uint32_t Output_data_plt_arm_long<big_endian>::plt_entry[4] =
+{
+  0xe28fc200,	// add   ip, pc, #0xN0000000
+  0xe28cc600,	// add   ip, ip, #0xNN00000
+  0xe28cca00,	// add   ip, ip, #0xNN000
+  0xe5bcf000,	// ldr   pc, [ip, #0xNNN]!
+};
+
+template<bool big_endian>
+void
+Output_data_plt_arm_long<big_endian>::do_fill_plt_entry(
     unsigned char* pov,
     Arm_address got_address,
     Arm_address plt_address,
@@ -7799,13 +7905,14 @@ Output_data_plt_arm_standard<big_endian>::do_fill_plt_entry(
   int32_t offset = ((got_address + got_offset)
 		    - (plt_address + plt_offset + 8));
 
-  gold_assert(offset >= 0 && offset < 0x0fffffff);
-  uint32_t plt_insn0 = plt_entry[0] | ((offset >> 20) & 0xff);
+  uint32_t plt_insn0 = plt_entry[0] | (offset >> 28);
   elfcpp::Swap<32, big_endian>::writeval(pov, plt_insn0);
-  uint32_t plt_insn1 = plt_entry[1] | ((offset >> 12) & 0xff);
+  uint32_t plt_insn1 = plt_entry[1] | ((offset >> 20) & 0xff);
   elfcpp::Swap<32, big_endian>::writeval(pov + 4, plt_insn1);
-  uint32_t plt_insn2 = plt_entry[2] | (offset & 0xfff);
+  uint32_t plt_insn2 = plt_entry[2] | ((offset >> 12) & 0xff);
   elfcpp::Swap<32, big_endian>::writeval(pov + 8, plt_insn2);
+  uint32_t plt_insn3 = plt_entry[3] | (offset & 0xfff);
+  elfcpp::Swap<32, big_endian>::writeval(pov + 12, plt_insn3);
 }
 
 // Write out the PLT.  This uses the hand-coded instructions above,
@@ -9089,8 +9196,7 @@ Target_arm<big_endian>::gc_process_relocs(
   typedef Target_arm<big_endian> Arm;
   typedef typename Target_arm<big_endian>::Scan Scan;
 
-  gold::gc_process_relocs<32, big_endian, Arm, elfcpp::SHT_REL, Scan,
-			  typename Target_arm::Relocatable_size_for_reloc>(
+  gold::gc_process_relocs<32, big_endian, Arm, Scan, Classify_reloc>(
     symtab,
     layout,
     this,
@@ -9120,7 +9226,6 @@ Target_arm<big_endian>::scan_relocs(Symbol_table* symtab,
 				    size_t local_symbol_count,
 				    const unsigned char* plocal_symbols)
 {
-  typedef typename Target_arm<big_endian>::Scan Scan;
   if (sh_type == elfcpp::SHT_RELA)
     {
       gold_error(_("%s: unsupported RELA reloc section"),
@@ -9128,7 +9233,7 @@ Target_arm<big_endian>::scan_relocs(Symbol_table* symtab,
       return;
     }
 
-  gold::scan_relocs<32, big_endian, Target_arm, elfcpp::SHT_REL, Scan>(
+  gold::scan_relocs<32, big_endian, Target_arm, Scan, Classify_reloc>(
     symtab,
     layout,
     this,
@@ -9323,11 +9428,11 @@ template<bool big_endian>
 inline bool
 Target_arm<big_endian>::Relocate::relocate(
     const Relocate_info<32, big_endian>* relinfo,
+    unsigned int,
     Target_arm* target,
     Output_section* output_section,
     size_t relnum,
-    const elfcpp::Rel<32, big_endian>& rel,
-    unsigned int r_type,
+    const unsigned char* preloc,
     const Sized_symbol<32>* gsym,
     const Symbol_value<32>* psymval,
     unsigned char* view,
@@ -9339,6 +9444,8 @@ Target_arm<big_endian>::Relocate::relocate(
 
   typedef Arm_relocate_functions<big_endian> Arm_relocate_functions;
 
+  const elfcpp::Rel<32, big_endian> rel(preloc);
+  unsigned int r_type = elfcpp::elf_r_type<32>(rel.get_r_info());
   r_type = get_real_reloc_type(r_type);
   const Arm_reloc_property* reloc_property =
     arm_reloc_property_table->get_implemented_static_reloc_property(r_type);
@@ -10026,8 +10133,8 @@ Target_arm<big_endian>::relocate_section(
 	}
     }
 
-  gold::relocate_section<32, big_endian, Target_arm, elfcpp::SHT_REL,
-			 Arm_relocate, gold::Default_comdat_behavior>(
+  gold::relocate_section<32, big_endian, Target_arm, Arm_relocate,
+			 gold::Default_comdat_behavior, Classify_reloc>(
     relinfo,
     this,
     prelocs,
@@ -10045,7 +10152,7 @@ Target_arm<big_endian>::relocate_section(
 
 template<bool big_endian>
 unsigned int
-Target_arm<big_endian>::Relocatable_size_for_reloc::get_size_for_reloc(
+Target_arm<big_endian>::Classify_reloc::get_size_for_reloc(
     unsigned int r_type,
     Relobj* object)
 {
@@ -10082,13 +10189,12 @@ Target_arm<big_endian>::scan_relocatable_relocs(
     const unsigned char* plocal_symbols,
     Relocatable_relocs* rr)
 {
+  typedef Arm_scan_relocatable_relocs<big_endian, Classify_reloc>
+      Scan_relocatable_relocs;
+
   gold_assert(sh_type == elfcpp::SHT_REL);
 
-  typedef Arm_scan_relocatable_relocs<big_endian, elfcpp::SHT_REL,
-    Relocatable_size_for_reloc> Scan_relocatable_relocs;
-
-  gold::scan_relocatable_relocs<32, big_endian, elfcpp::SHT_REL,
-      Scan_relocatable_relocs>(
+  gold::scan_relocatable_relocs<32, big_endian, Scan_relocatable_relocs>(
     symtab,
     layout,
     object,
@@ -10099,6 +10205,44 @@ Target_arm<big_endian>::scan_relocatable_relocs(
     needs_special_offset_handling,
     local_symbol_count,
     plocal_symbols,
+    rr);
+}
+
+// Scan the relocs for --emit-relocs.
+
+template<bool big_endian>
+void
+Target_arm<big_endian>::emit_relocs_scan(Symbol_table* symtab,
+    Layout* layout,
+    Sized_relobj_file<32, big_endian>* object,
+    unsigned int data_shndx,
+    unsigned int sh_type,
+    const unsigned char* prelocs,
+    size_t reloc_count,
+    Output_section* output_section,
+    bool needs_special_offset_handling,
+    size_t local_symbol_count,
+    const unsigned char* plocal_syms,
+    Relocatable_relocs* rr)
+{
+  typedef gold::Default_classify_reloc<elfcpp::SHT_REL, 32, big_endian>
+      Classify_reloc;
+  typedef gold::Default_emit_relocs_strategy<Classify_reloc>
+      Emit_relocs_strategy;
+
+  gold_assert(sh_type == elfcpp::SHT_REL);
+
+  gold::scan_relocatable_relocs<32, big_endian, Emit_relocs_strategy>(
+    symtab,
+    layout,
+    object,
+    data_shndx,
+    prelocs,
+    reloc_count,
+    output_section,
+    needs_special_offset_handling,
+    local_symbol_count,
+    plocal_syms,
     rr);
 }
 
@@ -10113,7 +10257,6 @@ Target_arm<big_endian>::relocate_relocs(
     size_t reloc_count,
     Output_section* output_section,
     typename elfcpp::Elf_types<32>::Elf_Off offset_in_output_section,
-    const Relocatable_relocs* rr,
     unsigned char* view,
     Arm_address view_address,
     section_size_type view_size,
@@ -10122,13 +10265,12 @@ Target_arm<big_endian>::relocate_relocs(
 {
   gold_assert(sh_type == elfcpp::SHT_REL);
 
-  gold::relocate_relocs<32, big_endian, elfcpp::SHT_REL>(
+  gold::relocate_relocs<32, big_endian, Classify_reloc>(
     relinfo,
     prelocs,
     reloc_count,
     output_section,
     offset_in_output_section,
-    rr,
     view,
     view_address,
     view_size,
@@ -12282,10 +12424,9 @@ Target_arm<big_endian>::relocate_stub(
       elfcpp::Rel_write<32, big_endian> reloc_write(reloc_buffer);
       reloc_write.put_r_offset(reloc_offset);
       reloc_write.put_r_info(elfcpp::elf_r_info<32>(0, r_type));
-      elfcpp::Rel<32, big_endian> rel(reloc_buffer);
 
-      relocate.relocate(relinfo, this, output_section,
-			this->fake_relnum_for_stubs, rel, r_type,
+      relocate.relocate(relinfo, elfcpp::SHT_REL, this, output_section,
+			this->fake_relnum_for_stubs, reloc_buffer,
 			NULL, &symval, view + reloc_offset,
 			address + reloc_offset, reloc_size);
     }

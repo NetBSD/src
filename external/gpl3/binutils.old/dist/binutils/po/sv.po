@@ -1,18 +1,18 @@
 # Swedish messages for binutils.
-# Copyright © 2001, 2002, 2013, 2014 Free Software Foundation, Inc.
+# Copyright © 2001, 2002, 2013, 2014, 2016 Free Software Foundation, Inc.
 # This file is distributed under the same license as the binutils package.
 #
 # Tommy Pettersson <ptp@lysator.liu.se>, 2001, 2002, 2004.
-# Göran Uddeborg <goeran@uddeborg.se>, 2013, 2014.
+# Göran Uddeborg <goeran@uddeborg.se>, 2013, 2014, 2016.
 #
-# $Revision: 1.1.1.2 $
+# $Revision: 1.1.1.3 $
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: binutils 2.24.90\n"
 "Report-Msgid-Bugs-To: bug-binutils@gnu.org\n"
 "POT-Creation-Date: 2014-02-10 09:42+1030\n"
-"PO-Revision-Date: 2014-11-02 22:54+0100\n"
+"PO-Revision-Date: 2016-05-14 18:23+0200\n"
 "Last-Translator: Göran Uddeborg <goeran@uddeborg.se>\n"
 "Language-Team: Swedish <tp-sv@listor.tp-sv.se>\n"
 "Language: sv\n"
@@ -112,7 +112,7 @@ msgstr "%s: kan inte hitta sektionen %s"
 #: addr2line.c:457 nm.c:1572 objdump.c:3479
 #, c-format
 msgid "unknown demangling style `%s'"
-msgstr "okänd avkodningsstil \"%s\""
+msgstr "okänd avkodningsstil ”%s”"
 
 #: ar.c:253
 #, c-format
@@ -374,11 +374,11 @@ msgstr "modifieraren ”u” ignoreras eftersom ”D” är standard (se ”U”
 
 #: ar.c:781
 msgid "`N' is only meaningful with the `x' and `d' options."
-msgstr "\"N\" är bara meningsfull tillsammans med \"x\" eller \"d\"."
+msgstr "”N” är bara meningsfull tillsammans med ”x” eller ”d”."
 
 #: ar.c:784
 msgid "Value for `N' must be positive."
-msgstr "Argumentet till \"N\" måste vara positivt."
+msgstr "Argumentet till ”N” måste vara positivt."
 
 #: ar.c:798
 msgid "`x' cannot be used on thin archives."
@@ -504,7 +504,7 @@ msgstr "  emuleringsflaggor:\n"
 #: bucomm.c:164
 #, c-format
 msgid "can't set BFD default target to `%s': %s"
-msgstr "kan inte sätta BFD:s standardmål till \"%s\": %s"
+msgstr "kan inte sätta BFD:s standardmål till ”%s”: %s"
 
 #: bucomm.c:176
 #, c-format
@@ -1311,7 +1311,7 @@ msgstr "Kan inte öppna basfilen: %s"
 #: dlltool.c:4196
 #, c-format
 msgid "Machine '%s' not supported"
-msgstr "Maskin \"%s\" hanteras inte"
+msgstr "Maskin ”%s” hanteras inte"
 
 #: dlltool.c:4276
 #, c-format
@@ -1401,7 +1401,7 @@ msgstr "  Flaggor för %s:\n"
 #: dllwrap.c:485
 #, c-format
 msgid "   --driver-name <driver> Defaults to \"gcc\"\n"
-msgstr "   --driver-name <enhet>  Förvald till \"gcc\"\n"
+msgstr "   --driver-name <enhet>  Förvald till ”gcc”\n"
 
 #: dllwrap.c:486
 #, c-format
@@ -1411,7 +1411,7 @@ msgstr "   --driver-flags <flaggor> Förbigå förvalda flaggor för ld\n"
 #: dllwrap.c:487
 #, c-format
 msgid "   --dlltool-name <dlltool> Defaults to \"dlltool\"\n"
-msgstr "   --dlltool-name <dllverktyg> Förvalt till \"dlltool\"\n"
+msgstr "   --dlltool-name <dllverktyg> Förvalt till ”dlltool”\n"
 
 #: dllwrap.c:488
 #, c-format
@@ -2103,7 +2103,7 @@ msgstr "  Max operationer per instr:   %d\n"
 #: dwarf.c:2734
 #, c-format
 msgid "  Initial value of 'is_stmt':  %d\n"
-msgstr "  initialvärde på \"is_stmt\": %d\n"
+msgstr "  initialvärde på ”is_stmt”: %d\n"
 
 #: dwarf.c:2735
 #, c-format
@@ -2957,7 +2957,7 @@ msgstr "Visa felsökningsinnehållet i sektion %s hanteras inte än.\n"
 #: dwarf.c:6714 dwarf.c:6784
 #, c-format
 msgid "Unrecognized debug option '%s'\n"
-msgstr "Okänt felsökningsargument \"%s\"\n"
+msgstr "Okänt felsökningsargument ”%s”\n"
 
 #: elfcomm.c:42
 #, c-format
@@ -3670,7 +3670,7 @@ msgstr "ouppklarad programräknarrelativ relokering mot %s"
 #: nlmconv.c:1990
 #, c-format
 msgid "overflow when adjusting relocation against %s"
-msgstr "överspill vid justeringen av relokering mot %s"
+msgstr "överspill vid justeringen av omlokalisering mot %s"
 
 #: nlmconv.c:2117
 #, c-format
@@ -4207,7 +4207,7 @@ msgid ""
 "  -o <file>                        Place stripped output into <file>\n"
 msgstr ""
 "  -R --remove-section=<namn>       Ta bort sektion <namn> från utdatan\n"
-"  -s --strip-all                   Ta bort all symbol- och relokeringsinfo\n"
+"  -s --strip-all                   Ta bort all symbol- och omlokaliseringsinfo\n"
 "  -g -S -d --strip-debug           Ta bort alla felsökssymboler & -sektioner\n"
 "     --strip-dwo                   Ta bort alla DWO-sektioner\n"
 "     --strip-unneeded              Ta bort alla symboler som inte är\n"
@@ -4228,7 +4228,7 @@ msgstr ""
 #: objcopy.c:706
 #, c-format
 msgid "unrecognized section flag `%s'"
-msgstr "okänd sektionsflagga \"%s\""
+msgstr "okänd sektionsflagga ”%s”"
 
 #: objcopy.c:707
 #, c-format
@@ -4278,17 +4278,17 @@ msgstr "tar inte bort symbolen ”%s” för den namnges i en omlokalisering"
 #: objcopy.c:1375
 #, c-format
 msgid "%s: Multiple redefinition of symbol \"%s\""
-msgstr "%s: Flera omdefinieringar av symbol \"%s\""
+msgstr "%s: Flera omdefinieringar av symbol ”%s”"
 
 #: objcopy.c:1379
 #, c-format
 msgid "%s: Symbol \"%s\" is target of more than one redefinition"
-msgstr "%s: Mer än en symbol omdefinieras till \"%s\""
+msgstr "%s: Mer än en symbol omdefinieras till ”%s”"
 
 #: objcopy.c:1407
 #, c-format
 msgid "couldn't open symbol redefinition file %s (error: %s)"
-msgstr "kunde inte öppna fil \"%s\" med symbolomdefinieringar (fel: %s)"
+msgstr "kunde inte öppna fil ”%s” med symbolomdefinieringar (fel: %s)"
 
 #: objcopy.c:1485
 #, c-format
@@ -4670,8 +4670,8 @@ msgstr ""
 "                           VISA DWARF-info i filen\n"
 "  -t, --syms               Visa innehållet i symboltabellen(erna)\n"
 "  -T, --dynamic-syms       Visa innehållet i tabellen med dynamiska symboler\n"
-"  -r, --reloc              Visa relokeringsposterna i filen\n"
-"  -R, --dynamic-reloc      Visa de dynamiska relokeringsposterna i filen\n"
+"  -r, --reloc              Visa omlokaliseringsposterna i filen\n"
+"  -R, --dynamic-reloc      Visa de dynamiska omlokaliseringsposterna i filen\n"
 "  @<fil>                   Läs flaggor från <fil>\n"
 "  -v, --version            Visa programmets versionsinformation\n"
 "  -i, --info               Lista de objektformat och arkitekturer som hanteras\n"
@@ -4962,7 +4962,7 @@ msgstr "okänd -E-flagga"
 #: objdump.c:3536
 #, c-format
 msgid "unrecognized --endian type `%s'"
-msgstr "okänd --endian-typ \"%s\""
+msgstr "okänd --endian-typ ”%s”"
 
 #: od-macho.c:62
 #, c-format
@@ -5693,7 +5693,7 @@ msgstr "Kan inte läsa in 0x%lx byte av %s\n"
 
 #: readelf.c:678
 msgid "Don't know about relocations on this machine architecture\n"
-msgstr "Vet inget om relokering på denna maskinarkitektur\n"
+msgstr "Vet inget om omlokaliseringar på denna maskinarkitektur\n"
 
 #: readelf.c:699 readelf.c:797
 msgid "32-bit relocation data"
@@ -6020,7 +6020,7 @@ msgstr "Slut på minne vid allokering av tabell för önskade utskrifter.\n"
 #: readelf.c:3934
 #, c-format
 msgid "Invalid option '-%c'\n"
-msgstr "Ogiltig flagga \"-%c\"\n"
+msgstr "Ogiltig flagga ”-%c”\n"
 
 #: readelf.c:3949
 msgid "Nothing to do.\n"
@@ -6609,7 +6609,7 @@ msgid ""
 "'%s' relocation section at offset 0x%lx contains %ld bytes:\n"
 msgstr ""
 "\n"
-"\"%s\" relokeringssektion på offset 0x%lx innehåller %ld byte:\n"
+"”%s” omlokaliseringssektion på offset 0x%lx innehåller %ld byte:\n"
 
 #: readelf.c:5932
 #, c-format
@@ -6618,7 +6618,7 @@ msgid ""
 "There are no dynamic relocations in this file.\n"
 msgstr ""
 "\n"
-"Det finns inga dynamiska relokeringar i denna fil.\n"
+"Det finns inga dynamiska omlokaliseringar i denna fil.\n"
 
 #: readelf.c:5956
 #, c-format
@@ -6641,7 +6641,7 @@ msgid ""
 "There are no relocations in this file.\n"
 msgstr ""
 "\n"
-"Det finns inga relokeringar i denna fil.\n"
+"Det finns inga omlokaliseringar i denna fil.\n"
 
 #: readelf.c:6153
 #, c-format
@@ -6655,7 +6655,7 @@ msgstr "utrullningstabell"
 #: readelf.c:6248 readelf.c:6659 readelf.c:6942 readelf.c:6955
 #, c-format
 msgid "Skipping unexpected relocation type %s\n"
-msgstr "Hoppar över oväntad relokeringstyp %s\n"
+msgstr "Hoppar över oväntad omlokaliseringstyp %s\n"
 
 #: readelf.c:6310 readelf.c:6721 readelf.c:7682
 #, c-format
@@ -6679,7 +6679,7 @@ msgstr ""
 #: readelf.c:6378 readelf.c:6393 readelf.c:6728
 #, c-format
 msgid "'%s'"
-msgstr "\"%s\""
+msgstr "”%s”"
 
 #: readelf.c:6385
 msgid "unwind info"
@@ -7118,7 +7118,7 @@ msgid ""
 "Version symbols section '%s' contains %d entries:\n"
 msgstr ""
 "\n"
-"Versionsymbolssektion \"%s\" innehåller %d poster:\n"
+"Versionsymbolssektion ”%s” innehåller %d poster:\n"
 
 #: readelf.c:9026
 #, c-format
@@ -7249,7 +7249,7 @@ msgid ""
 "Symbol table '%s' contains %lu entries:\n"
 msgstr ""
 "\n"
-"Symboltabell \"%s\" innehåller %lu poster:\n"
+"Symboltabell ”%s” innehåller %lu poster:\n"
 
 #: readelf.c:9854
 #, c-format
@@ -7373,7 +7373,7 @@ msgid ""
 "Section '%s' has no data to dump.\n"
 msgstr ""
 "\n"
-"Sektion \"%s\" har ingen data att skriva ut.\n"
+"Sektion ”%s” har ingen data att skriva ut.\n"
 
 #: readelf.c:11011
 msgid "section contents"
@@ -7405,7 +7405,7 @@ msgid ""
 "Hex dump of section '%s':\n"
 msgstr ""
 "\n"
-"Hexadecimal utskrift av sektion \"%s\":\n"
+"Hexadecimal utskrift av sektion ”%s”:\n"
 
 #: readelf.c:11125
 #, c-format
@@ -7424,7 +7424,7 @@ msgid ""
 "Section '%s' has no debugging data.\n"
 msgstr ""
 "\n"
-"Sektion \"%s\" innehåller ingen felsökningsdata.\n"
+"Sektion ”%s” innehåller ingen felsökningsdata.\n"
 
 #. There is no point in dumping the contents of a debugging section
 #. which has the NOBITS type - the bits in the file will be random.
@@ -7759,7 +7759,7 @@ msgid ""
 "Section '%s' contains %d entries:\n"
 msgstr ""
 "\n"
-"Sektion \"%s\" innehåller %d poster:\n"
+"Sektion ”%s” innehåller %d poster:\n"
 
 #: readelf.c:12977
 msgid "conflict list found without a dynamic symbol table\n"
@@ -7901,7 +7901,7 @@ msgid ""
 "Library list section '%s' contains %lu entries:\n"
 msgstr ""
 "\n"
-"Bibliotekslistsektion \"%s\" innehåller %lu poster:\n"
+"Bibliotekslistsektion ”%s” innehåller %lu poster:\n"
 
 #: readelf.c:13288
 msgid "     Library              Time Stamp          Checksum   Version Flags"
@@ -8718,47 +8718,47 @@ msgstr "filnamn krävs för COFF-utdata"
 
 #: rescoff.c:714
 msgid "can't get BFD_RELOC_RVA relocation type"
-msgstr "kan inte få fram BFD_RELOC_RVA-relokeringstyp"
+msgstr "kan inte få fram BFD_RELOC_RVA-omlokaliseringstyp"
 
 #: resrc.c:257 resrc.c:328
 #, c-format
 msgid "can't open temporary file `%s': %s"
-msgstr "kan inte öppna temporärfil \"%s\": %s"
+msgstr "kan inte öppna temporärfil ”%s”: %s"
 
 #: resrc.c:263
 #, c-format
 msgid "can't redirect stdout: `%s': %s"
-msgstr "kan inte omdirigera standard ut: \"%s\": %s"
+msgstr "kan inte omdirigera standard ut: ”%s”: %s"
 
 #: resrc.c:324
 #, c-format
 msgid "can't execute `%s': %s"
-msgstr "kan inte exekvera \"%s\": %s"
+msgstr "kan inte exekvera ”%s”: %s"
 
 #: resrc.c:333
 #, c-format
 msgid "Using temporary file `%s' to read preprocessor output\n"
-msgstr "Läser utdata från förbehandlaren via temporärfil \"%s\"\n"
+msgstr "Läser utdata från preprocessorn via temporärfil ”%s”\n"
 
 #: resrc.c:340
 #, c-format
 msgid "can't popen `%s': %s"
-msgstr "kan inte anropa popen \"%s\": %s"
+msgstr "kan inte anropa popen ”%s”: %s"
 
 #: resrc.c:342
 #, c-format
 msgid "Using popen to read preprocessor output\n"
-msgstr "Läser utdata från förbehandlaren via popen\n"
+msgstr " Läser utdata från preprocessorn via popen\n"
 
 #: resrc.c:408
 #, c-format
 msgid "Tried `%s'\n"
-msgstr "Provade \"%s\"\n"
+msgstr "Provade ”%s”\n"
 
 #: resrc.c:419
 #, c-format
 msgid "Using `%s'\n"
-msgstr "Använder \"%s\"\n"
+msgstr "Använder ”%s”\n"
 
 #: resrc.c:603
 msgid "preprocessing failed."
@@ -8777,12 +8777,12 @@ msgstr "%s: läsning av %lu byte gav %lu"
 #: resrc.c:722 resrc.c:1497
 #, c-format
 msgid "stat failed on bitmap file `%s': %s"
-msgstr "stat misslyckades på bildfil \"%s\": %s"
+msgstr "stat misslyckades på bildfil ”%s”: %s"
 
 #: resrc.c:773
 #, c-format
 msgid "cursor file `%s' does not contain cursor data"
-msgstr "markörfil \"%s\" innehåller inte markördata"
+msgstr "markörfil ”%s” innehåller inte markördata"
 
 #: resrc.c:805 resrc.c:1205
 #, c-format
@@ -8805,7 +8805,7 @@ msgstr "stat misslyckades på typsnittsfilen ”%s”: %s"
 #: resrc.c:1174
 #, c-format
 msgid "icon file `%s' does not contain icon data"
-msgstr "ikonfil \"%s\" innehåller inte ikondata"
+msgstr "ikonfil ”%s” innehåller inte ikondata"
 
 #: resrc.c:1723 resrc.c:1758
 #, c-format
@@ -8815,7 +8815,7 @@ msgstr "stat misslyckades filen ”%s”: %s"
 #: resrc.c:1957
 #, c-format
 msgid "can't open `%s' for output: %s"
-msgstr "kan inte öppna \"%s\" för utmatning: %s"
+msgstr "kan inte öppna ”%s” för utmatning: %s"
 
 #: size.c:79
 #, c-format
@@ -8959,7 +8959,7 @@ msgstr "const/volatile-indikator saknas"
 #: stabs.c:2921
 #, c-format
 msgid "No mangling for \"%s\"\n"
-msgstr "Ingen kodning av \"%s\"\n"
+msgstr "Ingen kodning av ”%s”\n"
 
 #: stabs.c:3221
 msgid "Undefined N_EXCL"
@@ -8983,7 +8983,7 @@ msgstr "Okänd XCOFF-typ %d\n"
 #: stabs.c:3677
 #, c-format
 msgid "bad mangled name `%s'\n"
-msgstr "felaktigt manglat namn \"%s\"\n"
+msgstr "felaktigt manglat namn ”%s”\n"
 
 #: stabs.c:3772
 #, c-format
@@ -9242,7 +9242,7 @@ msgstr "infilen verkar inte vara UTF16.\n"
 #: windres.c:213
 #, c-format
 msgid "can't open %s `%s': %s"
-msgstr "kan inte öppna %s \"%s\": %s"
+msgstr "kan inte öppna %s ”%s”: %s"
 
 #: windres.c:382
 #, c-format
@@ -9262,7 +9262,7 @@ msgstr ": dubblett av värdet\n"
 #: windres.c:555
 #, c-format
 msgid "unknown format type `%s'"
-msgstr "okänd formattyp \"%s\""
+msgstr "okänd formattyp ”%s”"
 
 #: windres.c:556
 #, c-format
@@ -9382,4 +9382,4 @@ msgstr "stab_int_type: felaktig storlek %u"
 #: wrstabs.c:1393
 #, c-format
 msgid "%s: warning: unknown size for field `%s' in struct"
-msgstr "%s: varning: okänd storleken på fält \"%s\" i strukturen"
+msgstr "%s: varning: okänd storleken på fält ”%s” i strukturen"

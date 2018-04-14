@@ -2,7 +2,7 @@
    of basic-block info to/from gmon.out; computing and formatting of
    basic-block related statistics.
 
-   Copyright (C) 1999-2015 Free Software Foundation, Inc.
+   Copyright (C) 1999-2016 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -248,7 +248,7 @@ bb_write_blocks (FILE *ofp, const char *filename)
 	<filename>:<line-number>: (<function-name>:<bb-addr): <ncalls>  */
 
 void
-print_exec_counts ()
+print_exec_counts (void)
 {
   Sym **sorted_bbs, *sym;
   unsigned int i, j, len;
@@ -459,7 +459,7 @@ annotate_with_count (char *buf, unsigned int width, int line_num, PTR arg)
    regarding that source file are printed.  */
 
 void
-print_annotated_source ()
+print_annotated_source (void)
 {
   Sym *sym, *line_stats, *new_line;
   Source_File *sf;

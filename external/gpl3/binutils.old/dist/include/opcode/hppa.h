@@ -1,5 +1,5 @@
 /* Table of opcodes for the PA-RISC.
-   Copyright (C) 1990-2015 Free Software Foundation, Inc.
+   Copyright (C) 1990-2016 Free Software Foundation, Inc.
 
    Contributed by the Center for Software Science at the
    University of Utah (pa-gdb-bugs@cs.utah.edu).
@@ -42,7 +42,7 @@ struct pa_opcode
     const char *name;
     unsigned long int match;	/* Bits that must be set...  */
     unsigned long int mask;	/* ... in these bits. */
-    char *args;
+    const char *args;
     enum pa_arch arch;
     char flags;
 };

@@ -1,6 +1,6 @@
 // aarch64.cc -- aarch64 target support for gold.
 
-// Copyright (C) 2014-2015 Free Software Foundation, Inc.
+// Copyright (C) 2014-2016 Free Software Foundation, Inc.
 // Written by Jing Yu <jingyu@google.com> and Han Shen <shenhan@google.com>.
 
 // This file is part of gold.
@@ -1327,10 +1327,12 @@ Reloc_stub<size, big_endian>::stub_type_for_reloc(
   if (aarch64_valid_for_adrp_p(location, dest))
     return ST_ADRP_BRANCH;
 
-  if (parameters->options().output_is_position_independent()
-      && parameters->options().output_is_executable())
+  // Always use PC-relative addressing in case of -shared or -pie.
+  if (parameters->options().output_is_position_independent())
     return ST_LONG_BRANCH_PCREL;
 
+  // This saves 2 insns per stub, compared to ST_LONG_BRANCH_PCREL.
+  // But is only applicable to non-shared or non-pie.
   return ST_LONG_BRANCH_ABS;
 }
 
@@ -2869,6 +2871,21 @@ class Target_aarch64 : public Sized_target<size, big_endian>
 			  const unsigned char* plocal_symbols,
 			  Relocatable_relocs*);
 
+  // Scan the relocs for --emit-relocs.
+  void
+  emit_relocs_scan(Symbol_table* symtab,
+		   Layout* layout,
+		   Sized_relobj_file<size, big_endian>* object,
+		   unsigned int data_shndx,
+		   unsigned int sh_type,
+		   const unsigned char* prelocs,
+		   size_t reloc_count,
+		   Output_section* output_section,
+		   bool needs_special_offset_handling,
+		   size_t local_symbol_count,
+		   const unsigned char* plocal_syms,
+		   Relocatable_relocs* rr);
+
   // Relocate a section during a relocatable link.
   void
   relocate_relocs(
@@ -2878,7 +2895,6 @@ class Target_aarch64 : public Sized_target<size, big_endian>
       size_t reloc_count,
       Output_section* output_section,
       typename elfcpp::Elf_types<size>::Elf_Off offset_in_output_section,
-      const Relocatable_relocs*,
       unsigned char* view,
       typename elfcpp::Elf_types<size>::Elf_Addr view_address,
       section_size_type view_size,
@@ -3157,11 +3173,9 @@ class Target_aarch64 : public Sized_target<size, big_endian>
     // Do a relocation.  Return false if the caller should not issue
     // any warnings about this relocation.
     inline bool
-    relocate(const Relocate_info<size, big_endian>*, Target_aarch64*,
-	     Output_section*,
-	     size_t relnum, const elfcpp::Rela<size, big_endian>&,
-	     unsigned int r_type, const Sized_symbol<size>*,
-	     const Symbol_value<size>*,
+    relocate(const Relocate_info<size, big_endian>*, unsigned int,
+	     Target_aarch64*, Output_section*, size_t, const unsigned char*,
+	     const Sized_symbol<size>*, const Symbol_value<size>*,
 	     unsigned char*, typename elfcpp::Elf_types<size>::Elf_Addr,
 	     section_size_type);
 
@@ -3226,15 +3240,6 @@ class Target_aarch64 : public Sized_target<size, big_endian>
     bool skip_call_tls_get_addr_;
 
   };  // End of class Relocate
-
-  // A class which returns the size required for a relocation type,
-  // used while scanning relocs during a relocatable link.
-  class Relocatable_size_for_reloc
-  {
-   public:
-    unsigned int
-    get_size_for_reloc(unsigned int, Relobj*);
-  };
 
   // Adjust TLS relocation type based on the options and whether this
   // is a local symbol.
@@ -5101,6 +5106,8 @@ class AArch64_relocate_functions
       static_cast<Valtype>(val | (immed << doffset)));
   }
 
+ public:
+
   // Update selected bits in text.
 
   template<int valsize>
@@ -5127,8 +5134,6 @@ class AArch64_relocate_functions
 	    ? This::STATUS_OKAY
 	    : This::STATUS_OVERFLOW);
   }
-
- public:
 
   // Construct a B insn. Note, although we group it here with other relocation
   // operation, there is actually no 'relocation' involved here.
@@ -5953,8 +5958,6 @@ Target_aarch64<size, big_endian>::Scan::local(
 
   typedef Output_data_reloc<elfcpp::SHT_RELA, true, size, big_endian>
       Reloc_section;
-  Output_data_got_aarch64<size, big_endian>* got =
-      target->got_section(symtab, layout);
   unsigned int r_sym = elfcpp::elf_r_sym<size>(rela.get_r_info());
 
   // A local STT_GNU_IFUNC symbol may require a PLT entry.
@@ -5964,6 +5967,9 @@ Target_aarch64<size, big_endian>::Scan::local(
 
   switch (r_type)
     {
+    case elfcpp::R_AARCH64_NONE:
+      break;
+
     case elfcpp::R_AARCH64_ABS32:
     case elfcpp::R_AARCH64_ABS16:
       if (parameters->options().output_is_position_independent())
@@ -5996,8 +6002,11 @@ Target_aarch64<size, big_endian>::Scan::local(
 
     case elfcpp::R_AARCH64_ADR_GOT_PAGE:
     case elfcpp::R_AARCH64_LD64_GOT_LO12_NC:
-      // This pair of relocations is used to access a specific GOT entry.
+    case elfcpp::R_AARCH64_LD64_GOTPAGE_LO15:
+      // The above relocations are used to access GOT entries.
       {
+	Output_data_got_aarch64<size, big_endian>* got =
+	    target->got_section(symtab, layout);
 	bool is_new = false;
 	// This symbol requires a GOT entry.
 	if (is_ifunc)
@@ -6050,6 +6059,8 @@ Target_aarch64<size, big_endian>::Scan::local(
 	// Create a GOT entry for the tp-relative offset.
 	if (!parameters->doing_static_link())
 	  {
+	    Output_data_got_aarch64<size, big_endian>* got =
+		target->got_section(symtab, layout);
 	    got->add_local_with_rel(object, r_sym, GOT_TYPE_TLS_OFFSET,
 				    target->rela_dyn_section(layout),
 				    elfcpp::R_AARCH64_TLS_TPREL64);
@@ -6057,6 +6068,8 @@ Target_aarch64<size, big_endian>::Scan::local(
 	else if (!object->local_has_got_offset(r_sym,
 					       GOT_TYPE_TLS_OFFSET))
 	  {
+	    Output_data_got_aarch64<size, big_endian>* got =
+		target->got_section(symtab, layout);
 	    got->add_local(object, r_sym, GOT_TYPE_TLS_OFFSET);
 	    unsigned int got_offset =
 		object->local_got_offset(r_sym, GOT_TYPE_TLS_OFFSET);
@@ -6080,6 +6093,8 @@ Target_aarch64<size, big_endian>::Scan::local(
 	  }
 	gold_assert(tlsopt == tls::TLSOPT_NONE);
 
+	Output_data_got_aarch64<size, big_endian>* got =
+	    target->got_section(symtab, layout);
 	got->add_local_pair_with_rel(object,r_sym, data_shndx,
 				     GOT_TYPE_TLS_PAIR,
 				     target->rela_dyn_section(layout),
@@ -6214,6 +6229,9 @@ Target_aarch64<size, big_endian>::Scan::global(
 
   switch (r_type)
     {
+    case elfcpp::R_AARCH64_NONE:
+      break;
+
     case elfcpp::R_AARCH64_ABS16:
     case elfcpp::R_AARCH64_ABS32:
     case elfcpp::R_AARCH64_ABS64:
@@ -6321,8 +6339,9 @@ Target_aarch64<size, big_endian>::Scan::global(
 
     case elfcpp::R_AARCH64_ADR_GOT_PAGE:
     case elfcpp::R_AARCH64_LD64_GOT_LO12_NC:
+    case elfcpp::R_AARCH64_LD64_GOTPAGE_LO15:
       {
-	// This pair of relocations is used to access a specific GOT entry.
+	// The above relocations are used to access GOT entries.
 	// Note a GOT entry is an *address* to a symbol.
 	// The symbol requires a GOT entry
 	Output_data_got_aarch64<size, big_endian>* got =
@@ -6633,17 +6652,16 @@ Target_aarch64<size, big_endian>::gc_process_relocs(
     size_t local_symbol_count,
     const unsigned char* plocal_symbols)
 {
+  typedef Target_aarch64<size, big_endian> Aarch64;
+  typedef gold::Default_classify_reloc<elfcpp::SHT_RELA, size, big_endian>
+      Classify_reloc;
+
   if (sh_type == elfcpp::SHT_REL)
     {
       return;
     }
 
-  gold::gc_process_relocs<
-    size, big_endian,
-    Target_aarch64<size, big_endian>,
-    elfcpp::SHT_RELA,
-    typename Target_aarch64<size, big_endian>::Scan,
-    typename Target_aarch64<size, big_endian>::Relocatable_size_for_reloc>(
+  gold::gc_process_relocs<size, big_endian, Aarch64, Scan, Classify_reloc>(
     symtab,
     layout,
     this,
@@ -6674,13 +6692,18 @@ Target_aarch64<size, big_endian>::scan_relocs(
     size_t local_symbol_count,
     const unsigned char* plocal_symbols)
 {
+  typedef Target_aarch64<size, big_endian> Aarch64;
+  typedef gold::Default_classify_reloc<elfcpp::SHT_RELA, size, big_endian>
+      Classify_reloc;
+
   if (sh_type == elfcpp::SHT_REL)
     {
       gold_error(_("%s: unsupported REL reloc section"),
 		 object->name().c_str());
       return;
     }
-  gold::scan_relocs<size, big_endian, Target_aarch64, elfcpp::SHT_RELA, Scan>(
+
+  gold::scan_relocs<size, big_endian, Aarch64, Scan, Classify_reloc>(
     symtab,
     layout,
     this,
@@ -6812,11 +6835,11 @@ template<int size, bool big_endian>
 inline bool
 Target_aarch64<size, big_endian>::Relocate::relocate(
     const Relocate_info<size, big_endian>* relinfo,
+    unsigned int,
     Target_aarch64<size, big_endian>* target,
     Output_section* ,
     size_t relnum,
-    const elfcpp::Rela<size, big_endian>& rela,
-    unsigned int r_type,
+    const unsigned char* preloc,
     const Sized_symbol<size>* gsym,
     const Symbol_value<size>* psymval,
     unsigned char* view,
@@ -6828,6 +6851,8 @@ Target_aarch64<size, big_endian>::Relocate::relocate(
 
   typedef AArch64_relocate_functions<size, big_endian> Reloc;
 
+  const elfcpp::Rela<size, big_endian> rela(preloc);
+  unsigned int r_type = elfcpp::elf_r_type<size>(rela.get_r_info());
   const AArch64_reloc_property* reloc_property =
       aarch64_reloc_property_table->get_reloc_property(r_type);
 
@@ -7033,6 +7058,19 @@ Target_aarch64<size, big_endian>::Relocate::relocate(
       reloc_status = Reloc::template rela_general<32>(
 	view, value, addend, reloc_property);
       break;
+
+    case elfcpp::R_AARCH64_LD64_GOTPAGE_LO15:
+      {
+	gold_assert(have_got_offset);
+	value = target->got_->address() + got_base + got_offset + addend -
+	  Reloc::Page(target->got_->address() + got_base);
+	if ((value & 7) != 0)
+	  reloc_status = Reloc::STATUS_OVERFLOW;
+	else
+	  reloc_status = Reloc::template reloc_common<32>(
+	    view, value, reloc_property);
+	break;
+      }
 
     case elfcpp::R_AARCH64_TLSGD_ADR_PAGE21:
     case elfcpp::R_AARCH64_TLSGD_ADD_LO12_NC:
@@ -7413,12 +7451,6 @@ Target_aarch64<size, big_endian>::Relocate::relocate_tls(
 	      }
 	    if (tlsopt == tls::TLSOPT_TO_IE)
 	      {
-		if (tls_segment == NULL)
-		  {
-		    gold_assert(parameters->errors()->error_count() > 0
-				|| issue_undefined_symbol_error(gsym));
-		    return aarch64_reloc_funcs::STATUS_BAD_RELOC;
-		  }
 		return tls_desc_gd_to_ie(relinfo, target, rela, r_type,
 					 view, psymval, got_entry_address,
 					 address);
@@ -7869,10 +7901,15 @@ Target_aarch64<size, big_endian>::relocate_section(
     section_size_type view_size,
     const Reloc_symbol_changes* reloc_symbol_changes)
 {
-  gold_assert(sh_type == elfcpp::SHT_RELA);
+  typedef Target_aarch64<size, big_endian> Aarch64;
   typedef typename Target_aarch64<size, big_endian>::Relocate AArch64_relocate;
-  gold::relocate_section<size, big_endian, Target_aarch64, elfcpp::SHT_RELA,
-			 AArch64_relocate, gold::Default_comdat_behavior>(
+  typedef gold::Default_classify_reloc<elfcpp::SHT_RELA, size, big_endian>
+      Classify_reloc;
+
+  gold_assert(sh_type == elfcpp::SHT_RELA);
+
+  gold::relocate_section<size, big_endian, Aarch64, AArch64_relocate,
+			 gold::Default_comdat_behavior, Classify_reloc>(
     relinfo,
     this,
     prelocs,
@@ -7883,21 +7920,6 @@ Target_aarch64<size, big_endian>::relocate_section(
     address,
     view_size,
     reloc_symbol_changes);
-}
-
-// Return the size of a relocation while scanning during a relocatable
-// link.
-
-template<int size, bool big_endian>
-unsigned int
-Target_aarch64<size, big_endian>::Relocatable_size_for_reloc::
-get_size_for_reloc(
-    unsigned int ,
-    Relobj* )
-{
-  // We will never support SHT_REL relocations.
-  gold_unreachable();
-  return 0;
 }
 
 // Scan the relocs during a relocatable link.
@@ -7918,13 +7940,14 @@ Target_aarch64<size, big_endian>::scan_relocatable_relocs(
     const unsigned char* plocal_symbols,
     Relocatable_relocs* rr)
 {
+  typedef gold::Default_classify_reloc<elfcpp::SHT_RELA, size, big_endian>
+      Classify_reloc;
+  typedef gold::Default_scan_relocatable_relocs<Classify_reloc>
+      Scan_relocatable_relocs;
+
   gold_assert(sh_type == elfcpp::SHT_RELA);
 
-  typedef gold::Default_scan_relocatable_relocs<elfcpp::SHT_RELA,
-    Relocatable_size_for_reloc> Scan_relocatable_relocs;
-
-  gold::scan_relocatable_relocs<size, big_endian, elfcpp::SHT_RELA,
-      Scan_relocatable_relocs>(
+  gold::scan_relocatable_relocs<size, big_endian, Scan_relocatable_relocs>(
     symtab,
     layout,
     object,
@@ -7935,6 +7958,45 @@ Target_aarch64<size, big_endian>::scan_relocatable_relocs(
     needs_special_offset_handling,
     local_symbol_count,
     plocal_symbols,
+    rr);
+}
+
+// Scan the relocs for --emit-relocs.
+
+template<int size, bool big_endian>
+void
+Target_aarch64<size, big_endian>::emit_relocs_scan(
+    Symbol_table* symtab,
+    Layout* layout,
+    Sized_relobj_file<size, big_endian>* object,
+    unsigned int data_shndx,
+    unsigned int sh_type,
+    const unsigned char* prelocs,
+    size_t reloc_count,
+    Output_section* output_section,
+    bool needs_special_offset_handling,
+    size_t local_symbol_count,
+    const unsigned char* plocal_syms,
+    Relocatable_relocs* rr)
+{
+  typedef gold::Default_classify_reloc<elfcpp::SHT_RELA, size, big_endian>
+      Classify_reloc;
+  typedef gold::Default_emit_relocs_strategy<Classify_reloc>
+      Emit_relocs_strategy;
+
+  gold_assert(sh_type == elfcpp::SHT_RELA);
+
+  gold::scan_relocatable_relocs<size, big_endian, Emit_relocs_strategy>(
+    symtab,
+    layout,
+    object,
+    data_shndx,
+    prelocs,
+    reloc_count,
+    output_section,
+    needs_special_offset_handling,
+    local_symbol_count,
+    plocal_syms,
     rr);
 }
 
@@ -7949,22 +8011,23 @@ Target_aarch64<size, big_endian>::relocate_relocs(
     size_t reloc_count,
     Output_section* output_section,
     typename elfcpp::Elf_types<size>::Elf_Off offset_in_output_section,
-    const Relocatable_relocs* rr,
     unsigned char* view,
     typename elfcpp::Elf_types<size>::Elf_Addr view_address,
     section_size_type view_size,
     unsigned char* reloc_view,
     section_size_type reloc_view_size)
 {
+  typedef gold::Default_classify_reloc<elfcpp::SHT_RELA, size, big_endian>
+      Classify_reloc;
+
   gold_assert(sh_type == elfcpp::SHT_RELA);
 
-  gold::relocate_relocs<size, big_endian, elfcpp::SHT_RELA>(
+  gold::relocate_relocs<size, big_endian, Classify_reloc>(
     relinfo,
     prelocs,
     reloc_count,
     output_section,
     offset_in_output_section,
-    rr,
     view,
     view_address,
     view_size,
@@ -8212,10 +8275,6 @@ Target_aarch64<size, big_endian>::scan_erratum_843419_span(
 	    }
 	  if (do_report)
 	    {
-	      gold_info(_("Erratum 843419 found and fixed at \"%s\", "
-			     "section %d, offset 0x%08x."),
-			   relobj->name().c_str(), shndx,
-			   (unsigned int)(span_start + offset));
 	      unsigned int erratum_insn_offset =
 		span_start + offset + insn_offset;
 	      Address erratum_address =

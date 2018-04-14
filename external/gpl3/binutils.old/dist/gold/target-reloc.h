@@ -1,6 +1,6 @@
 // target-reloc.h -- target specific relocation support  -*- C++ -*-
 
-// Copyright (C) 2006-2015 Free Software Foundation, Inc.
+// Copyright (C) 2006-2016 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -39,8 +39,8 @@ namespace gold
 // avoid making a function call for each relocation, and to avoid
 // repeating the generic code for each target.
 
-template<int size, bool big_endian, typename Target_type, int sh_type,
-	 typename Scan>
+template<int size, bool big_endian, typename Target_type,
+	 typename Scan, typename Classify_reloc>
 inline void
 scan_relocs(
     Symbol_table* symtab,
@@ -55,8 +55,8 @@ scan_relocs(
     size_t local_count,
     const unsigned char* plocal_syms)
 {
-  typedef typename Reloc_types<sh_type, size, big_endian>::Reloc Reltype;
-  const int reloc_size = Reloc_types<sh_type, size, big_endian>::reloc_size;
+  typedef typename Classify_reloc::Reltype Reltype;
+  const int reloc_size = Classify_reloc::reloc_size;
   const int sym_size = elfcpp::Elf_sizes<size>::sym_size;
   Scan scan;
 
@@ -69,9 +69,8 @@ scan_relocs(
 						      reloc.get_r_offset()))
 	continue;
 
-      typename elfcpp::Elf_types<size>::Elf_WXword r_info = reloc.get_r_info();
-      unsigned int r_sym = elfcpp::elf_r_sym<size>(r_info);
-      unsigned int r_type = elfcpp::elf_r_type<size>(r_info);
+      unsigned int r_sym = Classify_reloc::get_r_sym(&reloc);
+      unsigned int r_type = Classify_reloc::get_r_type(&reloc);
 
       if (r_sym < local_count)
 	{
@@ -187,8 +186,10 @@ issue_undefined_symbol_error(const Symbol* sym)
   if (sym->is_weak_undefined())
     return false;
 
-  // We don't report symbols defined in discarded sections.
-  if (sym->is_defined_in_discarded_section())
+  // We don't report symbols defined in discarded sections,
+  // unless they're placeholder symbols that should have been
+  // provided by a plugin.
+  if (sym->is_defined_in_discarded_section() && !sym->is_placeholder())
     return false;
 
   // If the target defines this symbol, don't report it here.
@@ -253,9 +254,10 @@ issue_undefined_symbol_error(const Symbol* sym)
 // symbol for the relocation, ignoring the symbol index in the
 // relocation.
 
-template<int size, bool big_endian, typename Target_type, int sh_type,
+template<int size, bool big_endian, typename Target_type,
 	 typename Relocate,
-	 typename Relocate_comdat_behavior>
+	 typename Relocate_comdat_behavior,
+	 typename Classify_reloc>
 inline void
 relocate_section(
     const Relocate_info<size, big_endian>* relinfo,
@@ -269,8 +271,8 @@ relocate_section(
     section_size_type view_size,
     const Reloc_symbol_changes* reloc_symbol_changes)
 {
-  typedef typename Reloc_types<sh_type, size, big_endian>::Reloc Reltype;
-  const int reloc_size = Reloc_types<sh_type, size, big_endian>::reloc_size;
+  typedef typename Classify_reloc::Reltype Reltype;
+  const int reloc_size = Classify_reloc::reloc_size;
   Relocate relocate;
   Relocate_comdat_behavior relocate_comdat_behavior;
 
@@ -295,9 +297,7 @@ relocate_section(
 	    continue;
 	}
 
-      typename elfcpp::Elf_types<size>::Elf_WXword r_info = reloc.get_r_info();
-      unsigned int r_sym = elfcpp::elf_r_sym<size>(r_info);
-      unsigned int r_type = elfcpp::elf_r_type<size>(r_info);
+      unsigned int r_sym = Classify_reloc::get_r_sym(&reloc);
 
       const Sized_symbol<size>* sym;
 
@@ -400,9 +400,9 @@ relocate_section(
       if (offset < 0 || static_cast<section_size_type>(offset) >= view_size)
 	v = NULL;
 
-      if (!relocate.relocate(relinfo, target, output_section, i, reloc,
-			     r_type, sym, psymval, v, view_address + offset,
-			     view_size))
+      if (!relocate.relocate(relinfo, Classify_reloc::sh_type, target,
+			     output_section, i, prelocs, sym, psymval,
+			     v, view_address + offset, view_size))
 	continue;
 
       if (v == NULL)
@@ -443,7 +443,6 @@ apply_relocation(const Relocate_info<size, big_endian>* relinfo,
   // Construct the ELF relocation in a temporary buffer.
   const int reloc_size = elfcpp::Elf_sizes<size>::rela_size;
   unsigned char relbuf[reloc_size];
-  elfcpp::Rela<size, big_endian> rel(relbuf);
   elfcpp::Rela_write<size, big_endian> orel(relbuf);
   orel.put_r_offset(r_offset);
   orel.put_r_info(elfcpp::elf_r_info<size>(0, r_type));
@@ -461,22 +460,95 @@ apply_relocation(const Relocate_info<size, big_endian>* relinfo,
     symval.set_is_ifunc_symbol();
 
   Relocate relocate;
-  relocate.relocate(relinfo, target, NULL, -1U, rel, r_type, sym, &symval,
+  relocate.relocate(relinfo, elfcpp::SHT_RELA, target, NULL,
+		    -1U, relbuf, sym, &symval,
 		    view + r_offset, address + r_offset, view_size);
 }
 
-// This class may be used as a typical class for the
-// Scan_relocatable_reloc parameter to scan_relocatable_relocs.  The
-// template parameter Classify_reloc must be a class type which
-// provides a function get_size_for_reloc which returns the number of
-// bytes to which a reloc applies.  This class is intended to capture
-// the most typical target behaviour, while still permitting targets
-// to define their own independent class for Scan_relocatable_reloc.
+// A class for inquiring about properties of a relocation,
+// used while scanning relocs during a relocatable link and
+// garbage collection. This class may be used as the default
+// for SHT_RELA targets, but SHT_REL targets must implement
+// a derived class that overrides get_size_for_reloc.
+// The MIPS-64 target also needs to override the methods
+// for accessing the r_sym and r_type fields of a relocation,
+// due to its non-standard use of the r_info field.
 
-template<int sh_type, typename Classify_reloc>
+template<int sh_type_, int size, bool big_endian>
+class Default_classify_reloc
+{
+ public:
+  typedef typename Reloc_types<sh_type_, size, big_endian>::Reloc
+      Reltype;
+  typedef typename Reloc_types<sh_type_, size, big_endian>::Reloc_write
+      Reltype_write;
+  static const int reloc_size =
+      Reloc_types<sh_type_, size, big_endian>::reloc_size;
+  static const int sh_type = sh_type_;
+
+  // Return the symbol referred to by the relocation.
+  static inline unsigned int
+  get_r_sym(const Reltype* reloc)
+  { return elfcpp::elf_r_sym<size>(reloc->get_r_info()); }
+
+  // Return the type of the relocation.
+  static inline unsigned int
+  get_r_type(const Reltype* reloc)
+  { return elfcpp::elf_r_type<size>(reloc->get_r_info()); }
+
+  // Return the explicit addend of the relocation (return 0 for SHT_REL).
+  static inline typename elfcpp::Elf_types<size>::Elf_Swxword
+  get_r_addend(const Reltype* reloc)
+  { return Reloc_types<sh_type_, size, big_endian>::get_reloc_addend(reloc); }
+
+  // Write the r_info field to a new reloc, using the r_info field from
+  // the original reloc, replacing the r_sym field with R_SYM.
+  static inline void
+  put_r_info(Reltype_write* new_reloc, Reltype* reloc, unsigned int r_sym)
+  {
+    unsigned int r_type = elfcpp::elf_r_type<size>(reloc->get_r_info());
+    new_reloc->put_r_info(elfcpp::elf_r_info<size>(r_sym, r_type));
+  }
+
+  // Write the r_addend field to a new reloc.
+  static inline void
+  put_r_addend(Reltype_write* to,
+	       typename elfcpp::Elf_types<size>::Elf_Swxword addend)
+  { Reloc_types<sh_type_, size, big_endian>::set_reloc_addend(to, addend); }
+
+  // Return the size of the addend of the relocation (only used for SHT_REL).
+  static unsigned int
+  get_size_for_reloc(unsigned int, Relobj*)
+  {
+    gold_unreachable();
+    return 0;
+  }
+};
+
+// This class may be used as a typical class for the
+// Scan_relocatable_reloc parameter to scan_relocatable_relocs.
+// This class is intended to capture the most typical target behaviour,
+// while still permitting targets to define their own independent class
+// for Scan_relocatable_reloc.
+
+template<typename Classify_reloc>
 class Default_scan_relocatable_relocs
 {
  public:
+  typedef typename Classify_reloc::Reltype Reltype;
+  static const int reloc_size = Classify_reloc::reloc_size;
+  static const int sh_type = Classify_reloc::sh_type;
+
+  // Return the symbol referred to by the relocation.
+  static inline unsigned int
+  get_r_sym(const Reltype* reloc)
+  { return Classify_reloc::get_r_sym(reloc); }
+
+  // Return the type of the relocation.
+  static inline unsigned int
+  get_r_type(const Reltype* reloc)
+  { return Classify_reloc::get_r_type(reloc); }
+
   // Return the strategy to use for a local symbol which is not a
   // section symbol, given the relocation type.
   inline Relocatable_relocs::Reloc_strategy
@@ -498,8 +570,7 @@ class Default_scan_relocatable_relocs
       return Relocatable_relocs::RELOC_ADJUST_FOR_SECTION_RELA;
     else
       {
-	Classify_reloc classify;
-	switch (classify.get_size_for_reloc(r_type, object))
+	switch (Classify_reloc::get_size_for_reloc(r_type, object))
 	  {
 	  case 0:
 	    return Relocatable_relocs::RELOC_ADJUST_FOR_SECTION_0;
@@ -524,6 +595,56 @@ class Default_scan_relocatable_relocs
   { return Relocatable_relocs::RELOC_COPY; }
 };
 
+// This is a strategy class used with scan_relocatable_relocs
+// and --emit-relocs.
+
+template<typename Classify_reloc>
+class Default_emit_relocs_strategy
+{
+ public:
+  typedef typename Classify_reloc::Reltype Reltype;
+  static const int reloc_size = Classify_reloc::reloc_size;
+  static const int sh_type = Classify_reloc::sh_type;
+
+  // Return the symbol referred to by the relocation.
+  static inline unsigned int
+  get_r_sym(const Reltype* reloc)
+  { return Classify_reloc::get_r_sym(reloc); }
+
+  // Return the type of the relocation.
+  static inline unsigned int
+  get_r_type(const Reltype* reloc)
+  { return Classify_reloc::get_r_type(reloc); }
+
+  // A local non-section symbol.
+  inline Relocatable_relocs::Reloc_strategy
+  local_non_section_strategy(unsigned int, Relobj*, unsigned int)
+  { return Relocatable_relocs::RELOC_COPY; }
+
+  // A local section symbol.
+  inline Relocatable_relocs::Reloc_strategy
+  local_section_strategy(unsigned int, Relobj*)
+  {
+    if (sh_type == elfcpp::SHT_RELA)
+      return Relocatable_relocs::RELOC_ADJUST_FOR_SECTION_RELA;
+    else
+      {
+	// The addend is stored in the section contents.  Since this
+	// is not a relocatable link, we are going to apply the
+	// relocation contents to the section as usual.  This means
+	// that we have no way to record the original addend.  If the
+	// original addend is not zero, there is basically no way for
+	// the user to handle this correctly.  Caveat emptor.
+	return Relocatable_relocs::RELOC_ADJUST_FOR_SECTION_0;
+      }
+  }
+
+  // A global symbol.
+  inline Relocatable_relocs::Reloc_strategy
+  global_strategy(unsigned int, Relobj*, unsigned int)
+  { return Relocatable_relocs::RELOC_COPY; }
+};
+
 // Scan relocs during a relocatable link.  This is a default
 // definition which should work for most targets.
 // Scan_relocatable_reloc must name a class type which provides three
@@ -532,8 +653,7 @@ class Default_scan_relocatable_relocs
 // local_section_strategy.  Most targets should be able to use
 // Default_scan_relocatable_relocs as this class.
 
-template<int size, bool big_endian, int sh_type,
-	 typename Scan_relocatable_reloc>
+template<int size, bool big_endian, typename Scan_relocatable_reloc>
 void
 scan_relocatable_relocs(
     Symbol_table*,
@@ -548,8 +668,8 @@ scan_relocatable_relocs(
     const unsigned char* plocal_syms,
     Relocatable_relocs* rr)
 {
-  typedef typename Reloc_types<sh_type, size, big_endian>::Reloc Reltype;
-  const int reloc_size = Reloc_types<sh_type, size, big_endian>::reloc_size;
+  typedef typename Scan_relocatable_reloc::Reltype Reltype;
+  const int reloc_size = Scan_relocatable_reloc::reloc_size;
   const int sym_size = elfcpp::Elf_sizes<size>::sym_size;
   Scan_relocatable_reloc scan;
 
@@ -565,10 +685,9 @@ scan_relocatable_relocs(
 	strategy = Relocatable_relocs::RELOC_DISCARD;
       else
 	{
-	  typename elfcpp::Elf_types<size>::Elf_WXword r_info =
-	    reloc.get_r_info();
-	  const unsigned int r_sym = elfcpp::elf_r_sym<size>(r_info);
-	  const unsigned int r_type = elfcpp::elf_r_type<size>(r_info);
+	  const unsigned int r_sym = Scan_relocatable_reloc::get_r_sym(&reloc);
+	  const unsigned int r_type =
+	      Scan_relocatable_reloc::get_r_type(&reloc);
 
 	  if (r_sym >= local_symbol_count)
 	    strategy = scan.global_strategy(r_type, object, r_sym);
@@ -611,7 +730,7 @@ scan_relocatable_relocs(
 // Relocate relocs.  Called for a relocatable link, and for --emit-relocs.
 // This is a default definition which should work for most targets.
 
-template<int size, bool big_endian, int sh_type>
+template<int size, bool big_endian, typename Classify_reloc>
 void
 relocate_relocs(
     const Relocate_info<size, big_endian>* relinfo,
@@ -619,7 +738,6 @@ relocate_relocs(
     size_t reloc_count,
     Output_section* output_section,
     typename elfcpp::Elf_types<size>::Elf_Off offset_in_output_section,
-    const Relocatable_relocs* rr,
     unsigned char* view,
     typename elfcpp::Elf_types<size>::Elf_Addr view_address,
     section_size_type view_size,
@@ -627,10 +745,9 @@ relocate_relocs(
     section_size_type reloc_view_size)
 {
   typedef typename elfcpp::Elf_types<size>::Elf_Addr Address;
-  typedef typename Reloc_types<sh_type, size, big_endian>::Reloc Reltype;
-  typedef typename Reloc_types<sh_type, size, big_endian>::Reloc_write
-    Reltype_write;
-  const int reloc_size = Reloc_types<sh_type, size, big_endian>::reloc_size;
+  typedef typename Classify_reloc::Reltype Reltype;
+  typedef typename Classify_reloc::Reltype_write Reltype_write;
+  const int reloc_size = Classify_reloc::reloc_size;
   const Address invalid_address = static_cast<Address>(0) - 1;
 
   Sized_relobj_file<size, big_endian>* const object = relinfo->object;
@@ -640,7 +757,7 @@ relocate_relocs(
 
   for (size_t i = 0; i < reloc_count; ++i, prelocs += reloc_size)
     {
-      Relocatable_relocs::Reloc_strategy strategy = rr->strategy(i);
+      Relocatable_relocs::Reloc_strategy strategy = relinfo->rr->strategy(i);
       if (strategy == Relocatable_relocs::RELOC_DISCARD)
 	continue;
 
@@ -649,8 +766,8 @@ relocate_relocs(
 	  // Target wants to handle this relocation.
 	  Sized_target<size, big_endian>* target =
 	    parameters->sized_target<size, big_endian>();
-	  target->relocate_special_relocatable(relinfo, sh_type, prelocs,
-					       i, output_section,
+	  target->relocate_special_relocatable(relinfo, Classify_reloc::sh_type,
+					       prelocs, i, output_section,
 					       offset_in_output_section,
 					       view, view_address,
 					       view_size, pwrite);
@@ -660,9 +777,7 @@ relocate_relocs(
       Reltype reloc(prelocs);
       Reltype_write reloc_write(pwrite);
 
-      typename elfcpp::Elf_types<size>::Elf_WXword r_info = reloc.get_r_info();
-      const unsigned int r_sym = elfcpp::elf_r_sym<size>(r_info);
-      const unsigned int r_type = elfcpp::elf_r_type<size>(r_info);
+      const unsigned int r_sym = Classify_reloc::get_r_sym(&reloc);
 
       // Get the new symbol index.
 
@@ -750,16 +865,15 @@ relocate_relocs(
 	}
 
       reloc_write.put_r_offset(new_offset);
-      reloc_write.put_r_info(elfcpp::elf_r_info<size>(new_symndx, r_type));
+      Classify_reloc::put_r_info(&reloc_write, &reloc, new_symndx);
 
       // Handle the reloc addend based on the strategy.
 
       if (strategy == Relocatable_relocs::RELOC_COPY)
 	{
-	  if (sh_type == elfcpp::SHT_RELA)
-	    Reloc_types<sh_type, size, big_endian>::
-	      copy_reloc_addend(&reloc_write,
-				&reloc);
+	  if (Classify_reloc::sh_type == elfcpp::SHT_RELA)
+	    Classify_reloc::put_r_addend(&reloc_write,
+					 Classify_reloc::get_r_addend(&reloc));
 	}
       else
 	{
@@ -779,12 +893,10 @@ relocate_relocs(
 	    case Relocatable_relocs::RELOC_ADJUST_FOR_SECTION_RELA:
 	      {
 		typename elfcpp::Elf_types<size>::Elf_Swxword addend;
-		addend = Reloc_types<sh_type, size, big_endian>::
-			   get_reloc_addend(&reloc);
+		addend = Classify_reloc::get_r_addend(&reloc);
 		gold_assert(os != NULL);
 		addend = psymval->value(object, addend) - os->address();
-		Reloc_types<sh_type, size, big_endian>::
-		  set_reloc_addend(&reloc_write, addend);
+		Classify_reloc::put_r_addend(&reloc_write, addend);
 	      }
 	      break;
 

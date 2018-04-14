@@ -1,6 +1,6 @@
 /* Test plugin for the GNU linker.  Check non-object IR file as well as
    get_input_file, get_view and release_input_file interfaces.
-   Copyright (C) 2015 Free Software Foundation, Inc.
+   Copyright (C) 2015-2016 Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
 
@@ -602,7 +602,7 @@ onall_symbols_read (void)
 #define EXPECTED_VIEW "/* The first line of this file must match the expectation of"
 #define EXPECTED_VIEW_LENGTH (sizeof (EXPECTED_VIEW) - 1)
       if (file.filesize != SIZE_OF_FUNC_C
-	  || SIZE_OF_FUNC_C < sizeof EXPECTED_VIEW_LENGTH
+	  || SIZE_OF_FUNC_C < EXPECTED_VIEW_LENGTH
 	  || memcmp (view, EXPECTED_VIEW, EXPECTED_VIEW_LENGTH) != 0)
 	{
 	  char result[EXPECTED_VIEW_LENGTH + 1];

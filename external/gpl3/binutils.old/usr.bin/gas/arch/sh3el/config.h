@@ -44,6 +44,10 @@
 /* Define if you want compressed debug sections by default. */
 /* #undef DEFAULT_FLAG_COMPRESS_DEBUG */
 
+/* Define to 1 if you want to generate ELF common symbols with the STT_COMMON
+   type by default. */
+#define DEFAULT_GENERATE_ELF_STT_COMMON 0
+
 /* Define to 1 if you want to generate x86 relax relocations by default. */
 #define DEFAULT_GENERATE_X86_RELAX_RELOCATIONS 1
 
@@ -264,7 +268,7 @@
 #define PACKAGE_NAME "gas"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "gas 2.26.1"
+#define PACKAGE_STRING "gas 2.27"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "gas"
@@ -273,7 +277,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "2.26.1"
+#define PACKAGE_VERSION "2.27"
 
 /* Define if defaulting to ELF on SCO 5. */
 /* #undef SCO_ELF */
@@ -319,6 +323,9 @@
 /* Target vendor. */
 #define TARGET_VENDOR ""
 
+/* Target specific CPU. */
+/* #undef TARGET_WITH_CPU */
+
 /* Use b modifier when opening binary files? */
 /* #undef USE_BINARY_FOPEN */
 
@@ -354,7 +361,7 @@
 /* #undef USING_CGEN */
 
 /* Version number of package */
-#define VERSION "2.26.1"
+#define VERSION "2.27"
 
 /* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
    significant byte first (like Motorola and SPARC, unlike Intel). */

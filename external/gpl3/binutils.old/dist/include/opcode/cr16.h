@@ -1,5 +1,5 @@
 /* cr16.h -- Header file for CR16 opcode and register tables.
-   Copyright (C) 2007-2015 Free Software Foundation, Inc.
+   Copyright (C) 2007-2016 Free Software Foundation, Inc.
    Contributed by M R Swami Reddy
 
    This file is part of GAS, GDB and the GNU binutils.

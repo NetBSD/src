@@ -1,5 +1,5 @@
 /* Insert/extract functions for the ARC opcodes.
-   Copyright 2015 Free Software Foundation, Inc.
+   Copyright (C) 2015-2016 Free Software Foundation, Inc.
 
    Contributed by Claudiu Zissulescu (claziss@synopsys.com)
 

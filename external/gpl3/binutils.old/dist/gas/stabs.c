@@ -1,5 +1,5 @@
 /* Generic stabs parsing for gas.
-   Copyright (C) 1989-2015 Free Software Foundation, Inc.
+   Copyright (C) 1989-2016 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -34,8 +34,8 @@
 
 int outputting_stabs_line_debug = 0;
 
-static void s_stab_generic (int, char *, char *);
-static void generate_asm_file (int, char *);
+static void s_stab_generic (int, const char *, const char *);
+static void generate_asm_file (int, const char *);
 
 /* Allow backends to override the names used for the stab sections.  */
 #ifndef STAB_SECTION_NAME
@@ -134,10 +134,7 @@ get_stab_string_offset (const char *string, const char *stabstr_secname)
 
 /* Here instead of obj-aout.c because other formats use it too.  */
 void
-aout_process_stab (what, string, type, other, desc)
-     int what;
-     const char *string;
-     int type, other, desc;
+aout_process_stab (int what, const char *string, int type, int other, int desc)
 {
   /* Put the stab information in the symbol table.  */
   symbolS *symbol;
@@ -176,10 +173,13 @@ aout_process_stab (what, string, type, other, desc)
    kinds of stab sections.  */
 
 static void
-s_stab_generic (int what, char *stab_secname, char *stabstr_secname)
+s_stab_generic (int          what,
+		const char * stab_secname,
+	       	const char * stabstr_secname)
 {
   long longint;
-  char *string, *saved_string_obstack_end;
+  const char *string;
+  char *saved_string_obstack_end;
   int type;
   int other;
   int desc;
@@ -429,9 +429,7 @@ s_xstab (int what)
      the stab section name.  */
   if (saved_secname == 0 || strcmp (saved_secname, stab_secname))
     {
-      stabstr_secname = (char *) xmalloc (strlen (stab_secname) + 4);
-      strcpy (stabstr_secname, stab_secname);
-      strcat (stabstr_secname, "str");
+      stabstr_secname = concat (stab_secname, "str", (char *) NULL);
       if (saved_secname)
 	{
 	  free (saved_secname);
@@ -448,8 +446,7 @@ s_xstab (int what)
 /* Frob invented at RMS' request. Set the n_desc of a symbol.  */
 
 void
-s_desc (ignore)
-     int ignore ATTRIBUTE_UNUSED;
+s_desc (int ignore ATTRIBUTE_UNUSED)
 {
   char *name;
   char c;
@@ -487,19 +484,19 @@ s_desc (ignore)
 void
 stabs_generate_asm_file (void)
 {
-  char *file;
+  const char *file;
   unsigned int lineno;
 
-  as_where (&file, &lineno);
+  file = as_where (&lineno);
   if (use_gnu_debug_info_extensions)
     {
       const char *dir;
       char *dir2;
 
       dir = remap_debug_filename (getpwd ());
-      dir2 = (char *) alloca (strlen (dir) + 2);
-      sprintf (dir2, "%s%s", dir, "/");
+      dir2 = concat (dir, "/", NULL);
       generate_asm_file (N_SO, dir2);
+      free (dir2);
       xfree ((char *) dir);
     }
   generate_asm_file (N_SO, file);
@@ -509,15 +506,15 @@ stabs_generate_asm_file (void)
    TYPE is one of N_SO, N_SOL.  */
 
 static void
-generate_asm_file (int type, char *file)
+generate_asm_file (int type, const char *file)
 {
   static char *last_file;
   static int label_count;
   char *hold;
   char sym[30];
   char *buf;
-  char *tmp = file;
-  char *file_endp = file + strlen (file);
+  const char *tmp = file;
+  const char *file_endp = file + strlen (file);
   char *bufp;
 
   if (last_file != NULL
@@ -536,13 +533,13 @@ generate_asm_file (int type, char *file)
   /* Allocate enough space for the file name (possibly extended with
      doubled up backslashes), the symbol name, and the other characters
      that make up a stabs file directive.  */
-  bufp = buf = (char *) xmalloc (2 * strlen (file) + strlen (sym) + 12);
+  bufp = buf = XNEWVEC (char, 2 * strlen (file) + strlen (sym) + 12);
 
   *bufp++ = '"';
 
   while (tmp < file_endp)
     {
-      char *bslash = strchr (tmp, '\\');
+      const char *bslash = strchr (tmp, '\\');
       size_t len = (bslash) ? (size_t) (bslash - tmp + 1) : strlen (tmp);
 
       /* Double all backslashes, since demand_copy_C_string (used by
@@ -580,7 +577,7 @@ stabs_generate_asm_lineno (void)
 {
   static int label_count;
   char *hold;
-  char *file;
+  const char *file;
   unsigned int lineno;
   char *buf;
   char sym[30];
@@ -595,7 +592,7 @@ stabs_generate_asm_lineno (void)
 
   hold = input_line_pointer;
 
-  as_where (&file, &lineno);
+  file = as_where (&lineno);
 
   /* Don't emit sequences of stabs for the same line.  */
   if (prev_file == NULL)
@@ -632,13 +629,13 @@ stabs_generate_asm_lineno (void)
 
   if (in_dot_func_p)
     {
-      buf = (char *) alloca (100 + strlen (current_function_label));
+      buf = XNEWVEC (char, 100 + strlen (current_function_label));
       sprintf (buf, "%d,0,%d,%s-%s\n", N_SLINE, lineno,
 	       sym, current_function_label);
     }
   else
     {
-      buf = (char *) alloca (100);
+      buf = XNEWVEC (char, 100);
       sprintf (buf, "%d,0,%d,%s\n", N_SLINE, lineno, sym);
     }
   input_line_pointer = buf;
@@ -647,6 +644,7 @@ stabs_generate_asm_lineno (void)
 
   input_line_pointer = hold;
   outputting_stabs_line_debug = 0;
+  free (buf);
 }
 
 /* Emit a function stab.
@@ -658,17 +656,16 @@ stabs_generate_asm_func (const char *funcname, const char *startlabname)
   static int void_emitted_p;
   char *hold = input_line_pointer;
   char *buf;
-  char *file;
   unsigned int lineno;
 
   if (! void_emitted_p)
     {
-      input_line_pointer = "\"void:t1=1\",128,0,0,0";
+      input_line_pointer = (char *) "\"void:t1=1\",128,0,0,0";
       s_stab ('s');
       void_emitted_p = 1;
     }
 
-  as_where (&file, &lineno);
+  as_where (&lineno);
   if (asprintf (&buf, "\"%s:F1\",%d,0,%d,%s",
 		funcname, N_FUN, lineno + 1, startlabname) == -1)
     as_fatal ("%s", xstrerror (errno));

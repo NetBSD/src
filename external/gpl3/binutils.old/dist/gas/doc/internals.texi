@@ -1,5 +1,5 @@
 \input texinfo
-@c  Copyright (C) 1991-2015 Free Software Foundation, Inc.
+@c  Copyright (C) 1991-2016 Free Software Foundation, Inc.
 @setfilename internals.info
 @node Top
 @top Assembler Internals
@@ -150,10 +150,6 @@ Set the name of the symbol.
 @item S_IS_EXTERNAL
 @cindex S_IS_EXTERNAL
 Return non-zero if the symbol is externally visible.
-
-@item S_IS_EXTERN
-@cindex S_IS_EXTERN
-A synonym for @code{S_IS_EXTERNAL}.  Don't use it.
 
 @item S_IS_WEAK
 @cindex S_IS_WEAK

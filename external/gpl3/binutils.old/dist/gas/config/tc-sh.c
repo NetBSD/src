@@ -1,5 +1,5 @@
 /* tc-sh.c -- Assemble code for the Renesas / SuperH SH
-   Copyright (C) 1993-2015 Free Software Foundation, Inc.
+   Copyright (C) 1993-2016 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -950,7 +950,7 @@ void
 md_begin (void)
 {
   const sh_opcode_info *opcode;
-  char *prev_name = "";
+  const char *prev_name = "";
   unsigned int target_arch;
 
   target_arch
@@ -987,7 +987,7 @@ static int reg_b;
 /* Try to parse a reg name.  Return the number of chars consumed.  */
 
 static unsigned int
-parse_reg_without_prefix (char *src, int *mode, int *reg)
+parse_reg_without_prefix (char *src, sh_arg_type *mode, int *reg)
 {
   char l0 = TOLOWER (src[0]);
   char l1 = l0 ? TOLOWER (src[1]) : 0;
@@ -1346,7 +1346,7 @@ parse_reg_without_prefix (char *src, int *mode, int *reg)
    $-prefixed register names if enabled by the user.  */
 
 static unsigned int
-parse_reg (char *src, int *mode, int *reg)
+parse_reg (char *src, sh_arg_type *mode, int *reg)
 {
   unsigned int prefix;
   unsigned int consumed;
@@ -1411,7 +1411,7 @@ static char *
 parse_at (char *src, sh_operand_info *op)
 {
   int len;
-  int mode;
+  sh_arg_type mode;
   src++;
   if (src[0] == '@')
     {
@@ -1583,7 +1583,7 @@ static void
 get_operand (char **ptr, sh_operand_info *op)
 {
   char *src = *ptr;
-  int mode = -1;
+  sh_arg_type mode = (sh_arg_type) -1;
   unsigned int len;
 
   if (src[0] == '#')
@@ -1677,7 +1677,7 @@ static sh_opcode_info *
 get_specific (sh_opcode_info *opcode, sh_operand_info *operands)
 {
   sh_opcode_info *this_try = opcode;
-  char *name = opcode->name;
+  const char *name = opcode->name;
   int n = 0;
 
   while (opcode->name)
@@ -2235,7 +2235,8 @@ get_specific (sh_opcode_info *opcode, sh_operand_info *operands)
 }
 
 static void
-insert (char *where, int how, int pcrel, sh_operand_info *op)
+insert (char *where, bfd_reloc_code_real_type how, int pcrel,
+       	sh_operand_info *op)
 {
   fix_new_exp (frag_now,
 	       where - frag_now->fr_literal,
@@ -2246,7 +2247,8 @@ insert (char *where, int how, int pcrel, sh_operand_info *op)
 }
 
 static void
-insert4 (char * where, int how, int pcrel, sh_operand_info * op)
+insert4 (char * where, bfd_reloc_code_real_type how, int pcrel,
+	 sh_operand_info * op)
 {
   fix_new_exp (frag_now,
 	       where - frag_now->fr_literal,
@@ -2292,7 +2294,6 @@ build_relax (sh_opcode_info *opcode, sh_operand_info *op)
 static char *
 insert_loop_bounds (char *output, sh_operand_info *operand)
 {
-  char *name;
   symbolS *end_sym;
 
   /* Since the low byte of the opcode will be overwritten by the reloc, we
@@ -2305,6 +2306,7 @@ insert_loop_bounds (char *output, sh_operand_info *operand)
   if (sh_relax)
     {
       static int count = 0;
+      char name[11];
 
       /* If the last loop insn is a two-byte-insn, it is in danger of being
 	 swapped with the insn after it.  To prevent this, create a new
@@ -2313,7 +2315,6 @@ insert_loop_bounds (char *output, sh_operand_info *operand)
 	 right in the middle, but four byte insns are not swapped anyways.  */
       /* A REPEAT takes 6 bytes.  The SH has a 32 bit address space.
 	 Hence a 9 digit number should be enough to count all REPEATs.  */
-      name = alloca (11);
       sprintf (name, "_R%x", count++ & 0x3fffffff);
       end_sym = symbol_new (name, undefined_section, 0, &zero_address_frag);
       /* Make this a local symbol.  */
@@ -3090,7 +3091,7 @@ md_undefined_symbol (char *name ATTRIBUTE_UNUSED)
 
 /* Various routines to kill one day.  */
 
-char *
+const char *
 md_atof (int type, char *litP, int *sizeP)
 {
   return ieee_md_atof (type, litP, sizeP, target_big_endian);
@@ -3181,7 +3182,7 @@ struct option md_longopts[] =
 size_t md_longopts_size = sizeof (md_longopts);
 
 int
-md_parse_option (int c, char *arg ATTRIBUTE_UNUSED)
+md_parse_option (int c, const char *arg ATTRIBUTE_UNUSED)
 {
   switch (c)
     {
@@ -4425,8 +4426,8 @@ tc_gen_reloc (asection *section ATTRIBUTE_UNUSED, fixS *fixp)
   arelent *rel;
   bfd_reloc_code_real_type r_type;
 
-  rel = (arelent *) xmalloc (sizeof (arelent));
-  rel->sym_ptr_ptr = (asymbol **) xmalloc (sizeof (asymbol *));
+  rel = XNEW (arelent);
+  rel->sym_ptr_ptr = XNEW (asymbol *);
   *rel->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_addsy);
   rel->address = fixp->fx_frag->fr_address + fixp->fx_where;
 
@@ -4490,7 +4491,7 @@ tc_gen_reloc (asection *section ATTRIBUTE_UNUSED, fixS *fixp)
 
 #ifdef OBJ_ELF
 inline static char *
-sh_end_of_match (char *cont, char *what)
+sh_end_of_match (char *cont, const char *what)
 {
   int len = strlen (what);
 
@@ -4603,7 +4604,7 @@ sh_regname_to_dw2regnum (char *regname)
   unsigned int i;
   const char *p;
   char *q;
-  static struct { char *name; int dw2regnum; } regnames[] =
+  static struct { const char *name; int dw2regnum; } regnames[] =
     {
       { "pr", 17 }, { "t", 18 }, { "gbr", 19 }, { "mach", 20 },
       { "macl", 21 }, { "fpul", 23 }

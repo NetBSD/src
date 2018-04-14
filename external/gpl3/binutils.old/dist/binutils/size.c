@@ -1,5 +1,5 @@
 /* size.c -- report size of various sections of an executable file.
-   Copyright (C) 1991-2015 Free Software Foundation, Inc.
+   Copyright (C) 1991-2016 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -499,8 +499,8 @@ print_berkeley_format (bfd *abfd)
 
   fputs (bfd_get_filename (abfd), stdout);
 
-  if (bfd_my_archive (abfd))
-    printf (" (ex %s)", bfd_get_filename (bfd_my_archive (abfd)));
+  if (abfd->my_archive)
+    printf (" (ex %s)", bfd_get_filename (abfd->my_archive));
 }
 
 /* I REALLY miss lexical functions! */
@@ -587,8 +587,8 @@ print_sysv_format (bfd *file)
   svi_total = 0;
   printf ("%s  ", bfd_get_filename (file));
 
-  if (bfd_my_archive (file))
-    printf (" (ex %s)", bfd_get_filename (bfd_my_archive (file)));
+  if (file->my_archive)
+    printf (" (ex %s)", bfd_get_filename (file->my_archive));
 
   printf (":\n%-*s   %*s   %*s\n", svi_namelen, "section",
 	  svi_sizelen, "size", svi_vmalen, "addr");
