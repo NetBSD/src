@@ -1,5 +1,5 @@
 /* os9k.h  -  OS-9000 i386 module header definitions
-   Copyright (C) 2000-2015 Free Software Foundation, Inc.
+   Copyright (C) 2000-2016 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
    
@@ -100,7 +100,7 @@ Boston, MA 02110-1301, USA.  */
 #define MODSIZE(mod) ((u_int32)((Mh_com)mod)->m_size)
 #endif /* 0 */
 #define MHCOM_BYTES_SIZE 80
-#define N_BADMAG(a) (((a).a_info) != MODSYNC)
+#define N_BADMAG(a) (((a)->a_info) != MODSYNC)
 
 typedef struct mh_com
 {

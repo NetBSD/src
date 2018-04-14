@@ -1,6 +1,6 @@
 // copy-relocs.cc -- handle COPY relocations for gold.
 
-// Copyright (C) 2006-2015 Free Software Foundation, Inc.
+// Copyright (C) 2006-2016 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -48,7 +48,7 @@ Copy_relocs<sh_type, size, big_endian>::copy_reloc(
     Output_data_reloc<sh_type, true, size, big_endian>* reloc_section)
 {
   if (this->need_copy_reloc(sym, object, shndx))
-    this->make_copy_reloc(symtab, layout, sym, reloc_section);
+    this->make_copy_reloc(symtab, layout, sym, object, reloc_section);
   else
     {
       // We may not need a COPY relocation.  Save this relocation to
@@ -111,10 +111,23 @@ Copy_relocs<sh_type, size, big_endian>::make_copy_reloc(
     Symbol_table* symtab,
     Layout* layout,
     Sized_symbol<size>* sym,
+    Sized_relobj_file<size, big_endian>* object,
     Output_data_reloc<sh_type, true, size, big_endian>* reloc_section)
 {
   // We should not be here if -z nocopyreloc is given.
   gold_assert(parameters->options().copyreloc());
+
+  gold_assert(sym->is_from_dynobj());
+
+  // The symbol must not have protected visibility.
+  if (sym->is_protected())
+    {
+      gold_error(_("%s: cannot make copy relocation for "
+		   "protected symbol '%s', defined in %s"),
+		 object->name().c_str(),
+		 sym->name(),
+		 sym->object()->name().c_str());
+    }
 
   typename elfcpp::Elf_types<size>::Elf_WXword symsize = sym->symsize();
 
@@ -124,7 +137,6 @@ Copy_relocs<sh_type, size, big_endian>::make_copy_reloc(
   // is defined; presumably we do not require an alignment larger than
   // that.  Then we reduce that alignment if the symbol is not aligned
   // within the section.
-  gold_assert(sym->is_from_dynobj());
   bool is_ordinary;
   unsigned int shndx = sym->shndx(&is_ordinary);
   gold_assert(is_ordinary);

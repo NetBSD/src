@@ -1,5 +1,5 @@
 /* This file defines the interface between the h8300 simulator and gdb.
-   Copyright (C) 2002-2015 Free Software Foundation, Inc.
+   Copyright (C) 2002-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,13 +19,9 @@
 #if !defined (SIM_H8300_H)
 #define SIM_H8300_H
 
-#ifdef __cplusplus
-extern "C" { //}
-#endif
-
 /* The simulator makes use of the following register information. */
 
-  enum sim_h8300_regs
+enum sim_h8300_regs
   {
     /* Registers common to all the H8 variants. */
     /* Start here: */
@@ -52,7 +48,7 @@ extern "C" { //}
     SIM_H8300_TICK_REGNUM
   };
 
-  enum
+enum
   {
     SIM_H8300_ARG_FIRST_REGNUM = SIM_H8300_R0_REGNUM, /* first reg in which an arg
                                                          may be passed */
@@ -63,15 +59,11 @@ extern "C" { //}
     SIM_H8300_SP_REGNUM = SIM_H8300_R7_REGNUM  /* Contains address of top of stack */
   };
 
-  enum
+enum
   {
     SIM_H8300_NUM_COMMON_REGS = 10,
     SIM_H8300_S_NUM_REGS = 13,
     SIM_H8300_NUM_REGS = 16
   };
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif				/* SIM_H8300_H */

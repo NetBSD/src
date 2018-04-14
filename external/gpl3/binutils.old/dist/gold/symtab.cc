@@ -1,6 +1,6 @@
 // symtab.cc -- the gold symbol table
 
-// Copyright (C) 2006-2015 Free Software Foundation, Inc.
+// Copyright (C) 2006-2016 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -80,6 +80,7 @@ Symbol::init_fields(const char* name, const char* version,
   this->undef_binding_set_ = false;
   this->undef_binding_weak_ = false;
   this->is_predefined_ = false;
+  this->is_protected_ = false;
 }
 
 // Return the demangled version of the symbol's name, but only
@@ -285,11 +286,12 @@ Sized_symbol<size>::init_constant(const char* name, const char* version,
 template<int size>
 void
 Sized_symbol<size>::init_undefined(const char* name, const char* version,
-				   elfcpp::STT type, elfcpp::STB binding,
-				   elfcpp::STV visibility, unsigned char nonvis)
+				   Value_type value, elfcpp::STT type,
+				   elfcpp::STB binding, elfcpp::STV visibility,
+				   unsigned char nonvis)
 {
   this->init_base_undefined(name, version, type, binding, visibility, nonvis);
-  this->value_ = 0;
+  this->value_ = value;
   this->symsize_ = 0;
 }
 
@@ -565,7 +567,8 @@ Symbol_table::Symbol_table(unsigned int count,
   : saw_undefined_(0), offset_(0), table_(count), namepool_(),
     forwarders_(), commons_(), tls_commons_(), small_commons_(),
     large_commons_(), forced_locals_(), warnings_(),
-    version_script_(version_script), gc_(NULL), icf_(NULL)
+    version_script_(version_script), gc_(NULL), icf_(NULL),
+    target_symbols_()
 {
   namepool_.reserve(count);
 }
@@ -863,6 +866,9 @@ Symbol_table::define_default_version(Sized_symbol<size>* sym,
       // other is defined in a shared object, then they are different
       // symbols.
 
+      // If the two symbols are from different shared objects,
+      // they are different symbols.
+
       // Otherwise, we just resolve the symbols as though they were
       // the same.
 
@@ -874,6 +880,10 @@ Symbol_table::define_default_version(Sized_symbol<size>* sym,
       else if (pdef->second->visibility() != elfcpp::STV_DEFAULT
 	       && sym->is_from_dynobj())
 	;
+      else if (pdef->second->is_from_dynobj()
+	       && sym->is_from_dynobj()
+	       && pdef->second->object() != sym->object())
+        ;
       else
 	{
 	  const Sized_symbol<size>* symdef;
@@ -1058,7 +1068,8 @@ Symbol_table::add_from_object(Object* object,
 	    ret = new Sized_symbol<size>();
 	  else
 	    {
-	      ret = target->make_symbol();
+	      ret = target->make_symbol(name, sym.get_st_type(), object,
+					st_shndx, sym.get_st_value());
 	      if (ret == NULL)
 		{
 		  // This means that we don't want a symbol table
@@ -1171,7 +1182,8 @@ Symbol_table::add_from_relobj(
 
       const char* name = sym_names + st_name;
 
-      if (strcmp (name, "__gnu_lto_slim") == 0)
+      if (!parameters->options().relocatable()
+	  && strcmp (name, "__gnu_lto_slim") == 0)
         gold_info(_("%s: plugin needed to handle lto object"),
 		  relobj->name().c_str());
 
@@ -1599,6 +1611,13 @@ Symbol_table::add_from_dynobj(
 	  && res->object() == dynobj)
 	object_symbols.push_back(res);
 
+      // If the symbol has protected visibility in the dynobj,
+      // mark it as such if it was not overridden.
+      if (res->source() == Symbol::FROM_OBJECT
+          && res->object() == dynobj
+          && sym.get_st_visibility() == elfcpp::STV_PROTECTED)
+        res->set_is_protected();
+
       if (sympointers != NULL)
 	(*sympointers)[i] = res;
     }
@@ -1857,7 +1876,8 @@ Symbol_table::define_special_symbol(const char** pname, const char** pversion,
     {
       Sized_target<size, big_endian>* sized_target =
 	parameters->sized_target<size, big_endian>();
-      sym = sized_target->make_symbol();
+      sym = sized_target->make_symbol(*pname, elfcpp::STT_NOTYPE,
+				      NULL, elfcpp::SHN_UNDEF, 0);
       if (sym == NULL)
         return NULL;
     }
@@ -2436,7 +2456,7 @@ Symbol_table::add_undefined_symbol_from_command_line(const char* name)
 
   gold_assert(oldsym == NULL);
 
-  sym->init_undefined(name, version, elfcpp::STT_NOTYPE, elfcpp::STB_GLOBAL,
+  sym->init_undefined(name, version, 0, elfcpp::STT_NOTYPE, elfcpp::STB_GLOBAL,
 		      elfcpp::STV_DEFAULT, 0);
   ++this->saw_undefined_;
 }
@@ -2532,6 +2552,17 @@ Symbol_table::set_dynsym_indexes(unsigned int index,
   // Finish up the versions.  In some cases this may add new dynamic
   // symbols.
   index = versions->finalize(this, index, syms);
+
+  // Process target-specific symbols.
+  for (std::vector<Symbol*>::iterator p = this->target_symbols_.begin();
+       p != this->target_symbols_.end();
+       ++p)
+    {
+      (*p)->set_dynsym_index(index);
+      ++index;
+      syms->push_back(*p);
+      dynpool->add((*p)->name(), false, NULL);
+    }
 
   return index;
 }
@@ -2636,6 +2667,14 @@ Symbol_table::sized_finalize(off_t off, Stringpool* pool,
       Symbol* sym = p->second;
       if (this->sized_finalize_symbol<size>(sym))
 	this->add_to_final_symtab<size>(sym, pool, &index, &off);
+    }
+
+  // Now do target-specific symbols.
+  for (std::vector<Symbol*>::iterator p = this->target_symbols_.begin();
+       p != this->target_symbols_.end();
+       ++p)
+    {
+      this->add_to_final_symtab<size>(*p, pool, &index, &off);
     }
 
   this->output_count_ = index - orig_index;
@@ -3104,6 +3143,54 @@ Symbol_table::sized_write_globals(const Stringpool* sympool,
 						     binding, dynpool, pd);
           // Allow a target to adjust dynamic symbol value.
           parameters->target().adjust_dyn_symbol(sym, pd);
+	}
+    }
+
+  // Write the target-specific symbols.
+  for (std::vector<Symbol*>::const_iterator p = this->target_symbols_.begin();
+       p != this->target_symbols_.end();
+       ++p)
+    {
+      Sized_symbol<size>* sym = static_cast<Sized_symbol<size>*>(*p);
+
+      unsigned int sym_index = sym->symtab_index();
+      unsigned int dynsym_index;
+      if (dynamic_view == NULL)
+	dynsym_index = -1U;
+      else
+	dynsym_index = sym->dynsym_index();
+
+      unsigned int shndx;
+      switch (sym->source())
+	{
+	case Symbol::IS_CONSTANT:
+	  shndx = elfcpp::SHN_ABS;
+	  break;
+	case Symbol::IS_UNDEFINED:
+	  shndx = elfcpp::SHN_UNDEF;
+	  break;
+	default:
+	  gold_unreachable();
+	}
+
+      if (sym_index != -1U)
+	{
+	  sym_index -= first_global_index;
+	  gold_assert(sym_index < output_count);
+	  unsigned char* ps = psyms + (sym_index * sym_size);
+	  this->sized_write_symbol<size, big_endian>(sym, sym->value(), shndx,
+						     sym->binding(), sympool,
+						     ps);
+	}
+
+      if (dynsym_index != -1U)
+	{
+	  dynsym_index -= first_dynamic_global_index;
+	  gold_assert(dynsym_index < dynamic_count);
+	  unsigned char* pd = dynamic_view + (dynsym_index * sym_size);
+	  this->sized_write_symbol<size, big_endian>(sym, sym->value(), shndx,
+						     sym->binding(), dynpool,
+						     pd);
 	}
     }
 
@@ -3745,6 +3832,21 @@ Sized_symbol<32>::init_output_data(const char* name, const char* version,
 				   unsigned char nonvis,
 				   bool offset_is_from_end,
 				   bool is_predefined);
+
+template
+void
+Sized_symbol<32>::init_constant(const char* name, const char* version,
+				Value_type value, Size_type symsize,
+				elfcpp::STT type, elfcpp::STB binding,
+				elfcpp::STV visibility, unsigned char nonvis,
+				bool is_predefined);
+
+template
+void
+Sized_symbol<32>::init_undefined(const char* name, const char* version,
+				 Value_type value, elfcpp::STT type,
+				 elfcpp::STB binding, elfcpp::STV visibility,
+				 unsigned char nonvis);
 #endif
 
 #if defined(HAVE_TARGET_64_LITTLE) || defined(HAVE_TARGET_64_BIG)
@@ -3758,6 +3860,21 @@ Sized_symbol<64>::init_output_data(const char* name, const char* version,
 				   unsigned char nonvis,
 				   bool offset_is_from_end,
 				   bool is_predefined);
+
+template
+void
+Sized_symbol<64>::init_constant(const char* name, const char* version,
+				Value_type value, Size_type symsize,
+				elfcpp::STT type, elfcpp::STB binding,
+				elfcpp::STV visibility, unsigned char nonvis,
+				bool is_predefined);
+
+template
+void
+Sized_symbol<64>::init_undefined(const char* name, const char* version,
+				 Value_type value, elfcpp::STT type,
+				 elfcpp::STB binding, elfcpp::STV visibility,
+				 unsigned char nonvis);
 #endif
 
 #ifdef HAVE_TARGET_32_LITTLE

@@ -1,6 +1,6 @@
 /* spu.c -- Assembler for the IBM Synergistic Processing Unit (SPU)
 
-   Copyright (C) 2006-2015 Free Software Foundation, Inc.
+   Copyright (C) 2006-2016 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -26,7 +26,7 @@
 
 const struct spu_opcode spu_opcodes[] = {
 #define APUOP(TAG,MACFORMAT,OPCODE,MNEMONIC,ASMFORMAT,DEP,PIPE) \
-	{ MACFORMAT, (OPCODE) << (32-11), MNEMONIC, ASMFORMAT },
+	{ MACFORMAT, (OPCODE ## u) << (32-11), MNEMONIC, ASMFORMAT },
 #define APUOPFB(TAG,MACFORMAT,OPCODE,FB,MNEMONIC,ASMFORMAT,DEP,PIPE) \
 	{ MACFORMAT, ((OPCODE) << (32-11)) | ((FB) << (32-18)), MNEMONIC, ASMFORMAT },
 #include "opcode/spu-insns.h"
@@ -156,7 +156,7 @@ static int emulate_apuasm;
 static int use_dd2 = 1;
 
 int
-md_parse_option (int c, char *arg ATTRIBUTE_UNUSED)
+md_parse_option (int c, const char *arg ATTRIBUTE_UNUSED)
 {
   switch (c)
     {
@@ -245,7 +245,7 @@ insn_fmt_string (struct spu_opcode *format)
   for (i = 1; i <= format->arg[0]; i++)
     {
       int arg = format->arg[i];
-      char *exp;
+      const char *exp;
       if (i > 1 && arg != A_P && format->arg[i-1] != A_P)
 	buf[len++] =  ',';
       if (arg == A_P)
@@ -716,7 +716,7 @@ get_imm (const char *param, struct spu_insn *insn, int arg)
   return param;
 }
 
-char *
+const char *
 md_atof (int type, char *litP, int *sizeP)
 {
   return ieee_md_atof (type, litP, sizeP, TRUE);
@@ -863,8 +863,8 @@ arelent *
 tc_gen_reloc (asection *seg ATTRIBUTE_UNUSED, fixS *fixp)
 {
   arelent *reloc;
-  reloc = (arelent *) xmalloc (sizeof (arelent));
-  reloc->sym_ptr_ptr = (asymbol **) xmalloc (sizeof (asymbol *));
+  reloc = XNEW (arelent);
+  reloc->sym_ptr_ptr = XNEW (asymbol *);
   if (fixp->fx_addsy)
     *reloc->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_addsy);
   else if (fixp->fx_subsy)

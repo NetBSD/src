@@ -1,5 +1,5 @@
 /* tc-mmix.h -- Header file for tc-mmix.c.
-   Copyright (C) 2001-2015 Free Software Foundation, Inc.
+   Copyright (C) 2001-2016 Free Software Foundation, Inc.
    Written by Hans-Peter Nilsson (hp@bitrange.com).
 
    This file is part of GAS, the GNU Assembler.
@@ -31,12 +31,6 @@ extern const char mmix_comment_chars[];
 
 extern const char mmix_symbol_chars[];
 #define tc_symbol_chars mmix_symbol_chars
-
-extern const char mmix_exp_chars[];
-#define EXP_CHARS mmix_exp_chars
-
-extern const char mmix_flt_chars[];
-#define FLT_CHARS mmix_flt_chars
 
 /* "@" is a synonym for ".".  */
 #define LEX_AT (LEX_BEGIN_NAME)

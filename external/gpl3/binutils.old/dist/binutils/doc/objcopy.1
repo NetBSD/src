@@ -133,7 +133,7 @@
 .\" ========================================================================
 .\"
 .IX Title "OBJCOPY 1"
-.TH OBJCOPY 1 "2016-06-29" "binutils-2.26.1" "GNU Development Tools"
+.TH OBJCOPY 1 "2016-08-03" "binutils-2.27" "GNU Development Tools"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -219,8 +219,7 @@ objcopy [\fB\-F\fR \fIbfdname\fR|\fB\-\-target=\fR\fIbfdname\fR]
         [\fB\-\-subsystem=\fR\fIwhich\fR:\fImajor\fR.\fIminor\fR]
         [\fB\-\-compress\-debug\-sections\fR]
         [\fB\-\-decompress\-debug\-sections\fR]
-        [\fB\-\-dwarf\-depth=\fR\fIn\fR]
-        [\fB\-\-dwarf\-start=\fR\fIn\fR]
+        [\fB\-\-elf\-stt\-common=\fR\fIval\fR]
         [\fB\-v\fR|\fB\-\-verbose\fR]
         [\fB\-V\fR|\fB\-\-version\fR]
         [\fB\-\-help\fR] [\fB\-\-info\fR]
@@ -1083,6 +1082,17 @@ renamed.
 .IX Item "--decompress-debug-sections"
 Decompress \s-1DWARF\s0 debug sections using zlib.  The original section
 names of the compressed sections are restored.
+.IP "\fB\-\-elf\-stt\-common=yes\fR" 4
+.IX Item "--elf-stt-common=yes"
+.PD 0
+.IP "\fB\-\-elf\-stt\-common=no\fR" 4
+.IX Item "--elf-stt-common=no"
+.PD
+For \s-1ELF\s0 files, these options control whether common symbols should be
+converted to the \f(CW\*(C`STT_COMMON\*(C'\fR or \f(CW\*(C`STT_OBJECT\*(C'\fR type.
+\&\fB\-\-elf\-stt\-common=yes\fR converts common symbol type to
+\&\f(CW\*(C`STT_COMMON\*(C'\fR. \fB\-\-elf\-stt\-common=no\fR converts common symbol
+type to \f(CW\*(C`STT_OBJECT\*(C'\fR.
 .IP "\fB\-V\fR" 4
 .IX Item "-V"
 .PD 0
@@ -1122,7 +1132,7 @@ with a backslash.  The \fIfile\fR may itself contain additional
 \&\fIld\fR\|(1), \fIobjdump\fR\|(1), and the Info entries for \fIbinutils\fR.
 .SH "COPYRIGHT"
 .IX Header "COPYRIGHT"
-Copyright (c) 1991\-2015 Free Software Foundation, Inc.
+Copyright (c) 1991\-2016 Free Software Foundation, Inc.
 .PP
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the \s-1GNU\s0 Free Documentation License, Version 1.3

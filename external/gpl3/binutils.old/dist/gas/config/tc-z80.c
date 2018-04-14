@@ -1,5 +1,5 @@
 /* tc-z80.c -- Assemble code for the Zilog Z80 and ASCII R800
-   Copyright (C) 2005-2015 Free Software Foundation, Inc.
+   Copyright (C) 2005-2016 Free Software Foundation, Inc.
    Contributed by Arnold Metselaar <arnold_m@operamail.com>
 
    This file is part of GAS, the GNU Assembler.
@@ -81,7 +81,7 @@ static int ins_err = INS_R800;
 static int ins_used = INS_Z80;
 
 int
-md_parse_option (int c, char* arg ATTRIBUTE_UNUSED)
+md_parse_option (int c, const char* arg ATTRIBUTE_UNUSED)
 {
   switch (c)
     {
@@ -163,7 +163,7 @@ static symbolS * zero;
 
 struct reg_entry
 {
-  char* name;
+  const char* name;
   int number;
 };
 #define R_STACKABLE (0x80)
@@ -249,7 +249,7 @@ md_begin (void)
         }
     }
   p = input_line_pointer;
-  input_line_pointer = "0";
+  input_line_pointer = (char *) "0";
   nul.X_md=0;
   expression (& nul);
   input_line_pointer = p;
@@ -384,7 +384,7 @@ md_undefined_symbol (char *name ATTRIBUTE_UNUSED)
   return NULL;
 }
 
-char *
+const char *
 md_atof (int type ATTRIBUTE_UNUSED, char *litP ATTRIBUTE_UNUSED,
 	 int *sizeP ATTRIBUTE_UNUSED)
 {
@@ -408,9 +408,9 @@ typedef const char * (asfunc)(char, char, const char*);
 
 typedef struct _table_t
 {
-  char* name;
-  char prefix;
-  char opcode;
+  const char* name;
+  unsigned char prefix;
+  unsigned char opcode;
   asfunc * fp;
 } table_t;
 
@@ -2058,8 +2058,8 @@ tc_gen_reloc (asection *seg ATTRIBUTE_UNUSED , fixS *fixp)
       return NULL;
     }
 
-  reloc               = xmalloc (sizeof (arelent));
-  reloc->sym_ptr_ptr  = xmalloc (sizeof (asymbol *));
+  reloc               = XNEW (arelent);
+  reloc->sym_ptr_ptr  = XNEW (asymbol *);
   *reloc->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_addsy);
   reloc->address      = fixp->fx_frag->fr_address + fixp->fx_where;
   reloc->howto        = bfd_reloc_type_lookup (stdoutput, fixp->fx_r_type);

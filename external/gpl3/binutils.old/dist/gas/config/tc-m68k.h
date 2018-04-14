@@ -1,5 +1,5 @@
 /* This file is tc-m68k.h
-   Copyright (C) 1987-2015 Free Software Foundation, Inc.
+   Copyright (C) 1987-2016 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -172,7 +172,7 @@ extern struct relax_type md_relax_table[];
 #define DWARF2_CIE_DATA_ALIGNMENT (-4)
 
 #define tc_regname_to_dw2regnum tc_m68k_regname_to_dw2regnum
-extern int tc_m68k_regname_to_dw2regnum (char *regname);
+extern int tc_m68k_regname_to_dw2regnum (const char *regname);
 
 #define tc_cfi_frame_initial_instructions tc_m68k_frame_initial_instructions
 extern void tc_m68k_frame_initial_instructions (void);

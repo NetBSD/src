@@ -1,6 +1,6 @@
 /* tc-avr.c -- Assembler code for the ATMEL AVR
 
-   Copyright (C) 1999-2015 Free Software Foundation, Inc.
+   Copyright (C) 1999-2016 Free Software Foundation, Inc.
    Contributed by Denis Chertykov <denisc@overta.ru>
 
    This file is part of GAS, the GNU Assembler.
@@ -37,9 +37,9 @@ struct avr_property_record_link
 
 struct avr_opcodes_s
 {
-  char *        name;
-  char *        constraints;
-  char *        opcode;
+  const char *        name;
+  const char *        constraints;
+  const char *        opcode;
   int           insn_size;		/* In words.  */
   int           isa;
   unsigned int  bin_opcode;
@@ -61,7 +61,7 @@ const char line_separator_chars[] = "$";
 const char *md_shortopts = "m:";
 struct mcu_type_s
 {
-  char *name;
+  const char *name;
   int isa;
   int mach;
 };
@@ -380,7 +380,7 @@ const pseudo_typeS md_pseudo_table[] =
 
 struct exp_mod_s
 {
-  char *                    name;
+  const char *                    name;
   bfd_reloc_code_real_type  reloc;
   bfd_reloc_code_real_type  neg_reloc;
   int                       have_pm;
@@ -555,26 +555,16 @@ avr_set_arch (int dummy ATTRIBUTE_UNUSED)
 }
 
 int
-md_parse_option (int c, char *arg)
+md_parse_option (int c, const char *arg)
 {
   switch (c)
     {
     case OPTION_MMCU:
       {
 	int i;
-	char *s = alloca (strlen (arg) + 1);
-
-	{
-	  char *t = s;
-	  char *arg1 = arg;
-
-	  do
-	    *t = TOLOWER (*arg1++);
-	  while (*t++);
-	}
 
 	for (i = 0; mcu_types[i].name; ++i)
-	  if (strcmp (mcu_types[i].name, s) == 0)
+	  if (strcasecmp (mcu_types[i].name, arg) == 0)
 	    break;
 
 	if (!mcu_types[i].name)
@@ -587,12 +577,12 @@ md_parse_option (int c, char *arg)
 	   type - this for allows passing -mmcu=... via gcc ASM_SPEC as well
 	   as .arch ... in the asm output at the same time.  */
 	if (avr_mcu == &default_mcu || avr_mcu->mach == mcu_types[i].mach)
-      {
-        specified_mcu.name = mcu_types[i].name;
-        specified_mcu.isa  |= mcu_types[i].isa;
-        specified_mcu.mach = mcu_types[i].mach;
-        avr_mcu = &specified_mcu;
-      }
+	  {
+	    specified_mcu.name = mcu_types[i].name;
+	    specified_mcu.isa  |= mcu_types[i].isa;
+	    specified_mcu.mach = mcu_types[i].mach;
+	    avr_mcu = &specified_mcu;
+	  }
 	else
 	  as_fatal (_("redefinition of mcu type `%s' to `%s'"),
 		    avr_mcu->name, mcu_types[i].name);
@@ -627,7 +617,7 @@ md_undefined_symbol (char *name ATTRIBUTE_UNUSED)
   return NULL;
 }
 
-char *
+const char *
 md_atof (int type, char *litP, int *sizeP)
 {
   return ieee_md_atof (type, litP, sizeP, FALSE);
@@ -860,7 +850,7 @@ avr_ldi_expression (expressionS *exp)
 static unsigned int
 avr_operand (struct avr_opcodes_s *opcode,
 	     int where,
-	     char *op,
+	     const char *op,
 	     char **line)
 {
   expressionS op_expr;
@@ -998,7 +988,7 @@ avr_operand (struct avr_opcodes_s *opcode,
       if (*str == '+')
 	{
 	  ++str;
-          char *s;
+          const char *s;
           for (s = opcode->opcode; *s; ++s)
             {
               if (*s == '+')
@@ -1145,7 +1135,7 @@ avr_operand (struct avr_opcodes_s *opcode,
 static unsigned int
 avr_operands (struct avr_opcodes_s *opcode, char **line)
 {
-  char *op = opcode->constraints;
+  const char *op = opcode->constraints;
   unsigned int bin = opcode->bin_opcode;
   char *frag = frag_more (opcode->insn_size * 2);
   char *str = *line;
@@ -1626,9 +1616,9 @@ tc_gen_reloc (asection *seg ATTRIBUTE_UNUSED,
       return NULL;
     }
 
-  reloc = xmalloc (sizeof (arelent));
+  reloc = XNEW (arelent);
 
-  reloc->sym_ptr_ptr = xmalloc (sizeof (asymbol *));
+  reloc->sym_ptr_ptr = XNEW (asymbol *);
   *reloc->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_addsy);
 
   reloc->address = fixp->fx_frag->fr_address + fixp->fx_where;
@@ -1741,8 +1731,6 @@ const exp_mod_data_t exp_mod_data[] =
   { "hi8",  1, BFD_RELOC_AVR_8_HI,  "`hi8' "  },
   { "hlo8", 1, BFD_RELOC_AVR_8_HLO, "`hlo8' " },
   { "hh8",  1, BFD_RELOC_AVR_8_HLO, "`hh8' "  },
-  /* End of list.  */
-  { NULL, 0, 0, NULL }
 };
 
 /* Parse special CONS expression: pm (expression) or alternatively
@@ -1752,16 +1740,17 @@ const exp_mod_data_t exp_mod_data[] =
 const exp_mod_data_t *
 avr_parse_cons_expression (expressionS *exp, int nbytes)
 {
-  const exp_mod_data_t *pexp = &exp_mod_data[0];
   char *tmp;
+  unsigned int i;
 
   tmp = input_line_pointer = skip_space (input_line_pointer);
 
   /* The first entry of exp_mod_data[] contains an entry if no
      expression modifier is present.  Skip it.  */
 
-  for (pexp++; pexp->name; pexp++)
+  for (i = 0; i < ARRAY_SIZE (exp_mod_data); i++)
     {
+      const exp_mod_data_t *pexp = &exp_mod_data[i];
       int len = strlen (pexp->name);
 
       if (nbytes == pexp->nbytes
@@ -2079,8 +2068,7 @@ create_record_for_frag (segT sec, fragS *fragP)
 {
   struct avr_property_record_link *prop_rec_link;
 
-  prop_rec_link = xmalloc (sizeof (struct avr_property_record_link));
-  memset (prop_rec_link, 0, sizeof (*prop_rec_link));
+  prop_rec_link = XCNEW (struct avr_property_record_link);
   gas_assert (fragP->fr_next != NULL);
 
   if (fragP->tc_frag_data.is_org)

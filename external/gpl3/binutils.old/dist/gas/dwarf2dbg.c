@@ -1,5 +1,5 @@
 /* dwarf2dbg.c - DWARF2 debug support
-   Copyright (C) 1999-2015 Free Software Foundation, Inc.
+   Copyright (C) 1999-2016 Free Software Foundation, Inc.
    Contributed by David Mosberger-Tang <davidm@hpl.hp.com>
 
    This file is part of GAS, the GNU Assembler.
@@ -253,7 +253,7 @@ get_line_subseg (segT seg, subsegT subseg, bfd_boolean create_p)
       if (!create_p)
 	return NULL;
 
-      s = (struct line_seg *) xmalloc (sizeof (*s));
+      s = XNEW (struct line_seg);
       s->next = NULL;
       s->seg = seg;
       s->head = NULL;
@@ -271,7 +271,7 @@ get_line_subseg (segT seg, subsegT subseg, bfd_boolean create_p)
 	break;
     }
 
-  lss = (struct line_subseg *) xmalloc (sizeof (*lss));
+  lss = XNEW (struct line_subseg);
   lss->next = *pss;
   lss->subseg = subseg;
   lss->head = NULL;
@@ -291,7 +291,7 @@ dwarf2_gen_line_info_1 (symbolS *label, struct dwarf2_line_info *loc)
   struct line_subseg *lss;
   struct line_entry *e;
 
-  e = (struct line_entry *) xmalloc (sizeof (*e));
+  e = XNEW (struct line_entry);
   e->next = NULL;
   e->label = label;
   e->loc = *loc;
@@ -350,8 +350,7 @@ dwarf2_where (struct dwarf2_line_info *line)
 {
   if (debug_type == DEBUG_DWARF2)
     {
-      char *filename;
-      as_where (&filename, &line->line);
+      const char *filename = as_where (&line->line);
       line->filenum = get_filenum (filename, 0);
       line->column = 0;
       line->flags = DWARF2_FLAG_IS_STMT;
@@ -513,13 +512,10 @@ get_filenum (const char *filename, unsigned int num)
 	  if (dir >= dirs_allocated)
 	    {
 	      dirs_allocated = dir + 32;
-	      dirs = (char **)
-		     xrealloc (dirs, (dir + 32) * sizeof (const char *));
+	      dirs = XRESIZEVEC (char *, dirs, dirs_allocated);
 	    }
 
-	  dirs[dir] = (char *) xmalloc (dir_len + 1);
-	  memcpy (dirs[dir], filename, dir_len);
-	  dirs[dir][dir_len] = '\0';
+	  dirs[dir] = xmemdup0 (filename, dir_len);
 	  dirs_in_use = dir + 1;
 	}
     }
@@ -544,8 +540,7 @@ get_filenum (const char *filename, unsigned int num)
       unsigned int old = files_allocated;
 
       files_allocated = i + 32;
-      files = (struct file_entry *)
-	xrealloc (files, (i + 32) * sizeof (struct file_entry));
+      files = XRESIZEVEC (struct file_entry, files, files_allocated);
 
       memset (files + old, 0, (i + 32 - old) * sizeof (struct file_entry));
     }
@@ -644,13 +639,14 @@ dwarf2_directive_loc (int dummy ATTRIBUTE_UNUSED)
 	{
 	  size_t dir_len = strlen (dirs[files[filenum].dir]);
 	  size_t file_len = strlen (files[filenum].filename);
-	  char *cp = (char *) alloca (dir_len + 1 + file_len + 1);
+	  char *cp = XNEWVEC (char, dir_len + 1 + file_len + 1);
 
 	  memcpy (cp, dirs[files[filenum].dir], dir_len);
 	  INSERT_DIR_SEPARATOR (cp, dir_len);
 	  memcpy (cp + dir_len + 1, files[filenum].filename, file_len);
 	  cp[dir_len + file_len + 1] = '\0';
 	  listing_source_file (cp);
+	  free (cp);
 	}
       else
 	listing_source_file (files[filenum].filename);
@@ -1299,11 +1295,7 @@ process_entries (segT seg, struct line_entry *e)
       sec_name = bfd_get_section_name (stdoutput, seg);
       if (strcmp (sec_name, ".text") != 0)
 	{
-	  unsigned int len;
-
-	  len = strlen (sec_name);
-	  name = xmalloc (len + 11 + 2);
-	  sprintf (name, ".debug_line%s", sec_name);
+	  name = concat (".debug_line", sec_name, (char *) NULL);
 	  subseg_set (subseg_get (name, FALSE), 0);
 	}
       else

@@ -1,5 +1,5 @@
 /* od-macho.c -- dump information about an Mach-O object file.
-   Copyright (C) 2011-2015 Free Software Foundation, Inc.
+   Copyright (C) 2011-2016 Free Software Foundation, Inc.
    Written by Tristan Gingold, Adacore.
 
    This file is part of GNU Binutils.
@@ -155,6 +155,10 @@ static const bfd_mach_o_xlat_name bfd_mach_o_header_flags_name[] =
   { "setuid_safe", BFD_MACH_O_MH_SETUID_SAFE },
   { "no_reexported_dylibs", BFD_MACH_O_MH_NO_REEXPORTED_DYLIBS },
   { "pie", BFD_MACH_O_MH_PIE },
+  { "dead_strippable_dylib", BFD_MACH_O_MH_DEAD_STRIPPABLE_DYLIB },
+  { "has_tlv", BFD_MACH_O_MH_HAS_TLV_DESCRIPTORS },
+  { "no_heap_execution", BFD_MACH_O_MH_NO_HEAP_EXECUTION },
+  { "app_extension_safe", BFD_MACH_O_MH_APP_EXTENSION_SAFE },
   { NULL, 0}
 };
 
@@ -203,6 +207,9 @@ static const bfd_mach_o_xlat_name bfd_mach_o_load_command_name[] =
   { "data_in_code", BFD_MACH_O_LC_DATA_IN_CODE},
   { "source_version", BFD_MACH_O_LC_SOURCE_VERSION},
   { "dylib_code_sign_drs", BFD_MACH_O_LC_DYLIB_CODE_SIGN_DRS},
+  { "encryption_info_64", BFD_MACH_O_LC_ENCRYPTION_INFO_64},
+  { "linker_options", BFD_MACH_O_LC_LINKER_OPTIONS},
+  { "linker_optimization_hint", BFD_MACH_O_LC_LINKER_OPTIMIZATION_HINT},
   { NULL, 0}
 };
 
@@ -1788,6 +1795,62 @@ dump_unwind_encoding_x86 (unsigned int encoding, unsigned int sz,
     }
 }
 
+/* Dump arm64 compact unwind entries.  */
+
+static void
+dump_unwind_encoding_arm64 (unsigned int encoding)
+{
+  switch (encoding & MACH_O_UNWIND_ARM64_MODE_MASK)
+    {
+    case MACH_O_UNWIND_ARM64_MODE_FRAMELESS:
+      printf (" frameless");
+      break;
+    case MACH_O_UNWIND_ARM64_MODE_DWARF:
+      printf (" Dwarf offset: 0x%06x",
+	      encoding & MACH_O_UNWIND_ARM64_DWARF_SECTION_OFFSET);
+      return;
+    case MACH_O_UNWIND_ARM64_MODE_FRAME:
+      printf (" frame");
+      break;
+    default:
+      printf (" [unhandled mode]");
+      return;
+    }
+  switch (encoding & MACH_O_UNWIND_ARM64_MODE_MASK)
+    {
+    case MACH_O_UNWIND_ARM64_MODE_FRAMELESS:
+    case MACH_O_UNWIND_ARM64_MODE_FRAME:
+      if (encoding & MACH_O_UNWIND_ARM64_FRAME_X19_X20_PAIR)
+	printf (" x19-x20");
+      if (encoding & MACH_O_UNWIND_ARM64_FRAME_X21_X22_PAIR)
+	printf (" x21-x22");
+      if (encoding & MACH_O_UNWIND_ARM64_FRAME_X23_X24_PAIR)
+	printf (" x23-x24");
+      if (encoding & MACH_O_UNWIND_ARM64_FRAME_X25_X26_PAIR)
+	printf (" x25-x26");
+      if (encoding & MACH_O_UNWIND_ARM64_FRAME_X27_X28_PAIR)
+	printf (" x27-x28");
+      break;
+    }
+  switch (encoding & MACH_O_UNWIND_ARM64_MODE_MASK)
+    {
+    case MACH_O_UNWIND_ARM64_MODE_FRAME:
+      if (encoding & MACH_O_UNWIND_ARM64_FRAME_D8_D9_PAIR)
+	printf (" d8-d9");
+      if (encoding & MACH_O_UNWIND_ARM64_FRAME_D10_D11_PAIR)
+	printf (" d10-d11");
+      if (encoding & MACH_O_UNWIND_ARM64_FRAME_D12_D13_PAIR)
+	printf (" d12-d13");
+      if (encoding & MACH_O_UNWIND_ARM64_FRAME_D14_D15_PAIR)
+	printf (" d14-d15");
+      break;
+    case MACH_O_UNWIND_ARM64_MODE_FRAMELESS:
+      printf (" size: %u",
+	      (encoding & MACH_O_UNWIND_ARM64_FRAMELESS_STACK_SIZE_MASK) >> 8);
+      break;
+    }
+}
+
 static void
 dump_unwind_encoding (bfd_mach_o_data_struct *mdata, unsigned int encoding)
 {
@@ -1802,6 +1865,9 @@ dump_unwind_encoding (bfd_mach_o_data_struct *mdata, unsigned int encoding)
       break;
     case BFD_MACH_O_CPU_TYPE_I386:
       dump_unwind_encoding_x86 (encoding, 4, unwind_x86_regs);
+      break;
+    case BFD_MACH_O_CPU_TYPE_ARM64:
+      dump_unwind_encoding_arm64 (encoding);
       break;
     default:
       printf (" [unhandled cpu]");

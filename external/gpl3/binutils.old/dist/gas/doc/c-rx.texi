@@ -1,4 +1,4 @@
-@c Copyright (C) 2008-2015 Free Software Foundation, Inc.
+@c Copyright (C) 2008-2016 Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
 @ifset GENERIC
@@ -108,9 +108,10 @@ alignments.  This option is the default.
 @cindex @samp{-mcpu=}
 @item -mcpu=@var{name}
 This option tells the assembler the target CPU type.  Currently the
-@code{rx200}, @code{rx600} and @code{rx610} are recognised as valid
-cpu names.  Attempting to assemble an instruction not supported by the
-indicated cpu type will result in an error message being generated.
+@code{rx100}, @code{rx200}, @code{rx600}, @code{rx610} and @code{rxv2}
+are recognised as valid cpu names.  Attempting to assemble an instruction
+not supported by the indicated cpu type will result in an error message
+being generated.
 
 @cindex @samp{-mno-allow-string-insns}
 @item -mno-allow-string-insns

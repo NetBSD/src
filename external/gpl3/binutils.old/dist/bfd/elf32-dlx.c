@@ -1,5 +1,5 @@
 /* DLX specific support for 32-bit ELF
-   Copyright (C) 2002-2015 Free Software Foundation, Inc.
+   Copyright (C) 2002-2016 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -23,6 +23,7 @@
 #include "libbfd.h"
 #include "elf-bfd.h"
 #include "elf/dlx.h"
+#include "elf32-dlx.h"
 
 #define USE_REL 1
 
@@ -39,8 +40,6 @@
    value that was placed there by gas.  */
 
 static int skip_dlx_elf_hi16_reloc = 0;
-
-extern int set_dlx_skip_hi16_flag (int);
 
 int
 set_dlx_skip_hi16_flag (int flag)

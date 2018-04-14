@@ -1,6 +1,6 @@
 // output.cc -- manage the output file for gold
 
-// Copyright (C) 2006-2015 Free Software Foundation, Inc.
+// Copyright (C) 2006-2016 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -1252,6 +1252,19 @@ Output_data_reloc_base<sh_type, dynamic, size, big_endian>
     os->set_should_link_to_dynsym();
 }
 
+// Standard relocation writer, which just calls Output_reloc::write().
+
+template<int sh_type, bool dynamic, int size, bool big_endian>
+struct Output_reloc_writer
+{
+  typedef Output_reloc<sh_type, dynamic, size, big_endian> Output_reloc_type;
+  typedef std::vector<Output_reloc_type> Relocs;
+
+  static void
+  write(typename Relocs::const_iterator p, unsigned char* pov)
+  { p->write(pov); }
+};
+
 // Write out relocation data.
 
 template<int sh_type, bool dynamic, int size, bool big_endian>
@@ -1259,32 +1272,8 @@ void
 Output_data_reloc_base<sh_type, dynamic, size, big_endian>::do_write(
     Output_file* of)
 {
-  const off_t off = this->offset();
-  const off_t oview_size = this->data_size();
-  unsigned char* const oview = of->get_output_view(off, oview_size);
-
-  if (this->sort_relocs())
-    {
-      gold_assert(dynamic);
-      std::sort(this->relocs_.begin(), this->relocs_.end(),
-		Sort_relocs_comparison());
-    }
-
-  unsigned char* pov = oview;
-  for (typename Relocs::const_iterator p = this->relocs_.begin();
-       p != this->relocs_.end();
-       ++p)
-    {
-      p->write(pov);
-      pov += reloc_size;
-    }
-
-  gold_assert(pov - oview == oview_size);
-
-  of->write_output_view(off, oview_size, oview);
-
-  // We no longer need the relocation entries.
-  this->relocs_.clear();
+  typedef Output_reloc_writer<sh_type, dynamic, size, big_endian> Writer;
+  this->do_write_generic<Writer>(of);
 }
 
 // Class Output_relocatable_relocs.
@@ -1437,7 +1426,7 @@ Output_data_got<got_size, big_endian>::Got_entry::write(
 	  val = parameters->target().plt_address_for_local(object, lsi);
 	else
 	  {
-	    uint64_t lval = object->local_symbol_value(lsi, 0);
+	    uint64_t lval = object->local_symbol_value(lsi, this->addend_);
 	    val = convert_types<Valtype, uint64_t>(lval);
 	    if (this->use_plt_or_tls_offset_ && is_tls)
 	      val += parameters->target().tls_offset_for_local(object, lsi,
@@ -1548,6 +1537,27 @@ Output_data_got<got_size, big_endian>::add_local(
   return true;
 }
 
+// Add an entry for a local symbol plus ADDEND to the GOT.  This returns
+// true if this is a new GOT entry, false if the symbol already has a GOT
+// entry.
+
+template<int got_size, bool big_endian>
+bool
+Output_data_got<got_size, big_endian>::add_local(
+    Relobj* object,
+    unsigned int symndx,
+    unsigned int got_type,
+    uint64_t addend)
+{
+  if (object->local_has_got_offset(symndx, got_type, addend))
+    return false;
+
+  unsigned int got_offset = this->add_got_entry(Got_entry(object, symndx,
+							  false, addend));
+  object->set_local_got_offset(symndx, got_type, got_offset, addend);
+  return true;
+}
+
 // Like add_local, but use the PLT offset.
 
 template<int got_size, bool big_endian>
@@ -1586,6 +1596,27 @@ Output_data_got<got_size, big_endian>::add_local_with_rel(
   rel_dyn->add_local_generic(object, symndx, r_type, this, got_offset, 0);
 }
 
+// Add an entry for a local symbol plus ADDEND to the GOT, and add a dynamic
+// relocation of type R_TYPE for the GOT entry.
+
+template<int got_size, bool big_endian>
+void
+Output_data_got<got_size, big_endian>::add_local_with_rel(
+    Relobj* object,
+    unsigned int symndx,
+    unsigned int got_type,
+    Output_data_reloc_generic* rel_dyn,
+    unsigned int r_type, uint64_t addend)
+{
+  if (object->local_has_got_offset(symndx, got_type, addend))
+    return;
+
+  unsigned int got_offset = this->add_got_entry(Got_entry());
+  object->set_local_got_offset(symndx, got_type, got_offset, addend);
+  rel_dyn->add_local_generic(object, symndx, r_type, this, got_offset,
+                             addend);
+}
+
 // Add a pair of entries for a local symbol to the GOT, and add
 // a dynamic relocation of type R_TYPE using the section symbol of
 // the output section to which input section SHNDX maps, on the first.
@@ -1610,6 +1641,32 @@ Output_data_got<got_size, big_endian>::add_local_pair_with_rel(
   object->set_local_got_offset(symndx, got_type, got_offset);
   Output_section* os = object->output_section(shndx);
   rel_dyn->add_output_section_generic(os, r_type, this, got_offset, 0);
+}
+
+// Add a pair of entries for a local symbol plus ADDEND to the GOT, and add
+// a dynamic relocation of type R_TYPE using the section symbol of
+// the output section to which input section SHNDX maps, on the first.
+// The first got entry will have a value of zero, the second the
+// value of the local symbol.
+template<int got_size, bool big_endian>
+void
+Output_data_got<got_size, big_endian>::add_local_pair_with_rel(
+    Relobj* object,
+    unsigned int symndx,
+    unsigned int shndx,
+    unsigned int got_type,
+    Output_data_reloc_generic* rel_dyn,
+    unsigned int r_type, uint64_t addend)
+{
+  if (object->local_has_got_offset(symndx, got_type, addend))
+    return;
+
+  unsigned int got_offset =
+      this->add_got_entry_pair(Got_entry(),
+			       Got_entry(object, symndx, false, addend));
+  object->set_local_got_offset(symndx, got_type, got_offset, addend);
+  Output_section* os = object->output_section(shndx);
+  rel_dyn->add_output_section_generic(os, r_type, this, got_offset, addend);
 }
 
 // Add a pair of entries for a local symbol to the GOT, and add
@@ -1823,6 +1880,27 @@ Output_data_dynamic::do_adjust_output_section(Output_section* os)
     os->set_entsize(elfcpp::Elf_sizes<64>::dyn_size);
   else
     gold_unreachable();
+}
+
+// Get a dynamic entry offset.
+
+unsigned int
+Output_data_dynamic::get_entry_offset(elfcpp::DT tag) const
+{
+  int dyn_size;
+
+  if (parameters->target().get_size() == 32)
+    dyn_size = elfcpp::Elf_sizes<32>::dyn_size;
+  else if (parameters->target().get_size() == 64)
+    dyn_size = elfcpp::Elf_sizes<64>::dyn_size;
+  else
+    gold_unreachable();
+
+  for (size_t i = 0; i < entries_.size(); ++i)
+    if (entries_[i].tag() == tag)
+      return i * dyn_size;
+
+  return -1U;
 }
 
 // Set the final data size.

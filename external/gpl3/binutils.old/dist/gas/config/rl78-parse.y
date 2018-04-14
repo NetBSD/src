@@ -1,5 +1,5 @@
 /* rl78-parse.y  Renesas RL78 parser
-   Copyright (C) 2011-2015 Free Software Foundation, Inc.
+   Copyright (C) 2011-2016 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -294,22 +294,22 @@ statement :
 /* ---------------------------------------------------------------------- */
 
 	| BC '$' EXPR
-	  { B1 (0xdc); PC1 ($3); rl78_relax (RL78_RELAX_BRANCH, 0); }
+	  { B1 (0xdc); PC1 ($3); rl78_linkrelax_branch (); }
 
 	| BNC '$' EXPR
-	  { B1 (0xde); PC1 ($3); rl78_relax (RL78_RELAX_BRANCH, 0); }
+	  { B1 (0xde); PC1 ($3); rl78_linkrelax_branch (); }
 
 	| BZ '$' EXPR
-	  { B1 (0xdd); PC1 ($3); rl78_relax (RL78_RELAX_BRANCH, 0); }
+	  { B1 (0xdd); PC1 ($3); rl78_linkrelax_branch (); }
 
 	| BNZ '$' EXPR
-	  { B1 (0xdf); PC1 ($3); rl78_relax (RL78_RELAX_BRANCH, 0); }
+	  { B1 (0xdf); PC1 ($3); rl78_linkrelax_branch (); }
 
 	| BH '$' EXPR
-	  { B2 (0x61, 0xc3); PC1 ($3); rl78_relax (RL78_RELAX_BRANCH, 0); }
+	  { B2 (0x61, 0xc3); PC1 ($3); rl78_linkrelax_branch (); }
 
 	| BNH '$' EXPR
-	  { B2 (0x61, 0xd3); PC1 ($3); rl78_relax (RL78_RELAX_BRANCH, 0); }
+	  { B2 (0x61, 0xd3); PC1 ($3); rl78_linkrelax_branch (); }
 
 /* ---------------------------------------------------------------------- */
 
@@ -337,7 +337,7 @@ statement :
 	  { B2 (0x61, 0xcb); }
 
 	| BR '$' EXPR
-	  { B1 (0xef); PC1 ($3); }
+	  { B1 (0xef); PC1 ($3); rl78_linkrelax_branch (); }
 
 	| BR '$' '!' EXPR
 	  { B1 (0xee); PC2 ($4); rl78_linkrelax_branch (); }
@@ -1022,22 +1022,22 @@ statement :
 /* ---------------------------------------------------------------------- */
 
 	| SKC
-	  { B2 (0x61, 0xc8); rl78_linkrelax_branch (); }
+	  { B2 (0x61, 0xc8); rl78_relax (RL78_RELAX_BRANCH, 0); }
 
 	| SKH
-	  { B2 (0x61, 0xe3); rl78_linkrelax_branch (); }
+	  { B2 (0x61, 0xe3); rl78_relax (RL78_RELAX_BRANCH, 0); }
 
 	| SKNC
-	  { B2 (0x61, 0xd8); rl78_linkrelax_branch (); }
+	  { B2 (0x61, 0xd8); rl78_relax (RL78_RELAX_BRANCH, 0); }
 
 	| SKNH
-	  { B2 (0x61, 0xf3); rl78_linkrelax_branch (); }
+	  { B2 (0x61, 0xf3); rl78_relax (RL78_RELAX_BRANCH, 0); }
 
 	| SKNZ
-	  { B2 (0x61, 0xf8); rl78_linkrelax_branch (); }
+	  { B2 (0x61, 0xf8); rl78_relax (RL78_RELAX_BRANCH, 0); }
 
 	| SKZ
-	  { B2 (0x61, 0xe8); rl78_linkrelax_branch (); }
+	  { B2 (0x61, 0xe8); rl78_relax (RL78_RELAX_BRANCH, 0); }
 
 /* ---------------------------------------------------------------------- */
 
@@ -1161,8 +1161,8 @@ andor1	: AND1 { $$ = 0x05; rl78_bit_insn = 1; }
 	| XOR1 { $$ = 0x07; rl78_bit_insn = 1; }
 	;
 
-bt_bf	: BT { $$ = 0x02;    rl78_bit_insn = 1; rl78_relax (RL78_RELAX_BRANCH, 0); }
-	| BF { $$ = 0x04;    rl78_bit_insn = 1; rl78_relax (RL78_RELAX_BRANCH, 0); }
+bt_bf	: BT { $$ = 0x02;    rl78_bit_insn = 1; rl78_linkrelax_branch (); }
+	| BF { $$ = 0x04;    rl78_bit_insn = 1; rl78_linkrelax_branch (); }
 	| BTCLR { $$ = 0x00; rl78_bit_insn = 1; }
 	;
 

@@ -1,5 +1,5 @@
 /* te-nbsd.h -- NetBSD target environment declarations.
-   Copyright (C) 1987-2015 Free Software Foundation, Inc.
+   Copyright (C) 1987-2016 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 

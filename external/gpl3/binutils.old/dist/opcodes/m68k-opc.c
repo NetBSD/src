@@ -1,5 +1,5 @@
 /* Opcode table for m680[012346]0/m6888[12]/m68851/mcf5200.
-   Copyright (C) 1989-2015 Free Software Foundation, Inc.
+   Copyright (C) 1989-2016 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -1575,13 +1575,13 @@ const struct m68k_opcode m68k_opcodes[] =
 {"moveb", 2,	one(0010200),	one(0170700), "obad", mcfisa_a },
 {"moveb", 2,	one(0010300),	one(0170700), "ob+d", mcfisa_a },
 {"moveb", 2,	one(0010400),	one(0170700), "ob-d", mcfisa_a },
-{"moveb", 2,	one(0010000),	one(0170000), "obnd", mcfisa_b | mcfisa_c },
+{"moveb", 2,	one(0010074),	one(0170077), "#bpd", mcfisa_b | mcfisa_c },
 
 {"movew", 2,	one(0030000),	one(0170000), "*w%d", m68000up },
 {"movew", 2,	one(0030000),	one(0170000), "ms%d", mcfisa_a },
 {"movew", 2,	one(0030000),	one(0170000), "nspd", mcfisa_a },
 {"movew", 2,	one(0030000),	one(0170000), "owmd", mcfisa_a },
-{"movew", 2,	one(0030000),	one(0170000), "ownd", mcfisa_b | mcfisa_c },
+{"movew", 2,	one(0030074),	one(0170077), "#wpd", mcfisa_b | mcfisa_c },
 {"movew", 2,	one(0040300),	one(0177700), "Ss$s", m68000up },
 {"movew", 2,	one(0040300),	one(0177770), "SsDs", mcfisa_a },
 {"movew", 2,	one(0041300),	one(0177700), "Cs$s", m68010up },
@@ -1630,7 +1630,7 @@ const struct m68k_opcode m68k_opcodes[] =
 {"move", 2,	one(0030000),	one(0170000), "ms%d", mcfisa_a },
 {"move", 2,	one(0030000),	one(0170000), "nspd", mcfisa_a },
 {"move", 2,	one(0030000),	one(0170000), "owmd", mcfisa_a },
-{"move", 2,	one(0030000),	one(0170000), "ownd", mcfisa_b | mcfisa_c },
+{"move", 2,	one(0030074),	one(0170077), "#wpd", mcfisa_b | mcfisa_c },
 {"move", 2,	one(0040300),	one(0177700), "Ss$s", m68000up },
 {"move", 2,	one(0040300),	one(0177770), "SsDs", mcfisa_a },
 {"move", 2,	one(0041300),	one(0177700), "Cs$s", m68010up },

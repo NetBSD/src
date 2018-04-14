@@ -1,5 +1,5 @@
 /* atof_ieee.c - turn a Flonum into an IEEE floating point number
-   Copyright (C) 1987-2015 Free Software Foundation, Inc.
+   Copyright (C) 1987-2016 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -23,7 +23,6 @@
 /* Flonums returned here.  */
 extern FLONUM_TYPE generic_floating_point_number;
 
-extern const char EXP_CHARS[];
 /* Precision in LittleNums.  */
 /* Don't count the gap in the m68k extended precision format.  */
 #define MAX_PRECISION  5
@@ -696,7 +695,6 @@ print_gen (gen)
 }
 #endif
 
-extern const char FLT_CHARS[];
 #define MAX_LITTLENUMS 6
 
 /* This is a utility function called from various tc-*.c files.  It
@@ -710,7 +708,7 @@ extern const char FLT_CHARS[];
 
    An error message is returned, or a NULL pointer if everything went OK.  */
 
-char *
+const char *
 ieee_md_atof (int type,
 	      char *litP,
 	      int *sizeP,

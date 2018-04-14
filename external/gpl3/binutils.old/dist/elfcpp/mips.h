@@ -1,6 +1,6 @@
 // mips.h -- ELF definitions specific to EM_MIPS  -*- C++ -*-
 
-// Copyright (C) 2012-2015 Free Software Foundation, Inc.
+// Copyright (C) 2012-2016 Free Software Foundation, Inc.
 // Written by Sasa Stankovic <sasa.stankovic@imgtec.com>
 //        and Aleksandar Simeonov <aleksandar.simeonov@rt-rk.com>.
 
@@ -98,6 +98,12 @@ enum
   R_MIPS_TLS_TPREL_HI16 = 49,
   R_MIPS_TLS_TPREL_LO16 = 50,
   R_MIPS_GLOB_DAT = 51,
+  R_MIPS_PC21_S2 = 60,
+  R_MIPS_PC26_S2 = 61,
+  R_MIPS_PC18_S3 = 62,
+  R_MIPS_PC19_S2 = 63,
+  R_MIPS_PCHI16 = 64,
+  R_MIPS_PCLO16 = 65,
   // These relocs are used for the mips16.
   R_MIPS16_26 = 100,
   R_MIPS16_GPREL = 101,
@@ -193,6 +199,10 @@ enum
   // Indicates code compiled for a 64-bit machine in 32-bit mode.
   // (regs are 32-bits wide.)
   EF_MIPS_32BITMODE = 0x00000100,
+  // 32-bit machine but FP registers are 64 bit (-mfp64).
+  EF_MIPS_FP64 = 0x00000200,
+  /// Code in file uses the IEEE 754-2008 NaN encoding convention.
+  EF_MIPS_NAN2008 = 0x00000400,
   // MIPS dynamic
   EF_MIPS_DYNAMIC = 0x40
 };
@@ -220,6 +230,7 @@ enum
   E_MIPS_MACH_OCTEON2 = 0x008d0000,
   E_MIPS_MACH_OCTEON3 = 0x008e0000,
   E_MIPS_MACH_5400 = 0x00910000,
+  E_MIPS_MACH_5900 = 0x00920000,
   E_MIPS_MACH_5500 = 0x00980000,
   E_MIPS_MACH_9000 = 0x00990000,
   E_MIPS_MACH_LS2E = 0x00A00000,
@@ -254,6 +265,141 @@ enum
   E_MIPS_ARCH_32R6 = 0x90000000,
   // -mips64r6 code.
   E_MIPS_ARCH_64R6 = 0xa0000000,
+};
+
+// Values for the xxx_size bytes of an ABI flags structure.
+enum
+{
+  // No registers.
+  AFL_REG_NONE = 0x00,
+  // 32-bit registers.
+  AFL_REG_32 = 0x01,
+  // 64-bit registers.
+  AFL_REG_64 = 0x02,
+  // 128-bit registers.
+  AFL_REG_128 = 0x03
+};
+
+// Masks for the ases word of an ABI flags structure.
+enum
+{
+  // DSP ASE.
+  AFL_ASE_DSP = 0x00000001,
+  // DSP R2 ASE.
+  AFL_ASE_DSPR2 = 0x00000002,
+  // Enhanced VA Scheme.
+  AFL_ASE_EVA = 0x00000004,
+  // MCU (MicroController) ASE.
+  AFL_ASE_MCU = 0x00000008,
+  // MDMX ASE.
+  AFL_ASE_MDMX = 0x00000010,
+  // MIPS-3D ASE.
+  AFL_ASE_MIPS3D = 0x00000020,
+  // MT ASE.
+  AFL_ASE_MT  = 0x00000040,
+  // SmartMIPS ASE.
+  AFL_ASE_SMARTMIPS = 0x00000080,
+  // VZ ASE.
+  AFL_ASE_VIRT = 0x00000100,
+  // MSA ASE.
+  AFL_ASE_MSA = 0x00000200,
+  // MIPS16 ASE.
+  AFL_ASE_MIPS16 = 0x00000400,
+  // MICROMIPS ASE.
+  AFL_ASE_MICROMIPS = 0x00000800,
+  // XPA ASE.
+  AFL_ASE_XPA = 0x00001000
+};
+
+// Values for the isa_ext word of an ABI flags structure.
+enum
+{
+  // RMI Xlr instruction.
+  AFL_EXT_XLR = 1,
+  // Cavium Networks Octeon2.
+  AFL_EXT_OCTEON2 = 2,
+  // Cavium Networks OcteonP.
+  AFL_EXT_OCTEONP = 3,
+  // Loongson 3A.
+  AFL_EXT_LOONGSON_3A = 4,
+  // Cavium Networks Octeon.
+  AFL_EXT_OCTEON = 5,
+  // MIPS R5900 instruction.
+  AFL_EXT_5900 = 6,
+  // MIPS R4650 instruction.
+  AFL_EXT_4650 = 7,
+  // LSI R4010 instruction.
+  AFL_EXT_4010 = 8,
+  // NEC VR4100 instruction.
+  AFL_EXT_4100 = 9,
+  // Toshiba R3900 instruction.
+  AFL_EXT_3900 = 10,
+  // MIPS R10000 instruction.
+  AFL_EXT_10000 = 11,
+  // Broadcom SB-1 instruction.
+  AFL_EXT_SB1 = 12,
+  // NEC VR4111/VR4181 instruction.
+  AFL_EXT_4111 = 13,
+  // NEC VR4120 instruction.
+  AFL_EXT_4120 = 14,
+  // NEC VR5400 instruction.
+  AFL_EXT_5400 = 15,
+  // NEC VR5500 instruction.
+  AFL_EXT_5500 = 16,
+  // ST Microelectronics Loongson 2E.
+  AFL_EXT_LOONGSON_2E = 17,
+  // ST Microelectronics Loongson 2F.
+  AFL_EXT_LOONGSON_2F = 18,
+  // Cavium Networks Octeon3.
+  AFL_EXT_OCTEON3 = 19
+};
+
+// Masks for the flags1 word of an ABI flags structure.
+enum
+{
+  // Uses odd single-precision registers.
+  AFL_FLAGS1_ODDSPREG = 1
+};
+
+// Object attribute tags.
+enum
+{
+  // 0-3 are generic.
+  // Floating-point ABI used by this object file.
+  Tag_GNU_MIPS_ABI_FP = 4,
+  // MSA ABI used by this object file.
+  Tag_GNU_MIPS_ABI_MSA = 8
+};
+
+// Object attribute values.
+enum
+{
+  // Values defined for Tag_GNU_MIPS_ABI_FP.
+  // Not tagged or not using any ABIs affected by the differences.
+  Val_GNU_MIPS_ABI_FP_ANY = 0,
+  // Using hard-float -mdouble-float.
+  Val_GNU_MIPS_ABI_FP_DOUBLE = 1,
+  // Using hard-float -msingle-float.
+  Val_GNU_MIPS_ABI_FP_SINGLE = 2,
+  // Using soft-float.
+  Val_GNU_MIPS_ABI_FP_SOFT = 3,
+  // Using -mips32r2 -mfp64.
+  Val_GNU_MIPS_ABI_FP_OLD_64 = 4,
+  // Using -mfpxx
+  Val_GNU_MIPS_ABI_FP_XX = 5,
+  // Using -mips32r2 -mfp64.
+  Val_GNU_MIPS_ABI_FP_64 = 6,
+  // Using -mips32r2 -mfp64 -mno-odd-spreg.
+  Val_GNU_MIPS_ABI_FP_64A = 7,
+  // This is reserved for backward-compatibility with an earlier
+  // implementation of the MIPS NaN2008 functionality.
+  Val_GNU_MIPS_ABI_FP_NAN2008 = 8,
+
+  // Values defined for Tag_GNU_MIPS_ABI_MSA.
+  // Not tagged or not using any ABIs affected by the differences.
+  Val_GNU_MIPS_ABI_MSA_ANY = 0,
+  // Using 128-bit MSA.
+  Val_GNU_MIPS_ABI_MSA_128 = 1
 };
 
 enum
@@ -339,10 +485,13 @@ bool
 abi_n32(elfcpp::Elf_Word e_flags)
 { return (e_flags & elfcpp::EF_MIPS_ABI2) != 0; }
 
-// Whether the ABI is N64.
+// Whether the ISA is R6.
 bool
-abi_64(unsigned char ei_class)
-{ return ei_class == elfcpp::ELFCLASS64; }
+r6_isa(elfcpp::Elf_Word e_flags)
+{
+  return ((e_flags & elfcpp::EF_MIPS_ARCH) == elfcpp::E_MIPS_ARCH_32R6)
+           || ((e_flags & elfcpp::EF_MIPS_ARCH) == elfcpp::E_MIPS_ARCH_64R6);
+}
 
 // Whether the file has microMIPS code.
 bool
