@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf2.c,v 1.30 2013/10/08 19:59:49 christos Exp $	*/
+/*	$NetBSD: uipc_mbuf2.c,v 1.31 2018/04/14 08:13:58 maxv Exp $	*/
 /*	$KAME: uipc_mbuf2.c,v 1.29 2001/02/14 13:42:10 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf2.c,v 1.30 2013/10/08 19:59:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf2.c,v 1.31 2018/04/14 08:13:58 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,12 +89,12 @@ m_pulldown(struct mbuf *m, int off, int len, int *offp)
 	int hlen, tlen, olen;
 	int sharedcluster;
 
-	/* check invalid arguments. */
+	/* Check invalid arguments. */
 	if (m == NULL)
-		panic("m == NULL in m_pulldown()");
+		panic("%s: m == NULL", __func__);
 	if (len > MCLBYTES) {
 		m_freem(m);
-		return NULL;	/* impossible */
+		return NULL;
 	}
 
 	n = m;
@@ -104,7 +104,7 @@ m_pulldown(struct mbuf *m, int off, int len, int *offp)
 		off -= n->m_len;
 		n = n->m_next;
 	}
-	/* be sure to point non-empty mbuf */
+	/* Be sure to point non-empty mbuf. */
 	while (n != NULL && n->m_len == 0)
 		n = n->m_next;
 	if (!n) {
@@ -115,17 +115,18 @@ m_pulldown(struct mbuf *m, int off, int len, int *offp)
 	sharedcluster = M_READONLY(n);
 
 	/*
-	 * the target data is on <n, off>.
-	 * if we got enough data on the mbuf "n", we're done.
+	 * The target data is on <n, off>. If we got enough data on the mbuf
+	 * "n", we're done.
 	 */
 	if ((off == 0 || offp) && len <= n->m_len - off && !sharedcluster)
 		goto ok;
 
 	/*
-	 * when len <= n->m_len - off and off != 0, it is a special case.
-	 * len bytes from <n, off> sits in single mbuf, but the caller does
+	 * When (len <= n->m_len - off) and (off != 0), it is a special case.
+	 * Len bytes from <n, off> sit in single mbuf, but the caller does
 	 * not like the starting position (off).
-	 * chop the current mbuf into two pieces, set off to 0.
+	 *
+	 * Chop the current mbuf into two pieces, set off to 0.
 	 */
 	if (len <= n->m_len - off) {
 		struct mbuf *mlast;
@@ -147,16 +148,17 @@ m_pulldown(struct mbuf *m, int off, int len, int *offp)
 	}
 
 	/*
-	 * we need to take hlen from <n, off> and tlen from <n->m_next, 0>,
+	 * We need to take hlen from <n, off> and tlen from <n->m_next, 0>,
 	 * and construct contiguous mbuf with m_len == len.
-	 * note that hlen + tlen == len, and tlen > 0.
+	 *
+	 * Note that hlen + tlen == len, and tlen > 0.
 	 */
 	hlen = n->m_len - off;
 	tlen = len - hlen;
 
 	/*
-	 * ensure that we have enough trailing data on mbuf chain.
-	 * if not, we can do nothing about the chain.
+	 * Ensure that we have enough trailing data on mbuf chain. If not,
+	 * we can do nothing about the chain.
 	 */
 	olen = 0;
 	for (o = n->m_next; o != NULL; o = o->m_next)
@@ -167,8 +169,8 @@ m_pulldown(struct mbuf *m, int off, int len, int *offp)
 	}
 
 	/*
-	 * easy cases first.
-	 * we need to use m_copydata() to get data from <n->m_next, 0>.
+	 * Easy cases first. We need to use m_copydata() to get data from
+	 * <n->m_next, 0>.
 	 */
 	if ((off == 0 || offp) && M_TRAILINGSPACE(n) >= tlen &&
 	    !sharedcluster) {
@@ -189,8 +191,8 @@ m_pulldown(struct mbuf *m, int off, int len, int *offp)
 	}
 
 	/*
-	 * now, we need to do the hard way.  don't m_copy as there's no room
-	 * on both end.
+	 * Now, we need to do the hard way. Don't m_copy as there's no room
+	 * on both ends.
 	 */
 	o = m_get(M_DONTWAIT, m->m_type);
 	if (o && len > MLEN) {
