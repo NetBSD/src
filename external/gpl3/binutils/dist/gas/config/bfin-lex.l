@@ -1,5 +1,7 @@
+%option noyywrap
+
 /* bfin-lex.l  ADI Blackfin lexer
-   Copyright (C) 2005-2016 Free Software Foundation, Inc.
+   Copyright (C) 2005-2018 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -362,7 +364,7 @@ static long parse_int (char **end)
         fmt = 'd';
         break;
 
-      case '0':  /* Accept different formated integers hex octal and binary. */
+      case '0':  /* Accept different formatted integers hex octal and binary. */
         {
 	  char c = *++arg;
           arg++;
@@ -545,12 +547,3 @@ set_start_state (void)
 {
   BEGIN KEYWORD;
 }
-
-
-#ifndef yywrap
-int
-yywrap ()
-{
-  return 1;
-}
-#endif

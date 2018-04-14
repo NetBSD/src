@@ -1,5 +1,5 @@
 /* BFD back-end for OSF/1 core files.
-   Copyright (C) 1993-2016 Free Software Foundation, Inc.
+   Copyright (C) 1993-2018 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -124,8 +124,8 @@ osf_core_core_file_p (bfd *abfd)
 	  flags = SEC_HAS_CONTENTS;
 	  break;
 	default:
-	  (*_bfd_error_handler) (_("Unhandled OSF/1 core file section type %d\n"),
-				 core_scnhdr.scntype);
+	  _bfd_error_handler (_("Unhandled OSF/1 core file section type %d\n"),
+			      core_scnhdr.scntype);
 	  continue;
 	}
 

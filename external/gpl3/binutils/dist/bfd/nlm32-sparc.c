@@ -1,5 +1,5 @@
 /* Support for 32-bit SPARC NLM (NetWare Loadable Module)
-   Copyright (C) 1993-2016 Free Software Foundation, Inc.
+   Copyright (C) 1993-2018 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -163,9 +163,9 @@ nlm_sparc_write_reloc (bfd * abfd, asection * sec, arelent * rel)
 
   /* Netware wants a list of relocs for each address.
      Format is:
-    	long	offset
-    	long	addend
-    	char	type
+	long	offset
+	long	addend
+	char	type
      That should be it.  */
 
   /* The value we write out is the offset into the appropriate

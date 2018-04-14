@@ -18,7 +18,7 @@ TINY_READONLY_SECTION=".tinyrodata :
 TINY_DATA_SECTION=".tinydata	${RELOCATING+0xff8000} :
   {
 	*(.tinydata)
-        ${RELOCATING+ _tinydata = .; }
+	${RELOCATING+ _tinydata = .; }
   }"
 TINY_BSS_SECTION=".tinybss	: ${RELOCATING+AT (_tinydata)}
   {

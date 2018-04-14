@@ -1,5 +1,5 @@
 /* BFD support for the M32R processor.
-   Copyright (C) 1996-2016 Free Software Foundation, Inc.
+   Copyright (C) 1996-2018 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -27,7 +27,7 @@
      bfd_default_compatible, bfd_default_scan, bfd_arch_default_fill, next }
 
 #define M32R2_NEXT   & arch_info_struct [1]
-#define NEXT         & arch_info_struct [0]
+#define NEXT	     & arch_info_struct [0]
 
 static const bfd_arch_info_type arch_info_struct[] =
 {

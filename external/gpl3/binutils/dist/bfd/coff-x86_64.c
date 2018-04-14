@@ -1,5 +1,5 @@
 /* BFD back-end for AMD 64 COFF files.
-   Copyright (C) 2006-2016 Free Software Foundation, Inc.
+   Copyright (C) 2006-2018 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -143,16 +143,10 @@ coff_amd64_reloc (bfd *abfd,
       reloc_howto_type *howto = reloc_entry->howto;
       unsigned char *addr = (unsigned char *) data + reloc_entry->address;
 
-      /* FIXME: We do not have an end address for data, so we cannot
-	 accurately range check any addresses computed against it.
-	 cf: PR binutils/17512: file: 1085-1761-0.004.
-	 For now we do the best that we can.  */
-      if (addr < (unsigned char *) data
-	  || addr > ((unsigned char *) data) + input_section->size)
-	{
-	  bfd_set_error (bfd_error_bad_value);
-	  return bfd_reloc_notsupported;
-	}
+      if (! bfd_reloc_offset_in_range (howto, abfd, input_section,
+				       reloc_entry->address
+				       * bfd_octets_per_byte (abfd)))
+	return bfd_reloc_outofrange;
 
       switch (howto->size)
 	{
@@ -182,9 +176,9 @@ coff_amd64_reloc (bfd *abfd,
 
 	case 4:
 	  {
-	    long long x = bfd_get_64 (abfd, addr);
+	    bfd_uint64_t x = bfd_get_64 (abfd, addr);
 	    DOIT (x);
-	    bfd_put_64 (abfd, (bfd_vma) x, addr);
+	    bfd_put_64 (abfd, x, addr);
 	  }
 	  break;
 
@@ -360,18 +354,18 @@ static reloc_howto_type howto_table[] =
   EMPTY_HOWTO (13),
 #ifndef DONT_EXTEND_AMD64
   HOWTO (R_AMD64_PCRQUAD,
-         0,                     /* rightshift */
-         4,                     /* size (0 = byte, 1 = short, 2 = long) */
-         64,                    /* bitsize */
-         TRUE,                  /* pc_relative */
-         0,                     /* bitpos */
-         complain_overflow_signed, /* complain_on_overflow */
-         coff_amd64_reloc,      /* special_function */
-         "R_X86_64_PC64",       /* name */
-         TRUE,                  /* partial_inplace */
-         0xffffffffffffffffll,  /* src_mask */
-         0xffffffffffffffffll,  /* dst_mask */
-         PCRELOFFSET),           /* pcrel_offset */
+	 0,			/* rightshift */
+	 4,			/* size (0 = byte, 1 = short, 2 = long) */
+	 64,			/* bitsize */
+	 TRUE,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_signed, /* complain_on_overflow */
+	 coff_amd64_reloc,	/* special_function */
+	 "R_X86_64_PC64",	/* name */
+	 TRUE,			/* partial_inplace */
+	 0xffffffffffffffffll,	/* src_mask */
+	 0xffffffffffffffffll,	/* dst_mask */
+	 PCRELOFFSET),		 /* pcrel_offset */
 #else
   EMPTY_HOWTO (14),
 #endif
@@ -496,13 +490,13 @@ static reloc_howto_type howto_table[] =
 #define CALC_ADDEND(abfd, ptr, reloc, cache_ptr)		\
   {								\
     coff_symbol_type *coffsym = NULL;				\
-    								\
+								\
     if (ptr && bfd_asymbol_bfd (ptr) != abfd)			\
       coffsym = (obj_symbols (abfd)				\
-	         + (cache_ptr->sym_ptr_ptr - symbols));		\
+		 + (cache_ptr->sym_ptr_ptr - symbols));		\
     else if (ptr)						\
       coffsym = coff_symbol_from (ptr);				\
-    								\
+								\
     if (coffsym != NULL						\
 	&& coffsym->native->u.syment.n_scnum == 0)		\
       cache_ptr->addend = - coffsym->native->u.syment.n_value;	\
@@ -614,14 +608,19 @@ coff_amd64_rtype_to_howto (bfd *abfd ATTRIBUTE_UNUSED,
 #if defined(COFF_WITH_PE)
   if (howto->pc_relative)
     {
-      *addendp -= 4;
+#ifndef DONT_EXTEND_AMD64
+      if (rel->r_type == R_AMD64_PCRQUAD)
+	*addendp -= 8;
+      else
+#endif
+	*addendp -= 4;
 
       /* If the symbol is defined, then the generic code is going to
-         add back the symbol value in order to cancel out an
-         adjustment it made to the addend.  However, we set the addend
-         to 0 at the start of this function.  We need to adjust here,
-         to avoid the adjustment the generic code will make.  FIXME:
-         This is getting a bit hackish.  */
+	 add back the symbol value in order to cancel out an
+	 adjustment it made to the addend.  However, we set the addend
+	 to 0 at the start of this function.  We need to adjust here,
+	 to avoid the adjustment the generic code will make.  FIXME:
+	 This is getting a bit hackish.  */
       if (sym != NULL && sym->n_scnum != 0)
 	*addendp -= sym->n_value;
     }

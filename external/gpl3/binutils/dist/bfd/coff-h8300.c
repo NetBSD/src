@@ -1,5 +1,5 @@
 /* BFD back-end for Renesas H8/300 COFF binaries.
-   Copyright (C) 1990-2016 Free Software Foundation, Inc.
+   Copyright (C) 1990-2018 Free Software Foundation, Inc.
    Written by Steve Chamberlain, <sac@cygnus.com>.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -579,9 +579,7 @@ h8300_reloc16_estimate (bfd *abfd, asection *input_section, arelent *reloc,
 	  /* Done with this reloc.  */
 	  break;
 	}
-
-      /* FALLTHROUGH and try to turn the 24-/32-bit reloc into a 16-bit
-	 reloc.  */
+      /* Fall through.  */
 
     /* This is a 24-/32-bit absolute address in a mov insn, which can
        become an 16-bit absolute address if it's in the right range.  */
@@ -591,7 +589,7 @@ h8300_reloc16_estimate (bfd *abfd, asection *input_section, arelent *reloc,
       value = bfd_h8300_pad_address (abfd, value);
 
       /* If the address is a sign-extended 16-bit value then we can
-         relax this instruction.  */
+	 relax this instruction.  */
       if (value <= 0x7fff || value >= 0xffff8000u)
 	{
 	  /* Change the reloc type.  */
@@ -1066,7 +1064,7 @@ h8300_reloc16_extra_cases (bfd *abfd, struct bfd_link_info *link_info,
 
 	if (link_info->output_bfd->xvec != abfd->xvec)
 	  {
-	    (*_bfd_error_handler)
+	    _bfd_error_handler
 	      (_("cannot handle R_MEM_INDIRECT reloc when using %s output"),
 	       link_info->output_bfd->xvec->name);
 

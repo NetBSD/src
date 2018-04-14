@@ -1,5 +1,5 @@
 /* ELF core file support for BFD.
-   Copyright (C) 1995-2016 Free Software Foundation, Inc.
+   Copyright (C) 1995-2018 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -161,9 +161,9 @@ elf_core_file_p (bfd *abfd)
 	    continue;
 	  if (back->elf_machine_code == i_ehdrp->e_machine
 	      || (back->elf_machine_alt1 != 0
-	          && i_ehdrp->e_machine == back->elf_machine_alt1)
+		  && i_ehdrp->e_machine == back->elf_machine_alt1)
 	      || (back->elf_machine_alt2 != 0
-	          && i_ehdrp->e_machine == back->elf_machine_alt2))
+		  && i_ehdrp->e_machine == back->elf_machine_alt2))
 	    {
 	      /* target_ptr is an ELF backend which matches this
 		 object file, so reject the generic ELF target.  */
@@ -295,10 +295,11 @@ elf_core_file_p (bfd *abfd)
       {
 	if ((bfd_size_type) statbuf.st_size < high)
 	  {
-	    (*_bfd_error_handler)
-	      (_("Warning: %B is truncated: expected core file "
-		 "size >= %lu, found: %lu."),
-	       abfd, (unsigned long) high, (unsigned long) statbuf.st_size);
+	    _bfd_error_handler
+	      /* xgettext:c-format */
+	      (_("warning: %B is truncated: expected core file "
+		 "size >= %Lu, found: %llu"),
+	       abfd, high, (unsigned long long) statbuf.st_size);
 	  }
       }
   }

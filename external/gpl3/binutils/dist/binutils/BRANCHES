@@ -42,9 +42,14 @@ binutils-2_23-branch
 binutils-2_24-branch
 binutils-2_25-branch
 binutils-2_26-branch
+binutils-2_27-branch
+binutils-2_28-branch
+binutils-2_29-branch
+binutils-2_30-branch
 
-Copyright (C) 2012-2016 Free Software Foundation, Inc.
+Copyright (C) 2012-2018 Free Software Foundation, Inc.
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright
 notice and this notice are preserved.
+binutils-2_30-branch

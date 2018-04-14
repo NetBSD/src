@@ -1,5 +1,5 @@
 /* elfcomm.h -- include file of common code for ELF format file.
-   Copyright (C) 2010-2016 Free Software Foundation, Inc.
+   Copyright (C) 2010-2018 Free Software Foundation, Inc.
 
    Originally developed by Eric Youngdale <eric@andante.jic.com>
    Modifications by Nick Clifton <nickc@redhat.com>
@@ -29,24 +29,17 @@
 void error (const char *, ...) ATTRIBUTE_PRINTF_1;
 void warn (const char *, ...) ATTRIBUTE_PRINTF_1;
 
-#if defined HAVE_LONG_LONG && SIZEOF_LONG_LONG > SIZEOF_LONG
-/* We can't use any bfd types here since readelf may define BFD64 and
-   objdump may not.  */
-#define HOST_WIDEST_INT	long long
-#else
-#define HOST_WIDEST_INT long
-#endif
 typedef unsigned HOST_WIDEST_INT elf_vma;
 
 extern void (*byte_put) (unsigned char *, elf_vma, int);
 extern void byte_put_little_endian (unsigned char *, elf_vma, int);
 extern void byte_put_big_endian (unsigned char *, elf_vma, int);
 
-extern elf_vma (*byte_get) (unsigned char *, int);
-extern elf_vma byte_get_signed (unsigned char *, int);
-extern elf_vma byte_get_little_endian (unsigned char *, int);
-extern elf_vma byte_get_big_endian (unsigned char *, int);
-extern void byte_get_64 (unsigned char *, elf_vma *, elf_vma *);
+extern elf_vma (*byte_get) (const unsigned char *, int);
+extern elf_vma byte_get_signed (const unsigned char *, int);
+extern elf_vma byte_get_little_endian (const unsigned char *, int);
+extern elf_vma byte_get_big_endian (const unsigned char *, int);
+extern void byte_get_64 (const unsigned char *, elf_vma *, elf_vma *);
 
 #define BYTE_PUT(field, val)	byte_put (field, val, sizeof (field))
 #define BYTE_GET(field)		byte_get (field, sizeof (field))

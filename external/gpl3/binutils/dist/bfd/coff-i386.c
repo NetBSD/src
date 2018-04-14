@@ -1,5 +1,5 @@
 /* BFD back-end for Intel 386 COFF files.
-   Copyright (C) 1990-2016 Free Software Foundation, Inc.
+   Copyright (C) 1990-2018 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -143,6 +143,11 @@ coff_i386_reloc (bfd *abfd,
     {
       reloc_howto_type *howto = reloc_entry->howto;
       unsigned char *addr = (unsigned char *) data + reloc_entry->address;
+
+      if (! bfd_reloc_offset_in_range (howto, abfd, input_section,
+				       reloc_entry->address
+				       * bfd_octets_per_byte (abfd)))
+	return bfd_reloc_outofrange;
 
       switch (howto->size)
 	{
@@ -377,7 +382,7 @@ static reloc_howto_type howto_table[] =
     coff_symbol_type *coffsym = (coff_symbol_type *) NULL;	\
     if (ptr && bfd_asymbol_bfd (ptr) != abfd)			\
       coffsym = (obj_symbols (abfd)				\
-	         + (cache_ptr->sym_ptr_ptr - symbols));		\
+		 + (cache_ptr->sym_ptr_ptr - symbols));		\
     else if (ptr)						\
       coffsym = coff_symbol_from (ptr);				\
     if (coffsym != (coff_symbol_type *) NULL			\
@@ -493,11 +498,11 @@ coff_i386_rtype_to_howto (bfd *abfd ATTRIBUTE_UNUSED,
       *addendp -= 4;
 
       /* If the symbol is defined, then the generic code is going to
-         add back the symbol value in order to cancel out an
-         adjustment it made to the addend.  However, we set the addend
-         to 0 at the start of this function.  We need to adjust here,
-         to avoid the adjustment the generic code will make.  FIXME:
-         This is getting a bit hackish.  */
+	 add back the symbol value in order to cancel out an
+	 adjustment it made to the addend.  However, we set the addend
+	 to 0 at the start of this function.  We need to adjust here,
+	 to avoid the adjustment the generic code will make.  FIXME:
+	 This is getting a bit hackish.  */
       if (sym != NULL && sym->n_scnum != 0)
 	*addendp -= sym->n_value;
     }

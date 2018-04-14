@@ -1,5 +1,5 @@
 /* This is the Assembler Pre-Processor
-   Copyright (C) 1987-2016 Free Software Foundation, Inc.
+   Copyright (C) 1987-2018 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -695,6 +695,7 @@ do_scrub_chars (size_t (*get) (char *, size_t), char *tostart, size_t tolen)
 	      state = 9;
 	      break;
 	    }
+	  /* Fall through.  */
 	case 17:
 	  /* We have seen "af" at the start of a symbol,
 	     a ' here is a part of that symbol.  */
@@ -1187,7 +1188,7 @@ do_scrub_chars (size_t (*get) (char *, size_t), char *tostart, size_t tolen)
 		  state = -2;
 		  break;
 		}
-	      else
+	      else if (ch2 != EOF)
 		{
 		  UNGET (ch2);
 		}
@@ -1321,8 +1322,8 @@ do_scrub_chars (size_t (*get) (char *, size_t), char *tostart, size_t tolen)
 	      else
 		UNGET (quot);
 	    }
-	  /* FALL THROUGH */
 #endif
+	  /* Fall through.  */
 
 	case LEX_IS_SYMBOL_COMPONENT:
 	  if (state == 10)

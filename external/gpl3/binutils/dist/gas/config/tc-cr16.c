@@ -1,5 +1,5 @@
 /* tc-cr16.c -- Assembler code for the CR16 CPU core.
-   Copyright (C) 2007-2016 Free Software Foundation, Inc.
+   Copyright (C) 2007-2018 Free Software Foundation, Inc.
 
    Contributed by M R Swami Reddy <MR.Swami.Reddy@nsc.com>
 
@@ -178,7 +178,12 @@ l_cons (int nbytes)
               if ((width = exp.X_add_number) >
                   (unsigned int)(BITS_PER_CHAR * nbytes))
                 {
-                  as_warn (_("field width %lu too big to fit in %d bytes: truncated to %d bits"), width, nbytes, (BITS_PER_CHAR * nbytes));
+		  as_warn (ngettext ("field width %lu too big to fit in %d"
+				     " byte: truncated to %d bits",
+				     "field width %lu too big to fit in %d"
+				     " bytes: truncated to %d bits",
+				     nbytes),
+			   width, nbytes, (BITS_PER_CHAR * nbytes));
                   width = BITS_PER_CHAR * nbytes;
                 }                   /* Too big.  */
 
@@ -334,7 +339,7 @@ get_register_pair (char *reg_name)
   const reg_entry *rreg;
   char tmp_rp[16]="\0";
 
-  /* Add '(' and ')' to the reg pair, if its not present.  */
+  /* Add '(' and ')' to the reg pair, if it's not present.  */
   if (reg_name[0] != '(')
     {
       tmp_rp[0] = '(';
@@ -1153,8 +1158,8 @@ getreg_image (reg r)
 static void
 set_operand (char *operand, ins * cr16_ins)
 {
-  char *operandS; /* Pointer to start of sub-opearand.  */
-  char *operandE; /* Pointer to end of sub-opearand.  */
+  char *operandS; /* Pointer to start of sub-operand.  */
+  char *operandE; /* Pointer to end of sub-operand.  */
 
   argument *cur_arg = &cr16_ins->arg[cur_arg_num]; /* Current argument.  */
 
@@ -1165,6 +1170,7 @@ set_operand (char *operand, ins * cr16_ins)
     {
     case arg_ic:    /* Case $0x18.  */
       operandS++;
+      /* Fall through.  */
     case arg_c:     /* Case 0x18.  */
       /* Set constant.  */
       process_label_constant (operandS, cr16_ins);
@@ -1182,6 +1188,7 @@ set_operand (char *operand, ins * cr16_ins)
       *operandE = '\0';
       process_label_constant (operandS, cr16_ins);
       operandS = operandE;
+      /* Fall through.  */
     case arg_rbase: /* Case (r1) or (r1,r0).  */
       operandS++;
       /* Set register base.  */
@@ -1469,7 +1476,7 @@ gettrap (char *s)
     if (strcasecmp (trap->name, s) == 0)
       return trap->entry;
 
-  /* To make compatable with CR16 4.1 tools, the below 3-lines of
+  /* To make compatible with CR16 4.1 tools, the below 3-lines of
    * code added. Refer: Development Tracker item #123 */
   for (trap = cr16_traps; trap < (cr16_traps + NUMTRAPS); trap++)
     if (trap->entry  == (unsigned int) atoi (s))
@@ -1652,7 +1659,7 @@ getidxregp_image (reg r)
   return 0;
 }
 
-/* Retrieve the opcode image of a given processort register.
+/* Retrieve the opcode image of a given processor register.
    If the register is illegal for the current instruction,
    issue an error.  */
 static int
@@ -1690,7 +1697,7 @@ getprocreg_image (int r)
   return 0;
 }
 
-/* Retrieve the opcode image of a given processort register.
+/* Retrieve the opcode image of a given processor register.
    If the register is illegal for the current instruction,
    issue an error.  */
 static int
@@ -1789,7 +1796,9 @@ print_constant (int nbits, int shift, argument *arg)
       break;
 
     case 21:
-      if ((nbits == 21) && (IS_INSN_TYPE (LD_STOR_INS))) nbits = 20;
+      if ((nbits == 21) && (IS_INSN_TYPE (LD_STOR_INS)))
+	nbits = 20;
+      /* Fall through.  */
     case 24:
     case 22:
     case 20:
@@ -1842,7 +1851,7 @@ print_constant (int nbits, int shift, argument *arg)
       /* When instruction size is 3 and 'shift' is 16, a 16-bit constant is
          always filling the upper part of output_opcode[1]. If we mistakenly
          write it to output_opcode[0], the constant prefix (that is, 'match')
-         will be overriden.
+         will be overridden.
          0        1         2         3
          +---------+---------+---------+---------+
          | 'match' |         | X X X X |         |
@@ -1998,7 +2007,7 @@ check_range (long *num, int bits, int unsigned flags, int update)
 
   if (bits == 0 && value > 0) return OP_OUT_OF_RANGE;
 
-  /* For hosts witah longs bigger than 32-bits make sure that the top
+  /* For hosts with longs bigger than 32-bits make sure that the top
      bits of a 32-bit negative value read in by the parser are set,
      so that the correct comparisons are made.  */
   if (value & 0x80000000)
@@ -2081,7 +2090,7 @@ check_range (long *num, int bits, int unsigned flags, int update)
    return retval;
 }
 
-/* Bunch of error checkings.
+/* Bunch of error checking.
    The checks are made after a matching instruction was found.  */
 
 static void
@@ -2104,7 +2113,7 @@ warn_if_needed (ins *insn)
     {
       unsigned int count = insn->arg[0].constant, reg_val;
 
-      /* Check if count operand caused to save/retrive the RA twice
+      /* Check if count operand caused to save/retrieve the RA twice
          to generate warning message.  */
      if (insn->nargs > 2)
        {
@@ -2285,7 +2294,7 @@ assemble_insn (const char *mnemonic, ins *insn)
             goto next_insn;
 
           /* If 'storb' instruction with 'sp' reg and 16-bit disp of
-           * reg-pair, leads to undifined trap, so this should use
+           * reg-pair, leads to undefined trap, so this should use
            * 20-bit disp of reg-pair.  */
           if (IS_INSN_MNEMONIC ("storb") && (instruction->size == 2)
               && (insn->arg[i].r == 15) && (insn->arg[i + 1].type == arg_crp))
@@ -2352,7 +2361,7 @@ next_insn:
   else
     /* Full match - print the encoding to output file.  */
     {
-      /* Make further checkings (such that couldn't be made earlier).
+      /* Make further checking (such that couldn't be made earlier).
          Warn the user if necessary.  */
       warn_if_needed (insn);
 
@@ -2381,7 +2390,7 @@ next_insn:
 
       for (i = 0; i < insn->nargs; i++)
         {
-         /* For BAL (ra),disp17 instuction only. And also set the
+         /* For BAL (ra),disp17 instruction only. And also set the
             DISP24a relocation type.  */
          if (IS_INSN_MNEMONIC ("bal") && (instruction->size == 2) && i == 0)
            {
@@ -2534,7 +2543,7 @@ md_assemble (char *op)
     ;
   *param++ = '\0';
 
-  /* bCC instuctions and adjust the mnemonic by adding extra white spaces.  */
+  /* bCC instructions and adjust the mnemonic by adding extra white spaces.  */
   if (is_bcc_insn (op))
     {
       strcpy (param1, get_b_cc (op));
@@ -2556,7 +2565,7 @@ md_assemble (char *op)
 
   /* MAPPING - SHIFT INSN, if imm4/imm16 positive values
      lsh[b/w] imm4/imm6, reg ==> ashu[b/w] imm4/imm16, reg
-     as CR16 core doesn't support lsh[b/w] right shift operaions.  */
+     as CR16 core doesn't support lsh[b/w] right shift operations.  */
   if ((streq ("lshb", op) || streq ("lshw", op) || streq ("lshd", op))
       && (param [0] == '$'))
     {

@@ -1,5 +1,5 @@
 /* Generic stabs parsing for gas.
-   Copyright (C) 1989-2016 Free Software Foundation, Inc.
+   Copyright (C) 1989-2018 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -46,13 +46,13 @@ static void generate_asm_file (int, const char *);
 #define STAB_STRING_SECTION_NAME ".stabstr"
 #endif
 
-/* Non-zero if we're in the middle of a .func function, in which case
+/* True if we're in the middle of a .func function, in which case
    stabs_generate_asm_lineno emits function relative line number stabs.
    Otherwise it emits line number stabs with absolute addresses.  Note that
    both cases only apply to assembler code assembled with -gstabs.  */
-static int in_dot_func_p;
+static bfd_boolean in_dot_func_p = FALSE;
 
-/* Label at start of current function if in_dot_func_p != 0.  */
+/* Label at start of current function if in_dot_func_p != FALSE.  */
 static const char *current_function_label;
 
 /*
@@ -510,7 +510,6 @@ generate_asm_file (int type, const char *file)
 {
   static char *last_file;
   static int label_count;
-  char *hold;
   char sym[30];
   char *buf;
   const char *tmp = file;
@@ -525,8 +524,6 @@ generate_asm_file (int type, const char *file)
      generate a string and then parse it again.  That lets us use the
      existing stabs hook, which expect to see a string, rather than
      inventing new ones.  */
-  hold = input_line_pointer;
-
   sprintf (sym, "%sF%d", FAKE_LABEL_NAME, label_count);
   ++label_count;
 
@@ -556,8 +553,10 @@ generate_asm_file (int type, const char *file)
 
   sprintf (bufp, "\",%d,0,0,%s\n", type, sym);
 
-  input_line_pointer = buf;
+  temp_ilp (buf);
   s_stab ('s');
+  restore_ilp ();
+
   colon (sym);
 
   if (last_file != NULL)
@@ -565,8 +564,6 @@ generate_asm_file (int type, const char *file)
   last_file = xstrdup (file);
 
   free (buf);
-
-  input_line_pointer = hold;
 }
 
 /* Generate stabs debugging information for the current line.  This is
@@ -576,7 +573,6 @@ void
 stabs_generate_asm_lineno (void)
 {
   static int label_count;
-  char *hold;
   const char *file;
   unsigned int lineno;
   char *buf;
@@ -590,14 +586,12 @@ stabs_generate_asm_lineno (void)
      existing stabs hook, which expect to see a string, rather than
      inventing new ones.  */
 
-  hold = input_line_pointer;
-
   file = as_where (&lineno);
 
   /* Don't emit sequences of stabs for the same line.  */
   if (prev_file == NULL)
     {
-      /* First time thru.  */
+      /* First time through.  */
       prev_file = xstrdup (file);
       prev_lineno = lineno;
     }
@@ -638,11 +632,13 @@ stabs_generate_asm_lineno (void)
       buf = XNEWVEC (char, 100);
       sprintf (buf, "%d,0,%d,%s\n", N_SLINE, lineno, sym);
     }
-  input_line_pointer = buf;
+
+  temp_ilp (buf);
   s_stab ('n');
+  restore_ilp ();
+
   colon (sym);
 
-  input_line_pointer = hold;
   outputting_stabs_line_debug = 0;
   free (buf);
 }
@@ -653,29 +649,30 @@ stabs_generate_asm_lineno (void)
 void
 stabs_generate_asm_func (const char *funcname, const char *startlabname)
 {
-  static int void_emitted_p;
-  char *hold = input_line_pointer;
+  static bfd_boolean void_emitted_p = FALSE;
   char *buf;
   unsigned int lineno;
 
   if (! void_emitted_p)
     {
-      input_line_pointer = (char *) "\"void:t1=1\",128,0,0,0";
+      temp_ilp ((char *) "\"void:t1=1\",128,0,0,0");
       s_stab ('s');
-      void_emitted_p = 1;
+      restore_ilp ();
+      void_emitted_p = TRUE;
     }
 
   as_where (&lineno);
   if (asprintf (&buf, "\"%s:F1\",%d,0,%d,%s",
 		funcname, N_FUN, lineno + 1, startlabname) == -1)
     as_fatal ("%s", xstrerror (errno));
-  input_line_pointer = buf;
+
+  temp_ilp (buf);
   s_stab ('s');
+  restore_ilp ();
   free (buf);
 
-  input_line_pointer = hold;
   current_function_label = xstrdup (startlabname);
-  in_dot_func_p = 1;
+  in_dot_func_p = TRUE;
 }
 
 /* Emit a stab to record the end of a function.  */
@@ -685,7 +682,6 @@ stabs_generate_asm_endfunc (const char *funcname ATTRIBUTE_UNUSED,
 			    const char *startlabname)
 {
   static int label_count;
-  char *hold = input_line_pointer;
   char *buf;
   char sym[30];
 
@@ -695,11 +691,12 @@ stabs_generate_asm_endfunc (const char *funcname ATTRIBUTE_UNUSED,
 
   if (asprintf (&buf, "\"\",%d,0,0,%s-%s", N_FUN, sym, startlabname) == -1)
     as_fatal ("%s", xstrerror (errno));
-  input_line_pointer = buf;
+
+  temp_ilp (buf);
   s_stab ('s');
+  restore_ilp ();
   free (buf);
 
-  input_line_pointer = hold;
-  in_dot_func_p = 0;
+  in_dot_func_p = FALSE;
   current_function_label = NULL;
 }

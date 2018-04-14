@@ -7,11 +7,21 @@
 #endif
 #define __CONFIG_H__ 1
 
+/* Define to 1 if you want to emit gnu hash in the ELF linker by default. */
+#undef DEFAULT_EMIT_GNU_HASH
+
+/* Define to 1 if you want to emit sysv hash in the ELF linker by default. */
+#undef DEFAULT_EMIT_SYSV_HASH
+
 /* Define if you want compressed debug sections by default. */
 #undef DEFAULT_FLAG_COMPRESS_DEBUG
 
 /* Define to 1 if you want to enable -z relro in ELF linker by default. */
 #undef DEFAULT_LD_Z_RELRO
+
+/* Define to 1 if you want to set DT_RUNPATH instead of DT_RPATH by default.
+   */
+#undef DEFAULT_NEW_DTAGS
 
 /* Define to 1 if translation of program messages to the user's native
    language is requested. */

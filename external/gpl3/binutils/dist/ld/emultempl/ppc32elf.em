@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright (C) 2003-2016 Free Software Foundation, Inc.
+#   Copyright (C) 2003-2018 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -24,7 +24,6 @@
 #
 fragment <<EOF
 
-#include "libbfd.h"
 #include "elf32-ppc.h"
 #include "ldlex.h"
 #include "ldlang.h"
@@ -39,9 +38,8 @@ static int notlsopt = 0;
 /* Choose the correct place for .got.  */
 static int old_got = 0;
 
-static bfd_vma pagesize = 0;
-
-static struct ppc_elf_params params = { PLT_UNSET, -1, 0, 0, 0, 0, 0 };
+static struct ppc_elf_params params = { PLT_UNSET, 0, 1, -1,
+					0, 0, 0, 0, 0, 0, 0 };
 
 static void
 ppc_after_open_output (void)
@@ -49,9 +47,8 @@ ppc_after_open_output (void)
   if (params.emit_stub_syms < 0)
     params.emit_stub_syms = (link_info.emitrelocations
 			     || bfd_link_pic (&link_info));
-  if (pagesize == 0)
-    pagesize = config.commonpagesize;
-  params.pagesize_p2 = bfd_log2 (pagesize);
+  if (params.pagesize == 0)
+    params.pagesize = config.commonpagesize;
   ppc_elf_link_params (&link_info, &params);
 }
 
@@ -61,7 +58,7 @@ EOF
 if test -z "$VXWORKS_BASE_EM_FILE" ; then
   fragment <<EOF
 static void
-ppc_after_open (void)
+ppc_after_check_relocs (void)
 {
   if (is_ppc_elf (link_info.output_bfd))
     {
@@ -75,7 +72,7 @@ ppc_after_open (void)
 
       new_plt = ppc_elf_select_plt_layout (link_info.output_bfd, &link_info);
       if (new_plt < 0)
-	einfo ("%X%P: select_plt_layout problem %E\n");
+	einfo (_("%X%P: select_plt_layout problem %E\n"));
 
       num_got = 0;
       num_plt = 0;
@@ -112,7 +109,7 @@ ppc_after_open (void)
 	}
     }
 
-  gld${EMULATION_NAME}_after_open ();
+  after_check_relocs_default ();
 }
 
 EOF
@@ -128,7 +125,7 @@ ppc_before_allocation (void)
 	{
 	  if (!ppc_elf_tls_optimize (link_info.output_bfd, &link_info))
 	    {
-	      einfo ("%X%P: TLS problem %E\n");
+	      einfo (_("%X%P: TLS problem %E\n"));
 	      return;
 	    }
 	}
@@ -153,7 +150,7 @@ ppc_before_allocation (void)
       if (expld.phase != lang_mark_phase_enum)
 	{
 	  expld.phase = lang_mark_phase_enum;
-	  expld.dataseg.phase = exp_dataseg_none;
+	  expld.dataseg.phase = exp_seg_none;
 	  one_lang_size_sections_pass (NULL, FALSE);
 	  lang_reset_memory_regions ();
 	}
@@ -243,16 +240,24 @@ fi
 # parse_args and list_options functions.
 #
 PARSE_AND_LIST_PROLOGUE=${PARSE_AND_LIST_PROLOGUE}'
-#define OPTION_NO_TLS_OPT		321
-#define OPTION_NO_TLS_GET_ADDR_OPT	(OPTION_NO_TLS_OPT + 1)
-#define OPTION_NEW_PLT			(OPTION_NO_TLS_GET_ADDR_OPT + 1)
-#define OPTION_OLD_PLT			(OPTION_NEW_PLT + 1)
-#define OPTION_OLD_GOT			(OPTION_OLD_PLT + 1)
-#define OPTION_STUBSYMS			(OPTION_OLD_GOT + 1)
-#define OPTION_NO_STUBSYMS		(OPTION_STUBSYMS + 1)
-#define OPTION_PPC476_WORKAROUND	(OPTION_NO_STUBSYMS + 1)
-#define OPTION_NO_PPC476_WORKAROUND	(OPTION_PPC476_WORKAROUND + 1)
-#define OPTION_NO_PICFIXUP		(OPTION_NO_PPC476_WORKAROUND + 1)
+enum ppc32_opt
+{
+  OPTION_NO_TLS_OPT = 321,
+  OPTION_NO_TLS_GET_ADDR_OPT,
+  OPTION_NEW_PLT,
+  OPTION_OLD_PLT,
+  OPTION_SPECULATE_INDIRECT_JUMPS,
+  OPTION_NO_SPECULATE_INDIRECT_JUMPS,
+  OPTION_PLT_ALIGN,
+  OPTION_NO_PLT_ALIGN,
+  OPTION_OLD_GOT,
+  OPTION_STUBSYMS,
+  OPTION_NO_STUBSYMS,
+  OPTION_PPC476_WORKAROUND,
+  OPTION_NO_PPC476_WORKAROUND,
+  OPTION_NO_PICFIXUP,
+  OPTION_VLE_RELOC_FIXUP
+};
 '
 
 PARSE_AND_LIST_LONGOPTS=${PARSE_AND_LIST_LONGOPTS}'
@@ -264,31 +269,69 @@ if test -z "$VXWORKS_BASE_EM_FILE" ; then
   PARSE_AND_LIST_LONGOPTS=${PARSE_AND_LIST_LONGOPTS}'
   { "secure-plt", no_argument, NULL, OPTION_NEW_PLT },
   { "bss-plt", no_argument, NULL, OPTION_OLD_PLT },
+  { "speculate-indirect-jumps", no_argument, NULL, OPTION_SPECULATE_INDIRECT_JUMPS },
+  { "no-speculate-indirect-jumps", no_argument, NULL, OPTION_NO_SPECULATE_INDIRECT_JUMPS },
+  { "plt-align", optional_argument, NULL, OPTION_PLT_ALIGN },
+  { "no-plt-align", no_argument, NULL, OPTION_NO_PLT_ALIGN },
   { "sdata-got", no_argument, NULL, OPTION_OLD_GOT },'
 fi
 PARSE_AND_LIST_LONGOPTS=${PARSE_AND_LIST_LONGOPTS}'
   { "ppc476-workaround", optional_argument, NULL, OPTION_PPC476_WORKAROUND },
   { "no-ppc476-workaround", no_argument, NULL, OPTION_NO_PPC476_WORKAROUND },
   { "no-pic-fixup", no_argument, NULL, OPTION_NO_PICFIXUP },
+  { "vle-reloc-fixup", no_argument, NULL, OPTION_VLE_RELOC_FIXUP },
 '
 
 PARSE_AND_LIST_OPTIONS=${PARSE_AND_LIST_OPTIONS}'
   fprintf (file, _("\
-  --emit-stub-syms            Label linker stubs with a symbol.\n\
-  --no-emit-stub-syms         Don'\''t label linker stubs with a symbol.\n\
-  --no-tls-optimize           Don'\''t try to optimize TLS accesses.\n\
-  --no-tls-get-addr-optimize  Don'\''t use a special __tls_get_addr call.\n'
+  --emit-stub-syms            Label linker stubs with a symbol.\n"
+		   ));
+  fprintf (file, _("\
+  --no-emit-stub-syms         Don'\''t label linker stubs with a symbol.\n"
+		   ));
+  fprintf (file, _("\
+  --no-tls-optimize           Don'\''t try to optimize TLS accesses.\n"
+		   ));
+  fprintf (file, _("\
+  --no-tls-get-addr-optimize  Don'\''t use a special __tls_get_addr call.\n"
+		   ));'
 if test -z "$VXWORKS_BASE_EM_FILE" ; then
   PARSE_AND_LIST_OPTIONS=${PARSE_AND_LIST_OPTIONS}'\
-  --secure-plt                Use new-style PLT if possible.\n\
-  --bss-plt                   Force old-style BSS PLT.\n\
-  --sdata-got                 Force GOT location just before .sdata.\n'
+  fprintf (file, _("\
+  --secure-plt                Use new-style PLT if possible.\n"
+		   ));
+  fprintf (file, _("\
+  --bss-plt                   Force old-style BSS PLT.\n"
+		   ));
+  fprintf (file, _("\
+  --speculate-indirect-jumps  PLT call stubs without speculation barrier.\n"
+		   ));
+  fprintf (file, _("\
+  --no-speculate-indirect-jumps PLT call stubs with speculation barrier.\n"
+		   ));
+  fprintf (file, _("\
+  --plt-align                 Align PLT call stubs to fit cache lines.\n"
+		   ));
+  fprintf (file, _("\
+  --no-plt-align              Dont'\''t align individual PLT call stubs.\n"
+		   ));
+  fprintf (file, _("\
+  --sdata-got                 Force GOT location just before .sdata.\n"
+		   ));'
 fi
 PARSE_AND_LIST_OPTIONS=${PARSE_AND_LIST_OPTIONS}'\
+  fprintf (file, _("\
   --ppc476-workaround [=pagesize]\n\
-                              Avoid a cache bug on ppc476.\n\
-  --no-ppc476-workaround      Disable workaround.\n\
+                              Avoid a cache bug on ppc476.\n"
+		   ));
+  fprintf (file, _("\
+  --no-ppc476-workaround      Disable workaround.\n"
+		   ));
+  fprintf (file, _("\
   --no-pic-fixup              Don'\''t edit non-pic to pic.\n"
+		   ));
+  fprintf (file, _("\
+  --vle-reloc-fixup           Correct old object file 16A/16D relocation.\n"
 		   ));
 '
 
@@ -317,6 +360,31 @@ PARSE_AND_LIST_ARGS_CASES=${PARSE_AND_LIST_ARGS_CASES}'
       params.plt_style = PLT_OLD;
       break;
 
+    case OPTION_SPECULATE_INDIRECT_JUMPS:
+      params.speculate_indirect_jumps = 1;
+      break;
+
+    case OPTION_NO_SPECULATE_INDIRECT_JUMPS:
+      params.speculate_indirect_jumps = 0;
+      break;
+
+    case OPTION_PLT_ALIGN:
+      if (optarg != NULL)
+	{
+	  char *end;
+	  unsigned long val = strtoul (optarg, &end, 0);
+	  if (*end || val > 5)
+	    einfo (_("%P%F: invalid --plt-align `%s'\''\n"), optarg);
+	  params.plt_stub_align = val;
+	}
+      else
+	params.plt_stub_align = 5;
+      break;
+
+    case OPTION_NO_PLT_ALIGN:
+      params.plt_stub_align = 0;
+      break;
+
     case OPTION_OLD_GOT:
       old_got = 1;
       break;
@@ -331,10 +399,10 @@ PARSE_AND_LIST_ARGS_CASES=${PARSE_AND_LIST_ARGS_CASES}'
       if (optarg != NULL)
 	{
 	  char *end;
-	  pagesize = strtoul (optarg, &end, 0);
+	  params.pagesize = strtoul (optarg, &end, 0);
 	  if (*end
-	      || (pagesize < 4096 && pagesize != 0)
-	      || pagesize != (pagesize & -pagesize))
+	      || (params.pagesize < 4096 && params.pagesize != 0)
+	      || params.pagesize != (params.pagesize & -params.pagesize))
 	    einfo (_("%P%F: invalid pagesize `%s'\''\n"), optarg);
 	}
       break;
@@ -346,13 +414,17 @@ PARSE_AND_LIST_ARGS_CASES=${PARSE_AND_LIST_ARGS_CASES}'
     case OPTION_NO_PICFIXUP:
       params.pic_fixup = -1;
       break;
+
+    case OPTION_VLE_RELOC_FIXUP:
+      params.vle_reloc_fixup = 1;
+      break;
 '
 
 # Put these extra ppc32elf routines in ld_${EMULATION_NAME}_emulation
 #
 LDEMUL_CREATE_OUTPUT_SECTION_STATEMENTS=ppc_after_open_output
 if test -z "$VXWORKS_BASE_EM_FILE" ; then
-  LDEMUL_AFTER_OPEN=ppc_after_open
+  LDEMUL_AFTER_CHECK_RELOCS=ppc_after_check_relocs
 fi
 LDEMUL_BEFORE_ALLOCATION=ppc_before_allocation
 LDEMUL_FINISH=ppc_finish

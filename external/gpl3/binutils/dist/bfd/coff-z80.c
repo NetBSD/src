@@ -1,5 +1,5 @@
 /* BFD back-end for Zilog Z80 COFF binaries.
-   Copyright (C) 2005-2016 Free Software Foundation, Inc.
+   Copyright (C) 2005-2018 Free Software Foundation, Inc.
    Contributed by Arnold Metselaar <arnold_m@operamail.com>
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -153,10 +153,10 @@ coff_z80_reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED,
 
 static void
 reloc_processing (arelent *relent,
-                  struct internal_reloc *reloc,
-                  asymbol **symbols,
-                  bfd *abfd,
-                  asection *section)
+		  struct internal_reloc *reloc,
+		  asymbol **symbols,
+		  bfd *abfd,
+		  asection *section)
 {
   relent->address = reloc->r_vaddr;
   rtype2howto (relent, reloc);
@@ -172,12 +172,12 @@ reloc_processing (arelent *relent,
 
 static void
 extra_case (bfd *in_abfd,
-            struct bfd_link_info *link_info,
-            struct bfd_link_order *link_order,
-            arelent *reloc,
-            bfd_byte *data,
-            unsigned int *src_ptr,
-            unsigned int *dst_ptr)
+	    struct bfd_link_info *link_info,
+	    struct bfd_link_order *link_order,
+	    arelent *reloc,
+	    bfd_byte *data,
+	    unsigned int *src_ptr,
+	    unsigned int *dst_ptr)
 {
   asection * input_section = link_order->u.indirect.section;
   int val;

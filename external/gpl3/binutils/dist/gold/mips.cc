@@ -1,6 +1,6 @@
 // mips.cc -- mips target support for gold.
 
-// Copyright (C) 2011-2016 Free Software Foundation, Inc.
+// Copyright (C) 2011-2018 Free Software Foundation, Inc.
 // Written by Sasa Stankovic <sasa.stankovic@imgtec.com>
 //        and Aleksandar Simeonov <aleksandar.simeonov@rt-rk.com>.
 // This file contains borrowed and adapted code from bfd/elfxx-mips.c.
@@ -62,6 +62,9 @@ class Target_mips;
 
 template<int size, bool big_endian>
 class Mips_output_section_reginfo;
+
+template<int size, bool big_endian>
+class Mips_output_section_options;
 
 template<int size, bool big_endian>
 class Mips_output_data_la25_stub;
@@ -471,22 +474,24 @@ class Mips_got_entry
          ? this->d.object->name().c_str()
          : this->d.sym->name());
     size_t addend = this->addend_;
-    return name_hash_value ^ this->symndx_ ^ addend;
+    return name_hash_value ^ this->symndx_ ^ (addend << 16);
   }
 
   // Return whether this entry is equal to OTHER.
   bool
   equals(Mips_got_entry<size, big_endian>* other) const
   {
+    if (this->symndx_ != other->symndx_
+        || this->tls_type_ != other->tls_type_)
+      return false;
+
     if (this->tls_type_ == GOT_TLS_LDM)
       return true;
 
-    return ((this->tls_type_ == other->tls_type_)
-             && (this->symndx_ == other->symndx_)
-             && ((this->symndx_ != -1U)
-                  ? (this->d.object == other->d.object)
-                  : (this->d.sym == other->d.sym))
-             && (this->addend_ == other->addend_));
+    return (((this->symndx_ != -1U)
+              ? (this->d.object == other->d.object)
+              : (this->d.sym == other->d.sym))
+            && (this->addend_ == other->addend_));
   }
 
   // Return input object that needs this GOT entry.
@@ -1589,10 +1594,11 @@ class Mips_relobj : public Sized_relobj_file<size, big_endian>
       local_symbol_is_micromips_(), mips16_stub_sections_(),
       local_non_16bit_calls_(), local_16bit_calls_(), local_mips16_fn_stubs_(),
       local_mips16_call_stubs_(), gp_(0), has_reginfo_section_(false),
-      got_info_(NULL), section_is_mips16_fn_stub_(),
-      section_is_mips16_call_stub_(), section_is_mips16_call_fp_stub_(),
-      pdr_shndx_(-1U), attributes_section_data_(NULL), abiflags_(NULL),
-      gprmask_(0), cprmask1_(0), cprmask2_(0), cprmask3_(0), cprmask4_(0)
+      merge_processor_specific_data_(true), got_info_(NULL),
+      section_is_mips16_fn_stub_(), section_is_mips16_call_stub_(),
+      section_is_mips16_call_fp_stub_(), pdr_shndx_(-1U),
+      attributes_section_data_(NULL), abiflags_(NULL), gprmask_(0),
+      cprmask1_(0), cprmask2_(0), cprmask3_(0), cprmask4_(0)
   {
     this->is_pic_ = (ehdr.get_e_flags() & elfcpp::EF_MIPS_PIC) != 0;
     this->is_n32_ = elfcpp::abi_n32(ehdr.get_e_flags());
@@ -1833,6 +1839,11 @@ class Mips_relobj : public Sized_relobj_file<size, big_endian>
   has_reginfo_section() const
   { return this->has_reginfo_section_; }
 
+  // Return whether we want to merge processor-specific data.
+  bool
+  merge_processor_specific_data() const
+  { return this->merge_processor_specific_data_; }
+
   // Return gprmask from the .reginfo section of this object.
   Valtype
   gprmask() const
@@ -1923,6 +1934,8 @@ class Mips_relobj : public Sized_relobj_file<size, big_endian>
   bool is_n32_ : 1;
   // Whether the object contains a .reginfo section.
   bool has_reginfo_section_ : 1;
+  // Whether we merge processor-specific data of this object to output.
+  bool merge_processor_specific_data_ : 1;
   // The Mips_got_info for this object.
   Mips_got_info<size, big_endian>* got_info_;
 
@@ -2475,7 +2488,7 @@ class Mips_output_data_plt : public Output_section_data
   add_entry(Mips_symbol<size>* gsym, unsigned int r_type);
 
   // Return the .rel.plt section data.
-  const Reloc_section*
+  Reloc_section*
   rel_plt() const
   { return this->rel_; }
 
@@ -2821,6 +2834,31 @@ class Mips_output_section_reginfo : public Output_section_data
   Valtype cprmask4_;
 };
 
+// This class handles .MIPS.options output section.
+
+template<int size, bool big_endian>
+class Mips_output_section_options : public Output_section
+{
+ public:
+  Mips_output_section_options(const char* name, elfcpp::Elf_Word type,
+                              elfcpp::Elf_Xword flags,
+                              Target_mips<size, big_endian>* target)
+    : Output_section(name, type, flags), target_(target)
+  {
+    // After the input sections are written, we only need to update
+    // ri_gp_value field of ODK_REGINFO entries.
+    this->set_after_input_sections();
+  }
+
+ protected:
+  // Write out option section.
+  void
+  do_write(Output_file* of);
+
+ private:
+  Target_mips<size, big_endian>* target_;
+};
+
 // This class handles .MIPS.abiflags output section.
 
 template<int size, bool big_endian>
@@ -2926,8 +2964,7 @@ symbol_refs_local(const Symbol* sym, bool has_dynsym_entry,
 
   // If we don't have a definition in a regular file, then we can't
   // resolve locally.  The sym is either undefined or dynamic.
-  if (sym->source() != Symbol::FROM_OBJECT || sym->object()->is_dynamic()
-      || sym->is_undefined())
+  if (sym->is_from_dynobj() || sym->is_undefined())
     return false;
 
   // Forced local symbols resolve locally.
@@ -3636,6 +3673,18 @@ class Target_mips : public Sized_target<size, big_endian>
                      const elfcpp::Ehdr<size, !big_endian>&)
   { gold_unreachable(); }
 
+  // Make an output section.
+  Output_section*
+  do_make_output_section(const char* name, elfcpp::Elf_Word type,
+                         elfcpp::Elf_Xword flags)
+    {
+      if (type == elfcpp::SHT_MIPS_OPTIONS)
+        return new Mips_output_section_options<size, big_endian>(name, type,
+                                                                 flags, this);
+      else
+        return new Output_section(name, type, flags);
+    }
+
   // Adjust ELF file header.
   void
   do_adjust_elf_header(unsigned char* view, int len);
@@ -3818,6 +3867,7 @@ class Target_mips : public Sized_target<size, big_endian>
   {
    public:
     Relocate()
+      : calculated_value_(0), calculate_only_(false)
     { }
 
     ~Relocate()
@@ -3837,6 +3887,12 @@ class Target_mips : public Sized_target<size, big_endian>
 	     Target_mips*, Output_section*, size_t, const unsigned char*,
 	     const Sized_symbol<size>*, const Symbol_value<size>*,
 	     unsigned char*, Mips_address, section_size_type);
+
+   private:
+    // Result of the relocation.
+    Valtype calculated_value_;
+    // Whether we have to calculate relocation instead of applying it.
+    bool calculate_only_;
   };
 
   // This POD class holds the dynamic relocations that should be emitted instead
@@ -4500,8 +4556,7 @@ class Mips_relocate_functions : public Relocate_functions<size, big_endian>
     Valtype32 val = elfcpp::Swap<32, big_endian>::readval(wv);
 
     // Try converting J(AL)R to B(AL), if the target is in range.
-    if (!parameters->options().relocatable()
-        && r_type == elfcpp::R_MIPS_JALR
+    if (r_type == elfcpp::R_MIPS_JALR
         && !cross_mode_jump
         && ((jalr_to_bal && val == 0x0320f809)    // jalr t9
             || (jr_to_b && val == 0x03200008)))   // jr t9
@@ -4592,15 +4647,9 @@ class Mips_relocate_functions : public Relocate_functions<size, big_endian>
       }
     x = psymval->value(object, x) >> shift;
 
-    if (!calculate_only && !local && !gsym->is_weak_undefined())
-      {
-        if ((x >> 26) != ((address + 4) >> (26 + shift)))
-          {
-            gold_error(_("relocation truncated to fit: %u against '%s'"),
-                       r_type, gsym->name());
-            return This::STATUS_OVERFLOW;
-          }
-      }
+    if (!calculate_only && !local && !gsym->is_weak_undefined()
+        && ((x >> 26) != ((address + 4) >> (26 + shift))))
+      return This::STATUS_OVERFLOW;
 
     val = Bits<32>::bit_select32(val, x, 0x03ffffff);
 
@@ -5579,6 +5628,52 @@ class Mips_relocate_functions : public Relocate_functions<size, big_endian>
     return This::STATUS_OKAY;
   }
 
+  // R_MIPS_HIGHER, R_MICROMIPS_HIGHER
+  static inline typename This::Status
+  relhigher(unsigned char* view, const Mips_relobj<size, big_endian>* object,
+            const Symbol_value<size>* psymval, Mips_address addend_a,
+            bool extract_addend, bool calculate_only, Valtype* calculated_value)
+  {
+    Valtype32* wv = reinterpret_cast<Valtype32*>(view);
+    Valtype32 val = elfcpp::Swap<32, big_endian>::readval(wv);
+    Valtype addend = (extract_addend ? Bits<16>::sign_extend32(val & 0xffff)
+                                     : addend_a);
+
+    Valtype x = psymval->value(object, addend);
+    x = ((x + (uint64_t) 0x80008000) >> 32) & 0xffff;
+    val = Bits<32>::bit_select32(val, x, 0xffff);
+
+    if (calculate_only)
+      *calculated_value = x;
+    else
+      elfcpp::Swap<32, big_endian>::writeval(wv, val);
+
+    return This::STATUS_OKAY;
+  }
+
+  // R_MIPS_HIGHEST, R_MICROMIPS_HIGHEST
+  static inline typename This::Status
+  relhighest(unsigned char* view, const Mips_relobj<size, big_endian>* object,
+             const Symbol_value<size>* psymval, Mips_address addend_a,
+             bool extract_addend, bool calculate_only,
+             Valtype* calculated_value)
+  {
+    Valtype32* wv = reinterpret_cast<Valtype32*>(view);
+    Valtype32 val = elfcpp::Swap<32, big_endian>::readval(wv);
+    Valtype addend = (extract_addend ? Bits<16>::sign_extend32(val & 0xffff)
+                                     : addend_a);
+
+    Valtype x = psymval->value(object, addend);
+    x = ((x + (uint64_t) 0x800080008000llu) >> 48) & 0xffff;
+    val = Bits<32>::bit_select32(val, x, 0xffff);
+
+    if (calculate_only)
+      *calculated_value = x;
+    else
+      elfcpp::Swap<32, big_endian>::writeval(wv, val);
+
+    return This::STATUS_OKAY;
+  }
 };
 
 template<int size, bool big_endian>
@@ -5627,7 +5722,7 @@ Mips_got_info<size, big_endian>::record_global_got_symbol(
     mips_sym->set_got_not_only_for_calls();
 
   // A global symbol in the GOT must also be in the dynamic symbol table.
-  if (!mips_sym->needs_dynsym_entry())
+  if (!mips_sym->needs_dynsym_entry() && !mips_sym->is_forced_local())
     {
       switch (mips_sym->visibility())
         {
@@ -6733,6 +6828,16 @@ Mips_relobj<size, big_endian>::do_read_symbols(Read_symbols_data* sd)
   // Call parent class to read symbol information.
   this->base_read_symbols(sd);
 
+  // If this input file is a binary file, it has no processor
+  // specific data.
+  Input_file::Format format = this->input_file()->format();
+  if (format != Input_file::FORMAT_ELF)
+    {
+      gold_assert(format == Input_file::FORMAT_BINARY);
+      this->merge_processor_specific_data_ = false;
+      return;
+    }
+
   // Read processor-specific flags in ELF file header.
   const unsigned char* pehdr = this->get_view(elfcpp::file_header_offset,
                                             elfcpp::Elf_sizes<size>::ehdr_size,
@@ -6752,9 +6857,26 @@ Mips_relobj<size, big_endian>::do_read_symbols(Read_symbols_data* sd)
   const size_t shdr_size = elfcpp::Elf_sizes<size>::shdr_size;
   const unsigned char* pshdrs = sd->section_headers->data();
   const unsigned char* ps = pshdrs + shdr_size;
+  bool must_merge_processor_specific_data = false;
   for (unsigned int i = 1; i < this->shnum(); ++i, ps += shdr_size)
     {
       elfcpp::Shdr<size, big_endian> shdr(ps);
+
+      // Sometimes an object has no contents except the section name string
+      // table and an empty symbol table with the undefined symbol.  We
+      // don't want to merge processor-specific data from such an object.
+      if (shdr.get_sh_type() == elfcpp::SHT_SYMTAB)
+        {
+          // Symbol table is not empty.
+          const typename elfcpp::Elf_types<size>::Elf_WXword sym_size =
+            elfcpp::Elf_sizes<size>::sym_size;
+          if (shdr.get_sh_size() > sym_size)
+            must_merge_processor_specific_data = true;
+        }
+      else if (shdr.get_sh_type() != elfcpp::SHT_STRTAB)
+        // If this is neither an empty symbol table nor a string table,
+        // be conservative.
+        must_merge_processor_specific_data = true;
 
       if (shdr.get_sh_type() == elfcpp::SHT_MIPS_REGINFO)
         {
@@ -6928,6 +7050,10 @@ Mips_relobj<size, big_endian>::do_read_symbols(Read_symbols_data* sd)
           this->pdr_shndx_ = i;
         }
     }
+
+  // This is rare.
+  if (!must_merge_processor_specific_data)
+    this->merge_processor_specific_data_ = false;
 }
 
 // Discard MIPS16 stub secions that are not needed.
@@ -8138,6 +8264,44 @@ Mips_output_section_reginfo<size, big_endian>::do_write(Output_file* of)
   of->write_output_view(offset, data_size, view);
 }
 
+// Mips_output_section_options methods.
+
+template<int size, bool big_endian>
+void
+Mips_output_section_options<size, big_endian>::do_write(Output_file* of)
+{
+  off_t offset = this->offset();
+  const section_size_type oview_size =
+    convert_to_section_size_type(this->data_size());
+  unsigned char* view = of->get_output_view(offset, oview_size);
+  const unsigned char* end = view + oview_size;
+
+  while (view + 8 <= end)
+    {
+      unsigned char kind = elfcpp::Swap<8, big_endian>::readval(view);
+      unsigned char sz = elfcpp::Swap<8, big_endian>::readval(view + 1);
+      if (sz < 8)
+        {
+          gold_error(_("Warning: bad `%s' option size %u smaller "
+                       "than its header in output section"),
+                     this->name(), sz);
+          break;
+        }
+
+      // Only update ri_gp_value (GP register value) field of ODK_REGINFO entry.
+      if (this->target_->is_output_n64() && kind == elfcpp::ODK_REGINFO)
+        elfcpp::Swap<size, big_endian>::writeval(view + 32,
+                                                 this->target_->gp_value());
+      else if (kind == elfcpp::ODK_REGINFO)
+        elfcpp::Swap<size, big_endian>::writeval(view + 28,
+                                                 this->target_->gp_value());
+
+      view += sz;
+    }
+
+  of->write_output_view(offset, oview_size, view);
+}
+
 // Mips_output_section_abiflags methods.
 
 template<int size, bool big_endian>
@@ -8332,7 +8496,7 @@ Target_mips<size, big_endian>::got_section(Symbol_table* symtab,
                                     this->got_,
                                     0, 0, elfcpp::STT_OBJECT,
                                     elfcpp::STB_GLOBAL,
-                                    elfcpp::STV_DEFAULT, 0,
+                                    elfcpp::STV_HIDDEN, 0,
                                     false, false);
     }
 
@@ -8345,53 +8509,30 @@ template<int size, bool big_endian>
 void
 Target_mips<size, big_endian>::set_gp(Layout* layout, Symbol_table* symtab)
 {
-  if (this->gp_ != NULL)
-    return;
-
-  Output_data* section = layout->find_output_section(".got");
-  if (section == NULL)
-    {
-      // If there is no .got section, gp should be based on .sdata.
-      // TODO(sasa): This is probably not needed.  This was needed for older
-      // MIPS architectures which accessed both GOT and .sdata section using
-      // gp-relative addressing.  Modern Mips Linux ELF architectures don't
-      // access .sdata using gp-relative addressing.
-      for (Layout::Section_list::const_iterator
-           p = layout->section_list().begin();
-           p != layout->section_list().end();
-           ++p)
-        {
-          if (strcmp((*p)->name(), ".sdata") == 0)
-            {
-              section = *p;
-              break;
-            }
-        }
-    }
+  gold_assert(this->gp_ == NULL);
 
   Sized_symbol<size>* gp =
     static_cast<Sized_symbol<size>*>(symtab->lookup("_gp"));
-  if (gp != NULL)
+
+  // Set _gp symbol if the linker script hasn't created it.
+  if (gp == NULL || gp->source() != Symbol::IS_CONSTANT)
     {
-      if (gp->source() != Symbol::IS_CONSTANT && section != NULL)
-        gp->init_output_data(gp->name(), NULL, section, MIPS_GP_OFFSET, 0,
-                             elfcpp::STT_OBJECT,
-                             elfcpp::STB_GLOBAL,
-                             elfcpp::STV_DEFAULT, 0,
-                             false, false);
-      this->gp_ = gp;
+      // If there is no .got section, gp should be based on .sdata.
+      Output_data* gp_section = (this->got_ != NULL
+                                 ? this->got_->output_section()
+                                 : layout->find_output_section(".sdata"));
+
+      if (gp_section != NULL)
+        gp = static_cast<Sized_symbol<size>*>(symtab->define_in_output_data(
+                                          "_gp", NULL, Symbol_table::PREDEFINED,
+                                          gp_section, MIPS_GP_OFFSET, 0,
+                                          elfcpp::STT_NOTYPE,
+                                          elfcpp::STB_LOCAL,
+                                          elfcpp::STV_DEFAULT,
+                                          0, false, false));
     }
-  else if (section != NULL)
-    {
-      gp = static_cast<Sized_symbol<size>*>(symtab->define_in_output_data(
-                                      "_gp", NULL, Symbol_table::PREDEFINED,
-                                      section, MIPS_GP_OFFSET, 0,
-                                      elfcpp::STT_OBJECT,
-                                      elfcpp::STB_GLOBAL,
-                                      elfcpp::STV_DEFAULT,
-                                      0, false, false));
-      this->gp_ = gp;
-    }
+
+  this->gp_ = gp;
 }
 
 // Set the dynamic symbol indexes.  INDEX is the index of the first
@@ -8521,6 +8662,10 @@ Target_mips<size, big_endian>::make_plt_entry(Symbol_table* symtab,
                                       (elfcpp::SHF_ALLOC
                                        | elfcpp::SHF_EXECINSTR),
                                       this->plt_, ORDER_PLT, false);
+
+      // Make the sh_info field of .rel.plt point to .plt.
+      Output_section* rel_plt_os = this->plt_->rel_plt()->output_section();
+      rel_plt_os->set_info_section(this->plt_->output_section());
     }
 
   this->plt_->add_entry(gsym, r_type);
@@ -9496,6 +9641,8 @@ Target_mips<size, big_endian>::do_finalize_sections(Layout* layout,
                                         const Input_objects* input_objects,
                                         Symbol_table* symtab)
 {
+  const bool relocatable = parameters->options().relocatable();
+
   // Add +1 to MIPS16 and microMIPS init_ and _fini symbols so that DT_INIT and
   // DT_FINI have correct values.
   Mips_symbol<size>* init = static_cast<Mips_symbol<size>*>(
@@ -9529,22 +9676,6 @@ Target_mips<size, big_endian>::do_finalize_sections(Layout* layout,
   if (this->got16_addends_.size() > 0)
       gold_error("Can't find matching LO16 reloc");
 
-  // Set _gp value.
-  this->set_gp(layout, symtab);
-
-  // Check for any mips16 stub sections that we can discard.
-  if (!parameters->options().relocatable())
-    {
-      for (Input_objects::Relobj_iterator p = input_objects->relobj_begin();
-          p != input_objects->relobj_end();
-          ++p)
-        {
-          Mips_relobj<size, big_endian>* object =
-            Mips_relobj<size, big_endian>::as_mips_relobj(*p);
-          object->discard_mips16_stub_sections(symtab);
-        }
-    }
-
   Valtype gprmask = 0;
   Valtype cprmask1 = 0;
   Valtype cprmask2 = 0;
@@ -9559,6 +9690,13 @@ Target_mips<size, big_endian>::do_finalize_sections(Layout* layout,
       Mips_relobj<size, big_endian>* relobj =
         Mips_relobj<size, big_endian>::as_mips_relobj(*p);
 
+      // Check for any mips16 stub sections that we can discard.
+      if (!relocatable)
+        relobj->discard_mips16_stub_sections(symtab);
+
+      if (!relobj->merge_processor_specific_data())
+        continue;
+
       // Merge .reginfo contents of input objects.
       if (relobj->has_reginfo_section())
         {
@@ -9569,24 +9707,6 @@ Target_mips<size, big_endian>::do_finalize_sections(Layout* layout,
           cprmask3 |= relobj->cprmask3();
           cprmask4 |= relobj->cprmask4();
         }
-
-      Input_file::Format format = relobj->input_file()->format();
-      if (format != Input_file::FORMAT_ELF)
-        continue;
-
-      // If all input sections will be discarded, don't use this object
-      // file for merging processor specific flags.
-      bool should_merge_processor_specific_flags = false;
-
-      for (unsigned int i = 1; i < relobj->shnum(); ++i)
-        if (relobj->output_section(i) != NULL)
-          {
-            should_merge_processor_specific_flags = true;
-            break;
-          }
-
-      if (!should_merge_processor_specific_flags)
-        continue;
 
       // Merge processor specific flags.
       Mips_abiflags<big_endian> in_abiflags;
@@ -9622,7 +9742,7 @@ Target_mips<size, big_endian>::do_finalize_sections(Layout* layout,
                                         elfcpp::SHF_ALLOC,
                                         abiflags_section, ORDER_INVALID, false);
 
-      if (!parameters->options().relocatable() && os != NULL)
+      if (!relocatable && os != NULL)
         {
           Output_segment* abiflags_segment =
             layout->make_output_segment(elfcpp::PT_MIPS_ABIFLAGS, elfcpp::PF_R);
@@ -9643,7 +9763,7 @@ Target_mips<size, big_endian>::do_finalize_sections(Layout* layout,
                                         elfcpp::SHF_ALLOC, reginfo_section,
                                         ORDER_INVALID, false);
 
-      if (!parameters->options().relocatable() && os != NULL)
+      if (!relocatable && os != NULL)
         {
           Output_segment* reginfo_segment =
             layout->make_output_segment(elfcpp::PT_MIPS_REGINFO,
@@ -9688,7 +9808,7 @@ Target_mips<size, big_endian>::do_finalize_sections(Layout* layout,
                                     false, false);
     }
 
-  if (!parameters->options().relocatable() && !parameters->doing_static_link())
+  if (!relocatable && !parameters->doing_static_link())
     // In case there is no .got section, create one.
     this->got_section(symtab, layout);
 
@@ -9697,6 +9817,9 @@ Target_mips<size, big_endian>::do_finalize_sections(Layout* layout,
   if (this->copy_relocs_.any_saved_relocs())
     this->copy_relocs_.emit_mips(this->rel_dyn_section(layout), symtab, layout,
                                  this);
+
+  // Set _gp value.
+  this->set_gp(layout, symtab);
 
   // Emit dynamic relocs.
   for (typename std::vector<Dyn_reloc>::iterator p = this->dyn_relocs_.begin();
@@ -9717,7 +9840,7 @@ Target_mips<size, big_endian>::do_finalize_sections(Layout* layout,
                                                                symtab));
 
   // Add NULL segment.
-  if (!parameters->options().relocatable())
+  if (!relocatable)
     layout->make_output_segment(elfcpp::PT_NULL, 0);
 
   // Fill in some more dynamic tags.
@@ -9729,7 +9852,7 @@ Target_mips<size, big_endian>::do_finalize_sections(Layout* layout,
 
   Output_data_dynamic* const odyn = layout->dynamic_data();
   if (odyn != NULL
-      && !parameters->options().relocatable()
+      && !relocatable
       && !parameters->doing_static_link())
   {
     unsigned int d_val;
@@ -9742,7 +9865,7 @@ Target_mips<size, big_endian>::do_finalize_sections(Layout* layout,
     d_val = elfcpp::RHF_NOTPOT;
     odyn->add_constant(elfcpp::DT_MIPS_FLAGS, d_val);
 
-    // Save layout for using when emiting custom dynamic tags.
+    // Save layout for using when emitting custom dynamic tags.
     this->layout_ = layout;
 
     // This member holds the base address of the segment.
@@ -9781,7 +9904,8 @@ Target_mips<size, big_endian>::do_finalize_sections(Layout* layout,
                                             elfcpp::STV_DEFAULT, 0,
                                             false, false);
 
-        rld_map->set_needs_dynsym_entry();
+        if (!rld_map->is_forced_local())
+          rld_map->set_needs_dynsym_entry();
 
         if (!parameters->options().pie())
           // This member holds the absolute address of the debug pointer.
@@ -9930,6 +10054,8 @@ mips_get_size_for_reloc(unsigned int r_type, Relobj* object)
     case elfcpp::R_MIPS_16:
     case elfcpp::R_MIPS_HI16:
     case elfcpp::R_MIPS_LO16:
+    case elfcpp::R_MIPS_HIGHER:
+    case elfcpp::R_MIPS_HIGHEST:
     case elfcpp::R_MIPS_GPREL16:
     case elfcpp::R_MIPS16_HI16:
     case elfcpp::R_MIPS16_LO16:
@@ -10278,7 +10404,9 @@ Target_mips<size, big_endian>::relocate_special_relocatable(
       break;
     case Reloc_funcs::STATUS_OVERFLOW:
       gold_error_at_location(relinfo, relnum, reloc.get_r_offset(),
-                             _("relocation overflow"));
+			     _("relocation overflow: "
+			       "%u against local symbol %u in %s"),
+			     r_type, r_sym, object->name().c_str());
       break;
     case Reloc_funcs::STATUS_BAD_RELOC:
       gold_error_at_location(relinfo, relnum, reloc.get_r_offset(),
@@ -10668,13 +10796,16 @@ Target_mips<size, big_endian>::Scan::local(
         {
         case elfcpp::R_MIPS16_HI16:
         case elfcpp::R_MIPS_HI16:
+        case elfcpp::R_MIPS_HIGHER:
+        case elfcpp::R_MIPS_HIGHEST:
         case elfcpp::R_MICROMIPS_HI16:
+        case elfcpp::R_MICROMIPS_HIGHER:
+        case elfcpp::R_MICROMIPS_HIGHEST:
           // Don't refuse a high part relocation if it's against
           // no symbol (e.g. part of a compound relocation).
           if (r_sym == 0)
             break;
-
-          // FALLTHROUGH
+	  // Fall through.
 
         case elfcpp::R_MIPS16_26:
         case elfcpp::R_MIPS_26:
@@ -10809,13 +10940,6 @@ Target_mips<size, big_endian>::Scan::global(
     // looking for relocs that would need to refer to MIPS16 stubs.
     mips_sym->set_need_fn_stub();
 
-  // A reference to _GLOBAL_OFFSET_TABLE_ implies that we need a got
-  // section.  We check here to avoid creating a dynamic reloc against
-  // _GLOBAL_OFFSET_TABLE_.
-  if (!target->has_got_section()
-      && strcmp(gsym->name(), "_GLOBAL_OFFSET_TABLE_") == 0)
-    target->got_section(symtab, layout);
-
   // We need PLT entries if there are static-only relocations against
   // an externally-defined function.  This can technically occur for
   // shared libraries if there are branches to the symbol, although it
@@ -10903,7 +11027,6 @@ Target_mips<size, big_endian>::Scan::global(
       // Most static relocations require pointer equality, except
       // for branches.
       mips_sym->set_pointer_equality_needed();
-
       // Fall through.
 
     case elfcpp::R_MIPS_26:
@@ -11173,7 +11296,11 @@ Target_mips<size, big_endian>::Scan::global(
         {
         case elfcpp::R_MIPS16_HI16:
         case elfcpp::R_MIPS_HI16:
+        case elfcpp::R_MIPS_HIGHER:
+        case elfcpp::R_MIPS_HIGHEST:
         case elfcpp::R_MICROMIPS_HI16:
+        case elfcpp::R_MICROMIPS_HIGHER:
+        case elfcpp::R_MICROMIPS_HIGHEST:
           // Don't refuse a high part relocation if it's against
           // no symbol (e.g. part of a compound relocation).
           if (r_sym == 0)
@@ -11183,8 +11310,7 @@ Target_mips<size, big_endian>::Scan::global(
           // and has a special meaning.
           if (!mips_obj->is_newabi() && strcmp(gsym->name(), "_gp_disp") == 0)
             break;
-
-          // FALLTHROUGH
+	  // Fall through.
 
         case elfcpp::R_MIPS16_26:
         case elfcpp::R_MIPS_26:
@@ -11328,6 +11454,13 @@ Target_mips<size, big_endian>::Relocate::relocate(
   unsigned int r_type3;
   unsigned char r_ssym;
   typename elfcpp::Elf_types<size>::Elf_Swxword r_addend;
+  // r_offset and r_type of the next relocation is needed for resolving multiple
+  // consecutive relocations with the same offset.
+  Mips_address next_r_offset = static_cast<Mips_address>(0) - 1;
+  unsigned int next_r_type = elfcpp::R_MIPS_NONE;
+
+  elfcpp::Shdr<size, big_endian> shdr(relinfo->reloc_shdr);
+  size_t reloc_count = shdr.get_sh_size() / shdr.get_sh_entsize();
 
   if (rel_type == elfcpp::SHT_RELA)
     {
@@ -11344,6 +11477,17 @@ Target_mips<size, big_endian>::Relocate::relocate(
       r_ssym = Mips_classify_reloc<elfcpp::SHT_RELA, size, big_endian>::
           get_r_ssym(&rela);
       r_addend = rela.get_r_addend();
+      // If this is not last relocation, get r_offset and r_type of the next
+      // relocation.
+      if (relnum + 1 < reloc_count)
+        {
+          const int reloc_size = elfcpp::Elf_sizes<size>::rela_size;
+          const Relatype next_rela(preloc + reloc_size);
+          next_r_offset = next_rela.get_r_offset();
+          next_r_type =
+            Mips_classify_reloc<elfcpp::SHT_RELA, size, big_endian>::
+              get_r_type(&next_rela);
+        }
     }
   else
     {
@@ -11354,9 +11498,19 @@ Target_mips<size, big_endian>::Relocate::relocate(
       r_type = Mips_classify_reloc<elfcpp::SHT_REL, size, big_endian>::
 	  get_r_type(&rel);
       r_ssym = 0;
-      r_type2 = 0;
-      r_type3 = 0;
+      r_type2 = elfcpp::R_MIPS_NONE;
+      r_type3 = elfcpp::R_MIPS_NONE;
       r_addend = 0;
+      // If this is not last relocation, get r_offset and r_type of the next
+      // relocation.
+      if (relnum + 1 < reloc_count)
+        {
+          const int reloc_size = elfcpp::Elf_sizes<size>::rel_size;
+          const Reltype next_rel(preloc + reloc_size);
+          next_r_offset = next_rel.get_r_offset();
+          next_r_type = Mips_classify_reloc<elfcpp::SHT_REL, size, big_endian>::
+            get_r_type(&next_rel);
+        }
     }
 
   typedef Mips_relocate_functions<size, big_endian> Reloc_funcs;
@@ -11469,7 +11623,6 @@ Target_mips<size, big_endian>::Relocate::relocate(
   //
   // (c) the section allows direct references to MIPS16 functions.
   if (r_type != elfcpp::R_MIPS16_26
-      && !parameters->options().relocatable()
       && ((mips_sym != NULL
            && mips_sym->has_mips16_fn_stub()
            && (r_type != elfcpp::R_MIPS16_CALL16 || mips_sym->need_fn_stub()))
@@ -11505,7 +11658,7 @@ Target_mips<size, big_endian>::Relocate::relocate(
   // to a standard MIPS function, we need to redirect the call to the stub.
   // Note that we specifically exclude R_MIPS16_CALL16 from this behavior;
   // indirect calls should use an indirect stub instead.
-  else if (r_type == elfcpp::R_MIPS16_26 && !parameters->options().relocatable()
+  else if (r_type == elfcpp::R_MIPS16_26
            && ((mips_sym != NULL
                 && (mips_sym->has_mips16_call_stub()
                     || mips_sym->has_mips16_call_fp_stub()))
@@ -11567,7 +11720,6 @@ Target_mips<size, big_endian>::Relocate::relocate(
   // entry is used if a standard PLT entry has also been made.
   else if ((r_type == elfcpp::R_MIPS16_26
             || r_type == elfcpp::R_MICROMIPS_26_S1)
-          && !parameters->options().relocatable()
           && mips_sym != NULL
           && mips_sym->has_plt_offset()
           && mips_sym->has_comp_plt_offset()
@@ -11596,8 +11748,7 @@ Target_mips<size, big_endian>::Relocate::relocate(
   // symbol would be 16-bit code, and that direct jumps were therefore
   // acceptable.
   cross_mode_jump =
-    (!parameters->options().relocatable()
-     && !(gsym != NULL && gsym->is_weak_undefined())
+    (!(gsym != NULL && gsym->is_weak_undefined())
      && ((r_type == elfcpp::R_MIPS16_26 && !target_is_16_bit_code)
          || (r_type == elfcpp::R_MICROMIPS_26_S1 && !target_is_micromips_code)
          || ((r_type == elfcpp::R_MIPS_26 || r_type == elfcpp::R_MIPS_JALR)
@@ -11619,8 +11770,7 @@ Target_mips<size, big_endian>::Relocate::relocate(
   unsigned int got_offset = 0;
   int gp_offset = 0;
 
-  bool calculate_only = false;
-  Valtype calculated_value = 0;
+  // Whether we have to extract addend from instruction.
   bool extract_addend = rel_type == elfcpp::SHT_REL;
   unsigned int r_types[3] = { r_type, r_type2, r_type3 };
 
@@ -11643,10 +11793,23 @@ Target_mips<size, big_endian>::Relocate::relocate(
       if (r_types[i] == elfcpp::R_MIPS_NONE)
         break;
 
-      // TODO(Vladimir)
-      // Check if the next relocation is for the same instruction.
-      calculate_only = i == 2 ? false
-                              : r_types[i+1] != elfcpp::R_MIPS_NONE;
+      // If we didn't apply previous relocation, use its result as addend
+      // for current.
+      if (this->calculate_only_)
+        {
+          r_addend = this->calculated_value_;
+          extract_addend = false;
+        }
+
+      // In the N32 and 64-bit ABIs there may be multiple consecutive
+      // relocations for the same offset.  In that case we are
+      // supposed to treat the output of each relocation as the addend
+      // for the next.  For N64 ABI, we are checking offsets only in a
+      // third operation in a record (r_type3).
+      this->calculate_only_ =
+        (object->is_n64() && i < 2
+         ? r_types[i+1] != elfcpp::R_MIPS_NONE
+         : (r_offset == next_r_offset) && (next_r_type != elfcpp::R_MIPS_NONE));
 
       if (object->is_n64())
         {
@@ -11686,16 +11849,18 @@ Target_mips<size, big_endian>::Relocate::relocate(
           break;
         case elfcpp::R_MIPS_16:
           reloc_status = Reloc_funcs::rel16(view, object, psymval, r_addend,
-                                            extract_addend, calculate_only,
-                                            &calculated_value);
+                                            extract_addend,
+                                            this->calculate_only_,
+                                            &this->calculated_value_);
           break;
 
         case elfcpp::R_MIPS_32:
           if (should_apply_static_reloc(mips_sym, r_types[i], output_section,
                                         target))
             reloc_status = Reloc_funcs::rel32(view, object, psymval, r_addend,
-                                              extract_addend, calculate_only,
-                                              &calculated_value);
+                                              extract_addend,
+                                              this->calculate_only_,
+                                              &this->calculated_value_);
           if (mips_sym != NULL
               && (mips_sym->is_mips16() || mips_sym->is_micromips())
               && mips_sym->global_got_area() == GGA_RELOC_ONLY)
@@ -11720,14 +11885,16 @@ Target_mips<size, big_endian>::Relocate::relocate(
           if (should_apply_static_reloc(mips_sym, r_types[i], output_section,
                                         target))
             reloc_status = Reloc_funcs::rel64(view, object, psymval, r_addend,
-                                              extract_addend, calculate_only,
-                                              &calculated_value, false);
+                                              extract_addend,
+                                              this->calculate_only_,
+                                              &this->calculated_value_, false);
           else if (target->is_output_n64() && r_addend != 0)
             // Only apply the addend.  The static relocation was RELA, but the
             // dynamic relocation is REL, so we need to apply the addend.
             reloc_status = Reloc_funcs::rel64(view, object, psymval, r_addend,
-                                              extract_addend, calculate_only,
-                                              &calculated_value, true);
+                                              extract_addend,
+                                              this->calculate_only_,
+                                              &this->calculated_value_, true);
           break;
         case elfcpp::R_MIPS_REL32:
           gold_unreachable();
@@ -11735,8 +11902,8 @@ Target_mips<size, big_endian>::Relocate::relocate(
         case elfcpp::R_MIPS_PC32:
           reloc_status = Reloc_funcs::relpc32(view, object, psymval, address,
                                               r_addend, extract_addend,
-                                              calculate_only,
-                                              &calculated_value);
+                                              this->calculate_only_,
+                                              &this->calculated_value_);
           break;
 
         case elfcpp::R_MIPS16_26:
@@ -11748,8 +11915,8 @@ Target_mips<size, big_endian>::Relocate::relocate(
         case elfcpp::R_MICROMIPS_26_S1:
           reloc_status = Reloc_funcs::rel26(view, object, psymval, address,
               gsym == NULL, r_addend, extract_addend, gsym, cross_mode_jump,
-              r_types[i], target->jal_to_bal(), calculate_only,
-              &calculated_value);
+              r_types[i], target->jal_to_bal(), this->calculate_only_,
+              &this->calculated_value_);
           break;
 
         case elfcpp::R_MIPS_HI16:
@@ -11760,8 +11927,9 @@ Target_mips<size, big_endian>::Relocate::relocate(
                                                    r_addend, address,
                                                    gp_disp, r_types[i],
                                                    extract_addend, 0,
-                                                   target, calculate_only,
-                                                   &calculated_value);
+                                                   target,
+                                                   this->calculate_only_,
+                                                   &this->calculated_value_);
           else if (rel_type == elfcpp::SHT_REL)
             reloc_status = Reloc_funcs::relhi16(view, object, psymval, r_addend,
                                                 address, gp_disp, r_types[i],
@@ -11777,8 +11945,8 @@ Target_mips<size, big_endian>::Relocate::relocate(
           reloc_status = Reloc_funcs::rello16(target, view, object, psymval,
                                               r_addend, extract_addend, address,
                                               gp_disp, r_types[i], r_sym,
-                                              rel_type, calculate_only,
-                                              &calculated_value);
+                                              rel_type, this->calculate_only_,
+                                              &this->calculated_value_);
           break;
 
         case elfcpp::R_MIPS_LITERAL:
@@ -11798,42 +11966,43 @@ Target_mips<size, big_endian>::Relocate::relocate(
                                              target->adjusted_gp_value(object),
                                              r_addend, extract_addend,
                                              gsym == NULL, r_types[i],
-                                             calculate_only, &calculated_value);
+                                             this->calculate_only_,
+                                             &this->calculated_value_);
           break;
 
         case elfcpp::R_MIPS_PC16:
           reloc_status = Reloc_funcs::relpc16(view, object, psymval, address,
                                               r_addend, extract_addend,
-                                              calculate_only,
-                                              &calculated_value);
+                                              this->calculate_only_,
+                                              &this->calculated_value_);
           break;
 
         case elfcpp::R_MIPS_PC21_S2:
           reloc_status = Reloc_funcs::relpc21(view, object, psymval, address,
                                               r_addend, extract_addend,
-                                              calculate_only,
-                                              &calculated_value);
+                                              this->calculate_only_,
+                                              &this->calculated_value_);
           break;
 
         case elfcpp::R_MIPS_PC26_S2:
           reloc_status = Reloc_funcs::relpc26(view, object, psymval, address,
                                               r_addend, extract_addend,
-                                              calculate_only,
-                                              &calculated_value);
+                                              this->calculate_only_,
+                                              &this->calculated_value_);
           break;
 
         case elfcpp::R_MIPS_PC18_S3:
           reloc_status = Reloc_funcs::relpc18(view, object, psymval, address,
                                               r_addend, extract_addend,
-                                              calculate_only,
-                                              &calculated_value);
+                                              this->calculate_only_,
+                                              &this->calculated_value_);
           break;
 
         case elfcpp::R_MIPS_PC19_S2:
           reloc_status = Reloc_funcs::relpc19(view, object, psymval, address,
                                               r_addend, extract_addend,
-                                              calculate_only,
-                                              &calculated_value);
+                                              this->calculate_only_,
+                                              &this->calculated_value_);
           break;
 
         case elfcpp::R_MIPS_PCHI16:
@@ -11841,8 +12010,8 @@ Target_mips<size, big_endian>::Relocate::relocate(
             reloc_status = Reloc_funcs::do_relpchi16(view, object, psymval,
                                                      r_addend, address,
                                                      extract_addend, 0,
-                                                     calculate_only,
-                                                     &calculated_value);
+                                                     this->calculate_only_,
+                                                     &this->calculated_value_);
           else if (rel_type == elfcpp::SHT_REL)
             reloc_status = Reloc_funcs::relpchi16(view, object, psymval,
                                                   r_addend, address, r_sym,
@@ -11854,36 +12023,36 @@ Target_mips<size, big_endian>::Relocate::relocate(
         case elfcpp::R_MIPS_PCLO16:
           reloc_status = Reloc_funcs::relpclo16(view, object, psymval, r_addend,
                                                 extract_addend, address, r_sym,
-                                                rel_type, calculate_only,
-                                                &calculated_value);
+                                                rel_type, this->calculate_only_,
+                                                &this->calculated_value_);
           break;
         case elfcpp::R_MICROMIPS_PC7_S1:
           reloc_status = Reloc_funcs::relmicromips_pc7_s1(view, object, psymval,
-                                                        address, r_addend,
-                                                        extract_addend,
-                                                        calculate_only,
-                                                        &calculated_value);
+                                                      address, r_addend,
+                                                      extract_addend,
+                                                      this->calculate_only_,
+                                                      &this->calculated_value_);
           break;
         case elfcpp::R_MICROMIPS_PC10_S1:
           reloc_status = Reloc_funcs::relmicromips_pc10_s1(view, object,
-                                                       psymval, address,
-                                                       r_addend, extract_addend,
-                                                       calculate_only,
-                                                       &calculated_value);
+                                                      psymval, address,
+                                                      r_addend, extract_addend,
+                                                      this->calculate_only_,
+                                                      &this->calculated_value_);
           break;
         case elfcpp::R_MICROMIPS_PC16_S1:
           reloc_status = Reloc_funcs::relmicromips_pc16_s1(view, object,
-                                                       psymval, address,
-                                                       r_addend, extract_addend,
-                                                       calculate_only,
-                                                       &calculated_value);
+                                                      psymval, address,
+                                                      r_addend, extract_addend,
+                                                      this->calculate_only_,
+                                                      &this->calculated_value_);
           break;
         case elfcpp::R_MIPS_GPREL32:
           reloc_status = Reloc_funcs::relgprel32(view, object, psymval,
                                               target->adjusted_gp_value(object),
                                               r_addend, extract_addend,
-                                              calculate_only,
-                                              &calculated_value);
+                                              this->calculate_only_,
+                                              &this->calculated_value_);
           break;
         case elfcpp::R_MIPS_GOT_HI16:
         case elfcpp::R_MIPS_CALL_HI16:
@@ -11899,8 +12068,8 @@ Target_mips<size, big_endian>::Relocate::relocate(
                                                            object, r_addend);
           gp_offset = target->got_section()->gp_offset(got_offset, object);
           reloc_status = Reloc_funcs::relgot_hi16(view, gp_offset,
-                                                  calculate_only,
-                                                  &calculated_value);
+                                                  this->calculate_only_,
+                                                  &this->calculated_value_);
           update_got_entry = changed_symbol_value;
           break;
 
@@ -11918,8 +12087,8 @@ Target_mips<size, big_endian>::Relocate::relocate(
                                                            object, r_addend);
           gp_offset = target->got_section()->gp_offset(got_offset, object);
           reloc_status = Reloc_funcs::relgot_lo16(view, gp_offset,
-                                                  calculate_only,
-                                                  &calculated_value);
+                                                  this->calculate_only_,
+                                                  &this->calculated_value_);
           update_got_entry = changed_symbol_value;
           break;
 
@@ -11937,12 +12106,12 @@ Target_mips<size, big_endian>::Relocate::relocate(
           gp_offset = target->got_section()->gp_offset(got_offset, object);
           if (eh_reloc(r_types[i]))
             reloc_status = Reloc_funcs::releh(view, gp_offset,
-                                              calculate_only,
-                                              &calculated_value);
+                                              this->calculate_only_,
+                                              &this->calculated_value_);
           else
             reloc_status = Reloc_funcs::relgot(view, gp_offset,
-                                               calculate_only,
-                                               &calculated_value);
+                                               this->calculate_only_,
+                                               &this->calculated_value_);
           break;
         case elfcpp::R_MIPS_CALL16:
         case elfcpp::R_MIPS16_CALL16:
@@ -11953,7 +12122,8 @@ Target_mips<size, big_endian>::Relocate::relocate(
                                                          object);
           gp_offset = target->got_section()->gp_offset(got_offset, object);
           reloc_status = Reloc_funcs::relgot(view, gp_offset,
-                                             calculate_only, &calculated_value);
+                                             this->calculate_only_,
+                                             &this->calculated_value_);
           // TODO(sasa): We should also initialize update_got_entry
           // in other place swhere relgot is called.
           update_got_entry = changed_symbol_value;
@@ -11969,18 +12139,18 @@ Target_mips<size, big_endian>::Relocate::relocate(
                                                              object);
               gp_offset = target->got_section()->gp_offset(got_offset, object);
               reloc_status = Reloc_funcs::relgot(view, gp_offset,
-                                                 calculate_only,
-                                                 &calculated_value);
+                                                 this->calculate_only_,
+                                                 &this->calculated_value_);
             }
           else
             {
               if (rel_type == elfcpp::SHT_RELA)
                 reloc_status = Reloc_funcs::do_relgot16_local(view, object,
-                                                         psymval, r_addend,
-                                                         extract_addend, 0,
-                                                         target,
-                                                         calculate_only,
-                                                         &calculated_value);
+                                                      psymval, r_addend,
+                                                      extract_addend, 0,
+                                                      target,
+                                                      this->calculate_only_,
+                                                      &this->calculated_value_);
               else if (rel_type == elfcpp::SHT_REL)
                 reloc_status = Reloc_funcs::relgot16_local(view, object,
                                                            psymval, r_addend,
@@ -12004,8 +12174,9 @@ Target_mips<size, big_endian>::Relocate::relocate(
                                                            GOT_TYPE_TLS_PAIR,
                                                            object, r_addend);
           gp_offset = target->got_section()->gp_offset(got_offset, object);
-          reloc_status = Reloc_funcs::relgot(view, gp_offset, calculate_only,
-                                             &calculated_value);
+          reloc_status = Reloc_funcs::relgot(view, gp_offset,
+                                             this->calculate_only_,
+                                             &this->calculated_value_);
           break;
 
         case elfcpp::R_MIPS_TLS_GOTTPREL:
@@ -12020,8 +12191,9 @@ Target_mips<size, big_endian>::Relocate::relocate(
                                                            GOT_TYPE_TLS_OFFSET,
                                                            object, r_addend);
           gp_offset = target->got_section()->gp_offset(got_offset, object);
-          reloc_status = Reloc_funcs::relgot(view, gp_offset, calculate_only,
-                                             &calculated_value);
+          reloc_status = Reloc_funcs::relgot(view, gp_offset,
+                                             this->calculate_only_,
+                                             &this->calculated_value_);
           break;
 
         case elfcpp::R_MIPS_TLS_LDM:
@@ -12031,24 +12203,25 @@ Target_mips<size, big_endian>::Relocate::relocate(
           // the module index.
           got_offset = target->got_section()->tls_ldm_offset(object);
           gp_offset = target->got_section()->gp_offset(got_offset, object);
-          reloc_status = Reloc_funcs::relgot(view, gp_offset, calculate_only,
-                                             &calculated_value);
+          reloc_status = Reloc_funcs::relgot(view, gp_offset,
+                                             this->calculate_only_,
+                                             &this->calculated_value_);
           break;
 
         case elfcpp::R_MIPS_GOT_PAGE:
         case elfcpp::R_MICROMIPS_GOT_PAGE:
           reloc_status = Reloc_funcs::relgotpage(target, view, object, psymval,
                                                  r_addend, extract_addend,
-                                                 calculate_only,
-                                                 &calculated_value);
+                                                 this->calculate_only_,
+                                                 &this->calculated_value_);
           break;
 
         case elfcpp::R_MIPS_GOT_OFST:
         case elfcpp::R_MICROMIPS_GOT_OFST:
           reloc_status = Reloc_funcs::relgotofst(target, view, object, psymval,
                                                  r_addend, extract_addend,
-                                                 local, calculate_only,
-                                                 &calculated_value);
+                                                 local, this->calculate_only_,
+                                                 &this->calculated_value_);
           break;
 
         case elfcpp::R_MIPS_JALR:
@@ -12063,8 +12236,8 @@ Target_mips<size, big_endian>::Relocate::relocate(
                                                 cross_mode_jump, r_types[i],
                                                 target->jalr_to_bal(),
                                                 target->jr_to_b(),
-                                                calculate_only,
-                                                &calculated_value);
+                                                this->calculate_only_,
+                                                &this->calculated_value_);
           break;
 
         case elfcpp::R_MIPS_TLS_DTPREL_HI16:
@@ -12072,52 +12245,73 @@ Target_mips<size, big_endian>::Relocate::relocate(
         case elfcpp::R_MICROMIPS_TLS_DTPREL_HI16:
           reloc_status = Reloc_funcs::tlsrelhi16(view, object, psymval,
                                                  elfcpp::DTP_OFFSET, r_addend,
-                                                 extract_addend, calculate_only,
-                                                 &calculated_value);
+                                                 extract_addend,
+                                                 this->calculate_only_,
+                                                 &this->calculated_value_);
           break;
         case elfcpp::R_MIPS_TLS_DTPREL_LO16:
         case elfcpp::R_MIPS16_TLS_DTPREL_LO16:
         case elfcpp::R_MICROMIPS_TLS_DTPREL_LO16:
           reloc_status = Reloc_funcs::tlsrello16(view, object, psymval,
                                                  elfcpp::DTP_OFFSET, r_addend,
-                                                 extract_addend, calculate_only,
-                                                 &calculated_value);
+                                                 extract_addend,
+                                                 this->calculate_only_,
+                                                 &this->calculated_value_);
           break;
         case elfcpp::R_MIPS_TLS_DTPREL32:
         case elfcpp::R_MIPS_TLS_DTPREL64:
           reloc_status = Reloc_funcs::tlsrel32(view, object, psymval,
                                                elfcpp::DTP_OFFSET, r_addend,
-                                               extract_addend, calculate_only,
-                                               &calculated_value);
+                                               extract_addend,
+                                               this->calculate_only_,
+                                               &this->calculated_value_);
           break;
         case elfcpp::R_MIPS_TLS_TPREL_HI16:
         case elfcpp::R_MIPS16_TLS_TPREL_HI16:
         case elfcpp::R_MICROMIPS_TLS_TPREL_HI16:
           reloc_status = Reloc_funcs::tlsrelhi16(view, object, psymval,
                                                  elfcpp::TP_OFFSET, r_addend,
-                                                 extract_addend, calculate_only,
-                                                 &calculated_value);
+                                                 extract_addend,
+                                                 this->calculate_only_,
+                                                 &this->calculated_value_);
           break;
         case elfcpp::R_MIPS_TLS_TPREL_LO16:
         case elfcpp::R_MIPS16_TLS_TPREL_LO16:
         case elfcpp::R_MICROMIPS_TLS_TPREL_LO16:
           reloc_status = Reloc_funcs::tlsrello16(view, object, psymval,
                                                  elfcpp::TP_OFFSET, r_addend,
-                                                 extract_addend, calculate_only,
-                                                 &calculated_value);
+                                                 extract_addend,
+                                                 this->calculate_only_,
+                                                 &this->calculated_value_);
           break;
         case elfcpp::R_MIPS_TLS_TPREL32:
         case elfcpp::R_MIPS_TLS_TPREL64:
           reloc_status = Reloc_funcs::tlsrel32(view, object, psymval,
                                                elfcpp::TP_OFFSET, r_addend,
-                                               extract_addend, calculate_only,
-                                               &calculated_value);
+                                               extract_addend,
+                                               this->calculate_only_,
+                                               &this->calculated_value_);
           break;
         case elfcpp::R_MIPS_SUB:
         case elfcpp::R_MICROMIPS_SUB:
           reloc_status = Reloc_funcs::relsub(view, object, psymval, r_addend,
                                              extract_addend,
-                                             calculate_only, &calculated_value);
+                                             this->calculate_only_,
+                                             &this->calculated_value_);
+          break;
+        case elfcpp::R_MIPS_HIGHER:
+        case elfcpp::R_MICROMIPS_HIGHER:
+          reloc_status = Reloc_funcs::relhigher(view, object, psymval, r_addend,
+                                                extract_addend,
+                                                this->calculate_only_,
+                                                &this->calculated_value_);
+          break;
+        case elfcpp::R_MIPS_HIGHEST:
+        case elfcpp::R_MICROMIPS_HIGHEST:
+          reloc_status = Reloc_funcs::relhighest(view, object, psymval,
+                                                 r_addend, extract_addend,
+                                                 this->calculate_only_,
+                                                 &this->calculated_value_);
           break;
         default:
           gold_error_at_location(relinfo, relnum, r_offset,
@@ -12134,12 +12328,9 @@ Target_mips<size, big_endian>::Relocate::relocate(
           else
             got->update_got_entry(got_offset, psymval->value(object, 0));
         }
-
-      r_addend = calculated_value;
     }
 
-  bool jal_shuffle = jal_reloc(r_type) ? !parameters->options().relocatable()
-                                       : false;
+  bool jal_shuffle = jal_reloc(r_type);
   Reloc_funcs::mips_reloc_shuffle(view, r_type, jal_shuffle);
 
   // Report any errors.
@@ -12148,8 +12339,21 @@ Target_mips<size, big_endian>::Relocate::relocate(
     case Reloc_funcs::STATUS_OKAY:
       break;
     case Reloc_funcs::STATUS_OVERFLOW:
-      gold_error_at_location(relinfo, relnum, r_offset,
-                             _("relocation overflow"));
+      if (gsym == NULL)
+        gold_error_at_location(relinfo, relnum, r_offset,
+                               _("relocation overflow: "
+                                 "%u against local symbol %u in %s"),
+                               r_type, r_sym, object->name().c_str());
+      else if (gsym->is_defined() && gsym->source() == Symbol::FROM_OBJECT)
+        gold_error_at_location(relinfo, relnum, r_offset,
+                               _("relocation overflow: "
+                                 "%u against '%s' defined in %s"),
+                               r_type, gsym->demangled_name().c_str(),
+                               gsym->object()->name().c_str());
+      else
+        gold_error_at_location(relinfo, relnum, r_offset,
+                               _("relocation overflow: %u against '%s'"),
+                               r_type, gsym->demangled_name().c_str());
       break;
     case Reloc_funcs::STATUS_BAD_RELOC:
       gold_error_at_location(relinfo, relnum, r_offset,
@@ -12184,10 +12388,14 @@ Target_mips<size, big_endian>::Scan::get_reference_flags(
     case elfcpp::R_MIPS_64:
     case elfcpp::R_MIPS_HI16:
     case elfcpp::R_MIPS_LO16:
+    case elfcpp::R_MIPS_HIGHER:
+    case elfcpp::R_MIPS_HIGHEST:
     case elfcpp::R_MIPS16_HI16:
     case elfcpp::R_MIPS16_LO16:
     case elfcpp::R_MICROMIPS_HI16:
     case elfcpp::R_MICROMIPS_LO16:
+    case elfcpp::R_MICROMIPS_HIGHER:
+    case elfcpp::R_MICROMIPS_HIGHEST:
       return Symbol::ABSOLUTE_REF;
 
     case elfcpp::R_MIPS_26:
@@ -12259,7 +12467,6 @@ Target_mips<size, big_endian>::Scan::get_reference_flags(
     case elfcpp::R_MIPS_COPY:
     case elfcpp::R_MIPS_JUMP_SLOT:
     default:
-      gold_unreachable();
       // Not expected.  We will give an error later.
       return 0;
     }

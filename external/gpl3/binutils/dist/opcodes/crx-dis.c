@@ -1,5 +1,5 @@
 /* Disassembler code for CRX.
-   Copyright (C) 2004-2016 Free Software Foundation, Inc.
+   Copyright (C) 2004-2018 Free Software Foundation, Inc.
    Contributed by Tomer Levi, NSC, Israel.
    Written by Tomer Levi.
 
@@ -21,7 +21,7 @@
    MA 02110-1301, USA.  */
 
 #include "sysdep.h"
-#include "dis-asm.h"
+#include "disassemble.h"
 #include "opcode/crx.h"
 
 /* String to print when opcode was not matched.  */
@@ -58,7 +58,7 @@ typedef struct
 cinv_entry;
 
 /* CRX 'cinv' options.  */
-const cinv_entry crx_cinvs[] =
+static const cinv_entry crx_cinvs[] =
 {
   {"[i]", 2}, {"[i,u]", 3}, {"[d]", 4}, {"[d,u]", 5},
   {"[d,i]", 6}, {"[d,i,u]", 7}, {"[b]", 8},
@@ -81,22 +81,22 @@ typedef enum REG_ARG_TYPE
 REG_ARG_TYPE;
 
 /* Number of valid 'cinv' instruction options.  */
-int NUMCINVS = ((sizeof crx_cinvs)/(sizeof crx_cinvs[0]));
+static int NUMCINVS = ((sizeof crx_cinvs)/(sizeof crx_cinvs[0]));
 /* Current opcode table entry we're disassembling.  */
-const inst *instruction;
+static const inst *instruction;
 /* Current instruction we're disassembling.  */
-ins currInsn;
+static ins currInsn;
 /* The current instruction is read into 3 consecutive words.  */
-wordU words[3];
+static wordU words[3];
 /* Contains all words in appropriate order.  */
-ULONGLONG allWords;
+static ULONGLONG allWords;
 /* Holds the current processed argument number.  */
-int processing_argument_number;
+static int processing_argument_number;
 /* Nonzero means a CST4 instruction.  */
-int cst4flag;
+static int cst4flag;
 /* Nonzero means the instruction's original size is
    incremented (escape sequence is used).  */
-int size_changed;
+static int size_changed;
 
 static int get_number_of_operands (void);
 static argtype getargtype     (operand_type);
@@ -727,7 +727,7 @@ print_insn_crx (bfd_vma memaddr, struct disassemble_info *info)
   /* Find a matching opcode in table.  */
   is_decoded = match_opcode ();
   /* If found, print the instruction's mnemonic and arguments.  */
-  if (is_decoded > 0 && (words[0] << 16 || words[1]) != 0)
+  if (is_decoded > 0 && (words[0] != 0 || words[1] != 0))
     {
       info->fprintf_func (info->stream, "%s", instruction->mnemonic);
       if ((currInsn.nargs = get_number_of_operands ()) != 0)

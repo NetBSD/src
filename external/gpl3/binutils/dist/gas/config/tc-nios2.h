@@ -1,5 +1,5 @@
 /* Definitions for Altera Nios II assembler.
-   Copyright (C) 2012-2016 Free Software Foundation, Inc.
+   Copyright (C) 2012-2018 Free Software Foundation, Inc.
    Contributed by Nigel Gray (ngray@altera.com).
    Contributed by Mentor Graphics, Inc.
 
@@ -45,7 +45,7 @@ extern const char *nios2_target_format (void);
    separator characters are commas, brackets and space.
    The instruction name is always separated from other tokens by a space
    The maximum number of tokens in an instruction is 5 (the instruction name,
-   3 arguments, and a 4th string representing the expected instructin opcode
+   3 arguments, and a 4th string representing the expected instruct in opcode
    after assembly. The latter is only used when the assemble is running in
    self test mode, otherwise its presence will generate an error.  */
 #define NIOS2_MAX_INSN_TOKENS	6
@@ -100,6 +100,14 @@ extern flagword nios2_elf_section_flags (flagword, int, int);
 #define GLOBAL_OFFSET_TABLE_NAME       "_GLOBAL_OFFSET_TABLE_"
 
 #define DIFF_EXPR_OK
+
+/* Don't allow the generic code to convert fixups involving the
+   subtraction of a label in the current section to pc-relative if we
+   don't have the necessary pc-relative relocation.  */
+#define TC_FORCE_RELOCATION_SUB_LOCAL(FIX, SEG)		\
+  (!((FIX)->fx_r_type == BFD_RELOC_16			\
+     || (FIX)->fx_r_type == BFD_RELOC_NIOS2_LO16	\
+     || (FIX)->fx_r_type == BFD_RELOC_NIOS2_HIADJ16))
 
 /* Nios2 ABI doesn't have 32-bit PCREL relocation, and, as relocations for
    CFI information will be in section other than .text, we can't use PC-biased

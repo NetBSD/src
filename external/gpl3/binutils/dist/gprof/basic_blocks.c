@@ -2,7 +2,7 @@
    of basic-block info to/from gmon.out; computing and formatting of
    basic-block related statistics.
 
-   Copyright (C) 1999-2016 Free Software Foundation, Inc.
+   Copyright (C) 1999-2018 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -311,7 +311,7 @@ print_exec_counts (void)
    line of a file in sequential order.
 
    Global variable bb_annotate_all_lines enables execution count
-   compression (counts are supressed if identical to the last one)
+   compression (counts are suppressed if identical to the last one)
    and prints counts on all executed lines.  Otherwise, print
    all basic-block execution counts exactly once on the line
    that starts the basic-block.  */
