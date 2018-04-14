@@ -1,5 +1,5 @@
 /* BFD back-end for PowerPC Microsoft Portable Executable files.
-   Copyright (C) 1990-2015 Free Software Foundation, Inc.
+   Copyright (C) 1990-2016 Free Software Foundation, Inc.
 
    Original version pieced together by Kim Knuttila (krk@cygnus.com)
 
@@ -1026,12 +1026,9 @@ coff_ppc_relocate_section (bfd *output_bfd,
 		     + sec->output_offset);
 	    }
 	  else
-	    {
-	      if (! ((*info->callbacks->undefined_symbol)
-		     (info, h->root.root.root.string, input_bfd, input_section,
-		      rel->r_vaddr - input_section->vma, TRUE)))
-		return FALSE;
-	    }
+	    (*info->callbacks->undefined_symbol)
+	      (info, h->root.root.root.string, input_bfd, input_section,
+	       rel->r_vaddr - input_section->vma, TRUE);
 	}
 
       rstat = bfd_reloc_ok;
@@ -1423,11 +1420,10 @@ coff_ppc_relocate_section (bfd *output_bfd,
 		name = buf;
 	      }
 
-	    if (! ((*info->callbacks->reloc_overflow)
-		   (info, (h ? &h->root.root : NULL), name, howto->name,
-		    (bfd_vma) 0, input_bfd,
-		    input_section, rel->r_vaddr - input_section->vma)))
-	      return FALSE;
+	    (*info->callbacks->reloc_overflow)
+	      (info, (h ? &h->root.root : NULL), name, howto->name,
+	       (bfd_vma) 0, input_bfd, input_section,
+	       rel->r_vaddr - input_section->vma);
 	  }
 	}
     }

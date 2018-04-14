@@ -1,5 +1,5 @@
 /* This file is tc-alpha.h
-   Copyright (C) 1994-2015 Free Software Foundation, Inc.
+   Copyright (C) 1994-2016 Free Software Foundation, Inc.
    Written by Ken Raeburn <raeburn@cygnus.com>.
 
    This file is part of GAS, the GNU Assembler.
@@ -122,7 +122,7 @@ extern void alpha_frob_file_before_adjust (void);
 
 #ifdef OBJ_ELF
 #define md_elf_section_letter		alpha_elf_section_letter
-extern bfd_vma alpha_elf_section_letter (int, char **);
+extern bfd_vma alpha_elf_section_letter (int, const char **);
 #define md_elf_section_flags		alpha_elf_section_flags
 extern flagword alpha_elf_section_flags (flagword, bfd_vma, int);
 #endif

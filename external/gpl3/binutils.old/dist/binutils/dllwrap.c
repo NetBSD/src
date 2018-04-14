@@ -1,5 +1,5 @@
 /* dllwrap.c -- wrapper for DLLTOOL and GCC to generate PE style DLLs
-   Copyright (C) 1998-2015 Free Software Foundation, Inc.
+   Copyright (C) 1998-2016 Free Software Foundation, Inc.
    Contributed by Mumit Khan (khan@xraylith.wisc.edu).
 
    This file is part of GNU Binutils.
@@ -364,7 +364,7 @@ run (const char *what, char *args)
     if (*s == ' ')
       i++;
   i++;
-  argv = alloca (sizeof (char *) * (i + 3));
+  argv = xmalloc (sizeof (char *) * (i + 3));
   i = 0;
   argv[i++] = what;
   s = args;
@@ -392,6 +392,7 @@ run (const char *what, char *args)
 
   pid = pexecute (argv[0], (char * const *) argv, prog_name, temp_base,
 		  &errmsg_fmt, &errmsg_arg, PEXECUTE_ONE | PEXECUTE_SEARCH);
+  free (argv);
 
   if (pid == -1)
     {

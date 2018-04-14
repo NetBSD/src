@@ -1,5 +1,5 @@
 /* write.c - emit .o file
-   Copyright (C) 1986-2015 Free Software Foundation, Inc.
+   Copyright (C) 1986-2016 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -191,7 +191,7 @@ fix_new_internal (fragS *frag,		/* Which frag?  */
   TC_INIT_FIX_DATA (fixP);
 #endif
 
-  as_where (&fixP->fx_file, &fixP->fx_line);
+  fixP->fx_file = as_where (&fixP->fx_line);
 
   {
 
@@ -354,12 +354,12 @@ record_alignment (/* Segment to which alignment pertains.  */
 		  segT seg,
 		  /* Alignment, as a power of 2 (e.g., 1 => 2-byte
 		     boundary, 2 => 4-byte boundary, etc.)  */
-		  int align)
+		  unsigned int align)
 {
   if (seg == absolute_section)
     return;
 
-  if ((unsigned int) align > bfd_get_section_alignment (stdoutput, seg))
+  if (align > bfd_get_section_alignment (stdoutput, seg))
     bfd_set_section_alignment (stdoutput, seg, align);
 }
 
@@ -578,7 +578,12 @@ size_seg (bfd *abfd, asection *sec, void *xxx ATTRIBUTE_UNUSED)
   x = bfd_set_section_flags (abfd, sec, flags);
   gas_assert (x);
 
-  newsize = md_section_align (sec, size);
+  /* If permitted, allow the backend to pad out the section
+     to some alignment boundary.  */
+  if (do_not_pad_sections_to_alignment)
+    newsize = size;
+  else
+    newsize = md_section_align (sec, size);
   x = bfd_set_section_size (abfd, sec, newsize);
   gas_assert (x);
 
@@ -1133,7 +1138,7 @@ fix_segment (bfd *abfd ATTRIBUTE_UNUSED,
 
 static void
 install_reloc (asection *sec, arelent *reloc, fragS *fragp,
-	       char *file, unsigned int line)
+	       const char *file, unsigned int line)
 {
   char *err;
   bfd_reloc_status_type s;
@@ -1233,7 +1238,7 @@ write_relocs (bfd *abfd, asection *sec, void *xxx ATTRIBUTE_UNUSED)
 	rp = &r->next;
     }
 
-  relocs = (arelent **) xcalloc (n, sizeof (arelent *));
+  relocs = XCNEWVEC (arelent *, n);
 
   n = 0;
   r = my_reloc_list;
@@ -1429,14 +1434,12 @@ compress_debug (bfd *abfd, asection *sec, void *xxx ATTRIBUTE_UNUSED)
 
   if (flag_compress_debug == COMPRESS_DEBUG_GABI_ZLIB)
     {
-      stdoutput->flags |= BFD_COMPRESS | BFD_COMPRESS_GABI;
       compression_header_size
 	= bfd_get_compression_header_size (stdoutput, NULL);
       header_size = compression_header_size;
     }
   else
     {
-      stdoutput->flags |= BFD_COMPRESS;
       compression_header_size = 0;
       header_size = 12;
     }
@@ -1546,10 +1549,7 @@ compress_debug (bfd *abfd, asection *sec, void *xxx ATTRIBUTE_UNUSED)
   gas_assert (x);
   if (!compression_header_size)
     {
-      compressed_name = (char *) xmalloc (strlen (section_name) + 2);
-      compressed_name[0] = '.';
-      compressed_name[1] = 'z';
-      strcpy (compressed_name + 2, section_name + 1);
+      compressed_name = concat (".z", section_name + 1, (char *) NULL);
       bfd_section_name (stdoutput, sec) = compressed_name;
     }
 }
@@ -1700,7 +1700,7 @@ set_symtab (void)
 }
 
 /* Finish the subsegments.  After every sub-segment, we fake an
-   ".align ...".  This conforms to BSD4.2 brane-damage.  We then fake
+   ".align ...".  This conforms to BSD4.2 brain-damage.  We then fake
    ".fill 0" because that is the kind of frag that requires least
    thought.  ".align" frags like to have a following frag since that
    makes calculating their intended length trivial.  */
@@ -1712,6 +1712,7 @@ set_symtab (void)
    code-bearing sections.  */
 #define SUB_SEGMENT_ALIGN(SEG, FRCHAIN)					\
   (!(FRCHAIN)->frch_next && subseg_text_p (SEG)				\
+   && !do_not_pad_sections_to_alignment					\
    ? get_recorded_alignment (SEG)					\
    : 0)
 #else
@@ -1731,31 +1732,31 @@ subsegs_finish_section (asection *s)
        frchainP != NULL;
        frchainP = frchainP->frch_next)
     {
-      int alignment = 0;
+      int alignment;
 
       subseg_set (s, frchainP->frch_subseg);
 
       /* This now gets called even if we had errors.  In that case,
 	 any alignment is meaningless, and, moreover, will look weird
 	 if we are generating a listing.  */
-      if (!had_errors ())
+      if (had_errors ())
+	do_not_pad_sections_to_alignment = 1;
+
+      alignment = SUB_SEGMENT_ALIGN (now_seg, frchainP);
+      if ((bfd_get_section_flags (now_seg->owner, now_seg) & SEC_MERGE)
+	  && now_seg->entsize)
 	{
-	  alignment = SUB_SEGMENT_ALIGN (now_seg, frchainP);
-	  if ((bfd_get_section_flags (now_seg->owner, now_seg) & SEC_MERGE)
-	      && now_seg->entsize)
+	  unsigned int entsize = now_seg->entsize;
+	  int entalign = 0;
+
+	  while ((entsize & 1) == 0)
 	    {
-	      unsigned int entsize = now_seg->entsize;
-	      int entalign = 0;
-
-	      while ((entsize & 1) == 0)
-		{
-		  ++entalign;
-		  entsize >>= 1;
-		}
-
-	      if (entalign > alignment)
-		alignment = entalign;
+	      ++entalign;
+	      entsize >>= 1;
 	    }
+
+	  if (entalign > alignment)
+	    alignment = entalign;
 	}
 
       if (subseg_text_p (now_seg))
@@ -2207,12 +2208,23 @@ write_object_file (void)
   obj_frob_file_after_relocs ();
 #endif
 
+#if defined OBJ_ELF || defined OBJ_MAYBE_ELF
+  if (IS_ELF && flag_use_elf_stt_common)
+    stdoutput->flags |= BFD_CONVERT_ELF_COMMON | BFD_USE_ELF_STT_COMMON;
+#endif
+
   /* Once all relocations have been written, we can compress the
      contents of the debug sections.  This needs to be done before
      we start writing any sections, because it will affect the file
      layout, which is fixed once we start writing contents.  */
   if (flag_compress_debug)
-    bfd_map_over_sections (stdoutput, compress_debug, (char *) 0);
+    {
+      if (flag_compress_debug == COMPRESS_DEBUG_GABI_ZLIB)
+	stdoutput->flags |= BFD_COMPRESS | BFD_COMPRESS_GABI;
+      else
+	stdoutput->flags |= BFD_COMPRESS;
+      bfd_map_over_sections (stdoutput, compress_debug, (char *) 0);
+    }
 
   bfd_map_over_sections (stdoutput, write_contents, (char *) 0);
 }

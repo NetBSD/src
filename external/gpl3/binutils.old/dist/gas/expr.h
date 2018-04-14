@@ -1,5 +1,5 @@
 /* expr.h -> header file for expr.c
-   Copyright (C) 1987-2015 Free Software Foundation, Inc.
+   Copyright (C) 1987-2016 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -180,7 +180,7 @@ extern void subtract_from_result (expressionS *, offsetT, int);
 extern segT expr (int, expressionS *, enum expr_mode);
 extern unsigned int get_single_number (void);
 extern symbolS *make_expr_symbol (expressionS * expressionP);
-extern int expr_symbol_where (symbolS *, char **, unsigned int *);
+extern int expr_symbol_where (symbolS *, const char **, unsigned int *);
 extern void current_location (expressionS *);
 
 extern symbolS *expr_build_uconstant (offsetT);

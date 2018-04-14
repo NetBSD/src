@@ -1,5 +1,5 @@
 /* BFD back-end for National Semiconductor's CRX ELF
-   Copyright (C) 2004-2015 Free Software Foundation, Inc.
+   Copyright (C) 2004-2016 Free Software Foundation, Inc.
    Written by Tomer Levi, NSC, Israel.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -909,18 +909,14 @@ elf32_crx_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 	  switch (r)
 	    {
 	     case bfd_reloc_overflow:
-	       if (!((*info->callbacks->reloc_overflow)
-		     (info, (h ? &h->root : NULL), name, howto->name,
-		      (bfd_vma) 0, input_bfd, input_section,
-		      rel->r_offset)))
-		 return FALSE;
+	       (*info->callbacks->reloc_overflow)
+		 (info, (h ? &h->root : NULL), name, howto->name,
+		  (bfd_vma) 0, input_bfd, input_section, rel->r_offset);
 	       break;
 
 	     case bfd_reloc_undefined:
-	       if (!((*info->callbacks->undefined_symbol)
-		     (info, name, input_bfd, input_section,
-		      rel->r_offset, TRUE)))
-		 return FALSE;
+	       (*info->callbacks->undefined_symbol)
+		 (info, name, input_bfd, input_section, rel->r_offset, TRUE);
 	       break;
 
 	     case bfd_reloc_outofrange:
@@ -940,10 +936,8 @@ elf32_crx_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 	       /* Fall through.  */
 
 	     common_error:
-	       if (!((*info->callbacks->warning)
-		     (info, msg, name, input_bfd, input_section,
-		      rel->r_offset)))
-		 return FALSE;
+	       (*info->callbacks->warning) (info, msg, name, input_bfd,
+					    input_section, rel->r_offset);
 	       break;
 	    }
 	}

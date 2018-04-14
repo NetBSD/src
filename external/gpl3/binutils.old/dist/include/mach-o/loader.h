@@ -1,5 +1,5 @@
 /* Mach-O support for BFD.
-   Copyright (C) 2011-2015 Free Software Foundation, Inc.
+   Copyright (C) 2011-2016 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -75,7 +75,11 @@ typedef enum bfd_mach_o_cpu_subtype
   BFD_MACH_O_CPU_SUBTYPE_ARM_V6 = 6,
   BFD_MACH_O_CPU_SUBTYPE_ARM_V5TEJ = 7,
   BFD_MACH_O_CPU_SUBTYPE_ARM_XSCALE = 8,
-  BFD_MACH_O_CPU_SUBTYPE_ARM_V7 = 9
+  BFD_MACH_O_CPU_SUBTYPE_ARM_V7 = 9,
+
+  /* arm64.  */
+  BFD_MACH_O_CPU_SUBTYPE_ARM64_ALL = 0,
+  BFD_MACH_O_CPU_SUBTYPE_ARM64_V8 = 1
 }
 bfd_mach_o_cpu_subtype;
 
@@ -121,7 +125,8 @@ typedef enum bfd_mach_o_header_flags
   BFD_MACH_O_MH_PIE			= 0x0200000,
   BFD_MACH_O_MH_DEAD_STRIPPABLE_DYLIB   = 0x0400000,
   BFD_MACH_O_MH_HAS_TLV_DESCRIPTORS     = 0x0800000,
-  BFD_MACH_O_MH_NO_HEAP_EXECUTION       = 0x1000000
+  BFD_MACH_O_MH_NO_HEAP_EXECUTION       = 0x1000000,
+  BFD_MACH_O_MH_APP_EXTENSION_SAFE      = 0x2000000
 }
 bfd_mach_o_header_flags;
 
@@ -176,7 +181,11 @@ typedef enum bfd_mach_o_load_command_type
   BFD_MACH_O_LC_MAIN = 0x28,             /* Entry point.  */
   BFD_MACH_O_LC_DATA_IN_CODE = 0x29,     /* Table of non-instructions.  */
   BFD_MACH_O_LC_SOURCE_VERSION = 0x2a,   /* Source version.  */
-  BFD_MACH_O_LC_DYLIB_CODE_SIGN_DRS = 0x2b /* DRs from dylibs.  */
+  BFD_MACH_O_LC_DYLIB_CODE_SIGN_DRS = 0x2b, /* DRs from dylibs.  */
+  BFD_MACH_O_LC_ENCRYPTION_INFO_64 = 0x2c, /* Encrypted 64 bit seg info.  */
+  BFD_MACH_O_LC_LINKER_OPTIONS = 0x2d,	/* Linker options.  */
+  BFD_MACH_O_LC_LINKER_OPTIMIZATION_HINT = 0x2e, /* Optimization hints.  */
+  BFD_MACH_O_LC_VERSION_MIN_WATCHOS = 0x30 /* Minimal WatchOS version.  */
 }
 bfd_mach_o_load_command_type;
 

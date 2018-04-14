@@ -1,5 +1,5 @@
 /* AArch64-specific support for NN-bit ELF.
-   Copyright (C) 2009-2015 Free Software Foundation, Inc.
+   Copyright (C) 2009-2016 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -339,8 +339,8 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 
   /* Basic data relocations.  */
 
-#if ARCH_SIZE == 64
-  HOWTO (R_AARCH64_NULL,	/* type */
+  /* Deprecated, but retained for backwards compatibility.  */
+  HOWTO64 (R_AARCH64_NULL,	/* type */
 	 0,			/* rightshift */
 	 3,			/* size (0 = byte, 1 = short, 2 = long) */
 	 0,			/* bitsize */
@@ -353,7 +353,6 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 0,			/* src_mask */
 	 0,			/* dst_mask */
 	 FALSE),		/* pcrel_offset */
-#else
   HOWTO (R_AARCH64_NONE,	/* type */
 	 0,			/* rightshift */
 	 3,			/* size (0 = byte, 1 = short, 2 = long) */
@@ -367,7 +366,6 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 0,			/* src_mask */
 	 0,			/* dst_mask */
 	 FALSE),		/* pcrel_offset */
-#endif
 
   /* .xword: (S+A) */
   HOWTO64 (AARCH64_R (ABS64),	/* type */
@@ -575,7 +573,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
   HOWTO (AARCH64_R (MOVW_SABS_G0),	/* type */
 	 0,			/* rightshift */
 	 2,			/* size (0 = byte, 1 = short, 2 = long) */
-	 16,			/* bitsize */
+	 17,			/* bitsize */
 	 FALSE,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_signed,	/* complain_on_overflow */
@@ -590,7 +588,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
   HOWTO64 (AARCH64_R (MOVW_SABS_G1),	/* type */
 	 16,			/* rightshift */
 	 2,			/* size (0 = byte, 1 = short, 2 = long) */
-	 16,			/* bitsize */
+	 17,			/* bitsize */
 	 FALSE,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_signed,	/* complain_on_overflow */
@@ -605,7 +603,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
   HOWTO64 (AARCH64_R (MOVW_SABS_G2),	/* type */
 	 32,			/* rightshift */
 	 2,			/* size (0 = byte, 1 = short, 2 = long) */
-	 16,			/* bitsize */
+	 17,			/* bitsize */
 	 FALSE,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_signed,	/* complain_on_overflow */
@@ -2289,6 +2287,9 @@ struct elf_aarch64_link_hash_table
   /* Enable ADRP->ADR rewrite for erratum 843419 workaround.  */
   int fix_erratum_843419_adr;
 
+  /* Don't apply link-time values for dynamic relocations.  */
+  int no_apply_dynamic_relocs;
+
   /* The number of bytes in the initial entry in the PLT.  */
   bfd_size_type plt_header_size;
 
@@ -2639,33 +2640,20 @@ aarch64_select_branch_stub (bfd_vma value, bfd_vma place)
 /* Determine the type of stub needed, if any, for a call.  */
 
 static enum elf_aarch64_stub_type
-aarch64_type_of_stub (struct bfd_link_info *info,
-		      asection *input_sec,
+aarch64_type_of_stub (asection *input_sec,
 		      const Elf_Internal_Rela *rel,
 		      asection *sym_sec,
 		      unsigned char st_type,
-		      struct elf_aarch64_link_hash_entry *hash,
 		      bfd_vma destination)
 {
   bfd_vma location;
   bfd_signed_vma branch_offset;
   unsigned int r_type;
-  struct elf_aarch64_link_hash_table *globals;
   enum elf_aarch64_stub_type stub_type = aarch64_stub_none;
-  bfd_boolean via_plt_p;
 
   if (st_type != STT_FUNC
       && (sym_sec == input_sec))
     return stub_type;
-
-  globals = elf_aarch64_hash_table (info);
-  via_plt_p = (globals->root.splt != NULL && hash != NULL
-	       && hash->root.plt.offset != (bfd_vma) - 1);
-  /* Make sure call to plt stub can fit into the branch range.  */
-  if (via_plt_p)
-    destination = (globals->root.splt->output_section->vma
-		   + globals->root.splt->output_offset
-		   + hash->root.plt.offset);
 
   /* Determine where the call point is.  */
   location = (input_sec->output_offset
@@ -4142,8 +4130,8 @@ elfNN_aarch64_size_stubs (bfd *output_bfd,
 		    }
 
 		  /* Determine what (if any) linker stub is needed.  */
-		  stub_type = aarch64_type_of_stub
-		    (info, section, irela, sym_sec, st_type, hash, destination);
+		  stub_type = aarch64_type_of_stub (section, irela, sym_sec,
+						    st_type, destination);
 		  if (stub_type == aarch64_stub_none)
 		    continue;
 
@@ -4347,7 +4335,8 @@ bfd_elfNN_aarch64_set_options (struct bfd *output_bfd,
 			       int no_enum_warn,
 			       int no_wchar_warn, int pic_veneer,
 			       int fix_erratum_835769,
-			       int fix_erratum_843419)
+			       int fix_erratum_843419,
+			       int no_apply_dynamic_relocs)
 {
   struct elf_aarch64_link_hash_table *globals;
 
@@ -4356,6 +4345,7 @@ bfd_elfNN_aarch64_set_options (struct bfd *output_bfd,
   globals->fix_erratum_835769 = fix_erratum_835769;
   globals->fix_erratum_843419 = fix_erratum_843419;
   globals->fix_erratum_843419_adr = TRUE;
+  globals->no_apply_dynamic_relocs = no_apply_dynamic_relocs;
 
   BFD_ASSERT (is_aarch64_elf (output_bfd));
   elf_aarch64_tdata (output_bfd)->no_enum_size_warning = no_enum_warn;
@@ -4903,7 +4893,9 @@ elfNN_aarch64_write_section (bfd *output_bfd  ATTRIBUTE_UNUSED,
   return FALSE;
 }
 
-/* Perform a relocation as part of a final link.  */
+/* Perform a relocation as part of a final link.  The input relocation type
+   should be TLS relaxed.  */
+
 static bfd_reloc_status_type
 elfNN_aarch64_final_link_relocate (reloc_howto_type *howto,
 				   bfd *input_bfd,
@@ -4924,7 +4916,6 @@ elfNN_aarch64_final_link_relocate (reloc_howto_type *howto,
   unsigned int r_type = howto->type;
   bfd_reloc_code_real_type bfd_r_type
     = elfNN_aarch64_bfd_reloc_from_howto (howto);
-  bfd_reloc_code_real_type new_bfd_r_type;
   unsigned long r_symndx;
   bfd_byte *hit_data = contents + rel->r_offset;
   bfd_vma place, off;
@@ -4940,17 +4931,6 @@ elfNN_aarch64_final_link_relocate (reloc_howto_type *howto,
   BFD_ASSERT (is_aarch64_elf (input_bfd));
 
   r_symndx = ELFNN_R_SYM (rel->r_info);
-
-  /* It is possible to have linker relaxations on some TLS access
-     models.  Update our information here.  */
-  new_bfd_r_type = aarch64_tls_transition (input_bfd, info, r_type, h, r_symndx);
-  if (new_bfd_r_type != bfd_r_type)
-    {
-      bfd_r_type = new_bfd_r_type;
-      howto = elfNN_aarch64_howto_from_bfd_reloc (bfd_r_type);
-      BFD_ASSERT (howto != NULL);
-      r_type = howto->type;
-    }
 
   place = input_section->output_section->vma
     + input_section->output_offset + rel->r_offset;
@@ -5221,6 +5201,7 @@ elfNN_aarch64_final_link_relocate (reloc_howto_type *howto,
 		 relocate the text and data segments independently,
 		 so the symbol does not matter.  */
 	      symbol = 0;
+	      relocate = globals->no_apply_dynamic_relocs ? FALSE : TRUE;
 	      outrel.r_info = ELFNN_R_INFO (symbol, AARCH64_R (RELATIVE));
 	      outrel.r_addend += value;
 	    }
@@ -6082,13 +6063,10 @@ elfNN_aarch64_relocate_section (bfd *output_bfd,
 	  if (r_type != R_AARCH64_NONE && r_type != R_AARCH64_NULL
 	      && bfd_is_und_section (sec)
 	      && ELF_ST_BIND (sym->st_info) != STB_WEAK)
-	    {
-	      if (!info->callbacks->undefined_symbol
-		  (info, bfd_elf_string_from_elf_section
-		   (input_bfd, symtab_hdr->sh_link, sym->st_name),
-		   input_bfd, input_section, rel->r_offset, TRUE))
-		return FALSE;
-	    }
+	    (*info->callbacks->undefined_symbol)
+	      (info, bfd_elf_string_from_elf_section
+	       (input_bfd, symtab_hdr->sh_link, sym->st_name),
+	       input_bfd, input_section, rel->r_offset, TRUE);
 
 	  relocation = _bfd_elf_rela_local_sym (output_bfd, sym, &sec, rel);
 
@@ -6405,10 +6383,6 @@ elfNN_aarch64_relocate_section (bfd *output_bfd,
 	  break;
 	}
 
-      if (!save_addend)
-	addend = 0;
-
-
       /* Dynamic relocs are not propagated for SEC_DEBUGGING sections
          because such sections are not SEC_ALLOC and thus ld.so will
          not process them.  */
@@ -6434,10 +6408,9 @@ elfNN_aarch64_relocate_section (bfd *output_bfd,
 	  switch (r)
 	    {
 	    case bfd_reloc_overflow:
-	      if (!(*info->callbacks->reloc_overflow)
-		  (info, (h ? &h->root : NULL), name, howto->name, (bfd_vma) 0,
-		   input_bfd, input_section, rel->r_offset))
-		return FALSE;
+	      (*info->callbacks->reloc_overflow)
+		(info, (h ? &h->root : NULL), name, howto->name, (bfd_vma) 0,
+		 input_bfd, input_section, rel->r_offset);
 	      if (real_r_type == BFD_RELOC_AARCH64_LD64_GOTPAGE_LO15
 		  || real_r_type == BFD_RELOC_AARCH64_LD32_GOTPAGE_LO14)
 		{
@@ -6448,13 +6421,39 @@ elfNN_aarch64_relocate_section (bfd *output_bfd,
 		     name, input_bfd, input_section, rel->r_offset);
 		  return FALSE;
 		}
+	      /* Overflow can occur when a variable is referenced with a type
+		 that has a larger alignment than the type with which it was
+		 declared. eg:
+		   file1.c: extern int foo; int a (void) { return foo; }
+		   file2.c: char bar, foo, baz;
+		 If the variable is placed into a data section at an offset
+		 that is incompatible with the larger alignment requirement
+		 overflow will occur.  (Strictly speaking this is not overflow
+		 but rather an alignment problem, but the bfd_reloc_ error
+		 enum does not have a value to cover that situation).
+
+		 Try to catch this situation here and provide a more helpful
+		 error message to the user.  */
+	      if (addend & ((1 << howto->rightshift) - 1)
+		  /* FIXME: Are we testing all of the appropriate reloc
+		     types here ?  */
+		  && (real_r_type == BFD_RELOC_AARCH64_LD_LO19_PCREL
+		      || real_r_type == BFD_RELOC_AARCH64_LDST16_LO12
+		      || real_r_type == BFD_RELOC_AARCH64_LDST32_LO12
+		      || real_r_type == BFD_RELOC_AARCH64_LDST64_LO12
+		      || real_r_type == BFD_RELOC_AARCH64_LDST128_LO12))
+		{
+		  info->callbacks->warning
+		    (info, _("One possible cause of this error is that the \
+symbol is being referenced in the indicated code as if it had a larger \
+alignment than was declared where it was defined."),
+		     name, input_bfd, input_section, rel->r_offset);
+		}
 	      break;
 
 	    case bfd_reloc_undefined:
-	      if (!((*info->callbacks->undefined_symbol)
-		    (info, name, input_bfd, input_section,
-		     rel->r_offset, TRUE)))
-		return FALSE;
+	      (*info->callbacks->undefined_symbol)
+		(info, name, input_bfd, input_section, rel->r_offset, TRUE);
 	      break;
 
 	    case bfd_reloc_outofrange:
@@ -6475,13 +6474,14 @@ elfNN_aarch64_relocate_section (bfd *output_bfd,
 
 	    common_error:
 	      BFD_ASSERT (error_message != NULL);
-	      if (!((*info->callbacks->reloc_dangerous)
-		    (info, error_message, input_bfd, input_section,
-		     rel->r_offset)))
-		return FALSE;
+	      (*info->callbacks->reloc_dangerous)
+		(info, error_message, input_bfd, input_section, rel->r_offset);
 	      break;
 	    }
 	}
+
+      if (!save_addend)
+	addend = 0;
     }
 
   return TRUE;
@@ -7066,6 +7066,22 @@ elfNN_aarch64_check_relocs (bfd *abfd, struct bfd_link_info *info,
 
       if (h != NULL)
 	{
+	  /* If a relocation refers to _GLOBAL_OFFSET_TABLE_, create the .got.
+	     This shows up in particular in an R_AARCH64_PREL64 in large model
+	     when calculating the pc-relative address to .got section which is
+	     used to initialize the gp register.  */
+	  if (h->root.root.string
+	      && strcmp (h->root.root.string, "_GLOBAL_OFFSET_TABLE_") == 0)
+	    {
+	      if (htab->root.dynobj == NULL)
+		htab->root.dynobj = abfd;
+
+	      if (! aarch64_elf_create_got_section (htab->root.dynobj, info))
+		return FALSE;
+
+	      BFD_ASSERT (h == htab->root.hgot);
+	    }
+
 	  /* Create the ifunc sections for static executables.  If we
 	     never see an indirect function symbol nor we are building
 	     a static executable, those sections will be empty and
@@ -8219,9 +8235,11 @@ elfNN_aarch64_allocate_ifunc_dynrelocs (struct elf_link_hash_entry *h,
       && h->def_regular)
     return _bfd_elf_allocate_ifunc_dyn_relocs (info, h,
 					       &eh->dyn_relocs,
+					       NULL,
 					       htab->plt_entry_size,
 					       htab->plt_header_size,
-					       GOT_ENTRY_SIZE);
+					       GOT_ENTRY_SIZE,
+					       FALSE);
   return TRUE;
 }
 
@@ -9026,7 +9044,8 @@ elfNN_aarch64_finish_dynamic_sections (bfd *output_bfd,
 	      break;
 
 	    case DT_JMPREL:
-	      dyn.d_un.d_ptr = htab->root.srelplt->output_section->vma;
+	      s = htab->root.srelplt;
+	      dyn.d_un.d_ptr = s->output_section->vma + s->output_offset;
 	      break;
 
 	    case DT_PLTRELSZ:
@@ -9193,6 +9212,40 @@ elfNN_aarch64_plt_sym_val (bfd_vma i, const asection *plt,
   return plt->vma + PLT_ENTRY_SIZE + i * PLT_SMALL_ENTRY_SIZE;
 }
 
+/* Returns TRUE if NAME is an AArch64 mapping symbol.
+   The ARM ELF standard defines $x (for A64 code) and $d (for data).
+   It also allows a period initiated suffix to be added to the symbol, ie:
+   "$[adtx]\.[:sym_char]+".  */
+
+static bfd_boolean
+is_aarch64_mapping_symbol (const char * name)
+{
+  return name != NULL /* Paranoia.  */
+    && name[0] == '$' /* Note: if objcopy --prefix-symbols has been used then
+			 the mapping symbols could have acquired a prefix.
+			 We do not support this here, since such symbols no
+			 longer conform to the ARM ELF ABI.  */
+    && (name[1] == 'd' || name[1] == 'x')
+    && (name[2] == 0 || name[2] == '.');
+  /* FIXME: Strictly speaking the symbol is only a valid mapping symbol if
+     any characters that follow the period are legal characters for the body
+     of a symbol's name.  For now we just assume that this is the case.  */
+}
+
+/* Make sure that mapping symbols in object files are not removed via the
+   "strip --strip-unneeded" tool.  These symbols might needed in order to
+   correctly generate linked files.  Once an object file has been linked,
+   it should be safe to remove them.  */
+
+static void
+elfNN_aarch64_backend_symbol_processing (bfd *abfd, asymbol *sym)
+{
+  if (((abfd->flags & (EXEC_P | DYNAMIC)) == 0)
+      && sym->section != bfd_abs_section_ptr
+      && is_aarch64_mapping_symbol (sym->name))
+    sym->flags |= BSF_KEEP;
+}
+
 
 /* We use this so we can override certain functions
    (though currently we don't).  */
@@ -9331,6 +9384,9 @@ const struct elf_size_info elfNN_aarch64_size_info =
 
 #define elf_backend_write_section		\
   elfNN_aarch64_write_section
+
+#define elf_backend_symbol_processing		\
+  elfNN_aarch64_backend_symbol_processing
 
 #define elf_backend_can_refcount       1
 #define elf_backend_can_gc_sections    1

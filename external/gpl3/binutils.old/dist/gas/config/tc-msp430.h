@@ -1,5 +1,5 @@
 /* This file is tc-msp430.h
-   Copyright (C) 2002-2015 Free Software Foundation, Inc.
+   Copyright (C) 2002-2016 Free Software Foundation, Inc.
 
    Contributed by Dmitry Diky <diwil@mail.ru>
 
@@ -171,3 +171,5 @@ extern bfd_boolean msp430_allow_local_subtract (expressionS *, expressionS *, se
 #define DWARF2_USE_FIXED_ADVANCE_PC 1
 
 #define TC_LINKRELAX_FIXUP(seg) ((seg->flags & SEC_CODE) || (seg->flags & SEC_DEBUGGING))
+
+#define DWARF2_ADDR_SIZE(bfd) 4

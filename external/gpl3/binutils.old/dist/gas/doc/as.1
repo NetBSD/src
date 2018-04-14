@@ -133,7 +133,7 @@
 .\" ========================================================================
 .\"
 .IX Title "AS 1"
-.TH AS 1 "2016-06-29" "binutils-2.26.1" "GNU Development Tools"
+.TH AS 1 "2016-08-03" "binutils-2.27" "GNU Development Tools"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -151,6 +151,7 @@ as [\fB\-a\fR[\fBcdghlns\fR][=\fIfile\fR]] [\fB\-\-alternate\fR] [\fB\-D\fR]
  [\fB\-K\fR] [\fB\-L\fR] [\fB\-\-listing\-lhs\-width\fR=\fI\s-1NUM\s0\fR]
  [\fB\-\-listing\-lhs\-width2\fR=\fI\s-1NUM\s0\fR] [\fB\-\-listing\-rhs\-width\fR=\fI\s-1NUM\s0\fR]
  [\fB\-\-listing\-cont\-lines\fR=\fI\s-1NUM\s0\fR] [\fB\-\-keep\-locals\fR]
+ [\fB\-\-no\-pad\-sections\fR]
  [\fB\-o\fR \fIobjfile\fR] [\fB\-R\fR]
  [\fB\-\-hash\-size\fR=\fI\s-1NUM\s0\fR] [\fB\-\-reduce\-memory\-overheads\fR]
  [\fB\-\-statistics\fR]
@@ -158,9 +159,11 @@ as [\fB\-a\fR[\fBcdghlns\fR][=\fIfile\fR]] [\fB\-\-alternate\fR] [\fB\-D\fR]
  [\fB\-W\fR] [\fB\-\-warn\fR] [\fB\-\-fatal\-warnings\fR] [\fB\-w\fR] [\fB\-x\fR]
  [\fB\-Z\fR] [\fB@\fR\fI\s-1FILE\s0\fR]
  [\fB\-\-sectname\-subst\fR] [\fB\-\-size\-check=[error|warning]\fR]
+ [\fB\-\-elf\-stt\-common=[no|yes]\fR]
  [\fB\-\-target\-help\fR] [\fItarget-options\fR]
  [\fB\-\-\fR|\fIfiles\fR ...]
-.PP
+.SH "TARGET"
+.IX Header "TARGET"
 \&\fITarget AArch64 options:\fR
    [\fB\-EB\fR|\fB\-EL\fR]
    [\fB\-mabi\fR=\fI\s-1ABI\s0\fR]
@@ -176,6 +179,7 @@ as [\fB\-a\fR[\fBcdghlns\fR][=\fIfile\fR]] [\fB\-\-alternate\fR] [\fB\-D\fR]
    [\fB\-mcpu=\fR\fIcpu\fR]
    [\fB\-mA6\fR|\fB\-mARC600\fR|\fB\-mARC601\fR|\fB\-mA7\fR|\fB\-mARC700\fR|\fB\-mEM\fR|\fB\-mHS\fR]
    [\fB\-mcode\-density\fR]
+   [\fB\-mrelax\fR]
    [\fB\-EB\fR|\fB\-EL\fR]
 .PP
 \&\fITarget \s-1ARM\s0 options:\fR
@@ -282,6 +286,7 @@ as [\fB\-a\fR[\fBcdghlns\fR][=\fIfile\fR]] [\fB\-\-alternate\fR] [\fB\-D\fR]
    [\fB\-mdmx\fR] [\fB\-no\-mdmx\fR]
    [\fB\-mdsp\fR] [\fB\-mno\-dsp\fR]
    [\fB\-mdspr2\fR] [\fB\-mno\-dspr2\fR]
+   [\fB\-mdspr3\fR] [\fB\-mno\-dspr3\fR]
    [\fB\-mmsa\fR] [\fB\-mno\-msa\fR]
    [\fB\-mxpa\fR] [\fB\-mno\-xpa\fR]
    [\fB\-mmt\fR] [\fB\-mno\-mt\fR]
@@ -609,6 +614,15 @@ suffix.
 .IX Item "--size-check=warning"
 .PD
 Issue an error or warning for invalid \s-1ELF \s0.size directive.
+.IP "\fB\-\-elf\-stt\-common=no\fR" 4
+.IX Item "--elf-stt-common=no"
+.PD 0
+.IP "\fB\-\-elf\-stt\-common=yes\fR" 4
+.IX Item "--elf-stt-common=yes"
+.PD
+These options control whether the \s-1ELF\s0 assembler should generate common
+symbols with the \f(CW\*(C`STT_COMMON\*(C'\fR type.  The default can be controlled
+by a configure option \fB\-\-enable\-elf\-stt\-common\fR.
 .IP "\fB\-\-help\fR" 4
 .IX Item "--help"
 Print a summary of the command line options and exit.
@@ -649,6 +663,11 @@ Set the maximum width of an input source line, as displayed in a listing, to
 .IX Item "--listing-cont-lines=number"
 Set the maximum number of lines printed in a listing for a single line of input
 to \fInumber\fR + 1.
+.IP "\fB\-\-no\-pad\-sections\fR" 4
+.IX Item "--no-pad-sections"
+Stop the assembler for padding the ends of output sections to the alignment
+of that section.  The default is to pad the sections, but this can waste space
+which might be needed on targets which have tight memory constraints.
 .IP "\fB\-o\fR \fIobjfile\fR" 4
 .IX Item "-o objfile"
 Name the object-file output from \fBas\fR \fIobjfile\fR.
@@ -737,9 +756,11 @@ on the target processor.  The following processor names are recognized:
 \&\f(CW\*(C`cortex\-a53\*(C'\fR,
 \&\f(CW\*(C`cortex\-a57\*(C'\fR,
 \&\f(CW\*(C`cortex\-a72\*(C'\fR,
+\&\f(CW\*(C`cortex\-a73\*(C'\fR,
 \&\f(CW\*(C`exynos\-m1\*(C'\fR,
 \&\f(CW\*(C`qdf24xx\*(C'\fR,
 \&\f(CW\*(C`thunderx\*(C'\fR,
+\&\f(CW\*(C`vulcan\*(C'\fR,
 \&\f(CW\*(C`xgene1\*(C'\fR
 and
 \&\f(CW\*(C`xgene2\*(C'\fR.
@@ -1084,7 +1105,11 @@ accept various extension mnemonics.  For example,
 \&\f(CW8087\fR,
 \&\f(CW287\fR,
 \&\f(CW387\fR,
+\&\f(CW687\fR,
 \&\f(CW\*(C`no87\*(C'\fR,
+\&\f(CW\*(C`no287\*(C'\fR,
+\&\f(CW\*(C`no387\*(C'\fR,
+\&\f(CW\*(C`no687\*(C'\fR,
 \&\f(CW\*(C`mmx\*(C'\fR,
 \&\f(CW\*(C`nommx\*(C'\fR,
 \&\f(CW\*(C`sse\*(C'\fR,
@@ -1095,14 +1120,23 @@ accept various extension mnemonics.  For example,
 \&\f(CW\*(C`sse4.2\*(C'\fR,
 \&\f(CW\*(C`sse4\*(C'\fR,
 \&\f(CW\*(C`nosse\*(C'\fR,
+\&\f(CW\*(C`nosse2\*(C'\fR,
+\&\f(CW\*(C`nosse3\*(C'\fR,
+\&\f(CW\*(C`nossse3\*(C'\fR,
+\&\f(CW\*(C`nosse4.1\*(C'\fR,
+\&\f(CW\*(C`nosse4.2\*(C'\fR,
+\&\f(CW\*(C`nosse4\*(C'\fR,
 \&\f(CW\*(C`avx\*(C'\fR,
 \&\f(CW\*(C`avx2\*(C'\fR,
+\&\f(CW\*(C`noavx\*(C'\fR,
+\&\f(CW\*(C`noavx2\*(C'\fR,
 \&\f(CW\*(C`adx\*(C'\fR,
 \&\f(CW\*(C`rdseed\*(C'\fR,
 \&\f(CW\*(C`prfchw\*(C'\fR,
 \&\f(CW\*(C`smap\*(C'\fR,
 \&\f(CW\*(C`mpx\*(C'\fR,
 \&\f(CW\*(C`sha\*(C'\fR,
+\&\f(CW\*(C`rdpid\*(C'\fR,
 \&\f(CW\*(C`prefetchwt1\*(C'\fR,
 \&\f(CW\*(C`clflushopt\*(C'\fR,
 \&\f(CW\*(C`se1\*(C'\fR,
@@ -1117,7 +1151,15 @@ accept various extension mnemonics.  For example,
 \&\f(CW\*(C`avx512dq\*(C'\fR,
 \&\f(CW\*(C`avx512ifma\*(C'\fR,
 \&\f(CW\*(C`avx512vbmi\*(C'\fR,
-\&\f(CW\*(C`noavx\*(C'\fR,
+\&\f(CW\*(C`noavx512f\*(C'\fR,
+\&\f(CW\*(C`noavx512cd\*(C'\fR,
+\&\f(CW\*(C`noavx512er\*(C'\fR,
+\&\f(CW\*(C`noavx512pf\*(C'\fR,
+\&\f(CW\*(C`noavx512vl\*(C'\fR,
+\&\f(CW\*(C`noavx512bw\*(C'\fR,
+\&\f(CW\*(C`noavx512dq\*(C'\fR,
+\&\f(CW\*(C`noavx512ifma\*(C'\fR,
+\&\f(CW\*(C`noavx512vbmi\*(C'\fR,
 \&\f(CW\*(C`vmx\*(C'\fR,
 \&\f(CW\*(C`vmfunc\*(C'\fR,
 \&\f(CW\*(C`smx\*(C'\fR,
@@ -1274,6 +1316,19 @@ single-thread computers
 \&\fB\-momit\-lock\-prefix=\fR\fIyes\fR will omit all lock prefixes.
 \&\fB\-momit\-lock\-prefix=\fR\fIno\fR will encode lock prefix as usual,
 which is the default.
+.IP "\fB\-mfence\-as\-lock\-add=\fR\fIno\fR" 4
+.IX Item "-mfence-as-lock-add=no"
+.PD 0
+.IP "\fB\-mfence\-as\-lock\-add=\fR\fIyes\fR" 4
+.IX Item "-mfence-as-lock-add=yes"
+.PD
+These options control how the assembler should encode lfence, mfence and
+sfence.
+\&\fB\-mfence\-as\-lock\-add=\fR\fIyes\fR will encode lfence, mfence and
+sfence as \fBlock addl \f(CB$0x0\fB, (%rsp)\fR in 64\-bit mode and
+\&\fBlock addl \f(CB$0x0\fB, (%esp)\fR in 32\-bit mode.
+\&\fB\-mfence\-as\-lock\-add=\fR\fIno\fR will encode lfence, mfence and
+sfence as usual, which is the default.
 .IP "\fB\-mrelax\-relocations=\fR\fIno\fR" 4
 .IX Item "-mrelax-relocations=no"
 .PD 0
@@ -1971,7 +2026,7 @@ Treat undocumented Z80 instructions that do not work on R800 as errors.
 \&\fIgcc\fR\|(1), \fIld\fR\|(1), and the Info entries for \fIbinutils\fR and \fIld\fR.
 .SH "COPYRIGHT"
 .IX Header "COPYRIGHT"
-Copyright (c) 1991\-2015 Free Software Foundation, Inc.
+Copyright (c) 1991\-2016 Free Software Foundation, Inc.
 .PP
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the \s-1GNU\s0 Free Documentation License, Version 1.3

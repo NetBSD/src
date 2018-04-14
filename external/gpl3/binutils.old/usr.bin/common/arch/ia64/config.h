@@ -129,7 +129,7 @@
 #define HAVE_MKSTEMP 1
 
 /* Define to 1 if you have the `sbrk' function. */
-/* #undef HAVE_SBRK */
+#define HAVE_SBRK 1
 
 /* Define to 1 if you have the `setlocale' function. */
 #define HAVE_SETLOCALE 1
@@ -202,7 +202,7 @@
 #define PACKAGE_NAME "binutils"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "binutils 2.26.1"
+#define PACKAGE_STRING "binutils 2.27"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "binutils"
@@ -211,7 +211,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "2.26.1"
+#define PACKAGE_VERSION "2.27"
 
 /* The size of `long', as computed by sizeof. */
 #define SIZEOF_LONG 8
@@ -265,7 +265,7 @@
 
 
 /* Version number of package */
-#define VERSION "2.26.1"
+#define VERSION "2.27"
 
 /* Define to 1 if `lex' declares `yytext' as a `char *' by default, not a
    `char[]'. */

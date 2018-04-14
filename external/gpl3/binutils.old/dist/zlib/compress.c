@@ -3,7 +3,7 @@
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
-/* @(#) $Id: compress.c,v 1.1.1.1 2016/10/26 17:03:40 christos Exp $ */
+/* @(#) $Id: compress.c,v 1.1.1.2 2018/04/14 15:37:37 christos Exp $ */
 
 #define ZLIB_INTERNAL
 #include "zlib.h"
@@ -29,7 +29,7 @@ int ZEXPORT compress2 (dest, destLen, source, sourceLen, level)
     z_stream stream;
     int err;
 
-    stream.next_in = (Bytef*)source;
+    stream.next_in = (z_const Bytef *)source;
     stream.avail_in = (uInt)sourceLen;
 #ifdef MAXSEG_64K
     /* Check for source > 64K on 16-bit machine: */

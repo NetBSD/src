@@ -1,5 +1,5 @@
 /* BFD XCOFF object file private structure.
-   Copyright (C) 2001-2015 Free Software Foundation, Inc.
+   Copyright (C) 2001-2016 Free Software Foundation, Inc.
    Written by Tom Rix, Redhat.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -64,8 +64,8 @@ struct xcoff_backend_data_rec
   unsigned long _xcoff_ldhdr_version;
 
   bfd_boolean (* _xcoff_put_symbol_name)
-    (bfd *, struct bfd_strtab_hash *, struct internal_syment *,
-     const char *);
+    (struct bfd_link_info *, struct bfd_strtab_hash *,
+     struct internal_syment *, const char *);
 
   bfd_boolean (* _xcoff_put_ldsymbol_name)
     (bfd *, struct xcoff_loader_info *, struct internal_ldsym *,
@@ -154,8 +154,8 @@ struct xcoff_backend_data_rec
 
 #define bfd_xcoff_ldhdr_version(a) ((xcoff_backend (a)->_xcoff_ldhdr_version))
 
-#define bfd_xcoff_put_symbol_name(a, b, c, d) \
-  ((xcoff_backend (a)->_xcoff_put_symbol_name) ((a), (b), (c), (d)))
+#define bfd_xcoff_put_symbol_name(a, b, c, d, e) \
+  ((xcoff_backend (a)->_xcoff_put_symbol_name) ((b), (c), (d), (e)))
 
 #define bfd_xcoff_put_ldsymbol_name(a, b, c, d) \
   ((xcoff_backend (a)->_xcoff_put_ldsymbol_name) ((a), (b), (c), (d)))

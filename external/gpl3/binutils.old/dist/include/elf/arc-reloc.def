@@ -1,3 +1,34 @@
+/* ARC relocation types
+   Copyright (C) 2015-2016 Free Software Foundation, Inc.
+
+   This file is part of BFD, the Binary File Descriptor library.
+
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 3 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   GAS/GDB is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 3, or (at your option)
+   any later version.
+
+   GAS/GDB is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	 See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with GAS or GDB; see the file COPYING3.  If not, write to
+   the Free Software Foundation, 51 Franklin Street - Fifth Floor, Boston,
+   MA 02110-1301, USA.  */
+
+
 ARC_RELOC_HOWTO(ARC_NONE, 0, \
                 2, \
                 32, \
@@ -80,84 +111,84 @@ ARC_RELOC_HOWTO(ARC_S21H_PCREL, 14, \
                 20, \
                 replace_disp21h, \
                 signed, \
-                ( ( ( S + A ) - P ) >> 1 ))
+                ( ME ( ( ( ( S + A ) - P ) >> 1 ) ) ))
 
 ARC_RELOC_HOWTO(ARC_S21W_PCREL, 15, \
                 2, \
                 19, \
                 replace_disp21w, \
                 signed, \
-                ( ( ( S + A ) - P ) >> 2 ))
+                ( ME ( ( ( ( S + A ) - P ) >> 2 ) ) ))
 
 ARC_RELOC_HOWTO(ARC_S25H_PCREL, 16, \
                 2, \
                 24, \
                 replace_disp25h, \
                 signed, \
-                ( ( ( S + A ) - P ) >> 1 ))
+                ( ME ( ( ( ( S + A ) - P ) >> 1 ) ) ))
 
 ARC_RELOC_HOWTO(ARC_S25W_PCREL, 17, \
                 2, \
                 23, \
                 replace_disp25w, \
                 signed, \
-                ( ( ( S + A ) - P ) >> 2 ))
+                ( ME ( ( ( ( S + A ) - P ) >> 2 ) ) ))
 
 ARC_RELOC_HOWTO(ARC_SDA32, 18, \
                 2, \
                 32, \
                 replace_word32, \
                 signed, \
-                ( ( S + A ) - _SDA_BASE_ ))
+                ( ME ( ( ( S + A ) - _SDA_BASE_ ) ) ))
 
 ARC_RELOC_HOWTO(ARC_SDA_LDST, 19, \
                 2, \
                 9, \
                 replace_disp9ls, \
                 signed, \
-                ( ( S + A ) - _SDA_BASE_ ))
+                ( ME ( ( ( S + A ) - _SDA_BASE_ ) ) ))
 
 ARC_RELOC_HOWTO(ARC_SDA_LDST1, 20, \
                 2, \
                 9, \
                 replace_disp9ls, \
                 signed, \
-                ( ( ( S + A ) - _SDA_BASE_ ) >> 1 ))
+                ( ME ( ( ( ( S + A ) - _SDA_BASE_ ) >> 1 ) ) ))
 
 ARC_RELOC_HOWTO(ARC_SDA_LDST2, 21, \
                 2, \
                 9, \
                 replace_disp9ls, \
                 signed, \
-                ( ( ( S + A ) - _SDA_BASE_ ) >> 2 ))
+                ( ME ( ( ( ( S + A ) - _SDA_BASE_ ) >> 2 ) ) ))
 
 ARC_RELOC_HOWTO(ARC_SDA16_LD, 22, \
                 1, \
                 9, \
                 replace_disp9s, \
                 signed, \
-                ( ( S + A ) - _SDA_BASE_ ))
+                ( ( ( S + A ) - _SDA_BASE_ ) ))
 
 ARC_RELOC_HOWTO(ARC_SDA16_LD1, 23, \
                 1, \
                 9, \
                 replace_disp9s, \
                 signed, \
-                ( ( ( S + A ) - _SDA_BASE_ ) >> 1 ))
+                ( ( ( ( S + A ) - _SDA_BASE_ ) >> 1 ) ))
 
 ARC_RELOC_HOWTO(ARC_SDA16_LD2, 24, \
                 1, \
                 9, \
                 replace_disp9s, \
                 signed, \
-                ( ( ( S + A ) - _SDA_BASE_ ) >> 2 ))
+                ( ( ( ( S + A ) - _SDA_BASE_ ) >> 2 ) ))
 
 ARC_RELOC_HOWTO(ARC_S13_PCREL, 25, \
                 1, \
                 11, \
                 replace_disp13s, \
                 signed, \
-                ( ( ( S + A ) - P ) >> 2 ))
+                ( ( ( ( S + A ) - P ) >> 2 ) ))
 
 ARC_RELOC_HOWTO(ARC_W, 26, \
                 2, \
@@ -171,42 +202,42 @@ ARC_RELOC_HOWTO(ARC_32_ME, 27, \
                 32, \
                 replace_limm, \
                 signed, \
-                ( S + A ))
+                ( ME ( ( S + A ) ) ))
 
 ARC_RELOC_HOWTO(ARC_32_ME_S, 105, \
                 2, \
                 32, \
                 replace_limms, \
                 signed, \
-                ( S + A ))
+                ( ME ( ( S + A ) ) ))
 
 ARC_RELOC_HOWTO(ARC_N32_ME, 28, \
                 2, \
                 32, \
                 replace_word32, \
                 bitfield, \
-                ( S - A ))
+                ( ME ( ( S - A ) ) ))
 
 ARC_RELOC_HOWTO(ARC_SECTOFF_ME, 29, \
                 2, \
                 32, \
                 replace_word32, \
                 bitfield, \
-                ( ( S - SECTSTART ) + A ))
+                ( ME ( ( ( S - SECTSTART ) + A ) ) ))
 
 ARC_RELOC_HOWTO(ARC_SDA32_ME, 30, \
                 2, \
                 32, \
                 replace_limm, \
                 signed, \
-                ( ( S + A ) - _SDA_BASE_ ))
+                ( ME ( ( ( S + A ) - _SDA_BASE_ ) ) ))
 
 ARC_RELOC_HOWTO(ARC_W_ME, 31, \
                 2, \
                 32, \
                 replace_word32, \
                 bitfield, \
-                ( S + A ))
+                ( ME ( ( ( S + A ) & ( ~3 ) ) ) ))
 
 ARC_RELOC_HOWTO(AC_SECTOFF_U8, 35, \
                 2, \
@@ -255,14 +286,14 @@ ARC_RELOC_HOWTO(ARC_SECTOFF_ME_1, 41, \
                 32, \
                 replace_word32, \
                 bitfield, \
-                ( ( ( S - SECTSTART ) + A ) >> 1 ))
+                ( ME ( ( ( ( S - SECTSTART ) + A ) >> 1 ) ) ))
 
 ARC_RELOC_HOWTO(ARC_SECTOFF_ME_2, 42, \
                 2, \
                 32, \
                 replace_word32, \
                 bitfield, \
-                ( ( ( S - SECTSTART ) + A ) >> 2 ))
+                ( ME ( ( ( ( S - SECTSTART ) + A ) >> 2 ) ) ))
 
 ARC_RELOC_HOWTO(ARC_SECTOFF_1, 43, \
                 2, \
@@ -297,7 +328,7 @@ ARC_RELOC_HOWTO(ARC_PC32, 50, \
                 32, \
                 replace_word32, \
                 signed, \
-                ( ( S + A ) - P ))
+                ( ME ( ( ( S + A ) - P ) ) ))
 
 ARC_RELOC_HOWTO(ARC_GOT32, 59, \
                 2, \
@@ -311,14 +342,14 @@ ARC_RELOC_HOWTO(ARC_GOTPC32, 51, \
                 32, \
                 replace_word32, \
                 signed, \
-                ( ( ( GOT + G ) + A ) - P ))
+                ( ME ( ( ( ( GOT + G ) + A ) - P ) ) ))
 
 ARC_RELOC_HOWTO(ARC_PLT32, 52, \
                 2, \
                 32, \
                 replace_word32, \
                 signed, \
-                ( ( L + A ) - P ))
+                ( ME ( ( ( L + A ) - P ) ) ))
 
 ARC_RELOC_HOWTO(ARC_COPY, 53, \
                 2, \
@@ -339,42 +370,42 @@ ARC_RELOC_HOWTO(ARC_JMP_SLOT, 55, \
                 32, \
                 replace_word32, \
                 signed, \
-                S)
+                ( ME ( S ) ))
 
 ARC_RELOC_HOWTO(ARC_RELATIVE, 56, \
                 2, \
                 32, \
                 replace_word32, \
                 signed, \
-                ( B + A ))
+                ( ME ( ( B + A ) ) ))
 
 ARC_RELOC_HOWTO(ARC_GOTOFF, 57, \
                 2, \
                 32, \
                 replace_word32, \
                 signed, \
-                ( ( S + A ) - GOT ))
+                ( ME ( ( ( S + A ) - GOT ) ) ))
 
 ARC_RELOC_HOWTO(ARC_GOTPC, 58, \
                 2, \
                 32, \
                 replace_word32, \
                 signed, \
-                ( ( GOT + A ) - P ))
+                ( ME ( ( GOT_BEGIN - P ) ) ))
 
 ARC_RELOC_HOWTO(ARC_S21W_PCREL_PLT, 60, \
                 2, \
                 19, \
                 replace_disp21w, \
                 signed, \
-                ( ( ( L + A ) - P ) >> 2 ))
+                ( ME ( ( ( ( L + A ) - P ) >> 2 ) ) ))
 
 ARC_RELOC_HOWTO(ARC_S25H_PCREL_PLT, 61, \
                 2, \
                 24, \
                 replace_disp25h, \
                 signed, \
-                ( ( ( L + A ) - P ) >> 1 ))
+                ( ME ( ( ( ( L + A ) - P ) >> 1 ) ) ))
 
 ARC_RELOC_HOWTO(ARC_TLS_DTPMOD, 66, \
                 2, \
@@ -395,12 +426,12 @@ ARC_RELOC_HOWTO(ARC_TLS_GD_GOT, 69, \
                 32, \
                 replace_word32, \
                 dont, \
-                0)
+                ( ME ( ( ( G + GOT ) - P ) ) ))
 
 ARC_RELOC_HOWTO(ARC_TLS_GD_LD, 70, \
                 2, \
-                32, \
-                replace_word32, \
+                0, \
+                replace_none, \
                 dont, \
                 0)
 
@@ -416,47 +447,53 @@ ARC_RELOC_HOWTO(ARC_TLS_IE_GOT, 72, \
                 32, \
                 replace_word32, \
                 dont, \
-                0)
+                ( ME ( ( ( G + GOT ) - P ) ) ))
 
 ARC_RELOC_HOWTO(ARC_TLS_DTPOFF, 67, \
                 2, \
                 32, \
                 replace_word32, \
                 dont, \
-                0)
+                ( ME ( ( S - TLS_REL ) ) ))
 
 ARC_RELOC_HOWTO(ARC_TLS_DTPOFF_S9, 73, \
                 2, \
                 32, \
                 replace_word32, \
                 dont, \
-                0)
+                ( ME ( ( S - TLS_REL ) ) ))
 
 ARC_RELOC_HOWTO(ARC_TLS_LE_S9, 74, \
                 2, \
                 32, \
                 replace_word32, \
                 dont, \
-                0)
+                ( ME ( ( ( S + TCB_SIZE ) - TLS_REL ) ) ))
 
 ARC_RELOC_HOWTO(ARC_TLS_LE_32, 75, \
                 2, \
                 32, \
                 replace_word32, \
                 dont, \
-                0)
+                ( ME ( ( ( ( S + A ) + TCB_SIZE ) - TLS_REL ) ) ))
 
 ARC_RELOC_HOWTO(ARC_S25W_PCREL_PLT, 76, \
                 2, \
                 23, \
                 replace_disp25w, \
                 signed, \
-                ( ( ( L + A ) - P ) >> 2 ))
+                ( ME ( ( ( ( L + A ) - P ) >> 2 ) ) ))
 
 ARC_RELOC_HOWTO(ARC_S21H_PCREL_PLT, 77, \
                 2, \
                 20, \
                 replace_disp21h, \
                 signed, \
-                ( ( ( L + A ) - P ) >> 1 ))
+                ( ME ( ( ( ( L + A ) - P ) >> 1 ) ) ))
 
+ARC_RELOC_HOWTO(ARC_NPS_CMEM16, 78, \
+                2, \
+                16, \
+                replace_bits16, \
+                dont, \
+                ( ME ( S + A )))

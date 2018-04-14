@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright (C) 1991-2015 Free Software Foundation, Inc.
+#   Copyright (C) 1991-2016 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -56,6 +56,19 @@ gld${EMULATION_NAME}_before_parse (void)
 }
 
 static void
+gld${EMULATION_NAME}_set_symbols (void)
+{
+  /* PR 19106: The section resizing code in gldarmelf_after_allocation
+     is effectively the same as relaxation, so prevent early memory
+     region checks which produce bogus error messages.
+     Note - this test has nothing to do with symbols.  It is just here
+     because this is the first emulation routine that is called after
+     the command line has been parsed.  */
+  if (!bfd_link_relocatable (&link_info))
+    TARGET_ENABLE_RELAXATION;
+}
+
+static void
 arm_elf_before_allocation (void)
 {
   bfd_elf32_arm_set_byteswap_code (&link_info, byteswap_code);
@@ -70,6 +83,10 @@ arm_elf_before_allocation (void)
 
   /* Auto-select Cortex-A8 erratum fix if it wasn't explicitly specified.  */
   bfd_elf32_arm_set_cortex_a8_fix (link_info.output_bfd, &link_info);
+
+  /* Ensure the output sections of veneers needing a dedicated one is not
+     removed.  */
+  bfd_elf32_arm_keep_private_stub_output_sections (&link_info);
 
   /* We should be able to set the size of the interworking stub section.  We
      can't do it until later if we have dynamic sections, though.  */
@@ -191,12 +208,12 @@ hook_in_stub (struct hook_stub_info *info, lang_statement_union_type **lp)
 
 static asection *
 elf32_arm_add_stub_section (const char * stub_sec_name,
-			    asection *   input_section,
+			    asection *   output_section,
+			    asection *   after_input_section,
 			    unsigned int alignment_power)
 {
   asection *stub_sec;
   flagword flags;
-  asection *output_section;
   lang_output_section_statement_type *os;
   struct hook_stub_info info;
 
@@ -209,18 +226,34 @@ elf32_arm_add_stub_section (const char * stub_sec_name,
 
   bfd_set_section_alignment (stub_file->the_bfd, stub_sec, alignment_power);
 
-  output_section = input_section->output_section;
   os = lang_output_section_get (output_section);
 
-  info.input_section = input_section;
+  info.input_section = after_input_section;
   lang_list_init (&info.add);
   lang_add_section (&info.add, stub_sec, NULL, os);
 
   if (info.add.head == NULL)
     goto err_ret;
 
-  if (hook_in_stub (&info, &os->children.head))
-    return stub_sec;
+  if (after_input_section == NULL)
+    {
+      lang_statement_union_type **lp = &os->children.head;
+      lang_statement_union_type *l, *lprev = NULL;
+
+      for (; (l = *lp) != NULL; lp = &l->header.next, lprev = l);
+
+      if (lprev)
+	lprev->header.next = info.add.head;
+      else
+	os->children.head = info.add.head;
+
+      return stub_sec;
+    }
+  else
+    {
+      if (hook_in_stub (&info, &os->children.head))
+	return stub_sec;
+    }
 
  err_ret:
   einfo ("%X%P: can not make stub section: %E\n");
@@ -281,55 +314,52 @@ gld${EMULATION_NAME}_after_allocation (void)
 {
   int ret;
 
-  if (!bfd_link_relocatable (&link_info))
+  /* Build a sorted list of input text sections, then use that to process
+     the unwind table index.  */
+  unsigned int list_size = 10;
+  asection **sec_list = (asection **)
+      xmalloc (list_size * sizeof (asection *));
+  unsigned int sec_count = 0;
+
+  LANG_FOR_EACH_INPUT_STATEMENT (is)
     {
-      /* Build a sorted list of input text sections, then use that to process
-	 the unwind table index.  */
-      unsigned int list_size = 10;
-      asection **sec_list = (asection **)
-          xmalloc (list_size * sizeof (asection *));
-      unsigned int sec_count = 0;
+      bfd *abfd = is->the_bfd;
+      asection *sec;
 
-      LANG_FOR_EACH_INPUT_STATEMENT (is)
+      if ((abfd->flags & (EXEC_P | DYNAMIC)) != 0)
+	continue;
+
+      for (sec = abfd->sections; sec != NULL; sec = sec->next)
 	{
-	  bfd *abfd = is->the_bfd;
-	  asection *sec;
+	  asection *out_sec = sec->output_section;
 
-	  if ((abfd->flags & (EXEC_P | DYNAMIC)) != 0)
-	    continue;
-
-	  for (sec = abfd->sections; sec != NULL; sec = sec->next)
+	  if (out_sec
+	      && elf_section_data (sec)
+	      && elf_section_type (sec) == SHT_PROGBITS
+	      && (elf_section_flags (sec) & SHF_EXECINSTR) != 0
+	      && (sec->flags & SEC_EXCLUDE) == 0
+	      && sec->sec_info_type != SEC_INFO_TYPE_JUST_SYMS
+	      && out_sec != bfd_abs_section_ptr)
 	    {
-	      asection *out_sec = sec->output_section;
-
-	      if (out_sec
-		  && elf_section_data (sec)
-		  && elf_section_type (sec) == SHT_PROGBITS
-		  && (elf_section_flags (sec) & SHF_EXECINSTR) != 0
-		  && (sec->flags & SEC_EXCLUDE) == 0
-		  && sec->sec_info_type != SEC_INFO_TYPE_JUST_SYMS
-		  && out_sec != bfd_abs_section_ptr)
+	      if (sec_count == list_size)
 		{
-		  if (sec_count == list_size)
-		    {
-		      list_size *= 2;
-		      sec_list = (asection **)
-                          xrealloc (sec_list, list_size * sizeof (asection *));
-		    }
-
-		  sec_list[sec_count++] = sec;
+		  list_size *= 2;
+		  sec_list = (asection **)
+		      xrealloc (sec_list, list_size * sizeof (asection *));
 		}
+
+	      sec_list[sec_count++] = sec;
 	    }
 	}
-
-      qsort (sec_list, sec_count, sizeof (asection *), &compare_output_sec_vma);
-
-      if (elf32_arm_fix_exidx_coverage (sec_list, sec_count, &link_info,
-					   merge_exidx_entries))
-	need_laying_out = 1;
-
-      free (sec_list);
     }
+
+  qsort (sec_list, sec_count, sizeof (asection *), &compare_output_sec_vma);
+
+  if (elf32_arm_fix_exidx_coverage (sec_list, sec_count, &link_info,
+				    merge_exidx_entries))
+    need_laying_out = 1;
+
+  free (sec_list);
 
   /* bfd_elf32_discard_info just plays with debugging sections,
      ie. doesn't affect any code, so we can delay resizing the
@@ -422,7 +452,8 @@ gld${EMULATION_NAME}_finish (void)
       h = bfd_link_hash_lookup (link_info.hash, entry_symbol.name,
 				FALSE, FALSE, TRUE);
       eh = (struct elf_link_hash_entry *)h;
-      if (!h || eh->target_internal != ST_BRANCH_TO_THUMB)
+      if (!h || ARM_GET_SYM_BRANCH_TYPE (eh->target_internal)
+		!= ST_BRANCH_TO_THUMB)
 	return;
     }
 
@@ -729,6 +760,7 @@ LDEMUL_CREATE_OUTPUT_SECTION_STATEMENTS=arm_elf_create_output_section_statements
 
 # Replace the elf before_parse function with our own.
 LDEMUL_BEFORE_PARSE=gld"${EMULATION_NAME}"_before_parse
+LDEMUL_SET_SYMBOLS=gld"${EMULATION_NAME}"_set_symbols
 
 # Call the extra arm-elf function
 LDEMUL_FINISH=gld${EMULATION_NAME}_finish

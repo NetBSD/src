@@ -1,5 +1,5 @@
 /* aarch64-opc.c -- AArch64 opcode support.
-   Copyright (C) 2009-2015 Free Software Foundation, Inc.
+   Copyright (C) 2009-2016 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of the GNU opcodes library.
@@ -1521,6 +1521,16 @@ operand_general_constraint_met_p (const aarch64_opnd_info *opnds, int idx,
       break;
 
     case AARCH64_OPND_CLASS_SIMD_REGLIST:
+      if (type == AARCH64_OPND_LEt)
+	{
+	  /* Get the upper bound for the element index.  */
+	  num = 16 / aarch64_get_qualifier_esize (qualifier) - 1;
+	  if (!value_in_range_p (opnd->reglist.index, 0, num))
+	    {
+	      set_elem_idx_out_of_range_error (mismatch_detail, idx, 0, num);
+	      return 0;
+	    }
+	}
       /* The opcode dependent area stores the number of elements in
 	 each structure to be loaded/stored.  */
       num = get_opcode_dependent_value (opcode);
@@ -1878,6 +1888,16 @@ operand_general_constraint_met_p (const aarch64_opnd_info *opnds, int idx,
 	{
 	case AARCH64_OPND_PSTATEFIELD:
 	  assert (idx == 0 && opnds[1].type == AARCH64_OPND_UIMM4);
+	  /* MSR UAO, #uimm4
+	     MSR PAN, #uimm4
+	     The immediate must be #0 or #1.  */
+	  if ((opnd->pstatefield == 0x03	/* UAO.  */
+	       || opnd->pstatefield == 0x04)	/* PAN.  */
+	      && opnds[1].imm.value > 1)
+	    {
+	      set_imm_out_of_range_error (mismatch_detail, idx, 0, 1);
+	      return 0;
+	    }
 	  /* MSR SPSel, #uimm4
 	     Uses uimm4 as a control value to select the stack pointer: if
 	     bit 0 is set it selects the current exception level's stack
@@ -2246,7 +2266,7 @@ print_register_list (char *buf, size_t size, const aarch64_opnd_info *opnd)
 
   /* Prepare the index if any.  */
   if (opnd->reglist.has_index)
-    snprintf (tb, 8, "[%d]", opnd->reglist.index);
+    snprintf (tb, 8, "[%" PRIi64 "]", opnd->reglist.index);
   else
     tb[0] = '\0';
 
@@ -2291,8 +2311,7 @@ static void
 print_register_offset_address (char *buf, size_t size,
 			       const aarch64_opnd_info *opnd)
 {
-  const size_t tblen = 16;
-  char tb[tblen];		/* Temporary buffer.  */
+  char tb[16];			/* Temporary buffer.  */
   bfd_boolean lsl_p = FALSE;	/* Is LSL shift operator?  */
   bfd_boolean wm_p = FALSE;	/* Should Rm be Wm?  */
   bfd_boolean print_extend_p = TRUE;
@@ -2324,9 +2343,9 @@ print_register_offset_address (char *buf, size_t size,
   if (print_extend_p)
     {
       if (print_amount_p)
-	snprintf (tb, tblen, ",%s #%d", shift_name, opnd->shifter.amount);
+	snprintf (tb, sizeof (tb), ",%s #%d", shift_name, opnd->shifter.amount);
       else
-	snprintf (tb, tblen, ",%s", shift_name);
+	snprintf (tb, sizeof (tb), ",%s", shift_name);
     }
   else
     tb[0] = '\0';
@@ -2470,7 +2489,7 @@ aarch64_print_operand (char *buf, size_t size, bfd_vma pc,
     case AARCH64_OPND_Ed:
     case AARCH64_OPND_En:
     case AARCH64_OPND_Em:
-      snprintf (buf, size, "v%d.%s[%d]", opnd->reglane.regno,
+      snprintf (buf, size, "v%d.%s[%" PRIi64 "]", opnd->reglane.regno,
 		aarch64_get_qualifier_name (opnd->qualifier),
 		opnd->reglane.index);
       break;
@@ -3214,18 +3233,16 @@ aarch64_sys_reg_supported_p (const aarch64_feature_set features,
 
   /* RAS extension.  */
 
-  /* ERRIDR_EL1 and ERRSELR_EL1.  */
+  /* ERRIDR_EL1, ERRSELR_EL1, ERXFR_EL1, ERXCTLR_EL1, ERXSTATUS_EL, ERXADDR_EL1,
+     ERXMISC0_EL1 AND ERXMISC1_EL1.  */
   if ((reg->value == CPENC (3, 0, C5, C3, 0)
-       || reg->value == CPENC (3, 0, C5, C3, 1))
-      && !AARCH64_CPU_HAS_FEATURE (features, AARCH64_FEATURE_RAS))
-    return FALSE;
-
-  /* ERXFR_EL1, ERXCTLR_EL1, ERXSTATUS_EL, ERXADDR_EL1, ERXMISC0_EL1 AND
-     ERXMISC1_EL1.  */
-  if ((reg->value == CPENC (3, 0, C5, C3, 0)
-       || reg->value == CPENC (3, 0, C5, C3 ,1)
+       || reg->value == CPENC (3, 0, C5, C3, 1)
        || reg->value == CPENC (3, 0, C5, C3, 2)
        || reg->value == CPENC (3, 0, C5, C3, 3)
+       || reg->value == CPENC (3, 0, C5, C4, 0)
+       || reg->value == CPENC (3, 0, C5, C4, 1)
+       || reg->value == CPENC (3, 0, C5, C4, 2)
+       || reg->value == CPENC (3, 0, C5, C4, 3)
        || reg->value == CPENC (3, 0, C5, C5, 0)
        || reg->value == CPENC (3, 0, C5, C5, 1))
       && !AARCH64_CPU_HAS_FEATURE (features, AARCH64_FEATURE_RAS))
@@ -3410,6 +3427,35 @@ aarch64_sys_ins_reg_supported_p (const aarch64_feature_set features,
 #undef C14
 #undef C15
 
+#define BIT(INSN,BT)     (((INSN) >> (BT)) & 1)
+#define BITS(INSN,HI,LO) (((INSN) >> (LO)) & ((1 << (((HI) - (LO)) + 1)) - 1))
+
+static bfd_boolean
+verify_ldpsw (const struct aarch64_opcode * opcode ATTRIBUTE_UNUSED,
+	      const aarch64_insn insn)
+{
+  int t  = BITS (insn, 4, 0);
+  int n  = BITS (insn, 9, 5);
+  int t2 = BITS (insn, 14, 10);
+
+  if (BIT (insn, 23))
+    {
+      /* Write back enabled.  */
+      if ((t == n || t2 == n) && n != 31)
+	return FALSE;
+    }
+
+  if (BIT (insn, 22))
+    {
+      /* Load */
+      if (t == t2)
+	return FALSE;
+    }
+
+  return TRUE;
+}
+
 /* Include the opcode description table as well as the operand description
    table.  */
+#define VERIFIER(x) verify_##x
 #include "aarch64-tbl.h"
