@@ -1,5 +1,5 @@
 /* Disassemble WDC 65816 instructions.
-   Copyright (C) 1995-2016 Free Software Foundation, Inc.
+   Copyright (C) 1995-2018 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -25,7 +25,7 @@
 #define DEFINE_TABLE
 
 #include "w65-opc.h"
-#include "dis-asm.h"
+#include "disassemble.h"
 
 static fprintf_ftype fpr;
 static void *stream;

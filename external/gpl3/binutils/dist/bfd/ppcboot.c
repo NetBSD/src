@@ -1,5 +1,5 @@
 /* BFD back-end for PPCbug boot records.
-   Copyright (C) 1996-2016 Free Software Foundation, Inc.
+   Copyright (C) 1996-2018 Free Software Foundation, Inc.
    Written by Michael Meissner, Cygnus Support, <meissner@cygnus.com>
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -354,8 +354,8 @@ ppcboot_set_section_contents (bfd *abfd,
       asection *s;
 
       /* The lowest section VMA sets the virtual address of the start
-         of the file.  We use the set the file position of all the
-         sections.  */
+	 of the file.  We use the set the file position of all the
+	 sections.  */
       low = abfd->sections->vma;
       for (s = abfd->sections->next; s != NULL; s = s->next)
 	if (s->vma < low)
@@ -422,20 +422,25 @@ ppcboot_bfd_print_private_bfd_data (bfd *abfd, void * farg)
 	  && !sector_begin && !sector_length)
 	continue;
 
+      /* xgettext:c-format */
       fprintf (f, _("\nPartition[%d] start  = { 0x%.2x, 0x%.2x, 0x%.2x, 0x%.2x }\n"), i,
 	       tdata->header.partition[i].partition_begin.ind,
 	       tdata->header.partition[i].partition_begin.head,
 	       tdata->header.partition[i].partition_begin.sector,
 	       tdata->header.partition[i].partition_begin.cylinder);
 
+      /* xgettext:c-format */
       fprintf (f, _("Partition[%d] end    = { 0x%.2x, 0x%.2x, 0x%.2x, 0x%.2x }\n"), i,
 	       tdata->header.partition[i].partition_end.ind,
 	       tdata->header.partition[i].partition_end.head,
 	       tdata->header.partition[i].partition_end.sector,
 	       tdata->header.partition[i].partition_end.cylinder);
 
+      /* xgettext:c-format */
       fprintf (f, _("Partition[%d] sector = 0x%.8lx (%ld)\n"),
 	       i, (unsigned long) sector_begin, sector_begin);
+
+      /* xgettext:c-format */
       fprintf (f, _("Partition[%d] length = 0x%.8lx (%ld)\n"),
 	       i, (unsigned long) sector_length, sector_length);
     }
@@ -456,6 +461,7 @@ ppcboot_bfd_print_private_bfd_data (bfd *abfd, void * farg)
 #define ppcboot_section_already_linked \
   _bfd_generic_section_already_linked
 #define ppcboot_bfd_define_common_symbol bfd_generic_define_common_symbol
+#define ppcboot_bfd_define_start_stop bfd_generic_define_start_stop
 #define ppcboot_bfd_link_hash_table_create _bfd_generic_link_hash_table_create
 #define ppcboot_bfd_link_add_symbols _bfd_generic_link_add_symbols
 #define ppcboot_bfd_link_just_syms _bfd_generic_link_just_syms

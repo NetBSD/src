@@ -1,5 +1,5 @@
 /* SuperH SH64-specific support for 32-bit ELF
-   Copyright (C) 2000-2016 Free Software Foundation, Inc.
+   Copyright (C) 2000-2018 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -44,7 +44,7 @@ static bfd_boolean sh64_elf_new_section_hook
 static bfd_boolean sh64_elf_copy_private_data
   (bfd *, bfd *);
 static bfd_boolean sh64_elf_merge_private_data
-  (bfd *, bfd *);
+  (bfd *, struct bfd_link_info *);
 static bfd_boolean sh64_elf_fake_sections
   (bfd *, Elf_Internal_Shdr *, asection *);
 static bfd_boolean sh64_elf_set_private_flags
@@ -87,7 +87,7 @@ static void sh64_find_section_for_address
 #define elf_backend_link_output_symbol_hook \
 	sh64_elf_link_output_symbol_hook
 #define elf_backend_merge_symbol_attribute	sh64_elf_merge_symbol_attribute
-#define elf_backend_final_write_processing 	sh64_elf_final_write_processing
+#define elf_backend_final_write_processing	sh64_elf_final_write_processing
 #define elf_backend_section_from_shdr		sh64_backend_section_from_shdr
 #define elf_backend_special_sections		sh64_elf_special_sections
 #define elf_backend_section_flags		sh64_elf_section_flags
@@ -203,11 +203,12 @@ sh64_elf_copy_private_data (bfd * ibfd, bfd * obfd)
 }
 
 static bfd_boolean
-sh64_elf_merge_private_data (bfd *ibfd, bfd *obfd)
+sh64_elf_merge_private_data (bfd *ibfd, struct bfd_link_info *info)
 {
+  bfd *obfd = info->output_bfd;
   flagword old_flags, new_flags;
 
-  if (! _bfd_generic_verify_endian_match (ibfd, obfd))
+  if (! _bfd_generic_verify_endian_match (ibfd, info))
     return FALSE;
 
   if (   bfd_get_flavour (ibfd) != bfd_target_elf_flavour
@@ -220,15 +221,17 @@ sh64_elf_merge_private_data (bfd *ibfd, bfd *obfd)
 
       if (bfd_get_arch_size (ibfd) == 32
 	  && bfd_get_arch_size (obfd) == 64)
-	msg = _("%s: compiled as 32-bit object and %s is 64-bit");
+	/* xgettext:c-format */
+	msg = _("%B: compiled as 32-bit object and %B is 64-bit");
       else if (bfd_get_arch_size (ibfd) == 64
 	       && bfd_get_arch_size (obfd) == 32)
-	msg = _("%s: compiled as 64-bit object and %s is 32-bit");
+	/* xgettext:c-format */
+	msg = _("%B: compiled as 64-bit object and %B is 32-bit");
       else
-	msg = _("%s: object size does not match that of target %s");
+	/* xgettext:c-format */
+	msg = _("%B: object size does not match that of target %B");
 
-      (*_bfd_error_handler) (msg, bfd_get_filename (ibfd),
-			     bfd_get_filename (obfd));
+      _bfd_error_handler (msg, ibfd, obfd);
       bfd_set_error (bfd_error_wrong_format);
       return FALSE;
     }
@@ -244,9 +247,10 @@ sh64_elf_merge_private_data (bfd *ibfd, bfd *obfd)
   /* We don't allow linking in non-SH64 code.  */
   else if ((new_flags & EF_SH_MACH_MASK) != EF_SH5)
     {
-      (*_bfd_error_handler)
-	("%s: uses non-SH64 instructions while previous modules use SH64 instructions",
-	 bfd_get_filename (ibfd));
+      _bfd_error_handler
+	("%B: uses non-SH64 instructions while previous modules"
+	 " use SH64 instructions",
+	 ibfd);
       bfd_set_error (bfd_error_bad_value);
       return FALSE;
     }
@@ -447,9 +451,8 @@ sh64_elf_add_symbol_hook (bfd *abfd, struct bfd_link_info *info,
 	      && h->root.type != bfd_link_hash_indirect))
 	{
 	  /* Make sure we don't get confused on invalid input.  */
-	  (*_bfd_error_handler)
-	    (_("%s: encountered datalabel symbol in input"),
-	     bfd_get_filename (abfd));
+	  _bfd_error_handler
+	    (_("%B: encountered datalabel symbol in input"), abfd);
 	  bfd_set_error (bfd_error_bad_value);
 	  return FALSE;
 	}
@@ -543,9 +546,9 @@ shmedia_prepare_reloc (struct bfd_link_info *info, bfd *abfd,
 	       unknown destination (or when relaxing) will get us here.  */
 	    if ((insn & SHMEDIA_PTB_BIT) != 0)
 	      {
-		(*_bfd_error_handler)
-		  (_("%s: GAS error: unexpected PTB insn with R_SH_PT_16"),
-		   bfd_get_filename (input_section->owner));
+		_bfd_error_handler
+		  (_("%B: GAS error: unexpected PTB insn with R_SH_PT_16"),
+		   input_section->owner);
 		return FALSE;
 	      }
 
@@ -592,10 +595,11 @@ shmedia_prepare_reloc (struct bfd_link_info *info, bfd *abfd,
     }
   if (dropped != 0)
     {
-      (*_bfd_error_handler)
-	(_("%B: error: unaligned relocation type %d at %08x reloc %p\n"),
-	 input_section->owner, ELF32_R_TYPE (rel->r_info),
-	 (unsigned) rel->r_offset, relocation);
+      _bfd_error_handler
+	/* xgettext:c-format */
+	(_("%B: error: unaligned relocation type %d at %#Lx reloc %#Lx"),
+	 input_section->owner, (int) ELF32_R_TYPE (rel->r_info),
+	 rel->r_offset, *relocation);
       return FALSE;
     }
 
@@ -668,9 +672,8 @@ sh64_elf_final_write_processing (bfd *abfd,
 				      ld_generated_cranges_size))
 	{
 	  bfd_set_error (bfd_error_file_truncated);
-	  (*_bfd_error_handler)
-	    (_("%s: could not write out added .cranges entries"),
-	     bfd_get_filename (abfd));
+	  _bfd_error_handler
+	    (_("%B: could not write out added .cranges entries"), abfd);
 	}
     }
 
@@ -728,9 +731,8 @@ sh64_elf_final_write_processing (bfd *abfd,
 					  cranges_size))
 	    {
 	      bfd_set_error (bfd_error_file_truncated);
-	      (*_bfd_error_handler)
-		(_("%s: could not write out sorted .cranges entries"),
-		 bfd_get_filename (abfd));
+	      _bfd_error_handler
+		(_("%B: could not write out sorted .cranges entries"), abfd);
 	    }
 	}
     }
@@ -760,7 +762,7 @@ sh64_elf_merge_symbol_attribute (struct elf_link_hash_entry *h,
 static const struct bfd_elf_special_section sh64_elf_special_sections[] =
 {
   { STRING_COMMA_LEN (".cranges"), 0, SHT_PROGBITS, 0 },
-  { NULL,                       0, 0, 0,            0 }
+  { NULL,			0, 0, 0,	    0 }
 };
 
 #undef	TARGET_BIG_SYM

@@ -1,5 +1,5 @@
 /* BFD PowerPC CPU definition
-   Copyright (C) 1994-2016 Free Software Foundation, Inc.
+   Copyright (C) 1994-2018 Free Software Foundation, Inc.
    Contributed by Ian Lance Taylor, Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -285,9 +285,9 @@ const bfd_arch_info_type bfd_powerpc_archs[] =
     &bfd_powerpc_archs[13]
   },
   {
-    32, /* 32 bits in a word */
-    32, /* 32 bits in an address */
-    8,  /* 8 bits in a byte */
+    32,	/* 32 bits in a word */
+    32,	/* 32 bits in an address */
+    8,	/* 8 bits in a byte */
     bfd_arch_powerpc,
     bfd_mach_ppc_e500,
     "powerpc",
@@ -300,9 +300,9 @@ const bfd_arch_info_type bfd_powerpc_archs[] =
     &bfd_powerpc_archs[14]
   },
   {
-    32,        /* 32 bits in a word */
-    32,        /* 32 bits in an address */
-    8, /* 8 bits in a byte */
+    32,	/* 32 bits in a word */
+    32,	/* 32 bits in an address */
+    8,	/* 8 bits in a byte */
     bfd_arch_powerpc,
     bfd_mach_ppc_e500mc,
     "powerpc",
@@ -315,9 +315,9 @@ const bfd_arch_info_type bfd_powerpc_archs[] =
     &bfd_powerpc_archs[15]
   },
   {
-    64, /* 64 bits in a word */
-    64, /* 64 bits in an address */
-    8,  /* 8 bits in a byte */
+    64,	/* 64 bits in a word */
+    64,	/* 64 bits in an address */
+    8,	/* 8 bits in a byte */
     bfd_arch_powerpc,
     bfd_mach_ppc_e500mc64,
     "powerpc",
@@ -330,9 +330,9 @@ const bfd_arch_info_type bfd_powerpc_archs[] =
     &bfd_powerpc_archs[16]
   },
   {
-    32,       /* 32 bits in a word */
-    32,       /* 32 bits in an address */
-    8,        /* 8 bits in a byte */
+    32,	/* 32 bits in a word */
+    32,	/* 32 bits in an address */
+    8,	/* 8 bits in a byte */
     bfd_arch_powerpc,
     bfd_mach_ppc_860,
     "powerpc",
@@ -345,9 +345,9 @@ const bfd_arch_info_type bfd_powerpc_archs[] =
     &bfd_powerpc_archs[17]
   },
   {
-    32, /* 32 bits in a word */
-    32, /* 32 bits in an address */
-    8,  /* 8 bits in a byte */
+    32,	/* 32 bits in a word */
+    32,	/* 32 bits in an address */
+    8,	/* 8 bits in a byte */
     bfd_arch_powerpc,
     bfd_mach_ppc_750,
     "powerpc",
@@ -360,9 +360,9 @@ const bfd_arch_info_type bfd_powerpc_archs[] =
     &bfd_powerpc_archs[18]
   },
   {
-    32, /* 32 bits in a word */
-    32, /* 32 bits in an address */
-    8,  /* 8 bits in a byte */
+    32,	/* 32 bits in a word */
+    32,	/* 32 bits in an address */
+    8,	/* 8 bits in a byte */
     bfd_arch_powerpc,
     bfd_mach_ppc_titan,
     "powerpc",
@@ -375,9 +375,9 @@ const bfd_arch_info_type bfd_powerpc_archs[] =
     &bfd_powerpc_archs[19]
   },
   {
-    16, /* 16 or 32 bits in a word */
-    32, /* 32 bits in an address */
-    8,  /* 8 bits in a byte */
+    16,	/* 16 or 32 bits in a word */
+    32,	/* 32 bits in an address */
+    8,	/* 8 bits in a byte */
     bfd_arch_powerpc,
     bfd_mach_ppc_vle,
     "powerpc",
@@ -390,9 +390,9 @@ const bfd_arch_info_type bfd_powerpc_archs[] =
     &bfd_powerpc_archs[20]
   },
   {
-    64, /* 64 bits in a word */
-    64, /* 64 bits in an address */
-    8,  /* 8 bits in a byte */
+    64,	/* 64 bits in a word */
+    64,	/* 64 bits in an address */
+    8,	/* 8 bits in a byte */
     bfd_arch_powerpc,
     bfd_mach_ppc_e5500,
     "powerpc",
@@ -405,9 +405,9 @@ const bfd_arch_info_type bfd_powerpc_archs[] =
     &bfd_powerpc_archs[21]
   },
   {
-    64, /* 64 bits in a word */
-    64, /* 64 bits in an address */
-    8,  /* 8 bits in a byte */
+    64,	/* 64 bits in a word */
+    64,	/* 64 bits in an address */
+    8,	/* 8 bits in a byte */
     bfd_arch_powerpc,
     bfd_mach_ppc_e6500,
     "powerpc",

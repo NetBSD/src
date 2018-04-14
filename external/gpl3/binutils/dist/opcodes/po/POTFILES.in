@@ -175,6 +175,10 @@ pj-dis.c
 pj-opc.c
 ppc-dis.c
 ppc-opc.c
+pru-dis.c
+pru-opc.c
+riscv-dis.c
+riscv-opc.c
 rl78-decode.c
 rl78-dis.c
 rx-decode.c
@@ -213,6 +217,7 @@ visium-dis.c
 visium-opc.c
 w65-dis.c
 w65-opc.h
+wasm32-dis.c
 xc16x-asm.c
 xc16x-desc.c
 xc16x-desc.h

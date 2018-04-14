@@ -1,4 +1,4 @@
-@c Copyright (C) 1991-2016 Free Software Foundation, Inc.
+@c Copyright (C) 1991-2018 Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
 @c man end
@@ -74,7 +74,8 @@ usage and use x86-64 as target platform).
 @item -n
 By default, x86 GAS replaces multiple nop instructions used for
 alignment within code sections with multi-byte nop instructions such
-as leal 0(%esi,1),%esi.  This switch disables the optimization.
+as leal 0(%esi,1),%esi.  This switch disables the optimization if a single
+byte nop (0x90) is explicitly specified as the fill byte for alignment.
 
 @cindex @samp{--divide} option, i386
 @item --divide
@@ -166,11 +167,15 @@ accept various extension mnemonics.  For example,
 @code{mpx},
 @code{sha},
 @code{rdpid},
+@code{ptwrite},
+@code{cet},
+@code{gfni},
+@code{vaes},
+@code{vpclmulqdq},
 @code{prefetchwt1},
 @code{clflushopt},
 @code{se1},
 @code{clwb},
-@code{pcommit},
 @code{avx512f},
 @code{avx512cd},
 @code{avx512er},
@@ -180,6 +185,12 @@ accept various extension mnemonics.  For example,
 @code{avx512dq},
 @code{avx512ifma},
 @code{avx512vbmi},
+@code{avx512_4fmaps},
+@code{avx512_4vnniw},
+@code{avx512_vpopcntdq},
+@code{avx512_vbmi2},
+@code{avx512_vnni},
+@code{avx512_bitalg},
 @code{noavx512f},
 @code{noavx512cd},
 @code{noavx512er},
@@ -189,6 +200,12 @@ accept various extension mnemonics.  For example,
 @code{noavx512dq},
 @code{noavx512ifma},
 @code{noavx512vbmi},
+@code{noavx512_4fmaps},
+@code{noavx512_4vnniw},
+@code{noavx512_vpopcntdq},
+@code{noavx512_vbmi2},
+@code{noavx512_vnni},
+@code{noavx512_bitalg},
 @code{vmx},
 @code{vmfunc},
 @code{smx},
@@ -311,7 +328,7 @@ take precedent.
 @cindex @samp{-mnaked-reg} option, i386
 @cindex @samp{-mnaked-reg} option, x86-64
 @item -mnaked-reg
-This opetion specifies that registers don't require a @samp{%} prefix.
+This option specifies that registers don't require a @samp{%} prefix.
 The @code{.att_syntax} and @code{.intel_syntax} directives will take precedent.
 
 @cindex @samp{-madd-bnd-prefix} option, i386
@@ -414,8 +431,17 @@ specifies the desired alignment of the symbol in the bss section.
 
 This directive is only available for COFF based x86 targets.
 
+@cindex @code{largecomm} directive, ELF
+@item .largecomm @var{symbol} , @var{length}[, @var{alignment}]
+This directive behaves in the same way as the @code{comm} directive
+except that the data is placed into the @var{.lbss} section instead of
+the @var{.bss} section @ref{Comm}.
+
+The directive is intended to be used for data which requires a large
+amount of space, and it is only available for ELF based x86_64
+targets.
+
 @c FIXME: Document other x86 specific directives ?  Eg: .code16gcc,
-@c .largecomm
 
 @end table
 
@@ -591,10 +617,30 @@ quadruple word).
 @cindex encoding options, i386
 @cindex encoding options, x86-64
 
-Different encoding options can be specified via optional mnemonic
-suffix.  @samp{.s} suffix swaps 2 register operands in encoding when
-moving from one register to another.  @samp{.d8} or @samp{.d32} suffix
-prefers 8bit or 32bit displacement in encoding.
+Different encoding options can be specified via pseudo prefixes:
+
+@itemize @bullet
+@item
+@samp{@{disp8@}} -- prefer 8-bit displacement.
+
+@item
+@samp{@{disp32@}} -- prefer 32-bit displacement.
+
+@item
+@samp{@{load@}} -- prefer load-form instruction.
+
+@item
+@samp{@{store@}} -- prefer store-form instruction.
+
+@item
+@samp{@{vex2@}} -- prefer 2-byte VEX prefix for VEX instruction.
+
+@item
+@samp{@{vex3@}} -- prefer 3-byte VEX prefix for VEX instruction.
+
+@item
+@samp{@{evex@}} --  encode with EVEX prefix.
+@end itemize
 
 @cindex conversion instructions, i386
 @cindex i386 conversion instructions
@@ -1190,11 +1236,15 @@ supported on the CPU specified.  The choices for @var{cpu_type} are:
 @item @samp{.clflushopt} @tab @samp{.xsavec} @tab @samp{.xsaves} @tab @samp{.se1}
 @item @samp{.avx512f} @tab @samp{.avx512cd} @tab @samp{.avx512er} @tab @samp{.avx512pf}
 @item @samp{.avx512vl} @tab @samp{.avx512bw} @tab @samp{.avx512dq} @tab @samp{.avx512ifma}
-@item @samp{.avx512vbmi} @tab @samp{.clwb} @tab @samp{.pcommit}
+@item @samp{.avx512vbmi} @tab @samp{.avx512_4fmaps} @tab @samp{.avx512_4vnniw}
+@item @samp{.avx512_vpopcntdq} @tab @samp{.avx512_vbmi2} @tab @samp{.avx512_vnni}
+@item @samp{.avx512_bitalg}
+@item @samp{.clwb} @tab @samp{.rdpid} @tab @samp{.ptwrite} @tab @item @samp{.cet}
 @item @samp{.3dnow} @tab @samp{.3dnowa} @tab @samp{.sse4a} @tab @samp{.sse5}
 @item @samp{.syscall} @tab @samp{.rdtscp} @tab @samp{.svme} @tab @samp{.abm}
 @item @samp{.lwp} @tab @samp{.fma4} @tab @samp{.xop} @tab @samp{.cx16}
-@item @samp{.padlock} @tab @samp{.clzero} @tab @samp{.mwaitx} @tab @samp{.rdpid}
+@item @samp{.padlock} @tab @samp{.clzero} @tab @samp{.mwaitx} @tab @samp{.gfni}
+@item @samp{.vaes} @tab @samp{.vpclmulqdq}
 @end multitable
 
 Apart from the warning, there are only two other effects on

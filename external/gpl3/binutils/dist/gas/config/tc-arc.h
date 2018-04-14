@@ -1,5 +1,5 @@
 /* tc-arc.h - Macros and type defines for the ARC.
-   Copyright (C) 2014-2016 Free Software Foundation, Inc.
+   Copyright (C) 2014-2018 Free Software Foundation, Inc.
 
    Contributed by Claudiu Zissulescu (claziss@synopsys.com)
 
@@ -171,7 +171,6 @@ extern long md_pcrel_from_section (struct fix *, segT);
 #define tc_frob_label(S)  arc_frob_label (S)
 
 #define GLOBAL_OFFSET_TABLE_NAME "_GLOBAL_OFFSET_TABLE_"
-#define DYNAMIC_STRUCT_NAME "_DYNAMIC"
 
 /* We need to take care of not having section relative fixups for the
    fixups with respect to Position Independent Code.  */
@@ -190,6 +189,17 @@ extern long md_pcrel_from_section (struct fix *, segT);
 /* Adjust symbol table.  */
 #define obj_adjust_symtab() arc_adjust_symtab ()
 
+/* Object attribute hooks.  */
+#define md_end arc_md_end
+#define CONVERT_SYMBOLIC_ATTRIBUTE(name) arc_convert_symbolic_attribute (name)
+#ifndef TC_COPY_SYMBOL_ATTRIBUTES
+#define TC_COPY_SYMBOL_ATTRIBUTES(DEST, SRC) \
+  (arc_copy_symbol_attributes (DEST, SRC))
+#endif
+
+extern void arc_copy_symbol_attributes (symbolS *, symbolS *);
+extern int arc_convert_symbolic_attribute (const char *);
+extern void arc_md_end (void);
 extern void arc_adjust_symtab (void);
 extern int arc_pcrel_adjust (fragS *);
 extern bfd_boolean arc_parse_name (const char *, struct expressionS *);

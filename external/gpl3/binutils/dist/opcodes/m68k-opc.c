@@ -1,5 +1,5 @@
 /* Opcode table for m680[012346]0/m6888[12]/m68851/mcf5200.
-   Copyright (C) 1989-2016 Free Software Foundation, Inc.
+   Copyright (C) 1989-2018 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -1501,6 +1501,13 @@ const struct m68k_opcode m68k_opcodes[] =
 {"macw", 4,  	two(0xa000, 0x0200), two(0xf130, 0x0900), "uMumMheH", mcfemac },/* Ry,Rx,+1/-1,accX.  */
 {"macw", 4,  	two(0xa000, 0x0000), two(0xf130, 0x0f00), "uMumeH", mcfemac }, /* Ry,Rx,accX.  */
 
+{"macw", 4,  	two(0xa080, 0x0000), two(0xf180, 0x0910), "uNuoiI4/Rn", mcfemac },
+{"macw", 4,  	two(0xa080, 0x0200), two(0xf180, 0x0910), "uNuoMh4/Rn", mcfemac },
+{"macw", 4,  	two(0xa080, 0x0000), two(0xf180, 0x0f10), "uNuo4/Rn", mcfemac },
+{"macw", 4,  	two(0xa000, 0x0000), two(0xf1b0, 0x0910), "uMumiI", mcfemac },
+{"macw", 4,  	two(0xa000, 0x0200), two(0xf1b0, 0x0910), "uMumMh", mcfemac },
+{"macw", 4,  	two(0xa000, 0x0000), two(0xf1b0, 0x0f10), "uMum", mcfemac },
+
 {"macl", 4,  	two(0xa080, 0x0800), two(0xf180, 0x0910), "RNRoiI4/Rn", mcfmac },
 {"macl", 4,  	two(0xa080, 0x0a00), two(0xf180, 0x0910), "RNRoMh4/Rn", mcfmac },
 {"macl", 4,  	two(0xa080, 0x0800), two(0xf180, 0x0f10), "RNRo4/Rn", mcfmac },
@@ -1514,6 +1521,13 @@ const struct m68k_opcode m68k_opcodes[] =
 {"macl", 4,  	two(0xa000, 0x0800), two(0xf130, 0x0900), "RMRmiIeH", mcfemac },
 {"macl", 4,  	two(0xa000, 0x0a00), two(0xf130, 0x0900), "RMRmMheH", mcfemac },
 {"macl", 4,  	two(0xa000, 0x0800), two(0xf130, 0x0f00), "RMRmeH", mcfemac },
+
+{"macl", 4,  	two(0xa080, 0x0800), two(0xf180, 0x0910), "RNRoiI4/Rn", mcfemac },
+{"macl", 4,  	two(0xa080, 0x0a00), two(0xf180, 0x0910), "RNRoMh4/Rn", mcfemac },
+{"macl", 4,  	two(0xa080, 0x0800), two(0xf180, 0x0f10), "RNRo4/Rn", mcfemac },
+{"macl", 4,  	two(0xa000, 0x0800), two(0xf1b0, 0x0b10), "RMRmiI", mcfemac },
+{"macl", 4,  	two(0xa000, 0x0a00), two(0xf1b0, 0x0b10), "RMRmMh", mcfemac },
+{"macl", 4,  	two(0xa000, 0x0800), two(0xf1b0, 0x0910), "RMRm", mcfemac },
 
 /* NOTE: The mcf5200 family programmer's reference manual does not
    indicate the byte form of the movea instruction is invalid (as it

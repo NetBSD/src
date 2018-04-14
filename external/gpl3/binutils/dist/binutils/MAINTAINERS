@@ -22,10 +22,13 @@ top level config.guess and config.sub scripts should be sent to:
   config-patches@gnu.org
 
 and not to the binutils lists.  Patches to the other top level
-configure files (configure, configure.in, config-ml.in) should
+configure files (configure, configure.ac, config-ml.in) should
 be sent to the binutils lists, and copied to the gcc and gdb
 lists as well (gcc-patches@gcc.gnu.org and
 gdb-patches@sourceware.org).
+
+Patches to the libiberty sources should be sent to
+gcc-patches@gcc.gnu.org.
 
 		--------- Blanket Write Privs ---------
 
@@ -33,7 +36,6 @@ The following people have permission to check patches into the
 repository without obtaining approval first:
 
   Nick Clifton <nickc@redhat.com> (head maintainer)
-  Richard Henderson <rth@redhat.com>
   Ian Lance Taylor <ian@airs.com>
   Jeff Law <law@redhat.com>
   Jim Wilson <wilson@tuliptree.org>
@@ -56,18 +58,15 @@ maintainers for a given domain then responsibility falls to the first
 maintainer.  The first maintainer is free to devolve that
 responsibility among the other maintainers.
 
-  ALPHA            Richard Henderson <rth@redhat.com>
+  ALPHA            Richard Henderson <rth@twiddle.net>
   AARCH64	   Richard Earnshaw <rearnsha@arm.com>
   AARCH64	   Marcus Shawcroft <marcus.shawcroft@arm.com>
   ARM		   Nick Clifton <nickc@redhat.com>
   ARM		   Richard Earnshaw <rearnsha@arm.com>
-  ARM		   Paul Brook <paul@codesourcery.com>
   ARM		   Ramana Radhakrishnan <ramana.radhakrishnan@arm.com>
-  ARM (Symbian)	   Mark Mitchell <mark@codesourcery.com>
   AVR		   Denis Chertykov <chertykov@gmail.com>
   AVR		   Marek Michalkiewicz <marekm@amelek.gda.pl>
   BFIN		   Jie Zhang <jzhang918@gmail.com>
-  BFIN		   Bernd Schmidt <bernd.schmidt@analog.com>
   BFIN		   Mike Frysinger <vapier@gentoo.org>
   BUILD SYSTEM	   Daniel Jacobowitz <drow@false.org>
   CR16		   M R Swami Reddy <MR.Swami.Reddy@nsc.com>
@@ -76,6 +75,7 @@ responsibility among the other maintainers.
   DLX              Nikolaos Kavvadias <nkavv@physics.auth.gr>
   DWARF2	   Jason Merrill <jason@redhat.com>
   DWARF2	   Jakub Jelinek <jakub@redhat.com>
+  dwarf-mode.el    Tom Tromey <tom@tromey.com>
   EPIPHANY	   Joern Rennecke <joern.rennecke@embecosm.com>
   FR30		   Dave Brolley <brolley@redhat.com>
   FRV		   Dave Brolley <brolley@redhat.com>
@@ -99,15 +99,13 @@ responsibility among the other maintainers.
   M68HC11 M68HC12  Stephane Carrez <Stephane.Carrez@gmail.com>
   M68HC11 M68HC12  Sean Keys <skeys@ipdatasys.com>
   M88k		   Mark Kettenis <kettenis@gnu.org>
-  MACH-O           Tristan Gingold <gingold@adacore.com>
+  MACH-O           Tristan Gingold <tgingold@free.fr>
   MAXQ		   Inderpreet Singh <inderpreetb@noida.hcltech.com>
   MEP		   Dave Brolley <brolley@redhat.com>
   METAG            Markos Chandras <markos.chandras@imgtec.com>
   MICROBLAZE	   Michael Eager <eager@eagercon.com>
-  MIPS		   Eric Christopher <echristo@apple.com>
-  MIPS		   Maciej W. Rozycki <macro@imgtec.com>
+  MIPS		   Maciej W. Rozycki <macro@mips.com>
   MMIX		   Hans-Peter Nilsson <hp@bitrange.com>
-  MN10300	   Eric Christopher <echristo@apple.com>
   MN10300	   Alexandre Oliva <aoliva@redhat.com>
   Moxie		   Anthony Green <green@moxielogic.com>
   MSP430	   Dmitry Diky <diwil@spec.ru>
@@ -122,24 +120,26 @@ responsibility among the other maintainers.
   PPC		   Alan Modra <amodra@gmail.com>
   PPC		   Peter Bergner <bergner@vnet.ibm.com>
   PPC vector ext   Aldy Hernandez <aldyh@redhat.com>
+  RISC-V	   Palmer Dabbelt <palmer@sifive.com>
+  RISC-V	   Andrew Waterman <andrew@sifive.com>
+  RISC-V	   Jim Wilson <jimw@sifive.com>
   RL78             DJ Delorie <dj@redhat.com>
   RX               DJ Delorie <dj@redhat.com>
   RX               Nick Clifton <nickc@redhat.com>
   s390, s390x	   Martin Schwidefsky <schwidefsky@de.ibm.com>
   s390, s390x	   Andreas Krebbel <krebbel@linux.vnet.ibm.com>
-  SCORE		   Mei Ligang <ligang@sunnorth.com.cn>
   SH		   Alexandre Oliva <aoliva@redhat.com>
-  SH		   Kaz Kojima <kkojima@rr.iij4u.or.jp>
   SPARC		   David S. Miller <davem@davemloft.net>
+  SPARC		   Jose E. Marchesi <jose.marchesi@oracle.com>
   SPU		   Alan Modra <amodra@gmail.com>
-  TIC4X            Svein Seldal <svein@dev.seldal.com>
   TIC54X           Timothy Wall <twall@alum.mit.edu>
   TIC6X            Joseph Myers <joseph@codesourcery.com>
   TILE-Gx          Walter Lee <walt@tilera.com>
   TILEPro          Walter Lee <walt@tilera.com>
   VAX		   Matt Thomas <matt@netbsd.org>
   VAX		   Jan-Benedict Glaw <jbglaw@lug-owl.de>
-  VMS		   Tristan Gingold <gingold@adacore.com>
+  Visium	   Eric Botcazou <ebotcazou@libertysurf.fr>
+  VMS		   Tristan Gingold <tgingold@free.fr>
   x86_64	   Jan Hubicka <jh@suse.cz>
   x86_64	   Andreas Jaeger <aj@suse.de>
   x86_64	   H.J. Lu <hjl.tools@gmail.com>
@@ -149,6 +149,18 @@ responsibility among the other maintainers.
   z80		   Arnold Metselaar <arnold.metselaar@planet.nl>
   z8k		   Christian Groessler <chris@groessler.org>
 
+      --------- Past Maintainers -------------
+
+These folks have acted as maintainers in the past, but have now
+moved on to other things.  Our thanks for all their hard work
+goes with them.
+
+  Paul Brook
+  Eric Christopher
+  Mei Ligang
+  Mark Mitchell
+  Bernd Schmidt
+  Svein Seldal
 
       --------- CGEN Maintainers -------------
 
@@ -197,14 +209,14 @@ burden of maintaining the branch in sync with the mainline becomes too
 great).  If you are uncertain as to whether a patch is appropriate for
 the branch, ask the branch maintainer.  This is:
 
-   Tristan Gingold  <gingold@adacore.com>
+   (cf global maintainers)
 
     -------- Testsuites ---------------
 
 In general patches to any of the binutils testsuites should be
 considered generic and sent to the binutils mailing list for
 approval.  Patches to target specific tests are the responsibility the
-relevent port maintainer(s), and can be approved/checked in by them.
+relevant port maintainer(s), and can be approved/checked in by them.
 Other testsuite patches need the approval of a blanket-write-priveleges
 person.
 
@@ -285,7 +297,7 @@ Having selected the branch name, create the branch as follows:
 Please do not commit any patches to a branch you did not create
 without the explicit permission of the person who created the branch.
 
-Copyright (C) 2012-2016 Free Software Foundation, Inc.
+Copyright (C) 2012-2018 Free Software Foundation, Inc.
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright

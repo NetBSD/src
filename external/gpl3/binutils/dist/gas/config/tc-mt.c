@@ -1,5 +1,5 @@
 /* tc-mt.c -- Assembler for the Morpho Technologies mt .
-   Copyright (C) 2005-2016 Free Software Foundation, Inc.
+   Copyright (C) 2005-2018 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -14,9 +14,9 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with GAS; see the file COPYING.  If not, write to
-   the Free Software Foundation, 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston,
+   MA 02110-1301, USA.  */
 
 #include "as.h"
 #include "dwarf2dbg.h"
@@ -27,7 +27,6 @@
 #include "cgen.h"
 #include "elf/common.h"
 #include "elf/mt.h"
-#include "libbfd.h"
 
 /* Structure to hold all of the different components
    describing an individual instruction.  */
@@ -134,6 +133,7 @@ md_parse_option (int c ATTRIBUTE_UNUSED, const char * arg)
  	  mt_mach_bitmask = 1 << MACH_MS2;
  	  mt_arch = ms2;
  	}
+      break;
     case OPTION_NO_SCHED_REST:
       no_scheduling_restrictions = 1;
       break;

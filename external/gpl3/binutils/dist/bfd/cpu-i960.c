@@ -1,5 +1,5 @@
 /* BFD library support routines for the i960 architecture.
-   Copyright (C) 1990-2016 Free Software Foundation, Inc.
+   Copyright (C) 1990-2018 Free Software Foundation, Inc.
    Hacked by Steve Chamberlain of Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -125,11 +125,11 @@ compatible (const bfd_arch_info_type *a,
 
 #define ERROR	0
 #define CORE	bfd_mach_i960_core  /*1*/
-#define KA 	bfd_mach_i960_ka_sa /*2*/
-#define KB 	bfd_mach_i960_kb_sb /*3*/
-#define MC 	bfd_mach_i960_mc    /*4*/
-#define XA 	bfd_mach_i960_xa    /*5*/
-#define CA 	bfd_mach_i960_ca    /*6*/
+#define KA	bfd_mach_i960_ka_sa /*2*/
+#define KB	bfd_mach_i960_kb_sb /*3*/
+#define MC	bfd_mach_i960_mc    /*4*/
+#define XA	bfd_mach_i960_xa    /*5*/
+#define CA	bfd_mach_i960_ca    /*6*/
 #define JX	bfd_mach_i960_jx    /*7*/
 #define HX	bfd_mach_i960_hx    /*8*/
 #define MAX_ARCH ((int)HX)
@@ -139,7 +139,7 @@ compatible (const bfd_arch_info_type *a,
       { ERROR,	CORE,	KA,	KB,	MC,	XA,	CA,	JX,	HX },
       { CORE,	CORE,	KA,	KB,	MC,	XA,	CA,	JX,	HX },
       { KA,	KA,	KA,	KB,	MC,	XA,	ERROR,	ERROR,	ERROR},
-      { KB,	KB,	KB,	KB,	MC,	XA,	ERROR, 	ERROR,	ERROR},
+      { KB,	KB,	KB,	KB,	MC,	XA,	ERROR,	ERROR,	ERROR},
       { MC,	MC,	MC,	MC,	MC,	XA,	ERROR,	ERROR,	ERROR},
       { XA,	XA,	XA,	XA,	XA,	XA,	ERROR,	ERROR,	ERROR},
       { CA,	CA,	ERROR,	ERROR,	ERROR,	ERROR,	CA,	ERROR,	ERROR},

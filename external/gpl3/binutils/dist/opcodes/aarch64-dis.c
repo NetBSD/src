@@ -1,5 +1,5 @@
 /* aarch64-dis.c -- AArch64 disassembler.
-   Copyright (C) 2009-2016 Free Software Foundation, Inc.
+   Copyright (C) 2009-2018 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of the GNU opcodes library.
@@ -20,7 +20,7 @@
 
 #include "sysdep.h"
 #include "bfd_stdint.h"
-#include "dis-asm.h"
+#include "disassemble.h"
 #include "libiberty.h"
 #include "opintl.h"
 #include "aarch64-dis.h"
@@ -123,7 +123,7 @@ parse_aarch64_dis_options (const char *options)
    is encoded in H:L:M in some cases, the fields H:L:M should be passed in
    the order of H, L, M.  */
 
-static inline aarch64_insn
+aarch64_insn
 extract_fields (aarch64_insn code, aarch64_insn mask, ...)
 {
   uint32_t num;
@@ -141,6 +141,26 @@ extract_fields (aarch64_insn code, aarch64_insn mask, ...)
       field = &fields[kind];
       value <<= field->width;
       value |= extract_field (kind, code, mask);
+    }
+  return value;
+}
+
+/* Extract the value of all fields in SELF->fields from instruction CODE.
+   The least significant bit comes from the final field.  */
+
+static aarch64_insn
+extract_all_fields (const aarch64_operand *self, aarch64_insn code)
+{
+  aarch64_insn value;
+  unsigned int i;
+  enum aarch64_field_kind kind;
+
+  value = 0;
+  for (i = 0; i < ARRAY_SIZE (self->fields) && self->fields[i] != FLD_NIL; ++i)
+    {
+      kind = self->fields[i];
+      value <<= fields[kind].width;
+      value |= extract_field (kind, code, 0);
     }
   return value;
 }
@@ -305,6 +325,26 @@ aarch64_ext_reglane (const aarch64_operand *self, aarch64_opnd_info *info,
 	  info->reglane.index = (unsigned) (value >> 1);
 	}
     }
+  else if (inst->opcode->iclass == dotproduct)
+    {
+      /* Need information in other operand(s) to help decoding.  */
+      info->qualifier = get_expected_qualifier (inst, info->idx);
+      switch (info->qualifier)
+	{
+	case AARCH64_OPND_QLF_S_4B:
+	  /* L:H */
+	  info->reglane.index = extract_fields (code, 0, 2, FLD_H, FLD_L);
+	  info->reglane.regno &= 0x1f;
+	  break;
+	default:
+	  return 0;
+	}
+    }
+  else if (inst->opcode->iclass == cryptosm3)
+    {
+      /* index for e.g. SM3TT2A <Vd>.4S, <Vn>.4S, <Vm>S[<imm2>].  */
+      info->reglane.index = extract_field (FLD_SM3_imm2, code, 0);
+    }
   else
     {
       /* Index only for e.g. SQDMLAL <Va><d>, <Vb><n>, <Vm>.<Ts>[<index>]
@@ -330,6 +370,14 @@ aarch64_ext_reglane (const aarch64_operand *self, aarch64_opnd_info *info,
 	  break;
 	default:
 	  return 0;
+	}
+
+      if (inst->opcode->op == OP_FCMLA_ELEM)
+	{
+	  /* Complex operand takes two elements.  */
+	  if (info->reglane.index & 1)
+	    return 0;
+	  info->reglane.index /= 2;
 	}
     }
 
@@ -381,6 +429,9 @@ aarch64_ext_ldst_reglist (const aarch64_operand *self ATTRIBUTE_UNUSED,
   info->reglist.first_regno = extract_field (FLD_Rt, code, 0);
   /* opcode */
   value = extract_field (FLD_opcode, code, 0);
+  /* PR 21595: Check for a bogus value.  */
+  if (value >= ARRAY_SIZE (data))
+    return 0;
   if (expected_num != data[value].num_elements || data[value].is_reserved)
     return 0;
   info->reglist.num_regs = data[value].num_regs;
@@ -575,17 +626,8 @@ aarch64_ext_imm (const aarch64_operand *self, aarch64_opnd_info *info,
 		 const aarch64_inst *inst ATTRIBUTE_UNUSED)
 {
   int64_t imm;
-  /* Maximum of two fields to extract.  */
-  assert (self->fields[2] == FLD_NIL);
 
-  if (self->fields[1] == FLD_NIL)
-    imm = extract_field (self->fields[0], code, 0);
-  else
-    /* e.g. TBZ b5:b40.  */
-    imm = extract_fields (code, 0, 2, self->fields[0], self->fields[1]);
-
-  if (info->type == AARCH64_OPND_FPIMM)
-    info->imm.is_fp = 1;
+  imm = extract_all_fields (self, code);
 
   if (operand_need_sign_extension (self))
     imm = sign_extend (imm, get_operand_fields_width (self) - 1);
@@ -681,6 +723,41 @@ aarch64_ext_advsimd_imm_modified (const aarch64_operand *self ATTRIBUTE_UNUSED,
   return 1;
 }
 
+/* Decode an 8-bit floating-point immediate.  */
+int
+aarch64_ext_fpimm (const aarch64_operand *self, aarch64_opnd_info *info,
+		   const aarch64_insn code,
+		   const aarch64_inst *inst ATTRIBUTE_UNUSED)
+{
+  info->imm.value = extract_all_fields (self, code);
+  info->imm.is_fp = 1;
+  return 1;
+}
+
+/* Decode a 1-bit rotate immediate (#90 or #270).  */
+int
+aarch64_ext_imm_rotate1 (const aarch64_operand *self, aarch64_opnd_info *info,
+			 const aarch64_insn code,
+			 const aarch64_inst *inst ATTRIBUTE_UNUSED)
+{
+  uint64_t rot = extract_field (self->fields[0], code, 0);
+  assert (rot < 2U);
+  info->imm.value = rot * 180 + 90;
+  return 1;
+}
+
+/* Decode a 2-bit rotate immediate (#0, #90, #180 or #270).  */
+int
+aarch64_ext_imm_rotate2 (const aarch64_operand *self, aarch64_opnd_info *info,
+			 const aarch64_insn code,
+			 const aarch64_inst *inst ATTRIBUTE_UNUSED)
+{
+  uint64_t rot = extract_field (self->fields[0], code, 0);
+  assert (rot < 4U);
+  info->imm.value = rot * 90;
+  return 1;
+}
+
 /* Decode scale for e.g. SCVTF <Dd>, <Wn>, #<fbits>.  */
 int
 aarch64_ext_fbits (const aarch64_operand *self ATTRIBUTE_UNUSED,
@@ -712,31 +789,20 @@ aarch64_ext_aimm (const aarch64_operand *self ATTRIBUTE_UNUSED,
   return 1;
 }
 
-/* Decode logical immediate for e.g. ORR <Wd|WSP>, <Wn>, #<imm>.  */
-
-int
-aarch64_ext_limm (const aarch64_operand *self ATTRIBUTE_UNUSED,
-		  aarch64_opnd_info *info, const aarch64_insn code,
-		  const aarch64_inst *inst ATTRIBUTE_UNUSED)
+/* Return true if VALUE is a valid logical immediate encoding, storing the
+   decoded value in *RESULT if so.  ESIZE is the number of bytes in the
+   decoded immediate.  */
+static int
+decode_limm (uint32_t esize, aarch64_insn value, int64_t *result)
 {
   uint64_t imm, mask;
-  uint32_t sf;
   uint32_t N, R, S;
   unsigned simd_size;
-  aarch64_insn value;
-
-  value = extract_fields (code, 0, 3, FLD_N, FLD_immr, FLD_imms);
-  assert (inst->operands[0].qualifier == AARCH64_OPND_QLF_W
-	  || inst->operands[0].qualifier == AARCH64_OPND_QLF_X);
-  sf = aarch64_get_qualifier_esize (inst->operands[0].qualifier) != 4;
 
   /* value is N:immr:imms.  */
   S = value & 0x3f;
   R = (value >> 6) & 0x3f;
   N = (value >> 12) & 0x1;
-
-  if (sf == 0 && N == 1)
-    return 0;
 
   /* The immediate value is S+1 bits to 1, left rotated by SIMDsize - R
      (in other words, right rotated by R), then replicated.  */
@@ -760,6 +826,10 @@ aarch64_ext_limm (const aarch64_operand *self ATTRIBUTE_UNUSED,
       /* Top bits are IGNORED.  */
       R &= simd_size - 1;
     }
+
+  if (simd_size > esize * 8)
+    return 0;
+
   /* NOTE: if S = simd_size - 1 we get 0xf..f which is rejected.  */
   if (S == simd_size - 1)
     return 0;
@@ -773,16 +843,48 @@ aarch64_ext_limm (const aarch64_operand *self ATTRIBUTE_UNUSED,
   switch (simd_size)
     {
     case  2: imm = (imm <<  2) | imm;
+      /* Fall through.  */
     case  4: imm = (imm <<  4) | imm;
+      /* Fall through.  */
     case  8: imm = (imm <<  8) | imm;
+      /* Fall through.  */
     case 16: imm = (imm << 16) | imm;
+      /* Fall through.  */
     case 32: imm = (imm << 32) | imm;
+      /* Fall through.  */
     case 64: break;
     default: assert (0); return 0;
     }
 
-  info->imm.value = sf ? imm : imm & 0xffffffff;
+  *result = imm & ~((uint64_t) -1 << (esize * 4) << (esize * 4));
 
+  return 1;
+}
+
+/* Decode a logical immediate for e.g. ORR <Wd|WSP>, <Wn>, #<imm>.  */
+int
+aarch64_ext_limm (const aarch64_operand *self,
+		  aarch64_opnd_info *info, const aarch64_insn code,
+		  const aarch64_inst *inst)
+{
+  uint32_t esize;
+  aarch64_insn value;
+
+  value = extract_fields (code, 0, 3, self->fields[0], self->fields[1],
+			  self->fields[2]);
+  esize = aarch64_get_qualifier_esize (inst->operands[0].qualifier);
+  return decode_limm (esize, value, &info->imm.value);
+}
+
+/* Decode a logical immediate for the BIC alias of AND (etc.).  */
+int
+aarch64_ext_inv_limm (const aarch64_operand *self,
+		      aarch64_opnd_info *info, const aarch64_insn code,
+		      const aarch64_inst *inst)
+{
+  if (!aarch64_ext_limm (self, info, code, inst))
+    return 0;
+  info->imm.value = ~info->imm.value;
   return 1;
 }
 
@@ -836,6 +938,28 @@ aarch64_ext_addr_simple (const aarch64_operand *self ATTRIBUTE_UNUSED,
 {
   /* Rn */
   info->addr.base_regno = extract_field (FLD_Rn, code, 0);
+  return 1;
+}
+
+/* Decode the address operand for e.g.
+     stlur <Xt>, [<Xn|SP>{, <amount>}].  */
+int
+aarch64_ext_addr_offset (const aarch64_operand *self ATTRIBUTE_UNUSED,
+			 aarch64_opnd_info *info,
+			 aarch64_insn code, const aarch64_inst *inst)
+{
+  info->qualifier = get_expected_qualifier (inst, info->idx);
+
+  /* Rn */
+  info->addr.base_regno = extract_field (self->fields[0], code, 0);
+
+  /* simm9 */
+  aarch64_insn imm = extract_fields (code, 0, 1, self->fields[1]);
+  info->addr.offset.imm = sign_extend (imm, 8);
+  if (extract_field (self->fields[2], code, 0) == 1) {
+    info->addr.writeback = 1;
+    info->addr.preind = 1;
+  }
   return 1;
 }
 
@@ -931,6 +1055,27 @@ aarch64_ext_addr_uimm12 (const aarch64_operand *self, aarch64_opnd_info *info,
   info->addr.base_regno = extract_field (self->fields[0], code, 0);
   /* uimm12 */
   info->addr.offset.imm = extract_field (self->fields[1], code, 0) << shift;
+  return 1;
+}
+
+/* Decode the address operand for e.g. LDRAA <Xt>, [<Xn|SP>{, #<simm>}].  */
+int
+aarch64_ext_addr_simm10 (const aarch64_operand *self, aarch64_opnd_info *info,
+			 aarch64_insn code,
+			 const aarch64_inst *inst ATTRIBUTE_UNUSED)
+{
+  aarch64_insn imm;
+
+  info->qualifier = get_expected_qualifier (inst, info->idx);
+  /* Rn */
+  info->addr.base_regno = extract_field (self->fields[0], code, 0);
+  /* simm10 */
+  imm = extract_fields (code, 0, 2, self->fields[1], self->fields[2]);
+  info->addr.offset.imm = sign_extend (imm, 9) << 3;
+  if (extract_field (self->fields[3], code, 0) == 1) {
+    info->addr.writeback = 1;
+    info->addr.preind = 1;
+  }
   return 1;
 }
 
@@ -1163,6 +1308,440 @@ aarch64_ext_reg_shifted (const aarch64_operand *self ATTRIBUTE_UNUSED,
 
   return 1;
 }
+
+/* Decode an SVE address [<base>, #<offset>*<factor>, MUL VL],
+   where <offset> is given by the OFFSET parameter and where <factor> is
+   1 plus SELF's operand-dependent value.  fields[0] specifies the field
+   that holds <base>.  */
+static int
+aarch64_ext_sve_addr_reg_mul_vl (const aarch64_operand *self,
+				 aarch64_opnd_info *info, aarch64_insn code,
+				 int64_t offset)
+{
+  info->addr.base_regno = extract_field (self->fields[0], code, 0);
+  info->addr.offset.imm = offset * (1 + get_operand_specific_data (self));
+  info->addr.offset.is_reg = FALSE;
+  info->addr.writeback = FALSE;
+  info->addr.preind = TRUE;
+  if (offset != 0)
+    info->shifter.kind = AARCH64_MOD_MUL_VL;
+  info->shifter.amount = 1;
+  info->shifter.operator_present = (info->addr.offset.imm != 0);
+  info->shifter.amount_present = FALSE;
+  return 1;
+}
+
+/* Decode an SVE address [<base>, #<simm4>*<factor>, MUL VL],
+   where <simm4> is a 4-bit signed value and where <factor> is 1 plus
+   SELF's operand-dependent value.  fields[0] specifies the field that
+   holds <base>.  <simm4> is encoded in the SVE_imm4 field.  */
+int
+aarch64_ext_sve_addr_ri_s4xvl (const aarch64_operand *self,
+			       aarch64_opnd_info *info, aarch64_insn code,
+			       const aarch64_inst *inst ATTRIBUTE_UNUSED)
+{
+  int offset;
+
+  offset = extract_field (FLD_SVE_imm4, code, 0);
+  offset = ((offset + 8) & 15) - 8;
+  return aarch64_ext_sve_addr_reg_mul_vl (self, info, code, offset);
+}
+
+/* Decode an SVE address [<base>, #<simm6>*<factor>, MUL VL],
+   where <simm6> is a 6-bit signed value and where <factor> is 1 plus
+   SELF's operand-dependent value.  fields[0] specifies the field that
+   holds <base>.  <simm6> is encoded in the SVE_imm6 field.  */
+int
+aarch64_ext_sve_addr_ri_s6xvl (const aarch64_operand *self,
+			       aarch64_opnd_info *info, aarch64_insn code,
+			       const aarch64_inst *inst ATTRIBUTE_UNUSED)
+{
+  int offset;
+
+  offset = extract_field (FLD_SVE_imm6, code, 0);
+  offset = (((offset + 32) & 63) - 32);
+  return aarch64_ext_sve_addr_reg_mul_vl (self, info, code, offset);
+}
+
+/* Decode an SVE address [<base>, #<simm9>*<factor>, MUL VL],
+   where <simm9> is a 9-bit signed value and where <factor> is 1 plus
+   SELF's operand-dependent value.  fields[0] specifies the field that
+   holds <base>.  <simm9> is encoded in the concatenation of the SVE_imm6
+   and imm3 fields, with imm3 being the less-significant part.  */
+int
+aarch64_ext_sve_addr_ri_s9xvl (const aarch64_operand *self,
+			       aarch64_opnd_info *info,
+			       aarch64_insn code,
+			       const aarch64_inst *inst ATTRIBUTE_UNUSED)
+{
+  int offset;
+
+  offset = extract_fields (code, 0, 2, FLD_SVE_imm6, FLD_imm3);
+  offset = (((offset + 256) & 511) - 256);
+  return aarch64_ext_sve_addr_reg_mul_vl (self, info, code, offset);
+}
+
+/* Decode an SVE address [<base>, #<offset> << <shift>], where <offset>
+   is given by the OFFSET parameter and where <shift> is SELF's operand-
+   dependent value.  fields[0] specifies the base register field <base>.  */
+static int
+aarch64_ext_sve_addr_reg_imm (const aarch64_operand *self,
+			      aarch64_opnd_info *info, aarch64_insn code,
+			      int64_t offset)
+{
+  info->addr.base_regno = extract_field (self->fields[0], code, 0);
+  info->addr.offset.imm = offset * (1 << get_operand_specific_data (self));
+  info->addr.offset.is_reg = FALSE;
+  info->addr.writeback = FALSE;
+  info->addr.preind = TRUE;
+  info->shifter.operator_present = FALSE;
+  info->shifter.amount_present = FALSE;
+  return 1;
+}
+
+/* Decode an SVE address [X<n>, #<SVE_imm4> << <shift>], where <SVE_imm4>
+   is a 4-bit signed number and where <shift> is SELF's operand-dependent
+   value.  fields[0] specifies the base register field.  */
+int
+aarch64_ext_sve_addr_ri_s4 (const aarch64_operand *self,
+			    aarch64_opnd_info *info, aarch64_insn code,
+			    const aarch64_inst *inst ATTRIBUTE_UNUSED)
+{
+  int offset = sign_extend (extract_field (FLD_SVE_imm4, code, 0), 3);
+  return aarch64_ext_sve_addr_reg_imm (self, info, code, offset);
+}
+
+/* Decode an SVE address [X<n>, #<SVE_imm6> << <shift>], where <SVE_imm6>
+   is a 6-bit unsigned number and where <shift> is SELF's operand-dependent
+   value.  fields[0] specifies the base register field.  */
+int
+aarch64_ext_sve_addr_ri_u6 (const aarch64_operand *self,
+			    aarch64_opnd_info *info, aarch64_insn code,
+			    const aarch64_inst *inst ATTRIBUTE_UNUSED)
+{
+  int offset = extract_field (FLD_SVE_imm6, code, 0);
+  return aarch64_ext_sve_addr_reg_imm (self, info, code, offset);
+}
+
+/* Decode an SVE address [X<n>, X<m>{, LSL #<shift>}], where <shift>
+   is SELF's operand-dependent value.  fields[0] specifies the base
+   register field and fields[1] specifies the offset register field.  */
+int
+aarch64_ext_sve_addr_rr_lsl (const aarch64_operand *self,
+			     aarch64_opnd_info *info, aarch64_insn code,
+			     const aarch64_inst *inst ATTRIBUTE_UNUSED)
+{
+  int index_regno;
+
+  index_regno = extract_field (self->fields[1], code, 0);
+  if (index_regno == 31 && (self->flags & OPD_F_NO_ZR) != 0)
+    return 0;
+
+  info->addr.base_regno = extract_field (self->fields[0], code, 0);
+  info->addr.offset.regno = index_regno;
+  info->addr.offset.is_reg = TRUE;
+  info->addr.writeback = FALSE;
+  info->addr.preind = TRUE;
+  info->shifter.kind = AARCH64_MOD_LSL;
+  info->shifter.amount = get_operand_specific_data (self);
+  info->shifter.operator_present = (info->shifter.amount != 0);
+  info->shifter.amount_present = (info->shifter.amount != 0);
+  return 1;
+}
+
+/* Decode an SVE address [X<n>, Z<m>.<T>, (S|U)XTW {#<shift>}], where
+   <shift> is SELF's operand-dependent value.  fields[0] specifies the
+   base register field, fields[1] specifies the offset register field and
+   fields[2] is a single-bit field that selects SXTW over UXTW.  */
+int
+aarch64_ext_sve_addr_rz_xtw (const aarch64_operand *self,
+			     aarch64_opnd_info *info, aarch64_insn code,
+			     const aarch64_inst *inst ATTRIBUTE_UNUSED)
+{
+  info->addr.base_regno = extract_field (self->fields[0], code, 0);
+  info->addr.offset.regno = extract_field (self->fields[1], code, 0);
+  info->addr.offset.is_reg = TRUE;
+  info->addr.writeback = FALSE;
+  info->addr.preind = TRUE;
+  if (extract_field (self->fields[2], code, 0))
+    info->shifter.kind = AARCH64_MOD_SXTW;
+  else
+    info->shifter.kind = AARCH64_MOD_UXTW;
+  info->shifter.amount = get_operand_specific_data (self);
+  info->shifter.operator_present = TRUE;
+  info->shifter.amount_present = (info->shifter.amount != 0);
+  return 1;
+}
+
+/* Decode an SVE address [Z<n>.<T>, #<imm5> << <shift>], where <imm5> is a
+   5-bit unsigned number and where <shift> is SELF's operand-dependent value.
+   fields[0] specifies the base register field.  */
+int
+aarch64_ext_sve_addr_zi_u5 (const aarch64_operand *self,
+			    aarch64_opnd_info *info, aarch64_insn code,
+			    const aarch64_inst *inst ATTRIBUTE_UNUSED)
+{
+  int offset = extract_field (FLD_imm5, code, 0);
+  return aarch64_ext_sve_addr_reg_imm (self, info, code, offset);
+}
+
+/* Decode an SVE address [Z<n>.<T>, Z<m>.<T>{, <modifier> {#<msz>}}],
+   where <modifier> is given by KIND and where <msz> is a 2-bit unsigned
+   number.  fields[0] specifies the base register field and fields[1]
+   specifies the offset register field.  */
+static int
+aarch64_ext_sve_addr_zz (const aarch64_operand *self, aarch64_opnd_info *info,
+			 aarch64_insn code, enum aarch64_modifier_kind kind)
+{
+  info->addr.base_regno = extract_field (self->fields[0], code, 0);
+  info->addr.offset.regno = extract_field (self->fields[1], code, 0);
+  info->addr.offset.is_reg = TRUE;
+  info->addr.writeback = FALSE;
+  info->addr.preind = TRUE;
+  info->shifter.kind = kind;
+  info->shifter.amount = extract_field (FLD_SVE_msz, code, 0);
+  info->shifter.operator_present = (kind != AARCH64_MOD_LSL
+				    || info->shifter.amount != 0);
+  info->shifter.amount_present = (info->shifter.amount != 0);
+  return 1;
+}
+
+/* Decode an SVE address [Z<n>.<T>, Z<m>.<T>{, LSL #<msz>}], where
+   <msz> is a 2-bit unsigned number.  fields[0] specifies the base register
+   field and fields[1] specifies the offset register field.  */
+int
+aarch64_ext_sve_addr_zz_lsl (const aarch64_operand *self,
+			     aarch64_opnd_info *info, aarch64_insn code,
+			     const aarch64_inst *inst ATTRIBUTE_UNUSED)
+{
+  return aarch64_ext_sve_addr_zz (self, info, code, AARCH64_MOD_LSL);
+}
+
+/* Decode an SVE address [Z<n>.<T>, Z<m>.<T>, SXTW {#<msz>}], where
+   <msz> is a 2-bit unsigned number.  fields[0] specifies the base register
+   field and fields[1] specifies the offset register field.  */
+int
+aarch64_ext_sve_addr_zz_sxtw (const aarch64_operand *self,
+			      aarch64_opnd_info *info, aarch64_insn code,
+			      const aarch64_inst *inst ATTRIBUTE_UNUSED)
+{
+  return aarch64_ext_sve_addr_zz (self, info, code, AARCH64_MOD_SXTW);
+}
+
+/* Decode an SVE address [Z<n>.<T>, Z<m>.<T>, UXTW {#<msz>}], where
+   <msz> is a 2-bit unsigned number.  fields[0] specifies the base register
+   field and fields[1] specifies the offset register field.  */
+int
+aarch64_ext_sve_addr_zz_uxtw (const aarch64_operand *self,
+			      aarch64_opnd_info *info, aarch64_insn code,
+			      const aarch64_inst *inst ATTRIBUTE_UNUSED)
+{
+  return aarch64_ext_sve_addr_zz (self, info, code, AARCH64_MOD_UXTW);
+}
+
+/* Finish decoding an SVE arithmetic immediate, given that INFO already
+   has the raw field value and that the low 8 bits decode to VALUE.  */
+static int
+decode_sve_aimm (aarch64_opnd_info *info, int64_t value)
+{
+  info->shifter.kind = AARCH64_MOD_LSL;
+  info->shifter.amount = 0;
+  if (info->imm.value & 0x100)
+    {
+      if (value == 0)
+	/* Decode 0x100 as #0, LSL #8.  */
+	info->shifter.amount = 8;
+      else
+	value *= 256;
+    }
+  info->shifter.operator_present = (info->shifter.amount != 0);
+  info->shifter.amount_present = (info->shifter.amount != 0);
+  info->imm.value = value;
+  return 1;
+}
+
+/* Decode an SVE ADD/SUB immediate.  */
+int
+aarch64_ext_sve_aimm (const aarch64_operand *self,
+		      aarch64_opnd_info *info, const aarch64_insn code,
+		      const aarch64_inst *inst)
+{
+  return (aarch64_ext_imm (self, info, code, inst)
+	  && decode_sve_aimm (info, (uint8_t) info->imm.value));
+}
+
+/* Decode an SVE CPY/DUP immediate.  */
+int
+aarch64_ext_sve_asimm (const aarch64_operand *self,
+		       aarch64_opnd_info *info, const aarch64_insn code,
+		       const aarch64_inst *inst)
+{
+  return (aarch64_ext_imm (self, info, code, inst)
+	  && decode_sve_aimm (info, (int8_t) info->imm.value));
+}
+
+/* Decode a single-bit immediate that selects between #0.5 and #1.0.
+   The fields array specifies which field to use.  */
+int
+aarch64_ext_sve_float_half_one (const aarch64_operand *self,
+				aarch64_opnd_info *info, aarch64_insn code,
+				const aarch64_inst *inst ATTRIBUTE_UNUSED)
+{
+  if (extract_field (self->fields[0], code, 0))
+    info->imm.value = 0x3f800000;
+  else
+    info->imm.value = 0x3f000000;
+  info->imm.is_fp = TRUE;
+  return 1;
+}
+
+/* Decode a single-bit immediate that selects between #0.5 and #2.0.
+   The fields array specifies which field to use.  */
+int
+aarch64_ext_sve_float_half_two (const aarch64_operand *self,
+				aarch64_opnd_info *info, aarch64_insn code,
+				const aarch64_inst *inst ATTRIBUTE_UNUSED)
+{
+  if (extract_field (self->fields[0], code, 0))
+    info->imm.value = 0x40000000;
+  else
+    info->imm.value = 0x3f000000;
+  info->imm.is_fp = TRUE;
+  return 1;
+}
+
+/* Decode a single-bit immediate that selects between #0.0 and #1.0.
+   The fields array specifies which field to use.  */
+int
+aarch64_ext_sve_float_zero_one (const aarch64_operand *self,
+				aarch64_opnd_info *info, aarch64_insn code,
+				const aarch64_inst *inst ATTRIBUTE_UNUSED)
+{
+  if (extract_field (self->fields[0], code, 0))
+    info->imm.value = 0x3f800000;
+  else
+    info->imm.value = 0x0;
+  info->imm.is_fp = TRUE;
+  return 1;
+}
+
+/* Decode Zn[MM], where MM has a 7-bit triangular encoding.  The fields
+   array specifies which field to use for Zn.  MM is encoded in the
+   concatenation of imm5 and SVE_tszh, with imm5 being the less
+   significant part.  */
+int
+aarch64_ext_sve_index (const aarch64_operand *self,
+		       aarch64_opnd_info *info, aarch64_insn code,
+		       const aarch64_inst *inst ATTRIBUTE_UNUSED)
+{
+  int val;
+
+  info->reglane.regno = extract_field (self->fields[0], code, 0);
+  val = extract_fields (code, 0, 2, FLD_SVE_tszh, FLD_imm5);
+  if ((val & 31) == 0)
+    return 0;
+  while ((val & 1) == 0)
+    val /= 2;
+  info->reglane.index = val / 2;
+  return 1;
+}
+
+/* Decode a logical immediate for the MOV alias of SVE DUPM.  */
+int
+aarch64_ext_sve_limm_mov (const aarch64_operand *self,
+			  aarch64_opnd_info *info, const aarch64_insn code,
+			  const aarch64_inst *inst)
+{
+  int esize = aarch64_get_qualifier_esize (inst->operands[0].qualifier);
+  return (aarch64_ext_limm (self, info, code, inst)
+	  && aarch64_sve_dupm_mov_immediate_p (info->imm.value, esize));
+}
+
+/* Decode Zn[MM], where Zn occupies the least-significant part of the field
+   and where MM occupies the most-significant part.  The operand-dependent
+   value specifies the number of bits in Zn.  */
+int
+aarch64_ext_sve_quad_index (const aarch64_operand *self,
+			    aarch64_opnd_info *info, aarch64_insn code,
+			    const aarch64_inst *inst ATTRIBUTE_UNUSED)
+{
+  unsigned int reg_bits = get_operand_specific_data (self);
+  unsigned int val = extract_all_fields (self, code);
+  info->reglane.regno = val & ((1 << reg_bits) - 1);
+  info->reglane.index = val >> reg_bits;
+  return 1;
+}
+
+/* Decode {Zn.<T> - Zm.<T>}.  The fields array specifies which field
+   to use for Zn.  The opcode-dependent value specifies the number
+   of registers in the list.  */
+int
+aarch64_ext_sve_reglist (const aarch64_operand *self,
+			 aarch64_opnd_info *info, aarch64_insn code,
+			 const aarch64_inst *inst ATTRIBUTE_UNUSED)
+{
+  info->reglist.first_regno = extract_field (self->fields[0], code, 0);
+  info->reglist.num_regs = get_opcode_dependent_value (inst->opcode);
+  return 1;
+}
+
+/* Decode <pattern>{, MUL #<amount>}.  The fields array specifies which
+   fields to use for <pattern>.  <amount> - 1 is encoded in the SVE_imm4
+   field.  */
+int
+aarch64_ext_sve_scale (const aarch64_operand *self,
+		       aarch64_opnd_info *info, aarch64_insn code,
+		       const aarch64_inst *inst)
+{
+  int val;
+
+  if (!aarch64_ext_imm (self, info, code, inst))
+    return 0;
+  val = extract_field (FLD_SVE_imm4, code, 0);
+  info->shifter.kind = AARCH64_MOD_MUL;
+  info->shifter.amount = val + 1;
+  info->shifter.operator_present = (val != 0);
+  info->shifter.amount_present = (val != 0);
+  return 1;
+}
+
+/* Return the top set bit in VALUE, which is expected to be relatively
+   small.  */
+static uint64_t
+get_top_bit (uint64_t value)
+{
+  while ((value & -value) != value)
+    value -= value & -value;
+  return value;
+}
+
+/* Decode an SVE shift-left immediate.  */
+int
+aarch64_ext_sve_shlimm (const aarch64_operand *self,
+			aarch64_opnd_info *info, const aarch64_insn code,
+			const aarch64_inst *inst)
+{
+  if (!aarch64_ext_imm (self, info, code, inst)
+      || info->imm.value == 0)
+    return 0;
+
+  info->imm.value -= get_top_bit (info->imm.value);
+  return 1;
+}
+
+/* Decode an SVE shift-right immediate.  */
+int
+aarch64_ext_sve_shrimm (const aarch64_operand *self,
+			aarch64_opnd_info *info, const aarch64_insn code,
+			const aarch64_inst *inst)
+{
+  if (!aarch64_ext_imm (self, info, code, inst)
+      || info->imm.value == 0)
+    return 0;
+
+  info->imm.value = get_top_bit (info->imm.value) * 2 - info->imm.value;
+  return 1;
+}
 
 /* Bitfields that are commonly used to encode certain operands' information
    may be partially used as part of the base opcode in some instructions.
@@ -1362,17 +1941,59 @@ decode_fcvt (aarch64_inst *inst)
 static int
 do_misc_decoding (aarch64_inst *inst)
 {
+  unsigned int value;
   switch (inst->opcode->op)
     {
     case OP_FCVT:
       return decode_fcvt (inst);
+
     case OP_FCVTN:
     case OP_FCVTN2:
     case OP_FCVTL:
     case OP_FCVTL2:
       return decode_asimd_fcvt (inst);
+
     case OP_FCVTXN_S:
       return decode_asisd_fcvtxn (inst);
+
+    case OP_MOV_P_P:
+    case OP_MOVS_P_P:
+      value = extract_field (FLD_SVE_Pn, inst->value, 0);
+      return (value == extract_field (FLD_SVE_Pm, inst->value, 0)
+	      && value == extract_field (FLD_SVE_Pg4_10, inst->value, 0));
+
+    case OP_MOV_Z_P_Z:
+      return (extract_field (FLD_SVE_Zd, inst->value, 0)
+	      == extract_field (FLD_SVE_Zm_16, inst->value, 0));
+
+    case OP_MOV_Z_V:
+      /* Index must be zero.  */
+      value = extract_fields (inst->value, 0, 2, FLD_SVE_tszh, FLD_imm5);
+      return value > 0 && value <= 16 && value == (value & -value);
+
+    case OP_MOV_Z_Z:
+      return (extract_field (FLD_SVE_Zn, inst->value, 0)
+	      == extract_field (FLD_SVE_Zm_16, inst->value, 0));
+
+    case OP_MOV_Z_Zi:
+      /* Index must be nonzero.  */
+      value = extract_fields (inst->value, 0, 2, FLD_SVE_tszh, FLD_imm5);
+      return value > 0 && value != (value & -value);
+
+    case OP_MOVM_P_P_P:
+      return (extract_field (FLD_SVE_Pd, inst->value, 0)
+	      == extract_field (FLD_SVE_Pm, inst->value, 0));
+
+    case OP_MOVZS_P_P_P:
+    case OP_MOVZ_P_P_P:
+      return (extract_field (FLD_SVE_Pn, inst->value, 0)
+	      == extract_field (FLD_SVE_Pm, inst->value, 0));
+
+    case OP_NOTS_P_P_P_Z:
+    case OP_NOT_P_P_P_Z:
+      return (extract_field (FLD_SVE_Pm, inst->value, 0)
+	      == extract_field (FLD_SVE_Pg4_10, inst->value, 0));
+
     default:
       return 0;
     }
@@ -1763,7 +2384,7 @@ convert_movewide_to_mov (aarch64_inst *inst)
       int is32 = inst->operands[0].qualifier == AARCH64_OPND_QLF_W;
       value = ~value;
       /* A MOVN has an immediate that could be encoded by MOVZ.  */
-      if (aarch64_wide_constant_p (value, is32, NULL) == TRUE)
+      if (aarch64_wide_constant_p (value, is32, NULL))
 	return 0;
     }
   inst->operands[1].imm.value = value;
@@ -1796,8 +2417,8 @@ convert_movebitmask_to_mov (aarch64_inst *inst)
   /* ORR has an immediate that could be generated by a MOVZ or MOVN
      instruction.  */
   if (inst->operands[0].reg.regno != 0x1f
-      && (aarch64_wide_constant_p (value, is32, NULL) == TRUE
-	  || aarch64_wide_constant_p (~value, is32, NULL) == TRUE))
+      && (aarch64_wide_constant_p (value, is32, NULL)
+	  || aarch64_wide_constant_p (~value, is32, NULL)))
     return 0;
 
   inst->operands[2].type = AARCH64_OPND_NIL;
@@ -1918,7 +2539,7 @@ determine_disassembling_preference (struct aarch64_inst *inst)
   opcode = inst->opcode;
 
   /* This opcode does not have an alias, so use itself.  */
-  if (opcode_has_alias (opcode) == FALSE)
+  if (!opcode_has_alias (opcode))
     return;
 
   alias = aarch64_find_alias_opcode (opcode);
@@ -1995,6 +2616,105 @@ determine_disassembling_preference (struct aarch64_inst *inst)
     }
 }
 
+/* Some instructions (including all SVE ones) use the instruction class
+   to describe how a qualifiers_list index is represented in the instruction
+   encoding.  If INST is such an instruction, decode the appropriate fields
+   and fill in the operand qualifiers accordingly.  Return true if no
+   problems are found.  */
+
+static bfd_boolean
+aarch64_decode_variant_using_iclass (aarch64_inst *inst)
+{
+  int i, variant;
+
+  variant = 0;
+  switch (inst->opcode->iclass)
+    {
+    case sve_cpy:
+      variant = extract_fields (inst->value, 0, 2, FLD_size, FLD_SVE_M_14);
+      break;
+
+    case sve_index:
+      i = extract_fields (inst->value, 0, 2, FLD_SVE_tszh, FLD_imm5);
+      if ((i & 31) == 0)
+	return FALSE;
+      while ((i & 1) == 0)
+	{
+	  i >>= 1;
+	  variant += 1;
+	}
+      break;
+
+    case sve_limm:
+      /* Pick the smallest applicable element size.  */
+      if ((inst->value & 0x20600) == 0x600)
+	variant = 0;
+      else if ((inst->value & 0x20400) == 0x400)
+	variant = 1;
+      else if ((inst->value & 0x20000) == 0)
+	variant = 2;
+      else
+	variant = 3;
+      break;
+
+    case sve_misc:
+      /* sve_misc instructions have only a single variant.  */
+      break;
+
+    case sve_movprfx:
+      variant = extract_fields (inst->value, 0, 2, FLD_size, FLD_SVE_M_16);
+      break;
+
+    case sve_pred_zm:
+      variant = extract_field (FLD_SVE_M_4, inst->value, 0);
+      break;
+
+    case sve_shift_pred:
+      i = extract_fields (inst->value, 0, 2, FLD_SVE_tszh, FLD_SVE_tszl_8);
+    sve_shift:
+      if (i == 0)
+	return FALSE;
+      while (i != 1)
+	{
+	  i >>= 1;
+	  variant += 1;
+	}
+      break;
+
+    case sve_shift_unpred:
+      i = extract_fields (inst->value, 0, 2, FLD_SVE_tszh, FLD_SVE_tszl_19);
+      goto sve_shift;
+
+    case sve_size_bhs:
+      variant = extract_field (FLD_size, inst->value, 0);
+      if (variant >= 3)
+	return FALSE;
+      break;
+
+    case sve_size_bhsd:
+      variant = extract_field (FLD_size, inst->value, 0);
+      break;
+
+    case sve_size_hsd:
+      i = extract_field (FLD_size, inst->value, 0);
+      if (i < 1)
+	return FALSE;
+      variant = i - 1;
+      break;
+
+    case sve_size_sd:
+      variant = extract_field (FLD_SVE_sz, inst->value, 0);
+      break;
+
+    default:
+      /* No mapping between instruction class and qualifiers.  */
+      return TRUE;
+    }
+
+  for (i = 0; i < AARCH64_MAX_OPND_NUM; ++i)
+    inst->operands[i].qualifier = inst->opcode->qualifiers_list[variant][i];
+  return TRUE;
+}
 /* Decode the CODE according to OPCODE; fill INST.  Return 0 if the decoding
    fails, which meanes that CODE is not an instruction of OPCODE; otherwise
    return 1.
@@ -2039,6 +2759,14 @@ aarch64_opcode_decode (const aarch64_opcode *opcode, const aarch64_insn code,
   if (opcode_has_special_coder (opcode) && do_special_decoding (inst) == 0)
     {
       DEBUG_TRACE ("opcode flag-based decoder FAIL");
+      goto decode_fail;
+    }
+
+  /* Possibly use the instruction class to determine the correct
+     qualifier.  */
+  if (!aarch64_decode_variant_using_iclass (inst))
+    {
+      DEBUG_TRACE ("iclass-based decoder FAIL");
       goto decode_fail;
     }
 
@@ -2189,6 +2917,22 @@ print_operands (bfd_vma pc, const aarch64_opcode *opcode,
     }
 }
 
+/* Set NAME to a copy of INST's mnemonic with the "." suffix removed.  */
+
+static void
+remove_dot_suffix (char *name, const aarch64_inst *inst)
+{
+  char *ptr;
+  size_t len;
+
+  ptr = strchr (inst->opcode->name, '.');
+  assert (ptr && inst->cond);
+  len = ptr - inst->opcode->name;
+  assert (len < 8);
+  strncpy (name, inst->opcode->name, len);
+  name[len] = '\0';
+}
+
 /* Print the instruction mnemonic name.  */
 
 static void
@@ -2199,19 +2943,33 @@ print_mnemonic_name (const aarch64_inst *inst, struct disassemble_info *info)
       /* For instructions that are truly conditionally executed, e.g. b.cond,
 	 prepare the full mnemonic name with the corresponding condition
 	 suffix.  */
-      char name[8], *ptr;
-      size_t len;
+      char name[8];
 
-      ptr = strchr (inst->opcode->name, '.');
-      assert (ptr && inst->cond);
-      len = ptr - inst->opcode->name;
-      assert (len < 8);
-      strncpy (name, inst->opcode->name, len);
-      name [len] = '\0';
+      remove_dot_suffix (name, inst);
       (*info->fprintf_func) (info->stream, "%s.%s", name, inst->cond->names[0]);
     }
   else
     (*info->fprintf_func) (info->stream, "%s", inst->opcode->name);
+}
+
+/* Decide whether we need to print a comment after the operands of
+   instruction INST.  */
+
+static void
+print_comment (const aarch64_inst *inst, struct disassemble_info *info)
+{
+  if (inst->opcode->flags & F_COND)
+    {
+      char name[8];
+      unsigned int i, num_conds;
+
+      remove_dot_suffix (name, inst);
+      num_conds = ARRAY_SIZE (inst->cond->names);
+      for (i = 1; i < num_conds && inst->cond->names[i]; ++i)
+	(*info->fprintf_func) (info->stream, "%s %s.%s",
+			       i == 1 ? "  //" : ",",
+			       name, inst->cond->names[i]);
+    }
 }
 
 /* Print the instruction according to *INST.  */
@@ -2222,6 +2980,7 @@ print_aarch64_insn (bfd_vma pc, const aarch64_inst *inst,
 {
   print_mnemonic_name (inst, info);
   print_operands (pc, inst->opcode, inst->operands, info);
+  print_comment (inst, info);
 }
 
 /* Entry-point of the instruction disassembler and printer.  */
@@ -2338,6 +3097,10 @@ get_sym_code_type (struct disassemble_info *info, int n,
   unsigned int type;
   const char *name;
 
+  /* If the symbol is in a different section, ignore it.  */
+  if (info->section != NULL && info->section != info->symtab[n]->section)
+    return FALSE;
+
   es = *(elf_symbol_type **)(info->symtab + n);
   type = ELF_ST_TYPE (es->internal_elf_sym.st_info);
 
@@ -2412,9 +3175,7 @@ print_insn_aarch64 (bfd_vma pc,
 	  addr = bfd_asymbol_value (info->symtab[n]);
 	  if (addr > pc)
 	    break;
-	  if ((info->section == NULL
-	       || info->section == info->symtab[n]->section)
-	      && get_sym_code_type (info, n, &type))
+	  if (get_sym_code_type (info, n, &type))
 	    {
 	      last_sym = n;
 	      found = TRUE;

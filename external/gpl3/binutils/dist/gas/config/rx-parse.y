@@ -1,5 +1,5 @@
 /* rx-parse.y  Renesas RX parser
-   Copyright (C) 2008-2016 Free Software Foundation, Inc.
+   Copyright (C) 2008-2018 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -1643,7 +1643,7 @@ zero_expr (void)
 static int
 immediate (expressionS exp, int type, int pos, int bits)
 {
-  /* We will emit constants ourself here, so negate them.  */
+  /* We will emit constants ourselves here, so negate them.  */
   if (type == RXREL_NEGATIVE && exp.X_op == O_constant)
     exp.X_add_number = - exp.X_add_number;
   if (type == RXREL_NEGATIVE_BORROW)

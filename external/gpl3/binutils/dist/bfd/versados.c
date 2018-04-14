@@ -1,5 +1,5 @@
 /* BFD back-end for VERSAdos-E objects.
-   Copyright (C) 1995-2016 Free Software Foundation, Inc.
+   Copyright (C) 1995-2018 Free Software Foundation, Inc.
    Written by Steve Chamberlain of Cygnus Support <sac@cygnus.com>.
 
    Versados is a Motorola trademark.
@@ -122,8 +122,8 @@ struct ext_esd
   unsigned char esd_entries[1];
 };
 
-#define ESD_ABS 	  0
-#define ESD_COMMON 	  1
+#define ESD_ABS		  0
+#define ESD_COMMON	  1
 #define ESD_STD_REL_SEC   2
 #define ESD_SHRT_REL_SEC  3
 #define ESD_XDEF_IN_SEC   4
@@ -149,7 +149,7 @@ versados_mkobject (bfd *abfd)
   if (abfd->tdata.versados_data == NULL)
     {
       bfd_size_type amt = sizeof (tdata_type);
-      tdata_type *tdata = bfd_alloc (abfd, amt);
+      tdata_type *tdata = bfd_zalloc (abfd, amt);
 
       if (tdata == NULL)
 	return FALSE;
@@ -296,6 +296,7 @@ process_esd (bfd *abfd, struct ext_esd *esd, int pass)
 	  break;
 	case ESD_XDEF_IN_ABS:
 	  sec = bfd_abs_section_ptr;
+	  /* Fall through.  */
 	case ESD_XDEF_IN_SEC:
 	  {
 	    int snum = VDATA (abfd)->def_idx++;
@@ -344,13 +345,13 @@ reloc_howto_type versados_howto_table[] =
 };
 
 static int
-get_offset (int len, unsigned char *ptr)
+get_offset (unsigned int len, unsigned char *ptr)
 {
   int val = 0;
 
   if (len)
     {
-      int i;
+      unsigned int i;
 
       val = *ptr++;
       if (val & 0x80)
@@ -393,8 +394,12 @@ process_otr (bfd *abfd, struct ext_otr *otr, int pass)
 	  int flag = *srcp++;
 	  int esdids = (flag >> 5) & 0x7;
 	  int sizeinwords = ((flag >> 3) & 1) ? 2 : 1;
-	  int offsetlen = flag & 0x7;
+	  unsigned int offsetlen = flag & 0x7;
 	  int j;
+
+	  /* PR 21591: Check for invalid lengths.  */
+	  if (srcp + esdids + offsetlen >= endp)
+	    return;
 
 	  if (esdids == 0)
 	    {
@@ -840,40 +845,42 @@ versados_canonicalize_reloc (bfd *abfd,
   return section->reloc_count;
 }
 
-#define	versados_close_and_cleanup                    _bfd_generic_close_and_cleanup
-#define versados_bfd_free_cached_info                 _bfd_generic_bfd_free_cached_info
-#define versados_new_section_hook                     _bfd_generic_new_section_hook
-#define versados_bfd_is_target_special_symbol   ((bfd_boolean (*) (bfd *, asymbol *)) bfd_false)
-#define versados_bfd_is_local_label_name              bfd_generic_is_local_label_name
-#define versados_get_lineno                           _bfd_nosymbols_get_lineno
-#define versados_find_nearest_line                    _bfd_nosymbols_find_nearest_line
-#define versados_find_line                            _bfd_nosymbols_find_line
-#define versados_find_inliner_info                    _bfd_nosymbols_find_inliner_info
+#define	versados_close_and_cleanup		      _bfd_generic_close_and_cleanup
+#define versados_bfd_free_cached_info		      _bfd_generic_bfd_free_cached_info
+#define versados_new_section_hook		      _bfd_generic_new_section_hook
+#define versados_bfd_is_target_special_symbol	((bfd_boolean (*) (bfd *, asymbol *)) bfd_false)
+#define versados_bfd_is_local_label_name	      bfd_generic_is_local_label_name
+#define versados_get_lineno			      _bfd_nosymbols_get_lineno
+#define versados_find_nearest_line		      _bfd_nosymbols_find_nearest_line
+#define versados_find_line			      _bfd_nosymbols_find_line
+#define versados_find_inliner_info		      _bfd_nosymbols_find_inliner_info
 #define versados_get_symbol_version_string	      _bfd_nosymbols_get_symbol_version_string
-#define versados_make_empty_symbol                    _bfd_generic_make_empty_symbol
-#define versados_bfd_make_debug_symbol                _bfd_nosymbols_bfd_make_debug_symbol
-#define versados_read_minisymbols                     _bfd_generic_read_minisymbols
-#define versados_minisymbol_to_symbol                 _bfd_generic_minisymbol_to_symbol
-#define versados_bfd_reloc_type_lookup                _bfd_norelocs_bfd_reloc_type_lookup
-#define versados_bfd_reloc_name_lookup          _bfd_norelocs_bfd_reloc_name_lookup
-#define versados_set_arch_mach                        bfd_default_set_arch_mach
+#define versados_make_empty_symbol		      _bfd_generic_make_empty_symbol
+#define versados_bfd_make_debug_symbol		      _bfd_nosymbols_bfd_make_debug_symbol
+#define versados_read_minisymbols		      _bfd_generic_read_minisymbols
+#define versados_minisymbol_to_symbol		      _bfd_generic_minisymbol_to_symbol
+#define versados_bfd_reloc_type_lookup		      _bfd_norelocs_bfd_reloc_type_lookup
+#define versados_bfd_reloc_name_lookup		_bfd_norelocs_bfd_reloc_name_lookup
+#define versados_set_arch_mach			      bfd_default_set_arch_mach
 #define versados_bfd_get_relocated_section_contents   bfd_generic_get_relocated_section_contents
-#define versados_bfd_relax_section                    bfd_generic_relax_section
-#define versados_bfd_gc_sections                      bfd_generic_gc_sections
-#define versados_bfd_lookup_section_flags             bfd_generic_lookup_section_flags
-#define versados_bfd_merge_sections                   bfd_generic_merge_sections
-#define versados_bfd_is_group_section                 bfd_generic_is_group_section
-#define versados_bfd_discard_group                    bfd_generic_discard_group
-#define versados_section_already_linked               _bfd_generic_section_already_linked
-#define versados_bfd_define_common_symbol             bfd_generic_define_common_symbol
-#define versados_bfd_link_hash_table_create           _bfd_generic_link_hash_table_create
-#define versados_bfd_link_add_symbols                 _bfd_generic_link_add_symbols
-#define versados_bfd_link_just_syms                   _bfd_generic_link_just_syms
+#define versados_bfd_relax_section		      bfd_generic_relax_section
+#define versados_bfd_gc_sections		      bfd_generic_gc_sections
+#define versados_bfd_lookup_section_flags	      bfd_generic_lookup_section_flags
+#define versados_bfd_merge_sections		      bfd_generic_merge_sections
+#define versados_bfd_is_group_section		      bfd_generic_is_group_section
+#define versados_bfd_discard_group		      bfd_generic_discard_group
+#define versados_section_already_linked		      _bfd_generic_section_already_linked
+#define versados_bfd_define_common_symbol	      bfd_generic_define_common_symbol
+#define versados_bfd_define_start_stop		      bfd_generic_define_start_stop
+#define versados_bfd_link_hash_table_create	      _bfd_generic_link_hash_table_create
+#define versados_bfd_link_add_symbols		      _bfd_generic_link_add_symbols
+#define versados_bfd_link_just_syms		      _bfd_generic_link_just_syms
 #define versados_bfd_copy_link_hash_symbol_type \
   _bfd_generic_copy_link_hash_symbol_type
-#define versados_bfd_final_link                       _bfd_generic_final_link
-#define versados_bfd_link_split_section               _bfd_generic_link_split_section
-#define versados_bfd_link_check_relocs                _bfd_generic_link_check_relocs
+#define versados_bfd_final_link			      _bfd_generic_final_link
+#define versados_bfd_link_split_section		      _bfd_generic_link_split_section
+#define versados_bfd_link_check_relocs		      _bfd_generic_link_check_relocs
+#define versados_set_reloc			      _bfd_generic_set_reloc
 
 const bfd_target m68k_versados_vec =
 {

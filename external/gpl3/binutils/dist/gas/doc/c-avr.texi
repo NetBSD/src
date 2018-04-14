@@ -1,4 +1,4 @@
-@c Copyright (C) 2006-2016 Free Software Foundation, Inc.
+@c Copyright (C) 2006-2018 Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
 
@@ -18,6 +18,7 @@
 * AVR Options::              Options
 * AVR Syntax::               Syntax
 * AVR Opcodes::              Opcodes
+* AVR Pseudo Instructions::  Pseudo Instructions
 @end menu
 
 @node AVR Options
@@ -96,9 +97,12 @@ atxmega16a4, atxmega16a4u, atxmega16c4, atxmega16d4, atxmega16x1,
 atxmega32a4, atxmega32a4u, atxmega32c4, atxmega32d4, atxmega16e5,
 atxmega8e5, atxmega32e5, atxmega32x1).
 
-Instruction set avrxmega3 is for the XMEGA AVR core with 8K to 64K
-program memory space and greater than 64K data space (MCU types:
-none).
+Instruction set avrxmega3 is for the XMEGA AVR core with up to 64K
+of combined program memory and RAM, and with program memory
+visible in the RAM address space (MCU types:
+attiny212, attiny214, attiny412, attiny414, attiny416, attiny417,
+attiny814, attiny816, attiny817, attiny1614, attiny1616, attiny1617,
+attiny3214, attiny3216, attiny3217).
 
 Instruction set avrxmega4 is for the XMEGA AVR core with up to 64K
 program memory space and less than 64K data space (MCU types:
@@ -150,6 +154,10 @@ and this flag no longer has any effect.
 Disable support for link-time relaxation.  The assembler will resolve
 relocations when it can, and may be able to better compress some debug
 information.
+
+@cindex @code{-mgcc-isr} command line option, AVR
+@item -mgcc-isr
+Enable the @code{__gcc_isr} pseudo instruction.
 
 @end table
 
@@ -441,3 +449,60 @@ The following table summarizes the AVR opcodes, and their arguments.
 1001010100011001   eicall
 1001010000011001   eijmp
 @end smallexample
+
+@node AVR Pseudo Instructions
+@section Pseudo Instructions
+
+The only available pseudo-instruction @code{__gcc_isr} can be activated by
+option @option{-mgcc-isr}.
+
+@table @code
+
+@item __gcc_isr 1
+Emit code chunk to be used in avr-gcc ISR prologue.
+It will expand to at most six 1-word instructions, all optional:
+push of @code{tmp_reg}, push of @code{SREG},
+push and clear of @code{zero_reg}, push of @var{Reg}.
+
+@item __gcc_isr 2
+Emit code chunk to be used in an avr-gcc ISR epilogue.
+It will expand to at most five 1-word instructions, all optional: 
+pop of @var{Reg}, pop of @code{zero_reg},
+pop of @code{SREG}, pop of @code{tmp_reg}.
+
+@item __gcc_isr 0, @var{Reg}
+Finish avr-gcc ISR function.  Scan code since the last prologue
+for usage of: @code{SREG}, @code{tmp_reg}, @code{zero_reg}.
+Prologue chunk and epilogue chunks will be replaced by appropriate code
+to save / restore @code{SREG}, @code{tmp_reg}, @code{zero_reg} and @var{Reg}.
+
+@end table
+
+Example input:
+
+@example
+__vector1:
+    __gcc_isr 1
+    lds r24, var
+    inc r24
+    sts var, r24
+    __gcc_isr 2
+    reti
+    __gcc_isr 0, r24
+@end example
+
+Example output:
+
+@example
+00000000 <__vector1>:
+   0:   8f 93           push    r24
+   2:   8f b7           in      r24, 0x3f
+   4:   8f 93           push    r24
+   6:   80 91 60 00     lds     r24, 0x0060     ; 0x800060 <var>
+   a:   83 95           inc     r24
+   c:   80 93 60 00     sts     0x0060, r24     ; 0x800060 <var>
+  10:   8f 91           pop     r24
+  12:   8f bf           out     0x3f, r24
+  14:   8f 91           pop     r24
+  16:   18 95           reti
+@end example

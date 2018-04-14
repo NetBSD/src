@@ -26,6 +26,11 @@
   (comment "program counter")
   (attrs PC (MACH ORBIS-MACHS))
   (type pc UWI)
+  (get () (raw-reg h-pc))
+  (set (newval) (sequence ()
+                 (set (reg h-sys-ppc) (raw-reg h-pc))
+                 (set (raw-reg h-pc) newval)
+                ))
   )
 
 (define-pmacro REG-INDICES

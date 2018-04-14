@@ -1,6 +1,6 @@
 /* tc-microblaze.c -- Assemble code for Xilinx MicroBlaze
 
-   Copyright (C) 2009-2016 Free Software Foundation, Inc.
+   Copyright (C) 2009-2018 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -145,7 +145,8 @@ static void
 microblaze_s_data (int ignore ATTRIBUTE_UNUSED)
 {
 #ifdef OBJ_ELF
-  obj_elf_change_section (".data", SHT_PROGBITS, SHF_ALLOC+SHF_WRITE, 0, 0, 0, 0);
+  obj_elf_change_section (".data", SHT_PROGBITS, 0, SHF_ALLOC+SHF_WRITE,
+			  0, 0, 0, 0);
 #else
   s_data (ignore);
 #endif
@@ -157,7 +158,8 @@ static void
 microblaze_s_sdata (int ignore ATTRIBUTE_UNUSED)
 {
 #ifdef OBJ_ELF
-  obj_elf_change_section (".sdata", SHT_PROGBITS, SHF_ALLOC+SHF_WRITE, 0, 0, 0, 0);
+  obj_elf_change_section (".sdata", SHT_PROGBITS, 0, SHF_ALLOC+SHF_WRITE,
+			  0, 0, 0, 0);
 #else
   s_data (ignore);
 #endif
@@ -275,14 +277,16 @@ microblaze_s_rdata (int localvar)
   if (localvar == 0)
     {
       /* rodata.  */
-      obj_elf_change_section (".rodata", SHT_PROGBITS, SHF_ALLOC, 0, 0, 0, 0);
+      obj_elf_change_section (".rodata", SHT_PROGBITS, 0, SHF_ALLOC,
+			      0, 0, 0, 0);
       if (rodata_segment == 0)
 	rodata_segment = subseg_new (".rodata", 0);
     }
   else
     {
       /* 1 .sdata2.  */
-      obj_elf_change_section (".sdata2", SHT_PROGBITS, SHF_ALLOC, 0, 0, 0, 0);
+      obj_elf_change_section (".sdata2", SHT_PROGBITS, 0, SHF_ALLOC,
+			      0, 0, 0, 0);
     }
 #else
   s_data (ignore);
@@ -294,11 +298,13 @@ microblaze_s_bss (int localvar)
 {
 #ifdef OBJ_ELF
   if (localvar == 0) /* bss.  */
-    obj_elf_change_section (".bss", SHT_NOBITS, SHF_ALLOC+SHF_WRITE, 0, 0, 0, 0);
+    obj_elf_change_section (".bss", SHT_NOBITS, 0, SHF_ALLOC+SHF_WRITE,
+			    0, 0, 0, 0);
   else if (localvar == 1)
     {
       /* sbss.  */
-      obj_elf_change_section (".sbss", SHT_NOBITS, SHF_ALLOC+SHF_WRITE, 0, 0, 0, 0);
+      obj_elf_change_section (".sbss", SHT_NOBITS, 0, SHF_ALLOC+SHF_WRITE,
+			      0, 0, 0, 0);
       if (sbss_segment == 0)
 	sbss_segment = subseg_new (".sbss", 0);
     }
@@ -626,7 +632,7 @@ struct imm_type {
 	int otype;       /* Offset Type */
 };
 
-/* These are NOT in assending order of type, GOTOFF is ahead to make
+/* These are NOT in ascending order of type, GOTOFF is ahead to make
    sure @GOTOFF does not get matched with @GOT  */
 static struct imm_type imm_types[] = {
 	{ "NONE", IMM_NONE , 0 },
@@ -2132,6 +2138,7 @@ md_apply_fix (fixS *   fixP,
     case BFD_RELOC_MICROBLAZE_64_TLSGD:
     case BFD_RELOC_MICROBLAZE_64_TLSLD:
       S_SET_THREAD_LOCAL (fixP->fx_addsy);
+      /* Fall through.  */
 
     case BFD_RELOC_MICROBLAZE_64_GOTPC:
     case BFD_RELOC_MICROBLAZE_64_GOT:
@@ -2427,7 +2434,7 @@ tc_gen_reloc (asection * section ATTRIBUTE_UNUSED, fixS * fixp)
           code = fixp->fx_r_type;
           as_bad (_("Can not do %d byte %srelocation"),
                   fixp->fx_size,
-                  fixp->fx_pcrel ? _("pc-relative") : "");
+                  fixp->fx_pcrel ? _("pc-relative ") : "");
         }
       break;
     }

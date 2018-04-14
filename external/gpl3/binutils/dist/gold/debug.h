@@ -1,6 +1,6 @@
 // debug.h -- gold internal debugging support   -*- C++ -*-
 
-// Copyright (C) 2007-2016 Free Software Foundation, Inc.
+// Copyright (C) 2007-2018 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -39,10 +39,11 @@ const int DEBUG_FILES = 0x4;
 const int DEBUG_RELAXATION = 0x8;
 const int DEBUG_INCREMENTAL = 0x10;
 const int DEBUG_LOCATION = 0x20;
+const int DEBUG_TARGET = 0x40;
 
 const int DEBUG_ALL = (DEBUG_TASK | DEBUG_SCRIPT | DEBUG_FILES
 		       | DEBUG_RELAXATION | DEBUG_INCREMENTAL
-		       | DEBUG_LOCATION);
+		       | DEBUG_LOCATION | DEBUG_TARGET);
 
 // Convert a debug string to the appropriate enum.
 inline int
@@ -57,6 +58,7 @@ debug_string_to_enum(const char* arg)
     { "relaxation", DEBUG_RELAXATION },
     { "incremental", DEBUG_INCREMENTAL },
     { "location", DEBUG_LOCATION },
+    { "target", DEBUG_TARGET },
     { "all", DEBUG_ALL }
   };
 
@@ -70,11 +72,11 @@ debug_string_to_enum(const char* arg)
 // Print a debug message if TYPE is enabled.  This is a macro so that
 // we only evaluate the arguments if necessary.
 
-#define gold_debug(TYPE, FORMAT, ...)				\
+#define gold_debug(TYPE, ...)					\
   do								\
     {								\
       if (is_debugging_enabled(TYPE))				\
-	parameters->errors()->debug(FORMAT, __VA_ARGS__);	\
+	parameters->errors()->debug(__VA_ARGS__);		\
     }								\
   while (0)
 

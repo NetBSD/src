@@ -1,5 +1,5 @@
 /* BFD back-end for NetBSD/ns32k a.out-ish binaries.
-   Copyright (C) 1990-2016 Free Software Foundation, Inc.
+   Copyright (C) 1990-2018 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -25,7 +25,7 @@
 #define	SEGMENT_SIZE		4096
 
 #define	DEFAULT_ARCH		bfd_arch_ns32k
-#define	DEFAULT_MID 		M_532_NETBSD
+#define	DEFAULT_MID		M_532_NETBSD
 
 /* Do not "beautify" the CONCAT* macro args.  Traditional C will not
    remove whitespace added here, and thus will fail to concatenate
