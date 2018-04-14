@@ -1,5 +1,5 @@
 /* BFD back-end for binary objects.
-   Copyright (C) 1994-2016 Free Software Foundation, Inc.
+   Copyright (C) 1994-2018 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support, <ian@cygnus.com>
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -203,14 +203,14 @@ binary_get_symbol_info (bfd *ignore_abfd ATTRIBUTE_UNUSED,
   bfd_symbol_info (symbol, ret);
 }
 
-#define binary_bfd_is_local_label_name      bfd_generic_is_local_label_name
-#define binary_get_lineno                  _bfd_nosymbols_get_lineno
-#define binary_find_nearest_line           _bfd_nosymbols_find_nearest_line
-#define binary_find_line                   _bfd_nosymbols_find_line
-#define binary_find_inliner_info           _bfd_nosymbols_find_inliner_info
-#define binary_bfd_make_debug_symbol       _bfd_nosymbols_bfd_make_debug_symbol
-#define binary_read_minisymbols            _bfd_generic_read_minisymbols
-#define binary_minisymbol_to_symbol        _bfd_generic_minisymbol_to_symbol
+#define binary_bfd_is_local_label_name	    bfd_generic_is_local_label_name
+#define binary_get_lineno		   _bfd_nosymbols_get_lineno
+#define binary_find_nearest_line	   _bfd_nosymbols_find_nearest_line
+#define binary_find_line		   _bfd_nosymbols_find_line
+#define binary_find_inliner_info	   _bfd_nosymbols_find_inliner_info
+#define binary_bfd_make_debug_symbol	   _bfd_nosymbols_bfd_make_debug_symbol
+#define binary_read_minisymbols		   _bfd_generic_read_minisymbols
+#define binary_minisymbol_to_symbol	   _bfd_generic_minisymbol_to_symbol
 #define binary_bfd_is_target_special_symbol ((bfd_boolean (*) (bfd *, asymbol *)) bfd_false)
 
 /* Set the architecture of a binary file.  */
@@ -230,13 +230,14 @@ binary_set_section_contents (bfd *abfd,
 
   if (! abfd->output_has_begun)
     {
+      unsigned int opb;
       bfd_boolean found_low;
       bfd_vma low;
       asection *s;
 
       /* The lowest section LMA sets the virtual address of the start
-         of the file.  We use this to set the file position of all the
-         sections.  */
+	 of the file.  We use this to set the file position of all the
+	 sections.  */
       found_low = FALSE;
       low = 0;
       for (s = abfd->sections; s != NULL; s = s->next)
@@ -250,9 +251,10 @@ binary_set_section_contents (bfd *abfd,
 	    found_low = TRUE;
 	  }
 
+      opb = bfd_octets_per_byte (abfd);
       for (s = abfd->sections; s != NULL; s = s->next)
 	{
-	  s->filepos = s->lma - low;
+	  s->filepos = (s->lma - low) * opb;
 
 	  /* Skip following warning check for sections that will not
 	     occupy file space.  */
@@ -269,10 +271,11 @@ binary_set_section_contents (bfd *abfd,
 	     have.  */
 
 	  if (s->filepos < 0)
-	    (*_bfd_error_handler)
-	      (_("Warning: Writing section `%s' to huge (ie negative) file offset 0x%lx."),
-	       bfd_get_section_name (abfd, s),
-	       (unsigned long) s->filepos);
+	    _bfd_error_handler
+	      /* xgettext:c-format */
+	      (_("warning: writing section `%A' at huge (ie negative) "
+		 "file offset"),
+	       s);
 	}
 
       abfd->output_has_begun = TRUE;
@@ -299,22 +302,23 @@ binary_sizeof_headers (bfd *abfd ATTRIBUTE_UNUSED,
 }
 
 #define binary_bfd_get_relocated_section_contents  bfd_generic_get_relocated_section_contents
-#define binary_bfd_relax_section                   bfd_generic_relax_section
-#define binary_bfd_gc_sections                     bfd_generic_gc_sections
-#define binary_bfd_lookup_section_flags            bfd_generic_lookup_section_flags
-#define binary_bfd_merge_sections                  bfd_generic_merge_sections
-#define binary_bfd_is_group_section                bfd_generic_is_group_section
-#define binary_bfd_discard_group                   bfd_generic_discard_group
-#define binary_section_already_linked             _bfd_generic_section_already_linked
-#define binary_bfd_define_common_symbol            bfd_generic_define_common_symbol
-#define binary_bfd_link_hash_table_create         _bfd_generic_link_hash_table_create
-#define binary_bfd_link_just_syms                 _bfd_generic_link_just_syms
-#define binary_bfd_copy_link_hash_symbol_type     _bfd_generic_copy_link_hash_symbol_type
-#define binary_bfd_link_add_symbols               _bfd_generic_link_add_symbols
-#define binary_bfd_final_link                     _bfd_generic_final_link
-#define binary_bfd_link_split_section             _bfd_generic_link_split_section
-#define binary_get_section_contents_in_window     _bfd_generic_get_section_contents_in_window
-#define binary_bfd_link_check_relocs              _bfd_generic_link_check_relocs
+#define binary_bfd_relax_section		   bfd_generic_relax_section
+#define binary_bfd_gc_sections			   bfd_generic_gc_sections
+#define binary_bfd_lookup_section_flags		   bfd_generic_lookup_section_flags
+#define binary_bfd_merge_sections		   bfd_generic_merge_sections
+#define binary_bfd_is_group_section		   bfd_generic_is_group_section
+#define binary_bfd_discard_group		   bfd_generic_discard_group
+#define binary_section_already_linked		  _bfd_generic_section_already_linked
+#define binary_bfd_define_common_symbol		   bfd_generic_define_common_symbol
+#define binary_bfd_define_start_stop		   bfd_generic_define_start_stop
+#define binary_bfd_link_hash_table_create	  _bfd_generic_link_hash_table_create
+#define binary_bfd_link_just_syms		  _bfd_generic_link_just_syms
+#define binary_bfd_copy_link_hash_symbol_type	  _bfd_generic_copy_link_hash_symbol_type
+#define binary_bfd_link_add_symbols		  _bfd_generic_link_add_symbols
+#define binary_bfd_final_link			  _bfd_generic_final_link
+#define binary_bfd_link_split_section		  _bfd_generic_link_split_section
+#define binary_get_section_contents_in_window	  _bfd_generic_get_section_contents_in_window
+#define binary_bfd_link_check_relocs		  _bfd_generic_link_check_relocs
 
 const bfd_target binary_vec =
 {

@@ -1,5 +1,5 @@
 /* Insert/extract functions for the ARC opcodes.
-   Copyright (C) 2015-2016 Free Software Foundation, Inc.
+   Copyright (C) 2015-2018 Free Software Foundation, Inc.
 
    Contributed by Claudiu Zissulescu (claziss@synopsys.com)
 
@@ -23,9 +23,9 @@
 #define INSERT_LIMM
 /* mask = 00000000000000000000000000000000
    insn = 00100bbb00101111FBBB111110001001.  */
-static unsigned
-insert_limm (unsigned insn ATTRIBUTE_UNUSED,
-	     int value ATTRIBUTE_UNUSED, const char **errmsg ATTRIBUTE_UNUSED)
+static unsigned long long
+insert_limm (unsigned long long insn ATTRIBUTE_UNUSED,
+	     long long int value ATTRIBUTE_UNUSED, const char **errmsg ATTRIBUTE_UNUSED)
 {
 
   return insn;
@@ -36,7 +36,7 @@ insert_limm (unsigned insn ATTRIBUTE_UNUSED,
 #define EXTRACT_LIMM
 /* mask = 00000000000000000000000000000000.  */
 static ATTRIBUTE_UNUSED int
-extract_limm (unsigned insn ATTRIBUTE_UNUSED, bfd_boolean * invalid ATTRIBUTE_UNUSED)
+extract_limm (unsigned long long insn ATTRIBUTE_UNUSED, bfd_boolean * invalid ATTRIBUTE_UNUSED)
 {
   unsigned value = 0;
 
@@ -48,9 +48,9 @@ extract_limm (unsigned insn ATTRIBUTE_UNUSED, bfd_boolean * invalid ATTRIBUTE_UN
 #define INSERT_UIMM6_20
 /* mask = 00000000000000000000111111000000
    insn = 00100bbb01101111FBBBuuuuuu001001.  */
-static unsigned
-insert_uimm6_20 (unsigned insn ATTRIBUTE_UNUSED,
-		 int value ATTRIBUTE_UNUSED,
+static unsigned long long
+insert_uimm6_20 (unsigned long long insn ATTRIBUTE_UNUSED,
+		 long long int value ATTRIBUTE_UNUSED,
 		 const char **errmsg ATTRIBUTE_UNUSED)
 {
 
@@ -63,8 +63,8 @@ insert_uimm6_20 (unsigned insn ATTRIBUTE_UNUSED,
 #ifndef EXTRACT_UIMM6_20
 #define EXTRACT_UIMM6_20
 /* mask = 00000000000000000000111111000000.  */
-static int
-extract_uimm6_20 (unsigned insn ATTRIBUTE_UNUSED,
+static long long int
+extract_uimm6_20 (unsigned long long insn ATTRIBUTE_UNUSED,
 		  bfd_boolean * invalid ATTRIBUTE_UNUSED)
 {
   unsigned value = 0;
@@ -79,9 +79,9 @@ extract_uimm6_20 (unsigned insn ATTRIBUTE_UNUSED,
 #define INSERT_SIMM12_20
 /* mask = 00000000000000000000111111222222
    insn = 00110bbb10101000FBBBssssssSSSSSS.  */
-static unsigned
-insert_simm12_20 (unsigned insn ATTRIBUTE_UNUSED,
-		  int value ATTRIBUTE_UNUSED,
+static unsigned long long
+insert_simm12_20 (unsigned long long insn ATTRIBUTE_UNUSED,
+		  long long int value ATTRIBUTE_UNUSED,
 		  const char **errmsg ATTRIBUTE_UNUSED)
 {
 
@@ -95,8 +95,8 @@ insert_simm12_20 (unsigned insn ATTRIBUTE_UNUSED,
 #ifndef EXTRACT_SIMM12_20
 #define EXTRACT_SIMM12_20
 /* mask = 00000000000000000000111111222222.  */
-static int
-extract_simm12_20 (unsigned insn ATTRIBUTE_UNUSED,
+static long long int
+extract_simm12_20 (unsigned long long insn ATTRIBUTE_UNUSED,
 		   bfd_boolean * invalid ATTRIBUTE_UNUSED)
 {
   int value = 0;
@@ -117,8 +117,8 @@ extract_simm12_20 (unsigned insn ATTRIBUTE_UNUSED,
 /* mask = 0000011100000000
    insn = 01110ssshhh001HH.  */
 static ATTRIBUTE_UNUSED unsigned
-insert_simm3_5_s (unsigned insn ATTRIBUTE_UNUSED,
-		  int value ATTRIBUTE_UNUSED,
+insert_simm3_5_s (unsigned long long insn ATTRIBUTE_UNUSED,
+		  long long int value ATTRIBUTE_UNUSED,
 		  const char **errmsg ATTRIBUTE_UNUSED)
 {
 
@@ -132,7 +132,7 @@ insert_simm3_5_s (unsigned insn ATTRIBUTE_UNUSED,
 #define EXTRACT_SIMM3_5_S
 /* mask = 0000011100000000.  */
 static ATTRIBUTE_UNUSED int
-extract_simm3_5_s (unsigned insn ATTRIBUTE_UNUSED,
+extract_simm3_5_s (unsigned long long insn ATTRIBUTE_UNUSED,
 		   bfd_boolean * invalid ATTRIBUTE_UNUSED)
 {
   int value = 0;
@@ -152,8 +152,8 @@ extract_simm3_5_s (unsigned insn ATTRIBUTE_UNUSED,
 /* mask = 0000000000000000
    insn = 01110sss11000111.  */
 static ATTRIBUTE_UNUSED unsigned
-insert_limm_s (unsigned insn ATTRIBUTE_UNUSED,
-	       int value ATTRIBUTE_UNUSED,
+insert_limm_s (unsigned long long insn ATTRIBUTE_UNUSED,
+	       long long int value ATTRIBUTE_UNUSED,
 	       const char **errmsg ATTRIBUTE_UNUSED)
 {
 
@@ -165,7 +165,7 @@ insert_limm_s (unsigned insn ATTRIBUTE_UNUSED,
 #define EXTRACT_LIMM_S
 /* mask = 0000000000000000.  */
 static ATTRIBUTE_UNUSED int
-extract_limm_s (unsigned insn ATTRIBUTE_UNUSED, bfd_boolean * invalid ATTRIBUTE_UNUSED)
+extract_limm_s (unsigned long long insn ATTRIBUTE_UNUSED, bfd_boolean * invalid ATTRIBUTE_UNUSED)
 {
   unsigned value = 0;
 
@@ -177,9 +177,9 @@ extract_limm_s (unsigned insn ATTRIBUTE_UNUSED, bfd_boolean * invalid ATTRIBUTE_
 #define INSERT_UIMM7_A32_11_S
 /* mask = 0000000000011111
    insn = 11000bbb100uuuuu.  */
-static unsigned
-insert_uimm7_a32_11_s (unsigned insn ATTRIBUTE_UNUSED,
-		       int value ATTRIBUTE_UNUSED,
+static unsigned long long
+insert_uimm7_a32_11_s (unsigned long long insn ATTRIBUTE_UNUSED,
+		       long long int value ATTRIBUTE_UNUSED,
 		       const char **errmsg ATTRIBUTE_UNUSED)
 {
   if (value & 0x03)
@@ -194,8 +194,8 @@ insert_uimm7_a32_11_s (unsigned insn ATTRIBUTE_UNUSED,
 #ifndef EXTRACT_UIMM7_A32_11_S
 #define EXTRACT_UIMM7_A32_11_S
 /* mask = 0000000000011111.  */
-static int
-extract_uimm7_a32_11_s (unsigned insn ATTRIBUTE_UNUSED,
+static long long int
+extract_uimm7_a32_11_s (unsigned long long insn ATTRIBUTE_UNUSED,
 			bfd_boolean * invalid ATTRIBUTE_UNUSED)
 {
   unsigned value = 0;
@@ -210,9 +210,9 @@ extract_uimm7_a32_11_s (unsigned insn ATTRIBUTE_UNUSED,
 #define INSERT_UIMM7_9_S
 /* mask = 0000000001111111
    insn = 11100bbb0uuuuuuu.  */
-static unsigned
-insert_uimm7_9_s (unsigned insn ATTRIBUTE_UNUSED,
-		  int value ATTRIBUTE_UNUSED,
+static unsigned long long
+insert_uimm7_9_s (unsigned long long insn ATTRIBUTE_UNUSED,
+		  long long int value ATTRIBUTE_UNUSED,
 		  const char **errmsg ATTRIBUTE_UNUSED)
 {
 
@@ -225,8 +225,8 @@ insert_uimm7_9_s (unsigned insn ATTRIBUTE_UNUSED,
 #ifndef EXTRACT_UIMM7_9_S
 #define EXTRACT_UIMM7_9_S
 /* mask = 0000000001111111.  */
-static int
-extract_uimm7_9_s (unsigned insn ATTRIBUTE_UNUSED,
+static long long int
+extract_uimm7_9_s (unsigned long long insn ATTRIBUTE_UNUSED,
 		   bfd_boolean * invalid ATTRIBUTE_UNUSED)
 {
   unsigned value = 0;
@@ -241,9 +241,9 @@ extract_uimm7_9_s (unsigned insn ATTRIBUTE_UNUSED,
 #define INSERT_UIMM3_13_S
 /* mask = 0000000000000111
    insn = 01101bbbccc00uuu.  */
-static unsigned
-insert_uimm3_13_s (unsigned insn ATTRIBUTE_UNUSED,
-		   int value ATTRIBUTE_UNUSED,
+static unsigned long long
+insert_uimm3_13_s (unsigned long long insn ATTRIBUTE_UNUSED,
+		   long long int value ATTRIBUTE_UNUSED,
 		   const char **errmsg ATTRIBUTE_UNUSED)
 {
 
@@ -256,8 +256,8 @@ insert_uimm3_13_s (unsigned insn ATTRIBUTE_UNUSED,
 #ifndef EXTRACT_UIMM3_13_S
 #define EXTRACT_UIMM3_13_S
 /* mask = 0000000000000111.  */
-static int
-extract_uimm3_13_s (unsigned insn ATTRIBUTE_UNUSED,
+static long long int
+extract_uimm3_13_s (unsigned long long insn ATTRIBUTE_UNUSED,
 		    bfd_boolean * invalid ATTRIBUTE_UNUSED)
 {
   unsigned value = 0;
@@ -272,9 +272,9 @@ extract_uimm3_13_s (unsigned insn ATTRIBUTE_UNUSED,
 #define INSERT_SIMM11_A32_7_S
 /* mask = 0000000111111111
    insn = 1100111sssssssss.  */
-static unsigned
-insert_simm11_a32_7_s (unsigned insn ATTRIBUTE_UNUSED,
-		       int value ATTRIBUTE_UNUSED,
+static unsigned long long
+insert_simm11_a32_7_s (unsigned long long insn ATTRIBUTE_UNUSED,
+		       long long int value ATTRIBUTE_UNUSED,
 		       const char **errmsg ATTRIBUTE_UNUSED)
 {
   if (value & 0x03)
@@ -289,8 +289,8 @@ insert_simm11_a32_7_s (unsigned insn ATTRIBUTE_UNUSED,
 #ifndef EXTRACT_SIMM11_A32_7_S
 #define EXTRACT_SIMM11_A32_7_S
 /* mask = 0000000111111111.  */
-static int
-extract_simm11_a32_7_s (unsigned insn ATTRIBUTE_UNUSED,
+static long long int
+extract_simm11_a32_7_s (unsigned long long insn ATTRIBUTE_UNUSED,
 			bfd_boolean * invalid ATTRIBUTE_UNUSED)
 {
   int value = 0;
@@ -309,9 +309,9 @@ extract_simm11_a32_7_s (unsigned insn ATTRIBUTE_UNUSED,
 #define INSERT_UIMM6_13_S
 /* mask = 0000000002220111
    insn = 01001bbb0UUU1uuu.  */
-static unsigned
-insert_uimm6_13_s (unsigned insn ATTRIBUTE_UNUSED,
-		   int value ATTRIBUTE_UNUSED,
+static unsigned long long
+insert_uimm6_13_s (unsigned long long insn ATTRIBUTE_UNUSED,
+		   long long int value ATTRIBUTE_UNUSED,
 		   const char **errmsg ATTRIBUTE_UNUSED)
 {
 
@@ -325,8 +325,8 @@ insert_uimm6_13_s (unsigned insn ATTRIBUTE_UNUSED,
 #ifndef EXTRACT_UIMM6_13_S
 #define EXTRACT_UIMM6_13_S
 /* mask = 0000000002220111.  */
-static int
-extract_uimm6_13_s (unsigned insn ATTRIBUTE_UNUSED,
+static long long int
+extract_uimm6_13_s (unsigned long long insn ATTRIBUTE_UNUSED,
 		    bfd_boolean * invalid ATTRIBUTE_UNUSED)
 {
   unsigned value = 0;
@@ -342,9 +342,9 @@ extract_uimm6_13_s (unsigned insn ATTRIBUTE_UNUSED,
 #define INSERT_UIMM5_11_S
 /* mask = 0000000000011111
    insn = 10111bbb000uuuuu.  */
-static unsigned
-insert_uimm5_11_s (unsigned insn ATTRIBUTE_UNUSED,
-		   int value ATTRIBUTE_UNUSED,
+static unsigned long long
+insert_uimm5_11_s (unsigned long long insn ATTRIBUTE_UNUSED,
+		   long long int value ATTRIBUTE_UNUSED,
 		   const char **errmsg ATTRIBUTE_UNUSED)
 {
 
@@ -357,8 +357,8 @@ insert_uimm5_11_s (unsigned insn ATTRIBUTE_UNUSED,
 #ifndef EXTRACT_UIMM5_11_S
 #define EXTRACT_UIMM5_11_S
 /* mask = 0000000000011111.  */
-static int
-extract_uimm5_11_s (unsigned insn ATTRIBUTE_UNUSED,
+static long long int
+extract_uimm5_11_s (unsigned long long insn ATTRIBUTE_UNUSED,
 		    bfd_boolean * invalid ATTRIBUTE_UNUSED)
 {
   unsigned value = 0;
@@ -373,9 +373,9 @@ extract_uimm5_11_s (unsigned insn ATTRIBUTE_UNUSED,
 #define INSERT_SIMM9_A16_8
 /* mask = 00000000111111102000000000000000
    insn = 00001bbbsssssss1SBBBCCCCCCN01110.  */
-static unsigned
-insert_simm9_a16_8 (unsigned insn ATTRIBUTE_UNUSED,
-		    int value ATTRIBUTE_UNUSED,
+static unsigned long long
+insert_simm9_a16_8 (unsigned long long insn ATTRIBUTE_UNUSED,
+		    long long int value ATTRIBUTE_UNUSED,
 		    const char **errmsg ATTRIBUTE_UNUSED)
 {
   if (value & 0x01)
@@ -391,8 +391,8 @@ insert_simm9_a16_8 (unsigned insn ATTRIBUTE_UNUSED,
 #ifndef EXTRACT_SIMM9_A16_8
 #define EXTRACT_SIMM9_A16_8
 /* mask = 00000000111111102000000000000000.  */
-static int
-extract_simm9_a16_8 (unsigned insn ATTRIBUTE_UNUSED,
+static long long int
+extract_simm9_a16_8 (unsigned long long insn ATTRIBUTE_UNUSED,
 		     bfd_boolean * invalid ATTRIBUTE_UNUSED)
 {
   int value = 0;
@@ -412,9 +412,9 @@ extract_simm9_a16_8 (unsigned insn ATTRIBUTE_UNUSED,
 #define INSERT_UIMM6_8
 /* mask = 00000000000000000000111111000000
    insn = 00001bbbsssssss1SBBBuuuuuuN11110.  */
-static unsigned
-insert_uimm6_8 (unsigned insn ATTRIBUTE_UNUSED,
-		int value ATTRIBUTE_UNUSED,
+static unsigned long long
+insert_uimm6_8 (unsigned long long insn ATTRIBUTE_UNUSED,
+		long long int value ATTRIBUTE_UNUSED,
 		const char **errmsg ATTRIBUTE_UNUSED)
 {
 
@@ -427,8 +427,8 @@ insert_uimm6_8 (unsigned insn ATTRIBUTE_UNUSED,
 #ifndef EXTRACT_UIMM6_8
 #define EXTRACT_UIMM6_8
 /* mask = 00000000000000000000111111000000.  */
-static int
-extract_uimm6_8 (unsigned insn ATTRIBUTE_UNUSED,
+static long long int
+extract_uimm6_8 (unsigned long long insn ATTRIBUTE_UNUSED,
 		 bfd_boolean * invalid ATTRIBUTE_UNUSED)
 {
   unsigned value = 0;
@@ -443,9 +443,9 @@ extract_uimm6_8 (unsigned insn ATTRIBUTE_UNUSED,
 #define INSERT_SIMM21_A16_5
 /* mask = 00000111111111102222222222000000
    insn = 00000ssssssssss0SSSSSSSSSSNQQQQQ.  */
-static unsigned
-insert_simm21_a16_5 (unsigned insn ATTRIBUTE_UNUSED,
-		     int value ATTRIBUTE_UNUSED,
+static unsigned long long
+insert_simm21_a16_5 (unsigned long long insn ATTRIBUTE_UNUSED,
+		     long long int value ATTRIBUTE_UNUSED,
 		     const char **errmsg ATTRIBUTE_UNUSED)
 {
   if (value & 0x01)
@@ -461,8 +461,8 @@ insert_simm21_a16_5 (unsigned insn ATTRIBUTE_UNUSED,
 #ifndef EXTRACT_SIMM21_A16_5
 #define EXTRACT_SIMM21_A16_5
 /* mask = 00000111111111102222222222000000.  */
-static int
-extract_simm21_a16_5 (unsigned insn ATTRIBUTE_UNUSED,
+static long long int
+extract_simm21_a16_5 (unsigned long long insn ATTRIBUTE_UNUSED,
 		      bfd_boolean * invalid ATTRIBUTE_UNUSED)
 {
   int value = 0;
@@ -482,9 +482,9 @@ extract_simm21_a16_5 (unsigned insn ATTRIBUTE_UNUSED,
 #define INSERT_SIMM25_A16_5
 /* mask = 00000111111111102222222222003333
    insn = 00000ssssssssss1SSSSSSSSSSNRtttt.  */
-static unsigned
-insert_simm25_a16_5 (unsigned insn ATTRIBUTE_UNUSED,
-		     int value ATTRIBUTE_UNUSED,
+static unsigned long long
+insert_simm25_a16_5 (unsigned long long insn ATTRIBUTE_UNUSED,
+		     long long int value ATTRIBUTE_UNUSED,
 		     const char **errmsg ATTRIBUTE_UNUSED)
 {
   if (value & 0x01)
@@ -501,8 +501,8 @@ insert_simm25_a16_5 (unsigned insn ATTRIBUTE_UNUSED,
 #ifndef EXTRACT_SIMM25_A16_5
 #define EXTRACT_SIMM25_A16_5
 /* mask = 00000111111111102222222222003333.  */
-static int
-extract_simm25_a16_5 (unsigned insn ATTRIBUTE_UNUSED,
+static long long int
+extract_simm25_a16_5 (unsigned long long insn ATTRIBUTE_UNUSED,
 		      bfd_boolean * invalid ATTRIBUTE_UNUSED)
 {
   int value = 0;
@@ -523,9 +523,9 @@ extract_simm25_a16_5 (unsigned insn ATTRIBUTE_UNUSED,
 #define INSERT_SIMM10_A16_7_S
 /* mask = 0000000111111111
    insn = 1111001sssssssss.  */
-static unsigned
-insert_simm10_a16_7_s (unsigned insn ATTRIBUTE_UNUSED,
-		       int value ATTRIBUTE_UNUSED,
+static unsigned long long
+insert_simm10_a16_7_s (unsigned long long insn ATTRIBUTE_UNUSED,
+		       long long int value ATTRIBUTE_UNUSED,
 		       const char **errmsg ATTRIBUTE_UNUSED)
 {
   if (value & 0x01)
@@ -540,8 +540,8 @@ insert_simm10_a16_7_s (unsigned insn ATTRIBUTE_UNUSED,
 #ifndef EXTRACT_SIMM10_A16_7_S
 #define EXTRACT_SIMM10_A16_7_S
 /* mask = 0000000111111111.  */
-static int
-extract_simm10_a16_7_s (unsigned insn ATTRIBUTE_UNUSED,
+static long long int
+extract_simm10_a16_7_s (unsigned long long insn ATTRIBUTE_UNUSED,
 			bfd_boolean * invalid ATTRIBUTE_UNUSED)
 {
   int value = 0;
@@ -560,9 +560,9 @@ extract_simm10_a16_7_s (unsigned insn ATTRIBUTE_UNUSED,
 #define INSERT_SIMM7_A16_10_S
 /* mask = 0000000000111111
    insn = 1111011000ssssss.  */
-static unsigned
-insert_simm7_a16_10_s (unsigned insn ATTRIBUTE_UNUSED,
-		       int value ATTRIBUTE_UNUSED,
+static unsigned long long
+insert_simm7_a16_10_s (unsigned long long insn ATTRIBUTE_UNUSED,
+		       long long int value ATTRIBUTE_UNUSED,
 		       const char **errmsg ATTRIBUTE_UNUSED)
 {
   if (value & 0x01)
@@ -577,8 +577,8 @@ insert_simm7_a16_10_s (unsigned insn ATTRIBUTE_UNUSED,
 #ifndef EXTRACT_SIMM7_A16_10_S
 #define EXTRACT_SIMM7_A16_10_S
 /* mask = 0000000000111111.  */
-static int
-extract_simm7_a16_10_s (unsigned insn ATTRIBUTE_UNUSED,
+static long long int
+extract_simm7_a16_10_s (unsigned long long insn ATTRIBUTE_UNUSED,
 			bfd_boolean * invalid ATTRIBUTE_UNUSED)
 {
   int value = 0;
@@ -597,9 +597,9 @@ extract_simm7_a16_10_s (unsigned insn ATTRIBUTE_UNUSED,
 #define INSERT_SIMM21_A32_5
 /* mask = 00000111111111002222222222000000
    insn = 00001sssssssss00SSSSSSSSSSNQQQQQ.  */
-static unsigned
-insert_simm21_a32_5 (unsigned insn ATTRIBUTE_UNUSED,
-		     int value ATTRIBUTE_UNUSED,
+static unsigned long long
+insert_simm21_a32_5 (unsigned long long insn ATTRIBUTE_UNUSED,
+		     long long int value ATTRIBUTE_UNUSED,
 		     const char **errmsg ATTRIBUTE_UNUSED)
 {
   if (value & 0x03)
@@ -615,8 +615,8 @@ insert_simm21_a32_5 (unsigned insn ATTRIBUTE_UNUSED,
 #ifndef EXTRACT_SIMM21_A32_5
 #define EXTRACT_SIMM21_A32_5
 /* mask = 00000111111111002222222222000000.  */
-static int
-extract_simm21_a32_5 (unsigned insn ATTRIBUTE_UNUSED,
+static long long int
+extract_simm21_a32_5 (unsigned long long insn ATTRIBUTE_UNUSED,
 		      bfd_boolean * invalid ATTRIBUTE_UNUSED)
 {
   int value = 0;
@@ -636,9 +636,9 @@ extract_simm21_a32_5 (unsigned insn ATTRIBUTE_UNUSED,
 #define INSERT_SIMM25_A32_5
 /* mask = 00000111111111002222222222003333
    insn = 00001sssssssss10SSSSSSSSSSNRtttt.  */
-static unsigned
-insert_simm25_a32_5 (unsigned insn ATTRIBUTE_UNUSED,
-		     int value ATTRIBUTE_UNUSED,
+static unsigned long long
+insert_simm25_a32_5 (unsigned long long insn ATTRIBUTE_UNUSED,
+		     long long int value ATTRIBUTE_UNUSED,
 		     const char **errmsg ATTRIBUTE_UNUSED)
 {
   if (value & 0x03)
@@ -655,8 +655,8 @@ insert_simm25_a32_5 (unsigned insn ATTRIBUTE_UNUSED,
 #ifndef EXTRACT_SIMM25_A32_5
 #define EXTRACT_SIMM25_A32_5
 /* mask = 00000111111111002222222222003333.  */
-static int
-extract_simm25_a32_5 (unsigned insn ATTRIBUTE_UNUSED,
+static long long int
+extract_simm25_a32_5 (unsigned long long insn ATTRIBUTE_UNUSED,
 		      bfd_boolean * invalid ATTRIBUTE_UNUSED)
 {
   int value = 0;
@@ -677,9 +677,9 @@ extract_simm25_a32_5 (unsigned insn ATTRIBUTE_UNUSED,
 #define INSERT_SIMM13_A32_5_S
 /* mask = 0000011111111111
    insn = 11111sssssssssss.  */
-static unsigned
-insert_simm13_a32_5_s (unsigned insn ATTRIBUTE_UNUSED,
-		       int value ATTRIBUTE_UNUSED,
+static unsigned long long
+insert_simm13_a32_5_s (unsigned long long insn ATTRIBUTE_UNUSED,
+		       long long int value ATTRIBUTE_UNUSED,
 		       const char **errmsg ATTRIBUTE_UNUSED)
 {
   if (value & 0x03)
@@ -694,8 +694,8 @@ insert_simm13_a32_5_s (unsigned insn ATTRIBUTE_UNUSED,
 #ifndef EXTRACT_SIMM13_A32_5_S
 #define EXTRACT_SIMM13_A32_5_S
 /* mask = 0000011111111111.  */
-static int
-extract_simm13_a32_5_s (unsigned insn ATTRIBUTE_UNUSED,
+static long long int
+extract_simm13_a32_5_s (unsigned long long insn ATTRIBUTE_UNUSED,
 			bfd_boolean * invalid ATTRIBUTE_UNUSED)
 {
   int value = 0;
@@ -714,9 +714,9 @@ extract_simm13_a32_5_s (unsigned insn ATTRIBUTE_UNUSED,
 #define INSERT_SIMM8_A16_9_S
 /* mask = 0000000001111111
    insn = 11101bbb1sssssss.  */
-static unsigned
-insert_simm8_a16_9_s (unsigned insn ATTRIBUTE_UNUSED,
-		      int value ATTRIBUTE_UNUSED,
+static unsigned long long
+insert_simm8_a16_9_s (unsigned long long insn ATTRIBUTE_UNUSED,
+		      long long int value ATTRIBUTE_UNUSED,
 		      const char **errmsg ATTRIBUTE_UNUSED)
 {
   if (value & 0x01)
@@ -731,8 +731,8 @@ insert_simm8_a16_9_s (unsigned insn ATTRIBUTE_UNUSED,
 #ifndef EXTRACT_SIMM8_A16_9_S
 #define EXTRACT_SIMM8_A16_9_S
 /* mask = 0000000001111111.  */
-static int
-extract_simm8_a16_9_s (unsigned insn ATTRIBUTE_UNUSED,
+static long long int
+extract_simm8_a16_9_s (unsigned long long insn ATTRIBUTE_UNUSED,
 		       bfd_boolean * invalid ATTRIBUTE_UNUSED)
 {
   int value = 0;
@@ -751,9 +751,9 @@ extract_simm8_a16_9_s (unsigned insn ATTRIBUTE_UNUSED,
 #define INSERT_UIMM3_23
 /* mask = 00000000000000000000000111000000
    insn = 00100011011011110001RRRuuu111111.  */
-static unsigned
-insert_uimm3_23 (unsigned insn ATTRIBUTE_UNUSED,
-		 int value ATTRIBUTE_UNUSED,
+static unsigned long long
+insert_uimm3_23 (unsigned long long insn ATTRIBUTE_UNUSED,
+		 long long int value ATTRIBUTE_UNUSED,
 		 const char **errmsg ATTRIBUTE_UNUSED)
 {
 
@@ -766,8 +766,8 @@ insert_uimm3_23 (unsigned insn ATTRIBUTE_UNUSED,
 #ifndef EXTRACT_UIMM3_23
 #define EXTRACT_UIMM3_23
 /* mask = 00000000000000000000000111000000.  */
-static int
-extract_uimm3_23 (unsigned insn ATTRIBUTE_UNUSED,
+static long long int
+extract_uimm3_23 (unsigned long long insn ATTRIBUTE_UNUSED,
 		  bfd_boolean * invalid ATTRIBUTE_UNUSED)
 {
   unsigned value = 0;
@@ -782,9 +782,9 @@ extract_uimm3_23 (unsigned insn ATTRIBUTE_UNUSED,
 #define INSERT_UIMM10_6_S
 /* mask = 0000001111111111
    insn = 010111uuuuuuuuuu.  */
-static unsigned
-insert_uimm10_6_s (unsigned insn ATTRIBUTE_UNUSED,
-		   int value ATTRIBUTE_UNUSED,
+static unsigned long long
+insert_uimm10_6_s (unsigned long long insn ATTRIBUTE_UNUSED,
+		   long long int value ATTRIBUTE_UNUSED,
 		   const char **errmsg ATTRIBUTE_UNUSED)
 {
 
@@ -797,8 +797,8 @@ insert_uimm10_6_s (unsigned insn ATTRIBUTE_UNUSED,
 #ifndef EXTRACT_UIMM10_6_S
 #define EXTRACT_UIMM10_6_S
 /* mask = 0000001111111111.  */
-static int
-extract_uimm10_6_s (unsigned insn ATTRIBUTE_UNUSED,
+static long long int
+extract_uimm10_6_s (unsigned long long insn ATTRIBUTE_UNUSED,
 		    bfd_boolean * invalid ATTRIBUTE_UNUSED)
 {
   unsigned value = 0;
@@ -813,9 +813,9 @@ extract_uimm10_6_s (unsigned insn ATTRIBUTE_UNUSED,
 #define INSERT_UIMM6_11_S
 /* mask = 0000002200011110
    insn = 110000UU111uuuu0.  */
-static unsigned
-insert_uimm6_11_s (unsigned insn ATTRIBUTE_UNUSED,
-		   int value ATTRIBUTE_UNUSED,
+static unsigned long long
+insert_uimm6_11_s (unsigned long long insn ATTRIBUTE_UNUSED,
+		   long long int value ATTRIBUTE_UNUSED,
 		   const char **errmsg ATTRIBUTE_UNUSED)
 {
 
@@ -829,8 +829,8 @@ insert_uimm6_11_s (unsigned insn ATTRIBUTE_UNUSED,
 #ifndef EXTRACT_UIMM6_11_S
 #define EXTRACT_UIMM6_11_S
 /* mask = 0000002200011110.  */
-static int
-extract_uimm6_11_s (unsigned insn ATTRIBUTE_UNUSED,
+static long long int
+extract_uimm6_11_s (unsigned long long insn ATTRIBUTE_UNUSED,
 		    bfd_boolean * invalid ATTRIBUTE_UNUSED)
 {
   unsigned value = 0;
@@ -846,9 +846,9 @@ extract_uimm6_11_s (unsigned insn ATTRIBUTE_UNUSED,
 #define INSERT_SIMM9_8
 /* mask = 00000000111111112000000000000000
    insn = 00010bbbssssssssSBBBDaaZZXAAAAAA.  */
-static unsigned
-insert_simm9_8 (unsigned insn ATTRIBUTE_UNUSED,
-		int value ATTRIBUTE_UNUSED,
+static unsigned long long
+insert_simm9_8 (unsigned long long insn ATTRIBUTE_UNUSED,
+		long long int value ATTRIBUTE_UNUSED,
 		const char **errmsg ATTRIBUTE_UNUSED)
 {
 
@@ -862,8 +862,8 @@ insert_simm9_8 (unsigned insn ATTRIBUTE_UNUSED,
 #ifndef EXTRACT_SIMM9_8
 #define EXTRACT_SIMM9_8
 /* mask = 00000000111111112000000000000000.  */
-static int
-extract_simm9_8 (unsigned insn ATTRIBUTE_UNUSED,
+static long long int
+extract_simm9_8 (unsigned long long insn ATTRIBUTE_UNUSED,
 		 bfd_boolean * invalid ATTRIBUTE_UNUSED)
 {
   int value = 0;
@@ -883,9 +883,9 @@ extract_simm9_8 (unsigned insn ATTRIBUTE_UNUSED,
 #define INSERT_UIMM10_A32_8_S
 /* mask = 0000000011111111
    insn = 11010bbbuuuuuuuu.  */
-static unsigned
-insert_uimm10_a32_8_s (unsigned insn ATTRIBUTE_UNUSED,
-		       int value ATTRIBUTE_UNUSED,
+static unsigned long long
+insert_uimm10_a32_8_s (unsigned long long insn ATTRIBUTE_UNUSED,
+		       long long int value ATTRIBUTE_UNUSED,
 		       const char **errmsg ATTRIBUTE_UNUSED)
 {
   if (value & 0x03)
@@ -900,8 +900,8 @@ insert_uimm10_a32_8_s (unsigned insn ATTRIBUTE_UNUSED,
 #ifndef EXTRACT_UIMM10_A32_8_S
 #define EXTRACT_UIMM10_A32_8_S
 /* mask = 0000000011111111.  */
-static int
-extract_uimm10_a32_8_s (unsigned insn ATTRIBUTE_UNUSED,
+static long long int
+extract_uimm10_a32_8_s (unsigned long long insn ATTRIBUTE_UNUSED,
 			bfd_boolean * invalid ATTRIBUTE_UNUSED)
 {
   unsigned value = 0;
@@ -916,9 +916,9 @@ extract_uimm10_a32_8_s (unsigned insn ATTRIBUTE_UNUSED,
 #define INSERT_SIMM9_7_S
 /* mask = 0000000111111111
    insn = 1100101sssssssss.  */
-static unsigned
-insert_simm9_7_s (unsigned insn ATTRIBUTE_UNUSED,
-		  int value ATTRIBUTE_UNUSED,
+static unsigned long long
+insert_simm9_7_s (unsigned long long insn ATTRIBUTE_UNUSED,
+		  long long int value ATTRIBUTE_UNUSED,
 		  const char **errmsg ATTRIBUTE_UNUSED)
 {
 
@@ -931,8 +931,8 @@ insert_simm9_7_s (unsigned insn ATTRIBUTE_UNUSED,
 #ifndef EXTRACT_SIMM9_7_S
 #define EXTRACT_SIMM9_7_S
 /* mask = 0000000111111111.  */
-static int
-extract_simm9_7_s (unsigned insn ATTRIBUTE_UNUSED,
+static long long int
+extract_simm9_7_s (unsigned long long insn ATTRIBUTE_UNUSED,
 		   bfd_boolean * invalid ATTRIBUTE_UNUSED)
 {
   int value = 0;
@@ -951,9 +951,9 @@ extract_simm9_7_s (unsigned insn ATTRIBUTE_UNUSED,
 #define INSERT_UIMM6_A16_11_S
 /* mask = 0000000000011111
    insn = 10010bbbcccuuuuu.  */
-static unsigned
-insert_uimm6_a16_11_s (unsigned insn ATTRIBUTE_UNUSED,
-		       int value ATTRIBUTE_UNUSED,
+static unsigned long long
+insert_uimm6_a16_11_s (unsigned long long insn ATTRIBUTE_UNUSED,
+		       long long int value ATTRIBUTE_UNUSED,
 		       const char **errmsg ATTRIBUTE_UNUSED)
 {
   if (value & 0x01)
@@ -968,8 +968,8 @@ insert_uimm6_a16_11_s (unsigned insn ATTRIBUTE_UNUSED,
 #ifndef EXTRACT_UIMM6_A16_11_S
 #define EXTRACT_UIMM6_A16_11_S
 /* mask = 0000000000011111.  */
-static int
-extract_uimm6_a16_11_s (unsigned insn ATTRIBUTE_UNUSED,
+static long long int
+extract_uimm6_a16_11_s (unsigned long long insn ATTRIBUTE_UNUSED,
 			bfd_boolean * invalid ATTRIBUTE_UNUSED)
 {
   unsigned value = 0;
@@ -984,9 +984,9 @@ extract_uimm6_a16_11_s (unsigned insn ATTRIBUTE_UNUSED,
 #define INSERT_UIMM5_A32_11_S
 /* mask = 0000020000011000
    insn = 01000U00hhhuu1HH.  */
-static unsigned
-insert_uimm5_a32_11_s (unsigned insn ATTRIBUTE_UNUSED,
-		       int value ATTRIBUTE_UNUSED,
+static unsigned long long
+insert_uimm5_a32_11_s (unsigned long long insn ATTRIBUTE_UNUSED,
+		       long long int value ATTRIBUTE_UNUSED,
 		       const char **errmsg ATTRIBUTE_UNUSED)
 {
   if (value & 0x03)
@@ -1002,8 +1002,8 @@ insert_uimm5_a32_11_s (unsigned insn ATTRIBUTE_UNUSED,
 #ifndef EXTRACT_UIMM5_A32_11_S
 #define EXTRACT_UIMM5_A32_11_S
 /* mask = 0000020000011000.  */
-static int
-extract_uimm5_a32_11_s (unsigned insn ATTRIBUTE_UNUSED,
+static long long int
+extract_uimm5_a32_11_s (unsigned long long insn ATTRIBUTE_UNUSED,
 			bfd_boolean * invalid ATTRIBUTE_UNUSED)
 {
   unsigned value = 0;
@@ -1019,9 +1019,9 @@ extract_uimm5_a32_11_s (unsigned insn ATTRIBUTE_UNUSED,
 #define INSERT_SIMM11_A32_13_S
 /* mask = 0000022222200111
    insn = 01010SSSSSS00sss.  */
-static unsigned
-insert_simm11_a32_13_s (unsigned insn ATTRIBUTE_UNUSED,
-			int value ATTRIBUTE_UNUSED,
+static unsigned long long
+insert_simm11_a32_13_s (unsigned long long insn ATTRIBUTE_UNUSED,
+			long long int value ATTRIBUTE_UNUSED,
 			const char **errmsg ATTRIBUTE_UNUSED)
 {
   if (value & 0x03)
@@ -1037,8 +1037,8 @@ insert_simm11_a32_13_s (unsigned insn ATTRIBUTE_UNUSED,
 #ifndef EXTRACT_SIMM11_A32_13_S
 #define EXTRACT_SIMM11_A32_13_S
 /* mask = 0000022222200111.  */
-static int
-extract_simm11_a32_13_s (unsigned insn ATTRIBUTE_UNUSED,
+static long long int
+extract_simm11_a32_13_s (unsigned long long insn ATTRIBUTE_UNUSED,
 			 bfd_boolean * invalid ATTRIBUTE_UNUSED)
 {
   int value = 0;
@@ -1058,9 +1058,9 @@ extract_simm11_a32_13_s (unsigned insn ATTRIBUTE_UNUSED,
 #define INSERT_UIMM7_13_S
 /* mask = 0000000022220111
    insn = 01010bbbUUUU1uuu.  */
-static unsigned
-insert_uimm7_13_s (unsigned insn ATTRIBUTE_UNUSED,
-		   int value ATTRIBUTE_UNUSED,
+static unsigned long long
+insert_uimm7_13_s (unsigned long long insn ATTRIBUTE_UNUSED,
+		   long long int value ATTRIBUTE_UNUSED,
 		   const char **errmsg ATTRIBUTE_UNUSED)
 {
 
@@ -1074,8 +1074,8 @@ insert_uimm7_13_s (unsigned insn ATTRIBUTE_UNUSED,
 #ifndef EXTRACT_UIMM7_13_S
 #define EXTRACT_UIMM7_13_S
 /* mask = 0000000022220111.  */
-static int
-extract_uimm7_13_s (unsigned insn ATTRIBUTE_UNUSED,
+static long long int
+extract_uimm7_13_s (unsigned long long insn ATTRIBUTE_UNUSED,
 		    bfd_boolean * invalid ATTRIBUTE_UNUSED)
 {
   unsigned value = 0;
@@ -1091,9 +1091,9 @@ extract_uimm7_13_s (unsigned insn ATTRIBUTE_UNUSED,
 #define INSERT_UIMM6_A16_21
 /* mask = 00000000000000000000011111000000
    insn = 00101bbb01001100RBBBRuuuuuAAAAAA.  */
-static unsigned
-insert_uimm6_a16_21 (unsigned insn ATTRIBUTE_UNUSED,
-		     int value ATTRIBUTE_UNUSED,
+static unsigned long long
+insert_uimm6_a16_21 (unsigned long long insn ATTRIBUTE_UNUSED,
+		     long long int value ATTRIBUTE_UNUSED,
 		     const char **errmsg ATTRIBUTE_UNUSED)
 {
   if (value & 0x01)
@@ -1108,8 +1108,8 @@ insert_uimm6_a16_21 (unsigned insn ATTRIBUTE_UNUSED,
 #ifndef EXTRACT_UIMM6_A16_21
 #define EXTRACT_UIMM6_A16_21
 /* mask = 00000000000000000000011111000000.  */
-static int
-extract_uimm6_a16_21 (unsigned insn ATTRIBUTE_UNUSED,
+static long long int
+extract_uimm6_a16_21 (unsigned long long insn ATTRIBUTE_UNUSED,
 		      bfd_boolean * invalid ATTRIBUTE_UNUSED)
 {
   unsigned value = 0;
@@ -1124,9 +1124,9 @@ extract_uimm6_a16_21 (unsigned insn ATTRIBUTE_UNUSED,
 #define INSERT_UIMM7_11_S
 /* mask = 0000022200011110
    insn = 11000UUU110uuuu0.  */
-static unsigned
-insert_uimm7_11_s (unsigned insn ATTRIBUTE_UNUSED,
-		   int value ATTRIBUTE_UNUSED,
+static unsigned long long
+insert_uimm7_11_s (unsigned long long insn ATTRIBUTE_UNUSED,
+		   long long int value ATTRIBUTE_UNUSED,
 		   const char **errmsg ATTRIBUTE_UNUSED)
 {
 
@@ -1140,8 +1140,8 @@ insert_uimm7_11_s (unsigned insn ATTRIBUTE_UNUSED,
 #ifndef EXTRACT_UIMM7_11_S
 #define EXTRACT_UIMM7_11_S
 /* mask = 0000022200011110.  */
-static int
-extract_uimm7_11_s (unsigned insn ATTRIBUTE_UNUSED,
+static long long int
+extract_uimm7_11_s (unsigned long long insn ATTRIBUTE_UNUSED,
 		    bfd_boolean * invalid ATTRIBUTE_UNUSED)
 {
   unsigned value = 0;
@@ -1157,9 +1157,9 @@ extract_uimm7_11_s (unsigned insn ATTRIBUTE_UNUSED,
 #define INSERT_UIMM7_A16_20
 /* mask = 00000000000000000000111111000000
    insn = 00100RRR111010000RRRuuuuuu1QQQQQ.  */
-static unsigned
-insert_uimm7_a16_20 (unsigned insn ATTRIBUTE_UNUSED,
-		     int value ATTRIBUTE_UNUSED,
+static unsigned long long
+insert_uimm7_a16_20 (unsigned long long insn ATTRIBUTE_UNUSED,
+		     long long int value ATTRIBUTE_UNUSED,
 		     const char **errmsg ATTRIBUTE_UNUSED)
 {
   if (value & 0x01)
@@ -1174,8 +1174,8 @@ insert_uimm7_a16_20 (unsigned insn ATTRIBUTE_UNUSED,
 #ifndef EXTRACT_UIMM7_A16_20
 #define EXTRACT_UIMM7_A16_20
 /* mask = 00000000000000000000111111000000.  */
-static int
-extract_uimm7_a16_20 (unsigned insn ATTRIBUTE_UNUSED,
+static long long int
+extract_uimm7_a16_20 (unsigned long long insn ATTRIBUTE_UNUSED,
 		      bfd_boolean * invalid ATTRIBUTE_UNUSED)
 {
   unsigned value = 0;
@@ -1190,9 +1190,9 @@ extract_uimm7_a16_20 (unsigned insn ATTRIBUTE_UNUSED,
 #define INSERT_SIMM13_A16_20
 /* mask = 00000000000000000000111111222222
    insn = 00100RRR101010000RRRssssssSSSSSS.  */
-static unsigned
-insert_simm13_a16_20 (unsigned insn ATTRIBUTE_UNUSED,
-		      int value ATTRIBUTE_UNUSED,
+static unsigned long long
+insert_simm13_a16_20 (unsigned long long insn ATTRIBUTE_UNUSED,
+		      long long int value ATTRIBUTE_UNUSED,
 		      const char **errmsg ATTRIBUTE_UNUSED)
 {
   if (value & 0x01)
@@ -1208,8 +1208,8 @@ insert_simm13_a16_20 (unsigned insn ATTRIBUTE_UNUSED,
 #ifndef EXTRACT_SIMM13_A16_20
 #define EXTRACT_SIMM13_A16_20
 /* mask = 00000000000000000000111111222222.  */
-static int
-extract_simm13_a16_20 (unsigned insn ATTRIBUTE_UNUSED,
+static long long int
+extract_simm13_a16_20 (unsigned long long insn ATTRIBUTE_UNUSED,
 		       bfd_boolean * invalid ATTRIBUTE_UNUSED)
 {
   int value = 0;
@@ -1229,9 +1229,9 @@ extract_simm13_a16_20 (unsigned insn ATTRIBUTE_UNUSED,
 #define INSERT_UIMM8_8_S
 /* mask = 0000000011111111
    insn = 11011bbbuuuuuuuu.  */
-static unsigned
-insert_uimm8_8_s (unsigned insn ATTRIBUTE_UNUSED,
-		  int value ATTRIBUTE_UNUSED,
+static unsigned long long
+insert_uimm8_8_s (unsigned long long insn ATTRIBUTE_UNUSED,
+		  long long int value ATTRIBUTE_UNUSED,
 		  const char **errmsg ATTRIBUTE_UNUSED)
 {
 
@@ -1244,8 +1244,8 @@ insert_uimm8_8_s (unsigned insn ATTRIBUTE_UNUSED,
 #ifndef EXTRACT_UIMM8_8_S
 #define EXTRACT_UIMM8_8_S
 /* mask = 0000000011111111.  */
-static int
-extract_uimm8_8_s (unsigned insn ATTRIBUTE_UNUSED,
+static long long int
+extract_uimm8_8_s (unsigned long long insn ATTRIBUTE_UNUSED,
 		   bfd_boolean * invalid ATTRIBUTE_UNUSED)
 {
   unsigned value = 0;
@@ -1260,9 +1260,9 @@ extract_uimm8_8_s (unsigned insn ATTRIBUTE_UNUSED,
 #define INSERT_UIMM6_5_S
 /* mask = 0000011111100000
    insn = 01111uuuuuu11111.  */
-static unsigned
-insert_uimm6_5_s (unsigned insn ATTRIBUTE_UNUSED,
-		  int value ATTRIBUTE_UNUSED,
+static unsigned long long
+insert_uimm6_5_s (unsigned long long insn ATTRIBUTE_UNUSED,
+		  long long int value ATTRIBUTE_UNUSED,
 		  const char **errmsg ATTRIBUTE_UNUSED)
 {
 
@@ -1275,8 +1275,8 @@ insert_uimm6_5_s (unsigned insn ATTRIBUTE_UNUSED,
 #ifndef EXTRACT_UIMM6_5_S
 #define EXTRACT_UIMM6_5_S
 /* mask = 0000011111100000.  */
-static int
-extract_uimm6_5_s (unsigned insn ATTRIBUTE_UNUSED,
+static long long int
+extract_uimm6_5_s (unsigned long long insn ATTRIBUTE_UNUSED,
 		   bfd_boolean * invalid ATTRIBUTE_UNUSED)
 {
   unsigned value = 0;
@@ -1292,8 +1292,8 @@ extract_uimm6_5_s (unsigned insn ATTRIBUTE_UNUSED,
 /* mask = 00000000000000000000000000000000
    insn = 00110bbb11100001100001100001QQQQ.  */
 static ATTRIBUTE_UNUSED unsigned
-insert_uimm6_axx_ (unsigned insn ATTRIBUTE_UNUSED,
-		   int value ATTRIBUTE_UNUSED,
+insert_uimm6_axx_ (unsigned long long insn ATTRIBUTE_UNUSED,
+		   long long int value ATTRIBUTE_UNUSED,
 		   const char **errmsg ATTRIBUTE_UNUSED)
 {
   if (value & 0x3f)
@@ -1307,7 +1307,7 @@ insert_uimm6_axx_ (unsigned insn ATTRIBUTE_UNUSED,
 #define EXTRACT_UIMM6_AXX_
 /* mask = 00000000000000000000000000000000.  */
 static ATTRIBUTE_UNUSED int
-extract_uimm6_axx_ (unsigned insn ATTRIBUTE_UNUSED,
+extract_uimm6_axx_ (unsigned long long insn ATTRIBUTE_UNUSED,
 		    bfd_boolean * invalid ATTRIBUTE_UNUSED)
 {
   unsigned value = 0;

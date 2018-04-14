@@ -1,5 +1,5 @@
 /* FR30-specific support for 32-bit ELF.
-   Copyright (C) 1998-2016 Free Software Foundation, Inc.
+   Copyright (C) 1998-2018 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -200,33 +200,33 @@ static reloc_howto_type fr30_elf_howto_table [] =
 	 FALSE),		/* pcrel_offset */
   /* GNU extension to record C++ vtable hierarchy */
   HOWTO (R_FR30_GNU_VTINHERIT, /* type */
-         0,                     /* rightshift */
-         2,                     /* size (0 = byte, 1 = short, 2 = long) */
-         0,                     /* bitsize */
-         FALSE,                 /* pc_relative */
-         0,                     /* bitpos */
-         complain_overflow_dont, /* complain_on_overflow */
-         NULL,                  /* special_function */
-         "R_FR30_GNU_VTINHERIT", /* name */
-         FALSE,                 /* partial_inplace */
-         0,                     /* src_mask */
-         0,                     /* dst_mask */
-         FALSE),                /* pcrel_offset */
+	 0,			/* rightshift */
+	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 0,			/* bitsize */
+	 FALSE,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_dont, /* complain_on_overflow */
+	 NULL,			/* special_function */
+	 "R_FR30_GNU_VTINHERIT", /* name */
+	 FALSE,			/* partial_inplace */
+	 0,			/* src_mask */
+	 0,			/* dst_mask */
+	 FALSE),		/* pcrel_offset */
 
   /* GNU extension to record C++ vtable member usage */
-  HOWTO (R_FR30_GNU_VTENTRY,     /* type */
-         0,                     /* rightshift */
-         2,                     /* size (0 = byte, 1 = short, 2 = long) */
-         0,                     /* bitsize */
-         FALSE,                 /* pc_relative */
-         0,                     /* bitpos */
-         complain_overflow_dont, /* complain_on_overflow */
-         _bfd_elf_rel_vtable_reloc_fn,  /* special_function */
-         "R_FR30_GNU_VTENTRY",   /* name */
-         FALSE,                 /* partial_inplace */
-         0,                     /* src_mask */
-         0,                     /* dst_mask */
-         FALSE),                /* pcrel_offset */
+  HOWTO (R_FR30_GNU_VTENTRY,	 /* type */
+	 0,			/* rightshift */
+	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 0,			/* bitsize */
+	 FALSE,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_dont, /* complain_on_overflow */
+	 _bfd_elf_rel_vtable_reloc_fn,	/* special_function */
+	 "R_FR30_GNU_VTENTRY",	 /* name */
+	 FALSE,			/* partial_inplace */
+	 0,			/* src_mask */
+	 0,			/* dst_mask */
+	 FALSE),		/* pcrel_offset */
 };
 
 /* Utility to actually perform an R_FR30_20 reloc.  */
@@ -321,11 +321,11 @@ struct fr30_reloc_map
 
 static const struct fr30_reloc_map fr30_reloc_map [] =
 {
-  { BFD_RELOC_NONE,           R_FR30_NONE },
-  { BFD_RELOC_8,              R_FR30_8 },
-  { BFD_RELOC_FR30_20,        R_FR30_20 },
-  { BFD_RELOC_32,             R_FR30_32 },
-  { BFD_RELOC_FR30_48,        R_FR30_48 },
+  { BFD_RELOC_NONE,	      R_FR30_NONE },
+  { BFD_RELOC_8,	      R_FR30_8 },
+  { BFD_RELOC_FR30_20,	      R_FR30_20 },
+  { BFD_RELOC_32,	      R_FR30_32 },
+  { BFD_RELOC_FR30_48,	      R_FR30_48 },
   { BFD_RELOC_FR30_6_IN_4,    R_FR30_6_IN_4 },
   { BFD_RELOC_FR30_8_IN_8,    R_FR30_8_IN_8 },
   { BFD_RELOC_FR30_9_IN_8,    R_FR30_9_IN_8 },
@@ -377,6 +377,7 @@ fr30_info_to_howto_rela (bfd *abfd ATTRIBUTE_UNUSED,
   r_type = ELF32_R_TYPE (dst->r_info);
   if (r_type >= (unsigned int) R_FR30_max)
     {
+      /* xgettext:c-format */
       _bfd_error_handler (_("%B: invalid FR30 reloc number: %d"), abfd, r_type);
       r_type = 0;
     }
@@ -662,37 +663,33 @@ fr30_elf_check_relocs (bfd *abfd,
 
       r_symndx = ELF32_R_SYM (rel->r_info);
       if (r_symndx < symtab_hdr->sh_info)
-        h = NULL;
+	h = NULL;
       else
 	{
 	  h = sym_hashes[r_symndx - symtab_hdr->sh_info];
 	  while (h->root.type == bfd_link_hash_indirect
 		 || h->root.type == bfd_link_hash_warning)
 	    h = (struct elf_link_hash_entry *) h->root.u.i.link;
-
-	  /* PR15323, ref flags aren't set for references in the same
-	     object.  */
-	  h->root.non_ir_ref = 1;
 	}
 
       switch (ELF32_R_TYPE (rel->r_info))
-        {
-        /* This relocation describes the C++ object vtable hierarchy.
-           Reconstruct it for later use during GC.  */
-        case R_FR30_GNU_VTINHERIT:
-          if (!bfd_elf_gc_record_vtinherit (abfd, sec, h, rel->r_offset))
-            return FALSE;
-          break;
+	{
+	/* This relocation describes the C++ object vtable hierarchy.
+	   Reconstruct it for later use during GC.  */
+	case R_FR30_GNU_VTINHERIT:
+	  if (!bfd_elf_gc_record_vtinherit (abfd, sec, h, rel->r_offset))
+	    return FALSE;
+	  break;
 
-        /* This relocation describes which C++ vtable entries are actually
-           used.  Record for later use during GC.  */
-        case R_FR30_GNU_VTENTRY:
-          BFD_ASSERT (h != NULL);
-          if (h != NULL
-              && !bfd_elf_gc_record_vtentry (abfd, sec, h, rel->r_addend))
-            return FALSE;
-          break;
-        }
+	/* This relocation describes which C++ vtable entries are actually
+	   used.  Record for later use during GC.  */
+	case R_FR30_GNU_VTENTRY:
+	  BFD_ASSERT (h != NULL);
+	  if (h != NULL
+	      && !bfd_elf_gc_record_vtentry (abfd, sec, h, rel->r_addend))
+	    return FALSE;
+	  break;
+	}
     }
 
   return TRUE;
@@ -703,19 +700,19 @@ fr30_elf_check_relocs (bfd *abfd,
 #define ELF_MACHINE_ALT1	EM_CYGNUS_FR30
 #define ELF_MAXPAGESIZE		0x1000
 
-#define TARGET_BIG_SYM          fr30_elf32_vec
+#define TARGET_BIG_SYM		fr30_elf32_vec
 #define TARGET_BIG_NAME		"elf32-fr30"
 
 #define elf_info_to_howto_rel			NULL
 #define elf_info_to_howto			fr30_info_to_howto_rela
 #define elf_backend_relocate_section		fr30_elf_relocate_section
 #define elf_backend_gc_mark_hook		fr30_elf_gc_mark_hook
-#define elf_backend_check_relocs                fr30_elf_check_relocs
+#define elf_backend_check_relocs		fr30_elf_check_relocs
 
 #define elf_backend_can_gc_sections		1
 #define elf_backend_rela_normal			1
 
 #define bfd_elf32_bfd_reloc_type_lookup		fr30_reloc_type_lookup
-#define bfd_elf32_bfd_reloc_name_lookup	fr30_reloc_name_lookup
+#define bfd_elf32_bfd_reloc_name_lookup		fr30_reloc_name_lookup
 
 #include "elf32-target.h"

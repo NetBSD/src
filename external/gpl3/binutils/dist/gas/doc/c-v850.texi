@@ -1,4 +1,4 @@
-@c Copyright (C) 1997-2016 Free Software Foundation, Inc.
+@c Copyright (C) 1997-2018 Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
 
@@ -411,7 +411,7 @@ register 6.
 @cindex @code{sdaoff} pseudo-op, V850
 @item sdaoff()
 Computes the offset of the named variable from the start of the Small
-Data Area (whoes address is held in register 4, the GP register) and
+Data Area (whose address is held in register 4, the GP register) and
 stores the result as a 16 bit signed value in the immediate operand
 field of the given instruction.  For example:
 
@@ -428,7 +428,7 @@ command line option].
 @cindex @code{tdaoff} pseudo-op, V850
 @item tdaoff()
 Computes the offset of the named variable from the start of the Tiny
-Data Area (whoes address is held in register 30, the EP register) and
+Data Area (whose address is held in register 30, the EP register) and
 stores the result as a 4,5, 7 or 8 bit unsigned value in the immediate
 operand field of the given instruction.  For example:
 
@@ -458,14 +458,14 @@ the offsets are signed).
 @cindex @code{ctoff} pseudo-op, V850
 @item ctoff()
 Computes the offset of the named variable from the start of the Call
-Table Area (whoes address is helg in system register 20, the CTBP
+Table Area (whose address is held in system register 20, the CTBP
 register) and stores the result a 6 or 16 bit unsigned value in the
 immediate field of then given instruction or piece of data.  For
 example:
 
      @samp{callt ctoff(table_func1)}
 
-will put the call the function whoes address is held in the call table
+will put the call the function whose address is held in the call table
 at the location labeled 'table_func1'.
 
 @cindex @code{longcall} pseudo-op, V850

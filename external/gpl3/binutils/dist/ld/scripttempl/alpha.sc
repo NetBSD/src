@@ -3,8 +3,8 @@
 # These variables may be overridden by the emulation file.  The
 # defaults are appropriate for an Alpha running OSF/1.
 #
-# Copyright (C) 2014-2016 Free Software Foundation, Inc.
-# 
+# Copyright (C) 2014-2018 Free Software Foundation, Inc.
+#
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
 # notice and this notice are preserved.
@@ -17,7 +17,7 @@ else
   test -z "$DATA_ADDR" && DATA_ADDR=0x140000000
 fi
 cat <<EOF
-/* Copyright (C) 2014-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2014-2018 Free Software Foundation, Inc.
 
    Copying and distribution of this script, with or without modification,
    are permitted in any medium without royalty provided the copyright

@@ -1,5 +1,5 @@
 /* BFD back-end data structures for NLM (NetWare Loadable Modules) files.
-   Copyright (C) 1993-2016 Free Software Foundation, Inc.
+   Copyright (C) 1993-2018 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -53,19 +53,19 @@ typedef struct
   struct nlm_relent *relocs;
 } nlmNAME(symbol_type);
 
-extern bfd_boolean        nlm_mkobject                    (bfd *);
-extern bfd_boolean        nlm_set_arch_mach               (bfd *, enum bfd_architecture, unsigned long);
-extern void               nlmNAME (get_symbol_info)       (bfd *, asymbol *, symbol_info *);
-extern long               nlmNAME (get_symtab_upper_bound)(bfd *);
-extern long               nlmNAME (canonicalize_symtab)   (bfd *, asymbol **);
-extern asymbol *          nlmNAME (make_empty_symbol)     (bfd *);
-extern void               nlmNAME (print_symbol)          (bfd *, void *, asymbol *, bfd_print_symbol_type);
-extern long               nlmNAME (get_reloc_upper_bound) (bfd *, asection *);
-extern long               nlmNAME (canonicalize_reloc)    (bfd *, asection *, arelent **, asymbol **);
-extern const bfd_target * nlmNAME (object_p)              (bfd *);
-extern bfd_boolean        nlmNAME (set_arch_mach)         (bfd *, enum bfd_architecture, unsigned long);
-extern bfd_boolean        nlmNAME (set_section_contents)  (bfd *, asection *, const void *, file_ptr, bfd_size_type);
-extern bfd_boolean        nlmNAME (write_object_contents) (bfd *);
+extern bfd_boolean	  nlm_mkobject			  (bfd *);
+extern bfd_boolean	  nlm_set_arch_mach		  (bfd *, enum bfd_architecture, unsigned long);
+extern void		  nlmNAME (get_symbol_info)	  (bfd *, asymbol *, symbol_info *);
+extern long		  nlmNAME (get_symtab_upper_bound)(bfd *);
+extern long		  nlmNAME (canonicalize_symtab)	  (bfd *, asymbol **);
+extern asymbol *	  nlmNAME (make_empty_symbol)	  (bfd *);
+extern void		  nlmNAME (print_symbol)	  (bfd *, void *, asymbol *, bfd_print_symbol_type);
+extern long		  nlmNAME (get_reloc_upper_bound) (bfd *, asection *);
+extern long		  nlmNAME (canonicalize_reloc)	  (bfd *, asection *, arelent **, asymbol **);
+extern const bfd_target * nlmNAME (object_p)		  (bfd *);
+extern bfd_boolean	  nlmNAME (set_arch_mach)	  (bfd *, enum bfd_architecture, unsigned long);
+extern bfd_boolean	  nlmNAME (set_section_contents)  (bfd *, asection *, const void *, file_ptr, bfd_size_type);
+extern bfd_boolean	  nlmNAME (write_object_contents) (bfd *);
 
 /* Some private data is stashed away for future use using the tdata pointer
    in the bfd structure.  */
@@ -192,24 +192,24 @@ struct nlm_backend_data
 };
 
 #define nlm_backend(bfd)   ((struct nlm_backend_data *)((bfd) -> xvec -> backend_data))
-#define nlm_signature(bfd)                 (nlm_backend (bfd) -> signature)
-#define nlm_fixed_header_size(bfd)         (nlm_backend (bfd) -> fixed_header_size)
-#define nlm_optional_prefix_size(bfd)      (nlm_backend (bfd) -> optional_prefix_size)
-#define nlm_architecture(bfd)              (nlm_backend (bfd) -> arch)
-#define nlm_machine(bfd)                   (nlm_backend (bfd) -> mach)
-#define nlm_no_uninitialized_data(bfd)     (nlm_backend (bfd) -> no_uninitialized_data)
-#define nlm_backend_object_p_func(bfd)     (nlm_backend (bfd) -> nlm_backend_object_p)
-#define nlm_write_prefix_func(bfd)         (nlm_backend (bfd) -> nlm_write_prefix)
-#define nlm_read_reloc_func(bfd)           (nlm_backend (bfd) -> nlm_read_reloc)
-#define nlm_mangle_relocs_func(bfd)        (nlm_backend (bfd) -> nlm_mangle_relocs)
-#define nlm_read_import_func(bfd)          (nlm_backend (bfd) -> nlm_read_import)
-#define nlm_write_import_func(bfd)         (nlm_backend (bfd) -> nlm_write_import)
+#define nlm_signature(bfd)		   (nlm_backend (bfd) -> signature)
+#define nlm_fixed_header_size(bfd)	   (nlm_backend (bfd) -> fixed_header_size)
+#define nlm_optional_prefix_size(bfd)	   (nlm_backend (bfd) -> optional_prefix_size)
+#define nlm_architecture(bfd)		   (nlm_backend (bfd) -> arch)
+#define nlm_machine(bfd)		   (nlm_backend (bfd) -> mach)
+#define nlm_no_uninitialized_data(bfd)	   (nlm_backend (bfd) -> no_uninitialized_data)
+#define nlm_backend_object_p_func(bfd)	   (nlm_backend (bfd) -> nlm_backend_object_p)
+#define nlm_write_prefix_func(bfd)	   (nlm_backend (bfd) -> nlm_write_prefix)
+#define nlm_read_reloc_func(bfd)	   (nlm_backend (bfd) -> nlm_read_reloc)
+#define nlm_mangle_relocs_func(bfd)	   (nlm_backend (bfd) -> nlm_mangle_relocs)
+#define nlm_read_import_func(bfd)	   (nlm_backend (bfd) -> nlm_read_import)
+#define nlm_write_import_func(bfd)	   (nlm_backend (bfd) -> nlm_write_import)
 #define nlm_set_public_section_func(bfd)   (nlm_backend (bfd) -> nlm_set_public_section)
-#define nlm_get_public_offset_func(bfd)    (nlm_backend (bfd) -> nlm_get_public_offset)
+#define nlm_get_public_offset_func(bfd)	   (nlm_backend (bfd) -> nlm_get_public_offset)
 #define nlm_swap_fixed_header_in_func(bfd) (nlm_backend (bfd) -> nlm_swap_fhdr_in)
 #define nlm_swap_fixed_header_out_func(bfd)(nlm_backend (bfd) -> nlm_swap_fhdr_out)
-#define nlm_write_external_func(bfd)       (nlm_backend (bfd) -> nlm_write_external)
-#define nlm_write_export_func(bfd)         (nlm_backend (bfd) -> nlm_write_export)
+#define nlm_write_external_func(bfd)	   (nlm_backend (bfd) -> nlm_write_external)
+#define nlm_write_export_func(bfd)	   (nlm_backend (bfd) -> nlm_write_export)
 
 /* The NLM code, data, and uninitialized sections have no names defined
    in the NLM, but bfd wants to give them names, so use the traditional

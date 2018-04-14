@@ -1,5 +1,5 @@
 /* BFD back-end for NewsOS3 (Sony, 68k) binaries.
-   Copyright (C) 1990-2016 Free Software Foundation, Inc.
+   Copyright (C) 1990-2018 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -38,6 +38,6 @@
 #include "aout/aout64.h"
 #include "aout/stab_gnu.h"
 #include "aout/ar.h"
-#include "libaout.h"           /* BFD a.out internal data structures */
+#include "libaout.h"	       /* BFD a.out internal data structures */
 
 #include "aout-target.h"

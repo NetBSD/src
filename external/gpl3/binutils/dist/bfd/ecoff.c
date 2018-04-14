@@ -1,5 +1,5 @@
 /* Generic ECOFF (Extended-COFF) routines.
-   Copyright (C) 1990-2016 Free Software Foundation, Inc.
+   Copyright (C) 1990-2018 Free Software Foundation, Inc.
    Original version by Per Bothner.
    Full support added by Ian Lance Taylor, ian@cygnus.com.
 
@@ -51,31 +51,31 @@
 /* This stuff is somewhat copied from coffcode.h.  */
 static asection bfd_debug_section =
 {
-  /* name,      id,  index, next, prev, flags, user_set_vma,       */
-     "*DEBUG*", 0,   0,     NULL, NULL, 0,     0,
-  /* linker_mark, linker_has_input, gc_mark, compress_status,      */
-     0,           0,                1,       0,
-  /* segment_mark, sec_info_type, use_rela_p,                      */
-     0,            0,             0,
+  /* name,	id,  index, next, prev, flags, user_set_vma,	   */
+     "*DEBUG*", 0,   0,	    NULL, NULL, 0,     0,
+  /* linker_mark, linker_has_input, gc_mark, compress_status,	   */
+     0,		  0,		    1,	     0,
+  /* segment_mark, sec_info_type, use_rela_p,			   */
+     0,		   0,		  0,
   /* sec_flg0, sec_flg1, sec_flg2, sec_flg3, sec_flg4, sec_flg5,   */
-     0,        0,        0,        0,        0,        0,
+     0,	       0,	 0,	   0,	     0,	       0,
   /* vma, lma, size, rawsize, compressed_size, relax, relax_count, */
-     0,   0,   0,    0,       0,               0,     0,
-  /* output_offset, output_section, alignment_power,               */
-     0,             NULL,           0,
+     0,	  0,   0,    0,	      0,	       0,     0,
+  /* output_offset, output_section, alignment_power,		   */
+     0,		    NULL,	    0,
   /* relocation, orelocation, reloc_count, filepos, rel_filepos,   */
-     NULL,       NULL,        0,           0,       0,
-  /* line_filepos, userdata, contents, lineno, lineno_count,       */
-     0,            NULL,     NULL,     NULL,   0,
-  /* entsize, kept_section, moving_line_filepos,                   */
-     0,       NULL,         0,
-  /* target_index, used_by_bfd, constructor_chain, owner,          */
-     0,            NULL,        NULL,              NULL,
-  /* symbol,                                                       */
+     NULL,	 NULL,	      0,	   0,	    0,
+  /* line_filepos, userdata, contents, lineno, lineno_count,	   */
+     0,		   NULL,     NULL,     NULL,   0,
+  /* entsize, kept_section, moving_line_filepos,		   */
+     0,	      NULL,	    0,
+  /* target_index, used_by_bfd, constructor_chain, owner,	   */
+     0,		   NULL,	NULL,		   NULL,
+  /* symbol,							   */
      NULL,
-  /* symbol_ptr_ptr,                                               */
+  /* symbol_ptr_ptr,						   */
      NULL,
-  /* map_head, map_tail                                            */
+  /* map_head, map_tail						   */
      { NULL }, { NULL }
 };
 
@@ -294,29 +294,29 @@ ecoff_sec_to_styp_flags (const char *name, flagword flags)
   }
   styp_flags [] =
   {
-    { _TEXT,    STYP_TEXT       },
-    { _DATA,    STYP_DATA       },
-    { _SDATA,   STYP_SDATA      },
-    { _RDATA,   STYP_RDATA      },
-    { _LITA,    STYP_LITA       },
-    { _LIT8,    STYP_LIT8       },
-    { _LIT4,    STYP_LIT4       },
-    { _BSS,     STYP_BSS        },
-    { _SBSS,    STYP_SBSS       },
-    { _INIT,    STYP_ECOFF_INIT },
-    { _FINI,    STYP_ECOFF_FINI },
-    { _PDATA,   STYP_PDATA      },
-    { _XDATA,   STYP_XDATA      },
-    { _LIB,     STYP_ECOFF_LIB  },
-    { _GOT,     STYP_GOT        },
-    { _HASH,    STYP_HASH       },
-    { _DYNAMIC, STYP_DYNAMIC    },
-    { _LIBLIST, STYP_LIBLIST    },
-    { _RELDYN,  STYP_RELDYN     },
-    { _CONFLIC, STYP_CONFLIC    },
-    { _DYNSTR,  STYP_DYNSTR     },
-    { _DYNSYM,  STYP_DYNSYM     },
-    { _RCONST,  STYP_RCONST     }
+    { _TEXT,	STYP_TEXT	},
+    { _DATA,	STYP_DATA	},
+    { _SDATA,	STYP_SDATA	},
+    { _RDATA,	STYP_RDATA	},
+    { _LITA,	STYP_LITA	},
+    { _LIT8,	STYP_LIT8	},
+    { _LIT4,	STYP_LIT4	},
+    { _BSS,	STYP_BSS	},
+    { _SBSS,	STYP_SBSS	},
+    { _INIT,	STYP_ECOFF_INIT },
+    { _FINI,	STYP_ECOFF_FINI },
+    { _PDATA,	STYP_PDATA	},
+    { _XDATA,	STYP_XDATA	},
+    { _LIB,	STYP_ECOFF_LIB	},
+    { _GOT,	STYP_GOT	},
+    { _HASH,	STYP_HASH	},
+    { _DYNAMIC, STYP_DYNAMIC	},
+    { _LIBLIST, STYP_LIBLIST	},
+    { _RELDYN,	STYP_RELDYN	},
+    { _CONFLIC, STYP_CONFLIC	},
+    { _DYNSTR,	STYP_DYNSTR	},
+    { _DYNSYM,	STYP_DYNSYM	},
+    { _RCONST,	STYP_RCONST	}
   };
   long styp = 0;
 
@@ -697,11 +697,11 @@ ecoff_set_symbol_info (bfd *abfd,
     {
       asym->flags = BSF_LOCAL;
       /* Normally, a local stProc symbol will have a corresponding
-         external symbol.  We mark the local symbol as a debugging
-         symbol, in order to prevent nm from printing both out.
-         Similarly, we mark stLabel and stabs symbols as debugging
-         symbols.  In both cases, we do want to set the value
-         correctly based on the symbol class.  */
+	 external symbol.  We mark the local symbol as a debugging
+	 symbol, in order to prevent nm from printing both out.
+	 Similarly, we mark stLabel and stabs symbols as debugging
+	 symbols.  In both cases, we do want to set the value
+	 correctly based on the symbol class.  */
       if (ecoff_sym->st == stProc
 	  || ecoff_sym->st == stLabel
 	  || ECOFF_IS_STAB (ecoff_sym))
@@ -959,8 +959,9 @@ _bfd_ecoff_slurp_symbol_table (bfd *abfd)
   if (internal_ptr - internal < (ptrdiff_t) bfd_get_symcount (abfd))
     {
       bfd_get_symcount (abfd) = internal_ptr - internal;
-      (*_bfd_error_handler)
-	(_("%B: warning: isymMax (%ld) is greater than ifdMax (%d)\n"),
+      _bfd_error_handler
+	/* xgettext:c-format */
+	(_("%B: warning: isymMax (%ld) is greater than ifdMax (%ld)"),
 	 abfd, ecoff_data (abfd)->debug_info.symbolic_header.isymMax,
 	 ecoff_data (abfd)->debug_info.symbolic_header.ifdMax);
     }
@@ -1277,12 +1278,12 @@ ecoff_type_to_string (bfd *abfd, FDR *fdr, unsigned int indx)
   if (qualifiers[0].type != tqNil)
     {
       /* Snarf up any array bounds in the correct order.  Arrays
-         store 5 successive words in the aux. table:
-        	word 0	RNDXR to type of the bounds (ie, int)
-        	word 1	Current file descriptor index
-        	word 2	low bound
-        	word 3	high bound (or -1 if [])
-        	word 4	stride size in bits.  */
+	 store 5 successive words in the aux. table:
+		word 0	RNDXR to type of the bounds (ie, int)
+		word 1	Current file descriptor index
+		word 2	low bound
+		word 3	high bound (or -1 if [])
+		word 4	stride size in bits.  */
       for (i = 0; i < 7; i++)
 	{
 	  if (qualifiers[i].type == tqArray)
@@ -1536,6 +1537,7 @@ _bfd_ecoff_print_symbol (bfd *abfd,
 		if (ECOFF_IS_STAB (&ecoff_ext.asym))
 		  ;
 		else if (ecoffsymbol (symbol)->local)
+		  /* xgettext:c-format */
 		  fprintf (file, _("\n      End+1 symbol: %-7ld   Type:  %s"),
 			   ((long)
 			    (AUX_GET_ISYM (bigendian,
@@ -1754,7 +1756,7 @@ _bfd_ecoff_find_nearest_line (bfd *abfd,
       bfd_size_type amt = sizeof (struct ecoff_find_line);
 
       ecoff_data (abfd)->find_line_info =
-          (struct ecoff_find_line *) bfd_zalloc (abfd, amt);
+	  (struct ecoff_find_line *) bfd_zalloc (abfd, amt);
       if (ecoff_data (abfd)->find_line_info == NULL)
 	return FALSE;
     }
@@ -2064,8 +2066,8 @@ ecoff_compute_section_file_positions (bfd *abfd)
 	       && (abfd->flags & D_PAGED) != 0)
 	{
 	  /* Skip up to the next page for an unallocated section, such
-             as the .comment section on the Alpha.  This leaves room
-             for the .bss section.  */
+	     as the .comment section on the Alpha.  This leaves room
+	     for the .bss section.  */
 	  first_nonalloc = FALSE;
 	  sofar = (sofar + round - 1) &~ (round - 1);
 	  file_sofar = (file_sofar + round - 1) &~ (round - 1);
@@ -2830,19 +2832,19 @@ _bfd_ecoff_write_object_contents (bfd *abfd)
 
    The Alpha seems to use ________64E[BL]E[BL]_.  */
 
-#define ARMAP_BIG_ENDIAN 		'B'
-#define ARMAP_LITTLE_ENDIAN 		'L'
-#define ARMAP_MARKER 			'E'
-#define ARMAP_START_LENGTH 		10
+#define ARMAP_BIG_ENDIAN		'B'
+#define ARMAP_LITTLE_ENDIAN		'L'
+#define ARMAP_MARKER			'E'
+#define ARMAP_START_LENGTH		10
 #define ARMAP_HEADER_MARKER_INDEX	10
-#define ARMAP_HEADER_ENDIAN_INDEX 	11
-#define ARMAP_OBJECT_MARKER_INDEX 	12
-#define ARMAP_OBJECT_ENDIAN_INDEX 	13
-#define ARMAP_END_INDEX 		14
-#define ARMAP_END 			"_ "
+#define ARMAP_HEADER_ENDIAN_INDEX	11
+#define ARMAP_OBJECT_MARKER_INDEX	12
+#define ARMAP_OBJECT_ENDIAN_INDEX	13
+#define ARMAP_END_INDEX			14
+#define ARMAP_END			"_ "
 
 /* This is a magic number used in the hashing algorithm.  */
-#define ARMAP_HASH_MAGIC 		0x9dd68ab5
+#define ARMAP_HASH_MAGIC		0x9dd68ab5
 
 /* This returns the hash value to use for a string.  It also sets
    *REHASH to the rehash adjustment if the first slot is taken.  SIZE
@@ -3757,17 +3759,17 @@ ecoff_final_link_debug_accumulate (bfd *output_bfd,
   else									 \
     {									 \
       bfd_size_type amt = (bfd_size_type) size * symhdr->count;		 \
-      debug->ptr = (type) bfd_malloc (amt);                              \
+      debug->ptr = (type) bfd_malloc (amt);				 \
       if (debug->ptr == NULL)						 \
 	{								 \
-          ret = FALSE;							 \
-          goto return_something;					 \
+	  ret = FALSE;							 \
+	  goto return_something;					 \
 	}								 \
       if (bfd_seek (input_bfd, (file_ptr) symhdr->offset, SEEK_SET) != 0 \
 	  || bfd_bread (debug->ptr, amt, input_bfd) != amt)		 \
 	{								 \
-          ret = FALSE;							 \
-          goto return_something;					 \
+	  ret = FALSE;							 \
+	  goto return_something;					 \
 	}								 \
     }
 
@@ -3967,7 +3969,7 @@ ecoff_reloc_link_order (bfd *output_bfd,
       struct bfd_link_hash_entry *h;
 
       /* Treat a reloc against a defined symbol as though it were
-         actually against the section.  */
+	 actually against the section.  */
       h = bfd_wrapped_link_hash_lookup (output_bfd, info,
 					link_order->u.reloc.p->u.name,
 					FALSE, FALSE, FALSE);
@@ -3978,8 +3980,8 @@ ecoff_reloc_link_order (bfd *output_bfd,
 	  type = bfd_section_reloc_link_order;
 	  section = h->u.def.section->output_section;
 	  /* It seems that we ought to add the symbol value to the
-             addend here, but in practice it has already been added
-             because it was passed to constructor_callback.  */
+	     addend here, but in practice it has already been added
+	     because it was passed to constructor_callback.  */
 	  addend += section->vma + h->u.def.section->output_offset;
 	}
       else

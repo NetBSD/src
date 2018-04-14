@@ -1,5 +1,5 @@
 /* BFD backend for SunOS binaries.
-   Copyright (C) 1990-2016 Free Software Foundation, Inc.
+   Copyright (C) 1990-2018 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -42,29 +42,29 @@
        && bfd_lookup_arch (bfd_arch_m68k, 0) != NULL))
 
 #define MY_get_dynamic_symtab_upper_bound  sunos_get_dynamic_symtab_upper_bound
-#define MY_canonicalize_dynamic_symtab     sunos_canonicalize_dynamic_symtab
-#define MY_get_synthetic_symtab            _bfd_nodynamic_get_synthetic_symtab
+#define MY_canonicalize_dynamic_symtab	   sunos_canonicalize_dynamic_symtab
+#define MY_get_synthetic_symtab		   _bfd_nodynamic_get_synthetic_symtab
 #define MY_get_dynamic_reloc_upper_bound   sunos_get_dynamic_reloc_upper_bound
-#define MY_canonicalize_dynamic_reloc      sunos_canonicalize_dynamic_reloc
-#define MY_bfd_link_hash_table_create      sunos_link_hash_table_create
-#define MY_add_dynamic_symbols             sunos_add_dynamic_symbols
-#define MY_add_one_symbol                  sunos_add_one_symbol
-#define MY_link_dynamic_object             sunos_link_dynamic_object
-#define MY_write_dynamic_symbol            sunos_write_dynamic_symbol
-#define MY_check_dynamic_reloc             sunos_check_dynamic_reloc
-#define MY_finish_dynamic_link             sunos_finish_dynamic_link
+#define MY_canonicalize_dynamic_reloc	   sunos_canonicalize_dynamic_reloc
+#define MY_bfd_link_hash_table_create	   sunos_link_hash_table_create
+#define MY_add_dynamic_symbols		   sunos_add_dynamic_symbols
+#define MY_add_one_symbol		   sunos_add_one_symbol
+#define MY_link_dynamic_object		   sunos_link_dynamic_object
+#define MY_write_dynamic_symbol		   sunos_write_dynamic_symbol
+#define MY_check_dynamic_reloc		   sunos_check_dynamic_reloc
+#define MY_finish_dynamic_link		   sunos_finish_dynamic_link
 
-static bfd_boolean sunos_add_dynamic_symbols            (bfd *, struct bfd_link_info *, struct external_nlist **, bfd_size_type *, char **);
-static bfd_boolean sunos_add_one_symbol                 (struct bfd_link_info *, bfd *, const char *, flagword, asection *, bfd_vma, const char *, bfd_boolean, bfd_boolean, struct bfd_link_hash_entry **);
-static bfd_boolean sunos_link_dynamic_object            (struct bfd_link_info *, bfd *);
-static bfd_boolean sunos_write_dynamic_symbol           (bfd *, struct bfd_link_info *, struct aout_link_hash_entry *);
-static bfd_boolean sunos_check_dynamic_reloc            (struct bfd_link_info *, bfd *, asection *, struct aout_link_hash_entry *, void *, bfd_byte *, bfd_boolean *, bfd_vma *);
-static bfd_boolean sunos_finish_dynamic_link            (bfd *, struct bfd_link_info *);
-static struct bfd_link_hash_table *sunos_link_hash_table_create  (bfd *);
-static long        sunos_get_dynamic_symtab_upper_bound (bfd *);
-static long        sunos_canonicalize_dynamic_symtab    (bfd *, asymbol **);
-static long        sunos_get_dynamic_reloc_upper_bound  (bfd *);
-static long        sunos_canonicalize_dynamic_reloc     (bfd *, arelent **, asymbol **);
+static bfd_boolean sunos_add_dynamic_symbols		(bfd *, struct bfd_link_info *, struct external_nlist **, bfd_size_type *, char **);
+static bfd_boolean sunos_add_one_symbol			(struct bfd_link_info *, bfd *, const char *, flagword, asection *, bfd_vma, const char *, bfd_boolean, bfd_boolean, struct bfd_link_hash_entry **);
+static bfd_boolean sunos_link_dynamic_object		(struct bfd_link_info *, bfd *);
+static bfd_boolean sunos_write_dynamic_symbol		(bfd *, struct bfd_link_info *, struct aout_link_hash_entry *);
+static bfd_boolean sunos_check_dynamic_reloc		(struct bfd_link_info *, bfd *, asection *, struct aout_link_hash_entry *, void *, bfd_byte *, bfd_boolean *, bfd_vma *);
+static bfd_boolean sunos_finish_dynamic_link		(bfd *, struct bfd_link_info *);
+static struct bfd_link_hash_table *sunos_link_hash_table_create	 (bfd *);
+static long	   sunos_get_dynamic_symtab_upper_bound (bfd *);
+static long	   sunos_canonicalize_dynamic_symtab	(bfd *, asymbol **);
+static long	   sunos_get_dynamic_reloc_upper_bound	(bfd *);
+static long	   sunos_canonicalize_dynamic_reloc	(bfd *, arelent **, asymbol **);
 
 /* Include the usual a.out support.  */
 #include "aoutf1.h"
@@ -2314,7 +2314,7 @@ sunos_write_dynamic_symbol (bfd *output_bfd,
 }
 
 /* This is called for each reloc against an external symbol.  If this
-   is a reloc which are are going to copy as a dynamic reloc, then
+   is a reloc which are going to copy as a dynamic reloc, then
    copy it over, and tell the caller to not bother processing this
    reloc.  */
 

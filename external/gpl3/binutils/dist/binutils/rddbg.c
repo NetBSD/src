@@ -1,5 +1,5 @@
 /* rddbg.c -- Read debugging information into a generic form.
-   Copyright (C) 1995-2016 Free Software Foundation, Inc.
+   Copyright (C) 1995-2018 Free Software Foundation, Inc.
    Written by Ian Lance Taylor <ian@cygnus.com>.
 
    This file is part of GNU Binutils.
@@ -299,8 +299,12 @@ read_symbol_stabs_debugging_info (bfd *abfd, asymbol **syms, long symcount,
 	  *pfound = TRUE;
 
 	  s = i.name;
+	  if (s == NULL || strlen (s) < 1)
+	    return FALSE;
 	  f = NULL;
-	  while (s[strlen (s) - 1] == '\\'
+
+	  while (strlen (s) > 0
+		 && s[strlen (s) - 1] == '\\'
 		 && ps + 1 < symend)
 	    {
 	      char *sc, *n;

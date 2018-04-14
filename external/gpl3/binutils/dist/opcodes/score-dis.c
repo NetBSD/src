@@ -1,5 +1,5 @@
 /* Instruction printing code for Score
-   Copyright (C) 2006-2016 Free Software Foundation, Inc.
+   Copyright (C) 2006-2018 Free Software Foundation, Inc.
    Contributed by:
    Brain.lin (brain.lin@sunplusct.com)
    Mei Ligang (ligang@sunnorth.com.cn)
@@ -23,7 +23,7 @@
    MA 02110-1301, USA.  */
 
 #include "sysdep.h"
-#include "dis-asm.h"
+#include "disassemble.h"
 #define DEFINE_TABLE
 #include "opintl.h"
 #include "bfd.h"
@@ -473,6 +473,7 @@ static struct score_opcode score_opcodes[] =
   {0x00003454, 0x3e007fff, "tvc"},
   {0x00000026, 0x3e0003ff, "xor\t\t%20-24r, %15-19r, %10-14r"},
   {0x00000027, 0x3e0003ff, "xor.c\t\t%20-24r, %15-19r, %10-14r"},
+  {0,0,NULL}
 };
 
 

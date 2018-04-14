@@ -1,5 +1,5 @@
 /* xSYM symbol-file support for BFD.
-   Copyright (C) 1999-2016 Free Software Foundation, Inc.
+   Copyright (C) 1999-2018 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -26,40 +26,41 @@
 #include "bfd.h"
 #include "libbfd.h"
 
-#define bfd_sym_close_and_cleanup                   _bfd_generic_close_and_cleanup
-#define bfd_sym_bfd_free_cached_info                _bfd_generic_bfd_free_cached_info
-#define bfd_sym_new_section_hook                    _bfd_generic_new_section_hook
-#define bfd_sym_bfd_is_local_label_name             bfd_generic_is_local_label_name
-#define bfd_sym_bfd_is_target_special_symbol       ((bfd_boolean (*) (bfd *, asymbol *)) bfd_false)
-#define bfd_sym_get_lineno                          _bfd_nosymbols_get_lineno
-#define bfd_sym_find_nearest_line                   _bfd_nosymbols_find_nearest_line
-#define bfd_sym_find_line                           _bfd_nosymbols_find_line
-#define bfd_sym_find_inliner_info                   _bfd_nosymbols_find_inliner_info
+#define bfd_sym_close_and_cleanup		    _bfd_generic_close_and_cleanup
+#define bfd_sym_bfd_free_cached_info		    _bfd_generic_bfd_free_cached_info
+#define bfd_sym_new_section_hook		    _bfd_generic_new_section_hook
+#define bfd_sym_bfd_is_local_label_name		    bfd_generic_is_local_label_name
+#define bfd_sym_bfd_is_target_special_symbol	   ((bfd_boolean (*) (bfd *, asymbol *)) bfd_false)
+#define bfd_sym_get_lineno			    _bfd_nosymbols_get_lineno
+#define bfd_sym_find_nearest_line		    _bfd_nosymbols_find_nearest_line
+#define bfd_sym_find_line			    _bfd_nosymbols_find_line
+#define bfd_sym_find_inliner_info		    _bfd_nosymbols_find_inliner_info
 #define bfd_sym_get_symbol_version_string	    _bfd_nosymbols_get_symbol_version_string
-#define bfd_sym_bfd_make_debug_symbol               _bfd_nosymbols_bfd_make_debug_symbol
-#define bfd_sym_read_minisymbols                    _bfd_generic_read_minisymbols
-#define bfd_sym_minisymbol_to_symbol                _bfd_generic_minisymbol_to_symbol
-#define bfd_sym_set_arch_mach                       _bfd_generic_set_arch_mach
-#define bfd_sym_get_section_contents                _bfd_generic_get_section_contents
-#define bfd_sym_set_section_contents                _bfd_generic_set_section_contents
+#define bfd_sym_bfd_make_debug_symbol		    _bfd_nosymbols_bfd_make_debug_symbol
+#define bfd_sym_read_minisymbols		    _bfd_generic_read_minisymbols
+#define bfd_sym_minisymbol_to_symbol		    _bfd_generic_minisymbol_to_symbol
+#define bfd_sym_set_arch_mach			    _bfd_generic_set_arch_mach
+#define bfd_sym_get_section_contents		    _bfd_generic_get_section_contents
+#define bfd_sym_set_section_contents		    _bfd_generic_set_section_contents
 #define bfd_sym_bfd_get_relocated_section_contents  bfd_generic_get_relocated_section_contents
-#define bfd_sym_bfd_relax_section                   bfd_generic_relax_section
-#define bfd_sym_bfd_gc_sections                     bfd_generic_gc_sections
-#define bfd_sym_bfd_lookup_section_flags            bfd_generic_lookup_section_flags
-#define bfd_sym_bfd_merge_sections                  bfd_generic_merge_sections
-#define bfd_sym_bfd_is_group_section                bfd_generic_is_group_section
-#define bfd_sym_bfd_discard_group                   bfd_generic_discard_group
-#define bfd_sym_section_already_linked              _bfd_generic_section_already_linked
-#define bfd_sym_bfd_define_common_symbol            bfd_generic_define_common_symbol
-#define bfd_sym_bfd_link_hash_table_create          _bfd_generic_link_hash_table_create
-#define bfd_sym_bfd_link_add_symbols                _bfd_generic_link_add_symbols
-#define bfd_sym_bfd_link_just_syms                  _bfd_generic_link_just_syms
+#define bfd_sym_bfd_relax_section		    bfd_generic_relax_section
+#define bfd_sym_bfd_gc_sections			    bfd_generic_gc_sections
+#define bfd_sym_bfd_lookup_section_flags	    bfd_generic_lookup_section_flags
+#define bfd_sym_bfd_merge_sections		    bfd_generic_merge_sections
+#define bfd_sym_bfd_is_group_section		    bfd_generic_is_group_section
+#define bfd_sym_bfd_discard_group		    bfd_generic_discard_group
+#define bfd_sym_section_already_linked		    _bfd_generic_section_already_linked
+#define bfd_sym_bfd_define_common_symbol	    bfd_generic_define_common_symbol
+#define bfd_sym_bfd_define_start_stop		    bfd_generic_define_start_stop
+#define bfd_sym_bfd_link_hash_table_create	    _bfd_generic_link_hash_table_create
+#define bfd_sym_bfd_link_add_symbols		    _bfd_generic_link_add_symbols
+#define bfd_sym_bfd_link_just_syms		    _bfd_generic_link_just_syms
 #define bfd_sym_bfd_copy_link_hash_symbol_type \
   _bfd_generic_copy_link_hash_symbol_type
-#define bfd_sym_bfd_final_link                      _bfd_generic_final_link
-#define bfd_sym_bfd_link_split_section              _bfd_generic_link_split_section
-#define bfd_sym_get_section_contents_in_window      _bfd_generic_get_section_contents_in_window
-#define bfd_sym_bfd_link_check_relocs               _bfd_generic_link_check_relocs
+#define bfd_sym_bfd_final_link			    _bfd_generic_final_link
+#define bfd_sym_bfd_link_split_section		    _bfd_generic_link_split_section
+#define bfd_sym_get_section_contents_in_window	    _bfd_generic_get_section_contents_in_window
+#define bfd_sym_bfd_link_check_relocs		    _bfd_generic_link_check_relocs
 
 extern const bfd_target sym_vec;
 

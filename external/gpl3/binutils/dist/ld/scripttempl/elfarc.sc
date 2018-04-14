@@ -26,15 +26,15 @@
 #	DATA_PLT - .plt should be in data segment, not text segment.
 #	BSS_PLT - .plt should be in bss segment
 #	TEXT_DYNAMIC - .dynamic in text segment, not data segment.
-#	EMBEDDED - whether this is for an embedded system. 
+#	EMBEDDED - whether this is for an embedded system.
 #	SHLIB_TEXT_START_ADDR - if set, add to SIZEOF_HEADERS to set
 #		start address of shared library.
 #	INPUT_FILES - INPUT command of files to always include
 #	WRITABLE_RODATA - if set, the .rodata section should be writable
 #	INIT_START, INIT_END -  statements just before and just after
-# 	combination of .init sections.
+#	combination of .init sections.
 #	FINI_START, FINI_END - statements just before and just after
-# 	combination of .fini sections.
+#	combination of .fini sections.
 #	STACK_ADDR - start of a .stack section.
 #	OTHER_END_SYMBOLS - symbols to place right at the end of the script.
 #
@@ -103,7 +103,7 @@ if test -z "${NO_SMALL_DATA}"; then
   SDATA="/* We want the small data sections together, so single-instruction offsets
      can access them all, and initialized data all before uninitialized, so
      we can shorten the on-disk segment size.  */
-  .sdata        ${RELOCATING-0} : 
+  .sdata        ${RELOCATING-0} :
   {
     ${RELOCATING+${SDATA_START_SYMBOLS}}
     *(.sdata${RELOCATING+ .sdata.* .gnu.linkonce.s.*})
@@ -118,7 +118,7 @@ if test -z "${NO_SMALL_DATA}"; then
   REL_SBSS2=".rel.sbss2    ${RELOCATING-0} : { *(.rel.sbss2${RELOCATING+ .rel.sbss2.* .rel.gnu.linkonce.sb2.*}) }
   .rela.sbss2   ${RELOCATING-0} : { *(.rela.sbss2${RELOCATING+ .rela.sbss2.* .rela.gnu.linkonce.sb2.*}) }"
 fi
-CTOR=".ctors        ${CONSTRUCTING-0} : 
+CTOR=".ctors        ${CONSTRUCTING-0} :
   {
     ${CONSTRUCTING+${CTOR_START}}
     /* gcc uses crtbegin.o to find the start of
@@ -238,13 +238,13 @@ cat <<EOF
   .rel.dyn      ${RELOCATING-0} :
     {
 EOF
-sed -e '/^[ 	]*[{}][ 	]*$/d;/:[ 	]*$/d;/\.rela\./d;s/^.*: { *\(.*\)}$/      \1/' $COMBRELOC
+sed -e '/^[	 ]*[{}][	 ]*$/d;/:[	 ]*$/d;/\.rela\./d;s/^.*: { *\(.*\)}$/      \1/' $COMBRELOC
 cat <<EOF
     }
   .rela.dyn     ${RELOCATING-0} :
     {
 EOF
-sed -e '/^[ 	]*[{}][ 	]*$/d;/:[ 	]*$/d;/\.rel\./d;s/^.*: { *\(.*\)}/      \1/' $COMBRELOC
+sed -e '/^[	 ]*[{}][	 ]*$/d;/:[	 ]*$/d;/\.rel\./d;s/^.*: { *\(.*\)}/      \1/' $COMBRELOC
 cat <<EOF
     }
 EOF
@@ -254,14 +254,20 @@ cat <<EOF
   .rela.plt     ${RELOCATING-0} : { *(.rela.plt) }
   ${OTHER_PLT_RELOC_SECTIONS}
 
-  .init         ${RELOCATING-0} : 
-  { 
+  .init         ${RELOCATING-0} :
+  {
     ${RELOCATING+${INIT_START}}
     KEEP (*(.init))
     ${RELOCATING+${INIT_END}}
   } =${NOP-0}
 
   ${DATA_PLT-${BSS_PLT-${PLT}}}
+  .jlitab       ${RELOCATING-0} :
+  {
+    ${RELOCATING+${JLI_START_TABLE}}
+    jlitab*.o(.jlitab*)
+    *(.jlitab*)
+  } =${NOP-0}
   .text         ${RELOCATING-0} :
   {
     ${RELOCATING+${TEXT_START_SYMBOLS}}
@@ -376,17 +382,17 @@ cat <<EOF
      the setting from ldflags prevails.  */
   .heap ${RELOCATING-0} :
   {
-        ${RELOCATING+ __start_heap = . ; }
-        ${RELOCATING+ . = . + (DEFINED(__HEAP_SIZE) ? __HEAP_SIZE : (DEFINED(__DEFAULT_HEAP_SIZE) ? __DEFAULT_HEAP_SIZE : 20k))  ; }
-        ${RELOCATING+ __end_heap = . ; }
+	${RELOCATING+ __start_heap = . ; }
+	${RELOCATING+ . = . + (DEFINED(__HEAP_SIZE) ? __HEAP_SIZE : (DEFINED(__DEFAULT_HEAP_SIZE) ? __DEFAULT_HEAP_SIZE : 20k)) ; }
+	${RELOCATING+ __end_heap = . ; }
   }
 
   ${RELOCATING+. = ALIGN(0x8);}
   .stack ${RELOCATING-0} :
   {
-        ${RELOCATING+ __stack = . ; }
-        ${RELOCATING+ . = . + (DEFINED(__STACK_SIZE) ? __STACK_SIZE : (DEFINED(__DEFAULT_STACK_SIZE) ? __DEFAULT_STACK_SIZE : 64k))  ; }
-        ${RELOCATING+ __stack_top = . ; }
+	${RELOCATING+ __stack = . ; }
+	${RELOCATING+ . = . + (DEFINED(__STACK_SIZE) ? __STACK_SIZE : (DEFINED(__DEFAULT_STACK_SIZE) ? __DEFAULT_STACK_SIZE : 64k)) ; }
+	${RELOCATING+ __stack_top = . ; }
   }
 
   /* Stabs debugging sections.  */
@@ -433,7 +439,6 @@ cat <<EOF
   /* ARC Extension Sections */
   .arcextmap	  0 : { *(.gnu.linkonce.arcextmap.*) }
 
-  ${STACK_ADDR+${STACK}}
   ${OTHER_SECTIONS}
   ${RELOCATING+${OTHER_END_SYMBOLS}}
   ${RELOCATING+${STACKNOTE}}

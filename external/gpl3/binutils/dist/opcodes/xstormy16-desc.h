@@ -1,8 +1,9 @@
+/* DO NOT EDIT!  -*- buffer-read-only: t -*- vi:set ro:  */
 /* CPU data header for xstormy16.
 
 THIS FILE IS MACHINE GENERATED WITH CGEN.
 
-Copyright (C) 1996-2016 Free Software Foundation, Inc.
+Copyright (C) 1996-2018 Free Software Foundation, Inc.
 
 This file is part of the GNU Binutils and/or GDB, the GNU debugger.
 
@@ -24,6 +25,10 @@ This file is part of the GNU Binutils and/or GDB, the GNU debugger.
 
 #ifndef XSTORMY16_CPU_H
 #define XSTORMY16_CPU_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #define CGEN_ARCH xstormy16
 
@@ -325,5 +330,9 @@ extern CGEN_KEYWORD xstormy16_cgen_opval_h_wordsize;
 extern const CGEN_HW_ENTRY xstormy16_cgen_hw_table[];
 
 
+
+   #ifdef __cplusplus
+   }
+   #endif
 
 #endif /* XSTORMY16_CPU_H */

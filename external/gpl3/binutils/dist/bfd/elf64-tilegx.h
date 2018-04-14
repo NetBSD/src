@@ -1,5 +1,5 @@
 /* TILE-Gx-specific support for 64-bit ELF.
-   Copyright (C) 2011-2016 Free Software Foundation, Inc.
+   Copyright (C) 2011-2018 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -23,16 +23,16 @@
 
 /* This file contains sizes and offsets of Linux data structures.  */
 
-#define TILEGX_PRSTATUS_SIZEOF           632
+#define TILEGX_PRSTATUS_SIZEOF		 632
 #define TILEGX_PRSTATUS_OFFSET_PR_CURSIG  12
-#define TILEGX_PRSTATUS_OFFSET_PR_PID     32
-#define TILEGX_PRSTATUS_OFFSET_PR_REG    112
+#define TILEGX_PRSTATUS_OFFSET_PR_PID	  32
+#define TILEGX_PRSTATUS_OFFSET_PR_REG	 112
 
-#define TILEGX_PRPSINFO_SIZEOF           136
-#define TILEGX_PRPSINFO_OFFSET_PR_FNAME   40
+#define TILEGX_PRPSINFO_SIZEOF		 136
+#define TILEGX_PRPSINFO_OFFSET_PR_FNAME	  40
 #define TILEGX_PRPSINFO_OFFSET_PR_PSARGS  56
-#define ELF_PR_PSARGS_SIZE                80
+#define ELF_PR_PSARGS_SIZE		  80
 
-#define TILEGX_GREGSET_T_SIZE            512
+#define TILEGX_GREGSET_T_SIZE		 512
 
 #endif /* _ELF64_TILEGX_H */

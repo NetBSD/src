@@ -438,19 +438,19 @@ typedef struct
 
   bfd_boolean (*_bfd_coff_pointerize_aux_hook)
     (bfd *, combined_entry_type *, combined_entry_type *,
-            unsigned int, combined_entry_type *);
+     unsigned int, combined_entry_type *);
 
   bfd_boolean (*_bfd_coff_print_aux)
     (bfd *, FILE *, combined_entry_type *, combined_entry_type *,
-            combined_entry_type *, unsigned int);
+     combined_entry_type *, unsigned int);
 
   void (*_bfd_coff_reloc16_extra_cases)
     (bfd *, struct bfd_link_info *, struct bfd_link_order *, arelent *,
-           bfd_byte *, unsigned int *, unsigned int *);
+     bfd_byte *, unsigned int *, unsigned int *);
 
   int (*_bfd_coff_reloc16_estimate)
     (bfd *, asection *, arelent *, unsigned int,
-            struct bfd_link_info *);
+     struct bfd_link_info *);
 
   enum coff_symbol_classification (*_bfd_coff_classify_symbol)
     (bfd *, struct internal_syment *);
@@ -463,21 +463,20 @@ typedef struct
 
   bfd_boolean (*_bfd_coff_relocate_section)
     (bfd *, struct bfd_link_info *, bfd *, asection *, bfd_byte *,
-            struct internal_reloc *, struct internal_syment *, asection **);
+     struct internal_reloc *, struct internal_syment *, asection **);
 
   reloc_howto_type *(*_bfd_coff_rtype_to_howto)
     (bfd *, asection *, struct internal_reloc *,
-            struct coff_link_hash_entry *, struct internal_syment *,
-            bfd_vma *);
+     struct coff_link_hash_entry *, struct internal_syment *, bfd_vma *);
 
   bfd_boolean (*_bfd_coff_adjust_symndx)
     (bfd *, struct bfd_link_info *, bfd *, asection *,
-            struct internal_reloc *, bfd_boolean *);
+     struct internal_reloc *, bfd_boolean *);
 
   bfd_boolean (*_bfd_coff_link_add_one_symbol)
     (struct bfd_link_info *, bfd *, const char *, flagword,
-            asection *, bfd_vma, const char *, bfd_boolean, bfd_boolean,
-            struct bfd_link_hash_entry **);
+     asection *, bfd_vma, const char *, bfd_boolean, bfd_boolean,
+     struct bfd_link_hash_entry **);
 
   bfd_boolean (*_bfd_coff_link_output_has_begun)
     (bfd *, struct coff_final_link_info *);

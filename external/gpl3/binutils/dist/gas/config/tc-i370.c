@@ -1,6 +1,6 @@
 /* tc-i370.c -- Assembler for the IBM 360/370/390 instruction set.
    Loosely based on the ppc files by Linas Vepstas <linas@linas.org> 1998, 99
-   Copyright (C) 1994-2016 Free Software Foundation, Inc.
+   Copyright (C) 1994-2018 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support.
 
    This file is part of GAS, the GNU Assembler.
@@ -276,7 +276,7 @@ register_name (expressionS *expressionP)
       (void) restore_line_pointer (c);
     }
 
-  /* If numeric, make sure its not out of bounds.  */
+  /* If numeric, make sure it's not out of bounds.  */
   if ((0 <= reg_number) && (16 >= reg_number))
     {
       expressionP->X_op = O_register;
@@ -443,7 +443,7 @@ md_parse_option (int c, const char *arg)
 
 /* Set i370_cpu if it is not already set.
    Currently defaults to the reasonable superset;
-   but can be made more fine grained if desred.  */
+   but can be made more fine grained if desired.  */
 
 static void
 i370_set_cpu (void)
@@ -680,7 +680,9 @@ i370_elf_cons (int nbytes)   /* 1=.byte, 2=.word, 4=.long.  */
           int size = bfd_get_reloc_size (reloc_howto);
 
           if (size > nbytes)
-            as_bad (_("%s relocations do not fit in %d bytes\n"),
+	    as_bad (ngettext ("%s relocations do not fit in %u byte",
+			      "%s relocations do not fit in %u bytes",
+			      nbytes),
 		    reloc_howto->name, nbytes);
           else
             {
@@ -887,7 +889,7 @@ i370_csect (int unused ATTRIBUTE_UNUSED)
 
 
 /* DC Define Const  is only partially supported.
-   For samplecode on what to do, look at i370_elf_cons() above.
+   For sample code on what to do, look at i370_elf_cons() above.
    This code handles pseudoops of the style
    DC   D'3.141592653'   # in sysv4, .double 3.14159265
    DC   F'1'             # in sysv4, .long   1.  */
@@ -956,6 +958,7 @@ i370_dc (int unused ATTRIBUTE_UNUSED)
       break;
     case 'E':  /* 32-bit */
       type = 'f';
+      /* Fall through.  */
     case 'D':  /* 64-bit */
       md_atof (type, tmp, &nbytes);
       p = frag_more (nbytes);
@@ -1186,7 +1189,7 @@ i370_elf_validate_fix (fixS *fixp, segT seg)
    start of each pool part.
 
    lit_pool_num increments from zero to infinity and uniquely id's
-     -- its used to generate the *_poolP symbol name.  */
+     -- it's used to generate the *_poolP symbol name.  */
 
 #define MAX_LITERAL_POOL_SIZE 1024
 
@@ -1324,11 +1327,11 @@ add_to_lit_pool (expressionS *exx, char *name, int sz)
 /* The symbol setup for the literal pool is done in two steps.  First,
    a symbol that represents the start of the literal pool is created,
    above, in the add_to_pool() routine. This sym ???_poolP.
-   However, we don't know what fragment its in until a bit later.
+   However, we don't know what fragment it's in until a bit later.
    So we defer the frag_now thing, and the symbol name, until .ltorg time.  */
 
 /* Can't use symbol_new here, so have to create a symbol and then at
-   a later date assign it a value. Thats what these functions do.  */
+   a later date assign it a value. That's what these functions do.  */
 
 static void
 symbol_locate (symbolS *symbolP,
@@ -1375,7 +1378,7 @@ symbol_locate (symbolS *symbolP,
 }
 
 /* i370_addr_offset() will convert operand expressions
-   that appear to be absolute into thier base-register
+   that appear to be absolute into their base-register
    relative form.  These expressions come in two types:
 
    (1) of the form "* + const" * where "*" means
@@ -1481,7 +1484,7 @@ i370_addr_cons (expressionS *exp)
       expression (exp);
 
       /* We use a simple string name to collapse together
-         multiple refrences to the same address literal.  */
+         multiple references to the same address literal.  */
       name_len = strcspn (sym_name, ", ");
       delim = *(sym_name + name_len);
       *(sym_name + name_len) = 0x0;
@@ -1548,7 +1551,7 @@ i370_addr_cons (expressionS *exp)
 	     =X'AB'       one byte
 	     =X'abcd'     two bytes
 	     =X'000000AB' four bytes
-	     =XL4'AB'     four bytes, left-padded withn zero.  */
+	     =XL4'AB'     four bytes, left-padded with zero.  */
 	  if (('X' == name[0]) && (0 > cons_len))
 	    {
 	      save = input_line_pointer;
@@ -1773,7 +1776,7 @@ i370_drop (int ignore ATTRIBUTE_UNUSED)
   if (0 == strncmp (now_seg->name, ".text", 5))
     {
       if (iregno != i370_using_text_regno)
-	as_bad (_("droping register %d in section %s does not match using register %d"),
+	as_bad (_("dropping register %d in section %s does not match using register %d"),
 		iregno, now_seg->name, i370_using_text_regno);
 
       i370_using_text_regno = -1;
@@ -1782,11 +1785,11 @@ i370_drop (int ignore ATTRIBUTE_UNUSED)
   else
     {
       if (iregno != i370_using_other_regno)
-	as_bad (_("droping register %d in section %s does not match using register %d"),
+	as_bad (_("dropping register %d in section %s does not match using register %d"),
 		iregno, now_seg->name, i370_using_other_regno);
 
       if (i370_other_section != now_seg)
-	as_bad (_("droping register %d in section %s previously used in section %s"),
+	as_bad (_("dropping register %d in section %s previously used in section %s"),
 		iregno, now_seg->name, i370_other_section->name);
 
       i370_using_other_regno = -1;
@@ -2008,9 +2011,9 @@ md_assemble (char *str)
     }
 
   /* Perform some off-by-one hacks on the length field of certain instructions.
-     Its such a shame to have to do this, but the problem is that HLASM got
+     It's such a shame to have to do this, but the problem is that HLASM got
      defined so that the lengths differ by one from the actual machine instructions.
-     this code should probably be moved to a special inster-operand routine.
+     this code should probably be moved to a special inter-operand routine.
      Sigh. Affected instructions are Compare Logical, Move and Exclusive OR
      hack alert -- aren't *all* SS instructions affected ??  */
   off_by_one = 0;
@@ -2114,7 +2117,7 @@ md_assemble (char *str)
       input_line_pointer = hold;
 
       /* Perform some off-by-one hacks on the length field of certain instructions.
-         Its such a shame to have to do this, but the problem is that HLASM got
+         It's such a shame to have to do this, but the problem is that HLASM got
          defined so that the programmer specifies a length that is one greater
          than what the machine instruction wants.  Sigh.  */
       if (off_by_one && (0 == strcasecmp ("SS L", operand->name)))
@@ -2248,7 +2251,7 @@ md_assemble (char *str)
 	  if (size < 1 || size > 4)
 	    abort ();
 
-	  printf (" gwana doo fixup %d \n", i);
+	  printf (" gwana do fixup %d \n", i);
 	  fixP = fix_new_exp (frag_now, f - frag_now->fr_literal, size,
          		      &fixups[i].exp, reloc_howto->pc_relative,
          		      fixups[i].reloc);
@@ -2496,7 +2499,7 @@ md_apply_fix (fixS *fixP, valueT * valP, segT seg)
 	 We are only prepared to turn a few of the operands into
 	 relocs.  In fact, we support *zero* operand relocations ...
 	 Why?  Because we are not expecting the compiler to generate
-	 any operands that need relocation.  Due to the 12-bit naturew of
+	 any operands that need relocation.  Due to the 12-bit nature of
 	 i370 addressing, this would be unusual.  */
         {
           const char *sfile;

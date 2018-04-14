@@ -1,5 +1,5 @@
 /* Disassemble V850 instructions.
-   Copyright (C) 1996-2016 Free Software Foundation, Inc.
+   Copyright (C) 1996-2018 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -23,7 +23,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "opcode/v850.h"
-#include "dis-asm.h"
+#include "disassemble.h"
 #include "opintl.h"
 
 static const char *const v850_reg_names[] =
