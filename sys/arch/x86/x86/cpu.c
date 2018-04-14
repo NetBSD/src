@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.130.2.5 2018/03/22 16:59:04 martin Exp $	*/
+/*	$NetBSD: cpu.c,v 1.130.2.6 2018/04/14 10:11:49 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000-2012 NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.130.2.5 2018/03/22 16:59:04 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.130.2.6 2018/04/14 10:11:49 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -628,6 +628,12 @@ cpu_init(struct cpu_info *ci)
 	if (cpu_feature[5] & CPUID_SEF_SMEP)
 		cr4 |= CR4_SMEP;
 
+#ifdef amd64
+	/* If SMAP is supported, enable it */
+	if (cpu_feature[5] & CPUID_SEF_SMAP)
+		cr4 |= CR4_SMAP;
+#endif
+
 	if (cr4) {
 		cr4 |= rcr4();
 		lcr4(cr4);
@@ -1091,7 +1097,7 @@ cpu_init_msrs(struct cpu_info *ci, bool full)
 	    ((uint64_t)LSEL(LSYSRETBASE_SEL, SEL_UPL) << 48));
 	wrmsr(MSR_LSTAR, (uint64_t)Xsyscall);
 	wrmsr(MSR_CSTAR, (uint64_t)Xsyscall32);
-	wrmsr(MSR_SFMASK, PSL_NT|PSL_T|PSL_I|PSL_C|PSL_D);
+	wrmsr(MSR_SFMASK, PSL_NT|PSL_T|PSL_I|PSL_C|PSL_D|PSL_AC);
 
 #ifdef SVS
 	if (svs_enabled)

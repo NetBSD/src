@@ -1,4 +1,4 @@
-/*	$NetBSD: patch.c,v 1.22.22.1 2018/03/06 10:17:11 martin Exp $	*/
+/*	$NetBSD: patch.c,v 1.22.22.2 2018/04/14 10:11:49 martin Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.22.22.1 2018/03/06 10:17:11 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.22.22.2 2018/04/14 10:11:49 martin Exp $");
 
 #include "opt_lockdebug.h"
 #ifdef i386
@@ -292,6 +292,27 @@ x86_patch(bool early)
 			patchbytes(x86_retpatch[i], bytes, sizeof(bytes));
 		}
 	}
+
+#ifdef amd64
+	/*
+	 * SMAP.
+	 */
+	if (!early && cpu_feature[5] & CPUID_SEF_SMAP) {
+		KASSERT(rcr4() & CR4_SMAP);
+		const uint8_t clac_bytes[] = {
+			0x0F, 0x01, 0xCA /* clac */
+		};
+		const uint8_t stac_bytes[] = {
+			0x0F, 0x01, 0xCB /* stac */
+		};
+
+		/* nop,nop,nop -> clac */
+		x86_hotpatch(HP_NAME_CLAC, clac_bytes, sizeof(clac_bytes));
+
+		/* nop,nop,nop -> stac */
+		x86_hotpatch(HP_NAME_STAC, stac_bytes, sizeof(stac_bytes));
+	}
+#endif
 
 	x86_patch_window_close(psl, cr0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: frameasm.h,v 1.20.32.2 2018/03/22 16:59:03 martin Exp $	*/
+/*	$NetBSD: frameasm.h,v 1.20.32.3 2018/04/14 10:11:49 martin Exp $	*/
 
 #ifndef _AMD64_MACHINE_FRAMEASM_H
 #define _AMD64_MACHINE_FRAMEASM_H
@@ -36,6 +36,8 @@
 #define STI(temp_reg) sti
 #endif	/* XEN */
 
+#define HP_NAME_CLAC		1
+#define HP_NAME_STAC		2
 #define HP_NAME_SVS_ENTER	5
 #define HP_NAME_SVS_LEAVE	6
 #define HP_NAME_SVS_ENTER_ALT	7
@@ -48,6 +50,14 @@
 	.byte		size			; \
 	.quad		123b			; \
 	.popsection
+
+#define SMAP_ENABLE \
+	HOTPATCH(HP_NAME_CLAC, 3)		; \
+	.byte 0x0F, 0x1F, 0x00			; \
+
+#define SMAP_DISABLE \
+	HOTPATCH(HP_NAME_STAC, 3)		; \
+	.byte 0x0F, 0x1F, 0x00			; \
 
 #define	SWAPGS	NOT_XEN(swapgs)
 
@@ -142,6 +152,7 @@
 	subq	$TF_REGSIZE,%rsp	; \
 	INTR_SAVE_GPRS			; \
 	cld				; \
+	SMAP_ENABLE			; \
 	testb	$SEL_UPL,TF_CS(%rsp)	; \
 	je	98f			; \
 	SWAPGS				; \
