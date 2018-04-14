@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.169 2018/04/14 01:45:37 kre Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.170 2018/04/14 01:53:38 kre Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.169 2018/04/14 01:45:37 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.170 2018/04/14 01:53:38 kre Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -484,7 +484,7 @@ putlogpri(int level)
 
 #ifndef KLOG_NOTIMESTAMP
 static int needtstamp = 1;
-int log_ts_prec = 9;
+int log_ts_prec = 7;
 
 static void
 addtstamp(int flags, struct tty *tp)
