@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.181 2018/04/14 03:13:38 snj Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.182 2018/04/14 11:07:16 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -12791,4 +12791,108 @@ distrib/sets/sets.subr				1.184
 	make obsolete lists including compat directory (eg. ./usr/lib/i386)
 	work properly.
 	[nakayama, ticket #747]
+
+sys/arch/amd64/amd64/copy.S		1.29 (adapted, via patch)
+sys/arch/amd64/amd64/amd64_trap.S	1.16,1.19 (partial) (via patch)
+sys/arch/amd64/amd64/trap.c		1.102,1.106 (partial),1.110 (via patch)
+sys/arch/amd64/include/frameasm.h	1.22,1.24 (via patch)
+sys/arch/x86/x86/cpu.c			1.137 (via patch)
+sys/arch/x86/x86/patch.c		1.23,1.26 (partial) (via patch)
+
+	Backport of SMAP support.
+	[maxv, #748]
+
+sys/net/if.h					1.259
+sys/net/route.c					1.209
+sys/net/route.h					1.118
+sys/net/rtsock.c				1.240
+
+	Resolve tangled lock dependencies in route.c
+	[ozaki-r, ticket #749]
+
+sys/dev/pci/ixgbe/if_bypass.c			1.4
+sys/dev/pci/ixgbe/if_fdir.c			1.2
+sys/dev/pci/ixgbe/if_sriov.c			1.3
+sys/dev/pci/ixgbe/ix_txrx.c			1.39
+sys/dev/pci/ixgbe/ixgbe.c			1.144-1.146
+sys/dev/pci/ixgbe/ixgbe.h			1.41
+sys/dev/pci/ixgbe/ixgbe_82598.c			1.11,1.12
+sys/dev/pci/ixgbe/ixgbe_82598.h			1.8
+sys/dev/pci/ixgbe/ixgbe_82599.c			1.18,1.19
+sys/dev/pci/ixgbe/ixgbe_82599.h			1.7
+sys/dev/pci/ixgbe/ixgbe_api.c			1.19,1.20
+sys/dev/pci/ixgbe/ixgbe_api.h			1.13
+sys/dev/pci/ixgbe/ixgbe_common.c		1.21,1.22
+sys/dev/pci/ixgbe/ixgbe_common.h		1.12,1.13
+sys/dev/pci/ixgbe/ixgbe_dcb.c			1.7,1.8
+sys/dev/pci/ixgbe/ixgbe_dcb.h			1.6
+sys/dev/pci/ixgbe/ixgbe_dcb_82598.c		1.6,1.7
+sys/dev/pci/ixgbe/ixgbe_dcb_82598.h		1.6
+sys/dev/pci/ixgbe/ixgbe_dcb_82599.c		1.6,1.7
+sys/dev/pci/ixgbe/ixgbe_dcb_82599.h		1.6
+sys/dev/pci/ixgbe/ixgbe_fdir.h			1.2
+sys/dev/pci/ixgbe/ixgbe_mbx.c			1.10
+sys/dev/pci/ixgbe/ixgbe_mbx.h			1.13
+sys/dev/pci/ixgbe/ixgbe_osdep.c			1.4
+sys/dev/pci/ixgbe/ixgbe_osdep.h			1.21
+sys/dev/pci/ixgbe/ixgbe_phy.c			1.16,1.17
+sys/dev/pci/ixgbe/ixgbe_phy.h			1.11
+sys/dev/pci/ixgbe/ixgbe_rss.h			1.4
+sys/dev/pci/ixgbe/ixgbe_sriov.h			1.3
+sys/dev/pci/ixgbe/ixgbe_type.h			1.33,1.34
+sys/dev/pci/ixgbe/ixgbe_vf.c			1.16,1.17
+sys/dev/pci/ixgbe/ixgbe_vf.h			1.13
+sys/dev/pci/ixgbe/ixgbe_x540.c			1.14,1.15
+sys/dev/pci/ixgbe/ixgbe_x540.h			1.8
+sys/dev/pci/ixgbe/ixgbe_x550.c			1.12
+sys/dev/pci/ixgbe/ixv.c				1.91-1.93
+
+        - Sync with FreeBSD r331224 except sfp_reinit and
+	   ixv_if_update_admin_status() stuff:
+          - Always schedule module interrupt in ixgbe_config_link() when
+            a device is SFP+ based.
+          - Fix length of reading buffer when the command is Read Flash in
+        ixgbe_host_interface_command().
+          - Some fixes unrelated to NetBSD.
+          - Style change.
+          - Update comment.                                                     
+        - Read sc_if_flags after taking core lock.
+	[msaitoh, ticket #750]
+
+sys/dev/pci/pcidevs				1.1308,1.1327
+sys/dev/pci/pcidevs.h				(regen)
+sys/dev/pci/pcidevs_data.h			(regen)
+
+	Add Nvidia GeForce 9400M as found in the late 2009 13"
+	MacBook (MacBook6,1).
+	Add new I219 devices (using with 300 series chipset).
+	[msaitoh, ticket #751]
+
+sys/net/if_vlan.c				1.125
+
+	Fix the handling of the state returned from pfil_run_hooks().
+	[ryo, ticket #752]
+
+sys/arch/x86/include/bootinfo.h			1.29
+
+	x86: Increase BOOTINFO_MAXSIZE to 8Kib.
+	[nonaka, ticket #753]
+
+tools/Makefile.gnuhost				1.45
+
+	GCC build exceeds the macOS clang default bracket nesting
+	level of 256. Work around with -fbracket-depth=512.
+	[maya, ticket #754]
+
+external/bsd/mdocml/dist/term_ascii.c		1.2
+external/bsd/mdocml/include/config.h		1.5
+
+	Re-enable wchar_t support.  mandoc(1) can now fall back to ascii
+	output if the locale is non-UTF-8.
+	[nakayama, ticket #755]
+
+sys/sys/ptrace.h				1.61
+
+	Fix copy & pasto.
+	[kamil, ticket #756]
 
