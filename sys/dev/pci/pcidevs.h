@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1281.2.4 2018/04/09 18:20:09 martin Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1281.2.5 2018/04/14 10:34:02 martin Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1289.2.4 2018/04/09 18:18:49 martin Exp
+ *	NetBSD: pcidevs,v 1.1289.2.5 2018/04/14 10:32:05 martin Exp
  */
 
 /*
@@ -3309,6 +3309,10 @@
 #define	PCI_PRODUCT_INTEL_I219_LM2	0x15b7		/* I219-LM Ethernet Connection */
 #define	PCI_PRODUCT_INTEL_I219_V2	0x15b8		/* I219-V Ethernet Connection */
 #define	PCI_PRODUCT_INTEL_I219_LM3	0x15b9		/* I219-LM Ethernet Connection */
+#define	PCI_PRODUCT_INTEL_I219_LM7	0x15bb		/* I219-LM Ethernet Connection */
+#define	PCI_PRODUCT_INTEL_I219_V7	0x15bc		/* I219-V Ethernet Connection */
+#define	PCI_PRODUCT_INTEL_I219_LM6	0x15bd		/* I219-LM Ethernet Connection */
+#define	PCI_PRODUCT_INTEL_I219_V6	0x15be		/* I219-V Ethernet Connection */
 #define	PCI_PRODUCT_INTEL_C3K_X553_KRKX	0x15c2		/* C3000 X553 Backplane (KR/KX 10G SKU) */
 #define	PCI_PRODUCT_INTEL_C3K_X553_KX_25G	0x15c3		/* C3000 X553 Backplane (KX 2.5G) */
 #define	PCI_PRODUCT_INTEL_C3K_X553_SFI_SFP	0x15c4		/* C3000 X553 10G SFP+ (SFI) */
@@ -6128,6 +6132,7 @@
 #define	PCI_PRODUCT_NVIDIA_MCP73_AHCI_12	0x07fb		/* nForce MCP73 AHCI Controller */
 #define	PCI_PRODUCT_NVIDIA_MCP73_HDA_1	0x07fc		/* nForce MCP73 High Definition Audio Controller */
 #define	PCI_PRODUCT_NVIDIA_MCP73_HDA_2	0x07fd		/* nForce MCP73 High Definition Audio Controller */
+#define	PCI_PRODUCT_NVIDIA_GEFORCE_9400M	0x0863		/* GeForce 9400M */
 #define	PCI_PRODUCT_NVIDIA_GEFORCE_210	0x0a65		/* GeForce 210 */
 #define	PCI_PRODUCT_NVIDIA_MCP79_SMB	0x0aa2		/* nForce MCP79 SMBus Controller */
 #define	PCI_PRODUCT_NVIDIA_MCP79_LAN1	0x0ab0		/* nForce MCP79 Gigabit Ethernet Controller */
