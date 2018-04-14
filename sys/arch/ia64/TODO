@@ -1,0 +1,63 @@
+$ NetBSD: TODO,v 1.1 2018/04/14 12:06:03 scole Exp $
+
+What works:
+  The ski simulator (pkgsrc/emulators/ski) works on NetBSD, can run
+  and step through in assembly.
+
+  Netbooting may work on some machines, basically you need to boot
+  diskless with the loader.efi (from src/sys/arch/ia64/stand/ia64/)
+  using dhcpd and put the kernel in a nfs accessible directory.  There
+  is info here https://www.netbsd.org/docs/network/netboot/ and
+  http://gnats.netbsd.org/49717 about how to setup.
+
+  Also, a successful report of booting off the CD is here
+  http://mail-index.netbsd.org/port-ia64/2009/06/18/msg000102.html
+
+Tasks remaining, first couple seem most important:
+
+- context switching and forking appear unfinished,
+  vm_machdep.c::cpu_lwp_fork() appears incomplete
+- pmap module, imported from freebsd but still needs more work and
+  testing
+- IA64 Stack unwind code: Support remaining unwind descriptor
+  types. (See arch/ia64/unwind/TODO). ddb() traces need to print line
+  information also.  Seems like a lot of this could be re-used
+  from freebsd
+- redo _regset.h in netbsd style with __greg_t __gregset_t
+- some commands in ski are not yet implemented, 2 important ones
+  are still missing, "cstack" and "pm", which view the stack and
+  source code lines respectively 
+- create a ski network driver
+- create a ski disk driver
+- implement ld.elf_so, MK_DYNAMICROOT
+- fix memory detection, on real hardware doesn't find all memory
+- implement interrupts (sacpi & pci), can be mostly from freebsd?
+- MKLINT and MKGDB for ia64?
+- implement fp[gs]etsticky, [make|get|set|swap]context
+- floating point, fenv functions were imported from freebsd, but haven't been tested
+- implement core_machdep.c
+- implement __cloneS ptrace.S sbrk.S shmat.S
+- implement kvm_ia64.c
+- implement pmc (performance monitoring counters) for ia64 pmc registers
+- optional(?) mutex.h/lock_stubs.S, mutex_enter()/mutex_exit() __HAVE_MUTEX_STUBS
+       mutex_spin_enter()/mutex_spin_exit() __HAVE_SPIN_MUTEX_STUBS
+- rwlock.h rw_enter(),rw_exit(),rw_tryenter() __HAVE_RW_STUBS, implemented already?
+- add efipart_dev to read gpt/ffs disks for bootloader
+- fix printf of lx in bootloader/libsa ?
+- sort out bootloader/loader.efi stuff, is freebsd one good enough or
+  do we want commands more like netbsd i386 bootloader? e.g., add
+  command to boot nfs from loader.efi instead of hack now
+- ia64 implement __HAVE_FAST_SOFTINTS?
+- fix all "[Nn]ot yet" and "XXX" functions everywhere
+- create/fix sys/arch/ia64/include/pci_machdep.h and implement actual functions,
+  need to handle "multiple" pci busses like from http://www.openpa.net/systems/il/rp3400-bus.txt,
+  add pchb, looks like one here
+   http://mail-index.netbsd.org/port-ia64/2010/06/29/msg000116.html
+  and/or could port from freebsd
+- Kernel module pre-loading via the bootloader
+- SMP
+- write console and/or X framebuffer driver.  freebsd has vgapci
+  device that may be portable
+- add ia32 emulation, port from freebsd
+- add rump stuff/MKRUMP
+- create install EFI/cdrom/netbsd
