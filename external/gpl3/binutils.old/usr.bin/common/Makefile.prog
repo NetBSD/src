@@ -1,0 +1,43 @@
+#	$NetBSD: Makefile.prog,v 1.6 2018/04/14 17:53:09 christos Exp $
+#
+# Common Makefile fragment for a binutils program.
+#
+
+BINUTILS_MACHINE_ARCH=${MACHINE_ARCH:C/armv[4-7]/arm/}
+CPPFLAGS+=	-I${.CURDIR}/../common/arch/${BINUTILS_MACHINE_ARCH}
+
+.include <bsd.init.mk>
+
+.include "${.CURDIR}/../common/Makefile.inc"
+.include "${.CURDIR}/../common/arch/${BINUTILS_MACHINE_ARCH}/defs.mk"
+
+# Might end in "-new" in GNU makefile
+XPROG=		${PROG:c++filt=cxxfilt}
+BUPROG=		${G_PROGRAMS:M${XPROG}*:S/-/_/}
+
+SRCS=		${G_${BUPROG}_OBJECTS:.o=.c} \
+		${G_${BUPROG}_DEPENDENCIES:M*.o:.o=.c}
+MAN=		${G_man_MANS:M${PROG}.1}
+
+
+.if !empty(G_${BUPROG}_DEPENDENCIES:M*/libopcodes*)
+PROGDPLIBS+=	opcodes	${TOP}/${BFDSUBDIR}/libopcodes
+.endif
+
+.if !empty(G_${BUPROG}_DEPENDENCIES:M*/libbfd*)
+PROGDPLIBS+=	bfd	${TOP}/${BFDSUBDIR}/libbfd
+.endif
+
+.if !empty(G_${BUPROG}_DEPENDENCIES:M*/libiberty*)
+PROGDPLIBS+=	iberty	${TOP}/${BFDSUBDIR}/libiberty
+.endif
+
+.PATH: ${DIST}/binutils ${DIST}/binutils/doc
+
+.include <bsd.prog.mk>
+
+LDADD+=		-lintl -lz -lm
+DPADD+=		${LIBINTL} ${LIBZ} ${LIBM}
+
+# Override the .y.c and .y.l rules *after* <bsd.prog.mk>
+.y.c .l.c:

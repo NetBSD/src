@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: binutils2netbsd,v 1.2 2018/04/14 15:49:37 christos Exp $
+#	$NetBSD: binutils2netbsd,v 1.3 2018/04/14 17:52:51 christos Exp $
 #
 # Copyright (c) 2016 The NetBSD Foundation, Inc.
 # All rights reserved.
