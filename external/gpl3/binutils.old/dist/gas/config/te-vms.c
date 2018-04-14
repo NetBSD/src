@@ -1,5 +1,5 @@
 /* te-vms.c -- Utilities for VMS.
-   Copyright (C) 2009-2015 Free Software Foundation, Inc.
+   Copyright (C) 2009-2016 Free Software Foundation, Inc.
 
    Written by Douglas B Rupp <rupp@gnat.com>
 
@@ -115,7 +115,8 @@ vms_file_stats_name (const char *dirname,
 		     char *rfo,
 		     int *ver)
 {
-  char fullname[strlen (dirname) + strlen (filename) + 1];
+  char * fullname;
+
 #ifdef VMS
   struct FAB fab;
   struct NAM nam;
@@ -168,9 +169,7 @@ vms_file_stats_name (const char *dirname,
       return 0;
     }
 
-  strcpy (fullname, dirname);
-  strcat (fullname, filename);
-
+  fullname = concat (dirname, filename, NULL);
   tryfile = to_vms_file_spec (fullname);
 
   /* Allocate and initialize a FAB and NAM structures.  */
@@ -188,14 +187,20 @@ vms_file_stats_name (const char *dirname,
   /* Validate filespec syntax and device existence.  */
   status = SYS$PARSE (&fab, 0, 0);
   if ((status & 1) != 1)
-    return 1;
+    {
+      free (fullname);
+      return 1;
+    }
 
   file.string[nam.nam$b_esl] = 0;
 
   /* Find matching filespec.  */
   status = SYS$SEARCH (&fab, 0, 0);
   if ((status & 1) != 1)
-    return 1;
+    {
+      free (fullname);
+      return 1;
+    }
 
   file.string[nam.nam$b_esl] = 0;
   result.string[result.length=nam.nam$b_rsl] = 0;
@@ -206,7 +211,10 @@ vms_file_stats_name (const char *dirname,
   chan = 0;
   status = SYS$ASSIGN (&devicedsc, &chan, 0, 0, 0);
   if ((status & 1) != 1)
-    return 1;
+    {
+      free (fullname);
+      return 1;
+    }
 
   /* Initialize the FIB and fill in the directory id field.  */
   memset (&fib, 0, sizeof (fib));
@@ -224,22 +232,39 @@ vms_file_stats_name (const char *dirname,
     = SYS$QIOW (0, chan, IO$_ACCESS|IO$M_ACCESS, &iosb, 0, 0,
 		&fibdsc, &filedsc, &result.length, &resultdsc, &atrlst, 0);
   if ((status & 1) != 1)
-    return 1;
+    {
+      free (fullname);
+      return 1;
+    }
+
   if ((iosb.status & 1) != 1)
-    return 1;
+    {
+      free (fullname);
+      return 1;
+    }
 
   result.string[result.length] = 0;
   status = SYS$QIOW (0, chan, IO$_DEACCESS, &iosb, 0, 0, &fibdsc, 0, 0, 0,
 		     &atrlst, 0);
   if ((status & 1) != 1)
-    return 1;
+    {
+      free (fullname);
+      return 1;
+    }
+
   if ((iosb.status & 1) != 1)
-    return 1;
+    {
+      free (fullname);
+      return 1;
+    }
 
   /* Deassign the channel and exit.  */
   status = SYS$DASSGN (chan);
   if ((status & 1) != 1)
-    return 1;
+    {
+      free (fullname);
+      return 1;
+    }
 
   if (cdt) *cdt = create;
   if (siz) *siz = (512 * 65536 * recattr.fat$w_efblkh) +
@@ -253,11 +278,13 @@ vms_file_stats_name (const char *dirname,
   struct tm *ts;
   long long gmtoff, secs, nsecs;
 
-  strcpy (fullname, dirname);
-  strcat (fullname, filename);
+  fullname = concat (dirname, filename, NULL);
 
   if ((stat (fullname, &buff)) != 0)
-     return 1;
+    {
+      free (fullname);
+      return 1;
+    }
 
   if (cdt)
     {
@@ -308,6 +335,7 @@ vms_file_stats_name (const char *dirname,
     *ver = 1;
 #endif /* VMS */
 
+  free (fullname);
   return 0;
 }
 

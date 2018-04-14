@@ -1,5 +1,5 @@
 /* BFD back-end for HP PA-RISC ELF files.
-   Copyright (C) 1990-2015 Free Software Foundation, Inc.
+   Copyright (C) 1990-2016 Free Software Foundation, Inc.
 
    Original code by
 	Center for Software Science
@@ -453,6 +453,18 @@ elf32_hppa_link_hash_table_create (bfd *abfd)
   htab->text_segment_base = (bfd_vma) -1;
   htab->data_segment_base = (bfd_vma) -1;
   return &htab->etab.root;
+}
+
+/* Initialize the linker stubs BFD so that we can use it for linker
+   created dynamic sections.  */
+
+void
+elf32_hppa_init_stub_bfd (bfd *abfd, struct bfd_link_info *info)
+{
+  struct elf32_hppa_link_hash_table *htab = hppa_link_hash_table (info);
+
+  elf_elfheader (abfd)->e_ident[EI_CLASS] = ELFCLASS32;
+  htab->etab.dynobj = abfd;
 }
 
 /* Build a name for an entry in the stub hash table.  */
@@ -1347,8 +1359,6 @@ elf32_hppa_check_relocs (bfd *abfd,
 	     relocation for this entry.  */
 	  if (htab->sgot == NULL)
 	    {
-	      if (htab->etab.dynobj == NULL)
-		htab->etab.dynobj = abfd;
 	      if (!elf32_hppa_create_dynamic_sections (htab->etab.dynobj, info))
 		return FALSE;
 	    }
@@ -1484,9 +1494,6 @@ elf32_hppa_check_relocs (bfd *abfd,
 		 this reloc.  */
 	      if (sreloc == NULL)
 		{
-		  if (htab->etab.dynobj == NULL)
-		    htab->etab.dynobj = abfd;
-
 		  sreloc = _bfd_elf_make_dynamic_reloc_section
 		    (sec, htab->etab.dynobj, 2, abfd, /*rela?*/ TRUE);
 
@@ -3075,7 +3082,8 @@ elf32_hppa_size_stubs
       for (stub_sec = htab->stub_bfd->sections;
 	   stub_sec != NULL;
 	   stub_sec = stub_sec->next)
-	stub_sec->size = 0;
+	if ((stub_sec->flags & SEC_LINKER_CREATED) == 0)
+	  stub_sec->size = 0;
 
       bfd_hash_traverse (&htab->bstab, hppa_size_one_stub, htab);
 
@@ -3197,16 +3205,15 @@ elf32_hppa_build_stubs (struct bfd_link_info *info)
   for (stub_sec = htab->stub_bfd->sections;
        stub_sec != NULL;
        stub_sec = stub_sec->next)
-    {
-      bfd_size_type size;
-
-      /* Allocate memory to hold the linker stubs.  */
-      size = stub_sec->size;
-      stub_sec->contents = bfd_zalloc (htab->stub_bfd, size);
-      if (stub_sec->contents == NULL && size != 0)
-	return FALSE;
-      stub_sec->size = 0;
-    }
+    if ((stub_sec->flags & SEC_LINKER_CREATED) == 0
+	&& stub_sec->size != 0)
+      {
+	/* Allocate memory to hold the linker stubs.  */
+	stub_sec->contents = bfd_zalloc (htab->stub_bfd, stub_sec->size);
+	if (stub_sec->contents == NULL)
+	  return FALSE;
+	stub_sec->size = 0;
+      }
 
   /* Build the stubs as directed by the stub hash table.  */
   table = &htab->bstab;
@@ -3730,10 +3737,9 @@ elf32_hppa_relocate_section (bfd *output_bfd,
 		  && ELF_ST_VISIBILITY (eh->other) == STV_DEFAULT
 		  && eh->type == STT_PARISC_MILLI)
 		{
-		  if (! info->callbacks->undefined_symbol
-		      (info, eh_name (eh), input_bfd,
-		       input_section, rela->r_offset, FALSE))
-		    return FALSE;
+		  (*info->callbacks->undefined_symbol)
+		    (info, eh_name (eh), input_bfd,
+		     input_section, rela->r_offset, FALSE);
 		  warned_undef = TRUE;
 		}
 	    }
@@ -4308,12 +4314,9 @@ elf32_hppa_relocate_section (bfd *output_bfd,
 	    }
 	}
       else
-	{
-	  if (!((*info->callbacks->reloc_overflow)
-		(info, (hh ? &hh->eh.root : NULL), sym_name, howto->name,
-		 (bfd_vma) 0, input_bfd, input_section, rela->r_offset)))
-	    return FALSE;
-	}
+	(*info->callbacks->reloc_overflow)
+	  (info, (hh ? &hh->eh.root : NULL), sym_name, howto->name,
+	   (bfd_vma) 0, input_bfd, input_section, rela->r_offset);
     }
 
   return TRUE;

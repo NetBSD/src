@@ -1,5 +1,5 @@
 /* Opcode decoder for the Renesas RX
-   Copyright (C) 2008-2015 Free Software Foundation, Inc.
+   Copyright (C) 2008-2016 Free Software Foundation, Inc.
    Written by DJ Delorie <dj@redhat.com>
 
    This file is part of GDB, the GNU Debugger and GAS, the GNU Assembler.
@@ -161,6 +161,25 @@ typedef enum
   RXO_wait,
 
   RXO_sccnd,	/* d = cond(s) ? 1 : 0 */
+
+  RXO_fsqrt,
+  RXO_ftou,
+  RXO_utof,
+  RXO_movco,
+  RXO_movli,
+  RXO_emaca,
+  RXO_emsba,
+  RXO_emula,
+  RXO_maclh,
+  RXO_msbhi,
+  RXO_msblh,
+  RXO_msblo,
+  RXO_mullh,
+  RXO_mvfacgu,
+  RXO_mvtacgu,
+  RXO_racl,
+  RXO_rdacl,
+  RXO_rdacw,
 } RX_Opcode_ID;
 
 /* Condition bitpatterns, as registers.  */

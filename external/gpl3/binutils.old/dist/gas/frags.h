@@ -1,5 +1,5 @@
 /* frags.h - Header file for the frag concept.
-   Copyright (C) 1987-2015 Free Software Foundation, Inc.
+   Copyright (C) 1987-2016 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -60,7 +60,7 @@ struct frag {
   struct frag *fr_next;
 
   /* Where the frag was created, or where it became a variant frag.  */
-  char *fr_file;
+  const char *fr_file;
   unsigned int fr_line;
 
 #ifndef NO_LISTING

@@ -1,5 +1,5 @@
 /* Disassembler code for Renesas RL78.
-   Copyright (C) 2011-2015 Free Software Foundation, Inc.
+   Copyright (C) 2011-2016 Free Software Foundation, Inc.
    Contributed by Red Hat.
    Written by DJ Delorie.
 
@@ -227,7 +227,18 @@ print_insn_rl78_common (bfd_vma addr, disassemble_info * dis, RL78_Dis_Isa isa)
 	      }
 
 	    if (do_bang)
-	      PC ('!');
+	      {
+		/* If we are going to display SP by name, we must omit the bang.  */
+		if ((oper->type == RL78_Operand_Indirect
+		     || oper->type == RL78_Operand_BitIndirect)
+		    && oper->reg == RL78_Reg_None
+		    && do_sfr
+		    && ((oper->addend == 0xffff8 && opcode.size == RL78_Word)
+			|| (oper->addend == 0x0fff8 && do_es && opcode.size == RL78_Word)))
+		  ;
+		else
+		  PC ('!');
+	      }
 
 	    if (do_cond)
 	      {
@@ -264,6 +275,8 @@ print_insn_rl78_common (bfd_vma addr, disassemble_info * dis, RL78_Dis_Isa isa)
 		    if (oper->addend == 0xffffa && do_sfr && opcode.size == RL78_Byte)
 		      PR (PS, "psw");
 		    else if (oper->addend == 0xffff8 && do_sfr && opcode.size == RL78_Word)
+		      PR (PS, "sp");
+		    else if (oper->addend == 0x0fff8 && do_sfr && do_es && opcode.size == RL78_Word)
 		      PR (PS, "sp");
                     else if (oper->addend == 0xffff8 && do_sfr && opcode.size == RL78_Byte)
                       PR (PS, "spl");

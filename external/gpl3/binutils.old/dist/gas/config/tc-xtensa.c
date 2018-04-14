@@ -1,5 +1,5 @@
 /* tc-xtensa.c -- Assemble Xtensa instructions.
-   Copyright (C) 2003-2015 Free Software Foundation, Inc.
+   Copyright (C) 2003-2016 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -29,6 +29,7 @@
 #include "xtensa-istack.h"
 #include "struc-symbol.h"
 #include "xtensa-config.h"
+#include "elf/xtensa.h"
 
 /* Provide default values for new configuration settings.  */
 #ifndef XSHAL_ABI
@@ -213,8 +214,6 @@ int generating_literals = 0;
 /* Required branch target alignment.  */
 #define XTENSA_PROP_BT_ALIGN_REQUIRE    0x3
 
-#define GET_XTENSA_PROP_BT_ALIGN(flag) \
-  (((unsigned) ((flag) & (XTENSA_PROP_BT_ALIGN_MASK))) >> 9)
 #define SET_XTENSA_PROP_BT_ALIGN(flag, align) \
   (((flag) & (~XTENSA_PROP_BT_ALIGN_MASK)) | \
     (((align) << 9) & XTENSA_PROP_BT_ALIGN_MASK))
@@ -235,8 +234,6 @@ int generating_literals = 0;
 
 #define XTENSA_PROP_ALIGNMENT_MASK      0x0001f000
 
-#define GET_XTENSA_PROP_ALIGNMENT(flag) \
-  (((unsigned) ((flag) & (XTENSA_PROP_ALIGNMENT_MASK))) >> 12)
 #define SET_XTENSA_PROP_ALIGNMENT(flag, align) \
   (((flag) & (~XTENSA_PROP_ALIGNMENT_MASK)) | \
     (((align) << 12) & XTENSA_PROP_ALIGNMENT_MASK))
@@ -361,10 +358,10 @@ op_placement_info_table op_placement_table;
 
 struct suffix_reloc_map
 {
-  char *suffix;
+  const char *suffix;
   int length;
   bfd_reloc_code_real_type reloc;
-  unsigned char operator;
+  operatorT operator;
 };
 
 #define SUFFIX_MAP(str, reloc, op) { str, sizeof (str) - 1, reloc, op }
@@ -380,7 +377,6 @@ static struct suffix_reloc_map suffix_relocs[] =
   SUFFIX_MAP ("tlscall", BFD_RELOC_XTENSA_TLS_CALL,	O_tlscall),
   SUFFIX_MAP ("tpoff",	BFD_RELOC_XTENSA_TLS_TPOFF,	O_tpoff),
   SUFFIX_MAP ("dtpoff",	BFD_RELOC_XTENSA_TLS_DTPOFF,	O_dtpoff),
-  { (char *) 0, 0,	BFD_RELOC_UNUSED,		0 }
 };
 
 
@@ -528,10 +524,6 @@ static void xtensa_switch_to_non_abs_literal_fragment (emit_state *);
 static void xtensa_switch_section_emit_state (emit_state *, segT, subsegT);
 static void xtensa_restore_emit_state (emit_state *);
 static segT cache_literal_section (bfd_boolean);
-
-/* Import from elf32-xtensa.c in BFD library.  */
-
-extern asection *xtensa_make_property_section (asection *, const char *);
 
 /* op_placement_info functions.  */
 
@@ -814,7 +806,7 @@ size_t md_longopts_size = sizeof md_longopts;
 
 
 int
-md_parse_option (int c, char *arg)
+md_parse_option (int c, const char *arg)
 {
   switch (c)
     {
@@ -952,20 +944,21 @@ md_parse_option (int c, char *arg)
     case option_target_hardware:
       {
 	int earliest, latest = 0;
+	char *end;
 	if (*arg == 0 || *arg == '-')
 	  as_fatal (_("invalid target hardware version"));
 
-	earliest = strtol (arg, &arg, 0);
+	earliest = strtol (arg, &end, 0);
 
-	if (*arg == 0)
+	if (*end == 0)
 	  latest = earliest;
-	else if (*arg == '-')
+	else if (*end == '-')
 	  {
-	    if (*++arg == 0)
+	    if (*++end == 0)
 	      as_fatal (_("invalid target hardware version"));
-	    latest = strtol (arg, &arg, 0);
+	    latest = strtol (end, &end, 0);
 	  }
-	if (*arg != 0)
+	if (*end != 0)
 	  as_fatal (_("invalid target hardware version"));
 
 	xtensa_setup_hw_workarounds (earliest, latest);
@@ -1008,12 +1001,13 @@ md_parse_option (int c, char *arg)
     case option_auto_litpool_limit:
       {
 	int value = 0;
+	char *end;
 	if (auto_litpool_limit < 0)
 	  as_fatal (_("no-auto-litpools is incompatible with auto-litpool-limit"));
 	if (*arg == 0 || *arg == '-')
 	  as_fatal (_("invalid auto-litpool-limit argument"));
-	value = strtol (arg, &arg, 10);
-	if (*arg != 0)
+	value = strtol (arg, &end, 10);
+	if (*end != 0)
 	  as_fatal (_("invalid auto-litpool-limit argument"));
 	if (value < 100 || value > 10000)
 	  as_fatal (_("invalid auto-litpool-limit argument (range is 100-10000)"));
@@ -1065,7 +1059,7 @@ xtensa_add_insn_label (symbolS *sym)
   sym_list *l;
 
   if (!free_insn_labels)
-    l = (sym_list *) xmalloc (sizeof (sym_list));
+    l = XNEW (sym_list);
   else
     {
       l = free_insn_labels;
@@ -1163,11 +1157,11 @@ do_align_targets (void)
 static void
 directive_push (directiveE directive, bfd_boolean negated, const void *datum)
 {
-  char *file;
+  const char *file;
   unsigned int line;
-  state_stackS *stack = (state_stackS *) xmalloc (sizeof (state_stackS));
+  state_stackS *stack = XNEW (state_stackS);
 
-  as_where (&file, &line);
+  file = as_where (&line);
 
   stack->directive = directive;
   stack->negated = negated;
@@ -1244,7 +1238,7 @@ get_directive (directiveE *directive, bfd_boolean *negated)
 {
   int len;
   unsigned i;
-  char *directive_string;
+  const char *directive_string;
 
   if (strncmp (input_line_pointer, "no-", 3) != 0)
     *negated = FALSE;
@@ -1321,7 +1315,7 @@ xtensa_begin_directive (int ignore ATTRIBUTE_UNUSED)
 	  insn_labels = NULL;
 	}
       as_warn (_(".begin literal is deprecated; use .literal instead"));
-      state = (emit_state *) xmalloc (sizeof (emit_state));
+      state = XNEW (emit_state);
       xtensa_switch_to_literal_fragment (state);
       directive_push (directive_literal, negated, state);
       break;
@@ -1340,7 +1334,7 @@ xtensa_begin_directive (int ignore ATTRIBUTE_UNUSED)
 
       /* Allocate the literal state for this section and push
 	 onto the directive stack.  */
-      ls = xmalloc (sizeof (lit_state));
+      ls = XNEW (lit_state);
       gas_assert (ls);
 
       *ls = default_lit_sections;
@@ -1592,10 +1586,7 @@ xtensa_literal_prefix (void)
 		"abcdefghijklmnopqrstuvwxyz_/0123456789.$");
 
   /* Get a null-terminated copy of the name.  */
-  name = xmalloc (len + 1);
-  gas_assert (name);
-  strncpy (name, input_line_pointer, len);
-  name[len] = 0;
+  name = xmemdup0 (input_line_pointer, len);
 
   /* Skip the name in the input line.  */
   input_line_pointer += len;
@@ -1725,7 +1716,7 @@ xtensa_elf_suffix (char **str_p, expressionS *exp_p)
   char *str2;
   int ch;
   int len;
-  struct suffix_reloc_map *ptr;
+  unsigned int i;
 
   if (*str++ != '@')
     return BFD_RELOC_NONE;
@@ -1742,10 +1733,10 @@ xtensa_elf_suffix (char **str_p, expressionS *exp_p)
   len = str2 - ident;
 
   ch = ident[0];
-  for (ptr = &suffix_relocs[0]; ptr->length > 0; ptr++)
-    if (ch == ptr->suffix[0]
-	&& len == ptr->length
-	&& memcmp (ident, ptr->suffix, ptr->length) == 0)
+  for (i = 0; i < ARRAY_SIZE (suffix_relocs); i++)
+    if (ch == suffix_relocs[i].suffix[0]
+	&& len == suffix_relocs[i].length
+	&& memcmp (ident, suffix_relocs[i].suffix, suffix_relocs[i].length) == 0)
       {
 	/* Now check for "identifier@suffix+constant".  */
 	if (*str == '-' || *str == '+')
@@ -1766,7 +1757,7 @@ xtensa_elf_suffix (char **str_p, expressionS *exp_p)
 	  }
 
 	*str_p = str;
-	return ptr->reloc;
+	return suffix_relocs[i].reloc;
       }
 
   return BFD_RELOC_UNUSED;
@@ -1774,21 +1765,21 @@ xtensa_elf_suffix (char **str_p, expressionS *exp_p)
 
 
 /* Find the matching operator type.  */
-static unsigned char
+static operatorT
 map_suffix_reloc_to_operator (bfd_reloc_code_real_type reloc)
 {
-  struct suffix_reloc_map *sfx;
-  unsigned char operator = (unsigned char) -1;
+  operatorT operator = O_illegal;
+  unsigned int i;
 
-  for (sfx = &suffix_relocs[0]; sfx->suffix; sfx++)
+  for (i = 0; i < ARRAY_SIZE (suffix_relocs); i++)
     {
-      if (sfx->reloc == reloc)
+      if (suffix_relocs[i].reloc == reloc)
 	{
-	  operator = sfx->operator;
+	  operator = suffix_relocs[i].operator;
 	  break;
 	}
     }
-  gas_assert (operator != (unsigned char) -1);
+  gas_assert (operator != O_illegal);
   return operator;
 }
 
@@ -1797,14 +1788,14 @@ map_suffix_reloc_to_operator (bfd_reloc_code_real_type reloc)
 static bfd_reloc_code_real_type
 map_operator_to_reloc (unsigned char operator, bfd_boolean is_literal)
 {
-  struct suffix_reloc_map *sfx;
+  unsigned int i;
   bfd_reloc_code_real_type reloc = BFD_RELOC_UNUSED;
 
-  for (sfx = &suffix_relocs[0]; sfx->suffix; sfx++)
+  for (i = 0; i < ARRAY_SIZE (suffix_relocs); i++)
     {
-      if (sfx->operator == operator)
+      if (suffix_relocs[i].operator == operator)
 	{
-	  reloc = sfx->reloc;
+	  reloc = suffix_relocs[i].reloc;
 	  break;
 	}
     }
@@ -2024,7 +2015,7 @@ tokenize_arguments (char **args, char *str)
 	    arg_end += 1;
 
 	  arg_len = arg_end - input_line_pointer;
-	  arg = (char *) xmalloc ((saw_colon ? 1 : 0) + arg_len + 1);
+	  arg = XNEWVEC (char, (saw_colon ? 1 : 0) + arg_len + 1);
 	  args[num_args] = arg;
 
 	  if (saw_colon)
@@ -2237,8 +2228,7 @@ xg_reverse_shift_count (char **cnt_argp)
   cnt_arg = *cnt_argp;
 
   /* replace the argument with "31-(argument)" */
-  new_arg = (char *) xmalloc (strlen (cnt_arg) + 6);
-  sprintf (new_arg, "31-(%s)", cnt_arg);
+  new_arg = concat ("31-(", cnt_argp, ")", (char *) NULL);
 
   free (cnt_arg);
   *cnt_argp = new_arg;
@@ -2269,11 +2259,10 @@ xg_arg_is_constant (char *arg, offsetT *valp)
 
 
 static void
-xg_replace_opname (char **popname, char *newop)
+xg_replace_opname (char **popname, const char *newop)
 {
   free (*popname);
-  *popname = (char *) xmalloc (strlen (newop) + 1);
-  strcpy (*popname, newop);
+  *popname = xstrdup (newop);
 }
 
 
@@ -2368,8 +2357,7 @@ xg_translate_sysreg_op (char **popname, int *pnum_args, char **arg_strings)
   /* Another special case for "WSR.INTSET"....  */
   if (is_write && !is_user && !strcasecmp ("interrupt", sr_name))
     sr_name = "intset";
-  new_opname = (char *) xmalloc (strlen (sr_name) + 6);
-  sprintf (new_opname, "%s.%s", *popname, sr_name);
+  new_opname = concat (*popname, ".", sr_name, (char *) NULL);
   free (*popname);
   *popname = new_opname;
 
@@ -2428,7 +2416,7 @@ xtensa_translate_old_userreg_ops (char **popname)
 
   /* Translate the opcode.  */
   sr_name = xtensa_sysreg_name (isa, sr);
-  new_opname = (char *) xmalloc (strlen (sr_name) + 6);
+  new_opname = XNEWVEC (char, strlen (sr_name) + 6);
   sprintf (new_opname, "%s%cur.%s", (has_underbar ? "_" : ""),
 	   opname[0], sr_name);
   free (*popname);
@@ -2439,8 +2427,8 @@ xtensa_translate_old_userreg_ops (char **popname)
 
 
 static int
-xtensa_translate_zero_immed (char *old_op,
-			     char *new_op,
+xtensa_translate_zero_immed (const char *old_op,
+			     const char *new_op,
 			     char **popname,
 			     int *pnum_args,
 			     char **arg_strings)
@@ -2493,8 +2481,7 @@ xg_translate_idioms (char **popname, int *pnum_args, char **arg_strings)
 	  if (xg_check_num_args (pnum_args, 2, opname, arg_strings))
 	    return -1;
 	  xg_replace_opname (popname, (has_underbar ? "_or" : "or"));
-	  arg_strings[2] = (char *) xmalloc (strlen (arg_strings[1]) + 1);
-	  strcpy (arg_strings[2], arg_strings[1]);
+	  arg_strings[2] = xstrdup (arg_strings[1]);
 	  *pnum_args = 3;
 	}
       return 0;
@@ -2534,12 +2521,9 @@ xg_translate_idioms (char **popname, int *pnum_args, char **arg_strings)
 	  if (xg_check_num_args (pnum_args, 0, opname, arg_strings))
 	    return -1;
 	  xg_replace_opname (popname, (has_underbar ? "_or" : "or"));
-	  arg_strings[0] = (char *) xmalloc (3);
-	  arg_strings[1] = (char *) xmalloc (3);
-	  arg_strings[2] = (char *) xmalloc (3);
-	  strcpy (arg_strings[0], "a1");
-	  strcpy (arg_strings[1], "a1");
-	  strcpy (arg_strings[2], "a1");
+	  arg_strings[0] = xstrdup ("a1");
+	  arg_strings[1] = xstrdup ("a1");
+	  arg_strings[2] = xstrdup ("a1");
 	  *pnum_args = 3;
 	}
       return 0;
@@ -4129,7 +4113,7 @@ xtensa_add_literal_sym (symbolS *sym)
 {
   sym_list *l;
 
-  l = (sym_list *) xmalloc (sizeof (sym_list));
+  l = XNEW (sym_list);
   l->sym = sym;
   l->next = literal_syms;
   literal_syms = l;
@@ -5499,9 +5483,7 @@ md_assemble (char *str)
 
   /* Split off the opcode.  */
   opnamelen = strspn (str, "abcdefghijklmnopqrstuvwxyz_/0123456789.");
-  opname = xmalloc (opnamelen + 1);
-  memcpy (opname, str, opnamelen);
-  opname[opnamelen] = '\0';
+  opname = xstrndup (str, opnamelen);
 
   num_args = tokenize_arguments (arg_strings, str + opnamelen);
   if (num_args == -1)
@@ -5961,15 +5943,15 @@ md_apply_fix (fixS *fixP, valueT *valP, segT seg)
 	    {
 	    case BFD_RELOC_8:
 	      fixP->fx_r_type = BFD_RELOC_XTENSA_DIFF8;
-	      fixP->fx_signed = 1;
+	      fixP->fx_signed = 0;
 	      break;
 	    case BFD_RELOC_16:
 	      fixP->fx_r_type = BFD_RELOC_XTENSA_DIFF16;
-	      fixP->fx_signed = 1;
+	      fixP->fx_signed = 0;
 	      break;
 	    case BFD_RELOC_32:
 	      fixP->fx_r_type = BFD_RELOC_XTENSA_DIFF32;
-	      fixP->fx_signed = 1;
+	      fixP->fx_signed = 0;
 	      break;
 	    default:
 	      break;
@@ -6079,7 +6061,7 @@ md_apply_fix (fixS *fixP, valueT *valP, segT seg)
 }
 
 
-char *
+const char *
 md_atof (int type, char *litP, int *sizeP)
 {
   return ieee_md_atof (type, litP, sizeP, target_big_endian);
@@ -6101,8 +6083,8 @@ tc_gen_reloc (asection *section ATTRIBUTE_UNUSED, fixS *fixp)
 {
   arelent *reloc;
 
-  reloc = (arelent *) xmalloc (sizeof (arelent));
-  reloc->sym_ptr_ptr = (asymbol **) xmalloc (sizeof (asymbol *));
+  reloc = XNEW (arelent);
+  reloc->sym_ptr_ptr = XNEW (asymbol *);
   *reloc->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_addsy);
   reloc->address = fixp->fx_frag->fr_address + fixp->fx_where;
 
@@ -6147,7 +6129,7 @@ new_resource_table (void *data,
 		    opcode_funcUnit_use_stage_func ousf)
 {
   int i;
-  resource_table *rt = (resource_table *) xmalloc (sizeof (resource_table));
+  resource_table *rt = XNEW (resource_table);
   rt->data = data;
   rt->cycles = cycles;
   rt->allocated_cycles = cycles;
@@ -6157,9 +6139,9 @@ new_resource_table (void *data,
   rt->opcode_unit_use = ouuf;
   rt->opcode_unit_stage = ousf;
 
-  rt->units = (unsigned char **) xcalloc (cycles, sizeof (unsigned char *));
+  rt->units = XCNEWVEC (unsigned char *, cycles);
   for (i = 0; i < cycles; i++)
-    rt->units[i] = (unsigned char *) xcalloc (nu, sizeof (unsigned char));
+    rt->units[i] = XCNEWVEC (unsigned char, nu);
 
   return rt;
 }
@@ -6189,13 +6171,11 @@ resize_resource_table (resource_table *rt, int cycles)
   old_cycles = rt->allocated_cycles;
   rt->allocated_cycles = cycles;
 
-  rt->units = xrealloc (rt->units,
-			rt->allocated_cycles * sizeof (unsigned char *));
+  rt->units = XRESIZEVEC (unsigned char *, rt->units, rt->allocated_cycles);
   for (i = 0; i < old_cycles; i++)
-    rt->units[i] = xrealloc (rt->units[i],
-			     rt->num_units * sizeof (unsigned char));
+    rt->units[i] = XRESIZEVEC (unsigned char, rt->units[i], rt->num_units);
   for (i = old_cycles; i < cycles; i++)
-    rt->units[i] = xcalloc (rt->num_units, sizeof (unsigned char));
+    rt->units[i] = XCNEWVEC (unsigned char, rt->num_units);
 }
 
 
@@ -6327,8 +6307,6 @@ finish_vinsn (vliw_insn *vinsn)
 {
   IStack slotstack;
   int i;
-  char *file_name;
-  unsigned line;
 
   if (find_vinsn_conflicts (vinsn))
     {
@@ -6350,9 +6328,7 @@ finish_vinsn (vliw_insn *vinsn)
 
   if (vinsn->format == XTENSA_UNDEFINED)
     {
-      as_where (&file_name, &line);
-      as_bad_where (file_name, line,
-		    _("couldn't find a valid instruction format"));
+      as_bad (_("couldn't find a valid instruction format"));
       fprintf (stderr, _("    ops were: "));
       for (i = 0; i < vinsn->num_slots; i++)
 	fprintf (stderr, _(" %s;"),
@@ -6376,8 +6352,7 @@ finish_vinsn (vliw_insn *vinsn)
 
   if (resources_conflict (vinsn))
     {
-      as_where (&file_name, &line);
-      as_bad_where (file_name, line, _("illegal resource usage in bundle"));
+      as_bad (_("illegal resource usage in bundle"));
       fprintf (stderr, "    ops were: ");
       for (i = 0; i < vinsn->num_slots; i++)
 	fprintf (stderr, " %s;",
@@ -6474,8 +6449,7 @@ finish_vinsn (vliw_insn *vinsn)
   /* Now check resource conflicts on the modified bundle.  */
   if (resources_conflict (vinsn))
     {
-      as_where (&file_name, &line);
-      as_bad_where (file_name, line, _("illegal resource usage in bundle"));
+      as_bad (_("illegal resource usage in bundle"));
       fprintf (stderr, "    ops were: ");
       for (i = 0; i < vinsn->num_slots; i++)
 	fprintf (stderr, " %s;",
@@ -6979,7 +6953,7 @@ emit_single_op (TInsn *orig_insn)
 	case ITYPE_LABEL:
 	  {
 	    static int relaxed_sym_idx = 0;
-	    char *label = xmalloc (strlen (FAKE_LABEL_NAME) + 12);
+	    char *label = XNEWVEC (char, strlen (FAKE_LABEL_NAME) + 12);
 	    sprintf (label, "%s_rl_%x", FAKE_LABEL_NAME, relaxed_sym_idx++);
 	    colon (label);
 	    gas_assert (label_sym == NULL);
@@ -7452,7 +7426,7 @@ xtensa_create_trampoline_frag (bfd_boolean needs_jump_around)
 
   if (ts == NULL)
     {
-      ts = (struct trampoline_seg *)xcalloc(sizeof (struct trampoline_seg), 1);
+      ts = XCNEW(struct trampoline_seg);
       ts->next = trampoline_seg_list.next;
       trampoline_seg_list.next = ts;
       ts->seg = now_seg;
@@ -7468,7 +7442,7 @@ xtensa_create_trampoline_frag (bfd_boolean needs_jump_around)
       trampoline_buf = xtensa_insnbuf_alloc (xtensa_default_isa);
       trampoline_slotbuf = xtensa_insnbuf_alloc (xtensa_default_isa);
     }
-  tf = (struct trampoline_frag *)xmalloc(sizeof (struct trampoline_frag));
+  tf = XNEW (struct trampoline_frag);
   tf->next = ts->trampoline_list.next;
   ts->trampoline_list.next = tf;
   tf->needs_jump_around = needs_jump_around;
@@ -7567,7 +7541,7 @@ xtensa_maybe_create_literal_pool_frag (bfd_boolean create,
 
   if (lps == NULL)
     {
-      lps = (struct litpool_seg *)xcalloc (sizeof (struct litpool_seg), 1);
+      lps = XCNEW (struct litpool_seg);
       lps->next = litpool_seg_list.next;
       litpool_seg_list.next = lps;
       lps->seg = now_seg;
@@ -7633,7 +7607,7 @@ xtensa_maybe_create_literal_pool_frag (bfd_boolean create,
       fragP = frag_now;
     }
 
-  lpf = (struct litpool_frag *)xmalloc(sizeof (struct litpool_frag));
+  lpf = XNEW (struct litpool_frag);
   /* Insert at tail of circular list.  */
   lpf->addr = 0;
   lps->frag_list.prev->next = lpf;
@@ -8491,12 +8465,12 @@ static bfd_boolean is_local_forward_loop (const TInsn *, fragS *);
 static void
 xtensa_sanity_check (void)
 {
-  char *file_name;
+  const char *file_name;
   unsigned line;
   frchainS *frchP;
   asection *s;
 
-  as_where (&file_name, &line);
+  file_name = as_where (&line);
   for (s = stdoutput->sections; s; s = s->next)
     for (frchP = seg_info (s)->frchainP; frchP; frchP = frchP->frch_next)
       {
@@ -8650,7 +8624,7 @@ xtensa_add_config_info (void)
   info_sec = subseg_new (".xtensa.info", 0);
   bfd_set_section_flags (stdoutput, info_sec, SEC_HAS_CONTENTS | SEC_READONLY);
 
-  data = xmalloc (100);
+  data = XNEWVEC (char, 100);
   sprintf (data, "USE_ABSOLUTE_LITERALS=%d\nABI=%d\n",
 	   XSHAL_USE_ABSOLUTE_LITERALS, XSHAL_ABI);
   sz = strlen (data) + 1;
@@ -9104,8 +9078,7 @@ static void xtensa_realloc_fixup_cache (fixup_cacheS *cache, unsigned add)
   if (cache->n_fixups + add > cache->n_max)
     {
       cache->n_max = (cache->n_fixups + add) * 2;
-      cache->fixups = xrealloc (cache->fixups,
-				sizeof (*cache->fixups) * cache->n_max);
+      cache->fixups = XRESIZEVEC (cached_fixupS, cache->fixups, cache->n_max);
     }
 }
 
@@ -9180,14 +9153,14 @@ xtensa_relax_frag (fragS *fragP, long stretch, int *stretched_p)
   xtensa_isa isa = xtensa_default_isa;
   int unreported = fragP->tc_frag_data.unreported_expansion;
   long new_stretch = 0;
-  char *file_name;
+  const char *file_name;
   unsigned line;
   int lit_size;
   static xtensa_insnbuf vbuf = NULL;
   int slot, num_slots;
   xtensa_format fmt;
 
-  as_where (&file_name, &line);
+  file_name = as_where (&line);
   new_logical_line (fragP->fr_file, fragP->fr_line);
 
   fragP->tc_frag_data.unreported_expansion = 0;
@@ -10293,10 +10266,10 @@ md_convert_frag (bfd *abfd ATTRIBUTE_UNUSED, segT sec, fragS *fragp)
   int slot;
   int num_slots;
   xtensa_format fmt;
-  char *file_name;
+  const char *file_name;
   unsigned line;
 
-  as_where (&file_name, &line);
+  file_name = as_where (&line);
   new_logical_line (fragp->fr_file, fragp->fr_line);
 
   switch (fragp->fr_subtype)
@@ -10954,7 +10927,7 @@ get_subseg_info (segT seg, subsegT subseg)
 static subseg_map *
 add_subseg_info (segT seg, subsegT subseg)
 {
-  subseg_map *subseg_e = (subseg_map *) xmalloc (sizeof (subseg_map));
+  subseg_map *subseg_e = XNEW (subseg_map);
   memset (subseg_e, 0, sizeof (subseg_map));
   subseg_e->seg = seg;
   subseg_e->subseg = subseg;
@@ -11061,6 +11034,10 @@ xtensa_move_literals (void)
   fixS *fix, *next_fix, **fix_splice;
   sym_list *lit;
   struct litpool_seg *lps;
+  const char *init_name = INIT_SECTION_NAME;
+  const char *fini_name = FINI_SECTION_NAME;
+  int init_name_len = strlen(init_name);
+  int fini_name_len = strlen(fini_name);
 
   mark_literal_frags (literal_head->next);
 
@@ -11171,9 +11148,13 @@ xtensa_move_literals (void)
 
   for (segment = literal_head->next; segment; segment = segment->next)
     {
+      const char *seg_name = segment_name (segment->seg);
+
       /* Keep the literals for .init and .fini in separate sections.  */
-      if (!strcmp (segment_name (segment->seg), INIT_SECTION_NAME)
-	  || !strcmp (segment_name (segment->seg), FINI_SECTION_NAME))
+      if ((!memcmp (seg_name, init_name, init_name_len) &&
+	   !strcmp (seg_name + init_name_len, ".literal")) ||
+	  (!memcmp (seg_name, fini_name, fini_name_len) &&
+	   !strcmp (seg_name + fini_name_len, ".literal")))
 	continue;
 
       frchain_from = seg_info (segment->seg)->frchainP;
@@ -11516,7 +11497,8 @@ static segT
 cache_literal_section (bfd_boolean use_abs_literals)
 {
   const char *text_name, *group_name = 0;
-  char *base_name, *name, *suffix;
+  const char *base_name, *suffix;
+  char *name;
   segT *pcached;
   segT seg, current_section;
   int current_subsec;
@@ -11554,19 +11536,14 @@ cache_literal_section (bfd_boolean use_abs_literals)
   base_name = use_abs_literals ? ".lit4" : ".literal";
   if (group_name)
     {
-      name = xmalloc (strlen (base_name) + strlen (group_name) + 2);
-      sprintf (name, "%s.%s", base_name, group_name);
+      name = concat (base_name, ".", group_name, (char *) NULL);
     }
   else if (strncmp (text_name, ".gnu.linkonce.", linkonce_len) == 0)
     {
       suffix = strchr (text_name + linkonce_len, '.');
 
-      name = xmalloc (linkonce_len + strlen (base_name) + 1
-		      + (suffix ? strlen (suffix) : 0));
-      strcpy (name, ".gnu.linkonce");
-      strcat (name, base_name);
-      if (suffix)
-	strcat (name, suffix);
+      name = concat (".gnu.linkonce", base_name, suffix ? suffix : "",
+		     (char *) NULL);
       linkonce = TRUE;
     }
   else
@@ -11579,7 +11556,7 @@ cache_literal_section (bfd_boolean use_abs_literals)
 	      || strncmp (text_name, ".text", 5) == 0))
 	len -= 5;
 
-      name = xmalloc (len + strlen (base_name) + 1);
+      name = XNEWVEC (char, len + strlen (base_name) + 1);
       if (strncmp (text_name, ".text", 5) == 0)
 	{
 	  strcpy (name, base_name);
@@ -11608,7 +11585,7 @@ cache_literal_section (bfd_boolean use_abs_literals)
       if (! use_abs_literals)
 	{
 	  /* Add the newly created literal segment to the list.  */
-	  seg_list *n = (seg_list *) xmalloc (sizeof (seg_list));
+	  seg_list *n = XNEW (seg_list);
 	  n->seg = seg;
 	  n->next = literal_head->next;
 	  literal_head->next = n;
@@ -11985,8 +11962,7 @@ add_xt_block_frags (segT sec,
 		}
 	      if (*xt_block == NULL)
 		{
-		  xtensa_block_info *new_block = (xtensa_block_info *)
-		    xmalloc (sizeof (xtensa_block_info));
+		  xtensa_block_info *new_block = XNEW (xtensa_block_info);
 		  new_block->sec = sec;
 		  new_block->offset = fragP->fr_address;
 		  new_block->size = fragP->fr_fix;
@@ -12243,8 +12219,7 @@ add_xt_prop_frags (segT sec,
 		  xtensa_block_info *new_block;
 		  if ((*xt_block) != NULL)
 		    xt_block = &(*xt_block)->next;
-		  new_block = (xtensa_block_info *)
-		    xmalloc (sizeof (xtensa_block_info));
+		  new_block = XNEW (xtensa_block_info);
 		  *new_block = tmp_block;
 		  *xt_block = new_block;
 		}
@@ -12269,8 +12244,7 @@ init_op_placement_info_table (void)
   int slot;
   int num_opcodes = xtensa_isa_num_opcodes (isa);
 
-  op_placement_table = (op_placement_info_table)
-    xmalloc (sizeof (op_placement_info) * num_opcodes);
+  op_placement_table = XNEWVEC (op_placement_info, num_opcodes);
   gas_assert (xtensa_isa_num_formats (isa) < MAX_FORMATS);
 
   for (opcode = 0; opcode < num_opcodes; opcode++)
@@ -12563,7 +12537,7 @@ tinsn_to_slotbuf (xtensa_format fmt,
       expressionS *exp = &tinsn->tok[i];
       int rc;
       unsigned line;
-      char *file_name;
+      const char *file_name;
       uint32 opnd_value;
 
       switch (exp->X_op)
@@ -12584,7 +12558,7 @@ tinsn_to_slotbuf (xtensa_format fmt,
 	case O_constant:
 	  if (xtensa_operand_is_visible (isa, opcode, i) == 0)
 	    break;
-	  as_where (&file_name, &line);
+	  file_name = as_where (&line);
 	  /* It is a constant and we called this function
 	     then we have to try to fit it.  */
 	  xtensa_insnbuf_set_operand (slotbuf, fmt, slot, opcode, i,
@@ -13112,7 +13086,7 @@ copy_expr (expressionS *dst, const expressionS *src)
 
 struct rename_section_struct
 {
-  char *old_name;
+  const char *old_name;
   char *new_name;
   struct rename_section_struct *next;
 };
@@ -13174,8 +13148,7 @@ build_section_rename (const char *arg)
 	}
 
       /* Now add it.  */
-      r = (struct rename_section_struct *)
-	xmalloc (sizeof (struct rename_section_struct));
+      r = XNEW (struct rename_section_struct);
       r->old_name = xstrdup (old_name);
       r->new_name = xstrdup (new_name);
       r->next = section_rename;
@@ -13185,7 +13158,7 @@ build_section_rename (const char *arg)
 
 
 char *
-xtensa_section_rename (char *name)
+xtensa_section_rename (const char *name)
 {
   struct rename_section_struct *r = section_rename;
 
@@ -13195,5 +13168,5 @@ xtensa_section_rename (char *name)
 	return r->new_name;
     }
 
-  return name;
+  return (char *) name;
 }

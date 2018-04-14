@@ -1,5 +1,5 @@
 /* tc-s390.c -- Assemble for the S390
-   Copyright (C) 2000-2015 Free Software Foundation, Inc.
+   Copyright (C) 2000-2016 Free Software Foundation, Inc.
    Contributed by Martin Schwidefsky (schwidefsky@de.ibm.com).
 
    This file is part of GAS, the GNU Assembler.
@@ -33,7 +33,7 @@
 #ifndef DEFAULT_ARCH
 #define DEFAULT_ARCH "s390"
 #endif
-static char *default_arch = DEFAULT_ARCH;
+static const char *default_arch = DEFAULT_ARCH;
 /* Either 32 or 64, selects file format.  */
 static int s390_arch_size = 0;
 
@@ -262,7 +262,7 @@ s390_target_format (void)
    In case of an error, S390_OPCODE_MAXCPU is returned.  */
 
 static unsigned int
-s390_parse_cpu (char *         arg,
+s390_parse_cpu (const char *         arg,
 		unsigned int * ret_flags,
 		bfd_boolean    allow_extensions)
 {
@@ -324,7 +324,7 @@ s390_parse_cpu (char *         arg,
   ilp_bak = input_line_pointer;
   if (icpu != S390_OPCODE_MAXCPU)
     {
-      input_line_pointer = arg;
+      input_line_pointer = (char *) arg;
       *ret_flags = (cpu_table[icpu].flags & S390_INSTR_FLAG_FACILITY_MASK);
 
       while (*input_line_pointer == '+' && allow_extensions)
@@ -368,7 +368,7 @@ s390_parse_cpu (char *         arg,
 }
 
 int
-md_parse_option (int c, char *arg)
+md_parse_option (int c, const char *arg)
 {
   switch (c)
     {
@@ -582,7 +582,7 @@ static void
 s390_insert_operand (unsigned char *insn,
 		     const struct s390_operand *operand,
 		     offsetT val,
-		     char *file,
+		     const char *file,
 		     unsigned int line)
 {
   addressT uval;
@@ -705,7 +705,7 @@ s390_insert_operand (unsigned char *insn,
 
 struct map_tls
   {
-    char *string;
+    const char *string;
     int length;
     bfd_reloc_code_real_type reloc;
   };
@@ -780,7 +780,7 @@ elf_suffix_type;
 
 struct map_bfd
   {
-    char *string;
+    const char *string;
     int length;
     elf_suffix_type suffix;
   };
@@ -1032,7 +1032,7 @@ s390_lit_suffix (char **str_p, expressionS *exp_p, elf_suffix_type suffix)
 	}
       else
 	{
-	  lpe = (struct s390_lpe *) xmalloc (sizeof (struct s390_lpe));
+	  lpe = XNEW (struct s390_lpe);
 	}
 
       lpe->ex = *exp_p;
@@ -1879,7 +1879,7 @@ static void
 s390_machine (int ignore ATTRIBUTE_UNUSED)
 {
   char *cpu_string;
-  static struct
+  static struct cpu_history
   {
     unsigned int cpu;
     unsigned int flags;
@@ -1923,7 +1923,7 @@ s390_machine (int ignore ATTRIBUTE_UNUSED)
       if (strcmp (cpu_string, "push") == 0)
 	{
 	  if (cpu_history == NULL)
-	    cpu_history = xmalloc (MAX_HISTORY * sizeof (*cpu_history));
+	    cpu_history = XNEWVEC (struct cpu_history, MAX_HISTORY);
 
 	  if (curr_hist >= MAX_HISTORY)
 	    as_bad (_(".machine stack overflow"));
@@ -1995,7 +1995,7 @@ s390_machinemode (int ignore ATTRIBUTE_UNUSED)
       if (strcmp (mode_string, "push") == 0)
 	{
 	  if (mode_history == NULL)
-	    mode_history = xmalloc (MAX_HISTORY * sizeof (*mode_history));
+	    mode_history = XNEWVEC (unsigned int, MAX_HISTORY);
 
 	  if (curr_hist >= MAX_HISTORY)
 	    as_bad (_(".machinemode stack overflow"));
@@ -2034,7 +2034,7 @@ s390_machinemode (int ignore ATTRIBUTE_UNUSED)
 
 #undef MAX_HISTORY
 
-char *
+const char *
 md_atof (int type, char *litp, int *sizep)
 {
   return ieee_md_atof (type, litp, sizep, TRUE);
@@ -2316,7 +2316,7 @@ md_apply_fix (fixS *fixP, valueT *valP, segT seg ATTRIBUTE_UNUSED)
 	}
       else
 	{
-	  char *sfile;
+	  const char *sfile;
 	  unsigned int sline;
 
 	  /* Use expr_symbol_where to see if this is an expression
@@ -2548,8 +2548,8 @@ tc_gen_reloc (asection *seg ATTRIBUTE_UNUSED, fixS *fixp)
 	code = BFD_RELOC_390_GOTPCDBL;
     }
 
-  reloc = (arelent *) xmalloc (sizeof (arelent));
-  reloc->sym_ptr_ptr = (asymbol **) xmalloc (sizeof (asymbol *));
+  reloc = XNEW (arelent);
+  reloc->sym_ptr_ptr = XNEW (asymbol *);
   *reloc->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_addsy);
   reloc->address = fixp->fx_frag->fr_address + fixp->fx_where;
   reloc->howto = bfd_reloc_type_lookup (stdoutput, code);

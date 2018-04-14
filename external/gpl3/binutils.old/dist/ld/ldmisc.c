@@ -1,5 +1,5 @@
 /* ldmisc.c
-   Copyright (C) 1991-2015 Free Software Foundation, Inc.
+   Copyright (C) 1991-2016 Free Software Foundation, Inc.
    Written by Steve Chamberlain of Cygnus Support.
 
    This file is part of the GNU Binutils.
@@ -201,7 +201,8 @@ vfinfo (FILE *fp, const char *fmt, va_list arg, bfd_boolean is_warning)
 
 		if (abfd == NULL)
 		  fprintf (fp, "%s generated", program_name);
-		else if (abfd->my_archive)
+		else if (abfd->my_archive != NULL
+			 && !bfd_is_thin_archive (abfd->my_archive))
 		  fprintf (fp, "%s(%s)", abfd->my_archive->filename,
 			   abfd->filename);
 		else
@@ -230,11 +231,13 @@ vfinfo (FILE *fp, const char *fmt, va_list arg, bfd_boolean is_warning)
 		lang_input_statement_type *i;
 
 		i = va_arg (arg, lang_input_statement_type *);
-		if (bfd_my_archive (i->the_bfd) != NULL)
+		if (i->the_bfd->my_archive != NULL
+		    && !bfd_is_thin_archive (i->the_bfd->my_archive))
 		  fprintf (fp, "(%s)",
-			   bfd_get_filename (bfd_my_archive (i->the_bfd)));
+			   bfd_get_filename (i->the_bfd->my_archive));
 		fprintf (fp, "%s", i->local_sym_name);
-		if (bfd_my_archive (i->the_bfd) == NULL
+		if ((i->the_bfd->my_archive == NULL
+		     || bfd_is_thin_archive (i->the_bfd->my_archive))
 		    && filename_cmp (i->local_sym_name, i->filename) != 0)
 		  fprintf (fp, " (%s)", i->filename);
 	      }

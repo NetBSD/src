@@ -1,5 +1,5 @@
 /* input_scrub.c - Break up input buffers into whole numbers of lines.
-   Copyright (C) 1987-2015 Free Software Foundation, Inc.
+   Copyright (C) 1987-2016 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -95,8 +95,8 @@ int macro_nest;
    source line numbers.  Whenever we open a file we must fill in
    physical_input_file. So if it is NULL we have not opened any files yet.  */
 
-static char *physical_input_file;
-static char *logical_input_file;
+static const char *physical_input_file;
+static const char *logical_input_file;
 
 /* 1-origin line number in a source file.  */
 /* A line ends in '\n' or eof.  */
@@ -110,8 +110,8 @@ struct input_save {
   int                 partial_size;
   char                save_source[AFTER_SIZE];
   size_t              buffer_length;
-  char *              physical_input_file;
-  char *              logical_input_file;
+  const char *              physical_input_file;
+  const char *              logical_input_file;
   unsigned int        physical_input_line;
   int                 logical_input_line;
   size_t              sb_index;
@@ -139,7 +139,7 @@ input_scrub_push (char *saved_position)
 {
   struct input_save *saved;
 
-  saved = (struct input_save *) xmalloc (sizeof *saved);
+  saved = XNEW (struct input_save);
 
   saved->saved_position = saved_position;
   saved->buffer_start = buffer_start;
@@ -159,12 +159,12 @@ input_scrub_push (char *saved_position)
 
   input_file_begin ();		/* Reinitialize! */
   logical_input_line = -1;
-  logical_input_file = (char *) NULL;
+  logical_input_file = NULL;
   buffer_length = input_file_buffer_size ();
   sb_index = -1;
 
-  buffer_start = (char *) xmalloc ((BEFORE_SIZE + buffer_length
-                                    + buffer_length + AFTER_SIZE + 1));
+  buffer_start = XNEWVEC (char, (BEFORE_SIZE + buffer_length
+				 + buffer_length + AFTER_SIZE + 1));
   memcpy (buffer_start, BEFORE_STRING, (int) BEFORE_SIZE);
 
   return saved;
@@ -208,13 +208,13 @@ input_scrub_begin (void)
 
   buffer_length = input_file_buffer_size ();
 
-  buffer_start = (char *) xmalloc ((BEFORE_SIZE + buffer_length
-                                    + buffer_length + AFTER_SIZE + 1));
+  buffer_start = XNEWVEC (char, (BEFORE_SIZE + buffer_length
+				 + buffer_length + AFTER_SIZE + 1));
   memcpy (buffer_start, BEFORE_STRING, (int) BEFORE_SIZE);
 
   /* Line number things.  */
   logical_input_line = -1;
-  logical_input_file = (char *) NULL;
+  logical_input_file = NULL;
   physical_input_file = NULL;	/* No file read yet.  */
   next_saved_file = NULL;	/* At EOF, don't pop to any other file */
   do_scrub_begin (flag_m68k_mri);
@@ -235,7 +235,7 @@ input_scrub_end (void)
    Return start of caller's part of buffer.  */
 
 char *
-input_scrub_new_file (char *filename)
+input_scrub_new_file (const char *filename)
 {
   input_file_open (filename, !flag_no_comments);
   physical_input_file = filename[0] ? filename : _("{standard input}");
@@ -250,7 +250,7 @@ input_scrub_new_file (char *filename)
    input_scrub_new_file.  */
 
 char *
-input_scrub_include_file (char *filename, char *position)
+input_scrub_include_file (const char *filename, char *position)
 {
   next_saved_file = input_scrub_push (position);
   return input_scrub_new_file (filename);
@@ -389,10 +389,10 @@ input_scrub_next_buffer (char **bufp)
 
       partial_size = limit - (buffer_start + BEFORE_SIZE);
       buffer_length += input_file_buffer_size ();
-      buffer_start = (char *) xrealloc (buffer_start,
-					(BEFORE_SIZE
-					 + 2 * buffer_length
-					 + AFTER_SIZE + 1));
+      buffer_start = XRESIZEVEC (char, buffer_start,
+				 (BEFORE_SIZE
+				  + 2 * buffer_length
+				  + AFTER_SIZE + 1));
     }
 
   /* Tell the listing we've finished the file.  */
@@ -435,7 +435,7 @@ bump_line_counters (void)
    Returns nonzero if the filename actually changes.  */
 
 int
-new_logical_line_flags (char *fname, /* DON'T destroy it!  We point to it!  */
+new_logical_line_flags (const char *fname, /* DON'T destroy it!  We point to it!  */
 			int line_number,
 			int flags)
 {
@@ -476,36 +476,34 @@ new_logical_line_flags (char *fname, /* DON'T destroy it!  We point to it!  */
 }
 
 int
-new_logical_line (char *fname, int line_number)
+new_logical_line (const char *fname, int line_number)
 {
   return new_logical_line_flags (fname, line_number, 0);
 }
 
 
-/* Return the current file name and line number.
-   namep should be char * const *, but there are compilers which screw
-   up declarations like that, and it's easier to avoid it.  */
+/* Return the current file name and line number.  */
 
-void
-as_where (char **namep, unsigned int *linep)
+const char *
+as_where (unsigned int *linep)
 {
   if (logical_input_file != NULL
       && (linep == NULL || logical_input_line >= 0))
     {
-      *namep = logical_input_file;
       if (linep != NULL)
 	*linep = logical_input_line;
+      return logical_input_file;
     }
   else if (physical_input_file != NULL)
     {
-      *namep = physical_input_file;
       if (linep != NULL)
 	*linep = physical_input_line;
+      return physical_input_file;
     }
   else
     {
-      *namep = 0;
       if (linep != NULL)
 	*linep = 0;
+      return NULL;
     }
 }

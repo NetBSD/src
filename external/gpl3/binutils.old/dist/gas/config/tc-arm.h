@@ -1,5 +1,5 @@
 /* This file is tc-arm.h
-   Copyright (C) 1994-2015 Free Software Foundation, Inc.
+   Copyright (C) 1994-2016 Free Software Foundation, Inc.
    Contributed by Richard Earnshaw (rwe@pegasus.esprit.ec.org)
 	Modified by David Taylor (dtaylor@armltd.co.uk)
 
@@ -249,9 +249,12 @@ arm_min (int am_p1, int am_p2)
 #define TC_FRAG_INIT(fragp)	arm_init_frag (fragp, max_chars)
 #define TC_ALIGN_ZERO_IS_DEFAULT 1
 #define HANDLE_ALIGN(fragp)	arm_handle_align (fragp)
-#define SUB_SEGMENT_ALIGN(SEG, FRCHAIN)			\
+/* PR gas/19276: COFF/PE segment alignment is already handled in coff_frob_section().  */
+#ifndef TE_PE
+#define SUB_SEGMENT_ALIGN(SEG, FRCHAIN)				\
   ((!(FRCHAIN)->frch_next && subseg_text_p (SEG))		\
    ? arm_min (2, get_recorded_alignment (SEG)) : 0)
+#endif
 
 #define md_do_align(N, FILL, LEN, MAX, LABEL)					\
   if (FILL == NULL && (N) != 0 && ! need_pass_2 && subseg_text_p (now_seg))	\

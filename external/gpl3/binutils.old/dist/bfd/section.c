@@ -1,5 +1,5 @@
 /* Object file "section" support for the BFD library.
-   Copyright (C) 1990-2015 Free Software Foundation, Inc.
+   Copyright (C) 1990-2016 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -361,6 +361,9 @@ CODE_FRAGMENT
 .     when memory read flag isn't set. *}
 .#define SEC_COFF_NOREAD 0x40000000
 .
+.  {* Indicate that section has the no read flag set.  *}
+.#define SEC_ELF_NOREAD 0x80000000
+.
 .  {*  End of section flags.  *}
 .
 .  {* Some internal packed boolean fields.  *}
@@ -427,7 +430,7 @@ CODE_FRAGMENT
 .      information.  *}
 .  bfd_vma lma;
 .
-.  {* The size of the section in octets, as it will be output.
+.  {* The size of the section in *octets*, as it will be output.
 .     Contains a value even if the section has no contents (e.g., the
 .     size of <<.bss>>).  *}
 .  bfd_size_type size;

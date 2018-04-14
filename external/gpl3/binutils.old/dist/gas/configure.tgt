@@ -1,6 +1,6 @@
 # gas target specific configuration file.  This is a -*- sh -*- file.
 #
-#   Copyright (C) 2012-2015 Free Software Foundation, Inc.
+#   Copyright (C) 2012-2016 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -122,7 +122,7 @@ esac
 generic_target=${cpu_type}-$vendor-$os
 # Note: This table is alpha-sorted, please try to keep it that way.
 case ${generic_target} in
-  aarch64*-*-elf)			fmt=elf;;
+  aarch64*-*-elf | aarch64*-*-rtems*)	fmt=elf;;
   aarch64*-*-linux*)			fmt=elf em=linux ;;
   aarch64*-*-netbsd*)			fmt=elf em=nbsd ;;
 
@@ -130,18 +130,18 @@ case ${generic_target} in
   alpha-*-osf*)				fmt=ecoff ;;
   alpha-*-linux*ecoff*)			fmt=ecoff ;;
   alpha-*-linux-*)			fmt=elf em=linux ;;
-  alpha-*-netbsd*)			fmt=elf em=nbsd ;;
-  alpha-*-openbsd*)			fmt=elf em=obsd ;;
+  alpha-*-netbsd* | alpha-*-openbsd*)	fmt=elf em=nbsd ;;
 
   arc-*-elf*)				fmt=elf ;;
-  arc*-*-linux-uclibc*)			fmt=elf bfd_gas=yes ;;
+  arc*-*-linux*)			fmt=elf bfd_gas=yes ;;
 
   arm-*-aout)				fmt=aout ;;
-  arm-*-coff | thumb-*-coff)		fmt=coff ;;
-  arm-*-rtems* | thumb-*-rtems*)	fmt=elf ;;
-  arm-*-elf | thumb-*-elf)		fmt=elf ;;
-  arm-*-netbsdelf*-*eabihf*)		fmt=elf em=armnbsdeabihf ;;
-  arm-*-netbsdelf*-*eabi*)		fmt=elf em=armnbsdeabi ;;
+  arm-*-coff)				fmt=coff ;;
+  arm-*-phoenix*)			fmt=elf ;;
+  arm-*-rtems*)				fmt=elf ;;
+  arm-*-elf)				fmt=elf ;;
+  arm-*-netbsdelf*-*eabihf*)		fmt=elf  em=armnbsdeabihf ;;
+  arm-*-netbsdelf*-*eabi*)		fmt=elf  em=armnbsdeabi ;;
   arm-*-eabi*)				fmt=elf em=armeabi ;;
   arm-*-symbianelf*)			fmt=elf em=symbian ;;
   arm-*-kaos*)				fmt=elf ;;
@@ -513,3 +513,12 @@ if test $bfd_gas != yes; then
   echo This target is no longer supported in gas
   exit 1
 fi
+
+case ${cpu_type}-${fmt}-${os} in
+i386-elf-linux*)
+  # Default to compress DWARF debug sections for Linux/x86.
+  if test ${ac_default_compressed_debug_sections} = unset; then
+    ac_default_compressed_debug_sections=yes
+  fi
+  ;;
+esac

@@ -1,5 +1,5 @@
 /* rl78-defs.h Renesas RL78 internal definitions
-   Copyright (C) 2008-2015 Free Software Foundation, Inc.
+   Copyright (C) 2008-2016 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 

@@ -1,5 +1,5 @@
 /* tc-v850.c -- Assembler code for the NEC V850
-   Copyright (C) 1996-2015 Free Software Foundation, Inc.
+   Copyright (C) 1996-2016 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -39,7 +39,7 @@ static int machine = -1;
 
 
 /* Indiciates the target BFD architecture.  */
-int          v850_target_arch = bfd_arch_v850_rh850;
+enum bfd_architecture v850_target_arch = bfd_arch_v850_rh850;
 const char * v850_target_format = "elf32-v850-rh850";
 static flagword v850_e_flags = 0;
 
@@ -1372,7 +1372,7 @@ skip_white_space (void)
    and so on upwards.  System registers are considered to be very
    high numbers.  */
 
-static char *
+static const char *
 parse_register_list (unsigned long *insn,
 		     const struct v850_operand *operand)
 {
@@ -1562,7 +1562,7 @@ md_show_usage (FILE *stream)
 }
 
 int
-md_parse_option (int c, char *arg)
+md_parse_option (int c, const char *arg)
 {
   if (c != 'm')
     {
@@ -1670,7 +1670,7 @@ md_undefined_symbol (char *name ATTRIBUTE_UNUSED)
   return 0;
 }
 
-char *
+const char *
 md_atof (int type, char *litp, int *sizep)
 {
   return ieee_md_atof (type, litp, sizep, FALSE);
@@ -1885,7 +1885,7 @@ md_section_align (asection *seg, valueT addr)
 void
 md_begin (void)
 {
-  char *prev_name = "";
+  const char *prev_name = "";
   const struct v850_opcode *op;
 
   if (strncmp (TARGET_CPU, "v850e3v5", 8) == 0)
@@ -3337,8 +3337,8 @@ tc_gen_reloc (asection *seg ATTRIBUTE_UNUSED, fixS *fixp)
 {
   arelent *reloc;
 
-  reloc		      = xmalloc (sizeof (arelent));
-  reloc->sym_ptr_ptr  = xmalloc (sizeof (asymbol *));
+  reloc		      = XNEW (arelent);
+  reloc->sym_ptr_ptr  = XNEW (asymbol *);
   *reloc->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_addsy);
   reloc->address      = fixp->fx_frag->fr_address + fixp->fx_where;
 

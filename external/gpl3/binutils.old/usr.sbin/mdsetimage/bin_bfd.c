@@ -1,4 +1,4 @@
-/*	$NetBSD: bin_bfd.c,v 1.1.1.1 2016/10/26 17:03:45 christos Exp $	*/
+/*	$NetBSD: bin_bfd.c,v 1.1.1.2 2018/04/14 15:37:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1996, 2002 Christopher G. Demetriou
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bin_bfd.c,v 1.1.1.1 2016/10/26 17:03:45 christos Exp $");
+__RCSID("$NetBSD: bin_bfd.c,v 1.1.1.2 2018/04/14 15:37:47 christos Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -75,6 +75,8 @@ bin_find_md_root(void *bin, const char *mappedkfile, off_t size,
 		size_t offset;
 	} *s, symbols[3];
 
+	symbols[0].offset = 0;
+	symbols[1].offset = 0;
 	symbols[0].name = root_name;
 	symbols[1].name = size_name;
 	symbols[2].name = NULL;

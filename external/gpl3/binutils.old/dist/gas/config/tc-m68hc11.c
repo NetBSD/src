@@ -1,5 +1,5 @@
 /* tc-m68hc11.c -- Assembler code for the Motorola 68HC11 & 68HC12.
-   Copyright (C) 1999-2015 Free Software Foundation, Inc.
+   Copyright (C) 1999-2016 Free Software Foundation, Inc.
    Written by Stephane Carrez (stcarrez@nerim.fr)
    XGATE and S12X added by James Murray (jsm@jsm-net.demon.co.uk)
 
@@ -490,7 +490,7 @@ m68hc11_print_statistics (FILE *file)
 }
 
 int
-md_parse_option (int c, char *arg)
+md_parse_option (int c, const char *arg)
 {
   get_default_target ();
   switch (c)
@@ -574,7 +574,7 @@ md_undefined_symbol (char *name ATTRIBUTE_UNUSED)
   return 0;
 }
 
-char *
+const char *
 md_atof (int type, char *litP, int *sizeP)
 {
   return ieee_md_atof (type, litP, sizeP, TRUE);
@@ -603,7 +603,7 @@ cmp_opcode (struct m68hc11_opcode *op1, struct m68hc11_opcode *op2)
 void
 md_begin (void)
 {
-  char *prev_name = "";
+  const char *prev_name = "";
   struct m68hc11_opcode *opcodes;
   struct m68hc11_opcode_def *opc = 0;
   int i, j;
@@ -613,9 +613,7 @@ md_begin (void)
   m68hc11_hash = hash_new ();
 
   /* Get a writable copy of the opcode table and sort it on the names.  */
-  opcodes = (struct m68hc11_opcode *) xmalloc (m68hc11_num_opcodes *
-					       sizeof (struct
-						       m68hc11_opcode));
+  opcodes = XNEWVEC (struct m68hc11_opcode, m68hc11_num_opcodes);
   m68hc11_sorted_opcodes = opcodes;
   num_opcodes = 0;
   for (i = 0; i < m68hc11_num_opcodes; i++)
@@ -644,8 +642,7 @@ md_begin (void)
   qsort (opcodes, num_opcodes, sizeof (struct m68hc11_opcode),
          (int (*) (const void*, const void*)) cmp_opcode);
 
-  opc = (struct m68hc11_opcode_def *)
-    xmalloc (num_opcodes * sizeof (struct m68hc11_opcode_def));
+  opc = XNEWVEC (struct m68hc11_opcode_def, num_opcodes);
   m68hc11_opcode_defs = opc--;
 
   /* Insert unique names into hash table.  The M6811 instruction set
@@ -964,7 +961,7 @@ static void
 print_opcode_list (void)
 {
   int i;
-  char *prev_name = "";
+  const char *prev_name = "";
   struct m68hc11_opcode *opcodes;
   int example = flag_print_opcodes == 2;
 
@@ -1607,7 +1604,7 @@ fixup8 (expressionS *oper, int mode, int opmode)
       else
 	{
 	  fixS *fixp;
-          int reloc;
+          bfd_reloc_code_real_type reloc;
 
 	  /* Now create an 8-bit fixup.  If there was some %hi, %lo
 	     or %page modifier, generate the reloc accordingly.  */
@@ -1654,7 +1651,7 @@ fixup16 (expressionS *oper, int mode, int opmode ATTRIBUTE_UNUSED)
   else if (oper->X_op != O_register)
     {
       fixS *fixp;
-      int reloc;
+      bfd_reloc_code_real_type reloc;
 
       if ((opmode & M6811_OP_CALL_ADDR) && (mode & M6811_OP_IMM16))
         reloc = BFD_RELOC_M68HC11_LO16;
@@ -1724,7 +1721,7 @@ fixup8_xg (expressionS *oper, int mode, int opmode)
   if (oper->X_op == O_constant)
     {
       fixS *fixp;
-      int reloc;
+      bfd_reloc_code_real_type reloc;
 
       if ((opmode & M6811_OP_HIGH_ADDR) || (opmode & M6811_OP_LOW_ADDR))
         {
@@ -1765,7 +1762,7 @@ fixup8_xg (expressionS *oper, int mode, int opmode)
       else
         {
           fixS *fixp;
-          int reloc;
+          bfd_reloc_code_real_type reloc;
 
           /* Now create an 8-bit fixup.  If there was some %hi, %lo
              modifier, generate the reloc accordingly.  */
@@ -3831,8 +3828,8 @@ tc_gen_reloc (asection *section ATTRIBUTE_UNUSED, fixS *fixp)
 {
   arelent *reloc;
 
-  reloc = (arelent *) xmalloc (sizeof (arelent));
-  reloc->sym_ptr_ptr = (asymbol **) xmalloc (sizeof (asymbol *));
+  reloc = XNEW (arelent);
+  reloc->sym_ptr_ptr = XNEW (asymbol *);
   *reloc->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_addsy);
   reloc->address = fixp->fx_frag->fr_address + fixp->fx_where;
   if (fixp->fx_r_type == 0)

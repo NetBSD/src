@@ -1,5 +1,5 @@
 /* Disassemble AVR instructions.
-   Copyright (C) 1999-2015 Free Software Foundation, Inc.
+   Copyright (C) 1999-2016 Free Software Foundation, Inc.
 
    Contributed by Denis Chertykov <denisc@overta.ru>
 
@@ -184,17 +184,23 @@ avr_operand (unsigned int insn, unsigned int insn2, unsigned int pc, int constra
       break;
 
     case 'i':
-      sprintf (buf, "0x%04X", insn2);
+      {
+        unsigned int val = insn2 | 0x800000;
+        *sym = 1;
+        *sym_addr = val;
+        sprintf (buf, "0x%04X", insn2);
+        strcpy (comment, comment_start);
+      }
       break;
 
     case 'j':
       {
         unsigned int val = ((insn & 0xf) | ((insn & 0x600) >> 5)
                                          | ((insn & 0x100) >> 2));
-        if (val > 0 && !(insn & 0x100))
-          val |= 0x80;
+        *sym = 1;
+        *sym_addr = val | 0x800000;
         sprintf (buf, "0x%02x", val);
-        sprintf (buf, "%d", val);
+        strcpy (comment, comment_start);
       }
       break;
 
