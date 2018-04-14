@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.180 2018/04/12 14:16:42 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.181 2018/04/14 03:13:38 snj Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -12717,7 +12717,7 @@ share/man/man9/kauth.9				1.109
 sys/compat/linux/arch/arm/linux_ptrace.c	1.20
 sys/compat/linux/arch/i386/linux_ptrace.c	1.32
 sys/compat/linux/arch/powerpc/linux_ptrace.c	1.30
-sys/compat/netbsd32/netbsd32.h			1.115
+sys/compat/netbsd32/netbsd32.h			1.115-1.116
 sys/compat/netbsd32/netbsd32_ptrace.c		1.5
 sys/compat/netbsd32/netbsd32_signal.c		1.45
 sys/kern/kern_exit.c				1.269
