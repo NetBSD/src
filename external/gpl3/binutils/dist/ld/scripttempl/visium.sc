@@ -1,5 +1,5 @@
-# Copyright (C) 2014-2016 Free Software Foundation, Inc.
-# 
+# Copyright (C) 2014-2018 Free Software Foundation, Inc.
+#
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
 # notice and this notice are preserved.
@@ -134,7 +134,7 @@ SECTIONS
     ${RELOCATING+ . = ALIGN(4);}
     ${RELOCATING+ _edata  =  .;}
   } ${RELOCATING+ > ram}
-  .bss ${RELOCATING-0} : { 					
+  .bss ${RELOCATING-0} : {
     ${RELOCATING+ . = ALIGN(4);}
     ${RELOCATING+ __bss_start = .;}
     *(.bss)

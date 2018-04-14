@@ -1,5 +1,5 @@
 /* tc-i960.c - All the i80960-specific stuff
-   Copyright (C) 1989-2016 Free Software Foundation, Inc.
+   Copyright (C) 1989-2018 Free Software Foundation, Inc.
 
    This file is part of GAS.
 
@@ -406,7 +406,7 @@ int iclasses_seen;		/* OR of instruction classes (I_* constants)
         of branches taken/not-taken for later input to a utility that will
         set the branch prediction bits of the instructions in accordance with
         the behavior observed.  (Note that the KX series does not have
-        brach-prediction.)
+        branch-prediction.)
 
         The instrumentation consists of:
 
@@ -577,6 +577,7 @@ get_cdisp (const char *dispP, /* Displacement as specified in source instruction
     {
     case O_illegal:
       as_bad (_("expression syntax error"));
+      break;
 
     case O_symbol:
       if (S_GET_SEGMENT (e.X_add_symbol) == now_seg
@@ -979,7 +980,7 @@ parse_memop (memS *memP,	/* Where to put the results.  */
 	  regnum = *intP;
 	  *p = '\0';		/* Discard register spec.  */
 	  if (regnum == IPREL)
-	    /* We have to specialcase ip-rel mode.  */
+	    /* We have to special-case ip-rel mode.  */
 	    iprel_flag = 1;
 	  else
 	    {
@@ -1040,7 +1041,7 @@ parse_memop (memS *memP,	/* Where to put the results.  */
     case I_BIT:
       /* Treat missing displacement as displacement of 0.  */
       mode |= D_BIT;
-      /* Fall into next case.  */
+      /* Fall through.  */
     case D_BIT | A_BIT | I_BIT:
     case D_BIT | I_BIT:
       /* Set MEMB bit in mode, and OR in mode bits.  */
@@ -1403,7 +1404,7 @@ get_args (char *p, 	/* Pointer to comma-separated operands; Mucked by us.  */
   n = 1;
   args[1] = p;
 
-  /* Squeze blanks out by moving non-blanks toward start of string.
+  /* Squeeze blanks out by moving non-blanks toward start of string.
      Isolate operands, whenever comma is found.  */
   to = p;
   while (*p != '\0')
@@ -1645,7 +1646,7 @@ md_assemble (char *textP)
   if (!oP || !targ_has_iclass (oP->iclass))
     as_bad (_("invalid opcode, \"%s\"."), args[0]);
   else if (n_ops != oP->num_ops)
-    as_bad (_("improper number of operands.  expecting %d, got %d"),
+    as_bad (_("improper number of operands.  Expecting %d, got %d"),
 	    oP->num_ops, n_ops);
   else
     {
@@ -1675,6 +1676,7 @@ md_assemble (char *textP)
 	      mem_fmt (args, oP, 1);
 	      break;
 	    }
+	  /* Fall through.  */
 	case MEM2:
 	case MEM4:
 	case MEM8:

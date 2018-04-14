@@ -1,6 +1,6 @@
 // powerpc.h -- ELF definitions specific to EM_PPC and EM_PPC64  -*- C++ -*-
 
-// Copyright (C) 2008-2016 Free Software Foundation, Inc.
+// Copyright (C) 2008-2018 Free Software Foundation, Inc.
 // Written by David S. Miller <davem@davemloft.net>.
 
 // This file is part of elfcpp.
@@ -226,6 +226,20 @@ enum
   // 2 for revised ABI without function descriptors,
   // 0 for unspecified or not using any features affected by the differences.
   EF_PPC64_ABI = 3
+};
+
+// DT_PPC_OPT bits
+enum
+{
+  PPC_OPT_TLS = 1
+};
+
+// DT_PPC64_OPT bits
+enum
+{
+  PPC64_OPT_TLS = 1,
+  PPC64_OPT_MULTI_TOC = 2,
+  PPC64_OPT_LOCALENTRY = 4
 };
 
 enum

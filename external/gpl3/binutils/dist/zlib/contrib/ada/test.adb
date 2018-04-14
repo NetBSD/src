@@ -6,7 +6,7 @@
 --  Open source license information is in the zlib.ads file.  --
 ----------------------------------------------------------------
 
---  $Id: test.adb,v 1.1.1.2 2016/07/28 12:20:05 christos Exp $
+--  Id: test.adb,v 1.17 2003/08/12 12:13:30 vagul Exp 
 
 --  The program has a few aims.
 --  1. Test ZLib.Ada95 thick binding functionality.

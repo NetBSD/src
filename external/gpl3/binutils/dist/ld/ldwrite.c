@@ -1,5 +1,5 @@
 /* ldwrite.c -- write out the linked file
-   Copyright (C) 1991-2016 Free Software Foundation, Inc.
+   Copyright (C) 1991-2018 Free Software Foundation, Inc.
    Written by Steve Chamberlain sac@cygnus.com
 
    This file is part of the GNU Binutils.
@@ -254,6 +254,8 @@ build_link_order (lang_statement_union_type *statement)
 
 	    link_order = bfd_new_link_order (link_info.output_bfd,
 					     output_section);
+	    if (link_order == NULL)
+	      einfo (_("%P%F: bfd_new_link_order failed\n"));
 
 	    if ((i->flags & SEC_NEVER_LOAD) != 0
 		&& (i->flags & SEC_DEBUGGING) == 0)
@@ -293,6 +295,8 @@ build_link_order (lang_statement_union_type *statement)
 
 	link_order = bfd_new_link_order (link_info.output_bfd,
 					 output_section);
+	if (link_order == NULL)
+	  einfo (_("%P%F: bfd_new_link_order failed\n"));
 	link_order->type = bfd_data_link_order;
 	link_order->size = statement->padding_statement.size;
 	link_order->offset = statement->padding_statement.output_offset;

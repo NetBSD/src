@@ -1,5 +1,5 @@
 /* BFD back-end for Intel 960 COFF files.
-   Copyright (C) 1990-2016 Free Software Foundation, Inc.
+   Copyright (C) 1990-2018 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -128,7 +128,7 @@ optcall_callback (bfd *abfd,
       {
       case C_LEAFSTAT:
       case C_LEAFEXT:
-  	/* This is a call to a leaf procedure, replace instruction with a bal
+	/* This is a call to a leaf procedure, replace instruction with a bal
 	   to the correct location.  */
 	{
 	  union internal_auxent *aux = &((cs->native+2)->u.auxent);
@@ -142,9 +142,9 @@ optcall_callback (bfd *abfd,
 	     sym and auxents untouched, so the delta between the two
 	     is the offset of the bal entry point.  */
 	  word = ((word +  olf)  & BAL_MASK) | BAL;
-  	  bfd_put_32 (abfd, (bfd_vma) word,
+	  bfd_put_32 (abfd, (bfd_vma) word,
 		      (bfd_byte *) data + reloc_entry->address);
-  	}
+	}
 	result = bfd_reloc_ok;
 	break;
       case C_SCALL:
@@ -201,7 +201,7 @@ coff_i960_relocate (bfd *abfd,
   if (bfd_is_com_section (bfd_get_section (symbol)))
     {
       /* I don't really know what the right action is for a common
-         symbol.  */
+	 symbol.  */
       return bfd_reloc_continue;
     }
 
@@ -429,7 +429,7 @@ coff_i960_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 	  else
 	    {
 	      sec = sections[symndx];
-              val = (sec->output_section->vma
+	      val = (sec->output_section->vma
 		     + sec->output_offset
 		     + sym->n_value
 		     - sec->vma);
@@ -468,8 +468,8 @@ coff_i960_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 	    {
 	    case C_NULL:
 	      /* This symbol is apparently not from a COFF input file.
-                 We warn, and then assume that it is not a leaf
-                 function.  */
+		 We warn, and then assume that it is not a leaf
+		 function.  */
 	      (*info->callbacks->reloc_dangerous)
 		(info,
 		 _("uncertain calling convention for non-COFF symbol"),
@@ -479,7 +479,7 @@ coff_i960_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 	    case C_LEAFSTAT:
 	    case C_LEAFEXT:
 	      /* This is a call to a leaf procedure; use the bal
-                 instruction.  */
+		 instruction.  */
 	      {
 		long olf;
 		unsigned long word;

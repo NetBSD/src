@@ -1,5 +1,5 @@
 /* i370-specific support for 32-bit ELF
-   Copyright (C) 1994-2016 Free Software Foundation, Inc.
+   Copyright (C) 1994-2018 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support.
    Hacked by Linas Vepstas for i370 linas@linas.org
 
@@ -303,8 +303,9 @@ i370_elf_info_to_howto (bfd *abfd ATTRIBUTE_UNUSED,
   r_type = ELF32_R_TYPE (dst->r_info);
   if (r_type >= R_I370_max)
     {
-      (*_bfd_error_handler) (_("%B: unrecognised I370 reloc number: %d"),
-			     abfd, r_type);
+      /* xgettext:c-format */
+      _bfd_error_handler (_("%B: unrecognised I370 reloc number: %d"),
+			  abfd, r_type);
       bfd_set_error (bfd_error_bad_value);
       r_type = R_I370_NONE;
     }
@@ -330,8 +331,9 @@ i370_elf_set_private_flags (bfd *abfd, flagword flags)
    object file when linking.  */
 
 static bfd_boolean
-i370_elf_merge_private_bfd_data (bfd *ibfd, bfd *obfd)
+i370_elf_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
 {
+  bfd *obfd = info->output_bfd;
   flagword old_flags;
   flagword new_flags;
 
@@ -352,9 +354,10 @@ i370_elf_merge_private_bfd_data (bfd *ibfd, bfd *obfd)
 
   else					/* Incompatible flags.  */
     {
-      (*_bfd_error_handler)
-	("%B: uses different e_flags (0x%lx) fields than previous modules (0x%lx)",
-	 ibfd, (long) new_flags, (long) old_flags);
+      _bfd_error_handler
+	/* xgettext:c-format */
+	(_("%B: uses different e_flags (%#x) fields than previous modules (%#x)"),
+	 ibfd, new_flags, old_flags);
 
       bfd_set_error (bfd_error_bad_value);
       return FALSE;
@@ -475,7 +478,7 @@ i370_elf_adjust_dynamic_symbol (struct bfd_link_info *info,
   /* Make sure we know what is going on here.  */
   BFD_ASSERT (dynobj != NULL
 	      && (h->needs_plt
-		  || h->u.weakdef != NULL
+		  || h->is_weakalias
 		  || (h->def_dynamic
 		      && h->ref_regular
 		      && !h->def_regular)));
@@ -487,12 +490,12 @@ i370_elf_adjust_dynamic_symbol (struct bfd_link_info *info,
   /* If this is a weak symbol, and there is a real definition, the
      processor independent code will have arranged for us to see the
      real definition first, and we can just use the same value.  */
-  if (h->u.weakdef != NULL)
+  if (h->is_weakalias)
     {
-      BFD_ASSERT (h->u.weakdef->root.type == bfd_link_hash_defined
-		  || h->u.weakdef->root.type == bfd_link_hash_defweak);
-      h->root.u.def.section = h->u.weakdef->root.u.def.section;
-      h->root.u.def.value = h->u.weakdef->root.u.def.value;
+      struct elf_link_hash_entry *def = weakdef (h);
+      BFD_ASSERT (def->root.type == bfd_link_hash_defined);
+      h->root.u.def.section = def->root.u.def.section;
+      h->root.u.def.value = def->root.u.def.value;
       return TRUE;
     }
 
@@ -833,10 +836,6 @@ i370_elf_check_relocs (bfd *abfd,
 	  while (h->root.type == bfd_link_hash_indirect
 		 || h->root.type == bfd_link_hash_warning)
 	    h = (struct elf_link_hash_entry *) h->root.u.i.link;
-
-	  /* PR15323, ref flags aren't set for references in the same
-	     object.  */
-	  h->root.non_ir_ref = 1;
 	}
 
       if (bfd_link_pic (info))
@@ -881,7 +880,7 @@ i370_elf_finish_dynamic_sections (bfd *output_bfd,
 {
   asection *sdyn;
   bfd *dynobj = elf_hash_table (info)->dynobj;
-  asection *sgot = bfd_get_linker_section (dynobj, ".got");
+  asection *sgot = elf_hash_table (info)->sgot;
 
 #ifdef DEBUG
   fprintf (stderr, "i370_elf_finish_dynamic_sections called\n");
@@ -894,7 +893,7 @@ i370_elf_finish_dynamic_sections (bfd *output_bfd,
       asection *splt;
       Elf32_External_Dyn *dyncon, *dynconend;
 
-      splt = bfd_get_linker_section (dynobj, ".plt");
+      splt = elf_hash_table (info)->splt;
       BFD_ASSERT (splt != NULL && sdyn != NULL);
 
       dyncon = (Elf32_External_Dyn *) sdyn->contents;
@@ -902,35 +901,39 @@ i370_elf_finish_dynamic_sections (bfd *output_bfd,
       for (; dyncon < dynconend; dyncon++)
 	{
 	  Elf_Internal_Dyn dyn;
-	  const char *name;
+	  asection *s;
 	  bfd_boolean size;
 
 	  bfd_elf32_swap_dyn_in (dynobj, dyncon, &dyn);
 
 	  switch (dyn.d_tag)
 	    {
-	    case DT_PLTGOT:   name = ".plt";	  size = FALSE; break;
-	    case DT_PLTRELSZ: name = ".rela.plt"; size = TRUE;  break;
-	    case DT_JMPREL:   name = ".rela.plt"; size = FALSE; break;
-	    default:	      name = NULL;	  size = FALSE; break;
+	    case DT_PLTGOT:
+	      s = elf_hash_table (info)->splt;
+	      size = FALSE;
+	      break;
+	    case DT_PLTRELSZ:
+	      s = elf_hash_table (info)->srelplt;
+	      size = TRUE;
+	      break;
+	    case DT_JMPREL:
+	      s = elf_hash_table (info)->srelplt;
+	      size = FALSE;
+	      break;
+	    default:
+	      continue;
 	    }
 
-	  if (name != NULL)
+	  if (s == NULL)
+	    dyn.d_un.d_val = 0;
+	  else
 	    {
-	      asection *s;
-
-	      s = bfd_get_linker_section (dynobj, name);
-	      if (s == NULL)
-		dyn.d_un.d_val = 0;
+	      if (!size)
+		dyn.d_un.d_ptr = s->output_section->vma + s->output_offset;
 	      else
-		{
-		  if (! size)
-		    dyn.d_un.d_ptr = s->output_section->vma + s->output_offset;
-		  else
-		    dyn.d_un.d_val = s->size;
-		}
-	      bfd_elf32_swap_dyn_out (output_bfd, &dyn, dyncon);
+		dyn.d_un.d_val = s->size;
 	    }
+	  bfd_elf32_swap_dyn_out (output_bfd, &dyn, dyncon);
 	}
     }
 
@@ -1046,9 +1049,9 @@ i370_elf_relocate_section (bfd *output_bfd,
   bfd_boolean ret = TRUE;
 
 #ifdef DEBUG
-  _bfd_error_handler ("i370_elf_relocate_section called for %B section %A, %ld relocations%s",
+  _bfd_error_handler ("i370_elf_relocate_section called for %B section %A, %u relocations%s",
 		      input_bfd, input_section,
-		      (long) input_section->reloc_count,
+		      input_section->reloc_count,
 		      (bfd_link_relocatable (info)) ? " (relocatable)" : "");
 #endif
 
@@ -1074,9 +1077,9 @@ i370_elf_relocate_section (bfd *output_bfd,
       if ((unsigned) r_type >= (unsigned) R_I370_max
 	  || !i370_elf_howto_table[(int)r_type])
 	{
-	  (*_bfd_error_handler) ("%B: unknown relocation type %d",
-				 input_bfd,
-				 (int) r_type);
+	  /* xgettext:c-format */
+	  _bfd_error_handler (_("%B: unknown relocation type %d"),
+			      input_bfd, (int) r_type);
 
 	  bfd_set_error (bfd_error_bad_value);
 	  ret = FALSE;
@@ -1157,8 +1160,8 @@ i370_elf_relocate_section (bfd *output_bfd,
       switch ((int) r_type)
 	{
 	default:
-	  (*_bfd_error_handler)
-	    ("%B: unknown relocation type %d for symbol %s",
+	  _bfd_error_handler
+	    (_("%B: unknown relocation type %d for symbol %s"),
 	     input_bfd, (int) r_type, sym_name);
 
 	  bfd_set_error (bfd_error_bad_value);
@@ -1298,8 +1301,9 @@ i370_elf_relocate_section (bfd *output_bfd,
 
 	case (int) R_I370_COPY:
 	case (int) R_I370_RELATIVE:
-	  (*_bfd_error_handler)
-	    ("%B: Relocation %s is not yet supported for symbol %s.",
+	  _bfd_error_handler
+	    /* xgettext:c-format */
+	    (_("%B: Relocation %s is not yet supported for symbol %s."),
 	     input_bfd,
 	     i370_elf_howto_table[(int) r_type]->name,
 	     sym_name);

@@ -1,5 +1,5 @@
 /* ECOFF debugging support.
-   Copyright (C) 1993-2016 Free Software Foundation, Inc.
+   Copyright (C) 1993-2018 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
    This file was put together by Ian Lance Taylor <ian@cygnus.com>.  A
    good deal of it comes directly from mips-tfile.c, by Michael
@@ -185,7 +185,7 @@
 
    Each file table has offsets for where the line numbers, local
    strings, local symbols, and procedure table starts from within the
-   global tables, and the indexs are reset to 0 for each of those
+   global tables, and the indices are reset to 0 for each of those
    tables for the file.
 
    The procedure table contains the binary equivalents of the .ent
@@ -618,7 +618,7 @@
     #26             48  0x00000030  struct no name { ifd = -1, index = 1048575 }
 */
 
-/* Redefinition of of storage classes as an enumeration for better
+/* Redefinition of storage classes as an enumeration for better
    debugging.  */
 
 typedef enum sc {
@@ -1422,7 +1422,7 @@ static symint_t add_aux_sym_tir (type_info_t *t,
 				 thash_t **hash_tbl);
 static tag_t *get_tag (const char *tag, localsym_t *sym, bt_t basic_type);
 static void add_unknown_tag (tag_t *ptag);
-static void add_procedure (char *func);
+static void add_procedure (char *func, int aent);
 static void add_file (const char *file_name, int indx, int fake);
 #ifdef ECOFF_DEBUG
 static char *sc_to_string (sc_t storage_class);
@@ -2109,10 +2109,11 @@ add_unknown_tag (tag_t *ptag /* pointer to tag information */)
 }
 
 /* Add a procedure to the current file's list of procedures, and record
-   this is the current procedure.  */
+   this is the current procedure.  If AENT, then only set the requested
+   symbol's function type.  */
 
 static void
-add_procedure (char *func /* func name */)
+add_procedure (char *func /* func name */, int aent)
 {
   varray_t *vp;
   proc_t *new_proc_ptr;
@@ -2122,6 +2123,13 @@ add_procedure (char *func /* func name */)
   if (debug)
     fputc ('\n', stderr);
 #endif
+
+  /* Set the BSF_FUNCTION flag for the symbol.  */
+  sym = symbol_find_or_make (func);
+  symbol_get_bfdsym (sym)->flags |= BSF_FUNCTION;
+
+  if (aent)
+    return;
 
   if (cur_file_ptr == (efdr_t *) NULL)
     as_fatal (_("no current file pointer"));
@@ -2142,10 +2150,6 @@ add_procedure (char *func /* func name */)
   new_proc_ptr->pdr.iline = -1;
   new_proc_ptr->pdr.lnLow = -1;
   new_proc_ptr->pdr.lnHigh = -1;
-
-  /* Set the BSF_FUNCTION flag for the symbol.  */
-  sym = symbol_find_or_make (func);
-  symbol_get_bfdsym (sym)->flags |= BSF_FUNCTION;
 
   /* Push the start of the function.  */
   new_proc_ptr->sym = add_ecoff_symbol ((const char *) NULL, st_Proc, sc_Text,
@@ -2223,7 +2227,7 @@ add_file (const char *file_name, int indx ATTRIBUTE_UNUSED, int fake)
   if (stabs_seen)
     {
       (void) add_ecoff_symbol (file_name, st_Nil, sc_Nil,
-			       symbol_new ("L0\001", now_seg,
+			       symbol_new (FAKE_LABEL_NAME, now_seg,
 					   (valueT) frag_now_fix (),
 					   frag_now),
 			       (bfd_vma) 0, 0, ECOFF_MARK_STAB (N_SOL));
@@ -3016,10 +3020,14 @@ ecoff_directive_end (int ignore ATTRIBUTE_UNUSED)
     as_warn (_(".end directive names unknown symbol"));
   else
     (void) add_ecoff_symbol ((const char *) NULL, st_End, sc_Text,
-			     symbol_new ("L0\001", now_seg,
+			     symbol_new (FAKE_LABEL_NAME, now_seg,
 					 (valueT) frag_now_fix (),
 					 frag_now),
 			     (bfd_vma) 0, (symint_t) 0, (symint_t) 0);
+
+#ifdef md_flush_pending_output
+  md_flush_pending_output ();
+#endif
 
   cur_proc_ptr = (proc_t *) NULL;
 
@@ -3030,7 +3038,7 @@ ecoff_directive_end (int ignore ATTRIBUTE_UNUSED)
 /* Parse .ent directives.  */
 
 void
-ecoff_directive_ent (int ignore ATTRIBUTE_UNUSED)
+ecoff_directive_ent (int aent)
 {
   char *name;
   char name_end;
@@ -3038,7 +3046,7 @@ ecoff_directive_ent (int ignore ATTRIBUTE_UNUSED)
   if (cur_file_ptr == (efdr_t *) NULL)
     add_file ((const char *) NULL, 0, 1);
 
-  if (cur_proc_ptr != (proc_t *) NULL)
+  if (!aent && cur_proc_ptr != (proc_t *) NULL)
     {
       as_warn (_("second .ent directive found before .end directive"));
       demand_empty_rest_of_line ();
@@ -3049,13 +3057,13 @@ ecoff_directive_ent (int ignore ATTRIBUTE_UNUSED)
 
   if (name == input_line_pointer)
     {
-      as_warn (_(".ent directive has no name"));
+      as_warn (_("%s directive has no name"), aent ? ".aent" : ".ent");
       (void) restore_line_pointer (name_end);
       demand_empty_rest_of_line ();
       return;
     }
 
-  add_procedure (name);
+  add_procedure (name, aent);
 
   (void) restore_line_pointer (name_end);
 
@@ -3256,7 +3264,7 @@ ecoff_directive_loc (int ignore ATTRIBUTE_UNUSED)
   if (stabs_seen)
     {
       (void) add_ecoff_symbol ((char *) NULL, st_Label, sc_Text,
-			       symbol_new ("L0\001", now_seg,
+			       symbol_new (FAKE_LABEL_NAME, now_seg,
 					   (valueT) frag_now_fix (),
 					   frag_now),
 			       (bfd_vma) 0, 0, lineno);
@@ -3318,7 +3326,7 @@ mark_stabs (int ignore ATTRIBUTE_UNUSED)
 {
   if (! stabs_seen)
     {
-      /* Add a dummy @stabs dymbol.  */
+      /* Add a dummy @stabs symbol.  */
       stabs_seen = 1;
       (void) add_ecoff_symbol (stabs_symbol, st_Nil, sc_Info,
 			       (symbolS *) NULL,
@@ -4096,10 +4104,10 @@ ecoff_build_symbols (const struct ecoff_debug_swap *backend,
 		      /* If an st_end symbol has an associated gas
 		         symbol, then it is a local label created for
 		         a .bend or .end directive.  Stabs line
-		         numbers will have \001 in the names.  */
+		         numbers will have FAKE_LABEL_CHAR in the names.  */
 		      if (local
 			  && sym_ptr->ecoff_sym.asym.st != st_End
-			  && strchr (sym_ptr->name, '\001') == 0)
+			  && strchr (sym_ptr->name, FAKE_LABEL_CHAR) == 0)
 			sym_ptr->ecoff_sym.asym.iss =
 			  add_string (&fil_ptr->strings,
 				      fil_ptr->str_hash,

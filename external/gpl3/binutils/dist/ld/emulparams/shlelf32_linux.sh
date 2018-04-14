@@ -14,7 +14,6 @@ TEMPLATE_NAME=elf32
 GENERATE_SHLIB_SCRIPT=yes
 GENERATE_PIE_SCRIPT=yes
 
-
 DATA_START_SYMBOLS='PROVIDE (___data = .);'
 
 # If data is located right after .text (not explicitly specified),

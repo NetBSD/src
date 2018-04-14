@@ -1,6 +1,6 @@
 /* Low-level I/O routines for BFDs.
 
-   Copyright (C) 1990-2016 Free Software Foundation, Inc.
+   Copyright (C) 1990-2018 Free Software Foundation, Inc.
 
    Written by Cygnus Support.
 
@@ -41,7 +41,7 @@
 #endif
 
 file_ptr
-real_ftell (FILE *file)
+_bfd_real_ftell (FILE *file)
 {
 #if defined (HAVE_FTELLO64)
   return ftello64 (file);
@@ -53,7 +53,7 @@ real_ftell (FILE *file)
 }
 
 int
-real_fseek (FILE *file, file_ptr offset, int whence)
+_bfd_real_fseek (FILE *file, file_ptr offset, int whence)
 {
 #if defined (HAVE_FSEEKO64)
   return fseeko64 (file, offset, whence);
@@ -82,7 +82,7 @@ close_on_exec (FILE *file)
 }
 
 FILE *
-real_fopen (const char *filename, const char *modes)
+_bfd_real_fopen (const char *filename, const char *modes)
 {
 #ifdef VMS
   char *vms_attr;
@@ -145,12 +145,12 @@ DESCRIPTION
 .     or -1 (setting <<bfd_error>>) if an error occurs.  *}
 .  file_ptr (*bread) (struct bfd *abfd, void *ptr, file_ptr nbytes);
 .  file_ptr (*bwrite) (struct bfd *abfd, const void *ptr,
-.                      file_ptr nbytes);
+.		       file_ptr nbytes);
 .  {* Return the current IOSTREAM file offset, or -1 (setting <<bfd_error>>
 .     if an error occurs.  *}
 .  file_ptr (*btell) (struct bfd *abfd);
 .  {* For the following, on successful completion a value of 0 is returned.
-.     Otherwise, a value of -1 is returned (and  <<bfd_error>> is set).  *}
+.     Otherwise, a value of -1 is returned (and <<bfd_error>> is set).  *}
 .  int (*bseek) (struct bfd *abfd, file_ptr offset, int whence);
 .  int (*bclose) (struct bfd *abfd);
 .  int (*bflush) (struct bfd *abfd);
@@ -162,8 +162,8 @@ DESCRIPTION
 .     MAP_LEN the size mapped (a page multiple).  Use unmap with MAP_ADDR and
 .     MAP_LEN to unmap.  *}
 .  void *(*bmmap) (struct bfd *abfd, void *addr, bfd_size_type len,
-.                  int prot, int flags, file_ptr offset,
-.                  void **map_addr, bfd_size_type *map_len);
+.		   int prot, int flags, file_ptr offset,
+.		   void **map_addr, bfd_size_type *map_len);
 .};
 
 .extern const struct bfd_iovec _bfd_memory_iovec;
@@ -185,11 +185,11 @@ bfd_bread (void *ptr, bfd_size_type size, bfd *abfd)
       bfd_size_type maxbytes = arelt_size (abfd);
 
       if (abfd->where + size > maxbytes)
-        {
-          if (abfd->where >= maxbytes)
-            return 0;
-          size = maxbytes - abfd->where;
-        }
+	{
+	  if (abfd->where >= maxbytes)
+	    return 0;
+	  size = maxbytes - abfd->where;
+	}
     }
 
   if (abfd->iovec)
@@ -317,10 +317,10 @@ bfd_seek (bfd *abfd, file_ptr position, int direction)
 
       while (parent_bfd->my_archive != NULL
 	     && !bfd_is_thin_archive (parent_bfd->my_archive))
-        {
-          file_position += parent_bfd->origin;
-          parent_bfd = parent_bfd->my_archive;
-        }
+	{
+	  file_position += parent_bfd->origin;
+	  parent_bfd = parent_bfd->my_archive;
+	}
     }
 
   if (abfd->iovec)
@@ -336,7 +336,7 @@ bfd_seek (bfd *abfd, file_ptr position, int direction)
       bfd_tell (abfd);
 
       /* An EINVAL error probably means that the file offset was
-         absurd.  */
+	 absurd.  */
       if (hold_errno == EINVAL)
 	bfd_set_error (bfd_error_file_truncated);
       else
@@ -392,7 +392,7 @@ FUNCTION
 	bfd_get_size
 
 SYNOPSIS
-	file_ptr bfd_get_size (bfd *abfd);
+	ufile_ptr bfd_get_size (bfd *abfd);
 
 DESCRIPTION
 	Return the file size (as read from file system) for the file
@@ -420,7 +420,7 @@ DESCRIPTION
 	size reasonable?".
 */
 
-file_ptr
+ufile_ptr
 bfd_get_size (bfd *abfd)
 {
   struct stat buf;
@@ -434,6 +434,29 @@ bfd_get_size (bfd *abfd)
   return buf.st_size;
 }
 
+/*
+FUNCTION
+	bfd_get_file_size
+
+SYNOPSIS
+	ufile_ptr bfd_get_file_size (bfd *abfd);
+
+DESCRIPTION
+	Return the file size (as read from file system) for the file
+	associated with BFD @var{abfd}.  It supports both normal files
+	and archive elements.
+
+*/
+
+ufile_ptr
+bfd_get_file_size (bfd *abfd)
+{
+  if (abfd->my_archive != NULL
+      && !bfd_is_thin_archive (abfd->my_archive))
+    return arelt_size (abfd);
+
+  return bfd_get_size (abfd);
+}
 
 /*
 FUNCTION
@@ -441,20 +464,20 @@ FUNCTION
 
 SYNOPSIS
 	void *bfd_mmap (bfd *abfd, void *addr, bfd_size_type len,
-	                int prot, int flags, file_ptr offset,
-	                void **map_addr, bfd_size_type *map_len);
+			int prot, int flags, file_ptr offset,
+			void **map_addr, bfd_size_type *map_len);
 
 DESCRIPTION
 	Return mmap()ed region of the file, if possible and implemented.
-        LEN and OFFSET do not need to be page aligned.  The page aligned
-        address and length are written to MAP_ADDR and MAP_LEN.
+	LEN and OFFSET do not need to be page aligned.  The page aligned
+	address and length are written to MAP_ADDR and MAP_LEN.
 
 */
 
 void *
 bfd_mmap (bfd *abfd, void *addr, bfd_size_type len,
 	  int prot, int flags, file_ptr offset,
-          void **map_addr, bfd_size_type *map_len)
+	  void **map_addr, bfd_size_type *map_len)
 {
   void *ret = (void *)-1;
 
@@ -462,7 +485,7 @@ bfd_mmap (bfd *abfd, void *addr, bfd_size_type len,
     return ret;
 
   return abfd->iovec->bmmap (abfd, addr, len, prot, flags, offset,
-                             map_addr, map_len);
+			     map_addr, map_len);
 }
 
 /* Memory file I/O operations.  */
@@ -478,9 +501,9 @@ memory_bread (bfd *abfd, void *ptr, file_ptr size)
   if (abfd->where + get > bim->size)
     {
       if (bim->size < (bfd_size_type) abfd->where)
-        get = 0;
+	get = 0;
       else
-        get = bim->size - abfd->where;
+	get = bim->size - abfd->where;
       bfd_set_error (bfd_error_file_truncated);
     }
   memcpy (ptr, bim->buffer + abfd->where, (size_t) get);
@@ -501,16 +524,16 @@ memory_bwrite (bfd *abfd, const void *ptr, file_ptr size)
       /* Round up to cut down on memory fragmentation */
       newsize = (bim->size + 127) & ~(bfd_size_type) 127;
       if (newsize > oldsize)
-        {
-          bim->buffer = (bfd_byte *) bfd_realloc_or_free (bim->buffer, newsize);
-          if (bim->buffer == NULL)
-            {
-              bim->size = 0;
-              return 0;
-            }
-          if (newsize > bim->size)
-            memset (bim->buffer + bim->size, 0, newsize - bim->size);
-        }
+	{
+	  bim->buffer = (bfd_byte *) bfd_realloc_or_free (bim->buffer, newsize);
+	  if (bim->buffer == NULL)
+	    {
+	      bim->size = 0;
+	      return 0;
+	    }
+	  if (newsize > bim->size)
+	    memset (bim->buffer + bim->size, 0, newsize - bim->size);
+	}
     }
   memcpy (bim->buffer + abfd->where, ptr, (size_t) size);
   return size;
@@ -545,33 +568,33 @@ memory_bseek (bfd *abfd, file_ptr position, int direction)
   if ((bfd_size_type)nwhere > bim->size)
     {
       if (abfd->direction == write_direction
-          || abfd->direction == both_direction)
-        {
-          bfd_size_type newsize, oldsize;
+	  || abfd->direction == both_direction)
+	{
+	  bfd_size_type newsize, oldsize;
 
-          oldsize = (bim->size + 127) & ~(bfd_size_type) 127;
-          bim->size = nwhere;
-          /* Round up to cut down on memory fragmentation */
-          newsize = (bim->size + 127) & ~(bfd_size_type) 127;
-          if (newsize > oldsize)
-            {
-              bim->buffer = (bfd_byte *) bfd_realloc_or_free (bim->buffer, newsize);
-              if (bim->buffer == NULL)
-                {
-                  errno = EINVAL;
-                  bim->size = 0;
-                  return -1;
-                }
-              memset (bim->buffer + oldsize, 0, newsize - oldsize);
-            }
-        }
+	  oldsize = (bim->size + 127) & ~(bfd_size_type) 127;
+	  bim->size = nwhere;
+	  /* Round up to cut down on memory fragmentation */
+	  newsize = (bim->size + 127) & ~(bfd_size_type) 127;
+	  if (newsize > oldsize)
+	    {
+	      bim->buffer = (bfd_byte *) bfd_realloc_or_free (bim->buffer, newsize);
+	      if (bim->buffer == NULL)
+		{
+		  errno = EINVAL;
+		  bim->size = 0;
+		  return -1;
+		}
+	      memset (bim->buffer + oldsize, 0, newsize - oldsize);
+	    }
+	}
       else
-        {
-          abfd->where = bim->size;
-          errno = EINVAL;
-          bfd_set_error (bfd_error_file_truncated);
-          return -1;
-        }
+	{
+	  abfd->where = bim->size;
+	  errno = EINVAL;
+	  bfd_set_error (bfd_error_file_truncated);
+	  return -1;
+	}
     }
   return 0;
 }
@@ -608,10 +631,10 @@ memory_bstat (bfd *abfd, struct stat *statbuf)
 
 static void *
 memory_bmmap (bfd *abfd ATTRIBUTE_UNUSED, void *addr ATTRIBUTE_UNUSED,
-              bfd_size_type len ATTRIBUTE_UNUSED, int prot ATTRIBUTE_UNUSED,
-              int flags ATTRIBUTE_UNUSED, file_ptr offset ATTRIBUTE_UNUSED,
-              void **map_addr ATTRIBUTE_UNUSED,
-              bfd_size_type *map_len ATTRIBUTE_UNUSED)
+	      bfd_size_type len ATTRIBUTE_UNUSED, int prot ATTRIBUTE_UNUSED,
+	      int flags ATTRIBUTE_UNUSED, file_ptr offset ATTRIBUTE_UNUSED,
+	      void **map_addr ATTRIBUTE_UNUSED,
+	      bfd_size_type *map_len ATTRIBUTE_UNUSED)
 {
   return (void *)-1;
 }

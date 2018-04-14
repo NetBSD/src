@@ -1,6 +1,6 @@
 /* This file defines the interface between the FT32 simulator and GDB.
 
-   Copyright (C) 2005-2016 Free Software Foundation, Inc.
+   Copyright (C) 2005-2018 Free Software Foundation, Inc.
    Contributed by FTDI.
 
    This file is part of GDB.

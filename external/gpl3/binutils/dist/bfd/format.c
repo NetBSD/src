@@ -1,5 +1,5 @@
 /* Generic BFD support for file formats.
-   Copyright (C) 1990-2016 Free Software Foundation, Inc.
+   Copyright (C) 1990-2018 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -104,6 +104,7 @@ struct bfd_preserve
   struct bfd_section *section_last;
   unsigned int section_count;
   struct bfd_hash_table section_htab;
+  const struct bfd_build_id *build_id;
 };
 
 /* When testing an object for compatibility with a particular target
@@ -126,6 +127,7 @@ bfd_preserve_save (bfd *abfd, struct bfd_preserve *preserve)
   preserve->section_count = abfd->section_count;
   preserve->section_htab = abfd->section_htab;
   preserve->marker = bfd_alloc (abfd, 1);
+  preserve->build_id = abfd->build_id;
   if (preserve->marker == NULL)
     return FALSE;
 
@@ -158,6 +160,7 @@ bfd_preserve_restore (bfd *abfd, struct bfd_preserve *preserve)
   abfd->sections = preserve->sections;
   abfd->section_last = preserve->section_last;
   abfd->section_count = preserve->section_count;
+  abfd->build_id = preserve->build_id;
 
   /* bfd_release frees all memory more recently bfd_alloc'd than
      its arg, as well as its arg.  */

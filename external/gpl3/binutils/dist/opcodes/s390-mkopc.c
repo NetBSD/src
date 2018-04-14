@@ -1,5 +1,5 @@
 /* s390-mkopc.c -- Generates opcode table out of s390-opc.txt
-   Copyright (C) 2000-2016 Free Software Foundation, Inc.
+   Copyright (C) 2000-2018 Free Software Foundation, Inc.
    Contributed by Martin Schwidefsky (schwidefsky@de.ibm.com).
 
    This file is part of the GNU opcodes library.
@@ -334,7 +334,7 @@ main (void)
       char  *str;
 
       if (currentLine[0] == '#' || currentLine[0] == '\n')
-        continue;
+	continue;
       memset (opcode, 0, 8);
       num_matched =
 	sscanf (currentLine, "%15s %15s %15s \"%79[^\"]\" %15s %15s %79[^\n]",
@@ -346,26 +346,37 @@ main (void)
 	  exit (1);
 	}
 
-      if (strcmp (cpu_string, "g5") == 0)
+      if (strcmp (cpu_string, "g5") == 0
+	  || strcmp (cpu_string, "arch3") == 0)
 	min_cpu = S390_OPCODE_G5;
       else if (strcmp (cpu_string, "g6") == 0)
 	min_cpu = S390_OPCODE_G6;
-      else if (strcmp (cpu_string, "z900") == 0)
+      else if (strcmp (cpu_string, "z900") == 0
+	       || strcmp (cpu_string, "arch5") == 0)
 	min_cpu = S390_OPCODE_Z900;
-      else if (strcmp (cpu_string, "z990") == 0)
+      else if (strcmp (cpu_string, "z990") == 0
+	       || strcmp (cpu_string, "arch6") == 0)
 	min_cpu = S390_OPCODE_Z990;
       else if (strcmp (cpu_string, "z9-109") == 0)
 	min_cpu = S390_OPCODE_Z9_109;
-      else if (strcmp (cpu_string, "z9-ec") == 0)
+      else if (strcmp (cpu_string, "z9-ec") == 0
+	       || strcmp (cpu_string, "arch7") == 0)
 	min_cpu = S390_OPCODE_Z9_EC;
-      else if (strcmp (cpu_string, "z10") == 0)
+      else if (strcmp (cpu_string, "z10") == 0
+	       || strcmp (cpu_string, "arch8") == 0)
 	min_cpu = S390_OPCODE_Z10;
-      else if (strcmp (cpu_string, "z196") == 0)
+      else if (strcmp (cpu_string, "z196") == 0
+	       || strcmp (cpu_string, "arch9") == 0)
 	min_cpu = S390_OPCODE_Z196;
-      else if (strcmp (cpu_string, "zEC12") == 0)
+      else if (strcmp (cpu_string, "zEC12") == 0
+	       || strcmp (cpu_string, "arch10") == 0)
 	min_cpu = S390_OPCODE_ZEC12;
-      else if (strcmp (cpu_string, "z13") == 0)
+      else if (strcmp (cpu_string, "z13") == 0
+	       || strcmp (cpu_string, "arch11") == 0)
 	min_cpu = S390_OPCODE_Z13;
+      else if (strcmp (cpu_string, "z14") == 0
+	       || strcmp (cpu_string, "arch12") == 0)
+	min_cpu = S390_OPCODE_ARCH12;
       else {
 	fprintf (stderr, "Couldn't parse cpu string %s\n", cpu_string);
 	exit (1);
@@ -401,12 +412,16 @@ main (void)
 		&& (str[7] == 0 || str[7] == ',')) {
 	      flag_bits |= S390_INSTR_FLAG_OPTPARM;
 	      str += 7;
+	    } else if (strncmp (str, "optparm2", 8) == 0
+		       && (str[8] == 0 || str[8] == ',')) {
+	      flag_bits |= S390_INSTR_FLAG_OPTPARM2;
+	      str += 8;
 	    } else if (strncmp (str, "htm", 3) == 0
-		&& (str[3] == 0 || str[3] == ',')) {
+		       && (str[3] == 0 || str[3] == ',')) {
 	      flag_bits |= S390_INSTR_FLAG_HTM;
 	      str += 3;
 	    } else if (strncmp (str, "vx", 2) == 0
-		&& (str[2] == 0 || str[2] == ',')) {
+		       && (str[2] == 0 || str[2] == ',')) {
 	      flag_bits |= S390_INSTR_FLAG_VX;
 	      str += 2;
 	    } else {

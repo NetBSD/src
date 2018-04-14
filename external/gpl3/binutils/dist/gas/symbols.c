@@ -1,5 +1,5 @@
 /* symbols.c -symbol table-
-   Copyright (C) 1987-2016 Free Software Foundation, Inc.
+   Copyright (C) 1987-2018 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -25,6 +25,7 @@
 #include "obstack.h"		/* For "symbols.h" */
 #include "subsegs.h"
 #include "struc-symbol.h"
+#include "write.h"
 
 /* This is non-zero if symbols are case sensitive, which is the
    default.  */
@@ -262,7 +263,7 @@ define_sym_at_dot (symbolS *symbolP)
 
 symbolS *
 colon (/* Just seen "x:" - rattle symbols & frags.  */
-       const char *sym_name	/* Symbol name, as a cannonical string.  */
+       const char *sym_name	/* Symbol name, as a canonical string.  */
        /* We copy this string: OK to alter later.  */)
 {
   symbolS *symbolP;	/* Symbol we are working with.  */
@@ -1429,7 +1430,16 @@ resolve_symbol_value (symbolS *symp)
 	    case O_gt:	left = left >  right ? ~ (offsetT) 0 : 0; break;
 	    case O_logical_and:	left = left && right; break;
 	    case O_logical_or:	left = left || right; break;
-	    default:		abort ();
+
+	    case O_illegal:
+	    case O_absent:
+	    case O_constant:
+	      /* See PR 20895 for a reproducer.  */
+	      as_bad (_("Invalid operation on symbol"));
+	      goto exit_dont_set_value;
+	      
+	    default:
+	      abort ();
 	    }
 
 	  final_val += symp->sy_frag->fr_address + left;
@@ -1541,7 +1551,7 @@ snapshot_symbol (symbolS **symbolPP, valueT *valueP, segT *segP, fragS **fragPP)
 	    case O_register:
 	      if (!symbol_equated_p (symbolP))
 		break;
-	      /* Fall thru.  */
+	      /* Fallthru.  */
 	    case O_symbol:
 	    case O_symbol_rva:
 	      symbolP = exp.X_add_symbol;
@@ -1552,9 +1562,23 @@ snapshot_symbol (symbolS **symbolPP, valueT *valueP, segT *segP, fragS **fragPP)
 	}
 
       *symbolPP = symbolP;
-      *valueP = exp.X_add_number;
-      *segP = symbolP->bsym->section;
-      *fragPP = symbolP->sy_frag;
+
+      /* A bogus input file can result in resolve_expression()
+	 generating a local symbol, so we have to check again.  */
+      if (LOCAL_SYMBOL_CHECK (symbolP))
+	{
+	  struct local_symbol *locsym = (struct local_symbol *) symbolP;
+
+	  *valueP = locsym->lsy_value;
+	  *segP = locsym->lsy_section;
+	  *fragPP = local_symbol_get_frag (locsym);
+	}
+      else
+	{
+	  *valueP = exp.X_add_number;
+	  *segP = symbolP->bsym->section;
+	  *fragPP = symbolP->sy_frag;
+	}
 
       if (*segP == expr_section)
 	switch (exp.X_op)
@@ -1661,7 +1685,7 @@ define_dollar_label (long label)
 
 /* Caller must copy returned name: we re-use the area for the next name.
 
-   The mth occurence of label n: is turned into the symbol "Ln^Am"
+   The mth occurrence of label n: is turned into the symbol "Ln^Am"
    where n is the label number and m is the instance number. "L" makes
    it a label discarded unless debugging and "^A"('\1') ensures no
    ordinary symbol SHOULD get the same name as a local label
@@ -1826,7 +1850,7 @@ fb_label_instance (long label)
 
 /* Caller must copy returned name: we re-use the area for the next name.
 
-   The mth occurence of label n: is turned into the symbol "Ln^Bm"
+   The mth occurrence of label n: is turned into the symbol "Ln^Bm"
    where n is the label number and m is the instance number. "L" makes
    it a label discarded unless debugging and "^B"('\2') ensures no
    ordinary symbol SHOULD get the same name as a local label
@@ -2082,16 +2106,20 @@ S_IS_DEFINED (symbolS *s)
 int
 S_FORCE_RELOC (symbolS *s, int strict)
 {
+  segT sec;
   if (LOCAL_SYMBOL_CHECK (s))
-    return ((struct local_symbol *) s)->lsy_section == undefined_section;
-
-  return ((strict
+    sec = ((struct local_symbol *) s)->lsy_section;
+  else
+    {
+      if ((strict
 	   && ((s->bsym->flags & BSF_WEAK) != 0
 	       || (EXTERN_FORCE_RELOC
 		   && (s->bsym->flags & BSF_GLOBAL) != 0)))
-	  || (s->bsym->flags & BSF_GNU_INDIRECT_FUNCTION) != 0
-	  || s->bsym->section == undefined_section
-	  || bfd_is_com_section (s->bsym->section));
+	  || (s->bsym->flags & BSF_GNU_INDIRECT_FUNCTION) != 0)
+	return TRUE;
+      sec = s->bsym->section;
+    }
+  return bfd_is_und_section (sec) || bfd_is_com_section (sec);
 }
 
 int
@@ -2134,6 +2162,9 @@ S_IS_LOCAL (symbolS *s)
 	  && ! S_IS_DEBUG (s)
 	  && (strchr (name, DOLLAR_LABEL_CHAR)
 	      || strchr (name, LOCAL_LABEL_CHAR)
+#if FAKE_LABEL_CHAR != DOLLAR_LABEL_CHAR
+	      || strchr (name, FAKE_LABEL_CHAR)
+#endif
 	      || TC_LABEL_IS_LOCAL (name)
 	      || (! flag_keep_locals
 		  && (bfd_is_local_label (stdoutput, s->bsym)
@@ -3060,7 +3091,7 @@ symbol_relc_make_sym (symbolS * sym)
       || S_GET_SEGMENT (sym) == absolute_section)
     return symbol_relc_make_expr (& sym->sy_value);
 
-  /* This may be a "fake symbol" L0\001, referring to ".".
+  /* This may be a "fake symbol", referring to ".".
      Write out a special null symbol to refer to this position.  */
   if (! strcmp (S_GET_NAME (sym), FAKE_LABEL_NAME))
     return xstrdup (".");

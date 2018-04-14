@@ -1,6 +1,6 @@
 /* corefile.h
 
-   Copyright (C) 2000-2016 Free Software Foundation, Inc.
+   Copyright (C) 2000-2018 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 

@@ -1,5 +1,5 @@
 /* BFD back-end for raw ARM a.out binaries.
-   Copyright (C) 1994-2016 Free Software Foundation, Inc.
+   Copyright (C) 1994-2018 Free Software Foundation, Inc.
    Contributed by Richard Earnshaw (rwe@pegasus.esprit.ec.org)
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -44,8 +44,8 @@
 
 #define MY(OP) CONCAT2 (arm_aout_,OP)
 #define N_BADMAG(x) ((((x)->a_info & ~007200) != ZMAGIC) && \
-                     (((x)->a_info & ~006000) != OMAGIC) && \
-                     ((x)->a_info != NMAGIC))
+		     (((x)->a_info & ~006000) != OMAGIC) && \
+		     ((x)->a_info != NMAGIC))
 #define N_MAGIC(x) ((x)->a_info & ~07200)
 
 #define MY_bfd_reloc_type_lookup arm_aout_bfd_reloc_type_lookup
@@ -111,7 +111,7 @@ MY (reloc_howto) (bfd *abfd,
 		       | rel->r_index[2]);
       *r_extern    = (0 != (rel->r_type[0] & RELOC_STD_BITS_EXTERN_BIG));
       r_pcrel_done = (0 != (rel->r_type[0] & RELOC_STD_BITS_PCREL_BIG));
-      r_neg 	   = (0 != (rel->r_type[0] & RELOC_ARM_BITS_NEG_BIG));
+      r_neg	   = (0 != (rel->r_type[0] & RELOC_ARM_BITS_NEG_BIG));
       r_length     = ((rel->r_type[0] & RELOC_STD_BITS_LENGTH_BIG)
 		      >> RELOC_STD_BITS_LENGTH_SH_BIG);
     }
@@ -122,7 +122,7 @@ MY (reloc_howto) (bfd *abfd,
 		      | rel->r_index[0]);
       *r_extern    = (0 != (rel->r_type[0] & RELOC_STD_BITS_EXTERN_LITTLE));
       r_pcrel_done = (0 != (rel->r_type[0] & RELOC_STD_BITS_PCREL_LITTLE));
-      r_neg 	   = (0 != (rel->r_type[0] & RELOC_ARM_BITS_NEG_LITTLE));
+      r_neg	   = (0 != (rel->r_type[0] & RELOC_ARM_BITS_NEG_LITTLE));
       r_length     = ((rel->r_type[0] & RELOC_STD_BITS_LENGTH_LITTLE)
 		      >> RELOC_STD_BITS_LENGTH_SH_LITTLE);
     }
@@ -156,7 +156,7 @@ MY (put_reloc) (bfd *abfd,
   if (howto->type == 3 || howto->type == 7)
     r_length = 3;
 
-  r_pcrel  = howto->type & 4; 	/* PC Relative done?  */
+  r_pcrel  = howto->type & 4;	/* PC Relative done?  */
   r_neg = howto->type & 8;	/* Negative relocation.  */
 
   if (bfd_header_big_endian (abfd))
@@ -298,8 +298,8 @@ MY (bfd_reloc_type_lookup) (bfd *abfd,
     switch (bfd_arch_bits_per_address (abfd))
       {
       case 32:
-        code = BFD_RELOC_32;
-        break;
+	code = BFD_RELOC_32;
+	break;
       default:
 	return NULL;
       }
@@ -465,17 +465,17 @@ extern const bfd_target arm_aout_be_vec;
 
 const bfd_target arm_aout_le_vec =
 {
-  "a.out-arm-little",           /* Name.  */
+  "a.out-arm-little",		/* Name.  */
   bfd_target_aout_flavour,
-  BFD_ENDIAN_LITTLE,            /* Target byte order (little).  */
-  BFD_ENDIAN_LITTLE,            /* Target headers byte order (little).  */
-  (HAS_RELOC | EXEC_P |         /* Object flags.  */
+  BFD_ENDIAN_LITTLE,		/* Target byte order (little).  */
+  BFD_ENDIAN_LITTLE,		/* Target headers byte order (little).  */
+  (HAS_RELOC | EXEC_P |		/* Object flags.  */
    HAS_LINENO | HAS_DEBUG |
    HAS_SYMS | HAS_LOCALS | DYNAMIC | WP_TEXT | D_PAGED),
   (SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_RELOC | SEC_CODE | SEC_DATA),
   MY_symbol_leading_char,
-  AR_PAD_CHAR,                  /* AR_pad_char.  */
-  15,                           /* AR_max_namelen.  */
+  AR_PAD_CHAR,			/* AR_pad_char.  */
+  15,				/* AR_max_namelen.  */
   0,				/* match priority.  */
   bfd_getl64, bfd_getl_signed_64, bfd_putl64,
   bfd_getl32, bfd_getl_signed_32, bfd_putl32,
@@ -507,11 +507,11 @@ const bfd_target arm_aout_le_vec =
 
 const bfd_target arm_aout_be_vec =
 {
-  "a.out-arm-big",              /* Name.  */
+  "a.out-arm-big",		/* Name.  */
   bfd_target_aout_flavour,
-  BFD_ENDIAN_BIG,               /* Target byte order (big).  */
-  BFD_ENDIAN_BIG,               /* Target headers byte order (big).  */
-  (HAS_RELOC | EXEC_P |         /* Object flags.  */
+  BFD_ENDIAN_BIG,		/* Target byte order (big).  */
+  BFD_ENDIAN_BIG,		/* Target headers byte order (big).  */
+  (HAS_RELOC | EXEC_P |		/* Object flags.  */
    HAS_LINENO | HAS_DEBUG |
    HAS_SYMS | HAS_LOCALS | DYNAMIC | WP_TEXT | D_PAGED),
   (SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_RELOC | SEC_CODE | SEC_DATA),

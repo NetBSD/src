@@ -1,5 +1,5 @@
 /* BFD backend for MIPS BSD (a.out) binaries.
-   Copyright (C) 1993-2016 Free Software Foundation, Inc.
+   Copyright (C) 1993-2018 Free Software Foundation, Inc.
    Written by Ralph Campbell.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -283,8 +283,8 @@ static reloc_howto_type mips_howto_table_ext[] =
   {MIPS_RELOC_HI16,   16, 2, 16, FALSE, 0, complain_overflow_bitfield, 0,
 	"HI16",     FALSE, 0, 0x0000ffff, FALSE},
   {MIPS_RELOC_HI16_S, 16, 2, 16, FALSE, 0, complain_overflow_bitfield,
-        mips_fix_hi16_s,
-        "HI16_S",   FALSE, 0, 0x0000ffff, FALSE},
+	mips_fix_hi16_s,
+	"HI16_S",   FALSE, 0, 0x0000ffff, FALSE},
   {MIPS_RELOC_LO16,    0, 2, 16, FALSE, 0, complain_overflow_dont, 0,
 	"LO16",     FALSE, 0, 0x0000ffff, FALSE},
 };

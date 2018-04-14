@@ -1,5 +1,5 @@
 /* Special version of <a.out.h> for use under HP-UX.
-   Copyright (C) 1988-2016 Free Software Foundation, Inc.
+   Copyright (C) 1988-2018 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -38,47 +38,47 @@ struct hp300hpux_exec_bytes
 #define	EXEC_BYTES_SIZE	64
 
 struct hp300hpux_nlist_bytes
-  {
-    unsigned char e_value[4];
-    unsigned char e_type[1];
-    unsigned char e_length[1];	/* length of ascii symbol name */
-    unsigned char e_almod[2];	/* alignment mod */
-    unsigned char e_shlib[2];   /* info about dynamic linking */
-  };
+{
+  unsigned char e_value[4];
+  unsigned char e_type[1];
+  unsigned char e_length[1];	/* Length of ascii symbol name.  */
+  unsigned char e_almod[2];	/* Alignment mod.  */
+  unsigned char e_shlib[2];	/* Info about dynamic linking.  */
+};
 #define EXTERNAL_NLIST_SIZE 10
 
 struct hp300hpux_reloc
-  {
-    unsigned char r_address[4];/* offset of of data to relocate */
-    unsigned char r_index[2];  /* symbol table index of symbol         */
-    unsigned char r_type[1];   /* relocation type                      */
-    unsigned char r_length[1]; /* length of item to reloc              */
-  };
+{
+  unsigned char r_address[4];/* offset of data to relocate */
+  unsigned char r_index[2];  /* symbol table index of symbol         */
+  unsigned char r_type[1];   /* relocation type                      */
+  unsigned char r_length[1]; /* length of item to reloc              */
+};
 
 struct hp300hpux_header_extension
 {
-    unsigned char e_syms[4];
-    unsigned char unique_headers[12*4];
-    unsigned char e_header[2];   /* type of header */
-    unsigned char e_version[2];  /* version        */
-    unsigned char e_size[4];     /* bytes following*/
-    unsigned char e_extension[4];/* file offset of next extension */
+  unsigned char e_syms[4];
+  unsigned char unique_headers[12*4];
+  unsigned char e_header[2];   /* Type of header.  */
+  unsigned char e_version[2];  /* Version.  */
+  unsigned char e_size[4];     /* Bytes following.  */
+  unsigned char e_extension[4];/* File offset of next extension.  */
 };
 #define EXTERNAL_EXTENSION_HEADER_SIZE (16*4)
 
-/* hpux separates object files (0x106) and impure executables (0x107)  */
-/* but the bfd code does not distinguish between them. Since we want to*/
-/* read hpux .o files, we add an special define and use it below in    */
-/* offset and address calculations.                                    */
+/* HPUX separates object files (0x106) and impure executables (0x107)
+   but the bfd code does not distinguish between them. Since we want to
+   read hpux .o files, we add an special define and use it below in
+   offset and address calculations.  */
 
 #define HPUX_DOT_O_MAGIC 0x106
-#define OMAGIC 0x107       /* object file or impure executable.  */
+#define OMAGIC 0x107       /* Object file or impure executable.  */
 #define NMAGIC 0x108       /* Code indicating pure executable.   */
-#define ZMAGIC 0x10B       /* demand-paged executable.           */
+#define ZMAGIC 0x10B       /* Demand-paged executable.           */
 
 #define N_HEADER_IN_TEXT(x) 0
 
-#if 0 /* libaout.h only uses the lower 8 bits */
+#if 0 /* libaout.h only uses the lower 8 bits.  */
 #define HP98x6_ID 0x20A
 #define HP9000S200_ID 0x20C
 #endif
@@ -121,7 +121,7 @@ struct hp300hpux_header_extension
 #define N_EXTHOFF(x)    ( N_DRELOFF(x)   /*  + (x)->a_drsize */)
 #define N_STROFF(x)	( 0 /* no string table */ )
 
-/* use these when the file has gnu symbol tables */
+/* Use these when the file has gnu symbol tables.  */
 #define N_GNU_TRELOFF(x) (N_DATOFF(x) + (x)->a_data)
 #define N_GNU_DRELOFF(x) (N_GNU_TRELOFF(x) + (x)->a_trsize)
 #define N_GNU_SYMOFF(x)  (N_GNU_DRELOFF(x) + (x)->a_drsize)

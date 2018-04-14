@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-# Copyright (C) 2012-2016 Free Software Foundation, Inc.
+# Copyright (C) 2012-2018 Free Software Foundation, Inc.
 # Contributed by Andes Technology Corporation.
 #
 # This file is part of the GNU Binutils.
@@ -22,7 +22,6 @@
 
 fragment <<EOF
 
-#include "libbfd.h"
 #include "elf-bfd.h"
 #include "elf/nds32.h"
 #include "bfd_stdint.h"
@@ -52,8 +51,8 @@ nds32_elf_create_output_section_statements (void)
   if (strstr (bfd_get_target (link_info.output_bfd), "nds32") == NULL)
     {
       /* Check the output target is nds32.  */
-      einfo ("%F%X%P: error: Cannot change output format whilst "
-	     "linking NDS32 binaries.\n");
+      einfo (_("%F%X%P: error: Cannot change output format whilst "
+	       "linking NDS32 binaries.\n"));
       return;
     }
 
@@ -196,7 +195,7 @@ nds32_elf_after_allocation (void)
     {
       /* Initialize ex9 hash table.  */
       if (!nds32_elf_ex9_init ())
-        return;
+	return;
     }
 
   /* Call default after allocation callback.
@@ -294,7 +293,7 @@ PARSE_AND_LIST_OPTIONS='
 '
 PARSE_AND_LIST_ARGS_CASES='
   case OPTION_BASELINE:
-    einfo ("%P: --mbaseline is not used anymore.\n");
+    einfo (_("%P: --mbaseline is not used anymore.\n"));
     break;
   case OPTION_ELIM_GC_RELOCS:
     eliminate_gc_relocs = 1;
@@ -305,7 +304,7 @@ PARSE_AND_LIST_ARGS_CASES='
     break;
   case OPTION_REDUCE_FP_UPDATE:
   case OPTION_NO_REDUCE_FP_UPDATE:
-    einfo ("%P: --relax-[no-]reduce-fp-updat is not used anymore.\n");
+    einfo (_("%P: --relax-[no-]reduce-fp-updat is not used anymore.\n"));
     break;
   case OPTION_EXPORT_SYMBOLS:
     if (!optarg)

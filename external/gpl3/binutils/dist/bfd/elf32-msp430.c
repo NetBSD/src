@@ -1,5 +1,5 @@
 /*  MSP430-specific support for 32-bit ELF
-    Copyright (C) 2002-2016 Free Software Foundation, Inc.
+    Copyright (C) 2002-2018 Free Software Foundation, Inc.
     Contributed by Dmitry Diky <diwil@mail.ru>
 
     This file is part of BFD, the Binary File Descriptor library.
@@ -470,7 +470,7 @@ static reloc_howto_type elf_msp430x_howto_table[] =
 	 FALSE,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0xffff,		/* dst_mask */
-	 TRUE),                 /* pcrel_offset */
+	 TRUE),			/* pcrel_offset */
 
   EMPTY_HOWTO (R_MSP430_EHTYPE),
 
@@ -487,7 +487,7 @@ static reloc_howto_type elf_msp430x_howto_table[] =
 	 FALSE,			/* partial_inplace */
 	 0x3ff,			/* src_mask */
 	 0x3ff,			/* dst_mask */
-	 TRUE),  		/* pcrel_offset */
+	 TRUE),			/* pcrel_offset */
 
   /* A 10 bit PC relative relocation for complicated polymorphs.  */
   HOWTO (R_MSP430X_2X_PCREL,	/* type */
@@ -531,27 +531,27 @@ struct msp430_reloc_map
 
 static const struct msp430_reloc_map msp430_reloc_map[] =
 {
-  {BFD_RELOC_NONE,                 R_MSP430_NONE},
-  {BFD_RELOC_32,                   R_MSP430_32},
-  {BFD_RELOC_MSP430_10_PCREL,      R_MSP430_10_PCREL},
-  {BFD_RELOC_16,                   R_MSP430_16_BYTE},
-  {BFD_RELOC_MSP430_16_PCREL,      R_MSP430_16_PCREL},
-  {BFD_RELOC_MSP430_16,            R_MSP430_16},
+  {BFD_RELOC_NONE,		   R_MSP430_NONE},
+  {BFD_RELOC_32,		   R_MSP430_32},
+  {BFD_RELOC_MSP430_10_PCREL,	   R_MSP430_10_PCREL},
+  {BFD_RELOC_16,		   R_MSP430_16_BYTE},
+  {BFD_RELOC_MSP430_16_PCREL,	   R_MSP430_16_PCREL},
+  {BFD_RELOC_MSP430_16,		   R_MSP430_16},
   {BFD_RELOC_MSP430_16_PCREL_BYTE, R_MSP430_16_PCREL_BYTE},
-  {BFD_RELOC_MSP430_16_BYTE,       R_MSP430_16_BYTE},
-  {BFD_RELOC_MSP430_2X_PCREL,      R_MSP430_2X_PCREL},
-  {BFD_RELOC_MSP430_RL_PCREL,      R_MSP430_RL_PCREL},
-  {BFD_RELOC_8,                    R_MSP430_8},
-  {BFD_RELOC_MSP430_SYM_DIFF,      R_MSP430_SYM_DIFF}
+  {BFD_RELOC_MSP430_16_BYTE,	   R_MSP430_16_BYTE},
+  {BFD_RELOC_MSP430_2X_PCREL,	   R_MSP430_2X_PCREL},
+  {BFD_RELOC_MSP430_RL_PCREL,	   R_MSP430_RL_PCREL},
+  {BFD_RELOC_8,			   R_MSP430_8},
+  {BFD_RELOC_MSP430_SYM_DIFF,	   R_MSP430_SYM_DIFF}
 };
 
 static const struct msp430_reloc_map msp430x_reloc_map[] =
 {
-  {BFD_RELOC_NONE,                    R_MSP430_NONE},
-  {BFD_RELOC_32,                      R_MSP430_ABS32},
-  {BFD_RELOC_16,                      R_MSP430_ABS16},
-  {BFD_RELOC_8,                       R_MSP430_ABS8},
-  {BFD_RELOC_MSP430_ABS8,             R_MSP430_ABS8},
+  {BFD_RELOC_NONE,		      R_MSP430_NONE},
+  {BFD_RELOC_32,		      R_MSP430_ABS32},
+  {BFD_RELOC_16,		      R_MSP430_ABS16},
+  {BFD_RELOC_8,			      R_MSP430_ABS8},
+  {BFD_RELOC_MSP430_ABS8,	      R_MSP430_ABS8},
   {BFD_RELOC_MSP430X_PCR20_EXT_SRC,   R_MSP430X_PCR20_EXT_SRC},
   {BFD_RELOC_MSP430X_PCR20_EXT_DST,   R_MSP430X_PCR20_EXT_DST},
   {BFD_RELOC_MSP430X_PCR20_EXT_ODST,  R_MSP430X_PCR20_EXT_ODST},
@@ -560,15 +560,15 @@ static const struct msp430_reloc_map msp430x_reloc_map[] =
   {BFD_RELOC_MSP430X_ABS20_EXT_ODST,  R_MSP430X_ABS20_EXT_ODST},
   {BFD_RELOC_MSP430X_ABS20_ADR_SRC,   R_MSP430X_ABS20_ADR_SRC},
   {BFD_RELOC_MSP430X_ABS20_ADR_DST,   R_MSP430X_ABS20_ADR_DST},
-  {BFD_RELOC_MSP430X_PCR16,           R_MSP430X_PCR16},
+  {BFD_RELOC_MSP430X_PCR16,	      R_MSP430X_PCR16},
   {BFD_RELOC_MSP430X_PCR20_CALL,      R_MSP430X_PCR20_CALL},
-  {BFD_RELOC_MSP430X_ABS16,           R_MSP430X_ABS16},
-  {BFD_RELOC_MSP430_ABS_HI16,         R_MSP430_ABS_HI16},
-  {BFD_RELOC_MSP430_PREL31,           R_MSP430_PREL31},
-  {BFD_RELOC_MSP430_10_PCREL,         R_MSP430X_10_PCREL},
-  {BFD_RELOC_MSP430_2X_PCREL,         R_MSP430X_2X_PCREL},
-  {BFD_RELOC_MSP430_RL_PCREL,         R_MSP430X_PCR16},
-  {BFD_RELOC_MSP430_SYM_DIFF,         R_MSP430X_SYM_DIFF}
+  {BFD_RELOC_MSP430X_ABS16,	      R_MSP430X_ABS16},
+  {BFD_RELOC_MSP430_ABS_HI16,	      R_MSP430_ABS_HI16},
+  {BFD_RELOC_MSP430_PREL31,	      R_MSP430_PREL31},
+  {BFD_RELOC_MSP430_10_PCREL,	      R_MSP430X_10_PCREL},
+  {BFD_RELOC_MSP430_2X_PCREL,	      R_MSP430X_2X_PCREL},
+  {BFD_RELOC_MSP430_RL_PCREL,	      R_MSP430X_PCR16},
+  {BFD_RELOC_MSP430_SYM_DIFF,	      R_MSP430X_SYM_DIFF}
 };
 
 static inline bfd_boolean
@@ -644,6 +644,7 @@ msp430_info_to_howto_rela (bfd * abfd ATTRIBUTE_UNUSED,
     {
       if (r_type >= (unsigned int) R_MSP430x_max)
 	{
+	  /* xgettext:c-format */
 	  _bfd_error_handler (_("%B: invalid MSP430X reloc number: %d"), abfd, r_type);
 	  r_type = 0;
 	}
@@ -653,6 +654,7 @@ msp430_info_to_howto_rela (bfd * abfd ATTRIBUTE_UNUSED,
 
   if (r_type >= (unsigned int) R_MSP430_max)
     {
+      /* xgettext:c-format */
       _bfd_error_handler (_("%B: invalid MSP430 reloc number: %d"), abfd, r_type);
       r_type = 0;
     }
@@ -693,10 +695,6 @@ elf32_msp430_check_relocs (bfd * abfd, struct bfd_link_info * info,
 	  while (h->root.type == bfd_link_hash_indirect
 		 || h->root.type == bfd_link_hash_warning)
 	    h = (struct elf_link_hash_entry *) h->root.u.i.link;
-
-	  /* PR15323, ref flags aren't set for references in the same
-	     object.  */
-	  h->root.non_ir_ref = 1;
 	}
     }
 
@@ -707,12 +705,12 @@ elf32_msp430_check_relocs (bfd * abfd, struct bfd_link_info * info,
    routines, but a few relocs, we have to do them ourselves.  */
 
 static bfd_reloc_status_type
-msp430_final_link_relocate (reloc_howto_type *     howto,
-			    bfd *                  input_bfd,
-			    asection *             input_section,
-			    bfd_byte *             contents,
-			    Elf_Internal_Rela *    rel,
-			    bfd_vma                relocation,
+msp430_final_link_relocate (reloc_howto_type *	   howto,
+			    bfd *		   input_bfd,
+			    asection *		   input_section,
+			    bfd_byte *		   contents,
+			    Elf_Internal_Rela *	   rel,
+			    bfd_vma		   relocation,
 			    struct bfd_link_info * info)
 {
   static asection *  sym_diff_section;
@@ -1483,26 +1481,26 @@ elf32_msp430_object_p (bfd * abfd)
 
    1. 3 words -> 1 word
 
-   eq      ==      jeq label    		jne +4; br lab
-   ne      !=      jne label    		jeq +4; br lab
-   lt      <       jl  label    		jge +4; br lab
-   ltu     <       jlo label    		lhs +4; br lab
-   ge      >=      jge label    		jl  +4; br lab
-   geu     >=      jhs label    		jlo +4; br lab
+   eq	   ==	   jeq label			jne +4; br lab
+   ne	   !=	   jne label			jeq +4; br lab
+   lt	   <	   jl  label			jge +4; br lab
+   ltu	   <	   jlo label			lhs +4; br lab
+   ge	   >=	   jge label			jl  +4; br lab
+   geu	   >=	   jhs label			jlo +4; br lab
 
    2. 4 words -> 1 word
 
-   ltn     <       jn                      jn  +2; jmp +4; br lab
+   ltn	   <	   jn			   jn  +2; jmp +4; br lab
 
    3. 4 words -> 2 words
 
-   gt      >       jeq +2; jge label       jeq +6; jl  +4; br label
-   gtu     >       jeq +2; jhs label       jeq +6; jlo +4; br label
+   gt	   >	   jeq +2; jge label	   jeq +6; jl  +4; br label
+   gtu	   >	   jeq +2; jhs label	   jeq +6; jlo +4; br label
 
    4. 4 words -> 2 words and 2 labels
 
-   leu     <=      jeq label; jlo label    jeq +2; jhs +4; br label
-   le      <=      jeq label; jl  label    jeq +2; jge +4; br label
+   leu	   <=	   jeq label; jlo label	   jeq +2; jhs +4; br label
+   le	   <=	   jeq label; jl  label	   jeq +2; jge +4; br label
    =================================================================
 
    codemap for first cases is (labels masked ):
@@ -1540,7 +1538,7 @@ static struct rcodes_s
   int off;			/* Offset from old label for new code.  */
   int ncl;			/* New code length.  */
 } rcode[] =
-{/*                               lab,cdx,bs,off,ncl */
+{/*				  lab,cdx,bs,off,ncl */
   { 0x0000, 0x0000, 0x3c00, 0x0000, 1, 0, 2, 2,	 2},	/* jump */
   { 0x0000, 0x2002, 0x2400, 0x0000, 1, 1, 4, 4,	 2},	/* eq */
   { 0x0000, 0x2402, 0x2000, 0x0000, 1, 1, 4, 4,	 2},	/* ne */
@@ -1553,7 +1551,7 @@ static struct rcodes_s
   { 0x2403, 0x2802, 0x2401, 0x2c00, 2, 2, 4, 6,	 4},	/* gtu */
   { 0x2401, 0x2c02, 0x2400, 0x2800, 3, 2, 4, 6,	 4},	/* leu , 2 labels */
   { 0x2401, 0x2c02, 0x2400, 0x2800, 3, 2, 4, 6,	 4},	/* le  , 2 labels */
-  { 0, 	    0, 	    0, 	    0, 	    0, 0, 0, 0,  0}
+  { 0,	    0,	    0,	    0,	    0, 0, 0, 0,	 0}
 };
 
 /* Return TRUE if a symbol exists at the given address.  */
@@ -1833,7 +1831,7 @@ msp430_elf_relax_section (bfd * abfd, asection * sec,
   Elf_Internal_Rela * internal_relocs;
   Elf_Internal_Rela * irel;
   Elf_Internal_Rela * irelend;
-  bfd_byte *          contents = NULL;
+  bfd_byte *	      contents = NULL;
   Elf_Internal_Sym *  isymbuf = NULL;
 
   /* Assume nothing changes.  */
@@ -1864,12 +1862,12 @@ msp430_elf_relax_section (bfd * abfd, asection * sec,
       bfd_vma symval;
 
       /* If this isn't something that can be relaxed, then ignore
-         this reloc.  */
+	 this reloc.  */
       if (uses_msp430x_relocs (abfd)
-          && ELF32_R_TYPE (irel->r_info) == (int) R_MSP430X_10_PCREL)
+	  && ELF32_R_TYPE (irel->r_info) == (int) R_MSP430X_10_PCREL)
 	;
       else if (! uses_msp430x_relocs (abfd)
-               && ELF32_R_TYPE (irel->r_info) == (int) R_MSP430_10_PCREL)
+	       && ELF32_R_TYPE (irel->r_info) == (int) R_MSP430_10_PCREL)
 	;
       else
 	continue;
@@ -1938,12 +1936,12 @@ msp430_elf_relax_section (bfd * abfd, asection * sec,
 	}
 
       /* For simplicity of coding, we are going to modify the section
-         contents, the section relocs, and the BFD symbol table.  We
-         must tell the rest of the code not to free up this
-         information.  It would be possible to instead create a table
-         of changes which have to be made, as is done in coff-mips.c;
-         that would be more work, but would require less memory when
-         the linker is run.  */
+	 contents, the section relocs, and the BFD symbol table.  We
+	 must tell the rest of the code not to free up this
+	 information.  It would be possible to instead create a table
+	 of changes which have to be made, as is done in coff-mips.c;
+	 that would be more work, but would require less memory when
+	 the linker is run.  */
 
       bfd_signed_vma value = symval;
       int opcode;
@@ -1969,7 +1967,7 @@ msp430_elf_relax_section (bfd * abfd, asection * sec,
 	 into:
 	 J<inv-cond> 1f
 	 BR[A] #label
-	 1:                     */
+	 1:			*/
       switch (opcode & 0xfc00)
 	{
 	case 0x3800: opcode = 0x3402; break; /* Jl  -> Jge +2 */
@@ -1981,10 +1979,10 @@ msp430_elf_relax_section (bfd * abfd, asection * sec,
 	case 0x3000: /* jn    */
 	  /* There is no direct inverse of the Jn insn.
 	     FIXME: we could do this as:
-	        Jn 1f
-	        br 2f
+		Jn 1f
+		br 2f
 	     1: br label
-	     2:                */
+	     2:		       */
 	  continue;
 	default:
 	  /* Not a conditional branch instruction.  */
@@ -2225,8 +2223,10 @@ msp430_elf_relax_section (bfd * abfd, asection * sec,
 
 	/* Try to turn a 16-bit absolute branch into a 10-bit pc-relative
 	   branch.  */
-	if (uses_msp430x_relocs (abfd)
-	    && ELF32_R_TYPE (irel->r_info) == R_MSP430X_ABS16)
+	if ((uses_msp430x_relocs (abfd)
+	     && ELF32_R_TYPE (irel->r_info) == R_MSP430X_ABS16)
+	    || (! uses_msp430x_relocs (abfd)
+		&& ELF32_R_TYPE (irel->r_info) == R_MSP430_16))
 	  {
 	    bfd_vma value = symval;
 
@@ -2348,6 +2348,7 @@ static bfd_boolean
 elf32_msp430_obj_attrs_handle_unknown (bfd *abfd, int tag)
 {
   _bfd_error_handler
+    /* xgettext:c-format */
     (_("Warning: %B: Unknown MSPABI object attribute %d"),
      abfd, tag);
   return TRUE;
@@ -2406,8 +2407,9 @@ data_model (int model)
    Raise an error if there are conflicting attributes.  */
 
 static bfd_boolean
-elf32_msp430_merge_mspabi_attributes (bfd *ibfd, bfd *obfd)
+elf32_msp430_merge_mspabi_attributes (bfd *ibfd, struct bfd_link_info *info)
 {
+  bfd *obfd = info->output_bfd;
   obj_attribute *in_attr;
   obj_attribute *out_attr;
   bfd_boolean result = TRUE;
@@ -2439,10 +2441,10 @@ elf32_msp430_merge_mspabi_attributes (bfd *ibfd, bfd *obfd)
   if (in_attr[OFBA_MSPABI_Tag_ISA].i != out_attr[OFBA_MSPABI_Tag_ISA].i)
     {
       _bfd_error_handler
+	/* xgettext:c-format */
 	(_("error: %B uses %s instructions but %B uses %s"),
-	 ibfd, first_input_bfd,
-	 isa_type (in_attr[OFBA_MSPABI_Tag_ISA].i),
-	 isa_type (out_attr[OFBA_MSPABI_Tag_ISA].i));
+	 ibfd, isa_type (in_attr[OFBA_MSPABI_Tag_ISA].i),
+	 first_input_bfd, isa_type (out_attr[OFBA_MSPABI_Tag_ISA].i));
       result = FALSE;
     }
 
@@ -2451,10 +2453,10 @@ elf32_msp430_merge_mspabi_attributes (bfd *ibfd, bfd *obfd)
       out_attr[OFBA_MSPABI_Tag_Code_Model].i)
     {
       _bfd_error_handler
+	/* xgettext:c-format */
 	(_("error: %B uses the %s code model whereas %B uses the %s code model"),
-	 ibfd, first_input_bfd,
-	 code_model (in_attr[OFBA_MSPABI_Tag_Code_Model].i),
-	 code_model (out_attr[OFBA_MSPABI_Tag_Code_Model].i));
+	 ibfd, code_model (in_attr[OFBA_MSPABI_Tag_Code_Model].i),
+	 first_input_bfd, code_model (out_attr[OFBA_MSPABI_Tag_Code_Model].i));
       result = FALSE;
     }
 
@@ -2463,6 +2465,7 @@ elf32_msp430_merge_mspabi_attributes (bfd *ibfd, bfd *obfd)
       && out_attr[OFBA_MSPABI_Tag_ISA].i != 2)
     {
       _bfd_error_handler
+	/* xgettext:c-format */
 	(_("error: %B uses the large code model but %B uses MSP430 instructions"),
 	 ibfd, first_input_bfd);
       result = FALSE;
@@ -2473,10 +2476,10 @@ elf32_msp430_merge_mspabi_attributes (bfd *ibfd, bfd *obfd)
       out_attr[OFBA_MSPABI_Tag_Data_Model].i)
     {
       _bfd_error_handler
+	/* xgettext:c-format */
 	(_("error: %B uses the %s data model whereas %B uses the %s data model"),
-	 ibfd, first_input_bfd,
-	 data_model (in_attr[OFBA_MSPABI_Tag_Data_Model].i),
-	 data_model (out_attr[OFBA_MSPABI_Tag_Data_Model].i));
+	 ibfd, data_model (in_attr[OFBA_MSPABI_Tag_Data_Model].i),
+	 first_input_bfd, data_model (out_attr[OFBA_MSPABI_Tag_Data_Model].i));
       result = FALSE;
     }
 
@@ -2485,6 +2488,7 @@ elf32_msp430_merge_mspabi_attributes (bfd *ibfd, bfd *obfd)
       && out_attr[OFBA_MSPABI_Tag_Data_Model].i != 1)
     {
       _bfd_error_handler
+	/* xgettext:c-format */
 	(_("error: %B uses the small code model but %B uses the %s data model"),
 	 ibfd, first_input_bfd,
 	 data_model (out_attr[OFBA_MSPABI_Tag_Data_Model].i));
@@ -2496,9 +2500,10 @@ elf32_msp430_merge_mspabi_attributes (bfd *ibfd, bfd *obfd)
       && out_attr[OFBA_MSPABI_Tag_ISA].i != 2)
     {
       _bfd_error_handler
+	/* xgettext:c-format */
 	(_("error: %B uses the %s data model but %B only uses MSP430 instructions"),
-	 ibfd, first_input_bfd,
-	 data_model (in_attr[OFBA_MSPABI_Tag_Data_Model].i));
+	 ibfd, data_model (in_attr[OFBA_MSPABI_Tag_Data_Model].i),
+	 first_input_bfd);
       result = FALSE;
     }
 
@@ -2509,8 +2514,9 @@ elf32_msp430_merge_mspabi_attributes (bfd *ibfd, bfd *obfd)
    object file when linking.  */
 
 static bfd_boolean
-elf32_msp430_merge_private_bfd_data (bfd * ibfd, bfd * obfd)
+elf32_msp430_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
 {
+  bfd *obfd = info->output_bfd;
   /* Make sure that the machine number reflects the most
      advanced version of the MSP architecture required.  */
 #define max(a,b) ((a) > (b) ? (a) : (b))
@@ -2519,7 +2525,7 @@ elf32_msp430_merge_private_bfd_data (bfd * ibfd, bfd * obfd)
 			       max (bfd_get_mach (ibfd), bfd_get_mach (obfd)));
 #undef max
 
-  return elf32_msp430_merge_mspabi_attributes (ibfd, obfd);
+  return elf32_msp430_merge_mspabi_attributes (ibfd, info);
 }
 
 static bfd_boolean
@@ -2544,7 +2550,8 @@ uses_large_model (bfd *abfd)
 }
 
 static unsigned int
-elf32_msp430_eh_frame_address_size (bfd *abfd, asection *sec ATTRIBUTE_UNUSED)
+elf32_msp430_eh_frame_address_size (bfd *abfd,
+				    const asection *sec ATTRIBUTE_UNUSED)
 {
   return uses_large_model (abfd) ? 4 : 2;
 }
@@ -2569,15 +2576,15 @@ elf32_msp430_eh_frame_address_size (bfd *abfd, asection *sec ATTRIBUTE_UNUSED)
 #define elf_backend_may_use_rela_p 1
 #define elf_backend_default_use_rela_p 1
 
-#undef  elf_backend_obj_attrs_vendor
+#undef	elf_backend_obj_attrs_vendor
 #define elf_backend_obj_attrs_vendor		"mspabi"
-#undef  elf_backend_obj_attrs_section
+#undef	elf_backend_obj_attrs_section
 #define elf_backend_obj_attrs_section		".MSP430.attributes"
-#undef  elf_backend_obj_attrs_section_type
+#undef	elf_backend_obj_attrs_section_type
 #define elf_backend_obj_attrs_section_type	SHT_MSP430_ATTRIBUTES
-#define elf_backend_section_from_shdr  		elf32_msp430_section_from_shdr
-#define elf_backend_obj_attrs_handle_unknown 	elf32_msp430_obj_attrs_handle_unknown
-#undef  elf_backend_obj_attrs_arg_type
+#define elf_backend_section_from_shdr		elf32_msp430_section_from_shdr
+#define elf_backend_obj_attrs_handle_unknown	elf32_msp430_obj_attrs_handle_unknown
+#undef	elf_backend_obj_attrs_arg_type
 #define elf_backend_obj_attrs_arg_type		elf32_msp430_obj_attrs_arg_type
 #define bfd_elf32_bfd_merge_private_bfd_data	elf32_msp430_merge_private_bfd_data
 #define elf_backend_eh_frame_address_size	elf32_msp430_eh_frame_address_size
@@ -2588,29 +2595,29 @@ elf32_msp430_eh_frame_address_size (bfd *abfd, asection *sec ATTRIBUTE_UNUSED)
 #define ELF_MAXPAGESIZE		4
 #define	ELF_OSABI		ELFOSABI_STANDALONE
 
-#define TARGET_LITTLE_SYM       msp430_elf32_vec
+#define TARGET_LITTLE_SYM	msp430_elf32_vec
 #define TARGET_LITTLE_NAME	"elf32-msp430"
 
-#define elf_info_to_howto	             msp430_info_to_howto_rela
-#define elf_info_to_howto_rel	             NULL
-#define elf_backend_relocate_section         elf32_msp430_relocate_section
-#define elf_backend_check_relocs             elf32_msp430_check_relocs
-#define elf_backend_can_gc_sections          1
+#define elf_info_to_howto		     msp430_info_to_howto_rela
+#define elf_info_to_howto_rel		     NULL
+#define elf_backend_relocate_section	     elf32_msp430_relocate_section
+#define elf_backend_check_relocs	     elf32_msp430_check_relocs
+#define elf_backend_can_gc_sections	     1
 #define elf_backend_final_write_processing   bfd_elf_msp430_final_write_processing
 #define elf_backend_object_p		     elf32_msp430_object_p
 #define bfd_elf32_bfd_relax_section	     msp430_elf_relax_section
 #define bfd_elf32_bfd_is_target_special_symbol	msp430_elf_is_target_special_symbol
 
-#undef  elf32_bed
+#undef	elf32_bed
 #define elf32_bed		elf32_msp430_bed
 
 #include "elf32-target.h"
 
 /* The TI compiler sets the OSABI field to ELFOSABI_NONE.  */
-#undef  TARGET_LITTLE_SYM
-#define TARGET_LITTLE_SYM       msp430_elf32_ti_vec
+#undef	TARGET_LITTLE_SYM
+#define TARGET_LITTLE_SYM	msp430_elf32_ti_vec
 
-#undef  elf32_bed
+#undef	elf32_bed
 #define elf32_bed		elf32_msp430_ti_bed
 
 #undef	ELF_OSABI
@@ -2618,14 +2625,14 @@ elf32_msp430_eh_frame_address_size (bfd *abfd, asection *sec ATTRIBUTE_UNUSED)
 
 static const struct bfd_elf_special_section msp430_ti_elf_special_sections[] =
 {
-  /* prefix, prefix_length,        suffix_len, type,               attributes.  */
+  /* prefix, prefix_length,	   suffix_len, type,		   attributes.  */
   { STRING_COMMA_LEN (".TI.symbol.alias"),  0, SHT_MSP430_SYM_ALIASES, 0 },
   { STRING_COMMA_LEN (".TI.section.flags"), 0, SHT_MSP430_SEC_FLAGS,   0 },
   { STRING_COMMA_LEN ("_TI_build_attrib"),  0, SHT_MSP430_ATTRIBUTES,  0 },
-  { NULL, 0,                                0, 0,                      0 }
+  { NULL, 0,				    0, 0,		       0 }
 };
 
-#undef  elf_backend_special_sections
-#define elf_backend_special_sections 		msp430_ti_elf_special_sections
+#undef	elf_backend_special_sections
+#define elf_backend_special_sections		msp430_ti_elf_special_sections
 
 #include "elf32-target.h"

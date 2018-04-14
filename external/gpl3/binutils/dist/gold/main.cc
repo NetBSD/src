@@ -1,6 +1,6 @@
 // main.cc -- gold main function.
 
-// Copyright (C) 2006-2016 Free Software Foundation, Inc.
+// Copyright (C) 2006-2018 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -292,8 +292,8 @@ main(int argc, char** argv)
 
 #ifdef HAVE_MALLINFO
       struct mallinfo m = mallinfo();
-      fprintf(stderr, _("%s: total space allocated by malloc: %d bytes\n"),
-	      program_name, m.arena);
+      fprintf(stderr, _("%s: total space allocated by malloc: %lld bytes\n"),
+	      program_name, static_cast<long long>(m.arena));
 #endif
       File_read::print_stats();
       Archive::print_stats();

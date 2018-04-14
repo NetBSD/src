@@ -1,6 +1,6 @@
 // options.c -- handle command line options for gold
 
-// Copyright (C) 2006-2016 Free Software Foundation, Inc.
+// Copyright (C) 2006-2018 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -146,8 +146,10 @@ One_option::print() const
   for (; len < 30; ++len)
     std::putchar(' ');
 
-  // TODO: if we're boolean, add " (default)" when appropriate.
-  printf("%s\n", gettext(this->helpstring));
+  printf("%s", gettext(this->helpstring));
+  if (this->is_default)
+    printf(" (%s)", _("default"));
+  printf("\n");
 }
 
 void
@@ -687,6 +689,20 @@ General_options::string_to_object_format(const char* arg)
     }
 }
 
+const char*
+General_options::object_format_to_string(General_options::Object_format fmt)
+{
+  switch (fmt)
+    {
+    case General_options::OBJECT_FORMAT_ELF:
+      return "elf";
+    case General_options::OBJECT_FORMAT_BINARY:
+      return "binary";
+    default:
+      gold_unreachable();
+    }
+}
+
 void
 General_options::parse_fix_v4bx(const char*, const char*,
 				Command_line*)
@@ -711,6 +727,39 @@ void
 General_options::parse_EL(const char*, const char*, Command_line*)
 {
   this->endianness_ = ENDIANNESS_LITTLE;
+}
+
+void
+General_options::copy_from_posdep_options(
+    const Position_dependent_options& posdep)
+{
+  this->set_as_needed(posdep.as_needed());
+  this->set_Bdynamic(posdep.Bdynamic());
+  this->set_format(
+      General_options::object_format_to_string(posdep.format_enum()));
+  this->set_whole_archive(posdep.whole_archive());
+  this->set_incremental_disposition(posdep.incremental_disposition());
+}
+
+void
+General_options::parse_push_state(const char*, const char*, Command_line*)
+{
+  Position_dependent_options* posdep = new Position_dependent_options(*this);
+  this->options_stack_.push_back(posdep);
+}
+
+void
+General_options::parse_pop_state(const char*, const char*, Command_line*)
+{
+  if (this->options_stack_.empty())
+    {
+      gold::gold_error(_("unbalanced --push-state/--pop-state"));
+      return;
+    }
+  Position_dependent_options* posdep = this->options_stack_.back();
+  this->options_stack_.pop_back();
+  this->copy_from_posdep_options(*posdep);
+  delete posdep;
 }
 
 } // End namespace gold.
@@ -876,7 +925,7 @@ parse_short_option(int argc, const char** argv, int pos_in_argv_i,
   // We handle -z as a special case.
   static gold::options::One_option dash_z("", gold::options::DASH_Z,
 					  'z', "", NULL, "Z-OPTION", false,
-					  NULL);
+					  NULL, false);
   gold::options::One_option* retval = NULL;
   if (this_argv[pos_in_argv_i] == 'z')
     retval = &dash_z;
@@ -949,7 +998,8 @@ General_options::General_options()
     section_starts_(),
     fix_v4bx_(FIX_V4BX_NONE),
     endianness_(ENDIANNESS_NOT_SET),
-    discard_locals_(DISCARD_SEC_MERGE)
+    discard_locals_(DISCARD_SEC_MERGE),
+    orphan_handling_enum_(ORPHAN_PLACE)
 {
   // Turn off option registration once construction is complete.
   gold::options::ready_to_register = false;
@@ -1106,6 +1156,19 @@ General_options::finalize()
       // Testing COLLECT_NO_DEMANGLE makes our default demangling
       // behaviour identical to that of gcc's linker wrapper.
       this->set_do_demangle(getenv("COLLECT_NO_DEMANGLE") == NULL);
+    }
+
+  // Parse the --orphan-handling argument.
+  if (this->user_set_orphan_handling())
+    {
+      if (strcmp(this->orphan_handling(), "place") == 0)
+        this->set_orphan_handling_enum(ORPHAN_PLACE);
+      else if (strcmp(this->orphan_handling(), "discard") == 0)
+        this->set_orphan_handling_enum(ORPHAN_DISCARD);
+      else if (strcmp(this->orphan_handling(), "warn") == 0)
+        this->set_orphan_handling_enum(ORPHAN_WARN);
+      else if (strcmp(this->orphan_handling(), "error") == 0)
+        this->set_orphan_handling_enum(ORPHAN_ERROR);
     }
 
   // -M is equivalent to "-Map -".
@@ -1280,6 +1343,8 @@ General_options::finalize()
 	gold_fatal(_("incremental linking is not compatible with --plugin"));
       if (this->relro())
 	gold_fatal(_("incremental linking is not compatible with -z relro"));
+      if (this->pie())
+	gold_fatal(_("incremental linking is not compatible with -pie"));
       if (this->gc_sections())
 	{
 	  gold_warning(_("ignoring --gc-sections for an incremental link"));
@@ -1503,6 +1568,12 @@ Command_line::process(int argc, const char** argv)
   if (this->inputs_.in_group())
     {
       fprintf(stderr, _("%s: missing group end\n"), program_name);
+      usage();
+    }
+
+  if (this->inputs_.in_lib())
+    {
+      fprintf(stderr, _("%s: missing lib end\n"), program_name);
       usage();
     }
 

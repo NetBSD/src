@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-# Copyright (C) 2007-2016 Free Software Foundation, Inc.
+# Copyright (C) 2007-2018 Free Software Foundation, Inc.
 # Contributed by M R Swami Reddy <MR.Swami.Reddy@nsc.com>
 #
 # This file is part of the GNU Binutils.
@@ -38,10 +38,10 @@ cr16_elf_after_open (void)
   /* Call the standard elf routine.  */
   gld${EMULATION_NAME}_after_open ();
 
-   if (command_line.embedded_relocs
-       && !bfd_link_relocatable (&link_info))
-     {
-       bfd *abfd;
+  if (command_line.embedded_relocs
+      && !bfd_link_relocatable (&link_info))
+    {
+      bfd *abfd;
 
       /* In the embedded relocs mode we create a .emreloc section for each
 	 input file with a nonzero .data section.  The BFD backend will fill in
@@ -57,7 +57,8 @@ cr16_elf_after_open (void)
 	     COFF and ELF.  */
 	  if (bfd_get_flavour (abfd) != bfd_target_coff_flavour
 	      && bfd_get_flavour (abfd) != bfd_target_elf_flavour)
-	    einfo ("%F%B: all input objects must be COFF or ELF for --embedded-relocs\n");
+	    einfo (_("%F%B: all input objects must be COFF or ELF "
+		     "for --embedded-relocs\n"));
 
 	  datasec = bfd_get_section_by_name (abfd, ".data.rel");
 
@@ -82,7 +83,7 @@ cr16_elf_after_open (void)
 		  || ! bfd_set_section_alignment (abfd, relsec, 2)
 		  || ! bfd_set_section_size (abfd, relsec,
 					     datasec->reloc_count * 8))
-		einfo ("%F%B: can not create .emreloc section: %E\n");
+		einfo (_("%F%B: can not create .emreloc section: %E\n"));
 	    }
 
 	  /* Double check that all other data sections are empty, as is
@@ -99,9 +100,9 @@ static void
 check_sections (bfd *abfd, asection *sec, void *datasec)
 {
   if ((strncmp (bfd_get_section_name (abfd, sec), ".data.rel", 9) == 0)
-     && sec != datasec
-     && sec->reloc_count == 0 )
-    einfo ("%B%X: section %s has relocs; can not use --embedded-relocs\n",
+      && sec != datasec
+      && sec->reloc_count == 0 )
+    einfo (_("%B%X: section %s has relocs; can not use --embedded-relocs\n"),
 	   abfd, bfd_get_section_name (abfd, sec));
 }
 
@@ -131,16 +132,16 @@ cr16elf_before_allocation (void)
   /* Call the default first.  */
   gld${EMULATION_NAME}_before_allocation ();
 
-   if (command_line.embedded_relocs
-       && (!bfd_link_relocatable (&link_info)))
-     {
+  if (command_line.embedded_relocs
+      && (!bfd_link_relocatable (&link_info)))
+    {
 
-   bfd *abfd;
+      bfd *abfd;
 
-   /* If we are generating embedded relocs, call a special BFD backend
+      /* If we are generating embedded relocs, call a special BFD backend
 	 routine to do the work.  */
-   for (abfd = link_info.input_bfds; abfd != NULL; abfd = abfd->link.next)
-      {
+      for (abfd = link_info.input_bfds; abfd != NULL; abfd = abfd->link.next)
+	{
 	  asection *datasec, *relsec;
 	  char *errmsg;
 
@@ -153,18 +154,18 @@ cr16elf_before_allocation (void)
 	  ASSERT (relsec != NULL);
 
 	  if (! bfd_cr16_elf32_create_embedded_relocs (abfd, &link_info,
-							   datasec, relsec,
-							   &errmsg))
-		{
-		  if (errmsg == NULL)
-		    einfo ("%B%X: can not create runtime reloc information: %E\n",
-			   abfd);
-		  else
-		    einfo ("%X%B: can not create runtime reloc information: %s\n",
-			   abfd, errmsg);
-		}
-       }
-     }
+						       datasec, relsec,
+						       &errmsg))
+	    {
+	      if (errmsg == NULL)
+		einfo (_("%B%X: can not create runtime reloc information: %E\n"),
+		       abfd);
+	      else
+		einfo (_("%X%B: can not create runtime reloc information: %s\n"),
+		       abfd, errmsg);
+	    }
+	}
+    }
 
   /* Enable relaxation by default if the "--no-relax" option was not
      specified.  This is done here instead of in the before_parse hook

@@ -1,5 +1,5 @@
 /* BFD back-end for MIPS Extended-Coff files.
-   Copyright (C) 1990-2016 Free Software Foundation, Inc.
+   Copyright (C) 1990-2018 Free Software Foundation, Inc.
    Original version by Per Bothner.
    Full support added by Ian Lance Taylor, ian@cygnus.com.
 
@@ -131,7 +131,7 @@ static reloc_howto_type mips_howto_table[] =
 	 FALSE,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont, /* complain_on_overflow */
-	 			/* This needs complex overflow
+				/* This needs complex overflow
 				   detection, because the upper four
 				   bits must match the PC.  */
 	 mips_generic_reloc,	/* special_function */
@@ -503,6 +503,12 @@ mips_reflo_reloc (bfd *abfd ATTRIBUTE_UNUSED,
 	  unsigned long val;
 	  unsigned long vallo;
 	  struct mips_hi *next;
+
+	  if (! bfd_reloc_offset_in_range (reloc_entry->howto, abfd,
+					   input_section,
+					   reloc_entry->address
+					   * bfd_octets_per_byte (abfd)))
+	    return bfd_reloc_outofrange;
 
 	  /* Do the REFHI relocation.  Note that we actually don't
 	     need to know anything about the REFLO itself, except
@@ -886,7 +892,7 @@ mips_relocate_section (bfd *output_bfd,
 	  struct external_reloc *lo_ext_rel;
 
 	  /* As a GNU extension, permit an arbitrary number of REFHI
-             relocs before the REFLO reloc.  This permits gcc to emit
+	     relocs before the REFLO reloc.  This permits gcc to emit
 	     the HI and LO relocs itself.  */
 	  for (lo_ext_rel = ext_rel + 1;
 	       lo_ext_rel < ext_rel_end;
@@ -1356,6 +1362,8 @@ static const struct ecoff_backend_data mips_ecoff_backend_data =
 #define _bfd_ecoff_section_already_linked \
   _bfd_coff_section_already_linked
 #define _bfd_ecoff_bfd_define_common_symbol bfd_generic_define_common_symbol
+#define _bfd_ecoff_bfd_define_start_stop bfd_generic_define_start_stop
+#define _bfd_ecoff_set_reloc _bfd_generic_set_reloc
 
 extern const bfd_target mips_ecoff_be_vec;
 

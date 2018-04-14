@@ -21,7 +21,7 @@ struct bfd_iovec
      if an error occurs.  */
   file_ptr (*btell) (struct bfd *abfd);
   /* For the following, on successful completion a value of 0 is returned.
-     Otherwise, a value of -1 is returned (and  @code{bfd_error} is set).  */
+     Otherwise, a value of -1 is returned (and @code{bfd_error} is set).  */
   int (*bseek) (struct bfd *abfd, file_ptr offset, int whence);
   int (*bclose) (struct bfd *abfd);
   int (*bflush) (struct bfd *abfd);
@@ -53,7 +53,7 @@ from the archive header for archive members).
 @subsubsection @code{bfd_get_size}
 @strong{Synopsis}
 @example
-file_ptr bfd_get_size (bfd *abfd);
+ufile_ptr bfd_get_size (bfd *abfd);
 @end example
 @strong{Description}@*
 Return the file size (as read from file system) for the file
@@ -79,6 +79,17 @@ exhausted" error when it tries to allocate 15 bazillon bytes
 of space for the 15 bazillon byte table it is about to read.
 This function at least allows us to answer the question, "is the
 size reasonable?".
+
+@findex bfd_get_file_size
+@subsubsection @code{bfd_get_file_size}
+@strong{Synopsis}
+@example
+ufile_ptr bfd_get_file_size (bfd *abfd);
+@end example
+@strong{Description}@*
+Return the file size (as read from file system) for the file
+associated with BFD @var{abfd}.  It supports both normal files
+and archive elements.
 
 @findex bfd_mmap
 @subsubsection @code{bfd_mmap}

@@ -1,5 +1,5 @@
 /* s390.h -- Header file for S390 opcode table
-   Copyright (C) 2000-2016 Free Software Foundation, Inc.
+   Copyright (C) 2000-2018 Free Software Foundation, Inc.
    Contributed by Martin Schwidefsky (schwidefsky@de.ibm.com).
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -42,14 +42,17 @@ enum s390_opcode_cpu_val
     S390_OPCODE_Z196,
     S390_OPCODE_ZEC12,
     S390_OPCODE_Z13,
+    S390_OPCODE_ARCH12,
     S390_OPCODE_MAXCPU
   };
 
 /* Instruction specific flags.  */
 #define S390_INSTR_FLAG_OPTPARM 0x1
-#define S390_INSTR_FLAG_HTM 0x2
-#define S390_INSTR_FLAG_VX 0x4
-#define S390_INSTR_FLAG_FACILITY_MASK 0x6
+#define S390_INSTR_FLAG_OPTPARM2 0x2
+
+#define S390_INSTR_FLAG_HTM 0x4
+#define S390_INSTR_FLAG_VX 0x8
+#define S390_INSTR_FLAG_FACILITY_MASK 0xc
 
 /* The opcode table is an array of struct s390_opcode.  */
 
@@ -154,21 +157,17 @@ extern const struct s390_operand s390_operands[];
 /* This operand is a length.  */
 #define S390_OPERAND_LENGTH 0x200
 
-/* This operand is optional. Only a single operand at the end of
-   the instruction may be optional.  */
-#define S390_OPERAND_OPTIONAL 0x400
-
 /* The operand needs to be a valid GP or FP register pair.  */
-#define S390_OPERAND_REG_PAIR 0x800
+#define S390_OPERAND_REG_PAIR 0x400
 
 /* This operand names a vector register.  The disassembler uses this
    to print register names with a leading 'v'.  */
-#define S390_OPERAND_VR 0x1000
+#define S390_OPERAND_VR 0x800
 
-#define S390_OPERAND_CP16 0x2000
+#define S390_OPERAND_CP16 0x1000
 
-#define S390_OPERAND_OR1 0x4000
-#define S390_OPERAND_OR2 0x8000
-#define S390_OPERAND_OR8 0x10000
+#define S390_OPERAND_OR1 0x2000
+#define S390_OPERAND_OR2 0x4000
+#define S390_OPERAND_OR8 0x8000
 
 #endif /* S390_H */

@@ -1,5 +1,5 @@
 /* as.h - global header file
-   Copyright (C) 1987-2016 Free Software Foundation, Inc.
+   Copyright (C) 1987-2018 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -85,8 +85,7 @@
 #if __GNUC__ < 2 || (__GNUC__ == 2 && __GNUC_MINOR__ < 6)
 #define __PRETTY_FUNCTION__  ((char *) NULL)
 #endif
-#define gas_assert(P) \
-  ((void) ((P) ? 0 : (as_assert (__FILE__, __LINE__, __PRETTY_FUNCTION__), 0)))
+#define gas_assert(P)	((void) ((P) ? 0 : (abort (), 0)))
 #undef abort
 #define abort()		as_abort (__FILE__, __LINE__, __PRETTY_FUNCTION__)
 
@@ -459,8 +458,8 @@ PRINTF_LIKE (as_warn);
 PRINTF_WHERE_LIKE (as_bad_where);
 PRINTF_WHERE_LIKE (as_warn_where);
 
-void   as_assert (const char *, int, const char *);
 void   as_abort (const char *, int, const char *) ATTRIBUTE_NORETURN;
+void   signal_init (void);
 void   sprint_value (char *, addressT);
 int    had_errors (void);
 int    had_warnings (void);
@@ -487,6 +486,7 @@ void   cond_exit_macro (int);
 int    seen_at_least_1_file (void);
 void   app_pop (char *);
 const char * as_where (unsigned int *);
+const char * as_where_physical (unsigned int *);
 void   bump_line_counters (void);
 void   do_scrub_begin (int);
 void   input_scrub_begin (void);
@@ -533,7 +533,7 @@ int generic_force_reloc (struct fix *);
 
 #include "expr.h"		/* Before targ-*.h */
 
-/* This one starts the chain of target dependant headers.  */
+/* This one starts the chain of target dependent headers.  */
 #include "targ-env.h"
 
 #ifdef OBJ_MAYBE_ELF

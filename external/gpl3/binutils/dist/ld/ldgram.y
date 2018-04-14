@@ -1,5 +1,5 @@
 /* A YACC grammar to parse a superset of the AT&T linker scripting language.
-   Copyright (C) 1991-2016 Free Software Foundation, Inc.
+   Copyright (C) 1991-2018 Free Software Foundation, Inc.
    Written by Steve Chamberlain of Cygnus Support (steve@cygnus.com).
 
    This file is part of the GNU Binutils.
@@ -48,8 +48,8 @@
 static enum section_type sectype;
 static lang_memory_region_type *region;
 
-bfd_boolean ldgram_had_keep = FALSE;
-char *ldgram_vers_current_lang = NULL;
+static bfd_boolean ldgram_had_keep = FALSE;
+static char *ldgram_vers_current_lang = NULL;
 
 #define ERROR_NAME_MAX 20
 static char *error_names[ERROR_NAME_MAX];
@@ -92,13 +92,13 @@ static int error_index;
 %type <etree> opt_exp_without_type opt_subalign opt_align
 %type <fill> fill_opt fill_exp
 %type <name_list> exclude_name_list
-%type <wildcard_list> file_NAME_list
+%type <wildcard_list> section_name_list
 %type <flag_info_list> sect_flag_list
 %type <flag_info> sect_flags
 %type <name> memspec_opt casesymlist
 %type <name> memspec_at_opt
 %type <cname> wildcard_name
-%type <wildcard> wildcard_spec
+%type <wildcard> section_name_spec filename_spec wildcard_maybe_exclude
 %token <bigint> INT
 %token <name> NAME LNAME
 %type <integer> length
@@ -131,7 +131,7 @@ static int error_index;
 %token SORT_BY_INIT_PRIORITY
 %token '{' '}'
 %token SIZEOF_HEADERS OUTPUT_FORMAT FORCE_COMMON_ALLOCATION OUTPUT_ARCH
-%token INHIBIT_COMMON_ALLOCATION
+%token INHIBIT_COMMON_ALLOCATION FORCE_GROUP_ALLOCATION
 %token SEGMENT_START
 %token INCLUDE
 %token MEMORY
@@ -199,27 +199,27 @@ mri_script_file:
 
 mri_script_lines:
 		mri_script_lines mri_script_command NEWLINE
-          |
+	|
 	;
 
 mri_script_command:
 		CHIP  exp
 	|	CHIP  exp ',' exp
-	|	NAME 	{
+	|	NAME	{
 			einfo(_("%P%F: unrecognised keyword in MRI style script '%s'\n"),$1);
 			}
-	|	LIST  	{
+	|	LIST	{
 			config.map_filename = "-";
 			}
-        |       ORDER ordernamelist
-	|       ENDWORD
-        |       PUBLIC NAME '=' exp
- 			{ mri_public($2, $4); }
-        |       PUBLIC NAME ',' exp
- 			{ mri_public($2, $4); }
-        |       PUBLIC NAME  exp
- 			{ mri_public($2, $3); }
-	| 	FORMAT NAME
+	|	ORDER ordernamelist
+	|	ENDWORD
+	|	PUBLIC NAME '=' exp
+			{ mri_public($2, $4); }
+	|	PUBLIC NAME ',' exp
+			{ mri_public($2, $4); }
+	|	PUBLIC NAME  exp
+			{ mri_public($2, $3); }
+	|	FORMAT NAME
 			{ mri_format($2); }
 	|	SECT NAME ',' exp
 			{ mri_output_section($2, $4);}
@@ -237,13 +237,13 @@ mri_script_command:
 			{ mri_alignmod($2,$4); }
 	|	ABSOLUTE mri_abs_name_list
 	|	LOAD	 mri_load_name_list
-	|       NAMEWORD NAME
+	|	NAMEWORD NAME
 			{ mri_name($2); }
 	|	ALIAS NAME ',' NAME
 			{ mri_alias($2,$4,0);}
 	|	ALIAS NAME ',' INT
 			{ mri_alias ($2, 0, (int) $4.integer); }
-	|	BASE     exp
+	|	BASE	 exp
 			{ mri_base($2); }
 	|	TRUNCATE INT
 		{ mri_truncate ((unsigned int) $2.integer); }
@@ -255,13 +255,13 @@ mri_script_command:
 		{ ldlex_popstate (); }
 	|	START NAME
 		{ lang_add_entry ($2, FALSE); }
-        |
+	|
 	;
 
 ordernamelist:
-	      ordernamelist ',' NAME         { mri_order($3); }
-	|     ordernamelist  NAME         { mri_order($2); }
-      	|
+	      ordernamelist ',' NAME	     { mri_order($3); }
+	|     ordernamelist  NAME	  { mri_order($2); }
+	|
 	;
 
 mri_load_name_list:
@@ -271,10 +271,10 @@ mri_load_name_list:
 	;
 
 mri_abs_name_list:
- 		NAME
- 			{ mri_only_load($1); }
+		NAME
+			{ mri_only_load($1); }
 	|	mri_abs_name_list ','  NAME
- 			{ mri_only_load($3); }
+			{ mri_only_load($3); }
 	;
 
 casesymlist:
@@ -302,11 +302,11 @@ script_file:
 	{ ldlex_both(); }
 	ifile_list
 	{ ldlex_popstate(); }
-        ;
+	;
 
 ifile_list:
 	ifile_list ifile_p1
-        |
+	|
 	;
 
 
@@ -320,30 +320,32 @@ ifile_p1:
 	|	floating_point_support
 	|	statement_anywhere
 	|	version
-        |	 ';'
+	|	 ';'
 	|	TARGET_K '(' NAME ')'
 		{ lang_add_target($3); }
 	|	SEARCH_DIR '(' filename ')'
 		{ ldfile_add_library_path ($3, FALSE); }
 	|	OUTPUT '(' filename ')'
 		{ lang_add_output($3, 1); }
-        |	OUTPUT_FORMAT '(' NAME ')'
+	|	OUTPUT_FORMAT '(' NAME ')'
 		  { lang_add_output_format ($3, (char *) NULL,
 					    (char *) NULL, 1); }
 	|	OUTPUT_FORMAT '(' NAME ',' NAME ',' NAME ')'
 		  { lang_add_output_format ($3, $5, $7, 1); }
-        |	OUTPUT_ARCH '(' NAME ')'
+	|	OUTPUT_ARCH '(' NAME ')'
 		  { ldfile_set_output_arch ($3, bfd_arch_unknown); }
 	|	FORCE_COMMON_ALLOCATION
 		{ command_line.force_common_definition = TRUE ; }
+	|	FORCE_GROUP_ALLOCATION
+		{ command_line.force_group_allocation = TRUE ; }
 	|	INHIBIT_COMMON_ALLOCATION
-		{ command_line.inhibit_common_definition = TRUE ; }
+		{ link_info.inhibit_common_definition = TRUE ; }
 	|	INPUT '(' input_list ')'
 	|	GROUP
 		  { lang_enter_group (); }
 		    '(' input_list ')'
 		  { lang_leave_group (); }
-     	|	MAP '(' filename ')'
+	|	MAP '(' filename ')'
 		{ lang_add_map($3); }
 	|	INCLUDE filename
 		{ ldlex_script (); ldfile_open_command_file($2); }
@@ -445,7 +447,7 @@ wildcard_name:
 			}
 	;
 
-wildcard_spec:
+wildcard_maybe_exclude:
 		wildcard_name
 			{
 			  $$.name = $1;
@@ -453,75 +455,70 @@ wildcard_spec:
 			  $$.exclude_name_list = NULL;
 			  $$.section_flag_list = NULL;
 			}
-	| 	EXCLUDE_FILE '(' exclude_name_list ')' wildcard_name
+	|	EXCLUDE_FILE '(' exclude_name_list ')' wildcard_name
 			{
 			  $$.name = $5;
 			  $$.sorted = none;
 			  $$.exclude_name_list = $3;
 			  $$.section_flag_list = NULL;
 			}
-	|	SORT_BY_NAME '(' wildcard_name ')'
+	;
+
+filename_spec:
+		wildcard_maybe_exclude
+	|	SORT_BY_NAME '(' wildcard_maybe_exclude ')'
 			{
-			  $$.name = $3;
+			  $$ = $3;
 			  $$.sorted = by_name;
-			  $$.exclude_name_list = NULL;
-			  $$.section_flag_list = NULL;
 			}
-	|	SORT_BY_ALIGNMENT '(' wildcard_name ')'
+	|	SORT_NONE '(' wildcard_maybe_exclude ')'
 			{
-			  $$.name = $3;
-			  $$.sorted = by_alignment;
-			  $$.exclude_name_list = NULL;
-			  $$.section_flag_list = NULL;
-			}
-	|	SORT_NONE '(' wildcard_name ')'
-			{
-			  $$.name = $3;
+			  $$ = $3;
 			  $$.sorted = by_none;
-			  $$.exclude_name_list = NULL;
-			  $$.section_flag_list = NULL;
 			}
-	|	SORT_BY_NAME '(' SORT_BY_ALIGNMENT '(' wildcard_name ')' ')'
+	;
+
+section_name_spec:
+		wildcard_maybe_exclude
+	|	SORT_BY_NAME '(' wildcard_maybe_exclude ')'
 			{
-			  $$.name = $5;
-			  $$.sorted = by_name_alignment;
-			  $$.exclude_name_list = NULL;
-			  $$.section_flag_list = NULL;
-			}
-	|	SORT_BY_NAME '(' SORT_BY_NAME '(' wildcard_name ')' ')'
-			{
-			  $$.name = $5;
+			  $$ = $3;
 			  $$.sorted = by_name;
-			  $$.exclude_name_list = NULL;
-			  $$.section_flag_list = NULL;
 			}
-	|	SORT_BY_ALIGNMENT '(' SORT_BY_NAME '(' wildcard_name ')' ')'
+	|	SORT_BY_ALIGNMENT '(' wildcard_maybe_exclude ')'
 			{
-			  $$.name = $5;
-			  $$.sorted = by_alignment_name;
-			  $$.exclude_name_list = NULL;
-			  $$.section_flag_list = NULL;
-			}
-	|	SORT_BY_ALIGNMENT '(' SORT_BY_ALIGNMENT '(' wildcard_name ')' ')'
-			{
-			  $$.name = $5;
+			  $$ = $3;
 			  $$.sorted = by_alignment;
-			  $$.exclude_name_list = NULL;
-			  $$.section_flag_list = NULL;
 			}
-	|	SORT_BY_NAME '(' EXCLUDE_FILE '(' exclude_name_list ')' wildcard_name ')'
+	|	SORT_NONE '(' wildcard_maybe_exclude ')'
 			{
-			  $$.name = $7;
+			  $$ = $3;
+			  $$.sorted = by_none;
+			}
+	|	SORT_BY_NAME '(' SORT_BY_ALIGNMENT '(' wildcard_maybe_exclude ')' ')'
+			{
+			  $$ = $5;
+			  $$.sorted = by_name_alignment;
+			}
+	|	SORT_BY_NAME '(' SORT_BY_NAME '(' wildcard_maybe_exclude ')' ')'
+			{
+			  $$ = $5;
 			  $$.sorted = by_name;
-			  $$.exclude_name_list = $5;
-			  $$.section_flag_list = NULL;
 			}
-	|	SORT_BY_INIT_PRIORITY '(' wildcard_name ')'
+	|	SORT_BY_ALIGNMENT '(' SORT_BY_NAME '(' wildcard_maybe_exclude ')' ')'
 			{
-			  $$.name = $3;
+			  $$ = $5;
+			  $$.sorted = by_alignment_name;
+			}
+	|	SORT_BY_ALIGNMENT '(' SORT_BY_ALIGNMENT '(' wildcard_maybe_exclude ')' ')'
+			{
+			  $$ = $5;
+			  $$.sorted = by_alignment;
+			}
+	|	SORT_BY_INIT_PRIORITY '(' wildcard_maybe_exclude ')'
+			{
+			  $$ = $3;
 			  $$.sorted = by_init_priority;
-			  $$.exclude_name_list = NULL;
-			  $$.section_flag_list = NULL;
 			}
 	;
 
@@ -596,8 +593,8 @@ exclude_name_list:
 			}
 	;
 
-file_NAME_list:
-		file_NAME_list opt_comma wildcard_spec
+section_name_list:
+		section_name_list opt_comma section_name_spec
 			{
 			  struct wildcard_list *tmp;
 			  tmp = (struct wildcard_list *) xmalloc (sizeof *tmp);
@@ -606,7 +603,7 @@ file_NAME_list:
 			  $$ = tmp;
 			}
 	|
-		wildcard_spec
+		section_name_spec
 			{
 			  struct wildcard_list *tmp;
 			  tmp = (struct wildcard_list *) xmalloc (sizeof *tmp);
@@ -635,11 +632,11 @@ input_section_spec_no_keep:
 			  tmp.section_flag_list = $1;
 			  lang_add_wild (&tmp, NULL, ldgram_had_keep);
 			}
-        |	'[' file_NAME_list ']'
+	|	'[' section_name_list ']'
 			{
 			  lang_add_wild (NULL, $2, ldgram_had_keep);
 			}
-        |	sect_flags '[' file_NAME_list ']'
+	|	sect_flags '[' section_name_list ']'
 			{
 			  struct wildcard_spec tmp;
 			  tmp.name = NULL;
@@ -648,11 +645,11 @@ input_section_spec_no_keep:
 			  tmp.section_flag_list = $1;
 			  lang_add_wild (&tmp, $3, ldgram_had_keep);
 			}
-	|	wildcard_spec '(' file_NAME_list ')'
+	|	filename_spec '(' section_name_list ')'
 			{
 			  lang_add_wild (&$1, $3, ldgram_had_keep);
 			}
-	|	sect_flags wildcard_spec '(' file_NAME_list ')'
+	|	sect_flags filename_spec '(' section_name_list ')'
 			{
 			  $2.section_flag_list = $1;
 			  lang_add_wild (&$2, $4, ldgram_had_keep);
@@ -668,13 +665,13 @@ input_section_spec:
 	;
 
 statement:
-	  	assignment end
+		assignment end
 	|	CREATE_OBJECT_SYMBOLS
 		{
- 		lang_add_attribute(lang_object_symbols_statement_enum);
-	      	}
-        |	';'
-        |	CONSTRUCTORS
+		lang_add_attribute(lang_object_symbols_statement_enum);
+		}
+	|	';'
+	|	CONSTRUCTORS
 		{
 
 		  lang_add_attribute(lang_constructors_statement_enum);
@@ -685,15 +682,15 @@ statement:
 		  lang_add_attribute (lang_constructors_statement_enum);
 		}
 	| input_section_spec
-        | length '(' mustbe_exp ')'
-        	        {
-			  lang_add_data ((int) $1, $3);
-			}
+	| length '(' mustbe_exp ')'
+		{
+		  lang_add_data ((int) $1, $3);
+		}
 
 	| FILL '(' fill_exp ')'
-			{
-			  lang_add_fill ($3);
-			}
+		{
+		  lang_add_fill ($3);
+		}
 	| ASSERT_K  {ldlex_expression ();} '(' exp ',' NAME ')' end
 			{ ldlex_popstate ();
 			  lang_add_assignment (exp_assert ($4, $6)); }
@@ -705,7 +702,7 @@ statement:
 
 statement_list:
 		statement_list statement
-  	|  	statement
+	|	statement
 	;
 
 statement_list_opt:
@@ -720,7 +717,7 @@ length:
 			{ $$ = $1; }
 	|	LONG
 			{ $$ = $1; }
-	| 	SHORT
+	|	SHORT
 			{ $$ = $1; }
 	|	BYTE
 			{ $$ = $1; }
@@ -736,7 +733,7 @@ fill_exp:
 fill_opt:
 	  '=' fill_exp
 		{ $$ = $2; }
-	| 	{ $$ = (fill_type *) 0; }
+	|	{ $$ = (fill_type *) 0; }
 	;
 
 assign_op:
@@ -744,17 +741,17 @@ assign_op:
 			{ $$ = '+'; }
 	|	MINUSEQ
 			{ $$ = '-'; }
-	| 	MULTEQ
+	|	MULTEQ
 			{ $$ = '*'; }
-	| 	DIVEQ
+	|	DIVEQ
 			{ $$ = '/'; }
-	| 	LSHIFTEQ
+	|	LSHIFTEQ
 			{ $$ = LSHIFT; }
-	| 	RSHIFTEQ
+	|	RSHIFTEQ
 			{ $$ = RSHIFT; }
-	| 	ANDEQ
+	|	ANDEQ
 			{ $$ = '&'; }
-	| 	OREQ
+	|	OREQ
 			{ $$ = '|'; }
 
 	;
@@ -807,7 +804,7 @@ memory_spec_list:
 	;
 
 
-memory_spec: 	NAME
+memory_spec:	NAME
 		{ region = lang_memory_region_lookup ($1, TRUE); }
 		attributes_opt ':'
 		origin_spec opt_comma length_spec
@@ -827,7 +824,7 @@ origin_spec:
 	;
 
 length_spec:
-             LENGTH '=' mustbe_exp
+	     LENGTH '=' mustbe_exp
 		{
 		  region->length_exp = $3;
 		}
@@ -949,7 +946,7 @@ exp	:
 			{ $$ = exp_binop (NE , $1, $3); }
 	|	exp LE exp
 			{ $$ = exp_binop (LE , $1, $3); }
-  	|	exp GE exp
+	|	exp GE exp
 			{ $$ = exp_binop (GE , $1, $3); }
 	|	exp '<' exp
 			{ $$ = exp_binop ('<' , $1, $3); }
@@ -971,7 +968,7 @@ exp	:
 			{ $$ = exp_nameop (DEFINED, $3); }
 	|	INT
 			{ $$ = exp_bigintop ($1.integer, $1.str); }
-        |	SIZEOF_HEADERS
+	|	SIZEOF_HEADERS
 			{ $$ = exp_nameop (SIZEOF_HEADERS,0); }
 
 	|	ALIGNOF '(' NAME ')'
@@ -996,8 +993,8 @@ exp	:
 			{ $$ = exp_binop (DATA_SEGMENT_RELRO_END, $5, $3); }
 	|	DATA_SEGMENT_END '(' exp ')'
 			{ $$ = exp_unop (DATA_SEGMENT_END, $3); }
-        |       SEGMENT_START '(' NAME ',' exp ')'
-                        { /* The operands to the expression node are
+	|	SEGMENT_START '(' NAME ',' exp ')'
+			{ /* The operands to the expression node are
 			     placed in the opposite order from the way
 			     in which they appear in the script as
 			     that allows us to reuse more code in
@@ -1025,9 +1022,9 @@ exp	:
 
 
 memspec_at_opt:
-                AT '>' NAME { $$ = $3; }
-        |       { $$ = 0; }
-        ;
+		AT '>' NAME { $$ = $3; }
+	|	{ $$ = 0; }
+	;
 
 opt_at:
 		AT '(' exp ')' { $$ = $3; }
@@ -1056,7 +1053,7 @@ sect_constraint:
 	|	{ $$ = 0; }
 	;
 
-section:	NAME 		{ ldlex_expression(); }
+section:	NAME		{ ldlex_expression(); }
 		opt_exp_with_type
 		opt_at
 		opt_align
@@ -1070,7 +1067,7 @@ section:	NAME 		{ ldlex_expression(); }
 							      $5, $7, $4, $9, $6);
 			}
 		statement_list_opt
- 		'}' { ldlex_popstate (); ldlex_expression (); }
+		'}' { ldlex_popstate (); ldlex_expression (); }
 		memspec_opt memspec_at_opt phdr_opt fill_opt
 		{
 		  ldlex_popstate ();
@@ -1122,9 +1119,9 @@ type:
 	;
 
 atype:
-	 	'(' type ')'
-  	| 	/* EMPTY */ { sectype = normal_section; }
-  	| 	'(' ')' { sectype = normal_section; }
+		'(' type ')'
+	|	/* EMPTY */ { sectype = normal_section; }
+	|	'(' ')' { sectype = normal_section; }
 	;
 
 opt_exp_with_type:
@@ -1405,7 +1402,7 @@ vers_defns:
 		{
 		  $$ = lang_new_vers_pattern (NULL, $1, ldgram_vers_current_lang, FALSE);
 		}
-        |       NAME
+	|	NAME
 		{
 		  $$ = lang_new_vers_pattern (NULL, $1, ldgram_vers_current_lang, TRUE);
 		}

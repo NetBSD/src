@@ -1,6 +1,6 @@
 // aarch64-reloc.def -- AArch64 relocation definitions.
 
-// Copyright (C) 2014-2016 Free Software Foundation, Inc.
+// Copyright (C) 2014-2018 Free Software Foundation, Inc.
 // Written by Han Shen <shenhan@google.com> and Jing Yu <jingyu@google.com>.
 
 // This file is part of gold.
@@ -42,6 +42,20 @@ ARD(PREL64                       , STATIC ,  DATA       ,   Y,  -1,    0,0      
 ARD(PREL32                       , STATIC ,  DATA       ,   Y,  -1,   31,32               ,    0,0  , Symbol::RELATIVE_REF ,                         DATA  )
 ARD(PREL16                       , STATIC ,  DATA       ,   Y,  -1,   15,16               ,    0,0  , Symbol::RELATIVE_REF ,                         DATA  )
 // Above is from Table 4-6, Data relocations, 257-262.
+
+ARD(MOVW_UABS_G0                 , STATIC ,  AARCH64    ,   Y,   0,    0,16               ,    0,15 , Symbol::ABSOLUTE_REF ,                         MOVW  )
+ARD(MOVW_UABS_G0_NC              , STATIC ,  AARCH64    ,   Y,   0,    0,0                ,    0,15 , Symbol::ABSOLUTE_REF ,                         MOVW  )
+ARD(MOVW_UABS_G1                 , STATIC ,  AARCH64    ,   Y,   0,    0,32               ,   16,31 , Symbol::ABSOLUTE_REF ,                         MOVW  )
+ARD(MOVW_UABS_G1_NC              , STATIC ,  AARCH64    ,   Y,   0,    0,0                ,   16,31 , Symbol::ABSOLUTE_REF ,                         MOVW  )
+ARD(MOVW_UABS_G2                 , STATIC ,  AARCH64    ,   Y,   0,    0,48               ,   32,47 , Symbol::ABSOLUTE_REF ,                         MOVW  )
+ARD(MOVW_UABS_G2_NC              , STATIC ,  AARCH64    ,   Y,   0,    0,0                ,   32,47 , Symbol::ABSOLUTE_REF ,                         MOVW  )
+ARD(MOVW_UABS_G3                 , STATIC ,  AARCH64    ,   Y,   0,    0,0                ,   48,63 , Symbol::ABSOLUTE_REF ,                         MOVW  )
+// Above is from Table 4-7, Group relocations to create a 16-, 32-, 48-, or 64-bit unsigned data value or address inline.
+
+ARD(MOVW_SABS_G0                 , STATIC ,  AARCH64    ,   Y,   0,   16,16               ,    0,15 , Symbol::ABSOLUTE_REF ,                         MOVW  )
+ARD(MOVW_SABS_G1                 , STATIC ,  AARCH64    ,   Y,   0,   32,32               ,   16,31 , Symbol::ABSOLUTE_REF ,                         MOVW  )
+ARD(MOVW_SABS_G2                 , STATIC ,  AARCH64    ,   Y,   0,   48,48               ,   32,47 , Symbol::ABSOLUTE_REF ,                         MOVW  )
+// Above is from Table 4-8, Group relocations to create a 16, 32, 48, or 64 bit signed data or offset value inline.
 
 ARD(LD_PREL_LO19		 , STATIC ,  AARCH64    ,   Y,  -1,   20,20		  ,    2,20 , Symbol::RELATIVE_REF , 			     LDST  )
 ARD(ADR_PREL_LO21		 , STATIC ,  AARCH64    ,   Y,  -1,   20,20		  ,    0,20 , Symbol::RELATIVE_REF , 			     ADR   )
@@ -104,5 +118,5 @@ ARD(TLSDESC_CALL                 , STATIC ,  CFLOW     ,    Y,  -1,    0,0      
 
 // Note -
 // A - Checking X, (L,U), if L == 0 && U == 0, no check. Otherwise, L!=0,
-//     check that -2^L<=X<2^U. Also an extra alignment check could be embeded
+//     check that -2^L<=X<2^U. Also an extra alignment check could be embedded
 //     into U.

@@ -1,5 +1,5 @@
 /* read.h - of read.c
-   Copyright (C) 1986-2016 Free Software Foundation, Inc.
+   Copyright (C) 1986-2018 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -19,6 +19,7 @@
    02110-1301, USA.  */
 
 extern char *input_line_pointer;	/* -> char we are parsing now.  */
+extern bfd_boolean input_from_string;
 
 /* Define to make whitespace be allowed in many syntactically
    unnecessary places.  Normally undefined.  For compatibility with
@@ -29,8 +30,11 @@ extern char *input_line_pointer;	/* -> char we are parsing now.  */
 #ifdef PERMIT_WHITESPACE
 #define SKIP_WHITESPACE()			\
   ((*input_line_pointer == ' ') ? ++input_line_pointer : 0)
+#define SKIP_ALL_WHITESPACE()			\
+  while (*input_line_pointer == ' ') ++input_line_pointer
 #else
-#define SKIP_WHITESPACE() know(*input_line_pointer != ' ' )
+#define SKIP_WHITESPACE() know (*input_line_pointer != ' ' )
+#define SKIP_ALL_WHITESPACE() SKIP_WHITESPACE()
 #endif
 
 #define SKIP_WHITESPACE_AFTER_NAME()		\
@@ -143,8 +147,8 @@ extern void stabs_generate_asm_file (void);
 extern void stabs_generate_asm_lineno (void);
 extern void stabs_generate_asm_func (const char *, const char *);
 extern void stabs_generate_asm_endfunc (const char *, const char *);
-extern void do_repeat (int,const char *,const char *);
-extern void do_repeat_with_expander (int, const char *, const char *, const char *);
+extern void do_repeat (size_t, const char *, const char *);
+extern void do_repeat_with_expander (size_t, const char *, const char *, const char *);
 extern void end_repeat (int);
 extern void do_parse_cons_expression (expressionS *, int);
 
@@ -210,3 +214,5 @@ extern void s_xstab (int what);
 extern void s_rva (int);
 extern void s_incbin (int);
 extern void s_weakref (int);
+extern void temp_ilp (char *);
+extern void restore_ilp (void);

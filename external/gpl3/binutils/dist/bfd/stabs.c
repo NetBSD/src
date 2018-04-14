@@ -1,5 +1,5 @@
 /* Stabs in sections linking support.
-   Copyright (C) 1996-2016 Free Software Foundation, Inc.
+   Copyright (C) 1996-2018 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -127,7 +127,7 @@ stab_link_includes_newfunc (struct bfd_hash_entry *entry,
      subclass.  */
   if (ret == NULL)
     ret = (struct stab_link_includes_entry *)
-        bfd_hash_allocate (table, sizeof (struct stab_link_includes_entry));
+	bfd_hash_allocate (table, sizeof (struct stab_link_includes_entry));
   if (ret == NULL)
     return NULL;
 
@@ -274,8 +274,9 @@ _bfd_link_section_stabs (bfd *abfd,
       symstroff = stroff + bfd_get_32 (abfd, sym + STRDXOFF);
       if (symstroff >= stabstrsec->size)
 	{
-	  (*_bfd_error_handler)
-	    (_("%B(%A+0x%lx): Stabs entry has invalid string index."),
+	  _bfd_error_handler
+	    /* xgettext:c-format */
+	    (_("%B(%A+%#lx): Stabs entry has invalid string index."),
 	     abfd, stabsec, (long) (sym - stabbuf));
 	  bfd_set_error (bfd_error_bad_value);
 	  goto error_return;
@@ -388,12 +389,12 @@ _bfd_link_section_stabs (bfd *abfd,
 	      /* This is the first time we have seen this header file
 		 with this set of stabs strings.  */
 	      t = (struct stab_link_includes_totals *)
-                  bfd_hash_allocate (&sinfo->includes, sizeof *t);
+		  bfd_hash_allocate (&sinfo->includes, sizeof *t);
 	      if (t == NULL)
 		goto error_return;
 	      t->sum_chars = sum_chars;
 	      t->num_chars = num_chars;
-              /* Trim data down.  */
+	      /* Trim data down.  */
 	      t->symb = symb = (char *) bfd_realloc_or_free (symb, num_chars);
 	      t->next = incl_entry->totals;
 	      incl_entry->totals = t;

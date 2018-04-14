@@ -1,5 +1,5 @@
 /* tc-sh64.c -- Assemble code for the SuperH SH SHcompact and SHmedia.
-   Copyright (C) 2000-2016 Free Software Foundation, Inc.
+   Copyright (C) 2000-2018 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -3030,14 +3030,14 @@ sh64_target_mach (void)
   return (sh64_abi == sh64_abi_64) ? bfd_mach_sh5 : 0;
 }
 
-/* This is MD_PCREL_FROM_SECTION, we we define so it is called instead of
+/* This is MD_PCREL_FROM_SECTION, we define so it is called instead of
    md_pcrel_from (in tc-sh.c).  */
 
 valueT
 shmedia_md_pcrel_from_section (struct fix *fixP, segT sec ATTRIBUTE_UNUSED)
 {
   /* Use the ISA for the instruction to decide which offset to use.  We
-     can glean it from the fisup type.  */
+     can glean it from the fixup type.  */
   switch (fixP->fx_r_type)
     {
     case BFD_RELOC_SH_IMM_LOW16:

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: bug-binutils@gnu.org\n"
-"POT-Creation-Date: 2016-08-03 10:16+0200\n"
+"POT-Creation-Date: 2018-01-13 13:55+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -211,47 +211,52 @@ msgstr ""
 msgid "<cycle %d>"
 msgstr ""
 
-#: corefile.c:61
+#: corefile.c:62
 #, c-format
 msgid "%s: unable to parse mapping file %s.\n"
 msgstr ""
 
-#: corefile.c:85 corefile.c:526
+#: corefile.c:90 corefile.c:527
 #, c-format
 msgid "%s: could not open %s.\n"
 msgstr ""
 
-#: corefile.c:187
+#: corefile.c:192
 #, c-format
 msgid "%s: %s: not in executable format\n"
 msgstr ""
 
-#: corefile.c:198
+#: corefile.c:203
 #, c-format
 msgid "%s: can't find .text section in %s\n"
 msgstr ""
 
-#: corefile.c:273
+#: corefile.c:278
 #, c-format
 msgid "%s: ran out room for %lu bytes of text space\n"
 msgstr ""
 
-#: corefile.c:287
+#: corefile.c:292
 #, c-format
 msgid "%s: can't do -c\n"
 msgstr ""
 
-#: corefile.c:330
+#: corefile.c:335
 #, c-format
 msgid "%s: -c not supported on architecture %s\n"
 msgstr ""
 
-#: corefile.c:535 corefile.c:638
+#: corefile.c:536 corefile.c:642
 #, c-format
 msgid "%s: file `%s' has no symbols\n"
 msgstr ""
 
-#: corefile.c:905
+#: corefile.c:541
+#, c-format
+msgid "%s: file `%s' has too many symbols\n"
+msgstr ""
+
+#: corefile.c:909
 #, c-format
 msgid "%s: somebody miscounted: ltab.len=%d instead of %ld\n"
 msgstr ""
@@ -375,51 +380,51 @@ msgstr ""
 msgid "%s: debugging not supported; -d ignored\n"
 msgstr ""
 
-#: gprof.c:334
+#: gprof.c:336
 #, c-format
 msgid "%s: unknown file format %s\n"
 msgstr ""
 
 #. This output is intended to follow the GNU standards document.
-#: gprof.c:422
+#: gprof.c:424
 #, c-format
 msgid "GNU gprof %s\n"
 msgstr ""
 
-#: gprof.c:423
+#: gprof.c:425
 #, c-format
 msgid ""
 "Based on BSD gprof, copyright 1983 Regents of the University of California.\n"
 msgstr ""
 
-#: gprof.c:424
+#: gprof.c:426
 #, c-format
 msgid ""
 "This program is free software.  This program has absolutely no warranty.\n"
 msgstr ""
 
-#: gprof.c:465
+#: gprof.c:467
 #, c-format
 msgid "%s: unknown demangling style `%s'\n"
 msgstr ""
 
-#: gprof.c:488
+#: gprof.c:490
 #, c-format
 msgid ""
 "%s: Only one of --function-ordering and --file-ordering may be specified.\n"
 msgstr ""
 
-#: gprof.c:540
+#: gprof.c:542
 #, c-format
 msgid "%s: sorry, file format `prof' is not yet supported\n"
 msgstr ""
 
-#: gprof.c:594
+#: gprof.c:596
 #, c-format
 msgid "%s: gmon.out file is missing histogram\n"
 msgstr ""
 
-#: gprof.c:601
+#: gprof.c:603
 #, c-format
 msgid "%s: gmon.out file is missing call-graph data\n"
 msgstr ""

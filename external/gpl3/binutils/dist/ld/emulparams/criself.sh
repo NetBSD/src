@@ -8,7 +8,7 @@ OUTPUT_FORMAT="elf32-us-cris"
 NO_REL_RELOCS=yes
 ARCH=cris
 MAXPAGESIZE=32
-ENTRY=__start
+USER_LABEL_PREFIX=_
 EMBEDDED=yes
 ALIGNMENT=32
 TEXT_START_ADDR=0
@@ -53,7 +53,6 @@ OTHER_BSS_END_SYMBOLS='
  __Sbss = ADDR (.bss);
  PROVIDE (_bss_start = __Sbss);
 '
-OTHER_END_SYMBOLS='PROVIDE (__end = .);'
 
 INIT_ADDR='ALIGN (2)'
 

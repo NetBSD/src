@@ -1,5 +1,5 @@
 /* Table of opcodes for the sparc.
-   Copyright (C) 1989-2016 Free Software Foundation, Inc.
+   Copyright (C) 1989-2018 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -42,20 +42,24 @@
 #define MASK_V9E	SPARC_OPCODE_ARCH_MASK (SPARC_OPCODE_ARCH_V9E)
 #define MASK_V9V	SPARC_OPCODE_ARCH_MASK (SPARC_OPCODE_ARCH_V9V)
 #define MASK_V9M	SPARC_OPCODE_ARCH_MASK (SPARC_OPCODE_ARCH_V9M)
+#define MASK_M8	SPARC_OPCODE_ARCH_MASK (SPARC_OPCODE_ARCH_M8)
 
 /* Bit masks of architectures supporting the insn.  */
 
 #define v6		(MASK_V6 | MASK_V7 | MASK_V8 | MASK_LEON \
 			 | MASK_SPARCLET | MASK_SPARCLITE \
 			 | MASK_V9 | MASK_V9A | MASK_V9B \
-                         | MASK_V9C | MASK_V9D | MASK_V9E | MASK_V9V | MASK_V9M)
+                         | MASK_V9C | MASK_V9D | MASK_V9E | MASK_V9V | MASK_V9M \
+                         | MASK_M8)
 /* v6 insns not supported on the sparclet.  */
 #define v6notlet	(MASK_V6 | MASK_V7 | MASK_V8 | MASK_LEON \
 			 | MASK_SPARCLITE | MASK_V9 | MASK_V9A | MASK_V9B \
-                         | MASK_V9C | MASK_V9D | MASK_V9E | MASK_V9V | MASK_V9M)
+                         | MASK_V9C | MASK_V9D | MASK_V9E | MASK_V9V | MASK_V9M \
+                         | MASK_M8)
 #define v7		(MASK_V7 | MASK_V8 | MASK_LEON | MASK_SPARCLET \
 			 | MASK_SPARCLITE | MASK_V9 | MASK_V9A | MASK_V9B \
-                         | MASK_V9C | MASK_V9D | MASK_V9E | MASK_V9V | MASK_V9M)
+                         | MASK_V9C | MASK_V9D | MASK_V9E | MASK_V9V | MASK_V9M \
+                         | MASK_M8)
 /* Although not all insns are implemented in hardware, sparclite is defined
    to be a superset of v8.  Unimplemented insns trap and are then theoretically
    implemented in software.
@@ -64,26 +68,32 @@
    recognizes all v8 insns.  */
 #define v8		(MASK_V8 | MASK_LEON | MASK_SPARCLET | MASK_SPARCLITE \
 			 | MASK_V9 | MASK_V9A | MASK_V9B \
-                         | MASK_V9C | MASK_V9D | MASK_V9E | MASK_V9V | MASK_V9M)
+                         | MASK_V9C | MASK_V9D | MASK_V9E | MASK_V9V | MASK_V9M \
+                         | MASK_M8)
 #define sparclet	(MASK_SPARCLET)
 /* sparclet insns supported by leon.  */
 #define letandleon	(MASK_SPARCLET | MASK_LEON)
 #define sparclite	(MASK_SPARCLITE)
 #define v9		(MASK_V9 | MASK_V9A | MASK_V9B \
-                         | MASK_V9C | MASK_V9D | MASK_V9E | MASK_V9V | MASK_V9M)
+                         | MASK_V9C | MASK_V9D | MASK_V9E | MASK_V9V | MASK_V9M \
+                         | MASK_M8)
 /* v9 insns supported by leon.  */
 #define v9andleon	(MASK_V9 | MASK_V9A | MASK_V9B \
                          | MASK_V9C | MASK_V9D | MASK_V9E | MASK_V9V | MASK_V9M \
-                         | MASK_LEON)
+                         | MASK_M8 | MASK_LEON)
 #define v9a		(MASK_V9A | MASK_V9B \
-                         | MASK_V9C | MASK_V9D | MASK_V9E | MASK_V9V | MASK_V9M)
+                         | MASK_V9C | MASK_V9D | MASK_V9E | MASK_V9V | MASK_V9M \
+                         | MASK_M8)
 #define v9b		(MASK_V9B \
-                         | MASK_V9C | MASK_V9D | MASK_V9E | MASK_V9V | MASK_V9M)
-#define v9c		(MASK_V9C | MASK_V9D | MASK_V9E | MASK_V9V | MASK_V9M)
-#define v9d		(MASK_V9D | MASK_V9E | MASK_V9V | MASK_V9M)
-#define v9e		(MASK_V9E | MASK_V9V | MASK_V9M)
-#define v9v		(MASK_V9V | MASK_V9M)
-#define v9m		(MASK_V9M)
+                         | MASK_V9C | MASK_V9D | MASK_V9E | MASK_V9V | MASK_V9M \
+                         | MASK_M8)
+#define v9c		(MASK_V9C | MASK_V9D | MASK_V9E | MASK_V9V | MASK_V9M \
+                         | MASK_M8)
+#define v9d		(MASK_V9D | MASK_V9E | MASK_V9V | MASK_V9M | MASK_M8)
+#define v9e		(MASK_V9E | MASK_V9V | MASK_V9M | MASK_M8)
+#define v9v		(MASK_V9V | MASK_V9M | MASK_M8)
+#define v9m		(MASK_V9M | MASK_M8)
+#define m8		(MASK_M8)
 
 /* v6 insns not supported by v9.  */
 #define v6notv9		(MASK_V6 | MASK_V7 | MASK_V8 | MASK_LEON \
@@ -92,40 +102,68 @@
    otherwise.  */
 #define v9notv9a	(MASK_V9)
 
+/* Hardware capability sets, used to keep sparc_opcode_archs easy to
+   read.  */
+#define HWS_V8 HWCAP_MUL32 | HWCAP_DIV32 | HWCAP_FSMULD
+#define HWS_V9 HWS_V8 | HWCAP_POPC
+#define HWS_VA HWS_V9 | HWCAP_VIS
+#define HWS_VB HWS_VA | HWCAP_VIS2
+#define HWS_VC HWS_VB | HWCAP_ASI_BLK_INIT
+#define HWS_VD HWS_VC | HWCAP_FMAF | HWCAP_VIS3 | HWCAP_HPC
+#define HWS_VE HWS_VD                                                   \
+  | HWCAP_AES | HWCAP_DES | HWCAP_KASUMI | HWCAP_CAMELLIA               \
+  | HWCAP_MD5 | HWCAP_SHA1 | HWCAP_SHA256 |HWCAP_SHA512 | HWCAP_MPMUL   \
+  | HWCAP_MONT | HWCAP_CRC32C | HWCAP_CBCOND | HWCAP_PAUSE
+#define HWS_VV HWS_VE | HWCAP_FJFMAU | HWCAP_IMA
+#define HWS_VM HWS_VV
+#define HWS_VM8 HWS_VM
+
+#define HWS2_VM							\
+  HWCAP2_VIS3B | HWCAP2_ADP | HWCAP2_SPARC5 | HWCAP2_MWAIT	\
+  | HWCAP2_XMPMUL | HWCAP2_XMONT
+#define HWS2_VM8 HWS2_VM \
+  | HWCAP2_SPARC6 | HWCAP2_ONADDSUB | HWCAP2_ONMUL | HWCAP2_ONDIV \
+  | HWCAP2_DICTUNP | HWCAP2_FPCMPSHL | HWCAP2_RLE | HWCAP2_SHA3
+
+
 /* Table of opcode architectures.
    The order is defined in opcode/sparc.h.  */
 
 const struct sparc_opcode_arch sparc_opcode_archs[] =
 {
-  { "v6", MASK_V6 },
-  { "v7", MASK_V6 | MASK_V7 },
-  { "v8", MASK_V6 | MASK_V7 | MASK_V8 },
-  { "leon", MASK_V6 | MASK_V7 | MASK_V8 | MASK_LEON },
-  { "sparclet", MASK_V6 | MASK_V7 | MASK_V8 | MASK_SPARCLET },
-  { "sparclite", MASK_V6 | MASK_V7 | MASK_V8 | MASK_SPARCLITE },
+  { "v6", MASK_V6, 0, 0 },
+  { "v7", MASK_V6 | MASK_V7, 0, 0 },
+  { "v8", MASK_V6 | MASK_V7 | MASK_V8, HWS_V8, 0 },
+  { "leon", MASK_V6 | MASK_V7 | MASK_V8 | MASK_LEON, HWS_V8, 0 },
+  { "sparclet", MASK_V6 | MASK_V7 | MASK_V8 | MASK_SPARCLET, HWS_V8, 0 },
+  { "sparclite", MASK_V6 | MASK_V7 | MASK_V8 | MASK_SPARCLITE, HWS_V8, 0 },
   /* ??? Don't some v8 priviledged insns conflict with v9?  */
-  { "v9", MASK_V6 | MASK_V7 | MASK_V8 | MASK_V9 },
+  { "v9", MASK_V6 | MASK_V7 | MASK_V8 | MASK_V9, HWS_V9, 0 },
   /* v9 with ultrasparc additions */
-  { "v9a", MASK_V6 | MASK_V7 | MASK_V8 | MASK_V9 | MASK_V9A },
+  { "v9a", MASK_V6 | MASK_V7 | MASK_V8 | MASK_V9 | MASK_V9A, HWS_VA, 0 },
   /* v9 with cheetah additions */
-  { "v9b", MASK_V6 | MASK_V7 | MASK_V8 | MASK_V9 | MASK_V9A | MASK_V9B },
+  { "v9b", MASK_V6 | MASK_V7 | MASK_V8 | MASK_V9 | MASK_V9A | MASK_V9B, HWS_VB, 0 },
   /* v9 with UA2005 and T1 additions.  */
   { "v9c", (MASK_V6 | MASK_V7 | MASK_V8 | MASK_V9 | MASK_V9A | MASK_V9B
-            | MASK_V9C) },
+            | MASK_V9C), HWS_VC, 0 },
   /* v9 with UA2007 and T3 additions.  */
   { "v9d", (MASK_V6 | MASK_V7 | MASK_V8 | MASK_V9 | MASK_V9A | MASK_V9B
-            | MASK_V9C | MASK_V9D) },
+            | MASK_V9C | MASK_V9D), HWS_VD, 0 },
   /* v9 with OSA2011 and T4 additions modulus integer multiply-add.  */
   { "v9e", (MASK_V6 | MASK_V7 | MASK_V8 | MASK_V9 | MASK_V9A | MASK_V9B
-            | MASK_V9C | MASK_V9D | MASK_V9E) },
+            | MASK_V9C | MASK_V9D | MASK_V9E), HWS_VE, 0 },
   /* V9 with OSA2011 and T4 additions, integer multiply and Fujitsu fp
      multiply-add.  */
   { "v9v", (MASK_V6 | MASK_V7 | MASK_V8 | MASK_V9 | MASK_V9A | MASK_V9B
-            | MASK_V9C | MASK_V9D | MASK_V9E | MASK_V9V) },
+            | MASK_V9C | MASK_V9D | MASK_V9E | MASK_V9V), HWS_VV, 0 },
   /* v9 with OSA2015 and M7 additions.  */
   { "v9m", (MASK_V6 | MASK_V7 | MASK_V8 | MASK_V9 | MASK_V9A | MASK_V9B
-            | MASK_V9C | MASK_V9D | MASK_V9E | MASK_V9V | MASK_V9M) },
-  { NULL, 0 }
+            | MASK_V9C | MASK_V9D | MASK_V9E | MASK_V9V | MASK_V9M), HWS_VM, HWS2_VM },
+  /* v9 with OSA2017 and M8 additions.  */
+  { "m8", (MASK_V6 | MASK_V7 | MASK_V8 | MASK_V9 | MASK_V9A | MASK_V9B
+           | MASK_V9C | MASK_V9D | MASK_V9E | MASK_V9V | MASK_V9M | MASK_M8),
+    HWS_VM8, HWS2_VM8 },
+  { NULL, 0, 0, 0 }
 };
 
 /* Given NAME, return it's architecture entry.  */
@@ -369,6 +407,28 @@ const struct sparc_opcode sparc_opcodes[] = {
 { "lda",	F3(3, 0x30, 1), F3(~3, ~0x30, ~1),		"[i+1]o,g", 0, 0, 0, v9 },
 { "lda",	F3(3, 0x30, 1), F3(~3, ~0x30, ~1)|RS1_G0,	"[i]o,g", 0, 0, 0, v9 },
 { "lda",	F3(3, 0x30, 1), F3(~3, ~0x30, ~1)|SIMM13(~0),	"[1]o,g", 0, 0, 0, v9 }, /* ld [rs1+0],d */
+
+/* Note that the LDTXA instructions share an opcode with the
+   (deprecated) LDTWA instructions below.  They are differenciated by
+   the combination of the `i' instruction field and the ASI used in
+   the instruction.  */
+
+#define ldtxa(asi) \
+{ "ldtxa",	F3(3, 0x13, 0)|ASI((asi)), F3(~3, ~0x13, ~0)|ASI(~(asi)), "[1+2]A,d", 0, HWCAP_ASI_BLK_INIT, 0, v9c }, \
+{ "ldtxa",	F3(3, 0x13, 0)|ASI((asi)), F3(~3, ~0x13, ~0)|ASI(~(asi))|RS2_G0, "[1]A,d", 0, HWCAP_ASI_BLK_INIT, 0, v9c }
+
+ldtxa (0x22), /* #ASI_TWINX_AIUP  */
+ldtxa (0x23), /* #ASI_TWINX_AIUS  */
+ldtxa (0x26), /* #ASI_TWINX_REAL  */
+ldtxa (0x27), /* #ASI_TWINX_N  */
+ldtxa (0x2A), /* #ASI_TWINX_AIUP_L  */
+ldtxa (0x2B), /* #ASI_TWINX_AIUS_L  */
+ldtxa (0x2E), /* #ASI_TWINX_REAL_L  */
+ldtxa (0x2F), /* #ASI_TWINX_NL  */
+ldtxa (0xE2), /* #ASI_TWINX_P  */
+ldtxa (0xE3), /* #ASI_TWINX_S  */
+ldtxa (0xEA), /* #ASI_TWINX_PL  */
+ldtxa (0xEB), /* #ASI_TWINX_SL  */
 
 { "ldtwa",	F3(3, 0x13, 0), F3(~3, ~0x13, ~0),		"[1+2]A,d", 0, 0, 0, v9 },
 { "ldtwa",	F3(3, 0x13, 0), F3(~3, ~0x13, ~0)|RS2_G0,	"[1]A,d", 0, 0, 0, v9 }, /* ldda [rs1+%g0],d */
@@ -747,13 +807,13 @@ const struct sparc_opcode sparc_opcodes[] = {
 { "restore",	F3(2, 0x3d, 1), F3(~2, ~0x3d, ~1),				"1,i,d", 0, 0, 0, v6 },
 { "restore",	F3(2, 0x3d, 1), F3(~2, ~0x3d, ~1)|RD_G0|RS1_G0|SIMM13(~0),	"", 0, 0, 0, v6 }, /* restore %g0,0,%g0 */
 
-{ "rett",	F3(2, 0x39, 0), F3(~2, ~0x39, ~0)|RD_G0|ASI(~0),	"1+2", F_UNBR|F_DELAYED, 0, 0, v6 }, /* rett rs1+rs2 */
-{ "rett",	F3(2, 0x39, 0), F3(~2, ~0x39, ~0)|RD_G0|ASI_RS2(~0),	"1", F_UNBR|F_DELAYED, 0, 0, v6 },	/* rett rs1,%g0 */
-{ "rett",	F3(2, 0x39, 1), F3(~2, ~0x39, ~1)|RD_G0,		"1+i", F_UNBR|F_DELAYED, 0, 0, v6 }, /* rett rs1+X */
-{ "rett",	F3(2, 0x39, 1), F3(~2, ~0x39, ~1)|RD_G0,		"i+1", F_UNBR|F_DELAYED, 0, 0, v6 }, /* rett X+rs1 */
-{ "rett",	F3(2, 0x39, 1), F3(~2, ~0x39, ~1)|RD_G0|RS1_G0,		"i", F_UNBR|F_DELAYED, 0, 0, v6 }, /* rett X+rs1 */
-{ "rett",	F3(2, 0x39, 1), F3(~2, ~0x39, ~1)|RD_G0|RS1_G0,		"i", F_UNBR|F_DELAYED, 0, 0, v6 },	/* rett X */
-{ "rett",	F3(2, 0x39, 1), F3(~2, ~0x39, ~1)|RD_G0|SIMM13(~0),	"1", F_UNBR|F_DELAYED, 0, 0, v6 },	/* rett rs1+0 */
+{ "rett",	F3(2, 0x39, 0), F3(~2, ~0x39, ~0)|RD_G0|ASI(~0),	"1+2", F_UNBR|F_DELAYED, 0, 0, v6notv9 }, /* rett rs1+rs2 */
+{ "rett",	F3(2, 0x39, 0), F3(~2, ~0x39, ~0)|RD_G0|ASI_RS2(~0),	"1", F_UNBR|F_DELAYED, 0, 0, v6notv9 },	/* rett rs1,%g0 */
+{ "rett",	F3(2, 0x39, 1), F3(~2, ~0x39, ~1)|RD_G0,		"1+i", F_UNBR|F_DELAYED, 0, 0, v6notv9 }, /* rett rs1+X */
+{ "rett",	F3(2, 0x39, 1), F3(~2, ~0x39, ~1)|RD_G0,		"i+1", F_UNBR|F_DELAYED, 0, 0, v6notv9 }, /* rett X+rs1 */
+{ "rett",	F3(2, 0x39, 1), F3(~2, ~0x39, ~1)|RD_G0|RS1_G0,		"i", F_UNBR|F_DELAYED, 0, 0, v6notv9 }, /* rett X+rs1 */
+{ "rett",	F3(2, 0x39, 1), F3(~2, ~0x39, ~1)|RD_G0|RS1_G0,		"i", F_UNBR|F_DELAYED, 0, 0, v6notv9 },	/* rett X */
+{ "rett",	F3(2, 0x39, 1), F3(~2, ~0x39, ~1)|RD_G0|SIMM13(~0),	"1", F_UNBR|F_DELAYED, 0, 0, v6notv9 },	/* rett rs1+0 */
 
 { "save",	F3(2, 0x3c, 0), F3(~2, ~0x3c, ~0)|ASI(~0),	"1,2,d", 0, 0, 0, v6 },
 { "save",	F3(2, 0x3c, 1), F3(~2, ~0x3c, ~1),		"1,i,d", 0, 0, 0, v6 },
@@ -970,6 +1030,7 @@ wrasr (28, 0, HWCAP2_MWAIT, v9m), /* wr ...,%mwait  */
 { "rd",	F3(2, 0x28, 0)|RS1(4),		F3(~2, ~0x28, ~0)|RS1(~4)|SIMM13(~0),	"W,d", 0, 0, 0, v9 }, /* rd %tick,r */
 { "rd",	F3(2, 0x28, 0)|RS1(5),		F3(~2, ~0x28, ~0)|RS1(~5)|SIMM13(~0),	"P,d", 0, 0, 0, v9 }, /* rd %pc,r */
 { "rd",	F3(2, 0x28, 0)|RS1(6),		F3(~2, ~0x28, ~0)|RS1(~6)|SIMM13(~0),	"s,d", 0, 0, 0, v9 }, /* rd %fprs,r */
+{ "rd", F3(2, 0x28, 0)|RS1(13),         F3(~2, ~0x28, ~0)|RS1(~13)|SIMM13(~0),  "&,d", 0, 0, HWCAP2_SPARC6, m8 }, /* rd %entropy,r */
 { "rd", F3(2, 0x28, 0)|RS1(14),         F3(~2, ~0x28, ~0)|RS1(~14)|SIMM13(~0),  "{,d", 0, 0, HWCAP2_SPARC5, v9m }, /* rd %mcdper,r */
 
 /* Read from ASR registers 16..31, which is the range defined in SPARC
@@ -2133,12 +2194,13 @@ SLCBCC("cbnefr", 15),
 { "des_iip",    F3F(2, 0x36, 0x135), F3F(~2, ~0x36, ~0x135), "v,H", F_FLOAT, HWCAP_DES, 0, v9e },
 { "des_kexpand",F3F(2, 0x36, 0x136), F3F(~2, ~0x36, ~0x136), "v,X,H", F_FLOAT, HWCAP_DES, 0, v9e },
 {"kasumi_fi_fi",F3F(2, 0x36, 0x138), F3F(~2, ~0x36, ~0x138), "v,B,H", F_FLOAT, HWCAP_KASUMI, 0, v9e },
-{ "camellia_fi",F3F(2, 0x36, 0x13c), F3F(~2, ~0x36, ~0x13c), "v,B,H", F_FLOAT, HWCAP_CAMELLIA, 0, v9e },
+{ "camellia_fl",F3F(2, 0x36, 0x13c), F3F(~2, ~0x36, ~0x13c), "v,B,H", F_FLOAT, HWCAP_CAMELLIA, 0, v9e },
 {"camellia_fli",F3F(2, 0x36, 0x13d), F3F(~2, ~0x36, ~0x13d), "v,B,H", F_FLOAT, HWCAP_CAMELLIA, 0, v9e },
 { "md5",        F3F(2, 0x36, 0x140), F3F(~2, ~0x36, ~0x140), "", F_FLOAT, HWCAP_MD5, 0, v9e },
 { "sha1",       F3F(2, 0x36, 0x141), F3F(~2, ~0x36, ~0x141), "", F_FLOAT, HWCAP_SHA1, 0, v9e },
 { "sha256",     F3F(2, 0x36, 0x142), F3F(~2, ~0x36, ~0x142), "", F_FLOAT, HWCAP_SHA256, 0, v9e },
 { "sha512",     F3F(2, 0x36, 0x143), F3F(~2, ~0x36, ~0x143), "", F_FLOAT, HWCAP_SHA512, 0, v9e },
+{ "sha3",	F3F(2, 0x36, 0x144), F3F(~2, ~0x36, ~0x144), "", F_FLOAT, 0, HWCAP2_SHA3, m8 },
 { "crc32c",     F3F(2, 0x36, 0x147), F3F(~2, ~0x36, ~0x147), "v,B,H", F_FLOAT, HWCAP_CRC32C, 0, v9e },
 { "xmpmul",     F3F(2, 0x36, 0x148)|RD(1), F3F(~2, ~0x36, ~0x148)|RD(~1), "X", F_FLOAT, 0, HWCAP2_XMPMUL, v9m },
 { "mpmul",      F3F(2, 0x36, 0x148), F3F(~2, ~0x36, ~0x148), "X", F_FLOAT, HWCAP_MPMUL, 0, v9e },
@@ -2203,6 +2265,168 @@ SLCBCC("cbnefr", 15),
 { "fpsubus8",   F3F(2, 0x36, 0x157), F3F(~2, ~0x36, ~0x157), "v,B,H", 0, 0, HWCAP2_SPARC5, v9m },
 { "fpsubus16",  F3F(2, 0x36, 0x153), F3F(~2, ~0x36, ~0x153), "v,B,H", 0, 0, HWCAP2_SPARC5, v9m },
 
+/* Other OSA2017 and M8 instructions.  */
+
+{ "dictunpack", F3F(2, 0x36, 0x1c), F3F(~2, ~0x36, ~0x1c), "v,X,H", 0, 0, HWCAP2_DICTUNP, m8 },
+
+#define fpcmpshl(cbits, opf) \
+  { "fpcmp" cbits "shl", F3F(2, 0x36, (opf)), F3F(~2, ~0x36, ~(opf)), "v,',|,d", 0, 0, HWCAP2_FPCMPSHL, m8 }
+
+fpcmpshl ("ule8", 0x190),
+fpcmpshl ("ugt8", 0x191),
+fpcmpshl ("eq8", 0x192),
+fpcmpshl ("ne8", 0x193),
+
+fpcmpshl ("ule16", 0x194),
+fpcmpshl ("ugt16", 0x195),
+fpcmpshl ("eq16", 0x196),
+fpcmpshl ("ne16", 0x197),
+
+fpcmpshl ("ule32", 0x198),
+fpcmpshl ("ugt32", 0x199),
+fpcmpshl ("eq32", 0x19a),
+fpcmpshl ("ne32", 0x19b),
+
+fpcmpshl ("de8", 0x45),
+fpcmpshl ("de16", 0x47),
+fpcmpshl  ("de32", 0x4a),
+
+fpcmpshl ("ur8", 0x19c),
+fpcmpshl ("ur16", 0x19d),
+fpcmpshl ("ur32", 0x19e),
+
+#undef fpcmpshl
+  
+#define fps64x(dir, opf) \
+  { "fps" dir "64x", F3F(2, 0x36, (opf)), F3F(~2, ~0x36, ~(opf)), "v,B,H", 0, 0, HWCAP2_SPARC6, m8 }
+
+fps64x ("ll", 0x106),
+fps64x ("ra", 0x10f),
+fps64x ("rl", 0x107),
+
+#undef fps64x
+
+#define ldm(width,opm,flags)                                                 \
+  { "ldm" width, F3(3, 0x31, 0)|OPM((opm))|OPMI(0), F3(~3, ~0x31, ~0)|OPM(~(opm))|OPMI(~0), "[1+2],d", (flags), 0, HWCAP2_SPARC6, m8 }, \
+  { "ldm" width, F3(3, 0x31, 0)|OPM((opm))|OPMI(0), F3(~3, ~0x31, ~0)|OPM(~(opm))|OPMI(~0)|RS2_G0, "[1],d", (flags), 0, HWCAP2_SPARC6, m8 }, /* ldm [rs1+%g0],d */ \
+  { "ldm" width, F3(3, 0x31, 1)|OPM((opm)), F3(~3, ~0x31, ~1)|OPM(~(opm)), "[1+j],d", (flags), 0, HWCAP2_SPARC6, m8 }, \
+  { "ldm" width, F3(3, 0x31, 1)|OPM((opm)), F3(~3, ~0x31, ~1)|OPM(~(opm)), "[j+1],d", (flags), 0, HWCAP2_SPARC6, m8 }, /* ldm [rs1+j],d  */ \
+  { "ldm" width, F3(3, 0x31, 1)|OPM((opm)), F3(~3, ~0x31, ~1)|OPM(~(opm))|RS1_G0, "[j],d", (flags), 0, HWCAP2_SPARC6, m8 }, \
+  { "ldm" width, F3(3, 0x31, 1)|OPM((opm)), F3(~3, ~0x31, ~1)|OPM(~(opm))|SIMM10(~0), "[1],d", (flags), 0, HWCAP2_SPARC6, m8 } /* ldm [rs1+0],d  */
+
+ldm ("sh", 0x0, 0),
+ldm ("uh", 0x1, 0),
+ldm ("sw", 0x2, 0),
+ldm ("uw", 0x3, 0),
+/* Note that opm=0x4 is reserved.  */
+ldm ("x",  0x5, 0),
+ldm ("ux", 0x5, F_ALIAS),
+
+#undef ldm
+
+#define ldma(width,opm,flags)                   \
+  { "ldm" width "a", F3(3, 0x31, 0)|OPM((opm))|OPMI(1), F3(~3, ~0x31, ~0)|OPM(~(opm))|OPMI(~1), "[1+2]o,d", (flags), 0, HWCAP2_SPARC6, m8 }, \
+  { "ldm" width "a", F3(3, 0x31, 0)|OPM((opm))|OPMI(1), F3(~3, ~0x31, ~0)|OPM(~(opm))|OPMI(~1)|RS2_G0, "[1]o,d", (flags), 0, HWCAP2_SPARC6, m8 }
+
+ldma ("sh", 0x0, 0),
+ldma ("uh", 0x1, 0),
+ldma ("sw", 0x2, 0),
+ldma ("uw", 0x3, 0),
+/* Note that opm=0x4 is reserved.  */
+ldma ("x",  0x5, 0),
+ldma ("ux", 0x5, F_ALIAS),
+
+#undef ldma
+
+#define ldmf(width,opm,rd)                                                \
+  { "ldmf" width, F3(3, 0x31, 0)|OPM((opm))|OPMI(0), F3(~3, ~0x31, ~0)|OPM(~(opm))|OPMI(~0), "[1+2]," rd, 0, 0, HWCAP2_SPARC6, m8 }, \
+  { "ldmf" width, F3(3, 0x31, 0)|OPM((opm))|OPMI(0), F3(~3, ~0x31, ~0)|OPM(~(opm))|OPMI(~0)|RS2_G0, "[1]," rd, 0, 0, HWCAP2_SPARC6, m8 },  /* ldmf [rs1+%g0],rd  */ \
+  { "ldmf" width, F3(3, 0x31, 1)|OPM((opm)), F3(~3, ~0x31, ~1)|OPM(~(opm)), "[1+j]," rd, 0, 0, HWCAP2_SPARC6, m8 }, \
+  { "ldmf" width, F3(3, 0x31, 1)|OPM((opm)), F3(~3, ~0x31, ~1)|OPM(~(opm)), "[j+1]," rd, 0, 0, HWCAP2_SPARC6, m8 }, /* ldmf [rs1+j],rd  */ \
+  { "ldmf" width, F3(3, 0x31, 1)|OPM((opm)), F3(~3, ~0x31, ~1)|OPM(~(opm))|RS1_G0, "[j]," rd, 0, 0, HWCAP2_SPARC6, m8 }, \
+  { "ldmf" width, F3(3, 0x31, 1)|OPM((opm)), F3(~3, ~0x31, ~1)|OPM(~(opm))|SIMM10(~0), "[1]," rd, 0, 0, HWCAP2_SPARC6, m8 } /* ldmf [rs1+0],rd  */
+
+ldmf ("s", 0x6, "g"),
+ldmf ("d", 0x7, "H"),
+
+#undef ldmf
+
+#define ldmfa(width,opm,rd)                                                \
+  { "ldmf" width "a", F3(3, 0x31, 0)|OPM((opm))|OPMI(1), F3(~3, ~0x31, ~0)|OPM(~(opm))|OPMI(~1), "[1+2]o," rd, 0, 0, HWCAP2_SPARC6, m8 }, \
+  { "ldmf" width "a", F3(3, 0x31, 0)|OPM((opm))|OPMI(1), F3(~3, ~0x31, ~0)|OPM(~(opm))|OPMI(~1)|RS2_G0, "[1]o," rd, 0, 0, HWCAP2_SPARC6, m8}
+
+ldmfa ("s", 0x6, "g"),
+ldmfa ("d", 0x7, "H"),
+
+#undef ldmfa
+
+#define stm(width,opm) \
+  { "stm" width, F3(3, 0x35, 0)|OPM((opm))|OPMI(0), F3(~3, ~0x35, ~0)|OPM(~(opm))|OPMI(~0), "d,[1+2]", 0, 0, HWCAP2_SPARC6, m8 }, \
+  { "stm" width, F3(3, 0x35, 0)|OPM((opm))|OPMI(0), F3(~3, ~0x35, ~0)|OPM(~(opm))|OPMI(~0)|RS2_G0, "d,[1]", 0, 0, HWCAP2_SPARC6, m8 }, /* stm d,[rs1+%g0]  */ \
+  { "stm" width, F3(3, 0x35, 1)|OPM((opm)), F3(~3, ~0x35, ~1)|OPM(~(opm)), "d,[1+j]", 0, 0, HWCAP2_SPARC6, m8 }, \
+  { "stm" width, F3(3, 0x35, 1)|OPM((opm)), F3(~3, ~0x35, ~1)|OPM(~(opm)), "d,[j+1]", 0, 0, HWCAP2_SPARC6, m8 }, \
+  { "stm" width, F3(3, 0x35, 1)|OPM((opm)), F3(~3, ~0x35, ~1)|OPM(~(opm))|RS1_G0, "d,[j]", 0, 0, HWCAP2_SPARC6, m8 }, \
+  { "stm" width, F3(3, 0x35, 1)|OPM((opm)), F3(~3, ~0x35, ~1)|OPM(~(opm))|SIMM10(~0), "d,[1]", 0, 0, HWCAP2_SPARC6, m8 }
+
+stm ("h", 0x1),
+stm ("w", 0x3),
+stm ("x", 0x5),
+
+#undef stm
+
+#define stma(width,opm) \
+  { "stm" width "a", F3(3, 0x35, 0)|OPM((opm))|OPMI(1), F3(~3, ~0x35, ~0)|OPM(~(opm))|OPMI(~1), "d,[1+2]o", 0, 0, HWCAP2_SPARC6, m8 }, \
+  { "stm" width "a", F3(3, 0x35, 0)|OPM((opm))|OPMI(1), F3(~3, ~0x35, ~0)|OPM(~(opm))|OPMI(~1)|RS2_G0, "d,[1]o", 0, 0, HWCAP2_SPARC6, m8 }
+
+stma ("h", 0x1),
+stma ("w", 0x3),
+stma ("x", 0x5),
+
+#undef stma
+
+#define stmf(width, opm, rd)                                               \
+  { "stmf" width, F3(3, 0x35, 0)|OPM((opm))|OPMI(0), F3(~3, ~0x35, ~0)|OPM(~(opm))|OPMI(~0), rd ",[1+2]", 0, 0, HWCAP2_SPARC6, m8 }, \
+  { "stmf" width, F3(3, 0x35, 0)|OPM((opm))|OPMI(0), F3(~3, ~0x35, ~0)|OPM(~(opm))|OPMI(~0)|RS2_G0, rd ",[1]", 0, 0, HWCAP2_SPARC6, m8 }, /* stmf rd,[rs1+%g0]  */ \
+  { "stmf" width, F3(3, 0x35, 1)|OPM((opm)), F3(~3, ~0x35, ~1)|OPM(~(opm)), rd ",[1+j]", 0, 0, HWCAP2_SPARC6, m8 }, \
+  { "stmf" width, F3(3, 0x35, 1)|OPM((opm)), F3(~3, ~0x35, ~1)|OPM(~(opm)), rd ",[j+1]", 0, 0, HWCAP2_SPARC6, m8 }, \
+  { "stmf" width, F3(3, 0x35, 1)|OPM((opm)), F3(~3, ~0x35, ~1)|OPM(~(opm))|RS1_G0, rd ",[j]", 0, 0, HWCAP2_SPARC6, m8 }, \
+  { "stmf" width, F3(3, 0x35, 1)|OPM((opm)), F3(~3, ~0x35, ~1)|OPM(~(opm))|SIMM10(~0), rd ",[1]", 0, 0, HWCAP2_SPARC6, m8 }
+
+stmf ("s", 0x6, "g"),
+stmf ("d", 0x7, "H"),
+
+#define stmfa(width, opm, rd) \
+  { "stmf" width "a", F3(3, 0x35, 0)|OPM((opm))|OPMI(1), F3(~3, ~0x35, ~0)|OPM(~(opm))|OPMI(~1), rd ",[1+2]o", 0, 0, HWCAP2_SPARC6, m8 }, \
+  { "stmf" width "a", F3(3, 0x35, 0)|OPM((opm))|OPMI(1), F3(~3, ~0x35, ~0)|OPM(~(opm))|OPMI(~1)|RS2_G0, rd ",[1]o", 0, 0, HWCAP2_SPARC6, m8 }
+
+stmfa ("s", 0x6, "g"),
+stmfa ("d", 0x7, "H"),
+
+#undef stmfa
+
+#define on(op,fcn,hwcaps2)                                                     \
+  { "on" op, F3F(2, 0x36, 0x15)|ONFCN((fcn)), F3F(~2, ~0x36, ~0x15)|ONFCN(~(fcn)), ";,:,^", 0, 0, (hwcaps2), m8 }
+
+on ("add", 0x0, HWCAP2_ONADDSUB),
+on ("sub", 0x1, HWCAP2_ONADDSUB),
+on ("mul", 0x2, HWCAP2_ONMUL),
+on ("div", 0x3, HWCAP2_ONDIV),
+
+#undef on
+
+#define rev(what,width,fcn)                        \
+  { "rev" what width, F3F(2, 0x36, 0x1e)|REVFCN((fcn)), F3F(~2, ~0x36, ~0x1e)|REVFCN(~(fcn)), "1,d", 0, 0, HWCAP2_SPARC6, m8 }
+
+rev ("bits",  "b", 0x0),
+rev ("bytes", "h", 0x1),
+rev ("bytes", "w", 0x2),
+rev ("bytes", "x", 0x3),
+
+#undef rev
+
+{ "rle_burst", F3F(2, 0x36, 0x30), F3F(~2, ~0x36, ~0x30), "1,2,d", 0, 0, HWCAP2_RLE, m8 },
+{ "rle_length", F3F(2, 0x36, 0x32)|RS1(0), F3F(~2, ~0x36, ~0x32)|RS1(~0), "2,d", 0, 0, HWCAP2_RLE, m8 },
+
 /* More v9 specific insns, these need to come last so they do not clash
    with v9a instructions such as "edge8" which looks like impdep1. */
 
@@ -2220,6 +2444,231 @@ IMPDEP ("impdep2", 0x37),
 };
 
 const int sparc_num_opcodes = ((sizeof sparc_opcodes)/(sizeof sparc_opcodes[0]));
+
+/* Handle ASI's.  */
+
+static sparc_asi asi_table[] =
+{
+  /* These are in the v9 architecture manual.  */
+  /* The shorter versions appear first, they're here because Sun's as has them.
+     Sun's as uses #ASI_P_L instead of #ASI_PL (which appears in the
+     UltraSPARC architecture manual).  */
+  { 0x04, "#ASI_N", v9 },
+  { 0x0c, "#ASI_N_L", v9 },
+  { 0x10, "#ASI_AIUP", v9 },
+  { 0x11, "#ASI_AIUS", v9 },
+  { 0x18, "#ASI_AIUP_L", v9 },
+  { 0x19, "#ASI_AIUS_L", v9 },
+  { 0x80, "#ASI_P", v9 },
+  { 0x81, "#ASI_S", v9 },
+  { 0x82, "#ASI_PNF", v9 },
+  { 0x83, "#ASI_SNF", v9 },
+  { 0x88, "#ASI_P_L", v9 },
+  { 0x89, "#ASI_S_L", v9 },
+  { 0x8a, "#ASI_PNF_L", v9 },
+  { 0x8b, "#ASI_SNF_L", v9 },
+  { 0x04, "#ASI_NUCLEUS", v9 },
+  { 0x0c, "#ASI_NUCLEUS_LITTLE", v9 },
+  { 0x10, "#ASI_AS_IF_USER_PRIMARY", v9 },
+  { 0x11, "#ASI_AS_IF_USER_SECONDARY", v9 },
+  { 0x18, "#ASI_AS_IF_USER_PRIMARY_LITTLE", v9 },
+  { 0x19, "#ASI_AS_IF_USER_SECONDARY_LITTLE", v9 },
+  { 0x80, "#ASI_PRIMARY", v9 },
+  { 0x81, "#ASI_SECONDARY", v9 },
+  { 0x82, "#ASI_PRIMARY_NOFAULT", v9 },
+  { 0x83, "#ASI_SECONDARY_NOFAULT", v9 },
+  { 0x88, "#ASI_PRIMARY_LITTLE", v9 },
+  { 0x89, "#ASI_SECONDARY_LITTLE", v9 },
+  { 0x8a, "#ASI_PRIMARY_NOFAULT_LITTLE", v9 },
+  { 0x8b, "#ASI_SECONDARY_NOFAULT_LITTLE", v9 },
+  /* These are UltraSPARC and Niagara extensions.  */
+  { 0x14, "#ASI_PHYS_USE_EC", v9b },
+  { 0x15, "#ASI_PHYS_BYPASS_EC_E", v9b },
+  { 0x16, "#ASI_BLK_AIUP_4V", v9c },
+  { 0x17, "#ASI_BLK_AIUS_4V", v9c },
+  { 0x1c, "#ASI_PHYS_USE_EC_L", v9b },
+  { 0x1d, "#ASI_PHYS_BYPASS_EC_E_L", v9b },
+  { 0x1e, "#ASI_BLK_AIUP_L_4V", v9c },
+  { 0x1f, "#ASI_BLK_AIUS_L_4V", v9c },
+  { 0x20, "#ASI_SCRATCHPAD", v9c },
+  { 0x21, "#ASI_MMU", v9c },
+  { 0x23, "#ASI_BLK_INIT_QUAD_LDD_AIUS", v9c },
+  { 0x24, "#ASI_NUCLEUS_QUAD_LDD", v9b },
+  { 0x24, "#ASI_CORE_COMMIT_COUNT", m8 },
+  { 0x24, "#ASI_CORE_SELECT_COUNT", m8 },
+  { 0x25, "#ASI_QUEUE", v9c },
+  { 0x26, "#ASI_QUAD_LDD_PHYS_4V", v9c },
+  { 0x2c, "#ASI_NUCLEUS_QUAD_LDD_L", v9b },
+  { 0x30, "#ASI_PCACHE_DATA_STATUS", v9b },
+  { 0x31, "#ASI_PCACHE_DATA", v9b },
+  { 0x32, "#ASI_PCACHE_TAG", v9b },
+  { 0x33, "#ASI_PCACHE_SNOOP_TAG", v9b },
+  { 0x34, "#ASI_QUAD_LDD_PHYS", v9b },
+  { 0x38, "#ASI_WCACHE_VALID_BITS", v9b },
+  { 0x39, "#ASI_WCACHE_DATA", v9b },
+  { 0x3a, "#ASI_WCACHE_TAG", v9b },
+  { 0x3b, "#ASI_WCACHE_SNOOP_TAG", v9b },
+  { 0x3c, "#ASI_QUAD_LDD_PHYS_L", v9b },
+  { 0x40, "#ASI_SRAM_FAST_INIT", v9b },
+  { 0x41, "#ASI_CORE_AVAILABLE", v9b },
+  { 0x41, "#ASI_CORE_ENABLE_STAT", v9b },
+  { 0x41, "#ASI_CORE_ENABLE", v9b },
+  { 0x41, "#ASI_XIR_STEERING", v9b },
+  { 0x41, "#ASI_CORE_RUNNING_RW", v9b },
+  { 0x41, "#ASI_CORE_RUNNING_W1S", v9b },
+  { 0x41, "#ASI_CORE_RUNNING_W1C", v9b },
+  { 0x41, "#ASI_CORE_RUNNING_STAT", v9b },
+  { 0x41, "#ASI_CMT_ERROR_STEERING", v9b },
+  { 0x45, "#ASI_LSU_CONTROL_REG", v9b },
+  { 0x45, "#ASI_DCU_CONTROL_REG", v9b },
+  { 0x46, "#ASI_DCACHE_DATA", v9b },
+  { 0x47, "#ASI_DCACHE_TAG", v9b },
+  { 0x48, "#ASI_INTR_DISPATCH_STAT", v9b },
+  { 0x49, "#ASI_INTR_RECEIVE", v9b },
+  { 0x4b, "#ASI_ESTATE_ERROR_EN", v9b },
+  { 0x4c, "#ASI_AFSR", v9b },
+  { 0x4d, "#ASI_AFAR", v9b },
+  { 0x4e, "#ASI_EC_TAG_DATA", v9b },
+  { 0x48, "#ASI_ARF_ECC_REG", m8 },
+  { 0x50, "#ASI_IMMU", v9b },
+  { 0x51, "#ASI_IMMU_TSB_8KB_PTR", v9b },
+  { 0x52, "#ASI_IMMU_TSB_64KB_PTR", v9b },
+  { 0x53, "#ASI_ITLB_PROBE", m8 },
+  { 0x54, "#ASI_ITLB_DATA_IN", v9b },
+  { 0x55, "#ASI_ITLB_DATA_ACCESS", v9b },
+  { 0x56, "#ASI_ITLB_TAG_READ", v9b },
+  { 0x57, "#ASI_IMMU_DEMAP", v9b },
+  { 0x58, "#ASI_DMMU", v9b },
+  { 0x58, "#ASI_DSFAR", m8 },
+  { 0x59, "#ASI_DMMU_TSB_8KB_PTR", v9b },
+  { 0x5a, "#ASI_DMMU_TSB_64KB_PTR", v9b },
+  { 0x5a, "#ASI_DTLB_PROBE_PRIMARY", m8 },
+  { 0x5b, "#ASI_DMMU_TSB_DIRECT_PTR", v9b },
+  { 0x5b, "#ASI_DTLB_PROBE_REAL", m8 },
+  { 0x5c, "#ASI_DTLB_DATA_IN", v9b },
+  { 0x5d, "#ASI_DTLB_DATA_ACCESS", v9b },
+  { 0x5e, "#ASI_DTLB_TAG_READ", v9b },
+  { 0x5f, "#ASI_DMMU_DEMAP", v9b },
+  { 0x60, "#ASI_IIU_INST_TRAP", v9b },
+  { 0x63, "#ASI_INTR_ID", v9b },
+  { 0x63, "#ASI_CORE_ID", v9b },
+  { 0x63, "#ASI_CESR_ID", v9b },
+  { 0x64, "#ASI_CORE_SELECT_COMMIT_NHT", m8 },
+  { 0x66, "#ASI_IC_INSTR", v9b },
+  { 0x67, "#ASI_IC_TAG", v9b },
+  { 0x68, "#ASI_IC_STAG", v9b },
+  { 0x6f, "#ASI_BRPRED_ARRAY", v9b },
+  { 0x70, "#ASI_BLK_AIUP", v9b },
+  { 0x71, "#ASI_BLK_AIUS", v9b },
+  { 0x72, "#ASI_MCU_CTRL_REG", v9b },
+  { 0x74, "#ASI_EC_DATA", v9b },
+  { 0x75, "#ASI_EC_CTRL", v9b },
+  { 0x76, "#ASI_EC_W", v9b },
+  { 0x77, "#ASI_INTR_W", v9b },
+  { 0x77, "#ASI_INTR_DATAN_W", v9b },
+  { 0x77, "#ASI_INTR_DISPATCH_W", v9b },
+  { 0x78, "#ASI_BLK_AIUPL", v9b },
+  { 0x79, "#ASI_BLK_AIUSL", v9b },
+  { 0x7e, "#ASI_EC_R", v9b },
+  { 0x7f, "#ASI_INTR_R", v9b },
+  { 0x7f, "#ASI_INTR_DATAN_R", v9b },
+  { 0xc0, "#ASI_PST8_P", v9b },
+  { 0xc1, "#ASI_PST8_S", v9b },
+  { 0xc2, "#ASI_PST16_P", v9b },
+  { 0xc3, "#ASI_PST16_S", v9b },
+  { 0xc4, "#ASI_PST32_P", v9b },
+  { 0xc5, "#ASI_PST32_S", v9b },
+  { 0xc8, "#ASI_PST8_PL", v9b },
+  { 0xc9, "#ASI_PST8_SL", v9b },
+  { 0xca, "#ASI_PST16_PL", v9b },
+  { 0xcb, "#ASI_PST16_SL", v9b },
+  { 0xcc, "#ASI_PST32_PL", v9b },
+  { 0xcd, "#ASI_PST32_SL", v9b },
+  { 0xd0, "#ASI_FL8_P", v9b },
+  { 0xd1, "#ASI_FL8_S", v9b },
+  { 0xd2, "#ASI_FL16_P", v9b },
+  { 0xd3, "#ASI_FL16_S", v9b },
+  { 0xd8, "#ASI_FL8_PL", v9b },
+  { 0xd9, "#ASI_FL8_SL", v9b },
+  { 0xda, "#ASI_FL16_PL", v9b },
+  { 0xdb, "#ASI_FL16_SL", v9b },
+  { 0xe0, "#ASI_BLK_COMMIT_P", v9b },
+  { 0xe1, "#ASI_BLK_COMMIT_S", v9b },
+  { 0xe2, "#ASI_BLK_INIT_QUAD_LDD_P", v9b },
+  { 0xf0, "#ASI_BLK_P", v9b },
+  { 0xf1, "#ASI_BLK_S", v9b },
+  { 0xf8, "#ASI_BLK_PL", v9b },
+  { 0xf9, "#ASI_BLK_SL", v9b },
+  { 0x22, "#ASI_TWINX_AIUP", v9c },
+  { 0x23, "#ASI_TWINX_AIUS", v9c },
+  { 0x26, "#ASI_TWINX_REAL", v9c },
+  { 0x27, "#ASI_TWINX_N", v9c },
+  { 0x2A, "#ASI_TWINX_AIUP_L", v9c },
+  { 0x2B, "#ASI_TWINX_AIUS_L", v9c },
+  { 0x2E, "#ASI_TWINX_REAL_L", v9c },
+  { 0x2F, "#ASI_TWINX_NL", v9c },
+  { 0xE2, "#ASI_TWINX_P", v9c },
+  { 0xE3, "#ASI_TWINX_S", v9c },
+  { 0xEA, "#ASI_TWINX_PL", v9c },
+  { 0xEB, "#ASI_TWINX_SL", v9c },
+  /* These are ASIs from UA2005, UA2007, OSA2011, & OSA 2015 */
+  { 0x12, "#ASI_MAIUP", v9m },
+  { 0x13, "#ASI_MAIUS", v9m },
+  { 0x14, "#ASI_REAL", v9c },
+  { 0x15, "#ASI_REAL_IO", v9c },
+  { 0x1c, "#ASI_REAL_L", v9c },
+  { 0x1d, "#ASI_REAL_IO_L", v9c },
+  { 0x30, "#ASI_AIPP", v9d },
+  { 0x31, "#ASI_AIPS", v9d },
+  { 0x36, "#ASI_AIPN", v9d },
+  { 0x38, "#ASI_AIPP_L", v9d },
+  { 0x39, "#ASI_AIPS_L", v9d },
+  { 0x3e, "#ASI_AIPN_L", v9d },
+  { 0x42, "#ASI_INST_MASK_REG", v9d },
+  { 0x42, "#ASI_LSU_DIAG_REG", v9d },
+  { 0x43, "#ASI_ERROR_INJECT_REG", v9d },
+  { 0x48, "#ASI_IRF_ECC_REG", v9d },
+  { 0x49, "#ASI_FRF_ECC_REG", v9d },
+  { 0x4e, "#ASI_SPARC_PWR_MGMT", v9d },
+  { 0x4f, "#ASI_HYP_SCRATCHPAD", v9c },
+  { 0x59, "#ASI_SCRATCHPAD_ACCESS", v9d },
+  { 0x5a, "#ASI_TICK_ACCESS", v9d },
+  { 0x5b, "#ASI_TSA_ACCESS", v9d },
+  { 0xb0, "#ASI_PIC", v9e },
+  { 0xf2, "#ASI_STBI_PM", v9e },
+  { 0xf3, "#ASI_STBI_SM", v9e },
+  { 0xfa, "#ASI_STBI_PLM", v9e },
+  { 0xfb, "#ASI_STBI_SLM", v9e },
+  { 0, 0, 0 }
+};
+
+/* Return the a pointer to the matching sparc_asi struct, NULL if not found.  */
+
+const sparc_asi *
+sparc_encode_asi (const char *name)
+{
+  const sparc_asi *p;
+
+  for (p = asi_table; p->name; ++p)
+    if (strcmp (name, p->name) == 0)
+      return p;
+
+  return NULL;
+}
+
+/* Return the name for ASI value VALUE or NULL if not found.  */
+
+const char *
+sparc_decode_asi (int value)
+{
+  const sparc_asi *p;
+
+  for (p = asi_table; p->name; ++p)
+    if (value == p->value)
+      return p->name;
+
+  return NULL;
+}
 
 /* Utilities for argument parsing.  */
 
@@ -2256,190 +2705,7 @@ lookup_value (const arg *table, int value)
 
   return NULL;
 }
-
-/* Handle ASI's.  */
 
-static arg asi_table[] =
-{
-  /* These are in the v9 architecture manual.  */
-  /* The shorter versions appear first, they're here because Sun's as has them.
-     Sun's as uses #ASI_P_L instead of #ASI_PL (which appears in the
-     UltraSPARC architecture manual).  */
-  { 0x04, "#ASI_N" },
-  { 0x0c, "#ASI_N_L" },
-  { 0x10, "#ASI_AIUP" },
-  { 0x11, "#ASI_AIUS" },
-  { 0x18, "#ASI_AIUP_L" },
-  { 0x19, "#ASI_AIUS_L" },
-  { 0x80, "#ASI_P" },
-  { 0x81, "#ASI_S" },
-  { 0x82, "#ASI_PNF" },
-  { 0x83, "#ASI_SNF" },
-  { 0x88, "#ASI_P_L" },
-  { 0x89, "#ASI_S_L" },
-  { 0x8a, "#ASI_PNF_L" },
-  { 0x8b, "#ASI_SNF_L" },
-  { 0x04, "#ASI_NUCLEUS" },
-  { 0x0c, "#ASI_NUCLEUS_LITTLE" },
-  { 0x10, "#ASI_AS_IF_USER_PRIMARY" },
-  { 0x11, "#ASI_AS_IF_USER_SECONDARY" },
-  { 0x18, "#ASI_AS_IF_USER_PRIMARY_LITTLE" },
-  { 0x19, "#ASI_AS_IF_USER_SECONDARY_LITTLE" },
-  { 0x80, "#ASI_PRIMARY" },
-  { 0x81, "#ASI_SECONDARY" },
-  { 0x82, "#ASI_PRIMARY_NOFAULT" },
-  { 0x83, "#ASI_SECONDARY_NOFAULT" },
-  { 0x88, "#ASI_PRIMARY_LITTLE" },
-  { 0x89, "#ASI_SECONDARY_LITTLE" },
-  { 0x8a, "#ASI_PRIMARY_NOFAULT_LITTLE" },
-  { 0x8b, "#ASI_SECONDARY_NOFAULT_LITTLE" },
-  /* These are UltraSPARC and Niagara extensions.  */
-  { 0x14, "#ASI_PHYS_USE_EC" },
-  { 0x15, "#ASI_PHYS_BYPASS_EC_E" },
-  { 0x16, "#ASI_BLK_AIUP_4V" },
-  { 0x17, "#ASI_BLK_AIUS_4V" },
-  { 0x1c, "#ASI_PHYS_USE_EC_L" },
-  { 0x1d, "#ASI_PHYS_BYPASS_EC_E_L" },
-  { 0x1e, "#ASI_BLK_AIUP_L_4V" },
-  { 0x1f, "#ASI_BLK_AIUS_L_4V" },
-  { 0x20, "#ASI_SCRATCHPAD" },
-  { 0x21, "#ASI_MMU" },
-  { 0x23, "#ASI_BLK_INIT_QUAD_LDD_AIUS" },
-  { 0x24, "#ASI_NUCLEUS_QUAD_LDD" },
-  { 0x25, "#ASI_QUEUE" },
-  { 0x26, "#ASI_QUAD_LDD_PHYS_4V" },
-  { 0x2c, "#ASI_NUCLEUS_QUAD_LDD_L" },
-  { 0x30, "#ASI_PCACHE_DATA_STATUS" },
-  { 0x31, "#ASI_PCACHE_DATA" },
-  { 0x32, "#ASI_PCACHE_TAG" },
-  { 0x33, "#ASI_PCACHE_SNOOP_TAG" },
-  { 0x34, "#ASI_QUAD_LDD_PHYS" },
-  { 0x38, "#ASI_WCACHE_VALID_BITS" },
-  { 0x39, "#ASI_WCACHE_DATA" },
-  { 0x3a, "#ASI_WCACHE_TAG" },
-  { 0x3b, "#ASI_WCACHE_SNOOP_TAG" },
-  { 0x3c, "#ASI_QUAD_LDD_PHYS_L" },
-  { 0x40, "#ASI_SRAM_FAST_INIT" },
-  { 0x41, "#ASI_CORE_AVAILABLE" },
-  { 0x41, "#ASI_CORE_ENABLE_STAT" },
-  { 0x41, "#ASI_CORE_ENABLE" },
-  { 0x41, "#ASI_XIR_STEERING" },
-  { 0x41, "#ASI_CORE_RUNNING_RW" },
-  { 0x41, "#ASI_CORE_RUNNING_W1S" },
-  { 0x41, "#ASI_CORE_RUNNING_W1C" },
-  { 0x41, "#ASI_CORE_RUNNING_STAT" },
-  { 0x41, "#ASI_CMT_ERROR_STEERING" },
-  { 0x41, "#ASI_DCACHE_INVALIDATE" },
-  { 0x41, "#ASI_DCACHE_UTAG" },
-  { 0x41, "#ASI_DCACHE_SNOOP_TAG" },
-  { 0x42, "#ASI_DCACHE_INVALIDATE" },
-  { 0x43, "#ASI_DCACHE_UTAG" },
-  { 0x44, "#ASI_DCACHE_SNOOP_TAG" },
-  { 0x45, "#ASI_LSU_CONTROL_REG" },
-  { 0x45, "#ASI_DCU_CONTROL_REG" },
-  { 0x46, "#ASI_DCACHE_DATA" },
-  { 0x47, "#ASI_DCACHE_TAG" },
-  { 0x48, "#ASI_INTR_DISPATCH_STAT" },
-  { 0x49, "#ASI_INTR_RECEIVE" },
-  { 0x4a, "#ASI_UPA_CONFIG" },
-  { 0x4a, "#ASI_JBUS_CONFIG" },
-  { 0x4a, "#ASI_SAFARI_CONFIG" },
-  { 0x4a, "#ASI_SAFARI_ADDRESS" },
-  { 0x4b, "#ASI_ESTATE_ERROR_EN" },
-  { 0x4c, "#ASI_AFSR" },
-  { 0x4d, "#ASI_AFAR" },
-  { 0x4e, "#ASI_EC_TAG_DATA" },
-  { 0x50, "#ASI_IMMU" },
-  { 0x51, "#ASI_IMMU_TSB_8KB_PTR" },
-  { 0x52, "#ASI_IMMU_TSB_16KB_PTR" },
-  { 0x54, "#ASI_ITLB_DATA_IN" },
-  { 0x55, "#ASI_ITLB_DATA_ACCESS" },
-  { 0x56, "#ASI_ITLB_TAG_READ" },
-  { 0x57, "#ASI_IMMU_DEMAP" },
-  { 0x58, "#ASI_DMMU" },
-  { 0x59, "#ASI_DMMU_TSB_8KB_PTR" },
-  { 0x5a, "#ASI_DMMU_TSB_64KB_PTR" },
-  { 0x5b, "#ASI_DMMU_TSB_DIRECT_PTR" },
-  { 0x5c, "#ASI_DTLB_DATA_IN" },
-  { 0x5d, "#ASI_DTLB_DATA_ACCESS" },
-  { 0x5e, "#ASI_DTLB_TAG_READ" },
-  { 0x5f, "#ASI_DMMU_DEMAP" },
-  { 0x60, "#ASI_IIU_INST_TRAP" },
-  { 0x63, "#ASI_INTR_ID" },
-  { 0x63, "#ASI_CORE_ID" },
-  { 0x63, "#ASI_CESR_ID" },
-  { 0x66, "#ASI_IC_INSTR" },
-  { 0x67, "#ASI_IC_TAG" },
-  { 0x68, "#ASI_IC_STAG" },
-  { 0x6e, "#ASI_IC_PRE_DECODE" },
-  { 0x6f, "#ASI_IC_NEXT_FIELD" },
-  { 0x6f, "#ASI_BRPRED_ARRAY" },
-  { 0x70, "#ASI_BLK_AIUP" },
-  { 0x71, "#ASI_BLK_AIUS" },
-  { 0x72, "#ASI_MCU_CTRL_REG" },
-  { 0x74, "#ASI_EC_DATA" },
-  { 0x75, "#ASI_EC_CTRL" },
-  { 0x76, "#ASI_EC_W" },
-  { 0x77, "#ASI_UDB_ERROR_W" },
-  { 0x77, "#ASI_UDB_CONTROL_W" },
-  { 0x77, "#ASI_INTR_W" },
-  { 0x77, "#ASI_INTR_DATAN_W" },
-  { 0x77, "#ASI_INTR_DISPATCH_W" },
-  { 0x78, "#ASI_BLK_AIUPL" },
-  { 0x79, "#ASI_BLK_AIUSL" },
-  { 0x7e, "#ASI_EC_R" },
-  { 0x7f, "#ASI_UDBH_ERROR_R" },
-  { 0x7f, "#ASI_UDBL_ERROR_R" },
-  { 0x7f, "#ASI_UDBH_CONTROL_R" },
-  { 0x7f, "#ASI_UDBL_CONTROL_R" },
-  { 0x7f, "#ASI_INTR_R" },
-  { 0x7f, "#ASI_INTR_DATAN_R" },
-  { 0xc0, "#ASI_PST8_P" },
-  { 0xc1, "#ASI_PST8_S" },
-  { 0xc2, "#ASI_PST16_P" },
-  { 0xc3, "#ASI_PST16_S" },
-  { 0xc4, "#ASI_PST32_P" },
-  { 0xc5, "#ASI_PST32_S" },
-  { 0xc8, "#ASI_PST8_PL" },
-  { 0xc9, "#ASI_PST8_SL" },
-  { 0xca, "#ASI_PST16_PL" },
-  { 0xcb, "#ASI_PST16_SL" },
-  { 0xcc, "#ASI_PST32_PL" },
-  { 0xcd, "#ASI_PST32_SL" },
-  { 0xd0, "#ASI_FL8_P" },
-  { 0xd1, "#ASI_FL8_S" },
-  { 0xd2, "#ASI_FL16_P" },
-  { 0xd3, "#ASI_FL16_S" },
-  { 0xd8, "#ASI_FL8_PL" },
-  { 0xd9, "#ASI_FL8_SL" },
-  { 0xda, "#ASI_FL16_PL" },
-  { 0xdb, "#ASI_FL16_SL" },
-  { 0xe0, "#ASI_BLK_COMMIT_P", },
-  { 0xe1, "#ASI_BLK_COMMIT_S", },
-  { 0xe2, "#ASI_BLK_INIT_QUAD_LDD_P" },
-  { 0xf0, "#ASI_BLK_P", },
-  { 0xf1, "#ASI_BLK_S", },
-  { 0xf8, "#ASI_BLK_PL", },
-  { 0xf9, "#ASI_BLK_SL", },
-  { 0, 0 }
-};
-
-/* Return the value for ASI NAME, or -1 if not found.  */
-
-int
-sparc_encode_asi (const char *name)
-{
-  return lookup_name (asi_table, name);
-}
-
-/* Return the name for ASI value VALUE or NULL if not found.  */
-
-const char *
-sparc_decode_asi (int value)
-{
-  return lookup_value (asi_table, value);
-}
-
 /* Handle membar masks.  */
 
 static arg membar_table[] =

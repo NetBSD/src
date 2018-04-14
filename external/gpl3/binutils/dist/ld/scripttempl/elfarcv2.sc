@@ -19,7 +19,7 @@ test -z "${ELFSIZE}" && ELFSIZE=32
 test -z "${ALIGNMENT}" && ALIGNMENT="${ELFSIZE} / 8"
 test "$LD_FLAG" = "N" && DATA_ADDR=.
 
-CTOR=".ctors        ${CONSTRUCTING-0} : 
+CTOR=".ctors        ${CONSTRUCTING-0} :
   {
     ${CONSTRUCTING+${CTOR_START}}
     /* gcc uses crtbegin.o to find the start of
@@ -179,6 +179,11 @@ SECTIONS
   .eh_frame : { KEEP (*(.eh_frame)) } ${RELOCATING+> ${TEXT_MEMORY}}
   .gcc_except_table : { *(.gcc_except_table) *(.gcc_except_table.*) } ${RELOCATING+> ${TEXT_MEMORY}}
   .plt : { *(.plt) } ${RELOCATING+> ${TEXT_MEMORY}}
+  .jlitab :
+  {
+    ${RELOCATING+${JLI_START_TABLE}}
+     jlitab*.o:(.jlitab*) *(.jlitab*)
+  } ${RELOCATING+> ${TEXT_MEMORY}}
 
   .rodata ${RELOCATING-0} :
   {

@@ -1,5 +1,5 @@
 /* Target definitions for NN-bit ELF
-   Copyright (C) 1993-2016 Free Software Foundation, Inc.
+   Copyright (C) 1993-2018 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -45,6 +45,9 @@
 #endif
 #ifndef bfd_elfNN_canonicalize_reloc
 #define bfd_elfNN_canonicalize_reloc	_bfd_elf_canonicalize_reloc
+#endif
+#ifndef bfd_elfNN_set_reloc
+#define bfd_elfNN_set_reloc		_bfd_generic_set_reloc
 #endif
 #ifndef bfd_elfNN_find_nearest_line
 #define bfd_elfNN_find_nearest_line	_bfd_elf_find_nearest_line
@@ -108,8 +111,14 @@
 #ifndef elf_backend_want_dynbss
 #define elf_backend_want_dynbss 1
 #endif
+#ifndef elf_backend_want_dynrelro
+#define elf_backend_want_dynrelro 0
+#endif
 #ifndef elf_backend_want_p_paddr_set_to_zero
 #define elf_backend_want_p_paddr_set_to_zero 0
+#endif
+#ifndef elf_backend_no_page_alias
+#define elf_backend_no_page_alias 0
 #endif
 #ifndef elf_backend_default_execstack
 #define elf_backend_default_execstack 1
@@ -119,6 +128,15 @@
 #endif
 #ifndef elf_backend_extern_protected_data
 #define elf_backend_extern_protected_data 0
+#endif
+#ifndef elf_backend_always_renumber_dynsyms
+#define elf_backend_always_renumber_dynsyms FALSE
+#endif
+#ifndef elf_backend_linux_prpsinfo32_ugid16
+#define elf_backend_linux_prpsinfo32_ugid16 FALSE
+#endif
+#ifndef elf_backend_linux_prpsinfo64_ugid16
+#define elf_backend_linux_prpsinfo64_ugid16 FALSE
 #endif
 #ifndef elf_backend_stack_align
 #define elf_backend_stack_align 16
@@ -161,9 +179,6 @@
 #endif
 #ifndef elf_backend_gc_mark_extra_sections
 #define elf_backend_gc_mark_extra_sections _bfd_elf_gc_mark_extra_sections
-#endif
-#ifndef elf_backend_gc_sweep_hook
-#define elf_backend_gc_sweep_hook	NULL
 #endif
 #ifndef bfd_elfNN_bfd_gc_sections
 #define bfd_elfNN_bfd_gc_sections bfd_elf_gc_sections
@@ -223,7 +238,7 @@
 #endif
 #ifndef bfd_elfNN_bfd_merge_private_bfd_data
 #define bfd_elfNN_bfd_merge_private_bfd_data \
-  ((bfd_boolean (*) (bfd *, bfd *)) bfd_true)
+  ((bfd_boolean (*) (bfd *, struct bfd_link_info *)) bfd_true)
 #endif
 #ifndef bfd_elfNN_bfd_set_private_flags
 #define bfd_elfNN_bfd_set_private_flags \
@@ -257,6 +272,9 @@
 #ifndef bfd_elfNN_bfd_link_add_symbols
 #define bfd_elfNN_bfd_link_add_symbols	bfd_elf_link_add_symbols
 #endif
+#ifndef bfd_elfNN_bfd_define_start_stop
+#define bfd_elfNN_bfd_define_start_stop bfd_elf_define_start_stop
+#endif
 #ifndef bfd_elfNN_bfd_final_link
 #define bfd_elfNN_bfd_final_link	bfd_elf_final_link
 #endif
@@ -276,6 +294,9 @@
 #endif
 #ifndef bfd_elfNN_bfd_link_add_symbols
 #define bfd_elfNN_bfd_link_add_symbols	_bfd_generic_link_add_symbols
+#endif
+#ifndef bfd_elfNN_bfd_define_start_stop
+#define bfd_elfNN_bfd_define_start_stop bfd_generic_define_start_stop
 #endif
 #ifndef bfd_elfNN_bfd_final_link
 #define bfd_elfNN_bfd_final_link	_bfd_generic_final_link
@@ -479,6 +500,10 @@
 #ifndef elf_backend_modify_program_headers
 #define elf_backend_modify_program_headers	0
 #endif
+#ifndef elf_backend_allow_non_load_phdr
+#define elf_backend_allow_non_load_phdr	\
+  ((bfd_boolean (*) (bfd *, const Elf_Internal_Phdr *, unsigned)) bfd_false)
+#endif
 #ifndef elf_backend_ecoff_debug_swap
 #define elf_backend_ecoff_debug_swap	0
 #endif
@@ -509,6 +534,15 @@
 #ifndef elf_backend_obj_attrs_handle_unknown
 #define elf_backend_obj_attrs_handle_unknown	NULL
 #endif
+#ifndef elf_backend_parse_gnu_properties
+#define elf_backend_parse_gnu_properties	NULL
+#endif
+#ifndef elf_backend_merge_gnu_properties
+#define elf_backend_merge_gnu_properties	NULL
+#endif
+#ifndef elf_backend_setup_gnu_properties
+#define elf_backend_setup_gnu_properties	_bfd_elf_link_setup_gnu_properties
+#endif
 #ifndef elf_backend_static_tls_alignment
 #define elf_backend_static_tls_alignment	1
 #endif
@@ -524,11 +558,14 @@
 #ifndef elf_backend_output_arch_syms
 #define elf_backend_output_arch_syms		NULL
 #endif
+#ifndef elf_backend_filter_implib_symbols
+#define elf_backend_filter_implib_symbols	NULL
+#endif
 #ifndef elf_backend_copy_indirect_symbol
-#define elf_backend_copy_indirect_symbol  _bfd_elf_link_hash_copy_indirect
+#define elf_backend_copy_indirect_symbol	_bfd_elf_link_hash_copy_indirect
 #endif
 #ifndef elf_backend_hide_symbol
-#define elf_backend_hide_symbol		_bfd_elf_link_hash_hide_symbol
+#define elf_backend_hide_symbol			_bfd_elf_link_hash_hide_symbol
 #endif
 #ifndef elf_backend_fixup_symbol
 #define elf_backend_fixup_symbol		NULL
@@ -545,6 +582,9 @@
 #ifndef elf_backend_emit_relocs
 #define elf_backend_emit_relocs			_bfd_elf_link_output_relocs
 #endif
+#ifndef elf_backend_update_relocs
+#define elf_backend_update_relocs		NULL
+#endif
 #ifndef elf_backend_count_relocs
 #define elf_backend_count_relocs		NULL
 #endif
@@ -559,6 +599,9 @@
 #endif
 #ifndef elf_backend_grok_psinfo
 #define elf_backend_grok_psinfo			NULL
+#endif
+#ifndef elf_backend_grok_freebsd_prstatus
+#define elf_backend_grok_freebsd_prstatus	NULL
 #endif
 #ifndef elf_backend_write_core_note
 #define elf_backend_write_core_note		NULL
@@ -626,6 +669,10 @@
 #define elf_backend_rela_normal 0
 #endif
 
+#ifndef elf_backend_dtrel_excludes_plt
+#define elf_backend_dtrel_excludes_plt 0
+#endif
+
 #ifndef elf_backend_plt_sym_val
 #define elf_backend_plt_sym_val NULL
 #endif
@@ -654,7 +701,7 @@
 #endif
 
 #ifndef elf_backend_link_order_error_handler
-#define elf_backend_link_order_error_handler _bfd_default_error_handler
+#define elf_backend_link_order_error_handler _bfd_error_handler
 #endif
 
 #ifndef elf_backend_common_definition
@@ -686,7 +733,7 @@
 #endif
 
 #ifndef elf_backend_get_reloc_section
-#define elf_backend_get_reloc_section _bfd_elf_get_reloc_section
+#define elf_backend_get_reloc_section _bfd_elf_plt_get_reloc_section
 #endif
 
 #ifndef elf_backend_copy_special_section_fields
@@ -755,15 +802,16 @@ static struct elf_backend_data elfNN_bed =
   elf_backend_additional_program_headers,
   elf_backend_modify_segment_map,
   elf_backend_modify_program_headers,
+  elf_backend_allow_non_load_phdr,
   elf_backend_gc_keep,
   elf_backend_gc_mark_dynamic_ref,
   elf_backend_gc_mark_hook,
   elf_backend_gc_mark_extra_sections,
-  elf_backend_gc_sweep_hook,
   elf_backend_post_process_headers,
   elf_backend_print_symbol_all,
   elf_backend_output_arch_local_syms,
   elf_backend_output_arch_syms,
+  elf_backend_filter_implib_symbols,
   elf_backend_copy_indirect_symbol,
   elf_backend_hide_symbol,
   elf_backend_fixup_symbol,
@@ -771,11 +819,13 @@ static struct elf_backend_data elfNN_bed =
   elf_backend_get_target_dtag,
   elf_backend_ignore_undef_symbol,
   elf_backend_emit_relocs,
+  elf_backend_update_relocs,
   elf_backend_count_relocs,
   elf_backend_count_additional_relocs,
   elf_backend_sort_relocs_p,
   elf_backend_grok_prstatus,
   elf_backend_grok_psinfo,
+  elf_backend_grok_freebsd_prstatus,
   elf_backend_write_core_note,
   elf_backend_lookup_section_flags_hook,
   elf_backend_reloc_type_class,
@@ -815,6 +865,9 @@ static struct elf_backend_data elfNN_bed =
   elf_backend_obj_attrs_section_type,
   elf_backend_obj_attrs_order,
   elf_backend_obj_attrs_handle_unknown,
+  elf_backend_parse_gnu_properties,
+  elf_backend_merge_gnu_properties,
+  elf_backend_setup_gnu_properties,
   elf_backend_compact_eh_encoding,
   elf_backend_cant_unwind_opcode,
   elf_backend_static_tls_alignment,
@@ -827,6 +880,7 @@ static struct elf_backend_data elfNN_bed =
   elf_backend_default_use_rela_p,
   elf_backend_rela_plts_and_copies_p,
   elf_backend_rela_normal,
+  elf_backend_dtrel_excludes_plt,
   elf_backend_sign_extend_vma,
   elf_backend_want_got_plt,
   elf_backend_plt_readonly,
@@ -837,10 +891,15 @@ static struct elf_backend_data elfNN_bed =
   elf_backend_can_refcount,
   elf_backend_want_got_sym,
   elf_backend_want_dynbss,
+  elf_backend_want_dynrelro,
   elf_backend_want_p_paddr_set_to_zero,
+  elf_backend_no_page_alias,
   elf_backend_default_execstack,
   elf_backend_caches_rawsize,
-  elf_backend_extern_protected_data
+  elf_backend_extern_protected_data,
+  elf_backend_always_renumber_dynsyms,
+  elf_backend_linux_prpsinfo32_ugid16,
+  elf_backend_linux_prpsinfo64_ugid16
 };
 
 /* Forward declaration for use when initialising alternative_target field.  */

@@ -1,5 +1,5 @@
 /* aarch64-asm.c -- AArch64 assembler support.
-   Copyright (C) 2012-2016 Free Software Foundation, Inc.
+   Copyright (C) 2012-2018 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of the GNU opcodes library.
@@ -20,6 +20,7 @@
 
 #include "sysdep.h"
 #include <stdarg.h>
+#include "libiberty.h"
 #include "aarch64-asm.h"
 
 /* Utilities.  */
@@ -53,6 +54,25 @@ insert_fields (aarch64_insn *code, aarch64_insn value, aarch64_insn mask, ...)
       value >>= field->width;
     }
   va_end (va);
+}
+
+/* Insert a raw field value VALUE into all fields in SELF->fields.
+   The least significant bit goes in the final field.  */
+
+static void
+insert_all_fields (const aarch64_operand *self, aarch64_insn *code,
+		   aarch64_insn value)
+{
+  unsigned int i;
+  enum aarch64_field_kind kind;
+
+  for (i = ARRAY_SIZE (self->fields); i-- > 0; )
+    if (self->fields[i] != FLD_NIL)
+      {
+	kind = self->fields[i];
+	insert_field (kind, code, value, 0);
+	value >>= fields[kind].width;
+      }
 }
 
 /* Operand inserters.  */
@@ -101,23 +121,53 @@ aarch64_ins_reglane (const aarch64_operand *self, const aarch64_opnd_info *info,
 	  insert_field (FLD_imm5, code, value, 0);
 	}
     }
+  else if (inst->opcode->iclass == dotproduct)
+    {
+      unsigned reglane_index = info->reglane.index;
+      switch (info->qualifier)
+	{
+	case AARCH64_OPND_QLF_S_4B:
+	  /* L:H */
+	  assert (reglane_index < 4);
+	  insert_fields (code, reglane_index, 0, 2, FLD_L, FLD_H);
+	  break;
+	default:
+	  assert (0);
+	}
+    }
+  else if (inst->opcode->iclass == cryptosm3)
+    {
+      /* index for e.g. SM3TT2A <Vd>.4S, <Vn>.4S, <Vm>S[<imm2>].  */
+      unsigned reglane_index = info->reglane.index;
+      assert (reglane_index < 4);
+      insert_field (FLD_SM3_imm2, code, reglane_index, 0);
+    }
   else
     {
       /* index for e.g. SQDMLAL <Va><d>, <Vb><n>, <Vm>.<Ts>[<index>]
          or SQDMLAL <Va><d>, <Vb><n>, <Vm>.<Ts>[<index>].  */
+      unsigned reglane_index = info->reglane.index;
+
+      if (inst->opcode->op == OP_FCMLA_ELEM)
+	/* Complex operand takes two elements.  */
+	reglane_index *= 2;
+
       switch (info->qualifier)
 	{
 	case AARCH64_OPND_QLF_S_H:
 	  /* H:L:M */
-	  insert_fields (code, info->reglane.index, 0, 3, FLD_M, FLD_L, FLD_H);
+	  assert (reglane_index < 8);
+	  insert_fields (code, reglane_index, 0, 3, FLD_M, FLD_L, FLD_H);
 	  break;
 	case AARCH64_OPND_QLF_S_S:
 	  /* H:L */
-	  insert_fields (code, info->reglane.index, 0, 2, FLD_L, FLD_H);
+	  assert (reglane_index < 4);
+	  insert_fields (code, reglane_index, 0, 2, FLD_L, FLD_H);
 	  break;
 	case AARCH64_OPND_QLF_S_D:
 	  /* H */
-	  insert_field (FLD_H, code, info->reglane.index, 0);
+	  assert (reglane_index < 2);
+	  insert_field (FLD_H, code, reglane_index, 0);
 	  break;
 	default:
 	  assert (0);
@@ -318,17 +368,11 @@ aarch64_ins_imm (const aarch64_operand *self, const aarch64_opnd_info *info,
 		 const aarch64_inst *inst ATTRIBUTE_UNUSED)
 {
   int64_t imm;
-  /* Maximum of two fields to insert.  */
-  assert (self->fields[2] == FLD_NIL);
 
   imm = info->imm.value;
   if (operand_need_shift_by_two (self))
     imm >>= 2;
-  if (self->fields[1] == FLD_NIL)
-    insert_field (self->fields[0], code, imm, 0);
-  else
-    /* e.g. TBZ b5:b40.  */
-    insert_fields (code, imm, 0, 2, self->fields[1], self->fields[0]);
+  insert_all_fields (self, code, imm);
   return NULL;
 }
 
@@ -403,6 +447,40 @@ aarch64_ins_advsimd_imm_modified (const aarch64_operand *self ATTRIBUTE_UNUSED,
   return NULL;
 }
 
+/* Insert fields for an 8-bit floating-point immediate.  */
+const char *
+aarch64_ins_fpimm (const aarch64_operand *self, const aarch64_opnd_info *info,
+		   aarch64_insn *code,
+		   const aarch64_inst *inst ATTRIBUTE_UNUSED)
+{
+  insert_all_fields (self, code, info->imm.value);
+  return NULL;
+}
+
+/* Insert 1-bit rotation immediate (#90 or #270).  */
+const char *
+aarch64_ins_imm_rotate1 (const aarch64_operand *self,
+			 const aarch64_opnd_info *info,
+			 aarch64_insn *code, const aarch64_inst *inst)
+{
+  uint64_t rot = (info->imm.value - 90) / 180;
+  assert (rot < 2U);
+  insert_field (self->fields[0], code, rot, inst->opcode->mask);
+  return NULL;
+}
+
+/* Insert 2-bit rotation immediate (#0, #90, #180 or #270).  */
+const char *
+aarch64_ins_imm_rotate2 (const aarch64_operand *self,
+			 const aarch64_opnd_info *info,
+			 aarch64_insn *code, const aarch64_inst *inst)
+{
+  uint64_t rot = info->imm.value / 90;
+  assert (rot < 4U);
+  insert_field (self->fields[0], code, rot, inst->opcode->mask);
+  return NULL;
+}
+
 /* Insert #<fbits> for the immediate operand in fp fix-point instructions,
    e.g.  SCVTF <Dd>, <Wn>, #<fbits>.  */
 const char *
@@ -428,25 +506,44 @@ aarch64_ins_aimm (const aarch64_operand *self, const aarch64_opnd_info *info,
   return NULL;
 }
 
-/* Insert logical/bitmask immediate for e.g. the last operand in
-     ORR <Wd|WSP>, <Wn>, #<imm>.  */
-const char *
-aarch64_ins_limm (const aarch64_operand *self, const aarch64_opnd_info *info,
-		  aarch64_insn *code, const aarch64_inst *inst ATTRIBUTE_UNUSED)
+/* Common routine shared by aarch64_ins{,_inv}_limm.  INVERT_P says whether
+   the operand should be inverted before encoding.  */
+static const char *
+aarch64_ins_limm_1 (const aarch64_operand *self,
+		    const aarch64_opnd_info *info, aarch64_insn *code,
+		    const aarch64_inst *inst, bfd_boolean invert_p)
 {
   aarch64_insn value;
   uint64_t imm = info->imm.value;
-  int is32 = aarch64_get_qualifier_esize (inst->operands[0].qualifier) == 4;
+  int esize = aarch64_get_qualifier_esize (inst->operands[0].qualifier);
 
-  if (inst->opcode->op == OP_BIC)
+  if (invert_p)
     imm = ~imm;
-  if (aarch64_logical_immediate_p (imm, is32, &value) == FALSE)
-    /* The constraint check should have guaranteed this wouldn't happen.  */
-    assert (0);
+  /* The constraint check should have guaranteed this wouldn't happen.  */
+  assert (aarch64_logical_immediate_p (imm, esize, &value));
 
   insert_fields (code, value, 0, 3, self->fields[2], self->fields[1],
 		 self->fields[0]);
   return NULL;
+}
+
+/* Insert logical/bitmask immediate for e.g. the last operand in
+     ORR <Wd|WSP>, <Wn>, #<imm>.  */
+const char *
+aarch64_ins_limm (const aarch64_operand *self, const aarch64_opnd_info *info,
+		  aarch64_insn *code, const aarch64_inst *inst)
+{
+  return aarch64_ins_limm_1 (self, info, code, inst,
+			     inst->opcode->op == OP_BIC);
+}
+
+/* Insert a logical/bitmask immediate for the BIC alias of AND (etc.).  */
+const char *
+aarch64_ins_inv_limm (const aarch64_operand *self,
+		      const aarch64_opnd_info *info, aarch64_insn *code,
+		      const aarch64_inst *inst)
+{
+  return aarch64_ins_limm_1 (self, info, code, inst, TRUE);
 }
 
 /* Encode Ft for e.g. STR <Qt>, [<Xn|SP>, <R><m>{, <extend> {<amount>}}]
@@ -530,6 +627,29 @@ aarch64_ins_addr_regoff (const aarch64_operand *self ATTRIBUTE_UNUSED,
   return NULL;
 }
 
+/* Encode the address operand for e.g.
+     stlur <Xt>, [<Xn|SP>{, <amount>}].  */
+const char *
+aarch64_ins_addr_offset (const aarch64_operand *self ATTRIBUTE_UNUSED,
+			 const aarch64_opnd_info *info, aarch64_insn *code,
+			 const aarch64_inst *inst ATTRIBUTE_UNUSED)
+{
+  /* Rn */
+  insert_field (self->fields[0], code, info->addr.base_regno, 0);
+
+  /* simm9 */
+  int imm = info->addr.offset.imm;
+  insert_field (self->fields[1], code, imm, 0);
+
+  /* writeback */
+  if (info->addr.writeback)
+    {
+      assert (info->addr.preind == 1 && info->addr.postind == 0);
+      insert_field (self->fields[2], code, 1, 0);
+    }
+  return NULL;
+}
+
 /* Encode the address operand for e.g. LDRSW <Xt>, [<Xn|SP>, #<simm>]!.  */
 const char *
 aarch64_ins_addr_simm (const aarch64_operand *self,
@@ -559,6 +679,30 @@ aarch64_ins_addr_simm (const aarch64_operand *self,
 	insert_field (self->fields[1], code, 1, 0);
     }
 
+  return NULL;
+}
+
+/* Encode the address operand for e.g. LDRAA <Xt>, [<Xn|SP>{, #<simm>}].  */
+const char *
+aarch64_ins_addr_simm10 (const aarch64_operand *self,
+			 const aarch64_opnd_info *info,
+			 aarch64_insn *code,
+			 const aarch64_inst *inst ATTRIBUTE_UNUSED)
+{
+  int imm;
+
+  /* Rn */
+  insert_field (self->fields[0], code, info->addr.base_regno, 0);
+  /* simm10 */
+  imm = info->addr.offset.imm >> 3;
+  insert_field (self->fields[1], code, imm >> 9, 0);
+  insert_field (self->fields[2], code, imm, 0);
+  /* writeback */
+  if (info->addr.writeback)
+    {
+      assert (info->addr.preind == 1 && info->addr.postind == 0);
+      insert_field (self->fields[3], code, 1, 0);
+    }
   return NULL;
 }
 
@@ -721,6 +865,343 @@ aarch64_ins_reg_shifted (const aarch64_operand *self ATTRIBUTE_UNUSED,
   return NULL;
 }
 
+/* Encode an SVE address [<base>, #<simm4>*<factor>, MUL VL],
+   where <simm4> is a 4-bit signed value and where <factor> is 1 plus
+   SELF's operand-dependent value.  fields[0] specifies the field that
+   holds <base>.  <simm4> is encoded in the SVE_imm4 field.  */
+const char *
+aarch64_ins_sve_addr_ri_s4xvl (const aarch64_operand *self,
+			       const aarch64_opnd_info *info,
+			       aarch64_insn *code,
+			       const aarch64_inst *inst ATTRIBUTE_UNUSED)
+{
+  int factor = 1 + get_operand_specific_data (self);
+  insert_field (self->fields[0], code, info->addr.base_regno, 0);
+  insert_field (FLD_SVE_imm4, code, info->addr.offset.imm / factor, 0);
+  return NULL;
+}
+
+/* Encode an SVE address [<base>, #<simm6>*<factor>, MUL VL],
+   where <simm6> is a 6-bit signed value and where <factor> is 1 plus
+   SELF's operand-dependent value.  fields[0] specifies the field that
+   holds <base>.  <simm6> is encoded in the SVE_imm6 field.  */
+const char *
+aarch64_ins_sve_addr_ri_s6xvl (const aarch64_operand *self,
+			       const aarch64_opnd_info *info,
+			       aarch64_insn *code,
+			       const aarch64_inst *inst ATTRIBUTE_UNUSED)
+{
+  int factor = 1 + get_operand_specific_data (self);
+  insert_field (self->fields[0], code, info->addr.base_regno, 0);
+  insert_field (FLD_SVE_imm6, code, info->addr.offset.imm / factor, 0);
+  return NULL;
+}
+
+/* Encode an SVE address [<base>, #<simm9>*<factor>, MUL VL],
+   where <simm9> is a 9-bit signed value and where <factor> is 1 plus
+   SELF's operand-dependent value.  fields[0] specifies the field that
+   holds <base>.  <simm9> is encoded in the concatenation of the SVE_imm6
+   and imm3 fields, with imm3 being the less-significant part.  */
+const char *
+aarch64_ins_sve_addr_ri_s9xvl (const aarch64_operand *self,
+			       const aarch64_opnd_info *info,
+			       aarch64_insn *code,
+			       const aarch64_inst *inst ATTRIBUTE_UNUSED)
+{
+  int factor = 1 + get_operand_specific_data (self);
+  insert_field (self->fields[0], code, info->addr.base_regno, 0);
+  insert_fields (code, info->addr.offset.imm / factor, 0,
+		 2, FLD_imm3, FLD_SVE_imm6);
+  return NULL;
+}
+
+/* Encode an SVE address [X<n>, #<SVE_imm4> << <shift>], where <SVE_imm4>
+   is a 4-bit signed number and where <shift> is SELF's operand-dependent
+   value.  fields[0] specifies the base register field.  */
+const char *
+aarch64_ins_sve_addr_ri_s4 (const aarch64_operand *self,
+			    const aarch64_opnd_info *info, aarch64_insn *code,
+			    const aarch64_inst *inst ATTRIBUTE_UNUSED)
+{
+  int factor = 1 << get_operand_specific_data (self);
+  insert_field (self->fields[0], code, info->addr.base_regno, 0);
+  insert_field (FLD_SVE_imm4, code, info->addr.offset.imm / factor, 0);
+  return NULL;
+}
+
+/* Encode an SVE address [X<n>, #<SVE_imm6> << <shift>], where <SVE_imm6>
+   is a 6-bit unsigned number and where <shift> is SELF's operand-dependent
+   value.  fields[0] specifies the base register field.  */
+const char *
+aarch64_ins_sve_addr_ri_u6 (const aarch64_operand *self,
+			    const aarch64_opnd_info *info, aarch64_insn *code,
+			    const aarch64_inst *inst ATTRIBUTE_UNUSED)
+{
+  int factor = 1 << get_operand_specific_data (self);
+  insert_field (self->fields[0], code, info->addr.base_regno, 0);
+  insert_field (FLD_SVE_imm6, code, info->addr.offset.imm / factor, 0);
+  return NULL;
+}
+
+/* Encode an SVE address [X<n>, X<m>{, LSL #<shift>}], where <shift>
+   is SELF's operand-dependent value.  fields[0] specifies the base
+   register field and fields[1] specifies the offset register field.  */
+const char *
+aarch64_ins_sve_addr_rr_lsl (const aarch64_operand *self,
+			     const aarch64_opnd_info *info, aarch64_insn *code,
+			     const aarch64_inst *inst ATTRIBUTE_UNUSED)
+{
+  insert_field (self->fields[0], code, info->addr.base_regno, 0);
+  insert_field (self->fields[1], code, info->addr.offset.regno, 0);
+  return NULL;
+}
+
+/* Encode an SVE address [X<n>, Z<m>.<T>, (S|U)XTW {#<shift>}], where
+   <shift> is SELF's operand-dependent value.  fields[0] specifies the
+   base register field, fields[1] specifies the offset register field and
+   fields[2] is a single-bit field that selects SXTW over UXTW.  */
+const char *
+aarch64_ins_sve_addr_rz_xtw (const aarch64_operand *self,
+			     const aarch64_opnd_info *info, aarch64_insn *code,
+			     const aarch64_inst *inst ATTRIBUTE_UNUSED)
+{
+  insert_field (self->fields[0], code, info->addr.base_regno, 0);
+  insert_field (self->fields[1], code, info->addr.offset.regno, 0);
+  if (info->shifter.kind == AARCH64_MOD_UXTW)
+    insert_field (self->fields[2], code, 0, 0);
+  else
+    insert_field (self->fields[2], code, 1, 0);
+  return NULL;
+}
+
+/* Encode an SVE address [Z<n>.<T>, #<imm5> << <shift>], where <imm5> is a
+   5-bit unsigned number and where <shift> is SELF's operand-dependent value.
+   fields[0] specifies the base register field.  */
+const char *
+aarch64_ins_sve_addr_zi_u5 (const aarch64_operand *self,
+			    const aarch64_opnd_info *info, aarch64_insn *code,
+			    const aarch64_inst *inst ATTRIBUTE_UNUSED)
+{
+  int factor = 1 << get_operand_specific_data (self);
+  insert_field (self->fields[0], code, info->addr.base_regno, 0);
+  insert_field (FLD_imm5, code, info->addr.offset.imm / factor, 0);
+  return NULL;
+}
+
+/* Encode an SVE address [Z<n>.<T>, Z<m>.<T>{, <modifier> {#<msz>}}],
+   where <modifier> is fixed by the instruction and where <msz> is a
+   2-bit unsigned number.  fields[0] specifies the base register field
+   and fields[1] specifies the offset register field.  */
+static const char *
+aarch64_ext_sve_addr_zz (const aarch64_operand *self,
+			 const aarch64_opnd_info *info, aarch64_insn *code)
+{
+  insert_field (self->fields[0], code, info->addr.base_regno, 0);
+  insert_field (self->fields[1], code, info->addr.offset.regno, 0);
+  insert_field (FLD_SVE_msz, code, info->shifter.amount, 0);
+  return NULL;
+}
+
+/* Encode an SVE address [Z<n>.<T>, Z<m>.<T>{, LSL #<msz>}], where
+   <msz> is a 2-bit unsigned number.  fields[0] specifies the base register
+   field and fields[1] specifies the offset register field.  */
+const char *
+aarch64_ins_sve_addr_zz_lsl (const aarch64_operand *self,
+			     const aarch64_opnd_info *info, aarch64_insn *code,
+			     const aarch64_inst *inst ATTRIBUTE_UNUSED)
+{
+  return aarch64_ext_sve_addr_zz (self, info, code);
+}
+
+/* Encode an SVE address [Z<n>.<T>, Z<m>.<T>, SXTW {#<msz>}], where
+   <msz> is a 2-bit unsigned number.  fields[0] specifies the base register
+   field and fields[1] specifies the offset register field.  */
+const char *
+aarch64_ins_sve_addr_zz_sxtw (const aarch64_operand *self,
+			      const aarch64_opnd_info *info,
+			      aarch64_insn *code,
+			      const aarch64_inst *inst ATTRIBUTE_UNUSED)
+{
+  return aarch64_ext_sve_addr_zz (self, info, code);
+}
+
+/* Encode an SVE address [Z<n>.<T>, Z<m>.<T>, UXTW {#<msz>}], where
+   <msz> is a 2-bit unsigned number.  fields[0] specifies the base register
+   field and fields[1] specifies the offset register field.  */
+const char *
+aarch64_ins_sve_addr_zz_uxtw (const aarch64_operand *self,
+			      const aarch64_opnd_info *info,
+			      aarch64_insn *code,
+			      const aarch64_inst *inst ATTRIBUTE_UNUSED)
+{
+  return aarch64_ext_sve_addr_zz (self, info, code);
+}
+
+/* Encode an SVE ADD/SUB immediate.  */
+const char *
+aarch64_ins_sve_aimm (const aarch64_operand *self,
+		      const aarch64_opnd_info *info, aarch64_insn *code,
+		      const aarch64_inst *inst ATTRIBUTE_UNUSED)
+{
+  if (info->shifter.amount == 8)
+    insert_all_fields (self, code, (info->imm.value & 0xff) | 256);
+  else if (info->imm.value != 0 && (info->imm.value & 0xff) == 0)
+    insert_all_fields (self, code, ((info->imm.value / 256) & 0xff) | 256);
+  else
+    insert_all_fields (self, code, info->imm.value & 0xff);
+  return NULL;
+}
+
+/* Encode an SVE CPY/DUP immediate.  */
+const char *
+aarch64_ins_sve_asimm (const aarch64_operand *self,
+		       const aarch64_opnd_info *info, aarch64_insn *code,
+		       const aarch64_inst *inst)
+{
+  return aarch64_ins_sve_aimm (self, info, code, inst);
+}
+
+/* Encode Zn[MM], where MM has a 7-bit triangular encoding.  The fields
+   array specifies which field to use for Zn.  MM is encoded in the
+   concatenation of imm5 and SVE_tszh, with imm5 being the less
+   significant part.  */
+const char *
+aarch64_ins_sve_index (const aarch64_operand *self,
+		       const aarch64_opnd_info *info, aarch64_insn *code,
+		       const aarch64_inst *inst ATTRIBUTE_UNUSED)
+{
+  unsigned int esize = aarch64_get_qualifier_esize (info->qualifier);
+  insert_field (self->fields[0], code, info->reglane.regno, 0);
+  insert_fields (code, (info->reglane.index * 2 + 1) * esize, 0,
+		 2, FLD_imm5, FLD_SVE_tszh);
+  return NULL;
+}
+
+/* Encode a logical/bitmask immediate for the MOV alias of SVE DUPM.  */
+const char *
+aarch64_ins_sve_limm_mov (const aarch64_operand *self,
+			  const aarch64_opnd_info *info, aarch64_insn *code,
+			  const aarch64_inst *inst)
+{
+  return aarch64_ins_limm (self, info, code, inst);
+}
+
+/* Encode Zn[MM], where Zn occupies the least-significant part of the field
+   and where MM occupies the most-significant part.  The operand-dependent
+   value specifies the number of bits in Zn.  */
+const char *
+aarch64_ins_sve_quad_index (const aarch64_operand *self,
+			    const aarch64_opnd_info *info, aarch64_insn *code,
+			    const aarch64_inst *inst ATTRIBUTE_UNUSED)
+{
+  unsigned int reg_bits = get_operand_specific_data (self);
+  assert (info->reglane.regno < (1U << reg_bits));
+  unsigned int val = (info->reglane.index << reg_bits) + info->reglane.regno;
+  insert_all_fields (self, code, val);
+  return NULL;
+}
+
+/* Encode {Zn.<T> - Zm.<T>}.  The fields array specifies which field
+   to use for Zn.  */
+const char *
+aarch64_ins_sve_reglist (const aarch64_operand *self,
+			 const aarch64_opnd_info *info, aarch64_insn *code,
+			 const aarch64_inst *inst ATTRIBUTE_UNUSED)
+{
+  insert_field (self->fields[0], code, info->reglist.first_regno, 0);
+  return NULL;
+}
+
+/* Encode <pattern>{, MUL #<amount>}.  The fields array specifies which
+   fields to use for <pattern>.  <amount> - 1 is encoded in the SVE_imm4
+   field.  */
+const char *
+aarch64_ins_sve_scale (const aarch64_operand *self,
+		       const aarch64_opnd_info *info, aarch64_insn *code,
+		       const aarch64_inst *inst ATTRIBUTE_UNUSED)
+{
+  insert_all_fields (self, code, info->imm.value);
+  insert_field (FLD_SVE_imm4, code, info->shifter.amount - 1, 0);
+  return NULL;
+}
+
+/* Encode an SVE shift left immediate.  */
+const char *
+aarch64_ins_sve_shlimm (const aarch64_operand *self,
+			const aarch64_opnd_info *info, aarch64_insn *code,
+			const aarch64_inst *inst)
+{
+  const aarch64_opnd_info *prev_operand;
+  unsigned int esize;
+
+  assert (info->idx > 0);
+  prev_operand = &inst->operands[info->idx - 1];
+  esize = aarch64_get_qualifier_esize (prev_operand->qualifier);
+  insert_all_fields (self, code, 8 * esize + info->imm.value);
+  return NULL;
+}
+
+/* Encode an SVE shift right immediate.  */
+const char *
+aarch64_ins_sve_shrimm (const aarch64_operand *self,
+			const aarch64_opnd_info *info, aarch64_insn *code,
+			const aarch64_inst *inst)
+{
+  const aarch64_opnd_info *prev_operand;
+  unsigned int esize;
+
+  assert (info->idx > 0);
+  prev_operand = &inst->operands[info->idx - 1];
+  esize = aarch64_get_qualifier_esize (prev_operand->qualifier);
+  insert_all_fields (self, code, 16 * esize - info->imm.value);
+  return NULL;
+}
+
+/* Encode a single-bit immediate that selects between #0.5 and #1.0.
+   The fields array specifies which field to use.  */
+const char *
+aarch64_ins_sve_float_half_one (const aarch64_operand *self,
+				const aarch64_opnd_info *info,
+				aarch64_insn *code,
+				const aarch64_inst *inst ATTRIBUTE_UNUSED)
+{
+  if (info->imm.value == 0x3f000000)
+    insert_field (self->fields[0], code, 0, 0);
+  else
+    insert_field (self->fields[0], code, 1, 0);
+  return NULL;
+}
+
+/* Encode a single-bit immediate that selects between #0.5 and #2.0.
+   The fields array specifies which field to use.  */
+const char *
+aarch64_ins_sve_float_half_two (const aarch64_operand *self,
+				const aarch64_opnd_info *info,
+				aarch64_insn *code,
+				const aarch64_inst *inst ATTRIBUTE_UNUSED)
+{
+  if (info->imm.value == 0x3f000000)
+    insert_field (self->fields[0], code, 0, 0);
+  else
+    insert_field (self->fields[0], code, 1, 0);
+  return NULL;
+}
+
+/* Encode a single-bit immediate that selects between #0.0 and #1.0.
+   The fields array specifies which field to use.  */
+const char *
+aarch64_ins_sve_float_zero_one (const aarch64_operand *self,
+				const aarch64_opnd_info *info,
+				aarch64_insn *code,
+				const aarch64_inst *inst ATTRIBUTE_UNUSED)
+{
+  if (info->imm.value == 0)
+    insert_field (self->fields[0], code, 0, 0);
+  else
+    insert_field (self->fields[0], code, 1, 0);
+  return NULL;
+}
+
 /* Miscellaneous encoding functions.  */
 
 /* Encode size[0], i.e. bit 22, for
@@ -788,12 +1269,35 @@ encode_fcvt (aarch64_inst *inst)
   return;
 }
 
+/* Return the index in qualifiers_list that INST is using.  Should only
+   be called once the qualifiers are known to be valid.  */
+
+static int
+aarch64_get_variant (struct aarch64_inst *inst)
+{
+  int i, nops, variant;
+
+  nops = aarch64_num_of_operands (inst->opcode);
+  for (variant = 0; variant < AARCH64_MAX_QLF_SEQ_NUM; ++variant)
+    {
+      for (i = 0; i < nops; ++i)
+	if (inst->opcode->qualifiers_list[variant][i]
+	    != inst->operands[i].qualifier)
+	  break;
+      if (i == nops)
+	return variant;
+    }
+  abort ();
+}
+
 /* Do miscellaneous encodings that are not common enough to be driven by
    flags.  */
 
 static void
 do_misc_encoding (aarch64_inst *inst)
 {
+  unsigned int value;
+
   switch (inst->opcode->op)
     {
     case OP_FCVT:
@@ -807,6 +1311,47 @@ do_misc_encoding (aarch64_inst *inst)
       break;
     case OP_FCVTXN_S:
       encode_asisd_fcvtxn (inst);
+      break;
+    case OP_MOV_P_P:
+    case OP_MOVS_P_P:
+      /* Copy Pn to Pm and Pg.  */
+      value = extract_field (FLD_SVE_Pn, inst->value, 0);
+      insert_field (FLD_SVE_Pm, &inst->value, value, 0);
+      insert_field (FLD_SVE_Pg4_10, &inst->value, value, 0);
+      break;
+    case OP_MOV_Z_P_Z:
+      /* Copy Zd to Zm.  */
+      value = extract_field (FLD_SVE_Zd, inst->value, 0);
+      insert_field (FLD_SVE_Zm_16, &inst->value, value, 0);
+      break;
+    case OP_MOV_Z_V:
+      /* Fill in the zero immediate.  */
+      insert_fields (&inst->value, 1 << aarch64_get_variant (inst), 0,
+		     2, FLD_imm5, FLD_SVE_tszh);
+      break;
+    case OP_MOV_Z_Z:
+      /* Copy Zn to Zm.  */
+      value = extract_field (FLD_SVE_Zn, inst->value, 0);
+      insert_field (FLD_SVE_Zm_16, &inst->value, value, 0);
+      break;
+    case OP_MOV_Z_Zi:
+      break;
+    case OP_MOVM_P_P_P:
+      /* Copy Pd to Pm.  */
+      value = extract_field (FLD_SVE_Pd, inst->value, 0);
+      insert_field (FLD_SVE_Pm, &inst->value, value, 0);
+      break;
+    case OP_MOVZS_P_P_P:
+    case OP_MOVZ_P_P_P:
+      /* Copy Pn to Pm.  */
+      value = extract_field (FLD_SVE_Pn, inst->value, 0);
+      insert_field (FLD_SVE_Pm, &inst->value, value, 0);
+      break;
+    case OP_NOTS_P_P_P_Z:
+    case OP_NOT_P_P_P_Z:
+      /* Copy Pg to Pm.  */
+      value = extract_field (FLD_SVE_Pg4_10, inst->value, 0);
+      insert_field (FLD_SVE_Pm, &inst->value, value, 0);
       break;
     default: break;
     }
@@ -966,6 +1511,65 @@ do_special_encoding (struct aarch64_inst *inst)
   DEBUG_TRACE ("exit with coding 0x%x", (uint32_t) inst->value);
 }
 
+/* Some instructions (including all SVE ones) use the instruction class
+   to describe how a qualifiers_list index is represented in the instruction
+   encoding.  If INST is such an instruction, encode the chosen qualifier
+   variant.  */
+
+static void
+aarch64_encode_variant_using_iclass (struct aarch64_inst *inst)
+{
+  switch (inst->opcode->iclass)
+    {
+    case sve_cpy:
+      insert_fields (&inst->value, aarch64_get_variant (inst),
+		     0, 2, FLD_SVE_M_14, FLD_size);
+      break;
+
+    case sve_index:
+    case sve_shift_pred:
+    case sve_shift_unpred:
+      /* For indices and shift amounts, the variant is encoded as
+	 part of the immediate.  */
+      break;
+
+    case sve_limm:
+      /* For sve_limm, the .B, .H, and .S forms are just a convenience
+	 and depend on the immediate.  They don't have a separate
+	 encoding.  */
+      break;
+
+    case sve_misc:
+      /* sve_misc instructions have only a single variant.  */
+      break;
+
+    case sve_movprfx:
+      insert_fields (&inst->value, aarch64_get_variant (inst),
+		     0, 2, FLD_SVE_M_16, FLD_size);
+      break;
+
+    case sve_pred_zm:
+      insert_field (FLD_SVE_M_4, &inst->value, aarch64_get_variant (inst), 0);
+      break;
+
+    case sve_size_bhs:
+    case sve_size_bhsd:
+      insert_field (FLD_size, &inst->value, aarch64_get_variant (inst), 0);
+      break;
+
+    case sve_size_hsd:
+      insert_field (FLD_size, &inst->value, aarch64_get_variant (inst) + 1, 0);
+      break;
+
+    case sve_size_sd:
+      insert_field (FLD_SVE_sz, &inst->value, aarch64_get_variant (inst), 0);
+      break;
+
+    default:
+      break;
+    }
+}
+
 /* Converters converting an alias opcode instruction to its real form.  */
 
 /* ROR <Wd>, <Ws>, #<shift>
@@ -1064,10 +1668,10 @@ convert_bfc_to_bfm (aarch64_inst *inst)
   /* Insert XZR.  */
   copy_operand_info (inst, 3, 2);
   copy_operand_info (inst, 2, 1);
-  copy_operand_info (inst, 2, 0);
+  copy_operand_info (inst, 1, 0);
   inst->operands[1].reg.regno = 0x1f;
 
-  /* Convert the immedate operand.  */
+  /* Convert the immediate operand.  */
   lsb = inst->operands[2].imm.value;
   width = inst->operands[3].imm.value;
   if (inst->operands[2].qualifier == AARCH64_OPND_QLF_imm_0_31)
@@ -1333,6 +1937,10 @@ aarch64_opcode_encode (const aarch64_opcode *opcode,
   /* Call opcode encoders indicated by flags.  */
   if (opcode_has_special_coder (opcode))
     do_special_encoding (inst);
+
+  /* Possibly use the instruction class to encode the chosen qualifier
+     variant.  */
+  aarch64_encode_variant_using_iclass (inst);
 
 encoding_exit:
   DEBUG_TRACE ("exit with %s", opcode->name);

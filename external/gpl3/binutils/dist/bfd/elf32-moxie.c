@@ -1,8 +1,8 @@
 /* moxie-specific support for 32-bit ELF.
-   Copyright (C) 2009-2016 Free Software Foundation, Inc.
+   Copyright (C) 2009-2018 Free Software Foundation, Inc.
 
    Copied from elf32-fr30.c which is..
-   Copyright (C) 1998-2016 Free Software Foundation, Inc.
+   Copyright (C) 1998-2018 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -87,8 +87,8 @@ struct moxie_reloc_map
 
 static const struct moxie_reloc_map moxie_reloc_map [] =
 {
-  { BFD_RELOC_NONE,            R_MOXIE_NONE },
-  { BFD_RELOC_32,              R_MOXIE_32 },
+  { BFD_RELOC_NONE,	       R_MOXIE_NONE },
+  { BFD_RELOC_32,	       R_MOXIE_32 },
   { BFD_RELOC_MOXIE_10_PCREL,  R_MOXIE_PCREL10 },
 };
 
@@ -133,6 +133,7 @@ moxie_info_to_howto_rela (bfd *abfd ATTRIBUTE_UNUSED,
   r_type = ELF32_R_TYPE (dst->r_info);
   if (r_type >= (unsigned int) R_MOXIE_max)
     {
+      /* xgettext:c-format */
       _bfd_error_handler (_("%B: invalid Moxie reloc number: %d"), abfd, r_type);
       r_type = 0;
     }
@@ -348,17 +349,13 @@ moxie_elf_check_relocs (bfd *abfd,
 
       r_symndx = ELF32_R_SYM (rel->r_info);
       if (r_symndx < symtab_hdr->sh_info)
-        h = NULL;
+	h = NULL;
       else
 	{
 	  h = sym_hashes[r_symndx - symtab_hdr->sh_info];
 	  while (h->root.type == bfd_link_hash_indirect
 		 || h->root.type == bfd_link_hash_warning)
 	    h = (struct elf_link_hash_entry *) h->root.u.i.link;
-
-	  /* PR15323, ref flags aren't set for references in the same
-	     object.  */
-	  h->root.non_ir_ref = 1;
 	}
     }
 
@@ -367,19 +364,19 @@ moxie_elf_check_relocs (bfd *abfd,
 
 #define ELF_ARCH		bfd_arch_moxie
 #define ELF_MACHINE_CODE	EM_MOXIE
-#define ELF_MACHINE_ALT1        EM_MOXIE_OLD
+#define ELF_MACHINE_ALT1	EM_MOXIE_OLD
 #define ELF_MAXPAGESIZE		0x1
 
-#define TARGET_BIG_SYM          moxie_elf32_be_vec
+#define TARGET_BIG_SYM		moxie_elf32_be_vec
 #define TARGET_BIG_NAME		"elf32-bigmoxie"
-#define TARGET_LITTLE_SYM       moxie_elf32_le_vec
+#define TARGET_LITTLE_SYM	moxie_elf32_le_vec
 #define TARGET_LITTLE_NAME	"elf32-littlemoxie"
 
 #define elf_info_to_howto_rel			NULL
 #define elf_info_to_howto			moxie_info_to_howto_rela
 #define elf_backend_relocate_section		moxie_elf_relocate_section
 #define elf_backend_gc_mark_hook		moxie_elf_gc_mark_hook
-#define elf_backend_check_relocs                moxie_elf_check_relocs
+#define elf_backend_check_relocs		moxie_elf_check_relocs
 
 #define elf_backend_can_gc_sections		1
 #define elf_backend_rela_normal			1

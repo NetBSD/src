@@ -1,5 +1,5 @@
 /* tilepro-dis.c.  Disassembly routines for the TILEPro architecture.
-   Copyright (C) 2011-2016 Free Software Foundation, Inc.
+   Copyright (C) 2011-2018 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -24,7 +24,7 @@
 #include "bfd.h"
 #include "elf/tilepro.h"
 #include "elf-bfd.h"
-#include "dis-asm.h"
+#include "disassemble.h"
 #include "opcode/tilepro.h"
 
 

@@ -1,6 +1,6 @@
 /* CGEN generic opcode support.
 
-   Copyright (C) 1996-2016 Free Software Foundation, Inc.
+   Copyright (C) 1996-2018 Free Software Foundation, Inc.
 
    This file is part of libopcodes.
 
@@ -452,18 +452,14 @@ cgen_lookup_insn (CGEN_CPU_DESC cd,
 		  CGEN_FIELDS *fields,
 		  int alias_p)
 {
-  unsigned char *buf;
-  CGEN_INSN_INT base_insn;
   CGEN_EXTRACT_INFO ex_info;
   CGEN_EXTRACT_INFO *info;
 
   if (cd->int_insn_p)
     {
       info = NULL;
-      buf = (unsigned char *) xmalloc (cd->max_insn_bitsize / 8);
-      cgen_put_insn_value (cd, buf, length, insn_int_value);
-      base_insn = insn_int_value;
-      free (buf);
+      insn_bytes_value = (unsigned char *) xmalloc (cd->max_insn_bitsize / 8);
+      cgen_put_insn_value (cd, insn_bytes_value, length, insn_int_value);
     }
   else
     {
@@ -471,8 +467,7 @@ cgen_lookup_insn (CGEN_CPU_DESC cd,
       ex_info.dis_info = NULL;
       ex_info.insn_bytes = insn_bytes_value;
       ex_info.valid = -1;
-      buf = insn_bytes_value;
-      base_insn = cgen_get_insn_value (cd, buf, length);
+      insn_int_value = cgen_get_insn_value (cd, insn_bytes_value, length);
     }
 
   if (!insn)
@@ -482,7 +477,8 @@ cgen_lookup_insn (CGEN_CPU_DESC cd,
       /* The instructions are stored in hash lists.
 	 Pick the first one and keep trying until we find the right one.  */
 
-      insn_list = cgen_dis_lookup_insn (cd, (char *) buf, base_insn);
+      insn_list = cgen_dis_lookup_insn (cd, (char *) insn_bytes_value,
+					insn_int_value);
       while (insn_list != NULL)
 	{
 	  insn = insn_list->insn;
@@ -494,18 +490,18 @@ cgen_lookup_insn (CGEN_CPU_DESC cd,
 	      /* Basic bit mask must be correct.  */
 	      /* ??? May wish to allow target to defer this check until the
 		 extract handler.  */
-	      if ((base_insn & CGEN_INSN_BASE_MASK (insn))
+	      if ((insn_int_value & CGEN_INSN_BASE_MASK (insn))
 		  == CGEN_INSN_BASE_VALUE (insn))
 		{
 		  /* ??? 0 is passed for `pc' */
 		  int elength = CGEN_EXTRACT_FN (cd, insn)
-		    (cd, insn, info, base_insn, fields, (bfd_vma) 0);
+		    (cd, insn, info, insn_int_value, fields, (bfd_vma) 0);
 		  if (elength > 0)
 		    {
 		      /* sanity check */
 		      if (length != 0 && length != elength)
 			abort ();
-		      return insn;
+		      break;
 		    }
 		}
 	    }
@@ -525,15 +521,17 @@ cgen_lookup_insn (CGEN_CPU_DESC cd,
 
       /* ??? 0 is passed for `pc' */
       length = CGEN_EXTRACT_FN (cd, insn)
-	(cd, insn, info, base_insn, fields, (bfd_vma) 0);
+	(cd, insn, info, insn_int_value, fields, (bfd_vma) 0);
       /* Sanity check: must succeed.
 	 Could relax this later if it ever proves useful.  */
       if (length == 0)
 	abort ();
-      return insn;
     }
 
-  return NULL;
+  if (cd->int_insn_p)
+    free (insn_bytes_value);
+
+  return insn;
 }
 
 /* Fill in the operand instances used by INSN whose operands are FIELDS.

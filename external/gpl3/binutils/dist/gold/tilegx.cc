@@ -1,6 +1,6 @@
 // tilegx.cc -- tilegx target support for gold.
 
-// Copyright (C) 2012-2016 Free Software Foundation, Inc.
+// Copyright (C) 2012-2018 Free Software Foundation, Inc.
 // Written by Jiong Wang (jiwang@tilera.com)
 
 // This file is part of gold.
@@ -2527,7 +2527,7 @@ Target_tilegx<size, big_endian>::make_plt_section(Symbol_table* symtab,
       this->got_section(symtab, layout);
 
       // Ensure that .rela.dyn always appears before .rela.plt,
-      // becuase on TILE-Gx, .rela.dyn needs to include .rela.plt
+      // because on TILE-Gx, .rela.dyn needs to include .rela.plt
       // in it's range.
       this->rela_dyn_section(layout);
 
@@ -3375,7 +3375,7 @@ Target_tilegx<size, big_endian>::Scan::local(Symbol_table* symtab,
             // tilegx dynamic linker will not update local got entry,
             // so, if we are generating a shared object, we need to add a
             // dynamic relocation for this symbol's GOT entry to inform
-            // dynamic linker plus the load base explictly.
+            // dynamic linker plus the load base explicitly.
             if (parameters->options().output_is_position_independent())
               {
                unsigned int got_offset
@@ -3431,7 +3431,7 @@ Target_tilegx<size, big_endian>::Scan::local(Symbol_table* symtab,
                //
                // R_TILEGX_TLS_GD_CALL implicitly reference __tls_get_addr,
                // while all other target, x86/arm/mips/powerpc/sparc
-               // generate tls relocation against __tls_get_addr explictly,
+               // generate tls relocation against __tls_get_addr explicitly,
                // so for TILEGX, we need the following hack.
                if (opt_t == tls::TLSOPT_NONE) {
                  if (!target->tls_get_addr_sym_defined_) {
@@ -4428,6 +4428,7 @@ Target_tilegx<size, big_endian>::Relocate::relocate(
       psymval = &symval;
       always_apply_relocation = true;
       addend = 0;
+      // Fall through.
 
     // when under PIC mode, these relocations are deferred to rtld
     case elfcpp::R_TILEGX_IMM16_X0_HW0:
@@ -4618,6 +4619,7 @@ Target_tilegx<size, big_endian>::Relocate::relocate(
                 got_type = GOT_TYPE_TLS_OFFSET;
                 have_got_offset = true;
               }
+	      // Fall through.
             do_update_value:
               if (have_got_offset) {
                 if (gsym != NULL) {
@@ -4647,10 +4649,8 @@ Target_tilegx<size, big_endian>::Relocate::relocate(
               } // else if (opt_t == tls::TLSOPT_TO_LE)
                 //   both GD/IE are turned into LE, which
                 //   is absolute relocation.
-                //
-                //  |  go through
-                //  |
-                //  V
+                // Fall through.
+
             // LE
             //
             // tp

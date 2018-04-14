@@ -1,7 +1,7 @@
 # Linker script for i386 go32 (DJGPP)
 #
-# Copyright (C) 2014-2016 Free Software Foundation, Inc.
-# 
+# Copyright (C) 2014-2018 Free Software Foundation, Inc.
+#
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
 # notice and this notice are preserved.
@@ -21,7 +21,7 @@ DTOR='.dtor : {
   }'
 
 cat <<EOF
-/* Copyright (C) 2014-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2014-2018 Free Software Foundation, Inc.
 
    Copying and distribution of this script, with or without modification,
    are permitted in any medium without royalty provided the copyright
@@ -68,7 +68,7 @@ SECTIONS
   ${CONSTRUCTING+${RELOCATING-$CTOR}}
   ${CONSTRUCTING+${RELOCATING-$DTOR}}
   .bss ${RELOCATING+ SIZEOF(.data) + ADDR(.data)} :
-  { 					
+  {
     *(.bss${RELOCATING+ .bss.* .gnu.linkonce.b.*})
     *(COMMON)
     ${RELOCATING+ end = . ; PROVIDE(_end = .) ;}

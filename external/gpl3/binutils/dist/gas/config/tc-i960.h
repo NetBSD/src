@@ -1,5 +1,5 @@
 /* tc-i960.h - Basic 80960 instruction formats.
-   Copyright (C) 1989-2016 Free Software Foundation, Inc.
+   Copyright (C) 1989-2018 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -122,8 +122,8 @@ struct relocation_info
 /* Makes no sense to use the difference of 2 arbitrary symbols
    as the target of a call instruction.  */
 #define TC_FORCE_RELOCATION_SUB_SAME(FIX, SEG)	\
-  ((FIX)->fx_tcbit				\
-   || ! SEG_NORMAL (SEG)			\
+  (GENERIC_FORCE_RELOCATION_SUB_SAME (FIX, SEG)	\
+   || (FIX)->fx_tcbit				\
    || TC_FORCE_RELOCATION (FIX))
 
 /* reloc_callj() may replace a 'call' with a 'calls' or a
@@ -136,8 +136,7 @@ extern int reloc_callj (struct fix *);
    || reloc_callj (FIX))
 
 #define TC_FORCE_RELOCATION_LOCAL(FIX)		\
-  (!(FIX)->fx_pcrel				\
-   || TC_FORCE_RELOCATION (FIX)		\
+  (GENERIC_FORCE_RELOCATION_LOCAL (FIX)		\
    || reloc_callj (FIX))
 
 #ifdef OBJ_COFF

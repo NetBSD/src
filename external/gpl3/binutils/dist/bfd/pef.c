@@ -1,5 +1,5 @@
 /* PEF support for BFD.
-   Copyright (C) 1999-2016 Free Software Foundation, Inc.
+   Copyright (C) 1999-2018 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -34,40 +34,41 @@
 #define BFD_IO_FUNCS 0
 #endif
 
-#define bfd_pef_close_and_cleanup                   _bfd_generic_close_and_cleanup
-#define bfd_pef_bfd_free_cached_info                _bfd_generic_bfd_free_cached_info
-#define bfd_pef_new_section_hook                    _bfd_generic_new_section_hook
-#define bfd_pef_bfd_is_local_label_name             bfd_generic_is_local_label_name
+#define bfd_pef_close_and_cleanup		    _bfd_generic_close_and_cleanup
+#define bfd_pef_bfd_free_cached_info		    _bfd_generic_bfd_free_cached_info
+#define bfd_pef_new_section_hook		    _bfd_generic_new_section_hook
+#define bfd_pef_bfd_is_local_label_name		    bfd_generic_is_local_label_name
 #define bfd_pef_bfd_is_target_special_symbol ((bfd_boolean (*) (bfd *, asymbol *)) bfd_false)
-#define bfd_pef_get_lineno                          _bfd_nosymbols_get_lineno
-#define bfd_pef_find_nearest_line                   _bfd_nosymbols_find_nearest_line
-#define bfd_pef_find_line                           _bfd_nosymbols_find_line
-#define bfd_pef_find_inliner_info                   _bfd_nosymbols_find_inliner_info
+#define bfd_pef_get_lineno			    _bfd_nosymbols_get_lineno
+#define bfd_pef_find_nearest_line		    _bfd_nosymbols_find_nearest_line
+#define bfd_pef_find_line			    _bfd_nosymbols_find_line
+#define bfd_pef_find_inliner_info		    _bfd_nosymbols_find_inliner_info
 #define bfd_pef_get_symbol_version_string	    _bfd_nosymbols_get_symbol_version_string
-#define bfd_pef_bfd_make_debug_symbol               _bfd_nosymbols_bfd_make_debug_symbol
-#define bfd_pef_read_minisymbols                    _bfd_generic_read_minisymbols
-#define bfd_pef_minisymbol_to_symbol                _bfd_generic_minisymbol_to_symbol
-#define bfd_pef_set_arch_mach                       _bfd_generic_set_arch_mach
-#define bfd_pef_get_section_contents                _bfd_generic_get_section_contents
-#define bfd_pef_set_section_contents                _bfd_generic_set_section_contents
+#define bfd_pef_bfd_make_debug_symbol		    _bfd_nosymbols_bfd_make_debug_symbol
+#define bfd_pef_read_minisymbols		    _bfd_generic_read_minisymbols
+#define bfd_pef_minisymbol_to_symbol		    _bfd_generic_minisymbol_to_symbol
+#define bfd_pef_set_arch_mach			    _bfd_generic_set_arch_mach
+#define bfd_pef_get_section_contents		    _bfd_generic_get_section_contents
+#define bfd_pef_set_section_contents		    _bfd_generic_set_section_contents
 #define bfd_pef_bfd_get_relocated_section_contents  bfd_generic_get_relocated_section_contents
-#define bfd_pef_bfd_relax_section                   bfd_generic_relax_section
-#define bfd_pef_bfd_gc_sections                     bfd_generic_gc_sections
-#define bfd_pef_bfd_lookup_section_flags            bfd_generic_lookup_section_flags
-#define bfd_pef_bfd_merge_sections                  bfd_generic_merge_sections
+#define bfd_pef_bfd_relax_section		    bfd_generic_relax_section
+#define bfd_pef_bfd_gc_sections			    bfd_generic_gc_sections
+#define bfd_pef_bfd_lookup_section_flags	    bfd_generic_lookup_section_flags
+#define bfd_pef_bfd_merge_sections		    bfd_generic_merge_sections
 #define bfd_pef_bfd_is_group_section		    bfd_generic_is_group_section
-#define bfd_pef_bfd_discard_group                   bfd_generic_discard_group
-#define bfd_pef_section_already_linked	            _bfd_generic_section_already_linked
-#define bfd_pef_bfd_define_common_symbol            bfd_generic_define_common_symbol
-#define bfd_pef_bfd_link_hash_table_create          _bfd_generic_link_hash_table_create
-#define bfd_pef_bfd_link_add_symbols                _bfd_generic_link_add_symbols
-#define bfd_pef_bfd_link_just_syms                  _bfd_generic_link_just_syms
+#define bfd_pef_bfd_discard_group		    bfd_generic_discard_group
+#define bfd_pef_section_already_linked		    _bfd_generic_section_already_linked
+#define bfd_pef_bfd_define_common_symbol	    bfd_generic_define_common_symbol
+#define bfd_pef_bfd_define_start_stop		    bfd_generic_define_start_stop
+#define bfd_pef_bfd_link_hash_table_create	    _bfd_generic_link_hash_table_create
+#define bfd_pef_bfd_link_add_symbols		    _bfd_generic_link_add_symbols
+#define bfd_pef_bfd_link_just_syms		    _bfd_generic_link_just_syms
 #define bfd_pef_bfd_copy_link_hash_symbol_type \
   _bfd_generic_copy_link_hash_symbol_type
-#define bfd_pef_bfd_final_link                      _bfd_generic_final_link
-#define bfd_pef_bfd_link_split_section              _bfd_generic_link_split_section
-#define bfd_pef_get_section_contents_in_window      _bfd_generic_get_section_contents_in_window
-#define bfd_pef_bfd_link_check_relocs               _bfd_generic_link_check_relocs
+#define bfd_pef_bfd_final_link			    _bfd_generic_final_link
+#define bfd_pef_bfd_link_split_section		    _bfd_generic_link_split_section
+#define bfd_pef_get_section_contents_in_window	    _bfd_generic_get_section_contents_in_window
+#define bfd_pef_bfd_link_check_relocs		    _bfd_generic_link_check_relocs
 
 static int
 bfd_pef_parse_traceback_table (bfd *abfd,
@@ -522,8 +523,8 @@ bfd_pef_scan (bfd *abfd,
   bfd_pef_convert_architecture (header->architecture, &cputype, &cpusubtype);
   if (cputype == bfd_arch_unknown)
     {
-      (*_bfd_error_handler) (_("bfd_pef_scan: unknown architecture 0x%lx"),
-			       header->architecture);
+      _bfd_error_handler (_("bfd_pef_scan: unknown architecture 0x%lx"),
+			  header->architecture);
       return -1;
     }
   bfd_set_arch_mach (abfd, cputype, cpusubtype);
@@ -1056,11 +1057,11 @@ const bfd_target pef_vec =
   NULL
 };
 
-#define bfd_pef_xlib_close_and_cleanup              _bfd_generic_close_and_cleanup
-#define bfd_pef_xlib_bfd_free_cached_info           _bfd_generic_bfd_free_cached_info
-#define bfd_pef_xlib_new_section_hook               _bfd_generic_new_section_hook
-#define bfd_pef_xlib_get_section_contents           _bfd_generic_get_section_contents
-#define bfd_pef_xlib_set_section_contents           _bfd_generic_set_section_contents
+#define bfd_pef_xlib_close_and_cleanup		    _bfd_generic_close_and_cleanup
+#define bfd_pef_xlib_bfd_free_cached_info	    _bfd_generic_bfd_free_cached_info
+#define bfd_pef_xlib_new_section_hook		    _bfd_generic_new_section_hook
+#define bfd_pef_xlib_get_section_contents	    _bfd_generic_get_section_contents
+#define bfd_pef_xlib_set_section_contents	    _bfd_generic_set_section_contents
 #define bfd_pef_xlib_get_section_contents_in_window _bfd_generic_get_section_contents_in_window
 #define bfd_pef_xlib_set_section_contents_in_window _bfd_generic_set_section_contents_in_window
 

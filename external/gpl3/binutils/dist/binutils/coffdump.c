@@ -1,5 +1,5 @@
 /* Coff file dumper.
-   Copyright (C) 1994-2016 Free Software Foundation, Inc.
+   Copyright (C) 1994-2018 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -267,6 +267,7 @@ dump_coff_where (struct coff_where *p)
       break;
     case coff_where_strtag:
       printf ("STRTAG");
+      break;
     case coff_where_entag:
       printf ("ENTAG");
       break;

@@ -1,5 +1,5 @@
 /* tc-h8300.c -- Assemble code for the Renesas H8/300
-   Copyright (C) 1991-2016 Free Software Foundation, Inc.
+   Copyright (C) 1991-2018 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -1432,6 +1432,7 @@ do_a_fix_imm (int offset, int nibble, struct h8_op *operand, int relaxmode, cons
 	  break;
 	default:
 	  as_bad (_("Can't work out size of operand.\n"));
+	  /* Fall through.  */
 	case L_16:
 	case L_16U:
 	  size = 2;

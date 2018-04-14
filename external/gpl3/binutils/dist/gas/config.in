@@ -144,6 +144,9 @@
 /* Define to 1 if you have the <string.h> header file. */
 #undef HAVE_STRING_H
 
+/* Define to 1 if you have the `strsignal' function. */
+#undef HAVE_STRSIGNAL
+
 /* Define if <sys/stat.h> has struct stat.st_mtim.tv_nsec */
 #undef HAVE_ST_MTIM_TV_NSEC
 

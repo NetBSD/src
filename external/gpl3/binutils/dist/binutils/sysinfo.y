@@ -1,4 +1,4 @@
-/* Copyright (C) 2001-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2001-2018 Free Software Foundation, Inc.
    Written by Steve Chamberlain of Cygnus Support (steve@cygnus.com).
 
    This file is part of GNU binutils.
@@ -21,6 +21,7 @@
 %{
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 static char writecode;
 static char *it;
@@ -153,13 +154,14 @@ it:
     break;
   case 'g':
     printf("\tchecksum(ffile,raw, idx, IT_%s_CODE);\n", it);
-
+    /* Fall through.  */
   case 'i':
-
   case 'o':
   case 'c':
     printf("}\n");
   }
+
+  free (it);
 }
 ;
 
@@ -182,6 +184,7 @@ repeat_it_field: '(' REPEAT NAME
 	      printf("\tprintf(\"repeat %%d\\n\", %s);\n",$3);
 	      if (rdepth==2)
 	      printf("\tprintf(\"repeat %%d\\n\", %s[n]);\n",$3);
+	      /* Fall through.  */
 	    case 'i':
 	    case 'g':
 	    case 'o':
@@ -204,6 +207,8 @@ repeat_it_field: '(' REPEAT NAME
 	 it_field_list ')'
 
 	{
+	  free (repeat);
+
 	  repeat = oldrepeat;
 	  oldrepeat =0;
 	  rdepth--;
@@ -230,6 +235,8 @@ cond_it_field: '(' COND NAME
 	      printf("\tif (%s) {\n", $3);
 	      break;
 	    }
+
+	  free ($3);
 	}
 
 	 it_field_list ')'
@@ -348,6 +355,9 @@ char *ptr = pnames[rdepth];
 	      else abort();
 		  break;
 		}
+
+	  free (desc);
+	  free (id);
 	}
 
 	;
@@ -371,7 +381,7 @@ attr_size:
 
 attr_id:
 		'(' NAME ')'	{ $$ = $2; }
-	|	{ $$ = "dummy";}
+	|	{ $$ = strdup ("dummy");}
 	;
 
 enums:
@@ -388,6 +398,9 @@ enum_list:
 	    case 'c':
 		printf("if (ptr->%s%s == %s) { tabout(); printf(\"%s\\n\");}\n", name, names[rdepth],$4,$3);
 	    }
+
+	  free ($3);
+	  free ($4);
 	}
 
 	;

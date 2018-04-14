@@ -1,4 +1,4 @@
-@c Copyright (C) 2009-2016 Free Software Foundation, Inc.
+@c Copyright (C) 2009-2018 Free Software Foundation, Inc.
 @c Contributed by ARM Ltd.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
@@ -57,11 +57,15 @@ message if an attempt is made to assemble an instruction which will not execute
 on the target processor.  The following processor names are recognized:
 @code{cortex-a35},
 @code{cortex-a53},
+@code{cortex-a55},
 @code{cortex-a57},
 @code{cortex-a72},
 @code{cortex-a73},
+@code{cortex-a75},
 @code{exynos-m1},
+@code{falkor},
 @code{qdf24xx},
+@code{saphira},
 @code{thunderx},
 @code{vulcan},
 @code{xgene1}
@@ -86,7 +90,7 @@ This option specifies the target architecture.  The assembler will
 issue an error message if an attempt is made to assemble an
 instruction which will not execute on the target architecture.  The
 following architecture names are recognized: @code{armv8-a},
-@code{armv8.1-a} and @code{armv8.2-a}.
+@code{armv8.1-a}, @code{armv8.2-a}, @code{armv8.3-a} and @code{armv8.4-a}.
 
 If both @option{-mcpu} and @option{-march} are specified, the
 assembler will use the setting for @option{-mcpu}.  If neither are
@@ -130,10 +134,21 @@ automatically cause those extensions to be disabled.
 @multitable @columnfractions .12 .17 .17 .54
 @headitem Extension @tab Minimum Architecture @tab Enabled by default
  @tab Description
+@item @code{compnum} @tab ARMv8.2-A @tab ARMv8.3-A or later
+ @tab Enable the complex number SIMD extensions.  This implies
+ @code{fp16} and @code{simd}.
 @item @code{crc} @tab ARMv8-A @tab ARMv8.1-A or later
  @tab Enable CRC instructions.
 @item @code{crypto} @tab ARMv8-A @tab No
- @tab Enable cryptographic extensions.  This implies @code{fp} and @code{simd}.
+ @tab Enable cryptographic extensions.  This implies @code{fp}, @code{simd}, @code{aes} and @code{sha2}.
+@item @code{aes} @tab ARMv8-A @tab No
+ @tab Enable the AES cryptographic extensions. This implies @code{fp} and @code{simd}.
+@item @code{sha2} @tab ARMv8-A @tab No
+ @tab Enable the SHA2 cryptographic extensions. This implies @code{fp} and @code{simd}.
+@item @code{sha3} @tab ARMv8.2-A @tab No
+ @tab Enable the ARMv8.2-A SHA2 and SHA3 cryptographic extensions. This implies @code{fp}, @code{simd} and @code{sha2}.
+@item @code{sm4} @tab ARMv8.2-A @tab No
+ @tab Enable the ARMv8.2-A SM3 and SM4 cryptographic extensions. This implies @code{fp} and @code{simd}.
 @item @code{fp} @tab ARMv8-A @tab ARMv8-A or later
  @tab Enable floating-point extensions.
 @item @code{fp16} @tab ARMv8.2-A @tab ARMv8.2-A or later
@@ -150,10 +165,20 @@ automatically cause those extensions to be disabled.
 @item @code{ras} @tab ARMv8-A @tab ARMv8.2-A or later
  @tab Enable the Reliability, Availability and Serviceability
  extension.
+@item @code{rcpc} @tab ARMv8.2-A @tab ARMv8.3-A or later
+ @tab Enable the weak release consistency extension.
 @item @code{rdma} @tab ARMv8-A @tab ARMv8.1-A or later
  @tab Enable ARMv8.1 Advanced SIMD extensions.  This implies @code{simd}.
 @item @code{simd} @tab ARMv8-A @tab ARMv8-A or later
  @tab Enable Advanced SIMD extensions.  This implies @code{fp}.
+@item @code{sve} @tab ARMv8.2-A @tab No
+ @tab Enable the Scalable Vector Extensions.  This implies @code{fp16},
+ @code{simd} and @code{compnum}.
+@item @code{dotprod} @tab ARMv8.2-A @tab ARMv8.4-A or later
+ @tab Enable the Dot Product extension.  This implies @code{simd}.
+@item @code{fp16fml} @tab ARMv8.2-A @tab ARMv8.4-A or later
+ @tab Enable ARMv8.2 16-bit floating-point multiplication variant support.
+ This implies @code{fp16}.
 @end multitable
 
 @node AArch64 Syntax
@@ -349,6 +374,9 @@ example:
 @smallexample
         foo .req w0
 @end smallexample
+
+ip0, ip1, lr and fp are automatically defined to
+alias to X16, X17, X30 and X29 respectively.
 
 @c SSSSSSSSSSSSSSSSSSSSSSSSSS
 

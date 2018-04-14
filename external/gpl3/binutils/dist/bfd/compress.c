@@ -1,5 +1,5 @@
 /* Compressed section support (intended for debug sections).
-   Copyright (C) 2008-2016 Free Software Foundation, Inc.
+   Copyright (C) 2008-2018 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -54,7 +54,7 @@ decompress_contents (bfd_byte *compressed_buffer,
       if (rc != Z_OK)
 	break;
       strm.next_out = ((Bytef*) uncompressed_buffer
-                       + (uncompressed_size - strm.avail_out));
+		       + (uncompressed_size - strm.avail_out));
       rc = inflate (&strm, Z_FINISH);
       if (rc != Z_STREAM_END)
 	break;
@@ -106,7 +106,7 @@ bfd_compress_section_contents (bfd *abfd, sec_ptr sec,
       if (orig_compression_header_size == 0)
 	{
 	  /* Convert it from .zdebug* section.  Get the uncompressed
-	     size first.  We need to substract the 12-byte overhead in
+	     size first.  We need to subtract the 12-byte overhead in
 	     .zdebug* section.  Set orig_compression_header_size to
 	     the 12-bye overhead.  */
 	  orig_compression_header_size = 12;
@@ -247,7 +247,15 @@ bfd_get_full_section_contents (bfd *abfd, sec_ptr sec, bfd_byte **ptr)
 	{
 	  p = (bfd_byte *) bfd_malloc (sz);
 	  if (p == NULL)
-	    return FALSE;
+	    {
+	      /* PR 20801: Provide a more helpful error message.  */
+	      if (bfd_get_error () == bfd_error_no_memory)
+		_bfd_error_handler
+		  /* xgettext:c-format */
+		  (_("error: %B(%A) is too large (%#Lx bytes)"),
+		  abfd, sec, sz);
+	      return FALSE;
+	    }
 	}
 
       if (!bfd_get_section_contents (abfd, sec, p, 0, sz))
@@ -292,7 +300,7 @@ bfd_get_full_section_contents (bfd *abfd, sec_ptr sec, bfd_byte **ptr)
 	   SHF_COMPRESSED section.  */
 	compression_header_size = 12;
       if (!decompress_contents (compressed_buffer + compression_header_size,
-				sec->compressed_size, p, sz))
+				sec->compressed_size - compression_header_size, p, sz))
 	{
 	  bfd_set_error (bfd_error_bad_value);
 	  if (p != *ptr)
@@ -389,7 +397,7 @@ bfd_is_section_compressed_with_header (bfd *abfd, sec_ptr sec,
   if (bfd_get_section_contents (abfd, sec, header, 0, header_size))
     {
       if (compression_header_size == 0)
-        /* In this case, it should be "ZLIB" followed by the uncompressed
+	/* In this case, it should be "ZLIB" followed by the uncompressed
 	   section size, 8 bytes in big-endian order.  */
 	compressed = CONST_STRNEQ ((char*) header , "ZLIB");
       else
@@ -534,7 +542,6 @@ bfd_init_section_compress_status (bfd *abfd, sec_ptr sec)
 {
   bfd_size_type uncompressed_size;
   bfd_byte *uncompressed_buffer;
-  bfd_boolean ret;
 
   /* Error if not opened for read.  */
   if (abfd->direction != read_direction
@@ -550,18 +557,18 @@ bfd_init_section_compress_status (bfd *abfd, sec_ptr sec)
   /* Read in the full section contents and compress it.  */
   uncompressed_size = sec->size;
   uncompressed_buffer = (bfd_byte *) bfd_malloc (uncompressed_size);
+  /* PR 21431 */
+  if (uncompressed_buffer == NULL)
+    return FALSE;
+
   if (!bfd_get_section_contents (abfd, sec, uncompressed_buffer,
 				 0, uncompressed_size))
-    ret = FALSE;
-  else
-    {
-      uncompressed_size = bfd_compress_section_contents (abfd, sec,
-							 uncompressed_buffer,
-							 uncompressed_size);
-      ret = uncompressed_size != 0;
-    }
+    return FALSE;
 
-  return ret;
+  uncompressed_size = bfd_compress_section_contents (abfd, sec,
+						     uncompressed_buffer,
+						     uncompressed_size);
+  return uncompressed_size != 0;
 }
 
 /*

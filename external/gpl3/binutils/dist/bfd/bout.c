@@ -1,5 +1,5 @@
 /* BFD back-end for Intel 960 b.out binaries.
-   Copyright (C) 1990-2016 Free Software Foundation, Inc.
+   Copyright (C) 1990-2018 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -476,7 +476,7 @@ b_out_write_object_contents (bfd *abfd)
 /* Some reloc hackery.  */
 
 #define CALLS	  0x66003800	/* Template for 'calls' instruction	*/
-#define BAL	  0x0b000000	/* Template for 'bal' instruction 	*/
+#define BAL	  0x0b000000	/* Template for 'bal' instruction	*/
 #define BAL_MASK  0x00ffffff
 #define BALX	  0x85f00000	/* Template for 'balx' instruction	*/
 #define BALX_MASK 0x0007ffff
@@ -613,9 +613,9 @@ callj_callback (bfd *abfd,
   else if ((symbol->symbol.flags & BSF_SECTION_SYM) != 0)
     {
       /* A callj against a symbol in the same section is a fully
-         resolved relative call.  We don't need to do anything here.
-         If the symbol is not in the same section, I'm not sure what
-         to do; fortunately, this case will probably never arise.  */
+	 resolved relative call.  We don't need to do anything here.
+	 If the symbol is not in the same section, I'm not sure what
+	 to do; fortunately, this case will probably never arise.  */
       BFD_ASSERT (! shrinking);
       BFD_ASSERT (symbol->symbol.section == input_section);
     }
@@ -1372,26 +1372,28 @@ b_out_bfd_get_relocated_section_contents (bfd *output_bfd,
 
 /* Build the transfer vectors for Big and Little-Endian B.OUT files.  */
 
-#define aout_32_find_line                      _bfd_nosymbols_find_line
+#define aout_32_find_line		       _bfd_nosymbols_find_line
 #define aout_32_get_symbol_version_string      _bfd_nosymbols_get_symbol_version_string
-#define aout_32_bfd_make_debug_symbol          _bfd_nosymbols_bfd_make_debug_symbol
-#define aout_32_close_and_cleanup              aout_32_bfd_free_cached_info
+#define aout_32_bfd_make_debug_symbol	       _bfd_nosymbols_bfd_make_debug_symbol
+#define aout_32_close_and_cleanup	       aout_32_bfd_free_cached_info
 #define b_out_bfd_link_hash_table_create       _bfd_generic_link_hash_table_create
-#define b_out_bfd_link_add_symbols             _bfd_generic_link_add_symbols
-#define b_out_bfd_link_just_syms               _bfd_generic_link_just_syms
+#define b_out_bfd_link_add_symbols	       _bfd_generic_link_add_symbols
+#define b_out_bfd_link_just_syms	       _bfd_generic_link_just_syms
 #define b_out_bfd_copy_link_hash_symbol_type \
   _bfd_generic_copy_link_hash_symbol_type
-#define b_out_bfd_final_link                   _bfd_generic_final_link
-#define b_out_bfd_link_split_section           _bfd_generic_link_split_section
-#define b_out_bfd_gc_sections                  bfd_generic_gc_sections
-#define b_out_bfd_lookup_section_flags         bfd_generic_lookup_section_flags
-#define b_out_bfd_merge_sections               bfd_generic_merge_sections
-#define b_out_bfd_is_group_section             bfd_generic_is_group_section
-#define b_out_bfd_discard_group                bfd_generic_discard_group
-#define b_out_section_already_linked           _bfd_generic_section_already_linked
-#define b_out_bfd_define_common_symbol         bfd_generic_define_common_symbol
+#define b_out_bfd_final_link		       _bfd_generic_final_link
+#define b_out_bfd_link_split_section	       _bfd_generic_link_split_section
+#define b_out_bfd_gc_sections		       bfd_generic_gc_sections
+#define b_out_bfd_lookup_section_flags	       bfd_generic_lookup_section_flags
+#define b_out_bfd_merge_sections	       bfd_generic_merge_sections
+#define b_out_bfd_is_group_section	       bfd_generic_is_group_section
+#define b_out_bfd_discard_group		       bfd_generic_discard_group
+#define b_out_section_already_linked	       _bfd_generic_section_already_linked
+#define b_out_bfd_define_common_symbol	       bfd_generic_define_common_symbol
+#define b_out_bfd_define_start_stop	       bfd_generic_define_start_stop
 #define aout_32_get_section_contents_in_window _bfd_generic_get_section_contents_in_window
-#define b_out_bfd_link_check_relocs            _bfd_generic_link_check_relocs
+#define b_out_bfd_link_check_relocs	       _bfd_generic_link_check_relocs
+#define b_out_set_reloc			       _bfd_generic_set_reloc
 
 extern const bfd_target bout_le_vec;
 

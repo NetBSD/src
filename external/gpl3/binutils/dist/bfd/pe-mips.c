@@ -1,5 +1,5 @@
 /* BFD back-end for MIPS PE COFF files.
-   Copyright (C) 1990-2016 Free Software Foundation, Inc.
+   Copyright (C) 1990-2018 Free Software Foundation, Inc.
    Modified from coff-i386.c by DJ Delorie, dj@cygnus.com
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -210,7 +210,7 @@ static reloc_howto_type howto_table[] =
 	 FALSE,			/* PC_relative.  */
 	 0,			/* Bitpos. */
 	 complain_overflow_dont, /* Complain_on_overflow. */
-	 			/* This needs complex overflow
+				/* This needs complex overflow
 				   detection, because the upper four
 				   bits must match the PC.  */
 	 coff_mips_reloc,	/* Special_function. */
@@ -309,34 +309,34 @@ static reloc_howto_type howto_table[] =
   EMPTY_HOWTO (31),
   EMPTY_HOWTO (32),
   EMPTY_HOWTO (33),
-  HOWTO (MIPS_R_RVA,            /* Type.  */
-	 0,	                /* Rightshift.  */
-	 2,	                /* Size (0 = byte, 1 = short, 2 = long).  */
-	 32,	                /* Bitsize.  */
-	 FALSE,	                /* PC_relative.  */
-	 0,	                /* Bitpos. */
+  HOWTO (MIPS_R_RVA,		/* Type.  */
+	 0,			/* Rightshift.  */
+	 2,			/* Size (0 = byte, 1 = short, 2 = long).  */
+	 32,			/* Bitsize.  */
+	 FALSE,			/* PC_relative.  */
+	 0,			/* Bitpos. */
 	 complain_overflow_bitfield, /* Complain_on_overflow. */
-	 coff_mips_reloc,       /* Special_function. */
-	 "rva32",	        /* Name. */
-	 TRUE,	                /* Partial_inplace. */
-	 0xffffffff,            /* Src_mask. */
-	 0xffffffff,            /* Dst_mask. */
-	 FALSE),                /* Pcrel_offset. */
+	 coff_mips_reloc,	/* Special_function. */
+	 "rva32",		/* Name. */
+	 TRUE,			/* Partial_inplace. */
+	 0xffffffff,		/* Src_mask. */
+	 0xffffffff,		/* Dst_mask. */
+	 FALSE),		/* Pcrel_offset. */
   EMPTY_HOWTO (35),
   EMPTY_HOWTO (36),
-  HOWTO (MIPS_R_PAIR,           /* Type.  */
-	 0,	                /* Rightshift.  */
-	 2,	                /* Size (0 = byte, 1 = short, 2 = long).  */
-	 32,	                /* Bitsize.  */
-	 FALSE,	                /* PC_relative.  */
-	 0,	                /* Bitpos. */
+  HOWTO (MIPS_R_PAIR,		/* Type.  */
+	 0,			/* Rightshift.  */
+	 2,			/* Size (0 = byte, 1 = short, 2 = long).  */
+	 32,			/* Bitsize.  */
+	 FALSE,			/* PC_relative.  */
+	 0,			/* Bitpos. */
 	 complain_overflow_bitfield, /* Complain_on_overflow. */
-	 coff_mips_reloc,       /* Special_function. */
-	 "PAIR",	        /* Name. */
-	 TRUE,	                /* Partial_inplace. */
-	 0xffffffff,            /* Src_mask. */
-	 0xffffffff,            /* Dst_mask. */
-	 FALSE),                /* Pcrel_offset. */
+	 coff_mips_reloc,	/* Special_function. */
+	 "PAIR",		/* Name. */
+	 TRUE,			/* Partial_inplace. */
+	 0xffffffff,		/* Src_mask. */
+	 0xffffffff,		/* Dst_mask. */
+	 FALSE),		/* Pcrel_offset. */
 };
 
 #define NUM_HOWTOS (sizeof (howto_table) / sizeof (howto_table[0]))
@@ -344,7 +344,7 @@ static reloc_howto_type howto_table[] =
 /* Turn a howto into a reloc nunmber.  */
 
 #define SELECT_RELOC(x, howto) { x.r_type = howto->type; }
-#define BADMAG(x)              MIPSBADMAG (x)
+#define BADMAG(x)	       MIPSBADMAG (x)
 
 /* Customize coffcode.h.  */
 #define MIPS 1
@@ -373,7 +373,7 @@ static reloc_howto_type howto_table[] =
     coff_symbol_type *coffsym = NULL;				\
     if (ptr && bfd_asymbol_bfd (ptr) != abfd)			\
       coffsym = (obj_symbols (abfd)				\
-	         + (cache_ptr->sym_ptr_ptr - symbols));		\
+		 + (cache_ptr->sym_ptr_ptr - symbols));		\
     else if (ptr)						\
       coffsym = coff_symbol_from (ptr);				\
     if (coffsym != NULL						\
@@ -447,11 +447,11 @@ coff_mips_rtype_to_howto (bfd *abfd ATTRIBUTE_UNUSED,
       *addendp -= 4;
 
       /* If the symbol is defined, then the generic code is going to
-         add back the symbol value in order to cancel out an
-         adjustment it made to the addend.  However, we set the addend
-         to 0 at the start of this function.  We need to adjust here,
-         to avoid the adjustment the generic code will make.  FIXME:
-         This is getting a bit hackish.  */
+	 add back the symbol value in order to cancel out an
+	 adjustment it made to the addend.  However, we set the addend
+	 to 0 at the start of this function.  We need to adjust here,
+	 to avoid the adjustment the generic code will make.  FIXME:
+	 This is getting a bit hackish.  */
       if (sym != NULL && sym->n_scnum != 0)
 	*addendp -= sym->n_value;
     }
@@ -463,7 +463,7 @@ coff_mips_rtype_to_howto (bfd *abfd ATTRIBUTE_UNUSED,
   return howto;
 }
 
-#define coff_rtype_to_howto         coff_mips_rtype_to_howto
+#define coff_rtype_to_howto	    coff_mips_rtype_to_howto
 #define coff_bfd_reloc_type_lookup  coff_mips_reloc_type_lookup
 #define coff_bfd_reloc_name_lookup coff_mips_reloc_name_lookup
 
@@ -605,7 +605,7 @@ coff_pe_mips_relocate_section (bfd *output_bfd,
 
   if (bfd_link_relocatable (info))
     {
-      (*_bfd_error_handler)
+      _bfd_error_handler
 	(_("%B: `ld -r' not supported with PE MIPS objects\n"), input_bfd);
       bfd_set_error (bfd_error_bad_value);
       return FALSE;
@@ -641,9 +641,9 @@ coff_pe_mips_relocate_section (bfd *output_bfd,
 	}
 
       /* COFF treats common symbols in one of two ways.  Either the
-         size of the symbol is included in the section contents, or it
-         is not.  We assume that the size is not included, and force
-         the rtype_to_howto function to adjust the addend as needed.  */
+	 size of the symbol is included in the section contents, or it
+	 is not.  We assume that the size is not included, and force
+	 the rtype_to_howto function to adjust the addend as needed.  */
 
       if (sym != NULL && sym->n_scnum != 0)
 	addend = - sym->n_value;
@@ -656,9 +656,9 @@ coff_pe_mips_relocate_section (bfd *output_bfd,
 	return FALSE;
 
       /* If we are doing a relocatable link, then we can just ignore
-         a PC relative reloc that is pcrel_offset.  It will already
-         have the correct value.  If this is not a relocatable link,
-         then we should ignore the symbol value.  */
+	 a PC relative reloc that is pcrel_offset.  It will already
+	 have the correct value.  If this is not a relocatable link,
+	 then we should ignore the symbol value.  */
       if (howto->pc_relative && howto->pcrel_offset)
 	{
 	  if (bfd_link_relocatable (info))
@@ -681,7 +681,7 @@ coff_pe_mips_relocate_section (bfd *output_bfd,
 	  else
 	    {
 	      sec = sections[symndx];
-              val = (sec->output_section->vma
+	      val = (sec->output_section->vma
 		     + sec->output_offset
 		     + sym->n_value);
 	      if (! obj_pe (input_bfd))
@@ -715,9 +715,11 @@ coff_pe_mips_relocate_section (bfd *output_bfd,
 	   mem = pointer to memory we're fixing up
 	   val = VMA of what we need to refer to.  */
 
-#define UI(x) (*_bfd_error_handler) (_("%B: unimplemented %s\n"), \
-				     input_bfd, x); \
-	      bfd_set_error (bfd_error_bad_value);
+#define UI(x)						       \
+      /* xgettext:c-format */				       \
+	_bfd_error_handler (_("%B: unimplemented %s\n"),       \
+			    input_bfd, x);		       \
+	bfd_set_error (bfd_error_bad_value);
 
       switch (rel->r_type)
 	{
@@ -741,7 +743,7 @@ coff_pe_mips_relocate_section (bfd *output_bfd,
 	  targ = val + (tmp & 0x03ffffff) * 4;
 	  if ((src & 0xf0000000) != (targ & 0xf0000000))
 	    {
-	      (*_bfd_error_handler) (_("%B: jump too far away\n"), input_bfd);
+	      _bfd_error_handler (_("%B: jump too far away\n"), input_bfd);
 	      bfd_set_error (bfd_error_bad_value);
 	      return FALSE;
 	    }
@@ -767,8 +769,8 @@ coff_pe_mips_relocate_section (bfd *output_bfd,
 	      targ = val + low + ((tmp & 0xffff) << 16);
 	      break;
 	    default:
-	      (*_bfd_error_handler) (_("%B: bad pair/reflo after refhi\n"),
-				     input_bfd);
+	      _bfd_error_handler (_("%B: bad pair/reflo after refhi\n"),
+				  input_bfd);
 	      bfd_set_error (bfd_error_bad_value);
 	      return FALSE;
 	    }

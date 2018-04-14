@@ -1,5 +1,5 @@
 /* BFD i370 CPU definition
-   Copyright (C) 1994-2016 Free Software Foundation, Inc.
+   Copyright (C) 1994-2018 Free Software Foundation, Inc.
    Contributed by Ian Lance Taylor, Cygnus Support.
    Hacked by Linas Vepstas <linas@linas.org> in 1998, 1999
 
@@ -28,30 +28,30 @@ static const bfd_arch_info_type arch_info_struct[] =
 {
   /* Hack alert: old old machines are really 16 and 24 bit arch ...  */
   {
-    32, 	/* 32 bits in a word.  */
-    32, 	/* 32 bits in an address.  */
-    8,  	/* 8 bits in a byte.  */
+    32,		/* 32 bits in a word.  */
+    32,		/* 32 bits in an address.  */
+    8,		/* 8 bits in a byte.  */
     bfd_arch_i370,
-    360, 	/* For the 360.  */
+    360,	/* For the 360.  */
     "i370",
     "i370:360",
     3,
-    FALSE, 	/* Not the default.  */
+    FALSE,	/* Not the default.  */
     bfd_default_compatible,
     bfd_default_scan,
     bfd_arch_default_fill,
     &arch_info_struct[1]
   },
   {
-    32, 	/* 32 bits in a word.  */
-    32, 	/* 32 bits in an address.  */
-    8,  	/* 8 bits in a byte.  */
+    32,		/* 32 bits in a word.  */
+    32,		/* 32 bits in an address.  */
+    8,		/* 8 bits in a byte.  */
     bfd_arch_i370,
-    370, 	/* For the 370.  */
+    370,	/* For the 370.  */
     "i370",
     "i370:370",
     3,
-    FALSE, 	/* Not the default.  */
+    FALSE,	/* Not the default.  */
     bfd_default_compatible,
     bfd_default_scan,
     bfd_arch_default_fill,
@@ -61,15 +61,15 @@ static const bfd_arch_info_type arch_info_struct[] =
 
 const bfd_arch_info_type bfd_i370_arch =
 {
-  32, 		/* 32 bits in a word.  */
-  32, 		/* 32 bits in an address.  */
-  8,  		/* 8 bits in a byte.  */
+  32,		/* 32 bits in a word.  */
+  32,		/* 32 bits in an address.  */
+  8,		/* 8 bits in a byte.  */
   bfd_arch_i370,
   0,		/* For the 360/370 common architecture.  */
   "i370",
   "i370:common",
   3,
-  TRUE, 	/* The default.  */
+  TRUE,		/* The default.  */
   bfd_default_compatible,
   bfd_default_scan,
   bfd_arch_default_fill,

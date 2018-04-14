@@ -1,5 +1,5 @@
 /* Generic ECOFF swapping routines, for BFD.
-   Copyright (C) 1992-2016 Free Software Foundation, Inc.
+   Copyright (C) 1992-2018 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -102,31 +102,31 @@ ecoff_swap_hdr_in (bfd *abfd, void * ext_copy, HDRR *intern)
 
   *ext = *(struct hdr_ext *) ext_copy;
 
-  intern->magic         = H_GET_S16     (abfd, ext->h_magic);
-  intern->vstamp        = H_GET_S16     (abfd, ext->h_vstamp);
-  intern->ilineMax      = H_GET_32      (abfd, ext->h_ilineMax);
-  intern->cbLine        = ECOFF_GET_OFF (abfd, ext->h_cbLine);
-  intern->cbLineOffset  = ECOFF_GET_OFF (abfd, ext->h_cbLineOffset);
-  intern->idnMax        = H_GET_32      (abfd, ext->h_idnMax);
-  intern->cbDnOffset    = ECOFF_GET_OFF (abfd, ext->h_cbDnOffset);
-  intern->ipdMax        = H_GET_32      (abfd, ext->h_ipdMax);
-  intern->cbPdOffset    = ECOFF_GET_OFF (abfd, ext->h_cbPdOffset);
-  intern->isymMax       = H_GET_32      (abfd, ext->h_isymMax);
-  intern->cbSymOffset   = ECOFF_GET_OFF (abfd, ext->h_cbSymOffset);
-  intern->ioptMax       = H_GET_32      (abfd, ext->h_ioptMax);
-  intern->cbOptOffset   = ECOFF_GET_OFF (abfd, ext->h_cbOptOffset);
-  intern->iauxMax       = H_GET_32      (abfd, ext->h_iauxMax);
-  intern->cbAuxOffset   = ECOFF_GET_OFF (abfd, ext->h_cbAuxOffset);
-  intern->issMax        = H_GET_32      (abfd, ext->h_issMax);
-  intern->cbSsOffset    = ECOFF_GET_OFF (abfd, ext->h_cbSsOffset);
-  intern->issExtMax     = H_GET_32      (abfd, ext->h_issExtMax);
+  intern->magic		= H_GET_S16	(abfd, ext->h_magic);
+  intern->vstamp	= H_GET_S16	(abfd, ext->h_vstamp);
+  intern->ilineMax	= H_GET_32	(abfd, ext->h_ilineMax);
+  intern->cbLine	= ECOFF_GET_OFF (abfd, ext->h_cbLine);
+  intern->cbLineOffset	= ECOFF_GET_OFF (abfd, ext->h_cbLineOffset);
+  intern->idnMax	= H_GET_32	(abfd, ext->h_idnMax);
+  intern->cbDnOffset	= ECOFF_GET_OFF (abfd, ext->h_cbDnOffset);
+  intern->ipdMax	= H_GET_32	(abfd, ext->h_ipdMax);
+  intern->cbPdOffset	= ECOFF_GET_OFF (abfd, ext->h_cbPdOffset);
+  intern->isymMax	= H_GET_32	(abfd, ext->h_isymMax);
+  intern->cbSymOffset	= ECOFF_GET_OFF (abfd, ext->h_cbSymOffset);
+  intern->ioptMax	= H_GET_32	(abfd, ext->h_ioptMax);
+  intern->cbOptOffset	= ECOFF_GET_OFF (abfd, ext->h_cbOptOffset);
+  intern->iauxMax	= H_GET_32	(abfd, ext->h_iauxMax);
+  intern->cbAuxOffset	= ECOFF_GET_OFF (abfd, ext->h_cbAuxOffset);
+  intern->issMax	= H_GET_32	(abfd, ext->h_issMax);
+  intern->cbSsOffset	= ECOFF_GET_OFF (abfd, ext->h_cbSsOffset);
+  intern->issExtMax	= H_GET_32	(abfd, ext->h_issExtMax);
   intern->cbSsExtOffset = ECOFF_GET_OFF (abfd, ext->h_cbSsExtOffset);
-  intern->ifdMax        = H_GET_32      (abfd, ext->h_ifdMax);
-  intern->cbFdOffset    = ECOFF_GET_OFF (abfd, ext->h_cbFdOffset);
-  intern->crfd          = H_GET_32      (abfd, ext->h_crfd);
-  intern->cbRfdOffset   = ECOFF_GET_OFF (abfd, ext->h_cbRfdOffset);
-  intern->iextMax       = H_GET_32      (abfd, ext->h_iextMax);
-  intern->cbExtOffset   = ECOFF_GET_OFF (abfd, ext->h_cbExtOffset);
+  intern->ifdMax	= H_GET_32	(abfd, ext->h_ifdMax);
+  intern->cbFdOffset	= ECOFF_GET_OFF (abfd, ext->h_cbFdOffset);
+  intern->crfd		= H_GET_32	(abfd, ext->h_crfd);
+  intern->cbRfdOffset	= ECOFF_GET_OFF (abfd, ext->h_cbRfdOffset);
+  intern->iextMax	= H_GET_32	(abfd, ext->h_iextMax);
+  intern->cbExtOffset	= ECOFF_GET_OFF (abfd, ext->h_cbExtOffset);
 
 #ifdef TEST
   if (memcmp ((char *) ext, (char *) intern, sizeof (*intern)) != 0)
@@ -144,30 +144,30 @@ ecoff_swap_hdr_out (bfd *abfd, const HDRR *intern_copy, void * ext_ptr)
 
   *intern = *intern_copy;
 
-  H_PUT_S16     (abfd, intern->magic,         ext->h_magic);
-  H_PUT_S16     (abfd, intern->vstamp,        ext->h_vstamp);
-  H_PUT_32      (abfd, intern->ilineMax,      ext->h_ilineMax);
-  ECOFF_PUT_OFF (abfd, intern->cbLine,        ext->h_cbLine);
+  H_PUT_S16	(abfd, intern->magic,	      ext->h_magic);
+  H_PUT_S16	(abfd, intern->vstamp,	      ext->h_vstamp);
+  H_PUT_32	(abfd, intern->ilineMax,      ext->h_ilineMax);
+  ECOFF_PUT_OFF (abfd, intern->cbLine,	      ext->h_cbLine);
   ECOFF_PUT_OFF (abfd, intern->cbLineOffset,  ext->h_cbLineOffset);
-  H_PUT_32      (abfd, intern->idnMax,        ext->h_idnMax);
+  H_PUT_32	(abfd, intern->idnMax,	      ext->h_idnMax);
   ECOFF_PUT_OFF (abfd, intern->cbDnOffset,    ext->h_cbDnOffset);
-  H_PUT_32      (abfd, intern->ipdMax,        ext->h_ipdMax);
+  H_PUT_32	(abfd, intern->ipdMax,	      ext->h_ipdMax);
   ECOFF_PUT_OFF (abfd, intern->cbPdOffset,    ext->h_cbPdOffset);
-  H_PUT_32      (abfd, intern->isymMax,       ext->h_isymMax);
+  H_PUT_32	(abfd, intern->isymMax,	      ext->h_isymMax);
   ECOFF_PUT_OFF (abfd, intern->cbSymOffset,   ext->h_cbSymOffset);
-  H_PUT_32      (abfd, intern->ioptMax,       ext->h_ioptMax);
+  H_PUT_32	(abfd, intern->ioptMax,	      ext->h_ioptMax);
   ECOFF_PUT_OFF (abfd, intern->cbOptOffset,   ext->h_cbOptOffset);
-  H_PUT_32      (abfd, intern->iauxMax,       ext->h_iauxMax);
+  H_PUT_32	(abfd, intern->iauxMax,	      ext->h_iauxMax);
   ECOFF_PUT_OFF (abfd, intern->cbAuxOffset,   ext->h_cbAuxOffset);
-  H_PUT_32      (abfd, intern->issMax,        ext->h_issMax);
+  H_PUT_32	(abfd, intern->issMax,	      ext->h_issMax);
   ECOFF_PUT_OFF (abfd, intern->cbSsOffset,    ext->h_cbSsOffset);
-  H_PUT_32      (abfd, intern->issExtMax,     ext->h_issExtMax);
+  H_PUT_32	(abfd, intern->issExtMax,     ext->h_issExtMax);
   ECOFF_PUT_OFF (abfd, intern->cbSsExtOffset, ext->h_cbSsExtOffset);
-  H_PUT_32      (abfd, intern->ifdMax,        ext->h_ifdMax);
+  H_PUT_32	(abfd, intern->ifdMax,	      ext->h_ifdMax);
   ECOFF_PUT_OFF (abfd, intern->cbFdOffset,    ext->h_cbFdOffset);
-  H_PUT_32      (abfd, intern->crfd,          ext->h_crfd);
+  H_PUT_32	(abfd, intern->crfd,	      ext->h_crfd);
   ECOFF_PUT_OFF (abfd, intern->cbRfdOffset,   ext->h_cbRfdOffset);
-  H_PUT_32      (abfd, intern->iextMax,       ext->h_iextMax);
+  H_PUT_32	(abfd, intern->iextMax,	      ext->h_iextMax);
   ECOFF_PUT_OFF (abfd, intern->cbExtOffset,   ext->h_cbExtOffset);
 
 #ifdef TEST
@@ -185,32 +185,32 @@ ecoff_swap_fdr_in (bfd *abfd, void * ext_copy, FDR *intern)
 
   *ext = *(struct fdr_ext *) ext_copy;
 
-  intern->adr           = ECOFF_GET_OFF (abfd, ext->f_adr);
-  intern->rss           = H_GET_32 (abfd, ext->f_rss);
+  intern->adr		= ECOFF_GET_OFF (abfd, ext->f_adr);
+  intern->rss		= H_GET_32 (abfd, ext->f_rss);
 #if defined (ECOFF_64) || defined (ECOFF_SIGNED_64)
   if (intern->rss == (signed long) 0xffffffff)
     intern->rss = -1;
 #endif
-  intern->issBase       = H_GET_32 (abfd, ext->f_issBase);
-  intern->cbSs          = ECOFF_GET_OFF (abfd, ext->f_cbSs);
-  intern->isymBase      = H_GET_32 (abfd, ext->f_isymBase);
-  intern->csym          = H_GET_32 (abfd, ext->f_csym);
-  intern->ilineBase     = H_GET_32 (abfd, ext->f_ilineBase);
-  intern->cline         = H_GET_32 (abfd, ext->f_cline);
-  intern->ioptBase      = H_GET_32 (abfd, ext->f_ioptBase);
-  intern->copt          = H_GET_32 (abfd, ext->f_copt);
+  intern->issBase	= H_GET_32 (abfd, ext->f_issBase);
+  intern->cbSs		= ECOFF_GET_OFF (abfd, ext->f_cbSs);
+  intern->isymBase	= H_GET_32 (abfd, ext->f_isymBase);
+  intern->csym		= H_GET_32 (abfd, ext->f_csym);
+  intern->ilineBase	= H_GET_32 (abfd, ext->f_ilineBase);
+  intern->cline		= H_GET_32 (abfd, ext->f_cline);
+  intern->ioptBase	= H_GET_32 (abfd, ext->f_ioptBase);
+  intern->copt		= H_GET_32 (abfd, ext->f_copt);
 #if defined (ECOFF_32) || defined (ECOFF_SIGNED_32)
-  intern->ipdFirst      = H_GET_16 (abfd, ext->f_ipdFirst);
-  intern->cpd           = H_GET_16 (abfd, ext->f_cpd);
+  intern->ipdFirst	= H_GET_16 (abfd, ext->f_ipdFirst);
+  intern->cpd		= H_GET_16 (abfd, ext->f_cpd);
 #endif
 #if defined (ECOFF_64) || defined (ECOFF_SIGNED_64)
-  intern->ipdFirst      = H_GET_32 (abfd, ext->f_ipdFirst);
-  intern->cpd           = H_GET_32 (abfd, ext->f_cpd);
+  intern->ipdFirst	= H_GET_32 (abfd, ext->f_ipdFirst);
+  intern->cpd		= H_GET_32 (abfd, ext->f_cpd);
 #endif
-  intern->iauxBase      = H_GET_32 (abfd, ext->f_iauxBase);
-  intern->caux          = H_GET_32 (abfd, ext->f_caux);
-  intern->rfdBase       = H_GET_32 (abfd, ext->f_rfdBase);
-  intern->crfd          = H_GET_32 (abfd, ext->f_crfd);
+  intern->iauxBase	= H_GET_32 (abfd, ext->f_iauxBase);
+  intern->caux		= H_GET_32 (abfd, ext->f_caux);
+  intern->rfdBase	= H_GET_32 (abfd, ext->f_rfdBase);
+  intern->crfd		= H_GET_32 (abfd, ext->f_crfd);
 
   /* Now the fun stuff...  */
   if (bfd_header_big_endian (abfd))
@@ -235,8 +235,8 @@ ecoff_swap_fdr_in (bfd *abfd, void * ext_copy, FDR *intern)
     }
   intern->reserved = 0;
 
-  intern->cbLineOffset  = ECOFF_GET_OFF (abfd, ext->f_cbLineOffset);
-  intern->cbLine        = ECOFF_GET_OFF (abfd, ext->f_cbLine);
+  intern->cbLineOffset	= ECOFF_GET_OFF (abfd, ext->f_cbLineOffset);
+  intern->cbLine	= ECOFF_GET_OFF (abfd, ext->f_cbLine);
 
 #ifdef TEST
   if (memcmp ((char *) ext, (char *) intern, sizeof (*intern)) != 0)
@@ -324,20 +324,20 @@ ecoff_swap_pdr_in (bfd *abfd, void * ext_copy, PDR *intern)
 
   memset ((void *) intern, 0, sizeof (*intern));
 
-  intern->adr           = ECOFF_GET_OFF (abfd, ext->p_adr);
-  intern->isym          = H_GET_32 (abfd, ext->p_isym);
-  intern->iline         = H_GET_32 (abfd, ext->p_iline);
-  intern->regmask       = H_GET_32 (abfd, ext->p_regmask);
-  intern->regoffset     = H_GET_S32 (abfd, ext->p_regoffset);
-  intern->iopt          = H_GET_S32 (abfd, ext->p_iopt);
-  intern->fregmask      = H_GET_32 (abfd, ext->p_fregmask);
-  intern->fregoffset    = H_GET_S32 (abfd, ext->p_fregoffset);
-  intern->frameoffset   = H_GET_S32 (abfd, ext->p_frameoffset);
-  intern->framereg      = H_GET_16 (abfd, ext->p_framereg);
-  intern->pcreg         = H_GET_16 (abfd, ext->p_pcreg);
-  intern->lnLow         = H_GET_32 (abfd, ext->p_lnLow);
-  intern->lnHigh        = H_GET_32 (abfd, ext->p_lnHigh);
-  intern->cbLineOffset  = ECOFF_GET_OFF (abfd, ext->p_cbLineOffset);
+  intern->adr		= ECOFF_GET_OFF (abfd, ext->p_adr);
+  intern->isym		= H_GET_32 (abfd, ext->p_isym);
+  intern->iline		= H_GET_32 (abfd, ext->p_iline);
+  intern->regmask	= H_GET_32 (abfd, ext->p_regmask);
+  intern->regoffset	= H_GET_S32 (abfd, ext->p_regoffset);
+  intern->iopt		= H_GET_S32 (abfd, ext->p_iopt);
+  intern->fregmask	= H_GET_32 (abfd, ext->p_fregmask);
+  intern->fregoffset	= H_GET_S32 (abfd, ext->p_fregoffset);
+  intern->frameoffset	= H_GET_S32 (abfd, ext->p_frameoffset);
+  intern->framereg	= H_GET_16 (abfd, ext->p_framereg);
+  intern->pcreg		= H_GET_16 (abfd, ext->p_pcreg);
+  intern->lnLow		= H_GET_32 (abfd, ext->p_lnLow);
+  intern->lnHigh	= H_GET_32 (abfd, ext->p_lnHigh);
+  intern->cbLineOffset	= ECOFF_GET_OFF (abfd, ext->p_cbLineOffset);
 
 #if defined (ECOFF_64) || defined (ECOFF_SIGNED_64)
   if (intern->isym == (signed long) 0xffffffff)
@@ -386,19 +386,19 @@ ecoff_swap_pdr_out (bfd *abfd, const PDR *intern_copy, void * ext_ptr)
   /* Make it reasonable to do in-place.  */
   *intern = *intern_copy;
 
-  ECOFF_PUT_OFF (abfd, intern->adr,          ext->p_adr);
-  H_PUT_32      (abfd, intern->isym,         ext->p_isym);
-  H_PUT_32      (abfd, intern->iline,        ext->p_iline);
-  H_PUT_32      (abfd, intern->regmask,      ext->p_regmask);
-  H_PUT_32      (abfd, intern->regoffset,    ext->p_regoffset);
-  H_PUT_32      (abfd, intern->iopt,         ext->p_iopt);
-  H_PUT_32      (abfd, intern->fregmask,     ext->p_fregmask);
-  H_PUT_32      (abfd, intern->fregoffset,   ext->p_fregoffset);
-  H_PUT_32      (abfd, intern->frameoffset,  ext->p_frameoffset);
-  H_PUT_16      (abfd, intern->framereg,     ext->p_framereg);
-  H_PUT_16      (abfd, intern->pcreg,        ext->p_pcreg);
-  H_PUT_32      (abfd, intern->lnLow,        ext->p_lnLow);
-  H_PUT_32      (abfd, intern->lnHigh,       ext->p_lnHigh);
+  ECOFF_PUT_OFF (abfd, intern->adr,	     ext->p_adr);
+  H_PUT_32	(abfd, intern->isym,	     ext->p_isym);
+  H_PUT_32	(abfd, intern->iline,	     ext->p_iline);
+  H_PUT_32	(abfd, intern->regmask,	     ext->p_regmask);
+  H_PUT_32	(abfd, intern->regoffset,    ext->p_regoffset);
+  H_PUT_32	(abfd, intern->iopt,	     ext->p_iopt);
+  H_PUT_32	(abfd, intern->fregmask,     ext->p_fregmask);
+  H_PUT_32	(abfd, intern->fregoffset,   ext->p_fregoffset);
+  H_PUT_32	(abfd, intern->frameoffset,  ext->p_frameoffset);
+  H_PUT_16	(abfd, intern->framereg,     ext->p_framereg);
+  H_PUT_16	(abfd, intern->pcreg,	     ext->p_pcreg);
+  H_PUT_32	(abfd, intern->lnLow,	     ext->p_lnLow);
+  H_PUT_32	(abfd, intern->lnHigh,	     ext->p_lnHigh);
   ECOFF_PUT_OFF (abfd, intern->cbLineOffset, ext->p_cbLineOffset);
 
 #if defined (ECOFF_64) || defined (ECOFF_SIGNED_64)
@@ -444,8 +444,8 @@ ecoff_swap_sym_in (bfd *abfd, void * ext_copy, SYMR *intern)
 
   *ext = *(struct sym_ext *) ext_copy;
 
-  intern->iss           = H_GET_32 (abfd, ext->s_iss);
-  intern->value         = ECOFF_GET_OFF (abfd, ext->s_value);
+  intern->iss		= H_GET_32 (abfd, ext->s_iss);
+  intern->value		= ECOFF_GET_OFF (abfd, ext->s_value);
 
 #if defined (ECOFF_64) || defined (ECOFF_SIGNED_64)
   if (intern->iss == (signed long) 0xffffffff)
@@ -455,28 +455,28 @@ ecoff_swap_sym_in (bfd *abfd, void * ext_copy, SYMR *intern)
   /* Now the fun stuff...  */
   if (bfd_header_big_endian (abfd))
     {
-      intern->st          =  (ext->s_bits1[0] & SYM_BITS1_ST_BIG)
+      intern->st	  =  (ext->s_bits1[0] & SYM_BITS1_ST_BIG)
 					     >> SYM_BITS1_ST_SH_BIG;
-      intern->sc          = ((ext->s_bits1[0] & SYM_BITS1_SC_BIG)
+      intern->sc	  = ((ext->s_bits1[0] & SYM_BITS1_SC_BIG)
 					     << SYM_BITS1_SC_SH_LEFT_BIG)
 			  | ((ext->s_bits2[0] & SYM_BITS2_SC_BIG)
 					     >> SYM_BITS2_SC_SH_BIG);
-      intern->reserved    = 0 != (ext->s_bits2[0] & SYM_BITS2_RESERVED_BIG);
-      intern->index       = ((ext->s_bits2[0] & SYM_BITS2_INDEX_BIG)
+      intern->reserved	  = 0 != (ext->s_bits2[0] & SYM_BITS2_RESERVED_BIG);
+      intern->index	  = ((ext->s_bits2[0] & SYM_BITS2_INDEX_BIG)
 					     << SYM_BITS2_INDEX_SH_LEFT_BIG)
 			  | (ext->s_bits3[0] << SYM_BITS3_INDEX_SH_LEFT_BIG)
 			  | (ext->s_bits4[0] << SYM_BITS4_INDEX_SH_LEFT_BIG);
     }
   else
     {
-      intern->st          =  (ext->s_bits1[0] & SYM_BITS1_ST_LITTLE)
+      intern->st	  =  (ext->s_bits1[0] & SYM_BITS1_ST_LITTLE)
 					     >> SYM_BITS1_ST_SH_LITTLE;
-      intern->sc          = ((ext->s_bits1[0] & SYM_BITS1_SC_LITTLE)
+      intern->sc	  = ((ext->s_bits1[0] & SYM_BITS1_SC_LITTLE)
 					     >> SYM_BITS1_SC_SH_LITTLE)
 			  | ((ext->s_bits2[0] & SYM_BITS2_SC_LITTLE)
 					     << SYM_BITS2_SC_SH_LEFT_LITTLE);
-      intern->reserved    = 0 != (ext->s_bits2[0] & SYM_BITS2_RESERVED_LITTLE);
-      intern->index       = ((ext->s_bits2[0] & SYM_BITS2_INDEX_LITTLE)
+      intern->reserved	  = 0 != (ext->s_bits2[0] & SYM_BITS2_RESERVED_LITTLE);
+      intern->index	  = ((ext->s_bits2[0] & SYM_BITS2_INDEX_LITTLE)
 					     >> SYM_BITS2_INDEX_SH_LITTLE)
 			  | (ext->s_bits3[0] << SYM_BITS3_INDEX_SH_LEFT_LITTLE)
 			  | ((unsigned int) ext->s_bits4[0]

@@ -1,5 +1,5 @@
 /* IQ2000-specific support for 32-bit ELF.
-   Copyright (C) 2003-2016 Free Software Foundation, Inc.
+   Copyright (C) 2003-2018 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -437,6 +437,7 @@ iq2000_info_to_howto_rela (bfd * abfd ATTRIBUTE_UNUSED,
     default:
       if (r_type >= (unsigned int) R_IQ2000_max)
 	{
+	  /* xgettext:c-format */
 	  _bfd_error_handler (_("%B: invalid IQ2000 reloc number: %d"), abfd, r_type);
 	  r_type = 0;
 	}
@@ -482,10 +483,6 @@ iq2000_elf_check_relocs (bfd *abfd,
 	  while (h->root.type == bfd_link_hash_indirect
 		 || h->root.type == bfd_link_hash_warning)
 	    h = (struct elf_link_hash_entry *) h->root.u.i.link;
-
-	  /* PR15323, ref flags aren't set for references in the same
-	     object.  */
-	  h->root.non_ir_ref = 1;
 	}
 
       switch (ELF32_R_TYPE (rel->r_info))
@@ -768,8 +765,9 @@ iq2000_elf_set_private_flags (bfd *abfd, flagword flags)
    file to the output object file when linking.  */
 
 static bfd_boolean
-iq2000_elf_merge_private_bfd_data (bfd *ibfd, bfd *obfd)
+iq2000_elf_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
 {
+  bfd *obfd = info->output_bfd;
   flagword old_flags, old_partial;
   flagword new_flags, new_partial;
   bfd_boolean error = FALSE;
@@ -826,8 +824,9 @@ iq2000_elf_merge_private_bfd_data (bfd *ibfd, bfd *obfd)
 	{
 	  error = TRUE;
 	  _bfd_error_handler
-	    (_("%s: compiled with %s and linked with modules compiled with %s"),
-	     bfd_get_filename (ibfd), new_opt, old_opt);
+	    /* xgettext:c-format */
+	    (_("%B: compiled with %s and linked with modules compiled with %s"),
+	     ibfd, new_opt, old_opt);
 	}
 
       new_flags &= ~ EF_IQ2000_ALL_FLAGS;
@@ -839,8 +838,9 @@ iq2000_elf_merge_private_bfd_data (bfd *ibfd, bfd *obfd)
 	  error = TRUE;
 
 	  _bfd_error_handler
-	    (_("%s: uses different e_flags (0x%lx) fields than previous modules (0x%lx)"),
-	     bfd_get_filename (ibfd), (long)new_flags, (long)old_flags);
+	    /* xgettext:c-format */
+	    (_("%B: uses different e_flags (%#x) fields than previous modules (%#x)"),
+	     ibfd, new_flags, old_flags);
 	}
     }
 

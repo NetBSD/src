@@ -1,7 +1,7 @@
 # This shell script emits a C file. -*- C -*-
 # It does some substitutions.
 fragment <<EOF
-/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2018 Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
 
@@ -129,6 +129,7 @@ struct ld_emulation_xfer_struct ld_gld960_emulation =
   hll_default,
   after_parse_default,
   after_open_default,
+  after_check_relocs_default,
   after_allocation_default,
   gld960_set_output_arch,
   gld960_choose_target,

@@ -1,5 +1,5 @@
-# Copyright (C) 2014-2016 Free Software Foundation, Inc.
-# 
+# Copyright (C) 2014-2018 Free Software Foundation, Inc.
+#
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
 # notice and this notice are preserved.
@@ -38,7 +38,7 @@ INTERP=".interp ${RELOCATING-0} : { *(.interp) }"
 PLT=".plt ${RELOCATING-0} : { *(.plt) }"
 
 cat <<EOF
-/* Copyright (C) 2014-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2014-2018 Free Software Foundation, Inc.
 
    Copying and distribution of this script, with or without modification,
    are permitted in any medium without royalty provided the copyright
@@ -199,7 +199,7 @@ EOF
 
 . $srcdir/scripttempl/DWARF.sc
 
-cat <<EOF  
+cat <<EOF
   ${ATTRS_SECTIONS}
   ${OTHER_SECTIONS}
 }

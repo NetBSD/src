@@ -1,5 +1,5 @@
 /* Print instructions for the Motorola 88000, for GDB and GNU Binutils.
-   Copyright (C) 1986-2016 Free Software Foundation, Inc.
+   Copyright (C) 1986-2018 Free Software Foundation, Inc.
    Contributed by Data General Corporation, November 1989.
    Partially derived from an earlier printcmd.c.
 
@@ -21,7 +21,7 @@
    MA 02110-1301, USA.  */
 
 #include "sysdep.h"
-#include "dis-asm.h"
+#include "disassemble.h"
 #include "opcode/m88k.h"
 #include "opintl.h"
 #include "libiberty.h"

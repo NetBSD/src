@@ -133,6 +133,12 @@
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
 
+/* Define to 1 if the system has the type `long double'. */
+#undef HAVE_LONG_DOUBLE
+
+/* Define to 1 if the system has the type `long long'. */
+#undef HAVE_LONG_LONG
+
 /* Define if <sys/procfs.h> has lwpstatus_t. */
 #undef HAVE_LWPSTATUS_T
 
@@ -337,7 +343,7 @@
 /* Name of host specific header file to include in trad-core.c. */
 #undef TRAD_HEADER
 
-/* Define if we should use 64-bit archives. */
+/* Define if 64-bit archives should always be used. */
 #undef USE_64_BIT_ARCHIVE
 
 /* Use b modifier when opening binary files? */

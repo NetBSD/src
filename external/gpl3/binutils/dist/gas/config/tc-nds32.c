@@ -1,5 +1,5 @@
 /* tc-nds32.c -- Assemble for the nds32
-   Copyright (C) 2012-2016 Free Software Foundation, Inc.
+   Copyright (C) 2012-2018 Free Software Foundation, Inc.
    Contributed by Andes Technology Corporation.
 
    This file is part of GAS, the GNU Assembler.
@@ -91,7 +91,7 @@ static int enable_relax_relocs = 1;
 static int enable_relax_ex9 = 0;
 /* The value will be used in RELAX_ENTRY.  */
 static int enable_relax_ifc = 0;
-/* Save option -O for perfomance.  */
+/* Save option -O for performance.  */
 static int optimize = 0;
 /* Save option -Os for code size.  */
 static int optimize_for_space = 0;
@@ -2090,13 +2090,13 @@ nds32_start_line_hook (void)
  * Pseudo opcodes
  */
 
-typedef void (*nds32_pseudo_opcode_func) (int argc, char *argv[], int pv);
+typedef void (*nds32_pseudo_opcode_func) (int argc, char *argv[], unsigned int pv);
 struct nds32_pseudo_opcode
 {
   const char *opcode;
   int argc;
   nds32_pseudo_opcode_func proc;
-  int pseudo_val;
+  unsigned int pseudo_val;
 
   /* Some instructions are not pseudo opcode, but they might still be
      expanded or changed with other instruction combination for some
@@ -2183,7 +2183,8 @@ static void do_pseudo_li_internal (const char *rt, int imm32s);
 static void do_pseudo_move_reg_internal (char *dst, char *src);
 
 static void
-do_pseudo_b (int argc ATTRIBUTE_UNUSED, char *argv[], int pv ATTRIBUTE_UNUSED)
+do_pseudo_b (int argc ATTRIBUTE_UNUSED, char *argv[], 
+	     unsigned int pv ATTRIBUTE_UNUSED)
 {
   char *arg_label = argv[0];
   relaxing = TRUE;
@@ -2203,7 +2204,8 @@ do_pseudo_b (int argc ATTRIBUTE_UNUSED, char *argv[], int pv ATTRIBUTE_UNUSED)
 }
 
 static void
-do_pseudo_bal (int argc ATTRIBUTE_UNUSED, char *argv[], int pv ATTRIBUTE_UNUSED)
+do_pseudo_bal (int argc ATTRIBUTE_UNUSED, char *argv[], 
+	       unsigned int pv ATTRIBUTE_UNUSED)
 {
   char *arg_label = argv[0];
   relaxing = TRUE;
@@ -2224,7 +2226,8 @@ do_pseudo_bal (int argc ATTRIBUTE_UNUSED, char *argv[], int pv ATTRIBUTE_UNUSED)
 }
 
 static void
-do_pseudo_bge (int argc ATTRIBUTE_UNUSED, char *argv[], int pv ATTRIBUTE_UNUSED)
+do_pseudo_bge (int argc ATTRIBUTE_UNUSED, char *argv[], 
+	       unsigned int pv ATTRIBUTE_UNUSED)
 {
   /* rt5, ra5, label */
   md_assemblef ("slt $ta,%s,%s", argv[0], argv[1]);
@@ -2232,7 +2235,8 @@ do_pseudo_bge (int argc ATTRIBUTE_UNUSED, char *argv[], int pv ATTRIBUTE_UNUSED)
 }
 
 static void
-do_pseudo_bges (int argc ATTRIBUTE_UNUSED, char *argv[], int pv ATTRIBUTE_UNUSED)
+do_pseudo_bges (int argc ATTRIBUTE_UNUSED, char *argv[], 
+		unsigned int pv ATTRIBUTE_UNUSED)
 {
   /* rt5, ra5, label */
   md_assemblef ("slts $ta,%s,%s", argv[0], argv[1]);
@@ -2240,7 +2244,8 @@ do_pseudo_bges (int argc ATTRIBUTE_UNUSED, char *argv[], int pv ATTRIBUTE_UNUSED
 }
 
 static void
-do_pseudo_bgt (int argc ATTRIBUTE_UNUSED, char *argv[], int pv ATTRIBUTE_UNUSED)
+do_pseudo_bgt (int argc ATTRIBUTE_UNUSED, char *argv[], 
+	       unsigned int pv ATTRIBUTE_UNUSED)
 {
   /* bgt rt5, ra5, label */
   md_assemblef ("slt $ta,%s,%s", argv[1], argv[0]);
@@ -2248,7 +2253,8 @@ do_pseudo_bgt (int argc ATTRIBUTE_UNUSED, char *argv[], int pv ATTRIBUTE_UNUSED)
 }
 
 static void
-do_pseudo_bgts (int argc ATTRIBUTE_UNUSED, char *argv[], int pv ATTRIBUTE_UNUSED)
+do_pseudo_bgts (int argc ATTRIBUTE_UNUSED, char *argv[], 
+		unsigned int pv ATTRIBUTE_UNUSED)
 {
   /* bgt rt5, ra5, label */
   md_assemblef ("slts $ta,%s,%s", argv[1], argv[0]);
@@ -2256,7 +2262,8 @@ do_pseudo_bgts (int argc ATTRIBUTE_UNUSED, char *argv[], int pv ATTRIBUTE_UNUSED
 }
 
 static void
-do_pseudo_ble (int argc ATTRIBUTE_UNUSED, char *argv[], int pv ATTRIBUTE_UNUSED)
+do_pseudo_ble (int argc ATTRIBUTE_UNUSED, char *argv[], 
+	       unsigned int pv ATTRIBUTE_UNUSED)
 {
   /* bgt rt5, ra5, label */
   md_assemblef ("slt $ta,%s,%s", argv[1], argv[0]);
@@ -2264,7 +2271,8 @@ do_pseudo_ble (int argc ATTRIBUTE_UNUSED, char *argv[], int pv ATTRIBUTE_UNUSED)
 }
 
 static void
-do_pseudo_bles (int argc ATTRIBUTE_UNUSED, char *argv[], int pv ATTRIBUTE_UNUSED)
+do_pseudo_bles (int argc ATTRIBUTE_UNUSED, char *argv[], 
+		unsigned int pv ATTRIBUTE_UNUSED)
 {
   /* bgt rt5, ra5, label */
   md_assemblef ("slts $ta,%s,%s", argv[1], argv[0]);
@@ -2272,7 +2280,8 @@ do_pseudo_bles (int argc ATTRIBUTE_UNUSED, char *argv[], int pv ATTRIBUTE_UNUSED
 }
 
 static void
-do_pseudo_blt (int argc ATTRIBUTE_UNUSED, char *argv[], int pv ATTRIBUTE_UNUSED)
+do_pseudo_blt (int argc ATTRIBUTE_UNUSED, char *argv[], 
+	       unsigned int pv ATTRIBUTE_UNUSED)
 {
   /* rt5, ra5, label */
   md_assemblef ("slt $ta,%s,%s", argv[0], argv[1]);
@@ -2280,7 +2289,8 @@ do_pseudo_blt (int argc ATTRIBUTE_UNUSED, char *argv[], int pv ATTRIBUTE_UNUSED)
 }
 
 static void
-do_pseudo_blts (int argc ATTRIBUTE_UNUSED, char *argv[], int pv ATTRIBUTE_UNUSED)
+do_pseudo_blts (int argc ATTRIBUTE_UNUSED, char *argv[], 
+		unsigned int pv ATTRIBUTE_UNUSED)
 {
   /* rt5, ra5, label */
   md_assemblef ("slts $ta,%s,%s", argv[0], argv[1]);
@@ -2288,13 +2298,15 @@ do_pseudo_blts (int argc ATTRIBUTE_UNUSED, char *argv[], int pv ATTRIBUTE_UNUSED
 }
 
 static void
-do_pseudo_br (int argc ATTRIBUTE_UNUSED, char *argv[], int pv ATTRIBUTE_UNUSED)
+do_pseudo_br (int argc ATTRIBUTE_UNUSED, char *argv[], 
+	      unsigned int pv ATTRIBUTE_UNUSED)
 {
   md_assemblef ("jr %s", argv[0]);
 }
 
 static void
-do_pseudo_bral (int argc, char *argv[], int pv ATTRIBUTE_UNUSED)
+do_pseudo_bral (int argc, char *argv[], 
+		unsigned int pv ATTRIBUTE_UNUSED)
 {
   if (argc == 1)
     md_assemblef ("jral $lp,%s", argv[0]);
@@ -2369,7 +2381,8 @@ do_pseudo_la_internal (const char *arg_reg, char *arg_label,
 }
 
 static void
-do_pseudo_la (int argc ATTRIBUTE_UNUSED, char *argv[], int pv ATTRIBUTE_UNUSED)
+do_pseudo_la (int argc ATTRIBUTE_UNUSED, char *argv[], 
+	      unsigned int pv ATTRIBUTE_UNUSED)
 {
   do_pseudo_la_internal (argv[0], argv[1], argv[argc]);
 }
@@ -2391,7 +2404,8 @@ do_pseudo_li_internal (const char *rt, int imm32s)
 }
 
 static void
-do_pseudo_li (int argc ATTRIBUTE_UNUSED, char *argv[], int pv ATTRIBUTE_UNUSED)
+do_pseudo_li (int argc ATTRIBUTE_UNUSED, char *argv[], 
+	      unsigned int pv ATTRIBUTE_UNUSED)
 {
   /* Validate argv[1] for constant expression.  */
   expressionS exp;
@@ -2407,7 +2421,8 @@ do_pseudo_li (int argc ATTRIBUTE_UNUSED, char *argv[], int pv ATTRIBUTE_UNUSED)
 }
 
 static void
-do_pseudo_ls_bhw (int argc ATTRIBUTE_UNUSED, char *argv[], int pv)
+do_pseudo_ls_bhw (int argc ATTRIBUTE_UNUSED, char *argv[], 
+		  unsigned int pv)
 {
   char ls = 'r';
   char size = 'x';
@@ -2494,7 +2509,8 @@ do_pseudo_ls_bhw (int argc ATTRIBUTE_UNUSED, char *argv[], int pv)
 }
 
 static void
-do_pseudo_ls_bhwp (int argc ATTRIBUTE_UNUSED, char *argv[], int pv)
+do_pseudo_ls_bhwp (int argc ATTRIBUTE_UNUSED, char *argv[], 
+		   unsigned int pv)
 {
   char *arg_rt = argv[0];
   char *arg_label = argv[1];
@@ -2521,7 +2537,8 @@ do_pseudo_ls_bhwp (int argc ATTRIBUTE_UNUSED, char *argv[], int pv)
 }
 
 static void
-do_pseudo_ls_bhwpc (int argc ATTRIBUTE_UNUSED, char *argv[], int pv)
+do_pseudo_ls_bhwpc (int argc ATTRIBUTE_UNUSED, char *argv[],
+		    unsigned int pv)
 {
   char *arg_rt = argv[0];
   char *arg_inc = argv[1];
@@ -2546,7 +2563,8 @@ do_pseudo_ls_bhwpc (int argc ATTRIBUTE_UNUSED, char *argv[], int pv)
 }
 
 static void
-do_pseudo_ls_bhwi (int argc ATTRIBUTE_UNUSED, char *argv[], int pv)
+do_pseudo_ls_bhwi (int argc ATTRIBUTE_UNUSED, char *argv[], 
+		   unsigned int pv)
 {
   char ls = 'r';
   char size = 'x';
@@ -2579,7 +2597,8 @@ do_pseudo_move_reg_internal (char *dst, char *src)
 }
 
 static void
-do_pseudo_move (int argc ATTRIBUTE_UNUSED, char *argv[], int pv ATTRIBUTE_UNUSED)
+do_pseudo_move (int argc ATTRIBUTE_UNUSED, char *argv[], 
+		unsigned int pv ATTRIBUTE_UNUSED)
 {
   expressionS exp;
 
@@ -2598,20 +2617,23 @@ do_pseudo_move (int argc ATTRIBUTE_UNUSED, char *argv[], int pv ATTRIBUTE_UNUSED
 }
 
 static void
-do_pseudo_neg (int argc ATTRIBUTE_UNUSED, char *argv[], int pv ATTRIBUTE_UNUSED)
+do_pseudo_neg (int argc ATTRIBUTE_UNUSED, char *argv[], 
+	       unsigned int pv ATTRIBUTE_UNUSED)
 {
   /* Instead of "subri".  */
   md_assemblef ("subri %s,%s,0", argv[0], argv[1]);
 }
 
 static void
-do_pseudo_not (int argc ATTRIBUTE_UNUSED, char *argv[], int pv ATTRIBUTE_UNUSED)
+do_pseudo_not (int argc ATTRIBUTE_UNUSED, char *argv[],
+	       unsigned int pv ATTRIBUTE_UNUSED)
 {
   md_assemblef ("nor %s,%s,%s", argv[0], argv[1], argv[1]);
 }
 
 static void
-do_pseudo_pushpopm (int argc, char *argv[], int pv ATTRIBUTE_UNUSED)
+do_pseudo_pushpopm (int argc, char *argv[],
+		    unsigned int pv ATTRIBUTE_UNUSED)
 {
   /* posh/pop $ra, $rb */
   /* SMW.{b | a}{i | d}{m?} Rb, [Ra], Re, Enable4 */
@@ -2673,7 +2695,8 @@ do_pseudo_pushpopm (int argc, char *argv[], int pv ATTRIBUTE_UNUSED)
 }
 
 static void
-do_pseudo_pushpop (int argc, char *argv[], int pv ATTRIBUTE_UNUSED)
+do_pseudo_pushpop (int argc, char *argv[],
+		   unsigned int pv ATTRIBUTE_UNUSED)
 {
   /* push/pop $ra5, $label=$sp */
   char *argvm[3];
@@ -2689,13 +2712,15 @@ do_pseudo_pushpop (int argc, char *argv[], int pv ATTRIBUTE_UNUSED)
 }
 
 static void
-do_pseudo_v3push (int argc ATTRIBUTE_UNUSED, char *argv[], int pv ATTRIBUTE_UNUSED)
+do_pseudo_v3push (int argc ATTRIBUTE_UNUSED, char *argv[],
+		  unsigned int pv ATTRIBUTE_UNUSED)
 {
   md_assemblef ("push25 %s,%s", argv[0], argv[1]);
 }
 
 static void
-do_pseudo_v3pop (int argc ATTRIBUTE_UNUSED, char *argv[], int pv ATTRIBUTE_UNUSED)
+do_pseudo_v3pop (int argc ATTRIBUTE_UNUSED, char *argv[], 
+		 unsigned int pv ATTRIBUTE_UNUSED)
 {
   md_assemblef ("pop25 %s,%s", argv[0], argv[1]);
 }
@@ -2704,7 +2729,8 @@ do_pseudo_v3pop (int argc ATTRIBUTE_UNUSED, char *argv[], int pv ATTRIBUTE_UNUSE
    pv != 0, parsing "pop.s" pseudo instruction operands.  */
 
 static void
-do_pseudo_pushpop_stack (int argc, char *argv[], int pv)
+do_pseudo_pushpop_stack (int argc, char *argv[],
+			 unsigned int pv)
 {
   /* push.s Rb,Re,{$fp $gp $lp $sp}  ==>  smw.adm Rb,[$sp],Re,Eable4  */
   /* pop.s Rb,Re,{$fp $gp $lp $sp}   ==>  lmw.bim Rb,[$sp],Re,Eable4  */
@@ -2768,7 +2794,8 @@ do_pseudo_pushpop_stack (int argc, char *argv[], int pv)
 }
 
 static void
-do_pseudo_push_bhwd (int argc ATTRIBUTE_UNUSED, char *argv[], int pv ATTRIBUTE_UNUSED)
+do_pseudo_push_bhwd (int argc ATTRIBUTE_UNUSED, char *argv[],
+		     unsigned int pv ATTRIBUTE_UNUSED)
 {
   char size = 'x';
   /* If users omit push location, use $sp as default value.  */
@@ -2799,7 +2826,8 @@ do_pseudo_push_bhwd (int argc ATTRIBUTE_UNUSED, char *argv[], int pv ATTRIBUTE_U
 }
 
 static void
-do_pseudo_pop_bhwd (int argc ATTRIBUTE_UNUSED, char *argv[], int pv ATTRIBUTE_UNUSED)
+do_pseudo_pop_bhwd (int argc ATTRIBUTE_UNUSED, char *argv[],
+		    unsigned int pv ATTRIBUTE_UNUSED)
 {
   char size = 'x';
   /* If users omit pop location, use $sp as default value.  */
@@ -2830,7 +2858,8 @@ do_pseudo_pop_bhwd (int argc ATTRIBUTE_UNUSED, char *argv[], int pv ATTRIBUTE_UN
 }
 
 static void
-do_pseudo_pusha (int argc ATTRIBUTE_UNUSED, char *argv[], int pv ATTRIBUTE_UNUSED)
+do_pseudo_pusha (int argc ATTRIBUTE_UNUSED, char *argv[],
+		 unsigned int pv ATTRIBUTE_UNUSED)
 {
   /* If users omit push location, use $sp as default value.  */
   char location[8] = "$sp";  /* 8 is enough for register name.  */
@@ -2846,7 +2875,8 @@ do_pseudo_pusha (int argc ATTRIBUTE_UNUSED, char *argv[], int pv ATTRIBUTE_UNUSE
 }
 
 static void
-do_pseudo_pushi (int argc ATTRIBUTE_UNUSED, char *argv[], int pv ATTRIBUTE_UNUSED)
+do_pseudo_pushi (int argc ATTRIBUTE_UNUSED, char *argv[],
+		 unsigned int pv ATTRIBUTE_UNUSED)
 {
   /* If users omit push location, use $sp as default value.  */
   char location[8] = "$sp";  /* 8 is enough for register name.  */
@@ -3379,24 +3409,24 @@ nds32_seg (int i)
 }
 
 /* Set if label adjustment is needed.  I should not adjust .xbyte in dwarf.  */
-static symbolS *nds32_last_label;	/* Last label for aligment.  */
+static symbolS *nds32_last_label;	/* Last label for alignment.  */
 
-/* This code is referred from D30V for adjust label to be with pedning
-   aligment.  For example,
+/* This code is referred from D30V for adjust label to be with pending
+   alignment.  For example,
      LBYTE: .byte	0x12
      LHALF: .half	0x12
      LWORD: .word	0x12
-   Without this, the above label will not attatch to incoming data.  */
+   Without this, the above label will not attach to incoming data.  */
 
 static void
 nds32_adjust_label (int n)
 {
-  /* FIXME: I think adjust lable and alignment is
-     the programmer's obligation.  Saddly, VLSI team doesn't
+  /* FIXME: I think adjust label and alignment is
+     the programmer's obligation.  Sadly, VLSI team doesn't
      properly use .align for their test cases.
      So I re-implement cons_align and auto adjust labels, again.
 
-     I think d30v's implmentation is simple and good enough.  */
+     I think d30v's implementation is simple and good enough.  */
 
   symbolS *label = nds32_last_label;
   nds32_last_label = NULL;
@@ -3463,7 +3493,7 @@ nds32_cons_align (int size ATTRIBUTE_UNUSED)
 
      There are two things should be done for auto-adjust-label.
      1. Align data/instructions and adjust label to be attached to them.
-     2. Clear auto-adjust state, so incommng data/instructions will not
+     2. Clear auto-adjust state, so incoming data/instructions will not
 	adjust the label.
 
      For example,
@@ -3889,7 +3919,7 @@ nds32_pre_do_align (int n, char *fill, int len, int max)
 	      fragP = frag_now;
 	      frag_align_code (n, max);
 
-	      /* Tag this alignment when there is a lable before it.  */
+	      /* Tag this alignment when there is a label before it.  */
 	      if (label_exist)
 		{
 		  fragP->tc_frag_data.flag = NDS32_FRAG_LABEL;
@@ -3981,7 +4011,7 @@ md_begin (void)
   asm_desc.parse_operand = nds32_asm_parse_operand;
   nds32_asm_init (&asm_desc, 0);
 
-  /* Initial general pupose registers hash table.  */
+  /* Initial general purpose registers hash table.  */
   nds32_gprs_hash = hash_new ();
   for (k = keyword_gpr; k->name; k++)
     hash_insert (nds32_gprs_hash, k->name, k);
@@ -4626,7 +4656,7 @@ static struct nds32_hint_map hint_map [] =
     },
     {
       /* LONGJUMP5.  */
-      /* There is two kinds of veriation of LONGJUMP5.  One of them
+      /* There is two kinds of variations of LONGJUMP5.  One of them
 	 generate EMPTY relocation for converted INSN16 if needed.
 	 But we don't distinguish them here.  */
       _dummy_first_bfd_reloc_code_real,
@@ -4786,7 +4816,7 @@ nds32_find_reloc_table (struct nds32_relocs_pattern *relocs_pattern,
 
   if (map_ptr->insn_list == 0)
     {
-      as_warn (_("Can not find match relax hint. line : %d"),
+      as_warn (_("Can not find match relax hint.  Line: %d"),
 	       relocs_pattern->frag->fr_line);
       return FALSE;
     }
@@ -4838,7 +4868,7 @@ nds32_find_reloc_table (struct nds32_relocs_pattern *relocs_pattern,
     }
   /* Clear final relocation.  */
   memset (hint_fixup, 0, sizeof (nds32_relax_fixup_info_t));
-  /* Copy code sequance.  */
+  /* Copy code sequence.  */
   memcpy (hint_code, code_seq, seq_size);
   return TRUE;
 }
@@ -5120,7 +5150,7 @@ nds32_check_insn_available (struct nds32_asm_insn insn, const char *str)
 
   if  ((baseline_isa & attr) == 0)
     {
-      as_bad (_("Not support instrcution %s in the baseline."), str);
+      as_bad (_("Instruction %s not supported in the baseline."), str);
       return FALSE;
     }
   return TRUE;
@@ -5203,7 +5233,7 @@ md_assemble (char *str)
   if (!nds32_check_insn_available (insn, str))
     return;
 
-  /* Make sure the begining of text being 2-byte align.  */
+  /* Make sure the beginning of text being 2-byte align.  */
   nds32_adjust_label (1);
   fld = insn.field;
   /* Try to allocate the max size to guarantee relaxable same branch
@@ -5217,7 +5247,7 @@ md_assemble (char *str)
     {
       /* User assembly code branch relax for it.  */
       /* If fld is not NULL, it is a symbol.  */
-      /* Branch msut relax to proper pattern in user assembly code exclude
+      /* Branch must relax to proper pattern in user assembly code exclude
 	 J and JAL.  Keep these two in original type for users which wants
 	 to keep their size be fixed.  In general, assembler does not convert
 	 instruction generated by compiler.  But jump instruction may be
@@ -5274,7 +5304,7 @@ md_assemble (char *str)
       fragP->tc_frag_data.insn = insn.insn;
       fragP->fr_fix += 2;
 
-      /* In original, we don't relax the instrucion with label on it,
+      /* In original, we don't relax the instruction with label on it,
 	 but this may cause some redundant nop16.  Therefore, tag this
 	 relaxable instruction and relax it carefully.  */
       if (label)
@@ -5292,7 +5322,7 @@ md_assemble (char *str)
       expressionS exp;
       out = frag_var (rs_machine_dependent, insn.opcode->isize,
 		      0, 0, NULL, 0, NULL);
-      /* If this insturction is branch target, it is not relaxable.  */
+      /* If this instruction is branch target, it is not relaxable.  */
       fragP->tc_frag_data.flag = NDS32_FRAG_LABEL;
       fragP->tc_frag_data.opcode = insn.opcode;
       fragP->tc_frag_data.insn = insn.insn;
@@ -5448,7 +5478,7 @@ nds32_convert_to_range_type (long offset)
   return range_type;
 }
 
-/* Set insntruction register mask.  */
+/* Set instruction register mask.  */
 
 static void
 nds32_elf_get_set_cond (relax_info_t *relax_info, int offset, uint32_t *insn,
@@ -5499,7 +5529,7 @@ nds32_relax_branch_instructions (segT segment, fragS *fragP,
   if (fragP->fr_symbol == NULL)
     return adjust;
 
-  /* If frag_var is not enough room, the previos frag is fr_full and with
+  /* If frag_var is not enough room, the previous frag is fr_full and with
      opcode.  The new one is rs_dependent but without opcode.  */
   if (opcode == NULL)
     return adjust;
@@ -5629,13 +5659,13 @@ invalid_prev_frag (fragS * fragP, fragS **prev_frag)
 	  || frag_t->fr_type == rs_align_code
 	  || frag_t->fr_type == rs_align_test)
 	{
-	  /* Relax instruction can not walk across lable.  */
+	  /* Relax instruction can not walk across label.  */
 	  if (frag_t->tc_frag_data.flag & NDS32_FRAG_LABEL)
 	    {
 	      prev_frag = NULL;
 	      return;
 	    }
-	  /* Relax previos relaxable to align rs_align frag.  */
+	  /* Relax previous relaxable to align rs_align frag.  */
 	  address = frag_t->fr_address + frag_t->fr_fix;
 	  addressT offset = nds32_get_align (address, (int) frag_t->fr_offset);
 	  if (offset & 0x2)
@@ -5690,8 +5720,8 @@ nds32_relax_frag (segT segment, fragS *fragP, long stretch ATTRIBUTE_UNUSED)
   if (fragP->tc_frag_data.flag & NDS32_FRAG_RELAXABLE
       && (fragP->tc_frag_data.flag & NDS32_FRAG_RELAXED) == 0)
     /* Here is considered relaxed case originally.  But it may cause
-       unendless loop when relaxing.  Once the instruction is relaxed,
-       it can not be undo.  */
+       an endless loop when relaxing.  Once the instruction is relaxed,
+       it can not be undone.  */
     prev_frag = fragP;
 
   return adjust;
@@ -5714,7 +5744,7 @@ md_estimate_size_before_relax (fragS *fragP, segT segment)
      1. relax for branch
      2. relax for 32-bits to 16-bits  */
 
-  /* Save previos relaxable frag.  */
+  /* Save previous relaxable frag.  */
   static fragS *prev_frag = NULL;
   int adjust = 0;
 
@@ -5773,7 +5803,7 @@ md_convert_frag (bfd *abfd ATTRIBUTE_UNUSED, segT sec, fragS *fragP)
   if (branch_symbol == NULL && !(fragP->tc_frag_data.flag & NDS32_FRAG_RELAXED))
     return;
 
-  /* If frag_var is not enough room, the previos frag is fr_full and with
+  /* If frag_var is not enough room, the previous frag is fr_full and with
      opcode.  The new one is rs_dependent but without opcode.  */
   if (opcode == NULL)
     return;
@@ -5891,7 +5921,7 @@ md_convert_frag (bfd *abfd ATTRIBUTE_UNUSED, segT sec, fragS *fragP)
 				  origin_insn, branch_range_type);
 
 	  /* Try to convert to 16-bits instruction.  Currently, only the first
-	     insntruction in pattern can be converted.  EX: bnez sethi ori jr,
+	     instruction in pattern can be converted.  EX: bnez sethi ori jr,
 	     only bnez can be converted to 16 bit and ori can't.  */
 
 	  while (fixup_info[k].size != 0
@@ -6194,7 +6224,7 @@ nds32_insert_relax_entry (bfd *abfd ATTRIBUTE_UNUSED, asection *sec,
   else
     {
       /* These flags are only enabled when global relax is enabled.
-	 Maybe we can check DISABLE_RELAX_FLAG at linke-time,
+	 Maybe we can check DISABLE_RELAX_FLAG at link-time,
 	 so we set them anyway.  */
       if (enable_relax_ex9)
 	exp.X_add_number |= R_NDS32_RELAX_ENTRY_EX9_FLAG;
@@ -6410,7 +6440,7 @@ elf_nds32_final_processing (void)
   elf_elfheader (stdoutput)->e_flags |= nds32_elf_flags;
 }
 
-/* Implement md_apply_fix.  Apply the fix-up or tranform the fix-up for
+/* Implement md_apply_fix.  Apply the fix-up or transform the fix-up for
    later relocation generation.  */
 
 void
@@ -6433,8 +6463,8 @@ nds32_apply_fix (fixS *fixP, valueT *valP, segT seg ATTRIBUTE_UNUSED)
       fixP->fx_addnumber = value;
       fixP->tc_fix_data = NULL;
 
-      /* Tranform specific relocations here for later relocation generation.
-	 Tag data here for ex9 relaxtion and tag tls data for linker.  */
+      /* Transform specific relocations here for later relocation generation.
+	 Tag data here for ex9 relaxation and tag tls data for linker.  */
       switch (fixP->fx_r_type)
 	{
 	case BFD_RELOC_NDS32_DATA:
@@ -6489,7 +6519,7 @@ nds32_apply_fix (fixS *fixP, valueT *valP, segT seg ATTRIBUTE_UNUSED)
 	 ---- 8< ---- 8< ---- 8< ---- 8< ----
 
 	 We use a single relocation entry for this expression.
-	 * The initial distance value is stored direcly in that location
+	 * The initial distance value is stored directly in that location
 	   specified by r_offset (i.e., foo in this example.)
 	 * The begin of the region, i.e., .LBEGIN, is specified by
 	   r_info/R_SYM and r_addend, e.g., .text + 0x32.
@@ -6575,6 +6605,7 @@ nds32_apply_fix (fixS *fixP, valueT *valP, segT seg ATTRIBUTE_UNUSED)
 	  break;
 	case BFD_RELOC_64:
 	  md_number_to_chars (where, value, 8);
+	  break;
 	default:
 	  as_bad_where (fixP->fx_file, fixP->fx_line,
 			_("Internal error: Unknown fixup type %d (`%s')"),
@@ -6655,7 +6686,7 @@ nds32_parse_name (char const *name, expressionS *exprP,
   exprP->X_op = O_symbol;
   exprP->X_add_number = 0;
 
-  /* Check the specail name if a symbol.  */
+  /* Check the special name if a symbol.  */
   segment = S_GET_SEGMENT (exprP->X_add_symbol);
   if (segment != undefined_section)
     return 0;

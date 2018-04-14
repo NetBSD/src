@@ -3,7 +3,7 @@
 (echo;echo;echo;echo)>e${EMULATION_NAME}.c # there, now line numbers match ;-)
 fragment <<EOF
 /* This file is part of GLD, the Gnu Linker.
-   Copyright (C) 1999-2016 Free Software Foundation, Inc.
+   Copyright (C) 1999-2018 Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
 
@@ -78,17 +78,17 @@ gld${EMULATION_NAME}_handle_option (int optc)
 
     case OPTION_COFF_FORMAT:
       if ((*optarg == '0' || *optarg == '1' || *optarg == '2')
-          && optarg[1] == '\0')
-      {
-        static char buf[] = "coffX-${OUTPUT_FORMAT_TEMPLATE}";
-        coff_version = *optarg - '0';
-        buf[4] = *optarg;
-	lang_add_output_format (buf, NULL, NULL, 0);
-      }
+	  && optarg[1] == '\0')
+	{
+	  static char buf[] = "coffX-${OUTPUT_FORMAT_TEMPLATE}";
+	  coff_version = *optarg - '0';
+	  buf[4] = *optarg;
+	  lang_add_output_format (buf, NULL, NULL, 0);
+	}
       else
-        {
+	{
 	  einfo (_("%P%F: invalid COFF format version %s\n"), optarg);
-        }
+	}
       break;
     }
   return FALSE;
@@ -161,6 +161,7 @@ struct ld_emulation_xfer_struct ld_${EMULATION_NAME}_emulation =
   hll_default,
   after_parse_default,
   after_open_default,
+  after_check_relocs_default,
   after_allocation_default,
   set_output_arch_default,
   ldemul_default_target,

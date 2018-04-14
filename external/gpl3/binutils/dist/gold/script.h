@@ -1,6 +1,6 @@
 // script.h -- handle linker scripts for gold   -*- C++ -*-
 
-// Copyright (C) 2006-2016 Free Software Foundation, Inc.
+// Copyright (C) 2006-2018 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -538,7 +538,7 @@ class Script_options
   // SECTIONS clause.
   typedef std::vector<Symbol_assignment*> Symbol_assignments;
 
-  // We keep a list of all assertions whcih occur outside of a
+  // We keep a list of all assertions which occur outside of a
   // SECTIONS clause.
   typedef std::vector<Script_assertion*> Assertions;
 

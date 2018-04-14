@@ -1,5 +1,5 @@
 /* ARC ELF support for BFD.
-   Copyright (C) 1995-2016 Free Software Foundation, Inc.
+   Copyright (C) 1995-2018 Free Software Foundation, Inc.
    Contributed by Doug Evans, (dje@cygnus.com)
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -55,12 +55,42 @@ END_RELOC_NUMBERS (R_ARC_max)
 #define E_ARC_OSABI_ORIG	0x00000000   /* MUST be 0 for back-compat.  */
 #define E_ARC_OSABI_V2		0x00000200
 #define E_ARC_OSABI_V3		0x00000300
-#define E_ARC_OSABI_CURRENT	E_ARC_OSABI_V3
-
+#define E_ARC_OSABI_V4		0x00000400
+#define E_ARC_OSABI_CURRENT	E_ARC_OSABI_V4
 /* Leave bits 0xf0 alone in case we ever have more than 16 cpu types.  */
 
 /* File contains position independent code.  */
 
 #define EF_ARC_PIC 0x00000100
+
+/* Additional section types.  */
+#define SHT_ARC_ATTRIBUTES     0x70000001	/* Section holds attributes.  */
+
+/* ARC ABI object attributes.  */
+enum {
+  /* 0-3 are generic.  */
+  Tag_ARC_PCS_config = 4,
+  Tag_ARC_CPU_base,
+  Tag_ARC_CPU_variation,
+  Tag_ARC_CPU_name,
+  Tag_ARC_ABI_rf16,
+  Tag_ARC_ABI_osver,
+  Tag_ARC_ABI_sda,
+  Tag_ARC_ABI_pic,
+  Tag_ARC_ABI_tls,
+  Tag_ARC_ABI_enumsize,
+  Tag_ARC_ABI_exceptions,
+  Tag_ARC_ABI_double_size,
+  Tag_ARC_ISA_config,
+  Tag_ARC_ISA_apex,
+  Tag_ARC_ISA_mpy_option
+};
+
+/* Values for the Tag_ARC_cpu_base attribute.  */
+#define TAG_CPU_NONE	  0
+#define TAG_CPU_ARC6xx	  1
+#define TAG_CPU_ARC7xx	  2
+#define TAG_CPU_ARCEM	  3
+#define TAG_CPU_ARCHS	  4
 
 #endif /* _ELF_ARC_H */

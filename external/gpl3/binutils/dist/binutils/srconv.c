@@ -1,5 +1,5 @@
 /* srconv.c -- Sysroff conversion program
-   Copyright (C) 1994-2016 Free Software Foundation, Inc.
+   Copyright (C) 1994-2018 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -43,52 +43,12 @@ static int addrsize;
 static char *toolname;
 static char **rnames;
 
-static int get_member_id (int);
-static int get_ordinary_id (int);
-static char *section_translate (char *);
-static char *strip_suffix (const char *);
-static void checksum (FILE *, unsigned char *, int, int);
-static void writeINT (int, unsigned char *, int *, int, FILE *);
-static void writeBITS (int, unsigned char *, int *, int);
-static void writeBARRAY (barray, unsigned char *, int *, int, FILE *);
-static void writeCHARS (char *, unsigned char *, int *, int, FILE *);
-static void wr_tr (void);
-static void wr_un (struct coff_ofile *, struct coff_sfile *, int, int);
-static void wr_hd (struct coff_ofile *);
-static void wr_sh (struct coff_ofile *, struct coff_section *);
-static void wr_ob (struct coff_ofile *, struct coff_section *);
-static void wr_rl (struct coff_ofile *, struct coff_section *);
-static void wr_object_body (struct coff_ofile *);
-static void wr_dps_start
-  (struct coff_sfile *, struct coff_section *, struct coff_scope *, int, int);
-static void wr_dps_end (struct coff_section *, struct coff_scope *, int);
-static int *nints (int);
-static void walk_tree_type_1
-  (struct coff_sfile *, struct coff_symbol *, struct coff_type *, int);
-static void walk_tree_type
-  (struct coff_sfile *, struct coff_symbol *, struct coff_type *, int);
 static void walk_tree_symbol
   (struct coff_sfile *, struct coff_section *, struct coff_symbol *, int);
 static void walk_tree_scope
   (struct coff_section *, struct coff_sfile *, struct coff_scope *, int, int);
-static void walk_tree_sfile (struct coff_section *, struct coff_sfile *);
-static void wr_program_structure (struct coff_ofile *, struct coff_sfile *);
-static void wr_du (struct coff_ofile *, struct coff_sfile *, int);
-static void wr_dus (struct coff_ofile *, struct coff_sfile *);
 static int find_base (struct coff_sfile *, struct coff_section *);
-static void wr_dln (struct coff_ofile *, struct coff_sfile *, int);
 static void wr_globals (struct coff_ofile *, struct coff_sfile *, int);
-static void wr_debug (struct coff_ofile *);
-static void wr_cs (void);
-static int wr_sc (struct coff_ofile *, struct coff_sfile *);
-static void wr_er (struct coff_ofile *, struct coff_sfile *, int);
-static void wr_ed (struct coff_ofile *, struct coff_sfile *, int);
-static void wr_unit_info (struct coff_ofile *);
-static void wr_module (struct coff_ofile *);
-static int align (int);
-static void prescan (struct coff_ofile *);
-static void show_usage (FILE *, int);
-extern int main (int, char **);
 
 static FILE *file;
 static bfd *abfd;
@@ -914,13 +874,14 @@ static void
 walk_tree_type (struct coff_sfile *sfile, struct coff_symbol *symbol,
 		struct coff_type *type, int nest)
 {
+  struct IT_dty dty;
+
+  dty.spare = 0;
+  dty.end = 0;
+  dty.neg = 0x1001;
+
   if (symbol->type->type == coff_function_type)
     {
-      struct IT_dty dty;
-
-      dty.end = 0;
-      dty.neg = 0x1001;
-
       sysroff_swap_dty_out (file, &dty);
       walk_tree_type_1 (sfile, symbol, type, nest);
       dty.end = 1;
@@ -946,10 +907,6 @@ walk_tree_type (struct coff_sfile *sfile, struct coff_symbol *symbol,
     }
   else
     {
-      struct IT_dty dty;
-
-      dty.end = 0;
-      dty.neg = 0x1001;
       sysroff_swap_dty_out (file, &dty);
       walk_tree_type_1 (sfile, symbol, type, nest);
       dty.end = 1;
@@ -1732,7 +1689,7 @@ prescan (struct coff_ofile *otree)
 
 char *program_name;
 
-static void
+ATTRIBUTE_NORETURN static void
 show_usage (FILE *ffile, int status)
 {
   fprintf (ffile, _("Usage: %s [option(s)] in-file [out-file]\n"), program_name);

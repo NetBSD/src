@@ -1,5 +1,5 @@
 /* tc-i860.h -- Header file for the i860.
-   Copyright (C) 1991-2016 Free Software Foundation, Inc.
+   Copyright (C) 1991-2018 Free Software Foundation, Inc.
 
    Brought back from the dead and completely reworked
    by Jason Eckhardt <jle@cygnus.com>.

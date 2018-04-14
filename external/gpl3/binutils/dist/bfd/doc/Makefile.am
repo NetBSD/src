@@ -1,6 +1,6 @@
 ## Process this file with automake to generate Makefile.in
 #
-#   Copyright (C) 2012-2016 Free Software Foundation, Inc.
+#   Copyright (C) 2012-2018 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -252,14 +252,13 @@ linker.stamp: $(srcdir)/../linker.c $(srcdir)/doc.str $(MKDOC)
 
 LIBBFD_H_DEP = \
 	$(srcdir)/../libbfd-in.h	\
-	$(srcdir)/../init.c		\
 	$(srcdir)/../libbfd.c		\
 	$(srcdir)/../bfdio.c		\
 	$(srcdir)/../bfdwin.c		\
 	$(srcdir)/../cache.c		\
 	$(srcdir)/../reloc.c		\
 	$(srcdir)/../archures.c		\
-	$(srcdir)/../elf.c		\
+	$(srcdir)/../linker.c		\
 	$(srcdir)/header.sed		\
 	$(srcdir)/proto.str		\
 	$(MKDOC)

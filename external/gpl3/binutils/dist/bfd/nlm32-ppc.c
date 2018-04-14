@@ -1,5 +1,5 @@
 /* Support for 32-bit PowerPC NLM (NetWare Loadable Module)
-   Copyright (C) 1994-2016 Free Software Foundation, Inc.
+   Copyright (C) 1994-2018 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -83,345 +83,345 @@ nlm_powerpc_write_prefix (bfd *abfd)
 static reloc_howto_type nlm_powerpc_howto_table[] =
 {
   /* Standard 32 bit relocation.  */
-  HOWTO (0,	                /* Type.  */
-	 0,	                /* Rightshift.  */
-	 2,	                /* Size (0 = byte, 1 = short, 2 = long).  */
-	 32,	                /* Bitsize.  */
-	 FALSE,	                /* PC relative.  */
-	 0,	                /* Bitpos.  */
+  HOWTO (0,			/* Type.  */
+	 0,			/* Rightshift.  */
+	 2,			/* Size (0 = byte, 1 = short, 2 = long).  */
+	 32,			/* Bitsize.  */
+	 FALSE,			/* PC relative.  */
+	 0,			/* Bitpos.  */
 	 complain_overflow_bitfield, /* Complain_on_overflow.  */
-	 0,		        /* Special_function.  */
-	 "R_POS",               /* Name.  */
-	 TRUE,	                /* Partial_inplace.  */
-	 0xffffffff,            /* Source mask.  */
-	 0xffffffff,            /* Dest mask.  */
-	 FALSE),                /* PC rel offset.  */
+	 0,			/* Special_function.  */
+	 "R_POS",		/* Name.  */
+	 TRUE,			/* Partial_inplace.  */
+	 0xffffffff,		/* Source mask.  */
+	 0xffffffff,		/* Dest mask.  */
+	 FALSE),		/* PC rel offset.  */
 
   /* 32 bit relocation, but store negative value.  */
-  HOWTO (1,	                /* Type.  */
-	 0,	                /* Rightshift.  */
-	 -2,	                /* Size (0 = byte, 1 = short, 2 = long).  */
-	 32,	                /* Bitsize.  */
-	 FALSE,	                /* PC relative.  */
-	 0,	                /* Bitpos.  */
+  HOWTO (1,			/* Type.  */
+	 0,			/* Rightshift.  */
+	 -2,			/* Size (0 = byte, 1 = short, 2 = long).  */
+	 32,			/* Bitsize.  */
+	 FALSE,			/* PC relative.  */
+	 0,			/* Bitpos.  */
 	 complain_overflow_bitfield, /* Complain_on_overflow.  */
-	 0,		        /* Special_function.  */
-	 "R_NEG",               /* Name.  */
-	 TRUE,	                /* Partial_inplace.  */
-	 0xffffffff,            /* Source mask.  */
-	 0xffffffff,            /* Dest mask.  */
-	 FALSE),                /* PC rel offset.  */
+	 0,			/* Special_function.  */
+	 "R_NEG",		/* Name.  */
+	 TRUE,			/* Partial_inplace.  */
+	 0xffffffff,		/* Source mask.  */
+	 0xffffffff,		/* Dest mask.  */
+	 FALSE),		/* PC rel offset.  */
 
   /* 32 bit PC relative relocation.  */
-  HOWTO (2,	                /* Type.  */
-	 0,	                /* Rightshift.  */
-	 2,	                /* Size (0 = byte, 1 = short, 2 = long).  */
-	 32,	                /* Bitsize.  */
-	 TRUE,	                /* PC relative.  */
-	 0,	                /* Bitpos.  */
+  HOWTO (2,			/* Type.  */
+	 0,			/* Rightshift.  */
+	 2,			/* Size (0 = byte, 1 = short, 2 = long).  */
+	 32,			/* Bitsize.  */
+	 TRUE,			/* PC relative.  */
+	 0,			/* Bitpos.  */
 	 complain_overflow_signed, /* Complain_on_overflow.  */
-	 0,		        /* Special_function.  */
-	 "R_REL",               /* Name.  */
-	 TRUE,	                /* Partial_inplace.  */
-	 0xffffffff,            /* Source mask.  */
-	 0xffffffff,            /* Dest mask.  */
-	 FALSE),                /* PC rel offset.  */
+	 0,			/* Special_function.  */
+	 "R_REL",		/* Name.  */
+	 TRUE,			/* Partial_inplace.  */
+	 0xffffffff,		/* Source mask.  */
+	 0xffffffff,		/* Dest mask.  */
+	 FALSE),		/* PC rel offset.  */
 
   /* 16 bit TOC relative relocation.  */
-  HOWTO (3,	                /* Type.  */
-	 0,	                /* Rightshift.  */
-	 1,	                /* Size (0 = byte, 1 = short, 2 = long).  */
-	 16,	                /* Bitsize.  */
-	 FALSE,	                /* PC relative.  */
-	 0,	                /* Bitpos.  */
+  HOWTO (3,			/* Type.  */
+	 0,			/* Rightshift.  */
+	 1,			/* Size (0 = byte, 1 = short, 2 = long).  */
+	 16,			/* Bitsize.  */
+	 FALSE,			/* PC relative.  */
+	 0,			/* Bitpos.  */
 	 complain_overflow_signed, /* Complain_on_overflow.  */
-	 0,		        /* Special_function.  */
-	 "R_TOC",               /* Name.  */
-	 TRUE,	                /* Partial_inplace.  */
-	 0xffff,	        /* Source mask.  */
-	 0xffff,        	/* Dest mask.  */
-	 FALSE),                /* PC rel offset.  */
+	 0,			/* Special_function.  */
+	 "R_TOC",		/* Name.  */
+	 TRUE,			/* Partial_inplace.  */
+	 0xffff,		/* Source mask.  */
+	 0xffff,		/* Dest mask.  */
+	 FALSE),		/* PC rel offset.  */
 
   /* I don't really know what this is.  */
-  HOWTO (4,	                /* Type.  */
-	 1,	                /* Rightshift.  */
-	 2,	                /* Size (0 = byte, 1 = short, 2 = long).  */
-	 32,	                /* Bitsize.  */
-	 FALSE,	                /* PC relative.  */
-	 0,	                /* Bitpos.  */
+  HOWTO (4,			/* Type.  */
+	 1,			/* Rightshift.  */
+	 2,			/* Size (0 = byte, 1 = short, 2 = long).  */
+	 32,			/* Bitsize.  */
+	 FALSE,			/* PC relative.  */
+	 0,			/* Bitpos.  */
 	 complain_overflow_bitfield, /* Complain_on_overflow.  */
-	 0,		        /* Special_function.  */
-	 "R_RTB",               /* Name.  */
-	 TRUE,	                /* Partial_inplace.  */
-	 0xffffffff,	        /* Source mask.  */
-	 0xffffffff,        	/* Dest mask.  */
-	 FALSE),                /* PC rel offset.  */
+	 0,			/* Special_function.  */
+	 "R_RTB",		/* Name.  */
+	 TRUE,			/* Partial_inplace.  */
+	 0xffffffff,		/* Source mask.  */
+	 0xffffffff,		/* Dest mask.  */
+	 FALSE),		/* PC rel offset.  */
 
   /* External TOC relative symbol.  */
-  HOWTO (5,	                /* Type.  */
-	 0,	                /* Rightshift.  */
-	 2,	                /* Size (0 = byte, 1 = short, 2 = long).  */
-	 16,	                /* Bitsize.  */
-	 FALSE,	                /* PC relative.  */
-	 0,	                /* Bitpos.  */
+  HOWTO (5,			/* Type.  */
+	 0,			/* Rightshift.  */
+	 2,			/* Size (0 = byte, 1 = short, 2 = long).  */
+	 16,			/* Bitsize.  */
+	 FALSE,			/* PC relative.  */
+	 0,			/* Bitpos.  */
 	 complain_overflow_bitfield, /* Complain_on_overflow.  */
-	 0,		        /* Special_function.  */
-	 "R_GL",                /* Name.  */
-	 TRUE,	                /* Partial_inplace.  */
-	 0xffff,	        /* Source mask.  */
-	 0xffff,        	/* Dest mask.  */
-	 FALSE),                /* PC rel offset.  */
+	 0,			/* Special_function.  */
+	 "R_GL",		/* Name.  */
+	 TRUE,			/* Partial_inplace.  */
+	 0xffff,		/* Source mask.  */
+	 0xffff,		/* Dest mask.  */
+	 FALSE),		/* PC rel offset.  */
 
   /* Local TOC relative symbol.  */
-  HOWTO (6,	                /* Type.  */
-	 0,	                /* Rightshift.  */
-	 2,	                /* Size (0 = byte, 1 = short, 2 = long).  */
-	 16,	                /* Bitsize.  */
-	 FALSE,	                /* PC relative.  */
-	 0,	                /* Bitpos.  */
+  HOWTO (6,			/* Type.  */
+	 0,			/* Rightshift.  */
+	 2,			/* Size (0 = byte, 1 = short, 2 = long).  */
+	 16,			/* Bitsize.  */
+	 FALSE,			/* PC relative.  */
+	 0,			/* Bitpos.  */
 	 complain_overflow_bitfield, /* Complain_on_overflow.  */
-	 0,		        /* Special_function.  */
-	 "R_TCL",               /* Name.  */
-	 TRUE,	                /* Partial_inplace.  */
-	 0xffff,	        /* Source mask.  */
-	 0xffff,        	/* Dest mask.  */
-	 FALSE),                /* PC rel offset.  */
+	 0,			/* Special_function.  */
+	 "R_TCL",		/* Name.  */
+	 TRUE,			/* Partial_inplace.  */
+	 0xffff,		/* Source mask.  */
+	 0xffff,		/* Dest mask.  */
+	 FALSE),		/* PC rel offset.  */
 
   { 7 },
 
   /* Non modifiable absolute branch.  */
-  HOWTO (8,	                /* Type.  */
-	 0,	                /* Rightshift.  */
-	 2,	                /* Size (0 = byte, 1 = short, 2 = long).  */
-	 26,	                /* Bitsize.  */
-	 FALSE,	                /* PC relative.  */
-	 0,	                /* Bitpos.  */
+  HOWTO (8,			/* Type.  */
+	 0,			/* Rightshift.  */
+	 2,			/* Size (0 = byte, 1 = short, 2 = long).  */
+	 26,			/* Bitsize.  */
+	 FALSE,			/* PC relative.  */
+	 0,			/* Bitpos.  */
 	 complain_overflow_bitfield, /* Complain_on_overflow.  */
-	 0,		        /* Special_function.  */
-	 "R_BA",                /* Name.  */
-	 TRUE,	                /* Partial_inplace.  */
-	 0x3fffffc,	        /* Source mask.  */
-	 0x3fffffc,        	/* Dest mask.  */
-	 FALSE),                /* PC rel offset.  */
+	 0,			/* Special_function.  */
+	 "R_BA",		/* Name.  */
+	 TRUE,			/* Partial_inplace.  */
+	 0x3fffffc,		/* Source mask.  */
+	 0x3fffffc,		/* Dest mask.  */
+	 FALSE),		/* PC rel offset.  */
 
   { 9 },
 
   /* Non modifiable relative branch.  */
-  HOWTO (0xa,	                /* Type.  */
-	 0,	                /* Rightshift.  */
-	 2,	                /* Size (0 = byte, 1 = short, 2 = long).  */
-	 26,	                /* Bitsize.  */
-	 TRUE,	                /* PC relative.  */
-	 0,	                /* Bitpos.  */
+  HOWTO (0xa,			/* Type.  */
+	 0,			/* Rightshift.  */
+	 2,			/* Size (0 = byte, 1 = short, 2 = long).  */
+	 26,			/* Bitsize.  */
+	 TRUE,			/* PC relative.  */
+	 0,			/* Bitpos.  */
 	 complain_overflow_signed, /* Complain_on_overflow.  */
-	 0,		        /* Special_function.  */
-	 "R_BR",                /* Name.  */
-	 TRUE,	                /* Partial_inplace.  */
-	 0x3fffffc,	        /* Source mask.  */
-	 0x3fffffc,        	/* Dest mask.  */
-	 FALSE),                /* PC rel offset.  */
+	 0,			/* Special_function.  */
+	 "R_BR",		/* Name.  */
+	 TRUE,			/* Partial_inplace.  */
+	 0x3fffffc,		/* Source mask.  */
+	 0x3fffffc,		/* Dest mask.  */
+	 FALSE),		/* PC rel offset.  */
 
   { 0xb },
 
   /* Indirect load.  */
-  HOWTO (0xc,	                /* Type.  */
-	 0,	                /* Rightshift.  */
-	 2,	                /* Size (0 = byte, 1 = short, 2 = long).  */
-	 16,	                /* Bitsize.  */
-	 FALSE,	                /* PC relative.  */
-	 0,	                /* Bitpos.  */
+  HOWTO (0xc,			/* Type.  */
+	 0,			/* Rightshift.  */
+	 2,			/* Size (0 = byte, 1 = short, 2 = long).  */
+	 16,			/* Bitsize.  */
+	 FALSE,			/* PC relative.  */
+	 0,			/* Bitpos.  */
 	 complain_overflow_bitfield, /* Complain_on_overflow.  */
-	 0,		        /* Special_function.  */
-	 "R_RL",                /* Name.  */
-	 TRUE,	                /* Partial_inplace.  */
-	 0xffff,	        /* Source mask.  */
-	 0xffff,        	/* Dest mask.  */
-	 FALSE),                /* PC rel offset.  */
+	 0,			/* Special_function.  */
+	 "R_RL",		/* Name.  */
+	 TRUE,			/* Partial_inplace.  */
+	 0xffff,		/* Source mask.  */
+	 0xffff,		/* Dest mask.  */
+	 FALSE),		/* PC rel offset.  */
 
   /* Load address.  */
-  HOWTO (0xd,	                /* Type.  */
-	 0,	                /* Rightshift.  */
-	 2,	                /* Size (0 = byte, 1 = short, 2 = long).  */
-	 16,	                /* Bitsize.  */
-	 FALSE,	                /* PC relative.  */
-	 0,	                /* Bitpos.  */
+  HOWTO (0xd,			/* Type.  */
+	 0,			/* Rightshift.  */
+	 2,			/* Size (0 = byte, 1 = short, 2 = long).  */
+	 16,			/* Bitsize.  */
+	 FALSE,			/* PC relative.  */
+	 0,			/* Bitpos.  */
 	 complain_overflow_bitfield, /* Complain_on_overflow.  */
-	 0,		        /* Special_function.  */
-	 "R_RLA",               /* Name.  */
-	 TRUE,	                /* Partial_inplace.  */
-	 0xffff,	        /* Source mask.  */
-	 0xffff,        	/* Dest mask.  */
-	 FALSE),                /* PC rel offset.  */
+	 0,			/* Special_function.  */
+	 "R_RLA",		/* Name.  */
+	 TRUE,			/* Partial_inplace.  */
+	 0xffff,		/* Source mask.  */
+	 0xffff,		/* Dest mask.  */
+	 FALSE),		/* PC rel offset.  */
 
   { 0xe },
 
   /* Non-relocating reference.  */
-  HOWTO (0xf,	                /* Type.  */
-	 0,	                /* Rightshift.  */
-	 2,	                /* Size (0 = byte, 1 = short, 2 = long).  */
-	 32,	                /* Bitsize.  */
-	 FALSE,	                /* PC relative.  */
-	 0,	                /* Bitpos.  */
+  HOWTO (0xf,			/* Type.  */
+	 0,			/* Rightshift.  */
+	 2,			/* Size (0 = byte, 1 = short, 2 = long).  */
+	 32,			/* Bitsize.  */
+	 FALSE,			/* PC relative.  */
+	 0,			/* Bitpos.  */
 	 complain_overflow_bitfield, /* Complain_on_overflow.  */
-	 0,		        /* Special_function.  */
-	 "R_REF",               /* Name.  */
-	 FALSE,	                /* Partial_inplace.  */
-	 0,		        /* Source mask.  */
-	 0,     	   	/* Dest mask.  */
-	 FALSE),                /* PC rel offset.  */
+	 0,			/* Special_function.  */
+	 "R_REF",		/* Name.  */
+	 FALSE,			/* Partial_inplace.  */
+	 0,			/* Source mask.  */
+	 0,			/* Dest mask.  */
+	 FALSE),		/* PC rel offset.  */
 
   { 0x10 },
   { 0x11 },
 
   /* TOC relative indirect load.  */
-  HOWTO (0x12,	                /* Type.  */
-	 0,	                /* Rightshift.  */
-	 2,	                /* Size (0 = byte, 1 = short, 2 = long).  */
-	 16,	                /* Bitsize.  */
-	 FALSE,	                /* PC relative.  */
-	 0,	                /* Bitpos.  */
+  HOWTO (0x12,			/* Type.  */
+	 0,			/* Rightshift.  */
+	 2,			/* Size (0 = byte, 1 = short, 2 = long).  */
+	 16,			/* Bitsize.  */
+	 FALSE,			/* PC relative.  */
+	 0,			/* Bitpos.  */
 	 complain_overflow_bitfield, /* Complain_on_overflow.  */
-	 0,		        /* Special_function.  */
-	 "R_TRL",               /* Name.  */
-	 TRUE,	                /* Partial_inplace.  */
-	 0xffff,	        /* Source mask.  */
-	 0xffff,        	/* Dest mask.  */
-	 FALSE),                /* PC rel offset.  */
+	 0,			/* Special_function.  */
+	 "R_TRL",		/* Name.  */
+	 TRUE,			/* Partial_inplace.  */
+	 0xffff,		/* Source mask.  */
+	 0xffff,		/* Dest mask.  */
+	 FALSE),		/* PC rel offset.  */
 
   /* TOC relative load address.  */
-  HOWTO (0x13,	                /* Type.  */
-	 0,	                /* Rightshift.  */
-	 2,	                /* Size (0 = byte, 1 = short, 2 = long).  */
-	 16,	                /* Bitsize.  */
-	 FALSE,	                /* PC relative.  */
-	 0,	                /* Bitpos.  */
+  HOWTO (0x13,			/* Type.  */
+	 0,			/* Rightshift.  */
+	 2,			/* Size (0 = byte, 1 = short, 2 = long).  */
+	 16,			/* Bitsize.  */
+	 FALSE,			/* PC relative.  */
+	 0,			/* Bitpos.  */
 	 complain_overflow_bitfield, /* Complain_on_overflow.  */
-	 0,		        /* Special_function.  */
-	 "R_TRLA",              /* Name.  */
-	 TRUE,	                /* Partial_inplace.  */
-	 0xffff,	        /* Source mask.  */
-	 0xffff,        	/* Dest mask.  */
-	 FALSE),                /* PC rel offset.  */
+	 0,			/* Special_function.  */
+	 "R_TRLA",		/* Name.  */
+	 TRUE,			/* Partial_inplace.  */
+	 0xffff,		/* Source mask.  */
+	 0xffff,		/* Dest mask.  */
+	 FALSE),		/* PC rel offset.  */
 
   /* Modifiable relative branch.  */
-  HOWTO (0x14,	                /* Type.  */
-	 1,	                /* Rightshift.  */
-	 2,	                /* Size (0 = byte, 1 = short, 2 = long).  */
-	 32,	                /* Bitsize.  */
-	 FALSE,	                /* PC relative.  */
-	 0,	                /* Bitpos.  */
+  HOWTO (0x14,			/* Type.  */
+	 1,			/* Rightshift.  */
+	 2,			/* Size (0 = byte, 1 = short, 2 = long).  */
+	 32,			/* Bitsize.  */
+	 FALSE,			/* PC relative.  */
+	 0,			/* Bitpos.  */
 	 complain_overflow_bitfield, /* Complain_on_overflow.  */
-	 0,		        /* Special_function.  */
-	 "R_RRTBI",             /* Name.  */
-	 TRUE,	                /* Partial_inplace.  */
-	 0xffffffff,	        /* Source mask.  */
-	 0xffffffff,        	/* Dest mask.  */
-	 FALSE),                /* PC rel offset.  */
+	 0,			/* Special_function.  */
+	 "R_RRTBI",		/* Name.  */
+	 TRUE,			/* Partial_inplace.  */
+	 0xffffffff,		/* Source mask.  */
+	 0xffffffff,		/* Dest mask.  */
+	 FALSE),		/* PC rel offset.  */
 
   /* Modifiable absolute branch.  */
-  HOWTO (0x15,	                /* Type.  */
-	 1,	                /* Rightshift.  */
-	 2,	                /* Size (0 = byte, 1 = short, 2 = long).  */
-	 32,	                /* Bitsize.  */
-	 FALSE,	                /* PC relative.  */
-	 0,	                /* Bitpos.  */
+  HOWTO (0x15,			/* Type.  */
+	 1,			/* Rightshift.  */
+	 2,			/* Size (0 = byte, 1 = short, 2 = long).  */
+	 32,			/* Bitsize.  */
+	 FALSE,			/* PC relative.  */
+	 0,			/* Bitpos.  */
 	 complain_overflow_bitfield, /* Complain_on_overflow.  */
-	 0,		        /* Special_function.  */
-	 "R_RRTBA",             /* Name.  */
-	 TRUE,	                /* Partial_inplace.  */
-	 0xffffffff,	        /* Source mask.  */
-	 0xffffffff,        	/* Dest mask.  */
-	 FALSE),                /* PC rel offset.  */
+	 0,			/* Special_function.  */
+	 "R_RRTBA",		/* Name.  */
+	 TRUE,			/* Partial_inplace.  */
+	 0xffffffff,		/* Source mask.  */
+	 0xffffffff,		/* Dest mask.  */
+	 FALSE),		/* PC rel offset.  */
 
   /* Modifiable call absolute indirect.  */
-  HOWTO (0x16,	                /* Type.  */
-	 0,	                /* Rightshift.  */
-	 2,	                /* Size (0 = byte, 1 = short, 2 = long).  */
-	 16,	                /* Bitsize.  */
-	 FALSE,	                /* PC relative.  */
-	 0,	                /* Bitpos.  */
+  HOWTO (0x16,			/* Type.  */
+	 0,			/* Rightshift.  */
+	 2,			/* Size (0 = byte, 1 = short, 2 = long).  */
+	 16,			/* Bitsize.  */
+	 FALSE,			/* PC relative.  */
+	 0,			/* Bitpos.  */
 	 complain_overflow_bitfield, /* Complain_on_overflow.  */
-	 0,		        /* Special_function.  */
-	 "R_CAI",               /* Name.  */
-	 TRUE,	                /* Partial_inplace.  */
-	 0xffff,	        /* Source mask.  */
-	 0xffff,        	/* Dest mask.  */
-	 FALSE),                /* PC rel offset.  */
+	 0,			/* Special_function.  */
+	 "R_CAI",		/* Name.  */
+	 TRUE,			/* Partial_inplace.  */
+	 0xffff,		/* Source mask.  */
+	 0xffff,		/* Dest mask.  */
+	 FALSE),		/* PC rel offset.  */
 
   /* Modifiable call relative.  */
-  HOWTO (0x17,	                /* Type.  */
-	 0,	                /* Rightshift.  */
-	 2,	                /* Size (0 = byte, 1 = short, 2 = long).  */
-	 16,	                /* Bitsize.  */
-	 FALSE,	                /* PC relative.  */
-	 0,	                /* Bitpos.  */
+  HOWTO (0x17,			/* Type.  */
+	 0,			/* Rightshift.  */
+	 2,			/* Size (0 = byte, 1 = short, 2 = long).  */
+	 16,			/* Bitsize.  */
+	 FALSE,			/* PC relative.  */
+	 0,			/* Bitpos.  */
 	 complain_overflow_bitfield, /* Complain_on_overflow.  */
-	 0,		        /* Special_function.  */
-	 "R_REL",               /* Name.  */
-	 TRUE,	                /* Partial_inplace.  */
-	 0xffff,	        /* Source mask.  */
-	 0xffff,        	/* Dest mask.  */
-	 FALSE),                /* PC rel offset.  */
+	 0,			/* Special_function.  */
+	 "R_REL",		/* Name.  */
+	 TRUE,			/* Partial_inplace.  */
+	 0xffff,		/* Source mask.  */
+	 0xffff,		/* Dest mask.  */
+	 FALSE),		/* PC rel offset.  */
 
   /* Modifiable branch absolute.  */
-  HOWTO (0x18,	                /* Type.  */
-	 0,	                /* Rightshift.  */
-	 2,	                /* Size (0 = byte, 1 = short, 2 = long).  */
-	 16,	                /* Bitsize.  */
-	 FALSE,	                /* PC relative.  */
-	 0,	                /* Bitpos.  */
+  HOWTO (0x18,			/* Type.  */
+	 0,			/* Rightshift.  */
+	 2,			/* Size (0 = byte, 1 = short, 2 = long).  */
+	 16,			/* Bitsize.  */
+	 FALSE,			/* PC relative.  */
+	 0,			/* Bitpos.  */
 	 complain_overflow_bitfield, /* Complain_on_overflow.  */
-	 0,		        /* Special_function.  */
-	 "R_RBA",               /* Name.  */
-	 TRUE,	                /* Partial_inplace.  */
-	 0xffff,	        /* Source mask.  */
-	 0xffff,        	/* Dest mask.  */
-	 FALSE),                /* PC rel offset.  */
+	 0,			/* Special_function.  */
+	 "R_RBA",		/* Name.  */
+	 TRUE,			/* Partial_inplace.  */
+	 0xffff,		/* Source mask.  */
+	 0xffff,		/* Dest mask.  */
+	 FALSE),		/* PC rel offset.  */
 
   /* Modifiable branch absolute.  */
-  HOWTO (0x19,	                /* Type.  */
-	 0,	                /* Rightshift.  */
-	 2,	                /* Size (0 = byte, 1 = short, 2 = long).  */
-	 16,	                /* Bitsize.  */
-	 FALSE,	                /* PC relative.  */
-	 0,	                /* Bitpos.  */
+  HOWTO (0x19,			/* Type.  */
+	 0,			/* Rightshift.  */
+	 2,			/* Size (0 = byte, 1 = short, 2 = long).  */
+	 16,			/* Bitsize.  */
+	 FALSE,			/* PC relative.  */
+	 0,			/* Bitpos.  */
 	 complain_overflow_bitfield, /* Complain_on_overflow.  */
-	 0,		        /* Special_function.  */
-	 "R_RBAC",              /* Name.  */
-	 TRUE,	                /* Partial_inplace.  */
-	 0xffff,	        /* Source mask.  */
-	 0xffff,        	/* Dest mask.  */
-	 FALSE),                /* PC rel offset.  */
+	 0,			/* Special_function.  */
+	 "R_RBAC",		/* Name.  */
+	 TRUE,			/* Partial_inplace.  */
+	 0xffff,		/* Source mask.  */
+	 0xffff,		/* Dest mask.  */
+	 FALSE),		/* PC rel offset.  */
 
   /* Modifiable branch relative.  */
-  HOWTO (0x1a,	                /* Type.  */
-	 0,	                /* Rightshift.  */
-	 2,	                /* Size (0 = byte, 1 = short, 2 = long).  */
-	 26,	                /* Bitsize.  */
-	 FALSE,	                /* PC relative.  */
-	 0,	                /* Bitpos.  */
+  HOWTO (0x1a,			/* Type.  */
+	 0,			/* Rightshift.  */
+	 2,			/* Size (0 = byte, 1 = short, 2 = long).  */
+	 26,			/* Bitsize.  */
+	 FALSE,			/* PC relative.  */
+	 0,			/* Bitpos.  */
 	 complain_overflow_signed, /* Complain_on_overflow.  */
-	 0,		        /* Special_function.  */
-	 "R_REL",               /* Name.  */
-	 TRUE,	                /* Partial_inplace.  */
-	 0xffff,	        /* Source mask.  */
-	 0xffff,        	/* Dest mask.  */
-	 FALSE),                /* PC rel offset.  */
+	 0,			/* Special_function.  */
+	 "R_REL",		/* Name.  */
+	 TRUE,			/* Partial_inplace.  */
+	 0xffff,		/* Source mask.  */
+	 0xffff,		/* Dest mask.  */
+	 FALSE),		/* PC rel offset.  */
 
   /* Modifiable branch absolute.  */
-  HOWTO (0x1b,	                /* Type.  */
-	 0,	                /* Rightshift.  */
-	 2,	                /* Size (0 = byte, 1 = short, 2 = long).  */
-	 16,	                /* Bitsize.  */
-	 FALSE,	                /* PC relative.  */
-	 0,	                /* Bitpos.  */
+  HOWTO (0x1b,			/* Type.  */
+	 0,			/* Rightshift.  */
+	 2,			/* Size (0 = byte, 1 = short, 2 = long).  */
+	 16,			/* Bitsize.  */
+	 FALSE,			/* PC relative.  */
+	 0,			/* Bitpos.  */
 	 complain_overflow_bitfield, /* Complain_on_overflow.  */
-	 0,		        /* Special_function.  */
-	 "R_REL",               /* Name.  */
-	 TRUE,	                /* Partial_inplace.  */
-	 0xffff,	        /* Source mask.  */
-	 0xffff,        	/* Dest mask.  */
-	 FALSE)                 /* PC rel offset.  */
+	 0,			/* Special_function.  */
+	 "R_REL",		/* Name.  */
+	 TRUE,			/* Partial_inplace.  */
+	 0xffff,		/* Source mask.  */
+	 0xffff,		/* Dest mask.  */
+	 FALSE)			/* PC rel offset.  */
 };
 
 #define HOWTO_COUNT (sizeof nlm_powerpc_howto_table		\
