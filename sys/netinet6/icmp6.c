@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.226 2018/04/12 07:28:10 maxv Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.227 2018/04/14 06:45:17 maxv Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.226 2018/04/12 07:28:10 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.227 2018/04/14 06:45:17 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -570,16 +570,10 @@ _icmp6_input(struct mbuf *m, int off, int proto)
 		case ICMP6_DST_UNREACH_ADDR:
 			code = PRC_HOSTDEAD;
 			break;
-#ifdef COMPAT_RFC1885
-		case ICMP6_DST_UNREACH_NOTNEIGHBOR:
-			code = PRC_UNREACH_SRCFAIL;
-			break;
-#else
 		case ICMP6_DST_UNREACH_BEYONDSCOPE:
 			/* I mean "source address was incorrect." */
 			code = PRC_UNREACH_NET;
 			break;
-#endif
 		case ICMP6_DST_UNREACH_NOPORT:
 			code = PRC_UNREACH_PORT;
 			break;
