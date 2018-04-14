@@ -1,6 +1,6 @@
 // reloc-types.h -- ELF relocation templates for gold  -*- C++ -*-
 
-// Copyright (C) 2006-2015 Free Software Foundation, Inc.
+// Copyright (C) 2006-2016 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -56,10 +56,6 @@ struct Reloc_types<elfcpp::SHT_REL, size, big_endian>
   set_reloc_addend(Reloc_write*,
 		   typename elfcpp::Elf_types<size>::Elf_Swxword)
   { gold_unreachable(); }
-
-  static inline void
-  copy_reloc_addend(Reloc_write*, const Reloc*)
-  { gold_unreachable(); }
 };
 
 template<int size, bool big_endian>
@@ -81,10 +77,6 @@ struct Reloc_types<elfcpp::SHT_RELA, size, big_endian>
   set_reloc_addend(Reloc_write* p,
 		   typename elfcpp::Elf_types<size>::Elf_Swxword val)
   { p->put_r_addend(val); }
-
-  static inline void
-  copy_reloc_addend(Reloc_write* to, const Reloc* from)
-  { to->put_r_addend(from->get_r_addend()); }
 };
 
 }; // End namespace gold.

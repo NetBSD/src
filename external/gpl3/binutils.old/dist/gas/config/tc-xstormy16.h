@@ -1,5 +1,5 @@
 /* tc-xstormy16.h -- Header file for tc-xstormy16.c.
-   Copyright (C) 2000-2015 Free Software Foundation, Inc.
+   Copyright (C) 2000-2016 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 

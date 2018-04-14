@@ -1,5 +1,5 @@
 /* cr16-opc.c -- Table of opcodes for the CR16 processor.
-   Copyright (C) 2007-2015 Free Software Foundation, Inc.
+   Copyright (C) 2007-2016 Free Software Foundation, Inc.
    Contributed by M R Swami Reddy (MR.Swami.Reddy@nsc.com)
 
    This file is part of the GNU opcodes library.

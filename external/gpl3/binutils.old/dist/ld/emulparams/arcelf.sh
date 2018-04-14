@@ -1,3 +1,4 @@
+. ${srcdir}/emulparams/arc-endianness.sh
 SCRIPT_NAME=elfarc
 TEMPLATE_NAME=elf32
 if [ "x${ARC_ENDIAN}" = "xbig" ]; then
@@ -17,3 +18,5 @@ ENTRY=__start
 SDATA_START_SYMBOLS='__SDATA_BEGIN__ = .;'
 OTHER_SECTIONS="/DISCARD/ : { *(.__arc_profile_*) }"
 EMBEDDED=yes
+
+GENERATE_SHLIB_SCRIPT=yes

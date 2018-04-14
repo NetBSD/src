@@ -1,6 +1,6 @@
 // gc.h -- garbage collection of unused sections
 
-// Copyright (C) 2009-2015 Free Software Foundation, Inc.
+// Copyright (C) 2009-2016 Free Software Foundation, Inc.
 // Written by Sriraman Tallam <tmsriram@google.com>.
 
 // This file is part of gold.
@@ -37,9 +37,6 @@ class Object;
 
 template<int size, bool big_endian>
 class Sized_relobj_file;
-
-template<int sh_type, int size, bool big_endian>
-struct Reloc_types;
 
 class Output_section;
 class General_options;
@@ -153,12 +150,11 @@ struct Symbols_data
 
 template<typename Classify_reloc>
 inline unsigned int
-get_embedded_addend_size(int sh_type, int r_type, Relobj* obj)
+get_embedded_addend_size(int r_type, Relobj* obj)
 {
-  if (sh_type != elfcpp::SHT_REL)
-    return 0;
-  Classify_reloc classify_reloc;
-  return classify_reloc.get_size_for_reloc(r_type, obj);
+  if (Classify_reloc::sh_type == elfcpp::SHT_REL)
+    return Classify_reloc::get_size_for_reloc(r_type, obj);
+  return 0;
 }
 
 // This function implements the generic part of reloc
@@ -167,7 +163,7 @@ get_embedded_addend_size(int sh_type, int r_type, Relobj* obj)
 // garbage collection (--gc-sections) and identical code
 // folding (--icf).
 
-template<int size, bool big_endian, typename Target_type, int sh_type,
+template<int size, bool big_endian, typename Target_type,
 	 typename Scan, typename Classify_reloc>
 inline void
 gc_process_relocs(
@@ -185,8 +181,8 @@ gc_process_relocs(
 {
   Scan scan;
 
-  typedef typename Reloc_types<sh_type, size, big_endian>::Reloc Reltype;
-  const int reloc_size = Reloc_types<sh_type, size, big_endian>::reloc_size;
+  typedef typename Classify_reloc::Reltype Reltype;
+  const int reloc_size = Classify_reloc::reloc_size;
   const int sym_size = elfcpp::Elf_sizes<size>::sym_size;
 
   Icf::Sections_reachable_info* secvec = NULL;
@@ -224,11 +220,10 @@ gc_process_relocs(
   for (size_t i = 0; i < reloc_count; ++i, prelocs += reloc_size)
     {
       Reltype reloc(prelocs);
-      typename elfcpp::Elf_types<size>::Elf_WXword r_info = reloc.get_r_info();
-      unsigned int r_sym = elfcpp::elf_r_sym<size>(r_info);
-      unsigned int r_type = elfcpp::elf_r_type<size>(r_info);
+      unsigned int r_sym = Classify_reloc::get_r_sym(&reloc);
+      unsigned int r_type = Classify_reloc::get_r_type(&reloc);
       typename elfcpp::Elf_types<size>::Elf_Swxword addend =
-      Reloc_types<sh_type, size, big_endian>::get_reloc_addend_noerror(&reloc);
+	  Classify_reloc::get_r_addend(&reloc);
       Relobj* dst_obj;
       unsigned int dst_indx;
       typedef typename elfcpp::Elf_types<size>::Elf_Addr Address;
@@ -260,8 +255,7 @@ gc_process_relocs(
                 convert_to_section_size_type(reloc.get_r_offset());
 	      (*offsetvec).push_back(reloc_offset);
               (*reloc_addend_size_vec).push_back(
-                get_embedded_addend_size<Classify_reloc>(sh_type, r_type,
-                                                         src_obj));
+                get_embedded_addend_size<Classify_reloc>(r_type, src_obj));
             }
 
 	  // When doing safe folding, check to see if this relocation is that
@@ -337,8 +331,7 @@ gc_process_relocs(
                 convert_to_section_size_type(reloc.get_r_offset());
 	      (*offsetvec).push_back(reloc_offset);
               (*reloc_addend_size_vec).push_back(
-                get_embedded_addend_size<Classify_reloc>(sh_type, r_type,
-                                                         src_obj));
+                get_embedded_addend_size<Classify_reloc>(r_type, src_obj));
 	    }
 
           if (dst_obj == NULL)

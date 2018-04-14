@@ -1,5 +1,5 @@
 /* Generic ECOFF (Extended-COFF) routines.
-   Copyright (C) 1990-2015 Free Software Foundation, Inc.
+   Copyright (C) 1990-2016 Free Software Foundation, Inc.
    Original version by Per Bothner.
    Full support added by Ian Lance Taylor, ian@cygnus.com.
 
@@ -3544,9 +3544,9 @@ ecoff_link_check_archive_element (bfd *abfd,
   if (h->type != bfd_link_hash_undefined)
     return TRUE;
 
-  /* Include this element.  */
+  /* Include this element?  */
   if (!(*info->callbacks->add_archive_element) (info, abfd, name, &abfd))
-    return FALSE;
+    return TRUE;
   *pneeded = TRUE;
 
   return ecoff_link_add_object_symbols (abfd, info);
@@ -4015,17 +4015,12 @@ ecoff_reloc_link_order (bfd *output_bfd,
 	case bfd_reloc_outofrange:
 	  abort ();
 	case bfd_reloc_overflow:
-	  if (! ((*info->callbacks->reloc_overflow)
-		 (info, NULL,
-		  (link_order->type == bfd_section_reloc_link_order
-		   ? bfd_section_name (output_bfd, section)
-		   : link_order->u.reloc.p->u.name),
-		  rel.howto->name, addend, NULL,
-		  NULL, (bfd_vma) 0)))
-	    {
-	      free (buf);
-	      return FALSE;
-	    }
+	  (*info->callbacks->reloc_overflow)
+	    (info, NULL,
+	     (link_order->type == bfd_section_reloc_link_order
+	      ? bfd_section_name (output_bfd, section)
+	      : link_order->u.reloc.p->u.name),
+	     rel.howto->name, addend, NULL, NULL, (bfd_vma) 0);
 	  break;
 	}
       ok = bfd_set_section_contents (output_bfd, output_section, (void *) buf,
@@ -4055,10 +4050,8 @@ ecoff_reloc_link_order (bfd *output_bfd,
 	in.r_symndx = h->indx;
       else
 	{
-	  if (! ((*info->callbacks->unattached_reloc)
-		 (info, link_order->u.reloc.p->u.name, NULL,
-		  NULL, (bfd_vma) 0)))
-	    return FALSE;
+	  (*info->callbacks->unattached_reloc)
+	    (info, link_order->u.reloc.p->u.name, NULL, NULL, (bfd_vma) 0);
 	  in.r_symndx = 0;
 	}
       in.r_extern = 1;

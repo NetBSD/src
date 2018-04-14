@@ -1,6 +1,6 @@
 // version.c -- print gold version information
 
-// Copyright (C) 2006-2015 Free Software Foundation, Inc.
+// Copyright (C) 2006-2016 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -36,7 +36,7 @@ namespace gold
 // version number from configure.ac.  But it's easier to just change
 // this file for now.
 
-static const char* version_string = "1.11";
+static const char* version_string = "1.12";
 
 // Report version information.
 
@@ -62,7 +62,7 @@ print_version(bool print_short)
   if (!print_short)
     {
       // This output is intended to follow the GNU standards.
-      printf(_("Copyright (C) 2015 Free Software Foundation, Inc.\n"));
+      printf(_("Copyright (C) 2016 Free Software Foundation, Inc.\n"));
       printf(_("\
 This program is free software; you may redistribute it under the terms of\n\
 the GNU General Public License version 3 or (at your option) a later version.\n\

@@ -1,3 +1,24 @@
+2016-01-06  Mike Frysinger  <vapier@gentoo.org>
+
+	* remote-sim.h (sim_open): Mark argv const.
+	(sim_create_inferior): Mark argv and env const.
+
+2015-11-24  Nick Clifton  <nickc@redhat.com>
+
+	* sim-aarch64.h: New file.
+
+2015-11-15  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-cr16.h (SIM_CR16_MEMORY_UNIFIED, SIM_CR16_MEMORY_INSN,
+	SIM_CR16_MEMORY_DATA, SIM_CR16_MEMORY_DMAP, SIM_CR16_MEMORY_IMAP):
+	Delete.
+
+2015-11-14  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-arm.h: Delete __cplusplus checks and extern "C" linkage.
+	* sim-cr16.h, sim-d10v.h, sim-frv.h, sim-h8300.h, sim-lm32.h,
+	sim-sh.h: Likewise.
+
 2015-11-10  Mike Frysinger  <vapier@gentoo.org>
 
 	* sim-cr16.h (sim_cr16_translate_dmap_addr): Delete.
@@ -315,7 +336,7 @@ Wed Jul 17 19:36:38 2002  J"orn Rennecke <joern.rennecke@superh.com>
 	* signals.h: New file, from gdb/defs.h.
 
 
-Copyright (C) 2002-2015 Free Software Foundation, Inc.
+Copyright (C) 2002-2016 Free Software Foundation, Inc.
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright

@@ -1,5 +1,5 @@
 /* Defs for interface to demanglers.
-   Copyright (C) 1992-2015 Free Software Foundation, Inc.
+   Copyright (C) 1992-2016 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU Library General Public License
@@ -379,6 +379,10 @@ enum demangle_component_type
   /* A typecast, represented as a unary operator.  The one subtree is
      the type to which the argument should be cast.  */
   DEMANGLE_COMPONENT_CAST,
+  /* A conversion operator, represented as a unary operator.  The one
+     subtree is the type to which the argument should be converted
+     to.  */
+  DEMANGLE_COMPONENT_CONVERSION,
   /* A nullary expression.  The left subtree is the operator.  */
   DEMANGLE_COMPONENT_NULLARY,
   /* A unary expression.  The left subtree is the operator, and the
@@ -442,6 +446,8 @@ enum demangle_component_type
   DEMANGLE_COMPONENT_PACK_EXPANSION,
   /* A name with an ABI tag.  */
   DEMANGLE_COMPONENT_TAGGED_NAME,
+  /* A transaction-safe function type.  */
+  DEMANGLE_COMPONENT_TRANSACTION_SAFE,
   /* A cloned function.  */
   DEMANGLE_COMPONENT_CLONE
 };

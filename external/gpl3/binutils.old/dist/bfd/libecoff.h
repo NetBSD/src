@@ -1,5 +1,5 @@
 /* BFD ECOFF object file private structure.
-   Copyright (C) 1993-2015 Free Software Foundation, Inc.
+   Copyright (C) 1993-2016 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -242,6 +242,7 @@ extern bfd_boolean _bfd_ecoff_get_section_contents
   (bfd *, asection *, void * location, file_ptr, bfd_size_type);
 
 #define _bfd_ecoff_bfd_link_split_section _bfd_generic_link_split_section
+#define _bfd_ecoff_bfd_link_check_relocs  _bfd_generic_link_check_relocs
 
 extern bfd_boolean _bfd_ecoff_bfd_copy_private_bfd_data
   (bfd *, bfd *);

@@ -1,6 +1,6 @@
 /* CGEN generic opcode support.
 
-   Copyright (C) 1996-2015 Free Software Foundation, Inc.
+   Copyright (C) 1996-2016 Free Software Foundation, Inc.
 
    This file is part of libopcodes.
 
@@ -460,9 +460,10 @@ cgen_lookup_insn (CGEN_CPU_DESC cd,
   if (cd->int_insn_p)
     {
       info = NULL;
-      buf = (unsigned char *) alloca (cd->max_insn_bitsize / 8);
+      buf = (unsigned char *) xmalloc (cd->max_insn_bitsize / 8);
       cgen_put_insn_value (cd, buf, length, insn_int_value);
       base_insn = insn_int_value;
+      free (buf);
     }
   else
     {

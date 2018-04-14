@@ -1,11 +1,11 @@
-# Copyright (C) 2014-2015 Free Software Foundation, Inc.
+# Copyright (C) 2014-2016 Free Software Foundation, Inc.
 # 
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
 # notice and this notice are preserved.
 
 cat <<EOF
-/* Copyright (C) 2014-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2014-2016 Free Software Foundation, Inc.
 
    Copying and distribution of this script, with or without modification,
    are permitted in any medium without royalty provided the copyright
@@ -113,6 +113,10 @@ SECTIONS
     ${RELOCATING+ *(.trampolines*)}
     ${CONSTRUCTING+ __trampolines_end = . ; }
 
+    /* avr-libc expects these data to reside in lower 64K. */
+    ${RELOCATING+ *libprintf_flt.a:*(.progmem.data)}
+    ${RELOCATING+ *libc.a:*(.progmem.data)}
+
     ${RELOCATING+ *(.progmem*)}
     
     ${RELOCATING+. = ALIGN(2);}
@@ -210,7 +214,7 @@ SECTIONS
   ${RELOCATING+ __data_load_end = __data_load_start + SIZEOF(.data); }
 
   /* Global data not cleared after reset.  */
-  .noinit ${RELOCATING-0}:
+  .noinit ${RELOCATING+ ADDR(.bss) + SIZEOF (.bss)} ${RELOCATING-0}: ${RELOCATING+ AT (ADDR (.noinit))}
   {
     ${RELOCATING+ PROVIDE (__noinit_start = .) ; }
     *(.noinit*)

@@ -1,5 +1,5 @@
 %{ /* mcparse.y -- parser for Windows mc files
-  Copyright (C) 2007-2015 Free Software Foundation, Inc.
+  Copyright (C) 2007-2016 Free Software Foundation, Inc.
 
   Parser for Windows mc files
   Written by Kai Tietz, Onevision.

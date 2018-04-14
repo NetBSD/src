@@ -31,7 +31,7 @@
 
 
 int
-hertz ()
+hertz (void)
 {
 #ifdef HERTZ
   return HERTZ;

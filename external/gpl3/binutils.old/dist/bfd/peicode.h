@@ -1,5 +1,5 @@
 /* Support for the generic parts of PE/PEI, for BFD.
-   Copyright (C) 1995-2015 Free Software Foundation, Inc.
+   Copyright (C) 1995-2016 Free Software Foundation, Inc.
    Written by Cygnus Solutions.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -959,13 +959,19 @@ pe_ILF_build_a_bfd (bfd *           abfd,
       pe_ILF_save_relocs (&vars, id5);
     }
 
+  /* Create an import symbol.  */
+  pe_ILF_make_a_symbol (& vars, "__imp_", symbol_name, id5, 0);
+  imp_sym   = vars.sym_ptr_ptr - 1;
+  imp_index = vars.sym_index - 1;
+
   /* Create extra sections depending upon the type of import we are dealing with.  */
   switch (import_type)
     {
       int i;
 
     case IMPORT_CODE:
-      /* Create a .text section.
+      /* CODE functions are special, in that they get a trampoline that
+         jumps to the main import symbol.  Create a .text section to hold it.
 	 First we need to look up its contents in the jump table.  */
       for (i = NUM_ENTRIES (jtab); i--;)
 	{
@@ -985,11 +991,6 @@ pe_ILF_build_a_bfd (bfd *           abfd,
 
       /* Copy in the jump code.  */
       memcpy (text->contents, jtab[i].data, jtab[i].size);
-
-      /* Create an import symbol.  */
-      pe_ILF_make_a_symbol (& vars, "__imp_", symbol_name, id5, 0);
-      imp_sym   = vars.sym_ptr_ptr - 1;
-      imp_index = vars.sym_index - 1;
 
       /* Create a reloc for the data in the text section.  */
 #ifdef MIPS_ARCH_MAGIC_WINCE
@@ -1068,14 +1069,6 @@ pe_ILF_build_a_bfd (bfd *           abfd,
       pe_ILF_make_a_symbol (& vars, "", symbol_name, text,
 			    BSF_NOT_AT_END | BSF_FUNCTION);
 
-      /* Create an import symbol for the DLL, without the
-       .dll suffix.  */
-      ptr = (bfd_byte *) strrchr (source_dll, '.');
-      if (ptr)
-	* ptr = 0;
-      pe_ILF_make_a_symbol (& vars, "__IMPORT_DESCRIPTOR_", source_dll, NULL, 0);
-      if (ptr)
-	* ptr = '.';
       break;
 
     case IMPORT_DATA:
@@ -1086,6 +1079,14 @@ pe_ILF_build_a_bfd (bfd *           abfd,
       /* XXX code not yet written.  */
       abort ();
     }
+
+  /* Create an import symbol for the DLL, without the .dll suffix.  */
+  ptr = (bfd_byte *) strrchr (source_dll, '.');
+  if (ptr)
+    * ptr = 0;
+  pe_ILF_make_a_symbol (& vars, "__IMPORT_DESCRIPTOR_", source_dll, NULL, 0);
+  if (ptr)
+    * ptr = '.';
 
   /* Point the bfd at the symbol table.  */
   obj_symbols (abfd) = vars.sym_cache;

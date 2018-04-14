@@ -1,5 +1,5 @@
 /* 32-bit ELF support for TI C6X
-   Copyright (C) 2010-2015 Free Software Foundation, Inc.
+   Copyright (C) 2010-2016 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -18,6 +18,10 @@
    Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston,
    MA 02110-1301, USA.  */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern int elf32_tic6x_merge_arch_attributes (int, int);
 
 /* This function is provided for use from the assembler.  */
@@ -32,3 +36,7 @@ struct elf32_tic6x_params
 
 extern void elf32_tic6x_setup (struct bfd_link_info *,
 			       struct elf32_tic6x_params *);
+
+#ifdef __cplusplus
+}
+#endif

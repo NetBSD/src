@@ -1,5 +1,5 @@
 /* Yet Another Try at encapsulating bfd object files in coff.
-   Copyright (C) 1988-2015 Free Software Foundation, Inc.
+   Copyright (C) 1988-2016 Free Software Foundation, Inc.
    Written by Pace Willisson 12/9/88
 
    This file is obsolete.  It needs to be converted to just define a bunch
@@ -131,5 +131,5 @@ short __header_offset_temp;
 
 #define N_DATADDR(x) \
 	((N_FLAGS(x) & N_FLAGS_COFF_ENCAPSULATE) ? \
-	 (SEGMENT_SIZE + ((N_TXTADDR(x)+(x).a_text-1) & ~(SEGMENT_SIZE-1))) : \
-	 (N_TXTADDR(x)+(x).a_text))
+	 (SEGMENT_SIZE + ((N_TXTADDR(x)+(x)->a_text-1) & ~(SEGMENT_SIZE-1))) : \
+	 (N_TXTADDR(x)+(x)->a_text))

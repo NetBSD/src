@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.2 2016/10/26 17:03:41 christos Exp $
+#	$NetBSD: Makefile,v 1.1.1.3 2018/04/14 15:37:39 christos Exp $
 
 NOLINKLIB=	# defined
 NOLINT=		# defined
@@ -27,7 +27,7 @@ BINDIR=/usr/bin
 .if exists(${DEFS_MK})
 .include "${DEFS_MK}"
 
-SHLIB_MAJOR=	14
+SHLIB_MAJOR=	15
 SHLIB_MINOR=	0
 
 LIBDPLIBS+=	z	${.CURDIR}/../../../../../lib/libz

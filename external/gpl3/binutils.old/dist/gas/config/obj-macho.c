@@ -1,5 +1,5 @@
 /* Mach-O object file format
-   Copyright (C) 2009-2015 Free Software Foundation, Inc.
+   Copyright (C) 2009-2016 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -206,16 +206,7 @@ obj_mach_o_make_or_get_sect (char * segname, char * sectname,
       /* There is no normal BFD section name for this section.  Create one.
          The name created doesn't really matter as it will never be written
          on disk.  */
-      size_t seglen = strlen (segname);
-      size_t sectlen = strlen (sectname);
-      char *n;
-
-      n = xmalloc (seglen + 1 + sectlen + 1);
-      memcpy (n, segname, seglen);
-      n[seglen] = '.';
-      memcpy (n + seglen + 1, sectname, sectlen);
-      n[seglen + 1 + sectlen] = 0;
-      name = n;
+      name = concat (segname, ".", sectname, (char *) NULL);
       if (specified_mask & SECT_TYPE_SPECIFIED)
 	sectype = usectype;
       else
@@ -1204,8 +1195,7 @@ obj_mach_o_indirect_symbol (int arg ATTRIBUTE_UNUSED)
 	     indirect, it is promoted to a 'real' one.  Fetching the bfd sym
 	     achieves this.  */
 	  symbol_get_bfdsym (sym);
-	  isym = (obj_mach_o_indirect_sym *)
-			xmalloc (sizeof (obj_mach_o_indirect_sym));
+	  isym = XNEW (obj_mach_o_indirect_sym);
 
 	  /* Just record the data for now, we will validate it when we
 	     compute the output in obj_mach_o_set_indirect_symbols.  */
