@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.182 2018/04/14 11:07:16 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.183 2018/04/14 11:28:12 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -12895,4 +12895,17 @@ sys/sys/ptrace.h				1.61
 
 	Fix copy & pasto.
 	[kamil, ticket #756]
+
+external/gpl3/gcc.old/dist/gcc/config.gcc	1.9
+external/gpl3/gcc.old/lib/libstdc++-v3/arch/powerpc/c++config.h 1.8
+external/gpl3/gcc.old/lib/libstdc++-v3/arch/powerpc/gstdint.h 1.7
+external/gpl3/gcc.old/usr.bin/gcc/arch/powerpc/configargs.h 1.8
+external/gpl3/gcc.old/usr.bin/gcc/arch/powerpc/defs.mk 1.7
+external/gpl3/gcc.old/usr.bin/gcc/arch/powerpc/gtyp-input.list 1.6
+external/gpl3/gcc.old/usr.bin/gcc/arch/powerpc/tm.h 1.6
+	(with gcc.old -> gcc)
+
+	Apply the changes from GCC 6 / powerpc and netbsd-stdint.h
+	to make <stdatomic.h> work.
+	[mrg, ticket #757]
 
