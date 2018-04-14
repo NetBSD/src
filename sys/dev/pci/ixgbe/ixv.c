@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.56.2.13 2018/04/04 16:18:49 martin Exp $*/
+/*$NetBSD: ixv.c,v 1.56.2.14 2018/04/14 10:25:11 martin Exp $*/
 
 /******************************************************************************
 
@@ -32,8 +32,7 @@
   POSSIBILITY OF SUCH DAMAGE.
 
 ******************************************************************************/
-/*$FreeBSD: head/sys/dev/ixgbe/if_ixv.c 320688 2017-07-05 17:27:03Z erj $*/
-
+/*$FreeBSD: head/sys/dev/ixgbe/if_ixv.c 331224 2018-03-19 20:55:05Z erj $*/
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -47,7 +46,7 @@
 /************************************************************************
  * Driver version
  ************************************************************************/
-char ixv_driver_version[] = "1.5.13-k";
+char ixv_driver_version[] = "2.0.1-k";
 
 /************************************************************************
  * PCI Device ID Table
@@ -741,7 +740,7 @@ ixv_init_locked(struct adapter *adapter)
 	hw->mac.ops.set_rar(hw, 0, hw->mac.addr, 0, IXGBE_RAH_AV);
 
 	/* Get the latest mac address, User can use a LAA */
-	memcpy(hw->mac.addr, CLLADDR(adapter->ifp->if_sadl),
+	memcpy(hw->mac.addr, CLLADDR(ifp->if_sadl),
 	     IXGBE_ETH_LENGTH_OF_ADDRESS);
 	hw->mac.ops.set_rar(hw, 0, hw->mac.addr, 0, 1);
 
@@ -754,6 +753,7 @@ ixv_init_locked(struct adapter *adapter)
 
 	/* Reset VF and renegotiate mailbox API version */
 	hw->mac.ops.reset_hw(hw);
+	hw->mac.ops.start_hw(hw);
 	error = ixv_negotiate_api(adapter);
 	if (error)
 		device_printf(dev,
@@ -886,7 +886,7 @@ ixv_rearm_queues(struct adapter *adapter, u64 queues)
 
 
 /************************************************************************
- * ixv_msix_que - MSI Queue Interrupt Service routine
+ * ixv_msix_que - MSI-X Queue Interrupt Service routine
  ************************************************************************/
 static int
 ixv_msix_que(void *arg)
@@ -1577,38 +1577,39 @@ ixv_initialize_transmit_units(struct adapter *adapter)
 {
 	struct tx_ring	*txr = adapter->tx_rings;
 	struct ixgbe_hw	*hw = &adapter->hw;
+	int i;
 
-
-	for (int i = 0; i < adapter->num_queues; i++, txr++) {
+	for (i = 0; i < adapter->num_queues; i++, txr++) {
 		u64 tdba = txr->txdma.dma_paddr;
 		u32 txctrl, txdctl;
+		int j = txr->me;
 
 		/* Set WTHRESH to 8, burst writeback */
-		txdctl = IXGBE_READ_REG(hw, IXGBE_VFTXDCTL(i));
+		txdctl = IXGBE_READ_REG(hw, IXGBE_VFTXDCTL(j));
 		txdctl |= (8 << 16);
-		IXGBE_WRITE_REG(hw, IXGBE_VFTXDCTL(i), txdctl);
+		IXGBE_WRITE_REG(hw, IXGBE_VFTXDCTL(j), txdctl);
 
 		/* Set the HW Tx Head and Tail indices */
-		IXGBE_WRITE_REG(&adapter->hw, IXGBE_VFTDH(i), 0);
-		IXGBE_WRITE_REG(&adapter->hw, IXGBE_VFTDT(i), 0);
+		IXGBE_WRITE_REG(&adapter->hw, IXGBE_VFTDH(j), 0);
+		IXGBE_WRITE_REG(&adapter->hw, IXGBE_VFTDT(j), 0);
 
 		/* Set Tx Tail register */
-		txr->tail = IXGBE_VFTDT(i);
+		txr->tail = IXGBE_VFTDT(j);
 
 		/* Set Ring parameters */
-		IXGBE_WRITE_REG(hw, IXGBE_VFTDBAL(i),
+		IXGBE_WRITE_REG(hw, IXGBE_VFTDBAL(j),
 		    (tdba & 0x00000000ffffffffULL));
-		IXGBE_WRITE_REG(hw, IXGBE_VFTDBAH(i), (tdba >> 32));
-		IXGBE_WRITE_REG(hw, IXGBE_VFTDLEN(i),
+		IXGBE_WRITE_REG(hw, IXGBE_VFTDBAH(j), (tdba >> 32));
+		IXGBE_WRITE_REG(hw, IXGBE_VFTDLEN(j),
 		    adapter->num_tx_desc * sizeof(struct ixgbe_legacy_tx_desc));
-		txctrl = IXGBE_READ_REG(hw, IXGBE_VFDCA_TXCTRL(i));
+		txctrl = IXGBE_READ_REG(hw, IXGBE_VFDCA_TXCTRL(j));
 		txctrl &= ~IXGBE_DCA_TXCTRL_DESC_WRO_EN;
-		IXGBE_WRITE_REG(hw, IXGBE_VFDCA_TXCTRL(i), txctrl);
+		IXGBE_WRITE_REG(hw, IXGBE_VFDCA_TXCTRL(j), txctrl);
 
 		/* Now enable */
-		txdctl = IXGBE_READ_REG(hw, IXGBE_VFTXDCTL(i));
+		txdctl = IXGBE_READ_REG(hw, IXGBE_VFTXDCTL(j));
 		txdctl |= IXGBE_TXDCTL_ENABLE;
-		IXGBE_WRITE_REG(hw, IXGBE_VFTXDCTL(i), txdctl);
+		IXGBE_WRITE_REG(hw, IXGBE_VFTXDCTL(j), txdctl);
 	}
 
 	return;
@@ -1748,13 +1749,14 @@ ixv_initialize_receive_units(struct adapter *adapter)
 	for (int i = 0; i < adapter->num_queues; i++, rxr++) {
 		u64 rdba = rxr->rxdma.dma_paddr;
 		u32 reg, rxdctl;
+		int j = rxr->me;
 
 		/* Disable the queue */
-		rxdctl = IXGBE_READ_REG(hw, IXGBE_VFRXDCTL(i));
+		rxdctl = IXGBE_READ_REG(hw, IXGBE_VFRXDCTL(j));
 		rxdctl &= ~IXGBE_RXDCTL_ENABLE;
-		IXGBE_WRITE_REG(hw, IXGBE_VFRXDCTL(i), rxdctl);
-		for (int j = 0; j < 10; j++) {
-			if (IXGBE_READ_REG(hw, IXGBE_VFRXDCTL(i)) &
+		IXGBE_WRITE_REG(hw, IXGBE_VFRXDCTL(j), rxdctl);
+		for (int k = 0; k < 10; k++) {
+			if (IXGBE_READ_REG(hw, IXGBE_VFRXDCTL(j)) &
 			    IXGBE_RXDCTL_ENABLE)
 				msec_delay(1);
 			else
@@ -1762,10 +1764,10 @@ ixv_initialize_receive_units(struct adapter *adapter)
 		}
 		wmb();
 		/* Setup the Base and Length of the Rx Descriptor Ring */
-		IXGBE_WRITE_REG(hw, IXGBE_VFRDBAL(i),
+		IXGBE_WRITE_REG(hw, IXGBE_VFRDBAL(j),
 		    (rdba & 0x00000000ffffffffULL));
-		IXGBE_WRITE_REG(hw, IXGBE_VFRDBAH(i), (rdba >> 32));
-		IXGBE_WRITE_REG(hw, IXGBE_VFRDLEN(i),
+		IXGBE_WRITE_REG(hw, IXGBE_VFRDBAH(j), (rdba >> 32));
+		IXGBE_WRITE_REG(hw, IXGBE_VFRDLEN(j),
 		    adapter->num_rx_desc * sizeof(union ixgbe_adv_rx_desc));
 
 		/* Reset the ring indices */
@@ -1773,21 +1775,21 @@ ixv_initialize_receive_units(struct adapter *adapter)
 		IXGBE_WRITE_REG(hw, IXGBE_VFRDT(rxr->me), 0);
 
 		/* Set up the SRRCTL register */
-		reg = IXGBE_READ_REG(hw, IXGBE_VFSRRCTL(i));
+		reg = IXGBE_READ_REG(hw, IXGBE_VFSRRCTL(j));
 		reg &= ~IXGBE_SRRCTL_BSIZEHDR_MASK;
 		reg &= ~IXGBE_SRRCTL_BSIZEPKT_MASK;
 		reg |= bufsz;
 		reg |= IXGBE_SRRCTL_DESCTYPE_ADV_ONEBUF;
-		IXGBE_WRITE_REG(hw, IXGBE_VFSRRCTL(i), reg);
+		IXGBE_WRITE_REG(hw, IXGBE_VFSRRCTL(j), reg);
 
 		/* Capture Rx Tail index */
 		rxr->tail = IXGBE_VFRDT(rxr->me);
 
 		/* Do the queue enabling last */
 		rxdctl |= IXGBE_RXDCTL_ENABLE | IXGBE_RXDCTL_VME;
-		IXGBE_WRITE_REG(hw, IXGBE_VFRXDCTL(i), rxdctl);
+		IXGBE_WRITE_REG(hw, IXGBE_VFRXDCTL(j), rxdctl);
 		for (int k = 0; k < 10; k++) {
-			if (IXGBE_READ_REG(hw, IXGBE_VFRXDCTL(i)) &
+			if (IXGBE_READ_REG(hw, IXGBE_VFRXDCTL(j)) &
 			    IXGBE_RXDCTL_ENABLE)
 				break;
 			msec_delay(1);
@@ -2688,10 +2690,11 @@ ixv_ifflags_cb(struct ethercom *ec)
 {
 	struct ifnet *ifp = &ec->ec_if;
 	struct adapter *adapter = ifp->if_softc;
-	int change = ifp->if_flags ^ adapter->if_flags, rc = 0;
+	int change, rc = 0;
 
 	IXGBE_CORE_LOCK(adapter);
 
+	change = ifp->if_flags ^ adapter->if_flags;
 	if (change != 0)
 		adapter->if_flags = ifp->if_flags;
 

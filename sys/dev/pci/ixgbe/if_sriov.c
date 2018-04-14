@@ -30,7 +30,7 @@
   POSSIBILITY OF SUCH DAMAGE.
 
 ******************************************************************************/
-/*$FreeBSD: head/sys/dev/ixgbe/if_sriov.c 320688 2017-07-05 17:27:03Z erj $*/
+/*$FreeBSD: head/sys/dev/ixgbe/if_sriov.c 327031 2017-12-20 18:15:06Z erj $*/
 
 #include "ixgbe.h"
 #include "ixgbe_sriov.h"
@@ -90,26 +90,26 @@ ixgbe_align_all_queue_indices(struct adapter *adapter)
 
 /* Support functions for SR-IOV/VF management */
 static inline void
-ixgbe_send_vf_msg(struct ixgbe_hw *hw, struct ixgbe_vf *vf, u32 msg)
+ixgbe_send_vf_msg(struct adapter *adapter, struct ixgbe_vf *vf, u32 msg)
 {
 	if (vf->flags & IXGBE_VF_CTS)
 		msg |= IXGBE_VT_MSGTYPE_CTS;
 
-	hw->mbx.ops.write(hw, &msg, 1, vf->pool);
+	adapter->hw.mbx.ops.write(&adapter->hw, &msg, 1, vf->pool);
 }
 
 static inline void
 ixgbe_send_vf_ack(struct adapter *adapter, struct ixgbe_vf *vf, u32 msg)
 {
 	msg &= IXGBE_VT_MSG_MASK;
-	ixgbe_send_vf_msg(&adapter->hw, vf, msg | IXGBE_VT_MSGTYPE_ACK);
+	ixgbe_send_vf_msg(adapter, vf, msg | IXGBE_VT_MSGTYPE_ACK);
 }
 
 static inline void
 ixgbe_send_vf_nack(struct adapter *adapter, struct ixgbe_vf *vf, u32 msg)
 {
 	msg &= IXGBE_VT_MSG_MASK;
-	ixgbe_send_vf_msg(&adapter->hw, vf, msg | IXGBE_VT_MSGTYPE_NACK);
+	ixgbe_send_vf_msg(adapter, vf, msg | IXGBE_VT_MSGTYPE_NACK);
 }
 
 static inline void
@@ -205,7 +205,7 @@ ixgbe_ping_all_vfs(struct adapter *adapter)
 	for (int i = 0; i < adapter->num_vfs; i++) {
 		vf = &adapter->vfs[i];
 		if (vf->flags & IXGBE_VF_ACTIVE)
-			ixgbe_send_vf_msg(&adapter->hw, vf, IXGBE_PF_CONTROL_MSG);
+			ixgbe_send_vf_msg(adapter, vf, IXGBE_PF_CONTROL_MSG);
 	}
 } /* ixgbe_ping_all_vfs */
 
@@ -775,7 +775,7 @@ ixgbe_init_vf(struct adapter *adapter, struct ixgbe_vf *vf)
 	ixgbe_vf_enable_transmit(adapter, vf);
 	ixgbe_vf_enable_receive(adapter, vf);
 
-	ixgbe_send_vf_msg(&adapter->hw, vf, IXGBE_PF_CONTROL_MSG);
+	ixgbe_send_vf_msg(adapter, vf, IXGBE_PF_CONTROL_MSG);
 } /* ixgbe_init_vf */
 
 void

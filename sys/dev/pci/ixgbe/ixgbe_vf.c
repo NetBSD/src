@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_vf.c,v 1.12.8.1 2017/12/21 19:28:54 snj Exp $ */
+/* $NetBSD: ixgbe_vf.c,v 1.12.8.2 2018/04/14 10:25:11 martin Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -33,7 +33,7 @@
   POSSIBILITY OF SUCH DAMAGE.
 
 ******************************************************************************/
-/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_vf.c 320688 2017-07-05 17:27:03Z erj $*/
+/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_vf.c 331224 2018-03-19 20:55:05Z erj $*/
 
 
 #include "ixgbe_api.h"
@@ -380,6 +380,7 @@ s32 ixgbe_set_rar_vf(struct ixgbe_hw *hw, u32 index, u8 *addr, u32 vmdq,
  *  @mc_addr_list: array of multicast addresses to program
  *  @mc_addr_count: number of multicast addresses to program
  *  @next: caller supplied function to return next address in list
+ *  @clear: unused
  *
  *  Updates the Multicast Table Array.
  **/
@@ -513,8 +514,9 @@ u32 ixgbe_get_num_of_rx_queues_vf(struct ixgbe_hw *hw)
 }
 
 /**
- *  ixgbe_get_mac_addr_vf - Read device MAC address
- *  @hw: pointer to the HW structure
+ * ixgbe_get_mac_addr_vf - Read device MAC address
+ * @hw: pointer to the HW structure
+ * @mac_addr: the MAC address
  **/
 s32 ixgbe_get_mac_addr_vf(struct ixgbe_hw *hw, u8 *mac_addr)
 {
@@ -560,7 +562,6 @@ s32 ixgbevf_set_uc_addr_vf(struct ixgbe_hw *hw, u32 index, u8 *addr)
  *  ixgbe_setup_mac_link_vf - Setup MAC link settings
  *  @hw: pointer to hardware structure
  *  @speed: new link speed
- *  @autoneg: TRUE if autonegotiation enabled
  *  @autoneg_wait_to_complete: TRUE when waiting for completion is needed
  *
  *  Set the link speed in the AUTOC register and restarts link.
