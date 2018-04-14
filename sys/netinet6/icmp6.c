@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.229 2018/04/14 14:59:58 maxv Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.230 2018/04/14 17:55:47 maxv Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.229 2018/04/14 14:59:58 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.230 2018/04/14 17:55:47 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2224,7 +2224,7 @@ icmp6_redirect_input(struct mbuf *m, int off)
 	struct ifnet *ifp;
 	struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
 	struct nd_redirect *nd_rd;
-	int icmp6len = ntohs(ip6->ip6_plen);
+	int icmp6len = m->m_pkthdr.len - off;
 	char *lladdr = NULL;
 	int lladdrlen = 0;
 	struct rtentry *rt = NULL;
