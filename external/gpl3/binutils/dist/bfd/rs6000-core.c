@@ -1,5 +1,5 @@
 /* IBM RS/6000 "XCOFF" back-end for BFD.
-   Copyright (C) 1990-2016 Free Software Foundation, Inc.
+   Copyright (C) 1990-2018 Free Software Foundation, Inc.
    Written by Metin G. Ozisik, Mimi Phuong-Thao Vo, and John Gilmore.
    Archive support from Damon A. Permezel.
    Contributed by IBM Corporation and Cygnus Support.
@@ -109,7 +109,7 @@ typedef union
 #else
   struct core_dump new_dump;	/* For simpler coding.  */
 #endif
-#ifndef BFD64                   /* Use old only if gdb is 32-bit.  */
+#ifndef BFD64			/* Use old only if gdb is 32-bit.  */
   struct core_dump old;		/* Old AIX 4.2- core dump, still used on
 				   4.3+ with appropriate SMIT config.  */
 #endif
@@ -135,9 +135,9 @@ typedef union
 
 #ifdef AIX_CORE_DUMPX_CORE
 # ifndef BFD64
-#  define CORE_NEW(c)        (!(c).old.c_entries)
+#  define CORE_NEW(c)	(!(c).old.c_entries)
 # else
-#  define CORE_NEW(c)   (!(c).new_dump.c_entries)
+#  define CORE_NEW(c)	1
 # endif
 #else
 # define CORE_NEW(c)	0
@@ -150,7 +150,7 @@ typedef union
    but that may not be the only such format version number.  */
 
 #ifdef AIX_5_CORE
-# define CORE_DUMPXX_VERSION  	267312562
+# define CORE_DUMPXX_VERSION	267312562
 # define CNEW_IS_CORE_DUMPXX(c) ((c).new_dump.c_version == CORE_DUMPXX_VERSION)
 #else
 # define CNEW_IS_CORE_DUMPXX(c) 0
@@ -269,17 +269,17 @@ typedef union
    common.  */
 #ifdef AIX_CORE_DUMPX_CORE
 #define CORE_COMMONSZ  ((long) &((struct core_dumpx *) 0)->c_entries \
-                        + sizeof (((struct core_dumpx *) 0)->c_entries))
+			+ sizeof (((struct core_dumpx *) 0)->c_entries))
 #else
 #define CORE_COMMONSZ   ((int) &((struct core_dump *) 0)->c_entries \
-                       + sizeof (((struct core_dump *) 0)->c_entries)
+		       + sizeof (((struct core_dump *) 0)->c_entries)
 #endif
 /* Define prototypes for certain functions, to avoid a compiler warning
    saying that they are missing.  */
 
 const bfd_target * rs6000coff_core_p (bfd *abfd);
 bfd_boolean rs6000coff_core_file_matches_executable_p (bfd *core_bfd,
-                                                       bfd *exec_bfd);
+						       bfd *exec_bfd);
 char * rs6000coff_core_file_failing_command (bfd *abfd);
 int rs6000coff_core_file_failing_signal (bfd *abfd);
 
@@ -468,8 +468,7 @@ rs6000coff_core_p (bfd *abfd)
 
   /* Issue warning if the core file was truncated during writing.  */
   if (c_flag & CORE_TRUNC)
-    (*_bfd_error_handler) (_("%s: warning core file truncated"),
-			   bfd_get_filename (abfd));
+    _bfd_error_handler (_("%B: warning core file truncated"), abfd);
 
   /* Allocate core file header.  */
 #ifndef BFD64
@@ -586,10 +585,10 @@ rs6000coff_core_p (bfd *abfd)
 	/* If Large Memory Model is used, then the .data segment should start from
 	   BDATAORG which has been defined in the system header files. */
 
-        if (c_flag & CORE_BIGDATA)
-          core_dataorg = BDATAORG;
-        else
-          core_dataorg = CDATA_ADDR (c_datasize);
+	if (c_flag & CORE_BIGDATA)
+	  core_dataorg = BDATAORG;
+	else
+	  core_dataorg = CDATA_ADDR (c_datasize);
 
 	if (!make_bfd_asection (abfd, ".data",
 				SEC_ALLOC | SEC_LOAD | SEC_HAS_CONTENTS,
@@ -656,7 +655,7 @@ rs6000coff_core_p (bfd *abfd)
 #ifndef BFD64
 	    size = CORE_NEW (core) ? sizeof (vminfo.new_dump) : sizeof (vminfo.old);
 #else
-            size = sizeof (vminfo.new_dump);
+	    size = sizeof (vminfo.new_dump);
 #endif
 	    if (bfd_bread (&vminfo, size, abfd) != size)
 	      goto fail;

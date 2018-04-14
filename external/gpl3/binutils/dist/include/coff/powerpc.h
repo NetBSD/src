@@ -1,7 +1,7 @@
 /* Basic coff information for the PowerPC
    Based on coff/rs6000.h, coff/i386.h and others.
    
-   Copyright (C) 2001-2016 Free Software Foundation, Inc.
+   Copyright (C) 2001-2018 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by

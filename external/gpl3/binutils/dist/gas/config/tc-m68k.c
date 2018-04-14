@@ -1,5 +1,5 @@
 /* tc-m68k.c -- Assemble for the m68k family
-   Copyright (C) 1987-2016 Free Software Foundation, Inc.
+   Copyright (C) 1987-2018 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -138,7 +138,7 @@ static struct label_line *current_label;
 /* Pointer to list holding the opcodes sorted by name.  */
 static struct m68k_opcode const ** m68k_sorted_opcodes;
 
-/* Its an arbitrary name:  This means I don't approve of it.
+/* It's an arbitrary name:  This means I don't approve of it.
    See flames below.  */
 static struct obstack robyn;
 
@@ -369,7 +369,7 @@ struct m68k_it
     }
   fragb[4];
 
-  int nrel;			/* Num of reloc strucs in use.  */
+  int nrel;			/* Num of reloc structs in use.  */
   struct
     {
       int n;
@@ -513,7 +513,7 @@ struct m68k_cpu
   unsigned long arch;	/* Architecture features.  */
   const enum m68k_register *control_regs;	/* Control regs on chip */
   const char *name;	/* Name */
-  int alias;       	/* Alias for a cannonical name.  If 1, then
+  int alias;       	/* Alias for a canonical name.  If 1, then
 			   succeeds canonical name, if -1 then
 			   succeeds canonical name, if <-1 ||>1 this is a
 			   deprecated name, and the next/previous name
@@ -1469,7 +1469,7 @@ m68k_ip (char *instring)
       char *old = input_line_pointer;
       *old = '\n';
       input_line_pointer = p;
-      /* Ahh - it's a motorola style psuedo op.  */
+      /* Ahh - it's a motorola style pseudo op.  */
       mote_pseudo_table[opcode->m_opnum].poc_handler
 	(mote_pseudo_table[opcode->m_opnum].poc_val);
       input_line_pointer = old;
@@ -1504,7 +1504,7 @@ m68k_ip (char *instring)
   opsfound = opP - &the_ins.operands[0];
 
   /* This ugly hack is to support the floating pt opcodes in their
-     standard form.  Essentially, we fake a first enty of type COP#1 */
+     standard form.  Essentially, we fake a first entry of type COP#1 */
   if (opcode->m_operands[0] == 'I')
     {
       int n;
@@ -2470,7 +2470,7 @@ m68k_ip (char *instring)
       int use_pl = 0;
 
       /* This switch is a doozy.
-	 Watch the first step; its a big one! */
+	 Watch the first step; it's a big one! */
       switch (s[0])
 	{
 
@@ -2794,7 +2794,7 @@ m68k_ip (char *instring)
 		    default:
 		      abort ();
 		    }
-		  /* IF its simple,
+		  /* IF it's simple,
 		     GET US OUT OF HERE! */
 
 		  /* Must be INDEX, with an index register.  Address
@@ -3003,7 +3003,7 @@ m68k_ip (char *instring)
 				TAB (ABSTOPCREL, SZ_UNDEF));
 		      break;
 		    }
-		  /* Fall through into long.  */
+		  /* Fall through.  */
 		case SIZE_LONG:
 		  if (isvar (&opP->disp))
 		    add_fix ('l', &opP->disp, 0, 0);
@@ -3109,6 +3109,7 @@ m68k_ip (char *instring)
 	      break;
 	    case '3':
 	      tmpreg &= 0xFF;
+	      /* Fall through.  */
 	    case '8':
 	    case 'C':
 	    case 'j':
@@ -3734,7 +3735,7 @@ m68k_ip (char *instring)
 	}
     }
 
-  /* By the time whe get here (FINALLY) the_ins contains the complete
+  /* By the time when get here (FINALLY) the_ins contains the complete
      instruction, ready to be emitted. . .  */
 }
 
@@ -3923,7 +3924,7 @@ install_gen_operand (int mode, int val)
   switch (mode)
     {
     case '/':  /* Special for mask loads for mac/msac insns with
-		  possible mask; trailing_ampersend set in bit 8.  */
+		  possible mask; trailing_ampersand set in bit 8.  */
       the_ins.opcode[0] |= (val & 0x3f);
       the_ins.opcode[1] |= (((val & 0x100) >> 8) << 5);
       break;
@@ -4431,7 +4432,7 @@ md_assemble (char *str)
 	      n = 4;
 	      break;
 	    default:
-	      as_fatal (_("Don't know how to figure width of %c in md_assemble()"),
+	      as_fatal (_("Don't know how to figure out width of %c in md_assemble()"),
 			the_ins.reloc[m].wid);
 	    }
 
@@ -4596,7 +4597,7 @@ md_begin (void)
 	m68k_rel32 = 0;
     }
 
-  /* First sort the opcode table into alphabetical order to seperate
+  /* First sort the opcode table into alphabetical order to separate
      the order that the assembler wants to see the opcodes from the
      order that the disassembler wants to see them.  */
   m68k_sorted_opcodes = XNEWVEC (const struct m68k_opcode *, m68k_numopcodes);
@@ -5477,7 +5478,7 @@ md_create_long_jump (char *ptr, addressT from_addr, addressT to_addr,
 
 #endif
 
-/* Different values of OK tell what its OK to return.  Things that
+/* Different values of OK tell what it's OK to return.  Things that
    aren't OK are an error (what a shock, no?)
 
    0:  Everything is OK
@@ -7730,7 +7731,7 @@ md_show_usage (FILE *stream)
 "), default_cpu);
   for (i = 0; m68k_extensions[i].name; i++)
     fprintf (stream, _("\
--m[no-]%-16s enable/disable%s architecture extension\n\
+-m[no-]%-16s enable/disable %s architecture extension\n\
 "), m68k_extensions[i].name,
 	     m68k_extensions[i].alias > 0 ? " ColdFire"
 	     : m68k_extensions[i].alias < 0 ? " m68k" : "");
@@ -8067,7 +8068,9 @@ m68k_elf_cons (int nbytes /* 4=.long */)
 
 	  if (size > nbytes)
 	    {
-	      as_bad (_("%s relocations do not fit in %d bytes\n"),
+	      as_bad (ngettext ("%s relocations do not fit in %u byte",
+				"%s relocations do not fit in %u bytes",
+				nbytes),
 		      reloc_howto->name, nbytes);
 	    }
 	  else

@@ -1,6 +1,6 @@
 // object.cc -- support for an object file for linking in gold
 
-// Copyright (C) 2006-2016 Free Software Foundation, Inc.
+// Copyright (C) 2006-2018 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -476,7 +476,6 @@ Sized_relobj_file<size, big_endian>::Sized_relobj_file(
     local_plt_offsets_(),
     kept_comdat_sections_(),
     has_eh_frame_(false),
-    discarded_eh_frame_shndx_(-1U),
     is_deferred_layout_(false),
     deferred_layout_(),
     deferred_layout_relocs_(),
@@ -816,9 +815,9 @@ Sized_relobj_file<size, big_endian>::do_find_special_sections(
   return (this->has_eh_frame_
 	  || (!parameters->options().relocatable()
 	      && parameters->options().gdb_index()
-	      && (memmem(names, sd->section_names_size, "debug_info", 12) == 0
-		  || memmem(names, sd->section_names_size, "debug_types",
-			    13) == 0)));
+	      && (memmem(names, sd->section_names_size, "debug_info", 11) != NULL
+		  || memmem(names, sd->section_names_size,
+			    "debug_types", 12) != NULL)));
 }
 
 // Read the sections and symbols from an object file.
@@ -1303,13 +1302,7 @@ Sized_relobj_file<size, big_endian>::layout_eh_frame_section(
 					       &offset);
   this->output_sections()[shndx] = os;
   if (os == NULL || offset == -1)
-    {
-      // An object can contain at most one section holding exception
-      // frame information.
-      gold_assert(this->discarded_eh_frame_shndx_ == -1U);
-      this->discarded_eh_frame_shndx_ = shndx;
-      this->section_offsets()[shndx] = invalid_address;
-    }
+    this->section_offsets()[shndx] = invalid_address;
   else
     this->section_offsets()[shndx] = convert_types<Address, off_t>(offset);
 
@@ -2225,9 +2218,14 @@ Sized_relobj_file<size, big_endian>::do_count_local_symbols(Stringpool* pool,
 
       // Decide whether this symbol should go into the output file.
 
-      if ((shndx < shnum && out_sections[shndx] == NULL)
-	  || shndx == this->discarded_eh_frame_shndx_)
+      if (is_ordinary
+	  && shndx < shnum
+	  && (out_sections[shndx] == NULL
+	      || (out_sections[shndx]->order() == ORDER_EHFRAME
+		  && out_section_offsets[shndx] == invalid_address)))
 	{
+	  // This is either a discarded section or an optimized .eh_frame
+	  // section.
 	  lv.set_no_output_symtab_entry();
 	  gold_assert(!lv.needs_output_dynsym_entry());
 	  continue;
@@ -2392,10 +2390,10 @@ Sized_relobj_file<size, big_endian>::compute_final_local_value_internal(
 
 	  // This is a SHF_MERGE section or one which otherwise
 	  // requires special handling.
-	  if (shndx == this->discarded_eh_frame_shndx_)
+	  if (os->order() == ORDER_EHFRAME)
 	    {
-	      // This local symbol belongs to a discarded .eh_frame
-	      // section.  Just treat it like the case in which
+	      // This local symbol belongs to a discarded or optimized
+	      // .eh_frame section.  Just treat it like the case in which
 	      // os == NULL above.
 	      gold_assert(this->has_eh_frame_);
 	      return This::CFLV_DISCARDED;
@@ -2404,8 +2402,11 @@ Sized_relobj_file<size, big_endian>::compute_final_local_value_internal(
 	    {
 	      // This is not a section symbol.  We can determine
 	      // the final value now.
-	      lv_out->set_output_value(
-		  os->output_address(this, shndx, lv_in->input_value()));
+	      uint64_t value =
+		os->output_address(this, shndx, lv_in->input_value());
+	      if (relocatable)
+		value -= os->address();
+	      lv_out->set_output_value(value);
 	    }
 	  else if (!os->find_starting_output_address(this, shndx, &start))
 	    {
@@ -2419,10 +2420,10 @@ Sized_relobj_file<size, big_endian>::compute_final_local_value_internal(
 		os->find_relaxed_input_section(this, shndx);
 	      if (posd != NULL)
 		{
-		  Address relocatable_link_adjustment =
-		    relocatable ? os->address() : 0;
-		  lv_out->set_output_value(posd->address()
-					   - relocatable_link_adjustment);
+		  uint64_t value = posd->address();
+		  if (relocatable)
+		    value -= os->address();
+		  lv_out->set_output_value(value);
 		}
 	      else
 		lv_out->set_output_value(os->address());
@@ -2676,7 +2677,6 @@ Sized_relobj_file<size, big_endian>::write_local_symbols(
       elfcpp::Sym<size, big_endian> isym(psyms);
 
       Symbol_value<size>& lv(this->local_values_[i]);
-      typename elfcpp::Elf_types<size>::Elf_Addr sym_value = lv.value(this, 0);
 
       bool is_ordinary;
       unsigned int st_shndx = this->adjust_sym_shndx(i, isym.get_st_shndx(),
@@ -2686,9 +2686,6 @@ Sized_relobj_file<size, big_endian>::write_local_symbols(
 	  gold_assert(st_shndx < out_sections.size());
 	  if (out_sections[st_shndx] == NULL)
 	    continue;
-	  // In relocatable object files symbol values are section relative.
-	  if (parameters->options().relocatable())
-	    sym_value -= out_sections[st_shndx]->address();
 	  st_shndx = out_sections[st_shndx]->out_shndx();
 	  if (st_shndx >= elfcpp::SHN_LORESERVE)
 	    {
@@ -2708,7 +2705,7 @@ Sized_relobj_file<size, big_endian>::write_local_symbols(
 	  gold_assert(isym.get_st_name() < strtab_size);
 	  const char* name = pnames + isym.get_st_name();
 	  osym.put_st_name(sympool->get_offset(name));
-	  osym.put_st_value(sym_value);
+	  osym.put_st_value(lv.value(this, 0));
 	  osym.put_st_size(isym.get_st_size());
 	  osym.put_st_info(isym.get_st_info());
 	  osym.put_st_other(isym.get_st_other());
@@ -2726,7 +2723,7 @@ Sized_relobj_file<size, big_endian>::write_local_symbols(
 	  gold_assert(isym.get_st_name() < strtab_size);
 	  const char* name = pnames + isym.get_st_name();
 	  osym.put_st_name(dynpool->get_offset(name));
-	  osym.put_st_value(sym_value);
+	  osym.put_st_value(lv.value(this, 0));
 	  osym.put_st_size(isym.get_st_size());
 	  osym.put_st_info(isym.get_st_info());
 	  osym.put_st_other(isym.get_st_other());
@@ -3454,6 +3451,38 @@ template
 void
 Xindex::read_symtab_xindex<64, true>(Object*, unsigned int,
 				     const unsigned char*);
+#endif
+
+#ifdef HAVE_TARGET_32_LITTLE
+template
+Compressed_section_map*
+build_compressed_section_map<32, false>(const unsigned char*, unsigned int,
+					const char*, section_size_type, 
+					Object*, bool);
+#endif
+
+#ifdef HAVE_TARGET_32_BIG
+template
+Compressed_section_map*
+build_compressed_section_map<32, true>(const unsigned char*, unsigned int,
+					const char*, section_size_type, 
+					Object*, bool);
+#endif
+
+#ifdef HAVE_TARGET_64_LITTLE
+template
+Compressed_section_map*
+build_compressed_section_map<64, false>(const unsigned char*, unsigned int,
+					const char*, section_size_type, 
+					Object*, bool);
+#endif
+
+#ifdef HAVE_TARGET_64_BIG
+template
+Compressed_section_map*
+build_compressed_section_map<64, true>(const unsigned char*, unsigned int,
+					const char*, section_size_type, 
+					Object*, bool);
 #endif
 
 } // End namespace gold.

@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright (C) 2011-2016 Free Software Foundation, Inc.
+#   Copyright (C) 2011-2018 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -103,7 +103,7 @@ gld${EMULATION_NAME}_after_allocation (void)
 	 the unwind table index.  */
       unsigned int list_size = 10;
       asection **sec_list = (asection **)
-          xmalloc (list_size * sizeof (asection *));
+	xmalloc (list_size * sizeof (asection *));
       unsigned int sec_count = 0;
 
       LANG_FOR_EACH_INPUT_STATEMENT (is)
@@ -130,7 +130,7 @@ gld${EMULATION_NAME}_after_allocation (void)
 		    {
 		      list_size *= 2;
 		      sec_list = (asection **)
-                          xrealloc (sec_list, list_size * sizeof (asection *));
+			xrealloc (sec_list, list_size * sizeof (asection *));
 		    }
 
 		  sec_list[sec_count++] = sec;
@@ -153,7 +153,7 @@ gld${EMULATION_NAME}_after_allocation (void)
   ret = bfd_elf_discard_info (link_info.output_bfd, & link_info);
   if (ret < 0)
     {
-      einfo ("%X%P: .eh_frame/.stab edit: %E\n");
+      einfo (_("%X%P: .eh_frame/.stab edit: %E\n"));
       return;
     }
   else if (ret > 0)

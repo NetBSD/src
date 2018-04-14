@@ -1,5 +1,5 @@
 /* BFD back-end for HP/UX core files.
-   Copyright (C) 1993-2016 Free Software Foundation, Inc.
+   Copyright (C) 1993-2018 Free Software Foundation, Inc.
    Written by Stu Grossman, Cygnus Support.
    Converted to back-end form by Ian Lance Taylor, Cygnus SUpport
 
@@ -80,7 +80,7 @@
    it won't be encountered in core-dumps from older HP-UX's) is
    harmless. */
 #if !defined(CORE_ANON_SHMEM)
-#define CORE_ANON_SHMEM 0x00000200         /* anonymous shared memory */
+#define CORE_ANON_SHMEM 0x00000200	   /* anonymous shared memory */
 #endif
 
 /* These are stored in the bfd's tdata */
@@ -91,7 +91,7 @@
 struct hpux_core_struct
 {
   int sig;
-  int lwpid;               /* Kernel thread ID. */
+  int lwpid;		   /* Kernel thread ID. */
   unsigned long user_tid;  /* User thread ID. */
   char cmd[MAXCOMLEN + 1];
 };
@@ -105,7 +105,7 @@ struct hpux_core_struct
 #define hpux_core_core_file_pid _bfd_nocore_core_file_pid
 
 static asection *make_bfd_asection (bfd *, const char *, flagword,
-                                    bfd_size_type, bfd_vma, unsigned int);
+				    bfd_size_type, bfd_vma, unsigned int);
 static const bfd_target *hpux_core_core_file_p (bfd *);
 static char *hpux_core_core_file_failing_command (bfd *);
 static int hpux_core_core_file_failing_signal (bfd *);
@@ -113,8 +113,8 @@ static void swap_abort (void);
 
 static asection *
 make_bfd_asection (bfd *abfd, const char *name, flagword flags,
-                   bfd_size_type size, bfd_vma vma,
-                   unsigned int alignment_power)
+		   bfd_size_type size, bfd_vma vma,
+		   unsigned int alignment_power)
 {
   asection *asect;
   char *newname;
@@ -142,8 +142,8 @@ make_bfd_asection (bfd *abfd, const char *name, flagword flags,
 
 static int
 thread_section_p (bfd *abfd ATTRIBUTE_UNUSED,
-                  asection *sect,
-                  void *obj ATTRIBUTE_UNUSED)
+		  asection *sect,
+		  void *obj ATTRIBUTE_UNUSED)
 {
   return CONST_STRNEQ (sect->name, ".reg/");
 }
@@ -183,7 +183,7 @@ hpux_core_core_file_p (bfd *abfd)
 	case CORE_FORMAT:
 	  /* Just skip this.  */
 	  bfd_seek (abfd, (file_ptr) core_header.len, SEEK_CUR);
-          good_sections++;
+	  good_sections++;
 	  break;
 	case CORE_EXEC:
 	  {
@@ -192,7 +192,7 @@ hpux_core_core_file_p (bfd *abfd)
 			  abfd) != core_header.len)
 	      break;
 	    strncpy (core_command (abfd), proc_exec.cmd, MAXCOMLEN + 1);
-            good_sections++;
+	    good_sections++;
 	  }
 	  break;
 	case CORE_PROC:
@@ -200,54 +200,54 @@ hpux_core_core_file_p (bfd *abfd)
 	    struct proc_info proc_info;
 	    char  secname[100];  /* Of arbitrary size, but plenty large. */
 
-            /* We need to read this section, 'cause we need to determine
-               whether the core-dumped app was threaded before we create
-               any .reg sections. */
+	    /* We need to read this section, 'cause we need to determine
+	       whether the core-dumped app was threaded before we create
+	       any .reg sections. */
 	    if (bfd_bread (&proc_info, (bfd_size_type) core_header.len, abfd)
 		!= core_header.len)
 	      break;
 
-              /* However, we also want to create those sections with the
-                 file positioned at the start of the record, it seems. */
-            if (bfd_seek (abfd, -((file_ptr) core_header.len), SEEK_CUR) != 0)
-              break;
+	      /* However, we also want to create those sections with the
+		 file positioned at the start of the record, it seems. */
+	    if (bfd_seek (abfd, -((file_ptr) core_header.len), SEEK_CUR) != 0)
+	      break;
 
 #if defined(PROC_INFO_HAS_THREAD_ID)
-            core_kernel_thread_id (abfd) = proc_info.lwpid;
-            core_user_thread_id (abfd) = proc_info.user_tid;
+	    core_kernel_thread_id (abfd) = proc_info.lwpid;
+	    core_user_thread_id (abfd) = proc_info.user_tid;
 #else
-            core_kernel_thread_id (abfd) = 0;
-            core_user_thread_id (abfd) = 0;
+	    core_kernel_thread_id (abfd) = 0;
+	    core_user_thread_id (abfd) = 0;
 #endif
-            /* If the program was unthreaded, then we'll just create a
-               .reg section.
+	    /* If the program was unthreaded, then we'll just create a
+	       .reg section.
 
-               If the program was threaded, then we'll create .reg/XXXXX
-               section for each thread, where XXXXX is a printable
-               representation of the kernel thread id.  We'll also
-               create a .reg section for the thread that was running
-               and signalled at the time of the core-dump (i.e., this
-               is effectively an alias, needed to keep GDB happy.)
+	       If the program was threaded, then we'll create .reg/XXXXX
+	       section for each thread, where XXXXX is a printable
+	       representation of the kernel thread id.  We'll also
+	       create a .reg section for the thread that was running
+	       and signalled at the time of the core-dump (i.e., this
+	       is effectively an alias, needed to keep GDB happy.)
 
-               Note that we use `.reg/XXXXX' as opposed to '.regXXXXX'
-               because GDB expects that .reg2 will be the floating-
-               point registers. */
-            if (core_kernel_thread_id (abfd) == 0)
-              {
-                if (!make_bfd_asection (abfd, ".reg",
+	       Note that we use `.reg/XXXXX' as opposed to '.regXXXXX'
+	       because GDB expects that .reg2 will be the floating-
+	       point registers. */
+	    if (core_kernel_thread_id (abfd) == 0)
+	      {
+		if (!make_bfd_asection (abfd, ".reg",
 					SEC_HAS_CONTENTS,
 					core_header.len,
 					(bfd_vma) offsetof (struct proc_info,
 							    hw_regs),
 					2))
 		  goto fail;
-              }
-            else
-              {
-                /* There are threads.  Is this the one that caused the
-                   core-dump?  We'll claim it was the running thread. */
-                if (proc_info.sig != -1)
-                  {
+	      }
+	    else
+	      {
+		/* There are threads.  Is this the one that caused the
+		   core-dump?  We'll claim it was the running thread. */
+		if (proc_info.sig != -1)
+		  {
 		    if (!make_bfd_asection (abfd, ".reg",
 					    SEC_HAS_CONTENTS,
 					    core_header.len,
@@ -255,21 +255,21 @@ hpux_core_core_file_p (bfd *abfd)
 							       hw_regs),
 					    2))
 		      goto fail;
-                  }
-                /* We always make one of these sections, for every thread. */
-                sprintf (secname, ".reg/%d", core_kernel_thread_id (abfd));
-                if (!make_bfd_asection (abfd, secname,
+		  }
+		/* We always make one of these sections, for every thread. */
+		sprintf (secname, ".reg/%d", core_kernel_thread_id (abfd));
+		if (!make_bfd_asection (abfd, secname,
 					SEC_HAS_CONTENTS,
 					core_header.len,
 					(bfd_vma) offsetof (struct proc_info,
 							    hw_regs),
 					2))
 		  goto fail;
-              }
+	      }
 	    core_signal (abfd) = proc_info.sig;
-            if (bfd_seek (abfd, (file_ptr) core_header.len, SEEK_CUR) != 0)
-              break;
-            good_sections++;
+	    if (bfd_seek (abfd, (file_ptr) core_header.len, SEEK_CUR) != 0)
+	      break;
+	    good_sections++;
 	  }
 	  break;
 
@@ -286,20 +286,20 @@ hpux_core_core_file_p (bfd *abfd)
 	    goto fail;
 
 	  bfd_seek (abfd, (file_ptr) core_header.len, SEEK_CUR);
-          good_sections++;
+	  good_sections++;
 	  break;
 
 	case CORE_NONE:
-          /* Let's not punt if we encounter a section of unknown
-             type.  Rather, let's make a note of it.  If we later
-             see that there were also "good" sections, then we'll
-             declare that this a core file, but we'll also warn that
-             it may be incompatible with this gdb.
-             */
+	  /* Let's not punt if we encounter a section of unknown
+	     type.  Rather, let's make a note of it.  If we later
+	     see that there were also "good" sections, then we'll
+	     declare that this a core file, but we'll also warn that
+	     it may be incompatible with this gdb.
+	     */
 	  unknown_sections++;
-          break;
+	  break;
 
-         default:
+	 default:
 	   goto fail; /*unrecognized core file type */
 	}
     }
@@ -318,15 +318,15 @@ hpux_core_core_file_p (bfd *abfd)
       asection *reg_sect;
 
       if (asect != NULL)
-        {
-          reg_sect = make_bfd_asection (abfd, ".reg", asect->flags,
-                                        asect->size, asect->vma,
-                                        asect->alignment_power);
-          if (reg_sect == NULL)
-            goto fail;
+	{
+	  reg_sect = make_bfd_asection (abfd, ".reg", asect->flags,
+					asect->size, asect->vma,
+					asect->alignment_power);
+	  if (reg_sect == NULL)
+	    goto fail;
 
-          reg_sect->filepos = asect->filepos;
-        }
+	  reg_sect->filepos = asect->filepos;
+	}
     }
 
   /* Were there sections of unknown type?  If so, yet there were
@@ -336,9 +336,11 @@ hpux_core_core_file_p (bfd *abfd)
      built.
      */
   if ((unknown_sections > 0) && (good_sections > 0))
-    (*_bfd_error_handler)
-      ("%s appears to be a core file,\nbut contains unknown sections.  It may have been created on an incompatible\nversion of HP-UX.  As a result, some information may be unavailable.\n",
-       abfd->filename);
+    _bfd_error_handler
+      ("%B appears to be a core file,\nbut contains unknown sections."
+       "  It may have been created on an incompatible\nversion of HP-UX."
+       "  As a result, some information may be unavailable.\n",
+       abfd);
 
   return abfd->xvec;
 

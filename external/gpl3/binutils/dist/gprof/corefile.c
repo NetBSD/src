@@ -1,6 +1,6 @@
 /* corefile.c
 
-   Copyright (C) 1999-2016 Free Software Foundation, Inc.
+   Copyright (C) 1999-2018 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -28,6 +28,7 @@
 #include "hist.h"
 #include "corefile.h"
 #include "safe-ctype.h"
+#include <limits.h>    /* For UINT_MAX.  */
 
 bfd *core_bfd;
 static int core_num_syms;
@@ -72,11 +73,15 @@ cmp_symbol_map (const void * l, const void * r)
 		 ((struct function_map *) r)->function_name);
 }
 
+#define BUFSIZE      (1024)
+/* This is BUFSIZE - 1 as a string.  Suitable for use in fprintf/sscanf format strings.  */
+#define STR_BUFSIZE  "1023"
+
 static void
 read_function_mappings (const char *filename)
 {
   FILE * file = fopen (filename, "r");
-  char dummy[1024];
+  char dummy[BUFSIZE];
   int count = 0;
   unsigned int i;
 
@@ -93,7 +98,7 @@ read_function_mappings (const char *filename)
     {
       int matches;
 
-      matches = fscanf (file, "%[^\n:]", dummy);
+      matches = fscanf (file, "%" STR_BUFSIZE "[^\n:]", dummy);
       if (!matches)
 	parse_error (filename);
 
@@ -107,7 +112,7 @@ read_function_mappings (const char *filename)
 	}
 
       /* Don't care what else is on this line at this point.  */
-      matches = fscanf (file, "%[^\n]\n", dummy);
+      matches = fscanf (file, "%" STR_BUFSIZE "[^\n]\n", dummy);
       if (!matches)
 	parse_error (filename);
       count++;
@@ -127,7 +132,7 @@ read_function_mappings (const char *filename)
       int matches;
       char *tmp;
 
-      matches = fscanf (file, "%[^\n:]", dummy);
+      matches = fscanf (file, "%" STR_BUFSIZE "[^\n:]", dummy);
       if (!matches)
 	parse_error (filename);
 
@@ -145,7 +150,7 @@ read_function_mappings (const char *filename)
       strcpy (symbol_map[count].file_name, dummy);
 
       /* Now we need the function name.  */
-      matches = fscanf (file, "%[^\n]\n", dummy);
+      matches = fscanf (file, "%" STR_BUFSIZE "[^\n]\n", dummy);
       if (!matches)
 	parse_error (filename);
       tmp = strrchr (dummy, ' ') + 1;
@@ -480,28 +485,28 @@ get_src_info (bfd_vma addr, const char **filename, const char **name, int *line_
     }
 }
 
+static char buf[BUFSIZE];
+static char address[BUFSIZE];
+static char name[BUFSIZE];
+
 /* Return number of symbols in a symbol-table file.  */
 
-static int
+static unsigned int
 num_of_syms_in (FILE * f)
 {
-  const int BUFSIZE = 1024;
-  char * buf = (char *) xmalloc (BUFSIZE);
-  char * address = (char *) xmalloc (BUFSIZE);
   char   type;
-  char * name = (char *) xmalloc (BUFSIZE);
-  int num = 0;
+  unsigned int num = 0;
 
   while (!feof (f) && fgets (buf, BUFSIZE - 1, f))
     {
-      if (sscanf (buf, "%s %c %s", address, &type, name) == 3)
+      if (sscanf (buf, "%" STR_BUFSIZE "s %c %" STR_BUFSIZE "s", address, &type, name) == 3)
         if (type == 't' || type == 'T')
-          ++num;
+	  {
+	    /* PR 20499 - prevent integer overflow computing argument to xmalloc.  */	  
+	    if (++num >= UINT_MAX / sizeof (Sym))
+	      return -1U;
+	  }
     }
-
-  free (buf);
-  free (address);
-  free (name);
 
   return num;
 }
@@ -511,11 +516,7 @@ num_of_syms_in (FILE * f)
 void
 core_create_syms_from (const char * sym_table_file)
 {
-  const int BUFSIZE = 1024;
-  char * buf = (char *) xmalloc (BUFSIZE);
-  char * address = (char *) xmalloc (BUFSIZE);
   char type;
-  char * name = (char *) xmalloc (BUFSIZE);
   bfd_vma min_vma = ~(bfd_vma) 0;
   bfd_vma max_vma = 0;
   FILE * f;
@@ -535,6 +536,12 @@ core_create_syms_from (const char * sym_table_file)
       fprintf (stderr, _("%s: file `%s' has no symbols\n"), whoami, sym_table_file);
       done (1);
     }
+  else if (symtab.len == -1U)
+    {
+      fprintf (stderr, _("%s: file `%s' has too many symbols\n"),
+	       whoami, sym_table_file);
+      done (1);
+    }
 
   symtab.base = (Sym *) xmalloc (symtab.len * sizeof (Sym));
 
@@ -549,9 +556,10 @@ core_create_syms_from (const char * sym_table_file)
 
   while (!feof (f) && fgets (buf, BUFSIZE - 1, f))
     {
-      if (sscanf (buf, "%s %c %s", address, &type, name) == 3)
-        if (type != 't' && type != 'T')
-          continue;
+      if (sscanf (buf, "%" STR_BUFSIZE "s %c %" STR_BUFSIZE "s", address, &type, name) != 3)
+	continue;
+      if (type != 't' && type != 'T')
+	continue;
 
       sym_init (symtab.limit);
 
@@ -572,10 +580,6 @@ core_create_syms_from (const char * sym_table_file)
 
   symtab.len = symtab.limit - symtab.base;
   symtab_finalize (&symtab);
-
-  free (buf);
-  free (address);
-  free (name);
 }
 
 static int
@@ -843,7 +847,7 @@ core_create_line_syms (void)
      The old way called symtab_finalize before the is_static pass,
      causing a problem since symtab_finalize uses is_static as part of
      its address conflict resolution algorithm.  Since global symbols
-     were prefered over static symbols, and all line symbols were
+     were preferred over static symbols, and all line symbols were
      global at that point, static function names that conflicted with
      their own line numbers (static, but labeled as global) were
      rejected in favor of the line num.

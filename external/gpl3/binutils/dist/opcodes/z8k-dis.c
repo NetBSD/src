@@ -1,5 +1,5 @@
 /* Disassemble z8000 code.
-   Copyright (C) 1992-2016 Free Software Foundation, Inc.
+   Copyright (C) 1992-2018 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -19,7 +19,7 @@
    MA 02110-1301, USA.  */
 
 #include "sysdep.h"
-#include "dis-asm.h"
+#include "disassemble.h"
 
 #define DEFINE_TABLE
 #include "z8k-opc.h"

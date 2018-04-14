@@ -12,4 +12,4 @@ DATA_START_SYMBOLS='PROVIDE (__data_start = .);';
 ENTRY=_start
 
 unset EMBEDDED
-unset OTHER_SECTIONS
+unset STACK_ADDR

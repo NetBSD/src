@@ -1,6 +1,6 @@
 // dwarf_reader.cc -- parse dwarf2/3 debug information
 
-// Copyright (C) 2007-2016 Free Software Foundation, Inc.
+// Copyright (C) 2007-2018 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -737,10 +737,23 @@ Dwarf_die::read_attributes()
 	      break;
 	    }
 	  case elfcpp::DW_FORM_addr:
-	  case elfcpp::DW_FORM_ref_addr:
 	    {
 	      off_t sec_off;
 	      if (this->dwinfo_->address_size() == 4)
+		sec_off = this->dwinfo_->read_from_pointer<32>(&pattr);
+	      else
+		sec_off = this->dwinfo_->read_from_pointer<64>(&pattr);
+	      unsigned int shndx =
+		  this->dwinfo_->lookup_reloc(attr_off, &sec_off);
+	      attr_value.aux.shndx = shndx;
+	      attr_value.val.refval = sec_off;
+	      ref_form = true;
+	      break;
+	    }
+	  case elfcpp::DW_FORM_ref_addr:
+	    {
+	      off_t sec_off;
+	      if (this->dwinfo_->ref_addr_size() == 4)
 		sec_off = this->dwinfo_->read_from_pointer<32>(&pattr);
 	      else
 		sec_off = this->dwinfo_->read_from_pointer<64>(&pattr);
@@ -947,8 +960,10 @@ Dwarf_die::skip_attributes()
 	    pattr += this->dwinfo_->offset_size();
 	    break;
 	  case elfcpp::DW_FORM_addr:
-	  case elfcpp::DW_FORM_ref_addr:
 	    pattr += this->dwinfo_->address_size();
+	    break;
+	  case elfcpp::DW_FORM_ref_addr:
+	    pattr += this->dwinfo_->ref_addr_size();
 	    break;
 	  case elfcpp::DW_FORM_block1:
 	    pattr += 1 + *pattr;

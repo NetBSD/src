@@ -1,5 +1,5 @@
 /* ldmisc.c
-   Copyright (C) 1991-2016 Free Software Foundation, Inc.
+   Copyright (C) 1991-2018 Free Software Foundation, Inc.
    Written by Steve Chamberlain of Cygnus Support.
 
    This file is part of the GNU Binutils.
@@ -23,6 +23,7 @@
 #include "bfd.h"
 #include "bfdlink.h"
 #include "libiberty.h"
+#include "safe-ctype.h"
 #include "filenames.h"
 #include "demangle.h"
 #include <stdarg.h>
@@ -65,10 +66,140 @@
 */
 
 void
-vfinfo (FILE *fp, const char *fmt, va_list arg, bfd_boolean is_warning)
+vfinfo (FILE *fp, const char *fmt, va_list ap, bfd_boolean is_warning)
 {
   bfd_boolean fatal = FALSE;
+  const char *scan;
+  int arg_type;
+  unsigned int arg_count = 0;
+  unsigned int arg_no;
+  union vfinfo_args
+  {
+    int i;
+    long l;
+    void *p;
+    bfd_vma v;
+    struct {
+      bfd *abfd;
+      asection *sec;
+      bfd_vma off;
+    } reladdr;
+    enum
+      {
+	Bad,
+	Int,
+	Long,
+	Ptr,
+	Vma,
+	RelAddr
+      } type;
+  } args[9];
 
+  for (arg_no = 0; arg_no < sizeof (args) / sizeof (args[0]); arg_no++)
+    args[arg_no].type = Bad;
+
+  arg_count = 0;
+  scan = fmt;
+  while (*scan != '\0')
+    {
+      while (*scan != '%' && *scan != '\0')
+	scan++;
+
+      if (*scan == '%')
+	{
+	  scan++;
+
+	  arg_no = arg_count;
+	  if (*scan != '0' && ISDIGIT (*scan) && scan[1] == '$')
+	    {
+	      arg_no = *scan - '1';
+	      scan += 2;
+	    }
+
+	  arg_type = Bad;
+	  switch (*scan++)
+	    {
+	    case '\0':
+	      --scan;
+	      break;
+
+	    case 'V':
+	    case 'v':
+	    case 'W':
+	      arg_type = Vma;
+	      break;
+
+	    case 'T':
+	    case 'A':
+	    case 'B':
+	    case 'I':
+	    case 'S':
+	    case 'R':
+	    case 'p':
+	    case 's':
+	      arg_type = Ptr;
+	      break;
+
+	    case 'C':
+	    case 'D':
+	    case 'G':
+	    case 'H':
+	      arg_type = RelAddr;
+	      break;
+
+	    case 'd':
+	    case 'u':
+	      arg_type = Int;
+	      break;
+
+	    case 'l':
+	      if (*scan == 'd' || *scan == 'u')
+		{
+		  ++scan;
+		  arg_type = Long;
+		}
+	      break;
+
+	    default:
+	      break;
+	    }
+	  if (arg_type != Bad)
+	    {
+	      if (arg_no >= sizeof (args) / sizeof (args[0]))
+		abort ();
+	      args[arg_no].type = arg_type;
+	      ++arg_count;
+	    }
+	}
+    }
+
+  for (arg_no = 0; arg_no < arg_count; arg_no++)
+    {
+      switch (args[arg_no].type)
+	{
+	case Int:
+	  args[arg_no].i = va_arg (ap, int);
+	  break;
+	case Long:
+	  args[arg_no].l = va_arg (ap, long);
+	  break;
+	case Ptr:
+	  args[arg_no].p = va_arg (ap, void *);
+	  break;
+	case Vma:
+	  args[arg_no].v = va_arg (ap, bfd_vma);
+	  break;
+	case RelAddr:
+	  args[arg_no].reladdr.abfd = va_arg (ap, bfd *);
+	  args[arg_no].reladdr.sec = va_arg (ap, asection *);
+	  args[arg_no].reladdr.off = va_arg (ap, bfd_vma);
+	  break;
+	default:
+	  abort ();
+	}
+    }
+
+  arg_count = 0;
   while (*fmt != '\0')
     {
       const char *str = fmt;
@@ -83,8 +214,20 @@ vfinfo (FILE *fp, const char *fmt, va_list arg, bfd_boolean is_warning)
       if (*fmt == '%')
 	{
 	  fmt++;
+
+	  arg_no = arg_count;
+	  if (*fmt != '0' && ISDIGIT (*fmt) && fmt[1] == '$')
+	    {
+	      arg_no = *fmt - '1';
+	      fmt += 2;
+	    }
+
 	  switch (*fmt++)
 	    {
+	    case '\0':
+	      --fmt;
+	      /* Fall through.  */
+
 	    case '%':
 	      /* literal % */
 	      putc ('%', fp);
@@ -98,7 +241,8 @@ vfinfo (FILE *fp, const char *fmt, va_list arg, bfd_boolean is_warning)
 	    case 'V':
 	      /* hex bfd_vma */
 	      {
-		bfd_vma value = va_arg (arg, bfd_vma);
+		bfd_vma value = args[arg_no].v;
+		++arg_count;
 		fprintf_vma (fp, value);
 	      }
 	      break;
@@ -108,7 +252,8 @@ vfinfo (FILE *fp, const char *fmt, va_list arg, bfd_boolean is_warning)
 	      {
 		char buf[100];
 		char *p = buf;
-		bfd_vma value = va_arg (arg, bfd_vma);
+		bfd_vma value = args[arg_no].v;
+		++arg_count;
 		sprintf_vma (p, value);
 		while (*p == '0')
 		  p++;
@@ -127,7 +272,8 @@ vfinfo (FILE *fp, const char *fmt, va_list arg, bfd_boolean is_warning)
 		char *p;
 		int len;
 
-		value = va_arg (arg, bfd_vma);
+		value = args[arg_no].v;
+		++arg_count;
 		sprintf_vma (buf, value);
 		for (p = buf; *p == '0'; ++p)
 		  ;
@@ -146,8 +292,8 @@ vfinfo (FILE *fp, const char *fmt, va_list arg, bfd_boolean is_warning)
 	    case 'T':
 	      /* Symbol name.  */
 	      {
-		const char *name = va_arg (arg, const char *);
-
+		const char *name = (const char *) args[arg_no].p;
+		++arg_count;
 		if (name == NULL || *name == 0)
 		  {
 		    fprintf (fp, _("no symbol"));
@@ -173,11 +319,14 @@ vfinfo (FILE *fp, const char *fmt, va_list arg, bfd_boolean is_warning)
 	    case 'A':
 	      /* section name from a section */
 	      {
-		asection *sec = va_arg (arg, asection *);
-		bfd *abfd = sec->owner;
+		asection *sec;
+		bfd *abfd;
 		const char *group = NULL;
 		struct coff_comdat_info *ci;
 
+		sec = (asection *) args[arg_no].p;
+		++arg_count;
+		abfd = sec->owner;
 		fprintf (fp, "%s", sec->name);
 		if (abfd != NULL
 		    && bfd_get_flavour (abfd) == bfd_target_elf_flavour
@@ -197,8 +346,8 @@ vfinfo (FILE *fp, const char *fmt, va_list arg, bfd_boolean is_warning)
 	    case 'B':
 	      /* filename from a bfd */
 	      {
-		bfd *abfd = va_arg (arg, bfd *);
-
+		bfd *abfd = (bfd *) args[arg_no].p;
+		++arg_count;
 		if (abfd == NULL)
 		  fprintf (fp, "%s generated", program_name);
 		else if (abfd->my_archive != NULL
@@ -230,7 +379,8 @@ vfinfo (FILE *fp, const char *fmt, va_list arg, bfd_boolean is_warning)
 	      {
 		lang_input_statement_type *i;
 
-		i = va_arg (arg, lang_input_statement_type *);
+		i = (lang_input_statement_type *) args[arg_no].p;
+		++arg_count;
 		if (i->the_bfd->my_archive != NULL
 		    && !bfd_is_thin_archive (i->the_bfd->my_archive))
 		  fprintf (fp, "(%s)",
@@ -247,8 +397,8 @@ vfinfo (FILE *fp, const char *fmt, va_list arg, bfd_boolean is_warning)
 	      /* Print script file and linenumber.  */
 	      {
 		etree_type node;
-		etree_type *tp = va_arg (arg, etree_type *);
-
+		etree_type *tp = (etree_type *) args[arg_no].p;
+		++arg_count;
 		if (tp == NULL)
 		  {
 		    tp = &node;
@@ -263,8 +413,8 @@ vfinfo (FILE *fp, const char *fmt, va_list arg, bfd_boolean is_warning)
 	    case 'R':
 	      /* Print all that's interesting about a relent.  */
 	      {
-		arelent *relent = va_arg (arg, arelent *);
-
+		arelent *relent = (arelent *) args[arg_no].p;
+		++arg_count;
 		lfinfo (fp, "%s+0x%v (type %s)",
 			(*(relent->sym_ptr_ptr))->name,
 			relent->addend,
@@ -280,8 +430,8 @@ vfinfo (FILE *fp, const char *fmt, va_list arg, bfd_boolean is_warning)
 		 The arguments are a BFD, a section, and an offset.  */
 	      {
 		static bfd *last_bfd;
-		static char *last_file = NULL;
-		static char *last_function = NULL;
+		static char *last_file;
+		static char *last_function;
 		bfd *abfd;
 		asection *section;
 		bfd_vma offset;
@@ -292,9 +442,10 @@ vfinfo (FILE *fp, const char *fmt, va_list arg, bfd_boolean is_warning)
 		bfd_boolean discard_last;
 		bfd_boolean done;
 
-		abfd = va_arg (arg, bfd *);
-		section = va_arg (arg, asection *);
-		offset = va_arg (arg, bfd_vma);
+		abfd = args[arg_no].reladdr.abfd;
+		section = args[arg_no].reladdr.sec;
+		offset = args[arg_no].reladdr.off;
+		++arg_count;
 
 		if (abfd != NULL)
 		  {
@@ -331,9 +482,9 @@ vfinfo (FILE *fp, const char *fmt, va_list arg, bfd_boolean is_warning)
 			   (eg emacs) to correctly locate multiple
 			   errors in the same source file.  */
 			if (last_bfd == NULL
-			    || last_file == NULL
 			    || last_function == NULL
 			    || last_bfd != abfd
+			    || (last_file == NULL) != (filename == NULL)
 			    || (filename != NULL
 				&& filename_cmp (last_file, filename) != 0)
 			    || strcmp (last_function, functionname) != 0)
@@ -394,38 +545,44 @@ vfinfo (FILE *fp, const char *fmt, va_list arg, bfd_boolean is_warning)
 
 	    case 'p':
 	      /* native (host) void* pointer, like printf */
-	      fprintf (fp, "%p", va_arg (arg, void *));
+	      fprintf (fp, "%p", args[arg_no].p);
+	      ++arg_count;
 	      break;
 
 	    case 's':
 	      /* arbitrary string, like printf */
-	      fprintf (fp, "%s", va_arg (arg, char *));
+	      fprintf (fp, "%s", (char *) args[arg_no].p);
+	      ++arg_count;
 	      break;
 
 	    case 'd':
 	      /* integer, like printf */
-	      fprintf (fp, "%d", va_arg (arg, int));
+	      fprintf (fp, "%d", args[arg_no].i);
+	      ++arg_count;
 	      break;
 
 	    case 'u':
 	      /* unsigned integer, like printf */
-	      fprintf (fp, "%u", va_arg (arg, unsigned int));
+	      fprintf (fp, "%u", args[arg_no].i);
+	      ++arg_count;
 	      break;
 
 	    case 'l':
 	      if (*fmt == 'd')
 		{
-		  fprintf (fp, "%ld", va_arg (arg, long));
+		  fprintf (fp, "%ld", args[arg_no].l);
+		  ++arg_count;
 		  ++fmt;
 		  break;
 		}
 	      else if (*fmt == 'u')
 		{
-		  fprintf (fp, "%lu", va_arg (arg, unsigned long));
+		  fprintf (fp, "%lu", args[arg_no].l);
+		  ++arg_count;
 		  ++fmt;
 		  break;
 		}
-	      /* Fall thru */
+	      /* Fallthru */
 
 	    default:
 	      fprintf (fp, "%%%c", fmt[-1]);

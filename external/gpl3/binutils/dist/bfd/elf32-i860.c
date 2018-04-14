@@ -1,5 +1,5 @@
 /* Intel i860 specific support for 32-bit ELF.
-   Copyright (C) 1993-2016 Free Software Foundation, Inc.
+   Copyright (C) 1993-2018 Free Software Foundation, Inc.
 
    Full i860 support contributed by Jason Eckhardt <jle@cygnus.com>.
 
@@ -29,12 +29,12 @@
 /* special_function for R_860_PC26 relocation.  */
 static bfd_reloc_status_type
 i860_howto_pc26_reloc (bfd *abfd ATTRIBUTE_UNUSED,
-                       arelent *reloc_entry,
-                       asymbol *symbol,
-                       void *data ATTRIBUTE_UNUSED,
-                       asection *input_section,
-                       bfd *output_bfd,
-                       char **error_message ATTRIBUTE_UNUSED)
+		       arelent *reloc_entry,
+		       asymbol *symbol,
+		       void *data ATTRIBUTE_UNUSED,
+		       asection *input_section,
+		       bfd *output_bfd,
+		       char **error_message ATTRIBUTE_UNUSED)
 {
   bfd_vma insn;
   bfd_vma relocation;
@@ -68,9 +68,9 @@ i860_howto_pc26_reloc (bfd *abfd ATTRIBUTE_UNUSED,
 
   /* Adjust for PC-relative relocation.  */
   relocation -= (input_section->output_section->vma
-                 + input_section->output_offset
-                 + reloc_entry->address
-                 + 4);
+		 + input_section->output_offset
+		 + reloc_entry->address
+		 + 4);
 
   /* Check for target out of range.  */
   if ((bfd_signed_vma)relocation > (0x3ffffff << 2)
@@ -82,7 +82,7 @@ i860_howto_pc26_reloc (bfd *abfd ATTRIBUTE_UNUSED,
 
   relocation >>= reloc_entry->howto->rightshift;
   insn = (insn & ~reloc_entry->howto->dst_mask)
-         | (relocation & reloc_entry->howto->dst_mask);
+	 | (relocation & reloc_entry->howto->dst_mask);
 
   bfd_put_32 (abfd, (bfd_vma) insn, addr);
 
@@ -92,12 +92,12 @@ i860_howto_pc26_reloc (bfd *abfd ATTRIBUTE_UNUSED,
 /* special_function for R_860_PC16 relocation.  */
 static bfd_reloc_status_type
 i860_howto_pc16_reloc (bfd *abfd,
-                       arelent *reloc_entry,
-                       asymbol *symbol,
-                       void *data,
-                       asection *input_section,
-                       bfd *output_bfd,
-                       char **error_message ATTRIBUTE_UNUSED)
+		       arelent *reloc_entry,
+		       asymbol *symbol,
+		       void *data,
+		       asection *input_section,
+		       bfd *output_bfd,
+		       char **error_message ATTRIBUTE_UNUSED)
 {
   bfd_vma insn;
   bfd_vma relocation;
@@ -131,9 +131,9 @@ i860_howto_pc16_reloc (bfd *abfd,
 
   /* Adjust for PC-relative relocation.  */
   relocation -= (input_section->output_section->vma
-                 + input_section->output_offset
-                 + reloc_entry->address
-                 + 4);
+		 + input_section->output_offset
+		 + reloc_entry->address
+		 + 4);
 
   /* Check for target out of range.  */
   if ((bfd_signed_vma)relocation > (0x7fff << 2)
@@ -145,7 +145,7 @@ i860_howto_pc16_reloc (bfd *abfd,
 
   relocation >>= reloc_entry->howto->rightshift;
   relocation = (((relocation & 0xf800) << 5) | (relocation & 0x7ff))
-               & reloc_entry->howto->dst_mask;
+	       & reloc_entry->howto->dst_mask;
   insn = (insn & ~reloc_entry->howto->dst_mask) | relocation;
 
   bfd_put_32 (abfd, (bfd_vma) insn, addr);
@@ -156,12 +156,12 @@ i860_howto_pc16_reloc (bfd *abfd,
 /* special_function for R_860_HIGHADJ relocation.  */
 static bfd_reloc_status_type
 i860_howto_highadj_reloc (bfd *abfd,
-                          arelent *reloc_entry,
-                          asymbol *symbol,
-                          void *data,
-                          asection *input_section,
-                          bfd *output_bfd,
-                          char **error_message ATTRIBUTE_UNUSED)
+			  arelent *reloc_entry,
+			  asymbol *symbol,
+			  void *data,
+			  asection *input_section,
+			  bfd *output_bfd,
+			  char **error_message ATTRIBUTE_UNUSED)
 {
   bfd_vma insn;
   bfd_vma relocation;
@@ -209,12 +209,12 @@ i860_howto_highadj_reloc (bfd *abfd,
 /* special_function for R_860_SPLITn relocations.  */
 static bfd_reloc_status_type
 i860_howto_splitn_reloc (bfd *abfd,
-                         arelent *reloc_entry,
-                         asymbol *symbol,
-                         void *data,
-                         asection *input_section,
-                         bfd *output_bfd,
-                         char **error_message ATTRIBUTE_UNUSED)
+			 arelent *reloc_entry,
+			 asymbol *symbol,
+			 void *data,
+			 asection *input_section,
+			 bfd *output_bfd,
+			 char **error_message ATTRIBUTE_UNUSED)
 {
   bfd_vma insn;
   bfd_vma relocation;
@@ -250,7 +250,7 @@ i860_howto_splitn_reloc (bfd *abfd,
   insn = bfd_get_32 (abfd, addr);
 
   relocation = (((relocation & 0xf800) << 5) | (relocation & 0x7ff))
-               & reloc_entry->howto->dst_mask;
+	       & reloc_entry->howto->dst_mask;
   insn = (insn & ~reloc_entry->howto->dst_mask) | relocation;
 
   bfd_put_32 (abfd, (bfd_vma) insn, addr);
@@ -348,7 +348,7 @@ static reloc_howto_type elf32_i860_howto_table [] =
 	 FALSE),		/* pcrel_offset */
 
   /* A 26-bit PC-relative relocation.  */
-  HOWTO (R_860_PC26,	        /* type */
+  HOWTO (R_860_PC26,		/* type */
 	 2,			/* rightshift */
 	 2,			/* size (0 = byte, 1 = short, 2 = long) */
 	 26,			/* bitsize */
@@ -360,9 +360,9 @@ static reloc_howto_type elf32_i860_howto_table [] =
 	 FALSE,			/* partial_inplace */
 	 0x3ffffff,		/* src_mask */
 	 0x3ffffff,		/* dst_mask */
-	 TRUE),		        /* pcrel_offset */
+	 TRUE),			/* pcrel_offset */
 
-  HOWTO (R_860_PLT26,	        /* type */
+  HOWTO (R_860_PLT26,		/* type */
 	 0,			/* rightshift */
 	 2,			/* size (0 = byte, 1 = short, 2 = long) */
 	 26,			/* bitsize */
@@ -374,10 +374,10 @@ static reloc_howto_type elf32_i860_howto_table [] =
 	 TRUE,			/* partial_inplace */
 	 0xffffffff,		/* src_mask */
 	 0xffffffff,		/* dst_mask */
-	 TRUE),		        /* pcrel_offset */
+	 TRUE),			/* pcrel_offset */
 
   /* A 16-bit PC-relative relocation.  */
-  HOWTO (R_860_PC16,	        /* type */
+  HOWTO (R_860_PC16,		/* type */
 	 2,			/* rightshift */
 	 2,			/* size (0 = byte, 1 = short, 2 = long) */
 	 16,			/* bitsize */
@@ -389,9 +389,9 @@ static reloc_howto_type elf32_i860_howto_table [] =
 	 FALSE,			/* partial_inplace */
 	 0x1f07ff,		/* src_mask */
 	 0x1f07ff,		/* dst_mask */
-	 TRUE),		        /* pcrel_offset */
+	 TRUE),			/* pcrel_offset */
 
-  HOWTO (R_860_LOW0,	        /* type */
+  HOWTO (R_860_LOW0,		/* type */
 	 0,			/* rightshift */
 	 2,			/* size (0 = byte, 1 = short, 2 = long) */
 	 16,			/* bitsize */
@@ -403,9 +403,9 @@ static reloc_howto_type elf32_i860_howto_table [] =
 	 FALSE,			/* partial_inplace */
 	 0xffff,		/* src_mask */
 	 0xffff,		/* dst_mask */
-	 FALSE),	        /* pcrel_offset */
+	 FALSE),		/* pcrel_offset */
 
-  HOWTO (R_860_SPLIT0,	        /* type */
+  HOWTO (R_860_SPLIT0,		/* type */
 	 0,			/* rightshift */
 	 2,			/* size (0 = byte, 1 = short, 2 = long) */
 	 16,			/* bitsize */
@@ -417,9 +417,9 @@ static reloc_howto_type elf32_i860_howto_table [] =
 	 FALSE,			/* partial_inplace */
 	 0x1f07ff,		/* src_mask */
 	 0x1f07ff,		/* dst_mask */
-	 FALSE),	        /* pcrel_offset */
+	 FALSE),		/* pcrel_offset */
 
-  HOWTO (R_860_LOW1,	        /* type */
+  HOWTO (R_860_LOW1,		/* type */
 	 0,			/* rightshift */
 	 2,			/* size (0 = byte, 1 = short, 2 = long) */
 	 16,			/* bitsize */
@@ -431,9 +431,9 @@ static reloc_howto_type elf32_i860_howto_table [] =
 	 FALSE,			/* partial_inplace */
 	 0xfffe,		/* src_mask */
 	 0xfffe,		/* dst_mask */
-	 FALSE),	        /* pcrel_offset */
+	 FALSE),		/* pcrel_offset */
 
-  HOWTO (R_860_SPLIT1,	        /* type */
+  HOWTO (R_860_SPLIT1,		/* type */
 	 0,			/* rightshift */
 	 2,			/* size (0 = byte, 1 = short, 2 = long) */
 	 16,			/* bitsize */
@@ -445,9 +445,9 @@ static reloc_howto_type elf32_i860_howto_table [] =
 	 FALSE,			/* partial_inplace */
 	 0x1f07fe,		/* src_mask */
 	 0x1f07fe,		/* dst_mask */
-	 FALSE),	        /* pcrel_offset */
+	 FALSE),		/* pcrel_offset */
 
-  HOWTO (R_860_LOW2,	        /* type */
+  HOWTO (R_860_LOW2,		/* type */
 	 0,			/* rightshift */
 	 2,			/* size (0 = byte, 1 = short, 2 = long) */
 	 16,			/* bitsize */
@@ -459,9 +459,9 @@ static reloc_howto_type elf32_i860_howto_table [] =
 	 FALSE,			/* partial_inplace */
 	 0xfffc,		/* src_mask */
 	 0xfffc,		/* dst_mask */
-	 FALSE),	        /* pcrel_offset */
+	 FALSE),		/* pcrel_offset */
 
-  HOWTO (R_860_SPLIT2,	        /* type */
+  HOWTO (R_860_SPLIT2,		/* type */
 	 0,			/* rightshift */
 	 2,			/* size (0 = byte, 1 = short, 2 = long) */
 	 16,			/* bitsize */
@@ -473,9 +473,9 @@ static reloc_howto_type elf32_i860_howto_table [] =
 	 FALSE,			/* partial_inplace */
 	 0x1f07fc,		/* src_mask */
 	 0x1f07fc,		/* dst_mask */
-	 FALSE),	        /* pcrel_offset */
+	 FALSE),		/* pcrel_offset */
 
-  HOWTO (R_860_LOW3,	        /* type */
+  HOWTO (R_860_LOW3,		/* type */
 	 0,			/* rightshift */
 	 2,			/* size (0 = byte, 1 = short, 2 = long) */
 	 16,			/* bitsize */
@@ -487,9 +487,9 @@ static reloc_howto_type elf32_i860_howto_table [] =
 	 FALSE,			/* partial_inplace */
 	 0xfff8,		/* src_mask */
 	 0xfff8,		/* dst_mask */
-	 FALSE),	        /* pcrel_offset */
+	 FALSE),		/* pcrel_offset */
 
-  HOWTO (R_860_LOGOT0,	        /* type */
+  HOWTO (R_860_LOGOT0,		/* type */
 	 0,			/* rightshift */
 	 2,			/* size (0 = byte, 1 = short, 2 = long) */
 	 16,			/* bitsize */
@@ -501,9 +501,9 @@ static reloc_howto_type elf32_i860_howto_table [] =
 	 FALSE,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0xffff,		/* dst_mask */
-	 TRUE),		        /* pcrel_offset */
+	 TRUE),			/* pcrel_offset */
 
-  HOWTO (R_860_SPGOT0,	        /* type */
+  HOWTO (R_860_SPGOT0,		/* type */
 	 0,			/* rightshift */
 	 2,			/* size (0 = byte, 1 = short, 2 = long) */
 	 16,			/* bitsize */
@@ -515,9 +515,9 @@ static reloc_howto_type elf32_i860_howto_table [] =
 	 FALSE,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0xffff,		/* dst_mask */
-	 TRUE),		        /* pcrel_offset */
+	 TRUE),			/* pcrel_offset */
 
-  HOWTO (R_860_LOGOT1,	        /* type */
+  HOWTO (R_860_LOGOT1,		/* type */
 	 0,			/* rightshift */
 	 2,			/* size (0 = byte, 1 = short, 2 = long) */
 	 16,			/* bitsize */
@@ -529,9 +529,9 @@ static reloc_howto_type elf32_i860_howto_table [] =
 	 FALSE,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0xffff,		/* dst_mask */
-	 TRUE),		        /* pcrel_offset */
+	 TRUE),			/* pcrel_offset */
 
-  HOWTO (R_860_SPGOT1,	        /* type */
+  HOWTO (R_860_SPGOT1,		/* type */
 	 0,			/* rightshift */
 	 2,			/* size (0 = byte, 1 = short, 2 = long) */
 	 16,			/* bitsize */
@@ -543,9 +543,9 @@ static reloc_howto_type elf32_i860_howto_table [] =
 	 FALSE,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0xffff,		/* dst_mask */
-	 TRUE),		        /* pcrel_offset */
+	 TRUE),			/* pcrel_offset */
 
-  HOWTO (R_860_LOGOTOFF0,        /* type */
+  HOWTO (R_860_LOGOTOFF0,	 /* type */
 	 0,			/* rightshift */
 	 2,			/* size (0 = byte, 1 = short, 2 = long) */
 	 32,			/* bitsize */
@@ -557,9 +557,9 @@ static reloc_howto_type elf32_i860_howto_table [] =
 	 TRUE,			/* partial_inplace */
 	 0xffffffff,		/* src_mask */
 	 0xffffffff,		/* dst_mask */
-	 FALSE),	        /* pcrel_offset */
+	 FALSE),		/* pcrel_offset */
 
-  HOWTO (R_860_SPGOTOFF0,        /* type */
+  HOWTO (R_860_SPGOTOFF0,	 /* type */
 	 0,			/* rightshift */
 	 2,			/* size (0 = byte, 1 = short, 2 = long) */
 	 32,			/* bitsize */
@@ -571,9 +571,9 @@ static reloc_howto_type elf32_i860_howto_table [] =
 	 TRUE,			/* partial_inplace */
 	 0xffffffff,		/* src_mask */
 	 0xffffffff,		/* dst_mask */
-	 FALSE),	        /* pcrel_offset */
+	 FALSE),		/* pcrel_offset */
 
-  HOWTO (R_860_LOGOTOFF1,        /* type */
+  HOWTO (R_860_LOGOTOFF1,	 /* type */
 	 0,			/* rightshift */
 	 2,			/* size (0 = byte, 1 = short, 2 = long) */
 	 32,			/* bitsize */
@@ -585,7 +585,7 @@ static reloc_howto_type elf32_i860_howto_table [] =
 	 TRUE,			/* partial_inplace */
 	 0xffffffff,		/* src_mask */
 	 0xffffffff,		/* dst_mask */
-	 FALSE),	        /* pcrel_offset */
+	 FALSE),		/* pcrel_offset */
 
   HOWTO (R_860_SPGOTOFF1,       /* type */
 	 0,			/* rightshift */
@@ -599,9 +599,9 @@ static reloc_howto_type elf32_i860_howto_table [] =
 	 TRUE,			/* partial_inplace */
 	 0xffffffff,		/* src_mask */
 	 0xffffffff,		/* dst_mask */
-	 FALSE),	        /* pcrel_offset */
+	 FALSE),		/* pcrel_offset */
 
-  HOWTO (R_860_LOGOTOFF2,        /* type */
+  HOWTO (R_860_LOGOTOFF2,	 /* type */
 	 0,			/* rightshift */
 	 2,			/* size (0 = byte, 1 = short, 2 = long) */
 	 32,			/* bitsize */
@@ -613,9 +613,9 @@ static reloc_howto_type elf32_i860_howto_table [] =
 	 TRUE,			/* partial_inplace */
 	 0xffffffff,		/* src_mask */
 	 0xffffffff,		/* dst_mask */
-	 FALSE),	        /* pcrel_offset */
+	 FALSE),		/* pcrel_offset */
 
-  HOWTO (R_860_LOGOTOFF3,        /* type */
+  HOWTO (R_860_LOGOTOFF3,	 /* type */
 	 0,			/* rightshift */
 	 2,			/* size (0 = byte, 1 = short, 2 = long) */
 	 32,			/* bitsize */
@@ -627,9 +627,9 @@ static reloc_howto_type elf32_i860_howto_table [] =
 	 TRUE,			/* partial_inplace */
 	 0xffffffff,		/* src_mask */
 	 0xffffffff,		/* dst_mask */
-	 FALSE),	        /* pcrel_offset */
+	 FALSE),		/* pcrel_offset */
 
-  HOWTO (R_860_LOPC,	        /* type */
+  HOWTO (R_860_LOPC,		/* type */
 	 0,			/* rightshift */
 	 2,			/* size (0 = byte, 1 = short, 2 = long) */
 	 16,			/* bitsize */
@@ -641,9 +641,9 @@ static reloc_howto_type elf32_i860_howto_table [] =
 	 FALSE,			/* partial_inplace */
 	 0xffff,		/* src_mask */
 	 0xffff,		/* dst_mask */
-	 TRUE),		        /* pcrel_offset */
+	 TRUE),			/* pcrel_offset */
 
-  HOWTO (R_860_HIGHADJ,	        /* type */
+  HOWTO (R_860_HIGHADJ,		/* type */
 	 0,			/* rightshift */
 	 2,			/* size (0 = byte, 1 = short, 2 = long) */
 	 16,			/* bitsize */
@@ -655,9 +655,9 @@ static reloc_howto_type elf32_i860_howto_table [] =
 	 FALSE,			/* partial_inplace */
 	 0xffff,		/* src_mask */
 	 0xffff,		/* dst_mask */
-	 FALSE),	        /* pcrel_offset */
+	 FALSE),		/* pcrel_offset */
 
-  HOWTO (R_860_HAGOT,	        /* type */
+  HOWTO (R_860_HAGOT,		/* type */
 	 0,			/* rightshift */
 	 2,			/* size (0 = byte, 1 = short, 2 = long) */
 	 16,			/* bitsize */
@@ -669,9 +669,9 @@ static reloc_howto_type elf32_i860_howto_table [] =
 	 FALSE,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0xffff,		/* dst_mask */
-	 TRUE),		        /* pcrel_offset */
+	 TRUE),			/* pcrel_offset */
 
-  HOWTO (R_860_HAGOTOFF,        /* type */
+  HOWTO (R_860_HAGOTOFF,	/* type */
 	 0,			/* rightshift */
 	 2,			/* size (0 = byte, 1 = short, 2 = long) */
 	 32,			/* bitsize */
@@ -683,9 +683,9 @@ static reloc_howto_type elf32_i860_howto_table [] =
 	 TRUE,			/* partial_inplace */
 	 0xffffffff,		/* src_mask */
 	 0xffffffff,		/* dst_mask */
-	 FALSE),	        /* pcrel_offset */
+	 FALSE),		/* pcrel_offset */
 
-  HOWTO (R_860_HAPC,	        /* type */
+  HOWTO (R_860_HAPC,		/* type */
 	 0,			/* rightshift */
 	 2,			/* size (0 = byte, 1 = short, 2 = long) */
 	 16,			/* bitsize */
@@ -697,9 +697,9 @@ static reloc_howto_type elf32_i860_howto_table [] =
 	 FALSE,			/* partial_inplace */
 	 0xffff,		/* src_mask */
 	 0xffff,		/* dst_mask */
-	 TRUE),		        /* pcrel_offset */
+	 TRUE),			/* pcrel_offset */
 
-  HOWTO (R_860_HIGH,	        /* type */
+  HOWTO (R_860_HIGH,		/* type */
 	 16,			/* rightshift */
 	 2,			/* size (0 = byte, 1 = short, 2 = long) */
 	 16,			/* bitsize */
@@ -711,9 +711,9 @@ static reloc_howto_type elf32_i860_howto_table [] =
 	 FALSE,			/* partial_inplace */
 	 0xffff,		/* src_mask */
 	 0xffff,		/* dst_mask */
-	 FALSE),	        /* pcrel_offset */
+	 FALSE),		/* pcrel_offset */
 
-  HOWTO (R_860_HIGOT,	        /* type */
+  HOWTO (R_860_HIGOT,		/* type */
 	 0,			/* rightshift */
 	 2,			/* size (0 = byte, 1 = short, 2 = long) */
 	 16,			/* bitsize */
@@ -725,9 +725,9 @@ static reloc_howto_type elf32_i860_howto_table [] =
 	 FALSE,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0xffff,		/* dst_mask */
-	 TRUE),		        /* pcrel_offset */
+	 TRUE),			/* pcrel_offset */
 
-  HOWTO (R_860_HIGOTOFF,        /* type */
+  HOWTO (R_860_HIGOTOFF,	/* type */
 	 0,			/* rightshift */
 	 2,			/* size (0 = byte, 1 = short, 2 = long) */
 	 32,			/* bitsize */
@@ -739,7 +739,7 @@ static reloc_howto_type elf32_i860_howto_table [] =
 	 TRUE,			/* partial_inplace */
 	 0xffffffff,		/* src_mask */
 	 0xffffffff,		/* dst_mask */
-	 FALSE),	        /* pcrel_offset */
+	 FALSE),		/* pcrel_offset */
 };
 
 static unsigned char elf_code_to_howto_index[R_860_max + 1];
@@ -758,7 +758,7 @@ lookup_howto (unsigned int rtype)
       memset (elf_code_to_howto_index, 0xff,
 	      sizeof (elf_code_to_howto_index));
       for (i = 0; i < howto_tbl_size; i++)
-        elf_code_to_howto_index[elf32_i860_howto_table[i].type] = i;
+	elf_code_to_howto_index[elf32_i860_howto_table[i].type] = i;
     }
 
   BFD_ASSERT (rtype <= R_860_max);
@@ -1089,15 +1089,15 @@ elf32_i860_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 
   for (rel = relocs; rel < relend; rel ++)
     {
-      reloc_howto_type *           howto;
-      unsigned long                r_symndx;
-      Elf_Internal_Sym *           sym;
-      asection *                   sec;
+      reloc_howto_type *	   howto;
+      unsigned long		   r_symndx;
+      Elf_Internal_Sym *	   sym;
+      asection *		   sec;
       struct elf_link_hash_entry * h;
-      bfd_vma                      relocation;
-      bfd_reloc_status_type        r;
-      const char *                 name = NULL;
-      int                          r_type;
+      bfd_vma			   relocation;
+      bfd_reloc_status_type	   r;
+      const char *		   name = NULL;
+      int			   r_type;
 
       r_type = ELF32_R_TYPE (rel->r_info);
       r_symndx = ELF32_R_SYM (rel->r_info);
@@ -1255,7 +1255,7 @@ elf32_i860_is_local_label_name (bfd *abfd, const char *name)
 #define ELF_MAXPAGESIZE		4096
 
 #define elf_backend_rela_normal			1
-#define elf_info_to_howto_rel                   NULL
+#define elf_info_to_howto_rel			NULL
 #define elf_info_to_howto			elf32_i860_info_to_howto_rela
 #define elf_backend_relocate_section		elf32_i860_relocate_section
 #define bfd_elf32_bfd_reloc_type_lookup		elf32_i860_reloc_type_lookup

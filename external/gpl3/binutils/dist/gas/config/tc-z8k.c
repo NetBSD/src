@@ -1,5 +1,5 @@
 /* tc-z8k.c -- Assemble code for the Zilog Z800n
-   Copyright (C) 1992-2016 Free Software Foundation, Inc.
+   Copyright (C) 1992-2018 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -956,9 +956,8 @@ get_specific (opcode_entry_type *opcode, op_type *operands)
 static char buffer[20];
 
 static void
-newfix (int ptr, int type, int size, expressionS *operand)
+newfix (int ptr, bfd_reloc_code_real_type type, int size, expressionS *operand)
 {
-  int is_pcrel = 0;
   fixS *fixP;
 
   /* Size is in nibbles.  */
@@ -966,12 +965,17 @@ newfix (int ptr, int type, int size, expressionS *operand)
       || operand->X_op_symbol
       || operand->X_add_number)
     {
+      int is_pcrel;
       switch(type)
         {
         case BFD_RELOC_8_PCREL:
         case BFD_RELOC_Z8K_CALLR:
         case BFD_RELOC_Z8K_DISP7:
           is_pcrel = 1;
+	  break;
+	default:
+	  is_pcrel = 0;
+	  break;
         }
       fixP = fix_new_exp (frag_now, ptr, size / 2,
                           operand, is_pcrel, type);
@@ -981,7 +985,8 @@ newfix (int ptr, int type, int size, expressionS *operand)
 }
 
 static char *
-apply_fix (char *ptr, int type, expressionS *operand, int size)
+apply_fix (char *ptr, bfd_reloc_code_real_type type, expressionS *operand,
+	   int size)
 {
   long n = operand->X_add_number;
 
@@ -995,11 +1000,14 @@ apply_fix (char *ptr, int type, expressionS *operand, int size)
       *ptr++ = n >> 24;
       *ptr++ = n >> 20;
       *ptr++ = n >> 16;
+      /* Fall through.  */
     case 4:			/* 4 nibbles == 16 bits.  */
       *ptr++ = n >> 12;
       *ptr++ = n >> 8;
+      /* Fall through.  */
     case 2:
       *ptr++ = n >> 4;
+      /* Fall through.  */
     case 1:
       *ptr++ = n >> 0;
       break;
@@ -1116,7 +1124,7 @@ build_bytes (opcode_entry_type *this_try, struct z8k_op *operand ATTRIBUTE_UNUSE
 	case CLASS_REG_WORD:
 	case CLASS_REG_LONG:
 	case CLASS_REG_QUAD:
-	  /* Insert bit mattern of right reg.  */
+	  /* Insert bit pattern of right reg.  */
 	  *output_ptr++ = reg[c & 0xf];
 	  break;
 	case CLASS_DISP:
@@ -1147,7 +1155,7 @@ build_bytes (opcode_entry_type *this_try, struct z8k_op *operand ATTRIBUTE_UNUSE
               /*case ARG_IMMNMINUS1: not used.  */
 	      case ARG_IMM4M1:
 		imm_operand->X_add_number--;
-                /* Drop through.  */
+                /* Fall through.  */
 	      case ARG_IMM4:
                 if (imm_operand->X_add_number > 15)
 		  as_bad (_("immediate value out of range"));
@@ -1155,7 +1163,7 @@ build_bytes (opcode_entry_type *this_try, struct z8k_op *operand ATTRIBUTE_UNUSE
 		break;
 	      case ARG_NIM8:
 		imm_operand->X_add_number = -imm_operand->X_add_number;
-                /* Drop through.  */
+                /* Fall through.  */
 	      case ARG_IMM8:
 		output_ptr = apply_fix (output_ptr, BFD_RELOC_8, imm_operand, 2);
 		break;

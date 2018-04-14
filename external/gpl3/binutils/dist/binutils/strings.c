@@ -1,5 +1,5 @@
 /* strings -- print the strings of printable characters in files
-   Copyright (C) 1993-2016 Free Software Foundation, Inc.
+   Copyright (C) 1993-2018 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -80,7 +80,7 @@
       (   (c) >= 0 \
        && (c) <= 255 \
        && ((c) == '\t' || ISPRINT (c) || (encoding == 'S' && (c) > 127) \
-           || (include_all_whitespace == TRUE && ISSPACE (c))) \
+	   || (include_all_whitespace && ISSPACE (c))) \
       )
 
 #ifndef errno
@@ -108,9 +108,6 @@ static bfd_boolean print_filenames;
 /* TRUE means for object files scan only the data section.  */
 static bfd_boolean datasection_only;
 
-/* TRUE if we found an initialized data section in the current file.  */
-static bfd_boolean got_a_section;
-
 /* The BFD object file format.  */
 static char *target;
 
@@ -137,21 +134,9 @@ static struct option long_options[] =
   {NULL, 0, NULL, 0}
 };
 
-/* Records the size of a named file so that we
-   do not repeatedly run bfd_stat() on it.  */
-
-typedef struct
-{
-  const char *  filename;
-  bfd_size_type filesize;
-} filename_and_size_t;
-
-static void strings_a_section (bfd *, asection *, void *);
-static bfd_boolean strings_object_file (const char *);
 static bfd_boolean strings_file (char *);
 static void print_strings (const char *, FILE *, file_ptr, int, int, char *);
-static void usage (FILE *, int);
-static long get_char (FILE *, file_ptr *, int *, char **);
+static void usage (FILE *, int) ATTRIBUTE_NORETURN;
 
 int main (int, char **);
 
@@ -321,7 +306,7 @@ main (int argc, char **argv)
 	  else
 	    {
 	      files_given = TRUE;
-	      exit_status |= strings_file (argv[optind]) == FALSE;
+	      exit_status |= !strings_file (argv[optind]);
 	    }
 	}
     }
@@ -332,61 +317,33 @@ main (int argc, char **argv)
   return (exit_status);
 }
 
-/* Scan section SECT of the file ABFD, whose printable name is in
-   ARG->filename and whose size might be in ARG->filesize.  If it
-   contains initialized data set `got_a_section' and print the
-   strings in it.
-
-   FIXME: We ought to be able to return error codes/messages for
-   certain conditions.  */
+/* Scan section SECT of the file ABFD, whose printable name is
+   FILENAME.  If it contains initialized data set GOT_A_SECTION and
+   print the strings in it.  */
 
 static void
-strings_a_section (bfd *abfd, asection *sect, void *arg)
+strings_a_section (bfd *abfd, asection *sect, const char *filename,
+		   bfd_boolean *got_a_section)
 {
-  filename_and_size_t * filename_and_sizep;
-  bfd_size_type *filesizep;
   bfd_size_type sectsize;
-  void *mem;
+  bfd_byte *mem;
 
   if ((sect->flags & DATA_FLAGS) != DATA_FLAGS)
     return;
 
   sectsize = bfd_get_section_size (sect);
-
-  if (sectsize <= 0)
+  if (sectsize == 0)
     return;
 
-  /* Get the size of the file.  This might have been cached for us.  */
-  filename_and_sizep = (filename_and_size_t *) arg;
-  filesizep = & filename_and_sizep->filesize;
-
-  if (*filesizep == 0)
+  if (!bfd_malloc_and_get_section (abfd, sect, &mem))
     {
-      struct stat st;
-
-      if (bfd_stat (abfd, &st))
-	return;
-
-      /* Cache the result so that we do not repeatedly stat this file.  */
-      *filesizep = st.st_size;
+      non_fatal (_("%s: Reading section %s failed: %s"),
+		 filename, sect->name, bfd_errmsg (bfd_get_error ()));
+      return;
     }
 
-  /* Compare the size of the section against the size of the file.
-     If the section is bigger then the file must be corrupt and
-     we should not try dumping it.  */
-  if (sectsize >= *filesizep)
-    return;
-
-  mem = xmalloc (sectsize);
-
-  if (bfd_get_section_contents (abfd, sect, mem, (file_ptr) 0, sectsize))
-    {
-      got_a_section = TRUE;
-
-      print_strings (filename_and_sizep->filename, NULL, sect->filepos,
-		     0, sectsize, (char *) mem);
-    }
-
+  *got_a_section = TRUE;
+  print_strings (filename, NULL, sect->filepos, 0, sectsize, (char *) mem);
   free (mem);
 }
 
@@ -399,8 +356,9 @@ strings_a_section (bfd *abfd, asection *sect, void *arg)
 static bfd_boolean
 strings_object_file (const char *file)
 {
-  filename_and_size_t filename_and_size;
   bfd *abfd;
+  asection *s;
+  bfd_boolean got_a_section;
 
   abfd = bfd_openr (file, target);
 
@@ -418,9 +376,8 @@ strings_object_file (const char *file)
     }
 
   got_a_section = FALSE;
-  filename_and_size.filename = file;
-  filename_and_size.filesize = 0;
-  bfd_map_over_sections (abfd, strings_a_section, & filename_and_size);
+  for (s = abfd->sections; s != NULL; s = s->next)
+    strings_a_section (abfd, s, file, &got_a_section);
 
   if (!bfd_close (abfd))
     {
@@ -447,6 +404,11 @@ strings_file (char *file)
       else
 	non_fatal (_("Warning: could not locate '%s'.  reason: %s"),
 		   file, strerror (errno));
+      return FALSE;
+    }
+  else if (S_ISDIR (st.st_mode))
+    {
+      non_fatal (_("Warning: '%s' is a directory"), file);
       return FALSE;
     }
 
