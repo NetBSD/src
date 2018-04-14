@@ -31,28 +31,12 @@ CTOR_END='___ctors_end = .;'
 DTOR_START='___dtors = .;'
 DTOR_END='___dtors_end = .;'
 
-# Do not use the varname=${varname-'string'} construct here; there are
-# problems with that on some shells (e.g. on Solaris) where there is a bug
-# that trigs when $varname contains a "}".
-# The effect of the .stack definition is like setting STACK_ADDR to 0x80000,
-# except that the setting can be overridden, e.g. --defsym _stack=0xff000,
-# and that we put an extra sentinal value at the bottom.
-# N.B. We can't use PROVIDE to set the default value in a symbol because
-# the address is needed to place the .stack section, which in turn is needed
-# to hold the sentinel value(s).
-test -z "$CREATE_SHLIB" && OTHER_SECTIONS="
-  .stack ${RELOCATING-0}${RELOCATING+(DEFINED(_stack) ? _stack : ALIGN (0x40000) + 0x80000)} :
-  {
-    ${RELOCATING+_stack = .;}
-    *(.stack)
-    LONG(0xdeaddead)
-  }
-  .cranges 0 : { *(.cranges) }
-"
+STACK_ADDR="(DEFINED(_stack) ? _stack : ALIGN (0x40000) + 0x80000)"
+STACK_SENTINEL="LONG(0xdeaddead)"
 # We do not need .stack for shared library.
-test -n "$CREATE_SHLIB" && OTHER_SECTIONS="
-  .cranges 0 : { *(.cranges) }
-"
+test -n "$CREATE_SHLIB" && unset STACK_ADDR
+
+OTHER_SECTIONS=".cranges 0 : { *(.cranges) }"
 
 # We need to adjust sizes in the .cranges section after relaxation, so
 # we need an after_allocation function, and it goes in this file.

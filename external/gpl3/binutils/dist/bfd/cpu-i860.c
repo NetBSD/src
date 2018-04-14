@@ -1,5 +1,5 @@
 /* BFD support for the Intel 860 architecture.
-   Copyright (C) 1992-2016 Free Software Foundation, Inc.
+   Copyright (C) 1992-2018 Free Software Foundation, Inc.
    Created mostly by substituting "860" for "386" in cpu-i386.c
    Harry Dolan <dolan@ssd.intel.com>, October 1995
 

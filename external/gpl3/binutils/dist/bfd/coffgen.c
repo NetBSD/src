@@ -1,5 +1,5 @@
 /* Support for the generic parts of COFF, for BFD.
-   Copyright (C) 1990-2016 Free Software Foundation, Inc.
+   Copyright (C) 1990-2018 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -72,9 +72,9 @@ make_a_section_from_file (bfd *abfd,
       const char *strings;
 
       /* Flag that this BFD uses long names, even though the format might
-         expect them to be off by default.  This won't directly affect the
-         format of any output BFD created from this one, but the information
-         can be used to decide what to do.  */
+	 expect them to be off by default.  This won't directly affect the
+	 format of any output BFD created from this one, but the information
+	 can be used to decide what to do.  */
       bfd_coff_set_long_section_names (abfd, TRUE);
       memcpy (buf, hdr->s_name + 1, SCNNMLEN - 1);
       buf[SCNNMLEN - 1] = '\0';
@@ -88,7 +88,7 @@ make_a_section_from_file (bfd *abfd,
 	    return FALSE;
 	  strings += strindex;
 	  name = (char *) bfd_alloc (abfd,
-                                     (bfd_size_type) strlen (strings) + 1 + 1);
+				     (bfd_size_type) strlen (strings) + 1 + 1);
 	  if (name == NULL)
 	    return FALSE;
 	  strcpy (name, strings);
@@ -99,7 +99,7 @@ make_a_section_from_file (bfd *abfd,
     {
       /* Assorted wastage to null-terminate the name, thanks AT&T! */
       name = (char *) bfd_alloc (abfd,
-                                 (bfd_size_type) sizeof (hdr->s_name) + 1 + 1);
+				 (bfd_size_type) sizeof (hdr->s_name) + 1 + 1);
       if (name == NULL)
 	return FALSE;
       strncpy (name, (char *) &hdr->s_name[0], sizeof (hdr->s_name));
@@ -173,7 +173,8 @@ make_a_section_from_file (bfd *abfd,
 	case compress:
 	  if (!bfd_init_section_compress_status (abfd, return_section))
 	    {
-	      (*_bfd_error_handler)
+	      _bfd_error_handler
+		/* xgettext: c-format */
 		(_("%B: unable to initialize compress status for section %s"),
 		 abfd, name);
 	      return FALSE;
@@ -192,11 +193,12 @@ make_a_section_from_file (bfd *abfd,
 		  memcpy (new_name + 2, name + 1, len);
 		}
 	    }
-         break;
+	 break;
 	case decompress:
 	  if (!bfd_init_section_decompress_status (abfd, return_section))
 	    {
-	      (*_bfd_error_handler)
+	      _bfd_error_handler
+		/* xgettext: c-format */
 		(_("%B: unable to initialize decompress status for section %s"),
 		 abfd, name);
 	      return FALSE;
@@ -224,9 +226,9 @@ make_a_section_from_file (bfd *abfd,
    ECOFF as well.  */
 const bfd_target *
 coff_real_object_p (bfd *,
-                    unsigned,
-                    struct internal_filehdr *,
-                    struct internal_aouthdr *);
+		    unsigned,
+		    struct internal_filehdr *,
+		    struct internal_aouthdr *);
 const bfd_target *
 coff_real_object_p (bfd *abfd,
 		    unsigned nscns,
@@ -593,7 +595,7 @@ coff_count_linenumbers (bfd *abfd)
   if (limit == 0)
     {
       /* This may be from the backend linker, in which case the
-         lineno_count in the sections is correct.  */
+	 lineno_count in the sections is correct.  */
       for (s = abfd->sections; s != NULL; s = s->next)
 	total += s->lineno_count;
       return total;
@@ -611,13 +613,13 @@ coff_count_linenumbers (bfd *abfd)
 	  coff_symbol_type *q = coffsymbol (q_maybe);
 
 	  /* The AIX 4.1 compiler can sometimes generate line numbers
-             attached to debugging symbols.  We try to simply ignore
-             those here.  */
+	     attached to debugging symbols.  We try to simply ignore
+	     those here.  */
 	  if (q->lineno != NULL
 	      && q->symbol.section->owner != NULL)
 	    {
 	      /* This symbol has line numbers.  Increment the owning
-	         section's linenumber count.  */
+		 section's linenumber count.  */
 	      alent *l = q->lineno;
 
 	      do
@@ -673,11 +675,11 @@ fixup_symbol_value (bfd *abfd,
 	  syment->n_value = (coff_symbol_ptr->symbol.value
 			     + coff_symbol_ptr->symbol.section->output_offset);
 	  if (! obj_pe (abfd))
-            {
-              syment->n_value += (syment->n_sclass == C_STATLAB)
-                ? coff_symbol_ptr->symbol.section->output_section->lma
-                : coff_symbol_ptr->symbol.section->output_section->vma;
-            }
+	    {
+	      syment->n_value += (syment->n_sclass == C_STATLAB)
+		? coff_symbol_ptr->symbol.section->output_section->lma
+		: coff_symbol_ptr->symbol.section->output_section->vma;
+	    }
 	}
       else
 	{
@@ -821,8 +823,8 @@ coff_mangle_symbols (bfd *bfd_ptr)
 	  if (s->fix_line)
 	    {
 	      /* The value is the offset into the line number entries
-                 for the symbol's section.  On output, the symbol's
-                 section should be N_DEBUG.  */
+		 for the symbol's section.  On output, the symbol's
+		 section should be N_DEBUG.  */
 	      s->u.syment.n_value =
 		(coff_symbol_ptr->symbol.section->output_section->line_filepos
 		 + s->u.syment.n_value * bfd_coff_linesz (bfd_ptr));
@@ -886,13 +888,13 @@ coff_fix_symbol_name (bfd *abfd,
 
       if (bfd_coff_force_symnames_in_strings (abfd))
 	{
-          native->u.syment._n._n_n._n_offset =
+	  native->u.syment._n._n_n._n_offset =
 	      (*string_size_p + STRING_SIZE_SIZE);
 	  native->u.syment._n._n_n._n_zeroes = 0;
 	  *string_size_p += 6;  /* strlen(".file") + 1 */
 	}
       else
-  	strncpy (native->u.syment._n._n_name, ".file", SYMNMLEN);
+	strncpy (native->u.syment._n._n_name, ".file", SYMNMLEN);
 
       BFD_ASSERT (! (native + 1)->is_sym);
       auxent = &(native + 1)->u.auxent;
@@ -1086,7 +1088,7 @@ coff_write_alien_symbol (bfd *abfd,
     {
       symbol->name = "";
       if (isym != NULL)
-        memset (isym, 0, sizeof (*isym));
+	memset (isym, 0, sizeof (*isym));
       return TRUE;
     }
   native = dummy;
@@ -1113,12 +1115,12 @@ coff_write_alien_symbol (bfd *abfd,
   else if (symbol->flags & BSF_DEBUGGING)
     {
       /* There isn't much point to writing out a debugging symbol
-         unless we are prepared to convert it into COFF debugging
-         format.  So, we just ignore them.  We must clobber the symbol
-         name to keep it from being put in the string table.  */
+	 unless we are prepared to convert it into COFF debugging
+	 format.  So, we just ignore them.  We must clobber the symbol
+	 name to keep it from being put in the string table.  */
       symbol->name = "";
       if (isym != NULL)
-        memset (isym, 0, sizeof (*isym));
+	memset (isym, 0, sizeof (*isym));
       return TRUE;
     }
   else
@@ -1130,7 +1132,7 @@ coff_write_alien_symbol (bfd *abfd,
 	native->u.syment.n_value += output_section->vma;
 
       /* Copy the any flags from the file header into the symbol.
-         FIXME: Why?  */
+	 FIXME: Why?  */
       {
 	coff_symbol_type *c = coff_symbol_from (symbol);
 	if (c != (coff_symbol_type *) NULL)
@@ -1218,7 +1220,8 @@ coff_write_native_symbol (bfd *abfd,
 }
 
 static void
-null_error_handler (const char * fmt ATTRIBUTE_UNUSED, ...)
+null_error_handler (const char *fmt ATTRIBUTE_UNUSED,
+		    va_list ap ATTRIBUTE_UNUSED)
 {
 }
 
@@ -1415,8 +1418,8 @@ coff_write_symbols (bfd *abfd)
   else
     {
       /* We would normally not write anything here, but we'll write
-         out 4 so that any stupid coff reader which tries to read the
-         string table even when there isn't one won't croak.  */
+	 out 4 so that any stupid coff reader which tries to read the
+	 string table even when there isn't one won't croak.  */
       unsigned int size = STRING_SIZE_SIZE;
       bfd_byte buffer[STRING_SIZE_SIZE];
 
@@ -1637,10 +1640,25 @@ _bfd_coff_get_external_symbols (bfd *abfd)
   size = obj_raw_syment_count (abfd) * symesz;
   if (size == 0)
     return TRUE;
+  /* Check for integer overflow and for unreasonable symbol counts.  */
+  if (size < obj_raw_syment_count (abfd)
+      || (bfd_get_file_size (abfd) > 0
+	  && size > bfd_get_file_size (abfd)))
+
+    {
+      _bfd_error_handler (_("%B: corrupt symbol count: %#Lx"),
+			  abfd, obj_raw_syment_count (abfd));
+      return FALSE;
+    }
 
   syms = bfd_malloc (size);
   if (syms == NULL)
-    return FALSE;
+    {
+      /* PR 21013: Provide an error message when the alloc fails.  */
+      _bfd_error_handler (_("%B: not enough memory to allocate space for %#Lx symbols of size %#Lx"),
+			  abfd, obj_raw_syment_count (abfd), symesz);
+      return FALSE;
+    }
 
   if (bfd_seek (abfd, obj_sym_filepos (abfd), SEEK_SET) != 0
       || bfd_bread (syms, size, abfd) != size)
@@ -1651,7 +1669,6 @@ _bfd_coff_get_external_symbols (bfd *abfd)
     }
 
   obj_coff_external_syms (abfd) = syms;
-
   return TRUE;
 }
 
@@ -1701,10 +1718,11 @@ _bfd_coff_read_string_table (bfd *abfd)
 #endif
     }
 
-  if (strsize < STRING_SIZE_SIZE)
+  if (strsize < STRING_SIZE_SIZE || strsize > bfd_get_file_size (abfd))
     {
-      (*_bfd_error_handler)
-	(_("%B: bad string table size %lu"), abfd, (unsigned long) strsize);
+      _bfd_error_handler
+	/* xgettext: c-format */
+	(_("%B: bad string table size %Lu"), abfd, strsize);
       bfd_set_error (bfd_error_bad_value);
       return NULL;
     }
@@ -1738,12 +1756,16 @@ _bfd_coff_read_string_table (bfd *abfd)
 bfd_boolean
 _bfd_coff_free_symbols (bfd *abfd)
 {
+  if (! bfd_family_coff (abfd))
+    return FALSE;
+
   if (obj_coff_external_syms (abfd) != NULL
       && ! obj_coff_keep_syms (abfd))
     {
       free (obj_coff_external_syms (abfd));
       obj_coff_external_syms (abfd) = NULL;
     }
+
   if (obj_coff_strings (abfd) != NULL
       && ! obj_coff_keep_strings (abfd))
     {
@@ -1751,6 +1773,7 @@ _bfd_coff_free_symbols (bfd *abfd)
       obj_coff_strings (abfd) = NULL;
       obj_coff_strings_len (abfd) = 0;
     }
+
   return TRUE;
 }
 
@@ -1781,6 +1804,9 @@ coff_get_normalized_symtab (bfd *abfd)
     return NULL;
 
   size = obj_raw_syment_count (abfd) * sizeof (combined_entry_type);
+  /* Check for integer overflow.  */
+  if (size < obj_raw_syment_count (abfd))
+    return NULL;
   internal = (combined_entry_type *) bfd_zalloc (abfd, size);
   if (internal == NULL && size != 0)
     return NULL;
@@ -1881,8 +1907,8 @@ coff_get_normalized_symtab (bfd *abfd)
 	  else
 	    {
 	      /* Ordinary short filename, put into memory anyway.  The
-                 Microsoft PE tools sometimes store a filename in
-                 multiple AUX entries.  */
+		 Microsoft PE tools sometimes store a filename in
+		 multiple AUX entries.  */
 	      if (internal_ptr->u.syment.n_numaux > 1
 		  && coff_data (abfd)->pe)
 		internal_ptr->u.syment._n._n_n._n_offset =
@@ -1907,7 +1933,7 @@ coff_get_normalized_symtab (bfd *abfd)
 	      char *newstring;
 
 	      /* Find the length of this string without walking into memory
-	         that isn't ours.  */
+		 that isn't ours.  */
 	      for (i = 0; i < 8; ++i)
 		if (internal_ptr->u.syment._n._n_name[i] == '\0')
 		  break;
@@ -1924,7 +1950,7 @@ coff_get_normalized_symtab (bfd *abfd)
 	  else if (!bfd_coff_symname_in_debug (abfd, &internal_ptr->u.syment))
 	    {
 	      /* Long name already.  Point symbol at the string in the
-                 table.  */
+		 table.  */
 	      if (string_table == NULL)
 		{
 		  string_table = _bfd_coff_read_string_table (abfd);
@@ -2133,7 +2159,7 @@ coff_print_symbol (bfd *abfd,
 				 auxp->u.auxent.x_scn.x_comdat);
 		      break;
 		    }
-		    /* Otherwise fall through.  */
+		  /* Fall through.  */
 		case C_EXT:
 		case C_AIX_WEAKEXT:
 		  if (ISFCN (combined->u.syment.n_type))
@@ -2153,7 +2179,7 @@ coff_print_symbol (bfd *abfd,
 			       llnos, next);
 		      break;
 		    }
-		  /* Otherwise fall through.  */
+		  /* Fall through.  */
 		default:
 		  fprintf (file, "AUX lnno %d size 0x%x tagndx %ld",
 			   auxp->u.auxent.x_sym.x_misc.x_lnsz.x_lnno,
@@ -2213,13 +2239,13 @@ _bfd_coff_is_local_label_name (bfd *abfd ATTRIBUTE_UNUSED,
 
 bfd_boolean
 coff_find_nearest_line_with_names (bfd *abfd,
-                                   asymbol **symbols,
-                                   asection *section,
-                                   bfd_vma offset,
-                                   const char **filename_ptr,
-                                   const char **functionname_ptr,
-                                   unsigned int *line_ptr,
-                                   const struct dwarf_debug_section *debug_sections)
+				   asymbol **symbols,
+				   asection *section,
+				   bfd_vma offset,
+				   const char **filename_ptr,
+				   const char **functionname_ptr,
+				   unsigned int *line_ptr,
+				   const struct dwarf_debug_section *debug_sections)
 {
   bfd_boolean found;
   unsigned int i;
@@ -2250,6 +2276,8 @@ coff_find_nearest_line_with_names (bfd *abfd,
 				     &coff_data(abfd)->dwarf2_find_line_info))
     return TRUE;
 
+  sec_data = coff_section_data (abfd, section);
+
   /* If the DWARF lookup failed, but there is DWARF information available
      then the problem might be that the file has been rebased.  This tool
      changes the VMAs of all the sections, but it does not update the DWARF
@@ -2258,8 +2286,26 @@ coff_find_nearest_line_with_names (bfd *abfd,
     {
       bfd_signed_vma bias;
 
-      bias = _bfd_dwarf2_find_symbol_bias (symbols,
-					   & coff_data (abfd)->dwarf2_find_line_info);
+      /* Create a cache of the result for the next call.  */
+      if (sec_data == NULL && section->owner == abfd)
+	{
+	  amt = sizeof (struct coff_section_tdata);
+	  section->used_by_bfd = bfd_zalloc (abfd, amt);
+	  sec_data = (struct coff_section_tdata *) section->used_by_bfd;
+	}
+
+      if (sec_data != NULL && sec_data->saved_bias)
+	bias = sec_data->saved_bias;
+      else
+	{
+	  bias = _bfd_dwarf2_find_symbol_bias (symbols,
+					       & coff_data (abfd)->dwarf2_find_line_info);
+	  if (sec_data)
+	    {
+	      sec_data->saved_bias = TRUE;
+	      sec_data->bias = bias;
+	    }
+	}
 
       if (bias
 	  && _bfd_dwarf2_find_nearest_line (abfd, symbols, NULL, section,
@@ -2334,7 +2380,7 @@ coff_find_nearest_line_with_names (bfd *abfd,
 	    file_addr += coff_section_from_bfd_index (abfd,
 						      p2->u.syment.n_scnum)->vma;
 	  /* We use <= MAXDIFF here so that if we get a zero length
-             file, we actually use the next file entry.  */
+	     file, we actually use the next file entry.  */
 	  if (p2 < pend
 	      && offset + sec_vma >= file_addr
 	      && offset + sec_vma - file_addr <= maxdiff)
@@ -2354,10 +2400,16 @@ coff_find_nearest_line_with_names (bfd *abfd,
 	}
     }
 
-  /* Now wander though the raw linenumbers of the section.  */
-  /* If we have been called on this section before, and the offset we
-     want is further down then we can prime the lookup loop.  */
-  sec_data = coff_section_data (abfd, section);
+  if (section->lineno_count == 0)
+    {
+      *functionname_ptr = NULL;
+      *line_ptr = 0;
+      return TRUE;
+    }
+
+  /* Now wander though the raw linenumbers of the section.
+     If we have been called on this section before, and the offset
+     we want is further down then we can prime the lookup loop.  */
   if (sec_data != NULL
       && sec_data->i > 0
       && offset >= sec_data->offset)
@@ -2386,6 +2438,7 @@ coff_find_nearest_line_with_names (bfd *abfd,
 	      coff_symbol_type *coff = (coff_symbol_type *) (l->u.sym);
 	      if (coff->symbol.value > offset)
 		break;
+
 	      *functionname_ptr = coff->symbol.name;
 	      last_value = coff->symbol.value;
 	      if (coff->native)
@@ -2442,6 +2495,7 @@ coff_find_nearest_line_with_names (bfd *abfd,
       section->used_by_bfd = bfd_zalloc (abfd, amt);
       sec_data = (struct coff_section_tdata *) section->used_by_bfd;
     }
+
   if (sec_data != NULL)
     {
       sec_data->offset = offset;
@@ -2466,8 +2520,8 @@ coff_find_nearest_line (bfd *abfd,
   if (discriminator_ptr)
     *discriminator_ptr = 0;
   return coff_find_nearest_line_with_names (abfd, symbols, section, offset,
-                                            filename_ptr, functionname_ptr,
-                                            line_ptr, dwarf_debug_sections);
+					    filename_ptr, functionname_ptr,
+					    line_ptr, dwarf_debug_sections);
 }
 
 bfd_boolean
@@ -2501,9 +2555,9 @@ coff_sizeof_headers (bfd *abfd, struct bfd_link_info *info)
 /* Change the class of a coff symbol held by BFD.  */
 
 bfd_boolean
-bfd_coff_set_symbol_class (bfd *         abfd,
-			   asymbol *     symbol,
-			   unsigned int  symbol_class)
+bfd_coff_set_symbol_class (bfd *	 abfd,
+			   asymbol *	 symbol,
+			   unsigned int	 symbol_class)
 {
   coff_symbol_type * csym;
 
@@ -2740,19 +2794,33 @@ _bfd_coff_gc_mark_hook (asection *sec,
   if (h != NULL)
     {
       switch (h->root.type)
-        {
-        case bfd_link_hash_defined:
-        case bfd_link_hash_defweak:
-          return h->root.u.def.section;
+	{
+	case bfd_link_hash_defined:
+	case bfd_link_hash_defweak:
+	  return h->root.u.def.section;
 
-        case bfd_link_hash_common:
-          return h->root.u.c.p->section;
+	case bfd_link_hash_common:
+	  return h->root.u.c.p->section;
+
+	case bfd_link_hash_undefweak:
+	  if (h->symbol_class == C_NT_WEAK && h->numaux == 1)
+	    {
+	      /* PE weak externals.  A weak symbol may include an auxiliary
+		 record indicating that if the weak symbol is not resolved,
+		 another external symbol is used instead.  */
+	      struct coff_link_hash_entry *h2 =
+		h->auxbfd->tdata.coff_obj_data->sym_hashes[
+		    h->aux->x_sym.x_tagndx.l];
+
+	      if (h2 && h2->root.type != bfd_link_hash_undefined)
+		return  h2->root.u.def.section;
+	    }
+	  break;
 
 	case bfd_link_hash_undefined:
-	case bfd_link_hash_undefweak:
-        default:
-          break;
-        }
+	default:
+	  break;
+	}
       return NULL;
     }
 
@@ -2831,19 +2899,19 @@ _bfd_coff_gc_mark (struct bfd_link_info *info,
       struct coff_reloc_cookie cookie;
 
       if (!init_reloc_cookie_for_section (&cookie, info, sec))
-        ret = FALSE;
+	ret = FALSE;
       else
-        {
-          for (; cookie.rel < cookie.relend; cookie.rel++)
-            {
+	{
+	  for (; cookie.rel < cookie.relend; cookie.rel++)
+	    {
 	      if (!_bfd_coff_gc_mark_reloc (info, sec, gc_mark_hook, &cookie))
 		{
 		  ret = FALSE;
 		  break;
 		}
 	    }
-          fini_reloc_cookie_for_section (&cookie, sec);
-        }
+	  fini_reloc_cookie_for_section (&cookie, sec);
+	}
     }
 
   return ret;
@@ -2860,7 +2928,7 @@ _bfd_coff_gc_mark_extra_sections (struct bfd_link_info *info,
       asection *isec;
       bfd_boolean some_kept;
 
-      if (bfd_get_flavour (ibfd) != bfd_target_elf_flavour)
+      if (bfd_get_flavour (ibfd) != bfd_target_coff_flavour)
 	continue;
 
       /* Ensure all linker created sections are kept, and see whether
@@ -2931,10 +2999,10 @@ coff_gc_sweep (bfd *abfd ATTRIBUTE_UNUSED, struct bfd_link_info *info)
       for (o = sub->sections; o != NULL; o = o->next)
 	{
 	    /* Keep debug and special sections.  */
-          if ((o->flags & (SEC_DEBUGGING | SEC_LINKER_CREATED)) != 0
+	  if ((o->flags & (SEC_DEBUGGING | SEC_LINKER_CREATED)) != 0
 	      || (o->flags & (SEC_ALLOC | SEC_LOAD | SEC_RELOC)) == 0)
 	    o->gc_mark = 1;
-          else if (CONST_STRNEQ (o->name, ".idata")
+	  else if (CONST_STRNEQ (o->name, ".idata")
 		   || CONST_STRNEQ (o->name, ".pdata")
 		   || CONST_STRNEQ (o->name, ".xdata")
 		   || CONST_STRNEQ (o->name, ".rsrc"))
@@ -2952,7 +3020,9 @@ coff_gc_sweep (bfd *abfd ATTRIBUTE_UNUSED, struct bfd_link_info *info)
 	  o->flags |= SEC_EXCLUDE;
 
 	  if (info->print_gc_sections && o->size != 0)
-            _bfd_error_handler (_("Removing unused section '%s' in file '%B'"), sub, o->name);
+	    /* xgettext: c-format */
+	    _bfd_error_handler (_("Removing unused section '%A' in file '%B'"),
+				o, sub);
 
 #if 0
 	  /* But we also have to update some of the relocation
@@ -3028,7 +3098,7 @@ bfd_coff_gc_sections (bfd *abfd ATTRIBUTE_UNUSED, struct bfd_link_info *info)
   if (!bed->can_gc_sections
       || !is_coff_hash_table (info->hash))
     {
-      (*_bfd_error_handler)(_("Warning: gc-sections option ignored"));
+      _bfd_error_handler(_("Warning: gc-sections option ignored"));
       return TRUE;
     }
 #endif
@@ -3041,10 +3111,10 @@ bfd_coff_gc_sections (bfd *abfd ATTRIBUTE_UNUSED, struct bfd_link_info *info)
       asection *o;
 
       if (bfd_get_flavour (sub) != bfd_target_coff_flavour)
-        continue;
+	continue;
 
       for (o = sub->sections; o != NULL; o = o->next)
-        {
+	{
 	  if (((o->flags & (SEC_EXCLUDE | SEC_KEEP)) == SEC_KEEP
 	       || CONST_STRNEQ (o->name, ".vectors")
 	       || CONST_STRNEQ (o->name, ".ctors")
@@ -3054,7 +3124,7 @@ bfd_coff_gc_sections (bfd *abfd ATTRIBUTE_UNUSED, struct bfd_link_info *info)
 	      if (!_bfd_coff_gc_mark (info, o, _bfd_coff_gc_mark_hook))
 		return FALSE;
 	    }
-        }
+	}
     }
 
   /* Allow the backend to mark additional target specific sections.  */

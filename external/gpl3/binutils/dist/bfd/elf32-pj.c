@@ -1,5 +1,5 @@
 /* picoJava specific support for 32-bit ELF
-   Copyright (C) 1999-2016 Free Software Foundation, Inc.
+   Copyright (C) 1999-2018 Free Software Foundation, Inc.
    Contributed by Steve Chamberlan of Transmeta (sac@pobox.com).
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -84,8 +84,8 @@ pj_elf_reloc (bfd *abfd,
     case R_PJ_CODE_REL16:
       insn = bfd_getb16 (hit_data);
       insn += sym_value + reloc_entry->addend
-        -  (input_section->output_section->vma
-            + input_section->output_offset);
+	-  (input_section->output_section->vma
+	    + input_section->output_offset);
       bfd_putb16 ((bfd_vma) insn, hit_data);
       break;
     case R_PJ_CODE_LO16:
@@ -222,34 +222,34 @@ static reloc_howto_type pj_elf_howto_table[] =
 	 TRUE),			/* pcrel_offset */
 
   /* GNU extension to record C++ vtable hierarchy.  */
-  HOWTO (R_PJ_GNU_VTINHERIT,    /* type */
-         0,                     /* rightshift */
-         2,                     /* size (0 = byte, 1 = short, 2 = long) */
-         0,                     /* bitsize */
-         FALSE,                 /* pc_relative */
-         0,                     /* bitpos */
-         complain_overflow_dont, /* complain_on_overflow */
-         NULL,                  /* special_function */
-         "R_PJ_GNU_VTINHERIT",  /* name */
-         FALSE,                 /* partial_inplace */
-         0,                     /* src_mask */
-         0,                     /* dst_mask */
-         FALSE),                /* pcrel_offset */
+  HOWTO (R_PJ_GNU_VTINHERIT,	/* type */
+	 0,			/* rightshift */
+	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 0,			/* bitsize */
+	 FALSE,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_dont, /* complain_on_overflow */
+	 NULL,			/* special_function */
+	 "R_PJ_GNU_VTINHERIT",	/* name */
+	 FALSE,			/* partial_inplace */
+	 0,			/* src_mask */
+	 0,			/* dst_mask */
+	 FALSE),		/* pcrel_offset */
 
   /* GNU extension to record C++ vtable member usage.  */
   HOWTO (R_PJ_GNU_VTENTRY,     /* type */
-         0,                     /* rightshift */
-         2,                     /* size (0 = byte, 1 = short, 2 = long) */
-         0,                     /* bitsize */
-         FALSE,                 /* pc_relative */
-         0,                     /* bitpos */
-         complain_overflow_dont, /* complain_on_overflow */
-         _bfd_elf_rel_vtable_reloc_fn,  /* special_function */
-         "R_PJ_GNU_VTENTRY",   /* name */
-         FALSE,                 /* partial_inplace */
-         0,                     /* src_mask */
-         0,                     /* dst_mask */
-         FALSE),                /* pcrel_offset */
+	 0,			/* rightshift */
+	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 0,			/* bitsize */
+	 FALSE,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_dont, /* complain_on_overflow */
+	 _bfd_elf_rel_vtable_reloc_fn,	/* special_function */
+	 "R_PJ_GNU_VTENTRY",   /* name */
+	 FALSE,			/* partial_inplace */
+	 0,			/* src_mask */
+	 0,			/* dst_mask */
+	 FALSE),		/* pcrel_offset */
 };
 
 /* This structure is used to map BFD reloc codes to PJ ELF relocs.  */
@@ -264,14 +264,14 @@ struct elf_reloc_map
 
 static const struct elf_reloc_map pj_reloc_map[] =
 {
-    { BFD_RELOC_NONE, 		R_PJ_NONE          },
-    { BFD_RELOC_32, 		R_PJ_DATA_DIR32    },
-    { BFD_RELOC_PJ_CODE_DIR16, 	R_PJ_CODE_DIR16    },
-    { BFD_RELOC_PJ_CODE_DIR32, 	R_PJ_CODE_DIR32    },
-    { BFD_RELOC_PJ_CODE_LO16, 	R_PJ_CODE_LO16     },
-    { BFD_RELOC_PJ_CODE_HI16, 	R_PJ_CODE_HI16     },
-    { BFD_RELOC_PJ_CODE_REL32,  R_PJ_CODE_REL32    },
-    { BFD_RELOC_PJ_CODE_REL16,  R_PJ_CODE_REL16    },
+    { BFD_RELOC_NONE,		R_PJ_NONE	   },
+    { BFD_RELOC_32,		R_PJ_DATA_DIR32	   },
+    { BFD_RELOC_PJ_CODE_DIR16,	R_PJ_CODE_DIR16	   },
+    { BFD_RELOC_PJ_CODE_DIR32,	R_PJ_CODE_DIR32	   },
+    { BFD_RELOC_PJ_CODE_LO16,	R_PJ_CODE_LO16	   },
+    { BFD_RELOC_PJ_CODE_HI16,	R_PJ_CODE_HI16	   },
+    { BFD_RELOC_PJ_CODE_REL32,	R_PJ_CODE_REL32	   },
+    { BFD_RELOC_PJ_CODE_REL16,	R_PJ_CODE_REL16	   },
     { BFD_RELOC_VTABLE_INHERIT, R_PJ_GNU_VTINHERIT },
     { BFD_RELOC_VTABLE_ENTRY,   R_PJ_GNU_VTENTRY   },
 };
@@ -321,8 +321,9 @@ pj_elf_info_to_howto (bfd *abfd ATTRIBUTE_UNUSED,
 
   if (r >= R_PJ_max)
     {
-      (*_bfd_error_handler) (_("%B: unrecognised PicoJava reloc number: %d"),
-			     abfd, r);
+      /* xgettext:c-format */
+      _bfd_error_handler (_("%B: unrecognised PicoJava reloc number: %d"),
+			  abfd, r);
       bfd_set_error (bfd_error_bad_value);
       r = R_PJ_NONE;
     }
@@ -351,8 +352,8 @@ pj_elf_final_write_processing (bfd *abfd,
 #define ELF_MAXPAGESIZE		0x1000
 #define bfd_elf32_bfd_get_relocated_section_contents \
   bfd_generic_get_relocated_section_contents
-#define bfd_elf32_bfd_reloc_type_lookup	        pj_elf_reloc_type_lookup
+#define bfd_elf32_bfd_reloc_type_lookup		pj_elf_reloc_type_lookup
 #define bfd_elf32_bfd_reloc_name_lookup   pj_elf_reloc_name_lookup
 #define elf_backend_final_write_processing      pj_elf_final_write_processing
-#define elf_info_to_howto		        pj_elf_info_to_howto
+#define elf_info_to_howto			pj_elf_info_to_howto
 #include "elf32-target.h"

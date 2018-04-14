@@ -1,5 +1,5 @@
 /* BFD back-end for Motorola 68000 COFF binaries.
-   Copyright (C) 1990-2016 Free Software Foundation, Inc.
+   Copyright (C) 1990-2018 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -95,13 +95,13 @@ static
 #endif
 reloc_howto_type m68kcoff_howto_table[] =
   {
-    HOWTO (R_RELBYTE,	       0,  0,  	8,  FALSE, 0, complain_overflow_bitfield, RELOC_SPECIAL_FN, "8",	TRUE, 0x000000ff,0x000000ff, FALSE),
-    HOWTO (R_RELWORD,	       0,  1, 	16, FALSE, 0, complain_overflow_bitfield, RELOC_SPECIAL_FN, "16",	TRUE, 0x0000ffff,0x0000ffff, FALSE),
-    HOWTO (R_RELLONG,	       0,  2, 	32, FALSE, 0, complain_overflow_bitfield, RELOC_SPECIAL_FN, "32",	TRUE, 0xffffffff,0xffffffff, FALSE),
-    HOWTO (R_PCRBYTE,	       0,  0, 	8,  TRUE,  0, complain_overflow_signed,   RELOC_SPECIAL_FN, "DISP8",    TRUE, 0x000000ff,0x000000ff, FALSE),
-    HOWTO (R_PCRWORD,	       0,  1, 	16, TRUE,  0, complain_overflow_signed,   RELOC_SPECIAL_FN, "DISP16",   TRUE, 0x0000ffff,0x0000ffff, FALSE),
-    HOWTO (R_PCRLONG,	       0,  2, 	32, TRUE,  0, complain_overflow_signed,   RELOC_SPECIAL_FN, "DISP32",   TRUE, 0xffffffff,0xffffffff, FALSE),
-    HOWTO (R_RELLONG_NEG,      0, -2, 	32, FALSE, 0, complain_overflow_bitfield, RELOC_SPECIAL_FN, "-32",	TRUE, 0xffffffff,0xffffffff, FALSE),
+    HOWTO (R_RELBYTE,	       0,  0,	8,  FALSE, 0, complain_overflow_bitfield, RELOC_SPECIAL_FN, "8",	TRUE, 0x000000ff,0x000000ff, FALSE),
+    HOWTO (R_RELWORD,	       0,  1,	16, FALSE, 0, complain_overflow_bitfield, RELOC_SPECIAL_FN, "16",	TRUE, 0x0000ffff,0x0000ffff, FALSE),
+    HOWTO (R_RELLONG,	       0,  2,	32, FALSE, 0, complain_overflow_bitfield, RELOC_SPECIAL_FN, "32",	TRUE, 0xffffffff,0xffffffff, FALSE),
+    HOWTO (R_PCRBYTE,	       0,  0,	8,  TRUE,  0, complain_overflow_signed,	  RELOC_SPECIAL_FN, "DISP8",	TRUE, 0x000000ff,0x000000ff, FALSE),
+    HOWTO (R_PCRWORD,	       0,  1,	16, TRUE,  0, complain_overflow_signed,	  RELOC_SPECIAL_FN, "DISP16",	TRUE, 0x0000ffff,0x0000ffff, FALSE),
+    HOWTO (R_PCRLONG,	       0,  2,	32, TRUE,  0, complain_overflow_signed,	  RELOC_SPECIAL_FN, "DISP32",	TRUE, 0xffffffff,0xffffffff, FALSE),
+    HOWTO (R_RELLONG_NEG,      0, -2,	32, FALSE, 0, complain_overflow_bitfield, RELOC_SPECIAL_FN, "-32",	TRUE, 0xffffffff,0xffffffff, FALSE),
   };
 #endif /* not ONLY_DECLARE_RELOCS */
 
@@ -143,7 +143,7 @@ m68k_rtype2howto (arelent *internal, int relocentry)
     case R_PCRWORD:	internal->howto = m68kcoff_howto_table + 4; break;
     case R_PCRLONG:	internal->howto = m68kcoff_howto_table + 5; break;
     case R_RELLONG_NEG:	internal->howto = m68kcoff_howto_table + 6; break;
-    default:            internal->howto = NULL; break;
+    default:		internal->howto = NULL; break;
     }
 }
 
@@ -192,7 +192,7 @@ m68k_reloc_type_lookup (bfd *abfd ATTRIBUTE_UNUSED,
 
 STAT_REL reloc_howto_type *
 m68k_reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED,
-		        const char *r_name)
+			const char *r_name)
 {
   unsigned int i;
 
@@ -305,6 +305,11 @@ m68kcoff_common_addend_special_fn (bfd *abfd,
       reloc_howto_type *howto = reloc_entry->howto;
       unsigned char *addr = (unsigned char *) data + reloc_entry->address;
 
+      if (! bfd_reloc_offset_in_range (howto, abfd, input_section,
+				       reloc_entry->address
+				       * bfd_octets_per_byte (abfd)))
+	return bfd_reloc_outofrange;
+
       switch (howto->size)
 	{
 	case 0:
@@ -358,7 +363,7 @@ m68kcoff_common_addend_special_fn (bfd *abfd,
     coff_symbol_type *coffsym = (coff_symbol_type *) NULL;	\
     if (ptr && bfd_asymbol_bfd (ptr) != abfd)			\
       coffsym = (obj_symbols (abfd)				\
-	         + (cache_ptr->sym_ptr_ptr - symbols));		\
+		 + (cache_ptr->sym_ptr_ptr - symbols));		\
     else if (ptr)						\
       coffsym = coff_symbol_from (ptr);				\
     if (coffsym != (coff_symbol_type *) NULL			\

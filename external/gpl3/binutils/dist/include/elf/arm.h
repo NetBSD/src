@@ -1,5 +1,5 @@
 /* ARM ELF support for BFD.
-   Copyright (C) 1998-2016 Free Software Foundation, Inc.
+   Copyright (C) 1998-2018 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -82,7 +82,7 @@
 
 /* ARM-specific values for sh_flags.  */
 #define SHF_ENTRYSECT      0x10000000   /* Section contains an entry point.  */
-#define SHF_ARM_NOREAD     0x20000000   /* Section contains code that can be place on no read memory area.  */
+#define SHF_ARM_PURECODE   0x20000000   /* Section contains only code and no data.  */
 #define SHF_COMDEF         0x80000000   /* Section may be multiply defined in the input to a link step.  */
 
 /* ARM-specific program header flags.  */
@@ -106,6 +106,7 @@
 #define TAG_CPU_ARCH_V6S_M	12
 #define TAG_CPU_ARCH_V7E_M	13
 #define TAG_CPU_ARCH_V8		14
+#define TAG_CPU_ARCH_V8R	15
 #define TAG_CPU_ARCH_V8M_BASE	16
 #define TAG_CPU_ARCH_V8M_MAIN	17
 #define MAX_TAG_CPU_ARCH	TAG_CPU_ARCH_V8M_MAIN
@@ -383,5 +384,12 @@ enum arm_st_branch_type {
   (STI) = (((STI) & ~ENUM_ARM_ST_BRANCH_TYPE_BITMASK)		\
 	   | ((TYPE) & ENUM_ARM_ST_BRANCH_TYPE_BITMASK))
 #endif
+
+/* Get or set whether a symbol is a special symbol of an entry function of CMSE
+   secure code.  */
+#define ARM_GET_SYM_CMSE_SPCL(SYM_TARGET_INTERNAL) \
+  (((SYM_TARGET_INTERNAL) >> 2) & 1)
+#define ARM_SET_SYM_CMSE_SPCL(SYM_TARGET_INTERNAL) \
+  (SYM_TARGET_INTERNAL) |= 4
 
 #endif /* _ELF_ARM_H */

@@ -1,5 +1,5 @@
 /* BFD back-end for ieee-695 objects.
-   Copyright (C) 1990-2016 Free Software Foundation, Inc.
+   Copyright (C) 1990-2018 Free Software Foundation, Inc.
 
    Written by Steve Chamberlain of Cygnus Support.
 
@@ -154,9 +154,9 @@ ieee_write_id (bfd *abfd, const char *id)
     }
   else
     {
-      (*_bfd_error_handler)
-	(_("%s: string too long (%d chars, max 65535)"),
-	 bfd_get_filename (abfd), length);
+      _bfd_error_handler
+	/* xgettext:c-format */
+	(_("%B: string too long (%ld chars, max 65535)"), abfd, (long) length);
       bfd_set_error (bfd_error_invalid_operation);
       return FALSE;
     }
@@ -169,8 +169,8 @@ ieee_write_id (bfd *abfd, const char *id)
 /* Functions for reading from ieee files in the strange way that the
    standard requires.  */
 
-#define this_byte(ieee)           *((ieee)->input_p)
-#define this_byte_and_next(ieee) (*((ieee)->input_p++))
+#define this_byte(ieee)		  *((ieee)->input_p)
+#define this_byte_and_next(ieee) ((ieee)->input_p < (ieee)->end_p ? *((ieee)->input_p++) : 0)
 
 static bfd_boolean
 next_byte (common_header_type * ieee)
@@ -218,6 +218,15 @@ read_id (common_header_type *ieee)
       /* Length is next two bytes, allowing 0..65535.  */
       length = this_byte_and_next (ieee);
       length = (length * 256) + this_byte_and_next (ieee);
+    }
+
+  /* PR 21612: Check for an invalid length.  */
+  if (ieee->input_p + length >= ieee->end_p)
+    {
+      _bfd_error_handler (_("IEEE parser: string length: %#lx longer than buffer: %#lx"),
+			  (long) length, (long) (ieee->end_p - ieee->input_p));
+      bfd_set_error (bfd_error_invalid_operation);
+      return NULL;
     }
 
   /* Buy memory and read string.  */
@@ -288,10 +297,10 @@ ieee_write_expression (bfd *abfd,
 	    }
 	  else
 	    {
-	      (*_bfd_error_handler)
-		(_("%s: unrecognized symbol `%s' flags 0x%x"),
-		 bfd_get_filename (abfd), bfd_asymbol_name (symbol),
-		 symbol->flags);
+	      _bfd_error_handler
+		/* xgettext:c-format */
+		(_("%B: unrecognized symbol `%s' flags 0x%x"),
+		 abfd, bfd_asymbol_name (symbol), symbol->flags);
 	      bfd_set_error (bfd_error_invalid_operation);
 	      return FALSE;
 	    }
@@ -699,12 +708,12 @@ ieee_seek (ieee_data_type * ieee, file_ptr offset)
   if (offset < 0 || (bfd_size_type) offset >= ieee->h.total_amt)
     {
       ieee->h.input_p = ieee->h.first_byte + ieee->h.total_amt;
-      ieee->h.last_byte = ieee->h.input_p;
+      ieee->h.end_p = ieee->h.last_byte = ieee->h.input_p;
       return FALSE;
     }
 
   ieee->h.input_p = ieee->h.first_byte + offset;
-  ieee->h.last_byte = (ieee->h.first_byte + ieee_part_after (ieee, offset));
+  ieee->h.end_p = ieee->h.last_byte = (ieee->h.first_byte + ieee_part_after (ieee, offset));
   return TRUE;
 }
 
@@ -823,7 +832,8 @@ ieee_slurp_external_symbols (bfd *abfd)
 		    parse_int (&ieee->h, &value);
 		    break;
 		  default:
-		    (*_bfd_error_handler)
+		    _bfd_error_handler
+		      /* xgettext:c-format */
 		      (_("%B: unimplemented ATI record %u for symbol %u"),
 		       abfd, symbol_attribute_def, symbol_name_index);
 		    bfd_set_error (bfd_error_bad_value);
@@ -847,9 +857,10 @@ ieee_slurp_external_symbols (bfd *abfd)
 		parse_int (&ieee->h, &value);
 		if (value != 0x3f)
 		  {
-		    (*_bfd_error_handler)
-		      (_("%B: unexpected ATN type %d in external part"),
-			 abfd, (int) value);
+		    _bfd_error_handler
+		      /* xgettext:c-format */
+		      (_("%B: unexpected ATN type %Ld in external part"),
+			 abfd, value);
 		    bfd_set_error (bfd_error_bad_value);
 		    return FALSE;
 		  }
@@ -869,7 +880,7 @@ ieee_slurp_external_symbols (bfd *abfd)
 			break;
 
 		      default:
-			(*_bfd_error_handler)
+			_bfd_error_handler
 			  (_("%B: unexpected type after ATN"), abfd);
 			bfd_set_error (bfd_error_bad_value);
 			return FALSE;
@@ -902,9 +913,9 @@ ieee_slurp_external_symbols (bfd *abfd)
 	      return FALSE;
 
 	    /* Fully linked IEEE-695 files tend to give every symbol
-               an absolute value.  Try to convert that back into a
-               section relative value.  FIXME: This won't always to
-               the right thing.  */
+	       an absolute value.  Try to convert that back into a
+	       section relative value.  FIXME: This won't always to
+	       the right thing.  */
 	    if (bfd_is_abs_section (symbol->symbol.section)
 		&& (abfd->flags & HAS_RELOC) == 0)
 	      {
@@ -1235,6 +1246,8 @@ ieee_slurp_sections (bfd *abfd)
 
 		/* Read section name, use it if non empty.  */
 		name = read_id (&ieee->h);
+		if (name == NULL)
+		  return FALSE;
 		if (name[0])
 		  section->name = name;
 
@@ -1353,7 +1366,7 @@ ieee_archive_p (bfd *abfd)
 {
   char *library;
   unsigned int i;
-  unsigned char buffer[512];
+  static unsigned char buffer[512];
   file_ptr buffer_offset = 0;
   ieee_ar_data_type *save = abfd->tdata.ieee_ar_data;
   ieee_ar_data_type *ieee;
@@ -1373,6 +1386,8 @@ ieee_archive_p (bfd *abfd)
 
   ieee->h.first_byte = buffer;
   ieee->h.input_p = buffer;
+  ieee->h.total_amt = sizeof (buffer);
+  ieee->h.end_p = buffer + sizeof (buffer);
 
   ieee->h.abfd = abfd;
 
@@ -1382,6 +1397,8 @@ ieee_archive_p (bfd *abfd)
   (void) next_byte (&(ieee->h));
 
   library = read_id (&(ieee->h));
+  if (library == NULL)
+    goto got_wrong_format_error;
   if (strcmp (library, "LIBRARY") != 0)
     goto got_wrong_format_error;
 
@@ -1440,6 +1457,8 @@ ieee_archive_p (bfd *abfd)
 	  bfd_bread ((void *) buffer, (bfd_size_type) sizeof (buffer), abfd);
 	  ieee->h.first_byte = buffer;
 	  ieee->h.input_p = buffer;
+	  ieee->h.total_amt = sizeof (buffer);
+	  ieee->h.end_p = buffer + sizeof (buffer);
 	}
     }
 
@@ -1463,6 +1482,8 @@ ieee_archive_p (bfd *abfd)
       bfd_bread ((void *) buffer, (bfd_size_type) sizeof (buffer), abfd);
       ieee->h.first_byte = buffer;
       ieee->h.input_p = buffer;
+      ieee->h.total_amt = sizeof (buffer);
+      ieee->h.end_p = buffer + sizeof (buffer);
 
       (void) next_byte (&(ieee->h));	/* Drop F8.  */
       if (! next_byte (&(ieee->h)))	/* Drop 14.  */
@@ -1871,7 +1892,7 @@ ieee_object_p (bfd *abfd)
   char *processor;
   unsigned int part;
   ieee_data_type *ieee;
-  unsigned char buffer[300];
+  static unsigned char buffer[300];
   ieee_data_type *save = IEEE_DATA (abfd);
   bfd_size_type amt;
 
@@ -1888,6 +1909,8 @@ ieee_object_p (bfd *abfd)
 
   ieee->h.input_p = buffer;
   ieee->h.total_amt = sizeof (buffer);
+  ieee->h.end_p = buffer + sizeof (buffer);
+
   if (this_byte_and_next (&(ieee->h)) != Module_Beginning)
     goto got_wrong_format;
 
@@ -1903,9 +1926,13 @@ ieee_object_p (bfd *abfd)
   ieee->section_table_size = 0;
 
   processor = ieee->mb.processor = read_id (&(ieee->h));
+  if (processor == NULL)
+    goto got_wrong_format;
   if (strcmp (processor, "LIBRARY") == 0)
     goto got_wrong_format;
   ieee->mb.module_name = read_id (&(ieee->h));
+  if (ieee->mb.module_name == NULL)
+    goto got_wrong_format;
   if (abfd->filename == (const char *) NULL)
     abfd->filename = xstrdup (ieee->mb.module_name);
 
@@ -1940,7 +1967,7 @@ ieee_object_p (bfd *abfd)
 	      case '4':
 		if (processor[4] == '9')    /* 68349 */
 		  strcpy (family, "68030"); /* CPU030 */
-		else		            /* 68340, 68341 */
+		else			    /* 68340, 68341 */
 		  strcpy (family, "68332"); /* CPU32 and CPU32+ */
 		break;
 
@@ -1949,7 +1976,7 @@ ieee_object_p (bfd *abfd)
 	      }
 	  }
 	else if (TOUPPER (processor[3]) == 'F')  /* 68F333 */
-	  strcpy (family, "68332");	           /* CPU32 */
+	  strcpy (family, "68332");		   /* CPU32 */
 	else if ((TOUPPER (processor[3]) == 'C') /* Embedded controllers.  */
 		 && ((TOUPPER (processor[2]) == 'E')
 		     || (TOUPPER (processor[2]) == 'H')
@@ -2597,10 +2624,13 @@ write_int (int value)
 	{
 	case 4:
 	  OUT (value >> 24);
+	  /* Fall through.  */
 	case 3:
 	  OUT (value >> 16);
+	  /* Fall through.  */
 	case 2:
 	  OUT (value >> 8);
+	  /* Fall through.  */
 	case 1:
 	  OUT (value);
 	}
@@ -2753,15 +2783,19 @@ drop_int (struct output_buffer_struct *buf)
 	case 0x84:
 	  ch = THIS ();
 	  NEXT ();
+	  /* Fall through.  */
 	case 0x83:
 	  ch = THIS ();
 	  NEXT ();
+	  /* Fall through.  */
 	case 0x82:
 	  ch = THIS ();
 	  NEXT ();
+	  /* Fall through.  */
 	case 0x81:
 	  ch = THIS ();
 	  NEXT ();
+	  /* Fall through.  */
 	case 0x80:
 	  break;
 	}
@@ -2791,18 +2825,22 @@ copy_int (void)
 	  ch = THIS ();
 	  NEXT ();
 	  OUT (ch);
+	  /* Fall through.  */
 	case 0x83:
 	  ch = THIS ();
 	  NEXT ();
 	  OUT (ch);
+	  /* Fall through.  */
 	case 0x82:
 	  ch = THIS ();
 	  NEXT ();
 	  OUT (ch);
+	  /* Fall through.  */
 	case 0x81:
 	  ch = THIS ();
 	  NEXT ();
 	  OUT (ch);
+	  /* Fall through.  */
 	case 0x80:
 	  break;
 	}
@@ -2833,12 +2871,15 @@ copy_till_end (void)
 	case 0x84:
 	  OUT (THIS ());
 	  NEXT ();
+	  /* Fall through.  */
 	case 0x83:
 	  OUT (THIS ());
 	  NEXT ();
+	  /* Fall through.  */
 	case 0x82:
 	  OUT (THIS ());
 	  NEXT ();
+	  /* Fall through.  */
 	case 0x81:
 	  OUT (THIS ());
 	  NEXT ();
@@ -3268,7 +3309,7 @@ ieee_write_data_part (bfd *abfd)
   for (s = abfd->sections; s != (asection *) NULL; s = s->next)
     {
       /* Skip sections that have no loadable contents (.bss,
-         debugging, etc.)  */
+	 debugging, etc.)  */
       if ((s->flags & SEC_LOAD) == 0)
 	continue;
 
@@ -3331,7 +3372,7 @@ ieee_set_section_contents (bfd *abfd,
 	    return FALSE;
 	}
       /* bfd_set_section_contents has already checked that everything
-         is within range.  */
+	 is within range.  */
       memcpy (section->contents + offset, location, (size_t) count);
       return TRUE;
     }
@@ -3450,7 +3491,7 @@ ieee_write_external_part (bfd *abfd)
 	  else
 	    {
 	      /* This can happen - when there are gaps in the symbols read
-	         from an input ieee file.  */
+		 from an input ieee file.  */
 	    }
 	}
     }
@@ -3769,7 +3810,7 @@ ieee_openr_next_archived_file (bfd *arch, bfd *prev)
 }
 
 #define ieee_find_nearest_line _bfd_nosymbols_find_nearest_line
-#define ieee_find_line         _bfd_nosymbols_find_line
+#define ieee_find_line	       _bfd_nosymbols_find_line
 #define ieee_find_inliner_info _bfd_nosymbols_find_inliner_info
 
 static int
@@ -3856,6 +3897,7 @@ ieee_sizeof_headers (bfd *abfd ATTRIBUTE_UNUSED,
 #define ieee_section_already_linked \
   _bfd_generic_section_already_linked
 #define ieee_bfd_define_common_symbol bfd_generic_define_common_symbol
+#define ieee_bfd_define_start_stop bfd_generic_define_start_stop
 #define ieee_bfd_link_hash_table_create _bfd_generic_link_hash_table_create
 #define ieee_bfd_link_add_symbols _bfd_generic_link_add_symbols
 #define ieee_bfd_link_just_syms _bfd_generic_link_just_syms
@@ -3864,6 +3906,7 @@ ieee_sizeof_headers (bfd *abfd ATTRIBUTE_UNUSED,
 #define ieee_bfd_final_link _bfd_generic_final_link
 #define ieee_bfd_link_split_section  _bfd_generic_link_split_section
 #define ieee_bfd_link_check_relocs   _bfd_generic_link_check_relocs
+#define ieee_set_reloc		     _bfd_generic_set_reloc
 
 const bfd_target ieee_vec =
 {

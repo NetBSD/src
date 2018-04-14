@@ -1,5 +1,5 @@
 /* Mach-O object file format
-   Copyright (C) 2009-2016 Free Software Foundation, Inc.
+   Copyright (C) 2009-2018 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -29,7 +29,7 @@
    which subsections are generated like __text, __const etc.
 
    The well-known as short-hand section switch directives like .text, .data
-   etc. are mapped onto predefined segment/section pairs using facilites
+   etc. are mapped onto predefined segment/section pairs using facilities
    supplied by the mach-o port of bfd.
 
    A number of additional mach-o short-hand section switch directives are
@@ -181,7 +181,7 @@ obj_mach_o_make_or_get_sect (char * segname, char * sectname,
      attributes along with the canonical name.  */
   xlat = bfd_mach_o_section_data_for_mach_sect (stdoutput, segname, sectname);
 
-  /* TODO: more checking of whether overides are acually allowed.  */
+  /* TODO: more checking of whether overrides are actually allowed.  */
 
   if (xlat != NULL)
     {
@@ -192,7 +192,7 @@ obj_mach_o_make_or_get_sect (char * segname, char * sectname,
 	  if ((sectype == BFD_MACH_O_S_ZEROFILL
 	       || sectype == BFD_MACH_O_S_GB_ZEROFILL)
 	      && sectype != usectype)
-	    as_bad (_("cannot overide zerofill section type for `%s,%s'"),
+	    as_bad (_("cannot override zerofill section type for `%s,%s'"),
 		    segname, sectname);
 	  else
 	    sectype = usectype;
@@ -308,7 +308,7 @@ obj_mach_o_section (int ignore ATTRIBUTE_UNUSED)
   md_flush_pending_output ();
 #endif
 
-  /* Get the User's segment annd section names.  */
+  /* Get the User's segment and section names.  */
   if (! obj_mach_o_get_section_names (segname, sectname, 17, 17))
     return;
 
@@ -449,7 +449,7 @@ obj_mach_o_zerofill (int ignore ATTRIBUTE_UNUSED)
   md_flush_pending_output ();
 #endif
 
-  /* Get the User's segment annd section names.  */
+  /* Get the User's segment and section names.  */
   if (! obj_mach_o_get_section_names (segname, sectname, 17, 17))
     return;
 
@@ -1808,15 +1808,21 @@ obj_mach_o_set_indirect_symbols (bfd *abfd, asection *sec,
 	    {
 	      unsigned n;
 	      bfd_mach_o_asymbol *sym;
+
+	      /* FIXME: It seems that there can be more indirect symbols
+		 than is computed by the loop above.  So be paranoid and
+		 allocate enough space for every symbol to be indirect.
+		 See PR 21939 for an example of where this is needed.  */
+	      if (nactual < bfd_get_symcount (abfd))
+		nactual = bfd_get_symcount (abfd);
+
 	      ms->indirect_syms =
 			bfd_zalloc (abfd,
 				    nactual * sizeof (bfd_mach_o_asymbol *));
 
 	      if (ms->indirect_syms == NULL)
-		{
-		  as_fatal (_("internal error: failed to allocate %d indirect"
-			      "symbol pointers"), nactual);
-		}
+		as_fatal (_("internal error: failed to allocate %d indirect"
+			    "symbol pointers"), nactual);
 
 	      for (isym = list, n = 0; isym != NULL; isym = isym->next, n++)
 		{
@@ -1827,7 +1833,11 @@ obj_mach_o_set_indirect_symbols (bfd *abfd, asection *sec,
 
 		     Absolute symbols are handled specially.  */
 		  if (sym->symbol.section == bfd_abs_section_ptr)
-		    ms->indirect_syms[n] = sym;
+		    {
+		      if (n >= nactual)
+			as_fatal (_("internal error: more indirect mach-o symbols than expected"));
+		      ms->indirect_syms[n] = sym;
+		    }
 		  else if (S_IS_LOCAL (isym->sym) && ! lazy)
 		    ;
 		  else
@@ -1847,6 +1857,8 @@ obj_mach_o_set_indirect_symbols (bfd *abfd, asection *sec,
 			      && ! (sym->n_type & BFD_MACH_O_N_PEXT)
 			      && (sym->n_type & BFD_MACH_O_N_EXT))
 			    sym->n_desc |= lazy;
+			  if (n >= nactual)
+			    as_fatal (_("internal error: more indirect mach-o symbols than expected"));
 			  ms->indirect_syms[n] = sym;
 		        }
 		    }

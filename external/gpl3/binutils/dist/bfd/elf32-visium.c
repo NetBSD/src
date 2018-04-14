@@ -1,6 +1,6 @@
 /* Visium-specific support for 32-bit ELF.
 
-   Copyright (C) 2003-2016 Free Software Foundation, Inc.
+   Copyright (C) 2003-2018 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -477,6 +477,7 @@ visium_info_to_howto_rela (bfd *abfd ATTRIBUTE_UNUSED, arelent *cache_ptr,
     default:
       if (r_type >= (unsigned int) R_VISIUM_max)
 	{
+	  /* xgettext:c-format */
 	  _bfd_error_handler (_("%B: invalid Visium reloc number: %d"), abfd, r_type);
 	  r_type = 0;
 	}
@@ -763,8 +764,9 @@ visium_elf_copy_private_bfd_data (bfd *ibfd, bfd *obfd)
    file to the output object file when linking.  */
 
 static bfd_boolean
-visium_elf_merge_private_bfd_data (bfd *ibfd, bfd *obfd)
+visium_elf_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
 {
+  bfd *obfd = info->output_bfd;
   flagword old_flags;
   flagword new_flags;
   flagword mismatch;
@@ -811,11 +813,10 @@ visium_elf_merge_private_bfd_data (bfd *ibfd, bfd *obfd)
 
       if (mismatch)
 	_bfd_error_handler
-	  (_
-	   ("%s: compiled %s -mtune=%s and linked with modules"
-	    " compiled %s -mtune=%s"),
-	   bfd_get_filename (ibfd), new_opt_with, opt_arch, old_opt_with,
-	   opt_arch);
+	  /* xgettext:c-format */
+	  (_("%B: compiled %s -mtune=%s and linked with modules"
+	     " compiled %s -mtune=%s"),
+	   ibfd, new_opt_with, opt_arch, old_opt_with, opt_arch);
     }
 
   return TRUE;

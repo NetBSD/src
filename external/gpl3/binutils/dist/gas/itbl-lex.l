@@ -1,5 +1,7 @@
+%option noyywrap
+
 /* itbl-lex.l
-   Copyright (C) 1997-2016 Free Software Foundation, Inc.
+   Copyright (C) 1997-2018 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -102,11 +104,3 @@ HEX	[0-9A-Fa-f]
     return yytext[0];
   }
 %%
-
-#ifndef yywrap
-int
-yywrap ()
-  {
-    return 1;
-  }
-#endif

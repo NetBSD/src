@@ -1,5 +1,5 @@
 /* Motorola 88k-specific support for 32-bit ELF
-   Copyright (C) 1993-2016 Free Software Foundation, Inc.
+   Copyright (C) 1993-2018 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -30,7 +30,7 @@
 #define TARGET_BIG_NAME		"elf32-m88k"
 #define ELF_ARCH		bfd_arch_m88k
 #define ELF_MACHINE_CODE	EM_88K
-#define ELF_MAXPAGESIZE  	1 /* FIXME: This number is wrong,  It should be the page size in bytes.  */
+#define ELF_MAXPAGESIZE		1 /* FIXME: This number is wrong,  It should be the page size in bytes.  */
 #define bfd_elf32_bfd_reloc_type_lookup bfd_default_reloc_type_lookup
 #define bfd_elf32_bfd_reloc_name_lookup _bfd_norelocs_bfd_reloc_name_lookup
 #define elf_info_to_howto		_bfd_elf_no_info_to_howto

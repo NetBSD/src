@@ -1,5 +1,5 @@
 /* Disassemble D30V instructions.
-   Copyright (C) 1997-2016 Free Software Foundation, Inc.
+   Copyright (C) 1997-2018 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -21,7 +21,7 @@
 #include "sysdep.h"
 #include <stdio.h>
 #include "opcode/d30v.h"
-#include "dis-asm.h"
+#include "disassemble.h"
 #include "opintl.h"
 
 #define PC_MASK 0xFFFFFFFF

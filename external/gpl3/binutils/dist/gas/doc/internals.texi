@@ -1,5 +1,5 @@
 \input texinfo
-@c  Copyright (C) 1991-2016 Free Software Foundation, Inc.
+@c  Copyright (C) 1991-2018 Free Software Foundation, Inc.
 @setfilename internals.info
 @node Top
 @top Assembler Internals

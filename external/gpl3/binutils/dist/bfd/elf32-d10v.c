@@ -1,5 +1,5 @@
 /* D10V-specific support for 32-bit ELF
-   Copyright (C) 1996-2016 Free Software Foundation, Inc.
+   Copyright (C) 1996-2018 Free Software Foundation, Inc.
    Contributed by Martin Hunt (hunt@cygnus.com).
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -47,32 +47,32 @@ static reloc_howto_type elf_d10v_howto_table[] =
 
   /* An PC Relative 10-bit relocation, shifted by 2, right container.  */
   HOWTO (R_D10V_10_PCREL_R,	/* Type.  */
-	 2,	                /* Rightshift.  */
-	 2,	                /* Size (0 = byte, 1 = short, 2 = long).  */
-	 8,	                /* Bitsize.  */
-	 TRUE,	        	/* PC_relative.  */
-	 0,	                /* Bitpos.  */
+	 2,			/* Rightshift.  */
+	 2,			/* Size (0 = byte, 1 = short, 2 = long).  */
+	 8,			/* Bitsize.  */
+	 TRUE,			/* PC_relative.  */
+	 0,			/* Bitpos.  */
 	 complain_overflow_signed, /* Complain_on_overflow.  */
 	 bfd_elf_generic_reloc, /* Special_function.  */
 	 "R_D10V_10_PCREL_R",	/* Name.  */
-	 FALSE,	        	/* Partial_inplace.  */
+	 FALSE,			/* Partial_inplace.  */
 	 0xff,			/* Src_mask.  */
-	 0xff,   		/* Dst_mask.  */
+	 0xff,			/* Dst_mask.  */
 	 TRUE),			/* PCrel_offset.  */
 
   /* An PC Relative 10-bit relocation, shifted by 2, left container.  */
   HOWTO (R_D10V_10_PCREL_L,	/* Type.  */
-	 2,	                /* Rightshift.  */
-	 2,	                /* Size (0 = byte, 1 = short, 2 = long).  */
-	 8,	                /* Bitsize.  */
-	 TRUE,	        	/* PC_relative.  */
-	 15,	                /* Bitpos.  */
+	 2,			/* Rightshift.  */
+	 2,			/* Size (0 = byte, 1 = short, 2 = long).  */
+	 8,			/* Bitsize.  */
+	 TRUE,			/* PC_relative.  */
+	 15,			/* Bitpos.  */
 	 complain_overflow_signed, /* Complain_on_overflow.  */
 	 bfd_elf_generic_reloc, /* Special_function.  */
 	 "R_D10V_10_PCREL_L",	/* Name.  */
-	 FALSE,	        	/* Partial_inplace.  */
+	 FALSE,			/* Partial_inplace.  */
 	 0x07f8000,		/* Src_mask.  */
-	 0x07f8000,   		/* Dst_mask.  */
+	 0x07f8000,		/* Dst_mask.  */
 	 TRUE),			/* PCrel_offset.  */
 
   /* A 16 bit absolute relocation.  */
@@ -137,33 +137,33 @@ static reloc_howto_type elf_d10v_howto_table[] =
 
   /* GNU extension to record C++ vtable hierarchy.  */
   HOWTO (R_D10V_GNU_VTINHERIT,	/* Type.  */
-	 0,                     /* Rightshift.  */
-	 2,                     /* Size (0 = byte, 1 = short, 2 = long).  */
-	 0,                     /* Bitsize.  */
-	 FALSE,                 /* PC_relative.  */
-	 0,                     /* Bitpos.  */
+	 0,			/* Rightshift.  */
+	 2,			/* Size (0 = byte, 1 = short, 2 = long).  */
+	 0,			/* Bitsize.  */
+	 FALSE,			/* PC_relative.  */
+	 0,			/* Bitpos.  */
 	 complain_overflow_dont,/* Complain_on_overflow.  */
-	 NULL,                  /* Special_function.  */
+	 NULL,			/* Special_function.  */
 	 "R_D10V_GNU_VTINHERIT",/* Name.  */
-	 FALSE,                 /* Partial_inplace.  */
-	 0,                     /* Src_mask.  */
-	 0,                     /* Dst_mask.  */
-	 FALSE),                /* PCrel_offset.  */
+	 FALSE,			/* Partial_inplace.  */
+	 0,			/* Src_mask.  */
+	 0,			/* Dst_mask.  */
+	 FALSE),		/* PCrel_offset.  */
 
   /* GNU extension to record C++ vtable member usage.  */
-  HOWTO (R_D10V_GNU_VTENTRY,    /* Type.  */
-	 0,                     /* Rightshift.  */
-	 2,                     /* Size (0 = byte, 1 = short, 2 = long).  */
-	 0,                     /* Bitsize.  */
-	 FALSE,                 /* PC_relative.  */
-	 0,                     /* Bitpos.  */
+  HOWTO (R_D10V_GNU_VTENTRY,	/* Type.  */
+	 0,			/* Rightshift.  */
+	 2,			/* Size (0 = byte, 1 = short, 2 = long).  */
+	 0,			/* Bitsize.  */
+	 FALSE,			/* PC_relative.  */
+	 0,			/* Bitpos.  */
 	 complain_overflow_dont,/* Complain_on_overflow.  */
 	 _bfd_elf_rel_vtable_reloc_fn,  /* Special_function.  */
-	 "R_D10V_GNU_VTENTRY",  /* Name.  */
-	 FALSE,                 /* Partial_inplace.  */
-	 0,                     /* Src_mask.  */
-	 0,                     /* Dst_mask.  */
-	 FALSE),                /* PCrel_offset.  */
+	 "R_D10V_GNU_VTENTRY",	/* Name.  */
+	 FALSE,			/* Partial_inplace.  */
+	 0,			/* Src_mask.  */
+	 0,			/* Dst_mask.  */
+	 FALSE),		/* PCrel_offset.  */
 };
 
 /* Map BFD reloc types to D10V ELF reloc types.  */
@@ -230,6 +230,7 @@ d10v_info_to_howto_rel (bfd *abfd ATTRIBUTE_UNUSED,
   r_type = ELF32_R_TYPE (dst->r_info);
   if (r_type >= (unsigned int) R_D10V_max)
     {
+      /* xgettext:c-format */
       _bfd_error_handler (_("%B: invalid D10V reloc number: %d"), abfd, r_type);
       r_type = 0;
     }
@@ -283,37 +284,33 @@ elf32_d10v_check_relocs (bfd *abfd,
 
       r_symndx = ELF32_R_SYM (rel->r_info);
       if (r_symndx < symtab_hdr->sh_info)
-        h = NULL;
+	h = NULL;
       else
 	{
 	  h = sym_hashes[r_symndx - symtab_hdr->sh_info];
 	  while (h->root.type == bfd_link_hash_indirect
 		 || h->root.type == bfd_link_hash_warning)
 	    h = (struct elf_link_hash_entry *) h->root.u.i.link;
-
-	  /* PR15323, ref flags aren't set for references in the same
-	     object.  */
-	  h->root.non_ir_ref = 1;
 	}
 
       switch (ELF32_R_TYPE (rel->r_info))
-        {
-        /* This relocation describes the C++ object vtable hierarchy.
-           Reconstruct it for later use during GC.  */
-        case R_D10V_GNU_VTINHERIT:
-          if (!bfd_elf_gc_record_vtinherit (abfd, sec, h, rel->r_offset))
-            return FALSE;
-          break;
+	{
+	/* This relocation describes the C++ object vtable hierarchy.
+	   Reconstruct it for later use during GC.  */
+	case R_D10V_GNU_VTINHERIT:
+	  if (!bfd_elf_gc_record_vtinherit (abfd, sec, h, rel->r_offset))
+	    return FALSE;
+	  break;
 
-        /* This relocation describes which C++ vtable entries are actually
-           used.  Record for later use during GC.  */
-        case R_D10V_GNU_VTENTRY:
-          BFD_ASSERT (h != NULL);
-          if (h != NULL
-              && !bfd_elf_gc_record_vtentry (abfd, sec, h, rel->r_offset))
-            return FALSE;
-          break;
-        }
+	/* This relocation describes which C++ vtable entries are actually
+	   used.  Record for later use during GC.  */
+	case R_D10V_GNU_VTENTRY:
+	  BFD_ASSERT (h != NULL);
+	  if (h != NULL
+	      && !bfd_elf_gc_record_vtentry (abfd, sec, h, rel->r_offset))
+	    return FALSE;
+	  break;
+	}
     }
 
   return TRUE;
@@ -423,8 +420,8 @@ elf32_d10v_relocate_section (bfd *output_bfd,
       r_type = ELF32_R_TYPE (rel->r_info);
 
       if (r_type == R_D10V_GNU_VTENTRY
-          || r_type == R_D10V_GNU_VTINHERIT)
-        continue;
+	  || r_type == R_D10V_GNU_VTINHERIT)
+	continue;
 
       howto = elf_d10v_howto_table + r_type;
       h = NULL;
@@ -488,8 +485,8 @@ elf32_d10v_relocate_section (bfd *output_bfd,
 	}
 
       r = _bfd_final_link_relocate (howto, input_bfd, input_section,
-                                    contents, rel->r_offset,
-                                    relocation, (bfd_vma) 0);
+				    contents, rel->r_offset,
+				    relocation, (bfd_vma) 0);
 
       if (r != bfd_reloc_ok)
 	{
@@ -539,16 +536,16 @@ elf32_d10v_relocate_section (bfd *output_bfd,
 #define ELF_MACHINE_ALT1	EM_CYGNUS_D10V
 #define ELF_MAXPAGESIZE		0x1000
 
-#define TARGET_BIG_SYM          d10v_elf32_vec
+#define TARGET_BIG_SYM		d10v_elf32_vec
 #define TARGET_BIG_NAME		"elf32-d10v"
 
-#define elf_info_to_howto	             0
-#define elf_info_to_howto_rel	             d10v_info_to_howto_rel
-#define elf_backend_object_p	             0
+#define elf_info_to_howto		     0
+#define elf_info_to_howto_rel		     d10v_info_to_howto_rel
+#define elf_backend_object_p		     0
 #define elf_backend_final_write_processing   0
-#define elf_backend_gc_mark_hook             elf32_d10v_gc_mark_hook
-#define elf_backend_check_relocs             elf32_d10v_check_relocs
-#define elf_backend_relocate_section         elf32_d10v_relocate_section
-#define elf_backend_can_gc_sections          1
+#define elf_backend_gc_mark_hook	     elf32_d10v_gc_mark_hook
+#define elf_backend_check_relocs	     elf32_d10v_check_relocs
+#define elf_backend_relocate_section	     elf32_d10v_relocate_section
+#define elf_backend_can_gc_sections	     1
 
 #include "elf32-target.h"

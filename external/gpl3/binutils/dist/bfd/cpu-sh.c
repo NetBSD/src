@@ -1,5 +1,5 @@
 /* BFD library support routines for the Renesas / SuperH SH architecture.
-   Copyright (C) 1993-2016 Free Software Foundation, Inc.
+   Copyright (C) 1993-2018 Free Software Foundation, Inc.
    Hacked by Steve Chamberlain of Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -24,27 +24,27 @@
 #include "libbfd.h"
 #include "../opcodes/sh-opc.h"
 
-#define SH_NEXT                            arch_info_struct + 0
-#define SH2_NEXT                           arch_info_struct + 1
-#define SH2E_NEXT                          arch_info_struct + 2
-#define SH_DSP_NEXT                        arch_info_struct + 3
-#define SH3_NEXT                           arch_info_struct + 4
-#define SH3_NOMMU_NEXT                     arch_info_struct + 5
-#define SH3_DSP_NEXT                       arch_info_struct + 6
-#define SH3E_NEXT                          arch_info_struct + 7
-#define SH4_NEXT                           arch_info_struct + 8
-#define SH4A_NEXT                          arch_info_struct + 9
-#define SH4AL_DSP_NEXT                     arch_info_struct + 10
-#define SH4_NOFPU_NEXT                     arch_info_struct + 11
-#define SH4_NOMMU_NOFPU_NEXT               arch_info_struct + 12
-#define SH4A_NOFPU_NEXT                    arch_info_struct + 13
-#define SH2A_NEXT                          arch_info_struct + 14
-#define SH2A_NOFPU_NEXT                    arch_info_struct + 15
+#define SH_NEXT				   arch_info_struct + 0
+#define SH2_NEXT			   arch_info_struct + 1
+#define SH2E_NEXT			   arch_info_struct + 2
+#define SH_DSP_NEXT			   arch_info_struct + 3
+#define SH3_NEXT			   arch_info_struct + 4
+#define SH3_NOMMU_NEXT			   arch_info_struct + 5
+#define SH3_DSP_NEXT			   arch_info_struct + 6
+#define SH3E_NEXT			   arch_info_struct + 7
+#define SH4_NEXT			   arch_info_struct + 8
+#define SH4A_NEXT			   arch_info_struct + 9
+#define SH4AL_DSP_NEXT			   arch_info_struct + 10
+#define SH4_NOFPU_NEXT			   arch_info_struct + 11
+#define SH4_NOMMU_NOFPU_NEXT		   arch_info_struct + 12
+#define SH4A_NOFPU_NEXT			   arch_info_struct + 13
+#define SH2A_NEXT			   arch_info_struct + 14
+#define SH2A_NOFPU_NEXT			   arch_info_struct + 15
 #define SH2A_NOFPU_OR_SH4_NOMMU_NOFPU_NEXT arch_info_struct + 16
-#define SH2A_NOFPU_OR_SH3_NOMMU_NEXT       arch_info_struct + 17
-#define SH2A_OR_SH4_NEXT                   arch_info_struct + 18
-#define SH2A_OR_SH3E_NEXT                  arch_info_struct + 19
-#define SH64_NEXT                          NULL
+#define SH2A_NOFPU_OR_SH3_NOMMU_NEXT	   arch_info_struct + 17
+#define SH2A_OR_SH4_NEXT		   arch_info_struct + 18
+#define SH2A_OR_SH3E_NEXT		   arch_info_struct + 19
+#define SH64_NEXT			   NULL
 
 static const bfd_arch_info_type arch_info_struct[] =
 {
@@ -376,29 +376,29 @@ const bfd_arch_info_type bfd_sh_arch =
 
 static struct { unsigned long bfd_mach, arch, arch_up; } bfd_to_arch_table[] =
 {
-  { bfd_mach_sh,              arch_sh1,             arch_sh_up },
-  { bfd_mach_sh2,             arch_sh2,             arch_sh2_up },
-  { bfd_mach_sh2e,            arch_sh2e,            arch_sh2e_up },
-  { bfd_mach_sh_dsp,          arch_sh_dsp,          arch_sh_dsp_up },
-  { bfd_mach_sh2a,            arch_sh2a,            arch_sh2a_up },
-  { bfd_mach_sh2a_nofpu,      arch_sh2a_nofpu,      arch_sh2a_nofpu_up },
+  { bfd_mach_sh,	      arch_sh1,		    arch_sh_up },
+  { bfd_mach_sh2,	      arch_sh2,		    arch_sh2_up },
+  { bfd_mach_sh2e,	      arch_sh2e,	    arch_sh2e_up },
+  { bfd_mach_sh_dsp,	      arch_sh_dsp,	    arch_sh_dsp_up },
+  { bfd_mach_sh2a,	      arch_sh2a,	    arch_sh2a_up },
+  { bfd_mach_sh2a_nofpu,      arch_sh2a_nofpu,	    arch_sh2a_nofpu_up },
 
-  { bfd_mach_sh2a_nofpu_or_sh4_nommu_nofpu,         arch_sh2a_nofpu_or_sh4_nommu_nofpu,   arch_sh2a_nofpu_or_sh4_nommu_nofpu_up },
-  { bfd_mach_sh2a_nofpu_or_sh3_nommu,               arch_sh2a_nofpu_or_sh3_nommu,         arch_sh2a_nofpu_or_sh3_nommu_up },
-  { bfd_mach_sh2a_or_sh4,     arch_sh2a_or_sh4,     arch_sh2a_or_sh4_up },
+  { bfd_mach_sh2a_nofpu_or_sh4_nommu_nofpu,	    arch_sh2a_nofpu_or_sh4_nommu_nofpu,	  arch_sh2a_nofpu_or_sh4_nommu_nofpu_up },
+  { bfd_mach_sh2a_nofpu_or_sh3_nommu,		    arch_sh2a_nofpu_or_sh3_nommu,	  arch_sh2a_nofpu_or_sh3_nommu_up },
+  { bfd_mach_sh2a_or_sh4,     arch_sh2a_or_sh4,	    arch_sh2a_or_sh4_up },
   { bfd_mach_sh2a_or_sh3e,    arch_sh2a_or_sh3e,    arch_sh2a_or_sh3e_up },
 
-  { bfd_mach_sh3,             arch_sh3,             arch_sh3_up },
-  { bfd_mach_sh3_nommu,       arch_sh3_nommu,       arch_sh3_nommu_up },
-  { bfd_mach_sh3_dsp,         arch_sh3_dsp,         arch_sh3_dsp_up },
-  { bfd_mach_sh3e,            arch_sh3e,            arch_sh3e_up },
-  { bfd_mach_sh4,             arch_sh4,             arch_sh4_up },
-  { bfd_mach_sh4a,            arch_sh4a,            arch_sh4a_up },
-  { bfd_mach_sh4al_dsp,       arch_sh4al_dsp,       arch_sh4al_dsp_up },
-  { bfd_mach_sh4_nofpu,       arch_sh4_nofpu,       arch_sh4_nofpu_up },
+  { bfd_mach_sh3,	      arch_sh3,		    arch_sh3_up },
+  { bfd_mach_sh3_nommu,	      arch_sh3_nommu,	    arch_sh3_nommu_up },
+  { bfd_mach_sh3_dsp,	      arch_sh3_dsp,	    arch_sh3_dsp_up },
+  { bfd_mach_sh3e,	      arch_sh3e,	    arch_sh3e_up },
+  { bfd_mach_sh4,	      arch_sh4,		    arch_sh4_up },
+  { bfd_mach_sh4a,	      arch_sh4a,	    arch_sh4a_up },
+  { bfd_mach_sh4al_dsp,	      arch_sh4al_dsp,	    arch_sh4al_dsp_up },
+  { bfd_mach_sh4_nofpu,	      arch_sh4_nofpu,	    arch_sh4_nofpu_up },
   { bfd_mach_sh4_nommu_nofpu, arch_sh4_nommu_nofpu, arch_sh4_nommu_nofpu_up },
-  { bfd_mach_sh4a_nofpu,      arch_sh4a_nofpu,      arch_sh4a_nofpu_up },
-  { 0, 0, 0 }   /* Terminator.  */
+  { bfd_mach_sh4a_nofpu,      arch_sh4a_nofpu,	    arch_sh4a_nofpu_up },
+  { 0, 0, 0 }	/* Terminator.  */
 };
 
 
@@ -476,7 +476,7 @@ sh_get_bfd_mach_from_arch_set (unsigned int arch_set)
       /* Conceptually: Find the architecture with the least number
 	 of extra features or, if they have the same number, then
 	 the greatest number of required features.  Disregard
-         architectures where the required features alone do
+	 architectures where the required features alone do
 	 not describe a valid architecture.  */
       if (((try & ~arch_set) < (best & ~arch_set)
 	   || ((try & ~arch_set) == (best & ~arch_set)
@@ -495,51 +495,4 @@ sh_get_bfd_mach_from_arch_set (unsigned int arch_set)
   BFD_ASSERT (result != 0);
 
   return result;
-}
-
-
-/* Merge the architecture type of two BFD files, such that the
-   resultant architecture supports all the features required
-   by the two input BFDs.
-   If the input BFDs are multually incompatible - i.e. one uses
-   DSP while the other uses FPU - or there is no known architecture
-   that fits the requirements then an error is emitted.  */
-
-bfd_boolean
-sh_merge_bfd_arch (bfd *ibfd, bfd *obfd)
-{
-  unsigned int old_arch, new_arch, merged_arch;
-
-  if (! _bfd_generic_verify_endian_match (ibfd, obfd))
-    return FALSE;
-
-  old_arch = sh_get_arch_up_from_bfd_mach (bfd_get_mach (obfd));
-  new_arch = sh_get_arch_up_from_bfd_mach (bfd_get_mach (ibfd));
-
-  merged_arch = SH_MERGE_ARCH_SET (old_arch, new_arch);
-
-  if (!SH_VALID_CO_ARCH_SET (merged_arch))
-    {
-      (*_bfd_error_handler)
-	("%B: uses %s instructions while previous modules use %s instructions",
-	 ibfd,
-	 SH_ARCH_SET_HAS_DSP (new_arch) ? "dsp" : "floating point",
-	 SH_ARCH_SET_HAS_DSP (new_arch) ? "floating point" : "dsp");
-      bfd_set_error (bfd_error_bad_value);
-      return FALSE;
-    }
-  else if (!SH_VALID_ARCH_SET (merged_arch))
-    {
-      (*_bfd_error_handler)
-	("internal error: merge of architecture '%s' with architecture '%s' produced unknown architecture\n",
-	 bfd_printable_name (obfd),
-	 bfd_printable_name (ibfd));
-      bfd_set_error (bfd_error_bad_value);
-      return FALSE;
-    }
-
-  bfd_default_set_arch_mach (obfd, bfd_arch_sh,
-			     sh_get_bfd_mach_from_arch_set (merged_arch));
-
-  return TRUE;
 }

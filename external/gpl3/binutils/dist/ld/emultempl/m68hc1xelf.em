@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright (C) 1991-2016 Free Software Foundation, Inc.
+#   Copyright (C) 1991-2018 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -66,6 +66,9 @@ m68hc11_elf_${EMULATION_NAME}_before_allocation (void)
 
   gld${EMULATION_NAME}_before_allocation ();
 
+  if (bfd_get_flavour (link_info.output_bfd) != bfd_target_elf_flavour)
+    return;
+
   /* If generating a relocatable output file, then we don't
      have to generate the trampolines.  */
   if (bfd_link_relocatable (&link_info))
@@ -76,7 +79,7 @@ m68hc11_elf_${EMULATION_NAME}_before_allocation (void)
     {
       if (ret < 0)
 	{
-	  einfo ("%X%P: can not size stub section: %E\n");
+	  einfo (_("%X%P: can not size stub section: %E\n"));
 	  return;
 	}
 
@@ -86,7 +89,7 @@ m68hc11_elf_${EMULATION_NAME}_before_allocation (void)
 				     &link_info,
 				     &m68hc11elf_add_stub_section))
 	{
-	  einfo ("%X%P: can not size stub section: %E\n");
+	  einfo (_("%X%P: can not size stub section: %E\n"));
 	  return;
 	}
     }
@@ -141,6 +144,13 @@ m68hc11_elf_${EMULATION_NAME}_before_allocation (void)
 static void
 m68hc11elf_create_output_section_statements (void)
 {
+  if (bfd_get_flavour (link_info.output_bfd) != bfd_target_elf_flavour)
+    {
+      einfo (_("%X%P: changing output format whilst linking "
+	       "is not supported\n"));
+      return;
+    }
+
   stub_file = lang_add_input_file ("linker stubs",
 				   lang_input_file_is_fake_enum,
 				   NULL);
@@ -150,7 +160,7 @@ m68hc11elf_create_output_section_statements (void)
 			     bfd_get_arch (link_info.output_bfd),
 			     bfd_get_mach (link_info.output_bfd)))
     {
-      einfo ("%X%P: can not create BFD %E\n");
+      einfo (_("%X%P: can not create BFD %E\n"));
       return;
     }
 
@@ -277,7 +287,7 @@ m68hc11elf_add_stub_section (const char *stub_sec_name,
     return stub_sec;
 
  err_ret:
-  einfo ("%X%P: can not make stub section: %E\n");
+  einfo (_("%X%P: can not make stub section: %E\n"));
   return NULL;
 }
 
@@ -286,22 +296,25 @@ m68hc11elf_add_stub_section (const char *stub_sec_name,
 static void
 m68hc11elf_after_allocation (void)
 {
-  /* Now build the linker stubs.  */
-  if (stub_file->the_bfd->sections != NULL)
+  if (bfd_get_flavour (link_info.output_bfd) == bfd_target_elf_flavour)
     {
-      /* Call again the trampoline analyzer to initialize the trampoline
-	 stubs with the correct symbol addresses.  Since there could have
-	 been relaxation, the symbol addresses that were found during
-	 first call may no longer be correct.  */
-      if (!elf32_m68hc11_size_stubs (link_info.output_bfd,
-				     stub_file->the_bfd,
-				     &link_info, 0))
+      /* Now build the linker stubs.  */
+      if (stub_file->the_bfd->sections != NULL)
 	{
-	  einfo ("%X%P: can not size stub section: %E\n");
-	  return;
+	  /* Call again the trampoline analyzer to initialize the trampoline
+	     stubs with the correct symbol addresses.  Since there could have
+	     been relaxation, the symbol addresses that were found during
+	     first call may no longer be correct.  */
+	  if (!elf32_m68hc11_size_stubs (link_info.output_bfd,
+					 stub_file->the_bfd,
+					 &link_info, 0))
+	    {
+	      einfo (_("%X%P: can not size stub section: %E\n"));
+	      return;
+	    }
+	  if (!elf32_m68hc11_build_stubs (link_info.output_bfd, &link_info))
+	    einfo (_("%X%P: can not build stubs: %E\n"));
 	}
-      if (!elf32_m68hc11_build_stubs (link_info.output_bfd, &link_info))
-	einfo ("%X%P: can not build stubs: %E\n");
     }
 
   gld${EMULATION_NAME}_after_allocation ();

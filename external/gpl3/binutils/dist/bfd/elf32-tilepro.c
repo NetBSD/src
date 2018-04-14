@@ -1,5 +1,5 @@
 /* TILEPro-specific support for 32-bit ELF.
-   Copyright (C) 2011-2016 Free Software Foundation, Inc.
+   Copyright (C) 2011-2018 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -264,7 +264,7 @@ static reloc_howto_type tilepro_elf_howto_table [] =
 	 FALSE,			/* partial_inplace */
 	 0,			/* src_mask */
 	 -1,			/* dst_mask */
-	 TRUE), 		/* pcrel_offset */
+	 TRUE),			/* pcrel_offset */
 
   HOWTO (R_TILEPRO_JOFFLONG_X1_PLT, /* type */
 	 TILEPRO_LOG2_BUNDLE_ALIGNMENT_IN_BYTES, /* rightshift */
@@ -278,17 +278,17 @@ static reloc_howto_type tilepro_elf_howto_table [] =
 	 FALSE,			/* partial_inplace */
 	 0,			/* src_mask */
 	 -1,			/* dst_mask */
-	 TRUE), 		/* pcrel_offset */
+	 TRUE),			/* pcrel_offset */
 
 #define TILEPRO_IMM_HOWTO(name, size, bitsize) \
   HOWTO (name, 0, size, bitsize, FALSE, 0, \
-         complain_overflow_signed, bfd_elf_generic_reloc, \
-         #name, FALSE, 0, -1, FALSE)
+	 complain_overflow_signed, bfd_elf_generic_reloc, \
+	 #name, FALSE, 0, -1, FALSE)
 
 #define TILEPRO_UIMM_HOWTO(name, size, bitsize) \
   HOWTO (name, 0, size, bitsize, FALSE, 0, \
-         complain_overflow_unsigned, bfd_elf_generic_reloc, \
-         #name, FALSE, 0, -1, FALSE)
+	 complain_overflow_unsigned, bfd_elf_generic_reloc, \
+	 #name, FALSE, 0, -1, FALSE)
 
   TILEPRO_IMM_HOWTO(R_TILEPRO_IMM8_X0,  0,  8),
   TILEPRO_IMM_HOWTO(R_TILEPRO_IMM8_Y0,  0,  8),
@@ -301,8 +301,8 @@ static reloc_howto_type tilepro_elf_howto_table [] =
 
 #define TILEPRO_IMM16_HOWTO(name, rshift) \
   HOWTO (name, rshift, 1, 16, FALSE, 0, \
-         complain_overflow_dont, bfd_elf_generic_reloc, \
-         #name, FALSE, 0, 0xffff, FALSE)
+	 complain_overflow_dont, bfd_elf_generic_reloc, \
+	 #name, FALSE, 0, 0xffff, FALSE)
 
   TILEPRO_IMM16_HOWTO (R_TILEPRO_IMM16_X0_LO,  0),
   TILEPRO_IMM16_HOWTO (R_TILEPRO_IMM16_X1_LO,  0),
@@ -343,8 +343,8 @@ static reloc_howto_type tilepro_elf_howto_table [] =
 
 #define TILEPRO_IMM16_HOWTO_PCREL(name, rshift) \
   HOWTO (name, rshift, 1, 16, TRUE, 0, \
-         complain_overflow_dont, bfd_elf_generic_reloc, \
-         #name, FALSE, 0, 0xffff, TRUE)
+	 complain_overflow_dont, bfd_elf_generic_reloc, \
+	 #name, FALSE, 0, 0xffff, TRUE)
 
   TILEPRO_IMM16_HOWTO_PCREL (R_TILEPRO_IMM16_X0_LO_PCREL,  0),
   TILEPRO_IMM16_HOWTO_PCREL (R_TILEPRO_IMM16_X1_LO_PCREL,  0),
@@ -393,7 +393,7 @@ static reloc_howto_type tilepro_elf_howto_table [] =
 	 FALSE,			/* partial_inplace */
 	 0,			/* src_mask */
 	 -1,			/* dst_mask */
-	 TRUE), 		/* pcrel_offset */
+	 TRUE),			/* pcrel_offset */
 
   TILEPRO_IMM_HOWTO(R_TILEPRO_IMM8_X0_TLS_GD_ADD,  0,  8),
   TILEPRO_IMM_HOWTO(R_TILEPRO_IMM8_X1_TLS_GD_ADD,  0,  8),
@@ -477,14 +477,14 @@ static reloc_howto_type tilepro_elf_howto_table [] =
 
   /* These are common with the Solaris TLS implementation. */
   HOWTO(R_TILEPRO_TLS_DTPMOD32, 0, 0, 0, FALSE, 0, complain_overflow_dont,
-        bfd_elf_generic_reloc, "R_TILEPRO_TLS_DTPMOD32",
-        FALSE, 0, 0, TRUE),
+	bfd_elf_generic_reloc, "R_TILEPRO_TLS_DTPMOD32",
+	FALSE, 0, 0, TRUE),
   HOWTO(R_TILEPRO_TLS_DTPOFF32, 0, 2, 32, FALSE, 0, complain_overflow_bitfield,
-        bfd_elf_generic_reloc, "R_TILEPRO_TLS_DTPOFF32",
-        FALSE, 0, 0xFFFFFFFF, TRUE),
+	bfd_elf_generic_reloc, "R_TILEPRO_TLS_DTPOFF32",
+	FALSE, 0, 0xFFFFFFFF, TRUE),
   HOWTO(R_TILEPRO_TLS_TPOFF32, 0, 0, 0, FALSE, 0, complain_overflow_dont,
-        bfd_elf_generic_reloc, "R_TILEPRO_TLS_TPOFF32",
-        FALSE, 0, 0, TRUE),
+	bfd_elf_generic_reloc, "R_TILEPRO_TLS_TPOFF32",
+	FALSE, 0, 0, TRUE),
 
   HOWTO (R_TILEPRO_IMM16_X0_TLS_LE,/* type */
 	 0,			/* rightshift */
@@ -526,33 +526,33 @@ static reloc_howto_type tilepro_elf_howto_table2 [] =
 {
   /* GNU extension to record C++ vtable hierarchy */
   HOWTO (R_TILEPRO_GNU_VTINHERIT, /* type */
-         0,                     /* rightshift */
-         2,                     /* size (0 = byte, 1 = short, 2 = long) */
-         0,                     /* bitsize */
-         FALSE,                 /* pc_relative */
-         0,                     /* bitpos */
-         complain_overflow_dont, /* complain_on_overflow */
-         NULL,                  /* special_function */
-         "R_TILEPRO_GNU_VTINHERIT", /* name */
-         FALSE,                 /* partial_inplace */
-         0,                     /* src_mask */
-         0,                     /* dst_mask */
-         FALSE),                /* pcrel_offset */
+	 0,			/* rightshift */
+	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 0,			/* bitsize */
+	 FALSE,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_dont, /* complain_on_overflow */
+	 NULL,			/* special_function */
+	 "R_TILEPRO_GNU_VTINHERIT", /* name */
+	 FALSE,			/* partial_inplace */
+	 0,			/* src_mask */
+	 0,			/* dst_mask */
+	 FALSE),		/* pcrel_offset */
 
   /* GNU extension to record C++ vtable member usage */
-  HOWTO (R_TILEPRO_GNU_VTENTRY,     /* type */
-         0,                     /* rightshift */
-         2,                     /* size (0 = byte, 1 = short, 2 = long) */
-         0,                     /* bitsize */
-         FALSE,                 /* pc_relative */
-         0,                     /* bitpos */
-         complain_overflow_dont, /* complain_on_overflow */
-         _bfd_elf_rel_vtable_reloc_fn,  /* special_function */
-         "R_TILEPRO_GNU_VTENTRY",   /* name */
-         FALSE,                 /* partial_inplace */
-         0,                     /* src_mask */
-         0,                     /* dst_mask */
-         FALSE),                /* pcrel_offset */
+  HOWTO (R_TILEPRO_GNU_VTENTRY,	    /* type */
+	 0,			/* rightshift */
+	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 0,			/* bitsize */
+	 FALSE,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_dont, /* complain_on_overflow */
+	 _bfd_elf_rel_vtable_reloc_fn,	/* special_function */
+	 "R_TILEPRO_GNU_VTENTRY",   /* name */
+	 FALSE,			/* partial_inplace */
+	 0,			/* src_mask */
+	 0,			/* dst_mask */
+	 FALSE),		/* pcrel_offset */
 
 };
 
@@ -561,8 +561,8 @@ static reloc_howto_type tilepro_elf_howto_table2 [] =
 typedef struct tilepro_reloc_map
 {
   bfd_reloc_code_real_type  bfd_reloc_val;
-  unsigned int              tilepro_reloc_val;
-  reloc_howto_type *        table;
+  unsigned int		    tilepro_reloc_val;
+  reloc_howto_type *	    table;
 } reloc_map;
 
 static const reloc_map tilepro_reloc_map [] =
@@ -571,34 +571,34 @@ static const reloc_map tilepro_reloc_map [] =
   { bfd, tilepro, tilepro_elf_howto_table },
 
   /* Standard relocations. */
-  TH_REMAP (BFD_RELOC_NONE,                    R_TILEPRO_NONE)
-  TH_REMAP (BFD_RELOC_32,                      R_TILEPRO_32)
-  TH_REMAP (BFD_RELOC_16,                      R_TILEPRO_16)
-  TH_REMAP (BFD_RELOC_8,                       R_TILEPRO_8)
-  TH_REMAP (BFD_RELOC_32_PCREL,                R_TILEPRO_32_PCREL)
-  TH_REMAP (BFD_RELOC_16_PCREL,                R_TILEPRO_16_PCREL)
-  TH_REMAP (BFD_RELOC_8_PCREL,                 R_TILEPRO_8_PCREL)
-  TH_REMAP (BFD_RELOC_LO16,                    R_TILEPRO_LO16)
-  TH_REMAP (BFD_RELOC_HI16,                    R_TILEPRO_HI16)
-  TH_REMAP (BFD_RELOC_HI16_S,                  R_TILEPRO_HA16)
+  TH_REMAP (BFD_RELOC_NONE,		       R_TILEPRO_NONE)
+  TH_REMAP (BFD_RELOC_32,		       R_TILEPRO_32)
+  TH_REMAP (BFD_RELOC_16,		       R_TILEPRO_16)
+  TH_REMAP (BFD_RELOC_8,		       R_TILEPRO_8)
+  TH_REMAP (BFD_RELOC_32_PCREL,		       R_TILEPRO_32_PCREL)
+  TH_REMAP (BFD_RELOC_16_PCREL,		       R_TILEPRO_16_PCREL)
+  TH_REMAP (BFD_RELOC_8_PCREL,		       R_TILEPRO_8_PCREL)
+  TH_REMAP (BFD_RELOC_LO16,		       R_TILEPRO_LO16)
+  TH_REMAP (BFD_RELOC_HI16,		       R_TILEPRO_HI16)
+  TH_REMAP (BFD_RELOC_HI16_S,		       R_TILEPRO_HA16)
 
   /* Custom relocations. */
-  TH_REMAP (BFD_RELOC_TILEPRO_COPY,            R_TILEPRO_COPY)
-  TH_REMAP (BFD_RELOC_TILEPRO_GLOB_DAT,        R_TILEPRO_GLOB_DAT)
-  TH_REMAP (BFD_RELOC_TILEPRO_JMP_SLOT,        R_TILEPRO_JMP_SLOT)
-  TH_REMAP (BFD_RELOC_TILEPRO_RELATIVE,        R_TILEPRO_RELATIVE)
-  TH_REMAP (BFD_RELOC_TILEPRO_BROFF_X1,        R_TILEPRO_BROFF_X1)
+  TH_REMAP (BFD_RELOC_TILEPRO_COPY,	       R_TILEPRO_COPY)
+  TH_REMAP (BFD_RELOC_TILEPRO_GLOB_DAT,	       R_TILEPRO_GLOB_DAT)
+  TH_REMAP (BFD_RELOC_TILEPRO_JMP_SLOT,	       R_TILEPRO_JMP_SLOT)
+  TH_REMAP (BFD_RELOC_TILEPRO_RELATIVE,	       R_TILEPRO_RELATIVE)
+  TH_REMAP (BFD_RELOC_TILEPRO_BROFF_X1,	       R_TILEPRO_BROFF_X1)
   TH_REMAP (BFD_RELOC_TILEPRO_JOFFLONG_X1,     R_TILEPRO_JOFFLONG_X1)
   TH_REMAP (BFD_RELOC_TILEPRO_JOFFLONG_X1_PLT, R_TILEPRO_JOFFLONG_X1_PLT)
-  TH_REMAP (BFD_RELOC_TILEPRO_IMM8_X0,         R_TILEPRO_IMM8_X0)
-  TH_REMAP (BFD_RELOC_TILEPRO_IMM8_Y0,         R_TILEPRO_IMM8_Y0)
-  TH_REMAP (BFD_RELOC_TILEPRO_IMM8_X1,         R_TILEPRO_IMM8_X1)
-  TH_REMAP (BFD_RELOC_TILEPRO_IMM8_Y1,         R_TILEPRO_IMM8_Y1)
+  TH_REMAP (BFD_RELOC_TILEPRO_IMM8_X0,	       R_TILEPRO_IMM8_X0)
+  TH_REMAP (BFD_RELOC_TILEPRO_IMM8_Y0,	       R_TILEPRO_IMM8_Y0)
+  TH_REMAP (BFD_RELOC_TILEPRO_IMM8_X1,	       R_TILEPRO_IMM8_X1)
+  TH_REMAP (BFD_RELOC_TILEPRO_IMM8_Y1,	       R_TILEPRO_IMM8_Y1)
   TH_REMAP (BFD_RELOC_TILEPRO_DEST_IMM8_X1,    R_TILEPRO_DEST_IMM8_X1)
   TH_REMAP (BFD_RELOC_TILEPRO_MT_IMM15_X1,     R_TILEPRO_MT_IMM15_X1)
   TH_REMAP (BFD_RELOC_TILEPRO_MF_IMM15_X1,     R_TILEPRO_MF_IMM15_X1)
-  TH_REMAP (BFD_RELOC_TILEPRO_IMM16_X0,        R_TILEPRO_IMM16_X0)
-  TH_REMAP (BFD_RELOC_TILEPRO_IMM16_X1,        R_TILEPRO_IMM16_X1)
+  TH_REMAP (BFD_RELOC_TILEPRO_IMM16_X0,	       R_TILEPRO_IMM16_X0)
+  TH_REMAP (BFD_RELOC_TILEPRO_IMM16_X1,	       R_TILEPRO_IMM16_X1)
   TH_REMAP (BFD_RELOC_TILEPRO_IMM16_X0_LO,     R_TILEPRO_IMM16_X0_LO)
   TH_REMAP (BFD_RELOC_TILEPRO_IMM16_X1_LO,     R_TILEPRO_IMM16_X1_LO)
   TH_REMAP (BFD_RELOC_TILEPRO_IMM16_X0_HI,     R_TILEPRO_IMM16_X0_HI)
@@ -606,8 +606,8 @@ static const reloc_map tilepro_reloc_map [] =
   TH_REMAP (BFD_RELOC_TILEPRO_IMM16_X0_HA,     R_TILEPRO_IMM16_X0_HA)
   TH_REMAP (BFD_RELOC_TILEPRO_IMM16_X1_HA,     R_TILEPRO_IMM16_X1_HA)
 
-  TH_REMAP (BFD_RELOC_TILEPRO_IMM16_X0_PCREL,    R_TILEPRO_IMM16_X0_PCREL)
-  TH_REMAP (BFD_RELOC_TILEPRO_IMM16_X1_PCREL,    R_TILEPRO_IMM16_X1_PCREL)
+  TH_REMAP (BFD_RELOC_TILEPRO_IMM16_X0_PCREL,	 R_TILEPRO_IMM16_X0_PCREL)
+  TH_REMAP (BFD_RELOC_TILEPRO_IMM16_X1_PCREL,	 R_TILEPRO_IMM16_X1_PCREL)
   TH_REMAP (BFD_RELOC_TILEPRO_IMM16_X0_LO_PCREL, R_TILEPRO_IMM16_X0_LO_PCREL)
   TH_REMAP (BFD_RELOC_TILEPRO_IMM16_X1_LO_PCREL, R_TILEPRO_IMM16_X1_LO_PCREL)
   TH_REMAP (BFD_RELOC_TILEPRO_IMM16_X0_HI_PCREL, R_TILEPRO_IMM16_X0_HI_PCREL)
@@ -625,23 +625,23 @@ static const reloc_map tilepro_reloc_map [] =
   TH_REMAP (BFD_RELOC_TILEPRO_IMM16_X1_GOT_HA, R_TILEPRO_IMM16_X1_GOT_HA)
 
   TH_REMAP (BFD_RELOC_TILEPRO_MMSTART_X0,  R_TILEPRO_MMSTART_X0)
-  TH_REMAP (BFD_RELOC_TILEPRO_MMEND_X0,    R_TILEPRO_MMEND_X0)
+  TH_REMAP (BFD_RELOC_TILEPRO_MMEND_X0,	   R_TILEPRO_MMEND_X0)
   TH_REMAP (BFD_RELOC_TILEPRO_MMSTART_X1,  R_TILEPRO_MMSTART_X1)
-  TH_REMAP (BFD_RELOC_TILEPRO_MMEND_X1,    R_TILEPRO_MMEND_X1)
-  TH_REMAP (BFD_RELOC_TILEPRO_SHAMT_X0,    R_TILEPRO_SHAMT_X0)
-  TH_REMAP (BFD_RELOC_TILEPRO_SHAMT_X1,    R_TILEPRO_SHAMT_X1)
-  TH_REMAP (BFD_RELOC_TILEPRO_SHAMT_Y0,    R_TILEPRO_SHAMT_Y0)
-  TH_REMAP (BFD_RELOC_TILEPRO_SHAMT_Y1,    R_TILEPRO_SHAMT_Y1)
+  TH_REMAP (BFD_RELOC_TILEPRO_MMEND_X1,	   R_TILEPRO_MMEND_X1)
+  TH_REMAP (BFD_RELOC_TILEPRO_SHAMT_X0,	   R_TILEPRO_SHAMT_X0)
+  TH_REMAP (BFD_RELOC_TILEPRO_SHAMT_X1,	   R_TILEPRO_SHAMT_X1)
+  TH_REMAP (BFD_RELOC_TILEPRO_SHAMT_Y0,	   R_TILEPRO_SHAMT_Y0)
+  TH_REMAP (BFD_RELOC_TILEPRO_SHAMT_Y1,	   R_TILEPRO_SHAMT_Y1)
 
-  TH_REMAP (BFD_RELOC_TILEPRO_TLS_GD_CALL,        R_TILEPRO_TLS_GD_CALL)
+  TH_REMAP (BFD_RELOC_TILEPRO_TLS_GD_CALL,	  R_TILEPRO_TLS_GD_CALL)
   TH_REMAP (BFD_RELOC_TILEPRO_IMM8_X0_TLS_GD_ADD, R_TILEPRO_IMM8_X0_TLS_GD_ADD)
   TH_REMAP (BFD_RELOC_TILEPRO_IMM8_X1_TLS_GD_ADD, R_TILEPRO_IMM8_X1_TLS_GD_ADD)
   TH_REMAP (BFD_RELOC_TILEPRO_IMM8_Y0_TLS_GD_ADD, R_TILEPRO_IMM8_Y0_TLS_GD_ADD)
   TH_REMAP (BFD_RELOC_TILEPRO_IMM8_Y1_TLS_GD_ADD, R_TILEPRO_IMM8_Y1_TLS_GD_ADD)
-  TH_REMAP (BFD_RELOC_TILEPRO_TLS_IE_LOAD,        R_TILEPRO_TLS_IE_LOAD)
+  TH_REMAP (BFD_RELOC_TILEPRO_TLS_IE_LOAD,	  R_TILEPRO_TLS_IE_LOAD)
 
-  TH_REMAP (BFD_RELOC_TILEPRO_IMM16_X0_TLS_GD,    R_TILEPRO_IMM16_X0_TLS_GD)
-  TH_REMAP (BFD_RELOC_TILEPRO_IMM16_X1_TLS_GD,    R_TILEPRO_IMM16_X1_TLS_GD)
+  TH_REMAP (BFD_RELOC_TILEPRO_IMM16_X0_TLS_GD,	  R_TILEPRO_IMM16_X0_TLS_GD)
+  TH_REMAP (BFD_RELOC_TILEPRO_IMM16_X1_TLS_GD,	  R_TILEPRO_IMM16_X1_TLS_GD)
   TH_REMAP (BFD_RELOC_TILEPRO_IMM16_X0_TLS_GD_LO, R_TILEPRO_IMM16_X0_TLS_GD_LO)
   TH_REMAP (BFD_RELOC_TILEPRO_IMM16_X1_TLS_GD_LO, R_TILEPRO_IMM16_X1_TLS_GD_LO)
   TH_REMAP (BFD_RELOC_TILEPRO_IMM16_X0_TLS_GD_HI, R_TILEPRO_IMM16_X0_TLS_GD_HI)
@@ -649,8 +649,8 @@ static const reloc_map tilepro_reloc_map [] =
   TH_REMAP (BFD_RELOC_TILEPRO_IMM16_X0_TLS_GD_HA, R_TILEPRO_IMM16_X0_TLS_GD_HA)
   TH_REMAP (BFD_RELOC_TILEPRO_IMM16_X1_TLS_GD_HA, R_TILEPRO_IMM16_X1_TLS_GD_HA)
 
-  TH_REMAP (BFD_RELOC_TILEPRO_IMM16_X0_TLS_IE,    R_TILEPRO_IMM16_X0_TLS_IE)
-  TH_REMAP (BFD_RELOC_TILEPRO_IMM16_X1_TLS_IE,    R_TILEPRO_IMM16_X1_TLS_IE)
+  TH_REMAP (BFD_RELOC_TILEPRO_IMM16_X0_TLS_IE,	  R_TILEPRO_IMM16_X0_TLS_IE)
+  TH_REMAP (BFD_RELOC_TILEPRO_IMM16_X1_TLS_IE,	  R_TILEPRO_IMM16_X1_TLS_IE)
   TH_REMAP (BFD_RELOC_TILEPRO_IMM16_X0_TLS_IE_LO, R_TILEPRO_IMM16_X0_TLS_IE_LO)
   TH_REMAP (BFD_RELOC_TILEPRO_IMM16_X1_TLS_IE_LO, R_TILEPRO_IMM16_X1_TLS_IE_LO)
   TH_REMAP (BFD_RELOC_TILEPRO_IMM16_X0_TLS_IE_HI, R_TILEPRO_IMM16_X0_TLS_IE_HI)
@@ -662,8 +662,8 @@ static const reloc_map tilepro_reloc_map [] =
   TH_REMAP (BFD_RELOC_TILEPRO_TLS_DTPOFF32, R_TILEPRO_TLS_DTPOFF32)
   TH_REMAP (BFD_RELOC_TILEPRO_TLS_TPOFF32,  R_TILEPRO_TLS_TPOFF32)
 
-  TH_REMAP (BFD_RELOC_TILEPRO_IMM16_X0_TLS_LE,    R_TILEPRO_IMM16_X0_TLS_LE)
-  TH_REMAP (BFD_RELOC_TILEPRO_IMM16_X1_TLS_LE,    R_TILEPRO_IMM16_X1_TLS_LE)
+  TH_REMAP (BFD_RELOC_TILEPRO_IMM16_X0_TLS_LE,	  R_TILEPRO_IMM16_X0_TLS_LE)
+  TH_REMAP (BFD_RELOC_TILEPRO_IMM16_X1_TLS_LE,	  R_TILEPRO_IMM16_X1_TLS_LE)
   TH_REMAP (BFD_RELOC_TILEPRO_IMM16_X0_TLS_LE_LO, R_TILEPRO_IMM16_X0_TLS_LE_LO)
   TH_REMAP (BFD_RELOC_TILEPRO_IMM16_X1_TLS_LE_LO, R_TILEPRO_IMM16_X1_TLS_LE_LO)
   TH_REMAP (BFD_RELOC_TILEPRO_IMM16_X0_TLS_LE_HI, R_TILEPRO_IMM16_X0_TLS_LE_HI)
@@ -679,26 +679,6 @@ static const reloc_map tilepro_reloc_map [] =
 
 
 
-/* The TILEPro linker needs to keep track of the number of relocs that it
-   decides to copy as dynamic relocs in check_relocs for each symbol.
-   This is so that it can later discard them if they are found to be
-   unnecessary.  We store the information in a field extending the
-   regular ELF linker hash table.  */
-
-struct tilepro_elf_dyn_relocs
-{
-  struct tilepro_elf_dyn_relocs *next;
-
-  /* The input section of the reloc.  */
-  asection *sec;
-
-  /* Total number of relocs copied for the input section.  */
-  bfd_size_type count;
-
-  /* Number of pc-relative relocs copied for the input section.  */
-  bfd_size_type pc_count;
-};
-
 /* TILEPRO ELF linker hash entry.  */
 
 struct tilepro_elf_link_hash_entry
@@ -706,7 +686,7 @@ struct tilepro_elf_link_hash_entry
   struct elf_link_hash_entry elf;
 
   /* Track dynamic relocs copied for this symbol.  */
-  struct tilepro_elf_dyn_relocs *dyn_relocs;
+  struct elf_dyn_relocs *dyn_relocs;
 
 #define GOT_UNKNOWN     0
 #define GOT_NORMAL      1
@@ -754,10 +734,6 @@ struct tilepro_elf_link_hash_table
 {
   struct elf_link_hash_table elf;
 
-  /* Short-cuts to get to dynamic linker sections.  */
-  asection *sdynbss;
-  asection *srelbss;
-
   /* Small local sym to section mapping cache.  */
   struct sym_cache sym_cache;
 };
@@ -770,7 +746,7 @@ struct tilepro_elf_link_hash_table
 
 static reloc_howto_type *
 tilepro_reloc_type_lookup (bfd * abfd ATTRIBUTE_UNUSED,
-                           bfd_reloc_code_real_type code)
+			   bfd_reloc_code_real_type code)
 {
   unsigned int i;
 
@@ -796,10 +772,10 @@ tilepro_reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED,
 
   for (i = 0;
        i < (sizeof (tilepro_elf_howto_table)
-            / sizeof (tilepro_elf_howto_table[0]));
+	    / sizeof (tilepro_elf_howto_table[0]));
        i++)
     if (tilepro_elf_howto_table[i].name != NULL
-        && strcasecmp (tilepro_elf_howto_table[i].name, r_name) == 0)
+	&& strcasecmp (tilepro_elf_howto_table[i].name, r_name) == 0)
       return &tilepro_elf_howto_table[i];
 
   return NULL;
@@ -809,8 +785,8 @@ tilepro_reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED,
 
 static void
 tilepro_info_to_howto_rela (bfd * abfd ATTRIBUTE_UNUSED,
-                            arelent * cache_ptr,
-                            Elf_Internal_Rela * dst)
+			    arelent * cache_ptr,
+			    Elf_Internal_Rela * dst)
 {
   unsigned int r_type = ELF32_R_TYPE (dst->r_info);
 
@@ -1006,18 +982,18 @@ tilepro_elf_append_rela_32 (bfd *abfd, asection *s, Elf_Internal_Rela *rel)
 /* The procedure linkage table starts with the following header:
 
    {
-    rli     r29, r29, 16
+    rli	    r29, r29, 16
     lwadd   r28, r27, 4
    }
-    lw      r27, r27
+    lw	    r27, r27
    {
-    info    10            ## SP not offset, return PC in LR
-    jr      r27
+    info    10		  ## SP not offset, return PC in LR
+    jr	    r27
    }
 
    Subsequent entries are the following, jumping to the header at the end:
 
-   lnk     r28
+   lnk	   r28
 1:
    {
     auli    r28, r28, <_GLOBAL_OFFSET_TABLE_ - 1b + MY_GOT_OFFSET>
@@ -1029,11 +1005,11 @@ tilepro_elf_append_rela_32 (bfd *abfd, asection *s, Elf_Internal_Rela *rel)
    }
    {
     auli    r29, zero, MY_PLT_INDEX
-    lw      r28, r28
+    lw	    r28, r28
    }
    {
-    info    10            ## SP not offset, return PC in LR
-    jr      r28
+    info    10		  ## SP not offset, return PC in LR
+    jr	    r28
    }
 
    We initially store MY_PLT_INDEX in the high bits so that we can use the all
@@ -1179,8 +1155,8 @@ link_hash_newfunc (struct bfd_hash_entry *entry,
   if (entry == NULL)
     {
       entry =
-        bfd_hash_allocate (table,
-                           sizeof (struct tilepro_elf_link_hash_entry));
+	bfd_hash_allocate (table,
+			   sizeof (struct tilepro_elf_link_hash_entry));
       if (entry == NULL)
 	return entry;
     }
@@ -1234,8 +1210,7 @@ tilepro_elf_create_got_section (bfd *abfd, struct bfd_link_info *info)
   struct elf_link_hash_table *htab = elf_hash_table (info);
 
   /* This function may be called more than once.  */
-  s = bfd_get_linker_section (abfd, ".got");
-  if (s != NULL)
+  if (htab->sgot != NULL)
     return TRUE;
 
   flags = bed->dynamic_sec_flags;
@@ -1296,26 +1271,10 @@ static bfd_boolean
 tilepro_elf_create_dynamic_sections (bfd *dynobj,
 				     struct bfd_link_info *info)
 {
-  struct tilepro_elf_link_hash_table *htab;
-
-  htab = tilepro_elf_hash_table (info);
-  BFD_ASSERT (htab != NULL);
-
   if (!tilepro_elf_create_got_section (dynobj, info))
     return FALSE;
 
-  if (!_bfd_elf_create_dynamic_sections (dynobj, info))
-    return FALSE;
-
-  htab->sdynbss = bfd_get_linker_section (dynobj, ".dynbss");
-  if (!bfd_link_pic (info))
-    htab->srelbss = bfd_get_linker_section (dynobj, ".rela.bss");
-
-  if (!htab->elf.splt || !htab->elf.srelplt || !htab->sdynbss
-      || (!bfd_link_pic (info) && !htab->srelbss))
-    abort ();
-
-  return TRUE;
+  return _bfd_elf_create_dynamic_sections (dynobj, info);
 }
 
 /* Copy the extra info we tack onto an elf_link_hash_entry.  */
@@ -1334,14 +1293,14 @@ tilepro_elf_copy_indirect_symbol (struct bfd_link_info *info,
     {
       if (edir->dyn_relocs != NULL)
 	{
-	  struct tilepro_elf_dyn_relocs **pp;
-	  struct tilepro_elf_dyn_relocs *p;
+	  struct elf_dyn_relocs **pp;
+	  struct elf_dyn_relocs *p;
 
 	  /* Add reloc counts against the indirect sym to the direct sym
 	     list.  Merge any entries against the same section.  */
 	  for (pp = &eind->dyn_relocs; (p = *pp) != NULL; )
 	    {
-	      struct tilepro_elf_dyn_relocs *q;
+	      struct elf_dyn_relocs *q;
 
 	      for (q = edir->dyn_relocs; q != NULL; q = q->next)
 		if (q->sec == p->sec)
@@ -1454,7 +1413,7 @@ static int
 tilepro_elf_tls_transition (struct bfd_link_info *info, int r_type,
 			    int is_local)
 {
-  if (bfd_link_pic (info))
+  if (!bfd_link_executable (info))
     return r_type;
 
   if (is_local)
@@ -1499,7 +1458,7 @@ tilepro_elf_check_relocs (bfd *abfd, struct bfd_link_info *info,
   for (rel = relocs; rel < rel_end; rel++)
     {
       unsigned int r_type;
-      unsigned long r_symndx;
+      unsigned int r_symndx;
       struct elf_link_hash_entry *h;
       int tls_type;
 
@@ -1508,8 +1467,9 @@ tilepro_elf_check_relocs (bfd *abfd, struct bfd_link_info *info,
 
       if (r_symndx >= NUM_SHDR_ENTRIES (symtab_hdr))
 	{
-	  (*_bfd_error_handler) (_("%B: bad symbol index: %d"),
-				 abfd, r_symndx);
+	  /* xgettext:c-format */
+	  _bfd_error_handler (_("%B: bad symbol index: %d"),
+			      abfd, r_symndx);
 	  return FALSE;
 	}
 
@@ -1521,67 +1481,63 @@ tilepro_elf_check_relocs (bfd *abfd, struct bfd_link_info *info,
 	  while (h->root.type == bfd_link_hash_indirect
 		 || h->root.type == bfd_link_hash_warning)
 	    h = (struct elf_link_hash_entry *) h->root.u.i.link;
-
-	  /* PR15323, ref flags aren't set for references in the same
-	     object.  */
-	  h->root.non_ir_ref = 1;
 	}
 
       r_type = tilepro_elf_tls_transition (info, r_type, h == NULL);
       switch (r_type)
 	{
-        case R_TILEPRO_IMM16_X0_TLS_LE:
-        case R_TILEPRO_IMM16_X1_TLS_LE:
-        case R_TILEPRO_IMM16_X0_TLS_LE_LO:
-        case R_TILEPRO_IMM16_X1_TLS_LE_LO:
-        case R_TILEPRO_IMM16_X0_TLS_LE_HI:
-        case R_TILEPRO_IMM16_X1_TLS_LE_HI:
-        case R_TILEPRO_IMM16_X0_TLS_LE_HA:
-        case R_TILEPRO_IMM16_X1_TLS_LE_HA:
-	  if (bfd_link_pic (info))
+	case R_TILEPRO_IMM16_X0_TLS_LE:
+	case R_TILEPRO_IMM16_X1_TLS_LE:
+	case R_TILEPRO_IMM16_X0_TLS_LE_LO:
+	case R_TILEPRO_IMM16_X1_TLS_LE_LO:
+	case R_TILEPRO_IMM16_X0_TLS_LE_HI:
+	case R_TILEPRO_IMM16_X1_TLS_LE_HI:
+	case R_TILEPRO_IMM16_X0_TLS_LE_HA:
+	case R_TILEPRO_IMM16_X1_TLS_LE_HA:
+	  if (!bfd_link_executable (info))
 	    goto r_tilepro_plt32;
 	  break;
 
-        case R_TILEPRO_IMM16_X0_TLS_GD:
-        case R_TILEPRO_IMM16_X1_TLS_GD:
-        case R_TILEPRO_IMM16_X0_TLS_GD_LO:
-        case R_TILEPRO_IMM16_X1_TLS_GD_LO:
-        case R_TILEPRO_IMM16_X0_TLS_GD_HI:
-        case R_TILEPRO_IMM16_X1_TLS_GD_HI:
-        case R_TILEPRO_IMM16_X0_TLS_GD_HA:
-        case R_TILEPRO_IMM16_X1_TLS_GD_HA:
+	case R_TILEPRO_IMM16_X0_TLS_GD:
+	case R_TILEPRO_IMM16_X1_TLS_GD:
+	case R_TILEPRO_IMM16_X0_TLS_GD_LO:
+	case R_TILEPRO_IMM16_X1_TLS_GD_LO:
+	case R_TILEPRO_IMM16_X0_TLS_GD_HI:
+	case R_TILEPRO_IMM16_X1_TLS_GD_HI:
+	case R_TILEPRO_IMM16_X0_TLS_GD_HA:
+	case R_TILEPRO_IMM16_X1_TLS_GD_HA:
 	  BFD_ASSERT (bfd_link_pic (info));
 	  tls_type = GOT_TLS_GD;
-          goto have_got_reference;
+	  goto have_got_reference;
 
-        case R_TILEPRO_IMM16_X0_TLS_IE:
-        case R_TILEPRO_IMM16_X1_TLS_IE:
-        case R_TILEPRO_IMM16_X0_TLS_IE_LO:
-        case R_TILEPRO_IMM16_X1_TLS_IE_LO:
-        case R_TILEPRO_IMM16_X0_TLS_IE_HI:
-        case R_TILEPRO_IMM16_X1_TLS_IE_HI:
-        case R_TILEPRO_IMM16_X0_TLS_IE_HA:
-        case R_TILEPRO_IMM16_X1_TLS_IE_HA:
-          tls_type = GOT_TLS_IE;
-          if (bfd_link_pic (info))
-            info->flags |= DF_STATIC_TLS;
-          goto have_got_reference;
+	case R_TILEPRO_IMM16_X0_TLS_IE:
+	case R_TILEPRO_IMM16_X1_TLS_IE:
+	case R_TILEPRO_IMM16_X0_TLS_IE_LO:
+	case R_TILEPRO_IMM16_X1_TLS_IE_LO:
+	case R_TILEPRO_IMM16_X0_TLS_IE_HI:
+	case R_TILEPRO_IMM16_X1_TLS_IE_HI:
+	case R_TILEPRO_IMM16_X0_TLS_IE_HA:
+	case R_TILEPRO_IMM16_X1_TLS_IE_HA:
+	  tls_type = GOT_TLS_IE;
+	  if (!bfd_link_executable (info))
+	    info->flags |= DF_STATIC_TLS;
+	  goto have_got_reference;
 
-        case R_TILEPRO_IMM16_X0_GOT:
-        case R_TILEPRO_IMM16_X1_GOT:
-        case R_TILEPRO_IMM16_X0_GOT_LO:
-        case R_TILEPRO_IMM16_X1_GOT_LO:
-        case R_TILEPRO_IMM16_X0_GOT_HI:
-        case R_TILEPRO_IMM16_X1_GOT_HI:
-        case R_TILEPRO_IMM16_X0_GOT_HA:
-        case R_TILEPRO_IMM16_X1_GOT_HA:
-           tls_type = GOT_NORMAL;
-           /* Fall Through */
+	case R_TILEPRO_IMM16_X0_GOT:
+	case R_TILEPRO_IMM16_X1_GOT:
+	case R_TILEPRO_IMM16_X0_GOT_LO:
+	case R_TILEPRO_IMM16_X1_GOT_LO:
+	case R_TILEPRO_IMM16_X0_GOT_HI:
+	case R_TILEPRO_IMM16_X1_GOT_HI:
+	case R_TILEPRO_IMM16_X0_GOT_HA:
+	case R_TILEPRO_IMM16_X1_GOT_HA:
+	   tls_type = GOT_NORMAL;
+	   /* Fall Through */
 
-        have_got_reference:
+	have_got_reference:
 	  /* This symbol requires a global offset table entry.  */
 	  {
-            int old_tls_type;
+	    int old_tls_type;
 
 	    if (h != NULL)
 	      {
@@ -1623,7 +1579,8 @@ tilepro_elf_check_relocs (bfd *abfd, struct bfd_link_info *info,
 		  tls_type = old_tls_type;
 		else
 		  {
-		    (*_bfd_error_handler)
+		    _bfd_error_handler
+		      /* xgettext:c-format */
 		      (_("%B: `%s' accessed both as normal and thread local symbol"),
 		       abfd, h ? h->root.root.string : "<local>");
 		    return FALSE;
@@ -1648,7 +1605,7 @@ tilepro_elf_check_relocs (bfd *abfd, struct bfd_link_info *info,
 	  break;
 
 	case R_TILEPRO_TLS_GD_CALL:
-	  if (bfd_link_pic (info))
+	  if (!bfd_link_executable (info))
 	    {
 	      /* These are basically R_TILEPRO_JOFFLONG_X1_PLT relocs
 		 against __tls_get_addr.  */
@@ -1665,7 +1622,7 @@ tilepro_elf_check_relocs (bfd *abfd, struct bfd_link_info *info,
 	    break;
 	  /* Fall through */
 
-        case R_TILEPRO_JOFFLONG_X1_PLT:
+	case R_TILEPRO_JOFFLONG_X1_PLT:
 	  /* This symbol requires a procedure linkage table entry.  We
 	     actually build the entry in adjust_dynamic_symbol,
 	     because this might be a case of linking PIC code without
@@ -1673,23 +1630,23 @@ tilepro_elf_check_relocs (bfd *abfd, struct bfd_link_info *info,
 	     need to generate a procedure linkage table after all.  */
 
 	  if (h != NULL)
-            {
-              h->needs_plt = 1;
-              h->plt.refcount += 1;
-            }
+	    {
+	      h->needs_plt = 1;
+	      h->plt.refcount += 1;
+	    }
 	  break;
 
-        case R_TILEPRO_32_PCREL:
-        case R_TILEPRO_16_PCREL:
-        case R_TILEPRO_8_PCREL:
-        case R_TILEPRO_IMM16_X0_PCREL:
-        case R_TILEPRO_IMM16_X1_PCREL:
-        case R_TILEPRO_IMM16_X0_LO_PCREL:
-        case R_TILEPRO_IMM16_X1_LO_PCREL:
-        case R_TILEPRO_IMM16_X0_HI_PCREL:
-        case R_TILEPRO_IMM16_X1_HI_PCREL:
-        case R_TILEPRO_IMM16_X0_HA_PCREL:
-        case R_TILEPRO_IMM16_X1_HA_PCREL:
+	case R_TILEPRO_32_PCREL:
+	case R_TILEPRO_16_PCREL:
+	case R_TILEPRO_8_PCREL:
+	case R_TILEPRO_IMM16_X0_PCREL:
+	case R_TILEPRO_IMM16_X1_PCREL:
+	case R_TILEPRO_IMM16_X0_LO_PCREL:
+	case R_TILEPRO_IMM16_X1_LO_PCREL:
+	case R_TILEPRO_IMM16_X0_HI_PCREL:
+	case R_TILEPRO_IMM16_X1_HI_PCREL:
+	case R_TILEPRO_IMM16_X0_HA_PCREL:
+	case R_TILEPRO_IMM16_X1_HA_PCREL:
 	  if (h != NULL)
 	    h->non_got_ref = 1;
 
@@ -1698,43 +1655,43 @@ tilepro_elf_check_relocs (bfd *abfd, struct bfd_link_info *info,
 	    break;
 	  /* Fall through.  */
 
-        case R_TILEPRO_32:
-        case R_TILEPRO_16:
-        case R_TILEPRO_8:
-        case R_TILEPRO_LO16:
-        case R_TILEPRO_HI16:
-        case R_TILEPRO_HA16:
-        case R_TILEPRO_COPY:
-        case R_TILEPRO_GLOB_DAT:
-        case R_TILEPRO_JMP_SLOT:
-        case R_TILEPRO_RELATIVE:
-        case R_TILEPRO_BROFF_X1:
-        case R_TILEPRO_JOFFLONG_X1:
-        case R_TILEPRO_IMM8_X0:
-        case R_TILEPRO_IMM8_Y0:
-        case R_TILEPRO_IMM8_X1:
-        case R_TILEPRO_IMM8_Y1:
-        case R_TILEPRO_DEST_IMM8_X1:
-        case R_TILEPRO_MT_IMM15_X1:
-        case R_TILEPRO_MF_IMM15_X1:
-        case R_TILEPRO_IMM16_X0:
-        case R_TILEPRO_IMM16_X1:
-        case R_TILEPRO_IMM16_X0_LO:
-        case R_TILEPRO_IMM16_X1_LO:
-        case R_TILEPRO_IMM16_X0_HI:
-        case R_TILEPRO_IMM16_X1_HI:
-        case R_TILEPRO_IMM16_X0_HA:
-        case R_TILEPRO_IMM16_X1_HA:
-        case R_TILEPRO_MMSTART_X0:
-        case R_TILEPRO_MMEND_X0:
-        case R_TILEPRO_MMSTART_X1:
-        case R_TILEPRO_MMEND_X1:
-        case R_TILEPRO_SHAMT_X0:
-        case R_TILEPRO_SHAMT_X1:
-        case R_TILEPRO_SHAMT_Y0:
-        case R_TILEPRO_SHAMT_Y1:
+	case R_TILEPRO_32:
+	case R_TILEPRO_16:
+	case R_TILEPRO_8:
+	case R_TILEPRO_LO16:
+	case R_TILEPRO_HI16:
+	case R_TILEPRO_HA16:
+	case R_TILEPRO_COPY:
+	case R_TILEPRO_GLOB_DAT:
+	case R_TILEPRO_JMP_SLOT:
+	case R_TILEPRO_RELATIVE:
+	case R_TILEPRO_BROFF_X1:
+	case R_TILEPRO_JOFFLONG_X1:
+	case R_TILEPRO_IMM8_X0:
+	case R_TILEPRO_IMM8_Y0:
+	case R_TILEPRO_IMM8_X1:
+	case R_TILEPRO_IMM8_Y1:
+	case R_TILEPRO_DEST_IMM8_X1:
+	case R_TILEPRO_MT_IMM15_X1:
+	case R_TILEPRO_MF_IMM15_X1:
+	case R_TILEPRO_IMM16_X0:
+	case R_TILEPRO_IMM16_X1:
+	case R_TILEPRO_IMM16_X0_LO:
+	case R_TILEPRO_IMM16_X1_LO:
+	case R_TILEPRO_IMM16_X0_HI:
+	case R_TILEPRO_IMM16_X1_HI:
+	case R_TILEPRO_IMM16_X0_HA:
+	case R_TILEPRO_IMM16_X1_HA:
+	case R_TILEPRO_MMSTART_X0:
+	case R_TILEPRO_MMEND_X0:
+	case R_TILEPRO_MMSTART_X1:
+	case R_TILEPRO_MMEND_X1:
+	case R_TILEPRO_SHAMT_X0:
+	case R_TILEPRO_SHAMT_X1:
+	case R_TILEPRO_SHAMT_Y0:
+	case R_TILEPRO_SHAMT_Y1:
 	  if (h != NULL)
-              h->non_got_ref = 1;
+	      h->non_got_ref = 1;
 
 	r_tilepro_plt32:
 	  if (h != NULL && !bfd_link_pic (info))
@@ -1742,7 +1699,7 @@ tilepro_elf_check_relocs (bfd *abfd, struct bfd_link_info *info,
 	      /* We may need a .plt entry if the function this reloc
 		 refers to is in a shared lib.  */
 	      h->plt.refcount += 1;
-            }
+	    }
 
 	  /* If we are creating a shared library, and this is a reloc
 	     against a global symbol, or a non PC relative reloc
@@ -1778,8 +1735,8 @@ tilepro_elf_check_relocs (bfd *abfd, struct bfd_link_info *info,
 		  && (h->root.type == bfd_link_hash_defweak
 		      || !h->def_regular)))
 	    {
-	      struct tilepro_elf_dyn_relocs *p;
-	      struct tilepro_elf_dyn_relocs **head;
+	      struct elf_dyn_relocs *p;
+	      struct elf_dyn_relocs **head;
 
 	      /* When creating a shared object, we must copy these
 		 relocs into the output file.  We create a reloc
@@ -1797,7 +1754,7 @@ tilepro_elf_check_relocs (bfd *abfd, struct bfd_link_info *info,
 		 relocations we need for this symbol.  */
 	      if (h != NULL)
 		head =
-                  &((struct tilepro_elf_link_hash_entry *) h)->dyn_relocs;
+		  &((struct tilepro_elf_link_hash_entry *) h)->dyn_relocs;
 	      else
 		{
 		  /* Track dynamic relocs needed for local syms too.
@@ -1818,14 +1775,14 @@ tilepro_elf_check_relocs (bfd *abfd, struct bfd_link_info *info,
 		    s = sec;
 
 		  vpp = &elf_section_data (s)->local_dynrel;
-		  head = (struct tilepro_elf_dyn_relocs **) vpp;
+		  head = (struct elf_dyn_relocs **) vpp;
 		}
 
 	      p = *head;
 	      if (p == NULL || p->sec != sec)
 		{
 		  bfd_size_type amt = sizeof *p;
-		  p = ((struct tilepro_elf_dyn_relocs *)
+		  p = ((struct elf_dyn_relocs *)
 		       bfd_alloc (htab->elf.dynobj, amt));
 		  if (p == NULL)
 		    return FALSE;
@@ -1864,10 +1821,10 @@ tilepro_elf_check_relocs (bfd *abfd, struct bfd_link_info *info,
 
 static asection *
 tilepro_elf_gc_mark_hook (asection *sec,
-                          struct bfd_link_info *info,
-                          Elf_Internal_Rela *rel,
-                          struct elf_link_hash_entry *h,
-                          Elf_Internal_Sym *sym)
+			  struct bfd_link_info *info,
+			  Elf_Internal_Rela *rel,
+			  struct elf_link_hash_entry *h,
+			  Elf_Internal_Sym *sym)
 {
   if (h != NULL)
     {
@@ -1883,6 +1840,8 @@ tilepro_elf_gc_mark_hook (asection *sec,
      dealing with TLS optimization, ought to be !bfd_link_executable (info).  */
   if (bfd_link_pic (info))
     {
+      struct bfd_link_hash_entry *bh;
+
       switch (ELF32_R_TYPE (rel->r_info))
 	{
 	case R_TILEPRO_TLS_GD_CALL:
@@ -1891,12 +1850,18 @@ tilepro_elf_gc_mark_hook (asection *sec,
 	     on this reloc, so the real symbol and section will be
 	     gc marked when processing the other reloc.  That lets
 	     us handle __tls_get_addr here.  */
-	  h = elf_link_hash_lookup (elf_hash_table (info), "__tls_get_addr",
-				    FALSE, FALSE, TRUE);
+	  bh = NULL;
+	  if (! _bfd_generic_link_add_one_symbol (info, sec->owner,
+						  "__tls_get_addr", 0,
+						  bfd_und_section_ptr,
+						  0, NULL, FALSE,
+						  FALSE, &bh))
+	    return NULL;
+	  h = (struct elf_link_hash_entry *) bh;
 	  BFD_ASSERT (h != NULL);
 	  h->mark = 1;
-	  if (h->u.weakdef != NULL)
-	    h->u.weakdef->mark = 1;
+	  if (h->is_weakalias)
+	    weakdef (h)->mark = 1;
 	  sym = NULL;
 	}
     }
@@ -1904,168 +1869,21 @@ tilepro_elf_gc_mark_hook (asection *sec,
   return _bfd_elf_gc_mark_hook (sec, info, rel, h, sym);
 }
 
-/* Update the got entry reference counts for the section being removed.  */
-static bfd_boolean
-tilepro_elf_gc_sweep_hook (bfd *abfd, struct bfd_link_info *info,
-			   asection *sec, const Elf_Internal_Rela *relocs)
+/* Find dynamic relocs for H that apply to read-only sections.  */
+
+static asection *
+readonly_dynrelocs (struct elf_link_hash_entry *h)
 {
-  struct tilepro_elf_link_hash_table *htab;
-  Elf_Internal_Shdr *symtab_hdr;
-  struct elf_link_hash_entry **sym_hashes;
-  bfd_signed_vma *local_got_refcounts;
-  const Elf_Internal_Rela *rel, *relend;
+  struct elf_dyn_relocs *p;
 
-  if (bfd_link_relocatable (info))
-    return TRUE;
-
-  BFD_ASSERT (is_tilepro_elf (abfd) || sec->reloc_count == 0);
-
-  elf_section_data (sec)->local_dynrel = NULL;
-
-  htab = tilepro_elf_hash_table (info);
-  BFD_ASSERT (htab != NULL);
-  symtab_hdr = &elf_symtab_hdr (abfd);
-  sym_hashes = elf_sym_hashes (abfd);
-  local_got_refcounts = elf_local_got_refcounts (abfd);
-
-  relend = relocs + sec->reloc_count;
-  for (rel = relocs; rel < relend; rel++)
+  for (p = tilepro_elf_hash_entry (h)->dyn_relocs; p != NULL; p = p->next)
     {
-      unsigned long r_symndx;
-      unsigned int r_type;
-      struct elf_link_hash_entry *h = NULL;
+      asection *s = p->sec->output_section;
 
-      r_symndx = ELF32_R_SYM (rel->r_info);
-      if (r_symndx >= symtab_hdr->sh_info)
-	{
-	  struct tilepro_elf_link_hash_entry *eh;
-	  struct tilepro_elf_dyn_relocs **pp;
-	  struct tilepro_elf_dyn_relocs *p;
-
-	  h = sym_hashes[r_symndx - symtab_hdr->sh_info];
-	  while (h->root.type == bfd_link_hash_indirect
-		 || h->root.type == bfd_link_hash_warning)
-	    h = (struct elf_link_hash_entry *) h->root.u.i.link;
-	  eh = (struct tilepro_elf_link_hash_entry *) h;
-	  for (pp = &eh->dyn_relocs; (p = *pp) != NULL; pp = &p->next)
-	    if (p->sec == sec)
-	      {
-		/* Everything must go for SEC.  */
-		*pp = p->next;
-		break;
-	      }
-	}
-
-      r_type = ELF32_R_TYPE (rel->r_info);
-      r_type = tilepro_elf_tls_transition (info, r_type, h != NULL);
-      switch (r_type)
-	{
-        case R_TILEPRO_IMM16_X0_GOT:
-        case R_TILEPRO_IMM16_X1_GOT:
-        case R_TILEPRO_IMM16_X0_GOT_LO:
-        case R_TILEPRO_IMM16_X1_GOT_LO:
-        case R_TILEPRO_IMM16_X0_GOT_HI:
-        case R_TILEPRO_IMM16_X1_GOT_HI:
-        case R_TILEPRO_IMM16_X0_GOT_HA:
-        case R_TILEPRO_IMM16_X1_GOT_HA:
-        case R_TILEPRO_IMM16_X0_TLS_GD:
-        case R_TILEPRO_IMM16_X1_TLS_GD:
-        case R_TILEPRO_IMM16_X0_TLS_GD_LO:
-        case R_TILEPRO_IMM16_X1_TLS_GD_LO:
-        case R_TILEPRO_IMM16_X0_TLS_GD_HI:
-        case R_TILEPRO_IMM16_X1_TLS_GD_HI:
-        case R_TILEPRO_IMM16_X0_TLS_GD_HA:
-        case R_TILEPRO_IMM16_X1_TLS_GD_HA:
-        case R_TILEPRO_IMM16_X0_TLS_IE:
-        case R_TILEPRO_IMM16_X1_TLS_IE:
-        case R_TILEPRO_IMM16_X0_TLS_IE_LO:
-        case R_TILEPRO_IMM16_X1_TLS_IE_LO:
-        case R_TILEPRO_IMM16_X0_TLS_IE_HI:
-        case R_TILEPRO_IMM16_X1_TLS_IE_HI:
-        case R_TILEPRO_IMM16_X0_TLS_IE_HA:
-        case R_TILEPRO_IMM16_X1_TLS_IE_HA:
-	  if (h != NULL)
-	    {
-	      if (h->got.refcount > 0)
-		h->got.refcount--;
-	    }
-	  else
-	    {
-	      if (local_got_refcounts &&
-		  local_got_refcounts[r_symndx] > 0)
-		local_got_refcounts[r_symndx]--;
-	    }
-	  break;
-
-        case R_TILEPRO_32_PCREL:
-        case R_TILEPRO_16_PCREL:
-        case R_TILEPRO_8_PCREL:
-        case R_TILEPRO_IMM16_X0_PCREL:
-        case R_TILEPRO_IMM16_X1_PCREL:
-        case R_TILEPRO_IMM16_X0_LO_PCREL:
-        case R_TILEPRO_IMM16_X1_LO_PCREL:
-        case R_TILEPRO_IMM16_X0_HI_PCREL:
-        case R_TILEPRO_IMM16_X1_HI_PCREL:
-        case R_TILEPRO_IMM16_X0_HA_PCREL:
-        case R_TILEPRO_IMM16_X1_HA_PCREL:
-	  if (h != NULL
-	      && strcmp (h->root.root.string, "_GLOBAL_OFFSET_TABLE_") == 0)
-	    break;
-	  /* Fall through.  */
-
-        case R_TILEPRO_32:
-        case R_TILEPRO_16:
-        case R_TILEPRO_8:
-        case R_TILEPRO_LO16:
-        case R_TILEPRO_HI16:
-        case R_TILEPRO_HA16:
-        case R_TILEPRO_COPY:
-        case R_TILEPRO_GLOB_DAT:
-        case R_TILEPRO_JMP_SLOT:
-        case R_TILEPRO_RELATIVE:
-        case R_TILEPRO_BROFF_X1:
-        case R_TILEPRO_JOFFLONG_X1:
-        case R_TILEPRO_IMM8_X0:
-        case R_TILEPRO_IMM8_Y0:
-        case R_TILEPRO_IMM8_X1:
-        case R_TILEPRO_IMM8_Y1:
-        case R_TILEPRO_DEST_IMM8_X1:
-        case R_TILEPRO_MT_IMM15_X1:
-        case R_TILEPRO_MF_IMM15_X1:
-        case R_TILEPRO_IMM16_X0:
-        case R_TILEPRO_IMM16_X1:
-        case R_TILEPRO_IMM16_X0_LO:
-        case R_TILEPRO_IMM16_X1_LO:
-        case R_TILEPRO_IMM16_X0_HI:
-        case R_TILEPRO_IMM16_X1_HI:
-        case R_TILEPRO_IMM16_X0_HA:
-        case R_TILEPRO_IMM16_X1_HA:
-        case R_TILEPRO_MMSTART_X0:
-        case R_TILEPRO_MMEND_X0:
-        case R_TILEPRO_MMSTART_X1:
-        case R_TILEPRO_MMEND_X1:
-        case R_TILEPRO_SHAMT_X0:
-        case R_TILEPRO_SHAMT_X1:
-        case R_TILEPRO_SHAMT_Y0:
-        case R_TILEPRO_SHAMT_Y1:
-	  if (bfd_link_pic (info))
-	    break;
-	  /* Fall through.  */
-
-        case R_TILEPRO_JOFFLONG_X1_PLT:
-	  if (h != NULL)
-	    {
-	      if (h->plt.refcount > 0)
-		h->plt.refcount--;
-	    }
-	  break;
-
-	default:
-	  break;
-	}
+      if (s != NULL && (s->flags & SEC_READONLY) != 0)
+	return p->sec;
     }
-
-  return TRUE;
+  return NULL;
 }
 
 /* Adjust a symbol defined by a dynamic object and referenced by a
@@ -2079,9 +1897,7 @@ tilepro_elf_adjust_dynamic_symbol (struct bfd_link_info *info,
 				   struct elf_link_hash_entry *h)
 {
   struct tilepro_elf_link_hash_table *htab;
-  struct tilepro_elf_link_hash_entry * eh;
-  struct tilepro_elf_dyn_relocs *p;
-  asection *s;
+  asection *s, *srel;
 
   htab = tilepro_elf_hash_table (info);
   BFD_ASSERT (htab != NULL);
@@ -2089,7 +1905,7 @@ tilepro_elf_adjust_dynamic_symbol (struct bfd_link_info *info,
   /* Make sure we know what is going on here.  */
   BFD_ASSERT (htab->elf.dynobj != NULL
 	      && (h->needs_plt
-		  || h->u.weakdef != NULL
+		  || h->is_weakalias
 		  || (h->def_dynamic
 		      && h->ref_regular
 		      && !h->def_regular)));
@@ -2105,11 +1921,11 @@ tilepro_elf_adjust_dynamic_symbol (struct bfd_link_info *info,
 	      && h->root.type == bfd_link_hash_undefweak))
 	{
 	  /* This case can occur if we saw a R_TILEPRO_JOFFLONG_X1_PLT
-             reloc in an input file, but the symbol was never referred
-             to by a dynamic object, or if all references were garbage
-             collected.  In such a case, we don't actually need to build
-             a procedure linkage table, and we can just do a
-             R_TILEPRO_JOFFLONG_X1 relocation instead. */
+	     reloc in an input file, but the symbol was never referred
+	     to by a dynamic object, or if all references were garbage
+	     collected.  In such a case, we don't actually need to build
+	     a procedure linkage table, and we can just do a
+	     R_TILEPRO_JOFFLONG_X1 relocation instead. */
 	  h->plt.offset = (bfd_vma) -1;
 	  h->needs_plt = 0;
 	}
@@ -2122,12 +1938,12 @@ tilepro_elf_adjust_dynamic_symbol (struct bfd_link_info *info,
   /* If this is a weak symbol, and there is a real definition, the
      processor independent code will have arranged for us to see the
      real definition first, and we can just use the same value.  */
-  if (h->u.weakdef != NULL)
+  if (h->is_weakalias)
     {
-      BFD_ASSERT (h->u.weakdef->root.type == bfd_link_hash_defined
-		  || h->u.weakdef->root.type == bfd_link_hash_defweak);
-      h->root.u.def.section = h->u.weakdef->root.u.def.section;
-      h->root.u.def.value = h->u.weakdef->root.u.def.value;
+      struct elf_link_hash_entry *def = weakdef (h);
+      BFD_ASSERT (def->root.type == bfd_link_hash_defined);
+      h->root.u.def.section = def->root.u.def.section;
+      h->root.u.def.value = def->root.u.def.value;
       return TRUE;
     }
 
@@ -2153,17 +1969,9 @@ tilepro_elf_adjust_dynamic_symbol (struct bfd_link_info *info,
       return TRUE;
     }
 
-  eh = (struct tilepro_elf_link_hash_entry *) h;
-  for (p = eh->dyn_relocs; p != NULL; p = p->next)
-    {
-      s = p->sec->output_section;
-      if (s != NULL && (s->flags & SEC_READONLY) != 0)
-	break;
-    }
-
-  /* If we didn't find any dynamic relocs in read-only sections, then
+  /* If we don't find any dynamic relocs in read-only sections, then
      we'll be keeping the dynamic relocs and avoiding the copy reloc.  */
-  if (p == NULL)
+  if (!readonly_dynrelocs (h))
     {
       h->non_got_ref = 0;
       return TRUE;
@@ -2183,13 +1991,23 @@ tilepro_elf_adjust_dynamic_symbol (struct bfd_link_info *info,
      to copy the initial value out of the dynamic object and into the
      runtime process image.  We need to remember the offset into the
      .rel.bss section we are going to use.  */
+  if ((h->root.u.def.section->flags & SEC_READONLY) != 0)
+    {
+      s = htab->elf.sdynrelro;
+      srel = htab->elf.sreldynrelro;
+    }
+  else
+    {
+      s = htab->elf.sdynbss;
+      srel = htab->elf.srelbss;
+    }
   if ((h->root.u.def.section->flags & SEC_ALLOC) != 0 && h->size != 0)
     {
-      htab->srelbss->size += TILEPRO_ELF_RELA_BYTES;
+      srel->size += TILEPRO_ELF_RELA_BYTES;
       h->needs_copy = 1;
     }
 
-  return _bfd_elf_adjust_dynamic_copy (info, h, htab->sdynbss);
+  return _bfd_elf_adjust_dynamic_copy (info, h, s);
 }
 
 /* Allocate space in .plt, .got and associated reloc sections for
@@ -2201,7 +2019,7 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, void *inf)
   struct bfd_link_info *info;
   struct tilepro_elf_link_hash_table *htab;
   struct tilepro_elf_link_hash_entry *eh;
-  struct tilepro_elf_dyn_relocs *p;
+  struct elf_dyn_relocs *p;
 
   if (h->root.type == bfd_link_hash_indirect)
     return TRUE;
@@ -2232,7 +2050,7 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, void *inf)
 	      s->size = PLT_ENTRY_SIZE;
 	    }
 
-          h->plt.offset = s->size;
+	  h->plt.offset = s->size;
 
 	  /* If this symbol is not defined in a regular file, and we are
 	     not generating a shared library, then set the symbol to this
@@ -2270,7 +2088,7 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, void *inf)
   /* If a TLS_IE symbol is now local to the binary, make it a TLS_LE
      requiring no TLS entry.  */
   if (h->got.refcount > 0
-      && !bfd_link_pic (info)
+      && bfd_link_executable (info)
       && h->dynindx == -1
       && tilepro_elf_hash_entry(h)->tls_type == GOT_TLS_IE)
     h->got.offset = (bfd_vma) -1;
@@ -2323,7 +2141,7 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, void *inf)
     {
       if (SYMBOL_CALLS_LOCAL (info, h))
 	{
-	  struct tilepro_elf_dyn_relocs **pp;
+	  struct elf_dyn_relocs **pp;
 
 	  for (pp = &eh->dyn_relocs; (p = *pp) != NULL; )
 	    {
@@ -2341,7 +2159,8 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, void *inf)
       if (eh->dyn_relocs != NULL
 	  && h->root.type == bfd_link_hash_undefweak)
 	{
-	  if (ELF_ST_VISIBILITY (h->other) != STV_DEFAULT)
+	  if (ELF_ST_VISIBILITY (h->other) != STV_DEFAULT
+	      || UNDEFWEAK_NO_DYNAMIC_RELOC (info, h))
 	    eh->dyn_relocs = NULL;
 
 	  /* Make sure undefined weak symbols are output as a dynamic
@@ -2397,28 +2216,29 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, void *inf)
   return TRUE;
 }
 
-/* Find any dynamic relocs that apply to read-only sections.  */
+/* Set DF_TEXTREL if we find any dynamic relocs that apply to
+   read-only sections.  */
 
 static bfd_boolean
-readonly_dynrelocs (struct elf_link_hash_entry *h, void *inf)
+maybe_set_textrel (struct elf_link_hash_entry *h, void *info_p)
 {
-  struct tilepro_elf_link_hash_entry *eh;
-  struct tilepro_elf_dyn_relocs *p;
+  asection *sec;
 
-  eh = (struct tilepro_elf_link_hash_entry *) h;
-  for (p = eh->dyn_relocs; p != NULL; p = p->next)
+  if (h->root.type == bfd_link_hash_indirect)
+    return TRUE;
+
+  sec = readonly_dynrelocs (h);
+  if (sec != NULL)
     {
-      asection *s = p->sec->output_section;
+      struct bfd_link_info *info = (struct bfd_link_info *) info_p;
 
-      if (s != NULL && (s->flags & SEC_READONLY) != 0)
-	{
-	  struct bfd_link_info *info = (struct bfd_link_info *) inf;
+      info->flags |= DF_TEXTREL;
+      info->callbacks->minfo
+	(_("%B: dynamic relocation against `%T' in read-only section `%A'\n"),
+	 sec->owner, h->root.root.string, sec);
 
-	  info->flags |= DF_TEXTREL;
-
-	  /* Not an error, just cut short the traversal.  */
-	  return FALSE;
-	}
+      /* Not an error, just cut short the traversal.  */
+      return FALSE;
     }
   return TRUE;
 }
@@ -2488,7 +2308,7 @@ tilepro_elf_size_dynamic_sections (bfd *output_bfd,
 
       for (s = ibfd->sections; s != NULL; s = s->next)
 	{
-	  struct tilepro_elf_dyn_relocs *p;
+	  struct elf_dyn_relocs *p;
 
 	  for (p = elf_section_data (s)->local_dynrel; p != NULL; p = p->next)
 	    {
@@ -2505,7 +2325,12 @@ tilepro_elf_size_dynamic_sections (bfd *output_bfd,
 		  srel = elf_section_data (p->sec)->sreloc;
 		  srel->size += p->count * TILEPRO_ELF_RELA_BYTES;
 		  if ((p->sec->output_section->flags & SEC_READONLY) != 0)
-		    info->flags |= DF_TEXTREL;
+		    {
+		      info->flags |= DF_TEXTREL;
+
+		      info->callbacks->minfo (_("%B: dynamic relocation in read-only section `%A'\n"),
+					      p->sec->owner, p->sec);
+		    }
 		}
 	    }
 	}
@@ -2560,7 +2385,7 @@ tilepro_elf_size_dynamic_sections (bfd *output_bfd,
 				  FALSE, FALSE, FALSE);
 
       /* Don't allocate .got.plt section if there are no GOT nor PLT
-         entries and there is no refeence to _GLOBAL_OFFSET_TABLE_.  */
+	 entries and there is no refeence to _GLOBAL_OFFSET_TABLE_.  */
       if ((got == NULL
 	   || !got->ref_regular_nonweak)
 	  && (htab->elf.sgotplt->size
@@ -2584,7 +2409,8 @@ tilepro_elf_size_dynamic_sections (bfd *output_bfd,
       if (s == htab->elf.splt
 	  || s == htab->elf.sgot
 	  || s == htab->elf.sgotplt
-	  || s == htab->sdynbss)
+	  || s == htab->elf.sdynbss
+	  || s == htab->elf.sdynrelro)
 	{
 	  /* Strip this section if we don't need it; see the
 	     comment below.  */
@@ -2663,7 +2489,7 @@ tilepro_elf_size_dynamic_sections (bfd *output_bfd,
       /* If any dynamic relocs apply to a read-only section,
 	 then we need a DT_TEXTREL entry.  */
       if ((info->flags & DF_TEXTREL) == 0)
-	elf_link_hash_traverse (&htab->elf, readonly_dynrelocs, info);
+	elf_link_hash_traverse (&htab->elf, maybe_set_textrel, info);
 
       if (info->flags & DF_TEXTREL)
 	{
@@ -2814,10 +2640,10 @@ static const bfd_byte insn_tls_gd_add_Y0Y1[] = {
 
 static bfd_boolean
 tilepro_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
-                              bfd *input_bfd, asection *input_section,
-                              bfd_byte *contents, Elf_Internal_Rela *relocs,
-                              Elf_Internal_Sym *local_syms,
-                              asection **local_sections)
+			      bfd *input_bfd, asection *input_section,
+			      bfd_byte *contents, Elf_Internal_Rela *relocs,
+			      Elf_Internal_Sym *local_syms,
+			      asection **local_sections)
 {
   struct tilepro_elf_link_hash_table *htab;
   Elf_Internal_Shdr *symtab_hdr;
@@ -2860,7 +2686,7 @@ tilepro_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
       const char *name;
       bfd_vma off;
       bfd_boolean is_plt = FALSE;
-
+      bfd_boolean resolved_to_zero;
       bfd_boolean unresolved_reloc;
 
       r_type = ELF32_R_TYPE (rel->r_info);
@@ -2869,14 +2695,7 @@ tilepro_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 	continue;
 
       if ((unsigned int)r_type >= NELEMS(tilepro_elf_howto_table))
-	{
-          /* Not clear if we need to check here, but just be paranoid. */
-	  (*_bfd_error_handler)
-	    (_("%B: unrecognized relocation (0x%x) in section `%A'"),
-	     input_bfd, r_type, input_section);
-	  bfd_set_error (bfd_error_bad_value);
-	  return FALSE;
-	}
+	return _bfd_unrecognized_reloc (input_bfd, input_section, r_type);
 
       howto = tilepro_elf_howto_table + r_type;
 
@@ -2948,8 +2767,8 @@ tilepro_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 	  else if (h != NULL)
 	    tls_type = tilepro_elf_hash_entry(h)->tls_type;
 
-	  is_tls_iele = (! bfd_link_pic (info) || tls_type == GOT_TLS_IE);
-	  is_tls_le = is_tls_iele && (!bfd_link_pic (info)
+	  is_tls_iele = (bfd_link_executable (info) || tls_type == GOT_TLS_IE);
+	  is_tls_le = is_tls_iele && (bfd_link_executable (info)
 				      && (h == NULL || h->dynindx == -1));
 
 	  if (r_type == R_TILEPRO_TLS_GD_CALL)
@@ -3026,7 +2845,7 @@ tilepro_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 	    }
 	  break;
 	case R_TILEPRO_TLS_IE_LOAD:
-	  if (!bfd_link_pic (info) && (h == NULL || h->dynindx == -1))
+	  if (bfd_link_executable (info) && (h == NULL || h->dynindx == -1))
 	    /* IE -> LE */
 	    tilepro_replace_insn (contents + rel->r_offset,
 				  insn_mask_X1_no_dest_no_srca,
@@ -3042,16 +2861,19 @@ tilepro_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 	  break;
 	}
 
+      resolved_to_zero = (h != NULL
+			  && UNDEFWEAK_NO_DYNAMIC_RELOC (info, h));
+
       switch (r_type)
 	{
-        case R_TILEPRO_IMM16_X0_GOT:
-        case R_TILEPRO_IMM16_X1_GOT:
-        case R_TILEPRO_IMM16_X0_GOT_LO:
-        case R_TILEPRO_IMM16_X1_GOT_LO:
-        case R_TILEPRO_IMM16_X0_GOT_HI:
-        case R_TILEPRO_IMM16_X1_GOT_HI:
-        case R_TILEPRO_IMM16_X0_GOT_HA:
-        case R_TILEPRO_IMM16_X1_GOT_HA:
+	case R_TILEPRO_IMM16_X0_GOT:
+	case R_TILEPRO_IMM16_X1_GOT:
+	case R_TILEPRO_IMM16_X0_GOT_LO:
+	case R_TILEPRO_IMM16_X1_GOT_LO:
+	case R_TILEPRO_IMM16_X0_GOT_HI:
+	case R_TILEPRO_IMM16_X1_GOT_HI:
+	case R_TILEPRO_IMM16_X0_GOT_HA:
+	case R_TILEPRO_IMM16_X1_GOT_HA:
 	  /* Relocation is to the entry for this symbol in the global
 	     offset table.  */
 	  if (htab->elf.sgot == NULL)
@@ -3103,7 +2925,7 @@ tilepro_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 	      off = local_got_offsets[r_symndx];
 
 	      /* The offset must always be a multiple of 4 on 32-bit.
-                 We use the least significant bit to record
+		 We use the least significant bit to record
 		 whether we have already processed this entry.  */
 	      if ((off & 1) != 0)
 		off &= ~1;
@@ -3136,10 +2958,10 @@ tilepro_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 	  relocation = off - got_base;
 	  break;
 
-        case R_TILEPRO_JOFFLONG_X1_PLT:
+	case R_TILEPRO_JOFFLONG_X1_PLT:
 	  /* Relocation is to the entry for this symbol in the
 	     procedure linkage table.  */
-          BFD_ASSERT (h != NULL);
+	  BFD_ASSERT (h != NULL);
 
 	  if (h->plt.offset == (bfd_vma) -1 || htab->elf.splt == NULL)
 	    {
@@ -3155,62 +2977,63 @@ tilepro_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 	  unresolved_reloc = FALSE;
 	  break;
 
-        case R_TILEPRO_32_PCREL:
-        case R_TILEPRO_16_PCREL:
-        case R_TILEPRO_8_PCREL:
-        case R_TILEPRO_IMM16_X0_PCREL:
-        case R_TILEPRO_IMM16_X1_PCREL:
-        case R_TILEPRO_IMM16_X0_LO_PCREL:
-        case R_TILEPRO_IMM16_X1_LO_PCREL:
-        case R_TILEPRO_IMM16_X0_HI_PCREL:
-        case R_TILEPRO_IMM16_X1_HI_PCREL:
-        case R_TILEPRO_IMM16_X0_HA_PCREL:
-        case R_TILEPRO_IMM16_X1_HA_PCREL:
+	case R_TILEPRO_32_PCREL:
+	case R_TILEPRO_16_PCREL:
+	case R_TILEPRO_8_PCREL:
+	case R_TILEPRO_IMM16_X0_PCREL:
+	case R_TILEPRO_IMM16_X1_PCREL:
+	case R_TILEPRO_IMM16_X0_LO_PCREL:
+	case R_TILEPRO_IMM16_X1_LO_PCREL:
+	case R_TILEPRO_IMM16_X0_HI_PCREL:
+	case R_TILEPRO_IMM16_X1_HI_PCREL:
+	case R_TILEPRO_IMM16_X0_HA_PCREL:
+	case R_TILEPRO_IMM16_X1_HA_PCREL:
 	  if (h != NULL
 	      && strcmp (h->root.root.string, "_GLOBAL_OFFSET_TABLE_") == 0)
 	    break;
 	  /* Fall through.  */
-        case R_TILEPRO_32:
-        case R_TILEPRO_16:
-        case R_TILEPRO_8:
-        case R_TILEPRO_LO16:
-        case R_TILEPRO_HI16:
-        case R_TILEPRO_HA16:
-        case R_TILEPRO_COPY:
-        case R_TILEPRO_GLOB_DAT:
-        case R_TILEPRO_JMP_SLOT:
-        case R_TILEPRO_RELATIVE:
-        case R_TILEPRO_BROFF_X1:
-        case R_TILEPRO_JOFFLONG_X1:
-        case R_TILEPRO_IMM8_X0:
-        case R_TILEPRO_IMM8_Y0:
-        case R_TILEPRO_IMM8_X1:
-        case R_TILEPRO_IMM8_Y1:
-        case R_TILEPRO_DEST_IMM8_X1:
-        case R_TILEPRO_MT_IMM15_X1:
-        case R_TILEPRO_MF_IMM15_X1:
-        case R_TILEPRO_IMM16_X0:
-        case R_TILEPRO_IMM16_X1:
-        case R_TILEPRO_IMM16_X0_LO:
-        case R_TILEPRO_IMM16_X1_LO:
-        case R_TILEPRO_IMM16_X0_HI:
-        case R_TILEPRO_IMM16_X1_HI:
-        case R_TILEPRO_IMM16_X0_HA:
-        case R_TILEPRO_IMM16_X1_HA:
-        case R_TILEPRO_MMSTART_X0:
-        case R_TILEPRO_MMEND_X0:
-        case R_TILEPRO_MMSTART_X1:
-        case R_TILEPRO_MMEND_X1:
-        case R_TILEPRO_SHAMT_X0:
-        case R_TILEPRO_SHAMT_X1:
-        case R_TILEPRO_SHAMT_Y0:
-        case R_TILEPRO_SHAMT_Y1:
+	case R_TILEPRO_32:
+	case R_TILEPRO_16:
+	case R_TILEPRO_8:
+	case R_TILEPRO_LO16:
+	case R_TILEPRO_HI16:
+	case R_TILEPRO_HA16:
+	case R_TILEPRO_COPY:
+	case R_TILEPRO_GLOB_DAT:
+	case R_TILEPRO_JMP_SLOT:
+	case R_TILEPRO_RELATIVE:
+	case R_TILEPRO_BROFF_X1:
+	case R_TILEPRO_JOFFLONG_X1:
+	case R_TILEPRO_IMM8_X0:
+	case R_TILEPRO_IMM8_Y0:
+	case R_TILEPRO_IMM8_X1:
+	case R_TILEPRO_IMM8_Y1:
+	case R_TILEPRO_DEST_IMM8_X1:
+	case R_TILEPRO_MT_IMM15_X1:
+	case R_TILEPRO_MF_IMM15_X1:
+	case R_TILEPRO_IMM16_X0:
+	case R_TILEPRO_IMM16_X1:
+	case R_TILEPRO_IMM16_X0_LO:
+	case R_TILEPRO_IMM16_X1_LO:
+	case R_TILEPRO_IMM16_X0_HI:
+	case R_TILEPRO_IMM16_X1_HI:
+	case R_TILEPRO_IMM16_X0_HA:
+	case R_TILEPRO_IMM16_X1_HA:
+	case R_TILEPRO_MMSTART_X0:
+	case R_TILEPRO_MMEND_X0:
+	case R_TILEPRO_MMSTART_X1:
+	case R_TILEPRO_MMEND_X1:
+	case R_TILEPRO_SHAMT_X0:
+	case R_TILEPRO_SHAMT_X1:
+	case R_TILEPRO_SHAMT_Y0:
+	case R_TILEPRO_SHAMT_Y1:
 	  if ((input_section->flags & SEC_ALLOC) == 0)
 	    break;
 
 	  if ((bfd_link_pic (info)
 	       && (h == NULL
-		   || ELF_ST_VISIBILITY (h->other) == STV_DEFAULT
+		   || (ELF_ST_VISIBILITY (h->other) == STV_DEFAULT
+		       && !resolved_to_zero)
 		   || h->root.type != bfd_link_hash_undefweak)
 	       && (! howto->pc_relative
 		   || !SYMBOL_CALLS_LOCAL (info, h)))
@@ -3246,9 +3069,9 @@ tilepro_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 
 	      switch (r_type)
 		{
-                case R_TILEPRO_32_PCREL:
-                case R_TILEPRO_16_PCREL:
-                case R_TILEPRO_8_PCREL:
+		case R_TILEPRO_32_PCREL:
+		case R_TILEPRO_16_PCREL:
+		case R_TILEPRO_8_PCREL:
 		  /* If the symbol is not dynamic, we should not keep
 		     a dynamic relocation.  But an .rela.* slot has been
 		     allocated for it, output R_TILEPRO_NONE.
@@ -3320,7 +3143,7 @@ tilepro_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 			  if (indx == 0)
 			    {
 			      BFD_FAIL ();
-			      (*_bfd_error_handler)
+			      _bfd_error_handler
 				(_("%B: probably compiled without -fPIC?"),
 				 input_bfd);
 			      bfd_set_error (bfd_error_bad_value);
@@ -3341,15 +3164,15 @@ tilepro_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 	    }
 	  break;
 
-        case R_TILEPRO_IMM16_X0_TLS_LE:
-        case R_TILEPRO_IMM16_X1_TLS_LE:
-        case R_TILEPRO_IMM16_X0_TLS_LE_LO:
-        case R_TILEPRO_IMM16_X1_TLS_LE_LO:
-        case R_TILEPRO_IMM16_X0_TLS_LE_HI:
-        case R_TILEPRO_IMM16_X1_TLS_LE_HI:
-        case R_TILEPRO_IMM16_X0_TLS_LE_HA:
-        case R_TILEPRO_IMM16_X1_TLS_LE_HA:
-	  if (bfd_link_pic (info))
+	case R_TILEPRO_IMM16_X0_TLS_LE:
+	case R_TILEPRO_IMM16_X1_TLS_LE:
+	case R_TILEPRO_IMM16_X0_TLS_LE_LO:
+	case R_TILEPRO_IMM16_X1_TLS_LE_LO:
+	case R_TILEPRO_IMM16_X0_TLS_LE_HI:
+	case R_TILEPRO_IMM16_X1_TLS_LE_HI:
+	case R_TILEPRO_IMM16_X0_TLS_LE_HA:
+	case R_TILEPRO_IMM16_X1_TLS_LE_HA:
+	  if (!bfd_link_executable (info))
 	    {
 	      Elf_Internal_Rela outrel;
 	      bfd_boolean skip;
@@ -3380,31 +3203,33 @@ tilepro_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 	  relocation = tpoff (info, relocation);
 	  break;
 
-        case R_TILEPRO_IMM16_X0_TLS_GD:
-        case R_TILEPRO_IMM16_X1_TLS_GD:
-        case R_TILEPRO_IMM16_X0_TLS_GD_LO:
-        case R_TILEPRO_IMM16_X1_TLS_GD_LO:
-        case R_TILEPRO_IMM16_X0_TLS_GD_HI:
-        case R_TILEPRO_IMM16_X1_TLS_GD_HI:
-        case R_TILEPRO_IMM16_X0_TLS_GD_HA:
-        case R_TILEPRO_IMM16_X1_TLS_GD_HA:
-        case R_TILEPRO_IMM16_X0_TLS_IE:
-        case R_TILEPRO_IMM16_X1_TLS_IE:
-        case R_TILEPRO_IMM16_X0_TLS_IE_LO:
-        case R_TILEPRO_IMM16_X1_TLS_IE_LO:
-        case R_TILEPRO_IMM16_X0_TLS_IE_HI:
-        case R_TILEPRO_IMM16_X1_TLS_IE_HI:
-        case R_TILEPRO_IMM16_X0_TLS_IE_HA:
-        case R_TILEPRO_IMM16_X1_TLS_IE_HA:
+	case R_TILEPRO_IMM16_X0_TLS_GD:
+	case R_TILEPRO_IMM16_X1_TLS_GD:
+	case R_TILEPRO_IMM16_X0_TLS_GD_LO:
+	case R_TILEPRO_IMM16_X1_TLS_GD_LO:
+	case R_TILEPRO_IMM16_X0_TLS_GD_HI:
+	case R_TILEPRO_IMM16_X1_TLS_GD_HI:
+	case R_TILEPRO_IMM16_X0_TLS_GD_HA:
+	case R_TILEPRO_IMM16_X1_TLS_GD_HA:
+	case R_TILEPRO_IMM16_X0_TLS_IE:
+	case R_TILEPRO_IMM16_X1_TLS_IE:
+	case R_TILEPRO_IMM16_X0_TLS_IE_LO:
+	case R_TILEPRO_IMM16_X1_TLS_IE_LO:
+	case R_TILEPRO_IMM16_X0_TLS_IE_HI:
+	case R_TILEPRO_IMM16_X1_TLS_IE_HI:
+	case R_TILEPRO_IMM16_X0_TLS_IE_HA:
+	case R_TILEPRO_IMM16_X1_TLS_IE_HA:
 	  r_type = tilepro_elf_tls_transition (info, r_type, h == NULL);
-          tls_type = GOT_UNKNOWN;
+	  tls_type = GOT_UNKNOWN;
 	  if (h == NULL && local_got_offsets)
 	    tls_type
 	      = _bfd_tilepro_elf_local_got_tls_type (input_bfd) [r_symndx];
 	  else if (h != NULL)
 	    {
 	      tls_type = tilepro_elf_hash_entry(h)->tls_type;
-	      if (!bfd_link_pic (info) && h->dynindx == -1 && tls_type == GOT_TLS_IE)
+	      if (bfd_link_executable (info)
+		  && h->dynindx == -1
+		  && tls_type == GOT_TLS_IE)
 		r_type = tilepro_tls_translate_to_le (r_type);
 	    }
 	  if (tls_type == GOT_TLS_IE)
@@ -3451,8 +3276,8 @@ tilepro_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 
 	      if (h != NULL)
 	      {
-	        bfd_boolean dyn;
-	        dyn = htab->elf.dynamic_sections_created;
+		bfd_boolean dyn;
+		dyn = htab->elf.dynamic_sections_created;
 
 		if (WILL_CALL_FINISH_DYNAMIC_SYMBOL (dyn,
 						     bfd_link_pic (info),
@@ -3465,38 +3290,38 @@ tilepro_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 	      }
 
 	      /* The GOT entries have not been initialized yet.  Do it
-	         now, and emit any relocations. */
+		 now, and emit any relocations. */
 	      if ((bfd_link_pic (info) || indx != 0)
 		  && (h == NULL
 		      || ELF_ST_VISIBILITY (h->other) == STV_DEFAULT
 		      || h->root.type != bfd_link_hash_undefweak))
 		    need_relocs = TRUE;
 
-              switch (r_type)
-                {
-                  case R_TILEPRO_IMM16_X0_TLS_IE:
-                  case R_TILEPRO_IMM16_X1_TLS_IE:
-                  case R_TILEPRO_IMM16_X0_TLS_IE_LO:
-                  case R_TILEPRO_IMM16_X1_TLS_IE_LO:
-                  case R_TILEPRO_IMM16_X0_TLS_IE_HI:
-                  case R_TILEPRO_IMM16_X1_TLS_IE_HI:
-                  case R_TILEPRO_IMM16_X0_TLS_IE_HA:
-                  case R_TILEPRO_IMM16_X1_TLS_IE_HA:
+	      switch (r_type)
+		{
+		  case R_TILEPRO_IMM16_X0_TLS_IE:
+		  case R_TILEPRO_IMM16_X1_TLS_IE:
+		  case R_TILEPRO_IMM16_X0_TLS_IE_LO:
+		  case R_TILEPRO_IMM16_X1_TLS_IE_LO:
+		  case R_TILEPRO_IMM16_X0_TLS_IE_HI:
+		  case R_TILEPRO_IMM16_X1_TLS_IE_HI:
+		  case R_TILEPRO_IMM16_X0_TLS_IE_HA:
+		  case R_TILEPRO_IMM16_X1_TLS_IE_HA:
 		    if (need_relocs) {
-	              bfd_put_32 (output_bfd, 0, htab->elf.sgot->contents + off);
-	              outrel.r_offset = (htab->elf.sgot->output_section->vma
+		      bfd_put_32 (output_bfd, 0, htab->elf.sgot->contents + off);
+		      outrel.r_offset = (htab->elf.sgot->output_section->vma
 				       + htab->elf.sgot->output_offset + off);
-	              outrel.r_addend = 0;
+		      outrel.r_addend = 0;
 		      if (indx == 0)
-		        outrel.r_addend = relocation - dtpoff_base (info);
+			outrel.r_addend = relocation - dtpoff_base (info);
 		      outrel.r_info = ELF32_R_INFO (indx, R_TILEPRO_TLS_TPOFF32);
 		      tilepro_elf_append_rela_32 (output_bfd, htab->elf.srelgot,
 						  &outrel);
-                    } else {
+		    } else {
 		      bfd_put_32 (output_bfd, tpoff (info, relocation),
 				  htab->elf.sgot->contents + off);
-                    }
-                    break;
+		    }
+		    break;
 
 		  case R_TILEPRO_IMM16_X0_TLS_GD:
 		  case R_TILEPRO_IMM16_X1_TLS_GD:
@@ -3507,48 +3332,48 @@ tilepro_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 		  case R_TILEPRO_IMM16_X0_TLS_GD_HA:
 		  case R_TILEPRO_IMM16_X1_TLS_GD_HA:
 		    if (need_relocs) {
- 	              outrel.r_offset = (htab->elf.sgot->output_section->vma
+		      outrel.r_offset = (htab->elf.sgot->output_section->vma
 				       + htab->elf.sgot->output_offset + off);
-	              outrel.r_addend = 0;
-	              outrel.r_info = ELF32_R_INFO (indx, R_TILEPRO_TLS_DTPMOD32);
-	              bfd_put_32 (output_bfd, 0, htab->elf.sgot->contents + off);
-	              tilepro_elf_append_rela_32 (output_bfd, htab->elf.srelgot,
+		      outrel.r_addend = 0;
+		      outrel.r_info = ELF32_R_INFO (indx, R_TILEPRO_TLS_DTPMOD32);
+		      bfd_put_32 (output_bfd, 0, htab->elf.sgot->contents + off);
+		      tilepro_elf_append_rela_32 (output_bfd, htab->elf.srelgot,
 						  &outrel);
 		      if (indx == 0)
-		        {
-		      	  BFD_ASSERT (! unresolved_reloc);
-		          bfd_put_32 (output_bfd,
+			{
+			  BFD_ASSERT (! unresolved_reloc);
+			  bfd_put_32 (output_bfd,
 				      relocation - dtpoff_base (info),
 				      (htab->elf.sgot->contents + off +
 				       TILEPRO_BYTES_PER_WORD));
-		        }
+			}
 		      else
-		        {
-		          bfd_put_32 (output_bfd, 0,
+			{
+			  bfd_put_32 (output_bfd, 0,
 				      (htab->elf.sgot->contents + off +
 				       TILEPRO_BYTES_PER_WORD));
-		          outrel.r_info = ELF32_R_INFO (indx,
+			  outrel.r_info = ELF32_R_INFO (indx,
 							R_TILEPRO_TLS_DTPOFF32);
 			  outrel.r_offset += TILEPRO_BYTES_PER_WORD;
-		          tilepro_elf_append_rela_32 (output_bfd,
+			  tilepro_elf_append_rela_32 (output_bfd,
 						      htab->elf.srelgot, &outrel);
-		        }
-                    }
+			}
+		    }
 
 		    else {
 		      /* If we are not emitting relocations for a
-		         general dynamic reference, then we must be in a
-		         static link or an executable link with the
-		         symbol binding locally.  Mark it as belonging
-		         to module 1, the executable.  */
+			 general dynamic reference, then we must be in a
+			 static link or an executable link with the
+			 symbol binding locally.  Mark it as belonging
+			 to module 1, the executable.  */
 		      bfd_put_32 (output_bfd, 1,
 				  htab->elf.sgot->contents + off );
 		      bfd_put_32 (output_bfd, relocation - dtpoff_base (info),
 				  htab->elf.sgot->contents + off +
 				  TILEPRO_BYTES_PER_WORD);
 		   }
-                   break;
-                }
+		   break;
+		}
 	    }
 
 	  if (off >= (bfd_vma) -2)
@@ -3571,11 +3396,12 @@ tilepro_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 	       && h->def_dynamic)
 	  && _bfd_elf_section_offset (output_bfd, info, input_section,
 				      rel->r_offset) != (bfd_vma) -1)
-	(*_bfd_error_handler)
-	  (_("%B(%A+0x%lx): unresolvable %s relocation against symbol `%s'"),
+	_bfd_error_handler
+	  /* xgettext:c-format */
+	  (_("%B(%A+%#Lx): unresolvable %s relocation against symbol `%s'"),
 	   input_bfd,
 	   input_section,
-	   (long) rel->r_offset,
+	   rel->r_offset,
 	   howto->name,
 	   h->root.root.string);
 
@@ -3597,57 +3423,57 @@ tilepro_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
       case R_TILEPRO_IMM16_X1_TLS_GD_HA:
       case R_TILEPRO_IMM16_X0_TLS_IE_HA:
       case R_TILEPRO_IMM16_X1_TLS_IE_HA:
-        relocation += 0x8000;
-        break;
+	relocation += 0x8000;
+	break;
       }
 
       /* Get the operand creation function, if any. */
       create_func = reloc_to_create_func[r_type];
       if (create_func == NULL)
       {
-        r = _bfd_final_link_relocate (howto, input_bfd, input_section,
-                                      contents, rel->r_offset,
-                                      relocation, rel->r_addend);
+	r = _bfd_final_link_relocate (howto, input_bfd, input_section,
+				      contents, rel->r_offset,
+				      relocation, rel->r_addend);
       }
       else
       {
-        if (howto->pc_relative)
-        {
-          relocation -=
-            input_section->output_section->vma + input_section->output_offset;
-          if (howto->pcrel_offset)
-            relocation -= rel->r_offset;
-        }
+	if (howto->pc_relative)
+	{
+	  relocation -=
+	    input_section->output_section->vma + input_section->output_offset;
+	  if (howto->pcrel_offset)
+	    relocation -= rel->r_offset;
+	}
 
-        bfd_byte *data;
+	bfd_byte *data;
 
-        /* Add the relocation addend if any to the final target value */
-        relocation += rel->r_addend;
+	/* Add the relocation addend if any to the final target value */
+	relocation += rel->r_addend;
 
-        /* Do basic range checking */
-        r = bfd_check_overflow (howto->complain_on_overflow,
-                                howto->bitsize,
-                                howto->rightshift,
-                                32,
-                                relocation);
+	/* Do basic range checking */
+	r = bfd_check_overflow (howto->complain_on_overflow,
+				howto->bitsize,
+				howto->rightshift,
+				32,
+				relocation);
 
-        /*
-         * Write the relocated value out into the raw section data.
-         * Don't put a relocation out in the .rela section.
-         */
-        tilepro_bundle_bits mask = create_func(-1);
-        tilepro_bundle_bits value = create_func(relocation >> howto->rightshift);
+	/*
+	 * Write the relocated value out into the raw section data.
+	 * Don't put a relocation out in the .rela section.
+	 */
+	tilepro_bundle_bits mask = create_func(-1);
+	tilepro_bundle_bits value = create_func(relocation >> howto->rightshift);
 
-        /* Only touch bytes while the mask is not 0, so we
-           don't write to out of bounds memory if this is actually
-           a 16-bit switch instruction. */
-        for (data = contents + rel->r_offset; mask != 0; data++)
-          {
-            bfd_byte byte_mask = (bfd_byte)mask;
-            *data = (*data & ~byte_mask) | ((bfd_byte)value & byte_mask);
-            mask >>= 8;
-            value >>= 8;
-          }
+	/* Only touch bytes while the mask is not 0, so we
+	   don't write to out of bounds memory if this is actually
+	   a 16-bit switch instruction. */
+	for (data = contents + rel->r_offset; mask != 0; data++)
+	  {
+	    bfd_byte byte_mask = (bfd_byte)mask;
+	    *data = (*data & ~byte_mask) | ((bfd_byte)value & byte_mask);
+	    mask >>= 8;
+	    value >>= 8;
+	  }
       }
 
       if (r != bfd_reloc_ok)
@@ -3814,14 +3640,15 @@ tilepro_elf_finish_dynamic_symbol (bfd *output_bfd,
       /* This symbols needs a copy reloc.  Set it up.  */
       BFD_ASSERT (h->dynindx != -1);
 
-      s = htab->srelbss;
-      BFD_ASSERT (s != NULL);
-
       rela.r_offset = (h->root.u.def.value
 		       + h->root.u.def.section->output_section->vma
 		       + h->root.u.def.section->output_offset);
       rela.r_info = ELF32_R_INFO (h->dynindx, R_TILEPRO_COPY);
       rela.r_addend = 0;
+      if (h->root.u.def.section == htab->elf.sdynrelro)
+	s = htab->elf.sreldynrelro;
+      else
+	s = htab->elf.srelbss;
       tilepro_elf_append_rela_32 (output_bfd, s, &rela);
     }
 
@@ -3879,7 +3706,7 @@ tilepro_finish_dyn (bfd *output_bfd, struct bfd_link_info *info,
 
 static bfd_boolean
 tilepro_elf_finish_dynamic_sections (bfd *output_bfd,
-                                     struct bfd_link_info *info)
+				     struct bfd_link_info *info)
 {
   bfd *dynobj;
   asection *sdyn;
@@ -3901,7 +3728,7 @@ tilepro_elf_finish_dynamic_sections (bfd *output_bfd,
 
       ret = tilepro_finish_dyn (output_bfd, info, dynobj, sdyn, splt);
 
-      if (ret != TRUE)
+      if (!ret)
 	return ret;
 
       /* Fill in the first entry in the procedure linkage table.  */
@@ -3921,7 +3748,7 @@ tilepro_elf_finish_dynamic_sections (bfd *output_bfd,
     {
       if (bfd_is_abs_section (htab->elf.sgotplt->output_section))
 	{
-	  (*_bfd_error_handler)
+	  _bfd_error_handler
 	    (_("discarded output section: `%A'"), htab->elf.sgotplt);
 	  return FALSE;
 	}
@@ -3966,7 +3793,7 @@ tilepro_elf_finish_dynamic_sections (bfd *output_bfd,
 
 static bfd_vma
 tilepro_elf_plt_sym_val (bfd_vma i, const asection *plt,
-                      const arelent *rel ATTRIBUTE_UNUSED)
+		      const arelent *rel ATTRIBUTE_UNUSED)
 {
   return plt->vma + (i + 1) * PLT_ENTRY_SIZE;
 }
@@ -3991,7 +3818,7 @@ tilepro_reloc_type_class (const struct bfd_link_info *info ATTRIBUTE_UNUSED,
 
 static int
 tilepro_additional_program_headers (bfd *abfd,
-                                    struct bfd_link_info *info ATTRIBUTE_UNUSED)
+				    struct bfd_link_info *info ATTRIBUTE_UNUSED)
 {
   /* Each .intrpt section specified by the user adds another PT_LOAD
      header since the sections are discontiguous. */
@@ -4028,7 +3855,7 @@ tilepro_additional_program_headers (bfd *abfd,
 
 #define elf_backend_reloc_type_class	     tilepro_reloc_type_class
 
-#define bfd_elf32_bfd_reloc_name_lookup      tilepro_reloc_name_lookup
+#define bfd_elf32_bfd_reloc_name_lookup	     tilepro_reloc_name_lookup
 #define bfd_elf32_bfd_link_hash_table_create tilepro_elf_link_hash_table_create
 #define bfd_elf32_bfd_reloc_type_lookup	     tilepro_reloc_type_lookup
 
@@ -4042,12 +3869,11 @@ tilepro_additional_program_headers (bfd *abfd,
 #define elf_backend_finish_dynamic_symbol    tilepro_elf_finish_dynamic_symbol
 #define elf_backend_finish_dynamic_sections  tilepro_elf_finish_dynamic_sections
 #define elf_backend_gc_mark_hook	     tilepro_elf_gc_mark_hook
-#define elf_backend_gc_sweep_hook            tilepro_elf_gc_sweep_hook
 #define elf_backend_plt_sym_val		     tilepro_elf_plt_sym_val
-#define elf_info_to_howto_rel                NULL
-#define elf_info_to_howto                    tilepro_info_to_howto_rela
-#define elf_backend_grok_prstatus            tilepro_elf_grok_prstatus
-#define elf_backend_grok_psinfo              tilepro_elf_grok_psinfo
+#define elf_info_to_howto_rel		     NULL
+#define elf_info_to_howto		     tilepro_info_to_howto_rela
+#define elf_backend_grok_prstatus	     tilepro_elf_grok_prstatus
+#define elf_backend_grok_psinfo		     tilepro_elf_grok_psinfo
 #define elf_backend_additional_program_headers tilepro_additional_program_headers
 
 #define bfd_elf32_mkobject		     tilepro_elf_mkobject
@@ -4062,6 +3888,7 @@ tilepro_additional_program_headers (bfd *abfd,
 #define elf_backend_plt_alignment 6
 #define elf_backend_want_plt_sym 1
 #define elf_backend_got_header_size GOT_ENTRY_SIZE
+#define elf_backend_want_dynrelro 1
 #define elf_backend_rela_normal 1
 #define elf_backend_default_execstack 0
 

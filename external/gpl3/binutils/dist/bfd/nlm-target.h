@@ -1,5 +1,5 @@
 /* Target definitions for 32/64-bit NLM (NetWare Loadable Module)
-   Copyright (C) 1993-2016 Free Software Foundation, Inc.
+   Copyright (C) 1993-2018 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -20,46 +20,48 @@
 
 #define nlm_core_file_p _bfd_dummy_target
 
-#define nlm_get_symtab_upper_bound              nlmNAME (get_symtab_upper_bound)
-#define nlm_canonicalize_symtab                 nlmNAME (canonicalize_symtab)
-#define nlm_make_empty_symbol                   nlmNAME (make_empty_symbol)
-#define nlm_print_symbol                        nlmNAME (print_symbol)
-#define nlm_get_symbol_info                     nlmNAME (get_symbol_info)
+#define nlm_get_symtab_upper_bound		nlmNAME (get_symtab_upper_bound)
+#define nlm_canonicalize_symtab			nlmNAME (canonicalize_symtab)
+#define nlm_make_empty_symbol			nlmNAME (make_empty_symbol)
+#define nlm_print_symbol			nlmNAME (print_symbol)
+#define nlm_get_symbol_info			nlmNAME (get_symbol_info)
 #define nlm_get_symbol_version_string		_bfd_nosymbols_get_symbol_version_string
-#define nlm_bfd_is_local_label_name             bfd_generic_is_local_label_name
+#define nlm_bfd_is_local_label_name		bfd_generic_is_local_label_name
 #define nlm_bfd_is_target_special_symbol ((bfd_boolean (*) (bfd *, asymbol *)) bfd_false)
-#define nlm_get_lineno                          _bfd_nosymbols_get_lineno
-#define nlm_find_nearest_line                   _bfd_nosymbols_find_nearest_line
-#define nlm_find_line                           _bfd_nosymbols_find_line
-#define nlm_find_inliner_info                   _bfd_nosymbols_find_inliner_info
-#define nlm_bfd_make_debug_symbol               _bfd_nosymbols_bfd_make_debug_symbol
-#define nlm_read_minisymbols                    _bfd_generic_read_minisymbols
-#define nlm_minisymbol_to_symbol                _bfd_generic_minisymbol_to_symbol
+#define nlm_get_lineno				_bfd_nosymbols_get_lineno
+#define nlm_find_nearest_line			_bfd_nosymbols_find_nearest_line
+#define nlm_find_line				_bfd_nosymbols_find_line
+#define nlm_find_inliner_info			_bfd_nosymbols_find_inliner_info
+#define nlm_bfd_make_debug_symbol		_bfd_nosymbols_bfd_make_debug_symbol
+#define nlm_read_minisymbols			_bfd_generic_read_minisymbols
+#define nlm_minisymbol_to_symbol		_bfd_generic_minisymbol_to_symbol
 
-#define nlm_get_reloc_upper_bound               nlmNAME (get_reloc_upper_bound)
-#define nlm_canonicalize_reloc                  nlmNAME (canonicalize_reloc)
-#define nlm_bfd_reloc_type_lookup               bfd_default_reloc_type_lookup
-#define nlm_bfd_reloc_name_lookup         _bfd_norelocs_bfd_reloc_name_lookup
-#define nlm_set_section_contents                nlmNAME (set_section_contents)
+#define nlm_get_reloc_upper_bound		nlmNAME (get_reloc_upper_bound)
+#define nlm_canonicalize_reloc			nlmNAME (canonicalize_reloc)
+#define nlm_set_reloc				_bfd_generic_set_reloc
+#define nlm_bfd_reloc_type_lookup		bfd_default_reloc_type_lookup
+#define nlm_bfd_reloc_name_lookup	  _bfd_norelocs_bfd_reloc_name_lookup
+#define nlm_set_section_contents		nlmNAME (set_section_contents)
 
-#define nlm_sizeof_headers                      _bfd_nolink_sizeof_headers
-#define nlm_bfd_get_relocated_section_contents  bfd_generic_get_relocated_section_contents
-#define nlm_bfd_relax_section                   bfd_generic_relax_section
-#define nlm_bfd_gc_sections                     bfd_generic_gc_sections
+#define nlm_sizeof_headers			_bfd_nolink_sizeof_headers
+#define nlm_bfd_get_relocated_section_contents	bfd_generic_get_relocated_section_contents
+#define nlm_bfd_relax_section			bfd_generic_relax_section
+#define nlm_bfd_gc_sections			bfd_generic_gc_sections
 #define nlm_bfd_lookup_section_flags		bfd_generic_lookup_section_flags
-#define nlm_bfd_merge_sections                  bfd_generic_merge_sections
-#define nlm_bfd_is_group_section                bfd_generic_is_group_section
-#define nlm_bfd_discard_group                   bfd_generic_discard_group
-#define nlm_section_already_linked              _bfd_generic_section_already_linked
-#define nlm_bfd_define_common_symbol            bfd_generic_define_common_symbol
-#define nlm_bfd_link_hash_table_create          _bfd_generic_link_hash_table_create
-#define nlm_bfd_link_add_symbols                _bfd_generic_link_add_symbols
-#define nlm_bfd_link_just_syms                  _bfd_generic_link_just_syms
+#define nlm_bfd_merge_sections			bfd_generic_merge_sections
+#define nlm_bfd_is_group_section		bfd_generic_is_group_section
+#define nlm_bfd_discard_group			bfd_generic_discard_group
+#define nlm_section_already_linked		_bfd_generic_section_already_linked
+#define nlm_bfd_define_common_symbol		bfd_generic_define_common_symbol
+#define nlm_bfd_define_start_stop		bfd_generic_define_start_stop
+#define nlm_bfd_link_hash_table_create		_bfd_generic_link_hash_table_create
+#define nlm_bfd_link_add_symbols		_bfd_generic_link_add_symbols
+#define nlm_bfd_link_just_syms			_bfd_generic_link_just_syms
 #define nlm_bfd_copy_link_hash_symbol_type \
   _bfd_generic_copy_link_hash_symbol_type
-#define nlm_bfd_final_link                      _bfd_generic_final_link
-#define nlm_bfd_link_split_section              _bfd_generic_link_split_section
-#define nlm_bfd_link_check_relocs               _bfd_generic_link_check_relocs
+#define nlm_bfd_final_link			_bfd_generic_final_link
+#define nlm_bfd_link_split_section		_bfd_generic_link_split_section
+#define nlm_bfd_link_check_relocs		_bfd_generic_link_check_relocs
 
 /* This structure contains everything that BFD knows about a target.
    It includes things like its byte order, name, what routines to call

@@ -1,3 +1,140 @@
+2018-01-10  Nick Clifton  <nickc@redhat.com>
+
+	* config-ml.in: Sync with gcc sources.
+	* config.guess: Likewise.
+	* config.sub: Likewise.
+	* configure.ac: Likewise.
+	* configure: Regenerate.
+
+2017-12-14  Nick Clifton  <nickc@redhat.com>
+
+	* COPYING.LIBGLOSS: Update address of FSF in copyright notice.
+
+2017-12-12  Stafford Horne  <shorne@gmail.com>
+
+	* configure.ac: Remove logic adding gdb to noconfigsdirs for or1k.
+	* configure: Regenerate.
+
+2017-09-15  Nick Clifton  <nickc@redhat.com>
+
+	* src-release.sh (LZIPPROG): New define.  Provides the name of the
+	lzip program.
+	(do_lz): New function.  Compresses a tarball using the lzip
+	program.
+	(do_compress): Add support for lzip compression.
+	(usage): Mention -l option.
+	(build_release): Support -l option to invoke lzip compression.
+
+2017-09-15  Alan Modra  <amodra@gmail.com>
+
+	* src-release.sh (do_proto_toplev): Revert last patch.  Enable or
+	disable binutils, gas, gdb, gold, gprof, ld, libdecnumber, readline,
+	and sim depending on $tool and $support_files.  Echo configure line.
+
+2017-09-14  Matt Rice <ratmice@gmail.com>
+
+	* src-release.sh (do_proto_toplev): Enable gold during release process.
+
+2017-04-13  Andrew Jenner  <andrew@codesourcery.com>
+
+	* config.sub: Sync with master version in config project.
+
+2017-04-03  Andrew Jenner  <andrew@codesourcery.com>
+
+	* config.sub: Handle ia16 in $basic_machine.
+
+	bfd/
+	* config.bfd: Handle ia16.
+
+	gas/
+	* configure.tgt: Handle ia16.
+
+	ld/
+	* configure.tgt: Handle ia16.
+
+2017-03-22  Nick Clifton  <nickc@redhat.com>
+
+	* config.sub: Sync with master version in config project.
+	* config.guess: Likewise.
+
+2017-01-23  Nick Clifton  <nickc@redhat.com>
+
+	* configure.ac: Update year in copyright notice.
+	Sync from FSF GCC mainline, bringing in the following patches.
+	* Makefile.def: Likewise.
+	* Makefile.tpl: Likewise.
+	* configure: Regenerate.
+	* Makefile.in: Regenerate.
+
+	2016-12-21  Jakub Jelinek  <jakub@redhat.com>
+
+	* configure.ac: Don't bootstrap libmpx unless --with-build-config
+	includes bootstrap-mpx.
+
+	2016-12-01  Matthias Klose  <doko@ubuntu.com>
+
+	* configure.ac: Don't use pkg-config to check for bdw-gc.
+
+	2016-11-30  Matthias Klose  <doko@ubuntu.com>
+
+	* Makefile.def: Remove reference to boehm-gc target module.
+  	* configure.ac: Include pkg.m4, check for --with-target-bdw-gc
+	options and for the bdw-gc pkg-config module.
+
+	2016-11-15  Matthias Klose  <doko@ubuntu.com>
+
+	* config-ml.in: Remove references to GCJ.
+	* configure.ac: Likewise.
+
+	2016-09-30  Jakub Jelinek  <jakub@redhat.com>
+
+	* configure.ac: Add target-libffi to target_libraries.
+	Readd libgcj target disablings, modified to only target-libffi.
+	Readd target addition of go to unsupported languages.
+
+	2016-09-30  Andrew Haley  <aph@redhat.com>
+
+	* Makefile.def: Remove libjava.
+	* Makefile.tpl: Likewise.
+	* configure.ac: Likewise.
+
+	2016-09-26  Anton Kolesov  <Anton.Kolesov@synopsys.com>
+
+	* configure.ac: Disable "sim" directory for arc*-*-*.
+
+	2016-09-12  Maciej W. Rozycki  <macro@imgtec.com>
+
+	* configure.ac: Check for the minimum in-tree MPFR version
+	handled.
+
+2016-12-31  Alan Modra  <amodra@gmail.com>
+
+	* config.sub: Import from upstream.
+
+2016-12-08  Alan Modra  <amodra@gmail.com>
+
+	* configure: Regenerate.
+
+2016-12-02  Josh Conner  <joshconner@google.com>
+
+	* configure.ac: Add fuchsia to targets that use ELF.
+	* configure: Regenerated.
+
+2016-11-07  Doug Evans  <dje@google.com>
+
+	* config.sub: Sync with upstream version 2016-11-03.
+	git://git.sv.gnu.org/config.git
+	* config.guess: Sync with upstream version 2016-10-02.
+
+2016-09-27  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* .gitignore: Add archives and make stamps.
+
+2016-07-20  Yan-Ting Lin  <currygt52@gmail.com>
+
+	* configure.ac (nds32*-*-*): Remove entry to enable gdb.
+	* configure: Regenerated.
+
 2016-06-28  Walter Lee  <walt@tilera.com>
 
 	* configure.ac (tilepro-*-*): Add gdb to noconfigdirs.

@@ -1,5 +1,5 @@
 /* BFD back-end for s-record objects.
-   Copyright (C) 1990-2016 Free Software Foundation, Inc.
+   Copyright (C) 1990-2018 Free Software Foundation, Inc.
    Written by Steve Chamberlain of Cygnus Support <sac@cygnus.com>.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -94,7 +94,7 @@
 	  _start $14
 	  _etext $8036
 	  _edata $8036
- 	  _end $8036
+	  _end $8036
 	$$
 
    DESCRIPTION
@@ -129,12 +129,12 @@ static const char digs[] = "0123456789ABCDEF";
 /* The number of data bytes we actually fit onto a line on output.
    This variable can be modified by objcopy's --srec-len parameter.
    For a 0x75 byte record you should set --srec-len=0x70.  */
-unsigned int Chunk = DEFAULT_CHUNK;
+unsigned int _bfd_srec_len = DEFAULT_CHUNK;
 
 /* The type of srec output (free or forced to S3).
    This variable can be modified by objcopy's --srec-forceS3
    parameter.  */
-bfd_boolean S3Forced = FALSE;
+bfd_boolean _bfd_srec_forceS3 = FALSE;
 
 /* When writing an S-record file, the S-records can not be output as
    they are seen.  This structure is used to hold them in memory.  */
@@ -255,7 +255,8 @@ srec_bad_byte (bfd *abfd,
 	  buf[0] = c;
 	  buf[1] = '\0';
 	}
-      (*_bfd_error_handler)
+      _bfd_error_handler
+	/* xgettext:c-format */
 	(_("%B:%d: Unexpected character `%s' in S-record file\n"),
 	 abfd, lineno, buf);
       bfd_set_error (bfd_error_bad_value);
@@ -483,8 +484,9 @@ srec_scan (bfd *abfd)
 	      min_bytes = 5;
 	    if (bytes < min_bytes)
 	      {
-		(*_bfd_error_handler) (_("%B:%d: byte count %d too small\n"),
-				       abfd, lineno, bytes);
+		/* xgettext:c-format */
+		_bfd_error_handler (_("%B:%d: byte count %d too small\n"),
+				    abfd, lineno, bytes);
 		bfd_set_error (bfd_error_bad_value);
 		goto error_return;
 	      }
@@ -574,7 +576,8 @@ srec_scan (bfd *abfd)
 		check_sum = 255 - (check_sum & 0xff);
 		if (check_sum != HEX (data))
 		  {
-		    (*_bfd_error_handler)
+		    _bfd_error_handler
+		      /* xgettext:c-format */
 		      (_("%B:%d: Bad checksum in S-record file\n"),
 		       abfd, lineno);
 		    bfd_set_error (bfd_error_bad_value);
@@ -607,7 +610,8 @@ srec_scan (bfd *abfd)
 		check_sum = 255 - (check_sum & 0xff);
 		if (check_sum != HEX (data))
 		  {
-		    (*_bfd_error_handler)
+		    _bfd_error_handler
+		      /* xgettext:c-format */
 		      (_("%B:%d: Bad checksum in S-record file\n"),
 		       abfd, lineno);
 		    bfd_set_error (bfd_error_bad_value);
@@ -850,7 +854,7 @@ srec_get_section_contents (bfd *abfd,
 	return FALSE;
 
       if (! srec_read_section (abfd, section,
-                               (bfd_byte *) section->used_by_bfd))
+			       (bfd_byte *) section->used_by_bfd))
 	return FALSE;
     }
 
@@ -900,9 +904,9 @@ srec_set_section_contents (bfd *abfd,
 	return FALSE;
       memcpy ((void *) data, location, (size_t) bytes_to_do);
 
-      /* Ff S3Forced is TRUE then always select S3 records,
-	 regardless of the siez of the addresses.  */
-      if (S3Forced)
+      /* If _bfd_srec_forceS3 is TRUE then always select S3 records,
+	 regardless of the size of the addresses.  */
+      if (_bfd_srec_forceS3)
 	tdata->type = 3;
       else if ((section->lma + (offset + bytes_to_do) / opb - 1) <= 0xffff)
 	;  /* The default, S1, is OK.  */
@@ -972,10 +976,12 @@ srec_write_record (bfd *abfd,
     case 7:
       TOHEX (dst, (address >> 24), check_sum);
       dst += 2;
+      /* Fall through.  */
     case 8:
     case 2:
       TOHEX (dst, (address >> 16), check_sum);
       dst += 2;
+      /* Fall through.  */
     case 9:
     case 1:
     case 0:
@@ -1034,18 +1040,18 @@ srec_write_section (bfd *abfd,
      have three, and S3 (tdata->type == 3) records have four.
      The total length can't exceed 255, and a zero data length will
      spin for a long time.  */
-  if (Chunk == 0)
-    Chunk = 1;
-  else if (Chunk > MAXCHUNK - tdata->type - 2)
-    Chunk = MAXCHUNK - tdata->type - 2;
+  if (_bfd_srec_len == 0)
+    _bfd_srec_len = 1;
+  else if (_bfd_srec_len > MAXCHUNK - tdata->type - 2)
+    _bfd_srec_len = MAXCHUNK - tdata->type - 2;
 
   while (octets_written < list->size)
     {
       bfd_vma address;
       unsigned int octets_this_chunk = list->size - octets_written;
 
-      if (octets_this_chunk > Chunk)
-	octets_this_chunk = Chunk;
+      if (octets_this_chunk > _bfd_srec_len)
+	octets_this_chunk = _bfd_srec_len;
 
       address = list->where + octets_written / bfd_octets_per_byte (abfd);
 
@@ -1248,37 +1254,38 @@ srec_print_symbol (bfd *abfd,
     }
 }
 
-#define	srec_close_and_cleanup                    _bfd_generic_close_and_cleanup
-#define srec_bfd_free_cached_info                 _bfd_generic_bfd_free_cached_info
-#define srec_new_section_hook                     _bfd_generic_new_section_hook
-#define srec_bfd_is_target_special_symbol         ((bfd_boolean (*) (bfd *, asymbol *)) bfd_false)
-#define srec_bfd_is_local_label_name              bfd_generic_is_local_label_name
-#define srec_get_lineno                           _bfd_nosymbols_get_lineno
-#define srec_find_nearest_line                    _bfd_nosymbols_find_nearest_line
-#define srec_find_line                            _bfd_nosymbols_find_line
-#define srec_find_inliner_info                    _bfd_nosymbols_find_inliner_info
-#define srec_make_empty_symbol                    _bfd_generic_make_empty_symbol
+#define	srec_close_and_cleanup			  _bfd_generic_close_and_cleanup
+#define srec_bfd_free_cached_info		  _bfd_generic_bfd_free_cached_info
+#define srec_new_section_hook			  _bfd_generic_new_section_hook
+#define srec_bfd_is_target_special_symbol	  ((bfd_boolean (*) (bfd *, asymbol *)) bfd_false)
+#define srec_bfd_is_local_label_name		  bfd_generic_is_local_label_name
+#define srec_get_lineno				  _bfd_nosymbols_get_lineno
+#define srec_find_nearest_line			  _bfd_nosymbols_find_nearest_line
+#define srec_find_line				  _bfd_nosymbols_find_line
+#define srec_find_inliner_info			  _bfd_nosymbols_find_inliner_info
+#define srec_make_empty_symbol			  _bfd_generic_make_empty_symbol
 #define srec_get_symbol_version_string		  _bfd_nosymbols_get_symbol_version_string
-#define srec_bfd_make_debug_symbol                _bfd_nosymbols_bfd_make_debug_symbol
-#define srec_read_minisymbols                     _bfd_generic_read_minisymbols
-#define srec_minisymbol_to_symbol                 _bfd_generic_minisymbol_to_symbol
-#define srec_get_section_contents_in_window       _bfd_generic_get_section_contents_in_window
-#define srec_bfd_get_relocated_section_contents   bfd_generic_get_relocated_section_contents
-#define srec_bfd_relax_section                    bfd_generic_relax_section
-#define srec_bfd_gc_sections                      bfd_generic_gc_sections
-#define srec_bfd_lookup_section_flags             bfd_generic_lookup_section_flags
-#define srec_bfd_merge_sections                   bfd_generic_merge_sections
-#define srec_bfd_is_group_section                 bfd_generic_is_group_section
-#define srec_bfd_discard_group                    bfd_generic_discard_group
-#define srec_section_already_linked               _bfd_generic_section_already_linked
-#define srec_bfd_define_common_symbol             bfd_generic_define_common_symbol
-#define srec_bfd_link_hash_table_create           _bfd_generic_link_hash_table_create
-#define srec_bfd_link_add_symbols                 _bfd_generic_link_add_symbols
-#define srec_bfd_link_just_syms                   _bfd_generic_link_just_syms
-#define srec_bfd_copy_link_hash_symbol_type       _bfd_generic_copy_link_hash_symbol_type
-#define srec_bfd_final_link                       _bfd_generic_final_link
-#define srec_bfd_link_split_section               _bfd_generic_link_split_section
-#define srec_bfd_link_check_relocs                _bfd_generic_link_check_relocs
+#define srec_bfd_make_debug_symbol		  _bfd_nosymbols_bfd_make_debug_symbol
+#define srec_read_minisymbols			  _bfd_generic_read_minisymbols
+#define srec_minisymbol_to_symbol		  _bfd_generic_minisymbol_to_symbol
+#define srec_get_section_contents_in_window	  _bfd_generic_get_section_contents_in_window
+#define srec_bfd_get_relocated_section_contents	  bfd_generic_get_relocated_section_contents
+#define srec_bfd_relax_section			  bfd_generic_relax_section
+#define srec_bfd_gc_sections			  bfd_generic_gc_sections
+#define srec_bfd_lookup_section_flags		  bfd_generic_lookup_section_flags
+#define srec_bfd_merge_sections			  bfd_generic_merge_sections
+#define srec_bfd_is_group_section		  bfd_generic_is_group_section
+#define srec_bfd_discard_group			  bfd_generic_discard_group
+#define srec_section_already_linked		  _bfd_generic_section_already_linked
+#define srec_bfd_define_common_symbol		  bfd_generic_define_common_symbol
+#define srec_bfd_define_start_stop		  bfd_generic_define_start_stop
+#define srec_bfd_link_hash_table_create		  _bfd_generic_link_hash_table_create
+#define srec_bfd_link_add_symbols		  _bfd_generic_link_add_symbols
+#define srec_bfd_link_just_syms			  _bfd_generic_link_just_syms
+#define srec_bfd_copy_link_hash_symbol_type	  _bfd_generic_copy_link_hash_symbol_type
+#define srec_bfd_final_link			  _bfd_generic_final_link
+#define srec_bfd_link_split_section		  _bfd_generic_link_split_section
+#define srec_bfd_link_check_relocs		  _bfd_generic_link_check_relocs
 
 const bfd_target srec_vec =
 {

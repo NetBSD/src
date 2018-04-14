@@ -1,5 +1,5 @@
 /* BFD back-end definitions used by all FreeBSD targets.
-   Copyright (C) 1990-2016 Free Software Foundation, Inc.
+   Copyright (C) 1990-2018 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -46,7 +46,7 @@
 	 | (((flags) & 0x3f) << 26))
 #define N_SET_MACHTYPE(execp, machtype) \
 	((execp)->a_info = \
-         ((execp)->a_info & 0xfb00ffff) | ((((int) (machtype)) & 0x3ff) << 16))
+	 ((execp)->a_info & 0xfb00ffff) | ((((int) (machtype)) & 0x3ff) << 16))
 #define N_SET_FLAGS(execp, flags) \
 	((execp)->a_info = \
 	 ((execp)->a_info & 0x03ffffff) | ((flags & 0x03f) << 26))

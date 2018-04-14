@@ -1,4 +1,4 @@
-@c Copyright (C) 2008-2016 Free Software Foundation, Inc.
+@c Copyright (C) 2008-2018 Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
 
@@ -10,7 +10,7 @@
 
 @ifclear GENERIC
 @node Machine Dependencies
-@chapter LM£" Dependent Features
+@chapter LM32 Dependent Features
 @end ifclear
 
 @cindex LM32 support
