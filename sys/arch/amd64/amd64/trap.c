@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.96.4.3 2018/04/08 06:14:18 snj Exp $	*/
+/*	$NetBSD: trap.c,v 1.96.4.4 2018/04/14 10:11:49 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.96.4.3 2018/04/08 06:14:18 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.96.4.4 2018/04/14 10:11:49 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -500,6 +500,15 @@ copyfault:
 			if (cr2 > VM_MIN_ADDRESS && cr2 <= VM_MAXUSER_ADDRESS)
 				panic("prevented execution of %p (SMEP)",
 				    (void *)cr2);
+		}
+
+		if ((frame->tf_err & PGEX_P) &&
+		    cr2 < VM_MAXUSER_ADDRESS) {
+			/* SMAP might have brought us here */
+			if (onfault_handler(pcb, frame) == NULL) {
+				panic("prevented access to %p (SMAP)",
+				    (void *)cr2);
+			}
 		}
 
 		goto faultcommon;

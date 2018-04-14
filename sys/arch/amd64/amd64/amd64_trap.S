@@ -1,4 +1,4 @@
-/*	$NetBSD: amd64_trap.S,v 1.5.6.2 2018/03/22 16:59:03 martin Exp $	*/
+/*	$NetBSD: amd64_trap.S,v 1.5.6.3 2018/04/14 10:11:49 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008, 2017 The NetBSD Foundation, Inc.
@@ -136,6 +136,7 @@ IDTVEC(trap02)
 	INTR_SAVE_GPRS
 	SVS_ENTER_ALTSTACK
 	cld
+	SMAP_ENABLE
 	movw	%gs,TF_GS(%rsp)
 	movw	%fs,TF_FS(%rsp)
 	movw	%es,TF_ES(%rsp)
@@ -236,6 +237,7 @@ IDTVEC(trap08)
 	swapgs
 1:
 	cld
+	SMAP_ENABLE
 	movw	%gs,TF_GS(%rsp)
 	movw	%fs,TF_FS(%rsp)
 	movw	%es,TF_ES(%rsp)
