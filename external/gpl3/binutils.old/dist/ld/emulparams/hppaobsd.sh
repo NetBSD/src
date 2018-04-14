@@ -1,0 +1,6 @@
+. ${srcdir}/emulparams/hppalinux.sh
+
+OUTPUT_FORMAT="elf32-hppa"
+TEXT_START_ADDR=0x1000
+TARGET_PAGE_SIZE=0x1000
+MAXPAGESIZE="CONSTANT (MAXPAGESIZE)"
