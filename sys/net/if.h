@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.239.2.4 2018/02/11 21:17:34 snj Exp $	*/
+/*	$NetBSD: if.h,v 1.239.2.5 2018/04/14 10:16:19 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -1145,8 +1145,6 @@ struct	ifaddr *ifa_ifwithnet(const struct sockaddr *);
 struct	ifaddr *ifa_ifwithnet_psref(const struct sockaddr *, struct psref *);
 struct	ifaddr *ifa_ifwithladdr(const struct sockaddr *);
 struct	ifaddr *ifa_ifwithladdr_psref(const struct sockaddr *, struct psref *);
-struct	ifaddr *ifa_ifwithroute_psref(int, const struct sockaddr *,
-	    const struct sockaddr *, struct psref *);
 struct	ifaddr *ifaof_ifpforaddr(const struct sockaddr *, struct ifnet *);
 struct	ifaddr *ifaof_ifpforaddr_psref(const struct sockaddr *, struct ifnet *,
 	    struct psref *);
