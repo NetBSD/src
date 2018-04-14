@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.60.6.2 2018/04/12 13:42:49 martin Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.60.6.3 2018/04/14 10:53:14 martin Exp $	*/
 
 /*-
  * Copyright (c) 1984, 1993
@@ -172,7 +172,7 @@ struct fpreg;
 #endif
 
 #if defined(PT_GETDBREGS) || defined(PT_SETDBREGS)
-struct fpreg;
+struct dbreg;
 #ifndef process_dbreg32
 #define process_dbreg32 struct dbreg
 #endif
