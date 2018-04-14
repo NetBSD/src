@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.97.2.11 2018/01/02 10:20:33 snj Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.97.2.12 2018/04/14 10:38:59 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.97.2.11 2018/01/02 10:20:33 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.97.2.12 2018/04/14 10:38:59 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1419,12 +1419,10 @@ vlan_transmit(struct ifnet *ifp, struct mbuf *m)
 
 	bpf_mtap(ifp, m);
 
-	if (pfil_run_hooks(ifp->if_pfil, &m, ifp, PFIL_OUT) != 0) {
-		if (m != NULL)
-			m_freem(m);
-		error = 0;
+	if ((error = pfil_run_hooks(ifp->if_pfil, &m, ifp, PFIL_OUT)) != 0)
 		goto out;
-	}
+	if (m == NULL)
+		goto out;
 
 	/*
 	 * If the parent can insert the tag itself, just mark
@@ -1610,11 +1608,10 @@ vlan_input(struct ifnet *ifp, struct mbuf *m)
 	m_set_rcvif(m, &ifv->ifv_if);
 	ifv->ifv_if.if_ipackets++;
 
-	if (pfil_run_hooks(ifp->if_pfil, &m, ifp, PFIL_IN) != 0) {
-		if (m != NULL)
-			m_freem(m);
+	if (pfil_run_hooks(ifp->if_pfil, &m, ifp, PFIL_IN) != 0)
 		goto out;
-	}
+	if (m == NULL)
+		goto out;
 
 	m->m_flags &= ~M_PROMISC;
 	if_input(&ifv->ifv_if, m);
