@@ -1,5 +1,5 @@
 /* tc-i386.c -- Assemble Intel syntax code for ix86/x86-64
-   Copyright (C) 2009-2016 Free Software Foundation, Inc.
+   Copyright (C) 2009-2018 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -26,7 +26,7 @@ static struct
     int has_offset;		/* 1 if operand has offset.  */
     unsigned int in_offset;	/* >=1 if processing operand of offset.  */
     unsigned int in_bracket;	/* >=1 if processing operand in brackets.  */
-    unsigned int in_scale;	/* >=1 if processing multipication operand
+    unsigned int in_scale;	/* >=1 if processing multiplication operand
 				 * in brackets.  */
     i386_operand_type reloc_types;	/* Value obtained from lex_got().  */
     const reg_entry *base;	/* Base register (if any).  */
@@ -286,9 +286,11 @@ i386_intel_simplify_register (expressionS *e)
       i.op[this_operand].regs = i386_regtab + reg_num;
     }
   else if (!intel_state.index
-	   && (i386_regtab[reg_num].reg_type.bitfield.regxmm
-	       || i386_regtab[reg_num].reg_type.bitfield.regymm
-	       || i386_regtab[reg_num].reg_type.bitfield.regzmm))
+	   && (i386_regtab[reg_num].reg_type.bitfield.xmmword
+	       || i386_regtab[reg_num].reg_type.bitfield.ymmword
+	       || i386_regtab[reg_num].reg_type.bitfield.zmmword
+	       || i386_regtab[reg_num].reg_num == RegRiz
+	       || i386_regtab[reg_num].reg_num == RegEiz))
     intel_state.index = i386_regtab + reg_num;
   else if (!intel_state.base && !intel_state.in_scale)
     intel_state.base = i386_regtab + reg_num;
@@ -411,7 +413,19 @@ static int i386_intel_simplify (expressionS *e)
 			       intel_state.index))
 	return 0;
       if (!intel_state.in_offset)
-	intel_state.seg = e->X_add_symbol;
+	{
+	  if (!intel_state.seg)
+	    intel_state.seg = e->X_add_symbol;
+	  else
+	    {
+	      expressionS exp;
+
+	      exp.X_op = O_full_ptr;
+	      exp.X_add_symbol = e->X_add_symbol;
+	      exp.X_op_symbol = intel_state.seg;
+	      intel_state.seg = make_expr_symbol (&exp);
+	    }
+	}
       i386_intel_fold (e, e->X_op_symbol);
       break;
 
@@ -437,7 +451,7 @@ static int i386_intel_simplify (expressionS *e)
 	    {
 	      resolve_expression (scale);
 	      if (scale->X_op != O_constant
-		  || intel_state.index->reg_type.bitfield.reg16)
+		  || intel_state.index->reg_type.bitfield.word)
 		scale->X_add_number = 0;
 	      intel_state.scale_factor *= scale->X_add_number;
 	    }
@@ -578,12 +592,14 @@ i386_intel_operand (char *operand_string, int got_a_float)
 
   if (!is_end_of_line[(unsigned char) *input_line_pointer])
     {
-      as_bad (_("junk `%s' after expression"), input_line_pointer);
+      if (ret)
+	as_bad (_("junk `%s' after expression"), input_line_pointer);
       ret = 0;
     }
   else if (exp.X_op == O_illegal || exp.X_op == O_absent)
     {
-      as_bad (_("invalid expression"));
+      if (ret)
+	as_bad (_("invalid expression"));
       ret = 0;
     }
   else if (!intel_state.has_offset
@@ -876,17 +892,40 @@ i386_intel_operand (char *operand_string, int got_a_float)
 	  return 0;
 	}
 
+      /* Swap base and index in 16-bit memory operands like
+	 [si+bx]. Since i386_index_check is also used in AT&T
+	 mode we have to do this here.  */
+      if (intel_state.base
+	  && intel_state.index
+	  && intel_state.base->reg_type.bitfield.word
+	  && intel_state.index->reg_type.bitfield.word
+	  && intel_state.base->reg_num >= 6
+	  && intel_state.index->reg_num < 6)
+	{
+	  i.base_reg = intel_state.index;
+	  i.index_reg = intel_state.base;
+	}
+      else
+	{
+	  i.base_reg = intel_state.base;
+	  i.index_reg = intel_state.index;
+	}
+
+      if (i.base_reg || i.index_reg)
+	i.types[this_operand].bitfield.baseindex = 1;
+
       expP = &disp_expressions[i.disp_operands];
       memcpy (expP, &exp, sizeof(exp));
       resolve_expression (expP);
 
       if (expP->X_op != O_constant
 	  || expP->X_add_number
-	  || (!intel_state.base
-	      && !intel_state.index))
+	  || !i.types[this_operand].bitfield.baseindex)
 	{
 	  i.op[this_operand].disps = expP;
 	  i.disp_operands++;
+
+	  i386_addressing_mode ();
 
 	  if (flag_code == CODE_64BIT)
 	    {
@@ -927,15 +966,14 @@ i386_intel_operand (char *operand_string, int got_a_float)
 	    return 0;
 	}
 
-      if (intel_state.base || intel_state.index)
-	i.types[this_operand].bitfield.baseindex = 1;
-
       if (intel_state.seg)
 	{
-	  for (;;)
+	  for (ret = check_none; ; ret = operand_check)
 	    {
 	      expP = symbol_get_value_expression (intel_state.seg);
-	      if (expP->X_op != O_full_ptr)
+	      if (expP->X_op != O_full_ptr 
+		  || symbol_get_value_expression (expP->X_op_symbol)->X_op
+		     != O_register)
 		break;
 	      intel_state.seg = expP->X_add_symbol;
 	    }
@@ -950,6 +988,15 @@ i386_intel_operand (char *operand_string, int got_a_float)
 	      as_bad (_("invalid use of register"));
 	      return 0;
 	    }
+	  switch (ret)
+	    {
+	    case check_error:
+	      as_bad (_("redundant segment overrides"));
+	      return 0;
+	    case check_warning:
+	      as_warn (_("redundant segment overrides"));
+	      break;
+	    }
 	  switch (i386_regtab[expP->X_add_number].reg_num)
 	    {
 	    case 0: i.seg[i.mem_operands] = &es; break;
@@ -960,25 +1007,6 @@ i386_intel_operand (char *operand_string, int got_a_float)
 	    case 5: i.seg[i.mem_operands] = &gs; break;
 	    case RegFlat: i.seg[i.mem_operands] = NULL; break;
 	    }
-	}
-
-      /* Swap base and index in 16-bit memory operands like
-	 [si+bx]. Since i386_index_check is also used in AT&T
-	 mode we have to do that here.  */
-      if (intel_state.base
-	  && intel_state.index
-	  && intel_state.base->reg_type.bitfield.reg16
-	  && intel_state.index->reg_type.bitfield.reg16
-	  && intel_state.base->reg_num >= 6
-	  && intel_state.index->reg_num < 6)
-	{
-	  i.base_reg = intel_state.index;
-	  i.index_reg = intel_state.base;
-	}
-      else
-	{
-	  i.base_reg = intel_state.base;
-	  i.index_reg = intel_state.index;
 	}
 
       if (!i386_index_check (operand_string))

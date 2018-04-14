@@ -1,5 +1,5 @@
 /* AArch64-specific support for ELF.
-   Copyright (C) 2009-2016 Free Software Foundation, Inc.
+   Copyright (C) 2009-2018 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -247,7 +247,7 @@ _bfd_aarch64_elf_put_addend (bfd *abfd,
       break;
 
     case BFD_RELOC_AARCH64_ADD_LO12:
-    case BFD_RELOC_AARCH64_TLSDESC_ADD_LO12_NC:
+    case BFD_RELOC_AARCH64_TLSDESC_ADD_LO12:
     case BFD_RELOC_AARCH64_TLSGD_ADD_LO12_NC:
     case BFD_RELOC_AARCH64_TLSLD_ADD_DTPREL_HI12:
     case BFD_RELOC_AARCH64_TLSLD_ADD_DTPREL_LO12:
@@ -257,9 +257,9 @@ _bfd_aarch64_elf_put_addend (bfd *abfd,
     case BFD_RELOC_AARCH64_TLSLE_ADD_TPREL_LO12:
     case BFD_RELOC_AARCH64_TLSLE_ADD_TPREL_LO12_NC:
       /* Corresponds to: add rd, rn, #uimm12 to provide the low order
-         12 bits of the page offset following
-         BFD_RELOC_AARCH64_ADR_HI21_PCREL which computes the
-         (pc-relative) page base.  */
+	 12 bits of the page offset following
+	 BFD_RELOC_AARCH64_ADR_HI21_PCREL which computes the
+	 (pc-relative) page base.  */
       contents = reencode_add_imm (contents, addend);
       break;
 
@@ -274,7 +274,7 @@ _bfd_aarch64_elf_put_addend (bfd *abfd,
     case BFD_RELOC_AARCH64_LDST64_LO12:
     case BFD_RELOC_AARCH64_LDST8_LO12:
     case BFD_RELOC_AARCH64_TLSDESC_LD32_LO12_NC:
-    case BFD_RELOC_AARCH64_TLSDESC_LD64_LO12_NC:
+    case BFD_RELOC_AARCH64_TLSDESC_LD64_LO12:
     case BFD_RELOC_AARCH64_TLSIE_LD32_GOTTPREL_LO12_NC:
     case BFD_RELOC_AARCH64_TLSIE_LD64_GOTTPREL_LO12_NC:
     case BFD_RELOC_AARCH64_TLSLD_LDST16_DTPREL_LO12:
@@ -288,15 +288,15 @@ _bfd_aarch64_elf_put_addend (bfd *abfd,
       if (old_addend & ((1 << howto->rightshift) - 1))
 	return bfd_reloc_overflow;
       /* Used for ldr*|str* rt, [rn, #uimm12] to provide the low order
-         12 bits of the page offset following BFD_RELOC_AARCH64_ADR_HI21_PCREL
-         which computes the (pc-relative) page base.  */
+	 12 bits of the page offset following BFD_RELOC_AARCH64_ADR_HI21_PCREL
+	 which computes the (pc-relative) page base.  */
       contents = reencode_ldst_pos_imm (contents, addend);
       break;
 
       /* Group relocations to create high bits of a 16, 32, 48 or 64
-         bit signed data or abs address inline. Will change
-         instruction to MOVN or MOVZ depending on sign of calculated
-         value.  */
+	 bit signed data or abs address inline. Will change
+	 instruction to MOVN or MOVZ depending on sign of calculated
+	 value.  */
 
     case BFD_RELOC_AARCH64_MOVW_G0_S:
     case BFD_RELOC_AARCH64_MOVW_G1_S:
@@ -319,10 +319,10 @@ _bfd_aarch64_elf_put_addend (bfd *abfd,
 	  /* Force use of MOVZ.  */
 	  contents = reencode_movzn_to_movz (contents);
 	}
-      /* fall through */
+      /* Fall through.  */
 
       /* Group relocations to create a 16, 32, 48 or 64 bit unsigned
-         data or abs address inline.  */
+	 data or abs address inline.  */
 
     case BFD_RELOC_AARCH64_MOVW_G0:
     case BFD_RELOC_AARCH64_MOVW_G0_NC:
@@ -413,7 +413,6 @@ _bfd_aarch64_elf_resolve_relocation (bfd_reloc_code_real_type r_type,
 
     case BFD_RELOC_AARCH64_16:
     case BFD_RELOC_AARCH64_32:
-    case BFD_RELOC_AARCH64_LD64_GOTOFF_LO15:
     case BFD_RELOC_AARCH64_MOVW_G0:
     case BFD_RELOC_AARCH64_MOVW_G0_NC:
     case BFD_RELOC_AARCH64_MOVW_G0_S:
@@ -424,8 +423,6 @@ _bfd_aarch64_elf_resolve_relocation (bfd_reloc_code_real_type r_type,
     case BFD_RELOC_AARCH64_MOVW_G2_NC:
     case BFD_RELOC_AARCH64_MOVW_G2_S:
     case BFD_RELOC_AARCH64_MOVW_G3:
-    case BFD_RELOC_AARCH64_MOVW_GOTOFF_G0_NC:
-    case BFD_RELOC_AARCH64_MOVW_GOTOFF_G1:
     case BFD_RELOC_AARCH64_TLSDESC_OFF_G0_NC:
     case BFD_RELOC_AARCH64_TLSDESC_OFF_G1:
     case BFD_RELOC_AARCH64_TLSGD_MOVW_G0_NC:
@@ -468,10 +465,15 @@ _bfd_aarch64_elf_resolve_relocation (bfd_reloc_code_real_type r_type,
       value = PG (value + addend) - PG (place);
       break;
 
+    /* Caller must make sure addend is the base address of .got section.  */
     case BFD_RELOC_AARCH64_LD32_GOTPAGE_LO14:
     case BFD_RELOC_AARCH64_LD64_GOTPAGE_LO15:
-      /* Caller must make sure addend is the base address of .got section.  */
-      value = value - PG (addend);
+      addend = PG (addend);
+      /* Fall through.  */
+    case BFD_RELOC_AARCH64_LD64_GOTOFF_LO15:
+    case BFD_RELOC_AARCH64_MOVW_GOTOFF_G0_NC:
+    case BFD_RELOC_AARCH64_MOVW_GOTOFF_G1:
+      value = value - addend;
       break;
 
     case BFD_RELOC_AARCH64_ADD_LO12:
@@ -483,9 +485,9 @@ _bfd_aarch64_elf_resolve_relocation (bfd_reloc_code_real_type r_type,
     case BFD_RELOC_AARCH64_LDST64_LO12:
     case BFD_RELOC_AARCH64_LDST8_LO12:
     case BFD_RELOC_AARCH64_TLSDESC_ADD:
-    case BFD_RELOC_AARCH64_TLSDESC_ADD_LO12_NC:
+    case BFD_RELOC_AARCH64_TLSDESC_ADD_LO12:
     case BFD_RELOC_AARCH64_TLSDESC_LD32_LO12_NC:
-    case BFD_RELOC_AARCH64_TLSDESC_LD64_LO12_NC:
+    case BFD_RELOC_AARCH64_TLSDESC_LD64_LO12:
     case BFD_RELOC_AARCH64_TLSDESC_LDR:
     case BFD_RELOC_AARCH64_TLSGD_ADD_LO12_NC:
     case BFD_RELOC_AARCH64_TLSIE_LD32_GOTTPREL_LO12_NC:
@@ -588,7 +590,7 @@ _bfd_aarch64_elf_grok_psinfo (bfd *abfd, Elf_Internal_Note *note)
     default:
       return FALSE;
 
-    case 136:        /* This is sizeof(struct elf_prpsinfo) on Linux/aarch64.  */
+    case 136:	     /* This is sizeof(struct elf_prpsinfo) on Linux/aarch64.  */
       elf_tdata (abfd)->core->pid = bfd_get_32 (abfd, note->descdata + 24);
       elf_tdata (abfd)->core->program
 	= _bfd_elfcore_strndup (abfd, note->descdata + 40, 16);
@@ -622,38 +624,38 @@ _bfd_aarch64_elf_write_core_note (bfd *abfd, char *buf, int *bufsiz, int note_ty
 
     case NT_PRPSINFO:
       {
-        char data[136];
-        va_list ap;
+	char data[136];
+	va_list ap;
 
-        va_start (ap, note_type);
-        memset (data, 0, sizeof (data));
-        strncpy (data + 40, va_arg (ap, const char *), 16);
-        strncpy (data + 56, va_arg (ap, const char *), 80);
-        va_end (ap);
+	va_start (ap, note_type);
+	memset (data, 0, sizeof (data));
+	strncpy (data + 40, va_arg (ap, const char *), 16);
+	strncpy (data + 56, va_arg (ap, const char *), 80);
+	va_end (ap);
 
-        return elfcore_write_note (abfd, buf, bufsiz, "CORE",
+	return elfcore_write_note (abfd, buf, bufsiz, "CORE",
 				   note_type, data, sizeof (data));
       }
 
     case NT_PRSTATUS:
       {
-        char data[392];
-        va_list ap;
-        long pid;
-        int cursig;
-        const void *greg;
+	char data[392];
+	va_list ap;
+	long pid;
+	int cursig;
+	const void *greg;
 
-        va_start (ap, note_type);
-        memset (data, 0, sizeof (data));
-        pid = va_arg (ap, long);
-        bfd_put_32 (abfd, pid, data + 32);
-        cursig = va_arg (ap, int);
-        bfd_put_16 (abfd, cursig, data + 12);
-        greg = va_arg (ap, const void *);
-        memcpy (data + 112, greg, 272);
-        va_end (ap);
+	va_start (ap, note_type);
+	memset (data, 0, sizeof (data));
+	pid = va_arg (ap, long);
+	bfd_put_32 (abfd, pid, data + 32);
+	cursig = va_arg (ap, int);
+	bfd_put_16 (abfd, cursig, data + 12);
+	greg = va_arg (ap, const void *);
+	memcpy (data + 112, greg, 272);
+	va_end (ap);
 
-        return elfcore_write_note (abfd, buf, bufsiz, "CORE",
+	return elfcore_write_note (abfd, buf, bufsiz, "CORE",
 				   note_type, data, sizeof (data));
       }
     }

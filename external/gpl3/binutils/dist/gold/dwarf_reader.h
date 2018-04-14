@@ -1,6 +1,6 @@
 // dwarf_reader.h -- parse dwarf2/3 debug information for gold  -*- C++ -*-
 
-// Copyright (C) 2007-2016 Free Software Foundation, Inc.
+// Copyright (C) 2007-2018 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -763,6 +763,13 @@ class Dwarf_info_reader
   unsigned int
   address_size() const
   { return this->address_size_; }
+
+  // Return the size of a DW_FORM_ref_addr.
+  // In DWARF v2, this was the size of an address; in DWARF v3 and later,
+  // it is the size of an DWARF offset.
+  unsigned int
+  ref_addr_size() const
+  { return this->cu_version_ > 2 ? this->offset_size_ : this->address_size_; }
 
   // Set the section index of the .debug_abbrev section.
   // We use this if there are no relocations for the .debug_info section.

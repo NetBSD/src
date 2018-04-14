@@ -1,6 +1,6 @@
 /* cg_print.c -  Print routines for displaying call graphs.
 
-   Copyright (C) 2000-2016 Free Software Foundation, Inc.
+   Copyright (C) 2000-2018 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -847,7 +847,7 @@ cg_print_function_ordering (void)
       tmp_arcs_count += arcs[arc_index]->count;
 
       /* Count how many times each parent and child are used up
-	 to our threshhold of arcs (90%).  */
+	 to our threshold of arcs (90%).  */
       if ((double)tmp_arcs_count / (double)total_arcs > 0.90)
 	break;
 

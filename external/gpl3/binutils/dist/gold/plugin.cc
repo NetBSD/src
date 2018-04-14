@@ -1,6 +1,6 @@
 // plugin.cc -- plugin manager for gold      -*- C++ -*-
 
-// Copyright (C) 2008-2016 Free Software Foundation, Inc.
+// Copyright (C) 2008-2018 Free Software Foundation, Inc.
 // Written by Cary Coutant <ccoutant@google.com>.
 
 // This file is part of gold.
@@ -167,6 +167,9 @@ static enum ld_plugin_status
 get_input_section_size(const struct ld_plugin_section section,
                        uint64_t* secsize);
 
+static enum ld_plugin_status
+register_new_input(ld_plugin_new_input_handler handler);
+
 };
 
 #endif // ENABLE_PLUGINS
@@ -211,7 +214,7 @@ Plugin::load()
   sscanf(ver, "%d.%d", &major, &minor);
 
   // Allocate and populate a transfer vector.
-  const int tv_fixed_size = 29;
+  const int tv_fixed_size = 30;
 
   int tv_size = this->args_.size() + tv_fixed_size;
   ld_plugin_tv* tv = new ld_plugin_tv[tv_size];
@@ -346,6 +349,10 @@ Plugin::load()
   tv[i].tv_u.tv_get_input_section_size = get_input_section_size;
 
   ++i;
+  tv[i].tv_tag = LDPT_REGISTER_NEW_INPUT_HOOK;
+  tv[i].tv_u.tv_register_new_input = register_new_input;
+
+  ++i;
   tv[i].tv_tag = LDPT_NULL;
   tv[i].tv_u.tv_val = 0;
 
@@ -381,6 +388,15 @@ Plugin::all_symbols_read()
 {
   if (this->all_symbols_read_handler_ != NULL)
     (*this->all_symbols_read_handler_)();
+}
+
+// Call the new_input handler.
+
+inline void
+Plugin::new_input(struct ld_plugin_input_file* plugin_input_file)
+{
+  if (this->new_input_handler_ != NULL)
+    (*this->new_input_handler_)(plugin_input_file);
 }
 
 // Call the cleanup handler.
@@ -476,8 +492,6 @@ Plugin_manager::claim_file(Input_file* input_file, off_t offset,
 
   gold_assert(lock_initialized);
   Hold_lock hl(*this->lock_);
-  if (this->in_replacement_phase_)
-    return NULL;
 
   unsigned int handle = this->objects_.size();
   this->input_file_ = input_file;
@@ -494,19 +508,28 @@ Plugin_manager::claim_file(Input_file* input_file, off_t offset,
        this->current_ != this->plugins_.end();
        ++this->current_)
     {
-      if ((*this->current_)->claim_file(&this->plugin_input_file_))
+      // If we aren't yet in replacement phase, allow plugins to claim input
+      // files, otherwise notify the plugin of the new input file, if needed.
+      if (!this->in_replacement_phase_)
         {
-	  this->any_claimed_ = true;
-	  this->in_claim_file_handler_ = false;
+          if ((*this->current_)->claim_file(&this->plugin_input_file_))
+            {
+              this->any_claimed_ = true;
+              this->in_claim_file_handler_ = false;
 
-          if (this->objects_.size() > handle
-              && this->objects_[handle]->pluginobj() != NULL)
-            return this->objects_[handle]->pluginobj();
+              if (this->objects_.size() > handle
+                  && this->objects_[handle]->pluginobj() != NULL)
+                return this->objects_[handle]->pluginobj();
 
-          // If the plugin claimed the file but did not call the
-          // add_symbols callback, we need to create the Pluginobj now.
-          Pluginobj* obj = this->make_plugin_object(handle);
-          return obj;
+              // If the plugin claimed the file but did not call the
+              // add_symbols callback, we need to create the Pluginobj now.
+              Pluginobj* obj = this->make_plugin_object(handle);
+              return obj;
+            }
+        }
+      else
+        {
+          (*this->current_)->new_input(&this->plugin_input_file_);
         }
     }
 
@@ -930,7 +953,9 @@ is_visible_from_outside(Symbol* lsym)
 {
   if (lsym->in_dyn())
     return true;
-  if (parameters->options().export_dynamic() || parameters->options().shared())
+  if (parameters->options().export_dynamic() || parameters->options().shared()
+      || parameters->options().in_dynamic_list(lsym->name())
+      || parameters->options().is_export_dynamic_symbol(lsym->name()))
     return lsym->is_externally_visible();
   return false;
 }
@@ -1900,6 +1925,16 @@ unique_segment_for_sections(const char* segment_name,
       layout->insert_section_segment_map(secn_id, s);
     }
 
+  return LDPS_OK;
+}
+
+// Register a new_input handler.
+
+static enum ld_plugin_status
+register_new_input(ld_plugin_new_input_handler handler)
+{
+  gold_assert(parameters->options().has_plugins());
+  parameters->options().plugins()->set_new_input_handler(handler);
   return LDPS_OK;
 }
 

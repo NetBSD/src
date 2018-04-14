@@ -1,5 +1,5 @@
 /* BFD back-end for PowerPC Microsoft Portable Executable files.
-   Copyright (C) 1990-2016 Free Software Foundation, Inc.
+   Copyright (C) 1990-2018 Free Software Foundation, Inc.
 
    Original version pieced together by Kim Knuttila (krk@cygnus.com)
 
@@ -79,9 +79,10 @@ extern void dump_toc (void *);
 #define HASH_CHECK_DCL char eye_catcher[8];
 #define HASH_CHECK_INIT(ret)      strcpy(ret->eye_catcher, EYE)
 #define HASH_CHECK(addr) \
- if (strcmp(addr->eye_catcher, EYE) != 0) \
+ if (strcmp (addr->eye_catcher, EYE) != 0) \
   { \
     fprintf (stderr,\
+    /* xgettext: c-format */ \
     _("File %s, line %d, Hash check failure, bad eye %8s\n"), \
     __FILE__, __LINE__, addr->eye_catcher); \
     abort (); \
@@ -106,7 +107,7 @@ struct ppc_coff_link_hash_entry
 
   /* As we wonder around the relocs, we'll keep the assigned toc_offset
      here.  */
-  bfd_vma toc_offset;               /* Our addition, as required.  */
+  bfd_vma toc_offset;		    /* Our addition, as required.  */
   int symbol_is_glue;
   unsigned long int glue_insn;
 
@@ -164,7 +165,7 @@ static bfd_boolean
 ppc_coff_link_hash_table_init (struct ppc_coff_link_hash_table *table,
 			       bfd *abfd,
 			       struct bfd_hash_entry *(*newfunc)
-			         (struct bfd_hash_entry *,
+				 (struct bfd_hash_entry *,
 				  struct bfd_hash_table *,
 				  const char *),
 			       unsigned int entsize)
@@ -214,85 +215,85 @@ ppc_coff_link_hash_table_create (bfd *abfd)
 /* These should definitely go in a header file somewhere...  */
 
 /* NOP */
-#define IMAGE_REL_PPC_ABSOLUTE          0x0000
+#define IMAGE_REL_PPC_ABSOLUTE		0x0000
 
 /* 64-bit address */
-#define IMAGE_REL_PPC_ADDR64            0x0001
+#define IMAGE_REL_PPC_ADDR64		0x0001
 
 /* 32-bit address */
-#define IMAGE_REL_PPC_ADDR32            0x0002
+#define IMAGE_REL_PPC_ADDR32		0x0002
 
 /* 26-bit address, shifted left 2 (branch absolute) */
-#define IMAGE_REL_PPC_ADDR24            0x0003
+#define IMAGE_REL_PPC_ADDR24		0x0003
 
 /* 16-bit address */
-#define IMAGE_REL_PPC_ADDR16            0x0004
+#define IMAGE_REL_PPC_ADDR16		0x0004
 
 /* 16-bit address, shifted left 2 (load doubleword) */
-#define IMAGE_REL_PPC_ADDR14            0x0005
+#define IMAGE_REL_PPC_ADDR14		0x0005
 
 /* 26-bit PC-relative offset, shifted left 2 (branch relative) */
-#define IMAGE_REL_PPC_REL24             0x0006
+#define IMAGE_REL_PPC_REL24		0x0006
 
 /* 16-bit PC-relative offset, shifted left 2 (br cond relative) */
-#define IMAGE_REL_PPC_REL14             0x0007
+#define IMAGE_REL_PPC_REL14		0x0007
 
 /* 16-bit offset from TOC base */
-#define IMAGE_REL_PPC_TOCREL16          0x0008
+#define IMAGE_REL_PPC_TOCREL16		0x0008
 
 /* 16-bit offset from TOC base, shifted left 2 (load doubleword) */
-#define IMAGE_REL_PPC_TOCREL14          0x0009
+#define IMAGE_REL_PPC_TOCREL14		0x0009
 
 /* 32-bit addr w/o image base */
-#define IMAGE_REL_PPC_ADDR32NB          0x000A
+#define IMAGE_REL_PPC_ADDR32NB		0x000A
 
 /* va of containing section (as in an image sectionhdr) */
-#define IMAGE_REL_PPC_SECREL            0x000B
+#define IMAGE_REL_PPC_SECREL		0x000B
 
 /* sectionheader number */
-#define IMAGE_REL_PPC_SECTION           0x000C
+#define IMAGE_REL_PPC_SECTION		0x000C
 
 /* substitute TOC restore instruction iff symbol is glue code */
-#define IMAGE_REL_PPC_IFGLUE            0x000D
+#define IMAGE_REL_PPC_IFGLUE		0x000D
 
 /* symbol is glue code; virtual address is TOC restore instruction */
-#define IMAGE_REL_PPC_IMGLUE            0x000E
+#define IMAGE_REL_PPC_IMGLUE		0x000E
 
 /* va of containing section (limited to 16 bits) */
-#define IMAGE_REL_PPC_SECREL16          0x000F
+#define IMAGE_REL_PPC_SECREL16		0x000F
 
 /* Stuff to handle immediate data when the number of bits in the
    data is greater than the number of bits in the immediate field
    We need to do (usually) 32 bit arithmetic on 16 bit chunks.  */
-#define IMAGE_REL_PPC_REFHI             0x0010
-#define IMAGE_REL_PPC_REFLO             0x0011
-#define IMAGE_REL_PPC_PAIR              0x0012
+#define IMAGE_REL_PPC_REFHI		0x0010
+#define IMAGE_REL_PPC_REFLO		0x0011
+#define IMAGE_REL_PPC_PAIR		0x0012
 
 /* This is essentially the same as tocrel16, with TOCDEFN assumed.  */
-#define IMAGE_REL_PPC_TOCREL16_DEFN     0x0013
+#define IMAGE_REL_PPC_TOCREL16_DEFN	0x0013
 
 /* Flag bits in IMAGE_RELOCATION.TYPE.  */
 
 /* Subtract reloc value rather than adding it.  */
-#define IMAGE_REL_PPC_NEG               0x0100
+#define IMAGE_REL_PPC_NEG		0x0100
 
 /* Fix branch prediction bit to predict branch taken.  */
-#define IMAGE_REL_PPC_BRTAKEN           0x0200
+#define IMAGE_REL_PPC_BRTAKEN		0x0200
 
 /* Fix branch prediction bit to predict branch not taken.  */
-#define IMAGE_REL_PPC_BRNTAKEN          0x0400
+#define IMAGE_REL_PPC_BRNTAKEN		0x0400
 
 /* TOC slot defined in file (or, data in toc).  */
-#define IMAGE_REL_PPC_TOCDEFN           0x0800
+#define IMAGE_REL_PPC_TOCDEFN		0x0800
 
 /* Masks to isolate above values in IMAGE_RELOCATION.Type.  */
-#define IMAGE_REL_PPC_TYPEMASK          0x00FF
-#define IMAGE_REL_PPC_FLAGMASK          0x0F00
+#define IMAGE_REL_PPC_TYPEMASK		0x00FF
+#define IMAGE_REL_PPC_FLAGMASK		0x0F00
 
-#define EXTRACT_TYPE(x)                 ((x) & IMAGE_REL_PPC_TYPEMASK)
+#define EXTRACT_TYPE(x)			((x) & IMAGE_REL_PPC_TYPEMASK)
 #define EXTRACT_FLAGS(x) ((x) & IMAGE_REL_PPC_FLAGMASK)
-#define EXTRACT_JUNK(x)  \
-           ((x) & ~(IMAGE_REL_PPC_TYPEMASK | IMAGE_REL_PPC_FLAGMASK))
+#define EXTRACT_JUNK(x)	 \
+	   ((x) & ~(IMAGE_REL_PPC_TYPEMASK | IMAGE_REL_PPC_FLAGMASK))
 
 /* Static helper functions to make relocation work.  */
 /* (Work In Progress) */
@@ -318,26 +319,26 @@ static bfd_reloc_status_type ppc_imglue_reloc
 
    From the document "" we find the following listed as used relocs:
 
-     ABSOLUTE       : The noop
+     ABSOLUTE	    : The noop
      ADDR[64|32|16] : fields that hold addresses in data fields or the
-                      16 bit displacement field on a load/store.
+		      16 bit displacement field on a load/store.
      ADDR[24|14]    : fields that hold addresses in branch and cond
-                      branches. These represent [26|16] bit addresses.
-                      The low order 2 bits are preserved.
-     REL[24|14]     : branches relative to the Instruction Address
-                      register. These represent [26|16] bit addresses,
-                      as before. The instruction field will be zero, and
-                      the address of the SYM will be inserted at link time.
-     TOCREL16       : 16 bit displacement field referring to a slot in
-                      toc.
-     TOCREL14       : 16 bit displacement field, similar to REL14 or ADDR14.
-     ADDR32NB       : 32 bit address relative to the virtual origin.
-                      (On the alpha, this is always a linker generated thunk)
-                      (i.e. 32bit addr relative to the image base)
-     SECREL         : The value is relative to the start of the section
-                      containing the symbol.
-     SECTION        : access to the header containing the item. Supports the
-                      codeview debugger.
+		      branches. These represent [26|16] bit addresses.
+		      The low order 2 bits are preserved.
+     REL[24|14]	    : branches relative to the Instruction Address
+		      register. These represent [26|16] bit addresses,
+		      as before. The instruction field will be zero, and
+		      the address of the SYM will be inserted at link time.
+     TOCREL16	    : 16 bit displacement field referring to a slot in
+		      toc.
+     TOCREL14	    : 16 bit displacement field, similar to REL14 or ADDR14.
+     ADDR32NB	    : 32 bit address relative to the virtual origin.
+		      (On the alpha, this is always a linker generated thunk)
+		      (i.e. 32bit addr relative to the image base)
+     SECREL	    : The value is relative to the start of the section
+		      containing the symbol.
+     SECTION	    : access to the header containing the item. Supports the
+		      codeview debugger.
 
    In particular, note that the document does not indicate that the
    relocations listed in the header file are used.  */
@@ -348,361 +349,361 @@ static reloc_howto_type ppc_coff_howto_table[] =
   /* IMAGE_REL_PPC_ABSOLUTE 0x0000   NOP */
   /* Unused: */
   HOWTO (IMAGE_REL_PPC_ABSOLUTE, /* type */
-	 0,	                 /* rightshift */
-	 0,	                 /* size (0 = byte, 1 = short, 2 = long) */
-	 0,	                 /* bitsize */
-	 FALSE,	                 /* pc_relative */
-	 0,	                 /* bitpos */
+	 0,			/* rightshift */
+	 0,			/* size (0 = byte, 1 = short, 2 = long) */
+	 0,			/* bitsize */
+	 FALSE,			/* pc_relative */
+	 0,			/* bitpos */
 	 complain_overflow_dont, /* dont complain_on_overflow */
-	 0,		         /* special_function */
-	 "ABSOLUTE",             /* name */
-	 FALSE,	                 /* partial_inplace */
-	 0x00,	 	         /* src_mask */
-	 0x00,        		 /* dst_mask */
-	 FALSE),                 /* pcrel_offset */
+	 0,			/* special_function */
+	 "ABSOLUTE",		/* name */
+	 FALSE,			/* partial_inplace */
+	 0x00,			/* src_mask */
+	 0x00,			/* dst_mask */
+	 FALSE),		/* pcrel_offset */
 
   /* IMAGE_REL_PPC_ADDR64 0x0001  64-bit address */
   /* Unused: */
-  HOWTO(IMAGE_REL_PPC_ADDR64,    /* type */
-	0,	                 /* rightshift */
-	3,	                 /* size (0 = byte, 1 = short, 2 = long) */
-	64,	                 /* bitsize */
-	FALSE,	                 /* pc_relative */
-	0,	                 /* bitpos */
-	complain_overflow_bitfield, 	 /* complain_on_overflow */
-	0,		         /* special_function */
-	"ADDR64",               /* name */
-	TRUE,	                 /* partial_inplace */
-	MINUS_ONE,	 	 /* src_mask */
-	MINUS_ONE,        	 /* dst_mask */
-	FALSE),                 /* pcrel_offset */
+  HOWTO(IMAGE_REL_PPC_ADDR64,	/* type */
+	0,			/* rightshift */
+	3,			/* size (0 = byte, 1 = short, 2 = long) */
+	64,			/* bitsize */
+	FALSE,			/* pc_relative */
+	0,			/* bitpos */
+	complain_overflow_bitfield, /* complain_on_overflow */
+	0,			/* special_function */
+	"ADDR64",		/* name */
+	TRUE,			/* partial_inplace */
+	MINUS_ONE,		/* src_mask */
+	MINUS_ONE,		/* dst_mask */
+	FALSE),			/* pcrel_offset */
 
   /* IMAGE_REL_PPC_ADDR32 0x0002  32-bit address */
   /* Used: */
   HOWTO (IMAGE_REL_PPC_ADDR32,	/* type */
-	 0,	                /* rightshift */
-	 2,	                /* size (0 = byte, 1 = short, 2 = long) */
-	 32,	                /* bitsize */
-	 FALSE,	                /* pc_relative */
-	 0,	                /* bitpos */
+	 0,			/* rightshift */
+	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 32,			/* bitsize */
+	 FALSE,			/* pc_relative */
+	 0,			/* bitpos */
 	 complain_overflow_bitfield, /* complain_on_overflow */
-	 0,		        /* special_function */
-	 "ADDR32",              /* name */
-	 TRUE,	                /* partial_inplace */
-	 0xffffffff,            /* src_mask */
-	 0xffffffff,            /* dst_mask */
-	 FALSE),                /* pcrel_offset */
+	 0,			/* special_function */
+	 "ADDR32",		/* name */
+	 TRUE,			/* partial_inplace */
+	 0xffffffff,		/* src_mask */
+	 0xffffffff,		/* dst_mask */
+	 FALSE),		/* pcrel_offset */
 
   /* IMAGE_REL_PPC_ADDR24 0x0003  26-bit address, shifted left 2 (branch absolute) */
   /* the LI field is in bit 6 through bit 29 is 24 bits, + 2 for the shift */
   /* Of course, That's the IBM approved bit numbering, which is not what */
   /* anyone else uses.... The li field is in bit 2 thru 25 */
   /* Used: */
-  HOWTO (IMAGE_REL_PPC_ADDR24,  /* type */
-	 0,	                /* rightshift */
-	 2,	                /* size (0 = byte, 1 = short, 2 = long) */
-	 26,	                /* bitsize */
-	 FALSE,	                /* pc_relative */
-	 0,	                /* bitpos */
+  HOWTO (IMAGE_REL_PPC_ADDR24,	/* type */
+	 0,			/* rightshift */
+	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 26,			/* bitsize */
+	 FALSE,			/* pc_relative */
+	 0,			/* bitpos */
 	 complain_overflow_bitfield, /* complain_on_overflow */
-	 0,		        /* special_function */
-	 "ADDR24",              /* name */
-	 TRUE,	                /* partial_inplace */
-	 0x07fffffc,	        /* src_mask */
-	 0x07fffffc,        	/* dst_mask */
-	 FALSE),                /* pcrel_offset */
+	 0,			/* special_function */
+	 "ADDR24",		/* name */
+	 TRUE,			/* partial_inplace */
+	 0x07fffffc,		/* src_mask */
+	 0x07fffffc,		/* dst_mask */
+	 FALSE),		/* pcrel_offset */
 
   /* IMAGE_REL_PPC_ADDR16 0x0004  16-bit address */
   /* Used: */
-  HOWTO (IMAGE_REL_PPC_ADDR16,  /* type */
-	 0,	                /* rightshift */
-	 1,	                /* size (0 = byte, 1 = short, 2 = long) */
-	 16,	                /* bitsize */
-	 FALSE,	                /* pc_relative */
-	 0,	                /* bitpos */
+  HOWTO (IMAGE_REL_PPC_ADDR16,	/* type */
+	 0,			/* rightshift */
+	 1,			/* size (0 = byte, 1 = short, 2 = long) */
+	 16,			/* bitsize */
+	 FALSE,			/* pc_relative */
+	 0,			/* bitpos */
 	 complain_overflow_signed, /* complain_on_overflow */
-	 0,		        /* special_function */
-	 "ADDR16",              /* name */
-	 TRUE,	                /* partial_inplace */
-	 0xffff,	        /* src_mask */
-	 0xffff,        	/* dst_mask */
-	 FALSE),                /* pcrel_offset */
+	 0,			/* special_function */
+	 "ADDR16",		/* name */
+	 TRUE,			/* partial_inplace */
+	 0xffff,		/* src_mask */
+	 0xffff,		/* dst_mask */
+	 FALSE),		/* pcrel_offset */
 
   /* IMAGE_REL_PPC_ADDR14 0x0005 */
   /*  16-bit address, shifted left 2 (load doubleword) */
   /* FIXME: the mask is likely wrong, and the bit position may be as well */
   /* Unused: */
-  HOWTO (IMAGE_REL_PPC_ADDR14,  /* type */
-	 1,	                /* rightshift */
-	 1,	                /* size (0 = byte, 1 = short, 2 = long) */
-	 16,	                /* bitsize */
-	 FALSE,	                /* pc_relative */
-	 0,	                /* bitpos */
+  HOWTO (IMAGE_REL_PPC_ADDR14,	/* type */
+	 1,			/* rightshift */
+	 1,			/* size (0 = byte, 1 = short, 2 = long) */
+	 16,			/* bitsize */
+	 FALSE,			/* pc_relative */
+	 0,			/* bitpos */
 	 complain_overflow_signed, /* complain_on_overflow */
-	 0,		        /* special_function */
-	 "ADDR16",              /* name */
-	 TRUE,	                /* partial_inplace */
-	 0xffff,	        /* src_mask */
-	 0xffff,        	/* dst_mask */
-	 FALSE),                /* pcrel_offset */
+	 0,			/* special_function */
+	 "ADDR16",		/* name */
+	 TRUE,			/* partial_inplace */
+	 0xffff,		/* src_mask */
+	 0xffff,		/* dst_mask */
+	 FALSE),		/* pcrel_offset */
 
   /* IMAGE_REL_PPC_REL24 0x0006 */
   /*   26-bit PC-relative offset, shifted left 2 (branch relative) */
   /* Used: */
-  HOWTO (IMAGE_REL_PPC_REL24,   /* type */
-	 0,	                /* rightshift */
-	 2,	                /* size (0 = byte, 1 = short, 2 = long) */
-	 26,	                /* bitsize */
-	 TRUE,	                /* pc_relative */
-	 0,	                /* bitpos */
+  HOWTO (IMAGE_REL_PPC_REL24,	/* type */
+	 0,			/* rightshift */
+	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 26,			/* bitsize */
+	 TRUE,			/* pc_relative */
+	 0,			/* bitpos */
 	 complain_overflow_signed, /* complain_on_overflow */
-	 0,		        /* special_function */
-	 "REL24",               /* name */
-	 TRUE,	                /* partial_inplace */
-	 0x3fffffc,	        /* src_mask */
-	 0x3fffffc,        	/* dst_mask */
-	 FALSE),                /* pcrel_offset */
+	 0,			/* special_function */
+	 "REL24",		/* name */
+	 TRUE,			/* partial_inplace */
+	 0x3fffffc,		/* src_mask */
+	 0x3fffffc,		/* dst_mask */
+	 FALSE),		/* pcrel_offset */
 
   /* IMAGE_REL_PPC_REL14 0x0007 */
   /*   16-bit PC-relative offset, shifted left 2 (br cond relative) */
   /* FIXME: the mask is likely wrong, and the bit position may be as well */
   /* FIXME: how does it know how far to shift? */
   /* Unused: */
-  HOWTO (IMAGE_REL_PPC_ADDR14,  /* type */
-	 1,	                /* rightshift */
-	 1,	                /* size (0 = byte, 1 = short, 2 = long) */
-	 16,	                /* bitsize */
-	 FALSE,	                /* pc_relative */
-	 0,	                /* bitpos */
+  HOWTO (IMAGE_REL_PPC_ADDR14,	/* type */
+	 1,			/* rightshift */
+	 1,			/* size (0 = byte, 1 = short, 2 = long) */
+	 16,			/* bitsize */
+	 FALSE,			/* pc_relative */
+	 0,			/* bitpos */
 	 complain_overflow_signed, /* complain_on_overflow */
-	 0,		        /* special_function */
-	 "ADDR16",              /* name */
-	 TRUE,	                /* partial_inplace */
-	 0xffff,	        /* src_mask */
-	 0xffff,        	/* dst_mask */
-	 TRUE),                 /* pcrel_offset */
+	 0,			/* special_function */
+	 "ADDR16",		/* name */
+	 TRUE,			/* partial_inplace */
+	 0xffff,		/* src_mask */
+	 0xffff,		/* dst_mask */
+	 TRUE),			/* pcrel_offset */
 
   /* IMAGE_REL_PPC_TOCREL16 0x0008 */
   /*   16-bit offset from TOC base */
   /* Used: */
   HOWTO (IMAGE_REL_PPC_TOCREL16,/* type */
-	 0,	                /* rightshift */
-	 1,	                /* size (0 = byte, 1 = short, 2 = long) */
-	 16,	                /* bitsize */
-	 FALSE,	                /* pc_relative */
-	 0,	                /* bitpos */
+	 0,			/* rightshift */
+	 1,			/* size (0 = byte, 1 = short, 2 = long) */
+	 16,			/* bitsize */
+	 FALSE,			/* pc_relative */
+	 0,			/* bitpos */
 	 complain_overflow_dont, /* complain_on_overflow */
-	 ppc_toc16_reloc,       /* special_function */
-	 "TOCREL16",            /* name */
-	 FALSE,	                /* partial_inplace */
-	 0xffff,	        /* src_mask */
-	 0xffff,        	/* dst_mask */
-	 FALSE),                /* pcrel_offset */
+	 ppc_toc16_reloc,	/* special_function */
+	 "TOCREL16",		/* name */
+	 FALSE,			/* partial_inplace */
+	 0xffff,		/* src_mask */
+	 0xffff,		/* dst_mask */
+	 FALSE),		/* pcrel_offset */
 
   /* IMAGE_REL_PPC_TOCREL14 0x0009 */
   /*   16-bit offset from TOC base, shifted left 2 (load doubleword) */
   /* Unused: */
   HOWTO (IMAGE_REL_PPC_TOCREL14,/* type */
-	 1,	                /* rightshift */
-	 1,	                /* size (0 = byte, 1 = short, 2 = long) */
-	 16,	                /* bitsize */
-	 FALSE,	                /* pc_relative */
-	 0,	                /* bitpos */
+	 1,			/* rightshift */
+	 1,			/* size (0 = byte, 1 = short, 2 = long) */
+	 16,			/* bitsize */
+	 FALSE,			/* pc_relative */
+	 0,			/* bitpos */
 	 complain_overflow_signed, /* complain_on_overflow */
-	 0,		        /* special_function */
-	 "TOCREL14",            /* name */
-	 FALSE,	                /* partial_inplace */
-	 0xffff,	        /* src_mask */
-	 0xffff,        	/* dst_mask */
-	 FALSE),                /* pcrel_offset */
+	 0,			/* special_function */
+	 "TOCREL14",		/* name */
+	 FALSE,			/* partial_inplace */
+	 0xffff,		/* src_mask */
+	 0xffff,		/* dst_mask */
+	 FALSE),		/* pcrel_offset */
 
   /* IMAGE_REL_PPC_ADDR32NB 0x000A */
   /*   32-bit addr w/ image base */
   /* Unused: */
   HOWTO (IMAGE_REL_PPC_ADDR32NB,/* type */
-	 0,	                /* rightshift */
-	 2,	                /* size (0 = byte, 1 = short, 2 = long) */
-	 32,	                /* bitsize */
-	 FALSE,	                /* pc_relative */
-	 0,	                /* bitpos */
+	 0,			/* rightshift */
+	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 32,			/* bitsize */
+	 FALSE,			/* pc_relative */
+	 0,			/* bitpos */
 	 complain_overflow_signed, /* complain_on_overflow */
-	 0,                     /* special_function */
-	 "ADDR32NB",            /* name */
-	 TRUE,	                /* partial_inplace */
-	 0xffffffff,	        /* src_mask */
-	 0xffffffff,        	/* dst_mask */
-	 FALSE),                 /* pcrel_offset */
+	 0,			/* special_function */
+	 "ADDR32NB",		/* name */
+	 TRUE,			/* partial_inplace */
+	 0xffffffff,		/* src_mask */
+	 0xffffffff,		/* dst_mask */
+	 FALSE),		/* pcrel_offset */
 
   /* IMAGE_REL_PPC_SECREL 0x000B */
   /*   va of containing section (as in an image sectionhdr) */
   /* Unused: */
   HOWTO (IMAGE_REL_PPC_SECREL,/* type */
-	 0,	                /* rightshift */
-	 2,	                /* size (0 = byte, 1 = short, 2 = long) */
-	 32,	                /* bitsize */
-	 FALSE,	                /* pc_relative */
-	 0,	                /* bitpos */
+	 0,			/* rightshift */
+	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 32,			/* bitsize */
+	 FALSE,			/* pc_relative */
+	 0,			/* bitpos */
 	 complain_overflow_signed, /* complain_on_overflow */
-	 ppc_secrel_reloc,      /* special_function */
-	 "SECREL",              /* name */
-	 TRUE,	                /* partial_inplace */
-	 0xffffffff,	        /* src_mask */
-	 0xffffffff,        	/* dst_mask */
-	 TRUE),                 /* pcrel_offset */
+	 ppc_secrel_reloc,	/* special_function */
+	 "SECREL",		/* name */
+	 TRUE,			/* partial_inplace */
+	 0xffffffff,		/* src_mask */
+	 0xffffffff,		/* dst_mask */
+	 TRUE),			/* pcrel_offset */
 
   /* IMAGE_REL_PPC_SECTION 0x000C */
   /*   sectionheader number */
   /* Unused: */
   HOWTO (IMAGE_REL_PPC_SECTION,/* type */
-	 0,	                /* rightshift */
-	 2,	                /* size (0 = byte, 1 = short, 2 = long) */
-	 32,	                /* bitsize */
-	 FALSE,	                /* pc_relative */
-	 0,	                /* bitpos */
+	 0,			/* rightshift */
+	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 32,			/* bitsize */
+	 FALSE,			/* pc_relative */
+	 0,			/* bitpos */
 	 complain_overflow_signed, /* complain_on_overflow */
-	 ppc_section_reloc,     /* special_function */
-	 "SECTION",             /* name */
-	 TRUE,	                /* partial_inplace */
-	 0xffffffff,	        /* src_mask */
-	 0xffffffff,        	/* dst_mask */
-	 TRUE),                 /* pcrel_offset */
+	 ppc_section_reloc,	/* special_function */
+	 "SECTION",		/* name */
+	 TRUE,			/* partial_inplace */
+	 0xffffffff,		/* src_mask */
+	 0xffffffff,		/* dst_mask */
+	 TRUE),			/* pcrel_offset */
 
   /* IMAGE_REL_PPC_IFGLUE 0x000D */
   /*   substitute TOC restore instruction iff symbol is glue code */
   /* Used: */
   HOWTO (IMAGE_REL_PPC_IFGLUE,/* type */
-	 0,	                /* rightshift */
-	 2,	                /* size (0 = byte, 1 = short, 2 = long) */
-	 32,	                /* bitsize */
-	 FALSE,	                /* pc_relative */
-	 0,	                /* bitpos */
+	 0,			/* rightshift */
+	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 32,			/* bitsize */
+	 FALSE,			/* pc_relative */
+	 0,			/* bitpos */
 	 complain_overflow_signed, /* complain_on_overflow */
-	 0,		        /* special_function */
-	 "IFGLUE",              /* name */
-	 TRUE,	                /* partial_inplace */
-	 0xffffffff,	        /* src_mask */
-	 0xffffffff,        	/* dst_mask */
-	 FALSE),                /* pcrel_offset */
+	 0,			/* special_function */
+	 "IFGLUE",		/* name */
+	 TRUE,			/* partial_inplace */
+	 0xffffffff,		/* src_mask */
+	 0xffffffff,		/* dst_mask */
+	 FALSE),		/* pcrel_offset */
 
   /* IMAGE_REL_PPC_IMGLUE 0x000E */
   /*   symbol is glue code; virtual address is TOC restore instruction */
   /* Unused: */
   HOWTO (IMAGE_REL_PPC_IMGLUE,/* type */
-	 0,	                /* rightshift */
-	 2,	                /* size (0 = byte, 1 = short, 2 = long) */
-	 32,	                /* bitsize */
-	 FALSE,	                /* pc_relative */
-	 0,	                /* bitpos */
+	 0,			/* rightshift */
+	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 32,			/* bitsize */
+	 FALSE,			/* pc_relative */
+	 0,			/* bitpos */
 	 complain_overflow_dont, /* complain_on_overflow */
-	 ppc_imglue_reloc,      /* special_function */
-	 "IMGLUE",              /* name */
-	 FALSE,	                /* partial_inplace */
-	 0xffffffff,	        /* src_mask */
-	 0xffffffff,        	/* dst_mask */
-	 FALSE),                 /* pcrel_offset */
+	 ppc_imglue_reloc,	/* special_function */
+	 "IMGLUE",		/* name */
+	 FALSE,			/* partial_inplace */
+	 0xffffffff,		/* src_mask */
+	 0xffffffff,		/* dst_mask */
+	 FALSE),		/* pcrel_offset */
 
   /* IMAGE_REL_PPC_SECREL16 0x000F */
   /*   va of containing section (limited to 16 bits) */
   /* Unused: */
   HOWTO (IMAGE_REL_PPC_SECREL16,/* type */
-	 0,	                /* rightshift */
-	 1,	                /* size (0 = byte, 1 = short, 2 = long) */
-	 16,	                /* bitsize */
-	 FALSE,	                /* pc_relative */
-	 0,	                /* bitpos */
+	 0,			/* rightshift */
+	 1,			/* size (0 = byte, 1 = short, 2 = long) */
+	 16,			/* bitsize */
+	 FALSE,			/* pc_relative */
+	 0,			/* bitpos */
 	 complain_overflow_signed, /* complain_on_overflow */
-	 0,		        /* special_function */
-	 "SECREL16",            /* name */
-	 TRUE,	                /* partial_inplace */
-	 0xffff,	        /* src_mask */
-	 0xffff,        	/* dst_mask */
-	 TRUE),                 /* pcrel_offset */
+	 0,			/* special_function */
+	 "SECREL16",		/* name */
+	 TRUE,			/* partial_inplace */
+	 0xffff,		/* src_mask */
+	 0xffff,		/* dst_mask */
+	 TRUE),			/* pcrel_offset */
 
-  /* IMAGE_REL_PPC_REFHI             0x0010 */
+  /* IMAGE_REL_PPC_REFHI	     0x0010 */
   /* Unused: */
-  HOWTO (IMAGE_REL_PPC_REFHI,   /* type */
-	 0,	                /* rightshift */
-	 1,	                /* size (0 = byte, 1 = short, 2 = long) */
-	 16,	                /* bitsize */
-	 FALSE,	                /* pc_relative */
-	 0,	                /* bitpos */
+  HOWTO (IMAGE_REL_PPC_REFHI,	/* type */
+	 0,			/* rightshift */
+	 1,			/* size (0 = byte, 1 = short, 2 = long) */
+	 16,			/* bitsize */
+	 FALSE,			/* pc_relative */
+	 0,			/* bitpos */
 	 complain_overflow_signed, /* complain_on_overflow */
 	 ppc_refhi_reloc,	/* special_function */
-	 "REFHI",               /* name */
-	 TRUE,	                /* partial_inplace */
-	 0xffffffff,	        /* src_mask */
-	 0xffffffff,        	/* dst_mask */
-	 FALSE),                 /* pcrel_offset */
+	 "REFHI",		/* name */
+	 TRUE,			/* partial_inplace */
+	 0xffffffff,		/* src_mask */
+	 0xffffffff,		/* dst_mask */
+	 FALSE),		/* pcrel_offset */
 
-  /* IMAGE_REL_PPC_REFLO             0x0011 */
+  /* IMAGE_REL_PPC_REFLO	     0x0011 */
   /* Unused: */
-  HOWTO (IMAGE_REL_PPC_REFLO,   /* type */
-	 0,	                /* rightshift */
-	 1,	                /* size (0 = byte, 1 = short, 2 = long) */
-	 16,	                /* bitsize */
-	 FALSE,	                /* pc_relative */
-	 0,	                /* bitpos */
+  HOWTO (IMAGE_REL_PPC_REFLO,	/* type */
+	 0,			/* rightshift */
+	 1,			/* size (0 = byte, 1 = short, 2 = long) */
+	 16,			/* bitsize */
+	 FALSE,			/* pc_relative */
+	 0,			/* bitpos */
 	 complain_overflow_signed, /* complain_on_overflow */
 	 ppc_refhi_reloc,	/* special_function */
-	 "REFLO",               /* name */
-	 TRUE,	                /* partial_inplace */
-	 0xffffffff,	        /* src_mask */
-	 0xffffffff,        	/* dst_mask */
-	 FALSE),                /* pcrel_offset */
+	 "REFLO",		/* name */
+	 TRUE,			/* partial_inplace */
+	 0xffffffff,		/* src_mask */
+	 0xffffffff,		/* dst_mask */
+	 FALSE),		/* pcrel_offset */
 
-  /* IMAGE_REL_PPC_PAIR              0x0012 */
+  /* IMAGE_REL_PPC_PAIR		     0x0012 */
   /* Unused: */
-  HOWTO (IMAGE_REL_PPC_PAIR,    /* type */
-	 0,	                /* rightshift */
-	 1,	                /* size (0 = byte, 1 = short, 2 = long) */
-	 16,	                /* bitsize */
-	 FALSE,	                /* pc_relative */
-	 0,	                /* bitpos */
+  HOWTO (IMAGE_REL_PPC_PAIR,	/* type */
+	 0,			/* rightshift */
+	 1,			/* size (0 = byte, 1 = short, 2 = long) */
+	 16,			/* bitsize */
+	 FALSE,			/* pc_relative */
+	 0,			/* bitpos */
 	 complain_overflow_signed, /* complain_on_overflow */
-	 ppc_pair_reloc,        /* special_function */
-	 "PAIR",                /* name */
-	 TRUE,	                /* partial_inplace */
-	 0xffffffff,	        /* src_mask */
-	 0xffffffff,        	/* dst_mask */
-	 FALSE),                /* pcrel_offset */
+	 ppc_pair_reloc,	/* special_function */
+	 "PAIR",		/* name */
+	 TRUE,			/* partial_inplace */
+	 0xffffffff,		/* src_mask */
+	 0xffffffff,		/* dst_mask */
+	 FALSE),		/* pcrel_offset */
 
   /* IMAGE_REL_PPC_TOCREL16_DEFN 0x0013 */
   /*   16-bit offset from TOC base, without causing a definition */
   /* Used: */
   HOWTO ( (IMAGE_REL_PPC_TOCREL16 | IMAGE_REL_PPC_TOCDEFN), /* type */
-	 0,	                /* rightshift */
-	 1,	                /* size (0 = byte, 1 = short, 2 = long) */
-	 16,	                /* bitsize */
-	 FALSE,	                /* pc_relative */
-	 0,	                /* bitpos */
+	 0,			/* rightshift */
+	 1,			/* size (0 = byte, 1 = short, 2 = long) */
+	 16,			/* bitsize */
+	 FALSE,			/* pc_relative */
+	 0,			/* bitpos */
 	 complain_overflow_dont, /* complain_on_overflow */
-	 0,                     /* special_function */
-	 "TOCREL16, TOCDEFN",   /* name */
-	 FALSE,	                /* partial_inplace */
-	 0xffff,	        /* src_mask */
-	 0xffff,        	/* dst_mask */
-	 FALSE),                /* pcrel_offset */
+	 0,			/* special_function */
+	 "TOCREL16, TOCDEFN",	/* name */
+	 FALSE,			/* partial_inplace */
+	 0xffff,		/* src_mask */
+	 0xffff,		/* dst_mask */
+	 FALSE),		/* pcrel_offset */
 
 };
 
 /* Some really cheezy macros that can be turned on to test stderr :-)  */
 
 #ifdef DEBUG_RELOC
-#define UN_IMPL(x)                                           \
-{                                                            \
-   static int i;                                             \
-   if (i == 0)                                               \
-     {                                                       \
-       i = 1;                                                \
+#define UN_IMPL(x)					     \
+{							     \
+   static int i;					     \
+   if (i == 0)						     \
+     {							     \
+       i = 1;						     \
        fprintf (stderr,_("Unimplemented Relocation -- %s\n"),x); \
-     }                                                       \
+     }							     \
 }
 
-#define DUMP_RELOC(n,r)                              \
-{                                                    \
+#define DUMP_RELOC(n,r)				     \
+{						     \
    fprintf (stderr,"%s sym %d, addr %d, addend %d\n", \
-	   n, (*(r->sym_ptr_ptr))->name,             \
-	   r->address, r->addend);                   \
+	   n, (*(r->sym_ptr_ptr))->name,	     \
+	   r->address, r->addend);		     \
 }
 
 /* Given a reloc name, n, and a pointer to an internal_reloc,
@@ -712,12 +713,12 @@ static reloc_howto_type ppc_coff_howto_table[] =
 #define n_zeroes	_n._n_n._n_zeroes
 #define n_offset	_n._n_n._n_offset  */
 
-#define DUMP_RELOC2(n,r)                     		\
-{                                            		\
-   fprintf (stderr,"%s sym %d, r_vaddr %d %s\n", 	\
+#define DUMP_RELOC2(n,r)				\
+{							\
+   fprintf (stderr,"%s sym %d, r_vaddr %d %s\n",	\
 	   n, r->r_symndx, r->r_vaddr,			\
 	   (((r->r_type) & IMAGE_REL_PPC_TOCDEFN) == 0) \
-	   ?" ":" TOCDEFN"  );      			\
+	   ?" ":" TOCDEFN"  );				\
 }
 
 #else
@@ -844,7 +845,7 @@ ppc_record_toc_entry (bfd *abfd,
 	  /* The size must fit in a 16-bit displacement.  */
 	  if (global_toc_size > 65535)
 	    {
-	      (*_bfd_error_handler) (_("TOC overflow"));
+	      _bfd_error_handler (_("TOC overflow"));
 	      bfd_set_error (bfd_error_file_too_big);
 	      return FALSE;
 	    }
@@ -862,7 +863,7 @@ ppc_record_toc_entry (bfd *abfd,
 	  /* The size must fit in a 16-bit displacement.  */
 	  if (global_toc_size >= 65535)
 	    {
-	      (*_bfd_error_handler) (_("TOC overflow"));
+	      _bfd_error_handler (_("TOC overflow"));
 	      bfd_set_error (bfd_error_file_too_big);
 	      return FALSE;
 	    }
@@ -1037,7 +1038,8 @@ coff_ppc_relocate_section (bfd *output_bfd,
       switch (r_type)
 	{
 	default:
-	  (*_bfd_error_handler)
+	  _bfd_error_handler
+	    /* xgettext: c-format */
 	    (_("%B: unsupported relocation type 0x%02x"), input_bfd, r_type);
 	  bfd_set_error (bfd_error_bad_value);
 	  return FALSE;
@@ -1127,10 +1129,11 @@ coff_ppc_relocate_section (bfd *output_bfd,
 		    /* The size must still fit in a 16-bit displacement.  */
 		    if ((bfd_vma) our_toc_offset >= 65535)
 		      {
-			(*_bfd_error_handler)
-			  (_("%B: Relocation for %s of %lx exceeds Toc size limit"),
-			   input_bfd, name,
-			   (unsigned long) our_toc_offset);
+			_bfd_error_handler
+			  /* xgettext: c-format */
+			  (_("%B: Relocation for %s of %#Lx exceeds "
+			     "Toc size limit"),
+			   input_bfd, name, our_toc_offset);
 			bfd_set_error (bfd_error_bad_value);
 			return FALSE;
 		      }
@@ -1180,9 +1183,10 @@ coff_ppc_relocate_section (bfd *output_bfd,
 	    if ((r_flags & IMAGE_REL_PPC_TOCDEFN) != IMAGE_REL_PPC_TOCDEFN
 		&& (bfd_vma) our_toc_offset > toc_section->size)
 	      {
-		(*_bfd_error_handler)
-		  (_("%B: Relocation exceeds allocated TOC (%lx)"),
-		   input_bfd, (unsigned long) toc_section->size);
+		_bfd_error_handler
+		  /* xgettext: c-format */
+		  (_("%B: Relocation exceeds allocated TOC (%#Lx)"),
+		   input_bfd, toc_section->size);
 		bfd_set_error (bfd_error_bad_value);
 		return FALSE;
 	      }
@@ -1234,12 +1238,12 @@ coff_ppc_relocate_section (bfd *output_bfd,
 	    else
 	      my_name = h->root.root.root.string;
 
-	    (*_bfd_error_handler)
+	    _bfd_error_handler
+	      /* xgettext: c-format */
 	      (_("Warning: unsupported reloc %s <file %B, section %A>\n"
-		 "sym %ld (%s), r_vaddr %ld (%lx)"),
-	       input_bfd, input_section, howto->name,
-	       rel->r_symndx, my_name, (long) rel->r_vaddr,
-	       (unsigned long) rel->r_vaddr);
+		 "sym %ld (%s), r_vaddr %Ld (%#Lx)"),
+	       howto->name, input_bfd, input_section,
+	       rel->r_symndx, my_name, rel->r_vaddr, rel->r_vaddr);
 	  }
 	  break;
 	case IMAGE_REL_PPC_IMGLUE:
@@ -1252,7 +1256,8 @@ coff_ppc_relocate_section (bfd *output_bfd,
 	      break;
 	    my_name = h->root.root.root.string;
 
-	    (*_bfd_error_handler)
+	    _bfd_error_handler
+	      /* xgettext: c-format */
 	      (_("%B: Out of order IMGLUE reloc for %s"), input_bfd, my_name);
 	    bfd_set_error (bfd_error_bad_value);
 	    return FALSE;
@@ -1483,6 +1488,7 @@ dump_toc (void * vfile)
 	  else
 	    {
 	      fprintf (file,
+		       /* xgettext: c-format */
 		      _("**** global_toc_size %ld(%lx), thunk_size %ld(%lx)\n"),
 		       global_toc_size, (unsigned long) global_toc_size,
 		       thunk_size, (unsigned long) thunk_size);
@@ -1706,7 +1712,7 @@ ppc_imglue_reloc (bfd *abfd ATTRIBUTE_UNUSED,
       (sizeof (ppc_coff_howto_table) / sizeof (ppc_coff_howto_table[0]) - 1)
 
 /* FIXME: There is a possibility that when we read in a reloc from a file,
-          that there are some bits encoded in the upper portion of the
+	  that there are some bits encoded in the upper portion of the
 	  type field. Not yet implemented.  */
 
 static void
@@ -1715,9 +1721,9 @@ ppc_coff_rtype2howto (arelent *relent, struct internal_reloc *internal)
   /* We can encode one of three things in the type field, aside from the
      type:
      1. IMAGE_REL_PPC_NEG - indicates the value field is a subtraction
-        value, rather than an addition value
+	value, rather than an addition value
      2. IMAGE_REL_PPC_BRTAKEN, IMAGE_REL_PPC_BRNTAKEN - indicates that
-        the branch is expected to be taken or not.
+	the branch is expected to be taken or not.
      3. IMAGE_REL_PPC_TOCDEFN - toc slot definition in the file
      For now, we just strip this stuff to find the type, and ignore it other
      than that.  */
@@ -1759,9 +1765,10 @@ ppc_coff_rtype2howto (arelent *relent, struct internal_reloc *internal)
 	howto = ppc_coff_howto_table + IMAGE_REL_PPC_TOCREL16;
       break;
     default:
-      (*_bfd_error_handler) (_("warning: unsupported reloc %s [%d] used -- it may not work"),
-			     ppc_coff_howto_table[r_type].name,
-			     r_type);
+      _bfd_error_handler
+	/* xgettext: c-format */
+	(_("warning: unsupported reloc %s [%d] used -- it may not work"),
+	 ppc_coff_howto_table[r_type].name, r_type);
       howto = ppc_coff_howto_table + r_type;
       break;
     }
@@ -1782,9 +1789,9 @@ coff_ppc_rtype_to_howto (bfd *abfd ATTRIBUTE_UNUSED,
   /* We can encode one of three things in the type field, aside from the
      type:
      1. IMAGE_REL_PPC_NEG - indicates the value field is a subtraction
-        value, rather than an addition value
+	value, rather than an addition value
      2. IMAGE_REL_PPC_BRTAKEN, IMAGE_REL_PPC_BRNTAKEN - indicates that
-        the branch is expected to be taken or not.
+	the branch is expected to be taken or not.
      3. IMAGE_REL_PPC_TOCDEFN - toc slot definition in the file
      For now, we just strip this stuff to find the type, and ignore it other
      than that.  */
@@ -1830,9 +1837,10 @@ coff_ppc_rtype_to_howto (bfd *abfd ATTRIBUTE_UNUSED,
       howto = ppc_coff_howto_table + r_type;
       break;
     default:
-      (*_bfd_error_handler) (_("warning: unsupported reloc %s [%d] used -- it may not work"),
-			     ppc_coff_howto_table[r_type].name,
-			     r_type);
+      _bfd_error_handler
+	/* xgettext: c-format */
+	(_("warning: unsupported reloc %s [%d] used -- it may not work"),
+	 ppc_coff_howto_table[r_type].name, r_type);
       howto = ppc_coff_howto_table + r_type;
       break;
     }
@@ -1852,13 +1860,13 @@ ppc_coff_reloc_type_lookup (bfd *abfd ATTRIBUTE_UNUSED,
     {
       HOW2MAP(BFD_RELOC_32_GOTOFF,    IMAGE_REL_PPC_IMGLUE);
       HOW2MAP(BFD_RELOC_16_GOT_PCREL, IMAGE_REL_PPC_IFGLUE);
-      HOW2MAP(BFD_RELOC_16,           IMAGE_REL_PPC_ADDR16);
+      HOW2MAP(BFD_RELOC_16,	      IMAGE_REL_PPC_ADDR16);
       HOW2MAP(BFD_RELOC_PPC_B26,      IMAGE_REL_PPC_REL24);
       HOW2MAP(BFD_RELOC_PPC_BA26,     IMAGE_REL_PPC_ADDR24);
       HOW2MAP(BFD_RELOC_PPC_TOC16,    IMAGE_REL_PPC_TOCREL16);
       HOW2MAP(BFD_RELOC_16_GOTOFF,    IMAGE_REL_PPC_TOCREL16_DEFN);
-      HOW2MAP(BFD_RELOC_32,           IMAGE_REL_PPC_ADDR32);
-      HOW2MAP(BFD_RELOC_RVA,          IMAGE_REL_PPC_ADDR32NB);
+      HOW2MAP(BFD_RELOC_32,	      IMAGE_REL_PPC_ADDR32);
+      HOW2MAP(BFD_RELOC_RVA,	      IMAGE_REL_PPC_ADDR32NB);
     default:
       return NULL;
     }
@@ -1889,16 +1897,16 @@ ppc_coff_reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED,
 
 #define coff_bfd_reloc_type_lookup   ppc_coff_reloc_type_lookup
 #define coff_bfd_reloc_name_lookup ppc_coff_reloc_name_lookup
-#define coff_rtype_to_howto          coff_ppc_rtype_to_howto
-#define coff_relocate_section        coff_ppc_relocate_section
-#define coff_bfd_final_link          ppc_bfd_coff_final_link
+#define coff_rtype_to_howto	     coff_ppc_rtype_to_howto
+#define coff_relocate_section	     coff_ppc_relocate_section
+#define coff_bfd_final_link	     ppc_bfd_coff_final_link
 
 #ifndef COFF_IMAGE_WITH_PE
 #endif
 
 #define SELECT_RELOC(internal, howto) {internal.r_type=howto->type;}
 
-#define COFF_PAGE_SIZE                       0x1000
+#define COFF_PAGE_SIZE			     0x1000
 
 /* FIXME: This controls some code that used to be in peicode.h and is
    now in peigen.c.  It will not control the code in peigen.c.  If
@@ -2073,7 +2081,7 @@ ppc_bfd_coff_final_link (bfd *abfd, struct bfd_link_info *info)
       unsigned int i;
 
       /* We use section_count + 1, rather than section_count, because
-         the target_index fields are 1 based.  */
+	 the target_index fields are 1 based.  */
       amt = abfd->section_count + 1;
       amt *= sizeof (struct coff_link_section_info);
       flaginfo.section_info = (struct coff_link_section_info *) bfd_malloc (amt);
@@ -2107,13 +2115,13 @@ ppc_bfd_coff_final_link (bfd *abfd, struct bfd_link_info *info)
       if (o->reloc_count != 0)
 	{
 	  /* We don't know the indices of global symbols until we have
-             written out all the local symbols.  For each section in
-             the output file, we keep an array of pointers to hash
-             table entries.  Each entry in the array corresponds to a
-             reloc.  When we find a reloc against a global symbol, we
-             set the corresponding entry in this array so that we can
-             fix up the symbol index after we have written out all the
-             local symbols.
+	     written out all the local symbols.  For each section in
+	     the output file, we keep an array of pointers to hash
+	     table entries.  Each entry in the array corresponds to a
+	     reloc.  When we find a reloc against a global symbol, we
+	     set the corresponding entry in this array so that we can
+	     fix up the symbol index after we have written out all the
+	     local symbols.
 
 	     Because of this problem, we also keep the relocs in
 	     memory until the end of the link.  This wastes memory,
@@ -2497,7 +2505,7 @@ const bfd_target TARGET_LITTLE_SYM =
   bfd_getl32, bfd_getl_signed_32, bfd_putl32,
   bfd_getl16, bfd_getl_signed_16, bfd_putl16, /* hdrs */
 
-  {_bfd_dummy_target, coff_object_p, 	/* bfd_check_format */
+  {_bfd_dummy_target, coff_object_p,	/* bfd_check_format */
      bfd_generic_archive_p, /* _bfd_dummy_target */ coff_object_p },
   {bfd_false, coff_mkobject, _bfd_generic_mkarchive, /* bfd_set_format */
      bfd_false},
@@ -2558,7 +2566,7 @@ const bfd_target TARGET_BIG_SYM =
   bfd_getb32, bfd_getb_signed_32, bfd_putb32,
   bfd_getb16, bfd_getb_signed_16, bfd_putb16, /* hdrs */
 
-  {_bfd_dummy_target, coff_object_p, 	/* bfd_check_format */
+  {_bfd_dummy_target, coff_object_p,	/* bfd_check_format */
      bfd_generic_archive_p, /* _bfd_dummy_target */ coff_object_p },
   {bfd_false, coff_mkobject, _bfd_generic_mkarchive, /* bfd_set_format */
      bfd_false},

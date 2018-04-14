@@ -1,5 +1,5 @@
 /* 390 ELF support for BFD.
-   Copyright (C) 2000-2016 Free Software Foundation, Inc.
+   Copyright (C) 2000-2018 Free Software Foundation, Inc.
    Contributed by Carl B. Pedersen and Martin Schwidefsky.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -36,6 +36,9 @@
 /* Processor specific flags for the ELF header e_flags field.  */
 
 #define EF_S390_HIGH_GPRS        0x00000001
+
+/* Request 4k page table size.  */
+#define PT_S390_PGSTE (PT_LOPROC + 0)
 
 /* Relocation types.  */
 

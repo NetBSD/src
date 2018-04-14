@@ -1,197 +1,234 @@
 # Irish translations for ld.
 # Copyright (C) 2005 Free Software Foundation, Inc.
-# This file is distributed under the same license as the ld package.
-# Kevin Patrick Scannell <kscanne@gmail.com>, 2005, 2006, 2007.
+# This file is distributed under the same license as the binutils package.
+# Kevin Scannell <kscanne@gmail.com>, 2005, 2006, 2007, 2017.
 msgid ""
 msgstr ""
-"Project-Id-Version: ld 2.17.90\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-06-27 16:44+0930\n"
-"PO-Revision-Date: 2007-08-05 18:39-0500\n"
+"Project-Id-Version: ld 2.24.90\n"
+"Report-Msgid-Bugs-To: bug-binutils@gnu.org\n"
+"POT-Creation-Date: 2014-02-10 09:42+1030\n"
+"PO-Revision-Date: 2017-01-17 18:39-0500\n"
 "Last-Translator: Kevin Scannell <kscanne@gmail.com>\n"
 "Language-Team: Irish <gaeilge-gnulinux@lists.sourceforge.net>\n"
+"Language: ga\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=ISO-8859-1\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-
-#: emultempl/armcoff.em:72
-#, c-format
-msgid "  --support-old-code   Support interworking with old code\n"
-msgstr "  --support-old-code   Tacaigh le comh-inoibritheacht le seanchÛd\n"
+"X-Bugs: Report translation errors to the Language-Team address.\n"
 
 #: emultempl/armcoff.em:73
 #, c-format
-msgid "  --thumb-entry=<sym>  Set the entry point to be Thumb symbol <sym>\n"
-msgstr "  --thumb-entry=<siom> Socraigh siombail ordÛige <siom> mar phointe iontr·la\n"
+msgid "  --support-old-code          Support interworking with old code\n"
+msgstr "  --support-old-code              Tacaigh le comh-inoibritheacht le seanch√≥d\n"
 
-#: emultempl/armcoff.em:121
+#: emultempl/armcoff.em:74
+#, c-format
+msgid "  --thumb-entry=<sym>         Set the entry point to be Thumb symbol <sym>\n"
+msgstr "  --thumb-entry=<siom> Socraigh siombail ord√≥ige <siom> mar phointe iontr√°la\n"
+
+#: emultempl/armcoff.em:122
 #, c-format
 msgid "Errors encountered processing file %s"
-msgstr "Tharla earr·idÌ agus comhad %s · phrÛise·il"
+msgstr "Tharla earr√°id√≠ agus comhad %s √° phr√≥ise√°il"
 
-#: emultempl/armcoff.em:189 emultempl/pe.em:1528
+#: emultempl/armcoff.em:192 emultempl/pe.em:1827
 msgid "%P: warning: '--thumb-entry %s' is overriding '-e %s'\n"
-msgstr "%P: rabhadh: s·raÌonn '--thumb-entry %s' rogha '-e %s'\n"
+msgstr "%P: rabhadh: s√°ra√≠onn '--thumb-entry %s' rogha '-e %s'\n"
 
-#: emultempl/armcoff.em:194 emultempl/pe.em:1533
-msgid "%P: warning: connot find thumb start symbol %s\n"
-msgstr "%P: rabhadh: nÌ fÈidir siombail ordÛige tosaigh %s a aimsi˙\n"
+#: emultempl/armcoff.em:197 emultempl/pe.em:1832
+msgid "%P: warning: cannot find thumb start symbol %s\n"
+msgstr "%P: rabhadh: n√≠ f√©idir siombail ord√≥ige tosaigh %s a aimsi√∫\n"
 
-#: emultempl/pe.em:311
+#: emultempl/pe.em:425
 #, c-format
 msgid "  --base_file <basefile>             Generate a base file for relocatable DLLs\n"
 msgstr "  --base_file <bunchomhad>           Gin bunchomhad do DLLanna in-athshuite\n"
 
-#: emultempl/pe.em:312
+#: emultempl/pe.em:426
 #, c-format
 msgid "  --dll                              Set image base to the default for DLLs\n"
-msgstr "  --dll                              Socraigh bun na hÌomh· de rÈir rÈamhshocraithe do DLLanna\n"
+msgstr "  --dll                              Socraigh bun na h√≠omh√° de r√©ir r√©amhshocraithe do DLLanna\n"
 
-#: emultempl/pe.em:313
+#: emultempl/pe.em:427
 #, c-format
 msgid "  --file-alignment <size>            Set file alignment\n"
-msgstr "  --file-alignment <mÈid>            Socraigh ailÌni˙ comhad\n"
+msgstr "  --file-alignment <m√©id>            Socraigh ail√≠ni√∫ comhad\n"
 
-#: emultempl/pe.em:314
+#: emultempl/pe.em:428
 #, c-format
 msgid "  --heap <size>                      Set initial size of the heap\n"
-msgstr "  --heap <mÈid>                      Socraigh bunmhÈid an chairn\n"
+msgstr "  --heap <m√©id>                      Socraigh bunmh√©id an chairn\n"
 
-#: emultempl/pe.em:315
+#: emultempl/pe.em:429
 #, c-format
 msgid "  --image-base <address>             Set start address of the executable\n"
-msgstr "  --image-base <seoladh>             Socraigh seoladh tosaigh an chl·ir inrite\n"
+msgstr "  --image-base <seoladh>             Socraigh seoladh tosaigh an chl√°ir inrite\n"
 
-#: emultempl/pe.em:316
+#: emultempl/pe.em:430
 #, c-format
 msgid "  --major-image-version <number>     Set version number of the executable\n"
-msgstr "  --major-image-version <uimhir>     Socraigh uimhir leagan an chl·ir inrite\n"
+msgstr "  --major-image-version <uimhir>     Socraigh uimhir leagan an chl√°ir inrite\n"
 
-#: emultempl/pe.em:317
+#: emultempl/pe.em:431
 #, c-format
 msgid "  --major-os-version <number>        Set minimum required OS version\n"
-msgstr "  --major-os-version <uimhir>        Socraigh an leas˙ CO is l˙ at· riachtanach\n"
+msgstr "  --major-os-version <uimhir>        Socraigh an leas√∫ CO is l√∫ at√° riachtanach\n"
 
-#: emultempl/pe.em:318
+#: emultempl/pe.em:432
 #, c-format
 msgid "  --major-subsystem-version <number> Set minimum required OS subsystem version\n"
-msgstr "  --major-subsystem-version <uimhir> Socraigh an leagan fo-chÛrais is l˙ at· riachtanach\n"
+msgstr "  --major-subsystem-version <uimhir> Socraigh an leagan fo-ch√≥rais is l√∫ at√° riachtanach\n"
 
-#: emultempl/pe.em:319
+#: emultempl/pe.em:433
 #, c-format
 msgid "  --minor-image-version <number>     Set revision number of the executable\n"
-msgstr "  --minor-image-version <uimhir>     Socraigh uimhir leasaithe an chl·ir inrite\n"
+msgstr "  --minor-image-version <uimhir>     Socraigh uimhir leasaithe an chl√°ir inrite\n"
 
-#: emultempl/pe.em:320
+#: emultempl/pe.em:434
 #, c-format
 msgid "  --minor-os-version <number>        Set minimum required OS revision\n"
-msgstr "  --minor-os-version <uimhir>        Socraigh leas˙ CO is l˙ at· riachtanach\n"
+msgstr "  --minor-os-version <uimhir>        Socraigh leas√∫ CO is l√∫ at√° riachtanach\n"
 
-#: emultempl/pe.em:321
+#: emultempl/pe.em:435
 #, c-format
 msgid "  --minor-subsystem-version <number> Set minimum required OS subsystem revision\n"
-msgstr "  --minor-subsystem-version <uimhir> Socraigh leas˙ fo-chÛrais is l˙ at· riachtanach\n"
+msgstr "  --minor-subsystem-version <uimhir> Socraigh leas√∫ fo-ch√≥rais is l√∫ at√° riachtanach\n"
 
-#: emultempl/pe.em:322
+#: emultempl/pe.em:436
 #, c-format
 msgid "  --section-alignment <size>         Set section alignment\n"
-msgstr "  --section-alignment <mÈid>         Socraigh ailÌni˙ rann·n\n"
+msgstr "  --section-alignment <m√©id>         Socraigh ail√≠ni√∫ rann√°n\n"
 
-#: emultempl/pe.em:323
+#: emultempl/pe.em:437
 #, c-format
 msgid "  --stack <size>                     Set size of the initial stack\n"
-msgstr "  --stack <mÈid>                     Socraigh bunmhÈid na cruaiche\n"
+msgstr "  --stack <m√©id>                     Socraigh bunmh√©id na cruaiche\n"
 
-#: emultempl/pe.em:324
+#: emultempl/pe.em:438
 #, c-format
 msgid "  --subsystem <name>[:<version>]     Set required OS subsystem [& version]\n"
-msgstr "  --subsystem <ainm>[:<leagan>]      Socraigh fo-chÛras CO [& leagan] is l˙ at· riachtanach\n"
+msgstr "  --subsystem <ainm>[:<leagan>]      Socraigh fo-ch√≥ras CO [& leagan] is l√∫ at√° riachtanach\n"
 
-#: emultempl/pe.em:325
+#: emultempl/pe.em:439
 #, c-format
 msgid "  --support-old-code                 Support interworking with old code\n"
-msgstr "  --support-old-code                 Tacaigh le comh-inoibritheacht le seanchÛd\n"
+msgstr "  --support-old-code                 Tacaigh le comh-inoibritheacht le seanch√≥d\n"
 
-#: emultempl/pe.em:326
+#: emultempl/pe.em:440
+#, c-format
+msgid "  --[no-]leading-underscore          Set explicit symbol underscore prefix mode\n"
+msgstr "  --[no-]leading-underscore          Socraigh m√≥d l√°imhse√°la na bhfostr√≠oc\n"
+
+#: emultempl/pe.em:441
 #, c-format
 msgid "  --thumb-entry=<symbol>             Set the entry point to be Thumb <symbol>\n"
-msgstr "  --thumb-entry=<siom>               Socraigh siombail ordÛige <siom> mar phointe iontr·la\n"
+msgstr "  --thumb-entry=<siom>               Socraigh siombail ord√≥ige <siom> mar phointe iontr√°la\n"
 
-#: emultempl/pe.em:328
+#: emultempl/pe.em:442
+#, c-format
+msgid "  --insert-timestamp                 Use a real timestamp rather than zero.\n"
+msgstr "  --insert-timestamp                 √ös√°id f√≠orstampa ama in √°it n√°ide.\n"
+
+#: emultempl/pe.em:443
+#, c-format
+msgid "                                     This makes binaries non-deterministic\n"
+msgstr "                                     Leis seo, beidh comhaid dh√©n√°rtha neamhchinntitheach\n"
+
+#: emultempl/pe.em:445
 #, c-format
 msgid "  --add-stdcall-alias                Export symbols with and without @nn\n"
-msgstr "  --add-stdcall-alias                EaspÛrt·il siombailÌ le, agus gan @nn\n"
+msgstr "  --add-stdcall-alias                Easp√≥rt√°il siombail√≠ le, agus gan @nn\n"
 
-#: emultempl/pe.em:329
+#: emultempl/pe.em:446
 #, c-format
 msgid "  --disable-stdcall-fixup            Don't link _sym to _sym@nn\n"
-msgstr "  --disable-stdcall-fixup            N· nasc _sym le _sym@nn\n"
+msgstr "  --disable-stdcall-fixup            N√° nasc _sym le _sym@nn\n"
 
-#: emultempl/pe.em:330
+#: emultempl/pe.em:447
 #, c-format
 msgid "  --enable-stdcall-fixup             Link _sym to _sym@nn without warnings\n"
 msgstr "  --enable-stdcall-fixup             Nasc _sym le _sym@nn gan rabhaidh\n"
 
-#: emultempl/pe.em:331
+#: emultempl/pe.em:448
 #, c-format
 msgid "  --exclude-symbols sym,sym,...      Exclude symbols from automatic export\n"
-msgstr "  --exclude-symbols siom,siom,...    Eisiaigh siombailÌ Û easpÛrt·il uathoibrÌoch\n"
+msgstr "  --exclude-symbols siom,siom,...    Eisiaigh siombail√≠ √≥ easp√≥rt√°il uathoibr√≠och\n"
 
-#: emultempl/pe.em:332
+#: emultempl/pe.em:449
+#, c-format
+msgid "  --exclude-all-symbols              Exclude all symbols from automatic export\n"
+msgstr "  --exclude-all-symbols       Eisiaigh siombail√≠ √≥ easp√≥rt√°il uathoibr√≠och\n"
+
+#: emultempl/pe.em:450
 #, c-format
 msgid "  --exclude-libs lib,lib,...         Exclude libraries from automatic export\n"
-msgstr "  --exclude-symbols leabh,leabh,...  Eisiaigh leabharlanna Û easpÛrt·il uathoibrÌoch\n"
+msgstr "  --exclude-libs leabh,leabh,...  Eisiaigh leabharlanna √≥ easp√≥rt√°il uathoibr√≠och\n"
 
-#: emultempl/pe.em:333
+#: emultempl/pe.em:451
+#, c-format
+msgid "  --exclude-modules-for-implib mod,mod,...\n"
+msgstr "  --exclude-modules-for-implib mod,mod,...\n"
+
+#: emultempl/pe.em:452
+#, c-format
+msgid "                                     Exclude objects, archive members from auto\n"
+msgstr "                                Eisiaigh r√©ada, baill chartlainne √≥ easp√≥rt√°il\n"
+
+#: emultempl/pe.em:453
+#, c-format
+msgid "                                     export, place into import library instead.\n"
+msgstr "                                uathoibr√≠och agus cuir i leabharlann iomp√≥rt√°la iad.\n"
+
+#: emultempl/pe.em:454
 #, c-format
 msgid "  --export-all-symbols               Automatically export all globals to DLL\n"
-msgstr "  --export-all-symbols               EaspÛrt·il gach siombail chomhchoiteann go DLL go huathoibrÌoch\n"
+msgstr "  --export-all-symbols               Easp√≥rt√°il gach siombail chomhchoiteann go DLL go huathoibr√≠och\n"
 
-#: emultempl/pe.em:334
+#: emultempl/pe.em:455
 #, c-format
 msgid "  --kill-at                          Remove @nn from exported symbols\n"
-msgstr "  --kill-at                          Bain @nn Û shiombailÌ easpÛrt·ilte\n"
+msgstr "  --kill-at                          Bain @nn √≥ shiombail√≠ easp√≥rt√°ilte\n"
 
-#: emultempl/pe.em:335
+#: emultempl/pe.em:456
 #, c-format
 msgid "  --out-implib <file>                Generate import library\n"
-msgstr "  --out-implib <comhad>              Cruthaigh leabharlann iompÛrt·la\n"
+msgstr "  --out-implib <comhad>              Cruthaigh leabharlann iomp√≥rt√°la\n"
 
-#: emultempl/pe.em:336
+#: emultempl/pe.em:457
 #, c-format
 msgid "  --output-def <file>                Generate a .DEF file for the built DLL\n"
-msgstr "  --output-def <comhad>              Cruthaigh comhad .DEF le haghaidh an DLL tÛgtha\n"
+msgstr "  --output-def <comhad>              Cruthaigh comhad .DEF le haghaidh an DLL t√≥gtha\n"
 
-#: emultempl/pe.em:337
+#: emultempl/pe.em:458
 #, c-format
 msgid "  --warn-duplicate-exports           Warn about duplicate exports.\n"
-msgstr "  --warn-duplicate-exports           Tabhair rabhadh faoi easpÛrt·lacha d˙bailte.\n"
+msgstr "  --warn-duplicate-exports           Tabhair rabhadh faoi easp√≥rt√°lacha d√∫bailte.\n"
 
-#: emultempl/pe.em:338
+#: emultempl/pe.em:459
 #, c-format
 msgid ""
 "  --compat-implib                    Create backward compatible import libs;\n"
 "                                       create __imp_<SYMBOL> as well.\n"
 msgstr ""
-"  --compat-implib                    Cruthaigh leabharlanna iompÛrt·la at·\n"
-"                                       comhoiri˙nach go siarghabh·lach;\n"
+"  --compat-implib                    Cruthaigh leabharlanna iomp√≥rt√°la at√°\n"
+"                                       comhoiri√∫nach go siarghabh√°lach;\n"
 "                                       cruthaigh __imp_<SIOMBAIL> freisin.\n"
 
-#: emultempl/pe.em:340
+#: emultempl/pe.em:461
 #, c-format
 msgid ""
 "  --enable-auto-image-base           Automatically choose image base for DLLs\n"
 "                                       unless user specifies one\n"
 msgstr ""
-"  --enable-auto-image-base           Roghnaigh bun na hÌomh· le haghaidh\n"
+"  --enable-auto-image-base           Roghnaigh bun na h√≠omh√° le haghaidh\n"
 "                                       DLL mura bhfuil bun roghnaithe cheana\n"
 
-#: emultempl/pe.em:342
+#: emultempl/pe.em:463
 #, c-format
 msgid "  --disable-auto-image-base          Do not auto-choose image base. (default)\n"
-msgstr "  --disable-auto-image-base          N· roghnaigh bun na hÌomh· go huathoibrÌoch. (rÈamhshocr˙)\n"
+msgstr "  --disable-auto-image-base          N√° roghnaigh bun na h√≠omh√° go huathoibr√≠och. (r√©amhshocr√∫)\n"
 
-#: emultempl/pe.em:343
+#: emultempl/pe.em:464
 #, c-format
 msgid ""
 "  --dll-search-prefix=<string>       When linking dynamically to a dll without\n"
@@ -199,142 +236,233 @@ msgid ""
 "                                       in preference to lib<basename>.dll \n"
 msgstr ""
 "  --dll-search-prefix=<teaghr>       Agus nascadh le dll gan leabharlann\n"
-"                                       iompÛrt·la, ˙s·id <teaghr><bunainm>.dll\n"
+"                                       iomp√≥rt√°la, √∫s√°id <teaghr><bunainm>.dll\n"
 "                                       in ionad lib<bunainm>.dll \n"
 
-#: emultempl/pe.em:346
+#: emultempl/pe.em:467
 #, c-format
 msgid ""
-"  --enable-auto-import               Do sophistcated linking of _sym to\n"
+"  --enable-auto-import               Do sophisticated linking of _sym to\n"
 "                                       __imp_sym for DATA references\n"
 msgstr ""
-"  --enable-auto-import               DÈan nascadh sofaistici˙il de _sym le\n"
-"                                       __imp_sym do thagairtÌ DATA\n"
+"  --enable-auto-import               D√©an nascadh sofaistici√∫il de _sym le\n"
+"                                       __imp_sym do thagairt√≠ DATA\n"
 
-#: emultempl/pe.em:348
+#: emultempl/pe.em:469
 #, c-format
 msgid "  --disable-auto-import              Do not auto-import DATA items from DLLs\n"
-msgstr "  --disable-auto-import              N· hiompÛrt·il mÌreanna DATA Û DLLanna go huathoibrÌoch\n"
+msgstr "  --disable-auto-import              N√° hiomp√≥rt√°il m√≠reanna DATA √≥ DLLanna go huathoibr√≠och\n"
 
-#: emultempl/pe.em:349
+#: emultempl/pe.em:470
 #, c-format
 msgid ""
 "  --enable-runtime-pseudo-reloc      Work around auto-import limitations by\n"
 "                                       adding pseudo-relocations resolved at\n"
 "                                       runtime.\n"
 msgstr ""
-"  --enable-runtime-pseudo-reloc      S·raigh teoranta uathiompÛrt·la trÌ\n"
-"                                       sh˙da-athshuÌmh rÈitithe ag am rite\n"
+"  --enable-runtime-pseudo-reloc      S√°raigh teoranta uathiomp√≥rt√°la tr√≠\n"
+"                                       sh√∫da-athshu√≠mh r√©itithe ag am rite\n"
 "                                       a chur leis.\n"
 
-#: emultempl/pe.em:352
+#: emultempl/pe.em:473
 #, c-format
 msgid ""
 "  --disable-runtime-pseudo-reloc     Do not add runtime pseudo-relocations for\n"
 "                                       auto-imported DATA.\n"
 msgstr ""
-"  --disable-runtime-pseudo-reloc     N· cuir s˙da-athshuÌmh am-rite leis\n"
-"                                       le haghaidh DATA uathiompÛrt·ilte.\n"
+"  --disable-runtime-pseudo-reloc     N√° cuir s√∫da-athshu√≠mh am-rite leis\n"
+"                                       le haghaidh DATA uathiomp√≥rt√°ilte.\n"
 
-#: emultempl/pe.em:354
+#: emultempl/pe.em:475
 #, c-format
 msgid ""
 "  --enable-extra-pe-debug            Enable verbose debug output when building\n"
 "                                       or linking to DLLs (esp. auto-import)\n"
 msgstr ""
-"  --enable-extra-pe-debug            Cumasaigh aschur foclach dÌfhabhtaithe\n"
-"                                       agus DLL · thÛg·il, nÛ le linn nasctha\n"
-"                                       le DLL (uathiompÛrt·il go h·irithe)\n"
+"  --enable-extra-pe-debug            Cumasaigh aschur foclach d√≠fhabhtaithe\n"
+"                                       agus DLL √° th√≥g√°il, n√≥ le linn nasctha\n"
+"                                       le DLL (uathiomp√≥rt√°il go h√°irithe)\n"
 
-#: emultempl/pe.em:357
+#: emultempl/pe.em:478
 #, c-format
 msgid ""
 "  --large-address-aware              Executable supports virtual addresses\n"
 "                                       greater than 2 gigabytes\n"
 msgstr ""
-"  --large-address-aware              TacaÌonn an cl·r inrite le seoltaÌ\n"
-"                                       fÌor˙la nÌos mÛ n· 2 ghigibheart\n"
+"  --large-address-aware              Taca√≠onn an cl√°r inrite le seolta√≠\n"
+"                                       f√≠or√∫la n√≠os m√≥ n√° 2 ghigibheart\n"
 
-#: emultempl/pe.em:424
+#: emultempl/pe.em:480
+#, c-format
+msgid ""
+"  --disable-large-address-aware      Executable does not support virtual\n"
+"                                       addresses greater than 2 gigabytes\n"
+msgstr ""
+"  --disable-large-address-aware      N√≠ thaca√≠onn an cl√°r inrite le seolta√≠\n"
+"                                       f√≠or√∫la n√≠os m√≥ n√° 2 ghigibheart\n"
+
+#: emultempl/pe.em:482
+#, c-format
+msgid ""
+"  --enable-long-section-names        Use long COFF section names even in\n"
+"                                       executable image files\n"
+msgstr ""
+"  --enable-long-section-names        √ös√°id ainmneacha fada COFF ar rann√°in,\n"
+"                                       fi√∫ i gcomhaid √≠omh√° inrite\n"
+
+#: emultempl/pe.em:484
+#, c-format
+msgid ""
+"  --disable-long-section-names       Never use long COFF section names, even\n"
+"                                       in object files\n"
+msgstr ""
+"  --disable-long-section-names       N√° h√∫s√°id ainmneacha fada COFF ar rann√°in\n"
+"                                       riamh, fi√∫ i gcomhad r√©ad\n"
+
+#: emultempl/pe.em:486
+#, c-format
+msgid ""
+"  --dynamicbase\t\t\t Image base address may be relocated using\n"
+"\t\t\t\t       address space layout randomization (ASLR)\n"
+msgstr ""
+"  --dynamicbase\t\t\t Is f√©idir bunseoladh na h√≠omh√° a athshu√≠omh tr√≠\n"
+"\t\t\t\t       leagan amach sp√°s na seolta√≠ a randam√∫ (ASLR)\n"
+
+#: emultempl/pe.em:488
+#, c-format
+msgid "  --forceinteg\t\t Code integrity checks are enforced\n"
+msgstr "  --forceinteg\t\t Cuir deimhni√∫ sl√°ine c√≥id i bhfeidhm\n"
+
+#: emultempl/pe.em:489
+#, c-format
+msgid "  --nxcompat\t\t Image is compatible with data execution prevention\n"
+msgstr "  --nxcompat\t\t √çomh√° comhoiri√∫nach le cosc ar rith sonra√≠\n"
+
+#: emultempl/pe.em:490
+#, c-format
+msgid "  --no-isolation\t\t Image understands isolation but do not isolate the image\n"
+msgstr "  --no-isolation\t\t Tuigeann an √≠omh√° aonr√∫, ach n√° haonraigh an √≠omh√°\n"
+
+#: emultempl/pe.em:491
+#, c-format
+msgid ""
+"  --no-seh\t\t\t Image does not use SEH. No SE handler may\n"
+"\t\t\t\t       be called in this image\n"
+msgstr ""
+"  --no-seh\t\t\t N√≠ √∫s√°ideann an √≠omh√° SEH. N√≠ f√©idir l√°imhse√°la√≠ SE\n"
+"\t\t\t\t       a √∫s√°id san √≠omh√° seo\n"
+
+#: emultempl/pe.em:493
+#, c-format
+msgid "  --no-bind\t\t\t Do not bind this image\n"
+msgstr "  --no-bind\t\t\t N√° ceangail an √≠omh√° seo\n"
+
+#: emultempl/pe.em:494
+#, c-format
+msgid "  --wdmdriver\t\t Driver uses the WDM model\n"
+msgstr "  --wdmdriver\t\t √ös√°ideann an tiom√°na√≠ an tsamhail WDM\n"
+
+#: emultempl/pe.em:495
+#, c-format
+msgid "  --tsaware                  Image is Terminal Server aware\n"
+msgstr "  --tsaware         T√° an √≠omh√° feasach ar an bhFreastala√≠ Teirmin√©il\n"
+
+#: emultempl/pe.em:624
 msgid "%P: warning: bad version number in -subsystem option\n"
 msgstr "%P: rabhadh: drochuimhir leagain i rogha -subsystem\n"
 
-#: emultempl/pe.em:455
+#: emultempl/pe.em:649
 msgid "%P%F: invalid subsystem type %s\n"
-msgstr "%P%F: cine·l neamhbhailÌ fo-chÛras %s\n"
+msgstr "%P%F: cine√°l neamhbhail√≠ fo-ch√≥ras %s\n"
 
-#: emultempl/pe.em:494
+#: emultempl/pe.em:670
 msgid "%P%F: invalid hex number for PE parameter '%s'\n"
-msgstr "%P%F: uimhir neamhbhailÌ heicsidheach˙lach le haghaidh paraimÈadair PE '%s'\n"
+msgstr "%P%F: uimhir neamhbhail√≠ heicsidheach√∫lach le haghaidh paraim√©adair PE '%s'\n"
 
-#: emultempl/pe.em:511
+#: emultempl/pe.em:687
 msgid "%P%F: strange hex info for PE parameter '%s'\n"
-msgstr "%P%F: eolas aisteach heics le haghaidh paraimÈadair PE '%s'\n"
+msgstr "%P%F: eolas aisteach heics le haghaidh paraim√©adair PE '%s'\n"
 
-#: emultempl/pe.em:528
-#, c-format
-msgid "%s: Can't open base file %s\n"
-msgstr "%s: NÌ fÈidir bunchomhad %s a oscailt\n"
+#: emultempl/pe.em:702
+msgid "%F%P: cannot open base file %s\n"
+msgstr "%F%P: n√≠ f√©idir bunchomhad %s a oscailt\n"
 
-#: emultempl/pe.em:744
+#: emultempl/pe.em:981
 msgid "%P: warning, file alignment > section alignment.\n"
-msgstr "%P: rabhadh, ailÌni˙ comhaid > ailÌni˙ rann·in.\n"
+msgstr "%P: rabhadh, ail√≠ni√∫ comhaid > ail√≠ni√∫ rann√°in.\n"
 
-#: emultempl/pe.em:831 emultempl/pe.em:858
+#: emultempl/pe.em:994
+msgid "%P: warning: --export-dynamic is not supported for PE targets, did you mean --export-all-symbols?\n"
+msgstr "%P: warning: n√≠ thaca√≠tear le --export-dynamic le haghaidh gach sprioc PE; an raibh --export-all-symbols i gceist agat?\n"
+
+#: emultempl/pe.em:1070 emultempl/pe.em:1097
 #, c-format
 msgid "Warning: resolving %s by linking to %s\n"
-msgstr "Rabhadh: %s · rÈiteach trÌ nascadh le %s\n"
+msgstr "Rabhadh: %s √° r√©iteach tr√≠ nascadh le %s\n"
 
-#: emultempl/pe.em:836 emultempl/pe.em:863
+#: emultempl/pe.em:1075 emultempl/pe.em:1102
 msgid "Use --enable-stdcall-fixup to disable these warnings\n"
-msgstr "⁄s·id --enable-stdcall-fixup chun na rabhaidh seo a dhÌchumas˙\n"
+msgstr "√ös√°id --enable-stdcall-fixup chun na rabhaidh seo a dh√≠chumas√∫\n"
 
-#: emultempl/pe.em:837 emultempl/pe.em:864
+#: emultempl/pe.em:1076 emultempl/pe.em:1103
 msgid "Use --disable-stdcall-fixup to disable these fixups\n"
-msgstr "⁄s·id --disable-stdcall-fixup chun na ceart˙ch·in seo a dhÌchumas˙\n"
+msgstr "√ös√°id --disable-stdcall-fixup chun na ceart√∫ch√°in seo a dh√≠chumas√∫\n"
 
-#: emultempl/pe.em:883
+#: emultempl/pe.em:1122
 #, c-format
 msgid "%C: Cannot get section contents - auto-import exception\n"
-msgstr "%C: NÌ fÈidir ·bhar an rann·in a fh·il - eisceacht uathiompÛrt·la\n"
+msgstr "%C: N√≠ f√©idir √°bhar an rann√°in a fh√°il - eisceacht uathiomp√≥rt√°la\n"
 
-#: emultempl/pe.em:920
+#: emultempl/pe.em:1162
 #, c-format
 msgid "Info: resolving %s by linking to %s (auto-import)\n"
-msgstr "Eolas: %s · rÈiteach trÌ nascadh le %s (uathiompÛrt·il)\n"
+msgstr "Eolas: %s √° r√©iteach tr√≠ nascadh le %s (uathiomp√≥rt√°il)\n"
 
-#: emultempl/pe.em:992
+#: emultempl/pe.em:1169
+msgid ""
+"%P: warning: auto-importing has been activated without --enable-auto-import specified on the command line.\n"
+"This should work unless it involves constant data structures referencing symbols from auto-imported DLLs.\n"
+msgstr ""
+"%P: rabhadh: cumasa√≠odh iomp√≥rt√°il uathoibr√≠och gan --enable-auto-import a shonr√∫ ar l√≠ne na n-orduithe.\n"
+"Is d√≥cha go n-oibreoidh s√© seo, mura bhfuil strucht√∫ir sonra√≠ ann a dh√©anann tagairt do shiombail√≠ i DLLanna a iomp√≥rt√°ladh go huathoibr√≠och.\n"
+
+#: emultempl/pe.em:1176 emultempl/pe.em:1383 emultempl/pe.em:1590 ldcref.c:503
+#: ldcref.c:601 ldmain.c:1183 ldmisc.c:300 pe-dll.c:710 pe-dll.c:1276
+#: pe-dll.c:1371
+msgid "%B%F: could not read symbols: %E\n"
+msgstr "%B%F: n√≠orbh fh√©idir siombail√≠ a l√©amh: %E\n"
+
+#: emultempl/pe.em:1258
 msgid "%F%P: cannot perform PE operations on non PE output file '%B'.\n"
-msgstr "%F%P: nÌ fÈidir oibrÌochtaÌ PE a dhÈanamh ar aschomhad neamh-PE '%B'.\n"
+msgstr "%F%P: n√≠ f√©idir oibr√≠ochta√≠ PE a dh√©anamh ar aschomhad neamh-PE '%B'.\n"
 
-#: emultempl/pe.em:1334
+#: emultempl/pe.em:1633
 #, c-format
 msgid "Errors encountered processing file %s\n"
-msgstr "Tharla earr·idÌ agus comhad %s · phrÛise·il\n"
+msgstr "Tharla earr√°id√≠ agus comhad %s √° phr√≥ise√°il\n"
 
-#: emultempl/pe.em:1357
+#: emultempl/pe.em:1656
 #, c-format
-msgid "Errors encountered processing file %s for interworking"
-msgstr "Tharla earr·idÌ agus comhad %s · phrÛise·il le haghaidh comh-inoibritheachta"
+msgid "Errors encountered processing file %s for interworking\n"
+msgstr "Tharla earr√°id√≠ agus comhad %s √° phr√≥ise√°il le haghaidh comh-inoibritheachta\n"
 
-#: emultempl/pe.em:1418 ldexp.c:530 ldlang.c:3082 ldlang.c:6087 ldlang.c:6118
-#: ldmain.c:1167
+#: emultempl/pe.em:1718 ldexp.c:631 ldlang.c:3451 ldmain.c:1128
 msgid "%P%F: bfd_link_hash_lookup failed: %E\n"
 msgstr "%P%F: theip ar bfd_link_hash_lookup: %E\n"
 
-#: ldcref.c:166
+#: ldcref.c:167
 msgid "%X%P: bfd_hash_table_init of cref table failed: %E\n"
-msgstr "%X%P: theip ar bfd_hash_table_init t·bla crostagartha a th˙s˙: %E\n"
+msgstr "%X%P: theip ar bfd_hash_table_init t√°bla crostagartha a th√∫s√∫: %E\n"
 
-#: ldcref.c:172
+#: ldcref.c:173
 msgid "%X%P: cref_hash_lookup failed: %E\n"
 msgstr "%X%P: theip ar cref_hash_lookup: %E\n"
 
-#: ldcref.c:182
+#: ldcref.c:183
 msgid "%X%P: cref alloc failed: %E\n"
-msgstr "%X%P: theip ar dh·ileadh cref: %E\n"
+msgstr "%X%P: theip ar dh√°ileadh cref: %E\n"
 
-#: ldcref.c:362
+#: ldcref.c:365
 #, c-format
 msgid ""
 "\n"
@@ -342,64 +470,56 @@ msgid ""
 "\n"
 msgstr ""
 "\n"
-"T·bla Crostagartha\n"
+"T√°bla Crostagartha\n"
 "\n"
 
-#: ldcref.c:363
+#: ldcref.c:366
 msgid "Symbol"
 msgstr "Siombail"
 
-#: ldcref.c:371
+#: ldcref.c:374
 #, c-format
 msgid "File\n"
 msgstr "Comhad\n"
 
-#: ldcref.c:375
+#: ldcref.c:378
 #, c-format
 msgid "No symbols\n"
-msgstr "Gan siombailÌ\n"
+msgstr "Gan siombail√≠\n"
 
-#: ldcref.c:496 ldcref.c:618
-msgid "%B%F: could not read symbols; %E\n"
-msgstr "%B%F: nÌorbh fhÈidir siombailÌ a lÈamh; %E\n"
-
-#: ldcref.c:500 ldcref.c:622 ldmain.c:1232 ldmain.c:1236
-msgid "%B%F: could not read symbols: %E\n"
-msgstr "%B%F: nÌorbh fhÈidir siombailÌ a lÈamh: %E\n"
-
-#: ldcref.c:551
+#: ldcref.c:545
 msgid "%P: symbol `%T' missing from main hash table\n"
-msgstr "%P: siombail `%T' ar iarraidh Ûn phrÌomh-hais-t·bla\n"
+msgstr "%P: siombail `%T' ar iarraidh √≥n phr√≠omh-hais-t√°bla\n"
 
-#: ldcref.c:693 ldcref.c:700 ldmain.c:1279 ldmain.c:1286
+#: ldcref.c:663 ldcref.c:670 ldmain.c:1217 ldmain.c:1224
 msgid "%B%F: could not read relocs: %E\n"
-msgstr "%B%F: nÌorbh fhÈidir na hathshuÌonna a lÈamh: %E\n"
+msgstr "%B%F: n√≠orbh fh√©idir na hathshu√≠onna a l√©amh: %E\n"
 
 #. We found a reloc for the symbol.  The symbol is defined
 #. in OUTSECNAME.  This reloc is from a section which is
 #. mapped into a section from which references to OUTSECNAME
 #. are prohibited.  We must report an error.
-#: ldcref.c:727
+#: ldcref.c:697
 msgid "%X%C: prohibited cross reference from %s to `%T' in %s\n"
-msgstr "%X%C: crostagairt choiscthe do `%T' Û %s i %s\n"
+msgstr "%X%C: crostagairt choiscthe do `%T' √≥ %s i %s\n"
 
-#: ldctor.c:84
+#: ldctor.c:85
 msgid "%P%X: Different relocs used in set %s\n"
-msgstr "%P%X: ⁄s·ideadh athshuÌonna difri˙la i dtacar %s\n"
+msgstr "%P%X: √ös√°ideadh athshu√≠onna difri√∫la i dtacar %s\n"
 
-#: ldctor.c:102
+#: ldctor.c:103
 msgid "%P%X: Different object file formats composing set %s\n"
-msgstr "%P%X: Form·idÌ difri˙la ar chomhaid oibiachta i dtacar %s\n"
+msgstr "%P%X: Form√°id√≠ difri√∫la ar chomhaid oibiachta i dtacar %s\n"
 
 #: ldctor.c:281 ldctor.c:295
 msgid "%P%X: %s does not support reloc %s for set %s\n"
-msgstr "%P%X: NÌ thacaÌonn %s le hathshuÌ %s i gcomhair tacair %s\n"
+msgstr "%P%X: N√≠ thaca√≠onn %s le hathshu√≠ %s i gcomhair tacair %s\n"
 
 #: ldctor.c:316
 msgid "%P%X: Unsupported size %d for set %s\n"
-msgstr "%P%X: MÈid %d gan tacaÌocht do thacar %s\n"
+msgstr "%P%X: M√©id %d gan taca√≠ocht do thacar %s\n"
 
-#: ldctor.c:337
+#: ldctor.c:339
 msgid ""
 "\n"
 "Set                 Symbol\n"
@@ -409,170 +529,192 @@ msgstr ""
 "Tacar               Siombail\n"
 "\n"
 
-#: ldemul.c:235
+#: ldemul.c:265
 #, c-format
 msgid "%S SYSLIB ignored\n"
 msgstr "%S Rinneadh neamhshuim ar SYSLIB\n"
 
-#: ldemul.c:241
+#: ldemul.c:271
 #, c-format
 msgid "%S HLL ignored\n"
 msgstr "%S Rinneadh neamhshuim ar HLL\n"
 
-#: ldemul.c:261
+#: ldemul.c:291
 msgid "%P: unrecognised emulation mode: %s\n"
-msgstr "%P: mÛd anaithnid aithrise: %s\n"
+msgstr "%P: m√≥d anaithnid aithrise: %s\n"
 
-#: ldemul.c:262
+#: ldemul.c:292
 msgid "Supported emulations: "
-msgstr "AithrisÌ a dtacaÌtear leo: "
+msgstr "Aithris√≠ a dtaca√≠tear leo: "
 
-#: ldemul.c:304
+#: ldemul.c:334
 #, c-format
 msgid "  no emulation specific options.\n"
 msgstr "  gan roghanna a bhaineann le haithris.\n"
 
-#: ldexp.c:344
+#: ldexp.c:346
+msgid "%P: warning: address of `%s' isn't multiple of maximum page size\n"
+msgstr "%P: rabhadh: n√≠ iolra√≠ den uasmh√©id leathanaigh √© an seoladh `%s'\n"
+
+#: ldexp.c:439
 #, c-format
 msgid "%F%S %% by zero\n"
-msgstr "%F%S %% le nialas\n"
+msgstr "%F%S %% le n√°id\n"
 
-#: ldexp.c:352
+#: ldexp.c:449
 #, c-format
 msgid "%F%S / by zero\n"
-msgstr "%F%S / le nialas\n"
+msgstr "%F%S / le n√°id\n"
 
-#: ldexp.c:544
+#: ldexp.c:643
 #, c-format
 msgid "%X%S: unresolvable symbol `%s' referenced in expression\n"
-msgstr "%X%S: rinneadh tagairt do shiombail neamh-inrÈitithe `%s' i slonn\n"
+msgstr "%X%S: rinneadh tagairt do shiombail neamh-inr√©itithe `%s' i slonn\n"
 
-#: ldexp.c:555
+#: ldexp.c:658
 #, c-format
 msgid "%F%S: undefined symbol `%s' referenced in expression\n"
-msgstr "%F%S: rinneadh tagairt do shiombail `%s' gan sainmhÌni˙ i slonn\n"
+msgstr "%F%S: rinneadh tagairt do shiombail `%s' gan sainmh√≠ni√∫ i slonn\n"
 
-#: ldexp.c:576 ldexp.c:593 ldexp.c:619
+#: ldexp.c:680 ldexp.c:698 ldexp.c:726
 #, c-format
 msgid "%F%S: undefined section `%s' referenced in expression\n"
-msgstr "%F%S: rinneadh tagairt do rann·n `%s' gan sainmhÌni˙ i slonn\n"
+msgstr "%F%S: rinneadh tagairt do rann√°n `%s' gan sainmh√≠ni√∫ i slonn\n"
 
-#: ldexp.c:645 ldexp.c:658
+#: ldexp.c:756 ldexp.c:771
 #, c-format
 msgid "%F%S: undefined MEMORY region `%s' referenced in expression\n"
-msgstr "%F%S: rinneadh tagairt do rÈigi˙n CUIMHNE `%s' gan sainmhÌni˙ i slonn\n"
+msgstr "%F%S: rinneadh tagairt do r√©igi√∫n CUIMHNE `%s' gan sainmh√≠ni√∫ i slonn\n"
 
-#: ldexp.c:669
+#: ldexp.c:783
 #, c-format
 msgid "%F%S: unknown constant `%s' referenced in expression\n"
-msgstr "%F%S: rinneadh tagairt do thairiseach `%s' gan sainmhÌni˙ i slonn\n"
+msgstr "%F%S: rinneadh tagairt do thairiseach `%s' gan sainmh√≠ni√∫ i slonn\n"
 
-#: ldexp.c:730
+#: ldexp.c:931
 #, c-format
 msgid "%F%S can not PROVIDE assignment to location counter\n"
-msgstr "NÌ fÈidir le %F%S sannadh a shol·thar d'·iritheoir suÌomhanna\n"
+msgstr "N√≠ f√©idir le %F%S sannadh a shol√°thar d'√°iritheoir su√≠omhanna\n"
 
-#: ldexp.c:744
+#: ldexp.c:957
 #, c-format
 msgid "%F%S invalid assignment to location counter\n"
-msgstr "%F%S sannadh neamhbhailÌ ar ·iritheoir suÌomhanna\n"
+msgstr "%F%S sannadh neamhbhail√≠ ar √°iritheoir su√≠omhanna\n"
 
-#: ldexp.c:747
+#: ldexp.c:961
 #, c-format
-msgid "%F%S assignment to location counter invalid outside of SECTION\n"
-msgstr "%F%S nÌl sannadh don ·iritheoir suÌomhanna bailÌ taobh amuigh de RANN¡N\n"
+msgid "%F%S assignment to location counter invalid outside of SECTIONS\n"
+msgstr "%F%S n√≠l sannadh don √°iritheoir su√≠omhanna bail√≠ taobh amuigh de RANN√ÅN\n"
 
-#: ldexp.c:756
+#: ldexp.c:980
 msgid "%F%S cannot move location counter backwards (from %V to %V)\n"
-msgstr "%F%S nÌ fÈidir an t-·iritheoir suÌomhanna a bhogadh ar ais (Û %V go %V)\n"
+msgstr "%F%S n√≠ f√©idir an t-√°iritheoir su√≠omhanna a bhogadh ar ais (√≥ %V go %V)\n"
 
-#: ldexp.c:795
+#: ldexp.c:1035
 msgid "%P%F:%s: hash creation failed\n"
-msgstr "%P%F:%s: theip ar chruth˙ an hais-t·bla\n"
+msgstr "%P%F:%s: theip ar chruth√∫ an hais-t√°bla\n"
 
-#: ldexp.c:1054 ldexp.c:1079
-#, c-format
-msgid "%F%S nonconstant expression for %s\n"
-msgstr "%F%S slonn inathraitheach do %s\n"
-
-#: ldexp.c:1138
+#: ldexp.c:1368 ldexp.c:1394 ldexp.c:1454
 #, c-format
 msgid "%F%S: nonconstant expression for %s\n"
 msgstr "%F%S: slonn inathraitheach do %s\n"
 
-#: ldfile.c:139
+#: ldfile.c:132
 #, c-format
 msgid "attempt to open %s failed\n"
 msgstr "theip ar oscailt %s\n"
 
-#: ldfile.c:141
+#: ldfile.c:134
 #, c-format
 msgid "attempt to open %s succeeded\n"
-msgstr "d'Èirigh le hiarracht %s a oscailt\n"
+msgstr "d'√©irigh le hiarracht %s a oscailt\n"
 
-#: ldfile.c:147
+#: ldfile.c:140
 msgid "%F%P: invalid BFD target `%s'\n"
-msgstr "%F%P: sprioc neamhbhailÌ BFD `%s'\n"
+msgstr "%F%P: sprioc neamhbhail√≠ BFD `%s'\n"
 
-#: ldfile.c:256 ldfile.c:285
+#: ldfile.c:257 ldfile.c:286
 msgid "%P: skipping incompatible %s when searching for %s\n"
-msgstr "%P: gabh thar %s neamh-chomhoiri˙nach agus %s · lorg\n"
+msgstr "%P: gabh thar %s neamh-chomhoiri√∫nach agus %s √° lorg\n"
 
-#: ldfile.c:269
+#: ldfile.c:270
 msgid "%F%P: attempted static link of dynamic object `%s'\n"
-msgstr "%F%P: iarracht ar nasc statach de rÈad dinimici˙il `%s' a dhÈanamh\n"
+msgstr "%F%P: iarracht ar nasc statach de r√©ad dinimici√∫il `%s' a dh√©anamh\n"
 
-#: ldfile.c:388
-msgid "%F%P: %s (%s): No such file: %E\n"
-msgstr "%F%P: %s (%s): NÌl a leithÈid de chomhad: %E\n"
+#: ldfile.c:408
+msgid "%P: cannot find %s (%s): %E\n"
+msgstr "%P: n√≠ f√©idir %s a aimsi√∫ (%s): %E\n"
 
-#: ldfile.c:391
-msgid "%F%P: %s: No such file: %E\n"
-msgstr "%F%P: %s: NÌl a leithÈid de chomhad: %E\n"
+#: ldfile.c:411
+msgid "%P: cannot find %s: %E\n"
+msgstr "%P: n√≠ f√©idir %s a aimsi√∫: %E\n"
 
-#: ldfile.c:421
-msgid "%F%P: cannot find %s inside %s\n"
-msgstr "%F%P: nÌ fÈidir %s a aimsi˙ i %s\n"
+#: ldfile.c:446
+msgid "%P: cannot find %s inside %s\n"
+msgstr "%P: n√≠ f√©idir %s a aimsi√∫ i %s\n"
 
-#: ldfile.c:424
-msgid "%F%P: cannot find %s\n"
-msgstr "%F%P: nÌ fÈidir %s a aimsi˙\n"
+#: ldfile.c:449
+msgid "%P: cannot find %s\n"
+msgstr "%P: n√≠ f√©idir %s a aimsi√∫\n"
 
-#: ldfile.c:441 ldfile.c:457
+#: ldfile.c:471
 #, c-format
 msgid "cannot find script file %s\n"
-msgstr "nÌ fÈidir comhad scripte %s a aimsi˙\n"
+msgstr "n√≠ f√©idir comhad scripte %s a aimsi√∫\n"
 
-#: ldfile.c:443 ldfile.c:459
+#: ldfile.c:473
 #, c-format
 msgid "opened script file %s\n"
-msgstr "osclaÌodh comhad scripte %s\n"
+msgstr "oscla√≠odh comhad scripte %s\n"
 
-#: ldfile.c:503
+#: ldfile.c:604
 msgid "%P%F: cannot open linker script file %s: %E\n"
-msgstr "%P%F: nÌ fÈidir script nascÛra %s a oscailt: %E\n"
+msgstr "%P%F: n√≠ f√©idir script nasc√≥ra %s a oscailt: %E\n"
 
-#: ldfile.c:550
+#: ldfile.c:669
 msgid "%P%F: cannot represent machine `%s'\n"
-msgstr "%P%F: nÌ fÈidir meaisÌn `%s' a lÈiri˙\n"
+msgstr "%P%F: n√≠ f√©idir meais√≠n `%s' a l√©iri√∫\n"
 
-#: ldlang.c:1069 ldlang.c:1111 ldlang.c:2831
+#: ldlang.c:1194 ldlang.c:1232 ldlang.c:3154
 msgid "%P%F: can not create hash table: %E\n"
-msgstr "%P%F: nÌ fÈidir an hais-t·bla a chruth˙: %E\n"
+msgstr "%P%F: n√≠ f√©idir an hais-t√°bla a chruth√∫: %E\n"
 
-#: ldlang.c:1154
-msgid "%P:%S: warning: redeclaration of memory region '%s'\n"
-msgstr "%P:%S: rabhadh: athfhÛgra ar rÈigi˙n cuimhne '%s'\n"
+#: ldlang.c:1288
+msgid "%P:%S: warning: redeclaration of memory region `%s'\n"
+msgstr "%P:%S: rabhadh: athfh√≥gra ar r√©igi√∫n cuimhne %s\n"
 
-#: ldlang.c:1160
-msgid "%P:%S: warning: memory region %s not declared\n"
-msgstr "%P:%S: rabhadh: rÈigi˙n cuimhne %s gan fÛgra\n"
+#: ldlang.c:1294
+msgid "%P:%S: warning: memory region `%s' not declared\n"
+msgstr "%P:%S: rabhadh: r√©igi√∫n cuimhne `%s' gan f√≥gra\n"
 
-#: ldlang.c:1240 ldlang.c:1270
+#: ldlang.c:1329
+msgid "%F%P:%S: error: alias for default memory region\n"
+msgstr "%F%P:%S: earr√°id: ailias ar r√©igi√∫n cuimhne r√©amhshocraithe\n"
+
+#: ldlang.c:1340
+msgid "%F%P:%S: error: redefinition of memory region alias `%s'\n"
+msgstr "%F%P:%S: earr√°id: athfh√≥gra ar ailias r√©igi√∫in cuimhne `%s'\n"
+
+#: ldlang.c:1347
+msgid "%F%P:%S: error: memory region `%s' for alias `%s' does not exist\n"
+msgstr "%F%P:%S: earr√°id: nil r√©igi√∫n cuimhne `%s' le haghaidh ailias `%s' ann\n"
+
+#: ldlang.c:1406 ldlang.c:1445
 msgid "%P%F: failed creating section `%s': %E\n"
-msgstr "%P%F: nÌ fÈidir rann·n `%s' a chruth˙: %E\n"
+msgstr "%P%F: n√≠ f√©idir rann√°n `%s' a chruth√∫: %E\n"
 
-#: ldlang.c:1754
+#: ldlang.c:2000
+#, c-format
+msgid ""
+"\n"
+"As-needed library included to satisfy reference by file (symbol)\n"
+"\n"
+msgstr ""
+"\n"
+"Cuireadh leabharlann ar √©ileamh san √°ireamh mar gheall ar thagairt i gcomhad (siombail)\n"
+"\n"
+
+#: ldlang.c:2068
 #, c-format
 msgid ""
 "\n"
@@ -580,36 +722,36 @@ msgid ""
 "\n"
 msgstr ""
 "\n"
-"Rann·in ionchurtha a bhfuarthas rÈidh leo\n"
+"Rann√°in ionchurtha a bhfuarthas r√©idh leo\n"
 "\n"
 
-#: ldlang.c:1762
+#: ldlang.c:2076
 msgid ""
 "\n"
 "Memory Configuration\n"
 "\n"
 msgstr ""
 "\n"
-"CumraÌocht Chuimhne\n"
+"Cumra√≠ocht Chuimhne\n"
 "\n"
 
-#: ldlang.c:1764
+#: ldlang.c:2078
 msgid "Name"
 msgstr "Ainm"
 
-#: ldlang.c:1764
+#: ldlang.c:2078
 msgid "Origin"
 msgstr "Bunphointe"
 
-#: ldlang.c:1764
+#: ldlang.c:2078
 msgid "Length"
 msgstr "Fad"
 
-#: ldlang.c:1764
+#: ldlang.c:2078
 msgid "Attributes"
-msgstr "TrÈithe"
+msgstr "Tr√©ithe"
 
-#: ldlang.c:1804
+#: ldlang.c:2118
 #, c-format
 msgid ""
 "\n"
@@ -617,1202 +759,1282 @@ msgid ""
 "\n"
 msgstr ""
 "\n"
-"Script nascÛra agus mapa cuimhne\n"
+"Script nasc√≥ra agus mapa cuimhne\n"
 "\n"
 
-#: ldlang.c:1871
+#: ldlang.c:2168
 msgid "%P%F: Illegal use of `%s' section\n"
-msgstr "%P%F: ⁄s·id neamhcheadaithe de rann·n `%s'\n"
+msgstr "%P%F: √ös√°id neamhcheadaithe de rann√°n `%s'\n"
 
-#: ldlang.c:1879
+#: ldlang.c:2177
 msgid "%P%F: output format %s cannot represent section called %s\n"
-msgstr "%P%F: nÌ fÈidir le form·id aschurtha %s rann·n darb ainm %s a lÈiri˙\n"
+msgstr "%P%F: n√≠ f√©idir le form√°id aschurtha %s rann√°n darb ainm %s a l√©iri√∫\n"
 
-#: ldlang.c:2429
+#: ldlang.c:2739
 msgid "%B: file not recognized: %E\n"
 msgstr "%B: comhad gan aithint: %E\n"
 
-#: ldlang.c:2430
+#: ldlang.c:2740
 msgid "%B: matching formats:"
-msgstr "%B: form·idÌ comhoiri˙nacha:"
+msgstr "%B: form√°id√≠ comhoiri√∫nacha:"
 
-#: ldlang.c:2437
+#: ldlang.c:2747
 msgid "%F%B: file not recognized: %E\n"
-msgstr "%F%B: comhad gan aimsi˙: %E\n"
+msgstr "%F%B: comhad gan aimsi√∫: %E\n"
 
-#: ldlang.c:2507
+#: ldlang.c:2821
 msgid "%F%B: member %B in archive is not an object\n"
-msgstr "%F%B: nÌ rÈad È ball %B sa chartlann\n"
+msgstr "%F%B: n√≠ r√©ad √© ball %B sa chartlann\n"
 
-#: ldlang.c:2518 ldlang.c:2532
-msgid "%F%B: could not read symbols: %E\n"
-msgstr "%F%B: nÌorbh fhÈidir na siombailÌ a lÈamh: %E\n"
+#: ldlang.c:2836 ldlang.c:2850
+msgid "%F%B: error adding symbols: %E\n"
+msgstr "%F%B: earr√°id agus siombail√≠ √° gcur leis: %E\n"
 
-#: ldlang.c:2801
+#: ldlang.c:3124
 msgid "%P: warning: could not find any targets that match endianness requirement\n"
-msgstr "%P: rabhadh: nÌorbh fhÈidir aon spriocanna a aimsi˙ a bhÌ caolcheannach nÛ mÛrcheannach, mar is cuÌ\n"
+msgstr "%P: rabhadh: n√≠orbh fh√©idir aon spriocanna a aimsi√∫ a bh√≠ caolcheannach n√≥ m√≥rcheannach, mar is cu√≠\n"
 
-#: ldlang.c:2815
+#: ldlang.c:3138
 msgid "%P%F: target %s not found\n"
-msgstr "%P%F: sprioc %s gan aimsi˙\n"
+msgstr "%P%F: sprioc %s gan aimsi√∫\n"
 
-#: ldlang.c:2817
+#: ldlang.c:3140
 msgid "%P%F: cannot open output file %s: %E\n"
-msgstr "%P%F: nÌ fÈidir aschomhad %s a oscailt: %E\n"
+msgstr "%P%F: n√≠ f√©idir aschomhad %s a oscailt: %E\n"
 
-#: ldlang.c:2823
+#: ldlang.c:3146
 msgid "%P%F:%s: can not make object file: %E\n"
-msgstr "%P%F:%s: nÌ fÈidir comhad oibiachta a dhÈanamh: %E\n"
+msgstr "%P%F:%s: n√≠ f√©idir comhad oibiachta a dh√©anamh: %E\n"
 
-#: ldlang.c:2827
+#: ldlang.c:3150
 msgid "%P%F:%s: can not set architecture: %E\n"
-msgstr "%P%F:%s: nÌ fÈidir an ailtireacht a shocr˙: %E\n"
+msgstr "%P%F:%s: n√≠ f√©idir an ailtireacht a shocr√∫: %E\n"
 
-#: ldlang.c:2975
-msgid "%P%F: bfd_hash_lookup failed creating symbol %s\n"
-msgstr "%P%F: theip ar bfd_hash_lookup siombail %s a chruth˙\n"
+#: ldlang.c:3322
+msgid "%P: warning: %s contains output sections; did you forget -T?\n"
+msgstr "%P: rabhadh: t√° rann√°in aschurtha i %s; ar dhearmad t√∫ -T?\n"
 
-#: ldlang.c:2993
+#: ldlang.c:3372
 msgid "%P%F: bfd_hash_allocate failed creating symbol %s\n"
-msgstr "%P%F: theip ar bfd_hash_allocate siombail %s a chruth˙\n"
+msgstr "%P%F: theip ar bfd_hash_allocate siombail %s a chruth√∫\n"
 
-#: ldlang.c:3426
+#: ldlang.c:3402
+msgid "%P%F: bfd_hash_lookup failed creating symbol %s\n"
+msgstr "%P%F: theip ar bfd_hash_lookup siombail %s a chruth√∫\n"
+
+#: ldlang.c:3759
+msgid "%F%P: %s not found for insert\n"
+msgstr "%F%P: n√≠or aims√≠odh %s le hions√°\n"
+
+#: ldlang.c:3974
 msgid " load address 0x%V"
-msgstr " luchtaigh seoladh 0x%V"
+msgstr " l√≥d√°il seoladh 0x%V"
 
-#: ldlang.c:3661
+#: ldlang.c:4201
 msgid "%W (size before relaxing)\n"
-msgstr "%W (mÈid roimh bhogadh)\n"
+msgstr "%W (m√©id roimh bhogadh)\n"
 
-#: ldlang.c:3747
+#: ldlang.c:4292
 #, c-format
 msgid "Address of section %s set to "
-msgstr "Seoladh rann·in %s socraithe "
+msgstr "Seoladh rann√°in %s socraithe "
 
-#: ldlang.c:3900
+#: ldlang.c:4445
 #, c-format
 msgid "Fail with %d\n"
 msgstr "Teipthe le %d\n"
 
-#: ldlang.c:4172
-msgid "%X%P: section %s [%V -> %V] overlaps section %s [%V -> %V]\n"
-msgstr "%X%P: forluÌonn rann·n %s [%V -> %V] rann·n %s [%V -> %V]\n"
+#: ldlang.c:4733
+msgid "%X%P: section %s loaded at [%V,%V] overlaps section %s loaded at [%V,%V]\n"
+msgstr "%X%P: forlu√≠onn rann√°n %s l√≥d√°ilte ag [%V,%V] ar rann√°n %s l√≥d√°ilte ag [%V,%V]\n"
 
-#: ldlang.c:4197
-msgid "%X%P: address 0x%v of %B section %s is not within region %s\n"
-msgstr "%X%P: nÌl seoladh 0x%v de %B rann·n %s isteach i rÈigi˙n %s\n"
+#: ldlang.c:4749
+msgid "%X%P: region `%s' overflowed by %ld bytes\n"
+msgstr "%X%P: r√©igi√∫n `%s', %ld beart thar maoil\n"
 
-#: ldlang.c:4206
-msgid "%X%P: region %s is full (%B section %s)\n"
-msgstr "%X%P: t· rÈigi˙n %s l·n (%B rann·n %s)\n"
+#: ldlang.c:4772
+msgid "%X%P: address 0x%v of %B section `%s' is not within region `%s'\n"
+msgstr "%X%P: n√≠l seoladh 0x%v de %B rann√°n `%s' laistigh de r√©igi√∫n `%s'\n"
 
-#: ldlang.c:4247
+#: ldlang.c:4783
+msgid "%X%P: %B section `%s' will not fit in region `%s'\n"
+msgstr "%X%P: %B rann√°n `%s' r√≥mh√≥r le cur isteach i r√©igi√∫n `%s'\n"
+
+#: ldlang.c:4840
 #, c-format
 msgid "%F%S: non constant or forward reference address expression for section %s\n"
-msgstr "%F%S: slonn seolta tagartha ar aghaidh nÛ slonn inathraitheach do rann·n %s\n"
+msgstr "%F%S: slonn seolta tagartha ar aghaidh n√≥ slonn inathraitheach do rann√°n %s\n"
 
-#: ldlang.c:4272
+#: ldlang.c:4865
 msgid "%P%X: Internal error on COFF shared library section %s\n"
-msgstr "%P%X: Earr·id inmhe·nach i gcomhleabharlann COFF, rann·n %s\n"
+msgstr "%P%X: Earr√°id inmhe√°nach i gcomhleabharlann COFF, rann√°n %s\n"
 
-#: ldlang.c:4331
+#: ldlang.c:4923
 msgid "%P%F: error: no memory region specified for loadable section `%s'\n"
-msgstr "%P%F: earr·id: nÌor socraÌodh rÈigi˙n cuimhne do rann·n inluchtaithe `%s'\n"
+msgstr "%P%F: earr√°id: n√≠or socra√≠odh r√©igi√∫n cuimhne do rann√°n inl√≥d√°ilte `%s'\n"
 
-#: ldlang.c:4336
+#: ldlang.c:4928
 msgid "%P: warning: no memory region specified for loadable section `%s'\n"
-msgstr "%P: rabhadh: nÌor socraÌodh rÈigi˙n cuimhne do rann·n inluchtaithe `%s'\n"
+msgstr "%P: rabhadh: n√≠or socra√≠odh r√©igi√∫n cuimhne do rann√°n inl√≥d√°ilte `%s'\n"
 
-#: ldlang.c:4358
+#: ldlang.c:4951
 msgid "%P: warning: changing start of section %s by %lu bytes\n"
-msgstr "%P: rabhadh: t˙s rann·in %s · athr˙ (%lu beart)\n"
+msgstr "%P: rabhadh: t√∫s rann√°in %s √° athr√∫ (%lu beart)\n"
 
-#: ldlang.c:4437
+#: ldlang.c:5040
 msgid "%P: warning: dot moved backwards before `%s'\n"
-msgstr "%P: rabhadh: bhog ponc ar gc˙l roimh `%s'\n"
+msgstr "%P: rabhadh: bhog ponc ar gc√∫l roimh `%s'\n"
 
-#: ldlang.c:4609
+#: ldlang.c:5212
 msgid "%P%F: can't relax section: %E\n"
-msgstr "%P%F: nÌ fÈidir rann·n a bhogadh: %E\n"
+msgstr "%P%F: n√≠ f√©idir rann√°n a bhogadh: %E\n"
 
-#: ldlang.c:4898
+#: ldlang.c:5557
 msgid "%F%P: invalid data statement\n"
-msgstr "%F%P: r·iteas neamhbhailÌ sonraÌ\n"
+msgstr "%F%P: r√°iteas neamhbhail√≠ sonra√≠\n"
 
-#: ldlang.c:4931
+#: ldlang.c:5590
 msgid "%F%P: invalid reloc statement\n"
-msgstr "%F%P: r·iteas neamhbhailÌ athshuite\n"
+msgstr "%F%P: r√°iteas neamhbhail√≠ athshuite\n"
 
-#: ldlang.c:5063
+#: ldlang.c:5802
+msgid "%P%F: gc-sections requires either an entry or an undefined symbol\n"
+msgstr "%P%F: teasta√≠onn iontr√°il n√≥ siombail neamhshainithe √≥ gc-sections\n"
+
+#: ldlang.c:5827
 msgid "%P%F:%s: can't set start address\n"
-msgstr "%P%F:%s: nÌ fÈidir an seoladh tosaigh a shocr˙\n"
+msgstr "%P%F:%s: n√≠ f√©idir an seoladh tosaigh a shocr√∫\n"
 
-#: ldlang.c:5076 ldlang.c:5095
+#: ldlang.c:5840 ldlang.c:5859
 msgid "%P%F: can't set start address\n"
-msgstr "%P%F: nÌ fÈidir an seoladh tosaigh a shocr˙\n"
+msgstr "%P%F: n√≠ f√©idir an seoladh tosaigh a shocr√∫\n"
 
-#: ldlang.c:5088
+#: ldlang.c:5852
 msgid "%P: warning: cannot find entry symbol %s; defaulting to %V\n"
-msgstr "%P: rabhadh: nÌ fÈidir siombail iontr·la %s a aimsi˙; ˙s·idfear %V de rÈir rÈamhshocraithe\n"
+msgstr "%P: rabhadh: n√≠ f√©idir siombail iontr√°la %s a aimsi√∫; √∫s√°idfear %V de r√©ir r√©amhshocraithe\n"
 
-#: ldlang.c:5100
+#: ldlang.c:5864
 msgid "%P: warning: cannot find entry symbol %s; not setting start address\n"
-msgstr "%P: rabhadh: nÌ fÈidir siombail iontr·la %s a aimsi˙; seoladh tosaigh gan socr˙\n"
+msgstr "%P: rabhadh: n√≠ f√©idir siombail iontr√°la %s a aimsi√∫; seoladh tosaigh gan socr√∫\n"
 
-#: ldlang.c:5149
+#: ldlang.c:5916
 msgid "%P%F: Relocatable linking with relocations from format %s (%B) to format %s (%B) is not supported\n"
-msgstr "%P%F: NÌ thacaÌtear le nascadh in-athshuite le hathshuÌmh Û fhorm·id %s (%B) go form·id %s (%B)\n"
+msgstr "%P%F: N√≠ thaca√≠tear le nascadh in-athshuite le hathshu√≠mh √≥ fhorm√°id %s (%B) go form√°id %s (%B)\n"
 
-#: ldlang.c:5159
+#: ldlang.c:5926
 msgid "%P%X: %s architecture of input file `%B' is incompatible with %s output\n"
-msgstr "%P%X: nÌl ailtireacht %s d'inchomhad `%B' comhoiri˙nach le haschur %s\n"
+msgstr "%P%X: n√≠l ailtireacht %s d'inchomhad `%B' comhoiri√∫nach le haschur %s\n"
 
-#: ldlang.c:5181
+#: ldlang.c:5948
 msgid "%P%X: failed to merge target specific data of file %B\n"
-msgstr "%P%X: theip ar chumasc na sonraÌ a bhaineann leis an sprioc Û chomhad %B\n"
+msgstr "%P%X: theip ar chumasc na sonra√≠ a bhaineann leis an sprioc √≥ chomhad %B\n"
 
-#: ldlang.c:5265
+#: ldlang.c:6019
+msgid "%P%F: Could not define common symbol `%T': %E\n"
+msgstr "%P%F: N√≠orbh fh√©idir siombail chomhchoiteann `%T' a shainmh√≠ni√∫: %E\n"
+
+#: ldlang.c:6031
 msgid ""
 "\n"
 "Allocating common symbols\n"
 msgstr ""
 "\n"
-"SiombailÌ coitianta · leithdh·ileadh\n"
+"Siombail√≠ coitianta √° leithdh√°ileadh\n"
 
-#: ldlang.c:5266
+#: ldlang.c:6032
 msgid ""
 "Common symbol       size              file\n"
 "\n"
 msgstr ""
-"Siombail choitianta mÈid              comhad\n"
+"Siombail choitianta m√©id              comhad\n"
 "\n"
 
-#: ldlang.c:5401
+#: ldlang.c:6178
 msgid "%P%F: invalid syntax in flags\n"
-msgstr "%P%F: comhrÈir neamhbhailÌ i mbratacha\n"
+msgstr "%P%F: comhr√©ir neamhbhail√≠ i mbratacha\n"
 
-#: ldlang.c:5714
+#: ldlang.c:6304
+msgid "%F%P:%S: error: align with input and explicit align specified\n"
+msgstr "%F%P:%S: earr√°id: sonra√≠odh ail√≠ni√∫ leis an ionchur agus ail√≠ni√∫ follasach\n"
+
+#: ldlang.c:6645
 msgid "%P%F: Failed to create hash table\n"
-msgstr "%P%F: Theip ar chruth˙ hais-t·bla\n"
+msgstr "%P%F: Theip ar chruth√∫ hais-t√°bla\n"
 
-#: ldlang.c:6009
+#: ldlang.c:6668
+msgid "%P%F: %s: plugin reported error after all symbols read\n"
+msgstr "%P%F: %s: rinne an breise√°n tuairisc ar earr√°id tar √©is d√≥ gach siombail a l√©amh\n"
+
+#: ldlang.c:6991
 msgid "%P%F: multiple STARTUP files\n"
 msgstr "%P%F: ilchomhad TOSAITHE\n"
 
-#: ldlang.c:6057
+#: ldlang.c:7037
 msgid "%X%P:%S: section has both a load address and a load region\n"
-msgstr "%X%P:%S: t· seoladh luchtaithe agus rÈigi˙n luchtaithe sa rann·n\n"
+msgstr "%X%P:%S: t√° seoladh l√≥d√°la agus r√©igi√∫n l√≥d√°la sa rann√°n\n"
 
-#: ldlang.c:6314
+#: ldlang.c:7162
+msgid "%X%P:%S: PHDRS and FILEHDR are not supported when prior PT_LOAD headers lack them\n"
+msgstr "%X%P:%S: n√≠ thaca√≠tear le PHDRS agus FILEHDR nuair nach mb√≠onn siad sna ceannt√°sca PT_LOAD\n"
+
+#: ldlang.c:7235
+msgid "%F%P: no sections assigned to phdrs\n"
+msgstr "%F%P: n√≠or sannadh aon rann√°n do phdrs\n"
+
+#: ldlang.c:7273
 msgid "%F%P: bfd_record_phdr failed: %E\n"
 msgstr "%F%P: theip ar bfd_record_phdr: %E\n"
 
-#: ldlang.c:6334
+#: ldlang.c:7293
 msgid "%X%P: section `%s' assigned to non-existent phdr `%s'\n"
-msgstr "%X%P: sannadh rann·n `%s' go phdr `%s' nach bhfuil ann\n"
+msgstr "%X%P: sannadh rann√°n `%s' go phdr `%s' nach bhfuil ann\n"
 
-#: ldlang.c:6725
+#: ldlang.c:7705
 msgid "%X%P: unknown language `%s' in version information\n"
 msgstr "%X%P: teanga anaithnid `%s' in eolas faoin leagan\n"
 
-#: ldlang.c:6867
+#: ldlang.c:7850
 msgid "%X%P: anonymous version tag cannot be combined with other version tags\n"
-msgstr "%X%P: nÌ fÈidir an chlib leagain gan ainm a cheangal le clibeanna leagain eile\n"
+msgstr "%X%P: n√≠ f√©idir an chlib leagain gan ainm a cheangal le clibeanna leagain eile\n"
 
-#: ldlang.c:6876
+#: ldlang.c:7859
 msgid "%X%P: duplicate version tag `%s'\n"
-msgstr "%X%P: clib leagain dh˙bailte `%s'\n"
+msgstr "%X%P: clib leagain dh√∫bailte `%s'\n"
 
-#: ldlang.c:6896 ldlang.c:6905 ldlang.c:6922 ldlang.c:6932
+#: ldlang.c:7880 ldlang.c:7889 ldlang.c:7907 ldlang.c:7917
 msgid "%X%P: duplicate expression `%s' in version information\n"
-msgstr "%X%P: slonn d˙bailte `%s' in eolas faoin leagan\n"
+msgstr "%X%P: slonn d√∫bailte `%s' in eolas faoin leagan\n"
 
-#: ldlang.c:6972
+#: ldlang.c:7957
 msgid "%X%P: unable to find version dependency `%s'\n"
-msgstr "%X%P: nÌ fÈidir sple·chÛg leagain `%s' a aimsi˙\n"
+msgstr "%X%P: n√≠ f√©idir sple√°ch√≥g leagain `%s' a aimsi√∫\n"
 
-#: ldlang.c:6994
+#: ldlang.c:7980
 msgid "%X%P: unable to read .exports section contents\n"
-msgstr "%X%P: nÌ fÈidir inneachar an rann·in .exports a lÈamh\n"
+msgstr "%X%P: n√≠ f√©idir inneachar an rann√°in .exports a l√©amh\n"
 
-#: ldmain.c:234
+#: ldlang.c:8104
+msgid "%X%P: unknown feature `%s'\n"
+msgstr "%X%P: gn√© anaithnid `%s'\n"
+
+#: ldmain.c:246
 msgid "%X%P: can't set BFD default target to `%s': %E\n"
-msgstr "%X%P: nÌ fÈidir an sprioc rÈamhshocraithe BFD a shocr˙ go `%s': %E\n"
+msgstr "%X%P: n√≠ f√©idir an sprioc r√©amhshocraithe BFD a shocr√∫ go `%s': %E\n"
 
-#: ldmain.c:298
-msgid "%P%F: --relax and -r may not be used together\n"
-msgstr "%P%F: nÌ cheadaÌtear roghanna --relax agus -r le chÈile\n"
+#: ldmain.c:336
+msgid "built in linker script"
+msgstr "script nasc√≥ra insuite"
 
-#: ldmain.c:300
-msgid "%P%F: -r and -shared may not be used together\n"
-msgstr "%P%F: nÌ cheadaÌtear roghanna -r agus -shared le chÈile\n"
-
-#: ldmain.c:343
-msgid "%P%F: -F may not be used without -shared\n"
-msgstr "%P%F: caithfidh t˙ -shared a ˙s·id in Èineacht le -F\n"
-
-#: ldmain.c:345
-msgid "%P%F: -f may not be used without -shared\n"
-msgstr "%P%F: caithfidh t˙ -shared a ˙s·id in Èineacht le -f\n"
-
-#: ldmain.c:397
+#: ldmain.c:346
 msgid "using external linker script:"
-msgstr "script sheachtrach nascÛra in ˙s·id:"
+msgstr "script sheachtrach nasc√≥ra in √∫s√°id:"
 
-#: ldmain.c:399
+#: ldmain.c:348
 msgid "using internal linker script:"
-msgstr "script inmhe·nach nascÛra in ˙s·id:"
+msgstr "script inmhe√°nach nasc√≥ra in √∫s√°id:"
 
-#: ldmain.c:433
+#: ldmain.c:385
 msgid "%P%F: no input files\n"
 msgstr "%P%F: gan inchomhaid\n"
 
-#: ldmain.c:437
+#: ldmain.c:389
 msgid "%P: mode %s\n"
-msgstr "%P: mÛd %s\n"
+msgstr "%P: m√≥d %s\n"
 
-#: ldmain.c:453
+#: ldmain.c:405
 msgid "%P%F: cannot open map file %s: %E\n"
-msgstr "%P%F: nÌ fÈidir comhad mapa %s a oscailt: %E\n"
+msgstr "%P%F: n√≠ f√©idir comhad mapa %s a oscailt: %E\n"
 
-#: ldmain.c:485
+#: ldmain.c:437
 msgid "%P: link errors found, deleting executable `%s'\n"
-msgstr "%P: aimsÌodh earr·idÌ nasctha, cl·r inrite `%s' · scriosadh\n"
+msgstr "%P: aims√≠odh earr√°id√≠ nasctha, cl√°r inrite `%s' √° scriosadh\n"
 
-#: ldmain.c:494
+#: ldmain.c:446
 msgid "%F%B: final close failed: %E\n"
-msgstr "%F%B: theip ar dh˙nadh deiridh: %E\n"
+msgstr "%F%B: theip ar dh√∫nadh deiridh: %E\n"
 
-#: ldmain.c:520
+#: ldmain.c:472
 msgid "%X%P: unable to open for source of copy `%s'\n"
-msgstr "%X%P: nÌ fÈidir foinse na cÛipe·la `%s' a oscailt\n"
+msgstr "%X%P: n√≠ f√©idir foinse na c√≥ipe√°la `%s' a oscailt\n"
 
-#: ldmain.c:523
+#: ldmain.c:475
 msgid "%X%P: unable to open for destination of copy `%s'\n"
-msgstr "%X%P: nÌ fÈidir sprioc na cÛipe·la `%s' a oscailt\n"
+msgstr "%X%P: n√≠ f√©idir sprioc na c√≥ipe√°la `%s' a oscailt\n"
 
-#: ldmain.c:530
+#: ldmain.c:482
 msgid "%P: Error writing file `%s'\n"
-msgstr "%P: Earr·id agus comhad `%s' · scrÌobh\n"
+msgstr "%P: Earr√°id agus comhad `%s' √° scr√≠obh\n"
 
-#: ldmain.c:535 pe-dll.c:1572
+#: ldmain.c:487 pe-dll.c:1761
 #, c-format
 msgid "%P: Error closing file `%s'\n"
-msgstr "%P: Earr·id agus comhad `%s' · dh˙nadh\n"
+msgstr "%P: Earr√°id agus comhad `%s' √° dh√∫nadh\n"
 
-#: ldmain.c:551
+#: ldmain.c:504
 #, c-format
 msgid "%s: total time in link: %ld.%06ld\n"
-msgstr "%s: am ioml·n nasctha: %ld.%06ld\n"
+msgstr "%s: am ioml√°n nasctha: %ld.%06ld\n"
 
-#: ldmain.c:554
+#: ldmain.c:507
 #, c-format
 msgid "%s: data size %ld\n"
-msgstr "%s: mÈid sonraÌ %ld\n"
+msgstr "%s: m√©id sonra√≠ %ld\n"
 
-#: ldmain.c:637
+#: ldmain.c:591
 msgid "%P%F: missing argument to -m\n"
-msgstr "%P%F: argÛint ar iarraidh tar Èis -m\n"
+msgstr "%P%F: arg√≥int ar iarraidh tar √©is -m\n"
 
-#: ldmain.c:784 ldmain.c:803 ldmain.c:834
+#: ldmain.c:639 ldmain.c:656 ldmain.c:676 ldmain.c:708
 msgid "%P%F: bfd_hash_table_init failed: %E\n"
 msgstr "%P%F: theip ar bfd_hash_table_init: %E\n"
 
-#: ldmain.c:788 ldmain.c:807
+#: ldmain.c:643 ldmain.c:660 ldmain.c:680
 msgid "%P%F: bfd_hash_lookup failed: %E\n"
 msgstr "%P%F: theip ar bfd_hash_lookup: %E\n"
 
-#: ldmain.c:821
+#: ldmain.c:694
 msgid "%X%P: error: duplicate retain-symbols-file\n"
-msgstr "%X%P: earr·id: retain-symbols-file d˙bailte\n"
+msgstr "%X%P: earr√°id: retain-symbols-file d√∫bailte\n"
 
-#: ldmain.c:864
+#: ldmain.c:738
 msgid "%P%F: bfd_hash_lookup for insertion failed: %E\n"
-msgstr "%P%F: theip ar bfd_hash_lookup le haghaidh ions·ite: %E\n"
+msgstr "%P%F: theip ar bfd_hash_lookup le haghaidh ions√°ite: %E\n"
 
-#: ldmain.c:869
+#: ldmain.c:743
 msgid "%P: `-retain-symbols-file' overrides `-s' and `-S'\n"
-msgstr "%P: s·raÌonn `-retain-symbols-file' na roghanna `-s' agus `-S'\n"
+msgstr "%P: s√°ra√≠onn `-retain-symbols-file' na roghanna `-s' agus `-S'\n"
 
-#: ldmain.c:944
+#: ldmain.c:844
 #, c-format
 msgid ""
-"Archive member included because of file (symbol)\n"
+"Archive member included to satisfy reference by file (symbol)\n"
 "\n"
 msgstr ""
-"Cuireadh ball na cartlainne san ·ireamh mar gheall ar chomhad (siombail)\n"
+"Cuireadh ball cartlainne san √°ireamh mar gheall ar thagairt √≥ chomhad (siombail)\n"
 "\n"
 
-#: ldmain.c:1014
+#: ldmain.c:951
 msgid "%X%C: multiple definition of `%T'\n"
-msgstr "%X%C: ilmhÌni˙ ar `%T'\n"
+msgstr "%X%C: n√≠os m√≥ n√° sainmh√≠ni√∫ amh√°in ar `%T'\n"
 
-#: ldmain.c:1017
+#: ldmain.c:954
 msgid "%D: first defined here\n"
-msgstr "%D: an chÈad mhÌni˙ anseo\n"
+msgstr "%D: an ch√©ad sainmh√≠ni√∫ anseo\n"
 
-#: ldmain.c:1021
+#: ldmain.c:958
 msgid "%P: Disabling relaxation: it will not work with multiple definitions\n"
-msgstr "%P: Bogadh · dhÌchumas˙: nÌ oibreoidh sÈ i gceart le sainmhÌnithe iomad˙la\n"
+msgstr "%P: Bogadh √° dh√≠chumas√∫: n√≠ oibreoidh s√© i gceart le sainmh√≠nithe iomad√∫la\n"
 
-#: ldmain.c:1051
+#: ldmain.c:1012
 msgid "%B: warning: definition of `%T' overriding common\n"
-msgstr "%B: rabhadh: s·raÌonn an sainmhÌni˙ ar `%T' an ceann coitianta\n"
+msgstr "%B: rabhadh: s√°ra√≠onn an sainmh√≠ni√∫ ar `%T' an ceann coitianta\n"
 
-#: ldmain.c:1054
+#: ldmain.c:1015
 msgid "%B: warning: common is here\n"
 msgstr "%B: rabhadh: coitianta anseo\n"
 
-#: ldmain.c:1061
+#: ldmain.c:1022
 msgid "%B: warning: common of `%T' overridden by definition\n"
-msgstr "%B: rabhadh: bhÌ `%T' coitianta s·raithe ag sainmhÌni˙\n"
+msgstr "%B: rabhadh: bh√≠ `%T' coitianta s√°raithe ag sainmh√≠ni√∫\n"
 
-#: ldmain.c:1064
+#: ldmain.c:1025
 msgid "%B: warning: defined here\n"
-msgstr "%B: rabhadh: sainmhÌni˙ anseo\n"
+msgstr "%B: rabhadh: sainmh√≠ni√∫ anseo\n"
 
-#: ldmain.c:1071
+#: ldmain.c:1032
 msgid "%B: warning: common of `%T' overridden by larger common\n"
-msgstr "%B: rabhadh: bhÌ `%T' coitianta s·raithe ag ceann coitianta nÌos mÛ\n"
+msgstr "%B: rabhadh: bh√≠ `%T' coitianta s√°raithe ag ceann coitianta n√≠os m√≥\n"
 
-#: ldmain.c:1074
+#: ldmain.c:1035
 msgid "%B: warning: larger common is here\n"
-msgstr "%B: rabhadh: ceann coitianta nÌos mÛ anseo\n"
+msgstr "%B: rabhadh: ceann coitianta n√≠os m√≥ anseo\n"
 
-#: ldmain.c:1078
+#: ldmain.c:1039
 msgid "%B: warning: common of `%T' overriding smaller common\n"
-msgstr "%B: rabhadh: s·raÌonn `%T' coitianta an ceann coitianta nÌos l˙\n"
+msgstr "%B: rabhadh: s√°ra√≠onn `%T' coitianta an ceann coitianta n√≠os l√∫\n"
 
-#: ldmain.c:1081
+#: ldmain.c:1042
 msgid "%B: warning: smaller common is here\n"
-msgstr "%B: rabhadh: ceann coitianta nÌos l˙ anseo\n"
+msgstr "%B: rabhadh: ceann coitianta n√≠os l√∫ anseo\n"
 
-#: ldmain.c:1085
+#: ldmain.c:1046
 msgid "%B: warning: multiple common of `%T'\n"
 msgstr "%B: rabhadh: ilchoitianta `%T'\n"
 
-#: ldmain.c:1087
+#: ldmain.c:1048
 msgid "%B: warning: previous common is here\n"
 msgstr "%B: rabhadh: ceann coitianta roimhe anseo\n"
 
-#: ldmain.c:1107 ldmain.c:1145
+#: ldmain.c:1068 ldmain.c:1106
 msgid "%P: warning: global constructor %s used\n"
-msgstr "%P: rabhadh: ˙s·ideadh cruthaitheoir comhchoiteann %s\n"
+msgstr "%P: rabhadh: √∫s√°ideadh cruthaitheoir comhchoiteann %s\n"
 
-#: ldmain.c:1155
+#: ldmain.c:1116
 msgid "%P%F: BFD backend error: BFD_RELOC_CTOR unsupported\n"
-msgstr "%P%F: earr·id in inneall BFD: BFD_RELOC_CTOR gan tacaÌocht\n"
+msgstr "%P%F: earr√°id in inneall BFD: BFD_RELOC_CTOR gan taca√≠ocht\n"
 
 #. We found a reloc for the symbol we are looking for.
-#: ldmain.c:1209 ldmain.c:1211 ldmain.c:1213 ldmain.c:1251 ldmain.c:1299
+#: ldmain.c:1170 ldmain.c:1172 ldmain.c:1174 ldmain.c:1192 ldmain.c:1237
 msgid "warning: "
 msgstr "rabhadh: "
 
-#: ldmain.c:1334
-msgid "%F%P: bfd_hash_table_init failed: %E\n"
-msgstr "%F%P: theip ar bfd_hash_table_init: %E\n"
-
-#: ldmain.c:1341
-msgid "%F%P: bfd_hash_lookup failed: %E\n"
-msgstr "%F%P: theip ar bfd_hash_lookup: %E\n"
-
-#: ldmain.c:1362
+#: ldmain.c:1290
 msgid "%X%C: undefined reference to `%T'\n"
-msgstr "%X%C: tagairt do `%T' gan sainmhÌni˙\n"
+msgstr "%X%C: tagairt do `%T' gan sainmh√≠ni√∫\n"
 
-#: ldmain.c:1365
+#: ldmain.c:1293
 msgid "%C: warning: undefined reference to `%T'\n"
-msgstr "%C: rabhadh: tagairt do `%T' gan sainmhÌni˙\n"
+msgstr "%C: rabhadh: tagairt do `%T' gan sainmh√≠ni√∫\n"
 
-#: ldmain.c:1371
+#: ldmain.c:1299
 msgid "%X%D: more undefined references to `%T' follow\n"
-msgstr "%X%D: t· tuilleadh tagairtÌ do `%T' gan sainmhÌni˙ thÌos\n"
+msgstr "%X%D: t√° tuilleadh tagairt√≠ do `%T' gan sainmh√≠ni√∫ th√≠os\n"
 
-#: ldmain.c:1374
+#: ldmain.c:1302
 msgid "%D: warning: more undefined references to `%T' follow\n"
-msgstr "%D: rabhadh: t· tuilleadh tagairtÌ do `%T' gan sainmhÌni˙ thÌos\n"
+msgstr "%D: rabhadh: t√° tuilleadh tagairt√≠ do `%T' gan sainmh√≠ni√∫ th√≠os\n"
 
-#: ldmain.c:1385
+#: ldmain.c:1313
 msgid "%X%B: undefined reference to `%T'\n"
-msgstr "%X%B: tagairt do `%T' gan sainmhÌni˙\n"
+msgstr "%X%B: tagairt do `%T' gan sainmh√≠ni√∫\n"
 
-#: ldmain.c:1388
+#: ldmain.c:1316
 msgid "%B: warning: undefined reference to `%T'\n"
-msgstr "%B: rabhadh: tagairt do `%T' gan sainmhÌni˙\n"
+msgstr "%B: rabhadh: tagairt do `%T' gan sainmh√≠ni√∫\n"
+
+#: ldmain.c:1322
+msgid "%X%B: more undefined references to `%T' follow\n"
+msgstr "%X%B: t√° tuilleadh tagairt√≠ do `%T' gan sainmh√≠ni√∫ th√≠os\n"
+
+#: ldmain.c:1325
+msgid "%B: warning: more undefined references to `%T' follow\n"
+msgstr "%B: rabhadh: t√° tuilleadh tagairt√≠ do `%T' gan sainmh√≠ni√∫ th√≠os\n"
+
+#: ldmain.c:1364
+msgid " additional relocation overflows omitted from the output\n"
+msgstr " f√°gadh forshreafa√≠ athshuite breise as an aschur\n"
+
+#: ldmain.c:1377
+msgid " relocation truncated to fit: %s against undefined symbol `%T'"
+msgstr " teascadh an t-athshu√≠omh: %s in aghaidh siombaile `%T' gan sainmh√≠ni√∫"
+
+#: ldmain.c:1382
+msgid " relocation truncated to fit: %s against symbol `%T' defined in %A section in %B"
+msgstr " teascadh an t-athshu√≠omh: %s in aghaidh siombaile `%T' a sainmh√≠n√≠odh i rann√°n %A i %B"
 
 #: ldmain.c:1394
-msgid "%X%B: more undefined references to `%T' follow\n"
-msgstr "%X%B: t· tuilleadh tagairtÌ do `%T' gan sainmhÌni˙ thÌos\n"
-
-#: ldmain.c:1397
-msgid "%B: warning: more undefined references to `%T' follow\n"
-msgstr "%B: rabhadh: t· tuilleadh tagairtÌ do `%T' gan sainmhÌni˙ thÌos\n"
-
-#: ldmain.c:1436
-msgid " additional relocation overflows omitted from the output\n"
-msgstr " f·gadh forshreafaÌ athshuite breise as an aschur\n"
-
-#: ldmain.c:1449
-msgid " relocation truncated to fit: %s against undefined symbol `%T'"
-msgstr " teascadh an t-athshuÌomh: %s in aghaidh siombaile `%T' gan sainmhÌni˙"
-
-#: ldmain.c:1454
-msgid " relocation truncated to fit: %s against symbol `%T' defined in %A section in %B"
-msgstr " teascadh an t-athshuÌomh: %s in aghaidh siombaile `%T' a sainmhÌnÌodh i rann·n %A i %B"
-
-#: ldmain.c:1466
 msgid " relocation truncated to fit: %s against `%T'"
-msgstr " teascadh an t-athshuÌomh: %s in aghaidh `%T'"
+msgstr " teascadh an t-athshu√≠omh: %s in aghaidh `%T'"
 
-#: ldmain.c:1483
-#, c-format
-msgid "%X%C: dangerous relocation: %s\n"
-msgstr "%X%C: athshuÌ cont˙irteach: %s\n"
+#: ldmain.c:1411
+msgid "%X%H: dangerous relocation: %s\n"
+msgstr "%X%H: athshu√≠omh cont√∫irteach: %s\n"
 
-#: ldmain.c:1498
-msgid "%X%C: reloc refers to symbol `%T' which is not being output\n"
-msgstr "%X%C: dÈanann an t-athshuÌomh tagairt do shiombail `%T' nach bhfuil · haschur\n"
+#: ldmain.c:1426
+msgid "%X%H: reloc refers to symbol `%T' which is not being output\n"
+msgstr "%X%H: d√©anann an t-athshu√≠omh tagairt do shiombail `%T' nach bhfuil √° haschur\n"
 
-#: ldmisc.c:148
+#: ldmisc.c:154
 #, c-format
 msgid "no symbol"
 msgstr "gan siombail"
 
-#: ldmisc.c:245
-#, c-format
-msgid "built in linker script:%u"
-msgstr "tÛgadh sa script nascÛra:%u"
-
-#: ldmisc.c:301 ldmisc.c:305
-msgid "%B%F: could not read symbols\n"
-msgstr "%B%F: nÌorbh fhÈidir siombailÌ a lÈamh\n"
-
-#: ldmisc.c:347
+#: ldmisc.c:339
 msgid "%B: In function `%T':\n"
 msgstr "%B: I bhfeidhm `%T':\n"
 
-#: ldmisc.c:472
+#: ldmisc.c:474
 msgid "%F%P: internal error %s %d\n"
-msgstr "%F%P: earr·id inmhe·nach %s %d\n"
+msgstr "%F%P: earr√°id inmhe√°nach %s %d\n"
 
-#: ldmisc.c:521
+#: ldmisc.c:538
 msgid "%P: internal error: aborting at %s line %d in %s\n"
-msgstr "%P: earr·id inmhe·nach: · thobscor ag %s lÌne %d i %s\n"
+msgstr "%P: earr√°id inmhe√°nach: √° thobscor ag %s l√≠ne %d i %s\n"
 
-#: ldmisc.c:524
+#: ldmisc.c:541
 msgid "%P: internal error: aborting at %s line %d\n"
-msgstr "%P: earr·id inmhe·nach: · thobscor ag %s lÌne %d\n"
+msgstr "%P: earr√°id inmhe√°nach: √° thobscor ag %s l√≠ne %d\n"
 
-#: ldmisc.c:526
+#: ldmisc.c:543
 msgid "%P%F: please report this bug\n"
 msgstr "%P%F: seol tuairisc ar an bhfabht seo, le do thoil\n"
 
 #. Output for noisy == 2 is intended to follow the GNU standards.
-#: ldver.c:37
+#: ldver.c:39
 #, c-format
 msgid "GNU ld %s\n"
 msgstr "ld GNU, leagan %s\n"
 
-#: ldver.c:41
+#: ldver.c:43
 #, c-format
-msgid "Copyright 2007 Free Software Foundation, Inc.\n"
-msgstr "Copyright 2007 Free Software Foundation, Inc.\n"
+msgid "Copyright 2014 Free Software Foundation, Inc.\n"
+msgstr "Copyright 2014 Free Software Foundation, Inc.\n"
 
-#: ldver.c:42
+#: ldver.c:44
 #, c-format
 msgid ""
 "This program is free software; you may redistribute it under the terms of\n"
-"the GNU General Public License.  This program has absolutely no warranty.\n"
+"the GNU General Public License version 3 or (at your option) a later version.\n"
+"This program has absolutely no warranty.\n"
 msgstr ""
-"Is saorbhogearra È an cl·r seo; is fÈidir leat È a scaipeadh de rÈir na\n"
-"gcoinnÌollacha den GNU General Public License.  NÌl bar·nta ar chor ar bith\n"
-"leis an gcl·r seo.\n"
+"Is saorbhogearra √© an cl√°r seo; is f√©idir leat √© a scaipeadh de r√©ir na\n"
+"gcoinn√≠ollacha den GNU General Public License, leagan 3 n√≥ (m√°s mian leat) aon leagan n√≠os d√©ana√≠.\n"
+"N√≠l bar√°nta ar chor ar bith leis an gcl√°r seo.\n"
 
-#: ldver.c:51
+#: ldver.c:54
 #, c-format
 msgid "  Supported emulations:\n"
-msgstr "  AithrisÌ a dtacaÌtear leo:\n"
+msgstr "  Aithris√≠ a dtaca√≠tear leo:\n"
 
-#: ldwrite.c:55 ldwrite.c:191
+#: ldwrite.c:62 ldwrite.c:208
 msgid "%P%F: bfd_new_link_order failed\n"
 msgstr "%P%F: theip ar bfd_new_link_order\n"
 
-#: ldwrite.c:344
+#: ldwrite.c:366
 msgid "%F%P: cannot create split section name for %s\n"
-msgstr "%F%P: nÌ fÈidir ainm roinnte a chruth˙ ar rann·n %s\n"
+msgstr "%F%P: n√≠ f√©idir ainm roinnte a chruth√∫ ar rann√°n %s\n"
 
-#: ldwrite.c:356
+#: ldwrite.c:378
 msgid "%F%P: clone section failed: %E\n"
-msgstr "%F%P: theip ar chlÛn·il an rann·in: %E\n"
+msgstr "%F%P: theip ar chl√≥n√°il an rann√°in: %E\n"
 
-#: ldwrite.c:394
+#: ldwrite.c:419
 #, c-format
 msgid "%8x something else\n"
-msgstr "%8x rud Èigin eile\n"
+msgstr "%8x rud √©igin eile\n"
 
-#: ldwrite.c:564
+#: ldwrite.c:589
 msgid "%F%P: final link failed: %E\n"
 msgstr "%F%P: theip ar an nascadh deiridh: %E\n"
 
-#: lexsup.c:205 lexsup.c:341
+#: lexsup.c:104 lexsup.c:261
 msgid "KEYWORD"
 msgstr "LORGFHOCAL"
 
-#: lexsup.c:205
+#: lexsup.c:104
 msgid "Shared library control for HP/UX compatibility"
-msgstr "Rial˙ comhleabharlainne, ar son comhoiri˙nachta le HP/UX"
+msgstr "Rial√∫ comhleabharlainne, ar son comhoiri√∫nachta le HP/UX"
 
-#: lexsup.c:208
+#: lexsup.c:107
 msgid "ARCH"
 msgstr "AILTIREACHT"
 
-#: lexsup.c:208
+#: lexsup.c:107
 msgid "Set architecture"
 msgstr "Socraigh an ailtireacht"
 
-#: lexsup.c:210 lexsup.c:447
+#: lexsup.c:109 lexsup.c:380
 msgid "TARGET"
 msgstr "SPRIOC"
 
-#: lexsup.c:210
+#: lexsup.c:109
 msgid "Specify target for following input files"
 msgstr "Sonraigh sprioc do na hinchomhaid seo a leanas"
 
-#: lexsup.c:213 lexsup.c:262 lexsup.c:274 lexsup.c:287 lexsup.c:289
-#: lexsup.c:402 lexsup.c:459 lexsup.c:516 lexsup.c:528
+#: lexsup.c:112 lexsup.c:163 lexsup.c:190 lexsup.c:203 lexsup.c:205
+#: lexsup.c:334 lexsup.c:396 lexsup.c:463 lexsup.c:476
 msgid "FILE"
 msgstr "COMHAD"
 
-#: lexsup.c:213
+#: lexsup.c:112
 msgid "Read MRI format linker script"
-msgstr "LÈigh script nascÛra i bhform·id MRI"
+msgstr "L√©igh script nasc√≥ra i bhform√°id MRI"
 
-#: lexsup.c:215
+#: lexsup.c:114
 msgid "Force common symbols to be defined"
-msgstr "Cuir iallach ar shiombailÌ coitianta a bheith sainmhÌnithe"
+msgstr "Cuir iallach ar shiombail√≠ coitianta a bheith sainmh√≠nithe"
 
-#: lexsup.c:219 lexsup.c:501 lexsup.c:503 lexsup.c:505
+#: lexsup.c:118 lexsup.c:440 lexsup.c:442 lexsup.c:444 lexsup.c:446
+#: lexsup.c:448 lexsup.c:450
 msgid "ADDRESS"
 msgstr "SEOLADH"
 
-#: lexsup.c:219
+#: lexsup.c:118
 msgid "Set start address"
 msgstr "Socraigh seoladh tosaithe"
 
-#: lexsup.c:221
+#: lexsup.c:120
 msgid "Export all dynamic symbols"
-msgstr "EaspÛrt·il gach siombail dhinimici˙il"
+msgstr "Easp√≥rt√°il gach siombail dhinimici√∫il"
 
-#: lexsup.c:223
+#: lexsup.c:122
+msgid "Undo the effect of --export-dynamic"
+msgstr "Cealaigh √©ifeacht --export-dynamic"
+
+#: lexsup.c:124
 msgid "Link big-endian objects"
-msgstr "Nasc rÈada mÛrcheannacha"
+msgstr "Nasc r√©ada m√≥rcheannacha"
 
-#: lexsup.c:225
+#: lexsup.c:126
 msgid "Link little-endian objects"
-msgstr "Nasc rÈada caolcheannacha"
+msgstr "Nasc r√©ada caolcheannacha"
 
-#: lexsup.c:227 lexsup.c:230
+#: lexsup.c:128 lexsup.c:131
 msgid "SHLIB"
 msgstr "SHLIB"
 
-#: lexsup.c:227
+#: lexsup.c:128
 msgid "Auxiliary filter for shared object symbol table"
-msgstr "Scagaire c˙ntach do th·bla siombaile comhrÈada"
+msgstr "Scagaire c√∫ntach do th√°bla siombaile comhr√©ada"
 
-#: lexsup.c:230
+#: lexsup.c:131
 msgid "Filter for shared object symbol table"
-msgstr "Scagaire do th·bla siombaile comhrÈada"
+msgstr "Scagaire do th√°bla siombaile comhr√©ada"
 
-#: lexsup.c:233
+#: lexsup.c:134
 msgid "Ignored"
 msgstr "Neamhaird tugtha air"
 
-#: lexsup.c:235
+#: lexsup.c:136
 msgid "SIZE"
-msgstr "M…ID"
+msgstr "M√âID"
 
-#: lexsup.c:235
+#: lexsup.c:136
 msgid "Small data size (if no size, same as --shared)"
-msgstr "MÈid bheag sonraÌ (mura bhfuil mÈid ann, ar comhbhrÌ le --shared)"
+msgstr "M√©id bheag sonra√≠ (mura bhfuil m√©id ann, ar comhbhr√≠ le --shared)"
 
-#: lexsup.c:238
+#: lexsup.c:139
 msgid "FILENAME"
 msgstr "COMHADAINM"
 
-#: lexsup.c:238
+#: lexsup.c:139
 msgid "Set internal name of shared library"
-msgstr "Socraigh an t-ainm inmhe·nach ar an gcomhleabharlann"
+msgstr "Socraigh an t-ainm inmhe√°nach ar an gcomhleabharlann"
 
-#: lexsup.c:240
+#: lexsup.c:141
 msgid "PROGRAM"
-msgstr "CL¡R"
+msgstr "CL√ÅR"
 
-#: lexsup.c:240
+#: lexsup.c:141
 msgid "Set PROGRAM as the dynamic linker to use"
-msgstr "⁄s·id CL¡R mar an nascÛir dinimici˙il"
+msgstr "√ös√°id CL√ÅR mar an nasc√≥ir dinimici√∫il"
 
-#: lexsup.c:243
+#: lexsup.c:144
 msgid "LIBNAME"
 msgstr "AINM"
 
-#: lexsup.c:243
+#: lexsup.c:144
 msgid "Search for library LIBNAME"
 msgstr "Cuardach ar leabharlann AINM"
 
-#: lexsup.c:245
+#: lexsup.c:146
 msgid "DIRECTORY"
 msgstr "COMHADLANN"
 
-#: lexsup.c:245
+#: lexsup.c:146
 msgid "Add DIRECTORY to library search path"
 msgstr "Cuir COMHADLANN leis an gconair chuardaigh leabharlann"
 
-#: lexsup.c:248
+#: lexsup.c:149
 msgid "Override the default sysroot location"
-msgstr "S·raigh an suÌomh rÈamhshocraithe sysroot"
+msgstr "S√°raigh an su√≠omh r√©amhshocraithe sysroot"
 
-#: lexsup.c:250
+#: lexsup.c:151
 msgid "EMULATION"
 msgstr "AITHRIS"
 
-#: lexsup.c:250
+#: lexsup.c:151
 msgid "Set emulation"
 msgstr "Socraigh aithris"
 
-#: lexsup.c:252
+#: lexsup.c:153
 msgid "Print map file on standard output"
-msgstr "ScrÌobh an comhad mapa ar an aschur caighde·nach"
+msgstr "Scr√≠obh an comhad mapa ar an aschur caighde√°nach"
 
-#: lexsup.c:254
+#: lexsup.c:155
 msgid "Do not page align data"
-msgstr "N· hailÌnigh sonraÌ de rÈir leathanaigh"
+msgstr "N√° hail√≠nigh sonra√≠ de r√©ir leathanaigh"
 
-#: lexsup.c:256
+#: lexsup.c:157
 msgid "Do not page align data, do not make text readonly"
-msgstr "N· hailÌnigh sonraÌ de rÈir leathanaigh, n· dÈan tÈacs inlÈite amh·in"
+msgstr "N√° hail√≠nigh sonra√≠ de r√©ir leathanaigh, n√° d√©an t√©acs inl√©ite amh√°in"
 
-#: lexsup.c:259
+#: lexsup.c:160
 msgid "Page align data, make text readonly"
-msgstr "AilÌnigh sonraÌ de rÈir leathanaigh, dÈan tÈacs inlÈite amh·in"
+msgstr "Ail√≠nigh sonra√≠ de r√©ir leathanaigh, d√©an t√©acs inl√©ite amh√°in"
 
-#: lexsup.c:262
+#: lexsup.c:163
 msgid "Set output file name"
 msgstr "Socraigh ainm an aschomhaid"
 
-#: lexsup.c:264
+#: lexsup.c:165
 msgid "Optimize output file"
 msgstr "Optamaigh an t-aschomhad"
 
-#: lexsup.c:266
-msgid "Ignored for SVR4 compatibility"
-msgstr "Rinneadh neamhshuim air, ar son comhoiri˙nachta le SVR4"
+#: lexsup.c:168
+msgid "PLUGIN"
+msgstr "BREISE√ÅN"
 
-#: lexsup.c:270
+#: lexsup.c:168
+msgid "Load named plugin"
+msgstr "L√≥d√°il an breise√°n ainmnithe"
+
+#: lexsup.c:170
+msgid "ARG"
+msgstr "ARG"
+
+#: lexsup.c:170
+msgid "Send arg to last-loaded plugin"
+msgstr "Seol arg√≥int chuig an breise√°n is deireana√≠ a l√≥d√°ladh"
+
+#: lexsup.c:172 lexsup.c:175
+msgid "Ignored for GCC LTO option compatibility"
+msgstr "Rinneadh neamhshuim air, mar gheall ar chomhoiri√∫nacht le GCC LTO"
+
+#: lexsup.c:179
+msgid "Ignored for GCC linker option compatibility"
+msgstr "Rinneadh neamhshuim air, mar gheall ar chomhoiri√∫nacht le nasc√≥ir GCC"
+
+#: lexsup.c:182
+msgid "Ignored for SVR4 compatibility"
+msgstr "Rinneadh neamhshuim air, mar gheall ar chomhoiri√∫nacht le SVR4"
+
+#: lexsup.c:186
 msgid "Generate relocatable output"
 msgstr "Gin aschur in-athshuite"
 
-#: lexsup.c:274
+#: lexsup.c:190
 msgid "Just link symbols (if directory, same as --rpath)"
-msgstr "Nasc siombailÌ amh·in (m·s comhadlann È, ar comhbhrÌ le --rpath)"
+msgstr "Nasc siombail√≠ amh√°in (m√°s comhadlann √©, ar comhbhr√≠ le --rpath)"
 
-#: lexsup.c:277
+#: lexsup.c:193
 msgid "Strip all symbols"
-msgstr "Struipe·il na siombailÌ uile"
+msgstr "Struipe√°il na siombail√≠ uile"
 
-#: lexsup.c:279
+#: lexsup.c:195
 msgid "Strip debugging symbols"
-msgstr "Struipe·il siombailÌ dÌfhabhtaithe"
+msgstr "Struipe√°il siombail√≠ d√≠fhabhtaithe"
 
-#: lexsup.c:281
+#: lexsup.c:197
 msgid "Strip symbols in discarded sections"
-msgstr "Struipe·il siombailÌ i rann·in chaite amach"
+msgstr "Struipe√°il siombail√≠ i rann√°in chaite amach"
 
-#: lexsup.c:283
+#: lexsup.c:199
 msgid "Do not strip symbols in discarded sections"
-msgstr "N· struipe·il siombailÌ i rann·in chaite amach"
+msgstr "N√° struipe√°il siombail√≠ i rann√°in chaite amach"
 
-#: lexsup.c:285
+#: lexsup.c:201
 msgid "Trace file opens"
-msgstr "Lorg oscailtÌ comhad"
+msgstr "Lorg oscailt√≠ comhad"
 
-#: lexsup.c:287
+#: lexsup.c:203
 msgid "Read linker script"
-msgstr "LÈigh script nascÛra"
+msgstr "L√©igh script nasc√≥ra"
 
-#: lexsup.c:289
+#: lexsup.c:205
 msgid "Read default linker script"
-msgstr "LÈigh script rÈamhshocraithe nascÛra"
+msgstr "L√©igh script r√©amhshocraithe nasc√≥ra"
 
-#: lexsup.c:293 lexsup.c:311 lexsup.c:379 lexsup.c:400 lexsup.c:494
-#: lexsup.c:519 lexsup.c:554
+#: lexsup.c:209 lexsup.c:227 lexsup.c:311 lexsup.c:332 lexsup.c:433
+#: lexsup.c:466 lexsup.c:505 lexsup.c:508
 msgid "SYMBOL"
 msgstr "SIOMBAIL"
 
-#: lexsup.c:293
+#: lexsup.c:209
 msgid "Start with undefined reference to SYMBOL"
-msgstr "Tosaigh le tagairt do SIOMBAIL gan sainmhÌni˙"
+msgstr "Tosaigh le tagairt do SIOMBAIL gan sainmh√≠ni√∫"
 
-#: lexsup.c:296
+#: lexsup.c:212
 msgid "[=SECTION]"
-msgstr "[=RANN¡N]"
+msgstr "[=RANN√ÅN]"
 
-#: lexsup.c:297
+#: lexsup.c:213
 msgid "Don't merge input [SECTION | orphan] sections"
-msgstr "N· cumaisc rann·in ionchurtha [RANN¡N | dÌlleachta]"
+msgstr "N√° cumaisc rann√°in ionchurtha [RANN√ÅN | d√≠lleachta]"
 
-#: lexsup.c:299
+#: lexsup.c:215
 msgid "Build global constructor/destructor tables"
-msgstr "TÛg t·blaÌ comhchoiteanna cruthaitheora/scriostÛra"
+msgstr "T√≥g t√°bla√≠ comhchoiteanna cruthaitheora/scriost√≥ra"
 
-#: lexsup.c:301
+#: lexsup.c:217
 msgid "Print version information"
-msgstr "Taispe·in eolas faoin leagan"
+msgstr "Taispe√°in eolas faoin leagan"
 
-#: lexsup.c:303
+#: lexsup.c:219
 msgid "Print version and emulation information"
-msgstr "Taispe·in eolas faoin leagan agus faoi aithris"
+msgstr "Taispe√°in eolas faoin leagan agus faoi aithris"
 
-#: lexsup.c:305
+#: lexsup.c:221
 msgid "Discard all local symbols"
-msgstr "Caith gach siombail log·nta i dtraipisÌ"
+msgstr "Caith gach siombail log√°nta i dtraipis√≠"
 
-#: lexsup.c:307
+#: lexsup.c:223
 msgid "Discard temporary local symbols (default)"
-msgstr "Caith siombailÌ sealadacha log·nta i dtraipisÌ (rÈamhshocr˙)"
+msgstr "Caith siombail√≠ sealadacha log√°nta i dtraipis√≠ (r√©amhshocr√∫)"
 
-#: lexsup.c:309
+#: lexsup.c:225
 msgid "Don't discard any local symbols"
-msgstr "N· caith aon siombail i dtraipisÌ"
+msgstr "N√° caith aon siombail i dtraipis√≠"
 
-#: lexsup.c:311
+#: lexsup.c:227
 msgid "Trace mentions of SYMBOL"
-msgstr "Lorg tr·cht ar SIOMBAIL"
+msgstr "Lorg tr√°cht ar SIOMBAIL"
 
-#: lexsup.c:313 lexsup.c:461 lexsup.c:463
+#: lexsup.c:229 lexsup.c:398 lexsup.c:400
 msgid "PATH"
 msgstr "CONAIR"
 
-#: lexsup.c:313
+#: lexsup.c:229
 msgid "Default search path for Solaris compatibility"
-msgstr "Conair rÈamhshocraithe chuardaigh, ar son comhoiri˙nachta le Solaris"
+msgstr "Conair r√©amhshocraithe chuardaigh, ar son comhoiri√∫nachta le Solaris"
 
-#: lexsup.c:316
+#: lexsup.c:232
 msgid "Start a group"
-msgstr "Tosaigh gr˙pa"
+msgstr "Tosaigh gr√∫pa"
 
-#: lexsup.c:318
+#: lexsup.c:234
 msgid "End a group"
-msgstr "Cuir deireadh le gr˙pa"
+msgstr "Cuir deireadh le gr√∫pa"
 
-#: lexsup.c:322
+#: lexsup.c:238
 msgid "Accept input files whose architecture cannot be determined"
-msgstr "Glac le hinchomhaid nach fÈidir a n-ailtireacht a dhÈanamh amach"
+msgstr "Glac le hinchomhaid nach f√©idir a n-ailtireacht a dh√©anamh amach"
 
-#: lexsup.c:326
+#: lexsup.c:242
 msgid "Reject input files whose architecture is unknown"
-msgstr "Di˙ltaigh le hinchomhaid le hailtireacht anaithnid"
+msgstr "Di√∫ltaigh le hinchomhaid le hailtireacht anaithnid"
 
-#: lexsup.c:329
-msgid ""
-"Set DT_NEEDED tags for DT_NEEDED entries in\n"
-"\t\t\t\tfollowing dynamic libs"
-msgstr ""
-"Socraigh clibeanna DT_NEEDED d'iontr·lacha DT_NEEDED sna\n"
-"\t\t\t\tleabharlanna dinimici˙la seo a leanas"
-
-#: lexsup.c:332
-msgid ""
-"Do not set DT_NEEDED tags for DT_NEEDED entries\n"
-"\t\t\t\tin following dynamic libs"
-msgstr ""
-"N· socraigh clibeanna DT_NEEDED d'iontr·lacha DT_NEEDED sna\n"
-"\t\t\t\tleabharlanna dinimici˙la seo a leanas"
-
-#: lexsup.c:335
+#: lexsup.c:254
 msgid "Only set DT_NEEDED for following dynamic libs if used"
-msgstr "N· socraigh DT_NEEDED ach do na leabharlanna dinimici˙la seo a leanas, m·s g·"
+msgstr "N√° socraigh DT_NEEDED ach do na leabharlanna dinimici√∫la seo a leanas, m√°s g√°"
 
-#: lexsup.c:338
-msgid "Always set DT_NEEDED for following dynamic libs"
-msgstr "Socraigh DT_NEEDED do na leabharlanna dinimici˙la seo a leanas i gcÛnaÌ"
+#: lexsup.c:257
+msgid ""
+"Always set DT_NEEDED for dynamic libraries mentioned on\n"
+"                                the command line"
+msgstr ""
+"Socraigh DT_NEEDED i gcomhair leabharlann dinimici√∫il a luaitear\n"
+"                                ar l√≠ne na n-orduithe"
 
-#: lexsup.c:341
+#: lexsup.c:261
 msgid "Ignored for SunOS compatibility"
-msgstr "Rinneadh neamhshuim air, ar son comhoiri˙nachta le SunOS"
+msgstr "Rinneadh neamhshuim air, ar son comhoiri√∫nachta le SunOS"
 
-#: lexsup.c:343
+#: lexsup.c:263
 msgid "Link against shared libraries"
 msgstr "Nasc le comhleabharlanna"
 
-#: lexsup.c:349
+#: lexsup.c:269
 msgid "Do not link against shared libraries"
-msgstr "N· nasc le comhleabharlanna"
+msgstr "N√° nasc le comhleabharlanna"
 
-#: lexsup.c:357
+#: lexsup.c:277
 msgid "Bind global references locally"
-msgstr "Ceangail tagairtÌ comhchoiteanna go log·nta"
+msgstr "Ceangail tagairt√≠ comhchoiteanna go log√°nta"
 
-#: lexsup.c:359
+#: lexsup.c:279
 msgid "Bind global function references locally"
-msgstr "Ceangail tagairtÌ comhchoiteanna feidhme go log·nta"
+msgstr "Ceangail tagairt√≠ comhchoiteanna feidhme go log√°nta"
 
-#: lexsup.c:361
+#: lexsup.c:281
 msgid "Check section addresses for overlaps (default)"
-msgstr "Lorg forluÌonna i seoltaÌ rann·in (rÈamhshocr˙)"
+msgstr "Lorg forlu√≠onna i seolta√≠ rann√°in (r√©amhshocr√∫)"
 
-#: lexsup.c:364
+#: lexsup.c:284
 msgid "Do not check section addresses for overlaps"
-msgstr "N· lorg forluÌonna i seoltaÌ rann·in"
+msgstr "N√° lorg forlu√≠onna i seolta√≠ rann√°in"
 
-#: lexsup.c:367
+#: lexsup.c:288
+msgid "Copy DT_NEEDED links mentioned inside DSOs that follow"
+msgstr "C√≥ipe√°il nascanna DT_NEEDED at√° luaite sna DSOanna a leanann"
+
+#: lexsup.c:292
+msgid "Do not copy DT_NEEDED links mentioned inside DSOs that follow"
+msgstr "N√° c√≥ipe√°il nascanna DT_NEEDED at√° luaite sna DSOanna a leanann"
+
+#: lexsup.c:296
 msgid "Output cross reference table"
-msgstr "Aschuir t·bla crostagartha"
+msgstr "Aschuir t√°bla crostagairt√≠"
 
-#: lexsup.c:369
+#: lexsup.c:298
 msgid "SYMBOL=EXPRESSION"
 msgstr "SIOMBAIL=SLONN"
 
-#: lexsup.c:369
+#: lexsup.c:298
 msgid "Define a symbol"
-msgstr "SainmhÌnigh siombail"
+msgstr "Sainmh√≠nigh siombail"
 
-#: lexsup.c:371
+#: lexsup.c:300
 msgid "[=STYLE]"
-msgstr "[=STÕL]"
+msgstr "[=ST√çL]"
+
+#: lexsup.c:300
+msgid "Demangle symbol names [using STYLE]"
+msgstr "D√≠choscair ainmneacha siombaile [de r√©ir ST√çL]"
+
+#: lexsup.c:303
+msgid "Generate embedded relocs"
+msgstr "Gin athshu√≠mh leabaithe"
+
+#: lexsup.c:305
+msgid "Treat warnings as errors"
+msgstr "Glac le rabhaidh mar earr√°id√≠"
+
+#: lexsup.c:308
+msgid "Do not treat warnings as errors (default)"
+msgstr "N√° glac le rabhaidh mar earr√°id√≠ (r√©amhshocr√∫)"
+
+#: lexsup.c:311
+msgid "Call SYMBOL at unload-time"
+msgstr "Glaoigh SIOMBAIL ag am d√≠l√≥d√°la"
+
+#: lexsup.c:313
+msgid "Force generation of file with .exe suffix"
+msgstr "√âiligh cruth√∫ de chomhad le hiarmh√≠r .exe"
+
+#: lexsup.c:315
+msgid "Remove unused sections (on some targets)"
+msgstr "Bain rann√°in neamh√∫s√°idte (ar spriocanna √°irithe)"
+
+#: lexsup.c:318
+msgid "Don't remove unused sections (default)"
+msgstr "N√° bain rann√°in neamh√∫s√°idte (r√©amhshocr√∫)"
+
+#: lexsup.c:321
+msgid "List removed unused sections on stderr"
+msgstr "Taispe√°in rann√°in neamh√∫s√°idte a baineadh ar stderr"
+
+#: lexsup.c:324
+msgid "Do not list removed unused sections"
+msgstr "N√° taispe√°in rann√°in neamh√∫s√°idte a baineadh ar stderr"
+
+#: lexsup.c:327
+msgid "Set default hash table size close to <NUMBER>"
+msgstr "Socraigh m√©id r√©amhshocraithe an hais-t√°bla i ngar do <UIMHIR>"
+
+#: lexsup.c:330
+msgid "Print option help"
+msgstr "Taispe√°in cabhair le roghanna"
+
+#: lexsup.c:332
+msgid "Call SYMBOL at load-time"
+msgstr "Glaoigh SIOMBAIL ag am l√≥d√°la"
+
+#: lexsup.c:334
+msgid "Write a map file"
+msgstr "Scr√≠obh comhad map√°la"
+
+#: lexsup.c:336
+msgid "Do not define Common storage"
+msgstr "N√° socraigh st√≥r√°il choitianta"
+
+#: lexsup.c:338
+msgid "Do not demangle symbol names"
+msgstr "N√° d√≠choscair ainmneacha siombaile"
+
+#: lexsup.c:340
+msgid "Use less memory and more disk I/O"
+msgstr "√ös√°id n√≠os l√∫ cuimhne agus n√≠os m√≥ I/A diosca"
+
+#: lexsup.c:342
+msgid "Do not allow unresolved references in object files"
+msgstr "N√° ceadaigh tagairt√≠ gan r√©iteach i gcomhaid r√©ada"
+
+#: lexsup.c:345
+msgid "Allow unresolved references in shared libraries"
+msgstr "Ceadaigh tagairt√≠ gan r√©iteach i gcomhleabharlanna"
+
+#: lexsup.c:349
+msgid "Do not allow unresolved references in shared libs"
+msgstr "N√° ceadaigh tagairt√≠ gan r√©iteach i gcomhleabharlanna"
+
+#: lexsup.c:353
+msgid "Allow multiple definitions"
+msgstr "Ceadaigh sainmh√≠nithe iomad√∫la"
+
+#: lexsup.c:355
+msgid "Disallow undefined version"
+msgstr "N√° ceadaigh leagan gan sainmh√≠ni√∫"
+
+#: lexsup.c:357
+msgid "Create default symbol version"
+msgstr "Cruthaigh leagan r√©amhshocraithe siombaile"
+
+#: lexsup.c:360
+msgid "Create default symbol version for imported symbols"
+msgstr "Cruthaigh leagan r√©amhshocraithe siombaile le haghaidh siombail√≠ iomp√≥rt√°ilte"
+
+#: lexsup.c:363
+msgid "Don't warn about mismatched input files"
+msgstr "N√° tabhair rabhadh maidir le hinchomhaid neamh-chomhoiri√∫nacha"
+
+#: lexsup.c:366
+msgid "Don't warn on finding an incompatible library"
+msgstr "N√° tabhair rabhadh faoi chomhadlann neamh-chomhoiri√∫nach"
+
+#: lexsup.c:369
+msgid "Turn off --whole-archive"
+msgstr "N√° h√∫s√°id --whole-archive"
 
 #: lexsup.c:371
-msgid "Demangle symbol names [using STYLE]"
-msgstr "DÌchoscair ainmneacha siombaile [de rÈir STÕL]"
-
-#: lexsup.c:374
-msgid "Generate embedded relocs"
-msgstr "Gin athshuÌmh leabaithe"
+msgid "Create an output file even if errors occur"
+msgstr "Cruthaigh aschomhad fi√∫ m√° tharla√≠onn earr√°id√≠"
 
 #: lexsup.c:376
-msgid "Treat warnings as errors"
-msgstr "Glac le rabhaidh mar earr·idÌ"
-
-#: lexsup.c:379
-msgid "Call SYMBOL at unload-time"
-msgstr "Glaoigh SIOMBAIL ag am dÌluchtaithe"
-
-#: lexsup.c:381
-msgid "Force generation of file with .exe suffix"
-msgstr "…iligh cruth˙ de chomhad le hiarmhÌr .exe"
-
-#: lexsup.c:383
-msgid "Remove unused sections (on some targets)"
-msgstr "Bain rann·in neamh˙s·idte (ar spriocanna ·irithe)"
-
-#: lexsup.c:386
-msgid "Don't remove unused sections (default)"
-msgstr "N· bain rann·in neamh˙s·idte (rÈamhshocr˙)"
-
-#: lexsup.c:389
-msgid "List removed unused sections on stderr"
-msgstr "Taispe·in rann·in neamh˙s·idte a baineadh ar stderr"
-
-#: lexsup.c:392
-msgid "Do not list removed unused sections"
-msgstr "N· taispe·in rann·in neamh˙s·idte a baineadh ar stderr"
-
-#: lexsup.c:395
-msgid "Set default hash table size close to <NUMBER>"
-msgstr "Socraigh mÈid rÈamhshocraithe an hais-t·bla i ngar do <UIMHIR>"
-
-#: lexsup.c:398
-msgid "Print option help"
-msgstr "Taispe·in cabhair le roghanna"
-
-#: lexsup.c:400
-msgid "Call SYMBOL at load-time"
-msgstr "Glaoigh SIOMBAIL ag am luchtaithe"
-
-#: lexsup.c:402
-msgid "Write a map file"
-msgstr "ScrÌobh comhad map·la"
-
-#: lexsup.c:404
-msgid "Do not define Common storage"
-msgstr "N· socraigh stÛr·il choitianta"
-
-#: lexsup.c:406
-msgid "Do not demangle symbol names"
-msgstr "N· dÌchoscair ainmneacha siombaile"
-
-#: lexsup.c:408
-msgid "Use less memory and more disk I/O"
-msgstr "⁄s·id nÌos l˙ cuimhne agus nÌos mÛ I/A diosca"
-
-#: lexsup.c:410
-msgid "Do not allow unresolved references in object files"
-msgstr "N· ceadaigh tagairtÌ gan rÈiteach i gcomhaid rÈada"
-
-#: lexsup.c:413
-msgid "Allow unresolved references in shared libaries"
-msgstr "Ceadaigh tagairtÌ gan rÈiteach i gcomhleabharlanna"
-
-#: lexsup.c:417
-msgid "Do not allow unresolved references in shared libs"
-msgstr "N· ceadaigh tagairtÌ gan rÈiteach i gcomhleabharlanna"
-
-#: lexsup.c:421
-msgid "Allow multiple definitions"
-msgstr "Ceadaigh sainmhÌnithe iomad˙la"
-
-#: lexsup.c:423
-msgid "Disallow undefined version"
-msgstr "N· ceadaigh leagan gan sainmhÌni˙"
-
-#: lexsup.c:425
-msgid "Create default symbol version"
-msgstr "Cruthaigh leagan rÈamhshocraithe siombaile"
-
-#: lexsup.c:428
-msgid "Create default symbol version for imported symbols"
-msgstr "Cruthaigh leagan rÈamhshocraithe siombaile le haghaidh siombailÌ iompÛrt·ilte"
-
-#: lexsup.c:431
-msgid "Don't warn about mismatched input files"
-msgstr "N· tabhair rabhadh maidir le hinchomhaid neamh-chomhoiri˙nacha"
-
-#: lexsup.c:434
-msgid "Don't warn on finding an incompatible library"
-msgstr "N· tabhair rabhadh faoi chomhadlann neamh-chomhoiri˙nach"
-
-#: lexsup.c:437
-msgid "Turn off --whole-archive"
-msgstr "N· h˙s·id --whole-archive"
-
-#: lexsup.c:439
-msgid "Create an output file even if errors occur"
-msgstr "Cruthaigh aschomhad fi˙ m· tharlaÌonn earr·idÌ"
-
-#: lexsup.c:444
 msgid ""
 "Only use library directories specified on\n"
-"\t\t\t\tthe command line"
+"                                the command line"
 msgstr ""
-"N· h˙s·id ach na comhadlanna leabharlainne a shonraÌtear\n"
-"\t\t\t\tar lÌne na n-orduithe"
+"N√° h√∫s√°id ach na comhadlanna leabharlainne a shonra√≠tear\n"
+"                                ar l√≠ne na n-orduithe"
 
-#: lexsup.c:447
+#: lexsup.c:380
 msgid "Specify target of output file"
 msgstr "Sonraigh sprioc an aschomhaid"
 
-#: lexsup.c:450
+#: lexsup.c:383
+msgid "Print default output format"
+msgstr "Form√°id aschurtha r√©amhshocraithe"
+
+#: lexsup.c:385
 msgid "Ignored for Linux compatibility"
-msgstr "Rinneadh neamhshuim air, ar son comhoiri˙nachta le Linux"
+msgstr "Rinneadh neamhshuim air, ar son comhoiri√∫nachta le Linux"
 
-#: lexsup.c:453
+#: lexsup.c:388
 msgid "Reduce memory overheads, possibly taking much longer"
-msgstr "Laghdaigh im˙s·id chuimhne, ach b'fhÈidir go mbeidh sÈ i bhfad nÌos moille"
+msgstr "Laghdaigh im√∫s√°id chuimhne, ach b'fh√©idir go mbeidh s√© i bhfad n√≠os moille"
 
-#: lexsup.c:456
-msgid "Relax branches on certain targets"
-msgstr "Bog brainsÌ ar spriocanna ·irithe"
+#: lexsup.c:391
+msgid "Reduce code size by using target specific optimizations"
+msgstr "Laghaidh m√©id an ch√≥id tr√≠ optamuithe a bhaineann leis an sprioc seo"
 
-#: lexsup.c:459
+#: lexsup.c:393
+msgid "Do not use relaxation techniques to reduce code size"
+msgstr "N√° h√∫s√°id teicn√≠c√≠ socrachta chun m√©id an ch√≥id a laghd√∫"
+
+#: lexsup.c:396
 msgid "Keep only symbols listed in FILE"
-msgstr "N· coinnigh ach na siombailÌ at· i gCOMHAD"
+msgstr "N√° coinnigh ach na siombail√≠ at√° i gCOMHAD"
 
-#: lexsup.c:461
+#: lexsup.c:398
 msgid "Set runtime shared library search path"
 msgstr "Socraigh conair chuardaigh do chomhleabharlanna am-rite"
 
-#: lexsup.c:463
+#: lexsup.c:400
 msgid "Set link time shared library search path"
 msgstr "Socraigh conair chuardaigh do chomhleabharlanna am-nasctha"
 
-#: lexsup.c:466
+#: lexsup.c:403
 msgid "Create a shared library"
 msgstr "Cruthaigh comhleabharlann"
 
-#: lexsup.c:470
+#: lexsup.c:407
 msgid "Create a position independent executable"
-msgstr "Cruthaigh cl·r inrite at· neamhsple·ch ar ionad"
+msgstr "Cruthaigh cl√°r inrite at√° neamhsple√°ch ar ionad"
 
-#: lexsup.c:474
-msgid "Sort common symbols by size"
-msgstr "SÛrt·il siombailÌ coitianta de rÈir mÈide"
+#: lexsup.c:411
+msgid "[=ascending|descending]"
+msgstr "[=ascending|descending]"
 
-#: lexsup.c:478
+#: lexsup.c:412
+msgid "Sort common symbols by alignment [in specified order]"
+msgstr "S√≥rt√°il siombail√≠ coitianta de r√©ir ail√≠nithe [san ord sonraithe]"
+
+#: lexsup.c:417
 msgid "name|alignment"
-msgstr "ainm|ailÌni˙"
+msgstr "ainm|ail√≠ni√∫"
 
-#: lexsup.c:479
+#: lexsup.c:418
 msgid "Sort sections by name or maximum alignment"
-msgstr "SÛrt·il rann·in de rÈir ainm nÛ ailÌni˙ uasta"
+msgstr "S√≥rt√°il rann√°in de r√©ir ainm n√≥ ail√≠ni√∫ uasta"
 
-#: lexsup.c:481
+#: lexsup.c:420
 msgid "COUNT"
-msgstr "LÕON"
+msgstr "L√çON"
 
-#: lexsup.c:481
+#: lexsup.c:420
 msgid "How many tags to reserve in .dynamic section"
-msgstr "CÈ mhÈad clib ba chÛir a chur in ·irithe i rann·n .dynamic"
+msgstr "C√© mh√©ad clib ba ch√≥ir a chur in √°irithe i rann√°n .dynamic"
 
-#: lexsup.c:484
+#: lexsup.c:423
 msgid "[=SIZE]"
-msgstr "[=M…ID]"
+msgstr "[=M√âID]"
 
-#: lexsup.c:484
+#: lexsup.c:423
 msgid "Split output sections every SIZE octets"
-msgstr "Roinn rann·in aschurtha gach M…ID beart"
+msgstr "Roinn rann√°in aschurtha gach M√âID beart"
 
-#: lexsup.c:487
+#: lexsup.c:426
 msgid "[=COUNT]"
-msgstr "[=LÕON]"
+msgstr "[=L√çON]"
 
-#: lexsup.c:487
+#: lexsup.c:426
 msgid "Split output sections every COUNT relocs"
-msgstr "Roinn rann·in aschurtha gach LÕON athshuÌomh"
+msgstr "Roinn rann√°in aschurtha gach L√çON athshu√≠omh"
 
-#: lexsup.c:490
+#: lexsup.c:429
 msgid "Print memory usage statistics"
-msgstr "Priont·il staitisticÌ ˙s·ide cuimhne"
+msgstr "Priont√°il staitistic√≠ √∫s√°ide cuimhne"
 
-#: lexsup.c:492
+#: lexsup.c:431
 msgid "Display target specific options"
-msgstr "Taispe·in roghanna a bhaineann leis an sprioc seo"
+msgstr "Taispe√°in roghanna a bhaineann leis an sprioc seo"
 
-#: lexsup.c:494
+#: lexsup.c:433
 msgid "Do task level linking"
-msgstr "DÈan nascadh tascleibhÈil"
+msgstr "D√©an nascadh tascleibh√©il"
 
-#: lexsup.c:496
+#: lexsup.c:435
 msgid "Use same format as native linker"
-msgstr "⁄s·id form·id chÈanna leis an nascÛir d˙chasach"
+msgstr "√ös√°id form√°id ch√©anna leis an nasc√≥ir d√∫chasach"
 
-#: lexsup.c:498
+#: lexsup.c:437
 msgid "SECTION=ADDRESS"
-msgstr "RANN¡N=SEOLADH"
+msgstr "RANN√ÅN=SEOLADH"
 
-#: lexsup.c:498
+#: lexsup.c:437
 msgid "Set address of named section"
-msgstr "Socraigh seoladh an rann·in ainmnithe"
+msgstr "Socraigh seoladh an rann√°in ainmnithe"
 
-#: lexsup.c:501
+#: lexsup.c:440
 msgid "Set address of .bss section"
-msgstr "Socraigh seoladh an rann·in .bss"
+msgstr "Socraigh seoladh an rann√°in .bss"
 
-#: lexsup.c:503
+#: lexsup.c:442
 msgid "Set address of .data section"
-msgstr "Socraigh seoladh an rann·in .data"
+msgstr "Socraigh seoladh an rann√°in .data"
 
-#: lexsup.c:505
+#: lexsup.c:444
 msgid "Set address of .text section"
-msgstr "Socraigh seoladh an rann·in .text"
+msgstr "Socraigh seoladh an rann√°in .text"
 
-#: lexsup.c:508
+#: lexsup.c:446
+msgid "Set address of text segment"
+msgstr "Socraigh seoladh an rann√°in text"
+
+#: lexsup.c:448
+msgid "Set address of rodata segment"
+msgstr "Socraigh seoladh an rann√°in rodata"
+
+#: lexsup.c:450
+msgid "Set address of ldata segment"
+msgstr "Socraigh seoladh an rann√°in ldata"
+
+#: lexsup.c:453
 msgid ""
 "How to handle unresolved symbols.  <method> is:\n"
-"\t\t\t\tignore-all, report-all, ignore-in-object-files,\n"
-"\t\t\t\tignore-in-shared-libs"
+"                                ignore-all, report-all, ignore-in-object-files,\n"
+"                                ignore-in-shared-libs"
 msgstr ""
-"Conas siombailÌ gan rÈiteach a l·imhse·il.  is <modh> ceann de:\n"
-"\t\t\t\tignore-all, report-all, ignore-in-object-files,\n"
-"\t\t\t\tignore-in-shared-libs"
+"Conas siombail√≠ gan r√©iteach a l√°imhse√°il.  is <modh> ceann de:\n"
+"                                ignore-all, report-all, ignore-in-object-files,\n"
+"                                ignore-in-shared-libs"
 
-#: lexsup.c:512
+#: lexsup.c:458
+msgid "[=NUMBER]"
+msgstr "[=UIMHIR]"
+
+#: lexsup.c:459
 msgid "Output lots of information during link"
-msgstr "Taispe·in go leor faisnÈise le linn nasctha"
+msgstr "Taispe√°in go leor faisn√©ise le linn nasctha"
 
-#: lexsup.c:516
+#: lexsup.c:463
 msgid "Read version information script"
-msgstr "LÈigh script le heolas faoin leagan"
+msgstr "L√©igh script le heolas faoin leagan"
 
-#: lexsup.c:519
+#: lexsup.c:466
 msgid ""
 "Take export symbols list from .exports, using\n"
-"\t\t\t\tSYMBOL as the version."
+"                                SYMBOL as the version."
 msgstr ""
-"Glac liosta de shiombailÌ easpÛrt·ilte Û .exports, le\n"
-"\t\t\t\tSIOMBAIL mar leagan."
+"Glac liosta de shiombail√≠ easp√≥rt√°ilte √≥ .exports, le\n"
+"                                SIOMBAIL mar leagan."
 
-#: lexsup.c:522
+#: lexsup.c:470
 msgid "Add data symbols to dynamic list"
-msgstr "Cuir siombailÌ sonraÌ le liosta dinimici˙il"
+msgstr "Cuir siombail√≠ sonra√≠ le liosta dinimici√∫il"
 
-#: lexsup.c:524
+#: lexsup.c:472
 msgid "Use C++ operator new/delete dynamic list"
-msgstr "⁄s·id liosta dinimici˙il new/delete C++"
+msgstr "√ös√°id liosta dinimici√∫il new/delete C++"
 
-#: lexsup.c:526
+#: lexsup.c:474
 msgid "Use C++ typeinfo dynamic list"
-msgstr "⁄s·id liosta dinimici˙il typeinfo C++"
+msgstr "√ös√°id liosta dinimici√∫il typeinfo C++"
 
-#: lexsup.c:528
+#: lexsup.c:476
 msgid "Read dynamic list"
-msgstr "LÈigh liosta dinimici˙il"
+msgstr "L√©igh liosta dinimici√∫il"
 
-#: lexsup.c:530
+#: lexsup.c:478
 msgid "Warn about duplicate common symbols"
-msgstr "Tabhair rabhadh m· t· siombailÌ coitianta d˙blacha ann"
+msgstr "Tabhair rabhadh m√° t√° siombail√≠ coitianta d√∫blacha ann"
 
-#: lexsup.c:532
+#: lexsup.c:480
 msgid "Warn if global constructors/destructors are seen"
-msgstr "Tabhair rabhadh m· fheictear cruthaitheoirÌ/scriostÛirÌ"
+msgstr "Tabhair rabhadh m√° fheictear cruthaitheoir√≠/scriost√≥ir√≠"
 
-#: lexsup.c:535
+#: lexsup.c:483
 msgid "Warn if the multiple GP values are used"
-msgstr "Tabhair rabhadh m· t· luachanna iomad˙la GP in ˙s·id"
+msgstr "Tabhair rabhadh m√° t√° luachanna iomad√∫la GP in √∫s√°id"
 
-#: lexsup.c:537
+#: lexsup.c:485
 msgid "Warn only once per undefined symbol"
-msgstr "N· tabhair ach rabhadh amh·in do gach siombail neamhshainithe"
+msgstr "N√° tabhair ach rabhadh amh√°in do gach siombail neamhshainithe"
 
-#: lexsup.c:539
+#: lexsup.c:487
 msgid "Warn if start of section changes due to alignment"
-msgstr "Tabhair rabhadh m· athraÌonn t˙s an rann·in de bharr ailÌnithe"
+msgstr "Tabhair rabhadh m√° athra√≠onn t√∫s an rann√°in de bharr ail√≠nithe"
 
-#: lexsup.c:542
+#: lexsup.c:490
 msgid "Warn if shared object has DT_TEXTREL"
-msgstr "Tabhair rabhadh m· t· DT_TEXTREL ag comhrÈad"
+msgstr "Tabhair rabhadh m√° t√° DT_TEXTREL ag comhr√©ad"
 
-#: lexsup.c:546
+#: lexsup.c:493
+msgid "Warn if an object has alternate ELF machine code"
+msgstr "Tabhair rabhadh m√° t√° c√≥d meais√≠n ELF malartach ag r√©ad"
+
+#: lexsup.c:497
 msgid "Report unresolved symbols as warnings"
-msgstr "Tabhair rabhadh m· t· siombail gan rÈiteach ann"
+msgstr "Tabhair rabhadh m√° t√° siombail gan r√©iteach ann"
 
-#: lexsup.c:549
+#: lexsup.c:500
 msgid "Report unresolved symbols as errors"
-msgstr "Tabhair earr·id m· t· siombail gan rÈiteach ann"
+msgstr "Tabhair earr√°id m√° t√° siombail gan r√©iteach ann"
 
-#: lexsup.c:551
+#: lexsup.c:502
 msgid "Include all objects from following archives"
-msgstr "Cuir gach rÈad san ·ireamh as na cartlanna seo a leanas"
+msgstr "Cuir gach r√©ad san √°ireamh as na cartlanna seo a leanas"
 
-#: lexsup.c:554
+#: lexsup.c:505
 msgid "Use wrapper functions for SYMBOL"
-msgstr "⁄s·id feidhmeanna rapair do SIOMBAIL"
+msgstr "√ös√°id feidhmeanna rapair do SIOMBAIL"
 
-#: lexsup.c:701
+#: lexsup.c:509
+msgid "Unresolved SYMBOL will not cause an error or warning"
+msgstr "N√≠ thabharfar earr√°id n√≥ rabhadh mar gheall ar SIOMBAIL gan r√©iteach"
+
+#: lexsup.c:659
 msgid "%P: unrecognized option '%s'\n"
 msgstr "%P: rogha anaithnid '%s'\n"
 
-#: lexsup.c:705
+#: lexsup.c:663
 msgid "%P%F: use the --help option for usage information\n"
-msgstr "%P%F: ˙s·id an rogha --help chun tuilleadh eolais a fh·il\n"
+msgstr "%P%F: √∫s√°id an rogha --help chun tuilleadh eolais a fh√°il\n"
 
-#: lexsup.c:723
+#: lexsup.c:681
 msgid "%P%F: unrecognized -a option `%s'\n"
 msgstr "%P%F: rogha anaithnid -a: `%s'\n"
 
-#: lexsup.c:736
+#: lexsup.c:694
 msgid "%P%F: unrecognized -assert option `%s'\n"
 msgstr "%P%F: rogha anaithnid -assert: `%s'\n"
 
-#: lexsup.c:779
-msgid "%F%P: unknown demangling style `%s'"
-msgstr "%F%P: stÌl anaithnid dÌchoscartha `%s'"
+#: lexsup.c:735
+msgid "%F%P: unknown demangling style `%s'\n"
+msgstr "%F%P: st√≠l anaithnid d√≠choscartha `%s'\n"
 
-#: lexsup.c:841
+#: lexsup.c:801 lexsup.c:1239
 msgid "%P%F: invalid number `%s'\n"
-msgstr "%P%F: uimhir neamhbhailÌ `%s'\n"
+msgstr "%P%F: uimhir neamhbhail√≠ `%s'\n"
 
-#: lexsup.c:939
+#: lexsup.c:899
 msgid "%P%F: bad --unresolved-symbols option: %s\n"
 msgstr "%P%F: drochrogha --unresolved-symbols: %s\n"
+
+#: lexsup.c:968
+msgid "%P%F: bad -plugin-opt option\n"
+msgstr "%P%F: drochrogha -plugin-opt\n"
 
 #. This can happen if the user put "-rpath,a" on the command
 #. line.  (Or something similar.  The comma is important).
@@ -1822,177 +2044,307 @@ msgstr "%P%F: drochrogha --unresolved-symbols: %s\n"
 #. an error message here.  We cannot just make this a warning,
 #. increment optind, and continue because getopt is too confused
 #. and will seg-fault the next time around.
-#: lexsup.c:1013
+#: lexsup.c:985
 msgid "%P%F: bad -rpath option\n"
 msgstr "%P%F: drochrogha -rpath\n"
 
-#: lexsup.c:1124
+#: lexsup.c:1099
 msgid "%P%F: -shared not supported\n"
-msgstr "%P%F: nÌ thacaÌtear le -shared\n"
+msgstr "%P%F: n√≠ thaca√≠tear le -shared\n"
 
-#: lexsup.c:1133
+#: lexsup.c:1108
 msgid "%P%F: -pie not supported\n"
-msgstr "%P%F: nÌ thacaÌtear le -pie\n"
+msgstr "%P%F: n√≠ thaca√≠tear le -pie\n"
 
-#: lexsup.c:1143
+#: lexsup.c:1116
+msgid "descending"
+msgstr "ag dul suas"
+
+#: lexsup.c:1118
+msgid "ascending"
+msgstr "ag dul s√≠os"
+
+#: lexsup.c:1121
+msgid "%P%F: invalid common section sorting option: %s\n"
+msgstr "%P%F: rogha neamhbhail√≠ s√≥rt√°la le haghaidh rann√°n coitianta: %s\n"
+
+#: lexsup.c:1125
 msgid "name"
 msgstr "ainm"
 
-#: lexsup.c:1145
+#: lexsup.c:1127
 msgid "alignment"
-msgstr "ailÌni˙"
+msgstr "ail√≠ni√∫"
 
-#: lexsup.c:1148
+#: lexsup.c:1130
 msgid "%P%F: invalid section sorting option: %s\n"
-msgstr "%P%F: rogha neamhbhailÌ sÛrt·la rann·n: %s\n"
+msgstr "%P%F: rogha neamhbhail√≠ s√≥rt√°la rann√°n: %s\n"
 
-#: lexsup.c:1180
+#: lexsup.c:1164
 msgid "%P%F: invalid argument to option \"--section-start\"\n"
-msgstr "%P%F: rogha neamhbhailÌ tar Èis \"--section-start\"\n"
+msgstr "%P%F: rogha neamhbhail√≠ tar √©is \"--section-start\"\n"
 
-#: lexsup.c:1187
+#: lexsup.c:1171
 msgid "%P%F: missing argument(s) to option \"--section-start\"\n"
-msgstr "%P%F: argÛint(Ì) ar iarraidh tar Èis \"--section-start\"\n"
+msgstr "%P%F: arg√≥int(√≠) ar iarraidh tar √©is \"--section-start\"\n"
 
-#: lexsup.c:1398
-msgid "%P%F: may not nest groups (--help for usage)\n"
-msgstr "%P%F: nÌ cheadaÌtear gr˙paÌ a bheith neadaithe (--help = cabhair)\n"
-
-#: lexsup.c:1405
+#: lexsup.c:1414
 msgid "%P%F: group ended before it began (--help for usage)\n"
-msgstr "%P%F: deireadh an ghr˙pa roimh a th˙s (--help = ˙s·id)\n"
+msgstr "%P%F: deireadh an ghr√∫pa roimh a th√∫s (--help = √∫s√°id)\n"
 
-#: lexsup.c:1433
+#: lexsup.c:1442
 msgid "%P%X: --hash-size needs a numeric argument\n"
-msgstr "%P%X: argÛint uimhri˙il de dhÌth tar Èis --hash-size\n"
+msgstr "%P%X: arg√≥int uimhri√∫il de dh√≠th tar √©is --hash-size\n"
 
-#: lexsup.c:1484 lexsup.c:1497
+#: lexsup.c:1473
+msgid "%P%F: -r and -shared may not be used together\n"
+msgstr "%P%F: n√≠ cheada√≠tear roghanna -r agus -shared le ch√©ile\n"
+
+#: lexsup.c:1516
+msgid "%P%F: -F may not be used without -shared\n"
+msgstr "%P%F: caithfidh t√∫ -shared a √∫s√°id in √©ineacht le -F\n"
+
+#: lexsup.c:1518
+msgid "%P%F: -f may not be used without -shared\n"
+msgstr "%P%F: caithfidh t√∫ -shared a √∫s√°id in √©ineacht le -f\n"
+
+#: lexsup.c:1562 lexsup.c:1575
 msgid "%P%F: invalid hex number `%s'\n"
-msgstr "%P%F: uimhir neamhbhailÌ heicsidheach˙lach `%s'\n"
+msgstr "%P%F: uimhir neamhbhail√≠ heicsidheach√∫lach `%s'\n"
 
-#: lexsup.c:1533
+#: lexsup.c:1611
 #, c-format
 msgid "Usage: %s [options] file...\n"
-msgstr "⁄s·id: %s [roghanna] comhad...\n"
+msgstr "√ös√°id: %s [roghanna] comhad...\n"
 
-#: lexsup.c:1535
+#: lexsup.c:1613
 #, c-format
 msgid "Options:\n"
 msgstr "Roghanna:\n"
 
-#: lexsup.c:1613
+#: lexsup.c:1691
 #, c-format
 msgid "  @FILE"
 msgstr "  @COMHAD"
 
-#: lexsup.c:1616
+#: lexsup.c:1694
 #, c-format
 msgid "Read options from FILE\n"
-msgstr "LÈigh roghanna Ûn gCOMHAD\n"
+msgstr "L√©igh roghanna √≥n gCOMHAD\n"
 
 #. Note: Various tools (such as libtool) depend upon the
 #. format of the listings below - do not change them.
-#: lexsup.c:1621
+#: lexsup.c:1699
 #, c-format
 msgid "%s: supported targets:"
 msgstr "%s: spriocanna tacaithe:"
 
-#: lexsup.c:1629
+#: lexsup.c:1707
 #, c-format
 msgid "%s: supported emulations: "
-msgstr "%s: aithrisÌ a dtacaÌtear leo: "
+msgstr "%s: aithris√≠ a dtaca√≠tear leo: "
 
-#: lexsup.c:1634
+#: lexsup.c:1712
 #, c-format
 msgid "%s: emulation specific options:\n"
 msgstr "%s: roghanna a bhaineann le haithris:\n"
 
-#: lexsup.c:1639
+#: lexsup.c:1717
 #, c-format
 msgid "Report bugs to %s\n"
-msgstr "Seol tuairiscÌ ar fhabhtanna chuig %s\n"
+msgstr "Seol tuairisc√≠ ar fhabhtanna chuig %s\n"
 
-#: mri.c:291
+#: mri.c:294
 msgid "%P%F: unknown format type %s\n"
-msgstr "%P%F: cine·l anaithnid form·ide %s\n"
+msgstr "%P%F: cine√°l anaithnid form√°ide %s\n"
 
-#: pe-dll.c:367
+#: pe-dll.c:430
 #, c-format
 msgid "%XUnsupported PEI architecture: %s\n"
-msgstr "%XAiltireacht PEI gan tacaÌocht: %s\n"
+msgstr "%XAiltireacht PEI gan taca√≠ocht: %s\n"
 
-#: pe-dll.c:673
+#: pe-dll.c:799
 #, c-format
 msgid "%XCannot export %s: invalid export name\n"
-msgstr "%XNÌ fÈidir %s a easpÛrt·il: ainm neamhbhailÌ easpÛrt·la\n"
+msgstr "%XN√≠ f√©idir %s a easp√≥rt√°il: ainm neamhbhail√≠ easp√≥rt√°la\n"
 
-#: pe-dll.c:729
+#: pe-dll.c:851
 #, c-format
 msgid "%XError, duplicate EXPORT with ordinals: %s (%d vs %d)\n"
-msgstr "%XEarr·id, EXPORT d˙blach le horduimhreacha: %s (%d vs %d)\n"
+msgstr "%XEarr√°id, EXPORT d√∫blach le horduimhreacha: %s (%d vs %d)\n"
 
-#: pe-dll.c:736
+#: pe-dll.c:858
 #, c-format
 msgid "Warning, duplicate EXPORT: %s\n"
-msgstr "Rabhadh, EXPORT d˙blach: %s\n"
+msgstr "Rabhadh, EXPORT d√∫blach: %s\n"
 
-#: pe-dll.c:823
+#: pe-dll.c:961
 #, c-format
 msgid "%XCannot export %s: symbol not defined\n"
-msgstr "%XNÌ fÈidir %s a easpÛrt·il: siombail gan sainmhÌni˙\n"
+msgstr "%XN√≠ f√©idir %s a easp√≥rt√°il: siombail gan sainmh√≠ni√∫\n"
 
-#: pe-dll.c:829
+#: pe-dll.c:967
 #, c-format
 msgid "%XCannot export %s: symbol wrong type (%d vs %d)\n"
-msgstr "%XNÌ fÈidir %s a easpÛrt·il: siombail den chine·l mÌcheart (%d vs %d)\n"
+msgstr "%XN√≠ f√©idir %s a easp√≥rt√°il: siombail den chine√°l m√≠cheart (%d vs %d)\n"
 
-#: pe-dll.c:836
+#: pe-dll.c:974
 #, c-format
 msgid "%XCannot export %s: symbol not found\n"
-msgstr "%XNÌ fÈidir %s a easpÛrt·il: siombail gan aimsi˙\n"
+msgstr "%XN√≠ f√©idir %s a easp√≥rt√°il: siombail gan aimsi√∫\n"
 
-#: pe-dll.c:949
+#: pe-dll.c:1088
 #, c-format
 msgid "%XError, ordinal used twice: %d (%s vs %s)\n"
-msgstr "%XEarr·id, ˙s·ideadh orduimhir faoi dhÛ: %d (%s vs %s)\n"
+msgstr "%XEarr√°id, √∫s√°ideadh orduimhir faoi dh√≥: %d (%s vs %s)\n"
 
-#: pe-dll.c:1297
+#: pe-dll.c:1478
 #, c-format
 msgid "%XError: %d-bit reloc in dll\n"
-msgstr "%XEarr·id: athshuÌomh %d-giot·n i dll\n"
+msgstr "%XEarr√°id: athshu√≠omh %d-giot√°n i dll\n"
 
-#: pe-dll.c:1425
+#: pe-dll.c:1606
 #, c-format
 msgid "%s: Can't open output def file %s\n"
-msgstr "%s: NÌ fÈidir aschomhad %s a oscailt\n"
+msgstr "%s: N√≠ f√©idir aschomhad %s a oscailt\n"
 
-#: pe-dll.c:1568
+#: pe-dll.c:1757
 #, c-format
 msgid "; no contents available\n"
-msgstr "; nÌl an t-·bhar ar f·il\n"
+msgstr "; n√≠l an t-√°bhar ar f√°il\n"
 
-#: pe-dll.c:2364
+#: pe-dll.c:2684
 msgid "%C: variable '%T' can't be auto-imported. Please read the documentation for ld's --enable-auto-import for details.\n"
-msgstr "%C: nÌ fÈidir athrÛg '%T' a uathiompÛrt·il. LÈigh an doicimÈad˙ \"ld\" ar --enable-auto-import chun na mionsonraÌ a fh·il.\n"
+msgstr "%C: n√≠ f√©idir athr√≥g '%T' a uathiomp√≥rt√°il. L√©igh an doicim√©ad√∫ \"ld\" ar --enable-auto-import chun na mionsonra√≠ a fh√°il.\n"
 
-#: pe-dll.c:2394
+#: pe-dll.c:2714
 #, c-format
 msgid "%XCan't open .lib file: %s\n"
-msgstr "%XNÌ fÈidir comhad .lib a oscailt: %s\n"
+msgstr "%XN√≠ f√©idir comhad .lib a oscailt: %s\n"
 
-#: pe-dll.c:2399
+#: pe-dll.c:2720
 #, c-format
 msgid "Creating library file: %s\n"
-msgstr "Comhad leabharlainne · chruth˙: %s\n"
+msgstr "Comhad leabharlainne √° chruth√∫: %s\n"
+
+#: pe-dll.c:2749
+#, c-format
+msgid "%Xbfd_openr %s: %E\n"
+msgstr "%Xbfd_openr %s: %E\n"
+
+#: pe-dll.c:2761
+#, c-format
+msgid "%X%s(%s): can't find member in non-archive file"
+msgstr "%X%s(%s): n√≠ f√©idir ball a aimsi√∫ i gcomhad nach cartlann √©"
+
+#: pe-dll.c:2773
+#, c-format
+msgid "%X%s(%s): can't find member in archive"
+msgstr "%X%s(%s): n√≠ f√©idir an ball a aimsi√∫ sa chartlann"
+
+#: pe-dll.c:3356
+#, c-format
+msgid "%XError: can't use long section names on this arch\n"
+msgstr "%XEarr√°id: n√≠ f√©idir ainmneacha fada ar rann√°in a √∫s√°id ar an ard√°n seo\n"
+
+#: plugin.c:185 plugin.c:218
+msgid "<no plugin>"
+msgstr "<gan breise√°n>"
+
+#: plugin.c:199 plugin.c:814
+msgid "%P%F: %s: error loading plugin: %s\n"
+msgstr "%P%F: %s: earr√°id agus breise√°n √° l√≥d√°il: %s\n"
+
+#: plugin.c:257
+#, c-format
+msgid "could not create dummy IR bfd: %F%E\n"
+msgstr "n√≠orbh fh√©idir dummy IR bfd a chruth√∫: %F%E\n"
+
+#: plugin.c:350
+msgid "%P%F: %s: non-ELF symbol in ELF BFD!\n"
+msgstr "%P%F: %s: siombail neamh-ELF in ELF BFD!\n"
+
+#: plugin.c:354
+msgid "%P%F: unknown ELF symbol visibility: %d!\n"
+msgstr "%P%F: infheictheacht anaithnid le haghaidh siombail√≠ ELF: %d!\n"
+
+#: plugin.c:591
+msgid "%P: %B: symbol `%s' definition: %d, visibility: %d, resolution: %d\n"
+msgstr "%P: %B: siombail `%s' sainmh√≠ni√∫: %d, infheictheacht: %d, r√©iteach: %d\n"
+
+#: plugin.c:821
+msgid "%P%F: %s: plugin error: %d\n"
+msgstr "%P%F: %s: earr√°id bhreise√°in: %d\n"
+
+#: plugin.c:871
+msgid "%P%F: %s: plugin reported error claiming file\n"
+msgstr "%P%F: %s: tharla earr√°id leis an mbreise√°n agus comhad √° √©ileamh\n"
+
+#: plugin.c:936
+msgid "%P: %s: error in plugin cleanup: %d (ignored)\n"
+msgstr "%P: %s: earr√°id agus breise√°n √° ghlanadh: %d (rinneadh neamhaird de)\n"
+
+#~ msgid "  --support-old-code   Support interworking with old code\n"
+#~ msgstr "  --support-old-code   Tacaigh le comh-inoibritheacht le seanch√≥d\n"
+
+#~ msgid "%B%F: could not read symbols; %E\n"
+#~ msgstr "%B%F: n√≠orbh fh√©idir siombail√≠ a l√©amh; %E\n"
+
+#~ msgid "%F%S nonconstant expression for %s\n"
+#~ msgstr "%F%S slonn inathraitheach do %s\n"
+
+#~ msgid "%F%P: %s (%s): No such file: %E\n"
+#~ msgstr "%F%P: %s (%s): N√≠l a leith√©id de chomhad: %E\n"
+
+#~ msgid "%F%P: %s: No such file: %E\n"
+#~ msgstr "%F%P: %s: N√≠l a leith√©id de chomhad: %E\n"
+
+#~ msgid "%X%P: region %s is full (%B section %s)\n"
+#~ msgstr "%X%P: t√° r√©igi√∫n %s l√°n (%B rann√°n %s)\n"
+
+#~ msgid "%P%F: --relax and -r may not be used together\n"
+#~ msgstr "%P%F: n√≠ cheada√≠tear roghanna --relax agus -r le ch√©ile\n"
+
+#~ msgid "%F%P: bfd_hash_table_init failed: %E\n"
+#~ msgstr "%F%P: theip ar bfd_hash_table_init: %E\n"
+
+#~ msgid "%F%P: bfd_hash_lookup failed: %E\n"
+#~ msgstr "%F%P: theip ar bfd_hash_lookup: %E\n"
+
+#~ msgid "%B%F: could not read symbols\n"
+#~ msgstr "%B%F: n√≠orbh fh√©idir siombail√≠ a l√©amh\n"
+
+#~ msgid ""
+#~ "Set DT_NEEDED tags for DT_NEEDED entries in\n"
+#~ "\t\t\t\tfollowing dynamic libs"
+#~ msgstr ""
+#~ "Socraigh clibeanna DT_NEEDED d'iontr√°lacha DT_NEEDED sna\n"
+#~ "\t\t\t\tleabharlanna dinimici√∫la seo a leanas"
+
+#~ msgid ""
+#~ "Do not set DT_NEEDED tags for DT_NEEDED entries\n"
+#~ "\t\t\t\tin following dynamic libs"
+#~ msgstr ""
+#~ "N√° socraigh clibeanna DT_NEEDED d'iontr√°lacha DT_NEEDED sna\n"
+#~ "\t\t\t\tleabharlanna dinimici√∫la seo a leanas"
+
+#~ msgid "Always set DT_NEEDED for following dynamic libs"
+#~ msgstr "Socraigh DT_NEEDED do na leabharlanna dinimici√∫la seo a leanas i gc√≥na√≠"
+
+#~ msgid "Relax branches on certain targets"
+#~ msgstr "Bog brains√≠ ar spriocanna √°irithe"
+
+#~ msgid "%P%F: may not nest groups (--help for usage)\n"
+#~ msgstr "%P%F: n√≠ cheada√≠tear gr√∫pa√≠ a bheith neadaithe (--help = cabhair)\n"
 
 #~ msgid "%F%S non constant expression for %s\n"
 #~ msgstr "%F%S slonn inathraitheach do %s\n"
 
 #~ msgid "%P%F: out of memory during initialization"
-#~ msgstr "%P%F: cuimhne Ìdithe le linn t˙saithe"
+#~ msgstr "%P%F: cuimhne √≠dithe le linn t√∫saithe"
 
 #~ msgid "%P%F: -static and -shared may not be used together\n"
-#~ msgstr "%P%F: nÌ cheadaÌtear roghanna -static agus -shared le chÈile\n"
+#~ msgstr "%P%F: n√≠ cheada√≠tear roghanna -static agus -shared le ch√©ile\n"
 
 #~ msgid "%P%X: generated"
 #~ msgstr "%P%X: ginte"

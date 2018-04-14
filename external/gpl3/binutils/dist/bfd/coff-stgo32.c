@@ -1,5 +1,5 @@
 /* BFD back-end for Intel 386 COFF files (DJGPP variant with a stub).
-   Copyright (C) 1997-2016 Free Software Foundation, Inc.
+   Copyright (C) 1997-2018 Free Software Foundation, Inc.
    Written by Robert Hoehne.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -318,13 +318,13 @@ create_go32_stub (bfd *abfd)
 	  goto stub_end;
 	}
       /* Compute the size of the stub (it is every thing up
-         to the beginning of the coff image).  */
+	 to the beginning of the coff image).  */
       coff_start = (long) _H (2) * 512L;
       if (_H (1))
 	coff_start += (long) _H (1) - 512L;
 
       /* Currently there is only a fixed stub size of 2048 bytes
-         supported.  */
+	 supported.  */
       if (coff_start != 2048)
 	{
 	  close (f);

@@ -1,3 +1,9 @@
+2017-11-07  Alan Modra  <amodra@gmail.com>
+
+	* configure.ac: Invole AM_GNU_GETTEXT with need_ngettext.
+	* configure: Regenerate.
+	* aclocal.m4: Regenerate.
+
 2015-08-31  Alan Modra  <amodra@gmail.com>
 
 	* configure: Regenerate.

@@ -1,5 +1,5 @@
 /* BFD back-end for TMS320C30 a.out binaries.
-   Copyright (C) 1998-2016 Free Software Foundation, Inc.
+   Copyright (C) 1998-2018 Free Software Foundation, Inc.
    Contributed by Steven Haworth (steve@pm.cse.rmit.edu.au)
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -21,10 +21,10 @@
 
 #define TARGET_IS_BIG_ENDIAN_P
 #define N_HEADER_IN_TEXT(x)	1
-#define TEXT_START_ADDR 	1024
-#define TARGET_PAGE_SIZE 	128
-#define SEGMENT_SIZE   		TARGET_PAGE_SIZE
-#define DEFAULT_ARCH 		bfd_arch_tic30
+#define TEXT_START_ADDR		1024
+#define TARGET_PAGE_SIZE	128
+#define SEGMENT_SIZE		TARGET_PAGE_SIZE
+#define DEFAULT_ARCH		bfd_arch_tic30
 #define ARCH_SIZE 32
 
 /* Do not "beautify" the CONCAT* macro args.  Traditional C will not
@@ -43,11 +43,11 @@
 
 #define MY_reloc_howto(BFD, REL, IN, EX, PC)   tic30_aout_reloc_howto (BFD, REL, & IN, & EX, & PC)
 
-#define MY_final_link_relocate    tic30_aout_final_link_relocate
-#define MY_object_p               tic30_aout_object_p
-#define MY_mkobject               NAME (aout,mkobject)
+#define MY_final_link_relocate	  tic30_aout_final_link_relocate
+#define MY_object_p		  tic30_aout_object_p
+#define MY_mkobject		  NAME (aout,mkobject)
 #define MY_write_object_contents  tic30_aout_write_object_contents
-#define MY_set_sizes              tic30_aout_set_sizes
+#define MY_set_sizes		  tic30_aout_set_sizes
 
 #ifndef MY_exec_hdr_flags
 #define MY_exec_hdr_flags 1
@@ -324,9 +324,9 @@ tic30_aout_reloc_howto (bfd *abfd,
  (bfd_get_8 (BFD, ADDR + 2)      )
 
 #define bfd_putb_24(BFD,DATA,ADDR)				\
- bfd_put_8 (BFD, (bfd_byte) ((DATA >> 16) & 0xFF), ADDR    );	\
+ bfd_put_8 (BFD, (bfd_byte) ((DATA >> 16) & 0xFF), ADDR	   );	\
  bfd_put_8 (BFD, (bfd_byte) ((DATA >>  8) & 0xFF), ADDR + 1);	\
- bfd_put_8 (BFD, (bfd_byte) ( DATA        & 0xFF), ADDR + 2)
+ bfd_put_8 (BFD, (bfd_byte) ( DATA	  & 0xFF), ADDR + 2)
 
 /* Set parameters about this a.out file that are machine-dependent.
    This routine is called from some_aout_object_p just before it returns.  */
@@ -828,7 +828,7 @@ tic30_aout_set_arch_mach (bfd *abfd,
   _bfd_archive_bsd_construct_extended_name_table
 #endif
 #ifndef	MY_write_armap
-#define	MY_write_armap			bsd_write_armap
+#define	MY_write_armap			_bfd_bsd_write_armap
 #endif
 #ifndef MY_read_ar_hdr
 #define MY_read_ar_hdr			_bfd_generic_read_ar_hdr
@@ -840,12 +840,12 @@ tic30_aout_set_arch_mach (bfd *abfd,
 #define	MY_truncate_arname		bfd_bsd_truncate_arname
 #endif
 #ifndef MY_update_armap_timestamp
-#define MY_update_armap_timestamp 	_bfd_archive_bsd_update_armap_timestamp
+#define MY_update_armap_timestamp	_bfd_archive_bsd_update_armap_timestamp
 #endif
 
 /* No core file defined here -- configure in trad-core.c separately.  */
 #ifndef	MY_core_file_failing_command
-#define	MY_core_file_failing_command 	_bfd_nocore_core_file_failing_command
+#define	MY_core_file_failing_command	_bfd_nocore_core_file_failing_command
 #endif
 #ifndef	MY_core_file_failing_signal
 #define	MY_core_file_failing_signal	_bfd_nocore_core_file_failing_signal
@@ -855,7 +855,7 @@ tic30_aout_set_arch_mach (bfd *abfd,
 				_bfd_nocore_core_file_matches_executable_p
 #endif
 #ifndef	MY_core_file_pid
-#define	MY_core_file_pid  		_bfd_nocore_core_file_pid
+#define	MY_core_file_pid		_bfd_nocore_core_file_pid
 #endif
 #ifndef	MY_core_file_p
 #define	MY_core_file_p			_bfd_dummy_target
@@ -904,6 +904,9 @@ tic30_aout_set_arch_mach (bfd *abfd,
 #endif
 #ifndef MY_canonicalize_reloc
 #define MY_canonicalize_reloc NAME (aout, canonicalize_reloc)
+#endif
+#ifndef MY_set_reloc
+#define MY_set_reloc _bfd_generic_set_reloc
 #endif
 #ifndef MY_make_empty_symbol
 #define MY_make_empty_symbol NAME (aout, make_empty_symbol)
@@ -964,6 +967,9 @@ tic30_aout_set_arch_mach (bfd *abfd,
 #endif
 #ifndef MY_bfd_define_common_symbol
 #define MY_bfd_define_common_symbol bfd_generic_define_common_symbol
+#endif
+#ifndef MY_bfd_define_start_stop
+#define MY_bfd_define_start_stop bfd_generic_define_start_stop
 #endif
 #ifndef MY_bfd_reloc_type_lookup
 #define MY_bfd_reloc_type_lookup tic30_aout_reloc_type_lookup

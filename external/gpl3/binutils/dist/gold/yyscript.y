@@ -1,6 +1,6 @@
 /* yyscript.y -- linker script grammar for gold.  */
 
-/* Copyright (C) 2006-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2006-2018 Free Software Foundation, Inc.
    Written by Ian Lance Taylor <iant@google.com>.
 
    This file is part of gold.
@@ -137,6 +137,7 @@
 %token FORCE_COMMON_ALLOCATION
 %token GLOBAL		/* global */
 %token GROUP
+%token HIDDEN
 %token HLL
 %token INCLUDE
 %token INHIBIT_COMMON_ALLOCATION
@@ -864,6 +865,8 @@ assignment:
 	      Expression_ptr e = script_exp_binary_bitwise_or(s, $3);
 	      script_set_symbol(closure, $1.value, $1.length, e, 0, 0);
 	    }
+	| HIDDEN '(' string '=' parse_exp ')'
+	    { script_set_symbol(closure, $3.value, $3.length, $5, 0, 1); }
 	| PROVIDE '(' string '=' parse_exp ')'
 	    { script_set_symbol(closure, $3.value, $3.length, $5, 1, 0); }
 	| PROVIDE_HIDDEN '(' string '=' parse_exp ')'

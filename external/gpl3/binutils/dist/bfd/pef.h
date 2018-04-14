@@ -1,5 +1,5 @@
 /* PEF support for BFD.
-   Copyright (C) 1999-2016 Free Software Foundation, Inc.
+   Copyright (C) 1999-2018 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -182,6 +182,6 @@ int  bfd_pef_print_loader_section   (bfd *, FILE *);
 void bfd_pef_print_loader_header    (bfd *, bfd_pef_loader_header *, FILE *);
 int  bfd_pef_parse_imported_library (bfd *, unsigned char *, size_t, bfd_pef_imported_library *);
 int  bfd_pef_parse_imported_symbol  (bfd *, unsigned char *, size_t, bfd_pef_imported_symbol *);
-int  bfd_pef_scan_section           (bfd *, bfd_pef_section *);
-int  bfd_pef_scan_start_address     (bfd *);
-int  bfd_pef_scan                   (bfd *, bfd_pef_header *, bfd_pef_data_struct *);
+int  bfd_pef_scan_section	    (bfd *, bfd_pef_section *);
+int  bfd_pef_scan_start_address	    (bfd *);
+int  bfd_pef_scan		    (bfd *, bfd_pef_header *, bfd_pef_data_struct *);

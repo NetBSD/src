@@ -1,6 +1,6 @@
 // system.h -- general definitions for gold   -*- C++ -*-
 
-// Copyright (C) 2006-2016 Free Software Foundation, Inc.
+// Copyright (C) 2006-2018 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -49,8 +49,14 @@
 # define gettext(Msgid) (Msgid)
 # define dgettext(Domainname, Msgid) (Msgid)
 # define dcgettext(Domainname, Msgid, Category) (Msgid)
-# define textdomain(Domainname) do {} while (0) /* nothing */
-# define bindtextdomain(Domainname, Dirname) do {} while (0) /* nothing */
+# define ngettext(Msgid1, Msgid2, n) \
+  (n == 1 ? Msgid1 : Msgid2)
+# define dngettext(Domainname, Msgid1, Msgid2, n) \
+  (n == 1 ? Msgid1 : Msgid2)
+# define dcngettext(Domainname, Msgid1, Msgid2, n, Category) \
+  (n == 1 ? Msgid1 : Msgid2)
+# define textdomain(Domainname) do {} while (0)
+# define bindtextdomain(Domainname, Dirname) do {} while (0)
 # define _(String) (String)
 # define N_(String) (String)
 #endif
