@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.13 2017/04/08 17:38:43 scole Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.14 2018/04/14 19:58:20 scole Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -133,6 +133,14 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 		KASSERT(l1 == &lwp0);
 	}
 
+	/*
+	 * XXX this seems incomplete, each thread apparently needs its
+	 * own stack and bspstore, and to re-adjust the RSE "ndirty"
+	 * registers.  See
+	 * http://fxr.watson.org/fxr/source/ia64/ia64/vm_machdep.c?v=FREEBSD10#L262
+	 * Also should verify u-area usage is consistent, which may be
+	 * different than freebsd.
+	 */
 	*pcb2 = *pcb1;
 
 	l2->l_md.md_flags = l1->l_md.md_flags;
