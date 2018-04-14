@@ -1,6 +1,6 @@
 /* This file defines the interface between the Arm simulator and GDB.
 
-   Copyright (C) 2002-2015 Free Software Foundation, Inc.
+   Copyright (C) 2002-2016 Free Software Foundation, Inc.
 
    Contributed by Red Hat.
 
@@ -21,10 +21,6 @@
 
 #if !defined (SIM_ARM_H)
 #define SIM_ARM_H
-
-#ifdef __cplusplus
-extern "C" { // }
-#endif
 
 enum sim_arm_regs
 {
@@ -104,9 +100,5 @@ enum sim_arm_regs
   SIM_ARM_IWMMXT_COP1R14_REGNUM,
   SIM_ARM_IWMMXT_COP1R15_REGNUM
 };
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

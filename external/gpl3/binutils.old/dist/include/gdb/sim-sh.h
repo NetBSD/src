@@ -1,5 +1,5 @@
 /* This file defines the interface between the sh simulator and gdb.
-   Copyright (C) 2000-2015 Free Software Foundation, Inc.
+   Copyright (C) 2000-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,10 +18,6 @@
 
 #if !defined (SIM_SH_H)
 #define SIM_SH_H
-
-#ifdef __cplusplus
-extern "C" { // }
-#endif
 
 /* The simulator makes use of the following register information. */
 
@@ -161,9 +157,5 @@ enum
   SIM_SH64_NR_TR_REGS = 8, /* number of target registers */
   SIM_SH64_NR_FP_REGS = 64 /* number of floating point registers */
 };
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

@@ -1,4 +1,4 @@
-@c Copyright (C) 2000-2015 Free Software Foundation, Inc.
+@c Copyright (C) 2000-2016 Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
 
@@ -64,10 +64,14 @@ Assemble for ARC EM.  Aliases: @code{-mEM}
 @cindex @code{mHS} command line option, ARC
 Assemble for ARC HS.  Aliases: @code{-mHS}, @code{-mav2hs}.
 
+@item nps400
+@cindex @code{mnps400} command line option, ARC
+Assemble for ARC 700 with NPS-400 extended instructions.
+
 @end table
 
-Note: the @code{.cpu} directive can to be used to select a core
-variant from within assembly code.
+Note: the @code{.cpu} directive (@pxref{ARC Directives}) can
+to be used to select a core variant from within assembly code.
 
 @cindex @code{-EB} command line option, ARC
 @item -EB
@@ -84,6 +88,29 @@ default.
 @item -mcode-density
 This option turns on Code Density instructions.  Only valid for ARC EM
 processors.
+
+@cindex @code{-mrelax} command line option, ARC
+@item -mrelax
+Enable support for assembly-time relaxation.  The assembler will
+replace a longer version of an instruction with a shorter one,
+whenever it is possible.
+
+@cindex @code{-mnps400} command line option, ARC
+@item -mnps400
+Enable support for NPS-400 extended instructions.
+
+@cindex @code{-mspfp} command line option, ARC
+@item -mspfp
+Enable support for single-precision floating point instructions.
+
+@cindex @code{-mdpfp} command line option, ARC
+@item -mdpfp
+Enable support for double-precision floating point instructions.
+
+@cindex @code{-mfpuda} command line option, ARC
+@item -mfpuda
+Enable support for double-precision assist floating point instructions.
+Only valid for ARC EM processors.
 
 @end table
 
@@ -314,7 +341,7 @@ machine directives:
 @table @code
 
 @cindex @code{lcomm} directive
-@item .lcomm @var{symbol} , @var{length}[, @var{alignment}]
+@item .lcomm @var{symbol}, @var{length}[, @var{alignment}]
 Reserve @var{length} (an absolute expression) bytes for a local common
 denoted by @var{symbol}.  The section and value of @var{symbol} are
 those of the new local common.  The addresses are allocated in the bss
@@ -329,12 +356,12 @@ two.  If no alignment is specified, as will set the alignment to the
 largest power of two less than or equal to the size of the symbol, up
 to a maximum of 16.
 
-@cindex @code{lcommon} directive
-@item .lcommon @var{symbol} , @var{length}[, @var{alignment}]
+@cindex @code{lcommon} directive, ARC
+@item .lcommon @var{symbol}, @var{length}[, @var{alignment}]
 The same as @code{lcomm} directive.
 
 @cindex @code{cpu} directive, ARC
-@cindex @code{cpu} directive, ARC
+@item .cpu @var{cpu}
 The @code{.cpu} directive must be followed by the desired core
 version.  Permitted values for CPU are:
 @table @code
@@ -343,6 +370,9 @@ Assemble for the ARC600 instruction set.
 
 @item ARC700
 Assemble for the ARC700 instruction set.
+
+@item NPS400
+Assemble for the NPS400 instruction set.
 
 @item EM
 Assemble for the ARC EM instruction set.
@@ -355,6 +385,175 @@ Assemble for the ARC HS instruction set.
 Note: the @code{.cpu} directive overrides the command line option
 @code{-mcpu=@var{cpu}}; a warning is emitted when the version is not
 consistent between the two.
+
+@item .extAuxRegister @var{name}, @var{addr}, @var{mode}
+@cindex @code{extAuxRegister} directive, ARC
+Auxiliary registers can be defined in the assembler source code by
+using this directive.  The first parameter, @var{name}, is the name of the
+new auxiliary register.  The second parameter, @var{addr}, is
+address the of the auxiliary register.  The third parameter,
+@var{mode}, specifies whether the register is readable and/or writable
+and is one of:
+@table @code
+@item r
+Read only;
+
+@item w
+Write only;
+
+@item r|w
+Read and write.
+
+@end table
+
+For example:
+@example
+	.extAuxRegister mulhi, 0x12, w
+@end example
+specifies a write only extension auxiliary register, @var{mulhi} at
+address 0x12.
+
+@item .extCondCode @var{suffix}, @var{val}
+@cindex @code{extCondCode} directive, ARC
+ARC supports extensible condition codes.  This directive defines a new
+condition code, to be known by the suffix, @var{suffix} and will
+depend on the value, @var{val} in the condition code.
+
+For example:
+@example
+	.extCondCode is_busy,0x14
+	add.is_busy  r1,r2,r3
+@end example
+will only execute the @code{add} instruction if the condition code
+value is 0x14.
+
+@item .extCoreRegister @var{name}, @var{regnum}, @var{mode}, @var{shortcut}
+@cindex @code{extCoreRegister} directive, ARC
+Specifies an extension core register named @var{name} as a synonym for
+the register numbered @var{regnum}.  The register number must be
+between 32 and 59.  The third argument, @var{mode}, indicates whether
+the register is readable and/or writable and is one of:
+@table @code
+@item r
+Read only;
+
+@item w
+Write only;
+
+@item r|w
+Read and write.
+
+@end table
+
+The final parameter, @var{shortcut} indicates whether the register has
+a short cut in the pipeline.  The valid values are:
+@table @code
+@item can_shortcut
+The register has a short cut in the pipeline;
+
+@item cannot_shortcut
+The register does not have a short cut in the pipeline.
+@end table
+
+For example:
+@example
+	.extCoreRegister mlo, 57, r , can_shortcut
+@end example
+defines a read only extension core register, @code{mlo}, which is
+register 57, and can short cut the pipeline.
+
+@item .extInstruction @var{name}, @var{opcode}, @var{subopcode}, @var{suffixclass}, @var{syntaxclass}
+@cindex @code{extInstruction} directive, ARC
+ARC allows the user to specify extension instructions.  These
+extension instructions are not macros; the assembler creates encodings
+for use of these instructions according to the specification by the
+user.
+
+The first argument, @var{name}, gives the name of the instruction.
+
+The second argument, @var{opcode}, is the opcode to be used (bits 31:27
+in the encoding).
+
+The third argument, @var{subopcode}, is the sub-opcode to be used, but
+the correct value also depends on the fifth argument,
+@var{syntaxclass}
+
+The fourth argument, @var{suffixclass}, determines the kinds of
+suffixes to be allowed.  Valid values are:
+@table @code
+@item SUFFIX_NONE
+No suffixes are permitted;
+
+@item SUFFIX_COND
+Conditional suffixes are permitted;
+
+@item SUFFIX_FLAG
+Flag setting suffixes are permitted.
+
+@item SUFFIX_COND|SUFFIX_FLAG
+Both conditional and flag setting suffices are permitted.
+
+@end table
+
+The fifth and final argument, @var{syntaxclass}, determines the syntax
+class for the instruction.  It can have the following values:
+@table @code
+@item SYNTAX_2OP
+Two Operand Instruction;
+
+@item SYNTAX_3OP
+Three Operand Instruction.
+
+@item SYNTAX_1OP
+One Operand Instruction.
+
+@item SYNTAX_NOP
+No Operand Instruction.
+@end table
+
+The syntax class may be followed by @samp{|} and one of the following
+modifiers.
+@table @code
+
+@item OP1_MUST_BE_IMM
+Modifies syntax class @code{SYNTAX_3OP}, specifying that the first
+operand of a three-operand instruction must be an immediate (i.e., the
+result is discarded).  This is usually used to set the flags using
+specific instructions and not retain results.
+
+@item OP1_IMM_IMPLIED
+Modifies syntax class @code{SYNTAX_20P}, specifying that there is an
+implied immediate destination operand which does not appear in the
+syntax.
+
+For example, if the source code contains an instruction like:
+@example
+inst r1,r2
+@end example
+the first argument is an implied immediate (that is, the result is
+discarded).  This is the same as though the source code were: inst
+0,r1,r2.
+
+@end table
+
+For example, defining a 64-bit multiplier with immediate operands:
+@example
+	.extInstruction  mp64, 0x07, 0x2d, SUFFIX_COND|SUFFIX_FLAG,
+			 SYNTAX_3OP|OP1_MUST_BE_IMM
+@end example
+which specifies an extension instruction named @code{mp64} with 3
+operands.  It sets the flags and can be used with a condition code,
+for which the first operand is an immediate, i.e. equivalent to
+discarding the result of the operation.
+
+A two operands instruction variant would be:
+@example
+	.extInstruction mul64, 0x07, 0x2d, SUFFIX_COND,
+	SYNTAX_2OP|OP1_IMM_IMPLIED
+@end example
+which describes a two operand instruction with an implicit first
+immediate operand.  The result of this operation would be discarded.
+
 @end table
 
 @node ARC Modifiers

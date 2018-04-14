@@ -1,5 +1,5 @@
 /* dlltool.c -- tool to generate stuff for PE style DLLs
-   Copyright (C) 1995-2015 Free Software Foundation, Inc.
+   Copyright (C) 1995-2016 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -1253,7 +1253,7 @@ def_import (const char *app_name, const char *module, const char *dllext,
 	    const char *entry, int ord_val, const char *its_name)
 {
   const char *application_name;
-  char *buf;
+  char *buf = NULL;
 
   if (entry != NULL)
     application_name = entry;
@@ -1266,13 +1266,12 @@ def_import (const char *app_name, const char *module, const char *dllext,
     }
 
   if (dllext != NULL)
-    {
-      buf = (char *) alloca (strlen (module) + strlen (dllext) + 2);
-      sprintf (buf, "%s.%s", module, dllext);
-      module = buf;
-    }
+    module = buf = concat (module, ".", dllext, NULL);
 
   append_import (application_name, module, ord_val, its_name);
+
+  if (buf)
+    free (buf);
 }
 
 void
@@ -1334,7 +1333,7 @@ run (const char *what, char *args)
     if (*s == ' ')
       i++;
   i++;
-  argv = alloca (sizeof (char *) * (i + 3));
+  argv = xmalloc (sizeof (char *) * (i + 3));
   i = 0;
   argv[i++] = what;
   s = args;
@@ -1353,6 +1352,7 @@ run (const char *what, char *args)
 
   pid = pexecute (argv[0], (char * const *) argv, program_name, temp_base,
 		  &errmsg_fmt, &errmsg_arg, PEXECUTE_ONE | PEXECUTE_SEARCH);
+  free(argv);
 
   if (pid == -1)
     {
@@ -1986,12 +1986,13 @@ assemble_file (const char * source, const char * dest)
 {
   char * cmd;
 
-  cmd = (char *) alloca (strlen (ASM_SWITCHES) + strlen (as_flags)
-			 + strlen (source) + strlen (dest) + 50);
+  cmd = xmalloc (strlen (ASM_SWITCHES) + strlen (as_flags)
+		 + strlen (source) + strlen (dest) + 50);
 
   sprintf (cmd, "%s %s -o %s %s", ASM_SWITCHES, as_flags, dest, source);
 
   run (as_name, cmd);
+  free (cmd);
 }
 
 static const char * temp_file_to_remove[5];
@@ -3295,7 +3296,7 @@ gen_lib_file (int delay)
     {
       char *name;
 
-      name = (char *) alloca (strlen (TMP_STUB) + 10);
+      name = xmalloc (strlen (TMP_STUB) + 10);
       for (i = 0; (exp = d_exports_lexically[i]); i++)
 	{
 	  /* Don't delete non-existent stubs for PRIVATE entries.  */
@@ -3313,6 +3314,7 @@ gen_lib_file (int delay)
 		non_fatal (_("cannot delete %s: %s"), name, strerror (errno));
 	    }
 	}
+      free (name);
     }
 
   inform (_("Created lib file"));

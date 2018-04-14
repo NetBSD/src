@@ -1,6 +1,6 @@
 /* AArch64 assembler/disassembler support.
 
-   Copyright (C) 2009-2015 Free Software Foundation, Inc.
+   Copyright (C) 2009-2016 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of GNU Binutils.
@@ -535,6 +535,9 @@ struct aarch64_opcode
 
   /* Flags providing information about this instruction */
   uint32_t flags;
+
+  /* If non-NULL, a function to verify that a given instruction is valid.  */
+  bfd_boolean (* verifier) (const struct aarch64_opcode *, const aarch64_insn);
 };
 
 typedef struct aarch64_opcode aarch64_opcode;
@@ -745,8 +748,8 @@ struct aarch64_opnd_info
 	} reg;
       struct
 	{
-	  unsigned regno : 5;
-	  unsigned index : 4;
+	  unsigned int regno;
+	  int64_t index;
 	} reglane;
       /* e.g. LVn.  */
       struct
@@ -756,7 +759,7 @@ struct aarch64_opnd_info
 	  /* 1 if it is a list of reg element.  */
 	  unsigned has_index : 1;
 	  /* Lane index; valid only when has_index is 1.  */
-	  unsigned index : 4;
+	  int64_t index;
 	} reglist;
       /* e.g. immediate or pc relative address offset.  */
       struct

@@ -1,5 +1,5 @@
 /* ppc.h -- Header file for PowerPC opcode table
-   Copyright (C) 1994-2015 Free Software Foundation, Inc.
+   Copyright (C) 1994-2016 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support
 
    This file is part of GDB, GAS, and the GNU binutils.
@@ -23,6 +23,10 @@
 #define PPC_H
 
 #include "bfd_stdint.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef uint64_t ppc_cpu_t;
 
@@ -436,5 +440,9 @@ ppc_optional_operand_value (const struct powerpc_operand *operand)
     return (operand+1)->shift;
   return 0;
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* PPC_H */

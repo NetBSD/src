@@ -1,5 +1,5 @@
 /* CGEN generic disassembler support code.
-   Copyright (C) 1996-2015 Free Software Foundation, Inc.
+   Copyright (C) 1996-2016 Free Software Foundation, Inc.
 
    This file is part of libopcodes.
 
@@ -40,7 +40,8 @@ count_decodable_bits (const CGEN_INSN *insn)
 {
   unsigned mask = CGEN_INSN_BASE_MASK (insn);
   int bits = 0;
-  int m;
+  unsigned m;
+
   for (m = 1; m != 0; m <<= 1)
     {
       if (mask & m)

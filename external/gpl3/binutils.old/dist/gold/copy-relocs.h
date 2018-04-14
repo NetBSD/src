@@ -1,6 +1,6 @@
 // copy-relocs.h -- handle COPY relocations for gold   -*- C++ -*-
 
-// Copyright (C) 2006-2015 Free Software Foundation, Inc.
+// Copyright (C) 2006-2016 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -123,6 +123,7 @@ class Copy_relocs
   // Make a new COPY reloc and emit it.
   void
   make_copy_reloc(Symbol_table*, Layout*, Sized_symbol<size>*,
+		  Sized_relobj_file<size, big_endian>* object,
 		  Output_data_reloc<sh_type, true, size, big_endian>*);
 
   // A list of relocs to be saved.

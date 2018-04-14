@@ -1,5 +1,5 @@
 /* tc-rl78.c -- Assembler for the Renesas RL78
-   Copyright (C) 2011-2015 Free Software Foundation, Inc.
+   Copyright (C) 2011-2016 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -102,6 +102,7 @@ rl78_linkrelax_addr16 (void)
 void
 rl78_linkrelax_branch (void)
 {
+  rl78_relax (RL78_RELAX_BRANCH, 0);
   rl78_bytes.link_relax |= RL78_RELAXA_BRA;
 }
 
@@ -130,7 +131,7 @@ rl78_prefix (int p)
 }
 
 int
-rl78_has_prefix ()
+rl78_has_prefix (void)
 {
   return rl78_bytes.n_prefix;
 }
@@ -280,6 +281,7 @@ rl78_field (int val, int pos, int sz)
 enum options
 {
   OPTION_RELAX = OPTION_MD_BASE,
+  OPTION_NORELAX,
   OPTION_G10,
   OPTION_G13,
   OPTION_G14,
@@ -294,6 +296,7 @@ const char * md_shortopts = RL78_SHORTOPTS;
 struct option md_longopts[] =
 {
   {"relax", no_argument, NULL, OPTION_RELAX},
+  {"norelax", no_argument, NULL, OPTION_NORELAX},
   {"mg10", no_argument, NULL, OPTION_G10},
   {"mg13", no_argument, NULL, OPTION_G13},
   {"mg14", no_argument, NULL, OPTION_G14},
@@ -305,12 +308,15 @@ struct option md_longopts[] =
 size_t md_longopts_size = sizeof (md_longopts);
 
 int
-md_parse_option (int c, char * arg ATTRIBUTE_UNUSED)
+md_parse_option (int c, const char * arg ATTRIBUTE_UNUSED)
 {
   switch (c)
     {
     case OPTION_RELAX:
       linkrelax = 1;
+      return 1;
+    case OPTION_NORELAX:
+      linkrelax = 0;
       return 1;
 
     case OPTION_G10:
@@ -430,7 +436,7 @@ md_number_to_chars (char * buf, valueT val, int n)
 }
 
 static void
-require_end_of_expr (char *fname)
+require_end_of_expr (const char *fname)
 {
   while (* input_line_pointer == ' '
 	 || * input_line_pointer == '\t')
@@ -448,7 +454,7 @@ require_end_of_expr (char *fname)
 
 static struct
 {
-  char * fname;
+  const char * fname;
   int    reloc;
 }
 reloc_functions[] =
@@ -496,7 +502,7 @@ rl78_frag_init (fragS * fragP)
 {
   if (rl78_bytes.n_relax || rl78_bytes.link_relax)
     {
-      fragP->tc_frag_data = malloc (sizeof (rl78_bytesT));
+      fragP->tc_frag_data = XNEW (rl78_bytesT);
       memcpy (fragP->tc_frag_data, & rl78_bytes, sizeof (rl78_bytesT));
     }
   else
@@ -527,7 +533,7 @@ rl78_handle_align (fragS * frag)
     }
 }
 
-char *
+const char *
 md_atof (int type, char * litP, int * sizeP)
 {
   return ieee_md_atof (type, litP, sizeP, target_big_endian);
@@ -757,7 +763,10 @@ typedef enum
   OT_bt_sfr,
   OT_bt_es,
   OT_bc,
-  OT_bh
+  OT_bh,
+  OT_sk,
+  OT_call,
+  OT_br,
 } op_type_T;
 
 /* We're looking for these types of relaxations:
@@ -780,8 +789,10 @@ typedef enum
    a different size later.  */
 
 static op_type_T
-rl78_opcode_type (char * op)
+rl78_opcode_type (char * ops)
 {
+  unsigned char *op = (unsigned char *)ops;
+
   if (op[0] == 0x31
       && ((op[1] & 0x0f) == 0x05
 	  || (op[1] & 0x0f) == 0x03))
@@ -804,6 +815,20 @@ rl78_opcode_type (char * op)
   if (op[0] == 0x61
       && (op[1] & 0xef) == 0xc3)
     return OT_bh;
+
+  if (op[0] == 0x61
+      && (op[1] & 0xcf) == 0xc8)
+    return OT_sk;
+
+  if (op[0] == 0x61
+      && (op[1] & 0xef) == 0xe3)
+    return OT_sk;
+
+  if (op[0] == 0xfc)
+    return OT_call;
+
+  if ((op[0] & 0xec) == 0xec)
+    return OT_br;
 
   return OT_other;
 }
@@ -901,6 +926,11 @@ rl78_relax_frag (segT segment ATTRIBUTE_UNUSED, fragS * fragP, long stretch)
 			   fragP->tc_frag_data->relax[ri].type != RL78_RELAX_BRANCH,
 			   & sym_addr))
     {
+      /* If we don't expect the linker to do relaxing, don't emit
+	 expanded opcodes that only the linker will relax.  */
+      if (!linkrelax)
+	return newsize - oldsize;
+
       /* If we don't, we must use the maximum size for the linker.  */
       switch (fragP->tc_frag_data->relax[ri].type)
 	{
@@ -920,7 +950,10 @@ rl78_relax_frag (segT segment ATTRIBUTE_UNUSED, fragS * fragP, long stretch)
 	    case OT_bh:
 	      newsize = 6;
 	      break;
-	    case OT_other:
+	    case OT_sk:
+	      newsize = 2;
+	      break;
+	    default:
 	      newsize = oldsize;
 	      break;
 	    }
@@ -967,7 +1000,10 @@ rl78_relax_frag (segT segment ATTRIBUTE_UNUSED, fragS * fragP, long stretch)
 	  else
 	    newsize = 6;
 	  break;
-	case OT_other:
+	case OT_sk:
+	  newsize = 2;
+	  break;
+	default:
 	  newsize = oldsize;
 	  break;
 	}
@@ -1062,6 +1098,7 @@ md_convert_frag (bfd *   abfd ATTRIBUTE_UNUSED,
 	case OPCODE (OT_bt, 3): /* BT A,$ - no change.  */
 	  disp -= 3;
 	  op[2] = disp;
+	  reloc_type = keep_reloc ? BFD_RELOC_8_PCREL : BFD_RELOC_NONE;
 	  break;
 
 	case OPCODE (OT_bt, 6): /* BT A,$ - long version.  */
@@ -1079,6 +1116,7 @@ md_convert_frag (bfd *   abfd ATTRIBUTE_UNUSED,
 	case OPCODE (OT_bt_sfr, 4): /* BT PSW,$ - no change.  */
 	  disp -= 4;
 	  op[3] = disp;
+	  reloc_type = keep_reloc ? BFD_RELOC_8_PCREL : BFD_RELOC_NONE;
 	  break;
 
 	case OPCODE (OT_bt_sfr, 7): /* BT PSW,$ - long version.  */
@@ -1096,6 +1134,7 @@ md_convert_frag (bfd *   abfd ATTRIBUTE_UNUSED,
 	case OPCODE (OT_bt_es, 4): /* BT ES:[HL],$ - no change.  */
 	  disp -= 4;
 	  op[3] = disp;
+	  reloc_type = keep_reloc ? BFD_RELOC_8_PCREL : BFD_RELOC_NONE;
 	  break;
 
 	case OPCODE (OT_bt_es, 7): /* BT PSW,$ - long version.  */
@@ -1113,6 +1152,7 @@ md_convert_frag (bfd *   abfd ATTRIBUTE_UNUSED,
 	case OPCODE (OT_bc, 2): /* BC $ - no change.  */
 	  disp -= 2;
 	  op[1] = disp;
+	  reloc_type = keep_reloc ? BFD_RELOC_8_PCREL : BFD_RELOC_NONE;
 	  break;
 
 	case OPCODE (OT_bc, 5): /* BC $ - long version.  */
@@ -1130,6 +1170,7 @@ md_convert_frag (bfd *   abfd ATTRIBUTE_UNUSED,
 	case OPCODE (OT_bh, 3): /* BH $ - no change.  */
 	  disp -= 3;
 	  op[2] = disp;
+	  reloc_type = keep_reloc ? BFD_RELOC_8_PCREL : BFD_RELOC_NONE;
 	  break;
 
 	case OPCODE (OT_bh, 6): /* BC $ - long version.  */
@@ -1144,11 +1185,13 @@ md_convert_frag (bfd *   abfd ATTRIBUTE_UNUSED,
 	  reloc_adjust = 2;
 	  break;
 
-	default:
-	  fprintf(stderr, "Missed case %d %d at 0x%lx\n",
-		  rl78_opcode_type (fragP->fr_opcode), fragP->fr_subtype, mypc);
-	  abort ();
+	case OPCODE (OT_sk, 2): /* SK<cond> - no change */
+	  reloc_type = keep_reloc ? BFD_RELOC_16_PCREL : BFD_RELOC_NONE;
+	  break;
 
+	default:
+	  reloc_type = fix ? fix->fx_r_type : BFD_RELOC_NONE;
+	  break;
 	}
       break;
 
@@ -1215,6 +1258,12 @@ tc_gen_reloc (asection * seg ATTRIBUTE_UNUSED, fixS * fixp)
       return reloc;
     }
 
+  if (fixp->fx_r_type == BFD_RELOC_RL78_RELAX && !linkrelax)
+    {
+      reloc[0] = NULL;
+      return reloc;
+    }
+
   if (fixp->fx_subsy
       && S_GET_SEGMENT (fixp->fx_subsy) == absolute_section)
     {
@@ -1222,8 +1271,8 @@ tc_gen_reloc (asection * seg ATTRIBUTE_UNUSED, fixS * fixp)
       fixp->fx_subsy = NULL;
     }
 
-  reloc[0]		  = (arelent *) xmalloc (sizeof (arelent));
-  reloc[0]->sym_ptr_ptr   = (asymbol **) xmalloc (sizeof (asymbol *));
+  reloc[0]		  = XNEW (arelent);
+  reloc[0]->sym_ptr_ptr   = XNEW (asymbol *);
   * reloc[0]->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_addsy);
   reloc[0]->address       = fixp->fx_frag->fr_address + fixp->fx_where;
   reloc[0]->addend        = fixp->fx_offset;
@@ -1235,8 +1284,8 @@ tc_gen_reloc (asection * seg ATTRIBUTE_UNUSED, fixS * fixp)
     }
 
 #define OPX(REL,SYM,ADD)							\
-  reloc[rp]		   = (arelent *) xmalloc (sizeof (arelent));		\
-  reloc[rp]->sym_ptr_ptr   = (asymbol **) xmalloc (sizeof (asymbol *));		\
+  reloc[rp]		   = XNEW (arelent);		\
+  reloc[rp]->sym_ptr_ptr   = XNEW (asymbol *);		\
   reloc[rp]->howto         = bfd_reloc_type_lookup (stdoutput, REL);		\
   reloc[rp]->addend        = ADD;						\
   * reloc[rp]->sym_ptr_ptr = SYM;						\
@@ -1376,6 +1425,11 @@ md_apply_fix (struct fix * f ATTRIBUTE_UNUSED,
   char * op;
   unsigned long val;
 
+  /* We always defer overflow checks for these to the linker, as it
+     needs to do PLT stuff.  */
+  if (f->fx_r_type == BFD_RELOC_RL78_CODE)
+    f->fx_no_overflow = 1;
+
   if (f->fx_addsy && S_FORCE_RELOC (f->fx_addsy, 1))
     return;
   if (f->fx_subsy && S_FORCE_RELOC (f->fx_subsy, 1))
@@ -1384,13 +1438,16 @@ md_apply_fix (struct fix * f ATTRIBUTE_UNUSED,
   op = f->fx_frag->fr_literal + f->fx_where;
   val = (unsigned long) * t;
 
+  if (f->fx_addsy == NULL)
+    f->fx_done = 1;
+
   switch (f->fx_r_type)
     {
     case BFD_RELOC_NONE:
       break;
 
     case BFD_RELOC_RL78_RELAX:
-      f->fx_done = 1;
+      f->fx_done = 0;
       break;
 
     case BFD_RELOC_8_PCREL:
@@ -1461,8 +1518,6 @@ md_apply_fix (struct fix * f ATTRIBUTE_UNUSED,
       break;
     }
 
-  if (f->fx_addsy == NULL)
-    f->fx_done = 1;
 }
 
 valueT

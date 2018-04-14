@@ -1,5 +1,5 @@
 /* TI C6X assembler.
-   Copyright (C) 2010-2015 Free Software Foundation, Inc.
+   Copyright (C) 2010-2016 Free Software Foundation, Inc.
    Contributed by Joseph Myers <joseph@codesourcery.com>
    		  Bernd Schmidt  <bernds@codesourcery.com>
 
@@ -201,7 +201,7 @@ static tic6x_unwind_info *tic6x_get_unwind (void)
   if (unwind)
     return unwind;
 
-  unwind = (tic6x_unwind_info *)xmalloc (sizeof (tic6x_unwind_info));
+  unwind =XNEW (tic6x_unwind_info);
   seg_info (now_seg)->tc_segment_info_data.unwind = unwind;
   memset (unwind, 0, sizeof (*unwind));
   return unwind;
@@ -265,7 +265,7 @@ tic6x_use_pid (const char *arg)
 /* Parse a target-specific option.  */
 
 int
-md_parse_option (int c, char *arg)
+md_parse_option (int c, const char *arg)
 {
   switch (c)
     {
@@ -761,7 +761,7 @@ md_begin (void)
   for (id = 0; id < tic6x_opcode_max; id++)
     {
       const char *errmsg;
-      tic6x_opcode_list *opc = xmalloc (sizeof (tic6x_opcode_list));
+      tic6x_opcode_list *opc = XNEW (tic6x_opcode_list);
 
       opc->id = id;
       opc->next = hash_find (opcode_hash, tic6x_opcode_table[id].name);
@@ -948,7 +948,7 @@ tic6x_frob_label (symbolS *sym)
 
   si = seg_info (now_seg);
   list = si->tc_segment_info_data.label_list;
-  si->tc_segment_info_data.label_list = xmalloc (sizeof (tic6x_label_list));
+  si->tc_segment_info_data.label_list = XNEW (tic6x_label_list);
   si->tc_segment_info_data.label_list->next = list;
   si->tc_segment_info_data.label_list->label = sym;
 
@@ -3253,7 +3253,7 @@ md_assemble (char *str)
   for (opc = opc_list; opc; opc = opc->next)
     max_matching_opcodes++;
   num_matching_opcodes = 0;
-  opcm = xmalloc (max_matching_opcodes * sizeof (*opcm));
+  opcm = XNEWVEC (tic6x_opcode_id, max_matching_opcodes);
   max_num_operands = 0;
   ok_this_arch = FALSE;
   ok_this_fu = FALSE;
@@ -4078,7 +4078,7 @@ md_apply_fix (fixS *fixP, valueT *valP, segT seg ATTRIBUTE_UNUSED)
 
 /* Convert a floating-point number to target (IEEE) format.  */
 
-char *
+const char *
 md_atof (int type, char *litP, int *sizeP)
 {
   return ieee_md_atof (type, litP, sizeP, target_big_endian);
@@ -4505,8 +4505,8 @@ tc_gen_reloc (asection *section ATTRIBUTE_UNUSED, fixS *fixp)
   asymbol *symbol;
   bfd_reloc_code_real_type r_type;
 
-  reloc = xmalloc (sizeof (arelent));
-  reloc->sym_ptr_ptr = xmalloc (sizeof (asymbol *));
+  reloc = XNEW (arelent);
+  reloc->sym_ptr_ptr = XNEW (asymbol *);
   symbol = symbol_get_bfdsym (fixp->fx_addsy);
   *reloc->sym_ptr_ptr = symbol;
   reloc->address = fixp->fx_frag->fr_address + fixp->fx_where;
@@ -4642,7 +4642,7 @@ tic6x_start_unwind_section (const segT text_seg, int idx)
   prefix_len = strlen (prefix);
   text_len = strlen (text_name);
   sec_name_len = prefix_len + text_len;
-  sec_name = (char *) xmalloc (sec_name_len + 1);
+  sec_name = XNEWVEC (char, sec_name_len + 1);
   memcpy (sec_name, prefix, prefix_len);
   memcpy (sec_name + prefix_len, text_name, text_len);
   sec_name[prefix_len + text_len] = '\0';

@@ -1,5 +1,5 @@
 /* DWARF 2 support.
-   Copyright (C) 1994-2015 Free Software Foundation, Inc.
+   Copyright (C) 1994-2016 Free Software Foundation, Inc.
 
    Adapted from gdb/dwarf2read.c by Gavin Koch of Cygnus Solutions
    (gavin@cygnus.com).
@@ -1003,7 +1003,7 @@ read_attribute_value (struct attribute *  attr,
   struct dwarf_block *blk;
   bfd_size_type amt;
 
-  if (info_ptr >= info_ptr_end)
+  if (info_ptr >= info_ptr_end && form != DW_FORM_flag_present)
     {
       (*_bfd_error_handler) (_("Dwarf Error: Info pointer extends beyond end of attributes"));
       bfd_set_error (bfd_error_bad_value);
@@ -2757,11 +2757,18 @@ parse_comp_unit (struct dwarf2_debug *stash,
 
   if (version != 2 && version != 3 && version != 4)
     {
-      (*_bfd_error_handler)
-	(_("Dwarf Error: found dwarf version '%u', this reader"
-	   " only handles version 2, 3 and 4 information."), version);
-      bfd_set_error (bfd_error_bad_value);
-      return 0;
+      /* PR 19872: A version number of 0 probably means that there is padding
+	 at the end of the .debug_info section.  Gold puts it there when
+	 performing an incremental link, for example.  So do not generate
+	 an error, just return a NULL.  */
+      if (version)
+	{
+	  (*_bfd_error_handler)
+	    (_("Dwarf Error: found dwarf version '%u', this reader"
+	       " only handles version 2, 3 and 4 information."), version);
+	  bfd_set_error (bfd_error_bad_value);
+	}
+      return NULL;
     }
 
   if (addr_size > sizeof (bfd_vma))
@@ -2772,7 +2779,7 @@ parse_comp_unit (struct dwarf2_debug *stash,
 	 addr_size,
 	 (unsigned int) sizeof (bfd_vma));
       bfd_set_error (bfd_error_bad_value);
-      return 0;
+      return NULL;
     }
 
   if (addr_size != 2 && addr_size != 4 && addr_size != 8)
@@ -2781,22 +2788,23 @@ parse_comp_unit (struct dwarf2_debug *stash,
 	("Dwarf Error: found address size '%u', this reader"
 	 " can only handle address sizes '2', '4' and '8'.", addr_size);
       bfd_set_error (bfd_error_bad_value);
-      return 0;
+      return NULL;
     }
 
   /* Read the abbrevs for this compilation unit into a table.  */
   abbrevs = read_abbrevs (abfd, abbrev_offset, stash);
   if (! abbrevs)
-    return 0;
+    return NULL;
 
   abbrev_number = safe_read_leb128 (abfd, info_ptr, &bytes_read, FALSE, end_ptr);
   info_ptr += bytes_read;
   if (! abbrev_number)
     {
-      (*_bfd_error_handler) (_("Dwarf Error: Bad abbrev number: %u."),
-			     abbrev_number);
-      bfd_set_error (bfd_error_bad_value);
-      return 0;
+      /* PR 19872: An abbrev number of 0 probably means that there is padding
+	 at the end of the .debug_abbrev section.  Gold puts it there when
+	 performing an incremental link, for example.  So do not generate
+	 an error, just return a NULL.  */
+      return NULL;
     }
 
   abbrev = lookup_abbrev (abbrev_number, abbrevs);
@@ -2805,7 +2813,7 @@ parse_comp_unit (struct dwarf2_debug *stash,
       (*_bfd_error_handler) (_("Dwarf Error: Could not find abbrev number %u."),
 			     abbrev_number);
       bfd_set_error (bfd_error_bad_value);
-      return 0;
+      return NULL;
     }
 
   amt = sizeof (struct comp_unit);

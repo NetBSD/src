@@ -1,6 +1,6 @@
 // script.cc -- handle linker scripts for gold.
 
-// Copyright (C) 2006-2015 Free Software Foundation, Inc.
+// Copyright (C) 2006-2016 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -1792,6 +1792,7 @@ script_keyword_parsecodes[] =
   { "SIZEOF_HEADERS", SIZEOF_HEADERS },
   { "SORT", SORT_BY_NAME },
   { "SORT_BY_ALIGNMENT", SORT_BY_ALIGNMENT },
+  { "SORT_BY_INIT_PRIORITY", SORT_BY_INIT_PRIORITY },
   { "SORT_BY_NAME", SORT_BY_NAME },
   { "SPECIAL", SPECIAL },
   { "SQUAD", SQUAD },

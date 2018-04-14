@@ -1,5 +1,5 @@
 /* tc-ia64.c -- Assembler for the HP/Intel IA-64 architecture.
-   Copyright (C) 1998-2015 Free Software Foundation, Inc.
+   Copyright (C) 1998-2016 Free Software Foundation, Inc.
    Contributed by David Mosberger-Tang <davidm@hpl.hp.com>
 
    This file is part of GAS, the GNU Assembler.
@@ -302,7 +302,7 @@ static struct
 	struct label_fix *tag_fixups;
 	struct unw_rec_list *unwind_record;	/* Unwind directive.  */
 	expressionS opnd[6];
-	char *src_file;
+	const char *src_file;
 	unsigned int src_line;
 	struct dwarf2_line_info debug_line;
       }
@@ -672,7 +672,7 @@ static struct rsrc {
   int insn_srlz;                    /* current insn serialization state */
   int data_srlz;                    /* current data serialization state */
   int qp_regno;                     /* qualifying predicate for this usage */
-  char *file;                       /* what file marked this dependency */
+  const char *file;                       /* what file marked this dependency */
   unsigned int line;                /* what line marked this dependency */
   struct mem_offset mem_offset;     /* optional memory offset hint */
   enum { CMP_NONE, CMP_OR, CMP_AND } cmp_type; /* OR or AND compare? */
@@ -856,7 +856,7 @@ set_section (char *name)
 /* Map 's' to SHF_IA_64_SHORT.  */
 
 bfd_vma
-ia64_elf_section_letter (int letter, char **ptr_msg)
+ia64_elf_section_letter (int letter, const char **ptr_msg)
 {
   if (letter == 's')
     return SHF_IA_64_SHORT;
@@ -1025,25 +1025,16 @@ ia64_flush_insns (void)
     as_bad (_("qualifying predicate not followed by instruction"));
 }
 
-static void
-ia64_do_align (int nbytes)
-{
-  char *saved_input_line_pointer = input_line_pointer;
-
-  input_line_pointer = "";
-  s_align_bytes (nbytes);
-  input_line_pointer = saved_input_line_pointer;
-}
-
 void
 ia64_cons_align (int nbytes)
 {
   if (md.auto_align)
     {
-      char *saved_input_line_pointer = input_line_pointer;
-      input_line_pointer = "";
-      s_align_bytes (nbytes);
-      input_line_pointer = saved_input_line_pointer;
+      int log;
+      for (log = 0; (nbytes & 1) != 1; nbytes >>= 1)
+	log++;
+
+      do_align (log, NULL, 0, 0);
     }
 }
 
@@ -1054,7 +1045,7 @@ ia64_cons_align (int nbytes)
 static void
 obj_elf_vms_common (int ignore ATTRIBUTE_UNUSED)
 {
-  char *sec_name;
+  const char *sec_name;
   char *sym_name;
   char c;
   offsetT size;
@@ -1750,7 +1741,7 @@ static unw_rec_list *
 alloc_record (unw_record_type t)
 {
   unw_rec_list *ptr;
-  ptr = xmalloc (sizeof (*ptr));
+  ptr = XNEW (unw_rec_list);
   memset (ptr, 0, sizeof (*ptr));
   ptr->slot_number = SLOT_NUM_NOT_SET;
   ptr->r.type = t;
@@ -2659,8 +2650,7 @@ set_imask (unw_rec_list *region,
   if (!imask)
     {
       imask_size = (region->r.record.r.rlen * 2 + 7) / 8 + 1;
-      imask = xmalloc (imask_size);
-      memset (imask, 0, imask_size);
+      imask = XCNEWVEC (unsigned char, imask_size);
 
       region->r.record.r.imask_size = imask_size;
       region->r.record.r.mask.i = imask;
@@ -3521,7 +3511,7 @@ dot_restorereg (int pred)
   add_unwind_entry (output_spill_reg (ab, reg, 0, 0, qp), sep);
 }
 
-static char *special_linkonce_name[] =
+static const char *special_linkonce_name[] =
   {
     ".gnu.linkonce.ia64unw.", ".gnu.linkonce.ia64unwi."
   };
@@ -3566,7 +3556,6 @@ start_unwind_section (const segT text_seg, int sec_index)
   char *sec_name;
   const char *prefix = special_section_name [sec_index];
   const char *suffix;
-  size_t prefix_len, suffix_len, sec_name_len;
 
   sec_text_name = segment_name (text_seg);
   text_name = sec_text_name;
@@ -3590,20 +3579,13 @@ start_unwind_section (const segT text_seg, int sec_index)
       suffix += sizeof (".gnu.linkonce.t.") - 1;
     }
 
-  prefix_len = strlen (prefix);
-  suffix_len = strlen (suffix);
-  sec_name_len = prefix_len + suffix_len;
-  sec_name = alloca (sec_name_len + 1);
-  memcpy (sec_name, prefix, prefix_len);
-  memcpy (sec_name + prefix_len, suffix, suffix_len);
-  sec_name [sec_name_len] = '\0';
+  sec_name = concat (prefix, suffix, NULL);
 
   /* Handle COMDAT group.  */
   if ((text_seg->flags & SEC_LINK_ONCE) != 0
       && (elf_section_flags (text_seg) & SHF_GROUP) != 0)
     {
       char *section;
-      size_t len, group_name_len;
       const char *group_name = elf_group_name (text_seg);
 
       if (group_name == NULL)
@@ -3611,22 +3593,14 @@ start_unwind_section (const segT text_seg, int sec_index)
 	  as_bad (_("Group section `%s' has no group signature"),
 		  sec_text_name);
 	  ignore_rest_of_line ();
+	  free (sec_name);
 	  return;
 	}
-      /* We have to construct a fake section directive. */
-      group_name_len = strlen (group_name);
-      len = (sec_name_len
-	     + 16			/* ,"aG",@progbits,  */
-	     + group_name_len		/* ,group_name  */
-	     + 7);			/* ,comdat  */
 
-      section = alloca (len + 1);
-      memcpy (section, sec_name, sec_name_len);
-      memcpy (section + sec_name_len, ",\"aG\",@progbits,", 16);
-      memcpy (section + sec_name_len + 16, group_name, group_name_len);
-      memcpy (section + len - 7, ",comdat", 7);
-      section [len] = '\0';
+      /* We have to construct a fake section directive.  */
+      section = concat (sec_name, ",\"aG\",@progbits,", group_name, ",comdat", NULL);
       set_section (section);
+      free (section);
     }
   else
     {
@@ -3636,6 +3610,7 @@ start_unwind_section (const segT text_seg, int sec_index)
     }
 
   elf_linked_to_section (now_seg) = text_seg;
+  free (sec_name);
 }
 
 static void
@@ -4134,7 +4109,7 @@ save_prologue_count (unsigned long lbl, unsigned int count)
     lpc->prologue_count = count;
   else
     {
-      label_prologue_count *new_lpc = xmalloc (sizeof (* new_lpc));
+      label_prologue_count *new_lpc = XNEW (label_prologue_count);
 
       new_lpc->next = unwind.saved_prologue_counts;
       new_lpc->label_number = lbl;
@@ -4144,7 +4119,7 @@ save_prologue_count (unsigned long lbl, unsigned int count)
 }
 
 static void
-free_saved_prologue_counts ()
+free_saved_prologue_counts (void)
 {
   label_prologue_count *lpc = unwind.saved_prologue_counts;
   label_prologue_count *next;
@@ -4286,7 +4261,7 @@ dot_proc (int dummy ATTRIBUTE_UNUSED)
 	    }
 	  else
 	    {
-	      pending = xmalloc (sizeof (*pending));
+	      pending = XNEW (proc_pending);
 	      pending->sym = sym;
 	      last_pending = last_pending->next = pending;
 	    }
@@ -4305,7 +4280,7 @@ dot_proc (int dummy ATTRIBUTE_UNUSED)
     }
   last_pending->next = NULL;
   demand_empty_rest_of_line ();
-  ia64_do_align (16);
+  do_align (4, NULL, 0, 0);
 
   unwind.prologue = 0;
   unwind.prologue_count = 0;
@@ -4360,12 +4335,14 @@ dot_prologue (int dummy ATTRIBUTE_UNUSED)
 	as_warn (_("Pointless use of zero first operand to .prologue"));
       else
 	mask = e.X_add_number;
-	n = popcount (mask);
+
+      n = popcount (mask);
 
       if (sep == ',')
 	parse_operand_and_eval (&e, 0);
       else
 	e.X_op = O_absent;
+
       if (e.X_op == O_constant
 	  && e.X_add_number >= 0
 	  && e.X_add_number < 128)
@@ -4385,7 +4362,6 @@ dot_prologue (int dummy ATTRIBUTE_UNUSED)
 	  as_bad (_("Second operand to .prologue must be the first of %d general registers"), n);
 	  grsave = 0;
 	}
-
     }
 
   if (mask)
@@ -4507,8 +4483,7 @@ dot_endp (int dummy ATTRIBUTE_UNUSED)
 		    S_SET_SIZE (sym, frag_now_fix () - S_GET_VALUE (sym));
 		  else
 		    {
-		      symbol_get_obj (sym)->size =
-			(expressionS *) xmalloc (sizeof (expressionS));
+		      symbol_get_obj (sym)->size = XNEW (expressionS);
 		      symbol_get_obj (sym)->size->X_op = O_subtract;
 		      symbol_get_obj (sym)->size->X_add_symbol
 			= symbol_new (FAKE_LABEL_NAME, now_seg,
@@ -4693,11 +4668,11 @@ dot_rot (int type)
 
       if (!*drpp)
 	{
-	  *drpp = obstack_alloc (&notes, sizeof (*dr));
+	  *drpp = XOBNEW (&notes, struct dynreg);
 	  memset (*drpp, 0, sizeof (*dr));
 	}
 
-      name = obstack_alloc (&notes, len + 1);
+      name = XOBNEWVEC (&notes, char, len + 1);
       memcpy (name, start, len);
       name[len] = '\0';
 
@@ -4857,20 +4832,20 @@ stmt_float_cons (int kind)
   switch (kind)
     {
     case 'd':
-      alignment = 8;
+      alignment = 3;
       break;
 
     case 'x':
     case 'X':
-      alignment = 16;
+      alignment = 4;
       break;
 
     case 'f':
     default:
-      alignment = 4;
+      alignment = 2;
       break;
     }
-  ia64_do_align (alignment);
+  do_align (alignment, NULL, 0, 0);
   float_cons (kind);
 }
 
@@ -5006,7 +4981,7 @@ static void
 print_prmask (valueT mask)
 {
   int regno;
-  char *comma = "";
+  const char *comma = "";
   for (regno = 0; regno < 64; regno++)
     {
       if (mask & ((valueT) 1 << regno))
@@ -7004,7 +6979,7 @@ emit_one_bundle (void)
 }
 
 int
-md_parse_option (int c, char *arg)
+md_parse_option (int c, const char *arg)
 {
 
   switch (c)
@@ -7790,7 +7765,7 @@ ia64_frob_label (struct symbol *sym)
      labels.  */
   if (defining_tag)
     {
-      fix = obstack_alloc (&notes, sizeof (*fix));
+      fix = XOBNEW (&notes, struct label_fix);
       fix->sym = sym;
       fix->next = CURR_SLOT.tag_fixups;
       fix->dw2_mark_labels = FALSE;
@@ -7802,7 +7777,7 @@ ia64_frob_label (struct symbol *sym)
   if (bfd_get_section_flags (stdoutput, now_seg) & SEC_CODE)
     {
       md.last_text_seg = now_seg;
-      fix = obstack_alloc (&notes, sizeof (*fix));
+      fix = XOBNEW (&notes, struct label_fix);
       fix->sym = sym;
       fix->next = CURR_SLOT.label_fixups;
       fix->dw2_mark_labels = dwarf2_loc_mark_labels;
@@ -7812,9 +7787,8 @@ ia64_frob_label (struct symbol *sym)
       if (md.path == md.maxpaths)
 	{
 	  md.maxpaths += 20;
-	  md.entry_labels = (const char **)
-	    xrealloc ((void *) md.entry_labels,
-		      md.maxpaths * sizeof (char *));
+	  md.entry_labels = XRESIZEVEC (const char *, md.entry_labels,
+					md.maxpaths);
 	}
       md.entry_labels[md.path++] = S_GET_NAME (sym);
     }
@@ -8077,8 +8051,7 @@ ia64_parse_name (char *name, expressionS *e, char *nextcharP)
 	}
     }
 
-  end = alloca (strlen (name) + 1);
-  strcpy (end, name);
+  end = xstrdup (name);
   name = ia64_canonicalize_symbol_name (end);
   if ((dr = hash_find (md.dynreg_hash, name)))
     {
@@ -8088,8 +8061,10 @@ ia64_parse_name (char *name, expressionS *e, char *nextcharP)
 	 bits.  */
       e->X_op = O_register;
       e->X_add_number = dr->base | (dr->num_regs << 16);
+      free (end);
       return 1;
     }
+  free (end);
   return 0;
 }
 
@@ -9754,9 +9729,7 @@ add_qp_imply (int p1, int p2)
   if (qp_implieslen == qp_impliestotlen)
     {
       qp_impliestotlen += 20;
-      qp_implies = (struct qp_imply *)
-	xrealloc ((void *) qp_implies,
-		  qp_impliestotlen * sizeof (struct qp_imply));
+      qp_implies = XRESIZEVEC (struct qp_imply, qp_implies, qp_impliestotlen);
     }
   if (md.debug_dv)
     fprintf (stderr, "  Registering PR%d implies PR%d\n", p1, p2);
@@ -9799,9 +9772,7 @@ add_qp_mutex (valueT mask)
   if (qp_mutexeslen == qp_mutexestotlen)
     {
       qp_mutexestotlen += 20;
-      qp_mutexes = (struct qpmutex *)
-	xrealloc ((void *) qp_mutexes,
-		  qp_mutexestotlen * sizeof (struct qpmutex));
+      qp_mutexes = XRESIZEVEC (struct qpmutex, qp_mutexes, qp_mutexestotlen);
     }
   if (md.debug_dv)
     {
@@ -10215,9 +10186,7 @@ mark_resource (struct ia64_opcode *idesc ATTRIBUTE_UNUSED,
   if (regdepslen == regdepstotlen)
     {
       regdepstotlen += 20;
-      regdeps = (struct rsrc *)
-	xrealloc ((void *) regdeps,
-		  regdepstotlen * sizeof (struct rsrc));
+      regdeps = XRESIZEVEC (struct rsrc, regdeps, regdepstotlen);
     }
 
   regdeps[regdepslen] = *spec;
@@ -10689,7 +10658,8 @@ check_dv (struct ia64_opcode *idesc)
 void
 md_assemble (char *str)
 {
-  char *saved_input_line_pointer, *mnemonic;
+  char *saved_input_line_pointer, *temp;
+  const char *mnemonic;
   const struct pseudo_opcode *pdesc;
   struct ia64_opcode *idesc;
   unsigned char qp_regno;
@@ -10701,7 +10671,8 @@ md_assemble (char *str)
 
   /* extract the opcode (mnemonic):  */
 
-  ch = get_symbol_name (&mnemonic);
+  ch = get_symbol_name (&temp);
+  mnemonic = temp;
   pdesc = (struct pseudo_opcode *) hash_find (md.pseudo_hash, mnemonic);
   if (pdesc)
     {
@@ -10855,7 +10826,7 @@ md_assemble (char *str)
   /* Build the instruction.  */
   CURR_SLOT.qp_regno = qp_regno;
   CURR_SLOT.idesc = idesc;
-  as_where (&CURR_SLOT.src_file, &CURR_SLOT.src_line);
+  CURR_SLOT.src_file = as_where (&CURR_SLOT.src_line);
   dwarf2_where (&CURR_SLOT.debug_line);
   dwarf2_consume_line_info ();
 
@@ -11571,8 +11542,8 @@ tc_gen_reloc (asection *sec ATTRIBUTE_UNUSED, fixS *fixp)
 {
   arelent *reloc;
 
-  reloc = xmalloc (sizeof (*reloc));
-  reloc->sym_ptr_ptr = (asymbol **) xmalloc (sizeof (asymbol *));
+  reloc = XNEW (arelent);
+  reloc->sym_ptr_ptr = XNEW (asymbol *);
   *reloc->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_addsy);
   reloc->address = fixp->fx_frag->fr_address + fixp->fx_where;
   reloc->addend = fixp->fx_offset;
@@ -11596,7 +11567,7 @@ tc_gen_reloc (asection *sec ATTRIBUTE_UNUSED, fixS *fixp)
 
 #define MAX_LITTLENUMS 5
 
-char *
+const char *
 md_atof (int type, char *lit, int *size)
 {
   LITTLENUM_TYPE words[MAX_LITTLENUMS];
@@ -11765,7 +11736,7 @@ ia64_check_label (symbolS *label)
    the relocatable file.  */
 struct alias
 {
-  char *file;		/* The file where the directive is seen.  */
+  const char *file;		/* The file where the directive is seen.  */
   unsigned int line;	/* The line number the directive is at.  */
   const char *name;	/* The original name of the symbol.  */
 };
@@ -11857,8 +11828,8 @@ dot_alias (int section)
       goto out;
     }
 
-  h = (struct alias *) xmalloc (sizeof (struct alias));
-  as_where (&h->file, &h->line);
+  h = XNEW (struct alias);
+  h->file = as_where (&h->line);
   h->name = name;
 
   error_string = hash_jam (ahash, alias, (void *) h);

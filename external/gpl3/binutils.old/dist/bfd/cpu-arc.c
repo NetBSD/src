@@ -1,5 +1,5 @@
 /* BFD support for the ARC processor
-   Copyright (C) 1994-2015 Free Software Foundation, Inc.
+   Copyright (C) 1994-2016 Free Software Foundation, Inc.
    Contributed by Doug Evans (dje@cygnus.com).
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -53,7 +53,7 @@ static const bfd_arch_info_type arch_info_struct[] =
 };
 
 const bfd_arch_info_type bfd_arc_arch =
-  ARC (bfd_mach_arc_arcv2,  "HS", TRUE, &arch_info_struct[0]);
+  ARC (bfd_mach_arc_arc600, "ARC600", TRUE, &arch_info_struct[0]);
 
 /* Utility routines.  */
 

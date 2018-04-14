@@ -607,6 +607,7 @@ LFS_CFLAGS
 GOLD_LDADD
 GOLD_LDFLAGS
 WARN_CXXFLAGS
+WARN_WRITE_STRINGS
 NO_WERROR
 WARN_CFLAGS
 IFUNC_STATIC_FALSE
@@ -668,6 +669,7 @@ CXX
 am__fastdepCC_FALSE
 am__fastdepCC_TRUE
 CCDEPMODE
+am__nodep
 AMDEPBACKSLASH
 AMDEP_FALSE
 AMDEP_TRUE
@@ -688,6 +690,8 @@ DEFAULT_TARGET_MIPS_FALSE
 DEFAULT_TARGET_MIPS_TRUE
 DEFAULT_TARGET_TILEGX_FALSE
 DEFAULT_TARGET_TILEGX_TRUE
+DEFAULT_TARGET_X86_64_OR_X32_FALSE
+DEFAULT_TARGET_X86_64_OR_X32_TRUE
 DEFAULT_TARGET_X32_FALSE
 DEFAULT_TARGET_X32_TRUE
 DEFAULT_TARGET_X86_64_FALSE
@@ -790,6 +794,7 @@ with_sysroot
 enable_gold
 enable_threads
 enable_plugins
+enable_relro
 enable_targets
 with_lib_path
 enable_dependency_tracking
@@ -1439,6 +1444,7 @@ Optional Features:
   --enable-gold[=ARG]     build gold [ARG={default,yes,no}]
   --enable-threads        multi-threaded linking
   --enable-plugins        linker plugins
+  --enable-relro          enable -z relro in ELF linker by default
   --enable-targets        alternative target configurations
   --disable-dependency-tracking  speeds up one-time build
   --enable-dependency-tracking   do not reject slow dependency extractors
@@ -3225,11 +3231,11 @@ MAKEINFO=${MAKEINFO-"${am_missing_run}makeinfo"}
 
 # We need awk for the "check" target.  The system "awk" is bad on
 # some platforms.
-# Always define AMTAR for backward compatibility.
+# Always define AMTAR for backward compatibility.  Yes, it's still used
+# in the wild :-(  We should find a proper way to deprecate it ...
+AMTAR='$${TAR-tar}'
 
-AMTAR=${AMTAR-"${am_missing_run}tar"}
-
-am__tar='${AMTAR} chof - "$$tardir"'; am__untar='${AMTAR} xf -'
+am__tar='$${TAR-tar} chof - "$$tardir"' am__untar='$${TAR-tar} xf -'
 
 
 
@@ -3349,6 +3355,25 @@ else
   PLUGINS_TRUE='#'
   PLUGINS_FALSE=
 fi
+
+
+# Decide if -z relro should be enabled in ELF linker by default.
+ac_default_ld_z_relro=unset
+# Provide a configure time option to override our default.
+# Check whether --enable-relro was given.
+if test "${enable_relro+set}" = set; then :
+  enableval=$enable_relro; case "${enableval}" in
+  yes)  ac_default_ld_z_relro=1 ;;
+  no)  ac_default_ld_z_relro=0 ;;
+esac
+fi
+if test "${ac_default_ld_z_relro}" = unset; then
+  ac_default_ld_z_relro=1
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define DEFAULT_LD_Z_RELRO $ac_default_ld_z_relro
+_ACEOF
 
 
 # Check whether --enable-targets was given.
@@ -3514,6 +3539,14 @@ fi
 else
   DEFAULT_TARGET_X32_TRUE='#'
   DEFAULT_TARGET_X32_FALSE=
+fi
+
+	 if test "$target_x86_64" = "yes" -o "$target_x32" = "yes"; then
+  DEFAULT_TARGET_X86_64_OR_X32_TRUE=
+  DEFAULT_TARGET_X86_64_OR_X32_FALSE='#'
+else
+  DEFAULT_TARGET_X86_64_OR_X32_TRUE='#'
+  DEFAULT_TARGET_X86_64_OR_X32_FALSE=
 fi
 
 	 if test "$targ_obj" = "tilegx"; then
@@ -4530,6 +4563,7 @@ fi
 if test "x$enable_dependency_tracking" != xno; then
   am_depcomp="$ac_aux_dir/depcomp"
   AMDEPBACKSLASH='\'
+  am__nodep='_no'
 fi
  if test "x$enable_dependency_tracking" != xno; then
   AMDEP_TRUE=
@@ -4554,6 +4588,7 @@ else
   # instance it was reported that on HP-UX the gcc test will end up
   # making a dummy file named `D' -- because `-MD' means `put the output
   # in D'.
+  rm -rf conftest.dir
   mkdir conftest.dir
   # Copy depcomp to subdir because otherwise we won't find it if we're
   # using a relative directory.
@@ -4613,7 +4648,7 @@ else
 	break
       fi
       ;;
-    msvisualcpp | msvcmsys)
+    msvc7 | msvc7msys | msvisualcpp | msvcmsys)
       # This compiler won't grok `-c -o', but also, the minuso test has
       # not run yet.  These depmodes are late enough in the game, and
       # so weak that their functioning should not be impacted.
@@ -4938,6 +4973,7 @@ else
   # instance it was reported that on HP-UX the gcc test will end up
   # making a dummy file named `D' -- because `-MD' means `put the output
   # in D'.
+  rm -rf conftest.dir
   mkdir conftest.dir
   # Copy depcomp to subdir because otherwise we won't find it if we're
   # using a relative directory.
@@ -4997,7 +5033,7 @@ else
 	break
       fi
       ;;
-    msvisualcpp | msvcmsys)
+    msvc7 | msvc7msys | msvisualcpp | msvcmsys)
       # This compiler won't grok `-c -o', but also, the minuso test has
       # not run yet.  These depmodes are late enough in the game, and
       # so weak that their functioning should not be impacted.
@@ -6687,7 +6723,10 @@ fi
 # Set the 'development' global.
 . $srcdir/../bfd/development.sh
 
+# Default set of GCC warnings to enable.
 GCC_WARN_CFLAGS="-W -Wall -Wstrict-prototypes -Wmissing-prototypes"
+
+# Add -Wshadow if the compiler is a sufficiently recent version of GCC.
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 __GNUC__
@@ -6697,6 +6736,35 @@ if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
 
 else
   GCC_WARN_CFLAGS="$GCC_WARN_CFLAGS -Wshadow"
+fi
+rm -f conftest*
+
+
+# Add -Wstack-usage if the compiler is a sufficiently recent version of GCC.
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+__GNUC__
+_ACEOF
+if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
+  $EGREP "^[0-4]$" >/dev/null 2>&1; then :
+
+else
+  GCC_WARN_CFLAGS="$GCC_WARN_CFLAGS -Wstack-usage=262144"
+fi
+rm -f conftest*
+
+
+# Set WARN_WRITE_STRINGS if the compiler supports -Wwrite-strings.
+WARN_WRITE_STRINGS=""
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+__GNUC__
+_ACEOF
+if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
+  $EGREP "^[0-3]$" >/dev/null 2>&1; then :
+
+else
+  WARN_WRITE_STRINGS="-Wwrite-strings"
 fi
 rm -f conftest*
 
@@ -6755,6 +6823,7 @@ fi
 if test x"$silent" != x"yes" && test x"$WARN_CFLAGS" != x""; then
   echo "Setting warning flags = $WARN_CFLAGS" 6>&1
 fi
+
 
 
 
@@ -7776,6 +7845,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${DEFAULT_TARGET_X32_TRUE}" && test -z "${DEFAULT_TARGET_X32_FALSE}"; then
   as_fn_error "conditional \"DEFAULT_TARGET_X32\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${DEFAULT_TARGET_X86_64_OR_X32_TRUE}" && test -z "${DEFAULT_TARGET_X86_64_OR_X32_FALSE}"; then
+  as_fn_error "conditional \"DEFAULT_TARGET_X86_64_OR_X32\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${DEFAULT_TARGET_TILEGX_TRUE}" && test -z "${DEFAULT_TARGET_TILEGX_FALSE}"; then

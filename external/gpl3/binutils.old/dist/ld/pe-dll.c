@@ -1,5 +1,5 @@
 /* Routines to help build PEI-format DLLs (Win32 etc)
-   Copyright (C) 1998-2015 Free Software Foundation, Inc.
+   Copyright (C) 1998-2016 Free Software Foundation, Inc.
    Written by DJ Delorie <dj@cygnus.com>
 
    This file is part of the GNU Binutils.
@@ -894,16 +894,23 @@ process_def_file_and_drectve (bfd *abfd ATTRIBUTE_UNUSED, struct bfd_link_info *
 
   for (i = 0; i < NE; i++)
     {
+      char *int_name = pe_def_file->exports[i].internal_name;
       char *name;
-      name = xmalloc (strlen (pe_def_file->exports[i].internal_name) + 2);
-      if (pe_details->underscored
- 	  && (*pe_def_file->exports[i].internal_name != '@'))
+
+      /* PR 19803: Make sure that any exported symbol does not get garbage collected.  */
+      lang_add_gc_name (int_name);
+
+      name = xmalloc (strlen (int_name) + 2);
+      if (pe_details->underscored && int_name[0] != '@')
 	{
 	  *name = '_';
-	  strcpy (name + 1, pe_def_file->exports[i].internal_name);
+	  strcpy (name + 1, int_name);
+
+	  /* PR 19803: The alias must be preserved as well.  */
+	  lang_add_gc_name (xstrdup (name));
 	}
       else
-	strcpy (name, pe_def_file->exports[i].internal_name);
+	strcpy (name, int_name);
 
       blhe = bfd_link_hash_lookup (info->hash,
 				   name,
@@ -939,7 +946,7 @@ process_def_file_and_drectve (bfd *abfd ATTRIBUTE_UNUSED, struct bfd_link_info *
 	 but we must take care not to be fooled when the user wants to export
 	 a symbol that actually really has a dot in it, so we only check
 	 for them here, after real defined symbols have already been matched.  */
-      else if (strchr (pe_def_file->exports[i].internal_name, '.'))
+      else if (strchr (int_name, '.'))
 	{
 	  count_exported++;
 	  if (!pe_def_file->exports[i].flag_noname)
@@ -960,20 +967,20 @@ process_def_file_and_drectve (bfd *abfd ATTRIBUTE_UNUSED, struct bfd_link_info *
 	{
 	  /* xgettext:c-format */
 	  einfo (_("%XCannot export %s: symbol not defined\n"),
-		 pe_def_file->exports[i].internal_name);
+		 int_name);
 	}
       else if (blhe)
 	{
 	  /* xgettext:c-format */
 	  einfo (_("%XCannot export %s: symbol wrong type (%d vs %d)\n"),
-		 pe_def_file->exports[i].internal_name,
+		 int_name,
 		 blhe->type, bfd_link_hash_defined);
 	}
       else
 	{
 	  /* xgettext:c-format */
 	  einfo (_("%XCannot export %s: symbol not found\n"),
-		 pe_def_file->exports[i].internal_name);
+		 int_name);
 	}
       free (name);
     }
@@ -2790,7 +2797,44 @@ pe_dll_generate_implib (def_file *def, const char *impfilename, struct bfd_link_
       /* Don't add PRIVATE entries to import lib.  */
       if (pe_def_file->exports[i].flag_private)
 	continue;
+
       def->exports[i].internal_name = def->exports[i].name;
+
+      /* PR 19803: If a symbol has been discard due to garbage
+	 collection then do not create any exports for it.  */
+      {
+	struct coff_link_hash_entry *h;
+
+	h = coff_link_hash_lookup (coff_hash_table (info), internal,
+				   FALSE, FALSE, FALSE);
+	if (h != NULL
+	    /* If the symbol is hidden and undefined then it
+	       has been swept up by garbage collection.  */
+	    && h->symbol_class == C_HIDDEN
+	    && h->root.u.def.section == bfd_und_section_ptr)
+	  continue;
+
+	/* If necessary, check with an underscore prefix as well.  */
+	if (pe_details->underscored && internal[0] != '@')
+	  {
+	    char *name;
+
+	    name = xmalloc (strlen (internal) + 2);
+	    sprintf (name, "_%s", internal);
+
+	    h = coff_link_hash_lookup (coff_hash_table (info), name,
+				       FALSE, FALSE, FALSE);
+	    free (name);
+
+	    if (h != NULL
+		/* If the symbol is hidden and undefined then it
+		   has been swept up by garbage collection.  */
+		&& h->symbol_class == C_HIDDEN
+		&& h->root.u.def.section == bfd_und_section_ptr)
+	      continue;
+	  }
+      }
+
       n = make_one (def->exports + i, outarch,
 		    ! (def->exports + i)->flag_data);
       n->archive_next = head;
@@ -2846,7 +2890,7 @@ pe_find_cdecl_alias_match (struct bfd_link_info *linfo, char *name)
   struct bfd_link_hash_entry *h = NULL;
   struct key_value *kv;
   struct key_value key;
-  char *at, *lname = (char *) alloca (strlen (name) + 3);
+  char *at, *lname = xmalloc (strlen (name) + 3);
 
   strcpy (lname, name);
 
@@ -2862,10 +2906,12 @@ pe_find_cdecl_alias_match (struct bfd_link_info *linfo, char *name)
     {
       h = bfd_link_hash_lookup (linfo->hash, kv->oname, FALSE, FALSE, FALSE);
       if (h->type == bfd_link_hash_undefined)
-        return h;
+        goto return_h;
     }
+
   if (lname[0] == '?')
-    return NULL;
+    goto return_NULL;
+
   if (at || lname[0] == '@')
     {
       if (lname[0] == '@')
@@ -2881,7 +2927,7 @@ pe_find_cdecl_alias_match (struct bfd_link_info *linfo, char *name)
 	    {
 	      h = bfd_link_hash_lookup (linfo->hash, kv->oname, FALSE, FALSE, FALSE);
 	      if (h->type == bfd_link_hash_undefined)
-		return h;
+		goto return_h;
 	    }
 	}
       if (at)
@@ -2893,9 +2939,9 @@ pe_find_cdecl_alias_match (struct bfd_link_info *linfo, char *name)
 	{
 	  h = bfd_link_hash_lookup (linfo->hash, kv->oname, FALSE, FALSE, FALSE);
 	  if (h->type == bfd_link_hash_undefined)
-	    return h;
+	    goto return_h;
 	}
-      return NULL;
+      goto return_NULL;
     }
 
   strcat (lname, "@");
@@ -2907,7 +2953,7 @@ pe_find_cdecl_alias_match (struct bfd_link_info *linfo, char *name)
     {
       h = bfd_link_hash_lookup (linfo->hash, kv->oname, FALSE, FALSE, FALSE);
       if (h->type == bfd_link_hash_undefined)
-	return h;
+	goto return_h;
     }
 
   if (lname[0] == '_' && pe_details->underscored)
@@ -2926,10 +2972,14 @@ pe_find_cdecl_alias_match (struct bfd_link_info *linfo, char *name)
     {
       h = bfd_link_hash_lookup (linfo->hash, kv->oname, FALSE, FALSE, FALSE);
       if (h->type == bfd_link_hash_undefined)
-        return h;
+        goto return_h;
     }
 
-  return NULL;
+ return_NULL:
+  h = NULL;
+ return_h:
+  free (lname);
+  return h;
 }
 
 static bfd_boolean

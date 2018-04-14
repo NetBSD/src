@@ -1,5 +1,5 @@
 /* input_file.h header for input-file.c
-   Copyright (C) 1987-2015 Free Software Foundation, Inc.
+   Copyright (C) 1987-2016 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -61,5 +61,5 @@ size_t input_file_buffer_size (void);
 void input_file_begin (void);
 void input_file_close (void);
 void input_file_end (void);
-void input_file_open (char *filename, int pre);
+void input_file_open (const char *filename, int pre);
 void input_file_pop (char *arg);

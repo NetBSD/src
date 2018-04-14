@@ -1,5 +1,5 @@
 /* BFD backend for CRIS a.out binaries.
-   Copyright (C) 2000-2015 Free Software Foundation, Inc.
+   Copyright (C) 2000-2016 Free Software Foundation, Inc.
    Contributed by Axis Communications AB.
    Written by Hans-Peter Nilsson.
 
@@ -37,7 +37,7 @@
    after text, but with those, we don't have any choice besides reading
    symbol info, and luckily there's no pressing need for correctness for
    those vma:s at this time.  */
-#define N_TXTADDR(x) ((x).a_entry & ~(bfd_vma) 0xffff)
+#define N_TXTADDR(x) ((x)->a_entry & ~(bfd_vma) 0xffff)
 
 /* If you change this to 4, you can not link to an address N*4+2.  */
 #define SEGMENT_SIZE 2
@@ -93,8 +93,8 @@ static bfd_boolean MY (set_sizes) (bfd *);
    not call set_sizes.  */
 
 #define MY_set_arch_mach NAME (aout, set_arch_mach)
-#define SET_ARCH_MACH(BFD, EXEC) \
- MY_set_arch_mach (BFD, DEFAULT_ARCH, N_MACHTYPE (EXEC))
+#define SET_ARCH_MACH(BFD, EXECP) \
+ MY_set_arch_mach (BFD, DEFAULT_ARCH, N_MACHTYPE (EXECP))
 
 /* These macros describe the binary layout of the reloc information we
    use in a file.  */
@@ -129,9 +129,9 @@ MY (write_object_contents) (bfd *abfd)
   /* Setting N_SET_MACHTYPE and using N_SET_FLAGS is not performed by
      the default definition.  */
   if (bfd_get_arch (abfd) == bfd_arch_cris)
-    N_SET_MACHTYPE (*execp, M_CRIS);
+    N_SET_MACHTYPE (execp, M_CRIS);
 
-  N_SET_FLAGS (*execp, aout_backend_info (abfd)->exec_hdr_flags);
+  N_SET_FLAGS (execp, aout_backend_info (abfd)->exec_hdr_flags);
 
   WRITE_HEADERS (abfd, execp);
 
