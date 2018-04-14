@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_osdep.c,v 1.1.12.2 2018/03/30 12:07:34 martin Exp $ */
+/* $NetBSD: ixgbe_osdep.c,v 1.1.12.3 2018/04/14 10:25:11 martin Exp $ */
 
 /******************************************************************************
 
@@ -32,7 +32,7 @@
   POSSIBILITY OF SUCH DAMAGE.
 
 ******************************************************************************/
-/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_osdep.c 320688 2017-07-05 17:27:03Z erj $*/
+/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_osdep.c 327031 2017-12-20 18:15:06Z erj $*/
 
 #include "ixgbe_osdep.h"
 #include "ixgbe.h"

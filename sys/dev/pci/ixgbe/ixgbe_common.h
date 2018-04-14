@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_common.h,v 1.7.8.3 2018/04/04 16:18:49 martin Exp $ */
+/* $NetBSD: ixgbe_common.h,v 1.7.8.4 2018/04/14 10:25:11 martin Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -33,7 +33,7 @@
   POSSIBILITY OF SUCH DAMAGE.
 
 ******************************************************************************/
-/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_common.h 320688 2017-07-05 17:27:03Z erj $*/
+/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_common.h 331224 2018-03-19 20:55:05Z erj $*/
 
 #ifndef _IXGBE_COMMON_H_
 #define _IXGBE_COMMON_H_

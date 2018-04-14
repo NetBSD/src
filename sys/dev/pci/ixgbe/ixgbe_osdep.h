@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_osdep.h,v 1.17.6.2 2018/03/30 12:07:34 martin Exp $ */
+/* $NetBSD: ixgbe_osdep.h,v 1.17.6.3 2018/04/14 10:25:11 martin Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -33,7 +33,7 @@
   POSSIBILITY OF SUCH DAMAGE.
 
 ******************************************************************************/
-/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_osdep.h 320688 2017-07-05 17:27:03Z erj $*/
+/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_osdep.h 327031 2017-12-20 18:15:06Z erj $*/
 
 #ifndef _IXGBE_OSDEP_H_
 #define _IXGBE_OSDEP_H_

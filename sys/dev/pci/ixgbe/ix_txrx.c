@@ -1,4 +1,4 @@
-/* $NetBSD: ix_txrx.c,v 1.24.2.9 2018/04/04 16:18:49 martin Exp $ */
+/* $NetBSD: ix_txrx.c,v 1.24.2.10 2018/04/14 10:25:11 martin Exp $ */
 
 /******************************************************************************
 
@@ -32,7 +32,7 @@
   POSSIBILITY OF SUCH DAMAGE.
 
 ******************************************************************************/
-/*$FreeBSD: head/sys/dev/ixgbe/ix_txrx.c 321476 2017-07-25 14:38:30Z sbruno $*/
+/*$FreeBSD: head/sys/dev/ixgbe/ix_txrx.c 327031 2017-12-20 18:15:06Z erj $*/
 
 /*
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
