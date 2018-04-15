@@ -1,4 +1,4 @@
-.\" $NetBSD: libnetpgp.3,v 1.20 2018/04/04 21:39:35 sevan Exp $
+.\" $NetBSD: libnetpgp.3,v 1.21 2018/04/15 23:00:36 sevan Exp $
 .\"
 .\" Copyright (c) 2009,2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 3, 2018
+.Dd April 15, 2018
 .Dt LIBNETPGP 3
 .Os
 .Sh NAME
@@ -172,12 +172,13 @@ Normal operation sees the
 .Nm
 process be initialised using the
 .Fn netpgp_init
-function, which will set up the public and private keyrings, and set the
-user identity to the
+function, which will set up the public and private keyrings, as well as set the
+user identity in the 
 .Ar userid
-argument passed stored in the
+member of the
 .Dv netpgp_t
-structure, and set using the
+structure.
+These are set using the
 .Fn netpgp_setvar
 function.
 If no public key ring file is set, initial values will be taken from those
@@ -189,6 +190,13 @@ initial values will be taken from those
 in the
 .Pa .gnupg/secring.gpg
 file in the user's home directory.
+The user identity is obtained from the
+.Ev userid
+environment variable, or failing that, the value of the
+.Dq default-key
+setting from
+.Pa .gnupg/gpg.conf
+file in the user's home directory is used.
 The
 .Fn netpgp_init
 function returns 1 on success, 0 on failure.
