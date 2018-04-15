@@ -1,4 +1,4 @@
-/*	$NetBSD: sockio.h,v 1.10.58.2 2018/04/12 22:33:41 pgoyette Exp $	*/
+/*	$NetBSD: sockio.h,v 1.10.58.3 2018/04/15 06:23:31 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
@@ -185,11 +185,6 @@ struct oifdatareq {
 
 void if_50_init(void);
 void if_50_fini(void);
-
-__BEGIN_DECLS
-int compat_ifconf(u_long, void *);
-int compat_ifdatareq(struct lwp *, u_long, void *);
-__END_DECLS
 
 #endif
 
