@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_input.c,v 1.62 2018/02/26 09:04:29 maxv Exp $	*/
+/*	$NetBSD: ipsec_input.c,v 1.63 2018/04/15 07:35:49 maxv Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/ipsec_input.c,v 1.2.4.2 2003/03/28 20:32:53 sam Exp $	*/
 /*	$OpenBSD: ipsec_input.c,v 1.63 2003/02/20 18:35:43 deraadt Exp $	*/
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.62 2018/02/26 09:04:29 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.63 2018/04/15 07:35:49 maxv Exp $");
 
 /*
  * IPsec input processing.
@@ -456,6 +456,8 @@ cantpull:
 #endif /* INET6 */
 #endif /* notyet */
 
+	M_VERIFY_PACKET(m);
+
 	key_sa_recordxfer(sav, m);		/* record data transfer */
 
 	if ((inetsw[ip_protox[prot]].pr_flags & PR_LASTHDR) != 0 &&
@@ -666,6 +668,8 @@ ipsec6_common_input_cb(struct mbuf *m, struct secasvar *sav, int skip,
 			error = EINVAL;
 			goto bad;
 		}
+
+		M_VERIFY_PACKET(m);
 
 		/*
 		 * Protection against faulty packet - there should be

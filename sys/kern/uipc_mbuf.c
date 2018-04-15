@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.187 2018/04/10 16:12:30 maxv Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.188 2018/04/15 07:35:49 maxv Exp $	*/
 
 /*
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.187 2018/04/10 16:12:30 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.188 2018/04/15 07:35:49 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
@@ -1887,6 +1887,67 @@ m_claim(struct mbuf *m, struct mowner *mo)
 	mowner_claim(m, mo);
 }
 #endif /* defined(MBUFTRACE) */
+
+#ifdef DIAGNOSTIC
+/*
+ * Verify that the mbuf chain is not malformed. Used only for diagnostic.
+ * Panics on error.
+ */
+void
+m_verify_packet(struct mbuf *m)
+{
+	struct mbuf *n = m;
+	char *low, *high, *dat;
+	int totlen = 0, len;
+
+	if (__predict_false((m->m_flags & M_PKTHDR) == 0)) {
+		panic("%s: mbuf doesn't have M_PKTHDR", __func__);
+	}
+
+	while (n != NULL) {
+		if (__predict_false(n->m_type == MT_FREE)) {
+			panic("%s: mbuf already freed (n = %p)", __func__, n);
+		}
+		if (__predict_false((n != m) && (n->m_flags & M_PKTHDR) != 0)) {
+			panic("%s: M_PKTHDR set on secondary mbuf", __func__);
+		}
+		if (__predict_false(n->m_nextpkt != NULL)) {
+			panic("%s: m_nextpkt not null (m_nextpkt = %p)",
+			    __func__, n->m_nextpkt);
+		}
+
+		dat = n->m_data;
+		len = n->m_len;
+
+		if (n->m_flags & M_EXT) {
+			low = n->m_ext.ext_buf;
+			high = low + n->m_ext.ext_size;
+		} else if (n->m_flags & M_PKTHDR) {
+			low = n->m_pktdat;
+			high = low + MHLEN;
+		} else {
+			low = n->m_dat;
+			high = low + MLEN;
+		}
+		if (__predict_false(dat + len <= dat)) {
+			panic("%s: incorrect length (len = %d)", __func__, len);
+		}
+		if (__predict_false((dat < low) || (dat + len > high))) {
+			panic("%s: m_data not in packet"
+			    "(dat = %p, len = %d, low = %p, high = %p)",
+			    __func__, dat, len, low, high);
+		}
+
+		totlen += len;
+		n = n->m_next;
+	}
+
+	if (__predict_false(totlen != m->m_pkthdr.len)) {
+		panic("%s: inconsistent mbuf length (%d != %d)", __func__,
+		    totlen, m->m_pkthdr.len);
+	}
+}
+#endif
 
 /*
  * Release a reference to the mbuf external storage.
