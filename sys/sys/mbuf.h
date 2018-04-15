@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.186 2018/04/15 07:35:49 maxv Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.187 2018/04/15 17:26:39 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -254,7 +254,9 @@ struct pkthdr {
 #define	M_EXT_MAXPAGES		((65536 / MIN_PAGE_SIZE) + 1)
 #endif
 
-/* description of external storage mapped into mbuf, valid if M_EXT set */
+/*
+ * Description of external storage mapped into mbuf, valid if M_EXT set.
+ */
 struct _m_ext_storage {
 	unsigned int ext_refcnt;
 	int ext_flags;
@@ -263,19 +265,18 @@ struct _m_ext_storage {
 		(struct mbuf *, void *, size_t, void *);
 	void *ext_arg;			/* argument for ext_free */
 	size_t ext_size;		/* size of buffer, for ext_free */
+
 	union {
-		paddr_t extun_paddr;	/* physical address (M_EXT_CLUSTER) */
-					/* pages (M_EXT_PAGES) */
-	/*
-	 * XXX This is gross, but it doesn't really matter; this is
-	 * XXX overlaid on top of the mbuf data area.
-	 */
+		/* M_EXT_CLUSTER: physical address */
+		paddr_t extun_paddr;
 #ifdef M_EXT_MAXPAGES
+		/* M_EXT_PAGES: pages */
 		struct vm_page *extun_pgs[M_EXT_MAXPAGES];
 #endif
 	} ext_un;
 #define	ext_paddr	ext_un.extun_paddr
 #define	ext_pgs		ext_un.extun_pgs
+
 #ifdef DEBUG
 	const char *ext_ofile;
 	const char *ext_nfile;
@@ -297,12 +298,12 @@ struct _m_ext {
  */
 #define	MBUF_DEFINE(name, mhlen, mlen)					\
 	struct name {							\
-		struct	m_hdr m_hdr;					\
+		struct m_hdr m_hdr;					\
 		union {							\
 			struct {					\
-				struct	pkthdr MH_pkthdr;		\
+				struct pkthdr MH_pkthdr;		\
 				union {					\
-					struct	_m_ext MH_ext;		\
+					struct _m_ext MH_ext;		\
 					char MH_databuf[(mhlen)];	\
 				} MH_dat;				\
 			} MH;						\
