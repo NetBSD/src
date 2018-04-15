@@ -1,5 +1,5 @@
 \input texinfo @c                               -*-Texinfo-*-
-@c  Copyright (C) 1991-2016 Free Software Foundation, Inc.
+@c  Copyright (C) 1991-2018 Free Software Foundation, Inc.
 @c UPDATE!!  On future updates--
 @c   (1)   check for new machine-dep cmdline options in
 @c         md_parse_option definitions in config/tc-*.c
@@ -100,7 +100,7 @@
 This file documents the GNU Assembler "@value{AS}".
 
 @c man begin COPYRIGHT
-Copyright @copyright{} 1991-2016 Free Software Foundation, Inc.
+Copyright @copyright{} 1991-2018 Free Software Foundation, Inc.
 
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3
@@ -149,7 +149,7 @@ done.
 @end tex
 
 @vskip 0pt plus 1filll
-Copyright @copyright{} 1991-2016 Free Software Foundation, Inc.
+Copyright @copyright{} 1991-2018 Free Software Foundation, Inc.
 
       Permission is granted to copy, distribute and/or modify this document
       under the terms of the GNU Free Documentation License, Version 1.3
@@ -416,9 +416,11 @@ gcc(1), ld(1), and the Info entries for @file{binutils} and @file{ld}.
    [@b{-mips32r3}] [@b{-mips32r5}] [@b{-mips32r6}] [@b{-mips64}] [@b{-mips64r2}]
    [@b{-mips64r3}] [@b{-mips64r5}] [@b{-mips64r6}]
    [@b{-construct-floats}] [@b{-no-construct-floats}]
+   [@b{-mignore-branch-isa}] [@b{-mno-ignore-branch-isa}]
    [@b{-mnan=@var{encoding}}]
    [@b{-trap}] [@b{-no-break}] [@b{-break}] [@b{-no-trap}]
    [@b{-mips16}] [@b{-no-mips16}]
+   [@b{-mmips16e2}] [@b{-mno-mips16e2}]
    [@b{-mmicromips}] [@b{-mno-micromips}]
    [@b{-msmartmips}] [@b{-mno-smartmips}]
    [@b{-mips3d}] [@b{-no-mips3d}]
@@ -485,13 +487,27 @@ gcc(1), ld(1), and the Info entries for @file{binutils} and @file{ld}.
     @b{-m620}|@b{-me500}|@b{-e500x2}|@b{-me500mc}|@b{-me500mc64}|@b{-me5500}|@b{-me6500}|@b{-mppc64bridge}|
     @b{-mbooke}|@b{-mpower4}|@b{-mpwr4}|@b{-mpower5}|@b{-mpwr5}|@b{-mpwr5x}|@b{-mpower6}|@b{-mpwr6}|
     @b{-mpower7}|@b{-mpwr7}|@b{-mpower8}|@b{-mpwr8}|@b{-mpower9}|@b{-mpwr9}@b{-ma2}|
-    @b{-mcell}|@b{-mspe}|@b{-mtitan}|@b{-me300}|@b{-mcom}]
+    @b{-mcell}|@b{-mspe}|@b{-mspe2}|@b{-mtitan}|@b{-me300}|@b{-mcom}]
    [@b{-many}] [@b{-maltivec}|@b{-mvsx}|@b{-mhtm}|@b{-mvle}]
    [@b{-mregnames}|@b{-mno-regnames}]
    [@b{-mrelocatable}|@b{-mrelocatable-lib}|@b{-K PIC}] [@b{-memb}]
    [@b{-mlittle}|@b{-mlittle-endian}|@b{-le}|@b{-mbig}|@b{-mbig-endian}|@b{-be}]
    [@b{-msolaris}|@b{-mno-solaris}]
    [@b{-nops=@var{count}}]
+@end ifset
+@ifset PRU
+
+@emph{Target PRU options:}
+   [@b{-link-relax}]
+   [@b{-mnolink-relax}]
+   [@b{-mno-warn-regname-label}]
+@end ifset
+@ifset RISCV
+
+@emph{Target RISC-V options:}
+   [@b{-fpic}|@b{-fPIC}|@b{-fno-pic}]
+   [@b{-march}=@var{ISA}]
+   [@b{-mabi}=@var{ABI}]
 @end ifset
 @ifset RL78
 
@@ -530,10 +546,21 @@ gcc(1), ld(1), and the Info entries for @file{binutils} and @file{ld}.
 
 @emph{Target SPARC options:}
 @c The order here is important.  See c-sparc.texi.
-   [@b{-Av6}|@b{-Av7}|@b{-Av8}|@b{-Asparclet}|@b{-Asparclite}
-    @b{-Av8plus}|@b{-Av8plusa}|@b{-Av9}|@b{-Av9a}]
-   [@b{-xarch=v8plus}|@b{-xarch=v8plusa}] [@b{-bump}]
+   [@b{-Av6}|@b{-Av7}|@b{-Av8}|@b{-Aleon}|@b{-Asparclet}|@b{-Asparclite}
+    @b{-Av8plus}|@b{-Av8plusa}|@b{-Av8plusb}|@b{-Av8plusc}|@b{-Av8plusd}
+    @b{-Av8plusv}|@b{-Av8plusm}|@b{-Av9}|@b{-Av9a}|@b{-Av9b}|@b{-Av9c}
+    @b{-Av9d}|@b{-Av9e}|@b{-Av9v}|@b{-Av9m}|@b{-Asparc}|@b{-Asparcvis}
+    @b{-Asparcvis2}|@b{-Asparcfmaf}|@b{-Asparcima}|@b{-Asparcvis3}
+    @b{-Asparcvisr}|@b{-Asparc5}]
+   [@b{-xarch=v8plus}|@b{-xarch=v8plusa}]|@b{-xarch=v8plusb}|@b{-xarch=v8plusc}
+    @b{-xarch=v8plusd}|@b{-xarch=v8plusv}|@b{-xarch=v8plusm}|@b{-xarch=v9}
+    @b{-xarch=v9a}|@b{-xarch=v9b}|@b{-xarch=v9c}|@b{-xarch=v9d}|@b{-xarch=v9e}
+    @b{-xarch=v9v}|@b{-xarch=v9m}|@b{-xarch=sparc}|@b{-xarch=sparcvis}
+    @b{-xarch=sparcvis2}|@b{-xarch=sparcfmaf}|@b{-xarch=sparcima}
+    @b{-xarch=sparcvis3}|@b{-xarch=sparcvisr}|@b{-xarch=sparc5}
+    @b{-bump}]
    [@b{-32}|@b{-64}]
+   [@b{--enforce-aligned-data}][@b{--dcti-couples-detect}]
 @end ifset
 @ifset TIC54X
 
@@ -1215,6 +1242,24 @@ Generate ``little endian'' format output.
 @end table
 @end ifset
 
+@ifset PRU
+
+@ifclear man
+@xref{PRU Options}, for the options available when @value{AS} is configured
+for a PRU processor.
+@end ifclear
+
+@ifset man
+@c man begin OPTIONS
+The following options are available when @value{AS} is configured for a
+PRU processor.
+@c man end
+@c man begin INCLUDE
+@include c-pru.texi
+@c ended inside the included file
+@end ifset
+@end ifset
+
 @ifset M68HC11
 The following options are available when @value{AS} is configured for the
 Motorola 68HC11 or 68HC12 series.
@@ -1308,6 +1353,7 @@ behaviour in the shell.
 @end ifset
 
 @ifset MIPS
+@c man begin OPTIONS
 The following options are available when @value{AS} is configured for
 a MIPS processor.
 
@@ -1408,21 +1454,27 @@ registers when supported by the ISA.  @samp{-mfpxx} implies
 @item -mips16
 @itemx -no-mips16
 Generate code for the MIPS 16 processor.  This is equivalent to putting
-@code{.set mips16} at the start of the assembly file.  @samp{-no-mips16}
+@code{.module mips16} at the start of the assembly file.  @samp{-no-mips16}
 turns off this option.
+
+@item -mmips16e2
+@itemx -mno-mips16e2
+Enable the use of MIPS16e2 instructions in MIPS16 mode.  This is equivalent
+to putting @code{.module mips16e2} at the start of the assembly file.
+@samp{-mno-mips16e2} turns off this option.
 
 @item -mmicromips
 @itemx -mno-micromips
 Generate code for the microMIPS processor.  This is equivalent to putting
-@code{.set micromips} at the start of the assembly file.  @samp{-mno-micromips}
-turns off this option.  This is equivalent to putting @code{.set nomicromips}
-at the start of the assembly file.
+@code{.module micromips} at the start of the assembly file.
+@samp{-mno-micromips} turns off this option.  This is equivalent to putting
+@code{.module nomicromips} at the start of the assembly file.
 
 @item -msmartmips
 @itemx -mno-smartmips
-Enables the SmartMIPS extension to the MIPS32 instruction set. This is
-equivalent to putting @code{.set smartmips} at the start of the assembly file.
-@samp{-mno-smartmips} turns off this option.
+Enables the SmartMIPS extension to the MIPS32 instruction set.  This is
+equivalent to putting @code{.module smartmips} at the start of the assembly
+file.  @samp{-mno-smartmips} turns off this option.
 
 @item -mips3d
 @itemx -no-mips3d
@@ -1504,6 +1556,17 @@ The @samp{--relax-branch} option enables the relaxation of out-of-range
 branches.  By default @samp{--no-relax-branch} is selected, causing any
 out-of-range branches to produce an error.
 
+@item -mignore-branch-isa
+@itemx -mno-ignore-branch-isa
+Ignore branch checks for invalid transitions between ISA modes.  The
+semantics of branches does not provide for an ISA mode switch, so in
+most cases the ISA mode a branch has been encoded for has to be the
+same as the ISA mode of the branch's target label.  Therefore GAS has
+checks implemented that verify in branch assembly that the two ISA
+modes match.  @samp{-mignore-branch-isa} disables these checks.  By
+default @samp{-mno-ignore-branch-isa} is selected, causing any invalid
+branch requiring a transition between ISA modes to produce an error.
+
 @item -mnan=@var{encoding}
 Select between the IEEE 754-2008 (@option{-mnan=2008}) or the legacy
 (@option{-mnan=legacy}) NaN encoding format.  The latter is the default.
@@ -1539,6 +1602,7 @@ break exception.
 When this option is used, @command{@value{AS}} will issue a warning every
 time it generates a nop instruction from a macro.
 @end table
+@c man end
 @end ifset
 
 @ifset MCORE
@@ -1636,6 +1700,25 @@ PowerPC processor.
 
 @end ifset
 
+@ifset RISCV
+
+@ifclear man
+@xref{RISC-V-Options}, for the options available when @value{AS} is configured
+for a RISC-V processor.
+@end ifclear
+
+@ifset man
+@c man begin OPTIONS
+The following options are available when @value{AS} is configured for a
+RISC-V processor.
+@c man end
+@c man begin INCLUDE
+@include c-riscv.texi
+@c ended inside the included file
+@end ifset
+
+@end ifset
+
 @c man begin OPTIONS
 @ifset RX
 See the info pages for documentation of the RX-specific options.
@@ -1654,9 +1737,11 @@ Select the word size, either 31/32 bits or 64 bits.
 Select the architecture mode, either the Enterprise System
 Architecture (esa) or the z/Architecture mode (zarch).
 @item -march=@var{processor}
-Specify which s390 processor variant is the target, @samp{g6}, @samp{g6},
-@samp{z900}, @samp{z990}, @samp{z9-109}, @samp{z9-ec}, @samp{z10},
-@samp{z196}, @samp{zEC12}, or @samp{z13}.
+Specify which s390 processor variant is the target, @samp{g5} (or
+@samp{arch3}), @samp{g6}, @samp{z900} (or @samp{arch5}), @samp{z990} (or
+@samp{arch6}), @samp{z9-109}, @samp{z9-ec} (or @samp{arch7}), @samp{z10} (or
+@samp{arch8}), @samp{z196} (or @samp{arch9}), @samp{zEC12} (or @samp{arch10}),
+@samp{z13} (or @samp{arch11}), or @samp{z14} (or @samp{arch12}).
 @item -mregnames
 @itemx -mno-regnames
 Allow or disallow symbolic names for registers.
@@ -3028,12 +3113,13 @@ sequence.
 @cindex single character constant
 @cindex character, single
 @cindex constant, single character
-A single character may be written as a single quote immediately
-followed by that character.  The same escapes apply to characters as
-to strings.  So if you want to write the character backslash, you
-must write @kbd{'\\} where the first @code{\} escapes the second
-@code{\}.  As you can see, the quote is an acute accent, not a
-grave accent.  A newline
+A single character may be written as a single quote immediately followed by
+that character.  Some backslash escapes apply to characters, @code{\b},
+@code{\f}, @code{\n}, @code{\r}, @code{\t}, and @code{\"} with the same meaning
+as for strings, plus @code{\'} for a single quote.  So if you want to write the
+character backslash, you must write @kbd{'\\} where the first @code{\} escapes
+the second @code{\}.  As you can see, the quote is an acute accent, not a grave
+accent.  A newline
 @ifclear GENERIC
 @ifclear abnormal-separator
 (or semicolon @samp{;})
@@ -4477,6 +4563,11 @@ Some machine configurations provide additional directives.
 @ifclear no-space-dir
 * Zero::                        @code{.zero @var{size}}
 @end ifclear
+@ifset ELF
+* 2byte::                       @code{.2byte @var{expressions}}
+* 4byte::                       @code{.4byte @var{expressions}}
+* 8byte::                       @code{.8byte @var{bignums}}
+@end ifset
 * Deprecated::                  Deprecated Directives
 @end menu
 
@@ -4516,7 +4607,7 @@ required, as described below.
 
 The second expression (also absolute) gives the fill value to be stored in the
 padding bytes.  It (and the comma) may be omitted.  If it is omitted, the
-padding bytes are normally zero.  However, on some systems, if the section is
+padding bytes are normally zero.  However, on most systems, if the section is
 marked as containing code and the fill value is omitted, the space is filled
 with no-op instructions.
 
@@ -4616,7 +4707,7 @@ is already a multiple of 8, no change is needed.
 
 The second expression (also absolute) gives the fill value to be stored in the
 padding bytes.  It (and the comma) may be omitted.  If it is omitted, the
-padding bytes are normally zero.  However, on some systems, if the section is
+padding bytes are normally zero.  However, on most systems, if the section is
 marked as containing code and the fill value is omitted, the space is filled
 with no-op instructions.
 
@@ -4812,11 +4903,14 @@ CFA address.
 
 @subsection @code{.cfi_adjust_cfa_offset @var{offset}}
 Same as @code{.cfi_def_cfa_offset} but @var{offset} is a relative
-value that is added/substracted from the previous offset.
+value that is added/subtracted from the previous offset.
 
 @subsection @code{.cfi_offset @var{register}, @var{offset}}
 Previous value of @var{register} is saved at offset @var{offset} from
 CFA.
+
+@subsection @code{.cfi_val_offset @var{register}, @var{offset}}
+Previous value of @var{register} is CFA + @var{offset}.
 
 @subsection @code{.cfi_rel_offset @var{register}, @var{offset}}
 Previous value of @var{register} is saved at offset @var{offset} from
@@ -5111,7 +5205,7 @@ The syntax for @code{equ} on the HPPA is
 @ifset Z80
 The syntax for @code{equ} on the Z80 is
 @samp{@var{symbol} equ @var{expression}}.
-On the Z80 it is an eror if @var{symbol} is already defined,
+On the Z80 it is an error if @var{symbol} is already defined,
 but the symbol is not protected from later redefinition.
 Compare @ref{Equiv}.
 @end ifset
@@ -5740,6 +5834,19 @@ state machine to @var{value}, which must be an unsigned integer.
 This directive will set the @code{discriminator} register in the @code{.debug_line}
 state machine to @var{value}, which must be an unsigned integer.
 
+@item view @var{value}
+This option causes a row to be added to @code{.debug_line} in reference to the
+current address (which might not be the same as that of the following assembly
+instruction), and to associate @var{value} with the @code{view} register in the
+@code{.debug_line} state machine.  If @var{value} is a label, both the
+@code{view} register and the label are set to the number of prior @code{.loc}
+directives at the same program location.  If @var{value} is the literal
+@code{0}, the @code{view} register is set to zero, and the assembler asserts
+that there aren't any prior @code{.loc} directives at the same program
+location.  If @var{value} is the literal @code{-0}, the assembler arrange for
+the @code{view} register to be reset in this row, even if there are prior
+@code{.loc} directives at the same program location.
+
 @end table
 
 @node Loc_mark_labels
@@ -6066,7 +6173,7 @@ multiple of 8, no change is needed.
 
 The second expression (also absolute) gives the fill value to be stored in the
 padding bytes.  It (and the comma) may be omitted.  If it is omitted, the
-padding bytes are normally zero.  However, on some systems, if the section is
+padding bytes are normally zero.  However, on most systems, if the section is
 marked as containing code and the fill value is omitted, the space is filled
 with no-op instructions.
 
@@ -6286,6 +6393,9 @@ is equivalent to assembling
         .long   0
 @end example
 
+A count of zero is allowed, but nothing is generated.  Negative counts are not
+allowed and if encountered will be treated as if they were zero.
+
 @node Sbttl
 @section @code{.sbttl "@var{subheading}"}
 
@@ -6428,8 +6538,8 @@ exception_code
 
 The two @code{exception_code} invocations above would create the
 @code{.text.exception} and @code{.init.exception} sections respectively.
-This is useful e.g. to discriminate between anciliary sections that are
-tied to setup code to be discarded after use from anciliary sections that
+This is useful e.g. to discriminate between ancillary sections that are
+tied to setup code to be discarded after use from ancillary sections that
 need to stay resident without having to define multiple @code{exception_code}
 macros just for that purpose.
 
@@ -6439,6 +6549,8 @@ combination of the following characters:
 @table @code
 @item a
 section is allocatable
+@item d
+section is a GNU_MBIND section
 @item e
 section is excluded from executable and shared library.
 @item w
@@ -7059,7 +7171,7 @@ Mark the symbol as being a data object.
 
 @item STT_TLS
 @itemx tls_object
-Mark the symbol as being a thead-local data object.
+Mark the symbol as being a thread-local data object.
 
 @item STT_COMMON
 @itemx common
@@ -7251,6 +7363,48 @@ expression.  This directive is actually an alias for the @samp{.skip} directive
 so in can take an optional second argument of the value to store in the bytes
 instead of zero.  Using @samp{.zero} in this way would be confusing however.
 @end ifclear
+
+@ifset ELF
+@node 2byte
+@section @code{.2byte @var{expression} [, @var{expression}]*}
+@cindex @code{2byte} directive
+@cindex two-byte integer
+@cindex integer, 2-byte
+
+This directive expects zero or more expressions, separated by commas.  If there
+are no expressions then the directive does nothing.  Otherwise each expression
+is evaluated in turn and placed in the next two bytes of the current output
+section, using the endian model of the target.  If an expression will not fit
+in two bytes, a warning message is displayed and the least significant two
+bytes of the expression's value are used.  If an expression cannot be evaluated
+at assembly time then relocations will be generated in order to compute the
+value at link time.  
+
+This directive does not apply any alignment before or after inserting the
+values.  As a result of this, if relocations are generated, they may be
+different from those used for inserting values with a guaranteed alignment.
+
+This directive is only available for ELF targets,
+
+@node 4byte
+@section @code{.4byte @var{expression} [, @var{expression}]*}
+@cindex @code{4byte} directive
+@cindex four-byte integer
+@cindex integer, 4-byte
+
+Like the @option{.2byte} directive, except that it inserts unaligned, four byte
+long values into the output.
+
+@node 8byte
+@section @code{.8byte @var{expression} [, @var{expression}]*}
+@cindex @code{8byte} directive
+@cindex eight-byte integer
+@cindex integer, 8-byte
+
+Like the @option{.2byte} directive, except that it inserts unaligned, eight
+byte long bignum values into the output.
+
+@end ifset
 
 @node Deprecated
 @section Deprecated Directives
@@ -7554,6 +7708,12 @@ subject, see the hardware manufacturer's manual.
 @ifset PPC
 * PPC-Dependent::               PowerPC Dependent Features
 @end ifset
+@ifset PRU
+* PRU-Dependent::               PRU Dependent Features
+@end ifset
+@ifset RISCV
+* RISC-V-Dependent::            RISC-V Dependent Features
+@end ifset
 @ifset RL78
 * RL78-Dependent::              RL78 Dependent Features
 @end ifset
@@ -7594,8 +7754,11 @@ subject, see the hardware manufacturer's manual.
 @ifset VISIUM
 * Visium-Dependent::            Visium Dependent Features
 @end ifset
+@ifset WASM32
+* WebAssembly-Dependent::       WebAssembly Dependent Features
+@end ifset
 @ifset XGATE
-* XGATE-Dependent::             XGATE Features
+* XGATE-Dependent::             XGATE Dependent Features
 @end ifset
 @ifset XSTORMY16
 * XSTORMY16-Dependent::         XStormy16 Dependent Features
@@ -7780,6 +7943,14 @@ family.
 @include c-ppc.texi
 @end ifset
 
+@ifset PRU
+@include c-pru.texi
+@end ifset
+
+@ifset RISCV
+@include c-riscv.texi
+@end ifset
+
 @ifset RL78
 @include c-rl78.texi
 @end ifset
@@ -7831,6 +8002,10 @@ family.
 
 @ifset VISIUM
 @include c-visium.texi
+@end ifset
+
+@ifset WASM32
+@include c-wasm32.texi
 @end ifset
 
 @ifset XGATE

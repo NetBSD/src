@@ -1,5 +1,5 @@
 /* atof_generic.c - turn a string of digits into a Flonum
-   Copyright (C) 1987-2016 Free Software Foundation, Inc.
+   Copyright (C) 1987-2018 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -478,7 +478,7 @@ atof_generic (/* return pointer to just AFTER number we read.  */
 
       {
 	/*
-	 * Compute the mantssa (& exponent) of the power of 10.
+	 * Compute the mantissa (& exponent) of the power of 10.
 	 * If successful, then multiply the power of 10 by the digits
 	 * giving return_binary_mantissa and return_binary_exponent.
 	 */

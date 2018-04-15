@@ -75,59 +75,59 @@ struct bfd
      the object_flags values have mostly just been copied from backend
      to another, and are not necessarily correct).  */
 
-#define BFD_NO_FLAGS   0x00
+#define BFD_NO_FLAGS                0x0
 
   /* BFD contains relocation entries.  */
-#define HAS_RELOC      0x01
+#define HAS_RELOC                   0x1
 
   /* BFD is directly executable.  */
-#define EXEC_P         0x02
+#define EXEC_P                      0x2
 
   /* BFD has line number information (basically used for F_LNNO in a
      COFF header).  */
-#define HAS_LINENO     0x04
+#define HAS_LINENO                  0x4
 
   /* BFD has debugging information.  */
-#define HAS_DEBUG      0x08
+#define HAS_DEBUG                  0x08
 
   /* BFD has symbols.  */
-#define HAS_SYMS       0x10
+#define HAS_SYMS                   0x10
 
   /* BFD has local symbols (basically used for F_LSYMS in a COFF
      header).  */
-#define HAS_LOCALS     0x20
+#define HAS_LOCALS                 0x20
 
   /* BFD is a dynamic object.  */
-#define DYNAMIC        0x40
+#define DYNAMIC                    0x40
 
   /* Text section is write protected (if D_PAGED is not set, this is
      like an a.out NMAGIC file) (the linker sets this by default, but
      clears it for -r or -N).  */
-#define WP_TEXT        0x80
+#define WP_TEXT                    0x80
 
   /* BFD is dynamically paged (this is like an a.out ZMAGIC file) (the
      linker sets this by default, but clears it for -r or -n or -N).  */
-#define D_PAGED        0x100
+#define D_PAGED                   0x100
 
   /* BFD is relaxable (this means that bfd_relax_section may be able to
      do something) (sometimes bfd_relax_section can do something even if
      this is not set).  */
-#define BFD_IS_RELAXABLE 0x200
+#define BFD_IS_RELAXABLE          0x200
 
   /* This may be set before writing out a BFD to request using a
      traditional format.  For example, this is used to request that when
      writing out an a.out object the symbols not be hashed to eliminate
      duplicates.  */
-#define BFD_TRADITIONAL_FORMAT 0x400
+#define BFD_TRADITIONAL_FORMAT    0x400
 
   /* This flag indicates that the BFD contents are actually cached
      in memory.  If this is set, iostream points to a bfd_in_memory
      struct.  */
-#define BFD_IN_MEMORY 0x800
+#define BFD_IN_MEMORY             0x800
 
   /* This BFD has been created by the linker and doesn't correspond
      to any input file.  */
-#define BFD_LINKER_CREATED 0x1000
+#define BFD_LINKER_CREATED       0x1000
 
   /* This may be set before writing out a BFD to request that it
      be written using values for UIDs, GIDs, timestamps, etc. that
@@ -135,28 +135,29 @@ struct bfd
 #define BFD_DETERMINISTIC_OUTPUT 0x2000
 
   /* Compress sections in this BFD.  */
-#define BFD_COMPRESS 0x4000
+#define BFD_COMPRESS             0x4000
 
   /* Decompress sections in this BFD.  */
-#define BFD_DECOMPRESS 0x8000
+#define BFD_DECOMPRESS           0x8000
 
   /* BFD is a dummy, for plugins.  */
-#define BFD_PLUGIN 0x10000
+#define BFD_PLUGIN              0x10000
 
   /* Compress sections in this BFD with SHF_COMPRESSED from gABI.  */
-#define BFD_COMPRESS_GABI 0x20000
+#define BFD_COMPRESS_GABI       0x20000
 
   /* Convert ELF common symbol type to STT_COMMON or STT_OBJECT in this
      BFD.  */
-#define BFD_CONVERT_ELF_COMMON 0x40000
+#define BFD_CONVERT_ELF_COMMON  0x40000
 
   /* Use the ELF STT_COMMON type in this BFD.  */
-#define BFD_USE_ELF_STT_COMMON 0x80000
+#define BFD_USE_ELF_STT_COMMON  0x80000
 
   /* Flags bits to be saved in bfd_preserve_save.  */
 #define BFD_FLAGS_SAVED \
-  (BFD_IN_MEMORY | BFD_COMPRESS | BFD_DECOMPRESS | BFD_PLUGIN \
-   | BFD_COMPRESS_GABI | BFD_CONVERT_ELF_COMMON | BFD_USE_ELF_STT_COMMON)
+  (BFD_IN_MEMORY | BFD_COMPRESS | BFD_DECOMPRESS | BFD_LINKER_CREATED \
+   | BFD_PLUGIN | BFD_COMPRESS_GABI | BFD_CONVERT_ELF_COMMON \
+   | BFD_USE_ELF_STT_COMMON)
 
   /* Flags bits which are for BFD use only.  */
 #define BFD_FLAGS_FOR_BFD_USE_MASK \
@@ -397,13 +398,24 @@ Return the current BFD error condition.
 @subsubsection @code{bfd_set_error}
 @strong{Synopsis}
 @example
-void bfd_set_error (bfd_error_type error_tag, ...);
+void bfd_set_error (bfd_error_type error_tag);
 @end example
 @strong{Description}@*
 Set the BFD error condition to be @var{error_tag}.
-If @var{error_tag} is bfd_error_on_input, then this function
-takes two more parameters, the input bfd where the error
-occurred, and the bfd_error_type error.
+
+@var{error_tag} must not be bfd_error_on_input.  Use
+bfd_set_input_error for input errors instead.
+
+@findex bfd_set_input_error
+@subsubsection @code{bfd_set_input_error}
+@strong{Synopsis}
+@example
+void bfd_set_input_error (bfd *input, bfd_error_type error_tag);
+@end example
+@strong{Description}@*
+Set the BFD error condition to be bfd_error_on_input.
+@var{input} is the input bfd where the error occurred, and
+@var{error_tag} the bfd_error_type error.
 
 @findex bfd_errmsg
 @subsubsection @code{bfd_errmsg}
@@ -433,12 +445,12 @@ Some BFD functions want to print messages describing the
 problem.  They call a BFD error handler function.  This
 function may be overridden by the program.
 
-The BFD error handler acts like printf.
+The BFD error handler acts like vprintf.
 
 
 @example
 
-typedef void (*bfd_error_handler_type) (const char *, ...);
+typedef void (*bfd_error_handler_type) (const char *, va_list);
 
 @end example
 @findex bfd_set_error_handler
@@ -462,15 +474,6 @@ Set the program name to use when printing a BFD error.  This
 is printed before the error message followed by a colon and
 space.  The string must not be changed after it is passed to
 this function.
-
-@findex bfd_get_error_handler
-@subsubsection @code{bfd_get_error_handler}
-@strong{Synopsis}
-@example
-bfd_error_handler_type bfd_get_error_handler (void);
-@end example
-@strong{Description}@*
-Return the BFD error handler function.
 
 @subsection BFD assert handler
 If BFD finds an internal inconsistency, the bfd assert
@@ -499,15 +502,6 @@ bfd_assert_handler_type bfd_set_assert_handler (bfd_assert_handler_type);
 @strong{Description}@*
 Set the BFD assert handler function.  Returns the previous
 function.
-
-@findex bfd_get_assert_handler
-@subsubsection @code{bfd_get_assert_handler}
-@strong{Synopsis}
-@example
-bfd_assert_handler_type bfd_get_assert_handler (void);
-@end example
-@strong{Description}@*
-Return the BFD assert handler function.
 
 @node Miscellaneous, Memory Usage, Error reporting, BFD front end
 @section Miscellaneous
@@ -557,6 +551,10 @@ void bfd_set_reloc
 Set the relocation pointer and count within
 section @var{sec} to the values @var{rel} and @var{count}.
 The argument @var{abfd} is ignored.
+@example
+#define bfd_set_reloc(abfd, asect, location, count) \
+       BFD_SEND (abfd, _bfd_set_reloc, (abfd, asect, location, count))
+@end example
 
 @findex bfd_set_file_flags
 @subsubsection @code{bfd_set_file_flags}
@@ -690,8 +688,8 @@ Not enough memory exists to create private data for @var{obfd}.
 @end itemize
 @example
 #define bfd_copy_private_header_data(ibfd, obfd) \
-     BFD_SEND (obfd, _bfd_copy_private_header_data, \
-               (ibfd, obfd))
+       BFD_SEND (obfd, _bfd_copy_private_header_data, \
+                 (ibfd, obfd))
 @end example
 
 @findex bfd_copy_private_bfd_data
@@ -713,31 +711,8 @@ Not enough memory exists to create private data for @var{obfd}.
 @end itemize
 @example
 #define bfd_copy_private_bfd_data(ibfd, obfd) \
-     BFD_SEND (obfd, _bfd_copy_private_bfd_data, \
-               (ibfd, obfd))
-@end example
-
-@findex bfd_merge_private_bfd_data
-@subsubsection @code{bfd_merge_private_bfd_data}
-@strong{Synopsis}
-@example
-bfd_boolean bfd_merge_private_bfd_data (bfd *ibfd, bfd *obfd);
-@end example
-@strong{Description}@*
-Merge private BFD information from the BFD @var{ibfd} to the
-the output file BFD @var{obfd} when linking.  Return @code{TRUE}
-on success, @code{FALSE} on error.  Possible error returns are:
-
-@itemize @bullet
-
-@item
-@code{bfd_error_no_memory} -
-Not enough memory exists to create private data for @var{obfd}.
-@end itemize
-@example
-#define bfd_merge_private_bfd_data(ibfd, obfd) \
-     BFD_SEND (obfd, _bfd_merge_private_bfd_data, \
-               (ibfd, obfd))
+       BFD_SEND (obfd, _bfd_copy_private_bfd_data, \
+                 (ibfd, obfd))
 @end example
 
 @findex bfd_set_private_flags
@@ -759,7 +734,7 @@ Not enough memory exists to create private data for @var{obfd}.
 @end itemize
 @example
 #define bfd_set_private_flags(abfd, flags) \
-     BFD_SEND (abfd, _bfd_set_private_flags, (abfd, flags))
+       BFD_SEND (abfd, _bfd_set_private_flags, (abfd, flags))
 @end example
 
 @findex Other functions
@@ -775,7 +750,7 @@ The following functions exist but have not yet been documented.
                  (abfd, syms, sec, off, file, func, line, NULL))
 
 #define bfd_find_nearest_line_discriminator(abfd, sec, syms, off, file, func, \
-                                            line, disc) \
+                                           line, disc) \
        BFD_SEND (abfd, _bfd_find_nearest_line, \
                  (abfd, syms, sec, off, file, func, line, disc))
 

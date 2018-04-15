@@ -1,6 +1,6 @@
 ## Process this file with automake to generate Makefile.in
 #
-#   Copyright (C) 2012-2016 Free Software Foundation, Inc.
+#   Copyright (C) 2012-2018 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -177,6 +177,7 @@ TARGET_CPU_CFILES = \
 	config/tc-pdp11.c \
 	config/tc-pj.c \
 	config/tc-ppc.c \
+	config/tc-pru.c \
 	config/tc-riscv.c \
 	config/tc-rl78.c \
 	config/tc-rx.c \
@@ -195,6 +196,7 @@ TARGET_CPU_CFILES = \
 	config/tc-v850.c \
 	config/tc-vax.c \
 	config/tc-visium.c \
+	config/tc-wasm32.c \
 	config/tc-xstormy16.c \
 	config/tc-xc16x.c \
 	config/tc-xgate.c \
@@ -251,6 +253,7 @@ TARGET_CPU_HFILES = \
 	config/tc-pdp11.h \
 	config/tc-pj.h \
 	config/tc-ppc.h \
+	config/tc-pru.h \
 	config/tc-riscv.h \
 	config/tc-rl78.h \
 	config/tc-rx.h \
@@ -269,6 +272,7 @@ TARGET_CPU_HFILES = \
 	config/tc-v850.h \
 	config/tc-vax.h \
 	config/tc-visium.h \
+	config/tc-wasm32.h \
 	config/tc-xstormy16.h \
 	config/tc-xc16x.h \
 	config/tc-xgate.h \
@@ -439,7 +443,7 @@ check-DEJAGNU: site.exp
 
 # The m68k operand parser.
 
-EXTRA_as_new_SOURCES += config/m68k-parse.y config/bfin-parse.y
+EXTRA_as_new_SOURCES += config/m68k-parse.y
 
 # If m68k-parse.y is in a different directory, then ylwrap will use an
 # absolute path when it invokes yacc, which will cause yacc to put the
@@ -481,13 +485,10 @@ endif
 m68k-parse.h: ; @true
 $(srcdir)/config/m68k-parse.h: ; @true
 
+EXTRA_as_new_SOURCES += config/bfin-parse.y
 bfin-parse.c: $(srcdir)/config/bfin-parse.y
 	$(SHELL) $(YLWRAP) $(srcdir)/config/bfin-parse.y y.tab.c bfin-parse.c y.tab.h bfin-parse.h -- $(YACCCOMPILE) -d ;
 bfin-parse.h: bfin-parse.c
-bfin-parse.@OBJEXT@: bfin-parse.c \
- $(srcdir)/config/bfin-aux.h $(srcdir)/config/bfin-defs.h \
- $(INCDIR)/elf/common.h $(INCDIR)/elf/bfin.h $(BFDDIR)/libbfd.h
-
 bfin-parse.h: ; @true
 $(srcdir)/config/bfin-parse.h: ; @true
 
@@ -505,20 +506,17 @@ endif
 	$(COMPILE) -c $(srcdir)/config/bfin-lex-wrapper.c $(NO_WERROR)
 endif
 
+EXTRA_as_new_SOURCES += config/rl78-parse.y
 rl78-parse.c: $(srcdir)/config/rl78-parse.y
 	$(SHELL) $(YLWRAP) $(srcdir)/config/rl78-parse.y y.tab.c rl78-parse.c y.tab.h rl78-parse.h -- $(YACCCOMPILE) -d ;
 rl78-parse.h: rl78-parse.c
-rl78-parse.@OBJEXT@: rl78-parse.c rl78-parse.h $(srcdir)/config/rl78-defs.h \
- $(INCDIR)/elf/common.h $(INCDIR)/elf/rl78.h $(BFDDIR)/libbfd.h
-
 rl78-defs.h: ; @true
+$(srcdir)/config/rl78-defs.h: ; @true
 
+EXTRA_as_new_SOURCES += config/rx-parse.y
 rx-parse.c: $(srcdir)/config/rx-parse.y
 	$(SHELL) $(YLWRAP) $(srcdir)/config/rx-parse.y y.tab.c rx-parse.c y.tab.h rx-parse.h -- $(YACCCOMPILE) -d ;
 rx-parse.h: rx-parse.c
-rx-parse.@OBJEXT@: rx-parse.c rx-parse.h $(srcdir)/config/rx-defs.h \
- $(INCDIR)/elf/common.h $(INCDIR)/elf/rx.h $(BFDDIR)/libbfd.h
-
 rx-defs.h: ; @true
 $(srcdir)/config/rx-defs.h: ; @true
 
@@ -673,21 +671,15 @@ stage3:
 
 against=stage2
 
-# This rule is derived from corresponding code in the Makefile.in for gcc.
-# The "tail +16c" is to bypass headers which may include timestamps or
-# temporary assembly file names.
 comparison:
 	x=0 ; \
 	for file in *.@OBJEXT@ ; do \
-	  tail +16c ./$$file > tmp-foo1; \
-	  if tail +16c ${against}/$$file > tmp-foo2 2>/dev/null ; then \
-	    if cmp tmp-foo1 tmp-foo2 ; then \
-	      true ; \
-	    else \
-	      echo $$file differs ; \
-	      x=1 ; \
-	    fi ; \
-	  else true; fi ; \
+	  f1=./$$file; f2=${against}/$$file; \
+	  $(do_compare) > /dev/null 2>&1; \
+	  if test $$? -ne 0; then \
+	    echo $$file differs ; \
+	    x=1 ; \
+	  fi ; \
 	done ; \
 	exit $$x
 	-rm -f tmp-foo*

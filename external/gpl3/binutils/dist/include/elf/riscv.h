@@ -1,7 +1,7 @@
 /* RISC-V ELF support for BFD.
-   Copyright 2011-2014 Free Software Foundation, Inc.
+   Copyright (C) 2011-2018 Free Software Foundation, Inc.
 
-   Contributed by Andrw Waterman <waterman@cs.berkeley.edu> at UC Berkeley.
+   Contributed by Andrew Waterman (andrew@sifive.com).
    Based on MIPS ELF support for BFD, by Ian Lance Taylor.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -17,9 +17,8 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston,
-   MA 02110-1301, USA.  */
+   along with this program; see the file COPYING3. If not,
+   see <http://www.gnu.org/licenses/>.  */
 
 /* This file holds definitions specific to the RISCV ELF ABI.  Note
    that most of this is not actually implemented by BFD.  */
@@ -28,6 +27,7 @@
 #define _ELF_RISCV_H
 
 #include "elf/reloc-macros.h"
+#include "libiberty.h"
 
 /* Relocation types.  */
 START_RELOC_NUMBERS (elf_riscv_reloc_type)
@@ -74,65 +74,43 @@ START_RELOC_NUMBERS (elf_riscv_reloc_type)
   RELOC_NUMBER (R_RISCV_GNU_VTINHERIT, 41)
   RELOC_NUMBER (R_RISCV_GNU_VTENTRY, 42)
   RELOC_NUMBER (R_RISCV_ALIGN, 43)
+  RELOC_NUMBER (R_RISCV_RVC_BRANCH, 44)
+  RELOC_NUMBER (R_RISCV_RVC_JUMP, 45)
+  RELOC_NUMBER (R_RISCV_RVC_LUI, 46)
+  RELOC_NUMBER (R_RISCV_GPREL_I, 47)
+  RELOC_NUMBER (R_RISCV_GPREL_S, 48)
+  RELOC_NUMBER (R_RISCV_TPREL_I, 49)
+  RELOC_NUMBER (R_RISCV_TPREL_S, 50)
+  RELOC_NUMBER (R_RISCV_RELAX, 51)
+  RELOC_NUMBER (R_RISCV_SUB6, 52)
+  RELOC_NUMBER (R_RISCV_SET6, 53)
+  RELOC_NUMBER (R_RISCV_SET8, 54)
+  RELOC_NUMBER (R_RISCV_SET16, 55)
+  RELOC_NUMBER (R_RISCV_SET32, 56)
+  RELOC_NUMBER (R_RISCV_32_PCREL, 57)
 END_RELOC_NUMBERS (R_RISCV_max)
 
 /* Processor specific flags for the ELF header e_flags field.  */
 
-/* Custom flag definitions. */
+/* File may contain compressed instructions.  */
+#define EF_RISCV_RVC 0x0001
 
-#define EF_RISCV_EXT_MASK 0xffff
-#define EF_RISCV_EXT_SH 16
-#define E_RISCV_EXT_Xcustom 0x0000
-#define E_RISCV_EXT_Xhwacha 0x0001
-#define E_RISCV_EXT_RESERVED 0xffff
+/* Which floating-point ABI a file uses.  */
+#define EF_RISCV_FLOAT_ABI 0x0006
 
-#define EF_GET_RISCV_EXT(x) \
-  ((x >> EF_RISCV_EXT_SH) & EF_RISCV_EXT_MASK)
+/* File uses the soft-float ABI.  */
+#define EF_RISCV_FLOAT_ABI_SOFT 0x0000
 
-#define EF_SET_RISCV_EXT(x, ext) \
-  do { x |= ((ext & EF_RISCV_EXT_MASK) << EF_RISCV_EXT_SH); } while (0)
+/* File uses the single-float ABI.  */
+#define EF_RISCV_FLOAT_ABI_SINGLE 0x0002
 
-#define EF_IS_RISCV_EXT_Xcustom(x) \
-  (EF_GET_RISCV_EXT(x) == E_RISCV_EXT_Xcustom)
+/* File uses the double-float ABI.  */
+#define EF_RISCV_FLOAT_ABI_DOUBLE 0x0004
 
-/* A mapping from extension names to elf flags  */
+/* File uses the quad-float ABI.  */
+#define EF_RISCV_FLOAT_ABI_QUAD 0x0006
 
-struct riscv_extension_entry
-{
-  const char* name;
-  unsigned int flag;
-};
-
-static const struct riscv_extension_entry riscv_extension_map[] =
-{
-  {"Xcustom", E_RISCV_EXT_Xcustom},
-  {"Xhwacha", E_RISCV_EXT_Xhwacha},
-};
-
-/* Given an extension name, return an elf flag. */
-
-static inline const char* riscv_elf_flag_to_name(unsigned int flag)
-{
-  unsigned int i;
-
-  for (i=0; i<sizeof(riscv_extension_map)/sizeof(riscv_extension_map[0]); i++)
-    if (riscv_extension_map[i].flag == flag)
-      return riscv_extension_map[i].name;
-
-  return NULL;
-}
-
-/* Given an elf flag, return an extension name. */
-
-static inline unsigned int riscv_elf_name_to_flag(const char* name)
-{
-  unsigned int i;
-
-  for (i=0; i<sizeof(riscv_extension_map)/sizeof(riscv_extension_map[0]); i++)
-    if (strcmp(riscv_extension_map[i].name, name) == 0)
-      return riscv_extension_map[i].flag;
-
-  return E_RISCV_EXT_Xcustom;
-}
+/* The name of the global pointer symbol.  */
+#define RISCV_GP_SYMBOL "__global_pointer$"
 
 #endif /* _ELF_RISCV_H */

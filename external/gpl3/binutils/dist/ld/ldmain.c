@@ -1,5 +1,5 @@
 /* Main program of GNU linker.
-   Copyright (C) 1991-2016 Free Software Foundation, Inc.
+   Copyright (C) 1991-2018 Free Software Foundation, Inc.
    Written by Steve Chamberlain steve@cygnus.com
 
    This file is part of the GNU Binutils.
@@ -49,12 +49,6 @@
 #endif
 
 #include <string.h>
-
-#ifdef HAVE_SBRK
-#if !HAVE_DECL_SBRK
-extern void *sbrk ();
-#endif
-#endif
 
 #ifndef TARGET_SYSTEM_ROOT
 #define TARGET_SYSTEM_ROOT ""
@@ -158,6 +152,7 @@ static struct bfd_link_callbacks link_callbacks =
 };
 
 static bfd_assert_handler_type default_bfd_assert_handler;
+static bfd_error_handler_type default_bfd_error_handler;
 
 struct bfd_link_info link_info;
 
@@ -172,15 +167,24 @@ ld_cleanup (void)
     unlink_if_ordinary (output_filename);
 }
 
-/* If there's a BFD assertion, we'll notice and exit with an error
-   unless otherwise instructed.  */
+/* Hook to notice BFD assertions.  */
 
 static void
 ld_bfd_assert_handler (const char *fmt, const char *bfdver,
 		       const char *file, int line)
 {
-  (*default_bfd_assert_handler) (fmt, bfdver, file, line);
   config.make_executable = FALSE;
+  (*default_bfd_assert_handler) (fmt, bfdver, file, line);
+}
+
+/* Hook the bfd error/warning handler for --fatal-warnings.  */
+
+static void
+ld_bfd_error_handler (const char *fmt, va_list ap)
+{
+  if (config.fatal_warnings)
+    config.make_executable = FALSE;
+  (*default_bfd_error_handler) (fmt, ap);
 }
 
 int
@@ -188,9 +192,6 @@ main (int argc, char **argv)
 {
   char *emulation;
   long start_time = get_run_time ();
-#ifdef HAVE_SBRK
-  char *start_sbrk = (char *) sbrk (0);
-#endif
 
 #if defined (HAVE_SETLOCALE) && defined (HAVE_LC_MESSAGES)
   setlocale (LC_MESSAGES, "");
@@ -216,6 +217,9 @@ main (int argc, char **argv)
      likely to signal incorrect output being generated but otherwise may
      leave no trace.  */
   default_bfd_assert_handler = bfd_set_assert_handler (ld_bfd_assert_handler);
+
+  /* Also hook the bfd error/warning handler for --fatal-warnings.  */
+  default_bfd_error_handler = bfd_set_error_handler (ld_bfd_error_handler);
 
   xatexit (ld_cleanup);
 
@@ -269,7 +273,8 @@ main (int argc, char **argv)
   link_info.keep_memory = TRUE;
   link_info.combreloc = TRUE;
   link_info.strip_discarded = TRUE;
-  link_info.emit_hash = TRUE;
+  link_info.emit_hash = DEFAULT_EMIT_SYSV_HASH;
+  link_info.emit_gnu_hash = DEFAULT_EMIT_GNU_HASH;
   link_info.callbacks = &link_callbacks;
   link_info.input_bfds_tail = &link_info.input_bfds;
   /* SVR4 linkers seem to set DT_INIT and DT_FINI based on magic _init
@@ -284,6 +289,9 @@ main (int argc, char **argv)
   link_info.path_separator = ':';
 #ifdef DEFAULT_FLAG_COMPRESS_DEBUG
   link_info.compress_debug = COMPRESS_DEBUG_GABI_ZLIB;
+#endif
+#ifdef DEFAULT_NEW_DTAGS
+  link_info.new_dtags = DEFAULT_NEW_DTAGS;
 #endif
 
   ldfile_add_arch ("");
@@ -355,7 +363,7 @@ main (int argc, char **argv)
 	  while ((n = fread (buf, 1, ld_bufsz - 1, saved_script_handle)) > 0)
 	    {
 	      buf[n] = 0;
-	      info_msg (buf);
+	      info_msg ("%s", buf);
 	    }
 	  rewind (saved_script_handle);
 	  free (buf);
@@ -370,6 +378,12 @@ main (int argc, char **argv)
       info_msg ("\n==================================================\n");
     }
 
+  if (command_line.force_group_allocation
+      || !bfd_link_relocatable (&link_info))
+    link_info.resolve_section_groups = TRUE;
+  else
+    link_info.resolve_section_groups = FALSE;
+
   if (command_line.print_output_format)
     info_msg ("%s\n", lang_get_output_target ());
 
@@ -381,6 +395,9 @@ main (int argc, char **argv)
      to provide version information.  */
   if (argc == 2 && version_printed)
     xexit (0);
+
+  if (link_info.inhibit_common_definition && !bfd_link_dll (&link_info))
+    einfo (_("%P%F: --no-define-common may not be used without -shared\n"));
 
   if (!lang_has_input_file)
     {
@@ -517,18 +534,11 @@ main (int argc, char **argv)
 
   if (config.stats)
     {
-#ifdef HAVE_SBRK
-      char *lim = (char *) sbrk (0);
-#endif
       long run_time = get_run_time () - start_time;
 
       fflush (stdout);
       fprintf (stderr, _("%s: total time in link: %ld.%06ld\n"),
 	       program_name, run_time / 1000000, run_time % 1000000);
-#ifdef HAVE_SBRK
-      fprintf (stderr, _("%s: data size %ld\n"), program_name,
-	       (long) (lim - start_sbrk));
-#endif
       fflush (stderr);
     }
 
@@ -787,6 +797,7 @@ add_archive_element (struct bfd_link_info *info,
 
   input = (lang_input_statement_type *)
       xcalloc (1, sizeof (lang_input_statement_type));
+  input->header.type = lang_input_statement_enum;
   input->filename = abfd->filename;
   input->local_sym_name = abfd->filename;
   input->the_bfd = abfd;
@@ -857,11 +868,7 @@ add_archive_element (struct bfd_link_info *info,
 
       if (!header_printed)
 	{
-	  char buf[100];
-
-	  sprintf (buf, _("Archive member included "
-			  "to satisfy reference by file (symbol)\n\n"));
-	  minfo ("%s", buf);
+	  minfo (_("Archive member included to satisfy reference by file (symbol)\n\n"));
 	  header_printed = TRUE;
 	}
 
@@ -1474,9 +1481,9 @@ notice (struct bfd_link_info *info,
       && bfd_hash_lookup (info->notice_hash, name, FALSE, FALSE) != NULL)
     {
       if (bfd_is_und_section (section))
-	einfo ("%B: reference to %s\n", abfd, name);
+	einfo (_("%B: reference to %s\n"), abfd, name);
       else
-	einfo ("%B: definition of %s\n", abfd, name);
+	einfo (_("%B: definition of %s\n"), abfd, name);
     }
 
   if (command_line.cref || nocrossref_list != NULL)

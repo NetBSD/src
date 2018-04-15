@@ -1,6 +1,6 @@
 #!/bin/sh
 # genscripts.sh - generate the ld-emulation-target specific files
-# Copyright (C) 2004-2016 Free Software Foundation, Inc.
+# Copyright (C) 2004-2018 Free Software Foundation, Inc.
 #
 # This file is part of the Gnu Linker.
 #
@@ -281,7 +281,7 @@ DEFAULT_DATA_ALIGNMENT="ALIGN(${SEGMENT_SIZE})"
 ( echo "/* Script for ld -r: link without relocation */"
   . ${CUSTOMIZER_SCRIPT}
   . ${srcdir}/scripttempl/${SCRIPT_NAME}.sc
-) | sed -e '/^ *$/d;s/[ 	]*$//' > ldscripts/${EMULATION_NAME}.xr
+) | sed -e '/^ *$/d;s/[	 ]*$//' > ldscripts/${EMULATION_NAME}.xr
 
 LD_FLAG=u
 DATA_ALIGNMENT=${DATA_ALIGNMENT_u}
@@ -289,29 +289,35 @@ CONSTRUCTING=" "
 ( echo "/* Script for ld -Ur: link w/out relocation, do create constructors */"
   . ${CUSTOMIZER_SCRIPT}
   . ${srcdir}/scripttempl/${SCRIPT_NAME}.sc
-) | sed -e '/^ *$/d;s/[ 	]*$//' > ldscripts/${EMULATION_NAME}.xu
+) | sed -e '/^ *$/d;s/[	 ]*$//' > ldscripts/${EMULATION_NAME}.xu
 
-LD_FLAG=
 DATA_ALIGNMENT=${DATA_ALIGNMENT_}
 RELOCATING=" "
+LD_FLAG=
 ( echo "/* Default linker script, for normal executables */"
   . ${CUSTOMIZER_SCRIPT}
   . ${srcdir}/scripttempl/${SCRIPT_NAME}.sc
-) | sed -e '/^ *$/d;s/[ 	]*$//' > ldscripts/${EMULATION_NAME}.x
+) | sed -e '/^ *$/d;s/[	 ]*$//' > ldscripts/${EMULATION_NAME}.x
+
+LD_FLAG=textonly
+( echo "/* Script for -z separate-code: generate normal executables with separate code segment */"
+  . ${CUSTOMIZER_SCRIPT}
+  . ${srcdir}/scripttempl/${SCRIPT_NAME}.sc
+) | sed -e '/^ *$/d;s/[	 ]*$//' > ldscripts/${EMULATION_NAME}.xe
 
 LD_FLAG=n
 DATA_ALIGNMENT=${DATA_ALIGNMENT_n}
 ( echo "/* Script for -n: mix text and data on same page */"
   . ${CUSTOMIZER_SCRIPT}
   . ${srcdir}/scripttempl/${SCRIPT_NAME}.sc
-) | sed -e '/^ *$/d;s/[ 	]*$//' > ldscripts/${EMULATION_NAME}.xn
+) | sed -e '/^ *$/d;s/[	 ]*$//' > ldscripts/${EMULATION_NAME}.xn
 
 LD_FLAG=N
 DATA_ALIGNMENT=${DATA_ALIGNMENT_N}
 ( echo "/* Script for -N: mix text and data on same page; don't align data */"
   . ${CUSTOMIZER_SCRIPT}
   . ${srcdir}/scripttempl/${SCRIPT_NAME}.sc
-) | sed -e '/^ *$/d;s/[ 	]*$//' > ldscripts/${EMULATION_NAME}.xbn
+) | sed -e '/^ *$/d;s/[	 ]*$//' > ldscripts/${EMULATION_NAME}.xbn
 
 if test -n "$GENERATE_COMBRELOC_SCRIPT"; then
   DATA_ALIGNMENT=${DATA_ALIGNMENT_c-${DATA_ALIGNMENT_}}
@@ -320,45 +326,79 @@ if test -n "$GENERATE_COMBRELOC_SCRIPT"; then
   ( echo "/* Script for -z combreloc: combine and sort reloc sections */"
     . ${CUSTOMIZER_SCRIPT}
     . ${srcdir}/scripttempl/${SCRIPT_NAME}.sc
-  ) | sed -e '/^ *$/d;s/[ 	]*$//' > ldscripts/${EMULATION_NAME}.xc
+  ) | sed -e '/^ *$/d;s/[	 ]*$//' > ldscripts/${EMULATION_NAME}.xc
   rm -f ${COMBRELOC}
-  LD_FLAG=w
+  LD_FLAG=ctextonly
+  COMBRELOC=ldscripts/${EMULATION_NAME}.xce.tmp
+  ( echo "/* Script for -z combreloc -z separate-code: combine and sort reloc sections with separate code segment */"
+    . ${CUSTOMIZER_SCRIPT}
+    . ${srcdir}/scripttempl/${SCRIPT_NAME}.sc
+  ) | sed -e '/^ *$/d;s/[	 ]*$//' > ldscripts/${EMULATION_NAME}.xce
+  rm -f ${COMBRELOC}
   RELRO_NOW=" "
+  LD_FLAG=w
   COMBRELOC=ldscripts/${EMULATION_NAME}.xw.tmp
   ( echo "/* Script for -z combreloc -z now -z relro: combine and sort reloc sections */"
     . ${CUSTOMIZER_SCRIPT}
     . ${srcdir}/scripttempl/${SCRIPT_NAME}.sc
-  ) | sed -e '/^ *$/d;s/[ 	]*$//' > ldscripts/${EMULATION_NAME}.xw
+  ) | sed -e '/^ *$/d;s/[	 ]*$//' > ldscripts/${EMULATION_NAME}.xw
+  rm -f ${COMBRELOC}
+  LD_FLAG=wtextonly
+  COMBRELOC=ldscripts/${EMULATION_NAME}.xwe.tmp
+  ( echo "/* Script for -z combreloc -z now -z relro -z separate-code: combine and sort reloc sections with separate code segment */"
+    . ${CUSTOMIZER_SCRIPT}
+    . ${srcdir}/scripttempl/${SCRIPT_NAME}.sc
+  ) | sed -e '/^ *$/d;s/[	 ]*$//' > ldscripts/${EMULATION_NAME}.xwe
   rm -f ${COMBRELOC}
   COMBRELOC=
   unset RELRO_NOW
 fi
 
 if test -n "$GENERATE_SHLIB_SCRIPT"; then
-  LD_FLAG=shared
   DATA_ALIGNMENT=${DATA_ALIGNMENT_s-${DATA_ALIGNMENT_}}
   CREATE_SHLIB=" "
+  LD_FLAG=shared
   (
     echo "/* Script for ld --shared: link shared library */"
     . ${CUSTOMIZER_SCRIPT}
     . ${srcdir}/scripttempl/${SCRIPT_NAME}.sc
-  ) | sed -e '/^ *$/d;s/[ 	]*$//' > ldscripts/${EMULATION_NAME}.xs
+  ) | sed -e '/^ *$/d;s/[	 ]*$//' > ldscripts/${EMULATION_NAME}.xs
+  LD_FLAG=sharedtextonly
+  (
+    echo "/* Script for ld --shared -z separate-code: link shared library with separate code segment */"
+    . ${CUSTOMIZER_SCRIPT}
+    . ${srcdir}/scripttempl/${SCRIPT_NAME}.sc
+  ) | sed -e '/^ *$/d;s/[	 ]*$//' > ldscripts/${EMULATION_NAME}.xse
   if test -n "$GENERATE_COMBRELOC_SCRIPT"; then
-    LD_FLAG=cshared
     DATA_ALIGNMENT=${DATA_ALIGNMENT_sc-${DATA_ALIGNMENT}}
+    LD_FLAG=cshared
     COMBRELOC=ldscripts/${EMULATION_NAME}.xsc.tmp
     ( echo "/* Script for --shared -z combreloc: shared library, combine & sort relocs */"
       . ${CUSTOMIZER_SCRIPT}
       . ${srcdir}/scripttempl/${SCRIPT_NAME}.sc
-    ) | sed -e '/^ *$/d;s/[ 	]*$//' > ldscripts/${EMULATION_NAME}.xsc
+    ) | sed -e '/^ *$/d;s/[	 ]*$//' > ldscripts/${EMULATION_NAME}.xsc
     rm -f ${COMBRELOC}
-    LD_FLAG=wshared
+    LD_FLAG=csharedtextonly
+    COMBRELOC=ldscripts/${EMULATION_NAME}.xsce.tmp
+    ( echo "/* Script for --shared -z combreloc -z separate-code: shared library, combine & sort relocs with separate code segment */"
+      . ${CUSTOMIZER_SCRIPT}
+      . ${srcdir}/scripttempl/${SCRIPT_NAME}.sc
+    ) | sed -e '/^ *$/d;s/[	 ]*$//' > ldscripts/${EMULATION_NAME}.xsce
+    rm -f ${COMBRELOC}
     RELRO_NOW=" "
+    LD_FLAG=wshared
     COMBRELOC=ldscripts/${EMULATION_NAME}.xsw.tmp
     ( echo "/* Script for --shared -z combreloc -z now -z relro: shared library, combine & sort relocs */"
       . ${CUSTOMIZER_SCRIPT}
       . ${srcdir}/scripttempl/${SCRIPT_NAME}.sc
-    ) | sed -e '/^ *$/d;s/[ 	]*$//' > ldscripts/${EMULATION_NAME}.xsw
+    ) | sed -e '/^ *$/d;s/[	 ]*$//' > ldscripts/${EMULATION_NAME}.xsw
+    rm -f ${COMBRELOC}
+    LD_FLAG=wsharedtextonly
+    COMBRELOC=ldscripts/${EMULATION_NAME}.xswe.tmp
+    ( echo "/* Script for --shared -z combreloc -z now -z relro -z separate-code: shared library, combine & sort relocs with separate code segment */"
+      . ${CUSTOMIZER_SCRIPT}
+      . ${srcdir}/scripttempl/${SCRIPT_NAME}.sc
+    ) | sed -e '/^ *$/d;s/[	 ]*$//' > ldscripts/${EMULATION_NAME}.xswe
     rm -f ${COMBRELOC}
     COMBRELOC=
     unset RELRO_NOW
@@ -367,30 +407,50 @@ if test -n "$GENERATE_SHLIB_SCRIPT"; then
 fi
 
 if test -n "$GENERATE_PIE_SCRIPT"; then
-  LD_FLAG=pie
   DATA_ALIGNMENT=${DATA_ALIGNMENT_s-${DATA_ALIGNMENT_}}
   CREATE_PIE=" "
+  LD_FLAG=pie
   (
     echo "/* Script for ld -pie: link position independent executable */"
     . ${CUSTOMIZER_SCRIPT}
     . ${srcdir}/scripttempl/${SCRIPT_NAME}.sc
-  ) | sed -e '/^ *$/d;s/[ 	]*$//' > ldscripts/${EMULATION_NAME}.xd
+  ) | sed -e '/^ *$/d;s/[	 ]*$//' > ldscripts/${EMULATION_NAME}.xd
+  LD_FLAG=pietextonly
+  (
+    echo "/* Script for ld -pie -z separate-code: link position independent executable with separate code segment */"
+    . ${CUSTOMIZER_SCRIPT}
+    . ${srcdir}/scripttempl/${SCRIPT_NAME}.sc
+  ) | sed -e '/^ *$/d;s/[	 ]*$//' > ldscripts/${EMULATION_NAME}.xde
   if test -n "$GENERATE_COMBRELOC_SCRIPT"; then
-    LD_FLAG=cpie
     DATA_ALIGNMENT=${DATA_ALIGNMENT_sc-${DATA_ALIGNMENT}}
     COMBRELOC=ldscripts/${EMULATION_NAME}.xdc.tmp
+    LD_FLAG=cpie
     ( echo "/* Script for -pie -z combreloc: position independent executable, combine & sort relocs */"
       . ${CUSTOMIZER_SCRIPT}
       . ${srcdir}/scripttempl/${SCRIPT_NAME}.sc
-    ) | sed -e '/^ *$/d;s/[ 	]*$//' > ldscripts/${EMULATION_NAME}.xdc
+    ) | sed -e '/^ *$/d;s/[	 ]*$//' > ldscripts/${EMULATION_NAME}.xdc
     rm -f ${COMBRELOC}
-    LD_FLAG=wpie
+    LD_FLAG=cpietextonly
+    COMBRELOC=ldscripts/${EMULATION_NAME}.xdce.tmp
+    ( echo "/* Script for -pie -z combreloc -z separate-code: position independent executable, combine & sort relocs with separate code segment */"
+      . ${CUSTOMIZER_SCRIPT}
+      . ${srcdir}/scripttempl/${SCRIPT_NAME}.sc
+    ) | sed -e '/^ *$/d;s/[	 ]*$//' > ldscripts/${EMULATION_NAME}.xdce
+    rm -f ${COMBRELOC}
     RELRO_NOW=" "
+    LD_FLAG=wpie
     COMBRELOC=ldscripts/${EMULATION_NAME}.xdw.tmp
     ( echo "/* Script for -pie -z combreloc -z now -z relro: position independent executable, combine & sort relocs */"
       . ${CUSTOMIZER_SCRIPT}
       . ${srcdir}/scripttempl/${SCRIPT_NAME}.sc
-    ) | sed -e '/^ *$/d;s/[ 	]*$//' > ldscripts/${EMULATION_NAME}.xdw
+    ) | sed -e '/^ *$/d;s/[	 ]*$//' > ldscripts/${EMULATION_NAME}.xdw
+    rm -f ${COMBRELOC}
+    LD_FLAG=wpietextonly
+    COMBRELOC=ldscripts/${EMULATION_NAME}.xdwe.tmp
+    ( echo "/* Script for -pie -z combreloc -z now -z relro -z separate-code: position independent executable, combine & sort relocs with separate code segment */"
+      . ${CUSTOMIZER_SCRIPT}
+      . ${srcdir}/scripttempl/${SCRIPT_NAME}.sc
+    ) | sed -e '/^ *$/d;s/[	 ]*$//' > ldscripts/${EMULATION_NAME}.xdwe
     rm -f ${COMBRELOC}
     COMBRELOC=
     unset RELRO_NOW
@@ -405,7 +465,7 @@ if test -n "$GENERATE_AUTO_IMPORT_SCRIPT"; then
     echo "/* Script for ld --enable-auto-import: Like the default script except read only data is placed into .data  */"
     . ${CUSTOMIZER_SCRIPT}
     . ${srcdir}/scripttempl/${SCRIPT_NAME}.sc
-  ) | sed -e '/^ *$/d;s/[ 	]*$//' > ldscripts/${EMULATION_NAME}.xa
+  ) | sed -e '/^ *$/d;s/[	 ]*$//' > ldscripts/${EMULATION_NAME}.xa
 fi
 
 case "$COMPILE_IN: $EMULATION_LIBPATH " in

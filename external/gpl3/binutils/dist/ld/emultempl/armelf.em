@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright (C) 1991-2016 Free Software Foundation, Inc.
+#   Copyright (C) 1991-2018 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -28,20 +28,26 @@ fragment <<EOF
 #include "ldctor.h"
 #include "elf/arm.h"
 
-static char * thumb_entry_symbol = NULL;
-static int byteswap_code = 0;
-static int target1_is_rel = 0${TARGET1_IS_REL};
-static char * target2_type = "${TARGET2_TYPE}";
-static int fix_v4bx = 0;
-static int use_blx = 0;
-static bfd_arm_vfp11_fix vfp11_denorm_fix = BFD_ARM_VFP11_FIX_DEFAULT;
-static bfd_arm_stm32l4xx_fix stm32l4xx_fix = BFD_ARM_STM32L4XX_FIX_NONE;
-static int fix_cortex_a8 = -1;
-static int no_enum_size_warning = 0;
-static int no_wchar_size_warning = 0;
-static int pic_veneer = 0;
-static int merge_exidx_entries = -1;
-static int fix_arm1176 = 1;
+static struct elf32_arm_params params =
+{
+  NULL,				/* thumb_entry_symbol */
+  0,				/* byteswap_code */
+  0${TARGET1_IS_REL},		/* target1_is_rel */
+  "${TARGET2_TYPE}",		/* target2_type */
+  0,				/* fix_v4bx */
+  0,				/* use_blx */
+  BFD_ARM_VFP11_FIX_DEFAULT,	/* vfp11_denorm_fix */
+  BFD_ARM_STM32L4XX_FIX_NONE,	/* stm32l4xx_fix */
+  0,				/* no_enum_size_warning */
+  0,				/* no_wchar_size_warning */
+  0,				/* pic_veneer */
+  -1,				/* fix_cortex_a8 */
+  1,				/* fix_arm1176 */
+  -1,				/* merge_exidx_entries */
+  0,				/* cmse_implib */
+  NULL				/* in_implib_bfd */
+};
+static char *in_implib_filename = NULL;
 
 static void
 gld${EMULATION_NAME}_before_parse (void)
@@ -53,6 +59,8 @@ gld${EMULATION_NAME}_before_parse (void)
   input_flags.add_DT_NEEDED_for_dynamic = TRUE;
   config.has_shared = `if test -n "$GENERATE_SHLIB_SCRIPT" ; then echo TRUE ; else echo FALSE ; fi`;
   config.separate_code = `if test "x${SEPARATE_CODE}" = xyes ; then echo TRUE ; else echo FALSE ; fi`;
+  link_info.check_relocs_after_open_input = TRUE;
+  link_info.relro = DEFAULT_LD_Z_RELRO;
 }
 
 static void
@@ -71,7 +79,7 @@ gld${EMULATION_NAME}_set_symbols (void)
 static void
 arm_elf_before_allocation (void)
 {
-  bfd_elf32_arm_set_byteswap_code (&link_info, byteswap_code);
+  bfd_elf32_arm_set_byteswap_code (&link_info, params.byteswap_code);
 
   /* Choose type of VFP11 erratum fix, or warn if specified fix is unnecessary
      due to architecture version.  */
@@ -95,8 +103,8 @@ arm_elf_before_allocation (void)
       /* Here we rummage through the found bfds to collect glue information.  */
       LANG_FOR_EACH_INPUT_STATEMENT (is)
 	{
-          /* Initialise mapping tables for code/data.  */
-          bfd_elf32_arm_init_maps (is->the_bfd);
+	  /* Initialise mapping tables for code/data.  */
+	  bfd_elf32_arm_init_maps (is->the_bfd);
 
 	  if (!bfd_elf32_arm_process_before_allocation (is->the_bfd,
 							&link_info)
@@ -256,7 +264,7 @@ elf32_arm_add_stub_section (const char * stub_sec_name,
     }
 
  err_ret:
-  einfo ("%X%P: can not make stub section: %E\n");
+  einfo (_("%X%P: can not make stub section: %E\n"));
   return NULL;
 }
 
@@ -356,7 +364,7 @@ gld${EMULATION_NAME}_after_allocation (void)
   qsort (sec_list, sec_count, sizeof (asection *), &compare_output_sec_vma);
 
   if (elf32_arm_fix_exidx_coverage (sec_list, sec_count, &link_info,
-				    merge_exidx_entries))
+				    params.merge_exidx_entries))
     need_laying_out = 1;
 
   free (sec_list);
@@ -368,7 +376,7 @@ gld${EMULATION_NAME}_after_allocation (void)
   ret = bfd_elf_discard_info (link_info.output_bfd, & link_info);
   if (ret < 0)
     {
-      einfo ("%X%P: .eh_frame/.stab edit: %E\n");
+      einfo (_("%X%P: .eh_frame/.stab edit: %E\n"));
       return;
     }
   else if (ret > 0)
@@ -383,7 +391,8 @@ gld${EMULATION_NAME}_after_allocation (void)
 	{
 	  if (ret < 0)
 	    {
-	      einfo ("%X%P: could not compute sections lists for stub generation: %E\n");
+	      einfo (_("%X%P: could not compute sections lists "
+		       "for stub generation: %E\n"));
 	      return;
 	    }
 
@@ -397,7 +406,7 @@ gld${EMULATION_NAME}_after_allocation (void)
 				      & elf32_arm_add_stub_section,
 				      & gldarm_layout_sections_again))
 	    {
-	      einfo ("%X%P: cannot size stub section: %E\n");
+	      einfo (_("%X%P: cannot size stub section: %E\n"));
 	      return;
 	    }
 	}
@@ -415,9 +424,9 @@ gld${EMULATION_NAME}_finish (void)
   {
     LANG_FOR_EACH_INPUT_STATEMENT (is)
       {
-        /* Figure out where VFP11 erratum veneers (and the labels returning
-           from same) have been placed.  */
-        bfd_elf32_arm_vfp11_fix_veneer_locations (is->the_bfd, &link_info);
+	/* Figure out where VFP11 erratum veneers (and the labels returning
+	   from same) have been placed.  */
+	bfd_elf32_arm_vfp11_fix_veneer_locations (is->the_bfd, &link_info);
 
 	 /* Figure out where STM32L4XX erratum veneers (and the labels returning
 	   from them) have been placed.  */
@@ -431,15 +440,15 @@ gld${EMULATION_NAME}_finish (void)
       if (stub_file->the_bfd->sections != NULL)
 	{
 	  if (! elf32_arm_build_stubs (& link_info))
-	    einfo ("%X%P: can not build stubs: %E\n");
+	    einfo (_("%X%P: can not build stubs: %E\n"));
 	}
     }
 
   finish_default ();
 
-  if (thumb_entry_symbol)
+  if (params.thumb_entry_symbol)
     {
-      h = bfd_link_hash_lookup (link_info.hash, thumb_entry_symbol,
+      h = bfd_link_hash_lookup (link_info.hash, params.thumb_entry_symbol,
 				FALSE, FALSE, TRUE);
     }
   else
@@ -482,15 +491,15 @@ gld${EMULATION_NAME}_finish (void)
 
       sprintf_vma (buffer + 2, val);
 
-      if (thumb_entry_symbol != NULL && entry_symbol.name != NULL
+      if (params.thumb_entry_symbol != NULL && entry_symbol.name != NULL
 	  && entry_from_cmdline)
 	einfo (_("%P: warning: '--thumb-entry %s' is overriding '-e %s'\n"),
-	       thumb_entry_symbol, entry_symbol.name);
+	       params.thumb_entry_symbol, entry_symbol.name);
       entry_symbol.name = buffer;
     }
   else
     einfo (_("%P: warning: cannot find thumb start symbol %s\n"),
-	   thumb_entry_symbol);
+	   params.thumb_entry_symbol);
 }
 
 /* This is a convenient point to tell BFD about target specific flags.
@@ -504,29 +513,35 @@ arm_elf_create_output_section_statements (void)
 	 These will only be created if the output format is an arm format,
 	 hence we do not support linking and changing output formats at the
 	 same time.  Use a link followed by objcopy to change output formats.  */
-      einfo ("%F%X%P: error: Cannot change output format whilst linking ARM binaries.\n");
+      einfo (_("%F%X%P: error: Cannot change output format "
+	       "whilst linking ARM binaries.\n"));
       return;
     }
 
-  bfd_elf32_arm_set_target_relocs (link_info.output_bfd, &link_info,
-				   target1_is_rel,
-				   target2_type, fix_v4bx, use_blx,
-				   vfp11_denorm_fix, stm32l4xx_fix,
-				   no_enum_size_warning,
-				   no_wchar_size_warning,
-				   pic_veneer, fix_cortex_a8,
-				   fix_arm1176);
+  if (in_implib_filename)
+    {
+      params.in_implib_bfd = bfd_openr (in_implib_filename,
+					bfd_get_target (link_info.output_bfd));
+
+      if (params.in_implib_bfd == NULL)
+	einfo (_("%F%s: Can't open: %E\n"), in_implib_filename);
+
+      if (!bfd_check_format (params.in_implib_bfd, bfd_object))
+	einfo (_("%F%s: Not a relocatable file: %E\n"), in_implib_filename);
+    }
+
+  bfd_elf32_arm_set_target_params (link_info.output_bfd, &link_info, &params);
 
   stub_file = lang_add_input_file ("linker stubs",
- 				   lang_input_file_is_fake_enum,
- 				   NULL);
+				   lang_input_file_is_fake_enum,
+				   NULL);
   stub_file->the_bfd = bfd_create ("linker stubs", link_info.output_bfd);
   if (stub_file->the_bfd == NULL
       || ! bfd_set_arch_mach (stub_file->the_bfd,
- 			      bfd_get_arch (link_info.output_bfd),
- 			      bfd_get_mach (link_info.output_bfd)))
+			      bfd_get_arch (link_info.output_bfd),
+			      bfd_get_mach (link_info.output_bfd)))
     {
-      einfo ("%X%P: can not create BFD %E\n");
+      einfo (_("%X%P: can not create BFD %E\n"));
       return;
     }
 
@@ -584,6 +599,8 @@ PARSE_AND_LIST_PROLOGUE='
 #define OPTION_NO_FIX_ARM1176		318
 #define OPTION_LONG_PLT			319
 #define OPTION_STM32L4XX_FIX		320
+#define OPTION_CMSE_IMPLIB		321
+#define OPTION_IN_IMPLIB		322
 '
 
 PARSE_AND_LIST_SHORTOPTS=p
@@ -610,6 +627,8 @@ PARSE_AND_LIST_LONGOPTS='
   { "fix-arm1176", no_argument, NULL, OPTION_FIX_ARM1176 },
   { "no-fix-arm1176", no_argument, NULL, OPTION_NO_FIX_ARM1176 },
   { "long-plt", no_argument, NULL, OPTION_LONG_PLT },
+  { "cmse-implib", no_argument, NULL, OPTION_CMSE_IMPLIB },
+  { "in-implib", required_argument, NULL, OPTION_IN_IMPLIB },
 '
 
 PARSE_AND_LIST_OPTIONS='
@@ -630,6 +649,10 @@ PARSE_AND_LIST_OPTIONS='
   fprintf (file, _("  --pic-veneer                Always generate PIC interworking veneers\n"));
   fprintf (file, _("  --long-plt                  Generate long .plt entries\n"
            "                              to handle large .plt/.got displacements\n"));
+  fprintf (file, _("  --cmse-implib               Make import library to be a secure gateway import\n"
+                   "                                library as per ARMv8-M Security Extensions\n"));
+  fprintf (file, _("  --in-implib                 Import library whose symbols address must\n"
+                   "                                remain stable\n"));
   fprintf (file, _("\
   --stub-group-size=N         Maximum size of a group of input sections that\n\
                                can be handled by one stub section.  A negative\n\
@@ -650,105 +673,113 @@ PARSE_AND_LIST_ARGS_CASES='
       break;
 
     case OPTION_THUMB_ENTRY:
-      thumb_entry_symbol = optarg;
+      params.thumb_entry_symbol = optarg;
       break;
 
     case OPTION_BE8:
-      byteswap_code = 1;
+      params.byteswap_code = 1;
       break;
 
     case OPTION_TARGET1_REL:
-      target1_is_rel = 1;
+      params.target1_is_rel = 1;
       break;
 
     case OPTION_TARGET1_ABS:
-      target1_is_rel = 0;
+      params.target1_is_rel = 0;
       break;
 
     case OPTION_TARGET2:
-      target2_type = optarg;
+      params.target2_type = optarg;
       break;
 
     case OPTION_FIX_V4BX:
-      fix_v4bx = 1;
+      params.fix_v4bx = 1;
       break;
 
     case OPTION_FIX_V4BX_INTERWORKING:
-      fix_v4bx = 2;
+      params.fix_v4bx = 2;
       break;
 
     case OPTION_USE_BLX:
-      use_blx = 1;
+      params.use_blx = 1;
       break;
 
     case OPTION_VFP11_DENORM_FIX:
       if (strcmp (optarg, "none") == 0)
-        vfp11_denorm_fix = BFD_ARM_VFP11_FIX_NONE;
+	params.vfp11_denorm_fix = BFD_ARM_VFP11_FIX_NONE;
       else if (strcmp (optarg, "scalar") == 0)
-        vfp11_denorm_fix = BFD_ARM_VFP11_FIX_SCALAR;
+	params.vfp11_denorm_fix = BFD_ARM_VFP11_FIX_SCALAR;
       else if (strcmp (optarg, "vector") == 0)
-        vfp11_denorm_fix = BFD_ARM_VFP11_FIX_VECTOR;
+	params.vfp11_denorm_fix = BFD_ARM_VFP11_FIX_VECTOR;
       else
-        einfo (_("Unrecognized VFP11 fix type '\''%s'\''.\n"), optarg);
+	einfo (_("Unrecognized VFP11 fix type '\''%s'\''.\n"), optarg);
       break;
 
     case OPTION_STM32L4XX_FIX:
       if (!optarg)
-        stm32l4xx_fix = BFD_ARM_STM32L4XX_FIX_DEFAULT;
+	params.stm32l4xx_fix = BFD_ARM_STM32L4XX_FIX_DEFAULT;
       else if (strcmp (optarg, "none") == 0)
-        stm32l4xx_fix = BFD_ARM_STM32L4XX_FIX_NONE;
+	params.stm32l4xx_fix = BFD_ARM_STM32L4XX_FIX_NONE;
       else if (strcmp (optarg, "default") == 0)
-        stm32l4xx_fix = BFD_ARM_STM32L4XX_FIX_DEFAULT;
+	params.stm32l4xx_fix = BFD_ARM_STM32L4XX_FIX_DEFAULT;
       else if (strcmp (optarg, "all") == 0)
-        stm32l4xx_fix = BFD_ARM_STM32L4XX_FIX_ALL;
+	params.stm32l4xx_fix = BFD_ARM_STM32L4XX_FIX_ALL;
       else
-        einfo (_("Unrecognized STM32L4XX fix type '\''%s'\''.\n"), optarg);
+	einfo (_("Unrecognized STM32L4XX fix type '\''%s'\''.\n"), optarg);
       break;
 
     case OPTION_NO_ENUM_SIZE_WARNING:
-      no_enum_size_warning = 1;
+      params.no_enum_size_warning = 1;
       break;
 
     case OPTION_NO_WCHAR_SIZE_WARNING:
-      no_wchar_size_warning = 1;
+      params.no_wchar_size_warning = 1;
       break;
 
     case OPTION_PIC_VENEER:
-      pic_veneer = 1;
+      params.pic_veneer = 1;
       break;
 
     case OPTION_STUBGROUP_SIZE:
       {
 	const char *end;
 
-        group_size = bfd_scan_vma (optarg, &end, 0);
-        if (*end)
+	group_size = bfd_scan_vma (optarg, &end, 0);
+	if (*end)
 	  einfo (_("%P%F: invalid number `%s'\''\n"), optarg);
       }
       break;
 
     case OPTION_FIX_CORTEX_A8:
-      fix_cortex_a8 = 1;
+      params.fix_cortex_a8 = 1;
       break;
 
     case OPTION_NO_FIX_CORTEX_A8:
-      fix_cortex_a8 = 0;
+      params.fix_cortex_a8 = 0;
       break;
 
    case OPTION_NO_MERGE_EXIDX_ENTRIES:
-      merge_exidx_entries = 0;
+      params.merge_exidx_entries = 0;
       break;
 
    case OPTION_FIX_ARM1176:
-      fix_arm1176 = 1;
+      params.fix_arm1176 = 1;
       break;
 
    case OPTION_NO_FIX_ARM1176:
-      fix_arm1176 = 0;
+      params.fix_arm1176 = 0;
       break;
 
    case OPTION_LONG_PLT:
       bfd_elf32_arm_use_long_plt ();
+      break;
+
+   case OPTION_CMSE_IMPLIB:
+      params.cmse_implib = 1;
+      break;
+
+   case OPTION_IN_IMPLIB:
+      in_implib_filename = optarg;
       break;
 '
 

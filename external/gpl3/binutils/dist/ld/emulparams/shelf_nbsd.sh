@@ -17,3 +17,4 @@ unset OTHER_SECTIONS
 OTHER_READWRITE_SECTIONS='
   .note.ABI-tag : { *(.note.ABI-tag) }
 '
+unset STACK_ADDR

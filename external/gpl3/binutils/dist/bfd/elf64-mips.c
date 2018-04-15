@@ -1,5 +1,5 @@
 /* MIPS-specific support for 64-bit ELF
-   Copyright (C) 1996-2016 Free Software Foundation, Inc.
+   Copyright (C) 1996-2018 Free Software Foundation, Inc.
    Ian Lance Taylor, Cygnus Support
    Linker support added by Mark Mitchell, CodeSourcery, LLC.
    <mark@codesourcery.com>
@@ -86,14 +86,8 @@ static void mips_elf64_info_to_howto_rel
   (bfd *, arelent *, Elf_Internal_Rela *);
 static void mips_elf64_info_to_howto_rela
   (bfd *, arelent *, Elf_Internal_Rela *);
-static long mips_elf64_get_reloc_upper_bound
-  (bfd *, asection *);
-static long mips_elf64_canonicalize_reloc
-  (bfd *, asection *, arelent **, asymbol **);
 static long mips_elf64_get_dynamic_reloc_upper_bound
   (bfd *);
-static long mips_elf64_canonicalize_dynamic_reloc
-  (bfd *, arelent **, asymbol **);
 static bfd_boolean mips_elf64_slurp_one_reloc_table
   (bfd *, asection *, Elf_Internal_Shdr *, bfd_size_type, arelent *,
    asymbol **, bfd_boolean);
@@ -1694,7 +1688,7 @@ static reloc_howto_type mips16_elf64_howto_table_rel[] =
 	 FALSE,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont, /* complain_on_overflow */
-	 			/* This needs complex overflow
+				/* This needs complex overflow
 				   detection, because the upper four
 				   bits must match the PC.  */
 	 _bfd_mips_elf_generic_reloc, /* special_function */
@@ -1716,7 +1710,7 @@ static reloc_howto_type mips16_elf64_howto_table_rel[] =
 	 "R_MIPS16_GPREL",	/* name */
 	 TRUE,			/* partial_inplace */
 	 0x0000ffff,		/* src_mask */
-	 0x0000ffff,	        /* dst_mask */
+	 0x0000ffff,		/* dst_mask */
 	 FALSE),		/* pcrel_offset */
 
   /* A MIPS16 reference to the global offset table.  */
@@ -1731,7 +1725,7 @@ static reloc_howto_type mips16_elf64_howto_table_rel[] =
 	 "R_MIPS16_GOT16",	/* name */
 	 TRUE,			/* partial_inplace */
 	 0x0000ffff,		/* src_mask */
-	 0x0000ffff,	        /* dst_mask */
+	 0x0000ffff,		/* dst_mask */
 	 FALSE),		/* pcrel_offset */
 
   /* A MIPS16 call through the global offset table.  */
@@ -1746,7 +1740,7 @@ static reloc_howto_type mips16_elf64_howto_table_rel[] =
 	 "R_MIPS16_CALL16",	/* name */
 	 TRUE,			/* partial_inplace */
 	 0x0000ffff,		/* src_mask */
-	 0x0000ffff,	        /* dst_mask */
+	 0x0000ffff,		/* dst_mask */
 	 FALSE),		/* pcrel_offset */
 
   /* MIPS16 high 16 bits of symbol value.  */
@@ -1910,7 +1904,7 @@ static reloc_howto_type mips16_elf64_howto_table_rela[] =
 	 FALSE,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont, /* complain_on_overflow */
-	 			/* This needs complex overflow
+				/* This needs complex overflow
 				   detection, because the upper four
 				   bits must match the PC.  */
 	 _bfd_mips_elf_generic_reloc, /* special_function */
@@ -1932,7 +1926,7 @@ static reloc_howto_type mips16_elf64_howto_table_rela[] =
 	 "R_MIPS16_GPREL",	/* name */
 	 FALSE,			/* partial_inplace */
 	 0,			/* src_mask */
-	 0x0000ffff,	        /* dst_mask */
+	 0x0000ffff,		/* dst_mask */
 	 FALSE),		/* pcrel_offset */
 
   /* A MIPS16 reference to the global offset table.  */
@@ -1947,7 +1941,7 @@ static reloc_howto_type mips16_elf64_howto_table_rela[] =
 	 "R_MIPS16_GOT16",	/* name */
 	 FALSE,			/* partial_inplace */
 	 0,			/* src_mask */
-	 0x0000ffff,	        /* dst_mask */
+	 0x0000ffff,		/* dst_mask */
 	 FALSE),		/* pcrel_offset */
 
   /* A MIPS16 call through the global offset table.  */
@@ -1962,7 +1956,7 @@ static reloc_howto_type mips16_elf64_howto_table_rela[] =
 	 "R_MIPS16_CALL16",	/* name */
 	 FALSE,			/* partial_inplace */
 	 0,			/* src_mask */
-	 0x0000ffff,	        /* dst_mask */
+	 0x0000ffff,		/* dst_mask */
 	 FALSE),		/* pcrel_offset */
 
   /* MIPS16 high 16 bits of symbol value.  */
@@ -2130,7 +2124,7 @@ static reloc_howto_type micromips_elf64_howto_table_rel[] =
 	 FALSE,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont, /* complain_on_overflow */
-	 			/* This needs complex overflow
+				/* This needs complex overflow
 				   detection, because the upper four
 				   bits must match the PC.  */
 	 _bfd_mips_elf_generic_reloc, /* special_function */
@@ -2449,7 +2443,7 @@ static reloc_howto_type micromips_elf64_howto_table_rela[] =
 	 FALSE,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont, /* complain_on_overflow */
-	 			/* This needs complex overflow
+				/* This needs complex overflow
 				   detection, because the upper four
 				   bits must match the PC.  */
 	 _bfd_mips_elf_generic_reloc, /* special_function */
@@ -2870,8 +2864,8 @@ static reloc_howto_type elf_mips_copy_howto =
 	 _bfd_mips_elf_generic_reloc, /* special_function */
 	 "R_MIPS_COPY",		/* name */
 	 FALSE,			/* partial_inplace */
-	 0x0,         		/* src_mask */
-	 0x0,		        /* dst_mask */
+	 0x0,			/* src_mask */
+	 0x0,			/* dst_mask */
 	 FALSE);		/* pcrel_offset */
 
 /* Originally a VxWorks extension, but now used for other systems too.  */
@@ -2886,8 +2880,8 @@ static reloc_howto_type elf_mips_jump_slot_howto =
 	 _bfd_mips_elf_generic_reloc, /* special_function */
 	 "R_MIPS_JUMP_SLOT",	/* name */
 	 FALSE,			/* partial_inplace */
-	 0x0,         		/* src_mask */
-	 0x0,		        /* dst_mask */
+	 0x0,			/* src_mask */
+	 0x0,			/* dst_mask */
 	 FALSE);		/* pcrel_offset */
 
 /* Used in EH tables.  */
@@ -2903,7 +2897,7 @@ static reloc_howto_type elf_mips_eh_howto =
 	 "R_MIPS_EH",		/* name */
 	 TRUE,			/* partial_inplace */
 	 0xffffffff,		/* src_mask */
-	 0xffffffff,	        /* dst_mask */
+	 0xffffffff,		/* dst_mask */
 	 FALSE);		/* pcrel_offset */
 
 
@@ -3620,7 +3614,7 @@ mips_elf64_rtype_to_howto (unsigned int r_type, bfd_boolean rela_p)
 	}
       if (r_type >= R_MIPS_max)
 	{
-	  (*_bfd_error_handler) (_("unrecognised MIPS reloc number: %d"), r_type);
+	  _bfd_error_handler (_("unrecognised MIPS reloc number: %d"), r_type);
 	  bfd_set_error (bfd_error_bad_value);
 	  r_type = R_MIPS_NONE;
 	}
@@ -3654,87 +3648,19 @@ mips_elf64_info_to_howto_rela (bfd *abfd ATTRIBUTE_UNUSED,
    to three relocs, we must tell the user to allocate more space.  */
 
 static long
-mips_elf64_get_reloc_upper_bound (bfd *abfd ATTRIBUTE_UNUSED, asection *sec)
-{
-  return (sec->reloc_count * 3 + 1) * sizeof (arelent *);
-}
-
-static long
 mips_elf64_get_dynamic_reloc_upper_bound (bfd *abfd)
 {
   return _bfd_elf_get_dynamic_reloc_upper_bound (abfd) * 3;
 }
 
-/* We must also copy more relocations than the corresponding functions
-   in elf.c would, so the two following functions are slightly
-   modified from elf.c, that multiply the external relocation count by
-   3 to obtain the internal relocation count.  */
-
-static long
-mips_elf64_canonicalize_reloc (bfd *abfd, sec_ptr section,
-			       arelent **relptr, asymbol **symbols)
-{
-  arelent *tblptr;
-  unsigned int i;
-  const struct elf_backend_data *bed = get_elf_backend_data (abfd);
-
-  if (! bed->s->slurp_reloc_table (abfd, section, symbols, FALSE))
-    return -1;
-
-  tblptr = section->relocation;
-  for (i = 0; i < section->reloc_count * 3; i++)
-    *relptr++ = tblptr++;
-
-  *relptr = NULL;
-
-  return section->reloc_count * 3;
-}
-
-static long
-mips_elf64_canonicalize_dynamic_reloc (bfd *abfd, arelent **storage,
-				       asymbol **syms)
-{
-  bfd_boolean (*slurp_relocs) (bfd *, asection *, asymbol **, bfd_boolean);
-  asection *s;
-  long ret;
-
-  if (elf_dynsymtab (abfd) == 0)
-    {
-      bfd_set_error (bfd_error_invalid_operation);
-      return -1;
-    }
-
-  slurp_relocs = get_elf_backend_data (abfd)->s->slurp_reloc_table;
-  ret = 0;
-  for (s = abfd->sections; s != NULL; s = s->next)
-    {
-      if (elf_section_data (s)->this_hdr.sh_link == elf_dynsymtab (abfd)
-	  && (elf_section_data (s)->this_hdr.sh_type == SHT_REL
-	      || elf_section_data (s)->this_hdr.sh_type == SHT_RELA))
-	{
-	  arelent *p;
-	  long count, i;
-
-	  if (! (*slurp_relocs) (abfd, s, syms, TRUE))
-	    return -1;
-	  count = s->size / elf_section_data (s)->this_hdr.sh_entsize * 3;
-	  p = s->relocation;
-	  for (i = 0; i < count; i++)
-	    *storage++ = p++;
-	  ret += count;
-	}
-    }
-
-  *storage = NULL;
-
-  return ret;
-}
-
 /* Read the relocations from one reloc section.  This is mostly copied
    from elfcode.h, except for the changes to expand one external
-   relocation to 3 internal ones.  We must unfortunately set
-   reloc_count to the number of external relocations, because a lot of
-   generic code seems to depend on this.  */
+   relocation to 3 internal ones.  To reduce processing effort we
+   could discard those R_MIPS_NONE relocations that occupy the second
+   and the third entry of a triplet, as `mips_elf64_write_rel' and
+   `mips_elf64_write_rela' recreate them in output automagically,
+   however that would also remove them from `objdump -r' output,
+   breaking a long-established tradition and likely confusing people.  */
 
 static bfd_boolean
 mips_elf64_slurp_one_reloc_table (bfd *abfd, asection *asect,
@@ -3887,8 +3813,6 @@ mips_elf64_slurp_one_reloc_table (bfd *abfd, asection *asect,
 	}
     }
 
-  asect->reloc_count += (relent - relents) / 3;
-
   if (allocated != NULL)
     free (allocated);
 
@@ -3903,8 +3827,7 @@ mips_elf64_slurp_one_reloc_table (bfd *abfd, asection *asect,
 /* Read the relocations.  On Irix 6, there can be two reloc sections
    associated with a single data section.  This is copied from
    elfcode.h as well, with changes as small as accounting for 3
-   internal relocs per external reloc and resetting reloc_count to
-   zero before processing the relocs of a section.  */
+   internal relocs per external reloc.  */
 
 static bfd_boolean
 mips_elf64_slurp_reloc_table (bfd *abfd, asection *asect,
@@ -3932,7 +3855,7 @@ mips_elf64_slurp_reloc_table (bfd *abfd, asection *asect,
       rel_hdr2 = d->rela.hdr;
       reloc_count2 = (rel_hdr2 ? NUM_SHDR_ENTRIES (rel_hdr2) : 0);
 
-      BFD_ASSERT (asect->reloc_count == reloc_count + reloc_count2);
+      BFD_ASSERT (asect->reloc_count == 3 * (reloc_count + reloc_count2));
       BFD_ASSERT ((rel_hdr && asect->rel_filepos == rel_hdr->sh_offset)
 		  || (rel_hdr2 && asect->rel_filepos == rel_hdr2->sh_offset));
 
@@ -3957,9 +3880,6 @@ mips_elf64_slurp_reloc_table (bfd *abfd, asection *asect,
   relents = bfd_alloc (abfd, amt);
   if (relents == NULL)
     return FALSE;
-
-  /* The slurp_one_reloc_table routine increments reloc_count.  */
-  asect->reloc_count = 0;
 
   if (rel_hdr != NULL
       && ! mips_elf64_slurp_one_reloc_table (abfd, asect,
@@ -4321,6 +4241,8 @@ elf64_mips_grok_psinfo (bfd *abfd, Elf_Internal_Note *note)
 	return FALSE;
 
       case 136:		/* Linux/MIPS - N64 kernel elf_prpsinfo */
+	elf_tdata (abfd)->core->pid
+	 = bfd_get_32 (abfd, note->descdata + 24);
 	elf_tdata (abfd)->core->program
 	 = _bfd_elfcore_strndup (abfd, note->descdata + 40, 16);
 	elf_tdata (abfd)->core->command
@@ -4340,6 +4262,45 @@ elf64_mips_grok_psinfo (bfd *abfd, Elf_Internal_Note *note)
   }
 
   return TRUE;
+}
+
+/* Write Linux core PRSTATUS note into core file.  */
+
+static char *
+elf64_mips_write_core_note (bfd *abfd, char *buf, int *bufsiz, int note_type,
+			     ...)
+{
+  switch (note_type)
+    {
+    default:
+      return NULL;
+
+    case NT_PRPSINFO:
+      BFD_FAIL ();
+      return NULL;
+
+    case NT_PRSTATUS:
+      {
+	char data[480];
+	va_list ap;
+	long pid;
+	int cursig;
+	const void *greg;
+
+	va_start (ap, note_type);
+	memset (data, 0, 112);
+	pid = va_arg (ap, long);
+	bfd_put_32 (abfd, pid, data + 32);
+	cursig = va_arg (ap, int);
+	bfd_put_16 (abfd, cursig, data + 12);
+	greg = va_arg (ap, const void *);
+	memcpy (data + 112, greg, 360);
+	memset (data + 472, 0, 8);
+	va_end (ap);
+	return elfcore_write_note (abfd, buf, bufsiz,
+				   "CORE", note_type, data, sizeof (data));
+      }
+    }
 }
 
 /* ECOFF swapping routines.  These are used when dealing with the
@@ -4466,7 +4427,6 @@ const struct elf_size_info mips_elf64_size_info =
 				_bfd_mips_elf_additional_program_headers
 #define elf_backend_modify_segment_map	_bfd_mips_elf_modify_segment_map
 #define elf_backend_gc_mark_hook	_bfd_mips_elf_gc_mark_hook
-#define elf_backend_gc_sweep_hook	_bfd_mips_elf_gc_sweep_hook
 #define elf_backend_copy_indirect_symbol \
 					_bfd_mips_elf_copy_indirect_symbol
 #define elf_backend_ignore_discarded_relocs \
@@ -4480,6 +4440,7 @@ const struct elf_size_info mips_elf64_size_info =
 #define elf_backend_grok_psinfo		elf64_mips_grok_psinfo
 
 #define elf_backend_got_header_size	(8 * MIPS_RESERVED_GOTNO)
+#define elf_backend_want_dynrelro	1
 
 /* MIPS ELF64 can use a mixture of REL and RELA, but some Relocations
    work better/work only in RELA, so we default to this.  */
@@ -4514,11 +4475,7 @@ const struct elf_size_info mips_elf64_size_info =
 #define bfd_elf64_bfd_print_private_bfd_data \
 				_bfd_mips_elf_print_private_bfd_data
 
-#define bfd_elf64_get_reloc_upper_bound mips_elf64_get_reloc_upper_bound
-#define bfd_elf64_canonicalize_reloc mips_elf64_canonicalize_reloc
 #define bfd_elf64_get_dynamic_reloc_upper_bound mips_elf64_get_dynamic_reloc_upper_bound
-#define bfd_elf64_canonicalize_dynamic_reloc mips_elf64_canonicalize_dynamic_reloc
-#define bfd_elf64_bfd_relax_section     _bfd_mips_relax_section
 #define bfd_elf64_mkobject		_bfd_mips_elf_mkobject
 
 /* The SGI style (n)64 NewABI.  */
@@ -4550,6 +4507,9 @@ const struct elf_size_info mips_elf64_size_info =
 #define ELF_COMMONPAGESIZE		0x1000
 #define elf64_bed			elf64_tradbed
 
+#undef elf_backend_write_core_note
+#define elf_backend_write_core_note	elf64_mips_write_core_note
+
 /* Include the target file again for this target.  */
 #include "elf64-target.h"
 
@@ -4571,5 +4531,7 @@ const struct elf_size_info mips_elf64_size_info =
 
 #undef	elf64_bed
 #define elf64_bed				elf64_fbsd_tradbed
+
+#undef elf64_mips_write_core_note
 
 #include "elf64-target.h"

@@ -261,11 +261,13 @@ main (int argc, char **argv)
 	  break;
 	case 'E':
 	  sym_id_add (optarg, EXCL_TIME);
+	  /* Fall through.  */
 	case 'e':
 	  sym_id_add (optarg, EXCL_GRAPH);
 	  break;
 	case 'F':
 	  sym_id_add (optarg, INCL_TIME);
+	  /* Fall through.  */
 	case 'f':
 	  sym_id_add (optarg, INCL_GRAPH);
 	  break;
