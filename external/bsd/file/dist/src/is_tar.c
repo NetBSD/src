@@ -1,4 +1,4 @@
-/*	$NetBSD: is_tar.c,v 1.1.1.6 2017/05/24 23:59:56 christos Exp $	*/
+/*	$NetBSD: is_tar.c,v 1.1.1.7 2018/04/15 19:32:48 christos Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -43,9 +43,9 @@
 
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)$File: is_tar.c,v 1.39 2017/03/17 20:45:01 christos Exp $")
+FILE_RCSID("@(#)$File: is_tar.c,v 1.41 2017/11/02 20:25:39 christos Exp $")
 #else
-__RCSID("$NetBSD: is_tar.c,v 1.1.1.6 2017/05/24 23:59:56 christos Exp $");
+__RCSID("$NetBSD: is_tar.c,v 1.1.1.7 2018/04/15 19:32:48 christos Exp $");
 #endif
 #endif
 
@@ -59,15 +59,17 @@ __RCSID("$NetBSD: is_tar.c,v 1.1.1.6 2017/05/24 23:59:56 christos Exp $");
 private int is_tar(const unsigned char *, size_t);
 private int from_oct(const char *, size_t);	/* Decode octal number */
 
-static const char tartype[][32] = {
-	"tar archive",
+static const char tartype[][32] = {	/* should be equal to messages */
+	"tar archive",			/* found in ../magic/Magdir/archive */
 	"POSIX tar archive",
-	"POSIX tar archive (GNU)",
+	"POSIX tar archive (GNU)",	/*  */
 };
 
 protected int
-file_is_tar(struct magic_set *ms, const unsigned char *buf, size_t nbytes)
+file_is_tar(struct magic_set *ms, const struct buffer *b)
 {
+	const unsigned char *buf = b->fbuf;
+	size_t nbytes = b->flen;
 	/*
 	 * Do the tar test first, because if the first file in the tar
 	 * archive starts with a dot, we can confuse it with an nroff file.
