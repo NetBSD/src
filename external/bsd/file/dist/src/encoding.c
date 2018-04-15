@@ -1,4 +1,4 @@
-/*	$NetBSD: encoding.c,v 1.5 2017/02/10 17:53:24 christos Exp $	*/
+/*	$NetBSD: encoding.c,v 1.6 2018/04/15 19:45:32 christos Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -38,9 +38,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)$File: encoding.c,v 1.13 2015/06/04 19:16:28 christos Exp $")
+FILE_RCSID("@(#)$File: encoding.c,v 1.14 2017/11/02 20:25:39 christos Exp $")
 #else
-__RCSID("$NetBSD: encoding.c,v 1.5 2017/02/10 17:53:24 christos Exp $");
+__RCSID("$NetBSD: encoding.c,v 1.6 2018/04/15 19:45:32 christos Exp $");
 #endif
 #endif	/* lint */
 
@@ -72,11 +72,21 @@ private void from_ebcdic(const unsigned char *, size_t, unsigned char *);
  * ubuf, and the number of characters converted in ulen.
  */
 protected int
-file_encoding(struct magic_set *ms, const unsigned char *buf, size_t nbytes, unichar **ubuf, size_t *ulen, const char **code, const char **code_mime, const char **type)
+file_encoding(struct magic_set *ms, const struct buffer *b, unichar **ubuf,
+    size_t *ulen, const char **code, const char **code_mime, const char **type)
 {
+	const unsigned char *buf = b->fbuf;
+	size_t nbytes = b->flen;
 	size_t mlen;
 	int rv = 1, ucs_type;
 	unsigned char *nbuf = NULL;
+	unichar *udefbuf;
+	size_t udeflen;
+
+	if (ubuf == NULL)
+		ubuf = &udefbuf;
+	if (ulen == NULL)
+		ulen = &udeflen;
 
 	*type = "text";
 	*ulen = 0;
@@ -150,6 +160,8 @@ file_encoding(struct magic_set *ms, const unsigned char *buf, size_t nbytes, uni
 
  done:
 	free(nbuf);
+	if (ubuf == &udefbuf)
+		free(udefbuf);
 
 	return rv;
 }
