@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.196 2018/04/11 07:55:19 maxv Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.197 2018/04/15 07:35:49 maxv Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.196 2018/04/11 07:55:19 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.197 2018/04/15 07:35:49 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -747,6 +747,8 @@ hbhcheck:
 			in6_ifstat_inc(rcvif, ifs6_in_hdrerr);
 			goto bad;
 		}
+
+		M_VERIFY_PACKET(m);
 
 		/*
 		 * protection against faulty packet - there should be
