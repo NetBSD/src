@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.197 2018/04/15 07:35:49 maxv Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.198 2018/04/15 08:31:18 maxv Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.197 2018/04/15 07:35:49 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.198 2018/04/15 08:31:18 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -1317,18 +1317,6 @@ ip6_pullexthdr(struct mbuf *m, size_t off, int nxt)
 	struct ip6_ext ip6e;
 	size_t elen;
 	struct mbuf *n;
-
-#ifdef DIAGNOSTIC
-	switch (nxt) {
-	case IPPROTO_DSTOPTS:
-	case IPPROTO_ROUTING:
-	case IPPROTO_HOPOPTS:
-	case IPPROTO_AH: /* is it possible? */
-		break;
-	default:
-		printf("ip6_pullexthdr: invalid nxt=%d\n", nxt);
-	}
-#endif
 
 	m_copydata(m, off, sizeof(ip6e), (void *)&ip6e);
 	if (nxt == IPPROTO_AH)
