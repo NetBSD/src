@@ -1,4 +1,4 @@
-/*	$NetBSD: readcdf.c,v 1.14 2017/05/25 00:11:26 christos Exp $	*/
+/*	$NetBSD: readcdf.c,v 1.15 2018/04/15 19:45:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2016 Christos Zoulas
@@ -29,9 +29,9 @@
 
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)$File: readcdf.c,v 1.65 2017/04/08 20:58:03 christos Exp $")
+FILE_RCSID("@(#)$File: readcdf.c,v 1.66 2017/11/02 20:25:39 christos Exp $")
 #else
-__RCSID("$NetBSD: readcdf.c,v 1.14 2017/05/25 00:11:26 christos Exp $");
+__RCSID("$NetBSD: readcdf.c,v 1.15 2018/04/15 19:45:32 christos Exp $");
 #endif
 #endif
 
@@ -543,9 +543,11 @@ cdf_file_dir_info(struct magic_set *ms, const cdf_dir_t *dir)
 }
 
 protected int
-file_trycdf(struct magic_set *ms, int fd, const unsigned char *buf,
-    size_t nbytes)
+file_trycdf(struct magic_set *ms, const struct buffer *b)
 {
+	int fd = b->fd;
+	const unsigned char *buf = b->fbuf;
+	size_t nbytes = b->flen;
         cdf_info_t info;
         cdf_header_t h;
         cdf_sat_t sat, ssat;
