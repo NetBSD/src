@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.194 2018/04/06 19:00:08 christos Exp $
+# $NetBSD: shl.mi,v 1.195 2018/04/15 19:47:30 christos Exp $
 ./usr/lib/libbfd_g.a						comp-c-debuglib	debuglib,compatfile,binutils
 ./usr/libdata/debug/lib						base-sys-usr	debug,dynamicroot,compatdir
 ./usr/libdata/debug/lib/libblacklist.so.0.0.debug		comp-sys-debug	debug,dynamicroot
@@ -138,7 +138,7 @@
 ./usr/libdata/debug/usr/lib/liblzf.so.1.0.debug			comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/liblzma.so.2.0.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libm.so.0.12.debug			comp-sys-debug	debug,compatfile
-./usr/libdata/debug/usr/lib/libmagic.so.5.2.debug		comp-sys-debug	debug,compatfile
+./usr/libdata/debug/usr/lib/libmagic.so.6.0.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libmenu.so.6.0.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libmj.so.1.0.debug			comp-crypto-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libmpc.so.2.0.debug			comp-obsolete	debug,compatfile,obsolete
