@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright (C) 2006-2016 Free Software Foundation, Inc.
+#   Copyright (C) 2006-2018 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -113,7 +113,7 @@ spu_after_open (void)
       if (!bfd_link_relocatable (&link_info)
 	  && link_info.input_bfds != NULL
 	  && !spu_elf_create_sections (&link_info))
-	einfo ("%X%P: can not create note section: %E\n");
+	einfo (_("%X%P: can not create note section: %E\n"));
     }
 
   gld${EMULATION_NAME}_after_open ();
@@ -202,7 +202,7 @@ spu_elf_load_ovl_mgr (void)
       /* User supplied __ovly_load.  */
     }
   else if (mgr_stream->start == mgr_stream->end)
-    einfo ("%F%P: no built-in overlay manager\n");
+    einfo (_("%F%P: no built-in overlay manager\n"));
   else
     {
       lang_input_statement_type *ovl_is;
@@ -212,13 +212,13 @@ spu_elf_load_ovl_mgr (void)
 				    NULL);
 
       if (!spu_elf_open_builtin_lib (&ovl_is->the_bfd, mgr_stream))
-	einfo ("%X%P: can not open built-in overlay manager: %E\n");
+	einfo (_("%X%P: can not open built-in overlay manager: %E\n"));
       else
 	{
 	  asection *in;
 
 	  if (!load_symbols (ovl_is, NULL))
-	    einfo ("%X%P: can not load built-in overlay manager: %E\n");
+	    einfo (_("%X%P: can not load built-in overlay manager: %E\n"));
 
 	  /* Map overlay manager sections to output sections.
 	     First try for a matching output section name, if that
@@ -272,20 +272,20 @@ spu_before_allocation (void)
       /* Size the sections.  This is premature, but we need to know the
 	 rough layout so that overlays can be found.  */
       expld.phase = lang_mark_phase_enum;
-      expld.dataseg.phase = exp_dataseg_none;
+      expld.dataseg.phase = exp_seg_none;
       one_lang_size_sections_pass (NULL, TRUE);
 
       /* Find overlays by inspecting section vmas.  */
       ret = spu_elf_find_overlays (&link_info);
       if (ret == 0)
-	einfo ("%X%P: can not find overlays: %E\n");
+	einfo (_("%X%P: can not find overlays: %E\n"));
       else if (ret == 2)
 	{
 	  lang_output_section_statement_type *os;
 
 	  if (params.auto_overlay != 0)
 	    {
-	      einfo ("%P: --auto-overlay ignored with user overlay script\n");
+	      einfo (_("%P: --auto-overlay ignored with user overlay script\n"));
 	      params.auto_overlay = 0;
 	    }
 
@@ -306,7 +306,7 @@ spu_before_allocation (void)
 
 	  ret = spu_elf_size_stubs (&link_info);
 	  if (ret == 0)
-	    einfo ("%X%P: can not size overlay stubs: %E\n");
+	    einfo (_("%X%P: can not size overlay stubs: %E\n"));
 	  else if (ret == 2)
 	    spu_elf_load_ovl_mgr ();
 
@@ -379,7 +379,7 @@ spu_elf_open_overlay_script (void)
   if (script == NULL)
     {
     file_err:
-      einfo ("%F%P: can not open script: %E\n");
+      einfo (_("%F%P: can not open script: %E\n"));
     }
   return script;
 }
@@ -421,15 +421,15 @@ gld${EMULATION_NAME}_finish (void)
   if (is_spu_target ())
     {
       if (params.local_store_lo < params.local_store_hi)
-        {
+	{
 	  asection *s;
 
 	  s = spu_elf_check_vma (&link_info);
 	  if (s != NULL && !params.auto_overlay)
-	    einfo ("%X%P: %A exceeds local store range\n", s);
+	    einfo (_("%X%P: %A exceeds local store range\n"), s);
 	}
       else if (params.auto_overlay)
-	einfo ("%P: --auto-overlay ignored with zero local store range\n");
+	einfo (_("%P: --auto-overlay ignored with zero local store range\n"));
     }
 
   finish_default ();
@@ -719,7 +719,7 @@ PARSE_AND_LIST_ARGS_CASES='
 	  auto_overlay_file = optarg;
 	  break;
 	}
-      /* Fall thru */
+      /* Fallthru */
 
     case OPTION_SPU_AUTO_RELINK:
       params.auto_overlay |= 2;

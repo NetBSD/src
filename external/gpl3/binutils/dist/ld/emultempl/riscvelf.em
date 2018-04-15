@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright 2004, 2006, 2007, 2008 Free Software Foundation, Inc.
+#   Copyright (C) 2004-2018 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -45,14 +45,12 @@ riscv_elf_before_allocation (void)
     link_info.discard = discard_l;
 
   /* We always need at least some relaxation to handle code alignment.  */
-#if 0
   if (RELAXATION_DISABLED_BY_USER)
     TARGET_ENABLE_RELAXATION;
   else
-#endif
     ENABLE_RELAXATION;
 
-  link_info.relax_pass = 2;
+  link_info.relax_pass = 3;
 }
 
 static void
@@ -67,7 +65,7 @@ gld${EMULATION_NAME}_after_allocation (void)
       need_layout = bfd_elf_discard_info (link_info.output_bfd, &link_info);
       if (need_layout < 0)
 	{
-	  einfo ("%X%P: .eh_frame/.stab edit: %E\n");
+	  einfo (_("%X%P: .eh_frame/.stab edit: %E\n"));
 	  return;
 	}
     }
