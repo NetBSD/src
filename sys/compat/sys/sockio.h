@@ -1,4 +1,4 @@
-/*	$NetBSD: sockio.h,v 1.11 2018/04/12 18:50:13 christos Exp $	*/
+/*	$NetBSD: sockio.h,v 1.12 2018/04/15 22:13:36 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
@@ -183,7 +183,6 @@ struct oifdatareq {
 
 #ifdef _KERNEL
 
-__BEGIN_DECLS
 extern int (*vec_compat_ifconf)(struct lwp *, u_long, void *);
 extern int (*vec_compat_ifdatareq)(struct lwp *, u_long, void *);
 
@@ -191,7 +190,6 @@ void uipc_syscalls_40_init(void);
 void uipc_syscalls_40_fini(void);
 void uipc_syscalls_50_init(void);
 void uipc_syscalls_50_fini(void);
-__END_DECLS
 
 #endif
 
