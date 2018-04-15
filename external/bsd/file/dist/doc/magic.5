@@ -1,7 +1,7 @@
-.\"	$NetBSD: magic.5,v 1.17 2017/09/08 13:40:25 christos Exp $
+.\"	$NetBSD: magic.5,v 1.18 2018/04/15 19:45:32 christos Exp $
 .\"
-.\" $File: magic.man,v 1.91 2017/02/12 15:30:08 christos Exp $
-.Dd February 12, 2017
+.\" $File: magic.man,v 1.92 2017/11/04 01:11:32 christos Exp $
+.Dd Noveber 3, 2017
 .Dt MAGIC 5
 .Os
 .\" install as magic.4 on USG, magic.5 on V7, Berkeley and Linux systems.
@@ -12,7 +12,7 @@
 This manual page documents the format of magic files as
 used by the
 .Xr file 1
-command, version 5.32.
+command, version 5.33.
 The
 .Xr file 1
 command identifies the type of a file using,
@@ -38,8 +38,20 @@ If the test succeeds, a message is printed.
 The line consists of the following fields:
 .Bl -tag -width ".Dv message"
 .It Dv offset
-A number specifying the offset, in bytes, into the file of the data
+A number specifying the offset (in bytes) into the file of the data
 which is to be tested.
+This offset can be a negative number if it is:
+.Bl -bullet  -compact
+.It
+The first direct offset of the magic entry (at continuation level 0),
+in which case it is interpreted an offset from end end of the file
+going backwards.
+This works only when a file descriptor to the file is a available and it
+is a regular file.
+.It
+A continuation offset relative to the end of the last up-level field
+.Dv ( \*[Am] ) .
+.El
 .It Dv type
 The type of the data to be tested.
 The possible values are:

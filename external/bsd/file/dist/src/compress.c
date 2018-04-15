@@ -1,4 +1,4 @@
-/*	$NetBSD: compress.c,v 1.14 2017/09/08 13:40:25 christos Exp $	*/
+/*	$NetBSD: compress.c,v 1.15 2018/04/15 19:45:32 christos Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -38,9 +38,9 @@
 
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)$File: compress.c,v 1.105 2017/05/25 00:13:03 christos Exp $")
+FILE_RCSID("@(#)$File: compress.c,v 1.106 2017/11/02 20:25:39 christos Exp $")
 #else
-__RCSID("$NetBSD: compress.c,v 1.14 2017/09/08 13:40:25 christos Exp $");
+__RCSID("$NetBSD: compress.c,v 1.15 2018/04/15 19:45:32 christos Exp $");
 #endif
 #endif
 
@@ -190,8 +190,7 @@ static int makeerror(unsigned char **, size_t *, const char *, ...)
 private const char *methodname(size_t);
 
 protected int
-file_zmagic(struct magic_set *ms, int fd, const char *name,
-    const unsigned char *buf, size_t nbytes)
+file_zmagic(struct magic_set *ms, const struct buffer *b, const char *name)
 {
 	unsigned char *newbuf = NULL;
 	size_t i, nsz;
@@ -199,6 +198,9 @@ file_zmagic(struct magic_set *ms, int fd, const char *name,
 	file_pushbuf_t *pb;
 	int urv, prv, rv = 0;
 	int mime = ms->flags & MAGIC_MIME;
+	int fd = b->fd;
+	const unsigned char *buf = b->fbuf;
+	size_t nbytes = b->flen;
 #ifdef HAVE_SIGNAL_H
 	sig_t osigpipe;
 #endif

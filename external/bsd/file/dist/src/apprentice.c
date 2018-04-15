@@ -1,4 +1,4 @@
-/*	$NetBSD: apprentice.c,v 1.19 2017/09/08 13:40:25 christos Exp $	*/
+/*	$NetBSD: apprentice.c,v 1.20 2018/04/15 19:45:32 christos Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -35,9 +35,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)$File: apprentice.c,v 1.262 2017/08/28 13:39:18 christos Exp $")
+FILE_RCSID("@(#)$File: apprentice.c,v 1.270 2018/02/21 21:26:48 christos Exp $")
 #else
-__RCSID("$NetBSD: apprentice.c,v 1.19 2017/09/08 13:40:25 christos Exp $");
+__RCSID("$NetBSD: apprentice.c,v 1.20 2018/04/15 19:45:32 christos Exp $");
 #endif
 #endif	/* lint */
 
@@ -658,7 +658,7 @@ protected int
 file_apprentice(struct magic_set *ms, const char *fn, int action)
 {
 	char *p, *mfn;
-	int file_err, errs = -1;
+	int fileerr, errs = -1;
 	size_t i;
 
 	(void)file_reset(ms, 0);
@@ -693,8 +693,8 @@ file_apprentice(struct magic_set *ms, const char *fn, int action)
 			*p++ = '\0';
 		if (*fn == '\0')
 			break;
-		file_err = apprentice_1(ms, fn, action);
-		errs = MAX(errs, file_err);
+		fileerr = apprentice_1(ms, fn, action);
+		errs = MAX(errs, fileerr);
 		fn = p;
 	}
 
@@ -1916,12 +1916,23 @@ parse(struct magic_set *ms, struct magic_entry *me, const char *line,
 	}
 
 	/* get offset, then skip over it */
-	m->offset = (uint32_t)strtoul(l, &t, 0);
+	m->offset = (int32_t)strtol(l, &t, 0);
         if (l == t) {
 		if (ms->flags & MAGIC_CHECK)
 			file_magwarn(ms, "offset `%s' invalid", l);
 		return -1;
 	}
+#if 0
+        if (m->offset < 0 && cont_level != 0 &&
+	    (m->flag & (OFFADD | INDIROFFADD)) == 0) {
+		if (ms->flags & MAGIC_CHECK) {
+			file_magwarn(ms,
+			    "negative direct offset `%s' at level %u",
+			    l, cont_level);
+		}
+		return -1;
+	}
+#endif
         l = t;
 
 	if (m->flag & INDIR) {
@@ -2343,7 +2354,7 @@ parse_ext(struct magic_set *ms, struct magic_entry *me, const char *line)
 
 	return parse_extra(ms, me, line,
 	    CAST(off_t, offsetof(struct magic, ext)),
-	    sizeof(m->ext), "EXTENSION", ",!+-/@", 0);
+	    sizeof(m->ext), "EXTENSION", ",!+-/@?_$", 0);
 }
 
 /*
@@ -2357,7 +2368,7 @@ parse_mime(struct magic_set *ms, struct magic_entry *me, const char *line)
 
 	return parse_extra(ms, me, line,
 	    CAST(off_t, offsetof(struct magic, mimetype)),
-	    sizeof(m->mimetype), "MIME", "+-/.", 1);
+	    sizeof(m->mimetype), "MIME", "+-/.$?:{}", 1);
 }
 
 private int
@@ -3183,20 +3194,21 @@ apprentice_compile(struct magic_set *ms, struct magic_map *map, const char *fn)
 
 	if (write(fd, &hdr, sizeof(hdr)) != (ssize_t)sizeof(hdr)) {
 		file_error(ms, errno, "error writing `%s'", dbname);
-		goto out;
+		goto out2;
 	}
 
 	for (i = 0; i < MAGIC_SETS; i++) {
 		len = m * map->nmagic[i];
 		if (write(fd, map->magic[i], len) != (ssize_t)len) {
 			file_error(ms, errno, "error writing `%s'", dbname);
-			goto out;
+			goto out2;
 		}
 	}
 
+	rv = 0;
+out2:
 	if (fd != -1)
 		(void)close(fd);
-	rv = 0;
 out:
 	apprentice_unmap(map);
 	free(dbname);

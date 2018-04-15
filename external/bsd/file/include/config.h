@@ -78,6 +78,9 @@
 /* Define to 1 if you have the `gnurx' library (-lgnurx). */
 /* #undef HAVE_LIBGNURX */
 
+/* Define to 1 if you have the `seccomp' library (-lseccomp). */
+/* #undef HAVE_LIBSECCOMP */
+
 /* Define to 1 if you have the `z' library (-lz). */
 #define HAVE_LIBZ 1
 
@@ -228,10 +231,6 @@
 /* Define to 1 if you have the <vfork.h> header file. */
 /* #undef HAVE_VFORK_H */
 
-/* Define to 1 or 0, depending whether the compiler supports simple visibility
-   declarations. */
-#define HAVE_VISIBILITY 1
-
 /* Define to 1 if you have the <wchar.h> header file. */
 #define HAVE_WCHAR_H 1
 
@@ -265,6 +264,9 @@
    <sysmacros.h>. */
 /* #undef MAJOR_IN_SYSMACROS */
 
+/* Define to 1 if your C compiler doesn't accept -c and -o together. */
+/* #undef NO_MINUS_C_MINUS_O */
+
 /* Name of package */
 #define PACKAGE "file"
 
@@ -275,7 +277,7 @@
 #define PACKAGE_NAME "file"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "file 5.32"
+#define PACKAGE_STRING "file 5.33"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "file"
@@ -284,7 +286,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "5.32"
+#define PACKAGE_VERSION "5.33"
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
@@ -315,7 +317,7 @@
 
 
 /* Version number of package */
-#define VERSION "5.32"
+#define VERSION "5.33"
 
 /* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
    significant byte first (like Motorola and SPARC, unlike Intel). */
