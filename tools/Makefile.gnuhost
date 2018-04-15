@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.gnuhost,v 1.45 2018/04/13 06:15:26 snj Exp $
+#	$NetBSD: Makefile.gnuhost,v 1.46 2018/04/15 21:50:38 christos Exp $
 #
 # Rules used when building a GNU host package.  Expects MODULE to be set.
 #
@@ -18,13 +18,18 @@
 .include <bsd.own.mk>
 
 # Disable use of pre-compiled headers on Darwin.
-# GCC build exceeds the macOS clang default bracket nesting level of 256.
 BUILD_OSTYPE!= uname -s
 .if ${BUILD_OSTYPE} == "Darwin"
 HOST_CFLAGS+=-O2 -no-cpp-precomp
-HOST_CFLAGS+=-O2 -no-cpp-precomp -fbracket-depth=512
+.endif
+
+# GCC build exceeds the clang default bracket nesting level of 256.
+HOST_COMPILER_CLANG != if ${HOST_CC} --version 2>&1 | grep -q -s clang; then echo yes; else echo no; fi
+.if ${HOST_COMPILER_CLANG} == "yes"
+HOST_CFLAGS+= -fbracket-depth=512
 HOST_CXXFLAGS+= -fbracket-depth=512
 .endif
+
 MAKE_PROGRAM?=	${MAKE}
 
 .for i in 3 2
