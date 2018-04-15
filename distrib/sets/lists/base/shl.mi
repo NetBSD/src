@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.833 2018/04/06 19:00:08 christos Exp $
+# $NetBSD: shl.mi,v 1.834 2018/04/15 19:47:30 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -399,8 +399,8 @@
 ./usr/lib/libm.so.0				base-sys-shlib		compatfile
 ./usr/lib/libm.so.0.12				base-sys-shlib		compatfile
 ./usr/lib/libmagic.so				base-sys-shlib		compatfile
-./usr/lib/libmagic.so.5				base-sys-shlib		compatfile
-./usr/lib/libmagic.so.5.2			base-sys-shlib		compatfile
+./usr/lib/libmagic.so.6				base-sys-shlib		compatfile
+./usr/lib/libmagic.so.6.0			base-sys-shlib		compatfile
 ./usr/lib/libmenu.so				base-sys-shlib		compatfile
 ./usr/lib/libmenu.so.6				base-sys-shlib		compatfile
 ./usr/lib/libmenu.so.6.0			base-sys-shlib		compatfile
