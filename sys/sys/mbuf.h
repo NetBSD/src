@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.185 2018/04/13 08:44:41 maxv Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.186 2018/04/15 07:35:49 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -704,6 +704,12 @@ do {									\
 	(m)->m_type = t;						\
 } while (/* CONSTCOND */ 0)
 
+#ifdef DIAGNOSTIC
+#define M_VERIFY_PACKET(m)	m_verify_packet(m)
+#else
+#define M_VERIFY_PACKET(m)	/* nothing */
+#endif
+
 /* length to m_copy to copy all */
 #define	M_COPYALL	-1
 
@@ -864,6 +870,7 @@ struct	mbuf *m_copyback_cow(struct mbuf *, int, int, const void *, int);
 int	m_makewritable(struct mbuf **, int, int, int);
 struct	mbuf *m_getcl(int, int, int);
 void	m_copydata(struct mbuf *, int, int, void *);
+void	m_verify_packet(struct mbuf *);
 struct	mbuf *m_free(struct mbuf *);
 void	m_freem(struct mbuf *);
 void	m_reclaim(void *, int);
