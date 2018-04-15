@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sched.c,v 1.69 2017/04/21 15:10:34 christos Exp $	*/
+/*	$NetBSD: linux_sched.c,v 1.70 2018/04/15 03:25:25 kamil Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.69 2017/04/21 15:10:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.70 2018/04/15 03:25:25 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -103,7 +103,6 @@ linux_sys_clone(struct lwp *l, const struct linux_sys_clone_args *uap,
 		syscallarg(void *) tls;
 		syscallarg(void *) child_tidptr;
 	} */
-	struct proc *p;
 	struct linux_emuldata *led;
 	int flags, sig, error;
 
@@ -159,7 +158,7 @@ linux_sys_clone(struct lwp *l, const struct linux_sys_clone_args *uap,
 	 * that makes this adjustment is a noop.
 	 */
 	if ((error = fork1(l, flags, sig, SCARG(uap, stack), 0,
-	    linux_child_return, NULL, retval, &p)) != 0) {
+	    linux_child_return, NULL, retval, NULL)) != 0) {
 		DPRINTF(("%s: fork1: error %d\n", __func__, error));
 		return error;
 	}
