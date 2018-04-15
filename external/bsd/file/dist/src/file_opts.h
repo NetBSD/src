@@ -1,4 +1,4 @@
-/*	$NetBSD: file_opts.h,v 1.1.1.7 2017/02/10 17:42:57 christos Exp $	*/
+/*	$NetBSD: file_opts.h,v 1.1.1.8 2018/04/15 19:32:48 christos Exp $	*/
 
 /*
  * Table of command-line options
@@ -56,5 +56,8 @@ OPT('P', "parameter", 1, 0, "            set file engine parameter limits\n"
 OPT('r', "raw", 0, 0, "                  don't translate unprintable chars to \\ooo\n")
 OPT('s', "special-files", 0, 0, "        treat special (block/char devices) files as\n"
     "                             ordinary ones\n")
+#ifdef HAVE_LIBSECCOMP
+OPT('S', "no-sandbox", 0, 0, "           disable system call sandboxing\n")
+#endif
 OPT('C', "compile", 0, 0, "              compile file specified by -m\n")
 OPT('d', "debug", 0, 0, "                print debugging messages\n")
