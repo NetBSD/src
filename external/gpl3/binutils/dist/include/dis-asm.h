@@ -1,6 +1,6 @@
 /* Interface between the opcode library and its callers.
 
-   Copyright (C) 1999-2016 Free Software Foundation, Inc.
+   Copyright (C) 1999-2018 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -158,7 +158,7 @@ typedef struct disassemble_info
   /* These are for buffer_read_memory.  */
   bfd_byte *buffer;
   bfd_vma buffer_vma;
-  unsigned int buffer_length;
+  size_t buffer_length;
 
   /* This variable may be set by the instruction decoder.  It suggests
       the number of bytes objdump should display on a single line.  If
@@ -210,7 +210,7 @@ typedef struct disassemble_info
   bfd_vma target2;		/* Second target address for dref2 */
 
   /* Command line options specific to the target disassembler.  */
-  char * disassembler_options;
+  const char *disassembler_options;
 
   /* If non-zero then try not disassemble beyond this address, even if
      there are values left in the buffer.  This address is the address
@@ -222,98 +222,27 @@ typedef struct disassemble_info
 
 } disassemble_info;
 
+/* This struct is used to pass information about valid disassembler options
+   and their descriptions from the target to the generic GDB functions that
+   set and display them.  */
+
+typedef struct
+{
+  const char **name;
+  const char **description;
+} disasm_options_t;
+
 
 /* Standard disassemblers.  Disassemble one instruction at the given
    target address.  Return number of octets processed.  */
 typedef int (*disassembler_ftype) (bfd_vma, disassemble_info *);
 
-extern int print_insn_aarch64		(bfd_vma, disassemble_info *);
-extern int print_insn_alpha		(bfd_vma, disassemble_info *);
-extern int print_insn_avr		(bfd_vma, disassemble_info *);
-extern int print_insn_bfin		(bfd_vma, disassemble_info *);
-extern int print_insn_big_arm		(bfd_vma, disassemble_info *);
-extern int print_insn_big_mips		(bfd_vma, disassemble_info *);
-extern int print_insn_big_nios2		(bfd_vma, disassemble_info *);
-extern int print_insn_big_powerpc	(bfd_vma, disassemble_info *);
-extern int print_insn_big_score         (bfd_vma, disassemble_info *);
-extern int print_insn_cr16              (bfd_vma, disassemble_info *);
-extern int print_insn_crx               (bfd_vma, disassemble_info *);
-extern int print_insn_d10v		(bfd_vma, disassemble_info *);
-extern int print_insn_d30v		(bfd_vma, disassemble_info *);
-extern int print_insn_dlx 		(bfd_vma, disassemble_info *);
-extern int print_insn_epiphany		(bfd_vma, disassemble_info *);
-extern int print_insn_fr30		(bfd_vma, disassemble_info *);
-extern int print_insn_frv		(bfd_vma, disassemble_info *);
-extern int print_insn_ft32  		(bfd_vma, disassemble_info *);
-extern int print_insn_h8300		(bfd_vma, disassemble_info *);
-extern int print_insn_h8300h		(bfd_vma, disassemble_info *);
-extern int print_insn_h8300s		(bfd_vma, disassemble_info *);
-extern int print_insn_h8500		(bfd_vma, disassemble_info *);
-extern int print_insn_hppa		(bfd_vma, disassemble_info *);
-extern int print_insn_i370		(bfd_vma, disassemble_info *);
-extern int print_insn_i386		(bfd_vma, disassemble_info *);
-extern int print_insn_i386_att		(bfd_vma, disassemble_info *);
-extern int print_insn_i386_intel	(bfd_vma, disassemble_info *);
-extern int print_insn_i860		(bfd_vma, disassemble_info *);
-extern int print_insn_i960		(bfd_vma, disassemble_info *);
-extern int print_insn_ia64		(bfd_vma, disassemble_info *);
-extern int print_insn_ip2k		(bfd_vma, disassemble_info *);
-extern int print_insn_iq2000		(bfd_vma, disassemble_info *);
-extern int print_insn_little_arm	(bfd_vma, disassemble_info *);
-extern int print_insn_little_mips	(bfd_vma, disassemble_info *);
-extern int print_insn_little_nios2	(bfd_vma, disassemble_info *);
-extern int print_insn_little_powerpc	(bfd_vma, disassemble_info *);
-extern int print_insn_little_score      (bfd_vma, disassemble_info *); 
-extern int print_insn_lm32		(bfd_vma, disassemble_info *);
-extern int print_insn_m32c	        (bfd_vma, disassemble_info *);
-extern int print_insn_m32r		(bfd_vma, disassemble_info *);
-extern int print_insn_m68hc11		(bfd_vma, disassemble_info *);
-extern int print_insn_m68hc12		(bfd_vma, disassemble_info *);
-extern int print_insn_m9s12x		(bfd_vma, disassemble_info *);
-extern int print_insn_m9s12xg		(bfd_vma, disassemble_info *);
-extern int print_insn_m68k		(bfd_vma, disassemble_info *);
-extern int print_insn_m88k		(bfd_vma, disassemble_info *);
-extern int print_insn_mcore		(bfd_vma, disassemble_info *);
+/* Disassemblers used out side of opcodes library.  */
+extern int print_insn_m32c		(bfd_vma, disassemble_info *);
 extern int print_insn_mep		(bfd_vma, disassemble_info *);
-extern int print_insn_metag		(bfd_vma, disassemble_info *);
-extern int print_insn_microblaze	(bfd_vma, disassemble_info *);
-extern int print_insn_mmix		(bfd_vma, disassemble_info *);
-extern int print_insn_mn10200		(bfd_vma, disassemble_info *);
-extern int print_insn_mn10300		(bfd_vma, disassemble_info *);
-extern int print_insn_moxie		(bfd_vma, disassemble_info *);
-extern int print_insn_msp430		(bfd_vma, disassemble_info *);
-extern int print_insn_mt                (bfd_vma, disassemble_info *);
-extern int print_insn_nds32		(bfd_vma, disassemble_info *);
-extern int print_insn_ns32k		(bfd_vma, disassemble_info *);
-extern int print_insn_or1k		(bfd_vma, disassemble_info *);
-extern int print_insn_pdp11		(bfd_vma, disassemble_info *);
-extern int print_insn_pj		(bfd_vma, disassemble_info *);
-extern int print_insn_riscv		(bfd_vma, disassemble_info *);
-extern int print_insn_rs6000		(bfd_vma, disassemble_info *);
-extern int print_insn_s390		(bfd_vma, disassemble_info *);
 extern int print_insn_sh		(bfd_vma, disassemble_info *);
-extern int print_insn_sh64		(bfd_vma, disassemble_info *);
 extern int print_insn_sh64x_media	(bfd_vma, disassemble_info *);
 extern int print_insn_sparc		(bfd_vma, disassemble_info *);
-extern int print_insn_spu		(bfd_vma, disassemble_info *);
-extern int print_insn_tic30		(bfd_vma, disassemble_info *);
-extern int print_insn_tic4x		(bfd_vma, disassemble_info *);
-extern int print_insn_tic54x		(bfd_vma, disassemble_info *);
-extern int print_insn_tic6x		(bfd_vma, disassemble_info *);
-extern int print_insn_tic80		(bfd_vma, disassemble_info *);
-extern int print_insn_tilegx		(bfd_vma, disassemble_info *);
-extern int print_insn_tilepro		(bfd_vma, disassemble_info *);
-extern int print_insn_v850		(bfd_vma, disassemble_info *);
-extern int print_insn_vax		(bfd_vma, disassemble_info *);
-extern int print_insn_visium		(bfd_vma, disassemble_info *);
-extern int print_insn_w65		(bfd_vma, disassemble_info *);
-extern int print_insn_xc16x		(bfd_vma, disassemble_info *);
-extern int print_insn_xgate             (bfd_vma, disassemble_info *);
-extern int print_insn_xstormy16		(bfd_vma, disassemble_info *);
-extern int print_insn_xtensa		(bfd_vma, disassemble_info *);
-extern int print_insn_z80		(bfd_vma, disassemble_info *);
-extern int print_insn_z8001		(bfd_vma, disassemble_info *);
-extern int print_insn_z8002		(bfd_vma, disassemble_info *);
 extern int print_insn_rx		(bfd_vma, disassemble_info *);
 extern int print_insn_rl78		(bfd_vma, disassemble_info *);
 extern int print_insn_rl78_g10		(bfd_vma, disassemble_info *);
@@ -322,24 +251,31 @@ extern int print_insn_rl78_g14		(bfd_vma, disassemble_info *);
 
 extern disassembler_ftype arc_get_disassembler (bfd *);
 extern disassembler_ftype cris_get_disassembler (bfd *);
-extern disassembler_ftype rl78_get_disassembler (bfd *);
 
 extern void print_aarch64_disassembler_options (FILE *);
 extern void print_i386_disassembler_options (FILE *);
 extern void print_mips_disassembler_options (FILE *);
 extern void print_ppc_disassembler_options (FILE *);
+extern void print_riscv_disassembler_options (FILE *);
 extern void print_arm_disassembler_options (FILE *);
-extern void parse_arm_disassembler_option (char *);
+extern void print_arc_disassembler_options (FILE *);
 extern void print_s390_disassembler_options (FILE *);
-extern int  get_arm_regname_num_options (void);
-extern int  set_arm_regname_option (int);
-extern int  get_arm_regnames (int, const char **, const char **, const char *const **);
+extern void print_wasm32_disassembler_options (FILE *);
 extern bfd_boolean aarch64_symbol_is_valid (asymbol *, struct disassemble_info *);
 extern bfd_boolean arm_symbol_is_valid (asymbol *, struct disassemble_info *);
 extern void disassemble_init_powerpc (struct disassemble_info *);
+extern void disassemble_init_s390 (struct disassemble_info *);
+extern void disassemble_init_wasm32 (struct disassemble_info *);
+extern const disasm_options_t *disassembler_options_powerpc (void);
+extern const disasm_options_t *disassembler_options_arm (void);
+extern const disasm_options_t *disassembler_options_s390 (void);
 
-/* Fetch the disassembler for a given BFD, if that support is available.  */
-extern disassembler_ftype disassembler (bfd *);
+/* Fetch the disassembler for a given architecture ARC, endianess (big
+   endian if BIG is true), bfd_mach value MACH, and ABFD, if that support
+   is available.  ABFD may be NULL.  */
+extern disassembler_ftype disassembler (enum bfd_architecture arc,
+					bfd_boolean big, unsigned long mach,
+					bfd *abfd);
 
 /* Amend the disassemble_info structure as necessary for the target architecture.
    Should only be called after initialising the info->arch field.  */
@@ -347,6 +283,29 @@ extern void disassemble_init_for_target (struct disassemble_info * dinfo);
 
 /* Document any target specific options available from the disassembler.  */
 extern void disassembler_usage (FILE *);
+
+/* Remove whitespace and consecutive commas.  */
+extern char *remove_whitespace_and_extra_commas (char *);
+
+/* Like STRCMP, but treat ',' the same as '\0' so that we match
+   strings like "foobar" against "foobar,xxyyzz,...".  */
+extern int disassembler_options_cmp (const char *, const char *);
+
+/* A helper function for FOR_EACH_DISASSEMBLER_OPTION.  */
+static inline const char *
+next_disassembler_option (const char *options)
+{
+  const char *opt = strchr (options, ',');
+  if (opt != NULL)
+    opt++;
+  return opt;
+}
+
+/* A macro for iterating over each comma separated option in OPTIONS.  */
+#define FOR_EACH_DISASSEMBLER_OPTION(OPT, OPTIONS) \
+  for ((OPT) = (OPTIONS); \
+       (OPT) != NULL; \
+       (OPT) = next_disassembler_option (OPT))
 
 
 /* This block of definitions is for particular callers who read instructions

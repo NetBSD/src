@@ -1,5 +1,83 @@
 -*- text -*-
 
+Changes in 2.30:
+
+* Add --debug-dump=links option to readelf and --dwarf=links option to objdump
+  which displays the contents of any .gnu_debuglink or .gnu_debugaltlink
+  sections.
+
+  Add a --debug-dump=follow-links option to readelf and a --dwarf=follow-links
+  option to objdump which causes indirect links into separate debug info files
+  to be followed when dumping other DWARF sections.
+
+Changes in 2.29:
+
+* The MIPS port now supports microMIPS eXtended Physical Addressing (XPA)
+  instructions for assembly and disassembly.
+
+* The MIPS port now supports the microMIPS Release 5 ISA for assembly and
+  disassembly.
+
+* The MIPS port now supports the Imagination interAptiv MR2 processor,
+  which implements the MIPS32r3 ISA, the MIPS16e2 ASE as well as a couple
+  of implementation-specific regular MIPS and MIPS16e2 ASE instructions.
+
+* The SPARC port now supports the SPARC M8 processor, which implements the
+  Oracle SPARC Architecture 2017.
+
+* The MIPS port now supports the MIPS16e2 ASE for assembly and disassembly.
+
+* Add support for ELF SHF_GNU_MBIND and PT_GNU_MBIND_XXX.
+
+* Add support for the wasm32 ELF conversion of the WebAssembly file format.
+
+* Add --inlines option to objdump, which extends the --line-numbers option
+  so that inlined functions will display their nesting information.
+
+* Add --merge-notes options to objcopy to reduce the size of notes in
+  a binary file by merging and deleting redundant notes.
+
+* Add support for locating separate debug info files using the build-id
+  method, where the separate file has a name based upon the build-id of
+  the original file.
+
+Changes in 2.28:
+
+* This version of binutils fixes a problem with PowerPC VLE 16A and 16D
+  relocations which were functionally swapped, for example,
+  R_PPC_VLE_HA16A performed like R_PPC_VLE_HA16D while R_PPC_VLE_HA16D
+  performed like R_PPC_VLE_HA16A.  This could have been fixed by
+  renumbering relocations, which would keep object files created by an
+  older version of gas compatible with a newer ld.  However, that would
+  require an ABI update, affecting other assemblers and linkers that
+  create and process the relocations correctly.  It is recommended that
+  all VLE object files be recompiled, but ld can modify the relocations
+  if --vle-reloc-fixup is passed to ld.  If the new ld command line
+  option is not used, ld will ld warn on finding relocations inconsistent
+  with the instructions being relocated.
+
+* The nm program has a new command line option (--with-version-strings)
+  which will display a symbol's version information, if any, after the
+  symbol's name.
+
+* The ARC port of objdump now accepts a -M option to specify the extra
+  instruction class(es) that should be disassembled.
+
+* The --remove-section option for objcopy and strip now accepts section
+  patterns starting with an exclamation point to indicate a non-matching
+  section.  A non-matching section is removed from the set of sections
+  matched by an earlier --remove-section pattern.
+
+* The --only-section option for objcopy now accepts section patterns
+  starting with an exclamation point to indicate a non-matching section.
+  A non-matching section is removed from the set of sections matched by
+  an earlier --only-section pattern.
+
+* New --remove-relocations=SECTIONPATTERN option for objcopy and strip.
+  This option can be used to remove sections containing relocations.
+  The SECTIONPATTERN is the section to which the relocations apply, not
+  the relocation section itself.
+
 Changes in 2.27:
 
 * Add a configure option, --enable-64-bit-archive, to force use of a
@@ -517,7 +595,7 @@ Changes in binutils 2.1:
   and/or local symbols only.  They now also support long options.
 
 
-Copyright (C) 2012-2016 Free Software Foundation, Inc.
+Copyright (C) 2012-2018 Free Software Foundation, Inc.
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright
