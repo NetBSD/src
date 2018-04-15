@@ -1,6 +1,6 @@
 ## Process this file with automake to generate Makefile.in
 #
-#   Copyright (C) 2012-2016 Free Software Foundation, Inc.
+#   Copyright (C) 2012-2018 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -147,7 +147,9 @@ ALL_MACHINES = \
 	cpu-pj.lo \
 	cpu-plugin.lo \
 	cpu-powerpc.lo \
+	cpu-pru.lo \
 	cpu-rs6000.lo \
+	cpu-riscv.lo \
 	cpu-rl78.lo \
 	cpu-rx.lo \
 	cpu-s390.lo \
@@ -167,6 +169,7 @@ ALL_MACHINES = \
 	cpu-vax.lo \
 	cpu-visium.lo \
 	cpu-w65.lo \
+	cpu-wasm32.lo \
 	cpu-we32k.lo \
 	cpu-xc16x.lo \
 	cpu-xgate.lo \
@@ -234,7 +237,9 @@ ALL_MACHINES_CFILES = \
 	cpu-pj.c \
 	cpu-plugin.c \
 	cpu-powerpc.c \
+	cpu-pru.c \
 	cpu-rs6000.c \
+	cpu-riscv.c \
 	cpu-rl78.c \
 	cpu-rx.c \
 	cpu-s390.c \
@@ -253,6 +258,7 @@ ALL_MACHINES_CFILES = \
 	cpu-v850_rh850.c \
 	cpu-vax.c \
 	cpu-visium.c \
+	cpu-wasm32.c \
 	cpu-w65.c \
 	cpu-we32k.c \
 	cpu-xc16x.c \
@@ -315,6 +321,7 @@ BFD32_BACKENDS = \
 	elf-m10200.lo \
 	elf-m10300.lo \
 	elf-nacl.lo \
+	elf-properties.lo \
 	elf-strtab.lo \
 	elf-vxworks.lo \
 	elf.lo \
@@ -339,6 +346,7 @@ BFD32_BACKENDS = \
 	elf32-hppa.lo \
 	elf32-i370.lo \
 	elf32-i386.lo \
+	elfxx-x86.lo \
 	elf32-i860.lo \
 	elf32-i960.lo \
 	elf32-ip2k.lo \
@@ -363,6 +371,7 @@ BFD32_BACKENDS = \
 	elf32-or1k.lo \
 	elf32-pj.lo \
 	elf32-ppc.lo \
+	elf32-pru.lo \
 	elf32-rl78.lo \
 	elf32-rx.lo \
 	elf32-s390.lo \
@@ -378,6 +387,7 @@ BFD32_BACKENDS = \
 	elf32-v850.lo \
 	elf32-vax.lo \
 	elf32-visium.lo \
+	elf32-wasm32.lo \
 	elf32-xc16x.lo \
 	elf32-xgate.lo \
 	elf32-xstormy16.lo \
@@ -451,6 +461,7 @@ BFD32_BACKENDS = \
 	versados.lo \
 	vms-lib.lo \
 	vms-misc.lo \
+	wasm-module.lo \
 	xcofflink.lo \
 	xsym.lo \
 	xtensa-isa.lo \
@@ -507,6 +518,7 @@ BFD32_BACKENDS_CFILES = \
 	elf-m10200.c \
 	elf-m10300.c \
 	elf-nacl.c \
+	elf-properties.c \
 	elf-strtab.c \
 	elf-vxworks.c \
 	elf.c \
@@ -531,6 +543,7 @@ BFD32_BACKENDS_CFILES = \
 	elf32-hppa.c \
 	elf32-i370.c \
 	elf32-i386.c \
+	elfxx-x86.c \
 	elf32-i860.c \
 	elf32-i960.c \
 	elf32-ip2k.c \
@@ -555,6 +568,7 @@ BFD32_BACKENDS_CFILES = \
 	elf32-or1k.c \
 	elf32-pj.c \
 	elf32-ppc.c \
+	elf32-pru.c \
 	elf32-rl78.c \
 	elf32-rx.c \
 	elf32-s390.c \
@@ -570,6 +584,7 @@ BFD32_BACKENDS_CFILES = \
 	elf32-v850.c \
 	elf32-vax.c \
 	elf32-visium.c \
+	elf32-wasm32.c \
 	elf32-xc16x.c \
 	elf32-xgate.c \
 	elf32-xstormy16.c \
@@ -642,6 +657,7 @@ BFD32_BACKENDS_CFILES = \
 	versados.c \
 	vms-lib.c \
 	vms-misc.c \
+	wasm-module.c \
 	xcofflink.c \
 	xsym.c \
 	xtensa-isa.c \
@@ -671,18 +687,22 @@ BFD64_BACKENDS = \
 	elf64-hppa.lo \
 	elf64-ia64.lo \
 	elf64-ia64-vms.lo \
+	elfxx-ia64.lo \
+	elfn32-mips.lo \
 	elf64-mips.lo \
+	elfxx-mips.lo \
 	elf64-mmix.lo \
 	elf64-ppc.lo \
+	elf32-riscv.lo \
+	elf64-riscv.lo \
+	elfxx-riscv.lo \
 	elf64-s390.lo \
 	elf64-sh64.lo \
 	elf64-sparc.lo \
 	elf64-tilegx.lo \
 	elf64-x86-64.lo \
+	elfxx-x86.lo \
 	elf64.lo \
-	elfn32-mips.lo \
-	elfxx-ia64.lo \
-	elfxx-mips.lo \
 	mach-o-aarch64.lo \
 	mach-o-x86-64.lo \
 	mmo.lo \
@@ -717,11 +737,13 @@ BFD64_BACKENDS_CFILES = \
 	elf64-sparc.c \
 	elf64-tilegx.c \
 	elf64-x86-64.c \
+	elfxx-x86.c \
 	elf64.c \
 	elfn32-mips.c \
 	elfxx-aarch64.c \
 	elfxx-ia64.c \
 	elfxx-mips.c \
+	elfxx-riscv.c \
 	mach-o-aarch64.c \
 	mach-o-x86-64.c \
 	mmo.c \
@@ -785,7 +807,9 @@ SOURCE_CFILES = \
 
 BUILD_CFILES = \
 	elf32-aarch64.c elf64-aarch64.c \
-	elf32-ia64.c elf64-ia64.c peigen.c pepigen.c pex64igen.c
+	elf32-ia64.c elf64-ia64.c \
+	elf32-riscv.c elf64-riscv.c \
+	peigen.c pepigen.c pex64igen.c
 
 CFILES = $(SOURCE_CFILES) $(BUILD_CFILES)
 
@@ -1009,12 +1033,13 @@ stmp-bfd-h: bfd-in3.h
 	rm -f bfd-tmp.h
 	touch stmp-bfd-h
 
-BFD_H_FILES = bfd-in.h init.c opncls.c libbfd.c section.c archures.c \
-	reloc.c syms.c bfd.c bfdio.c bfdwin.c \
-	archive.c corefile.c targets.c format.c compress.c
+BFD_H_FILES = bfd-in.h init.c opncls.c libbfd.c \
+	bfdio.c bfdwin.c section.c archures.c reloc.c \
+	syms.c bfd.c archive.c corefile.c targets.c format.c \
+	linker.c simple.c compress.c
 BFD64_H_FILES = archive64.c
-LIBBFD_H_FILES = libbfd-in.h init.c libbfd.c bfdio.c bfdwin.c \
-	cache.c reloc.c archures.c elf.c
+LIBBFD_H_FILES = libbfd-in.h libbfd.c bfdio.c bfdwin.c \
+	cache.c reloc.c archures.c linker.c
 LIBCOFF_H_FILES = libcoff-in.h coffcode.h
 
 # Could really use a "copy-if-change"...
