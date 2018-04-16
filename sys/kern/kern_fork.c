@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.203 2017/11/07 19:44:04 christos Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.204 2018/04/16 14:51:59 kamil Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.203 2017/11/07 19:44:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.204 2018/04/16 14:51:59 kamil Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
@@ -117,7 +117,7 @@ int
 sys_fork(struct lwp *l, const void *v, register_t *retval)
 {
 
-	return fork1(l, 0, SIGCHLD, NULL, 0, NULL, NULL, retval, NULL);
+	return fork1(l, 0, SIGCHLD, NULL, 0, NULL, NULL, retval);
 }
 
 /*
@@ -129,7 +129,7 @@ sys_vfork(struct lwp *l, const void *v, register_t *retval)
 {
 
 	return fork1(l, FORK_PPWAIT, SIGCHLD, NULL, 0, NULL, NULL,
-	    retval, NULL);
+	    retval);
 }
 
 /*
@@ -141,7 +141,7 @@ sys___vfork14(struct lwp *l, const void *v, register_t *retval)
 {
 
 	return fork1(l, FORK_PPWAIT|FORK_SHAREVM, SIGCHLD, NULL, 0,
-	    NULL, NULL, retval, NULL);
+	    NULL, NULL, retval);
 }
 
 /*
@@ -194,7 +194,7 @@ sys___clone(struct lwp *l, const struct sys___clone_args *uap,
 	 * code that makes this adjustment is a noop.
 	 */
 	return fork1(l, flags, sig, SCARG(uap, stack), 0,
-	    NULL, NULL, retval, NULL);
+	    NULL, NULL, retval);
 }
 
 /*
@@ -209,8 +209,7 @@ static struct timeval fork_tfmrate = { 10, 0 };
  */
 int
 fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
-    void (*func)(void *), void *arg, register_t *retval,
-    struct proc **rnewprocp)
+    void (*func)(void *), void *arg, register_t *retval)
 {
 	struct proc	*p1, *p2, *parent;
 	struct plimit   *p1_lim;
@@ -523,12 +522,6 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 		uvmexp.forks_ppwait++;
 	if (flags & FORK_SHAREVM)
 		uvmexp.forks_sharevm++;
-
-	/*
-	 * Pass a pointer to the new process to the caller.
-	 */
-	if (rnewprocp != NULL)
-		*rnewprocp = p2;
 
 	if (ktrpoint(KTR_EMUL))
 		p2->p_traceflag |= KTRFAC_TRC_EMUL;
