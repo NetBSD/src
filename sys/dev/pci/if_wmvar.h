@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmvar.h,v 1.33.6.1 2017/08/01 23:33:18 snj Exp $	*/
+/*	$NetBSD: if_wmvar.h,v 1.33.6.2 2018/04/16 14:25:49 martin Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -117,7 +117,7 @@
  *  |  |  |  |  +---------- 82571 - 82572 - 82573 - 82574 - 82583
  *  |  |  |  |  |  +--------- 82575 - 82576 - 82580 - I350 - I354 - I210 - I211
  *  |  |  |  |  |  |  +-- 80003
- *  |  |  |  |  |  |  |  +-- ICH8 - ICH9 - ICH10 - PCH - PCH2 - PCH_LPT
+ *  |  |  |  |  |  |  |  +-- ICH8 - 9 - 10 - PCH - 2 - LPT - SPT - CNP
  *  |  |  |  |  |  |  |  |
  * -+--+--+--+--+--+--+--+----------------------------------------------->
  */
@@ -157,6 +157,7 @@ typedef enum {
 	WM_T_PCH2,			/* PCH2 LAN */
 	WM_T_PCH_LPT,			/* PCH "Lynx Point" LAN (I217, I218) */
 	WM_T_PCH_SPT,			/* PCH "Sunrise Point" LAN (I219) */
+	WM_T_PCH_CNP,			/* (I219) */
 } wm_chip_type;
 
 typedef enum {
