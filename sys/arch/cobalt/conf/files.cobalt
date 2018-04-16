@@ -1,4 +1,4 @@
-#	$NetBSD: files.cobalt,v 1.39 2018/01/20 13:56:09 skrll Exp $
+#	$NetBSD: files.cobalt,v 1.39.2.1 2018/04/16 01:59:54 pgoyette Exp $
 
 maxpartitions 16
 
@@ -31,9 +31,9 @@ device mcclock: mc146818
 attach mcclock at mainbus
 file arch/cobalt/dev/mcclock.c		mcclock		needs-flag
 
-device panel: hd44780
-attach panel at mainbus
-file arch/cobalt/dev/panel.c		panel
+device lcdpanel: hd44780
+attach lcdpanel at mainbus
+file arch/cobalt/dev/lcdpanel.c		lcdpanel
 
 device gt: pcibus
 attach gt at mainbus

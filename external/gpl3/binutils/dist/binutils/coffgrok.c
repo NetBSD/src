@@ -1,5 +1,5 @@
 /* coffgrok.c
-   Copyright (C) 1994-2016 Free Software Foundation, Inc.
+   Copyright (C) 1994-2018 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -846,13 +846,13 @@ doit (void)
 	case C_UNTAG:
 	  /* Various definition.  */
 	  if (top_scope == NULL)
-	    fatal (_("Aggregate defintion encountered without a scope"));
+	    fatal (_("Aggregate definition encountered without a scope"));
 	  i = do_define (i, top_scope);
 	  break;
 	case C_EXT:
 	case C_LABEL:
 	  if (file_scope == NULL)
-	    fatal (_("Label defintion encountered without a file scope"));
+	    fatal (_("Label definition encountered without a file scope"));
 	  i = do_define (i, file_scope);
 	  break;
 	case C_STAT:
@@ -860,7 +860,7 @@ doit (void)
 	case C_AUTO:
 	case C_REG:
 	  if (top_scope == NULL)
-	    fatal (_("Variable defintion encountered without a scope"));
+	    fatal (_("Variable definition encountered without a scope"));
 	  i = do_define (i, top_scope);
 	  break;
 	case C_EOS:

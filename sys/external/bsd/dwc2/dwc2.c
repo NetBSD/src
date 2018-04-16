@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.c,v 1.48 2018/02/01 09:55:37 msaitoh Exp $	*/
+/*	$NetBSD: dwc2.c,v 1.48.2.1 2018/04/16 02:00:07 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.48 2018/02/01 09:55:37 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.48.2.1 2018/04/16 02:00:07 pgoyette Exp $");
 
 #include "opt_usb.h"
 
@@ -554,10 +554,6 @@ dwc2_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 			break;
 		switch (value) {
 #define sd ((usb_string_descriptor_t *)buf)
-		case C(1, UDESC_STRING):
-			/* Vendor */
-			//totlen = usb_makestrdesc(sd, len, sc->sc_vendor);
-			break;
 		case C(2, UDESC_STRING):
 			/* Product */
 			totlen = usb_makestrdesc(sd, len, "DWC2 root hub");

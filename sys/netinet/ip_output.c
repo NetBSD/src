@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.298.2.1 2018/04/07 04:12:19 pgoyette Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.298.2.2 2018/04/16 02:00:08 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.298.2.1 2018/04/07 04:12:19 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.298.2.2 2018/04/16 02:00:08 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -980,13 +980,11 @@ in_delayed_cksum(struct mbuf *m)
 	offset += M_CSUM_DATA_IPv4_OFFSET(m->m_pkthdr.csum_data);
 
 	if ((offset + sizeof(u_int16_t)) > m->m_len) {
-		/* This happen when ip options were inserted
-		printf("in_delayed_cksum: pullup len %d off %d proto %d\n",
-		    m->m_len, offset, ip->ip_p);
-		 */
-		m_copyback(m, offset, sizeof(csum), (void *) &csum);
-	} else
+		/* This happens when ip options were inserted */
+		m_copyback(m, offset, sizeof(csum), (void *)&csum);
+	} else {
 		*(u_int16_t *)(mtod(m, char *) + offset) = csum;
+	}
 }
 
 /*
@@ -1031,10 +1029,10 @@ ip_insertoptions(struct mbuf *m, struct mbuf *opt, int *phlen)
 		m->m_len -= sizeof(struct ip);
 		m->m_data += sizeof(struct ip);
 		n->m_next = m;
+		n->m_len = optlen + sizeof(struct ip);
+		n->m_data += max_linkhdr;
+		memcpy(mtod(n, void *), ip, sizeof(struct ip));
 		m = n;
-		m->m_len = optlen + sizeof(struct ip);
-		m->m_data += max_linkhdr;
-		bcopy((void *)ip, mtod(m, void *), sizeof(struct ip));
 	} else {
 		m->m_data -= optlen;
 		m->m_len += optlen;
@@ -1042,7 +1040,7 @@ ip_insertoptions(struct mbuf *m, struct mbuf *opt, int *phlen)
 	}
 	m->m_pkthdr.len += optlen;
 	ip = mtod(m, struct ip *);
-	bcopy((void *)p->ipopt_list, (void *)(ip + 1), (unsigned)optlen);
+	memcpy(ip + 1, p->ipopt_list, optlen);
 	*phlen = sizeof(struct ip) + optlen;
 	ip->ip_len = htons(ntohs(ip->ip_len) + optlen);
 	return m;
@@ -1822,12 +1820,13 @@ ip_add_membership(struct ip_moptions *imo, const struct sockopt *sopt)
 	bound = curlwp_bind();
 	if (sopt->sopt_size == sizeof(struct ip_mreq))
 		error = ip_get_membership(sopt, &ifp, &psref, &ia, true);
-	else
+	else {
 #ifdef INET6
 		error = ip6_get_membership(sopt, &ifp, &psref, &ia, sizeof(ia));
 #else
 		error = EINVAL;
 #endif
+	}
 
 	if (error)
 		goto out;
@@ -1902,7 +1901,6 @@ ip_drop_membership(struct ip_moptions *imo, const struct sockopt *sopt)
 		error = ip6_get_membership(sopt, &ifp, &psref, &ia, sizeof(ia));
 #else
 		error = EINVAL;
-		goto out;
 #endif
 	}
 

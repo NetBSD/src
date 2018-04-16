@@ -1,6 +1,6 @@
-.\"	$NetBSD: dnssec-keygen.8,v 1.11 2017/06/15 15:59:36 christos Exp $
+.\"	$NetBSD: dnssec-keygen.8,v 1.11.4.1 2018/04/16 01:57:36 pgoyette Exp $
 .\"
-.\" Copyright (C) 2004, 2005, 2007-2012, 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (C) 2004, 2005, 2007-2012, 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (C) 2000-2003 Internet Software Consortium.
 .\" 
 .\" Permission to use, copy, modify, and/or distribute this software for any
@@ -65,7 +65,7 @@ of the key is specified on the command line\&. For DNSSEC keys, this must match 
 .RS 4
 Selects the cryptographic algorithm\&. For DNSSEC keys, the value of
 \fBalgorithm\fR
-must be one of RSAMD5, RSASHA1, DSA, NSEC3RSASHA1, NSEC3DSA, RSASHA256, RSASHA512, ECCGOST, ECDSAP256SHA256 or ECDSAP384SHA384\&. For TSIG/TKEY, the value must be DH (Diffie Hellman), HMAC\-MD5, HMAC\-SHA1, HMAC\-SHA224, HMAC\-SHA256, HMAC\-SHA384, or HMAC\-SHA512\&. These values are case insensitive\&.
+must be one of RSAMD5, RSASHA1, DSA, NSEC3RSASHA1, NSEC3DSA, RSASHA256, RSASHA512, ECCGOST, ECDSAP256SHA256, ECDSAP384SHA384, ED25519 or ED448\&. For TSIG/TKEY, the value must be DH (Diffie Hellman), HMAC\-MD5, HMAC\-SHA1, HMAC\-SHA224, HMAC\-SHA256, HMAC\-SHA384, or HMAC\-SHA512\&. These values are case insensitive\&.
 .sp
 If no algorithm is specified, then RSASHA1 will be used by default, unless the
 \fB\-3\fR
@@ -98,7 +98,7 @@ must either be ZONE (for a DNSSEC zone key (KEY/DNSKEY)), HOST or ENTITY (for a 
 .PP
 \-3
 .RS 4
-Use an NSEC3\-capable algorithm to generate a DNSSEC key\&. If this option is used and no algorithm is explicitly set on the command line, NSEC3RSASHA1 will be used by default\&. Note that RSASHA256, RSASHA512, ECCGOST, ECDSAP256SHA256 and ECDSAP384SHA384 algorithms are NSEC3\-capable\&.
+Use an NSEC3\-capable algorithm to generate a DNSSEC key\&. If this option is used and no algorithm is explicitly set on the command line, NSEC3RSASHA1 will be used by default\&. Note that RSASHA256, RSASHA512, ECCGOST, ECDSAP256SHA256, ECDSAP384SHA384, ED25519 and ED448 algorithms are NSEC3\-capable\&.
 .RE
 .PP
 \-C
@@ -351,7 +351,7 @@ RFC 4034\&.
 \fBInternet Systems Consortium, Inc\&.\fR
 .SH "COPYRIGHT"
 .br
-Copyright \(co 2004, 2005, 2007-2012, 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+Copyright \(co 2004, 2005, 2007-2012, 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 .br
 Copyright \(co 2000-2003 Internet Software Consortium.
 .br

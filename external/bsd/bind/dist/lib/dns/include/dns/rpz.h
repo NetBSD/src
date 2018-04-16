@@ -1,7 +1,7 @@
-/*	$NetBSD: rpz.h,v 1.8 2015/07/08 17:28:59 christos Exp $	*/
+/*	$NetBSD: rpz.h,v 1.8.14.1 2018/04/16 01:57:56 pgoyette Exp $	*/
 
 /*
- * Copyright (C) 2011-2013, 2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2011-2013, 2015, 2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,12 +16,11 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id */
-
 
 #ifndef DNS_RPZ_H
 #define DNS_RPZ_H 1
 
+#include <isc/event.h>
 #include <isc/lang.h>
 #include <isc/refcount.h>
 #include <isc/rwlock.h>

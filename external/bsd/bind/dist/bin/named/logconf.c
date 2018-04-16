@@ -1,7 +1,7 @@
-/*	$NetBSD: logconf.c,v 1.9 2017/06/15 15:59:36 christos Exp $	*/
+/*	$NetBSD: logconf.c,v 1.9.4.1 2018/04/16 01:57:36 pgoyette Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2011, 2013, 2015, 2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2011, 2013, 2015-2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -30,6 +30,7 @@
 #include <isc/stdio.h>
 #include <isc/string.h>
 #include <isc/syslog.h>
+#include <isc/util.h>
 
 #include <isccfg/cfg.h>
 #include <isccfg/log.h>

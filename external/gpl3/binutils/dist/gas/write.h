@@ -1,5 +1,5 @@
 /* write.h
-   Copyright (C) 1987-2016 Free Software Foundation, Inc.
+   Copyright (C) 1987-2018 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -25,6 +25,19 @@
    assembler output.  S_IS_LOCAL detects it because of the \001.  */
 #ifndef FAKE_LABEL_NAME
 #define FAKE_LABEL_NAME "L0\001"
+#endif
+
+/* This is a special character that is used to indicate a fake label.
+   It must be present in FAKE_LABEL_NAME, although it does not have to
+   be the first character.  It must not be a character that would be
+   found in a valid symbol name.
+
+   Also be aware that the function _bfd_elf_is_local_label_name in
+   bfd/elf.c has an implicit assumption that FAKE_LABEL_CHAR is '\001'.
+   If this is not the case then FAKE_LABEL_NAME must start with ".L" in
+   order for the function to continue working.  */
+#ifndef FAKE_LABEL_CHAR
+#define FAKE_LABEL_CHAR '\001'
 #endif
 
 #include "bit_fix.h"

@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.65 2018/01/23 14:47:54 sevan Exp $
+# $NetBSD: INSTALL,v 1.65.2.1 2018/04/16 01:59:54 pgoyette Exp $
 #
 # INSTALL -- installation and rescue kernel.
 #
@@ -10,7 +10,7 @@ include 	"arch/cobalt/conf/std.cobalt"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"INSTALL-$Revision: 1.65 $"
+#ident 		"INSTALL-$Revision: 1.65.2.1 $"
 
 makeoptions     COPTS="-Os -mmemcpy"
 makeoptions	CPUFLAGS="-march=vr5000 -mabi=32"
@@ -135,7 +135,7 @@ zsc0		at mainbus? addr 0x1c800000 irq 4
 zstty0		at zsc0 channel 0
 #zstty1		at zsc0 channel 1
 
-panel0 		at mainbus? addr 0x1f000000
+lcdpanel0	at mainbus? addr 0x1f000000
 
 gt0 		at mainbus? addr 0x14000000
 

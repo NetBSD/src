@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_debe.c,v 1.2.2.1 2018/04/07 04:12:12 pgoyette Exp $ */
+/* $NetBSD: sunxi_debe.c,v 1.2.2.2 2018/04/16 01:59:53 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2018 Manuel Bouyer <bouyer@antioche.eu.org>
@@ -38,7 +38,7 @@
 #define SUNXI_DEBE_CURMAX	64
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_debe.c,v 1.2.2.1 2018/04/07 04:12:12 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_debe.c,v 1.2.2.2 2018/04/16 01:59:53 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -58,6 +58,8 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_debe.c,v 1.2.2.1 2018/04/07 04:12:12 pgoyette 
 
 #include <arm/sunxi/sunxi_debereg.h>
 #include <arm/sunxi/sunxi_display.h>
+#include <arm/sunxi/sunxi_platform.h>
+#include <machine/bootconfig.h>
 
 enum sunxi_debe_type {
 	DEBE_A10 = 1,
@@ -127,6 +129,9 @@ static int	sunxi_debe_set_cursor(struct sunxi_debe_softc *,
 static int	sunxi_debe_ioctl(device_t, u_long, void *);
 static void	sunxi_befb_set_videomode(device_t, u_int, u_int);
 void sunxi_debe_dump_regs(int);
+
+static struct sunxi_debe_softc *debe_console_sc;
+static int sunxi_simplefb_phandle = -1;
 
 CFATTACH_DECL_NEW(sunxi_debe, sizeof(struct sunxi_debe_softc),
 	sunxi_debe_match, sunxi_debe_attach, NULL, NULL);
@@ -242,8 +247,6 @@ sunxi_debe_attach(device_t parent, device_t self, void *aux)
 	}
 }
 
-
-
 static void
 sunxi_debe_ep_connect(device_t self, struct fdt_endpoint *ep, bool connect)
 {
@@ -337,6 +340,32 @@ sunxi_debe_setup_fbdev(struct sunxi_debe_softc *sc, const struct videomode *mode
 	const u_int fb_height = (mode->vdisplay << interlace_p);
 
 	if (mode && sc->sc_fbdev == NULL) {
+		/* see if we are the console */
+		if (sunxi_simplefb_phandle >= 0) {
+			const char *cons_pipeline =
+			    fdtbus_get_string(sunxi_simplefb_phandle,
+			        "allwinner,pipeline");
+			struct fdt_endpoint *ep = fdt_endpoint_get_from_index(
+			    &sc->sc_ports, SUNXI_PORT_OUTPUT, sc->sc_unit);
+			struct fdt_endpoint *rep = fdt_endpoint_remote(ep);
+			if (sunxi_tcon_is_console(
+			    fdt_endpoint_device(rep), cons_pipeline))
+				debe_console_sc = sc;
+		} else if (debe_console_sc == NULL) {
+			if (match_bootconf_option(boot_args,
+			    "console", "fb0")) {
+				if (sc->sc_unit == 0)
+					debe_console_sc = sc;
+			} else if (match_bootconf_option(boot_args,
+			    "console", "fb1")) {
+				if (sc->sc_unit == 1)
+					debe_console_sc = sc;
+			} else if (match_bootconf_option(boot_args,
+			    "console", "fb")) {
+				/* match first activated */
+				debe_console_sc = sc;
+			}
+		}
 		struct sunxifb_attach_args afb = {
 			.afb_fb = sc->sc_dmap,
 			.afb_width = fb_width,
@@ -684,9 +713,6 @@ sunxi_befb_attach(device_t parent, device_t self, void *aux)
 	prop_dictionary_t cfg = device_properties(self);
 	struct genfb_ops ops;
 
-	if (sunxi_befb_consoledev == NULL)
-		sunxi_befb_consoledev = self;
-
 	sc->sc_gen.sc_dev = self;
 	sc->sc_debedev = parent;
 	sc->sc_dmat = afb->afb_dmat;
@@ -716,13 +742,26 @@ sunxi_befb_attach(device_t parent, device_t self, void *aux)
 
 	aprint_naive("\n");
 
-	bool is_console = false;
-	prop_dictionary_set_bool(cfg, "is_console", is_console);
-
+	bool is_console = (debe_console_sc == device_private(parent));
 	if (is_console)
 		aprint_normal(": switching to framebuffer console\n");
 	else
 		aprint_normal("\n");
+
+#ifdef WSDISPLAY_MULTICONS
+	/*
+	 * if we support multicons, only the first framebuffer is console,
+	 * unless we already know which framebuffer will be the console
+	 */
+	if (!is_console && debe_console_sc == NULL &&
+	    sunxi_befb_consoledev == NULL)
+		is_console = true;
+#endif
+	prop_dictionary_set_bool(cfg, "is_console", is_console);
+	if (is_console) {
+		KASSERT(sunxi_befb_consoledev == NULL);
+		sunxi_befb_consoledev = self;
+	}
 
 	genfb_attach(&sc->sc_gen, &ops);
 }
@@ -829,12 +868,46 @@ sunxi_debe_pipeline(int phandle, bool active)
 		return ENODEV;
 	}
 	error = fdt_endpoint_activate(ep, true);
-	if (error == 0) {
-		sc->sc_out_ep = ep;
-		fdt_endpoint_enable(ep, true);
-	}
+	if (error)
+		return error;
+
+	sc->sc_out_ep = ep;
+	error = fdt_endpoint_enable(ep, true);
 	return error;
 }
+
+/*
+ * we don't want to take over console at this time - simplefb will
+ * do a better job than us. We will take over later.
+ * But we want to record the /chose/framebuffer phandle if there is one
+ */
+
+static const char * const simplefb_compatible[] = {
+	"allwinner,simple-framebuffer",
+	NULL
+};
+
+static int
+sunxidebe_console_match(int phandle)
+{
+	if (of_match_compatible(phandle, simplefb_compatible)) {
+		sunxi_simplefb_phandle = phandle;
+	}
+	return 0;
+}
+
+static void
+sunxidebe_console_consinit(struct fdt_attach_args *faa, u_int uart_freq)
+{
+	panic("sunxidebe_console_consinit");
+}
+
+static const struct fdt_console sunxidebe_fdt_console = {
+	.match = sunxidebe_console_match,
+	.consinit = sunxidebe_console_consinit
+};
+
+FDT_CONSOLE(sunxidebe, &sunxidebe_fdt_console);
 
 #if defined(SUNXI_DEBE_DEBUG)
 void

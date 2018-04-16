@@ -1,7 +1,7 @@
-/*	$NetBSD: atomic.h,v 1.7 2014/12/10 04:38:00 christos Exp $	*/
+/*	$NetBSD: atomic.h,v 1.7.14.1 2018/04/16 01:57:59 pgoyette Exp $	*/
 
 /*
- * Copyright (C) 2005, 2007, 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2005, 2007, 2009, 2011, 2012, 2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -80,7 +80,7 @@ static __inline int
 #else
 static int
 #endif
-isc_atomic_cmpxchg(atomic_p p, int old, int new) {
+isc_atomic_cmpxchg(atomic_p p, int old, int replacement) {
 	int orig = old;
 
 #ifdef __GNUC__
@@ -88,7 +88,7 @@ isc_atomic_cmpxchg(atomic_p p, int old, int new) {
 #else
 	 __isync();
 #endif
-	if (compare_and_swap(p, &orig, new))
+	if (compare_and_swap(p, &orig, replacement))
 		orig = old;
 
 #ifdef __GNUC__

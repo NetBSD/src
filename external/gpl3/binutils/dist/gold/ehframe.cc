@@ -1,6 +1,6 @@
 // ehframe.cc -- handle exception frame sections for gold
 
-// Copyright (C) 2006-2016 Free Software Foundation, Inc.
+// Copyright (C) 2006-2018 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -325,6 +325,21 @@ Eh_frame_hdr::get_fde_addresses(Output_file* of,
 
 // Class Fde.
 
+bool
+Fde::operator==(const Fde& that) const
+{
+  if (this->object_ != that.object_
+      || this->contents_ != that.contents_)
+    return false;
+  if (this->object_ == NULL)
+    return (this->u_.from_linker.plt == that.u_.from_linker.plt
+	    && this->u_.from_linker.post_map == that.u_.from_linker.post_map);
+  else
+    return (this->u_.from_object.shndx == that.u_.from_object.shndx
+	    && (this->u_.from_object.input_offset
+		== that.u_.from_object.input_offset));
+}
+
 // Write the FDE to OVIEW starting at OFFSET.  CIE_OFFSET is the
 // offset of the CIE in OVIEW.  OUTPUT_OFFSET is the offset of the
 // Eh_frame section within the output section.  FDE_ENCODING is the
@@ -441,6 +456,15 @@ Cie::set_output_offset(section_offset_type output_offset,
     }
 
   return output_offset + length;
+}
+
+// Remove FDE.  Only the last FDE using this CIE may be removed.
+
+void
+Cie::remove_fde(const Fde* fde)
+{
+  gold_assert(*fde == *this->fdes_.back());
+  this->fdes_.pop_back();
 }
 
 // Write the CIE to OVIEW starting at OFFSET.  OUTPUT_OFFSET is the
@@ -1141,6 +1165,28 @@ Eh_frame::add_ehframe_for_plt(Output_data* plt, const unsigned char* cie_data,
 
   if (this->mappings_are_done_)
     this->final_data_size_ += align_address(fde_length + 8, this->addralign());
+}
+
+// Remove unwind information for a PLT.  Only the last FDE added may be removed.
+
+void
+Eh_frame::remove_ehframe_for_plt(Output_data* plt,
+				 const unsigned char* cie_data,
+				 size_t cie_length,
+				 const unsigned char* fde_data,
+				 size_t fde_length)
+{
+  Cie cie(NULL, 0, 0, elfcpp::DW_EH_PE_pcrel | elfcpp::DW_EH_PE_sdata4, "",
+	  cie_data, cie_length);
+  Cie_offsets::iterator find_cie = this->cie_offsets_.find(&cie);
+  gold_assert (find_cie != this->cie_offsets_.end());
+  Cie* pcie = *find_cie;
+
+  Fde* fde = new Fde(plt, fde_data, fde_length, this->mappings_are_done_);
+  pcie->remove_fde(fde);
+
+  if (this->mappings_are_done_)
+    this->final_data_size_ -= align_address(fde_length + 8, this->addralign());
 }
 
 // Return the number of FDEs.

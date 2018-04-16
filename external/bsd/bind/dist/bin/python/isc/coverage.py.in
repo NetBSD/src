@@ -1,5 +1,5 @@
 ############################################################################
-# Copyright (C) 2013-2016  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2013-2017  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -81,7 +81,7 @@ def parse_time(s):
         pass
 
     # try to parse as a number with a suffix indicating unit of time
-    r = re.compile('([0-9][0-9]*)\s*([A-Za-z]*)')
+    r = re.compile(r'([0-9][0-9]*)\s*([A-Za-z]*)')
     m = r.match(s)
     if not m:
         raise ValueError("Cannot parse %s" % s)

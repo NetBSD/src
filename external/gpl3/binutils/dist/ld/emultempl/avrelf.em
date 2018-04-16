@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright (C) 2006-2016 Free Software Foundation, Inc.
+#   Copyright (C) 2006-2018 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -36,7 +36,7 @@ fragment <<EOF
 static lang_input_statement_type *stub_file;
 static asection *avr_stub_section;
 
-/* Variables set by the command-line parameters and transfered
+/* Variables set by the command-line parameters and transferred
    to the bfd without use of global shared variables.  */
 
 static bfd_boolean avr_no_stubs = FALSE;
@@ -51,13 +51,13 @@ static void
 avr_elf_set_global_bfd_parameters (void)
 {
   elf32_avr_setup_params (& link_info,
-                          stub_file->the_bfd,
-                          avr_stub_section,
-                          avr_no_stubs,
-                          avr_debug_stubs,
-                          avr_debug_relax,
-                          avr_pc_wrap_around,
-                          avr_replace_call_ret_sequences);
+			  stub_file->the_bfd,
+			  avr_stub_section,
+			  avr_no_stubs,
+			  avr_debug_stubs,
+			  avr_debug_relax,
+			  avr_pc_wrap_around,
+			  avr_replace_call_ret_sequences);
 }
 
 
@@ -70,6 +70,12 @@ avr_elf_${EMULATION_NAME}_before_allocation (void)
   int ret;
 
   gld${EMULATION_NAME}_before_allocation ();
+
+  if (bfd_get_flavour (link_info.output_bfd) != bfd_target_elf_flavour)
+    {
+      avr_no_stubs = TRUE;
+      return;
+    }
 
   /* We only need stubs for avr6, avrxmega6, and avrxmega7. */
   if (strcmp ("${EMULATION_NAME}","avr6")
@@ -90,14 +96,14 @@ avr_elf_${EMULATION_NAME}_before_allocation (void)
   ret = elf32_avr_setup_section_lists (link_info.output_bfd, &link_info);
 
   if (ret < 0)
-    einfo ("%X%P: can not setup the input section list: %E\n");
+    einfo (_("%X%P: can not setup the input section list: %E\n"));
 
   if (ret <= 0)
     return;
 
   /* Call into the BFD backend to do the real "stub"-work.  */
   if (! elf32_avr_size_stubs (link_info.output_bfd, &link_info, TRUE))
-    einfo ("%X%P: can not size stub section: %E\n");
+    einfo (_("%X%P: can not size stub section: %E\n"));
 }
 
 /* This is called before the input files are opened.  We create a new
@@ -108,24 +114,31 @@ avr_elf_create_output_section_statements (void)
 {
   flagword flags;
 
+  if (bfd_get_flavour (link_info.output_bfd) != bfd_target_elf_flavour)
+    {
+      einfo (_("%X%P: changing output format whilst linking "
+	       "is not supported\n"));
+      return;
+    }
+
   stub_file = lang_add_input_file ("linker stubs",
-                                   lang_input_file_is_fake_enum,
-                                   NULL);
+				   lang_input_file_is_fake_enum,
+				   NULL);
 
   stub_file->the_bfd = bfd_create ("linker stubs", link_info.output_bfd);
   if (stub_file->the_bfd == NULL
       || !bfd_set_arch_mach (stub_file->the_bfd,
-                             bfd_get_arch (link_info.output_bfd),
-                             bfd_get_mach (link_info.output_bfd)))
+			     bfd_get_arch (link_info.output_bfd),
+			     bfd_get_mach (link_info.output_bfd)))
     {
-      einfo ("%X%P: can not create stub BFD %E\n");
+      einfo (_("%X%P: can not create stub BFD %E\n"));
       return;
     }
 
   /* Now we add the stub section.  */
 
   flags = (SEC_ALLOC | SEC_LOAD | SEC_READONLY | SEC_CODE
-           | SEC_HAS_CONTENTS | SEC_RELOC | SEC_IN_MEMORY | SEC_KEEP);
+	   | SEC_HAS_CONTENTS | SEC_RELOC | SEC_IN_MEMORY | SEC_KEEP);
   avr_stub_section = bfd_make_section_anyway_with_flags (stub_file->the_bfd,
 							 ".trampolines",
 							 flags);
@@ -138,9 +151,9 @@ avr_elf_create_output_section_statements (void)
 
   return;
 
-  err_ret:
-   einfo ("%X%P: can not make stub section: %E\n");
-   return;
+ err_ret:
+  einfo (_("%X%P: can not make stub section: %E\n"));
+  return;
 }
 
 /* Re-calculates the size of the stubs so that we won't waste space.  */
@@ -153,7 +166,7 @@ avr_elf_after_allocation (void)
       /* If relaxing, elf32_avr_size_stubs will be called from
 	 elf32_avr_relax_section.  */
       if (!elf32_avr_size_stubs (link_info.output_bfd, &link_info, TRUE))
-	einfo ("%X%P: can not size stub section: %E\n");
+	einfo (_("%X%P: can not size stub section: %E\n"));
     }
 
   gld${EMULATION_NAME}_after_allocation ();
@@ -162,7 +175,7 @@ avr_elf_after_allocation (void)
   if (!avr_no_stubs)
     {
       if (!elf32_avr_build_stubs (&link_info))
-	einfo ("%X%P: can not build stubs: %E\n");
+	einfo (_("%X%P: can not build stubs: %E\n"));
     }
 }
 
@@ -186,17 +199,17 @@ avr_finish (void)
     {
       avr_link_relax = TRUE;
       for (abfd = link_info.input_bfds; abfd != NULL; abfd = abfd->link.next)
-        {
-          /* Don't let the linker stubs prevent the final object being
-             marked as link-relax ready.  */
-          if ((elf_elfheader (abfd)->e_flags
-               & EF_AVR_LINKRELAX_PREPARED) == 0
-              && abfd != stub_file->the_bfd)
-            {
-              avr_link_relax = FALSE;
-              break;
-            }
-        }
+	{
+	  /* Don't let the linker stubs prevent the final object being
+	     marked as link-relax ready.  */
+	  if ((elf_elfheader (abfd)->e_flags
+	       & EF_AVR_LINKRELAX_PREPARED) == 0
+	      && abfd != stub_file->the_bfd)
+	    {
+	      avr_link_relax = FALSE;
+	      break;
+	    }
+	}
     }
   else
     {
@@ -204,10 +217,14 @@ avr_finish (void)
     }
 
   abfd = link_info.output_bfd;
-  if (avr_link_relax)
-    elf_elfheader (abfd)->e_flags |= EF_AVR_LINKRELAX_PREPARED;
-  else
-    elf_elfheader (abfd)->e_flags &= ~EF_AVR_LINKRELAX_PREPARED;
+
+  if (bfd_get_flavour (link_info.output_bfd) == bfd_target_elf_flavour)
+    {
+      if (avr_link_relax)
+	elf_elfheader (abfd)->e_flags |= EF_AVR_LINKRELAX_PREPARED;
+      else
+	elf_elfheader (abfd)->e_flags &= ~EF_AVR_LINKRELAX_PREPARED;
+    }
 
   finish_default ();
 }
@@ -217,15 +234,15 @@ EOF
 PARSE_AND_LIST_PROLOGUE='
 
 #define OPTION_NO_CALL_RET_REPLACEMENT 301
-#define OPTION_PMEM_WRAP_AROUND        302
-#define OPTION_NO_STUBS                303
-#define OPTION_DEBUG_STUBS             304
-#define OPTION_DEBUG_RELAX             305
+#define OPTION_PMEM_WRAP_AROUND	       302
+#define OPTION_NO_STUBS		       303
+#define OPTION_DEBUG_STUBS	       304
+#define OPTION_DEBUG_RELAX	       305
 '
 
 PARSE_AND_LIST_LONGOPTS='
   { "no-call-ret-replacement", no_argument,
-     NULL, OPTION_NO_CALL_RET_REPLACEMENT},
+    NULL, OPTION_NO_CALL_RET_REPLACEMENT},
   { "pmem-wrap-around", required_argument,
     NULL, OPTION_PMEM_WRAP_AROUND},
   { "no-stubs", no_argument,
@@ -269,17 +286,17 @@ PARSE_AND_LIST_ARGS_CASES='
 
     case OPTION_PMEM_WRAP_AROUND:
       {
-        /* This variable is defined in the bfd library.  */
-        if ((!strcmp (optarg,"32k"))      || (!strcmp (optarg,"32K")))
-          avr_pc_wrap_around = 32768;
-        else if ((!strcmp (optarg,"8k")) || (!strcmp (optarg,"8K")))
-          avr_pc_wrap_around = 8192;
-        else if ((!strcmp (optarg,"16k")) || (!strcmp (optarg,"16K")))
-          avr_pc_wrap_around = 16384;
-        else if ((!strcmp (optarg,"64k")) || (!strcmp (optarg,"64K")))
-          avr_pc_wrap_around = 0x10000;
-        else
-          return FALSE;
+	/* This variable is defined in the bfd library.  */
+	if ((!strcmp (optarg,"32k"))      || (!strcmp (optarg,"32K")))
+	  avr_pc_wrap_around = 32768;
+	else if ((!strcmp (optarg,"8k"))  || (!strcmp (optarg,"8K")))
+	  avr_pc_wrap_around = 8192;
+	else if ((!strcmp (optarg,"16k")) || (!strcmp (optarg,"16K")))
+	  avr_pc_wrap_around = 16384;
+	else if ((!strcmp (optarg,"64k")) || (!strcmp (optarg,"64K")))
+	  avr_pc_wrap_around = 0x10000;
+	else
+	  return FALSE;
       }
       break;
 
@@ -297,8 +314,8 @@ PARSE_AND_LIST_ARGS_CASES='
 
     case OPTION_NO_CALL_RET_REPLACEMENT:
       {
-        /* This variable is defined in the bfd library.  */
-        avr_replace_call_ret_sequences = FALSE;
+	/* This variable is defined in the bfd library.  */
+	avr_replace_call_ret_sequences = FALSE;
       }
       break;
 '

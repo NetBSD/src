@@ -1,4 +1,4 @@
-/* $NetBSD: pl041.c,v 1.3 2017/06/08 11:05:16 jmcneill Exp $ */
+/* $NetBSD: pl041.c,v 1.3.10.1 2018/04/16 01:59:57 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pl041.c,v 1.3 2017/06/08 11:05:16 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pl041.c,v 1.3.10.1 2018/04/16 01:59:57 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -203,7 +203,7 @@ aaci_trigger_output(void *priv, void *start, void *end, int blksize,
 	AACI_WRITE(sc, AACIIE, AACIIE_TXIE | AACIIE_TXUIE);
 	AACI_WRITE(sc, AACITXCR, AACITXCR_TXFEN | AACITXCR_TXEN |
 	    AACITXCR_TXCM | AACITXCR_TSIZE_16 |
-	    AACITXCR_TX(3) | AACITXCR_TX(4));
+	    AACITXCR_TX(AC97_SLOT_PCM_L) | AACITXCR_TX(AC97_SLOT_PCM_R));
 
 	return 0;
 }

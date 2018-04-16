@@ -1,7 +1,7 @@
-/*	$NetBSD: buffer.h,v 1.8 2014/12/10 04:38:00 christos Exp $	*/
+/*	$NetBSD: buffer.h,v 1.8.14.1 2018/04/16 01:57:58 pgoyette Exp $	*/
 
 /*
- * Copyright (C) 2004-2008, 2010, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008, 2010, 2012, 2014, 2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -109,6 +109,7 @@
  *** Imports
  ***/
 
+#include <isc/formatcheck.h>
 #include <isc/lang.h>
 #include <isc/magic.h>
 #include <isc/types.h>
@@ -797,7 +798,7 @@ ISC_LANG_ENDDECLS
 	do { \
 		unsigned int _length; \
 		unsigned char *_cp; \
-		_length = strlen(_source); \
+		_length = (unsigned int)strlen(_source); \
 		_cp = isc_buffer_used(_b); \
 		memmove(_cp, (_source), _length); \
 		(_b)->used += (_length); \

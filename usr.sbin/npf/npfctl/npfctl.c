@@ -1,4 +1,4 @@
-/*	$NetBSD: npfctl.c,v 1.54 2017/10/30 04:53:43 ozaki-r Exp $	*/
+/*	$NetBSD: npfctl.c,v 1.54.2.1 2018/04/16 02:00:10 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfctl.c,v 1.54 2017/10/30 04:53:43 ozaki-r Exp $");
+__RCSID("$NetBSD: npfctl.c,v 1.54.2.1 2018/04/16 02:00:10 pgoyette Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -154,6 +154,9 @@ usage(void)
 	    progname);
 	fprintf(stderr,
 	    "\t%s list [-46hNnw] [-i <ifname>]\n",
+	    progname);
+	fprintf(stderr,
+	    "\t%s debug [<rule-file>] [<raw-output>]\n",
 	    progname);
 	exit(EXIT_FAILURE);
 }

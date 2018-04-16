@@ -1,7 +1,7 @@
-/*	$NetBSD: delv.c,v 1.6 2017/06/15 15:59:36 christos Exp $	*/
+/*	$NetBSD: delv.c,v 1.6.4.1 2018/04/16 01:57:35 pgoyette Exp $	*/
 
 /*
- * Copyright (C) 2014-2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2014-2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -577,7 +577,7 @@ key_fromconfig(const cfg_obj_t *key, dns_client_t *client) {
 	dns_fixedname_t fkeyname;
 	dns_name_t *keyname;
 	isc_result_t result;
-	isc_boolean_t match_root, match_dlv;
+	isc_boolean_t match_root = ISC_FALSE, match_dlv = ISC_FALSE;
 
 	keynamestr = cfg_obj_asstring(cfg_tuple_get(key, "name"));
 	CHECK(convert_name(&fkeyname, &keyname, keynamestr));
@@ -585,8 +585,10 @@ key_fromconfig(const cfg_obj_t *key, dns_client_t *client) {
 	if (!root_validation && !dlv_validation)
 		return (ISC_R_SUCCESS);
 
-	match_root = dns_name_equal(keyname, anchor_name);
-	match_dlv = dns_name_equal(keyname, dlv_name);
+	if (anchor_name)
+		match_root = dns_name_equal(keyname, anchor_name);
+	if (dlv_name)
+		match_dlv = dns_name_equal(keyname, dlv_name);
 
 	if (!match_root && !match_dlv)
 		return (ISC_R_SUCCESS);
@@ -716,14 +718,10 @@ setup_dnsseckeys(dns_client_t *client) {
 			fatal("out of memory");
 	}
 
-	if (dlv_anchor == NULL) {
-		dlv_anchor = isc_mem_strdup(mctx, "dlv.isc.org");
-		if (dlv_anchor == NULL)
-			fatal("out of memory");
-	}
-
-	CHECK(convert_name(&afn, &anchor_name, trust_anchor));
-	CHECK(convert_name(&dfn, &dlv_name, dlv_anchor));
+	if (trust_anchor != NULL)
+		CHECK(convert_name(&afn, &anchor_name, trust_anchor));
+	if (dlv_anchor != NULL)
+		CHECK(convert_name(&dfn, &dlv_name, dlv_anchor));
 
 	CHECK(cfg_parser_create(mctx, dns_lctx, &parser));
 
@@ -791,14 +789,20 @@ addserver(dns_client_t *client) {
 
 	ISC_LIST_INIT(servers);
 
-	if (use_ipv4 && inet_pton(AF_INET, server, &in4) == 1) {
+	if (inet_pton(AF_INET, server, &in4) == 1) {
+		if (!use_ipv4) {
+			fatal("Use of IPv4 disabled by -6");
+		}
 		sa = isc_mem_get(mctx, sizeof(*sa));
 		if (sa == NULL)
 			return (ISC_R_NOMEMORY);
 		ISC_LINK_INIT(sa, link);
 		isc_sockaddr_fromin(sa, &in4, destport);
 		ISC_LIST_APPEND(servers, sa, link);
-	} else if (use_ipv6 && inet_pton(AF_INET6, server, &in6) == 1) {
+	} else if (inet_pton(AF_INET6, server, &in6) == 1) {
+		if (!use_ipv6) {
+			fatal("Use of IPv6 disabled by -4");
+		}
 		sa = isc_mem_get(mctx, sizeof(*sa));
 		if (sa == NULL)
 			return (ISC_R_NOMEMORY);
@@ -975,8 +979,7 @@ plus_option(char *option) {
 	char *cmd, *value, *ptr;
 	isc_boolean_t state = ISC_TRUE;
 
-	strncpy(option_store, option, sizeof(option_store));
-	option_store[sizeof(option_store)-1]=0;
+	strlcpy(option_store, option, sizeof(option_store));
 	ptr = option_store;
 	cmd = next_token(&ptr,"=");
 	if (cmd == NULL) {
@@ -1363,6 +1366,7 @@ dash_option(char *option, char *next, isc_boolean_t *open_type_class) {
  */
 static void
 preparse_args(int argc, char **argv) {
+	isc_boolean_t ipv4only = ISC_FALSE, ipv6only = ISC_FALSE;
 	char *option;
 
 	for (argc--, argv++; argc > 0; argc--, argv++) {
@@ -1370,10 +1374,23 @@ preparse_args(int argc, char **argv) {
 			continue;
 		option = &argv[0][1];
 		while (strpbrk(option, single_dash_opts) == &option[0]) {
-			if (option[0] == 'm') {
+			switch (option[0]) {
+			case 'm':
 				isc_mem_debugging = ISC_MEM_DEBUGTRACE |
 					ISC_MEM_DEBUGRECORD;
-				return;
+				break;
+			case '4':
+				if (ipv6only) {
+					fatal("only one of -4 and -6 allowed");
+				}
+				ipv4only = ISC_TRUE;
+				break;
+			case '6':
+				if (ipv4only) {
+					fatal("only one of -4 and -6 allowed");
+				}
+				ipv6only = ISC_TRUE;
+				break;
 			}
 			option = &option[1];
 		}
@@ -1561,8 +1578,8 @@ main(int argc, char *argv[]) {
 	struct sigaction sa;
 #endif
 
-	preparse_args(argc, argv);
 	progname = argv[0];
+	preparse_args(argc, argv);
 
 	argc--;
 	argv++;

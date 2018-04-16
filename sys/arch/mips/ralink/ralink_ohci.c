@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_ohci.c,v 1.4 2016/04/23 10:15:30 skrll Exp $	*/
+/*	$NetBSD: ralink_ohci.c,v 1.4.16.1 2018/04/16 01:59:55 pgoyette Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -31,7 +31,7 @@
 #include "ehci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ralink_ohci.c,v 1.4 2016/04/23 10:15:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ralink_ohci.c,v 1.4.16.1 2018/04/16 01:59:55 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -131,10 +131,6 @@ ralink_ohci_attach(device_t parent, device_t self, void *aux)
 			RA_IRQ_USB);
 		goto fail_0;
 	}
-
-	/* Set vendor for root hub descriptor. */
-	sc->sc_ohci.sc_id_vendor = 0x1814;
-	strlcpy(sc->sc_ohci.sc_vendor, "Ralink", sizeof(sc->sc_ohci.sc_vendor));
 
 	/* Initialize OHCI */
 	error = ohci_init(&sc->sc_ohci);

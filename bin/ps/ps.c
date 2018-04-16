@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.c,v 1.89 2018/01/12 23:01:14 kamil Exp $	*/
+/*	$NetBSD: ps.c,v 1.89.2.1 2018/04/16 01:57:31 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2000-2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: ps.c,v 1.89 2018/01/12 23:01:14 kamil Exp $");
+__RCSID("$NetBSD: ps.c,v 1.89.2.1 2018/04/16 01:57:31 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -189,10 +189,10 @@ ttyname2dev(const char *ttname, int *xflg, int *what)
 				return makedev(pts, ptsminor);
 		}
 		errno = serrno;
-		err(1, "%s", ttypath);
+		err(EXIT_FAILURE, "%s", ttypath);
 	}
 	if (!S_ISCHR(sb.st_mode))
-		errx(1, "%s: not a terminal", ttypath);
+		errx(EXIT_FAILURE, "%s: not a terminal", ttypath);
 	return sb.st_rdev;
 }
 
@@ -325,7 +325,7 @@ main(int argc, char *argv[])
 			break;
 		case 'T':
 			if ((ttname = ttyname(STDIN_FILENO)) == NULL)
-				errx(1, "stdin: not a terminal");
+				errx(EXIT_FAILURE, "stdin: not a terminal");
 			flag = ttyname2dev(ttname, &xflg, &what);
 			break;
 		case 't':
@@ -394,7 +394,7 @@ main(int argc, char *argv[])
 		kd = kvm_openfiles(nlistf, memf, swapf, O_RDONLY, errbuf);
 
 	if (kd == NULL)
-		errx(1, "%s", errbuf);
+		errx(EXIT_FAILURE, "%s", errbuf);
 
 	if (!fmt)
 		parsefmt(default_fmt);
@@ -425,7 +425,7 @@ main(int argc, char *argv[])
 	 * select procs
 	 */
 	if (!(kinfo = getkinfo_kvm(kd, what, flag, &nentries)))
-		err(1, "%s", kvm_geterr(kd));
+		errx(EXIT_FAILURE, "%s", kvm_geterr(kd));
 	if (nentries == 0) {
 		printheader();
 		return 1;
@@ -602,7 +602,7 @@ setpinfo(struct kinfo_proc2 *ki, int nentries, int calc_pcpu, int rawcpu)
 
 	pi = calloc(nentries, sizeof(*pi));
 	if (pi == NULL)
-		err(1, "calloc");
+		err(EXIT_FAILURE, "calloc");
 
 	if (calc_pcpu && !nlistread)
 		donlist();
@@ -763,7 +763,7 @@ kludge_oldps_options(char *s)
 
 	len = strlen(s);
 	if ((newopts = ns = malloc(len + 3)) == NULL)
-		err(1, NULL);
+		err(EXIT_FAILURE, NULL);
 	/*
 	 * options begin with '-'
 	 */
@@ -815,10 +815,10 @@ parsenum(const char *str, const char *msg)
 	ul = strtoul(str, &ep, 0);
 
 	if (*str == '\0' || *ep != '\0')
-		errx(1, "Invalid %s: `%s'", msg, str);
+		errx(EXIT_FAILURE, "Invalid %s: `%s'", msg, str);
 
 	if (ul > INT_MAX)
-		errx(1, "Out of range %s: `%s'", msg, str);
+		errx(EXIT_FAILURE, "Out of range %s: `%s'", msg, str);
 
 	return (int)ul;
 }
@@ -904,7 +904,7 @@ descendant_sort(struct pinfo *ki, int items)
 			continue;
 		}
 		if ((ki[src].prefix = malloc(lvl * 2 + 1)) == NULL)
-			errx(1, "malloc failed");
+			errx(EXIT_FAILURE, "malloc failed");
 		for (n = 0; n < lvl - 2; n++) {
 			ki[src].prefix[n * 2] =
 			    path[n / 8] & 1 << (n % 8) ? '|' : ' ';

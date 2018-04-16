@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.158 2017/11/06 17:56:25 christos Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.158.2.1 2018/04/16 02:00:09 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -910,7 +910,7 @@ typedef struct {
 #define ELF_NOTE_GO_BUILDID_DESCSZ	40
 #define ELF_NOTE_GO_BUILDID_NAME	"Go\0\0"
 
-/* NetBSD-specific note type: Emulation name.
+/* NetBSD-specific note type: NetBSD ABI version.
  * name: NetBSD\0\0
  * namesz: 8
  * desc: 
@@ -929,19 +929,19 @@ typedef struct {
 /* NetBSD-specific note name */
 #define ELF_NOTE_NETBSD_NAME		"NetBSD\0\0"
 
-/* NetBSD-specific note type: Checksum. 
- * There should be 1 NOTE per PT_LOAD section.
- * name: ???
- * namesz: ???
+/* NetBSD-specific note type: Emulation (obsolete; last used early 2000)
+ * name: NetBSD\0\0
+ * namesz: 8
  * desc:
- *	a tuple of <phnum>(16),<chk-type>(16),<chk-value>.
- * descsz: ???
+ *	"netbsd\0"
+ *	
+ * descsz: 8
  */
-#define ELF_NOTE_TYPE_CHECKSUM_TAG	2
-#define ELF_NOTE_CHECKSUM_CRC32		1
-#define ELF_NOTE_CHECKSUM_MD5		2
-#define ELF_NOTE_CHECKSUM_SHA1		3
-#define ELF_NOTE_CHECKSUM_SHA256	4
+#define ELF_NOTE_TYPE_NETBSD_EMUL_TAG	2
+#define ELF_NOTE_NETBSD_EMUL_NAMESZ	7
+#define ELF_NOTE_NETBSD_EMUL_DESCSZ	7
+/* NetBSD-specific note name */
+#define ELF_NOTE_NETBSD_EMUL_NAME	"NetBSD\0\0"
 
 /*
  * NetBSD-specific note type: PaX.

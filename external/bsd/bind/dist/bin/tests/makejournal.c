@@ -1,7 +1,7 @@
-/*	$NetBSD: makejournal.c,v 1.4 2015/12/17 04:00:42 christos Exp $	*/
+/*	$NetBSD: makejournal.c,v 1.4.14.1 2018/04/16 01:57:38 pgoyette Exp $	*/
 
 /*
- * Copyright (C) 2013, 2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2013, 2015, 2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -90,7 +90,7 @@ int
 main(int argc, char **argv) {
 	isc_result_t result;
 	char *origin, *file1, *file2, *journal;
-	dns_db_t *old = NULL, *new = NULL;
+	dns_db_t *olddb = NULL, *newdb = NULL;
 	isc_logdestination_t destination;
 	isc_logconfig_t *logconfig = NULL;
 
@@ -131,28 +131,28 @@ main(int argc, char **argv) {
 
 	dns_result_register();
 
-	result = loadzone(&old, origin, file1);
+	result = loadzone(&olddb, origin, file1);
 	if (result != ISC_R_SUCCESS) {
 		fprintf(stderr, "Couldn't load %s: ", file1);
 		goto cleanup;
 	}
 
-	result = loadzone(&new, origin, file2);
+	result = loadzone(&newdb, origin, file2);
 	if (result != ISC_R_SUCCESS) {
 		fprintf(stderr, "Couldn't load %s: ", file2);
 		goto cleanup;
 	}
 
-	result = dns_db_diff(mctx, new, NULL, old, NULL, journal);
+	result = dns_db_diff(mctx, newdb, NULL, olddb, NULL, journal);
 
   cleanup:
 	if (result != ISC_R_SUCCESS)
 		fprintf(stderr, "%s\n", isc_result_totext(result));
 
-	if (new != NULL)
-		dns_db_detach(&new);
-	if (old != NULL)
-		dns_db_detach(&old);
+	if (newdb != NULL)
+		dns_db_detach(&newdb);
+	if (olddb != NULL)
+		dns_db_detach(&olddb);
 
 	if (lctx != NULL)
 		isc_log_destroy(&lctx);

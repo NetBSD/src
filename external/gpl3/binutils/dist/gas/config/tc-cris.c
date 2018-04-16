@@ -1,5 +1,5 @@
 /* tc-cris.c -- Assembler code for the CRIS CPU core.
-   Copyright (C) 2000-2016 Free Software Foundation, Inc.
+   Copyright (C) 2000-2018 Free Software Foundation, Inc.
 
    Contributed by Axis Communications AB, Lund, Sweden.
    Originally written for GAS 1.38.1 by Mikael Asker.
@@ -81,7 +81,7 @@ struct cris_prefix
   expressionS expr;
 
   /* If there's an expression, we might need a relocation.  Here's the
-     type of what relocation to start relaxaton with.
+     type of what relocation to start relaxation with.
      The relocation is assumed to start immediately after the prefix insn,
      so we don't provide an offset.  */
   enum bfd_reloc_code_real reloc;

@@ -255,4 +255,4 @@ Step 10: Python package install
   BIND python tools should work with version 2 or 3, 32 or 64 bits.
 
 Please report bugs, whether in the process of building the application
-or in BIND 9 itself, to bind9-bugs@isc.org.
+or in BIND 9 itself, at https://gitlab.isc.org/isc-projects/bind9.

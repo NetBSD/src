@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.122.2.1 2018/04/07 04:12:19 pgoyette Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.122.2.2 2018/04/16 02:00:08 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -67,17 +67,12 @@ struct ipflow {
 };
 
 /*
- * IP sequence queue structure.
+ * TCP sequence queue structure.
  */
 TAILQ_HEAD(ipqehead, ipqent);
 struct ipqent {
 	TAILQ_ENTRY(ipqent) ipqe_q;
-	struct mbuf	*ipqe_m;	/* point to first mbuf */
-	struct mbuf	*ipre_mlast;	/* point to last mbuf */
-	u_int8_t	ipqe_mff;	/* for IP fragmentation */
-	/*
-	 * The following are used in TCP reassembly
-	 */
+	struct mbuf *ipqe_m;
 	TAILQ_ENTRY(ipqent) ipqe_timeq;
 	u_int32_t ipqe_seq;
 	u_int32_t ipqe_len;

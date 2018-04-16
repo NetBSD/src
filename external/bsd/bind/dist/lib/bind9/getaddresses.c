@@ -1,7 +1,7 @@
-/*	$NetBSD: getaddresses.c,v 1.6 2015/07/08 17:28:58 christos Exp $	*/
+/*	$NetBSD: getaddresses.c,v 1.6.14.1 2018/04/16 01:57:55 pgoyette Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2014, 2015, 2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001, 2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,8 +17,6 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: getaddresses.c,v 1.22 2007/06/19 23:47:16 tbox Exp  */
-
 /*! \file */
 
 #include <config.h>
@@ -30,6 +28,7 @@
 #include <isc/netscope.h>
 #include <isc/result.h>
 #include <isc/sockaddr.h>
+#include <isc/string.h>
 #include <isc/util.h>
 
 #include <bind9/getaddresses.h>
@@ -92,7 +91,7 @@ bind9_getaddresses(const char *hostname, in_port_t port,
 		char tmpbuf[128], *d;
 		isc_uint32_t zone = 0;
 
-		strcpy(tmpbuf, hostname);
+		strlcpy(tmpbuf, hostname, sizeof(tmpbuf));
 		d = strchr(tmpbuf, '%');
 		if (d != NULL)
 			*d = '\0';
@@ -165,6 +164,7 @@ bind9_getaddresses(const char *hostname, in_port_t port,
 			goto again;
 		}
 #endif
+		/* FALLTHROUGH */
 	default:
 		return (ISC_R_FAILURE);
 	}

@@ -1,7 +1,7 @@
-/*	$NetBSD: db.h,v 1.10 2017/06/15 15:59:40 christos Exp $	*/
+/*	$NetBSD: db.h,v 1.10.4.1 2018/04/16 01:57:56 pgoyette Exp $	*/
 
 /*
- * Copyright (C) 2004-2009, 2011-2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2011-2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -843,14 +843,6 @@ dns_db_findext(dns_db_t *db, dns_name_t *name, dns_dbversion_t *version,
  *
  *	\li	#ISC_R_SUCCESS			The desired node and type were
  *						found.
- *
- *	\li	#DNS_R_WILDCARD			The desired node and type were
- *						found after performing
- *						wildcard matching.  This is
- *						only returned if the
- *						#DNS_DBFIND_INDICATEWILD
- *						option is set; otherwise
- *						#ISC_R_SUCCESS is returned.
  *
  *	\li	#DNS_R_GLUE			The desired node and type were
  *						found, but are glue.  This

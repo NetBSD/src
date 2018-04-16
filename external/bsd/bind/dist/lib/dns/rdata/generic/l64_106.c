@@ -1,7 +1,7 @@
-/*	$NetBSD: l64_106.c,v 1.1.1.5 2015/12/17 03:22:09 christos Exp $	*/
+/*	$NetBSD: l64_106.c,v 1.1.1.5.14.1 2018/04/16 01:57:57 pgoyette Exp $	*/
 
 /*
- * Copyright (C) 2013-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2013-2015, 2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -66,16 +66,16 @@ totext_l64(ARGS_TOTEXT) {
 	dns_rdata_toregion(rdata, &region);
 	num = uint16_fromregion(&region);
 	isc_region_consume(&region, 2);
-	sprintf(buf, "%u", num);
+	snprintf(buf, sizeof(buf), "%u", num);
 	RETERR(str_totext(buf, target));
 
 	RETERR(str_totext(" ", target));
 
-	sprintf(buf, "%x:%x:%x:%x",
-		region.base[0]<<8 | region.base[1],
-		region.base[2]<<8 | region.base[3],
-		region.base[4]<<8 | region.base[5],
-		region.base[6]<<8 | region.base[7]);
+	snprintf(buf, sizeof(buf), "%x:%x:%x:%x",
+		 region.base[0]<<8 | region.base[1],
+		 region.base[2]<<8 | region.base[3],
+		 region.base[4]<<8 | region.base[5],
+		 region.base[6]<<8 | region.base[7]);
 	return (str_totext(buf, target));
 }
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: thread.h,v 1.6 2014/12/10 04:38:01 christos Exp $	*/
+/*	$NetBSD: thread.h,v 1.6.14.1 2018/04/16 01:58:00 pgoyette Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009, 2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2013, 2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -84,6 +84,9 @@ isc_thread_join(isc_thread_t, isc_threadresult_t *);
 
 void
 isc_thread_setconcurrency(unsigned int level);
+
+void
+isc_thread_setname(isc_thread_t, const char *);
 
 int
 isc_thread_key_create(isc_thread_key_t *key, void (*func)(void *));

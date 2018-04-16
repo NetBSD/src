@@ -1,4 +1,4 @@
-/*      $NetBSD: vfp_init.c,v 1.56 2018/03/02 23:07:55 christos Exp $ */
+/*      $NetBSD: vfp_init.c,v 1.56.2.1 2018/04/16 01:59:53 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2008 ARM Ltd
@@ -408,13 +408,6 @@ vfp_handler(u_int address, u_int insn, trapframe_t *frame, int fault_code)
 		/* No VFP detected, just fault.  */
 		return 1;
 	}
-
-	/*
-	 * If we are just changing/fetching FPSCR, don't bother loading it
-	 * just emulate the instruction.
-	 */
-	if (!vfp_fpscr_handler(address, insn, frame, fault_code))
-		return 0;
 
 	/* 
 	 * If we already own the FPU and it's enabled (and no exception), raise

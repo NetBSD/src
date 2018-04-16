@@ -1,4 +1,4 @@
-/*	$NetBSD: ping6.c,v 1.93 2016/12/18 01:30:54 dholland Exp $	*/
+/*	$NetBSD: ping6.c,v 1.93.12.1 2018/04/16 01:59:51 pgoyette Exp $	*/
 /*	$KAME: ping6.c,v 1.164 2002/11/16 14:05:37 itojun Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping6.c,v 1.93 2016/12/18 01:30:54 dholland Exp $");
+__RCSID("$NetBSD: ping6.c,v 1.93.12.1 2018/04/16 01:59:51 pgoyette Exp $");
 #endif
 #endif
 
@@ -686,7 +686,7 @@ main(int argc, char *argv[])
 	}
 
 	/*
-	 * let the kerel pass extension headers of incoming packets,
+	 * let the kernel pass extension headers of incoming packets,
 	 * for privileged socket options
 	 */
 	if ((options & F_VERBOSE) != 0) {

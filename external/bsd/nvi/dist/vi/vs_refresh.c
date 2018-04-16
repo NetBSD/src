@@ -1,4 +1,4 @@
-/*	$NetBSD: vs_refresh.c,v 1.9 2018/02/04 09:15:45 mrg Exp $ */
+/*	$NetBSD: vs_refresh.c,v 1.9.2.1 2018/04/16 01:58:12 pgoyette Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -16,7 +16,7 @@
 static const char sccsid[] = "Id: vs_refresh.c,v 10.50 2001/06/25 15:19:37 skimo Exp  (Berkeley) Date: 2001/06/25 15:19:37 ";
 #endif /* not lint */
 #else
-__RCSID("$NetBSD: vs_refresh.c,v 1.9 2018/02/04 09:15:45 mrg Exp $");
+__RCSID("$NetBSD: vs_refresh.c,v 1.9.2.1 2018/04/16 01:58:12 pgoyette Exp $");
 #endif
 
 #include <sys/types.h>
@@ -723,7 +723,7 @@ done_cursor:
 #else
 	if (vip->sc_smap == NULL) {
 		if (F_ISSET(sp, SC_SCR_REFORMAT))
-			abort(); /* XXX */
+			abort(); /* XXX infinite recursion */
 		F_SET(sp, SC_SCR_REFORMAT);
 		return (vs_paint(sp, flags));
 	}

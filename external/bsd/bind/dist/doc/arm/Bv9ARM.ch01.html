@@ -1,6 +1,6 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <!--
- - Copyright (C) 2004-2016 Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2004-2018 Internet Systems Consortium, Inc. ("ISC")
  - Copyright (C) 2000-2003 Internet Software Consortium.
  - 
  - Permission to use, copy, modify, and/or distribute this software for any
@@ -280,11 +280,8 @@
           <span class="emphasis"><em>resolver</em></span> library, which sends queries to one or
           more <span class="emphasis"><em>name servers</em></span> and interprets the responses.
           The <acronym class="acronym">BIND</acronym> 9 software distribution
-          contains a
-          name server, <span class="command"><strong>named</strong></span>, and a resolver
-          library, <span class="command"><strong>liblwres</strong></span>.  The older
-          <span class="command"><strong>libbind</strong></span> resolver library is also available
-          from ISC as a separate download.
+          contains a name server, <span class="command"><strong>named</strong></span>, and a
+          resolver library, <span class="command"><strong>liblwres</strong></span>.
         </p>
 
         </div>
@@ -448,14 +445,31 @@
           <p>
             The other authoritative servers, the <span class="emphasis"><em>slave</em></span>
             servers (also known as <span class="emphasis"><em>secondary</em></span> servers)
-            load
-            the zone contents from another server using a replication process
-            known as a <span class="emphasis"><em>zone transfer</em></span>.  Typically the data
-            are
-            transferred directly from the primary master, but it is also
-            possible
-            to transfer it from another slave.  In other words, a slave server
-            may itself act as a master to a subordinate slave server.
+            load the zone contents from another server using a replication
+            process known as a <span class="emphasis"><em>zone transfer</em></span>.
+            Typically the data are transferred directly from the primary
+            master, but it is also possible to transfer it from another
+            slave.  In other words, a slave server may itself act as a
+            master to a subordinate slave server.
+          </p>
+          <p>
+            Periodically, the slave server must send a refresh query to
+            determine whether the zone contents have been updated. This
+            is done by sending a query for the zone's SOA record and
+            checking whether the SERIAL field has been updated; if so,
+            a new transfer request is initiated. The timing of these
+            refresh queries is controlled by the SOA REFRESH and RETRY
+            fields, but can be overrridden with the
+            <span class="command"><strong>max-refresh-time</strong></span>,
+            <span class="command"><strong>min-refresh-time</strong></span>,
+            <span class="command"><strong>max-retry-time</strong></span>, and
+            <span class="command"><strong>min-retry-time</strong></span> options.
+          </p>
+          <p>
+            If the zone data cannot be updated within the time specified
+            by the SOA EXPIRE option (up to a hard-coded maximum of
+            24 weeks) then the slave zone expires and will no longer
+            respond to queries.
           </p>
         </div>
 
@@ -611,6 +625,6 @@
 </tr>
 </table>
 </div>
-<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.10.5-P2</p>
+<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.10.7</p>
 </body>
 </html>

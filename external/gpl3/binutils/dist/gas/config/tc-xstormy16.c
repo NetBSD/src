@@ -1,5 +1,5 @@
 /* tc-xstormy16.c -- Assembler for the Sanyo XSTORMY16.
-   Copyright (C) 2000-2016 Free Software Foundation, Inc.
+   Copyright (C) 2000-2018 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -382,6 +382,7 @@ md_cgen_lookup_reloc (const CGEN_INSN *    insn ATTRIBUTE_UNUSED,
 
     case XSTORMY16_OPERAND_REL8_4:
       fixP->fx_addnumber -= 2;
+      /* Fall through.  */
     case XSTORMY16_OPERAND_REL8_2:
       fixP->fx_addnumber -= 2;
       fixP->fx_pcrel = 1;
@@ -389,7 +390,7 @@ md_cgen_lookup_reloc (const CGEN_INSN *    insn ATTRIBUTE_UNUSED,
 
     case XSTORMY16_OPERAND_REL12:
       fixP->fx_where += 2;
-      /* Fall through...  */
+      /* Fall through.  */
     case XSTORMY16_OPERAND_REL12A:
       fixP->fx_addnumber -= 2;
       fixP->fx_pcrel = 1;

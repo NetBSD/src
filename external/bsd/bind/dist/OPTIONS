@@ -1,0 +1,30 @@
+Setting the STD_CDEFINES environment variable before running configure can
+be used to enable certain compile-time options that are not explicitly
+defined in configure.
+
+Some of these settings are:
+
+Setting                   Description
+                          Don't ovewrite memory when allocating or freeing
+-DISC_MEM_FILL=0          it; this improves performance but makes
+                          debugging more difficult.
+                          Don't track memory allocations by file and line
+-DISC_MEM_TRACKLINES=0    number; this improves performance but makes
+                          debugging more difficult.
+-DISC_FACILITY=LOG_LOCAL0 Change the default syslog facility for named
+-DNS_CLIENT_DROPPORT=0    Disable dropping queries from particular
+                          well-known ports:
+-DCHECK_SIBLING=0         Don't check sibling glue in named-checkzone
+-DCHECK_LOCAL=0           Don't check out-of-zone addresses in
+                          named-checkzone
+-DNS_RUN_PID_DIR=0        Create default PID files in ${localstatedir}/run
+                          rather than ${localstatedir}/run/{named,lwresd}/
+                          Enable DNSSEC signature chasing support in dig.
+-DDIG_SIGCHASE=1          (Note: This feature is deprecated. Use delv
+                          instead.)
+                          Increase the maximum number of configurable
+-DNS_RPZ_MAX_ZONES=64     response policy zones from 32 to 64; this is the
+                          highest possible setting
+-DISC_HEAP_CHECK          Test heap consistency after every heap
+                          operation; used when debugging
+

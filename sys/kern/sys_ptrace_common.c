@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace_common.c,v 1.35 2018/03/05 11:24:34 kamil Exp $	*/
+/*	$NetBSD: sys_ptrace_common.c,v 1.35.2.1 2018/04/16 02:00:08 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.35 2018/03/05 11:24:34 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.35.2.1 2018/04/16 02:00:08 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -218,6 +218,9 @@ ptrace_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 {
 	struct proc *p;
 	int result;
+#ifdef PT_SETDBREGS
+	extern int user_set_dbregs;
+#endif
 
 	result = KAUTH_RESULT_DEFER;
 	p = arg0;
@@ -231,6 +234,13 @@ ptrace_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 		goto out;
 
 	switch ((u_long)arg1) {
+#ifdef PT_SETDBREGS
+	case_PT_SETDBREGS
+		if (kauth_cred_getuid(cred) != 0 && user_set_dbregs == 0) {
+			result = KAUTH_RESULT_DENY;
+			break;
+		}
+#endif
 	case PT_TRACE_ME:
 	case PT_ATTACH:
 	case PT_WRITE_I:
@@ -243,7 +253,6 @@ ptrace_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 	case_PT_GETFPREGS
 	case_PT_SETFPREGS
 	case_PT_GETDBREGS
-	case_PT_SETDBREGS
 	case PT_SET_EVENT_MASK:
 	case PT_GET_EVENT_MASK:
 	case PT_GET_PROCESS_STATE:

@@ -1,4 +1,4 @@
-/*	$NetBSD: servconf.c,v 1.25.2.1 2018/04/07 04:11:48 pgoyette Exp $	*/
+/*	$NetBSD: servconf.c,v 1.25.2.2 2018/04/16 01:57:31 pgoyette Exp $	*/
 
 /* $OpenBSD: servconf.c,v 1.326 2018/03/01 20:32:16 markus Exp $ */
 /*
@@ -13,7 +13,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: servconf.c,v 1.25.2.1 2018/04/07 04:11:48 pgoyette Exp $");
+__RCSID("$NetBSD: servconf.c,v 1.25.2.2 2018/04/16 01:57:31 pgoyette Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/queue.h>
@@ -1053,7 +1053,7 @@ out:
 	return result;
 }
 
-static void
+__dead static void
 match_test_missing_fatal(const char *criteria, const char *attrib)
 {
 	fatal("'Match %s' in configuration but '%s' not in connection "

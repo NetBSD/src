@@ -1,10 +1,87 @@
 -*- text -*-
 
+Changes in 2.30:
+
+* Add -z separate-code to generate separate code PT_LOAD segment.
+
+* Add "-z undefs" command line option as the inverse of the "-z defs" option.
+
+* Add -z globalaudit command line option to force audit libraries to be run
+  for every dynamic object loaded by an executable - provided that the loader
+  supports this functionality.
+
+* Tighten linker script grammar around file name specifiers to prevent the use
+  of SORT_BY_ALIGNMENT and SORT_BY_INIT_PRIORITY on filenames.  These would
+  previously be accepted but had no effect.
+
+* The EXCLUDE_FILE directive can now be placed within any SORT_* directive
+  within input section lists.
+
+Changes in 2.29:
+
+* Support for -z shstk in the x86 ELF linker to generate
+  GNU_PROPERTY_X86_FEATURE_1_SHSTK in ELF GNU program properties.
+
+* Add support for GNU_PROPERTY_X86_FEATURE_1_SHSTK in ELF GNU program
+  properties in the x86 ELF linker.
+
+* Add support for GNU_PROPERTY_X86_FEATURE_1_IBT in ELF GNU program
+  properties in the x86 ELF linker.
+
+* Support for -z ibtplt in the x86 ELF linker to generate IBT-enabled
+  PLT.
+
+* Support for -z ibt in the x86 ELF linker to generate IBT-enabled
+  PLT as well as GNU_PROPERTY_X86_FEATURE_1_IBT in ELF GNU program
+  properties.
+
+* Add support for ELF SHF_GNU_MBIND and PT_GNU_MBIND_XXX.
+
+* Add support for ELF GNU program properties.
+
+* Add support for the Texas Instruments PRU processor.
+
+* When configuring for arc*-*-linux* targets the default linker emulation will
+  change if --with-cpu=nps400 is used at configure time.
+
+* Improve assignment of LMAs to orphan sections in some edge cases where a
+  mixture of both AT>LMA_REGION and AT(LMA) are used.
+
+* Orphan sections placed after an empty section that has an AT(LMA) will now
+  take an load memory address starting from LMA.
+
+* Section groups can now be resolved (the group deleted and the group members
+  placed like normal sections) at partial link time either using the new linker
+  option --force-group-allocation or by placing FORCE_GROUP_ALLOCATION into the
+  linker script.
+
+Changes in 2.28:
+
+* The EXCLUDE_FILE linker script construct can now be applied outside of the
+  section list in order for the exclusions to apply over all input sections in
+  the list.
+
+* Add support for the RISC-V architecture.
+
+* The command line option --no-eh-frame-hdr can now be used in ELF based
+  linkers to disable the automatic generation of .eh_frame_hdr sections.
+
+* Add --in-implib=<infile> to the ARM linker to enable specifying a set of
+  Secure Gateway veneers that must exist in the output import library specified
+  by --out-implib=<outfile> and the address they must have.  As such,
+  --in-implib is only supported in combination with --cmse-implib.
+
+* Extended the --out-implib=<file> option, previously restricted to x86 PE
+  targets, to any ELF based target.  This allows the generation of an import
+  library for an ELF executable, which can then be used by another application
+  to link against the executable.
+
 Changes in 2.27:
 
 * Add a configure option --enable-relro to decide whether -z relro should
   be enabled in ELF linker by default.  Default to yes for all Linux
-  targets except FRV, HPPA, IA64 and MIPS.
+  targets except FRV, HPPA, IA64 and MIPS.  Note that -z relro can increase
+  disk and memory size.
 
 * Support for -z noreloc-overflow in the x86-64 ELF linker to disable
   relocation overflow check.
@@ -642,7 +719,7 @@ Changes in version 2.1:
   other utilities should work on Risc/Ultrix and Irix.
 
 
-Copyright (C) 2012-2016 Free Software Foundation, Inc.
+Copyright (C) 2012-2018 Free Software Foundation, Inc.
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright

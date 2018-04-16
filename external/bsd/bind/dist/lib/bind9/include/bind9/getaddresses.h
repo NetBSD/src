@@ -1,7 +1,7 @@
-/*	$NetBSD: getaddresses.h,v 1.4 2014/12/10 04:37:57 christos Exp $	*/
+/*	$NetBSD: getaddresses.h,v 1.4.14.1 2018/04/16 01:57:55 pgoyette Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009, 2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -54,7 +54,7 @@ bind9_getaddresses(const char *hostname, in_port_t port,
  * Returns:
  *\li	#ISC_R_SUCCESS
  *\li	#ISC_R_NOTFOUND
- *\li	#ISC_R_NOFAMILYSUPPORT - 'hostname' is an IPv6 address, and IPv6 is
+ *\li	#ISC_R_FAMILYNOSUPPORT - 'hostname' is an IPv6 address, and IPv6 is
  *		not supported.
  */
 

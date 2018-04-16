@@ -1,7 +1,7 @@
-/*	$NetBSD: order.h,v 1.4 2014/12/10 04:37:58 christos Exp $	*/
+/*	$NetBSD: order.h,v 1.4.14.1 2018/04/16 01:57:56 pgoyette Exp $	*/
 
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -55,8 +55,8 @@ dns_order_add(dns_order_t *order, dns_name_t *name,
  * Requires:
  * \li	'order' to be valid.
  *\li	'name' to be valid.
- *\li	'mode' to be one of #DNS_RDATASERATTR_RANDOMIZE,
- *		#DNS_RDATASERATTR_RANDOMIZE or zero (#DNS_RDATASERATTR_CYCLIC).
+ *\li	'mode' to be one of #DNS_RDATASETATTR_RANDOMIZE,
+ *		#DNS_RDATASETATTR_FIXEDORDER or zero (#DNS_RDATASETATTR_CYCLIC).
  *
  * Returns:
  *\li	#ISC_R_SUCCESS

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.23.2.2 2018/04/12 22:33:41 pgoyette Exp $
+#	$NetBSD: Makefile.inc,v 1.23.2.3 2018/04/16 01:59:56 pgoyette Exp $
 #
 #	Configuration variables (default values are below):
 #

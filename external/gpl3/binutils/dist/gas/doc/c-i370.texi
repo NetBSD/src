@@ -1,4 +1,4 @@
-@c Copyright (C) 2000-2016 Free Software Foundation, Inc.
+@c Copyright (C) 2000-2018 Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
 @ifset GENERIC
@@ -66,7 +66,7 @@ write code.
 Since @samp{$} has no special meaning, you may use it in symbol names.
 
 Registers can be given the symbolic names r0..r15, fp0, fp2, fp4, fp6.
-By using thesse symbolic names, @code{@value{AS}} can detect simple
+By using these symbolic names, @code{@value{AS}} can detect simple
 syntax errors. The name rarg or r.arg is a synonym for r11, rtca or r.tca
 for r12, sp, r.sp, dsa r.dsa for r13, lr or r.lr for r14, rbase or r.base
 for r3 and rpgt or r.pgt for r4.

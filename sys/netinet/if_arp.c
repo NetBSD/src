@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.268.2.1 2018/03/15 09:12:06 pgoyette Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.268.2.2 2018/04/16 02:00:08 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.268.2.1 2018/03/15 09:12:06 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.268.2.2 2018/04/16 02:00:08 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -163,9 +163,9 @@ static struct sockaddr *arp_setgate(struct rtentry *, struct sockaddr *,
     const struct sockaddr *);
 static void arptimer(void *);
 static void arp_settimer(struct llentry *, int);
-static struct llentry *arplookup(struct ifnet *, struct mbuf *,
+static struct llentry *arplookup(struct ifnet *,
     const struct in_addr *, const struct sockaddr *, int);
-static struct llentry *arpcreate(struct ifnet *, struct mbuf *,
+static struct llentry *arpcreate(struct ifnet *,
     const struct in_addr *, const struct sockaddr *, int);
 static void in_arpinput(struct mbuf *);
 static void in_revarpinput(struct mbuf *);
@@ -733,7 +733,7 @@ arpresolve(struct ifnet *ifp, const struct rtentry *rt, struct mbuf *m,
 
 	KASSERT(m != NULL);
 
-	la = arplookup(ifp, m, NULL, dst, 0);
+	la = arplookup(ifp, NULL, dst, 0);
 	if (la == NULL)
 		goto notfound;
 
@@ -1193,9 +1193,9 @@ in_arpinput(struct mbuf *m)
 		goto reply;
 
 	if (in_hosteq(itaddr, myaddr))
-		la = arpcreate(ifp, m, &isaddr, NULL, 1);
+		la = arpcreate(ifp, &isaddr, NULL, 1);
 	else
-		la = arplookup(ifp, m, &isaddr, NULL, 1);
+		la = arplookup(ifp, &isaddr, NULL, 1);
 	if (la == NULL)
 		goto reply;
 
@@ -1358,6 +1358,15 @@ reply:
 	}
 	ia4_release(ia, &psref_ia);
 
+	/*
+	 * XXX XXX: Here we're recycling the mbuf. But the mbuf could have
+	 * other mbufs in its chain, and just overwriting m->m_pkthdr.len
+	 * would be wrong in this case (the length becomes smaller than the
+	 * real chain size).
+	 *
+	 * This can theoretically cause bugs in the lower layers (drivers,
+	 * and L2encap), in some corner cases.
+	 */
 	memcpy(ar_tpa(ah), ar_spa(ah), ah->ar_pln);
 	memcpy(ar_spa(ah), &itaddr, ah->ar_pln);
 	ah->ar_op = htons(ARPOP_REPLY);
@@ -1400,13 +1409,12 @@ out:
  * Lookup or a new address in arptab.
  */
 static struct llentry *
-arplookup(struct ifnet *ifp, struct mbuf *m, const struct in_addr *addr,
+arplookup(struct ifnet *ifp, const struct in_addr *addr,
     const struct sockaddr *sa, int wlock)
 {
 	struct sockaddr_in sin;
 	struct llentry *la;
 	int flags = wlock ? LLE_EXCLUSIVE : 0;
-
 
 	if (sa == NULL) {
 		KASSERT(addr != NULL);
@@ -1422,7 +1430,7 @@ arplookup(struct ifnet *ifp, struct mbuf *m, const struct in_addr *addr,
 }
 
 static struct llentry *
-arpcreate(struct ifnet *ifp, struct mbuf *m, const struct in_addr *addr,
+arpcreate(struct ifnet *ifp, const struct in_addr *addr,
     const struct sockaddr *sa, int wlock)
 {
 	struct sockaddr_in sin;
@@ -1435,7 +1443,7 @@ arpcreate(struct ifnet *ifp, struct mbuf *m, const struct in_addr *addr,
 		sa = sintocsa(&sin);
 	}
 
-	la = arplookup(ifp, m, addr, sa, wlock);
+	la = arplookup(ifp, addr, sa, wlock);
 
 	if (la == NULL) {
 		struct rtentry *rt;

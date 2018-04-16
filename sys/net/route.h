@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.117 2018/01/09 19:52:29 christos Exp $	*/
+/*	$NetBSD: route.h,v 1.117.2.1 2018/04/16 02:00:08 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -413,6 +413,7 @@ void	rt_timer_queue_destroy(struct rttimer_queue *);
 void	rt_free(struct rtentry *);
 void	rt_unref(struct rtentry *);
 
+int	rt_update(struct rtentry *, struct rt_addrinfo *, void *);
 int	rt_update_prepare(struct rtentry *);
 void	rt_update_finish(struct rtentry *);
 
@@ -434,10 +435,6 @@ int	rt_ifa_addlocal(struct ifaddr *);
 int	rt_ifa_remlocal(struct ifaddr *, struct ifaddr *);
 struct ifaddr *
 	rt_get_ifa(struct rtentry *);
-struct ifaddr *
-	rt_getifa(struct rt_addrinfo *, struct psref *);
-struct ifnet *
-	rt_getifp(struct rt_addrinfo *, struct psref *);
 void	rt_replace_ifa(struct rtentry *, struct ifaddr *);
 int	rt_setgate(struct rtentry *, const struct sockaddr *);
 
@@ -519,6 +516,8 @@ void	route_enqueue(struct mbuf *, int);
 struct llentry;
 void	rt_clonedmsg(const struct sockaddr *, const struct ifnet *,
 	    const struct rtentry *);
+
+void	rt_setmetrics(void *, struct rtentry *);
 
 /* rtbl */
 int	rt_addaddr(rtbl_t *, struct rtentry *, const struct sockaddr *);

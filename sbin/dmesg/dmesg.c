@@ -1,4 +1,4 @@
-/*	$NetBSD: dmesg.c,v 1.27.40.1 2018/04/07 04:12:09 pgoyette Exp $	*/
+/*	$NetBSD: dmesg.c,v 1.27.40.2 2018/04/16 01:59:51 pgoyette Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,7 +38,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)dmesg.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: dmesg.c,v 1.27.40.1 2018/04/07 04:12:09 pgoyette Exp $");
+__RCSID("$NetBSD: dmesg.c,v 1.27.40.2 2018/04/16 01:59:51 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -82,31 +82,41 @@ main(int argc, char *argv[])
 	char tbuf[64];
 	char *memf, *nlistf;
 	struct timeval boottime;
-	int ptime = 0;
+	struct timespec lasttime;
+	intmax_t sec;
+	long nsec, fsec;
+	int scale;
+	int deltas, quiet, humantime;
+	bool frac;
 	
 	static const int bmib[] = { CTL_KERN, KERN_BOOTTIME };
 	size = sizeof(boottime);
 
 	boottime.tv_sec = 0;
 	boottime.tv_usec = 0;
-	ptime = 0;
+	lasttime.tv_sec = 0;
+	lasttime.tv_nsec = 0;
+	deltas = quiet = humantime = 0;
 
         (void)sysctl(bmib, 2, &boottime, &size, NULL, 0);
 
 	memf = nlistf = NULL;
-	while ((ch = getopt(argc, argv, "M:N:qt")) != -1)
+	while ((ch = getopt(argc, argv, "dM:N:tT")) != -1)
 		switch(ch) {
+		case 'd':
+			deltas = 1;
+			break;
 		case 'M':
 			memf = optarg;
 			break;
 		case 'N':
 			nlistf = optarg;
 			break;
-		case 'q':
-			ptime = -1;
-			break;
 		case 't':
-			ptime = 1;
+			quiet = 1;
+			break;
+		case 'T':
+			humantime = 1;
 			break;
 		case '?':
 		default:
@@ -114,6 +124,8 @@ main(int argc, char *argv[])
 		}
 	argc -= optind;
 	argv += optind;
+	if (quiet && humantime)
+		err(EXIT_FAILURE, "-t cannot be used with -T");
 
 	if (memf == NULL) {
 #endif
@@ -173,16 +185,23 @@ main(int argc, char *argv[])
 	 * over cur.msg_bufs times.  Unused area is skipped since it
 	 * contains nul.
 	 */
+#ifndef SMALL
+	frac = false;
+	scale = 0;
+#endif
 	for (tstamp = 0, newl = 1, log = i = 0, p = bufdata + cur.msg_bufx;
 	    i < cur.msg_bufs; i++, p++) {
+
 #ifndef SMALL
 		if (p == bufdata + cur.msg_bufs)
 			p = bufdata;
 #define ADDC(c)				\
-    do 					\
+    do {				\
 	if (tstamp < sizeof(tbuf) - 1)	\
 		tbuf[tstamp++] = (c);	\
-    while (/*CONSTCOND*/0)
+	if (frac)			\
+		scale++;		\
+    } while (/*CONSTCOND*/0)
 #else
 #define ADDC(c)
 #endif
@@ -192,8 +211,16 @@ main(int argc, char *argv[])
 		/* Skip "\n<.*>" syslog sequences. */
 		/* Gather timestamp sequences */
 		if (newl) {
+#ifndef SMALL
+			int j;
+#endif
+
 			switch (ch) {
 			case '[':
+#ifndef SMALL
+				frac = false;
+				scale = 0;
+#endif
 				ADDC(ch);
 				continue;
 			case '<':
@@ -203,27 +230,66 @@ main(int argc, char *argv[])
 				log = 0;
 				continue;
 			case ']':
+#ifndef SMALL
+				frac = false;
+#endif
 				ADDC(ch);
 				ADDC('\0');
 				tstamp = 0;
 #ifndef SMALL
-				if (ptime == 1) {
-					intmax_t sec;
+				sec = fsec = 0;
+				switch (sscanf(tbuf, "[%jd.%ld]", &sec, &fsec)){
+				case EOF:
+				case 0:
+					/*???*/
+					continue;
+				case 1:
+					fsec = 0;
+					break;
+				case 2:
+					break;
+				default:
+					/* Help */
+					continue;
+				}
+
+				for (nsec = fsec, j = 9 - scale; --j >= 0; )
+					nsec *= 10;
+				if (!quiet || deltas)
+					printf("[");
+				if (humantime) {
 					time_t t;
-					long nsec;
 					struct tm tm;
 
-					sscanf(tbuf, "[%jd.%ld]", &sec, &nsec);
 					t = boottime.tv_sec + sec;
 					if (localtime_r(&t, &tm) != NULL) {
 						strftime(tbuf, sizeof(tbuf),
-						    "[%a %b %e %H:%M:%S %Z %Y]",
+						    "%a %b %e %H:%M:%S %Z %Y",
 						     &tm);
-						printf("%s ", tbuf);
+						printf("%s", tbuf);
 					}
-					continue;
-				} else if (ptime != -1)
-					printf("%s ", tbuf);
+				} else if (!quiet) {
+					if (scale > 6)
+						printf("% 5jd.%6.6ld",
+						    sec, (nsec + 499) / 1000);
+					else
+						printf("% 5jd.%*.*ld%.*s",
+						    sec, scale, scale, fsec,
+						    6 - scale, "000000");
+				}
+				if (deltas) {
+					struct timespec nt = { sec, nsec };
+					struct timespec dt;
+
+					timespecsub(&nt, &lasttime, &dt);
+					if (humantime || !quiet)
+						printf(" ");
+					printf("<% 4jd.%06ld>", (intmax_t)
+					    dt.tv_sec, (dt.tv_nsec+499) / 1000);
+					lasttime = nt;
+				}
+				if (!quiet || deltas)
+					printf("] ");
 #endif
 				continue;
 			case ' ':
@@ -233,6 +299,10 @@ main(int argc, char *argv[])
 			default:
 				if (tstamp) {
 				    ADDC(ch);
+#ifndef SMALL
+				    if (ch == '.')
+					frac = true;
+#endif
 				    continue;
 				}
 				if (log)
@@ -260,7 +330,7 @@ static void
 usage(void)
 {
 
-	(void)fprintf(stderr, "Usage: %s [-qt] [-M core] [-N system]\n",
+	(void)fprintf(stderr, "Usage: %s [-dTt] [-M core] [-N system]\n",
 		getprogname());
 	exit(EXIT_FAILURE);
 }

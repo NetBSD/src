@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.260 2018/02/13 15:21:59 maxv Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.260.2.1 2018/04/16 02:00:08 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.260 2018/02/13 15:21:59 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.260.2.1 2018/04/16 02:00:08 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -142,7 +142,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.260 2018/02/13 15:21:59 maxv Exp 
 #include <netinet6/nd6.h>
 #endif
 
-
 #include "carp.h"
 #if NCARP > 0
 #include <netinet/ip_carp.h>
@@ -170,15 +169,14 @@ static int bigpktppslim = 2;	/* XXX */
 static int bigpktpps_count;
 static kmutex_t bigpktpps_lock __cacheline_aligned;
 
-
 const uint8_t etherbroadcastaddr[ETHER_ADDR_LEN] =
     { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
 const uint8_t ethermulticastaddr_slowprotocols[ETHER_ADDR_LEN] =
     { 0x01, 0x80, 0xc2, 0x00, 0x00, 0x02 };
 #define senderr(e) { error = (e); goto bad;}
 
-static	int ether_output(struct ifnet *, struct mbuf *,
-	    const struct sockaddr *, const struct rtentry *);
+static int ether_output(struct ifnet *, struct mbuf *,
+    const struct sockaddr *, const struct rtentry *);
 
 /*
  * Ethernet output routine.
@@ -238,11 +236,11 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 
 #ifdef INET
 	case AF_INET:
-		if (m->m_flags & M_BCAST)
+		if (m->m_flags & M_BCAST) {
 			memcpy(edst, etherbroadcastaddr, sizeof(edst));
-		else if (m->m_flags & M_MCAST)
+		} else if (m->m_flags & M_MCAST) {
 			ETHER_MAP_IP_MULTICAST(&satocsin(dst)->sin_addr, edst);
-		else {
+		} else {
 			error = arpresolve(ifp, rt, m, dst, edst, sizeof(edst));
 			if (error)
 				return (error == EWOULDBLOCK) ? 0 : error;
@@ -255,9 +253,9 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 
 	case AF_ARP:
 		ah = mtod(m, struct arphdr *);
-		if (m->m_flags & M_BCAST)
+		if (m->m_flags & M_BCAST) {
 			memcpy(edst, etherbroadcastaddr, sizeof(edst));
-		else {
+		} else {
 			void *tha = ar_tha(ah);
 
 			if (tha == NULL) {
@@ -286,16 +284,16 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 
 #ifdef INET6
 	case AF_INET6:
-		if (m->m_flags & M_BCAST)
+		if (m->m_flags & M_BCAST) {
 			memcpy(edst, etherbroadcastaddr, sizeof(edst));
-		else if (m->m_flags & M_MCAST) {
+		} else if (m->m_flags & M_MCAST) {
 			ETHER_MAP_IPV6_MULTICAST(&satocsin6(dst)->sin6_addr,
 			    edst);
 		} else {
 			error = nd6_resolve(ifp, rt, m, dst, edst,
 			    sizeof(edst));
-			if (error != 0)
-				return error == EWOULDBLOCK ? 0 : error;
+			if (error)
+				return (error == EWOULDBLOCK) ? 0 : error;
 		}
 		etype = htons(ETHERTYPE_IPV6);
 		break;
@@ -313,7 +311,7 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 			printf("aarpresolve failed\n");
 #endif
 			KERNEL_UNLOCK_ONE(NULL);
-			return (0);
+			return 0;
 		}
 
 		/*
@@ -376,7 +374,7 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 
 	default:
 		printf("%s: can't handle af%d\n", ifp->if_xname,
-			dst->sa_family);
+		    dst->sa_family);
 		senderr(EAFNOSUPPORT);
 	}
 
@@ -414,11 +412,12 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 	/* Note: etype is already in network byte order. */
 	memcpy(&eh->ether_type, &etype, sizeof(eh->ether_type));
 	memcpy(eh->ether_dhost, edst, sizeof(edst));
-	if (hdrcmplt)
+	if (hdrcmplt) {
 		memcpy(eh->ether_shost, esrc, sizeof(eh->ether_shost));
-	else
+	} else {
 	 	memcpy(eh->ether_shost, CLLADDR(ifp->if_sadl),
 		    sizeof(eh->ether_shost));
+	}
 
 #if NCARP > 0
 	if (ifp0 != ifp && ifp0->if_type == IFT_CARP) {
@@ -428,9 +427,9 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 #endif
 
 	if ((error = pfil_run_hooks(ifp->if_pfil, &m, ifp, PFIL_OUT)) != 0)
-		return (error);
+		return error;
 	if (m == NULL)
-		return (0);
+		return 0;
 
 #if NBRIDGE > 0
 	/*
@@ -462,7 +461,7 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 bad:
 	if (m)
 		m_freem(m);
-	return (error);
+	return error;
 }
 
 #ifdef ALTQ
@@ -470,6 +469,9 @@ bad:
  * This routine is a slight hack to allow a packet to be classified
  * if the Ethernet headers are present.  It will go away when ALTQ's
  * classification engine understands link headers.
+ *
+ * XXX: We may need to do m_pullups here. First to ensure struct ether_header
+ * is indeed contiguous, then to read the LLC and so on.
  */
 void
 altq_etherclassify(struct ifaltq *ifq, struct mbuf *m)
@@ -586,6 +588,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 
 	KASSERT(!cpu_intr_p());
 	KASSERT((m->m_flags & M_PKTHDR) != 0);
+	KASSERT(m->m_len >= sizeof(*eh));
 
 	if ((ifp->if_flags & IFF_UP) == 0) {
 		m_freem(m);
@@ -612,7 +615,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 	    ETHER_MAX_FRAME(ifp, etype, m->m_flags & M_HASFCS)) {
 		mutex_enter(&bigpktpps_lock);
 		if (ppsratecheck(&bigpktppslim_last, &bigpktpps_count,
-			    bigpktppslim)) {
+		    bigpktppslim)) {
 			printf("%s: discarding oversize frame (len=%d)\n",
 			    ifp->if_xname, m->m_pkthdr.len);
 		}
@@ -652,8 +655,8 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 #if NCARP > 0
 	if (__predict_false(ifp->if_carp && ifp->if_type != IFT_CARP)) {
 		/*
-		 * clear M_PROMISC, in case the packets comes from a
-		 * vlan
+		 * Clear M_PROMISC, in case the packet comes from a
+		 * vlan.
 		 */
 		m->m_flags &= ~M_PROMISC;
 		if (carp_input(m, (uint8_t *)&eh->ether_shost,
@@ -665,7 +668,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 	if ((m->m_flags & (M_BCAST | M_MCAST | M_PROMISC)) == 0 &&
 	    (ifp->if_flags & IFF_PROMISC) != 0 &&
 	    memcmp(CLLADDR(ifp->if_sadl), eh->ether_dhost,
-		   ETHER_ADDR_LEN) != 0) {
+	     ETHER_ADDR_LEN) != 0) {
 		m->m_flags |= M_PROMISC;
 	}
 
@@ -756,8 +759,10 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 	case ETHERTYPE_SLOWPROTOCOLS: {
 		uint8_t subtype;
 
-		KASSERTMSG((m->m_pkthdr.len >= sizeof(*eh) + sizeof(subtype)),
-			"too short slow protocol packet");
+		if (m->m_pkthdr.len < sizeof(*eh) + sizeof(subtype)) {
+			m_freem(m);
+			return;
+		}
 
 		m_copydata(m, sizeof(*eh), sizeof(subtype), &subtype);
 		switch (subtype) {
@@ -775,7 +780,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 				return;
 			}
 			break;
-#endif /* NAGR > 0 */
+#endif
 
 		default:
 			if (subtype == 0 || subtype > 10) {
@@ -897,7 +902,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 				    ETHERTYPE_AARP) {
 					m_adj(m, sizeof(struct ether_header)
 					    + sizeof(struct llc));
-					aarpinput(ifp, m); /* XXX */
+					aarpinput(ifp, m); /* XXX queue? */
 					return;
 				}
 
@@ -1191,10 +1196,10 @@ ether_multiaddr(const struct sockaddr *sa, uint8_t addrlo[ETHER_ADDR_LEN],
 {
 #ifdef INET
 	const struct sockaddr_in *sin;
-#endif /* INET */
+#endif
 #ifdef INET6
 	const struct sockaddr_in6 *sin6;
-#endif /* INET6 */
+#endif
 
 	switch (sa->sa_family) {
 

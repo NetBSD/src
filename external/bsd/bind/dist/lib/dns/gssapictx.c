@@ -1,7 +1,7 @@
-/*	$NetBSD: gssapictx.c,v 1.10 2017/06/15 15:59:40 christos Exp $	*/
+/*	$NetBSD: gssapictx.c,v 1.10.4.1 2018/04/16 01:57:55 pgoyette Exp $	*/
 
 /*
- * Copyright (C) 2004-2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -703,10 +703,14 @@ dst_gssapi_acceptctx(gss_cred_id_t cred,
 		 */
 		const char *old = getenv("KRB5_KTNAME");
 		if (old == NULL || strcmp(old, gssapi_keytab) != 0) {
-			char *kt = malloc(strlen(gssapi_keytab) + 13);
+			size_t size;
+			char *kt;
+
+			size = strlen(gssapi_keytab) + 13;
+			kt = malloc(size);
 			if (kt == NULL)
 				return (ISC_R_NOMEMORY);
-			sprintf(kt, "KRB5_KTNAME=%s", gssapi_keytab);
+			snprintf(kt, size, "KRB5_KTNAME=%s", gssapi_keytab);
 			if (putenv(kt) != 0)
 				return (ISC_R_NOMEMORY);
 		}

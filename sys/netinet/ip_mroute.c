@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.154.2.1 2018/03/22 01:44:51 pgoyette Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.154.2.2 2018/04/16 02:00:08 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.154.2.1 2018/03/22 01:44:51 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.154.2.2 2018/04/16 02:00:08 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1279,6 +1279,12 @@ ip_mforward(struct mbuf *m, struct ifnet *ifp)
 		log(LOG_DEBUG, "ip_mforward: src %x, dst %x, ifp %p\n",
 		    ntohl(ip->ip_src.s_addr), ntohl(ip->ip_dst.s_addr), ifp);
 
+	/*
+	 * XXX XXX: Why do we check [1] against IPOPT_LSRR? Because we
+	 * expect [0] to be IPOPT_NOP, maybe? In all cases that doesn't
+	 * make a lot of sense, a forged packet can just put two IPOPT_NOPs
+	 * followed by one IPOPT_LSRR, and bypass the check.
+	 */
 	if (ip->ip_hl < (IP_HDR_LEN + TUNNEL_LEN) >> 2 ||
 	    ((u_char *)(ip + 1))[1] != IPOPT_LSRR) {
 		/*
@@ -2065,6 +2071,11 @@ priority(struct vif *vifp, struct ip *ip)
 	int prio = 50;	/* the lowest priority -- default case */
 
 	/* temporary hack; may add general packet classifier some day */
+
+	/*
+	 * XXX XXX: We're reading the UDP header, but we didn't ensure
+	 * it was present in the packet.
+	 */
 
 	/*
 	 * The UDP port space is divided up into four priority ranges:

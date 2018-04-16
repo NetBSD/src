@@ -1,7 +1,7 @@
-/*	$NetBSD: rwlock_test.c,v 1.7 2014/12/10 04:37:53 christos Exp $	*/
+/*	$NetBSD: rwlock_test.c,v 1.7.14.1 2018/04/16 01:57:38 pgoyette Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2013, 2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -120,7 +120,7 @@ main(int argc, char *argv[]) {
 	RUNTIME_CHECK(isc_rwlock_init(&lock, 5, 10) == ISC_R_SUCCESS);
 
 	for (i = 0; i < nworkers; i++) {
-		sprintf(name, "%02u", i);
+		snprintf(name, sizeof(name), "%02u", i);
 		dupname = strdup(name);
 		RUNTIME_CHECK(dupname != NULL);
 		if (i != 0 && i % 3 == 0)

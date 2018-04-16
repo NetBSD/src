@@ -1,4 +1,4 @@
-# $NetBSD: rc.subr,v 1.100.10.1 2018/04/07 04:11:58 pgoyette Exp $
+# $NetBSD: rc.subr,v 1.100.10.2 2018/04/16 01:57:33 pgoyette Exp $
 #
 # Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -294,10 +294,10 @@ _find_processes()
 	fi
 
 	_proccheck='
-		ps -o "pid,args" '"$_psargs"' |
+		ps -o "pid,args" '"$_psargs"' 2>&1 |
 		while read _npid '"$_fp_args"'; do
 			case "$_npid" in
-			    PID)
+			ps:|PID)
 				continue ;;
 			esac ; '"$_fp_match"'
 				echo -n "$_pref$_npid" ;

@@ -1,7 +1,7 @@
-/*	$NetBSD: compress.h,v 1.4 2014/12/10 04:37:58 christos Exp $	*/
+/*	$NetBSD: compress.h,v 1.4.14.1 2018/04/16 01:57:56 pgoyette Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009, 2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -16,8 +16,6 @@
  * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-
-/* Id: compress.h,v 1.42 2009/01/17 23:47:43 tbox Exp  */
 
 #ifndef DNS_COMPRESS_H
 #define DNS_COMPRESS_H 1
@@ -89,7 +87,6 @@ dns_compress_init(dns_compress_t *cctx, int edns, isc_mem_t *mctx);
  *
  *	Returns:
  *	\li	#ISC_R_SUCCESS
- *	\li	failures from dns_rbt_create()
  */
 
 void

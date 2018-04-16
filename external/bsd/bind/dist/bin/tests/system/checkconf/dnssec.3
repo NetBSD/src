@@ -1,7 +1,7 @@
-.\"	$NetBSD: dnssec.3,v 1.1.1.4 2014/12/10 03:34:28 christos Exp $
+.\"	$NetBSD: dnssec.3,v 1.1.1.4.14.1 2018/04/16 01:57:42 pgoyette Exp $
 .\"
 /*
- * Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2011, 2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,33 +16,31 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dnssec.3,v 1.5 2011/11/07 00:14:11 marka Exp  */
-
 options {
-        dnssec-validation no;
+	dnssec-validation no;
 };
 
 view view1 {
-        match-clients { any; };
-        dnssec-enable no;
+	match-clients { any; };
+	dnssec-enable no;
 };
 
 view view2 {
-        match-clients { none; };
-        dnssec-enable yes;
+	match-clients { none; };
+	dnssec-enable yes;
 };
 
 view view3 {
-        match-clients { none; };
-        dnssec-lookaside auto;
+	match-clients { none; };
+	dnssec-validation auto;
 };
 
 view view4 {
-        match-clients { none; };
-        dnssec-lookaside no;
+	match-clients { none; };
+	dnssec-lookaside no;
 };
 
 view view5 {
-        match-clients { none; };
-        auto-dnssec off;
+	match-clients { none; };
+	auto-dnssec off;
 };

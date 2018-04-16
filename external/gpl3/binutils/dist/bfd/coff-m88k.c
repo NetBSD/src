@@ -1,5 +1,5 @@
 /* BFD back-end for Motorola 88000 COFF "Binary Compatibility Standard" files.
-   Copyright (C) 1990-2016 Free Software Foundation, Inc.
+   Copyright (C) 1990-2018 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -72,9 +72,16 @@ m88k_special_reloc (bfd *abfd,
 	{
 	  bfd_vma output_base = 0;
 	  bfd_vma addr = reloc_entry->address;
-	  bfd_vma x = bfd_get_16 (abfd, (bfd_byte *) data + addr);
+	  bfd_vma x;
 	  asection *reloc_target_output_section;
 	  long relocation = 0;
+
+	  if (! bfd_reloc_offset_in_range (howto, abfd, input_section,
+					   reloc_entry->address
+					   * bfd_octets_per_byte (abfd)))
+	    return bfd_reloc_outofrange;
+
+	  x = bfd_get_16 (abfd, (bfd_byte *) data + addr);
 
 	  /* Work out which section the relocation is targeted at and the
 	     initial relocation command value.  */

@@ -1,7 +1,7 @@
-/*	$NetBSD: dnssec-keygen.c,v 1.18 2017/06/15 15:59:36 christos Exp $	*/
+/*	$NetBSD: dnssec-keygen.c,v 1.18.4.1 2018/04/16 01:57:36 pgoyette Exp $	*/
 
 /*
- * Portions Copyright (C) 2004-2016  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004-2017  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -93,7 +93,8 @@ usage(void) {
 				" | NSEC3DSA |\n");
 	fprintf(stderr, "        RSASHA256 | RSASHA512 | ECCGOST |\n");
 	fprintf(stderr, "        ECDSAP256SHA256 | ECDSAP384SHA384 |\n");
-	fprintf(stderr, "        DH | HMAC-MD5 | HMAC-SHA1 | HMAC-SHA224 | "
+	fprintf(stderr, "        ED25519 | ED448 | DH |\n");
+	fprintf(stderr, "        HMAC-MD5 | HMAC-SHA1 | HMAC-SHA224 | "
 				"HMAC-SHA256 | \n");
 	fprintf(stderr, "        HMAC-SHA384 | HMAC-SHA512\n");
 	fprintf(stderr, "       (default: RSASHA1, or "
@@ -112,6 +113,8 @@ usage(void) {
 	fprintf(stderr, "        ECCGOST:\tignored\n");
 	fprintf(stderr, "        ECDSAP256SHA256:\tignored\n");
 	fprintf(stderr, "        ECDSAP384SHA384:\tignored\n");
+	fprintf(stderr, "        ED25519:\tignored\n");
+	fprintf(stderr, "        ED448:\tignored\n");
 	fprintf(stderr, "        HMAC-MD5:\t[1..512]\n");
 	fprintf(stderr, "        HMAC-SHA1:\t[1..160]\n");
 	fprintf(stderr, "        HMAC-SHA224:\t[1..224]\n");
@@ -245,7 +248,7 @@ main(int argc, char **argv) {
 	dns_ttl_t	ttl = 0;
 	isc_boolean_t	use_default = ISC_FALSE, use_nsec3 = ISC_FALSE;
 	isc_stdtime_t	publish = 0, activate = 0, revokekey = 0;
-	isc_stdtime_t	inactive = 0, delete = 0;
+	isc_stdtime_t	inactive = 0, deltime = 0;
 	isc_stdtime_t	now;
 	int		prepub = -1;
 	isc_boolean_t	setpub = ISC_FALSE, setact = ISC_FALSE;
@@ -448,8 +451,8 @@ main(int argc, char **argv) {
 			if (setdel || unsetdel)
 				fatal("-D specified more than once");
 
-			delete = strtotime(isc_commandline_argument,
-					   now, now, &setdel);
+			deltime = strtotime(isc_commandline_argument,
+					    now, now, &setdel);
 			unsetdel = !setdel;
 			break;
 		case 'S':
@@ -583,7 +586,8 @@ main(int argc, char **argv) {
 		    alg != DST_ALG_NSEC3DSA && alg != DST_ALG_NSEC3RSASHA1 &&
 		    alg != DST_ALG_RSASHA256 && alg!= DST_ALG_RSASHA512 &&
 		    alg != DST_ALG_ECCGOST &&
-		    alg != DST_ALG_ECDSA256 && alg != DST_ALG_ECDSA384) {
+		    alg != DST_ALG_ECDSA256 && alg != DST_ALG_ECDSA384 &&
+		    alg != DST_ALG_ED25519 && alg != DST_ALG_ED448) {
 			fatal("%s is incompatible with NSEC3; "
 			      "do not use the -3 option", algname);
 		}
@@ -617,7 +621,9 @@ main(int argc, char **argv) {
 							" to %d\n", size);
 			} else if (alg != DST_ALG_ECCGOST &&
 				   alg != DST_ALG_ECDSA256 &&
-				   alg != DST_ALG_ECDSA384)
+				   alg != DST_ALG_ECDSA384 &&
+				   alg != DST_ALG_ED25519 &&
+				   alg != DST_ALG_ED448)
 				fatal("key size not specified (-b option)");
 		}
 
@@ -754,6 +760,12 @@ main(int argc, char **argv) {
 	case DST_ALG_ECDSA384:
 		size = 384;
 		break;
+	case DST_ALG_ED25519:
+		size = 256;
+		break;
+	case DST_ALG_ED448:
+		size = 456;
+		break;
 	case DST_ALG_HMACMD5:
 		options |= DST_TYPE_KEY;
 		if (size < 1 || size > 512)
@@ -887,6 +899,8 @@ main(int argc, char **argv) {
 	case DST_ALG_ECCGOST:
 	case DST_ALG_ECDSA256:
 	case DST_ALG_ECDSA384:
+	case DST_ALG_ED25519:
+	case DST_ALG_ED448:
 		show_progress = ISC_TRUE;
 		/* fall through */
 
@@ -988,13 +1002,13 @@ main(int argc, char **argv) {
 						inactive);
 
 			if (setdel) {
-				if (setinact && delete < inactive)
+				if (setinact && deltime < inactive)
 					fprintf(stderr, "%s: warning: Key is "
 						"scheduled to be deleted "
 						"before it is scheduled to be "
 						"made inactive.\n",
 						program);
-				dst_key_settime(key, DST_TIME_DELETE, delete);
+				dst_key_settime(key, DST_TIME_DELETE, deltime);
 			}
 		} else {
 			if (setpub || setact || setrev || setinact ||

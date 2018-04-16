@@ -1,4 +1,4 @@
-/*	$NetBSD: frag6.c,v 1.66.2.1 2018/03/15 09:12:07 pgoyette Exp $	*/
+/*	$NetBSD: frag6.c,v 1.66.2.2 2018/04/16 02:00:09 pgoyette Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.66.2.1 2018/03/15 09:12:07 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.66.2.2 2018/04/16 02:00:09 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -59,8 +59,10 @@ __KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.66.2.1 2018/03/15 09:12:07 pgoyette Exp 
 #include <net/net_osdep.h>
 
 /*
- * IP6 reassembly queue structure.  Each fragment
- * being reassembled is attached to one of these structures.
+ * IPv6 reassembly queue structure. Each fragment being reassembled is
+ * attached to one of these structures.
+ *
+ * XXX: Would be better to use TAILQ.
  */
 struct	ip6q {
 	u_int32_t	ip6q_head;
@@ -93,7 +95,6 @@ struct	ip6asfrag {
 	bool		ip6af_mff;	/* more fragment bit in frag off */
 };
 
-
 static void frag6_enq(struct ip6asfrag *, struct ip6asfrag *);
 static void frag6_deq(struct ip6asfrag *);
 static void frag6_insque(struct ip6q *, struct ip6q *);
@@ -102,9 +103,9 @@ static void frag6_freef(struct ip6q *);
 
 static int frag6_drainwanted;
 
-u_int frag6_nfragpackets;
-u_int frag6_nfrags;
-struct ip6q ip6q;	/* ip6 reassembly queue */
+static u_int frag6_nfragpackets;
+static u_int frag6_nfrags;
+static struct ip6q ip6q;	/* ip6 reassembly queue */
 
 /* Protects ip6q */
 static kmutex_t	frag6_lock __cacheline_aligned;
@@ -150,6 +151,8 @@ frag6_init(void)
  *		-> should grab it from the first fragment only
  *
  * There is no explicit reason given in the RFC.  Historical reason maybe?
+ *
+ * XXX: It would be better to use a pool, rather than kmem.
  */
 int
 frag6_input(struct mbuf **mp, int *offp, int proto)
@@ -214,6 +217,10 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 	 * a Fragment Header with the "Fragment Offset" equal to 0 and
 	 * the "M" bit equal to 0 MUST process such packet in isolation
 	 * from any other packets/fragments.
+	 *
+	 * XXX: Would be better to remove this fragment header entirely,
+	 * for us not to get confused later when looking back at the
+	 * previous headers in the chain.
 	 */
 	fragoff = ntohs(ip6f->ip6f_offlg & IP6F_OFF_MASK);
 	if (fragoff == 0 && !(ip6f->ip6f_offlg & IP6F_MORE_FRAG)) {
@@ -480,6 +487,7 @@ insert:
 			plen += t->m_len;
 		}
 		m->m_pkthdr.len = plen;
+		/* XXX XXX: clear csum_flags? */
 	}
 
 	/*
@@ -500,15 +508,13 @@ insert:
 	IP6_STATINC(IP6_STAT_REASSEMBLED);
 	in6_ifstat_inc(dstifp, ifs6_reass_ok);
 	rtcache_unref(rt, &ro);
+	mutex_exit(&frag6_lock);
 
 	/*
-	 * Tell launch routine the next header
+	 * Tell launch routine the next header.
 	 */
-
 	*mp = m;
 	*offp = offset;
-
-	mutex_exit(&frag6_lock);
 	return nxt;
 
  dropfrag:
@@ -663,7 +669,7 @@ frag6_slowtimo(void)
 
 	mutex_enter(&frag6_lock);
 	q6 = ip6q.ip6q_next;
-	if (q6)
+	if (q6) {
 		while (q6 != &ip6q) {
 			--q6->ip6q_ttl;
 			q6 = q6->ip6q_next;
@@ -673,6 +679,8 @@ frag6_slowtimo(void)
 				frag6_freef(q6->ip6q_prev);
 			}
 		}
+	}
+
 	/*
 	 * If we are over the maximum number of fragments
 	 * (due to the limit being lowered), drain off
@@ -697,7 +705,6 @@ frag6_slowtimo(void)
 	rtcache_free(&ip6_forward_rt);
 	rtcache_free(&ipsrcchk_rt);
 #endif
-
 }
 
 void

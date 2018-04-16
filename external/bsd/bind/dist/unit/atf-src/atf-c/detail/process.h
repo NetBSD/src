@@ -1,9 +1,6 @@
-/*	$NetBSD: process.h,v 1.3 2014/12/10 04:38:03 christos Exp $	*/
+/*	$NetBSD: process.h,v 1.3.14.1 2018/04/16 01:58:03 pgoyette Exp $	*/
 
-/*
- * Automated Testing Framework (atf)
- *
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+/* Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,20 +23,18 @@
  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
  * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
+ * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.  */
 
-#if !defined(ATF_C_PROCESS_H)
-#define ATF_C_PROCESS_H
+#if !defined(ATF_C_DETAIL_PROCESS_H)
+#define ATF_C_DETAIL_PROCESS_H
 
 #include <sys/types.h>
 
 #include <stdbool.h>
 
+#include <atf-c/detail/fs.h>
+#include <atf-c/detail/list.h>
 #include <atf-c/error_fwd.h>
-
-#include "fs.h"
-#include "list.h"
 
 /* ---------------------------------------------------------------------
  * The "atf_process_stream" type.
@@ -135,4 +130,4 @@ atf_error_t atf_process_exec_list(atf_process_status_t *,
                                   const atf_process_stream_t *,
                                   void (*)(void));
 
-#endif /* !defined(ATF_C_PROCESS_H) */
+#endif /* !defined(ATF_C_DETAIL_PROCESS_H) */

@@ -1,6 +1,6 @@
 // int_encoding.cc -- variable length and unaligned integer encoding support.
 
-// Copyright (C) 2009-2016 Free Software Foundation, Inc.
+// Copyright (C) 2009-2018 Free Software Foundation, Inc.
 // Written by Doug Kwan <dougkwan@google.com> by refactoring scattered
 // contents from other files in gold.  Original code written by Ian
 // Lance Taylor <iant@google.com> and Caleb Howe <cshowe@google.com>.

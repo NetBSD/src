@@ -1,7 +1,7 @@
-/*	$NetBSD: byaddr.c,v 1.7 2014/12/10 04:37:58 christos Exp $	*/
+/*	$NetBSD: byaddr.c,v 1.7.14.1 2018/04/16 01:57:55 pgoyette Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009, 2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2013, 2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -91,6 +91,8 @@ dns_byaddr_createptrname2(isc_netaddr_t *address, unsigned int options,
 			       (bytes[1] & 0xff),
 			       (bytes[0] & 0xff));
 	} else if (address->family == AF_INET6) {
+		size_t remaining;
+
 		cp = textname;
 		for (i = 15; i >= 0; i--) {
 			*cp++ = hex_digits[bytes[i] & 0x0f];
@@ -98,10 +100,12 @@ dns_byaddr_createptrname2(isc_netaddr_t *address, unsigned int options,
 			*cp++ = hex_digits[(bytes[i] >> 4) & 0x0f];
 			*cp++ = '.';
 		}
-		if ((options & DNS_BYADDROPT_IPV6INT) != 0)
-			strcpy(cp, "ip6.int.");
-		else
-			strcpy(cp, "ip6.arpa.");
+		remaining = sizeof(textname) - (cp - textname);
+		if ((options & DNS_BYADDROPT_IPV6INT) != 0) {
+			strlcpy(cp, "ip6.int.", remaining);
+		} else {
+			strlcpy(cp, "ip6.arpa.", remaining);
+		}
 	} else
 		return (ISC_R_NOTIMPLEMENTED);
 

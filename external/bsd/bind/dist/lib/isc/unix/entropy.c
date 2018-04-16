@@ -1,7 +1,7 @@
-/*	$NetBSD: entropy.c,v 1.5 2014/12/10 04:38:01 christos Exp $	*/
+/*	$NetBSD: entropy.c,v 1.5.14.1 2018/04/16 01:57:59 pgoyette Exp $	*/
 
 /*
- * Copyright (C) 2004-2008, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008, 2012, 2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -39,7 +39,9 @@
 #include <unistd.h>
 
 #include <isc/platform.h>
+#include <isc/print.h>
 #include <isc/strerror.h>
+#include <isc/string.h>
 
 #ifdef ISC_PLATFORM_NEEDSYSSELECTH
 #include <sys/select.h>
@@ -162,7 +164,7 @@ get_from_usocketsource(isc_entropysource_t *source, isc_uint32_t desired) {
 			INSIST(n == 2);
 			source->sources.usocket.status =
 						isc_usocketsource_wrote;
-			/*FALLTHROUGH*/
+			/* FALLTHROUGH */
 
 		case isc_usocketsource_wrote:
 			if (recvfrom(fd, buf, 1, 0, NULL, NULL) != 1) {
@@ -200,7 +202,7 @@ get_from_usocketsource(isc_entropysource_t *source, isc_uint32_t desired) {
 			source->sources.usocket.sz_to_recv = sz_to_recv;
 			if (sz_to_recv > sizeof(buf))
 				goto err;
-			/*FALLTHROUGH*/
+			/* FALLTHROUGH */
 
 		case isc_usocketsource_reading:
 			if (sz_to_recv != 0U) {

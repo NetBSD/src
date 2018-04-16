@@ -1,4 +1,4 @@
-/*	$NetBSD: imxusb.c,v 1.12 2016/05/17 06:44:46 ryo Exp $	*/
+/*	$NetBSD: imxusb.c,v 1.12.16.1 2018/04/16 01:59:53 pgoyette Exp $	*/
 /*
  * Copyright (c) 2009, 2010  Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi and Hiroyuki Bessho for Genetec Corporation.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imxusb.c,v 1.12 2016/05/17 06:44:46 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imxusb.c,v 1.12.16.1 2018/04/16 01:59:53 pgoyette Exp $");
 
 #include "opt_imx.h"
 
@@ -201,9 +201,6 @@ imxehci_attach(device_t parent, device_t self, void *aux)
 	EOWRITE4(hsc, EHCI_USBINTR, 0);
 
 	intr_establish(aa->aa_irq, IPL_USB, IST_LEVEL, ehci_intr, hsc);
-
-	/* Figure out vendor for root hub descriptor. */
-	strlcpy(hsc->sc_vendor, "i.MX", sizeof(hsc->sc_vendor));
 
 	int err = ehci_init(hsc);
 	if (err) {

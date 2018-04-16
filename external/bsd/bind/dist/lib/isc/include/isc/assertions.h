@@ -1,7 +1,7 @@
-/*	$NetBSD: assertions.h,v 1.7 2016/05/26 16:50:00 christos Exp $	*/
+/*	$NetBSD: assertions.h,v 1.7.14.1 2018/04/16 01:57:58 pgoyette Exp $	*/
 
 /*
- * Copyright (C) 2004-2009, 2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2016, 2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1997-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -27,6 +27,7 @@
 #define ISC_ASSERTIONS_H 1
 
 #include <isc/lang.h>
+#include <isc/likely.h>
 #include <isc/platform.h>
 
 ISC_LANG_BEGINDECLS

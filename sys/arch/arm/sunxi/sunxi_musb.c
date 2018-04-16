@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_musb.c,v 1.3 2017/12/03 14:35:07 jmcneill Exp $ */
+/* $NetBSD: sunxi_musb.c,v 1.3.2.1 2018/04/16 01:59:53 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -26,13 +26,8 @@
  * SUCH DAMAGE.
  */
 
-#include "opt_motg.h"
-#ifdef MOTG_ALLWINNER
-# error Do not define MOTG_ALLWINNER when using this driver
-#endif
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_musb.c,v 1.3 2017/12/03 14:35:07 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_musb.c,v 1.3.2.1 2018/04/16 01:59:53 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -366,7 +361,6 @@ sunxi_musb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_bus.ub_hcpriv = sc;
 	sc->sc_bus.ub_dmatag = faa->faa_dmat;
-	strlcpy(sc->sc_vendor, "Allwinner", sizeof(sc->sc_vendor));
 	sc->sc_size = size;
 	sc->sc_iot = &msc->sc_bs;
 	if (bus_space_map(faa->faa_bst, addr, size, 0, &sc->sc_ioh) != 0) {

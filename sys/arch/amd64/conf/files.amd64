@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.101 2018/01/20 14:27:14 maxv Exp $
+#	$NetBSD: files.amd64,v 1.101.2.1 2018/04/16 01:59:52 pgoyette Exp $
 #
 # new style config file for amd64 architecture
 #
@@ -18,6 +18,9 @@ defparam opt_realmem.h	REALBASEMEM REALEXTMEM
 
 # The PHYSMEM_MAX_{SIZE,ADDR} optionms
 defparam opt_physmem.h	PHYSMEM_MAX_ADDR PHYSMEM_MAX_SIZE
+
+# Enable GCC spectre V2 mitigation options
+defflag opt_spectre.h	SPECTRE_V2_GCC_MITIGATION
 
 #
 # XXX these are just here at the moment so that we can share files

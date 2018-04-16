@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.23.2.1 2018/03/15 09:12:07 pgoyette Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.23.2.2 2018/04/16 02:00:09 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.23.2.1 2018/03/15 09:12:07 pgoyette Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.23.2.2 2018/04/16 02:00:09 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -134,7 +134,8 @@ ATF_TC(traceme2);
 ATF_TC_HEAD(traceme2, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
-	    "Verify SIGSTOP followed by _exit(2) in a child");
+	    "Verify that a signal emitted by a tracer to a child is caught by "
+	    "a signal handler");
 }
 
 static int traceme2_caught = 0;
@@ -1320,21 +1321,14 @@ ATF_TC_BODY(eventmask6, tc)
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
-#if defined(TWAIT_HAVE_PID)
-ATF_TC(fork1);
-ATF_TC_HEAD(fork1, tc)
-{
-	atf_tc_set_md_var(tc, "descr",
-	    "Verify that fork(2) is intercepted by ptrace(2) with EVENT_MASK "
-	    "set to PTRACE_FORK");
-}
-
-ATF_TC_BODY(fork1, tc)
+static void
+fork_body(pid_t (*fn)(void), bool trackfork, bool trackvfork,
+          bool trackvforkdone, bool detachchild, bool detachparent)
 {
 	const int exitval = 5;
 	const int exitval2 = 15;
 	const int sigval = SIGSTOP;
-	pid_t child, child2, wpid;
+	pid_t child, child2 = 0, wpid;
 #if defined(TWAIT_HAVE_STATUS)
 	int status;
 #endif
@@ -1343,6 +1337,10 @@ ATF_TC_BODY(fork1, tc)
 	ptrace_event_t event;
 	const int elen = sizeof(event);
 
+	if (trackvfork) {
+		atf_tc_expect_fail("PR kern/51630");
+	}
+
 	DPRINTF("Before forking process PID=%d\n", getpid());
 	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
@@ -1352,7 +1350,7 @@ ATF_TC_BODY(fork1, tc)
 		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		FORKEE_ASSERT((child2 = fork()) != -1);
+		FORKEE_ASSERT((child2 = (fn)()) != -1);
 
 		if (child2 == 0)
 			_exit(exitval2);
@@ -1372,342 +1370,113 @@ ATF_TC_BODY(fork1, tc)
 
 	validate_status_stopped(status, sigval);
 
-	DPRINTF("Enable PTRACE_FORK in EVENT_MASK for the child %d\n", child);
-	event.pe_set_event = PTRACE_FORK;
-	SYSCALL_REQUIRE(ptrace(PT_SET_EVENT_MASK, child, &event, elen) != -1);
-
-	DPRINTF("Before resuming the child process where it left off and "
-	    "without signal to be sent\n");
-        DPRINTF("We expect two SIGTRAP events, for child %d (TRAP_CHLD, "
-               "pe_report_event=PTRACE_FORK, state.pe_other_pid=child2) and "
-               "for child2 (TRAP_CHLD, pe_report_event=PTRACE_FORK, "
-                "state.pe_other_pid=child)\n", child);
-	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
-
-	DPRINTF("Before calling %s() for the child %d\n", TWAIT_FNAME, child);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_stopped(status, SIGTRAP);
-
-	SYSCALL_REQUIRE(ptrace(PT_GET_PROCESS_STATE, child, &state, slen) != -1);
-	ATF_REQUIRE_EQ(state.pe_report_event, PTRACE_FORK);
-
-	child2 = state.pe_other_pid;
-	DPRINTF("Reported PTRACE_FORK event with forkee %d\n", child2);
-
-	DPRINTF("Before calling %s() for the forkee %d of the child %d\n",
-	    TWAIT_FNAME, child2, child);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child2, &status, 0),
-	    child2);
-
-	validate_status_stopped(status, SIGTRAP);
-
-	SYSCALL_REQUIRE(ptrace(PT_GET_PROCESS_STATE, child2, &state, slen) != -1);
-	ATF_REQUIRE_EQ(state.pe_report_event, PTRACE_FORK);
-	ATF_REQUIRE_EQ(state.pe_other_pid, child);
-
-	DPRINTF("Before resuming the forkee process where it left off and "
-	    "without signal to be sent\n");
-	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child2, (void *)1, 0) != -1);
-
-	DPRINTF("Before resuming the child process where it left off and "
-	    "without signal to be sent\n");
-	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
-
-	DPRINTF("Before calling %s() for the forkee - expected exited\n",
-	    TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child2, &status, 0),
-	    child2);
-
-	validate_status_exited(status, exitval2);
-
-	DPRINTF("Before calling %s() for the forkee - expected no process\n",
-	    TWAIT_FNAME);
-	TWAIT_REQUIRE_FAILURE(ECHILD,
-	    wpid = TWAIT_GENERIC(child2, &status, 0));
-
-	DPRINTF("Before calling %s() for the child - expected stopped "
-	    "SIGCHLD\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_stopped(status, SIGCHLD);
-
-	DPRINTF("Before resuming the child process where it left off and "
-	    "without signal to be sent\n");
-	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
-
-	DPRINTF("Before calling %s() for the child - expected exited\n",
-	    TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_exited(status, exitval);
-
-	DPRINTF("Before calling %s() for the child - expected no process\n",
-	    TWAIT_FNAME);
-	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
-}
-#endif
-
-ATF_TC(fork2);
-ATF_TC_HEAD(fork2, tc)
-{
-	atf_tc_set_md_var(tc, "descr",
-	    "Verify that fork(2) is not intercepted by ptrace(2) with empty "
-	    "EVENT_MASK");
-}
-
-ATF_TC_BODY(fork2, tc)
-{
-	const int exitval = 5;
-	const int exitval2 = 15;
-	const int sigval = SIGSTOP;
-	pid_t child, child2, wpid;
-#if defined(TWAIT_HAVE_STATUS)
-	int status;
-#endif
-	ptrace_event_t event;
-	const int elen = sizeof(event);
-
-	DPRINTF("Before forking process PID=%d\n", getpid());
-	SYSCALL_REQUIRE((child = fork()) != -1);
-	if (child == 0) {
-		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
-		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
-
-		DPRINTF("Before raising %s from child\n", strsignal(sigval));
-		FORKEE_ASSERT(raise(sigval) == 0);
-
-		FORKEE_ASSERT((child2 = fork()) != -1);
-
-		if (child2 == 0)
-			_exit(exitval2);
-
-		FORKEE_REQUIRE_SUCCESS
-		    (wpid = TWAIT_GENERIC(child2, &status, 0), child2);
-
-		forkee_status_exited(status, exitval2);
-
-		DPRINTF("Before exiting of the child process\n");
-		_exit(exitval);
-	}
-	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
-
-	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_stopped(status, sigval);
-
-	DPRINTF("Set empty EVENT_MASK for the child %d\n", child);
+	DPRINTF("Set 0%s%s%s in EVENT_MASK for the child %d\n",
+	        trackfork ? "|PTRACE_FORK" : "",
+	        trackvfork ? "|PTRACE_VFORK" : "",
+	        trackvforkdone ? "|PTRACE_VFORK_DONE" : "", child);
 	event.pe_set_event = 0;
+	if (trackfork)
+		event.pe_set_event |= PTRACE_FORK;
+	if (trackvfork)
+		event.pe_set_event |= PTRACE_VFORK;
+	if (trackvforkdone)
+		event.pe_set_event |= PTRACE_VFORK_DONE;
 	SYSCALL_REQUIRE(ptrace(PT_SET_EVENT_MASK, child, &event, elen) != -1);
 
 	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
 	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
-
-	DPRINTF("Before calling %s() for the child - expected stopped "
-	    "SIGCHLD\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_stopped(status, SIGCHLD);
-
-	DPRINTF("Before resuming the child process where it left off and "
-	    "without signal to be sent\n");
-	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
-
-	DPRINTF("Before calling %s() for the child - expected exited\n",
-	    TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_exited(status, exitval);
-
-	DPRINTF("Before calling %s() for the child - expected no process\n",
-	    TWAIT_FNAME);
-	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
-}
 
 #if defined(TWAIT_HAVE_PID)
-ATF_TC(vfork1);
-ATF_TC_HEAD(vfork1, tc)
-{
-	atf_tc_set_md_var(tc, "descr",
-	    "Verify that vfork(2) is intercepted by ptrace(2) with EVENT_MASK "
-	    "set to PTRACE_VFORK");
-}
+	if ((trackfork && fn == fork) || (trackvfork && fn == vfork)) {
+		DPRINTF("Before calling %s() for the child %d\n", TWAIT_FNAME,
+		        child);
+		TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0),
+		                      child);
 
-ATF_TC_BODY(vfork1, tc)
-{
-	const int exitval = 5;
-	const int exitval2 = 15;
-	const int sigval = SIGSTOP;
-	pid_t child, child2, wpid;
-#if defined(TWAIT_HAVE_STATUS)
-	int status;
-#endif
-	ptrace_state_t state;
-	const int slen = sizeof(state);
-	ptrace_event_t event;
-	const int elen = sizeof(event);
+		validate_status_stopped(status, SIGTRAP);
 
-	atf_tc_expect_fail("PR kern/51630");
+		SYSCALL_REQUIRE(ptrace(PT_GET_PROCESS_STATE, child, &state,
+		                       slen) != -1);
+		if (trackfork && fn == fork) {
+			ATF_REQUIRE_EQ(state.pe_report_event & PTRACE_FORK,
+			       PTRACE_FORK);
+		}
+		if (trackvfork && fn == vfork) {
+			ATF_REQUIRE_EQ(state.pe_report_event & PTRACE_VFORK,
+			       PTRACE_VFORK);
+		}
 
-	DPRINTF("Before forking process PID=%d\n", getpid());
-	SYSCALL_REQUIRE((child = fork()) != -1);
-	if (child == 0) {
-		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
-		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
+		child2 = state.pe_other_pid;
+		DPRINTF("Reported ptrace event with forkee %d\n", child2);
 
-		DPRINTF("Before raising %s from child\n", strsignal(sigval));
-		FORKEE_ASSERT(raise(sigval) == 0);
+		DPRINTF("Before calling %s() for the forkee %d of the child "
+		        "%d\n", TWAIT_FNAME, child2, child);
+		TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child2, &status, 0),
+		    child2);
 
-		FORKEE_ASSERT((child2 = vfork()) != -1);
+		validate_status_stopped(status, SIGTRAP);
 
-		if (child2 == 0)
-			_exit(exitval2);
+		SYSCALL_REQUIRE(ptrace(PT_GET_PROCESS_STATE, child2, &state,
+		                       slen) != -1);
+		if (trackfork && fn == fork) {
+			ATF_REQUIRE_EQ(state.pe_report_event & PTRACE_FORK,
+			       PTRACE_FORK);
+		}
+		if (trackvfork && fn == vfork) {
+			ATF_REQUIRE_EQ(state.pe_report_event & PTRACE_VFORK,
+			       PTRACE_VFORK);
+		}
 
-		FORKEE_REQUIRE_SUCCESS
-		    (wpid = TWAIT_GENERIC(child2, &status, 0), child2);
+		ATF_REQUIRE_EQ(state.pe_other_pid, child);
 
-		forkee_status_exited(status, exitval2);
+		DPRINTF("Before resuming the forkee process where it left off "
+		    "and without signal to be sent\n");
+		SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child2, (void *)1, 0)
+		                != -1);
 
-		DPRINTF("Before exiting of the child process\n");
-		_exit(exitval);
+		DPRINTF("Before resuming the child process where it left off "
+		        "and without signal to be sent\n");
+		SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 	}
-	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
-
-	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_stopped(status, sigval);
-
-	DPRINTF("Enable PTRACE_VFORK in EVENT_MASK for the child %d\n", child);
-	event.pe_set_event = PTRACE_VFORK;
-	SYSCALL_REQUIRE(ptrace(PT_SET_EVENT_MASK, child, &event, elen) != -1 || errno == ENOTSUP);
-
-	DPRINTF("Before resuming the child process where it left off and "
-	    "without signal to be sent\n");
-	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
-
-	DPRINTF("Before calling %s() for the child %d\n", TWAIT_FNAME, child);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_stopped(status, SIGTRAP);
-
-	SYSCALL_REQUIRE(ptrace(PT_GET_PROCESS_STATE, child, &state, slen) != -1);
-	ATF_REQUIRE_EQ(state.pe_report_event, PTRACE_VFORK);
-
-	child2 = state.pe_other_pid;
-	DPRINTF("Reported PTRACE_VFORK event with forkee %d\n", child2);
-
-	DPRINTF("Before calling %s() for the forkee %d of the child %d\n",
-	    TWAIT_FNAME, child2, child);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child2, &status, 0),
-	    child2);
-
-	validate_status_stopped(status, SIGTRAP);
-
-	SYSCALL_REQUIRE(ptrace(PT_GET_PROCESS_STATE, child2, &state, slen) != -1);
-	ATF_REQUIRE_EQ(state.pe_report_event, PTRACE_VFORK);
-	ATF_REQUIRE_EQ(state.pe_other_pid, child);
-
-	DPRINTF("Before resuming the forkee process where it left off and "
-	    "without signal to be sent\n");
-	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child2, (void *)1, 0) != -1);
-
-	DPRINTF("Before resuming the child process where it left off and "
-	    "without signal to be sent\n");
-	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
-
-	DPRINTF("Before calling %s() for the forkee - expected exited\n",
-	    TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child2, &status, 0),
-	    child2);
-
-	validate_status_exited(status, exitval2);
-
-	DPRINTF("Before calling %s() for the forkee - expected no process\n",
-	    TWAIT_FNAME);
-	TWAIT_REQUIRE_FAILURE(ECHILD,
-	    wpid = TWAIT_GENERIC(child2, &status, 0));
-
-	DPRINTF("Before calling %s() for the child - expected stopped "
-	    "SIGCHLD\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_stopped(status, SIGCHLD);
-
-	DPRINTF("Before resuming the child process where it left off and "
-	    "without signal to be sent\n");
-	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
-
-	DPRINTF("Before calling %s() for the child - expected exited\n",
-	    TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_exited(status, exitval);
-
-	DPRINTF("Before calling %s() for the child - expected no process\n",
-	    TWAIT_FNAME);
-	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
-}
 #endif
 
-ATF_TC(vfork2);
-ATF_TC_HEAD(vfork2, tc)
-{
-	atf_tc_set_md_var(tc, "descr",
-	    "Verify that vfork(2) is not intercepted by ptrace(2) with empty "
-	    "EVENT_MASK");
-}
+	if (trackvforkdone && fn == vfork) {
+		DPRINTF("Before calling %s() for the child %d\n", TWAIT_FNAME,
+		        child);
+		TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0),
+		                      child);
 
-ATF_TC_BODY(vfork2, tc)
-{
-	const int exitval = 5;
-	const int exitval2 = 15;
-	const int sigval = SIGSTOP;
-	pid_t child, child2, wpid;
-#if defined(TWAIT_HAVE_STATUS)
-	int status;
-#endif
-	ptrace_event_t event;
-	const int elen = sizeof(event);
+		validate_status_stopped(status, SIGTRAP);
 
-	DPRINTF("Before forking process PID=%d\n", getpid());
-	SYSCALL_REQUIRE((child = fork()) != -1);
-	if (child == 0) {
-		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
-		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
+		SYSCALL_REQUIRE(ptrace(PT_GET_PROCESS_STATE, child, &state,
+		                       slen) != -1);
+		ATF_REQUIRE_EQ(state.pe_report_event, PTRACE_VFORK_DONE);
 
-		DPRINTF("Before raising %s from child\n", strsignal(sigval));
-		FORKEE_ASSERT(raise(sigval) == 0);
+		child2 = state.pe_other_pid;
+		DPRINTF("Reported PTRACE_VFORK_DONE event with forkee %d\n",
+		        child2);
 
-		FORKEE_ASSERT((child2 = vfork()) != -1);
-
-		if (child2 == 0)
-			_exit(exitval2);
-
-		FORKEE_REQUIRE_SUCCESS
-		    (wpid = TWAIT_GENERIC(child2, &status, 0), child2);
-
-		forkee_status_exited(status, exitval2);
-
-		DPRINTF("Before exiting of the child process\n");
-		_exit(exitval);
+		DPRINTF("Before resuming the child process where it left off "
+		        "and without signal to be sent\n");
+		SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 	}
-	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+#if defined(TWAIT_HAVE_PID)
+	if ((trackfork && fn == fork) || (trackvfork && fn == vfork)) {
+		DPRINTF("Before calling %s() for the forkee - expected exited"
+		        "\n", TWAIT_FNAME);
+		TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child2, &status, 0),
+		    child2);
 
-	validate_status_stopped(status, sigval);
+		validate_status_exited(status, exitval2);
 
-	DPRINTF("Set empty EVENT_MASK for the child %d\n", child);
-	event.pe_set_event = 0;
-	SYSCALL_REQUIRE(ptrace(PT_SET_EVENT_MASK, child, &event, elen) != -1);
-
-	DPRINTF("Before resuming the child process where it left off and "
-	    "without signal to be sent\n");
-	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+		DPRINTF("Before calling %s() for the forkee - expected no "
+		        "process\n", TWAIT_FNAME);
+		TWAIT_REQUIRE_FAILURE(ECHILD,
+		    wpid = TWAIT_GENERIC(child2, &status, 0));
+	}
+#endif
 
 	DPRINTF("Before calling %s() for the child - expected stopped "
 	    "SIGCHLD\n", TWAIT_FNAME);
@@ -1730,196 +1499,65 @@ ATF_TC_BODY(vfork2, tc)
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
-ATF_TC(vforkdone1);
-ATF_TC_HEAD(vforkdone1, tc)
-{
-	atf_tc_set_md_var(tc, "descr",
-	    "Verify that vfork(2) is intercepted by ptrace(2) with EVENT_MASK "
-	    "set to PTRACE_VFORK_DONE");
+#define FORK_TEST(name,descr,fun,tfork,tvfork,tvforkdone,detchild,detparent)	\
+ATF_TC(name);									\
+ATF_TC_HEAD(name, tc)								\
+{										\
+	atf_tc_set_md_var(tc, "descr", descr);					\
+}										\
+										\
+ATF_TC_BODY(name, tc)								\
+{										\
+										\
+	fork_body(fun, tfork, tvfork, tvforkdone, detchild, detparent);		\
 }
 
-ATF_TC_BODY(vforkdone1, tc)
-{
-	const int exitval = 5;
-	const int exitval2 = 15;
-	const int sigval = SIGSTOP;
-	pid_t child, child2, wpid;
-#if defined(TWAIT_HAVE_STATUS)
-	int status;
+#define F false
+#define T true
+
+#define F_IF__0(x)
+#define F_IF__1(x) x
+#define F_IF__(x,y) F_IF__ ## x (y)
+#define F_IF_(x,y) F_IF__(x,y)
+#define F_IF(x,y) F_IF_(x,y)
+
+#define DSCR(function,forkbit,vforkbit,vforkdonebit,dchildbit,dparentbit)	\
+        "Verify " #function "(2) called with 0"					\
+        F_IF(forkbit,"|PTRACE_FORK")						\
+        F_IF(vforkbit,"|PTRACE_VFORK")						\
+        F_IF(vforkdonebit,"|PTRACE_VFORK_DONE")					\
+        " in EVENT_MASK."							\
+        F_IF(dchildbit," Detach child in this test.")				\
+        F_IF(dparentbit," Detach parent in this test.")
+
+FORK_TEST(fork1, DSCR(fork,0,0,0,0,0), fork, F, F, F, F, F)
+#if defined(TWAIT_HAVE_PID)
+FORK_TEST(fork2, DSCR(fork,1,0,0,0,0), fork, T, F, F, F, F)
+FORK_TEST(fork3, DSCR(fork,0,1,0,0,0), fork, F, T, F, F, F)
+FORK_TEST(fork4, DSCR(fork,1,1,0,0,0), fork, T, T, F, F, F)
 #endif
-	ptrace_state_t state;
-	const int slen = sizeof(state);
-	ptrace_event_t event;
-	const int elen = sizeof(event);
-
-	DPRINTF("Before forking process PID=%d\n", getpid());
-	SYSCALL_REQUIRE((child = fork()) != -1);
-	if (child == 0) {
-		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
-		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
-
-		DPRINTF("Before raising %s from child\n", strsignal(sigval));
-		FORKEE_ASSERT(raise(sigval) == 0);
-
-		FORKEE_ASSERT((child2 = vfork()) != -1);
-
-		if (child2 == 0)
-			_exit(exitval2);
-
-		FORKEE_REQUIRE_SUCCESS
-		    (wpid = TWAIT_GENERIC(child2, &status, 0), child2);
-
-		forkee_status_exited(status, exitval2);
-
-		DPRINTF("Before exiting of the child process\n");
-		_exit(exitval);
-	}
-	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
-
-	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_stopped(status, sigval);
-
-	DPRINTF("Enable PTRACE_VFORK_DONE in EVENT_MASK for the child %d\n",
-	    child);
-	event.pe_set_event = PTRACE_VFORK_DONE;
-	SYSCALL_REQUIRE(ptrace(PT_SET_EVENT_MASK, child, &event, elen) != -1);
-
-	DPRINTF("Before resuming the child process where it left off and "
-	    "without signal to be sent\n");
-	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
-
-	DPRINTF("Before calling %s() for the child %d\n", TWAIT_FNAME, child);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_stopped(status, SIGTRAP);
-
-	SYSCALL_REQUIRE(ptrace(PT_GET_PROCESS_STATE, child, &state, slen) != -1);
-	ATF_REQUIRE_EQ(state.pe_report_event, PTRACE_VFORK_DONE);
-
-	child2 = state.pe_other_pid;
-	DPRINTF("Reported PTRACE_VFORK_DONE event with forkee %d\n", child2);
-
-	DPRINTF("Before resuming the child process where it left off and "
-	    "without signal to be sent\n");
-	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
-
-	DPRINTF("Before calling %s() for the child - expected stopped "
-	    "SIGCHLD\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_stopped(status, SIGCHLD);
-
-	DPRINTF("Before resuming the child process where it left off and "
-	    "without signal to be sent\n");
-	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
-
-	DPRINTF("Before calling %s() for the child - expected exited\n",
-	    TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_exited(status, exitval);
-
-	DPRINTF("Before calling %s() for the child - expected no process\n",
-	    TWAIT_FNAME);
-	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
-}
-
-ATF_TC(vforkdone2);
-ATF_TC_HEAD(vforkdone2, tc)
-{
-	atf_tc_set_md_var(tc, "descr",
-	    "Verify that vfork(2) is intercepted by ptrace(2) with EVENT_MASK "
-	    "set to PTRACE_FORK | PTRACE_VFORK_DONE");
-}
-
-ATF_TC_BODY(vforkdone2, tc)
-{
-	const int exitval = 5;
-	const int exitval2 = 15;
-	const int sigval = SIGSTOP;
-	pid_t child, child2, wpid;
-#if defined(TWAIT_HAVE_STATUS)
-	int status;
+FORK_TEST(fork5, DSCR(fork,0,0,1,0,0), fork, F, F, T, F, F)
+#if defined(TWAIT_HAVE_PID)
+FORK_TEST(fork6, DSCR(fork,1,0,1,0,0), fork, T, F, T, F, F)
+FORK_TEST(fork7, DSCR(fork,0,1,1,0,0), fork, F, T, T, F, F)
+FORK_TEST(fork8, DSCR(fork,1,1,1,0,0), fork, T, T, T, F, F)
 #endif
-	ptrace_state_t state;
-	const int slen = sizeof(state);
-	ptrace_event_t event;
-	const int elen = sizeof(event);
 
-	DPRINTF("Before forking process PID=%d\n", getpid());
-	SYSCALL_REQUIRE((child = fork()) != -1);
-	if (child == 0) {
-		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
-		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
+FORK_TEST(vfork1, DSCR(vfork,0,0,0,0,0), vfork, F, F, F, F, F)
+#if defined(TWAIT_HAVE_PID)
+FORK_TEST(vfork2, DSCR(vfork,1,0,0,0,0), vfork, T, F, F, F, F)
+FORK_TEST(vfork3, DSCR(vfork,0,1,0,0,0), vfork, F, T, F, F, F)
+FORK_TEST(vfork4, DSCR(vfork,1,1,0,0,0), vfork, T, T, F, F, F)
+#endif
+FORK_TEST(vfork5, DSCR(vfork,0,0,1,0,0), vfork, F, F, T, F, F)
+#if defined(TWAIT_HAVE_PID)
+FORK_TEST(vfork6, DSCR(vfork,1,0,1,0,0), vfork, T, F, T, F, F)
+FORK_TEST(vfork7, DSCR(vfork,0,1,1,0,0), vfork, F, T, T, F, F)
+FORK_TEST(vfork8, DSCR(vfork,1,1,1,0,0), vfork, T, T, T, F, F)
+#endif
 
-		DPRINTF("Before raising %s from child\n", strsignal(sigval));
-		FORKEE_ASSERT(raise(sigval) == 0);
 
-		FORKEE_ASSERT((child2 = vfork()) != -1);
 
-		if (child2 == 0)
-			_exit(exitval2);
-
-		FORKEE_REQUIRE_SUCCESS
-		    (wpid = TWAIT_GENERIC(child2, &status, 0), child2);
-
-		forkee_status_exited(status, exitval2);
-
-		DPRINTF("Before exiting of the child process\n");
-		_exit(exitval);
-	}
-	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
-
-	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_stopped(status, sigval);
-
-	DPRINTF("Enable PTRACE_VFORK in EVENT_MASK for the child %d\n", child);
-	event.pe_set_event = PTRACE_FORK | PTRACE_VFORK_DONE;
-	SYSCALL_REQUIRE(ptrace(PT_SET_EVENT_MASK, child, &event, elen) != -1);
-
-	DPRINTF("Before resuming the child process where it left off and "
-	    "without signal to be sent\n");
-	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
-
-	DPRINTF("Before calling %s() for the child %d\n", TWAIT_FNAME, child);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_stopped(status, SIGTRAP);
-
-	SYSCALL_REQUIRE(ptrace(PT_GET_PROCESS_STATE, child, &state, slen) != -1);
-	ATF_REQUIRE_EQ(state.pe_report_event, PTRACE_VFORK_DONE);
-
-	child2 = state.pe_other_pid;
-	DPRINTF("Reported PTRACE_VFORK_DONE event with forkee %d\n", child2);
-
-	DPRINTF("Before resuming the child process where it left off and "
-	    "without signal to be sent\n");
-	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
-
-	DPRINTF("Before calling %s() for the child - expected stopped "
-	    "SIGCHLD\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_stopped(status, SIGCHLD);
-
-	DPRINTF("Before resuming the child process where it left off and "
-	    "without signal to be sent\n");
-	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
-
-	DPRINTF("Before calling %s() for the child - expected exited\n",
-	    TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_exited(status, exitval);
-
-	DPRINTF("Before calling %s() for the child - expected no process\n",
-	    TWAIT_FNAME);
-	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
-}
 
 ATF_TC(io_read_d1);
 ATF_TC_HEAD(io_read_d1, tc)
@@ -7133,14 +6771,23 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, eventmask5);
 	ATF_TP_ADD_TC(tp, eventmask6);
 
-	ATF_TP_ADD_TC_HAVE_PID(tp, fork1);
-	ATF_TP_ADD_TC(tp, fork2);
+	ATF_TP_ADD_TC(tp, fork1);
+	ATF_TP_ADD_TC_HAVE_PID(tp, fork2);
+	ATF_TP_ADD_TC_HAVE_PID(tp, fork3);
+	ATF_TP_ADD_TC_HAVE_PID(tp, fork4);
+	ATF_TP_ADD_TC(tp, fork5);
+	ATF_TP_ADD_TC_HAVE_PID(tp, fork6);
+	ATF_TP_ADD_TC_HAVE_PID(tp, fork7);
+	ATF_TP_ADD_TC_HAVE_PID(tp, fork8);
 
-	ATF_TP_ADD_TC_HAVE_PID(tp, vfork1);
-	ATF_TP_ADD_TC(tp, vfork2);
-
-	ATF_TP_ADD_TC(tp, vforkdone1);
-	ATF_TP_ADD_TC(tp, vforkdone2);
+	ATF_TP_ADD_TC(tp, vfork1);
+	ATF_TP_ADD_TC_HAVE_PID(tp, vfork2);
+	ATF_TP_ADD_TC_HAVE_PID(tp, vfork3);
+	ATF_TP_ADD_TC_HAVE_PID(tp, vfork4);
+	ATF_TP_ADD_TC(tp, vfork5);
+	ATF_TP_ADD_TC_HAVE_PID(tp, vfork6);
+	ATF_TP_ADD_TC_HAVE_PID(tp, vfork7);
+	ATF_TP_ADD_TC_HAVE_PID(tp, vfork8);
 
 	ATF_TP_ADD_TC(tp, io_read_d1);
 	ATF_TP_ADD_TC(tp, io_read_d2);

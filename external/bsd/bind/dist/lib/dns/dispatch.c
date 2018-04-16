@@ -1,4 +1,4 @@
-/*	$NetBSD: dispatch.c,v 1.12 2017/06/15 15:59:40 christos Exp $	*/
+/*	$NetBSD: dispatch.c,v 1.12.4.1 2018/04/16 01:57:55 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 2004-2009, 2011-2017  Internet Systems Consortium, Inc. ("ISC")
@@ -3687,12 +3687,14 @@ dns_dispatch_importrecv(dns_dispatch_t *disp, isc_event_t *event) {
 	isc_socketevent_t *sevent, *newsevent;
 
 	REQUIRE(VALID_DISPATCH(disp));
-	REQUIRE((disp->attributes & DNS_DISPATCHATTR_NOLISTEN) != 0);
 	REQUIRE(event != NULL);
 
-	sevent = (isc_socketevent_t *)event;
+	if ((disp->attributes & DNS_DISPATCHATTR_NOLISTEN) == 0)
+		return;
 
+	sevent = (isc_socketevent_t *)event;
 	INSIST(sevent->n <= disp->mgr->buffersize);
+
 	newsevent = (isc_socketevent_t *)
 		    isc_event_allocate(disp->mgr->mctx, NULL,
 				      DNS_EVENT_IMPORTRECVDONE, udp_shrecv,

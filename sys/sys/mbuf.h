@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.178.2.2 2018/03/22 01:44:52 pgoyette Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.178.2.3 2018/04/16 02:00:09 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -161,15 +161,19 @@ struct m_hdr {
 /*
  * record/packet header in first mbuf of chain; valid if M_PKTHDR set
  *
- * A note about csum_data: For the out-bound direction, the low 16 bits
- * indicates the offset after the L4 header where the final L4 checksum value
- * is to be stored and the high 16 bits is the length of the L3 header (the
- * start of the data to be checksumed).  For the in-bound direction, it is only
- * valid if the M_CSUM_DATA flag is set.  In this case, an L4 checksum has been
- * calculated by hardware, but it is up to software to perform final
- * verification.
+ * A note about csum_data:
  *
- * Note for in-bound TCP/UDP checksums, we expect the csum_data to NOT
+ *  o For the out-bound direction, the low 16 bits indicates the offset after
+ *    the L4 header where the final L4 checksum value is to be stored and the
+ *    high 16 bits is the length of the L3 header (the start of the data to
+ *    be checksummed):
+ *
+ *  o For the in-bound direction, it is only valid if the M_CSUM_DATA flag is
+ *    set. In this case, an L4 checksum has been calculated by hardware and
+ *    is stored in csum_data, but it is up to software to perform final
+ *    verification.
+ *
+ * Note for in-bound TCP/UDP checksums: we expect the csum_data to NOT
  * be bit-wise inverted (the final step in the calculation of an IP
  * checksum) -- this is so we can accumulate the checksum for fragmented
  * packets during reassembly.
@@ -200,7 +204,7 @@ struct pkthdr {
 	void	*pattr_hdr;		/* ALTQ: saved header position in mbuf */
 };
 
-/* Checksumming flags. */
+/* Checksumming flags (csum_flags). */
 #define	M_CSUM_TCPv4		0x00000001	/* TCP header/payload */
 #define	M_CSUM_UDPv4		0x00000002	/* UDP header/payload */
 #define	M_CSUM_TCP_UDP_BAD	0x00000004	/* TCP/UDP checksum bad */
@@ -581,6 +585,7 @@ do {									\
  */
 #define	M_COPY_PKTHDR(to, from)						\
 do {									\
+	KASSERT(((from)->m_flags & M_PKTHDR) != 0);			\
 	(to)->m_pkthdr = (from)->m_pkthdr;				\
 	(to)->m_flags = (from)->m_flags & M_COPYFLAGS;			\
 	SLIST_INIT(&(to)->m_pkthdr.tags);				\
@@ -698,6 +703,12 @@ do {									\
 	mbstat_type_add(t, 1);						\
 	(m)->m_type = t;						\
 } while (/* CONSTCOND */ 0)
+
+#ifdef DIAGNOSTIC
+#define M_VERIFY_PACKET(m)	m_verify_packet(m)
+#else
+#define M_VERIFY_PACKET(m)	/* nothing */
+#endif
 
 /* length to m_copy to copy all */
 #define	M_COPYALL	-1
@@ -841,7 +852,6 @@ struct	mbuf *m_devget(char *, int, int, struct ifnet *,
     void (*copy)(const void *, void *, size_t));
 struct	mbuf *m_dup(struct mbuf *, int, int, int);
 struct	mbuf *m_get(int, int);
-struct	mbuf *m_getclr(int, int);
 struct	mbuf *m_gethdr(int, int);
 struct	mbuf *m_prepend(struct mbuf *,int, int);
 struct	mbuf *m_pulldown(struct mbuf *, int, int, int *);
@@ -860,11 +870,11 @@ struct	mbuf *m_copyback_cow(struct mbuf *, int, int, const void *, int);
 int	m_makewritable(struct mbuf **, int, int, int);
 struct	mbuf *m_getcl(int, int, int);
 void	m_copydata(struct mbuf *, int, int, void *);
+void	m_verify_packet(struct mbuf *);
 struct	mbuf *m_free(struct mbuf *);
 void	m_freem(struct mbuf *);
 void	m_reclaim(void *, int);
 void	mbinit(void);
-void	m_ext_free(struct mbuf *);
 void	m_move_pkthdr(struct mbuf *, struct mbuf *);
 
 bool	m_ensure_contig(struct mbuf **, int);

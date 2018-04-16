@@ -1,7 +1,7 @@
-/*	$NetBSD: inet_pton.c,v 1.6 2014/12/10 04:37:59 christos Exp $	*/
+/*	$NetBSD: inet_pton.c,v 1.6.14.1 2018/04/16 01:57:58 pgoyette Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2013, 2014, 2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1996-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -93,14 +93,14 @@ inet_pton4(const char *src, unsigned char *dst) {
 		const char *pch;
 
 		if ((pch = strchr(digits, ch)) != NULL) {
-			unsigned int new = *tp * 10;
+			unsigned int byte = *tp * 10;
 
-			new += (int)(pch - digits);
+			byte += (int)(pch - digits);
 			if (saw_digit && *tp == 0)
 				return (0);
-			if (new > 255)
+			if (byte > 255)
 				return (0);
-			*tp = new;
+			*tp = byte;
 			if (!saw_digit) {
 				if (++octets > 4)
 					return (0);

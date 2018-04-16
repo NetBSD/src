@@ -1,7 +1,7 @@
-/*	$NetBSD: dbdiff_test.c,v 1.1.1.3 2014/12/10 03:34:42 christos Exp $	*/
+/*	$NetBSD: dbdiff_test.c,v 1.1.1.3.14.1 2018/04/16 01:57:57 pgoyette Exp $	*/
 
 /*
- * Copyright (C) 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2011, 2012, 2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -43,14 +43,14 @@
 #define TEST_ORIGIN	"test"
 
 static void
-test_create(const atf_tc_t *tc, dns_db_t **old, dns_db_t **new) {
+test_create(const atf_tc_t *tc, dns_db_t **old, dns_db_t **newdb) {
 	isc_result_t result;
 
 	result = dns_test_loaddb(old, dns_dbtype_zone, TEST_ORIGIN,
 				 atf_tc_get_md_var(tc, "X-old"));
 	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
 
-	result = dns_test_loaddb(new, dns_dbtype_zone, TEST_ORIGIN,
+	result = dns_test_loaddb(newdb, dns_dbtype_zone, TEST_ORIGIN,
 				 atf_tc_get_md_var(tc, "X-new"));
 	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
 }
@@ -65,25 +65,25 @@ ATF_TC_HEAD(diffx_same, tc) {
 	atf_tc_set_md_var(tc, "X-old", "testdata/diff/zone1.data");
 	atf_tc_set_md_var(tc, "X-new", "testdata/diff/zone1.data"); }
 ATF_TC_BODY(diffx_same, tc) {
-	dns_db_t *new = NULL, *old = NULL;
+	dns_db_t *newdb = NULL, *olddb = NULL;
 	isc_result_t result;
 	dns_diff_t diff;
 
 	result = dns_test_begin(NULL, ISC_FALSE);
 	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
 
-	test_create(tc, &old, &new);
+	test_create(tc, &olddb, &newdb);
 
 	dns_diff_init(mctx, &diff);
 
-	result = dns_db_diffx(&diff, new, NULL, old, NULL, NULL);
+	result = dns_db_diffx(&diff, newdb, NULL, olddb, NULL, NULL);
 	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
 
 	ATF_REQUIRE_EQ(ISC_LIST_EMPTY(diff.tuples), ISC_TRUE);
 
 	dns_diff_clear(&diff);
-	dns_db_detach(&new);
-	dns_db_detach(&old);
+	dns_db_detach(&newdb);
+	dns_db_detach(&olddb);
 	dns_test_end();
 }
 
@@ -95,7 +95,7 @@ ATF_TC_HEAD(diffx_add, tc) {
 	atf_tc_set_md_var(tc, "X-new", "testdata/diff/zone2.data");
 }
 ATF_TC_BODY(diffx_add, tc) {
-	dns_db_t *new = NULL, *old = NULL;
+	dns_db_t *newdb = NULL, *olddb = NULL;
 	dns_difftuple_t *tuple;
 	isc_result_t result;
 	dns_diff_t diff;
@@ -104,11 +104,11 @@ ATF_TC_BODY(diffx_add, tc) {
 	result = dns_test_begin(NULL, ISC_FALSE);
 	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
 
-	test_create(tc, &old, &new);
+	test_create(tc, &olddb, &newdb);
 
 	dns_diff_init(mctx, &diff);
 
-	result = dns_db_diffx(&diff, new, NULL, old, NULL, NULL);
+	result = dns_db_diffx(&diff, newdb, NULL, olddb, NULL, NULL);
 	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
 
 	ATF_REQUIRE_EQ(ISC_LIST_EMPTY(diff.tuples), ISC_FALSE);
@@ -120,8 +120,8 @@ ATF_TC_BODY(diffx_add, tc) {
 	ATF_REQUIRE_EQ(count, 1);
 
 	dns_diff_clear(&diff);
-	dns_db_detach(&new);
-	dns_db_detach(&old);
+	dns_db_detach(&newdb);
+	dns_db_detach(&olddb);
 	dns_test_end();
 }
 
@@ -133,7 +133,7 @@ ATF_TC_HEAD(diffx_remove, tc) {
 	atf_tc_set_md_var(tc, "X-new", "testdata/diff/zone3.data");
 }
 ATF_TC_BODY(diffx_remove, tc) {
-	dns_db_t *new = NULL, *old = NULL;
+	dns_db_t *newdb = NULL, *olddb = NULL;
 	dns_difftuple_t *tuple;
 	isc_result_t result;
 	dns_diff_t diff;
@@ -142,11 +142,11 @@ ATF_TC_BODY(diffx_remove, tc) {
 	result = dns_test_begin(NULL, ISC_FALSE);
 	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
 
-	test_create(tc, &old, &new);
+	test_create(tc, &olddb, &newdb);
 
 	dns_diff_init(mctx, &diff);
 
-	result = dns_db_diffx(&diff, new, NULL, old, NULL, NULL);
+	result = dns_db_diffx(&diff, newdb, NULL, olddb, NULL, NULL);
 	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
 
 	ATF_REQUIRE_EQ(ISC_LIST_EMPTY(diff.tuples), ISC_FALSE);
@@ -158,8 +158,8 @@ ATF_TC_BODY(diffx_remove, tc) {
 	ATF_REQUIRE_EQ(count, 1);
 
 	dns_diff_clear(&diff);
-	dns_db_detach(&new);
-	dns_db_detach(&old);
+	dns_db_detach(&newdb);
+	dns_db_detach(&olddb);
 	dns_test_end();
 }
 

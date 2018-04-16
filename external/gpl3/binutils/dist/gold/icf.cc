@@ -1,6 +1,6 @@
 // icf.cc -- Identical Code Folding.
 //
-// Copyright (C) 2009-2016 Free Software Foundation, Inc.
+// Copyright (C) 2009-2018 Free Software Foundation, Inc.
 // Written by Sriraman Tallam <tmsriram@google.com>.
 
 // This file is part of gold.
@@ -545,7 +545,7 @@ get_section_contents(bool first_iteration,
     {
       buffer.append("Contents = ");
       buffer.append(reinterpret_cast<const char*>(contents), plen);
-      // Store the section contents that dont change to avoid recomputing
+      // Store the section contents that don't change to avoid recomputing
       // during the next call to this function.
       (*section_contents)[section_num] = buffer;
     }
@@ -590,6 +590,7 @@ match_sections(unsigned int iteration_num,
                std::vector<unsigned int>* num_tracked_relocs,
                std::vector<unsigned int>* kept_section_id,
                const std::vector<Section_id>& id_section,
+	       const std::vector<uint64_t>& section_addraligns,
                std::vector<bool>* is_secn_or_group_unique,
                std::vector<std::string>* section_contents)
 {
@@ -630,13 +631,7 @@ match_sections(unsigned int iteration_num,
         {
           if ((*kept_section_id)[i] != i)
             {
-              // This section is already folded into something.  See
-              // if it should point to a different kept section.
-              unsigned int kept_section = (*kept_section_id)[i];
-              if (kept_section != (*kept_section_id)[kept_section])
-                {
-                  (*kept_section_id)[i] = (*kept_section_id)[kept_section];
-                }
+              // This section is already folded into something.
               continue;
             }
           this_secn_contents = get_section_contents(false, secn, i, NULL,
@@ -671,7 +666,25 @@ match_sections(unsigned int iteration_num,
                          this_secn_contents.c_str(),
                          this_secn_contents.length()) != 0)
                   continue;
-              (*kept_section_id)[i] = kept_section;
+
+	      // Check section alignment here.
+	      // The section with the larger alignment requirement
+	      // should be kept.  We assume alignment can only be 
+	      // zero or positive integral powers of two.
+	      uint64_t align_i = section_addraligns[i];
+	      uint64_t align_kept = section_addraligns[kept_section];
+	      if (align_i <= align_kept)
+		{
+		  (*kept_section_id)[i] = kept_section;
+		}
+	      else
+		{
+		  (*kept_section_id)[kept_section] = i;
+		  it->second = i;
+		  full_section_contents[kept_section].swap(
+		      full_section_contents[i]);
+		}
+
               converged = false;
               break;
             }
@@ -686,6 +699,26 @@ match_sections(unsigned int iteration_num,
       // this section any further.
       if (iteration_num == 1 && (*num_tracked_relocs)[i] == 0)
         (*is_secn_or_group_unique)[i] = true;
+    }
+
+  // If a section was folded into another section that was later folded
+  // again then the former has to be updated.
+  for (unsigned int i = 0; i < id_section.size(); i++)
+    {
+      // Find the end of the folding chain
+      unsigned int kept = i;
+      while ((*kept_section_id)[kept] != kept)
+        {
+          kept = (*kept_section_id)[kept];
+        }
+      // Update every element of the chain
+      unsigned int current = i;
+      while ((*kept_section_id)[current] != kept)
+        {
+          unsigned int next = (*kept_section_id)[current];
+          (*kept_section_id)[current] = kept;
+          current = next;
+        }
     }
 
   return converged;
@@ -719,6 +752,7 @@ Icf::find_identical_sections(const Input_objects* input_objects,
 {
   unsigned int section_num = 0;
   std::vector<unsigned int> num_tracked_relocs;
+  std::vector<uint64_t> section_addraligns;
   std::vector<bool> is_secn_or_group_unique;
   std::vector<std::string> section_contents;
   const Target& target = parameters->target();
@@ -759,6 +793,7 @@ Icf::find_identical_sections(const Input_objects* input_objects,
           this->section_id_[Section_id(*p, i)] = section_num;
           this->kept_section_id_.push_back(section_num);
           num_tracked_relocs.push_back(0);
+	  section_addraligns.push_back((*p)->section_addralign(i));
           is_secn_or_group_unique.push_back(false);
           section_contents.push_back("");
           section_num++;
@@ -779,8 +814,8 @@ Icf::find_identical_sections(const Input_objects* input_objects,
       num_iterations++;
       converged = match_sections(num_iterations, symtab,
                                  &num_tracked_relocs, &this->kept_section_id_,
-                                 this->id_section_, &is_secn_or_group_unique,
-                                 &section_contents);
+                                 this->id_section_, section_addraligns,
+                                 &is_secn_or_group_unique, &section_contents);
     }
 
   if (parameters->options().print_icf_sections())

@@ -1,6 +1,6 @@
-.\"	$NetBSD: nsupdate.1,v 1.9 2017/06/15 15:59:37 christos Exp $
+.\"	$NetBSD: nsupdate.1,v 1.9.4.1 2018/04/16 01:57:37 pgoyette Exp $
 .\"
-.\" Copyright (C) 2004-2012, 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (C) 2004-2012, 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (C) 2000-2003 Internet Software Consortium.
 .\" 
 .\" Permission to use, copy, modify, and/or distribute this software for any
@@ -50,7 +50,7 @@
 nsupdate \- Dynamic DNS update utility
 .SH "SYNOPSIS"
 .HP \w'\fBnsupdate\fR\ 'u
-\fBnsupdate\fR [\fB\-d\fR] [\fB\-D\fR] [\fB\-L\ \fR\fB\fIlevel\fR\fR] [[\fB\-g\fR] | [\fB\-o\fR] | [\fB\-l\fR] | [\fB\-y\ \fR\fB\fI[hmac:]\fR\fIkeyname:secret\fR\fR] | [\fB\-k\ \fR\fB\fIkeyfile\fR\fR]] [\fB\-t\ \fR\fB\fItimeout\fR\fR] [\fB\-u\ \fR\fB\fIudptimeout\fR\fR] [\fB\-r\ \fR\fB\fIudpretries\fR\fR] [\fB\-R\ \fR\fB\fIrandomdev\fR\fR] [\fB\-v\fR] [\fB\-T\fR] [\fB\-P\fR] [\fB\-V\fR] [filename]
+\fBnsupdate\fR [\fB\-d\fR] [\fB\-D\fR] [\fB\-i\fR] [\fB\-L\ \fR\fB\fIlevel\fR\fR] [[\fB\-g\fR] | [\fB\-o\fR] | [\fB\-l\fR] | [\fB\-y\ \fR\fB\fI[hmac:]\fR\fIkeyname:secret\fR\fR] | [\fB\-k\ \fR\fB\fIkeyfile\fR\fR]] [\fB\-t\ \fR\fB\fItimeout\fR\fR] [\fB\-u\ \fR\fB\fIudptimeout\fR\fR] [\fB\-r\ \fR\fB\fIudpretries\fR\fR] [\fB\-R\ \fR\fB\fIrandomdev\fR\fR] [\fB\-v\fR] [\fB\-T\fR] [\fB\-P\fR] [\fB\-V\fR] [filename]
 .SH "DESCRIPTION"
 .PP
 \fBnsupdate\fR
@@ -101,6 +101,11 @@ Debug mode\&. This provides tracing information about the update requests that a
 \-D
 .RS 4
 Extra debug mode\&.
+.RE
+.PP
+\-i
+.RS 4
+Force interactive mode, even when standard input is not a terminal\&.
 .RE
 .PP
 \-k \fIkeyfile\fR
@@ -521,7 +526,7 @@ The TSIG key is redundantly stored in two separate files\&. This is a consequenc
 \fBInternet Systems Consortium, Inc\&.\fR
 .SH "COPYRIGHT"
 .br
-Copyright \(co 2004-2012, 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+Copyright \(co 2004-2012, 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 .br
 Copyright \(co 2000-2003 Internet Software Consortium.
 .br

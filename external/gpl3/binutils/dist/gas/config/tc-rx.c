@@ -1,5 +1,5 @@
 /* tc-rx.c -- Assembler for the Renesas RX
-   Copyright (C) 2008-2016 Free Software Foundation, Inc.
+   Copyright (C) 2008-2018 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -22,7 +22,6 @@
 #include "struc-symbol.h"
 #include "safe-ctype.h"
 #include "dwarf2dbg.h"
-#include "libbfd.h"
 #include "elf/common.h"
 #include "elf/rx.h"
 #include "rx-defs.h"
@@ -343,7 +342,7 @@ rx_include (int ignore)
      3. Try any directories specified by the -I command line
         option(s).
 
-     4 .Try a directory specifed by the INC100 environment variable.  */
+     4 .Try a directory specified by the INC100 environment variable.  */
 
   if (IS_ABSOLUTE_PATH (f))
     try = fopen (path = f, FOPEN_RT);
@@ -487,7 +486,7 @@ parse_rx_section (char * name)
       else
 	type = SHT_NOBITS;
 
-      obj_elf_change_section (name, type, attr, 0, NULL, FALSE, FALSE);
+      obj_elf_change_section (name, type, 0, attr, 0, NULL, FALSE, FALSE);
     }
   else /* Try not to redefine a section, especially B_1.  */
     {
@@ -502,7 +501,7 @@ parse_rx_section (char * name)
 	| ((flags & SEC_STRINGS) ? SHF_STRINGS : 0)
 	| ((flags & SEC_THREAD_LOCAL) ? SHF_TLS : 0);
 
-      obj_elf_change_section (name, type, attr, 0, NULL, FALSE, FALSE);
+      obj_elf_change_section (name, type, 0, attr, 0, NULL, FALSE, FALSE);
     }
 
   bfd_set_section_alignment (stdoutput, now_seg, align);
@@ -561,7 +560,7 @@ rx_list (int ignore ATTRIBUTE_UNUSED)
 static void
 rx_rept (int ignore ATTRIBUTE_UNUSED)
 {
-  int count = get_absolute_expression ();
+  size_t count = get_absolute_expression ();
 
   do_repeat_with_expander (count, "MREPEAT", "ENDR", "..MACREP");
 }
@@ -1078,7 +1077,7 @@ scan_for_infix_rx_pseudo_ops (char * str)
   if (dot == NULL || dot == str)
     return FALSE;
 
-  /* A real pseudo-op must be preceeded by whitespace.  */
+  /* A real pseudo-op must be preceded by whitespace.  */
   if (dot[-1] != ' ' && dot[-1] != '\t')
     return FALSE;
 
@@ -1487,7 +1486,7 @@ rx_frag_fix_value (fragS *    fragP,
 /* Estimate how big the opcode is after this relax pass.  The return
    value is the difference between fr_fix and the actual size.  We
    compute the total size in rx_relax_frag and store it in fr_subtype,
-   sowe only need to subtract fx_fix and return it.  */
+   so we only need to subtract fx_fix and return it.  */
 
 int
 md_estimate_size_before_relax (fragS * fragP ATTRIBUTE_UNUSED, segT segment ATTRIBUTE_UNUSED)
@@ -2402,8 +2401,10 @@ md_apply_fix (struct fix * f ATTRIBUTE_UNUSED,
 
     case BFD_RELOC_RX_GPRELL:
       val >>= 1;
+      /* Fall through.  */
     case BFD_RELOC_RX_GPRELW:
       val >>= 1;
+      /* Fall through.  */
     case BFD_RELOC_RX_GPRELB:
 #if RX_OPCODE_BIG_ENDIAN
       op[1] = val & 0xff;
@@ -2670,7 +2671,7 @@ rx_elf_final_processing (void)
   elf_elfheader (stdoutput)->e_flags |= elf_flags;
 }
 
-/* Scan the current input line for occurances of Renesas
+/* Scan the current input line for occurrences of Renesas
    local labels and replace them with the GAS version.  */
 
 void

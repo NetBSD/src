@@ -14,13 +14,16 @@ OUTPUT_FORMAT("${OUTPUT_FORMAT}")
 OUTPUT_ARCH(${ARCH})
 ${LIB_SEARCH_DIRS}
 
+/* Allow the command line to override the memory region sizes.  */
+__PMSIZE = DEFINED(__PMSIZE)  ? __PMSIZE : 256K;
+__RAMSIZE = DEFINED(__RAMSIZE) ? __RAMSIZE : 64K;
+
 MEMORY
 {
-  /* Note - we cannot use "PROVIDE(len)" ... "LENGTH = len" as
-     PROVIDE statements are not evaluated inside MEMORY blocks.  */
-  flash     (rx)   : ORIGIN = 0, LENGTH = 256K
-  ram       (rw!x) : ORIGIN = 0x800000, LENGTH = 64K
+  flash     (rx)   : ORIGIN = 0,        LENGTH = __PMSIZE
+  ram       (rw!x) : ORIGIN = 0x800000, LENGTH = __RAMSIZE
 }
+
 SECTIONS
 {
   .text :
@@ -40,6 +43,7 @@ SECTIONS
     *(.rodata)
     *(.rodata*)
     ${RELOCATING+ _edata = . ; }
+    . = ALIGN(4);
   } ${RELOCATING+ > ram}
   .bss  ${RELOCATING+ SIZEOF(.data) + ADDR(.data)} :
   {
@@ -47,6 +51,7 @@ SECTIONS
     *(.bss)
     *(COMMON)
     ${RELOCATING+ _end = . ;  }
+    . = ALIGN(4);
   } ${RELOCATING+ > ram}
 
   ${RELOCATING+ __data_load_start = LOADADDR(.data); }

@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2017, Intel Corp.
+ * Copyright (C) 2000 - 2018, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -128,6 +128,11 @@ main (
 
     AcpiDbgLevel = ACPI_NORMAL_DEFAULT | ACPI_LV_TABLES;
     AcpiDbgLayer = 0xFFFFFFFF;
+
+    /* Set flags so that the interpreter is not used */
+
+    AcpiGbl_ExecuteTablesAsMethods = FALSE;
+    AcpiGbl_GroupModuleLevelCode = TRUE;
 
     Status = AcpiInitializeSubsystem ();
     ACPI_CHECK_OK (AcpiInitializeSubsystem, Status);
@@ -253,9 +258,9 @@ AnDumpEntireNamespace (
         return (-1);
     }
 
-    /* Load the ACPI namespace */
+    /* Build the namespace from the tables */
 
-    Status = AcpiTbLoadNamespace ();
+    Status = AcpiLoadTables ();
     if (Status == AE_CTRL_TERMINATE)
     {
         /* At least one table load failed -- terminate with error */
@@ -277,32 +282,15 @@ AnDumpEntireNamespace (
     }
 
     /*
-     * Enable ACPICA. These calls don't do much for this
-     * utility, since we only dump the namespace. There is no
-     * hardware or event manager code underneath.
+     * NOTE:
+     * We don't need to do any further ACPICA initialization, since we don't
+     * have any hardware, nor is the interpreter configured.
+     *
+     * Namely, we don't need these calls:
+     *  AcpiEnableSubsystem
+     *  AcpiInitializeObjects
      */
-    Status = AcpiEnableSubsystem (
-        ACPI_NO_ACPI_ENABLE |
-        ACPI_NO_ADDRESS_SPACE_INIT |
-        ACPI_NO_EVENT_INIT |
-        ACPI_NO_HANDLER_INIT);
-    if (ACPI_FAILURE (Status))
-    {
-        printf ("**** Could not EnableSubsystem, %s\n",
-            AcpiFormatException (Status));
-        return (-1);
-    }
 
-    Status = AcpiInitializeObjects (
-        ACPI_NO_ADDRESS_SPACE_INIT |
-        ACPI_NO_DEVICE_INIT |
-        ACPI_NO_EVENT_INIT);
-    if (ACPI_FAILURE (Status))
-    {
-        printf ("**** Could not InitializeObjects, %s\n",
-            AcpiFormatException (Status));
-        return (-1);
-    }
 
     /*
      * Perform a namespace walk to dump the contents

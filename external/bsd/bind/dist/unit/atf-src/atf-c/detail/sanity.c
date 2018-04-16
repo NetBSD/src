@@ -1,9 +1,6 @@
-/*	$NetBSD: sanity.c,v 1.1.1.3 2014/12/10 03:34:48 christos Exp $	*/
+/*	$NetBSD: sanity.c,v 1.1.1.3.14.1 2018/04/16 01:58:03 pgoyette Exp $	*/
 
-/*
- * Automated Testing Framework (atf)
- *
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+/* Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,19 +23,18 @@
  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
  * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
+ * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.  */
+
+#include "atf-c/detail/sanity.h"
 
 #if defined(HAVE_CONFIG_H)
-#include "bconfig.h"
+#include "config.h"
 #endif
 
 #include <err.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
-
-#include "sanity.h"
 
 static
 void
@@ -55,7 +51,7 @@ fail(const char *fmt, ...)
     warnx("This is probably a bug in this application or one of the "
           "libraries it uses.  If you believe this problem is caused "
           "by, or is related to " PACKAGE_STRING ", please report it "
-          "to " PACKAGE_BUGREPORT " and provide as many detatils as "
+          "to " PACKAGE_BUGREPORT " and provide as many details as "
           "possible describing how you got to this condition.");
 
     abort();

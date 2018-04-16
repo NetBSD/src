@@ -1,7 +1,7 @@
-/*	$NetBSD: a6_38.c,v 1.7 2016/05/26 16:49:59 christos Exp $	*/
+/*	$NetBSD: a6_38.c,v 1.7.14.1 2018/04/16 01:57:57 pgoyette Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007, 2009, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007, 2009, 2014, 2015, 2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -118,7 +118,7 @@ totext_in_a6(ARGS_TOTEXT) {
 	prefixlen = sr.base[0];
 	INSIST(prefixlen <= 128);
 	isc_region_consume(&sr, 1);
-	sprintf(buf, "%u", prefixlen);
+	snprintf(buf, sizeof(buf), "%u", prefixlen);
 	RETERR(str_totext(buf, target));
 	RETERR(str_totext(" ", target));
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: result.c,v 1.8 2017/06/15 15:59:40 christos Exp $	*/
+/*	$NetBSD: result.c,v 1.8.4.1 2018/04/16 01:57:56 pgoyette Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007-2013, 2015, 2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007-2013, 2015-2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -16,8 +16,6 @@
  * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-
-/* Id */
 
 /*! \file */
 
@@ -167,7 +165,7 @@ static const char *text[DNS_R_NRESULTS] = {
 	"bad EUI",			       /*%< 109 DNS_R_BADEUI */
 
 	"covered by negative trust anchor",    /*%< 110 DNS_R_NTACOVERED */
-	"bad CDS",			       /*%< 111 DNS_R_BADCSD */
+	"bad CDS",			       /*%< 111 DNS_R_BADCDS */
 	"bad CDNSKEY",			       /*%< 112 DNS_R_BADCDNSKEY */
 	"malformed OPT option",		       /*%< 113 DNS_R_OPTERR */
 	"malformed DNSTAP data",	       /*%< 114 DNS_R_BADDNSTAP */

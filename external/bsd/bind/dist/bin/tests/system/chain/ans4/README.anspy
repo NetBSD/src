@@ -1,0 +1,19 @@
+Copyright (C) 2017  Internet Systems Consortium, Inc. ("ISC")
+See COPYRIGHT in the source root or http://isc.org/copyright.html for terms.
+
+This Source Code Form is subject to the terms of the Mozilla Public
+License, v. 2.0. If a copy of the MPL was not distributed with this
+file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+REQUIREMENTS
+ans.py requires at least dnspython 1.12.0.
+
+"ans.py" is a fairly simple Python script that will respond as an
+authoritative server to DNS queries. It opens a UDP socket on 10.53.0.4
+and fd92:7065:b8e:ffff::8, port 5300 (these are for DNS queries) and a TCP
+socket addresses on 10.53.0.4 at port 5301 (this is the control channel).
+
+Please note that all functionality and formatting are subject to change as
+we determine what features the tool will need.
+
+"ans.py" will respond to queries as follows: TBD

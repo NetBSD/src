@@ -2495,8 +2495,7 @@ powerpc*-*-freebsd*)
 	esac
 	;;
 powerpc*-*-netbsd*)
-	tm_file="${tm_file} dbxelf.h elfos.h freebsd-spec.h"
-	tm_file="${tm_file} netbsd.h netbsd-elf.h"
+	tm_file="${tm_file} ${nbsd_tm_file} dbxelf.h elfos.h freebsd-spec.h"
 	case ${target} in
 	    powerpc64*)
 		tm_file="rs6000/biarch64.h ${tm_file}"

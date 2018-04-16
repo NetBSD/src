@@ -1,5 +1,5 @@
 /* dlltool.c -- tool to generate stuff for PE style DLLs
-   Copyright (C) 1995-2016 Free Software Foundation, Inc.
+   Copyright (C) 1995-2018 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -780,10 +780,9 @@ typedef struct export
   int ordinal;
   int constant;
   int noname;		/* Don't put name in image file.  */
-  int private;	/* Don't put reference in import lib.  */
+  int private;		/* Don't put reference in import lib.  */
   int data;
-  int hint;
-  int forward;	/* Number of forward label, 0 means no forward.  */
+  int forward;		/* Number of forward label, 0 means no forward.  */
   struct export *next;
 }
 export_type;
@@ -2708,7 +2707,8 @@ make_one_lib_file (export_type *exp, int i, int delay)
 	      sec->orelocation = rpp;
 	      break;
 	    }
-	  /* else fall through */
+	  /* Fall through.  */
+
 	case IDATA4:
 	  /* An idata$4 or idata$5 is one word long, and has an
 	     rva to idata$6.  */
@@ -2775,10 +2775,8 @@ make_one_lib_file (export_type *exp, int i, int delay)
 	case IDATA6:
 	  if (!exp->noname)
 	    {
-	      /* This used to add 1 to exp->hint.  I don't know
-		 why it did that, and it does not match what I see
-		 in programs compiled with the MS tools.  */
-	      int idx = exp->hint;
+	      int idx = exp->ordinal;
+
 	      if (exp->its_name)
 	        si->size = strlen (exp->its_name) + 3;
 	      else
@@ -3262,7 +3260,6 @@ gen_lib_file (int delay)
 	  alias_exp.noname = exp->noname;
 	  alias_exp.private = exp->private;
 	  alias_exp.data = exp->data;
-	  alias_exp.hint = exp->hint;
 	  alias_exp.forward = exp->forward;
 	  alias_exp.next = exp->next;
 	  n = make_one_lib_file (&alias_exp, i + PREFIX_ALIAS_BASE, delay);
@@ -3926,10 +3923,8 @@ mangle_defs (void)
 {
   /* First work out the minimum ordinal chosen.  */
   export_type *exp;
-
-  int i;
-  int hint = 0;
   export_type **d_export_vec = xmalloc (sizeof (export_type *) * d_nfuncs);
+  int i;
 
   inform (_("Processing definitions"));
 
@@ -3957,11 +3952,6 @@ mangle_defs (void)
   d_exports_lexically[i] = 0;
 
   qsort (d_exports_lexically, i, sizeof (export_type *), nfunc);
-
-  /* Fill exp entries with their hint values.  */
-  for (i = 0; i < d_nfuncs; i++)
-    if (!d_exports_lexically[i]->noname || show_allnames)
-      d_exports_lexically[i]->hint = hint++;
 
   inform (_("Processed definitions"));
 }

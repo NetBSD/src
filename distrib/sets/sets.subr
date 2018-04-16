@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.183 2018/02/08 03:27:50 christos Exp $
+#	$NetBSD: sets.subr,v 1.183.2.1 2018/04/16 01:57:31 pgoyette Exp $
 #
 
 #
@@ -180,7 +180,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.183 2018/02/08 03:27:50 christos Exp $
+# 	# $NetBSD: sets.subr,v 1.183.2.1 2018/04/16 01:57:31 pgoyette Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
@@ -369,6 +369,13 @@ list_set_files()
 				if (kw == "obsolete")
 					haveobs = 1
 			}
+			if (iscompatdir) {
+				for (d in cpaths) {
+					if (cpaths[d] == $1 "/")
+						next
+				}
+				cpaths[ncpaths++] = $1 "/"
+			}
 			if (obsolete && ! haveobs)
 				next
 			if (!show)
@@ -392,11 +399,6 @@ list_set_files()
 				emitcompat[$1] = 1;
 				next
 			}
-			for (d in cpaths) {
-				if (cpaths[d] == $1 "/")
-					next
-			}
-			cpaths[ncpaths++] = $1 "/"
 			for (d in compatarchdirs) {
 				tmp = $0
 				xfile = $1 "/" compatarchdirs[d]

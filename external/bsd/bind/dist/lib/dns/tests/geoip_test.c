@@ -1,7 +1,7 @@
-/*	$NetBSD: geoip_test.c,v 1.4 2015/12/17 04:00:44 christos Exp $	*/
+/*	$NetBSD: geoip_test.c,v 1.4.14.1 2018/04/16 01:57:57 pgoyette Exp $	*/
 
 /*
- * Copyright (C) 2013-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2013-2015, 2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -27,6 +27,7 @@
 #include <unistd.h>
 
 #include <isc/print.h>
+#include <isc/string.h>
 #include <isc/types.h>
 
 #include <dns/geoip.h>
@@ -150,7 +151,7 @@ do_lookup_string(const char *addr, dns_geoip_subtype_t subtype,
 	isc_netaddr_fromin(&na, &in4);
 
 	elt.subtype = subtype;
-	strcpy(elt.as_string, string);
+	strlcpy(elt.as_string, string, sizeof(elt.as_string));
 
 	return (dns_geoip_match(&na, &geoip, &elt));
 }
@@ -167,7 +168,7 @@ do_lookup_string_v6(const char *addr, dns_geoip_subtype_t subtype,
 	isc_netaddr_fromin6(&na, &in6);
 
 	elt.subtype = subtype;
-	strcpy(elt.as_string, string);
+	strlcpy(elt.as_string, string, sizeof(elt.as_string));
 
 	return (dns_geoip_match(&na, &geoip, &elt));
 }

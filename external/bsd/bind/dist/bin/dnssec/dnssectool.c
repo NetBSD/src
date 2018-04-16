@@ -1,7 +1,7 @@
-/*	$NetBSD: dnssectool.c,v 1.10 2017/06/15 15:59:36 christos Exp $	*/
+/*	$NetBSD: dnssectool.c,v 1.10.4.1 2018/04/16 01:57:36 pgoyette Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009-2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009-2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -1845,7 +1845,7 @@ verifyzone(dns_db_t *db, dns_dbversion_t *ver,
 		for (i = 0; i < 256; i++) {
 			if ((ksk_algorithms[i] != 0) ||
 			    (standby_ksk[i] != 0) ||
-			    (revoked_zsk[i] != 0) ||
+			    (revoked_ksk[i] != 0) ||
 			    (zsk_algorithms[i] != 0) ||
 			    (standby_zsk[i] != 0) ||
 			    (revoked_zsk[i] != 0)) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_s3c24x0.c,v 1.9 2016/04/23 10:15:28 skrll Exp $ */
+/*	$NetBSD: ohci_s3c24x0.c,v 1.9.16.1 2018/04/16 01:59:53 pgoyette Exp $ */
 
 /* derived from ohci_pci.c */
 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_s3c24x0.c,v 1.9 2016/04/23 10:15:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_s3c24x0.c,v 1.9.16.1 2018/04/16 01:59:53 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,8 +119,6 @@ ohci_ssio_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't establish interrupt\n");
 		return;
 	}
-
-	strlcpy(sc->sc.sc_vendor, "Samsung", sizeof sc->sc.sc_vendor);
 
 	int err = ohci_init(&sc->sc);
 	if (err) {

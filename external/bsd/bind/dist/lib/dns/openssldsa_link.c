@@ -1,7 +1,7 @@
-/*	$NetBSD: openssldsa_link.c,v 1.13 2017/06/15 15:59:40 christos Exp $	*/
+/*	$NetBSD: openssldsa_link.c,v 1.13.4.1 2018/04/16 01:57:55 pgoyette Exp $	*/
 
 /*
- * Portions Copyright (C) 2004-2009, 2011-2016  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004-2009, 2011-2017  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -46,6 +46,7 @@
 
 #include <isc/entropy.h>
 #include <isc/mem.h>
+#include <isc/safe.h>
 #include <isc/sha1.h>
 #include <isc/util.h>
 
@@ -722,7 +723,7 @@ openssldsa_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 		pub->keydata.pkey = NULL;
 		key->key_size = pub->key_size;
 		dst__privstruct_free(&priv, mctx);
-		memset(&priv, 0, sizeof(priv));
+		isc_safe_memwipe(&priv, sizeof(priv));
 		return (ISC_R_SUCCESS);
 	}
 
@@ -758,7 +759,7 @@ openssldsa_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 		}
 	}
 	dst__privstruct_free(&priv, mctx);
-	memset(&priv, 0, sizeof(priv));
+	isc_safe_memwipe(&priv, sizeof(priv));
 	DSA_set0_key(dsa, pub_key, priv_key);
 	DSA_set0_pqg(dsa, p, q, g);
 	key->key_size = BN_num_bits(p);
@@ -773,7 +774,7 @@ openssldsa_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 		BN_free(g);
 	openssldsa_destroy(key);
 	dst__privstruct_free(&priv, mctx);
-	memset(&priv, 0, sizeof(priv));
+	isc_safe_memwipe(&priv, sizeof(priv));
 	return (ret);
 }
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: named-rrchecker.c,v 1.1.1.5 2016/05/26 15:45:45 christos Exp $	*/
+/*	$NetBSD: named-rrchecker.c,v 1.1.1.5.14.1 2018/04/16 01:57:49 pgoyette Exp $	*/
 
 /*
- * Copyright (C) 2013, 2015, 2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2013, 2015-2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -40,6 +40,9 @@ static isc_lex_t *lex;
 
 static isc_lexspecials_t specials;
 
+ISC_PLATFORM_NORETURN_PRE static void
+usage(void) ISC_PLATFORM_NORETURN_POST;
+
 static void
 usage(void) {
 	fprintf(stderr, "usage: named-rrchecker [-o origin] [-hpCPTu]\n");
@@ -51,6 +54,7 @@ usage(void) {
 	fprintf(stderr, "\t-P: list the supported private type names\n");
 	fprintf(stderr, "\t-T: list the supported standard type names\n");
 	fprintf(stderr, "\t-u: print the record in unknown record format\n");
+	exit(0);
 }
 
 int
@@ -83,8 +87,8 @@ main(int argc, char *argv[]) {
 			    isc_commandline_option != 'h')
 				fprintf(stderr, "%s: invalid argument -%c\n",
 					argv[0], isc_commandline_option);
+			/* Does not return. */
 			usage();
-			exit(1);
 
 		case 'o':
 			origin = isc_commandline_argument;

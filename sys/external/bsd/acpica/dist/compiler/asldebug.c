@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2017, Intel Corp.
+ * Copyright (C) 2000 - 2018, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -84,7 +84,7 @@ CvDbgPrint (
     va_list                 Args;
 
 
-    if (!Gbl_CaptureComments || !AcpiGbl_DebugAslConversion)
+    if (!AcpiGbl_CaptureComments || !AcpiGbl_DebugAslConversion)
     {
         return;
     }

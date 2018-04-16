@@ -1,7 +1,7 @@
-/*	$NetBSD: client.h,v 1.6 2014/12/10 04:37:52 christos Exp $	*/
+/*	$NetBSD: client.h,v 1.6.14.1 2018/04/16 01:57:37 pgoyette Exp $	*/
 
 /*
- * Copyright (C) 2004-2009, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2011-2014, 2017, 2018  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -142,6 +142,8 @@ struct ns_client {
 	isc_sockaddr_t		peeraddr;
 	isc_boolean_t		peeraddr_valid;
 	isc_netaddr_t		destaddr;
+	isc_sockaddr_t		destsockaddr;
+
 	struct in6_pktinfo	pktinfo;
 	isc_dscp_t		dscp;
 	isc_event_t		ctlevent;
@@ -165,6 +167,8 @@ struct ns_client {
 	ISC_QLINK(ns_client_t)	ilink;
 	unsigned char		cookie[8];
 	isc_uint32_t		expire;
+	unsigned char		*keytag;
+	isc_uint16_t		keytag_len;
 };
 
 typedef ISC_QUEUE(ns_client_t) client_queue_t;
@@ -292,6 +296,13 @@ isc_sockaddr_t *
 ns_client_getsockaddr(ns_client_t *client);
 /*%
  * Get the socket address of the client whose request is
+ * currently being processed.
+ */
+
+isc_sockaddr_t *
+ns_client_getdestaddr(ns_client_t *client);
+/*%<
+ * Get the destination address (server) for the request that is
  * currently being processed.
  */
 

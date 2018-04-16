@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.93.2.3 2018/03/22 01:44:50 pgoyette Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.93.2.4 2018/04/16 02:00:07 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005, 2015 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.93.2.3 2018/03/22 01:44:50 pgoyette Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.93.2.4 2018/04/16 02:00:07 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -1054,6 +1054,10 @@ netbsd_elf_note(struct exec_package *epp,
 		break;
 
 	case ELF_NOTE_TYPE_GO_BUILDID_TAG:
+		break;
+
+	case ELF_NOTE_TYPE_NETBSD_EMUL_TAG:
+		/* Ancient NetBSD version tag */
 		break;
 
 	default:

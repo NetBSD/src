@@ -2,7 +2,7 @@
 # It does some substitutions.
 fragment <<EOF
 /* intel coff loader emulation specific stuff
-   Copyright (C) 1991-2016 Free Software Foundation, Inc.
+   Copyright (C) 1991-2018 Free Software Foundation, Inc.
    Written by Steve Chamberlain steve@cygnus.com
 
    This file is part of the GNU Binutils.
@@ -90,7 +90,7 @@ lnk960_before_parse (void)
     {
       name = getenv("G960BASE");
       if (name == (char *) NULL)
-	einfo ("%P%F I960BASE and G960BASE not set\n");
+	einfo (_("%P%F I960BASE and G960BASE not set\n"));
     }
 
   ldfile_add_library_path (concat (name, "/lib", (const char *) NULL), FALSE);
@@ -323,6 +323,7 @@ struct ld_emulation_xfer_struct ld_lnk960_emulation =
   lnk960_hll,
   lnk960_after_parse,
   after_open_default,
+  after_check_relocs_default,
   lnk960_after_allocation,
   lnk960_set_output_arch,
   lnk960_choose_target,

@@ -1,5 +1,5 @@
 /* opcode/i386.h -- Intel 80386 opcode macros
-   Copyright (C) 1989-2016 Free Software Foundation, Inc.
+   Copyright (C) 1989-2018 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler, and GDB, the GNU Debugger.
 
@@ -77,6 +77,7 @@
 #define XACQUIRE_PREFIX_OPCODE 0xf2
 #define XRELEASE_PREFIX_OPCODE 0xf3
 #define BND_PREFIX_OPCODE 0xf2
+#define NOTRACK_PREFIX_OPCODE 0x3e
 
 #define TWO_BYTE_OPCODE_ESCAPE 0x0f
 #define NOP_OPCODE (char) 0x90

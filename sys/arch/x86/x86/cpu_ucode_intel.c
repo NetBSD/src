@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_ucode_intel.c,v 1.12.8.3 2018/03/25 08:49:12 pgoyette Exp $ */
+/* $NetBSD: cpu_ucode_intel.c,v 1.12.8.4 2018/04/16 01:59:56 pgoyette Exp $ */
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_ucode_intel.c,v 1.12.8.3 2018/03/25 08:49:12 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_ucode_intel.c,v 1.12.8.4 2018/04/16 01:59:56 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_xen.h"
@@ -106,6 +106,75 @@ cpu_ucode_intel_firmware_open(firmware_handle_t *fwh, const char *fwname)
 }
 
 #ifndef XEN
+/* Check header version and checksum */
+static int
+cpu_ucode_intel_verify(struct intel1_ucode_header *buf)
+{
+	uint32_t data_size, total_size, payload_size, extended_table_size;
+#if 0 /* not yet */
+	struct intel1_ucode_ext_table *ext_table;
+	struct intel1_ucode_proc_signature *ext_psig;
+#endif
+	uint32_t sum;
+	int i;
+	
+	if ((buf->uh_header_ver != 1) || (buf->uh_loader_rev != 1))
+		return EINVAL;
+
+	/* Data size */
+	if (buf->uh_data_size == 0)
+		data_size = 2000;
+	else
+		data_size = buf->uh_data_size;
+
+	if ((data_size % 4) != 0) {
+		/* Wrong size */
+		return EINVAL;
+	}
+
+	/* Total size */
+	if (buf->uh_total_size == 0)
+		total_size = data_size + 48;
+	else
+		total_size = buf->uh_total_size;
+
+	if ((total_size % 1024) != 0) {
+		/* Wrong size */
+		return EINVAL;
+	}
+
+	payload_size = data_size + 48;
+
+	/* Extended table size */
+	extended_table_size = total_size - payload_size;
+
+	/*
+	 * Verify checksum of update data and header
+	 * (exclude extended signature).
+	 */
+	sum = 0;
+	for (i = 0; i < (payload_size / sizeof(uint32_t)); i++)
+		sum += *((uint32_t *)buf + i);
+	if (sum != 0) {
+		/* Checksum mismatch */
+		return EINVAL;
+	}
+
+	if (extended_table_size == 0)
+		return 0;
+
+#if 0
+	/* Verify extended signature's checksum */
+	ext_table = (void *)buf + payload_size;
+	ext_psig = (void *)ext_table + sizeof(struct intel1_ucode_ext_table);
+	printf("ext_table = %p, extsig = %p\n", ext_table, ext_psig);
+#else
+	printf("This image has extended signature table.");
+#endif
+
+	return 0;
+}
+
 int
 cpu_ucode_intel_apply(struct cpu_ucode_softc *sc, int cpuno)
 {
@@ -121,8 +190,10 @@ cpu_ucode_intel_apply(struct cpu_ucode_softc *sc, int cpuno)
 		return EINVAL;
 
 	uh = (struct intel1_ucode_header *)(sc->sc_blob);
-	if (uh->uh_header_ver != 1 || uh->uh_loader_rev != 1)
+	rv = cpu_ucode_intel_verify(uh);
+	if (rv != 0)
 		return EINVAL;
+
 	ucodetarget = uh->uh_rev;
 
 	if ((uintptr_t)(sc->sc_blob) & 15) {

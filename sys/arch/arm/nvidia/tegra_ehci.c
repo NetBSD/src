@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_ehci.c,v 1.15 2017/05/25 23:45:04 jmcneill Exp $ */
+/* $NetBSD: tegra_ehci.c,v 1.15.10.1 2018/04/16 01:59:53 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_ehci.c,v 1.15 2017/05/25 23:45:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_ehci.c,v 1.15.10.1 2018/04/16 01:59:53 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -112,8 +112,6 @@ tegra_ehci_attach(device_t parent, device_t self, void *aux)
 	sc->sc.sc_bus.ub_revision = USBREV_2_0;
 	sc->sc.sc_ncomp = 0;
 	sc->sc.sc_flags = EHCIF_ETTF;
-	sc->sc.sc_id_vendor = 0x10de;
-	strlcpy(sc->sc.sc_vendor, "Tegra", sizeof(sc->sc.sc_vendor));
 	sc->sc.sc_size = size - TEGRA_EHCI_REG_OFFSET;
 	sc->sc.iot = sc->sc_bst;
 	bus_space_subregion(sc->sc_bst, sc->sc_bsh, TEGRA_EHCI_REG_OFFSET,

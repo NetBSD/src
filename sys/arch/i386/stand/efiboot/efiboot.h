@@ -1,4 +1,4 @@
-/*	$NetBSD: efiboot.h,v 1.5.10.2 2018/03/30 06:20:11 pgoyette Exp $	*/
+/*	$NetBSD: efiboot.h,v 1.5.10.3 2018/04/16 01:59:54 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -46,7 +46,11 @@ void print_banner(void);
 /* efiboot.c */
 extern EFI_HANDLE IH;
 extern EFI_DEVICE_PATH *efi_bootdp;
-extern int efi_bootdp_type;
+extern enum efi_boot_device_type {
+	BOOT_DEVICE_TYPE_HD,
+	BOOT_DEVICE_TYPE_CD,
+	BOOT_DEVICE_TYPE_NET
+} efi_bootdp_type;
 extern EFI_LOADED_IMAGE *efi_li;
 extern uintptr_t efi_main_sp;
 extern physaddr_t efi_loadaddr, efi_kernel_start;
@@ -79,6 +83,16 @@ void efi_memory_probe(void);
 void efi_memory_show_map(bool);
 EFI_MEMORY_DESCRIPTOR *efi_memory_get_map(UINTN *, UINTN *, UINTN *, UINT32 *,
     bool);
+
+/* efinet.c */
+void efi_net_probe(void);
+void efi_net_show(void);
+int efi_net_get_booted_interface_unit(void);
+
+/* efipxe.c */
+void efi_pxe_probe(void);
+void efi_pxe_show(void);
+bool efi_pxe_match_booted_interface(const EFI_MAC_ADDRESS *, UINT32);
 
 /* panic.c */
 __dead VOID Panic(IN CHAR16 *, ...);

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.181.2.2 2018/03/22 01:44:50 pgoyette Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.181.2.3 2018/04/16 02:00:08 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.181.2.2 2018/03/22 01:44:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.181.2.3 2018/04/16 02:00:08 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
@@ -640,18 +640,6 @@ m_gethdr(int nowait, int type)
 	m->m_pkthdr.pattr_af = AF_UNSPEC;
 	m->m_pkthdr.pattr_hdr = NULL;
 
-	return m;
-}
-
-struct mbuf *
-m_getclr(int nowait, int type)
-{
-	struct mbuf *m;
-
-	m = m_get(nowait, type);
-	if (m == NULL)
-		return NULL;
-	memset(mtod(m, void *), 0, MLEN);
 	return m;
 }
 
@@ -1716,76 +1704,6 @@ m_getptr(struct mbuf *m, int loc, int *off)
 	return NULL;
 }
 
-/*
- * m_ext_free: release a reference to the mbuf external storage.
- *
- * => free the mbuf m itself as well.
- */
-
-void
-m_ext_free(struct mbuf *m)
-{
-	const bool embedded = MEXT_ISEMBEDDED(m);
-	bool dofree = true;
-	u_int refcnt;
-
-	KASSERT((m->m_flags & M_EXT) != 0);
-	KASSERT(MEXT_ISEMBEDDED(m->m_ext_ref));
-	KASSERT((m->m_ext_ref->m_flags & M_EXT) != 0);
-	KASSERT((m->m_flags & M_EXT_CLUSTER) ==
-	    (m->m_ext_ref->m_flags & M_EXT_CLUSTER));
-
-	if (__predict_false(m->m_type == MT_FREE)) {
-		panic("mbuf %p already freed", m);
-	}
-
-	if (__predict_true(m->m_ext.ext_refcnt == 1)) {
-		refcnt = m->m_ext.ext_refcnt = 0;
-	} else {
-		refcnt = atomic_dec_uint_nv(&m->m_ext.ext_refcnt);
-	}
-
-	if (refcnt > 0) {
-		if (embedded) {
-			/*
-			 * other mbuf's m_ext_ref still points to us.
-			 */
-			dofree = false;
-		} else {
-			m->m_ext_ref = m;
-		}
-	} else {
-		/*
-		 * dropping the last reference
-		 */
-		if (!embedded) {
-			m->m_ext.ext_refcnt++; /* XXX */
-			m_ext_free(m->m_ext_ref);
-			m->m_ext_ref = m;
-		} else if ((m->m_flags & M_EXT_CLUSTER) != 0) {
-			pool_cache_put_paddr((struct pool_cache *)
-			    m->m_ext.ext_arg,
-			    m->m_ext.ext_buf, m->m_ext.ext_paddr);
-		} else if (m->m_ext.ext_free) {
-			(*m->m_ext.ext_free)(m,
-			    m->m_ext.ext_buf, m->m_ext.ext_size,
-			    m->m_ext.ext_arg);
-			/*
-			 * 'm' is already freed by the ext_free callback.
-			 */
-			dofree = false;
-		} else {
-			free(m->m_ext.ext_buf, m->m_ext.ext_type);
-		}
-	}
-
-	if (dofree) {
-		m->m_type = MT_FREE;
-		m->m_data = NULL;
-		pool_cache_put(mb_cache, m);
-	}
-}
-
 #if defined(DDB)
 void
 m_print(const struct mbuf *m, const char *modif, void (*pr)(const char *, ...))
@@ -1969,6 +1887,136 @@ m_claim(struct mbuf *m, struct mowner *mo)
 	mowner_claim(m, mo);
 }
 #endif /* defined(MBUFTRACE) */
+
+#ifdef DIAGNOSTIC
+/*
+ * Verify that the mbuf chain is not malformed. Used only for diagnostic.
+ * Panics on error.
+ */
+void
+m_verify_packet(struct mbuf *m)
+{
+	struct mbuf *n = m;
+	char *low, *high, *dat;
+	int totlen = 0, len;
+
+	if (__predict_false((m->m_flags & M_PKTHDR) == 0)) {
+		panic("%s: mbuf doesn't have M_PKTHDR", __func__);
+	}
+
+	while (n != NULL) {
+		if (__predict_false(n->m_type == MT_FREE)) {
+			panic("%s: mbuf already freed (n = %p)", __func__, n);
+		}
+		if (__predict_false((n != m) && (n->m_flags & M_PKTHDR) != 0)) {
+			panic("%s: M_PKTHDR set on secondary mbuf", __func__);
+		}
+		if (__predict_false(n->m_nextpkt != NULL)) {
+			panic("%s: m_nextpkt not null (m_nextpkt = %p)",
+			    __func__, n->m_nextpkt);
+		}
+
+		dat = n->m_data;
+		len = n->m_len;
+
+		if (n->m_flags & M_EXT) {
+			low = n->m_ext.ext_buf;
+			high = low + n->m_ext.ext_size;
+		} else if (n->m_flags & M_PKTHDR) {
+			low = n->m_pktdat;
+			high = low + MHLEN;
+		} else {
+			low = n->m_dat;
+			high = low + MLEN;
+		}
+		if (__predict_false(dat + len <= dat)) {
+			panic("%s: incorrect length (len = %d)", __func__, len);
+		}
+		if (__predict_false((dat < low) || (dat + len > high))) {
+			panic("%s: m_data not in packet"
+			    "(dat = %p, len = %d, low = %p, high = %p)",
+			    __func__, dat, len, low, high);
+		}
+
+		totlen += len;
+		n = n->m_next;
+	}
+
+	if (__predict_false(totlen != m->m_pkthdr.len)) {
+		panic("%s: inconsistent mbuf length (%d != %d)", __func__,
+		    totlen, m->m_pkthdr.len);
+	}
+}
+#endif
+
+/*
+ * Release a reference to the mbuf external storage.
+ *
+ * => free the mbuf m itself as well.
+ */
+static void
+m_ext_free(struct mbuf *m)
+{
+	const bool embedded = MEXT_ISEMBEDDED(m);
+	bool dofree = true;
+	u_int refcnt;
+
+	KASSERT((m->m_flags & M_EXT) != 0);
+	KASSERT(MEXT_ISEMBEDDED(m->m_ext_ref));
+	KASSERT((m->m_ext_ref->m_flags & M_EXT) != 0);
+	KASSERT((m->m_flags & M_EXT_CLUSTER) ==
+	    (m->m_ext_ref->m_flags & M_EXT_CLUSTER));
+
+	if (__predict_false(m->m_type == MT_FREE)) {
+		panic("mbuf %p already freed", m);
+	}
+
+	if (__predict_true(m->m_ext.ext_refcnt == 1)) {
+		refcnt = m->m_ext.ext_refcnt = 0;
+	} else {
+		refcnt = atomic_dec_uint_nv(&m->m_ext.ext_refcnt);
+	}
+
+	if (refcnt > 0) {
+		if (embedded) {
+			/*
+			 * other mbuf's m_ext_ref still points to us.
+			 */
+			dofree = false;
+		} else {
+			m->m_ext_ref = m;
+		}
+	} else {
+		/*
+		 * dropping the last reference
+		 */
+		if (!embedded) {
+			m->m_ext.ext_refcnt++; /* XXX */
+			m_ext_free(m->m_ext_ref);
+			m->m_ext_ref = m;
+		} else if ((m->m_flags & M_EXT_CLUSTER) != 0) {
+			pool_cache_put_paddr((struct pool_cache *)
+			    m->m_ext.ext_arg,
+			    m->m_ext.ext_buf, m->m_ext.ext_paddr);
+		} else if (m->m_ext.ext_free) {
+			(*m->m_ext.ext_free)(m,
+			    m->m_ext.ext_buf, m->m_ext.ext_size,
+			    m->m_ext.ext_arg);
+			/*
+			 * 'm' is already freed by the ext_free callback.
+			 */
+			dofree = false;
+		} else {
+			free(m->m_ext.ext_buf, m->m_ext.ext_type);
+		}
+	}
+
+	if (dofree) {
+		m->m_type = MT_FREE;
+		m->m_data = NULL;
+		pool_cache_put(mb_cache, m);
+	}
+}
 
 /*
  * Free a single mbuf and associated external storage. Return the

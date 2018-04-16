@@ -1,7 +1,7 @@
-/*	$NetBSD: log.h,v 1.9 2015/12/17 04:00:44 christos Exp $	*/
+/*	$NetBSD: log.h,v 1.9.14.1 2018/04/16 01:57:56 pgoyette Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009, 2011-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009, 2011-2015, 2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -80,6 +80,7 @@ LIBDNS_EXTERNAL_DATA extern isc_logmodule_t dns_modules[];
 #define DNS_LOGMODULE_DNSSEC		(&dns_modules[27])
 #define DNS_LOGMODULE_CRYPTO		(&dns_modules[28])
 #define DNS_LOGMODULE_PACKETS		(&dns_modules[29])
+#define DNS_LOGMODULE_SSU		(&dns_modules[30])
 
 ISC_LANG_BEGINDECLS
 

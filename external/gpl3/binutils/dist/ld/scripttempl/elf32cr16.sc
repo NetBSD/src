@@ -1,7 +1,7 @@
 # Linker Script for National Semiconductor's CR16-ELF32.
 #
-# Copyright (C) 2014-2016 Free Software Foundation, Inc.
-# 
+# Copyright (C) 2014-2018 Free Software Foundation, Inc.
+#
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
 # notice and this notice are preserved.
@@ -15,7 +15,7 @@ test -z "$ENTRY" && ENTRY=_start
 cat <<EOF
 
 /* Example Linker Script for linking NS CR16 elf32 files.
-   Copyright (C) 2014-2016 Free Software Foundation, Inc.
+   Copyright (C) 2014-2018 Free Software Foundation, Inc.
 
    Copying and distribution of this script, with or without modification,
    are permitted in any medium without royalty provided the copyright
@@ -28,8 +28,8 @@ ${RELOCATING+ENTRY(${ENTRY})}
 /* Define memory regions.  */
 MEMORY
 {
-        rom         : ORIGIN = 0x2,         LENGTH = 3M
-        ram         : ORIGIN = 4M,          LENGTH = 10M
+	rom	    : ORIGIN = 0x2,	    LENGTH = 3M
+	ram	    : ORIGIN = 4M,	    LENGTH = 10M
 }
 
 /*  Many sections come in three flavours.  There is the 'real' section,
@@ -50,25 +50,25 @@ MEMORY
 SECTIONS
 {
   .init :
-  { 
-    __INIT_START = .; 
+  {
+    __INIT_START = .;
     KEEP (*(.init))
-    __INIT_END = .; 
+    __INIT_END = .;
   } > rom
 
   .fini :
-  { 
-    __FINI_START = .; 
+  {
+    __FINI_START = .;
     KEEP (*(.fini))
-    __FINI_END = .; 
+    __FINI_END = .;
   } > rom
 
   .jcr :
-  { 
+  {
     KEEP (*(.jcr))
   } > rom
 
-  .text : 
+  .text :
   {
     __TEXT_START = .;
     *(.text) *(.text.*) *(.gnu.linkonce.t.*)
@@ -82,9 +82,9 @@ SECTIONS
     __RDATA_END = .;
   } > rom
 
-  .ctor ALIGN(4) : 
-  { 
-    __CTOR_START = .; 
+  .ctor ALIGN(4) :
+  {
+    __CTOR_START = .;
     /* The compiler uses crtbegin.o to find the start
        of the constructors, so we make sure it is
        first.  Because this is a wildcard, it
@@ -105,17 +105,17 @@ SECTIONS
     KEEP (*(EXCLUDE_FILE (*crtend*.o) .ctors))
     KEEP (*(SORT(.ctors.*)))
     KEEP (*(.ctors))
-    __CTOR_END = .; 
+    __CTOR_END = .;
   } > rom
 
-  .dtor ALIGN(4) : 
-  { 
-    __DTOR_START = .; 
+  .dtor ALIGN(4) :
+  {
+    __DTOR_START = .;
     KEEP (*crtbegin*.o(.dtors))
     KEEP (*(EXCLUDE_FILE (*crtend*.o) .dtors))
     KEEP (*(SORT(.dtors.*)))
     KEEP (*(.dtors))
-    __DTOR_END = .; 
+    __DTOR_END = .;
   } > rom
 
   .data :

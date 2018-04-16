@@ -1,4 +1,4 @@
-/*	$NetBSD: sockio.h,v 1.10.58.3 2018/04/15 06:23:31 pgoyette Exp $	*/
+/*	$NetBSD: sockio.h,v 1.10.58.4 2018/04/16 01:59:57 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
@@ -56,7 +56,7 @@
 
 #endif /* _KERNEL_OPT */
 
-#define	OIFNAMSIZ	16
+#define OIFNAMSIZ	16
 
 struct oifreq {
 	char	ifr_name[OIFNAMSIZ];		/* if name, e.g. "en0" */

@@ -1,5 +1,5 @@
 /* as.c - GAS main program.
-   Copyright (C) 1987-2016 Free Software Foundation, Inc.
+   Copyright (C) 1987-2018 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -31,6 +31,10 @@
 
 #define COMMON
 
+/* Disable code to set FAKE_LABEL_NAME in obj-multi.h, to avoid circular
+   reference.  */
+#define INITIALIZING_EMULS
+
 #include "as.h"
 #include "subsegs.h"
 #include "output-file.h"
@@ -39,17 +43,12 @@
 #include "dwarf2dbg.h"
 #include "dw2gencfi.h"
 #include "bfdver.h"
+#include "write.h"
 
 #ifdef HAVE_ITBL_CPU
 #include "itbl-ops.h"
 #else
 #define itbl_init()
-#endif
-
-#ifdef HAVE_SBRK
-#ifdef NEED_DECLARATION_SBRK
-extern void *sbrk ();
-#endif
 #endif
 
 #ifdef USING_CGEN
@@ -125,9 +124,6 @@ static struct itbl_file_list *itbl_files;
 #endif
 
 static long start_time;
-#ifdef HAVE_SBRK
-char *start_sbrk;
-#endif
 
 static int flag_macro_alternate;
 
@@ -208,10 +204,10 @@ common_emul_init (void)
   if (this_emulation->fake_label_name == 0)
     {
       if (this_emulation->leading_underscore)
-	this_emulation->fake_label_name = "L0\001";
+	this_emulation->fake_label_name = FAKE_LABEL_NAME;
       else
 	/* What other parameters should we test?  */
-	this_emulation->fake_label_name = ".L0\001";
+	this_emulation->fake_label_name = "." FAKE_LABEL_NAME;
     }
 }
 #endif
@@ -660,7 +656,7 @@ parse_args (int * pargc, char *** pargv)
 	case OPTION_VERSION:
 	  /* This output is intended to follow the GNU standards document.  */
 	  printf (_("GNU assembler %s\n"), BFD_VERSION_STRING);
-	  printf (_("Copyright (C) 2016 Free Software Foundation, Inc.\n"));
+	  printf (_("Copyright (C) 2018 Free Software Foundation, Inc.\n"));
 	  printf (_("\
 This program is free software; you may redistribute it under the terms of\n\
 the GNU General Public License version 3 or later.\n\
@@ -1043,17 +1039,10 @@ This program has absolutely no warranty.\n"));
 static void
 dump_statistics (void)
 {
-#ifdef HAVE_SBRK
-  char *lim = (char *) sbrk (0);
-#endif
   long run_time = get_run_time () - start_time;
 
   fprintf (stderr, _("%s: total time in assembly: %ld.%06ld\n"),
 	   myname, run_time / 1000000, run_time % 1000000);
-#ifdef HAVE_SBRK
-  fprintf (stderr, _("%s: data size %ld\n"),
-	   myname, (long) (lim - start_sbrk));
-#endif
 
   subsegs_print_statistics (stderr);
   write_print_statistics (stderr);
@@ -1186,9 +1175,7 @@ main (int argc, char ** argv)
   int macro_strip_at;
 
   start_time = get_run_time ();
-#ifdef HAVE_SBRK
-  start_sbrk = (char *) sbrk (0);
-#endif
+  signal_init ();
 
 #if defined (HAVE_SETLOCALE) && defined (HAVE_LC_MESSAGES)
   setlocale (LC_MESSAGES, "");
@@ -1334,15 +1321,10 @@ main (int argc, char ** argv)
       n_warns = had_warnings ();
       n_errs = had_errors ();
 
-      if (n_warns == 1)
-	sprintf (warn_msg, _("%d warning"), n_warns);
-      else
-	sprintf (warn_msg, _("%d warnings"), n_warns);
-      if (n_errs == 1)
-	sprintf (err_msg, _("%d error"), n_errs);
-      else
-	sprintf (err_msg, _("%d errors"), n_errs);
-
+      sprintf (warn_msg,
+	       ngettext ("%d warning", "%d warnings", n_warns), n_warns);
+      sprintf (err_msg,
+	       ngettext ("%d error", "%d errors", n_errs), n_errs);
       if (flag_fatal_warnings && n_warns != 0)
 	{
 	  if (n_errs == 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_inet.c,v 1.37.12.4 2018/04/07 04:12:19 pgoyette Exp $	*/
+/*	$NetBSD: npf_inet.c,v 1.37.12.5 2018/04/16 02:00:08 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.37.12.4 2018/04/07 04:12:19 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.37.12.5 2018/04/16 02:00:08 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -229,9 +229,9 @@ npf_fetch_tcpopts(npf_cache_t *npc, uint16_t *mss, int *wscale)
 {
 	nbuf_t *nbuf = npc->npc_nbuf;
 	const struct tcphdr *th = npc->npc_l4.tcp;
-	int topts_len, step;
+	int cnt, optlen = 0;
 	bool setmss = false;
-	uint8_t *nptr;
+	uint8_t *cp, opt;
 	uint8_t val;
 	bool ok;
 
@@ -239,81 +239,64 @@ npf_fetch_tcpopts(npf_cache_t *npc, uint16_t *mss, int *wscale)
 	KASSERT(npf_iscached(npc, NPC_TCP));
 
 	/* Determine if there are any TCP options, get their length. */
-	topts_len = (th->th_off << 2) - sizeof(struct tcphdr);
-	if (topts_len <= 0) {
+	cnt = (th->th_off << 2) - sizeof(struct tcphdr);
+	if (cnt <= 0) {
 		/* No options. */
 		return false;
 	}
-	KASSERT(topts_len <= MAX_TCPOPTLEN);
+	KASSERT(cnt <= MAX_TCPOPTLEN);
 
 	/* Determine if we want to set or get the mss. */
 	if (mss) {
 		setmss = (*mss != 0);
 	}
 
-	/* First step: IP and TCP header up to options. */
-	step = npc->npc_hlen + sizeof(struct tcphdr);
+	/* Fetch all the options at once. */
 	nbuf_reset(nbuf);
-next:
-	if ((nptr = nbuf_advance(nbuf, step, 1)) == NULL) {
+	const int step = npc->npc_hlen + sizeof(struct tcphdr);
+	if ((cp = nbuf_advance(nbuf, step, cnt)) == NULL) {
 		ok = false;
 		goto done;
 	}
-	val = *nptr;
 
-	switch (val) {
-	case TCPOPT_EOL:
-		/* Done. */
-		ok = true;
-		goto done;
-	case TCPOPT_NOP:
-		topts_len--;
-		step = 1;
-		break;
-	case TCPOPT_MAXSEG:
-		if ((nptr = nbuf_ensure_contig(nbuf, TCPOLEN_MAXSEG)) == NULL) {
-			ok = false;
-			goto done;
+	/* Scan the options. */
+	for (; cnt > 0; cnt -= optlen, cp += optlen) {
+		opt = cp[0];
+		if (opt == TCPOPT_EOL)
+			break;
+		if (opt == TCPOPT_NOP)
+			optlen = 1;
+		else {
+			if (cnt < 2)
+				break;
+			optlen = cp[1];
+			if (optlen < 2 || optlen > cnt)
+				break;
 		}
-		if (mss) {
-			if (setmss) {
-				memcpy(nptr + 2, mss, sizeof(uint16_t));
-			} else {
-				memcpy(mss, nptr + 2, sizeof(uint16_t));
+
+		switch (opt) {
+		case TCPOPT_MAXSEG:
+			if (optlen != TCPOLEN_MAXSEG)
+				continue;
+			if (mss) {
+				if (setmss) {
+					memcpy(cp + 2, mss, sizeof(uint16_t));
+				} else {
+					memcpy(mss, cp + 2, sizeof(uint16_t));
+				}
 			}
+			break;
+		case TCPOPT_WINDOW:
+			if (optlen != TCPOLEN_WINDOW)
+				continue;
+			val = *(cp + 2);
+			*wscale = (val > TCP_MAX_WINSHIFT) ? TCP_MAX_WINSHIFT : val;
+			break;
+		default:
+			break;
 		}
-		topts_len -= TCPOLEN_MAXSEG;
-		step = TCPOLEN_MAXSEG;
-		break;
-	case TCPOPT_WINDOW:
-		/* TCP Window Scaling (RFC 1323). */
-		if ((nptr = nbuf_ensure_contig(nbuf, TCPOLEN_WINDOW)) == NULL) {
-			ok = false;
-			goto done;
-		}
-		val = *(nptr + 2);
-		*wscale = (val > TCP_MAX_WINSHIFT) ? TCP_MAX_WINSHIFT : val;
-		topts_len -= TCPOLEN_WINDOW;
-		step = TCPOLEN_WINDOW;
-		break;
-	default:
-		if ((nptr = nbuf_ensure_contig(nbuf, 2)) == NULL) {
-			ok = false;
-			goto done;
-		}
-		val = *(nptr + 1);
-		if (val < 2 || val > topts_len) {
-			ok = false;
-			goto done;
-		}
-		topts_len -= val;
-		step = val;
 	}
 
-	/* Any options left? */
-	if (__predict_true(topts_len > 0)) {
-		goto next;
-	}
 	ok = true;
 done:
 	if (nbuf_flag_p(nbuf, NBUF_DATAREF_RESET)) {

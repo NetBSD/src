@@ -1,7 +1,7 @@
-/*	$NetBSD: constants.h,v 1.1.1.3 2014/12/10 03:34:44 christos Exp $	*/
+/*	$NetBSD: constants.h,v 1.1.1.3.14.1 2018/04/16 01:57:59 pgoyette Exp $	*/
 
 /*
- * Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2014, 2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -32,6 +32,12 @@ static CK_BYTE pk11_ecc_prime256v1[] = {
 };
 static CK_BYTE pk11_ecc_secp384r1[] = {
 	0x06, 0x05, 0x2b, 0x81, 0x04, 0x00, 0x22
+};
+static CK_BYTE pk11_ecc_ed25519[] = {
+	0x06, 0x03, 0x2b, 0x65, 0x70
+};
+static CK_BYTE pk11_ecc_ed448[] = {
+	0x06, 0x03, 0x2b, 0x65, 0x71
 };
 #endif
 

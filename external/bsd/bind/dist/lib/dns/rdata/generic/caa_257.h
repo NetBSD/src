@@ -1,7 +1,7 @@
-/*	$NetBSD: caa_257.h,v 1.1.1.3 2014/12/10 03:34:42 christos Exp $	*/
+/*	$NetBSD: caa_257.h,v 1.1.1.3.22.1 2018/04/16 01:57:57 pgoyette Exp $	*/
 
 /*
- * Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2014, 2018  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -28,7 +28,7 @@ typedef struct dns_rdata_caa {
 	unsigned char *		tag;
 	isc_uint8_t		tag_len;
 	unsigned char		*value;
-	isc_uint8_t		value_len;
+	isc_uint16_t		value_len;
 } dns_rdata_caa_t;
 
 #endif /* GENERIC_CAA_257_H */

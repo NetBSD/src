@@ -1,5 +1,5 @@
 /* BFD back-end for we32k COFF files.
-   Copyright (C) 1992-2016 Free Software Foundation, Inc.
+   Copyright (C) 1992-2018 Free Software Foundation, Inc.
    Contributed by Brendan Kehoe (brendan@cs.widener.edu).
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -36,7 +36,7 @@ static reloc_howto_type howto_table[] =
     EMPTY_HOWTO (3),
     EMPTY_HOWTO (4),
     EMPTY_HOWTO (5),
-  HOWTO(R_DIR32,	       0,  2, 	32, FALSE, 0,complain_overflow_bitfield, 0, "dir32",	TRUE, 0xffffffff,0xffffffff, FALSE),
+  HOWTO(R_DIR32,	       0,  2,	32, FALSE, 0,complain_overflow_bitfield, 0, "dir32",	TRUE, 0xffffffff,0xffffffff, FALSE),
     EMPTY_HOWTO (7),
     EMPTY_HOWTO (010),
     EMPTY_HOWTO (011),
@@ -45,12 +45,12 @@ static reloc_howto_type howto_table[] =
     EMPTY_HOWTO (014),
     EMPTY_HOWTO (015),
     EMPTY_HOWTO (016),
-  HOWTO(R_RELBYTE,	       0,  0,  	8,  FALSE, 0, complain_overflow_bitfield, 0, "8",	TRUE, 0x000000ff,0x000000ff, FALSE),
-  HOWTO(R_RELWORD,	       0,  1, 	16, FALSE, 0, complain_overflow_bitfield, 0, "16",	TRUE, 0x0000ffff,0x0000ffff, FALSE),
-  HOWTO(R_RELLONG,	       0,  2, 	32, FALSE, 0, complain_overflow_bitfield, 0, "32",	TRUE, 0xffffffff,0xffffffff, FALSE),
-  HOWTO(R_PCRBYTE,	       0,  0, 	8,  TRUE,  0, complain_overflow_signed, 0, "DISP8",    TRUE, 0x000000ff,0x000000ff, FALSE),
-  HOWTO(R_PCRWORD,	       0,  1, 	16, TRUE,  0, complain_overflow_signed, 0, "DISP16",   TRUE, 0x0000ffff,0x0000ffff, FALSE),
-  HOWTO(R_PCRLONG,	       0,  2, 	32, TRUE,  0, complain_overflow_signed, 0, "DISP32",   TRUE, 0xffffffff,0xffffffff, FALSE),
+  HOWTO(R_RELBYTE,	       0,  0,	8,  FALSE, 0, complain_overflow_bitfield, 0, "8",	TRUE, 0x000000ff,0x000000ff, FALSE),
+  HOWTO(R_RELWORD,	       0,  1,	16, FALSE, 0, complain_overflow_bitfield, 0, "16",	TRUE, 0x0000ffff,0x0000ffff, FALSE),
+  HOWTO(R_RELLONG,	       0,  2,	32, FALSE, 0, complain_overflow_bitfield, 0, "32",	TRUE, 0xffffffff,0xffffffff, FALSE),
+  HOWTO(R_PCRBYTE,	       0,  0,	8,  TRUE,  0, complain_overflow_signed, 0, "DISP8",    TRUE, 0x000000ff,0x000000ff, FALSE),
+  HOWTO(R_PCRWORD,	       0,  1,	16, TRUE,  0, complain_overflow_signed, 0, "DISP16",   TRUE, 0x0000ffff,0x0000ffff, FALSE),
+  HOWTO(R_PCRLONG,	       0,  2,	32, TRUE,  0, complain_overflow_signed, 0, "DISP32",   TRUE, 0xffffffff,0xffffffff, FALSE),
 };
 
 #define NUM_HOWTOS (sizeof (howto_table) / sizeof (howto_table[0]))

@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_cardbus.c,v 1.43 2016/07/14 04:00:45 msaitoh Exp $	*/
+/*	$NetBSD: ohci_cardbus.c,v 1.43.16.1 2018/04/16 01:59:57 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_cardbus.c,v 1.43 2016/07/14 04:00:45 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_cardbus.c,v 1.43.16.1 2018/04/16 01:59:57 pgoyette Exp $");
 
 #include "ehci_cardbus.h"
 
@@ -145,11 +145,6 @@ ohci_cardbus_attach(device_t parent, device_t self, void *aux)
 		aprint_error("%s: couldn't establish interrupt\n", devname);
 		return;
 	}
-
-	/* Figure out vendor for root hub descriptor. */
-	sc->sc.sc_id_vendor = PCI_VENDOR(ca->ca_id);
-	pci_findvendor(sc->sc.sc_vendor, sizeof(sc->sc.sc_vendor),
-	    sc->sc.sc_id_vendor);
 
 	int err = ohci_init(&sc->sc);
 	if (err) {

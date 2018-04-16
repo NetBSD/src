@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.483.2.1 2018/04/07 04:12:10 pgoyette Exp $
+.\"	$NetBSD: options.4,v 1.483.2.2 2018/04/16 01:59:51 pgoyette Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd February 17, 2018
+.Dd April 5, 2018
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -543,7 +543,7 @@ If not explicitly specified, the default value is "1".
 Note that this sets the value of the
 .Em ddb.fromconsole
 .Xr sysctl 3
-variable which may be changed at run time -- see
+variable which may be changed at run time \(em see
 .Xr sysctl 8
 for details.
 .It Cd options DDB_HISTORY_SIZE=integer
@@ -564,7 +564,7 @@ it is as if DDB were not compiled into the kernel.
 Note that this sets the value of the
 .Em ddb.onpanic
 .Xr sysctl 3
-variable which may be changed at run time -- see
+variable which may be changed at run time \(em see
 .Xr sysctl 8
 for details.
 .It Cd options DDB_COMMANDONENTER=string
@@ -927,7 +927,7 @@ See
 for details.
 .It Cd file-system UMAPFS
 Includes a loopback file system in which user and group IDs may be
-remapped -- this can be useful when mounting alien file systems with
+remapped \(em this can be useful when mounting alien file systems with
 different UIDs and GIDs than the local system.
 See
 .Xr mount_umap 8
@@ -936,7 +936,7 @@ for details.
 .Bq Em EXPERIMENTAL
 Includes code for the union file system, which permits directories to
 be mounted on top of each other in such a way that both file systems
-remain visible -- this permits tricks like allowing writing (and the
+remain visible \(em this permits tricks like allowing writing (and the
 deleting of files) on a read-only file system like a CD-ROM by
 mounting a local writable file system on top of the read-only file
 system.
@@ -1701,12 +1701,12 @@ option sets this to 1 automatically.
 With this option enabled, the machine will forward IP datagrams destined
 for other machines between its interfaces.
 Note that even without this option, the kernel will
-still forward some packets (such as source routed packets) -- removing
+still forward some packets (such as source routed packets) \(em removing
 .Em GATEWAY
 and
 .Em IPFORWARDING
 is insufficient to stop all routing through a bastion host on a
-firewall -- source routing is controlled independently.
+firewall \(em source routing is controlled independently.
 Note that IP forwarding may be turned on and off independently of the
 setting of the
 .Em IPFORWARDING
@@ -2243,7 +2243,7 @@ command.
 Note that this sets the value of the
 .Em kern.dump_on_panic
 .Xr sysctl 3
-variable which may be changed at run time -- see
+variable which may be changed at run time \(em see
 .Xr sysctl 8
 for details.
 .It Cd options USE_TOPDOWN_VM
@@ -2469,6 +2469,17 @@ base memory size to prevent programs overwriting it.
 This is correct behavior, and you should not use the
 .Em REALBASEMEM
 option to access this memory).
+.It Cd options SPECTRE_V2_GCC_MITIGATION=1
+Enable GCC-specific Spectre variant 2 mitigations.
+For 32-bit kernels this means these options:
+.Bd -literal -offset indent
+-mindirect-branch=thunk -mindirect-branch-register
+.Ed
+.Pp
+For 64-bit kernels this means these options:
+.Bd -literal -offset indent
+-mindirect-branch=thunk-inline -mindirect-branch-register
+.Ed
 .It Cd options REALEXTMEM=integer
 Overrides the extended memory size passed in from the boot block.
 (Value given in kilobytes.
@@ -2702,6 +2713,7 @@ bolded
 .\" .Sh EXAMPLES
 .Sh SEE ALSO
 .Xr config 1 ,
+.Xr gcc 1 ,
 .Xr gdb 1 ,
 .Xr ktrace 1 ,
 .Xr pmc 1 ,

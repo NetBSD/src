@@ -1,9 +1,6 @@
-/*	$NetBSD: sanity.h,v 1.4 2014/12/10 04:38:03 christos Exp $	*/
+/*	$NetBSD: sanity.h,v 1.4.14.1 2018/04/16 01:58:03 pgoyette Exp $	*/
 
-/*
- * Automated Testing Framework (atf)
- *
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+/* Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,11 +23,10 @@
  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
  * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
+ * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.  */
 
-#if !defined(ATF_C_SANITY_H)
-#define ATF_C_SANITY_H
+#if !defined(ATF_C_DETAIL_SANITY_H)
+#define ATF_C_DETAIL_SANITY_H
 
 void atf_sanity_inv(const char *, int, const char *);
 void atf_sanity_pre(const char *, int, const char *);
@@ -75,4 +71,4 @@ void atf_sanity_post(const char *, int, const char *);
 
 #define UNREACHABLE INV(0)
 
-#endif /* ATF_C_SANITY_H */
+#endif /* !defined(ATF_C_DETAIL_SANITY_H) */

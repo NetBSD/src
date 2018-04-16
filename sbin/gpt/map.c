@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/map.c,v 1.6 2005/08/31 01:47:19 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: map.c,v 1.13 2015/12/03 21:30:54 christos Exp $");
+__RCSID("$NetBSD: map.c,v 1.13.14.1 2018/04/16 01:59:51 pgoyette Exp $");
 #endif
 
 #include <sys/types.h>
@@ -117,7 +117,10 @@ map_add(gpt_t gpt, off_t start, off_t size, int type, void *data, int alloc)
 
 	if (n->map_start + n->map_size < start + size) {
 		if (!(gpt->flags & GPT_QUIET))
-			gpt_warnx(gpt, "map entry doesn't fit media");
+			gpt_warnx(gpt, "map entry doesn't fit media: "
+			    "new start + new size < start + size\n"
+			    "(%jx + %jx < %jx + %jx)",
+			    n->map_start, n->map_size, start, size);
 		return NULL;
 	}
 
