@@ -1,4 +1,4 @@
-.\"	$NetBSD: fork1.9,v 1.15 2018/04/16 14:51:59 kamil Exp $
+.\"	$NetBSD: fork1.9,v 1.16 2018/04/16 15:02:37 wiz Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -139,9 +139,8 @@ returns 0.
 Otherwise, the following error values are returned:
 .Bl -tag -width [EAGAIN]
 .It Bq Er EAGAIN
-The limit on the total number of system processes would be exceeded.
-.It Bq Er EAGAIN
-The limit
+The limit on the total number of system processes would be exceeded;
+or the limit
 .Dv RLIMIT_NPROC
 on the total number of processes under execution by this
 user id would be exceeded.
