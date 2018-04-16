@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.344 2018/01/09 20:55:43 maya Exp $	*/
+/*	$NetBSD: proc.h,v 1.345 2018/04/16 14:51:59 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -522,7 +522,7 @@ void	proc_free_pid(pid_t);
 void	proc_free_mem(struct proc *);
 void	exit_lwps(struct lwp *l);
 int	fork1(struct lwp *, int, int, void *, size_t,
-	    void (*)(void *), void *, register_t *, struct proc **);
+	    void (*)(void *), void *, register_t *);
 int	pgid_in_session(struct proc *, pid_t);
 void	cpu_lwp_fork(struct lwp *, struct lwp *, void *, size_t,
 	    void (*)(void *), void *);
