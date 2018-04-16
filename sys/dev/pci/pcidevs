@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1328 2018/04/16 13:08:33 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1329 2018/04/16 13:11:53 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -5291,6 +5291,7 @@ product INTEL CP_SS_REGS	0xd156	Core Processor Semaphore and Scratchpad Register
 product INTEL CP_SCS_REGS	0xd157	Core Processor System Control and Status Registers
 product INTEL CP_MISC_REGS	0xd158	Core Processor Miscellaneous Registers
 product INTEL HANKSVILLE	0xf0fe	HANKSVILLE LAN Controller
+product INTEL SSD_760P		0xf1a6	SSD 760p
 
 /* Intergraph products */
 product INTERGRAPH 4D60T	0x00e3	Powerstorm 4D60T
