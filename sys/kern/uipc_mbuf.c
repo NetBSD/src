@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.188 2018/04/15 07:35:49 maxv Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.189 2018/04/16 19:19:51 maxv Exp $	*/
 
 /*
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.188 2018/04/15 07:35:49 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.189 2018/04/16 19:19:51 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
@@ -1908,9 +1908,11 @@ m_verify_packet(struct mbuf *m)
 		if (__predict_false(n->m_type == MT_FREE)) {
 			panic("%s: mbuf already freed (n = %p)", __func__, n);
 		}
+#if 0	/* Causing PR/53189 */
 		if (__predict_false((n != m) && (n->m_flags & M_PKTHDR) != 0)) {
 			panic("%s: M_PKTHDR set on secondary mbuf", __func__);
 		}
+#endif
 		if (__predict_false(n->m_nextpkt != NULL)) {
 			panic("%s: m_nextpkt not null (m_nextpkt = %p)",
 			    __func__, n->m_nextpkt);
