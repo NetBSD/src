@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.495 2018/02/04 17:31:51 maxv Exp $	*/
+/*	$NetBSD: init_main.c,v 1.496 2018/04/16 14:18:16 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.495 2018/02/04 17:31:51 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.496 2018/04/16 14:18:16 kamil Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -608,7 +608,7 @@ main(void)
 	 * wait for us to inform it that the root file system has been
 	 * mounted.
 	 */
-	if (fork1(l, 0, SIGCHLD, NULL, 0, start_init, NULL, NULL, &initproc))
+	if (fork1(l, 0, SIGCHLD, NULL, 0, start_init, NULL, NULL, NULL))
 		panic("fork init");
 
 	/*
@@ -929,6 +929,8 @@ start_init(void *arg)
 	char *ucp, **uap, *arg0, *arg1, *argv[3];
 	char ipath[129];
 	int ipx, len;
+
+	initproc = p;
 
 	/*
 	 * Now in process 1.
