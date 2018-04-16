@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.183 2018/04/14 11:28:12 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.184 2018/04/16 14:36:29 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -12908,4 +12908,79 @@ external/gpl3/gcc.old/usr.bin/gcc/arch/powerpc/tm.h 1.6
 	Apply the changes from GCC 6 / powerpc and netbsd-stdint.h
 	to make <stdatomic.h> work.
 	[mrg, ticket #757]
+
+sys/kern/kern_proc.c				1.212
+
+	Don't set errno ESRCH for empty result of KINFO_PROC[2].
+	[kamil, ticket #758]
+
+sys/dev/auconv.c				1.31 (patch)
+sys/dev/audio.c					1.367,1.369,1.376 (patch),
+						1.377 (patch), 1.378,
+						1.382 (patch),1.383 (patch),
+						1.384,1.388,1.389,
+						1.395,1.396 (patch), 1.397,
+						1.403,1.451,1.452
+sys/dev/audiovar.h				1.59 (patch),1.60 (patch)
+sys/dev/aurateconv.c				1.21 (patch)
+
+	Various audio fixes.
+	[nat, ticket #759]
+
+sys/dev/isa/gus.c				1.112
+
+	Add padding and fix locking.
+	[nat, ticket #760]
+
+sys/dev/isa/sbdsp.c				1.137
+
+	Add AUDIO_ENCODING_SLINEAR to supported encodings.
+	This allows sb, sbpro & sb16 to configure with 8-bit precision.
+	[nat, ticket #761]
+
+sys/arch/x86/pci/if_vmx.c			1.22
+
+	Fix calculation of interface statistics counter.
+	[nonaka, ticket #762]
+
+sys/dev/pci/ichsmb.c				1.57
+sys/dev/pci/pucdata.c				1.101
+
+	ichsmb(4), puc(4): Add Intel 300 series support.
+	[msaitoh, ticket #763]
+
+share/man/man4/wm.4				1.40
+sys/dev/pci/if_wm.c				1.567-1.572
+sys/dev/pci/if_wmreg.h				1.106,1.107
+sys/dev/pci/if_wmvar.h				1.38
+
+	- Fix a bug that ICH8 B0 stepping might misconfigure the chip from the
+	  NVM image.			  
+	- On PCH_SPT and newer, FLASH access should be done by 32bit. Fix it.
+	- Sync wm_nvm_valid_bank_detect_ich8lan() with FreeBSD r287467.
+	- If the extended configuration size in the EXTCNFSIZE register is 0,
+	  don't continue because it's not required.
+	- Add PCH_CNP support (I219 with Intel 300 series chipset).
+	- Enable all I219 devices by default.
+	- I354 uses an external PHY, so don't use wm_set_eee_i350().
+	  The function is only for internal PHY. 
+	- Sort registers and lowercase hexadecimal value. No functional change.
+	[msaitoh, ticket #764]
+
+sys/dev/isa/wbsio.c				1.22
+
+	Handle watchdog attachment in the wbsio_rescan() function, where we
+	take care of other children.
+	[yamaguchi, ticket #765]
+
+sys/netipsec/key.c				1.250
+
+	Removed the unnecessary order check of key_lookup_sa.
+	[yamaguchi, ticket #766]
+
+sys/arch/x86/pci/if_vmx.c			1.23,1.24
+
+	vmx(4): handled SIOCZIFDATA. Fix computation of received
+	bytes interface statistics.
+	[nonaka, ticket #767]
 
