@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.250 2018/04/09 06:26:05 yamaguchi Exp $	*/
+/*	$NetBSD: key.c,v 1.251 2018/04/16 08:52:09 yamaguchi Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.250 2018/04/09 06:26:05 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.251 2018/04/16 08:52:09 yamaguchi Exp $");
 
 /*
  * This code is referred to RFC 2367
@@ -72,6 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: key.c,v 1.250 2018/04/09 06:26:05 yamaguchi Exp $");
 #include <sys/condvar.h>
 #include <sys/localcount.h>
 #include <sys/pserialize.h>
+#include <sys/hash.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -118,6 +119,10 @@ __KERNEL_RCSID(0, "$NetBSD: key.c,v 1.250 2018/04/09 06:26:05 yamaguchi Exp $");
 #define PORT_NONE	0
 #define PORT_LOOSE	1
 #define PORT_STRICT	2
+
+#ifndef SAHHASH_NHASH
+#define SAHHASH_NHASH		128
+#endif
 
 percpu_t *pfkeystat_percpu;
 
@@ -201,20 +206,20 @@ static u_int32_t acq_seq = 0;
 /*
  * Locking notes on SAD:
  * - Data structures
- *   - SAs are managed by the list called key_sad.sahlist and sav lists of sah
- *     entries
+ *   - SAs are managed by the list called key_sad.sahlists and sav lists of
+ *     sah entries
  *     - An sav is supposed to be an SA from a viewpoint of users
  *   - A sah has sav lists for each SA state
- *   - Multiple sahs with the same saidx can exist
+ *   - Multiple saves with the same saidx can exist
  *     - Only one entry has MATURE state and others should be DEAD
  *     - DEAD entries are just ignored from searching
- * - Modifications to the key_sad.sahlist and sah.savlist must be done with
+ * - Modifications to the key_sad.sahlists and sah.savlist must be done with
  *   holding key_sad.lock which is a adaptive mutex
- * - Read accesses to the key_sad.sahlist and sah.savlist must be in
+ * - Read accesses to the key_sad.sahlists and sah.savlist must be in
  *   pserialize(9) read sections
  * - sah's lifetime is managed by localcount(9)
  * - Getting an sah entry
- *   - We get an sah from the key_sad.sahlist
+ *   - We get an sah from the key_sad.sahlists
  *     - Must iterate the list and increment the reference count of a found sah
  *       (by key_sah_ref) in a pserialize read section
  *   - A gotten sah must be released after use by key_sah_unref
@@ -258,7 +263,8 @@ static struct {
 static struct {
 	kmutex_t lock;
 	kcondvar_t cv_lc;
-	struct pslist_head sahlist;
+	struct pslist_head *sahlists;
+	u_long sahlistmask;
 
 	pserialize_t psz;
 	kcondvar_t cv_psz;
@@ -338,13 +344,23 @@ static struct {
 #define SAHLIST_WRITER_REMOVE(sah)					\
 	PSLIST_WRITER_REMOVE((sah), pslist_entry)
 #define SAHLIST_READER_FOREACH(sah)					\
-	PSLIST_READER_FOREACH((sah), &key_sad.sahlist, struct secashead,\
-	                      pslist_entry)
+	for(int _i_sah = 0; _i_sah <= key_sad.sahlistmask; _i_sah++)	\
+		PSLIST_READER_FOREACH((sah), &key_sad.sahlists[_i_sah],	\
+		                      struct secashead, pslist_entry)
+#define SAHLIST_READER_FOREACH_SAIDX(sah, saidx)			\
+	PSLIST_READER_FOREACH((sah),					\
+	    &key_sad.sahlists[key_saidxhash((saidx),			\
+	                       key_sad.sahlistmask)],			\
+	    struct secashead, pslist_entry)
 #define SAHLIST_WRITER_FOREACH(sah)					\
-	PSLIST_WRITER_FOREACH((sah), &key_sad.sahlist, struct secashead,\
-	                      pslist_entry)
+	for(int _i_sah = 0; _i_sah <= key_sad.sahlistmask; _i_sah++)	\
+		PSLIST_WRITER_FOREACH((sah), &key_sad.sahlists[_i_sah],	\
+		                     struct secashead, pslist_entry)
 #define SAHLIST_WRITER_INSERT_HEAD(sah)					\
-	PSLIST_WRITER_INSERT_HEAD(&key_sad.sahlist, (sah), pslist_entry)
+	PSLIST_WRITER_INSERT_HEAD(					\
+	    &key_sad.sahlists[key_saidxhash(&(sah)->saidx,		\
+	                      key_sad.sahlistmask)],	\
+	    (sah), pslist_entry)
 
 /* Macros for key_sad.sahlist#savlist */
 #define SAVLIST_ENTRY_INIT(sav)						\
@@ -790,6 +806,9 @@ static void key_timehandler_work(struct work *, void *);
 static struct callout	key_timehandler_ch;
 static struct workqueue	*key_timehandler_wq;
 static struct work	key_timehandler_wk;
+
+static inline uint32_t
+    key_saidxhash(const struct secasindex *, u_long);
 
 /*
  * Utilities for percpu counters for sadb_lifetime_allocations and
@@ -3364,7 +3383,7 @@ key_getsah(const struct secasindex *saidx, int flag)
 {
 	struct secashead *sah;
 
-	SAHLIST_READER_FOREACH(sah) {
+	SAHLIST_READER_FOREACH_SAIDX(sah, saidx) {
 		if (sah->state == SADB_SASTATE_DEAD)
 			continue;
 		if (key_saidx_match(&sah->saidx, saidx, flag))
@@ -8088,7 +8107,8 @@ key_do_init(void)
 
 	PSLIST_INIT(&key_spd.socksplist);
 
-	PSLIST_INIT(&key_sad.sahlist);
+	key_sad.sahlists = hashinit(SAHHASH_NHASH, HASH_PSLIST, true,
+	    &key_sad.sahlistmask);
 
 	for (i = 0; i <= SADB_SATYPE_MAX; i++) {
 		LIST_INIT(&key_misc.reglist[i]);
@@ -8532,6 +8552,44 @@ key_update_used(void)
 		ipsec_used = 1;
 		break;
 	}
+}
+
+/*
+ * Calculate hash using protocol, source address,
+ * and destination address included in saidx.
+ */
+static inline uint32_t
+key_saidxhash(const struct secasindex *saidx, u_long mask)
+{
+	uint32_t hash32;
+	const struct sockaddr_in *sin;
+	const struct sockaddr_in6 *sin6;
+
+	hash32 = saidx->proto;
+
+	switch (saidx->src.sa.sa_family) {
+	case AF_INET:
+		sin = &saidx->src.sin;
+		hash32 = hash32_buf(&sin->sin_addr,
+		    sizeof(sin->sin_addr), hash32);
+		sin = &saidx->dst.sin;
+		hash32 = hash32_buf(&sin->sin_addr,
+		    sizeof(sin->sin_addr), hash32 << 1);
+		break;
+	case AF_INET6:
+		sin6 = &saidx->src.sin6;
+		hash32 = hash32_buf(&sin6->sin6_addr,
+		    sizeof(sin6->sin6_addr), hash32);
+		sin6 = &saidx->dst.sin6;
+		hash32 = hash32_buf(&sin6->sin6_addr,
+		    sizeof(sin6->sin6_addr), hash32 << 1);
+		break;
+	default:
+		hash32 = 0;
+		break;
+	}
+
+	return hash32 & mask;
 }
 
 static int
