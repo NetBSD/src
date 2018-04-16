@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.251 2018/04/16 08:52:09 yamaguchi Exp $	*/
+/*	$NetBSD: key.c,v 1.252 2018/04/16 08:56:08 yamaguchi Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.251 2018/04/16 08:52:09 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.252 2018/04/16 08:56:08 yamaguchi Exp $");
 
 /*
  * This code is referred to RFC 2367
@@ -124,6 +124,10 @@ __KERNEL_RCSID(0, "$NetBSD: key.c,v 1.251 2018/04/16 08:52:09 yamaguchi Exp $");
 #define SAHHASH_NHASH		128
 #endif
 
+#ifndef SAVLUT_NHASH
+#define SAVLUT_NHASH		128
+#endif
+
 percpu_t *pfkeystat_percpu;
 
 /*
@@ -213,10 +217,13 @@ static u_int32_t acq_seq = 0;
  *   - Multiple saves with the same saidx can exist
  *     - Only one entry has MATURE state and others should be DEAD
  *     - DEAD entries are just ignored from searching
- * - Modifications to the key_sad.sahlists and sah.savlist must be done with
- *   holding key_sad.lock which is a adaptive mutex
- * - Read accesses to the key_sad.sahlists and sah.savlist must be in
- *   pserialize(9) read sections
+ *   - All sav whose state is MATURE or DYING are registered to the lookup
+ *     table called key_sad.savlut in addition to the savlists.
+ *     - The table is used to search an sav without use of saidx.
+ * - Modifications to the key_sad.sahlists, sah.savlist and key_sad.savlut
+ *   must be done with holding key_sad.lock which is a adaptive mutex
+ * - Read accesses to the key_sad.sahlists, sah.savlist and key_sad.savlut
+ *   must be in pserialize(9) read sections
  * - sah's lifetime is managed by localcount(9)
  * - Getting an sah entry
  *   - We get an sah from the key_sad.sahlists
@@ -265,6 +272,8 @@ static struct {
 	kcondvar_t cv_lc;
 	struct pslist_head *sahlists;
 	u_long sahlistmask;
+	struct pslist_head *savlut;
+	u_long savlutmask;
 
 	pserialize_t psz;
 	kcondvar_t cv_psz;
@@ -408,6 +417,21 @@ static struct {
 #define SAVLIST_READER_NEXT(sav)					\
 	PSLIST_READER_NEXT((sav), struct secasvar, pslist_entry)
 
+/* Macros for key_sad.savlut */
+#define SAVLUT_READER_FOREACH(sav, dst, proto, hash_key)		\
+	PSLIST_READER_FOREACH((sav),					\
+	&key_sad.savlut[key_savluthash(dst, proto, hash_key,		\
+	                  key_sad.savlutmask)],				\
+	struct secasvar, pslist_entry_savlut)
+#define SAVLUT_WRITER_INSERT_HEAD(sav)					\
+	key_savlut_writer_insert_head((sav))
+#define SAVLUT_WRITER_REMOVE(sav)					\
+	do {								\
+		if (!(sav)->savlut_added)				\
+			break;						\
+		PSLIST_WRITER_REMOVE((sav), pslist_entry_savlut);	\
+		(sav)->savlut_added = false;				\
+	} while(0)
 
 /* search order for SAs */
 	/*
@@ -807,8 +831,13 @@ static struct callout	key_timehandler_ch;
 static struct workqueue	*key_timehandler_wq;
 static struct work	key_timehandler_wk;
 
+static inline void
+    key_savlut_writer_insert_head(struct secasvar *sav);
 static inline uint32_t
     key_saidxhash(const struct secasindex *, u_long);
+static inline uint32_t
+    key_savluthash(const struct sockaddr *,
+    uint32_t, uint32_t, u_long);
 
 /*
  * Utilities for percpu counters for sadb_lifetime_allocations and
@@ -1219,9 +1248,7 @@ key_lookup_sa(
 	u_int16_t dport,
 	const char* where, int tag)
 {
-	struct secashead *sah;
 	struct secasvar *sav;
-	u_int state;
 	int chkport;
 	int s;
 
@@ -1229,6 +1256,7 @@ key_lookup_sa(
 	int must_check_alg = 0;
 	u_int16_t cpi = 0;
 	u_int8_t algo = 0;
+	uint32_t hash_key = spi;
 
 	if ((sport != 0) && (dport != 0))
 		chkport = PORT_STRICT;
@@ -1251,6 +1279,7 @@ key_lookup_sa(
 		cpi = (u_int16_t) tmp;
 		if (cpi < IPCOMP_CPI_NEGOTIATE_MIN) {
 			algo = (u_int8_t) cpi;
+			hash_key = algo;
 			must_check_spi = 0;
 			must_check_alg = 1;
 		}
@@ -1267,57 +1296,51 @@ key_lookup_sa(
 	 * encrypted so we can't check internal IP header.
 	 */
 	s = pserialize_read_enter();
-	SAHLIST_READER_FOREACH(sah) {
-		/* search valid state */
-		SASTATE_USABLE_FOREACH(state) {
-			SAVLIST_READER_FOREACH(sav, sah, state) {
-				KEYDEBUG_PRINTF(KEYDEBUG_MATCH,
-				    "try match spi %#x, %#x\n",
-				    ntohl(spi), ntohl(sav->spi));
-				/* sanity check */
-				KEY_CHKSASTATE(sav->state, state);
-				/* do not return entries w/ unusable state */
-				if (!SADB_SASTATE_USABLE_P(sav)) {
-					KEYDEBUG_PRINTF(KEYDEBUG_MATCH,
-					    "bad state %d\n", sav->state);
-					continue;
-				}
-				if (proto != sav->sah->saidx.proto) {
-					KEYDEBUG_PRINTF(KEYDEBUG_MATCH,
-					    "proto fail %d != %d\n",
-					    proto, sav->sah->saidx.proto);
-					continue;
-				}
-				if (must_check_spi && spi != sav->spi) {
-					KEYDEBUG_PRINTF(KEYDEBUG_MATCH,
-					    "spi fail %#x != %#x\n",
-					    ntohl(spi), ntohl(sav->spi));
-					continue;
-				}
-				/* XXX only on the ipcomp case */
-				if (must_check_alg && algo != sav->alg_comp) {
-					KEYDEBUG_PRINTF(KEYDEBUG_MATCH,
-					    "algo fail %d != %d\n",
-					    algo, sav->alg_comp);
-					continue;
-				}
+	SAVLUT_READER_FOREACH(sav, &dst->sa, proto, hash_key) {
+		KEYDEBUG_PRINTF(KEYDEBUG_MATCH,
+		    "try match spi %#x, %#x\n",
+		    ntohl(spi), ntohl(sav->spi));
+
+		/* do not return entries w/ unusable state */
+		if (!SADB_SASTATE_USABLE_P(sav)) {
+			KEYDEBUG_PRINTF(KEYDEBUG_MATCH,
+			    "bad state %d\n", sav->state);
+			continue;
+		}
+		if (proto != sav->sah->saidx.proto) {
+			KEYDEBUG_PRINTF(KEYDEBUG_MATCH,
+			    "proto fail %d != %d\n",
+			    proto, sav->sah->saidx.proto);
+			continue;
+		}
+		if (must_check_spi && spi != sav->spi) {
+			KEYDEBUG_PRINTF(KEYDEBUG_MATCH,
+			    "spi fail %#x != %#x\n",
+			    ntohl(spi), ntohl(sav->spi));
+			continue;
+		}
+		/* XXX only on the ipcomp case */
+		if (must_check_alg && algo != sav->alg_comp) {
+			KEYDEBUG_PRINTF(KEYDEBUG_MATCH,
+			    "algo fail %d != %d\n",
+			    algo, sav->alg_comp);
+			continue;
+		}
 
 #if 0	/* don't check src */
 	/* Fix port in src->sa */
 
-				/* check src address */
-				if (!key_sockaddr_match(&src->sa, &sav->sah->saidx.src.sa, PORT_NONE))
-					continue;
+		/* check src address */
+		if (!key_sockaddr_match(&src->sa, &sav->sah->saidx.src.sa, PORT_NONE))
+			continue;
 #endif
-				/* fix port of dst address XXX*/
-				key_porttosaddr(__UNCONST(dst), dport);
-				/* check dst address */
-				if (!key_sockaddr_match(&dst->sa, &sav->sah->saidx.dst.sa, chkport))
-					continue;
-				key_sa_ref(sav, where, tag);
-				goto done;
-			}
-		}
+		/* fix port of dst address XXX*/
+		key_porttosaddr(__UNCONST(dst), dport);
+		/* check dst address */
+		if (!key_sockaddr_match(&dst->sa, &sav->sah->saidx.dst.sa, chkport))
+			continue;
+		key_sa_ref(sav, where, tag);
+		goto done;
 	}
 	sav = NULL;
 done:
@@ -1547,6 +1570,7 @@ key_unlink_sav(struct secasvar *sav)
 	KASSERT(mutex_owned(&key_sad.lock));
 
 	SAVLIST_WRITER_REMOVE(sav);
+	SAVLUT_WRITER_REMOVE(sav);
 
 	KDASSERT(mutex_ownable(softnet_lock));
 	key_sad_pserialize_perform();
@@ -1582,6 +1606,7 @@ key_destroy_sav_with_ref(struct secasvar *sav)
 	mutex_enter(&key_sad.lock);
 	sav->state = SADB_SASTATE_DEAD;
 	SAVLIST_WRITER_REMOVE(sav);
+	SAVLUT_WRITER_REMOVE(sav);
 	mutex_exit(&key_sad.lock);
 
 	/* We cannot unref with holding key_sad.lock */
@@ -5716,6 +5741,7 @@ key_api_update(struct socket *so, struct mbuf *m, const struct sadb_msghdr *mhp)
 	newsav->state = SADB_SASTATE_MATURE;
 	mutex_enter(&key_sad.lock);
 	SAVLIST_WRITER_INSERT_TAIL(sah, SADB_SASTATE_MATURE, newsav);
+	SAVLUT_WRITER_INSERT_HEAD(newsav);
 	mutex_exit(&key_sad.lock);
 	key_validate_savlist(sah, SADB_SASTATE_MATURE);
 
@@ -5913,6 +5939,7 @@ key_api_add(struct socket *so, struct mbuf *m,
 	newsav->state = SADB_SASTATE_MATURE;
 	mutex_enter(&key_sad.lock);
 	SAVLIST_WRITER_INSERT_TAIL(sah, SADB_SASTATE_MATURE, newsav);
+	SAVLUT_WRITER_INSERT_HEAD(newsav);
 	mutex_exit(&key_sad.lock);
 	key_validate_savlist(sah, SADB_SASTATE_MATURE);
 
@@ -8109,6 +8136,8 @@ key_do_init(void)
 
 	key_sad.sahlists = hashinit(SAHHASH_NHASH, HASH_PSLIST, true,
 	    &key_sad.sahlistmask);
+	key_sad.savlut = hashinit(SAVLUT_NHASH, HASH_PSLIST, true,
+	    &key_sad.savlutmask);
 
 	for (i = 0; i <= SADB_SATYPE_MAX; i++) {
 		LIST_INIT(&key_misc.reglist[i]);
@@ -8352,6 +8381,9 @@ key_sa_chgstate(struct secasvar *sav, u_int8_t state)
 	if (_sav == NULL) {
 		SAVLIST_WRITER_INSERT_TAIL(sav->sah, state, sav);
 	}
+
+	SAVLUT_WRITER_INSERT_HEAD(sav);
+
 	key_validate_savlist(sav->sah, state);
 }
 
@@ -8554,6 +8586,28 @@ key_update_used(void)
 	}
 }
 
+static inline void
+key_savlut_writer_insert_head(struct secasvar *sav)
+{
+	uint32_t hash_key;
+	uint32_t hash;
+
+	KASSERT(mutex_owned(&key_sad.lock));
+	KASSERT(!sav->savlut_added);
+
+	if (sav->sah->saidx.proto == IPPROTO_IPCOMP)
+		hash_key = sav->alg_comp;
+	else
+		hash_key = sav->spi;
+
+	hash = key_savluthash(&sav->sah->saidx.dst.sa,
+	    sav->sah->saidx.proto, hash_key, key_sad.savlutmask);
+
+	PSLIST_WRITER_INSERT_HEAD(&key_sad.savlut[hash], sav,
+	    pslist_entry_savlut);
+	sav->savlut_added = true;
+}
+
 /*
  * Calculate hash using protocol, source address,
  * and destination address included in saidx.
@@ -8587,6 +8641,39 @@ key_saidxhash(const struct secasindex *saidx, u_long mask)
 	default:
 		hash32 = 0;
 		break;
+	}
+
+	return hash32 & mask;
+}
+
+/*
+ * Calculate hash using destination address, protocol,
+ * and spi. Those parameter depend on the search of
+ * key_lookup_sa().
+ */
+static uint32_t
+key_savluthash(const struct sockaddr *dst, uint32_t proto,
+    uint32_t spi, u_long mask)
+{
+	uint32_t hash32;
+	const struct sockaddr_in *sin;
+	const struct sockaddr_in6 *sin6;
+
+	hash32 = hash32_buf(&proto, sizeof(proto), spi);
+
+	switch(dst->sa_family) {
+	case AF_INET:
+		sin = satocsin(dst);
+		hash32 = hash32_buf(&sin->sin_addr,
+		    sizeof(sin->sin_addr), hash32);
+		break;
+	case AF_INET6:
+		sin6 = satocsin6(dst);
+		hash32 = hash32_buf(&sin6->sin6_addr,
+		    sizeof(sin6->sin6_addr), hash32);
+		break;
+	default:
+		hash32 = 0;
 	}
 
 	return hash32 & mask;
