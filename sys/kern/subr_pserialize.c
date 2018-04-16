@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pserialize.c,v 1.10 2017/12/28 03:39:48 msaitoh Exp $	*/
+/*	$NetBSD: subr_pserialize.c,v 1.11 2018/04/16 20:25:21 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pserialize.c,v 1.10 2017/12/28 03:39:48 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pserialize.c,v 1.11 2018/04/16 20:25:21 hannken Exp $");
 
 #include <sys/param.h>
 
@@ -146,6 +146,7 @@ pserialize_destroy(pserialize_t psz)
 void
 pserialize_perform(pserialize_t psz)
 {
+	int n;
 	uint64_t xc;
 
 	KASSERT(!cpu_intr_p());
@@ -176,6 +177,7 @@ pserialize_perform(pserialize_t psz)
 	TAILQ_INSERT_TAIL(&psz_queue0, psz, psz_chain);
 	psz_work_todo++;
 
+	n = 0;
 	do {
 		mutex_spin_exit(&psz_lock);
 
@@ -183,9 +185,10 @@ pserialize_perform(pserialize_t psz)
 		 * Force some context switch activity on every CPU, as
 		 * the system may not be busy.  Pause to not flood.
 		 */
+		if (n++ > 1)
+			kpause("psrlz", false, 1, NULL);
 		xc = xc_broadcast(XC_HIGHPRI, (xcfunc_t)nullop, NULL, NULL);
 		xc_wait(xc);
-		kpause("psrlz", false, 1, NULL);
 
 		mutex_spin_enter(&psz_lock);
 	} while (!kcpuset_iszero(psz->psz_target));
