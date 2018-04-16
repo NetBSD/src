@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vmx.c,v 1.19.6.3 2018/04/16 14:18:53 martin Exp $	*/
+/*	$NetBSD: if_vmx.c,v 1.19.6.4 2018/04/16 14:34:43 martin Exp $	*/
 /*	$OpenBSD: if_vmx.c,v 1.16 2014/01/22 06:04:17 brad Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.19.6.3 2018/04/16 14:18:53 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.19.6.4 2018/04/16 14:34:43 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -2892,27 +2892,40 @@ vmxnet3_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		splx(s);
 		break;
 	case SIOCGIFDATA:
+	case SIOCZIFDATA:
 		ifp->if_ipackets = 0;
+		ifp->if_ibytes = 0;
 		ifp->if_iqdrops = 0;
 		ifp->if_ierrors = 0;
 		for (int i = 0; i < sc->vmx_nrxqueues; i++) {
-			ifp->if_ipackets +=
-			    sc->vmx_rxq[i].vxrxq_stats.vmrxs_ipackets;
-			ifp->if_iqdrops +=
-			    sc->vmx_rxq[i].vxrxq_stats.vmrxs_iqdrops;
-			ifp->if_ierrors +=
-			    sc->vmx_rxq[i].vxrxq_stats.vmrxs_ierrors;
+			struct vmxnet3_rxqueue *rxq = &sc->vmx_rxq[i];
+
+			VMXNET3_RXQ_LOCK(rxq);
+			ifp->if_ipackets += rxq->vxrxq_stats.vmrxs_ipackets;
+			ifp->if_ibytes += rxq->vxrxq_stats.vmrxs_ibytes;
+			ifp->if_iqdrops += rxq->vxrxq_stats.vmrxs_iqdrops;
+			ifp->if_ierrors += rxq->vxrxq_stats.vmrxs_ierrors;
+			if (cmd == SIOCZIFDATA) {
+				memset(&rxq->vxrxq_stats, 0,
+				    sizeof(rxq->vxrxq_stats));
+			}
+			VMXNET3_RXQ_UNLOCK(rxq);
 		}
 		ifp->if_opackets = 0;
 		ifp->if_obytes = 0;
 		ifp->if_omcasts = 0;
 		for (int i = 0; i < sc->vmx_ntxqueues; i++) {
-			ifp->if_opackets +=
-			    sc->vmx_txq[i].vxtxq_stats.vmtxs_opackets;
-			ifp->if_obytes +=
-			    sc->vmx_txq[i].vxtxq_stats.vmtxs_obytes;
-			ifp->if_omcasts +=
-			    sc->vmx_txq[i].vxtxq_stats.vmtxs_omcasts;
+			struct vmxnet3_txqueue *txq = &sc->vmx_txq[i];
+
+			VMXNET3_TXQ_LOCK(txq);
+			ifp->if_opackets += txq->vxtxq_stats.vmtxs_opackets;
+			ifp->if_obytes += txq->vxtxq_stats.vmtxs_obytes;
+			ifp->if_omcasts += txq->vxtxq_stats.vmtxs_omcasts;
+			if (cmd == SIOCZIFDATA) {
+				memset(&txq->vxtxq_stats, 0,
+				    sizeof(txq->vxtxq_stats));
+			}
+			VMXNET3_TXQ_UNLOCK(txq);
 		}
 		/* FALLTHROUGH */
 	default:
