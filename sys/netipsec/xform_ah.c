@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ah.c,v 1.88 2018/04/13 09:34:20 maxv Exp $	*/
+/*	$NetBSD: xform_ah.c,v 1.89 2018/04/16 17:32:34 maxv Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ah.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ah.c,v 1.63 2001/06/26 06:18:58 angelos Exp $ */
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.88 2018/04/13 09:34:20 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.89 2018/04/16 17:32:34 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -298,22 +298,6 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 		ip->ip_ttl = 0;
 		ip->ip_sum = 0;
 		ip->ip_off = htons(ntohs(ip->ip_off) & ip4_ah_offsetmask);
-
-		/*
-		 * On FreeBSD, ip_off and ip_len assumed in host endian;
-		 * they are converted (if necessary) by ip_input().
-		 * On NetBSD, ip_off and ip_len are in network byte order.
-		 * They must be massaged back to network byte order
-		 * before verifying the  HMAC. Moreover, on FreeBSD,
-		 * we should add `skip' back into the massaged ip_len
-		 * (presumably ip_input() deducted it before we got here?)
-		 * whereas on NetBSD, we should not.
-		 */
-		if (!out) {
-			/* XXX XXX: What are we trying to achieve here? */
-			uint16_t inlen = ntohs(ip->ip_len);
-			ip->ip_len = htons(inlen);
-		}
 
 		if (alg == CRYPTO_MD5_KPDK || alg == CRYPTO_SHA1_KPDK)
 			ip->ip_off &= htons(IP_DF);
