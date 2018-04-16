@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vmx.c,v 1.21 2018/02/12 17:01:22 maxv Exp $	*/
+/*	$NetBSD: if_vmx.c,v 1.22 2018/04/16 03:21:43 nonaka Exp $	*/
 /*	$OpenBSD: if_vmx.c,v 1.16 2014/01/22 06:04:17 brad Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.21 2018/02/12 17:01:22 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.22 2018/04/16 03:21:43 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -2892,20 +2892,26 @@ vmxnet3_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		splx(s);
 		break;
 	case SIOCGIFDATA:
+		ifp->if_ipackets = 0;
+		ifp->if_iqdrops = 0;
+		ifp->if_ierrors = 0;
 		for (int i = 0; i < sc->vmx_nrxqueues; i++) {
-			ifp->if_ipackets =
+			ifp->if_ipackets +=
 			    sc->vmx_rxq[i].vxrxq_stats.vmrxs_ipackets;
-			ifp->if_iqdrops =
+			ifp->if_iqdrops +=
 			    sc->vmx_rxq[i].vxrxq_stats.vmrxs_iqdrops;
-			ifp->if_ierrors =
+			ifp->if_ierrors +=
 			    sc->vmx_rxq[i].vxrxq_stats.vmrxs_ierrors;
 		}
+		ifp->if_opackets = 0;
+		ifp->if_obytes = 0;
+		ifp->if_omcasts = 0;
 		for (int i = 0; i < sc->vmx_ntxqueues; i++) {
-			ifp->if_opackets =
+			ifp->if_opackets +=
 			    sc->vmx_txq[i].vxtxq_stats.vmtxs_opackets;
-			ifp->if_obytes =
+			ifp->if_obytes +=
 			    sc->vmx_txq[i].vxtxq_stats.vmtxs_obytes;
-			ifp->if_omcasts =
+			ifp->if_omcasts +=
 			    sc->vmx_txq[i].vxtxq_stats.vmtxs_omcasts;
 		}
 		/* FALLTHROUGH */
