@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vmx.c,v 1.23 2018/04/16 09:10:42 nonaka Exp $	*/
+/*	$NetBSD: if_vmx.c,v 1.24 2018/04/16 09:12:52 nonaka Exp $	*/
 /*	$OpenBSD: if_vmx.c,v 1.16 2014/01/22 06:04:17 brad Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.23 2018/04/16 09:10:42 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.24 2018/04/16 09:12:52 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -2894,6 +2894,7 @@ vmxnet3_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	case SIOCGIFDATA:
 	case SIOCZIFDATA:
 		ifp->if_ipackets = 0;
+		ifp->if_ibytes = 0;
 		ifp->if_iqdrops = 0;
 		ifp->if_ierrors = 0;
 		for (int i = 0; i < sc->vmx_nrxqueues; i++) {
@@ -2901,6 +2902,7 @@ vmxnet3_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 			VMXNET3_RXQ_LOCK(rxq);
 			ifp->if_ipackets += rxq->vxrxq_stats.vmrxs_ipackets;
+			ifp->if_ibytes += rxq->vxrxq_stats.vmrxs_ibytes;
 			ifp->if_iqdrops += rxq->vxrxq_stats.vmrxs_iqdrops;
 			ifp->if_ierrors += rxq->vxrxq_stats.vmrxs_ierrors;
 			if (cmd == SIOCZIFDATA) {
