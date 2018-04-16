@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.111 2017/02/01 19:10:33 jakllsch Exp $	*/
+/*	$NetBSD: gus.c,v 1.111.6.1 2018/04/16 14:15:03 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1999, 2008 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.111 2017/02/01 19:10:33 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.111.6.1 2018/04/16 14:15:03 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -175,15 +175,16 @@ struct gus_softc {
 	kmutex_t sc_intr_lock;
 	void *sc_ih;			/* interrupt vector */
 	bus_space_tag_t sc_iot;		/* tag */
-	isa_chipset_tag_t sc_ic;	/* ISA chipset info */
 	bus_space_handle_t sc_ioh1;	/* handle */
 	bus_space_handle_t sc_ioh2;	/* handle */
 	bus_space_handle_t sc_ioh3;	/* ICS2101 handle */
 	bus_space_handle_t sc_ioh4;	/* MIDI handle */
+	char padding[20];
 
 	callout_t sc_dmaout_ch;
 
-	int sc_iobase;			/* I/O base address */
+	isa_chipset_tag_t sc_ic;	/* ISA chipset info */
+	char padding1[4];
 	int sc_irq;			/* IRQ used */
 	int sc_playdrq;			/* DMA channel for play */
 	bus_size_t sc_play_maxsize;	/* DMA size for play */
@@ -257,6 +258,7 @@ struct gus_softc {
 		struct ics2101_softc sc_mixer_u;
 		struct ad1848_isa_softc sc_codec_u;
 	} u;
+	int sc_iobase;			/* I/O base address */
 #define sc_mixer u.sc_mixer_u
 #define sc_codec u.sc_codec_u
 };
@@ -818,9 +820,12 @@ gusattach(device_t parent, device_t self, void *aux)
 	const struct audio_hw_if *hwif;
 
 	sc = device_private(self);
+	sc->sc_dev = self;
 	ia = aux;
 	callout_init(&sc->sc_dmaout_ch, CALLOUT_MPSAFE);
 	ad1848_init_locks(&sc->sc_codec.sc_ad1848, IPL_AUDIO);
+	sc->sc_lock = sc->sc_codec.sc_ad1848.sc_lock;
+	sc->sc_intr_lock = sc->sc_codec.sc_ad1848.sc_intr_lock;
 
 	sc->sc_iot = iot = ia->ia_iot;
 	sc->sc_ic = ia->ia_ic;
@@ -859,7 +864,7 @@ gusattach(device_t parent, device_t self, void *aux)
 
 	delay(500);
 
-	mutex_spin_enter(&sc->sc_intr_lock);
+	mutex_spin_enter(&sc->sc_codec.sc_ad1848.sc_intr_lock);
 
 	c = bus_space_read_1(iot, ioh3, GUS_BOARD_REV);
 	if (c != 0xff)
@@ -872,7 +877,7 @@ gusattach(device_t parent, device_t self, void *aux)
 
 	gusreset(sc, GUS_MAX_VOICES); /* initialize all voices */
 	gusreset(sc, GUS_MIN_VOICES); /* then set to just the ones we use */
-	mutex_spin_exit(&sc->sc_intr_lock);
+	mutex_spin_exit(&sc->sc_codec.sc_ad1848.sc_intr_lock);
 
 	/*
 	 * Setup the IRQ and DRQ lines in software, using values from
@@ -2311,7 +2316,7 @@ gus_set_params(void *addr,int setmode, int usemode, audio_params_t *p,
 		return EINVAL;
 	}
 
-	mutex_spin_enter(&sc->sc_intr_lock);
+	mutex_spin_enter(&sc->sc_codec.sc_ad1848.sc_intr_lock);
 
 	if (p->precision == 8) {
 		sc->sc_voc[GUS_VOICE_LEFT].voccntl &= ~GUSMASK_DATA_SIZE16;
@@ -2332,7 +2337,7 @@ gus_set_params(void *addr,int setmode, int usemode, audio_params_t *p,
 	if (setmode & AUMODE_PLAY)
 		sc->sc_orate = p->sample_rate;
 
-	mutex_spin_exit(&sc->sc_intr_lock);
+	mutex_spin_exit(&sc->sc_codec.sc_ad1848.sc_intr_lock);
 
 	hw = *p;
 	/* clear req_size before setting a filter to avoid confliction
