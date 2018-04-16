@@ -1,5 +1,5 @@
 /* tc-nds32.h -- Header file for tc-nds32.c.
-   Copyright (C) 2012-2016 Free Software Foundation, Inc.
+   Copyright (C) 2012-2018 Free Software Foundation, Inc.
    Contributed by Andes Technology Corporation.
 
    This file is part of GAS.
@@ -91,7 +91,8 @@ extern void tc_nds32_frame_initial_instructions (void);
 /* For DIFF relocations.  The default behavior is inconsistent with the
    asm internal document.  */
 #define TC_FORCE_RELOCATION_SUB_SAME(FIX, SEC)		\
-  (! SEG_NORMAL (SEC) || TC_FORCE_RELOCATION (FIX))
+  (GENERIC_FORCE_RELOCATION_SUB_SAME (FIX, SEC)		\
+   || TC_FORCE_RELOCATION (FIX))
 #define TC_FORCE_RELOCATION(fix)		nds32_force_relocation (fix)
 #define TC_VALIDATE_FIX_SUB(FIX,SEG)		nds32_validate_fix_sub (FIX,SEG)
 #define SET_SECTION_RELOCS(sec, relocs, n)	nds32_set_section_relocs (sec, relocs, n)
@@ -168,7 +169,7 @@ struct nds32_frag_type
   relax_substateT flag;
   struct nds32_opcode *opcode;
   uint32_t insn;
-  /* To Save previos label fixup if existence.  */
+  /* To Save previous label fixup if existence.  */
   struct fix *fixup;
 };
 
@@ -252,7 +253,7 @@ typedef struct nds32_cond_field
 
 /* The max relaxation pattern is 20-bytes including the nop.  */
 #define NDS32_MAXCHAR 20
-/* In current, the max entend number of instruction for one pseudo instruction
+/* In current, the max extended number of instruction for one pseudo instruction
    is 4, but its number of relocation may be 12.  */
 #define MAX_RELAX_NUM 4
 #define MAX_RELAX_FIX 12

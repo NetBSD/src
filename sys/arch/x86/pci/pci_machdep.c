@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.79 2017/06/01 02:45:08 chs Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.79.8.1 2018/04/16 01:59:56 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.79 2017/06/01 02:45:08 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.79.8.1 2018/04/16 01:59:56 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -98,6 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.79 2017/06/01 02:45:08 chs Exp $")
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pccbbreg.h>
 #include <dev/pci/pcidevs.h>
+#include <dev/pci/ppbvar.h>
 #include <dev/pci/genfb_pcivar.h>
 
 #include <dev/wsfb/genfbvar.h>
@@ -147,6 +148,10 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.79 2017/06/01 02:45:08 chs Exp $")
 
 #if NCOM > 0
 #include <dev/pci/puccn.h>
+#endif
+
+#ifndef XEN
+#include <x86/efi.h>
 #endif
 
 #include "opt_pci_conf_mode.h"
@@ -1016,6 +1021,7 @@ device_t
 device_pci_register(device_t dev, void *aux)
 {
 	static bool found_console = false;
+	device_t parent = device_parent(dev);
 
 	device_pci_props_register(dev, aux);
 
@@ -1037,8 +1043,7 @@ device_pci_register(device_t dev, void *aux)
 		 * information (checked below) must be sufficient to
 		 * identify the device.
 		 */
-		if (bin->bus == BI_BUS_PCI &&
-		    device_is_a(device_parent(dev), "pci")) {
+		if (bin->bus == BI_BUS_PCI && device_is_a(parent, "pci")) {
 			struct pci_attach_args *paa = aux;
 			int b, d, f;
 
@@ -1052,9 +1057,23 @@ device_pci_register(device_t dev, void *aux)
 			pci_decompose_tag(paa->pa_pc, paa->pa_tag, &b, &d, &f);
 			if (bin->addr.tag == ((b << 8) | (d << 3) | f))
 				return dev;
+
+#ifndef XEN
+			/*
+			 * efiboot reports parent ppb bus/device/function.
+			 */
+			device_t grand = device_parent(parent);
+			if (efi_probe() && grand && device_is_a(grand, "ppb")) {
+				struct ppb_softc *ppb_sc = device_private(grand);
+				pci_decompose_tag(ppb_sc->sc_pc, ppb_sc->sc_tag,
+				    &b, &d, &f);
+				if (bin->addr.tag == ((b << 8) | (d << 3) | f))
+					return dev;
+			}
+#endif
 		}
 	}
-	if (device_parent(dev) && device_is_a(device_parent(dev), "pci") &&
+	if (parent && device_is_a(parent, "pci") &&
 	    found_console == false) {
 		struct btinfo_framebuffer *fbinfo;
 		struct pci_attach_args *pa = aux;

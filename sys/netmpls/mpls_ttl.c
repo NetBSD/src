@@ -1,4 +1,4 @@
-/*	$NetBSD: mpls_ttl.c,v 1.11 2018/01/19 14:15:35 maxv Exp $ */
+/*	$NetBSD: mpls_ttl.c,v 1.11.2.1 2018/04/16 02:00:09 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpls_ttl.c,v 1.11 2018/01/19 14:15:35 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpls_ttl.c,v 1.11.2.1 2018/04/16 02:00:09 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -146,10 +146,12 @@ static struct mbuf *ip4_check(struct mbuf *);
 /*
  * Send an ICMP Extended error message. References: RFC4884 and RFC4950.
  *
- * This should be in sync with icmp_error() in sys/netinet/ip_icmp.c
- * XXX: is called only for ICMP_TIMXCEED_INTRANS but code is too general.
+ * XXX: This code is inspired from icmp_error(), and should really be merged
+ * into it. icmp_error() should handle ICMP Extended error messages.
  *
- * XXX We're not setting the 'length' field of the Extended ICMP header.
+ * XXX: It is called only for ICMP_TIMXCEED_INTRANS but code is too general.
+ *
+ * XXX: We're not setting the 'length' field of the Extended ICMP header.
  * According to RFC4884, we are in 'non-compliant' mode. Moreover, we're
  * not computing the checksum of the Extended ICMP header.
  */

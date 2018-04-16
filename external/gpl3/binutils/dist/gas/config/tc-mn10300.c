@@ -1,5 +1,5 @@
 /* tc-mn10300.c -- Assembler code for the Matsushita 10300
-   Copyright (C) 1996-2016 Free Software Foundation, Inc.
+   Copyright (C) 1996-2018 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -284,7 +284,7 @@ static const struct reg_name other_registers[] =
 #define OTHER_REG_NAME_CNT	ARRAY_SIZE (other_registers)
 
 /* Perform a binary search of the given register table REGS to see
-   if NAME is a valid regiter name.  Returns the register number from
+   if NAME is a valid register name.  Returns the register number from
    the array on success, or -1 on failure.  */
 
 static int
@@ -1865,7 +1865,7 @@ keep_going:
 	 as the size of a pointer, so we need a union to convert
 	 the opindex field of the fr_cgen structure into a char *
 	 so that it can be stored in the frag.  We do not have
-	 to worry about loosing accuracy as we are not going to
+	 to worry about losing accuracy as we are not going to
 	 be even close to the 32bit limit of the int.  */
       union
       {
@@ -2422,7 +2422,7 @@ mn10300_fix_adjustable (struct fix *fixp)
 
   /* Likewise, do not adjust symbols that won't be merged, or debug
      symbols, because they too break relaxation.  We do want to adjust
-     other mergable symbols, like .rodata, because code relaxations
+     other mergeable symbols, like .rodata, because code relaxations
      need section-relative symbols to properly relax them.  */
   if (! (S_GET_SEGMENT (fixp->fx_addsy)->flags & SEC_MERGE))
     return FALSE;
@@ -2618,7 +2618,7 @@ mn10300_handle_align (fragS *frag)
 	 relocs will prevent the contents from being merged.  */
       && (bfd_get_section_flags (now_seg->owner, now_seg) & SEC_MERGE) == 0)
     /* Create a new fixup to record the alignment request.  The symbol is
-       irrelevent but must be present so we use the absolute section symbol.
+       irrelevant but must be present so we use the absolute section symbol.
        The offset from the symbol is used to record the power-of-two alignment
        value.  The size is set to 0 because the frag may already be aligned,
        thus causing cvt_frag_to_fill to reduce the size of the frag to zero.  */

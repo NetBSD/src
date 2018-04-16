@@ -1,4 +1,4 @@
-/* $NetBSD: gcscehci.c,v 1.12 2016/04/23 10:15:29 skrll Exp $ */
+/* $NetBSD: gcscehci.c,v 1.12.16.1 2018/04/16 01:59:54 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gcscehci.c,v 1.12 2016/04/23 10:15:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gcscehci.c,v 1.12.16.1 2018/04/16 01:59:54 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,11 +147,6 @@ gcscehci_attach(device_t parent, device_t self, void *aux)
 	aprint_normal("%s: interrupting at %s\n", devname, intrstr);
 
 	sc->sc.sc_bus.ub_revision = USBREV_2_0;
-
-	/* Figure out vendor for root hub descriptor. */
-	sc->sc.sc_id_vendor = PCI_VENDOR(pa->pa_id);
-	pci_findvendor(sc->sc.sc_vendor, sizeof(sc->sc.sc_vendor),
-	    sc->sc.sc_id_vendor);
 
 	/*
 	 * Find companion controllers.  According to the spec they always

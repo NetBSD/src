@@ -1,7 +1,7 @@
-/*	$NetBSD: hmacmd5.h,v 1.6 2017/06/15 15:59:41 christos Exp $	*/
+/*	$NetBSD: hmacmd5.h,v 1.6.4.1 2018/04/16 01:57:58 pgoyette Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009, 2014, 2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009, 2014, 2016-2018  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -44,7 +44,7 @@
 
 typedef struct {
 	HMAC_CTX *ctx;
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
+#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
 	HMAC_CTX _ctx;
 #endif
 } isc_hmacmd5_t;
@@ -83,6 +83,9 @@ isc_hmacmd5_verify(isc_hmacmd5_t *ctx, unsigned char *digest);
 
 isc_boolean_t
 isc_hmacmd5_verify2(isc_hmacmd5_t *ctx, unsigned char *digest, size_t len);
+
+isc_boolean_t
+isc_hmacmd5_check(int testing);
 
 ISC_LANG_ENDDECLS
 

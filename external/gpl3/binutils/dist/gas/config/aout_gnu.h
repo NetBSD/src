@@ -1,6 +1,6 @@
 /* This file is aout_gnu.h
 
-   Copyright (C) 1987-2016 Free Software Foundation, Inc.
+   Copyright (C) 1987-2018 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -32,8 +32,6 @@
 
 */
 
-#define USE_EXTENDED_RELOC defined(TC_SPARC)
-
 #if defined(TC_SPARC)
 enum reloc_type
   {
@@ -62,6 +60,9 @@ enum reloc_type
     NO_RELOC
   };
 
+#define USE_EXTENDED_RELOC 1
+#else
+#define USE_EXTENDED_RELOC 0
 #endif /* TC_SPARC */
 
 #define __GNU_EXEC_MACROS__
@@ -303,7 +304,7 @@ struct nlist
 
 /* The following enum and struct were borrowed from SunOS's
    /usr/include/sun4/a.out.h  and extended to handle
-   other machines.  It is currently used on SPARC and AMD 29000.
+   other machines.  It is currently used on SPARC.
 
    reloc_ext_bytes is how it looks on disk.  reloc_info_extended is
    how we might process it on a native host.  */

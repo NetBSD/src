@@ -1,9 +1,6 @@
-/*	$NetBSD: text_test.c,v 1.4 2014/12/10 04:38:03 christos Exp $	*/
+/*	$NetBSD: text_test.c,v 1.4.14.1 2018/04/16 01:58:03 pgoyette Exp $	*/
 
-/*
- * Automated Testing Framework (atf)
- *
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+/* Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,8 +23,9 @@
  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
  * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
+ * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.  */
+
+#include "atf-c/detail/text.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -35,9 +33,8 @@
 
 #include <atf-c.h>
 
-#include "sanity.h"
-#include "test_helpers.h"
-#include "text.h"
+#include "atf-c/detail/sanity.h"
+#include "atf-c/detail/test_helpers.h"
 
 /* ---------------------------------------------------------------------
  * Auxiliary functions.

@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.245.2.1 2018/03/22 01:44:51 pgoyette Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.245.2.2 2018/04/16 02:00:09 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.245.2.1 2018/03/22 01:44:51 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.245.2.2 2018/04/16 02:00:09 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -374,8 +374,12 @@ udp_input(struct mbuf *m, ...)
 	 */
 	ip_len = ntohs(ip->ip_len);
 	len = ntohs((u_int16_t)uh->uh_ulen);
+	if (len < sizeof(struct udphdr)) {
+		UDP_STATINC(UDP_STAT_BADLEN);
+		goto bad;
+	}
 	if (ip_len != iphlen + len) {
-		if (ip_len < iphlen + len || len < sizeof(struct udphdr)) {
+		if (ip_len < iphlen + len) {
 			UDP_STATINC(UDP_STAT_BADLEN);
 			goto bad;
 		}
@@ -477,7 +481,6 @@ udp4_sendup(struct mbuf *m, int off /* offset of data portion */,
 	KASSERT(inp != NULL);
 
 #if defined(IPSEC)
-	/* check AH/ESP integrity. */
 	if (ipsec_used && ipsec_in_reject(m, inp)) {
 		if ((n = m_copypacket(m, M_DONTWAIT)) != NULL)
 			icmp_error(n, ICMP_UNREACH, ICMP_UNREACH_ADMIN_PROHIBIT,

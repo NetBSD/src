@@ -1,7 +1,7 @@
-/*	$NetBSD: ifiter_ioctl.c,v 1.6 2015/12/17 04:00:45 christos Exp $	*/
+/*	$NetBSD: ifiter_ioctl.c,v 1.6.14.1 2018/04/16 01:58:00 pgoyette Exp $	*/
 
 /*
- * Copyright (C) 2004-2009, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2014, 2015, 2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -413,7 +413,8 @@ internal_current_clusteralias(isc_interfaceiter_t *iter) {
 	memset(&iter->current, 0, sizeof(iter->current));
 	iter->current.af = iter->clua_sa.sa_family;
 	memset(iter->current.name, 0, sizeof(iter->current.name));
-	sprintf(iter->current.name, "clua%d", ci.aliasid);
+	snprintf(iter->current.name, sizeof(iter->current.name),
+		 "clua%d", ci.aliasid);
 	iter->current.flags = INTERFACE_F_UP;
 	get_inaddr(&iter->current.address, &ci.addr);
 	get_inaddr(&iter->current.netmask, &ci.netmask);

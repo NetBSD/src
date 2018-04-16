@@ -1,5 +1,5 @@
 /* Instruction printing code for Score
-   Copyright (C) 2009-2016 Free Software Foundation, Inc.
+   Copyright (C) 2009-2018 Free Software Foundation, Inc.
    Contributed by:
    Brain.lin (brain.lin@sunplusct.com)
    Mei Ligang (ligang@sunnorth.com.cn)
@@ -513,7 +513,8 @@ static struct score_opcode score_opcodes[] =
   {0x00000d05, 0x00007f0f, "tvc!"},
   {0x00000026, 0x3e0003ff, "xor\t\t%20-24r, %15-19r, %10-14r"},
   {0x00000027, 0x3e0003ff, "xor.c\t\t%20-24r, %15-19r, %10-14r"},
-  {0x00002007, 0x0000700f, "xor!\t\t%8-11r, %4-7r"}
+  {0x00002007, 0x0000700f, "xor!\t\t%8-11r, %4-7r"},
+  { 0, 0, NULL }
 };
 
 typedef struct

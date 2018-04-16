@@ -1,7 +1,7 @@
-/*	$NetBSD: inet_aton.c,v 1.7 2014/12/10 04:37:59 christos Exp $	*/
+/*	$NetBSD: inet_aton.c,v 1.7.14.1 2018/04/16 01:57:58 pgoyette Exp $	*/
 
 /*
- * Portions Copyright (C) 2004, 2005, 2007, 2008, 2012-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004, 2005, 2007, 2008, 2012-2014, 2017  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1996-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -93,8 +93,8 @@ isc_net_aton(const char *cp, struct in_addr *addr) {
 	int base;
 	ptrdiff_t n;
 	unsigned char c;
-	isc_uint8_t parts[4];
-	isc_uint8_t *pp = parts;
+	isc_uint32_t parts[4];
+	isc_uint32_t *pp = parts;
 	int digit;
 
 	c = *cp;
@@ -146,7 +146,7 @@ isc_net_aton(const char *cp, struct in_addr *addr) {
 			 */
 			if (pp >= parts + 3 || val > 0xffU)
 				return (0);
-			*pp++ = (isc_uint8_t)val;
+			*pp++ = val;
 			c = *++cp;
 		} else
 			break;

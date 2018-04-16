@@ -1,5 +1,5 @@
 /* BFD back-end for Motorola sysv68
-   Copyright (C) 1997-2016 Free Software Foundation, Inc.
+   Copyright (C) 1997-2018 Free Software Foundation, Inc.
    Written by Philippe De Muyter <phdm@info.ucl.ac.be>.
 
    This file is part of BFD, the Binary File Descriptor library.

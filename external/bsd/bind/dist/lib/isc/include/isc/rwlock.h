@@ -1,7 +1,7 @@
-/*	$NetBSD: rwlock.h,v 1.5 2014/12/10 04:38:00 christos Exp $	*/
+/*	$NetBSD: rwlock.h,v 1.5.14.1 2018/04/16 01:57:58 pgoyette Exp $	*/
 
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -29,6 +29,11 @@
 #include <isc/platform.h>
 #include <isc/types.h>
 
+#if defined(ISC_PLATFORM_HAVESTDATOMIC)
+#include <stdint.h>
+#include <stdatomic.h>
+#endif
+
 ISC_LANG_BEGINDECLS
 
 typedef enum {
@@ -38,9 +43,11 @@ typedef enum {
 } isc_rwlocktype_t;
 
 #ifdef ISC_PLATFORM_USETHREADS
-#ifndef ISC_PLATFORM_USE_NATIVE_RWLOCKS
-#if defined(ISC_PLATFORM_HAVEXADD) && defined(ISC_PLATFORM_HAVECMPXCHG)
+#if (defined(ISC_PLATFORM_HAVESTDATOMIC) && defined(ATOMIC_INT_LOCK_FREE)) || (defined(ISC_PLATFORM_HAVEXADD) && defined(ISC_PLATFORM_HAVECMPXCHG))
 #define ISC_RWLOCK_USEATOMIC 1
+#if (defined(ISC_PLATFORM_HAVESTDATOMIC) && defined(ATOMIC_INT_LOCK_FREE))
+#define ISC_RWLOCK_USESTDATOMIC 1
+#endif
 #endif
 
 struct isc_rwlock {
@@ -48,7 +55,7 @@ struct isc_rwlock {
 	unsigned int		magic;
 	isc_mutex_t		lock;
 
-#if defined(ISC_PLATFORM_HAVEXADD) && defined(ISC_PLATFORM_HAVECMPXCHG)
+#if defined(ISC_RWLOCK_USEATOMIC)
 	/*
 	 * When some atomic instructions with hardware assistance are
 	 * available, rwlock will use those so that concurrent readers do not
@@ -63,9 +70,15 @@ struct isc_rwlock {
 	 */
 
 	/* Read or modified atomically. */
+#if defined(ISC_RWLOCK_USESTDATOMIC)
+	atomic_int_fast32_t	write_requests;
+	atomic_int_fast32_t	write_completions;
+	atomic_int_fast32_t	cnt_and_flag;
+#else
 	isc_int32_t		write_requests;
 	isc_int32_t		write_completions;
 	isc_int32_t		cnt_and_flag;
+#endif
 
 	/* Locked by lock. */
 	isc_condition_t		readable;
@@ -78,7 +91,7 @@ struct isc_rwlock {
 	/* Unlocked. */
 	unsigned int		write_quota;
 
-#else  /* ISC_PLATFORM_HAVEXADD && ISC_PLATFORM_HAVECMPXCHG */
+#else  /* ISC_RWLOCK_USEATOMIC */
 
 	/*%< Locked by lock. */
 	isc_condition_t		readable;
@@ -94,15 +107,14 @@ struct isc_rwlock {
 	 * when the quota is reached and it is time to switch.
 	 */
 	unsigned int		granted;
-	
+
 	unsigned int		readers_waiting;
 	unsigned int		writers_waiting;
 	unsigned int		read_quota;
 	unsigned int		write_quota;
 	isc_rwlocktype_t	original;
-#endif  /* ISC_PLATFORM_HAVEXADD && ISC_PLATFORM_HAVECMPXCHG */
+#endif  /* ISC_RWLOCK_USEATOMIC */
 };
-#endif /* !ISC_PLATFORM_USE_NATIVE_RWLOCKS */
 #else /* ISC_PLATFORM_USETHREADS */
 struct isc_rwlock {
 	unsigned int		magic;

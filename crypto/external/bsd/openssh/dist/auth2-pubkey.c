@@ -1,4 +1,4 @@
-/*	$NetBSD: auth2-pubkey.c,v 1.18.2.1 2018/04/07 04:11:48 pgoyette Exp $	*/
+/*	$NetBSD: auth2-pubkey.c,v 1.18.2.2 2018/04/16 01:57:31 pgoyette Exp $	*/
 /* $OpenBSD: auth2-pubkey.c,v 1.77 2018/03/03 03:15:51 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth2-pubkey.c,v 1.18.2.1 2018/04/07 04:11:48 pgoyette Exp $");
+__RCSID("$NetBSD: auth2-pubkey.c,v 1.18.2.2 2018/04/16 01:57:31 pgoyette Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -692,9 +692,9 @@ check_authkeys_file(struct ssh *ssh, struct passwd *pw, FILE *f,
 	char *cp, line[SSH_MAX_PUBKEY_BYTES], loc[256];
 	int found_key = 0;
 	u_long linenum = 0;
-	struct sshkey *found = NULL;
 	struct sshauthopt *opts = NULL;
 #ifdef WITH_LDAP_PUBKEY
+	struct sshkey *found = NULL;
 	ldap_key_t * k;
 	unsigned int i = 0;
 	const char *reason;
@@ -780,7 +780,6 @@ check_authkeys_file(struct ssh *ssh, struct passwd *pw, FILE *f,
 			continue;
 
 		/* Skip leading whitespace, empty and comment lines. */
-/*###782 [cc] error: 'cp' undeclared (first use in this function)%%%*/
 		cp = line;
 		skip_space(&cp);
 		if (!*cp || *cp == '\n' || *cp == '#')

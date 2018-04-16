@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2017, Intel Corp.
+ * Copyright (C) 2000 - 2018, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -151,6 +151,7 @@ AnMapArgTypeToBtype (
         return (ACPI_BTYPE_DATA | ACPI_BTYPE_DEBUG_OBJECT |
             ACPI_BTYPE_REFERENCE_OBJECT);
 
+    case ARGI_FIXED_TARGET:
     case ARGI_SIMPLE_TARGET:
 
         return (ACPI_BTYPE_OBJECTS_AND_REFS);

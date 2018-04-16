@@ -1,5 +1,5 @@
 /* BFD back-end for MS-DOS executables.
-   Copyright (C) 1990-2016 Free Software Foundation, Inc.
+   Copyright (C) 1990-2018 Free Software Foundation, Inc.
    Written by Bryan Ford of the University of Utah.
 
    Contributed by the Center for Software Science at the
@@ -52,15 +52,15 @@ msdos_write_object_contents (bfd *abfd)
   for (sec = abfd->sections; sec != (asection *) NULL; sec = sec->next)
     {
       if (sec->size == 0)
-        continue;
+	continue;
       if (bfd_get_section_flags (abfd, sec) & SEC_ALLOC)
-        {
+	{
 	  bfd_vma sec_vma = bfd_get_section_vma (abfd, sec) + sec->size;
 	  if (sec_vma > high_vma)
 	    high_vma = sec_vma;
 	}
       if (bfd_get_section_flags (abfd, sec) & SEC_LOAD)
-        {
+	{
 	  file_ptr sec_end = (sizeof (hdr)
 			      + bfd_get_section_vma (abfd, sec)
 			      + sec->size);
@@ -118,8 +118,8 @@ msdos_set_section_contents (bfd *abfd,
   if (bfd_get_section_flags (abfd, section) & SEC_LOAD)
     {
       if (bfd_seek (abfd, section->filepos + offset, SEEK_SET) != 0
-          || bfd_bwrite (location, count, abfd) != count)
-        return FALSE;
+	  || bfd_bwrite (location, count, abfd) != count)
+	return FALSE;
     }
 
   return TRUE;
@@ -149,6 +149,7 @@ msdos_set_section_contents (bfd *abfd,
 #define msdos_section_already_linked \
   _bfd_generic_section_already_linked
 #define msdos_bfd_define_common_symbol bfd_generic_define_common_symbol
+#define msdos_bfd_define_start_stop bfd_generic_define_start_stop
 #define msdos_bfd_link_hash_table_create _bfd_generic_link_hash_table_create
 #define msdos_bfd_link_add_symbols _bfd_generic_link_add_symbols
 #define msdos_bfd_link_just_syms _bfd_generic_link_just_syms
@@ -176,6 +177,7 @@ msdos_set_section_contents (bfd *abfd,
 #define msdos_minisymbol_to_symbol _bfd_nosymbols_minisymbol_to_symbol
 
 #define msdos_canonicalize_reloc _bfd_norelocs_canonicalize_reloc
+#define msdos_set_reloc _bfd_norelocs_set_reloc
 #define msdos_get_reloc_upper_bound _bfd_norelocs_get_reloc_upper_bound
 #define msdos_32_bfd_link_split_section  _bfd_generic_link_split_section
 

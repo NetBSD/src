@@ -1,7 +1,7 @@
 # Linker script for PE.
 #
-# Copyright (C) 2014-2016 Free Software Foundation, Inc.
-# 
+# Copyright (C) 2014-2018 Free Software Foundation, Inc.
+#
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
 # notice and this notice are preserved.
@@ -42,7 +42,7 @@ else
 fi
 
 cat <<EOF
-/* Copyright (C) 2014-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2014-2018 Free Software Foundation, Inc.
 
    Copying and distribution of this script, with or without modification,
    are permitted in any medium without royalty provided the copyright
@@ -57,7 +57,7 @@ ${RELOCATING+ENTRY (_mainCRTStartup)}
 
 SECTIONS
 {
-  .text ${RELOCATING+ __image_base__ + __section_alignment__ } : 
+  .text ${RELOCATING+ __image_base__ + __section_alignment__ } :
   {
     ${RELOCATING+ *(.init)}
     *(.text)
@@ -65,9 +65,9 @@ SECTIONS
     *(.glue_7t)
     *(.glue_7)
     ${RELOCATING+ *(.text.*)}
-    ${CONSTRUCTING+ ___CTOR_LIST__ = .; __CTOR_LIST__ = . ; 
+    ${CONSTRUCTING+ ___CTOR_LIST__ = .; __CTOR_LIST__ = . ;
 			LONG (-1); *(.ctors); *(.ctor); LONG (0); }
-    ${CONSTRUCTING+ ___DTOR_LIST__ = .; __DTOR_LIST__ = . ; 
+    ${CONSTRUCTING+ ___DTOR_LIST__ = .; __DTOR_LIST__ = . ;
 			LONG (-1); *(.dtors); *(.dtor);  LONG (0); }
     ${RELOCATING+ *(.fini)}
     /* ??? Why is .gcc_exc here?  */
@@ -88,7 +88,7 @@ SECTIONS
      breaks building the cygwin32 dll.  Instead, we name the section
      ".data_cygwin_nocopy" and explicitly include it after __data_end__. */
 
-  .data ${RELOCATING+BLOCK(__section_alignment__)} : 
+  .data ${RELOCATING+BLOCK(__section_alignment__)} :
   {
     ${RELOCATING+__data_start__ = . ;}
     *(.data)
@@ -125,9 +125,9 @@ SECTIONS
 	See pe.em:sort_sections.  */
     ${R_IDATA}
   }
-  
+
   .CRT ${RELOCATING+BLOCK(__section_alignment__)} :
-  { 					
+  {
     ${R_CRT}
   }
 
@@ -140,12 +140,12 @@ SECTIONS
   }
 
   .reloc ${RELOCATING+BLOCK(__section_alignment__)} :
-  { 					
+  {
     *(.reloc)
   }
 
   .rsrc ${RELOCATING+BLOCK(__section_alignment__)} :
-  { 					
+  {
     *(.rsrc)
     ${R_RSRC}
   }

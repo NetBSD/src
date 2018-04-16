@@ -1,4 +1,4 @@
-/*	$NetBSD: efiboot.c,v 1.4.18.2 2018/03/30 06:20:11 pgoyette Exp $	*/
+/*	$NetBSD: efiboot.c,v 1.4.18.3 2018/04/16 01:59:54 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -34,7 +34,7 @@
 
 EFI_HANDLE IH;
 EFI_DEVICE_PATH *efi_bootdp;
-int efi_bootdp_type = BIOSDISK_TYPE_HD;
+enum efi_boot_device_type efi_bootdp_type = BOOT_DEVICE_TYPE_HD;
 EFI_LOADED_IMAGE *efi_li;
 uintptr_t efi_main_sp;
 physaddr_t efi_loadaddr, efi_kernel_start;
@@ -79,12 +79,19 @@ efi_main(EFI_HANDLE imageHandle, EFI_SYSTEM_TABLE *systemTable)
 	for (dp = dp0; !IsDevicePathEnd(dp); dp = NextDevicePathNode(dp)) {
 		if (DevicePathType(dp) == MEDIA_DEVICE_PATH &&
 		    DevicePathSubType(dp) == MEDIA_CDROM_DP) {
-			efi_bootdp_type = BIOSDISK_TYPE_CD;
+			efi_bootdp_type = BOOT_DEVICE_TYPE_CD;
+			break;
+		}
+		if (DevicePathType(dp) == MESSAGING_DEVICE_PATH &&
+		    DevicePathSubType(dp) == MSG_MAC_ADDR_DP) {
+			efi_bootdp_type = BOOT_DEVICE_TYPE_NET;
 			break;
 		}
 	}
 
 	efi_disk_probe();
+	efi_pxe_probe();
+	efi_net_probe();
 
 	status = uefi_call_wrapper(BS->SetWatchdogTimer, 4, 0, 0, 0, NULL);
 	if (EFI_ERROR(status))

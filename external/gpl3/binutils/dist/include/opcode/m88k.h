@@ -1,5 +1,5 @@
 /* Table of opcodes for the Motorola M88k family.
-   Copyright (C) 1989-2016 Free Software Foundation, Inc.
+   Copyright (C) 1989-2018 Free Software Foundation, Inc.
 
    This file is part of GDB and GAS.
 

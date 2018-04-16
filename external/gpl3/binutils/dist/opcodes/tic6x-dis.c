@@ -1,5 +1,5 @@
 /* TI C6X disassembler.
-   Copyright (C) 2010-2016 Free Software Foundation, Inc.
+   Copyright (C) 2010-2018 Free Software Foundation, Inc.
    Contributed by Joseph Myers <joseph@codesourcery.com>
    		  Bernd Schmidt  <bernds@codesourcery.com>
 
@@ -21,7 +21,7 @@
    MA 02110-1301, USA.  */
 
 #include "sysdep.h"
-#include "dis-asm.h"
+#include "disassemble.h"
 #include "opcode/tic6x.h"
 #include "libiberty.h"
 
@@ -316,7 +316,7 @@ print_insn_tic6x (bfd_vma addr, struct disassemble_info *info)
       const char *parallel;
       const char *cond = "";
       const char *func_unit;
-      char func_unit_buf[7];
+      char func_unit_buf[8];
       unsigned int func_unit_side = 0;
       unsigned int func_unit_data_side = 0;
       unsigned int func_unit_cross = 0;
@@ -510,8 +510,17 @@ print_insn_tic6x (bfd_vma addr, struct disassemble_info *info)
 
 	      prev_header_based
 		= tic6x_check_fetch_packet_header (fp_prev, &prev_header, info);
-	      if (prev_header_based && prev_header.word_compact[6])
-		p_bit = prev_header.p_bits[13];
+	      if (prev_header_based)
+		{
+		  if (prev_header.word_compact[6])
+		    p_bit = prev_header.p_bits[13];
+		  else
+		    {
+		      unsigned int prev_opcode = tic6x_extract_32 (fp_prev + 24,
+								   info);
+		      p_bit = (prev_opcode & 0x1) ? TRUE : FALSE;
+		    }
+		}
 	      else
 		{
 		  unsigned int prev_opcode = tic6x_extract_32 (fp_prev + 28,
@@ -694,8 +703,9 @@ print_insn_tic6x (bfd_vma addr, struct disassemble_info *info)
 	  if (opc->flags & TIC6X_FLAG_INSN16_BSIDE && func_unit_side == 1)
 	      func_unit_cross = 1;
 
-	  snprintf (func_unit_buf, 7, " .%c%u%s%s", func_unit_char,
-		    func_unit_side, (func_unit_cross ? "X" : ""), data_str);
+	  snprintf (func_unit_buf, sizeof func_unit_buf, " .%c%u%s%s",
+		    func_unit_char, func_unit_side,
+		    (func_unit_cross ? "X" : ""), data_str);
 	  func_unit = func_unit_buf;
 	}
 
@@ -1075,6 +1085,7 @@ print_insn_tic6x (bfd_vma addr, struct disassemble_info *info)
 		case tic6x_coding_mem_offset_minus_one_noscale:
 		case tic6x_coding_mem_offset_minus_one:
 		  fld_val += 1;
+		  /* Fall through.  */
 		case tic6x_coding_mem_offset_noscale:
 		case tic6x_coding_mem_offset:
 		  mem_offset = fld_val;

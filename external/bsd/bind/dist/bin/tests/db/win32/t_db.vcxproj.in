@@ -61,6 +61,7 @@
       <ProgramDataBaseFileName>$(OutDir)$(TargetName).pdb</ProgramDataBaseFileName>
       <BrowseInformation>true</BrowseInformation>
       <AdditionalIncludeDirectories>.\;..\..\..\..\;@LIBXML2_INC@@OPENSSL_INC@..\..\..\..\lib\isc\win32;..\..\..\..\lib\isc\win32\include;..\..\..\..\lib\isc\include;..\..\..\..\lib\dns\include;..\..\..\..\lib\isccfg\include;..\..\..\..\lib\tests\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <CompileAs>CompileAsC</CompileAs>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -87,6 +88,7 @@
       <ObjectFileName>.\$(Configuration)\</ObjectFileName>
       <ProgramDataBaseFileName>$(OutDir)$(TargetName).pdb</ProgramDataBaseFileName>
       <AdditionalIncludeDirectories>.\;..\..\..\..\;@LIBXML2_INC@@OPENSSL_INC@..\..\..\..\lib\isc\win32;..\..\..\..\lib\isc\win32\include;..\..\..\..\lib\isc\include;..\..\..\..\lib\dns\include;..\..\..\..\lib\isccfg\include;..\..\..\..\lib\tests\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <CompileAs>CompileAsC</CompileAs>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

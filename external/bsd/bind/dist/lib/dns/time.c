@@ -1,7 +1,7 @@
-/*	$NetBSD: time.c,v 1.6 2014/12/10 04:37:58 christos Exp $	*/
+/*	$NetBSD: time.c,v 1.6.14.1 2018/04/16 01:57:56 pgoyette Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009-2012, 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009-2012, 2014, 2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -42,7 +42,7 @@ static const int days[12] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
 isc_result_t
 dns_time64_totext(isc_int64_t t, isc_buffer_t *target) {
 	struct tm tm;
-	char buf[sizeof("YYYYMMDDHHMMSS")];
+	char buf[sizeof("!!!!!!YYYY!!!!!!!!MM!!!!!!!!DD!!!!!!!!HH!!!!!!!!MM!!!!!!!!SS")];
 	int secs;
 	unsigned int l;
 	isc_region_t region;

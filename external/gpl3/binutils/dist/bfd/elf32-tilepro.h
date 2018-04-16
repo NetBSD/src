@@ -1,5 +1,5 @@
 /* TILEPro-specific support for 32-bit ELF.
-   Copyright (C) 2011-2016 Free Software Foundation, Inc.
+   Copyright (C) 2011-2018 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -23,16 +23,16 @@
 
 /* This file contains sizes and offsets of Linux data structures.  */
 
-#define TILEPRO_PRSTATUS_SIZEOF           332
+#define TILEPRO_PRSTATUS_SIZEOF		  332
 #define TILEPRO_PRSTATUS_OFFSET_PR_CURSIG  12
-#define TILEPRO_PRSTATUS_OFFSET_PR_PID     24
-#define TILEPRO_PRSTATUS_OFFSET_PR_REG     72
+#define TILEPRO_PRSTATUS_OFFSET_PR_PID	   24
+#define TILEPRO_PRSTATUS_OFFSET_PR_REG	   72
 
-#define TILEPRO_PRPSINFO_SIZEOF           128
+#define TILEPRO_PRPSINFO_SIZEOF		  128
 #define TILEPRO_PRPSINFO_OFFSET_PR_FNAME   32
 #define TILEPRO_PRPSINFO_OFFSET_PR_PSARGS  48
-#define ELF_PR_PSARGS_SIZE              80
+#define ELF_PR_PSARGS_SIZE		80
 
-#define TILEPRO_GREGSET_T_SIZE            256
+#define TILEPRO_GREGSET_T_SIZE		  256
 
 #endif /* _ELF32_TILEPRO_H */

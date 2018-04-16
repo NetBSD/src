@@ -1,5 +1,5 @@
 /* Linker file opening and searching.
-   Copyright (C) 1991-2016 Free Software Foundation, Inc.
+   Copyright (C) 1991-2018 Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
 
@@ -112,6 +112,8 @@ ldfile_add_library_path (const char *name, bfd_boolean cmdline)
      now.  */
   if (name[0] == '=')
     new_dirs->name = concat (ld_sysroot, name + 1, (const char *) NULL);
+  else if (CONST_STRNEQ (name, "$SYSROOT"))
+    new_dirs->name = concat (ld_sysroot, name + strlen ("$SYSROOT"), (const char *) NULL);
   else
     new_dirs->name = xstrdup (name);
 }

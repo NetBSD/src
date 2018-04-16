@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.216.2.1 2018/03/30 06:20:16 pgoyette Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.216.2.2 2018/04/16 02:00:09 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.216.2.1 2018/03/30 06:20:16 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.216.2.2 2018/04/16 02:00:09 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -156,9 +156,6 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.216.2.1 2018/03/30 06:20:16 pgoyett
 static int  
 tcp_debug_capture(struct tcpcb *tp, int req)  
 {
-#ifdef KPROF
-	tcp_acounts[tp->t_state][req]++;
-#endif
 #ifdef TCP_DEBUG
 	return tp->t_state;
 #endif

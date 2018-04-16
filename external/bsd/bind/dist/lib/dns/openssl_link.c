@@ -1,4 +1,4 @@
-/*	$NetBSD: openssl_link.c,v 1.14 2017/06/15 15:59:40 christos Exp $	*/
+/*	$NetBSD: openssl_link.c,v 1.14.4.1 2018/04/16 01:57:55 pgoyette Exp $	*/
 
 /*
  * Portions Copyright (C) 2004-2012, 2014-2017  Internet Systems Consortium, Inc. ("ISC")
@@ -108,7 +108,7 @@ entropy_add(const void *buf, int num, double entropy) {
 #endif
 }
 
-#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
+#if OPENSSL_VERSION_NUMBER >= 0x10000000L && OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
 static void
 lock_callback(int mode, int type, const char *file, int line) {
 	UNUSED(file);
@@ -118,7 +118,9 @@ lock_callback(int mode, int type, const char *file, int line) {
 	else
 		UNLOCK(&locks[type]);
 }
+#endif
 
+#if OPENSSL_VERSION_NUMBER < 0x10000000L || defined(LIBRESSL_VERSION_NUMBER)
 static unsigned long
 id_callback(void) {
 	return ((unsigned long)isc_thread_self());
@@ -182,6 +184,14 @@ mem_realloc(void *ptr, size_t size FLARG) {
 #endif
 }
 
+#if OPENSSL_VERSION_NUMBER >= 0x10000000L && OPENSSL_VERSION_NUMBER < 0x10100000L
+static void
+_set_thread_id(CRYPTO_THREADID *id)
+{
+	CRYPTO_THREADID_set_numeric(id, (unsigned long)isc_thread_self());
+}
+#endif
+
 isc_result_t
 dst__openssl_init(const char *engine) {
 	isc_result_t result;
@@ -207,10 +217,14 @@ dst__openssl_init(const char *engine) {
 	if (result != ISC_R_SUCCESS)
 		goto cleanup_mutexalloc;
 	CRYPTO_set_locking_callback(lock_callback);
+# if OPENSSL_VERSION_NUMBER >= 0x10000000L && OPENSSL_VERSION_NUMBER < 0x10100000L
+	CRYPTO_THREADID_set_callback(_set_thread_id);
+# else
 	CRYPTO_set_id_callback(id_callback);
-#endif
+# endif
 
 	ERR_load_crypto_strings();
+#endif
 
 	rm = mem_alloc(sizeof(RAND_METHOD) FILELINE);
 	if (rm == NULL) {
@@ -328,7 +342,9 @@ dst__openssl_destroy(void) {
 	CRYPTO_cleanup_all_ex_data();
 #endif
 	ERR_clear_error();
-#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
+#if OPENSSL_VERSION_NUMBER >= 0x10000000L && OPENSSL_VERSION_NUMBER < 0x10100000L
+	ERR_remove_thread_state(NULL);
+#elif OPENSSL_VERSION_NUMBER < 0x10000000L || defined(LIBRESSL_VERSION_NUMBER)
 	ERR_remove_state(0);
 #endif
 	ERR_free_strings();

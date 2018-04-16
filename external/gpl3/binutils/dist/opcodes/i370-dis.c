@@ -1,5 +1,5 @@
 /* i370-dis.c -- Disassemble Instruction 370 (ESA/390) instructions
-   Copyright (C) 1994-2016 Free Software Foundation, Inc.
+   Copyright (C) 1994-2018 Free Software Foundation, Inc.
    PowerPC version written by Ian Lance Taylor, Cygnus Support
    Rewritten for i370 ESA/390 support by Linas Vepstas <linas@linas.org>
 
@@ -22,7 +22,7 @@
 
 #include "sysdep.h"
 #include <stdio.h>
-#include "dis-asm.h"
+#include "disassemble.h"
 #include "opcode/i370.h"
 
 /* This file provides several disassembler functions, all of which use

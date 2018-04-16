@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_ssh.c,v 1.23 2015/04/04 02:51:10 christos Exp $	*/
+/*	$NetBSD: pam_ssh.c,v 1.23.14.1 2018/04/16 01:59:51 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2003 Networks Associates Technology, Inc.
@@ -38,7 +38,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_ssh/pam_ssh.c,v 1.40 2004/02/10 10:13:21 des Exp $");
 #else
-__RCSID("$NetBSD: pam_ssh.c,v 1.23 2015/04/04 02:51:10 christos Exp $");
+__RCSID("$NetBSD: pam_ssh.c,v 1.23.14.1 2018/04/16 01:59:51 pgoyette Exp $");
 #endif
 
 #include <sys/param.h>
@@ -68,7 +68,7 @@ __RCSID("$NetBSD: pam_ssh.c,v 1.23 2015/04/04 02:51:10 christos Exp $");
 #include "authfile.h"
 
 #define ssh_add_identity(auth, key, comment) \
-	ssh_add_identity_constrained(auth, key, comment, 0, 0)
+	ssh_add_identity_constrained(auth, key, comment, 0, 0, 0)
 
 extern char **environ;
 
@@ -383,8 +383,7 @@ pam_ssh_add_keys_to_agent(pam_handle_t *pamh)
 		pam_err = pam_get_data(pamh, *kfn, &vp);
 		psk = vp;
 		if (pam_err == PAM_SUCCESS && psk != NULL) {
-			if (ssh_add_identity_constrained(agent_fd, psk->key,
-			    psk->comment, 0, 0))
+			if (ssh_add_identity(agent_fd, psk->key, psk->comment))
 				openpam_log(PAM_LOG_DEBUG,
 				    "added %s to ssh agent", psk->comment);
 			else

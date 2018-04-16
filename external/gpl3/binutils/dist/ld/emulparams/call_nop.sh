@@ -10,11 +10,6 @@ PARSE_AND_LIST_ARGS_CASE_Z_CALL_NOP='
 	      link_info.call_nop_as_suffix = FALSE;
 	      link_info.call_nop_byte = 0x67;
 	    }
-	  else if (strcmp (optarg + 9, "prefix-nop") == 0)
-	    {
-	      link_info.call_nop_as_suffix = FALSE;
-	      link_info.call_nop_byte = 0x90;
-	    }
 	  else if (strcmp (optarg + 9, "suffix-nop") == 0)
 	    {
 	      link_info.call_nop_as_suffix = TRUE;

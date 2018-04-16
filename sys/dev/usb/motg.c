@@ -1,4 +1,4 @@
-/*	$NetBSD: motg.c,v 1.19 2017/11/17 08:22:02 skrll Exp $	*/
+/*	$NetBSD: motg.c,v 1.19.2.1 2018/04/16 02:00:02 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012, 2014 The NetBSD Foundation, Inc.
@@ -40,10 +40,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.19 2017/11/17 08:22:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.19.2.1 2018/04/16 02:00:02 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
-#include "opt_motg.h"
 #include "opt_usb.h"
 #endif
 
@@ -68,12 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.19 2017/11/17 08:22:02 skrll Exp $");
 #include <dev/usb/usb_mem.h>
 #include <dev/usb/usbhist.h>
 
-#ifdef MOTG_ALLWINNER
-#include <arch/arm/allwinner/awin_otgreg.h>
-#else
 #include <dev/usb/motgreg.h>
-#endif
-
 #include <dev/usb/motgvar.h>
 #include <dev/usb/usbroothub.h>
 
@@ -474,8 +468,6 @@ motg_init(struct motg_softc *sc)
 	sc->sc_bus.ub_revision = USBREV_2_0;
 	sc->sc_bus.ub_usedma = false;
 	sc->sc_bus.ub_hcpriv = sc;
-	snprintf(sc->sc_vendor, sizeof(sc->sc_vendor),
-	    "Mentor Graphics");
 	sc->sc_child = config_found(sc->sc_dev, &sc->sc_bus, usbctlprint);
 	return 0;
 }
@@ -816,20 +808,7 @@ motg_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 	case C(UR_GET_DESCRIPTOR, UT_READ_DEVICE):
 		DPRINTFN(MD_ROOT, "wValue=0x%04jx", value, 0, 0, 0);
 		switch (value) {
-		case C(0, UDESC_DEVICE): {
-			usb_device_descriptor_t devd;
-
-			totlen = min(buflen, sizeof(devd));
-			memcpy(&devd, buf, totlen);
-			USETW(devd.idVendor, sc->sc_id_vendor);
-			memcpy(buf, &devd, totlen);
-			break;
-		}
-		case C(1, UDESC_STRING):
 #define sd ((usb_string_descriptor_t *)buf)
-			/* Vendor */
-			totlen = usb_makestrdesc(sd, len, sc->sc_vendor);
-			break;
 		case C(2, UDESC_STRING):
 			/* Product */
 			totlen = usb_makestrdesc(sd, len, "MOTG root hub");

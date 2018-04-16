@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.15 2011/05/03 09:15:20 tsutsui Exp $	*/
+/*	$NetBSD: cpu.h,v 1.15.54.1 2018/04/16 01:59:54 pgoyette Exp $	*/
 
 #ifndef _COBALT_CPU_H_
 #define _COBALT_CPU_H_
@@ -25,7 +25,7 @@ extern u_int cobalt_id;
 #define LED_POWEROFF	3
 #define COM_BASE	0x1c800000
 #define ZS_BASE		0x1c800000
-#define PANEL_BASE	0x1d000000
+#define LCDPANEL_BASE	0x1d000000
 #define LCD_BASE	0x1f000000
 
 #endif /* !_LOCORE */

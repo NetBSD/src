@@ -1,6 +1,6 @@
 // output.cc -- manage the output file for gold
 
-// Copyright (C) 2006-2016 Free Software Foundation, Inc.
+// Copyright (C) 2006-2018 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -127,14 +127,26 @@ namespace gold
 static int
 gold_fallocate(int o, off_t offset, off_t len)
 {
+  if (len <= 0)
+    return 0;
+
 #ifdef HAVE_POSIX_FALLOCATE
   if (parameters->options().posix_fallocate())
-    return ::posix_fallocate(o, offset, len);
+    {
+      int err = ::posix_fallocate(o, offset, len);
+      if (err != EINVAL && err != ENOSYS && err != EOPNOTSUPP)
+	return err;
+    }
 #endif // defined(HAVE_POSIX_FALLOCATE)
+
 #ifdef HAVE_FALLOCATE
-  if (::fallocate(o, 0, offset, len) == 0)
-    return 0;
+  {
+    int err = ::fallocate(o, 0, offset, len);
+    if (err != EINVAL && err != ENOSYS && err != EOPNOTSUPP)
+      return err;
+  }
 #endif // defined(HAVE_FALLOCATE)
+
   if (::ftruncate(o, offset + len) < 0)
     return errno;
   return 0;
@@ -3165,17 +3177,17 @@ Output_section::set_final_data_size()
 
       uint64_t address = this->address();
       off_t startoff = this->offset();
-      off_t off = startoff + this->first_input_offset_;
+      off_t off = this->first_input_offset_;
       for (Input_section_list::iterator p = this->input_sections_.begin();
 	   p != this->input_sections_.end();
 	   ++p)
 	{
 	  off = align_address(off, p->addralign());
-	  p->set_address_and_file_offset(address + (off - startoff), off,
+	  p->set_address_and_file_offset(address + off, startoff + off,
 					 startoff);
 	  off += p->data_size();
 	}
-      data_size = off - startoff;
+      data_size = off;
     }
 
   // For full incremental links, we want to allocate some patch space
@@ -4398,12 +4410,14 @@ Output_segment::set_section_addresses(const Target* target,
   this->offset_ = orig_off;
 
   off_t off = 0;
-  uint64_t ret;
+  off_t foff = *poff;
+  uint64_t ret = 0;
   for (int i = 0; i < static_cast<int>(ORDER_MAX); ++i)
     {
       if (i == static_cast<int>(ORDER_RELRO_LAST))
 	{
 	  *poff += last_relro_pad;
+	  foff += last_relro_pad;
 	  addr += last_relro_pad;
 	  if (this->output_lists_[i].empty())
 	    {
@@ -4415,12 +4429,20 @@ Output_segment::set_section_addresses(const Target* target,
 	}
       addr = this->set_section_list_addresses(layout, reset,
 					      &this->output_lists_[i],
-					      addr, poff, pshndx, &in_tls);
-      if (i < static_cast<int>(ORDER_SMALL_BSS))
-	{
-	  this->filesz_ = *poff - orig_off;
-	  off = *poff;
-	}
+					      addr, poff, &foff, pshndx,
+					      &in_tls);
+
+      // FOFF tracks the last offset used for the file image,
+      // and *POFF tracks the last offset used for the memory image.
+      // When not using a linker script, bss sections should all
+      // be processed in the ORDER_SMALL_BSS and later buckets.
+      gold_assert(*poff == foff
+		  || i == static_cast<int>(ORDER_TLS_BSS)
+		  || i >= static_cast<int>(ORDER_SMALL_BSS)
+		  || layout->script_options()->saw_sections_clause());
+
+      this->filesz_ = foff - orig_off;
+      off = foff;
 
       ret = addr;
     }
@@ -4485,6 +4507,7 @@ uint64_t
 Output_segment::set_section_list_addresses(Layout* layout, bool reset,
 					   Output_data_list* pdl,
 					   uint64_t addr, off_t* poff,
+					   off_t* pfoff,
 					   unsigned int* pshndx,
 					   bool* in_tls)
 {
@@ -4494,10 +4517,14 @@ Output_segment::set_section_list_addresses(Layout* layout, bool reset,
   off_t maxoff = startoff;
 
   off_t off = startoff;
+  off_t foff = *pfoff;
   for (Output_data_list::iterator p = pdl->begin();
        p != pdl->end();
        ++p)
     {
+      bool is_bss = (*p)->is_section_type(elfcpp::SHT_NOBITS);
+      bool is_tls = (*p)->is_section_flag_set(elfcpp::SHF_TLS);
+
       if (reset)
 	(*p)->reset_address_and_file_offset();
 
@@ -4507,7 +4534,7 @@ Output_segment::set_section_list_addresses(Layout* layout, bool reset,
 	{
 	  uint64_t align = (*p)->addralign();
 
-	  if ((*p)->is_section_flag_set(elfcpp::SHF_TLS))
+	  if (is_tls)
 	    {
 	      // Give the first TLS section the alignment of the
 	      // entire TLS segment.  Otherwise the TLS segment as a
@@ -4542,8 +4569,11 @@ Output_segment::set_section_list_addresses(Layout* layout, bool reset,
 
 	  if (!parameters->incremental_update())
 	    {
+	      gold_assert(off == foff || is_bss);
 	      off = align_address(off, align);
-	      (*p)->set_address_and_file_offset(addr + (off - startoff), off);
+	      if (is_tls || !is_bss)
+		foff = off;
+	      (*p)->set_address_and_file_offset(addr + (off - startoff), foff);
 	    }
 	  else
 	    {
@@ -4551,6 +4581,7 @@ Output_segment::set_section_list_addresses(Layout* layout, bool reset,
 	      (*p)->pre_finalize_data_size();
 	      off_t current_size = (*p)->current_data_size();
 	      off = layout->allocate(current_size, align, startoff);
+	      foff = off;
 	      if (off == -1)
 		{
 		  gold_assert((*p)->output_section() != NULL);
@@ -4558,7 +4589,7 @@ Output_segment::set_section_list_addresses(Layout* layout, bool reset,
 				  "relink with --incremental-full"),
 				(*p)->output_section()->name());
 		}
-	      (*p)->set_address_and_file_offset(addr + (off - startoff), off);
+	      (*p)->set_address_and_file_offset(addr + (off - startoff), foff);
 	      if ((*p)->data_size() > current_size)
 		{
 		  gold_assert((*p)->output_section() != NULL);
@@ -4573,13 +4604,22 @@ Output_segment::set_section_list_addresses(Layout* layout, bool reset,
 	  // For incremental updates, use the fixed offset for the
 	  // high-water mark computation.
 	  off = (*p)->offset();
+	  foff = off;
 	}
       else
 	{
 	  // The script may have inserted a skip forward, but it
 	  // better not have moved backward.
 	  if ((*p)->address() >= addr + (off - startoff))
-	    off += (*p)->address() - (addr + (off - startoff));
+	    {
+	      if (!is_bss && off > foff)
+	        gold_warning(_("script places BSS section in the middle "
+			       "of a LOAD segment; space will be allocated "
+			       "in the file"));
+	      off += (*p)->address() - (addr + (off - startoff));
+	      if (is_tls || !is_bss)
+		foff = off;
+	    }
 	  else
 	    {
 	      if (!layout->script_options()->saw_sections_clause())
@@ -4603,7 +4643,7 @@ Output_segment::set_section_list_addresses(Layout* layout, bool reset,
 			       os->name(), previous_dot, dot);
 		}
 	    }
-	  (*p)->set_file_offset(off);
+	  (*p)->set_file_offset(foff);
 	  (*p)->finalize_data_size();
 	}
 
@@ -4618,9 +4658,13 @@ Output_segment::set_section_list_addresses(Layout* layout, bool reset,
       // We want to ignore the size of a SHF_TLS SHT_NOBITS
       // section.  Such a section does not affect the size of a
       // PT_LOAD segment.
-      if (!(*p)->is_section_flag_set(elfcpp::SHF_TLS)
-	  || !(*p)->is_section_type(elfcpp::SHT_NOBITS))
+      if (!is_tls || !is_bss)
 	off += (*p)->data_size();
+
+      // We don't allocate space in the file for SHT_NOBITS sections,
+      // unless a script has force-placed one in the middle of a segment.
+      if (!is_bss)
+	foff = off;
 
       if (off > maxoff)
 	maxoff = off;
@@ -4633,6 +4677,7 @@ Output_segment::set_section_list_addresses(Layout* layout, bool reset,
     }
 
   *poff = maxoff;
+  *pfoff = foff;
   return addr + (maxoff - startoff);
 }
 
@@ -4768,7 +4813,7 @@ Output_segment::first_section() const
 	    return (*p)->output_section();
 	}
     }
-  gold_unreachable();
+  return NULL;
 }
 
 // Return the number of Output_sections in an Output_segment.

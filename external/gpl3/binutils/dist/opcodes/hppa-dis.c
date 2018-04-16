@@ -1,5 +1,5 @@
 /* Disassembler for the PA-RISC. Somewhat derived from sparc-pinsn.c.
-   Copyright (C) 1989-2016 Free Software Foundation, Inc.
+   Copyright (C) 1989-2018 Free Software Foundation, Inc.
 
    Contributed by the Center for Software Science at the
    University of Utah (pa-gdb-bugs@cs.utah.edu).
@@ -22,7 +22,7 @@
    MA 02110-1301, USA.  */
 
 #include "sysdep.h"
-#include "dis-asm.h"
+#include "disassemble.h"
 #include "libhppa.h"
 #include "opcode/hppa.h"
 

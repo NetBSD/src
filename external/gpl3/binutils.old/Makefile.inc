@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.4 2016/10/26 17:58:48 christos Exp $
+# $NetBSD: Makefile.inc,v 1.4.12.1 2018/04/16 01:58:46 pgoyette Exp $
 .include <bsd.own.mk>
 TOP:=	${.PARSEDIR}
 DIST:=	${TOP}/dist

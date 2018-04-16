@@ -1,5 +1,5 @@
 /* BFD back-end for oasys objects.
-   Copyright (C) 1990-2016 Free Software Foundation, Inc.
+   Copyright (C) 1990-2018 Free Software Foundation, Inc.
    Written by Steve Chamberlain of Cygnus Support, <sac@cygnus.com>.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -612,6 +612,7 @@ oasys_object_p (bfd *abfd)
 	  break;
 	case oasys_record_is_data_enum:
 	  oasys->first_data_record = bfd_tell (abfd) - record.header.length;
+	  /* Fall through.  */
 	case oasys_record_is_debug_enum:
 	case oasys_record_is_module_enum:
 	case oasys_record_is_named_section_enum:
@@ -875,9 +876,9 @@ oasys_write_sections (bfd *abfd)
     {
       if (!ISDIGIT (s->name[0]))
 	{
-	  (*_bfd_error_handler)
-	    (_("%s: can not represent section `%s' in oasys"),
-	     bfd_get_filename (abfd), s->name);
+	  _bfd_error_handler
+	    /* xgettext:c-format */
+	    (_("%B: can not represent section `%A' in oasys"), abfd, s);
 	  bfd_set_error (bfd_error_nonrepresentable_section);
 	  return FALSE;
 	}
@@ -1128,7 +1129,7 @@ oasys_openr_next_archived_file (bfd *arch, bfd *prev)
 }
 
 #define oasys_find_nearest_line _bfd_nosymbols_find_nearest_line
-#define oasys_find_line         _bfd_nosymbols_find_line
+#define oasys_find_line		_bfd_nosymbols_find_line
 #define oasys_find_inliner_info _bfd_nosymbols_find_inliner_info
 
 static int
@@ -1154,45 +1155,47 @@ oasys_sizeof_headers (bfd *abfd ATTRIBUTE_UNUSED,
   return 0;
 }
 
-#define	oasys_close_and_cleanup                    _bfd_generic_close_and_cleanup
-#define oasys_bfd_free_cached_info                 _bfd_generic_bfd_free_cached_info
-#define oasys_slurp_armap                          bfd_true
-#define oasys_slurp_extended_name_table            bfd_true
-#define oasys_construct_extended_name_table        ((bfd_boolean (*) (bfd *, char **, bfd_size_type *, const char **)) bfd_true)
-#define oasys_truncate_arname                      bfd_dont_truncate_arname
-#define oasys_write_armap                          ((bfd_boolean (*) (bfd *, unsigned int, struct orl *, unsigned int, int)) bfd_true)
-#define oasys_read_ar_hdr                          bfd_nullvoidptr
+#define	oasys_close_and_cleanup			   _bfd_generic_close_and_cleanup
+#define oasys_bfd_free_cached_info		   _bfd_generic_bfd_free_cached_info
+#define oasys_slurp_armap			   bfd_true
+#define oasys_slurp_extended_name_table		   bfd_true
+#define oasys_construct_extended_name_table	   ((bfd_boolean (*) (bfd *, char **, bfd_size_type *, const char **)) bfd_true)
+#define oasys_truncate_arname			   bfd_dont_truncate_arname
+#define oasys_write_armap			   ((bfd_boolean (*) (bfd *, unsigned int, struct orl *, unsigned int, int)) bfd_true)
+#define oasys_read_ar_hdr			   bfd_nullvoidptr
 #define oasys_write_ar_hdr ((bfd_boolean (*) (bfd *, bfd *)) bfd_false)
-#define oasys_get_elt_at_index                     _bfd_generic_get_elt_at_index
-#define oasys_update_armap_timestamp               bfd_true
-#define oasys_bfd_is_local_label_name              bfd_generic_is_local_label_name
-#define oasys_bfd_is_target_special_symbol         ((bfd_boolean (*) (bfd *, asymbol *)) bfd_false)
-#define oasys_get_lineno                           _bfd_nosymbols_get_lineno
+#define oasys_get_elt_at_index			   _bfd_generic_get_elt_at_index
+#define oasys_update_armap_timestamp		   bfd_true
+#define oasys_bfd_is_local_label_name		   bfd_generic_is_local_label_name
+#define oasys_bfd_is_target_special_symbol	   ((bfd_boolean (*) (bfd *, asymbol *)) bfd_false)
+#define oasys_get_lineno			   _bfd_nosymbols_get_lineno
 #define oasys_get_symbol_version_string		   _bfd_nosymbols_get_symbol_version_string
-#define oasys_bfd_make_debug_symbol                _bfd_nosymbols_bfd_make_debug_symbol
-#define oasys_read_minisymbols                     _bfd_generic_read_minisymbols
-#define oasys_minisymbol_to_symbol                 _bfd_generic_minisymbol_to_symbol
-#define oasys_bfd_reloc_type_lookup                _bfd_norelocs_bfd_reloc_type_lookup
-#define oasys_bfd_reloc_name_lookup          _bfd_norelocs_bfd_reloc_name_lookup
-#define oasys_set_arch_mach                        bfd_default_set_arch_mach
-#define oasys_get_section_contents_in_window       _bfd_generic_get_section_contents_in_window
+#define oasys_bfd_make_debug_symbol		   _bfd_nosymbols_bfd_make_debug_symbol
+#define oasys_read_minisymbols			   _bfd_generic_read_minisymbols
+#define oasys_minisymbol_to_symbol		   _bfd_generic_minisymbol_to_symbol
+#define oasys_bfd_reloc_type_lookup		   _bfd_norelocs_bfd_reloc_type_lookup
+#define oasys_bfd_reloc_name_lookup	     _bfd_norelocs_bfd_reloc_name_lookup
+#define oasys_set_arch_mach			   bfd_default_set_arch_mach
+#define oasys_get_section_contents_in_window	   _bfd_generic_get_section_contents_in_window
 #define oasys_bfd_get_relocated_section_contents   bfd_generic_get_relocated_section_contents
-#define oasys_bfd_relax_section                    bfd_generic_relax_section
-#define oasys_bfd_gc_sections                      bfd_generic_gc_sections
-#define oasys_bfd_lookup_section_flags             bfd_generic_lookup_section_flags
-#define oasys_bfd_merge_sections                   bfd_generic_merge_sections
-#define oasys_bfd_is_group_section                 bfd_generic_is_group_section
-#define oasys_bfd_discard_group                    bfd_generic_discard_group
-#define oasys_section_already_linked               _bfd_generic_section_already_linked
-#define oasys_bfd_define_common_symbol             bfd_generic_define_common_symbol
-#define oasys_bfd_link_hash_table_create           _bfd_generic_link_hash_table_create
-#define oasys_bfd_link_add_symbols                 _bfd_generic_link_add_symbols
-#define oasys_bfd_link_just_syms                   _bfd_generic_link_just_syms
+#define oasys_bfd_relax_section			   bfd_generic_relax_section
+#define oasys_bfd_gc_sections			   bfd_generic_gc_sections
+#define oasys_bfd_lookup_section_flags		   bfd_generic_lookup_section_flags
+#define oasys_bfd_merge_sections		   bfd_generic_merge_sections
+#define oasys_bfd_is_group_section		   bfd_generic_is_group_section
+#define oasys_bfd_discard_group			   bfd_generic_discard_group
+#define oasys_section_already_linked		   _bfd_generic_section_already_linked
+#define oasys_bfd_define_common_symbol		   bfd_generic_define_common_symbol
+#define oasys_bfd_define_start_stop		   bfd_generic_define_start_stop
+#define oasys_bfd_link_hash_table_create	   _bfd_generic_link_hash_table_create
+#define oasys_bfd_link_add_symbols		   _bfd_generic_link_add_symbols
+#define oasys_bfd_link_just_syms		   _bfd_generic_link_just_syms
 #define oasys_bfd_copy_link_hash_symbol_type \
   _bfd_generic_copy_link_hash_symbol_type
-#define oasys_bfd_final_link                       _bfd_generic_final_link
-#define oasys_bfd_link_split_section               _bfd_generic_link_split_section
-#define oasys_bfd_link_check_relocs                _bfd_generic_link_check_relocs
+#define oasys_bfd_final_link			   _bfd_generic_final_link
+#define oasys_bfd_link_split_section		   _bfd_generic_link_split_section
+#define oasys_bfd_link_check_relocs		   _bfd_generic_link_check_relocs
+#define oasys_set_reloc				   _bfd_generic_set_reloc
 
 const bfd_target oasys_vec =
 {

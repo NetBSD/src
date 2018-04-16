@@ -1,5 +1,5 @@
 /* Disassemble h8500 instructions.
-   Copyright (C) 1993-2016 Free Software Foundation, Inc.
+   Copyright (C) 1993-2018 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -25,7 +25,7 @@
 #define DEFINE_TABLE
 
 #include "h8500-opc.h"
-#include "dis-asm.h"
+#include "disassemble.h"
 #include "opintl.h"
 
 /* Maximum length of an instruction.  */

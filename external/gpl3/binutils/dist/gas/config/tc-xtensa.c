@@ -1,5 +1,5 @@
 /* tc-xtensa.c -- Assemble Xtensa instructions.
-   Copyright (C) 2003-2016 Free Software Foundation, Inc.
+   Copyright (C) 2003-2018 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -72,13 +72,13 @@ const char FLT_CHARS[] = "rRsSfFdDxXpP";
 /* Flags to indicate whether the hardware supports the density and
    absolute literals options.  */
 
-bfd_boolean density_supported = XCHAL_HAVE_DENSITY;
-bfd_boolean absolute_literals_supported = XSHAL_USE_ABSOLUTE_LITERALS;
+bfd_boolean density_supported;
+bfd_boolean absolute_literals_supported;
 
 static vliw_insn cur_vinsn;
 
 unsigned xtensa_num_pipe_stages;
-unsigned xtensa_fetch_width = XCHAL_INST_FETCH_WIDTH;
+unsigned xtensa_fetch_width;
 
 static enum debug_info_type xt_saved_debug_type = DEBUG_NONE;
 
@@ -419,21 +419,13 @@ bfd_boolean directive_state[] =
 {
   FALSE,			/* none */
   FALSE,			/* literal */
-#if !XCHAL_HAVE_DENSITY
   FALSE,			/* density */
-#else
-  TRUE,				/* density */
-#endif
   TRUE,				/* transform */
   FALSE,			/* freeregs */
   FALSE,			/* longcalls */
   FALSE,			/* literal_prefix */
   FALSE,			/* schedule */
-#if XSHAL_USE_ABSOLUTE_LITERALS
-  TRUE				/* absolute_literals */
-#else
   FALSE				/* absolute_literals */
-#endif
 };
 
 /* A circular list of all potential and actual literal pool locations
@@ -492,7 +484,8 @@ static void xtensa_check_frag_count (void);
 static void xtensa_create_trampoline_frag (bfd_boolean);
 static void xtensa_maybe_create_trampoline_frag (void);
 struct trampoline_frag;
-static int init_trampoline_frag (struct trampoline_frag *);
+static int init_trampoline_frag (fragS *);
+static fixS *xg_append_jump (fragS *fragP, symbolS *sym, offsetT offset);
 static void xtensa_maybe_create_literal_pool_frag (bfd_boolean, bfd_boolean);
 static bfd_boolean auto_litpools = FALSE;
 static int auto_litpool_limit = 10000;
@@ -1187,7 +1180,7 @@ directive_pop (directiveE *directive,
 
   if (!directive_state_stack)
     {
-      as_bad (_("unmatched end directive"));
+      as_bad (_("unmatched .end directive"));
       *directive = directive_none;
       return;
     }
@@ -1668,7 +1661,9 @@ xtensa_elf_cons (int nbytes)
 	    as_bad (_("opcode-specific %s relocation used outside "
 		      "an instruction"), reloc_howto->name);
 	  else if (nbytes != (int) bfd_get_reloc_size (reloc_howto))
-	    as_bad (_("%s relocations do not fit in %d bytes"),
+	    as_bad (ngettext ("%s relocations do not fit in %d byte",
+			      "%s relocations do not fit in %d bytes",
+			      nbytes),
 		    reloc_howto->name, nbytes);
 	  else if (reloc == BFD_RELOC_XTENSA_TLS_FUNC
 		   || reloc == BFD_RELOC_XTENSA_TLS_ARG
@@ -2228,7 +2223,7 @@ xg_reverse_shift_count (char **cnt_argp)
   cnt_arg = *cnt_argp;
 
   /* replace the argument with "31-(argument)" */
-  new_arg = concat ("31-(", cnt_argp, ")", (char *) NULL);
+  new_arg = concat ("31-(", cnt_arg, ")", (char *) NULL);
 
   free (cnt_arg);
   *cnt_argp = new_arg;
@@ -4022,14 +4017,18 @@ xg_expand_assembly_insn (IStack *istack, TInsn *orig_insn)
 					  orig_insn->opcode);
   if (orig_insn->ntok < noperands)
     {
-      as_bad (_("found %d operands for '%s':  Expected %d"),
+      as_bad (ngettext ("found %d operand for '%s':  Expected %d",
+			"found %d operands for '%s':  Expected %d",
+			orig_insn->ntok),
 	      orig_insn->ntok,
 	      xtensa_opcode_name (xtensa_default_isa, orig_insn->opcode),
 	      noperands);
       return TRUE;
     }
   if (orig_insn->ntok > noperands)
-    as_warn (_("found too many (%d) operands for '%s':  Expected %d"),
+    as_warn (ngettext ("found %d operand for '%s':  Expected %d",
+		       "found %d operands for '%s':  Expected %d",
+		       orig_insn->ntok),
 	     orig_insn->ntok,
 	     xtensa_opcode_name (xtensa_default_isa, orig_insn->opcode),
 	     noperands);
@@ -5216,6 +5215,24 @@ md_number_to_chars (char *buf, valueT val, int n)
     number_to_chars_littleendian (buf, val, n);
 }
 
+static void
+xg_init_global_config (void)
+{
+  target_big_endian = XCHAL_HAVE_BE;
+
+  density_supported = XCHAL_HAVE_DENSITY;
+  absolute_literals_supported = XSHAL_USE_ABSOLUTE_LITERALS;
+  xtensa_fetch_width = XCHAL_INST_FETCH_WIDTH;
+
+  directive_state[directive_density] = XCHAL_HAVE_DENSITY;
+  directive_state[directive_absolute_literals] = XSHAL_USE_ABSOLUTE_LITERALS;
+}
+
+void
+xtensa_init (int argc ATTRIBUTE_UNUSED, char **argv ATTRIBUTE_UNUSED)
+{
+  xg_init_global_config ();
+}
 
 /* This function is called once, at assembler startup time.  It should
    set up all the tables, etc. that the MD part of the assembler will
@@ -5507,7 +5524,7 @@ md_assemble (char *str)
   orig_insn.is_specific_opcode = (has_underbar || !use_transform ());
   orig_insn.opcode = xtensa_opcode_lookup (isa, opname);
 
-  /* Special case: Check for "CALLXn.TLS" psuedo op.  If found, grab its
+  /* Special case: Check for "CALLXn.TLS" pseudo op.  If found, grab its
      extra argument and set the opcode to "CALLXn".  */
   if (orig_insn.opcode == XTENSA_UNDEFINED
       && strncasecmp (opname, "callx", 5) == 0)
@@ -5556,7 +5573,7 @@ md_assemble (char *str)
 	}
     }
 
-  /* Special case: Check for "j.l" psuedo op.  */
+  /* Special case: Check for "j.l" pseudo op.  */
   if (orig_insn.opcode == XTENSA_UNDEFINED
       && strncasecmp (opname, "j.l", 3) == 0)
     {
@@ -6307,6 +6324,7 @@ finish_vinsn (vliw_insn *vinsn)
 {
   IStack slotstack;
   int i;
+  int slots;
 
   if (find_vinsn_conflicts (vinsn))
     {
@@ -6318,7 +6336,8 @@ finish_vinsn (vliw_insn *vinsn)
   if (vinsn->format == XTENSA_UNDEFINED)
     vinsn->format = xg_find_narrowest_format (vinsn);
 
-  if (xtensa_format_num_slots (xtensa_default_isa, vinsn->format) > 1
+  slots = xtensa_format_num_slots (xtensa_default_isa, vinsn->format);
+  if (slots > 1
       && produce_flix == FLIX_NONE)
     {
       as_bad (_("The option \"--no-allow-flix\" prohibits multi-slot flix."));
@@ -6339,13 +6358,11 @@ finish_vinsn (vliw_insn *vinsn)
       return;
     }
 
-  if (vinsn->num_slots
-      != xtensa_format_num_slots (xtensa_default_isa, vinsn->format))
+  if (vinsn->num_slots != slots)
     {
-      as_bad (_("format '%s' allows %d slots, but there are %d opcodes"),
+      as_bad (_("mismatch for format '%s': #slots = %d, #opcodes = %d"),
 	      xtensa_format_name (xtensa_default_isa, vinsn->format),
-	      xtensa_format_num_slots (xtensa_default_isa, vinsn->format),
-	      vinsn->num_slots);
+	      slots, vinsn->num_slots);
       xg_clear_vinsn (vinsn);
       return;
     }
@@ -7331,24 +7348,53 @@ xtensa_end (void)
   xtensa_check_frag_count ();
 }
 
-
-struct trampoline_frag
+struct trampoline_chain_entry
 {
-  struct trampoline_frag *next;
-  bfd_boolean needs_jump_around;
-  fragS *fragP;
-  fixS *fixP;
+  symbolS *sym;
+  addressT offset;
+};
+
+/* Trampoline chain for a given (sym, offset) pair is a sorted array
+   of locations of trampoline jumps leading there.  Jumps are represented
+   as pairs (sym, offset): trampoline frag symbol and offset of the jump
+   inside the frag.  */
+struct trampoline_chain
+{
+  struct trampoline_chain_entry target;
+  struct trampoline_chain_entry *entry;
+  size_t n_entries;
+  size_t n_max;
+  bfd_boolean needs_sorting;
+};
+
+struct trampoline_chain_index
+{
+  struct trampoline_chain *entry;
+  size_t n_entries;
+  size_t n_max;
+  bfd_boolean needs_sorting;
+};
+
+struct trampoline_index
+{
+  fragS **entry;
+  size_t n_entries;
+  size_t n_max;
 };
 
 struct trampoline_seg
 {
   struct trampoline_seg *next;
   asection *seg;
-  struct trampoline_frag trampoline_list;
+  /* Trampolines ordered by their frag fr_address */
+  struct trampoline_index index;
+  /* Known trampoline chains ordered by (sym, offset) pair */
+  struct trampoline_chain_index chain_index;
 };
 
 static struct trampoline_seg trampoline_seg_list;
 #define J_RANGE (128 * 1024)
+#define J_MARGIN 4096
 
 static int unreachable_count = 0;
 
@@ -7403,6 +7449,73 @@ static xtensa_insnbuf litpool_slotbuf = NULL;
 
 #define TRAMPOLINE_FRAG_SIZE 3000
 
+static struct trampoline_seg *
+find_trampoline_seg (asection *seg)
+{
+  struct trampoline_seg *ts = trampoline_seg_list.next;
+  static struct trampoline_seg *mr;
+
+  if (mr && mr->seg == seg)
+    return mr;
+
+  for ( ; ts; ts = ts->next)
+    {
+      if (ts->seg == seg)
+	{
+	  mr = ts;
+	  return ts;
+	}
+    }
+
+  return NULL;
+}
+
+static size_t xg_find_trampoline (const struct trampoline_index *idx,
+				  addressT addr)
+{
+  size_t a = 0;
+  size_t b = idx->n_entries;
+
+  while (b - a > 1)
+    {
+      size_t c = (a + b) / 2;
+
+      if (idx->entry[c]->fr_address <= addr)
+	a = c;
+      else
+	b = c;
+    }
+  return a;
+}
+
+static void xg_add_trampoline_to_index (struct trampoline_index *idx,
+					fragS *fragP)
+{
+  if (idx->n_entries == idx->n_max)
+    {
+      idx->n_max = (idx->n_entries + 1) * 2;
+      idx->entry = xrealloc (idx->entry,
+			     sizeof (*idx->entry) * idx->n_max);
+    }
+  idx->entry[idx->n_entries] = fragP;
+  ++idx->n_entries;
+}
+
+static void xg_remove_trampoline_from_index (struct trampoline_index *idx,
+					     size_t i)
+{
+  gas_assert (i < idx->n_entries);
+  memmove (idx->entry + i, idx->entry + i + 1,
+	   (idx->n_entries - i - 1) * sizeof (*idx->entry));
+  --idx->n_entries;
+}
+
+static void xg_add_trampoline_to_seg (struct trampoline_seg *ts,
+				      fragS *fragP)
+{
+  xg_add_trampoline_to_index (&ts->index, fragP);
+}
+
 static void
 xtensa_create_trampoline_frag (bfd_boolean needs_jump_around)
 {
@@ -7412,17 +7525,10 @@ xtensa_create_trampoline_frag (bfd_boolean needs_jump_around)
      We allocate enough for 1000 trampolines in each frag.
      If that's not enough, oh well.  */
 
-  struct trampoline_seg *ts = trampoline_seg_list.next;
-  struct trampoline_frag *tf;
+  struct trampoline_seg *ts = find_trampoline_seg (now_seg);
   char *varP;
   fragS *fragP;
   int size = TRAMPOLINE_FRAG_SIZE;
-
-  for ( ; ts; ts = ts->next)
-    {
-      if (ts->seg == now_seg)
-	break;
-    }
 
   if (ts == NULL)
     {
@@ -7442,29 +7548,213 @@ xtensa_create_trampoline_frag (bfd_boolean needs_jump_around)
       trampoline_buf = xtensa_insnbuf_alloc (xtensa_default_isa);
       trampoline_slotbuf = xtensa_insnbuf_alloc (xtensa_default_isa);
     }
-  tf = XNEW (struct trampoline_frag);
-  tf->next = ts->trampoline_list.next;
-  ts->trampoline_list.next = tf;
-  tf->needs_jump_around = needs_jump_around;
-  tf->fragP = fragP;
-  tf->fixP = NULL;
+  fragP->tc_frag_data.needs_jump_around = needs_jump_around;
+  xg_add_trampoline_to_seg (ts, fragP);
 }
 
-
-static struct trampoline_seg *
-find_trampoline_seg (asection *seg)
+static bfd_boolean xg_is_trampoline_frag_full (const fragS *fragP)
 {
-  struct trampoline_seg *ts = trampoline_seg_list.next;
+  return fragP->fr_var < 3;
+}
 
-  for ( ; ts; ts = ts->next)
+static int xg_order_trampoline_chain_entry (const void *a, const void *b)
+{
+  const struct trampoline_chain_entry *pa = a;
+  const struct trampoline_chain_entry *pb = b;
+
+  if (pa->sym == pb->sym ||
+      S_GET_VALUE (pa->sym) == S_GET_VALUE (pb->sym))
+    if (pa->offset == pb->offset)
+      return 0;
+    else
+      return pa->offset < pb->offset ? -1 : 1;
+  else
+    return S_GET_VALUE (pa->sym) < S_GET_VALUE (pb->sym) ? -1 : 1;
+}
+
+static void xg_sort_trampoline_chain (struct trampoline_chain *tc)
+{
+  qsort (tc->entry, tc->n_entries, sizeof (*tc->entry),
+	 xg_order_trampoline_chain_entry);
+  tc->needs_sorting = FALSE;
+}
+
+/* Find entry index in the given chain with maximal address <= source.  */
+static size_t xg_find_chain_entry (struct trampoline_chain *tc,
+				   addressT source)
+{
+  size_t a = 0;
+  size_t b = tc->n_entries;
+
+  if (tc->needs_sorting)
+    xg_sort_trampoline_chain (tc);
+
+  while (b - a > 1)
     {
-      if (ts->seg == seg)
-	return ts;
+      size_t c = (a + b) / 2;
+      struct trampoline_chain_entry *e = tc->entry + c;
+
+      if (S_GET_VALUE(e->sym) + e->offset <= source)
+	a = c;
+      else
+	b = c;
+    }
+  return a;
+}
+
+/* Find the best jump target for the source in the given trampoline chain.
+   The best jump target is the one that results in the shortest path to the
+   final target, it's the location of the jump closest to the final target,
+   but within the J_RANGE - J_MARGIN from the source.  */
+static struct trampoline_chain_entry *
+xg_get_best_chain_entry (struct trampoline_chain *tc, addressT source)
+{
+  addressT target = S_GET_VALUE(tc->target.sym) + tc->target.offset;
+  size_t i = xg_find_chain_entry (tc, source);
+  struct trampoline_chain_entry *e = tc->entry + i;
+  int step = target < source ? -1 : 1;
+  addressT chained_target;
+  offsetT off;
+
+  if (target > source &&
+      S_GET_VALUE(e->sym) + e->offset <= source &&
+      i + 1 < tc->n_entries)
+    ++i;
+
+  while (i + step < tc->n_entries)
+    {
+      struct trampoline_chain_entry *next = tc->entry + i + step;
+
+      chained_target = S_GET_VALUE(next->sym) + next->offset;
+      off = source - chained_target;
+
+      if (labs (off) >= J_RANGE - J_MARGIN)
+	break;
+
+      i += step;
     }
 
-  return NULL;
+  e = tc->entry + i;
+  chained_target = S_GET_VALUE(e->sym) + e->offset;
+  off = source - chained_target;
+
+  if (labs (off) < J_MARGIN ||
+      labs (off) >= J_RANGE - J_MARGIN)
+    return &tc->target;
+  return tc->entry + i;
 }
 
+static int xg_order_trampoline_chain (const void *a, const void *b)
+{
+  const struct trampoline_chain *_pa = a;
+  const struct trampoline_chain *_pb = b;
+  const struct trampoline_chain_entry *pa = &_pa->target;
+  const struct trampoline_chain_entry *pb = &_pb->target;
+  symbolS *s1 = pa->sym;
+  symbolS *s2 = pb->sym;
+
+  if (s1->sy_flags.sy_local_symbol
+      && local_symbol_converted_p ((struct local_symbol *) s1))
+    s1 = local_symbol_get_real_symbol ((struct local_symbol *) s1);
+
+  if (s2->sy_flags.sy_local_symbol
+      && local_symbol_converted_p ((struct local_symbol *) s2))
+    s2 = local_symbol_get_real_symbol ((struct local_symbol *) s2);
+
+  if (s1 == s2)
+    if (pa->offset == pb->offset)
+      return 0;
+    else
+      return pa->offset < pb->offset ? -1 : 1;
+  else
+    return s1 < s2 ? -1 : 1;
+}
+
+static struct trampoline_chain *
+xg_get_trampoline_chain (struct trampoline_seg *ts,
+			 symbolS *sym,
+			 addressT offset)
+{
+  struct trampoline_chain_index *idx = &ts->chain_index;
+  struct trampoline_chain c;
+
+  if (idx->needs_sorting)
+    {
+      qsort (idx->entry, idx->n_entries, sizeof (*idx->entry),
+	     xg_order_trampoline_chain);
+      idx->needs_sorting = FALSE;
+    }
+  c.target.sym = sym;
+  c.target.offset = offset;
+  return bsearch (&c, idx->entry, idx->n_entries,
+		  sizeof (struct trampoline_chain),
+		  xg_order_trampoline_chain);
+}
+
+/* Find trampoline chain in the given trampoline segment that is going
+   to the *sym + *offset.  If found, replace *sym and *offset with the
+   best jump target in that chain.  */
+static struct trampoline_chain *
+xg_find_best_eq_target (struct trampoline_seg *ts,
+			addressT source, symbolS **sym,
+			addressT *offset)
+{
+  struct trampoline_chain *tc = xg_get_trampoline_chain (ts, *sym, *offset);
+
+  if (tc)
+    {
+      struct trampoline_chain_entry *e = xg_get_best_chain_entry (tc, source);
+
+      *sym = e->sym;
+      *offset = e->offset;
+    }
+  return tc;
+}
+
+static void xg_add_location_to_chain (struct trampoline_chain *tc,
+				      symbolS *sym, addressT offset)
+{
+  struct trampoline_chain_entry *e;
+
+  if (tc->n_entries == tc->n_max)
+    {
+      tc->n_max = (tc->n_max + 1) * 2;
+      tc->entry = xrealloc (tc->entry, sizeof (*tc->entry) * tc->n_max);
+    }
+  e = tc->entry + tc->n_entries;
+  e->sym = sym;
+  e->offset = offset;
+  ++tc->n_entries;
+  tc->needs_sorting = TRUE;
+}
+
+static struct trampoline_chain *
+xg_create_trampoline_chain (struct trampoline_seg *ts,
+			    symbolS *sym, addressT offset)
+{
+  struct trampoline_chain_index *idx = &ts->chain_index;
+  struct trampoline_chain *tc;
+
+  if (idx->n_entries == idx->n_max)
+    {
+      idx->n_max = (idx->n_max + 1) * 2;
+      idx->entry = xrealloc (idx->entry,
+			     sizeof (*idx->entry) * idx->n_max);
+    }
+
+  tc = idx->entry + idx->n_entries;
+  tc->target.sym = sym;
+  tc->target.offset = offset;
+  tc->entry = NULL;
+  tc->n_entries = 0;
+  tc->n_max = 0;
+  xg_add_location_to_chain (tc, sym, offset);
+
+  ++idx->n_entries;
+  idx->needs_sorting = TRUE;
+
+  return tc;
+}
 
 void dump_trampolines (void);
 
@@ -7475,19 +7765,20 @@ dump_trampolines (void)
 
   for ( ; ts; ts = ts->next)
     {
+      size_t i;
       asection *seg = ts->seg;
 
       if (seg == NULL)
 	continue;
       fprintf(stderr, "SECTION %s\n", seg->name);
-      struct trampoline_frag *tf = ts->trampoline_list.next;
-      for ( ; tf; tf = tf->next)
+
+      for (i = 0; i < ts->index.n_entries; ++i)
 	{
-	  if (tf->fragP == NULL)
-	    continue;
+	  fragS *tf = ts->index.entry[i];
+
 	  fprintf(stderr, "   0x%08x: fix=%d, jump_around=%s\n",
-		  (int)tf->fragP->fr_address, (int)tf->fragP->fr_fix,
-		  tf->needs_jump_around ? "T" : "F");
+		  (int)tf->fr_address, (int)tf->fr_fix,
+		  tf->tc_frag_data.needs_jump_around ? "T" : "F");
 	}
     }
 }
@@ -7547,6 +7838,10 @@ xtensa_maybe_create_literal_pool_frag (bfd_boolean create,
       lps->seg = now_seg;
       lps->frag_list.next = &lps->frag_list;
       lps->frag_list.prev = &lps->frag_list;
+      /* Put candidate literal pool at the beginning of every section,
+         so that even when section starts with literal load there's a
+	 literal pool available.  */
+      lps->frag_count = auto_litpool_limit;
     }
 
   lps->frag_count++;
@@ -8996,50 +9291,116 @@ static long relax_frag_for_align (fragS *, long);
 static long relax_frag_immed
   (segT, fragS *, long, int, xtensa_format, int, int *, bfd_boolean);
 
-typedef struct cached_fixup cached_fixupS;
-struct cached_fixup
+/* Get projected address for the first fulcrum on a path from source to
+   target.  */
+static addressT xg_get_fulcrum (addressT source, addressT target)
 {
-  int addr;
-  int target;
-  int delta;
-  fixS *fixP;
-};
+  offsetT delta = target - source;
+  int n;
 
-typedef struct fixup_cache fixup_cacheS;
-struct fixup_cache
-{
-  cached_fixupS *fixups;
-  unsigned n_fixups;
-  unsigned n_max;
-
-  segT seg;
-  fragS *first_frag;
-};
-
-static int fixup_order (const void *a, const void *b)
-{
-  const cached_fixupS *pa = a;
-  const cached_fixupS *pb = b;
-
-  if (pa->addr == pb->addr)
-    {
-      if (pa->target == pb->target)
-	{
-	  if (pa->fixP->fx_r_type == pb->fixP->fx_r_type)
-	    return 0;
-	  return pa->fixP->fx_r_type < pb->fixP->fx_r_type ?  -1 : 1;
-	}
-      return pa->target - pb->target;
-    }
-  return pa->addr - pb->addr;
+  n = (labs (delta) + J_RANGE - J_MARGIN - 1) / (J_RANGE - J_MARGIN);
+  return source + delta / n;
 }
 
-static bfd_boolean xtensa_make_cached_fixup (cached_fixupS *o, fixS *fixP)
+/* Given trampoline index, source and target of a jump find the best
+   candidate trampoline for the first fulcrum.  The best trampoline is
+   the one in the reach of "j' instruction from the source, closest to
+   the projected fulcrum address, and preferrably w/o a jump around or
+   with already initialized jump around.  */
+static size_t xg_find_best_trampoline (struct trampoline_index *idx,
+				       addressT source, addressT target)
+{
+  addressT fulcrum = xg_get_fulcrum (source, target);
+  size_t dist = 0;
+  size_t best = -1;
+  size_t base_tr = xg_find_trampoline (idx, fulcrum);
+  int checked = 1;
+
+  /* Check trampoline frags around the base_tr to find the best.  */
+  for (dist = 0; checked; ++dist)
+    {
+      int i;
+      size_t tr = base_tr - dist;
+
+      checked = 0;
+
+      /* Trampolines are checked in the following order:
+         base_tr, base_tr + 1, base_tr - 1, base_tr + 2, base_tr - 2  */
+      for (i = 0; i < 2; ++i, tr = base_tr + dist + 1)
+	if (tr < idx->n_entries)
+	  {
+	    fragS *trampoline_frag = idx->entry[tr];
+	    offsetT off;
+
+	    /* Don't check trampolines outside source - target interval.  */
+	    if ((trampoline_frag->fr_address < source &&
+		 trampoline_frag->fr_address < target) ||
+		(trampoline_frag->fr_address > source &&
+		 trampoline_frag->fr_address > target))
+	      continue;
+
+	    off = trampoline_frag->fr_address - fulcrum;
+	    /* Stop if some trampoline is found and the search is more than
+	       J_RANGE / 4 from the projected fulcrum.  A trampoline w/o jump
+	       around is nice, but it shouldn't have much overhead.  */
+	    if (best < idx->n_entries && labs (off) > J_RANGE / 4)
+	      return best;
+
+	    off = trampoline_frag->fr_address - source;
+	    if (labs (off) < J_RANGE - J_MARGIN)
+	      {
+		++checked;
+		/* Stop if a trampoline w/o jump around is found or initialized
+		   trampoline with jump around is found.  */
+		if (!trampoline_frag->tc_frag_data.needs_jump_around ||
+		    trampoline_frag->fr_fix)
+		  return tr;
+		else if (best >= idx->n_entries)
+		  best = tr;
+	      }
+	  }
+    }
+
+  if (best < idx->n_entries)
+    return best;
+  else
+    as_fatal (_("cannot find suitable trampoline"));
+}
+
+static fixS *xg_relax_fixup (struct trampoline_index *idx, fixS *fixP)
+{
+  symbolS *s = fixP->fx_addsy;
+  addressT source = fixP->fx_frag->fr_address;
+  addressT target = S_GET_VALUE (s) + fixP->fx_offset;
+  size_t tr = xg_find_best_trampoline (idx, source, target);
+  fragS *trampoline_frag = idx->entry[tr];
+  fixS *newfixP;
+
+  init_trampoline_frag (trampoline_frag);
+  newfixP = xg_append_jump (trampoline_frag,
+			    fixP->fx_addsy, fixP->fx_offset);
+
+  /* Adjust the fixup for the original "j" instruction to
+     point to the newly added jump.  */
+  fixP->fx_addsy = trampoline_frag->fr_symbol;
+  fixP->fx_offset = trampoline_frag->fr_fix - 3;
+  fixP->tc_fix_data.X_add_symbol = trampoline_frag->fr_symbol;
+  fixP->tc_fix_data.X_add_number = trampoline_frag->fr_fix - 3;
+
+  trampoline_frag->tc_frag_data.relax_seen = FALSE;
+
+  if (xg_is_trampoline_frag_full (trampoline_frag))
+    xg_remove_trampoline_from_index (idx, tr);
+
+  return newfixP;
+}
+
+static bfd_boolean xg_is_relaxable_fixup (fixS *fixP)
 {
   xtensa_isa isa = xtensa_default_isa;
-  int addr = fixP->fx_frag->fr_address;
-  int target;
-  int delta;
+  addressT addr = fixP->fx_frag->fr_address;
+  addressT target;
+  offsetT delta;
   symbolS *s = fixP->fx_addsy;
   int slot;
   xtensa_format fmt;
@@ -9048,10 +9409,11 @@ static bfd_boolean xtensa_make_cached_fixup (cached_fixupS *o, fixS *fixP)
   if (fixP->fx_r_type < BFD_RELOC_XTENSA_SLOT0_OP ||
       fixP->fx_r_type > BFD_RELOC_XTENSA_SLOT14_OP)
     return FALSE;
-  target = S_GET_VALUE (s);
+
+  target = S_GET_VALUE (s) + fixP->fx_offset;
   delta = target - addr;
 
-  if (abs(delta) < J_RANGE / 2)
+  if (labs (delta) < J_RANGE - J_MARGIN)
     return FALSE;
 
   xtensa_insnbuf_from_chars (isa, trampoline_buf,
@@ -9062,86 +9424,52 @@ static bfd_boolean xtensa_make_cached_fixup (cached_fixupS *o, fixS *fixP)
   slot = fixP->tc_fix_data.slot;
   xtensa_format_get_slot (isa, fmt, slot, trampoline_buf, trampoline_slotbuf);
   opcode = xtensa_opcode_decode (isa, fmt, slot, trampoline_slotbuf);
-  if (opcode != xtensa_j_opcode)
-    return FALSE;
-
-  o->addr = addr;
-  o->target = target;
-  o->delta = delta;
-  o->fixP = fixP;
-
-  return TRUE;
+  return opcode == xtensa_j_opcode;
 }
 
-static void xtensa_realloc_fixup_cache (fixup_cacheS *cache, unsigned add)
+static void xg_relax_fixups (struct trampoline_seg *ts)
 {
-  if (cache->n_fixups + add > cache->n_max)
+  struct trampoline_index *idx = &ts->index;
+  segment_info_type *seginfo = seg_info (now_seg);
+  fixS *fx;
+
+  for (fx = seginfo->fix_root; fx; fx = fx->fx_next)
     {
-      cache->n_max = (cache->n_fixups + add) * 2;
-      cache->fixups = XRESIZEVEC (cached_fixupS, cache->fixups, cache->n_max);
+      fixS *fixP = fx;
+      struct trampoline_chain *tc = NULL;
+
+      if (xg_is_relaxable_fixup (fixP))
+	{
+	  tc = xg_find_best_eq_target (ts, fixP->fx_frag->fr_address,
+				       &fixP->fx_addsy, &fixP->fx_offset);
+	  if (!tc)
+	    tc = xg_create_trampoline_chain (ts, fixP->fx_addsy,
+					     fixP->fx_offset);
+	  gas_assert (tc);
+	}
+
+      while (xg_is_relaxable_fixup (fixP))
+	{
+	  fixP = xg_relax_fixup (idx, fixP);
+	  xg_add_location_to_chain (tc, fixP->fx_frag->fr_symbol,
+				    fixP->fx_where);
+	}
     }
 }
 
-static void xtensa_cache_relaxable_fixups (fixup_cacheS *cache,
-					   segment_info_type *seginfo)
+/* Given a trampoline frag relax all jumps that might want to use this
+   trampoline.  Only do real work once per relaxation cycle, when
+   xg_relax_trampoline is called for the first trampoline in the now_seg.
+   Don't use stretch, don't update new_stretch: place fulcrums with a
+   slack to tolerate code movement.  In the worst case if a jump between
+   two trampolines wouldn't reach the next relaxation pass will fix it.  */
+static void xg_relax_trampoline (fragS *fragP, long stretch ATTRIBUTE_UNUSED,
+				 long *new_stretch ATTRIBUTE_UNUSED)
 {
-  fixS *fixP;
+  struct trampoline_seg *ts = find_trampoline_seg (now_seg);
 
-  cache->n_fixups = 0;
-
-  for (fixP = seginfo->fix_root; fixP ; fixP = fixP->fx_next)
-    {
-      xtensa_realloc_fixup_cache (cache, 1);
-
-      if (xtensa_make_cached_fixup (cache->fixups + cache->n_fixups, fixP))
-	++cache->n_fixups;
-    }
-  qsort (cache->fixups, cache->n_fixups, sizeof (*cache->fixups), fixup_order);
-}
-
-static unsigned xtensa_find_first_cached_fixup (const fixup_cacheS *cache,
-						int addr)
-{
-  unsigned a = 0;
-  unsigned b = cache->n_fixups;
-
-  while (b - a > 1)
-    {
-      unsigned c = (a + b) / 2;
-
-      if (cache->fixups[c].addr < addr)
-	a = c;
-      else
-	b = c;
-    }
-  return a;
-}
-
-static void xtensa_delete_cached_fixup (fixup_cacheS *cache, unsigned i)
-{
-  memmove (cache->fixups + i, cache->fixups + i + 1,
-	   (cache->n_fixups - i - 1) * sizeof (*cache->fixups));
-  --cache->n_fixups;
-}
-
-static bfd_boolean xtensa_add_cached_fixup (fixup_cacheS *cache, fixS *fixP)
-{
-  cached_fixupS o;
-  unsigned i;
-
-  if (!xtensa_make_cached_fixup (&o, fixP))
-    return FALSE;
-  xtensa_realloc_fixup_cache (cache, 1);
-  i = xtensa_find_first_cached_fixup (cache, o.addr);
-  if (i < cache->n_fixups)
-    {
-      ++i;
-      memmove (cache->fixups + i + 1, cache->fixups + i,
-	       (cache->n_fixups - i) * sizeof (*cache->fixups));
-    }
-  cache->fixups[i] = o;
-  ++cache->n_fixups;
-  return TRUE;
+  if (ts->index.n_entries && ts->index.entry[0] == fragP)
+    xg_relax_fixups (ts);
 }
 
 /* Return the number of bytes added to this fragment, given that the
@@ -9287,163 +9615,7 @@ xtensa_relax_frag (fragS *fragP, long stretch, int *stretched_p)
 
     case RELAX_TRAMPOLINE:
       if (fragP->tc_frag_data.relax_seen)
-        {
-	  static fixup_cacheS fixup_cache;
-	  segment_info_type *seginfo = seg_info (now_seg);
-	  int trampaddr = fragP->fr_address + fragP->fr_fix;
-	  int searchaddr = trampaddr < J_RANGE ? 0 : trampaddr - J_RANGE;
-	  unsigned i;
-
-	  if (now_seg != fixup_cache.seg ||
-	      fragP == fixup_cache.first_frag ||
-	      fixup_cache.first_frag == NULL)
-	    {
-	      xtensa_cache_relaxable_fixups (&fixup_cache, seginfo);
-	      fixup_cache.seg = now_seg;
-	      fixup_cache.first_frag = fragP;
-	    }
-
-          /* Scan for jumps that will not reach.  */
-          for (i = xtensa_find_first_cached_fixup (&fixup_cache, searchaddr);
-	       i < fixup_cache.n_fixups; ++i)
-
-            {
-	      fixS *fixP = fixup_cache.fixups[i].fixP;
-	      int target = fixup_cache.fixups[i].target;
-	      int addr = fixup_cache.fixups[i].addr;
-	      int delta = fixup_cache.fixups[i].delta + stretch;
-
-	      trampaddr = fragP->fr_address + fragP->fr_fix;
-
-	      if (addr + J_RANGE < trampaddr)
-		continue;
-	      if (addr > trampaddr + J_RANGE)
-		break;
-	      if (abs (delta) < J_RANGE)
-		continue;
-
-	      slot = fixP->tc_fix_data.slot;
-
-              if (delta > J_RANGE  || delta < -1 * J_RANGE)
-                { /* Found an out-of-range jump; scan the list of trampolines for the best match.  */
-		  struct trampoline_seg *ts = find_trampoline_seg (now_seg);
-		  struct trampoline_frag *tf = ts->trampoline_list.next;
-		  struct trampoline_frag *prev = &ts->trampoline_list;
-		  int lower = (target < addr) ? target : addr;
-		  int upper = (target > addr) ? target : addr;
-		  int midpoint = lower + (upper - lower) / 2;
-
-		  if ((upper - lower) > 2 * J_RANGE)
-		    {
-		      /* One trampoline won't suffice; we need multiple jumps.
-			 Jump to the trampoline that's farthest, but still in
-			 range relative to the original "j" instruction.  */
-		      for ( ; tf; prev = tf, tf = tf->next )
-			{
-			  int this_addr = tf->fragP->fr_address + tf->fragP->fr_fix;
-			  int next_addr = (tf->next) ? tf->next->fragP->fr_address + tf->next->fragP->fr_fix : 0 ;
-
-			  if (addr == lower)
-			    {
-			      /* Forward jump.  */
-			      if (this_addr - addr < J_RANGE)
-				break;
-			    }
-			  else
-			    {
-			      /* Backward jump.  */
-			      if (next_addr == 0 || addr - next_addr > J_RANGE)
-				break;
-			    }
-			}
-		    }
-		  else
-		    {
-		      struct trampoline_frag *best_tf = NULL;
-		      int best_delta = 0;
-
-		      for ( ; tf; prev = tf, tf = tf->next )
-			{
-			  int this_addr = tf->fragP->fr_address + tf->fragP->fr_fix;
-			  int this_delta = abs (this_addr - midpoint);
-
-			  if (!best_tf || this_delta < best_delta)
-			    {
-			       best_tf = tf;
-			       best_delta = this_delta;
-			    }
-			}
-		      tf = best_tf;
-		    }
-		  if (tf->fragP == fragP)
-		    {
-		      if (abs (addr - trampaddr) < J_RANGE)
-			{ /* The trampoline is in range of original; fix it!  */
-			  fixS *newfixP;
-			  int offset;
-			  TInsn insn;
-			  symbolS *lsym;
-			  fragS *fP; /* The out-of-range jump.  */
-
-			  new_stretch += init_trampoline_frag (tf);
-			  offset = fragP->fr_fix; /* Where to assemble the j insn.  */
-			  lsym = fragP->fr_symbol;
-			  fP = fixP->fx_frag;
-			  /* Assemble a jump to the target label here.  */
-			  tinsn_init (&insn);
-			  insn.insn_type = ITYPE_INSN;
-			  insn.opcode = xtensa_j_opcode;
-			  insn.ntok = 1;
-			  set_expr_symbol_offset (&insn.tok[0], lsym, offset);
-			  fmt = xg_get_single_format (xtensa_j_opcode);
-			  tinsn_to_slotbuf (fmt, 0, &insn, trampoline_slotbuf);
-			  xtensa_format_set_slot (isa, fmt, 0, trampoline_buf, trampoline_slotbuf);
-			  xtensa_insnbuf_to_chars (isa, trampoline_buf, (unsigned char *)fragP->fr_literal + offset, 3);
-			  fragP->fr_fix += 3;
-			  fragP->fr_var -= 3;
-			  /* Add a fix-up for the original j insn.  */
-			  newfixP = fix_new (fP, fixP->fx_where, fixP->fx_size, lsym, fragP->fr_fix - 3, TRUE, fixP->fx_r_type);
-			  newfixP->fx_no_overflow = 1;
-			  newfixP->tc_fix_data.X_add_symbol = lsym;
-			  newfixP->tc_fix_data.X_add_number = offset;
-			  newfixP->tc_fix_data.slot = slot;
-
-			  xtensa_delete_cached_fixup (&fixup_cache, i);
-			  xtensa_add_cached_fixup (&fixup_cache, newfixP);
-
-			  /* Move the fix-up from the original j insn to this one.  */
-			  fixP->fx_frag = fragP;
-			  fixP->fx_where = fragP->fr_fix - 3;
-			  fixP->tc_fix_data.slot = 0;
-
-			  xtensa_add_cached_fixup (&fixup_cache, fixP);
-
-			  /* re-do current fixup */
-			  --i;
-
-			  /* Adjust the jump around this trampoline (if present).  */
-			  if (tf->fixP != NULL)
-			    {
-			      tf->fixP->fx_offset += 3;
-			    }
-			  new_stretch += 3;
-			  fragP->tc_frag_data.relax_seen = FALSE; /* Need another pass.  */
-			  /* Do we have room for more?  */
-			  if (fragP->fr_var < 3)
-			    { /* No, convert to fill.  */
-			      frag_wane (fragP);
-			      fragP->fr_subtype = 0;
-			      /* Remove from the trampoline_list.  */
-			      prev->next = tf->next;
-			      if (fragP == fixup_cache.first_frag)
-				fixup_cache.first_frag = NULL;
-			      break;
-			    }
-			}
-		    }
-                }
-            }
-        }
+	xg_relax_trampoline (fragP, stretch, &new_stretch);
       break;
 
     default:
@@ -9884,197 +10056,134 @@ bytes_to_stretch (fragS *this_frag,
 }
 
 
-static struct trampoline_frag *
-search_trampolines (TInsn *tinsn, fragS *fragP, bfd_boolean unreachable_only)
+static fragS *
+xg_find_best_trampoline_for_tinsn (TInsn *tinsn, fragS *fragP)
 {
-  struct trampoline_seg *ts = find_trampoline_seg (now_seg);
-  struct trampoline_frag *tf = (ts) ? ts->trampoline_list.next : NULL;
-  struct trampoline_frag *best_tf = NULL;
-  int best_delta = 0;
-  int best_addr = 0;
   symbolS *sym = tinsn->tok[0].X_add_symbol;
-  offsetT target = S_GET_VALUE (sym) + tinsn->tok[0].X_add_number;
-  offsetT addr = fragP->fr_address;
-  offsetT lower = (addr < target) ? addr : target;
-  offsetT upper = (addr > target) ? addr : target;
-  int delta = upper - lower;
-  offsetT midpoint = lower + delta / 2;
-  int this_delta = -1;
-  int this_addr = -1;
-
-  if (delta > 2 * J_RANGE)
-    {
-      /* One trampoline won't do; we need multiple.
-	 Choose the farthest trampoline that's still in range of the original
-	 and let a later pass finish the job.  */
-      for ( ; tf; tf = tf->next)
-	{
-	  int next_addr = (tf->next) ? tf->next->fragP->fr_address + tf->next->fragP->fr_fix : 0;
-
-	  this_addr = tf->fragP->fr_address + tf->fragP->fr_fix;
-	  if (lower == addr)
-	    {
-	      /* Forward jump.  */
-	      if (this_addr - addr < J_RANGE)
-		break;
-	    }
-	  else
-	    {
-	      /* Backward jump.  */
-	      if (next_addr == 0 || addr - next_addr > J_RANGE)
-		break;
-	    }
-	}
-      if (abs (addr - this_addr) < J_RANGE)
-	return tf;
-
-      return NULL;
-    }
-  for ( ; tf; tf = tf->next)
-    {
-      this_addr = tf->fragP->fr_address + tf->fragP->fr_fix;
-      this_delta = abs (this_addr - midpoint);
-      if (unreachable_only && tf->needs_jump_around)
-	continue;
-      if (!best_tf || this_delta < best_delta)
-        {
-	  best_tf = tf;
-	  best_delta = this_delta;
-	  best_addr = this_addr;
-        }
-    }
-
-  if (best_tf &&
-      best_delta < J_RANGE &&
-      abs(best_addr - lower) < J_RANGE &&
-      abs(best_addr - upper) < J_RANGE)
-    return best_tf;
-
-  return NULL; /* No suitable trampoline found.  */
-}
-
-
-static struct trampoline_frag *
-get_best_trampoline (TInsn *tinsn, fragS *fragP)
-{
-  struct trampoline_frag *tf = NULL;
-
-  tf = search_trampolines (tinsn, fragP, TRUE); /* Try unreachable first.  */
-
-  if (tf == NULL)
-    tf = search_trampolines (tinsn, fragP, FALSE); /* Try ones needing a jump-around, too.  */
-
-  return tf;
-}
-
-
-static void
-check_and_update_trampolines (void)
-{
+  addressT source = fragP->fr_address;
+  addressT target = S_GET_VALUE (sym) + tinsn->tok[0].X_add_number;
   struct trampoline_seg *ts = find_trampoline_seg (now_seg);
-  struct trampoline_frag *tf = ts->trampoline_list.next;
-  struct trampoline_frag *prev = &ts->trampoline_list;
+  size_t i;
 
-  for ( ; tf; prev = tf, tf = tf->next)
+  if (!ts || !ts->index.n_entries)
+    return NULL;
+
+  i = xg_find_best_trampoline (&ts->index, source, target);
+
+  return ts->index.entry[i];
+}
+
+
+/* Append jump to sym + offset to the end of the trampoline frag fragP.
+   Adjust fragP's jump around if it's present.  Adjust fragP's fr_fix/fr_var
+   and finish the frag if it's full (but don't remove it from the trampoline
+   frag index).  Return fixup for the newly created jump.  */
+static fixS *xg_append_jump (fragS *fragP, symbolS *sym, offsetT offset)
+{
+  fixS *fixP;
+  TInsn insn;
+  xtensa_format fmt;
+  xtensa_isa isa = xtensa_default_isa;
+
+  gas_assert (fragP->fr_var >= 3);
+  tinsn_init (&insn);
+  insn.insn_type = ITYPE_INSN;
+  insn.opcode = xtensa_j_opcode;
+  insn.ntok = 1;
+  set_expr_symbol_offset (&insn.tok[0], sym, offset);
+  fmt = xg_get_single_format (xtensa_j_opcode);
+  tinsn_to_slotbuf (fmt, 0, &insn, trampoline_slotbuf);
+  xtensa_format_set_slot (isa, fmt, 0, trampoline_buf, trampoline_slotbuf);
+  xtensa_insnbuf_to_chars (isa, trampoline_buf,
+			   (unsigned char *)fragP->fr_literal + fragP->fr_fix, 3);
+  fixP = fix_new (fragP, fragP->fr_fix, 3, sym, offset, TRUE,
+		  BFD_RELOC_XTENSA_SLOT0_OP);
+  fixP->tc_fix_data.slot = 0;
+
+  fragP->fr_fix += 3;
+  fragP->fr_var -= 3;
+
+  /* Adjust the jump around this trampoline (if present).  */
+  if (fragP->tc_frag_data.jump_around_fix)
+    fragP->tc_frag_data.jump_around_fix->fx_offset += 3;
+
+  /* Do we have room for more? */
+  if (xg_is_trampoline_frag_full (fragP))
     {
-      if (tf->fragP->fr_var < 3)
-	{
-	  frag_wane (tf->fragP);
-	  prev->next = tf->next;
-	  tf->fragP = NULL;
-	}
+      frag_wane (fragP);
+      fragP->fr_subtype = 0;
     }
+
+  return fixP;
 }
 
 
 static int
-init_trampoline_frag (struct trampoline_frag *trampP)
+init_trampoline_frag (fragS *fp)
 {
-  fragS *fp = trampP->fragP;
   int growth = 0;
 
   if (fp->fr_fix == 0)
     {
       symbolS *lsym;
       char label[10 + 2 * sizeof(fp)];
-      sprintf (label, ".L0_TR_%p", fp);
 
+      sprintf (label, ".L0_TR_%p", fp);
       lsym = (symbolS *)local_symbol_make (label, now_seg, 0, fp);
       fp->fr_symbol = lsym;
-      if (trampP->needs_jump_around)
+      if (fp->tc_frag_data.needs_jump_around)
         {
-	  /* Add a jump around this block of jumps, in case
-	     control flows into this block.  */
-	  fixS *fixP;
-	  TInsn insn;
-	  xtensa_format fmt;
-	  xtensa_isa isa = xtensa_default_isa;
-
-	  fp->tc_frag_data.is_insn = 1;
-	  /* Assemble a jump insn.  */
-	  tinsn_init (&insn);
-	  insn.insn_type = ITYPE_INSN;
-	  insn.opcode = xtensa_j_opcode;
-	  insn.ntok = 1;
-	  set_expr_symbol_offset (&insn.tok[0], lsym, 3);
-	  fmt = xg_get_single_format (xtensa_j_opcode);
-	  tinsn_to_slotbuf (fmt, 0, &insn, trampoline_slotbuf);
-	  xtensa_format_set_slot (isa, fmt, 0, trampoline_buf, trampoline_slotbuf);
-	  xtensa_insnbuf_to_chars (isa, trampoline_buf, (unsigned char *)fp->fr_literal, 3);
-	  fp->fr_fix += 3;
-	  fp->fr_var -= 3;
+	  fp->tc_frag_data.jump_around_fix = xg_append_jump (fp, lsym, 3);
 	  growth = 3;
-	  fixP = fix_new (fp, 0, 3, lsym, 3, TRUE, BFD_RELOC_XTENSA_SLOT0_OP);
-	  trampP->fixP = fixP;
         }
     }
   return growth;
 }
 
-
 static int
-add_jump_to_trampoline (struct trampoline_frag *trampP, fragS *origfrag)
+xg_get_single_symbol_slot (fragS *fragP)
 {
-  fragS *tramp = trampP->fragP;
+  int i;
+  int slot = -1;
+
+  for (i = 0; i < MAX_SLOTS; ++i)
+    if (fragP->tc_frag_data.slot_symbols[i])
+      {
+	gas_assert (slot == -1);
+	slot = i;
+      }
+
+  gas_assert (slot >= 0 && slot < MAX_SLOTS);
+
+  return slot;
+}
+
+static fixS *
+add_jump_to_trampoline (fragS *tramp, fragS *origfrag)
+{
+  int slot = xg_get_single_symbol_slot (origfrag);
   fixS *fixP;
-  int offset = tramp->fr_fix; /* Where to assemble the j insn.  */
-  TInsn insn;
-  symbolS *lsym;
-  symbolS *tsym;
-  int toffset;
-  xtensa_format fmt;
-  xtensa_isa isa = xtensa_default_isa;
-  int growth = 0;
 
-  lsym = tramp->fr_symbol;
   /* Assemble a jump to the target label in the trampoline frag.  */
-  tsym = origfrag->tc_frag_data.slot_symbols[0];
-  toffset = origfrag-> tc_frag_data.slot_offsets[0];
-  tinsn_init (&insn);
-  insn.insn_type = ITYPE_INSN;
-  insn.opcode = xtensa_j_opcode;
-  insn.ntok = 1;
-  set_expr_symbol_offset (&insn.tok[0], tsym, toffset);
-  fmt = xg_get_single_format (xtensa_j_opcode);
-  tinsn_to_slotbuf (fmt, 0, &insn, trampoline_slotbuf);
-  xtensa_format_set_slot (isa, fmt, 0, trampoline_buf, trampoline_slotbuf);
-  xtensa_insnbuf_to_chars (isa, trampoline_buf, (unsigned char *)tramp->fr_literal + offset, 3);
-  tramp->fr_fix += 3;
-  tramp->fr_var -= 3;
-  growth = 3;
-  /* add a fix-up for the trampoline jump.  */
-  fixP = fix_new (tramp, tramp->fr_fix - 3, 3, tsym, toffset, TRUE, BFD_RELOC_XTENSA_SLOT0_OP);
-  /* Modify the jump at the start of this trampoline to point past the newly-added jump.  */
-  fixP = trampP->fixP;
-  if (fixP)
-    fixP->fx_offset += 3;
-  /* Modify the original j to point here.  */
-  origfrag->tc_frag_data.slot_symbols[0] = lsym;
-  origfrag->tc_frag_data.slot_offsets[0] = tramp->fr_fix - 3;
-  /* If trampoline is full, remove it from the list.  */
-  check_and_update_trampolines ();
+  fixP = xg_append_jump (tramp,
+			 origfrag->tc_frag_data.slot_symbols[slot],
+			 origfrag->tc_frag_data.slot_offsets[slot]);
 
-  return growth;
+  /* Modify the original j to point here.  */
+  origfrag->tc_frag_data.slot_symbols[slot] = tramp->fr_symbol;
+  origfrag->tc_frag_data.slot_offsets[slot] = tramp->fr_fix - 3;
+
+  /* If trampoline is full, remove it from the list.  */
+  if (xg_is_trampoline_frag_full (tramp))
+    {
+      struct trampoline_seg *ts = find_trampoline_seg (now_seg);
+      size_t tr = xg_find_trampoline (&ts->index, tramp->fr_address);
+
+      gas_assert (ts->index.entry[tr] == tramp);
+      xg_remove_trampoline_from_index (&ts->index, tr);
+    }
+
+  return fixP;
 }
 
 
@@ -10223,15 +10332,42 @@ relax_frag_immed (segT segP,
       istack.insn[istack.ninsn - 2].opcode == xtensa_j_opcode)
     {
       TInsn *jinsn = &istack.insn[istack.ninsn - 2];
+      struct trampoline_seg *ts = find_trampoline_seg (segP);
+      struct trampoline_chain *tc = NULL;
 
-      if (!xg_symbolic_immeds_fit (jinsn, segP, fragP, fragP->fr_offset, total_text_diff))
+      if (ts &&
+	  !xg_symbolic_immeds_fit (jinsn, segP, fragP, fragP->fr_offset,
+				   total_text_diff))
 	{
-	  struct trampoline_frag *tf = get_best_trampoline (jinsn, fragP);
+	  int s = xg_get_single_symbol_slot (fragP);
+	  addressT offset = fragP->tc_frag_data.slot_offsets[s];
+
+	  tc = xg_find_best_eq_target (ts, fragP->fr_address,
+				       &fragP->tc_frag_data.slot_symbols[s],
+				       &offset);
+
+	  if (!tc)
+	    tc = xg_create_trampoline_chain (ts,
+					     fragP->tc_frag_data.slot_symbols[s],
+					     offset);
+	  fragP->tc_frag_data.slot_offsets[s] = offset;
+	  tinsn_immed_from_frag (jinsn, fragP, s);
+	}
+
+      if (!xg_symbolic_immeds_fit (jinsn, segP, fragP, fragP->fr_offset,
+				   total_text_diff))
+	{
+	  fragS *tf = xg_find_best_trampoline_for_tinsn (jinsn, fragP);
 
 	  if (tf)
 	    {
-	      this_text_diff += init_trampoline_frag (tf);
-	      this_text_diff += add_jump_to_trampoline (tf, fragP);
+	      fixS *fixP;
+
+	      this_text_diff += init_trampoline_frag (tf) + 3;
+	      fixP = add_jump_to_trampoline (tf, fragP);
+	      xg_add_location_to_chain (tc, fixP->fx_frag->fr_symbol,
+					fixP->fx_where);
+	      fragP->tc_frag_data.relax_seen = FALSE;
 	    }
 	  else
 	    {
@@ -11023,6 +11159,30 @@ xtensa_move_seg_list_to_beginning (seg_list *head)
 static void mark_literal_frags (seg_list *);
 
 static void
+xg_promote_candidate_litpool (struct litpool_seg *lps,
+			      struct litpool_frag *lp)
+{
+  fragS *poolbeg;
+  fragS *poolend;
+  symbolS *lsym;
+  char label[10 + 2 * sizeof (fragS *)];
+
+  poolbeg = lp->fragP;
+  lp->priority = 1;
+  poolbeg->fr_subtype = RELAX_LITERAL_POOL_BEGIN;
+  poolend = poolbeg->fr_next;
+  gas_assert (poolend->fr_type == rs_machine_dependent &&
+	      poolend->fr_subtype == RELAX_LITERAL_POOL_END);
+  /* Create a local symbol pointing to the
+     end of the pool.  */
+  sprintf (label, ".L0_LT_%p", poolbeg);
+  lsym = (symbolS *)local_symbol_make (label, lps->seg,
+				       0, poolend);
+  poolbeg->fr_symbol = lsym;
+  /* Rest is done in xtensa_relax_frag.  */
+}
+
+static void
 xtensa_move_literals (void)
 {
   seg_list *segment;
@@ -11109,27 +11269,17 @@ xtensa_move_literals (void)
 				      /* This is still a "candidate" but the next one
 				         will be too far away, so revert to the nearest
 					 one, convert it and add the jump around.  */
-				      fragS *poolbeg;
-				      fragS *poolend;
-				      symbolS *lsym;
-				      char label[10 + 2 * sizeof (fragS *)];
 				      lp = lpf->prev;
-				      poolbeg = lp->fragP;
-				      lp->priority = 1;
-				      poolbeg->fr_subtype = RELAX_LITERAL_POOL_BEGIN;
-				      poolend = poolbeg->fr_next;
-				      gas_assert (poolend->fr_type == rs_machine_dependent &&
-						  poolend->fr_subtype == RELAX_LITERAL_POOL_END);
-				      /* Create a local symbol pointing to the
-				         end of the pool.  */
-				      sprintf (label, ".L0_LT_%p", poolbeg);
-				      lsym = (symbolS *)local_symbol_make (label, lps->seg,
-									   0, poolend);
-				      poolbeg->fr_symbol = lsym;
-				      /* Rest is done in xtensa_relax_frag.  */
+				      break;
 				    }
 				}
 			    }
+
+			  /* Convert candidate and add the jump around.  */
+			  if (lp->fragP->fr_subtype ==
+			      RELAX_LITERAL_POOL_CANDIDATE_BEGIN)
+			    xg_promote_candidate_litpool (lps, lp);
+
 			  if (! litfrag->tc_frag_data.literal_frag)
 			    {
 			      /* Take earliest use of this literal to avoid
@@ -11223,7 +11373,7 @@ xtensa_move_literals (void)
 	  /* First, move the frag out of the literal section and
 	     to the appropriate place.  */
 
-	  /* Insert an aligmnent frag at start of pool.  */
+	  /* Insert an alignment frag at start of pool.  */
 	  if (literal_pool->fr_next->fr_type == rs_machine_dependent &&
 	      literal_pool->fr_next->fr_subtype == RELAX_LITERAL_POOL_END)
 	    {
@@ -11401,7 +11551,6 @@ xtensa_switch_to_literal_fragment (emit_state *result)
 static void
 xtensa_switch_to_non_abs_literal_fragment (emit_state *result)
 {
-  static bfd_boolean recursive = FALSE;
   fragS *pool_location = get_literal_pool_location (now_seg);
   segT lit_seg;
   bfd_boolean is_init =
@@ -11411,23 +11560,14 @@ xtensa_switch_to_non_abs_literal_fragment (emit_state *result)
 
   if (pool_location == NULL
       && !use_literal_section
-      && !recursive
       && !is_init && ! is_fini)
     {
       if (!auto_litpools)
 	{
 	  as_bad (_("literal pool location required for text-section-literals; specify with .literal_position"));
 	}
-
-      /* When we mark a literal pool location, we want to put a frag in
-	 the literal pool that points to it.  But to do that, we want to
-	 switch_to_literal_fragment.  But literal sections don't have
-	 literal pools, so their location is always null, so we would
-	 recurse forever.  This is kind of hacky, but it works.  */
-
-      recursive = TRUE;
-      xtensa_mark_literal_pool_location ();
-      recursive = FALSE;
+      xtensa_maybe_create_literal_pool_frag (TRUE, TRUE);
+      pool_location = get_literal_pool_location (now_seg);
     }
 
   lit_seg = cache_literal_section (FALSE);

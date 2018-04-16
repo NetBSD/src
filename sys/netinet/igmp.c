@@ -1,4 +1,4 @@
-/*	$NetBSD: igmp.c,v 1.66 2018/02/07 11:42:58 maxv Exp $	*/
+/*	$NetBSD: igmp.c,v 1.66.2.1 2018/04/16 02:00:08 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igmp.c,v 1.66 2018/02/07 11:42:58 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igmp.c,v 1.66.2.1 2018/04/16 02:00:08 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mrouting.h"
@@ -602,11 +602,8 @@ igmp_sendpkt(struct in_multi *inm, int type)
 	MGETHDR(m, M_DONTWAIT, MT_HEADER);
 	if (m == NULL)
 		return;
+	KASSERT(max_linkhdr + sizeof(struct ip) + IGMP_MINLEN <= MHLEN);
 
-	/*
-	 * Assume max_linkhdr + sizeof(struct ip) + IGMP_MINLEN
-	 * is smaller than mbuf size returned by MGETHDR.
-	 */
 	m->m_data += max_linkhdr;
 	m->m_len = sizeof(struct ip) + IGMP_MINLEN;
 	m->m_pkthdr.len = sizeof(struct ip) + IGMP_MINLEN;

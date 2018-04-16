@@ -1,5 +1,5 @@
 /* tc-pdp11.c - pdp11-specific -
-   Copyright (C) 2001-2016 Free Software Foundation, Inc.
+   Copyright (C) 2001-2018 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -109,7 +109,7 @@ set_option (const char *arg)
       arg += 3;
     }
 
-  /* Commersial instructions.  */
+  /* Commercial instructions.  */
   if (strcmp (arg, "cis") == 0)
     pdp11_extension[PDP11_CIS] = yes;
   /* Call supervisor mode.  */
@@ -203,7 +203,7 @@ md_number_to_chars (char con[], valueT value, int nbytes)
 {
   /* On a PDP-11, 0x1234 is stored as "\x12\x34", and
      0x12345678 is stored as "\x56\x78\x12\x34". It's
-     anyones guess what 0x123456 would be stored like.  */
+     anyone's guess what 0x123456 would be stored like.  */
 
   switch (nbytes)
     {
@@ -283,7 +283,7 @@ md_chars_to_number (unsigned char *con, int nbytes)
 {
   /* On a PDP-11, 0x1234 is stored as "\x12\x34", and
      0x12345678 is stored as "\x56\x78\x12\x34". It's
-     anyones guess what 0x123456 would be stored like.  */
+     anyone's guess what 0x123456 would be stored like.  */
   switch (nbytes)
     {
     case 0:
@@ -1286,9 +1286,9 @@ md_show_usage (FILE *stream)
 {
   fprintf (stream, "\
 \n\
-PDP-11 instruction set extentions:\n\
+PDP-11 instruction set extensions:\n\
 \n\
--m(no-)cis		allow (disallow) commersial instruction set\n\
+-m(no-)cis		allow (disallow) commercial instruction set\n\
 -m(no-)csm		allow (disallow) CSM instruction\n\
 -m(no-)eis		allow (disallow) full extended instruction set\n\
 -m(no-)fis		allow (disallow) KEV11 floating-point instructions\n\
@@ -1302,8 +1302,8 @@ PDP-11 instruction set extentions:\n\
 -m(no-)ucode		allow (disallow) microcode instructions\n\
 -mall-extensions	allow all instruction set extensions\n\
 			(this is the default)\n\
--mno-extentions		disallow all instruction set extensions\n\
--pic			generate position-indepenent code\n\
+-mno-extensions		disallow all instruction set extensions\n\
+-pic			generate position-independent code\n\
 \n\
 PDP-11 CPU model options:\n\
 \n\

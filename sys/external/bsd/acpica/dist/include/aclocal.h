@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2017, Intel Corp.
+ * Copyright (C) 2000 - 2018, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -1259,7 +1259,7 @@ typedef struct acpi_bit_register_info
 
 typedef struct acpi_interface_info
 {
-    char                        *Name;
+    const char                  *Name;
     struct acpi_interface_info  *Next;
     UINT8                       Flags;
     UINT8                       Value;

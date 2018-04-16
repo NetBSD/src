@@ -843,6 +843,10 @@ SOURCE=..\opensslecdsa_link.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\openssleddsa_link.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\opensslgost_link.c
 # End Source File
 # Begin Source File
@@ -866,6 +870,10 @@ SOURCE=..\pkcs11dsa_link.c
 # Begin Source File
 
 SOURCE=..\pkcs11ecdsa_link.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\pkcs11eddsa_link.c
 # End Source File
 # Begin Source File
 

@@ -288,16 +288,16 @@ extern mStatus mDNSSendDNSMessage(mDNS *const m, DNSMessage *const msg, mDNSu8 *
 #endif
 
 extern void ShowTaskSchedulingError(mDNS *const m);
-extern void mDNS_Lock_(mDNS *const m, const char * const functionname);
-extern void mDNS_Unlock_(mDNS *const m, const char * const functionname);
+extern void mDNS_Lock_(mDNS *const m, const char * const functionname, int lineno);
+extern void mDNS_Unlock_(mDNS *const m, const char * const functionname, int lineno);
 
 #if defined(_WIN32)
  #define __func__ __FUNCTION__
 #endif
 
-#define mDNS_Lock(X) mDNS_Lock_((X), __func__)
+#define mDNS_Lock(X) mDNS_Lock_((X), __func__, __LINE__)
 
-#define mDNS_Unlock(X) mDNS_Unlock_((X), __func__)
+#define mDNS_Unlock(X) mDNS_Unlock_((X), __func__, __LINE__)
 
 #define mDNS_CheckLock(X) \
     if ((X)->mDNS_busy != (X)->mDNS_reentrancy+1) LogMsg("%s: Lock not held! mDNS_busy (%ld) mDNS_reentrancy (%ld)", __func__, (X)->mDNS_busy, (X)->mDNS_reentrancy)

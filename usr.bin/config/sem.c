@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.82 2017/11/27 00:25:46 christos Exp $	*/
+/*	$NetBSD: sem.c,v 1.82.2.1 2018/04/16 02:00:10 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sem.c,v 1.82 2017/11/27 00:25:46 christos Exp $");
+__RCSID("$NetBSD: sem.c,v 1.82.2.1 2018/04/16 02:00:10 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <ctype.h>
@@ -509,7 +509,8 @@ defdev(struct devbase *dev, struct loclist *loclist, struct attrlist *attrs,
 	if (dev == &errdev)
 		goto bad;
 	if (dev->d_isdef) {
-		cfgerror("redefinition of `%s'", dev->d_name);
+		cfgerror("redefinition of `%s' (previously defined at %s:%d)",
+		    dev->d_name, dev->d_srcfile, dev->d_srcline);
 		goto bad;
 	}
 
@@ -624,6 +625,8 @@ getdevbase(const char *name)
 		dev->d_ahead = NULL;
 		dev->d_app = &dev->d_ahead;
 		dev->d_umax = 0;
+		dev->d_srcfile = yyfile;
+		dev->d_srcline = currentline();
 		TAILQ_INSERT_TAIL(&allbases, dev, d_next);
 		if (ht_insert(devbasetab, name, dev))
 			panic("%s: Can't insert %s", __func__, name);
@@ -655,7 +658,8 @@ defdevattach(struct deva *deva, struct devbase *dev, struct nvlist *atlist,
 		goto bad;
 	}
 	if (deva->d_isdef) {
-		cfgerror("redefinition of `%s'", deva->d_name);
+		cfgerror("redefinition of `%s' (previously defined at %s:%d)",
+		    deva->d_name, deva->d_srcfile, deva->d_srcline);
 		goto bad;
 	}
 	if (dev->d_ispseudo) {
@@ -764,6 +768,8 @@ getdevattach(const char *name)
 		deva->d_attrs = NULL;
 		deva->d_ihead = NULL;
 		deva->d_ipp = &deva->d_ihead;
+		deva->d_srcfile = yyfile;
+		deva->d_srcline = currentline();
 		TAILQ_INSERT_TAIL(&alldevas, deva, d_next);
 		if (ht_insert(devatab, name, deva))
 			panic("%s: Can't insert %s", __func__, name);

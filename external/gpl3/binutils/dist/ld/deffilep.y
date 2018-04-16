@@ -1,6 +1,6 @@
 %{ /* deffilep.y - parser for .def files */
 
-/*   Copyright (C) 1995-2016 Free Software Foundation, Inc.
+/*   Copyright (C) 1995-2018 Free Software Foundation, Inc.
 
      This file is part of GNU Binutils.
 
@@ -193,18 +193,18 @@ implist:
 	;
 
 impline:
-               ID '=' ID '.' ID '.' ID opt_equalequal_name
-                 { def_import ($1, $3, $5, $7, -1, $8); }
+	       ID '=' ID '.' ID '.' ID opt_equalequal_name
+		 { def_import ($1, $3, $5, $7, -1, $8); }
        |       ID '=' ID '.' ID '.' NUMBER opt_equalequal_name
 				 { def_import ($1, $3, $5,  0, $7, $8); }
        |       ID '=' ID '.' ID opt_equalequal_name
-                 { def_import ($1, $3,  0, $5, -1, $6); }
+		 { def_import ($1, $3,	0, $5, -1, $6); }
        |       ID '=' ID '.' NUMBER opt_equalequal_name
-                 { def_import ($1, $3,  0,  0, $5, $6); }
+		 { def_import ($1, $3,	0,  0, $5, $6); }
        |       ID '.' ID '.' ID opt_equalequal_name
-                 { def_import( 0, $1, $3, $5, -1, $6); }
+		 { def_import( 0, $1, $3, $5, -1, $6); }
        |       ID '.' ID opt_equalequal_name
-                 { def_import ( 0, $1,  0, $3, -1, $4); }
+		 { def_import ( 0, $1,	0, $3, -1, $4); }
 ;
 
 seclist:
@@ -309,8 +309,8 @@ opt_ordinal:
 	;
 
 opt_equal_name:
-          '=' opt_name2	{ $$ = $2; }
-        | 		{ $$ =  0; }
+	  '=' opt_name2	{ $$ = $2; }
+	|		{ $$ =	0; }
 	;
 
 opt_base: BASE	'=' VMA	{ $$ = $3;}
@@ -636,7 +636,7 @@ find_export_in_list (def_file_export *b, int max,
   if ((e = cmp_export_elem (b, ex_name, in_name, its_name, ord)) <= 0)
     {
       if (!e)
-        *is_ident = 1;
+	*is_ident = 1;
       return 0;
     }
   if (max == 1)
@@ -655,14 +655,14 @@ find_export_in_list (def_file_export *b, int max,
       p = (l + r) / 2;
       e = cmp_export_elem (b + p, ex_name, in_name, its_name, ord);
       if (!e)
-        {
-          *is_ident = 1;
-          return p;
-        }
+	{
+	  *is_ident = 1;
+	  return p;
+	}
       else if (e < 0)
-        r = p - 1;
+	r = p - 1;
       else if (e > 0)
-        l = p + 1;
+	l = p + 1;
     }
   if ((e = cmp_export_elem (b + l, ex_name, in_name, its_name, ord)) > 0)
     ++l;
@@ -781,7 +781,7 @@ find_import_in_list (def_file_import *b, int max,
   if ((e = cmp_import_elem (b, ex_name, in_name, module, ord)) <= 0)
     {
       if (!e)
-        *is_ident = 1;
+	*is_ident = 1;
       return 0;
     }
   if (max == 1)
@@ -791,7 +791,7 @@ find_import_in_list (def_file_import *b, int max,
   else if (!e || max == 2)
     {
       if (!e)
-        *is_ident = 1;
+	*is_ident = 1;
       return max - 1;
     }
   l = 0; r = max - 1;
@@ -800,14 +800,14 @@ find_import_in_list (def_file_import *b, int max,
       p = (l + r) / 2;
       e = cmp_import_elem (b + p, ex_name, in_name, module, ord);
       if (!e)
-        {
-          *is_ident = 1;
-          return p;
-        }
+	{
+	  *is_ident = 1;
+	  return p;
+	}
       else if (e < 0)
-        r = p - 1;
+	r = p - 1;
       else if (e > 0)
-        l = p + 1;
+	l = p + 1;
     }
   if ((e = cmp_import_elem (b + l, ex_name, in_name, module, ord)) > 0)
     ++l;
@@ -902,10 +902,10 @@ def_file_add_directive (def_file *my_def, const char *param, int len)
 	break;
 
       /* Scan forward until we encounter any of:
-          - the end of the buffer
+	  - the end of the buffer
 	  - the start of a new option
-	  - a newline seperating options
-          - a NUL seperating options.  */
+	  - a newline separating options
+	  - a NUL separating options.  */
       for (tend = (char *) (param + 1);
 	   (tend < pend
 	    && !(ISSPACE (tend[-1]) && *tend == '-')
@@ -981,7 +981,7 @@ def_image_name (const char *name, bfd_vma base, int is_dll)
 
 	  def->name = xmalloc (strlen (image_name) + strlen (suffix) + 1);
 	  sprintf (def->name, "%s%s", image_name, suffix);
-        }
+	}
       else
 	def->name = xstrdup (image_name);
     }
@@ -1176,7 +1176,7 @@ def_aligncomm (char *str, int align)
 	    return;
 	}
       if (e > 0)
-        break;
+	break;
       c = (p = c)->next;
     }
 
@@ -1367,12 +1367,12 @@ def_lex (void)
 
       if (q == '@')
 	{
-          if (ISBLANK (c) ) /* '@' followed by whitespace.  */
+	  if (ISBLANK (c) ) /* '@' followed by whitespace.  */
 	    return (q);
-          else if (ISDIGIT (c)) /* '@' followed by digit.  */
-            {
+	  else if (ISDIGIT (c)) /* '@' followed by digit.  */
+	    {
 	      def_ungetc (c);
-              return (q);
+	      return (q);
 	    }
 #if TRACE
 	  printf ("lex: @ returns itself\n");
@@ -1388,7 +1388,7 @@ def_lex (void)
 	def_ungetc (c);
       if (ISALPHA (q)) /* Check for tokens.  */
 	{
-          for (i = 0; tokens[i].name; i++)
+	  for (i = 0; tokens[i].name; i++)
 	    if (strcmp (tokens[i].name, buffer) == 0)
 	      {
 #if TRACE
@@ -1426,12 +1426,12 @@ def_lex (void)
     {
       c = def_getc ();
       if (c == '=')
-        {
+	{
 #if TRACE
-          printf ("lex: `==' returns EQUAL\n");
+	  printf ("lex: `==' returns EQUAL\n");
 #endif
-		  return EQUAL;
-        }
+	  return EQUAL;
+	}
       def_ungetc (c);
 #if TRACE
       printf ("lex: `=' returns itself\n");

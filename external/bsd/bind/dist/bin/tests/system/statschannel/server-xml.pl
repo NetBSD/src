@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-# Copyright (C) 2015  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2015, 2017  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -22,7 +22,7 @@ use XML::Simple;
 my $ref = XMLin("xml.stats");
 my $counters = $ref->{server}->{counters};
 foreach $group (@$counters) {
-    foreach $key (keys $group->{counter}) {
+    foreach $key (keys %{$group->{counter}}) {
         print $group->{type} . " " . $key . ": ". $group->{counter}->{$key}->{content} . "\n";
     }
 }

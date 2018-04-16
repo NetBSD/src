@@ -1,7 +1,7 @@
-/*	$NetBSD: BINDInstallDlg.h,v 1.5 2016/05/26 16:49:57 christos Exp $	*/
+/*	$NetBSD: BINDInstallDlg.h,v 1.5.14.1 2018/04/16 01:57:49 pgoyette Exp $	*/
 
 /*
- * Portions Copyright (C) 2004, 2007, 2009, 2015  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004, 2007, 2009, 2015, 2017  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -97,6 +97,8 @@ protected:
 	BOOL CheckBINDService();
 	void SetCurrent(int id, ...);
 	void ProgramGroup(BOOL create = TRUE);
+	void ProgramGroupCreate(TCHAR *commonPath);
+	void ProgramGroupRemove(TCHAR *commonPath);
 
 	HICON m_hIcon;
 	CString m_defaultDir;

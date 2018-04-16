@@ -1,5 +1,5 @@
 /* hash.c -- hash table routines for BFD
-   Copyright (C) 1993-2016 Free Software Foundation, Inc.
+   Copyright (C) 1993-2018 Free Software Foundation, Inc.
    Written by Steve Chamberlain <sac@cygnus.com>
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -231,8 +231,8 @@ EXAMPLE
 
 .struct bfd_hash_entry *
 .@var{function_name} (struct bfd_hash_entry *entry,
-.                     struct bfd_hash_table *table,
-.                     const char *string)
+.		      struct bfd_hash_table *table,
+.		      const char *string)
 .{
 .  struct @var{entry_type} *ret = (@var{entry_type} *) entry;
 .
@@ -242,12 +242,12 @@ EXAMPLE
 .    {
 .      ret = bfd_hash_allocate (table, sizeof (* ret));
 .      if (ret == NULL)
-.        return NULL;
+.	 return NULL;
 .    }
 .
 . {* Call the allocation method of the base class.  *}
 .  ret = ((@var{entry_type} *)
-.	 @var{base_newfunc} ((struct bfd_hash_entry *) ret, table, string));
+.	  @var{base_newfunc} ((struct bfd_hash_entry *) ret, table, string));
 .
 . {* Initialize the local fields here.  *}
 .
@@ -483,7 +483,7 @@ bfd_hash_lookup (struct bfd_hash_table *table,
       char *new_string;
 
       new_string = (char *) objalloc_alloc ((struct objalloc *) table->memory,
-                                            len + 1);
+					    len + 1);
       if (!new_string)
 	{
 	  bfd_set_error (bfd_error_no_memory);
@@ -634,7 +634,7 @@ bfd_hash_newfunc (struct bfd_hash_entry *entry,
 {
   if (entry == NULL)
     entry = (struct bfd_hash_entry *) bfd_hash_allocate (table,
-                                                         sizeof (* entry));
+							 sizeof (* entry));
   return entry;
 }
 
@@ -731,7 +731,7 @@ strtab_hash_newfunc (struct bfd_hash_entry *entry,
      subclass.  */
   if (ret == NULL)
     ret = (struct strtab_hash_entry *) bfd_hash_allocate (table,
-                                                          sizeof (* ret));
+							  sizeof (* ret));
   if (ret == NULL)
     return NULL;
 
@@ -828,7 +828,7 @@ _bfd_stringtab_add (struct bfd_strtab_hash *tab,
   else
     {
       entry = (struct strtab_hash_entry *) bfd_hash_allocate (&tab->table,
-                                                              sizeof (* entry));
+							      sizeof (* entry));
       if (entry == NULL)
 	return (bfd_size_type) -1;
       if (! copy)
@@ -841,7 +841,7 @@ _bfd_stringtab_add (struct bfd_strtab_hash *tab,
 	  n = (char *) bfd_hash_allocate (&tab->table, len);
 	  if (n == NULL)
 	    return (bfd_size_type) -1;
-          memcpy (n, str, len);
+	  memcpy (n, str, len);
 	  entry->root.string = n;
 	}
       entry->index = (bfd_size_type) -1;

@@ -1,7 +1,7 @@
-/*	$NetBSD: log.h,v 1.5 2016/05/26 16:49:56 christos Exp $	*/
+/*	$NetBSD: log.h,v 1.5.14.1 2018/04/16 01:57:37 pgoyette Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009, 2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2015, 2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -39,6 +39,7 @@
 #define NS_LOGCATEGORY_UNMATCHED	(&ns_g_categories[5])
 #define NS_LOGCATEGORY_UPDATE_SECURITY	(&ns_g_categories[6])
 #define NS_LOGCATEGORY_QUERY_ERRORS	(&ns_g_categories[7])
+#define NS_LOGCATEGORY_TAT		(&ns_g_categories[8])
 
 /*
  * Backwards compatibility.

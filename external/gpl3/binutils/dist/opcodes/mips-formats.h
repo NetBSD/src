@@ -1,5 +1,5 @@
 /* mips-formats.h
-   Copyright (C) 2013-2016 Free Software Foundation, Inc.
+   Copyright (C) 2013-2018 Free Software Foundation, Inc.
 
    This library is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -18,13 +18,16 @@
 /* For ARRAY_SIZE.  */
 #include "libiberty.h"
 
-#define INT_ADJ(SIZE, LSB, MAX_VAL, SHIFT, PRINT_HEX) \
+#define INT_BIAS(SIZE, LSB, MAX_VAL, BIAS, SHIFT, PRINT_HEX) \
   { \
     static const struct mips_int_operand op = { \
-      { OP_INT, SIZE, LSB }, MAX_VAL, 0, SHIFT, PRINT_HEX \
+      { OP_INT, SIZE, LSB }, MAX_VAL, BIAS, SHIFT, PRINT_HEX \
     }; \
     return &op.root; \
   }
+
+#define INT_ADJ(SIZE, LSB, MAX_VAL, SHIFT, PRINT_HEX) \
+  INT_BIAS(SIZE, LSB, MAX_VAL, 0, SHIFT, PRINT_HEX)
 
 #define UINT(SIZE, LSB) \
   INT_ADJ(SIZE, LSB, (1 << (SIZE)) - 1, 0, FALSE)

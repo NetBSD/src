@@ -1,4 +1,4 @@
-/* $NetBSD: xc5k.c,v 1.7 2017/06/01 02:45:10 chs Exp $ */
+/* $NetBSD: xc5k.c,v 1.7.8.1 2018/04/16 01:59:57 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xc5k.c,v 1.7 2017/06/01 02:45:10 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xc5k.c,v 1.7.8.1 2018/04/16 01:59:57 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,19 +158,26 @@ xc5k_firmware_open(struct xc5k *xc)
 
 	aprint_normal_dev(xc->parent, "xc5k: loading firmware '%s/%s'\n",
 	    XC5K_FIRMWARE_DRVNAME, XC5K_FIRMWARE_IMGNAME);
+
 	error = xc5k_firmware_upload(xc, fw, fwlen);
-	if (!error) {
-		xc5k_read_2(xc, XC5K_REG_VERSION, &xcversion);
-		xc5k_read_2(xc, XC5K_REG_BUILD, &xcbuild);
-		if (!error)
-			aprint_normal_dev(xc->parent,
-			    "xc5k: hw %d.%d, fw %d.%d.%d\n",
-			    (xcversion >> 12) & 0xf,
-			    (xcversion >> 8) & 0xf,
-			    (xcversion >> 4) & 0xf,
-			    xcversion & 0xf,
-			    xcbuild);
+	if (error)
+		goto done;
+
+	error = xc5k_read_2(xc, XC5K_REG_VERSION, &xcversion);
+	if (error) {
+		error = 0;
+		goto done;
 	}
+
+	error = xc5k_read_2(xc, XC5K_REG_BUILD, &xcbuild);
+	if (error) {
+		error = 0;
+		xcbuild = 0;
+	}
+
+	aprint_normal_dev(xc->parent, "xc5k: hw %d.%d, fw %d.%d.%d\n",
+	    (xcversion >> 12) & 0xf, (xcversion >> 8) & 0xf,
+	    (xcversion >> 4) & 0xf, xcversion & 0xf, xcbuild);
 
 done:
 	if (fw)

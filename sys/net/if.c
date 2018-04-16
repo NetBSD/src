@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.419.2.5 2018/04/12 22:33:41 pgoyette Exp $	*/
+/*	$NetBSD: if.c,v 1.419.2.6 2018/04/16 02:00:08 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.419.2.5 2018/04/12 22:33:41 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.419.2.6 2018/04/16 02:00:08 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -242,7 +242,7 @@ static void sysctl_net_pktq_setup(struct sysctllog **, int);
 
 static void if_sysctl_setup(struct sysctllog **);
 
-/* Compatability vector functions */
+/* Compatibility vector functions */
 u_long (*vec_compat_cvtcmd)(u_long) = NULL;
 int (*vec_compat_ifioctl)(struct socket *, u_long, u_long, void *,
 	struct lwp *) = NULL;

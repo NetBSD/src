@@ -11,7 +11,9 @@ DTOR_START='__dtors = .;'
 DTOR_END='__dtors_end = .;'
 
 # Suppress the .stack section.
-test -z "$CREATE_SHLIB" && OTHER_SECTIONS="${RELOCATING+PROVIDE (_stack = 0x30000);}"
+unset STACK_ADDR
+OTHER_SYMBOLS="PROVIDE (_stack = 0x30000);"
+test -n "$CREATE_SHLIB" && unset OTHER_SYMBOLS
 
 OUTPUT_FORMAT="elf32-shl-symbian"
 SCRIPT_NAME=elf32sh-symbian

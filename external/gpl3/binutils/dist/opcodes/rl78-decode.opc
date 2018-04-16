@@ -1,5 +1,5 @@
 /* -*- c -*- */
-/* Copyright (C) 2012-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2012-2018 Free Software Foundation, Inc.
    Contributed by Red Hat.
    Written by DJ Delorie.
 
@@ -50,7 +50,9 @@ typedef struct
 #define W() rl78->size = RL78_Word
 
 #define AU ATTRIBUTE_UNUSED
-#define GETBYTE() (ld->op [ld->rl78->n_bytes++] = ld->getbyte (ld->ptr))
+
+#define OP_BUF_LEN 20
+#define GETBYTE() (ld->rl78->n_bytes < (OP_BUF_LEN - 1) ? ld->op [ld->rl78->n_bytes++] = ld->getbyte (ld->ptr): 0)
 #define B ((unsigned long) GETBYTE())
 
 #define SYNTAX(x) rl78->syntax = x
@@ -168,7 +170,7 @@ rl78_decode_opcode (unsigned long pc AU,
 		  RL78_Dis_Isa isa)
 {
   LocalData lds, * ld = &lds;
-  unsigned char op_buf[20] = {0};
+  unsigned char op_buf[OP_BUF_LEN] = {0};
   unsigned char *op = op_buf;
   int op0, op1;
 

@@ -1,5 +1,5 @@
 /* Freescale XGATE-specific support for 32-bit ELF
-   Copyright (C) 2010-2016 Free Software Foundation, Inc.
+   Copyright (C) 2010-2018 Free Software Foundation, Inc.
    Contributed by Sean Keys(skeys@ipdatasys.com)
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -406,7 +406,7 @@ bfd_elf32_bfd_reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED, const char *r_name)
 
   for (i = 0; i < ARRAY_SIZE (elf_xgate_howto_table); i++)
     if (elf_xgate_howto_table[i].name != NULL
-        && strcasecmp (elf_xgate_howto_table[i].name, r_name) == 0)
+	&& strcasecmp (elf_xgate_howto_table[i].name, r_name) == 0)
       return &elf_xgate_howto_table[i];
 
   return NULL;
@@ -424,6 +424,7 @@ xgate_info_to_howto_rel (bfd *abfd ATTRIBUTE_UNUSED,
   r_type = ELF32_R_TYPE (dst->r_info);
   if (r_type >= (unsigned int) R_XGATE_max)
     {
+      /* xgettext:c-format */
       _bfd_error_handler (_("%B: invalid XGate reloc number: %d"), abfd, r_type);
       r_type = 0;
     }
@@ -654,16 +655,6 @@ _bfd_xgate_elf_set_private_flags (bfd *abfd ATTRIBUTE_UNUSED,
   return TRUE;
 }
 
-/* Merge backend specific data from an object file to the output
-   object file when linking.  */
-
-bfd_boolean
-_bfd_xgate_elf_merge_private_bfd_data (bfd *ibfd ATTRIBUTE_UNUSED,
-				       bfd *obfd ATTRIBUTE_UNUSED)
-{
-  return TRUE;
-}
-
 bfd_boolean
 _bfd_xgate_elf_print_private_bfd_data (bfd *abfd, void *ptr)
 {
@@ -701,33 +692,32 @@ elf32_xgate_post_process_headers (bfd *abfd ATTRIBUTE_UNUSED, struct bfd_link_in
 
 }
 
-#define ELF_ARCH                             bfd_arch_xgate
-#define ELF_MACHINE_CODE                     EM_XGATE
-#define ELF_TARGET_ID                        XGATE_ELF_DATA
+#define ELF_ARCH			     bfd_arch_xgate
+#define ELF_MACHINE_CODE		     EM_XGATE
+#define ELF_TARGET_ID			     XGATE_ELF_DATA
 
-#define ELF_MAXPAGESIZE                      0x1000
+#define ELF_MAXPAGESIZE			     0x1000
 
-#define TARGET_BIG_SYM                       xgate_elf32_vec
-#define TARGET_BIG_NAME                      "elf32-xgate"
+#define TARGET_BIG_SYM			     xgate_elf32_vec
+#define TARGET_BIG_NAME			     "elf32-xgate"
 
-#define elf_info_to_howto                    0
-#define elf_info_to_howto_rel                xgate_info_to_howto_rel
-#define elf_backend_check_relocs             elf32_xgate_check_relocs
-#define elf_backend_relocate_section         elf32_xgate_relocate_section
-#define elf_backend_object_p                 xgate_elf_set_mach_from_flags
+#define elf_info_to_howto		     0
+#define elf_info_to_howto_rel		     xgate_info_to_howto_rel
+#define elf_backend_check_relocs	     elf32_xgate_check_relocs
+#define elf_backend_relocate_section	     elf32_xgate_relocate_section
+#define elf_backend_object_p		     xgate_elf_set_mach_from_flags
 #define elf_backend_final_write_processing   0
-#define elf_backend_can_gc_sections          1
-#define elf_backend_special_sections         elf32_xgate_special_sections
+#define elf_backend_can_gc_sections	     1
+#define elf_backend_special_sections	     elf32_xgate_special_sections
 #define elf_backend_post_process_headers     elf32_xgate_post_process_headers
-#define elf_backend_add_symbol_hook          elf32_xgate_add_symbol_hook
+#define elf_backend_add_symbol_hook	     elf32_xgate_add_symbol_hook
 
 #define bfd_elf32_bfd_link_hash_table_create xgate_elf_bfd_link_hash_table_create
-#define bfd_elf32_bfd_merge_private_bfd_data _bfd_xgate_elf_merge_private_bfd_data
-#define bfd_elf32_bfd_set_private_flags      _bfd_xgate_elf_set_private_flags
+#define bfd_elf32_bfd_set_private_flags	     _bfd_xgate_elf_set_private_flags
 #define bfd_elf32_bfd_print_private_bfd_data _bfd_xgate_elf_print_private_bfd_data
 
 #define xgate_stub_hash_lookup(table, string, create, copy)	\
     ((struct elf32_xgate_stub_hash_entry *) \
-        bfd_hash_lookup ((table), (string), (create), (copy)))
+	bfd_hash_lookup ((table), (string), (create), (copy)))
 
 #include "elf32-target.h"

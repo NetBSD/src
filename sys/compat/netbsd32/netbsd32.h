@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.116 2017/12/18 00:33:32 mrg Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.116.2.1 2018/04/16 01:59:56 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008, 2015 Matthew R. Green
@@ -50,6 +50,7 @@
 #include <compat/sys/mount.h>
 #include <compat/sys/signal.h>
 #include <compat/sys/siginfo.h>
+#include <compat/common/compat_util.h>
 
 #include <nfs/rpcv2.h>
 
@@ -1122,8 +1123,6 @@ int	coredump_netbsd32(struct lwp *, struct coredump_iostate *);
 /*
  * random other stuff
  */
-#include <compat/common/compat_util.h>
-#include <compat/sys/siginfo.h>
 
 vaddr_t netbsd32_vm_default_addr(struct proc *, vaddr_t, vsize_t, int);
 void netbsd32_adjust_limits(struct proc *);

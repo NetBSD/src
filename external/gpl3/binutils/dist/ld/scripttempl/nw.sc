@@ -1,5 +1,5 @@
-# Copyright (C) 2014-2016 Free Software Foundation, Inc.
-# 
+# Copyright (C) 2014-2018 Free Software Foundation, Inc.
+#
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
 # notice and this notice are preserved.
@@ -29,11 +29,11 @@
 test -z "${BIG_OUTPUT_FORMAT}" && BIG_OUTPUT_FORMAT=${OUTPUT_FORMAT}
 test -z "${LITTLE_OUTPUT_FORMAT}" && LITTLE_OUTPUT_FORMAT=${OUTPUT_FORMAT}
 test "$LD_FLAG" = "N" && DATA_ADDR=.
-INTERP=".interp   ${RELOCATING-0} : { *(.interp) 	}"
-PLT=".plt    ${RELOCATING-0} : { *(.plt)	}"
+INTERP=".interp   ${RELOCATING-0} : { *(.interp) }"
+PLT=".plt    ${RELOCATING-0} : { *(.plt) }"
 
 cat <<EOF
-/* Copyright (C) 2014-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2014-2018 Free Software Foundation, Inc.
 
    Copying and distribution of this script, with or without modification,
    are permitted in any medium without royalty provided the copyright
@@ -61,11 +61,11 @@ SECTIONS
   .dynsym      ${RELOCATING-0} : { *(.dynsym)		}
   .dynstr      ${RELOCATING-0} : { *(.dynstr)		}
   .rel.text    ${RELOCATING-0} : { *(.rel.text)		}
-  .rela.text   ${RELOCATING-0} : { *(.rela.text) 	}
+  .rela.text   ${RELOCATING-0} : { *(.rela.text)	}
   .rel.data    ${RELOCATING-0} : { *(.rel.data)		}
-  .rela.data   ${RELOCATING-0} : { *(.rela.data) 	}
-  .rel.rodata  ${RELOCATING-0} : { *(.rel.rodata) 	}
-  .rela.rodata ${RELOCATING-0} : { *(.rela.rodata) 	}
+  .rela.data   ${RELOCATING-0} : { *(.rela.data)	}
+  .rel.rodata  ${RELOCATING-0} : { *(.rel.rodata)	}
+  .rela.rodata ${RELOCATING-0} : { *(.rela.rodata)	}
   .rel.got     ${RELOCATING-0} : { *(.rel.got)		}
   .rela.got    ${RELOCATING-0} : { *(.rela.got)		}
   .rel.ctors   ${RELOCATING-0} : { *(.rel.ctors)	}

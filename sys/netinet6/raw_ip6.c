@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.165.2.1 2018/03/22 01:44:51 pgoyette Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.165.2.2 2018/04/16 02:00:09 pgoyette Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.165.2.1 2018/03/22 01:44:51 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.165.2.2 2018/04/16 02:00:09 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -149,7 +149,7 @@ rip6_input(struct mbuf **mp, int *offp, int proto)
 	struct in6pcb *in6p;
 	struct in6pcb *last = NULL;
 	struct sockaddr_in6 rip6src;
-	struct mbuf *opts = NULL;
+	struct mbuf *n, *opts = NULL;
 
 	RIP6_STATINC(RIP6_STAT_IPACKETS);
 
@@ -189,32 +189,33 @@ rip6_input(struct mbuf **mp, int *offp, int proto)
 				continue;
 			}
 		}
-		if (last) {
-			struct	mbuf *n;
 
-#ifdef IPSEC
-			/*
-			 * Check AH/ESP integrity
-			 */
-			if (!ipsec_used || !ipsec_in_reject(m, last))
-#endif
-			if ((n = m_copy(m, 0, (int)M_COPYALL)) != NULL) {
-				if (last->in6p_flags & IN6P_CONTROLOPTS)
-					ip6_savecontrol(last, &opts, ip6, n);
-				/* strip intermediate headers */
-				m_adj(n, *offp);
-				if (sbappendaddr(&last->in6p_socket->so_rcv,
-				    sin6tosa(&rip6src), n, opts) == 0) {
-					soroverflow(last->in6p_socket);
-					m_freem(n);
-					if (opts)
-						m_freem(opts);
-					RIP6_STATINC(RIP6_STAT_FULLSOCK);
-				} else
-					sorwakeup(last->in6p_socket);
-				opts = NULL;
-			}
+		if (last == NULL) {
+			;
 		}
+#ifdef IPSEC
+		else if (ipsec_used && ipsec_in_reject(m, last)) {
+			/* do not inject data into pcb */
+		}
+#endif
+		else if ((n = m_copy(m, 0, (int)M_COPYALL)) != NULL) {
+			if (last->in6p_flags & IN6P_CONTROLOPTS)
+				ip6_savecontrol(last, &opts, ip6, n);
+			/* strip intermediate headers */
+			m_adj(n, *offp);
+			if (sbappendaddr(&last->in6p_socket->so_rcv,
+			    sin6tosa(&rip6src), n, opts) == 0) {
+				soroverflow(last->in6p_socket);
+				m_freem(n);
+				if (opts)
+					m_freem(opts);
+				RIP6_STATINC(RIP6_STAT_FULLSOCK);
+			} else {
+				sorwakeup(last->in6p_socket);
+			}
+			opts = NULL;
+		}
+
 		last = in6p;
 	}
 

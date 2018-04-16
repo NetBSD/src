@@ -1,7 +1,7 @@
-/*	$NetBSD: check-tool.c,v 1.8 2015/12/17 04:00:40 christos Exp $	*/
+/*	$NetBSD: check-tool.c,v 1.8.14.1 2018/04/16 01:57:34 pgoyette Exp $	*/
 
 /*
- * Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2015, 2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -130,6 +130,7 @@ static isc_logcategory_t categories[] = {
 	{ "unmatched", 	     0 },
 	{ "update-security", 0 },
 	{ "query-errors",    0 },
+	{ "trust-anchor-telemetry",    0 },
 	{ NULL,		     0 }
 };
 
@@ -220,8 +221,9 @@ checkns(dns_zone_t *zone, dns_name_t *name, dns_name_t *owner,
 	/*
 	 * Turn off search.
 	 */
-	if (dns_name_countlabels(name) > 1U)
-		strcat(namebuf, ".");
+	if (dns_name_countlabels(name) > 1U) {
+		strlcat(namebuf, ".", sizeof(namebuf));
+	}
 	dns_name_format(owner, ownerbuf, sizeof(ownerbuf));
 
 	result = getaddrinfo(namebuf, NULL, &hints, &ai);
@@ -409,8 +411,9 @@ checkmx(dns_zone_t *zone, dns_name_t *name, dns_name_t *owner) {
 	/*
 	 * Turn off search.
 	 */
-	if (dns_name_countlabels(name) > 1U)
-		strcat(namebuf, ".");
+	if (dns_name_countlabels(name) > 1U) {
+		strlcat(namebuf, ".", sizeof(namebuf));
+	}
 	dns_name_format(owner, ownerbuf, sizeof(ownerbuf));
 
 	result = getaddrinfo(namebuf, NULL, &hints, &ai);
@@ -494,8 +497,9 @@ checksrv(dns_zone_t *zone, dns_name_t *name, dns_name_t *owner) {
 	/*
 	 * Turn off search.
 	 */
-	if (dns_name_countlabels(name) > 1U)
-		strcat(namebuf, ".");
+	if (dns_name_countlabels(name) > 1U) {
+		strlcat(namebuf, ".", sizeof(namebuf));
+	}
 	dns_name_format(owner, ownerbuf, sizeof(ownerbuf));
 
 	result = getaddrinfo(namebuf, NULL, &hints, &ai);

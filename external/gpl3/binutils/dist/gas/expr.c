@@ -1,5 +1,5 @@
 /* expr.c -operands, expressions-
-   Copyright (C) 1987-2016 Free Software Foundation, Inc.
+   Copyright (C) 1987-2018 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -515,6 +515,14 @@ integer_constant (int radix, expressionS *expressionP)
   if (tc_allow_U_suffix && (c == 'U' || c == 'u'))
     c = * input_line_pointer++;
 
+#ifndef tc_allow_L_suffix
+#define tc_allow_L_suffix 1
+#endif
+  /* PR 20732: Look for, and ignore, a L or LL suffix to the number.  */
+  if (tc_allow_L_suffix)
+    while (c == 'L' || c == 'l')
+      c = * input_line_pointer++;
+
   if (small)
     {
       /* Here with number, in correct radix. c is the next char.
@@ -949,8 +957,8 @@ operand (expressionS *expressionP, enum expr_mode mode)
       if (md_need_index_operator())
 	goto de_fault;
 # endif
-      /* FALLTHROUGH */
 #endif
+      /* Fall through.  */
     case '(':
       /* Didn't begin with digit & not a name.  */
       segment = expr (0, expressionP, mode);
@@ -980,8 +988,8 @@ operand (expressionS *expressionP, enum expr_mode mode)
       if (! flag_m68k_mri || *input_line_pointer != '\'')
 	goto de_fault;
       ++input_line_pointer;
-      /* Fall through.  */
 #endif
+      /* Fall through.  */
     case '\'':
       if (! flag_m68k_mri)
 	{
@@ -1002,12 +1010,13 @@ operand (expressionS *expressionP, enum expr_mode mode)
       /* Double quote is the bitwise not operator in MRI mode.  */
       if (! flag_m68k_mri)
 	goto de_fault;
-      /* Fall through.  */
 #endif
+      /* Fall through.  */
     case '~':
       /* '~' is permitted to start a label on the Delta.  */
       if (is_name_beginner (c))
 	goto isname;
+      /* Fall through.  */
     case '!':
     case '-':
     case '+':
@@ -1145,6 +1154,10 @@ operand (expressionS *expressionP, enum expr_mode mode)
 		   || input_line_pointer[1] == 'T');
 	  input_line_pointer += start ? 8 : 7;
 	  SKIP_WHITESPACE ();
+
+	  /* Cover for the as_bad () invocations below.  */
+	  expressionP->X_op = O_absent;
+
 	  if (*input_line_pointer != '(')
 	    as_bad (_("syntax error in .startof. or .sizeof."));
 	  else
@@ -1154,6 +1167,16 @@ operand (expressionS *expressionP, enum expr_mode mode)
 	      ++input_line_pointer;
 	      SKIP_WHITESPACE ();
 	      c = get_symbol_name (& name);
+	      if (! *name)
+		{
+		  as_bad (_("expected symbol name"));
+		  (void) restore_line_pointer (c);
+		  if (c != ')')
+		    ignore_rest_of_line ();
+		  else
+		    ++input_line_pointer;
+		  break;
+		}
 
 	      buf = concat (start ? ".startof." : ".sizeof.", name,
 			    (char *) NULL);
@@ -1297,6 +1320,14 @@ operand (expressionS *expressionP, enum expr_mode mode)
 	      SKIP_WHITESPACE_AFTER_NAME ();
 
 	      c = get_symbol_name (& name);
+	      if (! *name)
+		{
+		  as_bad (_("expected symbol name"));
+		  expressionP->X_op = O_absent;
+		  (void) restore_line_pointer (c);
+		  ignore_rest_of_line ();
+		  break;
+		}
 
 	      buf = concat (start ? ".startof." : ".sizeof.", name,
 			    (char *) NULL);
@@ -1362,7 +1393,7 @@ operand (expressionS *expressionP, enum expr_mode mode)
   /* It is more 'efficient' to clean up the expressionS when they are
      created.  Doing it here saves lines of code.  */
   clean_up_expression (expressionP);
-  SKIP_WHITESPACE ();		/* -> 1st char after operand.  */
+  SKIP_ALL_WHITESPACE ();		/* -> 1st char after operand.  */
   know (*input_line_pointer != ' ');
 
   /* The PA port needs this information.  */
@@ -2338,12 +2369,13 @@ get_symbol_name (char ** ilp_return)
   char c;
 
   * ilp_return = input_line_pointer;
-  /* We accept \001 in a name in case this is being called with a
+  /* We accept FAKE_LABEL_CHAR in a name in case this is being called with a
      constructed string.  */
-  if (is_name_beginner (c = *input_line_pointer++) || c == '\001')
+  if (is_name_beginner (c = *input_line_pointer++)
+      || (input_from_string && c == FAKE_LABEL_CHAR))
     {
       while (is_part_of_name (c = *input_line_pointer++)
-	     || c == '\001')
+	     || (input_from_string && c == FAKE_LABEL_CHAR))
 	;
       if (is_name_ender (c))
 	c = *input_line_pointer++;

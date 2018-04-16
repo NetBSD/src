@@ -2079,9 +2079,15 @@ do
 done;
 grep "ANSWER: 3," dig.out.ns2.test$n > /dev/null || ret=1
 if [ $ret != 0 ]; then echo "I:nsec3 chain generation not complete"; fi
-sleep 3
 $DIG $DIGOPTS +noauth +nodnssec soa nsec3chain-test @10.53.0.2 > dig.out.ns2.test$n || ret=1
-$DIG $DIGOPTS +noauth +nodnssec soa nsec3chain-test @10.53.0.3 > dig.out.ns3.test$n || ret=1
+s2=`awk '$4 == "SOA" { print $7}' dig.out.ns2.test$n`
+for i in 1 2 3 4 5 6 7 8 9 10
+do
+	$DIG $DIGOPTS +noauth +nodnssec soa nsec3chain-test @10.53.0.3 > dig.out.ns3.test$n || ret=1
+	s3=`awk '$4 == "SOA" { print $7}' dig.out.ns3.test$n`
+	test "$s2" = "$s3" && break
+	sleep 1
+done
 $PERL ../digcomp.pl dig.out.ns2.test$n dig.out.ns3.test$n || ret=1
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
@@ -2105,6 +2111,18 @@ awk '{
 	printf("\n");
 }' < ns1/dsset-algroll$TP > canonical2.$n || ret=1
 diff -b canonical1.$n canonical2.$n > /dev/null 2>&1 || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+# Intentionally strip ".key" from keyfile name to ensure the error message
+# includes it anyway to avoid confusion (RT #21731)
+echo "I:check dnssec-dsfromkey error message when keyfile is not found ($n)"
+ret=0
+key=`$KEYGEN -q -r $RANDFILE example.` || ret=1
+mv $key.key $key
+$DSFROMKEY $key > dsfromkey.out.$n 2>&1 && ret=1
+grep "$key.key: file not found" dsfromkey.out.$n > /dev/null || ret=1
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
@@ -2262,7 +2280,32 @@ n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 
+cp ns4/named4.conf ns4/named.conf
+$RNDC -c ../common/rndc.conf -s 10.53.0.4 -p 9953 reconfig 2>&1 | sed 's/^/I:ns4 /'
+sleep 3
+
 echo "I:testing TTL is capped at RRSIG expiry time for records in the additional section with dnssec-accept-expired yes; ($n)"
+ret=0
+$RNDC -c ../common/rndc.conf -s 10.53.0.4 -p 9953 flush
+$DIG +noall +additional +dnssec +cd -p 5300 expiring.example mx @10.53.0.4 > dig.out.ns4.1.$n
+$DIG +noall +additional +dnssec -p 5300 expiring.example mx @10.53.0.4 > dig.out.ns4.2.$n
+ttls=`awk '$1 != ";;" {print $2}' dig.out.ns4.1.$n`
+ttls2=`awk '$1 != ";;" {print $2}' dig.out.ns4.2.$n`
+for ttl in ${ttls:-300}; do
+    [ $ttl -eq 300 ] || ret=1
+done
+for ttl in ${ttls2:-0}; do
+    [ $ttl -le 120  -a $ttl -gt 60 ] || ret=1
+done
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+cp ns4/named4.conf ns4/named.conf
+$RNDC -c ../common/rndc.conf -s 10.53.0.4 -p 9953 reconfig 2>&1 | sed 's/^/I:ns4 /'
+sleep 3
+
+echo "I:testing TTL is capped at RRSIG expiry time for records in the additional section with acache off; ($n)"
 ret=0
 $RNDC -c ../common/rndc.conf -s 10.53.0.4 -p 9953 flush
 $DIG +noall +additional +dnssec +cd -p 5300 expiring.example mx @10.53.0.4 > dig.out.ns4.1.$n
@@ -2442,7 +2485,7 @@ n=`expr $n + 1`
 if test "$before" = "$after" ; then echo "I:failed"; ret=1; fi
 status=`expr $status + $ret`
 
-cp ns4/named4.conf ns4/named.conf
+cp ns4/named5.conf ns4/named.conf
 $RNDC -c ../common/rndc.conf -s 10.53.0.4 -p 9953 reconfig 2>&1 | sed 's/^/I:ns4 /'
 sleep 3
 
@@ -2872,16 +2915,24 @@ n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 
-echo "I:check that trust-anchor-telemetry queries are received ($n)"
+echo "I:check that _ta-XXXX trust-anchor-telemetry queries are logged ($n)"
 ret=0
-grep "query '_ta-[0-9a-f]*/NULL/IN' approved" ns1/named.run > /dev/null || ret=1
+grep "trust-anchor-telemetry '_ta-[0-9a-f]*/IN' from" ns1/named.run > /dev/null || ret=1
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 
-echo "I:check that trust-anchor-telemetry are not sent when disabled ($n)"
+echo "I:check that _ta-AAAA trust-anchor-telemetry are not sent when disabled ($n)"
 ret=0
-grep "sending trust-anchor-telemetry query '_ta-[0-9a-f]*/NULL" ns1/named.run > /dev/null && ret=1
+grep "sending trust-anchor-telemetry query '_ta-[0-9a-f]*/IN" ns1/named.run > /dev/null && ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:check that KEY-TAG trust-anchor-telemetry queries are logged ($n)"
+ret=0
+$DIG $DIGOPTS . dnskey +ednsopt=KEY-TAG:ffff @10.53.0.1 > dig.out.ns4.test$n || ret=1
+grep "trust-anchor-telemetry './IN' from .* 65535" ns1/named.run > /dev/null || ret=1
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`

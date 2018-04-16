@@ -1,6 +1,6 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <!--
- - Copyright (C) 2004-2016 Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2004-2018 Internet Systems Consortium, Inc. ("ISC")
  - Copyright (C) 2000-2003 Internet Software Consortium.
  - 
  - Permission to use, copy, modify, and/or distribute this software for any
@@ -376,8 +376,25 @@
                 <p>
                   A non-negative 32-bit integer
                   (i.e., a number between 0 and 4294967295, inclusive).
-                  Its acceptable value might further
-                  be limited by the context in which it is used.
+                  Its acceptable value might be further
+                  limited by the context in which it is used.
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  <code class="varname">fixedpoint</code>
+                </p>
+              </td>
+<td>
+                <p>
+                  A non-negative real number that can be specified to
+                  the nearest one hundredth.  Up to five digits can be
+                  specified before a decimal point, and up to two
+                  digits after, so the maximum value is 99999.99.
+                  Acceptable values might be further limited by the
+                  context in which it is used.
                 </p>
               </td>
 </tr>
@@ -1281,7 +1298,7 @@ geoip org "Internet Systems Consortium";
           number of required bits preceded by a dash, e.g.
           <code class="literal">hmac-sha1-80</code>.  The
           <em class="replaceable"><code>secret_string</code></em> is the secret
-          to be used by the algorithm, and is treated as a base-64
+          to be used by the algorithm, and is treated as a Base64
           encoded string.
         </p>
 
@@ -1958,6 +1975,16 @@ category notify { null; };
 </tr>
 <tr>
 <td>
+	  <p><span class="command"><strong>trust-anchor-telemetry</strong></span></p>
+	</td>
+<td>
+	  <p>
+	    Logs trust-anchor-telemetry requests received by named.
+	  </p>
+	</td>
+</tr>
+<tr>
+<td>
 	  <p><span class="command"><strong>unmatched</strong></span></p>
 	</td>
 <td>
@@ -2410,6 +2437,7 @@ badresp:1,adberr:0,findfail:0,valfail:0]
   [ <span class="command"><strong>maintain-ixfr-base</strong></span> <em class="replaceable"><code>yes_or_no</code></em> ; ]
   [ <span class="command"><strong>ixfr-from-differences</strong></span> ( <em class="replaceable"><code>yes_or_no</code></em> | <code class="option">master</code> | <code class="option">slave</code> ) ; ]
   [ <span class="command"><strong>auto-dnssec</strong></span> ( <code class="option">allow</code> | <code class="option">maintain</code> | <code class="option">off</code> ) ; ]
+  [ <span class="command"><strong>inline-signing</strong></span> <em class="replaceable"><code>yes_or_no</code></em> ; ]
   [ <span class="command"><strong>dnssec-enable</strong></span> <em class="replaceable"><code>yes_or_no</code></em> ; ]
   [ <span class="command"><strong>dnssec-validation</strong></span> ( <em class="replaceable"><code>yes_or_no</code></em> | <code class="option">auto</code> ) ; ]
   [ <span class="command"><strong>dnssec-lookaside</strong></span> ( <code class="option">auto</code> | <code class="option">no</code> | <em class="replaceable"><code>domain</code></em> trust-anchor <em class="replaceable"><code>domain</code></em> ) ; ]
@@ -2614,6 +2642,7 @@ badresp:1,adberr:0,findfail:0,valfail:0]
       [ <span class="command"><strong>break-dnssec</strong></span> <em class="replaceable"><code>yes_or_no</code></em> ]
       [ <span class="command"><strong>min-ns-dots</strong></span> <em class="replaceable"><code>number</code></em> ]
       [ <span class="command"><strong>qname-wait-recurse</strong></span> <em class="replaceable"><code>yes_or_no</code></em> ] ; ]
+  [ <span class="command"><strong>trust-anchor-telemetry</strong></span> <em class="replaceable"><code>yes_or_no</code></em> ; ]
 <span class="command"><strong>}</strong></span> ; ]
 </pre>
 
@@ -2731,17 +2760,17 @@ badresp:1,adberr:0,findfail:0,valfail:0]
 <dd>
               <p>
                 The working directory of the server.
-                Any non-absolute pathnames in the configuration file will be
-                taken
-                as relative to this directory. The default location for most
-                server
-                output files (e.g. <code class="filename">named.run</code>)
-                is this directory.
+                Any non-absolute pathnames in the configuration file will
+                be taken as relative to this directory. The default
+                location for most server output files
+                (e.g. <code class="filename">named.run</code>) is this directory.
                 If a directory is not specified, the working directory
                 defaults to `<code class="filename">.</code>', the directory from
-                which the server
-                was started. The directory specified should be an absolute
-                path.
+                which the server was started. The directory specified
+                should be an absolute path. It is
+                <span class="emphasis"><em>strongly recommended</em></span>
+                that the directory be writable by the effective user
+                ID of the <span class="command"><strong>named</strong></span> process.
               </p>
             </dd>
 <dt><span class="term"><span class="command"><strong>geoip-directory</strong></span></span></dt>
@@ -2775,7 +2804,9 @@ badresp:1,adberr:0,findfail:0,valfail:0]
               <p>
                 Specifies the directory in which to store the files that
                 track managed DNSSEC keys.  By default, this is the working
-                directory.
+                directory.  The directory <span class="emphasis"><em>must</em></span>
+                be writable by the effective user ID of the
+                <span class="command"><strong>named</strong></span> process.
               </p>
               <p>
                 If <span class="command"><strong>named</strong></span> is not configured to use views,
@@ -2921,9 +2952,8 @@ badresp:1,adberr:0,findfail:0,valfail:0]
               <p>
                 The pathname of a file to override the built-in trusted
                 keys provided by <span class="command"><strong>named</strong></span>.
-                See the discussion of <span class="command"><strong>dnssec-lookaside</strong></span>
-                and <span class="command"><strong>dnssec-validation</strong></span> for details.
-                If not specified, the default is
+                See the discussion of <span class="command"><strong>dnssec-validation</strong></span>
+                for details.  If not specified, the default is
                 <code class="filename">/etc/bind.keys</code>.
               </p>
             </dd>
@@ -3117,38 +3147,16 @@ options {
               </p>
               <p>
                 If <span class="command"><strong>dnssec-lookaside</strong></span> is set to
-                <strong class="userinput"><code>auto</code></strong>, then built-in default
-                values for the DLV domain and trust anchor will be
-                used, along with a built-in key for validation.
-              </p>
-              <p>
-                If <span class="command"><strong>dnssec-lookaside</strong></span> is set to
                 <strong class="userinput"><code>no</code></strong>, then dnssec-lookaside
                 is not used.
               </p>
               <p>
-                The default DLV key is stored in the file
-                <code class="filename">bind.keys</code>;
-                <span class="command"><strong>named</strong></span> will load that key at
-                startup if <span class="command"><strong>dnssec-lookaside</strong></span> is set to
-                <code class="constant">auto</code>.  A copy of the file is
-                installed along with <acronym class="acronym">BIND</acronym> 9, and is
-                current as of the release date.  If the DLV key expires, a
-                new copy of <code class="filename">bind.keys</code> can be downloaded
-                from <a class="link" href="https://www.isc.org/solutions/dlv/" target="_top">https://www.isc.org/solutions/dlv/</a>.
-              </p>
-              <p>
-                (To prevent problems if <code class="filename">bind.keys</code> is
-                not found, the current key is also compiled in to
-                <span class="command"><strong>named</strong></span>.  Relying on this is not
-                recommended, however, as it requires <span class="command"><strong>named</strong></span>
-                to be recompiled with a new key when the DLV key expires.)
-              </p>
-              <p>
-                NOTE: <span class="command"><strong>named</strong></span> only loads certain specific
-                keys from <code class="filename">bind.keys</code>:  those for the
-                DLV zone and for the DNS root zone.  The file cannot be
-                used to store keys for other zones.
+                NOTE: The ISC-provided DLV service at
+                <code class="literal">dlv.isc.org</code>, has been shut down.
+                The <span class="command"><strong>dnssec-lookaside auto;</strong></span>
+                configuration option, which set <span class="command"><strong>named</strong></span>
+                up to use ISC DLV with minimal configuration, has
+                accordingly been removed.
               </p>
             </dd>
 <dt><span class="term"><span class="command"><strong>dnssec-must-be-secure</strong></span></span></dt>
@@ -3162,7 +3170,7 @@ options {
                 be accepted.  The specified domain must be under a
                 <span class="command"><strong>trusted-keys</strong></span> or
                 <span class="command"><strong>managed-keys</strong></span> statement, or
-                <span class="command"><strong>dnssec-lookaside</strong></span> must be active.
+                <span class="command"><strong>dnssec-validation auto</strong></span> must be active.
               </p>
             </dd>
 <dt><span class="term"><span class="command"><strong>dns64</strong></span></span></dt>
@@ -3712,7 +3720,7 @@ options {
 <dt><span class="term"><span class="command"><strong>host-statistics</strong></span></span></dt>
 <dd>
                 <p>
-                  In BIND 8, this enables keeping of
+                  In BIND 8, this enabled keeping of
                   statistics for every host that the name server interacts
                   with.
                   Not implemented in BIND 9.
@@ -3894,9 +3902,8 @@ options {
                   Causes <span class="command"><strong>named</strong></span> to send specially-formed
                   queries once per day to domains for which trust anchors
                   have been configured via <span class="command"><strong>trusted-keys</strong></span>,
-                  <span class="command"><strong>managed-keys</strong></span>,
-                  <span class="command"><strong>dnssec-validation auto</strong></span>, or
-                  <span class="command"><strong>dnssec-lookaside auto</strong></span>.
+                  <span class="command"><strong>managed-keys</strong></span>, or
+                  <span class="command"><strong>dnssec-validation auto</strong></span>.
                 </p>
                 <p>
                   The query name used for these queries has the
@@ -4237,17 +4244,45 @@ options {
                   Note <span class="command"><strong>dnssec-enable</strong></span> also needs to be
                   set to <strong class="userinput"><code>yes</code></strong> to be effective.
                   If set to <strong class="userinput"><code>no</code></strong>, DNSSEC validation
-                  is disabled.  If set to <strong class="userinput"><code>auto</code></strong>,
-                  DNSSEC validation is enabled, and a default
-                  trust-anchor for the DNS root zone is used.  If set to
-                  <strong class="userinput"><code>yes</code></strong>, DNSSEC validation is enabled,
-                  but a trust anchor must be manually configured using
-                  a <span class="command"><strong>trusted-keys</strong></span> or
-                  <span class="command"><strong>managed-keys</strong></span> statement.  The default
+                  is disabled.
+                </p>
+                <p>
+                  If set to <strong class="userinput"><code>auto</code></strong>, DNSSEC validation
+                  is enabled, and a default trust anchor for the DNS root
+                  zone is used.  If set to <strong class="userinput"><code>yes</code></strong>,
+                  DNSSEC validation is enabled, but a trust anchor must be
+                  manually configured using a <span class="command"><strong>trusted-keys</strong></span>
+                  or <span class="command"><strong>managed-keys</strong></span> statement.  The default
                   is <strong class="userinput"><code>yes</code></strong>.
+                </p>
+                <p>
+                  The default root trust anchor is stored in the file
+                  <code class="filename">bind.keys</code>.
+                  <span class="command"><strong>named</strong></span> will load that key at
+                  startup if <span class="command"><strong>dnssec-validation</strong></span> is
+                  set to <code class="constant">auto</code>.  A copy of the file is
+                  installed along with BIND 9, and is current as of the
+                  release date.  If the root key expires, a new copy of
+                  <code class="filename">bind.keys</code> can be downloaded
+                  from <a class="link" href="https://www.isc.org/bind-keys" target="_top">https://www.isc.org/bind-keys</a>.
+                </p>
+                <p>
+                  To prevent problems if <code class="filename">bind.keys</code> is
+                  not found, the current trust anchor is also compiled in
+                  to <span class="command"><strong>named</strong></span>.  Relying on this is not
+                  recommended, however, as it requires <span class="command"><strong>named</strong></span>
+                  to be recompiled with a new key when the root key expires.)
                 </p>
                 <div class="note" style="margin-left: 0.5in; margin-right: 0.5in;">
 <h3 class="title">Note</h3>
+                  <p>
+                    <span class="command"><strong>named</strong></span> <span class="emphasis"><em>only</em></span>
+                    loads the root key from <code class="filename">bind.keys</code>.
+                    The file cannot be used to store keys for other zones.
+                    The root key in <code class="filename">bind.keys</code> is ignored
+                    if <span class="command"><strong>dnssec-validation auto</strong></span> is not in
+                    use.
+                  </p>
                   <p>
                     Whenever the resolver sends out queries to an
                     EDNS-compliant server, it always sets the DO bit
@@ -4776,7 +4811,8 @@ options {
                 <p>
                   Specifies a list of addresses to which
                   <span class="command"><strong>filter-aaaa-on-v4</strong></span>
-                  is applies.  The default is <strong class="userinput"><code>any</code></strong>.
+                  and <span class="command"><strong>filter-aaaa-on-v6</strong></span>
+                  apply.  The default is <strong class="userinput"><code>any</code></strong>.
                 </p>
               </dd>
 <dt><span class="term"><span class="command"><strong>no-case-compress</strong></span></span></dt>
@@ -5878,58 +5914,17 @@ avoid-v6-udp-ports { 40000; range 50000 60000; };
                   </p>
                 </div>
               </dd>
+<dt><span class="term"><span class="command"><strong>topology</strong></span></span></dt>
+<dd>
+                <p>
+                  In BIND 8, this option indicated network topology
+                  so that preferential treatment could be given to
+                  the topologicaly closest name servers when sending
+                  queries. It is not implemented in BIND 9.
+                </p>
+              </dd>
 </dl></div>
 
-        </div>
-
-        <div class="section">
-<div class="titlepage"><div><div><h4 class="title">
-<a name="topology"></a>Topology</h4></div></div></div>
-
-          <p>
-            All other things being equal, when the server chooses a name
-            server
-            to query from a list of name servers, it prefers the one that is
-            topologically closest to itself. The <span class="command"><strong>topology</strong></span> statement
-            takes an <span class="command"><strong>address_match_list</strong></span> and
-            interprets it
-            in a special way. Each top-level list element is assigned a
-            distance.
-            Non-negated elements get a distance based on their position in the
-            list, where the closer the match is to the start of the list, the
-            shorter the distance is between it and the server. A negated match
-            will be assigned the maximum distance from the server. If there
-            is no match, the address will get a distance which is further than
-            any non-negated list element, and closer than any negated element.
-            For example,
-          </p>
-
-<pre class="programlisting">topology {
-    10/8;
-    !1.2.3/24;
-    { 1.2/16; 3/8; };
-};</pre>
-
-          <p>
-            will prefer servers on network 10 the most, followed by hosts
-            on network 1.2.0.0 (netmask 255.255.0.0) and network 3, with the
-            exception of hosts on network 1.2.3 (netmask 255.255.255.0), which
-            is preferred least of all.
-          </p>
-          <p>
-            The default topology is
-          </p>
-
-<pre class="programlisting">    topology { localhost; localnets; };
-</pre>
-
-          <div class="note" style="margin-left: 0.5in; margin-right: 0.5in;">
-<h3 class="title">Note</h3>
-            <p>
-              The <span class="command"><strong>topology</strong></span> option
-              is not implemented in <acronym class="acronym">BIND</acronym> 9.
-            </p>
-          </div>
         </div>
 
         <div class="section">
@@ -5938,68 +5933,52 @@ avoid-v6-udp-ports { 40000; range 50000 60000; };
 
           <p>
             The response to a DNS query may consist of multiple resource
-            records (RRs) forming a resource records set (RRset).
-            The name server will normally return the
-            RRs within the RRset in an indeterminate order
-            (but see the <span class="command"><strong>rrset-order</strong></span>
-            statement in <a class="xref" href="Bv9ARM.ch06.html#rrset_ordering" title="RRset Ordering">the section called &#8220;RRset Ordering&#8221;</a>).
-            The client resolver code should rearrange the RRs as appropriate,
-            that is, using any addresses on the local net in preference to
-            other addresses.
-            However, not all resolvers can do this or are correctly
-            configured.
-            When a client is using a local server, the sorting can be performed
-            in the server, based on the client's address. This only requires
-            configuring the name servers, not all the clients.
+            records (RRs) forming a resource record set (RRset).  The name
+            server will normally return the RRs within the RRset in an
+            indeterminate order (but see the <span class="command"><strong>rrset-order</strong></span>
+            statement in <a class="xref" href="Bv9ARM.ch06.html#rrset_ordering" title="RRset Ordering">the section called &#8220;RRset Ordering&#8221;</a>).  The client
+            resolver code should rearrange the RRs as appropriate, that is,
+            using any addresses on the local net in preference to other
+            addresses.  However, not all resolvers can do this or are
+            correctly configured.  When a client is using a local server,
+            the sorting can be performed in the server, based on the
+            client's address. This only requires configuring the name
+            servers, not all the clients.
           </p>
 
           <p>
-            The <span class="command"><strong>sortlist</strong></span> statement (see below)
-            takes
-            an <span class="command"><strong>address_match_list</strong></span> and
-            interprets it even
-            more specifically than the <span class="command"><strong>topology</strong></span>
-            statement
-            does (<a class="xref" href="Bv9ARM.ch06.html#topology" title="Topology">the section called &#8220;Topology&#8221;</a>).
-            Each top level statement in the <span class="command"><strong>sortlist</strong></span> must
-            itself be an explicit <span class="command"><strong>address_match_list</strong></span> with
-            one or two elements. The first element (which may be an IP
-            address,
-            an IP prefix, an ACL name or a nested <span class="command"><strong>address_match_list</strong></span>)
-            of each top level list is checked against the source address of
+            The <span class="command"><strong>sortlist</strong></span> statement (see below) takes an
+            <span class="command"><strong>address_match_list</strong></span> and interprets it in a
+            special way.  Each top level statement in the
+            <span class="command"><strong>sortlist</strong></span> must itself be an explicit
+            <span class="command"><strong>address_match_list</strong></span> with one or two elements.
+            The first element (which may be an IP address, an IP prefix, an
+            ACL name or a nested <span class="command"><strong>address_match_list</strong></span>) of
+            each top level list is checked against the source address of
             the query until a match is found.
           </p>
           <p>
-            Once the source address of the query has been matched, if
-            the top level statement contains only one element, the actual
-            primitive
-            element that matched the source address is used to select the
-            address
-            in the response to move to the beginning of the response. If the
-            statement is a list of two elements, then the second element is
-            treated the same as the <span class="command"><strong>address_match_list</strong></span> in
-            a <span class="command"><strong>topology</strong></span> statement. Each top
-            level element
-            is assigned a distance and the address in the response with the
-            minimum
-            distance is moved to the beginning of the response.
+            Once the source address of the query has been matched, if the
+            top level statement contains only one element, the actual
+            primitive element that matched the source address is used to
+            select the address in the response to move to the beginning of
+            the response. If the statement is a list of two elements, then
+            the second element is interpreted as a topology preference
+            list.  Each top level element is assigned a distance and the
+            address in the response with the minimum distance is moved to
+            the beginning of the response.
           </p>
           <p>
-            In the following example, any queries received from any of
-            the addresses of the host itself will get responses preferring
-            addresses
-            on any of the locally connected networks. Next most preferred are
-            addresses
-            on the 192.168.1/24 network, and after that either the
-            192.168.2/24
-            or
-            192.168.3/24 network with no preference shown between these two
-            networks. Queries received from a host on the 192.168.1/24 network
-            will prefer other addresses on that network to the 192.168.2/24
-            and
-            192.168.3/24 networks. Queries received from a host on the
-            192.168.4/24
-            or the 192.168.5/24 network will only prefer other addresses on
+            In the following example, any queries received from any of the
+            addresses of the host itself will get responses preferring
+            addresses on any of the locally connected networks. Next most
+            preferred are addresses on the 192.168.1/24 network, and after
+            that either the 192.168.2/24 or 192.168.3/24 network with no
+            preference shown between these two networks. Queries received
+            from a host on the 192.168.1/24 network will prefer other
+            addresses on that network to the 192.168.2/24 and 192.168.3/24
+            networks. Queries received from a host on the 192.168.4/24 or
+            the 192.168.5/24 network will only prefer other addresses on
             their directly connected networks.
           </p>
 
@@ -6029,15 +6008,13 @@ avoid-v6-udp-ports { 40000; range 50000 60000; };
 
           <p>
             The following example will give reasonable behavior for the
-            local host and hosts on directly connected networks. It is similar
-            to the behavior of the address sort in <acronym class="acronym">BIND</acronym> 4.9.x. Responses sent
-            to queries from the local host will favor any of the directly
-            connected
+            local host and hosts on directly connected networks. It is
+            similar to the behavior of the address sort in
+            <acronym class="acronym">BIND</acronym> 4.9.x. Responses sent to queries from
+            the local host will favor any of the directly connected
             networks. Responses sent to queries from any other hosts on a
-            directly
-            connected network will prefer addresses on that same network.
-            Responses
-            to other queries will not be sorted.
+            directly connected network will prefer addresses on that same
+            network.  Responses to other queries will not be sorted.
           </p>
 
 <pre class="programlisting">sortlist {
@@ -6308,22 +6285,18 @@ avoid-v6-udp-ports { 40000; range 50000 60000; };
 <dd>
                 <p>
                   These options control the server's behavior on refreshing a
-                  zone
-                  (querying for SOA changes) or retrying failed transfers.
-                  Usually the SOA values for the zone are used, but these
-                  values
-                  are set by the master, giving slave server administrators
-                  little
-                  control over their contents.
+                  zone (querying for SOA changes) or retrying failed
+                  transfers.  Usually the SOA values for the zone are used,
+                  up to a hard-coded maximum expiry of 24 weeks. However,
+                  these values are set by the master, giving slave server
+                  administrators little control over their contents.
                 </p>
                 <p>
                   These options allow the administrator to set a minimum and
-                  maximum
-                  refresh and retry time either per-zone, per-view, or
-                  globally.
-                  These options are valid for slave and stub zones,
-                  and clamp the SOA refresh and retry times to the specified
-                  values.
+                  maximum refresh and retry time either per-zone,
+                  per-view, or globally.  These options are valid for
+                  slave and stub zones, and clamp the SOA refresh and
+                  retry times to the specified values.
                 </p>
                 <p>
                   The following defaults apply.
@@ -8125,7 +8098,7 @@ example.com                 CNAME   rpz-tcp-only.
           <p>
             The <span class="command"><strong>trusted-keys</strong></span> statement can contain
             multiple key entries, each consisting of the key's
-            domain name, flags, protocol, algorithm, and the Base-64
+            domain name, flags, protocol, algorithm, and the Base64
             representation of the key data.
             Spaces, tabs, newlines and carriage returns are ignored
             in the key data, so the configuration may be split up into
@@ -8189,8 +8162,8 @@ example.com                 CNAME   rpz-tcp-only.
             A <span class="command"><strong>managed-keys</strong></span> statement contains a list of
             the keys to be managed, along with information about how the
             keys are to be initialized for the first time.  The only
-            initialization method currently supported (as of
-            <acronym class="acronym">BIND</acronym> 9.7.0) is <code class="literal">initial-key</code>.
+            initialization method currently supported is
+            <code class="literal">initial-key</code>.
             This means the <span class="command"><strong>managed-keys</strong></span> statement must
             contain a copy of the initializing key.  (Future releases may
             allow keys to be initialized by other methods, eliminating this
@@ -8262,15 +8235,13 @@ example.com                 CNAME   rpz-tcp-only.
             If the <span class="command"><strong>dnssec-validation</strong></span> option is
             set to <strong class="userinput"><code>auto</code></strong>, <span class="command"><strong>named</strong></span>
             will automatically initialize a managed key for the
-            root zone.  Similarly, if the <span class="command"><strong>dnssec-lookaside</strong></span>
-            option is set to <strong class="userinput"><code>auto</code></strong>,
-            <span class="command"><strong>named</strong></span> will automatically initialize
-            a managed key for the zone <code class="literal">dlv.isc.org</code>.
-            (Note: The ISC DLV service is expected to cease operation by
-            the end of 2017.) In both cases, the key that is used to
-            initialize the key maintenance process is built into
-            <span class="command"><strong>named</strong></span>, and can be overridden from
-            <span class="command"><strong>bindkeys-file</strong></span>.
+            root zone.  The key that is used to initialize the key
+            maintenance process is stored in <code class="filename">bind.keys</code>;
+            the location of this file can be overridden with the
+            <span class="command"><strong>bindkeys-file</strong></span> option. As a fallback
+            in the event no <code class="filename">bind.keys</code> can be
+            found, the initializing key is also compiled directly
+            into <span class="command"><strong>named</strong></span>.
           </p>
         </div>
 
@@ -9207,6 +9178,20 @@ view "external" {
                     See caveats in <a class="xref" href="Bv9ARM.ch06.html#root_delegation_only"><span class="command"><strong>root-delegation-only</strong></span></a>.
                   </p>
                 </dd>
+<dt><span class="term"><span class="command"><strong>file</strong></span></span></dt>
+<dd>
+                  <p>
+                    Set the zone's filename. In <span class="command"><strong>master</strong></span>,
+                    <span class="command"><strong>hint</strong></span>, and <span class="command"><strong>redirect</strong></span>
+                    zones which do not have <span class="command"><strong>masters</strong></span>
+                    defined, zone data is loaded from this file. In
+                    <span class="command"><strong>slave</strong></span>, <span class="command"><strong>stub</strong></span>, and
+                    <span class="command"><strong>redirect</strong></span> zones which do have
+                    <span class="command"><strong>masters</strong></span> defined, zone data is
+                    retrieved from another server and saved in this file.
+                    This option is not applicable to other zone types.
+                  </p>
+                </dd>
 <dt><span class="term"><span class="command"><strong>forward</strong></span></span></dt>
 <dd>
                   <p>
@@ -9609,38 +9594,52 @@ example.com. NS ns2.example.net.
               is present, it is a configuration error for the
               <span class="command"><strong>allow-update</strong></span> statement to be
               present.  The <span class="command"><strong>update-policy</strong></span> statement
-              only examines the signer of a message; the source
+              (except when set to <code class="literal">local</code>) only
+              examines the signer of a message; the source
               address is not relevant.
             </p>
             <p>
-              There is a pre-defined <span class="command"><strong>update-policy</strong></span>
-              rule which can be switched on with the command
+              A pre-defined <span class="command"><strong>update-policy</strong></span> rule can be
+              switched on with the command
               <span class="command"><strong>update-policy local;</strong></span>.
               Switching on this rule in a zone causes
-              <span class="command"><strong>named</strong></span> to generate a TSIG session
-              key and place it in a file, and to allow that key
-              to update the zone.  (By default, the file is
-              <code class="filename">/var/run/named/session.key</code>, the key
-              name is "local-ddns" and the key algorithm is HMAC-SHA256,
-              but these values are configurable with the
+              <span class="command"><strong>named</strong></span> to generate a TSIG session key and
+              place it in a file. That key will then be allowed to update
+              the zone, if the update request is sent from localhost.
+              By default, the session key is stored in the file
+              <code class="filename">/var/run/named/session.key</code>; the key name
+              is "local-ddns" and the key algorithm is HMAC-SHA256.
+              These values are configurable with the
               <span class="command"><strong>session-keyfile</strong></span>,
               <span class="command"><strong>session-keyname</strong></span> and
               <span class="command"><strong>session-keyalg</strong></span> options, respectively).
             </p>
             <p>
-              A client running on the local system, and with appropriate
-              permissions, may read that file and use the key to sign update
-              requests.  The zone's update policy will be set to allow that
-              key to change any record within the zone.  Assuming the
-              key name is "local-ddns", this policy is equivalent to:
+              A client on the local system, if it is run with appropriate
+              permissions, may read the session key from the key file and
+              use the key to sign update requests.  The zone's update
+              policy will be set to allow that key to change any record
+              within the zone.  Assuming the key name is "local-ddns",
+              this policy is:
             </p>
 
             <pre class="programlisting">update-policy { grant local-ddns zonesub any; };
             </pre>
 
             <p>
-              The command <span class="command"><strong>nsupdate -l</strong></span> sends update
-              requests to localhost, and signs them using the session key.
+              ...with an additional restriction that only clients
+              connecting from the local system will be permitted to send
+              updates.
+            </p>
+            <p>
+              Note that only one session key is generated; all zones
+              configured to use <span class="command"><strong>update-policy local</strong></span>
+              will accept the same key.
+            </p>
+            <p>
+              The command <span class="command"><strong>nsupdate -l</strong></span> implements this
+              feature, sending requests to localhost and signing them using
+              the key retrieved from the session key file.
             </p>
 
             <p>
@@ -9790,7 +9789,8 @@ example.com. NS ns2.example.net.
                         <em class="replaceable"><code>identity</code></em> field.
                         The <em class="replaceable"><code>name</code></em> field
                         is ignored, but should be the same as the
-                        <em class="replaceable"><code>identity</code></em> field.
+                        <em class="replaceable"><code>identity</code></em> field or
+                        "."
                         The <code class="varname">self</code> nametype is
                         most useful when allowing using one key per
                         name to update, where the key has the same
@@ -9842,7 +9842,7 @@ example.com. NS ns2.example.net.
                         and converts it machine.realm allowing the machine
                         to update machine.realm.  The REALM to be matched
                         is specified in the <em class="replaceable"><code>identity</code></em>
-                        field.
+                        field.  The name field should be set to "."
                       </p>
                     </td>
 </tr>
@@ -9876,7 +9876,7 @@ example.com. NS ns2.example.net.
                         and converts it machine.realm allowing the machine
                         to update machine.realm.  The REALM to be matched
                         is specified in the <em class="replaceable"><code>identity</code></em>
-                        field.
+                        field. The name field should be set to "."
                       </p>
                     </td>
 </tr>
@@ -9893,7 +9893,8 @@ example.com. NS ns2.example.net.
                         converts it to machine.realm allowing the machine
                         to update subdomains of machine.realm.  The REALM
                         to be matched is specified in the
-                        <em class="replaceable"><code>identity</code></em> field.
+                        <em class="replaceable"><code>identity</code></em> field. The
+                        name field should be set to "."
                       </p>
                     </td>
 </tr>
@@ -9908,7 +9909,8 @@ example.com. NS ns2.example.net.
                         Allow updates that have been sent via TCP and
                         for which the standard mapping from the initiating
                         IP address into the IN-ADDR.ARPA and IP6.ARPA
-                        namespaces match the name to be updated.
+                        namespaces match the name to be updated.  The
+                        name field should be set to "."
                       </p>
                       <div class="note" style="margin-left: 0.5in; margin-right: 0.5in;">
 <h3 class="title">Note</h3>
@@ -10412,6 +10414,19 @@ view external {
                       <p>
                         Stores a public key associated with a signed
                         DNS zone.  Described in RFC 4034.
+                      </p>
+                    </td>
+</tr>
+<tr>
+<td>
+                      <p>
+                        DOA
+                      </p>
+                    </td>
+<td>
+                      <p>
+                        Implements the Digital Object Architecture over
+                        DNS. Experimental.
                       </p>
                     </td>
 </tr>
@@ -12142,7 +12157,7 @@ HOST-127.EXAMPLE. MX 0 .
             and not part of the standard zone file format.
           </p>
           <p>
-            BIND 8 does not support the optional TTL and CLASS fields.
+            BIND 8 did not support the optional TTL and CLASS fields.
           </p>
         </div>
 
@@ -13790,6 +13805,6 @@ HOST-127.EXAMPLE. MX 0 .
 </tr>
 </table>
 </div>
-<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.10.5-P2</p>
+<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.10.7</p>
 </body>
 </html>

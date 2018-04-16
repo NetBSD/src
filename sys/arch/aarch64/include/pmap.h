@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.1.28.1 2018/04/07 04:12:11 pgoyette Exp $ */
+/* $NetBSD: pmap.h,v 1.1.28.2 2018/04/16 01:59:52 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -150,10 +150,10 @@ paddr_t pmap_devmap_vtophys(paddr_t);
 /* mmap cookie and flags */
 #define AARCH64_MMAP_FLAG_SHIFT		(64 - PGSHIFT)
 #define AARCH64_MMAP_FLAG_MASK		0xf
-#define AARCH64_MMAP_WRITEBACK		0
-#define AARCH64_MMAP_NOCACHE		1
-#define AARCH64_MMAP_WRITECOMBINE	2
-#define AARCH64_MMAP_DEVICE		3
+#define AARCH64_MMAP_WRITEBACK		0UL
+#define AARCH64_MMAP_NOCACHE		1UL
+#define AARCH64_MMAP_WRITECOMBINE	2UL
+#define AARCH64_MMAP_DEVICE		3UL
 
 #define ARM_MMAP_WRITECOMBINE		AARCH64_MMAP_WRITECOMBINE
 #define ARM_MMAP_WRITEBACK		AARCH64_MMAP_WRITEBACK

@@ -1,7 +1,7 @@
-/*	$NetBSD: nsec3_50.c,v 1.10 2016/05/26 16:49:59 christos Exp $	*/
+/*	$NetBSD: nsec3_50.c,v 1.10.14.1 2018/04/16 01:57:57 pgoyette Exp $	*/
 
 /*
- * Copyright (C) 2008, 2009, 2011, 2012, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2008, 2009, 2011, 2012, 2014, 2015, 2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -125,19 +125,19 @@ totext_nsec3(ARGS_TOTEXT) {
 	/* Hash */
 	hash = uint8_fromregion(&sr);
 	isc_region_consume(&sr, 1);
-	sprintf(buf, "%u ", hash);
+	snprintf(buf, sizeof(buf), "%u ", hash);
 	RETERR(str_totext(buf, target));
 
 	/* Flags */
 	flags = uint8_fromregion(&sr);
 	isc_region_consume(&sr, 1);
-	sprintf(buf, "%u ", flags);
+	snprintf(buf, sizeof(buf), "%u ", flags);
 	RETERR(str_totext(buf, target));
 
 	/* Iterations */
 	iterations = uint16_fromregion(&sr);
 	isc_region_consume(&sr, 2);
-	sprintf(buf, "%u ", iterations);
+	snprintf(buf, sizeof(buf), "%u ", iterations);
 	RETERR(str_totext(buf, target));
 
 	/* Salt */
@@ -167,7 +167,10 @@ totext_nsec3(ARGS_TOTEXT) {
 	RETERR(isc_base32hexnp_totext(&sr, 1, "", target));
 	sr.length = i - j;
 
-	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) == 0)
+	/*
+	 * Don't leave a trailing space when there's no typemap present.
+	 */
+	if (((tctx->flags & DNS_STYLEFLAG_MULTILINE) == 0) && (sr.length > 0))
 		RETERR(str_totext(" ", target));
 
 	RETERR(typemap_totext(&sr, tctx, target));

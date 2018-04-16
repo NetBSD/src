@@ -1,4 +1,4 @@
-# Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2013, 2017  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -12,4 +12,4 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-rm -f classlist.out privatelist.out typelist.out tempzone checker.out
+rm -f classlist.out privatelist.out typelist.out tempzone checkzone.out* checker.out

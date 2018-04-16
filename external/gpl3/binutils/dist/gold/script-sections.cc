@@ -1,6 +1,6 @@
 // script-sections.cc -- linker script SECTIONS for gold
 
-// Copyright (C) 2008-2016 Free Software Foundation, Inc.
+// Copyright (C) 2008-2018 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -244,10 +244,10 @@ Memory_region::attributes_compatible(elfcpp::Elf_Xword flags,
       attrs &= ~ (attrs & - attrs);
     }
   while (attrs != 0);
-  
+
   return match;
 }
-  
+
 // Print a memory region.
 
 void
@@ -313,6 +313,10 @@ class Orphan_section_placement
   bool
   find_place(Output_section*, Elements_iterator** pwhere);
 
+  // Update PLACE_LAST_ALLOC.
+  void
+  update_last_alloc(Elements_iterator where);
+
   // Return the iterator being used for sections at the very end of
   // the linker script.
   Elements_iterator
@@ -329,6 +333,7 @@ class Orphan_section_placement
     PLACE_TLS,
     PLACE_TLS_BSS,
     PLACE_BSS,
+    PLACE_LAST_ALLOC,
     PLACE_REL,
     PLACE_INTERP,
     PLACE_NONALLOC,
@@ -368,6 +373,7 @@ Orphan_section_placement::Orphan_section_placement()
   this->initialize_place(PLACE_TLS, NULL);
   this->initialize_place(PLACE_TLS_BSS, NULL);
   this->initialize_place(PLACE_BSS, ".bss");
+  this->initialize_place(PLACE_LAST_ALLOC, NULL);
   this->initialize_place(PLACE_REL, NULL);
   this->initialize_place(PLACE_INTERP, ".interp");
   this->initialize_place(PLACE_NONALLOC, NULL);
@@ -395,6 +401,15 @@ Orphan_section_placement::output_section_init(const std::string& name,
 {
   bool first_init = this->first_init_;
   this->first_init_ = false;
+
+  // Remember the last allocated section. Any orphan bss sections
+  // will be placed after it.
+  if (os != NULL
+      && (os->flags() & elfcpp::SHF_ALLOC) != 0)
+    {
+      this->places_[PLACE_LAST_ALLOC].location = location;
+      this->places_[PLACE_LAST_ALLOC].have_location = true;
+    }
 
   for (int i = 0; i < PLACE_MAX; ++i)
     {
@@ -508,8 +523,13 @@ Orphan_section_placement::find_place(Output_section* os,
 	case PLACE_RODATA:
 	  follow = PLACE_TEXT;
 	  break;
+	case PLACE_DATA:
+	  follow = PLACE_RODATA;
+	  if (!this->places_[PLACE_RODATA].have_location)
+	    follow = PLACE_TEXT;
+	  break;
 	case PLACE_BSS:
-	  follow = PLACE_DATA;
+	  follow = PLACE_LAST_ALLOC;
 	  break;
 	case PLACE_REL:
 	  follow = PLACE_TEXT;
@@ -544,6 +564,20 @@ Orphan_section_placement::find_place(Output_section* os,
   this->places_[index].have_location = true;
 
   return ret;
+}
+
+// Update PLACE_LAST_ALLOC.
+void
+Orphan_section_placement::update_last_alloc(Elements_iterator elem)
+{
+  Elements_iterator prev = elem;
+  --prev;
+  if (this->places_[PLACE_LAST_ALLOC].have_location
+      && this->places_[PLACE_LAST_ALLOC].location == prev)
+    {
+      this->places_[PLACE_LAST_ALLOC].have_location = true;
+      this->places_[PLACE_LAST_ALLOC].location = elem;
+    }
 }
 
 // Return the iterator being used for sections at the very end of the
@@ -598,7 +632,7 @@ class Sections_element
   // Output_section_definition.
   virtual const char*
   output_section_name(const char*, const char*, Output_section***,
-		      Script_sections::Section_type*, bool*)
+		      Script_sections::Section_type*, bool*, bool)
   { return NULL; }
 
   // Initialize OSP with an output section.
@@ -1503,7 +1537,7 @@ class Input_section_info
  private:
   // Input section, can be a relaxed section.
   Output_section::Input_section input_section_;
-  // Name of the section. 
+  // Name of the section.
   std::string section_name_;
   // Section size.
   uint64_t size_;
@@ -1545,7 +1579,7 @@ Input_section_sorter::get_init_priority(const char* name)
   // GCC uses the following section names for the init_priority
   // attribute with numerical values 101 and 65535 inclusive. A
   // lower value means a higher priority.
-  // 
+  //
   // 1: .init_array.NNNN/.fini_array.NNNN: Where NNNN is the
   //    decimal numerical value of the init_priority attribute.
   //    The order of execution in .init_array is forward and
@@ -1666,7 +1700,7 @@ Output_section_element_input::set_section_addresses(
   while (p != input_sections->end())
     {
       Relobj* relobj = p->relobj();
-      unsigned int shndx = p->shndx();      
+      unsigned int shndx = p->shndx();
       Input_section_info isi(*p);
 
       // Calling section_name and section_addralign is not very
@@ -1751,16 +1785,16 @@ Output_section_element_input::set_section_addresses(
 	   p != matching_sections[i].end();
 	   ++p)
 	{
-	  // Override the original address alignment if SUBALIGN is specified
-	  // and is greater than the original alignment.  We need to make a
-	  // copy of the input section to modify the alignment.
+	  // Override the original address alignment if SUBALIGN is specified.
+	  // We need to make a copy of the input section to modify the
+	  // alignment.
 	  Output_section::Input_section sis(p->input_section());
 
 	  uint64_t this_subalign = sis.addralign();
 	  if (!sis.is_input_section())
-	    sis.output_section_data()->finalize_data_size();	
+	    sis.output_section_data()->finalize_data_size();
 	  uint64_t data_size = sis.data_size();
-	  if (this_subalign < subalign)
+	  if (subalign > 0)
 	    {
 	      this_subalign = subalign;
 	      sis.set_addralign(subalign);
@@ -1969,7 +2003,7 @@ class Output_section_definition : public Sections_element
   const char*
   output_section_name(const char* file_name, const char* section_name,
 		      Output_section***, Script_sections::Section_type*,
-		      bool*);
+		      bool*, bool);
 
   // Initialize OSP with an output section.
   void
@@ -2029,7 +2063,7 @@ class Output_section_definition : public Sections_element
   void
   set_section_vma(Expression* address)
   { this->address_ = address; }
-  
+
   void
   set_section_lma(Expression* address)
   { this->load_address_ = address; }
@@ -2037,7 +2071,7 @@ class Output_section_definition : public Sections_element
   const std::string&
   get_section_name() const
   { return this->name_; }
-  
+
  private:
   static const char*
   script_section_type_name(Script_section_type);
@@ -2255,8 +2289,20 @@ Output_section_definition::output_section_name(
     const char* section_name,
     Output_section*** slot,
     Script_sections::Section_type* psection_type,
-    bool* keep)
+    bool* keep,
+    bool match_input_spec)
 {
+  // If the section is a linker-created output section, just look for a match
+  // on the output section name.
+  if (!match_input_spec && this->name_ != "/DISCARD/")
+    {
+      if (this->name_ != section_name)
+	return NULL;
+      *slot = &this->output_section_;
+      *psection_type = this->section_type();
+      return this->name_.c_str();
+    }
+
   // Ask each element whether it matches NAME.
   for (Output_section_elements::const_iterator p = this->elements_.begin();
        p != this->elements_.end();
@@ -2402,9 +2448,9 @@ Output_section_definition::set_section_addresses(Symbol_table* symtab,
   uint64_t old_load_address = *load_address;
 
   // If input section sorting is requested via --section-ordering-file or
-  // linker plugins, then do it here.  This is important because we want 
+  // linker plugins, then do it here.  This is important because we want
   // any sorting specified in the linker scripts, which will be done after
-  // this, to take precedence.  The final order of input sections is then 
+  // this, to take precedence.  The final order of input sections is then
   // guaranteed to be according to the linker script specification.
   if (this->output_section_ != NULL
       && this->output_section_->input_section_order_specified())
@@ -2463,6 +2509,35 @@ Output_section_definition::set_section_addresses(Symbol_table* symtab,
 	this->output_section_->set_addralign(align);
     }
 
+  uint64_t subalign;
+  if (this->subalign_ == NULL)
+    subalign = 0;
+  else
+    {
+      Output_section* subalign_section;
+      subalign = this->subalign_->eval_with_dot(symtab, layout, true,
+						*dot_value, NULL,
+						&subalign_section, NULL,
+						false);
+      if (subalign_section != NULL)
+	gold_warning(_("subalign of section %s is not absolute"),
+		     this->name_.c_str());
+
+      // Reserve a value of 0 to mean there is no SUBALIGN property.
+      if (subalign == 0)
+	subalign = 1;
+
+      // The external alignment of the output section must be at least
+      // as large as that of the input sections.  If there is no
+      // explicit ALIGN property, we set the output section alignment
+      // to match the input section alignment.
+      if (align < subalign || this->align_ == NULL)
+	{
+	  align = subalign;
+	  this->output_section_->set_addralign(align);
+	}
+    }
+
   address = align_address(address, align);
 
   uint64_t start_address = address;
@@ -2495,7 +2570,7 @@ Output_section_definition::set_section_addresses(Symbol_table* symtab,
 	    // The LMA address was explicitly set to the given region.
 	    laddr = lma_region->get_current_address()->eval(symtab, layout,
 							    false);
-	  else 
+	  else
 	    {
 	      // We are not going to use the discovered lma_region, so
 	      // make sure that we do not update it in the code below.
@@ -2546,21 +2621,6 @@ Output_section_definition::set_section_addresses(Symbol_table* symtab,
     }
 
   this->evaluated_load_address_ = laddr;
-
-  uint64_t subalign;
-  if (this->subalign_ == NULL)
-    subalign = 0;
-  else
-    {
-      Output_section* subalign_section;
-      subalign = this->subalign_->eval_with_dot(symtab, layout, true,
-						*dot_value, NULL,
-						&subalign_section, NULL,
-						false);
-      if (subalign_section != NULL)
-	gold_warning(_("subalign of section %s is not absolute"),
-		     this->name_.c_str());
-    }
 
   std::string fill;
   if (this->fill_ != NULL)
@@ -2987,9 +3047,9 @@ Orphan_output_section::set_section_addresses(Symbol_table*, Layout*,
   address = align_address(address, this->os_->addralign());
 
   // If input section sorting is requested via --section-ordering-file or
-  // linker plugins, then do it here.  This is important because we want 
+  // linker plugins, then do it here.  This is important because we want
   // any sorting specified in the linker scripts, which will be done after
-  // this, to take precedence.  The final order of input sections is then 
+  // this, to take precedence.  The final order of input sections is then
   // guaranteed to be according to the linker script specification.
   if (this->os_ != NULL
       && this->os_->input_section_order_specified())
@@ -3023,7 +3083,7 @@ Orphan_output_section::set_section_addresses(Symbol_table*, Layout*,
     {
       uint64_t addralign = p->addralign();
       if (!p->is_input_section())
-	p->output_section_data()->finalize_data_size();	
+	p->output_section_data()->finalize_data_size();
       uint64_t size = p->data_size();
       address = align_address(address, addralign);
       this->os_->add_script_input_section(*p);
@@ -3509,7 +3569,8 @@ Script_sections::output_section_name(
     const char* section_name,
     Output_section*** output_section_slot,
     Script_sections::Section_type* psection_type,
-    bool* keep)
+    bool* keep,
+    bool is_input_section)
 {
   for (Sections_elements::const_iterator p = this->sections_elements_->begin();
        p != this->sections_elements_->end();
@@ -3517,7 +3578,8 @@ Script_sections::output_section_name(
     {
       const char* ret = (*p)->output_section_name(file_name, section_name,
 						  output_section_slot,
-						  psection_type, keep);
+						  psection_type, keep,
+						  is_input_section);
 
       if (ret != NULL)
 	{
@@ -3533,12 +3595,37 @@ Script_sections::output_section_name(
 	}
     }
 
-  // If we couldn't find a mapping for the name, the output section
-  // gets the name of the input section.
-
+  // We have an orphan section.
   *output_section_slot = NULL;
   *psection_type = Script_sections::ST_NONE;
+  *keep = false;
 
+  General_options::Orphan_handling orphan_handling =
+      parameters->options().orphan_handling_enum();
+  if (orphan_handling == General_options::ORPHAN_DISCARD)
+    return NULL;
+  if (orphan_handling == General_options::ORPHAN_ERROR)
+    {
+      if (file_name == NULL)
+	gold_error(_("unplaced orphan section '%s'"), section_name);
+      else
+	gold_error(_("unplaced orphan section '%s' from '%s'"),
+		   section_name, file_name);
+      return NULL;
+    }
+  if (orphan_handling == General_options::ORPHAN_WARN)
+    {
+      if (file_name == NULL)
+	gold_warning(_("orphan section '%s' is being placed in section '%s'"),
+		     section_name, section_name);
+      else
+	gold_warning(_("orphan section '%s' from '%s' is being placed "
+		       "in section '%s'"),
+		     section_name, file_name, section_name);
+    }
+
+  // If we couldn't find a mapping for the name, the output section
+  // gets the name of the input section.
   return section_name;
 }
 
@@ -3591,6 +3678,9 @@ Script_sections::place_orphan(Output_section* os)
       Sections_elements::iterator last = osp->last_place();
       *where = this->sections_elements_->insert(last, orphan);
     }
+
+  if ((os->flags() & elfcpp::SHF_ALLOC) != 0)
+    osp->update_last_alloc(*where);
 }
 
 // Set the addresses of all the output sections.  Walk through all the
@@ -3605,7 +3695,7 @@ Output_segment*
 Script_sections::set_section_addresses(Symbol_table* symtab, Layout* layout)
 {
   gold_assert(this->saw_sections_clause_);
-	 
+
   // Implement ONLY_IF_RO/ONLY_IF_RW constraints.  These are a pain
   // for our representation.
   for (Sections_elements::iterator p = this->sections_elements_->begin();
@@ -3674,7 +3764,7 @@ Script_sections::set_section_addresses(Symbol_table* symtab, Layout* layout)
       Output_section* os = (*p)->get_output_section();
 
       // Handle -Ttext, -Tdata and -Tbss options.  We do this by looking for
-      // the special sections by names and doing dot assignments. 
+      // the special sections by names and doing dot assignments.
       if (use_tsection_options
 	  && os != NULL
 	  && (os->flags() & elfcpp::SHF_ALLOC) != 0)
@@ -3703,7 +3793,7 @@ Script_sections::set_section_addresses(Symbol_table* symtab, Layout* layout)
 
       (*p)->set_section_addresses(symtab, layout, &dot_value, &dot_alignment,
 				  &load_address);
-    } 
+    }
 
   if (this->phdrs_elements_ != NULL)
     {
@@ -3890,7 +3980,7 @@ Script_sections::create_segments(Layout* layout, uint64_t dot_alignment)
   layout->get_allocated_sections(&sections);
 
   // Sort the sections by address.
-  std::stable_sort(sections.begin(), sections.end(), 
+  std::stable_sort(sections.begin(), sections.end(),
 		   Sort_output_sections(this->sections_elements_));
 
   this->create_note_and_tls_segments(layout, &sections);
@@ -3900,10 +3990,10 @@ Script_sections::create_segments(Layout* layout, uint64_t dot_alignment)
   Output_segment* first_seg = NULL;
   Output_segment* current_seg = NULL;
   bool is_current_seg_readonly = true;
-  Layout::Section_list::iterator plast = sections.end();
   uint64_t last_vma = 0;
   uint64_t last_lma = 0;
   uint64_t last_size = 0;
+  bool in_bss = false;
   for (Layout::Section_list::iterator p = sections.begin();
        p != sections.end();
        ++p)
@@ -3930,7 +4020,7 @@ Script_sections::create_segments(Layout* layout, uint64_t dot_alignment)
 	  // skipping a page.
 	  need_new_segment = true;
 	}
-      else if (is_bss_section(*plast) && !is_bss_section(*p))
+      else if (in_bss && !is_bss_section(*p))
 	{
 	  // A non-BSS section can not follow a BSS section in the
 	  // same segment.
@@ -3962,6 +4052,7 @@ Script_sections::create_segments(Layout* layout, uint64_t dot_alignment)
 	  if (first_seg == NULL)
 	    first_seg = current_seg;
 	  is_current_seg_readonly = true;
+	  in_bss = false;
 	}
 
       current_seg->add_output_section_to_load(layout, *p, seg_flags);
@@ -3969,7 +4060,9 @@ Script_sections::create_segments(Layout* layout, uint64_t dot_alignment)
       if (((*p)->flags() & elfcpp::SHF_WRITE) != 0)
 	is_current_seg_readonly = false;
 
-      plast = p;
+      if (is_bss_section(*p) && size > 0)
+        in_bss = true;
+
       last_vma = vma;
       last_lma = lma;
       last_size = size;
@@ -4217,7 +4310,7 @@ Script_sections::attach_sections_using_phdrs_clause(Layout* layout)
   // Output sections in the script which do not list segments are
   // attached to the same set of segments as the immediately preceding
   // output section.
-  
+
   String_list* phdr_names = NULL;
   bool load_segments_only = false;
   for (Sections_elements::const_iterator p = this->sections_elements_->begin();
@@ -4262,7 +4355,7 @@ Script_sections::attach_sections_using_phdrs_clause(Layout* layout)
       // filtering.
       if (old_phdr_names != phdr_names)
 	load_segments_only = false;
-		
+
       // If this is an orphan section--one that was not explicitly
       // mentioned in the linker script--then it should not inherit
       // any segment type other than PT_LOAD.  Otherwise, e.g., the
@@ -4459,6 +4552,7 @@ Script_sections::release_segments()
 	   ++p)
 	(*p)->release_segment();
     }
+  this->segments_created_ = false;
 }
 
 // Print the SECTIONS clause to F for debugging.

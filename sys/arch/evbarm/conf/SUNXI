@@ -1,5 +1,5 @@
 #
-#	$NetBSD: SUNXI,v 1.59.2.2 2018/04/07 04:12:12 pgoyette Exp $
+#	$NetBSD: SUNXI,v 1.59.2.3 2018/04/16 01:59:54 pgoyette Exp $
 #
 #	Allwinner sunxi family
 #
@@ -284,13 +284,14 @@ wd*		at atabus? drive ?
 genfb*		at fdt?
 wsdisplay*	at genfb?
 
-#sunxidebe*	at fdt? pass 4	# Display Backend
-#genfb*		at sunxidebe?
-#sunxitcon*	at fdt? pass 4	# LCD LVDS/RGB controller
-#sunxihdmi*	at fdt? pass 4	# HDMI controller
-#connector*	at fdt? pass 4
-#panel*		at fdt? pass 4
-#sunxidep*	at fdt?		# Display Engine Pipeline
+sunxidebe*	at fdt? pass 4	# Display Backend
+genfb*		at sunxidebe?
+sunxitcon*	at fdt? pass 4	# LCD LVDS/RGB controller
+sunxihdmi*	at fdt? pass 4	# HDMI controller
+connector*	at fdt? pass 4
+panel*		at fdt? pass 4
+#sunxidep must be after display pipeline elements but before genfb@fdt
+sunxidep*	at fdt? pass 5	# Display Engine Pipeline
 options 	VCONS_DRAW_INTR
 options 	WSEMUL_VT100
 options 	WS_DEFAULT_FG=WSCOL_WHITE

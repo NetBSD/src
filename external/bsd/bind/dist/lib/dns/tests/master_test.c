@@ -1,7 +1,7 @@
-/*	$NetBSD: master_test.c,v 1.7 2015/12/17 04:00:44 christos Exp $	*/
+/*	$NetBSD: master_test.c,v 1.7.14.1 2018/04/16 01:57:57 pgoyette Exp $	*/
 
 /*
- * Copyright (C) 2011-2013, 2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2011-2013, 2015, 2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -28,6 +28,7 @@
 #include <unistd.h>
 
 #include <isc/print.h>
+#include <isc/string.h>
 #include <isc/xml.h>
 
 #include <dns/cache.h>
@@ -95,7 +96,7 @@ setup_master(void (*warn)(struct dns_rdatacallbacks *, const char *, ...),
 	isc_buffer_t		source;
 	isc_buffer_t		target;
 
-	strcpy(origin, TEST_ORIGIN);
+	strlcpy(origin, TEST_ORIGIN, sizeof(origin));
 	len = strlen(origin);
 	isc_buffer_init(&source, origin, len);
 	isc_buffer_add(&source, len);
@@ -565,7 +566,7 @@ ATF_TC_BODY(dumpraw, tc) {
 
 	UNUSED(tc);
 
-	strcpy(myorigin, TEST_ORIGIN);
+	strlcpy(myorigin, TEST_ORIGIN, sizeof(myorigin));
 	len = strlen(myorigin);
 	isc_buffer_init(&source, myorigin, len);
 	isc_buffer_add(&source, len);

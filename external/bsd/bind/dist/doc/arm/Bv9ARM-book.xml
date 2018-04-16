@@ -1,5 +1,5 @@
 <!--
- - Copyright (C) 2004-2016  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2004-2018  Internet Systems Consortium, Inc. ("ISC")
  - Copyright (C) 2000-2003  Internet Software Consortium.
  -
  - Permission to use, copy, modify, and/or distribute this software for any
@@ -34,6 +34,8 @@
       <year>2014</year>
       <year>2015</year>
       <year>2016</year>
+      <year>2017</year>
+      <year>2018</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
     <copyright>
@@ -253,11 +255,8 @@
 	  <emphasis>resolver</emphasis> library, which sends queries to one or
 	  more <emphasis>name servers</emphasis> and interprets the responses.
 	  The <acronym>BIND</acronym> 9 software distribution
-	  contains a
-	  name server, <command>named</command>, and a resolver
-	  library, <command>liblwres</command>.  The older
-	  <command>libbind</command> resolver library is also available
-	  from ISC as a separate download.
+	  contains a name server, <command>named</command>, and a
+	  resolver library, <command>liblwres</command>.
 	</para>
 
 	</section>
@@ -411,14 +410,31 @@
 	  <para>
 	    The other authoritative servers, the <emphasis>slave</emphasis>
 	    servers (also known as <emphasis>secondary</emphasis> servers)
-	    load
-	    the zone contents from another server using a replication process
-	    known as a <emphasis>zone transfer</emphasis>.  Typically the data
-	    are
-	    transferred directly from the primary master, but it is also
-	    possible
-	    to transfer it from another slave.  In other words, a slave server
-	    may itself act as a master to a subordinate slave server.
+	    load the zone contents from another server using a replication
+	    process known as a <emphasis>zone transfer</emphasis>.
+	    Typically the data are transferred directly from the primary
+	    master, but it is also possible to transfer it from another
+	    slave.  In other words, a slave server may itself act as a
+	    master to a subordinate slave server.
+	  </para>
+	  <para>
+	    Periodically, the slave server must send a refresh query to
+	    determine whether the zone contents have been updated. This
+	    is done by sending a query for the zone's SOA record and
+	    checking whether the SERIAL field has been updated; if so,
+	    a new transfer request is initiated. The timing of these
+	    refresh queries is controlled by the SOA REFRESH and RETRY
+	    fields, but can be overrridden with the
+	    <command>max-refresh-time</command>,
+	    <command>min-refresh-time</command>,
+	    <command>max-retry-time</command>, and
+	    <command>min-retry-time</command> options.
+	  </para>
+	  <para>
+	    If the zone data cannot be updated within the time specified
+	    by the SOA EXPIRE option (up to a hard-coded maximum of
+	    24 weeks) then the slave zone expires and will no longer
+	    respond to queries.
 	  </para>
 	</section>
 
@@ -906,7 +922,7 @@ zone "eng.example.com" {
 	      <term xml:id="dig"><command>dig</command></term>
 	      <listitem>
 		<para>
-		  The domain information groper (<command>dig</command>)
+		  <command>dig</command>
 		  is the most versatile and complete of these lookup tools.
 		  It has two modes: simple interactive
 		  mode for a single query, and batch mode which executes a
@@ -1190,7 +1206,7 @@ zone "eng.example.com" {
 		  "<userinput>hmac-sha256</userinput>",
 		  "<userinput>hmac-sha384</userinput>"
 		  and "<userinput>hmac-sha512</userinput>"
-		  have any meaning.  The secret is a base-64 encoded string
+		  have any meaning.  The secret is a Base64 encoded string
 		  as specified in RFC 3548.
 		</para>
 
@@ -2359,8 +2375,6 @@ options {
 	  <para>
 	    The logged error reads "insecurity proof failed" and
 	    "got insecure response; parent indicates it should be secure".
-	    (Prior to BIND 9.7, the logged error was "not insecure".
-	    This referred to the zone, not the response.)
 	  </para>
 	</note>
       </section>
@@ -2800,8 +2814,25 @@ $ORIGIN 0.0.0.0.0.0.0.0.8.b.d.0.1.0.0.2.ip6.arpa.
 		<para>
 		  A non-negative 32-bit integer
 		  (i.e., a number between 0 and 4294967295, inclusive).
-		  Its acceptable value might further
-		  be limited by the context in which it is used.
+		  Its acceptable value might be further
+		  limited by the context in which it is used.
+		</para>
+	      </entry>
+	    </row>
+	    <row rowsep="0">
+	      <entry colname="1">
+		<para>
+		  <varname>fixedpoint</varname>
+		</para>
+	      </entry>
+	      <entry colname="2">
+		<para>
+		  A non-negative real number that can be specified to
+		  the nearest one hundredth.  Up to five digits can be
+		  specified before a decimal point, and up to two
+		  digits after, so the maximum value is 99999.99.
+		  Acceptable values might be further limited by the
+		  context in which it is used.
 		</para>
 	      </entry>
 	    </row>
@@ -3656,7 +3687,7 @@ geoip org "Internet Systems Consortium";
 	  number of required bits preceded by a dash, e.g.
 	  <literal>hmac-sha1-80</literal>.  The
 	  <replaceable>secret_string</replaceable> is the secret
-	  to be used by the algorithm, and is treated as a base-64
+	  to be used by the algorithm, and is treated as a Base64
 	  encoded string.
 	</para>
 
@@ -3666,8 +3697,8 @@ geoip org "Internet Systems Consortium";
 <programlisting><command>logging {</command>
   [ <command>channel</command> <replaceable>channel_name</replaceable> <command>{</command>
     ( ( <command>file</command> <replaceable>path_name</replaceable>
-          [ <command>versions</command> ( <replaceable>number</replaceable> | <option>unlimited</option> ) ]
-          [ <command>size</command> <replaceable>size_spec</replaceable> ] )
+	  [ <command>versions</command> ( <replaceable>number</replaceable> | <option>unlimited</option> ) ]
+	  [ <command>size</command> <replaceable>size_spec</replaceable> ] )
       | <command>syslog</command> <replaceable>syslog_facility</replaceable>
       | <command>stderr</command>
       | <command>null</command> ) <command>;</command>
@@ -4404,6 +4435,7 @@ badresp:1,adberr:0,findfail:0,valfail:0]
   [ <command>maintain-ixfr-base</command> <replaceable>yes_or_no</replaceable> ; ]
   [ <command>ixfr-from-differences</command> ( <replaceable>yes_or_no</replaceable> | <option>master</option> | <option>slave</option> ) ; ]
   [ <command>auto-dnssec</command> ( <option>allow</option> | <option>maintain</option> | <option>off</option> ) ; ]
+  [ <command>inline-signing</command> <replaceable>yes_or_no</replaceable> ; ]
   [ <command>dnssec-enable</command> <replaceable>yes_or_no</replaceable> ; ]
   [ <command>dnssec-validation</command> ( <replaceable>yes_or_no</replaceable> | <option>auto</option> ) ; ]
   [ <command>dnssec-lookaside</command> ( <option>auto</option> | <option>no</option> | <replaceable>domain</replaceable> trust-anchor <replaceable>domain</replaceable> ) ; ]
@@ -4412,14 +4444,14 @@ badresp:1,adberr:0,findfail:0,valfail:0]
   [ <command>forward</command> ( <option>only</option> | <option>first</option> ) ; ]
   [ <command>forwarders {</command>
       ( <replaceable>ip_addr</replaceable> [ <command>port</command> <replaceable>ip_port</replaceable> ] [ <command>dscp</command> <replaceable>ip_dscp</replaceable> ] ; )
-        ...
+	...
     <command>}</command> ; ]
   [ <command>dual-stack-servers</command> [ <command>port</command> <replaceable>ip_port</replaceable> ] [ <command>dscp</command> <replaceable>ip_dscp</replaceable> ] <command>{</command>
       ( ( <replaceable>domain_name</replaceable> | <replaceable>ip_addr</replaceable> ) [ <command>port</command> <replaceable>ip_port</replaceable> ] [ <command>dscp</command> <replaceable>ip_dscp</replaceable> ] ; )
-        ...
+	...
     <command>}</command> ; ]
   [ <command>check-names</command> ( <option>master</option> | <option>slave</option> | <option>response</option> )
-	        ( <option>warn</option> | <option>fail</option> | <option>ignore</option> ) ; ]
+		( <option>warn</option> | <option>fail</option> | <option>ignore</option> ) ; ]
   [ <command>check-dup-records</command> ( <option>warn</option> | <option>fail</option> | <option>ignore</option> ) ; ]
   [ <command>check-mx</command> ( <option>warn</option> | <option>fail</option> | <option>ignore</option> ) ; ]
   [ <command>check-wildcard</command> <replaceable>yes_or_no</replaceable> ; ]
@@ -4499,7 +4531,7 @@ badresp:1,adberr:0,findfail:0,valfail:0]
   [ <command>notify-to-soa</command> <replaceable>yes_or_no</replaceable> ; ]
   [ <command>also-notify</command> [ <command>port</command> <replaceable>ip_port</replaceable>] [ <command>dscp</command> <replaceable>ip_dscp</replaceable>] <command>{</command>
       ( <replaceable>masters</replaceable> | <replaceable>ip_addr</replaceable> [ <command>port</command> <replaceable>ip_port</replaceable> ] ) [ <command>key</command> <replaceable>key_name</replaceable> ] ;
-        ...
+	...
     <command>}</command> ; ]
   [ <command>max-ixfr-log-size</command> <replaceable>number</replaceable> ; ]
   [ <command>max-journal-size</command> <replaceable>size_spec</replaceable> ; ]
@@ -4596,18 +4628,19 @@ badresp:1,adberr:0,findfail:0,valfail:0]
       [ <command>min-table-size</command> <replaceable>number</replaceable> ; ]
     <command>}</command> ; ]
   [ <command>response-policy {</command>
-        <command>zone</command> <replaceable>zone_name</replaceable>
+	<command>zone</command> <replaceable>zone_name</replaceable>
       [ <command>policy</command> ( given | disabled | passthru | drop |
-                 tcp-only | nxdomain | nodata | cname <replaceable>domain</replaceable> ) ]
+		 tcp-only | nxdomain | nodata | cname <replaceable>domain</replaceable> ) ]
       [ <command>recursive-only</command> <replaceable>yes_or_no</replaceable> ]
       [ <command>max-policy-ttl</command> <replaceable>number</replaceable> ] ;
-         ...
+	 ...
     <command>}</command>
       [ <command>recursive-only</command> <replaceable>yes_or_no</replaceable> ]
       [ <command>max-policy-ttl</command> <replaceable>number</replaceable> ]
       [ <command>break-dnssec</command> <replaceable>yes_or_no</replaceable> ]
       [ <command>min-ns-dots</command> <replaceable>number</replaceable> ]
       [ <command>qname-wait-recurse</command> <replaceable>yes_or_no</replaceable> ] ; ]
+  [ <command>trust-anchor-telemetry</command> <replaceable>yes_or_no</replaceable> ; ]
 <command>}</command> ; ]
 </programlisting>
 
@@ -4729,17 +4762,17 @@ badresp:1,adberr:0,findfail:0,valfail:0]
 	    <listitem>
 	      <para>
 		The working directory of the server.
-		Any non-absolute pathnames in the configuration file will be
-		taken
-		as relative to this directory. The default location for most
-		server
-		output files (e.g. <filename>named.run</filename>)
-		is this directory.
+		Any non-absolute pathnames in the configuration file will
+		be taken as relative to this directory. The default
+		location for most server output files
+		(e.g. <filename>named.run</filename>) is this directory.
 		If a directory is not specified, the working directory
 		defaults to `<filename>.</filename>', the directory from
-		which the server
-		was started. The directory specified should be an absolute
-		path.
+		which the server was started. The directory specified
+		should be an absolute path. It is
+		<emphasis>strongly recommended</emphasis>
+		that the directory be writable by the effective user
+		ID of the <command>named</command> process.
 	      </para>
 	    </listitem>
 	  </varlistentry>
@@ -4781,7 +4814,9 @@ badresp:1,adberr:0,findfail:0,valfail:0]
 	      <para>
 		Specifies the directory in which to store the files that
 		track managed DNSSEC keys.  By default, this is the working
-		directory.
+		directory.  The directory <emphasis>must</emphasis>
+		be writable by the effective user ID of the
+		<command>named</command> process.
 	      </para>
 	      <para>
 		If <command>named</command> is not configured to use views,
@@ -4963,9 +4998,8 @@ badresp:1,adberr:0,findfail:0,valfail:0]
 	      <para>
 		The pathname of a file to override the built-in trusted
 		keys provided by <command>named</command>.
-		See the discussion of <command>dnssec-lookaside</command>
-		and <command>dnssec-validation</command> for details.
-		If not specified, the default is
+		See the discussion of <command>dnssec-validation</command>
+		for details.  If not specified, the default is
 		<filename>/etc/bind.keys</filename>.
 	      </para>
 	    </listitem>
@@ -5193,38 +5227,16 @@ options {
 	      </para>
 	      <para>
 		If <command>dnssec-lookaside</command> is set to
-		<userinput>auto</userinput>, then built-in default
-		values for the DLV domain and trust anchor will be
-		used, along with a built-in key for validation.
-	      </para>
-	      <para>
-		If <command>dnssec-lookaside</command> is set to
 		<userinput>no</userinput>, then dnssec-lookaside
 		is not used.
 	      </para>
 	      <para>
-		The default DLV key is stored in the file
-		<filename>bind.keys</filename>;
-		<command>named</command> will load that key at
-		startup if <command>dnssec-lookaside</command> is set to
-		<constant>auto</constant>.  A copy of the file is
-		installed along with <acronym>BIND</acronym> 9, and is
-		current as of the release date.  If the DLV key expires, a
-		new copy of <filename>bind.keys</filename> can be downloaded
-		from <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.isc.org/solutions/dlv/">https://www.isc.org/solutions/dlv/</link>.
-	      </para>
-	      <para>
-		(To prevent problems if <filename>bind.keys</filename> is
-		not found, the current key is also compiled in to
-		<command>named</command>.  Relying on this is not
-		recommended, however, as it requires <command>named</command>
-		to be recompiled with a new key when the DLV key expires.)
-	      </para>
-	      <para>
-		NOTE: <command>named</command> only loads certain specific
-		keys from <filename>bind.keys</filename>:  those for the
-		DLV zone and for the DNS root zone.  The file cannot be
-		used to store keys for other zones.
+		NOTE: The ISC-provided DLV service at
+		<literal>dlv.isc.org</literal>, has been shut down.
+		The <command>dnssec-lookaside auto;</command>
+		configuration option, which set <command>named</command>
+		up to use ISC DLV with minimal configuration, has
+		accordingly been removed.
 	      </para>
 	    </listitem>
 	  </varlistentry>
@@ -5241,7 +5253,7 @@ options {
 		be accepted.  The specified domain must be under a
 		<command>trusted-keys</command> or
 		<command>managed-keys</command> statement, or
-		<command>dnssec-lookaside</command> must be active.
+		<command>dnssec-validation auto</command> must be active.
 	      </para>
 	    </listitem>
 	  </varlistentry>
@@ -5838,7 +5850,7 @@ options {
 	      <term><command>host-statistics</command></term>
 	      <listitem>
 		<para>
-		  In BIND 8, this enables keeping of
+		  In BIND 8, this enabled keeping of
 		  statistics for every host that the name server interacts
 		  with.
 		  Not implemented in BIND 9.
@@ -6055,9 +6067,8 @@ options {
 		  Causes <command>named</command> to send specially-formed
 		  queries once per day to domains for which trust anchors
 		  have been configured via <command>trusted-keys</command>,
-		  <command>managed-keys</command>,
-		  <command>dnssec-validation auto</command>, or
-		  <command>dnssec-lookaside auto</command>.
+		  <command>managed-keys</command>, or
+		  <command>dnssec-validation auto</command>.
 		</para>
 		<para>
 		  The query name used for these queries has the
@@ -6374,7 +6385,7 @@ options {
 	    <varlistentry>
 	      <term><command>auto-dnssec</command></term>
 	      <listitem>
-	        <para>
+		<para>
 		  Zones configured for dynamic DNS may use this
 		  option to allow varying levels of automatic DNSSEC key
 		  management. There are three possible settings:
@@ -6436,16 +6447,44 @@ options {
 		  Note <command>dnssec-enable</command> also needs to be
 		  set to <userinput>yes</userinput> to be effective.
 		  If set to <userinput>no</userinput>, DNSSEC validation
-		  is disabled.  If set to <userinput>auto</userinput>,
-		  DNSSEC validation is enabled, and a default
-		  trust-anchor for the DNS root zone is used.  If set to
-		  <userinput>yes</userinput>, DNSSEC validation is enabled,
-		  but a trust anchor must be manually configured using
-		  a <command>trusted-keys</command> or
-		  <command>managed-keys</command> statement.  The default
+		  is disabled.
+		</para>
+	        <para>
+		  If set to <userinput>auto</userinput>, DNSSEC validation
+		  is enabled, and a default trust anchor for the DNS root
+		  zone is used.  If set to <userinput>yes</userinput>,
+		  DNSSEC validation is enabled, but a trust anchor must be
+		  manually configured using a <command>trusted-keys</command>
+		  or <command>managed-keys</command> statement.  The default
 		  is <userinput>yes</userinput>.
 		</para>
+		<para>
+		  The default root trust anchor is stored in the file
+		  <filename>bind.keys</filename>.
+		  <command>named</command> will load that key at
+		  startup if <command>dnssec-validation</command> is
+		  set to <constant>auto</constant>.  A copy of the file is
+		  installed along with BIND 9, and is current as of the
+		  release date.  If the root key expires, a new copy of
+		  <filename>bind.keys</filename> can be downloaded
+		  from <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.isc.org/bind-keys">https://www.isc.org/bind-keys</link>.
+		</para>
+		<para>
+		  To prevent problems if <filename>bind.keys</filename> is
+		  not found, the current trust anchor is also compiled in
+		  to <command>named</command>.  Relying on this is not
+		  recommended, however, as it requires <command>named</command>
+		  to be recompiled with a new key when the root key expires.)
+		</para>
 		<note>
+		  <para>
+		    <command>named</command> <emphasis>only</emphasis>
+		    loads the root key from <filename>bind.keys</filename>.
+		    The file cannot be used to store keys for other zones.
+		    The root key in <filename>bind.keys</filename> is ignored
+		    if <command>dnssec-validation auto</command> is not in
+		    use.
+		  </para>
 		  <para>
 		    Whenever the resolver sends out queries to an
 		    EDNS-compliant server, it always sets the DO bit
@@ -7064,7 +7103,8 @@ options {
 		<para>
 		  Specifies a list of addresses to which
 		  <command>filter-aaaa-on-v4</command>
-		  is applies.  The default is <userinput>any</userinput>.
+		  and <command>filter-aaaa-on-v6</command>
+		  apply.  The default is <userinput>any</userinput>.
 		</para>
 	      </listitem>
 	    </varlistentry>
@@ -7894,7 +7934,7 @@ avoid-v6-udp-ports { 40000; range 50000 60000; };
 		<para>
 		  The maximum number of records permitted in a zone.
 		  The default is zero which means unlimited.
-	 	</para>
+		</para>
 	      </listitem>
 	    </varlistentry>
 
@@ -7930,16 +7970,16 @@ avoid-v6-udp-ports { 40000; range 50000 60000; };
 		  will not be accepted, and for each incoming request
 		  a previous pending request will also be dropped.
 		</para>
-                <para>
-                  A "soft quota" is also set.  When this lower
+		<para>
+		  A "soft quota" is also set.  When this lower
 		  quota is exceeded, incoming requests are accepted, but
 		  for each one, a pending request will be dropped.
-                  If <option>recursive-clients</option> is greater than
-                  1000, the soft quota is set to
-                  <option>recursive-clients</option> minus 100;
-                  otherwise it is set to 90% of
-                  <option>recursive-clients</option>.
-                </para>
+		  If <option>recursive-clients</option> is greater than
+		  1000, the soft quota is set to
+		  <option>recursive-clients</option> minus 100;
+		  otherwise it is set to 90% of
+		  <option>recursive-clients</option>.
+		</para>
 	      </listitem>
 	    </varlistentry>
 
@@ -8052,13 +8092,13 @@ avoid-v6-udp-ports { 40000; range 50000 60000; };
 	      <listitem>
 		<para>
 		  The maximum number of simultaneous iterative
-                  queries that the server will allow to be sent to
-                  a single upstream name server before blocking
-                  additional queries.
+		  queries that the server will allow to be sent to
+		  a single upstream name server before blocking
+		  additional queries.
 		  This value should reflect how many fetches would
 		  normally be sent to any one server in the time it
 		  would take to resolve them.  It should be smaller
-                  than <option>recursive-clients</option>.
+		  than <option>recursive-clients</option>.
 		</para>
 		<para>
 		  Optionally, this value may be followed by the keyword
@@ -8271,123 +8311,72 @@ avoid-v6-udp-ports { 40000; range 50000 60000; };
 	      </listitem>
 	    </varlistentry>
 
+	    <varlistentry>
+	      <term><command>topology</command></term>
+	      <listitem>
+		<para>
+		  In BIND 8, this option indicated network topology
+		  so that preferential treatment could be given to
+		  the topologicaly closest name servers when sending
+		  queries. It is not implemented in BIND 9.
+		</para>
+	      </listitem>
+	    </varlistentry>
+
 	  </variablelist>
 
-	</section>
-
-	<section xml:id="topology"><info><title>Topology</title></info>
-
-	  <para>
-	    All other things being equal, when the server chooses a name
-	    server
-	    to query from a list of name servers, it prefers the one that is
-	    topologically closest to itself. The <command>topology</command> statement
-	    takes an <command>address_match_list</command> and
-	    interprets it
-	    in a special way. Each top-level list element is assigned a
-	    distance.
-	    Non-negated elements get a distance based on their position in the
-	    list, where the closer the match is to the start of the list, the
-	    shorter the distance is between it and the server. A negated match
-	    will be assigned the maximum distance from the server. If there
-	    is no match, the address will get a distance which is further than
-	    any non-negated list element, and closer than any negated element.
-	    For example,
-	  </para>
-
-<programlisting>topology {
-    10/8;
-    !1.2.3/24;
-    { 1.2/16; 3/8; };
-};</programlisting>
-
-	  <para>
-	    will prefer servers on network 10 the most, followed by hosts
-	    on network 1.2.0.0 (netmask 255.255.0.0) and network 3, with the
-	    exception of hosts on network 1.2.3 (netmask 255.255.255.0), which
-	    is preferred least of all.
-	  </para>
-	  <para>
-	    The default topology is
-	  </para>
-
-<programlisting>    topology { localhost; localnets; };
-</programlisting>
-
-	  <note>
-	    <simpara>
-	      The <command>topology</command> option
-	      is not implemented in <acronym>BIND</acronym> 9.
-	    </simpara>
-	  </note>
 	</section>
 
 	<section xml:id="the_sortlist_statement"><info><title>The <command>sortlist</command> Statement</title></info>
 
 	  <para>
 	    The response to a DNS query may consist of multiple resource
-	    records (RRs) forming a resource records set (RRset).
-	    The name server will normally return the
-	    RRs within the RRset in an indeterminate order
-	    (but see the <command>rrset-order</command>
-	    statement in <xref linkend="rrset_ordering"/>).
-	    The client resolver code should rearrange the RRs as appropriate,
-	    that is, using any addresses on the local net in preference to
-	    other addresses.
-	    However, not all resolvers can do this or are correctly
-	    configured.
-	    When a client is using a local server, the sorting can be performed
-	    in the server, based on the client's address. This only requires
-	    configuring the name servers, not all the clients.
+	    records (RRs) forming a resource record set (RRset).  The name
+	    server will normally return the RRs within the RRset in an
+	    indeterminate order (but see the <command>rrset-order</command>
+	    statement in <xref linkend="rrset_ordering"/>).  The client
+	    resolver code should rearrange the RRs as appropriate, that is,
+	    using any addresses on the local net in preference to other
+	    addresses.  However, not all resolvers can do this or are
+	    correctly configured.  When a client is using a local server,
+	    the sorting can be performed in the server, based on the
+	    client's address. This only requires configuring the name
+	    servers, not all the clients.
 	  </para>
 
 	  <para>
-	    The <command>sortlist</command> statement (see below)
-	    takes
-	    an <command>address_match_list</command> and
-	    interprets it even
-	    more specifically than the <command>topology</command>
-	    statement
-	    does (<xref linkend="topology"/>).
-	    Each top level statement in the <command>sortlist</command> must
-	    itself be an explicit <command>address_match_list</command> with
-	    one or two elements. The first element (which may be an IP
-	    address,
-	    an IP prefix, an ACL name or a nested <command>address_match_list</command>)
-	    of each top level list is checked against the source address of
+	    The <command>sortlist</command> statement (see below) takes an
+	    <command>address_match_list</command> and interprets it in a
+	    special way.  Each top level statement in the
+	    <command>sortlist</command> must itself be an explicit
+	    <command>address_match_list</command> with one or two elements.
+	    The first element (which may be an IP address, an IP prefix, an
+	    ACL name or a nested <command>address_match_list</command>) of
+	    each top level list is checked against the source address of
 	    the query until a match is found.
 	  </para>
 	  <para>
-	    Once the source address of the query has been matched, if
-	    the top level statement contains only one element, the actual
-	    primitive
-	    element that matched the source address is used to select the
-	    address
-	    in the response to move to the beginning of the response. If the
-	    statement is a list of two elements, then the second element is
-	    treated the same as the <command>address_match_list</command> in
-	    a <command>topology</command> statement. Each top
-	    level element
-	    is assigned a distance and the address in the response with the
-	    minimum
-	    distance is moved to the beginning of the response.
+	    Once the source address of the query has been matched, if the
+	    top level statement contains only one element, the actual
+	    primitive element that matched the source address is used to
+	    select the address in the response to move to the beginning of
+	    the response. If the statement is a list of two elements, then
+	    the second element is interpreted as a topology preference
+	    list.  Each top level element is assigned a distance and the
+	    address in the response with the minimum distance is moved to
+	    the beginning of the response.
 	  </para>
 	  <para>
-	    In the following example, any queries received from any of
-	    the addresses of the host itself will get responses preferring
-	    addresses
-	    on any of the locally connected networks. Next most preferred are
-	    addresses
-	    on the 192.168.1/24 network, and after that either the
-	    192.168.2/24
-	    or
-	    192.168.3/24 network with no preference shown between these two
-	    networks. Queries received from a host on the 192.168.1/24 network
-	    will prefer other addresses on that network to the 192.168.2/24
-	    and
-	    192.168.3/24 networks. Queries received from a host on the
-	    192.168.4/24
-	    or the 192.168.5/24 network will only prefer other addresses on
+	    In the following example, any queries received from any of the
+	    addresses of the host itself will get responses preferring
+	    addresses on any of the locally connected networks. Next most
+	    preferred are addresses on the 192.168.1/24 network, and after
+	    that either the 192.168.2/24 or 192.168.3/24 network with no
+	    preference shown between these two networks. Queries received
+	    from a host on the 192.168.1/24 network will prefer other
+	    addresses on that network to the 192.168.2/24 and 192.168.3/24
+	    networks. Queries received from a host on the 192.168.4/24 or
+	    the 192.168.5/24 network will only prefer other addresses on
 	    their directly connected networks.
 	  </para>
 
@@ -8417,15 +8406,13 @@ avoid-v6-udp-ports { 40000; range 50000 60000; };
 
 	  <para>
 	    The following example will give reasonable behavior for the
-	    local host and hosts on directly connected networks. It is similar
-	    to the behavior of the address sort in <acronym>BIND</acronym> 4.9.x. Responses sent
-	    to queries from the local host will favor any of the directly
-	    connected
+	    local host and hosts on directly connected networks. It is
+	    similar to the behavior of the address sort in
+	    <acronym>BIND</acronym> 4.9.x. Responses sent to queries from
+	    the local host will favor any of the directly connected
 	    networks. Responses sent to queries from any other hosts on a
-	    directly
-	    connected network will prefer addresses on that same network.
-	    Responses
-	    to other queries will not be sorted.
+	    directly connected network will prefer addresses on that same
+	    network.  Responses to other queries will not be sorted.
 	  </para>
 
 <programlisting>sortlist {
@@ -8715,22 +8702,18 @@ avoid-v6-udp-ports { 40000; range 50000 60000; };
 	      <listitem>
 		<para>
 		  These options control the server's behavior on refreshing a
-		  zone
-		  (querying for SOA changes) or retrying failed transfers.
-		  Usually the SOA values for the zone are used, but these
-		  values
-		  are set by the master, giving slave server administrators
-		  little
-		  control over their contents.
+		  zone (querying for SOA changes) or retrying failed
+		  transfers.  Usually the SOA values for the zone are used,
+		  up to a hard-coded maximum expiry of 24 weeks. However,
+		  these values are set by the master, giving slave server
+		  administrators little control over their contents.
 		</para>
 		<para>
 		  These options allow the administrator to set a minimum and
-		  maximum
-		  refresh and retry time either per-zone, per-view, or
-		  globally.
-		  These options are valid for slave and stub zones,
-		  and clamp the SOA refresh and retry times to the specified
-		  values.
+		  maximum refresh and retry time either per-zone,
+		  per-view, or globally.  These options are valid for
+		  slave and stub zones, and clamp the SOA refresh and
+		  retry times to the specified values.
 		</para>
 		<para>
 		  The following defaults apply.
@@ -10590,7 +10573,7 @@ example.com                 CNAME   rpz-tcp-only.
 	  <para>
 	    The <command>trusted-keys</command> statement can contain
 	    multiple key entries, each consisting of the key's
-	    domain name, flags, protocol, algorithm, and the Base-64
+	    domain name, flags, protocol, algorithm, and the Base64
 	    representation of the key data.
 	    Spaces, tabs, newlines and carriage returns are ignored
 	    in the key data, so the configuration may be split up into
@@ -10650,8 +10633,8 @@ example.com                 CNAME   rpz-tcp-only.
 	    A <command>managed-keys</command> statement contains a list of
 	    the keys to be managed, along with information about how the
 	    keys are to be initialized for the first time.  The only
-	    initialization method currently supported (as of
-	    <acronym>BIND</acronym> 9.7.0) is <literal>initial-key</literal>.
+	    initialization method currently supported is
+	    <literal>initial-key</literal>.
 	    This means the <command>managed-keys</command> statement must
 	    contain a copy of the initializing key.  (Future releases may
 	    allow keys to be initialized by other methods, eliminating this
@@ -10723,15 +10706,13 @@ example.com                 CNAME   rpz-tcp-only.
 	    If the <command>dnssec-validation</command> option is
 	    set to <userinput>auto</userinput>, <command>named</command>
 	    will automatically initialize a managed key for the
-	    root zone.  Similarly, if the <command>dnssec-lookaside</command>
-	    option is set to <userinput>auto</userinput>,
-	    <command>named</command> will automatically initialize
-	    a managed key for the zone <literal>dlv.isc.org</literal>.
-	    (Note: The ISC DLV service is expected to cease operation by
-	    the end of 2017.) In both cases, the key that is used to
-	    initialize the key maintenance process is built into
-	    <command>named</command>, and can be overridden from
-	    <command>bindkeys-file</command>.
+	    root zone.  The key that is used to initialize the key
+	    maintenance process is stored in <filename>bind.keys</filename>;
+	    the location of this file can be overridden with the
+	    <command>bindkeys-file</command> option. As a fallback
+	    in the event no <filename>bind.keys</filename> can be
+	    found, the initializing key is also compiled directly
+	    into <command>named</command>.
 	  </para>
 	</section>
 
@@ -10889,7 +10870,7 @@ view "external" {
   [ <command>update-policy</command> <option>local</option> | <command>{</command> <replaceable>update_policy_rule</replaceable> ; ...  <command>}</command> ; ]
   [ <command>also-notify</command> [ <command>port</command> <replaceable>ip_port</replaceable> ] [ <command>dscp</command> <replaceable>ip_dscp</replaceable> ] <command>{</command>
       ( <replaceable>masters_list</replaceable> | <replaceable>ip_addr</replaceable> [ <command>port</command> <replaceable>ip_port</replaceable> ] ) [ <command>key</command> <replaceable>key_name</replaceable> ] ;
-        ...
+	...
     <command>}</command> ; ]
   [ <command>check-names</command> ( <option>warn</option> | <option>fail</option> | <option>ignore</option> ) ; ]
   [ <command>check-mx</command> ( <option>warn</option> | <option>fail</option> | <option>ignore</option> ) ; ]
@@ -10951,7 +10932,7 @@ view "external" {
   [ <command>try-tcp-refresh</command> <replaceable>yes_or_no</replaceable> ; ]
   [ <command>also-notify</command> [ <command>port</command> <replaceable>ip_port</replaceable> ] [ <command>dscp</command> <replaceable>ip_dscp</replaceable> ] <command>{</command>
       ( <replaceable>masters_list</replaceable> | <replaceable>ip_addr</replaceable> [ <command>port</command> <replaceable>ip_port</replaceable> ] ) [ <command>key</command> <replaceable>key_name</replaceable> ] ;
-        ...
+	...
     <command>}</command> ; ]
   [ <command>check-names</command> ( <option>warn</option> | <option>fail</option> | <option>ignore</option> ) ; ]
   [ <command>dialup</command> <replaceable>dialup_option</replaceable> ; ]
@@ -10968,7 +10949,7 @@ view "external" {
   [ <command>maintain-ixfr-base</command> <replaceable>yes_or_no</replaceable> ; ]
   [ <command>masters</command> [ <command>port</command> <replaceable>ip_port</replaceable> ] [ <command>dscp</command> <replaceable>ip_dscp</replaceable> ] <command>{</command>
       ( <replaceable>masters_list</replaceable> | <replaceable>ip_addr</replaceable> [ <command>port</command> <replaceable>ip_port</replaceable> ] ) [ <command>key</command> <replaceable>key_name</replaceable> ] ;
-        ...
+	...
     <command>}</command> ; ]
   [ <command>max-ixfr-log-size</command> <replaceable>number</replaceable> ; ]
   [ <command>max-transfer-idle-in</command> <replaceable>number</replaceable> ; ]
@@ -11029,7 +11010,7 @@ view "external" {
   [ <command>forwarders</command> <command>{</command> [ <replaceable>ip_addr</replaceable> [ <command>port</command> <replaceable>ip_port</replaceable> ] [ <command>dscp</command> <replaceable>ip_dscp</replaceable> ] ; ... ] <command>}</command> ; ]
   [ <command>masters</command> [ <command>port</command> <replaceable>ip_port</replaceable> ] [ <command>dscp</command> <replaceable>ip_dscp</replaceable> ] <command>{</command>
       ( <replaceable>masters_list</replaceable> | <replaceable>ip_addr</replaceable> [ <command>port</command> <replaceable>ip_port</replaceable> ] ) [ <command>key</command> <replaceable>key_name</replaceable> ] ;
-        ...
+	...
     <command>}</command> ; ]
   [ <command>max-transfer-idle-in</command> <replaceable>number</replaceable> ; ]
   [ <command>max-transfer-time-in</command> <replaceable>number</replaceable> ; ]
@@ -11723,6 +11704,23 @@ view "external" {
 	      </varlistentry>
 
 	      <varlistentry>
+		<term><command>file</command></term>
+		<listitem>
+		  <para>
+		    Set the zone's filename. In <command>master</command>,
+		    <command>hint</command>, and <command>redirect</command>
+		    zones which do not have <command>masters</command>
+		    defined, zone data is loaded from this file. In
+		    <command>slave</command>, <command>stub</command>, and
+		    <command>redirect</command> zones which do have
+		    <command>masters</command> defined, zone data is
+		    retrieved from another server and saved in this file.
+		    This option is not applicable to other zone types.
+		  </para>
+		</listitem>
+	      </varlistentry>
+
+	      <varlistentry>
 		<term><command>forward</command></term>
 		<listitem>
 		  <para>
@@ -12236,38 +12234,52 @@ example.com. NS ns2.example.net.
 	      is present, it is a configuration error for the
 	      <command>allow-update</command> statement to be
 	      present.  The <command>update-policy</command> statement
-	      only examines the signer of a message; the source
+	      (except when set to <literal>local</literal>) only
+	      examines the signer of a message; the source
 	      address is not relevant.
 	    </para>
 	    <para>
-	      There is a pre-defined <command>update-policy</command>
-	      rule which can be switched on with the command
+	      A pre-defined <command>update-policy</command> rule can be
+	      switched on with the command
 	      <command>update-policy local;</command>.
 	      Switching on this rule in a zone causes
-	      <command>named</command> to generate a TSIG session
-	      key and place it in a file, and to allow that key
-	      to update the zone.  (By default, the file is
-	      <filename>/var/run/named/session.key</filename>, the key
-	      name is "local-ddns" and the key algorithm is HMAC-SHA256,
-	      but these values are configurable with the
+	      <command>named</command> to generate a TSIG session key and
+	      place it in a file. That key will then be allowed to update
+	      the zone, if the update request is sent from localhost.
+	      By default, the session key is stored in the file
+	      <filename>/var/run/named/session.key</filename>; the key name
+	      is "local-ddns" and the key algorithm is HMAC-SHA256.
+	      These values are configurable with the
 	      <command>session-keyfile</command>,
 	      <command>session-keyname</command> and
 	      <command>session-keyalg</command> options, respectively).
 	    </para>
 	    <para>
-	      A client running on the local system, and with appropriate
-	      permissions, may read that file and use the key to sign update
-	      requests.  The zone's update policy will be set to allow that
-	      key to change any record within the zone.  Assuming the
-	      key name is "local-ddns", this policy is equivalent to:
+	      A client on the local system, if it is run with appropriate
+	      permissions, may read the session key from the key file and
+	      use the key to sign update requests.  The zone's update
+	      policy will be set to allow that key to change any record
+	      within the zone.  Assuming the key name is "local-ddns",
+	      this policy is:
 	    </para>
 
 	    <programlisting>update-policy { grant local-ddns zonesub any; };
 	    </programlisting>
 
 	    <para>
-	      The command <command>nsupdate -l</command> sends update
-	      requests to localhost, and signs them using the session key.
+	      ...with an additional restriction that only clients
+	      connecting from the local system will be permitted to send
+	      updates.
+	    </para>
+	    <para>
+	      Note that only one session key is generated; all zones
+	      configured to use <command>update-policy local</command>
+	      will accept the same key.
+	    </para>
+	    <para>
+	      The command <command>nsupdate -l</command> implements this
+	      feature, sending requests to localhost and signing them using
+	      the key retrieved from the session key file.
 	    </para>
 
 	    <para>
@@ -12411,7 +12423,8 @@ example.com. NS ns2.example.net.
 			<replaceable>identity</replaceable> field.
 			The <replaceable>name</replaceable> field
 			is ignored, but should be the same as the
-			<replaceable>identity</replaceable> field.
+			<replaceable>identity</replaceable> field or
+			"."
 			The <varname>self</varname> nametype is
 			most useful when allowing using one key per
 			name to update, where the key has the same
@@ -12460,7 +12473,7 @@ example.com. NS ns2.example.net.
 			and converts it machine.realm allowing the machine
 			to update machine.realm.  The REALM to be matched
 			is specified in the <replaceable>identity</replaceable>
-			field.
+			field.  The name field should be set to "."
 		      </para>
 		    </entry>
 		  </row>
@@ -12492,7 +12505,7 @@ example.com. NS ns2.example.net.
 			and converts it machine.realm allowing the machine
 			to update machine.realm.  The REALM to be matched
 			is specified in the <replaceable>identity</replaceable>
-			field.
+			field. The name field should be set to "."
 		      </para>
 		    </entry>
 		  </row>
@@ -12508,7 +12521,8 @@ example.com. NS ns2.example.net.
 			converts it to machine.realm allowing the machine
 			to update subdomains of machine.realm.  The REALM
 			to be matched is specified in the
-			<replaceable>identity</replaceable> field.
+			<replaceable>identity</replaceable> field. The
+			name field should be set to "."
 		      </para>
 		    </entry>
 		  </row>
@@ -12522,7 +12536,8 @@ example.com. NS ns2.example.net.
 			Allow updates that have been sent via TCP and
 			for which the standard mapping from the initiating
 			IP address into the IN-ADDR.ARPA and IP6.ARPA
-			namespaces match the name to be updated.
+			namespaces match the name to be updated.  The
+			name field should be set to "."
 		      </para>
 		      <note>
 			It is theoretically possible to spoof these TCP
@@ -13010,6 +13025,19 @@ view external {
 		      <para>
 			Stores a public key associated with a signed
 			DNS zone.  Described in RFC 4034.
+		      </para>
+		    </entry>
+		  </row>
+		  <row rowsep="0">
+		    <entry colname="1">
+		      <para>
+			DOA
+		      </para>
+		    </entry>
+		    <entry colname="2">
+		      <para>
+			Implements the Digital Object Architecture over
+			DNS. Experimental.
 		      </para>
 		    </entry>
 		  </row>
@@ -14704,7 +14732,7 @@ HOST-127.EXAMPLE. MX 0 .
 	    and not part of the standard zone file format.
 	  </para>
 	  <para>
-	    BIND 8 does not support the optional TTL and CLASS fields.
+	    BIND 8 did not support the optional TTL and CLASS fields.
 	  </para>
 	</section>
 

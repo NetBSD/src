@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding="iso-8859-1"?>
 <!--
- - Copyright (C) 2015  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2015, 2018  Internet Systems Consortium, Inc. ("ISC")
  -
  - Permission to use, copy, modify, and/or distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
@@ -46,8 +46,8 @@
   <xsl:template match="abstract"/>
   <xsl:template match="sidebar"/>
 
-  <!-- Two section level in the Table of contents -->
-  <xsl:param name="toc.section.depth">2</xsl:param>
+  <!-- Three section levels deep in the Table of contents -->
+  <xsl:param name="toc.section.depth">3</xsl:param>
 
   <!-- Do not show the collaborators listed in bookinfo -->
   <xsl:param name="doc.collab.show" select="0"/>

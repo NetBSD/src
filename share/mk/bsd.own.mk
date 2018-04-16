@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1046.2.3 2018/04/07 04:12:10 pgoyette Exp $
+#	$NetBSD: bsd.own.mk,v 1.1046.2.4 2018/04/16 01:59:52 pgoyette Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -67,9 +67,6 @@ MKGCC?=		no
 .if \
     ${MACHINE_CPU} == "aarch64"
 HAVE_GCC?=	0
-.elif \
-    ${MACHINE_CPU} == "vax"
-HAVE_GCC?=	5
 .else
 HAVE_GCC?=	6
 .endif
@@ -167,8 +164,10 @@ EXTERNAL_GDB_SUBDIR=		/does/not/exist
 #
 HAVE_BINUTILS?=	227
 
-.if ${HAVE_BINUTILS} == 227
+.if ${HAVE_BINUTILS} == 230
 EXTERNAL_BINUTILS_SUBDIR=	binutils
+.elif ${HAVE_BINUTILS} == 227
+EXTERNAL_BINUTILS_SUBDIR=	binutils.old
 .else
 EXTERNAL_BINUTILS_SUBDIR=	/does/not/exist
 .endif

@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2017, Intel Corp.
+ * Copyright (C) 2000 - 2018, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -90,6 +90,8 @@
 
 ACPI_GLOBAL (char,                      Gbl_Buffer[AH_BUFFER_LENGTH]);
 ACPI_GLOBAL (char,                      Gbl_LineBuffer[AH_LINE_BUFFER_LENGTH]);
+extern const AH_PREDEFINED_NAME         AslPredefinedInfo[];
+extern const AH_DEVICE_ID               AslDeviceIds[];
 
 
 #define AH_DISPLAY_EXCEPTION(Status, Name) \

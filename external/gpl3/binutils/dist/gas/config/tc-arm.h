@@ -1,5 +1,5 @@
 /* This file is tc-arm.h
-   Copyright (C) 1994-2016 Free Software Foundation, Inc.
+   Copyright (C) 1994-2018 Free Software Foundation, Inc.
    Contributed by Richard Earnshaw (rwe@pegasus.esprit.ec.org)
 	Modified by David Taylor (dtaylor@armltd.co.uk)
 
@@ -118,8 +118,8 @@ extern bfd_boolean tc_start_label_without_colon (void);
 extern void arm_md_end (void);
 bfd_boolean arm_is_eabi (void);
 
-#define md_post_relax_hook		aeabi_set_public_attributes ()
-extern void aeabi_set_public_attributes (void);
+#define md_post_relax_hook		arm_md_post_relax ()
+extern void arm_md_post_relax (void);
 #endif
 
 /* NOTE: The fake label creation in stabs.c:s_stab_generic() has
@@ -200,17 +200,17 @@ void arm_copy_symbol_attributes (symbolS *, symbolS *);
    pcrel, but it is easier to be safe than sorry.  */
 
 #define TC_FORCE_RELOCATION_LOCAL(FIX)			\
-  (!(FIX)->fx_pcrel					\
+  (GENERIC_FORCE_RELOCATION_LOCAL (FIX)			\
    || (FIX)->fx_r_type == BFD_RELOC_ARM_GOT32		\
    || (FIX)->fx_r_type == BFD_RELOC_32			\
-   || ((FIX)->fx_addsy != NULL && S_IS_WEAK ((FIX)->fx_addsy))	\
-   || TC_FORCE_RELOCATION (FIX))
+   || ((FIX)->fx_addsy != NULL				\
+       && S_IS_WEAK ((FIX)->fx_addsy)))
 
 /* Force output of R_ARM_REL32 relocations against thumb function symbols.
    This is needed to ensure the low bit is handled correctly.  */
 #define TC_FORCE_RELOCATION_SUB_SAME(FIX, SEG)	\
-  (THUMB_IS_FUNC ((FIX)->fx_addsy)		\
-   || !SEG_NORMAL (SEG))
+  (GENERIC_FORCE_RELOCATION_SUB_SAME (FIX, SEG)	\
+   || THUMB_IS_FUNC ((FIX)->fx_addsy))
 
 #define TC_FORCE_RELOCATION_ABS(FIX)			\
   (((FIX)->fx_pcrel					\

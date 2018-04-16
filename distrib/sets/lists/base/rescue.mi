@@ -1,4 +1,4 @@
-# $NetBSD: rescue.mi,v 1.40 2017/05/21 15:28:37 riastradh Exp $
+# $NetBSD: rescue.mi,v 1.40.8.1 2018/04/16 01:57:32 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -111,6 +111,7 @@
 ./rescue/ping					base-rescue-root
 ./rescue/ping6					base-rescue-root	use_inet6
 ./rescue/pppoectl				base-rescue-root
+./rescue/progress				base-rescue-root
 ./rescue/ps					base-rescue-root
 ./rescue/pwd					base-rescue-root
 ./rescue/raidctl				base-rescue-root

@@ -1,4 +1,4 @@
-/* $NetBSD: bus_space.c,v 1.1.28.1 2018/04/07 04:12:10 pgoyette Exp $ */
+/* $NetBSD: bus_space.c,v 1.1.28.2 2018/04/16 01:59:52 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: bus_space.c,v 1.1.28.1 2018/04/07 04:12:10 pgoyette Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bus_space.c,v 1.1.28.2 2018/04/16 01:59:52 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -615,8 +615,12 @@ generic_bs_mmap(void *t, bus_addr_t bpa, off_t offset, int prot, int flags)
 {
 	paddr_t bus_flags = 0;
 
-	if ((flags & (BUS_SPACE_MAP_CACHEABLE|BUS_SPACE_MAP_PREFETCHABLE)) != 0)
-		bus_flags |= AARCH64_MMAP_WRITEBACK;
+	if ((flags & BUS_SPACE_MAP_CACHEABLE) != 0)
+		bus_flags |= (AARCH64_MMAP_WRITEBACK << AARCH64_MMAP_FLAG_SHIFT);
+	else if ((flags & BUS_SPACE_MAP_PREFETCHABLE) != 0)
+		bus_flags |= (AARCH64_MMAP_WRITECOMBINE << AARCH64_MMAP_FLAG_SHIFT);
+	else
+		bus_flags |= (AARCH64_MMAP_DEVICE << AARCH64_MMAP_FLAG_SHIFT);
 
 	return (atop(bpa + (offset << ((struct bus_space *)t)->bs_stride)) |
 	    bus_flags);

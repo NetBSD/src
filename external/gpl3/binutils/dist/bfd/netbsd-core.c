@@ -1,5 +1,5 @@
 /* BFD back end for NetBSD style core files
-   Copyright (C) 1988-2016 Free Software Foundation, Inc.
+   Copyright (C) 1988-2018 Free Software Foundation, Inc.
    Written by Paul Kranenburg, EUR
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -22,7 +22,7 @@
 #include "sysdep.h"
 #include "bfd.h"
 #include "libbfd.h"
-#include "libaout.h"           /* BFD a.out internal data structures.  */
+#include "libaout.h"	       /* BFD a.out internal data structures.  */
 
 #include <sys/param.h>
 #include <sys/dir.h>
@@ -314,5 +314,5 @@ const bfd_target core_netbsd_vec =
 
     NULL,
 
-    NULL			        /* Backend_data.  */
+    NULL				/* Backend_data.  */
   };

@@ -1,5 +1,5 @@
 /* ft32 ELF support for BFD.
-   Copyright (C) 2009-2016 Free Software Foundation, Inc.
+   Copyright (C) 2009-2018 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -32,6 +32,11 @@ START_RELOC_NUMBERS (elf_ft32_reloc_type)
   RELOC_NUMBER (R_FT32_20, 5)
   RELOC_NUMBER (R_FT32_17, 6)
   RELOC_NUMBER (R_FT32_18, 7)
+  RELOC_NUMBER (R_FT32_RELAX, 8)
+  RELOC_NUMBER (R_FT32_SC0, 9)
+  RELOC_NUMBER (R_FT32_SC1, 10)
+  RELOC_NUMBER (R_FT32_15, 11)
+  RELOC_NUMBER (R_FT32_DIFF32, 12)
 END_RELOC_NUMBERS (R_FT32_max)
 
 #endif /* _ELF_FT32_H */

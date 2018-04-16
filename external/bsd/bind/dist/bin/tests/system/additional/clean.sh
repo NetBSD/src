@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2013, 2017  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -14,13 +14,11 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: clean.sh,v 1.6 2007/09/26 03:22:44 marka Exp 
-
 #
 # Clean up after tests.
 #
 
 rm -f dig.out.*
 rm -f */named.memstats
-rm -f */named.conf
+rm -f ns1/named.conf
 rm -f */named.run

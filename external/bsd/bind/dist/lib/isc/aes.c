@@ -1,7 +1,7 @@
-/*	$NetBSD: aes.c,v 1.1.1.5 2017/06/15 15:22:49 christos Exp $	*/
+/*	$NetBSD: aes.c,v 1.1.1.5.4.1 2018/04/16 01:57:58 pgoyette Exp $	*/
 
 /*
- * Copyright (C) 2014, 2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2014, 2016, 2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -35,7 +35,7 @@
 #include <openssl/opensslv.h>
 #include <openssl/evp.h>
 
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
+#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
 #define EVP_CIPHER_CTX_new() &(_context), EVP_CIPHER_CTX_init(&_context)
 #define EVP_CIPHER_CTX_free(c) RUNTIME_CHECK(EVP_CIPHER_CTX_cleanup(c) == 1)
 #endif
@@ -44,7 +44,7 @@ void
 isc_aes128_crypt(const unsigned char *key, const unsigned char *in,
 		 unsigned char *out)
 {
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
+#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
 	EVP_CIPHER_CTX _context;
 #endif
 	EVP_CIPHER_CTX *c;
@@ -64,7 +64,7 @@ void
 isc_aes192_crypt(const unsigned char *key, const unsigned char *in,
 		 unsigned char *out)
 {
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
+#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
 	EVP_CIPHER_CTX _context;
 #endif
 	EVP_CIPHER_CTX *c;
@@ -84,7 +84,7 @@ void
 isc_aes256_crypt(const unsigned char *key, const unsigned char *in,
 		 unsigned char *out)
 {
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
+#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
 	EVP_CIPHER_CTX _context;
 #endif
 	EVP_CIPHER_CTX *c;

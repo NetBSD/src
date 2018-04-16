@@ -17,8 +17,6 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: acconfig.h,v 1.53 2008/12/01 23:47:44 tbox Exp  */
-
 /*! \file */
 
 /***
@@ -158,9 +156,11 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define if building universal (internal helper macro) */
 /* #undef AC_APPLE_UNIVERSAL_BUILD */
 
+#ifndef __NetBSD__
+/* defined by the build process */
 /* Use AES for Source Identity Token generation */
-/* In Makefile */
-/* #undef AES_SIT */
+#define AES_SIT 1
+#endif
 
 /* Define to enable the "filter-aaaa-on-v4" and "filter-aaaa-on-v6" options.
    */
@@ -255,8 +255,14 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define to 1 if you have the `EVP_sha512' function. */
 #define HAVE_EVP_SHA512 1
 
+/* Define to 1 if you have the `explicit_bzero' function. */
+/* #undef HAVE_EXPLICIT_BZERO */
+
 /* Define to 1 if you have the <fcntl.h> header file. */
 #define HAVE_FCNTL_H 1
+
+/* Define if OpenSSL provides FIPS_mode() */
+#define HAVE_FIPS_MODE 1
 
 /* Define to 1 if you have the `fseeko' function. */
 #define HAVE_FSEEKO 1
@@ -379,26 +385,46 @@ int sigwait(const unsigned int *set, int *sig);
 #define HAVE_NET_ROUTE_H 1
 
 /* Define if your OpenSSL version supports AES */
-#define HAVE_OPENSSL_AES 1
+/* #undef HAVE_OPENSSL_AES */
 
 /* Define if your OpenSSL version supports ECDSA. */
 #define HAVE_OPENSSL_ECDSA 1
+
+/* Define if your OpenSSL version supports Ed25519. */
+/* #undef HAVE_OPENSSL_ED25519 */
+
+/* Define if your OpenSSL version supports Ed448. */
+/* #undef HAVE_OPENSSL_ED448 */
 
 /* Define if your OpenSSL version supports EVP AES */
 #define HAVE_OPENSSL_EVP_AES 1
 
 /* Define if your OpenSSL version supports GOST. */
-/* In Makefile */
 /* #undef HAVE_OPENSSL_GOST */
 
 /* Define if your PKCS11 provider supports ECDSA. */
 /* #undef HAVE_PKCS11_ECDSA */
+
+/* Define if your PKCS11 provider supports Ed25519. */
+/* #undef HAVE_PKCS11_ED25519 */
+
+/* Define if your PKCS11 provider supports Ed448. */
+/* #undef HAVE_PKCS11_ED448 */
 
 /* Define if your PKCS11 provider supports GOST. */
 /* #undef HAVE_PKCS11_GOST */
 
 /* Support for PTHREAD_MUTEX_ADAPTIVE_NP */
 /* #undef HAVE_PTHREAD_MUTEX_ADAPTIVE_NP */
+
+/* Define to 1 if you have the <pthread_np.h> header file. */
+/* #undef HAVE_PTHREAD_NP_H */
+
+/* Define to 1 if you have the `pthread_setname_np' function. */
+#define HAVE_PTHREAD_SETNAME_NP 1
+
+/* Define to 1 if you have the `pthread_set_name_np' function. */
+/* #undef HAVE_PTHREAD_SET_NAME_NP */
 
 /* Define to 1 if you have the `pthread_yield' function. */
 /* #undef HAVE_PTHREAD_YIELD */
@@ -535,7 +561,7 @@ int sigwait(const unsigned int *set, int *sig);
 /* #undef NEED_SECURE_DIRECTORY */
 
 /* Define to the address where bug reports for this package should be sent. */
-#define PACKAGE_BUGREPORT "bind9-bugs@isc.org"
+#define PACKAGE_BUGREPORT "info@isc.org"
 
 /* Define to the full name of this package. */
 #define PACKAGE_NAME "BIND"

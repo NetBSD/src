@@ -1,4 +1,4 @@
-/*	$NetBSD: multiboot.h,v 1.8 2009/02/22 18:05:42 ahoka Exp $	*/
+/*	$NetBSD: multiboot.h,v 1.8.62.1 2018/04/16 01:59:54 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -134,9 +134,10 @@ struct multiboot_info {
 	/* Valid if mi_flags sets MULTIBOOT_INFO_HAS_VBE. */
 	void *		unused_mi_vbe_control_info;
 	void *		unused_mi_vbe_mode_info;
-	paddr_t		unused_mi_vbe_interface_seg;
-	paddr_t		unused_mi_vbe_interface_off;
-	uint32_t	unused_mi_vbe_interface_len;
+	uint16_t	unused_mi_vbe_mode;
+	uint16_t	unused_mi_vbe_interface_seg;
+	uint16_t	unused_mi_vbe_interface_off;
+	uint16_t	unused_mi_vbe_interface_len;
 };
 
 /* --------------------------------------------------------------------- */

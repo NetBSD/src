@@ -1,7 +1,7 @@
-/*	$NetBSD: validator.c,v 1.13 2015/07/08 17:28:59 christos Exp $	*/
+/*	$NetBSD: validator.c,v 1.13.14.1 2018/04/16 01:57:56 pgoyette Exp $	*/
 
 /*
- * Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2015, 2017, 2018  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -16,8 +16,6 @@
  * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-
-/* Id */
 
 #include <config.h>
 
@@ -1825,10 +1823,10 @@ dlv_validatezonekey(dns_validator_t *val) {
 	supported_algorithm = ISC_FALSE;
 
 	/*
-	 * If DNS_DSDIGEST_SHA256 is present we are required to prefer
-	 * it over DNS_DSDIGEST_SHA1.  This in practice means that we
-	 * need to ignore DNS_DSDIGEST_SHA1 if a DNS_DSDIGEST_SHA256
-	 * is present.
+	 * If DNS_DSDIGEST_SHA256 or DNS_DSDIGEST_SHA384 is present we
+	 * are required to prefer it over DNS_DSDIGEST_SHA1.  This in
+	 * practice means that we need to ignore DNS_DSDIGEST_SHA1 if a
+	 * DNS_DSDIGEST_SHA256 or DNS_DSDIGEST_SHA384 is present.
 	 */
 	memset(digest_types, 1, sizeof(digest_types));
 	for (result = dns_rdataset_first(&val->dlv);
@@ -1839,13 +1837,21 @@ dlv_validatezonekey(dns_validator_t *val) {
 		result = dns_rdata_tostruct(&dlvrdata, &dlv, NULL);
 		RUNTIME_CHECK(result == ISC_R_SUCCESS);
 
+		if (!dns_resolver_ds_digest_supported(val->view->resolver,
+						      val->event->name,
+						      dlv.digest_type))
+			continue;
+
 		if (!dns_resolver_algorithm_supported(val->view->resolver,
 						      val->event->name,
 						      dlv.algorithm))
 			continue;
 
-		if (dlv.digest_type == DNS_DSDIGEST_SHA256 &&
-		    dlv.length == ISC_SHA256_DIGESTLENGTH) {
+		if ((dlv.digest_type == DNS_DSDIGEST_SHA256 &&
+		     dlv.length == ISC_SHA256_DIGESTLENGTH) ||
+		    (dlv.digest_type == DNS_DSDIGEST_SHA384 &&
+		     dlv.length == ISC_SHA384_DIGESTLENGTH))
+		{
 			digest_types[DNS_DSDIGEST_SHA1] = 0;
 			break;
 		}
@@ -2177,10 +2183,10 @@ validatezonekey(dns_validator_t *val) {
 	supported_algorithm = ISC_FALSE;
 
 	/*
-	 * If DNS_DSDIGEST_SHA256 is present we are required to prefer
-	 * it over DNS_DSDIGEST_SHA1.  This in practice means that we
-	 * need to ignore DNS_DSDIGEST_SHA1 if a DNS_DSDIGEST_SHA256
-	 * is present.
+	 * If DNS_DSDIGEST_SHA256 or DNS_DSDIGEST_SHA384 is present we
+	 * are required to prefer it over DNS_DSDIGEST_SHA1.  This in
+	 * practice means that we need to ignore DNS_DSDIGEST_SHA1 if a
+	 * DNS_DSDIGEST_SHA256 or DNS_DSDIGEST_SHA384 is present.
 	 */
 	memset(digest_types, 1, sizeof(digest_types));
 	for (result = dns_rdataset_first(val->dsset);
@@ -2191,13 +2197,21 @@ validatezonekey(dns_validator_t *val) {
 		result = dns_rdata_tostruct(&dsrdata, &ds, NULL);
 		RUNTIME_CHECK(result == ISC_R_SUCCESS);
 
+		if (!dns_resolver_ds_digest_supported(val->view->resolver,
+						      val->event->name,
+						      ds.digest_type))
+			continue;
+
 		if (!dns_resolver_algorithm_supported(val->view->resolver,
 						      val->event->name,
 						      ds.algorithm))
 			continue;
 
-		if (ds.digest_type == DNS_DSDIGEST_SHA256 &&
-		    ds.length == ISC_SHA256_DIGESTLENGTH) {
+		if ((ds.digest_type == DNS_DSDIGEST_SHA256 &&
+		     ds.length == ISC_SHA256_DIGESTLENGTH) ||
+		    (ds.digest_type == DNS_DSDIGEST_SHA384 &&
+		     ds.length == ISC_SHA384_DIGESTLENGTH))
+		{
 			digest_types[DNS_DSDIGEST_SHA1] = 0;
 			break;
 		}

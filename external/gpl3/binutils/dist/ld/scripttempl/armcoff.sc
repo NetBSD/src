@@ -1,8 +1,8 @@
 # Linker script for ARM COFF.
 # Based on i386coff.sc by Ian Taylor <ian@cygnus.com>.
 #
-# Copyright (C) 2014-2016 Free Software Foundation, Inc.
-# 
+# Copyright (C) 2014-2018 Free Software Foundation, Inc.
+#
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
 # notice and this notice are preserved.
@@ -26,7 +26,7 @@ DTOR='.dtor : {
   }'
 
 cat <<EOF
-/* Copyright (C) 2014-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2014-2018 Free Software Foundation, Inc.
 
    Copying and distribution of this script, with or without modification,
    are permitted in any medium without royalty provided the copyright
@@ -49,9 +49,9 @@ SECTIONS
     *(.glue_7t)
     *(.glue_7)
     *(.rdata)
-    ${CONSTRUCTING+ ___CTOR_LIST__ = .; __CTOR_LIST__ = . ; 
+    ${CONSTRUCTING+ ___CTOR_LIST__ = .; __CTOR_LIST__ = . ;
 			LONG (-1); *(.ctors); *(.ctor); LONG (0); }
-    ${CONSTRUCTING+ ___DTOR_LIST__ = .; __DTOR_LIST__ = . ; 
+    ${CONSTRUCTING+ ___DTOR_LIST__ = .; __DTOR_LIST__ = . ;
 			LONG (-1); *(.dtors); *(.dtor);  LONG (0); }
     *(.fini)
     ${RELOCATING+ etext  =  .;}
@@ -60,13 +60,13 @@ SECTIONS
   .data ${RELOCATING+${DATA_ADDR-0x40000 + (ALIGN(0x8) & 0xfffc0fff)}} : {
     ${RELOCATING+  __data_start__ = . ;}
     *(.data*)
-        
+
     ${RELOCATING+*(.gcc_exc*)}
     ${RELOCATING+___EH_FRAME_BEGIN__ = . ;}
     ${RELOCATING+*(.eh_fram*)}
     ${RELOCATING+___EH_FRAME_END__ = . ;}
     ${RELOCATING+LONG(0);}
-    
+
     ${RELOCATING+ __data_end__ = . ;}
     ${RELOCATING+ edata  =  .;}
     ${RELOCATING+ _edata  =  .;}
@@ -74,7 +74,7 @@ SECTIONS
   ${CONSTRUCTING+${RELOCATING-$CTOR}}
   ${CONSTRUCTING+${RELOCATING-$DTOR}}
   .bss ${RELOCATING+ ALIGN(0x8)} :
-  { 					
+  {
     ${RELOCATING+ __bss_start__ = . ;}
     *(.bss)
     *(COMMON)
@@ -85,7 +85,7 @@ SECTIONS
   ${RELOCATING+ _end = .;}
   ${RELOCATING+ __end__ = .;}
 
-  .stab  0 ${RELOCATING+(NOLOAD)} : 
+  .stab  0 ${RELOCATING+(NOLOAD)} :
   {
     [ .stab ]
   }

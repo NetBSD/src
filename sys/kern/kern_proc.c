@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.209.2.1 2018/03/15 09:12:06 pgoyette Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.209.2.2 2018/04/16 02:00:07 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.209.2.1 2018/03/15 09:12:06 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.209.2.2 2018/04/16 02:00:07 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -1834,10 +1834,6 @@ sysctl_doeproc(SYSCTLFN_ARGS)
 	mutex_exit(proc_lock);
 
 	if (where != NULL) {
-		if (needed == 0) {
-			error = ESRCH;
-			goto out;
-		}
 		*oldlenp = dp - where;
 		if (needed > *oldlenp) {
 			error = ENOMEM;

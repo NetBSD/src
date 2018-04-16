@@ -1,5 +1,5 @@
 /* tc-d10v.c -- Assembler code for the Mitsubishi D10V
-   Copyright (C) 1996-2016 Free Software Foundation, Inc.
+   Copyright (C) 1996-2018 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -104,7 +104,7 @@ size_t md_longopts_size = sizeof (md_longopts);
 static struct hash_control *d10v_hash;
 
 /* Do a binary search of the d10v_predefined_registers array to see if
-   NAME is a valid regiter name.  Return the register number from the
+   NAME is a valid register name.  Return the register number from the
    array on success, or -1 on failure.  */
 
 static int
@@ -1548,7 +1548,7 @@ md_apply_fix (fixS *fixP, valueT *valP, segT seg ATTRIBUTE_UNUSED)
 	  if ( segf && segf->sym != fixP->fx_addsy)
 	    value = 0;
         }
-      /* Drop through.  */
+      /* Fall through.  */
     case BFD_RELOC_D10V_18:
       /* Instruction addresses are always right-shifted by 2.  */
       value >>= AT_WORD_RIGHT_SHIFT;

@@ -1,6 +1,6 @@
 // arm.h -- ELF definitions specific to EM_ARM  -*- C++ -*-
 
-// Copyright (C) 2009-2016 Free Software Foundation, Inc.
+// Copyright (C) 2009-2018 Free Software Foundation, Inc.
 // Written by Doug Kwan <dougkwan@google.com>.
 
 // This file is part of elfcpp.

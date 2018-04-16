@@ -1,9 +1,6 @@
-/*	$NetBSD: map.c,v 1.3 2014/12/10 04:38:03 christos Exp $	*/
+/*	$NetBSD: map.c,v 1.3.14.1 2018/04/16 01:58:03 pgoyette Exp $	*/
 
-/*
- * Automated Testing Framework (atf)
- *
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+/* Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,18 +23,17 @@
  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
  * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
+ * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.  */
+
+#include "atf-c/detail/map.h"
 
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include "atf-c/detail/sanity.h"
 #include "atf-c/error.h"
 #include "atf-c/utils.h"
-
-#include "map.h"
-#include "sanity.h"
 
 /* ---------------------------------------------------------------------
  * Auxiliary functions.
@@ -366,6 +362,7 @@ atf_map_insert(atf_map_t *m, const char *key, void *value, bool managed)
             if (atf_is_error(err)) {
                 if (managed)
                     free(value);
+                free(me->m_key);
                 free(me);
             }
         }

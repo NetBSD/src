@@ -1,6 +1,6 @@
 // incremental.cc -- incremental linking test/debug tool
 
-// Copyright (C) 2009-2016 Free Software Foundation, Inc.
+// Copyright (C) 2009-2018 Free Software Foundation, Inc.
 // Written by Rafael Avila de Espindola <rafael.espindola@gmail.com>
 
 // This file is part of gold.

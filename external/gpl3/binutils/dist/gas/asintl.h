@@ -1,5 +1,5 @@
 /* asintl.h - gas-specific header for gettext code.
-   Copyright (C) 1998-2016 Free Software Foundation, Inc.
+   Copyright (C) 1998-2018 Free Software Foundation, Inc.
 
    Written by Tom Tromey <tromey@cygnus.com>
 
@@ -25,7 +25,7 @@
    /* The Solaris version of locale.h always includes libintl.h.  If we have
       been configured with --disable-nls then ENABLE_NLS will not be defined
       and the dummy definitions of bindtextdomain (et al) below will conflict
-      with the defintions in libintl.h.  So we define these values to prevent
+      with the definitions in libintl.h.  So we define these values to prevent
       the bogus inclusion of libintl.h.  */
 #  define _LIBINTL_H
 #  define _LIBGETTEXT_H
@@ -45,8 +45,14 @@
 # define gettext(Msgid) (Msgid)
 # define dgettext(Domainname, Msgid) (Msgid)
 # define dcgettext(Domainname, Msgid, Category) (Msgid)
-# define textdomain(Domainname) while (0) /* nothing */
-# define bindtextdomain(Domainname, Dirname) while (0) /* nothing */
+# define ngettext(Msgid1, Msgid2, n) \
+  (n == 1 ? Msgid1 : Msgid2)
+# define dngettext(Domainname, Msgid1, Msgid2, n) \
+  (n == 1 ? Msgid1 : Msgid2)
+# define dcngettext(Domainname, Msgid1, Msgid2, n, Category) \
+  (n == 1 ? Msgid1 : Msgid2)
+# define textdomain(Domainname) do {} while (0)
+# define bindtextdomain(Domainname, Dirname) do {} while (0)
 # define _(String) (String)
 # define N_(String) (String)
 #endif

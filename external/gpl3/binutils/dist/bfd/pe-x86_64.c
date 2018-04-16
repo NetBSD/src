@@ -1,5 +1,5 @@
 /* BFD back-end for Intel/AMD x86_64 PECOFF files.
-   Copyright (C) 2006-2016 Free Software Foundation, Inc.
+   Copyright (C) 2006-2018 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -23,16 +23,16 @@
 #include "sysdep.h"
 #include "bfd.h"
 
-#define TARGET_SYM 		x86_64_pe_vec
-#define TARGET_NAME 		"pe-x86-64"
+#define TARGET_SYM		x86_64_pe_vec
+#define TARGET_NAME		"pe-x86-64"
 #define COFF_WITH_PE
 #define COFF_WITH_pex64
 #define COFF_WITH_PE_BIGOBJ
-#define PCRELOFFSET 		TRUE
+#define PCRELOFFSET		TRUE
 #if defined (USE_MINGW64_LEADING_UNDERSCORES)
-#define TARGET_UNDERSCORE 	'_'
+#define TARGET_UNDERSCORE	'_'
 #else
-#define TARGET_UNDERSCORE 	0
+#define TARGET_UNDERSCORE	0
 #endif
 #define COFF_LONG_SECTION_NAMES
 #define COFF_SUPPORT_GNU_LINKONCE

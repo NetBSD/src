@@ -1,5 +1,5 @@
-# Copyright (C) 2014-2016 Free Software Foundation, Inc.
-# 
+# Copyright (C) 2014-2018 Free Software Foundation, Inc.
+#
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
 # notice and this notice are preserved.
@@ -29,15 +29,15 @@
 #	DATA_PLT - .plt should be in data segment, not text segment.
 #	BSS_PLT - .plt should be in bss segment
 #	TEXT_DYNAMIC - .dynamic in text segment, not data segment.
-#	EMBEDDED - whether this is for an embedded system. 
+#	EMBEDDED - whether this is for an embedded system.
 #	SHLIB_TEXT_START_ADDR - if set, add to SIZEOF_HEADERS to set
 #		start address of shared library.
 #	INPUT_FILES - INPUT command of files to always include
 #	WRITABLE_RODATA - if set, the .rodata section should be writable
 #	INIT_START, INIT_END -  statements just before and just after
-# 	combination of .init sections.
+#	combination of .init sections.
 #	FINI_START, FINI_END - statements just before and just after
-# 	combination of .fini sections.
+#	combination of .fini sections.
 #	STACK_ADDR - start of a .stack section.
 #	OTHER_SYMBOLS - symbols to place right at the end of the script.
 #
@@ -104,7 +104,7 @@ FINI_ARRAY=".fini_array   ${RELOCATING-0} :
     KEEP (*(.fini_array))
     ${RELOCATING+${CREATE_SHLIB-PROVIDE_HIDDEN (__fini_array_end = .);}}
   }"
-CTOR=".ctors     ALIGN(4) : 
+CTOR=".ctors     ALIGN(4) :
   {
     ${CONSTRUCTING+${CTOR_START}}
     /* gcc uses crtbegin.o to find the start of
@@ -154,7 +154,7 @@ else
 fi
 
 cat <<EOF
-/* Copyright (C) 2014-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2014-2018 Free Software Foundation, Inc.
 
    Copying and distribution of this script, with or without modification,
    are permitted in any medium without royalty provided the copyright
@@ -191,11 +191,11 @@ SECTIONS
   ${CREATE_SHLIB+${RELOCATING+. = ${SHLIB_TEXT_START_ADDR:-0};}}
   ${CREATE_PIE+${RELOCATING+. = ${SHLIB_TEXT_START_ADDR:-0};}}
   ${CREATE_SHLIB-${INTERP}}
-  
+
   ${INITIAL_READONLY_SECTIONS}
 
-  .init ALIGN(4) : 
-  { 
+  .init ALIGN(4) :
+  {
     ${RELOCATING+${INIT_START}}
     KEEP (*(.init))
     ${RELOCATING+${INIT_END}}
@@ -209,24 +209,24 @@ SECTIONS
     *(.gnu.warning)
     ${RELOCATING+${OTHER_TEXT_SECTIONS}}
   } =${NOP-0}
-  
+
   ${RELOCATING+${CTOR}}
   ${RELOCATING+${DTOR}}
-  
+
   .fini ALIGN(4) :
   {
     ${RELOCATING+${FINI_START}}
     KEEP (*(.fini))
     ${RELOCATING+${FINI_END}}
   } =${NOP-0}
-  
+
   ${RELOCATING+PROVIDE (__etext = .);}
   ${RELOCATING+PROVIDE (_etext = .);}
   ${RELOCATING+PROVIDE (etext = .);}
-  
+
   ${WRITABLE_RODATA-${RODATA}}
   .rodata1 ALIGN(4) : { *(.rodata1) }
-  
+
   ExportTable  ALIGN(4) : { KEEP (*(ExportTable)) }
   .eh_frame_hdr ALIGN(4) : { *(.eh_frame_hdr) } :text
 
@@ -252,7 +252,7 @@ SECTIONS
     *(.data${RELOCATING+ .data.* .gnu.linkonce.d.*})
     ${CONSTRUCTING+SORT(CONSTRUCTORS)}
   } :data
-  
+
   .data1            ALIGN(4) : { *(.data1) } :data
   .tdata	    ALIGN(4) : { *(.tdata${RELOCATING+ .tdata.* .gnu.linkonce.td.*}) } :data
   .tbss		    ALIGN(4) : { *(.tbss${RELOCATING+ .tbss.* .gnu.linkonce.tb.*})${RELOCATING+ *(.tcommon)} } :data
@@ -331,13 +331,13 @@ cat <<EOF
   .rel.dyn      ${RELOCATING-0} :
     {
 EOF
-sed -e '/^[ 	]*[{}][ 	]*$/d;/:[ 	]*$/d;/\.rela\./d;s/^.*: { *\(.*\)}$/      \1/' $COMBRELOC
+sed -e '/^[	 ]*[{}][	 ]*$/d;/:[	 ]*$/d;/\.rela\./d;s/^.*: { *\(.*\)}$/      \1/' $COMBRELOC
 cat <<EOF
     }
   .rela.dyn     ${RELOCATING-0} :
     {
 EOF
-sed -e '/^[ 	]*[{}][ 	]*$/d;/:[ 	]*$/d;/\.rel\./d;s/^.*: { *\(.*\)}/      \1/' $COMBRELOC
+sed -e '/^[	 ]*[{}][	 ]*$/d;/:[	 ]*$/d;/\.rel\./d;s/^.*: { *\(.*\)}/      \1/' $COMBRELOC
 cat <<EOF
     }
 EOF

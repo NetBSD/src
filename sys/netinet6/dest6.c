@@ -1,4 +1,4 @@
-/*	$NetBSD: dest6.c,v 1.21 2018/01/23 15:13:56 maxv Exp $	*/
+/*	$NetBSD: dest6.c,v 1.21.2.1 2018/04/16 02:00:09 pgoyette Exp $	*/
 /*	$KAME: dest6.c,v 1.25 2001/02/22 01:39:16 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dest6.c,v 1.21 2018/01/23 15:13:56 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dest6.c,v 1.21.2.1 2018/04/16 02:00:09 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,7 +92,7 @@ dest6_input(struct mbuf **mp, int *offp, int proto)
 			erroff = *offp + (opt - (u_int8_t *)dstopts);
 			optlen = ip6_unknown_opt(opt, m, erroff);
 			if (optlen == -1)
-				return (IPPROTO_DONE);
+				return IPPROTO_DONE;
 			optlen += 2;
 			break;
 		}

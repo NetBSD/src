@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.82.2.2 2018/03/30 06:20:11 pgoyette Exp $
+# $NetBSD: ALL,v 1.82.2.3 2018/04/16 01:59:52 pgoyette Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"ALL-$Revision: 1.82.2.2 $"
+#ident		"ALL-$Revision: 1.82.2.3 $"
 
 maxusers	64		# estimated number of users
 
@@ -27,6 +27,8 @@ makeoptions	USE_SSP=yes
 #options 	USER_LDT	# user-settable LDT; used by WINE
 options 	X86EMU		# 386 Real Mode emulator
 #options 	PAE		# PAE mode (36 bits physical addressing)
+makeoptions	SPECTRE_V2_GCC_MITIGATION=1	# GCC Spectre variant 2
+						# migitation
 
 # CPU features
 acpicpu*	at cpu?		# ACPI CPU (including frequency scaling)

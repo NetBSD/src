@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_ohci.c,v 1.10 2016/04/23 10:15:28 skrll Exp $	*/
+/*	$NetBSD: pxa2x0_ohci.c,v 1.10.16.1 2018/04/16 01:59:53 pgoyette Exp $	*/
 /*	$OpenBSD: pxa2x0_ohci.c,v 1.19 2005/04/08 02:32:54 dlg Exp $ */
 
 /*
@@ -116,7 +116,6 @@ pxaohci_attach(device_t parent, device_t self, void *aux)
 		goto free_map;
 	}
 
-	strlcpy(sc->sc.sc_vendor, "PXA27x", sizeof(sc->sc.sc_vendor));
 	int err = ohci_init(&sc->sc);
 	if (err) {
 		aprint_error_dev(sc->sc.sc_dev, "init failed, error=%d\n", err);

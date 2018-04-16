@@ -1,5 +1,5 @@
 <!--
- - Copyright (C) 2010, 2011, 2015, 2016  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2010, 2011, 2015-2017  Internet Systems Consortium, Inc. ("ISC")
  -
  - Permission to use, copy, modify, and/or distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
@@ -17,9 +17,6 @@
 <!-- Converted by db4-upgrade version 1.0 -->
 <section xmlns:db="http://docbook.org/ns/docbook" version="5.0" xml:id="dnssec.dynamic.zones"><info><title>DNSSEC, Dynamic Zones, and Automatic Signing</title></info>
 
-  <para>As of BIND 9.7.0 it is possible to change a dynamic zone
-  from insecure to signed and back again. A secure zone can use
-  either NSEC or NSEC3 chains.</para>
   <section><info><title>Converting from insecure to secure</title></info>
 
   </section>

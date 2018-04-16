@@ -1,5 +1,5 @@
 /* Define a target vector and some small routines for a variant of a.out.
-   Copyright (C) 1990-2016 Free Software Foundation, Inc.
+   Copyright (C) 1990-2018 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -373,7 +373,7 @@ MY_bfd_final_link (bfd *abfd, struct bfd_link_info *info)
   _bfd_archive_bsd_construct_extended_name_table
 #endif
 #ifndef	MY_write_armap
-#define	MY_write_armap		bsd_write_armap
+#define	MY_write_armap		_bfd_bsd_write_armap
 #endif
 #ifndef MY_read_ar_hdr
 #define MY_read_ar_hdr		_bfd_generic_read_ar_hdr
@@ -450,6 +450,9 @@ MY_bfd_final_link (bfd *abfd, struct bfd_link_info *info)
 #ifndef MY_canonicalize_reloc
 #define MY_canonicalize_reloc NAME (aout, canonicalize_reloc)
 #endif
+#ifndef MY_set_reloc
+#define MY_set_reloc _bfd_generic_set_reloc
+#endif
 #ifndef MY_make_empty_symbol
 #define MY_make_empty_symbol NAME (aout, make_empty_symbol)
 #endif
@@ -509,6 +512,9 @@ MY_bfd_final_link (bfd *abfd, struct bfd_link_info *info)
 #endif
 #ifndef MY_bfd_define_common_symbol
 #define MY_bfd_define_common_symbol bfd_generic_define_common_symbol
+#endif
+#ifndef MY_bfd_define_start_stop
+#define MY_bfd_define_start_stop bfd_generic_define_start_stop
 #endif
 #ifndef MY_bfd_reloc_type_lookup
 #define MY_bfd_reloc_type_lookup NAME (aout, reloc_type_lookup)
@@ -663,11 +669,11 @@ const bfd_target MY (vec) =
      bfd_getl32, bfd_getl_signed_32, bfd_putl32,
      bfd_getl16, bfd_getl_signed_16, bfd_putl16, /* Headers.  */
 #endif
-    {_bfd_dummy_target, MY_object_p, 		/* bfd_check_format.  */
+    {_bfd_dummy_target, MY_object_p,		/* bfd_check_format.  */
        bfd_generic_archive_p, MY_core_file_p},
     {bfd_false, MY_mkobject,			/* bfd_set_format.  */
        _bfd_generic_mkarchive, bfd_false},
-    {bfd_false, MY_write_object_contents, 	/* bfd_write_contents.  */
+    {bfd_false, MY_write_object_contents,	/* bfd_write_contents.  */
        _bfd_write_archive_contents, bfd_false},
 
      BFD_JUMP_TABLE_GENERIC (MY),

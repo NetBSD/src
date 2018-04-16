@@ -1,7 +1,7 @@
-/*	$NetBSD: sock_test.c,v 1.9 2015/12/17 04:00:42 christos Exp $	*/
+/*	$NetBSD: sock_test.c,v 1.9.14.1 2018/04/16 01:57:38 pgoyette Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007, 2008, 2012-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007, 2008, 2012-2015, 2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -27,8 +27,9 @@
 
 #include <isc/mem.h>
 #include <isc/print.h>
-#include <isc/task.h>
 #include <isc/socket.h>
+#include <isc/string.h>
+#include <isc/task.h>
 #include <isc/timer.h>
 #include <isc/util.h>
 
@@ -112,12 +113,12 @@ my_recv(isc_task_t *task, isc_event_t *event) {
 	 */
 	if (strcmp(event->ev_arg, "so2") != 0) {
 		region = dev->region;
-		sprintf(buf, "\r\nReceived: %.*s\r\n\r\n",
-			(int)dev->n, (char *)region.base);
+		snprintf(buf, sizeof(buf), "\r\nReceived: %.*s\r\n\r\n",
+			 (int)dev->n, (char *)region.base);
 		region.base = isc_mem_get(mctx, strlen(buf) + 1);
 		if (region.base != NULL) {
 			region.length = strlen(buf) + 1;
-			strcpy((char *)region.base, buf);  /* strcpy is safe */
+			strlcpy((char *)region.base, buf, region.length);
 		} else
 			region.length = 0;
 		isc_socket_send(sock, &region, task, my_send, event->ev_arg);
@@ -184,14 +185,16 @@ my_connect(isc_task_t *task, isc_event_t *event) {
 	 * Send a GET string, and set up to receive (and just display)
 	 * the result.
 	 */
-	strcpy(buf, "GET / HTTP/1.1\r\nHost: www.flame.org\r\n"
-	       "Connection: Close\r\n\r\n");
+	snprintf(buf, sizeof(buf),
+		 "GET / HTTP/1.1\r\nHost: www.flame.org\r\n"
+		 "Connection: Close\r\n\r\n");
 	region.base = isc_mem_get(mctx, strlen(buf) + 1);
 	if (region.base != NULL) {
 		region.length = strlen(buf) + 1;
-		strcpy((char *)region.base, buf);  /* This strcpy is safe. */
-	} else
+		strlcpy((char *)region.base, buf, region.length);
+	} else {
 		region.length = 0;
+	}
 
 	isc_socket_send(sock, &region, task, my_http_get, event->ev_arg);
 

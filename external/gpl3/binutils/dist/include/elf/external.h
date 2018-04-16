@@ -1,5 +1,5 @@
 /* ELF support for BFD.
-   Copyright (C) 1991-2016 Free Software Foundation, Inc.
+   Copyright (C) 1991-2018 Free Software Foundation, Inc.
 
    Written by Fred Fish @ Cygnus Support, from information published
    in "UNIX System V Release 4, Programmers Guide: ANSI C and
@@ -182,6 +182,22 @@ typedef struct {
   unsigned char	type[4];		/* Interpretation of the descriptor */
   char		name[1];		/* Start of the name+desc data */
 } Elf_External_Note;
+
+/* Align an address upward to a boundary, expressed as a number of bytes.
+   E.g. align to an 8-byte boundary with argument of 8.  */
+#define ELF_ALIGN_UP(addr, boundary) \
+  (((bfd_vma) (addr) + ((boundary) - 1)) & ~ (bfd_vma) ((boundary) -1))
+
+/* Compute the offset of the note descriptor from size of note entry's
+   owner string and note alignment.  */
+#define ELF_NOTE_DESC_OFFSET(namesz, align) \
+  ELF_ALIGN_UP (offsetof (Elf_External_Note, name) + (namesz), (align))
+
+/* Compute the offset of the next note entry from size of note entry's
+   owner string, size of the note descriptor and note alignment.  */
+#define ELF_NOTE_NEXT_OFFSET(namesz, descsz, align) \
+  ELF_ALIGN_UP (ELF_NOTE_DESC_OFFSET ((namesz), (align)) + (descsz), \
+		(align))
 
 /* Relocation Entries */
 typedef struct {

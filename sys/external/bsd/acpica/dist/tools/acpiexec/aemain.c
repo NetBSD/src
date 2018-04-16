@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2017, Intel Corp.
+ * Copyright (C) 2000 - 2018, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -142,6 +142,7 @@ usage (
     ACPI_OPTION ("-da",                 "Disable method abort on error");
     ACPI_OPTION ("-di",                 "Disable execution of STA/INI methods during init");
     ACPI_OPTION ("-do",                 "Disable Operation Region address simulation");
+    ACPI_OPTION ("-dp",                 "Disable TermList parsing for scope objects");
     ACPI_OPTION ("-dr",                 "Disable repair of method return values");
     ACPI_OPTION ("-ds",                 "Disable method auto-serialization");
     ACPI_OPTION ("-dt",                 "Disable allocation tracking (performance)");
@@ -151,8 +152,7 @@ usage (
     ACPI_OPTION ("-ef",                 "Enable display of final memory statistics");
     ACPI_OPTION ("-ei",                 "Enable additional tests for ACPICA interfaces");
     ACPI_OPTION ("-el",                 "Enable loading of additional test tables");
-    ACPI_OPTION ("-em",                 "Enable grouping of module-level code");
-    ACPI_OPTION ("-ep",                 "Enable TermList parsing for scope objects");
+    ACPI_OPTION ("-em",                 "Enable (legacy) grouping of module-level code");
     ACPI_OPTION ("-es",                 "Enable Interpreter Slack Mode");
     ACPI_OPTION ("-et",                 "Enable debug semaphore timeout");
     printf ("\n");
@@ -232,6 +232,11 @@ AeDoOptions (
             AcpiGbl_DbOpt_NoRegionSupport = TRUE;
             break;
 
+        case 'p':
+
+            AcpiGbl_ExecuteTablesAsMethods = FALSE;
+            break;
+
         case 'r':
 
             AcpiGbl_DisableAutoRepair = TRUE;
@@ -285,11 +290,6 @@ AeDoOptions (
         case 'm':
 
             AcpiGbl_GroupModuleLevelCode = TRUE;
-            break;
-
-        case 'p':
-
-            AcpiGbl_ParseTableAsTermList = TRUE;
             break;
 
         case 's':
@@ -425,7 +425,6 @@ AeDoOptions (
         {
         case '^':  /* -v: (Version): signon already emitted, just exit */
 
-            (void) AcpiOsTerminate ();
             return (1);
 
         case 'd':
@@ -499,6 +498,11 @@ main (
 
     AcpiDbgLevel = ACPI_NORMAL_DEFAULT;
     AcpiDbgLayer = 0xFFFFFFFF;
+
+    /* Module-level code. Use new architecture */
+
+    AcpiGbl_ExecuteTablesAsMethods = TRUE;
+    AcpiGbl_GroupModuleLevelCode = FALSE;
 
     /*
      * Initialize ACPICA and start debugger thread.
@@ -604,6 +608,25 @@ main (
         goto EnterDebugger;
     }
 
+    Status = AeLoadTables ();
+
+    /*
+     * Exit namespace initialization for the "load namespace only" option.
+     * No control methods will be executed. However, still enter the
+     * the debugger.
+     */
+    if (AcpiGbl_AeLoadOnly)
+    {
+        goto EnterDebugger;
+    }
+
+    if (ACPI_FAILURE (Status))
+    {
+        printf ("**** Could not load ACPI tables, %s\n",
+            AcpiFormatException (Status));
+        goto EnterDebugger;
+    }
+
     /* Setup initialization flags for ACPICA */
 
     InitFlags = (ACPI_NO_HANDLER_INIT | ACPI_NO_ACPI_ENABLE);
@@ -630,30 +653,17 @@ main (
         goto EnterDebugger;
     }
 
-    Status = AeLoadTables ();
-
-    /*
-     * Exit namespace initialization for the "load namespace only" option.
-     * No control methods will be executed. However, still enter the
-     * the debugger.
-     */
-    if (AcpiGbl_AeLoadOnly)
-    {
-        goto EnterDebugger;
-    }
-
-    if (ACPI_FAILURE (Status))
-    {
-        printf ("**** Could not load ACPI tables, %s\n",
-            AcpiFormatException (Status));
-        goto EnterDebugger;
-    }
-
     /*
      * Install handlers for "device driver" space IDs (EC,SMBus, etc.)
      * and fixed event handlers
      */
     AeInstallLateHandlers ();
+
+    /*
+     * This call implements the "initialization file" option for AcpiExec.
+     * This is the precise point that we want to perform the overrides.
+     */
+    AeDoObjectOverrides ();
 
     /* Finish the ACPICA initialization */
 

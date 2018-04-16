@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2017, Intel Corp.
+ * Copyright (C) 2000 - 2018, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -248,11 +248,11 @@ AcpiTbOverrideTable (
     ACPI_TABLE_DESC         *OldTableDesc)
 {
     ACPI_STATUS             Status;
-    const char              *OverrideType;
     ACPI_TABLE_DESC         NewTableDesc;
     ACPI_TABLE_HEADER       *Table;
     ACPI_PHYSICAL_ADDRESS   Address;
     UINT32                  Length;
+    ACPI_ERROR_ONLY (const char   *OverrideType);
 
 
     /* (1) Attempt logical override (returns a logical address) */
@@ -262,7 +262,7 @@ AcpiTbOverrideTable (
     {
         AcpiTbAcquireTempTable (&NewTableDesc, ACPI_PTR_TO_PHYSADDR (Table),
             ACPI_TABLE_ORIGIN_EXTERNAL_VIRTUAL);
-        OverrideType = "Logical";
+        ACPI_ERROR_ONLY (OverrideType = "Logical");
         goto FinishOverride;
     }
 
@@ -274,7 +274,7 @@ AcpiTbOverrideTable (
     {
         AcpiTbAcquireTempTable (&NewTableDesc, Address,
             ACPI_TABLE_ORIGIN_INTERNAL_PHYSICAL);
-        OverrideType = "Physical";
+        ACPI_ERROR_ONLY (OverrideType = "Physical");
         goto FinishOverride;
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2017 Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2018 Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003 Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -100,6 +100,7 @@ enum {
 	dns_rdatatype_uri = 256,
 	dns_rdatatype_caa = 257,
 	dns_rdatatype_avc = 258,
+	dns_rdatatype_doa = 259,
 	dns_rdatatype_ta = 32768,
 	dns_rdatatype_dlv = 32769,
 	dns_rdatatype_keydata = 65533,
@@ -182,6 +183,7 @@ enum {
 #define dns_rdatatype_uri	((dns_rdatatype_t)dns_rdatatype_uri)
 #define dns_rdatatype_caa	((dns_rdatatype_t)dns_rdatatype_caa)
 #define dns_rdatatype_avc	((dns_rdatatype_t)dns_rdatatype_avc)
+#define dns_rdatatype_doa	((dns_rdatatype_t)dns_rdatatype_doa)
 #define dns_rdatatype_ta	((dns_rdatatype_t)dns_rdatatype_ta)
 #define dns_rdatatype_dlv	((dns_rdatatype_t)dns_rdatatype_dlv)
 #define dns_rdatatype_keydata	((dns_rdatatype_t)dns_rdatatype_keydata)

@@ -1,6 +1,6 @@
 // dwp.h -- general definitions for dwp.
 
-// Copyright (C) 2012-2016 Free Software Foundation, Inc.
+// Copyright (C) 2012-2018 Free Software Foundation, Inc.
 // Written by Cary Coutant <ccoutant@google.com>.
 
 // This file is part of dwp, the DWARF packaging utility.

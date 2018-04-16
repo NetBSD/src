@@ -1,4 +1,4 @@
-/*	$NetBSD: sunxi_dep.c,v 1.2.2.2 2018/04/07 04:12:12 pgoyette Exp $	*/
+/*	$NetBSD: sunxi_dep.c,v 1.2.2.3 2018/04/16 01:59:53 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sunxi_dep.c,v 1.2.2.2 2018/04/07 04:12:12 pgoyette Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sunxi_dep.c,v 1.2.2.3 2018/04/16 01:59:53 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -57,6 +57,11 @@ static const struct of_compat_data compat_data[] = {
 	{NULL}
 };
 
+static const char *fb_compat[] = {
+	"allwinner,simple-framebuffer",
+	NULL
+};
+
 static int sunxi_dep_match(device_t, cfdata_t, void *);
 static void sunxi_dep_attach(device_t, device_t, void *);
 
@@ -68,9 +73,8 @@ sunxi_dep_match(device_t parent, cfdata_t cf, void *aux)
 {
 #if NSUNXI_DEBE > 0
 	struct fdt_attach_args * const faa = aux;
-	if (!of_match_compat_data(faa->faa_phandle, compat_data))
-		return 0;
-	return 1;
+
+	return  of_match_compat_data(faa->faa_phandle, compat_data);
 #else
 	return 0;
 #endif
@@ -82,6 +86,7 @@ sunxi_dep_attach(device_t parent, device_t self, void *aux)
 	struct sunxi_dep_softc * const sc = device_private(self);
 	struct fdt_attach_args * const faa = aux;
 	const int phandle = faa->faa_phandle;
+	int sunxi_dep_npipelines = 0;
 	int len;
 	const u_int *buf;
 	u_int ref;
@@ -95,7 +100,6 @@ sunxi_dep_attach(device_t parent, device_t self, void *aux)
 		aprint_error("bad/missing allwinner,pipelines property\n");
 		return;
 	}
-	aprint_naive("\n");
 	aprint_normal(": ");
 #if NSUNXI_DEBE > 0
 	for (int i = 0; i < (len / sizeof(ref)); i++) {
@@ -106,7 +110,12 @@ sunxi_dep_attach(device_t parent, device_t self, void *aux)
 		    fdtbus_get_phandle_from_native(ref), true);
 		if (error)
 			aprint_error("can't activate pipeline %d\n", i);
+		else
+			sunxi_dep_npipelines++;
 	}
+	aprint_naive("\n");
+	if (sunxi_dep_npipelines > 0)
+		fdt_remove_bycompat(fb_compat);
 #else
 	aprint_error("debe not configured\n");
 	return;

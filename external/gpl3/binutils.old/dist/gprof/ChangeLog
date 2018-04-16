@@ -1,0 +1,54 @@
+2016-08-03  Tristan Gingold  <gingold@adacore.com>
+
+	* configure: Regenerate.
+
+2016-07-01  Tristan Gingold  <gingold@adacore.com>
+
+	* configure: Regenerate.
+
+2016-07-01  Tristan Gingold  <gingold@adacore.com>
+
+	* configure: Regenerate.
+
+2016-04-20  Trevor Saunders  <tbsaunde+binutils@tbsaunde.org>
+
+	* basic_blocks.c: Update old style function definitions.
+	* cg_arcs.c: Likewise.
+	* cg_print.c: Likewise.
+	* gen-c-prog.awk: Likewise.
+	* gmon_io.c: Likewise.
+	* hertz.c: Likewise.
+	* hist.c: Likewise.
+	* sym_ids.c: Likewise.
+
+2016-04-15  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* Makefile.in: Regenerated with automake 1.11.6.
+	* aclocal.m4: Likewise.
+
+2016-03-22  Nick Clifton  <nickc@redhat.com>
+
+	* configure: Regenerate.
+
+2016-01-17  Alan Modra  <amodra@gmail.com>
+
+	* configure: Regenerate.
+
+2016-01-01  Alan Modra  <amodra@gmail.com>
+
+	Update year range in copyright notice of all files.
+
+For older changes see ChangeLog-2015
+
+Copyright (C) 2016 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
+Local Variables:
+mode: change-log
+left-margin: 8
+fill-column: 74
+version-control: never
+End:

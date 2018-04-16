@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1196.2.7 2018/03/14 22:26:15 pgoyette Exp $
+#	$NetBSD: files,v 1.1196.2.8 2018/04/16 01:59:57 pgoyette Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20171118
@@ -905,7 +905,7 @@ defflag	opt_com.h		COM_DEBUG
 # XXX In a perfect world, this would be done with attributes
 defflag	opt_com.h		COM_16650 COM_16750
 				COM_HAYESP COM_PXA2X0 COM_AU1X00
-				COM_REGMAP COM_FUNCMAP COM_AWIN
+				COM_REGMAP COM_FUNCMAP
 defparam opt_com.h		COM_TOLERANCE
 device	com { } : tty
 file	dev/ic/com.c			com			needs-flag
@@ -1297,7 +1297,6 @@ device	xhci: usbus, usbroothub, usb_dma
 file	dev/usb/xhci.c			xhci			needs-flag
 
 # Mentor graphics OTG IP
-defflag	opt_motg.h	MOTG_ALLWINNER
 device	motg: usbus, usbroothub
 file	dev/usb/motg.c			motg			needs-flag
 

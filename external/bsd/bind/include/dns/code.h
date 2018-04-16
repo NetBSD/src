@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2017 Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2018 Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003 Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -105,6 +105,7 @@
 #include "rdata/generic/uri_256.c"
 #include "rdata/generic/caa_257.c"
 #include "rdata/generic/avc_258.c"
+#include "rdata/generic/doa_259.c"
 #include "rdata/generic/ta_32768.c"
 #include "rdata/generic/dlv_32769.c"
 #include "rdata/generic/keydata_65533.c"
@@ -234,6 +235,7 @@
 	case 256: result = fromtext_uri(rdclass, type, lexer, origin, options, target, callbacks); break; \
 	case 257: result = fromtext_caa(rdclass, type, lexer, origin, options, target, callbacks); break; \
 	case 258: result = fromtext_avc(rdclass, type, lexer, origin, options, target, callbacks); break; \
+	case 259: result = fromtext_doa(rdclass, type, lexer, origin, options, target, callbacks); break; \
 	case 32768: result = fromtext_ta(rdclass, type, lexer, origin, options, target, callbacks); break; \
 	case 32769: result = fromtext_dlv(rdclass, type, lexer, origin, options, target, callbacks); break; \
 	case 65533: result = fromtext_keydata(rdclass, type, lexer, origin, options, target, callbacks); break; \
@@ -363,6 +365,7 @@
 	case 256: result = totext_uri(rdata, tctx, target); break; \
 	case 257: result = totext_caa(rdata, tctx, target); break; \
 	case 258: result = totext_avc(rdata, tctx, target); break; \
+	case 259: result = totext_doa(rdata, tctx, target); break; \
 	case 32768: result = totext_ta(rdata, tctx, target); break; \
 	case 32769: result = totext_dlv(rdata, tctx, target); break; \
 	case 65533: result = totext_keydata(rdata, tctx, target); break; \
@@ -492,6 +495,7 @@
 	case 256: result = fromwire_uri(rdclass, type, source, dctx, options, target); break; \
 	case 257: result = fromwire_caa(rdclass, type, source, dctx, options, target); break; \
 	case 258: result = fromwire_avc(rdclass, type, source, dctx, options, target); break; \
+	case 259: result = fromwire_doa(rdclass, type, source, dctx, options, target); break; \
 	case 32768: result = fromwire_ta(rdclass, type, source, dctx, options, target); break; \
 	case 32769: result = fromwire_dlv(rdclass, type, source, dctx, options, target); break; \
 	case 65533: result = fromwire_keydata(rdclass, type, source, dctx, options, target); break; \
@@ -621,6 +625,7 @@
 	case 256: result = towire_uri(rdata, cctx, target); break; \
 	case 257: result = towire_caa(rdata, cctx, target); break; \
 	case 258: result = towire_avc(rdata, cctx, target); break; \
+	case 259: result = towire_doa(rdata, cctx, target); break; \
 	case 32768: result = towire_ta(rdata, cctx, target); break; \
 	case 32769: result = towire_dlv(rdata, cctx, target); break; \
 	case 65533: result = towire_keydata(rdata, cctx, target); break; \
@@ -750,6 +755,7 @@
 	case 256: result = compare_uri(rdata1, rdata2); break; \
 	case 257: result = compare_caa(rdata1, rdata2); break; \
 	case 258: result = compare_avc(rdata1, rdata2); break; \
+	case 259: result = compare_doa(rdata1, rdata2); break; \
 	case 32768: result = compare_ta(rdata1, rdata2); break; \
 	case 32769: result = compare_dlv(rdata1, rdata2); break; \
 	case 65533: result = compare_keydata(rdata1, rdata2); break; \
@@ -879,6 +885,7 @@
 	case 256: result = casecompare_uri(rdata1, rdata2); break; \
 	case 257: result = casecompare_caa(rdata1, rdata2); break; \
 	case 258: result = casecompare_avc(rdata1, rdata2); break; \
+	case 259: result = casecompare_doa(rdata1, rdata2); break; \
 	case 32768: result = casecompare_ta(rdata1, rdata2); break; \
 	case 32769: result = casecompare_dlv(rdata1, rdata2); break; \
 	case 65533: result = casecompare_keydata(rdata1, rdata2); break; \
@@ -1008,6 +1015,7 @@
 	case 256: result = fromstruct_uri(rdclass, type, source, target); break; \
 	case 257: result = fromstruct_caa(rdclass, type, source, target); break; \
 	case 258: result = fromstruct_avc(rdclass, type, source, target); break; \
+	case 259: result = fromstruct_doa(rdclass, type, source, target); break; \
 	case 32768: result = fromstruct_ta(rdclass, type, source, target); break; \
 	case 32769: result = fromstruct_dlv(rdclass, type, source, target); break; \
 	case 65533: result = fromstruct_keydata(rdclass, type, source, target); break; \
@@ -1137,6 +1145,7 @@
 	case 256: result = tostruct_uri(rdata, target, mctx); break; \
 	case 257: result = tostruct_caa(rdata, target, mctx); break; \
 	case 258: result = tostruct_avc(rdata, target, mctx); break; \
+	case 259: result = tostruct_doa(rdata, target, mctx); break; \
 	case 32768: result = tostruct_ta(rdata, target, mctx); break; \
 	case 32769: result = tostruct_dlv(rdata, target, mctx); break; \
 	case 65533: result = tostruct_keydata(rdata, target, mctx); break; \
@@ -1266,6 +1275,7 @@
 	case 256: freestruct_uri(source); break; \
 	case 257: freestruct_caa(source); break; \
 	case 258: freestruct_avc(source); break; \
+	case 259: freestruct_doa(source); break; \
 	case 32768: freestruct_ta(source); break; \
 	case 32769: freestruct_dlv(source); break; \
 	case 65533: freestruct_keydata(source); break; \
@@ -1395,6 +1405,7 @@
 	case 256: result = additionaldata_uri(rdata, add, arg); break; \
 	case 257: result = additionaldata_caa(rdata, add, arg); break; \
 	case 258: result = additionaldata_avc(rdata, add, arg); break; \
+	case 259: result = additionaldata_doa(rdata, add, arg); break; \
 	case 32768: result = additionaldata_ta(rdata, add, arg); break; \
 	case 32769: result = additionaldata_dlv(rdata, add, arg); break; \
 	case 65533: result = additionaldata_keydata(rdata, add, arg); break; \
@@ -1524,6 +1535,7 @@
 	case 256: result = digest_uri(rdata, digest, arg); break; \
 	case 257: result = digest_caa(rdata, digest, arg); break; \
 	case 258: result = digest_avc(rdata, digest, arg); break; \
+	case 259: result = digest_doa(rdata, digest, arg); break; \
 	case 32768: result = digest_ta(rdata, digest, arg); break; \
 	case 32769: result = digest_dlv(rdata, digest, arg); break; \
 	case 65533: result = digest_keydata(rdata, digest, arg); break; \
@@ -1653,6 +1665,7 @@
 	case 256: result = checkowner_uri(name, rdclass, type, wildcard); break; \
 	case 257: result = checkowner_caa(name, rdclass, type, wildcard); break; \
 	case 258: result = checkowner_avc(name, rdclass, type, wildcard); break; \
+	case 259: result = checkowner_doa(name, rdclass, type, wildcard); break; \
 	case 32768: result = checkowner_ta(name, rdclass, type, wildcard); break; \
 	case 32769: result = checkowner_dlv(name, rdclass, type, wildcard); break; \
 	case 65533: result = checkowner_keydata(name, rdclass, type, wildcard); break; \
@@ -1782,6 +1795,7 @@
 	case 256: result = checknames_uri(rdata, owner, bad); break; \
 	case 257: result = checknames_caa(rdata, owner, bad); break; \
 	case 258: result = checknames_avc(rdata, owner, bad); break; \
+	case 259: result = checknames_doa(rdata, owner, bad); break; \
 	case 32768: result = checknames_ta(rdata, owner, bad); break; \
 	case 32769: result = checknames_dlv(rdata, owner, bad); break; \
 	case 65533: result = checknames_keydata(rdata, owner, bad); break; \
@@ -2022,6 +2036,9 @@
 		case 166: \
 			RDATATYPE_COMPARE("caa", 257, _typename, _length, _typep); \
 			break; \
+		case 7: \
+			RDATATYPE_COMPARE("doa", 259, _typename, _length, _typep); \
+			break; \
 	}
 #define RDATATYPE_ATTRIBUTE_SW \
 	switch (type) { \
@@ -2108,6 +2125,7 @@
 	case 256: return (RRTYPE_URI_ATTRIBUTES); \
 	case 257: return (RRTYPE_CAA_ATTRIBUTES); \
 	case 258: return (RRTYPE_AVC_ATTRIBUTES); \
+	case 259: return (RRTYPE_DOA_ATTRIBUTES); \
 	case 32768: return (RRTYPE_TA_ATTRIBUTES); \
 	case 32769: return (RRTYPE_DLV_ATTRIBUTES); \
 	case 65533: return (RRTYPE_KEYDATA_ATTRIBUTES); \
@@ -2197,6 +2215,7 @@
 	case 256: return (str_totext("URI", target)); \
 	case 257: return (str_totext("CAA", target)); \
 	case 258: return (str_totext("AVC", target)); \
+	case 259: return (str_totext("DOA", target)); \
 	case 32768: return (str_totext("TA", target)); \
 	case 32769: return (str_totext("DLV", target)); \
 	}

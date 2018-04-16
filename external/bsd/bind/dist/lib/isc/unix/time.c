@@ -1,7 +1,7 @@
-/*	$NetBSD: time.c,v 1.9 2015/07/08 17:29:00 christos Exp $	*/
+/*	$NetBSD: time.c,v 1.9.14.1 2018/04/16 01:58:00 pgoyette Exp $	*/
 
 /*
- * Copyright (C) 2004-2008, 2011, 2012, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008, 2011, 2012, 2014, 2015, 2017, 2018  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -32,6 +32,7 @@
 #include <sys/time.h>	/* Required for struct timeval on some platforms. */
 
 #include <isc/log.h>
+#include <isc/platform.h>
 #include <isc/print.h>
 #include <isc/strerror.h>
 #include <isc/string.h>
@@ -398,31 +399,53 @@ void
 isc_time_formattimestamp(const isc_time_t *t, char *buf, unsigned int len) {
 	time_t now;
 	unsigned int flen;
+#ifdef ISC_PLATFORM_USETHREADS
+	struct tm tm;
+#endif
 
+	REQUIRE(t != NULL);
+	INSIST(t->nanoseconds < NS_PER_S);
+	REQUIRE(buf != NULL);
 	REQUIRE(len > 0);
 
 	now = (time_t) t->seconds;
+#ifdef ISC_PLATFORM_USETHREADS
+	flen = strftime(buf, len, "%d-%b-%Y %X", localtime_r(&now, &tm));
+#else
 	flen = strftime(buf, len, "%d-%b-%Y %X", localtime(&now));
+#endif
 	INSIST(flen < len);
-	if (flen != 0)
+	if (flen != 0) {
 		snprintf(buf + flen, len - flen,
 			 ".%03u", t->nanoseconds / 1000000);
-	else
-		snprintf(buf, len, "99-Bad-9999 99:99:99.999");
+	} else {
+		strlcpy(buf, "99-Bad-9999 99:99:99.999", len);
+	}
 }
 
 void
 isc_time_formathttptimestamp(const isc_time_t *t, char *buf, unsigned int len) {
 	time_t now;
 	unsigned int flen;
+#ifdef ISC_PLATFORM_USETHREADS
+	struct tm tm;
+#endif
 
+	REQUIRE(t != NULL);
+	INSIST(t->nanoseconds < NS_PER_S);
+	REQUIRE(buf != NULL);
 	REQUIRE(len > 0);
 
 	/*
 	 * 5 spaces, 1 comma, 3 GMT, 2 %d, 4 %Y, 8 %H:%M:%S, 3+ %a, 3+ %b (29+)
 	 */
 	now = (time_t)t->seconds;
+#ifdef ISC_PLATFORM_USETHREADS
+	flen = strftime(buf, len, "%a, %d %b %Y %H:%M:%S GMT",
+			gmtime_r(&now, &tm));
+#else
 	flen = strftime(buf, len, "%a, %d %b %Y %H:%M:%S GMT", gmtime(&now));
+#endif
 	INSIST(flen < len);
 }
 
@@ -434,6 +457,7 @@ isc_time_parsehttptimestamp(char *buf, isc_time_t *t) {
 
 	REQUIRE(buf != NULL);
 	REQUIRE(t != NULL);
+
 	p = isc_tm_strptime(buf, "%a, %d %b %Y %H:%M:%S", &t_tm);
 	if (p == NULL)
 		return (ISC_R_UNEXPECTED);
@@ -448,10 +472,20 @@ void
 isc_time_formatISO8601(const isc_time_t *t, char *buf, unsigned int len) {
 	time_t now;
 	unsigned int flen;
+#ifdef ISC_PLATFORM_USETHREADS
+	struct tm tm;
+#endif
 
+	REQUIRE(t != NULL);
+	INSIST(t->nanoseconds < NS_PER_S);
+	REQUIRE(buf != NULL);
 	REQUIRE(len > 0);
 
 	now = (time_t)t->seconds;
+#ifdef ISC_PLATFORM_USETHREADS
+	flen = strftime(buf, len, "%Y-%m-%dT%H:%M:%SZ", gmtime_r(&now, &tm));
+#else
 	flen = strftime(buf, len, "%Y-%m-%dT%H:%M:%SZ", gmtime(&now));
+#endif
 	INSIST(flen < len);
 }

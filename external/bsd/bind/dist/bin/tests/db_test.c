@@ -1,7 +1,7 @@
-/*	$NetBSD: db_test.c,v 1.9 2016/05/26 16:49:57 christos Exp $	*/
+/*	$NetBSD: db_test.c,v 1.9.14.1 2018/04/16 01:57:38 pgoyette Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007-2009, 2011-2013, 2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007-2009, 2011-2013, 2015, 2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -385,9 +385,7 @@ main(int argc, char *argv[]) {
 	RUNTIME_CHECK(dns_dbtable_create(mctx, dns_rdataclass_in, &dbtable) ==
 		      ISC_R_SUCCESS);
 
-
-
-	strcpy(dbtype, "rbt");
+	snprintf(dbtype, sizeof(dbtype), "rbt");
 	while ((ch = isc_commandline_parse(argc, argv, "c:d:t:z:P:Q:glpqvT"))
 	       != -1) {
 		switch (ch) {

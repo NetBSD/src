@@ -1,5 +1,5 @@
 /* input_scrub.c - Break up input buffers into whole numbers of lines.
-   Copyright (C) 1987-2016 Free Software Foundation, Inc.
+   Copyright (C) 1987-2018 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -61,16 +61,17 @@
 
 static char *buffer_start;	/*->1st char of full buffer area.  */
 static char *partial_where;	/*->after last full line in buffer.  */
-static int partial_size;	/* >=0. Number of chars in partial line in buffer.  */
+static size_t partial_size;	/* >=0. Number of chars in partial line in buffer.  */
 
 /* Because we need AFTER_STRING just after last full line, it clobbers
    1st part of partial line. So we preserve 1st part of partial line
    here.  */
 static char save_source[AFTER_SIZE];
 
-/* What is the largest size buffer that input_file_give_next_buffer()
-   could return to us?  */
-static unsigned int buffer_length;
+/* The size of the input buffer we concatenate
+   input_file_give_next_buffer chunks into.  Excludes the BEFORE and
+   AFTER counts.  */
+static size_t buffer_length;
 
 /* The index into an sb structure we are reading from.  -1 if none.  */
 static size_t sb_index = -1;
@@ -107,7 +108,7 @@ static int logical_input_line;
 struct input_save {
   char *              buffer_start;
   char *              partial_where;
-  int                 partial_size;
+  size_t              partial_size;
   char                save_source[AFTER_SIZE];
   size_t              buffer_length;
   const char *              physical_input_file;
@@ -129,6 +130,20 @@ static char *input_scrub_pop (struct input_save *arg);
    we automatically pop to that file.  */
 
 static struct input_save *next_saved_file;
+
+/* Initialize input buffering.  */
+
+static void
+input_scrub_reinit (void)
+{
+  input_file_begin ();		/* Reinitialize! */
+  logical_input_line = -1;
+  logical_input_file = NULL;
+
+  buffer_length = input_file_buffer_size () * 2;
+  buffer_start = XNEWVEC (char, BEFORE_SIZE + AFTER_SIZE + 1 + buffer_length);
+  memcpy (buffer_start, BEFORE_STRING, (int) BEFORE_SIZE);
+}
 
 /* Push the state of input reading and scrubbing so that we can #include.
    The return value is a 'void *' (fudged for old compilers) to a save
@@ -157,15 +172,9 @@ input_scrub_push (char *saved_position)
   saved->next_saved_file = next_saved_file;
   saved->input_file_save = input_file_push ();
 
-  input_file_begin ();		/* Reinitialize! */
-  logical_input_line = -1;
-  logical_input_file = NULL;
-  buffer_length = input_file_buffer_size ();
   sb_index = -1;
 
-  buffer_start = XNEWVEC (char, (BEFORE_SIZE + buffer_length
-				 + buffer_length + AFTER_SIZE + 1));
-  memcpy (buffer_start, BEFORE_STRING, (int) BEFORE_SIZE);
+  input_scrub_reinit ();
 
   return saved;
 }
@@ -204,19 +213,9 @@ input_scrub_begin (void)
   know (strlen (AFTER_STRING) == AFTER_SIZE
 	|| (AFTER_STRING[0] == '\0' && AFTER_SIZE == 1));
 
-  input_file_begin ();
-
-  buffer_length = input_file_buffer_size ();
-
-  buffer_start = XNEWVEC (char, (BEFORE_SIZE + buffer_length
-				 + buffer_length + AFTER_SIZE + 1));
-  memcpy (buffer_start, BEFORE_STRING, (int) BEFORE_SIZE);
-
-  /* Line number things.  */
-  logical_input_line = -1;
-  logical_input_file = NULL;
   physical_input_file = NULL;	/* No file read yet.  */
   next_saved_file = NULL;	/* At EOF, don't pop to any other file */
+  input_scrub_reinit ();
   do_scrub_begin (flag_m68k_mri);
 }
 
@@ -344,22 +343,21 @@ input_scrub_next_buffer (char **bufp)
 
   if (partial_size)
     {
-      memmove (buffer_start + BEFORE_SIZE, partial_where,
-	       (unsigned int) partial_size);
+      memmove (buffer_start + BEFORE_SIZE, partial_where, partial_size);
       memcpy (buffer_start + BEFORE_SIZE, save_source, AFTER_SIZE);
     }
 
   while (1)
     {
       char *p;
+      char *start = buffer_start + BEFORE_SIZE + partial_size;
 
       *bufp = buffer_start + BEFORE_SIZE;
-      limit = input_file_give_next_buffer (buffer_start
-					   + BEFORE_SIZE
-					   + partial_size);
+      limit = input_file_give_next_buffer (start);
       if (!limit)
 	{
-	  if (partial_size == 0)
+	  if (!partial_size)
+	    /* End of this file.  */
 	    break;
 
 	  as_warn (_("end of file not at end of a line; newline inserted"));
@@ -374,25 +372,32 @@ input_scrub_next_buffer (char **bufp)
 
 	  /* Find last newline.  */
 	  for (p = limit - 1; *p != '\n' || TC_EOL_IN_INSN (p); --p)
-	    ;
+	    if (p < start)
+	      goto read_more;
 	  ++p;
 	}
 
-      if (p != buffer_start + BEFORE_SIZE)
-	{
-	  partial_where = p;
-	  partial_size = limit - p;
-	  memcpy (save_source, partial_where, (int) AFTER_SIZE);
-	  memcpy (partial_where, AFTER_STRING, (int) AFTER_SIZE);
-	  return partial_where;
-	}
+      /* We found a newline in the newly read chars.  */
+      partial_where = p;
+      partial_size = limit - p;
 
+      /* Save the fragment after that last newline.  */
+      memcpy (save_source, partial_where, (int) AFTER_SIZE);
+      memcpy (partial_where, AFTER_STRING, (int) AFTER_SIZE);
+      return partial_where;
+
+    read_more:
+      /* Didn't find a newline.  Read more text.  */
       partial_size = limit - (buffer_start + BEFORE_SIZE);
-      buffer_length += input_file_buffer_size ();
-      buffer_start = XRESIZEVEC (char, buffer_start,
-				 (BEFORE_SIZE
-				  + 2 * buffer_length
-				  + AFTER_SIZE + 1));
+      if (buffer_length - input_file_buffer_size () < partial_size)
+	{
+	  /* Increase the buffer when it doesn't have room for the
+	     next block of input.  */
+	  buffer_length *= 2;
+	  buffer_start = XRESIZEVEC (char, buffer_start,
+				     (buffer_length
+				      + BEFORE_SIZE + AFTER_SIZE + 1));
+	}
     }
 
   /* Tell the listing we've finished the file.  */
@@ -482,6 +487,23 @@ new_logical_line (const char *fname, int line_number)
 }
 
 
+/* Return the current physical input file name and line number, if known  */
+
+const char *
+as_where_physical (unsigned int *linep)
+{
+  if (physical_input_file != NULL)
+    {
+      if (linep != NULL)
+	*linep = physical_input_line;
+      return physical_input_file;
+    }
+
+  if (linep != NULL)
+    *linep = 0;
+  return NULL;
+}
+
 /* Return the current file name and line number.  */
 
 const char *
@@ -494,16 +516,7 @@ as_where (unsigned int *linep)
 	*linep = logical_input_line;
       return logical_input_file;
     }
-  else if (physical_input_file != NULL)
-    {
-      if (linep != NULL)
-	*linep = physical_input_line;
-      return physical_input_file;
-    }
-  else
-    {
-      if (linep != NULL)
-	*linep = 0;
-      return NULL;
-    }
+
+  return as_where_physical (linep);
 }
+

@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.39 2017/10/17 16:24:14 jdolecek Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.39.2.1 2018/04/16 01:59:57 pgoyette Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.39 2017/10/17 16:24:14 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.39.2.1 2018/04/16 01:59:57 pgoyette Exp $");
 
 #include "opt_mvsata.h"
 
@@ -3574,32 +3574,40 @@ mvsata_edma_disable(struct mvsata_port *mvport, int timeout, int wflags)
 {
 	struct ata_channel *chp = &mvport->port_ata_channel;
 	uint32_t status, command;
-	int ms;
+	uint32_t idlestatus = EDMA_S_EDMAIDLE | EDMA_S_ECACHEEMPTY;
+	int t;
 
 	if (MVSATA_EDMA_READ_4(mvport, EDMA_CMD) & EDMA_CMD_EENEDMA) {
-		for (ms = 0; ms < timeout; ms++) {
+
+		timeout = mstohz(timeout + hztoms(1) - 1);
+
+		for (t = 0; ; ++t) {
 			status = MVSATA_EDMA_READ_4(mvport, EDMA_S);
-			if (status & EDMA_S_EDMAIDLE)
+			if ((status & idlestatus) == idlestatus)
 				break;
-			ata_delay(chp, 1, "mvsata_edma1", wflags);
+			if (t >= timeout)
+				break;
+			ata_delay(chp, hztoms(1), "mvsata_edma1", wflags);
 		}
-		if (ms == timeout) {
-			aprint_error("%s:%d:%d: unable to disable EDMA\n",
+		if (t >= timeout) {
+			aprint_error("%s:%d:%d: unable to stop EDMA\n",
 			    device_xname(MVSATA_DEV2(mvport)),
 			    mvport->port_hc->hc, mvport->port);
 			return EBUSY;
 		}
 
-		/* The diable bit (eDsEDMA) is self negated. */
+		/* The disable bit (eDsEDMA) is self negated. */
 		MVSATA_EDMA_WRITE_4(mvport, EDMA_CMD, EDMA_CMD_EDSEDMA);
 
-		for ( ; ms < timeout; ms++) {
+		for (t = 0; ; ++t) {
 			command = MVSATA_EDMA_READ_4(mvport, EDMA_CMD);
 			if (!(command & EDMA_CMD_EENEDMA))
 				break;
-			ata_delay(chp, 1, "mvsata_edma2", wflags);
+			if (t >= timeout)
+				break;
+			ata_delay(chp, hztoms(1), "mvsata_edma2", wflags);
 		}
-		if (ms == timeout) {
+		if (t >= timeout) {
 			aprint_error("%s:%d:%d: unable to re-enable EDMA\n",
 			    device_xname(MVSATA_DEV2(mvport)),
 			    mvport->port_hc->hc, mvport->port);

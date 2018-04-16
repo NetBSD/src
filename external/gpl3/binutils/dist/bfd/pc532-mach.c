@@ -1,5 +1,5 @@
 /* BFD back-end for Mach3/532 a.out-ish binaries.
-   Copyright (C) 1990-2016 Free Software Foundation, Inc.
+   Copyright (C) 1990-2018 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -20,7 +20,7 @@
 
 
 /* Written by Ian Dall
-              19-Apr-94
+	      19-Apr-94
 
    Formerly part of aout-pc532-mach.c. Split out to allow more
    flexibility with multiple formats.  */

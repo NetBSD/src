@@ -1,9 +1,6 @@
-/*	$NetBSD: env_test.c,v 1.3 2014/12/10 04:38:03 christos Exp $	*/
+/*	$NetBSD: env_test.c,v 1.3.14.1 2018/04/16 01:58:03 pgoyette Exp $	*/
 
-/*
- * Automated Testing Framework (atf)
- *
- * Copyright (c) 2007 The NetBSD Foundation, Inc.
+/* Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,17 +23,17 @@
  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
  * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
+ * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.  */
+
+#include "atf-c/detail/env.h"
 
 #include <stdlib.h>
 #include <string.h>
 
 #include <atf-c.h>
 
-#include "env.h"
-#include "test_helpers.h"
-#include "text.h"
+#include "atf-c/detail/test_helpers.h"
+#include "atf-c/detail/text.h"
 
 /* ---------------------------------------------------------------------
  * Test cases for the free functions.
@@ -67,6 +64,25 @@ ATF_TC_BODY(get, tc)
     val = atf_env_get("PATH");
     ATF_REQUIRE(strlen(val) > 0);
     ATF_REQUIRE(strchr(val, ':') != NULL);
+}
+
+ATF_TC(get_with_default);
+ATF_TC_HEAD(get_with_default, tc)
+{
+    atf_tc_set_md_var(tc, "descr", "Tests the atf_env_get_with_default "
+                      "function");
+}
+ATF_TC_BODY(get_with_default, tc)
+{
+    const char *val;
+
+    ATF_REQUIRE(atf_env_has("PATH"));
+
+    val = atf_env_get_with_default("PATH", "unknown");
+    ATF_REQUIRE(strcmp(val, "unknown") != 0);
+
+    val = atf_env_get_with_default("_UNKNOWN_VARIABLE_", "foo bar");
+    ATF_REQUIRE(strcmp(val, "foo bar") == 0);
 }
 
 ATF_TC(set);
@@ -111,6 +127,7 @@ ATF_TP_ADD_TCS(tp)
 {
     ATF_TP_ADD_TC(tp, has);
     ATF_TP_ADD_TC(tp, get);
+    ATF_TP_ADD_TC(tp, get_with_default);
     ATF_TP_ADD_TC(tp, set);
     ATF_TP_ADD_TC(tp, unset);
 

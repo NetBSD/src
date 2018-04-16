@@ -1,7 +1,7 @@
-/*	$NetBSD: server.h,v 1.12 2017/06/15 15:59:37 christos Exp $	*/
+/*	$NetBSD: server.h,v 1.12.4.1 2018/04/16 01:57:37 pgoyette Exp $	*/
 
 /*
- * Copyright (C) 2004-2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -191,8 +191,9 @@ enum {
 	dns_nsstatscounter_sitnomatch = 49,
 	dns_nsstatscounter_sitmatch = 50,
 	dns_nsstatscounter_sitnew = 51,
+	dns_nsstatscounter_keytagopt = 52,
 
-	dns_nsstatscounter_max = 52
+	dns_nsstatscounter_max = 53
 };
 
 void

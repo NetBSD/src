@@ -1,5 +1,5 @@
 /* pe-dll.h: Header file for routines used to build Windows DLLs.
-   Copyright (C) 1999-2016 Free Software Foundation, Inc.
+   Copyright (C) 1999-2018 Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
 
@@ -62,9 +62,9 @@ extern void pe_dll_fill_sections
 extern void pe_exe_fill_sections
   (bfd *, struct bfd_link_info *);
 extern void pe_walk_relocs_of_symbol
-  (struct bfd_link_info *, const char *, int (*) (arelent *, asection *));
+  (struct bfd_link_info *, char *, int (*) (arelent *, asection *, char *));
 extern void pe_create_import_fixup
-  (arelent * rel, asection *, bfd_vma);
+  (arelent * rel, asection *, bfd_vma, char *);
 extern bfd_boolean pe_bfd_is_dll
   (bfd *);
 extern void pe_output_file_set_long_section_names

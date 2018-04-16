@@ -1,7 +1,7 @@
-/*	$NetBSD: keyvalues.h,v 1.5 2014/12/10 04:37:58 christos Exp $	*/
+/*	$NetBSD: keyvalues.h,v 1.5.14.1 2018/04/16 01:57:56 pgoyette Exp $	*/
 
 /*
- * Copyright (C) 2004-2010, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2010, 2012, 2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -75,6 +75,8 @@
 #define DNS_KEYALG_ECCGOST	12
 #define DNS_KEYALG_ECDSA256	13
 #define DNS_KEYALG_ECDSA384	14
+#define DNS_KEYALG_ED25519	15
+#define DNS_KEYALG_ED448	16
 #define DNS_KEYALG_INDIRECT	252
 #define DNS_KEYALG_PRIVATEDNS	253
 #define DNS_KEYALG_PRIVATEOID	254     /*%< Key begins with OID giving alg */
@@ -110,5 +112,11 @@
 
 #define DNS_KEY_ECDSA256SIZE	64
 #define DNS_KEY_ECDSA384SIZE	96
+
+#define DNS_SIG_ED25519SIZE	64
+#define DNS_SIG_ED448SIZE	114
+
+#define DNS_KEY_ED25519SIZE	32
+#define DNS_KEY_ED448SIZE	57
 
 #endif /* DNS_KEYVALUES_H */

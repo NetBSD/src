@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2015, 2016  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2015, 2016, 2018  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -204,11 +204,12 @@ kill -CONT $PID
 for n in 1 2 3 4 5 6 7 8 9; do
     sleep 1
     [ -s dig.out.${t} ] || continue
-    grep "status: NOERROR" dig.out.${t} > /dev/null 2>&1 || {
-        echo "I:test ${t} failed"
-        status=1
-    }
+    grep "status: .*," dig.out.${t} > /dev/null 2>&1 && break
 done
+grep "status: NOERROR" dig.out.${t} > /dev/null 2>&1 || {
+    echo "I:test ${t} failed"
+    status=1
+}
 
 echo "I:check recursive behavior consistency during policy removal races"
 cp ns2/saved.policy.local ns2/db.6a.00.policy.local
@@ -249,11 +250,12 @@ kill -CONT $PID
 for n in 1 2 3 4 5 6 7 8 9; do
     sleep 1
     [ -s dig.out.${t} ] || continue
-    grep "status: NOERROR" dig.out.${t} > /dev/null 2>&1 || {
-        echo "I:test ${t} failed"
-        status=1
-    }
+    grep "status: .*," dig.out.${t} > /dev/null 2>&1 && break
 done
+grep "status: NOERROR" dig.out.${t} > /dev/null 2>&1 || {
+     echo "I:test ${t} failed"
+     status=1
+}
 
 # Check CLIENT-IP behavior
 t=`expr $t + 1`

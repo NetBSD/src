@@ -1,7 +1,7 @@
-/*	$NetBSD: nsecify.c,v 1.7 2016/05/26 16:49:57 christos Exp $	*/
+/*	$NetBSD: nsecify.c,v 1.7.14.1 2018/04/16 01:57:38 pgoyette Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007-2009, 2011, 2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007-2009, 2011, 2015, 2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -190,7 +190,7 @@ nsecify(char *filename) {
 	len = strlen(filename);
 	if (len + 4 + 1 > sizeof(newfilename))
 		fatal("filename too long");
-	sprintf(newfilename, "%s.new", filename);
+	snprintf(newfilename, sizeof(newfilename), "%s.new", filename);
 	result = dns_db_dump(db, NULL, newfilename);
 	check_result(result, "dns_db_dump");
 	dns_db_detach(&db);

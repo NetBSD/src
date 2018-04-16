@@ -1,5 +1,5 @@
 /* BFD back end for Lynx core files
-   Copyright (C) 1993-2016 Free Software Foundation, Inc.
+   Copyright (C) 1993-2018 Free Software Foundation, Inc.
    Written by Stu Grossman of Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -162,11 +162,11 @@ lynx_core_file_p (bfd *abfd)
 			       pagesize + tcontext_size + pss.ssize
 #if defined (SPARC) || defined (__SPARC__)
 			       /* SPARC Lynx seems to start dumping
-                                  the .data section at a page
-                                  boundary.  It's OK to check a
-                                  #define like SPARC here because this
-                                  file can only be compiled on a Lynx
-                                  host.  */
+				  the .data section at a page
+				  boundary.  It's OK to check a
+				  #define like SPARC here because this
+				  file can only be compiled on a Lynx
+				  host.  */
 			       + pss.data_start % pagesize
 #endif
 			       );

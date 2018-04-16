@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2009, 2011, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2009, 2011, 2012, 2014, 2017  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -20,3 +20,4 @@ rm -f pending.key rolling.key standby.key inact.key
 rm -f prerev.key postrev.key oldstyle.key
 rm -f keys sigs
 rm -f tmp.out
+rm -f settime1.test* settime2.test*

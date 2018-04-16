@@ -1,7 +1,7 @@
-/*	$NetBSD: driver.c,v 1.7 2015/12/17 04:00:42 christos Exp $	*/
+/*	$NetBSD: driver.c,v 1.7.14.1 2018/04/16 01:57:39 pgoyette Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007, 2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007, 2015, 2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include <time.h>
 
+#include <isc/platform.h>
 #include <isc/print.h>
 #include <isc/string.h>
 #include <isc/util.h>
@@ -38,19 +39,22 @@
 const char *gettime(void);
 const char *test_result_totext(test_result_t);
 
-/*
- * Not thread safe.
- */
 const char *
 gettime(void) {
 	static char now[512];
 	time_t t;
+#if defined(ISC_PLATFORM_USETHREADS) && !defined(WIN32)
+	struct tm tm;
+#endif
 
 	(void)time(&t);
 
-	strftime(now, sizeof(now) - 1,
-		 "%A %d %B %H:%M:%S %Y",
-		 localtime(&t));
+#if defined(ISC_PLATFORM_USETHREADS) && !defined(WIN32)
+	strftime(now, sizeof(now) - 1, "%A %d %B %H:%M:%S %Y",
+		 localtime_r(&t, &tm));
+#else
+	strftime(now, sizeof(now) - 1, "%A %d %B %H:%M:%S %Y", localtime(&t));
+#endif
 
 	return (now);
 }

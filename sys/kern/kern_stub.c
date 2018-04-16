@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_stub.c,v 1.44.2.2 2018/04/12 22:33:41 pgoyette Exp $	*/
+/*	$NetBSD: kern_stub.c,v 1.44.2.3 2018/04/16 02:00:07 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.44.2.2 2018/04/12 22:33:41 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.44.2.3 2018/04/16 02:00:07 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ktrace.h"
@@ -97,9 +97,9 @@ __strong_alias(msgctl1,enosys);
 #ifndef SYSVSHM
 __strong_alias(shmctl1,enosys);
 #endif
- #ifndef SYSVSEM
+#ifndef SYSVSEM
  __strong_alias(semctl1,enosys);
- #endif
+#endif
 #endif
 
 /*

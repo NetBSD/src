@@ -1,5 +1,5 @@
 /* Renesas / SuperH specific support for Symbian 32-bit ELF files
-   Copyright (C) 2004-2016 Free Software Foundation, Inc.
+   Copyright (C) 2004-2018 Free Software Foundation, Inc.
    Contributed by Red Hat
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -22,7 +22,7 @@
 
 /* Stop elf32-sh.c from defining any target vectors.  */
 #define SH_TARGET_ALREADY_DEFINED
-#define sh_find_elf_flags           sh_symbian_find_elf_flags
+#define sh_find_elf_flags	    sh_symbian_find_elf_flags
 #define sh_elf_get_flags_from_mach  sh_symbian_elf_get_flags_from_mach
 #include "elf32-sh.c"
 
@@ -46,7 +46,7 @@
 	++ s;							\
       if (s >= e)						\
 	{							\
-          if (SYMBIAN_DEBUG)					\
+	  if (SYMBIAN_DEBUG)					\
 	    fprintf (stderr, "Corrupt directive: %s\n", m);	\
 	  result = FALSE;					\
 	}							\
@@ -64,7 +64,7 @@
 	++ s;							\
       if (s >= e)						\
 	{							\
-          if (SYMBIAN_DEBUG)					\
+	  if (SYMBIAN_DEBUG)					\
 	    fprintf (stderr, "Corrupt directive: %s\n", m);	\
 	  result = FALSE;					\
 	}							\
@@ -84,7 +84,7 @@
 	++ s;							\
       if (s >= e)						\
 	{							\
-          if (SYMBIAN_DEBUG)					\
+	  if (SYMBIAN_DEBUG)					\
 	    fprintf (stderr, "Corrupt directive: %s\n", m);	\
 	  result = FALSE;					\
 	}							\
@@ -97,10 +97,10 @@
 typedef struct symbol_rename
 {
   struct symbol_rename *       next;
-  char *                       current_name;
-  char *                       new_name;
+  char *		       current_name;
+  char *		       new_name;
   struct elf_link_hash_entry * current_hash;
-  unsigned long                new_symndx;
+  unsigned long		       new_symndx;
 }
 symbol_rename;
 
@@ -126,6 +126,7 @@ sh_symbian_import_as (struct bfd_link_info *info, bfd * abfd,
 	  return TRUE;
 
 	bfd_set_error (bfd_error_invalid_operation);
+	/* xgettext:c-format */
 	_bfd_error_handler (_("%B: IMPORT AS directive for %s conceals previous IMPORT AS"),
 			    abfd, current_name);
 	return FALSE;
@@ -379,6 +380,7 @@ sh_symbian_process_embedded_commands (struct bfd_link_info *info, bfd * abfd,
 		     (long) (directive - (char *) contents));
 
 	  bfd_set_error (bfd_error_invalid_operation);
+	  /* xgettext:c-format */
 	  _bfd_error_handler (_("%B: Unrecognised .directive command: %s"),
 			      abfd, directive);
 	  break;
@@ -422,26 +424,26 @@ sh_symbian_process_directives (bfd *abfd, struct bfd_link_info *info)
    and magle the relocs to allow for symbol renaming.  */
 
 static bfd_boolean
-sh_symbian_relocate_section (bfd *                  output_bfd,
+sh_symbian_relocate_section (bfd *		    output_bfd,
 			     struct bfd_link_info * info,
-			     bfd *                  input_bfd,
-			     asection *             input_section,
-			     bfd_byte *             contents,
+			     bfd *		    input_bfd,
+			     asection *		    input_section,
+			     bfd_byte *		    contents,
 			     Elf_Internal_Rela *    relocs,
-			     Elf_Internal_Sym *     local_syms,
-			     asection **            local_sections)
+			     Elf_Internal_Sym *	    local_syms,
+			     asection **	    local_sections)
 {
   /* When performing a final link we implement the IMPORT AS directives.  */
   if (!bfd_link_relocatable (info))
     {
-      Elf_Internal_Rela *            rel;
-      Elf_Internal_Rela *            relend;
-      Elf_Internal_Shdr *            symtab_hdr;
+      Elf_Internal_Rela *	     rel;
+      Elf_Internal_Rela *	     relend;
+      Elf_Internal_Shdr *	     symtab_hdr;
       struct elf_link_hash_entry **  sym_hashes;
       struct elf_link_hash_entry **  sym_hashes_end;
       struct elf_link_hash_table *   hash_table;
-      symbol_rename *                ptr;
-      bfd_size_type                  num_global_syms;
+      symbol_rename *		     ptr;
+      bfd_size_type		     num_global_syms;
       unsigned long		     num_local_syms;
 
       BFD_ASSERT (! elf_bad_symtab (input_bfd));
@@ -496,6 +498,7 @@ sh_symbian_relocate_section (bfd *                  output_bfd,
 
 	  if (new_hash == NULL)
 	    {
+	      /* xgettext:c-format */
 	      _bfd_error_handler (_("%B: Failed to add renamed symbol %s"),
 				  input_bfd, ptr->new_name);
 	      continue;
@@ -549,8 +552,8 @@ sh_symbian_relocate_section (bfd *                  output_bfd,
 	   rel < relend;
 	   rel ++)
 	{
-	  int                          r_type;
-	  unsigned long                r_symndx;
+	  int			       r_type;
+	  unsigned long		       r_symndx;
 	  struct elf_link_hash_entry * h;
 
 	  r_symndx = ELF32_R_SYM (rel->r_info);

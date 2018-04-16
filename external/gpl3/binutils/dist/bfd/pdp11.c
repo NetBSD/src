@@ -1,5 +1,5 @@
 /* BFD back-end for PDP-11 a.out binaries.
-   Copyright (C) 2001-2016 Free Software Foundation, Inc.
+   Copyright (C) 2001-2018 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -41,7 +41,7 @@
 #define	SEGMENT__SIZE	TARGET_PAGE_SIZE
 
 #define	DEFAULT_ARCH	bfd_arch_pdp11
-#define	DEFAULT_MID 	M_PDP11
+#define	DEFAULT_MID	M_PDP11
 
 /* Do not "beautify" the CONCAT* macro args.  Traditional C will not
    remove whitespace added here, and thus will fail to concatenate
@@ -79,7 +79,7 @@ struct pdp11_external_exec
   bfd_byte e_entry[2];		/* Start address.  */
   bfd_byte e_unused[2];		/* Not used.  */
   bfd_byte e_flag[2];		/* Relocation info stripped.  */
-  bfd_byte e_relocatable; 	/* Ugly hack.  */
+  bfd_byte e_relocatable;	/* Ugly hack.  */
 };
 
 #define	EXEC_BYTES_SIZE	(8 * 2)
@@ -243,7 +243,7 @@ struct aout_final_link_info
 
 reloc_howto_type howto_table_pdp11[] =
 {
-  /* type              rs size bsz  pcrel bitpos ovrf                     sf name     part_inpl readmask  setmask    pcdone */
+  /* type	       rs size bsz  pcrel bitpos ovrf			  sf name     part_inpl readmask  setmask    pcdone */
 HOWTO( 0,	       0,  1,  16,  FALSE, 0, complain_overflow_signed,0,"16",	TRUE, 0x0000ffff,0x0000ffff, FALSE),
 HOWTO( 1,	       0,  1,  16,  TRUE,  0, complain_overflow_signed,0,"DISP16",	TRUE, 0x0000ffff,0x0000ffff, FALSE),
 };
@@ -252,9 +252,9 @@ HOWTO( 1,	       0,  1,  16,  TRUE,  0, complain_overflow_signed,0,"DISP16",	TRU
 
 
 static bfd_boolean aout_link_check_archive_element (bfd *, struct bfd_link_info *, struct bfd_link_hash_entry *, const char *, bfd_boolean *);
-static bfd_boolean aout_link_add_object_symbols    (bfd *, struct bfd_link_info *);
-static bfd_boolean aout_link_add_symbols           (bfd *, struct bfd_link_info *);
-static bfd_boolean aout_link_write_symbols         (struct aout_final_link_info *, bfd *);
+static bfd_boolean aout_link_add_object_symbols	   (bfd *, struct bfd_link_info *);
+static bfd_boolean aout_link_add_symbols	   (bfd *, struct bfd_link_info *);
+static bfd_boolean aout_link_write_symbols	   (struct aout_final_link_info *, bfd *);
 
 
 reloc_howto_type *
@@ -621,12 +621,12 @@ NAME (aout, some_aout_object_p) (bfd *abfd,
       struct stat stat_buf;
 
       /* The original heuristic doesn't work in some important cases.
-        The a.out file has no information about the text start
-        address.  For files (like kernels) linked to non-standard
-        addresses (ld -Ttext nnn) the entry point may not be between
-        the default text start (obj_textsec(abfd)->vma) and
-        (obj_textsec(abfd)->vma) + text size.  This is not just a mach
-        issue.  Many kernels are loaded at non standard addresses.  */
+	The a.out file has no information about the text start
+	address.  For files (like kernels) linked to non-standard
+	addresses (ld -Ttext nnn) the entry point may not be between
+	the default text start (obj_textsec(abfd)->vma) and
+	(obj_textsec(abfd)->vma) + text size.  This is not just a mach
+	issue.  Many kernels are loaded at non standard addresses.  */
       if (abfd->iostream != NULL
 	  && (abfd->flags & BFD_IN_MEMORY) == 0
 	  && (fstat(fileno((FILE *) (abfd->iostream)), &stat_buf) == 0)
@@ -727,13 +727,13 @@ NAME (aout, machine_type) (enum bfd_architecture arch,
 	case 0:
 	case 2000:
 	case bfd_mach_mips3000:
-          arch_flags = M_MIPS1;
+	  arch_flags = M_MIPS1;
 	  break;
 	case bfd_mach_mips4000: /* MIPS3 */
 	case bfd_mach_mips4400:
 	case bfd_mach_mips8000: /* MIPS4 */
 	case bfd_mach_mips6000: /* Real MIPS2: */
-          arch_flags = M_MIPS2;
+	  arch_flags = M_MIPS2;
 	  break;
 	default:
 	  arch_flags = M_UNKNOWN;
@@ -744,7 +744,7 @@ NAME (aout, machine_type) (enum bfd_architecture arch,
     case bfd_arch_ns32k:
       switch (machine)
 	{
-	case 0:    		arch_flags = M_NS32532; break;
+	case 0:			arch_flags = M_NS32532; break;
 	case 32032:		arch_flags = M_NS32032; break;
 	case 32532:		arch_flags = M_NS32532; break;
 	default:		arch_flags = M_UNKNOWN; break;
@@ -838,8 +838,8 @@ adjust_o_magic (bfd *abfd, struct internal_exec *execp)
   else
     {
       /* The VMA of the .bss section is set by the VMA of the
-         .data section plus the size of the .data section.  We may
-         need to add padding bytes to make this true.  */
+	 .data section plus the size of the .data section.  We may
+	 need to add padding bytes to make this true.  */
       pad = obj_bsssec (abfd)->vma - vma;
       if (pad > 0)
 	{
@@ -887,8 +887,8 @@ adjust_z_magic (bfd *abfd, struct internal_exec *execp)
   else
     {
       /* The .text section is being loaded at an unusual address.  We
-         may need to pad it such that the .data section starts at a page
-         boundary.  */
+	 may need to pad it such that the .data section starts at a page
+	 boundary.  */
       if (ztih)
 	text_pad = ((obj_textsec (abfd)->filepos - obj_textsec (abfd)->vma)
 		    & (adata (abfd).page_size - 1));
@@ -1056,11 +1056,11 @@ NAME (aout, adjust_sizes_and_vmas) (bfd *abfd)
 	      str;
 	    }),
 	   obj_textsec(abfd)->vma, obj_textsec(abfd)->size,
-	   	obj_textsec(abfd)->alignment_power,
+		obj_textsec(abfd)->alignment_power,
 	   obj_datasec(abfd)->vma, obj_datasec(abfd)->size,
-	   	obj_datasec(abfd)->alignment_power,
+		obj_datasec(abfd)->alignment_power,
 	   obj_bsssec(abfd)->vma, obj_bsssec(abfd)->size,
-	   	obj_bsssec(abfd)->alignment_power);
+		obj_bsssec(abfd)->alignment_power);
 #endif
 #endif
 
@@ -1082,9 +1082,9 @@ NAME (aout, adjust_sizes_and_vmas) (bfd *abfd)
 #ifdef BFD_AOUT_DEBUG
   fprintf (stderr, "       text=<%x,%x,%x> data=<%x,%x,%x> bss=<%x,%x>\n",
 	   obj_textsec(abfd)->vma, obj_textsec(abfd)->size,
-	   	obj_textsec(abfd)->filepos,
+		obj_textsec(abfd)->filepos,
 	   obj_datasec(abfd)->vma, obj_datasec(abfd)->size,
-	   	obj_datasec(abfd)->filepos,
+		obj_datasec(abfd)->filepos,
 	   obj_bsssec(abfd)->vma, obj_bsssec(abfd)->size);
 #endif
 
@@ -1147,9 +1147,10 @@ NAME (aout, set_section_contents) (bfd *abfd,
   if (section != obj_textsec (abfd)
       && section != obj_datasec (abfd))
     {
-      (*_bfd_error_handler)
-	("%s: can not represent section `%s' in a.out object file format",
-	 bfd_get_filename (abfd), bfd_get_section_name (abfd, section));
+      _bfd_error_handler
+	/* xgettext:c-format */
+	(_("%B: can not represent section `%A' in a.out object file format"),
+	 abfd, section);
       bfd_set_error (bfd_error_nonrepresentable_section);
       return FALSE;
     }
@@ -1379,8 +1380,9 @@ translate_to_native_sym_flags (bfd *abfd,
     {
       /* This case occurs, e.g., for the *DEBUG* section of a COFF
 	 file.  */
-      (*_bfd_error_handler)
-	("%B: can not represent section for symbol `%s' in a.out object file format",
+      _bfd_error_handler
+	/* xgettext:c-format */
+	(_("%B: can not represent section for symbol `%s' in a.out object file format"),
 	 abfd, cache_ptr->name != NULL ? cache_ptr->name : "*unknown*");
       bfd_set_error (bfd_error_nonrepresentable_section);
       return FALSE;
@@ -1406,8 +1408,9 @@ translate_to_native_sym_flags (bfd *abfd,
     sym_pointer->e_type[0] = N_UNDF | N_EXT;
   else
     {
-      (*_bfd_error_handler)
-	("%B: can not represent section `%A' in a.out object file format",
+      _bfd_error_handler
+	/* xgettext:c-format */
+	(_("%B: can not represent section `%A' in a.out object file format"),
 	 abfd, sec);
       bfd_set_error (bfd_error_nonrepresentable_section);
       return FALSE;
@@ -1735,8 +1738,8 @@ pdp11_aout_swap_reloc_out (bfd *abfd, arelent *g, bfd_byte *natptr)
    to give the true offset from the section */
 
 
-#define MOVE_ADDRESS(ad)       						\
-  if (r_extern) 							\
+#define MOVE_ADDRESS(ad)						\
+  if (r_extern)								\
     {									\
       /* Undefined symbol.  */						\
       cache_ptr->sym_ptr_ptr = symbols + r_index;			\
@@ -1744,7 +1747,7 @@ pdp11_aout_swap_reloc_out (bfd *abfd, arelent *g, bfd_byte *natptr)
     }									\
   else									\
     {									\
-      /* Defined, section relative. replace symbol with pointer to    	\
+      /* Defined, section relative. replace symbol with pointer to	\
 	 symbol which points to section.  */				\
       switch (r_index)							\
 	{								\
@@ -1773,12 +1776,12 @@ pdp11_aout_swap_reloc_out (bfd *abfd, arelent *g, bfd_byte *natptr)
     }
 
 static void
-pdp11_aout_swap_reloc_in (bfd *          abfd,
-			  bfd_byte *     bytes,
-			  arelent *      cache_ptr,
-			  bfd_size_type  offset,
-			  asymbol **     symbols,
-			  bfd_size_type  symcount)
+pdp11_aout_swap_reloc_in (bfd *		 abfd,
+			  bfd_byte *	 bytes,
+			  arelent *	 cache_ptr,
+			  bfd_size_type	 offset,
+			  asymbol **	 symbols,
+			  bfd_size_type	 symcount)
 {
   struct aoutdata *su = &(abfd->tdata.aout_data->a);
   unsigned int r_index;
@@ -1805,7 +1808,7 @@ pdp11_aout_swap_reloc_in (bfd *          abfd,
   if (r_extern && r_index > symcount)
     {
       /* We could arrange to return an error, but it might be useful
-         to see the file even if it is bad.  */
+	 to see the file even if it is bad.  */
       r_extern = 0;
       r_index = N_ABS;
     }
@@ -2596,9 +2599,9 @@ aout_link_check_ar_symbols (bfd *abfd,
 	     definition of the symbol is undefined or common.  If the
 	     current definition is common, we have a case in which we
 	     have already seen an object file including
-	         int a;
+		 int a;
 	     and this object file from the archive includes
-	         int a = 5;
+		 int a = 5;
 	     In such a case we must include this object file.
 
 	     FIXME: The SunOS 4.1.3 linker will pull in the archive
@@ -2950,7 +2953,7 @@ aout_link_write_other_symbol (struct bfd_hash_entry *bh, void *data)
       return TRUE;
     case bfd_link_hash_new:
       /* This can happen for set symbols when sets are not being
-         built.  */
+	 built.  */
       return TRUE;
     case bfd_link_hash_undefined:
       type = N_UNDF | N_EXT;
@@ -2985,6 +2988,7 @@ aout_link_write_other_symbol (struct bfd_hash_entry *bh, void *data)
     case bfd_link_hash_undefweak:
       type = N_WEAKU;
       val = 0;
+      /* Fall through.  */
     case bfd_link_hash_indirect:
     case bfd_link_hash_warning:
       /* FIXME: Ignore these for now.  The circumstances under which
@@ -3330,10 +3334,10 @@ pdp11_aout_link_input_section (struct aout_final_link_info *flaginfo,
 		      if (h != NULL)
 			{
 			  /* We decided to strip this symbol, but it
-                             turns out that we can't.  Note that we
-                             lose the other and desc information here.
-                             I don't think that will ever matter for a
-                             global symbol.  */
+			     turns out that we can't.  Note that we
+			     lose the other and desc information here.
+			     I don't think that will ever matter for a
+			     global symbol.  */
 			  if (h->indx < 0)
 			    {
 			      h->indx = -2;
@@ -3453,8 +3457,8 @@ pdp11_aout_link_input_section (struct aout_final_link_info *flaginfo,
 	    }
 
 	  /* Now warn if a global symbol is undefined.  We could not
-             do this earlier, because check_dynamic_reloc might want
-             to skip this reloc.  */
+	     do this earlier, because check_dynamic_reloc might want
+	     to skip this reloc.  */
 	  if (hundef && ! bfd_link_pic (flaginfo->info))
 	    {
 	      const char *name;
@@ -3699,10 +3703,10 @@ NAME (aout, final_link) (bfd *abfd,
 		 and call get_reloc_upper_bound and canonicalize_reloc to
 		 work out the number of relocs needed, and then multiply
 		 by the reloc size.  */
-	      (*_bfd_error_handler)
-		("%s: relocatable link from %s to %s not supported",
-		 bfd_get_filename (abfd),
-		 sub->xvec->name, abfd->xvec->name);
+	      _bfd_error_handler
+		/* xgettext:c-format */
+		(_("%B: relocatable link from %s to %s not supported"),
+		 abfd, sub->xvec->name, abfd->xvec->name);
 	      bfd_set_error (bfd_error_invalid_operation);
 	      goto error_return;
 	    }
@@ -4042,15 +4046,15 @@ aout_link_write_symbols (struct aout_final_link_info *flaginfo, bfd *input_bfd)
       bfd_boolean copy;
 
       /* We set *symbol_map to 0 above for all symbols.  If it has
-         already been set to -1 for this symbol, it means that we are
-         discarding it because it appears in a duplicate header file.
-         See the N_BINCL code below.  */
+	 already been set to -1 for this symbol, it means that we are
+	 discarding it because it appears in a duplicate header file.
+	 See the N_BINCL code below.  */
       if (*symbol_map == -1)
 	continue;
 
       /* Initialize *symbol_map to -1, which means that the symbol was
-         not copied into the output file.  We will change it later if
-         we do copy the symbol over.  */
+	 not copied into the output file.  We will change it later if
+	 we do copy the symbol over.  */
       *symbol_map = -1;
 
       type = H_GET_8 (input_bfd, sym->e_type);
@@ -4084,7 +4088,7 @@ aout_link_write_symbols (struct aout_final_link_info *flaginfo, bfd *input_bfd)
 	  h = *sym_hash;
 
 	  /* Use the name from the hash table, in case the symbol was
-             wrapped.  */
+	     wrapped.  */
 	  if (h != NULL)
 	    name = h->root.root.string;
 
@@ -4354,8 +4358,8 @@ aout_link_write_symbols (struct aout_final_link_info *flaginfo, bfd *input_bfd)
 		}
 
 	      /* If we have already included a header file with the
-                 same value, then replace this one with an N_EXCL
-                 symbol.  */
+		 same value, then replace this one with an N_EXCL
+		 symbol.  */
 	      copy = ! flaginfo->info->keep_memory;
 	      incl_entry = aout_link_includes_lookup (&flaginfo->includes,
 						      name, TRUE, copy);
@@ -4367,7 +4371,7 @@ aout_link_write_symbols (struct aout_final_link_info *flaginfo, bfd *input_bfd)
 	      if (t == NULL)
 		{
 		  /* This is the first time we have seen this header
-                     file with this set of stabs strings.  */
+		     file with this set of stabs strings.  */
 		  t = bfd_hash_allocate (&flaginfo->includes.root,
 					 sizeof *t);
 		  if (t == NULL)
@@ -4381,8 +4385,8 @@ aout_link_write_symbols (struct aout_final_link_info *flaginfo, bfd *input_bfd)
 		  int *incl_map;
 
 		  /* This is a duplicate header file.  We must change
-                     it to be an N_EXCL entry, and mark all the
-                     included symbols to prevent outputting them.  */
+		     it to be an N_EXCL entry, and mark all the
+		     included symbols to prevent outputting them.  */
 		  type = N_EXCL;
 
 		  nest = 0;
@@ -4515,11 +4519,11 @@ const bfd_target MY (vec) =
   bfd_getl64, bfd_getl_signed_64, bfd_putl64,
      bfd_getp32, bfd_getp_signed_32, bfd_putp32,
      bfd_getl16, bfd_getl_signed_16, bfd_putl16, /* Headers.  */
-    {_bfd_dummy_target, MY_object_p, 		/* bfd_check_format.  */
+    {_bfd_dummy_target, MY_object_p,		/* bfd_check_format.  */
        bfd_generic_archive_p, MY_core_file_p},
     {bfd_false, MY_mkobject,			/* bfd_set_format.  */
        _bfd_generic_mkarchive, bfd_false},
-    {bfd_false, MY_write_object_contents, 	/* bfd_write_contents.  */
+    {bfd_false, MY_write_object_contents,	/* bfd_write_contents.  */
        _bfd_write_archive_contents, bfd_false},
 
      BFD_JUMP_TABLE_GENERIC (MY),

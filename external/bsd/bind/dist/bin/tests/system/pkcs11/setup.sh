@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2010, 2012-2014  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2010, 2012-2014, 2017  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -22,11 +22,10 @@ infile=ns1/example.db.in
 /bin/echo -n ${HSMPIN:-1234}> pin
 PWD=`pwd`
 
-supported=`cat supported`
-
 zone=rsa.example
 zonefile=ns1/rsa.example.db
-if [ "$supported" != "ecconly" ]; then
+have_rsa=`grep rsa supported`
+if [ "x$have_rsa" != "x" ]; then
     $PK11GEN -a RSA -b 1024 -l robie-rsa-zsk1 -i 01
     $PK11GEN -a RSA -b 1024 -l robie-rsa-zsk2 -i 02
     $PK11GEN -a RSA -b 2048 -l robie-rsa-ksk
@@ -50,7 +49,8 @@ fi
 
 zone=ecc.example
 zonefile=ns1/ecc.example.db
-if [ "$supported" != "rsaonly" ]; then
+have_ecc=`grep ecc supported`
+if [ "x$have_ecc" != "x" ]; then
     $PK11GEN -a ECC -b 256 -l robie-ecc-zsk1 -i 03
     $PK11GEN -a ECC -b 256 -l robie-ecc-zsk2 -i 04
     $PK11GEN -a ECC -b 384 -l robie-ecc-ksk
@@ -69,6 +69,34 @@ if [ "$supported" != "rsaonly" ]; then
     mv Kecc* ns1
 else
     # ECC not available and will not be tested; make a placeholder
+    cp $infile ${zonefile}.signed
+fi
+
+zone=ecx.example
+zonefile=ns1/ecx.example.db
+have_ecx=`grep ecx supported`
+if [ "x$have_ecx" != "x" ]; then
+    $PK11GEN -a ECX -b 256 -l robie-ecx-zsk1 -i 05
+    $PK11GEN -a ECX -b 256 -l robie-ecx-zsk2 -i 06
+    $PK11GEN -a ECX -b 256 -l robie-ecx-ksk
+#   $PK11GEN -a ECX -b 456 -l robie-ecx-ksk
+
+    ecxzsk1=`$KEYFRLAB -a ED25519 \
+            -l "object=robie-ecx-zsk1;pin-source=$PWD/pin" ecx.example`
+    ecxzsk2=`$KEYFRLAB -a ED25519 \
+            -l "object=robie-ecx-zsk2;pin-source=$PWD/pin" ecx.example`
+    ecxksk=`$KEYFRLAB -a ED25519 -f ksk \
+            -l "object=robie-ecx-ksk;pin-source=$PWD/pin" ecx.example`
+#   ecxksk=`$KEYFRLAB -a ED448 -f ksk \
+#           -l "object=robie-ecx-ksk;pin-source=$PWD/pin" ecx.example`
+
+    cat $infile $ecxzsk1.key $ecxksk.key > $zonefile
+    $SIGNER -a -P -g -r $RANDFILE -o $zone $zonefile \
+        > /dev/null 2> signer.err || cat signer.err
+    cp $ecxzsk2.key ns1/ecx.key
+    mv Kecx* ns1
+else
+    # ECX not available and will not be tested; make a placeholder
     cp $infile ${zonefile}.signed
 fi
 

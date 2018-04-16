@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.383.2.2 2018/04/07 04:12:19 pgoyette Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.383.2.3 2018/04/16 02:00:09 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.383.2.2 2018/04/07 04:12:19 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.383.2.3 2018/04/16 02:00:09 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -405,8 +405,6 @@ static void tcp4_log_refused(const struct ip *, const struct tcphdr *);
 static void tcp6_log_refused(const struct ip6_hdr *, const struct tcphdr *);
 #endif
 
-#define	TRAVERSE(x) while ((x)->m_next) (x) = (x)->m_next
-
 #if defined(MBUFTRACE)
 struct mowner tcp_reass_mowner = MOWNER_INIT("tcp", "reass");
 #endif /* defined(MBUFTRACE) */
@@ -501,8 +499,7 @@ tcp_reass(struct tcpcb *tp, const struct tcphdr *th, struct mbuf *m, int tlen)
 		if (pkt_seq == p->ipqe_seq + p->ipqe_len) {
 			p->ipqe_len += pkt_len;
 			p->ipqe_flags |= pkt_flags;
-			m_cat(p->ipre_mlast, m);
-			TRAVERSE(p->ipre_mlast);
+			m_cat(p->ipqe_m, m);
 			m = NULL;
 			tiqe = p;
 			TAILQ_REMOVE(&tp->timeq, p, ipqe_timeq);
@@ -533,8 +530,6 @@ tcp_reass(struct tcpcb *tp, const struct tcphdr *th, struct mbuf *m, int tlen)
 			q->ipqe_flags |= pkt_flags;
 			m_cat(m, q->ipqe_m);
 			q->ipqe_m = m;
-			q->ipre_mlast = m; /* last mbuf may have changed */
-			TRAVERSE(q->ipre_mlast);
 			tiqe = q;
 			TAILQ_REMOVE(&tp->timeq, q, ipqe_timeq);
 			TCP_REASS_COUNTER_INCR(&tcp_reass_prependfirst);
@@ -562,8 +557,7 @@ tcp_reass(struct tcpcb *tp, const struct tcphdr *th, struct mbuf *m, int tlen)
 			pkt_len += q->ipqe_len;
 			pkt_flags |= q->ipqe_flags;
 			pkt_seq = q->ipqe_seq;
-			m_cat(q->ipre_mlast, m);
-			TRAVERSE(q->ipre_mlast);
+			m_cat(q->ipqe_m, m);
 			m = q->ipqe_m;
 			TCP_REASS_COUNTER_INCR(&tcp_reass_append);
 			goto free_ipqe;
@@ -629,8 +623,7 @@ tcp_reass(struct tcpcb *tp, const struct tcphdr *th, struct mbuf *m, int tlen)
 			int overlap = q->ipqe_seq + q->ipqe_len - pkt_seq;
 			m_adj(m, overlap);
 			rcvpartdupbyte += overlap;
-			m_cat(q->ipre_mlast, m);
-			TRAVERSE(q->ipre_mlast);
+			m_cat(q->ipqe_m, m);
 			m = q->ipqe_m;
 			pkt_seq = q->ipqe_seq;
 			pkt_len += q->ipqe_len - overlap;
@@ -750,7 +743,6 @@ insert_it:
 	 * Insert the new fragment queue entry into both queues.
 	 */
 	tiqe->ipqe_m = m;
-	tiqe->ipre_mlast = m;
 	tiqe->ipqe_seq = pkt_seq;
 	tiqe->ipqe_len = pkt_len;
 	tiqe->ipqe_flags = pkt_flags;

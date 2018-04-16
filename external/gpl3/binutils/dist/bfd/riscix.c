@@ -1,5 +1,5 @@
 /* BFD back-end for RISC iX (Acorn, arm) binaries.
-   Copyright (C) 1994-2016 Free Software Foundation, Inc.
+   Copyright (C) 1994-2018 Free Software Foundation, Inc.
    Contributed by Richard Earnshaw (rwe@pegasus.esprit.ec.org)
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -27,41 +27,41 @@
 /* The following come from the man page.  */
 #define SHLIBLEN 60
 
-#define MF_IMPURE       00200
-#define MF_SQUEEZED     01000
-#define MF_USES_SL      02000
-#define MF_IS_SL        04000
+#define MF_IMPURE	00200
+#define MF_SQUEEZED	01000
+#define MF_USES_SL	02000
+#define MF_IS_SL	04000
 
 /* Common combinations.  */
 
 /* Demand load (impure text).  */
-#define IMAGIC          (MF_IMPURE | ZMAGIC)
+#define IMAGIC		(MF_IMPURE | ZMAGIC)
 
 /* OMAGIC with large header.
    May contain a ref to a shared lib required by the object.  */
-#define SPOMAGIC        (MF_USES_SL | OMAGIC)
+#define SPOMAGIC	(MF_USES_SL | OMAGIC)
 
 /* A reference to a shared library.
    The text portion of the object contains "overflow text" from
    the shared library to be linked in with an object.  */
-#define SLOMAGIC        (MF_IS_SL | OMAGIC)
+#define SLOMAGIC	(MF_IS_SL | OMAGIC)
 
 /* Sqeezed demand paged.
    NOTE: This interpretation of QMAGIC seems to be at variance
    with that used on other architectures.  */
-#define QMAGIC          (MF_SQUEEZED | ZMAGIC)
+#define QMAGIC		(MF_SQUEEZED | ZMAGIC)
 
 /* Program which uses sl.  */
-#define SPZMAGIC        (MF_USES_SL | ZMAGIC)
+#define SPZMAGIC	(MF_USES_SL | ZMAGIC)
 
 /* Sqeezed ditto.  */
-#define SPQMAGIC        (MF_USES_SL | QMAGIC)
+#define SPQMAGIC	(MF_USES_SL | QMAGIC)
 
 /* Shared lib part of prog.  */
-#define SLZMAGIC        (MF_IS_SL | ZMAGIC)
+#define SLZMAGIC	(MF_IS_SL | ZMAGIC)
 
 /* Sl which uses another.  */
-#define SLPZMAGIC       (MF_USES_SL | SLZMAGIC)
+#define SLPZMAGIC	(MF_USES_SL | SLZMAGIC)
 
 #define N_SHARED_LIB(x) ((x)->a_info & MF_USES_SL)
 
@@ -100,8 +100,8 @@
 #define MY(OP) CONCAT2 (arm_aout_riscix_,OP)
 #define TARGETNAME "a.out-riscix"
 #define N_BADMAG(x) ((((x)->a_info & ~007200) != ZMAGIC) \
-                  && (((x)->a_info & ~006000) != OMAGIC) \
-                  && ((x)->a_info != NMAGIC))
+		  && (((x)->a_info & ~006000) != OMAGIC) \
+		  && ((x)->a_info != NMAGIC))
 #define N_MAGIC(x) ((x)->a_info & ~07200)
 
 #include "sysdep.h"
@@ -112,30 +112,30 @@
   {									    \
     if (adata (abfd).magic == undecided_magic)				    \
       NAME (aout, adjust_sizes_and_vmas) (abfd);			    \
-    									    \
+									    \
     execp->a_syms = bfd_get_symcount (abfd) * EXTERNAL_NLIST_SIZE;	    \
     execp->a_entry = bfd_get_start_address (abfd);			    \
-    									    \
+									    \
     execp->a_trsize = ((obj_textsec (abfd)->reloc_count) *		    \
 		       obj_reloc_entry_size (abfd));			    \
     execp->a_drsize = ((obj_datasec (abfd)->reloc_count) *		    \
 		       obj_reloc_entry_size (abfd));			    \
     NAME (aout, swap_exec_header_out) (abfd, execp, & exec_bytes);	    \
-    									    \
+									    \
     if (bfd_seek (abfd, (file_ptr) 0, SEEK_SET) != 0			    \
 	|| bfd_bwrite ((void *) & exec_bytes, (bfd_size_type) EXEC_BYTES_SIZE,  \
 		      abfd) != EXEC_BYTES_SIZE)				    \
       return FALSE;							    \
     /* Now write out reloc info, followed by syms and strings.  */	    \
 									    \
-    if (bfd_get_outsymbols (abfd) != NULL			    	    \
+    if (bfd_get_outsymbols (abfd) != NULL				    \
 	&& bfd_get_symcount (abfd) != 0)				    \
       {									    \
 	if (bfd_seek (abfd, (file_ptr) (N_SYMOFF (execp)), SEEK_SET) != 0)  \
 	  return FALSE;							    \
 									    \
 	if (! NAME (aout, write_syms) (abfd))				    \
-          return FALSE;							    \
+	  return FALSE;							    \
 									    \
 	if (bfd_seek (abfd, (file_ptr) (N_TRELOFF (execp)), SEEK_SET) != 0) \
 	  return FALSE;							    \
@@ -171,18 +171,18 @@ static const bfd_target *arm_aout_riscix_callback (bfd *);
 
 static reloc_howto_type riscix_std_reloc_howto[] =
 {
-  /* Type              rs size bsz  pcrel bitpos ovrf                     sf name     part_inpl readmask  setmask    pcdone */
-  HOWTO( 0,              0,  0,   8,  FALSE, 0, complain_overflow_bitfield,0,"8",         TRUE, 0x000000ff,0x000000ff, FALSE),
-  HOWTO( 1,              0,  1,   16, FALSE, 0, complain_overflow_bitfield,0,"16",        TRUE, 0x0000ffff,0x0000ffff, FALSE),
-  HOWTO( 2,              0,  2,   32, FALSE, 0, complain_overflow_bitfield,0,"32",        TRUE, 0xffffffff,0xffffffff, FALSE),
-  HOWTO( 3,              2,  3,   26, TRUE,  0, complain_overflow_signed,  riscix_fix_pcrel_26 , "ARM26",      TRUE, 0x00ffffff,0x00ffffff, FALSE),
-  HOWTO( 4,              0,  0,   8,  TRUE,  0, complain_overflow_signed,  0,"DISP8",     TRUE, 0x000000ff,0x000000ff, TRUE),
-  HOWTO( 5,              0,  1,   16, TRUE,  0, complain_overflow_signed,  0,"DISP16",    TRUE, 0x0000ffff,0x0000ffff, TRUE),
-  HOWTO( 6,              0,  2,   32, TRUE,  0, complain_overflow_signed,  0,"DISP32",    TRUE, 0xffffffff,0xffffffff, TRUE),
-  HOWTO( 7,              2,  3,   26, FALSE, 0, complain_overflow_signed,  riscix_fix_pcrel_26_done, "ARM26D",TRUE,0x00ffffff,0x00ffffff, FALSE),
+  /* Type	       rs size bsz  pcrel bitpos ovrf			  sf name     part_inpl readmask  setmask    pcdone */
+  HOWTO( 0,		 0,  0,	  8,  FALSE, 0, complain_overflow_bitfield,0,"8",	  TRUE, 0x000000ff,0x000000ff, FALSE),
+  HOWTO( 1,		 0,  1,	  16, FALSE, 0, complain_overflow_bitfield,0,"16",	  TRUE, 0x0000ffff,0x0000ffff, FALSE),
+  HOWTO( 2,		 0,  2,	  32, FALSE, 0, complain_overflow_bitfield,0,"32",	  TRUE, 0xffffffff,0xffffffff, FALSE),
+  HOWTO( 3,		 2,  3,	  26, TRUE,  0, complain_overflow_signed,  riscix_fix_pcrel_26 , "ARM26",      TRUE, 0x00ffffff,0x00ffffff, FALSE),
+  HOWTO( 4,		 0,  0,	  8,  TRUE,  0, complain_overflow_signed,  0,"DISP8",	  TRUE, 0x000000ff,0x000000ff, TRUE),
+  HOWTO( 5,		 0,  1,	  16, TRUE,  0, complain_overflow_signed,  0,"DISP16",	  TRUE, 0x0000ffff,0x0000ffff, TRUE),
+  HOWTO( 6,		 0,  2,	  32, TRUE,  0, complain_overflow_signed,  0,"DISP32",	  TRUE, 0xffffffff,0xffffffff, TRUE),
+  HOWTO( 7,		 2,  3,	  26, FALSE, 0, complain_overflow_signed,  riscix_fix_pcrel_26_done, "ARM26D",TRUE,0x00ffffff,0x00ffffff, FALSE),
   EMPTY_HOWTO (-1),
-  HOWTO( 9,              0, -1,   16, FALSE, 0, complain_overflow_bitfield,0,"NEG16",     TRUE, 0x0000ffff,0x0000ffff, FALSE),
-  HOWTO( 10,              0, -2,  32, FALSE, 0, complain_overflow_bitfield,0,"NEG32",     TRUE, 0xffffffff,0xffffffff, FALSE)
+  HOWTO( 9,		 0, -1,	  16, FALSE, 0, complain_overflow_bitfield,0,"NEG16",	  TRUE, 0x0000ffff,0x0000ffff, FALSE),
+  HOWTO( 10,		  0, -2,  32, FALSE, 0, complain_overflow_bitfield,0,"NEG32",	  TRUE, 0xffffffff,0xffffffff, FALSE)
 };
 
 #define RISCIX_TABLE_SIZE \
@@ -253,8 +253,8 @@ riscix_reloc_type_lookup (bfd *abfd, bfd_reloc_code_real_type code)
     switch (bfd_arch_bits_per_address (abfd))
       {
       case 32:
-        code = BFD_RELOC_32;
-        break;
+	code = BFD_RELOC_32;
+	break;
       default:
 	return NULL;
       }
@@ -289,14 +289,14 @@ riscix_reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED,
 }
 
 #define MY_bfd_link_hash_table_create  _bfd_generic_link_hash_table_create
-#define MY_bfd_link_add_symbols        _bfd_generic_link_add_symbols
-#define MY_final_link_callback         should_not_be_used
-#define MY_bfd_final_link              _bfd_generic_final_link
+#define MY_bfd_link_add_symbols	       _bfd_generic_link_add_symbols
+#define MY_final_link_callback	       should_not_be_used
+#define MY_bfd_final_link	       _bfd_generic_final_link
 
 #define MY_bfd_reloc_type_lookup       riscix_reloc_type_lookup
 #define MY_bfd_reloc_name_lookup       riscix_reloc_name_lookup
-#define MY_canonicalize_reloc          arm_aout_riscix_canonicalize_reloc
-#define MY_object_p                    arm_aout_riscix_object_p
+#define MY_canonicalize_reloc	       arm_aout_riscix_canonicalize_reloc
+#define MY_object_p		       arm_aout_riscix_object_p
 
 static void
 riscix_swap_std_reloc_out (bfd *abfd,
@@ -592,8 +592,8 @@ riscix_some_aout_object_p (bfd *abfd,
 
     if (abfd->iostream != NULL
 	&& (abfd->flags & BFD_IN_MEMORY) == 0
-        && (fstat(fileno((FILE *) (abfd->iostream)), &stat_buf) == 0)
-        && ((stat_buf.st_mode & 0111) != 0))
+	&& (fstat(fileno((FILE *) (abfd->iostream)), &stat_buf) == 0)
+	&& ((stat_buf.st_mode & 0111) != 0))
       abfd->flags |= EXEC_P;
   }
 #else /* ! MACH */
@@ -620,8 +620,8 @@ riscix_some_aout_object_p (bfd *abfd,
 static const bfd_target *
 MY (object_p) (bfd *abfd)
 {
-  struct external_exec exec_bytes;      /* Raw exec header from file.  */
-  struct internal_exec exec;            /* Cleaned-up exec header.  */
+  struct external_exec exec_bytes;	/* Raw exec header from file.  */
+  struct internal_exec exec;		/* Cleaned-up exec header.  */
   const bfd_target *target;
 
   if (bfd_bread ((void *) &exec_bytes, (bfd_size_type) EXEC_BYTES_SIZE, abfd)

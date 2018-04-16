@@ -1,5 +1,5 @@
 /* BFD back-end for Apollo 68000 COFF binaries.
-   Copyright (C) 1990-2016 Free Software Foundation, Inc.
+   Copyright (C) 1990-2018 Free Software Foundation, Inc.
    By Troy Rollo (troy@cbme.unsw.edu.au)
    Based on m68k standard COFF version Written by Cygnus Support.
 
@@ -34,13 +34,13 @@ extern reloc_howto_type apollocoff_howto_table[];
 #else
 reloc_howto_type apollocoff_howto_table[] =
   {
-    HOWTO (R_RELBYTE,	       0,  0,  	8,  FALSE, 0, complain_overflow_bitfield, 0, "8",	TRUE, 0x000000ff,0x000000ff, FALSE),
-    HOWTO (R_RELWORD,	       0,  1, 	16, FALSE, 0, complain_overflow_bitfield, 0, "16",	TRUE, 0x0000ffff,0x0000ffff, FALSE),
-    HOWTO (R_RELLONG,	       0,  2, 	32, FALSE, 0, complain_overflow_bitfield, 0, "32",	TRUE, 0xffffffff,0xffffffff, FALSE),
-    HOWTO (R_PCRBYTE,	       0,  0, 	8,  TRUE,  0, complain_overflow_signed,   0, "DISP8",   TRUE, 0x000000ff,0x000000ff, FALSE),
-    HOWTO (R_PCRWORD,	       0,  1, 	16, TRUE,  0, complain_overflow_signed,   0, "DISP16",  TRUE, 0x0000ffff,0x0000ffff, FALSE),
-    HOWTO (R_PCRLONG,	       0,  2, 	32, TRUE,  0, complain_overflow_signed,   0, "DISP32",  TRUE, 0xffffffff,0xffffffff, FALSE),
-    HOWTO (R_RELLONG_NEG,      0,  -2, 	32, FALSE, 0, complain_overflow_bitfield, 0, "-32",	TRUE, 0xffffffff,0xffffffff, FALSE),
+    HOWTO (R_RELBYTE,	       0,  0,	8,  FALSE, 0, complain_overflow_bitfield, 0, "8",	TRUE, 0x000000ff,0x000000ff, FALSE),
+    HOWTO (R_RELWORD,	       0,  1,	16, FALSE, 0, complain_overflow_bitfield, 0, "16",	TRUE, 0x0000ffff,0x0000ffff, FALSE),
+    HOWTO (R_RELLONG,	       0,  2,	32, FALSE, 0, complain_overflow_bitfield, 0, "32",	TRUE, 0xffffffff,0xffffffff, FALSE),
+    HOWTO (R_PCRBYTE,	       0,  0,	8,  TRUE,  0, complain_overflow_signed,	  0, "DISP8",	TRUE, 0x000000ff,0x000000ff, FALSE),
+    HOWTO (R_PCRWORD,	       0,  1,	16, TRUE,  0, complain_overflow_signed,	  0, "DISP16",	TRUE, 0x0000ffff,0x0000ffff, FALSE),
+    HOWTO (R_PCRLONG,	       0,  2,	32, TRUE,  0, complain_overflow_signed,	  0, "DISP32",	TRUE, 0xffffffff,0xffffffff, FALSE),
+    HOWTO (R_RELLONG_NEG,      0,  -2,	32, FALSE, 0, complain_overflow_bitfield, 0, "-32",	TRUE, 0xffffffff,0xffffffff, FALSE),
   };
 #endif /* not ONLY_DECLARE_RELOCS */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pkcs11gost_link.c,v 1.1.1.7 2017/06/15 15:22:47 christos Exp $	*/
+/*	$NetBSD: pkcs11gost_link.c,v 1.1.1.7.4.1 2018/04/16 01:57:55 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 2014-2017  Internet Systems Consortium, Inc. ("ISC")
@@ -100,7 +100,7 @@ isc_gost_invalidate(isc_gost_t *ctx) {
 	if (ctx->handle == NULL)
 		return;
 	(void) pkcs_C_DigestFinal(ctx->session, garbage, &len);
-	memset(garbage, 0, sizeof(garbage));
+	isc_safe_memwipe(garbage, sizeof(garbage));
 	pk11_return_session(ctx);
 }
 
@@ -219,8 +219,8 @@ pkcs11gost_createctx_sign(dst_key_t *key, dst_context_t *dctx) {
 
 	for (i = 6; i <= 6; i++)
 		if (keyTemplate[i].pValue != NULL) {
-			memset(keyTemplate[i].pValue, 0,
-			       keyTemplate[i].ulValueLen);
+			isc_safe_memwipe(keyTemplate[i].pValue,
+					 keyTemplate[i].ulValueLen);
 			isc_mem_put(dctx->mctx,
 				    keyTemplate[i].pValue,
 				    keyTemplate[i].ulValueLen);
@@ -233,14 +233,14 @@ pkcs11gost_createctx_sign(dst_key_t *key, dst_context_t *dctx) {
 		(void) pkcs_C_DestroyObject(pk11_ctx->session, pk11_ctx->object);
 	for (i = 6; i <= 6; i++)
 		if (keyTemplate[i].pValue != NULL) {
-			memset(keyTemplate[i].pValue, 0,
-			       keyTemplate[i].ulValueLen);
+			isc_safe_memwipe(keyTemplate[i].pValue,
+					 keyTemplate[i].ulValueLen);
 			isc_mem_put(dctx->mctx,
 				    keyTemplate[i].pValue,
 				    keyTemplate[i].ulValueLen);
 		}
 	pk11_return_session(pk11_ctx);
-	memset(pk11_ctx, 0, sizeof(*pk11_ctx));
+	isc_safe_memwipe(pk11_ctx, sizeof(*pk11_ctx));
 	isc_mem_put(dctx->mctx, pk11_ctx, sizeof(*pk11_ctx));
 
 	return (ret);
@@ -324,8 +324,8 @@ pkcs11gost_createctx_verify(dst_key_t *key, dst_context_t *dctx) {
 
 	for (i = 5; i <= 5; i++)
 		if (keyTemplate[i].pValue != NULL) {
-			memset(keyTemplate[i].pValue, 0,
-			       keyTemplate[i].ulValueLen);
+			isc_safe_memwipe(keyTemplate[i].pValue,
+					 keyTemplate[i].ulValueLen);
 			isc_mem_put(dctx->mctx,
 				    keyTemplate[i].pValue,
 				    keyTemplate[i].ulValueLen);
@@ -338,14 +338,14 @@ pkcs11gost_createctx_verify(dst_key_t *key, dst_context_t *dctx) {
 		(void) pkcs_C_DestroyObject(pk11_ctx->session, pk11_ctx->object);
 	for (i = 5; i <= 5; i++)
 		if (keyTemplate[i].pValue != NULL) {
-			memset(keyTemplate[i].pValue, 0,
-			       keyTemplate[i].ulValueLen);
+			isc_safe_memwipe(keyTemplate[i].pValue,
+					 keyTemplate[i].ulValueLen);
 			isc_mem_put(dctx->mctx,
 				    keyTemplate[i].pValue,
 				    keyTemplate[i].ulValueLen);
 		}
 	pk11_return_session(pk11_ctx);
-	memset(pk11_ctx, 0, sizeof(*pk11_ctx));
+	isc_safe_memwipe(pk11_ctx, sizeof(*pk11_ctx));
 	isc_mem_put(dctx->mctx, pk11_ctx, sizeof(*pk11_ctx));
 
 	return (ret);
@@ -369,7 +369,7 @@ pkcs11gost_destroyctx(dst_context_t *dctx) {
 			(void) pkcs_C_DestroyObject(pk11_ctx->session,
 					       pk11_ctx->object);
 		pk11_return_session(pk11_ctx);
-		memset(pk11_ctx, 0, sizeof(*pk11_ctx));
+		isc_safe_memwipe(pk11_ctx, sizeof(*pk11_ctx));
 		isc_mem_put(dctx->mctx, pk11_ctx, sizeof(*pk11_ctx));
 		dctx->ctxdata.pk11_ctx = NULL;
 	}
@@ -576,7 +576,7 @@ pkcs11gost_generate(dst_key_t *key, int unused, void (*callback)(int)) {
 	(void) pkcs_C_DestroyObject(pk11_ctx->session, priv);
 	(void) pkcs_C_DestroyObject(pk11_ctx->session, pub);
 	pk11_return_session(pk11_ctx);
-	memset(pk11_ctx, 0, sizeof(*pk11_ctx));
+	isc_safe_memwipe(pk11_ctx, sizeof(*pk11_ctx));
 	isc_mem_put(key->mctx, pk11_ctx, sizeof(*pk11_ctx));
 
 	return (ISC_R_SUCCESS);
@@ -588,7 +588,7 @@ pkcs11gost_generate(dst_key_t *key, int unused, void (*callback)(int)) {
 	if (pub != CK_INVALID_HANDLE)
 		(void) pkcs_C_DestroyObject(pk11_ctx->session, pub);
 	pk11_return_session(pk11_ctx);
-	memset(pk11_ctx, 0, sizeof(*pk11_ctx));
+	isc_safe_memwipe(pk11_ctx, sizeof(*pk11_ctx));
 	isc_mem_put(key->mctx, pk11_ctx, sizeof(*pk11_ctx));
 
 	return (ret);
@@ -622,7 +622,8 @@ pkcs11gost_destroy(dst_key_t *key) {
 		case CKA_VALUE:
 		case CKA_VALUE2:
 			if (attr->pValue != NULL) {
-				memset(attr->pValue, 0, attr->ulValueLen);
+				isc_safe_memwipe(attr->pValue,
+						 attr->ulValueLen);
 				isc_mem_put(key->mctx,
 					    attr->pValue,
 					    attr->ulValueLen);
@@ -630,12 +631,11 @@ pkcs11gost_destroy(dst_key_t *key) {
 			break;
 		}
 	if (gost->repr != NULL) {
-		memset(gost->repr, 0, gost->attrcnt * sizeof(*attr));
+		isc_safe_memwipe(gost->repr, gost->attrcnt * sizeof(*attr));
 		isc_mem_put(key->mctx,
-			    gost->repr,
-			    gost->attrcnt * sizeof(*attr));
+			    gost->repr, gost->attrcnt * sizeof(*attr));
 	}
-	memset(gost, 0, sizeof(*gost));
+	isc_safe_memwipe(gost, sizeof(*gost));
 	isc_mem_put(key->mctx, gost, sizeof(*gost));
 	key->keydata.pkey = NULL;
 }
@@ -703,7 +703,8 @@ pkcs11gost_fromdns(dst_key_t *key, isc_buffer_t *data) {
 		switch (attr->type) {
 		case CKA_VALUE:
 			if (attr->pValue != NULL) {
-				memset(attr->pValue, 0, attr->ulValueLen);
+				isc_safe_memwipe(attr->pValue,
+						 attr->ulValueLen);
 				isc_mem_put(key->mctx,
 					    attr->pValue,
 					    attr->ulValueLen);
@@ -711,12 +712,11 @@ pkcs11gost_fromdns(dst_key_t *key, isc_buffer_t *data) {
 			break;
 		}
 	if (gost->repr != NULL) {
-		memset(gost->repr, 0, gost->attrcnt * sizeof(*attr));
+		isc_safe_memwipe(gost->repr, gost->attrcnt * sizeof(*attr));
 		isc_mem_put(key->mctx,
-			    gost->repr,
-			    gost->attrcnt * sizeof(*attr));
+			    gost->repr, gost->attrcnt * sizeof(*attr));
 	}
-	memset(gost, 0, sizeof(*gost));
+	isc_safe_memwipe(gost, sizeof(*gost));
 	isc_mem_put(key->mctx, gost, sizeof(*gost));
 	return (ISC_R_NOMEMORY);
 }
@@ -775,7 +775,7 @@ pkcs11gost_tofile(const dst_key_t *key, const char *directory) {
 	ret = dst__privstruct_writefile(key, &priv, directory);
 
 	if (buf != NULL) {
-		memset(buf, 0, attr->ulValueLen);
+		isc_safe_memwipe(buf, attr->ulValueLen);
 		isc_mem_put(key->mctx, buf, attr->ulValueLen);
 	}
 	return (ret);
@@ -818,7 +818,7 @@ pkcs11gost_tofile(const dst_key_t *key, const char *directory) {
 	ret = dst__privstruct_writefile(key, &priv, directory);
 
 	if (buf != NULL) {
-		memset(buf, 0, attr->ulValueLen);
+		isc_safe_memwipe(buf, attr->ulValueLen);
 		isc_mem_put(key->mctx, buf, attr->ulValueLen);
 	}
 	return (ret);
@@ -850,7 +850,7 @@ pkcs11gost_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 		key->key_size = pub->key_size;
 
 		dst__privstruct_free(&priv, mctx);
-		memset(&priv, 0, sizeof(priv));
+		isc_safe_memwipe(&priv, sizeof(priv));
 
 		return (ISC_R_SUCCESS);
 	}
@@ -909,14 +909,14 @@ pkcs11gost_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 	attr->ulValueLen = priv.elements[0].length;
 
 	dst__privstruct_free(&priv, mctx);
-	memset(&priv, 0, sizeof(priv));
+	isc_safe_memwipe(&priv, sizeof(priv));
 
 	return (ISC_R_SUCCESS);
 
  err:
 	pkcs11gost_destroy(key);
 	dst__privstruct_free(&priv, mctx);
-	memset(&priv, 0, sizeof(priv));
+	isc_safe_memwipe(&priv, sizeof(priv));
 	return (ret);
 }
 

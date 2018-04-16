@@ -1,4 +1,4 @@
-/*	$NetBSD: pk11.c,v 1.1.1.7 2017/06/15 15:22:50 christos Exp $	*/
+/*	$NetBSD: pk11.c,v 1.1.1.7.4.1 2018/04/16 01:57:58 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 2014-2017  Internet Systems Consortium, Inc. ("ISC")
@@ -28,6 +28,7 @@
 #include <isc/platform.h>
 #include <isc/print.h>
 #include <isc/stdio.h>
+#include <isc/string.h>
 #include <isc/thread.h>
 #include <isc/util.h>
 
@@ -40,6 +41,7 @@
 
 #include <pkcs11/cryptoki.h>
 #include <pkcs11/pkcs11.h>
+#include <pkcs11/eddsa.h>
 
 /* was 32 octets, Petr Spacek suggested 1024, SoftHSMv2 uses 256... */
 #ifndef PINLEN
@@ -417,9 +419,13 @@ pk11_get_session(pk11_context_t *ctx, pk11_optype_t optype,
 	/* Override the token's PIN */
 	if (logon && pin != NULL && *pin != '\0') {
 		if (strlen(pin) > PINLEN)
-			return ISC_R_RANGE;
-		memset(token->pin, 0, PINLEN + 1);
-		strncpy(token->pin, pin, PINLEN);
+			return (ISC_R_RANGE);
+		/*
+		 * We want to zero out the old pin before
+		 * overwriting with a new one.
+		 */
+		memset(token->pin, 0, sizeof(token->pin));
+		strlcpy(token->pin, pin, sizeof(token->pin));
 	}
 
 	freelist = &token->sessions;
@@ -881,12 +887,33 @@ scan_slots(void) {
 			PK11_TRACEM(CKM_GOSTR3410_WITH_GOSTR3411);
 		}
 		if (bad)
-			goto try_aes;
+			goto try_eddsa;
 		token->operations |= 1 << OP_GOST;
 		if (best_gost_token == NULL)
 			best_gost_token = token;
 
+	try_eddsa:
+#if defined(CKM_EDDSA_KEY_PAIR_GEN) && defined(CKM_EDDSA) && defined(CKK_EDDSA)
+		bad = ISC_FALSE;
+		rv = pkcs_C_GetMechanismInfo(slot, CKM_EDDSA_KEY_PAIR_GEN,
+					     &mechInfo);
+		if ((rv != CKR_OK) ||
+		    ((mechInfo.flags & CKF_GENERATE_KEY_PAIR) == 0)) {
+			bad = ISC_TRUE;
+			PK11_TRACEM(CKM_EDDSA_KEY_PAIR_GEN);
+		}
+		rv = pkcs_C_GetMechanismInfo(slot, CKM_EDDSA, &mechInfo);
+		if ((rv != CKR_OK) ||
+		    ((mechInfo.flags & CKF_SIGN) == 0) ||
+		    ((mechInfo.flags & CKF_VERIFY) == 0)) {
+			bad = ISC_TRUE;
+			PK11_TRACEM(CKM_EDDSA);
+		}
+		if (bad)
+			goto try_aes;
+
 	try_aes:
+#endif
 		bad = ISC_FALSE;
 		rv = pkcs_C_GetMechanismInfo(slot, CKM_AES_ECB, &mechInfo);
 		if ((rv != CKR_OK) || ((mechInfo.flags & CKF_ENCRYPT) == 0)) {

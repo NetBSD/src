@@ -303,6 +303,36 @@ struct ifi_info *get_ifi_info(int family, int doaliases)
         if ((flags & IFF_UP) == 0)
             continue;   /* ignore if interface not up */
 
+	if ((flags & IFF_LOOPBACK))
+	    continue;	/* ignore loopback interfaces */
+
+	/* Skip addresses we can't use */
+#ifdef SIOCGIFAFLAG_IN
+	if (ifr->ifr_addr.sa_family == AF_INET) {
+		ifrcopy = *ifr;
+		if (ioctl(sockfd, SIOCGIFAFLAG_IN, &ifrcopy) < 0)
+			goto gotError;
+		if (ifrcopy.ifr_addrflags & (IN_IFF_NOTREADY | IN_IFF_DETACHED))
+			continue;
+	}
+#endif
+#ifdef SIOCGIFAFLAG_IN6
+        if (ifr->ifr_addr.sa_family == AF_INET6) {
+		struct in6_ifreq ifr6;
+
+		if (sockf6 == -1)
+			sockf6 = socket(AF_INET6, SOCK_DGRAM, 0);
+		memset(&ifr6, 0, sizeof(ifr6));
+		memcpy(&ifr6.ifr_name, &ifr->ifr_name, sizeof(ifr6.ifr_name));
+		memcpy(&ifr6.ifr_addr, &ifr->ifr_addr, sizeof(ifr6.ifr_addr));
+		if (ioctl(sockf6, SIOCGIFAFLAG_IN6, &ifr6) < 0)
+			goto gotError;
+		if (ifr6.ifr_ifru.ifru_flags6 &
+		    (IN6_IFF_NOTREADY | IN6_IFF_DETACHED))
+			continue;
+	}
+#endif
+
         ifi = (struct ifi_info*)calloc(1, sizeof(struct ifi_info));
         if (ifi == NULL) {
             goto gotError;

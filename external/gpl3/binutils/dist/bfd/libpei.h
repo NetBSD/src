@@ -1,5 +1,5 @@
 /* Support for the generic parts of PE/PEI; common header information.
-   Copyright (C) 1995-2016 Free Software Foundation, Inc.
+   Copyright (C) 1995-2018 Free Software Foundation, Inc.
    Written by Cygnus Solutions.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -207,17 +207,17 @@
 
 #ifdef COFF_WITH_pex64
 
-#define GET_OPTHDR_IMAGE_BASE            H_GET_64
-#define PUT_OPTHDR_IMAGE_BASE            H_PUT_64
+#define GET_OPTHDR_IMAGE_BASE		 H_GET_64
+#define PUT_OPTHDR_IMAGE_BASE		 H_PUT_64
 #define GET_OPTHDR_SIZE_OF_STACK_RESERVE H_GET_64
 #define PUT_OPTHDR_SIZE_OF_STACK_RESERVE H_PUT_64
-#define GET_OPTHDR_SIZE_OF_STACK_COMMIT  H_GET_64
-#define PUT_OPTHDR_SIZE_OF_STACK_COMMIT  H_PUT_64
-#define GET_OPTHDR_SIZE_OF_HEAP_RESERVE  H_GET_64
-#define PUT_OPTHDR_SIZE_OF_HEAP_RESERVE  H_PUT_64
-#define GET_OPTHDR_SIZE_OF_HEAP_COMMIT   H_GET_64
-#define PUT_OPTHDR_SIZE_OF_HEAP_COMMIT   H_PUT_64
-#define GET_PDATA_ENTRY                  bfd_get_32
+#define GET_OPTHDR_SIZE_OF_STACK_COMMIT	 H_GET_64
+#define PUT_OPTHDR_SIZE_OF_STACK_COMMIT	 H_PUT_64
+#define GET_OPTHDR_SIZE_OF_HEAP_RESERVE	 H_GET_64
+#define PUT_OPTHDR_SIZE_OF_HEAP_RESERVE	 H_PUT_64
+#define GET_OPTHDR_SIZE_OF_HEAP_COMMIT	 H_GET_64
+#define PUT_OPTHDR_SIZE_OF_HEAP_COMMIT	 H_PUT_64
+#define GET_PDATA_ENTRY			 bfd_get_32
 
 #define _bfd_XX_bfd_copy_private_bfd_data_common	_bfd_pex64_bfd_copy_private_bfd_data_common
 #define _bfd_XX_bfd_copy_private_section_data		_bfd_pex64_bfd_copy_private_section_data
@@ -338,20 +338,20 @@
 #define coff_final_link_postscript _bfd_XXi_final_link_postscript
 #endif
 
-void        _bfd_XXi_swap_sym_in (bfd *, void *, void *);
+void	    _bfd_XXi_swap_sym_in (bfd *, void *, void *);
 unsigned    _bfd_XXi_swap_sym_out (bfd *, void *, void *);
-void        _bfd_XXi_swap_aux_in (bfd *, void *, int, int, int, int, void *);
+void	    _bfd_XXi_swap_aux_in (bfd *, void *, int, int, int, int, void *);
 unsigned    _bfd_XXi_swap_aux_out (bfd *, void *, int, int, int, int, void *);
-void        _bfd_XXi_swap_lineno_in (bfd *, void *, void *);
+void	    _bfd_XXi_swap_lineno_in (bfd *, void *, void *);
 unsigned    _bfd_XXi_swap_lineno_out (bfd *, void *, void *);
-void        _bfd_XXi_swap_aouthdr_in (bfd *, void *, void *);
+void	    _bfd_XXi_swap_aouthdr_in (bfd *, void *, void *);
 unsigned    _bfd_XXi_swap_aouthdr_out (bfd *, void *, void *);
 unsigned    _bfd_XXi_swap_scnhdr_out (bfd *, void *, void *);
 bfd_boolean _bfd_XX_print_private_bfd_data_common (bfd *, void *);
 bfd_boolean _bfd_XX_bfd_copy_private_bfd_data_common (bfd *, bfd *);
-void        _bfd_XX_get_symbol_info (bfd *, asymbol *, symbol_info *);
+void	    _bfd_XX_get_symbol_info (bfd *, asymbol *, symbol_info *);
 bfd_boolean _bfd_XXi_final_link_postscript (bfd *, struct coff_final_link_info *);
-void        _bfd_XXi_swap_debugdir_in (bfd *, void *, void *);
+void	    _bfd_XXi_swap_debugdir_in (bfd *, void *, void *);
 unsigned    _bfd_XXi_swap_debugdir_out (bfd *, void *, void *);
 unsigned    _bfd_XXi_write_codeview_record (bfd *, file_ptr, CODEVIEW_INFO *);
 CODEVIEW_INFO * _bfd_XXi_slurp_codeview_record (bfd * abfd, file_ptr where, unsigned long length, CODEVIEW_INFO *cvinfo);

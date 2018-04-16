@@ -1,6 +1,6 @@
 /* Initialize "struct disassemble_info".
 
-   Copyright (C) 2003-2016 Free Software Foundation, Inc.
+   Copyright (C) 2003-2018 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 

@@ -1,5 +1,5 @@
 /* D30V-specific support for 32-bit ELF
-   Copyright (C) 1997-2016 Free Software Foundation, Inc.
+   Copyright (C) 1997-2018 Free Software Foundation, Inc.
    Contributed by Martin Hunt (hunt@cygnus.com).
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -56,7 +56,7 @@ bfd_elf_d30v_reloc (bfd *abfd,
     }
 
   r = bfd_elf_generic_reloc (abfd, reloc_entry, symbol, data,
-                             input_section, output_bfd, error_message);
+			     input_section, output_bfd, error_message);
   if (r != bfd_reloc_continue)
     return r;
 
@@ -123,7 +123,7 @@ bfd_elf_d30v_reloc (bfd *abfd,
     }
 
   in1 |= (relocation >> 26) & 0x3F;		/* Top 6 bits.  */
-  in2 |= ((relocation & 0x03FC0000) << 2);  	/* Next 8 bits.  */
+  in2 |= ((relocation & 0x03FC0000) << 2);	/* Next 8 bits.  */
   in2 |= relocation & 0x0003FFFF;		/* Bottom 18 bits.  */
 
   /* Change a PC-relative instruction to its
@@ -164,7 +164,7 @@ bfd_elf_d30v_reloc_21 (bfd *abfd,
     }
 
   r = bfd_elf_generic_reloc (abfd, reloc_entry, symbol, data,
-                             input_section, output_bfd, error_message);
+			     input_section, output_bfd, error_message);
   if (r != bfd_reloc_continue)
     return r;
 
@@ -518,6 +518,7 @@ d30v_info_to_howto_rel (bfd *abfd ATTRIBUTE_UNUSED,
   r_type = ELF32_R_TYPE (dst->r_info);
   if (r_type >= (unsigned int) R_D30V_max)
     {
+      /* xgettext:c-format */
       _bfd_error_handler (_("%B: invalid D30V reloc number: %d"), abfd, r_type);
       r_type = 0;
     }
@@ -536,6 +537,7 @@ d30v_info_to_howto_rela (bfd *abfd ATTRIBUTE_UNUSED,
   r_type = ELF32_R_TYPE (dst->r_info);
   if (r_type >= (unsigned int) R_D30V_max)
     {
+      /* xgettext:c-format */
       _bfd_error_handler (_("%B: invalid D30V reloc number: %d"), abfd, r_type);
       r_type = 0;
     }
@@ -547,7 +549,7 @@ d30v_info_to_howto_rela (bfd *abfd ATTRIBUTE_UNUSED,
 #define ELF_MACHINE_ALT1	EM_CYGNUS_D30V
 #define ELF_MAXPAGESIZE		0x1000
 
-#define TARGET_BIG_SYM          d30v_elf32_vec
+#define TARGET_BIG_SYM		d30v_elf32_vec
 #define TARGET_BIG_NAME		"elf32-d30v"
 
 #define elf_info_to_howto	d30v_info_to_howto_rela

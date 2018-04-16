@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_mod.c,v 1.24.14.31 2018/03/31 10:01:58 pgoyette Exp $	*/
+/*	$NetBSD: compat_mod.c,v 1.24.14.32 2018/04/16 01:59:56 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.24.14.31 2018/03/31 10:01:58 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.24.14.32 2018/04/16 01:59:56 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -270,7 +270,6 @@ compat_modcmd(modcmd_t cmd, void *arg)
 				return error;
 			}
 		}
-
 		return 0;
 
 	default:

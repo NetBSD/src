@@ -294,6 +294,9 @@
     <ClCompile Include="..\opensslecdsa_link.c">
       <Filter>Dst Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\openssleddsa_link.c">
+      <Filter>Dst Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="..\opensslgost_link.c">
       <Filter>Dst Source Files</Filter>
     </ClCompile>
@@ -312,6 +315,9 @@
       <Filter>Dst Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\pkcs11ecdsa_link.c">
+      <Filter>Dst Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pkcs11eddsa_link.c">
       <Filter>Dst Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\pkcs11gost_link.c">

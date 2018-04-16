@@ -1,5 +1,5 @@
 /* BFD back-end for HPPA BSD core files.
-   Copyright (C) 1993-2016 Free Software Foundation, Inc.
+   Copyright (C) 1993-2018 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -227,7 +227,7 @@ const bfd_target core_hppabsd_vec =
      HAS_LINENO | HAS_DEBUG |
      HAS_SYMS | HAS_LOCALS | WP_TEXT | D_PAGED),
     (SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_RELOC), /* section flags */
-    0,			                                   /* symbol prefix */
+    0,							   /* symbol prefix */
     ' ',						   /* ar_pad_char */
     16,							   /* ar_max_namelen */
     NO_GET64, NO_GETS64, NO_PUT64,	/* 64 bit data */

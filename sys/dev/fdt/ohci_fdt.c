@@ -1,4 +1,4 @@
-/* $NetBSD: ohci_fdt.c,v 1.1 2017/06/29 17:04:53 jmcneill Exp $ */
+/* $NetBSD: ohci_fdt.c,v 1.1.10.1 2018/04/16 01:59:57 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_fdt.c,v 1.1 2017/06/29 17:04:53 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_fdt.c,v 1.1.10.1 2018/04/16 01:59:57 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -109,8 +109,6 @@ ohci_fdt_attach(device_t parent, device_t self, void *aux)
 	sc->sc_bus.ub_hcpriv = sc;
 	sc->sc_bus.ub_dmatag = faa->faa_dmat;
 	sc->sc_flags = 0;
-	sc->sc_id_vendor = 0;
-	strlcpy(sc->sc_vendor, "Generic", sizeof(sc->sc_vendor));
 	sc->sc_size = size;
 	sc->iot = faa->faa_bst;
 	if (bus_space_map(sc->iot, addr, size, 0, &sc->ioh) != 0) {

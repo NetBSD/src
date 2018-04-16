@@ -1,7 +1,7 @@
-/*	$NetBSD: t_dst.c,v 1.11 2017/06/15 15:59:38 christos Exp $	*/
+/*	$NetBSD: t_dst.c,v 1.11.4.1 2018/04/16 01:57:39 pgoyette Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007-2009, 2011-2014, 2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007-2009, 2011-2014, 2016, 2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -37,6 +37,7 @@
 #include <isc/entropy.h>
 #include <isc/file.h>
 #include <isc/mem.h>
+#include <isc/print.h>
 #include <isc/region.h>
 #include <isc/stdio.h>
 #include <isc/string.h>
@@ -391,7 +392,8 @@ io(dns_name_t *name, isc_uint16_t id, isc_uint16_t alg, int type,
 	cleandir(tmp);
 
  failure:
-	dst_key_free(&key);
+	if (key != NULL)
+		dst_key_free(&key);
 }
 
 static void

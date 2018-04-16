@@ -1,4 +1,4 @@
-/*	$NetBSD: obio_ehci.c,v 1.4 2016/04/23 10:15:28 skrll Exp $	*/
+/*	$NetBSD: obio_ehci.c,v 1.4.16.1 2018/04/16 01:59:53 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio_ehci.c,v 1.4 2016/04/23 10:15:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio_ehci.c,v 1.4.16.1 2018/04/16 01:59:53 pgoyette Exp $");
 
 #include "locators.h"
 
@@ -45,8 +45,6 @@ __KERNEL_RCSID(0, "$NetBSD: obio_ehci.c,v 1.4 2016/04/23 10:15:28 skrll Exp $");
 
 #include <arm/gemini/gemini_reg.h>
 #include <arm/gemini/gemini_obiovar.h>
-
-#include <dev/pci/pcidevs.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
@@ -131,10 +129,6 @@ ehci_obio_attach(device_t parent, device_t self, void *aux)
 	}
 
 	sc->sc_bus.ub_revision = USBREV_2_0;
-
-	/* Figure out vendor for root hub descriptor. */
-	sc->sc_id_vendor = PCI_VENDOR_FARADAY;
-	strlcpy(sc->sc_vendor, "SL351x", sizeof(sc->sc_vendor));
 
 	int err = ehci_init(sc);
 	if (err) {

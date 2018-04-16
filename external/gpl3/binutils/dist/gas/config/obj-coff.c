@@ -1,5 +1,5 @@
 /* coff object file format
-   Copyright (C) 1989-2016 Free Software Foundation, Inc.
+   Copyright (C) 1989-2018 Free Software Foundation, Inc.
 
    This file is part of GAS.
 
@@ -929,7 +929,7 @@ obj_coff_size (int ignore ATTRIBUTE_UNUSED)
 {
   if (def_symbol_in_progress == NULL)
     {
-      as_warn (_(".size pseudo-op used outside of .def/.endef ignored."));
+      as_warn (_(".size pseudo-op used outside of .def/.endef: ignored."));
       demand_empty_rest_of_line ();
       return;
     }
@@ -944,7 +944,7 @@ obj_coff_scl (int ignore ATTRIBUTE_UNUSED)
 {
   if (def_symbol_in_progress == NULL)
     {
-      as_warn (_(".scl pseudo-op used outside of .def/.endef ignored."));
+      as_warn (_(".scl pseudo-op used outside of .def/.endef: ignored."));
       demand_empty_rest_of_line ();
       return;
     }
@@ -961,7 +961,7 @@ obj_coff_tag (int ignore ATTRIBUTE_UNUSED)
 
   if (def_symbol_in_progress == NULL)
     {
-      as_warn (_(".tag pseudo-op used outside of .def/.endef ignored."));
+      as_warn (_(".tag pseudo-op used outside of .def/.endef: ignored."));
       demand_empty_rest_of_line ();
       return;
     }
@@ -991,7 +991,7 @@ obj_coff_type (int ignore ATTRIBUTE_UNUSED)
 {
   if (def_symbol_in_progress == NULL)
     {
-      as_warn (_(".type pseudo-op used outside of .def/.endef ignored."));
+      as_warn (_(".type pseudo-op used outside of .def/.endef: ignored."));
       demand_empty_rest_of_line ();
       return;
     }
@@ -1010,7 +1010,7 @@ obj_coff_val (int ignore ATTRIBUTE_UNUSED)
 {
   if (def_symbol_in_progress == NULL)
     {
-      as_warn (_(".val pseudo-op used outside of .def/.endef ignored."));
+      as_warn (_(".val pseudo-op used outside of .def/.endef: ignored."));
       demand_empty_rest_of_line ();
       return;
     }

@@ -1,7 +1,7 @@
-/*	$NetBSD: isctest.c,v 1.1.1.7 2014/12/10 03:34:44 christos Exp $	*/
+/*	$NetBSD: isctest.c,v 1.1.1.7.14.1 2018/04/16 01:57:59 pgoyette Exp $	*/
 
 /*
- * Copyright (C) 2011-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2011-2014, 2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -150,8 +150,6 @@ isc_test_end(void) {
 		isc_task_detach(&maintask);
 	if (taskmgr != NULL)
 		isc_taskmgr_destroy(&taskmgr);
-	if (lctx != NULL)
-		isc_log_destroy(&lctx);
 	if (hash_active) {
 		isc_hash_destroy();
 		hash_active = ISC_FALSE;
@@ -161,6 +159,8 @@ isc_test_end(void) {
 
 	cleanup_managers();
 
+	if (lctx != NULL)
+		isc_log_destroy(&lctx);
 	if (mctx != NULL)
 		isc_mem_destroy(&mctx);
 }

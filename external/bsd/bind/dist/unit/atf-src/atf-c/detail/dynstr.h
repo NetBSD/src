@@ -1,9 +1,6 @@
-/*	$NetBSD: dynstr.h,v 1.3 2014/12/10 04:38:03 christos Exp $	*/
+/*	$NetBSD: dynstr.h,v 1.3.14.1 2018/04/16 01:58:03 pgoyette Exp $	*/
 
-/*
- * Automated Testing Framework (atf)
- *
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+/* Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,11 +23,10 @@
  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
  * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
+ * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.  */
 
-#if !defined(ATF_C_DYNSTR_H)
-#define ATF_C_DYNSTR_H
+#if !defined(ATF_C_DETAIL_DYNSTR_H)
+#define ATF_C_DETAIL_DYNSTR_H
 
 #include <stdarg.h>
 #include <stdbool.h>
@@ -80,4 +76,4 @@ atf_error_t atf_dynstr_prepend_fmt(atf_dynstr_t *, const char *, ...);
 bool atf_equal_dynstr_cstring(const atf_dynstr_t *, const char *);
 bool atf_equal_dynstr_dynstr(const atf_dynstr_t *, const atf_dynstr_t *);
 
-#endif /* ATF_C_DYNSTR_H */
+#endif /* !defined(ATF_C_DETAIL_DYNSTR_H) */

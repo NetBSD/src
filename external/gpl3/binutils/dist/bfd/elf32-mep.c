@@ -1,5 +1,5 @@
 /* MeP-specific support for 32-bit ELF.
-   Copyright (C) 2001-2016 Free Software Foundation, Inc.
+   Copyright (C) 2001-2018 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -39,30 +39,30 @@
 static reloc_howto_type mep_elf_howto_table [] =
 {
   /* type, size, bits, leftshift, rightshift, pcrel, OD/OS/OU, mask.  */
-  MEPREL (R_MEP_NONE,     3,  0, 0, 0, 0, N, 0),
-  MEPREL (R_RELC,         0,  0, 0, 0, 0, N, 0),
+  MEPREL (R_MEP_NONE,	  3,  0, 0, 0, 0, N, 0),
+  MEPREL (R_RELC,	  0,  0, 0, 0, 0, N, 0),
   /* MEPRELOC:HOWTO */
     /* This section generated from bfd/mep-relocs.pl from include/elf/mep.h.  */
-  MEPREL (R_MEP_8,        0,  8, 0, 0, 0, U, 0xff),
-  MEPREL (R_MEP_16,       1, 16, 0, 0, 0, U, 0xffff),
-  MEPREL (R_MEP_32,       2, 32, 0, 0, 0, U, 0xffffffff),
+  MEPREL (R_MEP_8,	  0,  8, 0, 0, 0, U, 0xff),
+  MEPREL (R_MEP_16,	  1, 16, 0, 0, 0, U, 0xffff),
+  MEPREL (R_MEP_32,	  2, 32, 0, 0, 0, U, 0xffffffff),
   MEPREL (R_MEP_PCREL8A2, 1,  8, 1, 1, 1, S, 0x00fe),
   MEPREL (R_MEP_PCREL12A2,1, 12, 1, 1, 1, S, 0x0ffe),
   MEPREL (R_MEP_PCREL17A2,2, 17, 0, 1, 1, S, 0x0000ffff),
   MEPREL (R_MEP_PCREL24A2,2, 24, 0, 1, 1, S, 0x07f0ffff),
   MEPREL (R_MEP_PCABS24A2,2, 24, 0, 1, 0, U, 0x07f0ffff),
-  MEPREL (R_MEP_LOW16,    2, 16, 0, 0, 0, N, 0x0000ffff),
-  MEPREL (R_MEP_HI16U,    2, 32, 0,16, 0, N, 0x0000ffff),
-  MEPREL (R_MEP_HI16S,    2, 32, 0,16, 0, N, 0x0000ffff),
-  MEPREL (R_MEP_GPREL,    2, 16, 0, 0, 0, S, 0x0000ffff),
-  MEPREL (R_MEP_TPREL,    2, 16, 0, 0, 0, S, 0x0000ffff),
-  MEPREL (R_MEP_TPREL7,   1,  7, 0, 0, 0, U, 0x007f),
+  MEPREL (R_MEP_LOW16,	  2, 16, 0, 0, 0, N, 0x0000ffff),
+  MEPREL (R_MEP_HI16U,	  2, 32, 0,16, 0, N, 0x0000ffff),
+  MEPREL (R_MEP_HI16S,	  2, 32, 0,16, 0, N, 0x0000ffff),
+  MEPREL (R_MEP_GPREL,	  2, 16, 0, 0, 0, S, 0x0000ffff),
+  MEPREL (R_MEP_TPREL,	  2, 16, 0, 0, 0, S, 0x0000ffff),
+  MEPREL (R_MEP_TPREL7,	  1,  7, 0, 0, 0, U, 0x007f),
   MEPREL (R_MEP_TPREL7A2, 1,  7, 1, 1, 0, U, 0x007e),
   MEPREL (R_MEP_TPREL7A4, 1,  7, 2, 2, 0, U, 0x007c),
-  MEPREL (R_MEP_UIMM24,   2, 24, 0, 0, 0, U, 0x00ffffff),
+  MEPREL (R_MEP_UIMM24,	  2, 24, 0, 0, 0, U, 0x00ffffff),
   MEPREL (R_MEP_ADDR24A4, 2, 24, 0, 2, 0, U, 0x00fcffff),
   MEPREL (R_MEP_GNU_VTINHERIT,1,  0,16,32, 0, N, 0x0000),
-  MEPREL (R_MEP_GNU_VTENTRY,1,  0,16,32, 0, N, 0x0000),
+  MEPREL (R_MEP_GNU_VTENTRY,1,	0,16,32, 0, N, 0x0000),
   /* MEPRELOC:END */
 };
 
@@ -136,14 +136,15 @@ mep_reloc_type_lookup
 
     default:
       /* Pacify gcc -Wall.  */
-      (*_bfd_error_handler) (_("mep: no reloc for code %d"), code);
+      _bfd_error_handler (_("mep: no reloc for code %d"), code);
       return NULL;
     }
 
   if (mep_elf_howto_table[type].type != type)
     {
-      (*_bfd_error_handler) (_("MeP: howto %d has type %d"),
-			     type, mep_elf_howto_table[type].type);
+      /* xgettext:c-format */
+      _bfd_error_handler (_("MeP: howto %d has type %d"),
+			  type, mep_elf_howto_table[type].type);
       abort ();
     }
 
@@ -212,12 +213,12 @@ mep_sdaoff_base (bfd_vma ofs)
 
 static bfd_reloc_status_type
 mep_final_link_relocate
-    (reloc_howto_type *  howto,
-     bfd *               input_bfd,
-     asection *          input_section,
-     bfd_byte *          contents,
+    (reloc_howto_type *	 howto,
+     bfd *		 input_bfd,
+     asection *		 input_section,
+     bfd_byte *		 contents,
      Elf_Internal_Rela * rel,
-     bfd_vma             relocation)
+     bfd_vma		 relocation)
 {
   unsigned long u;
   long s;
@@ -376,8 +377,8 @@ mep_final_link_relocate
 
 static void
 mep_info_to_howto_rela
-    (bfd *               abfd ATTRIBUTE_UNUSED,
-     arelent *           cache_ptr,
+    (bfd *		 abfd ATTRIBUTE_UNUSED,
+     arelent *		 cache_ptr,
      Elf_Internal_Rela * dst)
 {
   unsigned int r_type;
@@ -385,6 +386,7 @@ mep_info_to_howto_rela
   r_type = ELF32_R_TYPE (dst->r_info);
   if (r_type >= R_MEP_max)
     {
+      /* xgettext:c-format */
       _bfd_error_handler (_("%B: invalid MEP reloc number: %d"), abfd, r_type);
       r_type = 0;
     }
@@ -426,19 +428,19 @@ mep_info_to_howto_rela
 
 static bfd_boolean
 mep_elf_relocate_section
-    (bfd *                   output_bfd ATTRIBUTE_UNUSED,
+    (bfd *		     output_bfd ATTRIBUTE_UNUSED,
      struct bfd_link_info *  info,
-     bfd *                   input_bfd,
-     asection *              input_section,
-     bfd_byte *              contents,
+     bfd *		     input_bfd,
+     asection *		     input_section,
+     bfd_byte *		     contents,
      Elf_Internal_Rela *     relocs,
-     Elf_Internal_Sym *      local_syms,
-     asection **             local_sections)
+     Elf_Internal_Sym *	     local_syms,
+     asection **	     local_sections)
 {
-  Elf_Internal_Shdr *           symtab_hdr;
+  Elf_Internal_Shdr *		symtab_hdr;
   struct elf_link_hash_entry ** sym_hashes;
-  Elf_Internal_Rela *           rel;
-  Elf_Internal_Rela *           relend;
+  Elf_Internal_Rela *		rel;
+  Elf_Internal_Rela *		relend;
 
   symtab_hdr = & elf_tdata (input_bfd)->symtab_hdr;
   sym_hashes = elf_sym_hashes (input_bfd);
@@ -448,15 +450,15 @@ mep_elf_relocate_section
 
   for (rel = relocs; rel < relend; rel ++)
     {
-      reloc_howto_type *           howto;
-      unsigned long                r_symndx;
-      Elf_Internal_Sym *           sym;
-      asection *                   sec;
+      reloc_howto_type *	   howto;
+      unsigned long		   r_symndx;
+      Elf_Internal_Sym *	   sym;
+      asection *		   sec;
       struct elf_link_hash_entry * h;
-      bfd_vma                      relocation;
-      bfd_reloc_status_type        r;
-      const char *                 name = NULL;
-      int                          r_type;
+      bfd_vma			   relocation;
+      bfd_reloc_status_type	   r;
+      const char *		   name = NULL;
+      int			   r_type;
 
       r_type = ELF32_R_TYPE (rel->r_info);
       r_symndx = ELF32_R_SYM (rel->r_info);
@@ -568,21 +570,22 @@ mep_elf_set_private_flags (bfd *    abfd,
    object file when linking.  */
 
 static bfd_boolean
-mep_elf_merge_private_bfd_data (bfd * ibfd, bfd * obfd)
+mep_elf_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
 {
+  bfd *obfd = info->output_bfd;
   static bfd *last_ibfd = 0;
   flagword old_flags, new_flags;
   flagword old_partial, new_partial;
 
   /* Check if we have the same endianness.  */
-  if (_bfd_generic_verify_endian_match (ibfd, obfd) == FALSE)
+  if (!_bfd_generic_verify_endian_match (ibfd, info))
     return FALSE;
 
   new_flags = elf_elfheader (ibfd)->e_flags;
   old_flags = elf_elfheader (obfd)->e_flags;
 
 #ifdef DEBUG
-  _bfd_error_handler ("%B: old_flags = 0x%.8lx, new_flags = 0x%.8lx, init = %s",
+  _bfd_error_handler ("%B: old_flags = 0x%.8x, new_flags = 0x%.8x, init = %s",
 		      ibfd, old_flags, new_flags, elf_flags_init (obfd) ? "yes" : "no");
 #endif
 
@@ -613,7 +616,9 @@ mep_elf_merge_private_bfd_data (bfd * ibfd, bfd * obfd)
 	old_flags = (old_flags & ~EF_MEP_CPU_MASK) | new_partial;
       else
 	{
-	  _bfd_error_handler (_("%B and %B are for different cores"), last_ibfd, ibfd);
+	  /* xgettext:c-format */
+	  _bfd_error_handler (_("%B and %B are for different cores"),
+			      last_ibfd, ibfd);
 	  bfd_set_error (bfd_error_invalid_target);
 	  return FALSE;
 	}
@@ -630,7 +635,9 @@ mep_elf_merge_private_bfd_data (bfd * ibfd, bfd * obfd)
 	old_flags = (old_flags & ~EF_MEP_INDEX_MASK) | new_partial;
       else
 	{
-	  _bfd_error_handler (_("%B and %B are for different configurations"), last_ibfd, ibfd);
+	  /* xgettext:c-format */
+	  _bfd_error_handler (_("%B and %B are for different configurations"),
+			      last_ibfd, ibfd);
 	  bfd_set_error (bfd_error_invalid_target);
 	  return FALSE;
 	}
@@ -716,9 +723,9 @@ mep_elf_section_flags (flagword * flags, const Elf_Internal_Shdr * hdr)
 }
 
 static bfd_boolean
-mep_elf_fake_sections (bfd *               abfd ATTRIBUTE_UNUSED,
+mep_elf_fake_sections (bfd *		   abfd ATTRIBUTE_UNUSED,
 		       Elf_Internal_Shdr * hdr,
-		       asection *          sec)
+		       asection *	   sec)
 {
   if (sec->flags & SEC_MEP_VLIW)
     hdr->sh_flags |= SHF_MEP_VLIW;
@@ -739,7 +746,7 @@ mep_elf_fake_sections (bfd *               abfd ATTRIBUTE_UNUSED,
 #define elf_info_to_howto_rel			NULL
 #define elf_info_to_howto			mep_info_to_howto_rela
 #define elf_backend_relocate_section		mep_elf_relocate_section
-#define elf_backend_object_p		        mep_elf_object_p
+#define elf_backend_object_p			mep_elf_object_p
 #define elf_backend_section_flags		mep_elf_section_flags
 #define elf_backend_fake_sections		mep_elf_fake_sections
 

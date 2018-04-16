@@ -1,7 +1,7 @@
-/*	$NetBSD: rndc.c,v 1.15 2017/06/15 15:59:37 christos Exp $	*/
+/*	$NetBSD: rndc.c,v 1.15.4.1 2018/04/16 01:57:38 pgoyette Exp $	*/
 
 /*
- * Copyright (C) 2004-2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2016, 2018  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -129,7 +129,7 @@ command is one of the following:\n\
   notify zone [class [view]]\n\
 		Resend NOTIFY messages for the zone.\n\
   notrace	Set debugging level to 0.\n\
-  querylog newstate\n\
+  querylog [ on | off ]\n\
 		Enable / disable query logging.\n\
   reconfig	Reload configuration file and new zones only.\n\
   recursing	Dump the queries that are currently recursing (named.recursing)\n\
@@ -178,7 +178,7 @@ command is one of the following:\n\
 		Delete a TKEY-negotiated TSIG key.\n\
   tsig-list	List all currently active TSIG keys, including both statically\n\
 		configured and TKEY-negotiated keys.\n\
-  validation newstate [view]\n\
+  validation [ yes | no | status ] [view]\n\
 		Enable / disable DNSSEC validation.\n\
   zonestatus zone [class [view]]\n\
 		Display the current status of a zone.\n\

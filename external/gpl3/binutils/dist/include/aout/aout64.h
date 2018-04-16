@@ -1,6 +1,6 @@
 /* `a.out' object-file definitions, including extensions to 64-bit fields
 
-   Copyright (C) 1999-2016 Free Software Foundation, Inc.
+   Copyright (C) 1999-2018 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -346,7 +346,7 @@ struct internal_nlist
 
 struct reloc_std_external
 {
-  bfd_byte r_address[BYTES_IN_WORD];	/* Offset of of data to relocate.  */
+  bfd_byte r_address[BYTES_IN_WORD];	/* Offset of data to relocate.  */
   bfd_byte r_index[3];			/* Symbol table index of symbol.  */
   bfd_byte r_type[1];			/* Relocation type.  */
 };
@@ -406,7 +406,7 @@ struct reloc_std_internal
 
 struct reloc_ext_external
 {
-  bfd_byte r_address[BYTES_IN_WORD];	/* Offset of of data to relocate.  */
+  bfd_byte r_address[BYTES_IN_WORD];	/* Offset of data to relocate.  */
   bfd_byte r_index[3];			/* Symbol table index of symbol.  */
   bfd_byte r_type[1];			/* Relocation type.  */
   bfd_byte r_addend[BYTES_IN_WORD];	/* Datum addend.  */
@@ -501,7 +501,7 @@ enum reloc_type
 
 struct reloc_internal
 {
-  bfd_vma r_address;		/* Offset of of data to relocate.  */
+  bfd_vma r_address;		/* Offset of data to relocate.  */
   long	r_index;		/* Symbol table index of symbol.  */
   enum reloc_type r_type;	/* Relocation type.  */
   bfd_vma r_addend;		/* Datum addend.  */

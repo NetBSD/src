@@ -1,5 +1,5 @@
 /* BFD library support routines for the AVR architecture.
-   Copyright (C) 1999-2016 Free Software Foundation, Inc.
+   Copyright (C) 1999-2018 Free Software Foundation, Inc.
    Contributed by Denis Chertykov <denisc@overta.ru>
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -48,7 +48,7 @@ compatible (const bfd_arch_info_type * a,
     {
       /* Special case for ATmega[16]03 (avr:3) and ATmega83 (avr:4).  */
       if ((a->mach == bfd_mach_avr3 && b->mach == bfd_mach_avr4)
-         || (a->mach == bfd_mach_avr4 && b->mach == bfd_mach_avr3))
+	 || (a->mach == bfd_mach_avr4 && b->mach == bfd_mach_avr3))
        return NULL;
 
       if (a->mach <= b->mach)

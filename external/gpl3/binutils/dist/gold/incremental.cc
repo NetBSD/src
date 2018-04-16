@@ -1,6 +1,6 @@
 // inremental.cc -- incremental linking support for gold
 
-// Copyright (C) 2009-2016 Free Software Foundation, Inc.
+// Copyright (C) 2009-2018 Free Software Foundation, Inc.
 // Written by Mikolaj Zalewski <mikolajz@google.com>.
 
 // This file is part of gold.
@@ -2536,8 +2536,8 @@ Sized_relobj_incr<size, big_endian>::do_set_local_dynsym_offset(off_t)
 // Relocate the input sections and write out the local symbols.
 // We don't actually do any relocation here.  For unchanged input files,
 // we reapply relocations only for symbols that have changed; that happens
-// in queue_final_tasks.  We do need to rewrite the incremental relocations
-// for this object.
+// in Layout_task_runner::run().  We do need to rewrite the incremental
+// relocations for this object.
 
 template<int size, bool big_endian>
 void

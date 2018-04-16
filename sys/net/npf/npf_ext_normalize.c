@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ext_normalize.c,v 1.6 2017/12/10 00:07:36 rmind Exp $	*/
+/*	$NetBSD: npf_ext_normalize.c,v 1.6.2.1 2018/04/16 02:00:08 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ext_normalize.c,v 1.6 2017/12/10 00:07:36 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ext_normalize.c,v 1.6.2.1 2018/04/16 02:00:08 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/module.h>
@@ -186,7 +186,7 @@ npf_normalize(npf_cache_t *npc, void *params, const npf_match_info_t *mi,
 	 * WARNING: must re-fetch the TCP header after the modification.
 	 */
 	if (npf_fetch_tcpopts(npc, &maxmss, &wscale) &&
-	    nbuf_cksum_barrier(npc->npc_nbuf, mi->mi_di)) {
+	    !nbuf_cksum_barrier(npc->npc_nbuf, mi->mi_di)) {
 		th = npc->npc_l4.tcp;
 		cksum = npf_fixup16_cksum(th->th_sum, mss, maxmss);
 		th->th_sum = cksum;

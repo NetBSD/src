@@ -1,6 +1,6 @@
 #!@PYTHON@
 ############################################################################
-# Copyright (C) 2013-2016  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2013-2017  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -20,8 +20,11 @@ import sys
 
 sys.path.insert(0, os.path.dirname(sys.argv[0]))
 if os.name != 'nt':
-    sys.path.insert(1, os.path.join('@prefix@', 'lib',
-		    'python' + sys.version[:3], 'site-packages'))
+    if '@PYTHON_INSTALL_DIR@': # value of --with-python-install-dir
+        sys.path.insert(1, '@PYTHON_INSTALL_DIR@')
+    else:
+        sys.path.insert(1, os.path.join('@prefix@', 'lib',
+                        'python' + sys.version[:3], 'site-packages'))
 
 import isc.coverage
 

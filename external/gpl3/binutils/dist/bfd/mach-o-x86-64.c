@@ -1,5 +1,5 @@
 /* Intel x86-64 Mach-O support for BFD.
-   Copyright (C) 2010-2016 Free Software Foundation, Inc.
+   Copyright (C) 2010-2018 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -39,7 +39,7 @@ static const bfd_target *
 bfd_mach_o_x86_64_core_p (bfd *abfd)
 {
   return bfd_mach_o_header_p (abfd, 0,
-                              BFD_MACH_O_MH_CORE, BFD_MACH_O_CPU_TYPE_X86_64);
+			      BFD_MACH_O_MH_CORE, BFD_MACH_O_CPU_TYPE_X86_64);
 }
 
 static bfd_boolean
@@ -120,9 +120,11 @@ static reloc_howto_type x86_64_howto_table[]=
 };
 
 static bfd_boolean
-bfd_mach_o_x86_64_canonicalize_one_reloc (bfd *abfd,
-				        struct mach_o_reloc_info_external *raw,
-					arelent *res, asymbol **syms)
+bfd_mach_o_x86_64_canonicalize_one_reloc (bfd *       abfd,
+					  struct mach_o_reloc_info_external * raw,
+					  arelent *   res,
+					  asymbol **  syms,
+					  arelent *   res_base ATTRIBUTE_UNUSED)
 {
   bfd_mach_o_reloc_info reloc;
 
@@ -137,86 +139,86 @@ bfd_mach_o_x86_64_canonicalize_one_reloc (bfd *abfd,
     {
     case BFD_MACH_O_X86_64_RELOC_UNSIGNED:
       if (reloc.r_pcrel)
-        return FALSE;
+	return FALSE;
       switch (reloc.r_length)
-        {
-        case 2:
-          res->howto = &x86_64_howto_table[1];
-          return TRUE;
-        case 3:
-          res->howto = &x86_64_howto_table[0];
-          return TRUE;
-        default:
-          return FALSE;
-        }
+	{
+	case 2:
+	  res->howto = &x86_64_howto_table[1];
+	  return TRUE;
+	case 3:
+	  res->howto = &x86_64_howto_table[0];
+	  return TRUE;
+	default:
+	  return FALSE;
+	}
     case BFD_MACH_O_X86_64_RELOC_SIGNED:
       if (reloc.r_length == 2 && reloc.r_pcrel)
-        {
-          res->howto = &x86_64_howto_table[2];
-          return TRUE;
-        }
+	{
+	  res->howto = &x86_64_howto_table[2];
+	  return TRUE;
+	}
       break;
     case BFD_MACH_O_X86_64_RELOC_BRANCH:
       if (!reloc.r_pcrel)
-        return FALSE;
+	return FALSE;
       switch (reloc.r_length)
-        {
-        case 2:
-          res->howto = &x86_64_howto_table[6];
-          return TRUE;
-        default:
-          return FALSE;
-        }
+	{
+	case 2:
+	  res->howto = &x86_64_howto_table[6];
+	  return TRUE;
+	default:
+	  return FALSE;
+	}
       break;
     case BFD_MACH_O_X86_64_RELOC_GOT_LOAD:
       if (reloc.r_length == 2 && reloc.r_pcrel && reloc.r_extern)
-        {
-          res->howto = &x86_64_howto_table[7];
-          return TRUE;
-        }
+	{
+	  res->howto = &x86_64_howto_table[7];
+	  return TRUE;
+	}
       break;
     case BFD_MACH_O_X86_64_RELOC_GOT:
       if (reloc.r_length == 2 && reloc.r_pcrel && reloc.r_extern)
-        {
-          res->howto = &x86_64_howto_table[10];
-          return TRUE;
-        }
+	{
+	  res->howto = &x86_64_howto_table[10];
+	  return TRUE;
+	}
       break;
     case BFD_MACH_O_X86_64_RELOC_SUBTRACTOR:
       if (reloc.r_pcrel)
-        return FALSE;
+	return FALSE;
       switch (reloc.r_length)
-        {
-        case 2:
-          res->howto = &x86_64_howto_table[8];
-          return TRUE;
-        case 3:
-          res->howto = &x86_64_howto_table[9];
-          return TRUE;
-        default:
-          return FALSE;
-        }
+	{
+	case 2:
+	  res->howto = &x86_64_howto_table[8];
+	  return TRUE;
+	case 3:
+	  res->howto = &x86_64_howto_table[9];
+	  return TRUE;
+	default:
+	  return FALSE;
+	}
       break;
     case BFD_MACH_O_X86_64_RELOC_SIGNED_1:
       if (reloc.r_length == 2 && reloc.r_pcrel)
-        {
-          res->howto = &x86_64_howto_table[3];
-          return TRUE;
-        }
+	{
+	  res->howto = &x86_64_howto_table[3];
+	  return TRUE;
+	}
       break;
     case BFD_MACH_O_X86_64_RELOC_SIGNED_2:
       if (reloc.r_length == 2 && reloc.r_pcrel)
-        {
-          res->howto = &x86_64_howto_table[4];
-          return TRUE;
-        }
+	{
+	  res->howto = &x86_64_howto_table[4];
+	  return TRUE;
+	}
       break;
     case BFD_MACH_O_X86_64_RELOC_SIGNED_4:
       if (reloc.r_length == 2 && reloc.r_pcrel)
-        {
-          res->howto = &x86_64_howto_table[5];
-          return TRUE;
-        }
+	{
+	  res->howto = &x86_64_howto_table[5];
+	  return TRUE;
+	}
       break;
     default:
       return FALSE;
@@ -305,7 +307,7 @@ bfd_mach_o_x86_64_swap_reloc_out (arelent *rel, bfd_mach_o_reloc_info *rinfo)
 
 static reloc_howto_type *
 bfd_mach_o_x86_64_bfd_reloc_type_lookup (bfd *abfd ATTRIBUTE_UNUSED,
-                                         bfd_reloc_code_real_type code)
+					 bfd_reloc_code_real_type code)
 {
   unsigned int i;
 
@@ -319,7 +321,7 @@ bfd_mach_o_x86_64_bfd_reloc_type_lookup (bfd *abfd ATTRIBUTE_UNUSED,
 
 static reloc_howto_type *
 bfd_mach_o_x86_64_bfd_reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED,
-                                         const char *name ATTRIBUTE_UNUSED)
+					 const char *name ATTRIBUTE_UNUSED)
 {
   return NULL;
 }
@@ -360,11 +362,11 @@ const mach_o_segment_name_xlat mach_o_x86_64_segsec_names_xlat[] =
 #define bfd_mach_o_tgt_seg_table mach_o_x86_64_segsec_names_xlat
 #define bfd_mach_o_section_type_valid_for_tgt bfd_mach_o_section_type_valid_for_x86_64
 
-#define TARGET_NAME 		x86_64_mach_o_vec
-#define TARGET_STRING 		"mach-o-x86-64"
+#define TARGET_NAME		x86_64_mach_o_vec
+#define TARGET_STRING		"mach-o-x86-64"
 #define TARGET_ARCHITECTURE	bfd_arch_i386
 #define TARGET_PAGESIZE		4096
-#define TARGET_BIG_ENDIAN 	0
-#define TARGET_ARCHIVE 		0
+#define TARGET_BIG_ENDIAN	0
+#define TARGET_ARCHIVE		0
 #define TARGET_PRIORITY		0
 #include "mach-o-target.c"

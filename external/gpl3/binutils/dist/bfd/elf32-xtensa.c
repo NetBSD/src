@@ -1,5 +1,5 @@
 /* Xtensa-specific support for 32-bit ELF.
-   Copyright (C) 2003-2016 Free Software Foundation, Inc.
+   Copyright (C) 2003-2018 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -214,11 +214,11 @@ static reloc_howto_type elf_howto_table[] =
 
   /* GNU extension to record C++ vtable hierarchy.  */
   HOWTO (R_XTENSA_GNU_VTINHERIT, 0, 2, 0, FALSE, 0, complain_overflow_dont,
-         NULL, "R_XTENSA_GNU_VTINHERIT",
+	 NULL, "R_XTENSA_GNU_VTINHERIT",
 	 FALSE, 0, 0, FALSE),
   /* GNU extension to record C++ vtable member usage.  */
   HOWTO (R_XTENSA_GNU_VTENTRY, 0, 2, 0, FALSE, 0, complain_overflow_dont,
-         _bfd_elf_rel_vtable_reloc_fn, "R_XTENSA_GNU_VTENTRY",
+	 _bfd_elf_rel_vtable_reloc_fn, "R_XTENSA_GNU_VTENTRY",
 	 FALSE, 0, 0, FALSE),
 
   /* Relocations for supporting difference of symbols.  */
@@ -481,6 +481,7 @@ elf_xtensa_info_to_howto_rela (bfd *abfd ATTRIBUTE_UNUSED,
 
   if (r_type >= (unsigned int) R_XTENSA_max)
     {
+      /* xgettext:c-format */
       _bfd_error_handler (_("%B: invalid XTENSA reloc number: %d"), abfd, r_type);
       r_type = 0;
     }
@@ -518,28 +519,42 @@ elf_xtensa_info_to_howto_rela (bfd *abfd ATTRIBUTE_UNUSED,
    invoked.  Note: the 32-byte frame size used here cannot be changed
    without a corresponding change in the runtime linker.  */
 
-static const bfd_byte elf_xtensa_be_plt_entry[PLT_ENTRY_SIZE] =
+static const bfd_byte elf_xtensa_be_plt_entry[][PLT_ENTRY_SIZE] =
 {
-#if XSHAL_ABI == XTHAL_ABI_WINDOWED
-  0x6c, 0x10, 0x04,	/* entry sp, 32 */
-#endif
-  0x18, 0x00, 0x00,	/* l32r  a8, [got entry for rtld's resolver] */
-  0x1a, 0x00, 0x00,	/* l32r  a10, [got entry for rtld's link map] */
-  0x1b, 0x00, 0x00,	/* l32r  a11, [literal for reloc index] */
-  0x0a, 0x80, 0x00,	/* jx    a8 */
-  0			/* unused */
+    {
+      0x6c, 0x10, 0x04,	/* entry sp, 32 */
+      0x18, 0x00, 0x00,	/* l32r  a8, [got entry for rtld's resolver] */
+      0x1a, 0x00, 0x00,	/* l32r  a10, [got entry for rtld's link map] */
+      0x1b, 0x00, 0x00,	/* l32r  a11, [literal for reloc index] */
+      0x0a, 0x80, 0x00,	/* jx    a8 */
+      0			/* unused */
+    },
+    {
+      0x18, 0x00, 0x00,	/* l32r  a8, [got entry for rtld's resolver] */
+      0x1a, 0x00, 0x00,	/* l32r  a10, [got entry for rtld's link map] */
+      0x1b, 0x00, 0x00,	/* l32r  a11, [literal for reloc index] */
+      0x0a, 0x80, 0x00,	/* jx    a8 */
+      0			/* unused */
+    }
 };
 
-static const bfd_byte elf_xtensa_le_plt_entry[PLT_ENTRY_SIZE] =
+static const bfd_byte elf_xtensa_le_plt_entry[][PLT_ENTRY_SIZE] =
 {
-#if XSHAL_ABI == XTHAL_ABI_WINDOWED
-  0x36, 0x41, 0x00,	/* entry sp, 32 */
-#endif
-  0x81, 0x00, 0x00,	/* l32r  a8, [got entry for rtld's resolver] */
-  0xa1, 0x00, 0x00,	/* l32r  a10, [got entry for rtld's link map] */
-  0xb1, 0x00, 0x00,	/* l32r  a11, [literal for reloc index] */
-  0xa0, 0x08, 0x00,	/* jx    a8 */
-  0			/* unused */
+    {
+      0x36, 0x41, 0x00,	/* entry sp, 32 */
+      0x81, 0x00, 0x00,	/* l32r  a8, [got entry for rtld's resolver] */
+      0xa1, 0x00, 0x00,	/* l32r  a10, [got entry for rtld's link map] */
+      0xb1, 0x00, 0x00,	/* l32r  a11, [literal for reloc index] */
+      0xa0, 0x08, 0x00,	/* jx    a8 */
+      0			/* unused */
+    },
+    {
+      0x81, 0x00, 0x00,	/* l32r  a8, [got entry for rtld's resolver] */
+      0xa1, 0x00, 0x00,	/* l32r  a10, [got entry for rtld's link map] */
+      0xb1, 0x00, 0x00,	/* l32r  a11, [literal for reloc index] */
+      0xa0, 0x08, 0x00,	/* jx    a8 */
+      0			/* unused */
+    }
 };
 
 /* The size of the thread control block.  */
@@ -599,11 +614,6 @@ struct elf_xtensa_link_hash_table
   struct elf_link_hash_table elf;
 
   /* Short-cuts to get to dynamic linker sections.  */
-  asection *sgot;
-  asection *sgotplt;
-  asection *srelgot;
-  asection *splt;
-  asection *srelplt;
   asection *sgotloc;
   asection *spltlittbl;
 
@@ -902,7 +912,7 @@ xtensa_read_table_entries (bfd *abfd,
 	     property_table_compare);
 
       /* Check that the table contents are valid.  Problems may occur,
-         for example, if an unrelocated object file is stripped.  */
+	 for example, if an unrelocated object file is stripped.  */
       for (blk = 1; blk < block_count; blk++)
 	{
 	  /* The only circumstance where two entries may legitimately
@@ -912,8 +922,9 @@ xtensa_read_table_entries (bfd *abfd,
 	  if (blocks[blk - 1].address == blocks[blk].address &&
 	      blocks[blk - 1].size != 0)
 	    {
-	      (*_bfd_error_handler) (_("%B(%A): invalid property table"),
-				     abfd, section);
+	      /* xgettext:c-format */
+	      _bfd_error_handler (_("%B(%A): invalid property table"),
+				  abfd, section);
 	      bfd_set_error (bfd_error_bad_value);
 	      free (blocks);
 	      return -1;
@@ -990,7 +1001,7 @@ elf_xtensa_check_relocs (bfd *abfd,
   for (rel = relocs; rel < rel_end; rel++)
     {
       unsigned int r_type;
-      unsigned long r_symndx;
+      unsigned r_symndx;
       struct elf_link_hash_entry *h = NULL;
       struct elf_xtensa_link_hash_entry *eh;
       int tls_type, old_tls_type;
@@ -1003,8 +1014,9 @@ elf_xtensa_check_relocs (bfd *abfd,
 
       if (r_symndx >= NUM_SHDR_ENTRIES (symtab_hdr))
 	{
-	  (*_bfd_error_handler) (_("%B: bad symbol index: %d"),
-				 abfd, r_symndx);
+	  /* xgettext:c-format */
+	  _bfd_error_handler (_("%B: bad symbol index: %d"),
+			      abfd, r_symndx);
 	  return FALSE;
 	}
 
@@ -1014,10 +1026,6 @@ elf_xtensa_check_relocs (bfd *abfd,
 	  while (h->root.type == bfd_link_hash_indirect
 		 || h->root.type == bfd_link_hash_warning)
 	    h = (struct elf_link_hash_entry *) h->root.u.i.link;
-
-	  /* PR15323, ref flags aren't set for references in the same
-	     object.  */
-	  h->root.non_ir_ref = 1;
 	}
       eh = elf_xtensa_hash_entry (h);
 
@@ -1179,7 +1187,8 @@ elf_xtensa_check_relocs (bfd *abfd,
 	    tls_type |= old_tls_type;
 	  else
 	    {
-	      (*_bfd_error_handler)
+	      _bfd_error_handler
+		/* xgettext:c-format */
 		(_("%B: `%s' accessed both as normal and thread local symbol"),
 		 abfd,
 		 h ? h->root.root.string : "<local>");
@@ -1202,19 +1211,19 @@ elf_xtensa_check_relocs (bfd *abfd,
 
 static void
 elf_xtensa_make_sym_local (struct bfd_link_info *info,
-                           struct elf_link_hash_entry *h)
+			   struct elf_link_hash_entry *h)
 {
   if (bfd_link_pic (info))
     {
       if (h->plt.refcount > 0)
-        {
+	{
 	  /* For shared objects, there's no need for PLT entries for local
 	     symbols (use RELATIVE relocs instead of JMP_SLOT relocs).  */
-          if (h->got.refcount < 0)
-            h->got.refcount = 0;
-          h->got.refcount += h->plt.refcount;
-          h->plt.refcount = 0;
-        }
+	  if (h->got.refcount < 0)
+	    h->got.refcount = 0;
+	  h->got.refcount += h->plt.refcount;
+	  h->plt.refcount = 0;
+	}
     }
   else
     {
@@ -1227,8 +1236,8 @@ elf_xtensa_make_sym_local (struct bfd_link_info *info,
 
 static void
 elf_xtensa_hide_symbol (struct bfd_link_info *info,
-                        struct elf_link_hash_entry *h,
-                        bfd_boolean force_local)
+			struct elf_link_hash_entry *h,
+			bfd_boolean force_local)
 {
   /* For a shared link, move the plt refcount to the got refcount to leave
      space for RELATIVE relocs.  */
@@ -1273,137 +1282,6 @@ elf_xtensa_gc_mark_hook (asection *sec,
 }
 
 
-/* Update the GOT & PLT entry reference counts
-   for the section being removed.  */
-
-static bfd_boolean
-elf_xtensa_gc_sweep_hook (bfd *abfd,
-			  struct bfd_link_info *info,
-			  asection *sec,
-			  const Elf_Internal_Rela *relocs)
-{
-  Elf_Internal_Shdr *symtab_hdr;
-  struct elf_link_hash_entry **sym_hashes;
-  const Elf_Internal_Rela *rel, *relend;
-  struct elf_xtensa_link_hash_table *htab;
-
-  htab = elf_xtensa_hash_table (info);
-  if (htab == NULL)
-    return FALSE;
-
-  if (bfd_link_relocatable (info))
-    return TRUE;
-
-  if ((sec->flags & SEC_ALLOC) == 0)
-    return TRUE;
-
-  symtab_hdr = &elf_tdata (abfd)->symtab_hdr;
-  sym_hashes = elf_sym_hashes (abfd);
-
-  relend = relocs + sec->reloc_count;
-  for (rel = relocs; rel < relend; rel++)
-    {
-      unsigned long r_symndx;
-      unsigned int r_type;
-      struct elf_link_hash_entry *h = NULL;
-      struct elf_xtensa_link_hash_entry *eh;
-      bfd_boolean is_got = FALSE;
-      bfd_boolean is_plt = FALSE;
-      bfd_boolean is_tlsfunc = FALSE;
-
-      r_symndx = ELF32_R_SYM (rel->r_info);
-      if (r_symndx >= symtab_hdr->sh_info)
-	{
-	  h = sym_hashes[r_symndx - symtab_hdr->sh_info];
-	  while (h->root.type == bfd_link_hash_indirect
-		 || h->root.type == bfd_link_hash_warning)
-	    h = (struct elf_link_hash_entry *) h->root.u.i.link;
-	}
-      eh = elf_xtensa_hash_entry (h);
-
-      r_type = ELF32_R_TYPE (rel->r_info);
-      switch (r_type)
-	{
-	case R_XTENSA_TLSDESC_FN:
-	  if (bfd_link_pic (info))
-	    {
-	      is_got = TRUE;
-	      is_tlsfunc = TRUE;
-	    }
-	  break;
-
-	case R_XTENSA_TLSDESC_ARG:
-	  if (bfd_link_pic (info))
-	    is_got = TRUE;
-	  else
-	    {
-	      if (h && elf_xtensa_hash_entry (h) != htab->tlsbase)
-		is_got = TRUE;
-	    }
-	  break;
-
-	case R_XTENSA_TLS_TPOFF:
-	  if (bfd_link_pic (info) || h)
-	    is_got = TRUE;
-	  break;
-
-	case R_XTENSA_32:
-	  is_got = TRUE;
-	  break;
-
-	case R_XTENSA_PLT:
-	  is_plt = TRUE;
-	  break;
-
-	default:
-	  continue;
-	}
-
-      if (h)
-	{
-	  if (is_plt)
-	    {
-	      /* If the symbol has been localized its plt.refcount got moved
-	         to got.refcount.  Handle it as GOT.  */
-	      if (h->plt.refcount > 0)
-		h->plt.refcount--;
-	      else
-		is_got = TRUE;
-	    }
-	  if (is_got)
-	    {
-	      if (h->got.refcount > 0)
-		h->got.refcount--;
-	    }
-	  if (is_tlsfunc)
-	    {
-	      if (eh->tlsfunc_refcount > 0)
-		eh->tlsfunc_refcount--;
-	    }
-	}
-      else
-	{
-	  if (is_got || is_plt)
-	    {
-	      bfd_signed_vma *got_refcount
-		= &elf_local_got_refcounts (abfd) [r_symndx];
-	      if (*got_refcount > 0)
-		*got_refcount -= 1;
-	    }
-	  if (is_tlsfunc)
-	    {
-	      bfd_signed_vma *tlsfunc_refcount
-		= &elf_xtensa_local_tlsfunc_refcounts (abfd) [r_symndx];
-	      if (*tlsfunc_refcount > 0)
-		*tlsfunc_refcount -= 1;
-	    }
-	}
-    }
-
-  return TRUE;
-}
-
-
 /* Create all the dynamic sections.  */
 
 static bfd_boolean
@@ -1419,11 +1297,6 @@ elf_xtensa_create_dynamic_sections (bfd *dynobj, struct bfd_link_info *info)
   /* First do all the standard stuff.  */
   if (! _bfd_elf_create_dynamic_sections (dynobj, info))
     return FALSE;
-  htab->splt = bfd_get_linker_section (dynobj, ".plt");
-  htab->srelplt = bfd_get_linker_section (dynobj, ".rela.plt");
-  htab->sgot = bfd_get_linker_section (dynobj, ".got");
-  htab->sgotplt = bfd_get_linker_section (dynobj, ".got.plt");
-  htab->srelgot = bfd_get_linker_section (dynobj, ".rela.got");
 
   /* Create any extra PLT sections in case check_relocs has already
      been called on all the non-dynamic input files.  */
@@ -1435,8 +1308,8 @@ elf_xtensa_create_dynamic_sections (bfd *dynobj, struct bfd_link_info *info)
   flags = noalloc_flags | SEC_ALLOC | SEC_LOAD;
 
   /* Mark the ".got.plt" section READONLY.  */
-  if (htab->sgotplt == NULL
-      || ! bfd_set_section_flags (dynobj, htab->sgotplt, flags))
+  if (htab->elf.sgotplt == NULL
+      || ! bfd_set_section_flags (dynobj, htab->elf.sgotplt, flags))
     return FALSE;
 
   /* Create ".got.loc" (literal tables for use by dynamic linker).  */
@@ -1510,12 +1383,12 @@ elf_xtensa_adjust_dynamic_symbol (struct bfd_link_info *info ATTRIBUTE_UNUSED,
   /* If this is a weak symbol, and there is a real definition, the
      processor independent code will have arranged for us to see the
      real definition first, and we can just use the same value.  */
-  if (h->u.weakdef)
+  if (h->is_weakalias)
     {
-      BFD_ASSERT (h->u.weakdef->root.type == bfd_link_hash_defined
-		  || h->u.weakdef->root.type == bfd_link_hash_defweak);
-      h->root.u.def.section = h->u.weakdef->root.u.def.section;
-      h->root.u.def.value = h->u.weakdef->root.u.def.value;
+      struct elf_link_hash_entry *def = weakdef (h);
+      BFD_ASSERT (def->root.type == bfd_link_hash_defined);
+      h->root.u.def.section = def->root.u.def.section;
+      h->root.u.def.value = def->root.u.def.value;
       return TRUE;
     }
 
@@ -1554,10 +1427,10 @@ elf_xtensa_allocate_dynrelocs (struct elf_link_hash_entry *h, void *arg)
     elf_xtensa_make_sym_local (info, h);
 
   if (h->plt.refcount > 0)
-    htab->srelplt->size += (h->plt.refcount * sizeof (Elf32_External_Rela));
+    htab->elf.srelplt->size += (h->plt.refcount * sizeof (Elf32_External_Rela));
 
   if (h->got.refcount > 0)
-    htab->srelgot->size += (h->got.refcount * sizeof (Elf32_External_Rela));
+    htab->elf.srelgot->size += (h->got.refcount * sizeof (Elf32_External_Rela));
 
   return TRUE;
 }
@@ -1599,8 +1472,8 @@ elf_xtensa_allocate_local_got_size (struct bfd_link_info *info)
 	    }
 
 	  if (local_got_refcounts[j] > 0)
-	    htab->srelgot->size += (local_got_refcounts[j]
-				    * sizeof (Elf32_External_Rela));
+	    htab->elf.srelgot->size += (local_got_refcounts[j]
+					* sizeof (Elf32_External_Rela));
 	}
     }
 }
@@ -1628,14 +1501,14 @@ elf_xtensa_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
   dynobj = elf_hash_table (info)->dynobj;
   if (dynobj == NULL)
     abort ();
-  srelgot = htab->srelgot;
-  srelplt = htab->srelplt;
+  srelgot = htab->elf.srelgot;
+  srelplt = htab->elf.srelplt;
 
   if (elf_hash_table (info)->dynamic_sections_created)
     {
-      BFD_ASSERT (htab->srelgot != NULL
-		  && htab->srelplt != NULL
-		  && htab->sgot != NULL
+      BFD_ASSERT (htab->elf.srelgot != NULL
+		  && htab->elf.srelplt != NULL
+		  && htab->elf.sgot != NULL
 		  && htab->spltlittbl != NULL
 		  && htab->sgotloc != NULL);
 
@@ -1650,7 +1523,7 @@ elf_xtensa_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 	}
 
       /* Allocate room for one word in ".got".  */
-      htab->sgot->size = 4;
+      htab->elf.sgot->size = 4;
 
       /* Allocate space in ".rela.got" for literals that reference global
 	 symbols and space in ".rela.plt" for literals that have PLT
@@ -1986,7 +1859,7 @@ elf_xtensa_do_reloc (reloc_howto_type *howto,
 
     case R_XTENSA_ASM_SIMPLIFY:
       {
-        /* Convert the L32R/CALLX to CALL.  */
+	/* Convert the L32R/CALLX to CALL.  */
 	bfd_reloc_status_type retval =
 	  elf_xtensa_do_asm_simplify (contents, address, input_size,
 				      error_message);
@@ -2342,8 +2215,8 @@ elf_xtensa_create_plt_entry (struct bfd_link_info *info,
   /* Fill in the entry in the procedure linkage table.  */
   memcpy (splt->contents + code_offset,
 	  (bfd_big_endian (output_bfd)
-	   ? elf_xtensa_be_plt_entry
-	   : elf_xtensa_le_plt_entry),
+	   ? elf_xtensa_be_plt_entry[XSHAL_ABI != XTHAL_ABI_WINDOWED]
+	   : elf_xtensa_le_plt_entry[XSHAL_ABI != XTHAL_ABI_WINDOWED]),
 	  PLT_ENTRY_SIZE);
   abi_offset = XSHAL_ABI == XTHAL_ABI_WINDOWED ? 3 : 0;
   bfd_put_16 (output_bfd, l32r_offset (got_base + 0,
@@ -2527,7 +2400,7 @@ replace_tls_insn (Elf_Internal_Rela *rel,
 
   xtensa_format_set_slot (isa, fmt, 0, ibuff, sbuff);
   xtensa_insnbuf_to_chars (isa, ibuff, contents + rel->r_offset,
-                           input_size - rel->r_offset);
+			   input_size - rel->r_offset);
 
   return TRUE;
 }
@@ -2777,8 +2650,9 @@ elf_xtensa_relocate_section (bfd *output_bfd,
       if (rel->r_offset >= input_size
 	  && ELF32_R_TYPE (rel->r_info) != R_XTENSA_NONE)
 	{
-	  (*_bfd_error_handler)
-	    (_("%B(%A+0x%lx): relocation offset out of range (size=0x%x)"),
+	  _bfd_error_handler
+	    /* xgettext:c-format */
+	    (_("%B(%A+%#Lx): relocation offset out of range (size=%#Lx)"),
 	     input_bfd, input_section, rel->r_offset, input_size);
 	  bfd_set_error (bfd_error_bad_value);
 	  return FALSE;
@@ -2801,13 +2675,15 @@ elf_xtensa_relocate_section (bfd *output_bfd,
 	      || h->root.type == bfd_link_hash_defweak)
 	  && IS_XTENSA_TLS_RELOC (r_type) != (sym_type == STT_TLS))
 	{
-	  (*_bfd_error_handler)
+	  _bfd_error_handler
 	    ((sym_type == STT_TLS
-	      ? _("%B(%A+0x%lx): %s used with TLS symbol %s")
-	      : _("%B(%A+0x%lx): %s used with non-TLS symbol %s")),
+	      /* xgettext:c-format */
+	      ? _("%B(%A+%#Lx): %s used with TLS symbol %s")
+	      /* xgettext:c-format */
+	      : _("%B(%A+%#Lx): %s used with non-TLS symbol %s")),
 	     input_bfd,
 	     input_section,
-	     (long) rel->r_offset,
+	     rel->r_offset,
 	     howto->name,
 	     name);
 	}
@@ -2833,9 +2709,9 @@ elf_xtensa_relocate_section (bfd *output_bfd,
 	      asection *srel;
 
 	      if (dynamic_symbol && r_type == R_XTENSA_PLT)
-		srel = htab->srelplt;
+		srel = htab->elf.srelplt;
 	      else
-		srel = htab->srelgot;
+		srel = htab->elf.srelgot;
 
 	      BFD_ASSERT (srel != NULL);
 
@@ -2962,7 +2838,7 @@ elf_xtensa_relocate_section (bfd *output_bfd,
 	      {
 		Elf_Internal_Rela outrel;
 		bfd_byte *loc;
-		asection *srel = htab->srelgot;
+		asection *srel = htab->elf.srelgot;
 		int indx;
 
 		outrel.r_offset = (input_section->output_section->vma
@@ -3058,11 +2934,12 @@ elf_xtensa_relocate_section (bfd *output_bfd,
 	  && _bfd_elf_section_offset (output_bfd, info, input_section,
 				      rel->r_offset) != (bfd_vma) -1)
 	{
-	  (*_bfd_error_handler)
-	    (_("%B(%A+0x%lx): unresolvable %s relocation against symbol `%s'"),
+	  _bfd_error_handler
+	    /* xgettext:c-format */
+	    (_("%B(%A+%#Lx): unresolvable %s relocation against symbol `%s'"),
 	     input_bfd,
 	     input_section,
-	     (long) rel->r_offset,
+	     rel->r_offset,
 	     howto->name,
 	     name);
 	  return FALSE;
@@ -3162,7 +3039,7 @@ elf_xtensa_combine_prop_entries (bfd *output_bfd,
   sgotloc_size = sgotloc->size;
   if (sgotloc_size != section_size)
     {
-      (*_bfd_error_handler)
+      _bfd_error_handler
 	(_("internal inconsistency in size of .got.loc section"));
       return -1;
     }
@@ -3274,7 +3151,7 @@ elf_xtensa_finish_dynamic_sections (bfd *output_bfd,
 
   /* Set the first entry in the global offset table to the address of
      the dynamic section.  */
-  sgot = htab->sgot;
+  sgot = htab->elf.sgot;
   if (sgot)
     {
       BFD_ASSERT (sgot->size == 4);
@@ -3286,7 +3163,7 @@ elf_xtensa_finish_dynamic_sections (bfd *output_bfd,
 		    sgot->contents);
     }
 
-  srelplt = htab->srelplt;
+  srelplt = htab->elf.srelplt;
   if (srelplt && srelplt->size != 0)
     {
       asection *sgotplt, *srelgot, *spltlittbl;
@@ -3295,7 +3172,7 @@ elf_xtensa_finish_dynamic_sections (bfd *output_bfd,
       bfd_byte *loc;
       unsigned rtld_reloc;
 
-      srelgot = htab->srelgot;
+      srelgot = htab->elf.srelgot;
       spltlittbl = htab->spltlittbl;
       BFD_ASSERT (srelgot != NULL && spltlittbl != NULL);
 
@@ -3419,28 +3296,17 @@ elf_xtensa_finish_dynamic_sections (bfd *output_bfd,
 	  break;
 
 	case DT_PLTGOT:
-	  dyn.d_un.d_ptr = (htab->sgot->output_section->vma
-			    + htab->sgot->output_offset);
+	  dyn.d_un.d_ptr = (htab->elf.sgot->output_section->vma
+			    + htab->elf.sgot->output_offset);
 	  break;
 
 	case DT_JMPREL:
-	  dyn.d_un.d_ptr = (htab->srelplt->output_section->vma
-			    + htab->srelplt->output_offset);
+	  dyn.d_un.d_ptr = (htab->elf.srelplt->output_section->vma
+			    + htab->elf.srelplt->output_offset);
 	  break;
 
 	case DT_PLTRELSZ:
-	  dyn.d_un.d_val = htab->srelplt->size;
-	  break;
-
-	case DT_RELASZ:
-	  /* Adjust RELASZ to not include JMPREL.  This matches what
-	     glibc expects and what is done for several other ELF
-	     targets (e.g., i386, alpha), but the "correct" behavior
-	     seems to be unresolved.  Since the linker script arranges
-	     for .rela.plt to follow all other relocation sections, we
-	     don't have to worry about changing the DT_RELA entry.  */
-	  if (htab->srelplt)
-	    dyn.d_un.d_val -= htab->srelplt->size;
+	  dyn.d_un.d_val = htab->elf.srelplt->size;
 	  break;
 	}
 
@@ -3457,13 +3323,14 @@ elf_xtensa_finish_dynamic_sections (bfd *output_bfd,
    object file when linking.  */
 
 static bfd_boolean
-elf_xtensa_merge_private_bfd_data (bfd *ibfd, bfd *obfd)
+elf_xtensa_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
 {
+  bfd *obfd = info->output_bfd;
   unsigned out_mach, in_mach;
   flagword out_flag, in_flag;
 
   /* Check if we have the same endianness.  */
-  if (!_bfd_generic_verify_endian_match (ibfd, obfd))
+  if (!_bfd_generic_verify_endian_match (ibfd, info))
     return FALSE;
 
   /* Don't even pretend to support mixed-format linking.  */
@@ -3478,7 +3345,8 @@ elf_xtensa_merge_private_bfd_data (bfd *ibfd, bfd *obfd)
   in_mach = in_flag & EF_XTENSA_MACH;
   if (out_mach != in_mach)
     {
-      (*_bfd_error_handler)
+      _bfd_error_handler
+	/* xgettext:c-format */
 	(_("%B: incompatible machine type. Output is 0x%x. Input is 0x%x"),
 	 ibfd, out_mach, in_mach);
       bfd_set_error (bfd_error_wrong_format);
@@ -5364,23 +5232,23 @@ add_value_map (value_map_hash_table *map,
 
 /* The following text actions are generated:
 
-   "ta_remove_insn"         remove an instruction or instructions
-   "ta_remove_longcall"     convert longcall to call
+   "ta_remove_insn"	    remove an instruction or instructions
+   "ta_remove_longcall"	    convert longcall to call
    "ta_convert_longcall"    convert longcall to nop/call
-   "ta_narrow_insn"         narrow a wide instruction
-   "ta_widen"               widen a narrow instruction
-   "ta_fill"                add fill or remove fill
+   "ta_narrow_insn"	    narrow a wide instruction
+   "ta_widen"		    widen a narrow instruction
+   "ta_fill"		    add fill or remove fill
       removed < 0 is a fill; branches to the fill address will be
 	changed to address + fill size (e.g., address - removed)
       removed >= 0 branches to the fill address will stay unchanged
-   "ta_remove_literal"      remove a literal; this action is
+   "ta_remove_literal"	    remove a literal; this action is
 			    indicated when a literal is removed
-                            or replaced.
-   "ta_add_literal"         insert a new literal; this action is
-                            indicated when a literal has been moved.
-                            It may use a virtual_offset because
+			    or replaced.
+   "ta_add_literal"	    insert a new literal; this action is
+			    indicated when a literal has been moved.
+			    It may use a virtual_offset because
 			    multiple literals can be placed at the
-                            same location.
+			    same location.
 
    For each of these text actions, we also record the number of bytes
    removed by performing the text action.  In the case of a "ta_widen"
@@ -5393,12 +5261,12 @@ typedef enum text_action_enum_t text_action_t;
 enum text_action_enum_t
 {
   ta_none,
-  ta_remove_insn,        /* removed = -size */
-  ta_remove_longcall,    /* removed = -size */
-  ta_convert_longcall,   /* removed = 0 */
-  ta_narrow_insn,        /* removed = -1 */
-  ta_widen_insn,         /* removed = +1 */
-  ta_fill,               /* removed = +size */
+  ta_remove_insn,	 /* removed = -size */
+  ta_remove_longcall,	 /* removed = -size */
+  ta_convert_longcall,	 /* removed = 0 */
+  ta_narrow_insn,	 /* removed = -1 */
+  ta_widen_insn,	 /* removed = +1 */
+  ta_fill,		 /* removed = +size */
   ta_remove_literal,
   ta_add_literal
 };
@@ -6544,8 +6412,10 @@ extend_ebb_bounds_forward (ebb_t *ebb)
 				  entry_end - ebb->end_offset);
       if (insn_block_len != (entry_end - ebb->end_offset))
 	{
-	  (*_bfd_error_handler)
-	    (_("%B(%A+0x%lx): could not decode instruction; possible configuration mismatch"),
+	  _bfd_error_handler
+	    /* xgettext:c-format */
+	    (_("%B(%A+%#Lx): could not decode instruction; "
+	       "possible configuration mismatch"),
 	     ebb->sec->owner, ebb->sec, ebb->end_offset + insn_block_len);
 	  return FALSE;
 	}
@@ -6620,8 +6490,10 @@ extend_ebb_bounds_backward (ebb_t *ebb)
 				  ebb->start_offset - block_begin);
       if (insn_block_len != ebb->start_offset - block_begin)
 	{
-	  (*_bfd_error_handler)
-	    (_("%B(%A+0x%lx): could not decode instruction; possible configuration mismatch"),
+	  _bfd_error_handler
+	    /* xgettext:c-format */
+	    (_("%B(%A+%#Lx): could not decode instruction; "
+	       "possible configuration mismatch"),
 	     ebb->sec->owner, ebb->sec, ebb->end_offset + insn_block_len);
 	  return FALSE;
 	}
@@ -7092,7 +6964,7 @@ find_relaxable_sections (bfd *abfd,
 	continue;
 
       /* Count PC-relative operand relocations against the target section.
-         Note: The conditions tested here must match the conditions under
+	 Note: The conditions tested here must match the conditions under
 	 which init_source_reloc is called in collect_source_relocs().  */
       is_l32r_reloc = FALSE;
       if (is_operand_relocation (ELF32_R_TYPE (irel->r_info)))
@@ -7539,7 +7411,7 @@ build_reloc_ranges (bfd *abfd, asection *sec,
       reloc[i].irel = irel;
 
       /* Every relocation won't possibly be checked in the optimized version of
-         check_section_ebb_pcrels_fit, so this needs to be done here.  */
+	 check_section_ebb_pcrels_fit, so this needs to be done here.  */
       if (is_alt_relocation (ELF32_R_TYPE (irel->r_info)))
 	{
 	  /* None of the current alternate relocs are PC-relative,
@@ -7733,8 +7605,11 @@ compute_text_actions (bfd *abfd,
       simplify_size = get_asm_simplify_size (contents, sec_size, r_offset);
       if (simplify_size == 0)
 	{
-	  (*_bfd_error_handler)
-	    (_("%B(%A+0x%lx): could not decode instruction for XTENSA_ASM_SIMPLIFY relocation; possible configuration mismatch"),
+	  _bfd_error_handler
+	    /* xgettext:c-format */
+	    (_("%B(%A+%#Lx): could not decode instruction for "
+	       "XTENSA_ASM_SIMPLIFY relocation; "
+	       "possible configuration mismatch"),
 	     sec->owner, sec, r_offset);
 	  continue;
 	}
@@ -7991,8 +7866,10 @@ compute_ebb_proposed_actions (ebb_constraint *ebb_table)
   return TRUE;
 
  decode_error:
-  (*_bfd_error_handler)
-    (_("%B(%A+0x%lx): could not decode instruction; possible configuration mismatch"),
+  _bfd_error_handler
+    /* xgettext:c-format */
+    (_("%B(%A+%#Lx): could not decode instruction; "
+       "possible configuration mismatch"),
      ebb->sec->owner, ebb->sec, offset);
   return FALSE;
 }
@@ -9114,7 +8991,7 @@ relocations_reach (source_reloc *reloc,
 	continue;
 
       /* The original and new output section for these must be the same
-         in order to coalesce.  */
+	 in order to coalesce.  */
       if (r_reloc_get_section (&reloc[i].r_rel)->output_section
 	  != sec->output_section)
 	return FALSE;
@@ -9484,7 +9361,7 @@ relax_section (bfd *abfd, asection *sec, struct bfd_link_info *link_info)
 		      /* Update the action so that the code that moves
 			 the contents will do the right thing.  */
 		      /* ta_remove_longcall and ta_remove_insn actions are
-		         grouped together in the tree as well as
+			 grouped together in the tree as well as
 			 ta_convert_longcall and ta_none, so that changes below
 			 can be done w/o removing and reinserting action into
 			 the tree.  */
@@ -10118,11 +9995,11 @@ shrink_dynamic_reloc_sections (struct bfd_link_info *info,
 
       if (dynamic_symbol && r_type == R_XTENSA_PLT)
 	{
-	  srel = htab->srelplt;
+	  srel = htab->elf.srelplt;
 	  is_plt = TRUE;
 	}
       else
-	srel = htab->srelgot;
+	srel = htab->elf.srelgot;
 
       /* Reduce size of the .rela.* section by one reloc.  */
       BFD_ASSERT (srel != NULL);
@@ -10151,7 +10028,7 @@ shrink_dynamic_reloc_sections (struct bfd_link_info *info,
 	  if (reloc_index % PLT_ENTRIES_PER_CHUNK == 0)
 	    {
 	      /* The two magic GOT entries for that chunk can go away.  */
-	      srelgot = htab->srelgot;
+	      srelgot = htab->elf.srelgot;
 	      BFD_ASSERT (srelgot != NULL);
 	      srelgot->reloc_count -= 2;
 	      srelgot->size -= 2 * sizeof (Elf32_External_Rela);
@@ -10468,7 +10345,7 @@ relax_property_section (bfd *abfd,
       predef_flags = xtensa_get_property_predef_flags (sec);
 
       /* Walk over memory and relocations at the same time.
-         This REQUIRES that the internal_relocs be sorted by offset.  */
+	 This REQUIRES that the internal_relocs be sorted by offset.  */
       qsort (internal_relocs, sec->reloc_count, sizeof (Elf_Internal_Rela),
 	     internal_reloc_compare);
 
@@ -10767,8 +10644,9 @@ do_fix_for_relocatable_link (Elf_Internal_Rela *rel,
     {
       if (r_type != R_XTENSA_ASM_EXPAND)
 	{
-	  (*_bfd_error_handler)
-	    (_("%B(%A+0x%lx): unexpected fix for %s relocation"),
+	  _bfd_error_handler
+	    /* xgettext:c-format */
+	    (_("%B(%A+%#Lx): unexpected fix for %s relocation"),
 	     input_bfd, input_section, rel->r_offset,
 	     elf_howto_table[r_type].name);
 	  return FALSE;
@@ -10827,18 +10705,11 @@ do_fix_for_final_link (Elf_Internal_Rela *rel,
 static asection *
 elf_xtensa_get_plt_section (struct bfd_link_info *info, int chunk)
 {
-  struct elf_xtensa_link_hash_table *htab;
   bfd *dynobj;
-  char plt_name[10];
+  char plt_name[17];
 
   if (chunk == 0)
-    {
-      htab = elf_xtensa_hash_table (info);
-      if (htab == NULL)
-	return NULL;
-
-      return htab->splt;
-    }
+    return elf_hash_table (info)->splt;
 
   dynobj = elf_hash_table (info)->dynobj;
   sprintf (plt_name, ".plt.%u", chunk);
@@ -10849,17 +10720,11 @@ elf_xtensa_get_plt_section (struct bfd_link_info *info, int chunk)
 static asection *
 elf_xtensa_get_gotplt_section (struct bfd_link_info *info, int chunk)
 {
-  struct elf_xtensa_link_hash_table *htab;
   bfd *dynobj;
-  char got_name[14];
+  char got_name[21];
 
   if (chunk == 0)
-    {
-      htab = elf_xtensa_hash_table (info);
-      if (htab == NULL)
-	return NULL;
-      return htab->sgotplt;
-    }
+    return elf_hash_table (info)->sgotplt;
 
   dynobj = elf_hash_table (info)->dynobj;
   sprintf (got_name, ".got.plt.%u", chunk);
@@ -10903,8 +10768,8 @@ get_elf_r_symndx_section (bfd *abfd, unsigned long r_symndx)
       struct elf_link_hash_entry *h = elf_sym_hashes (abfd)[indx];
 
       while (h->root.type == bfd_link_hash_indirect
-             || h->root.type == bfd_link_hash_warning)
-        h = (struct elf_link_hash_entry *) h->root.u.i.link;
+	     || h->root.type == bfd_link_hash_warning)
+	h = (struct elf_link_hash_entry *) h->root.u.i.link;
 
       switch (h->root.type)
 	{
@@ -10968,10 +10833,10 @@ get_elf_r_symndx_offset (bfd *abfd, unsigned long r_symndx)
 	elf_sym_hashes (abfd)[indx];
 
       while (h->root.type == bfd_link_hash_indirect
-             || h->root.type == bfd_link_hash_warning)
+	     || h->root.type == bfd_link_hash_warning)
 	h = (struct elf_link_hash_entry *) h->root.u.i.link;
       if (h->root.type == bfd_link_hash_defined
-          || h->root.type == bfd_link_hash_defweak)
+	  || h->root.type == bfd_link_hash_defweak)
 	offset = h->root.u.def.value;
     }
   return offset;
@@ -11141,9 +11006,9 @@ xtensa_property_section_name (asection *sec, const char *base_name)
 
       suffix = sec->name + linkonce_len;
       /* For backward compatibility, replace "t." instead of inserting
-         the new linkonce_kind (but not for "prop" sections).  */
+	 the new linkonce_kind (but not for "prop" sections).  */
       if (CONST_STRNEQ (suffix, "t.") && linkonce_kind[1] == '.')
-        suffix += 2;
+	suffix += 2;
       strcat (prop_sec_name + linkonce_len, suffix);
     }
   else
@@ -11242,7 +11107,7 @@ xtensa_callback_required_dependence (bfd *abfd,
 
       /* Find the corresponding ".got.plt*" section.  */
       if (sec->name[4] == '\0')
-	sgotplt = bfd_get_linker_section (sec->owner, ".got.plt");
+	sgotplt = elf_hash_table (link_info)->sgotplt;
       else
 	{
 	  char got_name[14];
@@ -11320,9 +11185,9 @@ static const struct bfd_elf_special_section elf_xtensa_special_sections[] =
 {
   { STRING_COMMA_LEN (".fini.literal"), 0, SHT_PROGBITS, SHF_ALLOC + SHF_EXECINSTR },
   { STRING_COMMA_LEN (".init.literal"), 0, SHT_PROGBITS, SHF_ALLOC + SHF_EXECINSTR },
-  { STRING_COMMA_LEN (".literal"),      0, SHT_PROGBITS, SHF_ALLOC + SHF_EXECINSTR },
-  { STRING_COMMA_LEN (".xtensa.info"),  0, SHT_NOTE,     0 },
-  { NULL,                       0,      0, 0,            0 }
+  { STRING_COMMA_LEN (".literal"),	0, SHT_PROGBITS, SHF_ALLOC + SHF_EXECINSTR },
+  { STRING_COMMA_LEN (".xtensa.info"),	0, SHT_NOTE,	 0 },
+  { NULL,			0,	0, 0,		 0 }
 };
 
 #define ELF_TARGET_ID			XTENSA_ELF_DATA
@@ -11336,11 +11201,7 @@ static const struct bfd_elf_special_section elf_xtensa_special_sections[] =
 #define ELF_MACHINE_CODE		EM_XTENSA
 #define ELF_MACHINE_ALT1		EM_XTENSA_OLD
 
-#if XCHAL_HAVE_MMU
-#define ELF_MAXPAGESIZE			(1 << XCHAL_MMU_MIN_PTE_PAGE_SIZE)
-#else /* !XCHAL_HAVE_MMU */
-#define ELF_MAXPAGESIZE			1
-#endif /* !XCHAL_HAVE_MMU */
+#define ELF_MAXPAGESIZE			0x1000
 #endif /* ELF_ARCH */
 
 #define elf_backend_can_gc_sections	1
@@ -11349,6 +11210,7 @@ static const struct bfd_elf_special_section elf_xtensa_special_sections[] =
 #define elf_backend_got_header_size	4
 #define elf_backend_want_dynbss		0
 #define elf_backend_want_got_plt	1
+#define elf_backend_dtrel_excludes_plt	1
 
 #define elf_info_to_howto		     elf_xtensa_info_to_howto_rela
 
@@ -11373,7 +11235,6 @@ static const struct bfd_elf_special_section elf_xtensa_special_sections[] =
 #define elf_backend_finish_dynamic_sections  elf_xtensa_finish_dynamic_sections
 #define elf_backend_finish_dynamic_symbol    elf_xtensa_finish_dynamic_symbol
 #define elf_backend_gc_mark_hook	     elf_xtensa_gc_mark_hook
-#define elf_backend_gc_sweep_hook	     elf_xtensa_gc_sweep_hook
 #define elf_backend_grok_prstatus	     elf_xtensa_grok_prstatus
 #define elf_backend_grok_psinfo		     elf_xtensa_grok_psinfo
 #define elf_backend_hide_symbol		     elf_xtensa_hide_symbol

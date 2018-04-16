@@ -1,7 +1,7 @@
-/*	$NetBSD: md5.c,v 1.9 2017/06/15 15:59:41 christos Exp $	*/
+/*	$NetBSD: md5.c,v 1.9.4.1 2018/04/16 01:57:58 pgoyette Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009, 2014-2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2014-2018  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -45,6 +45,7 @@
 #include <isc/assertions.h>
 #include <isc/md5.h>
 #include <isc/platform.h>
+#include <isc/safe.h>
 #include <isc/string.h>
 #include <isc/types.h>
 
@@ -56,7 +57,7 @@
 #include <isc/util.h>
 
 #ifdef ISC_PLATFORM_OPENSSLHASH
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
+#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
 #define EVP_MD_CTX_new() &(ctx->_ctx)
 #define EVP_MD_CTX_free(ptr) EVP_MD_CTX_cleanup(ptr)
 #endif
@@ -65,7 +66,9 @@ void
 isc_md5_init(isc_md5_t *ctx) {
 	ctx->ctx = EVP_MD_CTX_new();
 	RUNTIME_CHECK(ctx->ctx != NULL);
-	RUNTIME_CHECK(EVP_DigestInit(ctx->ctx, EVP_md5()) == 1);
+	if (EVP_DigestInit(ctx->ctx, EVP_md5()) != 1) {
+		FATAL_ERROR(__FILE__, __LINE__, "Cannot initialize MD5.");
+	}
 }
 
 void
@@ -110,7 +113,7 @@ isc_md5_invalidate(isc_md5_t *ctx) {
 	if (ctx->handle == NULL)
 		return;
 	(void) pkcs_C_DigestFinal(ctx->session, garbage, &len);
-	memset(garbage, 0, sizeof(garbage));
+	isc_safe_memwipe(garbage, sizeof(garbage));
 	pk11_return_session(ctx);
 }
 
@@ -165,7 +168,7 @@ isc_md5_init(isc_md5_t *ctx) {
 
 void
 isc_md5_invalidate(isc_md5_t *ctx) {
-	memset(ctx, 0, sizeof(isc_md5_t));
+	isc_safe_memwipe(ctx, sizeof(*ctx));
 }
 
 /*@{*/
@@ -341,9 +344,49 @@ isc_md5_final(isc_md5_t *ctx, unsigned char *digest) {
 
 	byteSwap(ctx->buf, 4);
 	memmove(digest, ctx->buf, 16);
-	memset(ctx, 0, sizeof(isc_md5_t));	/* In case it's sensitive */
+	isc_safe_memwipe(ctx, sizeof(*ctx));	/* In case it's sensitive */
 }
 #endif
+
+/*
+ * Check for MD5 support; if it does not work, raise a fatal error.
+ *
+ * Use "a" as the test vector.
+ *
+ * Standard use is testing false and result true.
+ * Testing use is testing true and result false;
+ */
+isc_boolean_t
+isc_md5_check(isc_boolean_t testing) {
+	isc_md5_t ctx;
+	unsigned char input = 'a';
+	unsigned char digest[ISC_MD5_DIGESTLENGTH];
+	unsigned char expected[] = {
+		0x0c, 0xc1, 0x75, 0xb9, 0xc0, 0xf1, 0xb6, 0xa8,
+		0x31, 0xc3, 0x99, 0xe2, 0x69, 0x77, 0x26, 0x61
+	};
+
+	INSIST(sizeof(expected) == ISC_MD5_DIGESTLENGTH);
+
+	/*
+	 * Introduce a fault for testing.
+	 */
+	if (testing) {
+		input ^= 0x01;
+	}
+
+	/*
+	 * These functions do not return anything; any failure will be fatal.
+	 */
+	isc_md5_init(&ctx);
+	isc_md5_update(&ctx, &input, 1U);
+	isc_md5_final(&ctx, digest);
+
+	/*
+	 * Must return true in standard case, should return false for testing.
+	 */
+	return (ISC_TF(memcmp(digest, expected, ISC_MD5_DIGESTLENGTH) == 0));
+}
 
 #else /* !PK11_MD5_DISABLE */
 #ifdef WIN32
@@ -354,5 +397,6 @@ void isc_md5_final() { INSIST(0); }
 void isc_md5_init() { INSIST(0); }
 void isc_md5_invalidate() { INSIST(0); }
 void isc_md5_update() { INSIST(0); }
+void isc_md5_check() { INSIST(0); }
 #endif
 #endif /* PK11_MD5_DISABLE */

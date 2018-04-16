@@ -1,5 +1,5 @@
 <!--
- - Copyright (C) 2009, 2014-2016  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2009, 2014-2017  Internet Systems Consortium, Inc. ("ISC")
  -
  - Permission to use, copy, modify, and/or distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
@@ -41,6 +41,7 @@
       <year>2014</year>
       <year>2015</year>
       <year>2016</year>
+      <year>2017</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
   </docinfo>
@@ -79,11 +80,11 @@
         <listitem>
           <para>
             Specify the key algorithm class: Supported classes are RSA,
-            DSA, DH, and ECC. In addition to these strings, the
+            DSA, DH, ECC and ECX. In addition to these strings, the
             <option>algorithm</option> can be specified as a DNSSEC
             signing algorithm that will be used with this key; for
-            example, NSEC3RSASHA1 maps to RSA, and ECDSAP256SHA256 maps
-            to ECC.  The default class is "RSA".
+            example, NSEC3RSASHA1 maps to RSA, ECDSAP256SHA256 maps
+            to ECC, and ED25519 to ECX.  The default class is "RSA".
           </para>
         </listitem>
       </varlistentry>
@@ -94,7 +95,8 @@
           <para>
             Create the key pair with <option>keysize</option> bits of
             prime. For ECC keys, the only valid values are 256 and 384,
-            and the default is 256.
+            and the default is 256. For ECX kyes, the only valid values
+            are 256 and 456, and the default is 256.
           </para>
         </listitem>
       </varlistentry>

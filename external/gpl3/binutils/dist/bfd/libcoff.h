@@ -1,9 +1,9 @@
-/* DO NOT EDIT!  -*- buffer-read-only: t -*-  This file is automatically 
+/* DO NOT EDIT!  -*- buffer-read-only: t -*-  This file is automatically
    generated from "libcoff-in.h" and "coffcode.h".
    Run "make headers" in your build bfd/ to regenerate.  */
 
 /* BFD COFF object file private structure.
-   Copyright (C) 1990-2016 Free Software Foundation, Inc.
+   Copyright (C) 1990-2018 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -33,7 +33,7 @@ extern "C" {
 /* Object file tdata; access macros.  */
 
 #define coff_data(bfd)		      ((bfd)->tdata.coff_obj_data)
-#define obj_pe(bfd)                   (coff_data (bfd)->pe)
+#define obj_pe(bfd)		      (coff_data (bfd)->pe)
 #define obj_symbols(bfd)	      (coff_data (bfd)->symbols)
 #define	obj_sym_filepos(bfd)	      (coff_data (bfd)->sym_filepos)
 #define obj_relocbase(bfd)	      (coff_data (bfd)->relocbase)
@@ -271,11 +271,11 @@ struct coff_link_hash_table
 
 struct coff_reloc_cookie
 {
-  struct internal_reloc *         rels;
-  struct internal_reloc *         rel;
-  struct internal_reloc *         relend;
-  struct coff_symbol_struct *     symbols;	/* Symtab for input bfd.  */
-  bfd *                           abfd;
+  struct internal_reloc *	  rels;
+  struct internal_reloc *	  rel;
+  struct internal_reloc *	  relend;
+  struct coff_symbol_struct *	  symbols;	/* Symtab for input bfd.  */
+  bfd *				  abfd;
   struct coff_link_hash_entry **  sym_hashes;
 };
 
@@ -775,19 +775,19 @@ typedef struct
 
   bfd_boolean (*_bfd_coff_pointerize_aux_hook)
     (bfd *, combined_entry_type *, combined_entry_type *,
-            unsigned int, combined_entry_type *);
+     unsigned int, combined_entry_type *);
 
   bfd_boolean (*_bfd_coff_print_aux)
     (bfd *, FILE *, combined_entry_type *, combined_entry_type *,
-            combined_entry_type *, unsigned int);
+     combined_entry_type *, unsigned int);
 
   void (*_bfd_coff_reloc16_extra_cases)
     (bfd *, struct bfd_link_info *, struct bfd_link_order *, arelent *,
-           bfd_byte *, unsigned int *, unsigned int *);
+     bfd_byte *, unsigned int *, unsigned int *);
 
   int (*_bfd_coff_reloc16_estimate)
     (bfd *, asection *, arelent *, unsigned int,
-            struct bfd_link_info *);
+     struct bfd_link_info *);
 
   enum coff_symbol_classification (*_bfd_coff_classify_symbol)
     (bfd *, struct internal_syment *);
@@ -800,21 +800,20 @@ typedef struct
 
   bfd_boolean (*_bfd_coff_relocate_section)
     (bfd *, struct bfd_link_info *, bfd *, asection *, bfd_byte *,
-            struct internal_reloc *, struct internal_syment *, asection **);
+     struct internal_reloc *, struct internal_syment *, asection **);
 
   reloc_howto_type *(*_bfd_coff_rtype_to_howto)
     (bfd *, asection *, struct internal_reloc *,
-            struct coff_link_hash_entry *, struct internal_syment *,
-            bfd_vma *);
+     struct coff_link_hash_entry *, struct internal_syment *, bfd_vma *);
 
   bfd_boolean (*_bfd_coff_adjust_symndx)
     (bfd *, struct bfd_link_info *, bfd *, asection *,
-            struct internal_reloc *, bfd_boolean *);
+     struct internal_reloc *, bfd_boolean *);
 
   bfd_boolean (*_bfd_coff_link_add_one_symbol)
     (struct bfd_link_info *, bfd *, const char *, flagword,
-            asection *, bfd_vma, const char *, bfd_boolean, bfd_boolean,
-            struct bfd_link_hash_entry **);
+     asection *, bfd_vma, const char *, bfd_boolean, bfd_boolean,
+     struct bfd_link_hash_entry **);
 
   bfd_boolean (*_bfd_coff_link_output_has_begun)
     (bfd *, struct coff_final_link_info *);

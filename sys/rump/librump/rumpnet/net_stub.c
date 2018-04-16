@@ -1,4 +1,4 @@
-/*	$NetBSD: net_stub.c,v 1.31.2.1 2018/04/12 22:33:41 pgoyette Exp $	*/
+/*	$NetBSD: net_stub.c,v 1.31.2.2 2018/04/16 02:00:09 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: net_stub.c,v 1.31.2.1 2018/04/12 22:33:41 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: net_stub.c,v 1.31.2.2 2018/04/16 02:00:09 pgoyette Exp $");
 
 #include <sys/mutex.h>
 #include <sys/param.h>

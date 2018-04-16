@@ -1,5 +1,5 @@
 /* BFD back-end for a.out.adobe binaries.
-   Copyright (C) 1990-2016 Free Software Foundation, Inc.
+   Copyright (C) 1990-2018 Free Software Foundation, Inc.
    Written by Cygnus Support.  Based on bout.c.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -121,7 +121,8 @@ aout_adobe_callback (bfd *abfd)
 	  goto no_more_sections;
 
 	default:
-	  (*_bfd_error_handler)
+	  _bfd_error_handler
+	    /* xgettext:c-format */
 	    (_("%B: Unknown section type in a.out.adobe file: %x\n"),
 	     abfd, ext->e_type[0]);
 	  goto no_more_sections;
@@ -451,28 +452,30 @@ aout_adobe_sizeof_headers (bfd *ignore_abfd ATTRIBUTE_UNUSED,
 #define aout_32_bfd_make_debug_symbol		    _bfd_nosymbols_bfd_make_debug_symbol
 #define aout_32_bfd_reloc_type_lookup		    _bfd_norelocs_bfd_reloc_type_lookup
 #define aout_32_bfd_reloc_name_lookup		    _bfd_norelocs_bfd_reloc_name_lookup
-#define aout_32_close_and_cleanup                   aout_32_bfd_free_cached_info
-#define	aout_32_set_arch_mach		            aout_adobe_set_arch_mach
-#define	aout_32_set_section_contents	            aout_adobe_set_section_contents
-#define	aout_32_sizeof_headers		            aout_adobe_sizeof_headers
+#define aout_32_close_and_cleanup		    aout_32_bfd_free_cached_info
+#define	aout_32_set_arch_mach			    aout_adobe_set_arch_mach
+#define	aout_32_set_section_contents		    aout_adobe_set_section_contents
+#define	aout_32_sizeof_headers			    aout_adobe_sizeof_headers
 #define aout_32_bfd_get_relocated_section_contents  bfd_generic_get_relocated_section_contents
-#define aout_32_get_section_contents_in_window      _bfd_generic_get_section_contents_in_window
-#define aout_32_bfd_relax_section                   bfd_generic_relax_section
-#define aout_32_bfd_gc_sections                     bfd_generic_gc_sections
+#define aout_32_get_section_contents_in_window	    _bfd_generic_get_section_contents_in_window
+#define aout_32_bfd_relax_section		    bfd_generic_relax_section
+#define aout_32_bfd_gc_sections			    bfd_generic_gc_sections
 #define aout_32_bfd_lookup_section_flags	    bfd_generic_lookup_section_flags
-#define aout_32_bfd_merge_sections	            bfd_generic_merge_sections
-#define aout_32_bfd_is_group_section	            bfd_generic_is_group_section
-#define aout_32_bfd_discard_group	            bfd_generic_discard_group
-#define aout_32_section_already_linked              _bfd_generic_section_already_linked
-#define aout_32_bfd_define_common_symbol            bfd_generic_define_common_symbol
-#define aout_32_bfd_link_hash_table_create          _bfd_generic_link_hash_table_create
-#define aout_32_bfd_link_add_symbols	            _bfd_generic_link_add_symbols
-#define aout_32_bfd_link_just_syms	            _bfd_generic_link_just_syms
+#define aout_32_bfd_merge_sections		    bfd_generic_merge_sections
+#define aout_32_bfd_is_group_section		    bfd_generic_is_group_section
+#define aout_32_bfd_discard_group		    bfd_generic_discard_group
+#define aout_32_section_already_linked		    _bfd_generic_section_already_linked
+#define aout_32_bfd_define_common_symbol	    bfd_generic_define_common_symbol
+#define aout_32_bfd_define_start_stop		    bfd_generic_define_start_stop
+#define aout_32_bfd_link_hash_table_create	    _bfd_generic_link_hash_table_create
+#define aout_32_bfd_link_add_symbols		    _bfd_generic_link_add_symbols
+#define aout_32_bfd_link_just_syms		    _bfd_generic_link_just_syms
 #define aout_32_bfd_copy_link_hash_symbol_type \
   _bfd_generic_copy_link_hash_symbol_type
-#define aout_32_bfd_final_link		            _bfd_generic_final_link
-#define aout_32_bfd_link_split_section	            _bfd_generic_link_split_section
-#define aout_32_bfd_link_check_relocs               _bfd_generic_link_check_relocs
+#define aout_32_bfd_final_link			    _bfd_generic_final_link
+#define aout_32_bfd_link_split_section		    _bfd_generic_link_split_section
+#define aout_32_bfd_link_check_relocs		    _bfd_generic_link_check_relocs
+#define aout_32_set_reloc			    _bfd_generic_set_reloc
 
 const bfd_target aout_adobe_vec =
 {

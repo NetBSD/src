@@ -1,7 +1,7 @@
-/*	$NetBSD: rbt.c,v 1.13 2017/06/15 15:59:40 christos Exp $	*/
+/*	$NetBSD: rbt.c,v 1.13.4.1 2018/04/16 01:57:55 pgoyette Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007-2009, 2011-2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007-2009, 2011-2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -32,6 +32,7 @@
 #include <isc/file.h>
 #include <isc/hex.h>
 #include <isc/mem.h>
+#include <isc/once.h>
 #include <isc/platform.h>
 #include <isc/print.h>
 #include <isc/refcount.h>
@@ -149,6 +150,9 @@ static isc_result_t
 write_header(FILE *file, dns_rbt_t *rbt, isc_uint64_t first_node_offset,
 	     isc_uint64_t crc);
 
+static isc_boolean_t
+match_header_version(file_header_t *header);
+
 static isc_result_t
 serialize_node(FILE *file, dns_rbtnode_t *node, uintptr_t left,
 	       uintptr_t right, uintptr_t down, uintptr_t parent,
@@ -237,11 +241,11 @@ getdata(dns_rbtnode_t *node, file_header_t *header) {
  * The variable length stuff stored after the node has the following
  * structure.
  *
- *	<name_data>{1..255}<oldoffsetlen>{1}<offsets>{1..128}
+ *	&lt;name_data&gt;{1..255}&lt;oldoffsetlen&gt;{1}&lt;offsets&gt;{1..128}
  *
- * <name_data> contains the name of the node when it was created.
- * <oldoffsetlen> contains the length of <offsets> when the node was created.
- * <offsets> contains the offets into name for each label when the node was
+ * &lt;name_data&gt; contains the name of the node when it was created.
+ * &lt;oldoffsetlen&gt; contains the length of &lt;offsets&gt; when the node was created.
+ * &lt;offsets&gt; contains the offets into name for each label when the node was
  * created.
  */
 
@@ -455,7 +459,7 @@ addonlevel(dns_rbtnode_t *node, dns_rbtnode_t *current, int order,
 	   dns_rbtnode_t **rootp);
 
 static void
-deletefromlevel(dns_rbtnode_t *delete, dns_rbtnode_t **rootp);
+deletefromlevel(dns_rbtnode_t *item, dns_rbtnode_t **rootp);
 
 static isc_result_t
 treefix(dns_rbt_t *rbt, void *base, size_t size,
@@ -495,6 +499,18 @@ dns_rbt_zero_header(FILE *file) {
 	return (ISC_R_SUCCESS);
 }
 
+static isc_once_t once = ISC_ONCE_INIT;
+
+static void
+init_file_version(void) {
+	int n;
+
+	memset(FILE_VERSION, 0, sizeof(FILE_VERSION));
+	n = snprintf(FILE_VERSION, sizeof(FILE_VERSION),
+		 "RBT Image %s %s", dns_major, dns_mapapi);
+	INSIST(n > 0 && (unsigned int)n < sizeof(FILE_VERSION));
+}
+
 /*
  * Write out the real header, including NodeDump version information
  * and the offset of the first node.
@@ -510,11 +526,7 @@ write_header(FILE *file, dns_rbt_t *rbt, isc_uint64_t first_node_offset,
 	isc_result_t result;
 	off_t location;
 
-	if (FILE_VERSION[0] == '\0') {
-		memset(FILE_VERSION, 0, sizeof(FILE_VERSION));
-		snprintf(FILE_VERSION, sizeof(FILE_VERSION),
-			 "RBT Image %s %s", dns_major, dns_mapapi);
-	}
+	RUNTIME_CHECK(isc_once_do(&once, init_file_version) == ISC_R_SUCCESS);
 
 	memset(&header, 0, sizeof(file_header_t));
 	memmove(header.version1, FILE_VERSION, sizeof(header.version1));
@@ -544,6 +556,21 @@ write_header(FILE *file, dns_rbt_t *rbt, isc_uint64_t first_node_offset,
 
  cleanup:
 	return (result);
+}
+
+static isc_boolean_t
+match_header_version(file_header_t *header) {
+	RUNTIME_CHECK(isc_once_do(&once, init_file_version) == ISC_R_SUCCESS);
+
+	if (memcmp(header->version1, FILE_VERSION,
+		   sizeof(header->version1)) != 0 ||
+	    memcmp(header->version2, FILE_VERSION,
+		   sizeof(header->version1)) != 0)
+	{
+		return (ISC_FALSE);
+	}
+
+	return (ISC_TRUE);
 }
 
 static isc_result_t
@@ -620,7 +647,7 @@ serialize_node(FILE *file, dns_rbtnode_t *node, uintptr_t left,
 #endif
 
 	isc_crc64_update(crc, (const isc_uint8_t *) &temp_node,
-			sizeof(dns_rbtnode_t));
+			 sizeof(dns_rbtnode_t));
 	isc_crc64_update(crc, (const isc_uint8_t *) node_data, datasize);
 
  cleanup:
@@ -880,6 +907,7 @@ dns_rbt_deserialize_tree(void *base_address, size_t filesize,
 	file_header_t *header;
 	dns_rbt_t *rbt = NULL;
 	isc_uint64_t crc;
+	unsigned int host_big_endian;
 
 	REQUIRE(originp == NULL || *originp == NULL);
 	REQUIRE(rbtp != NULL && *rbtp == NULL);
@@ -891,6 +919,10 @@ dns_rbt_deserialize_tree(void *base_address, size_t filesize,
 	rbt->mmap_location = base_address;
 
 	header = (file_header_t *)((char *)base_address + header_offset);
+	if (!match_header_version(header)) {
+		result = ISC_R_INVALIDFILE;
+		goto cleanup;
+	}
 
 #ifdef DNS_RDATASET_FIXED
 	if (header->rdataset_fixed != 1) {
@@ -909,7 +941,9 @@ dns_rbt_deserialize_tree(void *base_address, size_t filesize,
 		result = ISC_R_INVALIDFILE;
 		goto cleanup;
 	}
-	if (header->bigendian != (1 == htonl(1)) ? 1 : 0) {
+
+	host_big_endian = (1 == htonl(1));
+	if (header->bigendian != host_big_endian) {
 		result = ISC_R_INVALIDFILE;
 		goto cleanup;
 	}
@@ -2564,25 +2598,25 @@ addonlevel(dns_rbtnode_t *node, dns_rbtnode_t *current, int order,
  * true red/black tree on a single level.
  */
 static void
-deletefromlevel(dns_rbtnode_t *delete, dns_rbtnode_t **rootp) {
+deletefromlevel(dns_rbtnode_t *item, dns_rbtnode_t **rootp) {
 	dns_rbtnode_t *child, *sibling, *parent;
 	dns_rbtnode_t *successor;
 
-	REQUIRE(delete != NULL);
+	REQUIRE(item != NULL);
 
 	/*
 	 * Verify that the parent history is (apparently) correct.
 	 */
-	INSIST((IS_ROOT(delete) && *rootp == delete) ||
-	       (! IS_ROOT(delete) &&
-		(LEFT(PARENT(delete)) == delete ||
-		 RIGHT(PARENT(delete)) == delete)));
+	INSIST((IS_ROOT(item) && *rootp == item) ||
+	       (! IS_ROOT(item) &&
+		(LEFT(PARENT(item)) == item ||
+		 RIGHT(PARENT(item)) == item)));
 
 	child = NULL;
 
-	if (LEFT(delete) == NULL) {
-		if (RIGHT(delete) == NULL) {
-			if (IS_ROOT(delete)) {
+	if (LEFT(item) == NULL) {
+		if (RIGHT(item) == NULL) {
+			if (IS_ROOT(item)) {
 				/*
 				 * This is the only item in the tree.
 				 */
@@ -2593,13 +2627,13 @@ deletefromlevel(dns_rbtnode_t *delete, dns_rbtnode_t **rootp) {
 			/*
 			 * This node has one child, on the right.
 			 */
-			child = RIGHT(delete);
+			child = RIGHT(item);
 
-	} else if (RIGHT(delete) == NULL)
+	} else if (RIGHT(item) == NULL)
 		/*
 		 * This node has one child, on the left.
 		 */
-		child = LEFT(delete);
+		child = LEFT(item);
 	else {
 		dns_rbtnode_t holder, *tmp = &holder;
 
@@ -2609,7 +2643,7 @@ deletefromlevel(dns_rbtnode_t *delete, dns_rbtnode_t **rootp) {
 		 * move it to this location, then do the deletion at the
 		 * old site of the successor.
 		 */
-		successor = RIGHT(delete);
+		successor = RIGHT(item);
 		while (LEFT(successor) != NULL)
 			successor = LEFT(successor);
 
@@ -2637,21 +2671,21 @@ deletefromlevel(dns_rbtnode_t *delete, dns_rbtnode_t **rootp) {
 		 */
 		memmove(tmp, successor, sizeof(dns_rbtnode_t));
 
-		if (IS_ROOT(delete)) {
+		if (IS_ROOT(item)) {
 			*rootp = successor;
 			successor->is_root = ISC_TRUE;
-			delete->is_root = ISC_FALSE;
+			item->is_root = ISC_FALSE;
 
 		} else
-			if (LEFT(PARENT(delete)) == delete)
-				LEFT(PARENT(delete)) = successor;
+			if (LEFT(PARENT(item)) == item)
+				LEFT(PARENT(item)) = successor;
 			else
-				RIGHT(PARENT(delete)) = successor;
+				RIGHT(PARENT(item)) = successor;
 
-		PARENT(successor) = PARENT(delete);
-		LEFT(successor)   = LEFT(delete);
-		RIGHT(successor)  = RIGHT(delete);
-		COLOR(successor)  = COLOR(delete);
+		PARENT(successor) = PARENT(item);
+		LEFT(successor)   = LEFT(item);
+		RIGHT(successor)  = RIGHT(item);
+		COLOR(successor)  = COLOR(item);
 
 		if (LEFT(successor) != NULL)
 			PARENT(LEFT(successor)) = successor;
@@ -2663,39 +2697,39 @@ deletefromlevel(dns_rbtnode_t *delete, dns_rbtnode_t **rootp) {
 		 * successor's previous tree location.  PARENT(tmp)
 		 * is the successor's original parent.
 		 */
-		INSIST(! IS_ROOT(delete));
+		INSIST(! IS_ROOT(item));
 
-		if (PARENT(tmp) == delete) {
+		if (PARENT(tmp) == item) {
 			/*
 			 * Node being deleted was successor's parent.
 			 */
-			RIGHT(successor) = delete;
-			PARENT(delete) = successor;
+			RIGHT(successor) = item;
+			PARENT(item) = successor;
 
 		} else {
-			LEFT(PARENT(tmp)) = delete;
-			PARENT(delete) = PARENT(tmp);
+			LEFT(PARENT(tmp)) = item;
+			PARENT(item) = PARENT(tmp);
 		}
 
 		/*
 		 * Original location of successor node has no left.
 		 */
-		LEFT(delete)   = NULL;
-		RIGHT(delete)  = RIGHT(tmp);
-		COLOR(delete)  = COLOR(tmp);
+		LEFT(item)   = NULL;
+		RIGHT(item)  = RIGHT(tmp);
+		COLOR(item)  = COLOR(tmp);
 	}
 
 	/*
 	 * Remove the node by removing the links from its parent.
 	 */
-	if (! IS_ROOT(delete)) {
-		if (LEFT(PARENT(delete)) == delete)
-			LEFT(PARENT(delete)) = child;
+	if (! IS_ROOT(item)) {
+		if (LEFT(PARENT(item)) == item)
+			LEFT(PARENT(item)) = child;
 		else
-			RIGHT(PARENT(delete)) = child;
+			RIGHT(PARENT(item)) = child;
 
 		if (child != NULL)
-			PARENT(child) = PARENT(delete);
+			PARENT(child) = PARENT(item);
 
 	} else {
 		/*
@@ -2704,14 +2738,14 @@ deletefromlevel(dns_rbtnode_t *delete, dns_rbtnode_t **rootp) {
 		 */
 		*rootp = child;
 		child->is_root = 1;
-		PARENT(child) = PARENT(delete);
+		PARENT(child) = PARENT(item);
 	}
 
 	/*
 	 * Fix color violations.
 	 */
-	if (IS_BLACK(delete)) {
-		parent = PARENT(delete);
+	if (IS_BLACK(item)) {
+		parent = PARENT(item);
 
 		while (child != *rootp && IS_BLACK(child)) {
 			INSIST(child == NULL || ! IS_ROOT(child));
@@ -3502,8 +3536,22 @@ dns_rbtnodechain_next(dns_rbtnodechain_t *chain, dns_name_t *name,
 				 * Reached the root without having traversed
 				 * any left pointers, so this level is done.
 				 */
-				if (chain->level_count == 0)
+				if (chain->level_count == 0) {
+					/*
+					 * If the tree we are iterating over
+					 * was modified since this chain was
+					 * initialized in a way that caused
+					 * node splits to occur, "current" may
+					 * now be pointing to a root node which
+					 * appears to be at level 0, but still
+					 * has a parent.  If that happens,
+					 * abort.  Otherwise, we are done
+					 * looking for a successor as we really
+					 * reached the root node on level 0.
+					 */
+					INSIST(PARENT(current) == NULL);
 					break;
+				}
 
 				current = chain->levels[--chain->level_count];
 				new_origin = ISC_TRUE;
@@ -3524,6 +3572,12 @@ dns_rbtnodechain_next(dns_rbtnodechain_t *chain, dns_name_t *name,
 	}
 
 	if (successor != NULL) {
+		/*
+		 * If we determine that the current node is the successor to
+		 * itself, we will run into an infinite loop, so abort instead.
+		 */
+		INSIST(chain->end != successor);
+
 		chain->end = successor;
 
 		/*

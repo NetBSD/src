@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.162.2.1 2018/04/07 04:12:19 pgoyette Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.162.2.2 2018/04/16 02:00:08 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.162.2.1 2018/04/07 04:12:19 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.162.2.2 2018/04/16 02:00:08 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -482,19 +482,36 @@ putlogpri(int level)
 	putone('>', TOLOG, NULL);
 }
 
-#ifdef KLOG_TIMESTAMP
+#ifndef KLOG_NOTIMESTAMP
 static int needtstamp = 1;
+int log_ts_prec = 7;
 
 static void
 addtstamp(int flags, struct tty *tp)
 {
 	char buf[64];
 	struct timespec ts;
-	int n;
+	int n, prec;
+	long fsec;
+
+	prec = log_ts_prec;
+	if (prec < 0) {
+		prec = 0;
+		log_ts_prec = prec;
+	} else if (prec > 9) {
+		prec = 9;
+		log_ts_prec = prec;
+	}
 
 	getnanouptime(&ts);
-	n = snprintf(buf, sizeof(buf), "[% 9jd.%.9ld] ",
-	    (intptr_t)ts.tv_sec, ts.tv_nsec);
+
+	for (n = prec, fsec = ts.tv_nsec; n < 8; n++)
+		fsec /= 10;
+	if (n < 9)
+		fsec = (fsec / 10) + ((fsec % 10) >= 5);
+
+	n = snprintf(buf, sizeof(buf), "[% 4jd.%.*ld] ",
+	    (intmax_t)ts.tv_sec, prec, fsec);
 
 	for (int i = 0; i < n; i++)
 		putone(buf[i], flags, tp);
@@ -516,14 +533,14 @@ putchar(int c, int flags, struct tty *tp)
 		return;
 	}
 
-#ifdef KLOG_TIMESTAMP
-	if (needtstamp) {
+#ifndef KLOG_NOTIMESTAMP
+	if (c != '\0' && c != '\n' && needtstamp) {
 		addtstamp(flags, tp);
 		needtstamp = 0;
 	}
 
 	if (c == '\n')
-		needtstamp++;
+		needtstamp = 1;
 #endif
 	putone(c, flags, tp);
 

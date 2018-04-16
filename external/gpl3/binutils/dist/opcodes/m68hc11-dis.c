@@ -1,5 +1,5 @@
 /* m68hc11-dis.c -- Motorola 68HC11 & 68HC12 disassembly
-   Copyright (C) 1999-2016 Free Software Foundation, Inc.
+   Copyright (C) 1999-2018 Free Software Foundation, Inc.
    Written by Stephane Carrez (stcarrez@nerim.fr)
    XGATE and S12X added by James Murray (jsm@jsm-net.demon.co.uk)
 
@@ -24,7 +24,7 @@
 #include <stdio.h>
 
 #include "opcode/m68hc11.h"
-#include "dis-asm.h"
+#include "disassemble.h"
 
 #define PC_REGNUM 3
 

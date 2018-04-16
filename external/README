@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.15 2012/06/14 04:14:36 riz Exp $
+$NetBSD: README,v 1.15.32.1 2018/04/16 01:57:33 pgoyette Exp $
 
 Organization of Sources:
 
@@ -78,6 +78,13 @@ The licenses currently used are:
 
 	mit		MIT (X11) style license.
 			http://www.opensource.org/licenses/mit-license.php
+
+	mpl		Mozilla Public license.
+			https://opensource.org/licenses/MPL-2.0
+
+	nvidia-firmware	NVIDIA firmware license permitting redistribution for
+			use on operating systems distributed under the terms
+			of an OSI-approved open source license.
 
 	public-domain	Non-license for code that has been explicitly put
 			into the Public Domain.

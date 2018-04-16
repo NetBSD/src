@@ -2319,6 +2319,8 @@ struct mDNS_struct
     // For debugging: To catch and report locking failures
     mDNSu32 mDNS_busy;                  // Incremented between mDNS_Lock/mDNS_Unlock section
     mDNSu32 mDNS_reentrancy;            // Incremented when calling a client callback
+    const char *mDNS_Lock_functionname;		// Where was the last lock taken
+    int	mDNS_Lock_lineno;				// and line number:
     mDNSu8 lock_rrcache;                // For debugging: Set at times when these lists may not be modified
     mDNSu8 lock_Questions;
     mDNSu8 lock_Records;

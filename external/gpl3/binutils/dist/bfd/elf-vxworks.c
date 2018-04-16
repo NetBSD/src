@@ -1,5 +1,5 @@
 /* VxWorks support for ELF
-   Copyright (C) 2005-2016 Free Software Foundation, Inc.
+   Copyright (C) 2005-2018 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -180,15 +180,15 @@ elf_vxworks_emit_relocs (bfd *output_bfd,
 	      && (*hash_ptr)->root.u.def.section->output_section != NULL)
 	    {
 	      /* This is a relocation from an executable or shared
-	         library against a symbol in a different shared
-	         library.  We are creating a definition in the output
-	         file but it does not come from any of our normal (.o)
-	         files. ie. a PLT stub.  Normally this would be a
-	         relocation against against SHN_UNDEF with the VMA of
-	         the PLT stub.  This upsets the VxWorks loader.
-	         Convert it to a section-relative relocation.  This
-	         gets some other symbols (for instance .dynbss), but
-	         is conservatively correct.  */
+		 library against a symbol in a different shared
+		 library.  We are creating a definition in the output
+		 file but it does not come from any of our normal (.o)
+		 files. ie. a PLT stub.  Normally this would be a
+		 relocation against against SHN_UNDEF with the VMA of
+		 the PLT stub.  This upsets the VxWorks loader.
+		 Convert it to a section-relative relocation.  This
+		 gets some other symbols (for instance .dynbss), but
+		 is conservatively correct.  */
 	      for (j = 0; j < bed->s->int_rels_per_ext_rel; j++)
 		{
 		  asection *sec = (*hash_ptr)->root.u.def.section;

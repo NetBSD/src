@@ -1,7 +1,7 @@
-/*	$NetBSD: nxt_30.c,v 1.6 2016/05/26 16:49:59 christos Exp $	*/
+/*	$NetBSD: nxt_30.c,v 1.6.14.1 2018/04/16 01:57:57 pgoyette Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009, 2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2015, 2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -120,7 +120,8 @@ totext_nxt(ARGS_TOTEXT) {
 								      target));
 					} else {
 						char buf[sizeof("65535")];
-						sprintf(buf, "%u", t);
+						snprintf(buf, sizeof(buf),
+							 "%u", t);
 						RETERR(str_totext(buf,
 								  target));
 					}

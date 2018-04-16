@@ -1,4 +1,4 @@
-/*	$NetBSD: opensslrsa_link.c,v 1.13 2017/06/15 15:59:40 christos Exp $	*/
+/*	$NetBSD: opensslrsa_link.c,v 1.13.4.1 2018/04/16 01:57:55 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 2004-2009, 2011-2017  Internet Systems Consortium, Inc. ("ISC")
@@ -270,6 +270,33 @@ opensslrsa_createctx(dst_key_t *key, dst_context_t *dctx) {
 		dctx->key->key_alg == DST_ALG_RSASHA256 ||
 		dctx->key->key_alg == DST_ALG_RSASHA512);
 #endif
+
+	/*
+	 * Reject incorrect RSA key lengths.
+	 */
+	switch (dctx->key->key_alg) {
+	case DST_ALG_RSAMD5:
+	case DST_ALG_RSASHA1:
+	case DST_ALG_NSEC3RSASHA1:
+		/* From RFC 3110 */
+		if (dctx->key->key_size > 4096)
+			return (ISC_R_FAILURE);
+		break;
+	case DST_ALG_RSASHA256:
+		/* From RFC 5702 */
+		if ((dctx->key->key_size < 512) ||
+		    (dctx->key->key_size > 4096))
+			return (ISC_R_FAILURE);
+		break;
+	case DST_ALG_RSASHA512:
+		/* From RFC 5702 */
+		if ((dctx->key->key_size < 1024) ||
+		    (dctx->key->key_size > 4096))
+			return (ISC_R_FAILURE);
+		break;
+	default:
+		INSIST(0);
+	}
 
 #if USE_EVP
 	evp_md_ctx = EVP_MD_CTX_create();
@@ -968,6 +995,33 @@ opensslrsa_generate(dst_key_t *key, int exp, void (*callback)(int)) {
 	EVP_PKEY *pkey = EVP_PKEY_new();
 #endif
 
+	/*
+	 * Reject incorrect RSA key lengths.
+	 */
+	switch (key->key_alg) {
+	case DST_ALG_RSAMD5:
+	case DST_ALG_RSASHA1:
+	case DST_ALG_NSEC3RSASHA1:
+		/* From RFC 3110 */
+		if (key->key_size > 4096)
+			goto err;
+		break;
+	case DST_ALG_RSASHA256:
+		/* From RFC 5702 */
+		if ((key->key_size < 512) ||
+		    (key->key_size > 4096))
+			goto err;
+		break;
+	case DST_ALG_RSASHA512:
+		/* From RFC 5702 */
+		if ((key->key_size < 1024) ||
+		    (key->key_size > 4096))
+			goto err;
+		break;
+	default:
+		INSIST(0);
+	}
+
 	if (rsa == NULL || e == NULL || cb == NULL)
 		goto err;
 #if USE_EVP
@@ -1441,7 +1495,7 @@ opensslrsa_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 		pub->keydata.pkey = NULL;
 		key->key_size = pub->key_size;
 		dst__privstruct_free(&priv, mctx);
-		memset(&priv, 0, sizeof(priv));
+		isc_safe_memwipe(&priv, sizeof(priv));
 		return (ISC_R_SUCCESS);
 	}
 
@@ -1509,7 +1563,7 @@ opensslrsa_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 		EVP_PKEY_free(pkey);
 #endif
 		dst__privstruct_free(&priv, mctx);
-		memset(&priv, 0, sizeof(priv));
+		isc_safe_memwipe(&priv, sizeof(priv));
 		return (ISC_R_SUCCESS);
 #else
 		DST_RET(DST_R_NOENGINE);
@@ -1573,7 +1627,7 @@ opensslrsa_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 		}
 	}
 	dst__privstruct_free(&priv, mctx);
-	memset(&priv, 0, sizeof(priv));
+	isc_safe_memwipe(&priv, sizeof(priv));
 
 	if (RSA_set0_key(rsa, n, e, d) == 0) {
 		if (n != NULL) BN_free(n);
@@ -1614,7 +1668,7 @@ opensslrsa_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 		RSA_free(pubrsa);
 	key->keydata.generic = NULL;
 	dst__privstruct_free(&priv, mctx);
-	memset(&priv, 0, sizeof(priv));
+	isc_safe_memwipe(&priv, sizeof(priv));
 	return (ret);
 }
 

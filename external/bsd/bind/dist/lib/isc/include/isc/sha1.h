@@ -1,7 +1,7 @@
-/*	$NetBSD: sha1.h,v 1.6 2017/06/15 15:59:41 christos Exp $	*/
+/*	$NetBSD: sha1.h,v 1.6.4.1 2018/04/16 01:57:58 pgoyette Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009, 2014, 2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009, 2014, 2016-2018  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -43,7 +43,7 @@
 
 typedef struct {
 	EVP_MD_CTX *ctx;
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
+#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
 	EVP_MD_CTX _ctx;
 #endif
 } isc_sha1_t;
@@ -75,6 +75,9 @@ isc_sha1_update(isc_sha1_t *ctx, const unsigned char *data, unsigned int len);
 
 void
 isc_sha1_final(isc_sha1_t *ctx, unsigned char *digest);
+
+isc_boolean_t
+isc_sha1_check(isc_boolean_t testing);
 
 ISC_LANG_ENDDECLS
 

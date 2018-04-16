@@ -1,5 +1,5 @@
 /* ELF executable support for BFD.
-   Copyright (C) 1991-2016 Free Software Foundation, Inc.
+   Copyright (C) 1991-2018 Free Software Foundation, Inc.
 
    Written by Fred Fish @ Cygnus Support, from information published
    in "UNIX System V Release 4, Programmers Guide: ANSI C and
@@ -756,7 +756,9 @@ elf_object_p (bfd *abfd)
 	     So we are kind, and reset the string index value to 0
 	     so that at least some processing can be done.  */
 	  i_ehdrp->e_shstrndx = SHN_UNDEF;
-	  _bfd_error_handler (_("warning: %s has a corrupt string table index - ignoring"), abfd->filename);
+	  _bfd_error_handler
+	    (_("warning: %B has a corrupt string table index - ignoring"),
+	     abfd);
 	}
     }
   else if (i_ehdrp->e_shstrndx != SHN_UNDEF)
@@ -956,6 +958,12 @@ elf_write_relocs (bfd *abfd, asection *sec, void *data)
 	  return;
 	}
 
+      if (ptr->howto == NULL)
+	{
+	  *failedp = TRUE;
+	  return;
+	}
+
       src_rela.r_offset = ptr->address + addr_offset;
       src_rela.r_info = ELF_R_INFO (n, ptr->howto->type);
       src_rela.r_addend = ptr->addend;
@@ -973,6 +981,7 @@ elf_write_out_phdrs (bfd *abfd,
   while (count--)
     {
       Elf_External_Phdr extphdr;
+
       elf_swap_phdr_out (abfd, phdr, &extphdr);
       if (bfd_bwrite (&extphdr, sizeof (Elf_External_Phdr), abfd)
 	  != sizeof (Elf_External_Phdr))
@@ -1185,10 +1194,11 @@ elf_slurp_symbol_table (bfd *abfd, asymbol **symptrs, bfd_boolean dynamic)
       if (verhdr != NULL
 	  && verhdr->sh_size / sizeof (Elf_External_Versym) != symcount)
 	{
-	  (*_bfd_error_handler)
-	    (_("%s: version count (%ld) does not match symbol count (%ld)"),
-	     abfd->filename,
-	     (long) (verhdr->sh_size / sizeof (Elf_External_Versym)),
+	  _bfd_error_handler
+	    /* xgettext:c-format */
+	    (_("%B: version count (%Ld) does not match symbol count (%ld)"),
+	     abfd,
+	     verhdr->sh_size / sizeof (Elf_External_Versym),
 	     symcount);
 
 	  /* Slurp in the symbols without the version information,
@@ -1436,12 +1446,15 @@ elf_slurp_reloc_table_from_section (bfd *abfd,
 	relent->address = rela.r_offset - asect->vma;
 
       if (ELF_R_SYM (rela.r_info) == STN_UNDEF)
+	/* FIXME: This and the error case below mean that we have a
+	   symbol on relocs that is not elf_symbol_type.  */
 	relent->sym_ptr_ptr = bfd_abs_section_ptr->symbol_ptr_ptr;
       else if (ELF_R_SYM (rela.r_info) > symcount)
 	{
-	  (*_bfd_error_handler)
-	    (_("%s(%s): relocation %d has invalid symbol index %ld"),
-	     abfd->filename, asect->name, i, ELF_R_SYM (rela.r_info));
+	  _bfd_error_handler
+	    /* xgettext:c-format */
+	    (_("%B(%A): relocation %d has invalid symbol index %ld"),
+	     abfd, asect, i, (long) ELF_R_SYM (rela.r_info));
 	  relent->sym_ptr_ptr = bfd_abs_section_ptr->symbol_ptr_ptr;
 	}
       else

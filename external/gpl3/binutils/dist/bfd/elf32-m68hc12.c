@@ -1,5 +1,5 @@
 /* Motorola 68HC12-specific support for 32-bit ELF
-   Copyright (C) 1999-2016 Free Software Foundation, Inc.
+   Copyright (C) 1999-2018 Free Software Foundation, Inc.
    Contributed by Stephane Carrez (stcarrez@nerim.fr)
    (Heavily copied from the D10V port by Martin Hunt (hunt@cygnus.com))
 
@@ -62,31 +62,31 @@ static void m68hc11_info_to_howto_rel
 
 					Banked
 					Address Space
-                                        |               |       Page n
+					|		|	Page n
 					+---------------+ 0x1010000
-                                        |               |
-                                        | jsr _foo      |
-                                        | ..            |       Page 3
-                                        | _foo:         |
+					|		|
+					| jsr _foo	|
+					| ..		|	Page 3
+					| _foo:		|
 					+---------------+ 0x100C000
-					|	        |
-                                        | call _bar     |
-					| ..	        |	Page 2
-					| _bar:	        |
+					|		|
+					| call _bar	|
+					| ..		|	Page 2
+					| _bar:		|
 					+---------------+ 0x1008000
-				/------>|	        |
-				|	| call _foo     |	Page 1
-				|	|       	|
+				/------>|		|
+				|	| call _foo	|	Page 1
+				|	|		|
 				|	+---------------+ 0x1004000
-      Physical			|	|	        |
-      Address Space		|	|	        |	Page 0
-				|	|	        |
+      Physical			|	|		|
+      Address Space		|	|		|	Page 0
+				|	|		|
     +-----------+ 0x00FFFF	|	+---------------+ 0x1000000
     |		|		|
     | call _foo	|		|
     |		|		|
     +-----------+ 0x00BFFF -+---/
-    |		|           |
+    |		|	    |
     |		|	    |
     |		| 16K	    |
     |		|	    |
@@ -177,7 +177,7 @@ static reloc_howto_type elf_m68hc11_howto_table[] = {
 	 FALSE,			/* partial_inplace */
 	 0x00ff,		/* src_mask */
 	 0x00ff,		/* dst_mask */
-	 TRUE),                 /* pcrel_offset */
+	 TRUE),			/* pcrel_offset */
 
   /* A 16 bit absolute relocation */
   HOWTO (R_M68HC11_16,		/* type */
@@ -238,7 +238,7 @@ static reloc_howto_type elf_m68hc11_howto_table[] = {
 	 FALSE,			/* partial_inplace */
 	 0xffff,		/* src_mask */
 	 0xffff,		/* dst_mask */
-	 TRUE),                 /* pcrel_offset */
+	 TRUE),			/* pcrel_offset */
 
   /* GNU extension to record C++ vtable hierarchy */
   HOWTO (R_M68HC11_GNU_VTINHERIT,	/* type */
@@ -271,7 +271,7 @@ static reloc_howto_type elf_m68hc11_howto_table[] = {
 	 FALSE),		/* pcrel_offset */
 
   /* A 24 bit relocation */
-  HOWTO (R_M68HC11_24,	        /* type */
+  HOWTO (R_M68HC11_24,		/* type */
 	 0,			/* rightshift */
 	 2,			/* size (0 = byte, 1 = short, 2 = long) */
 	 24,			/* bitsize */
@@ -286,7 +286,7 @@ static reloc_howto_type elf_m68hc11_howto_table[] = {
 	 FALSE),		/* pcrel_offset */
 
   /* A 16-bit low relocation */
-  HOWTO (R_M68HC11_LO16,        /* type */
+  HOWTO (R_M68HC11_LO16,	/* type */
 	 0,			/* rightshift */
 	 1,			/* size (0 = byte, 1 = short, 2 = long) */
 	 16,			/* bitsize */
@@ -301,7 +301,7 @@ static reloc_howto_type elf_m68hc11_howto_table[] = {
 	 FALSE),		/* pcrel_offset */
 
   /* A page relocation */
-  HOWTO (R_M68HC11_PAGE,        /* type */
+  HOWTO (R_M68HC11_PAGE,	/* type */
 	 0,			/* rightshift */
 	 0,			/* size (0 = byte, 1 = short, 2 = long) */
 	 8,			/* bitsize */
@@ -328,8 +328,8 @@ static reloc_howto_type elf_m68hc11_howto_table[] = {
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_M68HC12_16B",	/* name */
 	 FALSE,			/* partial_inplace */
-	 0xffff,			/* src_mask */
-	 0xffff,			/* dst_mask */
+	 0xffff,		/* src_mask */
+	 0xffff,		/* dst_mask */
 	 FALSE),		/* pcrel_offset */
 
   /* A 9 bit PC-rel relocation.  */
@@ -345,7 +345,7 @@ static reloc_howto_type elf_m68hc11_howto_table[] = {
 	 TRUE,			/* partial_inplace */
 	 0xfe00,		/* src_mask */
 	 0x01ff,		/* dst_mask */
-	 TRUE),                 /* pcrel_offset */
+	 TRUE),			/* pcrel_offset */
 
   /* A 10 bit PC-rel relocation.  */
   HOWTO (R_M68HC12_PCREL_10,	/* type */
@@ -360,7 +360,7 @@ static reloc_howto_type elf_m68hc11_howto_table[] = {
 	 TRUE,			/* partial_inplace */
 	 0xfc00,		/* src_mask */
 	 0x03ff,		/* dst_mask */
-	 TRUE),                 /* pcrel_offset */
+	 TRUE),			/* pcrel_offset */
 
   /* A 8 bit absolute relocation (upper address).  */
   HOWTO (R_M68HC12_HI8XG,		/* type */
@@ -405,7 +405,7 @@ static reloc_howto_type elf_m68hc11_howto_table[] = {
 	 TRUE,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0,			/* dst_mask */
-	 TRUE),                 /* pcrel_offset */
+	 TRUE),			/* pcrel_offset */
 
   /* Mark beginning of Gcc relaxation group instruction.  */
   HOWTO (R_M68HC11_RL_GROUP,	/* type */
@@ -420,7 +420,7 @@ static reloc_howto_type elf_m68hc11_howto_table[] = {
 	 TRUE,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0,			/* dst_mask */
-	 TRUE),                 /* pcrel_offset */
+	 TRUE),			/* pcrel_offset */
 };
 
 /* Map BFD reloc types to M68HC11 ELF reloc types.  */
@@ -463,7 +463,7 @@ static const struct m68hc11_reloc_map m68hc11_reloc_map[] =
 
 static reloc_howto_type *
 bfd_elf32_bfd_reloc_type_lookup (bfd *abfd ATTRIBUTE_UNUSED,
-                                 bfd_reloc_code_real_type code)
+				 bfd_reloc_code_real_type code)
 {
   unsigned int i;
 
@@ -499,13 +499,14 @@ bfd_elf32_bfd_reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED,
 
 static void
 m68hc11_info_to_howto_rel (bfd *abfd ATTRIBUTE_UNUSED,
-                           arelent *cache_ptr, Elf_Internal_Rela *dst)
+			   arelent *cache_ptr, Elf_Internal_Rela *dst)
 {
   unsigned int r_type;
 
   r_type = ELF32_R_TYPE (dst->r_info);
   if (r_type >= (unsigned int) R_M68HC11_max)
     {
+      /* xgettext:c-format */
       _bfd_error_handler (_("%B: invalid M68HC12 reloc number: %d"), abfd, r_type);
       r_type = 0;
     }
@@ -549,8 +550,8 @@ m68hc12_elf_build_one_stub (struct bfd_hash_entry *gen_entry, void *in_arg)
 
   */
   sym_value = (stub_entry->target_value
-               + stub_entry->target_section->output_offset
-               + stub_entry->target_section->output_section->vma);
+	       + stub_entry->target_section->output_offset
+	       + stub_entry->target_section->output_section->vma);
   phys_addr = m68hc11_phys_addr (&htab->pinfo, sym_value);
   phys_page = m68hc11_phys_page (&htab->pinfo, sym_value);
 
@@ -572,7 +573,7 @@ m68hc12_elf_build_one_stub (struct bfd_hash_entry *gen_entry, void *in_arg)
 
 static bfd_boolean
 m68hc12_elf_size_one_stub (struct bfd_hash_entry *gen_entry,
-                           void *in_arg ATTRIBUTE_UNUSED)
+			   void *in_arg ATTRIBUTE_UNUSED)
 {
   struct elf32_m68hc11_stub_hash_entry *stub_entry;
 
@@ -615,7 +616,7 @@ m68hc12_elf_set_mach_from_flags (bfd *abfd)
       break;
     case EF_M68HC11_GENERIC:
       bfd_default_set_arch_mach (abfd, bfd_arch_m68hc12,
-                                 bfd_mach_m6812_default);
+				 bfd_mach_m6812_default);
       break;
     default:
       return FALSE;
@@ -634,7 +635,7 @@ static const struct bfd_elf_special_section elf32_m68hc12_special_sections[] =
   { STRING_COMMA_LEN (".page0"),    0, SHT_PROGBITS, SHF_ALLOC + SHF_WRITE },
   { STRING_COMMA_LEN (".softregs"), 0, SHT_NOBITS,   SHF_ALLOC + SHF_WRITE },
   { STRING_COMMA_LEN (".vectors"),  0, SHT_PROGBITS, SHF_ALLOC },
-  { NULL,                       0,  0, 0,            0 }
+  { NULL,			0,  0, 0,	     0 }
 };
 
 #define ELF_ARCH		bfd_arch_m68hc12
@@ -642,7 +643,7 @@ static const struct bfd_elf_special_section elf32_m68hc12_special_sections[] =
 #define ELF_MACHINE_CODE	EM_68HC12
 #define ELF_MAXPAGESIZE		0x1000
 
-#define TARGET_BIG_SYM          m68hc12_elf32_vec
+#define TARGET_BIG_SYM		m68hc12_elf32_vec
 #define TARGET_BIG_NAME		"elf32-m68hc12"
 
 #define elf_info_to_howto	0
@@ -658,7 +659,7 @@ static const struct bfd_elf_special_section elf32_m68hc12_special_sections[] =
 #define elf_backend_merge_symbol_attribute elf32_m68hc11_merge_symbol_attribute
 
 #define bfd_elf32_bfd_link_hash_table_create \
-                                m68hc12_elf_bfd_link_hash_table_create
+				m68hc12_elf_bfd_link_hash_table_create
 #define bfd_elf32_bfd_merge_private_bfd_data \
 					_bfd_m68hc11_elf_merge_private_bfd_data
 #define bfd_elf32_bfd_set_private_flags	_bfd_m68hc11_elf_set_private_flags

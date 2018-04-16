@@ -1,5 +1,5 @@
 /* tc-ip2k.c -- Assembler for the Scenix IP2xxx.
-   Copyright (C) 2000-2016 Free Software Foundation, Inc.
+   Copyright (C) 2000-2018 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -26,7 +26,6 @@
 #include "cgen.h"
 #include "elf/common.h"
 #include "elf/ip2k.h"
-#include "libbfd.h"
 
 /* Structure to hold all of the different components describing
    an individual instruction.  */

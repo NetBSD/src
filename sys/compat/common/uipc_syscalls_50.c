@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls_50.c,v 1.3.56.4 2018/04/12 22:33:41 pgoyette Exp $	*/
+/*	$NetBSD: uipc_syscalls_50.c,v 1.3.56.5 2018/04/16 01:59:56 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_50.c,v 1.3.56.4 2018/04/12 22:33:41 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_50.c,v 1.3.56.5 2018/04/16 01:59:56 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -110,4 +110,4 @@ if_50_fini(void)
 {
 
 	vec_compat_ifdatareq = (void *)enosys;
-}
+	}

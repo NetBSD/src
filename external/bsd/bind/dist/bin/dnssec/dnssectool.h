@@ -1,7 +1,7 @@
-/*	$NetBSD: dnssectool.h,v 1.8 2017/06/15 15:59:36 christos Exp $	*/
+/*	$NetBSD: dnssectool.h,v 1.8.4.1 2018/04/16 01:57:36 pgoyette Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007-2012, 2014-2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007-2012, 2014-2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -47,8 +47,8 @@ check_result(isc_result_t result, const char *message);
 void
 vbprintf(int level, const char *fmt, ...) ISC_FORMAT_PRINTF(2, 3);
 
-void
-version(const char *program);
+ISC_PLATFORM_NORETURN_PRE void
+version(const char *program) ISC_PLATFORM_NORETURN_POST;
 
 void
 type_format(const dns_rdatatype_t type, char *cp, unsigned int size);

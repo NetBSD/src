@@ -1,7 +1,7 @@
-/*	$NetBSD: px_26.c,v 1.6 2016/05/26 16:49:59 christos Exp $	*/
+/*	$NetBSD: px_26.c,v 1.6.14.1 2018/04/16 01:57:57 pgoyette Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009, 2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2015, 2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -95,7 +95,7 @@ totext_in_px(ARGS_TOTEXT) {
 	dns_rdata_toregion(rdata, &region);
 	num = uint16_fromregion(&region);
 	isc_region_consume(&region, 2);
-	sprintf(buf, "%u", num);
+	snprintf(buf, sizeof(buf), "%u", num);
 	RETERR(str_totext(buf, target));
 	RETERR(str_totext(" ", target));
 

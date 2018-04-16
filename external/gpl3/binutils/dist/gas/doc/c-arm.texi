@@ -1,4 +1,4 @@
-@c Copyright (C) 1996-2016 Free Software Foundation, Inc.
+@c Copyright (C) 1996-2018 Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
 
@@ -123,14 +123,19 @@ recognized:
 @code{cortex-a32},
 @code{cortex-a35},
 @code{cortex-a53},
+@code{cortex-a55},
 @code{cortex-a57},
 @code{cortex-a72},
 @code{cortex-a73},
+@code{cortex-a75},
 @code{cortex-r4},
 @code{cortex-r4f},
 @code{cortex-r5},
 @code{cortex-r7},
 @code{cortex-r8},
+@code{cortex-r52},
+@code{cortex-m33},
+@code{cortex-m23},
 @code{cortex-m7},
 @code{cortex-m4},
 @code{cortex-m3},
@@ -140,7 +145,6 @@ recognized:
 @code{exynos-m1},
 @code{marvell-pj4},
 @code{marvell-whitney},
-@code{qdf24xx},
 @code{xgene1},
 @code{xgene2},
 @code{ep9312} (ARM920 with Cirrus Maverick coprocessor),
@@ -172,7 +176,10 @@ been added, again in ascending alphabetical order.  For example,
 The following extensions are currently supported:
 @code{crc}
 @code{crypto} (Cryptography Extensions for v8-A architecture, implies @code{fp+simd}),
+@code{dotprod} (Dot Product Extensions for v8.2-A architecture, implies @code{fp+simd}),
 @code{fp} (Floating Point Extensions for v8-A architecture),
+@code{fp16} (FP16 Extensions for v8.2-A architecture, implies @code{fp}),
+@code{fp16fml} (FP16 Floating Point Multiplication Variant Extensions for v8.2-A architecture, implies @code{fp16}),
 @code{idiv} (Integer Divide Extensions for v7-A and v7-R architectures),
 @code{iwmmxt},
 @code{iwmmxt2},
@@ -185,7 +192,7 @@ architectures),
 @code{simd} (Advanced SIMD Extensions for v8-A architecture, implies @code{fp}),
 @code{virt} (Virtualization Extensions for v7-A architecture, implies
 @code{idiv}),
-@code{pan} (Priviliged Access Never Extensions for v8-A architecture),
+@code{pan} (Privileged Access Never Extensions for v8-A architecture),
 @code{ras} (Reliability, Availability and Serviceability extensions
 for v8-A architecture),
 @code{rdma} (ARMv8.1 Advanced SIMD extensions for v8-A architecture, implies
@@ -230,6 +237,9 @@ names are recognized:
 @code{armv8-a},
 @code{armv8.1-a},
 @code{armv8.2-a},
+@code{armv8.3-a},
+@code{armv8-r},
+@code{armv8.4-a},
 @code{iwmmxt}
 @code{iwmmxt2}
 and
@@ -281,6 +291,8 @@ The following format options are recognized:
 @code{arm1136jf-s},
 @code{maverick},
 @code{neon},
+@code{neon-vfpv3},
+@code{neon-fp16},
 @code{neon-vfpv4},
 @code{neon-fp-armv8},
 @code{crypto-neon-fp-armv8},
@@ -293,7 +305,7 @@ also affects the way in which the @code{.double} assembler directive behaves
 when assembling little-endian code.
 
 The default is dependent on the processor selected.  For Architecture 5 or
-later, the default is to assembler for VFP instructions; for earlier
+later, the default is to assemble for VFP instructions; for earlier
 architectures the default is to assemble for FPA instructions.
 
 @cindex @code{-mthumb} command line option, ARM
@@ -590,6 +602,7 @@ The ARM family uses @sc{ieee} floating-point numbers.
 
 @c AAAAAAAAAAAAAAAAAAAAAAAAA
 
+@ifclear ELF
 @cindex @code{.2byte} directive, ARM
 @cindex @code{.4byte} directive, ARM
 @cindex @code{.8byte} directive, ARM
@@ -597,6 +610,7 @@ The ARM family uses @sc{ieee} floating-point numbers.
 @itemx .4byte @var{expression} [, @var{expression}]*
 @itemx .8byte @var{expression} [, @var{expression}]*
 These directives write 2, 4 or 8 byte values to the output section.
+@end ifclear
 
 @cindex @code{.align} directive, ARM
 @item .align @var{expression} [, @var{expression}]
@@ -931,7 +945,7 @@ between Arm and Thumb instructions and should be used even if
 interworking is not going to be performed.  The presence of this
 directive also implies @code{.thumb}
 
-This directive is not neccessary when generating EABI objects.  On these
+This directive is not necessary when generating EABI objects.  On these
 targets the encoding is implicit when generating Thumb code.
 
 @cindex @code{.thumb_set} directive, ARM
@@ -966,7 +980,7 @@ should only be done if it is really necessary.
 
 @cindex @code{.unwind_raw} directive, ARM
 @item .unwind_raw @var{offset}, @var{byte1}, @dots{}
-Insert one of more arbitary unwind opcode bytes, which are known to adjust
+Insert one of more arbitrary unwind opcode bytes, which are known to adjust
 the stack pointer by @var{offset} bytes.
 
 For example @code{.unwind_raw 4, 0xb1, 0x01} is equivalent to

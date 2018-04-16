@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_fsm.h,v 1.15 2005/12/10 23:36:23 elad Exp $	*/
+/*	$NetBSD: tcp_fsm.h,v 1.15.162.1 2018/04/16 02:00:09 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -81,10 +81,6 @@ const u_char	tcp_outflags[TCP_NSTATES] = {
 	TH_ACK,		/* FIN_WAIT_2 */
 	TH_ACK,		/* TIME_WAIT */
 };
-#endif
-
-#ifdef KPROF
-int	tcp_acounts[TCP_NSTATES][PRU_NREQ];
 #endif
 
 #ifdef	TCPSTATES

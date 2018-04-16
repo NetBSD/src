@@ -1,5 +1,5 @@
 /* tc-sparc.h - Macros and type defines for the sparc.
-   Copyright (C) 1989-2016 Free Software Foundation, Inc.
+   Copyright (C) 1989-2018 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -77,6 +77,8 @@ extern void sparc_handle_align (struct frag *);
 
 #define MAX_MEM_FOR_RS_ALIGN_CODE  (3 + 4 + 4)
 
+#define DIFF_EXPR_OK    /* foo-. gets turned into PC relative relocs */
+
 /* I know that "call 0" fails in sparc-coff if this doesn't return 1.  I
    don't know about other relocation types, or other formats, yet.  */
 #ifdef OBJ_COFF
@@ -94,10 +96,9 @@ extern void sparc_handle_align (struct frag *);
    the .o file.  */
 
 #define TC_FORCE_RELOCATION_LOCAL(FIX)		\
-  (!(FIX)->fx_pcrel				\
+  (GENERIC_FORCE_RELOCATION_LOCAL (FIX)		\
    || (sparc_pic_code				\
-       && S_IS_EXTERNAL ((FIX)->fx_addsy))	\
-   || TC_FORCE_RELOCATION (FIX))
+       && S_IS_EXTERNAL ((FIX)->fx_addsy)))
 #endif
 
 #ifdef OBJ_ELF
@@ -129,6 +130,15 @@ extern void sparc_handle_align (struct frag *);
 /* Finish up the entire symtab.  */
 #define tc_adjust_symtab() sparc_adjust_symtab ()
 extern void sparc_adjust_symtab (void);
+
+/* Don't allow the generic code to convert fixups involving the
+   subtraction of a label in the current section to pc-relative if we
+   don't have the necessary pc-relative relocation.  */
+#define TC_FORCE_RELOCATION_SUB_LOCAL(FIX, SEG)		\
+  (!((FIX)->fx_r_type == BFD_RELOC_64			\
+     || (FIX)->fx_r_type == BFD_RELOC_32		\
+     || (FIX)->fx_r_type == BFD_RELOC_16		\
+     || (FIX)->fx_r_type == BFD_RELOC_8))
 #endif
 
 #ifdef OBJ_AOUT
@@ -200,5 +210,11 @@ extern int sparc_cie_data_alignment;
 #define DWARF2_LINE_MIN_INSN_LENGTH     4
 #define DWARF2_DEFAULT_RETURN_COLUMN    15
 #define DWARF2_CIE_DATA_ALIGNMENT       sparc_cie_data_alignment
+
+/* cons_fix_new_sparc will chooose BFD_RELOC_SPARC_UA32 for the difference
+   expressions, but there is no corresponding PC-relative relocation; as this
+   is for debugging info though, alignment does not matter, so by disabling
+   this, BFD_RELOC_32_PCREL will be emitted directly instead.  */
+#define CFI_DIFF_EXPR_OK 0
 
 /* end of tc-sparc.h */

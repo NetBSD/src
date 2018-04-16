@@ -1,0 +1,8 @@
+syntax(2)
+test_suite('isc-dhcp')
+
+atf_test_program{name='alloc_unittest'}
+atf_test_program{name='dns_unittest'}
+atf_test_program{name='misc_unittest'}
+atf_test_program{name='ns_name_unittest'}
+atf_test_program{name='option_unittest'}

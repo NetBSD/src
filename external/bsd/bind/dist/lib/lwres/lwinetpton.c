@@ -1,7 +1,7 @@
-/*	$NetBSD: lwinetpton.c,v 1.6 2014/12/10 04:38:02 christos Exp $	*/
+/*	$NetBSD: lwinetpton.c,v 1.6.14.1 2018/04/16 01:58:01 pgoyette Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2011-2014, 2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1996-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -92,12 +92,12 @@ inet_pton4(const char *src, unsigned char *dst) {
 		const char *pch;
 
 		if ((pch = strchr(digits, ch)) != NULL) {
-			unsigned int new = *tp * 10;
+			unsigned int byte = *tp * 10;
 
-			new += (unsigned int)(pch - digits);
-			if (new > 255)
+			byte += (unsigned int)(pch - digits);
+			if (byte > 255)
 				return (0);
-			*tp = new;
+			*tp = byte;
 			if (! saw_digit) {
 				if (++octets > 4)
 					return (0);

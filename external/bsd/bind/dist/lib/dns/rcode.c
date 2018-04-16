@@ -1,7 +1,7 @@
-/*	$NetBSD: rcode.c,v 1.11 2017/06/15 15:59:40 christos Exp $	*/
+/*	$NetBSD: rcode.c,v 1.11.4.1 2018/04/16 01:57:56 pgoyette Exp $	*/
 
 /*
- * Copyright (C) 2004-2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -143,6 +143,8 @@
 	{ DNS_KEYALG_ECCGOST, "ECCGOST", 0 }, \
 	{ DNS_KEYALG_ECDSA256, "ECDSAP256SHA256", 0 }, \
 	{ DNS_KEYALG_ECDSA384, "ECDSAP384SHA384", 0 }, \
+	{ DNS_KEYALG_ED25519, "ED25519", 0 }, \
+	{ DNS_KEYALG_ED448, "ED448", 0 }, \
 	{ DNS_KEYALG_INDIRECT, "INDIRECT", 0 }, \
 	{ DNS_KEYALG_PRIVATEDNS, "PRIVATEDNS", 0 }, \
 	{ DNS_KEYALG_PRIVATEOID, "PRIVATEOID", 0 }, \
@@ -259,8 +261,8 @@ maybe_numeric(unsigned int *valuep, isc_textregion_t *source,
 	 * isc_parse_uint32().	isc_parse_uint32() requires
 	 * null termination, so we must make a copy.
 	 */
-	strncpy(buffer, source->base, sizeof(buffer));
-	buffer[sizeof(buffer) - 1] = '\0';
+	snprintf(buffer, sizeof(buffer), "%.*s",
+		 (int)source->length, source->base);
 
 	INSIST(buffer[source->length] == '\0');
 
@@ -511,8 +513,12 @@ dns_rdataclass_fromtext(dns_rdataclass_t *classp, isc_textregion_t *source) {
 			char *endp;
 			unsigned int val;
 
-			strncpy(buf, source->base + 5, source->length - 5);
-			buf[source->length - 5] = '\0';
+			/*
+			 * source->base is not required to be NUL terminated.
+			 * Copy up to remaining bytes and NUL terminate.
+			 */
+			snprintf(buf, sizeof(buf), "%.*s",
+				 (int)(source->length - 5), source->base + 5);
 			val = strtoul(buf, &endp, 10);
 			if (*endp == '\0' && val <= 0xffff) {
 				*classp = (dns_rdataclass_t)val;

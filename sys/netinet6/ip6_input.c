@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.193.2.2 2018/03/22 01:44:51 pgoyette Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.193.2.3 2018/04/16 02:00:09 pgoyette Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.193.2.2 2018/03/22 01:44:51 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.193.2.3 2018/04/16 02:00:09 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -380,10 +380,9 @@ ip6_input(struct mbuf *m, struct ifnet *rcvif)
 	 * not fast-forwarded, they must clear the M_CANFASTFWD flag.
 	 * Note that filters must _never_ set this flag, as another filter
 	 * in the list may have previously cleared it.
-	 */
-	/*
-	 * let ipfilter look at packet on the wire,
-	 * not the decapsulated packet.
+	 *
+	 * Don't call hooks if the packet has already been processed by
+	 * IPsec (encapsulated, tunnel mode).
 	 */
 #if defined(IPSEC)
 	if (!ipsec_used || !ipsec_indone(m))
@@ -748,6 +747,8 @@ hbhcheck:
 			in6_ifstat_inc(rcvif, ifs6_in_hdrerr);
 			goto bad;
 		}
+
+		M_VERIFY_PACKET(m);
 
 		/*
 		 * protection against faulty packet - there should be
@@ -1316,18 +1317,6 @@ ip6_pullexthdr(struct mbuf *m, size_t off, int nxt)
 	struct ip6_ext ip6e;
 	size_t elen;
 	struct mbuf *n;
-
-#ifdef DIAGNOSTIC
-	switch (nxt) {
-	case IPPROTO_DSTOPTS:
-	case IPPROTO_ROUTING:
-	case IPPROTO_HOPOPTS:
-	case IPPROTO_AH: /* is it possible? */
-		break;
-	default:
-		printf("ip6_pullexthdr: invalid nxt=%d\n", nxt);
-	}
-#endif
 
 	m_copydata(m, off, sizeof(ip6e), (void *)&ip6e);
 	if (nxt == IPPROTO_AH)

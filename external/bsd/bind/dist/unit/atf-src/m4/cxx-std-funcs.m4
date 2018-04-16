@@ -1,6 +1,3 @@
-dnl
-dnl Automated Testing Framework (atf)
-dnl
 dnl Copyright (c) 2007 The NetBSD Foundation, Inc.
 dnl All rights reserved.
 dnl
@@ -25,7 +22,6 @@ dnl INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
 dnl IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
 dnl OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 dnl IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-dnl
 
 AC_DEFUN([ATF_CHECK_IN_STD], [
     AC_MSG_CHECKING(whether $1 is in std)
@@ -36,35 +32,6 @@ AC_DEFUN([ATF_CHECK_IN_STD], [
                   [Define to 1 if $1 is in std]),
         AC_MSG_RESULT(no)
     )
-])
-
-AC_DEFUN([ATF_CHECK_STD_PUTENV], [
-    ATF_CHECK_IN_STD([putenv],
-                     [#include <cstdio>],
-                     [std::putenv("a=b");]
-                    )
-])
-
-AC_DEFUN([ATF_CHECK_STD_SETENV], [
-    ATF_CHECK_IN_STD([setenv],
-                     [#include <cstdio>],
-                     [std::setenv("a", "b");]
-                    )
-])
-
-AC_DEFUN([ATF_CHECK_STD_SNPRINTF], [
-    ATF_CHECK_IN_STD([snprintf],
-                     [#include <cstdio>],
-                     [char buf;
-                      std::snprintf(&buf, 1, "");]
-                    )
-])
-
-AC_DEFUN([ATF_CHECK_STD_UNSETENV], [
-    ATF_CHECK_IN_STD([unsetenv],
-                     [#include <cstdio>],
-                     [std::unsetenv("a");]
-                    )
 ])
 
 AC_DEFUN([ATF_CHECK_STD_VSNPRINTF], [

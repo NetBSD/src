@@ -51,6 +51,7 @@ isc__buffer_remainingregion
 isc__buffer_setactive
 isc__buffer_subtract
 isc__buffer_usedregion
+isc__hash_setvec
 isc__mem_allocate
 isc__mem_free
 isc__mem_get
@@ -202,6 +203,7 @@ isc_entropy_stats
 isc_entropy_status
 isc_entropy_stopcallbacksources
 isc_entropy_usebestsource
+isc_errno_toresult
 isc_error_fatal
 isc_error_runtimecheck
 isc_error_setfatal
@@ -223,6 +225,7 @@ isc_file_isabsolute
 isc_file_ischdiridempotent
 isc_file_iscurrentdir
 isc_file_isdirectory
+isc_file_isdirwritable
 isc_file_isplainfile
 isc_file_isplainfilefd
 isc_file_mktemplate
@@ -268,12 +271,14 @@ isc_heap_insert
 isc_hex_decodestring
 isc_hex_tobuffer
 isc_hex_totext
+isc_hmacmd5_check
 isc_hmacmd5_init
 isc_hmacmd5_invalidate
 isc_hmacmd5_sign
 isc_hmacmd5_update
 isc_hmacmd5_verify
 isc_hmacmd5_verify2
+isc_hmacsha1_check
 isc_hmacsha1_init
 isc_hmacsha1_invalidate
 isc_hmacsha1_sign
@@ -373,6 +378,7 @@ isc_logconfig_create
 isc_logconfig_destroy
 isc_logconfig_get
 isc_logconfig_use
+isc_md5_check
 isc_md5_final
 isc_md5_init
 isc_md5_invalidate
@@ -428,6 +434,8 @@ isc_mutexblock_init
 isc_net_aton
 isc_net_disableipv4
 isc_net_disableipv6
+isc_net_enableipv4
+isc_net_enableipv6
 isc_net_getudpportrange
 isc_net_ntop
 isc_net_probe_ipv6only
@@ -450,6 +458,7 @@ isc_netaddr_fromv4mapped
 isc_netaddr_getzone
 isc_netaddr_isexperimental
 isc_netaddr_islinklocal
+isc_netaddr_isloopback
 isc_netaddr_ismulticast
 isc_netaddr_isnetzero
 isc_netaddr_issitelocal
@@ -525,12 +534,14 @@ isc_rwlock_tryupgrade
 isc_rwlock_unlock
 isc_safe_memcompare
 isc_safe_memequal
+isc_safe_memwipe
 isc_serial_eq
 isc_serial_ge
 isc_serial_gt
 isc_serial_le
 isc_serial_lt
 isc_serial_ne
+isc_sha1_check
 isc_sha1_final
 isc_sha1_init
 isc_sha1_invalidate
@@ -583,6 +594,9 @@ isc_sockaddr_totext
 isc_sockaddr_v6fromin
 isc_socket_socketevent
 isc_socketmgr_createinctx
+@IF NOTYET
+isc_socketmgr_renderjson
+@END NOTYET
 @IF LIBXML2
 isc_socketmgr_renderxml
 @END LIBXML2
@@ -668,6 +682,7 @@ isc_thread_key_delete
 isc_thread_key_getspecific
 isc_thread_key_setspecific
 isc_thread_setconcurrency
+isc_thread_setname
 isc_time_add
 isc_time_compare
 isc_time_formatISO8601

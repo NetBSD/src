@@ -1,5 +1,5 @@
 /* BFD back-end for Intel 386 PE IMAGE COFF files.
-   Copyright (C) 2006-2016 Free Software Foundation, Inc.
+   Copyright (C) 2006-2018 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -23,16 +23,16 @@
 #include "sysdep.h"
 #include "bfd.h"
 
-#define TARGET_SYM 		x86_64_pei_vec
-#define TARGET_NAME 		"pei-x86-64"
+#define TARGET_SYM		x86_64_pei_vec
+#define TARGET_NAME		"pei-x86-64"
 #define COFF_IMAGE_WITH_PE
 #define COFF_WITH_PE
 #define COFF_WITH_pex64
-#define PCRELOFFSET 		TRUE
+#define PCRELOFFSET		TRUE
 #if defined (USE_MINGW64_LEADING_UNDERSCORES)
-#define TARGET_UNDERSCORE 	'_'
+#define TARGET_UNDERSCORE	'_'
 #else
-#define TARGET_UNDERSCORE 	0
+#define TARGET_UNDERSCORE	0
 #endif
 /* Long section names not allowed in executable images, only object files.  */
 #define COFF_LONG_SECTION_NAMES 0
@@ -162,7 +162,7 @@ pex64_xdata_print_uwd_codes (FILE *file, bfd *abfd,
       && PEX64_UNWCODE_CODE (ui->rawUnwindCodes[1]) == UWOP_EPILOG)
     {
       /* Display epilog opcode (whose docoding is not fully documented).
-         Looks to be designed to speed-up unwinding, as there is no need
+	 Looks to be designed to speed-up unwinding, as there is no need
 	 to decode instruction flow if outside an epilog.  */
       unsigned int func_size = rf->rva_EndAddress - rf->rva_BeginAddress;
 
@@ -487,6 +487,7 @@ pex64_bfd_print_pdata_section (bfd *abfd, void *vfile, asection *pdata_section)
   stop = pei_section_data (abfd, pdata_section)->virt_size;
   if ((stop % onaline) != 0)
     fprintf (file,
+	     /* xgettext:c-format */
 	     _("Warning: %s section size (%ld) is not a multiple of %d\n"),
 	     pdata_section->name, (long) stop, onaline);
 
@@ -508,6 +509,7 @@ pex64_bfd_print_pdata_section (bfd *abfd, void *vfile, asection *pdata_section)
   else if (datasize < stop)
       {
 	fprintf (file,
+		 /* xgettext:c-format */
 		 _("Warning: %s section size (%ld) is smaller than virtual size (%ld)\n"),
 		 pdata_section->name, (unsigned long) datasize,
 		 (unsigned long) stop);
@@ -561,7 +563,7 @@ pex64_bfd_print_pdata_section (bfd *abfd, void *vfile, asection *pdata_section)
 	  seen_error = 1;
 	  fprintf (file, "  has %s begin address as predecessor\n",
 	    (rf.rva_BeginAddress < prev_beginaddress ? "smaller" : "same"));
-        }
+	}
       prev_beginaddress = rf.rva_BeginAddress;
       /* Now we check for negative addresses.  */
       if ((prev_beginaddress & 0x80000000) != 0)
@@ -649,7 +651,7 @@ pex64_bfd_print_pdata_section (bfd *abfd, void *vfile, asection *pdata_section)
 	/* We are probably into the padding of the section now.  */
 	break;
       if (i == 0)
-        fprintf (file, _("\nDump of %s\n"), xdata_section->name);
+	fprintf (file, _("\nDump of %s\n"), xdata_section->name);
 
       fputc (' ', file);
       fprintf_vma (file, rf.rva_UnwindData + imagebase);
@@ -702,7 +704,7 @@ pex64_bfd_print_pdata_section (bfd *abfd, void *vfile, asection *pdata_section)
 
 	      /* Search for the current entry in the sorted array.  */
 	      p = (bfd_vma *)
-	          bsearch (&rf.rva_UnwindData, xdata_arr,
+		  bsearch (&rf.rva_UnwindData, xdata_arr,
 			   (size_t) xdata_arr_cnt, sizeof (bfd_vma),
 			   sort_xdata_arr);
 

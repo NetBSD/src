@@ -1,6 +1,6 @@
 #!/bin/sh -e
 #
-# Copyright (C) 2011-2014  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2011-2014, 2017  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -81,6 +81,24 @@ rm -f K${zone}.+*+*.key
 rm -f K${zone}.+*+*.private
 keyname=`$KEYGEN -q -r $RANDFILE -a NSEC3RSASHA1 -b 768 -n zone $zone`
 keyname=`$KEYGEN -q -r $RANDFILE -a NSEC3RSASHA1 -b 1024 -n zone -f KSK $zone`
+$DSFROMKEY -T 1200 $keyname >> ../ns1/root.db
+
+zone=inactiveksk
+rm -f K${zone}.+*+*.key
+rm -f K${zone}.+*+*.private
+keyname=`$KEYGEN -q -r $RANDFILE -a NSEC3RSASHA1 -b 1024 -n zone $zone`
+keyname=`$KEYGEN -q -r $RANDFILE -a NSEC3RSASHA1 -b 1024 -n zone -P now -A now+3600 -f KSK $zone`
+keyname=`$KEYGEN -q -r $RANDFILE -a RSASHA256 -b 1024 -n zone $zone`
+keyname=`$KEYGEN -q -r $RANDFILE -a RSASHA256 -b 1024 -n zone -f KSK $zone`
+$DSFROMKEY -T 1200 $keyname >> ../ns1/root.db
+
+zone=inactivezsk
+rm -f K${zone}.+*+*.key
+rm -f K${zone}.+*+*.private
+keyname=`$KEYGEN -q -r $RANDFILE -a NSEC3RSASHA1 -b 1024 -n zone -P now -A now+3600 $zone`
+keyname=`$KEYGEN -q -r $RANDFILE -a NSEC3RSASHA1 -b 1024 -n zone -f KSK $zone`
+keyname=`$KEYGEN -q -r $RANDFILE -a RSASHA256 -b 1024 -n zone $zone`
+keyname=`$KEYGEN -q -r $RANDFILE -a RSASHA256 -b 1024 -n zone -f KSK $zone`
 $DSFROMKEY -T 1200 $keyname >> ../ns1/root.db
 
 for s in a c d h k l m q z

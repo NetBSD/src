@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2017, Intel Corp.
+ * Copyright (C) 2000 - 2018, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -435,6 +435,10 @@ AcpiDmIsSwitchBlock (
      * statement, so check for it.
      */
     CurrentOp = StoreOp->Common.Next->Common.Next;
+    if (!CurrentOp)
+    {
+        return (FALSE);
+    }
     if (CurrentOp->Common.AmlOpcode == AML_ELSE_OP)
     {
         CurrentOp = CurrentOp->Common.Next;

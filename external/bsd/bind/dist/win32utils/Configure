@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-# Copyright (C) 2013-2017  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2013-2018  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -389,6 +389,7 @@ my @substdefh = ("AES_SIT",
                  "HAVE_EVP_SHA256",
                  "HAVE_EVP_SHA384",
                  "HAVE_EVP_SHA512",
+                 "HAVE_FIPS_MODE",
                  "HAVE_GEOIP",
                  "HAVE_GEOIP_CITY_V6",
                  "HAVE_GEOIP_V6",
@@ -396,9 +397,13 @@ my @substdefh = ("AES_SIT",
                  "HAVE_OPENSSL_AES",
                  "HAVE_OPENSSL_DSA",
                  "HAVE_OPENSSL_ECDSA",
+                 "HAVE_OPENSSL_ED25519",
+                 "HAVE_OPENSSL_ED448",
                  "HAVE_OPENSSL_EVP_AES",
                  "HAVE_OPENSSL_GOST",
                  "HAVE_PKCS11_ECDSA",
+                 "HAVE_PKCS11_ED25519",
+                 "HAVE_PKCS11_ED448",
                  "HAVE_PKCS11_GOST",
                  "HAVE_READLINE",
                  "HMAC_SHA1_SIT",
@@ -500,6 +505,7 @@ my @substvar = ("BIND9_VERSION",
                 "PKCS11_TOOLS",
                 "prefix",
                 "PYTHON",
+                "PYTHON_INSTALL_DIR",
                 "VCREDIST_PATH"),
 
 # defines
@@ -555,6 +561,7 @@ my @withlist = ("aes",
                 "cc-alg",
                 "cross-compile",
                 "ecdsa",
+                "eddsa",
                 "extra-tests",
                 "gssapi",
                 "geoip",
@@ -600,7 +607,7 @@ my @help = (
 "  enable-native-pkcs11  use native PKCS#11 for all crypto [default=no]\n",
 "  enable-openssl-hash   use OpenSSL for hash functions [default=yes]\n",
 "  enable-isc-spnego     use SPNEGO from lib/dns [default=yes]\n",
-"  enable-filter-aaaa    enable filtering of AAAA records [default=no]\n",
+"  enable-filter-aaaa    enable filtering of AAAA records [default=yes]\n",
 "  enable-fixed-rrset    enable fixed rrset ordering [default=no]\n",
 "  enable-developer      enable developer build settings [default=no]\n",
 "  enable-querytrace     enable very verbose query trace [default=no]\n",
@@ -615,6 +622,7 @@ my @help = (
 "  with-openssl[=PATH]   build with OpenSSL yes|no|path\n",
 "  with-pkcs11[=PATH]    build with PKCS#11 support yes|no|provider-path\n",
 "  with-ecdsa            crypto ECDSA\n",
+"  with-eddsa            crypto EDDSA yes|all|no\n",
 "  with-gost[=ENC]       crypto GOST yes|no|raw|ans1\n",
 "  with-aes              crypto AES\n",
 "  with-sit-alg          choose the algorithm for SIT aes|sha1|sha256\n",
@@ -642,7 +650,7 @@ my $unknown_value;
 my $enable_intrinsics = "yes";
 my $enable_native_pkcs11 = "no";
 my $enable_openssl_hash = "auto";
-my $enable_filter_aaaa = "no";
+my $enable_filter_aaaa = "yes";
 my $enable_isc_spnego = "yes";
 my $enable_fixed_rrset = "no";
 my $enable_developer = "no";
@@ -659,6 +667,8 @@ my $openssl_path = "..\\..\\";
 my $use_pkcs11 = "no";
 my $pkcs11_path = "unknown";
 my $use_ecdsa = "auto";
+my $use_eddsa = "auto";
+my $use_ed448 = "auto";
 my $use_gost = "auto";
 my $gost_encoding = "raw";
 my $use_aes = "auto";
@@ -737,19 +747,19 @@ if ($legacy_only && ($want_x64 ne "yes")) {
 }
 
 if ($want_checkfiles eq "yes") {
-	foreach (@filelist) {
-		next if -r $_ . ".in";
-		s/\\/\//g;
-		next if -r $_ . ".in";
-		print "missing $_.in from filelist\n";
-	}
-	foreach (@projectlist) {
-		next if -r $_ . ".in";
-		s/\\/\//g;
-		next if -r $_ . ".in";
-		print "missing $_.in from projectlist\n";
-	}
-	exit(0);
+        foreach (@filelist) {
+                next if -r $_ . ".in";
+                s/\\/\//g;
+                next if -r $_ . ".in";
+                print "missing $_.in from filelist\n";
+        }
+        foreach (@projectlist) {
+                next if -r $_ . ".in";
+                s/\\/\//g;
+                next if -r $_ . ".in";
+                print "missing $_.in from projectlist\n";
+        }
+        exit(0);
 }
 
 # configure the platform
@@ -855,8 +865,8 @@ sub myenable {
             $enable_isc_spnego = "no";
         }
     } elsif ($key =~ /^filter-aaaa$/i) {
-        if ($val =~ /^yes$/i) {
-            $enable_filter_aaaa = "yes";
+        if ($val =~ /^no$/i) {
+            $enable_filter_aaaa = "no";
         }
     } elsif ($key =~ /^fixed-rrset$/i) {
         if ($val =~ /^yes$/i) {
@@ -953,10 +963,19 @@ sub mywith {
         } elsif ($val =~ /^yes$/i) {
             $use_ecdsa = "yes";
         }
+    } elsif ($key =~ /^eddsa$/i) {
+        if ($val =~ /^no$/i) {
+            $use_eddsa = "no";
+        } elsif ($val !~ /^no$/i) {
+            $use_eddsa = "yes";
+            if ($val =~ /^all$/i) {
+                $use_ed448 = "yes";
+            }
+        }
     } elsif ($key =~ /^gost$/i) {
         if ($val =~ /^no$/i) {
             $use_gost = "no";
-        } elsif ($val =~ /^yes$/i) {
+        } elsif ($val !~ /^no$/i) {
             $use_gost = "yes";
             $gost_encoding = $val;
         }
@@ -1188,6 +1207,16 @@ if ($verbose) {
         print "ecdsa: disabled\n";
     } else {
         print "ecdsa: enabled\n";
+    }
+    if ($use_eddsa eq "no") {
+        print "eddsa: disabled\n";
+    } else {
+        print "ed25519: enabled\n";
+        if ($use_ed448 eq "no") {
+            print "ed448: disabled\n";
+        } else {
+            print "ed448: enabled\n";
+        }
     }
     if ($use_gost eq "no") {
         print "gost: disabled\n";
@@ -1477,6 +1506,26 @@ if ($enable_native_pkcs11 eq "yes") {
         }
         $configdefh{"HAVE_PKCS11_ECDSA"} = 1;
     }
+    if ($use_eddsa eq "no") {
+        if ($verbose) {
+            print "no EDDSA support in native PKCS#11\n";
+        }
+    } else {
+        if ($verbose) {
+            print "enabled Ed25519 support in native PKCS#11\n";
+        }
+        $configdefh{"HAVE_PKCS11_ED25519"} = 1;
+        if ($use_ed448 eq "no") {
+            if ($verbose) {
+                print "no Ed448 support in native PKCS#11\n";
+            }
+        } else {
+            if ($verbose) {
+                print "enabled Ed448 support in native PKCS#11\n";
+            }
+            $configdefh{"HAVE_PKCS11_ED448"} = 1;
+        }
+    }
     if ($use_gost eq "no") {
         if ($verbose) {
             print "no GOST support in native PKCS#11\n";
@@ -1727,6 +1776,33 @@ EOF
     }
 }
 
+# check FIPS_mode
+
+if ($use_openssl eq "yes") {
+    if ($verbose) {
+        printf "checking for FIPS_mode\n";
+    }
+    open F, ">testfips.c" || die $!;
+    print F << 'EOF';
+extern int FIPS_mode();
+
+int main() {
+    return FIPS_mode();
+}
+EOF
+    close F;
+    my $library = $configlib{"OPENSSL_LIB"};
+    $compret = `cl /nologo /MD testfips.c "$library"`;
+    if (grep { -f and -x } ".\\testfips.exe") {
+        $configdefh{"HAVE_FIPS_MODE"} = 1;
+    } else {
+        if ($verbose) {
+            print "can't compile FIPS_mode test: $compret\n";
+            print "disabling FIPS_mode\n";
+        }
+    }
+}
+
 # check EVP_sha256 / EVP_sha384 / EVP_sha512
 
 if ($use_openssl eq "yes") {
@@ -1816,6 +1892,7 @@ EOF
             if ($verbose) {
                 print "EVP_sha512 test failed: disabling EVP_sha512\n";
             }
+            $use_eddsa = "no";
         } else {
             $configdefh{"HAVE_EVP_SHA512"} = 1;
         }
@@ -1824,6 +1901,7 @@ EOF
             print "can't compile EVP_sha512 test: $compret\n";
             print "disabling EVP_sha512\n";
         }
+        $use_eddsa = "no";
     }
 }
 
@@ -1876,6 +1954,104 @@ EOF
 if ($use_ecdsa ne "no") {
     $use_ecdsa = "yes";
     $configdefh{"HAVE_OPENSSL_ECDSA"} = 1;
+}
+
+# with-eddsa
+if ($use_openssl eq "no") {
+    $use_eddsa = "no";
+}
+if ($use_eddsa eq "auto") {
+    if ($verbose) {
+        print "checking for OpenSSL ED25519 support\n";
+    }
+    open F, ">tested25519.c" || die $!;
+    print F << 'EOF';
+#include <openssl/evp.h>
+#include <openssl/objects.h>
+
+int
+main(void)
+{
+        EVP_PKEY_CTX *ctx;
+
+        ctx = EVP_PKEY_CTX_new_id(NID_ED25519, NULL);
+        if (ctx == NULL)
+                return (2);
+        return (0);
+}
+EOF
+    close F;
+    my $include = $configinc{"OPENSSL_INC"};
+    my $library = $configlib{"OPENSSL_LIB"};
+    $compret = `cl /nologo /MD /I "$include" tested25519.c "$library"`;
+    if (grep { -f and -x } ".\\tested25519.exe") {
+        `.\\tested25519.exe`;
+        if ($? != 0) {
+            if ($verbose) {
+                print "EDDSA test failed: disabling EDDSA\n";
+            }
+            $use_eddsa = "no";
+        }
+    } else {
+        if ($verbose) {
+            print "can't compile EDDSA test: $compret\n";
+            print "disabling EDDSA\n";
+        }
+    $use_eddsa = "no";
+    }
+}
+
+if ($use_eddsa ne "no") {
+    $use_eddsa = "yes";
+    $configdefh{"HAVE_OPENSSL_ED25519"} = 1;
+} else {
+    $use_ed448 = "no";
+}
+
+if ($use_ed448 eq "auto") {
+    if ($verbose) {
+        print "checking for OpenSSL ED448 support\n";
+    }
+    open F, ">tested448.c" || die $!;
+    print F << 'EOF';
+#include <openssl/evp.h>
+#include <openssl/objects.h>
+
+int
+main(void)
+{
+        EVP_PKEY_CTX *ctx;
+
+        ctx = EVP_PKEY_CTX_new_id(NID_ED448, NULL);
+        if (ctx == NULL)
+                return (2);
+        return (0);
+}
+EOF
+    close F;
+    my $include = $configinc{"OPENSSL_INC"};
+    my $library = $configlib{"OPENSSL_LIB"};
+    $compret = `cl /nologo /MD /I "$include" tested448.c "$library"`;
+    if (grep { -f and -x } ".\\tested448.exe") {
+        `.\\tested448.exe`;
+        if ($? != 0) {
+            if ($verbose) {
+                print "ED448 test failed: disabling ED448\n";
+            }
+            $use_ed448 = "no";
+        }
+    } else {
+        if ($verbose) {
+            print "can't compile ED448 test: $compret\n";
+            print "disabling ED448\n";
+        }
+    $use_ed448 = "no";
+    }
+}
+
+if ($use_ed448 ne "no") {
+    $use_ed448 = "yes";
+    $configdefh{"HAVE_OPENSSL_ED448"} = 1;
 }
 
 # with-gost
@@ -3398,6 +3574,7 @@ exit 0;
 #  --with-openssl supported
 #  --with-pkcs11 supported
 #  --with-ecdsa supported
+#  --with-eddsa supported
 #  --with-gost supported
 #  --with-aes supported
 #  --with-sit-alg supported
@@ -3419,7 +3596,7 @@ exit 0;
 #  --with-dlz-* ?
 #
 # Notes: MSVC versions
-# MSVC 15.0 _MSC_VER == 1910 (VS 2017)
+# MSVC 15.x _MSC_VER == 191y (VS 2017)
 # MSVC 14.0 _MSC_VER == 1900 (VS 2015)
 # MSVC 12.0 _MSC_VER == 1800 (VS 2013)
 # MSVC 11.0 _MSC_VER == 1700 (VS 2012)

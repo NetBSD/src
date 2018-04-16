@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2010-2013, 2015, 2016  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2010-2013, 2015-2017  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -377,6 +377,17 @@ ret=0
 $RNDC -c ../common/rndc.conf -s 10.53.0.2 -p 9953 reconfig > /dev/null 2>&1 || ret=1
 sleep 5
 $RNDC -c ../common/rndc.conf -s 10.53.0.2 -p 9953 status > /dev/null 2>&1 || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:check delzone after reconfig failure ($n)"
+ret=0
+$RNDC -c ../common/rndc.conf -s 10.53.0.3 -p 9953 addzone 'inlineslave.example. IN { type slave; file "inlineslave.db"; masterfile-format text; masters { testmaster; }; };' > /dev/null 2>&1 || ret=1
+cp -f ns3/named2.conf ns3/named.conf
+$RNDC -c ../common/rndc.conf -s 10.53.0.3 -p 9953 reconfig > /dev/null 2>&1 && ret=1
+sleep 5
+$RNDC -c ../common/rndc.conf -s 10.53.0.3 -p 9953 delzone inlineslave.example > /dev/null 2>&1 || ret=1
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`

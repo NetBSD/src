@@ -1,6 +1,6 @@
 // symtab.h -- the gold symbol table   -*- C++ -*-
 
-// Copyright (C) 2006-2016 Free Software Foundation, Inc.
+// Copyright (C) 2006-2018 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -159,7 +159,7 @@ class Symbol
   object() const
   {
     gold_assert(this->source_ == FROM_OBJECT);
-    return this->u_.from_object.object;
+    return this->u1_.object;
   }
 
   // Return the index of the section in the input relocatable or
@@ -169,7 +169,7 @@ class Symbol
   {
     gold_assert(this->source_ == FROM_OBJECT);
     *is_ordinary = this->is_ordinary_shndx_;
-    return this->u_.from_object.shndx;
+    return this->u2_.shndx;
   }
 
   // Return the output data section with which this symbol is
@@ -179,7 +179,7 @@ class Symbol
   output_data() const
   {
     gold_assert(this->source_ == IN_OUTPUT_DATA);
-    return this->u_.in_output_data.output_data;
+    return this->u1_.output_data;
   }
 
   // If this symbol was defined with respect to an output data
@@ -188,7 +188,7 @@ class Symbol
   offset_is_from_end() const
   {
     gold_assert(this->source_ == IN_OUTPUT_DATA);
-    return this->u_.in_output_data.offset_is_from_end;
+    return this->u2_.offset_is_from_end;
   }
 
   // Return the output segment with which this symbol is associated,
@@ -198,7 +198,7 @@ class Symbol
   output_segment() const
   {
     gold_assert(this->source_ == IN_OUTPUT_SEGMENT);
-    return this->u_.in_output_segment.output_segment;
+    return this->u1_.output_segment;
   }
 
   // If this symbol was defined with respect to an output segment,
@@ -207,7 +207,7 @@ class Symbol
   offset_base() const
   {
     gold_assert(this->source_ == IN_OUTPUT_SEGMENT);
-    return this->u_.in_output_segment.offset_base;
+    return this->u2_.offset_base;
   }
 
   // Return the symbol binding.
@@ -328,6 +328,11 @@ class Symbol
   void
   set_in_reg()
   { this->in_reg_ = true; }
+
+  // Forget this symbol was seen in a regular object.
+  void
+  clear_in_reg()
+  { this->in_reg_ = false; }
 
   // Return whether this symbol has been seen in a dynamic object.
   bool
@@ -883,6 +888,23 @@ class Symbol
   set_is_protected()
   { this->is_protected_ = true; }
 
+  // Return state of PowerPC64 ELFv2 specific flag.
+  bool
+  non_zero_localentry() const
+  { return this->non_zero_localentry_; }
+
+  // Set PowerPC64 ELFv2 specific flag.
+  void
+  set_non_zero_localentry()
+  { this->non_zero_localentry_ = true; }
+
+  // Completely override existing symbol.  Everything bar name_,
+  // version_, and is_forced_local_ flag are copied.  version_ is
+  // cleared if from->version_ is clear.  Returns true if this symbol
+  // should be forced local.
+  bool
+  clone(const Symbol* from);
+
  protected:
   // Instances of this class should always be created at a specific
   // size.
@@ -963,38 +985,38 @@ class Symbol
 
   union
   {
-    // This struct is used if SOURCE_ == FROM_OBJECT.
-    struct
-    {
-      // Object in which symbol is defined, or in which it was first
-      // seen.
-      Object* object;
-      // Section number in object_ in which symbol is defined.
-      unsigned int shndx;
-    } from_object;
+    // This is used if SOURCE_ == FROM_OBJECT.
+    // Object in which symbol is defined, or in which it was first
+    // seen.
+    Object* object;
 
-    // This struct is used if SOURCE_ == IN_OUTPUT_DATA.
-    struct
-    {
-      // Output_data in which symbol is defined.  Before
-      // Layout::finalize the symbol's value is an offset within the
-      // Output_data.
-      Output_data* output_data;
-      // True if the offset is from the end, false if the offset is
-      // from the beginning.
-      bool offset_is_from_end;
-    } in_output_data;
+    // This is used if SOURCE_ == IN_OUTPUT_DATA.
+    // Output_data in which symbol is defined.  Before
+    // Layout::finalize the symbol's value is an offset within the
+    // Output_data.
+    Output_data* output_data;
 
-    // This struct is used if SOURCE_ == IN_OUTPUT_SEGMENT.
-    struct
-    {
-      // Output_segment in which the symbol is defined.  Before
-      // Layout::finalize the symbol's value is an offset.
-      Output_segment* output_segment;
-      // The base to use for the offset before Layout::finalize.
-      Segment_offset_base offset_base;
-    } in_output_segment;
-  } u_;
+    // This is used if SOURCE_ == IN_OUTPUT_SEGMENT.
+    // Output_segment in which the symbol is defined.  Before
+    // Layout::finalize the symbol's value is an offset.
+    Output_segment* output_segment;
+  } u1_;
+
+  union
+  {
+    // This is used if SOURCE_ == FROM_OBJECT.
+    // Section number in object in which symbol is defined.
+    unsigned int shndx;
+
+    // This is used if SOURCE_ == IN_OUTPUT_DATA.
+    // True if the offset is from the end, false if the offset is
+    // from the beginning.
+    bool offset_is_from_end;
+
+    // This is used if SOURCE_ == IN_OUTPUT_SEGMENT.
+    // The base to use for the offset before Layout::finalize.
+    Segment_offset_base offset_base;
+  } u2_;
 
   // The index of this symbol in the output file.  If the symbol is
   // not going into the output file, this value is -1U.  This field
@@ -1008,15 +1030,15 @@ class Symbol
   // non-zero value during Layout::finalize.
   unsigned int dynsym_index_;
 
-  // The GOT section entries for this symbol.  A symbol may have more
-  // than one GOT offset (e.g., when mixing modules compiled with two
-  // different TLS models), but will usually have at most one.
-  Got_offset_list got_offsets_;
-
   // If this symbol has an entry in the PLT section, then this is the
   // offset from the start of the PLT section.  This is -1U if there
   // is no PLT entry.
   unsigned int plt_offset_;
+
+  // The GOT section entries for this symbol.  A symbol may have more
+  // than one GOT offset (e.g., when mixing modules compiled with two
+  // different TLS models), but will usually have at most one.
+  Got_offset_list got_offsets_;
 
   // Symbol type (bits 0 to 3).
   elfcpp::STT type_ : 4;
@@ -1059,7 +1081,7 @@ class Symbol
   // True if this symbol was forced to local visibility by a version
   // script (bit 28).
   bool is_forced_local_ : 1;
-  // True if the field u_.from_object.shndx is an ordinary section
+  // True if the field u2_.shndx is an ordinary section
   // index, not one of the special codes from SHN_LORESERVE to
   // SHN_HIRESERVE (bit 29).
   bool is_ordinary_shndx_ : 1;
@@ -1084,6 +1106,8 @@ class Symbol
   // The visibility_ field will be STV_DEFAULT in this case because we
   // must treat it as such from outside the shared object.
   bool is_protected_  : 1;
+  // Used by PowerPC64 ELFv2 to track st_other localentry (bit 36).
+  bool non_zero_localentry_ : 1;
 };
 
 // The parts of a symbol which are size specific.  Using a template
@@ -1169,6 +1193,13 @@ class Sized_symbol : public Symbol
   // file.
   void
   allocate_common(Output_data*, Value_type value);
+
+  // Completely override existing symbol.  Everything bar name_,
+  // version_, and is_forced_local_ flag are copied.  version_ is
+  // cleared if from->version_ is clear.  Returns true if this symbol
+  // should be forced local.
+  bool
+  clone(const Sized_symbol<size>* from);
 
  private:
   Sized_symbol(const Sized_symbol&);
@@ -1271,6 +1302,16 @@ struct Symbol_location
 	    && this->shndx == that.shndx
 	    && this->offset == that.offset);
   }
+};
+
+// A map from symbol name (as a pointer into the namepool) to all
+// the locations the symbols is (weakly) defined (and certain other
+// conditions are met).  This map will be used later to detect
+// possible One Definition Rule (ODR) violations.
+struct Symbol_location_hash
+{
+  size_t operator()(const Symbol_location& loc) const
+  { return reinterpret_cast<uintptr_t>(loc.object) ^ loc.offset ^ loc.shndx; }
 };
 
 // This class manages warnings.  Warnings are a GNU extension.  When
@@ -1574,12 +1615,13 @@ class Symbol_table
   get_copy_source(const Symbol* sym) const;
 
   // Set the dynamic symbol indexes.  INDEX is the index of the first
-  // global dynamic symbol.  Pointers to the symbols are stored into
+  // global dynamic symbol.  Return the count of forced-local symbols in
+  // *PFORCED_LOCAL_COUNT.  Pointers to the symbols are stored into
   // the vector.  The names are stored into the Stringpool.  This
   // returns an updated dynamic symbol index.
   unsigned int
-  set_dynsym_indexes(unsigned int index, std::vector<Symbol*>*,
-		     Stringpool*, Versions*);
+  set_dynsym_indexes(unsigned int index, unsigned int* pforced_local_count,
+		     std::vector<Symbol*>*, Stringpool*, Versions*);
 
   // Finalize the symbol table after we have set the final addresses
   // of all the input sections.  This sets the final symbol indexes,
@@ -1664,6 +1706,15 @@ class Symbol_table
   version_script() const
   { return version_script_; }
 
+  // Completely override existing symbol.
+  template<int size>
+  void
+  clone(Sized_symbol<size>* to, const Sized_symbol<size>* from)
+  {
+    if (to->clone(from))
+      this->force_local(to);
+  }
+
  private:
   Symbol_table(const Symbol_table&);
   Symbol_table& operator=(const Symbol_table&);
@@ -1693,16 +1744,6 @@ class Symbol_table
 
   typedef Unordered_map<Symbol_table_key, Symbol*, Symbol_table_hash,
 			Symbol_table_eq> Symbol_table_type;
-
-  // A map from symbol name (as a pointer into the namepool) to all
-  // the locations the symbols is (weakly) defined (and certain other
-  // conditions are met).  This map will be used later to detect
-  // possible One Definition Rule (ODR) violations.
-  struct Symbol_location_hash
-  {
-    size_t operator()(const Symbol_location& loc) const
-    { return reinterpret_cast<uintptr_t>(loc.object) ^ loc.offset ^ loc.shndx; }
-  };
 
   typedef Unordered_map<const char*,
                         Unordered_set<Symbol_location, Symbol_location_hash> >
@@ -1789,8 +1830,9 @@ class Symbol_table
   template<int size, bool big_endian>
   Sized_symbol<size>*
   define_special_symbol(const char** pname, const char** pversion,
-			bool only_if_ref, Sized_symbol<size>** poldsym,
-			bool* resolve_oldsym);
+			bool only_if_ref, elfcpp::STV visibility,
+			Sized_symbol<size>** poldsym,
+			bool* resolve_oldsym, bool is_forced_local);
 
   // Define a symbol in an Output_data, sized version.
   template<int size>
@@ -1928,9 +1970,11 @@ class Symbol_table
   unsigned int output_count_;
   // The file offset of the global dynamic symbols, or 0 if none.
   off_t dynamic_offset_;
-  // The index of the first global dynamic symbol.
+  // The index of the first global dynamic symbol (including
+  // forced-local symbols).
   unsigned int first_dynamic_global_index_;
-  // The number of global dynamic symbols, or 0 if none.
+  // The number of global dynamic symbols (including forced-local symbols),
+  // or 0 if none.
   unsigned int dynamic_count_;
   // The symbol hash table.
   Symbol_table_type table_;
