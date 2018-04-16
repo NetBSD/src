@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_50_mod.c,v 1.1.2.7 2018/03/24 23:52:19 pgoyette Exp $	*/
+/*	$NetBSD: compat_50_mod.c,v 1.1.2.8 2018/04/16 03:41:34 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_50_mod.c,v 1.1.2.7 2018/03/24 23:52:19 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_50_mod.c,v 1.1.2.8 2018/04/16 03:41:34 pgoyette Exp $");
 
 #include <sys/systm.h>
 #include <sys/module.h>
@@ -79,7 +79,7 @@ compat_50_init(void)
 		goto err3;
 
 	uvm_50_init();
-	if_50_init();
+	uipc_syscalls_50_init();
 	clockctl_50_init();
 	if_spppsubr_50_init();
 	cryptodev_50_init();
@@ -112,7 +112,7 @@ compat_50_fini(void)
 	cryptodev_50_fini();
 	if_spppsubr_50_fini();
 	clockctl_50_fini();
-	if_50_fini();
+	uipc_syscalls_50_fini();
 	uvm_50_fini();
 
 	error = vfs_syscalls_50_fini();
@@ -142,7 +142,7 @@ compat_50_fini(void)
 	vfs_syscalls_50_init();
  err1:
 	uvm_50_init();
-	if_50_init();
+	uipc_syscalls_50_init();
 	clockctl_50_init();
 	if_spppsubr_50_init();
 	cryptodev_50_init();
