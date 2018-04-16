@@ -1,4 +1,4 @@
-/*	$NetBSD: aurateconv.c,v 1.19.42.1 2017/06/30 06:34:20 snj Exp $	*/
+/*	$NetBSD: aurateconv.c,v 1.19.42.2 2018/04/16 14:11:44 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aurateconv.c,v 1.19.42.1 2017/06/30 06:34:20 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aurateconv.c,v 1.19.42.2 2018/04/16 14:11:44 martin Exp $");
 
 #include <sys/systm.h>
 #include <sys/types.h>
@@ -293,7 +293,7 @@ aurateconv_fetch_to(struct audio_softc *sc, stream_fetcher_t *self,
 #define READ_Sn(BITS, EN, V, STREAM, RP, PAR)	\
 	do { \
 		int j; \
-		for (j = 0; j < (PAR)->channels; j++) { \
+		for (j = 0; j < (int)(PAR)->channels; j++) { \
 			(V)[j] = READ_S##BITS##EN(RP); \
 			RP = audio_stream_add_outp(STREAM, RP, (BITS) / NBBY); \
 		} \
@@ -305,7 +305,7 @@ aurateconv_fetch_to(struct audio_softc *sc, stream_fetcher_t *self,
 			WP = audio_stream_add_inp(STREAM, WP, (BITS) / NBBY); \
 		} else if (from->channels <= to->channels) { \
 			int j; \
-			for (j = 0; j < (FROM)->channels; j++) { \
+			for (j = 0; j < (int)(FROM)->channels; j++) { \
 				WRITE_S##BITS##EN(WP, (V)[j]); \
 				WP = audio_stream_add_inp(STREAM, WP, (BITS) / NBBY); \
 			} \
@@ -314,13 +314,13 @@ aurateconv_fetch_to(struct audio_softc *sc, stream_fetcher_t *self,
 				WP = audio_stream_add_inp(STREAM, WP, (BITS) / NBBY); \
 				j++; \
 			} \
-			for (; j < (TO)->channels; j++) { \
+			for (; j < (int)(TO)->channels; j++) { \
 				WRITE_S##BITS##EN(WP, 0); \
 				WP = audio_stream_add_inp(STREAM, WP, (BITS) / NBBY); \
 			} \
 		} else {	/* from->channels < to->channels */ \
 			int j; \
-			for (j = 0; j < (TO)->channels; j++) { \
+			for (j = 0; j < (int)(TO)->channels; j++) { \
 				WRITE_S##BITS##EN(WP, (V)[j]); \
 				WP = audio_stream_add_inp(STREAM, WP, (BITS) / NBBY); \
 			} \
@@ -381,7 +381,7 @@ aurateconv_slinear##BITS##_##EN (aurateconv_t *this, audio_stream_t *dst, \
 				READ_Sn(BITS, EN, next, src, r, from); \
 			} \
 			c256 = this->count * 256 / to->sample_rate; \
-			for (i = 0; i < from->channels; i++) \
+			for (i = 0; i < (int)from->channels; i++) \
 				v[i] = (c256 * next[i] + (256 - c256) * prev[i]) >> 8; \
 			WRITE_Sn(BITS, EN, v, dst, w, from, to); \
 			this->count += from->sample_rate; \
@@ -452,7 +452,7 @@ aurateconv_slinear32_##EN (aurateconv_t *this, audio_stream_t *dst, \
 				used_src -= frame_src; \
 			} \
 			c256 = this->count * 256 / to->sample_rate; \
-			for (i = 0; i < from->channels; i++) \
+			for (i = 0; i < (int)from->channels; i++) \
 				v[i] = (int32_t)((c256 * next[i] + (INT64_C(256) - c256) * prev[i]) >> 8) & mask; \
 			WRITE_Sn(32, EN, v, dst, w, from, to); \
 			used_dst += frame_dst; \
