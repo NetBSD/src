@@ -1,4 +1,4 @@
-/*	$NetBSD: wbsio.c,v 1.10.10.2 2018/02/19 18:50:35 snj Exp $	*/
+/*	$NetBSD: wbsio.c,v 1.10.10.3 2018/04/16 14:28:23 martin Exp $	*/
 /*	$OpenBSD: wbsio.c,v 1.10 2015/03/14 03:38:47 jsg Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
@@ -284,8 +284,7 @@ wbsio_attach(device_t parent, device_t self, void *aux)
 	if (!pmf_device_register(self, wbsio_suspend, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
-	wbsio_wdog_attach(self);
-
+	sc->sc_smw_valid = false;
 	wbsio_rescan(self, "wbsio", NULL);
 
 #if NGPIO > 0
@@ -335,6 +334,8 @@ wbsio_rescan(device_t self, const char *ifattr, const int *locators)
 	}
 #endif
 	config_search_loc(wbsio_search, self, ifattr, locators, NULL);
+
+	wbsio_wdog_attach(self);
 
 	return 0;
 }
@@ -799,7 +800,8 @@ wbsio_wdog_attach(device_t self)
 	uint16_t devid;
 	uint8_t rev;
 
-	sc->sc_smw_valid = false;
+	if (sc->sc_smw_valid)
+		return;		/* watchdog already attached */
 
 	wbsio_conf_enable(&sc->sc_conf_lock, sc->sc_iot, sc->sc_ioh);
 	devid = wbsio_conf_read(sc->sc_iot, sc->sc_ioh, WBSIO_ID);
