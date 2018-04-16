@@ -207,7 +207,7 @@ my_realloc (p, n)
 #endif /* __GNU_LIBRARY__ */
 
 
-#if !defined __alloca && defined __GNU_LIBRARY__
+#if !defined __alloca && !defined __GNU_LIBRARY__
 
 # ifdef	__GNUC__
 #  undef alloca
