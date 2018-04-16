@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.95 2017/10/17 18:52:50 jdolecek Exp $	*/
+/*	$NetBSD: atavar.h,v 1.96 2018/04/16 22:33:28 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -522,7 +522,7 @@ int	ata_read_log_ext_ncq(struct ata_drive_datas *, uint8_t, uint8_t *,
 #define CMD_AGAIN 2
 
 struct ata_xfer *ata_get_xfer_ext(struct ata_channel *, int, uint8_t);
-#define ata_get_xfer(chp) ata_get_xfer_ext((chp), C_WAIT, 0);
+#define ata_get_xfer(chp) ata_get_xfer_ext((chp), C_WAIT, 0)
 void	ata_free_xfer(struct ata_channel *, struct ata_xfer *);
 void	ata_deactivate_xfer(struct ata_channel *, struct ata_xfer *);
 void	ata_exec_xfer(struct ata_channel *, struct ata_xfer *);
