@@ -1,4 +1,4 @@
-/*	$NetBSD: audiovar.h,v 1.55.2.5 2018/01/15 00:08:55 snj Exp $	*/
+/*	$NetBSD: audiovar.h,v 1.55.2.6 2018/04/16 14:11:44 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -162,8 +162,8 @@ struct au_mixer_ports {
 	bool	isenum;		/* selector is enum type */
 	u_int	allports;	/* all aumasks or'd */
 	u_int	aumask[AUDIO_N_PORTS];	/* exposed value of "ports" */
-	u_int	misel [AUDIO_N_PORTS];	/* ord of port, for selector */
-	u_int	miport[AUDIO_N_PORTS];	/* index of port's mixerctl */
+	int	misel [AUDIO_N_PORTS];	/* ord of port, for selector */
+	int	miport[AUDIO_N_PORTS];	/* index of port's mixerctl */
 	bool	isdual;		/* has working mixerout */
 	int	mixerout;	/* ord of mixerout, for dual case */
 	int	cur_port;	/* the port that gain actually controls when
