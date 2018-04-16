@@ -1,4 +1,4 @@
-/*	$NetBSD: if_40.h,v 1.1.2.2 2018/03/06 23:31:29 pgoyette Exp $	*/
+/*	$NetBSD: if_40.h,v 1.1.2.3 2018/04/16 03:41:34 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -41,8 +41,6 @@ extern u_long (*vec_compat_cvtcmd)(u_long);
 extern int (*vec_compat_ifioctl)(struct socket *, u_long, u_long, 
     void *, struct lwp *);
 
-void if_40_init(void);
-void if_40_fini(void);
 #endif
 
 #endif /* !_COMPAT_IF_40_H_ */

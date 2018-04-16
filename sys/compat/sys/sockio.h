@@ -1,4 +1,4 @@
-/*	$NetBSD: sockio.h,v 1.10.58.4 2018/04/16 01:59:57 pgoyette Exp $	*/
+/*	$NetBSD: sockio.h,v 1.10.58.5 2018/04/16 03:41:34 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
@@ -180,12 +180,5 @@ struct oifdatareq {
 		(ni)->ifi_lastchange.tv_nsec = \
 		    (oi)->ifi_lastchange.tv_usec * 1000; \
 	} while (/*CONSTCOND*/0)
-
-#ifdef _KERNEL
-
-void if_50_init(void);
-void if_50_fini(void);
-
-#endif
 
 #endif /* _COMPAT_SYS_SOCKIO_H_ */

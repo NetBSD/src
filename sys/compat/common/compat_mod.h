@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_mod.h,v 1.1.42.18 2018/04/03 08:29:44 pgoyette Exp $	*/
+/*	$NetBSD: compat_mod.h,v 1.1.42.19 2018/04/16 03:41:34 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -75,15 +75,15 @@ void uvm_50_init(void);
 void uvm_50_fini(void);
 int vfs_syscalls_50_init(void);
 int vfs_syscalls_50_fini(void);
-void if_50_init(void);
-void if_50_fini(void);
+void uipc_syscalls_50_init(void);
+void uipc_syscalls_50_fini(void);
 #endif
 
 #ifdef COMPAT_40
 int compat_40_init(void);
 int compat_40_fini(void);
-void if_40_init(void);
-void if_40_fini(void);
+void uipc_syscalls_40_init(void);
+void uipc_syscalls_40_fini(void);
 int vfs_syscalls_40_init(void);
 int vfs_syscalls_40_fini(void);
 void sysmon_power_40_init(void);

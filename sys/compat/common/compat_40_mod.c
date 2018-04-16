@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_40_mod.c,v 1.1.2.1 2018/03/27 07:29:43 pgoyette Exp $	*/
+/*	$NetBSD: compat_40_mod.c,v 1.1.2.2 2018/04/16 03:41:34 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_40_mod.c,v 1.1.2.1 2018/03/27 07:29:43 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_40_mod.c,v 1.1.2.2 2018/04/16 03:41:34 pgoyette Exp $");
 
 #include <sys/systm.h>
 #include <sys/module.h>
@@ -56,7 +56,7 @@ compat_40_init(void)
 	error = vfs_syscalls_40_init();
 	if (error != 0)
 		return error;
-	if_40_init();
+	uipc_syscalls_40_init();
 	sysmon_power_40_init();
 
 	return error;
@@ -68,10 +68,10 @@ compat_40_fini(void)
 	int error = 0;
 
 	sysmon_power_40_fini();
-	if_40_fini();
+	uipc_syscalls_40_fini();
 	error = vfs_syscalls_40_fini();
 	if (error != 0) {
-		if_40_init();
+		uipc_syscalls_40_init();
 		sysmon_power_40_init();
 	}
 
