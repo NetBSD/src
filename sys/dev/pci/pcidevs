@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1327 2018/04/09 15:33:54 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1328 2018/04/16 13:08:33 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -4469,6 +4469,11 @@ product INTEL E5_UNICAST	0x3ce8	E5 Unicast
 product INTEL E5_SAD_1		0x3cf4	E5 SAD
 product INTEL E5_BROADCAST	0x3cf5	E5 Broadcast
 product INTEL E5_SAD_2		0x3cf6	E5 SAD
+product INTEL CORE8G_S_HOST_DRAM_4C 0x3e1f Core 8G (S) Host Bridge, DRAM
+product INTEL CORE8G_S_HOST_DRAM_6C 0x3ec2 Core 8G (S) Host Bridge, DRAM
+product INTEL CORE8G_PCIE_X16	0x3e81 Core 8G (S) PCIe x16
+product INTEL CORE8G_PCIE_X8	0x3e85 Core 8G (S) PCIe x16
+product INTEL CORE8G_PCIE_X4	0x3e89 Core 8G (S) PCIe x16
 product INTEL COFLK_IGD_1	0x3e90	UHD Graphics 610
 product INTEL COFLK_IGD_2	0x3e91	UHD Graphics 630
 product INTEL COFLK_IGD_3	0x3e92	UHD Graphics 630
