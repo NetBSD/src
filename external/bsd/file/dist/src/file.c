@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.9 2018/04/15 19:45:32 christos Exp $	*/
+/*	$NetBSD: file.c,v 1.10 2018/04/17 12:34:04 jakllsch Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -37,7 +37,7 @@
 #if 0
 FILE_RCSID("@(#)$File: file.c,v 1.175 2018/03/02 16:11:37 christos Exp $")
 #else
-__RCSID("$NetBSD: file.c,v 1.9 2018/04/15 19:45:32 christos Exp $");
+__RCSID("$NetBSD: file.c,v 1.10 2018/04/17 12:34:04 jakllsch Exp $");
 #endif
 #endif	/* lint */
 
@@ -677,6 +677,9 @@ file_getprogname(void)
 	return file_progname;
 }
 
+#ifdef __dead
+__dead
+#endif
 protected void
 file_err(int e, const char *fmt, ...)
 {
@@ -691,6 +694,9 @@ file_err(int e, const char *fmt, ...)
 	exit(e);
 }
 
+#ifdef __dead
+__dead
+#endif
 protected void
 file_errx(int e, const char *fmt, ...)
 {
