@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmectl.h,v 1.6 2018/04/17 08:54:35 nonaka Exp $	*/
+/*	$NetBSD: nvmectl.h,v 1.7 2018/04/17 15:31:00 nonaka Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -81,7 +81,7 @@ struct nvme_function {
 "power [-l] [-p new-state [-w workload-hint]] <controller id>\n"
 
 #define WDC_USAGE							       \
-"wdc (cap-diag|drive-log|get-crash-dump|purge|purge-montior)\n"
+"wdc cap-diag [-o path-templete]\n"
 
 void devlist(int, char *[]) __dead;
 void identify(int, char *[]) __dead;
