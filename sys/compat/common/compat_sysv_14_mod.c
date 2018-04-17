@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_sysv_mod.c,v 1.4.10.2 2018/04/17 23:06:11 pgoyette Exp $	*/
+/*	$NetBSD: compat_sysv_14_mod.c,v 1.1.2.1 2018/04/17 23:06:11 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_sysv_mod.c,v 1.4.10.2 2018/04/17 23:06:11 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_sysv_14_mod.c,v 1.1.2.1 2018/04/17 23:06:11 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -44,31 +44,11 @@ __KERNEL_RCSID(0, "$NetBSD: compat_sysv_mod.c,v 1.4.10.2 2018/04/17 23:06:11 pgo
 #include <sys/syscallvar.h>
 #include <sys/sysctl.h>
 
-#include <compat/common/compat_sysv_mod.h>
-
-static const char * const compat_sysv_includes[] = {
-        "compat_sysv_50", "compat_14", "compat_10", NULL
-};
-
-MODULE_WITH_ALIASES(MODULE_CLASS_EXEC, compat_sysv, "sysv_ipc",
-    &compat_sysv_includes);
+MODULE(MODULE_CLASS_EXEC, compat_sysv_14, "sysv_ipc_50,sysv_ipc");
 
 /* Build the syscall package based on options specified */
 
-static const struct syscall_package compat_sysv_syscalls[] = {
-#if defined(COMPAT_10) && !defined(_LP64)
-#ifdef	SYSVSHM
-	{ SYS_compat_10_oshmsys, 0, (sy_call_t *)compat_10_sys_shmsys },
-#endif
-#ifdef	SYSVSEM
-	{ SYS_compat_10_osemsys, 0, (sy_call_t *)compat_10_sys_semsys },
-#endif
-#ifdef	SYSVMSG
-	{ SYS_compat_10_omsgsys, 0, (sy_call_t *)compat_10_sys_msgsys },
-#endif
-#endif /* defined(COMPAT_10) && !defined(_LP64) */
-
-#if defined(COMPAT_14)
+static const struct syscall_package compat_sysv_14_syscalls[] = {
 #ifdef SYSVSHM
 	{ SYS_compat_14_shmctl, 0, (sy_call_t *)compat_14_sys_shmctl },
 #endif
@@ -78,47 +58,25 @@ static const struct syscall_package compat_sysv_syscalls[] = {
 #ifdef	SYSVMSG
 	{ SYS_compat_14_msgctl, 0, (sy_call_t *)compat_14_sys_msgctl },
 #endif
-#endif	/* defined(COMPAT_14) */
-
-#if defined(COMPAT_50)
-#ifdef SYSVSHM
-	{ SYS_compat_50___shmctl13, 0, (sy_call_t *)compat_50_sys___shmctl13 },
-#endif
-#ifdef	SYSVSEM
-	{ SYS_compat_50_____semctl13, 0, (sy_call_t *)compat_50_sys_____semctl13 },
-#endif
-#ifdef	SYSVMSG
-	{ SYS_compat_50___msgctl13, 0, (sy_call_t *)compat_50_sys___msgctl13 },
-#endif
-#endif	/* defined(COMPAT_50) */
-
 	{ 0, 0, NULL }
 };
 
 static int
-compat_sysv_modcmd(modcmd_t cmd, void *arg)
+compat_sysv_14_modcmd(modcmd_t cmd, void *arg)
 {
-	static int (*orig_sysvipc50_sysctl)(SYSCTLFN_PROTO);
 
 	int error = 0;
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		error = syscall_establish(NULL, compat_sysv_syscalls);
+		error = syscall_establish(NULL, compat_sysv_14_syscalls);
 		if (error != 0) {
 			break;
 		}
-#if defined(COMPAT_50)
-		orig_sysvipc50_sysctl = vec_sysvipc50_sysctl;
-		vec_sysvipc50_sysctl = sysctl_kern_sysvipc50;
-#endif
 		break;
 
 	case MODULE_CMD_FINI:
-#if defined(COMPAT_50)
-		vec_sysvipc50_sysctl = orig_sysvipc50_sysctl;
-#endif
-		error = syscall_disestablish(NULL, compat_sysv_syscalls);
+		error = syscall_disestablish(NULL, compat_sysv_14_syscalls);
 		if (error != 0) {
 			break;
 		}
