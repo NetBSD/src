@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_input.c,v 1.63 2018/04/15 07:35:49 maxv Exp $	*/
+/*	$NetBSD: ipsec_input.c,v 1.64 2018/04/17 17:56:08 maxv Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/ipsec_input.c,v 1.2.4.2 2003/03/28 20:32:53 sam Exp $	*/
 /*	$OpenBSD: ipsec_input.c,v 1.63 2003/02/20 18:35:43 deraadt Exp $	*/
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.63 2018/04/15 07:35:49 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.64 2018/04/17 17:56:08 maxv Exp $");
 
 /*
  * IPsec input processing.
@@ -175,8 +175,8 @@ ipsec4_fixup_checksum(struct mbuf *m)
 
 /*
  * ipsec_common_input gets called when an IPsec-protected packet
- * is received by IPv4 or IPv6.  It's job is to find the right SA
- # and call the appropriate transform.  The transform callback
+ * is received by IPv4 or IPv6.  Its job is to find the right SA
+ * and call the appropriate transform.  The transform callback
  * takes care of further processing (like ingress filtering).
  */
 static int
@@ -685,7 +685,7 @@ ipsec6_common_input_cb(struct mbuf *m, struct secasvar *sav, int skip,
 
 		/*
 		 * Enforce IPsec policy checking if we are seeing last header.
-		 * note that we do not visit this with protocols with pcb layer
+		 * Note that we do not visit this with protocols with pcb layer
 		 * code - like udp/tcp/raw ip.
 		 */
 		if ((inet6sw[ip6_protox[nxt]].pr_flags & PR_LASTHDR) != 0 &&
