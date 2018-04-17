@@ -32,6 +32,14 @@ DONE
     module status to userland has been versioned and moved to the
     compat_80 module.
 
+9.  The old monolithic compat module has been broken into multiple
+    modules, one for each old NetBSD version.  The monolithic module
+    is still available, and uses the alias mechanism to "advertise"
+    that the component modules are available.
+
+    There are still several areas which are not complete - see the
+    TODO list below for more details.
+
 
 TODO
 ----
@@ -39,69 +47,44 @@ TODO
     COMPAT_xx.  When found, move the actual compat code into the compat
     hierarchy and replace originals with indirect (vectored) calls.
 
-2.  Using the alias mechanism, split compat (and perhaps compat_sysv)
-    into multiple version-specific modules.  Note that in addition to
-    updating the module code, this would also require changes to
-    syscalls.master files to change the names of the modules associated
-    with module-provided syscalls.
+2.  Similar to the monolithic netbsd module, split the compat_sysv
+    module into multiple version-specific modules.
 
-    Update:  These are being done simultaneously, with compat code being
-    moved directly to a version-specific module.  All of COMPAT_80 and
-    COMPAT_70, most of COMPAT_60, and much of COMPAT_50 are finished.
-    Still need to decide how to handle the COMPAT_BSDPTY stuff.
+3.  Update syscalls.master to reflect that modular syscalls are now
+    provided by version-specific modules.
 
-    COMPAT_40 is also finished, except for some arch/sh3 MD code.  There
-    is also some arch/m68k MD-specific code remaining for COMPAT_50.
+4.  The rtsock compat code is a disaster, with rtsock_50.c #include-ing
+    the main rtsock.c code with various manipulations of the COMPAT_50
+    macro.
 
-3.  XXX The compat_60 module still needs some work for XEN systems.
+5.  The compat_60 module still needs some work for XEN systems.  We
+    probably need some build infrastructure changes to ensure that
+    XEN (and, for i386, XEN-PAE) modules are build with the correct
+    macros defined and with -I directories specified in the same order
+    as for building kernels.
 
-4.  Update syscalls.master to point the compat calls at the specific
+6.  Update syscalls.master to point the compat calls at the specific
     modules rather than the monolithic compat module.  Update the
     "required" lists of other modules, too.
 
-5.  The rtsock compatability code needs to be de-spaghetti'd and made
+7.  The rtsock compatability code needs to be de-spaghetti'd and made
     separable into rtsock_70 and rtsock_50 pieces.
 
-6.  Once rtsock is separated, compat_14 references to rtsock_50 routines
+8.  Once rtsock is separated, compat_14 references to rtsock_50 routines
     needs to be verified.
 
-7.  For compat_60, still need to figure out what to do with BSDPTY and
+9.  For compat_60, still need to figure out what to do with BSDPTY and
     tty_ptm
 
-8.  Also for compat_60, need to fix the building of XEN (and, for i386,
+10. Also for compat_60, need to fix the building of XEN (and, for i386,
     XEN-PAE) module variants so that the obj-dir symlinks and the -I
     include order match those present in a kernel build.  See PR/53130
     (Currently, this affects the compat_60 module and its implementation
     of microcode updates for AMD processors - i386 and amd64.)
 
-9.  For compat_50, in addition to rtsock there are some things in dev/vnd,
+11. For compat_50, in addition to rtsock there are some things in dev/vnd,
     dev/gpio, and dev/wscons/wsmux that I haven't been able to cleanly
     separate.
-
-10. In addition to the ttcompat code in compat_60, there is another
-    ttcompat in compat_43.  The 60 code used to simply update the function
-    pointer, but the 43 code uses a rw_lock to protect the pointer update.
-    Additionally, the 43 code specifically checks to ensure that the
-    initial value of the pointer in NULL before updating it, which would
-    prevent the 43 code from working if the 60 code is already loaded.  (I
-    have some XXX comment in my branch code for this.)
-
-    I suspect that the right this to do here is probably to make _two_
-    indirect function calls in the main tty code, use separate pointers
-    for the 60 and 43 compat stuff, and remove the rw_lock stuff.
-
-11. There's a vfs sysctl call that currently is build under COMPAT_09 ||
-    COMPAT_43.  I don't understand enough of unix history to figure out if
-    this really belongs to both compat_xx modules (which would require
-    building a separate module, required by both) or if it belongs to a
-    specific module.
-
-    (This is based on a statement that mrg@ made in IRC, which basically
-    said that compat_43 is not as much about maintaining binary
-    compatability  as it is about maintaining old interfaces.  Thus it
-    does _not_ depend on any of the "newer" compat code.  So, compat_43
-    would be able to be loaded on its own, or in combination with any of
-    the other compat modules.)
 
 12. There seems to be quite a bit of MD compat_xx code, in the various
     sys/arch/ directories.  I haven't yet looked at any of this.  But it
@@ -109,6 +92,4 @@ TODO
     mechanism to "reach over" to the MD code, #include a Makefile.inc file,
     and perhaps define something to enable the MI modcmd code to call a
     compat_xx_MD_init() routine.
-
-
 
