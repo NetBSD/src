@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.3,v 1.1.2.100 2018/04/09 13:32:42 martin Exp $
+# $NetBSD: CHANGES-7.0.3,v 1.1.2.101 2018/04/17 08:30:43 martin Exp $
 
 A complete list of changes from the NetBSD 7.0.2 release to the NetBSD 7.0.3
 release:
@@ -5400,4 +5400,10 @@ sys/arch/amiga/amiga/cc.c			1.27
 
 	Fix a spl(9) leak.
 	[msaitoh, ticket #1597]
+
+sys/kern/uipc_mbuf.c				1.190
+
+	m_pkthdr_remove(): if the mbuf is shared leave M_PKTHDR
+	in place.
+	[maxv, ticket #1598]
 
