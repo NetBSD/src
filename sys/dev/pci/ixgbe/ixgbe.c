@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.147 2018/04/17 05:23:58 knakahara Exp $ */
+/* $NetBSD: ixgbe.c,v 1.148 2018/04/17 08:38:05 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -6282,7 +6282,6 @@ ixgbe_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 	    adapter->osdep.intrs[vector], IPL_NET, ixgbe_msix_link, adapter,
 	    intr_xname);
 	if (adapter->osdep.ihs[vector] == NULL) {
-		adapter->res = NULL;
 		aprint_error_dev(dev, "Failed to register LINK handler\n");
 		error = ENXIO;
 		goto err_out;
