@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.h,v 1.41 2018/04/04 08:13:07 msaitoh Exp $ */
+/* $NetBSD: ixgbe.h,v 1.42 2018/04/17 05:23:58 knakahara Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -346,6 +346,7 @@ struct ix_queue {
 					 *     > 0 : this queue is disabled
 					 *           the value is ixgbe_disable_queue() called count
 					 */
+	bool             txrx_use_workqueue;
 };
 
 /*
