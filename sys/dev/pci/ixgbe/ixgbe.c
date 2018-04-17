@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.146 2018/04/12 08:03:55 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.147 2018/04/17 05:23:58 knakahara Exp $ */
 
 /******************************************************************************
 
@@ -2487,7 +2487,7 @@ static inline void
 ixgbe_sched_handle_que(struct adapter *adapter, struct ix_queue *que)
 {
 
-	if (adapter->txrx_use_workqueue) {
+	if(que->txrx_use_workqueue) {
 		/*
 		 * adapter->que_wq is bound to each CPU instead of
 		 * each NIC queue to reduce workqueue kthread. As we
@@ -2530,6 +2530,12 @@ ixgbe_msix_que(void *arg)
 
 	ixgbe_disable_queue(adapter, que->msix);
 	++que->irqs.ev_count;
+
+	/*
+	 * Don't change "que->txrx_use_workqueue" from this point to avoid
+	 * flip-flopping softint/workqueue mode in one deferred processing.
+	 */
+	que->txrx_use_workqueue = adapter->txrx_use_workqueue;
 
 #ifdef __NetBSD__
 	/* Don't run ixgbe_rxeof in interrupt context */
@@ -3174,6 +3180,16 @@ ixgbe_add_device_sysctls(struct adapter *adapter)
 	    CTL_EOL) != 0)
 		aprint_error_dev(dev, "could not create sysctl\n");
 
+	/*
+	 * If each "que->txrx_use_workqueue" is changed in sysctl handler,
+	 * it causesflip-flopping softint/workqueue mode in one deferred
+	 * processing. Therefore, preempt_disable()/preempt_enable() are
+	 * required in ixgbe_sched_handle_que() to avoid
+	 * KASSERT(ixgbe_sched_handle_que()) in softint_schedule().
+	 * I think changing "que->txrx_use_workqueue" in interrupt handler
+	 * is lighter than doing preempt_disable()/preempt_enable() in every
+	 * ixgbe_sched_handle_que().
+	 */
 	adapter->txrx_use_workqueue = ixgbe_txrx_workqueue;
 	if (sysctl_createv(log, 0, &rnode, &cnode, CTLFLAG_READWRITE,
 	    CTLTYPE_BOOL, "txrx_workqueue", SYSCTL_DESCR("Use workqueue for packet processing"),
@@ -4798,6 +4814,11 @@ ixgbe_legacy_irq(void *arg)
 	}
 
 	if ((ifp->if_flags & IFF_RUNNING) != 0) {
+		/*
+		 * The same as ixgbe_msix_que() about "que->txrx_use_workqueue".
+		 */
+		que->txrx_use_workqueue = adapter->txrx_use_workqueue;
+
 #ifdef __NetBSD__
 		/* Don't run ixgbe_rxeof in interrupt context */
 		more = true;
