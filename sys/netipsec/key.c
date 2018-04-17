@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.252 2018/04/16 08:56:08 yamaguchi Exp $	*/
+/*	$NetBSD: key.c,v 1.253 2018/04/17 04:22:58 yamaguchi Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.252 2018/04/16 08:56:08 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.253 2018/04/17 04:22:58 yamaguchi Exp $");
 
 /*
  * This code is referred to RFC 2367
@@ -418,6 +418,8 @@ static struct {
 	PSLIST_READER_NEXT((sav), struct secasvar, pslist_entry)
 
 /* Macros for key_sad.savlut */
+#define SAVLUT_ENTRY_INIT(sav)						\
+	PSLIST_ENTRY_INIT((sav), pslist_entry_savlut)
 #define SAVLUT_READER_FOREACH(sav, dst, proto, hash_key)		\
 	PSLIST_READER_FOREACH((sav),					\
 	&key_sad.savlut[key_savluthash(dst, proto, hash_key,		\
@@ -1432,6 +1434,7 @@ key_init_sav(struct secasvar *sav)
 
 	localcount_init(&sav->localcount);
 	SAVLIST_ENTRY_INIT(sav);
+	SAVLUT_ENTRY_INIT(sav);
 }
 
 u_int
