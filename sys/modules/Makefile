@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.202.2.20 2018/04/17 08:02:35 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.202.2.21 2018/04/17 23:06:11 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -12,8 +12,7 @@ SUBDIR+=	compat_09   compat_10   compat_12   compat_13   compat_14
 SUBDIR+=	compat_16   compat_20   compat_30   compat_40   compat_50
 SUBDIR+=	compat_60   compat_70   compat_80 
 
-SUBDIR+=	compat_ossaudio
-SUBDIR+=	compat_sysv
+SUBDIR+=	compat_sysv compat_sysv_10 compat_sysv_14 compat_sysv_50
 
 SUBDIR+=	accf_dataready
 SUBDIR+=	accf_httpready
@@ -35,6 +34,7 @@ SUBDIR+=	cd9660
 SUBDIR+=	cgd
 SUBDIR+=	chfs
 SUBDIR+=	clockctl
+SUBDIR+=	compat_ossaudio
 SUBDIR+=	crypto
 SUBDIR+=	coda
 SUBDIR+=	coda5
