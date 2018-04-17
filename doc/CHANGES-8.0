@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.184 2018/04/16 14:36:29 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.185 2018/04/17 08:37:22 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -12983,4 +12983,33 @@ sys/arch/x86/pci/if_vmx.c			1.23,1.24
 	vmx(4): handled SIOCZIFDATA. Fix computation of received
 	bytes interface statistics.
 	[nonaka, ticket #767]
+
+external/gpl2/gmake/dist/glob/glob.c		1.4
+
+	Fix build of gmake (in tools) on new GLIBC systems.
+	[kamil, ticket #768]
+
+sys/dev/pci/ixgbe/ixgbe.c			1.147
+sys/dev/pci/ixgbe/ixgbe.h			1.42
+
+	Fix panic when changing the work queue size while there is traffic.
+	[knakahara, ticket #769]
+
+sys/kern/uipc_mbuf.c				1.190
+
+	m_pkthdr_remove(): if the mbuf is shared leave M_PKTHDR
+	in place.
+	[maxv, ticket #770]
+
+sys/kern/subr_pserialize.c			1.11
+
+	Function pserialize_perform() usually succeeds after two cross calls
+	so defer kpause() to iterations three and above.
+	[hannken, ticket #771]
+
+sys/miscfs/procfs/procfs_subr.c			1.112
+
+	Change procfs_revoke_vnodes() to use vrecycle()/vgone() instead
+	of VOP_REVOKE().
+	[hannken, ticket #772]
 
