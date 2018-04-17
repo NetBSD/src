@@ -1,6 +1,8 @@
-/*	$NetBSD: identify.c,v 1.3 2018/03/17 11:07:26 jdolecek Exp $	*/
+/*	$NetBSD: identify.c,v 1.4 2018/04/17 08:54:35 nonaka Exp $	*/
 
 /*-
+ * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
+ *
  * Copyright (C) 2012-2013 Intel Corporation
  * All rights reserved.
  *
@@ -28,9 +30,9 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: identify.c,v 1.3 2018/03/17 11:07:26 jdolecek Exp $");
+__RCSID("$NetBSD: identify.c,v 1.4 2018/04/17 08:54:35 nonaka Exp $");
 #if 0
-__FBSDID("$FreeBSD: head/sbin/nvmecontrol/identify.c 253476 2013-07-19 21:40:57Z jimharris $");
+__FBSDID("$FreeBSD: head/sbin/nvmecontrol/identify.c 326276 2017-11-27 15:37:16Z pfg $");
 #endif
 #endif
 
@@ -72,6 +74,7 @@ print_controller(struct nvm_identify_controller *cdata)
 		printf("Unlimited\n");
 	else
 		printf("%ld\n", sysconf(_SC_PAGESIZE) * (1 << cdata->mdts));
+	printf("Controller ID:              0x%02x\n", cdata->cntlid);
 	printf("\n");
 
 	printf("Admin Command Set Attributes\n");
@@ -84,6 +87,9 @@ print_controller(struct nvm_identify_controller *cdata)
 		"Supported" : "Not Supported");
 	printf("Firmware Activate/Download:  %s\n",
 		(cdata->oacs & NVME_ID_CTRLR_OACS_FW) ?
+		"Supported" : "Not Supported");
+	printf("Namespace Managment:         %s\n",
+		(cdata->oacs & NVME_ID_CTRLR_OACS_NS) ?
 		"Supported" : "Not Supported");
 	printf("Abort Command Limit:         %d\n", cdata->acl+1);
 	printf("Async Event Request Limit:   %d\n", cdata->aerl+1);
@@ -139,6 +145,16 @@ print_controller(struct nvm_identify_controller *cdata)
 	printf("Volatile Write Cache:        %s\n",
 		(cdata->vwc & NVME_ID_CTRLR_VWC_PRESENT) ?
 		"Present" : "Not Present");
+
+	if (cdata->oacs & NVME_ID_CTRLR_OACS_NS) {
+		printf("\n");
+		printf("Namespace Drive Attributes\n");
+		printf("==========================\n");
+		print_bignum("NVM total cap:               ",
+		    cdata->untncap.tnvmcap, "");
+		print_bignum("NVM unallocated cap:         ",
+		    cdata->untncap.unvmcap, "");
+	}
 }
 
 static void

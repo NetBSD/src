@@ -1,6 +1,8 @@
-/*	$NetBSD: nvmectl.h,v 1.5 2018/03/17 11:07:26 jdolecek Exp $	*/
+/*	$NetBSD: nvmectl.h,v 1.6 2018/04/17 08:54:35 nonaka Exp $	*/
 
 /*-
+ * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
+ *
  * Copyright (C) 2012-2013 Intel Corporation
  * All rights reserved.
  *
@@ -25,7 +27,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: head/sbin/nvmecontrol/nvmecontrol.h 314230 2017-02-25 00:09:16Z imp $
+ * $FreeBSD: head/sbin/nvmecontrol/nvmecontrol.h 326276 2017-11-27 15:37:16Z pfg $
  */
 
 #ifndef __NVMECTL_H__
@@ -53,7 +55,7 @@ struct nvme_function {
 #define IDENTIFY_USAGE							       \
 "identify [-x [-v]] <controller id|namespace id>\n"
 
-#if 0
+#ifdef ENABLE_PREFTEST
 #define PERFTEST_USAGE							       \
 "perftest <-n num_threads> <-o read|write>\n"		       \
 "                        <-s size_in_bytes> <-t time_in_seconds>\n"	       \
@@ -61,7 +63,7 @@ struct nvme_function {
 "                        <namespace id>\n"
 #endif
 
-#if 0
+#ifdef ENABLE_RESET
 #define RESET_USAGE							       \
 "reset <controller id>\n"
 #endif
@@ -70,7 +72,7 @@ struct nvme_function {
 "logpage <-p page_id> [-b] [-v vendor] [-x] "		       \
     "<controller id|namespace id>\n"
 
-#if 0
+#ifdef ENABLE_FIRMWARE
 #define FIRMWARE_USAGE							       \
 "firmware [-s slot] [-f path_to_firmware] [-a] <controller id>\n"
 #endif
@@ -103,6 +105,10 @@ void read_namespace_data(int, int, struct nvm_identify_namespace *);
 void print_hex(void *, uint32_t);
 void read_logpage(int, uint8_t, int, void *, uint32_t);
 __dead void dispatch(int argc, char *argv[], const struct nvme_function *f);
+
+/* Utility Routines */
 void nvme_strvis(uint8_t *, int, const uint8_t *, int);
+void print_bignum(const char *, uint64_t v[2], const char *);
+uint64_t le48dec(const void *);
 
 #endif	/* __NVMECTL_H__ */
