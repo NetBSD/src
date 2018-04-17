@@ -1,6 +1,8 @@
-/*	$NetBSD: firmware.c,v 1.2 2017/04/29 00:06:40 nonaka Exp $	*/
+/*	$NetBSD: firmware.c,v 1.3 2018/04/17 08:54:35 nonaka Exp $	*/
 
 /*-
+ * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
+ *
  * Copyright (c) 2013 EMC Corp.
  * All rights reserved.
  *
@@ -31,9 +33,9 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: firmware.c,v 1.2 2017/04/29 00:06:40 nonaka Exp $");
+__RCSID("$NetBSD: firmware.c,v 1.3 2018/04/17 08:54:35 nonaka Exp $");
 #if 0
-__FBSDID("$FreeBSD: head/sbin/nvmecontrol/firmware.c 313188 2017-02-04 05:52:50Z imp $");
+__FBSDID("$FreeBSD: head/sbin/nvmecontrol/firmware.c 326276 2017-11-27 15:37:16Z pfg $");
 #endif
 #endif
 
