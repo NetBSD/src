@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.185 2018/04/17 08:37:22 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.186 2018/04/17 16:03:36 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -13012,4 +13012,11 @@ sys/miscfs/procfs/procfs_subr.c			1.112
 	Change procfs_revoke_vnodes() to use vrecycle()/vgone() instead
 	of VOP_REVOKE().
 	[hannken, ticket #772]
+
+sys/netipsec/ipsec_mbuf.c			1.23,1.24
+
+	Don't assume M_PKTHDR is set only on the first mbuf of the chain.
+	Fix a pretty bad mistake (IPsec DoS).
+	[maxv, ticket #773]
+
 
