@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.h,v 1.1.2.14 2018/04/03 08:29:44 pgoyette Exp $	*/
+/* $NetBSD: compat_stub.h,v 1.1.2.15 2018/04/17 07:24:55 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -178,3 +178,8 @@ struct iovec;
 
 extern int (*compat_modstat_80)(int, struct iovec *, void *);
 #endif	/* _SYS_COMPAT_STUB_H */
+
+/*
+ * mask for kern_sig_43's killpg
+ */
+extern int kern_sig_43_pgid_mask;

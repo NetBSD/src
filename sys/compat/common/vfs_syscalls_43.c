@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_43.c,v 1.62.2.2 2018/04/17 00:02:58 pgoyette Exp $	*/
+/*	$NetBSD: vfs_syscalls_43.c,v 1.62.2.3 2018/04/17 07:24:55 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.62.2.2 2018/04/17 00:02:58 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.62.2.3 2018/04/17 07:24:55 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -58,7 +58,6 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.62.2.2 2018/04/17 00:02:58 pgo
 #include <sys/malloc.h>
 #include <sys/ioctl.h>
 #include <sys/fcntl.h>
-#include <sys/sysctl.h>
 #include <sys/syslog.h>
 #include <sys/unistd.h>
 #include <sys/resourcevar.h>
@@ -525,66 +524,6 @@ out1:
 		return error;
 	return copyout(&loff, SCARG(uap, basep), sizeof(long));
 }
-
-/*
- * sysctl helper routine for vfs.generic.conf lookups.
- */
-#if defined(COMPAT_09) || defined(COMPAT_43) || defined(COMPAT_44)
-
-static int
-sysctl_vfs_generic_conf(SYSCTLFN_ARGS)
-{
-        struct vfsconf vfc;
-	struct sysctlnode node;
-	struct vfsops *vfsp;
-	u_int vfsnum;
-
-	if (namelen != 1)
-		return (ENOTDIR);
-	vfsnum = name[0];
-	if (vfsnum >= nmountcompatnames ||
-	    mountcompatnames[vfsnum] == NULL)
-		return (EOPNOTSUPP);
-	vfsp = vfs_getopsbyname(mountcompatnames[vfsnum]);
-	if (vfsp == NULL)
-		return (EOPNOTSUPP);
-
-	vfc.vfc_vfsops = vfsp;
-	strncpy(vfc.vfc_name, vfsp->vfs_name, sizeof(vfc.vfc_name));
-	vfc.vfc_typenum = vfsnum;
-	vfc.vfc_refcount = vfsp->vfs_refcount;
-	vfc.vfc_flags = 0;
-	vfc.vfc_mountroot = vfsp->vfs_mountroot;
-	vfc.vfc_next = NULL;
-	vfs_delref(vfsp);
-
-	node = *rnode;
-	node.sysctl_data = &vfc;
-	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
-}
-
-/*
- * Top level filesystem related information gathering.
- */
-void
-compat_sysctl_vfs(struct sysctllog **clog)
-{
-
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
-		       CTLTYPE_INT, "maxtypenum",
-		       SYSCTL_DESCR("Highest valid filesystem type number"),
-		       NULL, nmountcompatnames, NULL, 0,
-		       CTL_VFS, VFS_GENERIC, VFS_MAXTYPENUM, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_STRUCT, "conf",
-		       SYSCTL_DESCR("Filesystem configuration information"),
-		       sysctl_vfs_generic_conf, 0, NULL,
-		       sizeof(struct vfsconf),
-		       CTL_VFS, VFS_GENERIC, VFS_CONF, CTL_EOL);
-}
-#endif
 
 int
 vfs_syscalls_43_init(void)
