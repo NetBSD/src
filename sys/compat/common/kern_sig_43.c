@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig_43.c,v 1.34 2011/01/19 10:21:16 tsutsui Exp $	*/
+/*	$NetBSD: kern_sig_43.c,v 1.34.56.1 2018/04/17 00:02:58 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig_43.c,v 1.34 2011/01/19 10:21:16 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig_43.c,v 1.34.56.1 2018/04/17 00:02:58 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -56,11 +56,14 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sig_43.c,v 1.34 2011/01/19 10:21:16 tsutsui Exp
 #include <sys/core.h>
 #include <sys/kauth.h>
 
+#include <sys/syscall.h>
+#include <sys/syscallvar.h>
 #include <sys/syscallargs.h>
 
 #include <sys/cpu.h>
 
 #include <compat/sys/signal.h>
+#include <compat/common/compat_mod.h>
 
 void compat_43_sigmask_to_sigset(const int *, sigset_t *);
 void compat_43_sigset_to_sigmask(const sigset_t *, int *);
@@ -68,6 +71,15 @@ void compat_43_sigvec_to_sigaction(const struct sigvec *, struct sigaction *);
 void compat_43_sigaction_to_sigvec(const struct sigaction *, struct sigvec *);
 void compat_43_sigstack_to_sigaltstack(const struct sigstack *, struct sigaltstack *);
 void compat_43_sigaltstack_to_sigstack(const struct sigaltstack *, struct sigstack *);
+
+static struct syscall_package kern_sig_43_syscalls[] = {
+	{ SYS_compat_43_osigblock, 0, (sy_call_t *)compat_43_sys_sigblock },
+	{ SYS_compat_43_osigsetmask, 0, (sy_call_t *)compat_43_sys_sigsetmask },
+	{ SYS_compat_43_osigstack, 0, (sy_call_t *)compat_43_sys_sigstack },
+	{ SYS_compat_43_osigvec, 0, (sy_call_t *)compat_43_sys_sigvec },
+	{ SYS_compat_43_okillpg, 0, (sy_call_t *)compat_43_sys_killpg },
+	{ 0, 0, NULL }
+};
 
 void
 compat_43_sigmask_to_sigset(const int *sm, sigset_t *ss)
@@ -259,4 +271,18 @@ compat_43_sys_killpg(struct lwp *l, const struct compat_43_sys_killpg_args *uap,
 	ksi.ksi_pid = l->l_proc->p_pid;
 	ksi.ksi_uid = kauth_cred_geteuid(l->l_cred);
 	return killpg1(l, &ksi, pgid, 0);
+}
+
+int
+kern_sig_43_init(void)
+{
+
+	return syscall_establish(NULL, kern_sig_43_syscalls);
+}
+
+int
+kern_sig_43_fini(void)
+{
+
+	return syscall_disestablish(NULL, kern_sig_43_syscalls);
 }

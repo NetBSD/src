@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit_43.c,v 1.22 2009/11/04 21:23:02 rmind Exp $	*/
+/*	$NetBSD: kern_exit_43.c,v 1.22.62.1 2018/04/17 00:02:58 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit_43.c,v 1.22 2009/11/04 21:23:02 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit_43.c,v 1.22.62.1 2018/04/17 00:02:58 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,11 +57,14 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exit_43.c,v 1.22 2009/11/04 21:23:02 rmind Exp 
 #include <sys/acct.h>
 
 #include <sys/mount.h>
+#include <sys/syscall.h>
+#include <sys/syscallvar.h>
 #include <sys/syscallargs.h>
 
 #include <sys/cpu.h>
 #include <machine/reg.h>
 #include <compat/common/compat_util.h>
+#include <compat/common/compat_mod.h>
 
 #ifdef m68k
 #include <machine/psl.h>		/* only m68k ports use PSL_ALLCC */
@@ -70,6 +73,11 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exit_43.c,v 1.22 2009/11/04 21:23:02 rmind Exp 
 #else
 #define GETPS(rp)	(rp)[PS]
 #endif
+
+static struct syscall_package kern_exit_43_syscalls[] = {
+	{ SYS_compat_43_owait, 0, (sy_call_t *)compat_43_sys_wait },
+	{ 0, 0, NULL}
+};
 
 int
 compat_43_sys_wait(struct lwp *l, const void *v, register_t *retval)
@@ -89,4 +97,18 @@ compat_43_sys_wait(struct lwp *l, const void *v, register_t *retval)
 	retval[0] = child_pid;
 	retval[1] = status;
 	return error;
+}
+
+int
+kern_exit_43_init(void)
+{
+
+	return syscall_establish(NULL, kern_exit_43_syscalls);
+}
+
+int
+kern_exit_43_fini(void)
+{
+
+	return syscall_disestablish(NULL, kern_exit_43_syscalls);
 }

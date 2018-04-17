@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_43.c,v 1.62.2.1 2018/03/31 11:45:33 pgoyette Exp $	*/
+/*	$NetBSD: vfs_syscalls_43.c,v 1.62.2.2 2018/04/17 00:02:58 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.62.2.1 2018/03/31 11:45:33 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.62.2.2 2018/04/17 00:02:58 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -64,6 +64,8 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.62.2.1 2018/03/31 11:45:33 pgo
 #include <sys/resourcevar.h>
 
 #include <sys/mount.h>
+#include <sys/syscall.h>
+#include <sys/syscallvar.h>
 #include <sys/syscallargs.h>
 #include <sys/vfs_syscalls.h>
 
@@ -76,6 +78,11 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.62.2.1 2018/03/31 11:45:33 pgo
 
 static void cvttimespec(struct timespec *, struct timespec50 *);
 static void cvtstat(struct stat *, struct stat43 *);
+
+static struct syscall_package vfs_syscalls_43_syscalls[] = {
+	{ SYS_compat_43_oquota, 0, (sy_call_t *)compat_43_sys_quota },
+	{ 0, 0, NULL }
+};
 
 /*
  * Convert from an old to a new timespec structure.
@@ -578,3 +585,17 @@ compat_sysctl_vfs(struct sysctllog **clog)
 		       CTL_VFS, VFS_GENERIC, VFS_CONF, CTL_EOL);
 }
 #endif
+
+int
+vfs_syscalls_43_init(void)
+{
+
+	return syscall_establish(NULL, vfs_syscalls_43_syscalls);
+}
+
+int
+vfs_syscalls_43_fini(void)
+{
+
+	return syscall_disestablish(NULL, vfs_syscalls_43_syscalls);
+}

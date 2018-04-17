@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_info_09.c,v 1.20 2007/12/20 23:02:44 dsl Exp $	*/
+/*	$NetBSD: kern_info_09.c,v 1.20.96.1 2018/04/17 00:02:58 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_info_09.c,v 1.20 2007/12/20 23:02:44 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_info_09.c,v 1.20.96.1 2018/04/17 00:02:58 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,11 +45,25 @@ __KERNEL_RCSID(0, "$NetBSD: kern_info_09.c,v 1.20 2007/12/20 23:02:44 dsl Exp $"
 #include <sys/sysctl.h>
 
 #include <sys/mount.h>
+#include <sys/syscall.h>
+#include <sys/syscallvar.h>
 #include <sys/syscallargs.h>
+
+#include <compat/common/compat_mod.h>
+
+static struct syscall_package kern_info_09_syscalls[] = {
+	{ SYS_compat_09_ogetdomainname, 0,
+	    (sy_call_t *)compat_09_sys_getdomainname },
+	{ SYS_compat_09_osetdomainname, 0,
+	    (sy_call_t *)compat_09_sys_setdomainname },
+	{ SYS_compat_09_ouname, 0, (sy_call_t *)compat_09_sys_uname },
+	{ 0, 0, NULL }
+};
 
 /* ARGSUSED */
 int
-compat_09_sys_getdomainname(struct lwp *l, const struct compat_09_sys_getdomainname_args *uap, register_t *retval)
+compat_09_sys_getdomainname(struct lwp *l,
+    const struct compat_09_sys_getdomainname_args *uap, register_t *retval)
 {
 	/* {
 		syscallarg(char *) domainname;
@@ -67,7 +81,8 @@ compat_09_sys_getdomainname(struct lwp *l, const struct compat_09_sys_getdomainn
 
 /* ARGSUSED */
 int
-compat_09_sys_setdomainname(struct lwp *l, const struct compat_09_sys_setdomainname_args *uap, register_t *retval)
+compat_09_sys_setdomainname(struct lwp *l,
+    const struct compat_09_sys_setdomainname_args *uap, register_t *retval)
 {
 	/* {
 		syscallarg(char *) domainname;
@@ -91,7 +106,8 @@ struct outsname {
 
 /* ARGSUSED */
 int
-compat_09_sys_uname(struct lwp *l, const struct compat_09_sys_uname_args *uap, register_t *retval)
+compat_09_sys_uname(struct lwp *l,
+    const struct compat_09_sys_uname_args *uap, register_t *retval)
 {
 	/* {
 		syscallarg(struct outsname *) name;
@@ -117,4 +133,18 @@ compat_09_sys_uname(struct lwp *l, const struct compat_09_sys_uname_args *uap, r
 	strncpy(outsname.machine, MACHINE, sizeof(outsname.machine));
 	return (copyout((void *)&outsname, (void *)SCARG(uap, name),
 			sizeof(struct outsname)));
+}
+
+int
+kern_info_09_init(void)
+{
+
+	return syscall_establish(NULL, kern_info_09_syscalls);
+}
+
+int
+kern_info_09_fini(void)
+{
+
+	return syscall_disestablish(NULL, kern_info_09_syscalls);
 }

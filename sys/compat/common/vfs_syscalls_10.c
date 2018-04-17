@@ -1,4 +1,4 @@
-/* $NetBSD: vfs_syscalls_10.c,v 1.1.2.1 2018/03/14 02:24:56 pgoyette Exp $	*/
+/* $NetBSD: vfs_syscalls_10.c,v 1.1.2.2 2018/04/17 00:02:58 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,12 +30,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_10.c,v 1.1.2.1 2018/03/14 02:24:56 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_10.c,v 1.1.2.2 2018/04/17 00:02:58 pgoyette Exp $");
  
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
 #include <sys/vfs_syscalls.h>
+
+#include <compat/common/compat_mod.h>
 
 static int (*orig_sys_openat_10)(struct pathbuf **);
 

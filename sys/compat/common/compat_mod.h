@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_mod.h,v 1.1.42.19 2018/04/16 03:41:34 pgoyette Exp $	*/
+/*	$NetBSD: compat_mod.h,v 1.1.42.20 2018/04/17 00:02:58 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -150,6 +150,43 @@ int vm_12_init(void);
 int vm_12_fini(void);
 int vfs_syscalls_12_init(void);
 int vfs_syscalls_12_fini(void);
+#endif
+
+#ifdef COMPAT_10
+int compat_10_init(void);
+int compat_10_fini(void);
+void vfs_syscalls_10_init(void);
+void vfs_syscalls_10_fini(void);
+#endif
+
+#ifdef COMPAT_09
+int compat_09_init(void);
+int compat_09_fini(void);
+int kern_info_09_init(void);
+int kern_info_09_fini(void);
+#endif
+
+#ifdef COMPAT_43
+int compat_43_init(void);
+int compat_43_fini(void);
+int kern_exit_43_init(void);
+int kern_exit_43_fini(void);
+int kern_info_43_init(void);
+int kern_info_43_fini(void);
+int kern_resource_43_init(void);
+int kern_resource_43_fini(void);
+int kern_sig_43_init(void);
+int kern_sig_43_fini(void);
+int tty_43_init(void);
+int tty_43_fini(void);
+int uipc_syscalls_43_init(void);
+int uipc_syscalls_43_fini(void);
+int vfs_syscalls_43_init(void);
+int vfs_syscalls_43_fini(void);
+int vm_43_init(void);
+int vm_43_fini(void);
+int if_43_init(void);
+int if_43_fini(void);
 #endif
 
 #endif /* !_COMPAT_MOD_H_ */

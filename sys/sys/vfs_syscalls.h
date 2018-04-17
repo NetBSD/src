@@ -1,4 +1,4 @@
-/*     $NetBSD: vfs_syscalls.h,v 1.23.2.1 2018/03/14 02:24:56 pgoyette Exp $        */
+/*     $NetBSD: vfs_syscalls.h,v 1.23.2.2 2018/04/17 00:02:58 pgoyette Exp $        */
 
 /*
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -87,7 +87,5 @@ extern const char *const mountcompatnames[];
 extern const int nmountcompatnames;
 
 extern int (*vec_sys_openat_10)(struct pathbuf **);
-void vfs_syscalls_10_init(void);
-void vfs_syscalls_10_fini(void);
 
 #endif /* _SYS_VFS_SYSCALLS_H_ */
