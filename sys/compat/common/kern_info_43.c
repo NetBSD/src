@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_info_43.c,v 1.35 2014/03/24 20:08:08 christos Exp $	*/
+/*	$NetBSD: kern_info_43.c,v 1.35.28.1 2018/04/17 00:02:58 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_info_43.c,v 1.35 2014/03/24 20:08:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_info_43.c,v 1.35.28.1 2018/04/17 00:02:58 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,8 +56,26 @@ __KERNEL_RCSID(0, "$NetBSD: kern_info_43.c,v 1.35 2014/03/24 20:08:08 christos E
 #include <sys/sysctl.h>
 
 #include <sys/mount.h>
+#include <sys/syscall.h>
+#include <sys/syscallvar.h>
 #include <sys/syscallargs.h>
 #include <compat/sys/time.h>
+
+#include <compat/common/compat_mod.h>
+
+static struct syscall_package kern_info_43_syscalls[] = {
+	{ SYS_compat_43_ogetdtablesize, 0,
+	    (sy_call_t *)compat_43_sys_getdtablesize },
+	{ SYS_compat_43_ogethostid, 0, (sy_call_t *)compat_43_sys_gethostid },
+        { SYS_compat_43_ogethostname, 0,
+	    (sy_call_t *)compat_43_sys_gethostname },
+	{ SYS_compat_43_ogetkerninfo, 0,
+	    (sy_call_t *)compat_43_sys_getkerninfo },
+	{ SYS_compat_43_osethostid, 0, (sy_call_t *)compat_43_sys_sethostid },
+	{ SYS_compat_43_osethostname, 0,
+	    (sy_call_t *)compat_43_sys_sethostname },
+	{ 0, 0, NULL }
+};
 
 int
 compat_43_sys_getdtablesize(struct lwp *l, const void *v, register_t *retval)
@@ -310,4 +328,18 @@ compat_43_sys_sethostname(struct lwp *l, const struct compat_43_sys_sethostname_
 	name[1] = KERN_HOSTNAME;
 	return (old_sysctl(&name[0], 2, 0, 0, SCARG(uap, hostname),
 			   SCARG(uap, len), l));
+}
+
+int
+kern_info_43_init(void)
+{
+
+	return syscall_establish(NULL, kern_info_43_syscalls);
+}
+
+int
+kern_info_43_fini(void)
+{
+
+	return syscall_disestablish(NULL, kern_info_43_syscalls);
 }

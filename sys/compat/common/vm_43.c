@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_43.c,v 1.20 2017/04/29 13:25:27 christos Exp $	*/
+/*	$NetBSD: vm_43.c,v 1.20.8.1 2018/04/17 00:02:58 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_43.c,v 1.20 2017/04/29 13:25:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_43.c,v 1.20.8.1 2018/04/17 00:02:58 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,9 +54,20 @@ __KERNEL_RCSID(0, "$NetBSD: vm_43.c,v 1.20 2017/04/29 13:25:27 christos Exp $");
 #include <sys/file.h>
 #include <sys/mman.h>
 
+#include <sys/syscall.h>
+#include <sys/syscallvar.h>
 #include <sys/syscallargs.h>
 
 #include <miscfs/specfs/specdev.h>
+
+#include <compat/common/compat_mod.h>
+
+static struct syscall_package vm_43_syscalls[] = {
+	{ SYS_compat_43_ogetpagesize, 0,
+	    (sy_call_t *)compat_43_sys_getpagesize },
+	{ SYS_compat_43_ommap, 0, (sy_call_t *)compat_43_sys_mmap },
+	{ 0, 0, NULL }
+};
 
 /* ARGSUSED */
 int
@@ -132,4 +143,18 @@ compat_43_sys_mmap(struct lwp *l, const struct compat_43_sys_mmap_args *uap, reg
 	SCARG(&nargs, fd) = SCARG(uap, fd);
 	SCARG(&nargs, pos) = SCARG(uap, pos);
 	return (sys_mmap(l, &nargs, retval));
+}
+
+int
+vm_43_init(void)
+{
+
+	return syscall_establish(NULL, vm_43_syscalls);
+}
+
+int
+vm_43_fini(void)
+{
+
+	return syscall_disestablish(NULL, vm_43_syscalls);
 }

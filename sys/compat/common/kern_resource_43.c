@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource_43.c,v 1.21 2007/12/20 23:02:44 dsl Exp $	*/
+/*	$NetBSD: kern_resource_43.c,v 1.21.96.1 2018/04/17 00:02:58 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource_43.c,v 1.21 2007/12/20 23:02:44 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource_43.c,v 1.21.96.1 2018/04/17 00:02:58 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,7 +47,17 @@ __KERNEL_RCSID(0, "$NetBSD: kern_resource_43.c,v 1.21 2007/12/20 23:02:44 dsl Ex
 #include <sys/proc.h>
 
 #include <sys/mount.h>
+#include <sys/syscall.h>
+#include <sys/syscallvar.h>
 #include <sys/syscallargs.h>
+
+#include <compat/common/compat_mod.h>
+
+static struct syscall_package kern_resource_43_syscalls[] = {
+	{ SYS_compat_43_ogetrlimit, 0, (sy_call_t *)compat_43_sys_getrlimit },
+	{ SYS_compat_43_osetrlimit, 0, (sy_call_t *)compat_43_sys_setrlimit },
+	{ 0, 0, NULL }
+};
 
 /* ARGSUSED */
 int
@@ -91,4 +101,18 @@ compat_43_sys_setrlimit(struct lwp *l, const struct compat_43_sys_setrlimit_args
 	lim.rlim_cur = olim.rlim_cur;
 	lim.rlim_max = olim.rlim_max;
 	return (dosetrlimit(l, l->l_proc, which, &lim));
+}
+
+int
+kern_resource_43_init(void)
+{
+
+	return syscall_establish(NULL, kern_resource_43_syscalls);
+}
+
+int
+kern_resource_43_fini(void)
+{
+
+	return syscall_disestablish(NULL, kern_resource_43_syscalls);
 }

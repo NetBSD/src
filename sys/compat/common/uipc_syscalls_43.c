@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls_43.c,v 1.47.14.1 2018/03/22 01:44:47 pgoyette Exp $	*/
+/*	$NetBSD: uipc_syscalls_43.c,v 1.47.14.2 2018/04/17 00:02:58 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_43.c,v 1.47.14.1 2018/03/22 01:44:47 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_43.c,v 1.47.14.2 2018/04/17 00:02:58 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +52,8 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_43.c,v 1.47.14.1 2018/03/22 01:44:47 p
 #include <sys/protosw.h>
 
 #include <sys/mount.h>
+#include <sys/syscall.h>
+#include <sys/syscallvar.h>
 #include <sys/syscallargs.h>
 
 #include <net/if.h>
@@ -70,6 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_43.c,v 1.47.14.1 2018/03/22 01:44:47 p
 #include <compat/sys/sockio.h>
 
 #include <compat/common/compat_util.h>
+#include <compat/common/compat_mod.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -78,6 +81,20 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_43.c,v 1.47.14.1 2018/03/22 01:44:47 p
  * have been:
  * connect(2), bind(2), sendto(2)
  */
+
+static struct syscall_package uipc_syscalls_43_syscalls[] = {
+	{ SYS_compat_43_oaccept, 0, (sy_call_t *)compat_43_sys_accept },
+	{ SYS_compat_43_ogetpeername, 0,
+	    (sy_call_t *)compat_43_sys_getpeername },      
+	{ SYS_compat_43_ogetsockname, 0,
+	    (sy_call_t *)compat_43_sys_getsockname },
+	{ SYS_compat_43_orecv, 0, (sy_call_t *)compat_43_sys_recv },
+	{ SYS_compat_43_orecvfrom, 0, (sy_call_t *)compat_43_sys_recvfrom },
+	{ SYS_compat_43_orecvmsg, 0, (sy_call_t *)compat_43_sys_recvmsg },
+	{ SYS_compat_43_osend, 0, (sy_call_t *)compat_43_sys_send },
+	{ SYS_compat_43_osendmsg, 0, (sy_call_t *)compat_43_sys_sendmsg },
+	{ 0, 0, NULL }
+};
 
 static int compat_43_sa_put(void *);
 
@@ -398,4 +415,18 @@ compat_43_sa_put(void *from)
 		return (error);
 
 	return (0);
+}
+
+int
+uipc_syscalls_43_init(void)
+{
+
+	return syscall_establish(NULL, uipc_syscalls_43_syscalls);
+}
+
+int
+uipc_syscalls_43_fini(void)
+{
+
+	return syscall_disestablish(NULL, uipc_syscalls_43_syscalls);
 }

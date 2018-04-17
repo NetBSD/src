@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_43.c,v 1.30 2014/05/22 16:31:19 dholland Exp $	*/
+/*	$NetBSD: tty_43.c,v 1.30.26.1 2018/04/17 00:02:58 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_43.c,v 1.30 2014/05/22 16:31:19 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_43.c,v 1.30.26.1 2018/04/17 00:02:58 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,6 +75,8 @@ __KERNEL_RCSID(0, "$NetBSD: tty_43.c,v 1.30 2014/05/22 16:31:19 dholland Exp $")
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 #include <sys/ioctl_compat.h>
+
+#include <compat/common/compat_mod.h>
 
 int ttydebug = 0;
 
@@ -504,4 +506,18 @@ ttcompatsetlflags(struct tty *tp, struct termios *t)
 	t->c_oflag = oflag;
 	t->c_lflag = lflag;
 	t->c_cflag = cflag;
+}
+
+int
+tty_43_init(void)
+{
+
+	return 0;
+}
+
+int
+tty_43_fini(void)
+{
+
+	return 0;
 }
