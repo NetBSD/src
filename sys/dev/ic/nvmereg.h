@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmereg.h,v 1.9 2017/05/29 02:20:34 nonaka Exp $	*/
+/*	$NetBSD: nvmereg.h,v 1.10 2018/04/17 08:54:35 nonaka Exp $	*/
 /*	$OpenBSD: nvmereg.h,v 1.10 2016/04/14 11:18:32 dlg Exp $ */
 
 /*
@@ -19,6 +19,10 @@
 
 #ifndef	__NVMEREG_H__
 #define	__NVMEREG_H__
+
+#ifndef	NVME_CTASSERT
+#define	NVME_CTASSERT(x, s)	__CTASSERT(x)
+#endif
 
 #define NVME_CAP	0x0000	/* Controller Capabilities */
 #define  NVME_CAP_MPSMAX(_r)	(12 + (((_r) >> 52) & 0xf)) /* shift */
@@ -96,6 +100,7 @@ struct nvme_sge {
 	uint8_t		id;
 	uint8_t		_reserved[15];
 } __packed __aligned(8);
+NVME_CTASSERT(sizeof(struct nvme_sge) == 16, "bad size for nvme_sge");
 
 struct nvme_sge_data {
 	uint8_t		id;
@@ -105,6 +110,7 @@ struct nvme_sge_data {
 
 	uint64_t	address;
 } __packed __aligned(8);
+NVME_CTASSERT(sizeof(struct nvme_sge_data) == 16, "bad size for nvme_sge_data");
 
 struct nvme_sge_bit_bucket {
 	uint8_t		id;
@@ -114,6 +120,7 @@ struct nvme_sge_bit_bucket {
 
 	uint64_t	address;
 } __packed __aligned(8);
+NVME_CTASSERT(sizeof(struct nvme_sge_bit_bucket) == 16, "bad size for nvme_sge_bit_bucket");
 
 struct nvme_sqe {
 	uint8_t		opcode;
@@ -138,6 +145,7 @@ struct nvme_sqe {
 	uint32_t	cdw14;
 	uint32_t	cdw15;
 } __packed __aligned(8);
+NVME_CTASSERT(sizeof(struct nvme_sqe) == 64, "bad size for nvme_sqe");
 
 struct nvme_sqe_q {
 	uint8_t		opcode;
@@ -165,6 +173,7 @@ struct nvme_sqe_q {
 
 	uint8_t		_reserved4[16];
 } __packed __aligned(8);
+NVME_CTASSERT(sizeof(struct nvme_sqe_q) == 64, "bad size for nvme_sqe_q");
 
 struct nvme_sqe_io {
 	uint8_t		opcode;
@@ -217,6 +226,7 @@ struct nvme_sqe_io {
 	uint16_t	elbatm;	/* Expected Logical Block
 				   Application Tag Mask */
 } __packed __aligned(8);
+NVME_CTASSERT(sizeof(struct nvme_sqe_io) == 64, "bad size for nvme_sqe_io");
 
 struct nvme_cqe {
 	uint32_t	cdw0;
@@ -292,6 +302,7 @@ struct nvme_cqe {
 #define  NVME_CQE_SC_ACCESS_DENIED	(0x86 << 1)
 #define NVME_CQE_PHASE		__BIT(0)
 } __packed __aligned(8);
+NVME_CTASSERT(sizeof(struct nvme_cqe) == 16, "bad size for nvme_cqe");
 
 #define NVM_ADMIN_DEL_IOSQ	0x00 /* Delete I/O Submission Queue */
 #define NVM_ADMIN_ADD_IOSQ	0x01 /* Create I/O Submission Queue */
@@ -303,8 +314,11 @@ struct nvme_cqe {
 #define NVM_ADMIN_SET_FEATURES	0x09 /* Set Features */
 #define NVM_ADMIN_GET_FEATURES	0x0a /* Get Features */
 #define NVM_ADMIN_ASYNC_EV_REQ	0x0c /* Asynchronous Event Request */
+#define NVM_ADMIN_NS_MANAGEMENT	0x0d /* Namespace Management */
+/* 0x0e-0x0f - reserved */
 #define NVM_ADMIN_FW_COMMIT	0x10 /* Firmware Commit */
 #define NVM_ADMIN_FW_DOWNLOAD	0x11 /* Firmware Image Download */
+#define NVM_ADMIN_NS_ATTACHMENT	0x15 /* Namespace Attachment */
 
 #define NVM_CMD_FLUSH		0x00 /* Flush */
 #define NVM_CMD_WRITE		0x01 /* Write */
@@ -314,8 +328,29 @@ struct nvme_cqe {
 #define NVM_CMD_DSM		0x09 /* Dataset Management */
 
 /* Features for GET/SET FEATURES */
+/* 0x00 - reserved */
+#define NVM_FEAT_ARBITRATION			0x01
+#define NVM_FEAT_POWER_MANAGEMENT		0x02
+#define NVM_FEAT_LBA_RANGE_TYPE			0x03
+#define NVM_FEAT_TEMPERATURE_THRESHOLD		0x04
+#define NVM_FEAT_ERROR_RECOVERY			0x05
 #define NVM_FEATURE_VOLATILE_WRITE_CACHE	0x06	/* optional */
 #define NVM_FEATURE_NUMBER_OF_QUEUES		0x07	/* mandatory */
+#define NVM_FEAT_INTERRUPT_COALESCING		0x08
+#define NVM_FEAT_INTERRUPT_VECTOR_CONFIGURATION 0x09
+#define NVM_FEAT_WRITE_ATOMICITY		0x0a
+#define NVM_FEAT_ASYNC_EVENT_CONFIGURATION	0x0b
+#define NVM_FEAT_AUTONOMOUS_POWER_STATE_TRANSITION 0x0c
+#define NVM_FEAT_HOST_MEMORY_BUFFER		0x0d
+#define NVM_FEAT_TIMESTAMP			0x0e
+#define NVM_FEAT_KEEP_ALIVE_TIMER		0x0f
+#define NVM_FEAT_HOST_CONTROLLED_THERMAL_MGMT	0x10
+#define NVM_FEAT_NON_OP_POWER_STATE_CONFIG	0x11
+/* 0x12-0x77 - reserved */
+/* 0x78-0x7f - NVMe Management Interface */
+#define NVM_FEAT_SOFTWARE_PROGRESS_MARKER	0x80
+/* 0x81-0xBF - command set specific (reserved) */
+/* 0xC0-0xFF - vendor specific */
 
 /* Power State Descriptor Data */
 struct nvm_identify_psd {
@@ -349,6 +384,7 @@ struct nvm_identify_psd {
 
 	uint8_t		_reserved[8];
 } __packed __aligned(8);
+NVME_CTASSERT(sizeof(struct nvm_identify_psd) == 32, "bad size for nvm_identify_psd");
 
 struct nvm_identify_controller {
 	/* Controller Capabilities and Features */
@@ -366,9 +402,21 @@ struct nvm_identify_controller {
 	uint8_t		cmic;		/* Controller Multi-Path I/O and
 					   Namespace Sharing Capabilities */
 	uint8_t		mdts;		/* Maximum Data Transfer Size */
-	uint16_t	cntlid;		/* Controller ID */
 
-	uint8_t		_reserved1[176];
+	uint16_t	cntlid;		/* Controller ID */
+	uint32_t	ver;		/* Version */
+
+	uint32_t	rtd3r;		/* RTD3 Resume Latency */
+	uint32_t	rtd3e;		/* RTD3 Enter Latency */
+
+	uint32_t	oaes;		/* Optional Asynchronous Events Supported */
+	uint32_t	ctrattr;	/* Controller Attributes */
+
+	uint8_t		_reserved1[12];
+
+	uint8_t		fguid[16];	/* FRU Globally Unique Identifier */
+
+	uint8_t		_reserved2[128];
 
 	/* Admin Command Set Attributes & Optional Controller Capabilities */
 
@@ -395,7 +443,40 @@ struct nvm_identify_controller {
 	uint8_t		apsta;		/* Autonomous Power State Transition
 					   Attributes */
 
-	uint8_t		_reserved2[246];
+	uint16_t	wctemp;		/* Warning Composite Temperature
+					   Threshold */
+	uint16_t	cctemp;		/* Critical Composite Temperature
+					   Threshold */
+
+	uint16_t	mtfa;		/* Maximum Time for Firmware Activation */
+
+	uint32_t	hmpre;		/* Host Memory Buffer Preferred Size */
+	uint32_t	hmmin;		/* Host Memory Buffer Minimum Size */
+
+	struct {
+		uint64_t	tnvmcap[2];
+		uint64_t	unvmcap[2];
+	} __packed untncap;		/* Name space capabilities:
+					   if NVME_ID_CTRLR_OACS_NS,
+					   report tnvmcap and unvmcap */
+
+	uint32_t	rpmbs;		/* Replay Protected Memory Block Support */
+
+	uint16_t	edstt;		/* Extended Device Self-test Time */
+	uint8_t		dsto;		/* Device Self-test Options */
+
+	uint8_t		fwug;		/* Firmware Update Granularity */
+
+	uint16_t	kas;		/* Keep Alive Support */
+
+	uint16_t	hctma;		/* Host Controlled Thermal Management
+					   Attributes */
+	uint16_t	mntmt;		/* Minimum Thermal Management Temperature */
+	uint16_t	mxtmt;		/* Maximum Thermal Management Temperature */
+
+	uint32_t	sanicap;	/* Sanitize Capabilities */
+
+	uint8_t		_reserved3[180];
 
 	/* NVM Command Set Attributes */
 
@@ -405,7 +486,8 @@ struct nvm_identify_controller {
 	uint8_t		cqes;		/* Completion Queue Entry Size */
 #define	NVME_ID_CTRLR_CQES_MAX		__BITS(4, 7)
 #define	NVME_ID_CTRLR_CQES_MIN		__BITS(0, 3)
-	uint8_t		_reserved3[2];
+
+	uint16_t	maxcmd;		/* Maximum Outstanding Commands */
 
 	uint32_t	nn;		/* Number of Namespaces */
 
@@ -446,12 +528,14 @@ struct nvm_identify_controller {
 
 	uint8_t		_reserved8[1024];
 } __packed __aligned(8);
+NVME_CTASSERT(sizeof(struct nvm_identify_controller) == 4096, "bad size for nvm_identify_controller");
 
 struct nvm_namespace_format {
 	uint16_t	ms;		/* Metadata Size */
 	uint8_t		lbads;		/* LBA Data Size */
 	uint8_t		rp;		/* Relative Performance */
 } __packed __aligned(4);
+NVME_CTASSERT(sizeof(struct nvm_namespace_format) == 4, "bad size for nvm_namespace_format");
 
 struct nvm_identify_namespace {
 	uint64_t	nsze;		/* Namespace Size */
@@ -482,5 +566,6 @@ struct nvm_identify_namespace {
 
 	uint8_t		vs[3712];
 } __packed __aligned(8);
+NVME_CTASSERT(sizeof(struct nvm_identify_namespace) == 4096, "bad size for nvm_identify_namespace");
 
 #endif	/* __NVMEREG_H__ */
