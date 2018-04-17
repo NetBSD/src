@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.108.6.1 2018/04/12 13:42:48 martin Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.108.6.2 2018/04/17 08:36:11 martin Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -102,13 +102,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.108.6.1 2018/04/12 13:42:48 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.108.6.2 2018/04/17 08:36:11 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
+#include <sys/fstrans.h>
 #include <sys/vnode.h>
 #include <sys/stat.h>
 #include <sys/file.h>
@@ -363,6 +364,8 @@ procfs_revoke_selector(void *arg, struct vnode *vp)
 void
 procfs_revoke_vnodes(struct proc *p, void *arg)
 {
+	int error;
+	bool suspended;
 	struct vnode *vp;
 	struct vnode_iterator *marker;
 	struct mount *mp = (struct mount *)arg;
@@ -370,13 +373,28 @@ procfs_revoke_vnodes(struct proc *p, void *arg)
 	if (!(p->p_flag & PK_SUGID))
 		return;
 
+	suspended = false;
 	vfs_vnode_iterator_init(mp, &marker);
 
 	while ((vp = vfs_vnode_iterator_next(marker,
 	    procfs_revoke_selector, p)) != NULL) {
-		VOP_REVOKE(vp, REVOKEALL);
-		vrele(vp);
+		if (vrecycle(vp))
+			continue;
+		/* Vnode is busy, we have to suspend the mount for vgone(). */
+		while (! suspended) {
+			error = vfs_suspend(mp, 0);
+			if (error == 0) {
+				suspended = true;
+			} else if (error != EINTR && error != ERESTART) {
+				KASSERT(error == EOPNOTSUPP);
+				break;
+			}
+		}
+		vgone(vp);
 	}
+
+	if (suspended)
+		vfs_resume(mp);
 
 	vfs_vnode_iterator_destroy(marker);
 }
