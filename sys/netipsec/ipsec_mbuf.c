@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_mbuf.c,v 1.22 2018/03/10 17:52:50 maxv Exp $	*/
+/*	$NetBSD: ipsec_mbuf.c,v 1.23 2018/04/17 06:23:30 maxv Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_mbuf.c,v 1.22 2018/03/10 17:52:50 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_mbuf.c,v 1.23 2018/04/17 06:23:30 maxv Exp $");
 
 /*
  * IPsec-specific mbuf routines.
@@ -400,7 +400,7 @@ m_striphdr(struct mbuf *m, int skip, int hlen)
 		/* The header was at the beginning of the mbuf */
 		IPSEC_STATINC(IPSEC_STAT_INPUT_FRONT);
 		m_adj(m1, hlen);
-		if ((m1->m_flags & M_PKTHDR) == 0)
+		if (m1 != m)
 			m->m_pkthdr.len -= hlen;
 	} else if (roff + hlen >= m1->m_len) {
 		struct mbuf *mo;
@@ -425,7 +425,7 @@ m_striphdr(struct mbuf *m, int skip, int hlen)
 
 		/* ...and trim the end of the first part of the chain...sick */
 		m_adj(m1, -(m1->m_len - roff));
-		if ((m1->m_flags & M_PKTHDR) == 0)
+		if (m1 != m)
 			m->m_pkthdr.len -= (m1->m_len - roff);
 
 		/* Finally, let's relink */
