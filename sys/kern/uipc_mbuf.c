@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.190 2018/04/17 07:41:34 maxv Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.191 2018/04/17 07:58:31 maxv Exp $	*/
 
 /*
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.190 2018/04/17 07:41:34 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.191 2018/04/17 07:58:31 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
@@ -1913,7 +1913,11 @@ m_verify_packet(struct mbuf *m)
 		if (__predict_false(n->m_type == MT_FREE)) {
 			panic("%s: mbuf already freed (n = %p)", __func__, n);
 		}
-#if 0	/* Causing PR/53189 */
+#if 0
+		/*
+		 * This ought to be a rule of the mbuf API. Unfortunately,
+		 * many places don't respect that rule.
+		 */
 		if (__predict_false((n != m) && (n->m_flags & M_PKTHDR) != 0)) {
 			panic("%s: M_PKTHDR set on secondary mbuf", __func__);
 		}
