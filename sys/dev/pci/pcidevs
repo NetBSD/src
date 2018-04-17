@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1329 2018/04/16 13:11:53 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1330 2018/04/17 08:47:19 nonaka Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -645,6 +645,8 @@ vendor MARVELL2		0x1b4b	Marvell
 vendor FRESCO		0x1b73	Fresco Logic
 vendor QINHENG2		0x1c00	Nanjing QinHeng Electronics (PCIe)
 vendor SYMPHONY2	0x1c1c	Symphony Labs (2nd PCI Vendor ID)
+vendor HGST		0x1c58	HGST, Inc.
+vendor BEIJING_MEMBLAZE	0x1c5f	Beijing Memblaze Technology Co. Ltd.
 vendor TEKRAM2		0x1de1	Tekram Technology (2nd PCI Vendor ID)
 vendor SUNIX2		0x1fd4	SUNIX Co
 vendor HINT		0x3388	HiNT
@@ -1742,6 +1744,9 @@ product BBELEC ISOLATED_2_PORT		0x4212	dual-channel Isolated RS-485 PCI UART
 product BBELEC ISOLATED_4_PORT		0x4214	quad-channel Isolated RS-485 PCI UART
 product BBELEC ISOLATED_8_PORT		0x4218	octal-channel Isolated RS-485 PCI UART
 
+/* Beijing Memblaze Technology Co. Ltd. products */
+product BEIJING_MEMBLAZE PBLAZE4	0x0540	PBlaze4 NVMe SSD
+
 /* Belkin products */
 product BELKIN F5D6001		0x6001	F5D6001
 product BELKIN F5D6020V3	0x6020	F5D6020v3 802.11b
@@ -2630,6 +2635,10 @@ product HP IPMI			0x3302	IPMI
 product HP ILO3_SLAVE		0x3306	iLO3 Slave
 product HP ILO3_MGMT		0x3307	iLO3 Management
 product HP RS780_PPB_GFX	0x9602  (AMD) RS780 PCI-PCI Bridge (int gfx)
+
+/* HGST Inc. products */
+product HGST SN100	0x0003	Ultrastar SN100 Series NVMe SSD
+product HGST SN200	0x0023	Ultrastar SN200 Series NVMe SSD
 
 /* Hifn products */
 product HIFN 7751	0x0005	7751
@@ -6616,6 +6625,8 @@ product SAFENET SAFEXCEL	0x1141 SafeXcel
 product SAMSUNGELEC3	XP941		0xa800	XP941 M.2 SSD
 product SAMSUNGELEC3	SM951		0xa801	SM951 M.2 SSD
 product SAMSUNGELEC3	SM951_NVME	0xa802	SM951 M.2 NVMe SSD
+product SAMSUNGELEC3	172X		0xa821	NVMe SSD Controller 172X
+product SAMSUNGELEC3	172XAB		0xa822	NVMe SSD Controller 172Xa/172Xb
 
 /* Samsung Semiconductor products */
 product SAMSUNGSEMI	KS8920	0x8920	KS8920 10/100 Ethernet
