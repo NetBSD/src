@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_mbuf.c,v 1.23 2018/04/17 06:23:30 maxv Exp $	*/
+/*	$NetBSD: ipsec_mbuf.c,v 1.24 2018/04/17 09:06:33 maxv Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_mbuf.c,v 1.23 2018/04/17 06:23:30 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_mbuf.c,v 1.24 2018/04/17 09:06:33 maxv Exp $");
 
 /*
  * IPsec-specific mbuf routines.
@@ -404,6 +404,7 @@ m_striphdr(struct mbuf *m, int skip, int hlen)
 			m->m_pkthdr.len -= hlen;
 	} else if (roff + hlen >= m1->m_len) {
 		struct mbuf *mo;
+		int adjlen;
 
 		/*
 		 * Part or all of the header is at the end of this mbuf,
@@ -412,11 +413,13 @@ m_striphdr(struct mbuf *m, int skip, int hlen)
 		 */
 		IPSEC_STATINC(IPSEC_STAT_INPUT_END);
 		if (roff + hlen > m1->m_len) {
+			adjlen = roff + hlen - m1->m_len;
+
 			/* Adjust the next mbuf by the remainder */
-			m_adj(m1->m_next, roff + hlen - m1->m_len);
+			m_adj(m1->m_next, adjlen);
 
 			/* The second mbuf is guaranteed not to have a pkthdr... */
-			m->m_pkthdr.len -= (roff + hlen - m1->m_len);
+			m->m_pkthdr.len -= adjlen;
 		}
 
 		/* Now, let's unlink the mbuf chain for a second...*/
@@ -424,9 +427,10 @@ m_striphdr(struct mbuf *m, int skip, int hlen)
 		m1->m_next = NULL;
 
 		/* ...and trim the end of the first part of the chain...sick */
-		m_adj(m1, -(m1->m_len - roff));
+		adjlen = m1->m_len - roff;
+		m_adj(m1, -adjlen);
 		if (m1 != m)
-			m->m_pkthdr.len -= (m1->m_len - roff);
+			m->m_pkthdr.len -= adjlen;
 
 		/* Finally, let's relink */
 		m1->m_next = mo;
