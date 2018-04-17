@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.h,v 1.42 2018/04/17 05:23:58 knakahara Exp $ */
+/* $NetBSD: ixgbe.h,v 1.43 2018/04/17 08:38:05 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -322,11 +322,9 @@ struct ixgbe_mc_addr {
 struct ix_queue {
 	struct adapter   *adapter;
 	u32              msix;           /* This queue's MSI-X vector */
-	u32              eims;           /* This queue's EIMS bit */
 	u32              eitr_setting;
 	u32              me;
 	struct resource  *res;
-	void             *tag;
 	int              busy;
 	struct tx_ring   *txr;
 	struct rx_ring   *rxr;
@@ -365,9 +363,10 @@ struct tx_ring {
 	u16			next_avail_desc;
 	u16			next_to_clean;
 	u16			num_desc;
-	u32			txd_cmd;
 	ixgbe_dma_tag_t		*txtag;
-	char			mtx_name[16];
+#if 0
+	char			mtx_name[16]; /* NetBSD has no mutex name */
+#endif
 	pcq_t			*txr_interq;
 	struct work		wq_cookie;
 	void			*txr_si;
@@ -415,7 +414,9 @@ struct rx_ring {
         u16 			next_to_check;
 	u16			num_desc;
 	u16			mbuf_sz;
-	char			mtx_name[16];
+#if 0
+	char			mtx_name[16]; /* NetBSD has no mutex name */
+#endif
 	struct ixgbe_rx_buf	*rx_buffers;
 	ixgbe_dma_tag_t		*ptag;
 
@@ -461,17 +462,10 @@ struct adapter {
 	struct resource		*pci_mem;
 	struct resource		*msix_mem;
 
-	/*
-	 * Interrupt resources: this set is
-	 * either used for legacy, or for Link
-	 * when doing MSI-X
-	 */
-	void			*tag;
-	struct resource 	*res;
+	/* NetBSD: Interrupt resources are in osdep */
 
 	struct ifmedia		media;
 	callout_t		timer;
-	int			link_rid;
 	int			if_flags;
 
 	kmutex_t		core_mtx;

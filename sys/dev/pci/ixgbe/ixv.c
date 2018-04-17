@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.93 2018/04/12 08:03:55 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.94 2018/04/17 08:38:05 msaitoh Exp $*/
 
 /******************************************************************************
 
@@ -2985,7 +2985,6 @@ ixv_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 	    adapter->osdep.intrs[vector], IPL_NET, ixv_msix_mbx, adapter,
 	    intr_xname);
 	if (adapter->osdep.ihs[vector] == NULL) {
-		adapter->res = NULL;
 		aprint_error_dev(dev, "Failed to register LINK handler\n");
 		kcpuset_destroy(affinity);
 		return (ENXIO);
