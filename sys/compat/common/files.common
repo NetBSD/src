@@ -1,4 +1,4 @@
-#	$NetBSD: files.common,v 1.1.2.31 2018/04/17 00:02:58 pgoyette Exp $
+#	$NetBSD: files.common,v 1.1.2.32 2018/04/17 07:24:55 pgoyette Exp $
 
 #
 # Generic files, used by all compat options.
@@ -26,6 +26,7 @@ file	compat/common/if_43.c			compat_43
 # Compatibility code for NetBSD 0.9
 file	compat/common/compat_09_mod.c		compat_09
 file	compat/common/kern_info_09.c		compat_09
+file	compat/common/compat_sysctl_09_43.c	compat_09 | compat_43
 
 # Compatability code for NetBSD 1.0
 file	compat/common/compat_10_mod.c		compat_10

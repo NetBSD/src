@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_mod.c,v 1.24.14.33 2018/04/17 00:02:58 pgoyette Exp $	*/
+/*	$NetBSD: compat_mod.c,v 1.24.14.34 2018/04/17 07:24:55 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.24.14.33 2018/04/17 00:02:58 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.24.14.34 2018/04/17 07:24:55 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -49,14 +49,9 @@ __KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.24.14.33 2018/04/17 00:02:58 pgoyet
 #include <sys/syscall.h>
 #include <sys/syscallargs.h>
 #include <sys/syscallvar.h>
-#include <sys/sysctl.h>
 
 #include <compat/common/compat_util.h>
 #include <compat/common/compat_mod.h>
-
-#if defined(COMPAT_09) || defined(COMPAT_43)
-static struct sysctllog *compat_clog = NULL;
-#endif
 
 static const char * const compat_includes[] = {
 	"compat_80", "compat_70", "compat_60", "compat_50", "compat_40",
@@ -108,6 +103,9 @@ struct compat_init_fini {
 #ifdef COMPAT_10
 	{ compat_10_init, compat_10_fini },
 #endif
+#if defined(COMPAT_09) || defined(COMPAT_43)
+	{ compat_sysctl_09_43_init, compat_sysctl_09_43_fini },
+#endif
 #ifdef COMPAT_09
 	{ compat_09_init, compat_09_fini },
 #endif
@@ -140,7 +138,6 @@ compat_modcmd(modcmd_t cmd, void *arg)
 			}
 		}
 
-		compat_sysctl_init();
 		return 0;
 
 	case MODULE_CMD_FINI:
@@ -149,7 +146,6 @@ compat_modcmd(modcmd_t cmd, void *arg)
 		 * if any component fails to fini(), re-init those
 		 * components which had already been disabled
 		 */
-		compat_sysctl_fini();
 		for (i = __arraycount(init_fini_list) - 1; i >= 0; i--) {
 			error = (*init_fini_list[i].fini)();
 			if (error != 0) {
@@ -165,25 +161,4 @@ compat_modcmd(modcmd_t cmd, void *arg)
 	default:
 		return ENOTTY;
 	}
-}
-
-void
-compat_sysctl_init(void)
-{
-
-#if defined(COMPAT_09) || defined(COMPAT_43)
-	compat_sysctl_vfs(&compat_clog);
-#endif
-}
-
-void
-compat_sysctl_fini(void)
-{
- 
-#if defined(COMPAT_09) || defined(COMPAT_43)
-        sysctl_teardown(&compat_clog);
-#endif
-#if defined(COMPAT_43)
-	if_43_fini();
-#endif
 }

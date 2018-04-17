@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.c,v 1.1.2.14 2018/04/03 08:29:44 pgoyette Exp $	*/
+/* $NetBSD: compat_stub.c,v 1.1.2.15 2018/04/17 07:24:55 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -153,3 +153,8 @@ int (*rtsock14_iflist)(struct ifnet *, struct rt_walkarg *,
  * modctl handler for old style OSTAT
  */
 int (*compat_modstat_80)(int, struct iovec *, void *) = (void *)enosys;
+
+/*
+ * mask for kern_sig_43's killpg (updated by compat_09)
+ */
+int kern_sig_43_pgid_mask = ~0;

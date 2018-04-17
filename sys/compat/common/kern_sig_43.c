@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig_43.c,v 1.34.56.1 2018/04/17 00:02:58 pgoyette Exp $	*/
+/*	$NetBSD: kern_sig_43.c,v 1.34.56.2 2018/04/17 07:24:55 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig_43.c,v 1.34.56.1 2018/04/17 00:02:58 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig_43.c,v 1.34.56.2 2018/04/17 07:24:55 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sig_43.c,v 1.34.56.1 2018/04/17 00:02:58 pgoyet
 #include <sys/syscall.h>
 #include <sys/syscallvar.h>
 #include <sys/syscallargs.h>
+#include <sys/compat_stub.h>
 
 #include <sys/cpu.h>
 
@@ -259,9 +260,7 @@ compat_43_sys_killpg(struct lwp *l, const struct compat_43_sys_killpg_args *uap,
 	ksiginfo_t ksi;
 	int pgid = SCARG(uap, pgid);
 
-#ifdef COMPAT_09
-	pgid &= 0xffff;
-#endif
+	pgid &= kern_sig_43_pgid_mask;
 
 	if ((u_int)SCARG(uap, signum) >= NSIG)
 		return (EINVAL);

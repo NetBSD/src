@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig_16.c,v 1.2.38.1 2018/03/30 05:35:47 pgoyette Exp $	*/
+/*	$NetBSD: kern_sig_16.c,v 1.2.38.2 2018/04/17 07:24:55 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig_16.c,v 1.2.38.1 2018/03/30 05:35:47 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig_16.c,v 1.2.38.2 2018/04/17 07:24:55 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -80,6 +80,10 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sig_16.c,v 1.2.38.1 2018/03/30 05:35:47 pgoyett
 #include <sys/kauth.h>
 #include <sys/wait.h>
 #include <sys/kmem.h>
+
+#include <uvm/uvm_object.h>
+#include <uvm/uvm_prot.h>
+#include <uvm/uvm_pager.h>
 
 #include <compat/common/compat_mod.h>
 
