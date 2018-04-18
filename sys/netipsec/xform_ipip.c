@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipip.c,v 1.63 2018/02/15 10:41:51 maxv Exp $	*/
+/*	$NetBSD: xform_ipip.c,v 1.64 2018/04/18 06:43:10 maxv Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipip.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ipip.c,v 1.25 2002/06/10 18:04:55 itojun Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.63 2018/02/15 10:41:51 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.64 2018/04/18 06:43:10 maxv Exp $");
 
 /*
  * IP-inside-IP processing
@@ -268,7 +268,7 @@ _ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp)
 					    AF_INET)
 						continue;
 
-					sin = (struct sockaddr_in *) ifa->ifa_addr;
+					sin = (struct sockaddr_in *)ifa->ifa_addr;
 
 					if (sin->sin_addr.s_addr ==
 					    ip4->ip_src.s_addr)	{
@@ -278,7 +278,7 @@ _ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp)
 						return;
 					}
 				}
-#endif /* INET */
+#endif
 
 #ifdef INET6
 				if (ip6) {
@@ -286,7 +286,7 @@ _ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp)
 					    AF_INET6)
 						continue;
 
-					sin6 = (struct sockaddr_in6 *) ifa->ifa_addr;
+					sin6 = (struct sockaddr_in6 *)ifa->ifa_addr;
 
 					if (IN6_ARE_ADDR_EQUAL(&sin6->sin6_addr, &ip6->ip6_src)) {
 						pserialize_read_exit(s);
@@ -296,7 +296,7 @@ _ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp)
 					}
 
 				}
-#endif /* INET6 */
+#endif
 			}
 		}
 		pserialize_read_exit(s);
@@ -355,7 +355,7 @@ ipip_output(struct mbuf *m, const struct ipsecrequest *isr,
 			DPRINTF(("%s: unspecified tunnel endpoint "
 			    "address in SA %s/%08lx\n", __func__,
 			    ipsec_address(&saidx->dst, buf, sizeof(buf)),
-			    (u_long) ntohl(sav->spi)));
+			    (u_long)ntohl(sav->spi)));
 			IPIP_STATINC(IPIP_STAT_UNSPEC);
 			error = EINVAL;
 			goto bad;
@@ -411,7 +411,7 @@ ipip_output(struct mbuf *m, const struct ipsecrequest *isr,
 			ipo->ip_p = IPPROTO_IPV6;
 			ipo->ip_off = 0;
 		}
-#endif /* INET6 */
+#endif
 		else {
 			goto nofamily;
 		}
@@ -430,7 +430,7 @@ ipip_output(struct mbuf *m, const struct ipsecrequest *isr,
 			DPRINTF(("%s: unspecified tunnel endpoint "
 			    "address in SA %s/%08lx\n", __func__,
 			    ipsec_address(&saidx->dst, buf, sizeof(buf)),
-			    (u_long) ntohl(sav->spi)));
+			    (u_long)ntohl(sav->spi)));
 			IPIP_STATINC(IPIP_STAT_UNSPEC);
 			error = ENOBUFS;
 			goto bad;
@@ -479,7 +479,7 @@ ipip_output(struct mbuf *m, const struct ipsecrequest *isr,
 			/* This is really IPVERSION. */
 			ip6o->ip6_nxt = IPPROTO_IPIP;
 		} else
-#endif /* INET */
+#endif
 		if (tp == (IPV6_VERSION >> 4)) {
 			uint32_t itos32;
 
@@ -496,7 +496,7 @@ ipip_output(struct mbuf *m, const struct ipsecrequest *isr,
 
 		otos = 0;
 		ip_ecn_ingress(ECN_ALLOWED, &otos, &itos);
-		ip6o->ip6_flow |= htonl((uint32_t) otos << 20);
+		ip6o->ip6_flow |= htonl((uint32_t)otos << 20);
 		break;
 #endif /* INET6 */
 
