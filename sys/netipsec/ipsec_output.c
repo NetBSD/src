@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_output.c,v 1.71 2018/03/05 11:50:25 maxv Exp $	*/
+/*	$NetBSD: ipsec_output.c,v 1.72 2018/04/18 06:52:35 maxv Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.71 2018/03/05 11:50:25 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.72 2018/04/18 06:52:35 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -89,7 +89,7 @@ static percpu_t *ipsec_rtcache_percpu __cacheline_aligned;
  * processed this packet.
  */
 static int
-ipsec_register_done(struct mbuf *m, int * error)
+ipsec_register_done(struct mbuf *m, int *error)
 {
 	struct m_tag *mtag;
 
@@ -144,14 +144,14 @@ ipsec_process_done(struct mbuf *m, const struct ipsecrequest *isr,
 	struct secasindex *saidx;
 	int error;
 #ifdef INET
-	struct ip * ip;
+	struct ip *ip;
 #endif
 #ifdef INET6
-	struct ip6_hdr * ip6;
+	struct ip6_hdr *ip6;
 #endif
-	struct mbuf * mo;
+	struct mbuf *mo;
 	struct udphdr *udp = NULL;
-	uint64_t * data = NULL;
+	uint64_t *data = NULL;
 	int hlen, roff;
 
 	IPSEC_SPLASSERT_SOFTNET("ipsec_process_done");
@@ -175,7 +175,7 @@ ipsec_process_done(struct mbuf *m, const struct ipsecrequest *isr,
 			IPSECLOG(LOG_DEBUG,
 			    "failed to inject %u byte UDP for SA %s/%08lx\n",
 			    hlen, ipsec_address(&saidx->dst, buf, sizeof(buf)),
-			    (u_long) ntohl(sav->spi));
+			    (u_long)ntohl(sav->spi));
 			error = ENOBUFS;
 			goto bad;
 		}
@@ -196,10 +196,12 @@ ipsec_process_done(struct mbuf *m, const struct ipsecrequest *isr,
 		udp->uh_ulen = htons(m->m_pkthdr.len - (ip->ip_hl << 2));
 	}
 
+	/*
+	 * Fix the header length, for AH processing.
+	 */
 	switch (saidx->dst.sa.sa_family) {
 #ifdef INET
 	case AF_INET:
-		/* Fix the header length, for AH processing. */
 		ip = mtod(m, struct ip *);
 		ip->ip_len = htons(m->m_pkthdr.len);
 		if (sav->natt_type != 0)
@@ -208,7 +210,6 @@ ipsec_process_done(struct mbuf *m, const struct ipsecrequest *isr,
 #endif
 #ifdef INET6
 	case AF_INET6:
-		/* Fix the header length, for AH processing. */
 		if (m->m_pkthdr.len < sizeof(struct ip6_hdr)) {
 			error = ENXIO;
 			goto bad;
@@ -260,9 +261,9 @@ ipsec_process_done(struct mbuf *m, const struct ipsecrequest *isr,
 	}
 
 	/*
-	 * We're done with IPsec processing,
-	 * mark that we have already processed the packet
-	 * transmit it packet using the appropriate network protocol (IP or IPv6).
+	 * We're done with IPsec processing, mark the packet as processed,
+	 * and transmit it using the appropriate network protocol
+	 * (IPv4/IPv6).
 	 */
 
 	if (ipsec_register_done(m, &error) < 0)
@@ -412,8 +413,8 @@ again:
 		    ipsec_get_reqlevel(isr));
 		isr = isr->next;
 		/*
-		 * No more rules to apply, return NULL isr and no error
-		 * It can happen when the last rules are USE rules
+		 * No more rules to apply, return NULL isr and no error.
+		 * It can happen when the last rules are USE rules.
 		 */
 		if (isr == NULL) {
 			*ret = NULL;
