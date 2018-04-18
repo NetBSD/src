@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.138 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.139 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -12226,3 +12226,6 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	opencrypto(9): Complete MP-ification [knakahara 20170731]
 	ipsec(4): Make it MP-safe [ozaki-r 20170809]
 	evbmips: Merge sbmips port into evbmips. [mrg 20170815]
+	amd64: Backport SVS (Meltdown mitigation). [maxv 20180404]
+	x86: Backport retpoline (SpectreV2 mitigation). [mrg 20180411]
+	amd64: Backport SMAP. [maxv 20180414]
