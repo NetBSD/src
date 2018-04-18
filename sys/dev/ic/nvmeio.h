@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmeio.h,v 1.1 2016/06/04 16:11:51 nonaka Exp $	*/
+/*	$NetBSD: nvmeio.h,v 1.2 2018/04/18 10:11:45 nonaka Exp $	*/
 
 /*-
  * Copyright (C) 2012-2013 Intel Corporation
@@ -25,12 +25,13 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: head/sys/dev/nvme/nvme.h 296617 2016-03-10 17:13:10Z mav $
+ * $FreeBSD: head/sys/dev/nvme/nvme.h 329824 2018-02-22 13:32:31Z wma $
  */
 
 #ifndef __NVMEIO_H__
 #define __NVMEIO_H__
 
+#include <sys/endian.h>
 #include <sys/ioccom.h>
 #include <dev/ic/nvmereg.h>
 
@@ -93,5 +94,104 @@ struct nvme_pt_command {
 	 */
 	uint32_t		timeout;
 };
+
+/* Endianess conversion functions for NVMe structs */
+static inline void
+nvme_le128toh(uint64_t v[2])
+{
+#if _BYTE_ORDER != _LITTLE_ENDIAN
+	uint64_t t;
+
+	t = le64toh(v[0]);
+	v[0] = le64toh(v[1]);
+	v[1] = t;
+#endif
+}
+
+static inline void
+nvme_namespace_format_swapbytes(struct nvm_namespace_format *format)
+{
+
+#if _BYTE_ORDER != _LITTLE_ENDIAN
+	format->ms = le16toh(format->ms);
+#endif
+}
+
+static inline void
+nvme_identify_namespace_swapbytes(struct nvm_identify_namespace *identify)
+{
+#if _BYTE_ORDER != _LITTLE_ENDIAN
+	u_int i;
+
+	identify->nsze = le64toh(identify->nsze);
+	identify->ncap = le64toh(identify->ncap);
+	identify->nuse = le64toh(identify->nuse);
+	identify->nawun = le16toh(identify->nawun);
+	identify->nawupf = le16toh(identify->nawupf);
+	identify->nacwu = le16toh(identify->nacwu);
+	identify->nabsn = le16toh(identify->nabsn);
+	identify->nabo = le16toh(identify->nabo);
+	identify->nabspf = le16toh(identify->nabspf);
+	identify->noiob = le16toh(identify->noiob);
+	for (i = 0; i < __arraycount(identify->lbaf); i++)
+		nvme_namespace_format_swapbytes(&identify->lbaf[i]);
+#endif
+}
+
+static inline void
+nvme_identify_psd_swapbytes(struct nvm_identify_psd *psd)
+{
+
+#if _BYTE_ORDER != _LITTLE_ENDIAN
+	psd->mp = le16toh(psd->mp);
+	psd->enlat = le32toh(psd->enlat);
+	psd->exlat = le32toh(psd->exlat);
+	psd->idlp = le16toh(psd->idlp);
+	psd->actp = le16toh(psd->actp);
+	psd->ap = le16toh(psd->ap);
+#endif
+}
+
+static inline void
+nvme_identify_controller_swapbytes(struct nvm_identify_controller *identify)
+{
+#if _BYTE_ORDER != _LITTLE_ENDIAN
+	u_int i;
+
+	identify->vid = le16toh(identify->vid);
+	identify->ssvid = le16toh(identify->ssvid);
+	identify->cntlid = le16toh(identify->cntlid);
+	identify->ver = le32toh(identify->ver);
+	identify->rtd3r = le32toh(identify->rtd3r);
+	identify->rtd3e = le32toh(identify->rtd3e);
+	identify->oaes = le32toh(identify->oaes);
+	identify->ctrattr = le32toh(identify->ctrattr);
+	identify->oacs = le16toh(identify->oacs);
+	identify->wctemp = le16toh(identify->wctemp);
+	identify->cctemp = le16toh(identify->cctemp);
+	identify->mtfa = le16toh(identify->mtfa);
+	identify->hmpre = le32toh(identify->hmpre);
+	identify->hmmin = le32toh(identify->hmmin);
+	nvme_le128toh(identify->untncap.tnvmcap);
+	nvme_le128toh(identify->untncap.unvmcap);
+	identify->rpmbs = le32toh(identify->rpmbs);
+	identify->edstt = le16toh(identify->edstt);
+	identify->kas = le16toh(identify->kas);
+	identify->hctma = le16toh(identify->hctma);
+	identify->mntmt = le16toh(identify->mntmt);
+	identify->mxtmt = le16toh(identify->mxtmt);
+	identify->sanicap = le32toh(identify->sanicap);
+	identify->maxcmd = le16toh(identify->maxcmd);
+	identify->nn = le32toh(identify->nn);
+	identify->oncs = le16toh(identify->oncs);
+	identify->fuses = le16toh(identify->fuses);
+	identify->awun = le16toh(identify->awun);
+	identify->awupf = le16toh(identify->awupf);
+	identify->acwu = le16toh(identify->acwu);
+	identify->sgls = le32toh(identify->sgls);
+	for (i = 0; i < __arraycount(identify->psd); i++)
+		nvme_identify_psd_swapbytes(&identify->psd[i]);
+#endif
+}
 
 #endif /* __NVMEIO_H__ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.1 2018/04/17 08:54:35 nonaka Exp $	*/
+/*	$NetBSD: util.c,v 1.2 2018/04/18 10:11:44 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2017 Netflix, Inc
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.1 2018/04/17 08:54:35 nonaka Exp $");
+__RCSID("$NetBSD: util.c,v 1.2 2018/04/18 10:11:44 nonaka Exp $");
 #if 0
 __FBSDID("$FreeBSD: head/sbin/nvmecontrol/util.c 320423 2017-06-27 20:24:25Z imp $");
 #endif
@@ -89,8 +89,16 @@ print_bignum(const char *title, uint64_t v[2], const char *suffix)
 {
 	char buf[64];
 	uint8_t tmp[16];
-	uint64_t l = le64toh(v[0]);
-	uint64_t h = le64toh(v[1]);
+	uint64_t h, l;
+
+#if _BYTE_ORDER != _LITTLE_ENDIAN
+	/* Already Converted to host endian */
+	h = v[0];
+	l = v[1];
+	memcpy(tmp, v, sizeof(tmp));
+#else
+	h = v[1];
+	l = v[0];
 
 	tmp[ 0] = (h >> 56) & 0xff;
 	tmp[ 1] = (h >> 48) & 0xff;
@@ -108,16 +116,17 @@ print_bignum(const char *title, uint64_t v[2], const char *suffix)
 	tmp[13] = (l >> 16) & 0xff;
 	tmp[14] = (l >> 8) & 0xff;
 	tmp[15] = l & 0xff;
+#endif
 
 	buf[0] = '\0';
-	BIGNUM *bn = BN_bin2bn(tmp, __arraycount(tmp), NULL);
+	BIGNUM *bn = BN_bin2bn(tmp, sizeof(tmp), NULL);
 	if (bn != NULL) {
 		humanize_bignum(buf, METRIX_PREFIX_BUFSIZ + strlen(suffix),
 		    bn, suffix, HN_AUTOSCALE, HN_DECIMAL);
 		BN_free(bn);
 	}
 	if (buf[0] == '\0')
-		snprintf(buf, sizeof(buf), "0x%016jx%016jx", h, l);
+		snprintf(buf, sizeof(buf), "0x%016" PRIx64 "%016" PRIx64, h, l);
 	printf("%-31s %s\n", title, buf);
 }
 
