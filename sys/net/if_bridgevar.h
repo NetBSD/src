@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridgevar.h,v 1.31 2016/04/28 00:16:56 ozaki-r Exp $	*/
+/*	$NetBSD: if_bridgevar.h,v 1.32 2018/04/18 04:01:58 ozaki-r Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -275,8 +275,8 @@ struct bridge_iflist {
  * Bridge route node.
  */
 struct bridge_rtnode {
-	LIST_ENTRY(bridge_rtnode) brt_hash;	/* hash table linkage */
-	LIST_ENTRY(bridge_rtnode) brt_list;	/* list linkage */
+	struct pslist_entry     brt_hash;	/* hash table linkage */
+	struct pslist_entry     brt_list;	/* list linkage */
 	struct ifnet		*brt_ifp;	/* destination if */
 	time_t			brt_expire;	/* expiration time */
 	uint8_t			brt_flags;	/* address flags */
@@ -319,8 +319,8 @@ struct bridge_softc {
 	callout_t		sc_brcallout;	/* bridge callout */
 	callout_t		sc_bstpcallout;	/* STP callout */
 	struct bridge_iflist_psref	sc_iflist_psref;
-	LIST_HEAD(, bridge_rtnode) *sc_rthash;	/* our forwarding table */
-	LIST_HEAD(, bridge_rtnode) sc_rtlist;	/* list version of above */
+	struct pslist_head	*sc_rthash;	/* our forwarding table */
+	struct pslist_head	sc_rtlist;	/* list version of above */
 	kmutex_t		*sc_rtlist_lock;
 	pserialize_t		sc_rtlist_psz;
 	struct workqueue	*sc_rtage_wq;
