@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.276 2018/03/29 18:54:48 maxv Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.277 2018/04/18 06:17:43 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.276 2018/03/29 18:54:48 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.277 2018/04/18 06:17:43 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1423,11 +1423,6 @@ tcp6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 	}
 
 	if (ip6) {
-		/*
-		 * XXX: We assume that when ip6 is non NULL,
-		 * M and OFF are valid.
-		 */
-
 		/* check if we can safely examine src and dst ports */
 		if (m->m_pkthdr.len < off + sizeof(th)) {
 			if (cmd == PRC_MSGSIZE)
