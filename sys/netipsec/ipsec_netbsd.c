@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_netbsd.c,v 1.50 2018/04/18 06:17:44 maxv Exp $	*/
+/*	$NetBSD: ipsec_netbsd.c,v 1.51 2018/04/18 06:22:47 maxv Exp $	*/
 /*	$KAME: esp_input.c,v 1.60 2001/09/04 08:43:19 itojun Exp $	*/
 /*	$KAME: ah_input.c,v 1.64 2001/09/04 08:43:19 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.50 2018/04/18 06:17:44 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.51 2018/04/18 06:22:47 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -223,7 +223,7 @@ ah6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 			 * Check to see if we have a valid SA corresponding
 			 * to the address in the ICMP message payload.
 			 */
-			sav = KEY_LOOKUP_SA((const union sockaddr_union*)sa,
+			sav = KEY_LOOKUP_SA((const union sockaddr_union *)sa,
 			    IPPROTO_AH, ahp->ah_spi, 0, 0);
 
 			if (sav) {
@@ -298,12 +298,6 @@ esp6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 		ip6cp1.ip6c_src = ip6cp->ip6c_src;
 		pfctlinput2(cmd, sa, &ip6cp1);
 
-		/*
-		 * Then go to special cases that need ESP header information.
-		 * XXX: We assume that when ip6 is non NULL,
-		 * M and OFF are valid.
-		 */
-
 		/* check if we can safely examine src and dst ports */
 		if (m->m_pkthdr.len < off + sizeof(esp))
 			return NULL;
@@ -316,7 +310,7 @@ esp6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 			m_copydata(m, off, sizeof(esp), &esp);
 			espp = &esp;
 		} else
-			espp = (struct newesp*)(mtod(m, char *) + off);
+			espp = (struct newesp *)(mtod(m, char *) + off);
 
 		if (cmd == PRC_MSGSIZE) {
 			int valid = 0;
@@ -326,7 +320,7 @@ esp6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 			 * the address in the ICMP message payload.
 			 */
 
-			sav = KEY_LOOKUP_SA((const union sockaddr_union*)sa,
+			sav = KEY_LOOKUP_SA((const union sockaddr_union *)sa,
 			    IPPROTO_ESP, espp->esp_spi, 0, 0);
 
 			if (sav) {
@@ -360,11 +354,11 @@ sysctl_ipsec(SYSCTLFN_ARGS)
 	struct sysctlnode node;
 
 	node = *rnode;
-	t = *(int*)rnode->sysctl_data;
+	t = *(int *)rnode->sysctl_data;
 	node.sysctl_data = &t;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if (error || newp == NULL)
-		return (error);
+		return error;
 
 	switch (rnode->sysctl_num) {
 	case IPSECCTL_DEF_ESP_TRANSLEV:
@@ -373,22 +367,22 @@ sysctl_ipsec(SYSCTLFN_ARGS)
 	case IPSECCTL_DEF_AH_NETLEV:
 		if (t != IPSEC_LEVEL_USE &&
 		    t != IPSEC_LEVEL_REQUIRE)
-			return (EINVAL);
+			return EINVAL;
 		ipsec_invalpcbcacheall();
 		break;
 	case IPSECCTL_DEF_POLICY:
 		if (t != IPSEC_POLICY_DISCARD &&
 		    t != IPSEC_POLICY_NONE)
-			return (EINVAL);
+			return EINVAL;
 		ipsec_invalpcbcacheall();
 		break;
 	default:
-		return (EINVAL);
+		return EINVAL;
 	}
 
-	*(int*)rnode->sysctl_data = t;
+	*(int *)rnode->sysctl_data = t;
 
-	return (0);
+	return 0;
 }
 
 #ifdef IPSEC_DEBUG
@@ -399,11 +393,11 @@ sysctl_ipsec_test(SYSCTLFN_ARGS)
 	struct sysctlnode node;
 
 	node = *rnode;
-	t = *(int*)rnode->sysctl_data;
+	t = *(int *)rnode->sysctl_data;
 	node.sysctl_data = &t;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if (error || newp == NULL)
-		return (error);
+		return error;
 
 	if (t < 0 || t > 1)
 		return EINVAL;
@@ -415,7 +409,7 @@ sysctl_ipsec_test(SYSCTLFN_ARGS)
 		 printf("ipsec: HMAC corruption %s\n",
 		     (t == 0) ? "deactivated" : "activated");
 
-	*(int*)rnode->sysctl_data = t;
+	*(int *)rnode->sysctl_data = t;
 
 	return 0;
 }
