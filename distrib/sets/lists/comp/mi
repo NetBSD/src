@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2187 2018/04/10 16:12:29 maxv Exp $
+#	$NetBSD: mi,v 1.2188 2018/04/18 08:58:41 mlelstv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -3002,7 +3002,7 @@
 ./usr/include/sys/pcu.h				comp-c-include
 ./usr/include/sys/pipe.h			comp-c-include
 ./usr/include/sys/pmc.h				comp-c-include
-./usr/include/sys/pmf.h				comp-obsolete		obsolete
+./usr/include/sys/pmf.h				comp-c-include
 ./usr/include/sys/poll.h			comp-c-include
 ./usr/include/sys/pool.h			comp-c-include
 ./usr/include/sys/power.h			comp-c-include
