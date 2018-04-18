@@ -146,6 +146,9 @@ static int rsa_builtin_keygen(RSA *rsa, int bits, BIGNUM *e_value,
         goto err;
 
     /* generate p and q */
+    BN_set_flags(rsa->p, BN_FLG_CONSTTIME);
+    BN_set_flags(rsa->q, BN_FLG_CONSTTIME);
+    BN_set_flags(r2, BN_FLG_CONSTTIME);
     for (;;) {
         if (!BN_generate_prime_ex(rsa->p, bitsp, 0, NULL, NULL, cb))
             goto err;
