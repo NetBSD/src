@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.152 2018/04/18 04:01:58 ozaki-r Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.153 2018/04/18 06:04:03 ozaki-r Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.152 2018/04/18 04:01:58 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.153 2018/04/18 06:04:03 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bridge_ipf.h"
@@ -186,7 +186,7 @@ __CTASSERT(offsetof(struct ifbifconf, ifbic_buf) == offsetof(struct ifbaconf, if
 #define BRIDGE_RT_LOCKED(_sc)	mutex_owned((_sc)->sc_rtlist_lock)
 
 #define BRIDGE_RT_PSZ_PERFORM(_sc) \
-				pserialize_perform((_sc)->sc_rtlist_psz);
+				pserialize_perform((_sc)->sc_rtlist_psz)
 
 #define BRIDGE_RT_RENTER(__s)	do { __s = pserialize_read_enter(); } while (0)
 #define BRIDGE_RT_REXIT(__s)	do { pserialize_read_exit(__s); } while (0)
