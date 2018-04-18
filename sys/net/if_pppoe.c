@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.125.6.6 2018/03/08 13:22:25 martin Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.125.6.7 2018/04/18 14:16:57 martin Exp $ */
 
 /*-
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.125.6.6 2018/03/08 13:22:25 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.125.6.7 2018/04/18 14:16:57 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pppoe.h"
@@ -63,6 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.125.6.6 2018/03/08 13:22:25 martin Ex
 #include <net/if_sppp.h>
 #include <net/if_spppvar.h>
 #include <net/if_pppoe.h>
+#include <net/if_dl.h>
 
 #include <net/bpf.h>
 
@@ -236,6 +237,7 @@ static int	pppoe_clone_create(struct if_clone *, int);
 static int	pppoe_clone_destroy(struct ifnet *);
 
 static bool	pppoe_term_unknown = false;
+static int	pppoe_term_unknown_pps = 1;
 
 static struct sysctllog	*pppoe_sysctl_clog;
 static void sysctl_net_pppoe_setup(struct sysctllog **);
@@ -951,6 +953,16 @@ pppoe_disc_input(struct mbuf *m)
 		m_freem(m);
 }
 
+static bool
+pppoe_is_my_frame(uint8_t *dhost, struct ifnet *rcvif)
+{
+
+	if (memcmp(CLLADDR(rcvif->if_sadl), dhost, ETHER_ADDR_LEN) == 0)
+		return true;
+
+	return false;
+}
+
 static void
 pppoe_data_input(struct mbuf *m)
 {
@@ -960,12 +972,17 @@ pppoe_data_input(struct mbuf *m)
 	struct ifnet *rcvif;
 	struct psref psref;
 	uint8_t shost[ETHER_ADDR_LEN];
+	uint8_t dhost[ETHER_ADDR_LEN];
+	bool term_unknown = pppoe_term_unknown;
 
 	KASSERT(m->m_flags & M_PKTHDR);
 
-	if (pppoe_term_unknown)
+	if (term_unknown) {
 		memcpy(shost, mtod(m, struct ether_header*)->ether_shost,
 		    ETHER_ADDR_LEN);
+		memcpy(dhost, mtod(m, struct ether_header*)->ether_dhost,
+		    ETHER_ADDR_LEN);
+	}
 	m_adj(m, sizeof(struct ether_header));
 	if (m->m_pkthdr.len <= PPPOE_HEADERLEN) {
 		printf("pppoe (data): dropping too short packet: %d bytes\n",
@@ -996,10 +1013,21 @@ pppoe_data_input(struct mbuf *m)
 		goto drop;
 	sc = pppoe_find_softc_by_session(session, rcvif, RW_READER);
 	if (sc == NULL) {
-		if (pppoe_term_unknown) {
-			printf("pppoe: input for unknown session %#x, "
-			    "sending PADT\n", session);
-			pppoe_send_padt(rcvif, session, shost);
+		if (term_unknown) {
+			static struct timeval lasttime = {0, 0};
+			static int curpps = 0;
+			/*
+			 * avoid to send wrong PADT which is response from
+			 * session stage pakcets for other hosts when parent
+			 * ethernet is promiscuous mode.
+			 */
+			if (pppoe_is_my_frame(dhost, rcvif)
+			    && ppsratecheck(&lasttime, &curpps,
+				pppoe_term_unknown_pps)) {
+				printf("pppoe: input for unknown session %#x, "
+				    "sending PADT\n", session);
+				pppoe_send_padt(rcvif, session, shost);
+			}
 		}
 		m_put_rcvif_psref(rcvif, &psref);
 		goto drop;
@@ -1941,7 +1969,7 @@ sysctl_net_pppoe_setup(struct sysctllog **clog)
 		return;
 
 	sysctl_createv(clog, 0, &node, NULL,
-	    CTLFLAG_PERMANENT | CTLFLAG_READONLY,
+	    CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
 	    CTLTYPE_BOOL, "term_unknown",
 	    SYSCTL_DESCR("Terminate unknown sessions"),
 	    NULL, 0, &pppoe_term_unknown, sizeof(pppoe_term_unknown),
