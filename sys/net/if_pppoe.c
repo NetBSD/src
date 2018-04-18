@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.134 2018/02/12 15:38:14 maxv Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.135 2018/04/18 07:36:26 knakahara Exp $ */
 
 /*-
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.134 2018/02/12 15:38:14 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.135 2018/04/18 07:36:26 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pppoe.h"
@@ -960,10 +960,11 @@ pppoe_data_input(struct mbuf *m)
 	struct ifnet *rcvif;
 	struct psref psref;
 	uint8_t shost[ETHER_ADDR_LEN];
+	bool term_unknown = pppoe_term_unknown;
 
 	KASSERT(m->m_flags & M_PKTHDR);
 
-	if (pppoe_term_unknown)
+	if (term_unknown)
 		memcpy(shost, mtod(m, struct ether_header*)->ether_shost,
 		    ETHER_ADDR_LEN);
 	m_adj(m, sizeof(struct ether_header));
@@ -996,7 +997,7 @@ pppoe_data_input(struct mbuf *m)
 		goto drop;
 	sc = pppoe_find_softc_by_session(session, rcvif, RW_READER);
 	if (sc == NULL) {
-		if (pppoe_term_unknown) {
+		if (term_unknown) {
 			printf("pppoe: input for unknown session %#x, "
 			    "sending PADT\n", session);
 			pppoe_send_padt(rcvif, session, shost);
@@ -1941,7 +1942,7 @@ sysctl_net_pppoe_setup(struct sysctllog **clog)
 		return;
 
 	sysctl_createv(clog, 0, &node, NULL,
-	    CTLFLAG_PERMANENT | CTLFLAG_READONLY,
+	    CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
 	    CTLTYPE_BOOL, "term_unknown",
 	    SYSCTL_DESCR("Terminate unknown sessions"),
 	    NULL, 0, &pppoe_term_unknown, sizeof(pppoe_term_unknown),
