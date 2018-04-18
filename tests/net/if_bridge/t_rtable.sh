@@ -1,4 +1,4 @@
-#	$NetBSD: t_rtable.sh,v 1.2 2018/04/10 07:09:00 ozaki-r Exp $
+#	$NetBSD: t_rtable.sh,v 1.3 2018/04/18 04:03:12 ozaki-r Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -169,6 +169,7 @@ bridge_rtable_flush_head()
 bridge_rtable_flush_body()
 {
 	local addr1= addr3=
+	local n=
 
 	setup
 	setup_bridge
@@ -193,6 +194,34 @@ bridge_rtable_flush_body()
 	atf_check -s exit:0 -o ignore /sbin/brconfig bridge0 flush
 	atf_check -s exit:0 -o not-match:"$addr1 shmif0" /sbin/brconfig bridge0
 	atf_check -s exit:0 -o not-match:"$addr3 shmif1" /sbin/brconfig bridge0
+	unset LD_PRELOAD
+
+	# Add extra interfaces and addresses
+	export RUMP_SERVER=$SOCK1
+	rump_server_add_iface $SOCK1 shmif1 bus1
+	atf_check -s exit:0 rump.ifconfig shmif1 10.0.0.11/24
+	atf_check -s exit:0 rump.ifconfig -w 10
+
+	export RUMP_SERVER=$SOCK3
+	rump_server_add_iface $SOCK3 shmif1 bus2
+	atf_check -s exit:0 rump.ifconfig shmif1 10.0.0.12/24
+	atf_check -s exit:0 rump.ifconfig -w 10
+
+	# Let cache entries
+	export RUMP_SERVER=$SOCK1
+	atf_check -s exit:0 -o ignore rump.ping -n -w $TIMEOUT -c 1 10.0.0.12
+	export RUMP_SERVER=$SOCK3
+	atf_check -s exit:0 -o ignore rump.ping -n -w $TIMEOUT -c 1 10.0.0.11
+
+	export RUMP_SERVER=$SOCK2
+	export LD_PRELOAD=/usr/lib/librumphijack.so
+	$DEBUG && /sbin/brconfig bridge0
+	n=$(get_number_of_caches)
+	atf_check_equal $n 4
+
+	atf_check -s exit:0 -o ignore /sbin/brconfig bridge0 flush
+	n=$(get_number_of_caches)
+	atf_check_equal $n 0
 	unset LD_PRELOAD
 
 	rump_server_destroy_ifaces
