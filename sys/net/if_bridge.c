@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.149 2018/04/10 07:05:39 ozaki-r Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.150 2018/04/18 03:47:28 ozaki-r Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.149 2018/04/10 07:05:39 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.150 2018/04/18 03:47:28 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bridge_ipf.h"
@@ -181,16 +181,12 @@ __CTASSERT(offsetof(struct ifbifconf, ifbic_buf) == offsetof(struct ifbaconf, if
 #define	BRIDGE_RTABLE_PRUNE_PERIOD	(5 * 60)
 #endif
 
-#define BRIDGE_RT_LOCK(_sc)	if ((_sc)->sc_rtlist_lock) \
-					mutex_enter((_sc)->sc_rtlist_lock)
-#define BRIDGE_RT_UNLOCK(_sc)	if ((_sc)->sc_rtlist_lock) \
-					mutex_exit((_sc)->sc_rtlist_lock)
-#define BRIDGE_RT_LOCKED(_sc)	(!(_sc)->sc_rtlist_lock || \
-				 mutex_owned((_sc)->sc_rtlist_lock))
+#define BRIDGE_RT_LOCK(_sc)	mutex_enter((_sc)->sc_rtlist_lock)
+#define BRIDGE_RT_UNLOCK(_sc)	mutex_exit((_sc)->sc_rtlist_lock)
+#define BRIDGE_RT_LOCKED(_sc)	mutex_owned((_sc)->sc_rtlist_lock)
 
 #define BRIDGE_RT_PSZ_PERFORM(_sc) \
-				if ((_sc)->sc_rtlist_psz != NULL) \
-					pserialize_perform((_sc)->sc_rtlist_psz);
+				pserialize_perform((_sc)->sc_rtlist_psz);
 
 #define BRIDGE_RT_RENTER(__s)	do { __s = pserialize_read_enter(); } while (0)
 #define BRIDGE_RT_REXIT(__s)	do { pserialize_read_exit(__s); } while (0)
@@ -2353,10 +2349,8 @@ bridge_rtable_fini(struct bridge_softc *sc)
 {
 
 	kmem_free(sc->sc_rthash, sizeof(*sc->sc_rthash) * BRIDGE_RTHASH_SIZE);
-	if (sc->sc_rtlist_lock)
-		mutex_obj_free(sc->sc_rtlist_lock);
-	if (sc->sc_rtlist_psz)
-		pserialize_destroy(sc->sc_rtlist_psz);
+	mutex_obj_free(sc->sc_rtlist_lock);
+	pserialize_destroy(sc->sc_rtlist_psz);
 }
 
 /*
