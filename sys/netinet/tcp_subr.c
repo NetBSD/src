@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.277 2018/04/18 06:17:43 maxv Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.278 2018/04/18 07:17:49 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.277 2018/04/18 06:17:43 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.278 2018/04/18 07:17:49 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -147,7 +147,6 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.277 2018/04/18 06:17:43 maxv Exp $");
 
 #ifdef IPSEC
 #include <netipsec/ipsec.h>
-#include <netipsec/xform.h>
 #ifdef INET6
 #include <netipsec/ipsec6.h>
 #endif

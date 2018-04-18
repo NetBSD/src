@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_forward.c,v 1.92 2018/01/29 08:17:18 maxv Exp $	*/
+/*	$NetBSD: ip6_forward.c,v 1.93 2018/04/18 07:17:49 maxv Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.109 2002/09/11 08:10:17 sakane Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.92 2018/01/29 08:17:18 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.93 2018/04/18 07:17:49 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -65,8 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.92 2018/01/29 08:17:18 maxv Exp $"
 #include <netipsec/ipsec.h>
 #include <netipsec/ipsec6.h>
 #include <netipsec/key.h>
-#include <netipsec/xform.h>
-#endif /* IPSEC */
+#endif
 
 #include <net/net_osdep.h>
 
