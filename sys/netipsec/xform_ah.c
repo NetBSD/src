@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ah.c,v 1.89 2018/04/16 17:32:34 maxv Exp $	*/
+/*	$NetBSD: xform_ah.c,v 1.90 2018/04/18 17:58:07 maxv Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ah.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ah.c,v 1.63 2001/06/26 06:18:58 angelos Exp $ */
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.89 2018/04/16 17:32:34 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.90 2018/04/18 17:58:07 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -266,7 +266,7 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 {
 	struct mbuf *m = *m0;
 	unsigned char *ptr;
-	int off, count;
+	int off, count, optlen;
 #ifdef INET
 	struct ip *ip;
 #endif
@@ -274,7 +274,7 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 	struct ip6_ext *ip6e;
 	struct ip6_hdr ip6;
 	struct ip6_rthdr *rh;
-	int alloc, ad, nxt;
+	int alloc, nxt;
 #endif
 
 	switch (proto) {
@@ -308,56 +308,32 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 
 		/* IPv4 option processing */
 		for (off = sizeof(struct ip); off < skip;) {
-			if (ptr[off] == IPOPT_EOL || ptr[off] == IPOPT_NOP ||
-			    off + 1 < skip)
-				;
-			else {
-				DPRINTF(("%s: illegal IPv4 option length for "
-				    "option %d\n", __func__, ptr[off]));
-
+			if (ptr[off] == IPOPT_EOL) {
+				break;
+			} else if (ptr[off] == IPOPT_NOP) {
+				optlen = 1;
+			} else if (off + 1 < skip) {
+				optlen = ptr[off + 1];
+				if (optlen < 2 || off + optlen > skip) {
+					m_freem(m);
+					return EINVAL;
+				}
+			} else {
 				m_freem(m);
 				return EINVAL;
 			}
 
 			switch (ptr[off]) {
-			case IPOPT_EOL:
-				off = skip;  /* End the loop. */
-				break;
-
 			case IPOPT_NOP:
-				off++;
-				break;
-
-			case IPOPT_SECURITY:	/* 0x82 */
+			case IPOPT_SECURITY:
 			case 0x85:	/* Extended security. */
 			case 0x86:	/* Commercial security. */
 			case 0x94:	/* Router alert */
 			case 0x95:	/* RFC1770 */
-				/* Sanity check for option length. */
-				if (ptr[off + 1] < 2) {
-					DPRINTF(("%s: illegal IPv4 option "
-					    "length for option %d\n", __func__,
-					    ptr[off]));
-
-					m_freem(m);
-					return EINVAL;
-				}
-
-				off += ptr[off + 1];
 				break;
 
 			case IPOPT_LSRR:
 			case IPOPT_SSRR:
-				/* Sanity check for option length. */
-				if (ptr[off + 1] < 2) {
-					DPRINTF(("%s: illegal IPv4 option "
-					    "length for option %d\n", __func__,
-					    ptr[off]));
-
-					m_freem(m);
-					return EINVAL;
-				}
-
 				/*
 				 * On output, if we have either of the
 				 * source routing options, we should
@@ -369,32 +345,21 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 				 */
 				if (out)
 					memcpy(&ip->ip_dst,
-					    ptr + off + ptr[off + 1] -
+					    ptr + off + optlen -
 					    sizeof(struct in_addr),
 					    sizeof(struct in_addr));
+				/* FALLTHROUGH */
 
-				/* Fall through */
 			default:
-				/* Sanity check for option length. */
-				if (ptr[off + 1] < 2) {
-					DPRINTF(("%s: illegal IPv4 option "
-					    "length for option %d\n", __func__,
-					    ptr[off]));
-					m_freem(m);
-					return EINVAL;
-				}
-
 				/* Zeroize all other options. */
-				count = ptr[off + 1];
-				memcpy(ptr + off, ipseczeroes, count);
-				off += count;
+				memcpy(ptr + off, ipseczeroes, optlen);
 				break;
 			}
 
+			off += optlen;
+
 			/* Sanity check. */
 			if (off > skip)	{
-				DPRINTF(("%s: malformed IPv4 options header\n",
-					__func__));
 				m_freem(m);
 				return EINVAL;
 			}
@@ -487,17 +452,17 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 					if (count + 1 >= noff) {
 						goto error6;
 					}
-					ad = ptr[count + 1] + 2;
+					optlen = ptr[count + 1] + 2;
 
-					if (count + ad > noff) {
+					if (count + optlen > noff) {
 						goto error6;
 					}
 
 					if (ptr[count] & IP6OPT_MUTABLE) {
-						memset(ptr + count, 0, ad);
+						memset(ptr + count, 0, optlen);
 					}
 
-					count += ad;
+					count += optlen;
 				}
 
 				if (count != noff) {
