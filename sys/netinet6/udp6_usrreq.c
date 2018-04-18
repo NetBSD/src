@@ -1,4 +1,4 @@
-/* $NetBSD: udp6_usrreq.c,v 1.139 2018/04/12 06:49:39 maxv Exp $ */
+/* $NetBSD: udp6_usrreq.c,v 1.140 2018/04/18 06:17:44 maxv Exp $ */
 /* $KAME: udp6_usrreq.c,v 1.86 2001/05/27 17:33:00 itojun Exp $ */
 /* $KAME: udp6_output.c,v 1.43 2001/10/15 09:19:52 itojun Exp $ */
 
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.139 2018/04/12 06:49:39 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.140 2018/04/18 06:17:44 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -230,11 +230,6 @@ udp6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 	}
 
 	if (ip6) {
-		/*
-		 * XXX: We assume that when IPV6 is non NULL,
-		 * M and OFF are valid.
-		 */
-
 		/* check if we can safely examine src and dst ports */
 		if (m->m_pkthdr.len < off + sizeof(*uhp)) {
 			if (cmd == PRC_MSGSIZE)
