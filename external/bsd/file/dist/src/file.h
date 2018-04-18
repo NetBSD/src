@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.18 2018/04/15 19:45:32 christos Exp $	*/
+/*	$NetBSD: file.h,v 1.19 2018/04/18 01:17:42 christos Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -620,9 +620,9 @@ int enable_sandbox_full(void);
 protected const char *file_getprogname(void);
 protected void file_setprogname(const char *);
 protected void file_err(int, const char *, ...)
-    __attribute__((__format__(__printf__, 2, 3)));
+    __attribute__((__format__(__printf__, 2, 3), __noreturn__));
 protected void file_errx(int, const char *, ...)
-    __attribute__((__format__(__printf__, 2, 3)));
+    __attribute__((__format__(__printf__, 2, 3), __noreturn__));
 protected void file_warn(const char *, ...)
     __attribute__((__format__(__printf__, 1, 2)));
 protected void file_warnx(const char *, ...)
