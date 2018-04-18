@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_netbsd.c,v 1.47 2018/02/26 06:17:01 maxv Exp $	*/
+/*	$NetBSD: ipsec_netbsd.c,v 1.48 2018/04/18 06:03:36 maxv Exp $	*/
 /*	$KAME: esp_input.c,v 1.60 2001/09/04 08:43:19 itojun Exp $	*/
 /*	$KAME: ah_input.c,v 1.64 2001/09/04 08:43:19 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.47 2018/02/26 06:17:01 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.48 2018/04/18 06:03:36 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -535,18 +535,6 @@ sysctl_net_inet_ipsec_setup(struct sysctllog **clog)
 		       NULL, 0, NULL, 0,
 		       CTL_NET, PF_INET, IPPROTO_ESP, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "trans_deflev", NULL,
-		       sysctl_ipsec, 0, &ip4_esp_trans_deflev, 0,
-		       CTL_NET, PF_INET, IPPROTO_ESP,
-		       IPSECCTL_DEF_ESP_TRANSLEV, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "net_deflev", NULL,
-		       sysctl_ipsec, 0, &ip4_esp_net_deflev, 0,
-		       CTL_NET, PF_INET, IPPROTO_ESP,
-		       IPSECCTL_DEF_ESP_NETLEV, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
 		       CTLTYPE_STRUCT, "esp_stats", NULL,
 		       sysctl_net_inet_esp_stats, 0, NULL, 0,
@@ -559,30 +547,6 @@ sysctl_net_inet_ipsec_setup(struct sysctllog **clog)
 		       CTLTYPE_NODE, "ah", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_NET, PF_INET, IPPROTO_AH, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "cleartos", NULL,
-		       NULL, 0, &ip4_ah_cleartos, 0,
-		       CTL_NET, PF_INET, IPPROTO_AH,
-		       IPSECCTL_AH_CLEARTOS, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "offsetmask", NULL,
-		       NULL, 0, &ip4_ah_offsetmask, 0,
-		       CTL_NET, PF_INET, IPPROTO_AH,
-		       IPSECCTL_AH_OFFSETMASK, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "trans_deflev", NULL,
-		       sysctl_ipsec, 0, &ip4_ah_trans_deflev, 0,
-		       CTL_NET, PF_INET, IPPROTO_AH,
-		       IPSECCTL_DEF_AH_TRANSLEV, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "net_deflev", NULL,
-		       sysctl_ipsec, 0, &ip4_ah_net_deflev, 0,
-		       CTL_NET, PF_INET, IPPROTO_AH,
-		       IPSECCTL_DEF_AH_NETLEV, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
 		       CTLTYPE_STRUCT, "ah_stats", NULL,
