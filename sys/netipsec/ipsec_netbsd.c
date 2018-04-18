@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_netbsd.c,v 1.51 2018/04/18 06:22:47 maxv Exp $	*/
+/*	$NetBSD: ipsec_netbsd.c,v 1.52 2018/04/18 07:38:02 maxv Exp $	*/
 /*	$KAME: esp_input.c,v 1.60 2001/09/04 08:43:19 itojun Exp $	*/
 /*	$KAME: ah_input.c,v 1.64 2001/09/04 08:43:19 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.51 2018/04/18 06:22:47 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.52 2018/04/18 07:38:02 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -41,7 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.51 2018/04/18 06:22:47 maxv Exp $
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/domain.h>
 #include <sys/protosw.h>
