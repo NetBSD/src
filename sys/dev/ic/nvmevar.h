@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmevar.h,v 1.15 2018/03/16 23:31:19 jdolecek Exp $	*/
+/*	$NetBSD: nvmevar.h,v 1.16 2018/04/18 10:05:59 nonaka Exp $	*/
 /*	$OpenBSD: nvmevar.h,v 1.8 2016/04/14 11:18:32 dlg Exp $ */
 
 /*
@@ -136,6 +136,9 @@ struct nvme_softc {
 	uint32_t		sc_flags;
 #define	NVME_F_ATTACHED	__BIT(0)
 #define	NVME_F_OPEN	__BIT(1)
+
+	uint32_t		sc_quirks;
+#define	NVME_QUIRK_DELAY_B4_CHK_RDY	__BIT(0)
 };
 
 #define	lemtoh16(p)	le16toh(*((uint16_t *)(p)))
