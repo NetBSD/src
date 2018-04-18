@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1281.2.5 2018/04/14 10:34:02 martin Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1281.2.6 2018/04/18 14:21:39 martin Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1289.2.5 2018/04/14 10:32:05 martin Exp
+ *	NetBSD: pcidevs,v 1.1289.2.6 2018/04/18 14:20:25 martin Exp
  */
 
 /*
@@ -652,6 +652,8 @@
 #define	PCI_VENDOR_FRESCO	0x1b73		/* Fresco Logic */
 #define	PCI_VENDOR_QINHENG2	0x1c00		/* Nanjing QinHeng Electronics (PCIe) */
 #define	PCI_VENDOR_SYMPHONY2	0x1c1c		/* Symphony Labs (2nd PCI Vendor ID) */
+#define	PCI_VENDOR_HGST	0x1c58		/* HGST, Inc. */
+#define	PCI_VENDOR_BEIJING_MEMBLAZE	0x1c5f		/* Beijing Memblaze Technology Co. Ltd. */
 #define	PCI_VENDOR_TEKRAM2	0x1de1		/* Tekram Technology (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_SUNIX2	0x1fd4		/* SUNIX Co */
 #define	PCI_VENDOR_HINT	0x3388		/* HiNT */
@@ -1749,6 +1751,9 @@
 #define	PCI_PRODUCT_BBELEC_ISOLATED_4_PORT	0x4214		/* quad-channel Isolated RS-485 PCI UART */
 #define	PCI_PRODUCT_BBELEC_ISOLATED_8_PORT	0x4218		/* octal-channel Isolated RS-485 PCI UART */
 
+/* Beijing Memblaze Technology Co. Ltd. products */
+#define	PCI_PRODUCT_BEIJING_MEMBLAZE_PBLAZE4	0x0540		/* PBlaze4 NVMe SSD */
+
 /* Belkin products */
 #define	PCI_PRODUCT_BELKIN_F5D6001	0x6001		/* F5D6001 */
 #define	PCI_PRODUCT_BELKIN_F5D6020V3	0x6020		/* F5D6020v3 802.11b */
@@ -2637,6 +2642,10 @@
 #define	PCI_PRODUCT_HP_ILO3_SLAVE	0x3306		/* iLO3 Slave */
 #define	PCI_PRODUCT_HP_ILO3_MGMT	0x3307		/* iLO3 Management */
 #define	PCI_PRODUCT_HP_RS780_PPB_GFX	0x9602		/* (AMD) RS780 PCI-PCI Bridge (int gfx) */
+
+/* HGST Inc. products */
+#define	PCI_PRODUCT_HGST_SN100	0x0003		/* Ultrastar SN100 Series NVMe SSD */
+#define	PCI_PRODUCT_HGST_SN200	0x0023		/* Ultrastar SN200 Series NVMe SSD */
 
 /* Hifn products */
 #define	PCI_PRODUCT_HIFN_7751	0x0005		/* 7751 */
@@ -4476,6 +4485,11 @@
 #define	PCI_PRODUCT_INTEL_E5_SAD_1	0x3cf4		/* E5 SAD */
 #define	PCI_PRODUCT_INTEL_E5_BROADCAST	0x3cf5		/* E5 Broadcast */
 #define	PCI_PRODUCT_INTEL_E5_SAD_2	0x3cf6		/* E5 SAD */
+#define	PCI_PRODUCT_INTEL_CORE8G_S_HOST_DRAM_4C	0x3e1f		/* Core 8G (S) Host Bridge, DRAM */
+#define	PCI_PRODUCT_INTEL_CORE8G_S_HOST_DRAM_6C	0x3ec2		/* Core 8G (S) Host Bridge, DRAM */
+#define	PCI_PRODUCT_INTEL_CORE8G_PCIE_X16	0x3e81		/* Core 8G (S) PCIe x16 */
+#define	PCI_PRODUCT_INTEL_CORE8G_PCIE_X8	0x3e85		/* Core 8G (S) PCIe x16 */
+#define	PCI_PRODUCT_INTEL_CORE8G_PCIE_X4	0x3e89		/* Core 8G (S) PCIe x16 */
 #define	PCI_PRODUCT_INTEL_COFLK_IGD_1	0x3e90		/* UHD Graphics 610 */
 #define	PCI_PRODUCT_INTEL_COFLK_IGD_2	0x3e91		/* UHD Graphics 630 */
 #define	PCI_PRODUCT_INTEL_COFLK_IGD_3	0x3e92		/* UHD Graphics 630 */
@@ -5293,6 +5307,7 @@
 #define	PCI_PRODUCT_INTEL_CP_SCS_REGS	0xd157		/* Core Processor System Control and Status Registers */
 #define	PCI_PRODUCT_INTEL_CP_MISC_REGS	0xd158		/* Core Processor Miscellaneous Registers */
 #define	PCI_PRODUCT_INTEL_HANKSVILLE	0xf0fe		/* HANKSVILLE LAN Controller */
+#define	PCI_PRODUCT_INTEL_SSD_760P	0xf1a6		/* SSD 760p */
 
 /* Intergraph products */
 #define	PCI_PRODUCT_INTERGRAPH_4D60T	0x00e3		/* Powerstorm 4D60T */
@@ -6617,6 +6632,8 @@
 #define	PCI_PRODUCT_SAMSUNGELEC3_XP941	0xa800		/* XP941 M.2 SSD */
 #define	PCI_PRODUCT_SAMSUNGELEC3_SM951	0xa801		/* SM951 M.2 SSD */
 #define	PCI_PRODUCT_SAMSUNGELEC3_SM951_NVME	0xa802		/* SM951 M.2 NVMe SSD */
+#define	PCI_PRODUCT_SAMSUNGELEC3_172X	0xa821		/* NVMe SSD Controller 172X */
+#define	PCI_PRODUCT_SAMSUNGELEC3_172XAB	0xa822		/* NVMe SSD Controller 172Xa/172Xb */
 
 /* Samsung Semiconductor products */
 #define	PCI_PRODUCT_SAMSUNGSEMI_KS8920	0x8920		/* KS8920 10/100 Ethernet */
