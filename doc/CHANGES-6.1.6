@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1.6,v 1.1.2.138 2018/04/10 17:45:17 snj Exp $
+# $NetBSD: CHANGES-6.1.6,v 1.1.2.139 2018/04/18 07:19:52 msaitoh Exp $
 
 A complete list of changes from the NetBSD 6.1.5 release to the NetBSD 6.1.6
 release:
@@ -15123,3 +15123,8 @@ usr.sbin/ypserv/ypserv/ypserv_proc.c		1.18 via patch
 	procs to avoid returning stale request data to the client.
 	[christos, ticket #1528]
 
+sys/netipsec/ipsec_mbuf.c			1.23-1.24
+
+	Don't assume M_PKTHDR is set only on the first mbuf of the chain.
+	Fix a pretty bad mistake (IPsec DoS).
+	[maxv, ticket #1545]
