@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.151 2018/04/18 03:49:44 ozaki-r Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.152 2018/04/18 04:01:58 ozaki-r Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.151 2018/04/18 03:49:44 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.152 2018/04/18 04:01:58 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bridge_ipf.h"
@@ -191,6 +191,29 @@ __CTASSERT(offsetof(struct ifbifconf, ifbic_buf) == offsetof(struct ifbaconf, if
 #define BRIDGE_RT_RENTER(__s)	do { __s = pserialize_read_enter(); } while (0)
 #define BRIDGE_RT_REXIT(__s)	do { pserialize_read_exit(__s); } while (0)
 
+#define BRIDGE_RTLIST_READER_FOREACH(_brt, _sc)			\
+	PSLIST_READER_FOREACH((_brt), &((_sc)->sc_rtlist),		\
+	    struct bridge_rtnode, brt_list)
+#define BRIDGE_RTLIST_WRITER_FOREACH(_brt, _sc)			\
+	PSLIST_WRITER_FOREACH((_brt), &((_sc)->sc_rtlist),		\
+	    struct bridge_rtnode, brt_list)
+#define BRIDGE_RTLIST_WRITER_INSERT_HEAD(_sc, _brt)			\
+	PSLIST_WRITER_INSERT_HEAD(&(_sc)->sc_rtlist, brt, brt_list)
+#define BRIDGE_RTLIST_WRITER_REMOVE(_brt)				\
+	PSLIST_WRITER_REMOVE((_brt), brt_list)
+
+#define BRIDGE_RTHASH_READER_FOREACH(_brt, _sc, _hash)			\
+	PSLIST_READER_FOREACH((_brt), &(_sc)->sc_rthash[(_hash)],	\
+	    struct bridge_rtnode, brt_hash)
+#define BRIDGE_RTHASH_WRITER_FOREACH(_brt, _sc, _hash)			\
+	PSLIST_WRITER_FOREACH((_brt), &(_sc)->sc_rthash[(_hash)],	\
+	    struct bridge_rtnode, brt_hash)
+#define BRIDGE_RTHASH_WRITER_INSERT_HEAD(_sc, _hash, _brt)		\
+	PSLIST_WRITER_INSERT_HEAD(&(_sc)->sc_rthash[(_hash)], brt, brt_hash)
+#define BRIDGE_RTHASH_WRITER_INSERT_AFTER(_brt, _new)			\
+	PSLIST_WRITER_INSERT_AFTER((_brt), (_new), brt_hash)
+#define BRIDGE_RTHASH_WRITER_REMOVE(_brt)				\
+	PSLIST_WRITER_REMOVE((_brt), brt_hash)
 
 #ifdef NET_MPSAFE
 #define DECLARE_LOCK_VARIABLE
@@ -1039,7 +1062,7 @@ bridge_ioctl_rts(struct bridge_softc *sc, void *arg)
 	BRIDGE_RT_LOCK(sc);
 
 	len = bac->ifbac_len;
-	LIST_FOREACH(brt, &sc->sc_rtlist, brt_list) {
+	BRIDGE_RTLIST_WRITER_FOREACH(brt, sc) {
 		if (len < sizeof(bareq))
 			goto out;
 		memset(&bareq, 0, sizeof(bareq));
@@ -2105,7 +2128,7 @@ typedef bool (*bridge_iterate_cb_t)
 static void
 bridge_rtlist_iterate_remove(struct bridge_softc *sc, bridge_iterate_cb_t func, void *arg)
 {
-	struct bridge_rtnode *brt, *nbrt;
+	struct bridge_rtnode *brt;
 	struct bridge_rtnode **brt_list;
 	int i, count;
 
@@ -2124,7 +2147,12 @@ retry:
 	}
 
 	i = 0;
-	LIST_FOREACH_SAFE(brt, &sc->sc_rtlist, brt_list, nbrt) {
+	/*
+	 * We don't need to use a _SAFE variant here because we know
+	 * that a removed item keeps its next pointer as-is thanks to
+	 * pslist(9) and isn't freed in the loop.
+	 */
+	BRIDGE_RTLIST_WRITER_FOREACH(brt, sc) {
 		bool need_break = false;
 		if (func(sc, brt, &need_break, arg)) {
 			bridge_rtnode_remove(sc, brt);
@@ -2298,7 +2326,7 @@ bridge_rtdelete(struct bridge_softc *sc, struct ifnet *ifp)
 	/* XXX pserialize_perform for each entry is slow */
 again:
 	BRIDGE_RT_LOCK(sc);
-	LIST_FOREACH(brt, &sc->sc_rtlist, brt_list) {
+	BRIDGE_RTLIST_WRITER_FOREACH(brt, sc) {
 		if (brt->brt_ifp == ifp)
 			break;
 	}
@@ -2329,11 +2357,11 @@ bridge_rtable_init(struct bridge_softc *sc)
 	    KM_SLEEP);
 
 	for (i = 0; i < BRIDGE_RTHASH_SIZE; i++)
-		LIST_INIT(&sc->sc_rthash[i]);
+		PSLIST_INIT(&sc->sc_rthash[i]);
 
 	sc->sc_rthash_key = cprng_fast32();
 
-	LIST_INIT(&sc->sc_rtlist);
+	PSLIST_INIT(&sc->sc_rtlist);
 
 	sc->sc_rtlist_psz = pserialize_create();
 	sc->sc_rtlist_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_SOFTNET);
@@ -2402,7 +2430,7 @@ bridge_rtnode_lookup(struct bridge_softc *sc, const uint8_t *addr)
 	int dir;
 
 	hash = bridge_rthash(sc, addr);
-	LIST_FOREACH(brt, &sc->sc_rthash[hash], brt_hash) {
+	BRIDGE_RTHASH_READER_FOREACH(brt, sc, hash) {
 		dir = memcmp(addr, brt->brt_addr, ETHER_ADDR_LEN);
 		if (dir == 0)
 			return brt;
@@ -2428,7 +2456,7 @@ bridge_rtnode_insert(struct bridge_softc *sc, struct bridge_rtnode *brt)
 	KASSERT(BRIDGE_RT_LOCKED(sc));
 
 	hash = bridge_rthash(sc, brt->brt_addr);
-	LIST_FOREACH(lbrt, &sc->sc_rthash[hash], brt_hash) {
+	BRIDGE_RTHASH_WRITER_FOREACH(lbrt, sc, hash) {
 		int dir = memcmp(brt->brt_addr, lbrt->brt_addr, ETHER_ADDR_LEN);
 		if (dir == 0)
 			return EEXIST;
@@ -2437,11 +2465,11 @@ bridge_rtnode_insert(struct bridge_softc *sc, struct bridge_rtnode *brt)
 		prev = lbrt;
 	}
 	if (prev == NULL)
-		LIST_INSERT_HEAD(&sc->sc_rthash[hash], brt, brt_hash);
+		BRIDGE_RTHASH_WRITER_INSERT_HEAD(sc, hash, brt);
 	else
-		LIST_INSERT_AFTER(prev, brt, brt_hash);
+		BRIDGE_RTHASH_WRITER_INSERT_AFTER(prev, brt);
 
-	LIST_INSERT_HEAD(&sc->sc_rtlist, brt, brt_list);
+	BRIDGE_RTLIST_WRITER_INSERT_HEAD(sc, brt);
 	sc->sc_brtcnt++;
 
 	return 0;
@@ -2458,8 +2486,8 @@ bridge_rtnode_remove(struct bridge_softc *sc, struct bridge_rtnode *brt)
 
 	KASSERT(BRIDGE_RT_LOCKED(sc));
 
-	LIST_REMOVE(brt, brt_hash);
-	LIST_REMOVE(brt, brt_list);
+	BRIDGE_RTHASH_WRITER_REMOVE(brt);
+	BRIDGE_RTLIST_WRITER_REMOVE(brt);
 	sc->sc_brtcnt--;
 }
 
