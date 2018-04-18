@@ -1,4 +1,4 @@
-.\" $NetBSD: nvmectl.8,v 1.4 2017/04/30 15:59:18 wiz Exp $
+.\" $NetBSD: nvmectl.8,v 1.5 2018/04/18 10:17:54 nonaka Exp $
 .\"
 .\" Copyright (c) 2012 Intel Corporation
 .\" All rights reserved.
@@ -54,10 +54,10 @@
 .\".Aq Fl o Ar read|write
 .\".Aq Fl s Ar size_in_bytes
 .\".Aq Fl t Ar time_in_sec
-.\".Aq namespace id
+.\".Aq namespace_id
 .\".Nm
 .\".Ic reset
-.\".Aq controller id
+.\".Aq controller_id
 .Nm
 .Ic logpage
 .Op Fl x
@@ -80,21 +80,7 @@
 .Nm
 .Ic wdc cap-diag
 .Op Fl o path_template
-.Ar device id
-.Nm
-.Ic wdc drive-log
-.Op Fl o path_template
-.Ar device id
-.Nm
-.Ic wdc get-crash-dump
-.Op Fl o path_template
-.Ar device id
-.\" .Nm
-.\" .Ic wdc purge
-.\" .Aq device id
-.\" .Nm
-.\" .Ic wdc purge-monitor
-.\" .Aq device id
+.Ar device_id
 .Sh DESCRIPTION
 NVM Express (NVMe) is a storage protocol standard, for SSDs and other
 high-speed storage devices over PCI Express.
