@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmectl.c,v 1.6 2018/04/17 08:54:35 nonaka Exp $	*/
+/*	$NetBSD: nvmectl.c,v 1.7 2018/04/18 10:11:44 nonaka Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -30,9 +30,9 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: nvmectl.c,v 1.6 2018/04/17 08:54:35 nonaka Exp $");
+__RCSID("$NetBSD: nvmectl.c,v 1.7 2018/04/18 10:11:44 nonaka Exp $");
 #if 0
-__FBSDID("$FreeBSD: head/sbin/nvmecontrol/nvmecontrol.c 326276 2017-11-27 15:37:16Z pfg $");
+__FBSDID("$FreeBSD: head/sbin/nvmecontrol/nvmecontrol.c 329824 2018-02-22 13:32:31Z wma $");
 #endif
 #endif
 
@@ -167,6 +167,9 @@ read_controller_data(int fd, struct nvm_identify_controller *cdata)
 
 	if (nvme_completion_is_error(&pt.cpl))
 		errx(1, "identify request returned error");
+
+	/* Convert data to host endian */
+	nvme_identify_controller_swapbytes(cdata);
 }
 
 void
@@ -186,6 +189,9 @@ read_namespace_data(int fd, int nsid, struct nvm_identify_namespace *nsdata)
 
 	if (nvme_completion_is_error(&pt.cpl))
 		errx(1, "identify request returned error");
+
+	/* Convert data to host endian */
+	nvme_identify_namespace_swapbytes(nsdata);
 }
 
 int
