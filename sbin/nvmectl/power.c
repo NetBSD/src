@@ -1,4 +1,4 @@
-/*	$NetBSD: power.c,v 1.3 2018/03/17 11:07:26 jdolecek Exp $	*/
+/*	$NetBSD: power.c,v 1.4 2018/04/18 10:11:44 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2016 Netflix, Inc
@@ -28,9 +28,9 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: power.c,v 1.3 2018/03/17 11:07:26 jdolecek Exp $");
+__RCSID("$NetBSD: power.c,v 1.4 2018/04/18 10:11:44 nonaka Exp $");
 #if 0
-__FBSDID("$FreeBSD: head/sbin/nvmecontrol/power.c 296672 2016-03-11 17:25:18Z dim $");
+__FBSDID("$FreeBSD: head/sbin/nvmecontrol/power.c 329824 2018-02-22 13:32:31Z wma $");
 #endif
 #endif
 
@@ -104,7 +104,7 @@ power_set(int fd, int power_val, int workload, int perm)
 	p = perm ? (1u << 31) : 0;
 	memset(&pt, 0, sizeof(pt));
 	pt.cmd.opcode = NVM_ADMIN_SET_FEATURES;
-	pt.cmd.cdw10 = NVME_FEAT_POWER_MANAGEMENT | p;
+	pt.cmd.cdw10 = NVM_FEAT_POWER_MANAGEMENT | p;
 	pt.cmd.cdw11 = power_val | (workload << 5);
 
 	if (ioctl(fd, NVME_PASSTHROUGH_CMD, &pt) < 0)
@@ -121,7 +121,7 @@ power_show(int fd)
 
 	memset(&pt, 0, sizeof(pt));
 	pt.cmd.opcode = NVM_ADMIN_GET_FEATURES;
-	pt.cmd.cdw10 = NVME_FEAT_POWER_MANAGEMENT;
+	pt.cmd.cdw10 = NVM_FEAT_POWER_MANAGEMENT;
 
 	if (ioctl(fd, NVME_PASSTHROUGH_CMD, &pt) < 0)
 		err(1, "set feature power mgmt request failed");

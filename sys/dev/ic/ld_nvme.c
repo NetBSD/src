@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_nvme.c,v 1.19 2018/03/16 23:31:19 jdolecek Exp $	*/
+/*	$NetBSD: ld_nvme.c,v 1.20 2018/04/18 10:11:45 nonaka Exp $	*/
 
 /*-
  * Copyright (C) 2016 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_nvme.c,v 1.19 2018/03/16 23:31:19 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_nvme.c,v 1.20 2018/04/18 10:11:45 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,7 +86,6 @@ ld_nvme_attach(device_t parent, device_t self, void *aux)
 	struct nvme_attach_args *naa = aux;
 	struct nvme_namespace *ns;
 	struct nvm_namespace_format *f;
-	uint64_t nsze;
 	int error;
 
 	ld->sc_dv = self;
@@ -104,11 +103,10 @@ ld_nvme_attach(device_t parent, device_t self, void *aux)
 
 	ns = nvme_ns_get(sc->sc_nvme, sc->sc_nsid);
 	KASSERT(ns);
-	nsze = lemtoh64(&ns->ident->nsze);
 	f = &ns->ident->lbaf[NVME_ID_NS_FLBAS(ns->ident->flbas)];
 
 	ld->sc_secsize = 1 << f->lbads;
-	ld->sc_secperunit = nsze;
+	ld->sc_secperunit = ns->ident->nsze;
 	ld->sc_maxxfer = naa->naa_maxphys;
 	ld->sc_maxqueuecnt = naa->naa_qentries;
 	ld->sc_start = ld_nvme_start;

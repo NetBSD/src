@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme.c,v 1.38 2018/04/18 10:05:59 nonaka Exp $	*/
+/*	$NetBSD: nvme.c,v 1.39 2018/04/18 10:11:45 nonaka Exp $	*/
 /*	$OpenBSD: nvme.c,v 1.49 2016/04/18 05:59:50 dlg Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.38 2018/04/18 10:05:59 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.39 2018/04/18 10:11:45 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -624,7 +624,9 @@ nvme_ns_identify(struct nvme_softc *sc, uint16_t nsid)
 
 	identify = kmem_zalloc(sizeof(*identify), KM_SLEEP);
 	*identify = *((volatile struct nvm_identify_namespace *)NVME_DMA_KVA(mem));
-	//memcpy(identify, NVME_DMA_KVA(mem), sizeof(*identify));
+
+	/* Convert data to host endian */
+	nvme_identify_namespace_swapbytes(identify);
 
 	ns = nvme_ns_get(sc, nsid);
 	KASSERT(ns);
@@ -899,7 +901,7 @@ nvme_getcache_fill(struct nvme_queue *q, struct nvme_ccb *ccb, void *slot)
 	struct nvme_sqe *sqe = slot;
 
 	sqe->opcode = NVM_ADMIN_GET_FEATURES;
-	sqe->cdw10 = NVM_FEATURE_VOLATILE_WRITE_CACHE;
+	htolem32(&sqe->cdw10, NVM_FEATURE_VOLATILE_WRITE_CACHE);
 }
 
 static void
@@ -1122,7 +1124,7 @@ nvme_q_submit(struct nvme_softc *sc, struct nvme_queue *q, struct nvme_ccb *ccb,
 	    sizeof(*sqe) * tail, sizeof(*sqe), BUS_DMASYNC_POSTWRITE);
 	memset(sqe, 0, sizeof(*sqe));
 	(*fill)(q, ccb, sqe);
-	sqe->cid = ccb->ccb_id;
+	htolem16(&sqe->cid, ccb->ccb_id);
 	bus_dmamap_sync(sc->sc_dmat, NVME_DMA_MAP(q->q_sq_dmamem),
 	    sizeof(*sqe) * tail, sizeof(*sqe), BUS_DMASYNC_PREWRITE);
 
@@ -1334,25 +1336,28 @@ nvme_identify(struct nvme_softc *sc, u_int mps)
 		goto done;
 
 	identify = NVME_DMA_KVA(mem);
+	sc->sc_identify = *identify;
+	identify = NULL;
 
-	strnvisx(sn, sizeof(sn), (const char *)identify->sn,
-	    sizeof(identify->sn), VIS_TRIM|VIS_SAFE|VIS_OCTAL);
-	strnvisx(mn, sizeof(mn), (const char *)identify->mn,
-	    sizeof(identify->mn), VIS_TRIM|VIS_SAFE|VIS_OCTAL);
-	strnvisx(fr, sizeof(fr), (const char *)identify->fr,
-	    sizeof(identify->fr), VIS_TRIM|VIS_SAFE|VIS_OCTAL);
+	/* Convert data to host endian */
+	nvme_identify_controller_swapbytes(&sc->sc_identify);
+
+	strnvisx(sn, sizeof(sn), (const char *)sc->sc_identify.sn,
+	    sizeof(sc->sc_identify.sn), VIS_TRIM|VIS_SAFE|VIS_OCTAL);
+	strnvisx(mn, sizeof(mn), (const char *)sc->sc_identify.mn,
+	    sizeof(sc->sc_identify.mn), VIS_TRIM|VIS_SAFE|VIS_OCTAL);
+	strnvisx(fr, sizeof(fr), (const char *)sc->sc_identify.fr,
+	    sizeof(sc->sc_identify.fr), VIS_TRIM|VIS_SAFE|VIS_OCTAL);
 	aprint_normal_dev(sc->sc_dev, "%s, firmware %s, serial %s\n", mn, fr,
 	    sn);
 
-	if (identify->mdts > 0) {
-		mdts = (1 << identify->mdts) * (1 << mps);
+	if (sc->sc_identify.mdts > 0) {
+		mdts = (1 << sc->sc_identify.mdts) * (1 << mps);
 		if (mdts < sc->sc_mdts)
 			sc->sc_mdts = mdts;
 	}
 
-	sc->sc_nn = lemtoh32(&identify->nn);
-
-	memcpy(&sc->sc_identify, identify, sizeof(sc->sc_identify));
+	sc->sc_nn = sc->sc_identify.nn;
 
 done:
 	nvme_dmamem_free(sc, mem);

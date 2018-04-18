@@ -1,4 +1,4 @@
-/*	$NetBSD: devlist.c,v 1.4 2018/04/17 08:54:35 nonaka Exp $	*/
+/*	$NetBSD: devlist.c,v 1.5 2018/04/18 10:11:44 nonaka Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -30,9 +30,9 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: devlist.c,v 1.4 2018/04/17 08:54:35 nonaka Exp $");
+__RCSID("$NetBSD: devlist.c,v 1.5 2018/04/18 10:11:44 nonaka Exp $");
 #if 0
-__FBSDID("$FreeBSD: head/sbin/nvmecontrol/devlist.c 326276 2017-11-27 15:37:16Z pfg $");
+__FBSDID("$FreeBSD: head/sbin/nvmecontrol/devlist.c 329824 2018-02-22 13:32:31Z wma $");
 #endif
 #endif
 
