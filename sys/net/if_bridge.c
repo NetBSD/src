@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.150 2018/04/18 03:47:28 ozaki-r Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.151 2018/04/18 03:49:44 ozaki-r Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.150 2018/04/18 03:47:28 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.151 2018/04/18 03:49:44 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bridge_ipf.h"
@@ -2422,40 +2422,25 @@ bridge_rtnode_lookup(struct bridge_softc *sc, const uint8_t *addr)
 static int
 bridge_rtnode_insert(struct bridge_softc *sc, struct bridge_rtnode *brt)
 {
-	struct bridge_rtnode *lbrt;
+	struct bridge_rtnode *lbrt, *prev = NULL;
 	uint32_t hash;
-	int dir;
 
 	KASSERT(BRIDGE_RT_LOCKED(sc));
 
 	hash = bridge_rthash(sc, brt->brt_addr);
-
-	lbrt = LIST_FIRST(&sc->sc_rthash[hash]);
-	if (lbrt == NULL) {
-		LIST_INSERT_HEAD(&sc->sc_rthash[hash], brt, brt_hash);
-		goto out;
-	}
-
-	do {
-		dir = memcmp(brt->brt_addr, lbrt->brt_addr, ETHER_ADDR_LEN);
+	LIST_FOREACH(lbrt, &sc->sc_rthash[hash], brt_hash) {
+		int dir = memcmp(brt->brt_addr, lbrt->brt_addr, ETHER_ADDR_LEN);
 		if (dir == 0)
 			return EEXIST;
-		if (dir > 0) {
-			LIST_INSERT_BEFORE(lbrt, brt, brt_hash);
-			goto out;
-		}
-		if (LIST_NEXT(lbrt, brt_hash) == NULL) {
-			LIST_INSERT_AFTER(lbrt, brt, brt_hash);
-			goto out;
-		}
-		lbrt = LIST_NEXT(lbrt, brt_hash);
-	} while (lbrt != NULL);
+		if (dir > 0)
+			break;
+		prev = lbrt;
+	}
+	if (prev == NULL)
+		LIST_INSERT_HEAD(&sc->sc_rthash[hash], brt, brt_hash);
+	else
+		LIST_INSERT_AFTER(prev, brt, brt_hash);
 
-#ifdef DIAGNOSTIC
-	panic("bridge_rtnode_insert: impossible");
-#endif
-
- out:
 	LIST_INSERT_HEAD(&sc->sc_rtlist, brt, brt_list);
 	sc->sc_brtcnt++;
 
