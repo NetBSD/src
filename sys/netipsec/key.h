@@ -1,4 +1,4 @@
-/*	$NetBSD: key.h,v 1.34 2018/01/10 10:56:31 knakahara Exp $	*/
+/*	$NetBSD: key.h,v 1.35 2018/04/18 07:32:44 maxv Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.h,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: key.h,v 1.21 2001/07/27 03:51:30 itojun Exp $	*/
 
@@ -56,19 +56,19 @@ struct sadb_msghdr {
 
 int key_havesp(u_int dir);
 struct secpolicy *key_lookup_sp_byspidx(const struct secpolicyindex *, u_int,
-	const char*, int);
+    const char *, int);
 struct secpolicy *key_newsp(const char*, int);
 struct secpolicy *key_gettunnel(const struct sockaddr *,
-	const struct sockaddr *, const struct sockaddr *,
-	const struct sockaddr *, const char*, int);
+    const struct sockaddr *, const struct sockaddr *,
+    const struct sockaddr *, const char *, int);
 /* NB: prepend with _ for KAME IPv6 compatbility */
 void key_init_sp(struct secpolicy *);
 void key_free_sp(struct secpolicy *);
 u_int key_sp_refcnt(const struct secpolicy *);
-void key_sp_ref(struct secpolicy *, const char*, int);
-void key_sp_unref(struct secpolicy *, const char*, int);
-void key_sa_ref(struct secasvar *, const char*, int);
-void key_sa_unref(struct secasvar *, const char*, int);
+void key_sp_ref(struct secpolicy *, const char *, int);
+void key_sp_unref(struct secpolicy *, const char *, int);
+void key_sa_ref(struct secasvar *, const char *, int);
+void key_sa_unref(struct secasvar *, const char *, int);
 u_int key_sa_refcnt(const struct secasvar *);
 
 void key_socksplist_add(struct secpolicy *);
@@ -96,41 +96,37 @@ void key_socksplist_add(struct secpolicy *);
 	key_sa_unref(*(psav), __func__, __LINE__)
 
 struct secasvar *key_lookup_sa(const union sockaddr_union *,
-		u_int, u_int32_t, u_int16_t, u_int16_t, const char*, int);
-void key_freesav(struct secasvar **, const char*, int);
+    u_int, u_int32_t, u_int16_t, u_int16_t, const char *, int);
+void key_freesav(struct secasvar **, const char *, int);
 struct secasvar *key_lookup_sa_bysaidx(const struct secasindex *);
 
 #define	KEY_LOOKUP_SA(dst, proto, spi, sport, dport)		\
 	key_lookup_sa(dst, proto, spi, sport, dport,  __func__, __LINE__)
 
-int key_checktunnelsanity (struct secasvar *, u_int, void *, void *);
+int key_checktunnelsanity(struct secasvar *, u_int, void *, void *);
 int key_checkrequest(const struct ipsecrequest *, const struct secasindex *,
     struct secasvar **);
 
-struct secpolicy *key_msg2sp (const struct sadb_x_policy *, size_t, int *);
+struct secpolicy *key_msg2sp(const struct sadb_x_policy *, size_t, int *);
 struct mbuf *key_sp2msg(const struct secpolicy *, int);
-int key_ismyaddr (const struct sockaddr *);
-int key_spdacquire (const struct secpolicy *);
-u_long key_random (void);
-void key_randomfill (void *, size_t);
-void key_freereg (struct socket *);
-int key_parse (struct mbuf *, struct socket *);
-void key_init (void);
-void key_sa_recordxfer (struct secasvar *, struct mbuf *);
-void key_sa_routechange (struct sockaddr *);
+int key_ismyaddr(const struct sockaddr *);
+int key_spdacquire(const struct secpolicy *);
+u_long key_random(void);
+void key_randomfill(void *, size_t);
+void key_freereg(struct socket *);
+int key_parse(struct mbuf *, struct socket *);
+void key_init(void);
+void key_sa_recordxfer(struct secasvar *, struct mbuf *);
+void key_sa_routechange(struct sockaddr *);
 void key_update_used(void);
 int key_get_used(void);
 
-u_int16_t key_portfromsaddr (const union sockaddr_union *);
+u_int16_t key_portfromsaddr(const union sockaddr_union *);
 
 /* for ipsec(4) */
 struct secpolicy *key_kpi_spdadd(struct mbuf *);
 int key_kpi_spddelete2(struct mbuf *);
 u_int16_t key_newreqid(void);
-
-#ifdef MALLOC_DECLARE
-MALLOC_DECLARE(M_SECA);
-#endif /* MALLOC_DECLARE */
 
 #endif /* defined(_KERNEL) */
 #endif /* !_NETIPSEC_KEY_H_ */
