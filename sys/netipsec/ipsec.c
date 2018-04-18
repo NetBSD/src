@@ -1,4 +1,4 @@
-/* $NetBSD: ipsec.c,v 1.155 2018/04/17 17:47:05 maxv Exp $ */
+/* $NetBSD: ipsec.c,v 1.156 2018/04/18 06:57:39 maxv Exp $ */
 /* $FreeBSD: src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $ */
 /* $KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $ */
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.155 2018/04/17 17:47:05 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.156 2018/04/18 06:57:39 maxv Exp $");
 
 /*
  * IPsec controller part.
@@ -1268,9 +1268,6 @@ ipsec_get_policy(void *inp, const void *request, size_t len,
 		IPSECLOG(LOG_DEBUG, "No more memory.\n");
 		return ENOBUFS;
 	}
-
-	/* XXX XXX XXX: What's the point? */
-	(*mp)->m_type = MT_DATA;
 
 	if (KEYDEBUG_ON(KEYDEBUG_IPSEC_DUMP)) {
 		kdebug_mbuf(__func__, *mp);
