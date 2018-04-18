@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme.c,v 1.37 2018/03/17 09:45:44 jdolecek Exp $	*/
+/*	$NetBSD: nvme.c,v 1.38 2018/04/18 10:05:59 nonaka Exp $	*/
 /*	$OpenBSD: nvme.c,v 1.49 2016/04/18 05:59:50 dlg Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.37 2018/03/17 09:45:44 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.38 2018/04/18 10:05:59 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,6 +41,8 @@ __KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.37 2018/03/17 09:45:44 jdolecek Exp $");
 #include <dev/ic/nvmeio.h>
 
 #include "ioconf.h"
+
+#define	B4_CHK_RDY_DELAY_MS	2300	/* workaround controller bug */
 
 int nvme_adminq_size = 32;
 int nvme_ioq_size = 1024;
@@ -220,15 +222,6 @@ static int
 nvme_ready(struct nvme_softc *sc, uint32_t rdy)
 {
 	u_int i = 0;
-	uint32_t cc;
-
-	cc = nvme_read4(sc, NVME_CC);
-	if (((cc & NVME_CC_EN) != 0) != (rdy != 0)) {
-		aprint_error_dev(sc->sc_dev,
-		    "controller enabled status expected %d, found to be %d\n",
-		    (rdy != 0), ((cc & NVME_CC_EN) != 0));
-		return ENXIO;
-	}
 
 	while ((nvme_read4(sc, NVME_CSTS) & NVME_CSTS_RDY) != rdy) {
 		if (i++ > sc->sc_rdy_to)
@@ -245,17 +238,24 @@ static int
 nvme_enable(struct nvme_softc *sc, u_int mps)
 {
 	uint32_t cc, csts;
+	int error;
 
 	cc = nvme_read4(sc, NVME_CC);
 	csts = nvme_read4(sc, NVME_CSTS);
-	
-	if (ISSET(cc, NVME_CC_EN)) {
-		aprint_error_dev(sc->sc_dev, "controller unexpectedly enabled, failed to stay disabled\n");
 
+	/*
+	 * See note in nvme_disable. Short circuit if we're already enabled.
+	 */
+	if (ISSET(cc, NVME_CC_EN)) {
 		if (ISSET(csts, NVME_CSTS_RDY))
-			return 1;
+			return 0;
 
 		goto waitready;
+	} else {
+		/* EN == 0 already wait for RDY == 0 or fail */
+		error = nvme_ready(sc, 0);
+		if (error)
+			return error;
 	}
 
 	nvme_write8(sc, NVME_ASQ, NVME_DMA_DVA(sc->sc_admin_q->q_sq_dmamem));
@@ -282,7 +282,6 @@ nvme_enable(struct nvme_softc *sc, u_int mps)
 	nvme_write4(sc, NVME_CC, cc);
 	nvme_barrier(sc, 0, sc->sc_ios,
 	    BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE);
-	delay(5000);
 
     waitready:
 	return nvme_ready(sc, NVME_CSTS_RDY);
@@ -292,20 +291,44 @@ static int
 nvme_disable(struct nvme_softc *sc)
 {
 	uint32_t cc, csts;
+	int error;
 
 	cc = nvme_read4(sc, NVME_CC);
 	csts = nvme_read4(sc, NVME_CSTS);
 
-	if (ISSET(cc, NVME_CC_EN) && !ISSET(csts, NVME_CSTS_RDY))
-		nvme_ready(sc, NVME_CSTS_RDY);
+	/*
+	 * Per 3.1.5 in NVME 1.3 spec, transitioning CC.EN from 0 to 1
+	 * when CSTS.RDY is 1 or transitioning CC.EN from 1 to 0 when
+	 * CSTS.RDY is 0 "has undefined results" So make sure that CSTS.RDY
+	 * isn't the desired value. Short circuit if we're already disabled.
+	 */
+	if (ISSET(cc, NVME_CC_EN)) {
+		if (!ISSET(csts, NVME_CSTS_RDY)) {
+			/* EN == 1, wait for RDY == 1 or fail */
+			error = nvme_ready(sc, NVME_CSTS_RDY);
+			if (error)
+				return error;
+		}
+	} else {
+		/* EN == 0 already wait for RDY == 0 */
+		if (!ISSET(csts, NVME_CSTS_RDY))
+			return 0;
+
+		goto waitready;
+	}
 
 	CLR(cc, NVME_CC_EN);
-
 	nvme_write4(sc, NVME_CC, cc);
 	nvme_barrier(sc, 0, sc->sc_ios, BUS_SPACE_BARRIER_READ);
-	
-	delay(5000);
 
+	/*
+	 * Some drives have issues with accessing the mmio after we disable,
+	 * so delay for a bit after we write the bit to cope with these issues.
+	 */
+	if (ISSET(sc->sc_quirks, NVME_QUIRK_DELAY_B4_CHK_RDY))
+		delay(B4_CHK_RDY_DELAY_MS);
+
+    waitready:
 	return nvme_ready(sc, 0);
 }
 

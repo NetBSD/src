@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme_pci.c,v 1.19 2017/06/01 02:45:11 chs Exp $	*/
+/*	$NetBSD: nvme_pci.c,v 1.20 2018/04/18 10:05:59 nonaka Exp $	*/
 /*	$OpenBSD: nvme_pci.c,v 1.3 2016/04/14 11:18:32 dlg Exp $ */
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme_pci.c,v 1.19 2017/06/01 02:45:11 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme_pci.c,v 1.20 2018/04/18 10:05:59 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: nvme_pci.c,v 1.19 2017/06/01 02:45:11 chs Exp $");
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
+#include <dev/pci/pcidevs.h>
 
 #include <dev/ic/nvmereg.h>
 #include <dev/ic/nvmevar.h>
@@ -92,6 +93,39 @@ static int	nvme_pci_intr_disestablish(struct nvme_softc *, uint16_t);
 static int	nvme_pci_setup_intr(struct pci_attach_args *,
 		    struct nvme_pci_softc *);
 
+static const struct nvme_pci_quirk {
+	pci_vendor_id_t		vendor;
+	pci_product_id_t	product;
+	uint32_t		quirks;
+} nvme_pci_quirks[] = {
+	{ PCI_VENDOR_HGST, PCI_PRODUCT_HGST_SN100,
+	    NVME_QUIRK_DELAY_B4_CHK_RDY },
+	{ PCI_VENDOR_HGST, PCI_PRODUCT_HGST_SN200,
+	    NVME_QUIRK_DELAY_B4_CHK_RDY },
+	{ PCI_VENDOR_BEIJING_MEMBLAZE, PCI_PRODUCT_BEIJING_MEMBLAZE_PBLAZE4,
+	    NVME_QUIRK_DELAY_B4_CHK_RDY },
+	{ PCI_VENDOR_SAMSUNGELEC3, PCI_PRODUCT_SAMSUNGELEC3_172X,
+	    NVME_QUIRK_DELAY_B4_CHK_RDY },
+	{ PCI_VENDOR_SAMSUNGELEC3, PCI_PRODUCT_SAMSUNGELEC3_172XAB,
+	    NVME_QUIRK_DELAY_B4_CHK_RDY },
+};
+
+static const struct nvme_pci_quirk *
+nvme_pci_lookup_quirk(struct pci_attach_args *pa)
+{
+	const struct nvme_pci_quirk *q;
+	int i;
+
+	for (i = 0; i < __arraycount(nvme_pci_quirks); i++) {
+		q = &nvme_pci_quirks[i];
+
+		if (PCI_VENDOR(pa->pa_id) == q->vendor &&
+		    PCI_PRODUCT(pa->pa_id) == q->product)
+			return q;
+	}
+	return NULL;
+}
+
 static int
 nvme_pci_match(device_t parent, cfdata_t match, void *aux)
 {
@@ -111,6 +145,7 @@ nvme_pci_attach(device_t parent, device_t self, void *aux)
 	struct nvme_pci_softc *psc = device_private(self);
 	struct nvme_softc *sc = &psc->psc_nvme;
 	struct pci_attach_args *pa = aux;
+	const struct nvme_pci_quirk *quirk;
 	pcireg_t memtype, reg;
 	bus_addr_t memaddr;
 	int flags, error;
@@ -179,6 +214,11 @@ nvme_pci_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ih = kmem_zalloc(sizeof(*sc->sc_ih) * psc->psc_nintrs, KM_SLEEP);
 	sc->sc_softih = kmem_zalloc(
 	    sizeof(*sc->sc_softih) * psc->psc_nintrs, KM_SLEEP);
+
+	quirk = nvme_pci_lookup_quirk(pa);
+	if (quirk != NULL)
+		sc->sc_quirks = quirk->quirks;
+
 	if (nvme_attach(sc) != 0) {
 		/* error printed by nvme_attach() */
 		goto softintr_free;
