@@ -1,4 +1,4 @@
-/*	$NetBSD: ubt.c,v 1.60 2018/01/21 13:57:12 skrll Exp $	*/
+/*	$NetBSD: ubt.c,v 1.61 2018/04/18 15:01:03 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.60 2018/01/21 13:57:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.61 2018/04/18 15:01:03 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1528,7 +1528,7 @@ ubt_mbufload(uint8_t *buf, int count, uint8_t type)
 	m->m_pkthdr.len = m->m_len = MHLEN;
 	m_copyback(m, 1, count, buf);	// (extends if necessary)
 	if (m->m_pkthdr.len != MAX(MHLEN, count + 1)) {
-		m_free(m);
+		m_freem(m);
 		return NULL;
 	}
 
