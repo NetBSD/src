@@ -93,3 +93,5 @@ TODO
     and perhaps define something to enable the MI modcmd code to call a
     compat_xx_MD_init() routine.
 
+11. Note that pre-5.0 quotactl (syscall #148) is not currently available.
+    Its entry in syscalls.master is XXXd out.
