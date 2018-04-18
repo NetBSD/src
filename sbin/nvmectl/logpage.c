@@ -1,4 +1,4 @@
-/*	$NetBSD: logpage.c,v 1.6 2018/04/17 08:54:35 nonaka Exp $	*/
+/*	$NetBSD: logpage.c,v 1.7 2018/04/18 10:11:44 nonaka Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -33,9 +33,9 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: logpage.c,v 1.6 2018/04/17 08:54:35 nonaka Exp $");
+__RCSID("$NetBSD: logpage.c,v 1.7 2018/04/18 10:11:44 nonaka Exp $");
 #if 0
-__FBSDID("$FreeBSD: head/sbin/nvmecontrol/logpage.c 326276 2017-11-27 15:37:16Z pfg $");
+__FBSDID("$FreeBSD: head/sbin/nvmecontrol/logpage.c 329824 2018-02-22 13:32:31Z wma $");
 #endif
 #endif
 
@@ -128,11 +128,29 @@ read_logpage(int fd, uint8_t log_page, int nsid, void *payload,
 }
 
 static void
+nvme_error_information_entry_swapbytes(struct nvme_error_information_entry *e)
+{
+#if _BYTE_ORDER != _LITTLE_ENDIAN
+	e->error_count = le64toh(e->error_count);
+	e->sqid = le16toh(e->sqid);
+	e->cid = le16toh(e->cid);
+	e->status = le16toh(e->status);
+	e->error_location = le16toh(e->error_location);
+	e->lba = le64toh(e->lba);
+	e->nsid = le32toh(e->nsid);
+	e->command_specific = le64toh(e->command_specific);
+#endif
+}
+
+static void
 print_log_error(const struct nvm_identify_controller *cdata __unused, void *buf,
     uint32_t size)
 {
 	int					i, nentries;
 	struct nvme_error_information_entry	*entry = buf;
+
+	/* Convert data to host endian */
+	nvme_error_information_entry_swapbytes(entry);
 
 	printf("Error Information Log\n");
 	printf("=====================\n");
@@ -181,11 +199,38 @@ print_temp(uint16_t t)
 }
 
 static void
+nvme_health_information_page_swapbytes(struct nvme_health_information_page *e)
+{
+#if _BYTE_ORDER != _LITTLE_ENDIAN
+	u_int i;
+
+	e->composite_temperature = le16toh(e->composite_temperature);
+	nvme_le128toh(e->data_units_read);
+	nvme_le128toh(e->data_units_written);
+	nvme_le128toh(e->host_read_commands);
+	nvme_le128toh(e->host_write_commands);
+	nvme_le128toh(e->controller_busy_time);
+	nvme_le128toh(e->power_cycles);
+	nvme_le128toh(e->power_on_hours);
+	nvme_le128toh(e->unsafe_shutdowns);
+	nvme_le128toh(e->media_errors);
+	nvme_le128toh(e->num_error_info_log_entries);
+	e->warning_temp_time = le32toh(e->warning_temp_time);
+	e->error_temp_time = le32toh(e->error_temp_time);
+	for (i = 0; i < __arraycount(e->temp_sensor); i++)
+		e->temp_sensor[i] = le16toh(e->temp_sensor[i]);
+#endif
+}
+
+static void
 print_log_health(const struct nvm_identify_controller *cdata __unused, void *buf,
     uint32_t size __unused)
 {
 	struct nvme_health_information_page *health = buf;
-	int i;
+	u_int i;
+
+	/* Convert data to host endian */
+	nvme_health_information_page_swapbytes(health);
 
 	printf("SMART/Health Information Log\n");
 	printf("============================\n");
@@ -232,12 +277,23 @@ print_log_health(const struct nvm_identify_controller *cdata __unused, void *buf
 
 	printf("Warning Temp Composite Time:    %d\n", health->warning_temp_time);
 	printf("Error Temp Composite Time:      %d\n", health->error_temp_time);
-	for (i = 0; i < 7; i++) {
+	for (i = 0; i < __arraycount(health->temp_sensor); i++) {
 		if (health->temp_sensor[i] == 0)
 			continue;
 		printf("Temperature Sensor %d:           ", i + 1);
 		print_temp(health->temp_sensor[i]);
 	}
+}
+
+static void
+nvme_firmware_page_swapbytes(struct nvme_firmware_page *e)
+{
+#if _BYTE_ORDER != _LITTLE_ENDIAN
+	u_int i;
+
+	for (i = 0; i < __arraycount(e->revision); i++)
+		e->revision[i] = le64toh(e->revision[i]);
+#endif
 }
 
 static void
@@ -247,6 +303,9 @@ print_log_firmware(const struct nvm_identify_controller *cdata, void *buf,
 	u_int				i, slots;
 	const char			*status;
 	struct nvme_firmware_page	*fw = buf;
+
+	/* Convert data to host endian */
+	nvme_firmware_page_swapbytes(fw);
 
 	printf("Firmware Slot Log\n");
 	printf("=================\n");
@@ -284,10 +343,28 @@ print_log_firmware(const struct nvm_identify_controller *cdata, void *buf,
  * offset 147: it is only 1 byte, not 6.
  */
 static void
+intel_log_temp_stats_swapbytes(struct intel_log_temp_stats *e)
+{
+#if _BYTE_ORDER != _LITTLE_ENDIAN
+	e->current = le64toh(e->current);
+	e->overtemp_flag_last = le64toh(e->overtemp_flag_last);
+	e->overtemp_flag_life = le64toh(e->overtemp_flag_life);
+	e->max_temp = le64toh(e->max_temp);
+	e->min_temp = le64toh(e->min_temp);
+	e->max_oper_temp = le64toh(e->max_oper_temp);
+	e->min_oper_temp = le64toh(e->min_oper_temp);
+	e->est_offset = le64toh(e->est_offset);
+#endif
+}
+
+static void
 print_intel_temp_stats(const struct nvm_identify_controller *cdata __unused,
     void *buf, uint32_t size __unused)
 {
 	struct intel_log_temp_stats	*temp = buf;
+
+	/* Convert data to host endian */
+	intel_log_temp_stats_swapbytes(temp);
 
 	printf("Intel Temperature Log\n");
 	printf("=====================\n");
