@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmectl.h,v 1.7 2018/04/17 15:31:00 nonaka Exp $	*/
+/*	$NetBSD: nvmectl.h,v 1.8 2018/04/18 10:16:22 nonaka Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -53,14 +53,14 @@ struct nvme_function {
 "devlist\n"
 
 #define IDENTIFY_USAGE							       \
-"identify [-x [-v]] <controller id|namespace id>\n"
+"identify [-x [-v]] <controller_id|namespace_id>\n"
 
 #ifdef ENABLE_PREFTEST
 #define PERFTEST_USAGE							       \
-"perftest <-n num_threads> <-o read|write>\n"		       \
+"perftest <-n num_threads> <-o read|write>\n"				       \
 "                        <-s size_in_bytes> <-t time_in_seconds>\n"	       \
 "                        <-i intr|wait> [-f refthread] [-p]\n"		       \
-"                        <namespace id>\n"
+"                        <namespace_id>\n"
 #endif
 
 #ifdef ENABLE_RESET
@@ -69,16 +69,16 @@ struct nvme_function {
 #endif
 
 #define LOGPAGE_USAGE							       \
-"logpage <-p page_id> [-b] [-v vendor] [-x] "		       \
-    "<controller id|namespace id>\n"
+"logpage <-p page_id> [-b] [-v vendor] [-x] "				       \
+    "<controller_id|namespace_id>\n"
 
 #ifdef ENABLE_FIRMWARE
 #define FIRMWARE_USAGE							       \
-"firmware [-s slot] [-f path_to_firmware] [-a] <controller id>\n"
+"firmware [-s slot] [-f path_to_firmware] [-a] <controller_id>\n"
 #endif
 
 #define POWER_USAGE							       \
-"power [-l] [-p new-state [-w workload-hint]] <controller id>\n"
+"power [-l] [-p new-state [-w workload-hint]] <controller_id>\n"
 
 #define WDC_USAGE							       \
 "wdc cap-diag [-o path-templete]\n"
