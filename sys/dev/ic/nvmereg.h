@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmereg.h,v 1.10 2018/04/17 08:54:35 nonaka Exp $	*/
+/*	$NetBSD: nvmereg.h,v 1.11 2018/04/18 10:10:26 nonaka Exp $	*/
 /*	$OpenBSD: nvmereg.h,v 1.10 2016/04/14 11:18:32 dlg Exp $ */
 
 /*
@@ -318,13 +318,27 @@ NVME_CTASSERT(sizeof(struct nvme_cqe) == 16, "bad size for nvme_cqe");
 /* 0x0e-0x0f - reserved */
 #define NVM_ADMIN_FW_COMMIT	0x10 /* Firmware Commit */
 #define NVM_ADMIN_FW_DOWNLOAD	0x11 /* Firmware Image Download */
+#define NVM_ADMIN_DEV_SELFTEST	0x14 /* Device Self Test */
 #define NVM_ADMIN_NS_ATTACHMENT	0x15 /* Namespace Attachment */
+#define NVM_ADMIN_KEEP_ALIVE	0x18 /* Keep Alive */
+#define NVM_ADMIN_DIRECTIVE_SND	0x19 /* Derective Send */
+#define NVM_ADMIN_DIRECTIVE_RCV	0x1a /* Derective Receive */
+#define NVM_ADMIN_VIRT_MGMT	0x1c /* Virtualization Management */
+#define NVM_ADMIN_NVME_MI_SEND	0x1d /* NVMe-MI Send */
+#define NVM_ADMIN_NVME_MI_RECV	0x1e /* NVMe-MI Receive */
+#define NVM_ADMIN_DOORBELL_BC	0x7c /* Doorbell Buffer Config */
+#define NVM_ADMIN_FORMAT_NVM	0x80 /* Format NVM */
+#define NVM_ADMIN_SECURITY_SND	0x81 /* Security Send */
+#define NVM_ADMIN_SECURITY_RCV	0x82 /* Security Receive */
+#define NVM_ADMIN_SANITIZE	0x84 /* Sanitize */
 
 #define NVM_CMD_FLUSH		0x00 /* Flush */
 #define NVM_CMD_WRITE		0x01 /* Write */
 #define NVM_CMD_READ		0x02 /* Read */
 #define NVM_CMD_WR_UNCOR	0x04 /* Write Uncorrectable */
 #define NVM_CMD_COMPARE		0x05 /* Compare */
+/* 0x06-0x07 - reserved */
+#define NVM_CMD_WRITE_ZEROES	0x08 /* Write Zeroes */
 #define NVM_CMD_DSM		0x09 /* Dataset Management */
 
 /* Features for GET/SET FEATURES */
@@ -349,7 +363,10 @@ NVME_CTASSERT(sizeof(struct nvme_cqe) == 16, "bad size for nvme_cqe");
 /* 0x12-0x77 - reserved */
 /* 0x78-0x7f - NVMe Management Interface */
 #define NVM_FEAT_SOFTWARE_PROGRESS_MARKER	0x80
-/* 0x81-0xBF - command set specific (reserved) */
+#define NVM_FEAT_HOST_IDENTIFIER		0x81
+#define NVM_FEAT_RESERVATION_NOTIFICATION_MASK	0x82
+#define NVM_FEAT_RESERVATION_PERSISTANCE	0x83
+/* 0x84-0xBF - command set specific (reserved) */
 /* 0xC0-0xFF - vendor specific */
 
 /* Power State Descriptor Data */
@@ -421,6 +438,11 @@ struct nvm_identify_controller {
 	/* Admin Command Set Attributes & Optional Controller Capabilities */
 
 	uint16_t	oacs;		/* Optional Admin Command Support */
+#define	NVME_ID_CTRLR_OACS_DOORBELL_BC	__BIT(8)
+#define	NVME_ID_CTRLR_OACS_VIRT_MGMT	__BIT(7)
+#define	NVME_ID_CTRLR_OACS_NVME_MI	__BIT(6)
+#define	NVME_ID_CTRLR_OACS_DIRECTIVES	__BIT(5)
+#define	NVME_ID_CTRLR_OACS_DEV_SELFTEST	__BIT(4)
 #define	NVME_ID_CTRLR_OACS_NS		__BIT(3)
 #define	NVME_ID_CTRLR_OACS_FW		__BIT(2)
 #define	NVME_ID_CTRLR_OACS_FORMAT	__BIT(1)
@@ -501,11 +523,14 @@ struct nvm_identify_controller {
 	uint16_t	fuses;		/* Fused Operation Support */
 
 	uint8_t		fna;		/* Format NVM Attributes */
+#define	NVME_ID_CTRLR_FNA_CRYPTO_ERASE	__BIT(2)
+#define	NVME_ID_CTRLR_FNA_ERASE_ALL	__BIT(1)
+#define	NVME_ID_CTRLR_FNA_FORMAT_ALL	__BIT(0)
 	uint8_t		vwc;		/* Volatile Write Cache */
 #define	NVME_ID_CTRLR_VWC_PRESENT	__BIT(0)
 	uint16_t	awun;		/* Atomic Write Unit Normal */
-
 	uint16_t	awupf;		/* Atomic Write Unit Power Fail */
+
 	uint8_t		nvscc;		/* NVM Vendor Specific Command */
 	uint8_t		_reserved4[1];
 
@@ -514,19 +539,17 @@ struct nvm_identify_controller {
 
 	uint32_t	sgls;		/* SGL Support */
 
-	uint8_t		_reserved6[164];
+	uint8_t		_reserved6[228];
 
-	/* I/O Command Set Attributes */
+	uint8_t		subnqn[256];	/* NVM Subsystem NVMe Qualified Name */
 
-	uint8_t		_reserved7[1344];
+	uint8_t		_reserved7[768];
 
-	/* Power State Descriptors */
+	uint8_t		_reserved8[256]; /* NVMe over Fabrics specification */
 
 	struct nvm_identify_psd psd[32]; /* Power State Descriptors */
 
-	/* Vendor Specific */
-
-	uint8_t		_reserved8[1024];
+	uint8_t		vs[1024];	/* Vendor Specific */
 } __packed __aligned(8);
 NVME_CTASSERT(sizeof(struct nvm_identify_controller) == 4096, "bad size for nvm_identify_controller");
 
@@ -555,9 +578,35 @@ struct nvm_identify_namespace {
 	uint8_t		mc;		/* Metadata Capabilities */
 	uint8_t		dpc;		/* End-to-end Data Protection
 					   Capabilities */
-	uint8_t		dps;		/* End-to-end Data Protection Type Settings */
+	uint8_t		dps;		/* End-to-end Data Protection Type
+					   Settings */
+#define	NVME_ID_NS_DPS_MD_START			__BIT(3)
+#define	NVME_ID_NS_DPS_PIT(_f)			((_f) & 0x7)
 
-	uint8_t		_reserved1[98];
+	uint8_t		nmic;		/* Namespace Multi-path I/O and Namespace
+					   Sharing Capabilities */
+
+	uint8_t		rescap;		/* Reservation Capabilities */
+
+	uint8_t		fpi;		/* Format Progress Indicator */
+
+	uint8_t		dlfeat;		/* Deallocate Logical Block Features */
+
+	uint16_t	nawun;		/* Namespace Atomic Write Unit Normal  */
+	uint16_t	nawupf;		/* Namespace Atomic Write Unit Power Fail */
+	uint16_t	nacwu;		/* Namespace Atomic Compare & Write Unit */
+	uint16_t	nabsn;		/* Namespace Atomic Boundary Size Normal */
+	uint16_t	nabo;		/* Namespace Atomic Boundary Offset */
+	uint16_t	nabspf;		/* Namespace Atomic Boundary Size Power
+					   Fail */
+	uint16_t	noiob;		/* Namespace Optimal IO Boundary */
+
+	uint8_t		nvmcap[16];	/* NVM Capacity */
+
+	uint8_t		_reserved1[40];	/* bytes 64-103: Reserved */
+
+	uint8_t		nguid[16];	/* Namespace Globally Unique Identifier */
+	uint8_t		eui64[8];	/* IEEE Extended Unique Identifier */
 
 	struct nvm_namespace_format
 			lbaf[16];	/* LBA Format Support */
