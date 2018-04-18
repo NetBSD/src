@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_netbsd.c,v 1.49 2018/04/18 06:13:23 maxv Exp $	*/
+/*	$NetBSD: ipsec_netbsd.c,v 1.50 2018/04/18 06:17:44 maxv Exp $	*/
 /*	$KAME: esp_input.c,v 1.60 2001/09/04 08:43:19 itojun Exp $	*/
 /*	$KAME: ah_input.c,v 1.64 2001/09/04 08:43:19 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.49 2018/04/18 06:13:23 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.50 2018/04/18 06:17:44 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -202,11 +202,6 @@ ah6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 	}
 
 	if (ip6) {
-		/*
-		 * XXX: We assume that when ip6 is non NULL,
-		 * M and OFF are valid.
-		 */
-
 		/* check if we can safely examine src and dst ports */
 		if (m->m_pkthdr.len < off + sizeof(ah))
 			return NULL;
