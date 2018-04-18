@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_netbsd.c,v 1.48 2018/04/18 06:03:36 maxv Exp $	*/
+/*	$NetBSD: ipsec_netbsd.c,v 1.49 2018/04/18 06:13:23 maxv Exp $	*/
 /*	$KAME: esp_input.c,v 1.60 2001/09/04 08:43:19 itojun Exp $	*/
 /*	$KAME: ah_input.c,v 1.64 2001/09/04 08:43:19 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.48 2018/04/18 06:03:36 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.49 2018/04/18 06:13:23 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -789,23 +789,5 @@ sysctl_net_inet6_ipsec6_setup(struct sysctllog **clog)
 		       NULL, 0, &ipsec_used, 0,
 		       CTL_NET, PF_INET6, IPPROTO_AH,
 		       CTL_CREATE, CTL_EOL);
-	/*
-	 * "aliases" for the ipsec6 subtree
-	 */
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_ALIAS,
-		       CTLTYPE_NODE, "esp6", NULL,
-		       NULL, IPPROTO_AH, NULL, 0,
-		       CTL_NET, PF_INET6, IPPROTO_ESP, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_ALIAS,
-		       CTLTYPE_NODE, "ipcomp6", NULL,
-		       NULL, IPPROTO_AH, NULL, 0,
-		       CTL_NET, PF_INET6, IPPROTO_IPCOMP, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_ALIAS,
-		       CTLTYPE_NODE, "ah6", NULL,
-		       NULL, IPPROTO_AH, NULL, 0,
-		       CTL_NET, PF_INET6, CTL_CREATE, CTL_EOL);
 }
 #endif /* INET6 */
