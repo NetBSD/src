@@ -1,4 +1,4 @@
-/*	$NetBSD: sbt.c,v 1.5 2016/07/14 04:00:46 msaitoh Exp $	*/
+/*	$NetBSD: sbt.c,v 1.6 2018/04/18 14:56:35 maxv Exp $	*/
 /*	$OpenBSD: sbt.c,v 1.9 2007/06/19 07:59:57 uwe Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Driver for Type-A/B SDIO Bluetooth cards */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbt.c,v 1.5 2016/07/14 04:00:46 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbt.c,v 1.6 2018/04/18 14:56:35 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -357,7 +357,7 @@ sbt_intr(void *arg)
 		m->m_len = MIN(MHLEN, m->m_pkthdr.len);
 	} else {
 		DPRINTF(("%s: sbt_intr: m_copyback failed\n", DEVNAME(sc)));
-		m_free(m);
+		m_freem(m);
 		m = NULL;
 	}
 
@@ -383,7 +383,7 @@ eoi:
 			DPRINTF(("%s: recv 0x%x packet (%d bytes)\n",
 			    DEVNAME(sc), sc->sc_buf[0], m->m_pkthdr.len));
 			sc->sc_stats.err_rx++;
-			m_free(m);
+			m_freem(m);
 			break;
 		}
 	} else
