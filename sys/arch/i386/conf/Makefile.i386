@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.i386,v 1.190 2018/04/07 19:38:06 mrg Exp $
+#	$NetBSD: Makefile.i386,v 1.191 2018/04/18 10:40:22 martin Exp $
 
 # Makefile for NetBSD
 #
@@ -39,7 +39,7 @@ CFLAGS+=	-msoft-float
 ## no-sse implies no-sse2 but not no-avx
 CFLAGS+=	-mno-mmx -mno-sse -mno-avx
 
-.if !empty(SPECTRE_V2_GCC_MITIGATION) && ${HAVE_GCC:U0} > 0
+.if ${SPECTRE_V2_GCC_MITIGATION:U0} > 0 && ${HAVE_GCC:U0} > 0
 CFLAGS+=	-mindirect-branch=thunk
 CFLAGS+=	-mindirect-branch-register
 .endif
