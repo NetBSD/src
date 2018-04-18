@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.153 2018/04/18 06:04:03 ozaki-r Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.154 2018/04/18 06:37:17 ozaki-r Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.153 2018/04/18 06:04:03 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.154 2018/04/18 06:37:17 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bridge_ipf.h"
@@ -2032,6 +2032,8 @@ bridge_rtalloc(struct bridge_softc *sc, const uint8_t *dst,
 	brt->brt_expire = time_uptime + sc->sc_brttimeout;
 	brt->brt_flags = IFBAF_DYNAMIC;
 	memcpy(brt->brt_addr, dst, ETHER_ADDR_LEN);
+	PSLIST_ENTRY_INIT(brt, brt_list);
+	PSLIST_ENTRY_INIT(brt, brt_hash);
 
 	BRIDGE_RT_LOCK(sc);
 	error = bridge_rtnode_insert(sc, brt);
@@ -2500,6 +2502,8 @@ static void
 bridge_rtnode_destroy(struct bridge_rtnode *brt)
 {
 
+	PSLIST_ENTRY_DESTROY(brt, brt_list);
+	PSLIST_ENTRY_DESTROY(brt, brt_hash);
 	pool_put(&bridge_rtnode_pool, brt);
 }
 
