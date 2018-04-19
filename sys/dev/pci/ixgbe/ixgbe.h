@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.h,v 1.44 2018/04/19 06:04:31 msaitoh Exp $ */
+/* $NetBSD: ixgbe.h,v 1.45 2018/04/19 21:50:09 christos Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -690,7 +690,7 @@ drbr_needs_enqueue(struct ifnet *ifp, struct buf_ring *br)
 /*
  * Find the number of unrefreshed RX descriptors
  */
-static inline u16
+static __inline u16
 ixgbe_rx_unrefreshed(struct rx_ring *rxr)
 {
 	if (rxr->next_to_check > rxr->next_to_refresh)
@@ -700,7 +700,7 @@ ixgbe_rx_unrefreshed(struct rx_ring *rxr)
 		    rxr->next_to_refresh - 1);
 }
 
-static inline int
+static __inline int
 ixgbe_legacy_ring_empty(struct ifnet *ifp, pcq_t *dummy)
 {
 	UNREFERENCED_1PARAMETER(dummy);
@@ -708,7 +708,7 @@ ixgbe_legacy_ring_empty(struct ifnet *ifp, pcq_t *dummy)
 	return IFQ_IS_EMPTY(&ifp->if_snd);
 }
 
-static inline int
+static __inline int
 ixgbe_mq_ring_empty(struct ifnet *dummy, pcq_t *interq)
 {
 	UNREFERENCED_1PARAMETER(dummy);
@@ -720,7 +720,7 @@ ixgbe_mq_ring_empty(struct ifnet *dummy, pcq_t *interq)
  * This checks for a zero mac addr, something that will be likely
  * unless the Admin on the Host has created one.
  */
-static inline bool
+static __inline bool
 ixv_check_ether_addr(u8 *addr)
 {
 	bool status = TRUE;

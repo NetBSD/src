@@ -1,4 +1,4 @@
-/*	$NetBSD: octeonvar.h,v 1.5 2016/07/11 16:15:35 matt Exp $	*/
+/*	$NetBSD: octeonvar.h,v 1.6 2018/04/19 21:50:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -308,13 +308,13 @@ void	 mips_cp0_cvmctl_write(uint64_t);
 /* octeon core does not use cca to determine cacheability */
 #define OCTEON_CCA_NONE UINT64_C(0)
 
-static inline uint64_t
+static __inline uint64_t
 octeon_xkphys_read_8(paddr_t address)
 {
 	return mips3_ld(MIPS_PHYS_TO_XKPHYS(OCTEON_CCA_NONE, address));
 }
 
-static inline void
+static __inline void
 octeon_xkphys_write_8(paddr_t address, uint64_t value)
 {
 	mips3_sd(MIPS_PHYS_TO_XKPHYS(OCTEON_CCA_NONE, address), value);
@@ -328,7 +328,7 @@ octeon_xkphys_write_8(paddr_t address, uint64_t value)
 	octeon_xkphys_write_8(address, value)
 #endif
 
-static inline void
+static __inline void
 octeon_iobdma_write_8(uint64_t value)
 {
 	uint64_t addr = UINT64_C(0xffffffffffffa200);
@@ -336,20 +336,20 @@ octeon_iobdma_write_8(uint64_t value)
 	octeon_xkphys_write_8(addr, value);
 }
 
-static inline uint64_t
+static __inline uint64_t
 octeon_cvmseg_read_8(size_t offset)
 {
 	return octeon_xkphys_read_8(UINT64_C(0xffffffffffff8000) + offset);
 }
 
-static inline void
+static __inline void
 octeon_cvmseg_write_8(size_t offset, uint64_t value)
 {
 	octeon_xkphys_write_8(UINT64_C(0xffffffffffff8000) + offset, value);
 }
 
 /* XXX */
-static inline uint32_t
+static __inline uint32_t
 octeon_disable_interrupt(uint32_t *new)
 {
 	uint32_t s, tmp;
@@ -367,7 +367,7 @@ octeon_disable_interrupt(uint32_t *new)
 }
 
 /* XXX */
-static inline void
+static __inline void
 octeon_restore_status(uint32_t s)
 {
 	__asm __volatile (
@@ -377,7 +377,7 @@ octeon_restore_status(uint32_t s)
 		:: [s]"r"(s));
 }
 
-static inline uint64_t
+static __inline uint64_t
 octeon_get_cycles(void)
 { 
 #if defined(__mips_o32)

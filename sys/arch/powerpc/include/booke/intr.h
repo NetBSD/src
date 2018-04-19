@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.10 2016/10/19 00:08:42 nonaka Exp $	*/
+/*	$NetBSD: intr.h,v 1.11 2018/04/19 21:50:07 christos Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -148,63 +148,63 @@ void	softint_fast_dispatch(struct lwp *, int);
 #endif /* __INTR_PRIVATE */
 
 #ifndef __INTR_NOINLINE
-static inline int 
+static __inline int 
 splhigh(void)
 {
 
 	return splraise(IPL_HIGH);
 }
 
-static inline int 
+static __inline int 
 splsched(void)
 {
 
 	return splraise(IPL_SCHED);
 }
 
-static inline int 
+static __inline int 
 splvm(void)
 {
 
 	return splraise(IPL_VM);
 }
 
-static inline int 
+static __inline int 
 splsoftserial(void)
 {
 
 	return splraise(IPL_SOFTSERIAL);
 }
 
-static inline int 
+static __inline int 
 splsoftnet(void)
 {
 
 	return splraise(IPL_SOFTNET);
 }
 
-static inline int 
+static __inline int 
 splsoftbio(void)
 {
 
 	return splraise(IPL_SOFTBIO);
 }
 
-static inline int 
+static __inline int 
 splsoftclock(void)
 {
 
 	return splraise(IPL_SOFTCLOCK);
 }
 
-static inline int
+static __inline int
 splraiseipl(ipl_cookie_t icookie)
 {
 
 	return splraise(icookie._ipl);
 }
 
-static inline ipl_cookie_t
+static __inline ipl_cookie_t
 makeiplcookie(ipl_t ipl)
 {
 

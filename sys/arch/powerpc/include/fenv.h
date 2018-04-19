@@ -1,4 +1,4 @@
-/*	$NetBSD: fenv.h,v 1.4 2017/09/18 23:21:15 phx Exp $	*/
+/*	$NetBSD: fenv.h,v 1.5 2018/04/19 21:50:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004-2005 David Schultz <das@FreeBSD.ORG>
@@ -95,7 +95,7 @@ extern const fenv_t	__fe_dfl_env;
 #define	__mffs(__env)	__asm __volatile("mffs %0" : "=f" (*(__env)))
 #define	__mtfsf(__env)	__asm __volatile("mtfsf 255,%0" : : "f" (__env))
 
-static inline uint32_t
+static __inline uint32_t
 __mfmsr(void)
 {
 	uint32_t __msr;
@@ -104,7 +104,7 @@ __mfmsr(void)
 	return __msr;
 }
 
-static inline void
+static __inline void
 __mtmsr(uint32_t __msr)
 {
 
@@ -115,7 +115,7 @@ __mtmsr(uint32_t __msr)
 #define __MSR_FE_DIS	(0)
 #define __MSR_FE_PREC	(0x00000800 | 0x00000100)
 
-static inline void
+static __inline void
 __updatemsr(uint32_t __reg)
 {
 	uint32_t __msr;
@@ -143,7 +143,7 @@ union __fpscr {
 	} __bits;
 };
 
-__fenv_static inline int
+__fenv_static __inline int
 feclearexcept(int __excepts)
 {
 	union __fpscr __r;
@@ -156,7 +156,7 @@ feclearexcept(int __excepts)
 	return (0);
 }
 
-__fenv_static inline int
+__fenv_static __inline int
 fegetexceptflag(fexcept_t *__flagp, int __excepts)
 {
 	union __fpscr __r;
@@ -166,7 +166,7 @@ fegetexceptflag(fexcept_t *__flagp, int __excepts)
 	return (0);
 }
 
-__fenv_static inline int
+__fenv_static __inline int
 fesetexceptflag(const fexcept_t *__flagp, int __excepts)
 {
 	union __fpscr __r;
@@ -180,7 +180,7 @@ fesetexceptflag(const fexcept_t *__flagp, int __excepts)
 	return (0);
 }
 
-__fenv_static inline int
+__fenv_static __inline int
 feraiseexcept(int __excepts)
 {
 	union __fpscr __r;
@@ -193,7 +193,7 @@ feraiseexcept(int __excepts)
 	return (0);
 }
 
-__fenv_static inline int
+__fenv_static __inline int
 fetestexcept(int __excepts)
 {
 	union __fpscr __r;
@@ -202,7 +202,7 @@ fetestexcept(int __excepts)
 	return (__r.__bits.__reg & __excepts);
 }
 
-__fenv_static inline int
+__fenv_static __inline int
 fegetround(void)
 {
 	union __fpscr __r;
@@ -211,7 +211,7 @@ fegetround(void)
 	return (__r.__bits.__reg & _ROUND_MASK);
 }
 
-__fenv_static inline int
+__fenv_static __inline int
 fesetround(int __round)
 {
 	union __fpscr __r;
@@ -225,7 +225,7 @@ fesetround(int __round)
 	return (0);
 }
 
-__fenv_static inline int
+__fenv_static __inline int
 fegetenv(fenv_t *__envp)
 {
 	union __fpscr __r;
@@ -235,7 +235,7 @@ fegetenv(fenv_t *__envp)
 	return (0);
 }
 
-__fenv_static inline int
+__fenv_static __inline int
 feholdexcept(fenv_t *__envp)
 {
 	union __fpscr __r;
@@ -249,7 +249,7 @@ feholdexcept(fenv_t *__envp)
 	return (0);
 }
 
-__fenv_static inline int
+__fenv_static __inline int
 fesetenv(const fenv_t *__envp)
 {
 	union __fpscr __r;
@@ -260,7 +260,7 @@ fesetenv(const fenv_t *__envp)
 	return (0);
 }
 
-__fenv_static inline int
+__fenv_static __inline int
 feupdateenv(const fenv_t *__envp)
 {
 	union __fpscr __r;
@@ -275,7 +275,7 @@ feupdateenv(const fenv_t *__envp)
 
 #if defined(_NETBSD_SOURCE) || defined(_GNU_SOURCE)
 
-__fenv_static inline int
+__fenv_static __inline int
 feenableexcept(int __mask)
 {
 	union __fpscr __r;
@@ -289,7 +289,7 @@ feenableexcept(int __mask)
 	return ((__oldmask & _ENABLE_MASK) << _FPUSW_SHIFT);
 }
 
-__fenv_static inline int
+__fenv_static __inline int
 fedisableexcept(int __mask)
 {
 	union __fpscr __r;
@@ -303,7 +303,7 @@ fedisableexcept(int __mask)
 	return ((__oldmask & _ENABLE_MASK) << _FPUSW_SHIFT);
 }
 
-__fenv_static inline int
+__fenv_static __inline int
 fegetexcept(void)
 {
 	union __fpscr __r;

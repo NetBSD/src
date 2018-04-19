@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_conv.h,v 1.33 2017/10/31 12:43:56 martin Exp $	*/
+/*	$NetBSD: netbsd32_conv.h,v 1.34 2018/04/19 21:50:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -754,7 +754,7 @@ netbsd32_to_dirent12(char *buf, int nbytes)
 	return ((char *)(void *)odp) - buf;
 }
 
-static inline int
+static __inline int
 netbsd32_copyin_plistref(netbsd32_pointer_t n32p, struct plistref *p)
 {
 	struct netbsd32_plistref n32plist;
@@ -769,7 +769,7 @@ netbsd32_copyin_plistref(netbsd32_pointer_t n32p, struct plistref *p)
 	return 0;
 }
 
-static inline int
+static __inline int
 netbsd32_copyout_plistref(netbsd32_pointer_t n32p, struct plistref *p)
 {
 	struct netbsd32_plistref n32plist;

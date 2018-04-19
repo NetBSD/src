@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_gmxvar.h,v 1.1 2015/04/29 08:32:01 hikaru Exp $	*/
+/*	$NetBSD: octeon_gmxvar.h,v 1.2 2018/04/19 21:50:06 christos Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -163,10 +163,10 @@ int		octeon_gmx_reset_board(struct octeon_gmx_port_softc *);
 void		octeon_gmx_stats(struct octeon_gmx_port_softc *);
 uint64_t	octeon_gmx_get_rx_int_reg(struct octeon_gmx_port_softc *sc);
 uint64_t	octeon_gmx_get_tx_int_reg(struct octeon_gmx_port_softc *sc);
-static inline int	octeon_gmx_link_status(struct octeon_gmx_port_softc *);
+static __inline int	octeon_gmx_link_status(struct octeon_gmx_port_softc *);
 
 /* XXX RGMII specific */
-static inline int
+static __inline int
 octeon_gmx_link_status(struct octeon_gmx_port_softc *sc)
 {
 	return (sc->sc_link & RXN_RX_INBND_STATUS) ? 1 : 0;
