@@ -1,4 +1,4 @@
-/*	$NetBSD: altivec.h,v 1.17 2017/03/16 16:13:20 chs Exp $	*/
+/*	$NetBSD: altivec.h,v 1.18 2018/04/19 21:50:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -53,19 +53,19 @@ bool	vec_save_to_mcontext(struct lwp *, mcontext_t *, unsigned int *);
 
 int	vec_siginfo_code(const struct trapframe *);
 
-static inline void
+static __inline void
 vec_load(void)
 {
 	pcu_load(&vec_ops);
 }
 
-static inline void
+static __inline void
 vec_save(lwp_t *l)
 {
 	pcu_save(&vec_ops, l);
 }
 
-static inline void
+static __inline void
 vec_discard(lwp_t *l)
 {
 	pcu_discard(&vec_ops, l, false);

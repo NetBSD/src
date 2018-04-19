@@ -1,3 +1,3 @@
-/*	$NetBSD: proc.h,v 1.5 1996/03/19 03:06:28 jonathan Exp $	*/
+/*	$NetBSD: proc.h,v 1.6 2018/04/19 21:50:07 christos Exp $	*/
 
 #include <mips/proc.h>

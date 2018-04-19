@@ -1,4 +1,4 @@
-/*	$NetBSD: flash.h,v 1.8 2017/11/13 17:35:58 jmcneill Exp $	*/
+/*	$NetBSD: flash.h,v 1.9 2018/04/19 21:50:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011 Department of Software Engineering,
@@ -141,7 +141,7 @@ int flash_sync(device_t);
  * This functions checks if the buffer only contains a specified byte pattern.
  * Returns %0 if found something else, %1 otherwise.
  */
-static inline int
+static __inline int
 check_pattern(const void *buf, uint8_t patt, size_t offset, size_t size)
 {
 	size_t i;

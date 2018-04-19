@@ -1,4 +1,4 @@
-/* $NetBSD: alpha.h,v 1.36 2017/06/16 18:17:41 jdolecek Exp $ */
+/* $NetBSD: alpha.h,v 1.37 2018/04/19 21:50:06 christos Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -112,25 +112,25 @@ void    fpu_state_load(struct lwp *, u_int);
 void    fpu_state_save(struct lwp *);
 void    fpu_state_release(struct lwp *);
 
-static inline bool
+static __inline bool
 fpu_valid_p(struct lwp *l)
 {
 	return pcu_valid_p(&fpu_ops, l);
 }
 
-static inline void
+static __inline void
 fpu_load(void)
 {
 	pcu_load(&fpu_ops);
 }
 
-static inline void
+static __inline void
 fpu_save(lwp_t *l)
 {
 	pcu_save(&fpu_ops, l);
 }
 
-static inline void
+static __inline void
 fpu_discard(lwp_t *l, bool valid_p)
 {
 	pcu_discard(&fpu_ops, l, valid_p);

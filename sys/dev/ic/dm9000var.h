@@ -1,4 +1,4 @@
-/*	$NetBSD: dm9000var.h,v 1.2 2012/01/28 08:29:55 nisimura Exp $	*/
+/*	$NetBSD: dm9000var.h,v 1.3 2018/04/19 21:50:08 christos Exp $	*/
 
 /*
  * Copyright (c) 2009 Paul Fleischer
@@ -118,28 +118,28 @@ int	dme_intr(void *);
 struct mbuf* dme_alloc_receive_buffer(struct ifnet *, unsigned int);
 
 /* Inline memory access methods */
-static inline uint8_t
+static __inline uint8_t
 dme_read(struct dme_softc *sc, int reg)
 {
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, sc->dme_io, reg);
 	return (bus_space_read_1(sc->sc_iot, sc->sc_ioh, sc->dme_data));
 }
 
-static inline void
+static __inline void
 dme_write(struct dme_softc *sc, int reg, uint8_t value)
 {
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, sc->dme_io, reg);
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, sc->dme_data, value);
 }
 
-static inline void
+static __inline void
 dme_write2(struct dme_softc *sc, int reg, uint16_t value)
 {
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, sc->dme_io, reg);
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, sc->dme_data, value);
 }
 
-static inline void
+static __inline void
 dme_write_c(struct dme_softc *sc, int reg, uint8_t value[], uint count)
 {
 	for(int i=0; i<count; i++) {
@@ -147,7 +147,7 @@ dme_write_c(struct dme_softc *sc, int reg, uint8_t value[], uint count)
 	}
 }
 
-static inline void
+static __inline void
 dme_read_c(struct dme_softc *sc, int reg, uint8_t *value, uint count)
 {
 	for(int i=0; i<count; i++) {

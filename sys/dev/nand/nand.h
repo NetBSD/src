@@ -1,4 +1,4 @@
-/*	$NetBSD: nand.h,v 1.18 2017/11/13 17:36:39 jmcneill Exp $	*/
+/*	$NetBSD: nand.h,v 1.19 2018/04/19 21:50:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -197,7 +197,7 @@ struct nand_attach_args {
 	struct nand_interface *naa_nand_if;
 };
 
-static inline void
+static __inline void
 nand_busy(device_t device)
 {
 	struct nand_softc * const sc = device_private(device);
@@ -214,7 +214,7 @@ nand_busy(device_t device)
 	sc->nand_if->select(sc->controller_dev, false);
 }
 
-static inline void
+static __inline void
 nand_select(device_t self, bool enable)
 {
 	struct nand_softc * const sc = device_private(self);
@@ -225,7 +225,7 @@ nand_select(device_t self, bool enable)
 	sc->nand_if->select(sc->controller_dev, enable);
 }
 
-static inline void
+static __inline void
 nand_address(device_t self, uint32_t address)
 {
 	struct nand_softc * const sc = device_private(self);
@@ -236,7 +236,7 @@ nand_address(device_t self, uint32_t address)
 	sc->nand_if->address(sc->controller_dev, address);
 }
 
-static inline void
+static __inline void
 nand_command(device_t self, uint8_t command)
 {
 	struct nand_softc * const sc = device_private(self);
@@ -247,7 +247,7 @@ nand_command(device_t self, uint8_t command)
 	sc->nand_if->command(sc->controller_dev, command);
 }
 
-static inline void
+static __inline void
 nand_read_1(device_t self, uint8_t *data)
 {
 	struct nand_softc * const sc = device_private(self);
@@ -258,7 +258,7 @@ nand_read_1(device_t self, uint8_t *data)
 	sc->nand_if->read_1(sc->controller_dev, data);
 }
 
-static inline void
+static __inline void
 nand_write_1(device_t self, uint8_t data)
 {
 	struct nand_softc * const sc = device_private(self);
@@ -269,7 +269,7 @@ nand_write_1(device_t self, uint8_t data)
 	sc->nand_if->write_1(sc->controller_dev, data);
 }
 
-static inline void
+static __inline void
 nand_read_2(device_t self, uint16_t *data)
 {
 	struct nand_softc * const sc = device_private(self);
@@ -280,7 +280,7 @@ nand_read_2(device_t self, uint16_t *data)
 	sc->nand_if->read_2(sc->controller_dev, data);
 }
 
-static inline void
+static __inline void
 nand_write_2(device_t self, uint16_t data)
 {
 	struct nand_softc * const sc = device_private(self);
@@ -291,7 +291,7 @@ nand_write_2(device_t self, uint16_t data)
 	sc->nand_if->write_2(sc->controller_dev, data);
 }
 
-static inline void
+static __inline void
 nand_read_buf_1(device_t self, void *buf, size_t size)
 {
 	struct nand_softc * const sc = device_private(self);
@@ -302,7 +302,7 @@ nand_read_buf_1(device_t self, void *buf, size_t size)
 	sc->nand_if->read_buf_1(sc->controller_dev, buf, size);
 }
 
-static inline void
+static __inline void
 nand_read_buf_2(device_t self, void *buf, size_t size)
 {
 	struct nand_softc * const sc = device_private(self);
@@ -313,7 +313,7 @@ nand_read_buf_2(device_t self, void *buf, size_t size)
 	sc->nand_if->read_buf_2(sc->controller_dev, buf, size);
 }
 
-static inline void
+static __inline void
 nand_write_buf_1(device_t self, const void *buf, size_t size)
 {
 	struct nand_softc * const sc = device_private(self);
@@ -324,7 +324,7 @@ nand_write_buf_1(device_t self, const void *buf, size_t size)
 	sc->nand_if->write_buf_1(sc->controller_dev, buf, size);
 }
 
-static inline void
+static __inline void
 nand_write_buf_2(device_t self, const void *buf, size_t size)
 {
 	struct nand_softc * const sc = device_private(self);
@@ -335,7 +335,7 @@ nand_write_buf_2(device_t self, const void *buf, size_t size)
 	sc->nand_if->write_buf_2(sc->controller_dev, buf, size);
 }
 
-static inline int
+static __inline int
 nand_ecc_correct(device_t self, uint8_t *data, const uint8_t *oldcode,
     const uint8_t *newcode)
 {
@@ -347,7 +347,7 @@ nand_ecc_correct(device_t self, uint8_t *data, const uint8_t *oldcode,
 	return sc->nand_if->ecc_correct(sc->controller_dev, data, oldcode, newcode);
 }
 
-static inline void
+static __inline void
 nand_ecc_compute(device_t self, const uint8_t *data, uint8_t *code)
 {
 	struct nand_softc * const sc = device_private(self);
@@ -358,7 +358,7 @@ nand_ecc_compute(device_t self, const uint8_t *data, uint8_t *code)
 	sc->nand_if->ecc_compute(sc->controller_dev, data, code);
 }
 
-static inline void
+static __inline void
 nand_ecc_prepare(device_t self, int mode)
 {
 	struct nand_softc * const sc = device_private(self);
@@ -369,7 +369,7 @@ nand_ecc_prepare(device_t self, int mode)
 		sc->nand_if->ecc_prepare(sc->controller_dev, mode);
 }
 
-static inline int
+static __inline int
 nand_program_page(device_t self, size_t offset, const uint8_t *data)
 {
 	struct nand_softc * const sc = device_private(self);
@@ -379,7 +379,7 @@ nand_program_page(device_t self, size_t offset, const uint8_t *data)
 	return sc->nand_if->program_page(self, offset, data);
 }
 
-static inline int
+static __inline int
 nand_read_page(device_t self, size_t offset, uint8_t *data)
 {
 	struct nand_softc * const sc = device_private(self);
@@ -390,7 +390,7 @@ nand_read_page(device_t self, size_t offset, uint8_t *data)
 }
 
 #if 0
-static inline bool
+static __inline bool
 nand_block_isbad(device_t self, flash_off_t block)
 {
 	struct nand_softc * const sc = device_private(self);
@@ -432,7 +432,7 @@ int nand_read_parameters_toshiba(device_t, struct nand_chip *);
 
 /* debug inlines */
 
-static inline void
+static __inline void
 nand_dump_data(const char *name, void *data, size_t len)
 {
 	uint8_t *dump = data;
@@ -484,17 +484,17 @@ int nand_default_ecc_correct(device_t, uint8_t *, const uint8_t *,
 int nand_default_read_page(device_t, size_t, uint8_t *);
 int nand_default_program_page(device_t, size_t, const uint8_t *);
 
-static inline void nand_busy(device_t);
-static inline void nand_select(device_t, bool);
-static inline void nand_command(device_t, uint8_t);
-static inline void nand_address(device_t, uint32_t);
-static inline void nand_read_buf_1(device_t, void *, size_t);
-static inline void nand_read_buf_2(device_t, void *, size_t);
-static inline void nand_read_1(device_t, uint8_t *);
-static inline void nand_write_buf_1(device_t, const void *, size_t);
-static inline void nand_write_buf_2(device_t, const void *, size_t);
-//static inline bool nand_block_isbad(device_t, off_t);
-//static inline void nand_block_markbad(device_t, off_t);
-//static inline bool nand_isbusy(device_t);
+static __inline void nand_busy(device_t);
+static __inline void nand_select(device_t, bool);
+static __inline void nand_command(device_t, uint8_t);
+static __inline void nand_address(device_t, uint32_t);
+static __inline void nand_read_buf_1(device_t, void *, size_t);
+static __inline void nand_read_buf_2(device_t, void *, size_t);
+static __inline void nand_read_1(device_t, uint8_t *);
+static __inline void nand_write_buf_1(device_t, const void *, size_t);
+static __inline void nand_write_buf_2(device_t, const void *, size_t);
+//static __inline bool nand_block_isbad(device_t, off_t);
+//static __inline void nand_block_markbad(device_t, off_t);
+//static __inline bool nand_isbusy(device_t);
 
 #endif	/* _NAND_H_ */
