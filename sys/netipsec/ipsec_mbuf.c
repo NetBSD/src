@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_mbuf.c,v 1.25 2018/04/18 17:34:54 maxv Exp $	*/
+/*	$NetBSD: ipsec_mbuf.c,v 1.26 2018/04/19 08:27:38 maxv Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -25,11 +25,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: /repoman/r/ncvs/src/sys/netipsec/ipsec_mbuf.c,v 1.5.2.2 2003/03/28 20:32:53 sam Exp $
+ * $FreeBSD: sys/netipsec/ipsec_mbuf.c,v 1.5.2.2 2003/03/28 20:32:53 sam Exp $
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_mbuf.c,v 1.25 2018/04/18 17:34:54 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_mbuf.c,v 1.26 2018/04/19 08:27:38 maxv Exp $");
 
 /*
  * IPsec-specific mbuf routines.
