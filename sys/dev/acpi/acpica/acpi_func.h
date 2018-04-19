@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_func.h,v 1.4 2010/07/24 21:53:54 jruoho Exp $	*/
+/*	$NetBSD: acpi_func.h,v 1.5 2018/04/19 21:50:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -51,7 +51,7 @@ do {									\
 	(Acq) = acpi_release_global_lock(&((GLptr)->GlobalLock));	\
 } while (0)
 
-static inline int
+static __inline int
 acpi_acquire_global_lock(uint32_t *lock)
 {
 	uint32_t new, old, val;
@@ -66,7 +66,7 @@ acpi_acquire_global_lock(uint32_t *lock)
 	return ((new < GL_BIT_MASK) ? GL_ACQUIRED : GL_BUSY);
 }
 
-static inline int
+static __inline int
 acpi_release_global_lock(uint32_t *lock)
 {
 	uint32_t new, old, val;

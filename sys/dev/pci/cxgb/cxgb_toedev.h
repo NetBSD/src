@@ -121,7 +121,7 @@ struct tom_info {
     TAILQ_ENTRY(tom_info) entry;
 };
 
-static inline void init_offload_dev(struct toedev *dev)
+static __inline void init_offload_dev(struct toedev *dev)
 {
 
 }
@@ -137,7 +137,7 @@ extern struct ifnet *offload_get_phys_egress(struct ifnet *dev,
                           int context);
 
 #if defined(CONFIG_TCP_OFFLOAD_MODULE)
-static inline int toe_receive_mbuf(struct toedev *dev, struct mbuf **m,
+static __inline int toe_receive_mbuf(struct toedev *dev, struct mbuf **m,
                   int n)
 {
     return dev->recv(dev, m, n);
@@ -157,11 +157,11 @@ extern void toe_failover(struct ifnet *bond_ifp,
 extern int toe_enslave(struct ifnet *bond_ifp,
                struct ifnet *slave_ifp);
 #else
-static inline void toe_neigh_update(struct ifnet *neigh) {}
-static inline void toe_failover(struct ifnet *bond_ifp,
+static __inline void toe_neigh_update(struct ifnet *neigh) {}
+static __inline void toe_failover(struct ifnet *bond_ifp,
                 struct ifnet *fail_ifp, int event)
 {}
-static inline int toe_enslave(struct ifnet *bond_ifp,
+static __inline int toe_enslave(struct ifnet *bond_ifp,
                   struct ifnet *slave_ifp)
 {
     return 0;

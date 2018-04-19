@@ -1,4 +1,4 @@
-/*	$NetBSD: at_var.h,v 1.7 2007/08/30 02:17:36 dyoung Exp $	 */
+/*	$NetBSD: at_var.h,v 1.8 2018/04/19 21:50:10 christos Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -69,7 +69,7 @@ struct at_aliasreq {
 #ifdef _KERNEL
 int sockaddr_at_cmp(const struct sockaddr *, const struct sockaddr *);
 
-static inline void
+static __inline void
 sockaddr_at_init1(struct sockaddr_at *sat, const struct at_addr *addr,
     uint8_t port)
 {
@@ -78,7 +78,7 @@ sockaddr_at_init1(struct sockaddr_at *sat, const struct at_addr *addr,
 	memset(&sat->sat_range, 0, sizeof(sat->sat_range));
 }
 
-static inline void
+static __inline void
 sockaddr_at_init(struct sockaddr_at *sat, const struct at_addr *addr,
     uint8_t port)
 {
@@ -87,7 +87,7 @@ sockaddr_at_init(struct sockaddr_at *sat, const struct at_addr *addr,
 	sockaddr_at_init1(sat, addr, port);
 }
 
-static inline struct sockaddr *
+static __inline struct sockaddr *
 sockaddr_at_alloc(const struct at_addr *addr, uint8_t port, int flags)
 {
 	struct sockaddr *sa;

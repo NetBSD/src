@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmcreg.h,v 1.33 2017/09/12 13:43:37 jmcneill Exp $	*/
+/*	$NetBSD: sdmmcreg.h,v 1.34 2018/04/19 21:50:09 christos Exp $	*/
 /*	$OpenBSD: sdmmcreg.h,v 1.4 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -408,7 +408,7 @@
 
 /* This assumes the response fields are in host byte order in 32-bit units.  */
 #define MMC_RSP_BITS(resp, start, len)	__bitfield((resp), (start)-8, (len))
-static inline uint32_t
+static __inline uint32_t
 __bitfield(const uint32_t *src, size_t start, size_t len)
 {
 	if (start + len > 512 || len == 0 || len > 32)

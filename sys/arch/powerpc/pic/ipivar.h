@@ -1,4 +1,4 @@
-/* $NetBSD: ipivar.h,v 1.8 2015/01/23 07:27:05 nonaka Exp $ */
+/* $NetBSD: ipivar.h,v 1.9 2018/04/19 21:50:07 christos Exp $ */
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipivar.h,v 1.8 2015/01/23 07:27:05 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipivar.h,v 1.9 2018/04/19 21:50:07 christos Exp $");
 
 #ifndef _IPI_VAR_H_
 #define _IPI_VAR_H_
@@ -66,7 +66,7 @@ int ipi_intr(void *);
 /* convenience */
 extern struct ipi_ops ipiops;
 
-static inline void
+static __inline void
 cpu_send_ipi(cpuid_t cpuid, uint32_t msg)
 {
 	(*ipiops.ppc_send_ipi)(cpuid, msg);

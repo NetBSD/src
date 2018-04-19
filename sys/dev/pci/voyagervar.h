@@ -1,4 +1,4 @@
-/*	$NetBSD: voyagervar.h,v 1.4 2011/12/07 09:08:00 macallan Exp $	*/
+/*	$NetBSD: voyagervar.h,v 1.5 2018/04/19 21:50:09 christos Exp $	*/
 
 /*
  * Copyright (c) 2011 Michael Lorenz
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voyagervar.h,v 1.4 2011/12/07 09:08:00 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voyagervar.h,v 1.5 2018/04/19 21:50:09 christos Exp $");
 
 #ifndef VOYAGERVAR_H
 #define VOYAGERVAR_H

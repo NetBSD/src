@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.26 2011/03/06 14:54:47 tsutsui Exp $	*/
+/*	$NetBSD: intr.h,v 1.27 2018/04/19 21:50:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
 
 extern int idepth;
 
-static inline bool
+static __inline bool
 cpu_intr_p(void)
 {
 
@@ -63,21 +63,21 @@ typedef struct {
 	uint16_t _psl;
 } ipl_cookie_t;
 
-static inline ipl_cookie_t
+static __inline ipl_cookie_t
 makeiplcookie(ipl_t ipl)
 {
 
 	return (ipl_cookie_t){._psl = ipl2psl_table[ipl]};
 }
 
-static inline int
+static __inline int
 splraiseipl(ipl_cookie_t icookie)
 {
 
 	return _splraise(icookie._psl);
 }
 
-static inline void
+static __inline void
 splx(int sr)
 {
 

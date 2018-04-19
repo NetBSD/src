@@ -1,4 +1,4 @@
-/*	$NetBSD: spr.h,v 1.51 2018/03/22 15:18:05 macallan Exp $	*/
+/*	$NetBSD: spr.h,v 1.52 2018/04/19 21:50:07 christos Exp $	*/
 
 /*
  * Copyright (c) 2001, The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include <powerpc/oea/cpufeat.h>
 
 #if defined(PPC_OEA64_BRIDGE) || defined (_ARCH_PPC64)
-static inline uint64_t
+static __inline uint64_t
 mfspr64(int reg)
 {
 	uint64_t ret;
@@ -68,7 +68,7 @@ mfspr64(int reg)
 } )
 #endif /* PPC_OEA64_BRIDGE || _ARCH_PPC64 */
 
-static inline uint64_t
+static __inline uint64_t
 mfspr32(int reg)
 {
 	register_t val;
@@ -77,7 +77,7 @@ mfspr32(int reg)
 	return val;
 }
 
-static inline void
+static __inline void
 mtspr32(int reg, uint32_t val)
 {
 
@@ -85,7 +85,7 @@ mtspr32(int reg, uint32_t val)
 }
 
 #if (defined(PPC_OEA) + defined(PPC_OEA64) + defined(PPC_OEA64_BRIDGE)) > 1
-static inline uint64_t
+static __inline uint64_t
 mfspr(int reg)
 {
 	if ((oeacpufeat & (OEACPU_64_BRIDGE|OEACPU_64)) != 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_powvar.h,v 1.2 2016/07/11 16:15:35 matt Exp $	*/
+/*	$NetBSD: octeon_powvar.h,v 1.3 2018/04/19 21:50:06 christos Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -113,7 +113,7 @@ extern struct octeon_pow_softc	octeon_pow_softc;
 
 /* GET_WORK Loads */
 
-static inline uint64_t 
+static __inline uint64_t 
 octeon_pow_ops_get_work_load(
 	int wait)			/* 0-1 */
 {
@@ -137,7 +137,7 @@ octeon_pow_ops_get_work_load(
  * f) get_cur == 1, get_wqp == 1, get_rev == 1 (cur_wqp_prev)
  */
 
-static inline uint64_t
+static __inline uint64_t
 octeon_pow_ops_pow_status(
 	int coreid,			/* 0-15 */
 	int get_rev,			/* 0-1 */
@@ -164,7 +164,7 @@ octeon_pow_ops_pow_status(
  * c) get_des == 1 (desched)
  */
 
-static inline uint64_t
+static __inline uint64_t
 octeon_pow_ops_pow_memory(
 	int index,			/* 0-2047 */
 	int get_des,			/* 0-1 */
@@ -190,7 +190,7 @@ octeon_pow_ops_pow_memory(
  * d) get_rmt == 1, get_des_get_tail == 1
  */
 
-static inline uint64_t
+static __inline uint64_t
 octeon_pow_ops_pow_idxptr(
 	int qosgrp,			/* 0-7 */
 	int get_des_get_tail,		/* 0-1 */
@@ -209,7 +209,7 @@ octeon_pow_ops_pow_idxptr(
 
 /* NULL_RD Loads */
 
-static inline uint64_t
+static __inline uint64_t
 octeon_pow_ops_null_rd_load(void)
 {
 	uint64_t ptr =
@@ -228,7 +228,7 @@ octeon_pow_ops_null_rd_load(void)
 
 /* GET_WORK IOBDMAs */
 
-static inline void
+static __inline void
 octeon_pow_ops_get_work_iobdma(
 	int scraddr,			/* 0-2047 */
 	int wait)			/* 0-1 */
@@ -250,7 +250,7 @@ octeon_pow_ops_get_work_iobdma(
 
 /* NULL_RD IOBDMAs */
 
-static inline void
+static __inline void
 octeon_pow_ops_null_rd_iobdma(
 	int scraddr)			/* 0-2047 */
 {
@@ -269,7 +269,7 @@ octeon_pow_ops_null_rd_iobdma(
 
 /* Store Operations */
 
-static inline void
+static __inline void
 octeon_pow_store(
 	int subdid,			/* 0, 1, 3 */
 	uint64_t addr,			/* 0-0x0000.000f.ffff.ffff */
@@ -303,7 +303,7 @@ octeon_pow_store(
 
 /* SWTAG */
 
-static inline void
+static __inline void
 octeon_pow_ops_swtag(int type, uint32_t tag)
 {
 	octeon_pow_store(
@@ -321,7 +321,7 @@ octeon_pow_ops_swtag(int type, uint32_t tag)
 
 /* SWTAG_FULL */
 
-static inline void
+static __inline void
 octeon_pow_ops_swtag_full(paddr_t addr, int grp, int type, uint32_t tag)
 {
 	octeon_pow_store(
@@ -338,7 +338,7 @@ octeon_pow_ops_swtag_full(paddr_t addr, int grp, int type, uint32_t tag)
 
 /* SWTAG_DESCHED */
 
-static inline void
+static __inline void
 octeon_pow_ops_swtag_desched(int no_sched, int grp, int type, uint32_t tag)
 {
 	octeon_pow_store(
@@ -355,7 +355,7 @@ octeon_pow_ops_swtag_desched(int no_sched, int grp, int type, uint32_t tag)
 
 /* DESCHED */
 
-static inline void
+static __inline void
 octeon_pow_ops_desched(int no_sched)
 {
 	octeon_pow_store(
@@ -372,7 +372,7 @@ octeon_pow_ops_desched(int no_sched)
 
 /* ADDWQ */
 
-static inline void
+static __inline void
 octeon_pow_ops_addwq(paddr_t addr, int qos, int grp, int type, uint32_t tag)
 {
 	octeon_pow_store(
@@ -389,7 +389,7 @@ octeon_pow_ops_addwq(paddr_t addr, int qos, int grp, int type, uint32_t tag)
 
 /* UPD_WQP_GRP */
 
-static inline void
+static __inline void
 octeon_pow_ops_upd_wqp_grp(paddr_t addr, int grp)
 {
 	octeon_pow_store(
@@ -406,7 +406,7 @@ octeon_pow_ops_upd_wqp_grp(paddr_t addr, int grp)
 
 /* CLR_NSCHED */
 
-static inline void
+static __inline void
 octeon_pow_ops_clr_nsched(paddr_t addr, int index)
 {
 	octeon_pow_store(
@@ -423,7 +423,7 @@ octeon_pow_ops_clr_nsched(paddr_t addr, int index)
 
 /* NOP */
 
-static inline void
+static __inline void
 octeon_pow_ops_nop(void)
 {
 	octeon_pow_store(
@@ -443,13 +443,13 @@ octeon_pow_ops_nop(void)
 /*
  * global functions
  */
-static inline void
+static __inline void
 octeon_pow_work_request_async(uint64_t scraddr, uint64_t wait)
 {
         octeon_pow_ops_get_work_iobdma(scraddr, wait);
 }
 
-static inline uint64_t *
+static __inline uint64_t *
 octeon_pow_work_response_async(uint64_t scraddr)
 {
 	uint64_t result;
@@ -470,7 +470,7 @@ octeon_pow_work_response_async(uint64_t scraddr)
 #endif
 }
 
-static inline void
+static __inline void
 octeon_pow_config_int_pc(struct octeon_pow_softc *sc, int unit)
 {
 	uint64_t wq_int_pc;
@@ -487,14 +487,14 @@ octeon_pow_config_int_pc(struct octeon_pow_softc *sc, int unit)
 	_POW_WR8(sc, POW_WQ_INT_PC_OFFSET, wq_int_pc);
 }
 
-static inline void
+static __inline void
 octeon_pow_config_int_pc_rate(struct octeon_pow_softc *sc, int rate)
 {
 	octeon_pow_config_int_pc(sc, sc->sc_int_pc_base / rate);
 }
 
 /* wait until ready */
-static inline void
+static __inline void
 octeon_pow_tag_sw_wait(void)
 {
 	__asm __volatile (

@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.h,v 1.56 2018/03/08 07:06:13 maxv Exp $	*/
+/*	$NetBSD: npf.h,v 1.57 2018/04/19 21:50:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -180,7 +180,7 @@ typedef struct {
 	} npc_l4;
 } npf_cache_t;
 
-static inline bool
+static __inline bool
 npf_iscached(const npf_cache_t *npc, const int inf)
 {
 	KASSERT(npc->npc_nbuf != NULL);

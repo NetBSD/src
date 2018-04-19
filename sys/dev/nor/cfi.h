@@ -1,4 +1,4 @@
-/*	$NetBSD: cfi.h,v 1.6 2011/12/17 19:42:41 phx Exp $	*/
+/*	$NetBSD: cfi.h,v 1.7 2018/04/19 21:50:09 christos Exp $	*/
 
 #ifndef _CFI_H_
 #define _CFI_H_
@@ -75,7 +75,7 @@ struct cfi_query_data {
 #define CFI_IFCODE_X8		0
 #define CFI_IFCODE_X16		1
 #define CFI_IFCODE_X8X16	2
-static inline const char *
+static __inline const char *
 cfi_interface_desc_str(uint16_t icd)
 {
 	switch(icd) {
@@ -233,21 +233,21 @@ enum {
 	CFI_AMD_UNLOCK_ADDR2 = 0x555*4,
 };
 
-static inline void
+static __inline void
 cfi_reset(struct cfi * const cfi)
 {
 	KASSERT(cfi->cfi_ops.cfi_reset != NULL);
 	cfi->cfi_ops.cfi_reset(cfi);
 }
 
-static inline int
+static __inline int
 cfi_erase_sector(struct cfi * const cfi, flash_off_t offset)
 {
 	KASSERT(cfi->cfi_ops.cfi_erase_sector != NULL);
 	return cfi->cfi_ops.cfi_erase_sector(cfi, offset);
 }
 
-static inline int
+static __inline int
 cfi_program_word(struct cfi * const cfi, flash_off_t offset)
 {
 	KASSERT(cfi->cfi_ops.cfi_program_word != NULL);

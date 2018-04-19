@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmevar.h,v 1.16 2018/04/18 10:05:59 nonaka Exp $	*/
+/*	$NetBSD: nvmevar.h,v 1.17 2018/04/19 21:50:08 christos Exp $	*/
 /*	$OpenBSD: nvmevar.h,v 1.8 2016/04/14 11:18:32 dlg Exp $ */
 
 /*
@@ -163,7 +163,7 @@ void	nvme_softintr_intx(void *);
 int	nvme_intr_msi(void *);
 void	nvme_softintr_msi(void *);
 
-static inline struct nvme_queue *
+static __inline struct nvme_queue *
 nvme_get_q(struct nvme_softc *sc)
 {
 	return sc->sc_q[cpu_index(curcpu()) % sc->sc_nq];
@@ -172,7 +172,7 @@ nvme_get_q(struct nvme_softc *sc)
 /*
  * namespace
  */
-static inline struct nvme_namespace *
+static __inline struct nvme_namespace *
 nvme_ns_get(struct nvme_softc *sc, uint16_t nsid)
 {
 	if (nsid == 0 || nsid - 1 >= sc->sc_nn)

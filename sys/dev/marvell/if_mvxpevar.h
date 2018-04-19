@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvxpevar.h,v 1.3 2016/02/13 08:05:06 hikaru Exp $	*/
+/*	$NetBSD: if_mvxpevar.h,v 1.4 2018/04/19 21:50:08 christos Exp $	*/
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -164,7 +164,7 @@ struct mvxpe_tx_ring {
 	int				tx_queue_th_free;
 };
 
-static inline int
+static __inline int
 tx_counter_adv(int ctr, int n)
 {
 	/* XXX: lock or atomic */
@@ -175,7 +175,7 @@ tx_counter_adv(int ctr, int n)
 	return ctr;
 }
 
-static inline int
+static __inline int
 rx_counter_adv(int ctr, int n)
 {
 	/* XXX: lock or atomic */

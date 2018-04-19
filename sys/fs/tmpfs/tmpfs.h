@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs.h,v 1.54 2017/03/01 10:44:47 hannken Exp $	*/
+/*	$NetBSD: tmpfs.h,v 1.55 2018/04/19 21:50:09 christos Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -312,7 +312,7 @@ bool		tmpfs_strname_neqlen(struct componentname *, struct componentname *);
  * Routines to convert VFS structures to tmpfs internal ones.
  */
 
-static inline tmpfs_mount_t *
+static __inline tmpfs_mount_t *
 VFS_TO_TMPFS(struct mount *mp)
 {
 	tmpfs_mount_t *tmp = mp->mnt_data;
@@ -321,7 +321,7 @@ VFS_TO_TMPFS(struct mount *mp)
 	return tmp;
 }
 
-static inline tmpfs_node_t *
+static __inline tmpfs_node_t *
 VP_TO_TMPFS_DIR(vnode_t *vp)
 {
 	tmpfs_node_t *node = vp->v_data;

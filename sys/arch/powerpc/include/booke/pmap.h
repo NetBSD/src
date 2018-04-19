@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.17 2016/12/24 18:34:31 cherry Exp $	*/
+/*	$NetBSD: pmap.h,v 1.18 2018/04/19 21:50:07 christos Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -108,9 +108,9 @@ void	pmap_md_page_syncicache(struct vm_page *, const kcpuset_t *);
 vaddr_t	pmap_bootstrap(vaddr_t, vaddr_t, phys_ram_seg_t *, size_t);
 bool	pmap_extract(struct pmap *, vaddr_t, paddr_t *);
 
-static inline paddr_t vtophys(vaddr_t);
+static __inline paddr_t vtophys(vaddr_t);
 
-static inline paddr_t
+static __inline paddr_t
 vtophys(vaddr_t va)
 {
 	paddr_t pa;
@@ -125,33 +125,33 @@ vtophys(vaddr_t va)
 /*
  * Virtual Cache Alias helper routines.  Not a problem for Booke CPUs.
  */
-static inline bool
+static __inline bool
 pmap_md_vca_add(struct vm_page *pg, vaddr_t va, pt_entry_t *nptep)
 {
 	return false;
 }
 
-static inline void
+static __inline void
 pmap_md_vca_remove(struct vm_page *pg, vaddr_t va, bool dirty)
 {
 
 }
 
-static inline void
+static __inline void
 pmap_md_vca_clean(struct vm_page *pg, vaddr_t va, int op)
 {
 }
 #endif
 
 #ifdef __PMAP_PRIVATE
-static inline size_t
+static __inline size_t
 pmap_md_tlb_asid_max(void)
 {
 	return PMAP_TLB_NUM_PIDS - 1;
 }
 
 struct vm_physseg;
-static inline bool
+static __inline bool
 pmap_md_ok_to_steal_p(const uvm_physseg_t bank, size_t npgs)
 {
 	return true;

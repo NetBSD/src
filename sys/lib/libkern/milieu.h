@@ -1,4 +1,4 @@
-/* $NetBSD: milieu.h,v 1.3 2008/04/28 20:24:06 martin Exp $ */
+/* $NetBSD: milieu.h,v 1.4 2018/04/19 21:50:09 christos Exp $ */
 
 /* This is a derivative work. */
 
@@ -142,6 +142,6 @@ a compiler does not support explicit inlining, this macro should be defined
 to be `static'.
 -------------------------------------------------------------------------------
 */
-#define INLINE static inline
+#define INLINE static __inline
 
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.12 2016/10/19 00:08:42 nonaka Exp $ */
+/*	$NetBSD: intr.h,v 1.13 2018/04/19 21:50:07 christos Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -28,7 +28,7 @@
 
 #ifndef _LOCORE
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.h,v 1.12 2016/10/19 00:08:42 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.h,v 1.13 2018/04/19 21:50:07 christos Exp $");
 #endif
 
 #ifndef _POWERPC_INTR_MACHDEP_H_
@@ -123,14 +123,14 @@ typedef struct {
 	ipl_t _ipl;
 } ipl_cookie_t;
 
-static inline ipl_cookie_t
+static __inline ipl_cookie_t
 makeiplcookie(ipl_t ipl)
 {
 
 	return (ipl_cookie_t){._ipl = ipl};
 }
 
-static inline int
+static __inline int
 splraiseipl(ipl_cookie_t icookie)
 {
 

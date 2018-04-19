@@ -571,7 +571,7 @@ tdev2adap(struct toedev *d)
 #undef container_of
 
 #define OFFLOAD_DEVMAP_BIT 15
-static inline int offload_running(adapter_t *adapter)
+static __inline int offload_running(adapter_t *adapter)
 {
         return isset(&adapter->open_device_map, OFFLOAD_DEVMAP_BIT);
 }

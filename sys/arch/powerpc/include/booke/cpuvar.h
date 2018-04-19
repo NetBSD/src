@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.18 2015/06/16 06:51:16 matt Exp $	*/
+/*	$NetBSD: cpuvar.h,v 1.19 2018/04/19 21:50:07 christos Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -140,7 +140,7 @@ struct cpu_md_ops {
 
 #ifdef _KERNEL
 
-static inline register_t
+static __inline register_t
 wrtee(register_t msr)
 {
 	register_t old_msr;

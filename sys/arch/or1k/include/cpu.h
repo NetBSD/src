@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.1 2014/09/03 19:34:26 matt Exp $ */
+/* $NetBSD: cpu.h,v 1.2 2018/04/19 21:50:07 christos Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -68,13 +68,13 @@ struct cpu_info {
 register struct lwp *or1k_curlwp __asm("r10");
 #define	curlwp		or1k_curlwp
 
-static inline struct cpu_info *
+static __inline struct cpu_info *
 curcpu(void)
 {
 	return curlwp->l_cpu;
 }
 
-static inline cpuid_t
+static __inline cpuid_t
 cpu_number(void)
 {
 #ifdef MULTIPROCESSOR
@@ -99,7 +99,7 @@ void	cpu_boot_secondary_processors(void);
 	(cii) = 0; (cii) == 0 && (ci) = curcpu(); (cii)++
 #endif
 
-static inline void
+static __inline void
 cpu_dosoftints(void)
 {
 	extern void dosoftints(void);
@@ -109,7 +109,7 @@ cpu_dosoftints(void)
                 dosoftints();
 }
 
-static inline bool
+static __inline bool
 cpu_intr_p(void)
 {
 	return curcpu()->ci_intr_depth > 0;

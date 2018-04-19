@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.110 2018/02/28 05:50:06 msaitoh Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.111 2018/04/19 21:50:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -131,7 +131,7 @@ struct pcibus_attach_args {
  * This is used by <machine/pci_machdep.h> to access the pba_pc member.  It
  * can't use it directly since pcibus_attach_args has yet to be defined.
  */
-static inline pci_chipset_tag_t
+static __inline pci_chipset_tag_t
 pcibus_attach_args_pc(struct pcibus_attach_args *pba)
 {
 	return pba->pba_pc;
@@ -173,7 +173,7 @@ struct pci_attach_args {
  * This is used by <machine/pci_machdep.h> to access the pa_pc member.  It
  * can't use it directly since pci_attach_args has yet to be defined.
  */
-static inline pci_chipset_tag_t
+static __inline pci_chipset_tag_t
 pci_attach_args_pc(const struct pci_attach_args *pa)
 {
 	return pa->pa_pc;

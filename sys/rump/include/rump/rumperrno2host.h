@@ -1,4 +1,4 @@
-/*	$NetBSD: rumperrno2host.h,v 1.3 2016/02/02 01:15:58 pooka Exp $	*/
+/*	$NetBSD: rumperrno2host.h,v 1.4 2018/04/19 21:50:10 christos Exp $	*/
 
 /*
  *	AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -10,7 +10,7 @@
 #error include ISO C style errno.h first
 #endif
 
-static inline int 
+static __inline int 
 rump_errno2host(int rumperrno)
 {
 

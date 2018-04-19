@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_fpavar.h,v 1.1 2015/04/29 08:32:01 hikaru Exp $	*/
+/*	$NetBSD: octeon_fpavar.h,v 1.2 2018/04/19 21:50:06 christos Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -92,7 +92,7 @@ void	octeon_fpa_dump(void);
  * operations
  */
 
-static inline uint64_t
+static __inline uint64_t
 octeon_fpa_load(uint64_t fpapool)
 {
 	uint64_t addr;
@@ -106,7 +106,7 @@ octeon_fpa_load(uint64_t fpapool)
 }
 
 #ifdef notyet
-static inline uint64_t
+static __inline uint64_t
 octeon_fpa_iobdma(struct octeon_fpa_softc *sc, int srcaddr, int len)
 {
 	/* XXX */
@@ -114,7 +114,7 @@ octeon_fpa_iobdma(struct octeon_fpa_softc *sc, int srcaddr, int len)
 }
 #endif
 
-static inline void
+static __inline void
 octeon_fpa_store(uint64_t addr, uint64_t fpapool, uint64_t dwbcount)
 {
 	uint64_t ptr;
@@ -129,13 +129,13 @@ octeon_fpa_store(uint64_t addr, uint64_t fpapool, uint64_t dwbcount)
 	octeon_write_csr(ptr, (dwbcount & 0x0ffULL));
 }
 
-static inline paddr_t
+static __inline paddr_t
 octeon_fpa_buf_get_paddr(struct octeon_fpa_buf *fb)
 {
 	return octeon_fpa_load(fb->fb_poolno);
 }
 
-static inline void
+static __inline void
 octeon_fpa_buf_put_paddr(struct octeon_fpa_buf *fb, paddr_t paddr)
 {
 	KASSERT(paddr >= fb->fb_paddr);
@@ -143,7 +143,7 @@ octeon_fpa_buf_put_paddr(struct octeon_fpa_buf *fb, paddr_t paddr)
 	octeon_fpa_store(paddr, fb->fb_poolno, fb->fb_size / 128);
 }
 
-static inline void
+static __inline void
 octeon_fpa_buf_put(struct octeon_fpa_buf *fb, void *addr)
 {
 	paddr_t paddr;

@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.14 2016/10/19 00:08:42 nonaka Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.15 2018/04/19 21:50:07 christos Exp $ */
 
 /*-
  * Copyright (c) 2002,2007 The NetBSD Foundation, Inc.
@@ -54,9 +54,9 @@ typedef int pci_intr_handle_t;
 struct pci_attach_args;
 struct pcibus_attach_args;
 
-static inline pci_chipset_tag_t pcibus_attach_args_pc(
+static __inline pci_chipset_tag_t pcibus_attach_args_pc(
     struct pcibus_attach_args *);
-static inline pci_chipset_tag_t pci_attach_args_pc(
+static __inline pci_chipset_tag_t pci_attach_args_pc(
     const struct pci_attach_args *);
 
 #include <dev/pci/pcireg.h>
@@ -194,7 +194,7 @@ struct genppc_pci_chipset {
 #ifdef __PCI_NOINLINE
 #define	__pci_inline
 #else
-#define	__pci_inline	static inline
+#define	__pci_inline	static __inline
 #endif
 
 /*

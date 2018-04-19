@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.28 2014/02/28 05:32:01 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.29 2018/04/19 21:50:07 christos Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -128,7 +128,7 @@ extern int pmap_use_altivec;
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
 
 /* ARGSUSED */
-static inline void
+static __inline void
 pmap_remove_all(struct pmap *pmap)
 {
 	/* Nothing. */
@@ -160,7 +160,7 @@ u_int powerpc_mmap_flags(paddr_t);
 #define pmap_phys_address(ppn)		(ppn & ~POWERPC_MMAP_FLAG_MASK)
 #define pmap_mmap_flags(ppn)		powerpc_mmap_flags(ppn)
 
-static inline paddr_t vtophys (vaddr_t);
+static __inline paddr_t vtophys (vaddr_t);
 
 /*
  * Alternate mapping hooks for pool pages.  Avoids thrashing the TLB.
@@ -175,7 +175,7 @@ static inline paddr_t vtophys (vaddr_t);
 #define POOL_VTOPHYS(va)	vtophys((vaddr_t) va)
 #endif
 
-static inline paddr_t
+static __inline paddr_t
 vtophys(vaddr_t va)
 {
 	paddr_t pa;
@@ -193,19 +193,19 @@ extern const struct pmap_ops pmap32_ops;
 extern const struct pmap_ops pmap64_ops;
 extern const struct pmap_ops pmap64bridge_ops;
 
-static inline void
+static __inline void
 pmap_setup32(void)
 {
 	pmapops = &pmap32_ops;
 }
 
-static inline void
+static __inline void
 pmap_setup64(void)
 {
 	pmapops = &pmap64_ops;
 }
 
-static inline void
+static __inline void
 pmap_setup64bridge(void)
 {
 	pmapops = &pmap64bridge_ops;

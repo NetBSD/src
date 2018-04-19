@@ -1,4 +1,4 @@
-/*	$NetBSD: atwvar.h,v 1.38 2017/02/02 10:05:35 nonaka Exp $	*/
+/*	$NetBSD: atwvar.h,v 1.39 2018/04/19 21:50:08 christos Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 The NetBSD Foundation, Inc.  All rights reserved.
@@ -397,7 +397,7 @@ do {									\
  * field is only 11 bits, we must subtract 1 from the length to avoid
  * having it truncated to 0!
  */
-static inline void
+static __inline void
 atw_init_rxdesc(struct atw_softc *sc, int x)
 {
 	struct atw_rxsoft *rxs = &sc->sc_rxsoft[x];

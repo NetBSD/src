@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_pkovar.h,v 1.1 2015/04/29 08:32:01 hikaru Exp $	*/
+/*	$NetBSD: octeon_pkovar.h,v 1.2 2018/04/19 21:50:06 christos Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -87,12 +87,12 @@ int			octeon_pko_port_enable(struct octeon_pko_softc *, int);
 int			octeon_pko_port_config(struct octeon_pko_softc *);
 void			octeon_pko_int_enable(struct octeon_pko_softc *, int);
 uint64_t		octeon_pko_int_summary(struct octeon_pko_softc *);
-static inline uint64_t	octeon_pko_cmd_word0(int, int, int, int, int, int,
+static __inline uint64_t	octeon_pko_cmd_word0(int, int, int, int, int, int,
 			    int, int, int, int, int, int, int, int, int, int);
-static inline uint64_t	octeon_pko_cmd_word1(int, int, int, int, paddr_t);
+static __inline uint64_t	octeon_pko_cmd_word1(int, int, int, int, paddr_t);
 
 
-static inline uint64_t
+static __inline uint64_t
 octeon_pko_cmd_word0(int sz1, int sz0, int s1, int reg1, int s0, int reg0,
     int le, int n2, int q, int r, int g, int ipoffp1, int ii, int df, int segs,
     int totalbytes)
@@ -118,7 +118,7 @@ octeon_pko_cmd_word0(int sz1, int sz0, int s1, int reg1, int s0, int reg0,
 	return cmd;
 }
 
-static inline uint64_t
+static __inline uint64_t
 octeon_pko_cmd_word1(int i, int back, int pool, int size, paddr_t addr)
 {
 	uint64_t cmd = 0;
@@ -135,7 +135,7 @@ octeon_pko_cmd_word1(int i, int back, int pool, int size, paddr_t addr)
 
 /* Store Operations */
 
-static inline void
+static __inline void
 octeon_pko_op_store(uint64_t args, uint64_t value)
 {
 	paddr_t addr;
@@ -150,7 +150,7 @@ octeon_pko_op_store(uint64_t args, uint64_t value)
 	octeon_write_csr(addr, value);
 }
 
-static inline void
+static __inline void
 octeon_pko_op_doorbell_write(int pid, int qid, int wdc)
 {
 	uint64_t args, value;

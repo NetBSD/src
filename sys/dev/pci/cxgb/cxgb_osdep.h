@@ -106,11 +106,11 @@ void m_cljset(struct mbuf *m, void *cl, int type);
 
 #define EVL_VLID_MASK       0x0FFF
 
-static inline void critical_enter(void)
+static __inline void critical_enter(void)
 {
 }
 
-static inline void critical_exit(void)
+static __inline void critical_exit(void)
 {
 }
 
@@ -139,7 +139,7 @@ u_short in_cksum_hdr(struct ip *ih);
 
 #define callout_drain(x) callout_stop(x)
 
-static inline int atomic_cmpset_ptr(volatile long *dst, long exp, long src)
+static __inline int atomic_cmpset_ptr(volatile long *dst, long exp, long src)
 {
     if (*dst == exp)
     {
@@ -150,14 +150,14 @@ static inline int atomic_cmpset_ptr(volatile long *dst, long exp, long src)
 }
 #define atomic_cmpset_int(a, b, c) atomic_cmpset_ptr((volatile long *)a, (long)b, (long)c)
 
-static inline int atomic_set_int(volatile int *dst, int val)
+static __inline int atomic_set_int(volatile int *dst, int val)
 {
     *dst = val;
 
     return (val);
 }
 
-static inline void log(int x, ...)
+static __inline void log(int x, ...)
 {
 }
 

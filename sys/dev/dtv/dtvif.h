@@ -1,4 +1,4 @@
-/* $NetBSD: dtvif.h,v 1.3 2011/08/09 01:42:24 jmcneill Exp $ */
+/* $NetBSD: dtvif.h,v 1.4 2018/04/19 21:50:08 christos Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -79,7 +79,7 @@ struct dtv_payload {
 	size_t		size;
 };
 
-static inline int
+static __inline int
 dtv_print(void *priv, const char *pnp)
 {
 	if (pnp)

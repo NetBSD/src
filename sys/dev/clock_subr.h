@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_subr.h,v 1.25 2014/11/20 16:26:34 christos Exp $	*/
+/*	$NetBSD: clock_subr.h,v 1.26 2018/04/19 21:50:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -53,13 +53,13 @@ int	clock_secs_to_ymdhms(time_t, struct clock_ymdhms *);
 /*
  * BCD to binary and binary to BCD.
  */
-static inline unsigned int
+static __inline unsigned int
 bcdtobin(unsigned int bcd)
 {
         return ((bcd >> 4) & 0x0f) * 10 + (bcd & 0x0f);
 }
 
-static inline unsigned int
+static __inline unsigned int
 bintobcd(unsigned int bin)
 {
 	return (((bin / 10) << 4) & 0xf0) | (bin % 10);

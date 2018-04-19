@@ -1,4 +1,4 @@
-/*	$NetBSD: nist_ctr_aes_rijndael.h,v 1.1 2011/11/19 22:51:22 tls Exp $ */
+/*	$NetBSD: nist_ctr_aes_rijndael.h,v 1.2 2018/04/19 21:50:08 christos Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -64,14 +64,14 @@
 
 typedef rijndael_ctx NIST_AES_ENCRYPT_CTX;
 
-static inline void
+static __inline void
 NIST_AES_ECB_Encrypt(const NIST_AES_ENCRYPT_CTX *ctx,
 		     const void *src, void* dst)
 {
 	rijndael_encrypt(ctx, src, dst);
 }
 
-static inline int
+static __inline int
 NIST_AES_Schedule_Encryption(NIST_AES_ENCRYPT_CTX *ctx,
 			     const void *key, int bits)
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwmreg.h,v 1.6 2017/03/14 23:59:26 nonaka Exp $	*/
+/*	$NetBSD: if_iwmreg.h,v 1.7 2018/04/19 21:50:09 christos Exp $	*/
 /*	OpenBSD: if_iwmreg.h,v 1.19 2016/09/20 11:46:09 stsp Exp 	*/
 
 /*-
@@ -1200,21 +1200,21 @@ struct iwm_tlv_ucode_header {
 #define IWM_SCD_GP_CTRL		(IWM_SCD_BASE + 0x1a8)
 #define IWM_SCD_EN_CTRL		(IWM_SCD_BASE + 0x254)
 
-static inline unsigned int IWM_SCD_QUEUE_WRPTR(unsigned int chnl)
+static __inline unsigned int IWM_SCD_QUEUE_WRPTR(unsigned int chnl)
 {
 	if (chnl < 20)
 		return IWM_SCD_BASE + 0x18 + chnl * 4;
 	return IWM_SCD_BASE + 0x284 + (chnl - 20) * 4;
 }
 
-static inline unsigned int IWM_SCD_QUEUE_RDPTR(unsigned int chnl)
+static __inline unsigned int IWM_SCD_QUEUE_RDPTR(unsigned int chnl)
 {
 	if (chnl < 20)
 		return IWM_SCD_BASE + 0x68 + chnl * 4;
 	return IWM_SCD_BASE + 0x2B4 + (chnl - 20) * 4;
 }
 
-static inline unsigned int IWM_SCD_QUEUE_STATUS_BITS(unsigned int chnl)
+static __inline unsigned int IWM_SCD_QUEUE_STATUS_BITS(unsigned int chnl)
 {
 	if (chnl < 20)
 		return IWM_SCD_BASE + 0x10c + chnl * 4;
@@ -1280,7 +1280,7 @@ static inline unsigned int IWM_SCD_QUEUE_STATUS_BITS(unsigned int chnl)
 #define IWM_FH_MEM_CBBC_20_31_UPPER_BOUND	(IWM_FH_MEM_LOWER_BOUND + 0xB80)
 
 /* Find TFD CB base pointer for given queue */
-static inline unsigned int IWM_FH_MEM_CBBC_QUEUE(unsigned int chnl)
+static __inline unsigned int IWM_FH_MEM_CBBC_QUEUE(unsigned int chnl)
 {
 	if (chnl < 16)
 		return IWM_FH_MEM_CBBC_0_15_LOWER_BOUND + 4 * chnl;
@@ -1631,7 +1631,7 @@ struct iwm_rb_status {
 #define IWM_TX_DMA_MASK        DMA_BIT_MASK(36)
 #define IWM_NUM_OF_TBS		20
 
-static inline uint8_t iwm_get_dma_hi_addr(bus_addr_t addr)
+static __inline uint8_t iwm_get_dma_hi_addr(bus_addr_t addr)
 {
 	return (sizeof(addr) > sizeof(uint32_t) ? (addr >> 16) >> 16 : 0) & 0xF;
 }
@@ -3696,7 +3696,7 @@ struct iwm_mac_ctx_cmd {
 	};
 } __packed; /* IWM_MAC_CONTEXT_CMD_API_S_VER_1 */
 
-static inline uint32_t iwm_reciprocal(uint32_t v)
+static __inline uint32_t iwm_reciprocal(uint32_t v)
 {
 	if (!v)
 		return 0;
@@ -4836,7 +4836,7 @@ struct iwm_tx_path_flush_cmd {
  * whole struct at a variable offset. This function knows how to cope with the
  * variable offset and returns the SSN of the SCD.
  */
-static inline uint32_t iwm_get_scd_ssn(struct iwm_tx_resp *tx_resp)
+static __inline uint32_t iwm_get_scd_ssn(struct iwm_tx_resp *tx_resp)
 {
 	return le32_to_cpup((uint32_t *)&tx_resp->status +
 			    tx_resp->frame_count) & 0xfff;
@@ -6435,25 +6435,25 @@ struct iwm_dts_measurement_notif_v2 {
  * the iwm_host_cmd struct which contains the command id, the group id,
  * and the version of the command.
 */
-static inline uint8_t
+static __inline uint8_t
 iwm_cmd_opcode(uint32_t cmdid)
 {
 	return cmdid & 0xff;
 }
 
-static inline uint8_t
+static __inline uint8_t
 iwm_cmd_groupid(uint32_t cmdid)
 {
 	return ((cmdid & 0Xff00) >> 8);
 }
 
-static inline uint8_t
+static __inline uint8_t
 iwm_cmd_version(uint32_t cmdid)
 {
 	return ((cmdid & 0xff0000) >> 16);
 }
 
-static inline uint32_t
+static __inline uint32_t
 iwm_cmd_id(uint8_t opcode, uint8_t groupid, uint8_t ver)
 {
 	return opcode + (groupid << 8) + (ver << 16);
