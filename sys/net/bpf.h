@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.h,v 1.69 2017/01/25 01:04:23 ozaki-r Exp $	*/
+/*	$NetBSD: bpf.h,v 1.70 2018/04/19 21:20:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -430,85 +430,85 @@ struct bpf_ops {
 
 extern struct bpf_ops *bpf_ops;
 
-static inline void
+static __inline void
 bpf_attach(struct ifnet *_ifp, u_int _dlt, u_int _hdrlen)
 {
 	bpf_ops->bpf_attach(_ifp, _dlt, _hdrlen, &_ifp->if_bpf);
 }
 
-static inline void
+static __inline void
 bpf_attach2(struct ifnet *_ifp, u_int _dlt, u_int _hdrlen, struct bpf_if **_dp)
 {
 	bpf_ops->bpf_attach(_ifp, _dlt, _hdrlen, _dp);
 }
 
-static inline void
+static __inline void
 bpf_tap(struct ifnet *_ifp, u_char *_pkt, u_int _len)
 {
 	if (_ifp->if_bpf)
 		bpf_ops->bpf_tap(_ifp->if_bpf, _pkt, _len);
 }
 
-static inline void
+static __inline void
 bpf_mtap(struct ifnet *_ifp, struct mbuf *_m)
 {
 	if (_ifp->if_bpf)
 		bpf_ops->bpf_mtap(_ifp->if_bpf, _m);
 }
 
-static inline void
+static __inline void
 bpf_mtap2(struct bpf_if *_bpf, void *_data, u_int _dlen, struct mbuf *_m)
 {
 	bpf_ops->bpf_mtap2(_bpf, _data, _dlen, _m);
 }
 
-static inline void
+static __inline void
 bpf_mtap3(struct bpf_if *_bpf, struct mbuf *_m)
 {
 	if (_bpf)
 		bpf_ops->bpf_mtap(_bpf, _m);
 }
 
-static inline void
+static __inline void
 bpf_mtap_af(struct ifnet *_ifp, uint32_t _af, struct mbuf *_m)
 {
 	if (_ifp->if_bpf)
 		bpf_ops->bpf_mtap_af(_ifp->if_bpf, _af, _m);
 }
 
-static inline void
+static __inline void
 bpf_change_type(struct ifnet *_ifp, u_int _dlt, u_int _hdrlen)
 {
 	bpf_ops->bpf_change_type(_ifp, _dlt, _hdrlen);
 }
 
-static inline void
+static __inline void
 bpf_detach(struct ifnet *_ifp)
 {
 	bpf_ops->bpf_detach(_ifp);
 }
 
-static inline void
+static __inline void
 bpf_mtap_sl_in(struct ifnet *_ifp, u_char *_hdr, struct mbuf **_m)
 {
 	bpf_ops->bpf_mtap_sl_in(_ifp->if_bpf, _hdr, _m);
 }
 
-static inline void
+static __inline void
 bpf_mtap_sl_out(struct ifnet *_ifp, u_char *_hdr, struct mbuf *_m)
 {
 	if (_ifp->if_bpf)
 		bpf_ops->bpf_mtap_sl_out(_ifp->if_bpf, _hdr, _m);
 }
 
-static inline void
+static __inline void
 bpf_mtap_softint_init(struct ifnet *_ifp)
 {
 
 	bpf_ops->bpf_mtap_softint_init(_ifp);
 }
 
-static inline void
+static __inline void
 bpf_mtap_softint(struct ifnet *_ifp, struct mbuf *_m)
 {
 

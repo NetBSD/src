@@ -1,4 +1,4 @@
-/*	$NetBSD: if_llatbl.h,v 1.14 2018/03/06 07:27:55 ozaki-r Exp $	*/
+/*	$NetBSD: if_llatbl.h,v 1.15 2018/04/19 21:20:43 christos Exp $	*/
 /*
  * Copyright (c) 2004 Luigi Rizzo, Alessandro Cerri. All rights reserved.
  * Copyright (c) 2004-2008 Qing Li. All rights reserved.
@@ -281,7 +281,7 @@ void lltable_fill_sa_entry(const struct llentry *lle, struct sockaddr *sa);
 struct ifnet *lltable_get_ifp(const struct lltable *llt);
 int lltable_get_af(const struct lltable *llt);
 
-static inline unsigned int
+static __inline unsigned int
 lltable_get_entry_count(struct lltable *llt)
 {
 	return llt->llt_lle_count;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.h,v 1.29 2017/11/27 05:03:11 knakahara Exp $	*/
+/*	$NetBSD: if_gif.h,v 1.30 2018/04/19 21:20:43 christos Exp $	*/
 /*	$KAME: if_gif.h,v 1.23 2001/07/27 09:21:42 itojun Exp $	*/
 
 /*
@@ -95,7 +95,7 @@ struct gif_softc {
  * Once a reader dereference sc->sc_var by this API, the reader must not
  * re-dereference form sc->sc_var.
  */
-static inline struct gif_variant *
+static __inline struct gif_variant *
 gif_getref_variant(struct gif_softc *sc, struct psref *psref)
 {
 	struct gif_variant *var;
@@ -111,7 +111,7 @@ gif_getref_variant(struct gif_softc *sc, struct psref *psref)
 	return var;
 }
 
-static inline void
+static __inline void
 gif_putref_variant(struct gif_variant *var, struct psref *psref)
 {
 
@@ -119,7 +119,7 @@ gif_putref_variant(struct gif_variant *var, struct psref *psref)
 	psref_release(psref, &var->gv_psref, gv_psref_class);
 }
 
-static inline bool
+static __inline bool
 gif_heldref_variant(struct gif_variant *var)
 {
 

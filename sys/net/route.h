@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.118 2018/04/12 04:38:13 ozaki-r Exp $	*/
+/*	$NetBSD: route.h,v 1.119 2018/04/19 21:20:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -129,7 +129,7 @@ struct rtentry {
 #endif
 };
 
-static inline const struct sockaddr *
+static __inline const struct sockaddr *
 rt_getkey(const struct rtentry *rt)
 {
 	return rt->_rt_key;
@@ -448,7 +448,7 @@ void	rt_delete_matched_entries(sa_family_t,
 	    int (*)(struct rtentry *, void *), void *);
 int	rt_walktree(sa_family_t, int (*)(struct rtentry *, void *), void *);
 
-static inline void
+static __inline void
 rt_assert_referenced(const struct rtentry *rt)
 {
 
@@ -468,14 +468,14 @@ int	rtcache_setdst(struct route *, const struct sockaddr *);
 struct rtentry *
 	rtcache_update(struct route *, int);
 
-static inline void
+static __inline void
 rtcache_invariants(const struct route *ro)
 {
 
 	KASSERT(ro->ro_sa != NULL || ro->_ro_rt == NULL);
 }
 
-static inline struct rtentry *
+static __inline struct rtentry *
 rtcache_lookup1(struct route *ro, const struct sockaddr *dst, int clone)
 {
 	int hit;
@@ -483,13 +483,13 @@ rtcache_lookup1(struct route *ro, const struct sockaddr *dst, int clone)
 	return rtcache_lookup2(ro, dst, clone, &hit);
 }
 
-static inline struct rtentry *
+static __inline struct rtentry *
 rtcache_lookup(struct route *ro, const struct sockaddr *dst)
 {
 	return rtcache_lookup1(ro, dst, 1);
 }
 
-static inline const struct sockaddr *
+static __inline const struct sockaddr *
 rtcache_getdst(const struct route *ro)
 {
 

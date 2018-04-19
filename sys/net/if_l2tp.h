@@ -1,4 +1,4 @@
-/*	$NetBSD: if_l2tp.h,v 1.3 2017/10/30 11:24:04 knakahara Exp $	*/
+/*	$NetBSD: if_l2tp.h,v 1.4 2018/04/19 21:20:43 christos Exp $	*/
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -124,7 +124,7 @@ struct l2tp_softc {
  * So, once a reader dereference sc->sc_var by this API, the reader must not
  * re-dereference form sc->sc_var.
  */
-static inline struct l2tp_variant *
+static __inline struct l2tp_variant *
 l2tp_getref_variant(struct l2tp_softc *sc, struct psref *psref)
 {
 	struct l2tp_variant *var;
@@ -143,7 +143,7 @@ l2tp_getref_variant(struct l2tp_softc *sc, struct psref *psref)
 	return var;
 }
 
-static inline void
+static __inline void
 l2tp_putref_variant(struct l2tp_variant *var, struct psref *psref)
 {
 
@@ -152,7 +152,7 @@ l2tp_putref_variant(struct l2tp_variant *var, struct psref *psref)
 	psref_release(psref, &var->lv_psref, lv_psref_class);
 }
 
-static inline bool
+static __inline bool
 l2tp_heldref_variant(struct l2tp_variant *var)
 {
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.71 2018/01/15 16:36:51 maxv Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.72 2018/04/19 21:20:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -298,7 +298,7 @@ struct ether_multistep {
  */
 
 /* add VLAN tag to input/received packet */
-static inline void
+static __inline void
 vlan_set_tag(struct mbuf *m, uint16_t vlantag)
 {
 	/* VLAN tag contains priority, CFI and VLAN ID */
@@ -308,14 +308,14 @@ vlan_set_tag(struct mbuf *m, uint16_t vlantag)
 	return;
 }
 
-static inline bool
+static __inline bool
 vlan_has_tag(struct mbuf *m)
 {
 	return (m->m_flags & M_VLANTAG) != 0;
 }
 
 /* extract VLAN ID value from a VLAN tag */
-static inline uint16_t
+static __inline uint16_t
 vlan_get_tag(struct mbuf *m)
 {
 	KASSERT((m->m_flags & M_PKTHDR) != 0);
