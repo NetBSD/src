@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.9 2017/06/24 07:19:59 skrll Exp $	*/
+/*	$NetBSD: pte.h,v 1.10 2018/04/19 21:50:07 christos Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -77,122 +77,122 @@ typedef __BSD_PT_ENTRY_T	pt_entry_t;
 #ifndef _LOCORE
 #ifdef _KERNEL
 
-static inline uint32_t
+static __inline uint32_t
 pte_value(pt_entry_t pt_entry)
 {
 	return pt_entry;
 }
 
-static inline bool
+static __inline bool
 pte_cached_p(pt_entry_t pt_entry)
 {
 	return (pt_entry & PTE_I) == 0;
 }
 
-static inline bool
+static __inline bool
 pte_modified_p(pt_entry_t pt_entry)
 {
 	return (pt_entry & (PTE_UNMODIFIED|PTE_xW)) == PTE_xW;
 }
 
-static inline bool
+static __inline bool
 pte_valid_p(pt_entry_t pt_entry)
 {
 	return pt_entry != 0;
 }
 
-static inline bool
+static __inline bool
 pte_zero_p(pt_entry_t pt_entry)
 {
 	return pt_entry == 0;
 }
 
-static inline bool
+static __inline bool
 pte_exec_p(pt_entry_t pt_entry)
 {
 	return (pt_entry & PTE_xX) != 0;
 }
 
-static inline bool
+static __inline bool
 pte_readonly_p(pt_entry_t pt_entry)
 {
 	return (pt_entry & PTE_xW) == 0;
 }
 
-static inline bool
+static __inline bool
 pte_deferred_exec_p(pt_entry_t pt_entry)
 {
 	//return (pt_entry & (PTE_xX|PTE_UNSYNCED)) == (PTE_xX|PTE_UNSYNCED);
 	return (pt_entry & PTE_UNSYNCED) == PTE_UNSYNCED;
 }
 
-static inline bool
+static __inline bool
 pte_wired_p(pt_entry_t pt_entry)
 {
 	return (pt_entry & PTE_WIRED) != 0;
 }
 
-static inline pt_entry_t
+static __inline pt_entry_t
 pte_nv_entry(bool kernel)
 {
 	return 0;
 }
 
-static inline paddr_t
+static __inline paddr_t
 pte_to_paddr(pt_entry_t pt_entry)
 {
 	return (paddr_t)(pt_entry & PTE_RPN_MASK);
 }
 
-static inline pt_entry_t
+static __inline pt_entry_t
 pte_ionocached_bits(void)
 {
 	return PTE_I|PTE_G;
 }
 
-static inline pt_entry_t
+static __inline pt_entry_t
 pte_iocached_bits(void)
 {
 	return PTE_G;
 }
 
-static inline pt_entry_t
+static __inline pt_entry_t
 pte_nocached_bits(void)
 {
 	return PTE_M|PTE_I;
 }
 
-static inline pt_entry_t
+static __inline pt_entry_t
 pte_cached_bits(void)
 {
 	return PTE_M;
 }
 
-static inline pt_entry_t
+static __inline pt_entry_t
 pte_cached_change(pt_entry_t pt_entry, bool cached)
 {
 	return (pt_entry & ~PTE_I) | (cached ? 0 : PTE_I);
 }
 
-static inline pt_entry_t
+static __inline pt_entry_t
 pte_wire_entry(pt_entry_t pt_entry)
 {
 	return pt_entry | PTE_WIRED;
 }
 
-static inline pt_entry_t
+static __inline pt_entry_t
 pte_unwire_entry(pt_entry_t pt_entry)
 {
 	return pt_entry & ~PTE_WIRED;
 }
 
-static inline pt_entry_t
+static __inline pt_entry_t
 pte_prot_nowrite(pt_entry_t pt_entry)
 {
 	return pt_entry & ~(PTE_xW|PTE_UNMODIFIED);
 }
 
-static inline pt_entry_t
+static __inline pt_entry_t
 pte_prot_downgrade(pt_entry_t pt_entry, vm_prot_t newprot)
 {
 	pt_entry &= ~(PTE_xW|PTE_UNMODIFIED);
@@ -201,7 +201,7 @@ pte_prot_downgrade(pt_entry_t pt_entry, vm_prot_t newprot)
 	return pt_entry;
 }
 
-static inline pt_entry_t
+static __inline pt_entry_t
 pte_prot_bits(struct vm_page_md *mdpg, vm_prot_t prot)
 {
 	KASSERT(prot & VM_PROT_READ);
@@ -228,7 +228,7 @@ pte_prot_bits(struct vm_page_md *mdpg, vm_prot_t prot)
 	return pt_entry;
 }
 
-static inline pt_entry_t
+static __inline pt_entry_t
 pte_flag_bits(struct vm_page_md *mdpg, int flags)
 {
 	if (__predict_false(flags & PMAP_NOCACHE)) {
@@ -246,7 +246,7 @@ pte_flag_bits(struct vm_page_md *mdpg, int flags)
 	}
 }
 
-static inline pt_entry_t
+static __inline pt_entry_t
 pte_make_enter(paddr_t pa, struct vm_page_md *mdpg, vm_prot_t prot,
 	int flags, bool kernel)
 {
@@ -258,7 +258,7 @@ pte_make_enter(paddr_t pa, struct vm_page_md *mdpg, vm_prot_t prot,
 	return pt_entry;
 }
 
-static inline pt_entry_t
+static __inline pt_entry_t
 pte_make_kenter_pa(paddr_t pa, struct vm_page_md *mdpg, vm_prot_t prot,
 	int flags)
 {
@@ -271,7 +271,7 @@ pte_make_kenter_pa(paddr_t pa, struct vm_page_md *mdpg, vm_prot_t prot,
 	return pt_entry;
 }
 
-static inline void
+static __inline void
 pte_set(pt_entry_t *ptep, pt_entry_t pte)
 {
 	*ptep = pte;

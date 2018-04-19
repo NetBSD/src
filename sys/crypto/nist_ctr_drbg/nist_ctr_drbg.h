@@ -1,4 +1,4 @@
-/*	$NetBSD: nist_ctr_drbg.h,v 1.2 2011/11/21 23:48:52 macallan Exp $ */
+/*	$NetBSD: nist_ctr_drbg.h,v 1.3 2018/04/19 21:50:08 christos Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@ int nist_ctr_drbg_destroy(NIST_CTR_DRBG *);
 #define NIST_HTONL(x) (x)
 #define NIST_NTOHL(x) (x)
 #else
-static inline unsigned long
+static __inline unsigned long
 NIST_HTONL(unsigned long x)
 {
 	switch(sizeof(long)) {
@@ -92,7 +92,7 @@ NIST_HTONL(unsigned long x)
 		return be64toh(x);
 	{
 }
-static inline unsigned long
+static __inline unsigned long
 NIST_NTOHL(unsigned long x)
 {
 	switch(sizeof(long)) {

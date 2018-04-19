@@ -127,7 +127,7 @@ typedef int (*cpl_handler_func)(struct toedev *dev, struct mbuf *m);
  * Returns a pointer to the first byte of the CPL header in an sk_buff that
  * contains a CPL message.
  */
-static inline void *cplhdr(struct mbuf *m)
+static __inline void *cplhdr(struct mbuf *m)
 {
     return mtod(m, uint8_t *);
 }
@@ -203,14 +203,14 @@ struct toe_data {
 /*
  * Map an ATID or STID to their entries in the corresponding TID tables.
  */
-static inline union active_open_entry *atid2entry(const struct tid_info *t,
+static __inline union active_open_entry *atid2entry(const struct tid_info *t,
                                                   unsigned int atid)
 {
         return &t->atid_tab[atid - t->atid_base];
 }
 
 
-static inline union listen_entry *stid2entry(const struct tid_info *t,
+static __inline union listen_entry *stid2entry(const struct tid_info *t,
                                              unsigned int stid)
 {
         return &t->stid_tab[stid - t->stid_base];
@@ -219,7 +219,7 @@ static inline union listen_entry *stid2entry(const struct tid_info *t,
 /*
  * Find the connection corresponding to a TID.
  */
-static inline struct toe_tid_entry *lookup_tid(const struct tid_info *t,
+static __inline struct toe_tid_entry *lookup_tid(const struct tid_info *t,
                                                unsigned int tid)
 {
         return tid < t->ntids ? &(t->tid_tab[tid]) : NULL;
@@ -228,7 +228,7 @@ static inline struct toe_tid_entry *lookup_tid(const struct tid_info *t,
 /*
  * Find the connection corresponding to a server TID.
  */
-static inline struct toe_tid_entry *lookup_stid(const struct tid_info *t,
+static __inline struct toe_tid_entry *lookup_stid(const struct tid_info *t,
                                                 unsigned int tid)
 {
         if (tid < t->stid_base || tid >= t->stid_base + t->nstids)
@@ -239,7 +239,7 @@ static inline struct toe_tid_entry *lookup_stid(const struct tid_info *t,
 /*
  * Find the connection corresponding to an active-open TID.
  */
-static inline struct toe_tid_entry *lookup_atid(const struct tid_info *t,
+static __inline struct toe_tid_entry *lookup_atid(const struct tid_info *t,
                                                 unsigned int tid)
 {
         if (tid < t->atid_base || tid >= t->atid_base + t->natids)

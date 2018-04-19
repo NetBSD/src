@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_bswap.h,v 1.22 2017/02/08 16:11:40 rin Exp $	*/
+/*	$NetBSD: ufs_bswap.h,v 1.23 2018/04/19 21:50:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -47,37 +47,37 @@
 
 #if (!defined(_KERNEL) && !defined(NO_FFS_EI)) || defined(FFS_EI)
 /* inlines for access to swapped data */
-static inline u_int16_t
+static __inline u_int16_t
 ufs_rw16(uint16_t a, int ns)
 {
 	return ((ns) ? bswap16(a) : (a));
 }
 
-static inline u_int32_t
+static __inline u_int32_t
 ufs_rw32(uint32_t a, int ns)
 {
 	return ((ns) ? bswap32(a) : (a));
 }
 
-static inline u_int64_t
+static __inline u_int64_t
 ufs_rw64(uint64_t a, int ns)
 {
 	return ((ns) ? bswap64(a) : (a));
 }
 #else
-static inline u_int16_t
+static __inline u_int16_t
 ufs_rw16(uint16_t a, int ns)
 {
 	return a;
 }
 
-static inline u_int32_t
+static __inline u_int32_t
 ufs_rw32(uint32_t a, int ns)
 {
 	return a;
 }
 
-static inline u_int64_t
+static __inline u_int64_t
 ufs_rw64(uint64_t a, int ns)
 {
 	return a;

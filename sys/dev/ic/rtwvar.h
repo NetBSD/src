@@ -1,4 +1,4 @@
-/* $NetBSD: rtwvar.h,v 1.46 2017/10/23 09:31:17 msaitoh Exp $ */
+/* $NetBSD: rtwvar.h,v 1.47 2018/04/19 21:50:08 christos Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -119,7 +119,7 @@ struct rtw_regs {
  * ([reg1, reg0]) before starting new ops on the same region. See
  * acceptable bus_space_barrier(9) for the flag definitions.
  */
-static inline void
+static __inline void
 rtw_barrier(const struct rtw_regs *r, int reg0, int reg1, int flags)
 {
 	bus_space_barrier(r->r_bt, r->r_bh, MIN(reg0, reg1),

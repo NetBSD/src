@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_classq.h,v 1.7 2006/10/12 19:59:08 peter Exp $	*/
+/*	$NetBSD: altq_classq.h,v 1.8 2018/04/19 21:50:06 christos Exp $	*/
 /*	$KAME: altq_classq.h,v 1.6 2003/01/07 07:33:38 kjc Exp $	*/
 
 /*
@@ -89,7 +89,7 @@ extern void		_flushq(class_queue_t *);
 /*
  * inlined versions
  */
-static inline void
+static __inline void
 _addq(class_queue_t *q, struct mbuf *m)
 {
         struct mbuf *m0;
@@ -103,7 +103,7 @@ _addq(class_queue_t *q, struct mbuf *m)
 	qlen(q)++;
 }
 
-static inline struct mbuf *
+static __inline struct mbuf *
 _getq(class_queue_t *q)
 {
 	struct mbuf  *m, *m0;
@@ -120,7 +120,7 @@ _getq(class_queue_t *q)
 }
 
 /* drop a packet at the tail of the queue */
-static inline struct mbuf *
+static __inline struct mbuf *
 _getq_tail(class_queue_t *q)
 {
 	struct mbuf *m, *m0, *prev;
@@ -142,7 +142,7 @@ _getq_tail(class_queue_t *q)
 }
 
 /* randomly select a packet in the queue */
-static inline struct mbuf *
+static __inline struct mbuf *
 _getq_random(class_queue_t *q)
 {
 	struct mbuf *m;
@@ -169,7 +169,7 @@ _getq_random(class_queue_t *q)
 	return (m);
 }
 
-static inline void
+static __inline void
 _removeq(class_queue_t *q, struct mbuf *m)
 {
 	struct mbuf *m0, *prev;
@@ -187,7 +187,7 @@ _removeq(class_queue_t *q, struct mbuf *m)
 	qlen(q)--;
 }
 
-static inline void
+static __inline void
 _flushq(class_queue_t *q)
 {
 	struct mbuf *m;

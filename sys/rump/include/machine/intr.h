@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.21 2016/04/11 10:53:06 martin Exp $	*/
+/*	$NetBSD: intr.h,v 1.22 2018/04/19 21:50:10 christos Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@ typedef struct {
         ipl_t _ipl;
 } ipl_cookie_t;
 
-static inline ipl_cookie_t
+static __inline ipl_cookie_t
 makeiplcookie(ipl_t ipl)
 {
 	ipl_cookie_t c;
