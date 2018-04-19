@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.94 2018/04/17 08:38:05 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.95 2018/04/19 07:40:12 msaitoh Exp $*/
 
 /******************************************************************************
 
@@ -117,7 +117,7 @@ static int	ixv_sysctl_debug(SYSCTLFN_PROTO);
 static void	ixv_set_ivar(struct adapter *, u8, u8, s8);
 static void	ixv_configure_ivars(struct adapter *);
 static u8 *	ixv_mc_array_itr(struct ixgbe_hw *, u8 **, u32 *);
-static void	ixv_eitr_write(struct ix_queue *, uint32_t);
+static void	ixv_eitr_write(struct adapter *, uint32_t, uint32_t);
 
 static void	ixv_setup_vlan_support(struct adapter *);
 #if 0
@@ -802,7 +802,7 @@ ixv_init_locked(struct adapter *adapter)
 	IXGBE_WRITE_REG(hw, IXGBE_VTEIAM, mask);
 
 	/* Set moderation on the Link interrupt */
-	IXGBE_WRITE_REG(hw, IXGBE_VTEITR(adapter->vector), IXGBE_LINK_ITR);
+	ixv_eitr_write(adapter, adapter->vector, IXGBE_LINK_ITR);
 
 	/* Stats init */
 	ixv_init_stats(adapter);
@@ -916,7 +916,7 @@ ixv_msix_que(void *arg)
 	 *    the last interval.
 	 */
 	if (que->eitr_setting)
-		ixv_eitr_write(que, que->eitr_setting);
+		ixv_eitr_write(adapter, que->msix, que->eitr_setting);
 
 	que->eitr_setting = 0;
 
@@ -991,9 +991,8 @@ ixv_msix_mbx(void *arg)
 } /* ixv_msix_mbx */
 
 static void
-ixv_eitr_write(struct ix_queue *que, uint32_t itr)
+ixv_eitr_write(struct adapter *adapter, uint32_t index, uint32_t itr)
 {
-	struct adapter *adapter = que->adapter;
 
 	/*
 	 * Newer devices than 82598 have VF function, so this function is
@@ -1001,7 +1000,7 @@ ixv_eitr_write(struct ix_queue *que, uint32_t itr)
 	 */
 	itr |= IXGBE_EITR_CNT_WDIS;
 
-	IXGBE_WRITE_REG(&adapter->hw, IXGBE_VTEITR(que->msix), itr);
+	IXGBE_WRITE_REG(&adapter->hw, IXGBE_VTEITR(index), itr);
 }
 
 
@@ -2132,7 +2131,7 @@ ixv_configure_ivars(struct adapter *adapter)
 		/* ... and the TX */
 		ixv_set_ivar(adapter, i, que->msix, 1);
 		/* Set an initial value in EITR */
-		ixv_eitr_write(que, IXGBE_EITR_DEFAULT);
+		ixv_eitr_write(adapter, que->msix, IXGBE_EITR_DEFAULT);
 	}
 
 	/* For the mailbox interrupt */
@@ -2285,7 +2284,7 @@ ixv_sysctl_interrupt_rate_handler(SYSCTLFN_ARGS)
 		ixv_max_interrupt_rate = rate;
 	} else
 		ixv_max_interrupt_rate = 0;
-	ixv_eitr_write(que, reg);
+	ixv_eitr_write(adapter, que->msix, reg);
 
 	return (0);
 } /* ixv_sysctl_interrupt_rate_handler */
