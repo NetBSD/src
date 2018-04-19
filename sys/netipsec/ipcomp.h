@@ -1,5 +1,5 @@
-/*	$NetBSD: ipcomp.h,v 1.2 2005/12/10 23:44:08 elad Exp $	*/
-/*	$FreeBSD: src/sys/netipsec/ipcomp.h,v 1.1.4.1 2003/01/24 05:11:35 sam Exp $	*/
+/*	$NetBSD: ipcomp.h,v 1.3 2018/04/19 08:27:38 maxv Exp $	*/
+/*	$FreeBSD: ipcomp.h,v 1.1.4.1 2003/01/24 05:11:35 sam Exp $	*/
 /*	$KAME: ipcomp.h,v 1.8 2000/09/26 07:55:14 itojun Exp $	*/
 
 /*

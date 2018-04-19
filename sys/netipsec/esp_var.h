@@ -1,5 +1,5 @@
-/*	$NetBSD: esp_var.h,v 1.5 2017/04/13 16:38:32 christos Exp $	*/
-/*	$FreeBSD: src/sys/netipsec/esp_var.h,v 1.1.4.1 2003/01/24 05:11:35 sam Exp $	*/
+/*	$NetBSD: esp_var.h,v 1.6 2018/04/19 08:27:38 maxv Exp $	*/
+/*	$FreeBSD: esp_var.h,v 1.1.4.1 2003/01/24 05:11:35 sam Exp $	*/
 /*	$OpenBSD: ip_esp.h,v 1.37 2002/06/09 16:26:10 itojun Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_output.c,v 1.72 2018/04/18 06:52:35 maxv Exp $	*/
+/*	$NetBSD: ipsec_output.c,v 1.73 2018/04/19 08:27:38 maxv Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -25,11 +25,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: /repoman/r/ncvs/src/sys/netipsec/ipsec_output.c,v 1.3.2.2 2003/03/28 20:32:53 sam Exp $
+ * $FreeBSD: sys/netipsec/ipsec_output.c,v 1.3.2.2 2003/03/28 20:32:53 sam Exp $
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.72 2018/04/18 06:52:35 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.73 2018/04/19 08:27:38 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"

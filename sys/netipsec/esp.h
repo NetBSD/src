@@ -1,5 +1,5 @@
-/*	$NetBSD: esp.h,v 1.3 2005/12/10 23:44:08 elad Exp $	*/
-/*	$FreeBSD: src/sys/netipsec/esp.h,v 1.1.4.1 2003/01/24 05:11:35 sam Exp $	*/
+/*	$NetBSD: esp.h,v 1.4 2018/04/19 08:27:38 maxv Exp $	*/
+/*	$FreeBSD: esp.h,v 1.1.4.1 2003/01/24 05:11:35 sam Exp $	*/
 /*	$KAME: esp.h,v 1.16 2000/10/18 21:28:00 itojun Exp $	*/
 
 /*

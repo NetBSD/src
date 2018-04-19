@@ -1,5 +1,5 @@
-/*	$NetBSD: xform.h,v 1.14 2018/02/16 15:18:41 maxv Exp $	*/
-/*	$FreeBSD: src/sys/netipsec/xform.h,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
+/*	$NetBSD: xform.h,v 1.15 2018/04/19 08:27:39 maxv Exp $	*/
+/*	$FreeBSD: xform.h,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ipsp.h,v 1.119 2002/03/14 01:27:11 millert Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),

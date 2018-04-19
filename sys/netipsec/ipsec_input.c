@@ -1,5 +1,5 @@
-/*	$NetBSD: ipsec_input.c,v 1.65 2018/04/18 07:38:02 maxv Exp $	*/
-/*	$FreeBSD: src/sys/netipsec/ipsec_input.c,v 1.2.4.2 2003/03/28 20:32:53 sam Exp $	*/
+/*	$NetBSD: ipsec_input.c,v 1.66 2018/04/19 08:27:38 maxv Exp $	*/
+/*	$FreeBSD: ipsec_input.c,v 1.2.4.2 2003/03/28 20:32:53 sam Exp $	*/
 /*	$OpenBSD: ipsec_input.c,v 1.63 2003/02/20 18:35:43 deraadt Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.65 2018/04/18 07:38:02 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.66 2018/04/19 08:27:38 maxv Exp $");
 
 /*
  * IPsec input processing.

@@ -1,5 +1,5 @@
-/*	$NetBSD: keysock.h,v 1.10 2017/07/27 09:53:57 ozaki-r Exp $	*/
-/*	$FreeBSD: src/sys/netipsec/keysock.h,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
+/*	$NetBSD: keysock.h,v 1.11 2018/04/19 08:27:39 maxv Exp $	*/
+/*	$FreeBSD: keysock.h,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keysock.h,v 1.8 2000/03/27 05:11:06 sumikawa Exp $	*/
 
 /*

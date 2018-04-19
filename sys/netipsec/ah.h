@@ -1,5 +1,5 @@
-/*	$NetBSD: ah.h,v 1.2 2005/12/10 23:44:08 elad Exp $	*/
-/*	$FreeBSD: src/sys/netipsec/ah.h,v 1.1.4.1 2003/01/24 05:11:35 sam Exp $	*/
+/*	$NetBSD: ah.h,v 1.3 2018/04/19 08:27:38 maxv Exp $	*/
+/*	$FreeBSD: ah.h,v 1.1.4.1 2003/01/24 05:11:35 sam Exp $	*/
 /*	$KAME: ah.h,v 1.13 2000/10/18 21:28:00 itojun Exp $	*/
 
 /*
