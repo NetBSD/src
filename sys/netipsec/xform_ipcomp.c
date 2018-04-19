@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipcomp.c,v 1.60 2018/03/10 17:48:32 maxv Exp $	*/
+/*	$NetBSD: xform_ipcomp.c,v 1.61 2018/04/19 07:58:26 maxv Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipcomp.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /* $OpenBSD: ip_ipcomp.c,v 1.1 2001/07/05 12:08:52 jjbg Exp $ */
 
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.60 2018/03/10 17:48:32 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.61 2018/04/19 07:58:26 maxv Exp $");
 
 /* IP payload compression protocol (IPComp), see RFC 2393 */
 #if defined(_KERNEL_OPT)
@@ -147,6 +147,7 @@ ipcomp_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 	int error, hlen = IPCOMP_HLENGTH, stat = IPCOMP_STAT_CRYPTO;
 
 	IPSEC_SPLASSERT_SOFTNET(__func__);
+	KASSERT(skip + hlen <= m->m_pkthdr.len);
 
 	/* Get crypto descriptors */
 	crp = crypto_getreq(1);
@@ -307,16 +308,20 @@ ipcomp_input_cb(struct cryptop *crp)
 	/* In case it's not done already, adjust the size of the mbuf chain */
 	m->m_pkthdr.len = clen + hlen + skip;
 
+	/*
+	 * Get the next protocol field.
+	 *
+	 * XXX: Really, we should use m_copydata instead of m_pullup.
+	 */
 	if (m->m_len < skip + hlen && (m = m_pullup(m, skip + hlen)) == 0) {
 		IPCOMP_STATINC(IPCOMP_STAT_HDROPS);
 		DPRINTF(("%s: m_pullup failed\n", __func__));
 		error = EINVAL;
 		goto bad;
 	}
-
-	/* Keep the next protocol field */
 	ipc = (struct ipcomp *)(mtod(m, uint8_t *) + skip);
 	nproto = ipc->comp_nxt;
+
 	switch (nproto) {
 	case IPPROTO_IPCOMP:
 	case IPPROTO_AH:
@@ -342,7 +347,7 @@ ipcomp_input_cb(struct cryptop *crp)
 	}
 
 	/* Restore the Next Protocol field */
-	m_copyback(m, protoff, sizeof(uint8_t), (uint8_t *)&nproto);
+	m_copyback(m, protoff, sizeof(nproto), &nproto);
 
 	IPSEC_COMMON_INPUT_CB(m, sav, skip, protoff);
 
@@ -602,7 +607,7 @@ ipcomp_output_cb(struct cryptop *crp)
 
 		/* Fix Next Protocol in IPv4/IPv6 header */
 		prot = IPPROTO_IPCOMP;
-		m_copyback(m, tc->tc_protoff, sizeof(uint8_t), (u_char *)&prot);
+		m_copyback(m, tc->tc_protoff, sizeof(prot), &prot);
 
 		/* Adjust the length in the IP header */
 		switch (sav->sah->saidx.dst.sa.sa_family) {
