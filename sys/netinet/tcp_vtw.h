@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_vtw.h,v 1.8 2016/12/13 08:29:03 ozaki-r Exp $	*/
+/*	$NetBSD: tcp_vtw.h,v 1.9 2018/04/19 21:21:44 christos Exp $	*/
 /*
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -174,13 +174,13 @@ struct fatp_mi {
 	fatp_word_t	tag[FATP_NTAGS];	/* 15 tags per CL */
 };
 
-static inline int
+static __inline int
 fatp_ntags(void)
 {
 	return FATP_NTAGS;
 }
 
-static inline int
+static __inline int
 fatp_full(fatp_t *fp) 
 {
 	fatp_t full;
@@ -297,7 +297,7 @@ typedef struct vtw_stats	vtw_stats_t;
 
 /*!\brief	follow fatp next 'pointer'
  */
-static inline fatp_t *
+static __inline fatp_t *
 fatp_next(fatp_ctl_t *fat, fatp_t *fp)
 {
 	return fp->nxt ? fat->base + fp->nxt-1 : 0;
@@ -305,21 +305,21 @@ fatp_next(fatp_ctl_t *fat, fatp_t *fp)
 
 /*!\brief determine a collection-relative fat pointer index.
  */
-static inline uint32_t
+static __inline uint32_t
 fatp_index(fatp_ctl_t *fat, fatp_t *fp)
 {
 	return fp ? 1 + (fp - fat->base) : 0;
 }
 
 
-static inline uint32_t
+static __inline uint32_t
 v4_tag(uint32_t faddr, uint32_t fport, uint32_t laddr, uint32_t lport)
 {
 	return (ntohl(faddr)   + ntohs(fport)
 		+ ntohl(laddr) + ntohs(lport));
 }
 
-static inline uint32_t
+static __inline uint32_t
 v6_tag(const struct in6_addr *faddr, uint16_t fport,
        const struct in6_addr *laddr, uint16_t lport)
 {
@@ -330,7 +330,7 @@ v6_tag(const struct in6_addr *faddr, uint16_t fport,
 #endif
 }
 
-static inline uint32_t
+static __inline uint32_t
 v4_port_tag(uint16_t lport)
 {
 	uint32_t tag = lport ^ (lport << 11);
@@ -345,7 +345,7 @@ v4_port_tag(uint16_t lport)
 	return tag;
 }
 
-static inline uint32_t
+static __inline uint32_t
 v6_port_tag(uint16_t lport)
 {
 	return v4_port_tag(lport);

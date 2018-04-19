@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_var.h,v 1.97 2017/03/02 09:48:20 ozaki-r Exp $	*/
+/*	$NetBSD: in6_var.h,v 1.98 2018/04/19 21:22:02 christos Exp $	*/
 /*	$KAME: in6_var.h,v 1.81 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -136,7 +136,7 @@ struct	in6_ifaddr {
 };
 
 #ifdef _KERNEL
-static inline void
+static __inline void
 ia6_acquire(struct in6_ifaddr *ia, struct psref *psref)
 {
 
@@ -144,7 +144,7 @@ ia6_acquire(struct in6_ifaddr *ia, struct psref *psref)
 	ifa_acquire(&ia->ia_ifa, psref);
 }
 
-static inline void
+static __inline void
 ia6_release(struct in6_ifaddr *ia, struct psref *psref)
 {
 
@@ -590,7 +590,7 @@ extern callout_t in6_tmpaddrtimer_ch;
  * Macro for finding the internet address structure (in6_ifaddr) corresponding
  * to a given interface (ifnet structure).
  */
-static inline struct in6_ifaddr *
+static __inline struct in6_ifaddr *
 in6_get_ia_from_ifp(struct ifnet *ifp)
 {
 	struct ifaddr *ifa;
@@ -602,7 +602,7 @@ in6_get_ia_from_ifp(struct ifnet *ifp)
 	return (struct in6_ifaddr *)ifa;
 }
 
-static inline struct in6_ifaddr *
+static __inline struct in6_ifaddr *
 in6_get_ia_from_ifp_psref(struct ifnet *ifp, struct psref *psref)
 {
 	struct in6_ifaddr *ia;
@@ -653,7 +653,7 @@ struct	in6_multi {
  * address on a given interface. If no matching record is found, "imm"
  * returns NULL.
  */
-static inline struct in6_multi_mship *
+static __inline struct in6_multi_mship *
 in6_lookup_mship(struct in6_addr *addr, struct ifnet *ifp,
     struct ip6_moptions *imop)
 {

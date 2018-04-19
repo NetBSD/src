@@ -1,4 +1,4 @@
-/*	$NetBSD: in_var.h,v 1.95 2017/05/12 17:53:54 ryo Exp $	*/
+/*	$NetBSD: in_var.h,v 1.96 2018/04/19 21:21:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -116,7 +116,7 @@ struct in_ifaddr {
 };
 
 #ifdef _KERNEL
-static inline void
+static __inline void
 ia4_acquire(struct in_ifaddr *ia, struct psref *psref)
 {
 
@@ -124,7 +124,7 @@ ia4_acquire(struct in_ifaddr *ia, struct psref *psref)
 	ifa_acquire(&ia->ia_ifa, psref);
 }
 
-static inline void
+static __inline void
 ia4_release(struct in_ifaddr *ia, struct psref *psref)
 {
 
@@ -249,7 +249,7 @@ extern	const	int	inetctlerrmap[];
  * Find whether an internet address (in_addr) belongs to one
  * of our interfaces (in_ifaddr).  NULL if the address isn't ours.
  */
-static inline struct in_ifaddr *
+static __inline struct in_ifaddr *
 in_get_ia(struct in_addr addr)
 {
 	struct in_ifaddr *ia;
@@ -262,7 +262,7 @@ in_get_ia(struct in_addr addr)
 	return ia;
 }
 
-static inline struct in_ifaddr *
+static __inline struct in_ifaddr *
 in_get_ia_psref(struct in_addr addr, struct psref *psref)
 {
 	struct in_ifaddr *ia;
@@ -281,7 +281,7 @@ in_get_ia_psref(struct in_addr addr, struct psref *psref)
  * Find whether an internet address (in_addr) belongs to a specified
  * interface.  NULL if the address isn't ours.
  */
-static inline struct in_ifaddr *
+static __inline struct in_ifaddr *
 in_get_ia_on_iface(struct in_addr addr, struct ifnet *ifp)
 {
 	struct in_ifaddr *ia;
@@ -295,7 +295,7 @@ in_get_ia_on_iface(struct in_addr addr, struct ifnet *ifp)
 	return ia;
 }
 
-static inline struct in_ifaddr *
+static __inline struct in_ifaddr *
 in_get_ia_on_iface_psref(struct in_addr addr, struct ifnet *ifp, struct psref *psref)
 {
 	struct in_ifaddr *ia;
@@ -314,7 +314,7 @@ in_get_ia_on_iface_psref(struct in_addr addr, struct ifnet *ifp, struct psref *p
  * Find an internet address structure (in_ifaddr) corresponding
  * to a given interface (ifnet structure).
  */
-static inline struct in_ifaddr *
+static __inline struct in_ifaddr *
 in_get_ia_from_ifp(struct ifnet *ifp)
 {
 	struct ifaddr *ifa;
@@ -327,7 +327,7 @@ in_get_ia_from_ifp(struct ifnet *ifp)
 	return ifatoia(ifa);
 }
 
-static inline struct in_ifaddr *
+static __inline struct in_ifaddr *
 in_get_ia_from_ifp_psref(struct ifnet *ifp, struct psref *psref)
 {
 	struct in_ifaddr *ia;
