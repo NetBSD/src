@@ -1,4 +1,4 @@
-/*	$NetBSD: vmpagemd.h,v 1.7 2017/06/24 05:39:53 skrll Exp $	*/
+/*	$NetBSD: vmpagemd.h,v 1.8 2018/04/19 21:50:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -116,14 +116,14 @@ struct vm_page_md {
 kmutex_t *pmap_pvlist_lock_addr(struct vm_page_md *);
 #else
 extern kmutex_t pmap_pvlist_mutex;
-static inline kmutex_t *
+static __inline kmutex_t *
 pmap_pvlist_lock_addr(struct vm_page_md *mdpg)
 {
 	return &pmap_pvlist_mutex;
 }
 #endif
 
-static inline uintptr_t
+static __inline uintptr_t
 pmap_pvlist_lock(struct vm_page_md *mdpg, uintptr_t increment)
 {
 	mutex_spin_enter(pmap_pvlist_lock_addr(mdpg));
@@ -132,7 +132,7 @@ pmap_pvlist_lock(struct vm_page_md *mdpg, uintptr_t increment)
 	return gen;
 }
 
-static inline uintptr_t
+static __inline uintptr_t
 pmap_pvlist_unlock(struct vm_page_md *mdpg)
 {
 	const uintptr_t gen = VM_PAGEMD_PVLIST_GEN(mdpg);
@@ -140,7 +140,7 @@ pmap_pvlist_unlock(struct vm_page_md *mdpg)
 	return gen;
 }
 
-static inline bool
+static __inline bool
 pmap_pvlist_locked_p(struct vm_page_md *mdpg)
 {
 	return mutex_owned(pmap_pvlist_lock_addr(mdpg));

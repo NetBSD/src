@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmeio.h,v 1.2 2018/04/18 10:11:45 nonaka Exp $	*/
+/*	$NetBSD: nvmeio.h,v 1.3 2018/04/19 21:50:08 christos Exp $	*/
 
 /*-
  * Copyright (C) 2012-2013 Intel Corporation
@@ -96,7 +96,7 @@ struct nvme_pt_command {
 };
 
 /* Endianess conversion functions for NVMe structs */
-static inline void
+static __inline void
 nvme_le128toh(uint64_t v[2])
 {
 #if _BYTE_ORDER != _LITTLE_ENDIAN
@@ -108,7 +108,7 @@ nvme_le128toh(uint64_t v[2])
 #endif
 }
 
-static inline void
+static __inline void
 nvme_namespace_format_swapbytes(struct nvm_namespace_format *format)
 {
 
@@ -117,7 +117,7 @@ nvme_namespace_format_swapbytes(struct nvm_namespace_format *format)
 #endif
 }
 
-static inline void
+static __inline void
 nvme_identify_namespace_swapbytes(struct nvm_identify_namespace *identify)
 {
 #if _BYTE_ORDER != _LITTLE_ENDIAN
@@ -138,7 +138,7 @@ nvme_identify_namespace_swapbytes(struct nvm_identify_namespace *identify)
 #endif
 }
 
-static inline void
+static __inline void
 nvme_identify_psd_swapbytes(struct nvm_identify_psd *psd)
 {
 
@@ -152,7 +152,7 @@ nvme_identify_psd_swapbytes(struct nvm_identify_psd *psd)
 #endif
 }
 
-static inline void
+static __inline void
 nvme_identify_controller_swapbytes(struct nvm_identify_controller *identify)
 {
 #if _BYTE_ORDER != _LITTLE_ENDIAN

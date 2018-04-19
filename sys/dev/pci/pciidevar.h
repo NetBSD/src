@@ -1,4 +1,4 @@
-/*	$NetBSD: pciidevar.h,v 1.49 2017/10/22 13:13:55 jdolecek Exp $	*/
+/*	$NetBSD: pciidevar.h,v 1.50 2018/04/19 21:50:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -183,11 +183,11 @@ struct pciide_product_desc {
 
 
 /* inlines for reading/writing 8-bit PCI registers */
-static inline u_int8_t pciide_pci_read(pci_chipset_tag_t, pcitag_t, int);
-static inline void pciide_pci_write(pci_chipset_tag_t, pcitag_t,
+static __inline u_int8_t pciide_pci_read(pci_chipset_tag_t, pcitag_t, int);
+static __inline void pciide_pci_write(pci_chipset_tag_t, pcitag_t,
 					   int, u_int8_t);
 
-static inline u_int8_t
+static __inline u_int8_t
 pciide_pci_read(pci_chipset_tag_t pc, pcitag_t pa, int reg)
 {
 
@@ -195,7 +195,7 @@ pciide_pci_read(pci_chipset_tag_t pc, pcitag_t pa, int reg)
 	    ((reg & 0x03) * 8) & 0xff);
 }
 
-static inline void
+static __inline void
 pciide_pci_write(pci_chipset_tag_t pc, pcitag_t pa, int reg, uint8_t val)
 {
 	pcireg_t pcival;

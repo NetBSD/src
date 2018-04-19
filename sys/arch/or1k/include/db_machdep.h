@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.1 2014/09/03 19:34:26 matt Exp $ */
+/* $NetBSD: db_machdep.h,v 1.2 2018/04/19 21:50:07 christos Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -59,14 +59,14 @@ extern db_regs_t ddb_regs;
 #define IS_WATCHPOINT_TRAP(type, code) \
 	((type) == DB_TRAP_WATCHPOINT)
 
-static inline bool 
+static __inline bool 
 inst_call(db_expr_t insn)
 {
 	return (insn & 0xfc000000) == 0x04000000	/* l.jal */
 	    || (insn & 0xffff07ff) == 0x48000000;	/* l.jalr */
 }
 
-static inline bool
+static __inline bool
 inst_load(db_expr_t insn)
 {
 	const unsigned int opcode = isns >> 26;
@@ -75,13 +75,13 @@ inst_load(db_expr_t insn)
 	return opcode == 0x1b || (opcode >= 0x20 && opcode <= 0x26);
 }
 
-static inline bool
+static __inline bool
 inst_return(db_expr_t insn)
 {
 	return insn == 0x44004800;			/* l.jr r9 */
 }
 
-static inline bool
+static __inline bool
 inst_store(db_expr_t insn)
 {
 	const unsigned int opcode = isns >> 26;
@@ -89,7 +89,7 @@ inst_store(db_expr_t insn)
 	return opcode >= 0x33 && opcode <= 0x37;
 }
 
-static inline bool
+static __inline bool
 inst_trap_return(db_expr_t insn)
 {
 	return insn == 0x24000000;			/* l.rfe */

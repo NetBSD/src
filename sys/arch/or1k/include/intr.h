@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.1 2014/09/03 19:34:26 matt Exp $ */
+/* $NetBSD: intr.h,v 1.2 2018/04/19 21:50:07 christos Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -73,49 +73,49 @@
 
 #include <or1k/pic/picvar.h>
 
-static inline void
+static __inline void
 spl0(void)
 {
 	(void)_spllower(IPL_NONE);
 }
 
-static inline int
+static __inline int
 splsoftclock(void)
 {
 	return _splraise(IPL_SOFTCLOCK);
 }
 
-static inline int
+static __inline int
 splsoftbio(void)
 {
 	return _splraise(IPL_SOFTBIO);
 }
 
-static inline int
+static __inline int
 splsoftnet(void)
 {
 	return _splraise(IPL_SOFTNET);
 }
 
-static inline int
+static __inline int
 splsoftserial(void)
 {
 	return _splraise(IPL_SOFTSERIAL);
 }
 
-static inline int
+static __inline int
 splvm(void)
 {
 	return _splraise(IPL_VM);
 }
 
-static inline int
+static __inline int
 splsched(void)
 {
 	return _splraise(IPL_SCHED);
 }
 
-static inline int
+static __inline int
 splhigh(void)
 {
 	return _splraise(IPL_HIGH);
@@ -126,14 +126,14 @@ typedef struct {
 	ipl_t _ipl;
 } ipl_cookie_t;
 
-static inline ipl_cookie_t
+static __inline ipl_cookie_t
 makeiplcookie(ipl_t ipl)
 {
 
 	return (ipl_cookie_t){._ipl = ipl};
 }
 
-static inline int
+static __inline int
 splraiseipl(ipl_cookie_t icookie)
 {
 
