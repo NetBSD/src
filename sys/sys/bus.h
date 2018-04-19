@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.11 2012/05/07 18:16:38 tsutsui Exp $	*/
+/*	$NetBSD: bus.h,v 1.12 2018/04/19 21:19:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -42,13 +42,13 @@ struct bus_space_reservation {
 
 typedef struct bus_space_reservation bus_space_reservation_t;
 
-static inline bus_size_t
+static __inline bus_size_t
 bus_space_reservation_size(bus_space_reservation_t *bsr)
 {
 	return bsr->_bsr_size;
 }
 
-static inline bus_space_reservation_t *
+static __inline bus_space_reservation_t *
 bus_space_reservation_init(bus_space_reservation_t *bsr,
     bus_addr_t addr, bus_size_t size)
 {
@@ -57,7 +57,7 @@ bus_space_reservation_init(bus_space_reservation_t *bsr,
 	return bsr;
 }
 
-static inline bus_addr_t
+static __inline bus_addr_t
 bus_space_reservation_addr(bus_space_reservation_t *bsr)
 {
 	return bsr->_bsr_start;
