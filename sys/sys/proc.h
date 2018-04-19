@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.345 2018/04/16 14:51:59 kamil Exp $	*/
+/*	$NetBSD: proc.h,v 1.346 2018/04/19 21:19:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -556,7 +556,7 @@ int	proc_compare(const struct proc *, const struct lwp *,
 int	proclist_foreach_call(struct proclist *,
     int (*)(struct proc *, void *arg), void *);
 
-static inline struct proc *
+static __inline struct proc *
 _proclist_skipmarker(struct proc *p0)
 {
 	struct proc *p = p0;

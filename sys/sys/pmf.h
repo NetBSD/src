@@ -1,4 +1,4 @@
-/* $NetBSD: pmf.h,v 1.23 2018/03/04 19:23:33 kre Exp $ */
+/* $NetBSD: pmf.h,v 1.24 2018/04/19 21:19:07 christos Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -120,19 +120,19 @@ void		pmf_qual_recursive_copy(pmf_qual_t *, const pmf_qual_t *);
 void		pmf_self_suspensor_init(device_t, device_suspensor_t *,
 		    pmf_qual_t *);
 
-static inline const device_suspensor_t *
+static __inline const device_suspensor_t *
 pmf_qual_suspension(const pmf_qual_t *pq)
 {
 	return pq->pq_suspensor;
 }
 
-static inline devact_level_t
+static __inline devact_level_t
 pmf_qual_depth(const pmf_qual_t *pq)
 {
 	return pq->pq_actlvl;
 }
 
-static inline bool
+static __inline bool
 pmf_qual_descend_ok(const pmf_qual_t *pq)
 {
 	return pq->pq_actlvl == DEVACT_LEVEL_FULL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sleepq.h,v 1.24 2015/02/08 19:39:09 christos Exp $	*/
+/*	$NetBSD: sleepq.h,v 1.25 2018/04/19 21:19:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ extern sleeptab_t	sleeptab;
  *
  * XXX This only exists because panic() is broken.
  */
-static inline bool
+static __inline bool
 sleepq_dontsleep(lwp_t *l)
 {
 	extern int cold;
@@ -92,7 +92,7 @@ sleepq_dontsleep(lwp_t *l)
  * Find the correct sleep queue for the specified wait channel.  This
  * acquires and holds the per-queue interlock.
  */
-static inline sleepq_t *
+static __inline sleepq_t *
 sleeptab_lookup(sleeptab_t *st, wchan_t wchan, kmutex_t **mp)
 {
 	sleepq_t *sq;
@@ -103,7 +103,7 @@ sleeptab_lookup(sleeptab_t *st, wchan_t wchan, kmutex_t **mp)
 	return sq;
 }
 
-static inline kmutex_t *
+static __inline kmutex_t *
 sleepq_hashlock(wchan_t wchan)
 {
 	kmutex_t *mp;
@@ -117,7 +117,7 @@ sleepq_hashlock(wchan_t wchan)
  * Prepare to block on a sleep queue, after which any interlock can be
  * safely released.
  */
-static inline void
+static __inline void
 sleepq_enter(sleepq_t *sq, lwp_t *l, kmutex_t *mp)
 {
 

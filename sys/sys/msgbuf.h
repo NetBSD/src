@@ -1,4 +1,4 @@
-/*	$NetBSD: msgbuf.h,v 1.16 2018/03/31 23:12:01 christos Exp $	*/
+/*	$NetBSD: msgbuf.h,v 1.17 2018/04/19 21:19:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1981, 1984, 1993
@@ -52,7 +52,7 @@ void	initmsgbuf(void *, size_t);
 void	loginit(void);
 void	logputchar(int);
 
-static inline int
+static __inline int
 logenabled(const struct kern_msgbuf *mbp)
 {
 	return msgbufenabled && mbp->msg_magic == MSG_MAGIC;
