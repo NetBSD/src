@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipip.c,v 1.64 2018/04/18 06:43:10 maxv Exp $	*/
+/*	$NetBSD: xform_ipip.c,v 1.65 2018/04/19 08:16:44 maxv Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipip.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ipip.c,v 1.25 2002/06/10 18:04:55 itojun Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.64 2018/04/18 06:43:10 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.65 2018/04/19 08:16:44 maxv Exp $");
 
 /*
  * IP-inside-IP processing
@@ -87,20 +87,18 @@ __KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.64 2018/04/18 06:43:10 maxv Exp $")
 /* XXX IPCOMP */
 #define	M_IPSEC	(M_AUTHIPHDR|M_AUTHIPDGM|M_DECRYPTED)
 
-typedef void pr_in_input_t(struct mbuf *m, ...);
-
 int ipip_allow = 0;
 percpu_t *ipipstat_percpu;
 
 void ipe4_attach(void);
 
-static void _ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp);
+static void _ipip_input(struct mbuf *, int);
 
 #ifdef INET6
 int
 ip4_input6(struct mbuf **m, int *offp, int proto, void *eparg __unused)
 {
-	_ipip_input(*m, *offp, NULL);
+	_ipip_input(*m, *offp);
 	return IPPROTO_DONE;
 }
 #endif
@@ -109,18 +107,16 @@ ip4_input6(struct mbuf **m, int *offp, int proto, void *eparg __unused)
 void
 ip4_input(struct mbuf *m, int off, int proto, void *eparg __unused)
 {
-	_ipip_input(m, off, NULL);
+	_ipip_input(m, off);
 }
 #endif
 
 /*
- * ipip_input gets called when we receive an IP{46} encapsulated packet,
- * either because we got it at a real interface, or because AH or ESP
- * were being used in tunnel mode (in which case the rcvif element will
- * contain the address of the encX interface associated with the tunnel).
+ * _ipip_input gets called when we receive an IP{46} encapsulated packet,
+ * because AH or ESP were being used in tunnel mode.
  */
 static void
-_ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp)
+_ipip_input(struct mbuf *m, int iphlen)
 {
 	register struct sockaddr_in *sin;
 	register struct ifnet *ifp;
@@ -181,7 +177,7 @@ _ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp)
 		break;
 #endif
 	default:
-		panic("%s: unknown ip version %u (outer)", __func__, v >> 4);
+		panic("%s: impossible (1)", __func__);
 	}
 
 	/* Remove outer IP header */
@@ -252,7 +248,7 @@ _ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp)
 		break;
 #endif
 	default:
-		panic("%s: unknown ip version %u (inner)", __func__, v>>4);
+		panic("%s: impossible (2)", __func__);
 	}
 
 	/* Check for local address spoofing. */
