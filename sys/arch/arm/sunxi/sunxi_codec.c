@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_codec.c,v 1.3 2017/10/07 21:53:16 jmcneill Exp $ */
+/* $NetBSD: sunxi_codec.c,v 1.4 2018/04/19 18:19:17 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_codec.c,v 1.3 2017/10/07 21:53:16 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_codec.c,v 1.4 2018/04/19 18:19:17 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -550,7 +550,9 @@ static void
 sunxi_codec_dmaintr(void *priv)
 {
 	struct sunxi_codec_chan * const ch = priv;
+	struct sunxi_codec_softc * const sc = ch->ch_sc;
 
+	mutex_enter(&sc->sc_intr_lock);
 	ch->ch_cur_phys += ch->ch_blksize;
 	if (ch->ch_cur_phys >= ch->ch_end_phys)
 		ch->ch_cur_phys = ch->ch_start_phys;
@@ -559,6 +561,7 @@ sunxi_codec_dmaintr(void *priv)
 		ch->ch_intr(ch->ch_intrarg);
 		sunxi_codec_transfer(ch);
 	}
+	mutex_exit(&sc->sc_intr_lock);
 }
 
 static int
@@ -688,8 +691,6 @@ sunxi_codec_attach(device_t parent, device_t self, void *aux)
 
 	/* Optional PA mute GPIO */
 	sc->sc_pin_pa = fdtbus_gpio_acquire(phandle, "allwinner,pa-gpios", GPIO_PIN_OUTPUT);
-	if (sc->sc_pin_pa != NULL)
-		fdtbus_gpio_write(sc->sc_pin_pa, 1);
 
 	aprint_naive("\n");
 	aprint_normal(": %s\n", sc->sc_cfg->name);
