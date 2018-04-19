@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.h,v 1.43 2018/04/17 08:38:05 msaitoh Exp $ */
+/* $NetBSD: ixgbe.h,v 1.44 2018/04/19 06:04:31 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -173,8 +173,6 @@
 
 /* Flow control constants */
 #define IXGBE_FC_PAUSE        0xFFFF
-#define IXGBE_FC_HI           0x20000
-#define IXGBE_FC_LO           0x10000
 
 /*
  * Used for optimizing small rx mbufs.  Effort is made to keep the copy
