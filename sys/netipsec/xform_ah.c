@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ah.c,v 1.90 2018/04/18 17:58:07 maxv Exp $	*/
+/*	$NetBSD: xform_ah.c,v 1.91 2018/04/19 07:22:29 maxv Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ah.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ah.c,v 1.63 2001/06/26 06:18:58 angelos Exp $ */
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.90 2018/04/18 17:58:07 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.91 2018/04/19 07:22:29 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -778,7 +778,6 @@ ah_input_cb(struct cryptop *crp)
 	protoff = tc->tc_protoff;
 	m = crp->crp_buf;
 
-
 	/* find the source port for NAT-T */
 	nat_t_ports_get(m, &dport, &sport);
 
@@ -878,7 +877,7 @@ ah_input_cb(struct cryptop *crp)
 		    sizeof(seq), &seq);
 		if (ipsec_updatereplay(ntohl(seq), sav)) {
 			AH_STATINC(AH_STAT_REPLAY);
-			error = ENOBUFS; /* XXX as above */
+			error = ENOBUFS; /* XXX */
 			goto bad;
 		}
 	}
@@ -1160,7 +1159,7 @@ bad_crp:
 bad:
 	if (m)
 		m_freem(m);
-	return (error);
+	return error;
 }
 
 /*
