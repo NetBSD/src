@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.h,v 1.90 2018/02/09 18:31:52 maxv Exp $	*/
+/*	$NetBSD: in6.h,v 1.91 2018/04/19 21:22:02 christos Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -720,7 +720,7 @@ int in6_tunnel_validate(const struct ip6_hdr *, const struct in6_addr *,
 #define	sin6tocsa(sin6)	((const struct sockaddr *)(sin6))
 #define	ifatoia6(ifa)	((struct in6_ifaddr *)(ifa))
 
-static inline void
+static __inline void
 sockaddr_in6_init1(struct sockaddr_in6 *sin6, const struct in6_addr *addr,
     in_port_t port, uint32_t flowinfo, uint32_t scope_id)
 {
@@ -730,7 +730,7 @@ sockaddr_in6_init1(struct sockaddr_in6 *sin6, const struct in6_addr *addr,
 	sin6->sin6_scope_id = scope_id;
 }
 
-static inline void
+static __inline void
 sockaddr_in6_init(struct sockaddr_in6 *sin6, const struct in6_addr *addr,
     in_port_t port, uint32_t flowinfo, uint32_t scope_id)
 {
@@ -739,7 +739,7 @@ sockaddr_in6_init(struct sockaddr_in6 *sin6, const struct in6_addr *addr,
 	sockaddr_in6_init1(sin6, addr, port, flowinfo, scope_id);
 }
 
-static inline struct sockaddr *
+static __inline struct sockaddr *
 sockaddr_in6_alloc(const struct in6_addr *addr, in_port_t port,
     uint32_t flowinfo, uint32_t scope_id, int flags)
 {
