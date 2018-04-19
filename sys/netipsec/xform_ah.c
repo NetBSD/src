@@ -1,5 +1,5 @@
-/*	$NetBSD: xform_ah.c,v 1.91 2018/04/19 07:22:29 maxv Exp $	*/
-/*	$FreeBSD: src/sys/netipsec/xform_ah.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
+/*	$NetBSD: xform_ah.c,v 1.92 2018/04/19 08:27:39 maxv Exp $	*/
+/*	$FreeBSD: xform_ah.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ah.c,v 1.63 2001/06/26 06:18:58 angelos Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.91 2018/04/19 07:22:29 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.92 2018/04/19 08:27:39 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
