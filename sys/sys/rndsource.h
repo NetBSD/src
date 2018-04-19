@@ -1,4 +1,4 @@
-/*	$NetBSD: rndsource.h,v 1.5 2016/02/17 00:43:43 riastradh Exp $	*/
+/*	$NetBSD: rndsource.h,v 1.6 2018/04/19 21:19:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ typedef struct krndsource {
 	unsigned	refcnt;
 } krndsource_t;
 
-static inline void
+static __inline void
 rndsource_setcb(struct krndsource *const rs, void (*const cb)(size_t, void *),
     void *const arg)
 {
@@ -76,7 +76,7 @@ rndsource_setcb(struct krndsource *const rs, void (*const cb)(size_t, void *),
 	rs->getarg = arg;
 }
 
-static inline void
+static __inline void
 rndsource_setenable(struct krndsource *const rs, void *const cb)
 {
 	rs->enable = cb;
@@ -95,7 +95,7 @@ void		rnd_attach_source(krndsource_t *, const char *,
 		    uint32_t, uint32_t);
 void		rnd_detach_source(krndsource_t *);
 
-static inline void
+static __inline void
 rnd_add_uint32(krndsource_t *kr, uint32_t val)
 {
 	if (__predict_true(kr)) {
@@ -107,7 +107,7 @@ rnd_add_uint32(krndsource_t *kr, uint32_t val)
 	}
 }
 
-static inline void
+static __inline void
 rnd_add_uint64(krndsource_t *kr, uint64_t val)
 {
 	if (__predict_true(kr)) {
