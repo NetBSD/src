@@ -1,6 +1,8 @@
-/*	$NetBSD: nvmectl.c,v 1.4 2017/05/03 01:37:16 christos Exp $	*/
+/*	$NetBSD: nvmectl.c,v 1.4.2.1 2018/04/19 15:37:56 martin Exp $	*/
 
 /*-
+ * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
+ *
  * Copyright (C) 2012-2013 Intel Corporation
  * All rights reserved.
  *
@@ -28,9 +30,9 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: nvmectl.c,v 1.4 2017/05/03 01:37:16 christos Exp $");
+__RCSID("$NetBSD: nvmectl.c,v 1.4.2.1 2018/04/19 15:37:56 martin Exp $");
 #if 0
-__FBSDID("$FreeBSD: head/sbin/nvmecontrol/nvmecontrol.c 314229 2017-02-25 00:09:12Z imp $");
+__FBSDID("$FreeBSD: head/sbin/nvmecontrol/nvmecontrol.c 329824 2018-02-22 13:32:31Z wma $");
 #endif
 #endif
 
@@ -52,7 +54,7 @@ __FBSDID("$FreeBSD: head/sbin/nvmecontrol/nvmecontrol.c 314229 2017-02-25 00:09:
 
 #include "nvmectl.h"
 
-static struct nvme_function funcs[] = {
+static const struct nvme_function funcs[] = {
 	{"devlist",	devlist,	DEVLIST_USAGE},
 	{"identify",	identify,	IDENTIFY_USAGE},
 #ifdef PERFTEST_USAGE
@@ -71,21 +73,21 @@ static struct nvme_function funcs[] = {
 };
 
 static __dead void
-gen_usage(struct nvme_function *f)
+gen_usage(const struct nvme_function *f)
 {
 
 	fprintf(stderr, "usage:\n");
 	while (f->name != NULL) {
-		fprintf(stderr, "%s", f->usage);
+		fprintf(stderr, "\t%s %s", getprogname(), f->usage);
 		f++;
 	}
 	exit(1);
 }
 
 __dead void
-dispatch(int argc, char *argv[], struct nvme_function *tbl)
+dispatch(int argc, char *argv[], const struct nvme_function *tbl)
 {
-	struct nvme_function *f = tbl;
+	const struct nvme_function *f = tbl;
 
 	if (argv[1] == NULL)
 		gen_usage(tbl);
@@ -165,6 +167,9 @@ read_controller_data(int fd, struct nvm_identify_controller *cdata)
 
 	if (nvme_completion_is_error(&pt.cpl))
 		errx(1, "identify request returned error");
+
+	/* Convert data to host endian */
+	nvme_identify_controller_swapbytes(cdata);
 }
 
 void
@@ -184,6 +189,9 @@ read_namespace_data(int fd, int nsid, struct nvm_identify_namespace *nsdata)
 
 	if (nvme_completion_is_error(&pt.cpl))
 		errx(1, "identify request returned error");
+
+	/* Convert data to host endian */
+	nvme_identify_namespace_swapbytes(nsdata);
 }
 
 int
@@ -238,48 +246,10 @@ parse_ns_str(const char *ns_str, char *ctrlr_str, int *nsid)
 	snprintf(ctrlr_str, nsloc - ns_str + 1, "%s", ns_str);
 }
 
-void
-nvme_strvis(u_char *dst, int dlen, const u_char *src, int slen)
-{
-#define STRVIS_ISWHITE(x) ((x) == ' ' || (x) == '\0' || (x) == (u_char)'\377')
-	/* Trim leading and trailing blanks and NULs. */
-	while (slen > 0 && STRVIS_ISWHITE(src[0]))
-		++src, --slen;
-	while (slen > 0 && STRVIS_ISWHITE(src[slen - 1]))
-		--slen;
-
-	while (slen > 0) {
-		if (*src < 0x20 || *src >= 0x80) {
-			/* non-printable characters */
-			dlen -= 4;
-			if (dlen < 1)
-				break;
-			*dst++ = '\\';
-			*dst++ = ((*src & 0300) >> 6) + '0';
-			*dst++ = ((*src & 0070) >> 3) + '0';
-			*dst++ = ((*src & 0007) >> 0) + '0';
-		} else if (*src == '\\') {
-			/* quote characters */
-			dlen -= 2;
-			if (dlen < 1)
-				break;
-			*dst++ = '\\';
-			*dst++ = '\\';
-		} else {
-			/* normal characters */
-			if (--dlen < 1)
-				break;
-			*dst++ = *src;
-		}
-		++src, --slen;
-	}
-
-	*dst++ = 0;
-}
-
 int
 main(int argc, char *argv[])
 {
+	setprogname(argv[0]);
 
 	if (argc < 2)
 		gen_usage(funcs);

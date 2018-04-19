@@ -1,6 +1,8 @@
-/*	$NetBSD: devlist.c,v 1.2 2016/06/04 20:59:49 joerg Exp $	*/
+/*	$NetBSD: devlist.c,v 1.2.8.1 2018/04/19 15:37:56 martin Exp $	*/
 
 /*-
+ * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
+ *
  * Copyright (C) 2012-2013 Intel Corporation
  * All rights reserved.
  *
@@ -28,9 +30,9 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: devlist.c,v 1.2 2016/06/04 20:59:49 joerg Exp $");
+__RCSID("$NetBSD: devlist.c,v 1.2.8.1 2018/04/19 15:37:56 martin Exp $");
 #if 0
-__FBSDID("$FreeBSD: head/sbin/nvmecontrol/devlist.c 260381 2014-01-06 23:48:47Z jimharris $");
+__FBSDID("$FreeBSD: head/sbin/nvmecontrol/devlist.c 329824 2018-02-22 13:32:31Z wma $");
 #endif
 #endif
 
@@ -52,7 +54,7 @@ __dead static void
 devlist_usage(void)
 {
 	fprintf(stderr, "usage:\n");
-	fprintf(stderr, DEVLIST_USAGE);
+	fprintf(stderr, "\t%s " DEVLIST_USAGE, getprogname());
 	exit(1);
 }
 
