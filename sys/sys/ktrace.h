@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.h,v 1.65 2016/09/13 07:39:45 martin Exp $	*/
+/*	$NetBSD: ktrace.h,v 1.66 2018/04/19 21:19:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -304,7 +304,7 @@ void ktr_execfd(int, u_int);
 
 int  ktrace_common(lwp_t *, int, int, int, file_t **);
 
-static inline int
+static __inline int
 ktrenter(lwp_t *l)
 {
 
@@ -314,118 +314,118 @@ ktrenter(lwp_t *l)
 	return 0;
 }
 
-static inline void
+static __inline void
 ktrexit(lwp_t *l)
 {
 
 	l->l_pflag &= ~LP_KTRACTIVE;
 }
 
-static inline bool
+static __inline bool
 ktrpoint(int fac)
 {
     return __predict_false(ktrace_on) && __predict_false(ktr_point(1 << fac));
 }
 
-static inline void
+static __inline void
 ktrcsw(int a, int b)
 {
 	if (__predict_false(ktrace_on))
 		ktr_csw(a, b);
 }
 
-static inline void
+static __inline void
 ktremul(void)
 {
 	if (__predict_false(ktrace_on))
 		ktr_emul();
 }
 
-static inline void
+static __inline void
 ktrgenio(int a, enum uio_rw b, const void *c, size_t d, int e)
 {
 	if (__predict_false(ktrace_on))
 		ktr_genio(a, b, c, d, e);
 }
 
-static inline void
+static __inline void
 ktrgeniov(int a, enum uio_rw b, struct iovec *c, int d, int e)
 {
 	if (__predict_false(ktrace_on))
 		ktr_geniov(a, b, c, d, e);
 }
 
-static inline void
+static __inline void
 ktrmibio(int a, enum uio_rw b, const void *c, size_t d, int e)
 {
 	if (__predict_false(ktrace_on))
 		ktr_mibio(a, b, c, d, e);
 }
 
-static inline void
+static __inline void
 ktrnamei(const char *a, size_t b)
 {
 	if (__predict_false(ktrace_on))
 		ktr_namei(a, b);
 }
 
-static inline void
+static __inline void
 ktrnamei2(const char *a, size_t b, const char *c, size_t d)
 {
 	if (__predict_false(ktrace_on))
 		ktr_namei2(a, b, c, d);
 }
 
-static inline void
+static __inline void
 ktrpsig(int a, sig_t b, const sigset_t *c, const ksiginfo_t * d)
 {
 	if (__predict_false(ktrace_on))
 		ktr_psig(a, b, c, d);
 }
 
-static inline void
+static __inline void
 ktrsyscall(register_t code, const register_t args[], int narg)
 {
 	if (__predict_false(ktrace_on))
 		ktr_syscall(code, args, narg);
 }
 
-static inline void
+static __inline void
 ktrsysret(register_t a, int b, register_t *c)
 {
 	if (__predict_false(ktrace_on))
 		ktr_sysret(a, b, c);
 }
 
-static inline void
+static __inline void
 ktrkuser(const char *a, const void *b, size_t c)
 {
 	if (__predict_false(ktrace_on))
 		ktr_kuser(a, b, c);
 }
 
-static inline void
+static __inline void
 ktrmib(const int *a , u_int b)
 {
 	if (__predict_false(ktrace_on))
 		ktr_mib(a, b);
 }
 
-static inline void
+static __inline void
 ktrexecarg(const void *a, size_t b)
 {
 	if (__predict_false(ktrace_on))
 		ktr_execarg(a, b);
 }
 
-static inline void
+static __inline void
 ktrexecenv(const void *a, size_t b)
 {
 	if (__predict_false(ktrace_on))
 		ktr_execenv(a, b);
 }
 
-static inline void
+static __inline void
 ktrexecfd(int fd, u_int dtype)
 {
 	if (__predict_false(ktrace_on))

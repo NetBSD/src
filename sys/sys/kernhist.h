@@ -1,4 +1,4 @@
-/*	$NetBSD: kernhist.h,v 1.22 2017/11/03 22:45:14 pgoyette Exp $	*/
+/*	$NetBSD: kernhist.h,v 1.23 2018/04/19 21:19:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -257,7 +257,7 @@ do { \
 #define KERNHIST_DUMP(NAME)
 #endif
 
-static inline void
+static __inline void
 kernhist_entry_print(const struct kern_history_ent *e, void (*pr)(const char *, ...) __printflike(1, 2))
 {
 	struct timeval tv;

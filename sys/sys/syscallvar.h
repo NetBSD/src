@@ -1,4 +1,4 @@
-/*	$NetBSD: syscallvar.h,v 1.11 2015/09/24 14:34:22 christos Exp $	*/
+/*	$NetBSD: syscallvar.h,v 1.12 2018/04/19 21:19:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@ void	syscall_init(void);
 int	syscall_establish(const struct emul *, const struct syscall_package *);
 int	syscall_disestablish(const struct emul *, const struct syscall_package *);
 
-static inline int
+static __inline int
 sy_call(const struct sysent *sy, struct lwp *l, const void *uap,
 	register_t *rval)
 {
@@ -68,7 +68,7 @@ sy_call(const struct sysent *sy, struct lwp *l, const void *uap,
 	return error;
 }
 
-static inline int
+static __inline int
 sy_invoke(const struct sysent *sy, struct lwp *l, const void *uap,
 	register_t *rval, int code)
 {

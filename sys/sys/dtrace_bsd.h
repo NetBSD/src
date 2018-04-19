@@ -1,4 +1,4 @@
-/*	$NetBSD: dtrace_bsd.h,v 1.8 2014/10/18 08:33:29 snj Exp $	*/
+/*	$NetBSD: dtrace_bsd.h,v 1.9 2018/04/19 21:19:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007-2008 John Birrell (jb@freebsd.org)
@@ -169,16 +169,16 @@ uint64_t	dtrace_gethrestime(void);
  * processes and lwps.
  */
 
-static inline size_t	kdtrace_proc_size(void);
-static inline void kdtrace_proc_ctor(void *, struct proc *);
-static inline void kdtrace_proc_dtor(void *, struct proc *);
-static inline size_t	kdtrace_thread_size(void);
-static inline void kdtrace_thread_ctor(void *, struct lwp *);
-static inline void kdtrace_thread_dtor(void *, struct lwp *);
+static __inline size_t	kdtrace_proc_size(void);
+static __inline void kdtrace_proc_ctor(void *, struct proc *);
+static __inline void kdtrace_proc_dtor(void *, struct proc *);
+static __inline size_t	kdtrace_thread_size(void);
+static __inline void kdtrace_thread_ctor(void *, struct lwp *);
+static __inline void kdtrace_thread_dtor(void *, struct lwp *);
 
 
 /* Return the DTrace process data size compiled in the kernel hooks. */
-static inline size_t
+static __inline size_t
 kdtrace_proc_size(void)
 {
 
@@ -186,14 +186,14 @@ kdtrace_proc_size(void)
 }
 
 /* Return the DTrace thread data size compiled in the kernel hooks. */
-static inline size_t
+static __inline size_t
 kdtrace_thread_size(void)
 {
 
 	return KDTRACE_THREAD_SIZE;
 }
 
-static inline void
+static __inline void
 kdtrace_proc_ctor(void *arg, struct proc *p)
 {
 
@@ -202,7 +202,7 @@ kdtrace_proc_ctor(void *arg, struct proc *p)
 #endif
 }
 
-static inline void
+static __inline void
 kdtrace_proc_dtor(void *arg, struct proc *p)
 {
 
@@ -214,7 +214,7 @@ kdtrace_proc_dtor(void *arg, struct proc *p)
 #endif
 }
 
-static inline void
+static __inline void
 kdtrace_thread_ctor(void *arg, struct lwp *l)
 {
 
@@ -223,7 +223,7 @@ kdtrace_thread_ctor(void *arg, struct lwp *l)
 #endif
 }
 
-static inline void
+static __inline void
 kdtrace_thread_dtor(void *arg, struct lwp *l)
 {
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.88 2017/01/06 22:53:17 kamil Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.89 2018/04/19 21:19:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -195,7 +195,7 @@ extern int	(*coredump_vec)(struct lwp *, const char *);
  *
  * 	Return the first signal in a signal set.
  */
-static inline int
+static __inline int
 firstsig(const sigset_t *ss)
 {
 	int sig;
@@ -221,13 +221,13 @@ firstsig(const sigset_t *ss)
 	return (0);
 }
 
-static inline void
+static __inline void
 ksiginfo_queue_init(ksiginfoq_t *kq)
 {
 	TAILQ_INIT(kq);
 }
 
-static inline void
+static __inline void
 ksiginfo_queue_drain(ksiginfoq_t *kq)
 {
 	if (!TAILQ_EMPTY(kq))

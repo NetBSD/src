@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.279 2018/01/09 03:31:13 christos Exp $	*/
+/*	$NetBSD: vnode.h,v 1.280 2018/04/19 21:19:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -550,7 +550,7 @@ void	vn_ra_allocctx(struct vnode *);
 int	vn_fifo_bypass(void *);
 
 #ifdef DIAGNOSTIC
-static inline bool
+static __inline bool
 vn_locked(struct vnode *_vp)
 {
 
@@ -558,7 +558,7 @@ vn_locked(struct vnode *_vp)
 	    VOP_ISLOCKED(_vp) == LK_EXCLUSIVE;
 }
 
-static inline bool
+static __inline bool
 vn_anylocked(struct vnode *_vp)
 {
 

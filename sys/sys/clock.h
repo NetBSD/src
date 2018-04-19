@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.h,v 1.3 2014/11/17 17:11:29 christos Exp $	*/
+/*	$NetBSD: clock.h,v 1.4 2018/04/19 21:19:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
 #define	POSIX_BASE_YEAR	1970
 
 /* Some handy functions */
-static inline int
+static __inline int
 days_in_month(int m)
 {
 	switch (m) {
@@ -68,7 +68,7 @@ days_in_month(int m)
  *     ((year % 400) == 0) )
  * It is otherwise equivalent.
  */
-static inline int
+static __inline int
 is_leap_year(uint64_t year)
 {
 	if ((year & 3) != 0)
@@ -80,7 +80,7 @@ is_leap_year(uint64_t year)
 	return __predict_false((year % 400) == 0);
 }
 
-static inline int
+static __inline int
 days_per_year(uint64_t year)
 {
 	return is_leap_year(year) ? DAYS_PER_LEAP_YEAR : DAYS_PER_COMMON_YEAR;

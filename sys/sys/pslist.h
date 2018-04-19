@@ -1,4 +1,4 @@
-/*	$NetBSD: pslist.h,v 1.4 2016/11/18 06:41:52 riastradh Exp $	*/
+/*	$NetBSD: pslist.h,v 1.5 2018/04/19 21:19:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -61,21 +61,21 @@ struct pslist_entry {
  * excluding writers and readers.
  */
 
-static inline void
+static __inline void
 pslist_init(struct pslist_head *head)
 {
 
 	head->plh_first = NULL;
 }
 
-static inline void
+static __inline void
 pslist_destroy(struct pslist_head *head __diagused)
 {
 
 	_PSLIST_ASSERT(head->plh_first == NULL);
 }
 
-static inline void
+static __inline void
 pslist_entry_init(struct pslist_entry *entry)
 {
 
@@ -83,7 +83,7 @@ pslist_entry_init(struct pslist_entry *entry)
 	entry->ple_prevp = NULL;
 }
 
-static inline void
+static __inline void
 pslist_entry_destroy(struct pslist_entry *entry)
 {
 
@@ -109,7 +109,7 @@ pslist_entry_destroy(struct pslist_entry *entry)
  * memory barriers is inconsequential.
  */
 
-static inline void
+static __inline void
 pslist_writer_insert_head(struct pslist_head *head, struct pslist_entry *new)
 {
 
@@ -126,7 +126,7 @@ pslist_writer_insert_head(struct pslist_head *head, struct pslist_entry *new)
 	head->plh_first = new;
 }
 
-static inline void
+static __inline void
 pslist_writer_insert_before(struct pslist_entry *entry,
     struct pslist_entry *new)
 {
@@ -144,7 +144,7 @@ pslist_writer_insert_before(struct pslist_entry *entry,
 	entry->ple_prevp = &new->ple_next;
 }
 
-static inline void
+static __inline void
 pslist_writer_insert_after(struct pslist_entry *entry,
     struct pslist_entry *new)
 {
@@ -163,7 +163,7 @@ pslist_writer_insert_after(struct pslist_entry *entry,
 	entry->ple_next = new;
 }
 
-static inline void
+static __inline void
 pslist_writer_remove(struct pslist_entry *entry)
 {
 
@@ -184,14 +184,14 @@ pslist_writer_remove(struct pslist_entry *entry)
 	 */
 }
 
-static inline struct pslist_entry *
+static __inline struct pslist_entry *
 pslist_writer_first(const struct pslist_head *head)
 {
 
 	return head->plh_first;
 }
 
-static inline struct pslist_entry *
+static __inline struct pslist_entry *
 pslist_writer_next(const struct pslist_entry *entry)
 {
 
@@ -199,7 +199,7 @@ pslist_writer_next(const struct pslist_entry *entry)
 	return entry->ple_next;
 }
 
-static inline void *
+static __inline void *
 _pslist_writer_first_container(const struct pslist_head *head,
     const ptrdiff_t offset)
 {
@@ -208,7 +208,7 @@ _pslist_writer_first_container(const struct pslist_head *head,
 	return (first == NULL ? NULL : (char *)first - offset);
 }
 
-static inline void *
+static __inline void *
 _pslist_writer_next_container(const struct pslist_entry *entry,
     const ptrdiff_t offset)
 {
@@ -225,7 +225,7 @@ _pslist_writer_next_container(const struct pslist_entry *entry,
  * dereferencing the resulting pointer.
  */
 
-static inline struct pslist_entry *
+static __inline struct pslist_entry *
 pslist_reader_first(const struct pslist_head *head)
 {
 	struct pslist_entry *first = head->plh_first;
@@ -236,7 +236,7 @@ pslist_reader_first(const struct pslist_head *head)
 	return first;
 }
 
-static inline struct pslist_entry *
+static __inline struct pslist_entry *
 pslist_reader_next(const struct pslist_entry *entry)
 {
 	struct pslist_entry *next = entry->ple_next;
@@ -248,7 +248,7 @@ pslist_reader_next(const struct pslist_entry *entry)
 	return next;
 }
 
-static inline void *
+static __inline void *
 _pslist_reader_first_container(const struct pslist_head *head,
     const ptrdiff_t offset)
 {
@@ -261,7 +261,7 @@ _pslist_reader_first_container(const struct pslist_head *head,
 	return (char *)first - offset;
 }
 
-static inline void *
+static __inline void *
 _pslist_reader_next_container(const struct pslist_entry *entry,
     const ptrdiff_t offset)
 {

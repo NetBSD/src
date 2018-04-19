@@ -1,4 +1,4 @@
-/* $NetBSD: gcq.h,v 1.2 2007/08/19 07:35:32 kiyohara Exp $ */
+/* $NetBSD: gcq.h,v 1.3 2018/04/19 21:19:07 christos Exp $ */
 /*
  * Not (c) 2007 Matthew Orgass
  * This file is public domain, meaning anyone can make any use of part or all 
@@ -50,61 +50,61 @@ struct gcq_head {
 #define GCQ_INIT(q) { &(q), &(q) }
 #define GCQ_INIT_HEAD(head) { GCQ_INIT((head).hq) }
 
-__attribute__((nonnull, always_inline)) static inline void
+__attribute__((nonnull, always_inline)) static __inline void
 gcq_init(struct gcq *q)
 {
 	q->q_next = q->q_prev = q;
 }
 
 __attribute__((nonnull, const, warn_unused_result, always_inline)) 
-static inline struct gcq *
+static __inline struct gcq *
 gcq_q(struct gcq *q)
 {
 	return q;
 }
 
 __attribute__((nonnull, const, warn_unused_result, always_inline)) 
-static inline struct gcq *
+static __inline struct gcq *
 gcq_hq(struct gcq_head *head)
 {
 	return (struct gcq *)head;
 }
 
 __attribute__((nonnull, const, warn_unused_result, always_inline)) 
-static inline struct gcq_head *
+static __inline struct gcq_head *
 gcq_head(struct gcq *q)
 {
 	return (struct gcq_head *)q;
 }
 
-__attribute__((nonnull, always_inline)) static inline void
+__attribute__((nonnull, always_inline)) static __inline void
 gcq_init_head(struct gcq_head *head)
 {
 	gcq_init(gcq_hq(head));
 }
 
 __attribute__((nonnull, pure, warn_unused_result, always_inline))
-static inline bool
+static __inline bool
 gcq_onlist(struct gcq *q)
 {
 	return (q->q_next != q);
 }
 
 __attribute__((nonnull, pure, warn_unused_result, always_inline))
-static inline bool
+static __inline bool
 gcq_empty(struct gcq_head *head)
 {
 	return (!gcq_onlist(gcq_hq(head)));
 }
 
 __attribute__((nonnull, pure, warn_unused_result, always_inline))
-static inline bool
+static __inline bool
 gcq_linked(struct gcq *prev, struct gcq *next)
 {
 	return (prev->q_next == next && next->q_prev == prev);
 }
 
-__attribute__((nonnull, always_inline)) static inline void
+__attribute__((nonnull, always_inline)) static __inline void
 gcq_insert_after(struct gcq *on, struct gcq *off)
 {
 	struct gcq *on_next;
@@ -117,7 +117,7 @@ gcq_insert_after(struct gcq *on, struct gcq *off)
 	on->q_next = off;
 }
 
-__attribute__((nonnull)) static inline void
+__attribute__((nonnull)) static __inline void
 gcq_insert_before(struct gcq *on, struct gcq *off)
 {
 	struct gcq *on_prev;
@@ -130,19 +130,19 @@ gcq_insert_before(struct gcq *on, struct gcq *off)
 	on->q_prev = off;
 }
 
-__attribute__((nonnull, always_inline)) static inline void
+__attribute__((nonnull, always_inline)) static __inline void
 gcq_insert_head(struct gcq_head *head, struct gcq *q)
 {
 	gcq_insert_after(gcq_hq(head), q);
 }
 
-__attribute__((nonnull, always_inline)) static inline void
+__attribute__((nonnull, always_inline)) static __inline void
 gcq_insert_tail(struct gcq_head *head, struct gcq *q)
 {
 	gcq_insert_before(gcq_hq(head), q);
 }
 
-__attribute__((nonnull)) static inline void
+__attribute__((nonnull)) static __inline void
 gcq_tie(struct gcq *dst, struct gcq *src)
 {
 	struct gcq *dst_next, *src_prev;
@@ -155,20 +155,20 @@ gcq_tie(struct gcq *dst, struct gcq *src)
 	dst->q_next = src;
 }
 
-__attribute__((nonnull, always_inline)) static inline void
+__attribute__((nonnull, always_inline)) static __inline void
 gcq_tie_after(struct gcq *dst, struct gcq *src)
 {
 	GCQ_ASSERT(dst != src && dst->q_prev != src);
 	gcq_tie(dst, src);
 }
 
-__attribute__((nonnull, always_inline)) static inline void
+__attribute__((nonnull, always_inline)) static __inline void
 gcq_tie_before(struct gcq *dst, struct gcq *src)
 {
 	gcq_tie_after(dst->q_prev, src);
 }
 
-__attribute__((nonnull)) static inline struct gcq *
+__attribute__((nonnull)) static __inline struct gcq *
 gcq_remove(struct gcq *q)
 {
 	struct gcq *next, *prev;
@@ -182,7 +182,7 @@ gcq_remove(struct gcq *q)
 }
 
 #ifdef GCQ_UNCONDITIONAL_MERGE
-__attribute__((nonnull)) static inline void
+__attribute__((nonnull)) static __inline void
 gcq_merge(struct gcq *dst, struct gcq *src)
 {
 	GCQ_ASSERT(dst != src && dst->q_prev != src);
@@ -190,19 +190,19 @@ gcq_merge(struct gcq *dst, struct gcq *src)
 	gcq_tie(src, src);
 }
 
-__attribute__((nonnull, always_inline)) static inline void
+__attribute__((nonnull, always_inline)) static __inline void
 gcq_merge_head(struct gcq_head *dst, struct gcq_head *src)
 {
 	gcq_merge(gcq_hq(dst), gcq_hq(src));
 }
 
-__attribute__((nonnull, always_inline)) static inline void
+__attribute__((nonnull, always_inline)) static __inline void
 gcq_merge_tail(struct gcq_head *dst, struct gcq_head *src)
 {
 	gcq_merge(gcq_hq(dst)->q_prev, gcq_hq(src));
 }
 #else
-__attribute__((nonnull)) static inline void
+__attribute__((nonnull)) static __inline void
 gcq_merge(struct gcq *dst, struct gcq *src)
 {
 	struct gcq *dst_next, *src_prev, *src_next;
@@ -221,20 +221,20 @@ gcq_merge(struct gcq *dst, struct gcq *src)
 	}
 }
 
-__attribute__((nonnull, always_inline)) static inline void
+__attribute__((nonnull, always_inline)) static __inline void
 gcq_merge_head(struct gcq_head *dst, struct gcq_head *src)
 {
 	gcq_merge(gcq_hq(dst), gcq_hq(src));
 }
 
-__attribute__((nonnull, always_inline)) static inline void
+__attribute__((nonnull, always_inline)) static __inline void
 gcq_merge_tail(struct gcq_head *dst, struct gcq_head *src)
 {
 	gcq_merge(gcq_hq(dst)->q_prev, gcq_hq(src));
 }
 #endif
 
-__attribute__((nonnull)) static inline void
+__attribute__((nonnull)) static __inline void
 gcq_clear(struct gcq *q)
 {
 	struct gcq *nq, *next;
@@ -246,13 +246,13 @@ gcq_clear(struct gcq *q)
 	} while (next != q);
 }
 
-__attribute__((nonnull, always_inline)) static inline void
+__attribute__((nonnull, always_inline)) static __inline void
 gcq_remove_all(struct gcq_head *head)
 {
 	gcq_clear(gcq_hq(head));
 }
 
-__attribute__((nonnull, always_inline)) static inline struct gcq *
+__attribute__((nonnull, always_inline)) static __inline struct gcq *
 _gcq_next(struct gcq *current, struct gcq_head *head, struct gcq *start)
 {
 	struct gcq *q, *hq;
@@ -265,7 +265,7 @@ _gcq_next(struct gcq *current, struct gcq_head *head, struct gcq *start)
 	return q;
 }
 
-__attribute__((nonnull, always_inline)) static inline struct gcq *
+__attribute__((nonnull, always_inline)) static __inline struct gcq *
 _gcq_prev(struct gcq *current, struct gcq_head *head, struct gcq *start)
 {
 	struct gcq *q, *hq;
