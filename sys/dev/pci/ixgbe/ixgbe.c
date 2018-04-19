@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.148 2018/04/17 08:38:05 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.149 2018/04/19 07:40:12 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -208,7 +208,7 @@ static void     ixgbe_update_link_status(struct adapter *);
 static void	ixgbe_set_ivar(struct adapter *, u8, u8, s8);
 static void	ixgbe_configure_ivars(struct adapter *);
 static u8 *	ixgbe_mc_array_itr(struct ixgbe_hw *, u8 **, u32 *);
-static void	ixgbe_eitr_write(struct ix_queue *, uint32_t);
+static void	ixgbe_eitr_write(struct adapter *, uint32_t, uint32_t);
 
 static void	ixgbe_setup_vlan_hw_support(struct adapter *);
 #if 0
@@ -2559,7 +2559,7 @@ ixgbe_msix_que(void *arg)
 	 *    the last interval.
 	 */
 	if (que->eitr_setting)
-		ixgbe_eitr_write(que, que->eitr_setting);
+		ixgbe_eitr_write(adapter, que->msix, que->eitr_setting);
 
 	que->eitr_setting = 0;
 
@@ -3042,16 +3042,15 @@ ixgbe_msix_link(void *arg)
 } /* ixgbe_msix_link */
 
 static void
-ixgbe_eitr_write(struct ix_queue *que, uint32_t itr)
+ixgbe_eitr_write(struct adapter *adapter, uint32_t index, uint32_t itr)
 {
-	struct adapter *adapter = que->adapter;
 	
         if (adapter->hw.mac.type == ixgbe_mac_82598EB)
                 itr |= itr << 16;
         else
                 itr |= IXGBE_EITR_CNT_WDIS;
 
-	IXGBE_WRITE_REG(&adapter->hw, IXGBE_EITR(que->msix), itr);
+	IXGBE_WRITE_REG(&adapter->hw, IXGBE_EITR(index), itr);
 }
 
 
@@ -3099,7 +3098,7 @@ ixgbe_sysctl_interrupt_rate_handler(SYSCTLFN_ARGS)
 		ixgbe_max_interrupt_rate = rate;
 	} else
 		ixgbe_max_interrupt_rate = 0;
-	ixgbe_eitr_write(que, reg);
+	ixgbe_eitr_write(adapter, que->msix, reg);
 
 	return (0);
 } /* ixgbe_sysctl_interrupt_rate_handler */
@@ -3919,7 +3918,7 @@ ixgbe_init_locked(struct adapter *adapter)
 	}
 
 	/* Set moderation on the Link interrupt */
-	IXGBE_WRITE_REG(hw, IXGBE_EITR(adapter->vector), IXGBE_LINK_ITR);
+	ixgbe_eitr_write(adapter, adapter->vector, IXGBE_LINK_ITR);
 
 	/* Enable power to the phy. */
 	ixgbe_set_phy_power(hw, TRUE);
@@ -4054,7 +4053,7 @@ ixgbe_configure_ivars(struct adapter *adapter)
 		/* ... and the TX */
 		ixgbe_set_ivar(adapter, txr->me, que->msix, 1);
 		/* Set an Initial EITR value */
-		ixgbe_eitr_write(que, newitr);
+		ixgbe_eitr_write(adapter, que->msix, newitr);
 		/*
 		 * To eliminate influence of the previous state.
 		 * At this point, Tx/Rx interrupt handler
