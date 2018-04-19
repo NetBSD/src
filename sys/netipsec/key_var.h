@@ -1,5 +1,5 @@
-/*	$NetBSD: key_var.h,v 1.3 2005/12/10 23:44:08 elad Exp $	*/
-/*	$FreeBSD: src/sys/netipsec/key_var.h,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
+/*	$NetBSD: key_var.h,v 1.4 2018/04/19 08:27:38 maxv Exp $	*/
+/*	$FreeBSD: key_var.h,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: key_var.h,v 1.11 2001/09/12 23:05:07 sakane Exp $	*/
 
 /*
