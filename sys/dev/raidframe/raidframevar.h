@@ -1,4 +1,4 @@
-/*	$NetBSD: raidframevar.h,v 1.18 2018/01/18 00:32:49 mrg Exp $ */
+/*	$NetBSD: raidframevar.h,v 1.19 2018/04/19 21:50:09 christos Exp $ */
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -475,7 +475,7 @@ typedef struct RF_ComponentLabel_s {
  * Following four functions are access macros for the number of blocks
  * and partition size in component label.
  */
-static inline RF_SectorCount_t
+static __inline RF_SectorCount_t
 rf_component_label_numblocks(const RF_ComponentLabel_t *cl)
 {
 
@@ -483,7 +483,7 @@ rf_component_label_numblocks(const RF_ComponentLabel_t *cl)
 	    cl->__numBlocks;
 }
 
-static inline void
+static __inline void
 rf_component_label_set_numblocks(RF_ComponentLabel_t *cl, RF_SectorCount_t siz)
 {
 
@@ -491,7 +491,7 @@ rf_component_label_set_numblocks(RF_ComponentLabel_t *cl, RF_SectorCount_t siz)
 	cl->__numBlocks = siz;
 }
 
-static inline RF_SectorCount_t
+static __inline RF_SectorCount_t
 rf_component_label_partitionsize(const RF_ComponentLabel_t *cl)
 {
 
@@ -499,7 +499,7 @@ rf_component_label_partitionsize(const RF_ComponentLabel_t *cl)
 	    cl->__partitionSize;
 }
 
-static inline void
+static __inline void
 rf_component_label_set_partitionsize(RF_ComponentLabel_t *cl,
     RF_SectorCount_t siz)
 {

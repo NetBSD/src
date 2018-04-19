@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.h,v 1.29 2018/01/21 14:18:21 maxv Exp $	*/
+/*	$NetBSD: ieee80211_node.h,v 1.30 2018/04/19 21:50:10 christos Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -325,19 +325,19 @@ struct ieee80211_scanparams {
  * ieee80211_node_refcnt	reference count for printing (only)
  */
 
-static inline void
+static __inline void
 ieee80211_node_initref(struct ieee80211_node *ni)
 {
 	ni->ni_refcnt = 1;
 }
 
-static inline void
+static __inline void
 ieee80211_node_incref(struct ieee80211_node *ni)
 {
 	atomic_inc_uint(&ni->ni_refcnt);
 }
 
-static inline void
+static __inline void
 ieee80211_node_decref(struct ieee80211_node *ni)
 {
 	atomic_dec_uint(&ni->ni_refcnt);
@@ -345,7 +345,7 @@ ieee80211_node_decref(struct ieee80211_node *ni)
 
 int ieee80211_node_dectestref(struct ieee80211_node *ni);
 
-static inline unsigned int
+static __inline unsigned int
 ieee80211_node_refcnt(const struct ieee80211_node *ni)
 {
 	return ni->ni_refcnt;

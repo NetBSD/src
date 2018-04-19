@@ -1,4 +1,4 @@
-/*	$NetBSD: nor.h,v 1.4 2011/08/02 20:44:09 cliff Exp $	*/
+/*	$NetBSD: nor.h,v 1.5 2018/04/19 21:50:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011 Department of Software Engineering,
@@ -136,7 +136,7 @@ struct nor_attach_args {
 	struct nor_interface *naa_nor_if;
 };
 
-static inline bool
+static __inline bool
 nor_busy(device_t device, flash_off_t offset, u_long usec)
 {
 	struct nor_softc *sc = device_private(device);
@@ -159,7 +159,7 @@ nor_busy(device_t device, flash_off_t offset, u_long usec)
 	return rv;
 }
 
-static inline void
+static __inline void
 nor_select(device_t self, bool enable)
 {
 	struct nor_softc *sc = device_private(self);
@@ -170,7 +170,7 @@ nor_select(device_t self, bool enable)
 	sc->sc_nor_if->select(sc->sc_controller_dev, enable);
 }
 
-static inline void
+static __inline void
 nor_read_1(device_t self, flash_off_t offset, uint8_t *data)
 {
 	struct nor_softc *sc = device_private(self);
@@ -181,7 +181,7 @@ nor_read_1(device_t self, flash_off_t offset, uint8_t *data)
 	sc->sc_nor_if->read_1(sc->sc_controller_dev, offset, data);
 }
 
-static inline void
+static __inline void
 nor_read_2(device_t self, flash_off_t offset, uint16_t *data)
 {
 	struct nor_softc *sc = device_private(self);
@@ -192,7 +192,7 @@ nor_read_2(device_t self, flash_off_t offset, uint16_t *data)
 	sc->sc_nor_if->read_2(sc->sc_controller_dev, offset, data);
 }
 
-static inline void
+static __inline void
 nor_read_4(device_t self, flash_off_t offset, uint32_t *data)
 {
 	struct nor_softc *sc = device_private(self);
@@ -203,7 +203,7 @@ nor_read_4(device_t self, flash_off_t offset, uint32_t *data)
 	sc->sc_nor_if->read_4(sc->sc_controller_dev, offset, data);
 }
 
-static inline void
+static __inline void
 nor_write_1(device_t self, flash_off_t offset, uint8_t data)
 {
 	struct nor_softc *sc = device_private(self);
@@ -214,7 +214,7 @@ nor_write_1(device_t self, flash_off_t offset, uint8_t data)
 	sc->sc_nor_if->write_1(sc->sc_controller_dev, offset, data);
 }
 
-static inline void
+static __inline void
 nor_write_2(device_t self, flash_off_t offset, uint16_t data)
 {
 	struct nor_softc *sc = device_private(self);
@@ -225,7 +225,7 @@ nor_write_2(device_t self, flash_off_t offset, uint16_t data)
 	sc->sc_nor_if->write_2(sc->sc_controller_dev, offset, data);
 }
 
-static inline void
+static __inline void
 nor_write_4(device_t self, flash_off_t offset, uint16_t data)
 {
 	struct nor_softc *sc = device_private(self);
@@ -236,7 +236,7 @@ nor_write_4(device_t self, flash_off_t offset, uint16_t data)
 	sc->sc_nor_if->write_4(sc->sc_controller_dev, offset, data);
 }
 
-static inline void
+static __inline void
 nor_read_buf_1(device_t self, flash_off_t offset, void *buf, size_t size)
 {
 	struct nor_softc *sc = device_private(self);
@@ -247,7 +247,7 @@ nor_read_buf_1(device_t self, flash_off_t offset, void *buf, size_t size)
 	sc->sc_nor_if->read_buf_1(sc->sc_controller_dev, offset, buf, size);
 }
 
-static inline void
+static __inline void
 nor_read_buf_2(device_t self, flash_off_t offset, void *buf, size_t size)
 {
 	struct nor_softc *sc = device_private(self);
@@ -258,7 +258,7 @@ nor_read_buf_2(device_t self, flash_off_t offset, void *buf, size_t size)
 	sc->sc_nor_if->read_buf_2(sc->sc_controller_dev, offset, buf, size);
 }
 
-static inline void
+static __inline void
 nor_read_buf_4(device_t self, flash_off_t offset, void *buf, size_t size)
 {
 	struct nor_softc *sc = device_private(self);
@@ -269,7 +269,7 @@ nor_read_buf_4(device_t self, flash_off_t offset, void *buf, size_t size)
 	sc->sc_nor_if->read_buf_4(sc->sc_controller_dev, offset, buf, size);
 }
 
-static inline void
+static __inline void
 nor_write_buf_1(device_t self, flash_off_t offset, const void *buf, size_t size)
 {
 	struct nor_softc *sc = device_private(self);
@@ -280,7 +280,7 @@ nor_write_buf_1(device_t self, flash_off_t offset, const void *buf, size_t size)
 	sc->sc_nor_if->write_buf_1(sc->sc_controller_dev, offset, buf, size);
 }
 
-static inline void
+static __inline void
 nor_write_buf_2(device_t self, flash_off_t offset, const void *buf, size_t size)
 {
 	struct nor_softc *sc = device_private(self);
@@ -291,7 +291,7 @@ nor_write_buf_2(device_t self, flash_off_t offset, const void *buf, size_t size)
 	sc->sc_nor_if->write_buf_2(sc->sc_controller_dev, offset, buf, size);
 }
 
-static inline void
+static __inline void
 nor_write_buf_4(device_t self, flash_off_t offset, const void *buf, size_t size)
 {
 	struct nor_softc *sc = device_private(self);
@@ -302,7 +302,7 @@ nor_write_buf_4(device_t self, flash_off_t offset, const void *buf, size_t size)
 	sc->sc_nor_if->write_buf_4(sc->sc_controller_dev, offset, buf, size);
 }
 
-static inline int
+static __inline int
 nor_read_page(device_t self, flash_off_t offset, uint8_t *data)
 {
 	struct nor_softc *sc = device_private(self);
@@ -312,7 +312,7 @@ nor_read_page(device_t self, flash_off_t offset, uint8_t *data)
 	return sc->sc_nor_if->read_page(self, offset, data);
 }
 
-static inline int
+static __inline int
 nor_program_page(device_t self, flash_off_t offset, const uint8_t *data)
 {
 	struct nor_softc *sc = device_private(self);
@@ -322,7 +322,7 @@ nor_program_page(device_t self, flash_off_t offset, const uint8_t *data)
 	return sc->sc_nor_if->program_page(self, offset, data);
 }
 
-static inline int
+static __inline int
 nor_erase_all(device_t self)
 {
 	struct nor_softc *sc = device_private(self);
@@ -332,7 +332,7 @@ nor_erase_all(device_t self)
 	return sc->sc_nor_if->erase_all(self);
 }
 
-static inline int
+static __inline int
 nor_erase_block(device_t self, flash_off_t offset)
 {
 	struct nor_softc *sc = device_private(self);

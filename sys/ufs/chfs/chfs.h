@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs.h,v 1.9 2015/01/11 17:29:57 hannken Exp $	*/
+/*	$NetBSD: chfs.h,v 1.10 2018/04/19 21:50:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -165,7 +165,7 @@ enum {
  * Nrefs are allocated in blocks, get the (in-memory) next. Usually the next
  * doesn't belongs to the same vnode.
  */
-static inline struct chfs_node_ref *
+static __inline struct chfs_node_ref *
 node_next(struct chfs_node_ref *nref)
 {
 	/* step to the next nref in the same block */
@@ -239,7 +239,7 @@ struct chfs_node_frag {
 };
 
 /* find the first fragment of a data node */
-static inline struct chfs_node_frag *
+static __inline struct chfs_node_frag *
 frag_first(struct rb_tree *tree)
 {
 	struct chfs_node_frag *frag;
@@ -250,7 +250,7 @@ frag_first(struct rb_tree *tree)
 }
 
 /* find the last fragment of a data node */
-static inline struct chfs_node_frag *
+static __inline struct chfs_node_frag *
 frag_last(struct rb_tree *tree)
 {
 	struct chfs_node_frag *frag;
@@ -507,7 +507,7 @@ void chfs_mark_node_obsolete(struct chfs_mount *, struct chfs_node_ref *);
  * Find out the corresponding vnode cache from an nref.
  * Every last element of a linked list of nrefs is the vnode cache.
  */
-static inline struct chfs_vnode_cache *
+static __inline struct chfs_vnode_cache *
 chfs_nref_to_vc(struct chfs_node_ref *nref)
 {
 	/* iterate the whole list */
@@ -673,7 +673,7 @@ int	chfs_update(struct vnode *, const struct timespec *,
 /* Some inline functions temporarily placed here */
 
 /* chfs_map_leb - corresponds to ebh_map_leb */
-static inline int
+static __inline int
 chfs_map_leb(struct chfs_mount *chmp, int lnr)
 {
 	int err;
@@ -687,7 +687,7 @@ chfs_map_leb(struct chfs_mount *chmp, int lnr)
 }
 
 /* chfs_unmap_leb - corresponds to ebh_unmap_leb */
-static inline int
+static __inline int
 chfs_unmap_leb(struct chfs_mount *chmp, int lnr)
 {
 	int err;
@@ -700,7 +700,7 @@ chfs_unmap_leb(struct chfs_mount *chmp, int lnr)
 }
 
 /* chfs_read_leb - corresponds to ebh_read_leb */
-static inline int
+static __inline int
 chfs_read_leb(struct chfs_mount *chmp, int lnr, char *buf,
     int offset, int len, size_t *retlen)
 {
@@ -715,7 +715,7 @@ chfs_read_leb(struct chfs_mount *chmp, int lnr, char *buf,
 }
 
 /* chfs_write_leb - corresponds to ebh_write_leb */
-static inline int chfs_write_leb(struct chfs_mount *chmp, int lnr, char *buf,
+static __inline int chfs_write_leb(struct chfs_mount *chmp, int lnr, char *buf,
     int offset, int len, size_t *retlen)
 {
 	int err;

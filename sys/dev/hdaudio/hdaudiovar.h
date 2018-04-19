@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudiovar.h,v 1.5 2015/12/23 12:45:06 jmcneill Exp $ */
+/* $NetBSD: hdaudiovar.h,v 1.6 2018/04/19 21:50:08 christos Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -185,13 +185,13 @@ int	hdaudio_stream_tag(struct hdaudio_stream *);
 uint16_t hdaudio_stream_param(struct hdaudio_stream *, const audio_params_t *);
 
 #ifdef HDAUDIO_32BIT_ACCESS
-static inline uint8_t
+static __inline uint8_t
 _hda_read1(struct hdaudio_softc *sc, bus_size_t off)
 {
 	return bus_space_read_4(sc->sc_memt, sc->sc_memh, off & -4) >>
 	    (8 * (off & 3));
 }
-static inline uint16_t
+static __inline uint16_t
 _hda_read2(struct hdaudio_softc *sc, bus_size_t off)
 {
 	return bus_space_read_4(sc->sc_memt, sc->sc_memh, off & -4) >>
@@ -201,7 +201,7 @@ _hda_read2(struct hdaudio_softc *sc, bus_size_t off)
 #define hda_read2			_hda_read2
 #define	hda_read4(sc, off)		\
 	bus_space_read_4((sc)->sc_memt, (sc)->sc_memh, (off))
-static inline void
+static __inline void
 _hda_write1(struct hdaudio_softc *sc, bus_size_t off, uint8_t val)
 {
 	const size_t shift = 8 * (off & 3);
@@ -210,7 +210,7 @@ _hda_write1(struct hdaudio_softc *sc, bus_size_t off, uint8_t val)
 	tmp = (val << shift) | (tmp & ~(0xff << shift));
 	bus_space_write_4(sc->sc_memt, sc->sc_memh, off, tmp);
 }
-static inline void
+static __inline void
 _hda_write2(struct hdaudio_softc *sc, bus_size_t off, uint16_t val)
 {
 	const size_t shift = 8 * (off & 2);

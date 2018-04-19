@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.21 2012/07/27 22:13:58 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.22 2018/04/19 21:50:07 christos Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -88,13 +88,13 @@ extern void intr_init(void);
  * macros because register address is encoded as immediate
  * operand.
  */
-static inline void
+static __inline void
 mtdcr(int reg, uint32_t val)
 {
 	__asm volatile("mtdcr %0,%1" : : "K"(reg), "r"(val));
 }
 
-static inline uint32_t
+static __inline uint32_t
 mfdcr(int reg)
 {
 	uint32_t val;	
@@ -103,14 +103,14 @@ mfdcr(int reg)
 	return val;
 }
 
-static inline void
+static __inline void
 mtcpr(int reg, uint32_t val)
 {
 	mtdcr(DCR_CPR0_CFGADDR, reg);
 	mtdcr(DCR_CPR0_CFGDATA, val);
 }
 
-static inline uint32_t
+static __inline uint32_t
 mfcpr(int reg)
 {
 	mtdcr(DCR_CPR0_CFGADDR, reg);
@@ -124,7 +124,7 @@ mtsdr(int reg, uint32_t val)
 	mtdcr(DCR_SDR0_CFGDATA, val);
 }
 
-static inline uint32_t
+static __inline uint32_t
 mfsdr(int reg)
 {
 	mtdcr(DCR_SDR0_CFGADDR, reg);

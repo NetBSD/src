@@ -67,7 +67,7 @@ int _m_explode(struct mbuf *);
 int _m_collapse(struct mbuf *, int maxbufs, struct mbuf **);
 void mb_free_vec(struct mbuf *m);
 
-static inline void 
+static __inline void 
 m_iovinit(struct mbuf *m) 
 { 
     struct mbuf_vec *mv = mtomv(m); 
@@ -77,7 +77,7 @@ m_iovinit(struct mbuf *m)
     m->m_flags |= M_IOVEC; 
 } 
  
-static inline void 
+static __inline void 
 m_iovappend(struct mbuf *m, uint8_t *cl, int size, int len, int offset)
 { 
     struct mbuf_vec *mv = mtomv(m);
@@ -99,7 +99,7 @@ m_iovappend(struct mbuf *m, uint8_t *cl, int size, int len, int offset)
         mv->mv_count++;
 } 
 
-static inline int
+static __inline int
 m_explode(struct mbuf *m)
 {
     if ((m->m_flags & M_IOVEC) == 0)
@@ -108,7 +108,7 @@ m_explode(struct mbuf *m)
     return _m_explode(m); 
 } 
  
-static inline int
+static __inline int
 m_collapse(struct mbuf *m, int maxbufs, struct mbuf **mnew) 
 {
 #if (!defined(__sparc64__) && !defined(__sun4v__))  
@@ -121,13 +121,13 @@ m_collapse(struct mbuf *m, int maxbufs, struct mbuf **mnew)
     return _m_collapse(m, maxbufs, mnew);
 } 
 
-static inline struct mbuf *
+static __inline struct mbuf *
 m_free_vec(struct mbuf *m)
 {
     return m_free(m);
 }
 
-static inline void 
+static __inline void 
 m_freem_vec(struct mbuf *m)
 {
     while (m != NULL)
