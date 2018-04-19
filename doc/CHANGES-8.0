@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.187 2018/04/18 14:50:39 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.188 2018/04/19 15:38:22 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -13103,4 +13103,36 @@ sys/arch/zaurus/conf/GENERIC
 
 	Remove options DIAGNOSTIC again.
 	[snj, ticket #60]
+
+sbin/nvmectl/Makefile				1.4
+sbin/nvmectl/bignum.c				1.2
+sbin/nvmectl/devlist.c				1.3-1.5
+sbin/nvmectl/firmware.c				1.3,1.4
+sbin/nvmectl/identify.c				1.3-1.5
+sbin/nvmectl/logpage.c				1.5-1.7
+sbin/nvmectl/nvme.h				1.3
+sbin/nvmectl/nvmectl.8				1.5
+sbin/nvmectl/nvmectl.c				1.5-1.7
+sbin/nvmectl/nvmectl.h				1.5-1.8
+sbin/nvmectl/perftest.c				1.3-1.5
+sbin/nvmectl/power.c				1.3,1.4
+sbin/nvmectl/reset.c				1.2,1.3
+sbin/nvmectl/util.c				1.1,1.2
+sbin/nvmectl/wdc.c				1.2-1.4
+sys/dev/ic/ld_nvme.c				1.20
+sys/dev/ic/nvme.c				1.38,1.39
+sys/dev/ic/nvmeio.h				1.2
+sys/dev/ic/nvmereg.h				1.10,1.11
+sys/dev/ic/nvmevar.h				1.16
+sys/dev/pci/nvme_pci.c				1.20
+
+	nvmectl(8): Sync with FreeBSD nvmecontrol(8) r328763.
+	nvmectl(8): fix wdc command usage.
+	nvme(4): Added some delay before check RDY bit quirk when
+	disabling device.
+	Add some new structure fileds, opcodes and statuses from NVMe 1.3a.
+	nvmectl(8): Add big-endian support.
+	nvmectl(8): fix subcommand usage.
+	nvmectl(8): Remove some wdc subcommands from man page.
+	[nonaka, ticket #781]
 
