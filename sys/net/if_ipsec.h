@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipsec.h,v 1.1 2018/01/10 10:56:30 knakahara Exp $  */
+/*	$NetBSD: if_ipsec.h,v 1.2 2018/04/19 21:20:43 christos Exp $  */
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -111,21 +111,21 @@ struct ipsec_softc {
 #define IV_SP_OUT(x) ((x)->iv_sp[IPSEC_DIR_OUTBOUND])
 #define IV_SP_OUT6(x) ((x)->iv_sp6[IPSEC_DIR_OUTBOUND])
 
-static inline bool
+static __inline bool
 if_ipsec_variant_is_configured(struct ipsec_variant *var)
 {
 
 	return (var->iv_psrc != NULL && var->iv_pdst != NULL);
 }
 
-static inline bool
+static __inline bool
 if_ipsec_variant_is_unconfigured(struct ipsec_variant *var)
 {
 
 	return (var->iv_psrc == NULL || var->iv_pdst == NULL);
 }
 
-static inline void
+static __inline void
 if_ipsec_copy_variant(struct ipsec_variant *dst, struct ipsec_variant *src)
 {
 
@@ -139,7 +139,7 @@ if_ipsec_copy_variant(struct ipsec_variant *dst, struct ipsec_variant *src)
 	dst->iv_dport = src->iv_dport;
 }
 
-static inline void
+static __inline void
 if_ipsec_clear_config(struct ipsec_variant *var)
 {
 
@@ -160,7 +160,7 @@ if_ipsec_clear_config(struct ipsec_variant *var)
  * Once a reader dereference sc->sc_var by this API, the reader must not
  * re-dereference from sc->sc_var.
  */
-static inline struct ipsec_variant *
+static __inline struct ipsec_variant *
 if_ipsec_getref_variant(struct ipsec_softc *sc, struct psref *psref)
 {
 	struct ipsec_variant *var;
@@ -176,7 +176,7 @@ if_ipsec_getref_variant(struct ipsec_softc *sc, struct psref *psref)
 	return var;
 }
 
-static inline void
+static __inline void
 if_ipsec_putref_variant(struct ipsec_variant *var, struct psref *psref)
 {
 
@@ -184,7 +184,7 @@ if_ipsec_putref_variant(struct ipsec_variant *var, struct psref *psref)
 	psref_release(psref, &var->iv_psref, iv_psref_class);
 }
 
-static inline bool
+static __inline bool
 if_ipsec_heldref_variant(struct ipsec_variant *var)
 {
 

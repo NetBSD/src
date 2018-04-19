@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.h,v 1.31 2018/02/13 08:43:26 maxv Exp $	*/
+/*	$NetBSD: if_arp.h,v 1.32 2018/04/19 21:20:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1986, 1993
@@ -73,19 +73,19 @@ struct	arphdr {
 #endif
 } __packed;
 
-static inline uint8_t *
+static __inline uint8_t *
 ar_sha(struct arphdr *ap)
 {
 	return ((uint8_t *)(ap + 1)) + 0;
 }
 
-static inline uint8_t *
+static __inline uint8_t *
 ar_spa(struct arphdr *ap)
 {
 	return ((uint8_t *)(ap + 1)) + ap->ar_hln;
 }
 
-static inline uint8_t *
+static __inline uint8_t *
 ar_tha(struct arphdr *ap)
 {
 	if (ntohs(ap->ar_hrd) == ARPHRD_IEEE1394) {
@@ -95,7 +95,7 @@ ar_tha(struct arphdr *ap)
 	}
 }
 
-static inline uint8_t *
+static __inline uint8_t *
 ar_tpa(struct arphdr *ap)
 {
 	if (ntohs(ap->ar_hrd) == ARPHRD_IEEE1394) {

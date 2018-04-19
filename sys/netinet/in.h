@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.104 2018/02/09 18:31:52 maxv Exp $	*/
+/*	$NetBSD: in.h,v 1.105 2018/04/19 21:21:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -601,7 +601,7 @@ int sockaddr_in_cmp(const struct sockaddr *, const struct sockaddr *);
 const void *sockaddr_in_const_addr(const struct sockaddr *, socklen_t *);
 void *sockaddr_in_addr(struct sockaddr *, socklen_t *);
 
-static inline void
+static __inline void
 sockaddr_in_init1(struct sockaddr_in *sin, const struct in_addr *addr,
     in_port_t port)
 {
@@ -610,7 +610,7 @@ sockaddr_in_init1(struct sockaddr_in *sin, const struct in_addr *addr,
 	memset(sin->sin_zero, 0, sizeof(sin->sin_zero));
 }
 
-static inline void
+static __inline void
 sockaddr_in_init(struct sockaddr_in *sin, const struct in_addr *addr,
     in_port_t port)
 {
@@ -619,7 +619,7 @@ sockaddr_in_init(struct sockaddr_in *sin, const struct in_addr *addr,
 	sockaddr_in_init1(sin, addr, port);
 }
 
-static inline struct sockaddr *
+static __inline struct sockaddr *
 sockaddr_in_alloc(const struct in_addr *addr, in_port_t port, int flags)
 {
 	struct sockaddr *sa;
