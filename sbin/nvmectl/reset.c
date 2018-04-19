@@ -1,6 +1,8 @@
-/*	$NetBSD: reset.c,v 1.1 2016/06/04 16:29:35 nonaka Exp $	*/
+/*	$NetBSD: reset.c,v 1.1.8.1 2018/04/19 15:37:56 martin Exp $	*/
 
 /*-
+ * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
+ *
  * Copyright (C) 2012-2013 Intel Corporation
  * All rights reserved.
  *
@@ -28,9 +30,9 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: reset.c,v 1.1 2016/06/04 16:29:35 nonaka Exp $");
+__RCSID("$NetBSD: reset.c,v 1.1.8.1 2018/04/19 15:37:56 martin Exp $");
 #if 0
-__FBSDID("$FreeBSD: head/sbin/nvmecontrol/reset.c 253109 2013-07-09 21:14:15Z jimharris $");
+__FBSDID("$FreeBSD: head/sbin/nvmecontrol/reset.c 326276 2017-11-27 15:37:16Z pfg $");
 #endif
 #endif
 
@@ -51,7 +53,7 @@ static void
 reset_usage(void)
 {
 	fprintf(stderr, "usage:\n");
-	fprintf(stderr, RESET_USAGE);
+	fprintf(stderr, "\t%s " RESET_USAGE, getprogname());
 	exit(1);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: power.c,v 1.2 2016/06/04 20:59:49 joerg Exp $	*/
+/*	$NetBSD: power.c,v 1.2.8.1 2018/04/19 15:37:56 martin Exp $	*/
 
 /*-
  * Copyright (c) 2016 Netflix, Inc
@@ -28,9 +28,9 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: power.c,v 1.2 2016/06/04 20:59:49 joerg Exp $");
+__RCSID("$NetBSD: power.c,v 1.2.8.1 2018/04/19 15:37:56 martin Exp $");
 #if 0
-__FBSDID("$FreeBSD: head/sbin/nvmecontrol/power.c 296672 2016-03-11 17:25:18Z dim $");
+__FBSDID("$FreeBSD: head/sbin/nvmecontrol/power.c 329824 2018-02-22 13:32:31Z wma $");
 #endif
 #endif
 
@@ -52,7 +52,7 @@ __dead static void
 power_usage(void)
 {
 	fprintf(stderr, "usage:\n");
-	fprintf(stderr, POWER_USAGE);
+	fprintf(stderr, "\t%s " POWER_USAGE, getprogname());
 	exit(1);
 }
 
@@ -104,7 +104,7 @@ power_set(int fd, int power_val, int workload, int perm)
 	p = perm ? (1u << 31) : 0;
 	memset(&pt, 0, sizeof(pt));
 	pt.cmd.opcode = NVM_ADMIN_SET_FEATURES;
-	pt.cmd.cdw10 = NVME_FEAT_POWER_MANAGEMENT | p;
+	pt.cmd.cdw10 = NVM_FEAT_POWER_MANAGEMENT | p;
 	pt.cmd.cdw11 = power_val | (workload << 5);
 
 	if (ioctl(fd, NVME_PASSTHROUGH_CMD, &pt) < 0)
@@ -121,7 +121,7 @@ power_show(int fd)
 
 	memset(&pt, 0, sizeof(pt));
 	pt.cmd.opcode = NVM_ADMIN_GET_FEATURES;
-	pt.cmd.cdw10 = NVME_FEAT_POWER_MANAGEMENT;
+	pt.cmd.cdw10 = NVM_FEAT_POWER_MANAGEMENT;
 
 	if (ioctl(fd, NVME_PASSTHROUGH_CMD, &pt) < 0)
 		err(1, "set feature power mgmt request failed");
