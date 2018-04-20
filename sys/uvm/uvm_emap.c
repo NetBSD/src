@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_emap.c,v 1.12 2018/04/02 18:25:41 jdolecek Exp $	*/
+/*	$NetBSD: uvm_emap.c,v 1.13 2018/04/20 19:02:18 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  *
  * Map pages at the address:
  *
- *	uvm_emap_enter(va, pgs, npages);
+ *	uvm_emap_enter(va, pgs, npages, VM_PROT_READ);
  *	gen = uvm_emap_produce();
  *
  * Read pages via the mapping:
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_emap.c,v 1.12 2018/04/02 18:25:41 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_emap.c,v 1.13 2018/04/20 19:02:18 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -185,14 +185,14 @@ uvm_emap_free(vaddr_t va, size_t size)
  * uvm_emap_enter: enter a new mapping, without TLB flush.
  */
 void
-uvm_emap_enter(vaddr_t va, struct vm_page **pgs, u_int npages)
+uvm_emap_enter(vaddr_t va, struct vm_page **pgs, u_int npages, vm_prot_t prot)
 {
 	paddr_t pa;
 	u_int n;
 
 	for (n = 0; n < npages; n++, va += PAGE_SIZE) {
 		pa = VM_PAGE_TO_PHYS(pgs[n]);
-		pmap_emap_enter(va, pa, VM_PROT_READ);
+		pmap_emap_enter(va, pa, prot);
 	}
 }
 
@@ -387,14 +387,14 @@ uvm_emap_update(u_int gen)
  */
 
 void
-uvm_emap_enter(vaddr_t va, struct vm_page **pgs, u_int npages)
+uvm_emap_enter(vaddr_t va, struct vm_page **pgs, u_int npages, vm_prot_t prot)
 {
 	paddr_t pa;
 	u_int n;
 
 	for (n = 0; n < npages; n++, va += PAGE_SIZE) {
 		pa = VM_PAGE_TO_PHYS(pgs[n]);
-		pmap_kenter_pa(va, pa, VM_PROT_READ, 0);
+		pmap_kenter_pa(va, pa, prot, 0);
 	}
 	pmap_update(pmap_kernel());
 }
