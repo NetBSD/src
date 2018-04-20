@@ -1,10 +1,10 @@
-/*	$NetBSD: rtadvd.h,v 1.15 2017/02/27 05:41:36 ozaki-r Exp $	*/
+/*	$NetBSD: rtadvd.h,v 1.16 2018/04/20 10:39:37 roy Exp $	*/
 /*	$KAME: rtadvd.h,v 1.30 2005/10/17 14:40:02 suz Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -16,7 +16,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -38,7 +38,7 @@
 
 #define IN6ADDR_SITELOCAL_ALLROUTERS_INIT \
 	{{{ 0xff, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, \
- 	    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02 }}}
+	    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02 }}}
 
 //extern struct sockaddr_in6 sin6_linklocal_allnodes;
 //extern struct sockaddr_in6 sin6_linklocal_allrouters;
@@ -156,7 +156,7 @@ struct	rainfo {
 	uint16_t	lifetime;	/* AdvDefaultLifetime */
 	uint16_t	maxinterval;	/* MaxRtrAdvInterval */
 	uint16_t	mininterval;	/* MinRtrAdvInterval */
-	int 	managedflg;	/* AdvManagedFlag */
+	int	managedflg;	/* AdvManagedFlag */
 	int	otherflg;	/* AdvOtherConfigFlag */
 
 	int	rtpref;		/* router preference */
