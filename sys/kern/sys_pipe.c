@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.143 2017/12/26 08:30:58 kamil Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.144 2018/04/20 19:02:18 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.143 2017/12/26 08:30:58 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.144 2018/04/20 19:02:18 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -747,7 +747,8 @@ pipe_direct_write(file_t *fp, struct pipe *wpipe, struct uio *uio)
 	}
 
 	/* Enter the loaned pages to KVA, produce new emap generation number. */
-	uvm_emap_enter(wmap->kva + ptoa(starting_color), pgs, npages);
+	uvm_emap_enter(wmap->kva + ptoa(starting_color), pgs, npages,
+	    VM_PROT_READ);
 	wmap->egen = uvm_emap_produce();
 
 	/* Now we can put the pipe in direct write mode */
