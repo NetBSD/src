@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.c,v 1.15 2018/04/20 10:39:37 roy Exp $	*/
+/*	$NetBSD: timer.c,v 1.16 2018/04/20 13:27:45 roy Exp $	*/
 /*	$KAME: timer.c,v 1.11 2005/04/14 06:22:35 suz Exp $	*/
 
 /*
@@ -36,6 +36,7 @@
 #include <limits.h>
 #include <unistd.h>
 #include <syslog.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 #include <search.h>
@@ -110,6 +111,9 @@ rtadvd_set_timer(struct timespec *tm, struct rtadvd_timer *timer)
 	/* upate the next expiration time */
 	if (timespeccmp(&timer->tm, &tm_max, <))
 		tm_max = timer->tm;
+
+	/* enable the timer */
+	timer->enabled = true;
 }
 
 /*
@@ -128,6 +132,8 @@ rtadvd_check_timer(void)
 	tm_max = tm_limit;
 
 	TAILQ_FOREACH_SAFE(tm, &ra_timer, next, tmn) {
+		if (!tm->enabled)
+			continue;
 		if (timespeccmp(&tm->tm, &now, <=)) {
 			if ((*tm->expire)(tm->expire_data) == NULL)
 				continue; /* the timer was removed */
@@ -157,9 +163,10 @@ rtadvd_timer_rest(struct rtadvd_timer *timer)
 
 	prog_clock_gettime(CLOCK_MONOTONIC, &now);
 	if (timespeccmp(&timer->tm, &now, <=)) {
-		logit(LOG_DEBUG,
-		       "<%s> a timer must be expired, but not yet",
-		       __func__);
+		if (timer->enabled)
+			logit(LOG_DEBUG,
+			       "<%s> a timer must be expired, but not yet",
+			       __func__);
 		returnval.tv_sec = 0;
 		returnval.tv_nsec = 0;
 	}
