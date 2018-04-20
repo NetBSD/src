@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.h,v 1.9 2018/04/20 10:39:37 roy Exp $	*/
+/*	$NetBSD: timer.h,v 1.10 2018/04/20 13:27:45 roy Exp $	*/
 /*	$KAME: timer.h,v 1.5 2002/05/31 13:30:38 jinmei Exp $	*/
 
 /*
@@ -35,6 +35,7 @@ struct rtadvd_timer {
 	TAILQ_ENTRY(rtadvd_timer) next;
 	struct rainfo *rai;
 	struct timespec tm;
+	bool enabled;
 
 	struct rtadvd_timer *(*expire) (void *); /* expiration function */
 	void *expire_data;
