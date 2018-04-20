@@ -1,4 +1,4 @@
-/*	$NetBSD: rtadvd.c,v 1.62 2018/04/20 10:43:38 roy Exp $	*/
+/*	$NetBSD: rtadvd.c,v 1.63 2018/04/20 11:25:39 roy Exp $	*/
 /*	$KAME: rtadvd.c,v 1.92 2005/10/17 14:40:02 suz Exp $	*/
 
 /*
@@ -183,6 +183,7 @@ main(int argc, char *argv[])
 	int fflag = 0, logopt;
 	struct passwd *pw;
 	const char *pidfilepath = NULL;
+	pid_t pid;
 
 	/* get command line options and arguments */
 #define OPTIONS "c:dDfM:p:Rs"
@@ -226,9 +227,19 @@ main(int argc, char *argv[])
 		return EXIT_FAILURE;
 	}
 
-	if (prog_init && prog_init() == -1) {
-		err(EXIT_FAILURE, "init failed");
+	if ((pid = pidfile_lock(pidfilepath)) != 0) {
+		if (pid == -1)
+			logit(LOG_ERR, "pidfile_lock: %m");
+			/* Continue */
+		else {
+			logit(LOG_ERR, "Another instance of `%s' is running "
+			    "(pid %d); exiting.", getprogname(), pid);
+			return EXIT_FAILURE;
+		}
 	}
+
+	if (prog_init && prog_init() == -1)
+		err(EXIT_FAILURE, "init failed");
 
 	logopt = LOG_NDELAY | LOG_PID;
 	if (fflag)
@@ -260,24 +271,13 @@ main(int argc, char *argv[])
 	while (argc--)
 		getconfig(*argv++, 1);
 
-	if (!fflag)
+	if (!fflag) {
 		prog_daemon(1, 0);
+		if (pidfile_lock(pidfilepath) != 0)
+			logit(LOG_ERR, " pidfile_lock: %m");
+	}
 
 	sock_open();
-
-#ifdef __NetBSD__
-	/* record the current PID */
-	if (pidfile(pidfilepath) == -1) {
-		if (errno == EEXIST) {
-			logit(LOG_ERR, "Another instance of `%s' is running "
-			    "(pid %d); exiting.", getprogname(),
-			    pidfile_read(pidfilepath));
-			return EXIT_FAILURE;
-		}
-		logit(LOG_ERR, "Failed to open the pid log file `%s' (%m), "
-		    "run anyway.", pidfilepath);
-	}
-#endif
 
 	set[0].fd = sock;
 	set[0].events = POLLIN;
