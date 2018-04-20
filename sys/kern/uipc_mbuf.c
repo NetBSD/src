@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.192 2018/04/19 05:16:02 maxv Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.193 2018/04/20 06:01:59 maxv Exp $	*/
 
 /*
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.192 2018/04/19 05:16:02 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.193 2018/04/20 06:01:59 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
@@ -1112,7 +1112,7 @@ m_copyup(struct mbuf *n, int len, int dstoff)
 	int count, space;
 
 	KASSERT(len != M_COPYALL);
-	if (len > (MHLEN - dstoff))
+	if (len > ((int)MHLEN - dstoff))
 		goto bad;
 	m = m_get(M_DONTWAIT, n->m_type);
 	if (m == NULL)
