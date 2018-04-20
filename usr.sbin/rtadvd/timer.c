@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.c,v 1.16 2018/04/20 13:27:45 roy Exp $	*/
+/*	$NetBSD: timer.c,v 1.17 2018/04/20 15:59:17 roy Exp $	*/
 /*	$KAME: timer.c,v 1.11 2005/04/14 06:22:35 suz Exp $	*/
 
 /*
@@ -66,7 +66,7 @@ rtadvd_add_timer(struct rtadvd_timer *(*timeout) (void *),
 	if ((newtimer = malloc(sizeof(*newtimer))) == NULL) {
 		logit(LOG_ERR,
 		       "<%s> can't allocate memory", __func__);
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 
 	memset(newtimer, 0, sizeof(*newtimer));
@@ -74,7 +74,7 @@ rtadvd_add_timer(struct rtadvd_timer *(*timeout) (void *),
 	if (timeout == NULL) {
 		logit(LOG_ERR,
 		       "<%s> timeout function unspecified", __func__);
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 	newtimer->expire = timeout;
 	newtimer->update = update;
