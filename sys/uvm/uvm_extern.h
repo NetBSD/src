@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.209 2018/04/20 18:58:10 jdolecek Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.210 2018/04/20 19:02:18 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -632,7 +632,8 @@ void			uvm_emap_update(u_int);
 vaddr_t			uvm_emap_alloc(vsize_t, bool);
 void			uvm_emap_free(vaddr_t, size_t);
 
-void			uvm_emap_enter(vaddr_t, struct vm_page **, u_int);
+void			uvm_emap_enter(vaddr_t, struct vm_page **, u_int,
+			    vm_prot_t);
 void			uvm_emap_remove(vaddr_t, vsize_t);
 
 #ifdef __HAVE_PMAP_EMAP
