@@ -1,4 +1,4 @@
-/*	$NetBSD: rtadvd.c,v 1.64 2018/04/20 11:31:54 roy Exp $	*/
+/*	$NetBSD: rtadvd.c,v 1.65 2018/04/20 15:57:23 roy Exp $	*/
 /*	$KAME: rtadvd.c,v 1.92 2005/10/17 14:40:02 suz Exp $	*/
 
 /*
@@ -166,7 +166,7 @@ static void rs_input(int, struct nd_router_solicit *,
     struct in6_pktinfo *, struct sockaddr_in6 *);
 static void ra_input(int, struct nd_router_advert *,
     struct in6_pktinfo *, struct sockaddr_in6 *);
-static struct rainfo *ra_output(struct rainfo *);
+static struct rainfo *ra_output(struct rainfo *, bool);
 static int prefix_check(struct nd_opt_prefix_info *, struct rainfo *,
     struct sockaddr_in6 *);
 static int nd6_options(struct nd_opt_hdr *, int, union nd_opts *, uint32_t);
@@ -440,7 +440,7 @@ die(void)
 		rai->mininterval = MIN_DELAY_BETWEEN_RAS;
 		rai->maxinterval = MIN_DELAY_BETWEEN_RAS;
 		rai->leaving_adv = MAX_FINAL_RTR_ADVERTISEMENTS;
-		ra_output(rai);
+		ra_output(rai, false);
 		ra_timer_update(rai, &rai->timer->tm);
 		rtadvd_set_timer(&rai->timer->tm, rai->timer);
 	}
@@ -698,13 +698,16 @@ rtmsg_input(void)
 			    ra_timer_update, rai, rai);
 			ra_timer_update(rai, &rai->timer->tm);
 			rtadvd_set_timer(&rai->timer->tm, rai->timer);
+			rtadvd_remove_timer(&rai->timer_sol);
+			rai->timer_sol = rtadvd_add_timer(ra_timeout_sol,
+			    NULL, rai, NULL);
 		} else if (prefixchange && rai->ifflags & IFF_UP) {
 			/*
 			 * An advertised prefix has been added or invalidated.
 			 * Will notice the change in a short delay.
 			 */
 			rai->initcounter = 0;
-			ra_timer_set_short_delay(rai);
+			ra_timer_set_short_delay(rai, rai->timer);
 		}
 	}
 
@@ -965,12 +968,20 @@ rs_input(int len, struct nd_router_solicit *rs,
 	 */
 
 	/* record sockaddr waiting for RA, if possible */
-	sol = malloc(sizeof(*sol));
-	if (sol) {
-		sol->addr = *from;
-		/* XXX RFC2553 need clarification on flowinfo */
-		sol->addr.sin6_flowinfo = 0;
-		TAILQ_INSERT_HEAD(&rai->soliciter, sol, next);
+	TAILQ_FOREACH(sol, &rai->soliciter, next) {
+		if (IN6_ARE_ADDR_EQUAL(&sol->addr.sin6_addr, &from->sin6_addr))
+			break;
+	}
+	if (sol == NULL) {
+		sol = malloc(sizeof(*sol));
+		if (sol == NULL) {
+			logit(LOG_ERR, "%s: malloc: %m", __func__);
+		} else {
+			sol->addr = *from;
+			/* XXX RFC2553 need clarification on flowinfo */
+			sol->addr.sin6_flowinfo = 0;
+			TAILQ_INSERT_TAIL(&rai->soliciter, sol, next);
+		}
 	}
 
 	/*
@@ -980,14 +991,14 @@ rs_input(int len, struct nd_router_solicit *rs,
 	if (rai->waiting++)
 		goto done;
 
-	ra_timer_set_short_delay(rai);
+	ra_timer_set_short_delay(rai, rai->timer_sol);
 
 done:
 	free_ndopts(&ndopts);
 }
 
 void
-ra_timer_set_short_delay(struct rainfo *rai)
+ra_timer_set_short_delay(struct rainfo *rai, struct rtadvd_timer *timer)
 {
 	long delay;	/* must not be greater than 1000000 */
 	struct timespec interval, now, min_delay, tm_tmp, *rest;
@@ -1024,7 +1035,7 @@ ra_timer_set_short_delay(struct rainfo *rai)
 		timespecsub(&min_delay, &tm_tmp, &min_delay);
 		timespecadd(&min_delay, &interval, &interval);
 	}
-	rtadvd_set_timer(&interval, rai->timer);
+	rtadvd_set_timer(&interval, timer);
 }
 
 static void
@@ -1503,7 +1514,8 @@ sock_open(void)
 		exit(EXIT_FAILURE);
 	}
 
-	sndcmsgbuflen = CMSG_SPACE(sizeof(struct in6_pktinfo));
+	sndcmsgbuflen = CMSG_SPACE(sizeof(struct in6_pktinfo)) +
+				CMSG_SPACE(sizeof(int));
 	sndcmsgbuf = malloc(sndcmsgbuflen);
 	if (sndcmsgbuf == NULL) {
 		logit(LOG_ERR, "%s: malloc: %m", __func__);
@@ -1520,6 +1532,12 @@ sock_open(void)
 	if (prog_setsockopt(sock, IPPROTO_IPV6, IPV6_MULTICAST_HOPS, &on,
 		       sizeof(on)) == -1) {
 		logit(LOG_ERR, "%s: IPV6_MULTICAST_HOPS: %m", __func__);
+		exit(EXIT_FAILURE);
+	}
+	on = 255;
+	if (prog_setsockopt(sock, IPPROTO_IPV6, IPV6_UNICAST_HOPS, &on,
+		       sizeof(on)) == -1) {
+		logit(LOG_ERR, "%s: IPV6_UNICAST_HOPS: %m", __func__);
 		exit(EXIT_FAILURE);
 	}
 
@@ -1661,7 +1679,7 @@ if_indextorainfo(unsigned int idx)
 }
 
 struct rainfo *
-ra_output(struct rainfo *rai)
+ra_output(struct rainfo *rai, bool solicited)
 {
 	int i;
 	struct cmsghdr *cm;
@@ -1680,8 +1698,8 @@ ra_output(struct rainfo *rai)
 	sndmhdr.msg_iov[0].iov_base = (void *)rai->ra_data;
 	sndmhdr.msg_iov[0].iov_len = rai->ra_datalen;
 
-	cm = CMSG_FIRSTHDR(&sndmhdr);
 	/* specify the outgoing interface */
+	cm = CMSG_FIRSTHDR(&sndmhdr);
 	cm->cmsg_level = IPPROTO_IPV6;
 	cm->cmsg_type = IPV6_PKTINFO;
 	cm->cmsg_len = CMSG_LEN(sizeof(struct in6_pktinfo));
@@ -1693,34 +1711,37 @@ ra_output(struct rainfo *rai)
 	       "%s: send RA on %s, # of waitings = %d",
 	       __func__, rai->ifname, rai->waiting); 
 
-	i = prog_sendmsg(sock, &sndmhdr, 0);
+	if (solicited) {
+		/* unicast solicited RA's as per RFC 7772 */
+		while ((sol = TAILQ_FIRST(&rai->soliciter)) != NULL) {
+			sndmhdr.msg_name = (void *)&sol->addr;
+			i = prog_sendmsg(sock, &sndmhdr, 0);
+			if (i < 0 || (size_t)i != rai->ra_datalen)  {
+				if (i < 0) {
+					logit(LOG_ERR,
+					    "%s: unicast sendmsg on %s: %m",
+					    __func__, rai->ifname);
+				}
+			}
+			TAILQ_REMOVE(&rai->soliciter, sol, next);
+			free(sol);
+		}
 
+		/* reset waiting conter */
+		rai->waiting = 0;
+
+		/* disable timer */
+		rai->timer_sol->enabled = false;
+
+		return rai;
+	}
+
+	i = prog_sendmsg(sock, &sndmhdr, 0);
 	if (i < 0 || (size_t)i != rai->ra_datalen)  {
 		if (i < 0) {
 			logit(LOG_ERR, "%s: sendmsg on %s: %m",
 			       __func__, rai->ifname);
 		}
-	}
-
-	/*
-	 * unicast advertisements
-	 * XXX commented out.  reason: though spec does not forbit it, unicast
-	 * advert does not really help
-	 */
-	while ((sol = TAILQ_FIRST(&rai->soliciter)) != NULL) {
-#if 0
-		sndmhdr.msg_name = (void *)&sol->addr;
-		i = sendmsg(sock, &sndmhdr, 0);
-		if (i < 0 || i != rai->ra_datalen)  {
-			if (i < 0) {
-				logit(LOG_ERR,
-				    "%s: unicast sendmsg on %s: %m",
-				    __func__, rai->ifname);
-			}
-		}
-#endif
-		TAILQ_REMOVE(&rai->soliciter, sol, next);
-		free(sol);
 	}
 
 	if (rai->leaving_adv > 0) {
@@ -1738,7 +1759,7 @@ ra_output(struct rainfo *rai)
 			rai->leaving_for->timer = rtadvd_add_timer(ra_timeout,
 			    ra_timer_update,
 			    rai->leaving_for, rai->leaving_for);
-			ra_timer_set_short_delay(rai->leaving_for);
+			ra_timer_set_short_delay(rai->leaving_for, rai->timer);
 			rai->leaving_for->leaving = NULL;
 			free_rainfo(rai);
 			return NULL;
@@ -1752,29 +1773,36 @@ ra_output(struct rainfo *rai)
 
 	/* update timestamp */
 	prog_clock_gettime(CLOCK_MONOTONIC, &rai->lastsent);
-
-	/* reset waiting conter */
-	rai->waiting = 0;
-
 	return rai;
 }
 
-/* process RA timer */
+/* process unsolicited RA timer */
 struct rtadvd_timer *
 ra_timeout(void *data)
 {
 	struct rainfo *rai = (struct rainfo *)data;
 
-#ifdef notyet
-	/* if necessary, reconstruct the packet. */
-#endif
-
 	logit(LOG_DEBUG,
-	       "%s: RA timer on %s is expired",
+	       "%s: unsolicited RA timer on %s is expired",
 	       __func__, rai->ifname);
 
-	if (ra_output(rai))
+	if (ra_output(rai, false))
 		return rai->timer;
+	return NULL;
+}
+
+/* process solicited RA timer */
+struct rtadvd_timer *
+ra_timeout_sol(void *data)
+{
+	struct rainfo *rai = (struct rainfo *)data;
+
+	logit(LOG_DEBUG,
+	       "%s: solicited RA timer on %s is expired",
+	       __func__, rai->ifname);
+
+	if (ra_output(rai, true))
+		return rai->timer_sol;
 	return NULL;
 }
 
