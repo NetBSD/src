@@ -1,4 +1,4 @@
-/*	$NetBSD: rtadvd.h,v 1.16 2018/04/20 10:39:37 roy Exp $	*/
+/*	$NetBSD: rtadvd.h,v 1.17 2018/04/20 15:57:23 roy Exp $	*/
 /*	$KAME: rtadvd.h,v 1.30 2005/10/17 14:40:02 suz Exp $	*/
 
 /*
@@ -136,7 +136,8 @@ struct	rainfo {
 	TAILQ_ENTRY(rainfo) next;
 
 	/* timer related parameters */
-	struct rtadvd_timer *timer;
+	struct rtadvd_timer *timer;	/* unsolicited RA timer */
+	struct rtadvd_timer *timer_sol;	/* solicited RA timer */
 	int initcounter; /* counter for the first few advertisements */
 	struct timespec lastsent; /* timestamp when the latest RA was sent */
 	int waiting;		/* number of RS waiting for RA */
@@ -189,8 +190,9 @@ struct	rainfo {
 extern TAILQ_HEAD(ralist_head_t, rainfo) ralist;
 
 struct rtadvd_timer *ra_timeout(void *);
+struct rtadvd_timer *ra_timeout_sol(void *);
 void ra_timer_update(void *, struct timespec *);
-void ra_timer_set_short_delay(struct rainfo *);
+void ra_timer_set_short_delay(struct rainfo *, struct rtadvd_timer *);
 
 int prefix_match(struct in6_addr *, int, struct in6_addr *, int);
 struct rainfo *if_indextorainfo(unsigned int);
