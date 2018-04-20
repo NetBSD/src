@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_codec.c,v 1.4 2018/04/19 18:19:17 bouyer Exp $ */
+/* $NetBSD: sunxi_codec.c,v 1.5 2018/04/20 18:07:40 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_codec.c,v 1.4 2018/04/19 18:19:17 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_codec.c,v 1.5 2018/04/20 18:07:40 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -171,21 +171,6 @@ sunxi_codec_open(void *priv, int flags)
 static void
 sunxi_codec_close(void *priv)
 {
-}
-
-static int
-sunxi_codec_drain(void *priv)
-{
-	struct sunxi_codec_softc * const sc = priv;
-	uint32_t val;
-
-	val = CODEC_READ(sc, AC_DAC_FIFOC(sc));
-	CODEC_WRITE(sc, AC_DAC_FIFOC(sc), val | DAC_FIFOC_FIFO_FLUSH);
-
-	val = CODEC_READ(sc, AC_ADC_FIFOC(sc));
-	CODEC_WRITE(sc, AC_ADC_FIFOC(sc), val | ADC_FIFOC_FIFO_FLUSH);
-
-	return 0;
 }
 
 static int
@@ -479,6 +464,12 @@ sunxi_codec_halt_output(void *priv)
 	/* Disable DMA channel */
 	fdtbus_dma_halt(ch->ch_dma);
 
+	/* flush fifo */
+	val = CODEC_READ(sc, AC_DAC_FIFOC(sc));
+	CODEC_WRITE(sc, AC_DAC_FIFOC(sc), val | DAC_FIFOC_FIFO_FLUSH);
+	while (val & DAC_FIFOC_FIFO_FLUSH)
+		val = CODEC_READ(sc, AC_DAC_FIFOC(sc));
+
 	/* Mute output */
 	if (sc->sc_cfg->mute)
 		sc->sc_cfg->mute(sc, 1, ch->ch_mode);
@@ -500,12 +491,18 @@ sunxi_codec_halt_input(void *priv)
 	struct sunxi_codec_chan *ch = &sc->sc_rchan;
 	uint32_t val;
 
-	/* Disable DMA channel */
-	fdtbus_dma_halt(ch->ch_dma);
-
 	/* Mute output */
 	if (sc->sc_cfg->mute)
 		sc->sc_cfg->mute(sc, 1, ch->ch_mode);
+
+	/* flush fifo */
+	val = CODEC_READ(sc, AC_ADC_FIFOC(sc));
+	CODEC_WRITE(sc, AC_ADC_FIFOC(sc), val | ADC_FIFOC_FIFO_FLUSH);
+	while (val & ADC_FIFOC_FIFO_FLUSH) 
+		val = CODEC_READ(sc, AC_ADC_FIFOC(sc));
+
+	/* Disable DMA channel */
+	fdtbus_dma_halt(ch->ch_dma);
 
 	/* Disable ADC DRQ */
 	val = CODEC_READ(sc, AC_ADC_FIFOC(sc));
@@ -526,7 +523,7 @@ sunxi_codec_get_locks(void *priv, kmutex_t **intr, kmutex_t **thread)
 static const struct audio_hw_if sunxi_codec_hw_if = {
 	.open = sunxi_codec_open,
 	.close = sunxi_codec_close,
-	.drain = sunxi_codec_drain,
+	.drain = NULL,
 	.query_encoding = sunxi_codec_query_encoding,
 	.set_params = sunxi_codec_set_params,
 	.allocm = sunxi_codec_allocm,
