@@ -1,4 +1,4 @@
-/*	$NetBSD: rrenum.c,v 1.20 2017/11/06 15:15:04 christos Exp $	*/
+/*	$NetBSD: rrenum.c,v 1.21 2018/04/20 10:26:34 roy Exp $	*/
 /*	$KAME: rrenum.c,v 1.14 2004/06/14 05:36:00 itojun Exp $	*/
 
 /*
@@ -147,6 +147,7 @@ do_use_prefix(int len, struct rr_pco_match *rpm,
 	struct rr_pco_use *rpu, *rpulim;
 	struct rainfo *rai;
 	struct prefix *pp;
+	struct in6_addr rpm_prefix, rpu_prefix;
 
 	rpu = (struct rr_pco_use *)(rpm + 1);
 	rpulim = (struct rr_pco_use *)((char *)rpm + len);
@@ -201,8 +202,10 @@ do_use_prefix(int len, struct rr_pco_match *rpm,
 			logit(LOG_ERR, "<%s> ioctl: %m", __func__);
 
 		/* very adhoc: should be rewritten */
+		memcpy(&rpm_prefix, &rpm->rpm_prefix, sizeof(rpm_prefix));
+		memcpy(&rpu_prefix, &rpu->rpu_prefix, sizeof(rpu_prefix));
 		if (rpm->rpm_code == RPM_PCO_CHANGE &&
-		    IN6_ARE_ADDR_EQUAL(&rpm->rpm_prefix, &rpu->rpu_prefix) &&
+		    IN6_ARE_ADDR_EQUAL(&rpm_prefix, &rpu_prefix) &&
 		    rpm->rpm_matchlen == rpu->rpu_uselen &&
 		    rpu->rpu_uselen == rpu->rpu_keeplen) {
 			if ((rai = if_indextorainfo(ifindex)) == NULL)
@@ -212,7 +215,7 @@ do_use_prefix(int len, struct rr_pco_match *rpm,
 				struct timespec now;
 
 				if (prefix_match(&pp->prefix, pp->prefixlen,
-						 &rpm->rpm_prefix,
+						 &rpm_prefix,
 						 rpm->rpm_matchlen)) {
 					/* change parameters */
 					pp->validlifetime = ntohl(rpu->rpu_vltime);
