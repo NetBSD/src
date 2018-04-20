@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.c,v 1.17 2018/04/20 15:59:17 roy Exp $	*/
+/*	$NetBSD: timer.c,v 1.18 2018/04/20 16:07:48 roy Exp $	*/
 /*	$KAME: timer.c,v 1.11 2005/04/14 06:22:35 suz Exp $	*/
 
 /*
@@ -33,6 +33,7 @@
 #include <sys/queue.h>
 #include <sys/time.h>
 
+#include <assert.h>
 #include <limits.h>
 #include <unistd.h>
 #include <syslog.h>
@@ -63,19 +64,15 @@ rtadvd_add_timer(struct rtadvd_timer *(*timeout) (void *),
 {
 	struct rtadvd_timer *newtimer;
 
+	assert(timeout != NULL);
+
 	if ((newtimer = malloc(sizeof(*newtimer))) == NULL) {
-		logit(LOG_ERR,
-		       "<%s> can't allocate memory", __func__);
+		logit(LOG_ERR, "%s: malloc: %m", __func__);
 		exit(EXIT_FAILURE);
 	}
 
 	memset(newtimer, 0, sizeof(*newtimer));
 
-	if (timeout == NULL) {
-		logit(LOG_ERR,
-		       "<%s> timeout function unspecified", __func__);
-		exit(EXIT_FAILURE);
-	}
 	newtimer->expire = timeout;
 	newtimer->update = update;
 	newtimer->expire_data = timeodata;
