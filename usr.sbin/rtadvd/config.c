@@ -1,4 +1,4 @@
-/*	$NetBSD: config.c,v 1.38 2018/04/20 10:39:37 roy Exp $	*/
+/*	$NetBSD: config.c,v 1.39 2018/04/20 15:29:19 roy Exp $	*/
 /*	$KAME: config.c,v 1.93 2005/10/17 14:40:02 suz Exp $	*/
 
 /*
@@ -104,6 +104,7 @@ encode_domain(char *dst, const char *src)
 void
 free_rainfo(struct rainfo *rai)
 {
+	struct soliciter *sol;
 	struct prefix *pfx;
 	struct rtinfo *rti;
 	struct rdnss *rdnss;
@@ -112,6 +113,11 @@ free_rainfo(struct rainfo *rai)
 	struct dnssl_domain *dnsd;
 
 	rtadvd_remove_timer(&rai->timer);
+
+	while ((sol = TAILQ_FIRST(&rai->soliciter))) {
+		TAILQ_REMOVE(&rai->soliciter, sol, next);
+		free(sol);
+	}
 
 	while ((pfx = TAILQ_FIRST(&rai->prefix))) {
 		TAILQ_REMOVE(&rai->prefix, pfx, next);
@@ -206,6 +212,7 @@ getconfig(const char *intface, int exithard)
 	}
 
 	ELM_MALLOC(tmp);
+	TAILQ_INIT(&tmp->soliciter);
 	TAILQ_INIT(&tmp->prefix);
 	TAILQ_INIT(&tmp->route);
 	TAILQ_INIT(&tmp->rdnss);
