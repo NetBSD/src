@@ -1,4 +1,4 @@
-/*	$NetBSD: rtadvd.c,v 1.59 2017/11/25 02:37:04 kre Exp $	*/
+/*	$NetBSD: rtadvd.c,v 1.60 2018/04/20 10:26:34 roy Exp $	*/
 /*	$KAME: rtadvd.c,v 1.92 2005/10/17 14:40:02 suz Exp $	*/
 
 /*
@@ -1213,21 +1213,24 @@ prefix_check(struct nd_opt_prefix_info *pinfo,
 	int inconsistent = 0;
 	char ntopbuf[INET6_ADDRSTRLEN], prefixbuf[INET6_ADDRSTRLEN];
 	struct timespec now;
+	struct in6_addr prefix;
 
 #if 0				/* impossible */
 	if (pinfo->nd_opt_pi_type != ND_OPT_PREFIX_INFORMATION)
 		return 0;
 #endif
 
+	memcpy(&prefix, &pinfo->nd_opt_pi_prefix, sizeof(prefix));
+
 	/*
 	 * log if the adveritsed prefix has link-local scope(sanity check?)
 	 */
-	if (IN6_IS_ADDR_LINKLOCAL(&pinfo->nd_opt_pi_prefix)) {
+	if (IN6_IS_ADDR_LINKLOCAL(&prefix)) {
 		logit(LOG_INFO,
 		       "%s: link-local prefix %s/%d is advertised "
 		       "from %s on %s",
 		       __func__,
-		       inet_ntop(AF_INET6, &pinfo->nd_opt_pi_prefix,
+		       inet_ntop(AF_INET6, &prefix,
 				 prefixbuf, INET6_ADDRSTRLEN),
 		       pinfo->nd_opt_pi_prefix_len,
 		       inet_ntop(AF_INET6, &from->sin6_addr,
@@ -1235,12 +1238,12 @@ prefix_check(struct nd_opt_prefix_info *pinfo,
 		       rai->ifname);
 	}
 
-	if ((pp = find_prefix(rai, &pinfo->nd_opt_pi_prefix,
+	if ((pp = find_prefix(rai, &prefix,
 			      pinfo->nd_opt_pi_prefix_len)) == NULL) {
 		logit(LOG_INFO,
 		       "%s: prefix %s/%d from %s on %s is not in our list",
 		       __func__,
-		       inet_ntop(AF_INET6, &pinfo->nd_opt_pi_prefix,
+		       inet_ntop(AF_INET6, &prefix,
 				 prefixbuf, INET6_ADDRSTRLEN),
 		       pinfo->nd_opt_pi_prefix_len,
 		       inet_ntop(AF_INET6, &from->sin6_addr,
@@ -1268,7 +1271,7 @@ prefix_check(struct nd_opt_prefix_info *pinfo,
 			       " (decr. in real time) inconsistent on %s:"
 			       " %d from %s, %ld from us",
 			       __func__,
-			       inet_ntop(AF_INET6, &pinfo->nd_opt_pi_prefix,
+			       inet_ntop(AF_INET6, &prefix,
 					 prefixbuf, INET6_ADDRSTRLEN),
 			       pinfo->nd_opt_pi_prefix_len,
 			       rai->ifname, preferred_time,
@@ -1283,7 +1286,7 @@ prefix_check(struct nd_opt_prefix_info *pinfo,
 		       " inconsistent on %s:"
 		       " %d from %s, %d from us",
 		       __func__,
-		       inet_ntop(AF_INET6, &pinfo->nd_opt_pi_prefix,
+		       inet_ntop(AF_INET6, &prefix,
 				 prefixbuf, INET6_ADDRSTRLEN),
 		       pinfo->nd_opt_pi_prefix_len,
 		       rai->ifname, preferred_time,
@@ -1304,7 +1307,7 @@ prefix_check(struct nd_opt_prefix_info *pinfo,
 			       " (decr. in real time) inconsistent on %s:"
 			       " %d from %s, %ld from us",
 			       __func__,
-			       inet_ntop(AF_INET6, &pinfo->nd_opt_pi_prefix,
+			       inet_ntop(AF_INET6, &prefix,
 					 prefixbuf, INET6_ADDRSTRLEN),
 			       pinfo->nd_opt_pi_prefix_len,
 			       rai->ifname, preferred_time,
@@ -1319,7 +1322,7 @@ prefix_check(struct nd_opt_prefix_info *pinfo,
 		       " inconsistent on %s:"
 		       " %d from %s, %d from us",
 		       __func__,
-		       inet_ntop(AF_INET6, &pinfo->nd_opt_pi_prefix,
+		       inet_ntop(AF_INET6, &prefix,
 				 prefixbuf, INET6_ADDRSTRLEN),
 		       pinfo->nd_opt_pi_prefix_len,
 		       rai->ifname, valid_time,
