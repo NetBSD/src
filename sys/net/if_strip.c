@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.108 2017/04/13 00:47:33 maya Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.109 2018/04/20 09:56:22 knakahara Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.108 2017/04/13 00:47:33 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.109 2018/04/20 09:56:22 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1268,7 +1268,7 @@ int
 stripioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct ifaddr *ifa = (struct ifaddr *)data;
-	struct ifreq *ifr;
+	struct ifreq *ifr = (struct ifreq *)data;;
 	int s, error = 0;
 
 	s = splnet();
@@ -1283,13 +1283,12 @@ stripioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 
 	case SIOCSIFDSTADDR:
-		if (ifa->ifa_addr->sa_family != AF_INET)
+		if (ifreq_getaddr(cmd, ifr)->sa_family != AF_INET)
 			error = EAFNOSUPPORT;
 		break;
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		ifr = (struct ifreq *)data;
 		if (ifr == 0) {
 			error = EAFNOSUPPORT;		/* XXX */
 			break;

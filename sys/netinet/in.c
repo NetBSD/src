@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.228 2018/04/08 13:52:22 christos Exp $	*/
+/*	$NetBSD: in.c,v 1.229 2018/04/20 09:56:22 knakahara Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.228 2018/04/08 13:52:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.229 2018/04/20 09:56:22 knakahara Exp $");
 
 #include "arp.h"
 
@@ -481,7 +481,7 @@ in_control0(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 			hostIsNew = 0;
 		/* FALLTHROUGH */
 	case SIOCSIFDSTADDR:
-		if (ifra->ifra_addr.sin_family != AF_INET) {
+		if (ifreq_getaddr(cmd, ifr)->sa_family != AF_INET) {
 			error = EAFNOSUPPORT;
 			goto out;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.128 2017/04/13 00:47:33 maya Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.129 2018/04/20 09:56:22 knakahara Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.128 2017/04/13 00:47:33 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.129 2018/04/20 09:56:22 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -992,7 +992,7 @@ slioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 
 	case SIOCSIFDSTADDR:
-		if (ifa->ifa_addr->sa_family != AF_INET)
+		if (ifreq_getaddr(cmd, ifr)->sa_family != AF_INET)
 			error = EAFNOSUPPORT;
 		break;
 
