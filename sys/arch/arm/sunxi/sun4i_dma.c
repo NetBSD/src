@@ -1,4 +1,4 @@
-/* $NetBSD: sun4i_dma.c,v 1.2 2018/04/10 00:59:55 jmcneill Exp $ */
+/* $NetBSD: sun4i_dma.c,v 1.3 2018/04/20 18:04:12 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sun4i_dma.c,v 1.2 2018/04/10 00:59:55 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sun4i_dma.c,v 1.3 2018/04/20 18:04:12 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -290,11 +290,17 @@ sun4idma_halt(device_t dev, void *priv)
 {
 	struct sun4idma_softc *sc = device_private(dev);
 	struct sun4idma_channel *ch = priv;
+	uint32_t val;
 
-	if (ch->ch_type == DMA_TYPE_NORMAL)
-		DMA_WRITE(sc, NDMA_CTRL_REG(ch->ch_index), 0);
-	else
-		DMA_WRITE(sc, DDMA_CTRL_REG(ch->ch_index), 0);
+	if (ch->ch_type == DMA_TYPE_NORMAL) {
+		val = DMA_READ(sc, NDMA_CTRL_REG(ch->ch_index));
+		val &= ~NDMA_CTRL_LOAD;
+		DMA_WRITE(sc, NDMA_CTRL_REG(ch->ch_index), val);
+	} else {
+		val = DMA_READ(sc, DDMA_CTRL_REG(ch->ch_index));
+		val &= ~DDMA_CTRL_LOAD;
+		DMA_WRITE(sc, DDMA_CTRL_REG(ch->ch_index), val);
+	}
 }
 
 static const struct fdtbus_dma_controller_func sun4idma_funcs = {
