@@ -105,25 +105,31 @@ static int smusat_sysctl_sensor_value(SYSCTLFN_ARGS);
 CFATTACH_DECL_NEW(smusat, sizeof(struct smusat_softc),
     smusat_match, smusat_attach, NULL, NULL);
 
+static const char * smusat_compats[] = {
+	"sat",	
+	"smu-sat",
+	NULL
+};
+
 static int
 smusat_match(device_t parent, struct cfdata *cf, void *aux)
 {
-	struct smuiic_confargs *ca = aux;
-	char compat[32];
+	struct i2c_attach_args *ia = aux;
 
-	memset(compat, 0, sizeof(compat));
-	OF_getprop(ca->ca_node, "compatible", compat, sizeof(compat));
-
-	if (strcmp(compat, "smu-sat") == 0)
-		return 5;
-	
-	return 0;
+	if (ia->ia_name == NULL) {
+		/* no ID registers on this chip */
+		if (ia->ia_addr == 0x58)
+			return 1;
+		return 0;
+	} else {
+		return iic_compat_match(ia, smusat_compats);
+	}
 }
 
 static void
 smusat_attach(device_t parent, device_t self, void *aux)
 {
-	struct smuiic_confargs *ca = aux;
+	struct i2c_attach_args *ia = aux;
 	struct smusat_softc *sc = device_private(self);
 	struct smusat_sensor *sensor;
 	struct sysctlnode *sysctl_sensors, *sysctl_sensor, *sysctl_node;
@@ -131,9 +137,9 @@ smusat_attach(device_t parent, device_t self, void *aux)
 	int node, i, j;
 
 	sc->sc_dev = self;
-	sc->sc_node = ca->ca_node;
-	sc->sc_addr = ca->ca_addr & 0xfe;
-	sc->sc_i2c = ca->ca_tag;
+	sc->sc_node = ia->ia_cookie;
+	sc->sc_addr = ia->ia_addr;
+	sc->sc_i2c = ia->ia_tag;
 
 	sysctl_createv(NULL, 0, NULL, (void *) &sc->sc_sysctl_me,
 	    CTLFLAG_READWRITE,
