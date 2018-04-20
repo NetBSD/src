@@ -120,8 +120,7 @@ ki2c*	at uni_n?			# Keywest I2C
 smu* 		at mainbus?
 #options 	SMU_DEBUG
 smuiic* 	at smu?
-#iic* 		at smuiic?
-smusat* 	at smuiic?
+iic* 		at smuiic?
 
 pci*	at ibmcpc? bus ?
 pci*	at uninorth? bus ?
@@ -140,6 +139,7 @@ iic*		at ki2c?
 admtemp* 	at iic?
 lmtemp* 	at iic?
 dstemp* 	at iic?
+smusat* 	at iic?
 deq* 		at iic?
 
 # Audio support
