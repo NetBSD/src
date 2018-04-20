@@ -1,4 +1,4 @@
-/*	$NetBSD: config.c,v 1.39 2018/04/20 15:29:19 roy Exp $	*/
+/*	$NetBSD: config.c,v 1.40 2018/04/20 15:57:23 roy Exp $	*/
 /*	$KAME: config.c,v 1.93 2005/10/17 14:40:02 suz Exp $	*/
 
 /*
@@ -113,6 +113,7 @@ free_rainfo(struct rainfo *rai)
 	struct dnssl_domain *dnsd;
 
 	rtadvd_remove_timer(&rai->timer);
+	rtadvd_remove_timer(&rai->timer_sol);
 
 	while ((sol = TAILQ_FIRST(&rai->soliciter))) {
 		TAILQ_REMOVE(&rai->soliciter, sol, next);
@@ -791,7 +792,8 @@ getconfig(const char *intface, int exithard)
 		return;
 	tmp->timer = rtadvd_add_timer(ra_timeout, ra_timer_update,
 				      tmp, tmp);
-	ra_timer_set_short_delay(tmp);
+	ra_timer_set_short_delay(tmp, tmp->timer);
+	tmp->timer_sol = rtadvd_add_timer(ra_timeout_sol, NULL, tmp, NULL);
 
 	return;
 
