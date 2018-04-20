@@ -1,10 +1,10 @@
-/*	$NetBSD: if.c,v 1.25 2017/11/06 15:15:04 christos Exp $	*/
+/*	$NetBSD: if.c,v 1.26 2018/04/20 10:39:37 roy Exp $	*/
 /*	$KAME: if.c,v 1.36 2004/11/30 22:32:01 suz Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -16,7 +16,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -68,7 +68,7 @@ static void
 get_rtaddrs(int addrs, struct sockaddr *sa, struct sockaddr **rti_info)
 {
 	int i;
-	
+
 	for (i = 0; i < RTAX_MAX; i++) {
 		if (addrs & (1 << i)) {
 			rti_info[i] = sa;
@@ -352,7 +352,7 @@ get_prefixlen(char *buf)
 	struct rt_msghdr *rtm = (struct rt_msghdr *)buf;
 	struct sockaddr *sa, *rti_info[RTAX_MAX];
 	unsigned char *p, *lim;
-	
+
 	sa = (struct sockaddr *)(rtm + 1);
 	get_rtaddrs(rtm->rtm_addrs, sa, rti_info);
 	sa = rti_info[RTAX_NETMASK];
