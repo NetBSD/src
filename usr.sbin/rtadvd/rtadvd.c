@@ -1,10 +1,10 @@
-/*	$NetBSD: rtadvd.c,v 1.60 2018/04/20 10:26:34 roy Exp $	*/
+/*	$NetBSD: rtadvd.c,v 1.61 2018/04/20 10:39:37 roy Exp $	*/
 /*	$KAME: rtadvd.c,v 1.92 2005/10/17 14:40:02 suz Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -16,7 +16,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -523,7 +523,7 @@ rtmsg_input(void)
 			ifindex = get_ifan_ifindex(next);
 			if (get_ifan_what(next) == IFAN_ARRIVAL) {
 				logit(LOG_DEBUG,
-		    		       "%s: interface %s arrived",
+				       "%s: interface %s arrived",
 				       __func__,
 				       if_indextoname(ifindex, ifname));
 				if (if_argc == 0) {
@@ -657,7 +657,7 @@ rtmsg_input(void)
 		case RTM_IFANNOUNCE:
 			if (get_ifan_what(next) == IFAN_DEPARTURE) {
 				logit(LOG_DEBUG,
-		    		       "%s: interface %s departed",
+				       "%s: interface %s departed",
 				       __func__, rai->ifname);
 				TAILQ_REMOVE(&ralist, rai, next);
 				if (rai->leaving)
@@ -718,7 +718,7 @@ rtadvd_input(void)
 	int *hlimp = NULL;
 #ifdef OLDRAWSOCKET
 	struct ip6_hdr *ip;
-#endif 
+#endif
 	struct icmp6_hdr *icp;
 	int ifindex = 0;
 	struct cmsghdr *cm;
@@ -1099,7 +1099,7 @@ ra_input(int len, struct nd_router_advert *ra,
 		goto done;
 	}
 	rai->rainput++;		/* increment statistics */
-	
+
 	/* Cur Hop Limit value */
 	if (ra->nd_ra_curhoplimit && rai->hoplimit &&
 	    ra->nd_ra_curhoplimit != rai->hoplimit) {
@@ -1198,7 +1198,7 @@ ra_input(int len, struct nd_router_advert *ra,
 
 	if (inconsistent)
 		rai->rainconsistent++;
-	
+
 done:
 	free_ndopts(&ndopts);
 }
@@ -1351,7 +1351,7 @@ find_prefix(struct rainfo *rai, struct in6_addr *prefix, int plen)
 		if (memcmp(prefix, &pp->prefix, bytelen))
 			continue;
 		if (bitlen == 0 ||
-		    ((prefix->s6_addr[bytelen] & bitmask) == 
+		    ((prefix->s6_addr[bytelen] & bitmask) ==
 		     (pp->prefix.s6_addr[bytelen] & bitmask))) {
 			return pp;
 		}
@@ -1377,7 +1377,7 @@ prefix_match(struct in6_addr *p0, int plen0,
 		return 0;
 	if (bitlen == 0 ||
 	    ((p0->s6_addr[bytelen] & bitmask) ==
-	     (p1->s6_addr[bytelen] & bitmask))) { 
+	     (p1->s6_addr[bytelen] & bitmask))) {
 		return 1;
 	}
 
@@ -1552,7 +1552,7 @@ sock_open(void)
 		logit(LOG_ERR, "%s: IPV6_PKTINFO: %m", __func__);
 		exit(EXIT_FAILURE);
 	}
-#endif 
+#endif
 
 	on = 1;
 	/* specify to tell value of hoplimit field of received IP6 hdr */
@@ -1603,7 +1603,7 @@ sock_open(void)
 
 	/*
 	 * When attending router renumbering, join all-routers site-local
-	 * multicast group. 
+	 * multicast group.
 	 */
 	if (accept_rr) {
 		if (inet_pton(AF_INET6, ALLROUTERS_SITE,
@@ -1633,7 +1633,7 @@ sock_open(void)
 			exit(EXIT_FAILURE);
 		}
 	}
-	
+
 	/* initialize msghdr for receiving packets */
 	rcviov[0].iov_base = answer;
 	rcviov[0].iov_len = sizeof(answer);
