@@ -1,4 +1,4 @@
-/*	$NetBSD: rtadvd.h,v 1.17 2018/04/20 15:57:23 roy Exp $	*/
+/*	$NetBSD: rtadvd.h,v 1.18 2018/04/20 16:18:18 roy Exp $	*/
 /*	$KAME: rtadvd.h,v 1.30 2005/10/17 14:40:02 suz Exp $	*/
 
 /*
@@ -30,11 +30,11 @@
  * SUCH DAMAGE.
  */
 
-#define RTADVD_USER	"_rtadvd"
+#define	RTADVD_USER	"_rtadvd"
 
-#define ALLNODES "ff02::1"
-#define ALLROUTERS_LINK "ff02::2"
-#define ALLROUTERS_SITE "ff05::2"
+#define	ALLNODES	"ff02::1"
+#define	ALLROUTERS_LINK	"ff02::2"
+#define	ALLROUTERS_SITE	"ff05::2"
 
 #define IN6ADDR_SITELOCAL_ALLROUTERS_INIT \
 	{{{ 0xff, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, \
@@ -45,30 +45,30 @@
 extern struct sockaddr_in6 sin6_sitelocal_allrouters;
 
 /* protocol constants and default values */
-#define DEF_MAXRTRADVINTERVAL 600
-#define DEF_ADVLINKMTU 0
-#define DEF_ADVREACHABLETIME 0
-#define DEF_ADVRETRANSTIMER 0
-#define DEF_ADVCURHOPLIMIT 64
-#define DEF_ADVVALIDLIFETIME 2592000
-#define DEF_ADVPREFERREDLIFETIME 604800
-#define DEF_ADVROUTERLIFETIME 1800
+#define	DEF_MAXRTRADVINTERVAL		600
+#define	DEF_ADVLINKMTU			0
+#define	DEF_ADVREACHABLETIME		0
+#define	DEF_ADVRETRANSTIMER		0
+#define	DEF_ADVCURHOPLIMIT		64
+#define	DEF_ADVVALIDLIFETIME		2592000
+#define	DEF_ADVPREFERREDLIFETIME	604800
+#define	DEF_ADVROUTERLIFETIME		1800
 
-#define MAXROUTERLIFETIME 9000
-#define MIN_MAXINTERVAL 4
-#define MAX_MAXINTERVAL 1800
-#define MIN_MININTERVAL 3
-#define MAXREACHABLETIME 3600000
+#define	MAXROUTERLIFETIME		9000
+#define	MIN_MAXINTERVAL			4
+#define	MAX_MAXINTERVAL			1800
+#define	MIN_MININTERVAL			3
+#define	MAXREACHABLETIME		3600000
 
-#define MAX_INITIAL_RTR_ADVERT_INTERVAL  16
-#define MAX_INITIAL_RTR_ADVERTISEMENTS    3
-#define MAX_FINAL_RTR_ADVERTISEMENTS      3
-#define MIN_DELAY_BETWEEN_RAS             3
-#define MAX_RA_DELAY_TIME                500000000 /* nsec */
+#define	MAX_INITIAL_RTR_ADVERT_INTERVAL  16
+#define	MAX_INITIAL_RTR_ADVERTISEMENTS    3
+#define	MAX_FINAL_RTR_ADVERTISEMENTS      3
+#define	MIN_DELAY_BETWEEN_RAS             3
+#define	MAX_RA_DELAY_TIME                500000000 /* nsec */
 
-#define PREFIX_FROM_KERNEL 1
-#define PREFIX_FROM_CONFIG 2
-#define PREFIX_FROM_DYNAMIC 3
+#define	PREFIX_FROM_KERNEL		1
+#define	PREFIX_FROM_CONFIG		2
+#define	PREFIX_FROM_DYNAMIC		3
 
 struct prefix {
 	TAILQ_ENTRY(prefix) next;
