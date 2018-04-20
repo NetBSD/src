@@ -131,6 +131,19 @@ struct smu_softc {
 #define SMU_CMD_RTC	0x8e
 #define SMU_CMD_I2C	0x9a
 #define SMU_CMD_POWER	0xaa
+#define SMU_ADC		0xd8
+#define SMU_MISC	0xee
+#define  SMU_MISC_GET_DATA	0x02
+#define  SMU_MISC_LED_CTRL	0x04
+
+#define SMU_CPUTEMP_CAL 0x18
+#define SMU_CPUVOLT_CAL	0x21
+#define SMU_SLOTPW_CAL	0x78
+
+#define SMU_PARTITION		0x3e
+#define SMU_PARTITION_LATEST	0x01
+#define SMU_PARTITION_BASE	0x02
+#define SMU_PARTITION_UPDATE	0x03
 
 #ifdef SMU_DEBUG
 #define DPRINTF printf
@@ -166,6 +179,8 @@ static bool is_cpu_sensor(const envsys_data_t *);
 static bool is_drive_sensor(const envsys_data_t *);
 static bool is_slots_sensor(const envsys_data_t *);
 
+int smu_get_datablock(int, uint8_t *, size_t);
+
 CFATTACH_DECL_NEW(smu, sizeof(struct smu_softc),
     smu_match, smu_attach, NULL, NULL);
 
@@ -191,6 +206,9 @@ smu_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_node = ca->ca_node;
 
+	if (smu0 == NULL)
+		smu0 = sc;
+
 	sysctl_createv(NULL, 0, NULL, (void *) &sc->sc_sysctl_me,
 	    CTLFLAG_READWRITE,
 	    CTLTYPE_NODE, device_xname(sc->sc_dev), NULL,
@@ -211,9 +229,6 @@ smu_attach(device_t parent, device_t self, void *aux)
 	todr_attach(&sc->sc_todr);
 
 	smu_setup_sme(sc);
-
-	if (smu0 == NULL)
-		smu0 = sc;
 
 	printf("\n");
 	smu_setup_zones(sc);
@@ -793,10 +808,10 @@ smu_iicbus_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *send,
 	cmd.len = 9 + recv_len;
 	cmd.data[0] = iicbus->reg;
 	cmd.data[1] = I2C_OP_READ_P(op) ? 0x02 : 0x00;
-	cmd.data[2] = addr;
+	cmd.data[2] = addr << 1;
 	cmd.data[3] = send_len;
 	memcpy(&cmd.data[4], send, send_len);
-	cmd.data[7] = addr;
+	cmd.data[7] = addr << 1;
 	if (I2C_OP_READ_P(op))
 		cmd.data[7] |= 0x01;
 	cmd.data[8] = recv_len;
@@ -1006,4 +1021,31 @@ static bool is_slots_sensor(const envsys_data_t *edata)
 	if (strstr(edata->desc, "INLET") != NULL)
 		return TRUE;
 	return false;
+}
+
+int
+smu_get_datablock(int id, uint8_t *buf, size_t len)
+{
+	struct smu_cmd cmd;
+
+	cmd.cmd = SMU_PARTITION;
+	cmd.len = 2;
+	cmd.data[0] = SMU_PARTITION_LATEST;
+	cmd.data[1] = id;
+	smu_do_cmd(smu0, &cmd, 100);
+
+	cmd.data[4] = cmd.data[0];
+	cmd.data[5] = cmd.data[1];
+
+	cmd.cmd = SMU_MISC;
+	cmd.len = 7;
+	cmd.data[0] = SMU_MISC_GET_DATA;
+	cmd.data[1] = 4;
+	cmd.data[2] = 0;
+	cmd.data[3] = 0;
+	cmd.data[6] = len;
+	smu_do_cmd(smu0, &cmd, 100);
+
+	memcpy(buf, cmd.data, len);
+	return 0;
 }
