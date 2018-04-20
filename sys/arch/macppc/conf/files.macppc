@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.108 2018/03/04 15:51:15 christos Exp $
+#	$NetBSD: files.macppc,v 1.109 2018/04/20 18:22:50 macallan Exp $
 #
 # macppc-specific configuration info
 
@@ -181,13 +181,12 @@ attach smu at mainbus
 file arch/macppc/dev/smu.c			smu needs-flag
 defflag	opt_smu.h	SMU_DEBUG
 
-define smuiic {}
-device smuiic: smuiic, i2cbus
+device smuiic: i2cbus
 attach smuiic at smu
 file arch/macppc/dev/smuiic.c			smuiic
 
 device smusat
-attach smusat at smuiic
+attach smusat at iic
 file arch/macppc/dev/smusat.c			smusat
 defflag	opt_smusat.h	SMUSAT_DEBUG
 
