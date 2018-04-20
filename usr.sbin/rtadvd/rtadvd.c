@@ -1,4 +1,4 @@
-/*	$NetBSD: rtadvd.c,v 1.61 2018/04/20 10:39:37 roy Exp $	*/
+/*	$NetBSD: rtadvd.c,v 1.62 2018/04/20 10:43:38 roy Exp $	*/
 /*	$KAME: rtadvd.c,v 1.92 2005/10/17 14:40:02 suz Exp $	*/
 
 /*
@@ -716,9 +716,6 @@ rtadvd_input(void)
 {
 	ssize_t i;
 	int *hlimp = NULL;
-#ifdef OLDRAWSOCKET
-	struct ip6_hdr *ip;
-#endif
 	struct icmp6_hdr *icp;
 	int ifindex = 0;
 	struct cmsghdr *cm;
@@ -791,17 +788,6 @@ rtadvd_input(void)
 		return;
 	}
 
-#ifdef OLDRAWSOCKET
-	if ((size_t)i < sizeof(struct ip6_hdr) + sizeof(struct icmp6_hdr)) {
-		logit(LOG_ERR,
-		       "%s: packet size(%d) is too short",
-		       __func__, i);
-		return;
-	}
-
-	ip = (struct ip6_hdr *)rcvmhdr.msg_iov[0].iov_base;
-	icp = (struct icmp6_hdr *)(ip + 1); /* XXX: ext. hdr? */
-#else
 	if ((size_t)i < sizeof(struct icmp6_hdr)) {
 		logit(LOG_ERR,
 		       "%s: packet size(%zd) is too short",
@@ -810,7 +796,6 @@ rtadvd_input(void)
 	}
 
 	icp = (struct icmp6_hdr *)rcvmhdr.msg_iov[0].iov_base;
-#endif
 
 	switch (icp->icmp6_type) {
 	case ND_ROUTER_SOLICIT:
