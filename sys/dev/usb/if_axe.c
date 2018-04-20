@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.84 2018/01/21 13:57:11 skrll Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.85 2018/04/20 11:14:40 christos Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.137 2016/04/13 11:03:37 mpi Exp $ */
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.84 2018/01/21 13:57:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.85 2018/04/20 11:14:40 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -591,6 +591,8 @@ axe_ax88178_init(struct axe_softc *sc)
 	AXEHIST_FUNC(); AXEHIST_CALLED();
 	int gpio0, ledmode, phymode;
 	uint16_t eeprom, val;
+
+	eeprom = 0;	/* XXX gcc -Wuninitialized */
 
 	axe_cmd(sc, AXE_CMD_SROM_WR_ENABLE, 0, 0, NULL);
 	/* XXX magic */
