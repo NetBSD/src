@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.93 2018/03/26 21:43:30 jdolecek Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.94 2018/04/20 18:58:10 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.93 2018/03/26 21:43:30 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.94 2018/04/20 18:58:10 jdolecek Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ubc.h"
@@ -473,7 +473,7 @@ ubc_find_mapping(struct uvm_object *uobj, voff_t offset)
  * ubc_alloc:  allocate a file mapping window
  */
 
-void *
+static void * __noinline
 ubc_alloc(struct uvm_object *uobj, voff_t offset, vsize_t *lenp, int advice,
     int flags)
 {
@@ -628,7 +628,7 @@ out:
  * ubc_release:  free a file mapping window.
  */
 
-void
+static void __noinline
 ubc_release(void *va, int flags)
 {
 	struct ubc_map *umap;
