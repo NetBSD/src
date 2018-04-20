@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.573 2018/04/16 08:31:06 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.574 2018/04/20 03:03:13 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.573 2018/04/16 08:31:06 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.574 2018/04/20 03:03:13 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -3031,14 +3031,15 @@ wm_watchdog_txq_locked(struct ifnet *ifp, struct wm_txqueue *txq,
 	 * before we report an error.
 	 */
 	wm_txeof(txq, UINT_MAX);
-	if (txq->txq_watchdog)
-		*hang |= __BIT(wmq->wmq_id);
 
 	if (txq->txq_free != WM_NTXDESC(txq)) {
 #ifdef WM_DEBUG
 		int i, j;
 		struct wm_txsoft *txs;
 #endif
+		if (txq->txq_watchdog)
+			*hang |= __BIT(wmq->wmq_id);
+
 		log(LOG_ERR,
 		    "%s: device timeout (txfree %d txsfree %d txnext %d)\n",
 		    device_xname(sc->sc_dev), txq->txq_free, txq->txq_sfree,
