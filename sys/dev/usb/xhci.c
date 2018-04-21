@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.87 2018/04/09 16:21:11 jakllsch Exp $	*/
+/*	$NetBSD: xhci.c,v 1.88 2018/04/21 15:53:24 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.87 2018/04/09 16:21:11 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.88 2018/04/21 15:53:24 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -593,12 +593,14 @@ xhci_detach(struct xhci_softc *sc, int flags)
 		rv = config_detach(sc->sc_child2, flags);
 		if (rv != 0)
 			return rv;
+		KASSERT(sc->sc_child2 == NULL);
 	}
 
 	if (sc->sc_child != NULL) {
 		rv = config_detach(sc->sc_child, flags);
 		if (rv != 0)
 			return rv;
+		KASSERT(sc->sc_child == NULL);
 	}
 
 	/* XXX unconfigure/free slots */
