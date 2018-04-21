@@ -1,4 +1,4 @@
-.\"	$NetBSD: rtadvd.conf.5,v 1.19 2018/04/20 16:37:17 roy Exp $
+.\"	$NetBSD: rtadvd.conf.5,v 1.20 2018/04/21 09:31:08 wiz Exp $
 .\"	$KAME: rtadvd.conf.5,v 1.50 2005/01/14 05:30:59 jinmei Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -142,9 +142,7 @@ means low.
 Bits 10 is reserved, and must not be specified.
 There is no character to specify the medium preference explicitly.
 The default value of the entire flag is 0
-.Po
-or a null string,
-.Pc
+(or a null string),
 which means no additional
 configuration methods, and the medium router preference.
 .It Cm \&rltime
@@ -448,7 +446,7 @@ The following example configures the
 .Li wlan0
 interface and adds two DNS servers and a DNS domain search options
 using the default option lifetime values.
-.Bd -literal -offset
+.Bd -literal -offset 8n
 wlan0:\\
 	:addr="2001:db8:ffff:1000::":prefixlen#64:\\
 	:rdnss="2001:db8:ffff::10,2001:db8:ffff::2:43":\\
