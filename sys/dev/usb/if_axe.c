@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.86 2018/04/20 21:03:00 christos Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.87 2018/04/21 18:07:23 christos Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.137 2016/04/13 11:03:37 mpi Exp $ */
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.86 2018/04/20 21:03:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.87 2018/04/21 18:07:23 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -984,9 +984,8 @@ axe_attach(device_t parent, device_t self, void *aux)
 	if (!(sc->axe_flags & AX772B)) {
 		if (axe_cmd(sc, AXE_172_CMD_READ_NODEID, 0, 0, sc->axe_enaddr))
 		{
-			aprint_error_dev(self,
+			aprint_debug_dev(self,
 			    "failed to read ethernet address\n");
-			return;
 		}
 	}
 
