@@ -1,4 +1,4 @@
-/*	$NetBSD: arithmetic.c,v 1.4 2017/07/24 13:21:14 kre Exp $	*/
+/*	$NetBSD: arithmetic.c,v 1.5 2018/04/21 23:01:29 kre Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: arithmetic.c,v 1.4 2017/07/24 13:21:14 kre Exp $");
+__RCSID("$NetBSD: arithmetic.c,v 1.5 2018/04/21 23:01:29 kre Exp $");
 #endif /* not lint */
 
 #include <limits.h>
@@ -59,6 +59,7 @@ __RCSID("$NetBSD: arithmetic.c,v 1.4 2017/07/24 13:21:14 kre Exp $");
 #include "options.h"
 #include "var.h"
 #include "show.h"
+#include "syntax.h"
 
 #if ARITH_BOR + ARITH_ASS_GAP != ARITH_BORASS || \
 	ARITH_ASS + ARITH_ASS_GAP != ARITH_EQ
@@ -127,8 +128,15 @@ arith_lookupvarint(char *varname)
 		str = "0";
 	errno = 0;
 	result = strtoimax(str, &p, 0);
-	if (errno != 0 || *p != '\0')
+	if (errno != 0 || *p != '\0') {
+		if (errno == 0) {
+			while (*p != '\0' && is_space(*p))
+				p++;
+			if (*p == '\0')
+				return result;
+		}
 		arith_err("variable contains non-numeric value");
+	}
 	return result;
 }
 
