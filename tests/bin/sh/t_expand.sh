@@ -1,4 +1,4 @@
-# $NetBSD: t_expand.sh,v 1.18 2017/10/06 17:05:05 kre Exp $
+# $NetBSD: t_expand.sh,v 1.19 2018/04/21 21:28:35 kre Exp $
 #
 # Copyright (c) 2007, 2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -997,6 +997,58 @@ dollar_star_in_quoted_word_body() {
 	results	  # FIXED: 'PR bin/52090 - 2 of 26 subtests expected to fail'
 }
 
+atf_test_case embedded_nl
+embedded_nl_head() {
+	atf_set "descr" 'Test literal \n in xxx string in ${var-xxx}'
+}
+embedded_nl_body() {
+
+	atf_check -s exit:0 -o inline:'a\nb\n' -e empty ${TEST_SH} <<- 'EOF'
+		unset V
+		X="${V-a
+		b}"
+		printf '%s\n' "${X}"
+		EOF
+
+	atf_check -s exit:0 -o inline:'a\nb\n' -e empty ${TEST_SH} <<- 'EOF'
+		unset V
+		X=${V-"a
+		b"}
+		printf '%s\n' "${X}"
+		EOF
+
+	# This should not generate a syntax error, see PR bin/53201
+	atf_check -s exit:0 -o inline:'abc\n' -e empty ${TEST_SH} <<- 'EOF'
+		V=abc
+		X=${V-a
+		b}
+		printf '%s\n' "${X}"
+		EOF
+
+	# Nor should any of these...
+	atf_check -s exit:0 -o inline:'a\nb\n' -e empty ${TEST_SH} <<- 'EOF'
+		unset V
+		X=${V-a
+		b}
+		printf '%s\n' "${X}"
+		EOF
+
+	atf_check -s exit:0 -o inline:'a\nb\n' -e empty ${TEST_SH} <<- 'EOF'
+		unset V
+		X=${V:=a
+		b}
+		printf '%s\n' "${X}"
+		EOF
+
+	atf_check -s exit:0 -o inline:'xa\nby\na\nb\n' -e empty \
+	    ${TEST_SH} <<- 'EOF'
+		unset V
+		X=x${V:=a
+		b}y
+		printf '%s\n' "${X}" "${V}"
+		EOF
+}
+
 atf_init_test_cases() {
 	# Listed here in the order ATF runs them, not the order from above
 
@@ -1009,6 +1061,7 @@ atf_init_test_cases() {
 	atf_add_test_case dollar_star_in_word
 	atf_add_test_case dollar_star_in_word_empty_ifs
 	atf_add_test_case dollar_star_with_empty_ifs
+	atf_add_test_case embedded_nl
 	atf_add_test_case iteration_on_null_parameter
 	atf_add_test_case iteration_on_quoted_null_parameter
 	atf_add_test_case iteration_on_null_or_null_parameter
