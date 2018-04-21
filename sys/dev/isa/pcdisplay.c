@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplay.c,v 1.42 2016/07/14 04:19:27 msaitoh Exp $ */
+/* $NetBSD: pcdisplay.c,v 1.43 2018/04/21 15:10:28 mlelstv Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcdisplay.c,v 1.42 2016/07/14 04:19:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcdisplay.c,v 1.43 2018/04/21 15:10:28 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -269,7 +269,7 @@ pcdisplay_match(device_t parent, cfdata_t match, void *aux)
 	ia->ia_io[0].ir_size = 0x10;
 
 	ia->ia_niomem = 1;
-	ia->ia_iomem[0].ir_size = mono ? 0xb0000 : 0xb8000;
+	ia->ia_iomem[0].ir_addr = mono ? 0xb0000 : 0xb8000;
 	ia->ia_iomem[0].ir_size = 0x8000;
 
 	ia->ia_nirq = 0;
