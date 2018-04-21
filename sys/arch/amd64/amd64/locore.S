@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.163 2018/03/30 09:53:08 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.164 2018/04/21 23:25:01 joerg Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1616,7 +1616,7 @@ END(intrfastexit)
 	.globl	nosvs_leave_altstack, nosvs_leave_altstack_end
 
 LABEL(svs_enter)
-	movq	SVS_UTLS+UTLS_KPDIRPA,%rax
+	movabs	SVS_UTLS+UTLS_KPDIRPA,%rax
 	movq	%rax,%cr3
 	movq	CPUVAR(KRSP0),%rsp
 LABEL(svs_enter_end)
@@ -1624,7 +1624,7 @@ LABEL(svs_enter_end)
 LABEL(svs_enter_altstack)
 	testb	$SEL_UPL,TF_CS(%rsp)
 	jz	1234f
-	movq	SVS_UTLS+UTLS_KPDIRPA,%rax
+	movabs	SVS_UTLS+UTLS_KPDIRPA,%rax
 	movq	%rax,%cr3
 1234:
 LABEL(svs_enter_altstack_end)
