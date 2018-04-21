@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.124 2018/02/22 14:49:29 sevan Exp $
+.\"	$NetBSD: sysctl.7,v 1.125 2018/04/21 12:38:17 wiz Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -2450,7 +2450,7 @@ privilege may change the value.
 .Bl -column "Second level name" "integer" "Changeable" -offset indent
 .It Sy Second level name Ta Sy Type Ta Sy Changeable
 .It ddb.commandonenter	string	yes
-.It ddb.dumpstack 	integer yes
+.It ddb.dumpstack 	integer	yes
 .It ddb.fromconsole	integer	yes
 .It ddb.lines	integer	yes
 .It ddb.maxoff	integer	yes
@@ -2467,7 +2467,8 @@ If not empty, the string is used as the DDB command to be executed each time
 DDB is entered.
 .It Li ddb.dumpstack
 A value of 1 causes a stack trace to be printed on entering ddb from a panic.
-A value of 0 disables this behaviour. The default value is 1.
+A value of 0 disables this behaviour.
+The default value is 1.
 .It Li ddb.fromconsole ( Dv DDBCTL_FROMCONSOLE )
 If not zero, DDB may be entered by sending a break on a serial
 console or by a special key sequence on a graphics console.
