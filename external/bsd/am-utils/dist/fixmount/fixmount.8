@@ -1,4 +1,4 @@
-.\"	$NetBSD: fixmount.8,v 1.3 2015/01/17 17:46:31 christos Exp $
+.\"	$NetBSD: fixmount.8,v 1.4 2018/04/21 18:34:08 christos Exp $
 .\"
 .\"
 .\" Copyright (c) 1997-2014 Erez Zadok
@@ -37,7 +37,7 @@
 .\"
 .\" File: am-utils/fixmount/fixmount.8
 .\"
-.TH FIXMOUNT 8 "26 Feb 1993"
+.TH FIXMOUNT 8 "21 Apr 2018"
 .SH NAME
 fixmount \- fix remote mount entries
 .SH SYNOPSIS
@@ -73,8 +73,8 @@ Removes those remote mount entries on
 .I host
 that do not correspond to current mounts, i.e., which are left-over
 from a crash or are the result of improper mount protocol.
-The actuality of mounts is verified using the entries in
-.BR /etc/mtab .
+.\" The actuality of mounts is verified using the entries in
+.\" .BR /etc/mtab .
 .TP
 .B \-v
 Verify remote mounts.  Similar to
@@ -96,26 +96,26 @@ i.e., due to remote hosts not supporting RPC or not running mountd.
 .BI \-h \ name
 Pretend the local hostname is
 .IR name .
-This is useful after the local hostname has been changed and rmtab entries
-using the old name remain on a remote machine.
-Unfortunately, most mountd's won't be able to successfully handle removal
-of such entries, so this option is useful in combination with
-.B \-v
-only.
-.br
+.\" This is useful after the local hostname has been changed and rmtab entries
+.\" using the old name remain on a remote machine.
+.\" Unfortunately, most mountd's won't be able to successfully handle removal
+.\" of such entries, so this option is useful in combination with
+.\" .B \-v
+.\" only.
+.\" .br
 This option also saves time as comparisons of remotely recorded and local
 hostnames by address are avoided.
-.SH FILES
-.TP 20
-.B /etc/mtab
-List of current mounts.
-.TP
-.B /etc/rmtab
-Backup file for remote mount entries on NFS server.
+.\" .SH FILES
+.\" .TP 20
+.\" .B /etc/mtab
+.\" List of current mounts.
+.\" .TP
+.\" .B /etc/rmtab
+.\" Backup file for remote mount entries on NFS server.
 .SH "SEE ALSO"
 .BR showmount (8),
-.BR mtab (5),
-.BR rmtab (5),
+.\" .BR mtab (5),
+.\" .BR rmtab (5),
 .BR mountd (8C).
 .LP
 ``am-utils''
@@ -129,35 +129,35 @@ by Erez Zadok, ISBN 0-7821-2739-8, (Sybex, 2001).
 .LP
 .I "Amd \- The 4.4 BSD Automounter"
 .SH BUGS
-No attempt is made to verify the information in
-.B /etc/mtab
-itself.
-.PP
-Since swap file mounts are not recorded in
-.BR /etc/mtab ,
-a heuristic specific to SunOS is used to determine whether such a mount
-is actual (replacing the string "swap" with "root" and verifying the resulting
-path).
-.PP
-Symbolic links on the server will cause the path in the remote entry to differ
-from the one in
-.BR /etc/mtab .
-To catch those cases, a filesystem is also deemed mounted if its
-.I local
-mount point is identical to the remote entry.
-I.e., on a SunOS diskless client,
-.B server:/export/share/sunos.4.1.1
-is actually
-.BR /usr/share .
-Since the local mount point is
-.B /usr/share
-as well this will be handled correctly.
-.PP
-There is no way to clear a stale entry in a remote mountd after the
-local hostname (or whatever reverse name resolution returns for it)
-has been changed.  To take care of these cases,
-the remote /etc/rmtab file has to be edited and mountd restarted.
-.PP
+.\" No attempt is made to verify the information in
+.\" .B /etc/mtab
+.\" itself.
+.\" .PP
+.\" Since swap file mounts are not recorded in
+.\" .BR /etc/mtab ,
+.\" a heuristic specific to SunOS is used to determine whether such a mount
+.\" is actual (replacing the string "swap" with "root" and verifying the resulting
+.\" path).
+.\" .PP
+.\" Symbolic links on the server will cause the path in the remote entry to differ
+.\" from the one in
+.\" .BR /etc/mtab .
+.\" To catch those cases, a filesystem is also deemed mounted if its
+.\" .I local
+.\" mount point is identical to the remote entry.
+.\" I.e., on a SunOS diskless client,
+.\" .B server:/export/share/sunos.4.1.1
+.\" is actually
+.\" .BR /usr/share .
+.\" Since the local mount point is
+.\" .B /usr/share
+.\" as well this will be handled correctly.
+.\" .PP
+.\" There is no way to clear a stale entry in a remote mountd after the
+.\" local hostname (or whatever reverse name resolution returns for it)
+.\" has been changed.  To take care of these cases,
+.\" the remote /etc/rmtab file has to be edited and mountd restarted.
+.\" .PP
 The RPC timeouts for mountd calls can only be changed by recompiling.
 The defaults are 2 seconds for client handle creation and 5 seconds for
 RPC calls.
