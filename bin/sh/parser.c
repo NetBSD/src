@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.145 2017/11/10 17:31:12 kre Exp $	*/
+/*	$NetBSD: parser.c,v 1.146 2018/04/21 21:32:14 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.145 2017/11/10 17:31:12 kre Exp $");
+__RCSID("$NetBSD: parser.c,v 1.146 2018/04/21 21:32:14 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -1773,7 +1773,7 @@ readtoken1(int firstc, char const *syn, int magicq)
 		CHECKSTRSPACE(4, out);	/* permit 4 calls to USTPUTC */
 		switch (syntax[c]) {
 		case CNL:	/* '\n' */
-			if (syntax == BASESYNTAX)
+			if (syntax == BASESYNTAX && varnest == 0)
 				break;	/* exit loop */
 			USTPUTC(c, out);
 			plinno++;
