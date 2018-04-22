@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_netbsd.c,v 1.52 2018/04/18 07:38:02 maxv Exp $	*/
+/*	$NetBSD: ipsec_netbsd.c,v 1.53 2018/04/22 10:25:40 maxv Exp $	*/
 /*	$KAME: esp_input.c,v 1.60 2001/09/04 08:43:19 itojun Exp $	*/
 /*	$KAME: ah_input.c,v 1.64 2001/09/04 08:43:19 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.52 2018/04/18 07:38:02 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.53 2018/04/22 10:25:40 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -623,6 +623,12 @@ sysctl_net_inet_ipsec_setup(struct sysctllog **clog)
 		       NULL, 0, &ipsec_debug, 0,
 		       CTL_NET, PF_INET, ipproto_ipsec,
 		       IPSECCTL_DEBUG, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "ipip_spoofcheck", NULL,
+		       NULL, 0, &ipip_spoofcheck, 0,
+		       CTL_NET, PF_INET, ipproto_ipsec,
+		       CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
 		       CTLTYPE_STRUCT, "ipsecstats", NULL,
