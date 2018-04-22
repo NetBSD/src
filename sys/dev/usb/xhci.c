@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.88 2018/04/21 15:53:24 jdolecek Exp $	*/
+/*	$NetBSD: xhci.c,v 1.89 2018/04/22 07:47:14 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.88 2018/04/21 15:53:24 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.89 2018/04/22 07:47:14 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1236,7 +1236,16 @@ xhci_intr(void *v)
 
 	ret = xhci_intr1(sc);
 	if (ret) {
-		usb_schedsoftintr(&sc->sc_bus);
+		KASSERT(sc->sc_child || sc->sc_child2);
+
+		/*
+		 * One of child busses could be already detached. It doesn't
+		 * matter on which of the two the softintr is scheduled.
+		 */
+		if (sc->sc_child)
+			usb_schedsoftintr(&sc->sc_bus);
+		else
+			usb_schedsoftintr(&sc->sc_bus2);
 	}
 done:
 	mutex_spin_exit(&sc->sc_intr_lock);
