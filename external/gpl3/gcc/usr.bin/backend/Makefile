@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.43.2.2 2018/04/16 01:59:42 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.43.2.3 2018/04/22 07:20:16 pgoyette Exp $
 
 LIBISPRIVATE=	yes
 
@@ -475,8 +475,8 @@ read-md.d read-md.o read-md.lo: auto-build.h
 hash-table.d hash-table.o hash-table.lo: auto-build.h gtype-desc.h
 gencfn-macros.d gencfn-macros.o gencfn-macros.lo: gtype-desc.h
 pass_manager.h passes.c: pass-instances.def
-context.d coverage.d lto-cgraph.d passes.d statistics.d toplev.d: pass_manager.h
-context.o coverage.o lto-cgraph.o passes.o statistics.o toplev.o: pass_manager.h
+context.d coverage.d lto-cgraph.d passes.d statistics.d toplev.d cgraphunit.d: pass_manager.h
+context.o coverage.o lto-cgraph.o passes.o statistics.o toplev.o cgraphunit.o: pass_manager.h
 insn-opinit.o insn-opinit.d: insn-flags.h
 .for _f in insn-attrtab insn-automata insn-dfatab insn-latencytab insn-output
 ${_f}.o ${_f}.d: insn-attr-common.h insn-attr.h

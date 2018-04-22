@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.h,v 1.32.2.3 2018/04/07 04:12:18 pgoyette Exp $ */
+/* $NetBSD: ixgbe.h,v 1.32.2.4 2018/04/22 07:20:26 pgoyette Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -173,8 +173,6 @@
 
 /* Flow control constants */
 #define IXGBE_FC_PAUSE        0xFFFF
-#define IXGBE_FC_HI           0x20000
-#define IXGBE_FC_LO           0x10000
 
 /*
  * Used for optimizing small rx mbufs.  Effort is made to keep the copy
@@ -322,11 +320,9 @@ struct ixgbe_mc_addr {
 struct ix_queue {
 	struct adapter   *adapter;
 	u32              msix;           /* This queue's MSI-X vector */
-	u32              eims;           /* This queue's EIMS bit */
 	u32              eitr_setting;
 	u32              me;
 	struct resource  *res;
-	void             *tag;
 	int              busy;
 	struct tx_ring   *txr;
 	struct rx_ring   *rxr;
@@ -346,6 +342,7 @@ struct ix_queue {
 					 *     > 0 : this queue is disabled
 					 *           the value is ixgbe_disable_queue() called count
 					 */
+	bool             txrx_use_workqueue;
 };
 
 /*
@@ -364,9 +361,10 @@ struct tx_ring {
 	u16			next_avail_desc;
 	u16			next_to_clean;
 	u16			num_desc;
-	u32			txd_cmd;
 	ixgbe_dma_tag_t		*txtag;
-	char			mtx_name[16];
+#if 0
+	char			mtx_name[16]; /* NetBSD has no mutex name */
+#endif
 	pcq_t			*txr_interq;
 	struct work		wq_cookie;
 	void			*txr_si;
@@ -414,7 +412,9 @@ struct rx_ring {
         u16 			next_to_check;
 	u16			num_desc;
 	u16			mbuf_sz;
-	char			mtx_name[16];
+#if 0
+	char			mtx_name[16]; /* NetBSD has no mutex name */
+#endif
 	struct ixgbe_rx_buf	*rx_buffers;
 	ixgbe_dma_tag_t		*ptag;
 
@@ -460,17 +460,10 @@ struct adapter {
 	struct resource		*pci_mem;
 	struct resource		*msix_mem;
 
-	/*
-	 * Interrupt resources: this set is
-	 * either used for legacy, or for Link
-	 * when doing MSI-X
-	 */
-	void			*tag;
-	struct resource 	*res;
+	/* NetBSD: Interrupt resources are in osdep */
 
 	struct ifmedia		media;
 	callout_t		timer;
-	int			link_rid;
 	int			if_flags;
 
 	kmutex_t		core_mtx;
@@ -697,7 +690,7 @@ drbr_needs_enqueue(struct ifnet *ifp, struct buf_ring *br)
 /*
  * Find the number of unrefreshed RX descriptors
  */
-static inline u16
+static __inline u16
 ixgbe_rx_unrefreshed(struct rx_ring *rxr)
 {
 	if (rxr->next_to_check > rxr->next_to_refresh)
@@ -707,7 +700,7 @@ ixgbe_rx_unrefreshed(struct rx_ring *rxr)
 		    rxr->next_to_refresh - 1);
 }
 
-static inline int
+static __inline int
 ixgbe_legacy_ring_empty(struct ifnet *ifp, pcq_t *dummy)
 {
 	UNREFERENCED_1PARAMETER(dummy);
@@ -715,7 +708,7 @@ ixgbe_legacy_ring_empty(struct ifnet *ifp, pcq_t *dummy)
 	return IFQ_IS_EMPTY(&ifp->if_snd);
 }
 
-static inline int
+static __inline int
 ixgbe_mq_ring_empty(struct ifnet *dummy, pcq_t *interq)
 {
 	UNREFERENCED_1PARAMETER(dummy);
@@ -727,7 +720,7 @@ ixgbe_mq_ring_empty(struct ifnet *dummy, pcq_t *interq)
  * This checks for a zero mac addr, something that will be likely
  * unless the Admin on the Host has created one.
  */
-static inline bool
+static __inline bool
 ixv_check_ether_addr(u8 *addr)
 {
 	bool status = TRUE;

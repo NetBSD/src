@@ -1,4 +1,4 @@
-@c Copyright (C) 1991-2016 Free Software Foundation, Inc.
+@c Copyright (C) 1991-2018 Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
 @ifset GENERIC
@@ -148,22 +148,28 @@ registers when supported by the ISA.  @samp{-mfpxx} implies
 @item -mips16
 @itemx -no-mips16
 Generate code for the MIPS 16 processor.  This is equivalent to putting
-@code{.set mips16} at the start of the assembly file.  @samp{-no-mips16}
+@code{.module mips16} at the start of the assembly file.  @samp{-no-mips16}
 turns off this option.
+
+@item -mmips16e2
+@itemx -mno-mips16e2
+Enable the use of MIPS16e2 instructions in MIPS16 mode.  This is equivalent
+to putting @code{.module mips16e2} at the start of the assembly file.
+@samp{-mno-mips16e2} turns off this option.
 
 @item -mmicromips
 @itemx -mno-micromips
 Generate code for the microMIPS processor.  This is equivalent to putting
-@code{.set micromips} at the start of the assembly file.  @samp{-mno-micromips}
-turns off this option.  This is equivalent to putting @code{.set nomicromips}
-at the start of the assembly file.
+@code{.module micromips} at the start of the assembly file.
+@samp{-mno-micromips} turns off this option.  This is equivalent to putting
+@code{.module nomicromips} at the start of the assembly file.
 
 @item -msmartmips
 @itemx -mno-smartmips
 Enables the SmartMIPS extensions to the MIPS32 instruction set, which
 provides a number of new instructions which target smartcard and
 cryptographic applications.  This is equivalent to putting
-@code{.set smartmips} at the start of the assembly file.
+@code{.module smartmips} at the start of the assembly file.
 @samp{-mno-smartmips} turns off this option.
 
 @item -mips3d
@@ -385,6 +391,7 @@ m14kec,
 1004kf,
 1004kf1_1,
 interaptiv,
+interaptiv-mr2,
 m5100,
 m5101,
 p5600,
@@ -479,6 +486,37 @@ Also no MIPS16 branches are ever relaxed.
 
 By default @samp{--no-relax-branch} is selected, causing any out-of-range
 branches to produce an error.
+
+@item -mignore-branch-isa
+@itemx -mno-ignore-branch-isa
+Ignore branch checks for invalid transitions between ISA modes.
+
+The semantics of branches does not provide for an ISA mode switch, so in
+most cases the ISA mode a branch has been encoded for has to be the same
+as the ISA mode of the branch's target label.  If the ISA modes do not
+match, then such a branch, if taken, will cause the ISA mode to remain
+unchanged and instructions that follow will be executed in the wrong ISA
+mode causing the program to misbehave or crash.
+
+In the case of the @code{BAL} instruction it may be possible to relax
+it to an equivalent @code{JALX} instruction so that the ISA mode is
+switched at the run time as required.  For other branches no relaxation
+is possible and therefore GAS has checks implemented that verify in
+branch assembly that the two ISA modes match, and report an error
+otherwise so that the problem with code can be diagnosed at the assembly
+time rather than at the run time.
+
+However some assembly code, including generated code produced by some
+versions of GCC, may incorrectly include branches to data labels, which
+appear to require a mode switch but are either dead or immediately
+followed by valid instructions encoded for the same ISA the branch has
+been encoded for.  While not strictly correct at the source level such
+code will execute as intended, so to help with these cases
+@samp{-mignore-branch-isa} is supported which disables ISA mode checks
+for branches.
+
+By default @samp{-mno-ignore-branch-isa} is selected, causing any invalid
+branch requiring a transition between ISA modes to produce an error.
 
 @cindex @option{-mnan=} command line option, MIPS
 @item -mnan=@var{encoding}
@@ -1070,6 +1108,16 @@ instructions from being accepted.
 The directive @code{.set xpa} makes the assembler accept instructions
 from the XPA Extension from that point on in the assembly.  The 
 @code{.set noxpa} directive prevents XPA instructions from being accepted.
+
+@cindex MIPS16e2 instruction generation override
+@kindex @code{.set mips16e2}
+@kindex @code{.set nomips16e2}
+The directive @code{.set mips16e2} makes the assembler accept instructions
+from the MIPS16e2 Application Specific Extension from that point on in the
+assembly, whenever in MIPS16 mode.  The @code{.set nomips16e2} directive
+prevents MIPS16e2 instructions from being accepted, in MIPS16 mode.  Neither
+directive affects the state of MIPS16 mode being active itself which has
+separate controls.
 
 Traditional MIPS assemblers do not support these directives.
 

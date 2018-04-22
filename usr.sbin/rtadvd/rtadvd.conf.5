@@ -1,4 +1,4 @@
-.\"	$NetBSD: rtadvd.conf.5,v 1.18 2012/12/11 16:37:23 roy Exp $
+.\"	$NetBSD: rtadvd.conf.5,v 1.18.28.1 2018/04/22 07:20:30 pgoyette Exp $
 .\"	$KAME: rtadvd.conf.5,v 1.50 2005/01/14 05:30:59 jinmei Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -28,7 +28,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd December 11, 2012
+.Dd April 20, 2018
 .Dt RTADVD.CONF 5
 .Os
 .Sh NAME
@@ -83,7 +83,7 @@ multicast router advertisements
 .Pq unit: seconds .
 The default value is 600.
 Its value must be no less than 4 seconds
-and no greater than 1800 seconds.
+and no greater than 65535 seconds.
 .It Cm \&mininterval
 (num) The minimum time allowed between sending unsolicited multicast
 router advertisements
@@ -142,9 +142,7 @@ means low.
 Bits 10 is reserved, and must not be specified.
 There is no character to specify the medium preference explicitly.
 The default value of the entire flag is 0
-.Po
-or a null string,
-.Pc
+(or a null string),
 which means no additional
 configuration methods, and the medium router preference.
 .It Cm \&rltime
@@ -153,7 +151,7 @@ configuration methods, and the medium router preference.
 The value must be either zero or between
 the value of
 .Cm maxinterval
-and 9000.
+and 65535.
 When
 .Nm rtadvd
 runs on a host, this value must explicitly set 0 on all the
@@ -448,7 +446,7 @@ The following example configures the
 .Li wlan0
 interface and adds two DNS servers and a DNS domain search options
 using the default option lifetime values.
-.Bd -literal -offset
+.Bd -literal -offset 8n
 wlan0:\\
 	:addr="2001:db8:ffff:1000::":prefixlen#64:\\
 	:rdnss="2001:db8:ffff::10,2001:db8:ffff::2:43":\\

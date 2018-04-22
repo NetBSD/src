@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.181.2.3 2018/04/16 02:00:08 pgoyette Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.181.2.4 2018/04/22 07:20:27 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.181.2.3 2018/04/16 02:00:08 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.181.2.4 2018/04/22 07:20:27 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
@@ -459,6 +459,11 @@ void
 m_pkthdr_remove(struct mbuf *m)
 {
 	KASSERT(m->m_flags & M_PKTHDR);
+
+	if (M_READONLY(m)) {
+		/* Nothing we can do. */
+		return;
+	}
 
 	m_tag_delete_chain(m, NULL);
 	m->m_flags &= ~M_PKTHDR;
@@ -1107,7 +1112,7 @@ m_copyup(struct mbuf *n, int len, int dstoff)
 	int count, space;
 
 	KASSERT(len != M_COPYALL);
-	if (len > (MHLEN - dstoff))
+	if (len > ((int)MHLEN - dstoff))
 		goto bad;
 	m = m_get(M_DONTWAIT, n->m_type);
 	if (m == NULL)
@@ -1908,9 +1913,15 @@ m_verify_packet(struct mbuf *m)
 		if (__predict_false(n->m_type == MT_FREE)) {
 			panic("%s: mbuf already freed (n = %p)", __func__, n);
 		}
+#if 0
+		/*
+		 * This ought to be a rule of the mbuf API. Unfortunately,
+		 * many places don't respect that rule.
+		 */
 		if (__predict_false((n != m) && (n->m_flags & M_PKTHDR) != 0)) {
 			panic("%s: M_PKTHDR set on secondary mbuf", __func__);
 		}
+#endif
 		if (__predict_false(n->m_nextpkt != NULL)) {
 			panic("%s: m_nextpkt not null (m_nextpkt = %p)",
 			    __func__, n->m_nextpkt);
@@ -1929,7 +1940,7 @@ m_verify_packet(struct mbuf *m)
 			low = n->m_dat;
 			high = low + MLEN;
 		}
-		if (__predict_false(dat + len <= dat)) {
+		if (__predict_false(dat + len < dat)) {
 			panic("%s: incorrect length (len = %d)", __func__, len);
 		}
 		if (__predict_false((dat < low) || (dat + len > high))) {

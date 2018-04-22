@@ -1,3 +1,3 @@
-/*	$NetBSD: pcb.h,v 1.7 1996/03/19 03:06:28 jonathan Exp $	*/
+/*	$NetBSD: pcb.h,v 1.7.80.1 2018/04/22 07:20:18 pgoyette Exp $	*/
 
 #include <mips/pcb.h>

@@ -1,5 +1,5 @@
 /* tc-alpha.c - Processor-specific code for the DEC Alpha AXP CPU.
-   Copyright (C) 1989-2016 Free Software Foundation, Inc.
+   Copyright (C) 1989-2018 Free Software Foundation, Inc.
    Contributed by Carnegie Mellon University, 1993.
    Written by Alessandro Forin, based on earlier gas-1.38 target CPU files.
    Modified by Ken Raeburn for gas-2.x and ECOFF support.
@@ -706,7 +706,7 @@ alpha_adjust_relocs (bfd *abfd ATTRIBUTE_UNUSED,
      present.  Not implemented.
 
      Also suppress the optimization if the !literals/!lituses are spread
-     in different segments.  This can happen with "intersting" uses of
+     in different segments.  This can happen with "interesting" uses of
      inline assembly; examples are present in the Linux kernel semaphores.  */
 
   for (fixp = seginfo->fix_root; fixp; fixp = next)
@@ -1005,6 +1005,7 @@ tokenize_arguments (char *str,
 	    /* ... then fall through to plain expression.  */
 	    input_line_pointer = hold;
 	  }
+	  /* Fall through.  */
 
 	default:
 	  if (saw_arg && !saw_comma)
@@ -3368,7 +3369,7 @@ assemble_tokens (const char *opname,
 #ifdef OBJ_EVAX
 
 /* Add sym+addend to link pool.
-   Return offset from curent procedure value (pv) to entry in link pool.
+   Return offset from current procedure value (pv) to entry in link pool.
 
    Add new fixup only if offset isn't 16bit.  */
 
@@ -4881,7 +4882,7 @@ s_alpha_gprel32 (int ignore ATTRIBUTE_UNUSED)
 }
 
 /* Handle floating point allocation pseudo-ops.  This is like the
-   generic vresion, but it makes sure the current label, if any, is
+   generic version, but it makes sure the current label, if any, is
    correctly aligned.  */
 
 static void
@@ -5583,6 +5584,7 @@ md_atof (int type, char *litP, int *sizeP)
     case 'G':
       /* vax_md_atof() doesn't like "G" for some reason.  */
       type = 'g';
+      /* Fall through.  */
     case 'F':
     case 'D':
       return vax_md_atof (type, litP, sizeP);

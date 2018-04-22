@@ -1,4 +1,4 @@
-/*	$NetBSD: rumperr.h,v 1.6 2016/02/02 01:15:58 pooka Exp $	*/
+/*	$NetBSD: rumperr.h,v 1.6.16.1 2018/04/22 07:20:29 pgoyette Exp $	*/
 
 /*
  *	AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -6,7 +6,7 @@
 
 /*	NetBSD: errno.h,v 1.40 2013/01/02 18:51:53 dsl Exp 	*/
 
-static inline const char *
+static __inline const char *
 rump_strerror(int error)
 {
 

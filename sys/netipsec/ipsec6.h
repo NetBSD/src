@@ -1,5 +1,5 @@
-/*	$NetBSD: ipsec6.h,v 1.26 2018/02/27 15:01:30 maxv Exp $	*/
-/*	$FreeBSD: src/sys/netipsec/ipsec6.h,v 1.1.4.1 2003/01/24 05:11:35 sam Exp $	*/
+/*	$NetBSD: ipsec6.h,v 1.26.2.1 2018/04/22 07:20:28 pgoyette Exp $	*/
+/*	$FreeBSD: ipsec6.h,v 1.1.4.1 2003/01/24 05:11:35 sam Exp $	*/
 /*	$KAME: ipsec.h,v 1.44 2001/03/23 08:08:47 itojun Exp $	*/
 
 /*

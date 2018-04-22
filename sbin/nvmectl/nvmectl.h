@@ -1,6 +1,8 @@
-/*	$NetBSD: nvmectl.h,v 1.4.8.1 2018/03/22 01:44:40 pgoyette Exp $	*/
+/*	$NetBSD: nvmectl.h,v 1.4.8.2 2018/04/22 07:20:16 pgoyette Exp $	*/
 
 /*-
+ * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
+ *
  * Copyright (C) 2012-2013 Intel Corporation
  * All rights reserved.
  *
@@ -25,7 +27,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: head/sbin/nvmecontrol/nvmecontrol.h 314230 2017-02-25 00:09:16Z imp $
+ * $FreeBSD: head/sbin/nvmecontrol/nvmecontrol.h 326276 2017-11-27 15:37:16Z pfg $
  */
 
 #ifndef __NVMECTL_H__
@@ -51,35 +53,35 @@ struct nvme_function {
 "devlist\n"
 
 #define IDENTIFY_USAGE							       \
-"identify [-x [-v]] <controller id|namespace id>\n"
+"identify [-x [-v]] <controller_id|namespace_id>\n"
 
-#if 0
+#ifdef ENABLE_PREFTEST
 #define PERFTEST_USAGE							       \
-"perftest <-n num_threads> <-o read|write>\n"		       \
+"perftest <-n num_threads> <-o read|write>\n"				       \
 "                        <-s size_in_bytes> <-t time_in_seconds>\n"	       \
 "                        <-i intr|wait> [-f refthread] [-p]\n"		       \
-"                        <namespace id>\n"
+"                        <namespace_id>\n"
 #endif
 
-#if 0
+#ifdef ENABLE_RESET
 #define RESET_USAGE							       \
 "reset <controller id>\n"
 #endif
 
 #define LOGPAGE_USAGE							       \
-"logpage <-p page_id> [-b] [-v vendor] [-x] "		       \
-    "<controller id|namespace id>\n"
+"logpage <-p page_id> [-b] [-v vendor] [-x] "				       \
+    "<controller_id|namespace_id>\n"
 
-#if 0
+#ifdef ENABLE_FIRMWARE
 #define FIRMWARE_USAGE							       \
-"firmware [-s slot] [-f path_to_firmware] [-a] <controller id>\n"
+"firmware [-s slot] [-f path_to_firmware] [-a] <controller_id>\n"
 #endif
 
 #define POWER_USAGE							       \
-"power [-l] [-p new-state [-w workload-hint]] <controller id>\n"
+"power [-l] [-p new-state [-w workload-hint]] <controller_id>\n"
 
 #define WDC_USAGE							       \
-"wdc (cap-diag|drive-log|get-crash-dump|purge|purge-montior)\n"
+"wdc cap-diag [-o path-templete]\n"
 
 void devlist(int, char *[]) __dead;
 void identify(int, char *[]) __dead;
@@ -103,6 +105,10 @@ void read_namespace_data(int, int, struct nvm_identify_namespace *);
 void print_hex(void *, uint32_t);
 void read_logpage(int, uint8_t, int, void *, uint32_t);
 __dead void dispatch(int argc, char *argv[], const struct nvme_function *f);
+
+/* Utility Routines */
 void nvme_strvis(uint8_t *, int, const uint8_t *, int);
+void print_bignum(const char *, uint64_t v[2], const char *);
+uint64_t le48dec(const void *);
 
 #endif	/* __NVMECTL_H__ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_netbsd.c,v 1.47 2018/02/26 06:17:01 maxv Exp $	*/
+/*	$NetBSD: ipsec_netbsd.c,v 1.47.2.1 2018/04/22 07:20:28 pgoyette Exp $	*/
 /*	$KAME: esp_input.c,v 1.60 2001/09/04 08:43:19 itojun Exp $	*/
 /*	$KAME: ah_input.c,v 1.64 2001/09/04 08:43:19 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.47 2018/02/26 06:17:01 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.47.2.1 2018/04/22 07:20:28 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -41,7 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.47 2018/02/26 06:17:01 maxv Exp $
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/domain.h>
 #include <sys/protosw.h>
@@ -202,11 +201,6 @@ ah6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 	}
 
 	if (ip6) {
-		/*
-		 * XXX: We assume that when ip6 is non NULL,
-		 * M and OFF are valid.
-		 */
-
 		/* check if we can safely examine src and dst ports */
 		if (m->m_pkthdr.len < off + sizeof(ah))
 			return NULL;
@@ -228,7 +222,7 @@ ah6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 			 * Check to see if we have a valid SA corresponding
 			 * to the address in the ICMP message payload.
 			 */
-			sav = KEY_LOOKUP_SA((const union sockaddr_union*)sa,
+			sav = KEY_LOOKUP_SA((const union sockaddr_union *)sa,
 			    IPPROTO_AH, ahp->ah_spi, 0, 0);
 
 			if (sav) {
@@ -303,12 +297,6 @@ esp6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 		ip6cp1.ip6c_src = ip6cp->ip6c_src;
 		pfctlinput2(cmd, sa, &ip6cp1);
 
-		/*
-		 * Then go to special cases that need ESP header information.
-		 * XXX: We assume that when ip6 is non NULL,
-		 * M and OFF are valid.
-		 */
-
 		/* check if we can safely examine src and dst ports */
 		if (m->m_pkthdr.len < off + sizeof(esp))
 			return NULL;
@@ -321,7 +309,7 @@ esp6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 			m_copydata(m, off, sizeof(esp), &esp);
 			espp = &esp;
 		} else
-			espp = (struct newesp*)(mtod(m, char *) + off);
+			espp = (struct newesp *)(mtod(m, char *) + off);
 
 		if (cmd == PRC_MSGSIZE) {
 			int valid = 0;
@@ -331,7 +319,7 @@ esp6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 			 * the address in the ICMP message payload.
 			 */
 
-			sav = KEY_LOOKUP_SA((const union sockaddr_union*)sa,
+			sav = KEY_LOOKUP_SA((const union sockaddr_union *)sa,
 			    IPPROTO_ESP, espp->esp_spi, 0, 0);
 
 			if (sav) {
@@ -365,11 +353,11 @@ sysctl_ipsec(SYSCTLFN_ARGS)
 	struct sysctlnode node;
 
 	node = *rnode;
-	t = *(int*)rnode->sysctl_data;
+	t = *(int *)rnode->sysctl_data;
 	node.sysctl_data = &t;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if (error || newp == NULL)
-		return (error);
+		return error;
 
 	switch (rnode->sysctl_num) {
 	case IPSECCTL_DEF_ESP_TRANSLEV:
@@ -378,22 +366,22 @@ sysctl_ipsec(SYSCTLFN_ARGS)
 	case IPSECCTL_DEF_AH_NETLEV:
 		if (t != IPSEC_LEVEL_USE &&
 		    t != IPSEC_LEVEL_REQUIRE)
-			return (EINVAL);
+			return EINVAL;
 		ipsec_invalpcbcacheall();
 		break;
 	case IPSECCTL_DEF_POLICY:
 		if (t != IPSEC_POLICY_DISCARD &&
 		    t != IPSEC_POLICY_NONE)
-			return (EINVAL);
+			return EINVAL;
 		ipsec_invalpcbcacheall();
 		break;
 	default:
-		return (EINVAL);
+		return EINVAL;
 	}
 
-	*(int*)rnode->sysctl_data = t;
+	*(int *)rnode->sysctl_data = t;
 
-	return (0);
+	return 0;
 }
 
 #ifdef IPSEC_DEBUG
@@ -404,11 +392,11 @@ sysctl_ipsec_test(SYSCTLFN_ARGS)
 	struct sysctlnode node;
 
 	node = *rnode;
-	t = *(int*)rnode->sysctl_data;
+	t = *(int *)rnode->sysctl_data;
 	node.sysctl_data = &t;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if (error || newp == NULL)
-		return (error);
+		return error;
 
 	if (t < 0 || t > 1)
 		return EINVAL;
@@ -420,7 +408,7 @@ sysctl_ipsec_test(SYSCTLFN_ARGS)
 		 printf("ipsec: HMAC corruption %s\n",
 		     (t == 0) ? "deactivated" : "activated");
 
-	*(int*)rnode->sysctl_data = t;
+	*(int *)rnode->sysctl_data = t;
 
 	return 0;
 }
@@ -535,18 +523,6 @@ sysctl_net_inet_ipsec_setup(struct sysctllog **clog)
 		       NULL, 0, NULL, 0,
 		       CTL_NET, PF_INET, IPPROTO_ESP, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "trans_deflev", NULL,
-		       sysctl_ipsec, 0, &ip4_esp_trans_deflev, 0,
-		       CTL_NET, PF_INET, IPPROTO_ESP,
-		       IPSECCTL_DEF_ESP_TRANSLEV, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "net_deflev", NULL,
-		       sysctl_ipsec, 0, &ip4_esp_net_deflev, 0,
-		       CTL_NET, PF_INET, IPPROTO_ESP,
-		       IPSECCTL_DEF_ESP_NETLEV, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
 		       CTLTYPE_STRUCT, "esp_stats", NULL,
 		       sysctl_net_inet_esp_stats, 0, NULL, 0,
@@ -559,30 +535,6 @@ sysctl_net_inet_ipsec_setup(struct sysctllog **clog)
 		       CTLTYPE_NODE, "ah", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_NET, PF_INET, IPPROTO_AH, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "cleartos", NULL,
-		       NULL, 0, &ip4_ah_cleartos, 0,
-		       CTL_NET, PF_INET, IPPROTO_AH,
-		       IPSECCTL_AH_CLEARTOS, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "offsetmask", NULL,
-		       NULL, 0, &ip4_ah_offsetmask, 0,
-		       CTL_NET, PF_INET, IPPROTO_AH,
-		       IPSECCTL_AH_OFFSETMASK, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "trans_deflev", NULL,
-		       sysctl_ipsec, 0, &ip4_ah_trans_deflev, 0,
-		       CTL_NET, PF_INET, IPPROTO_AH,
-		       IPSECCTL_DEF_AH_TRANSLEV, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "net_deflev", NULL,
-		       sysctl_ipsec, 0, &ip4_ah_net_deflev, 0,
-		       CTL_NET, PF_INET, IPPROTO_AH,
-		       IPSECCTL_DEF_AH_NETLEV, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
 		       CTLTYPE_STRUCT, "ah_stats", NULL,
@@ -825,23 +777,5 @@ sysctl_net_inet6_ipsec6_setup(struct sysctllog **clog)
 		       NULL, 0, &ipsec_used, 0,
 		       CTL_NET, PF_INET6, IPPROTO_AH,
 		       CTL_CREATE, CTL_EOL);
-	/*
-	 * "aliases" for the ipsec6 subtree
-	 */
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_ALIAS,
-		       CTLTYPE_NODE, "esp6", NULL,
-		       NULL, IPPROTO_AH, NULL, 0,
-		       CTL_NET, PF_INET6, IPPROTO_ESP, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_ALIAS,
-		       CTLTYPE_NODE, "ipcomp6", NULL,
-		       NULL, IPPROTO_AH, NULL, 0,
-		       CTL_NET, PF_INET6, IPPROTO_IPCOMP, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_ALIAS,
-		       CTLTYPE_NODE, "ah6", NULL,
-		       NULL, IPPROTO_AH, NULL, 0,
-		       CTL_NET, PF_INET6, CTL_CREATE, CTL_EOL);
 }
 #endif /* INET6 */

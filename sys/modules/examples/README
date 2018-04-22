@@ -1,4 +1,4 @@
-	$NetBSD: README,v 1.4.12.1 2018/04/16 02:00:08 pgoyette Exp $
+	$NetBSD: README,v 1.4.12.2 2018/04/22 07:20:27 pgoyette Exp $
 
                            Kernel Developer's Manual
 
@@ -13,6 +13,7 @@ DESCRIPTION
      * properties      - handle incoming properties during the module load
      * ping            - basic ioctl(9)
      * readhappy       - basic implementation of read(9) with happy numbers
+     * readhappy_mpsafe- demonstrates how to make a module MPSAFE
      * sysctl          - demonstrates adding a sysctl handle dynamically
 
      To build the examples you need a local copy of NetBSD sources. You also
@@ -58,8 +59,8 @@ HISTORY
      ping, luahello and luareadhappy) first appeared in NetBSD 8.0; they were
      written by Kamil Rytarowski.
 
-     The executor and sysctls module first appeared in NetBSD 9.0 and were
-     authored by Siddharth Muralee.
+     The readhappy_mpsafe, executor and sysctls modules first appeared in NetBSD
+     9.0 and were authored by Siddharth Muralee.
 
 AUTHORS
      This document was written by Kamil Rytarowski.

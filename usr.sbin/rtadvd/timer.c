@@ -1,10 +1,10 @@
-/*	$NetBSD: timer.c,v 1.14 2017/11/06 15:15:04 christos Exp $	*/
+/*	$NetBSD: timer.c,v 1.14.2.1 2018/04/22 07:20:30 pgoyette Exp $	*/
 /*	$KAME: timer.c,v 1.11 2005/04/14 06:22:35 suz Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -16,7 +16,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -33,9 +33,11 @@
 #include <sys/queue.h>
 #include <sys/time.h>
 
+#include <assert.h>
 #include <limits.h>
 #include <unistd.h>
 #include <syslog.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 #include <search.h>
@@ -62,19 +64,15 @@ rtadvd_add_timer(struct rtadvd_timer *(*timeout) (void *),
 {
 	struct rtadvd_timer *newtimer;
 
+	assert(timeout != NULL);
+
 	if ((newtimer = malloc(sizeof(*newtimer))) == NULL) {
-		logit(LOG_ERR,
-		       "<%s> can't allocate memory", __func__);
-		exit(1);
+		logit(LOG_ERR, "%s: malloc: %m", __func__);
+		exit(EXIT_FAILURE);
 	}
 
 	memset(newtimer, 0, sizeof(*newtimer));
 
-	if (timeout == NULL) {
-		logit(LOG_ERR,
-		       "<%s> timeout function unspecified", __func__);
-		exit(1);
-	}
 	newtimer->expire = timeout;
 	newtimer->update = update;
 	newtimer->expire_data = timeodata;
@@ -110,6 +108,9 @@ rtadvd_set_timer(struct timespec *tm, struct rtadvd_timer *timer)
 	/* upate the next expiration time */
 	if (timespeccmp(&timer->tm, &tm_max, <))
 		tm_max = timer->tm;
+
+	/* enable the timer */
+	timer->enabled = true;
 }
 
 /*
@@ -128,6 +129,8 @@ rtadvd_check_timer(void)
 	tm_max = tm_limit;
 
 	TAILQ_FOREACH_SAFE(tm, &ra_timer, next, tmn) {
+		if (!tm->enabled)
+			continue;
 		if (timespeccmp(&tm->tm, &now, <=)) {
 			if ((*tm->expire)(tm->expire_data) == NULL)
 				continue; /* the timer was removed */
@@ -157,9 +160,10 @@ rtadvd_timer_rest(struct rtadvd_timer *timer)
 
 	prog_clock_gettime(CLOCK_MONOTONIC, &now);
 	if (timespeccmp(&timer->tm, &now, <=)) {
-		logit(LOG_DEBUG,
-		       "<%s> a timer must be expired, but not yet",
-		       __func__);
+		if (timer->enabled)
+			logit(LOG_DEBUG,
+			       "<%s> a timer must be expired, but not yet",
+			       __func__);
 		returnval.tv_sec = 0;
 		returnval.tv_nsec = 0;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_curlwp___thread.h,v 1.2 2014/03/16 15:30:05 pooka Exp $	*/
+/*	$NetBSD: rump_curlwp___thread.h,v 1.2.34.1 2018/04/22 07:20:29 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2014 Antti Kantee.  All Rights Reserved.
@@ -55,7 +55,7 @@ lwproc_curlwpop(enum rumplwpop op, struct lwp *l)
 }
 #endif
 
-static inline struct lwp * __attribute__((const))
+static __inline struct lwp * __attribute__((const))
 rump_curlwp_fast(void)
 {
 

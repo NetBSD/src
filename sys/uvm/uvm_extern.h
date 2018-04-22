@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.208 2017/12/15 16:03:29 maya Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.208.2.1 2018/04/22 07:20:29 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -218,7 +218,7 @@ b\32UNMAP\0\
 #define	UVM_PGA_ZERO		0x0002	/* returned page must be zero'd */
 
 /*
- * flags for ubc_alloc()
+ * flags for ubc_uiomove()
  */
 #define UBC_READ	0x001	/* reading from object */
 #define UBC_WRITE	0x002	/* writing to object */
@@ -613,9 +613,6 @@ void			uao_reference(struct uvm_object *);
 /* uvm_bio.c */
 void			ubc_init(void);
 void			ubchist_init(void);
-void *			ubc_alloc(struct uvm_object *, voff_t, vsize_t *, int,
-			    int);
-void			ubc_release(void *, int);
 int			ubc_uiomove(struct uvm_object *, struct uio *, vsize_t,
 			    int, int);
 void			ubc_zerorange(struct uvm_object *, off_t, size_t, int);
@@ -635,7 +632,8 @@ void			uvm_emap_update(u_int);
 vaddr_t			uvm_emap_alloc(vsize_t, bool);
 void			uvm_emap_free(vaddr_t, size_t);
 
-void			uvm_emap_enter(vaddr_t, struct vm_page **, u_int);
+void			uvm_emap_enter(vaddr_t, struct vm_page **, u_int,
+			    vm_prot_t);
 void			uvm_emap_remove(vaddr_t, vsize_t);
 
 #ifdef __HAVE_PMAP_EMAP

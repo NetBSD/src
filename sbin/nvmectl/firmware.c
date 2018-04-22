@@ -1,6 +1,8 @@
-/*	$NetBSD: firmware.c,v 1.2 2017/04/29 00:06:40 nonaka Exp $	*/
+/*	$NetBSD: firmware.c,v 1.2.8.1 2018/04/22 07:20:16 pgoyette Exp $	*/
 
 /*-
+ * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
+ *
  * Copyright (c) 2013 EMC Corp.
  * All rights reserved.
  *
@@ -31,9 +33,9 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: firmware.c,v 1.2 2017/04/29 00:06:40 nonaka Exp $");
+__RCSID("$NetBSD: firmware.c,v 1.2.8.1 2018/04/22 07:20:16 pgoyette Exp $");
 #if 0
-__FBSDID("$FreeBSD: head/sbin/nvmecontrol/firmware.c 313188 2017-02-04 05:52:50Z imp $");
+__FBSDID("$FreeBSD: head/sbin/nvmecontrol/firmware.c 329824 2018-02-22 13:32:31Z wma $");
 #endif
 #endif
 
@@ -186,7 +188,7 @@ firmware(int argc, char *argv[])
 	int				fd = -1;
 	int				a_flag, s_flag, f_flag;
 	int				commit_action, reboot_required;
-	int				ch,
+	int				ch;
 	char				*p, *image = NULL;
 	char				*controller = NULL, prompt[64];
 	void				*buf = NULL;

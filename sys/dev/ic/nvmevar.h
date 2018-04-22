@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmevar.h,v 1.13.14.1 2018/03/22 01:44:48 pgoyette Exp $	*/
+/*	$NetBSD: nvmevar.h,v 1.13.14.2 2018/04/22 07:20:20 pgoyette Exp $	*/
 /*	$OpenBSD: nvmevar.h,v 1.8 2016/04/14 11:18:32 dlg Exp $ */
 
 /*
@@ -136,6 +136,9 @@ struct nvme_softc {
 	uint32_t		sc_flags;
 #define	NVME_F_ATTACHED	__BIT(0)
 #define	NVME_F_OPEN	__BIT(1)
+
+	uint32_t		sc_quirks;
+#define	NVME_QUIRK_DELAY_B4_CHK_RDY	__BIT(0)
 };
 
 #define	lemtoh16(p)	le16toh(*((uint16_t *)(p)))
@@ -160,7 +163,7 @@ void	nvme_softintr_intx(void *);
 int	nvme_intr_msi(void *);
 void	nvme_softintr_msi(void *);
 
-static inline struct nvme_queue *
+static __inline struct nvme_queue *
 nvme_get_q(struct nvme_softc *sc)
 {
 	return sc->sc_q[cpu_index(curcpu()) % sc->sc_nq];
@@ -169,7 +172,7 @@ nvme_get_q(struct nvme_softc *sc)
 /*
  * namespace
  */
-static inline struct nvme_namespace *
+static __inline struct nvme_namespace *
 nvme_ns_get(struct nvme_softc *sc, uint16_t nsid)
 {
 	if (nsid == 0 || nsid - 1 >= sc->sc_nn)

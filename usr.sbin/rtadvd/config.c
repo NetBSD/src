@@ -1,10 +1,10 @@
-/*	$NetBSD: config.c,v 1.37 2017/11/06 15:15:04 christos Exp $	*/
+/*	$NetBSD: config.c,v 1.37.2.1 2018/04/22 07:20:30 pgoyette Exp $	*/
 /*	$KAME: config.c,v 1.93 2005/10/17 14:40:02 suz Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -16,7 +16,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -97,13 +97,14 @@ encode_domain(char *dst, const char *src)
 		src = p + 1;
 	}
 	*dst++ = '\0';
-	
+
 	return dst - odst;
 }
 
 void
 free_rainfo(struct rainfo *rai)
 {
+	struct soliciter *sol;
 	struct prefix *pfx;
 	struct rtinfo *rti;
 	struct rdnss *rdnss;
@@ -112,6 +113,12 @@ free_rainfo(struct rainfo *rai)
 	struct dnssl_domain *dnsd;
 
 	rtadvd_remove_timer(&rai->timer);
+	rtadvd_remove_timer(&rai->timer_sol);
+
+	while ((sol = TAILQ_FIRST(&rai->soliciter))) {
+		TAILQ_REMOVE(&rai->soliciter, sol, next);
+		free(sol);
+	}
 
 	while ((pfx = TAILQ_FIRST(&rai->prefix))) {
 		TAILQ_REMOVE(&rai->prefix, pfx, next);
@@ -206,6 +213,7 @@ getconfig(const char *intface, int exithard)
 	}
 
 	ELM_MALLOC(tmp);
+	TAILQ_INIT(&tmp->soliciter);
 	TAILQ_INIT(&tmp->prefix);
 	TAILQ_INIT(&tmp->route);
 	TAILQ_INIT(&tmp->rdnss);
@@ -697,7 +705,7 @@ getconfig(const char *intface, int exithard)
 		    val64 > tmp->maxinterval * 2)
 		{
 			logit(LOG_ERR, "<%s> %s (%lld) on %s is invalid",
-		    	     __func__, entbuf, (long long)val64, intface);
+			     __func__, entbuf, (long long)val64, intface);
 			goto errexit;
 		}
 		rdnss->lifetime = (uint32_t)val64;
@@ -733,7 +741,7 @@ getconfig(const char *intface, int exithard)
 		    val64 > tmp->maxinterval * 2)
 		{
 			logit(LOG_ERR, "<%s> %s (%lld) on %s is invalid",
-		    	     __func__, entbuf, (long long)val64, intface);
+			     __func__, entbuf, (long long)val64, intface);
 			goto errexit;
 		}
 		dnssl->lifetime = (uint32_t)val64;
@@ -784,7 +792,8 @@ getconfig(const char *intface, int exithard)
 		return;
 	tmp->timer = rtadvd_add_timer(ra_timeout, ra_timer_update,
 				      tmp, tmp);
-	ra_timer_set_short_delay(tmp);
+	ra_timer_set_short_delay(tmp, tmp->timer);
+	tmp->timer_sol = rtadvd_add_timer(ra_timeout_sol, NULL, tmp, NULL);
 
 	return;
 
@@ -1123,8 +1132,8 @@ make_packet(struct rainfo *rainfo)
 		packlen += sizeof(struct nd_opt_prefix_info) * rainfo->pfxs;
 	if (rainfo->linkmtu)
 		packlen += sizeof(struct nd_opt_mtu);
-	TAILQ_FOREACH(rti, &rainfo->route, next) 
-		packlen += sizeof(struct nd_opt_route_info) + 
+	TAILQ_FOREACH(rti, &rainfo->route, next)
+		packlen += sizeof(struct nd_opt_route_info) +
 			   ((rti->prefixlen + 0x3f) >> 6) * 8;
 
 	TAILQ_FOREACH(rdns, &rainfo->rdnss, next) {
@@ -1200,7 +1209,7 @@ make_packet(struct rainfo *rainfo)
 		buf += sizeof(struct nd_opt_mtu);
 	}
 
-	TAILQ_FOREACH(pfx, &rainfo->prefix, next) {	
+	TAILQ_FOREACH(pfx, &rainfo->prefix, next) {
 		uint32_t vltime, pltime;
 		struct timespec now;
 
@@ -1273,7 +1282,7 @@ make_packet(struct rainfo *rainfo)
 		ndopt_rdnss->nd_opt_rdnss_reserved = 0;
 		ndopt_rdnss->nd_opt_rdnss_lifetime = htonl(rdns->lifetime);
 		buf += sizeof(*ndopt_rdnss);
-	
+
 		TAILQ_FOREACH(rdnsa, &rdns->list, next) {
 			CHECKLEN(sizeof(rdnsa->addr));
 			memcpy(buf, &rdnsa->addr, sizeof(rdnsa->addr));
@@ -1290,7 +1299,7 @@ make_packet(struct rainfo *rainfo)
 		ndopt_dnssl->nd_opt_dnssl_reserved = 0;
 		ndopt_dnssl->nd_opt_dnssl_lifetime = htonl(dnsl->lifetime);
 		buf += sizeof(*ndopt_dnssl);
-	
+
 		TAILQ_FOREACH(dnsd, &dnsl->list, next) {
 			CHECKLEN(dnsd->len);
 			memcpy(buf, dnsd->domain, dnsd->len);
