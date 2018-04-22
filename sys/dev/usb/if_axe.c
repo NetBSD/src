@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.87 2018/04/21 18:07:23 christos Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.88 2018/04/22 20:32:27 christos Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.137 2016/04/13 11:03:37 mpi Exp $ */
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.87 2018/04/21 18:07:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.88 2018/04/22 20:32:27 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -523,6 +523,20 @@ axe_setmulti(struct axe_softc *sc)
 	axe_unlock_mii(sc);
 }
 
+static void
+axe_ax_init(struct axe_softc *sc)
+{
+	if (sc->axe_flags & AX178) {
+		axe_ax88178_init(sc);
+	} else if (sc->axe_flags & AX772) {
+		axe_ax88772_init(sc);
+	} else if (sc->axe_flags & AX772A) {
+		axe_ax88772a_init(sc);
+	} else if (sc->axe_flags & AX772B) {
+		axe_ax88772b_init(sc);
+	}
+}
+
 
 static void
 axe_reset(struct axe_softc *sc)
@@ -546,15 +560,8 @@ axe_reset(struct axe_softc *sc)
 #else
 	axe_lock_mii(sc);
 
-	if (sc->axe_flags & AX178) {
-		axe_ax88178_init(sc);
-	} else if (sc->axe_flags & AX772) {
-		axe_ax88772_init(sc);
-	} else if (sc->axe_flags & AX772A) {
-		axe_ax88772a_init(sc);
-	} else if (sc->axe_flags & AX772B) {
-		axe_ax88772b_init(sc);
-	}
+	axe_ax_init(sc);
+
 	axe_unlock_mii(sc);
 #endif
 }
@@ -971,20 +978,12 @@ axe_attach(device_t parent, device_t self, void *aux)
 
 	/* Initialize controller and get station address. */
 
-	if (sc->axe_flags & AX178) {
-		axe_ax88178_init(sc);
-	} else if (sc->axe_flags & AX772) {
-		axe_ax88772_init(sc);
-	} else if (sc->axe_flags & AX772A) {
-		axe_ax88772a_init(sc);
-	} else if (sc->axe_flags & AX772B) {
-		axe_ax88772b_init(sc);
-	}
+	axe_ax_init(sc);
 
-	if (!(sc->axe_flags & AX772B)) {
+	if ((sc->axe_flags & AX772B) != 0) {
 		if (axe_cmd(sc, AXE_172_CMD_READ_NODEID, 0, 0, sc->axe_enaddr))
 		{
-			aprint_debug_dev(self,
+			aprint_error_dev(self,
 			    "failed to read ethernet address\n");
 		}
 	}
