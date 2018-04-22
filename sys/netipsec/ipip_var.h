@@ -1,4 +1,4 @@
-/*	$NetBSD: ipip_var.h,v 1.5 2018/04/19 08:27:38 maxv Exp $	*/
+/*	$NetBSD: ipip_var.h,v 1.6 2018/04/22 10:25:40 maxv Exp $	*/
 /*	$FreeBSD: ipip_var.h,v 1.1.4.1 2003/01/24 05:11:35 sam Exp $	*/
 /*	$OpenBSD: ip_ipip.h,v 1.5 2002/06/09 16:26:10 itojun Exp $ */
 /*
@@ -59,6 +59,6 @@
 #define	IPIP_NSTATS		10
 
 #ifdef _KERNEL
-extern	int ipip_allow;
+extern	int ipip_spoofcheck;
 #endif /* _KERNEL */
 #endif /* !_NETINET_IPIP_H_ */
