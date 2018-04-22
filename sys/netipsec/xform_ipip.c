@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipip.c,v 1.66 2018/04/19 08:27:39 maxv Exp $	*/
+/*	$NetBSD: xform_ipip.c,v 1.67 2018/04/22 10:25:40 maxv Exp $	*/
 /*	$FreeBSD: xform_ipip.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ipip.c,v 1.25 2002/06/10 18:04:55 itojun Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.66 2018/04/19 08:27:39 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.67 2018/04/22 10:25:40 maxv Exp $");
 
 /*
  * IP-inside-IP processing
@@ -87,7 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.66 2018/04/19 08:27:39 maxv Exp $")
 /* XXX IPCOMP */
 #define	M_IPSEC	(M_AUTHIPHDR|M_AUTHIPDGM|M_DECRYPTED)
 
-int ipip_allow = 0;
+int ipip_spoofcheck = 1;
 percpu_t *ipipstat_percpu;
 
 void ipe4_attach(void);
@@ -254,7 +254,7 @@ _ipip_input(struct mbuf *m, int iphlen)
 	/* Check for local address spoofing. */
 	if ((m_get_rcvif_NOMPSAFE(m) == NULL ||
 	    !(m_get_rcvif_NOMPSAFE(m)->if_flags & IFF_LOOPBACK)) &&
-	    ipip_allow != 2) {
+	    ipip_spoofcheck) {
 		int s = pserialize_read_enter();
 		IFNET_READER_FOREACH(ifp) {
 			IFADDR_READER_FOREACH(ifa, ifp) {
