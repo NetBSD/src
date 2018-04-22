@@ -14,7 +14,8 @@ LITTLE_OUTPUT_FORMAT="elf32-littlemips"
 TEMPLATE_NAME=elf32
 EXTRA_EM_FILE=mipself
 
-case x"$EMULATION_NAME" in
+# Note: use "x$var" not x"$var" in case directive in order to work around bug in bash 4.2
+case "x$EMULATION_NAME" in
 xelf32*n32*) ELFSIZE=32 ;;
 xelf64*) ELFSIZE=64 ;;
 x) ;;

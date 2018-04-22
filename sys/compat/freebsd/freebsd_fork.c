@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_fork.c,v 1.8 2017/08/08 08:04:06 maxv Exp $	*/
+/*	$NetBSD: freebsd_fork.c,v 1.8.2.1 2018/04/22 07:20:19 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_fork.c,v 1.8 2017/08/08 08:04:06 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_fork.c,v 1.8.2.1 2018/04/22 07:20:19 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,5 +81,5 @@ freebsd_sys_rfork(struct lwp *l, const struct freebsd_sys_rfork_args *uap, regis
 
 	return (fork1(l, flags,
 	    SCARG(uap, flags) & FREEBSD_RFLINUXTHPN ? SIGUSR1 : SIGCHLD,
-	    NULL, 0, NULL, NULL, retval, NULL));
+	    NULL, 0, NULL, NULL, retval));
 }

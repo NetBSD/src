@@ -1,4 +1,4 @@
-/* $NetBSD: ix_txrx.c,v 1.34.2.3 2018/04/07 04:12:18 pgoyette Exp $ */
+/* $NetBSD: ix_txrx.c,v 1.34.2.4 2018/04/22 07:20:26 pgoyette Exp $ */
 
 /******************************************************************************
 
@@ -494,8 +494,7 @@ retry:
 		segaddr = htole64(map->dm_segs[j].ds_addr);
 
 		txd->read.buffer_addr = segaddr;
-		txd->read.cmd_type_len = htole32(txr->txd_cmd |
-		    cmd_type_len | seglen);
+		txd->read.cmd_type_len = htole32(cmd_type_len | seglen);
 		txd->read.olinfo_status = htole32(olinfo_status);
 
 		if (++i == txr->num_desc)
@@ -2266,8 +2265,6 @@ ixgbe_allocate_queues(struct adapter *adapter)
 		txr->num_desc = adapter->num_tx_desc;
 
 		/* Initialize the TX side lock */
-		snprintf(txr->mtx_name, sizeof(txr->mtx_name), "%s:tx(%d)",
-		    device_xname(dev), txr->me);
 		mutex_init(&txr->tx_mtx, MUTEX_DEFAULT, IPL_NET);
 
 		if (ixgbe_dma_malloc(adapter, tsize, &txr->txdma,
@@ -2318,8 +2315,6 @@ ixgbe_allocate_queues(struct adapter *adapter)
 		rxr->num_desc = adapter->num_rx_desc;
 
 		/* Initialize the RX side lock */
-		snprintf(rxr->mtx_name, sizeof(rxr->mtx_name), "%s:rx(%d)",
-		    device_xname(dev), rxr->me);
 		mutex_init(&rxr->rx_mtx, MUTEX_DEFAULT, IPL_NET);
 
 		if (ixgbe_dma_malloc(adapter, rsize, &rxr->rxdma,

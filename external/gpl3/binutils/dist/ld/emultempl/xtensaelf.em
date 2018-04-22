@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright (C) 2003-2016 Free Software Foundation, Inc.
+#   Copyright (C) 2003-2018 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -26,7 +26,6 @@ fragment <<EOF
 
 #include <xtensa-config.h>
 #include "../bfd/elf-bfd.h"
-#include "../bfd/libbfd.h"
 #include "elf/xtensa.h"
 #include "bfd.h"
 
@@ -116,12 +115,7 @@ replace_insn_sec_with_prop_sec (bfd *abfd,
 
   if (insn_sec->size != 0)
     {
-      insn_contents = (bfd_byte *) bfd_malloc (insn_sec->size);
-      if (insn_contents == NULL)
-	{
-	  *error_message = _("out of memory");
-	  goto cleanup;
-	}
+      insn_contents = (bfd_byte *) xmalloc (insn_sec->size);
       if (! bfd_get_section_contents (abfd, insn_sec, insn_contents,
 				      (file_ptr) 0, insn_sec->size))
 	{
@@ -1438,7 +1432,7 @@ xtensa_wild_group_interleave_callback (lang_statement_union_type *statement)
 	  struct wildcard_list *l;
 	  for (l = w->section_list; l != NULL; l = l->next)
 	    {
-	      if (l->spec.sorted == TRUE)
+	      if (l->spec.sorted == by_name)
 		{
 		  no_reorder = TRUE;
 		  break;

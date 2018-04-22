@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.273.2.1 2018/03/30 06:20:16 pgoyette Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.273.2.2 2018/04/22 07:20:28 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.273.2.1 2018/03/30 06:20:16 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.273.2.2 2018/04/22 07:20:28 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -147,7 +147,6 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.273.2.1 2018/03/30 06:20:16 pgoyette 
 
 #ifdef IPSEC
 #include <netipsec/ipsec.h>
-#include <netipsec/xform.h>
 #ifdef INET6
 #include <netipsec/ipsec6.h>
 #endif
@@ -1423,11 +1422,6 @@ tcp6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 	}
 
 	if (ip6) {
-		/*
-		 * XXX: We assume that when ip6 is non NULL,
-		 * M and OFF are valid.
-		 */
-
 		/* check if we can safely examine src and dst ports */
 		if (m->m_pkthdr.len < off + sizeof(th)) {
 			if (cmd == PRC_MSGSIZE)

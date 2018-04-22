@@ -1,5 +1,5 @@
-/*	$NetBSD: ipsec.h,v 1.71.2.1 2018/04/07 04:12:20 pgoyette Exp $	*/
-/*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.h,v 1.2.4.2 2004/02/14 22:23:23 bms Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.71.2.2 2018/04/22 07:20:28 pgoyette Exp $	*/
+/*	$FreeBSD: ipsec.h,v 1.2.4.2 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: ipsec.h,v 1.53 2001/11/20 08:32:38 itojun Exp $	*/
 
 /*
@@ -141,7 +141,7 @@ struct inpcbpolicy {
 
 extern u_int ipsec_spdgen;
 
-static inline bool
+static __inline bool
 ipsec_pcb_skip_ipsec(struct inpcbpolicy *pcbsp, int dir)
 {
 

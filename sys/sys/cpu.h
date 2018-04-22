@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.42.2.3 2018/03/17 06:50:56 pgoyette Exp $	*/
+/*	$NetBSD: cpu.h,v 1.42.2.4 2018/04/22 07:20:29 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007 YAMAMOTO Takashi,
@@ -108,13 +108,13 @@ extern struct cpu_info **cpu_infos;
 extern kcpuset_t *kcpuset_attached;
 extern kcpuset_t *kcpuset_running;
 
-static inline u_int
+static __inline u_int
 cpu_index(const struct cpu_info *ci)
 {
 	return ci->ci_index;
 }
 
-static inline char *
+static __inline char *
 cpu_name(struct cpu_info *ci)
 {
 	return ci->ci_data.cpu_name;

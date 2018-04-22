@@ -16,7 +16,7 @@
 @SET_MAKE@
 
 #
-#   Copyright (C) 2012-2016 Free Software Foundation, Inc.
+#   Copyright (C) 2012-2018 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -79,8 +79,8 @@ DIST_COMMON = NEWS README ChangeLog $(srcdir)/Makefile.in \
 	$(am__configure_deps) $(srcdir)/config.in \
 	$(srcdir)/../mkinstalldirs $(srcdir)/gdbinit.in \
 	$(srcdir)/gdbinit.in $(top_srcdir)/po/Make-in m68k-parse.c \
-	bfin-parse.c itbl-parse.c itbl-lex.c $(srcdir)/../depcomp \
-	$(srcdir)/../ylwrap
+	bfin-parse.c rl78-parse.c rx-parse.c itbl-parse.c itbl-lex.c \
+	$(srcdir)/../depcomp $(srcdir)/../ylwrap
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/../bfd/acinclude.m4 \
 	$(top_srcdir)/../bfd/warning.m4 $(top_srcdir)/../config/acx.m4 \
@@ -255,6 +255,7 @@ STRIP = @STRIP@
 USE_NLS = @USE_NLS@
 VERSION = @VERSION@
 WARN_CFLAGS = @WARN_CFLAGS@ @WARN_WRITE_STRINGS@
+WARN_CFLAGS_FOR_BUILD = @WARN_CFLAGS_FOR_BUILD@
 WARN_WRITE_STRINGS = @WARN_WRITE_STRINGS@
 XGETTEXT = @XGETTEXT@
 YACC = `if [ -f ../bison/bison ] ; then echo ../bison/bison -y -L../bison/bison ; else echo @YACC@ ; fi`
@@ -281,6 +282,7 @@ builddir = @builddir@
 cgen_cpu_prefix = @cgen_cpu_prefix@
 datadir = @datadir@
 datarootdir = @datarootdir@
+do_compare = @do_compare@
 docdir = @docdir@
 dvidir = @dvidir@
 exec_prefix = @exec_prefix@
@@ -471,6 +473,7 @@ TARGET_CPU_CFILES = \
 	config/tc-pdp11.c \
 	config/tc-pj.c \
 	config/tc-ppc.c \
+	config/tc-pru.c \
 	config/tc-riscv.c \
 	config/tc-rl78.c \
 	config/tc-rx.c \
@@ -489,6 +492,7 @@ TARGET_CPU_CFILES = \
 	config/tc-v850.c \
 	config/tc-vax.c \
 	config/tc-visium.c \
+	config/tc-wasm32.c \
 	config/tc-xstormy16.c \
 	config/tc-xc16x.c \
 	config/tc-xgate.c \
@@ -545,6 +549,7 @@ TARGET_CPU_HFILES = \
 	config/tc-pdp11.h \
 	config/tc-pj.h \
 	config/tc-ppc.h \
+	config/tc-pru.h \
 	config/tc-riscv.h \
 	config/tc-rl78.h \
 	config/tc-rx.h \
@@ -563,6 +568,7 @@ TARGET_CPU_HFILES = \
 	config/tc-v850.h \
 	config/tc-vax.h \
 	config/tc-visium.h \
+	config/tc-wasm32.h \
 	config/tc-xstormy16.h \
 	config/tc-xc16x.h \
 	config/tc-xgate.h \
@@ -699,7 +705,8 @@ as_new_DEPENDENCIES = $(TARG_CPU_O) $(OBJ_FORMAT_O) $(ATOF_TARG_O) \
 EXTRA_as_new_SOURCES = $(CFILES) $(HFILES) $(TARGET_CPU_CFILES) \
 	$(TARGET_CPU_HFILES) $(OBJ_FORMAT_CFILES) $(OBJ_FORMAT_HFILES) \
 	$(TARG_ENV_CFILES) $(CONFIG_ATOF_CFILES) $(MULTI_CFILES) \
-	config/m68k-parse.y config/bfin-parse.y
+	config/m68k-parse.y config/bfin-parse.y config/rl78-parse.y \
+	config/rx-parse.y
 EXPECT = expect
 RUNTEST = runtest
 RUNTESTFLAGS = 
@@ -849,6 +856,8 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/output-file.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/read.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/remap.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rl78-parse.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rx-parse.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sb.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/stabs.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/subsegs.Po@am__quote@
@@ -901,6 +910,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tc-pdp11.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tc-pj.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tc-ppc.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tc-pru.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tc-riscv.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tc-rl78.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tc-rx.Po@am__quote@
@@ -919,6 +929,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tc-v850.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tc-vax.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tc-visium.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tc-wasm32.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tc-xc16x.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tc-xgate.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tc-xstormy16.Po@am__quote@
@@ -1622,6 +1633,20 @@ tc-ppc.obj: config/tc-ppc.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tc-ppc.obj `if test -f 'config/tc-ppc.c'; then $(CYGPATH_W) 'config/tc-ppc.c'; else $(CYGPATH_W) '$(srcdir)/config/tc-ppc.c'; fi`
 
+tc-pru.o: config/tc-pru.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tc-pru.o -MD -MP -MF $(DEPDIR)/tc-pru.Tpo -c -o tc-pru.o `test -f 'config/tc-pru.c' || echo '$(srcdir)/'`config/tc-pru.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/tc-pru.Tpo $(DEPDIR)/tc-pru.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='config/tc-pru.c' object='tc-pru.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tc-pru.o `test -f 'config/tc-pru.c' || echo '$(srcdir)/'`config/tc-pru.c
+
+tc-pru.obj: config/tc-pru.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tc-pru.obj -MD -MP -MF $(DEPDIR)/tc-pru.Tpo -c -o tc-pru.obj `if test -f 'config/tc-pru.c'; then $(CYGPATH_W) 'config/tc-pru.c'; else $(CYGPATH_W) '$(srcdir)/config/tc-pru.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/tc-pru.Tpo $(DEPDIR)/tc-pru.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='config/tc-pru.c' object='tc-pru.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tc-pru.obj `if test -f 'config/tc-pru.c'; then $(CYGPATH_W) 'config/tc-pru.c'; else $(CYGPATH_W) '$(srcdir)/config/tc-pru.c'; fi`
+
 tc-riscv.o: config/tc-riscv.c
 @am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tc-riscv.o -MD -MP -MF $(DEPDIR)/tc-riscv.Tpo -c -o tc-riscv.o `test -f 'config/tc-riscv.c' || echo '$(srcdir)/'`config/tc-riscv.c
 @am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/tc-riscv.Tpo $(DEPDIR)/tc-riscv.Po
@@ -1873,6 +1898,20 @@ tc-visium.obj: config/tc-visium.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='config/tc-visium.c' object='tc-visium.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tc-visium.obj `if test -f 'config/tc-visium.c'; then $(CYGPATH_W) 'config/tc-visium.c'; else $(CYGPATH_W) '$(srcdir)/config/tc-visium.c'; fi`
+
+tc-wasm32.o: config/tc-wasm32.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tc-wasm32.o -MD -MP -MF $(DEPDIR)/tc-wasm32.Tpo -c -o tc-wasm32.o `test -f 'config/tc-wasm32.c' || echo '$(srcdir)/'`config/tc-wasm32.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/tc-wasm32.Tpo $(DEPDIR)/tc-wasm32.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='config/tc-wasm32.c' object='tc-wasm32.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tc-wasm32.o `test -f 'config/tc-wasm32.c' || echo '$(srcdir)/'`config/tc-wasm32.c
+
+tc-wasm32.obj: config/tc-wasm32.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tc-wasm32.obj -MD -MP -MF $(DEPDIR)/tc-wasm32.Tpo -c -o tc-wasm32.obj `if test -f 'config/tc-wasm32.c'; then $(CYGPATH_W) 'config/tc-wasm32.c'; else $(CYGPATH_W) '$(srcdir)/config/tc-wasm32.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/tc-wasm32.Tpo $(DEPDIR)/tc-wasm32.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='config/tc-wasm32.c' object='tc-wasm32.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tc-wasm32.obj `if test -f 'config/tc-wasm32.c'; then $(CYGPATH_W) 'config/tc-wasm32.c'; else $(CYGPATH_W) '$(srcdir)/config/tc-wasm32.c'; fi`
 
 tc-xstormy16.o: config/tc-xstormy16.c
 @am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tc-xstormy16.o -MD -MP -MF $(DEPDIR)/tc-xstormy16.Tpo -c -o tc-xstormy16.o `test -f 'config/tc-xstormy16.c' || echo '$(srcdir)/'`config/tc-xstormy16.c
@@ -2447,6 +2486,8 @@ maintainer-clean-generic:
 	-rm -f itbl-lex.c
 	-rm -f itbl-parse.c
 	-rm -f m68k-parse.c
+	-rm -f rl78-parse.c
+	-rm -f rx-parse.c
 clean: clean-recursive
 
 clean-am: clean-generic clean-libtool clean-noinstPROGRAMS \
@@ -2601,14 +2642,9 @@ m68k-parse.@OBJEXT@: m68k-parse.c
 # Don't let the .y.h rule clobber m68k-parse.h.
 m68k-parse.h: ; @true
 $(srcdir)/config/m68k-parse.h: ; @true
-
 bfin-parse.c: $(srcdir)/config/bfin-parse.y
 	$(SHELL) $(YLWRAP) $(srcdir)/config/bfin-parse.y y.tab.c bfin-parse.c y.tab.h bfin-parse.h -- $(YACCCOMPILE) -d ;
 bfin-parse.h: bfin-parse.c
-bfin-parse.@OBJEXT@: bfin-parse.c \
- $(srcdir)/config/bfin-aux.h $(srcdir)/config/bfin-defs.h \
- $(INCDIR)/elf/common.h $(INCDIR)/elf/bfin.h $(BFDDIR)/libbfd.h
-
 bfin-parse.h: ; @true
 $(srcdir)/config/bfin-parse.h: ; @true
 
@@ -2620,21 +2656,14 @@ bfin-lex-wrapper.@OBJEXT@: $(srcdir)/config/bfin-lex-wrapper.c bfin-lex.c bfin-p
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='bfin-lex-wrapper.c' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(COMPILE) -c $(srcdir)/config/bfin-lex-wrapper.c $(NO_WERROR)
-
 rl78-parse.c: $(srcdir)/config/rl78-parse.y
 	$(SHELL) $(YLWRAP) $(srcdir)/config/rl78-parse.y y.tab.c rl78-parse.c y.tab.h rl78-parse.h -- $(YACCCOMPILE) -d ;
 rl78-parse.h: rl78-parse.c
-rl78-parse.@OBJEXT@: rl78-parse.c rl78-parse.h $(srcdir)/config/rl78-defs.h \
- $(INCDIR)/elf/common.h $(INCDIR)/elf/rl78.h $(BFDDIR)/libbfd.h
-
 rl78-defs.h: ; @true
-
+$(srcdir)/config/rl78-defs.h: ; @true
 rx-parse.c: $(srcdir)/config/rx-parse.y
 	$(SHELL) $(YLWRAP) $(srcdir)/config/rx-parse.y y.tab.c rx-parse.c y.tab.h rx-parse.h -- $(YACCCOMPILE) -d ;
 rx-parse.h: rx-parse.c
-rx-parse.@OBJEXT@: rx-parse.c rx-parse.h $(srcdir)/config/rx-defs.h \
- $(INCDIR)/elf/common.h $(INCDIR)/elf/rx.h $(BFDDIR)/libbfd.h
-
 rx-defs.h: ; @true
 $(srcdir)/config/rx-defs.h: ; @true
 
@@ -2751,21 +2780,15 @@ stage3:
 	-mv $(STAGESTUFF) stage3
 	if [ -f stage3/as-new$(EXEEXT) -a ! -f stage3/as$(EXEEXT) ] ; then (cd stage3 ; ln -s as-new as$(EXEEXT)) ; fi
 
-# This rule is derived from corresponding code in the Makefile.in for gcc.
-# The "tail +16c" is to bypass headers which may include timestamps or
-# temporary assembly file names.
 comparison:
 	x=0 ; \
 	for file in *.@OBJEXT@ ; do \
-	  tail +16c ./$$file > tmp-foo1; \
-	  if tail +16c ${against}/$$file > tmp-foo2 2>/dev/null ; then \
-	    if cmp tmp-foo1 tmp-foo2 ; then \
-	      true ; \
-	    else \
-	      echo $$file differs ; \
-	      x=1 ; \
-	    fi ; \
-	  else true; fi ; \
+	  f1=./$$file; f2=${against}/$$file; \
+	  $(do_compare) > /dev/null 2>&1; \
+	  if test $$? -ne 0; then \
+	    echo $$file differs ; \
+	    x=1 ; \
+	  fi ; \
 	done ; \
 	exit $$x
 	-rm -f tmp-foo*

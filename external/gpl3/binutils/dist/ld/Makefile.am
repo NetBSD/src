@@ -1,6 +1,6 @@
 ## Process this file with automake to generate Makefile.in
 #
-#   Copyright (C) 2012-2016 Free Software Foundation, Inc.
+#   Copyright (C) 2012-2018 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -88,13 +88,6 @@ TEXI2POD = perl $(BASEDIR)/etc/texi2pod.pl $(AM_MAKEINFOFLAGS)
 POD2MAN = pod2man --center="GNU Development Tools" \
 	--release="binutils-$(VERSION)" --section=1
 
-#stuff for self hosting (can be overridden in config file).
-HOSTING_CRT0 = @HOSTING_CRT0@
-HOSTING_SCRT0 = @HOSTING_SCRT0@
-HOSTING_LIBS = @HOSTING_LIBS@
-HOSTING_SLIBS = @HOSTING_SLIBS@
-HOSTING_EMU = -m $(EMUL)
-
 # Setup the testing framework, if you have one
 EXPECT = expect
 RUNTEST = runtest
@@ -136,6 +129,10 @@ CXX_FOR_TARGET = ` \
     fi; \
   fi`
 
+# Strip out sanitization options as we want to test building binaries without any extra paraphernalia
+CFLAGS_FOR_TARGET = `echo $(CFLAGS) | sed -e 's/-fsanitize=address//g' -e 's/-fsanitize=undefined//g'`
+CXXFLAGS_FOR_TARGET = `echo $(CXXFLAGS) | sed -e 's/-fsanitize=address//g' -e 's/-fsanitize=undefined//g'`
+
 transform = s/^ld-new$$/$(installed_linker)/;@program_transform_name@
 bin_PROGRAMS = ld-new
 info_TEXINFOS = ld.texinfo
@@ -167,6 +164,7 @@ ALL_EMULATION_SOURCES = \
 	earcelf.c \
 	earcelf_prof.c \
 	earclinux.c \
+	earclinux_nps.c \
 	earclinux_prof.c \
 	earm_epoc_pe.c \
 	earm_wince_pe.c \
@@ -175,6 +173,7 @@ ALL_EMULATION_SOURCES = \
 	earmcoff.c \
 	earmelf.c \
 	earmelf_fbsd.c \
+	earmelf_fuchsia.c \
 	earmelf_linux.c \
 	earmelf_linux_eabi.c \
 	earmelf_nacl.c \
@@ -185,6 +184,7 @@ ALL_EMULATION_SOURCES = \
 	earmelf_vxworks.c \
 	earmelfb.c \
 	earmelfb_fbsd.c \
+	earmelfb_fuchsia.c \
 	earmelfb_linux.c \
 	earmelfb_linux_eabi.c \
 	earmelfb_nacl.c \
@@ -286,6 +286,7 @@ ALL_EMULATION_SOURCES = \
 	eelf32ppcsim.c \
 	eelf32ppcvxworks.c \
 	eelf32ppcwindiss.c \
+	eelf32lriscv.c \
 	eelf32rl78.c \
 	eelf32rx.c \
 	eelf32tilegx.c \
@@ -396,6 +397,7 @@ ALL_EMULATION_SOURCES = \
 	eppcmacos.c \
 	eppcnw.c \
 	eppcpe.c \
+	epruelf.c \
 	eriscix.c \
 	escore3_elf.c \
 	escore7_elf.c \
@@ -689,7 +691,8 @@ ELF_X86_DEPS = $(ELF_DEPS) $(srcdir)/emulparams/plt_unwind.sh \
 	       $(srcdir)/emulparams/extern_protected_data.sh \
 	       $(srcdir)/emulparams/dynamic_undefined_weak.sh \
 	       $(srcdir)/emulparams/reloc_overflow.sh \
-	       $(srcdir)/emulparams/call_nop.sh
+	       $(srcdir)/emulparams/call_nop.sh \
+	       $(srcdir)/emulparams/cet.sh
 
 @TDIRS@
 
@@ -744,6 +747,11 @@ earclinux.c: $(srcdir)/emulparams/arclinux.sh \
   $(ELF_DEPS) $(srcdir)/emultempl/arclinux.em \
   $(srcdir)/scripttempl/arclinux.sc ${GEN_DEPENDS}
 
+earclinux_nps.c: $(srcdir)/emulparams/arclinux_nps.sh \
+  $(srcdir)/emulparams/arc-nps.sh \
+  $(ELF_DEPS) $(srcdir)/emultempl/arclinux.em \
+  $(srcdir)/scripttempl/arclinux.sc ${GEN_DEPENDS}
+
 earclinux_prof.c: $(srcdir)/emulparams/arclinux_prof.sh \
   $(ELF_DEPS) $(srcdir)/emultempl/arclinux.em \
   $(srcdir)/scripttempl/arclinux.sc ${GEN_DEPENDS}
@@ -769,6 +777,10 @@ earmelf.c: $(srcdir)/emulparams/armelf.sh \
 
 earmelf_fbsd.c: $(srcdir)/emulparams/armelf_fbsd.sh \
   $(srcdir)/emulparams/armelf.sh \
+  $(ELF_DEPS) $(srcdir)/emultempl/armelf.em \
+  $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
+
+earmelf_fuchsia.c: $(srcdir)/emulparams/armelf_fuchsia.sh \
   $(ELF_DEPS) $(srcdir)/emultempl/armelf.em \
   $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
 
@@ -821,6 +833,10 @@ earmelfb.c: $(srcdir)/emulparams/armelfb.sh $(srcdir)/emulparams/armelf.sh \
 
 earmelfb_fbsd.c: $(srcdir)/emulparams/armelfb_fbsd.sh \
   $(srcdir)/emulparams/armelf_fbsd.sh \
+  $(ELF_DEPS) $(srcdir)/emultempl/armelf.em \
+  $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
+
+earmelfb_fuchsia.c: $(srcdir)/emulparams/armelfb_fuchsia.sh \
   $(ELF_DEPS) $(srcdir)/emultempl/armelf.em \
   $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
 
@@ -946,7 +962,7 @@ eavrxmega7.c: $(srcdir)/emulparams/avrxmega7.sh \
   ${GEN_DEPENDS}
 
 eavrtiny.c: $(srcdir)/emulparams/avrtiny.sh \
-  $(srcdir)/emultempl/avrelf.em $(ELF_DEPS) $(srcdir)/scripttempl/avrtiny.sc \
+  $(srcdir)/emultempl/avrelf.em $(ELF_DEPS) $(srcdir)/scripttempl/avr.sc \
   ${GEN_DEPENDS}
 
 ecoff_i860.c: $(srcdir)/emulparams/coff_i860.sh \
@@ -1181,29 +1197,34 @@ eelf32lmip.c: $(srcdir)/emulparams/elf32lmip.sh \
 eelf32lppc.c: $(srcdir)/emulparams/elf32lppc.sh \
   $(srcdir)/emulparams/elf32ppccommon.sh \
   $(srcdir)/emulparams/elf32ppc.sh \
+  $(srcdir)/emulparams/dynamic_undefined_weak.sh \
   $(srcdir)/emultempl/ppc32elf.em ldemul-list.h \
   $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
 
 eelf32lppclinux.c: $(srcdir)/emulparams/elf32lppclinux.sh \
   $(srcdir)/emulparams/elf32lppc.sh $(srcdir)/emulparams/elf32ppc.sh \
   $(srcdir)/emulparams/elf32ppccommon.sh \
+  $(srcdir)/emulparams/dynamic_undefined_weak.sh \
   $(srcdir)/emultempl/ppc32elf.em ldemul-list.h \
   $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
 
 eelf32lppcnto.c: $(srcdir)/emulparams/elf32lppcnto.sh \
   $(srcdir)/emulparams/elf32ppc.sh $(srcdir)/emulparams/elf32ppccommon.sh \
+  $(srcdir)/emulparams/dynamic_undefined_weak.sh \
   $(srcdir)/emultempl/ppc32elf.em ldemul-list.h \
   $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
 
 eelf32lppcsim.c: $(srcdir)/emulparams/elf32lppcsim.sh \
   $(srcdir)/emulparams/elf32lppc.sh $(srcdir)/emulparams/elf32ppc.sh \
   $(srcdir)/emulparams/elf32ppccommon.sh \
+  $(srcdir)/emulparams/dynamic_undefined_weak.sh \
   $(srcdir)/emultempl/ppc32elf.em ldemul-list.h \
   $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
 
 eelf32lriscv.c: $(srcdir)/emulparams/elf32lriscv.sh \
   $(srcdir)/emulparams/elf32lriscv-defs.sh $(ELF_DEPS) \
-  $(srcdir)/emultempl/riscvelf.em $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
+  $(srcdir)/emultempl/riscvelf.em $(srcdir)/scripttempl/elf.sc \
+  ${GEN_DEPENDS}
 
 eelf32lsmip.c: $(srcdir)/emulparams/elf32lsmip.sh \
   $(srcdir)/emulparams/elf32lmip.sh $(srcdir)/emulparams/elf32bmip.sh \
@@ -1280,11 +1301,13 @@ eelf32or1k_nbsd.c: $(srcdir)/emulparams/elf32or1k_nbsd.sh \
 
 eelf32ppc.c: $(srcdir)/emulparams/elf32ppc.sh \
   $(srcdir)/emulparams/elf32ppccommon.sh \
+  $(srcdir)/emulparams/dynamic_undefined_weak.sh \
   $(srcdir)/emultempl/ppc32elf.em ldemul-list.h \
   $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
 
 eelf32ppc_fbsd.c: $(srcdir)/emulparams/elf32ppc_fbsd.sh \
   $(srcdir)/emulparams/elf32ppc.sh $(srcdir)/emulparams/elf32ppccommon.sh \
+  $(srcdir)/emulparams/dynamic_undefined_weak.sh \
   $(srcdir)/emultempl/ppc32elf.em ldemul-list.h \
   $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
 
@@ -1296,21 +1319,25 @@ eelf32ppc_nbsd.c: $(srcdir)/emulparams/elf32ppc_nbsd.sh \
 
 eelf32ppclinux.c: $(srcdir)/emulparams/elf32ppclinux.sh \
   $(srcdir)/emulparams/elf32ppc.sh $(srcdir)/emulparams/elf32ppccommon.sh \
+  $(srcdir)/emulparams/dynamic_undefined_weak.sh \
   $(srcdir)/emultempl/ppc32elf.em ldemul-list.h \
   $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
 
 eelf32ppcnto.c: $(srcdir)/emulparams/elf32ppcnto.sh \
   $(srcdir)/emulparams/elf32ppc.sh $(srcdir)/emulparams/elf32ppccommon.sh \
+  $(srcdir)/emulparams/dynamic_undefined_weak.sh \
   $(srcdir)/emultempl/ppc32elf.em ldemul-list.h \
   $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
 
 eelf32ppcsim.c: $(srcdir)/emulparams/elf32ppcsim.sh \
   $(srcdir)/emulparams/elf32ppc.sh $(srcdir)/emulparams/elf32ppccommon.sh \
+  $(srcdir)/emulparams/dynamic_undefined_weak.sh \
   $(srcdir)/emultempl/ppc32elf.em ldemul-list.h \
   $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
 
 eelf32ppcvxworks.c: $(srcdir)/emulparams/elf32ppcvxworks.sh \
   $(srcdir)/emulparams/elf32ppccommon.sh $(srcdir)/emulparams/vxworks.sh \
+  $(srcdir)/emulparams/dynamic_undefined_weak.sh \
   $(srcdir)/emultempl/ppc32elf.em ldemul-list.h \
   $(srcdir)/emultempl/vxworks.em \
   $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
@@ -1360,7 +1387,7 @@ eelf32xstormy16.c: $(srcdir)/emulparams/elf32xstormy16.sh \
 
 eelf32xtensa.c: $(srcdir)/emulparams/elf32xtensa.sh $(ELF_DEPS) \
   $(srcdir)/emultempl/xtensaelf.em $(INCDIR)/xtensa-config.h \
-  $(BFDDIR)/elf-bfd.h $(BFDDIR)/libbfd.h $(INCDIR)/elf/xtensa.h \
+  $(BFDDIR)/elf-bfd.h $(INCDIR)/elf/xtensa.h \
   $(srcdir)/scripttempl/elfxtensa.sc ${GEN_DEPENDS}
 
 eelf_i386.c: $(srcdir)/emulparams/elf_i386.sh \
@@ -1762,6 +1789,10 @@ eppcnw.c:	$(srcdir)/emulparams/ppcnw.sh \
 eppcpe.c: $(srcdir)/emulparams/ppcpe.sh \
   $(srcdir)/emultempl/pe.em $(srcdir)/scripttempl/ppcpe.sc ${GEN_DEPENDS}
 
+epruelf.c: $(srcdir)/emulparams/pruelf.sh \
+  $(ELF_DEPS) $(srcdir)/scripttempl/pru.sc \
+  $(srcdir)/emultempl/pruelf.em ${GEN_DEPENDS}
+
 eriscix.c: $(srcdir)/emulparams/riscix.sh \
   $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/aout.sc ${GEN_DEPENDS}
 
@@ -1781,19 +1812,19 @@ eshelf.c: $(srcdir)/emulparams/shelf.sh \
   $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
 
 eshelf32.c: $(srcdir)/emulparams/shelf32.sh \
-  $(BFDDIR)/libbfd.h $(INCDIR)/libiberty.h \
+  $(INCDIR)/libiberty.h \
   $(srcdir)/emultempl/sh64elf.em $(INCDIR)/elf/sh.h $(BFDDIR)/elf-bfd.h \
   $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
 
 eshelf32_linux.c: $(srcdir)/emulparams/shelf32_linux.sh \
   $(srcdir)/emulparams/shelf32.sh \
-  $(BFDDIR)/libbfd.h $(INCDIR)/libiberty.h \
+  $(INCDIR)/libiberty.h \
   $(srcdir)/emultempl/sh64elf.em $(INCDIR)/elf/sh.h $(BFDDIR)/elf-bfd.h \
   $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
 
 eshelf32_nbsd.c: $(srcdir)/emulparams/shelf32_nbsd.sh \
   $(srcdir)/emulparams/shelf32.sh \
-  $(BFDDIR)/libbfd.h $(INCDIR)/libiberty.h \
+  $(INCDIR)/libiberty.h \
   $(srcdir)/emultempl/sh64elf.em $(INCDIR)/elf/sh.h $(BFDDIR)/elf-bfd.h \
   $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
 
@@ -1827,19 +1858,19 @@ eshlelf.c: $(srcdir)/emulparams/shlelf.sh \
   $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
 
 eshlelf32.c: $(srcdir)/emulparams/shlelf32.sh \
-  $(BFDDIR)/libbfd.h $(INCDIR)/libiberty.h $(srcdir)/emulparams/shelf32.sh \
+  $(INCDIR)/libiberty.h $(srcdir)/emulparams/shelf32.sh \
   $(srcdir)/emultempl/sh64elf.em $(INCDIR)/elf/sh.h $(BFDDIR)/elf-bfd.h \
   $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
 
 eshlelf32_linux.c: $(srcdir)/emulparams/shlelf32_linux.sh \
   $(srcdir)/emulparams/shelf32_linux.sh $(srcdir)/emulparams/shelf32.sh \
-  $(BFDDIR)/libbfd.h $(INCDIR)/libiberty.h \
+  $(INCDIR)/libiberty.h \
   $(srcdir)/emultempl/sh64elf.em $(INCDIR)/elf/sh.h $(BFDDIR)/elf-bfd.h \
   $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
 
 eshlelf32_nbsd.c: $(srcdir)/emulparams/shlelf32_nbsd.sh \
   $(srcdir)/emulparams/shelf32_nbsd.sh $(srcdir)/emulparams/shelf32.sh \
-  $(BFDDIR)/libbfd.h $(INCDIR)/libiberty.h \
+  $(INCDIR)/libiberty.h \
   $(srcdir)/emultempl/sh64elf.em $(INCDIR)/elf/sh.h $(BFDDIR)/elf-bfd.h \
   $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
 
@@ -1971,6 +2002,7 @@ eelf64_ia64_vms.c: $(srcdir)/emulparams/elf64_ia64_vms.sh \
   $(srcdir)/scripttempl/ia64vms.sc ${GEN_DEPENDS}
 
 eelf64_s390.c: $(srcdir)/emulparams/elf64_s390.sh \
+  $(srcdir)/emultempl/s390.em \
   $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
 
 eelf64_sparc.c: $(srcdir)/emulparams/elf64_sparc.sh \
@@ -2020,15 +2052,16 @@ eelf64hppa.c: $(srcdir)/emulparams/elf64hppa.sh \
   $(ELF_DEPS) $(srcdir)/scripttempl/elf64hppa.sc ${GEN_DEPENDS}
 
 eelf64lppc.c: $(srcdir)/emulparams/elf64lppc.sh \
-  $(srcdir)/emulparams/elf64ppc.sh $(srcdir)/emultempl/ppc64elf.em \
-  ldemul-list.h \
+  $(srcdir)/emulparams/elf64ppc.sh \
+  $(srcdir)/emulparams/dynamic_undefined_weak.sh \
+  $(srcdir)/emultempl/ppc64elf.em ldemul-list.h \
   $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
 
 eelf64lriscv.c: $(srcdir)/emulparams/elf64lriscv.sh \
   $(srcdir)/emulparams/elf64lriscv-defs.sh \
   $(srcdir)/emulparams/elf32lriscv-defs.sh $(ELF_DEPS) \
-  $(srcdir)/emultempl/riscvelf.em $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
-	${GENSCRIPTS} elf64lriscv "$(tdir_elf64lriscv)"
+  $(srcdir)/emultempl/riscvelf.em $(srcdir)/scripttempl/elf.sc \
+  ${GEN_DEPENDS}
 
 eelf64ltsmip.c: $(srcdir)/emulparams/elf64ltsmip.sh \
   $(srcdir)/emulparams/elf64btsmip.sh $(srcdir)/emulparams/elf64bmip-defs.sh \
@@ -2044,11 +2077,13 @@ eelf64mmix.c: $(srcdir)/emulparams/elf64mmix.sh \
   $(ELF_DEPS) $(srcdir)/emultempl/mmix-elfnmmo.em \
   $(srcdir)/emultempl/mmixelf.em $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
 
-eelf64ppc.c: $(srcdir)/emulparams/elf64ppc.sh $(srcdir)/emultempl/ppc64elf.em \
-  ldemul-list.h \
+eelf64ppc.c: $(srcdir)/emulparams/elf64ppc.sh \
+  $(srcdir)/emulparams/dynamic_undefined_weak.sh \
+  $(srcdir)/emultempl/ppc64elf.em ldemul-list.h \
   $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
 
 eelf64ppc_fbsd.c: $(srcdir)/emulparams/elf64ppc_fbsd.sh \
+  $(srcdir)/emulparams/dynamic_undefined_weak.sh \
   $(srcdir)/emultempl/ppc64elf.em ldemul-list.h \
   $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
 
@@ -2150,8 +2185,8 @@ check-DEJAGNU: site.exp
 	runtest=$(RUNTEST); \
 	if $(SHELL) -c "$$runtest --version" > /dev/null 2>&1; then \
 	  $$runtest --tool $(DEJATOOL) --srcdir $${srcroot}/testsuite \
-		CC="$(CC_FOR_TARGET)" CFLAGS="$(CFLAGS)" \
-		CXX="$(CXX_FOR_TARGET)" CXXFLAGS="$(CXXFLAGS)" \
+		CC="$(CC_FOR_TARGET)" CFLAGS="$(CFLAGS_FOR_TARGET)" \
+		CXX="$(CXX_FOR_TARGET)" CXXFLAGS="$(CXXFLAGS_FOR_TARGET)" \
 		CC_FOR_HOST="$(CC)" CFLAGS_FOR_HOST="$(CFLAGS)" \
 		OFILES="$(OFILES)" BFDLIB="$(TESTBFDLIB)" \
 		LIBIBERTY="$(LIBIBERTY) $(LIBINTL)" LIBS="$(LIBS)" \
@@ -2159,60 +2194,6 @@ check-DEJAGNU: site.exp
 		$(RUNTESTFLAGS); \
 	else echo "WARNING: could not find \`runtest'" 1>&2; :;\
 	fi
-
-# Rules for testing by relinking ld itself.
-# A similar test is in the testsuite.  This target is for ease of use
-# when porting ld.
-
-ld-partial.@OBJEXT@: ld-new$(EXEEXT)
-	./ld-new$(EXEEXT) $(HOSTING_EMU) -o ld-partial.@OBJEXT@ -r $(OFILES)
-ld1$(EXEEXT): ld-partial.@OBJEXT@
-	./ld-new$(EXEEXT) $(HOSTING_EMU) -o ld1$(EXEEXT) $(HOSTING_CRT0) ld-partial.@OBJEXT@ $(TESTBFDLIB) $(LIBIBERTY) $(HOSTING_LIBS) $(LIBS)
-
-ld1-full$(EXEEXT): ld-new
-	./ld-new$(EXEEXT) $(HOSTING_EMU) -o ld1-full$(EXEEXT) $(HOSTING_CRT0) $(OFILES) $(TESTBFDLIB) $(LIBIBERTY) $(HOSTING_LIBS) $(LIBS)
-
-ld2$(EXEEXT): ld1$(EXEEXT)
-	./ld1$(EXEEXT) $(HOSTING_EMU) -o ld2$(EXEEXT) $(HOSTING_CRT0) $(OFILES) $(TESTBFDLIB) $(LIBIBERTY) $(HOSTING_LIBS) $(LIBS)
-
-ld3$(EXEEXT): ld2$(EXEEXT)
-	./ld2$(EXEEXT) $(HOSTING_EMU) -o ld3$(EXEEXT) $(HOSTING_CRT0) $(OFILES) $(TESTBFDLIB) $(LIBIBERTY) $(HOSTING_LIBS) $(LIBS)
-
-bootstrap: ld3$(EXEEXT)
-	cmp ld2$(EXEEXT) ld3$(EXEEXT)
-
-.PHONY: bootstrap
-
-# A test program for C++ constructors and destructors.
-# This test is now in the testsuite.
-#
-#cdtest: cdtest-main.@OBJEXT@ cdtest-bar.@OBJEXT@ cdtest-foo.@OBJEXT@ ld.new
-#	./ld.new $(HOSTING_EMU) -o cdtest $(HOSTING_CRT0) \
-#	  cdtest-main.@OBJEXT@ cdtest-bar.@OBJEXT@ cdtest-foo.@OBJEXT@ $(HOSTING_LIBS)
-#
-#cdtest.out: cdtest
-#	./cdtest > cdtest.tmp
-#	mv cdtest.tmp cdtest.out
-#
-#cdtest-ur.@OBJEXT@: cdtest-main.@OBJEXT@ cdtest-bar.@OBJEXT@ cdtest-foo.@OBJEXT@ ld.new
-#	./ld.new $(HOSTING_EMU) -o cdtest-ur.@OBJEXT@ -Ur cdtest-main.@OBJEXT@ \
-#	  cdtest-bar.@OBJEXT@ cdtest-foo.@OBJEXT@
-#
-#cdtest-ur: cdtest-ur.@OBJEXT@
-#	./ld.new $(HOSTING_EMU) -o cdtest-ur $(HOSTING_CRT0) cdtest-ur.@OBJEXT@ \
-#	  $(HOSTING_LIBS)
-#
-#cdtest-ur.out: cdtest-ur
-#	./cdtest-ur > cdtest-ur.tmp
-#	mv cdtest-ur.tmp cdtest-ur.out
-#
-#check-cdtest: cdtest.out cdtest-ur.out $(srcdir)/cdtest.exp
-#	diff $(srcdir)/cdtest.exp cdtest.out
-#	diff $(srcdir)/cdtest.exp cdtest-ur.out
-#
-#.PHONY: check-cdtest
-
-# END OF CHECK TARGETS
 
 #
 # Build a dummy plugin using libtool.

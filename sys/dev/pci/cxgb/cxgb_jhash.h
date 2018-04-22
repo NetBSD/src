@@ -36,7 +36,7 @@
  * of bytes.  No alignment or length assumptions are made about
  * the input key.
  */
-static inline u32 jhash(const void *key, u32 length, u32 initval)
+static __inline u32 jhash(const void *key, u32 length, u32 initval)
 {
     u32 a, b, c, len;
     const u8 *k = key;
@@ -79,7 +79,7 @@ static inline u32 jhash(const void *key, u32 length, u32 initval)
 /* A special optimized version that handles 1 or more of u32s.
  * The length parameter here is the number of u32s in the key.
  */
-static inline u32 jhash2(u32 *k, u32 length, u32 initval)
+static __inline u32 jhash2(u32 *k, u32 length, u32 initval)
 {
     u32 a, b, c, len;
 
@@ -114,7 +114,7 @@ static inline u32 jhash2(u32 *k, u32 length, u32 initval)
  * NOTE: In partilar the "c += length; __jhash_mix(a,b,c);" normally
  *       done at the end is not done here.
  */
-static inline u32 jhash_3words(u32 a, u32 b, u32 c, u32 initval)
+static __inline u32 jhash_3words(u32 a, u32 b, u32 c, u32 initval)
 {
     a += JHASH_GOLDEN_RATIO;
     b += JHASH_GOLDEN_RATIO;
@@ -125,12 +125,12 @@ static inline u32 jhash_3words(u32 a, u32 b, u32 c, u32 initval)
     return c;
 }
 
-static inline u32 jhash_2words(u32 a, u32 b, u32 initval)
+static __inline u32 jhash_2words(u32 a, u32 b, u32 initval)
 {
     return jhash_3words(a, b, 0, initval);
 }
 
-static inline u32 jhash_1word(u32 a, u32 initval)
+static __inline u32 jhash_1word(u32 a, u32 initval)
 {
     return jhash_3words(a, 0, 0, initval);
 }

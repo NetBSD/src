@@ -1,4 +1,4 @@
-/*	$NetBSD: sockio.h,v 1.10.58.5 2018/04/16 03:41:34 pgoyette Exp $	*/
+/*	$NetBSD: sockio.h,v 1.10.58.6 2018/04/22 07:20:20 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994

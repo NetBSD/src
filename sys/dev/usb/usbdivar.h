@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.114.12.2 2018/03/29 10:27:27 pgoyette Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.114.12.3 2018/04/22 07:20:26 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -344,7 +344,7 @@ void		usb_needs_explore(struct usbd_device *);
 void		usb_needs_reattach(struct usbd_device *);
 void		usb_schedsoftintr(struct usbd_bus *);
 
-static inline int
+static __inline int
 usbd_xfer_isread(struct usbd_xfer *xfer)
 {
 	if (xfer->ux_rqflags & URQ_REQUEST)
@@ -354,7 +354,7 @@ usbd_xfer_isread(struct usbd_xfer *xfer)
 	   UE_DIR_IN;
 }
 
-static inline size_t
+static __inline size_t
 usb_addr2dindex(int addr)
 {
 

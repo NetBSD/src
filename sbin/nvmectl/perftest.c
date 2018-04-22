@@ -1,6 +1,8 @@
-/*	$NetBSD: perftest.c,v 1.2.14.1 2018/03/22 01:44:40 pgoyette Exp $	*/
+/*	$NetBSD: perftest.c,v 1.2.14.2 2018/04/22 07:20:16 pgoyette Exp $	*/
 
 /*-
+ * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
+ *
  * Copyright (C) 2012-2013 Intel Corporation
  * All rights reserved.
  *
@@ -28,9 +30,9 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: perftest.c,v 1.2.14.1 2018/03/22 01:44:40 pgoyette Exp $");
+__RCSID("$NetBSD: perftest.c,v 1.2.14.2 2018/04/22 07:20:16 pgoyette Exp $");
 #if 0
-__FBSDID("$FreeBSD: head/sbin/nvmecontrol/perftest.c 257531 2013-11-01 22:05:29Z jimharris $");
+__FBSDID("$FreeBSD: head/sbin/nvmecontrol/perftest.c 329824 2018-02-22 13:32:31Z wma $");
 #endif
 #endif
 

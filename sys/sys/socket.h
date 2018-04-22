@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.123 2017/07/01 16:59:12 christos Exp $	*/
+/*	$NetBSD: socket.h,v 1.123.4.1 2018/04/22 07:20:29 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -618,7 +618,7 @@ struct cmsghdr {
 #define	SHUT_RDWR	2		/* Disallow further sends/receives. */
 
 #ifdef	_KERNEL
-static inline socklen_t
+static __inline socklen_t
 sockaddr_getlen(const struct sockaddr *sa)
 {
 	return sa->sa_len;

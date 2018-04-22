@@ -16,7 +16,7 @@
 @SET_MAKE@
 
 #
-#   Copyright (C) 2012-2016 Free Software Foundation, Inc.
+#   Copyright (C) 2012-2018 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -230,6 +230,7 @@ STRIP = @STRIP@
 USE_NLS = @USE_NLS@
 VERSION = @VERSION@
 WARN_CFLAGS = @WARN_CFLAGS@
+WARN_CFLAGS_FOR_BUILD = @WARN_CFLAGS_FOR_BUILD@
 WARN_WRITE_STRINGS = @WARN_WRITE_STRINGS@
 XGETTEXT = @XGETTEXT@
 YACC = @YACC@
@@ -256,6 +257,7 @@ builddir = @builddir@
 cgen_cpu_prefix = @cgen_cpu_prefix@
 datadir = @datadir@
 datarootdir = @datarootdir@
+do_compare = @do_compare@
 docdir = @docdir@
 dvidir = @dvidir@
 exec_prefix = @exec_prefix@
@@ -353,7 +355,9 @@ CPU_DOCS = \
 	c-pdp11.texi \
 	c-pj.texi \
 	c-ppc.texi \
+	c-pru.texi \
 	c-rl78.texi \
+	c-riscv.texi \
 	c-rx.texi \
 	c-s390.texi \
 	c-score.texi \

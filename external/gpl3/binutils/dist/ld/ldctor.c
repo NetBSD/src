@@ -1,5 +1,5 @@
 /* ldctor.c -- constructor support routines
-   Copyright (C) 1991-2016 Free Software Foundation, Inc.
+   Copyright (C) 1991-2018 Free Software Foundation, Inc.
    By Steve Chamberlain <sac@cygnus.com>
 
    This file is part of the GNU Binutils.
@@ -290,10 +290,17 @@ ldctor_build_sets (void)
 					   p->reloc);
 	  if (howto == NULL)
 	    {
-	      einfo (_("%P%X: %s does not support reloc %s for set %s\n"),
-		     bfd_get_target (p->elements->section->owner),
-		     bfd_get_reloc_code_name (p->reloc),
-		     p->h->root.string);
+	      /* See PR 20911 for a reproducer.  */
+	      if (p->elements->section->owner == NULL)
+		einfo (_("%P%X: Special section %s does not support reloc %s for set %s\n"),
+		       bfd_get_section_name (link_info.output_bfd, p->elements->section),
+		       bfd_get_reloc_code_name (p->reloc),
+		       p->h->root.string);
+	      else
+		einfo (_("%P%X: %s does not support reloc %s for set %s\n"),
+		       bfd_get_target (p->elements->section->owner),
+		       bfd_get_reloc_code_name (p->reloc),
+		       p->h->root.string);
 	      continue;
 	    }
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sched.c,v 1.69.10.1 2018/04/16 01:59:56 pgoyette Exp $	*/
+/*	$NetBSD: linux_sched.c,v 1.69.10.2 2018/04/22 07:20:19 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.69.10.1 2018/04/16 01:59:56 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.69.10.2 2018/04/22 07:20:19 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -158,7 +158,7 @@ linux_sys_clone(struct lwp *l, const struct linux_sys_clone_args *uap,
 	 * that makes this adjustment is a noop.
 	 */
 	if ((error = fork1(l, flags, sig, SCARG(uap, stack), 0,
-	    linux_child_return, NULL, retval, NULL)) != 0) {
+	    linux_child_return, NULL, retval)) != 0) {
 		DPRINTF(("%s: fork1: error %d\n", __func__, error));
 		return error;
 	}

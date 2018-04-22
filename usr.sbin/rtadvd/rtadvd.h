@@ -1,10 +1,10 @@
-/*	$NetBSD: rtadvd.h,v 1.15 2017/02/27 05:41:36 ozaki-r Exp $	*/
+/*	$NetBSD: rtadvd.h,v 1.15.10.1 2018/04/22 07:20:30 pgoyette Exp $	*/
 /*	$KAME: rtadvd.h,v 1.30 2005/10/17 14:40:02 suz Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -16,7 +16,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -30,45 +30,45 @@
  * SUCH DAMAGE.
  */
 
-#define RTADVD_USER	"_rtadvd"
+#define	RTADVD_USER	"_rtadvd"
 
-#define ALLNODES "ff02::1"
-#define ALLROUTERS_LINK "ff02::2"
-#define ALLROUTERS_SITE "ff05::2"
+#define	ALLNODES	"ff02::1"
+#define	ALLROUTERS_LINK	"ff02::2"
+#define	ALLROUTERS_SITE	"ff05::2"
 
 #define IN6ADDR_SITELOCAL_ALLROUTERS_INIT \
 	{{{ 0xff, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, \
- 	    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02 }}}
+	    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02 }}}
 
 //extern struct sockaddr_in6 sin6_linklocal_allnodes;
 //extern struct sockaddr_in6 sin6_linklocal_allrouters;
 extern struct sockaddr_in6 sin6_sitelocal_allrouters;
 
 /* protocol constants and default values */
-#define DEF_MAXRTRADVINTERVAL 600
-#define DEF_ADVLINKMTU 0
-#define DEF_ADVREACHABLETIME 0
-#define DEF_ADVRETRANSTIMER 0
-#define DEF_ADVCURHOPLIMIT 64
-#define DEF_ADVVALIDLIFETIME 2592000
-#define DEF_ADVPREFERREDLIFETIME 604800
-#define DEF_ADVROUTERLIFETIME 1800
+#define	DEF_MAXRTRADVINTERVAL		600
+#define	DEF_ADVLINKMTU			0
+#define	DEF_ADVREACHABLETIME		0
+#define	DEF_ADVRETRANSTIMER		0
+#define	DEF_ADVCURHOPLIMIT		64
+#define	DEF_ADVVALIDLIFETIME		2592000
+#define	DEF_ADVPREFERREDLIFETIME	604800
+#define	DEF_ADVROUTERLIFETIME		1800
 
-#define MAXROUTERLIFETIME 9000
-#define MIN_MAXINTERVAL 4
-#define MAX_MAXINTERVAL 1800
-#define MIN_MININTERVAL 3
-#define MAXREACHABLETIME 3600000
+#define	MAXROUTERLIFETIME		65535	/* RFC 8319 */
+#define	MIN_MAXINTERVAL			4
+#define	MAX_MAXINTERVAL			65535	/* RFC 8319 */
+#define	MIN_MININTERVAL			3
+#define	MAXREACHABLETIME		3600000
 
-#define MAX_INITIAL_RTR_ADVERT_INTERVAL  16
-#define MAX_INITIAL_RTR_ADVERTISEMENTS    3
-#define MAX_FINAL_RTR_ADVERTISEMENTS      3
-#define MIN_DELAY_BETWEEN_RAS             3
-#define MAX_RA_DELAY_TIME                500000000 /* nsec */
+#define	MAX_INITIAL_RTR_ADVERT_INTERVAL  16
+#define	MAX_INITIAL_RTR_ADVERTISEMENTS    3
+#define	MAX_FINAL_RTR_ADVERTISEMENTS      3
+#define	MIN_DELAY_BETWEEN_RAS             3
+#define	MAX_RA_DELAY_TIME                500000000 /* nsec */
 
-#define PREFIX_FROM_KERNEL 1
-#define PREFIX_FROM_CONFIG 2
-#define PREFIX_FROM_DYNAMIC 3
+#define	PREFIX_FROM_KERNEL		1
+#define	PREFIX_FROM_CONFIG		2
+#define	PREFIX_FROM_DYNAMIC		3
 
 struct prefix {
 	TAILQ_ENTRY(prefix) next;
@@ -136,7 +136,8 @@ struct	rainfo {
 	TAILQ_ENTRY(rainfo) next;
 
 	/* timer related parameters */
-	struct rtadvd_timer *timer;
+	struct rtadvd_timer *timer;	/* unsolicited RA timer */
+	struct rtadvd_timer *timer_sol;	/* solicited RA timer */
 	int initcounter; /* counter for the first few advertisements */
 	struct timespec lastsent; /* timestamp when the latest RA was sent */
 	int waiting;		/* number of RS waiting for RA */
@@ -156,7 +157,7 @@ struct	rainfo {
 	uint16_t	lifetime;	/* AdvDefaultLifetime */
 	uint16_t	maxinterval;	/* MaxRtrAdvInterval */
 	uint16_t	mininterval;	/* MinRtrAdvInterval */
-	int 	managedflg;	/* AdvManagedFlag */
+	int	managedflg;	/* AdvManagedFlag */
 	int	otherflg;	/* AdvOtherConfigFlag */
 
 	int	rtpref;		/* router preference */
@@ -189,8 +190,9 @@ struct	rainfo {
 extern TAILQ_HEAD(ralist_head_t, rainfo) ralist;
 
 struct rtadvd_timer *ra_timeout(void *);
+struct rtadvd_timer *ra_timeout_sol(void *);
 void ra_timer_update(void *, struct timespec *);
-void ra_timer_set_short_delay(struct rainfo *);
+void ra_timer_set_short_delay(struct rainfo *, struct rtadvd_timer *);
 
 int prefix_match(struct in6_addr *, int, struct in6_addr *, int);
 struct rainfo *if_indextorainfo(unsigned int);

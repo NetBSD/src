@@ -1,5 +1,5 @@
 /* BFD back-end for archive files (libraries).
-   Copyright (C) 1990-2016 Free Software Foundation, Inc.
+   Copyright (C) 1990-2018 Free Software Foundation, Inc.
    Written by Cygnus Support.  Mostly Gumby Henkel-Wallace's fault.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -767,10 +767,11 @@ SYNOPSIS
 DESCRIPTION
 	Provided a BFD, @var{archive}, containing an archive and NULL, open
 	an input BFD on the first contained element and returns that.
-	Subsequent calls should pass
-	the archive and the previous return value to return a created
-	BFD to the next contained element. NULL is returned when there
-	are no more.
+	Subsequent calls should pass the archive and the previous return
+	value to return a created BFD to the next contained element.  NULL
+	is returned when there are no more.
+	Note - if you want to process the bfd returned by this call be
+	sure to call bfd_check_format() on it first.
 */
 
 bfd *
@@ -847,7 +848,12 @@ bfd_generic_archive_p (bfd *abfd)
   if (strncmp (armag, ARMAG, SARMAG) != 0
       && strncmp (armag, ARMAGB, SARMAG) != 0
       && ! bfd_is_thin_archive (abfd))
-    return NULL;
+    {
+      bfd_set_error (bfd_error_wrong_format);
+      if (abfd->format == bfd_archive)
+	abfd->format = bfd_unknown;
+      return NULL;
+    }
 
   tdata_hold = bfd_ardata (abfd);
 
@@ -1445,16 +1451,16 @@ normalize (bfd *abfd ATTRIBUTE_UNUSED, const char *file)
 
      Relative path  Reference path  Result
      -------------  --------------  ------
-     bar.o          lib.a           bar.o
-     foo/bar.o      lib.a           foo/bar.o
-     bar.o          foo/lib.a       ../bar.o
-     foo/bar.o      baz/lib.a       ../foo/bar.o
-     bar.o          ../lib.a        <parent of current dir>/bar.o
-   ; ../bar.o       ../lib.a        bar.o
-   ; ../bar.o       lib.a           ../bar.o
-     foo/bar.o      ../lib.a        <parent of current dir>/foo/bar.o
-     bar.o          ../../lib.a     <grandparent>/<parent>/bar.o
-     bar.o          foo/baz/lib.a   ../../bar.o
+     bar.o	    lib.a	    bar.o
+     foo/bar.o	    lib.a	    foo/bar.o
+     bar.o	    foo/lib.a	    ../bar.o
+     foo/bar.o	    baz/lib.a	    ../foo/bar.o
+     bar.o	    ../lib.a	    <parent of current dir>/bar.o
+   ; ../bar.o	    ../lib.a	    bar.o
+   ; ../bar.o	    lib.a	    ../bar.o
+     foo/bar.o	    ../lib.a	    <parent of current dir>/foo/bar.o
+     bar.o	    ../../lib.a	    <grandparent>/<parent>/bar.o
+     bar.o	    foo/baz/lib.a   ../../bar.o
 
    Note - the semicolons above are there to prevent the BFD chew
    utility from interpreting those lines as prototypes to put into
@@ -1988,6 +1994,12 @@ bfd_ar_hdr_from_filesystem (bfd *abfd, const char *filename, bfd *member)
 		      status.st_gid);
   _bfd_ar_spacepad (hdr->ar_mode, sizeof (hdr->ar_mode), "%-8lo",
 		    status.st_mode);
+  if (status.st_size - (bfd_size_type) status.st_size != 0)
+    {
+      bfd_set_error (bfd_error_file_too_big);
+      free (ared);
+      return NULL;
+    }
   if (!_bfd_ar_sizepad (hdr->ar_size, sizeof (hdr->ar_size), status.st_size))
     {
       free (ared);
@@ -2020,7 +2032,7 @@ bfd_generic_stat_arch_elt (bfd *abfd, struct stat *buf)
     return -1;
 #define foo(arelt, stelt, size)				\
   buf->stelt = strtol (hdr->arelt, &aloser, size);	\
-  if (aloser == hdr->arelt)	      			\
+  if (aloser == hdr->arelt)				\
     return -1;
 
   /* Some platforms support special notations for large IDs.  */
@@ -2313,7 +2325,7 @@ _bfd_write_archive_contents (bfd *arch)
 	{
 	  if (bfd_update_armap_timestamp (arch))
 	    break;
-	  (*_bfd_error_handler)
+	  _bfd_error_handler
 	    (_("Warning: writing archive was slow: rewriting timestamp\n"));
 	}
       while (++tries < 6);
@@ -2322,7 +2334,7 @@ _bfd_write_archive_contents (bfd *arch)
   return TRUE;
 
  input_err:
-  bfd_set_error (bfd_error_on_input, current, bfd_get_error ());
+  bfd_set_input_error (current, bfd_get_error ());
   return FALSE;
 }
 
@@ -2424,10 +2436,14 @@ _bfd_compute_and_write_armap (bfd *arch, unsigned int elength)
 			  map = new_map;
 			}
 
-		      if (strcmp (syms[src_count]->name, "__gnu_lto_slim") == 0)
-			(*_bfd_error_handler)
-			  (_("%s: plugin needed to handle lto object"),
-			   bfd_get_filename (current));
+		      if (syms[src_count]->name[0] == '_'
+			  && syms[src_count]->name[1] == '_'
+			  && strcmp (syms[src_count]->name
+				     + (syms[src_count]->name[2] == '_'),
+				     "__gnu_lto_slim") == 0)
+			_bfd_error_handler
+			  (_("%B: plugin needed to handle lto object"),
+			   current);
 		      namelen = strlen (syms[src_count]->name);
 		      amt = sizeof (char *);
 		      map[orl_count].name = (char **) bfd_alloc (arch, amt);
@@ -2479,11 +2495,11 @@ _bfd_compute_and_write_armap (bfd *arch, unsigned int elength)
 }
 
 bfd_boolean
-bsd_write_armap (bfd *arch,
-		 unsigned int elength,
-		 struct orl *map,
-		 unsigned int orl_count,
-		 int stridx)
+_bfd_bsd_write_armap (bfd *arch,
+		      unsigned int elength,
+		      struct orl *map,
+		      unsigned int orl_count,
+		      int stridx)
 {
   int padit = stridx & 1;
   unsigned int ranlibsize = orl_count * BSD_SYMDEF_SIZE;
@@ -2711,11 +2727,11 @@ _bfd_archive_bsd_update_armap_timestamp (bfd *arch)
    symbol name n-1  */
 
 bfd_boolean
-coff_write_armap (bfd *arch,
-		  unsigned int elength,
-		  struct orl *map,
-		  unsigned int symbol_count,
-		  int stridx)
+_bfd_coff_write_armap (bfd *arch,
+		       unsigned int elength,
+		       struct orl *map,
+		       unsigned int symbol_count,
+		       int stridx)
 {
   /* The size of the ranlib is the number of exported symbols in the
      archive * the number of bytes in an int, + an int for the count.  */

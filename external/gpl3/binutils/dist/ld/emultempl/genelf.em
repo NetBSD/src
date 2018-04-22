@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright (C) 2006-2016 Free Software Foundation, Inc.
+#   Copyright (C) 2006-2018 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -54,7 +54,7 @@ gld${EMULATION_NAME}_before_allocation (void)
 {
   if (bfd_link_relocatable (&link_info)
       && !_bfd_elf_size_group_sections (&link_info))
-    einfo ("%X%P: can not size group sections: %E\n");
+    einfo (_("%X%P: can not size group sections: %E\n"));
   before_allocation_default ();
 }
 

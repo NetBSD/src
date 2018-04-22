@@ -49,7 +49,6 @@ struct smuiic_softc {
 
 static int smuiic_match(device_t, struct cfdata *, void *);
 static void smuiic_attach(device_t, device_t, void *);
-static int smuiic_print(void *, const char *);
 
 CFATTACH_DECL_NEW(smuiic, sizeof(struct smuiic_softc),
     smuiic_match, smuiic_attach, NULL, NULL);
@@ -71,8 +70,13 @@ smuiic_attach(device_t parent, device_t self, void *aux)
 	struct smu_iicbus_confargs *ca = aux;
 	struct smuiic_softc *sc = device_private(self);
 	struct i2cbus_attach_args iba;
-	struct smuiic_confargs sca;
-	int node, reg;
+	prop_dictionary_t dict = device_properties(self);
+	int devs;
+	uint32_t addr;
+	char compat[256];
+	prop_array_t cfg;
+	prop_dictionary_t dev;
+	prop_data_t data;
 	char name[32];
 
 	sc->sc_dev = self;
@@ -80,34 +84,36 @@ smuiic_attach(device_t parent, device_t self, void *aux)
 	sc->sc_i2c = ca->ca_tag;
 	printf("\n");
 
+	cfg = prop_array_create();
+	prop_dictionary_set(dict, "i2c-child-devices", cfg);
+	prop_object_release(cfg);
+
+	/* look for i2c devices */
+	devs = OF_child(sc->sc_node);
+	while (devs != 0) {
+		if (OF_getprop(devs, "name", name, 256) <= 0)
+			goto skip;
+		if (OF_getprop(devs, "compatible",
+		    compat, 256) <= 0)
+			goto skip;
+		if (OF_getprop(devs, "reg", &addr, 4) <= 0)
+			goto skip;
+		addr = (addr & 0xff) >> 1;
+		dev = prop_dictionary_create();
+		prop_dictionary_set_cstring(dev, "name", name);
+		data = prop_data_create_data(compat, strlen(compat)+1);
+		prop_dictionary_set(dev, "compatible", data);
+		prop_object_release(data);
+		prop_dictionary_set_uint32(dev, "addr", addr);
+		prop_dictionary_set_uint64(dev, "cookie", devs);
+		prop_array_add(cfg, dev);
+		prop_object_release(dev);
+	skip:
+		devs = OF_peer(devs);
+	}
+
+	memset(&iba, 0, sizeof(iba));
 	iba.iba_tag = sc->sc_i2c;
 
 	config_found_ia(sc->sc_dev, "i2cbus", &iba, iicbus_print);
-
-	for (node = OF_child(sc->sc_node); node != 0; node = OF_peer(node)) {
-		memset(name, 0, sizeof(name));
-		OF_getprop(node, "name", name, sizeof(name));
-
-		if (OF_getprop(node, "reg", &reg, sizeof(reg)) <= 0)
-			continue;
-
-		sca.ca_name = name;
-		sca.ca_node = node;
-		sca.ca_addr = reg & 0xfe;
-		sca.ca_tag = sc->sc_i2c;
-		config_found_ia(sc->sc_dev, "smuiic", &sca, smuiic_print);
-	}
-}
-
-static int
-smuiic_print(void *aux, const char *smuiic)
-{
-	struct smuiic_confargs *ca = aux;
-
-	if (smuiic) {
-		aprint_normal("%s at %s", ca->ca_name, smuiic);
-		aprint_normal(" address 0x%x", ca->ca_addr);
-	}
-
-	return UNCONF;
 }

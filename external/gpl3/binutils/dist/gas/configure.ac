@@ -3,7 +3,7 @@ dnl
 dnl And be careful when changing it!  If you must add tests with square
 dnl brackets, be sure changequote invocations surround it.
 dnl
-dnl   Copyright (C) 2012-2016 Free Software Foundation, Inc.
+dnl   Copyright (C) 2012-2018 Free Software Foundation, Inc.
 dnl
 dnl This file is free software; you can redistribute it and/or modify
 dnl it under the terms of the GNU General Public License as published by
@@ -40,6 +40,7 @@ AC_USE_SYSTEM_EXTENSIONS
 
 LT_INIT
 ACX_LARGEFILE
+ACX_PROG_CMP_IGNORE_INITIAL
 
 AC_ARG_ENABLE(targets,
 [  --enable-targets        alternative target configurations besides the primary],
@@ -344,7 +345,8 @@ changequote([,])dnl
 	esac
 	# Decide which ABI to target by default.
 	case ${target} in
-	  mips64*-linux* | mips-sgi-irix6* | mips64*-freebsd* | mips64*-kfreebsd*-gnu)
+	  mips64*-linux* | mips-sgi-irix6* | mips64*-freebsd* \
+	  | mips64*-kfreebsd*-gnu | mips64*-ps2-elf*)
 	    mips_default_abi=N32_ABI
 	    ;;
 	  mips*-linux* | mips*-freebsd* | mips*-kfreebsd*-gnu)
@@ -510,7 +512,7 @@ changequote([,])dnl
 	AC_MSG_RESULT($enable_audio_ext)
 	;;
 
-      i386 | s390 | sparc)
+      aarch64 | i386 | riscv | s390 | sparc)
 	if test $this_target = $target ; then
 	  AC_DEFINE_UNQUOTED(DEFAULT_ARCH, "${arch}", [Default architecture.])
 	fi
@@ -795,7 +797,7 @@ AC_DEFINE_UNQUOTED(TARGET_OS,		"${target_os}",    [Target OS.])
 AC_PROG_YACC
 AM_PROG_LEX
 
-ALL_LINGUAS="fr tr es rw id ru fi ja zh_CN"
+ALL_LINGUAS="fr tr es rw id ru fi ja zh_CN sv"
 ZW_GNU_GETTEXT_SISTER_DIR
 AM_PO_SUBDIRS
 
@@ -825,6 +827,7 @@ AC_C_INLINE
 # VMS doesn't have unlink.
 AC_CHECK_FUNCS(unlink remove, break)
 AC_CHECK_FUNCS(sbrk setlocale)
+AC_CHECK_FUNCS(strsignal)
 
 AM_LC_MESSAGES
 

@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.128.2.5 2018/04/16 02:00:02 pgoyette Exp $ */
+/* $NetBSD: ixgbe.c,v 1.128.2.6 2018/04/22 07:20:26 pgoyette Exp $ */
 
 /******************************************************************************
 
@@ -208,7 +208,7 @@ static void     ixgbe_update_link_status(struct adapter *);
 static void	ixgbe_set_ivar(struct adapter *, u8, u8, s8);
 static void	ixgbe_configure_ivars(struct adapter *);
 static u8 *	ixgbe_mc_array_itr(struct ixgbe_hw *, u8 **, u32 *);
-static void	ixgbe_eitr_write(struct ix_queue *, uint32_t);
+static void	ixgbe_eitr_write(struct adapter *, uint32_t, uint32_t);
 
 static void	ixgbe_setup_vlan_hw_support(struct adapter *);
 #if 0
@@ -2487,7 +2487,7 @@ static inline void
 ixgbe_sched_handle_que(struct adapter *adapter, struct ix_queue *que)
 {
 
-	if (adapter->txrx_use_workqueue) {
+	if(que->txrx_use_workqueue) {
 		/*
 		 * adapter->que_wq is bound to each CPU instead of
 		 * each NIC queue to reduce workqueue kthread. As we
@@ -2531,6 +2531,12 @@ ixgbe_msix_que(void *arg)
 	ixgbe_disable_queue(adapter, que->msix);
 	++que->irqs.ev_count;
 
+	/*
+	 * Don't change "que->txrx_use_workqueue" from this point to avoid
+	 * flip-flopping softint/workqueue mode in one deferred processing.
+	 */
+	que->txrx_use_workqueue = adapter->txrx_use_workqueue;
+
 #ifdef __NetBSD__
 	/* Don't run ixgbe_rxeof in interrupt context */
 	more = true;
@@ -2553,7 +2559,7 @@ ixgbe_msix_que(void *arg)
 	 *    the last interval.
 	 */
 	if (que->eitr_setting)
-		ixgbe_eitr_write(que, que->eitr_setting);
+		ixgbe_eitr_write(adapter, que->msix, que->eitr_setting);
 
 	que->eitr_setting = 0;
 
@@ -3036,16 +3042,15 @@ ixgbe_msix_link(void *arg)
 } /* ixgbe_msix_link */
 
 static void
-ixgbe_eitr_write(struct ix_queue *que, uint32_t itr)
+ixgbe_eitr_write(struct adapter *adapter, uint32_t index, uint32_t itr)
 {
-	struct adapter *adapter = que->adapter;
 	
         if (adapter->hw.mac.type == ixgbe_mac_82598EB)
                 itr |= itr << 16;
         else
                 itr |= IXGBE_EITR_CNT_WDIS;
 
-	IXGBE_WRITE_REG(&adapter->hw, IXGBE_EITR(que->msix), itr);
+	IXGBE_WRITE_REG(&adapter->hw, IXGBE_EITR(index), itr);
 }
 
 
@@ -3093,7 +3098,7 @@ ixgbe_sysctl_interrupt_rate_handler(SYSCTLFN_ARGS)
 		ixgbe_max_interrupt_rate = rate;
 	} else
 		ixgbe_max_interrupt_rate = 0;
-	ixgbe_eitr_write(que, reg);
+	ixgbe_eitr_write(adapter, que->msix, reg);
 
 	return (0);
 } /* ixgbe_sysctl_interrupt_rate_handler */
@@ -3174,6 +3179,16 @@ ixgbe_add_device_sysctls(struct adapter *adapter)
 	    CTL_EOL) != 0)
 		aprint_error_dev(dev, "could not create sysctl\n");
 
+	/*
+	 * If each "que->txrx_use_workqueue" is changed in sysctl handler,
+	 * it causesflip-flopping softint/workqueue mode in one deferred
+	 * processing. Therefore, preempt_disable()/preempt_enable() are
+	 * required in ixgbe_sched_handle_que() to avoid
+	 * KASSERT(ixgbe_sched_handle_que()) in softint_schedule().
+	 * I think changing "que->txrx_use_workqueue" in interrupt handler
+	 * is lighter than doing preempt_disable()/preempt_enable() in every
+	 * ixgbe_sched_handle_que().
+	 */
 	adapter->txrx_use_workqueue = ixgbe_txrx_workqueue;
 	if (sysctl_createv(log, 0, &rnode, &cnode, CTLFLAG_READWRITE,
 	    CTLTYPE_BOOL, "txrx_workqueue", SYSCTL_DESCR("Use workqueue for packet processing"),
@@ -3903,7 +3918,7 @@ ixgbe_init_locked(struct adapter *adapter)
 	}
 
 	/* Set moderation on the Link interrupt */
-	IXGBE_WRITE_REG(hw, IXGBE_EITR(adapter->vector), IXGBE_LINK_ITR);
+	ixgbe_eitr_write(adapter, adapter->vector, IXGBE_LINK_ITR);
 
 	/* Enable power to the phy. */
 	ixgbe_set_phy_power(hw, TRUE);
@@ -4038,7 +4053,7 @@ ixgbe_configure_ivars(struct adapter *adapter)
 		/* ... and the TX */
 		ixgbe_set_ivar(adapter, txr->me, que->msix, 1);
 		/* Set an Initial EITR value */
-		ixgbe_eitr_write(que, newitr);
+		ixgbe_eitr_write(adapter, que->msix, newitr);
 		/*
 		 * To eliminate influence of the previous state.
 		 * At this point, Tx/Rx interrupt handler
@@ -4798,6 +4813,11 @@ ixgbe_legacy_irq(void *arg)
 	}
 
 	if ((ifp->if_flags & IFF_RUNNING) != 0) {
+		/*
+		 * The same as ixgbe_msix_que() about "que->txrx_use_workqueue".
+		 */
+		que->txrx_use_workqueue = adapter->txrx_use_workqueue;
+
 #ifdef __NetBSD__
 		/* Don't run ixgbe_rxeof in interrupt context */
 		more = true;
@@ -6261,7 +6281,6 @@ ixgbe_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 	    adapter->osdep.intrs[vector], IPL_NET, ixgbe_msix_link, adapter,
 	    intr_xname);
 	if (adapter->osdep.ihs[vector] == NULL) {
-		adapter->res = NULL;
 		aprint_error_dev(dev, "Failed to register LINK handler\n");
 		error = ENXIO;
 		goto err_out;

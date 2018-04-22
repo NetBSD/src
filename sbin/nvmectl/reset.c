@@ -1,6 +1,8 @@
-/*	$NetBSD: reset.c,v 1.1.14.1 2018/03/22 01:44:40 pgoyette Exp $	*/
+/*	$NetBSD: reset.c,v 1.1.14.2 2018/04/22 07:20:16 pgoyette Exp $	*/
 
 /*-
+ * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
+ *
  * Copyright (C) 2012-2013 Intel Corporation
  * All rights reserved.
  *
@@ -28,9 +30,9 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: reset.c,v 1.1.14.1 2018/03/22 01:44:40 pgoyette Exp $");
+__RCSID("$NetBSD: reset.c,v 1.1.14.2 2018/04/22 07:20:16 pgoyette Exp $");
 #if 0
-__FBSDID("$FreeBSD: head/sbin/nvmecontrol/reset.c 253109 2013-07-09 21:14:15Z jimharris $");
+__FBSDID("$FreeBSD: head/sbin/nvmecontrol/reset.c 326276 2017-11-27 15:37:16Z pfg $");
 #endif
 #endif
 

@@ -1,5 +1,5 @@
-/*	$NetBSD: key_debug.c,v 1.21 2017/09/28 17:21:42 christos Exp $	*/
-/*	$FreeBSD: src/sys/netipsec/key_debug.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
+/*	$NetBSD: key_debug.c,v 1.21.2.1 2018/04/22 07:20:28 pgoyette Exp $	*/
+/*	$FreeBSD: key_debug.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: key_debug.c,v 1.26 2001/06/27 10:46:50 sakane Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key_debug.c,v 1.21 2017/09/28 17:21:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key_debug.c,v 1.21.2.1 2018/04/22 07:20:28 pgoyette Exp $");
 #endif
 
 #if defined(_KERNEL_OPT)

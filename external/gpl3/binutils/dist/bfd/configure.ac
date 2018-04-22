@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 dnl
-dnl   Copyright (C) 2012-2016 Free Software Foundation, Inc.
+dnl   Copyright (C) 2012-2018 Free Software Foundation, Inc.
 dnl
 dnl This file is free software; you can redistribute it and/or modify
 dnl it under the terms of the GNU General Public License as published by
@@ -143,7 +143,7 @@ bfd_default_target_size=32
 
 # host stuff:
 
-ALL_LINGUAS="fr tr ja es sv da zh_CN ro rw vi fi id ru uk sr"
+ALL_LINGUAS="da es fi fr hr id ja ro ru rw sr sv tr uk vi zh_CN"
 ZW_GNU_GETTEXT_SISTER_DIR
 AM_PO_SUBDIRS
 
@@ -160,7 +160,8 @@ BFD_HOST_64_BIT=
 BFD_HOST_U_64_BIT=
 BFD_HOSTPTR_T="unsigned long"
 
-AC_CHECK_SIZEOF(long long)
+AC_TYPE_LONG_DOUBLE
+AC_CHECK_TYPES([long long], [AC_CHECK_SIZEOF(long long)])
 AC_CHECK_SIZEOF(void *)
 AC_CHECK_SIZEOF(long)
 
@@ -365,7 +366,7 @@ selarchs="$f"
 # Target backend .o files.
 tb=
 
-elf="elf.lo elflink.lo elf-attrs.lo elf-strtab.lo
+elf="elf.lo elflink.lo elf-attrs.lo elf-strtab.lo elf-properties.lo
      elf-eh-frame.lo dwarf1.lo dwarf2.lo"
 coffgen="coffgen.lo dwarf2.lo"
 coff="cofflink.lo $coffgen"
@@ -472,17 +473,17 @@ do
     i386_coff_go32_vec)		 tb="$tb coff-go32.lo $coff" ;;
     i386_coff_go32stubbed_vec)	 tb="$tb coff-stgo32.lo $coff" ;;
     i386_coff_lynx_vec)		 tb="$tb cf-i386lynx.lo lynx-core.lo $coff" ;;
-    i386_elf32_vec)		 tb="$tb elf32-i386.lo elf-ifunc.lo elf-nacl.lo elf-vxworks.lo elf32.lo $elf" ;;
-    i386_elf32_fbsd_vec)	 tb="$tb elf32-i386.lo elf-ifunc.lo elf-nacl.lo elf-vxworks.lo elf32.lo $elf" ;;
-    i386_elf32_nacl_vec)	 tb="$tb elf32-i386.lo elf-ifunc.lo elf-nacl.lo elf-vxworks.lo elf32.lo $elf" ;;
-    i386_elf32_sol2_vec)	 tb="$tb elf32-i386.lo elf-ifunc.lo elf-nacl.lo elf-vxworks.lo elf32.lo $elf" ;;
-    i386_elf32_vxworks_vec)	 tb="$tb elf32-i386.lo elf-ifunc.lo elf-nacl.lo elf-vxworks.lo elf32.lo $elf" ;;
+    i386_elf32_vec)		 tb="$tb elf32-i386.lo elfxx-x86.lo elf-ifunc.lo elf-nacl.lo elf-vxworks.lo elf32.lo $elf" ;;
+    i386_elf32_fbsd_vec)	 tb="$tb elf32-i386.lo elfxx-x86.lo elf-ifunc.lo elf-nacl.lo elf-vxworks.lo elf32.lo $elf" ;;
+    i386_elf32_nacl_vec)	 tb="$tb elf32-i386.lo elfxx-x86.lo elf-ifunc.lo elf-nacl.lo elf-vxworks.lo elf32.lo $elf" ;;
+    i386_elf32_sol2_vec)	 tb="$tb elf32-i386.lo elfxx-x86.lo elf-ifunc.lo elf-nacl.lo elf-vxworks.lo elf32.lo $elf" ;;
+    i386_elf32_vxworks_vec)	 tb="$tb elf32-i386.lo elfxx-x86.lo elf-ifunc.lo elf-nacl.lo elf-vxworks.lo elf32.lo $elf" ;;
     i386_mach_o_vec)		 tb="$tb mach-o-i386.lo" ;;
     i386_msdos_vec)		 tb="$tb i386msdos.lo" ;;
     i386_nlm32_vec)		 tb="$tb nlm32-i386.lo nlm32.lo nlm.lo" ;;
     i386_pe_vec)		 tb="$tb pe-i386.lo peigen.lo $coff" ;;
     i386_pei_vec)		 tb="$tb pei-i386.lo peigen.lo $coff" ;;
-    iamcu_elf32_vec)		 tb="$tb elf32-i386.lo elf-ifunc.lo elf-nacl.lo elf-vxworks.lo elf32.lo $elf" ;;
+    iamcu_elf32_vec)		 tb="$tb elf32-i386.lo elfxx-x86.lo elf-ifunc.lo elf-nacl.lo elf-vxworks.lo elf32.lo $elf" ;;
     i860_coff_vec)		 tb="$tb coff-i860.lo $coff" ;;
     i860_elf32_vec)		 tb="$tb elf32-i860.lo elf32.lo $elf" ;;
     i860_elf32_le_vec)		 tb="$tb elf32-i860.lo elf32.lo $elf" ;;
@@ -499,10 +500,10 @@ do
     ieee_vec)			 tb="$tb ieee.lo" ;;
     ip2k_elf32_vec)		 tb="$tb elf32-ip2k.lo elf32.lo $elf" ;;
     iq2000_elf32_vec)		 tb="$tb elf32-iq2000.lo elf32.lo $elf" ;;
-    k1om_elf64_vec)		 tb="$tb elf64-x86-64.lo elf-ifunc.lo elf-nacl.lo elf64.lo $elf"; target_size=64 ;;
-    k1om_elf64_fbsd_vec)	 tb="$tb elf64-x86-64.lo elf-ifunc.lo elf-nacl.lo elf64.lo $elf"; target_size=64 ;;
-    l1om_elf64_vec)		 tb="$tb elf64-x86-64.lo elf-ifunc.lo elf-nacl.lo elf64.lo $elf"; target_size=64 ;;
-    l1om_elf64_fbsd_vec)	 tb="$tb elf64-x86-64.lo elf-ifunc.lo elf-nacl.lo elf64.lo $elf"; target_size=64 ;;
+    k1om_elf64_vec)		 tb="$tb elf64-x86-64.lo elfxx-x86.lo elf-ifunc.lo elf-nacl.lo elf64.lo $elf"; target_size=64 ;;
+    k1om_elf64_fbsd_vec)	 tb="$tb elf64-x86-64.lo elfxx-x86.lo elf-ifunc.lo elf-nacl.lo elf64.lo $elf"; target_size=64 ;;
+    l1om_elf64_vec)		 tb="$tb elf64-x86-64.lo elfxx-x86.lo elf-ifunc.lo elf-nacl.lo elf64.lo $elf"; target_size=64 ;;
+    l1om_elf64_fbsd_vec)	 tb="$tb elf64-x86-64.lo elfxx-x86.lo elf-ifunc.lo elf-nacl.lo elf64.lo $elf"; target_size=64 ;;
     lm32_elf32_vec)		 tb="$tb elf32-lm32.lo elf32.lo $elf" ;;
     lm32_elf32_fdpic_vec)	 tb="$tb elf32-lm32.lo elf32.lo $elf" ;;
     m32c_elf32_vec)		 tb="$tb elf32-m32c.lo elf32.lo $elf" ;;
@@ -608,6 +609,9 @@ do
     powerpc_pei_vec)		 tb="$tb pei-ppc.lo peigen.lo $coff" ;;
     powerpc_pei_le_vec)		 tb="$tb pei-ppc.lo peigen.lo $coff" ;;
     powerpc_xcoff_vec)		 tb="$tb coff-rs6000.lo $xcoff" ;;
+    pru_elf32_vec)		 tb="$tb elf32-pru.lo elf32.lo $elf" ;;
+    riscv_elf32_vec)		 tb="$tb elf32-riscv.lo elfxx-riscv.lo elf32.lo $elf" ;;
+    riscv_elf64_vec)		 tb="$tb elf64-riscv.lo elf64.lo elfxx-riscv.lo elf32.lo $elf"; target_size=64 ;;
     rl78_elf32_vec)		 tb="$tb elf32-rl78.lo elf32.lo $elf" ;;
     rs6000_xcoff64_vec)		 tb="$tb coff64-rs6000.lo aix5ppc-core.lo $xcoff"; target_size=64 ;;
     rs6000_xcoff64_aix_vec)	 tb="$tb coff64-rs6000.lo aix5ppc-core.lo $xcoff"; target_size=64 ;;
@@ -699,15 +703,17 @@ do
     ft32_elf32_vec)		 tb="$tb elf32-ft32.lo elf32.lo $elf" ;;
     visium_elf32_vec)		 tb="$tb elf32-visium.lo elf32.lo $elf" ;;
     w65_coff_vec)		 tb="$tb coff-w65.lo reloc16.lo $coffgen" ;;
+    wasm_vec)                    tb="$tb wasm-module.lo" ;;
+    wasm32_elf32_vec)            tb="$tb elf32-wasm32.lo elf32.lo $elf" ;;
     we32k_coff_vec)		 tb="$tb coff-we32k.lo $coffgen" ;;
     x86_64_coff_vec)		 tb="$tb coff-x86_64.lo $coff"; target_size=64 ;;
-    x86_64_elf32_vec)		 tb="$tb elf64-x86-64.lo elf-ifunc.lo elf-nacl.lo elf64.lo elf32.lo $elf"; target_size=64 ;;
-    x86_64_elf32_nacl_vec)	 tb="$tb elf64-x86-64.lo elf-ifunc.lo elf-nacl.lo elf64.lo elf32.lo $elf"; target_size=64 ;;
-    x86_64_elf64_vec)		 tb="$tb elf64-x86-64.lo elf-ifunc.lo elf-nacl.lo elf64.lo $elf"; target_size=64 ;;
-    x86_64_elf64_cloudabi_vec)	 tb="$tb elf64-x86-64.lo elf-ifunc.lo elf-nacl.lo elf64.lo $elf"; target_size=64 ;;
-    x86_64_elf64_fbsd_vec)	 tb="$tb elf64-x86-64.lo elf-ifunc.lo elf-nacl.lo elf64.lo $elf"; target_size=64 ;;
-    x86_64_elf64_nacl_vec)	 tb="$tb elf64-x86-64.lo elf-ifunc.lo elf-nacl.lo elf64.lo $elf"; target_size=64 ;;
-    x86_64_elf64_sol2_vec)	 tb="$tb elf64-x86-64.lo elf-ifunc.lo elf-nacl.lo elf64.lo $elf"; target_size=64 ;;
+    x86_64_elf32_vec)		 tb="$tb elf64-x86-64.lo elfxx-x86.lo elf-ifunc.lo elf-nacl.lo elf64.lo elf32.lo $elf"; target_size=64 ;;
+    x86_64_elf32_nacl_vec)	 tb="$tb elf64-x86-64.lo elfxx-x86.lo elf-ifunc.lo elf-nacl.lo elf64.lo elf32.lo $elf"; target_size=64 ;;
+    x86_64_elf64_vec)		 tb="$tb elf64-x86-64.lo elfxx-x86.lo elf-ifunc.lo elf-nacl.lo elf64.lo $elf"; target_size=64 ;;
+    x86_64_elf64_cloudabi_vec)	 tb="$tb elf64-x86-64.lo elfxx-x86.lo elf-ifunc.lo elf-nacl.lo elf64.lo $elf"; target_size=64 ;;
+    x86_64_elf64_fbsd_vec)	 tb="$tb elf64-x86-64.lo elfxx-x86.lo elf-ifunc.lo elf-nacl.lo elf64.lo $elf"; target_size=64 ;;
+    x86_64_elf64_nacl_vec)	 tb="$tb elf64-x86-64.lo elfxx-x86.lo elf-ifunc.lo elf-nacl.lo elf64.lo $elf"; target_size=64 ;;
+    x86_64_elf64_sol2_vec)	 tb="$tb elf64-x86-64.lo elfxx-x86.lo elf-ifunc.lo elf-nacl.lo elf64.lo $elf"; target_size=64 ;;
     x86_64_mach_o_vec)		 tb="$tb mach-o-x86-64.lo" ;;
     x86_64_pe_vec)		 tb="$tb pe-x86_64.lo pex64igen.lo $coff"; target_size=64 ;;
     x86_64_pe_be_vec)		 tb="$tb pe-x86_64.lo pex64igen.lo $coff"; target_size=64 ;;
@@ -786,20 +792,11 @@ else	# all_targets is true
     selarchs=`echo $selarchs | sed -e 's/^/\&/' -e 's/ \(.\)/,\&\1/g'`
 fi	# all_targets is true
 
-if test "x$want_64_bit_archive" = xunset; then
-  # 64-bit MIPS and s390 ELF targets use 64-bit archives.
-  case "${bfd_backends}" in
-    *elf64-mips* | *elf64-s390*)
-      want_64_bit_archive=true
-      ;;
-  esac
-fi
-
 # 64-bit archives need a 64-bit bfd_vma.
 if test "x$want_64_bit_archive" = xtrue; then
   want64=true
   AC_DEFINE(USE_64_BIT_ARCHIVE, 1,
-    [Define if we should use 64-bit archives.])
+    [Define if 64-bit archives should always be used.])
 fi
 
 case ${host64}-${target64}-${want64} in
@@ -1156,7 +1153,7 @@ fi
 AC_SUBST(supports_plugins)
 AC_SUBST(lt_cv_dlopen_libs)
 
-# Determine the host dependant file_ptr a.k.a. off_t type.  In order
+# Determine the host dependent file_ptr a.k.a. off_t type.  In order
 # prefer: off64_t - if ftello64 and fseeko64, off_t - if ftello and
 # fseeko, long.  This assumes that sizeof off_t is .ge. sizeof long.
 # Hopefully a reasonable assumption since fseeko et.al. should be

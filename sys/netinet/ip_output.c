@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.298.2.2 2018/04/16 02:00:08 pgoyette Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.298.2.3 2018/04/22 07:20:28 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.298.2.2 2018/04/16 02:00:08 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.298.2.3 2018/04/22 07:20:28 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1016,6 +1016,7 @@ ip_insertoptions(struct mbuf *m, struct mbuf *opt, int *phlen)
 	unsigned optlen;
 
 	optlen = opt->m_len - sizeof(p->ipopt_dst);
+	KASSERT(optlen % 4 == 0);
 	if (optlen + ntohs(ip->ip_len) > IP_MAXPACKET)
 		return m;		/* XXX should fail */
 	if (!in_nullhost(p->ipopt_dst))
@@ -1577,10 +1578,10 @@ ip_pcbopts(struct inpcb *inp, const struct sockopt *sopt)
 	}
 	cp = sopt->sopt_data;
 
-#ifndef	__vax__
-	if (cnt % sizeof(int32_t))
+	if (cnt % 4) {
+		/* Must be 4-byte aligned, because there's no padding. */
 		return EINVAL;
-#endif
+	}
 
 	m = m_get(M_DONTWAIT, MT_SOOPTS);
 	if (m == NULL)

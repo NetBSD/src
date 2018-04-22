@@ -134,7 +134,7 @@ void t3_l2t_proc_free(struct proc_dir_entry *dir);
 
 int cxgb_ofld_send(struct toedev *dev, struct mbuf *m);
 
-static inline int l2t_send(struct toedev *dev, struct mbuf *m,
+static __inline int l2t_send(struct toedev *dev, struct mbuf *m,
                struct l2t_entry *e)
 {
     if (__predict_true(e->state == L2T_STATE_VALID))
@@ -142,13 +142,13 @@ static inline int l2t_send(struct toedev *dev, struct mbuf *m,
     return t3_l2t_send_slow(dev, m, e);
 }
 
-static inline void l2t_release(struct l2t_data *d, struct l2t_entry *e)
+static __inline void l2t_release(struct l2t_data *d, struct l2t_entry *e)
 {
     if (atomic_fetchadd_int(&e->refcnt, -1) == 1)
         t3_l2e_free(d, e);
 }
 
-static inline void l2t_hold(struct l2t_data *d, struct l2t_entry *e)
+static __inline void l2t_hold(struct l2t_data *d, struct l2t_entry *e)
 {
     if (atomic_fetchadd_int(&e->refcnt, 1) == 1)  /* 0 -> 1 transition */
         atomic_add_int(&d->nfree, 1);

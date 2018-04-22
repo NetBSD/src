@@ -1,5 +1,5 @@
-/*	$NetBSD: ipsec_var.h,v 1.5 2008/04/23 06:09:05 thorpej Exp $ */
-/*	$FreeBSD: src/sys/netipsec/ipsec.h,v 1.2.4.2 2004/02/14 22:23:23 bms Exp $	*/
+/*	$NetBSD: ipsec_var.h,v 1.5.88.1 2018/04/22 07:20:28 pgoyette Exp $ */
+/*	$FreeBSD: ipsec.h,v 1.2.4.2 2004/02/14 22:23:23 bms Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
