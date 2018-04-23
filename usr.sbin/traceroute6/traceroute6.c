@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute6.c,v 1.46 2018/04/23 09:47:03 maxv Exp $	*/
+/*	$NetBSD: traceroute6.c,v 1.47 2018/04/23 09:58:35 maxv Exp $	*/
 /*	$KAME: traceroute6.c,v 1.67 2004/01/25 03:24:39 itojun Exp $	*/
 
 /*
@@ -75,7 +75,7 @@ static char sccsid[] = "@(#)traceroute.c	8.1 (Berkeley) 6/6/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: traceroute6.c,v 1.46 2018/04/23 09:47:03 maxv Exp $");
+__RCSID("$NetBSD: traceroute6.c,v 1.47 2018/04/23 09:58:35 maxv Exp $");
 #endif
 #endif
 
@@ -319,9 +319,6 @@ static int	setpolicy(int so, const char *policy);
 #endif
 static void send_probe(int, u_long);
 static struct udphdr *get_udphdr(struct ip6_hdr *, u_char *);
-#if 0
-static int get_hoplim(struct msghdr *);
-#endif
 static double deltaT(struct timeval *, struct timeval *);
 static const char *pr_type(int);
 static int packet_ok(struct msghdr *, ssize_t, int);
@@ -914,24 +911,6 @@ send_probe(int seq, u_long hops)
 		(void) fflush(stdout);
 	}
 }
-
-#if 0
-static int
-get_hoplim(struct msghdr *mhdr)
-{
-	struct cmsghdr *cm;
-
-	for (cm = (struct cmsghdr *)CMSG_FIRSTHDR(mhdr); cm;
-	    cm = (struct cmsghdr *)CMSG_NXTHDR(mhdr, cm)) {
-		if (cm->cmsg_level == IPPROTO_IPV6 &&
-		    cm->cmsg_type == IPV6_HOPLIMIT &&
-		    cm->cmsg_len == CMSG_LEN(sizeof(int)))
-			return *(int *)CMSG_DATA(cm);
-	}
-
-	return -1;
-}
-#endif
 
 static double
 deltaT(struct timeval *t1p, struct timeval *t2p)
