@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.575 2018/04/23 01:29:23 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.576 2018/04/23 01:35:25 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.575 2018/04/23 01:29:23 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.576 2018/04/23 01:35:25 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -370,7 +370,7 @@ struct wm_txqueue {
 
 	bool txq_stopping;
 
-	bool txq_watchdog;
+	bool txq_sending;
 	time_t txq_lastsent;
 
 	uint32_t txq_packets;		/* for AIM */
@@ -3010,7 +3010,7 @@ wm_watchdog_txq(struct ifnet *ifp, struct wm_txqueue *txq, uint16_t *hang)
 {
 
 	mutex_enter(txq->txq_lock);
-	if (txq->txq_watchdog &&
+	if (txq->txq_sending &&
 	    time_uptime - txq->txq_lastsent > wm_watchdog_timeout) {
 		wm_watchdog_txq_locked(ifp, txq, hang);
 	}
@@ -3032,14 +3032,17 @@ wm_watchdog_txq_locked(struct ifnet *ifp, struct wm_txqueue *txq,
 	 */
 	wm_txeof(txq, UINT_MAX);
 
-	if (txq->txq_free != WM_NTXDESC(txq)) {
+	if (txq->txq_sending)
+		*hang |= __BIT(wmq->wmq_id);
+
+	if (txq->txq_free == WM_NTXDESC(txq)) {
+		log(LOG_ERR, "%s: device timeout (lost interrupt)\n",
+		    device_xname(sc->sc_dev));
+	} else {
 #ifdef WM_DEBUG
 		int i, j;
 		struct wm_txsoft *txs;
 #endif
-		if (txq->txq_watchdog)
-			*hang |= __BIT(wmq->wmq_id);
-
 		log(LOG_ERR,
 		    "%s: device timeout (txfree %d txsfree %d txnext %d)\n",
 		    device_xname(sc->sc_dev), txq->txq_free, txq->txq_sfree,
@@ -6011,7 +6014,7 @@ wm_stop_locked(struct ifnet *ifp, int disable)
 		struct wm_queue *wmq = &sc->sc_queue[qidx];
 		struct wm_txqueue *txq = &wmq->wmq_txq;
 		mutex_enter(txq->txq_lock);
-		txq->txq_watchdog = false; /* ensure watchdog disabled */
+		txq->txq_sending = false; /* ensure watchdog disabled */
 		for (i = 0; i < WM_TXQUEUELEN(txq); i++) {
 			txs = &txq->txq_soft[i];
 			if (txs->txs_mbuf != NULL) {
@@ -6700,7 +6703,7 @@ wm_init_tx_queue(struct wm_softc *sc, struct wm_queue *wmq,
 	wm_init_tx_regs(sc, wmq, txq);
 	wm_init_tx_buffer(sc, txq);
 
-	txq->txq_watchdog = false;
+	txq->txq_sending = false;
 }
 
 static void
@@ -7467,7 +7470,7 @@ wm_send_common_locked(struct ifnet *ifp, struct wm_txqueue *txq,
 	if (txq->txq_free != ofree) {
 		/* Set a watchdog timer in case the chip flakes out. */
 		txq->txq_lastsent = time_uptime;
-		txq->txq_watchdog = true;
+		txq->txq_sending = true;
 	}
 }
 
@@ -8041,7 +8044,7 @@ wm_nq_send_common_locked(struct ifnet *ifp, struct wm_txqueue *txq,
 	if (sent) {
 		/* Set a watchdog timer in case the chip flakes out. */
 		txq->txq_lastsent = time_uptime;
-		txq->txq_watchdog = true;
+		txq->txq_sending = true;
 	}
 }
 
@@ -8186,7 +8189,7 @@ wm_txeof(struct wm_txqueue *txq, u_int limit)
 	 * timer.
 	 */
 	if (txq->txq_sfree == WM_TXQUEUELEN(txq))
-		txq->txq_watchdog = false;
+		txq->txq_sending = false;
 
 	return more;
 }
