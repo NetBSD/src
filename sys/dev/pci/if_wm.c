@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.574 2018/04/20 03:03:13 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.575 2018/04/23 01:29:23 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.574 2018/04/20 03:03:13 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.575 2018/04/23 01:29:23 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -13069,7 +13069,7 @@ wm_get_swfw_semaphore(struct wm_softc *sc, uint16_t mask)
 	else
 		timeout = 200;
 
-	for (timeout = 0; timeout < 200; timeout++) {
+	while (timeout) {
 		if (wm_get_swsm_semaphore(sc)) {
 			aprint_error_dev(sc->sc_dev,
 			    "%s: failed to get semaphore\n",
@@ -13085,6 +13085,7 @@ wm_get_swfw_semaphore(struct wm_softc *sc, uint16_t mask)
 		}
 		wm_put_swsm_semaphore(sc);
 		delay(5000);
+		timeout--;
 	}
 	printf("%s: failed to get swfw semaphore mask 0x%x swfw 0x%x\n",
 	    device_xname(sc->sc_dev), mask, swfw_sync);
