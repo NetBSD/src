@@ -148,10 +148,21 @@ amd64nbsd_trapframe_cache(struct frame_info *this_frame, void **this_cache)
 
   /* There is an extra 'call' in the interrupt sequence - ignore the extra
    * return address */
-  if (name && strncmp (name, "Xintr", 5) == 0)
-    addr = sp + 8;		/* It's an interrupt frame.  */
-  else
-    addr = sp;
+
+  addr = sp;
+  if (name) {
+	if (strncmp (name, "Xintr", 5) == 0
+	 || strncmp (name, "Xhandle", 7) == 0) {
+		addr += 8;		/* It's an interrupt frame.  */
+	}
+  }
+
+#ifdef DEBUG_TRAPFRAME
+  for (i = 0; i < 50; i++) {
+    cs = read_memory_unsigned_integer (addr + i * 8, 8, byte_order);
+    printf("%s i=%d r=%#jx\n", name, i, (intmax_t)cs);
+  }
+#endif
 
   for (i = 0; i < ARRAY_SIZE (amd64nbsd_tf_reg_offset); i++)
     if (amd64nbsd_tf_reg_offset[i] != -1)
@@ -162,6 +173,10 @@ amd64nbsd_trapframe_cache(struct frame_info *this_frame, void **this_cache)
     + amd64nbsd_tf_reg_offset[AMD64_CS_REGNUM], 8, byte_order);
   rip = read_memory_unsigned_integer (addr
     + amd64nbsd_tf_reg_offset[AMD64_RIP_REGNUM], 8, byte_order);
+
+#ifdef DEBUG_TRAPFRAME
+  printf("%s cs=%#jx rip=%#jx\n", name, (intmax_t)cs, (intmax_t)rip);
+#endif
 
   /* The trap frame layout was changed lf the %rip value is less than 2^16 it
    * is almost certainly the %ss of the old format. */
@@ -243,16 +258,20 @@ amd64nbsd_trapframe_sniffer (const struct frame_unwind *self,
 
   find_pc_partial_function (get_frame_pc (this_frame), &name, NULL, NULL);
   return (name && ((strcmp (name, "alltraps") == 0)
-		   || (strcmp (name, "calltrap") == 0)
-		   || (strncmp (name, "Xtrap", 5) == 0)
-		   || (strcmp (name, "osyscall1") == 0)
-		   || (strcmp (name, "Xsyscall") == 0)
-		   || (strncmp (name, "Xintr", 5) == 0)
-		   || (strncmp (name, "Xresume", 7) == 0)
-		   || (strncmp (name, "Xstray", 6) == 0)
-		   || (strncmp (name, "Xrecurse", 8) == 0)
-		   || (strncmp (name, "Xsoft", 5) == 0)
-		   || (strcmp (name, "Xdoreti") == 0)));
+	        || (strcmp (name, "calltrap") == 0)
+	        || (strcmp (name, "handle_syscall") == 0)
+		|| (strcmp (name, "Xdoreti") == 0)
+		|| (strcmp (name, "Xspllower") == 0)
+		|| (strncmp (name, "Xhandle", 7) == 0)
+		|| (strncmp (name, "Xintr", 5) == 0)
+		|| (strncmp (name, "Xpreempt", 8) == 0)
+		|| (strncmp (name, "Xrecurse", 8) == 0)
+		|| (strncmp (name, "Xresume", 7) == 0)
+		|| (strncmp (name, "Xsoft", 5) == 0)
+		|| (strncmp (name, "Xstray", 6) == 0)
+		|| (strncmp (name, "Xsyscall", 8) == 0)
+		|| (strncmp (name, "Xtrap", 5) == 0)
+	    ));
 }
 
 static const struct frame_unwind amd64nbsd_trapframe_unwind = {
