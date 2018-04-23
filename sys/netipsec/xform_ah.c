@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ah.c,v 1.92 2018/04/19 08:27:39 maxv Exp $	*/
+/*	$NetBSD: xform_ah.c,v 1.93 2018/04/23 07:22:54 maxv Exp $	*/
 /*	$FreeBSD: xform_ah.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ah.c,v 1.63 2001/06/26 06:18:58 angelos Exp $ */
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.92 2018/04/19 08:27:39 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.93 2018/04/23 07:22:54 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -273,7 +273,6 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 #ifdef INET6
 	struct ip6_ext *ip6e;
 	struct ip6_hdr ip6;
-	struct ip6_rthdr *rh;
 	int alloc, nxt;
 #endif
 
@@ -475,42 +474,7 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 				break;
 
 			case IPPROTO_ROUTING:
-				/*
-				 * Always include routing headers in
-				 * computation.
-				 */
 				ip6e = (struct ip6_ext *)(ptr + off);
-				rh = (struct ip6_rthdr *)(ptr + off);
-				/*
-				 * must adjust content to make it look like
-				 * its final form (as seen at the final
-				 * destination).
-				 * we only know how to massage type 0 routing
-				 * header.
-				 */
-				if (out && rh->ip6r_type == IPV6_RTHDR_TYPE_0) {
-					struct ip6_rthdr0 *rh0;
-					struct in6_addr *addr, finaldst;
-					int i;
-
-					rh0 = (struct ip6_rthdr0 *)rh;
-					addr = (struct in6_addr *)(rh0 + 1);
-
-					for (i = 0; i < rh0->ip6r0_segleft; i++)
-						in6_clearscope(&addr[i]);
-
-					finaldst = addr[rh0->ip6r0_segleft - 1];
-					memmove(&addr[1], &addr[0],
-						sizeof(struct in6_addr) *
-						(rh0->ip6r0_segleft - 1));
-
-					m_copydata(m, 0, sizeof(ip6), &ip6);
-					addr[0] = ip6.ip6_dst;
-					ip6.ip6_dst = finaldst;
-					m_copyback(m, 0, sizeof(ip6), &ip6);
-
-					rh0->ip6r0_segleft = 0;
-				}
 
 				/* advance */
 				off += ((ip6e->ip6e_len + 1) << 3);

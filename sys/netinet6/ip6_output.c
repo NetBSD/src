@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.204 2018/04/18 07:17:49 maxv Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.205 2018/04/23 07:22:54 maxv Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.204 2018/04/18 07:17:49 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.205 2018/04/23 07:22:54 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -143,34 +143,11 @@ static int ip6_pcbopts(struct ip6_pktopts **, struct socket *, struct sockopt *)
 static int
 ip6_handle_rthdr(struct ip6_rthdr *rh, struct ip6_hdr *ip6)
 {
-	struct ip6_rthdr0 *rh0;
-	struct in6_addr *addr;
-	struct sockaddr_in6 sa;
 	int error = 0;
 
 	switch (rh->ip6r_type) {
 	case IPV6_RTHDR_TYPE_0:
-		rh0 = (struct ip6_rthdr0 *)rh;
-		addr = (struct in6_addr *)(rh0 + 1);
-
-		/*
-		 * construct a sockaddr_in6 form of the first hop.
-		 *
-		 * XXX we may not have enough information about its scope zone;
-		 * there is no standard API to pass the information from the
-		 * application.
-		 */
-		sockaddr_in6_init(&sa, addr, 0, 0, 0);
-		error = sa6_embedscope(&sa, ip6_use_defzone);
-		if (error != 0)
-			break;
-		memmove(&addr[0], &addr[1],
-		    sizeof(struct in6_addr) * (rh0->ip6r0_segleft - 1));
-		addr[rh0->ip6r0_segleft - 1] = ip6->ip6_dst;
-		ip6->ip6_dst = sa.sin6_addr;
-		/* XXX */
-		in6_clearscope(addr + rh0->ip6r0_segleft - 1);
-		break;
+		/* Dropped, RFC5095. */
 	default:	/* is it possible? */
 		error = EINVAL;
 	}
@@ -3205,13 +3182,7 @@ ip6_setpktopt(int optname, u_char *buf, int len, struct ip6_pktopts *opt,
 			return (EINVAL);
 		switch (rth->ip6r_type) {
 		case IPV6_RTHDR_TYPE_0:
-			if (rth->ip6r_len == 0)	/* must contain one addr */
-				return (EINVAL);
-			if (rth->ip6r_len % 2) /* length must be even */
-				return (EINVAL);
-			if (rth->ip6r_len / 2 != rth->ip6r_segleft)
-				return (EINVAL);
-			break;
+			/* Dropped, RFC5095. */
 		default:
 			return (EINVAL);	/* not supported */
 		}
