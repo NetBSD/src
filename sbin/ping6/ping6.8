@@ -1,4 +1,4 @@
-.\"	$NetBSD: ping6.8,v 1.31 2018/04/23 06:51:25 maxv Exp $
+.\"	$NetBSD: ping6.8,v 1.32 2018/04/23 07:25:36 wiz Exp $
 .\"	$KAME: ping6.8,v 1.57 2002/05/26 13:18:25 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -33,9 +33,7 @@
 .Os
 .Sh NAME
 .Nm ping6
-.Nd send
-.Tn ICMPv6 ECHO_REQUEST
-packets to network hosts
+.Nd send ICMPv6 ECHO_REQUEST packets to network hosts
 .Sh SYNOPSIS
 .Nm ping6
 .\" without IPsec, or new IPsec
@@ -50,28 +48,24 @@ packets to network hosts
 .Op Fl I Ar interface
 .Op Fl i Ar wait
 .Op Fl l Ar preload
-.Op Fl p Ar pattern
 .\" new IPsec
 .Op Fl P Ar policy
+.Op Fl p Ar pattern
 .Op Fl S Ar sourceaddr
 .Op Fl s Ar packetsize
-.Op Fl x Ar maxwait
 .Op Fl X Ar deadline
+.Op Fl x Ar maxwait
 .Ar host
 .Sh DESCRIPTION
 .Nm
-uses the
-.Tn ICMPv6
-protocol's mandatory
-.Tn ICMP6_ECHO_REQUEST
+uses the ICMPv6 protocol's mandatory
+.Dv ICMP6_ECHO_REQUEST
 datagram to elicit an
-.Tn ICMP6_ECHO_REPLY
+.Dv ICMP6_ECHO_REPLY
 from a host or gateway.
-.Tn ICMP6_ECHO_REQUEST
+.Dv ICMP6_ECHO_REQUEST
 datagrams (``pings'') have an IPv6 header,
-and
-.Tn ICMPv6
-header formatted as documented in RFC 2463.
+and ICMPv6 header formatted as documented in RFC 2463.
 The options are as follows:
 .Bl -tag -width Ds
 .\" old IPsec
@@ -110,7 +104,7 @@ Set socket buffer size.
 Stop after sending
 .Pq and receiving
 .Ar count
-.Tn ECHO_RESPONSE
+.Dv ECHO_RESPONSE
 packets.
 .It Fl d
 Set the
@@ -124,11 +118,11 @@ Flood ping.
 Outputs packets as fast as they come back or one hundred times per second,
 whichever is more.
 For every
-.Tn ECHO_REQUEST
+.Dv ECHO_REQUEST
 sent a period
 .Dq \&.
 is printed, while for every
-.Tn ECHO_REPLY
+.Dv ECHO_REPLY
 received a backspace is printed.
 This provides a rapid display of how many packets are being dropped.
 Only the super-user may use this option.
@@ -178,9 +172,6 @@ when the option is specified once, the behavior will be disabled for
 unicast packets.
 When the option is specified more than once, it will be disabled for both
 unicast and multicast packets.
-.It Fl n
-Numeric output only.
-No attempt will be made to lookup symbolic names from addresses in the reply.
 .It Fl N
 Probe node information multicast group
 .Pq Li ff02::2:xxxx:xxxx .
@@ -194,8 +185,14 @@ Since node information multicast group is a link-local multicast group,
 outgoing interface needs to be specified by
 .Fl I
 option.
+.It Fl n
+Numeric output only.
+No attempt will be made to lookup symbolic names from addresses in the reply.
 .It Fl o
 Exit successfully after receiving one reply packet.
+.It Fl P Ar policy
+.Ar policy
+specifies IPsec policy to be used for the probe.
 .It Fl p Ar pattern
 You may specify up to 16
 .Dq pad
@@ -206,9 +203,6 @@ For example,
 will cause the sent packet to be filled with all
 ones.
 .\" new IPsec
-.It Fl P Ar policy
-.Ar policy
-specifies IPsec policy to be used for the probe.
 .It Fl q
 Quiet output.
 Nothing is displayed except the summary lines at startup time and
@@ -226,12 +220,8 @@ The source address must be one of the unicast addresses of the sending node,
 and must be numeric.
 .It Fl s Ar packetsize
 Specifies the number of data bytes to be sent.
-The default is 56, which translates into 64
-.Tn ICMP
-data bytes when combined
-with the 8 bytes of
-.Tn ICMP
-header data.
+The default is 56, which translates into 64 ICMP data bytes when combined
+with the 8 bytes of ICMP header data.
 You may need to specify
 .Fl b
 as well to extend socket buffer size.
@@ -244,16 +234,9 @@ has no effect if
 is specified.
 .It Fl v
 Verbose output.
-.Tn ICMP
-packets other than
-.Tn ECHO_RESPONSE
+ICMP packets other than
+.Dv ECHO_RESPONSE
 that are received are listed.
-.It Fl w
-Generate ICMPv6 Node Information DNS Name query, rather than echo-request.
-.Fl s
-has no effect if
-.Fl w
-is specified.
 .It Fl W
 Same as
 .Fl w ,
@@ -263,13 +246,19 @@ This option is present for backward compatibility.
 has no effect if
 .Fl w
 is specified.
-.It Fl x Ar maxwait
-Time in milliseconds to wait for a reply for each packet sent.
+.It Fl w
+Generate ICMPv6 Node Information DNS Name query, rather than echo-request.
+.Fl s
+has no effect if
+.Fl w
+is specified.
 .It Fl X Ar deadline
 Specify a timeout, in seconds, before ping exits regardless of
 how many packets have been received.
 .It Ar host
 IPv6 address of the final destination node.
+.It Fl x Ar maxwait
+Time in milliseconds to wait for a reply for each packet sent.
 .El
 .Pp
 When using
@@ -298,20 +287,20 @@ during normal operations or from automated scripts.
 .\" .Sh ICMP PACKET DETAILS
 .\" An IP header without options is 20 bytes.
 .\" An
-.\" .Tn ICMP
-.\" .Tn ECHO_REQUEST
+.\" ICMP
+.\" .Dv ECHO_REQUEST
 .\" packet contains an additional 8 bytes worth of
-.\" .Tn ICMP
+.\" ICMP
 .\" header followed by an arbitrary amount of data.
 .\" When a
 .\" .Ar packetsize
 .\" is given, this indicated the size of this extra piece of data
 .\" .Pq the default is 56 .
 .\" Thus the amount of data received inside of an IP packet of type
-.\" .Tn ICMP
-.\" .Tn ECHO_REPLY
+.\" ICMP
+.\" .Dv ECHO_REPLY
 .\" will always be 8 bytes more than the requested data space
-.\" .Pq the Tn ICMP header .
+.\" .Pq the ICMP header .
 .\" .Pp
 .\" If the data space is at least eight bytes large,
 .\" .Nm
@@ -366,7 +355,7 @@ You can then examine this file for repeated patterns that you can test
 using the
 .Fl p
 option of
-.Nm Ns .
+.Nm .
 .Sh EXIT STATUS
 .Nm
 exits with 0 on success (the host is alive),
