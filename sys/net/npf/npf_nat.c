@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_nat.c,v 1.41 2016/12/26 23:05:06 christos Exp $	*/
+/*	$NetBSD: npf_nat.c,v 1.42 2018/04/23 15:36:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 2014 Mindaugas Rasiukevicius <rmind at netbsd org>
@@ -72,7 +72,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.41 2016/12/26 23:05:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.42 2018/04/23 15:36:30 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -890,7 +890,7 @@ npf_nat_import(npf_t *npf, prop_dictionary_t natdict,
 	prop_dictionary_get_uint16(natdict, "tport", &nt->nt_tport);
 
 	/* Take a specific port from port-map. */
-	if ((np->n_flags & NPF_NAT_PORTMAP) != 0 && nt->nt_tport &
+	if ((np->n_flags & NPF_NAT_PORTMAP) != 0 && nt->nt_tport &&
 	    !npf_nat_takeport(np, nt->nt_tport)) {
 		pool_cache_put(nat_cache, nt);
 		return NULL;
