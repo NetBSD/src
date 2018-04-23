@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute6.c,v 1.44 2016/11/17 09:21:34 shm Exp $	*/
+/*	$NetBSD: traceroute6.c,v 1.45 2018/04/23 06:42:02 maxv Exp $	*/
 /*	$KAME: traceroute6.c,v 1.67 2004/01/25 03:24:39 itojun Exp $	*/
 
 /*
@@ -75,7 +75,7 @@ static char sccsid[] = "@(#)traceroute.c	8.1 (Berkeley) 6/6/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: traceroute6.c,v 1.44 2016/11/17 09:21:34 shm Exp $");
+__RCSID("$NetBSD: traceroute6.c,v 1.45 2018/04/23 06:42:02 maxv Exp $");
 #endif
 #endif
 
@@ -340,8 +340,6 @@ static struct in6_pktinfo *rcvpktinfo;
 static struct sockaddr_in6 Src, Dst, Rcv;
 static u_long datalen;			/* How much data */
 #define	ICMP6ECHOLEN	8
-/* XXX: 2064 = 127(max hops in type 0 rthdr) * sizeof(ip6_hdr) + 16(margin) */
-static char rtbuf[2064];
 #ifdef USE_RFC3542
 static struct ip6_rthdr *rth;
 #endif
@@ -376,7 +374,6 @@ main(int argc, char *argv[])
 	struct addrinfo hints, *res;
 	static u_char *rcvcmsgbuf;
 	u_long probe, hops, lport;
-	struct hostent *hp;
 	size_t size;
 
 	/*
@@ -417,7 +414,7 @@ main(int argc, char *argv[])
 
 	seq = 0;
 
-	while ((ch = getopt(argc, argv, "aA:df:g:Ilm:np:q:rs:w:v")) != -1)
+	while ((ch = getopt(argc, argv, "aA:df:Ilm:np:q:rs:w:v")) != -1)
 		switch (ch) {
 		case 'a':
 			as_path = 1;
@@ -435,35 +432,6 @@ main(int argc, char *argv[])
 			first_hop = strtoul(optarg, &ep, 0);
 			if (errno || !*optarg || *ep|| first_hop > 255)
 				errx(1, "Invalid min hoplimit `%s'", optarg);
-			break;
-		case 'g':
-			hp = getipnodebyname(optarg, AF_INET6, 0, &h_errno);
-			if (hp == NULL)
-				errx(1, "Unknown host `%s'", optarg);
-#ifdef USE_RFC3542
-			if (rth == NULL) {
-				/*
-				 * XXX: We can't detect the number of
-				 * intermediate nodes yet.
-				 */
-				if ((rth = inet6_rth_init((void *)rtbuf,
-				    sizeof(rtbuf), IPV6_RTHDR_TYPE_0,
-				    0)) == NULL) {
-					errx(1, "inet6_rth_init failed");
-				}
-			}
-			if (inet6_rth_add((void *)rth,
-			    (struct in6_addr *)hp->h_addr))
-				errx(1, "inet6_rth_add failed for `%s'",
-				    optarg);
-#else  /* old advanced API */
-			if (cmsg == NULL)
-				cmsg = inet6_rthdr_init(rtbuf,
-				    IPV6_RTHDR_TYPE_0);
-			inet6_rthdr_add(cmsg, (struct in6_addr *)hp->h_addr,
-			    IPV6_RTHDR_LOOSE);
-#endif
-			freehostent(hp);
 			break;
 		case 'I':
 			useicmp++;
@@ -1300,8 +1268,8 @@ usage(void)
 {
 
 	fprintf(stderr,
-"Usage: %s [-adIlnrv] [-A as_server] [-f firsthop] [-g gateway]\n"
-"\t[-m hoplimit] [-p port] [-q probes] [-s src] [-w waittime] target [datalen]\n",
+"Usage: %s [-adIlnrv] [-A as_server] [-f firsthop] [-m hoplimit]\n"
+"\t[-p port] [-q probes] [-s src] [-w waittime] target [datalen]\n",
 	getprogname());
 	exit(1);
 }
