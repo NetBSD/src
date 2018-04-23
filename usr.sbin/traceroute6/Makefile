@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.9 2011/05/10 01:52:49 christos Exp $
+# $NetBSD: Makefile,v 1.10 2018/04/23 10:19:11 maxv Exp $
 
 USE_FORT?= yes	# network client
 
@@ -12,7 +12,6 @@ BINMODE=4555
 BINOWN=	root
 
 CPPFLAGS+=-DINET6 -DIPSEC
-CPPFLAGS+=-DUSE_RFC3542
 LDADD+=	-lipsec
 DPADD+=	${LIBIPSEC}
 
