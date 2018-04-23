@@ -1,4 +1,4 @@
-/*	$NetBSD: ping6.c,v 1.98 2018/04/23 18:32:18 maxv Exp $	*/
+/*	$NetBSD: ping6.c,v 1.99 2018/04/23 18:37:19 maxv Exp $	*/
 /*	$KAME: ping6.c,v 1.164 2002/11/16 14:05:37 itojun Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping6.c,v 1.98 2018/04/23 18:32:18 maxv Exp $");
+__RCSID("$NetBSD: ping6.c,v 1.99 2018/04/23 18:37:19 maxv Exp $");
 #endif
 #endif
 
@@ -2547,13 +2547,7 @@ usage(void)
 {
 	(void)fprintf(stderr,
 	    "usage: ping6 [-"
-#if defined(IPSEC) && defined(IPSEC_POLICY_IPSEC)
-	    "dfH"
-#else
-	    "AdEfH"
-#endif
-	    "m"
-	    "Nnq"
+	    "dfHmNnq"
 #ifdef IPV6_REACHCONF
 	    "R"
 #endif
