@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.164 2018/04/21 23:25:01 joerg Exp $	*/
+/*	$NetBSD: locore.S,v 1.165 2018/04/23 22:53:04 joerg Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1388,8 +1388,8 @@ IDTVEC(\name)
 
 	/* Get the LWP's kernel stack pointer in %rax */
 	.if	\is_svs
-		movq	%rax,SVS_UTLS+UTLS_SCRATCH
-		movq	SVS_UTLS+UTLS_RSP0,%rax
+		movabs	%rax,SVS_UTLS+UTLS_SCRATCH
+		movabs	SVS_UTLS+UTLS_RSP0,%rax
 	.else
 		movq	%rax,CPUVAR(SCRATCH)
 		movq	CPUVAR(CURLWP),%rax
@@ -1407,7 +1407,7 @@ IDTVEC(\name)
 
 	/* Restore %rax */
 	.if	\is_svs
-		movq	SVS_UTLS+UTLS_SCRATCH,%rax
+		movabs	SVS_UTLS+UTLS_SCRATCH,%rax
 	.else
 		movq	CPUVAR(SCRATCH),%rax
 	.endif
