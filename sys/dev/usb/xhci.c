@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.89 2018/04/22 07:47:14 jdolecek Exp $	*/
+/*	$NetBSD: xhci.c,v 1.90 2018/04/23 19:55:00 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.89 2018/04/22 07:47:14 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.90 2018/04/23 19:55:00 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1262,24 +1262,36 @@ xhci_intr1(struct xhci_softc * const sc)
 
 	usbsts = xhci_op_read_4(sc, XHCI_USBSTS);
 	DPRINTFN(16, "USBSTS %08jx", usbsts, 0, 0, 0);
-#if 0
-	if ((usbsts & (XHCI_STS_EINT|XHCI_STS_PCD)) == 0) {
+	if ((usbsts & (XHCI_STS_HSE | XHCI_STS_EINT | XHCI_STS_PCD |
+	    XHCI_STS_HCE)) == 0) {
+		DPRINTFN(16, "ignored intr not for %s",
+		    device_xname(sc->sc_dev), 0, 0, 0);
 		return 0;
 	}
-#endif
-	xhci_op_write_4(sc, XHCI_USBSTS,
-	    usbsts & (2|XHCI_STS_EINT|XHCI_STS_PCD)); /* XXX */
+
+	/*
+	 * Clear EINT and other transient flags, to not misenterpret
+	 * next shared interrupt. Also, to avoid race, EINT must be cleared
+	 * before XHCI_IMAN_INTR_PEND is cleared.
+	 */
+	xhci_op_write_4(sc, XHCI_USBSTS, usbsts & XHCI_STS_RSVDP0);
+
+#ifdef XHCI_DEBUG
 	usbsts = xhci_op_read_4(sc, XHCI_USBSTS);
 	DPRINTFN(16, "USBSTS %08jx", usbsts, 0, 0, 0);
+#endif
 
 	iman = xhci_rt_read_4(sc, XHCI_IMAN(0));
 	DPRINTFN(16, "IMAN0 %08jx", iman, 0, 0, 0);
 	iman |= XHCI_IMAN_INTR_PEND;
 	xhci_rt_write_4(sc, XHCI_IMAN(0), iman);
+
+#ifdef XHCI_DEBUG
 	iman = xhci_rt_read_4(sc, XHCI_IMAN(0));
 	DPRINTFN(16, "IMAN0 %08jx", iman, 0, 0, 0);
 	usbsts = xhci_op_read_4(sc, XHCI_USBSTS);
 	DPRINTFN(16, "USBSTS %08jx", usbsts, 0, 0, 0);
+#endif
 
 	return 1;
 }
