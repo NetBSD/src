@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute6.c,v 1.50 2018/04/23 10:23:38 maxv Exp $	*/
+/*	$NetBSD: traceroute6.c,v 1.51 2018/04/23 18:59:03 maxv Exp $	*/
 /*	$KAME: traceroute6.c,v 1.67 2004/01/25 03:24:39 itojun Exp $	*/
 
 /*
@@ -75,7 +75,7 @@ static char sccsid[] = "@(#)traceroute.c	8.1 (Berkeley) 6/6/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: traceroute6.c,v 1.50 2018/04/23 10:23:38 maxv Exp $");
+__RCSID("$NetBSD: traceroute6.c,v 1.51 2018/04/23 18:59:03 maxv Exp $");
 #endif
 #endif
 
@@ -312,10 +312,8 @@ static u_char	packet[512];		/* last inbound (icmp) packet */
 static struct opacket	*outpacket;	/* last output (udp) packet */
 
 static ssize_t	wait_for_reply(int, struct msghdr *);
-#ifdef IPSEC
-#ifdef IPSEC_POLICY_IPSEC
-static int	setpolicy(int so, const char *policy);
-#endif
+#if defined(IPSEC) && defined(IPSEC_POLICY_IPSEC)
+static int	setpolicy(int, const char *);
 #endif
 static void send_probe(int, u_long);
 static struct udphdr *get_udphdr(struct ip6_hdr *, u_char *);
@@ -555,38 +553,13 @@ main(int argc, char *argv[])
 	if (options & SO_DONTROUTE)
 		(void) setsockopt(rcvsock, SOL_SOCKET, SO_DONTROUTE,
 		    (char *)&on, sizeof(on));
-#ifdef IPSEC
-#ifdef IPSEC_POLICY_IPSEC
-	/*
-	 * do not raise error even if setsockopt fails, kernel may have ipsec
-	 * turned off.
-	 */
+
+#if defined(IPSEC) && defined(IPSEC_POLICY_IPSEC)
 	if (setpolicy(rcvsock, "in bypass") < 0)
 		errx(1, "%s", ipsec_strerror());
 	if (setpolicy(rcvsock, "out bypass") < 0)
 		errx(1, "%s", ipsec_strerror());
-#else
-    {
-	int level = IPSEC_LEVEL_NONE;
-
-	(void)setsockopt(rcvsock, IPPROTO_IPV6, IPV6_ESP_TRANS_LEVEL, &level,
-	    sizeof(level));
-	(void)setsockopt(rcvsock, IPPROTO_IPV6, IPV6_ESP_NETWORK_LEVEL, &level,
-	    sizeof(level));
-#ifdef IP_AUTH_TRANS_LEVEL
-	(void)setsockopt(rcvsock, IPPROTO_IPV6, IPV6_AUTH_TRANS_LEVEL, &level,
-	    sizeof(level));
-#else
-	(void)setsockopt(rcvsock, IPPROTO_IPV6, IPV6_AUTH_LEVEL, &level,
-	    sizeof(level));
 #endif
-#ifdef IP_AUTH_NETWORK_LEVEL
-	(void)setsockopt(rcvsock, IPPROTO_IPV6, IPV6_AUTH_NETWORK_LEVEL, &level,
-	    sizeof(level));
-#endif
-    }
-#endif /*IPSEC_POLICY_IPSEC*/
-#endif /*IPSEC*/
 
 	/*
 	 * Send UDP or ICMP
@@ -597,12 +570,12 @@ main(int argc, char *argv[])
 		if ((sndsock = socket(AF_INET6, SOCK_DGRAM, 0)) < 0)
 			err(5, "socket(SOCK_DGRAM)");
 	}
-#ifdef SO_SNDBUF
+
 	i = datalen;
 	if (setsockopt(sndsock, SOL_SOCKET, SO_SNDBUF, (char *)&i,
 	    sizeof(i)) < 0)
 		err(6, "setsockopt(SO_SNDBUF)");
-#endif /* SO_SNDBUF */
+
 	if (options & SO_DEBUG)
 		(void) setsockopt(sndsock, SOL_SOCKET, SO_DEBUG,
 		    (char *)&on, sizeof(on));
@@ -610,38 +583,12 @@ main(int argc, char *argv[])
 		(void) setsockopt(sndsock, SOL_SOCKET, SO_DONTROUTE,
 		    (char *)&on, sizeof(on));
 
-#ifdef IPSEC
-#ifdef IPSEC_POLICY_IPSEC
-	/*
-	 * do not raise error even if setsockopt fails, kernel may have ipsec
-	 * turned off.
-	 */
+#if defined(IPSEC) && defined(IPSEC_POLICY_IPSEC)
 	if (setpolicy(sndsock, "in bypass") < 0)
 		errx(1, "%s", ipsec_strerror());
 	if (setpolicy(sndsock, "out bypass") < 0)
 		errx(1, "%s", ipsec_strerror());
-#else
-    {
-	int level = IPSEC_LEVEL_BYPASS;
-
-	(void)setsockopt(sndsock, IPPROTO_IPV6, IPV6_ESP_TRANS_LEVEL, &level,
-	    sizeof(level));
-	(void)setsockopt(sndsock, IPPROTO_IPV6, IPV6_ESP_NETWORK_LEVEL, &level,
-	    sizeof(level));
-#ifdef IP_AUTH_TRANS_LEVEL
-	(void)setsockopt(sndsock, IPPROTO_IPV6, IPV6_AUTH_TRANS_LEVEL, &level,
-	    sizeof(level));
-#else
-	(void)setsockopt(sndsock, IPPROTO_IPV6, IPV6_AUTH_LEVEL, &level,
-	    sizeof(level));
 #endif
-#ifdef IP_AUTH_NETWORK_LEVEL
-	(void)setsockopt(sndsock, IPPROTO_IPV6, IPV6_AUTH_NETWORK_LEVEL, &level,
-	    sizeof(level));
-#endif
-    }
-#endif /*IPSEC_POLICY_IPSEC*/
-#endif /*IPSEC*/
 
 	/*
 	 * Source selection
@@ -832,13 +779,16 @@ wait_for_reply(int sock, struct msghdr *mhdr)
 #endif
 }
 
-#ifdef IPSEC
-#ifdef IPSEC_POLICY_IPSEC
+#if defined(IPSEC) && defined(IPSEC_POLICY_IPSEC)
 static int
 setpolicy(int so, const char *policy)
 {
 	char *buf;
 
+	/*
+	 * do not raise error even if setsockopt fails, kernel may have ipsec
+	 * turned off.
+	 */
 	buf = ipsec_set_policy(policy, strlen(policy));
 	if (buf == NULL) {
 		warnx("%s", ipsec_strerror());
@@ -851,7 +801,6 @@ setpolicy(int so, const char *policy)
 
 	return 0;
 }
-#endif
 #endif
 
 static void
