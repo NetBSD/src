@@ -1,4 +1,4 @@
-/*	$NetBSD: ping6.c,v 1.95 2018/04/23 06:51:25 maxv Exp $	*/
+/*	$NetBSD: ping6.c,v 1.96 2018/04/23 07:25:36 wiz Exp $	*/
 /*	$KAME: ping6.c,v 1.164 2002/11/16 14:05:37 itojun Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping6.c,v 1.95 2018/04/23 06:51:25 maxv Exp $");
+__RCSID("$NetBSD: ping6.c,v 1.96 2018/04/23 07:25:36 wiz Exp $");
 #endif
 #endif
 
@@ -2635,26 +2635,27 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "usage: ping6 [-dfH"
+	    "usage: ping6 [-"
+#if defined(IPSEC) && defined(IPSEC_POLICY_IPSEC)
+	    "dfH"
+#else
+	    "AdEfH"
+#endif
 #ifdef IPV6_USE_MIN_MTU
 	    "m"
 #endif
-	    "nNqtvwW"
+	    "Nnq"
 #ifdef IPV6_REACHCONF
 	    "R"
 #endif
-#ifdef IPSEC
-#ifdef IPSEC_POLICY_IPSEC
-	    "] [-P policy"
-#else
-	    "AE"
+	    "tvWw"
+	    "] [-a addrtype] [-b bufsize] [-c count] [-g gateway]\n"
+            "\t[-h hoplimit] [-I interface] [-i wait] [-l preload]"
+#if defined(IPSEC) && defined(IPSEC_POLICY_IPSEC)
+	    " [-P policy]"
 #endif
-#endif
-	    "] [-a [aAclsg]] [-b sockbufsiz] [-c count]\n"
-            "\t[-I interface] [-i wait] [-l preload] [-p pattern] "
-	    "[-X deadline]\n"
-	    "\t[-x maxwait] [-S sourceaddr] "
-            "[-s packetsize] [-h hoplimit]\n"
-	    "\t[-g gateway] host\n");
+            "\n"
+	    "\t[-p pattern] [-S sourceaddr] [-s packetsize] [-X deadline]\n"
+	    "\t[-x maxwait] host\n");
 	exit(1);
 }
