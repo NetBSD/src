@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute6.c,v 1.47 2018/04/23 09:58:35 maxv Exp $	*/
+/*	$NetBSD: traceroute6.c,v 1.48 2018/04/23 10:14:12 maxv Exp $	*/
 /*	$KAME: traceroute6.c,v 1.67 2004/01/25 03:24:39 itojun Exp $	*/
 
 /*
@@ -75,7 +75,7 @@ static char sccsid[] = "@(#)traceroute.c	8.1 (Berkeley) 6/6/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: traceroute6.c,v 1.47 2018/04/23 09:58:35 maxv Exp $");
+__RCSID("$NetBSD: traceroute6.c,v 1.48 2018/04/23 10:14:12 maxv Exp $");
 #endif
 #endif
 
@@ -384,26 +384,14 @@ main(int argc, char *argv[])
 	max_hops = i;
 
 	/* specify to tell receiving interface */
-#ifdef IPV6_RECVPKTINFO
 	if (setsockopt(rcvsock, IPPROTO_IPV6, IPV6_RECVPKTINFO, &on,
 	    sizeof(on)) < 0)
 		err(1, "setsockopt(IPV6_RECVPKTINFO)");
-#else  /* old adv. API */
-	if (setsockopt(rcvsock, IPPROTO_IPV6, IPV6_PKTINFO, &on,
-	    sizeof(on)) < 0)
-		err(1, "setsockopt(IPV6_PKTINFO)");
-#endif
 
 	/* specify to tell value of hoplimit field of received IP6 hdr */
-#ifdef IPV6_RECVHOPLIMIT
 	if (setsockopt(rcvsock, IPPROTO_IPV6, IPV6_RECVHOPLIMIT, &on,
 	    sizeof(on)) < 0)
 		err(1, "setsockopt(IPV6_RECVHOPLIMIT)");
-#else  /* old adv. API */
-	if (setsockopt(rcvsock, IPPROTO_IPV6, IPV6_HOPLIMIT, &on,
-	    sizeof(on)) < 0)
-		err(1, "setsockopt(IPV6_HOPLIMIT)");
-#endif
 
 	seq = 0;
 
