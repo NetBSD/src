@@ -1,4 +1,4 @@
-/*	$NetBSD: ping6.c,v 1.97 2018/04/23 10:35:20 maxv Exp $	*/
+/*	$NetBSD: ping6.c,v 1.98 2018/04/23 18:32:18 maxv Exp $	*/
 /*	$KAME: ping6.c,v 1.164 2002/11/16 14:05:37 itojun Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping6.c,v 1.97 2018/04/23 10:35:20 maxv Exp $");
+__RCSID("$NetBSD: ping6.c,v 1.98 2018/04/23 18:32:18 maxv Exp $");
 #endif
 #endif
 
@@ -171,14 +171,9 @@ struct tv32 {
 #define	F_RROUTE	0x0020
 #define	F_SO_DEBUG	0x0040
 #define	F_VERBOSE	0x0100
-#ifdef IPSEC
-#ifdef IPSEC_POLICY_IPSEC
+#if defined(IPSEC) && defined(IPSEC_POLICY_IPSEC)
 #define	F_POLICY	0x0400
-#else
-#define F_AUTHHDR	0x0200
-#define F_ENCRYPT	0x0400
-#endif /*IPSEC_POLICY_IPSEC*/
-#endif /*IPSEC*/
+#endif
 #define F_NODEADDR	0x0800
 #define F_FQDN		0x1000
 #define F_INTERFACE	0x2000
@@ -282,11 +277,9 @@ static int	 pr_bitrange(u_int32_t, int, int);
 static void	 pr_retip(struct ip6_hdr *, u_char *);
 static void	 summary(void);
 static void	 tvsub(struct timeval *, struct timeval *);
-#ifdef IPSEC
-#ifdef IPSEC_POLICY_IPSEC
+#if defined(IPSEC) && defined(IPSEC_POLICY_IPSEC)
 static int	 setpolicy(int, char *);
-#endif	/* IPSEC_POLICY_IPSEC */
-#endif	/* IPSEC */
+#endif
 static char	*nigroup(char *);
 static double	timespec_to_sec(const struct timespec *tp);
 static double	diffsec(struct timespec *, struct timespec *);
@@ -303,10 +296,8 @@ main(int argc, char *argv[])
 	char *e, *target, *ifname = NULL, *gateway = NULL;
 	int ip6optlen = 0;
 	struct cmsghdr *scmsgp = NULL;
-#if defined(SO_SNDBUF) && defined(SO_RCVBUF)
 	u_long lsockbufsize;
 	int sockbufsize = 0;
-#endif
 	int usepktinfo = 0;
 	struct in6_pktinfo *pktinfo = NULL;
 	struct ip6_rthdr *rthdr = NULL;
@@ -315,9 +306,7 @@ main(int argc, char *argv[])
 	char *policy_out = NULL;
 #endif
 	double intval;
-#ifdef IPV6_USE_MIN_MTU
 	int mflag = 0;
-#endif
 
 	/* just to be sure */
 	memset(&smsghdr, 0, sizeof(smsghdr));
@@ -325,14 +314,11 @@ main(int argc, char *argv[])
 
 	preload = 0;
 	datap = &outpack[ICMP6ECHOLEN + ICMP6ECHOTMLEN];
-#ifndef IPSEC
-#define ADDOPTS
-#else
-#ifdef IPSEC_POLICY_IPSEC
+
+#if defined(IPSEC) && defined(IPSEC_POLICY_IPSEC)
 #define ADDOPTS	"P:"
 #else
-#define ADDOPTS	"AE"
-#endif /*IPSEC_POLICY_IPSEC*/
+#define ADDOPTS
 #endif
 
 	if (prog_init && prog_init() == -1)
@@ -386,7 +372,6 @@ main(int argc, char *argv[])
 			break;
 		}
 		case 'b':
-#if defined(SO_SNDBUF) && defined(SO_RCVBUF)
 			errno = 0;
 			e = NULL;
 			lsockbufsize = strtoul(optarg, &e, 10);
@@ -394,10 +379,6 @@ main(int argc, char *argv[])
 			if (errno || !*optarg || *e ||
 			    (u_long)sockbufsize != lsockbufsize)
 				errx(1, "invalid socket buffer size");
-#else
-			errx(1,
-"-b option ignored: SO_SNDBUF/SO_RCVBUF socket options not supported");
-#endif
 			break;
 		case 'c':
 			l = strtol(optarg, &e, 10);
@@ -485,13 +466,8 @@ main(int argc, char *argv[])
 			preload = l;
 			break;
 		case 'm':
-#ifdef IPV6_USE_MIN_MTU
 			mflag++;
 			break;
-#else
-			errx(1, "-%c is not supported on this platform", ch);
-			/*NOTREACHED*/
-#endif
 		case 'n':
 			options &= ~F_HOSTNAME;
 			break;
@@ -573,8 +549,8 @@ main(int argc, char *argv[])
 				errx(EXIT_FAILURE, "Bad/invalid deadline time: "
 				    "%s", optarg);
                         break;
-#ifdef IPSEC
-#ifdef IPSEC_POLICY_IPSEC
+
+#if defined(IPSEC) && defined(IPSEC_POLICY_IPSEC)
 		case 'P':
 			options |= F_POLICY;
 			if (!strncmp("in", optarg, 2)) {
@@ -586,15 +562,7 @@ main(int argc, char *argv[])
 			} else
 				errx(1, "invalid security policy");
 			break;
-#else
-		case 'A':
-			options |= F_AUTHHDR;
-			break;
-		case 'E':
-			options |= F_ENCRYPT;
-			break;
-#endif /*IPSEC_POLICY_IPSEC*/
-#endif /*IPSEC*/
+#endif
 		default:
 			usage();
 			/*NOTREACHED*/
@@ -758,34 +726,13 @@ main(int argc, char *argv[])
 			err(1, "setsockopt(IPV6_RECVPATHMTU)");
 	}
 
-#ifdef IPSEC
-#ifdef IPSEC_POLICY_IPSEC
+#if defined(IPSEC) && defined(IPSEC_POLICY_IPSEC)
 	if (options & F_POLICY) {
 		if (setpolicy(s, policy_in) < 0)
 			errx(1, "%s", ipsec_strerror());
 		if (setpolicy(s, policy_out) < 0)
 			errx(1, "%s", ipsec_strerror());
 	}
-#else
-	if (options & F_AUTHHDR) {
-		optval = IPSEC_LEVEL_REQUIRE;
-#ifdef IPV6_AUTH_TRANS_LEVEL
-		if (prog_setsockopt(s, IPPROTO_IPV6, IPV6_AUTH_TRANS_LEVEL,
-		    &optval, sizeof(optval)) == -1)
-			err(1, "setsockopt(IPV6_AUTH_TRANS_LEVEL)");
-#else /* old def */
-		if (prog_setsockopt(s, IPPROTO_IPV6, IPV6_AUTH_LEVEL,
-		    &optval, sizeof(optval)) == -1)
-			err(1, "setsockopt(IPV6_AUTH_LEVEL)");
-#endif
-	}
-	if (options & F_ENCRYPT) {
-		optval = IPSEC_LEVEL_REQUIRE;
-		if (prog_setsockopt(s, IPPROTO_IPV6, IPV6_ESP_TRANS_LEVEL,
-		    &optval, sizeof(optval)) == -1)
-			err(1, "setsockopt(IPV6_ESP_TRANS_LEVEL)");
-	}
-#endif /*IPSEC_POLICY_IPSEC*/
 #endif
 
 #ifdef ICMP6_FILTER
@@ -927,7 +874,6 @@ main(int argc, char *argv[])
 		prog_close(dummy);
 	}
 
-#if defined(SO_SNDBUF) && defined(SO_RCVBUF)
 	if (sockbufsize) {
 		if (datalen > sockbufsize)
 			warnx("you need -b to increase socket buffer size");
@@ -937,8 +883,7 @@ main(int argc, char *argv[])
 		if (prog_setsockopt(s, SOL_SOCKET, SO_RCVBUF, &sockbufsize,
 		    sizeof(sockbufsize)) < 0)
 			err(1, "setsockopt(SO_RCVBUF)");
-	}
-	else {
+	} else {
 		if (datalen > 8 * 1024)	/*XXX*/
 			warnx("you need -b to increase socket buffer size");
 		/*
@@ -951,7 +896,6 @@ main(int argc, char *argv[])
 		prog_setsockopt(s, SOL_SOCKET, SO_RCVBUF, (char *)&hold,
 		    sizeof(hold));
 	}
-#endif
 
 	optval = 1;
 #ifndef USE_SIN6_SCOPE_ID
@@ -2514,8 +2458,7 @@ fill(char *bp, char *patp)
 	}
 }
 
-#ifdef IPSEC
-#ifdef IPSEC_POLICY_IPSEC
+#if defined(IPSEC) && defined(IPSEC_POLICY_IPSEC)
 static int
 setpolicy(int so, char *policy)
 {
@@ -2534,7 +2477,6 @@ setpolicy(int so, char *policy)
 
 	return 0;
 }
-#endif
 #endif
 
 static char *
@@ -2610,9 +2552,7 @@ usage(void)
 #else
 	    "AdEfH"
 #endif
-#ifdef IPV6_USE_MIN_MTU
 	    "m"
-#endif
 	    "Nnq"
 #ifdef IPV6_REACHCONF
 	    "R"
