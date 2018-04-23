@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute6.c,v 1.49 2018/04/23 10:22:18 maxv Exp $	*/
+/*	$NetBSD: traceroute6.c,v 1.50 2018/04/23 10:23:38 maxv Exp $	*/
 /*	$KAME: traceroute6.c,v 1.67 2004/01/25 03:24:39 itojun Exp $	*/
 
 /*
@@ -75,7 +75,7 @@ static char sccsid[] = "@(#)traceroute.c	8.1 (Berkeley) 6/6/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: traceroute6.c,v 1.49 2018/04/23 10:22:18 maxv Exp $");
+__RCSID("$NetBSD: traceroute6.c,v 1.50 2018/04/23 10:23:38 maxv Exp $");
 #endif
 #endif
 
@@ -1138,15 +1138,9 @@ print(struct msghdr *mhdr, int cc)
 		printf(" %s", inetname((struct sockaddr *)from));
 
 	if (verbose) {
-#ifdef OLDRAWSOCKET
-		printf(" %d bytes to %s", cc,
-		    rcvpktinfo ? inet_ntop(AF_INET6, &rcvpktinfo->ipi6_addr,
-		    hbuf, sizeof(hbuf)) : "?");
-#else
 		printf(" %d bytes of data to %s", cc,
 		    rcvpktinfo ?  inet_ntop(AF_INET6, &rcvpktinfo->ipi6_addr,
 		    hbuf, sizeof(hbuf)) : "?");
-#endif
 	}
 }
 
