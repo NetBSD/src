@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute6.c,v 1.48 2018/04/23 10:14:12 maxv Exp $	*/
+/*	$NetBSD: traceroute6.c,v 1.49 2018/04/23 10:22:18 maxv Exp $	*/
 /*	$KAME: traceroute6.c,v 1.67 2004/01/25 03:24:39 itojun Exp $	*/
 
 /*
@@ -75,7 +75,7 @@ static char sccsid[] = "@(#)traceroute.c	8.1 (Berkeley) 6/6/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: traceroute6.c,v 1.48 2018/04/23 10:14:12 maxv Exp $");
+__RCSID("$NetBSD: traceroute6.c,v 1.49 2018/04/23 10:22:18 maxv Exp $");
 #endif
 #endif
 
@@ -980,27 +980,6 @@ packet_ok(struct msghdr *mhdr, ssize_t cc, int seq)
 	int *hlimp;
 	char hbuf[NI_MAXHOST];
 
-#ifdef OLDRAWSOCKET
-	int hlen;
-	struct ip6_hdr *ip;
-#endif
-
-#ifdef OLDRAWSOCKET
-	ip = (struct ip6_hdr *) buf;
-	hlen = sizeof(struct ip6_hdr);
-	if (cc < hlen + sizeof(struct icmp6_hdr)) {
-		if (verbose) {
-			if (getnameinfo((struct sockaddr *)from, from->sin6_len,
-			    hbuf, sizeof(hbuf), NULL, 0, NI_NUMERICHOST) != 0)
-				strlcpy(hbuf, "invalid", sizeof(hbuf));
-			printf("packet too short (%d bytes) from %s\n", cc,
-			    hbuf);
-		}
-		return 0;
-	}
-	cc -= hlen;
-	icp = (struct icmp6_hdr *)(buf + hlen);
-#else
 	if (cc < (ssize_t)sizeof(struct icmp6_hdr)) {
 		if (verbose) {
 			if (getnameinfo((struct sockaddr *)from, from->sin6_len,
@@ -1012,7 +991,7 @@ packet_ok(struct msghdr *mhdr, ssize_t cc, int seq)
 		return 0;
 	}
 	icp = (struct icmp6_hdr *)buf;
-#endif
+
 	/* get optional information via advanced API */
 	rcvpktinfo = NULL;
 	hlimp = NULL;
