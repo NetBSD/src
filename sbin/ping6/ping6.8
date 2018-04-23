@@ -1,4 +1,4 @@
-.\"	$NetBSD: ping6.8,v 1.32 2018/04/23 07:25:36 wiz Exp $
+.\"	$NetBSD: ping6.8,v 1.33 2018/04/23 18:44:39 maxv Exp $
 .\"	$KAME: ping6.8,v 1.57 2002/05/26 13:18:25 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -37,7 +37,7 @@
 .Sh SYNOPSIS
 .Nm ping6
 .\" without IPsec, or new IPsec
-.Op Fl dfHmnNoqRtvwW
+.Op Fl dfHmnNoqtvwW
 .\" old IPsec
 .\" .Op Fl AdEfnNqRtvwW
 .Op Fl a Ar addrtype
@@ -207,13 +207,6 @@ ones.
 Quiet output.
 Nothing is displayed except the summary lines at startup time and
 when finished.
-.It Fl R
-Make the kernel believe that the target
-.Ar host
-is reachable, by injecting upper-layer reachability confirmation hint.
-The option is meaningful only if the target
-.Ar host
-is a neighbor.
 .It Fl S Ar sourceaddr
 Specifies the source address of request packets.
 The source address must be one of the unicast addresses of the sending node,

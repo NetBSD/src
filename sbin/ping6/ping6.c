@@ -1,4 +1,4 @@
-/*	$NetBSD: ping6.c,v 1.99 2018/04/23 18:37:19 maxv Exp $	*/
+/*	$NetBSD: ping6.c,v 1.100 2018/04/23 18:44:39 maxv Exp $	*/
 /*	$KAME: ping6.c,v 1.164 2002/11/16 14:05:37 itojun Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping6.c,v 1.99 2018/04/23 18:37:19 maxv Exp $");
+__RCSID("$NetBSD: ping6.c,v 1.100 2018/04/23 18:44:39 maxv Exp $");
 #endif
 #endif
 
@@ -178,9 +178,6 @@ struct tv32 {
 #define F_FQDN		0x1000
 #define F_INTERFACE	0x2000
 #define F_SRCADDR	0x4000
-#ifdef IPV6_REACHCONF
-#define F_REACHCONF	0x8000
-#endif
 #define F_HOSTNAME	0x10000
 #define F_FQDNOLD	0x20000
 #define F_NIGROUP	0x40000
@@ -325,7 +322,7 @@ main(int argc, char *argv[])
 		err(EXIT_FAILURE, "init failed");
 
 	while ((ch = getopt(argc, argv,
-	    "a:b:c:dfHg:h:I:i:l:mnNop:qRS:s:tvwWx:X:" ADDOPTS)) != -1) {
+	    "a:b:c:dfHg:h:I:i:l:mnNop:qS:s:tvwWx:X:" ADDOPTS)) != -1) {
 #undef ADDOPTS
 		switch (ch) {
 		case 'a':
@@ -484,13 +481,6 @@ main(int argc, char *argv[])
 		case 'q':
 			options |= F_QUIET;
 			break;
-		case 'R':
-#ifdef IPV6_REACHCONF
-			options |= F_REACHCONF;
-			break;
-#else
-			errx(1, "-R is not supported in this configuration");
-#endif
 		case 'S':
 			memset(&hints, 0, sizeof(struct addrinfo));
 			hints.ai_flags = AI_NUMERICHOST; /* allow hostname? */
@@ -778,11 +768,6 @@ main(int argc, char *argv[])
 	if (hoplimit != -1)
 		ip6optlen += CMSG_SPACE(sizeof(int));
 
-#ifdef IPV6_REACHCONF
-	if (options & F_REACHCONF)
-		ip6optlen += CMSG_SPACE(0);
-#endif
-
 	/* set IP6 packet options */
 	if (ip6optlen) {
 		if ((scmsg = (char *)malloc(ip6optlen)) == 0)
@@ -819,15 +804,6 @@ main(int argc, char *argv[])
 
 		scmsgp = CMSG_NXTHDR(&smsghdr, scmsgp);
 	}
-#ifdef IPV6_REACHCONF
-	if (options & F_REACHCONF) {
-		scmsgp->cmsg_len = CMSG_LEN(0);
-		scmsgp->cmsg_level = IPPROTO_IPV6;
-		scmsgp->cmsg_type = IPV6_REACHCONF;
-
-		scmsgp = CMSG_NXTHDR(&smsghdr, scmsgp);
-	}
-#endif
 
 	if (!(options & F_SRCADDR)) {
 		/*
@@ -2546,14 +2522,9 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "usage: ping6 [-"
-	    "dfHmNnq"
-#ifdef IPV6_REACHCONF
-	    "R"
-#endif
-	    "tvWw"
-	    "] [-a addrtype] [-b bufsize] [-c count] [-g gateway]\n"
-            "\t[-h hoplimit] [-I interface] [-i wait] [-l preload]"
+	    "usage: ping6 [-dfHmNnqtvWw] [-a addrtype] [-b bufsize]\n"
+	    "\t[-c count] [-g gateway] [-h hoplimit] [-I interface]\n"
+	    "\t[-i wait] [-l preload]"
 #if defined(IPSEC) && defined(IPSEC_POLICY_IPSEC)
 	    " [-P policy]"
 #endif
