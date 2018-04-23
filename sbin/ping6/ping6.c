@@ -1,4 +1,4 @@
-/*	$NetBSD: ping6.c,v 1.100 2018/04/23 18:44:39 maxv Exp $	*/
+/*	$NetBSD: ping6.c,v 1.101 2018/04/23 18:48:30 maxv Exp $	*/
 /*	$KAME: ping6.c,v 1.164 2002/11/16 14:05:37 itojun Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping6.c,v 1.100 2018/04/23 18:44:39 maxv Exp $");
+__RCSID("$NetBSD: ping6.c,v 1.101 2018/04/23 18:48:30 maxv Exp $");
 #endif
 #endif
 
@@ -133,7 +133,6 @@ __RCSID("$NetBSD: ping6.c,v 1.100 2018/04/23 18:44:39 maxv Exp $");
 #include <poll.h>
 
 #ifdef IPSEC
-#include <netinet/ip6.h>
 #include <netipsec/ipsec.h>
 #endif
 
@@ -168,7 +167,6 @@ struct tv32 {
 #define	F_INTERVAL	0x0002
 #define	F_PINGFILLED	0x0008
 #define	F_QUIET		0x0010
-#define	F_RROUTE	0x0020
 #define	F_SO_DEBUG	0x0040
 #define	F_VERBOSE	0x0100
 #if defined(IPSEC) && defined(IPSEC_POLICY_IPSEC)
@@ -182,16 +180,11 @@ struct tv32 {
 #define F_FQDNOLD	0x20000
 #define F_NIGROUP	0x40000
 #define F_SUPTYPES	0x80000
-#define F_NOMINMTU	0x100000
 #define F_ONCE		0x200000
 #define F_NOUSERDATA	(F_NODEADDR | F_FQDN | F_FQDNOLD | F_SUPTYPES)
 static u_int options;
 
-#define IN6LEN		sizeof(struct in6_addr)
-#define SA6LEN		sizeof(struct sockaddr_in6)
 #define DUMMY_PORT	10101
-
-#define SIN6(s)	((struct sockaddr_in6 *)(s))
 
 /*
  * MAX_DUP_CHK is the number of bits in received table, i.e. the maximum
