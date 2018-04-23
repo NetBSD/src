@@ -1,4 +1,4 @@
-/*	$NetBSD: ping6.c,v 1.96 2018/04/23 07:25:36 wiz Exp $	*/
+/*	$NetBSD: ping6.c,v 1.97 2018/04/23 10:35:20 maxv Exp $	*/
 /*	$KAME: ping6.c,v 1.164 2002/11/16 14:05:37 itojun Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping6.c,v 1.96 2018/04/23 07:25:36 wiz Exp $");
+__RCSID("$NetBSD: ping6.c,v 1.97 2018/04/23 10:35:20 maxv Exp $");
 #endif
 #endif
 
@@ -681,24 +681,14 @@ main(int argc, char *argv[])
 	if ((options & F_VERBOSE) != 0) {
 		int opton = 1;
 
-#ifdef IPV6_RECVHOPOPTS
 		if (prog_setsockopt(s, IPPROTO_IPV6, IPV6_RECVHOPOPTS, &opton,
 		    sizeof(opton)))
 			err(1, "setsockopt(IPV6_RECVHOPOPTS)");
-#else  /* old adv. API */
-		if (prog_setsockopt(s, IPPROTO_IPV6, IPV6_HOPOPTS, &opton,
-		    sizeof(opton)))
-			err(1, "setsockopt(IPV6_HOPOPTS)");
-#endif
-#ifdef IPV6_RECVDSTOPTS
+
 		if (prog_setsockopt(s, IPPROTO_IPV6, IPV6_RECVDSTOPTS, &opton,
 		    sizeof(opton)))
 			err(1, "setsockopt(IPV6_RECVDSTOPTS)");
-#else  /* old adv. API */
-		if (prog_setsockopt(s, IPPROTO_IPV6, IPV6_DSTOPTS, &opton,
-		    sizeof(opton)))
-			err(1, "setsockopt(IPV6_DSTOPTS)");
-#endif
+
 #ifdef IPV6_RECVRTHDRDSTOPTS
 		if (prog_setsockopt(s, IPPROTO_IPV6, IPV6_RECVRTHDRDSTOPTS, &opton,
 		    sizeof(opton)))
@@ -754,23 +744,19 @@ main(int argc, char *argv[])
 		if (prog_setsockopt(s, IPPROTO_IPV6, IPV6_MULTICAST_HOPS,
 		    &optval, sizeof(optval)) == -1)
 			err(1, "IPV6_MULTICAST_HOPS");
-#ifdef IPV6_USE_MIN_MTU
+
 	if (mflag != 1) {
 		optval = mflag > 1 ? 0 : 1;
 
 		if (prog_setsockopt(s, IPPROTO_IPV6, IPV6_USE_MIN_MTU,
 		    &optval, sizeof(optval)) == -1)
 			err(1, "setsockopt(IPV6_USE_MIN_MTU)");
-	}
-#ifdef IPV6_RECVPATHMTU
-	else {
+	} else {
 		optval = 1;
 		if (prog_setsockopt(s, IPPROTO_IPV6, IPV6_RECVPATHMTU,
 		    &optval, sizeof(optval)) == -1)
 			err(1, "setsockopt(IPV6_RECVPATHMTU)");
 	}
-#endif /* IPV6_RECVPATHMTU */
-#endif /* IPV6_USE_MIN_MTU */
 
 #ifdef IPSEC
 #ifdef IPSEC_POLICY_IPSEC
@@ -825,15 +811,9 @@ main(int argc, char *argv[])
 	if ((options & F_VERBOSE) != 0) {
 		int opton = 1;
 
-#ifdef IPV6_RECVRTHDR
 		if (prog_setsockopt(s, IPPROTO_IPV6, IPV6_RECVRTHDR, &opton,
 		    sizeof(opton)))
 			err(1, "setsockopt(IPV6_RECVRTHDR)");
-#else  /* old adv. API */
-		if (prog_setsockopt(s, IPPROTO_IPV6, IPV6_RTHDR, &opton,
-		    sizeof(opton)))
-			err(1, "setsockopt(IPV6_RTHDR)");
-#endif
 	}
 
 /*
@@ -975,25 +955,14 @@ main(int argc, char *argv[])
 
 	optval = 1;
 #ifndef USE_SIN6_SCOPE_ID
-#ifdef IPV6_RECVPKTINFO
 	if (prog_setsockopt(s, IPPROTO_IPV6, IPV6_RECVPKTINFO, &optval,
 	    sizeof(optval)) < 0)
 		warn("setsockopt(IPV6_RECVPKTINFO)"); /* XXX err? */
-#else  /* old adv. API */
-	if (prog_setsockopt(s, IPPROTO_IPV6, IPV6_PKTINFO, &optval,
-	    sizeof(optval)) < 0)
-		warn("setsockopt(IPV6_PKTINFO)"); /* XXX err? */
 #endif
-#endif /* USE_SIN6_SCOPE_ID */
-#ifdef IPV6_RECVHOPLIMIT
+
 	if (prog_setsockopt(s, IPPROTO_IPV6, IPV6_RECVHOPLIMIT, &optval,
 	    sizeof(optval)) < 0)
 		warn("setsockopt(IPV6_RECVHOPLIMIT)"); /* XXX err? */
-#else  /* old adv. API */
-	if (prog_setsockopt(s, IPPROTO_IPV6, IPV6_HOPLIMIT, &optval,
-	    sizeof(optval)) < 0)
-		warn("setsockopt(IPV6_HOPLIMIT)"); /* XXX err? */
-#endif
 
 	printf("PING6(%lu=40+8+%lu bytes) ", (unsigned long)(40 + pingerlen()),
 	    (unsigned long)(pingerlen() - 8));
