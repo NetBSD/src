@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute6.c,v 1.45 2018/04/23 06:42:02 maxv Exp $	*/
+/*	$NetBSD: traceroute6.c,v 1.46 2018/04/23 09:47:03 maxv Exp $	*/
 /*	$KAME: traceroute6.c,v 1.67 2004/01/25 03:24:39 itojun Exp $	*/
 
 /*
@@ -75,7 +75,7 @@ static char sccsid[] = "@(#)traceroute.c	8.1 (Berkeley) 6/6/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: traceroute6.c,v 1.45 2018/04/23 06:42:02 maxv Exp $");
+__RCSID("$NetBSD: traceroute6.c,v 1.46 2018/04/23 09:47:03 maxv Exp $");
 #endif
 #endif
 
@@ -340,10 +340,6 @@ static struct in6_pktinfo *rcvpktinfo;
 static struct sockaddr_in6 Src, Dst, Rcv;
 static u_long datalen;			/* How much data */
 #define	ICMP6ECHOLEN	8
-#ifdef USE_RFC3542
-static struct ip6_rthdr *rth;
-#endif
-static struct cmsghdr *cmsg;
 
 static char *source;
 static char *hostname;
@@ -628,21 +624,7 @@ main(int argc, char *argv[])
 	if (options & SO_DONTROUTE)
 		(void) setsockopt(sndsock, SOL_SOCKET, SO_DONTROUTE,
 		    (char *)&on, sizeof(on));
-#ifdef USE_RFC3542
-	if (rth) {/* XXX: there is no library to finalize the header... */
-		rth->ip6r_len = rth->ip6r_segleft * 2;
-		if (setsockopt(sndsock, IPPROTO_IPV6, IPV6_RTHDR,
-		    (void *)rth, (rth->ip6r_len + 1) << 3))
-			err(1, "setsockopt(IPV6_RTHDR)");
-	}
-#else  /* old advanced API */
-	if (cmsg != NULL) {
-		inet6_rthdr_lasthop(cmsg, IPV6_RTHDR_LOOSE);
-		if (setsockopt(sndsock, IPPROTO_IPV6, IPV6_PKTOPTIONS,
-		    rtbuf, cmsg->cmsg_len) < 0)
-			err(1, "setsockopt(IPV6_PKTOPTIONS)");
-	}
-#endif /* USE_RFC3542 */
+
 #ifdef IPSEC
 #ifdef IPSEC_POLICY_IPSEC
 	/*
@@ -703,9 +685,7 @@ main(int argc, char *argv[])
 
 		Nxt = Dst;
 		Nxt.sin6_port = htons(DUMMY_PORT);
-		if (cmsg != NULL)
-			memcpy( &Nxt.sin6_addr, inet6_rthdr_getaddr(cmsg, 1),
-			    sizeof(Nxt.sin6_addr));
+
 		if ((dummy = socket(AF_INET6, SOCK_DGRAM, 0)) < 0)
 			err(1, "socket");
 		if (connect(dummy, (struct sockaddr *)&Nxt, Nxt.sin6_len) < 0)
