@@ -1,4 +1,4 @@
-/*	$NetBSD: ping6.c,v 1.94 2018/04/15 08:27:21 maxv Exp $	*/
+/*	$NetBSD: ping6.c,v 1.95 2018/04/23 06:51:25 maxv Exp $	*/
 /*	$KAME: ping6.c,v 1.164 2002/11/16 14:05:37 itojun Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping6.c,v 1.94 2018/04/15 08:27:21 maxv Exp $");
+__RCSID("$NetBSD: ping6.c,v 1.95 2018/04/23 06:51:25 maxv Exp $");
 #endif
 #endif
 
@@ -315,7 +315,6 @@ main(int argc, char *argv[])
 	char *policy_out = NULL;
 #endif
 	double intval;
-	size_t rthlen;
 #ifdef IPV6_USE_MIN_MTU
 	int mflag = 0;
 #endif
@@ -605,19 +604,9 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	if (argc < 1) {
+	if (argc != 1) {
 		usage();
 		/*NOTREACHED*/
-	}
-
-	if (argc > 1) {
-		rthlen = CMSG_SPACE(inet6_rth_space(IPV6_RTHDR_TYPE_0,
-		    argc - 1));
-		if (rthlen == 0) {
-			errx(1, "too many intermediate hops");
-			/*NOTREACHED*/
-		}
-		ip6optlen += rthlen;
 	}
 
 	if (options & F_NIGROUP) {
@@ -912,39 +901,6 @@ main(int argc, char *argv[])
 		scmsgp = CMSG_NXTHDR(&smsghdr, scmsgp);
 	}
 #endif
-
-	if (argc > 1) {	/* some intermediate addrs are specified */
-		int hops, error;
-		int rthdrlen;
-
-		rthdrlen = inet6_rth_space(IPV6_RTHDR_TYPE_0, argc - 1);
-		scmsgp->cmsg_len = CMSG_LEN(rthdrlen);
-		scmsgp->cmsg_level = IPPROTO_IPV6;
-		scmsgp->cmsg_type = IPV6_RTHDR;
-		rthdr = (struct ip6_rthdr *)CMSG_DATA(scmsgp);
-		rthdr = inet6_rth_init((void *)rthdr, rthdrlen,
-		    IPV6_RTHDR_TYPE_0, argc - 1);
-		if (rthdr == NULL)
-			errx(1, "can't initialize rthdr");
-
-		for (hops = 0; hops < argc - 1; hops++) {
-			struct addrinfo *iaip;
-
-			if ((error = getaddrinfo(argv[hops], NULL, &hints,
-			    &iaip)))
-				errx(1, "%s", gai_strerror(error));
-			if (SIN6(iaip->ai_addr)->sin6_family != AF_INET6)
-				errx(1,
-				    "bad addr family of an intermediate addr");
-
-			if (inet6_rth_add(rthdr,
-			    &(SIN6(iaip->ai_addr))->sin6_addr))
-				errx(1, "can't add an intermediate node");
-			freeaddrinfo(iaip);
-		}
-
-		scmsgp = CMSG_NXTHDR(&smsghdr, scmsgp);
-	}
 
 	if (!(options & F_SRCADDR)) {
 		/*
@@ -2699,6 +2655,6 @@ usage(void)
 	    "[-X deadline]\n"
 	    "\t[-x maxwait] [-S sourceaddr] "
             "[-s packetsize] [-h hoplimit]\n"
-	    "\t[-g gateway] [hops...] host\n");
+	    "\t[-g gateway] host\n");
 	exit(1);
 }
