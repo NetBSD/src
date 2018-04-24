@@ -1,4 +1,4 @@
-/*	$NetBSD: ping6.c,v 1.102 2018/04/24 07:12:04 maxv Exp $	*/
+/*	$NetBSD: ping6.c,v 1.103 2018/04/24 07:22:32 maxv Exp $	*/
 /*	$KAME: ping6.c,v 1.164 2002/11/16 14:05:37 itojun Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping6.c,v 1.102 2018/04/24 07:12:04 maxv Exp $");
+__RCSID("$NetBSD: ping6.c,v 1.103 2018/04/24 07:22:32 maxv Exp $");
 #endif
 #endif
 
@@ -2107,6 +2107,9 @@ pr_icmph(struct icmp6_hdr *icp, u_char *end)
 			break;
 		case ICMP6_PARAMPROB_OPTION:
 			printf("Unrecognized Option ");
+			break;
+		case ICMP6_PARAMPROB_FRAGMENT:
+			printf("First Fragment Has Incomplete Chain ");
 			break;
 		default:
 			printf("Bad code(%d) ", icp->icmp6_code);
