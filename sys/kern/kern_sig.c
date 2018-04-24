@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.339 2017/12/07 19:49:43 christos Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.340 2018/04/24 18:34:46 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.339 2017/12/07 19:49:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.340 2018/04/24 18:34:46 kamil Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_dtrace.h"
@@ -123,7 +123,7 @@ static int	sigchecktrace(void);
 static int	sigpost(struct lwp *, sig_t, int, int);
 static int	sigput(sigpend_t *, struct proc *, ksiginfo_t *);
 static int	sigunwait(struct proc *, const ksiginfo_t *);
-static void	sigswitch(bool, int, int);
+static void	sigswitch(int, int);
 
 static void	sigacts_poolpage_free(struct pool *, void *);
 static void	*sigacts_poolpage_alloc(struct pool *, int);
@@ -1506,7 +1506,7 @@ proc_stop_lwps(struct proc *p)
  * Drop p_lock briefly if PS_NOTIFYSTOP is set and ppsig is true.
  */
 static void
-proc_stop_done(struct proc *p, bool ppsig, int ppmask)
+proc_stop_done(struct proc *p, int ppmask)
 {
 
 	KASSERT(mutex_owned(proc_lock));
@@ -1519,10 +1519,8 @@ proc_stop_done(struct proc *p, bool ppsig, int ppmask)
 	p->p_waited = 0;
 	p->p_pptr->p_nstopchild++;
 	if ((p->p_sflag & PS_NOTIFYSTOP) != 0) {
-		if (ppsig) {
-			/* child_psignal drops p_lock briefly. */
-			child_psignal(p, ppmask);
-		}
+		/* child_psignal drops p_lock briefly. */
+		child_psignal(p, ppmask);
 		cv_broadcast(&p->p_pptr->p_waitcv);
 	}
 }
@@ -1531,7 +1529,7 @@ proc_stop_done(struct proc *p, bool ppsig, int ppmask)
  * Stop the current process and switch away when being stopped or traced.
  */
 static void
-sigswitch(bool ppsig, int ppmask, int signo)
+sigswitch(int ppmask, int signo)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
@@ -1568,7 +1566,7 @@ sigswitch(bool ppsig, int ppmask, int signo)
 			 * Note that proc_stop_done() can drop
 			 * p->p_lock briefly.
 			 */
-			proc_stop_done(p, ppsig, ppmask);
+			proc_stop_done(p, ppmask);
 		}
 
 		mutex_exit(proc_lock);
@@ -1667,7 +1665,7 @@ issignal(struct lwp *l)
 		 * we awaken, check for a signal from the debugger.
 		 */
 		if (p->p_stat == SSTOP || (p->p_sflag & PS_STOPPING) != 0) {
-			sigswitch(true, PS_NOCLDSTOP, 0);
+			sigswitch(PS_NOCLDSTOP, 0);
 			signo = sigchecktrace();
 		} else
 			signo = 0;
@@ -1737,7 +1735,7 @@ issignal(struct lwp *l)
 			/* Emulation-specific handling of signal trace */
 			if (p->p_emul->e_tracesig == NULL ||
 			    (*p->p_emul->e_tracesig)(p, signo) == 0)
-				sigswitch(1, 0, signo);
+				sigswitch(0, signo);
 
 			/* Check for a signal from the debugger. */
 			if ((signo = sigchecktrace()) == 0)
@@ -1791,7 +1789,7 @@ issignal(struct lwp *l)
 				p->p_xsig = signo;
 				p->p_sflag &= ~PS_CONTINUED;
 				signo = 0;
-				sigswitch(true, PS_NOCLDSTOP, p->p_xsig);
+				sigswitch(PS_NOCLDSTOP, p->p_xsig);
 			} else if (prop & SA_IGNORE) {
 				/*
 				 * Except for SIGCONT, shouldn't get here.
@@ -2134,7 +2132,7 @@ proc_stop(struct proc *p, int signo)
 	 */
 
 	if (p->p_nrlwps == 0) {
-		proc_stop_done(p, true, PS_NOCLDSTOP);
+		proc_stop_done(p, PS_NOCLDSTOP);
 	} else {
 		/*
 		 * Have the remaining LWPs come to a halt, and trigger
@@ -2206,7 +2204,7 @@ proc_stop_callout(void *cookie)
 					 */
 					restart = true;
 				}
-				proc_stop_done(p, true, PS_NOCLDSTOP);
+				proc_stop_done(p, PS_NOCLDSTOP);
 			} else
 				more = true;
 
@@ -2283,7 +2281,7 @@ proc_stoptrace(int trapno)
 	p->p_xsig = SIGTRAP;
 	p->p_sigctx.ps_info._signo = p->p_xsig;
 	p->p_sigctx.ps_info._code = trapno;
-	sigswitch(true, 0, p->p_xsig);
+	sigswitch(0, p->p_xsig);
 	mutex_exit(p->p_lock);
 }
 
