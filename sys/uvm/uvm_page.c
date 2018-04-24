@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.195 2017/12/02 08:15:43 mrg Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.196 2018/04/24 16:35:53 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.195 2017/12/02 08:15:43 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.196 2018/04/24 16:35:53 jakllsch Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvm.h"
@@ -769,7 +769,7 @@ uvm_page_recolor(int newncolors)
 	mutex_spin_exit(&uvm_fpageqlock);
 
 	if (oldbucketmemsize) {
-		kmem_free(oldbucketarray, recolored_pages_memsize);
+		kmem_free(oldbucketarray, oldbucketmemsize);
 	}
 
 	/*
