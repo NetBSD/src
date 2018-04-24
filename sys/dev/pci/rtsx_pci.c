@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsx_pci.c,v 1.6 2016/07/07 06:55:41 msaitoh Exp $	*/
+/*	$NetBSD: rtsx_pci.c,v 1.7 2018/04/24 18:34:30 maya Exp $	*/
 /*	$OpenBSD: rtsx_pci.c,v 1.7 2014/08/19 17:55:03 phessler Exp $	*/
 
 
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsx_pci.c,v 1.6 2016/07/07 06:55:41 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsx_pci.c,v 1.7 2018/04/24 18:34:30 maya Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -36,7 +36,8 @@ __KERNEL_RCSID(0, "$NetBSD: rtsx_pci.c,v 1.6 2016/07/07 06:55:41 msaitoh Exp $")
 
 #include <dev/sdmmc/sdmmcvar.h>
 
-#define RTSX_PCI_BAR	0x10
+#define RTSX_PCI_BAR		0x10
+#define RTSX_PCI_BAR_525A	0x14
 
 struct rtsx_pci_softc {
 	struct rtsx_softc sc;
@@ -78,6 +79,7 @@ rtsx_pci_match(device_t parent, cfdata_t cf, void *aux)
 	case PCI_PRODUCT_REALTEK_RTS5209:
 	case PCI_PRODUCT_REALTEK_RTS5227:
 	case PCI_PRODUCT_REALTEK_RTS5229:
+	case PCI_PRODUCT_REALTEK_RTS525A:
 	case PCI_PRODUCT_REALTEK_RTL8402:
 	case PCI_PRODUCT_REALTEK_RTL8411:
 	case PCI_PRODUCT_REALTEK_RTL8411B:
@@ -100,10 +102,39 @@ rtsx_pci_attach(device_t parent, device_t self, void *aux)
 	bus_space_handle_t ioh;
 	bus_size_t size;
 	uint32_t flags;
+	int bar = RTSX_PCI_BAR;
 	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->sc.sc_dev = self;
 	sc->sc_pc = pc;
+
+	switch (PCI_PRODUCT(pa->pa_id)) {
+	case PCI_PRODUCT_REALTEK_RTS5209:
+		flags = RTSX_F_5209;
+		break;
+	case PCI_PRODUCT_REALTEK_RTS5227:
+		flags = RTSX_F_5227;
+		break;
+	case PCI_PRODUCT_REALTEK_RTS5229:
+		flags = RTSX_F_5229;
+		break;
+	case PCI_PRODUCT_REALTEK_RTS525A:
+		flags = RTSX_F_525A;
+		bar = RTSX_PCI_BAR_525A;
+		break;
+	case PCI_PRODUCT_REALTEK_RTL8402:
+		flags = RTSX_F_8402;
+		break;
+	case PCI_PRODUCT_REALTEK_RTL8411:
+		flags = RTSX_F_8411;
+		break;
+	case PCI_PRODUCT_REALTEK_RTL8411B:
+		flags = RTSX_F_8411B;
+		break;
+	default:
+		flags = 0;
+		break;
+	}
 
 	pci_aprint_devinfo(pa, NULL);
 
@@ -112,7 +143,7 @@ rtsx_pci_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	if (pci_mapreg_map(pa, RTSX_PCI_BAR, PCI_MAPREG_TYPE_MEM, 0,
+	if (pci_mapreg_map(pa, bar, PCI_MAPREG_TYPE_MEM, 0,
 	    &iot, &ioh, NULL, &size)) {
 		aprint_error_dev(self, "couldn't map registers\n");
 		return;
@@ -138,30 +169,6 @@ rtsx_pci_attach(device_t parent, device_t self, void *aux)
 
 	/* Power up the device */
 	pci_set_powerstate(pc, tag, PCI_PMCSR_STATE_D0);
-
-	switch (PCI_PRODUCT(pa->pa_id)) {
-	case PCI_PRODUCT_REALTEK_RTS5209:
-		flags = RTSX_F_5209;
-		break;
-	case PCI_PRODUCT_REALTEK_RTS5227:
-		flags = RTSX_F_5227;
-		break;
-	case PCI_PRODUCT_REALTEK_RTS5229:
-		flags = RTSX_F_5229;
-		break;
-	case PCI_PRODUCT_REALTEK_RTL8402:
-		flags = RTSX_F_8402;
-		break;
-	case PCI_PRODUCT_REALTEK_RTL8411:
-		flags = RTSX_F_8411;
-		break;
-	case PCI_PRODUCT_REALTEK_RTL8411B:
-		flags = RTSX_F_8411B;
-		break;
-	default:
-		flags = 0;
-		break;
-	}
 
 	if (rtsx_attach(&sc->sc, iot, ioh, size, pa->pa_dmat, flags) != 0) {
 		aprint_error_dev(self, "couldn't initialize chip\n");
