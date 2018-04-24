@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsx.c,v 1.2 2014/10/29 14:24:09 nonaka Exp $	*/
+/*	$NetBSD: rtsx.c,v 1.3 2018/04/24 18:34:30 maya Exp $	*/
 /*	$OpenBSD: rtsx.c,v 1.10 2014/08/19 17:55:03 phessler Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsx.c,v 1.2 2014/10/29 14:24:09 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsx.c,v 1.3 2018/04/24 18:34:30 maya Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -560,7 +560,9 @@ rtsx_bus_power_off(struct rtsx_softc *sc)
 	disable3 = RTSX_PULL_CTL_DISABLE3;
 	if (RTSX_IS_RTS5209(sc))
 		RTSX_SET(sc, RTSX_PWR_GATE_CTRL, RTSX_LDO3318_OFF);
-	else if (RTSX_IS_RTS5227(sc) || RTSX_IS_RTS5229(sc)) {
+	else if (RTSX_IS_RTS5227(sc)
+		|| RTSX_IS_RTS5229(sc)
+		|| RTSX_IS_RTS525A(sc)) {
 		RTSX_CLR(sc, RTSX_PWR_GATE_CTRL, RTSX_LDO3318_VCC1 |
 		    RTSX_LDO3318_VCC2);
 		if (RTSX_IS_RTS5229_TYPE_C(sc))
@@ -578,7 +580,10 @@ rtsx_bus_power_off(struct rtsx_softc *sc)
 	RTSX_CLR(sc, RTSX_CARD_PWR_CTL, RTSX_PMOS_STRG_800mA);
 
 	/* Disable pull control. */
-	if (RTSX_IS_RTS5209(sc) || RTSX_IS_RTS5227(sc) || RTSX_IS_RTS5229(sc)) {
+	if (RTSX_IS_RTS5209(sc)
+	    || RTSX_IS_RTS5227(sc)
+	    || RTSX_IS_RTS5229(sc)
+	    || RTSX_IS_RTS525A(sc)) {
 		RTSX_WRITE(sc, RTSX_CARD_PULL_CTL1, RTSX_PULL_CTL_DISABLE12);
 		RTSX_WRITE(sc, RTSX_CARD_PULL_CTL2, RTSX_PULL_CTL_DISABLE12);
 		RTSX_WRITE(sc, RTSX_CARD_PULL_CTL3, disable3);
@@ -612,13 +617,23 @@ rtsx_bus_power_on(struct rtsx_softc *sc)
 {
 	uint8_t enable3;
 
+	if (RTSX_IS_RTS525A(sc)) {
+		int err = rtsx_write(sc, RTSX_LDO_VCC_CFG1, RTSX_LDO_VCC_TUNE_MASK,
+		    RTSX_LDO_VCC_3V3);
+		if (err)
+			return err;
+	}
+
 	/* Select SD card. */
 	RTSX_WRITE(sc, RTSX_CARD_SELECT, RTSX_SD_MOD_SEL);
 	RTSX_WRITE(sc, RTSX_CARD_SHARE_MODE, RTSX_CARD_SHARE_48_SD);
 	RTSX_SET(sc, RTSX_CARD_CLK_EN, RTSX_SD_CLK_EN);
 
 	/* Enable pull control. */
-	if (RTSX_IS_RTS5209(sc) || RTSX_IS_RTS5227(sc) || RTSX_IS_RTS5229(sc)) {
+	if (RTSX_IS_RTS5209(sc)
+	    || RTSX_IS_RTS5227(sc)
+	    || RTSX_IS_RTS5229(sc)
+	    || RTSX_IS_RTS525A(sc)) {
 		RTSX_WRITE(sc, RTSX_CARD_PULL_CTL1, RTSX_PULL_CTL_ENABLE12);
 		RTSX_WRITE(sc, RTSX_CARD_PULL_CTL2, RTSX_PULL_CTL_ENABLE12);
 		if (RTSX_IS_RTS5229_TYPE_C(sc))
@@ -653,7 +668,10 @@ rtsx_bus_power_on(struct rtsx_softc *sc)
 	 * delay in between.
 	 */
 
-	if (RTSX_IS_RTS5209(sc) || RTSX_IS_RTS5227(sc) || RTSX_IS_RTS5229(sc)) {
+	if (RTSX_IS_RTS5209(sc)
+	    || RTSX_IS_RTS5227(sc)
+	    || RTSX_IS_RTS5229(sc)
+	    || RTSX_IS_RTS525A(sc)) {
 		/* Partial power. */
 		RTSX_SET(sc, RTSX_CARD_PWR_CTL, RTSX_SD_PARTIAL_PWR_ON);
 		if (RTSX_IS_RTS5209(sc))
