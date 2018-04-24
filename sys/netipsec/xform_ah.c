@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ah.c,v 1.93 2018/04/23 07:22:54 maxv Exp $	*/
+/*	$NetBSD: xform_ah.c,v 1.94 2018/04/24 08:07:06 maxv Exp $	*/
 /*	$FreeBSD: xform_ah.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ah.c,v 1.63 2001/06/26 06:18:58 angelos Exp $ */
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.93 2018/04/23 07:22:54 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.94 2018/04/24 08:07:06 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -829,7 +829,7 @@ ah_input_cb(struct cryptop *crp)
 	/*
 	 * Header is now authenticated.
 	 */
-	m->m_flags |= M_AUTHIPHDR|M_AUTHIPDGM;
+	m->m_flags |= M_AUTHIPHDR;
 
 	/*
 	 * Update replay sequence number, if appropriate.

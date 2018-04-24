@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.187 2018/04/15 17:26:39 maxv Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.188 2018/04/24 08:07:06 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -355,7 +355,6 @@ MBUF_DEFINE(mbuf, MHLEN, MLEN);
 					 * IP header */
 #define	M_DECRYPTED	0x00000020	/* confidentiality */
 #define	M_LOOP		0x00000040	/* for Mbuf statistics */
-#define	M_AUTHIPDGM	0x00000080	/* data origin authentication */
 #define	M_BCAST		0x00000100	/* send/received as link-level
 					 * broadcast */
 #define	M_MCAST		0x00000200	/* send/received as link-level
@@ -387,7 +386,7 @@ MBUF_DEFINE(mbuf, MHLEN, MLEN);
 #define	M_NOTIFICATION	M_PROTO1
 
 #define M_FLAGS_BITS \
-    "\20\1EXT\2PKTHDR\3EOR\4PROTO1\5AUTHIPHDR\6DECRYPTED\7LOOP\10AUTHIPDGM" \
+    "\20\1EXT\2PKTHDR\3EOR\4PROTO1\5AUTHIPHDR\6DECRYPTED\7LOOP\10NONE" \
     "\11BCAST\12MCAST\13CANFASTFWD\14ANYCAST6\15LINK0\16LINK1\17LINK2\20LINK3" \
     "\21LINK4\22LINK5\23LINK6\24LINK7" \
     "\25VLANTAG" \
@@ -396,7 +395,7 @@ MBUF_DEFINE(mbuf, MHLEN, MLEN);
 /* flags copied when copying m_pkthdr */
 #define	M_COPYFLAGS	(M_PKTHDR|M_EOR|M_BCAST|M_MCAST|M_CANFASTFWD| \
     M_ANYCAST6|M_LINK0|M_LINK1|M_LINK2|M_AUTHIPHDR|M_DECRYPTED|M_LOOP| \
-    M_AUTHIPDGM|M_VLANTAG)
+    M_VLANTAG)
 
 /* flag copied when shallow-copying external storage */
 #define	M_EXTCOPYFLAGS	(M_EXT|M_EXT_FLAGS)

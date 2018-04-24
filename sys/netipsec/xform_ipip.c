@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipip.c,v 1.67 2018/04/22 10:25:40 maxv Exp $	*/
+/*	$NetBSD: xform_ipip.c,v 1.68 2018/04/24 08:07:06 maxv Exp $	*/
 /*	$FreeBSD: xform_ipip.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ipip.c,v 1.25 2002/06/10 18:04:55 itojun Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.67 2018/04/22 10:25:40 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.68 2018/04/24 08:07:06 maxv Exp $");
 
 /*
  * IP-inside-IP processing
@@ -85,7 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.67 2018/04/22 10:25:40 maxv Exp $")
 #include <netipsec/key_debug.h>
 
 /* XXX IPCOMP */
-#define	M_IPSEC	(M_AUTHIPHDR|M_AUTHIPDGM|M_DECRYPTED)
+#define	M_IPSEC	(M_AUTHIPHDR|M_DECRYPTED)
 
 int ipip_spoofcheck = 1;
 percpu_t *ipipstat_percpu;
