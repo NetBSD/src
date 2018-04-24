@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.188 2018/04/24 08:07:06 maxv Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.189 2018/04/24 08:10:32 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -351,16 +351,12 @@ MBUF_DEFINE(mbuf, MHLEN, MLEN);
 #define	M_PROTO1	0x00000008	/* protocol-specific */
 
 /* mbuf pkthdr flags, also in m_flags */
-#define	M_AUTHIPHDR	0x00000010	/* data origin authentication for
-					 * IP header */
-#define	M_DECRYPTED	0x00000020	/* confidentiality */
+#define	M_AUTHIPHDR	0x00000010	/* authenticated (IPsec) */
+#define	M_DECRYPTED	0x00000020	/* decrypted (IPsec) */
 #define	M_LOOP		0x00000040	/* for Mbuf statistics */
-#define	M_BCAST		0x00000100	/* send/received as link-level
-					 * broadcast */
-#define	M_MCAST		0x00000200	/* send/received as link-level
-					 * multicast */
-#define	M_CANFASTFWD	0x00000400	/* used by filters to indicate
-					 * packet can be fast-forwarded */
+#define	M_BCAST		0x00000100	/* send/received as L2 broadcast */
+#define	M_MCAST		0x00000200	/* send/received as L2 multicast */
+#define	M_CANFASTFWD	0x00000400	/* packet can be fast-forwarded */
 #define	M_ANYCAST6	0x00000800	/* received as IPv6 anycast */
 
 #define	M_LINK0		0x00001000	/* link layer specific flag */
