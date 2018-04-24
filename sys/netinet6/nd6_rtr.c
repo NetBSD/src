@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.139 2018/04/24 08:07:05 maxv Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.140 2018/04/24 08:22:16 maxv Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.139 2018/04/24 08:07:05 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.140 2018/04/24 08:22:16 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -1118,12 +1118,10 @@ prelist_update(struct nd_prefixctl *newprc,
 	int ss;
 	char ip6buf[INET6_ADDRSTRLEN];
 
+	KASSERT(m != NULL);
 	ND6_ASSERT_WLOCK();
 
-	auth = 0;
-	if (m) {
-		auth = (m->m_flags & M_AUTHIPHDR) ? 1 : 0;
-	}
+	auth = (m->m_flags & M_AUTHIPHDR) ? 1 : 0;
 
 	if ((pr = nd6_prefix_lookup(newprc)) != NULL) {
 		/*
