@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1330 2018/04/17 08:47:19 nonaka Exp $
+$NetBSD: pcidevs,v 1.1331 2018/04/24 18:08:56 maya Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -6508,6 +6508,7 @@ product REALTEK RTS5209		0x5209	RTS5209 PCI-E Card Reader
 product REALTEK RTS5227		0x5227	RTS5227 PCI-E Card Reader
 product REALTEK RTS5229		0x5229	RTS5229 PCI-E Card Reader
 product REALTEK RTS5249		0x5249	RTS5249 PCI-E Card Reader
+product REALTEK RTS525A		0x525A	RTS525A PCI-E Card Reader
 product REALTEK RTL8402		0x5286	RTL8402 PCI-E Card Reader
 product REALTEK RTL8411B	0x5287	RTL8411B PCI-E Card Reader
 product REALTEK RTL8411		0x5289	RTL8411 PCI-E Card Reader
