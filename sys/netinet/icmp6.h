@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.h,v 1.50 2018/03/06 10:57:00 roy Exp $	*/
+/*	$NetBSD: icmp6.h,v 1.51 2018/04/24 07:22:33 maxv Exp $	*/
 /*	$KAME: icmp6.h,v 1.84 2003/04/23 10:26:51 itojun Exp $	*/
 
 
@@ -156,6 +156,7 @@ struct icmp6_hdr {
 #define ICMP6_PARAMPROB_HEADER 	 	0	/* erroneous header field */
 #define ICMP6_PARAMPROB_NEXTHEADER	1	/* unrecognized next header */
 #define ICMP6_PARAMPROB_OPTION		2	/* unrecognized option */
+#define ICMP6_PARAMPROB_FRAGMENT	3	/* incomplete chain in frag */
 
 #define ICMP6_INFOMSG_MASK		0x80	/* all informational messages */
 
