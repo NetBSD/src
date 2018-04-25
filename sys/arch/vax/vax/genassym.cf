@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.52 2017/05/22 16:39:41 ragge Exp $
+#	$NetBSD: genassym.cf,v 1.53 2018/04/25 09:28:42 ragge Exp $
 #
 # Copyright (c) 1997 Ludd, University of Lule}, Sweden.
 # All rights reserved.
@@ -33,6 +33,7 @@ include	<sys/errno.h>
 include	<sys/syscall.h>
 include	<sys/sched.h>
 include	<sys/device.h>
+include <sys/mbuf.h>
 
 include <uvm/uvm.h>
 
@@ -82,6 +83,11 @@ define	SOFTINT_SERIAL	SOFTINT_SERIAL
 define	MCHK		offsetof(struct cpu_dep, cpu_mchk)
 define	MEMERR		offsetof(struct cpu_dep, cpu_memerr)
 define	BADADDR		offsetof(struct cpu_dep, cpu_badaddr)
+
+define	M_DATA		offsetof(struct mbuf, m_data)
+define	M_LEN		offsetof(struct mbuf, m_len)
+define	M_NEXT		offsetof(struct mbuf, m_next)
+
 
 define	KERNBASE	KERNBASE
 
