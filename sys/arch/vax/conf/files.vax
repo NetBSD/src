@@ -1,4 +1,4 @@
-#	$NetBSD: files.vax,v 1.123 2017/06/22 17:51:22 flxd Exp $
+#	$NetBSD: files.vax,v 1.124 2018/04/25 11:08:21 ragge Exp $
 #
 # new style config file for vax architecture
 #
@@ -385,6 +385,7 @@ file	arch/vax/vax/db_machdep.c	ddb
 file	arch/vax/vax/db_disasm.c	ddb
 file	arch/vax/uba/uba_dma.c		uba
 file	arch/vax/vax/multicpu.c		multiprocessor
+file	arch/vax/vax/cpu_in_cksum.S	(inet | inet6) & cpu_in_cksum
 
 # Binary compatibility with previous NetBSD releases (COMPAT_XX)
 file	arch/vax/vax/compat_13_machdep.c 	compat_13 | compat_ultrix |
