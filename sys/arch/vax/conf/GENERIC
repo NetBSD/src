@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.204 2018/01/23 14:47:56 sevan Exp $
+# $NetBSD: GENERIC,v 1.205 2018/04/25 11:12:55 ragge Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/vax/conf/std.vax"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.204 $"
+#ident 		"GENERIC-$Revision: 1.205 $"
 
 # Here are all different supported CPU types listed.
 #options 	VAX8800		# VAX 8500, 8530, 8550, 8700, 8800
@@ -75,6 +75,7 @@ options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 #options 	IPFILTER_LOOKUP	# ippool(8) support
 options 	IPFILTER_COMPAT # Compat for IP-Filter
 #options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
+options 	CPU_IN_CKSUM	# optimized checksum routine
 
 #options 	ALTQ		# Manipulate network interfaces' output queues
 #options 	ALTQ_BLUE	# Stochastic Fair Blue
