@@ -1,4 +1,4 @@
-# $NetBSD: VAX780,v 1.25 2018/01/23 14:47:56 sevan Exp $
+# $NetBSD: VAX780,v 1.26 2018/04/25 11:12:55 ragge Exp $
 #
 # 11/780,750,730 machine description file
 # 
@@ -60,6 +60,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 #options 	IPFILTER_LOG	# ipmon(8) log support
 #options 	IPFILTER_LOOKUP	# ippool(8) support
 #options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
+options 	CPU_IN_CKSUM	# optimized checksum routine
 
 #options 	ALTQ		# Manipulate network interfaces' output queues
 #options 	ALTQ_BLUE	# Stochastic Fair Blue

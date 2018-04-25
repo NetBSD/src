@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.73 2017/09/14 07:58:44 mrg Exp $
+#	$NetBSD: INSTALL,v 1.74 2018/04/25 11:12:55 ragge Exp $
 #
 # INSTALL kernel; all supported devices but nothing fancy.
 #
@@ -47,6 +47,7 @@ options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 # Networking options
 #options 	GATEWAY		# packet forwarding
 options 	INET		# IP + ICMP + TCP + UDP
+options 	CPU_IN_CKSUM	# optimized checksum routine
 
 # File systems
 file-system 	FFS
