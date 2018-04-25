@@ -449,7 +449,7 @@ AcpiUtTrackAllocation (
     Allocation->Component = Component;
     Allocation->Line = Line;
 
-    AcpiUtSafeStrncpy (Allocation->Module, (char *) Module, ACPI_MAX_MODULE_NAME);
+    AcpiUtSafeStrncpy (Allocation->Module, Module, ACPI_MAX_MODULE_NAME);
 
     if (!Element)
     {
