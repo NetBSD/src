@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.240 2018/04/12 04:38:13 ozaki-r Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.241 2018/04/25 03:49:57 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.240 2018/04/12 04:38:13 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.241 2018/04/25 03:49:57 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -928,9 +928,19 @@ flush:
 	if (old_rtm != NULL)
 		Free(old_rtm);
 	if (rt) {
-		if (do_rt_free)
+		if (do_rt_free) {
+#ifdef NET_MPSAFE
+			/*
+			 * Release rt_so_mtx to avoid a deadlock with
+			 * route_intr.
+			 */
+			mutex_exit(rt_so_mtx);
 			rt_free(rt);
-		else
+			mutex_enter(rt_so_mtx);
+#else
+			rt_free(rt);
+#endif
+		} else
 			rt_unref(rt);
 	}
     {
