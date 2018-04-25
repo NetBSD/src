@@ -68,40 +68,36 @@ int_add_overflow32_head() {
 
 int_add_overflow_body(){
 	cat > test.c << EOF
-#include "stdint.h"
-#include "stdio.h"
-#include "stdlib.h"
+#include <limits.h>
+#include <stdio.h>
+#include <stdlib.h>
 int main(int argc, char **argv) { int l = INT_MAX; l+= argc; printf("CHECK\n"); exit(0); }
 EOF
 
 	cc -fsanitize=undefined -o test test.c 
-	atf_check -s not-exit:0 -o not-match:"CHECK\n" -e match:"int-add-overflow" ./test
+	atf_check -s not-exit:0 -o not-match:"CHECK\n" -e match:"signed integer overflow" ./test
 }
 
 int_add_overflow_profile_body(){
 	cat > test.c << EOF
-#include "stdint.h"
-#include "stdio.h"
-#include "stdlib.h"
-int main(int argc, char **argv) { int l = INT_MAX; l+= argc; printf("CHECK\n"); exit(0); }
 EOF
 
 	cc -fsanitize=undefined -o test -pg test.c 
-	atf_check -s not-exit:0 -o not-match:"CHECK\n" -e match:"int-add-overflow" ./test
+	atf_check -s not-exit:0 -o not-match:"CHECK\n" -e match:"signed integer overflow" ./test
 }
 
 int_add_overflow_pic_body(){
 	cat > test.c << EOF
-#include "stdio.h"
-#include "stdlib.h"
+#include <stdio.h>
+#include <stdlib.h>
 void help(int);
 int main(int argc, char **argv) { help(argc); printf("CHECK\n"); exit(0); }
 EOF
 
 	cat > pic.c << EOF
-#include "stdlib.h"
-#include "stdio.h"
-#include "stdint.h"
+#include <stdlib.h>
+#include <stdio.h>
+#include <limits.h>
 void help(int count) { int l = INT_MAX; l+= count; }
 EOF
 
@@ -109,7 +105,7 @@ EOF
 	cc -o test test.c -fsanitize=undefined -L -ltest
 
 	export LD_LIBRARY_PATH=.
-	atf_check -s not-exit:0 -o not-match:"CHECK\n" -e match:"int-add-overflow" ./test
+	atf_check -s not-exit:0 -o not-match:"CHECK\n" -e match:"signed integer overflow" ./test
 }
 
 int_add_overflow_pie_body(){
@@ -119,14 +115,14 @@ int_add_overflow_pie_body(){
 		atf_set_skip "cc -pie not supported on this architecture"
 	fi
 	cat > test.c << EOF
-#include "stdint.h"
-#include "stdio.h"
-#include "stdlib.h"
+#include <limits.h>
+#include <stdio.h>
+#include <stdlib.h>
 int main(int argc, char **argv) { int l = INT_MAX; l+= argc; printf("CHECK\n"); exit(0); }
 EOF
 
 	cc -fsanitize=undefined -o test -fpie -pie test.c 
-	atf_check -s not-exit:0 -o not-match:"CHECK\n" -e match:"int-add-overflow" ./test
+	atf_check -s not-exit:0 -o not-match:"CHECK\n" -e match:"signed integer overflow" ./test
 }
 
 
@@ -145,14 +141,14 @@ int_add_overflow32_body(){
 	fi
 
 	cat > test.c << EOF
-#include "stdint.h"
-#include "stdio.h"
-#include "stdlib.h"
+#include <limits.h>
+#include <stdio.h>
+#include <stdlib.h>
 int main(int argc, char **argv) { int l = INT_MAX; l+= argc; printf("CHECK\n"); exit(0); }
 EOF
 
-	cc -fsanitize=address -o df32 -m32 test.c
-	cc -fsanitize=address -o df64 test.c
+	cc -fsanitize=undefined -o df32 -m32 test.c
+	cc -fsanitize=undefined -o df64 test.c
 	file -b ./df32 > ./ftype32
 	file -b ./df64 > ./ftype64
 	if diff ./ftype32 ./ftype64 >/dev/null; then
@@ -162,18 +158,18 @@ EOF
 	cat ./ftype32
 	echo "64bit Binz are on the other hand:"
 	cat ./ftype64
-	atf_check -s not-exit:0 -o not-match:"CHECK\n" -e match:"int-add-overflow" ./test
+	atf_check -s not-exit:0 -o not-match:"CHECK\n" -e match:"signed integer overflow" ./test
 
 	# Another test with profile 32bit binaries, just to make sure everything has been thoroughly done
 	cat > test.c << EOF
-#include "stdint.h"
-#include "stdio.h"
-#include "stdlib.h"
+#include <limits.h>
+#include <stdio.h>
+#include <stdlib.h>
 int main(int argc, char **argv) { int l = INT_MAX; l+= argc; printf("CHECK\n"); exit(0); }
 EOF
 
 	cc -fsanitize=undefined -pg -m32 -o test test.c
-	atf_check -s not-exit:0 -o not-match:"CHECK\n" -e match:"int-add-overflow" ./test
+	atf_check -s not-exit:0 -o not-match:"CHECK\n" -e match:"signed integer overflow" ./test
 }
 
 atf_test_case target_not_supported
