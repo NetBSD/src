@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_netbsd.c,v 1.6 2017/06/01 02:45:11 chs Exp $ */
+/* $NetBSD: ixgbe_netbsd.c,v 1.7 2018/04/25 08:46:19 msaitoh Exp $ */
 /*
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -40,7 +40,7 @@
 #include <sys/workqueue.h>
 #include <dev/pci/pcivar.h>
 
-#include "ixgbe_netbsd.h"
+#include "ixgbe.h"
 
 void
 ixgbe_dma_tag_destroy(ixgbe_dma_tag_t *dt)
@@ -162,11 +162,12 @@ post_zalloc_err:
 }
 
 void
-ixgbe_jcl_reinit(ixgbe_extmem_head_t *eh, bus_dma_tag_t dmat, int nbuf,
+ixgbe_jcl_reinit(struct adapter *adapter, bus_dma_tag_t dmat, int nbuf,
     size_t size)
 {
-	int i;
+	ixgbe_extmem_head_t *eh = &adapter->jcl_head;
 	ixgbe_extmem_t *em;
+	int i;
 
 	if (!eh->eh_initialized) {
 		TAILQ_INIT(&eh->eh_freelist);
@@ -174,6 +175,18 @@ ixgbe_jcl_reinit(ixgbe_extmem_head_t *eh, bus_dma_tag_t dmat, int nbuf,
 		eh->eh_initialized = true;
 	}
 
+	/*
+	 *  Check previous parameters. If it's not required to reinit, just
+	 * return.
+	 *
+	 *  Note that the num_rx_desc is currently fixed value. It's never
+	 * changed after device is attached.
+	 */
+	if ((adapter->osdep.last_rx_mbuf_sz == adapter->rx_mbuf_sz)
+	    && (adapter->osdep.last_num_rx_desc == adapter->num_rx_desc))
+		return;
+
+	/* Free all dmamem */
 	while ((em = ixgbe_getext(eh, 0)) != NULL) {
 		KASSERT(em->em_vaddr != NULL);
 		bus_dmamem_unmap(dmat, em->em_vaddr, em->em_size);
@@ -190,6 +203,10 @@ ixgbe_jcl_reinit(ixgbe_extmem_head_t *eh, bus_dma_tag_t dmat, int nbuf,
 		}
 		ixgbe_putext(em);
 	}
+
+	/* Keep current parameters */
+	adapter->osdep.last_rx_mbuf_sz = adapter->rx_mbuf_sz;
+	adapter->osdep.last_num_rx_desc = adapter->num_rx_desc;
 }
 
 static void

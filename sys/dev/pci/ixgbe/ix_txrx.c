@@ -1,4 +1,4 @@
-/* $NetBSD: ix_txrx.c,v 1.40 2018/04/17 08:38:05 msaitoh Exp $ */
+/* $NetBSD: ix_txrx.c,v 1.41 2018/04/25 08:46:19 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -1607,7 +1607,7 @@ ixgbe_setup_receive_structures(struct adapter *adapter)
 	 * or size of jumbo mbufs may have changed.
 	 * Assume all of rxr->ptag are the same.
 	 */
-	ixgbe_jcl_reinit(&adapter->jcl_head, rxr->ptag->dt_dmat,
+	ixgbe_jcl_reinit(adapter, rxr->ptag->dt_dmat,
 	    (2 * adapter->num_rx_desc) * adapter->num_queues,
 	    adapter->rx_mbuf_sz);
 
