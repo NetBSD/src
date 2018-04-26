@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_commonsubs.c,v 1.2 2016/12/13 22:31:51 pgoyette Exp $	*/
+/*	$NetBSD: nfs_commonsubs.c,v 1.3 2018/04/26 19:27:04 maxv Exp $	*/
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("FreeBSD: head/sys/fs/nfs/nfs_commonsubs.c 308708 2016-11-16 01:11:49Z cperciva "); */
-__RCSID("$NetBSD: nfs_commonsubs.c,v 1.2 2016/12/13 22:31:51 pgoyette Exp $");
+__RCSID("$NetBSD: nfs_commonsubs.c,v 1.3 2018/04/26 19:27:04 maxv Exp $");
 
 /*
  * These functions support the macros and help fiddle mbuf chains for
@@ -309,7 +309,7 @@ nfsm_dissct(struct nfsrv_descript *nd, int siz, int how)
 	} else if (siz > ncl_mbuf_mhlen) {
 		panic("nfs S too big");
 	} else {
-		MGET(mp2, MT_DATA, how);
+		MGET(mp2, how, MT_DATA);
 		if (mp2 == NULL)
 			return (NULL);
 		mbuf_setnext(mp2, mbuf_next(nd->nd_md));
