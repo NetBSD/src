@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.123 2018/03/21 14:23:54 roy Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.124 2018/04/26 07:28:21 maxv Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.49 2001/07/25 09:21:18 jinmei Exp $	*/
 
 /*
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.123 2018/03/21 14:23:54 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.124 2018/04/26 07:28:21 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1131,8 +1131,7 @@ ip6_mforward(struct ip6_hdr *ip6, struct ifnet *ifp, struct mbuf *m)
 		 * Pullup packet header if needed before storing it,
 		 * as other references may modify it in the meantime.
 		 */
-		if (mb0 &&
-		    (M_READONLY(mb0) || mb0->m_len < sizeof(struct ip6_hdr)))
+		if (mb0 && M_UNWRITABLE(mb0, sizeof(struct ip6_hdr)))
 			mb0 = m_pullup(mb0, sizeof(struct ip6_hdr));
 		if (mb0 == NULL) {
 			free(rte, M_MRTABLE);
@@ -1416,9 +1415,7 @@ ip6_mdq(struct mbuf *m, struct ifnet *ifp, struct mf6c *rt)
 				struct omrt6msg *oim;
 
 				mm = m_copy(m, 0, sizeof(struct ip6_hdr));
-				if (mm &&
-				    (M_READONLY(mm) ||
-				     mm->m_len < sizeof(struct ip6_hdr)))
+				if (mm && M_UNWRITABLE(mm, sizeof(struct ip6_hdr)))
 					mm = m_pullup(mm, sizeof(struct ip6_hdr));
 				if (mm == NULL)
 					return ENOBUFS;
@@ -1552,8 +1549,7 @@ phyint_send(struct ip6_hdr *ip6, struct mif6 *mifp, struct mbuf *m)
 	 * so that ip6_output() only scribbles on the copy.
 	 */
 	mb_copy = m_copy(m, 0, M_COPYALL);
-	if (mb_copy &&
-	    (M_READONLY(mb_copy) || mb_copy->m_len < sizeof(struct ip6_hdr)))
+	if (mb_copy && M_UNWRITABLE(mb_copy, sizeof(struct ip6_hdr)))
 		mb_copy = m_pullup(mb_copy, sizeof(struct ip6_hdr));
 	if (mb_copy == NULL) {
 		splx(s);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.168 2018/02/08 09:32:02 maxv Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.169 2018/04/26 07:28:21 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.168 2018/02/08 09:32:02 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.169 2018/04/26 07:28:21 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -448,7 +448,7 @@ _icmp_input(struct mbuf *m, int hlen, int proto)
 		goto freeit;
 	}
 	i = hlen + min(icmplen, ICMP_ADVLENMIN);
-	if ((m->m_len < i || M_READONLY(m)) && (m = m_pullup(m, i)) == NULL) {
+	if (M_UNWRITABLE(m, i) && (m = m_pullup(m, i)) == NULL) {
 		ICMP_STATINC(ICMP_STAT_TOOSHORT);
 		return;
 	}
