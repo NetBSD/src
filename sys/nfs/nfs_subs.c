@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.230 2018/01/21 20:36:49 christos Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.231 2018/04/26 20:10:44 maxv Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.230 2018/01/21 20:36:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.231 2018/04/26 20:10:44 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -1602,7 +1602,7 @@ nfs_zeropad(struct mbuf *mp, int len, int nul)
 		char *cp;
 		int i;
 
-		if (M_ROMAP(m) || M_TRAILINGSPACE(m) < nul) {
+		if (M_READONLY(m) || M_TRAILINGSPACE(m) < nul) {
 			struct mbuf *n;
 
 			KDASSERT(MLEN >= nul);
