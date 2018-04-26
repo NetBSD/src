@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.64 2018/04/19 08:27:38 maxv Exp $	*/
+/*	$NetBSD: keysock.c,v 1.65 2018/04/26 19:50:09 maxv Exp $	*/
 /*	$FreeBSD: keysock.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keysock.c,v 1.25 2001/08/13 20:07:41 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.64 2018/04/19 08:27:38 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.65 2018/04/26 19:50:09 maxv Exp $");
 
 /* This code has derived from sys/net/rtsock.c on FreeBSD2.2.5 */
 
@@ -379,7 +379,7 @@ _key_sendup_mbuf(struct socket *so, struct mbuf *m,
 		 * (based on pf_key@inner.net message on 14 Oct 1998)
 		 */
 		if (((struct keycb *)rp)->kp_promisc) {
-			if ((n = m_copy(m, 0, (int)M_COPYALL)) != NULL) {
+			if ((n = m_copym(m, 0, (int)M_COPYALL, M_DONTWAIT)) != NULL) {
 				(void)key_sendup0(rp, n, 1, 0);
 				n = NULL;
 			}
@@ -417,7 +417,7 @@ _key_sendup_mbuf(struct socket *so, struct mbuf *m,
 		if (!sendup)
 			continue;
 
-		if ((n = m_copy(m, 0, (int)M_COPYALL)) == NULL) {
+		if ((n = m_copym(m, 0, (int)M_COPYALL, M_DONTWAIT)) == NULL) {
 			m_freem(m);
 			PFKEY_STATINC(PFKEY_STAT_IN_NOMEM);
 			return ENOBUFS;

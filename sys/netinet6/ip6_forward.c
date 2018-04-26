@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_forward.c,v 1.93 2018/04/18 07:17:49 maxv Exp $	*/
+/*	$NetBSD: ip6_forward.c,v 1.94 2018/04/26 19:50:09 maxv Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.109 2002/09/11 08:10:17 sakane Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.93 2018/04/18 07:17:49 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.94 2018/04/26 19:50:09 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -177,7 +177,8 @@ ip6_forward(struct mbuf *m, int srcrt)
 	 * It is important to save it before IPsec processing as IPsec
 	 * processing may modify the mbuf.
 	 */
-	mcopy = m_copy(m, 0, imin(m->m_pkthdr.len, ICMPV6_PLD_MAXLEN));
+	mcopy = m_copym(m, 0, imin(m->m_pkthdr.len, ICMPV6_PLD_MAXLEN),
+	    M_DONTWAIT);
 
 #ifdef IPSEC
 	if (ipsec_used) {
