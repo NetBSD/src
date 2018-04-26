@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.194 2018/04/26 07:46:24 maxv Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.195 2018/04/26 08:13:30 maxv Exp $	*/
 
 /*
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.194 2018/04/26 07:46:24 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.195 2018/04/26 08:13:30 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
@@ -102,8 +102,8 @@ static void	sysctl_kern_mbuf_setup(void);
 
 static struct sysctllog *mbuf_sysctllog;
 
-static struct mbuf *m_copym0(struct mbuf *, int, int, int, bool);
-static struct mbuf *m_split0(struct mbuf *, int, int, bool);
+static struct mbuf *m_copy_internal(struct mbuf *, int, int, int, bool);
+static struct mbuf *m_split_internal(struct mbuf *, int, int, bool);
 static int m_copyback0(struct mbuf **, int, int, const void *, int, int);
 
 /* flags for m_copyback0 */
@@ -717,17 +717,17 @@ m_prepend(struct mbuf *m, int len, int how)
  * The wait parameter is a choice of M_WAIT/M_DONTWAIT from caller.
  */
 struct mbuf *
-m_copym(struct mbuf *m, int off0, int len, int wait)
+m_copym(struct mbuf *m, int off, int len, int wait)
 {
-
-	return m_copym0(m, off0, len, wait, false); /* shallow copy on M_EXT */
+	/* Shallow copy on M_EXT. */
+	return m_copy_internal(m, off, len, wait, false);
 }
 
 struct mbuf *
-m_dup(struct mbuf *m, int off0, int len, int wait)
+m_dup(struct mbuf *m, int off, int len, int wait)
 {
-
-	return m_copym0(m, off0, len, wait, true); /* deep copy */
+	/* Deep copy. */
+	return m_copy_internal(m, off, len, wait, true);
 }
 
 static inline int
@@ -737,7 +737,7 @@ m_copylen(int len, int copylen)
 }
 
 static struct mbuf *
-m_copym0(struct mbuf *m, int off0, int len, int wait, bool deep)
+m_copy_internal(struct mbuf *m, int off0, int len, int wait, bool deep)
 {
 	struct mbuf *n, **np;
 	int off = off0;
@@ -1145,20 +1145,14 @@ m_copyup(struct mbuf *n, int len, int dstoff)
 	return (NULL);
 }
 
-/*
- * Partition an mbuf chain in two pieces, returning the tail --
- * all but the first len0 bytes.  In case of failure, it returns NULL and
- * attempts to restore the chain to its original state.
- */
 struct mbuf *
-m_split(struct mbuf *m0, int len0, int wait)
+m_split(struct mbuf *m0, int len, int wait)
 {
-
-	return m_split0(m0, len0, wait, true);
+	return m_split_internal(m0, len, wait, true);
 }
 
 static struct mbuf *
-m_split0(struct mbuf *m0, int len0, int wait, bool copyhdr)
+m_split_internal(struct mbuf *m0, int len0, int wait, bool copyhdr)
 {
 	struct mbuf *m, *n;
 	unsigned len = len0, remain, len_save;
@@ -1533,7 +1527,7 @@ extend:
 			 * a mbuf, split it first.
 			 */
 			if (off > 0) {
-				n = m_split0(m, off, how, false);
+				n = m_split_internal(m, off, how, false);
 				if (n == NULL)
 					goto enobufs;
 				m->m_next = n;
