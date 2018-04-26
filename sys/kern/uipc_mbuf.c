@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.196 2018/04/26 08:31:36 maxv Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.197 2018/04/26 19:13:34 maxv Exp $	*/
 
 /*
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.196 2018/04/26 08:31:36 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.197 2018/04/26 19:13:34 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
@@ -653,7 +653,7 @@ void
 m_clget(struct mbuf *m, int nowait)
 {
 
-	MCLGET(m, nowait);
+	_MCLGET(m, mcl_cache, MCLBYTES, nowait);
 }
 
 #ifdef MBUFTRACE
