@@ -1,4 +1,4 @@
-.\"	$NetBSD: mbuf.9,v 1.58 2018/04/26 07:48:21 maxv Exp $
+.\"	$NetBSD: mbuf.9,v 1.59 2018/04/26 08:13:30 maxv Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -75,7 +75,7 @@
 .Ft struct mbuf *
 .Fn m_devget "char *buf" "int totlen" "int off0" "struct ifnet *ifp" "void (*copy)(const void *, void *, size_t)"
 .Ft struct mbuf *
-.Fn m_copym "struct mbuf *m" "int off0" "int len" "int wait"
+.Fn m_copym "struct mbuf *m" "int off" "int len" "int wait"
 .Ft struct mbuf *
 .Fn m_copypacket "struct mbuf *m" "int how"
 .Ft void
@@ -89,7 +89,7 @@
 .Ft void
 .Fn m_cat "struct mbuf *m" "struct mbuf *n"
 .Ft struct mbuf *
-.Fn m_dup "struct mbuf *m" "int off0" "int len" "int wait"
+.Fn m_dup "struct mbuf *m" "int off" "int len" "int wait"
 .Ft struct mbuf *
 .Fn m_pulldown "struct mbuf *m" "int off" "int len" "int *offp"
 .Ft struct mbuf *
@@ -97,7 +97,7 @@
 .Ft struct mbuf *
 .Fn m_copyup "struct mbuf *m" "int len" "int dstoff"
 .Ft struct mbuf *
-.Fn m_split "struct mbuf *m0" "int len0" "int wait"
+.Fn m_split "struct mbuf *m0" "int len" "int wait"
 .Ft void
 .Fn m_adj "struct mbuf *mp" "int req_len"
 .Ft int
@@ -267,9 +267,9 @@ is non-zero, the packet is supposed to be trailer-encapsulated and
 .Fa off
 bytes plus the type and length fields will be skipped before copying.
 Returns the top of the mbuf chain it created.
-.It Fn m_copym "struct mbuf *m" "int off0" "int len" "int wait"
+.It Fn m_copym "struct mbuf *m" "int off" "int len" "int wait"
 Creates a copy of an mbuf chain starting
-.Fa off0
+.Fa off
 bytes from the beginning, continuing for
 .Fa len
 bytes.
@@ -385,11 +385,11 @@ to
 Both chains must be of the same type; packet headers will
 .Em not
 be updated if present.
-.It Fn m_dup "struct mbuf *m" "int off0" "int len" "int wait"
+.It Fn m_dup "struct mbuf *m" "int off" "int len" "int wait"
 Similarly to
 .Fn m_copym ,
 the function creates a copy of an mbuf chain starting
-.Fa off0
+.Fa off
 bytes from the beginning, continuing for
 .Fa len
 bytes.
@@ -475,7 +475,7 @@ the function does not allocate mbuf clusters, so
 .Fa len + dstoff
 must be less than
 .Dv MHLEN .
-.It Fn m_split "struct mbuf *m0" "int len0" "int wait"
+.It Fn m_split "struct mbuf *m0" "int len" "int wait"
 Partitions an mbuf chain in two pieces, returning the tail,
 which is all but the first
 .Fa len0
