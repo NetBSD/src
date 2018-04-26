@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.124 2018/04/26 07:28:21 maxv Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.125 2018/04/26 19:50:09 maxv Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.49 2001/07/25 09:21:18 jinmei Exp $	*/
 
 /*
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.124 2018/04/26 07:28:21 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.125 2018/04/26 19:50:09 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1125,7 +1125,7 @@ ip6_mforward(struct ip6_hdr *ip6, struct ifnet *ifp, struct mbuf *m)
 			splx(s);
 			return ENOBUFS;
 		}
-		mb0 = m_copy(m, 0, M_COPYALL);
+		mb0 = m_copym(m, 0, M_COPYALL, M_DONTWAIT);
 
 		/*
 		 * Pullup packet header if needed before storing it,
@@ -1167,7 +1167,7 @@ ip6_mforward(struct ip6_hdr *ip6, struct ifnet *ifp, struct mbuf *m)
 			 * Make a copy of the header to send to the user
 			 * level process
 			 */
-			mm = m_copy(mb0, 0, sizeof(struct ip6_hdr));
+			mm = m_copym(mb0, 0, sizeof(struct ip6_hdr), M_DONTWAIT);
 
 			if (mm == NULL) {
 				free(rte, M_MRTABLE);
@@ -1414,7 +1414,7 @@ ip6_mdq(struct mbuf *m, struct ifnet *ifp, struct mf6c *rt)
 				struct mrt6msg *im;
 				struct omrt6msg *oim;
 
-				mm = m_copy(m, 0, sizeof(struct ip6_hdr));
+				mm = m_copym(m, 0, sizeof(struct ip6_hdr), M_DONTWAIT);
 				if (mm && M_UNWRITABLE(mm, sizeof(struct ip6_hdr)))
 					mm = m_pullup(mm, sizeof(struct ip6_hdr));
 				if (mm == NULL)
@@ -1548,7 +1548,7 @@ phyint_send(struct ip6_hdr *ip6, struct mif6 *mifp, struct mbuf *m)
 	 * the IPv6 header is actually copied, not just referenced,
 	 * so that ip6_output() only scribbles on the copy.
 	 */
-	mb_copy = m_copy(m, 0, M_COPYALL);
+	mb_copy = m_copym(m, 0, M_COPYALL, M_DONTWAIT);
 	if (mb_copy && M_UNWRITABLE(mb_copy, sizeof(struct ip6_hdr)))
 		mb_copy = m_pullup(mb_copy, sizeof(struct ip6_hdr));
 	if (mb_copy == NULL) {
@@ -1668,7 +1668,7 @@ register_send(struct ip6_hdr *ip6, struct mif6 *mif, struct mbuf *m)
 	mm->m_data += max_linkhdr;
 	mm->m_len = sizeof(struct ip6_hdr);
 
-	if ((mm->m_next = m_copy(m, 0, M_COPYALL)) == NULL) {
+	if ((mm->m_next = m_copym(m, 0, M_COPYALL, M_DONTWAIT)) == NULL) {
 		m_freem(mm);
 		return ENOBUFS;
 	}
@@ -1895,7 +1895,7 @@ pim6_input(struct mbuf **mp, int *offp, int proto)
 		/*
 		 * make a copy of the whole header to pass to the daemon later.
 		 */
-		mcp = m_copy(m, 0, off + PIM6_REG_MINLEN);
+		mcp = m_copym(m, 0, off + PIM6_REG_MINLEN, M_DONTWAIT);
 		if (mcp == NULL) {
 #ifdef MRT6DEBUG
 			log(LOG_ERR,
