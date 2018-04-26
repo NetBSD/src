@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.195 2018/04/26 08:13:30 maxv Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.196 2018/04/26 08:31:36 maxv Exp $	*/
 
 /*
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.195 2018/04/26 08:13:30 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.196 2018/04/26 08:31:36 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
@@ -104,13 +104,14 @@ static struct sysctllog *mbuf_sysctllog;
 
 static struct mbuf *m_copy_internal(struct mbuf *, int, int, int, bool);
 static struct mbuf *m_split_internal(struct mbuf *, int, int, bool);
-static int m_copyback0(struct mbuf **, int, int, const void *, int, int);
+static int m_copyback_internal(struct mbuf **, int, int, const void *,
+    int, int);
 
-/* flags for m_copyback0 */
-#define	M_COPYBACK0_COPYBACK	0x0001	/* copyback from cp */
-#define	M_COPYBACK0_PRESERVE	0x0002	/* preserve original data */
-#define	M_COPYBACK0_COW		0x0004	/* do copy-on-write */
-#define	M_COPYBACK0_EXTEND	0x0008	/* extend chain */
+/* Flags for m_copyback_internal. */
+#define	CB_COPYBACK	0x0001	/* copyback from cp */
+#define	CB_PRESERVE	0x0002	/* preserve original data */
+#define	CB_COW		0x0004	/* do copy-on-write */
+#define	CB_EXTEND	0x0008	/* extend chain */
 
 static const char mclpool_warnmsg[] =
     "WARNING: mclpool limit reached; increase kern.mbuf.nmbclusters";
@@ -745,12 +746,12 @@ m_copy_internal(struct mbuf *m, int off0, int len, int wait, bool deep)
 	int copyhdr = 0;
 
 	if (off < 0 || (len != M_COPYALL && len < 0))
-		panic("m_copym: off %d, len %d", off, len);
+		panic("%s: off %d, len %d", __func__, off, len);
 	if (off == 0 && m->m_flags & M_PKTHDR)
 		copyhdr = 1;
 	while (off > 0) {
 		if (m == NULL)
-			panic("m_copym: m == 0, off %d", off);
+			panic("%s: m == 0, off %d", __func__, off);
 		if (off < m->m_len)
 			break;
 		off -= m->m_len;
@@ -762,8 +763,8 @@ m_copy_internal(struct mbuf *m, int off0, int len, int wait, bool deep)
 	while (len == M_COPYALL || len > 0) {
 		if (m == NULL) {
 			if (len != M_COPYALL)
-				panic("m_copym: m == 0, len %d [!COPYALL]",
-				    len);
+				panic("%s: m == NULL, len %d [!COPYALL]",
+				    __func__, len);
 			break;
 		}
 
@@ -810,7 +811,7 @@ m_copy_internal(struct mbuf *m, int off0, int len, int wait, bool deep)
 		off += n->m_len;
 #ifdef DIAGNOSTIC
 		if (off > m->m_len)
-			panic("m_copym0 overrun %d %d", off, m->m_len);
+			panic("%s overrun %d %d", __func__, off, m->m_len);
 #endif
 		if (off == m->m_len) {
 			m = m->m_next;
@@ -1316,8 +1317,8 @@ m_copyback(struct mbuf *m0, int off, int len, const void *cp)
 #if defined(DEBUG)
 	error =
 #endif
-	m_copyback0(&m0, off, len, cp,
-	    M_COPYBACK0_COPYBACK|M_COPYBACK0_EXTEND, M_DONTWAIT);
+	m_copyback_internal(&m0, off, len, cp, CB_COPYBACK|CB_EXTEND,
+	    M_DONTWAIT);
 
 #if defined(DEBUG)
 	if (error != 0 || (m0 != NULL && origm != m0))
@@ -1334,8 +1335,8 @@ m_copyback_cow(struct mbuf *m0, int off, int len, const void *cp, int how)
 	KASSERT(len != M_COPYALL);
 	KDASSERT(off + len <= m_length(m0));
 
-	error = m_copyback0(&m0, off, len, cp,
-	    M_COPYBACK0_COPYBACK|M_COPYBACK0_COW, how);
+	error = m_copyback_internal(&m0, off, len, cp, CB_COPYBACK|CB_COW,
+	    how);
 	if (error) {
 		/*
 		 * no way to recover from partial success.
@@ -1347,9 +1348,6 @@ m_copyback_cow(struct mbuf *m0, int off, int len, const void *cp, int how)
 	return m0;
 }
 
-/*
- * m_makewritable: ensure the specified range writable.
- */
 int
 m_makewritable(struct mbuf **mp, int off, int len, int how)
 {
@@ -1358,9 +1356,8 @@ m_makewritable(struct mbuf **mp, int off, int len, int how)
 	int origlen = m_length(*mp);
 #endif
 
-	error = m_copyback0(mp, off, len, NULL,
-	    M_COPYBACK0_PRESERVE|M_COPYBACK0_COW, how);
-
+	error = m_copyback_internal(mp, off, len, NULL, CB_PRESERVE|CB_COW,
+	    how);
 	if (error)
 		return error;
 
@@ -1430,9 +1427,9 @@ m_defrag(struct mbuf *mold, int flags)
 	return m0;
 }
 
-int
-m_copyback0(struct mbuf **mp0, int off, int len, const void *vp, int flags,
-    int how)
+static int
+m_copyback_internal(struct mbuf **mp0, int off, int len, const void *vp,
+    int flags, int how)
 {
 	int mlen;
 	struct mbuf *m, *n;
@@ -1442,18 +1439,18 @@ m_copyback0(struct mbuf **mp0, int off, int len, const void *vp, int flags,
 
 	KASSERT(mp0 != NULL);
 	KASSERT(*mp0 != NULL);
-	KASSERT((flags & M_COPYBACK0_PRESERVE) == 0 || cp == NULL);
-	KASSERT((flags & M_COPYBACK0_COPYBACK) == 0 || cp != NULL);
+	KASSERT((flags & CB_PRESERVE) == 0 || cp == NULL);
+	KASSERT((flags & CB_COPYBACK) == 0 || cp != NULL);
 
 	if (len == M_COPYALL)
 		len = m_length(*mp0) - off;
 
 	/*
-	 * we don't bother to update "totlen" in the case of M_COPYBACK0_COW,
-	 * assuming that M_COPYBACK0_EXTEND and M_COPYBACK0_COW are exclusive.
+	 * we don't bother to update "totlen" in the case of CB_COW,
+	 * assuming that CB_EXTEND and CB_COW are exclusive.
 	 */
 
-	KASSERT((~flags & (M_COPYBACK0_EXTEND|M_COPYBACK0_COW)) != 0);
+	KASSERT((~flags & (CB_EXTEND|CB_COW)) != 0);
 
 	mp = mp0;
 	m = *mp;
@@ -1463,7 +1460,7 @@ m_copyback0(struct mbuf **mp0, int off, int len, const void *vp, int flags,
 		if (m->m_next == NULL) {
 			int tspace;
 extend:
-			if ((flags & M_COPYBACK0_EXTEND) == 0)
+			if ((flags & CB_EXTEND) == 0)
 				goto out;
 
 			/*
@@ -1509,18 +1506,14 @@ extend:
 	while (len > 0) {
 		mlen = m->m_len - off;
 		if (mlen != 0 && M_READONLY(m)) {
+			/*
+			 * This mbuf is read-only. Allocate a new writable
+			 * mbuf and try again.
+			 */
 			char *datap;
 			int eatlen;
 
-			/*
-			 * this mbuf is read-only.
-			 * allocate a new writable mbuf and try again.
-			 */
-
-#if defined(DIAGNOSTIC)
-			if ((flags & M_COPYBACK0_COW) == 0)
-				panic("m_copyback0: read-only");
-#endif /* defined(DIAGNOSTIC) */
+			KASSERT((flags & CB_COW) != 0);
 
 			/*
 			 * if we're going to write into the middle of
@@ -1565,7 +1558,7 @@ extend:
 			 * free the region which has been overwritten.
 			 * copying data from old mbufs if requested.
 			 */
-			if (flags & M_COPYBACK0_PRESERVE)
+			if (flags & CB_PRESERVE)
 				datap = mtod(n, char *);
 			else
 				datap = NULL;
@@ -1590,7 +1583,7 @@ extend:
 			continue;
 		}
 		mlen = min(mlen, len);
-		if (flags & M_COPYBACK0_COPYBACK) {
+		if (flags & CB_COPYBACK) {
 			memcpy(mtod(m, char *) + off, cp, (unsigned)mlen);
 			cp += mlen;
 		}
@@ -1607,7 +1600,7 @@ extend:
 		m = m->m_next;
 	}
 out:	if (((m = *mp0)->m_flags & M_PKTHDR) && (m->m_pkthdr.len < totlen)) {
-		KASSERT((flags & M_COPYBACK0_EXTEND) != 0);
+		KASSERT((flags & CB_EXTEND) != 0);
 		m->m_pkthdr.len = totlen;
 	}
 
