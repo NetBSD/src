@@ -93,5 +93,10 @@ TODO
     and perhaps define something to enable the MI modcmd code to call a
     compat_xx_MD_init() routine.
 
-11. Note that pre-5.0 quotactl (syscall #148) is not currently available.
-    Its entry in syscalls.master is XXXd out.
+    Note also that there are a few bits of MD code that is COMPAT_44
+    related.  The only bit of MI COMPAT_44 code is in the single module
+    shared by COMPAT_43 and COMPAT_09.  This affects the cesfic, hp300,
+    news68k, and x68k platforms, all in their respective machdep.c
+    source file.  Additionally, the zaurus platform defines COMPAT_44 in
+    its INSTALL kernel configuration - but no other configuration files!
+
