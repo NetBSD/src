@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.189 2018/04/24 08:10:32 maxv Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.190 2018/04/26 19:13:34 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -531,7 +531,7 @@ do {									\
 /*
  * The standard mbuf cluster pool.
  */
-#define	MCLGET(m, how)	_MCLGET((m), mcl_cache, MCLBYTES, (how))
+#define	MCLGET(m, how)	m_clget((m), (how))
 
 #define	MEXTMALLOC(m, size, how)					\
 do {									\
