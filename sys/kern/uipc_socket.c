@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.261 2018/03/19 16:32:30 roy Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.262 2018/04/26 19:22:17 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.261 2018/03/19 16:32:30 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.262 2018/04/26 19:22:17 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -2431,7 +2431,7 @@ sopoll(struct socket *so, int events)
 }
 
 struct mbuf **
-sbsavetimestamp(int opt, struct mbuf *m, struct mbuf **mp)
+sbsavetimestamp(int opt, struct mbuf **mp)
 {
 	struct timeval tv;
 	microtime(&tv);
