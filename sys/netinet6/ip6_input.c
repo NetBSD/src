@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.199 2018/04/26 07:01:38 maxv Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.200 2018/04/26 19:22:17 maxv Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.199 2018/04/26 07:01:38 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.200 2018/04/26 19:22:17 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -1074,7 +1074,7 @@ ip6_savecontrol(struct in6pcb *in6p, struct mbuf **mp,
 #endif
 
 	if (SOOPT_TIMESTAMP(so->so_options))
-		mp = sbsavetimestamp(so->so_options, m, mp);
+		mp = sbsavetimestamp(so->so_options, mp);
 
 	/* some OSes call this logic with IPv4 packet, for SO_TIMESTAMP */
 	if ((ip6->ip6_vfc & IPV6_VERSION_MASK) != IPV6_VERSION)
