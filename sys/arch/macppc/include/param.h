@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.20 2012/09/23 22:31:38 mrg Exp $	*/
+/*	$NetBSD: param.h,v 1.21 2018/04/26 18:33:02 macallan Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -43,7 +43,7 @@
  * 4KB isn't enough for a full boot message for a macppc system anymore
  */
 #ifndef MSGBUFSIZE
-#define	MSGBUFSIZE		(3*NBPG)
+#define	MSGBUFSIZE		(8*NBPG)
 #endif
 
 #endif /* _KERNEL && !_MODULE */
