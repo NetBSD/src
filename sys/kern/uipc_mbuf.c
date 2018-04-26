@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.193 2018/04/20 06:01:59 maxv Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.194 2018/04/26 07:46:24 maxv Exp $	*/
 
 /*
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.193 2018/04/20 06:01:59 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.194 2018/04/26 07:46:24 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
@@ -673,9 +673,7 @@ m_claimm(struct mbuf *m, struct mowner *mo)
  */
 
 /*
- * Lesser-used path for M_PREPEND:
- * allocate new mbuf to prepend to chain,
- * copy junk along.
+ * Utility function for M_PREPEND. Do *NOT* use it directly.
  */
 struct mbuf *
 m_prepend(struct mbuf *m, int len, int how)
