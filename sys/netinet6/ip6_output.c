@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.205 2018/04/23 07:22:54 maxv Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.206 2018/04/26 19:50:09 maxv Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.205 2018/04/23 07:22:54 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.206 2018/04/26 19:50:09 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -988,7 +988,7 @@ ip6_output(
 
 			mhip6->ip6_plen = htons((u_int16_t)(len + hlen +
 			    sizeof(*ip6f) - sizeof(struct ip6_hdr)));
-			if ((m_frgpart = m_copy(m0, off, len)) == NULL) {
+			if ((m_frgpart = m_copym(m0, off, len, M_DONTWAIT)) == NULL) {
 				error = ENOBUFS;
 				IP6_STATINC(IP6_STAT_ODROPPED);
 				goto sendorfree;
@@ -3260,7 +3260,7 @@ ip6_mloopback(struct ifnet *ifp, struct mbuf *m,
 	struct mbuf *copym;
 	struct ip6_hdr *ip6;
 
-	copym = m_copy(m, 0, M_COPYALL);
+	copym = m_copym(m, 0, M_COPYALL, M_DONTWAIT);
 	if (copym == NULL)
 		return;
 
