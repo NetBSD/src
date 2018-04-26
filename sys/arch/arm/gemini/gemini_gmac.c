@@ -1,4 +1,4 @@
-/* $NetBSD: gemini_gmac.c,v 1.13 2017/06/01 02:45:05 chs Exp $ */
+/* $NetBSD: gemini_gmac.c,v 1.14 2018/04/26 19:33:02 maxv Exp $ */
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -49,7 +49,7 @@
 
 #include <sys/gpio.h>
 
-__KERNEL_RCSID(0, "$NetBSD: gemini_gmac.c,v 1.13 2017/06/01 02:45:05 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_gmac.c,v 1.14 2018/04/26 19:33:02 maxv Exp $");
 
 #define	SWFREEQ_DESCS	256	/* one page worth */
 #define	HWFREEQ_DESCS	256	/* one page worth */
@@ -695,7 +695,7 @@ gmac_rxproduce(gmac_hwqueue_t *hwq, size_t free_min)
 
 		KASSERT(map->dm_mapsize == 0);
 
-		m = m_gethdr(MT_DATA, M_DONTWAIT);
+		m = m_gethdr(M_DONTWAIT, MT_DATA);
 		if (m == NULL) {
 			gmac_mapcache_put(hqm->hqm_mc, map);
 			break;
