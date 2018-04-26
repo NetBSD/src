@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.262 2018/04/26 19:22:17 maxv Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.263 2018/04/26 19:50:09 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.262 2018/04/26 19:22:17 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.263 2018/04/26 19:50:09 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1316,7 +1316,7 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 		orig_resid = 0;
 		if (flags & MSG_PEEK) {
 			if (paddr)
-				*paddr = m_copy(m, 0, m->m_len);
+				*paddr = m_copym(m, 0, m->m_len, M_DONTWAIT);
 			m = m->m_next;
 		} else {
 			sbfree(&so->so_rcv, m);
@@ -1341,7 +1341,7 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 			orig_resid = 0;
 			if (flags & MSG_PEEK) {
 				if (paddr)
-					*paddr = m_copy(m, 0, m->m_len);
+					*paddr = m_copym(m, 0, m->m_len, M_DONTWAIT);
 				m = m->m_next;
 			} else {
 				sbfree(&so->so_rcv, m);
@@ -1370,7 +1370,7 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 		do {
 			if (flags & MSG_PEEK) {
 				if (controlp != NULL) {
-					*controlp = m_copy(m, 0, m->m_len);
+					*controlp = m_copym(m, 0, m->m_len, M_DONTWAIT);
 					controlp = &(*controlp)->m_next;
 				}
 				m = m->m_next;
