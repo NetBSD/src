@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.230 2018/04/14 17:55:47 maxv Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.231 2018/04/26 07:28:21 maxv Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.230 2018/04/14 17:55:47 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.231 2018/04/26 07:28:21 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -642,8 +642,7 @@ _icmp6_input(struct mbuf *m, int off, int proto)
 			/* Give up local */
 			n = m;
 			m = NULL;
-		} else if (M_READONLY(n) ||
-		    n->m_len < off + sizeof(struct icmp6_hdr)) {
+		} else if (M_UNWRITABLE(n, off + sizeof(struct icmp6_hdr))) {
 			struct mbuf *n0 = n;
 
 			/*
