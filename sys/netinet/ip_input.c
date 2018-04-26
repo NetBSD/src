@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.380 2018/04/15 07:35:49 maxv Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.381 2018/04/26 19:22:17 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.380 2018/04/15 07:35:49 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.381 2018/04/26 19:22:17 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1497,7 +1497,7 @@ ip_savecontrol(struct inpcb *inp, struct mbuf **mp, struct ip *ip,
 	int inpflags = inp->inp_flags;
 
 	if (SOOPT_TIMESTAMP(so->so_options))
-		mp = sbsavetimestamp(so->so_options, m, mp);
+		mp = sbsavetimestamp(so->so_options, mp);
 
 	if (inpflags & INP_RECVDSTADDR) {
 		*mp = sbcreatecontrol(&ip->ip_dst,
