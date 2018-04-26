@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls_50.c,v 1.3.56.6 2018/04/16 03:41:34 pgoyette Exp $	*/
+/*	$NetBSD: uipc_syscalls_50.c,v 1.3.56.7 2018/04/26 09:37:22 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_50.c,v 1.3.56.6 2018/04/16 03:41:34 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_50.c,v 1.3.56.7 2018/04/26 09:37:22 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -66,10 +66,19 @@ compat_ifdatareq(struct lwp *l, u_long cmd, void *data)
 	struct ifnet *ifp;
 	int error;
 
-	ifp = ifunit(ifdr->ifdr_name);
-	if (ifp == NULL)
-		return ENXIO;
+	/* Validate arguments. */
+	switch (cmd) {
+	case SIOCGIFDATA:
+	case SIOCZIFDATA:
+		ifp = ifunit(ifdr->ifdr_name);
+		if (ifp == NULL)
+			return ENXIO;
+		break;
+	default:
+		return ENOSYS;
+	}
 
+	/* Do work. */
 	switch (cmd) {
 	case SIOCGIFDATA:
 		ifdatan2o(&ifdr->ifdr_data, &ifp->if_data);
@@ -94,6 +103,7 @@ compat_ifdatareq(struct lwp *l, u_long cmd, void *data)
 		return 0;
 
 	default:
+		/* Impossible due to above validation, but makes gcc happy. */
 		return ENOSYS;
 	}
 }
