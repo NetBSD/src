@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.194 2018/04/27 07:53:07 maxv Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.195 2018/04/27 08:51:26 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -378,7 +378,6 @@ MBUF_DEFINE(mbuf, MHLEN, MLEN);
 #define	M_EXT_RW	0x08000000	/* ext storage is writable */
 
 /* for source-level compatibility */
-#define	M_CLUSTER	M_EXT_CLUSTER
 #define	M_NOTIFICATION	M_PROTO1
 
 #define M_FLAGS_BITS \
