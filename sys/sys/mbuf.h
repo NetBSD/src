@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.190 2018/04/26 19:13:34 maxv Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.191 2018/04/27 06:56:21 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -875,8 +875,6 @@ void	m_move_pkthdr(struct mbuf *, struct mbuf *);
 
 bool	m_ensure_contig(struct mbuf **, int);
 struct mbuf *m_add(struct mbuf *, struct mbuf *);
-void	m_align(struct mbuf *, int);
-int	m_append(struct mbuf *, int, const void *);
 
 /* Inline routines. */
 static __inline u_int m_length(const struct mbuf *) __unused;
