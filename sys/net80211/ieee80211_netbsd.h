@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_netbsd.h,v 1.19 2014/04/07 00:07:40 pooka Exp $ */
+/* $NetBSD: ieee80211_netbsd.h,v 1.20 2018/04/27 06:56:21 maxv Exp $ */
 /*-
  * Copyright (c) 2003-2005 Sam Leffler, Errno Consulting
  * All rights reserved.
@@ -248,5 +248,8 @@ void	ieee80211_init(void);
 	__link_set_add_text(ieee80211_funcs, name);		\
 	static void name(void)
 #endif
+
+void	m_align(struct mbuf *, int);
+int	m_append(struct mbuf *, int, const void *);
 
 #endif /* !_NET80211_IEEE80211_NETBSD_H_ */
