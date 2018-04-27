@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.203 2018/04/27 07:41:58 maxv Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.204 2018/04/27 07:53:07 maxv Exp $	*/
 
 /*
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.203 2018/04/27 07:41:58 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.204 2018/04/27 07:53:07 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
@@ -1750,7 +1750,7 @@ mowner_ref(struct mbuf *m, int flags)
 	mc = percpu_getref(mo->mo_counters);
 	if ((flags & M_EXT) != 0)
 		mc->mc_counter[MOWNER_COUNTER_EXT_CLAIMS]++;
-	if ((flags & M_CLUSTER) != 0)
+	if ((flags & M_EXT_CLUSTER) != 0)
 		mc->mc_counter[MOWNER_COUNTER_CLUSTER_CLAIMS]++;
 	percpu_putref(mo->mo_counters);
 	splx(s);
@@ -1767,7 +1767,7 @@ mowner_revoke(struct mbuf *m, bool all, int flags)
 	mc = percpu_getref(mo->mo_counters);
 	if ((flags & M_EXT) != 0)
 		mc->mc_counter[MOWNER_COUNTER_EXT_RELEASES]++;
-	if ((flags & M_CLUSTER) != 0)
+	if ((flags & M_EXT_CLUSTER) != 0)
 		mc->mc_counter[MOWNER_COUNTER_CLUSTER_RELEASES]++;
 	if (all)
 		mc->mc_counter[MOWNER_COUNTER_RELEASES]++;
@@ -1789,7 +1789,7 @@ mowner_claim(struct mbuf *m, struct mowner *mo)
 	mc->mc_counter[MOWNER_COUNTER_CLAIMS]++;
 	if ((flags & M_EXT) != 0)
 		mc->mc_counter[MOWNER_COUNTER_EXT_CLAIMS]++;
-	if ((flags & M_CLUSTER) != 0)
+	if ((flags & M_EXT_CLUSTER) != 0)
 		mc->mc_counter[MOWNER_COUNTER_CLUSTER_CLAIMS]++;
 	percpu_putref(mo->mo_counters);
 	splx(s);

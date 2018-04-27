@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.61 2017/11/11 21:03:01 riastradh Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.62 2018/04/27 07:53:07 maxv Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.61 2017/11/11 21:03:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.62 2018/04/27 07:53:07 maxv Exp $");
 
 #include "opt_xen.h"
 
@@ -1011,7 +1011,7 @@ xennetback_ifsoftstart_transfer(void *arg)
 			if (__predict_false(
 			    xennetback_get_mcl_page(&newp_ma) != 0))
 				break; /* out of memory */
-			if ((m->m_flags & M_CLUSTER) != 0 &&
+			if ((m->m_flags & M_EXT_CLUSTER) != 0 &&
 			    !M_READONLY(m) && MCLBYTES == PAGE_SIZE) {
 				/* we can give this page away */
 				xmit_pa = m->m_ext.ext_paddr;
