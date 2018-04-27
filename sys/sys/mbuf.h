@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.193 2018/04/27 07:41:58 maxv Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.194 2018/04/27 07:53:07 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -118,8 +118,8 @@ struct mowner {
 enum mowner_counter_index {
 	MOWNER_COUNTER_CLAIMS,		/* # of small mbuf claimed */
 	MOWNER_COUNTER_RELEASES,	/* # of small mbuf released */
-	MOWNER_COUNTER_CLUSTER_CLAIMS,	/* # of M_CLUSTER mbuf claimed */
-	MOWNER_COUNTER_CLUSTER_RELEASES,/* # of M_CLUSTER mbuf released */
+	MOWNER_COUNTER_CLUSTER_CLAIMS,	/* # of cluster mbuf claimed */
+	MOWNER_COUNTER_CLUSTER_RELEASES,/* # of cluster mbuf released */
 	MOWNER_COUNTER_EXT_CLAIMS,	/* # of M_EXT mbuf claimed */
 	MOWNER_COUNTER_EXT_RELEASES,	/* # of M_EXT mbuf released */
 
@@ -518,13 +518,13 @@ do {									\
 		MCLINITREFERENCE(m);					\
 		(m)->m_data = (m)->m_ext.ext_buf;			\
 		(m)->m_flags = ((m)->m_flags & ~M_EXTCOPYFLAGS) |	\
-				M_EXT|M_CLUSTER|M_EXT_RW;		\
+				M_EXT|M_EXT_CLUSTER|M_EXT_RW;		\
 		(m)->m_ext.ext_flags = 0;				\
 		(m)->m_ext.ext_size = (size);				\
 		(m)->m_ext.ext_free = NULL;				\
 		(m)->m_ext.ext_arg = (pool_cache);			\
 		/* ext_paddr initialized above */			\
-		mowner_ref((m), M_EXT|M_CLUSTER);			\
+		mowner_ref((m), M_EXT|M_EXT_CLUSTER);			\
 	}								\
 } while (/* CONSTCOND */ 0)
 
