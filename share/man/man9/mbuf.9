@@ -1,4 +1,4 @@
-.\"	$NetBSD: mbuf.9,v 1.61 2018/04/27 08:51:26 maxv Exp $
+.\"	$NetBSD: mbuf.9,v 1.62 2018/04/27 09:33:09 wiz Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -287,7 +287,8 @@ This function is an optimization of the common case
 .Li m_copym ( m , 0 , Dv M_COPYALL , Fa how ) .
 However, contrary to
 .Fn m_copym ,
-a header must be present. It is incorrect to use
+a header must be present.
+It is incorrect to use
 .Fn m_copypacket
 with an mbuf that does not have a header.
 .It Fn m_copydata "struct mbuf *m" "int off" "int len" "void *cp"
