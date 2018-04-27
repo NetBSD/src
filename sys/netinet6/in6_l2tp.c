@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_l2tp.c,v 1.14 2018/01/26 07:49:15 maxv Exp $	*/
+/*	$NetBSD: in6_l2tp.c,v 1.15 2018/04/27 09:55:28 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_l2tp.c,v 1.14 2018/01/26 07:49:15 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_l2tp.c,v 1.15 2018/04/27 09:55:28 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_l2tp.h"
@@ -202,9 +202,9 @@ in6_l2tp_output(struct l2tp_variant *var, struct mbuf *m)
 	memcpy(mtod(m, struct ip6_hdr *), &ip6hdr, sizeof(struct ip6_hdr));
 
 	lro = percpu_getref(sc->l2tp_ro_percpu);
-	mutex_enter(&lro->lr_lock);
+	mutex_enter(lro->lr_lock);
 	if ((rt = rtcache_lookup(&lro->lr_ro, var->lv_pdst)) == NULL) {
-		mutex_exit(&lro->lr_lock);
+		mutex_exit(lro->lr_lock);
 		percpu_putref(sc->l2tp_ro_percpu);
 		m_freem(m);
 		return ENETUNREACH;
@@ -214,7 +214,7 @@ in6_l2tp_output(struct l2tp_variant *var, struct mbuf *m)
 	if (rt->rt_ifp == ifp) {
 		rtcache_unref(rt, &lro->lr_ro);
 		rtcache_free(&lro->lr_ro);
-		mutex_exit(&lro->lr_lock);
+		mutex_exit(lro->lr_lock);
 		percpu_putref(sc->l2tp_ro_percpu);
 		m_freem(m);
 		return ENETUNREACH;	/* XXX */
@@ -228,7 +228,7 @@ in6_l2tp_output(struct l2tp_variant *var, struct mbuf *m)
 	m->m_pkthdr.csum_flags  = 0;
 
 	error = ip6_output(m, 0, &lro->lr_ro, 0, NULL, NULL, NULL);
-	mutex_exit(&lro->lr_lock);
+	mutex_exit(lro->lr_lock);
 	percpu_putref(sc->l2tp_ro_percpu);
 	return(error);
 

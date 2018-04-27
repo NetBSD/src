@@ -1,4 +1,4 @@
-/*	$NetBSD: if_l2tp.c,v 1.23 2018/04/10 11:44:13 knakahara Exp $	*/
+/*	$NetBSD: if_l2tp.c,v 1.24 2018/04/27 09:55:27 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.23 2018/04/10 11:44:13 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.24 2018/04/27 09:55:27 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -298,7 +298,7 @@ l2tp_ro_init_pc(void *p, void *arg __unused, struct cpu_info *ci __unused)
 {
 	struct l2tp_ro *lro = p;
 
-	mutex_init(&lro->lr_lock, MUTEX_DEFAULT, IPL_NONE);
+	lro->lr_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
 }
 
 void
@@ -308,7 +308,7 @@ l2tp_ro_fini_pc(void *p, void *arg __unused, struct cpu_info *ci __unused)
 
 	rtcache_free(&lro->lr_ro);
 
-	mutex_destroy(&lro->lr_lock);
+	mutex_obj_free(lro->lr_lock);
 }
 
 static int

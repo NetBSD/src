@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipsec.h,v 1.2 2018/04/19 21:20:43 christos Exp $  */
+/*	$NetBSD: if_ipsec.h,v 1.3 2018/04/27 09:55:27 knakahara Exp $  */
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -87,7 +87,7 @@ struct ipsec_variant {
 
 struct ipsec_ro {
 	struct route ir_ro;
-	kmutex_t ir_lock;
+	kmutex_t *ir_lock;
 };
 
 struct ipsec_softc {

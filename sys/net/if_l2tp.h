@@ -1,4 +1,4 @@
-/*	$NetBSD: if_l2tp.h,v 1.4 2018/04/19 21:20:43 christos Exp $	*/
+/*	$NetBSD: if_l2tp.h,v 1.5 2018/04/27 09:55:27 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -92,7 +92,7 @@ struct l2tp_variant {
 
 struct l2tp_ro {
 	struct route lr_ro;
-	kmutex_t lr_lock;
+	kmutex_t *lr_lock;
 };
 
 struct l2tp_softc {
