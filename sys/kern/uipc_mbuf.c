@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.198 2018/04/27 06:15:49 maxv Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.199 2018/04/27 06:27:36 maxv Exp $	*/
 
 /*
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.198 2018/04/27 06:15:49 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.199 2018/04/27 06:27:36 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
@@ -91,14 +91,14 @@ pool_cache_t mb_cache;	/* mbuf cache */
 pool_cache_t mcl_cache;	/* mbuf cluster cache */
 
 struct mbstat mbstat;
-int	max_linkhdr;
-int	max_protohdr;
-int	max_hdr;
-int	max_datalen;
+int max_linkhdr;
+int max_protohdr;
+int max_hdr;
+int max_datalen;
 
 static int mb_ctor(void *, void *, int);
 
-static void	sysctl_kern_mbuf_setup(void);
+static void sysctl_kern_mbuf_setup(void);
 
 static struct sysctllog *mbuf_sysctllog;
 
@@ -257,21 +257,21 @@ sysctl_kern_mbuf(SYSCTLFN_ARGS)
 		newval = *(int*)rnode->sysctl_data;
 		break;
 	default:
-		return (EOPNOTSUPP);
+		return EOPNOTSUPP;
 	}
 
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if (error || newp == NULL)
-		return (error);
+		return error;
 	if (newval < 0)
-		return (EINVAL);
+		return EINVAL;
 
 	switch (node.sysctl_num) {
 	case MBUF_NMBCLUSTERS:
 		if (newval < nmbclusters)
-			return (EINVAL);
+			return EINVAL;
 		if (newval > nmbclusters_limit())
-			return (EINVAL);
+			return EINVAL;
 		nmbclusters = newval;
 		pool_cache_sethardlimit(mcl_cache, nmbclusters,
 		    mclpool_warnmsg, 60);
@@ -286,7 +286,7 @@ sysctl_kern_mbuf(SYSCTLFN_ARGS)
 		break;
 	}
 
-	return (0);
+	return 0;
 }
 
 #ifdef MBUFTRACE
@@ -322,9 +322,9 @@ sysctl_kern_mbuf_mowners(SYSCTLFN_ARGS)
 	int error = 0;
 
 	if (namelen != 0)
-		return (EINVAL);
+		return EINVAL;
 	if (newp != NULL)
-		return (EPERM);
+		return EPERM;
 
 	LIST_FOREACH(mo, &mowners, mo_link) {
 		struct mowner_user mo_user;
@@ -347,7 +347,7 @@ sysctl_kern_mbuf_mowners(SYSCTLFN_ARGS)
 	if (error == 0)
 		*oldlenp = len;
 
-	return (error);
+	return error;
 }
 #endif /* MBUFTRACE */
 
@@ -440,7 +440,7 @@ sysctl_kern_mbuf_setup(void)
 		       SYSCTL_DESCR("Information about mbuf owners"),
 		       sysctl_kern_mbuf_mowners, 0, NULL, 0,
 		       CTL_KERN, KERN_MBUF, MBUF_MOWNERS, CTL_EOL);
-#endif /* MBUFTRACE */
+#endif
 }
 
 static int
@@ -453,7 +453,7 @@ mb_ctor(void *arg, void *object, int flags)
 #else
 	m->m_paddr = M_PADDR_INVALID;
 #endif
-	return (0);
+	return 0;
 }
 
 void
@@ -593,11 +593,6 @@ m_reclaim(void *arg, int flags)
 	KERNEL_UNLOCK_ONE(NULL);
 }
 
-/*
- * Space allocation routines.
- * These are also available as macros
- * for critical paths.
- */
 struct mbuf *
 m_get(int nowait, int type)
 {
@@ -670,10 +665,6 @@ m_claimm(struct mbuf *m, struct mowner *mo)
 #endif
 
 /*
- * Mbuffer utility routines.
- */
-
-/*
  * Utility function for M_PREPEND. Do *NOT* use it directly.
  */
 struct mbuf *
@@ -712,11 +703,6 @@ m_prepend(struct mbuf *m, int len, int how)
 	return m;
 }
 
-/*
- * Make a copy of an mbuf chain starting "off0" bytes from the beginning,
- * continuing for "len" bytes.  If len is M_COPYALL, copy to end of mbuf.
- * The wait parameter is a choice of M_WAIT/M_DONTWAIT from caller.
- */
 struct mbuf *
 m_copym(struct mbuf *m, int off, int len, int wait)
 {
@@ -751,7 +737,7 @@ m_copy_internal(struct mbuf *m, int off0, int len, int wait, bool deep)
 		copyhdr = 1;
 	while (off > 0) {
 		if (m == NULL)
-			panic("%s: m == 0, off %d", __func__, off);
+			panic("%s: m == NULL, off %d", __func__, off);
 		if (off < m->m_len)
 			break;
 		off -= m->m_len;
@@ -809,10 +795,9 @@ m_copy_internal(struct mbuf *m, int off0, int len, int wait, bool deep)
 		if (len != M_COPYALL)
 			len -= n->m_len;
 		off += n->m_len;
-#ifdef DIAGNOSTIC
-		if (off > m->m_len)
-			panic("%s overrun %d %d", __func__, off, m->m_len);
-#endif
+
+		KASSERT(off <= m->m_len);
+
 		if (off == m->m_len) {
 			m = m->m_next;
 			off = 0;
@@ -882,10 +867,6 @@ nospace:
 	return NULL;
 }
 
-/*
- * Copy data from an mbuf chain starting "off" bytes from the beginning,
- * continuing for "len" bytes, into the indicated buffer.
- */
 void
 m_copydata(struct mbuf *m, int off, int len, void *vp)
 {
@@ -1144,10 +1125,10 @@ m_copyup(struct mbuf *n, int len, int dstoff)
 		goto bad;
 	}
 	m->m_next = n;
-	return (m);
+	return m;
  bad:
 	m_freem(n);
-	return (NULL);
+	return NULL;
 }
 
 struct mbuf *
@@ -1603,7 +1584,9 @@ extend:
 		mp = &m->m_next;
 		m = m->m_next;
 	}
-out:	if (((m = *mp0)->m_flags & M_PKTHDR) && (m->m_pkthdr.len < totlen)) {
+
+out:
+	if (((m = *mp0)->m_flags & M_PKTHDR) && (m->m_pkthdr.len < totlen)) {
 		KASSERT((flags & CB_EXTEND) != 0);
 		m->m_pkthdr.len = totlen;
 	}
