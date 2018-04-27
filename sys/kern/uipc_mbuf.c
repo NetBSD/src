@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.200 2018/04/27 06:36:16 maxv Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.201 2018/04/27 06:56:21 maxv Exp $	*/
 
 /*
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.200 2018/04/27 06:36:16 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.201 2018/04/27 06:56:21 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
@@ -486,75 +486,6 @@ m_add(struct mbuf *c, struct mbuf *m)
 		continue;
 	n->m_next = m;
 	return c;
-}
-
-/*
- * Set the m_data pointer of a newly-allocated mbuf
- * to place an object of the specified size at the
- * end of the mbuf, longword aligned.
- */
-void
-m_align(struct mbuf *m, int len)
-{
-	int adjust;
-
-	KASSERT(len != M_COPYALL);
-
-	if (m->m_flags & M_EXT)
-		adjust = m->m_ext.ext_size - len;
-	else if (m->m_flags & M_PKTHDR)
-		adjust = MHLEN - len;
-	else
-		adjust = MLEN - len;
-	m->m_data += adjust &~ (sizeof(long)-1);
-}
-
-/*
- * Append the specified data to the indicated mbuf chain,
- * Extend the mbuf chain if the new data does not fit in
- * existing space.
- *
- * Return 1 if able to complete the job; otherwise 0.
- */
-int
-m_append(struct mbuf *m0, int len, const void *cpv)
-{
-	struct mbuf *m, *n;
-	int remainder, space;
-	const char *cp = cpv;
-
-	KASSERT(len != M_COPYALL);
-	for (m = m0; m->m_next != NULL; m = m->m_next)
-		continue;
-	remainder = len;
-	space = M_TRAILINGSPACE(m);
-	if (space > 0) {
-		/*
-		 * Copy into available space.
-		 */
-		if (space > remainder)
-			space = remainder;
-		memmove(mtod(m, char *) + m->m_len, cp, space);
-		m->m_len += space;
-		cp = cp + space, remainder -= space;
-	}
-	while (remainder > 0) {
-		/*
-		 * Allocate a new mbuf; could check space
-		 * and allocate a cluster instead.
-		 */
-		n = m_get(M_DONTWAIT, m->m_type);
-		if (n == NULL)
-			break;
-		n->m_len = min(MLEN, remainder);
-		memmove(mtod(n, void *), cp, n->m_len);
-		cp += n->m_len, remainder -= n->m_len;
-		m->m_next = n;
-		m = n;
-	}
-	if (m0->m_flags & M_PKTHDR)
-		m0->m_pkthdr.len += len - remainder;
-	return (remainder == 0);
 }
 
 void
