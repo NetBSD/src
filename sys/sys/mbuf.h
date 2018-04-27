@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.196 2018/04/27 09:22:28 maxv Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.197 2018/04/27 16:32:03 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -259,7 +259,6 @@ struct pkthdr {
  */
 struct _m_ext_storage {
 	unsigned int ext_refcnt;
-	int ext_flags;
 	char *ext_buf;			/* start of buffer */
 	void (*ext_free)		/* free routine if not the usual */
 		(struct mbuf *, void *, size_t, void *);
@@ -511,14 +510,12 @@ do {									\
 
 #define	MEXTMALLOC(m, size, how)					\
 do {									\
-	(m)->m_ext_storage.ext_buf = (char *)				\
-	    malloc((size), mbtypes[(m)->m_type], (how));		\
+	(m)->m_ext_storage.ext_buf = malloc((size), 0, (how));		\
 	if ((m)->m_ext_storage.ext_buf != NULL) {			\
 		MCLINITREFERENCE(m);					\
 		(m)->m_data = (m)->m_ext.ext_buf;			\
 		(m)->m_flags = ((m)->m_flags & ~M_EXTCOPYFLAGS) |	\
 				M_EXT|M_EXT_RW;				\
-		(m)->m_ext.ext_flags = 0;				\
 		(m)->m_ext.ext_size = (size);				\
 		(m)->m_ext.ext_free = NULL;				\
 		(m)->m_ext.ext_arg = NULL;				\
@@ -531,7 +528,6 @@ do {									\
 	MCLINITREFERENCE(m);						\
 	(m)->m_data = (m)->m_ext.ext_buf = (char *)(buf);		\
 	(m)->m_flags = ((m)->m_flags & ~M_EXTCOPYFLAGS) | M_EXT;	\
-	(m)->m_ext.ext_flags = 0;					\
 	(m)->m_ext.ext_size = (size);					\
 	(m)->m_ext.ext_free = (free);					\
 	(m)->m_ext.ext_arg = (arg);					\
