@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.199 2018/04/27 06:27:36 maxv Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.200 2018/04/27 06:36:16 maxv Exp $	*/
 
 /*
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.199 2018/04/27 06:27:36 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.200 2018/04/27 06:36:16 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
@@ -868,14 +868,13 @@ nospace:
 }
 
 void
-m_copydata(struct mbuf *m, int off, int len, void *vp)
+m_copydata(struct mbuf *m, int off, int len, void *cp)
 {
-	unsigned count;
-	void *cp = vp;
+	unsigned int count;
 	struct mbuf *m0 = m;
 	int len0 = len;
 	int off0 = off;
-	void *vp0 = vp;
+	void *cp0 = cp;
 
 	KASSERT(len != M_COPYALL);
 	if (off < 0 || len < 0)
@@ -883,7 +882,7 @@ m_copydata(struct mbuf *m, int off, int len, void *vp)
 	while (off > 0) {
 		if (m == NULL)
 			panic("m_copydata(%p,%d,%d,%p): m=NULL, off=%d (%d)",
-			    m0, len0, off0, vp0, off, off0 - off);
+			    m0, len0, off0, cp0, off, off0 - off);
 		if (off < m->m_len)
 			break;
 		off -= m->m_len;
@@ -893,7 +892,7 @@ m_copydata(struct mbuf *m, int off, int len, void *vp)
 		if (m == NULL)
 			panic("m_copydata(%p,%d,%d,%p): "
 			    "m=NULL, off=%d (%d), len=%d (%d)",
-			    m0, len0, off0, vp0,
+			    m0, len0, off0, cp0,
 			    off, off0 - off, len, len0 - len);
 		count = min(m->m_len - off, len);
 		memcpy(cp, mtod(m, char *) + off, count);
