@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.201 2018/04/27 06:56:21 maxv Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.202 2018/04/27 07:20:33 maxv Exp $	*/
 
 /*
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.201 2018/04/27 06:56:21 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.202 2018/04/27 07:20:33 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
@@ -1525,6 +1525,18 @@ out:
 
 enobufs:
 	return ENOBUFS;
+}
+
+void
+m_copy_pkthdr(struct mbuf *to, struct mbuf *from)
+{
+	KASSERT((from->m_flags & M_PKTHDR) != 0);
+
+	to->m_pkthdr = from->m_pkthdr;
+	to->m_flags = from->m_flags & M_COPYFLAGS;
+	SLIST_INIT(&to->m_pkthdr.tags);
+	m_tag_copy_chain(to, from);
+	to->m_data = to->m_pktdat;
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.191 2018/04/27 06:56:21 maxv Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.192 2018/04/27 07:20:33 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -575,24 +575,7 @@ do {									\
 		(m)->m_data = (m)->m_dat;				\
 } while (/* CONSTCOND */ 0)
 
-/*
- * Copy mbuf pkthdr from `from' to `to'.
- * `from' must have M_PKTHDR set, and `to' must be empty.
- */
-#define	M_COPY_PKTHDR(to, from)						\
-do {									\
-	KASSERT(((from)->m_flags & M_PKTHDR) != 0);			\
-	(to)->m_pkthdr = (from)->m_pkthdr;				\
-	(to)->m_flags = (from)->m_flags & M_COPYFLAGS;			\
-	SLIST_INIT(&(to)->m_pkthdr.tags);				\
-	m_tag_copy_chain((to), (from));					\
-	(to)->m_data = (to)->m_pktdat;					\
-} while (/* CONSTCOND */ 0)
-
-/*
- * Move mbuf pkthdr from `from' to `to'.
- * `from' must have M_PKTHDR set, and `to' must be empty.
- */
+#define	M_COPY_PKTHDR(to, from)	m_copy_pkthdr(to, from)
 #define	M_MOVE_PKTHDR(to, from)	m_move_pkthdr(to, from)
 
 /*
@@ -871,6 +854,7 @@ struct	mbuf *m_free(struct mbuf *);
 void	m_freem(struct mbuf *);
 void	m_reclaim(void *, int);
 void	mbinit(void);
+void	m_copy_pkthdr(struct mbuf *, struct mbuf *);
 void	m_move_pkthdr(struct mbuf *, struct mbuf *);
 
 bool	m_ensure_contig(struct mbuf **, int);
