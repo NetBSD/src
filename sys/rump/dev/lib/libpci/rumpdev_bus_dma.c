@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpdev_bus_dma.c,v 1.5 2015/06/15 15:38:52 pooka Exp $	*/
+/*	$NetBSD: rumpdev_bus_dma.c,v 1.6 2018/04/27 08:51:26 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2013 Antti Kantee
@@ -318,8 +318,8 @@ bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map,
 #ifdef POOL_VTOPHYS
 		/* XXX Could be better about coalescing. */
 		/* XXX Doesn't check boundaries. */
-		switch (m->m_flags & (M_EXT|M_CLUSTER)) {
-		case M_EXT|M_CLUSTER:
+		switch (m->m_flags & (M_EXT|M_EXT_CLUSTER)) {
+		case M_EXT|M_EXT_CLUSTER:
 			/* XXX KDASSERT */
 			KASSERT(m->m_ext.ext_paddr != M_PADDR_INVALID);
 			lastaddr = m->m_ext.ext_paddr +
