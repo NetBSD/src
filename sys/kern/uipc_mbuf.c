@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.208 2018/04/27 16:32:03 maxv Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.209 2018/04/27 18:40:40 maxv Exp $	*/
 
 /*
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.208 2018/04/27 16:32:03 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.209 2018/04/27 18:40:40 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
@@ -1942,7 +1942,7 @@ m_ext_free(struct mbuf *m)
 			 */
 			dofree = false;
 		} else {
-			free(m->m_ext.ext_buf, m->m_ext.ext_type);
+			free(m->m_ext.ext_buf, 0);
 		}
 	}
 
