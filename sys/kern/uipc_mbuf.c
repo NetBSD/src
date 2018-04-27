@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.197 2018/04/26 19:13:34 maxv Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.198 2018/04/27 06:15:49 maxv Exp $	*/
 
 /*
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.197 2018/04/26 19:13:34 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.198 2018/04/27 06:15:49 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
@@ -835,6 +835,10 @@ struct mbuf *
 m_copypacket(struct mbuf *m, int how)
 {
 	struct mbuf *top, *n, *o;
+
+	if (__predict_false((m->m_flags & M_PKTHDR) == 0)) {
+		panic("%s: no header (m = %p)", __func__, m);
+	}
 
 	n = m_get(how, m->m_type);
 	top = n;
