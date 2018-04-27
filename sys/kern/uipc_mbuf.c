@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.202 2018/04/27 07:20:33 maxv Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.203 2018/04/27 07:41:58 maxv Exp $	*/
 
 /*
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.202 2018/04/27 07:20:33 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.203 2018/04/27 07:41:58 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
@@ -96,6 +96,7 @@ int max_protohdr;
 int max_hdr;
 int max_datalen;
 
+static void mb_drain(void *, int);
 static int mb_ctor(void *, void *, int);
 
 static void sysctl_kern_mbuf_setup(void);
@@ -191,8 +192,8 @@ mbinit(void)
 	    IPL_VM, NULL, NULL, NULL);
 	KASSERT(mcl_cache != NULL);
 
-	pool_cache_set_drain_hook(mb_cache, m_reclaim, NULL);
-	pool_cache_set_drain_hook(mcl_cache, m_reclaim, NULL);
+	pool_cache_set_drain_hook(mb_cache, mb_drain, NULL);
+	pool_cache_set_drain_hook(mcl_cache, mb_drain, NULL);
 
 	/*
 	 * Set an arbitrary default limit on the number of mbuf clusters.
@@ -235,6 +236,42 @@ mbinit(void)
 			MOWNER_ATTACH(&unknown_mowners[i]);
 	}
 #endif
+}
+
+static void
+mb_drain(void *arg, int flags)
+{
+	struct domain *dp;
+	const struct protosw *pr;
+	struct ifnet *ifp;
+	int s;
+
+	KERNEL_LOCK(1, NULL);
+	s = splvm();
+	DOMAIN_FOREACH(dp) {
+		for (pr = dp->dom_protosw;
+		     pr < dp->dom_protoswNPROTOSW; pr++)
+			if (pr->pr_drain)
+				(*pr->pr_drain)();
+	}
+	/* XXX we cannot use psref in H/W interrupt */
+	if (!cpu_intr_p()) {
+		int bound = curlwp_bind();
+		IFNET_READER_FOREACH(ifp) {
+			struct psref psref;
+
+			if_acquire(ifp, &psref);
+
+			if (ifp->if_drain)
+				(*ifp->if_drain)(ifp);
+
+			if_release(ifp, &psref);
+		}
+		curlwp_bindx(bound);
+	}
+	splx(s);
+	mbstat.m_drain++;
+	KERNEL_UNLOCK_ONE(NULL);
 }
 
 /*
@@ -486,42 +523,6 @@ m_add(struct mbuf *c, struct mbuf *m)
 		continue;
 	n->m_next = m;
 	return c;
-}
-
-void
-m_reclaim(void *arg, int flags)
-{
-	struct domain *dp;
-	const struct protosw *pr;
-	struct ifnet *ifp;
-	int s;
-
-	KERNEL_LOCK(1, NULL);
-	s = splvm();
-	DOMAIN_FOREACH(dp) {
-		for (pr = dp->dom_protosw;
-		     pr < dp->dom_protoswNPROTOSW; pr++)
-			if (pr->pr_drain)
-				(*pr->pr_drain)();
-	}
-	/* XXX we cannot use psref in H/W interrupt */
-	if (!cpu_intr_p()) {
-		int bound = curlwp_bind();
-		IFNET_READER_FOREACH(ifp) {
-			struct psref psref;
-
-			if_acquire(ifp, &psref);
-
-			if (ifp->if_drain)
-				(*ifp->if_drain)(ifp);
-
-			if_release(ifp, &psref);
-		}
-		curlwp_bindx(bound);
-	}
-	splx(s);
-	mbstat.m_drain++;
-	KERNEL_UNLOCK_ONE(NULL);
 }
 
 struct mbuf *
