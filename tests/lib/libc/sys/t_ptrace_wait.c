@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.32 2018/04/15 00:19:23 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.33 2018/04/27 21:36:45 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.32 2018/04/15 00:19:23 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.33 2018/04/27 21:36:45 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -81,18 +81,10 @@ static int debug = 0;
 	if (debug) printf(a,  ##__VA_ARGS__); \
     while (/*CONSTCOND*/0)
 
-
-ATF_TC(traceme1);
-ATF_TC_HEAD(traceme1, tc)
-{
-	atf_tc_set_md_var(tc, "descr",
-	    "Verify SIGSTOP followed by _exit(2) in a child");
-}
-
-ATF_TC_BODY(traceme1, tc)
+static void
+traceme_raise(int sigval)
 {
 	const int exitval = 5;
-	const int sigval = SIGSTOP;
 	pid_t child, wpid;
 #if defined(TWAIT_HAVE_STATUS)
 	int status;
@@ -129,6 +121,26 @@ ATF_TC_BODY(traceme1, tc)
 	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
+
+#define TRACEME_RAISE(test, sig)						\
+ATF_TC(test);									\
+ATF_TC_HEAD(test, tc)								\
+{										\
+	atf_tc_set_md_var(tc, "descr",						\
+	    "Verify " #sig " followed by _exit(2) in a child");			\
+}										\
+										\
+ATF_TC_BODY(test, tc)								\
+{										\
+										\
+	traceme_raise(sig);							\
+}
+
+//TRACEME_RAISE(traceme_raise1, SIGKILL) /* non-maskable */ // not yet
+TRACEME_RAISE(traceme_raise2, SIGSTOP) /* non-maskable */
+TRACEME_RAISE(traceme_raise3, SIGABRT) /* regular abort trap */
+TRACEME_RAISE(traceme_raise4, SIGHUP)  /* hangup */
+TRACEME_RAISE(traceme_raise5, SIGCONT) /* continued? */
 
 ATF_TC(traceme2);
 ATF_TC_HEAD(traceme2, tc)
@@ -241,66 +253,6 @@ ATF_TC_BODY(traceme3, tc)
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_signaled(status, sigsent, 0);
-
-	DPRINTF("Before calling %s() for the exited child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
-}
-
-ATF_TC(traceme4);
-ATF_TC_HEAD(traceme4, tc)
-{
-	atf_tc_set_md_var(tc, "descr",
-	    "Verify SIGSTOP followed by SIGCONT and _exit(2) in a child");
-}
-
-ATF_TC_BODY(traceme4, tc)
-{
-	const int exitval = 5;
-	const int sigval = SIGSTOP, sigsent = SIGCONT;
-	pid_t child, wpid;
-#if defined(TWAIT_HAVE_STATUS)
-	int status;
-#endif
-
-	DPRINTF("Before forking process PID=%d\n", getpid());
-	SYSCALL_REQUIRE((child = fork()) != -1);
-	if (child == 0) {
-		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
-		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
-
-		DPRINTF("Before raising %s from child\n", strsignal(sigval));
-		FORKEE_ASSERT(raise(sigval) == 0);
-
-		DPRINTF("Before raising %s from child\n", strsignal(sigsent));
-		FORKEE_ASSERT(raise(sigsent) == 0);
-
-		DPRINTF("Before exiting of the child process\n");
-		_exit(exitval);
-	}
-	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(),child);
-
-	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_stopped(status, sigval);
-
-	DPRINTF("Before resuming the child process where it left off and "
-	    "without signal to be sent\n");
-	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
-
-	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_stopped(status, sigsent);
-
-	DPRINTF("Before resuming the child process where it left off and "
-	    "without signal to be sent\n");
-	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
-
-	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_exited(status, exitval);
 
 	DPRINTF("Before calling %s() for the exited child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
@@ -6751,10 +6703,15 @@ ATF_TP_ADD_TCS(tp)
 {
 	setvbuf(stdout, NULL, _IONBF, 0);
 	setvbuf(stderr, NULL, _IONBF, 0);
-	ATF_TP_ADD_TC(tp, traceme1);
+
+//	ATF_TP_ADD_TC(tp, traceme_raise1); // not yet
+	ATF_TP_ADD_TC(tp, traceme_raise2);
+	ATF_TP_ADD_TC(tp, traceme_raise3);
+	ATF_TP_ADD_TC(tp, traceme_raise4);
+	ATF_TP_ADD_TC(tp, traceme_raise5);
+
 	ATF_TP_ADD_TC(tp, traceme2);
 	ATF_TP_ADD_TC(tp, traceme3);
-	ATF_TP_ADD_TC(tp, traceme4);
 
 	ATF_TP_ADD_TC_HAVE_PID(tp, attach1);
 	ATF_TP_ADD_TC_HAVE_PID(tp, attach2);
