@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace_common.c,v 1.36 2018/04/08 14:46:32 kamil Exp $	*/
+/*	$NetBSD: sys_ptrace_common.c,v 1.37 2018/04/27 16:50:56 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.36 2018/04/08 14:46:32 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.37 2018/04/27 16:50:56 kamil Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -1020,12 +1020,21 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 		t->p_opptr = t->p_pptr;
 		break;
 
-	case PT_WRITE_I:		/* XXX no separate I and D spaces */
+	/*
+	 * The I and D separate address space has been inherited from PDP-11.
+	 * The 16-bit UNIX started with a single address space per program,
+	 * but was extended to two 16-bit (2 x 64kb) address spaces.
+	 *
+	 * We no longer maintain this feature in maintained architectures, but
+	 * we keep the API for backward compatiblity. Currently the I and D
+	 * operations are exactly the same and not distinguished in debuggers.
+	 */
+	case PT_WRITE_I:
 	case PT_WRITE_D:
 		write = 1;
 		tmp = data;
 		/* FALLTHROUGH */
-	case PT_READ_I:			/* XXX no separate I and D spaces */
+	case PT_READ_I:
 	case PT_READ_D:
 		piod.piod_addr = &tmp;
 		piod.piod_len = sizeof(tmp);
