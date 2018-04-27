@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.206 2018/04/27 09:22:28 maxv Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.207 2018/04/27 16:18:40 maxv Exp $	*/
 
 /*
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.206 2018/04/27 09:22:28 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.207 2018/04/27 16:18:40 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
@@ -591,7 +591,7 @@ m_clget(struct mbuf *m, int nowait)
 	m->m_ext.ext_flags = 0;
 	m->m_ext.ext_size = MCLBYTES;
 	m->m_ext.ext_free = NULL;
-	m->m_ext.ext_arg = mcl_cache;
+	m->m_ext.ext_arg = NULL;
 	/* ext_paddr initialized above */
 
 	mowner_ref(m, M_EXT|M_EXT_CLUSTER);
@@ -1932,8 +1932,7 @@ m_ext_free(struct mbuf *m)
 			m_ext_free(m->m_ext_ref);
 			m->m_ext_ref = m;
 		} else if ((m->m_flags & M_EXT_CLUSTER) != 0) {
-			pool_cache_put_paddr((struct pool_cache *)
-			    m->m_ext.ext_arg,
+			pool_cache_put_paddr(mcl_cache,
 			    m->m_ext.ext_buf, m->m_ext.ext_paddr);
 		} else if (m->m_ext.ext_free) {
 			(*m->m_ext.ext_free)(m,
