@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.3 2018/04/01 04:35:03 ryo Exp $ */
+/* $NetBSD: db_machdep.h,v 1.4 2018/04/27 09:05:26 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -118,51 +118,65 @@ static inline bool
 inst_load(db_expr_t insn)
 {
 	return
-	    ((((insn) & 0x3b000000) == 0x18000000) || /* literal */
-	     (((insn) & 0x3f400000) == 0x08400000) || /* exclusive */
-	     (((insn) & 0x3bc00000) == 0x28400000) || /* no-allocate pair */
-	     ((((insn) & 0x3b200c00) == 0x38000400) &&
-	      (((insn) & 0x3be00c00) != 0x38000400) &&
-	      (((insn) & 0xffe00c00) != 0x3c800400)) || /* imm post-indexed */
-	     ((((insn) & 0x3b200c00) == 0x38000c00) &&
-	      (((insn) & 0x3be00c00) != 0x38000c00) &&
-	      (((insn) & 0xffe00c00) != 0x3c800c00)) || /* imm pre-indexed */
-	     ((((insn) & 0x3b200c00) == 0x38200800) &&
-	      (((insn) & 0x3be00c00) != 0x38200800) &&
-	      (((insn) & 0xffe00c00) != 0x3ca00c80)) || /* register offset */
-	     ((((insn) & 0x3b200c00) == 0x38000800) &&
-	      (((insn) & 0x3be00c00) != 0x38000800)) || /* unprivileged */
-	     ((((insn) & 0x3b200c00) == 0x38000000) &&
-	      (((insn) & 0x3be00c00) != 0x38000000) &&
-	      (((insn) & 0xffe00c00) != 0x3c800000)) || /* unscaled imm */
-	     ((((insn) & 0x3b000000) == 0x39000000) &&
-	      (((insn) & 0x3bc00000) != 0x39000000) &&
-	      (((insn) & 0xffc00000) != 0x3d800000)) || /* unsigned imm */
-	     (((insn) & 0x3bc00000) == 0x28400000) || /* pair (offset) */
-	     (((insn) & 0x3bc00000) == 0x28c00000) || /* pair (post-indexed) */
-	     (((insn) & 0x3bc00000) == 0x29800000)); /* pair (pre-indexed) */
+	    ((insn & 0xffe00c00) == 0xb8800000) ||	/* ldursw */
+	    /* ldrsw imm{preidx,postidx} */
+	    ((insn & 0xffe00400) == 0xb8800c00) ||
+	    ((insn & 0xffc00c00) == 0xb8a00800) ||	/* ldrsw reg,ldtrsw */
+	    ((insn & 0xffc00000) == 0xb9800000) ||	/* ldrsw immunsign */
+	    ((insn & 0xffc00000) == 0x39400000) ||	/* ldrb immunsign */
+	    ((insn & 0xff000000) == 0x98000000) ||	/* ldrsw literal */
+	    /* ldpsw {preidx,postidx} */
+	    ((insn & 0xfec00000) == 0x69c00000) ||
+	    /* ldrh immunsign,ldpsw signed */
+	    ((insn & 0xefc00000) == 0x79400000) ||
+	    ((insn & 0xbffffc00) == 0x885f7c00) ||	/* ldxr */
+	    ((insn & 0xbffffc00) == 0x485f7c00) ||	/* ldxr[bh] */
+	    ((insn & 0xbfff0000) == 0x887f8000) ||	/* ldaxp,ldxp */
+	    ((insn & 0xbfe00c00) == 0xb8400000) ||	/* ldur */
+	    ((insn & 0xbfe00c00) == 0x78400000) ||	/* ldur[bh] */
+	    /* ldr imm{preidx,postidx} */
+	    ((insn & 0xbfe00400) == 0xb8400c00) ||
+	    /* ldr[bh] imm{preidx,postidx} */
+	    ((insn & 0xbfe00400) == 0x78400c00) ||
+	    ((insn & 0xbfc00c00) == 0xb8600800) ||	/* ldr reg,ldtr */
+	    /* ldr[bh] reg,ldtr[bh] */
+	    ((insn & 0xbfc00c00) == 0x78600800) ||
+	    ((insn & 0xbfc00000) == 0xb9400000) ||	/* ldr immunsign */
+	    ((insn & 0xbfa00c00) == 0x78800000) ||	/* ldursh,ldursb */
+	    /* ldrs[bh] imm{preidx,postidx} */
+	    ((insn & 0xbfa00400) == 0x78800c00) ||
+	    /* ldrs[bh] reg,ldtrs[bh] */
+	    ((insn & 0xbf800c00) == 0x78a00800) ||
+	    ((insn & 0xbf800000) == 0x79800000) ||	/* ldrs[bh] immunsign */
+	    ((insn & 0xbf7ffc00) == 0x88dffc00) ||	/* ldar,ldaxr */
+	    ((insn & 0xbf7ffc00) == 0x48dffc00) ||	/* ldar[bh],ldaxr[bh] */
+	    ((insn & 0xbf000000) == 0x18000000) ||	/* ldr literal */
+	    /* ldp {preidx,postidx,signed},ldnp */
+	    ((insn & 0x7e400000) == 0x29c00000);
 }
 
 static inline bool
 inst_store(db_expr_t insn)
 {
 	return
-	    ((((insn) & 0x3f400000) == 0x08000000) || /* exclusive */
-	     (((insn) & 0x3bc00000) == 0x28000000) || /* no-allocate pair */
-	     ((((insn) & 0x3be00c00) == 0x38000400) ||
-	      (((insn) & 0xffe00c00) == 0x3c800400)) || /* imm post-indexed */
-	     ((((insn) & 0x3be00c00) == 0x38000c00) ||
-	      (((insn) & 0xffe00c00) == 0x3c800c00)) || /* imm pre-indexed */
-	     ((((insn) & 0x3be00c00) == 0x38200800) ||
-	      (((insn) & 0xffe00c00) == 0x3ca00800)) || /* register offset */
-	     (((insn) & 0x3be00c00) == 0x38000800) ||  /* unprivileged */
-	     ((((insn) & 0x3be00c00) == 0x38000000) ||
-	      (((insn) & 0xffe00c00) == 0x3c800000)) || /* unscaled imm */
-	     ((((insn) & 0x3bc00000) == 0x39000000) ||
-	      (((insn) & 0xffc00000) == 0x3d800000)) || /* unsigned imm */
-	     (((insn) & 0x3bc00000) == 0x28000000) || /* pair (offset) */
-	     (((insn) & 0x3bc00000) == 0x28800000) || /* pair (post-indexed) */
-	     (((insn) & 0x3bc00000) == 0x29800000)); /* pair (pre-indexed) */
+	    ((insn & 0xbffffc00) == 0x889ffc00) ||	/* stlr */
+	    ((insn & 0xbffffc00) == 0x489ffc00) ||	/* stlr[bh] */
+	    ((insn & 0xbfe07c00) == 0x8800fc00) ||	/* stlxr,stxr */
+	    ((insn & 0xbfe07c00) == 0x4800fc00) ||	/* stlxr[bh],stxr[bh] */
+	    ((insn & 0xbfe00c00) == 0xb8000000) ||	/* stur */
+	    ((insn & 0xbfe00c00) == 0x78000000) ||	/* stur[bh] */
+	    /* str imm{preidx,postidx} */
+	    ((insn & 0xbfe00400) == 0xb8000c00) ||
+	    /* str[bh] imm{preidx,postidx} */
+	    ((insn & 0xbfe00400) == 0x78000c00) ||
+	    ((insn & 0xbfe00000) == 0x88208000) ||	/* stlxp,stxp */
+	    ((insn & 0xbfc00c00) == 0xb8200800) ||	/* str reg,sttr */
+	    /* str[bh] reg,sttr[bh] */
+	    ((insn & 0xbfc00c00) == 0x78200800) ||
+	    ((insn & 0xbfc00000) == 0xb9000000) ||	/* str immunsign */
+	    ((insn & 0xbfc00000) == 0x79000000) ||	/* str[bh] immunsign */
+	    /* stp {preidx,postidx,signed},stnp */
+	    ((insn & 0x7e400000) == 0x29800000);
 }
 
 #define SOFTWARE_SSTEP
