@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.204 2018/04/27 07:53:07 maxv Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.205 2018/04/27 08:23:18 maxv Exp $	*/
 
 /*
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.204 2018/04/27 07:53:07 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.205 2018/04/27 08:23:18 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
@@ -388,6 +388,19 @@ sysctl_kern_mbuf_mowners(SYSCTLFN_ARGS)
 }
 #endif /* MBUFTRACE */
 
+void
+mbstat_type_add(int type, int diff)
+{
+	struct mbstat_cpu *mb;
+	int s;
+
+	s = splvm();
+	mb = percpu_getref(mbstat_percpu);
+	mb->m_mtypes[type] += diff;
+	percpu_putref(mbstat_percpu);
+	splx(s);
+}
+
 static void
 mbstat_conver_to_user_cb(void *v1, void *v2, struct cpu_info *ci)
 {
@@ -493,21 +506,6 @@ mb_ctor(void *arg, void *object, int flags)
 	return 0;
 }
 
-void
-m_pkthdr_remove(struct mbuf *m)
-{
-	KASSERT(m->m_flags & M_PKTHDR);
-
-	if (M_READONLY(m)) {
-		/* Nothing we can do. */
-		return;
-	}
-
-	m_tag_delete_chain(m, NULL);
-	m->m_flags &= ~M_PKTHDR;
-	memset(&m->m_pkthdr, 0, sizeof(m->m_pkthdr));
-}
-
 /*
  * Add mbuf to the end of a chain
  */
@@ -582,19 +580,6 @@ m_clget(struct mbuf *m, int nowait)
 
 	_MCLGET(m, mcl_cache, MCLBYTES, nowait);
 }
-
-#ifdef MBUFTRACE
-/*
- * Walk a chain of mbufs, claiming ownership of each mbuf in the chain.
- */
-void
-m_claimm(struct mbuf *m, struct mowner *mo)
-{
-
-	for (; m != NULL; m = m->m_next)
-		MCLAIM(m, mo);
-}
-#endif
 
 /*
  * Utility function for M_PREPEND. Do *NOT* use it directly.
@@ -1290,59 +1275,6 @@ m_makewritable(struct mbuf **mp, int off, int len, int how)
 	return 0;
 }
 
-/*
- * Copy the mbuf chain to a new mbuf chain that is as short as possible.
- * Return the new mbuf chain on success, NULL on failure.  On success,
- * free the old mbuf chain.
- */
-struct mbuf *
-m_defrag(struct mbuf *mold, int flags)
-{
-	struct mbuf *m0, *mn, *n;
-	size_t sz = mold->m_pkthdr.len;
-
-	KASSERT((mold->m_flags & M_PKTHDR) != 0);
-
-	m0 = m_gethdr(flags, MT_DATA);
-	if (m0 == NULL)
-		return NULL;
-	M_COPY_PKTHDR(m0, mold);
-	mn = m0;
-
-	do {
-		if (sz > MHLEN) {
-			MCLGET(mn, M_DONTWAIT);
-			if ((mn->m_flags & M_EXT) == 0) {
-				m_freem(m0);
-				return NULL;
-			}
-		}
-
-		mn->m_len = MIN(sz, MCLBYTES);
-
-		m_copydata(mold, mold->m_pkthdr.len - sz, mn->m_len,
-		     mtod(mn, void *));
-
-		sz -= mn->m_len;
-
-		if (sz > 0) {
-			/* need more mbufs */
-			n = m_get(M_NOWAIT, MT_DATA);
-			if (n == NULL) {
-				m_freem(m0);
-				return NULL;
-			}
-
-			mn->m_next = n;
-			mn = n;
-		}
-	} while (sz > 0);
-
-	m_freem(mold);
-
-	return m0;
-}
-
 static int
 m_copyback_internal(struct mbuf **mp0, int off, int len, const void *vp,
     int flags, int how)
@@ -1528,6 +1460,74 @@ enobufs:
 	return ENOBUFS;
 }
 
+/*
+ * Copy the mbuf chain to a new mbuf chain that is as short as possible.
+ * Return the new mbuf chain on success, NULL on failure.  On success,
+ * free the old mbuf chain.
+ */
+struct mbuf *
+m_defrag(struct mbuf *mold, int flags)
+{
+	struct mbuf *m0, *mn, *n;
+	size_t sz = mold->m_pkthdr.len;
+
+	KASSERT((mold->m_flags & M_PKTHDR) != 0);
+
+	m0 = m_gethdr(flags, MT_DATA);
+	if (m0 == NULL)
+		return NULL;
+	M_COPY_PKTHDR(m0, mold);
+	mn = m0;
+
+	do {
+		if (sz > MHLEN) {
+			MCLGET(mn, M_DONTWAIT);
+			if ((mn->m_flags & M_EXT) == 0) {
+				m_freem(m0);
+				return NULL;
+			}
+		}
+
+		mn->m_len = MIN(sz, MCLBYTES);
+
+		m_copydata(mold, mold->m_pkthdr.len - sz, mn->m_len,
+		     mtod(mn, void *));
+
+		sz -= mn->m_len;
+
+		if (sz > 0) {
+			/* need more mbufs */
+			n = m_get(M_NOWAIT, MT_DATA);
+			if (n == NULL) {
+				m_freem(m0);
+				return NULL;
+			}
+
+			mn->m_next = n;
+			mn = n;
+		}
+	} while (sz > 0);
+
+	m_freem(mold);
+
+	return m0;
+}
+
+void
+m_pkthdr_remove(struct mbuf *m)
+{
+	KASSERT(m->m_flags & M_PKTHDR);
+
+	if (M_READONLY(m)) {
+		/* Nothing we can do. */
+		return;
+	}
+
+	m_tag_delete_chain(m, NULL);
+	m->m_flags &= ~M_PKTHDR;
+	memset(&m->m_pkthdr, 0, sizeof(m->m_pkthdr));
+}
+
 void
 m_copy_pkthdr(struct mbuf *to, struct mbuf *from)
 {
@@ -1686,19 +1686,6 @@ nextchain:
 }
 #endif /* defined(DDB) */
 
-void
-mbstat_type_add(int type, int diff)
-{
-	struct mbstat_cpu *mb;
-	int s;
-
-	s = splvm();
-	mb = percpu_getref(mbstat_percpu);
-	mb->m_mtypes[type] += diff;
-	percpu_putref(mbstat_percpu);
-	splx(s);
-}
-
 #if defined(MBUFTRACE)
 void
 mowner_attach(struct mowner *mo)
@@ -1805,6 +1792,14 @@ m_claim(struct mbuf *m, struct mowner *mo)
 
 	mowner_revoke(m, true, m->m_flags);
 	mowner_claim(m, mo);
+}
+
+void
+m_claimm(struct mbuf *m, struct mowner *mo)
+{
+
+	for (; m != NULL; m = m->m_next)
+		m_claim(m, mo);
 }
 #endif /* defined(MBUFTRACE) */
 
