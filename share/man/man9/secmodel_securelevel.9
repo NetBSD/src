@@ -1,4 +1,4 @@
-.\" $NetBSD: secmodel_securelevel.9,v 1.16 2018/04/26 18:56:18 alnsn Exp $
+.\" $NetBSD: secmodel_securelevel.9,v 1.17 2018/04/27 09:33:43 wiz Exp $
 .\"
 .\" Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
 .\" Copyright (c) 2000 Hugh Graham
@@ -78,7 +78,7 @@ All
 pins can be set and device drivers can be attached to them.
 .It
 On architectures that support
-.Xr module 4 ,
+.Xr module 7 ,
 kernel modules can be loaded and unloaded.
 .El
 .It \ 1 Em Secure mode
@@ -89,7 +89,7 @@ All effects of
 0.
 .It
 The
-.Xr kmem 4
+.Xr x86/kmem 4
 memory files
 .Pa /dev/mem
 and
