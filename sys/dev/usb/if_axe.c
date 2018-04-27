@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.88 2018/04/22 20:32:27 christos Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.89 2018/04/27 12:04:23 christos Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.137 2016/04/13 11:03:37 mpi Exp $ */
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.88 2018/04/22 20:32:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.89 2018/04/27 12:04:23 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -526,6 +526,8 @@ axe_setmulti(struct axe_softc *sc)
 static void
 axe_ax_init(struct axe_softc *sc)
 {
+	int cmd = AXE_178_CMD_READ_NODEID;
+
 	if (sc->axe_flags & AX178) {
 		axe_ax88178_init(sc);
 	} else if (sc->axe_flags & AX772) {
@@ -534,6 +536,14 @@ axe_ax_init(struct axe_softc *sc)
 		axe_ax88772a_init(sc);
 	} else if (sc->axe_flags & AX772B) {
 		axe_ax88772b_init(sc);
+		return;
+	} else {
+		cmd = AXE_172_CMD_READ_NODEID;
+	}
+
+	if (axe_cmd(sc, cmd, 0, 0, sc->axe_enaddr)) {
+		aprint_error_dev(sc->axe_dev,
+		    "failed to read ethernet address\n");
 	}
 }
 
@@ -979,14 +989,6 @@ axe_attach(device_t parent, device_t self, void *aux)
 	/* Initialize controller and get station address. */
 
 	axe_ax_init(sc);
-
-	if ((sc->axe_flags & AX772B) != 0) {
-		if (axe_cmd(sc, AXE_172_CMD_READ_NODEID, 0, 0, sc->axe_enaddr))
-		{
-			aprint_error_dev(self,
-			    "failed to read ethernet address\n");
-		}
-	}
 
 	/*
 	 * Fetch IPG values.
