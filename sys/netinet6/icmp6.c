@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.232 2018/04/26 19:50:09 maxv Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.233 2018/04/27 09:02:16 maxv Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.232 2018/04/26 19:50:09 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.233 2018/04/27 09:02:16 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2495,7 +2495,7 @@ icmp6_redirect_output(struct mbuf *m0, struct rtentry *rt)
 	MGETHDR(m, M_DONTWAIT, MT_HEADER);
 	if (m && IPV6_MMTU >= MHLEN) {
 #if IPV6_MMTU >= MCLBYTES
-		_MCLGET(m, mcl_cache, IPV6_MMTU, M_DONTWAIT);
+		MEXTMALLOC(m, IPV6_MMTU, M_NOWAIT);
 #else
 		MCLGET(m, M_DONTWAIT);
 #endif
