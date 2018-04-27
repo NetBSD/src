@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.197 2018/04/27 16:32:03 maxv Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.198 2018/04/27 19:06:48 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -275,13 +275,6 @@ struct _m_ext_storage {
 	} ext_un;
 #define	ext_paddr	ext_un.extun_paddr
 #define	ext_pgs		ext_un.extun_pgs
-
-#ifdef DEBUG
-	const char *ext_ofile;
-	const char *ext_nfile;
-	int ext_oline;
-	int ext_nline;
-#endif
 };
 
 struct _m_ext {
@@ -464,33 +457,12 @@ void m_claimm(struct mbuf *, struct mowner *);
 
 #if defined(_KERNEL)
 #define	_M_
-/*
- * Macros for tracking external storage associated with an mbuf.
- */
-#ifdef DEBUG
-#define MCLREFDEBUGN(m, file, line)					\
-do {									\
-	(m)->m_ext.ext_nfile = (file);					\
-	(m)->m_ext.ext_nline = (line);					\
-} while (/* CONSTCOND */ 0)
-
-#define MCLREFDEBUGO(m, file, line)					\
-do {									\
-	(m)->m_ext.ext_ofile = (file);					\
-	(m)->m_ext.ext_oline = (line);					\
-} while (/* CONSTCOND */ 0)
-#else
-#define MCLREFDEBUGN(m, file, line)
-#define MCLREFDEBUGO(m, file, line)
-#endif
 
 #define	MCLINITREFERENCE(m)						\
 do {									\
 	KASSERT(((m)->m_flags & M_EXT) == 0);				\
 	(m)->m_ext_ref = (m);						\
 	(m)->m_ext.ext_refcnt = 1;					\
-	MCLREFDEBUGO((m), __FILE__, __LINE__);				\
-	MCLREFDEBUGN((m), NULL, 0);					\
 } while (/* CONSTCOND */ 0)
 
 /*
