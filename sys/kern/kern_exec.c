@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.456 2018/02/23 19:43:08 maxv Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.457 2018/04/27 18:33:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.456 2018/02/23 19:43:08 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.457 2018/04/27 18:33:24 christos Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -607,9 +607,9 @@ exec_autoload(void)
 #endif
 }
 
-static int
-makepathbuf(struct lwp *l, const char *upath, struct pathbuf **pbp,
-    size_t *offs)
+int
+exec_makepathbuf(struct lwp *l, const char *upath, enum uio_seg seg,
+    struct pathbuf **pbp, size_t *offs)
 {
 	char *path, *bp;
 	size_t len, tlen;
@@ -617,7 +617,11 @@ makepathbuf(struct lwp *l, const char *upath, struct pathbuf **pbp,
 	struct cwdinfo *cwdi;
 
 	path = PNBUF_GET();
-	error = copyinstr(upath, path, MAXPATHLEN, &len);
+	if (seg == UIO_SYSSPACE) {
+		error = copystr(upath, path, MAXPATHLEN, &len);
+	} else {
+		error = copyinstr(upath, path, MAXPATHLEN, &len);
+	}
 	if (error) {
 		PNBUF_PUT(path);
 		DPRINTF(("%s: copyin path @%p %d\n", __func__, upath, error));
@@ -625,7 +629,8 @@ makepathbuf(struct lwp *l, const char *upath, struct pathbuf **pbp,
 	}
 
 	if (path[0] == '/') {
-		*offs = 0;
+		if (offs)
+			*offs = 0;
 		goto out;
 	}
 
@@ -651,7 +656,8 @@ makepathbuf(struct lwp *l, const char *upath, struct pathbuf **pbp,
 
 	memmove(path, bp, tlen);
 	path[tlen] = '\0';
-	*offs = tlen - len;
+	if (offs)
+		*offs = tlen - len;
 out:
 	*pbp = pathbuf_assimilate(path);
 	return 0;
@@ -730,7 +736,8 @@ execve_loadvm(struct lwp *l, const char *path, char * const *args,
 	 * functions call check_exec() recursively - for example,
 	 * see exec_script_makecmds().
 	 */
-	if ((error = makepathbuf(l, path, &data->ed_pathbuf, &offs)) != 0)
+	if ((error = exec_makepathbuf(l, path, UIO_USERSPACE,
+	    &data->ed_pathbuf, &offs)) != 0)
 		goto clrflg;
 	data->ed_pathstring = pathbuf_stringcopy_get(data->ed_pathbuf);
 	data->ed_resolvedpathbuf = PNBUF_GET();
