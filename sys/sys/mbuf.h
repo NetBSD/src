@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.195 2018/04/27 08:51:26 maxv Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.196 2018/04/27 09:22:28 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -507,29 +507,6 @@ do {									\
  * a normal mbuf; the flag M_EXT is set upon success.
  */
 
-#define	_MCLGET(m, pool_cache, size, how)				\
-do {									\
-	(m)->m_ext_storage.ext_buf = (char *)				\
-	    pool_cache_get_paddr((pool_cache),				\
-		(how) == M_WAIT ? (PR_WAITOK|PR_LIMITFAIL) : PR_NOWAIT,	\
-		&(m)->m_ext_storage.ext_paddr);				\
-	if ((m)->m_ext_storage.ext_buf != NULL) {			\
-		MCLINITREFERENCE(m);					\
-		(m)->m_data = (m)->m_ext.ext_buf;			\
-		(m)->m_flags = ((m)->m_flags & ~M_EXTCOPYFLAGS) |	\
-				M_EXT|M_EXT_CLUSTER|M_EXT_RW;		\
-		(m)->m_ext.ext_flags = 0;				\
-		(m)->m_ext.ext_size = (size);				\
-		(m)->m_ext.ext_free = NULL;				\
-		(m)->m_ext.ext_arg = (pool_cache);			\
-		/* ext_paddr initialized above */			\
-		mowner_ref((m), M_EXT|M_EXT_CLUSTER);			\
-	}								\
-} while (/* CONSTCOND */ 0)
-
-/*
- * The standard mbuf cluster pool.
- */
 #define	MCLGET(m, how)	m_clget((m), (how))
 
 #define	MEXTMALLOC(m, size, how)					\
