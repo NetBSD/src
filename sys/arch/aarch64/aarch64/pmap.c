@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.2 2018/04/01 04:35:03 ryo Exp $	*/
+/*	$NetBSD: pmap.c,v 1.3 2018/04/27 08:07:08 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.2 2018/04/01 04:35:03 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.3 2018/04/27 08:07:08 ryo Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -129,8 +129,7 @@ PMAP_COUNTER(remappings, "pages remapped");
 PMAP_COUNTER(pv_entry_cannotalloc, "pv_entry allocation failure");
 
 PMAP_COUNTER(unwire, "pmap_unwire call");
-PMAP_COUNTER(unwire_unmanaged, "pmap_unwire unmanaged pages");
-PMAP_COUNTER(unwire_wired, "pmap_unwire but already unwire");
+PMAP_COUNTER(unwire_failure, "pmap_unwire failure");
 
 #else /* PMAPCOUNTERS */
 #define PMAP_COUNT(name)		__nothing
@@ -139,6 +138,7 @@ PMAP_COUNTER(unwire_wired, "pmap_unwire but already unwire");
 /* saved permission bit for referenced/modified emulation */
 #define LX_BLKPAG_OS_READ	LX_BLKPAG_OS_0
 #define LX_BLKPAG_OS_WRITE	LX_BLKPAG_OS_1
+#define LX_BLKPAG_OS_WIRED	LX_BLKPAG_OS_2
 #define LX_BLKPAG_OS_RWMASK	(LX_BLKPAG_OS_WRITE|LX_BLKPAG_OS_READ)
 
 /* memory attributes are configured MAIR_EL1 in locore */
@@ -154,7 +154,6 @@ struct pv_entry {
 	vaddr_t pv_va;
 	paddr_t pv_pa;		/* debug */
 	pt_entry_t *pv_ptep;	/* for fast pte lookup */
-	u_int pv_flags;
 };
 
 static pt_entry_t *_pmap_pte_lookup(struct pmap *, vaddr_t);
@@ -876,14 +875,6 @@ _pmap_remove_pv(struct vm_page *pg, struct pmap *pm, vaddr_t va, pt_entry_t pte)
 	}
 	KASSERT(pv != NULL);
 
-	if (pv->pv_flags & PMAP_WIRED) {
-		pm->pm_stats.wired_count--;
-		KDASSERT(md->mdpg_wiredcount > 0);
-		if (--md->mdpg_wiredcount == 0) {
-			md->mdpg_flags &= ~PMAP_WIRED;
-		}
-	}
-
 	TAILQ_REMOVE(&md->mdpg_pvhead, pv, pv_link);
 	PMAP_COUNT(pv_remove);
 
@@ -947,8 +938,6 @@ pv_dump(struct vm_page_md *md, void (*pr)(const char *, ...))
 	pr("md=%p\n", md);
 	pr(" md->mdpg_flags=%08x %s\n", md->mdpg_flags,
 	    str_vmflags(md->mdpg_flags));
-	pr(" md->mdpg_kenter=%d\n", md->mdpg_kenter);
-	pr(" md->mdpg_wiredcount=%d\n", md->mdpg_wiredcount);
 
 	TAILQ_FOREACH(pv, &md->mdpg_pvhead, pv_link) {
 		pr("  pv[%d] pv=%p\n",
@@ -959,7 +948,6 @@ pv_dump(struct vm_page_md *md, void (*pr)(const char *, ...))
 		    i, pv->pv_va, _pmap_color(pv->pv_va));
 		pr("    pv[%d].pv_pa   =%016lx (color=%d)\n",
 		    i, pv->pv_pa, _pmap_color(pv->pv_pa));
-		pr("    pv[%d].pv_flags=%016lx\n", i, pv->pv_flags);
 		i++;
 	}
 }
@@ -989,24 +977,7 @@ _pmap_enter_pv(struct vm_page *pg, struct pmap *pm, vaddr_t va,
 		}
 	}
 
-	if (pv != NULL) {
-		/* update wired count, and mdpg_flags */
-		if ((pv->pv_flags & PMAP_WIRED) && !(flags & PMAP_WIRED)) {
-			/* wire -> unwire */
-			pm->pm_stats.wired_count--;
-			KDASSERT(md->mdpg_wiredcount > 0);
-			if (--md->mdpg_wiredcount == 0) {
-				md->mdpg_flags &= ~PMAP_WIRED;
-			}
-		} else if (!(pv->pv_flags & PMAP_WIRED) &&
-		    (flags & PMAP_WIRED)) {
-			/* unwire -> wire */
-			pm->pm_stats.wired_count++;
-			md->mdpg_wiredcount++;
-			md->mdpg_flags |= flags;
-		}
-		pv->pv_flags = flags;
-	} else {
+	if (pv == NULL) {
 		pmap_pv_unlock(md);
 
 		/* create and link new pv */
@@ -1018,18 +989,11 @@ _pmap_enter_pv(struct vm_page *pg, struct pmap *pm, vaddr_t va,
 		pv->pv_va = va;
 		pv->pv_pa = pa;
 		pv->pv_ptep = ptep;
-		pv->pv_flags = flags;
 
 		pmap_pv_lock(md);
 		TAILQ_INSERT_HEAD(&md->mdpg_pvhead, pv, pv_link);
 		PMAP_COUNT(pv_enter);
 
-		if (flags & PMAP_WIRED) {
-			pm->pm_stats.wired_count++;
-			if (md->mdpg_wiredcount++ == 0) {
-				md->mdpg_flags |= PMAP_WIRED;
-			}
-		}
 #ifdef PMAP_PV_DEBUG
 		if (!TAILQ_EMPTY(&md->mdpg_pvhead)){
 			printf("pv %p alias added va=%016lx -> pa=%016lx\n",
@@ -1059,6 +1023,7 @@ pmap_kremove(vaddr_t va, vsize_t size)
 {
 	struct pmap *kpm = pmap_kernel();
 	vaddr_t eva;
+	int s;
 
 	UVMHIST_FUNC(__func__);
 	UVMHIST_CALLED(pmaphist);
@@ -1073,9 +1038,11 @@ pmap_kremove(vaddr_t va, vsize_t size)
 	eva = va + size;
 	KDASSERT(VM_MIN_KERNEL_ADDRESS <= va && eva < VM_MAX_KERNEL_ADDRESS);
 
+	s = splvm();
 	for (; va < eva; va += PAGE_SIZE) {
 		_pmap_remove(kpm, va, true);
 	}
+	splx(s);
 }
 
 static void
@@ -1101,9 +1068,9 @@ _pmap_protect_pv(struct vm_page *pg, struct pv_entry *pv, vm_prot_t prot)
 
 	/* get prot mask from pte */
 	pteprot = 0;
-	if (pte & LX_BLKPAG_OS_READ)
+	if (pte & LX_BLKPAG_AF)
 		pteprot |= VM_PROT_READ;
-	if (pte & LX_BLKPAG_OS_WRITE)
+	if ((pte & LX_BLKPAG_AP) == LX_BLKPAG_AP_RW)
 		pteprot |= VM_PROT_WRITE;
 	if ((pte & (LX_BLKPAG_UXN|LX_BLKPAG_PXN)) == 0)
 		pteprot |= VM_PROT_EXECUTE;
@@ -1174,6 +1141,7 @@ pmap_protect(struct pmap *pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 		pg = PHYS_TO_VM_PAGE(pa);
 
 		if (pg != NULL) {
+			/* get prot mask from referenced/modified */
 			mdattr = VM_PAGE_TO_MD(pg)->mdpg_flags &
 			    (VM_PROT_READ | VM_PROT_WRITE);
 			PMAP_COUNT(protect_managed);
@@ -1359,14 +1327,18 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 	}
 #endif
 
-	pg = PHYS_TO_VM_PAGE(pa);
+	if (kenter)
+		pg = NULL;
+	else
+		pg = PHYS_TO_VM_PAGE(pa);
+
+#ifdef PMAPCOUNTERS
 	if (pg == NULL) {
 		PMAP_COUNT(unmanaged_mappings);
-		/* XXX */
-		/* panic("%s:%d", __func__, __LINE__); */
 	} else {
 		PMAP_COUNT(managed_mappings);
 	}
+#endif
 
 	/*
 	 * _pmap_enter() may be called recursively. In case of
@@ -1417,8 +1389,6 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 	idx = l3pte_index(va);
 	ptep = &l3[idx];	/* as PTE */
 
-	/* KASSERT(pg != NULL); */
-
 	pte = *ptep;
 	executable = l3pte_executable(pte);
 
@@ -1445,46 +1415,41 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 			    va, l3pte_pa(pte), pa, pte);
 
 			opg = PHYS_TO_VM_PAGE(l3pte_pa(pte));
-			KASSERT(opg != NULL);
-
-			if (opg == pg) {
-				/* XXX */
-				panic("%s:%d: XXX: not supported yet",
-				    __func__, __LINE__);
-			}
-
-			_pmap_remove_pv(opg, pm, va, pte);
+			if (opg != NULL)
+				_pmap_remove_pv(opg, pm, va, pte);
 		}
+
+		if (pte & LX_BLKPAG_OS_WIRED)
+			pm->pm_stats.wired_count--;
+		pm->pm_stats.resident_count--;
 	}
 
 	/*
 	 * _pmap_enter_pv() may call pmap_kenter() internally.
 	 * don't allocate pv_entry (don't call _pmap_enter_pv) when kenter mode.
+	 * `pg' have got to be NULL if (kenter).
 	 */
 	mdattr = VM_PROT_READ | VM_PROT_WRITE;
-	if (pg) {
-		if (kenter) {
-			VM_PAGE_TO_MD(pg)->mdpg_kenter++;
-			VM_PAGE_TO_MD(pg)->mdpg_flags |= (PMAP_WIRED | mdattr);
-			VM_PAGE_TO_MD(pg)->mdpg_wiredcount++;
+	if (pg != NULL) {
+		error = _pmap_enter_pv(pg, pm, va, ptep, pa, flags);
+		if (error != 0) {
+			PMAP_COUNT(pv_entry_cannotalloc);
+			if (flags & PMAP_CANFAIL)
+				goto done;
+			panic(
+			    "pmap_enter: failed to allocate pv_entry");
+		}
 
-			pm->pm_stats.wired_count++;
+		if (flags & PMAP_WIRED) {
+			/*
+			 * initial value of ref/mod are equal to prot,
+			 * and pte RW are same as prot.
+			 */
+			VM_PAGE_TO_MD(pg)->mdpg_flags |=
+			    (prot & mdattr);
 		} else {
-			error = _pmap_enter_pv(pg, pm, va, ptep, pa, flags);
-			if (error != 0) {
-				PMAP_COUNT(pv_entry_cannotalloc);
-				if (flags & PMAP_CANFAIL)
-					goto done;
-				panic(
-				    "pmap_enter: failed to allocate pv_entry");
-			}
-
-			if (flags & PMAP_WIRED) {
-				VM_PAGE_TO_MD(pg)->mdpg_flags |=
-				    (PMAP_WIRED | mdattr);
-			} else {
-				mdattr &= VM_PAGE_TO_MD(pg)->mdpg_flags;
-			}
+			/* pte RW will be masked by ref/mod for ref/mod emul */
+			mdattr &= VM_PAGE_TO_MD(pg)->mdpg_flags;
 		}
 	}
 
@@ -1501,6 +1466,8 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 	attr = _pmap_pte_adjust_cacheflags(attr, flags);
 	if (VM_MAXUSER_ADDRESS > va)
 		attr |= LX_BLKPAG_APUSER;
+	if (flags & PMAP_WIRED)
+		attr |= LX_BLKPAG_OS_WIRED;
 #ifdef MULTIPROCESSOR
 	attr |= LX_BLKPAG_SH_IS;
 #endif
@@ -1520,6 +1487,8 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 		cpu_icache_sync_range(va, PAGE_SIZE);
 	}
 
+	if (pte & LX_BLKPAG_OS_WIRED)
+		pm->pm_stats.wired_count++;
 	pm->pm_stats.resident_count++;
 
  done:
@@ -1563,33 +1532,25 @@ _pmap_remove(struct pmap *pm, vaddr_t va, bool kremove)
 			return;
 
 		pa = l3pte_pa(pte);
-		pg = PHYS_TO_VM_PAGE(pa);
-		if (pg != NULL) {
-			if (kremove) {
-				struct vm_page_md *md = VM_PAGE_TO_MD(pg);
 
-				KASSERT(md->mdpg_flags & PMAP_WIRED);
-				KDASSERT(md->mdpg_kenter > 0);
+		if (kremove)
+			pg = NULL;
+		else
+			pg = PHYS_TO_VM_PAGE(pa);
 
-				md->mdpg_kenter--;
-				pm->pm_stats.wired_count--;
-				KDASSERT(md->mdpg_wiredcount > 0);
-				if (--md->mdpg_wiredcount == 0) {
-					md->mdpg_flags &= ~PMAP_WIRED;
-				}
+		if (pg != NULL)
+			_pmap_remove_pv(pg, pm, va, pte);
 
-			} else {
-				_pmap_remove_pv(pg, pm, va, pte);
-			}
-			pm->pm_stats.resident_count--;
-		}
 		atomic_swap_64(ptep, 0);
-
 #if 0
 		aarch64_tlbi_by_asid_va(pm->pm_asid, va);
 #else
 		aarch64_tlbi_by_va(va);
 #endif
+
+		if ((pte & LX_BLKPAG_OS_WIRED) != 0)
+			pm->pm_stats.wired_count--;
+		pm->pm_stats.resident_count--;
 	}
 }
 
@@ -1615,6 +1576,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 {
 	struct vm_page_md *md = VM_PAGE_TO_MD(pg);
 	struct pv_entry *pv, *pvtmp;
+	pt_entry_t opte;
 
 	KASSERT((prot & VM_PROT_READ) || !(prot & VM_PROT_WRITE));
 
@@ -1629,41 +1591,30 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 	    VM_PROT_NONE) {
 
 		/* remove all pages reference to this physical page */
-
-		/* XXX: todo cleanup */
 		pmap_pv_lock(md);
 		TAILQ_FOREACH_SAFE(pv, &md->mdpg_pvhead, pv_link, pvtmp) {
 
-			if (pv->pv_flags & PMAP_WIRED) {
-				pv->pv_pmap->pm_stats.wired_count--;
-				KDASSERT(md->mdpg_wiredcount > 0);
-				if (--md->mdpg_wiredcount == 0) {
-					md->mdpg_flags &= ~PMAP_WIRED;
-				}
-			}
-			atomic_swap_64(pv->pv_ptep, 0);
+			opte = atomic_swap_64(pv->pv_ptep, 0);
 #if 0
 			aarch64_tlbi_by_asid_va(pv->pv_pmap->pm_asid,
 			    pv->pv_va);
 #else
 			aarch64_tlbi_by_va(pv->pv_va);
 #endif
+			if ((opte & LX_BLKPAG_OS_WIRED) != 0)
+				pv->pv_pmap->pm_stats.wired_count--;
 			pv->pv_pmap->pm_stats.resident_count--;
 
 			TAILQ_REMOVE(&md->mdpg_pvhead, pv, pv_link);
 			PMAP_COUNT(pv_remove);
 			pool_cache_put(&_pmap_pv_pool, pv);
-
 		}
 		pmap_pv_unlock(md);
-
 
 	} else {
 		pmap_pv_lock(md);
 		TAILQ_FOREACH(pv, &md->mdpg_pvhead, pv_link) {
-			if (!(pv->pv_flags & PMAP_WIRED)) {
-				_pmap_protect_pv(pg, pv, prot);
-			}
+			_pmap_protect_pv(pg, pv, prot);
 		}
 		pmap_pv_unlock(md);
 	}
@@ -1673,11 +1624,6 @@ void
 pmap_unwire(struct pmap *pm, vaddr_t va)
 {
 	pt_entry_t pte, *ptep;
-	struct vm_page *pg;
-	struct vm_page_md *md;
-	struct pv_entry *pv;
-	paddr_t pa;
-
 
 	UVMHIST_FUNC(__func__);
 	UVMHIST_CALLED(pmaphist);
@@ -1692,39 +1638,18 @@ pmap_unwire(struct pmap *pm, vaddr_t va)
 	ptep = _pmap_pte_lookup(pm, va);
 	if (ptep != NULL) {
 		pte = *ptep;
-		if (!l3pte_valid(pte)) {
-			PMAP_COUNT(unwire_unmanaged);
+		if (!l3pte_valid(pte) ||
+		    ((pte & LX_BLKPAG_OS_WIRED) == 0)) {
+			/* invalid pte, or pte is not wired */
+			PMAP_COUNT(unwire_failure);
+			PM_UNLOCK(pm);
 			return;
 		}
 
-		pa = l3pte_pa(pte);
-		pg = PHYS_TO_VM_PAGE(pa);
+		pte &= ~LX_BLKPAG_OS_WIRED;
+		atomic_swap_64(ptep, pte);
 
-		if (pg != NULL) {
-			md = VM_PAGE_TO_MD(pg);
-			pmap_pv_lock(md);
-			if (md->mdpg_flags & PMAP_WIRED) {
-				TAILQ_FOREACH(pv, &md->mdpg_pvhead, pv_link) {
-					if ((va != pv->pv_va) ||
-					    (pm != pv->pv_pmap) ||
-					    !(pv->pv_flags & PMAP_WIRED)) {
-						continue;
-					}
-
-					pv->pv_flags &= ~PMAP_WIRED;
-					pm->pm_stats.wired_count--;
-					KDASSERT(md->mdpg_wiredcount > 0);
-					if (--md->mdpg_wiredcount == 0) {
-						md->mdpg_flags &= ~PMAP_WIRED;
-						PMAP_COUNT(unwire_wired);
-					}
-					break;
-				}
-			}
-			pmap_pv_unlock(VM_PAGE_TO_MD(pg));
-		} else {
-			PMAP_COUNT(unwire_unmanaged);
-		}
+		pm->pm_stats.wired_count--;
 	}
 	PM_UNLOCK(pm);
 }
@@ -1993,14 +1918,16 @@ bool
 pmap_is_modified(struct vm_page *pg)
 {
 	struct vm_page_md * const md = VM_PAGE_TO_MD(pg);
+
 	return (md->mdpg_flags & VM_PROT_WRITE);
 }
 
 bool
 pmap_is_referenced(struct vm_page *pg)
 {
-	struct vm_page_md * const mdpg = VM_PAGE_TO_MD(pg);
-	return (mdpg->mdpg_flags & VM_PROT_READ);
+	struct vm_page_md * const md = VM_PAGE_TO_MD(pg);
+
+	return (md->mdpg_flags & VM_PROT_READ);
 }
 
 #ifdef DDB
