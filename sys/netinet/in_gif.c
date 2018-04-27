@@ -1,4 +1,4 @@
-/*	$NetBSD: in_gif.c,v 1.92 2018/01/10 11:13:26 knakahara Exp $	*/
+/*	$NetBSD: in_gif.c,v 1.93 2018/04/27 09:55:28 knakahara Exp $	*/
 /*	$KAME: in_gif.c,v 1.66 2001/07/29 04:46:09 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.92 2018/01/10 11:13:26 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.93 2018/04/27 09:55:28 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -176,10 +176,10 @@ in_gif_output(struct gif_variant *var, int family, struct mbuf *m)
 
 	sc = var->gv_softc;
 	gro = percpu_getref(sc->gif_ro_percpu);
-	mutex_enter(&gro->gr_lock);
+	mutex_enter(gro->gr_lock);
 	ro = &gro->gr_ro;
 	if ((rt = rtcache_lookup(ro, var->gv_pdst)) == NULL) {
-		mutex_exit(&gro->gr_lock);
+		mutex_exit(gro->gr_lock);
 		percpu_putref(sc->gif_ro_percpu);
 		m_freem(m);
 		return ENETUNREACH;
@@ -189,7 +189,7 @@ in_gif_output(struct gif_variant *var, int family, struct mbuf *m)
 	if (rt->rt_ifp == ifp) {
 		rtcache_unref(rt, ro);
 		rtcache_free(ro);
-		mutex_exit(&gro->gr_lock);
+		mutex_exit(gro->gr_lock);
 		percpu_putref(sc->gif_ro_percpu);
 		m_freem(m);
 		return ENETUNREACH;	/*XXX*/
@@ -197,7 +197,7 @@ in_gif_output(struct gif_variant *var, int family, struct mbuf *m)
 	rtcache_unref(rt, ro);
 
 	error = ip_output(m, NULL, ro, 0, NULL, NULL);
-	mutex_exit(&gro->gr_lock);
+	mutex_exit(gro->gr_lock);
 	percpu_putref(sc->gif_ro_percpu);
 	return (error);
 }
