@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.205 2018/04/27 08:23:18 maxv Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.206 2018/04/27 09:22:28 maxv Exp $	*/
 
 /*
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.205 2018/04/27 08:23:18 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.206 2018/04/27 09:22:28 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
@@ -577,8 +577,24 @@ m_gethdr(int nowait, int type)
 void
 m_clget(struct mbuf *m, int nowait)
 {
+	m->m_ext_storage.ext_buf = (char *)pool_cache_get_paddr(mcl_cache,
+	    nowait == M_WAIT ? (PR_WAITOK|PR_LIMITFAIL) : PR_NOWAIT,
+	    &m->m_ext_storage.ext_paddr);
 
-	_MCLGET(m, mcl_cache, MCLBYTES, nowait);
+	if (m->m_ext_storage.ext_buf == NULL)
+		return;
+
+	MCLINITREFERENCE(m);
+	m->m_data = m->m_ext.ext_buf;
+	m->m_flags = (m->m_flags & ~M_EXTCOPYFLAGS) |
+	    M_EXT|M_EXT_CLUSTER|M_EXT_RW;
+	m->m_ext.ext_flags = 0;
+	m->m_ext.ext_size = MCLBYTES;
+	m->m_ext.ext_free = NULL;
+	m->m_ext.ext_arg = mcl_cache;
+	/* ext_paddr initialized above */
+
+	mowner_ref(m, M_EXT|M_EXT_CLUSTER);
 }
 
 /*
