@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.209 2018/04/27 18:40:40 maxv Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.210 2018/04/27 19:06:48 maxv Exp $	*/
 
 /*
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.209 2018/04/27 18:40:40 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.210 2018/04/27 19:06:48 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
@@ -147,7 +147,6 @@ do {									\
 	atomic_inc_uint(&(o)->m_ext.ext_refcnt);			\
 	(n)->m_ext_ref = (o)->m_ext_ref;				\
 	mowner_ref((n), (n)->m_flags);					\
-	MCLREFDEBUGN((n), __FILE__, __LINE__);				\
 } while (/* CONSTCOND */ 0)
 
 static int
