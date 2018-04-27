@@ -1,4 +1,4 @@
-.\"	$NetBSD: mbuf.9,v 1.59 2018/04/26 08:13:30 maxv Exp $
+.\"	$NetBSD: mbuf.9,v 1.60 2018/04/27 06:06:43 maxv Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 26, 2018
+.Dd April 27, 2018
 .Dt MBUF 9
 .Os
 .Sh NAME
@@ -284,9 +284,14 @@ parameter is a choice of
 .Dv M_WAIT / M_DONTWAIT
 from caller.
 .It Fn m_copypacket "struct mbuf *m" "int how"
-Copies an entire packet, including header (which must be present).
+Copies an entire packet, including header.
 This function is an optimization of the common case
 .Li m_copym ( m , 0 , Dv M_COPYALL , Fa how ) .
+However, contrary to
+.Fn m_copym ,
+a header must be present. It is incorrect to use
+.Fn m_copypacket
+with an mbuf that does not have a header.
 .It Fn m_copydata "struct mbuf *m" "int off" "int len" "void *cp"
 Copies
 .Fa len
@@ -478,7 +483,7 @@ must be less than
 .It Fn m_split "struct mbuf *m0" "int len" "int wait"
 Partitions an mbuf chain in two pieces, returning the tail,
 which is all but the first
-.Fa len0
+.Fa len
 bytes.
 In case of failure, it returns
 .Dv NULL
