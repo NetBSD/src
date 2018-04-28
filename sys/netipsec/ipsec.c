@@ -1,4 +1,4 @@
-/* $NetBSD: ipsec.c,v 1.158 2018/04/28 14:01:50 maxv Exp $ */
+/* $NetBSD: ipsec.c,v 1.159 2018/04/28 14:21:03 maxv Exp $ */
 /* $FreeBSD: ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $ */
 /* $KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $ */
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.158 2018/04/28 14:01:50 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.159 2018/04/28 14:21:03 maxv Exp $");
 
 /*
  * IPsec controller part.
@@ -1104,9 +1104,8 @@ ipsec_delpcbpolicy(struct inpcbpolicy *p)
 	kmem_intr_free(p, sizeof(*p));
 }
 
-/* initialize policy in PCB */
 int
-ipsec_init_policy(struct socket *so, struct inpcbpolicy **policy)
+ipsec_init_pcbpolicy(struct socket *so, struct inpcbpolicy **policy)
 {
 	struct inpcbpolicy *new;
 
