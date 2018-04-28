@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.2 2018/04/28 18:42:20 jmcneill Exp $
+#	$NetBSD: GENERIC64,v 1.3 2018/04/28 20:30:50 jmcneill Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -116,6 +116,7 @@ sun6idma*	at fdt?			# Allwinner DMA controller (sun6i)
 tegraapbdma*	at fdt? pass 4		# NVIDIA Tegra APB DMA
 
 # FUSE controller
+sunxisid*	at fdt? pass 4		# Allwinner SID
 tegrafuse*	at fdt? pass 4		# NVIDIA Tegra FUSE
 
 # Power management controller
@@ -275,6 +276,7 @@ pseudo-device	wsfont
 #nouveau*	at fdt?			# NVIDIA GPU
 
 # Thermal throttling controller
+sunxithermal*	at fdt?			# Allwinner thermal sensor controller
 tegrasoctherm*	at fdt?			# NVIDIA Tegra SOC_THERM
 
 # USB
