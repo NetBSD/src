@@ -1,4 +1,4 @@
-/* $NetBSD: fixedclock.c,v 1.2 2017/04/21 19:18:05 jmcneill Exp $ */
+/* $NetBSD: fixedclock.c,v 1.3 2018/04/28 15:21:05 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fixedclock.c,v 1.2 2017/04/21 19:18:05 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fixedclock.c,v 1.3 2018/04/28 15:21:05 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,6 +92,7 @@ fixedclock_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	sc->sc_phandle = phandle;
+	sc->sc_clkdom.name = device_xname(self);
 	sc->sc_clkdom.funcs = &fixedclock_clk_funcs;
 	sc->sc_clkdom.priv = sc;
 	if (of_getprop_uint32(phandle, "clock-frequency",
@@ -101,6 +102,7 @@ fixedclock_attach(device_t parent, device_t self, void *aux)
 	}
 	sc->sc_clk.base.domain = &sc->sc_clkdom;
 	sc->sc_clk.base.name = kmem_asprintf("%s", faa->faa_name);
+	clk_attach(&sc->sc_clk.base);
 
 	aprint_naive("\n");
 	aprint_normal(": %u Hz fixed clock\n", sc->sc_clk.rate);
