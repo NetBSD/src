@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.34 2018/04/28 00:14:37 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.35 2018/04/28 18:07:15 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.34 2018/04/28 00:14:37 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.35 2018/04/28 18:07:15 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -229,19 +229,15 @@ TRACEME_SIGHANDLER_CATCH(traceme_sighandler_catch3, SIGCONT) /* continued? */
 
 /// ----------------------------------------------------------------------------
 
-ATF_TC(traceme3);
-ATF_TC_HEAD(traceme3, tc)
+static void
+traceme_signal_nohandler(int sigsent)
 {
-	atf_tc_set_md_var(tc, "descr",
-	    "Verify SIGSTOP followed by termination by a signal in a child");
-}
-
-ATF_TC_BODY(traceme3, tc)
-{
-	const int sigval = SIGSTOP, sigsent = SIGINT /* Without core-dump */;
+	const int sigval = SIGSTOP;
+	int exitval = 0;
 	pid_t child, wpid;
 #if defined(TWAIT_HAVE_STATUS)
 	int status;
+	int expect_core = (sigsent == SIGABRT) ? 1 : 0;
 #endif
 
 	DPRINTF("Before forking process PID=%d\n", getpid());
@@ -253,9 +249,13 @@ ATF_TC_BODY(traceme3, tc)
 		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		/* NOTREACHED */
-		FORKEE_ASSERTX(0 &&
-		    "Child should be terminated by a signal from its parent");
+		switch (sigsent) {
+		case SIGCONT:
+			_exit(exitval);
+		default:
+			/* NOTREACHED */
+			FORKEE_ASSERTX(0 && "This shall not be reached");
+		}
 	}
 	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
@@ -271,11 +271,41 @@ ATF_TC_BODY(traceme3, tc)
 	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
-	validate_status_signaled(status, sigsent, 0);
+	switch (sigsent) {
+	case SIGCONT:
+		validate_status_exited(status, exitval);
+		break;
+	default:
+		validate_status_signaled(status, sigsent, expect_core);
+		break;
+	}
 
 	DPRINTF("Before calling %s() for the exited child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
+
+#define TRACEME_SIGNAL_NOHANDLER(test, sig)					\
+ATF_TC(test);									\
+ATF_TC_HEAD(test, tc)								\
+{										\
+	atf_tc_set_md_var(tc, "descr",						\
+	    "Verify that a signal " #sig " emitted by a tracer to a child is "	\
+	    "handled correctly in a child without a signal handler");		\
+}										\
+										\
+ATF_TC_BODY(test, tc)								\
+{										\
+										\
+	traceme_signal_nohandler(sig);						\
+}
+
+TRACEME_SIGNAL_NOHANDLER(traceme_signal_nohandler1, SIGKILL) /* non-maskable */
+//TRACEME_SIGNAL_NOHANDLER(traceme_signal_nohandler2, SIGSTOP) /* non-maskable */
+TRACEME_SIGNAL_NOHANDLER(traceme_signal_nohandler3, SIGABRT) /* abort trap */
+TRACEME_SIGNAL_NOHANDLER(traceme_signal_nohandler4, SIGHUP)  /* hangup */
+TRACEME_SIGNAL_NOHANDLER(traceme_signal_nohandler5, SIGCONT) /* continued? */
+
+/// ----------------------------------------------------------------------------
 
 #if defined(TWAIT_HAVE_PID)
 ATF_TC(attach1);
@@ -6733,7 +6763,11 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, traceme_sighandler_catch2);
 	ATF_TP_ADD_TC(tp, traceme_sighandler_catch3);
 
-	ATF_TP_ADD_TC(tp, traceme3);
+	ATF_TP_ADD_TC(tp, traceme_signal_nohandler1);
+//	ATF_TP_ADD_TC(tp, traceme_signal_nohandler2); // not yet
+	ATF_TP_ADD_TC(tp, traceme_signal_nohandler3);
+	ATF_TP_ADD_TC(tp, traceme_signal_nohandler4);
+	ATF_TP_ADD_TC(tp, traceme_signal_nohandler5);
 
 	ATF_TP_ADD_TC_HAVE_PID(tp, attach1);
 	ATF_TP_ADD_TC_HAVE_PID(tp, attach2);
