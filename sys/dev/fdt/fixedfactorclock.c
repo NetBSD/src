@@ -1,4 +1,4 @@
-/* $NetBSD: fixedfactorclock.c,v 1.1 2017/07/08 12:37:08 jmcneill Exp $ */
+/* $NetBSD: fixedfactorclock.c,v 1.2 2018/04/28 15:21:05 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fixedfactorclock.c,v 1.1 2017/07/08 12:37:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fixedfactorclock.c,v 1.2 2018/04/28 15:21:05 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,6 +95,7 @@ fixedfactorclock_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	sc->sc_phandle = phandle;
+	sc->sc_clkdom.name = device_xname(self);
 	sc->sc_clkdom.funcs = &fixedfactorclock_clk_funcs;
 	sc->sc_clkdom.priv = sc;
 
@@ -112,6 +113,7 @@ fixedfactorclock_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_clk.base.domain = &sc->sc_clkdom;
 	sc->sc_clk.base.name = name;
+	clk_attach(&sc->sc_clk.base);
 
 	aprint_naive("\n");
 	aprint_normal(": x%u /%u fixed-factor clock\n",
