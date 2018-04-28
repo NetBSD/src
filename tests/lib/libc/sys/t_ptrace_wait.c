@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.35 2018/04/28 18:07:15 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.36 2018/04/28 19:00:25 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.35 2018/04/28 18:07:15 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.36 2018/04/28 19:00:25 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -101,24 +101,36 @@ traceme_raise(int sigval)
 		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		DPRINTF("Before exiting of the child process\n");
-		_exit(exitval);
+		switch (sigval) {
+		case SIGKILL:
+			/* NOTREACHED */
+			FORKEE_ASSERTX(0 && "This shall not be reached");
+		default:
+			DPRINTF("Before exiting of the child process\n");
+			_exit(exitval);
+		}
 	}
 	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
 	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
-	validate_status_stopped(status, sigval);
+	switch (sigval) {
+	case SIGKILL:
+		validate_status_signaled(status, sigval, 0);
+		break;
+	default:
+		validate_status_stopped(status, sigval);
 
-	DPRINTF("Before resuming the child process where it left off and "
-	    "without signal to be sent\n");
-	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+		DPRINTF("Before resuming the child process where it left off "
+		    "and without signal to be sent\n");
+		SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_exited(status, exitval);
+		DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
+		TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0),
+		                      child);
+		break;
+	}
 
 	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
@@ -138,7 +150,7 @@ ATF_TC_BODY(test, tc)								\
 	traceme_raise(sig);							\
 }
 
-//TRACEME_RAISE(traceme_raise1, SIGKILL) /* non-maskable */ // not yet
+TRACEME_RAISE(traceme_raise1, SIGKILL) /* non-maskable */
 TRACEME_RAISE(traceme_raise2, SIGSTOP) /* non-maskable */
 TRACEME_RAISE(traceme_raise3, SIGABRT) /* regular abort trap */
 TRACEME_RAISE(traceme_raise4, SIGHUP)  /* hangup */
@@ -6753,7 +6765,7 @@ ATF_TP_ADD_TCS(tp)
 	setvbuf(stdout, NULL, _IONBF, 0);
 	setvbuf(stderr, NULL, _IONBF, 0);
 
-//	ATF_TP_ADD_TC(tp, traceme_raise1); // not yet
+	ATF_TP_ADD_TC(tp, traceme_raise1);
 	ATF_TP_ADD_TC(tp, traceme_raise2);
 	ATF_TP_ADD_TC(tp, traceme_raise3);
 	ATF_TP_ADD_TC(tp, traceme_raise4);
