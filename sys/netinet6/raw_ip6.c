@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.169 2018/04/26 19:50:09 maxv Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.170 2018/04/28 13:26:57 maxv Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.169 2018/04/26 19:50:09 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.170 2018/04/28 13:26:57 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -99,7 +99,6 @@ __KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.169 2018/04/26 19:50:09 maxv Exp $");
 
 #ifdef IPSEC
 #include <netipsec/ipsec.h>
-#include <netipsec/ipsec_var.h>
 #include <netipsec/ipsec6.h>
 #endif
 
