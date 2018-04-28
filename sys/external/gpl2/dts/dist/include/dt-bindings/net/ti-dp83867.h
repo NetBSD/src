@@ -1,4 +1,4 @@
-/*	$NetBSD: ti-dp83867.h,v 1.1.1.1 2017/06/15 20:14:23 jmcneill Exp $	*/
+/*	$NetBSD: ti-dp83867.h,v 1.1.1.2 2018/04/28 18:25:53 jmcneill Exp $	*/
 
 /*
  * Device Tree constants for the Texas Instruments DP83867 PHY
@@ -44,4 +44,18 @@
 #define	DP83867_RGMIIDCTL_3_75_NS	0xe
 #define	DP83867_RGMIIDCTL_4_00_NS	0xf
 
+/* IO_MUX_CFG - Clock output selection */
+#define DP83867_CLK_O_SEL_CHN_A_RCLK		0x0
+#define DP83867_CLK_O_SEL_CHN_B_RCLK		0x1
+#define DP83867_CLK_O_SEL_CHN_C_RCLK		0x2
+#define DP83867_CLK_O_SEL_CHN_D_RCLK		0x3
+#define DP83867_CLK_O_SEL_CHN_A_RCLK_DIV5	0x4
+#define DP83867_CLK_O_SEL_CHN_B_RCLK_DIV5	0x5
+#define DP83867_CLK_O_SEL_CHN_C_RCLK_DIV5	0x6
+#define DP83867_CLK_O_SEL_CHN_D_RCLK_DIV5	0x7
+#define DP83867_CLK_O_SEL_CHN_A_TCLK		0x8
+#define DP83867_CLK_O_SEL_CHN_B_TCLK		0x9
+#define DP83867_CLK_O_SEL_CHN_C_TCLK		0xA
+#define DP83867_CLK_O_SEL_CHN_D_TCLK		0xB
+#define DP83867_CLK_O_SEL_REF_CLK		0xC
 #endif
