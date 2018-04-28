@@ -1,4 +1,4 @@
-/* $NetBSD: gpiokeys.c,v 1.6 2017/12/10 17:03:07 bouyer Exp $ */
+/* $NetBSD: gpiokeys.c,v 1.7 2018/04/28 11:49:06 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpiokeys.c,v 1.6 2017/12/10 17:03:07 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpiokeys.c,v 1.7 2018/04/28 11:49:06 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -50,8 +50,16 @@ __KERNEL_RCSID(0, "$NetBSD: gpiokeys.c,v 1.6 2017/12/10 17:03:07 bouyer Exp $");
 
 #define GPIOKEYS_POLL_INTERVAL	mstohz(200)
 
-#define KEY_POWER	116
-#define KEY_SLEEP	142
+/* Event types */
+#define	EV_KEY		1
+#define	EV_SW		5
+
+/* Key and button events */
+#define	KEY_POWER	116
+#define	KEY_SLEEP	142
+
+/* Switch events */
+#define	SW_LID		0
 
 static int	gpiokeys_match(device_t, cfdata_t, void *);
 static void	gpiokeys_attach(device_t, device_t, void *);
@@ -148,7 +156,7 @@ gpiokeys_attach(device_t parent, device_t self, void *aux)
 	const struct fdt_attach_args *faa = aux;
 	const int phandle = faa->faa_phandle;
 	struct gpiokeys_key *key;
-	u_int debounce, code;
+	u_int debounce, input_type, code;
 	int use_wskbddev = 0;
 	int child, len;
 
@@ -159,6 +167,8 @@ gpiokeys_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(":");
 
 	for (child = OF_child(phandle); child; child = OF_peer(child)) {
+		if (of_getprop_uint32(child, "linux,input-type", &input_type))
+			input_type = EV_KEY;	/* default */
 		if (of_getprop_uint32(child, "linux,code", &code))
 			continue;
 		if (of_getprop_uint32(child, "debounce-interval", &debounce))
@@ -183,22 +193,37 @@ gpiokeys_attach(device_t parent, device_t self, void *aux)
 		if (key->key_pin)
 			key->key_state = fdtbus_gpio_read(key->key_pin);
 
-		switch (code) {
-		case KEY_POWER:
-			key->key_pswitch.smpsw_name = key->key_label;
-			key->key_pswitch.smpsw_type = PSWITCH_TYPE_POWER;
-			break;
-		case KEY_SLEEP:
-			key->key_pswitch.smpsw_name = key->key_label;
-			key->key_pswitch.smpsw_type = PSWITCH_TYPE_SLEEP;
-			break;
-		default:
-			key->key_usbcode = linux_key_to_usb(code);
-			if (key->key_usbcode != 0) {
-				use_wskbddev++;
-			} else {
+		switch (input_type) {
+		case EV_KEY:
+			switch (code) {
+			case KEY_POWER:
 				key->key_pswitch.smpsw_name = key->key_label;
+				key->key_pswitch.smpsw_type = PSWITCH_TYPE_POWER;
+				break;
+			case KEY_SLEEP:
+				key->key_pswitch.smpsw_name = key->key_label;
+				key->key_pswitch.smpsw_type = PSWITCH_TYPE_SLEEP;
+				break;
+			default:
+				key->key_usbcode = linux_key_to_usb(code);
+				if (key->key_usbcode != 0) {
+					use_wskbddev++;
+				} else {
+					key->key_pswitch.smpsw_name = key->key_label;
+					key->key_pswitch.smpsw_type = PSWITCH_TYPE_HOTKEY;
+				}
+				break;
+			}
+			break;
+		case EV_SW:
+			key->key_pswitch.smpsw_name = key->key_label;
+			switch (code) {
+			case SW_LID:
+				key->key_pswitch.smpsw_type = PSWITCH_TYPE_LID;
+				break;
+			default:
 				key->key_pswitch.smpsw_type = PSWITCH_TYPE_HOTKEY;
+				break;
 			}
 			break;
 		}
