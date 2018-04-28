@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_var.h,v 1.6 2018/04/19 08:27:38 maxv Exp $ */
+/*	$NetBSD: ipsec_var.h,v 1.7 2018/04/28 13:23:17 maxv Exp $ */
 /*	$FreeBSD: ipsec.h,v 1.2.4.2 2004/02/14 22:23:23 bms Exp $	*/
 
 /*-
@@ -56,9 +56,6 @@
 #define	IPSEC_NSTATS		16
 
 /*
- * Definitions for IPsec & Key sysctl operations.
- */
-/*
  * Names for IPsec & Key sysctl objects
  */
 #define IPSECCTL_STATS			1	/* KAME compat stats */
@@ -77,39 +74,5 @@
 #define	IPSECCTL_DEBUG			12
 #define	IPSECCTL_ESP_RANDPAD		13
 #define IPSECCTL_MAXID			14
-
-#define IPSECCTL_NAMES { \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ "def_policy", CTLTYPE_INT }, \
-	{ "esp_trans_deflev", CTLTYPE_INT }, \
-	{ "esp_net_deflev", CTLTYPE_INT }, \
-	{ "ah_trans_deflev", CTLTYPE_INT }, \
-	{ "ah_net_deflev", CTLTYPE_INT }, \
-	{ 0, 0 }, \
-	{ "ah_cleartos", CTLTYPE_INT }, \
-	{ "ah_offsetmask", CTLTYPE_INT }, \
-	{ "dfbit", CTLTYPE_INT }, \
-	{ "ecn", CTLTYPE_INT }, \
-	{ "debug", CTLTYPE_INT }, \
-	{ "esp_randpad", CTLTYPE_INT }, \
-}
-
-#define IPSEC6CTL_NAMES { \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ "def_policy", CTLTYPE_INT }, \
-	{ "esp_trans_deflev", CTLTYPE_INT }, \
-	{ "esp_net_deflev", CTLTYPE_INT }, \
-	{ "ah_trans_deflev", CTLTYPE_INT }, \
-	{ "ah_net_deflev", CTLTYPE_INT }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ "ecn", CTLTYPE_INT }, \
-	{ "debug", CTLTYPE_INT }, \
-	{ "esp_randpad", CTLTYPE_INT }, \
-}
 
 #endif /* !_NETIPSEC_IPSEC_VAR_H_ */
