@@ -1,4 +1,4 @@
-/*	$NetBSD: imx7d-clock.h,v 1.1.1.3 2017/11/30 19:40:51 jmcneill Exp $	*/
+/*	$NetBSD: imx7d-clock.h,v 1.1.1.4 2018/04/28 18:25:53 jmcneill Exp $	*/
 
 /*
  * Copyright (C) 2014-2015 Freescale Semiconductor, Inc.
@@ -454,5 +454,8 @@
 #define IMX7D_OCOTP_CLK			439
 #define IMX7D_NAND_RAWNAND_CLK		440
 #define IMX7D_NAND_USDHC_BUS_RAWNAND_CLK 441
-#define IMX7D_CLK_END			442
+#define IMX7D_SNVS_CLK			442
+#define IMX7D_CAAM_CLK			443
+#define IMX7D_KPP_ROOT_CLK		444
+#define IMX7D_CLK_END			445
 #endif /* __DT_BINDINGS_CLOCK_IMX7D_H */
