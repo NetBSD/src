@@ -1,4 +1,4 @@
-#	$NetBSD: t_ping6_opts.sh,v 1.8 2016/11/25 08:51:17 ozaki-r Exp $
+#	$NetBSD: t_ping6_opts.sh,v 1.9 2018/04/26 06:23:33 maxv Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -292,89 +292,10 @@ ping6_opts_gateway_cleanup()
 	cleanup
 }
 
-atf_test_case ping6_opts_hops cleanup
-ping6_opts_hops_head()
-{
-
-	atf_set "descr" "tests of ping6 hops (Type 0 Routing Header)"
-	atf_set "require.progs" "rump_server"
-}
-
-ping6_opts_hops_body()
-{
-	local my_macaddr=
-	local gw_shmif0_macaddr=
-	local gw_shmif2_macaddr=
-
-	setup6
-	setup_forwarding6
-
-	my_macaddr=$(get_macaddr ${SOCKSRC} shmif0)
-	gw_shmif0_macaddr=$(get_macaddr ${SOCKFWD} shmif0)
-
-	export RUMP_SERVER=$SOCKSRC
-	atf_check -s exit:0 -o ignore rump.ping6 -n -c 1 -X $TIMEOUT $IP6DST
-	check_echo_request_pkt_with_macaddr \
-	    $my_macaddr $gw_shmif0_macaddr $IP6SRC $IP6DST
-
-	rump_server_add_iface $SOCKFWD shmif2 $BUS_SRCGW
-	export RUMP_SERVER=$SOCKFWD
-	atf_check -s exit:0 rump.ifconfig shmif2 inet6 $IP6SRCGW2
-	atf_check -s exit:0 rump.ifconfig -w 10
-	gw_shmif2_macaddr=$(get_macaddr ${SOCKFWD} shmif2)
-
-	export RUMP_SERVER=$SOCKSRC
-	atf_check -s exit:0 -o ignore rump.ping6 -n -c 1 -X $TIMEOUT $IP6DST
-	check_echo_request_pkt_with_macaddr \
-	    $my_macaddr $gw_shmif0_macaddr $IP6SRC $IP6DST
-
-	# ping6 hops
-
-	# ping6 fails expectedly because the kernel doesn't support
-	# to receive packets with type 0 routing headers, but we can
-	# check whether a sent packet is correct.
-	atf_check -s not-exit:0 -o ignore rump.ping6 -n -c 1 -X $TIMEOUT \
-	    $IP6SRCGW $IP6DST
-	check_echo_request_pkt_with_macaddr_and_rthdr0 \
-	    $my_macaddr $gw_shmif0_macaddr $IP6SRC $IP6SRCGW $IP6DST
-
-	atf_check -s not-exit:0 -o ignore rump.ping6 -n -c 1 -X $TIMEOUT \
-	    $IP6SRCGW2 $IP6DST
-	check_echo_request_pkt_with_macaddr_and_rthdr0 \
-	    $my_macaddr $gw_shmif2_macaddr $IP6SRC $IP6SRCGW2 $IP6DST
-
-	# ping6 -g <gateway> hops
-	atf_check -s not-exit:0 -o ignore rump.ping6 -n -c 1 -X $TIMEOUT \
-	    -g $IP6SRCGW $IP6SRCGW $IP6DST
-	check_echo_request_pkt_with_macaddr_and_rthdr0 \
-	    $my_macaddr $gw_shmif0_macaddr $IP6SRC $IP6SRCGW $IP6DST
-
-	atf_check -s not-exit:0 -o ignore rump.ping6 -n -c 1 -X $TIMEOUT \
-	    -g $IP6SRCGW2 $IP6SRCGW2 $IP6DST
-	check_echo_request_pkt_with_macaddr_and_rthdr0 \
-	    $my_macaddr $gw_shmif2_macaddr $IP6SRC $IP6SRCGW2 $IP6DST
-
-	# ping6 -g <gateway> hops, but different nexthops (is it valid?)
-	atf_check -s not-exit:0 -o ignore rump.ping6 -n -c 1 -X $TIMEOUT \
-	    -g $IP6SRCGW $IP6SRCGW2 $IP6DST
-	check_echo_request_pkt_with_macaddr_and_rthdr0 \
-	    $my_macaddr $gw_shmif0_macaddr $IP6SRC $IP6SRCGW2 $IP6DST
-
-	rump_server_destroy_ifaces
-}
-
-ping6_opts_hops_cleanup()
-{
-
-	$DEBUG && dump
-	cleanup
-}
-
 atf_init_test_cases()
 {
 
 	atf_add_test_case ping6_opts_sourceaddr
 	atf_add_test_case ping6_opts_interface
 	atf_add_test_case ping6_opts_gateway
-	atf_add_test_case ping6_opts_hops
 }
