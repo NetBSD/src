@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec6.h,v 1.27 2018/04/19 08:27:38 maxv Exp $	*/
+/*	$NetBSD: ipsec6.h,v 1.28 2018/04/28 14:25:56 maxv Exp $	*/
 /*	$FreeBSD: ipsec6.h,v 1.1.4.1 2003/01/24 05:11:35 sam Exp $	*/
 /*	$KAME: ipsec.h,v 1.44 2001/03/23 08:08:47 itojun Exp $	*/
 
@@ -31,10 +31,6 @@
  * SUCH DAMAGE.
  */
 
-/*
- * IPsec controller part.
- */
-
 #ifndef _NETIPSEC_IPSEC6_H_
 #define _NETIPSEC_IPSEC6_H_
 
@@ -50,24 +46,21 @@ extern int ip6_ah_net_deflev;
 extern int ip6_ipsec_ecn;
 extern struct secpolicy ip6_def_policy;
 
-struct inpcb;
 struct in6pcb;
-
-struct secpolicy *ipsec6_check_policy(struct mbuf *, 
-    struct in6pcb *, int, int*,int*);
-
 struct tcp6cb;
 
-size_t ipsec6_hdrsiz_tcp(struct tcpcb*);
+struct secpolicy *ipsec6_check_policy(struct mbuf *, struct in6pcb *,
+    int, int *, int *);
+size_t ipsec6_hdrsiz_tcp(struct tcpcb *);
 
-/* NetBSD protosw ctlin entrypoint */
 void *esp6_ctlinput(int, const struct sockaddr *, void *);
 void *ah6_ctlinput(int, const struct sockaddr *, void *);
 
 struct m_tag;
 int ipsec6_common_input(struct mbuf **, int *, int);
 int ipsec6_common_input_cb(struct mbuf *, struct secasvar *, int, int);
-int ipsec6_process_packet(struct mbuf*, const struct ipsecrequest *);
+int ipsec6_process_packet(struct mbuf *, const struct ipsecrequest *);
+int ipsec6_input(struct mbuf *);
 #endif /*_KERNEL*/
 
 #endif /* !_NETIPSEC_IPSEC6_H_ */
