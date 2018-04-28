@@ -1,4 +1,4 @@
-/*	$NetBSD: key_var.h,v 1.4 2018/04/19 08:27:38 maxv Exp $	*/
+/*	$NetBSD: key_var.h,v 1.5 2018/04/28 13:23:17 maxv Exp $	*/
 /*	$FreeBSD: key_var.h,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: key_var.h,v 1.11 2001/09/12 23:05:07 sakane Exp $	*/
 
@@ -50,38 +50,6 @@
 #define KEYCTL_DUMPSA			13
 #define KEYCTL_DUMPSP			14
 #define KEYCTL_MAXID			15
-
-#define KEYCTL_NAMES { \
-	{ 0, 0 }, \
-	{ "debug", CTLTYPE_INT }, \
-	{ "spi_try", CTLTYPE_INT }, \
-	{ "spi_min_value", CTLTYPE_INT }, \
-	{ "spi_max_value", CTLTYPE_INT }, \
-	{ "random_int", CTLTYPE_INT }, \
-	{ "larval_lifetime", CTLTYPE_INT }, \
-	{ "blockacq_count", CTLTYPE_INT }, \
-	{ "blockacq_lifetime", CTLTYPE_INT }, \
-	{ "esp_keymin", CTLTYPE_INT }, \
-	{ "esp_auth", CTLTYPE_INT }, \
-	{ "ah_keymin", CTLTYPE_INT }, \
-	{ "prefered_oldsa", CTLTYPE_INT }, \
-}
-
-#define KEYCTL_VARS { \
-	0, \
-	0, \
-	&key_spi_trycnt, \
-	&key_spi_minval, \
-	&key_spi_maxval, \
-	&key_int_random, \
-	&key_larval_lifetime, \
-	&key_blockacq_count, \
-	&key_blockacq_lifetime, \
-	&ipsec_esp_keymin, \
-	&ipsec_esp_auth, \
-	&ipsec_ah_keymin, \
-	&key_prefered_oldsa, \
-}
 
 #ifdef _KERNEL
 #define _ARRAYLEN(p) (sizeof(p)/sizeof(p[0]))
