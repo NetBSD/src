@@ -1,4 +1,4 @@
-.\"	$NetBSD: mbuf.9,v 1.62 2018/04/27 09:33:09 wiz Exp $
+.\"	$NetBSD: mbuf.9,v 1.63 2018/04/28 08:34:45 maxv Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 27, 2018
+.Dd April 28, 2018
 .Dt MBUF 9
 .Os
 .Sh NAME
@@ -69,9 +69,9 @@
 .Sh SYNOPSIS
 .In sys/mbuf.h
 .Ft struct mbuf *
-.Fn m_get "int nowait" "int type"
+.Fn m_get "int how" "int type"
 .Ft struct mbuf *
-.Fn m_gethdr "int nowait" "int type"
+.Fn m_gethdr "int how" "int type"
 .Ft struct mbuf *
 .Fn m_devget "char *buf" "int totlen" "int off0" "struct ifnet *ifp" "void (*copy)(const void *, void *, size_t)"
 .Ft struct mbuf *
@@ -231,10 +231,10 @@ flag is raised for an mbuf,
 the external storage area could be shared among multiple mbufs.
 Be careful when you attempt to overwrite the data content of the mbuf.
 .Bl -tag -width compact
-.It Fn m_get "int nowait" "int type"
+.It Fn m_get "int how" "int type"
 Allocates an mbuf and initializes it to contain internal data.
 The
-.Fa nowait
+.Fa how
 parameter is a choice of
 .Dv M_WAIT / M_DONTWAIT
 from caller.
@@ -243,11 +243,11 @@ means the call cannot fail, but may take forever.
 The
 .Fa type
 parameter is an mbuf type.
-.It Fn m_gethdr "int nowait" "int type"
+.It Fn m_gethdr "int how" "int type"
 Allocates an mbuf and initializes it to contain a packet header and internal
 data.
 The
-.Fa nowait
+.Fa how
 parameter is a choice of
 .Dv M_WAIT / M_DONTWAIT
 from caller.
