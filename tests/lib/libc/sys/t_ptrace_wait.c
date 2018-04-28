@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.33 2018/04/27 21:36:45 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.34 2018/04/28 00:14:37 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.33 2018/04/27 21:36:45 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.34 2018/04/28 00:14:37 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -80,6 +80,8 @@ static int debug = 0;
 #define DPRINTF(a, ...)	do  \
 	if (debug) printf(a,  ##__VA_ARGS__); \
     while (/*CONSTCOND*/0)
+
+/// ----------------------------------------------------------------------------
 
 static void
 traceme_raise(int sigval)
@@ -142,28 +144,13 @@ TRACEME_RAISE(traceme_raise3, SIGABRT) /* regular abort trap */
 TRACEME_RAISE(traceme_raise4, SIGHUP)  /* hangup */
 TRACEME_RAISE(traceme_raise5, SIGCONT) /* continued? */
 
-ATF_TC(traceme2);
-ATF_TC_HEAD(traceme2, tc)
-{
-	atf_tc_set_md_var(tc, "descr",
-	    "Verify that a signal emitted by a tracer to a child is caught by "
-	    "a signal handler");
-}
-
-static int traceme2_caught = 0;
+/// ----------------------------------------------------------------------------
 
 static void
-traceme2_sighandler(int sig)
-{
-	FORKEE_ASSERT_EQ(sig, SIGINT);
-
-	++traceme2_caught;
-}
-
-ATF_TC_BODY(traceme2, tc)
+traceme_sighandler_catch(int sigsent, void (*sah)(int arg), int *traceme_caught)
 {
 	const int exitval = 5;
-	const int sigval = SIGSTOP, sigsent = SIGINT;
+	const int sigval = SIGSTOP;
 	pid_t child, wpid;
 	struct sigaction sa;
 #if defined(TWAIT_HAVE_STATUS)
@@ -176,7 +163,7 @@ ATF_TC_BODY(traceme2, tc)
 		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
-		sa.sa_handler = traceme2_sighandler;
+		sa.sa_handler = sah;
 		sa.sa_flags = SA_SIGINFO;
 		sigemptyset(&sa.sa_mask);
 
@@ -185,7 +172,7 @@ ATF_TC_BODY(traceme2, tc)
 		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		FORKEE_ASSERT_EQ(traceme2_caught, 1);
+		FORKEE_ASSERT_EQ(*traceme_caught, 1);
 
 		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
@@ -209,6 +196,38 @@ ATF_TC_BODY(traceme2, tc)
 	DPRINTF("Before calling %s() for the exited child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
+
+#define TRACEME_SIGHANDLER_CATCH(test, sig)					\
+ATF_TC(test);									\
+ATF_TC_HEAD(test, tc)								\
+{										\
+	atf_tc_set_md_var(tc, "descr",						\
+	    "Verify that a signal " #sig " emitted by a tracer to a child is "	\
+	    "handled correctly and caught by a signal handler");		\
+}										\
+										\
+static int test##_caught = 0;							\
+										\
+static void									\
+test##_sighandler(int arg)							\
+{										\
+	FORKEE_ASSERT_EQ(arg, sig);						\
+										\
+	++ test##_caught;							\
+}										\
+										\
+ATF_TC_BODY(test, tc)								\
+{										\
+										\
+	traceme_sighandler_catch(sig, test##_sighandler, & test##_caught);	\
+}
+
+// A signal handler for SIGKILL and SIGSTOP cannot be registered.
+TRACEME_SIGHANDLER_CATCH(traceme_sighandler_catch1, SIGABRT) /* abort trap */
+TRACEME_SIGHANDLER_CATCH(traceme_sighandler_catch2, SIGHUP)  /* hangup */
+TRACEME_SIGHANDLER_CATCH(traceme_sighandler_catch3, SIGCONT) /* continued? */
+
+/// ----------------------------------------------------------------------------
 
 ATF_TC(traceme3);
 ATF_TC_HEAD(traceme3, tc)
@@ -6710,7 +6729,10 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, traceme_raise4);
 	ATF_TP_ADD_TC(tp, traceme_raise5);
 
-	ATF_TP_ADD_TC(tp, traceme2);
+	ATF_TP_ADD_TC(tp, traceme_sighandler_catch1);
+	ATF_TP_ADD_TC(tp, traceme_sighandler_catch2);
+	ATF_TP_ADD_TC(tp, traceme_sighandler_catch3);
+
 	ATF_TP_ADD_TC(tp, traceme3);
 
 	ATF_TP_ADD_TC_HAVE_PID(tp, attach1);
