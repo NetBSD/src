@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.75 2018/04/28 14:01:50 maxv Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.76 2018/04/28 14:21:03 maxv Exp $	*/
 /*	$FreeBSD: ipsec.h,v 1.2.4.2 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: ipsec.h,v 1.53 2001/11/20 08:32:38 itojun Exp $	*/
 
@@ -269,8 +269,7 @@ int ipsec6_input(struct mbuf *);
 #endif
 
 struct inpcb;
-#define	ipsec_init_pcbpolicy ipsec_init_policy
-int ipsec_init_policy(struct socket *so, struct inpcbpolicy **);
+int ipsec_init_pcbpolicy(struct socket *so, struct inpcbpolicy **);
 int ipsec_copy_policy(const struct inpcbpolicy *, struct inpcbpolicy *);
 u_int ipsec_get_reqlevel(const struct ipsecrequest *);
 
