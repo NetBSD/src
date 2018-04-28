@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_netbsd.c,v 1.53 2018/04/22 10:25:40 maxv Exp $	*/
+/*	$NetBSD: ipsec_netbsd.c,v 1.54 2018/04/28 13:44:19 maxv Exp $	*/
 /*	$KAME: esp_input.c,v 1.60 2001/09/04 08:43:19 itojun Exp $	*/
 /*	$KAME: ah_input.c,v 1.64 2001/09/04 08:43:19 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.53 2018/04/22 10:25:40 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.54 2018/04/28 13:44:19 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -720,7 +720,7 @@ sysctl_net_inet6_ipsec6_setup(struct sysctllog **clog)
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "def_policy",
 		       SYSCTL_DESCR("Default action for non-IPSec packets"),
-		       sysctl_ipsec, 0, (void *)&ip6_def_policy, 0,
+		       sysctl_ipsec, 0, &ip6_def_policy.policy, 0,
 		       CTL_NET, PF_INET6, IPPROTO_AH,
 		       IPSECCTL_DEF_POLICY, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
