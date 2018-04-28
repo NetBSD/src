@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.h,v 1.2 2018/03/13 13:34:40 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.h,v 1.3 2018/04/28 17:56:55 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -273,7 +273,7 @@ validate_status_signaled(int status, int expected_termsig, int expected_core)
 	ATF_REQUIRE_EQ_MSG(WTERMSIG(status), expected_termsig,
 	    "Unexpected signal received");
 
-	ATF_REQUIRE_EQ_MSG(WCOREDUMP(status), expected_core,
+	ATF_REQUIRE_EQ_MSG(!!WCOREDUMP(status), expected_core,
 	    "Unexpectedly core file %s generated", expected_core ? "not" : "");
 }
 
@@ -286,7 +286,7 @@ forkee_status_signaled(int status, int expected_termsig, int expected_core)
 	FORKEE_ASSERTX(!WIFSTOPPED(status));
 
 	FORKEE_ASSERT_EQ(WTERMSIG(status), expected_termsig);
-	FORKEE_ASSERT_EQ(WCOREDUMP(status), expected_core);
+	FORKEE_ASSERT_EQ(!!WCOREDUMP(status), expected_core);
 }
 
 static void __used
