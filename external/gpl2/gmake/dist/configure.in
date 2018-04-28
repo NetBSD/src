@@ -19,7 +19,7 @@
 AC_INIT([GNU make],[3.81],[bug-make@gnu.org])
 
 AC_PREREQ(2.59)
-AC_REVISION([[$Id: configure.in,v 1.1.1.1 2014/08/18 06:46:47 christos Exp $]])
+AC_REVISION([[$Id: configure.in,v 1.2 2018/04/28 12:20:40 nonaka Exp $]])
 
 # Autoconf setup
 AC_CONFIG_AUX_DIR(config)
@@ -351,10 +351,9 @@ AC_CACHE_VAL(make_cv_sys_gnu_glob, [
 #include <glob.h>
 #include <fnmatch.h>
 
-#define GLOB_INTERFACE_VERSION 1
 #if !defined _LIBC && defined __GNU_LIBRARY__ && __GNU_LIBRARY__ > 1
 # include <gnu-versions.h>
-# if _GNU_GLOB_INTERFACE_VERSION == GLOB_INTERFACE_VERSION
+# if _GNU_GLOB_INTERFACE_VERSION == 1 || _GNU_GLOB_INTERFACE_VERSION == 2
    gnu glob
 # endif
 #endif
