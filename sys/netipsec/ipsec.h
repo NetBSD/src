@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.76 2018/04/28 14:21:03 maxv Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.77 2018/04/28 14:25:56 maxv Exp $	*/
 /*	$FreeBSD: ipsec.h,v 1.2.4.2 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: ipsec.h,v 1.53 2001/11/20 08:32:38 itojun Exp $	*/
 
@@ -264,9 +264,6 @@ struct inpcb;
 int ipsec4_output(struct mbuf *, struct inpcb *, int, u_long *, bool *, bool *);
 int ipsec4_input(struct mbuf *, int);
 int ipsec4_forward(struct mbuf *, int *);
-#ifdef INET6
-int ipsec6_input(struct mbuf *);
-#endif
 
 struct inpcb;
 int ipsec_init_pcbpolicy(struct socket *so, struct inpcbpolicy **);
