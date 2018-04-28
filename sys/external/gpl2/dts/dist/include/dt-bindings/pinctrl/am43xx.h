@@ -1,4 +1,4 @@
-/*	$NetBSD: am43xx.h,v 1.1.1.2 2017/11/30 19:40:51 jmcneill Exp $	*/
+/*	$NetBSD: am43xx.h,v 1.1.1.3 2018/04/28 18:25:53 jmcneill Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
@@ -27,7 +27,8 @@
 #define DS0_FORCE_OFF_MODE	(1 << 24)
 #define DS0_INPUT		(1 << 25)
 #define DS0_FORCE_OUT_HIGH	(1 << 26)
-#define DS0_PULL_UP_DOWN_EN	(1 << 27)
+#define DS0_PULL_UP_DOWN_EN	(0 << 27)
+#define DS0_PULL_UP_DOWN_DIS	(1 << 27)
 #define DS0_PULL_UP_SEL		(1 << 28)
 #define WAKEUP_ENABLE		(1 << 29)
 
