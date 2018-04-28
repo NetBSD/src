@@ -1,4 +1,4 @@
-/* $NetBSD: param.h,v 1.2 2018/04/01 04:35:03 ryo Exp $ */
+/* $NetBSD: param.h,v 1.3 2018/04/28 10:53:02 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
 
 
 #ifndef MSGBUFSIZE
-#define MSGBUFSIZE		NBPG	/* default message buffer size */
+#define MSGBUFSIZE		16384	/* default message buffer size */
 #endif
 
 #ifdef _KERNEL
