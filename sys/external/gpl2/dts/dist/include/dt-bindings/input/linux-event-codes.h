@@ -1,4 +1,4 @@
-/*	$NetBSD: linux-event-codes.h,v 1.5 2017/11/30 19:42:58 jmcneill Exp $	*/
+/*	$NetBSD: linux-event-codes.h,v 1.6 2018/04/28 18:28:25 jmcneill Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
 /*
@@ -596,6 +596,7 @@
 #define BTN_DPAD_RIGHT		0x223
 
 #define KEY_ALS_TOGGLE		0x230	/* Ambient light sensor */
+#define KEY_ROTATE_LOCK_TOGGLE	0x231	/* Display rotation lock */
 
 #define KEY_BUTTONCONFIG		0x240	/* AL Button Configuration */
 #define KEY_TASKMANAGER		0x241	/* AL Task/Project Manager */
