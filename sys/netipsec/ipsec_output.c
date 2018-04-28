@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_output.c,v 1.73 2018/04/19 08:27:38 maxv Exp $	*/
+/*	$NetBSD: ipsec_output.c,v 1.74 2018/04/28 15:45:16 maxv Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.73 2018/04/19 08:27:38 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.74 2018/04/28 15:45:16 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -153,8 +153,6 @@ ipsec_process_done(struct mbuf *m, const struct ipsecrequest *isr,
 	struct udphdr *udp = NULL;
 	uint64_t *data = NULL;
 	int hlen, roff;
-
-	IPSEC_SPLASSERT_SOFTNET("ipsec_process_done");
 
 	KASSERT(m != NULL);
 	KASSERT(isr != NULL);
@@ -376,7 +374,6 @@ do {									\
 	struct secasvar *sav = NULL;
 	struct secasindex saidx;
 
-	IPSEC_SPLASSERT_SOFTNET("ipsec_nextisr");
 	KASSERTMSG(af == AF_INET || af == AF_INET6,
 	    "invalid address family %u", af);
 again:

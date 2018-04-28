@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ah.c,v 1.94 2018/04/24 08:07:06 maxv Exp $	*/
+/*	$NetBSD: xform_ah.c,v 1.95 2018/04/28 15:45:16 maxv Exp $	*/
 /*	$FreeBSD: xform_ah.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ah.c,v 1.63 2001/06/26 06:18:58 angelos Exp $ */
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.94 2018/04/24 08:07:06 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.95 2018/04/28 15:45:16 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -522,8 +522,6 @@ ah_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 	bool pool_used;
 	uint8_t nxt;
 
-	IPSEC_SPLASSERT_SOFTNET(__func__);
-
 	KASSERT(sav != NULL);
 	KASSERT(sav->key_auth != NULL);
 	KASSERT(sav->tdb_authalgxform != NULL);
@@ -901,8 +899,6 @@ ah_output(struct mbuf *m, const struct ipsecrequest *isr, struct secasvar *sav,
 	struct newah *ah;
 	size_t ipoffs;
 	bool pool_used;
-
-	IPSEC_SPLASSERT_SOFTNET(__func__);
 
 	KASSERT(sav != NULL);
 	KASSERT(sav->tdb_authalgxform != NULL);

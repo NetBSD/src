@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_esp.c,v 1.81 2018/04/19 08:27:39 maxv Exp $	*/
+/*	$NetBSD: xform_esp.c,v 1.82 2018/04/28 15:45:16 maxv Exp $	*/
 /*	$FreeBSD: xform_esp.c,v 1.2.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_esp.c,v 1.69 2001/06/26 06:18:59 angelos Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.81 2018/04/19 08:27:39 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.82 2018/04/28 15:45:16 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -302,8 +302,6 @@ esp_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 	struct newesp *esp;
 	struct cryptodesc *crde;
 	struct cryptop *crp;
-
-	IPSEC_SPLASSERT_SOFTNET(__func__);
 
 	KASSERT(sav != NULL);
 	KASSERT(sav->tdb_encalgxform != NULL);
@@ -705,8 +703,6 @@ esp_output(struct mbuf *m, const struct ipsecrequest *isr, struct secasvar *sav,
 
 	struct cryptodesc *crde = NULL, *crda = NULL;
 	struct cryptop *crp;
-
-	IPSEC_SPLASSERT_SOFTNET(__func__);
 
 	esph = sav->tdb_authalgxform;
 	KASSERT(sav->tdb_encalgxform != NULL);

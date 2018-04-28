@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipcomp.c,v 1.62 2018/04/19 08:27:39 maxv Exp $	*/
+/*	$NetBSD: xform_ipcomp.c,v 1.63 2018/04/28 15:45:16 maxv Exp $	*/
 /*	$FreeBSD: xform_ipcomp.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /* $OpenBSD: ip_ipcomp.c,v 1.1 2001/07/05 12:08:52 jjbg Exp $ */
 
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.62 2018/04/19 08:27:39 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.63 2018/04/28 15:45:16 maxv Exp $");
 
 /* IP payload compression protocol (IPComp), see RFC 2393 */
 #if defined(_KERNEL_OPT)
@@ -146,7 +146,6 @@ ipcomp_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 	struct cryptop *crp;
 	int error, hlen = IPCOMP_HLENGTH, stat = IPCOMP_STAT_CRYPTO;
 
-	IPSEC_SPLASSERT_SOFTNET(__func__);
 	KASSERT(skip + hlen <= m->m_pkthdr.len);
 
 	/* Get crypto descriptors */
@@ -382,7 +381,6 @@ ipcomp_output(struct mbuf *m, const struct ipsecrequest *isr,
 	struct cryptop *crp;
 	struct tdb_crypto *tc;
 
-	IPSEC_SPLASSERT_SOFTNET(__func__);
 	KASSERT(sav != NULL);
 	KASSERT(sav->tdb_compalgxform != NULL);
 	ipcompx = sav->tdb_compalgxform;
