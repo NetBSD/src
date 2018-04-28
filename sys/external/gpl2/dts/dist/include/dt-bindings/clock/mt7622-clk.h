@@ -1,4 +1,4 @@
-/*	$NetBSD: mt7622-clk.h,v 1.1.1.1 2017/11/30 19:40:51 jmcneill Exp $	*/
+/*	$NetBSD: mt7622-clk.h,v 1.1.1.2 2018/04/28 18:25:53 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2017 MediaTek Inc.
@@ -237,7 +237,8 @@
 #define CLK_AUDIO_MEM_ASRC3		43
 #define CLK_AUDIO_MEM_ASRC4		44
 #define CLK_AUDIO_MEM_ASRC5		45
-#define CLK_AUDIO_NR_CLK		46
+#define CLK_AUDIO_AFE_CONN		46
+#define CLK_AUDIO_NR_CLK		47
 
 /* SSUSBSYS */
 

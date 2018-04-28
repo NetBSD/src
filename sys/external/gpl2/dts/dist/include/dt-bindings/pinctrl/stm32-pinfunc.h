@@ -1,4 +1,10 @@
-/*	$NetBSD: stm32-pinfunc.h,v 1.1.1.1 2017/11/30 19:40:51 jmcneill Exp $	*/
+/*	$NetBSD: stm32-pinfunc.h,v 1.1.1.2 2018/04/28 18:25:53 jmcneill Exp $	*/
+
+/* SPDX-License-Identifier: (GPL-2.0+ OR BSD-3-Clause) */
+/*
+ * Copyright (C) STMicroelectronics 2017 - All Rights Reserved
+ * Author: Torgue Alexandre <alexandre.torgue@st.com> for STMicroelectronics.
+ */
 
 #ifndef _DT_BINDINGS_STM32_PINFUNC_H
 #define _DT_BINDINGS_STM32_PINFUNC_H

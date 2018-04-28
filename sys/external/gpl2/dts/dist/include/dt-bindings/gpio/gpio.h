@@ -1,4 +1,4 @@
-/*	$NetBSD: gpio.h,v 1.1.1.4 2017/11/30 19:40:51 jmcneill Exp $	*/
+/*	$NetBSD: gpio.h,v 1.1.1.5 2018/04/28 18:25:53 jmcneill Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
@@ -31,8 +31,8 @@
 #define GPIO_OPEN_DRAIN (GPIO_SINGLE_ENDED | GPIO_LINE_OPEN_DRAIN)
 #define GPIO_OPEN_SOURCE (GPIO_SINGLE_ENDED | GPIO_LINE_OPEN_SOURCE)
 
-/* Bit 3 express GPIO suspend/resume persistence */
-#define GPIO_SLEEP_MAINTAIN_VALUE 0
-#define GPIO_SLEEP_MAY_LOSE_VALUE 8
+/* Bit 3 express GPIO suspend/resume and reset persistence */
+#define GPIO_PERSISTENT 0
+#define GPIO_TRANSITORY 8
 
 #endif

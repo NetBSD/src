@@ -1,4 +1,4 @@
-/*	$NetBSD: sun8i-h3-ccu.h,v 1.1.1.2 2017/07/27 18:10:51 jmcneill Exp $	*/
+/*	$NetBSD: sun8i-h3-ccu.h,v 1.1.1.3 2018/04/28 18:25:53 jmcneill Exp $	*/
 
 /*
  * Copyright (C) 2016 Maxime Ripard <maxime.ripard@free-electrons.com>
@@ -44,6 +44,8 @@
 
 #ifndef _DT_BINDINGS_CLK_SUN8I_H3_H_
 #define _DT_BINDINGS_CLK_SUN8I_H3_H_
+
+#define CLK_PLL_VIDEO		6
 
 #define CLK_PLL_PERIPH0		9
 
