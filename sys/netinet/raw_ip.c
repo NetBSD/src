@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.175 2018/04/12 07:45:29 maxv Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.176 2018/04/28 13:26:57 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.175 2018/04/12 07:45:29 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.176 2018/04/28 13:26:57 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -100,7 +100,6 @@ __KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.175 2018/04/12 07:45:29 maxv Exp $");
 
 #ifdef IPSEC
 #include <netipsec/ipsec.h>
-#include <netipsec/ipsec_var.h>
 #endif
 
 struct inpcbtable rawcbtable;
