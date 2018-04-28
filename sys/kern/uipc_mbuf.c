@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.211 2018/04/28 08:16:15 maxv Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.212 2018/04/28 08:34:45 maxv Exp $	*/
 
 /*
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.211 2018/04/28 08:16:15 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.212 2018/04/28 08:34:45 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
@@ -523,14 +523,14 @@ m_add(struct mbuf *c, struct mbuf *m)
 }
 
 struct mbuf *
-m_get(int nowait, int type)
+m_get(int how, int type)
 {
 	struct mbuf *m;
 
 	KASSERT(type != MT_FREE);
 
 	m = pool_cache_get(mb_cache,
-	    nowait == M_WAIT ? PR_WAITOK|PR_LIMITFAIL : PR_NOWAIT);
+	    how == M_WAIT ? PR_WAITOK|PR_LIMITFAIL : PR_NOWAIT);
 	if (m == NULL)
 		return NULL;
 
@@ -549,11 +549,11 @@ m_get(int nowait, int type)
 }
 
 struct mbuf *
-m_gethdr(int nowait, int type)
+m_gethdr(int how, int type)
 {
 	struct mbuf *m;
 
-	m = m_get(nowait, type);
+	m = m_get(how, type);
 	if (m == NULL)
 		return NULL;
 
@@ -574,10 +574,10 @@ m_gethdr(int nowait, int type)
 }
 
 void
-m_clget(struct mbuf *m, int nowait)
+m_clget(struct mbuf *m, int how)
 {
 	m->m_ext_storage.ext_buf = (char *)pool_cache_get_paddr(mcl_cache,
-	    nowait == M_WAIT ? (PR_WAITOK|PR_LIMITFAIL) : PR_NOWAIT,
+	    how == M_WAIT ? (PR_WAITOK|PR_LIMITFAIL) : PR_NOWAIT,
 	    &m->m_ext_storage.ext_paddr);
 
 	if (m->m_ext_storage.ext_buf == NULL)
@@ -1480,27 +1480,27 @@ enobufs:
  * is the same as the one passed.
  */
 struct mbuf *
-m_defrag(struct mbuf *mold, int flags)
+m_defrag(struct mbuf *m, int how)
 {
 	struct mbuf *m0, *mn, *n;
 	int sz;
 
-	KASSERT((mold->m_flags & M_PKTHDR) != 0);
+	KASSERT((m->m_flags & M_PKTHDR) != 0);
 
-	if (mold->m_next == NULL)
-		return mold;
+	if (m->m_next == NULL)
+		return m;
 
-	m0 = m_get(flags, MT_DATA);
+	m0 = m_get(how, MT_DATA);
 	if (m0 == NULL)
 		return NULL;
 	mn = m0;
 
-	sz = mold->m_pkthdr.len - mold->m_len;
+	sz = m->m_pkthdr.len - m->m_len;
 	KASSERT(sz >= 0);
 
 	do {
 		if (sz > MLEN) {
-			MCLGET(mn, flags);
+			MCLGET(mn, how);
 			if ((mn->m_flags & M_EXT) == 0) {
 				m_freem(m0);
 				return NULL;
@@ -1509,14 +1509,14 @@ m_defrag(struct mbuf *mold, int flags)
 
 		mn->m_len = MIN(sz, MCLBYTES);
 
-		m_copydata(mold, mold->m_pkthdr.len - sz, mn->m_len,
+		m_copydata(m, m->m_pkthdr.len - sz, mn->m_len,
 		     mtod(mn, void *));
 
 		sz -= mn->m_len;
 
 		if (sz > 0) {
 			/* need more mbufs */
-			n = m_get(flags, MT_DATA);
+			n = m_get(how, MT_DATA);
 			if (n == NULL) {
 				m_freem(m0);
 				return NULL;
@@ -1527,10 +1527,10 @@ m_defrag(struct mbuf *mold, int flags)
 		}
 	} while (sz > 0);
 
-	m_freem(mold->m_next);
-	mold->m_next = m0;
+	m_freem(m->m_next);
+	m->m_next = m0;
 
-	return mold;
+	return m;
 }
 
 void
