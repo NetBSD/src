@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.4 2018/04/27 09:05:26 ryo Exp $ */
+/* $NetBSD: db_machdep.h,v 1.5 2018/04/28 17:42:07 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -119,64 +119,55 @@ inst_load(db_expr_t insn)
 {
 	return
 	    ((insn & 0xffe00c00) == 0xb8800000) ||	/* ldursw */
-	    /* ldrsw imm{preidx,postidx} */
-	    ((insn & 0xffe00400) == 0xb8800c00) ||
-	    ((insn & 0xffc00c00) == 0xb8a00800) ||	/* ldrsw reg,ldtrsw */
+	    /* ldrsw imm{pre,post}idx */
+	    ((insn & 0xffe00400) == 0xb8800400) ||
+	    ((insn & 0xffc00c00) == 0xb8800800) ||	/* ldrsw reg,ldtrsw */
 	    ((insn & 0xffc00000) == 0xb9800000) ||	/* ldrsw immunsign */
 	    ((insn & 0xffc00000) == 0x39400000) ||	/* ldrb immunsign */
 	    ((insn & 0xff000000) == 0x98000000) ||	/* ldrsw literal */
-	    /* ldpsw {preidx,postidx} */
-	    ((insn & 0xfec00000) == 0x69c00000) ||
+	    /* ldpsw {pre,post}idx */
+	    ((insn & 0xfec00000) == 0x68c00000) ||
 	    /* ldrh immunsign,ldpsw signed */
-	    ((insn & 0xefc00000) == 0x79400000) ||
-	    ((insn & 0xbffffc00) == 0x885f7c00) ||	/* ldxr */
-	    ((insn & 0xbffffc00) == 0x485f7c00) ||	/* ldxr[bh] */
-	    ((insn & 0xbfff0000) == 0x887f8000) ||	/* ldaxp,ldxp */
-	    ((insn & 0xbfe00c00) == 0xb8400000) ||	/* ldur */
-	    ((insn & 0xbfe00c00) == 0x78400000) ||	/* ldur[bh] */
-	    /* ldr imm{preidx,postidx} */
-	    ((insn & 0xbfe00400) == 0xb8400c00) ||
-	    /* ldr[bh] imm{preidx,postidx} */
-	    ((insn & 0xbfe00400) == 0x78400c00) ||
-	    ((insn & 0xbfc00c00) == 0xb8600800) ||	/* ldr reg,ldtr */
-	    /* ldr[bh] reg,ldtr[bh] */
-	    ((insn & 0xbfc00c00) == 0x78600800) ||
+	    ((insn & 0xefc00000) == 0x69400000) ||
+	    ((insn & 0xbfff0000) == 0x887f0000) ||	/* ldaxp,ldxp */
 	    ((insn & 0xbfc00000) == 0xb9400000) ||	/* ldr immunsign */
-	    ((insn & 0xbfa00c00) == 0x78800000) ||	/* ldursh,ldursb */
-	    /* ldrs[bh] imm{preidx,postidx} */
-	    ((insn & 0xbfa00400) == 0x78800c00) ||
+	    ((insn & 0xbfa00c00) == 0x38800000) ||	/* ldursh,ldursb */
+	    /* ldrsh imm{pre,post}idx,ldrsb imm{pre,post}idx */
+	    ((insn & 0xbfa00400) == 0x38800400) ||
 	    /* ldrs[bh] reg,ldtrs[bh] */
-	    ((insn & 0xbf800c00) == 0x78a00800) ||
-	    ((insn & 0xbf800000) == 0x79800000) ||	/* ldrs[bh] immunsign */
-	    ((insn & 0xbf7ffc00) == 0x88dffc00) ||	/* ldar,ldaxr */
-	    ((insn & 0xbf7ffc00) == 0x48dffc00) ||	/* ldar[bh],ldaxr[bh] */
+	    ((insn & 0xbf800c00) == 0x38800800) ||
+	    /* ldrsh immunsign,ldrsb immunsign */
+	    ((insn & 0xbf800000) == 0x39800000) ||
 	    ((insn & 0xbf000000) == 0x18000000) ||	/* ldr literal */
-	    /* ldp {preidx,postidx,signed},ldnp */
-	    ((insn & 0x7e400000) == 0x29c00000);
+	    /* ldp {pre,post}idx,ldp signed,ldnp */
+	    ((insn & 0x7e400000) == 0x28400000) ||
+	    ((insn & 0x3ffffc00) == 0x085f7c00) ||	/* ldxr,ldxr[bh] */
+	    ((insn & 0x3fe00c00) == 0x38400000) ||	/* ldur,ldur[bh] */
+	    /* ldr imm{pre,post}idx,ldr[bh]_imm{pre,post}idx */
+	    ((insn & 0x3fe00400) == 0x38400400) ||
+	    /* ldtr,ldtr[bh],ldr_reg,ldr[bh]_reg */
+	    ((insn & 0x3fc00c00) == 0x38400800) ||
+	    /* ldaxr,ldaxr[bh],ldar,ldar[bh] */
+	    ((insn & 0x3f7ffc00) == 0x085ffc00);
 }
 
 static inline bool
 inst_store(db_expr_t insn)
 {
 	return
-	    ((insn & 0xbffffc00) == 0x889ffc00) ||	/* stlr */
-	    ((insn & 0xbffffc00) == 0x489ffc00) ||	/* stlr[bh] */
-	    ((insn & 0xbfe07c00) == 0x8800fc00) ||	/* stlxr,stxr */
-	    ((insn & 0xbfe07c00) == 0x4800fc00) ||	/* stlxr[bh],stxr[bh] */
-	    ((insn & 0xbfe00c00) == 0xb8000000) ||	/* stur */
-	    ((insn & 0xbfe00c00) == 0x78000000) ||	/* stur[bh] */
-	    /* str imm{preidx,postidx} */
-	    ((insn & 0xbfe00400) == 0xb8000c00) ||
-	    /* str[bh] imm{preidx,postidx} */
-	    ((insn & 0xbfe00400) == 0x78000c00) ||
-	    ((insn & 0xbfe00000) == 0x88208000) ||	/* stlxp,stxp */
-	    ((insn & 0xbfc00c00) == 0xb8200800) ||	/* str reg,sttr */
-	    /* str[bh] reg,sttr[bh] */
-	    ((insn & 0xbfc00c00) == 0x78200800) ||
-	    ((insn & 0xbfc00000) == 0xb9000000) ||	/* str immunsign */
-	    ((insn & 0xbfc00000) == 0x79000000) ||	/* str[bh] immunsign */
-	    /* stp {preidx,postidx,signed},stnp */
-	    ((insn & 0x7e400000) == 0x29800000);
+	    ((insn & 0xbfe00000) == 0x88200000) ||	/* stlxp,stxp */
+	    /* stp {pre,post}idx,stp signed,stnp */
+	    ((insn & 0x7e400000) == 0x28000000) ||
+	    ((insn & 0x3ffffc00) == 0x089ffc00) ||	/* stlr,stlr[bh] */
+	    /* stlxr,stlxr[bh],stxr,stxr[bh] */
+	    ((insn & 0x3fe07c00) == 0x08007c00) ||
+	    ((insn & 0x3fe00c00) == 0x38000000) ||	/* stur,stur[bh] */
+	    /* str imm{pre,post}idx,str[bh] imm{pre,post}idx */
+	    ((insn & 0x3fe00400) == 0x38000400) ||
+	    /* str reg,str[bh] reg,sttr,sttr[bh] */
+	    ((insn & 0x3fc00c00) == 0x38000800) ||
+	    /* str immunsign,str[bh] immunsign */
+	    ((insn & 0x3fc00000) == 0x39000000);
 }
 
 #define SOFTWARE_SSTEP
