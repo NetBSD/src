@@ -1,4 +1,4 @@
-/* $NetBSD: ipsec.c,v 1.157 2018/04/19 08:27:38 maxv Exp $ */
+/* $NetBSD: ipsec.c,v 1.158 2018/04/28 14:01:50 maxv Exp $ */
 /* $FreeBSD: ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $ */
 /* $KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $ */
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.157 2018/04/19 08:27:38 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.158 2018/04/28 14:01:50 maxv Exp $");
 
 /*
  * IPsec controller part.
@@ -1812,30 +1812,6 @@ ipsec_logsastr(const struct secasvar *sav, char *buf, size_t size)
 	    ipsec_address(&saidx->dst, dbuf, sizeof(dbuf)));
 
 	return buf;
-}
-
-void
-ipsec_dumpmbuf(struct mbuf *m)
-{
-	int totlen;
-	int i;
-	u_char *p;
-
-	totlen = 0;
-	printf("---\n");
-	while (m) {
-		p = mtod(m, u_char *);
-		for (i = 0; i < m->m_len; i++) {
-			printf("%02x ", p[i]);
-			totlen++;
-			if (totlen % 16 == 0)
-				printf("\n");
-		}
-		m = m->m_next;
-	}
-	if (totlen % 16 != 0)
-		printf("\n");
-	printf("---\n");
 }
 
 #ifdef INET6

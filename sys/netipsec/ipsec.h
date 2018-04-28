@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.74 2018/04/19 21:50:10 christos Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.75 2018/04/28 14:01:50 maxv Exp $	*/
 /*	$FreeBSD: ipsec.h,v 1.2.4.2 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: ipsec.h,v 1.53 2001/11/20 08:32:38 itojun Exp $	*/
 
@@ -29,10 +29,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- */
-
-/*
- * IPsec controller part.
  */
 
 #ifndef _NETIPSEC_IPSEC_H_
@@ -227,16 +223,6 @@ struct secspacq {
 #define IPSEC_REPLAYWSIZE  32
 
 #ifdef _KERNEL
-struct ipsec_output_state {
-	struct mbuf *m;
-	struct route *ro;
-	struct sockaddr *dst;
-};
-
-struct ipsec_history {
-	int ih_proto;
-	u_int32_t ih_spi;
-};
 
 extern int ipsec_debug;
 #ifdef IPSEC_DEBUG
@@ -256,8 +242,7 @@ extern int ip4_ipsec_ecn;
 extern int crypto_support;
 
 #include <sys/syslog.h>
-#define ipseclog(x)	do { if (ipsec_debug) log x; } while (0)
-/* for openbsd compatibility */
+
 #define	DPRINTF(x)	do { if (ipsec_debug) printf x; } while (0)
 
 #define IPSECLOG(level, fmt, args...) 					\
@@ -265,6 +250,11 @@ extern int crypto_support;
 		if (ipsec_debug)					\
 			log(level, "%s: " fmt, __func__, ##args);	\
 	} while (0)
+
+#define ipsec_indone(m)	\
+	((m->m_flags & M_AUTHIPHDR) || (m->m_flags & M_DECRYPTED))
+#define ipsec_outdone(m) \
+	(m_tag_find((m), PACKET_TAG_IPSEC_OUT_DONE, NULL) != NULL)
 
 void ipsec_pcbconn(struct inpcbpolicy *);
 void ipsec_pcbdisconn(struct inpcbpolicy *);
@@ -304,8 +294,6 @@ union sockaddr_union;
 const char *ipsec_address(const union sockaddr_union* sa, char *, size_t);
 const char *ipsec_logsastr(const struct secasvar *, char *, size_t);
 
-void ipsec_dumpmbuf(struct mbuf *);
-
 /* NetBSD protosw ctlin entrypoint */
 void *esp4_ctlinput(int, const struct sockaddr *, void *);
 void *ah4_ctlinput(int, const struct sockaddr *, void *);
@@ -318,19 +306,15 @@ int ipsec4_process_packet(struct mbuf *, const struct ipsecrequest *, u_long *);
 int ipsec_process_done(struct mbuf *, const struct ipsecrequest *,
     struct secasvar *);
 
-#define ipsec_indone(m)	\
-	((m->m_flags & M_AUTHIPHDR) || (m->m_flags & M_DECRYPTED))
-#define ipsec_outdone(m) \
-	(m_tag_find((m), PACKET_TAG_IPSEC_OUT_DONE, NULL) != NULL)
-
 struct mbuf *m_clone(struct mbuf *);
 struct mbuf *m_makespace(struct mbuf *, int, int, int *);
-void *m_pad(struct mbuf *, int );
+void *m_pad(struct mbuf *, int);
 int m_striphdr(struct mbuf *, int, int);
 
 void nat_t_ports_get(struct mbuf *, u_int16_t *, u_int16_t *);
 
-extern int ipsec_used __read_mostly, ipsec_enabled __read_mostly;
+extern int ipsec_used __read_mostly;
+extern int ipsec_enabled __read_mostly;
 
 #endif /* _KERNEL */
 
