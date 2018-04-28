@@ -1,4 +1,4 @@
-/*	$NetBSD: stm32fx-clock.h,v 1.1.1.1 2017/06/15 20:14:23 jmcneill Exp $	*/
+/*	$NetBSD: stm32fx-clock.h,v 1.1.1.2 2018/04/28 18:25:53 jmcneill Exp $	*/
 
 /*
  * stm32fx-clock.h
@@ -35,11 +35,12 @@
 #define CLK_SAI2		11
 #define CLK_I2SQ_PDIV		12
 #define CLK_SAIQ_PDIV		13
-
-#define END_PRIMARY_CLK		14
-
 #define CLK_HSI			14
 #define CLK_SYSCLK		15
+#define CLK_F469_DSI		16
+
+#define END_PRIMARY_CLK		17
+
 #define CLK_HDMI_CEC		16
 #define CLK_SPDIF		17
 #define CLK_USART1		18

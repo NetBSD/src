@@ -1,4 +1,4 @@
-/*	$NetBSD: rk3328-cru.h,v 1.1.1.2 2017/07/27 18:10:51 jmcneill Exp $	*/
+/*	$NetBSD: rk3328-cru.h,v 1.1.1.3 2018/04/28 18:25:53 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2016 Rockchip Electronics Co. Ltd.
@@ -195,7 +195,6 @@
 #define HCLK_VPU_PRE		324
 #define HCLK_VIO_PRE		325
 #define HCLK_VPU		326
-#define HCLK_VIO		327
 #define HCLK_BUS_PRE		328
 #define HCLK_PERI_PRE		329
 #define HCLK_H264		330
