@@ -1,4 +1,4 @@
-.\"	$NetBSD: ftpd.8,v 1.86 2017/07/03 21:35:48 wiz Exp $
+.\"	$NetBSD: ftpd.8,v 1.87 2018/04/28 13:38:00 riastradh Exp $
 .\"
 .\" Copyright (c) 1997-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -65,7 +65,7 @@
 Internet File Transfer Protocol server
 .Sh SYNOPSIS
 .Nm
-.Op Fl 46DdHlnQqrsUuWwX
+.Op Fl 46DdfHlnQqrsUuWwX
 .Op Fl a Ar anondir
 .Op Fl C Ar user Ns Op @ Ns Ar host
 .Op Fl c Ar confdir
@@ -154,6 +154,10 @@ for the
 .Dq "\&%E"
 escape sequence (see
 .Sx Display file escape sequences )
+.It Fl f
+Stops the
+.Fl D
+flag from detaching from the tty and going into the background.
 .It Fl H
 Equivalent to
 .Do
