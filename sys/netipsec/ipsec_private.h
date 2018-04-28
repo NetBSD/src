@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_private.h,v 1.8 2018/04/28 14:39:34 maxv Exp $	*/
+/*	$NetBSD: ipsec_private.h,v 1.9 2018/04/28 15:45:16 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,11 +63,6 @@ extern percpu_t *pfkeystat_percpu;
 #define	PFKEY_STAT_PUTREF()	_NET_STAT_PUTREF(pfkeystat_percpu)
 #define	PFKEY_STATINC(x)	_NET_STATINC(pfkeystat_percpu, x)
 #define	PFKEY_STATADD(x, v)	_NET_STATADD(pfkeystat_percpu, x, v)
-
-/*
- * Remainings of ipsec_osdep.h
- */
-#define IPSEC_SPLASSERT_SOFTNET(msg)	do {} while (0)
 
 /* superuser opened socket? */
 #define IPSEC_PRIVILEGED_SO(so) ((so)->so_uidinfo->ui_uid == 0)
