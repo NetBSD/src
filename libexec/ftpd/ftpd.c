@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.203 2016/07/19 21:25:38 shm Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.204 2018/04/28 13:38:00 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997-2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.203 2016/07/19 21:25:38 shm Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.204 2018/04/28 13:38:00 riastradh Exp $");
 #endif
 #endif /* not lint */
 
@@ -177,6 +177,7 @@ static sig_atomic_t	urgflag;
 
 int	data;
 int	Dflag;
+int	fflag;
 int	sflag;
 int	stru;			/* avoid C keyword */
 int	mode;
@@ -298,6 +299,7 @@ main(int argc, char *argv[])
 	logging = 0;
 	pdata = -1;
 	Dflag = 0;
+	fflag = 0;
 	sflag = 0;
 	dataport = 0;
 	dopidfile = 1;		/* default: DO use a pid file to count users */
@@ -323,7 +325,7 @@ main(int argc, char *argv[])
 	openlog("ftpd", LOG_PID | LOG_NDELAY, LOG_FTP);
 
 	while ((ch = getopt(argc, argv,
-	    "46a:c:C:Dde:h:HlL:nP:qQrst:T:uUvV:wWX")) != -1) {
+	    "46a:c:C:Dde:fh:HlL:nP:qQrst:T:uUvV:wWX")) != -1) {
 		switch (ch) {
 		case '4':
 			af = AF_INET;
@@ -375,6 +377,10 @@ main(int argc, char *argv[])
 
 		case 'e':
 			emailaddr = optarg;
+			break;
+
+		case 'f':
+			fflag = 1;
 			break;
 
 		case 'h':
@@ -505,7 +511,7 @@ main(int argc, char *argv[])
 		struct pollfd *fds;
 		struct addrinfo hints, *res, *res0;
 
-		if (daemon(1, 0) == -1) {
+		if (!fflag && daemon(1, 0) == -1) {
 			syslog(LOG_ERR, "failed to daemonize: %m");
 			exit(1);
 		}
