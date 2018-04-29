@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.36 2018/04/28 19:00:25 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.37 2018/04/29 13:56:00 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.36 2018/04/28 19:00:25 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.37 2018/04/29 13:56:00 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -316,6 +316,65 @@ TRACEME_SIGNAL_NOHANDLER(traceme_signal_nohandler1, SIGKILL) /* non-maskable */
 TRACEME_SIGNAL_NOHANDLER(traceme_signal_nohandler3, SIGABRT) /* abort trap */
 TRACEME_SIGNAL_NOHANDLER(traceme_signal_nohandler4, SIGHUP)  /* hangup */
 TRACEME_SIGNAL_NOHANDLER(traceme_signal_nohandler5, SIGCONT) /* continued? */
+
+/// ----------------------------------------------------------------------------
+
+ATF_TC(traceme_pid1_parent);
+ATF_TC_HEAD(traceme_pid1_parent, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Verify that PT_TRACE_ME is not allowed when our parent is PID1");
+}
+
+ATF_TC_BODY(traceme_pid1_parent, tc)
+{
+	struct msg_fds parent_child;
+	int exitval_child1 = 1, exitval_child2 = 2;
+	pid_t child1, child2, wpid;
+	uint8_t msg = 0xde; /* dummy message for IPC based on pipe(2) */
+#if defined(TWAIT_HAVE_STATUS)
+	int status;
+#endif
+
+	SYSCALL_REQUIRE(msg_open(&parent_child) == 0);
+
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child1 = fork()) != -1);
+	if (child1 == 0) {
+		DPRINTF("Before forking process PID=%d\n", getpid());
+		SYSCALL_REQUIRE((child2 = fork()) != -1);
+		if (child2 != 0) {
+			DPRINTF("Parent process PID=%d, child2's PID=%d\n",
+			        getpid(), child2);
+			_exit(exitval_child1);
+		}
+		CHILD_FROM_PARENT("exit child1", parent_child, msg);
+
+		DPRINTF("Assert that our parent is PID1 (initproc)\n");
+		FORKEE_ASSERT_EQ(getppid(), 1);
+
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
+		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) == -1);
+		SYSCALL_REQUIRE_ERRNO(errno, EPERM);
+
+		CHILD_TO_PARENT("child2 exiting", parent_child, msg);
+
+		_exit(exitval_child2);
+	}
+	DPRINTF("Parent process PID=%d, child1's PID=%d\n", getpid(), child1);
+
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child1, &status, WEXITED),
+	                      child1);
+
+	validate_status_exited(status, exitval_child1);
+
+	DPRINTF("Notify that child1 is dead\n");
+	PARENT_TO_CHILD("exit child1", parent_child, msg);
+
+	DPRINTF("Wait for exiting of child2\n");
+	PARENT_FROM_CHILD("child2 exiting", parent_child, msg);
+}
 
 /// ----------------------------------------------------------------------------
 
@@ -6780,6 +6839,8 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, traceme_signal_nohandler3);
 	ATF_TP_ADD_TC(tp, traceme_signal_nohandler4);
 	ATF_TP_ADD_TC(tp, traceme_signal_nohandler5);
+
+	ATF_TP_ADD_TC(tp, traceme_pid1_parent);
 
 	ATF_TP_ADD_TC_HAVE_PID(tp, attach1);
 	ATF_TP_ADD_TC_HAVE_PID(tp, attach2);

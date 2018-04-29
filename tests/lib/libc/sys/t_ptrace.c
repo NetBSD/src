@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace.c,v 1.1 2017/04/02 21:44:00 kamil Exp $	*/
+/*	$NetBSD: t_ptrace.c,v 1.2 2018/04/29 13:56:00 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace.c,v 1.1 2017/04/02 21:44:00 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace.c,v 1.2 2018/04/29 13:56:00 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -194,6 +194,25 @@ ATF_TC_BODY(attach_chroot, tc)
         ATF_REQUIRE(close(fds_toparent[0]) == 0);
 }
 
+ATF_TC(traceme_twice);
+ATF_TC_HEAD(traceme_twice, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Assert that a process cannot mark its parent a debugger twice");
+}
+
+ATF_TC_BODY(traceme_twice, tc)
+{
+
+	printf("Mark the parent process (PID %d) a debugger of PID %d",
+	       getppid(), getpid());
+	ATF_REQUIRE(ptrace(PT_TRACE_ME, 0, NULL, 0) == 0);
+
+	printf("Mark the parent process (PID %d) a debugger of PID %d again",
+	       getppid(), getpid());
+	ATF_REQUIRE_ERRNO(EBUSY, ptrace(PT_TRACE_ME, 0, NULL, 0) == -1);
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 	setvbuf(stdout, NULL, _IONBF, 0);
@@ -203,6 +222,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, attach_pid1_securelevel);
 	ATF_TP_ADD_TC(tp, attach_self);
 	ATF_TP_ADD_TC(tp, attach_chroot);
+	ATF_TP_ADD_TC(tp, traceme_twice);
 
 	return atf_no_error();
 }
