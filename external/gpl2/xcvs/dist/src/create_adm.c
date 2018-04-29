@@ -16,7 +16,7 @@
  * "Entries" file is prefilled from the "initrecord" argument.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: create_adm.c,v 1.2 2016/05/17 14:00:09 christos Exp $");
+__RCSID("$NetBSD: create_adm.c,v 1.3 2018/04/29 15:47:01 christos Exp $");
 
 #include "cvs.h"
 
@@ -49,7 +49,9 @@ Create_Admin (const char *dir, const char *update_dir, const char *repository,
 
     tmp = Xasprintf ("%s/%s", dir, CVSADM);
     if (isfile (tmp))
-	error (1, 0, "there is a version in %s already", update_dir);
+    {
+	error (0, 0, "there is a version in %s already", update_dir);
+    }
 
     if (CVS_MKDIR (tmp, 0777) < 0)
     {
