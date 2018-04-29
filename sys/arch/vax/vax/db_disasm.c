@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.22 2017/05/22 16:39:41 ragge Exp $ */
+/*	$NetBSD: db_disasm.c,v 1.23 2018/04/29 19:01:15 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.22 2017/05/22 16:39:41 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.23 2018/04/29 19:01:15 ragge Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -471,7 +471,7 @@ add_int(inst_buffer *ib, int i)
 {
 	char buf[32];
 	if (i < 100 && i > -100)
-		snprintf(ib->curp, sizeof(buf), "%d", i);
+		snprintf(buf, sizeof(buf), "%d", i);
 	else
 		snprintf(buf, sizeof(buf), "0x%x", i);
 	add_str(ib, buf);
