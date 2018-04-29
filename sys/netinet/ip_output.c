@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.303 2018/04/21 13:22:06 maxv Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.304 2018/04/29 11:51:08 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.303 2018/04/21 13:22:06 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.304 2018/04/29 11:51:08 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1262,7 +1262,7 @@ ip_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 #if defined(IPSEC)
 		case IP_IPSEC_POLICY:
 			if (ipsec_enabled) {
-				error = ipsec_set_policy(inp, sopt->sopt_name,
+				error = ipsec_set_policy(inp,
 				    sopt->sopt_data, sopt->sopt_size,
 				    curlwp->l_cred);
 				break;
