@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.106 2018/04/26 19:56:55 maxv Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.107 2018/04/29 07:13:10 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.106 2018/04/26 19:56:55 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.107 2018/04/29 07:13:10 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -322,9 +322,9 @@ fddi_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
 
 		/*
 		 * In the phase 2 case, we need to prepend an mbuf for the llc
-		 * header. Since we must preserve the value of m, which is
-		 * passed to us by value, we m_copy() the first mbuf, and use
-		 * it for our llc header.
+		 * header.
+		 *
+		 * XXX XXX: Do we need to preserve the value of m?
 		 */
 		if (aa->aa_flags & AFA_PHASE2) {
 			struct llc llc;

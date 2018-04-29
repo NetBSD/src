@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.199 2018/04/29 06:52:55 maxv Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.200 2018/04/29 07:13:10 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -633,7 +633,7 @@ do {									\
 #define M_VERIFY_PACKET(m)	/* nothing */
 #endif
 
-/* length to m_copy to copy all */
+/* The "copy all" special length. */
 #define	M_COPYALL	-1
 
 /* compatibility with 4.3 */
