@@ -1,4 +1,4 @@
-/*	$NetBSD: cprng.h,v 1.13 2018/04/19 21:19:07 christos Exp $ */
+/*	$NetBSD: cprng.h,v 1.14 2018/04/29 11:42:09 maxv Exp $ */
 
 /*-
  * Copyright (c) 2011-2013 The NetBSD Foundation, Inc.
@@ -85,12 +85,6 @@ cprng_strong64(void)
 	uint64_t r;
 	cprng_strong(kern_cprng, &r, sizeof(r), 0);
 	return r;
-}
-
-static __inline unsigned int
-cprng_strong_strength(cprng_strong_t *c)
-{
-	return NIST_BLOCK_KEYLEN_BYTES;
 }
 
 #endif	/* _CPRNG_H */
