@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_input.c,v 1.67 2018/04/28 15:45:16 maxv Exp $	*/
+/*	$NetBSD: ipsec_input.c,v 1.68 2018/04/29 14:35:35 maxv Exp $	*/
 /*	$FreeBSD: ipsec_input.c,v 1.2.4.2 2003/03/28 20:32:53 sam Exp $	*/
 /*	$OpenBSD: ipsec_input.c,v 1.63 2003/02/20 18:35:43 deraadt Exp $	*/
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.67 2018/04/28 15:45:16 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.68 2018/04/29 14:35:35 maxv Exp $");
 
 /*
  * IPsec input processing.
@@ -375,84 +375,6 @@ cantpull:
 
 	prot = ip->ip_p;
 
-#ifdef notyet
-	/* IP-in-IP encapsulation */
-	if (prot == IPPROTO_IPIP) {
-		struct ip ipn;
-
-		/* ipn will now contain the inner IPv4 header */
-		/* XXX: check m_pkthdr.len */
-		m_copydata(m, ip->ip_hl << 2, sizeof(struct ip), &ipn);
-
-		/* XXX PROXY address isn't recorded in SAH */
-		/*
-		 * Check that the inner source address is the same as
-		 * the proxy address, if available.
-		 */
-		if ((saidx->proxy.sa.sa_family == AF_INET &&
-		    saidx->proxy.sin.sin_addr.s_addr !=
-		    INADDR_ANY &&
-		    ipn.ip_src.s_addr !=
-		    saidx->proxy.sin.sin_addr.s_addr) ||
-		    (saidx->proxy.sa.sa_family != AF_INET &&
-			saidx->proxy.sa.sa_family != 0)) {
-
-			char ipbuf[INET_ADDRSTRLEN];
-			IPSECLOG(LOG_DEBUG,
-			    "inner source address %s doesn't correspond to "
-			    "expected proxy source %s, SA %s/%08lx\n",
-			    IN_PRINT(ipbuf, ipn.ip_src),
-			    ipsp_address(saidx->proxy),
-			    ipsp_address(saidx->dst),
-			    (u_long) ntohl(sav->spi));
-
-			IPSEC_ISTAT(sproto, ESP_STAT_PDROPS,
-			    AH_STAT_PDROPS,
-			    IPCOMP_STAT_PDROPS);
-			error = EACCES;
-			goto bad;
-		}
-	}
-#if INET6
-	/* IPv6-in-IP encapsulation. */
-	if (prot == IPPROTO_IPV6) {
-		struct ip6_hdr ip6n;
-
-		/* ip6n will now contain the inner IPv6 header. */
-		/* XXX: check m_pkthdr.len */
-		m_copydata(m, ip->ip_hl << 2, sizeof(struct ip6_hdr), &ip6n);
-
-		/*
-		 * Check that the inner source address is the same as
-		 * the proxy address, if available.
-		 */
-		if ((saidx->proxy.sa.sa_family == AF_INET6 &&
-		    !IN6_IS_ADDR_UNSPECIFIED(&saidx->proxy.sin6.sin6_addr) &&
-		    !IN6_ARE_ADDR_EQUAL(&ip6n.ip6_src,
-			&saidx->proxy.sin6.sin6_addr)) ||
-		    (saidx->proxy.sa.sa_family != AF_INET6 &&
-			saidx->proxy.sa.sa_family != 0)) {
-
-			char ip6buf[INET6_ADDRSTRLEN];
-			char pbuf[IPSEC_ADDRSTRLEN], dbuf[IPSEC_ADDRSTRLEN];
-			IPSECLOG(LOG_DEBUG,
-			    "inner source address %s doesn't correspond to "
-			    "expected proxy source %s, SA %s/%08lx\n",
-			    ip6_sprintf(ip6buf, &ip6n.ip6_src),
-			    ipsec_address(&saidx->proxy, pbuf, sizeof(pbuf)),
-			    ipsec_address(&saidx->dst, dbuf, sizeof(dbuf)),
-			    (u_long) ntohl(sav->spi));
-
-			IPSEC_ISTAT(sproto, ESP_STAT_PDROPS,
-			    AH_STAT_PDROPS,
-			    IPCOMP_STAT_PDROPS);
-			error = EACCES;
-			goto bad;
-		}
-	}
-#endif /* INET6 */
-#endif /* notyet */
-
 	M_VERIFY_PACKET(m);
 
 	key_sa_recordxfer(sav, m);		/* record data transfer */
@@ -573,80 +495,6 @@ ipsec6_common_input_cb(struct mbuf *m, struct secasvar *sav, int skip,
 
 	/* Save protocol */
 	m_copydata(m, protoff, 1, &prot);
-
-#ifdef notyet
-#ifdef INET
-	/* IP-in-IP encapsulation */
-	if (prot == IPPROTO_IPIP) {
-		struct ip ipn;
-
-		/* ipn will now contain the inner IPv4 header */
-		/* XXX: check m_pkthdr.len */
-		m_copydata(m, skip, sizeof(struct ip), &ipn);
-
-		/*
-		 * Check that the inner source address is the same as
-		 * the proxy address, if available.
-		 */
-		if ((saidx->proxy.sa.sa_family == AF_INET &&
-		    saidx->proxy.sin.sin_addr.s_addr != INADDR_ANY &&
-		    ipn.ip_src.s_addr != saidx->proxy.sin.sin_addr.s_addr) ||
-		    (saidx->proxy.sa.sa_family != AF_INET &&
-			saidx->proxy.sa.sa_family != 0)) {
-
-			char ipbuf[INET_ADDRSTRLEN];
-			char pbuf[IPSEC_ADDRSTRLEN], dbuf[IPSEC_ADDRSTRLEN];
-			IPSECLOG(LOG_DEBUG,
-			    "inner source address %s doesn't correspond to "
-			    "expected proxy source %s, SA %s/%08lx\n",
-			    IN_PRINT(ipbuf, ipn.ip_src),
-			    ipsec_address(&saidx->proxy, pbuf, sizeof(pbuf)),
-			    ipsec_address(&saidx->dst, dbuf, sizeof(dbuf)),
-			    (u_long) ntohl(sav->spi));
-
-			IPSEC_ISTAT(sproto, ESP_STAT_PDROPS,
-			    AH_STAT_PDROPS, IPCOMP_STAT_PDROPS);
-			error = EACCES;
-			goto bad;
-		}
-	}
-#endif /* INET */
-	/* IPv6-in-IP encapsulation */
-	if (prot == IPPROTO_IPV6) {
-		struct ip6_hdr ip6n;
-
-		/* ip6n will now contain the inner IPv6 header. */
-		/* XXX: check m_pkthdr.len */
-		m_copydata(m, skip, sizeof(struct ip6_hdr), &ip6n);
-
-		/*
-		 * Check that the inner source address is the same as
-		 * the proxy address, if available.
-		 */
-		if ((saidx->proxy.sa.sa_family == AF_INET6 &&
-		    !IN6_IS_ADDR_UNSPECIFIED(&saidx->proxy.sin6.sin6_addr) &&
-		    !IN6_ARE_ADDR_EQUAL(&ip6n.ip6_src,
-			&saidx->proxy.sin6.sin6_addr)) ||
-		    (saidx->proxy.sa.sa_family != AF_INET6 &&
-			saidx->proxy.sa.sa_family != 0)) {
-
-			char ip6buf[INET6_ADDRSTRLEN];
-			char pbuf[IPSEC_ADDRSTRLEN], dbuf[IPSEC_ADDRSTRLEN];
-			IPSECLOG(LOG_DEBUG,
-			    "inner source address %s doesn't correspond to "
-			    "expected proxy source %s, SA %s/%08lx\n",
-			    ip6_sprintf(ip6buf, &ip6n.ip6_src),
-			    ipsec_address(&saidx->proxy, pbuf, sizeof(pbuf)),
-			    ipsec_address(&saidx->dst, dbuf, sizeof(dbuf)),
-			    (u_long) ntohl(sav->spi));
-
-			IPSEC_ISTAT(sproto, ESP_STAT_PDROPS,
-			    AH_STAT_PDROPS, IPCOMP_STAT_PDROPS);
-			error = EACCES;
-			goto bad;
-		}
-	}
-#endif /* notyet */
 
 	key_sa_recordxfer(sav, m);
 
