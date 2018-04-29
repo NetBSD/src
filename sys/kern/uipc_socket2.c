@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.128 2018/03/19 16:26:26 roy Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.129 2018/04/29 07:13:10 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.128 2018/03/19 16:26:26 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.129 2018/04/29 07:13:10 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
@@ -725,7 +725,7 @@ sbrelease(struct sockbuf *sb, struct socket *so)
  *
  * Reliable protocols may use the socket send buffer to hold data
  * awaiting acknowledgement.  Data is normally copied from a socket
- * send buffer in a protocol with m_copy for output to a peer,
+ * send buffer in a protocol with m_copym for output to a peer,
  * and then removing the data from the socket buffer with sbdrop()
  * or sbdroprecord() when the data is acknowledged by the peer.
  */
