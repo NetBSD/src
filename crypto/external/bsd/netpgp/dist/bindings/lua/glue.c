@@ -161,7 +161,7 @@ l_encrypt_file(lua_State *L)
 	}
 	armour = findtype(armourtypes, luaL_checkstring(L, 4));
 	ret = netpgp_encrypt_file(netpgp, netpgp_getvar(netpgp, "userid"),
-				f, __UNCONST("a.gpg"), armour);
+				f, __UNCONST(output), armour);
 	lua_pushnumber(L, ret);
 	return 1;
 }
