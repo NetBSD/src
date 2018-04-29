@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace_common.c,v 1.37 2018/04/27 16:50:56 kamil Exp $	*/
+/*	$NetBSD: sys_ptrace_common.c,v 1.38 2018/04/29 04:28:09 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.37 2018/04/27 16:50:56 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.38 2018/04/29 04:28:09 kamil Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -377,7 +377,19 @@ ptrace_allowed(struct lwp *l, int req, struct proc *t, struct proc *p)
 	/* Make sure we can operate on it. */
 	switch (req) {
 	case PT_TRACE_ME:
-		/* Saying that you're being traced is always legal. */
+		/*
+		 * You can't say to the parent of a process to start tracing if:
+		 *	(1) the parent is initproc,
+		 */
+		if (p->p_pptr == initproc)
+			return EPERM;
+
+		/*
+		 *	(2) the child is already traced.
+		 */
+		if (ISSET(p->p_slflag, PSL_TRACED))
+			return EBUSY;
+
 		return 0;
 
 	case PT_ATTACH:
@@ -389,7 +401,7 @@ ptrace_allowed(struct lwp *l, int req, struct proc *t, struct proc *p)
 			return EINVAL;
 
 		/*
-		 *  (2) it's a system process
+		 *	(2) it's a system process
 		 */
 		if (t->p_flag & PK_SYSTEM)
 			return EPERM;
