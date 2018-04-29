@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.198 2018/04/27 19:06:48 maxv Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.199 2018/04/29 06:52:55 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -860,14 +860,14 @@ m_length(const struct mbuf *m)
 static __inline void
 m_set_rcvif(struct mbuf *m, const struct ifnet *ifp)
 {
-
+	KASSERT(m->m_flags & M_PKTHDR);
 	m->m_pkthdr.rcvif_index = ifp->if_index;
 }
 
 static __inline void
 m_reset_rcvif(struct mbuf *m)
 {
-
+	KASSERT(m->m_flags & M_PKTHDR);
 	/* A caller may expect whole _rcvif union is zeroed */
 	/* m->m_pkthdr.rcvif_index = 0; */
 	m->m_pkthdr._rcvif.ctx = NULL;
@@ -876,7 +876,8 @@ m_reset_rcvif(struct mbuf *m)
 static __inline void
 m_copy_rcvif(struct mbuf *m, const struct mbuf *n)
 {
-
+	KASSERT(m->m_flags & M_PKTHDR);
+	KASSERT(n->m_flags & M_PKTHDR);
 	m->m_pkthdr.rcvif_index = n->m_pkthdr.rcvif_index;
 }
 
@@ -898,6 +899,7 @@ m_get_rcvif(const struct mbuf *m, int *s)
 {
 	struct ifnet *ifp;
 
+	KASSERT(m->m_flags & M_PKTHDR);
 	*s = pserialize_read_enter();
 	ifp = if_byindex(m->m_pkthdr.rcvif_index);
 	if (__predict_false(ifp == NULL))
@@ -924,7 +926,7 @@ m_put_rcvif(struct ifnet *ifp, int *s)
 static __inline struct ifnet *
 m_get_rcvif_psref(const struct mbuf *m, struct psref *psref)
 {
-
+	KASSERT(m->m_flags & M_PKTHDR);
 	return if_get_byindex(m->m_pkthdr.rcvif_index, psref);
 }
 
@@ -945,7 +947,7 @@ m_put_rcvif_psref(struct ifnet *ifp, struct psref *psref)
 static __inline struct ifnet *
 m_get_rcvif_NOMPSAFE(const struct mbuf *m)
 {
-
+	KASSERT(m->m_flags & M_PKTHDR);
 	return if_byindex(m->m_pkthdr.rcvif_index);
 }
 
