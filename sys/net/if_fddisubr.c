@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.107 2018/04/29 07:13:10 maxv Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.108 2018/04/29 07:16:28 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.107 2018/04/29 07:13:10 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.108 2018/04/29 07:16:28 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -330,8 +330,10 @@ fddi_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
 			struct llc llc;
 
 			M_PREPEND(m, sizeof(struct llc), M_NOWAIT);
-			if (m == 0)
+			if (m == NULL) {
+				pserialize_read_exit(s);
 				senderr(ENOBUFS);
+			}
 			llc.llc_dsap = llc.llc_ssap = LLC_SNAP_LSAP;
 			llc.llc_control = LLC_UI;
 			memcpy(llc.llc_snap_org_code, at_org_code,
