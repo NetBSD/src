@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_input.c,v 1.68 2018/04/29 14:35:35 maxv Exp $	*/
+/*	$NetBSD: ipsec_input.c,v 1.69 2018/04/29 14:54:09 maxv Exp $	*/
 /*	$FreeBSD: ipsec_input.c,v 1.2.4.2 2003/03/28 20:32:53 sam Exp $	*/
 /*	$OpenBSD: ipsec_input.c,v 1.63 2003/02/20 18:35:43 deraadt Exp $	*/
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.68 2018/04/29 14:35:35 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.69 2018/04/29 14:54:09 maxv Exp $");
 
 /*
  * IPsec input processing.
@@ -72,14 +72,12 @@ __KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.68 2018/04/29 14:35:35 maxv Exp $"
 
 #include <netinet/ip6.h>
 #ifdef INET6
+#include <netinet6/in6.h>
 #include <netinet6/ip6_var.h>
 #include <netinet6/ip6_private.h>
 #include <netinet6/scope6_var.h>
 #endif
 #include <netinet/in_pcb.h>
-#ifdef INET6
-#include <netinet/icmp6.h>
-#endif
 
 #include <netipsec/ipsec.h>
 #include <netipsec/ipsec_private.h>
@@ -377,7 +375,7 @@ cantpull:
 
 	M_VERIFY_PACKET(m);
 
-	key_sa_recordxfer(sav, m);		/* record data transfer */
+	key_sa_recordxfer(sav, m);
 
 	if ((inetsw[ip_protox[prot]].pr_flags & PR_LASTHDR) != 0 &&
 	    ipsec_in_reject(m, NULL)) {
@@ -446,9 +444,6 @@ ipsec6_common_input(struct mbuf **mp, int *offp, int proto)
 	return IPPROTO_DONE;
 }
 
-extern const struct ip6protosw inet6sw[];
-extern u_char ip6_protox[];
-
 /*
  * IPsec input callback, called by the transform callback. Takes care of
  * filtering and other sanity checks on the processed packet.
@@ -461,7 +456,7 @@ ipsec6_common_input_cb(struct mbuf *m, struct secasvar *sav, int skip,
 	struct ip6_hdr *ip6;
 	struct secasindex *saidx;
 	int nxt;
-	u_int8_t prot, nxt8;
+	u_int8_t prot;
 	int error, nest;
 
 	if (__predict_false(m == NULL)) {
@@ -493,20 +488,16 @@ ipsec6_common_input_cb(struct mbuf *m, struct secasvar *sav, int skip,
 	ip6 = mtod(m, struct ip6_hdr *);
 	ip6->ip6_plen = htons(m->m_pkthdr.len - sizeof(struct ip6_hdr));
 
-	/* Save protocol */
-	m_copydata(m, protoff, 1, &prot);
+	m_copydata(m, protoff, sizeof(prot), &prot);
 
 	key_sa_recordxfer(sav, m);
-
-	/* Retrieve new protocol */
-	m_copydata(m, protoff, sizeof(u_int8_t), &nxt8);
 
 	/*
 	 * See the end of ip6_input for this logic.
 	 * IPPROTO_IPV[46] case will be processed just like other ones
 	 */
 	nest = 0;
-	nxt = nxt8;
+	nxt = prot;
 	while (nxt != IPPROTO_DONE) {
 		if (ip6_hdrnestlimit && (++nest > ip6_hdrnestlimit)) {
 			IP6_STATINC(IP6_STAT_TOOMANYHDR);
