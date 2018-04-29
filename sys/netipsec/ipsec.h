@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.77 2018/04/28 14:25:56 maxv Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.78 2018/04/29 07:24:38 maxv Exp $	*/
 /*	$FreeBSD: ipsec.h,v 1.2.4.2 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: ipsec.h,v 1.53 2001/11/20 08:32:38 itojun Exp $	*/
 
@@ -326,7 +326,6 @@ const char *ipsec_strerror(void);
 void ah_attach(void);
 void esp_attach(void);
 void ipcomp_attach(void);
-void ipe4_attach(void);
 void ipe4_attach(void);
 void tcpsignature_attach(void);
 
