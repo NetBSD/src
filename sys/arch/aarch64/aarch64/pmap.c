@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.4 2018/04/29 12:05:39 ryo Exp $	*/
+/*	$NetBSD: pmap.c,v 1.5 2018/04/29 12:07:05 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.4 2018/04/29 12:05:39 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.5 2018/04/29 12:07:05 ryo Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -91,6 +91,7 @@ PMAP_COUNTER(pdp_free, "page table page free (uvm_pagefree)");
 
 PMAP_COUNTER(pv_enter, "pv_entry allocate and link");
 PMAP_COUNTER(pv_remove, "pv_entry free and unlink");
+PMAP_COUNTER(pv_remove_nopv, "no pv_entry found when removing pv");
 
 PMAP_COUNTER(activate, "pmap_activate call");
 PMAP_COUNTER(deactivate, "pmap_deactivate call");
@@ -867,16 +868,18 @@ _pmap_remove_pv(struct vm_page *pg, struct pmap *pm, vaddr_t va, pt_entry_t pte)
 
 	pmap_pv_lock(md);
 
-	/* find pv */
 	TAILQ_FOREACH(pv, &md->mdpg_pvhead, pv_link) {
 		if ((pm == pv->pv_pmap) && (va == pv->pv_va)) {
+			TAILQ_REMOVE(&md->mdpg_pvhead, pv, pv_link);
+			PMAP_COUNT(pv_remove);
 			break;
 		}
 	}
-	KASSERT(pv != NULL);
-
-	TAILQ_REMOVE(&md->mdpg_pvhead, pv, pv_link);
-	PMAP_COUNT(pv_remove);
+#ifdef PMAPCOUNTERS
+	if (pv == NULL) {
+		PMAP_COUNT(pv_remove_nopv);
+	}
+#endif
 
 	pmap_pv_unlock(md);
 
