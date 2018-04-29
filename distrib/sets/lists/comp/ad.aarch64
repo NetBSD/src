@@ -1,4 +1,4 @@
-# $NetBSD: ad.aarch64,v 1.18 2018/04/01 04:35:02 ryo Exp $
+# $NetBSD: ad.aarch64,v 1.19 2018/04/29 18:29:29 jmcneill Exp $
 ./usr/include/aarch64				comp-c-include
 ./usr/include/aarch64/ansi.h			comp-c-include
 ./usr/include/aarch64/aout_machdep.h		comp-c-include
@@ -114,6 +114,8 @@
 ./usr/include/arm/vfpreg.h			comp-c-include
 ./usr/include/arm/vmparam.h			comp-c-include
 ./usr/include/arm/wchar_limits.h		comp-c-include
+./usr/include/clang-5.0/arm_acle.h		comp-c-include		llvm
+./usr/include/clang-5.0/arm_neon.h		comp-c-include		llvm
 ./usr/include/evbarm				comp-c-include
 ./usr/include/evbarm/disklabel.h		comp-c-include
 ./usr/include/evbarm/intr.h			comp-c-include
