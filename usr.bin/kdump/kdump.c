@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.129 2017/09/10 10:09:40 wiz Exp $	*/
+/*	$NetBSD: kdump.c,v 1.130 2018/04/29 18:00:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.129 2017/09/10 10:09:40 wiz Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.130 2018/04/29 18:00:31 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -516,6 +516,37 @@ ioctldecode(u_long cmd)
 }
 
 static void
+putprot(int pr)
+{
+	const char *s = "";
+
+	if (pr == PROT_NONE) {
+		fputs("PROT_NONE", stdout);
+		return;
+	}
+
+	if (pr & PROT_READ) {
+		fputs("PROT_READ", stdout);
+		s = "|";
+		pr &= ~PROT_READ;
+	}
+
+	if (pr & PROT_WRITE) {
+		printf("%sPROT_WRITE", s);
+		pr &= ~PROT_WRITE;
+		s = "|";
+	}
+	if (pr & PROT_EXEC) {
+		printf("%sPROT_EXEC", s);
+		pr &= ~PROT_EXEC;
+		s = "|";
+	}
+	if (pr) {
+		printf("%s%#lx", s, (long)pr);
+	}
+}
+
+static void
 ktrsyscall(struct ktr_syscall *ktr)
 {
 	int argcount;
@@ -602,6 +633,17 @@ ktrsyscall(struct ktr_syscall *ktr)
 			ap += 2;
 			argcount -= 2;
 			c = ',';
+		} else if (strcmp(sys_name, "mprotect") == 0 && argcount >= 3) {
+			putchar('(');
+			output_long((long)ap[0], !(decimal || small(ap[0])));
+			c = ',';
+			putchar(c);
+			output_long((long)ap[1], !(decimal || small(ap[1])));
+			putchar(c);
+			putprot(ap[2]);
+			ap += 3;
+			argcount -= 3;
+			c = ',';
 		} else if (strcmp(sys_name, "mmap") == 0 && argcount >= 6) {
 			char buf[1024];
 			putchar('(');
@@ -610,30 +652,7 @@ ktrsyscall(struct ktr_syscall *ktr)
 			putchar(c);
 			output_long((long)ap[1], !(decimal || small(ap[1])));
 			putchar(c);
-			if (ap[2] == PROT_NONE) {
-			    fputs("PROT_NONE", stdout);
-			} else {
-			    const char *s = "";
-			    c = 0;
-			    if (ap[2] & PROT_READ) {
-				fputs("PROT_READ", stdout);
-				s = "|";
-				ap[2] &= ~PROT_READ;
-			    }
-			    if (ap[2] & PROT_WRITE) {
-				printf("%sPROT_WRITE", s);
-				ap[2] &= ~PROT_WRITE;
-				s = "|";
-			    }
-			    if (ap[2] & PROT_EXEC) {
-				printf("%sPROT_EXEC", s);
-				ap[2] &= ~PROT_EXEC;
-				s = "|";
-			    }
-			    if (ap[2]) {
-				printf("%s%#lx", s, (long)ap[2]);
-			    }
-			}
+			putprot(ap[2]);
 			snprintb(buf, sizeof(buf), MAP_FMT, ap[3]);
 			printf(",%s", buf);
 			ap += 4;
