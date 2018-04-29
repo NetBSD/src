@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.3 2018/04/27 08:07:08 ryo Exp $	*/
+/*	$NetBSD: pmap.c,v 1.4 2018/04/29 12:05:39 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.3 2018/04/27 08:07:08 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.4 2018/04/29 12:05:39 ryo Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -877,13 +877,6 @@ _pmap_remove_pv(struct vm_page *pg, struct pmap *pm, vaddr_t va, pt_entry_t pte)
 
 	TAILQ_REMOVE(&md->mdpg_pvhead, pv, pv_link);
 	PMAP_COUNT(pv_remove);
-
-#if 0
-	if ((md->mdpg_kenter == 0) && TAILQ_EMPTY(&md->mdpg_pvhead)){
-		/* remove last mapping */
-		cpu_dcache_wbinv_range(va, PAGE_SIZE);
-	}
-#endif
 
 	pmap_pv_unlock(md);
 
