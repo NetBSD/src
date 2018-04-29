@@ -38,6 +38,7 @@
 #include <unistd.h>
 
 #define LUA_LIB
+#define LUA_USE_APICHECK
 #include <lua.h>
 #include <lauxlib.h>
 #include <lualib.h>
