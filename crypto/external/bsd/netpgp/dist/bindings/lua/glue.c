@@ -334,7 +334,7 @@ l_getvar(lua_State *L)
 	return 1;
 }
 
-const struct luaL_reg libluanetpgp[] = {
+const struct luaL_Reg libluanetpgp[] = {
 	{ "new",		l_new },
 	{ "init",		l_init },
 
@@ -358,6 +358,10 @@ const struct luaL_reg libluanetpgp[] = {
 int 
 luaopen_netpgp(lua_State *L)
 {
-	luaL_openlib(L, "netpgp", libluanetpgp, 0);
+#if LUA_VERSION_NUM >= 502
+	luaL_newlib(L, libluanetpgp);
+#else
+	luaL_register(L, "netpgp", libluanetpgp);
+#endif
 	return 1;
 }
