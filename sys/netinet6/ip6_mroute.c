@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.125 2018/04/26 19:50:09 maxv Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.126 2018/04/29 07:05:13 maxv Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.49 2001/07/25 09:21:18 jinmei Exp $	*/
 
 /*
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.125 2018/04/26 19:50:09 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.126 2018/04/29 07:05:13 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1125,7 +1125,7 @@ ip6_mforward(struct ip6_hdr *ip6, struct ifnet *ifp, struct mbuf *m)
 			splx(s);
 			return ENOBUFS;
 		}
-		mb0 = m_copym(m, 0, M_COPYALL, M_DONTWAIT);
+		mb0 = m_copypacket(m, M_DONTWAIT);
 
 		/*
 		 * Pullup packet header if needed before storing it,
@@ -1548,7 +1548,7 @@ phyint_send(struct ip6_hdr *ip6, struct mif6 *mifp, struct mbuf *m)
 	 * the IPv6 header is actually copied, not just referenced,
 	 * so that ip6_output() only scribbles on the copy.
 	 */
-	mb_copy = m_copym(m, 0, M_COPYALL, M_DONTWAIT);
+	mb_copy = m_copypacket(m, M_DONTWAIT);
 	if (mb_copy && M_UNWRITABLE(mb_copy, sizeof(struct ip6_hdr)))
 		mb_copy = m_pullup(mb_copy, sizeof(struct ip6_hdr));
 	if (mb_copy == NULL) {
@@ -1668,7 +1668,7 @@ register_send(struct ip6_hdr *ip6, struct mif6 *mif, struct mbuf *m)
 	mm->m_data += max_linkhdr;
 	mm->m_len = sizeof(struct ip6_hdr);
 
-	if ((mm->m_next = m_copym(m, 0, M_COPYALL, M_DONTWAIT)) == NULL) {
+	if ((mm->m_next = m_copypacket(m, M_DONTWAIT)) == NULL) {
 		m_freem(mm);
 		return ENOBUFS;
 	}
