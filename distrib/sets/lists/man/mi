@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1577 2018/02/25 12:53:22 kamil Exp $
+# $NetBSD: mi,v 1.1578 2018/04/30 01:10:13 sevan Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6715,6 +6715,7 @@
 ./usr/share/man/man3lua/gpio.unset.3lua		man-sys-man		.man
 ./usr/share/man/man3lua/gpio.write.3lua		man-sys-man		.man
 ./usr/share/man/man3lua/intro.3lua		man-sys-man		.man
+./usr/share/man/man3lua/netpgp.3lua		man-sys-man		.man
 ./usr/share/man/man3lua/sqlite.3lua		man-sys-man		.man
 ./usr/share/man/man3lua/syslog.3lua		man-sys-man		.man
 ./usr/share/man/man4/aac.4			man-sys-man		.man
