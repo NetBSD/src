@@ -1,6 +1,6 @@
-.\"     $NetBSD: netpgp.3lua,v 1.1 2018/04/30 01:10:13 sevan Exp $
+.\"     $NetBSD: netpgp.3lua,v 1.2 2018/04/30 07:10:04 wiz Exp $
 .\"
-.\" Copyright (c) 2008 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2018 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -26,7 +26,6 @@
 .\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
-.\"
 .\"
 .Dd April 30, 2018
 .Dt NETPGP 3lua
@@ -92,4 +91,4 @@ This manual was written by
 .Sh BUGS
 This binding currently only provides a subset of the functionality available in
 .Xr libnetpgp 3 .
-This manual needs more description of the functionality available .
+This manual needs more description of the available functionality.
