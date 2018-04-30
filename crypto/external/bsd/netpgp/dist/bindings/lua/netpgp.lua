@@ -32,7 +32,7 @@
 -- command line args
 dofile "optparse.lua"
 
-opt = OptionParser{usage="%prog [options] file", version="20180428"}                           
+opt = OptionParser{usage="%prog [options] file", version="20180430"}                           
 
 opt.add_option{"-s", "--sign", action="store_true", dest="sign", help="--sign [--detached] [--armour] file"}
 opt.add_option{"-v", "--verify", action="store_true", dest="verify", help="--verify [--armour] file"}
@@ -71,6 +71,9 @@ if options.detached then
 end
 if options.homedir then
 	netpgp.homedir(pgp, options.homedir)
+end
+if options.decrypt or options.sign then
+netpgp.setvar(pgp, "need seckey", 1)
 end
 
 -- initialise everything
