@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2382 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2383 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -147,3 +147,4 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	wm(4): Enable I219 support. [msaitoh 20180413]
 	puc(4): Add Intel 300 series chipset support. [msaitoh 20180413]
 	file(1): Upgraded to 5.33. [christos 20180415]
+	netpgp(3lua): Add Lua binding for libnetpgp(3). [sevan 20180429]
