@@ -1,4 +1,4 @@
-/* $NetBSD: titemp.c,v 1.3 2016/08/16 23:47:45 jakllsch Exp $ */
+/* $NetBSD: titemp.c,v 1.4 2018/04/30 20:37:01 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: titemp.c,v 1.3 2016/08/16 23:47:45 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: titemp.c,v 1.4 2018/04/30 20:37:01 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,6 +97,9 @@ titemp_match(device_t parent, cfdata_t match, void *aux)
 	int error;
 
 	if (ia->ia_name == NULL) {
+		if (ia->ia_addr != 0x4c)
+			return 0;
+
 		if (iic_acquire_bus(ia->ia_tag, I2C_F_POLL) != 0)
 			return 0;
 		error = iic_smbus_read_byte(ia->ia_tag, ia->ia_addr,
