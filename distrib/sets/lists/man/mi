@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1578 2018/04/30 01:10:13 sevan Exp $
+# $NetBSD: mi,v 1.1579 2018/04/30 09:59:09 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3855,6 +3855,7 @@
 ./usr/share/man/html3lua/gpio.unset.html	man-sys-htmlman		html
 ./usr/share/man/html3lua/gpio.write.html	man-sys-htmlman		html
 ./usr/share/man/html3lua/intro.html		man-sys-htmlman		html
+./usr/share/man/html3lua/netpgp.html		man-sys-htmlman		html
 ./usr/share/man/html3lua/sqlite.html		man-sys-htmlman		html
 ./usr/share/man/html3lua/syslog.html		man-sys-htmlman		html
 ./usr/share/man/html4/aac.html			man-sys-htmlman		html
