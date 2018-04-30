@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_zydreg.h,v 1.19 2006/11/30 19:28:07 damien Exp $	*/
-/*	$NetBSD: if_zydreg.h,v 1.8 2016/04/23 10:15:32 skrll Exp $	*/
+/*	$NetBSD: if_zydreg.h,v 1.9 2018/04/30 01:14:07 maya Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -1185,9 +1185,6 @@ struct zyd_softc {
 	struct usb_task			sc_task;
 	struct usbd_device *		sc_udev;
 	struct usbd_interface *		sc_iface;
-	int				sc_flags;
-#define ZD1211_FWLOADED (1 << 0)
-
 
 	enum ieee80211_state		sc_state;
 	int				sc_arg;
