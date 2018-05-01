@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.140 2018/04/24 08:22:16 maxv Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.141 2018/05/01 07:21:39 maxv Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.140 2018/04/24 08:22:16 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.141 2018/05/01 07:21:39 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -63,8 +63,6 @@ __KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.140 2018/04/24 08:22:16 maxv Exp $");
 #include <netinet/icmp6.h>
 #include <netinet6/icmp6_private.h>
 #include <netinet6/scope6_var.h>
-
-#include <net/net_osdep.h>
 
 static int rtpref(struct nd_defrouter *);
 static struct nd_defrouter *defrtrlist_update(struct nd_defrouter *);

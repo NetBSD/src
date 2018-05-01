@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.247 2018/03/06 10:57:00 roy Exp $	*/
+/*	$NetBSD: nd6.c,v 1.248 2018/05/01 07:21:39 maxv Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.247 2018/03/06 10:57:00 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.248 2018/05/01 07:21:39 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -75,8 +75,6 @@ __KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.247 2018/03/06 10:57:00 roy Exp $");
 #include <netinet6/in6_ifattach.h>
 #include <netinet/icmp6.h>
 #include <netinet6/icmp6_private.h>
-
-#include <net/net_osdep.h>
 
 #define ND6_SLOWTIMER_INTERVAL (60 * 60) /* 1 hour */
 #define ND6_RECALC_REACHTM_INTERVAL (60 * 120) /* 2 hours */

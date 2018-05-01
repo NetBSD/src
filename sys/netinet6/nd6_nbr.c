@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.153 2018/03/19 03:14:08 ozaki-r Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.154 2018/05/01 07:21:39 maxv Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.153 2018/03/19 03:14:08 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.154 2018/05/01 07:21:39 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -74,8 +74,6 @@ __KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.153 2018/03/19 03:14:08 ozaki-r Exp $"
 #if NCARP > 0
 #include <netinet/ip_carp.h>
 #endif
-
-#include <net/net_osdep.h>
 
 struct dadq;
 static struct dadq *nd6_dad_find(struct ifaddr *, struct nd_opt_nonce *);

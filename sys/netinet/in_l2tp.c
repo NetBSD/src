@@ -1,4 +1,4 @@
-/*	$NetBSD: in_l2tp.c,v 1.13 2018/04/27 09:55:28 knakahara Exp $	*/
+/*	$NetBSD: in_l2tp.c,v 1.14 2018/05/01 07:21:39 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_l2tp.c,v 1.13 2018/04/27 09:55:28 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_l2tp.c,v 1.14 2018/05/01 07:21:39 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_l2tp.h"
@@ -67,8 +67,6 @@ __KERNEL_RCSID(0, "$NetBSD: in_l2tp.c,v 1.13 2018/04/27 09:55:28 knakahara Exp $
 #endif
 
 #include <net/if_l2tp.h>
-
-#include <net/net_osdep.h>
 
 int ip_l2tp_ttl = L2TP_TTL;
 

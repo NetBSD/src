@@ -1,4 +1,4 @@
-/*	$NetBSD: sctp_output.c,v 1.13 2018/03/30 22:54:37 maya Exp $ */
+/*	$NetBSD: sctp_output.c,v 1.14 2018/05/01 07:21:39 maxv Exp $ */
 /*	$KAME: sctp_output.c,v 1.48 2005/06/16 18:29:24 jinmei Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_output.c,v 1.13 2018/03/30 22:54:37 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_output.c,v 1.14 2018/05/01 07:21:39 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -81,8 +81,6 @@ __KERNEL_RCSID(0, "$NetBSD: sctp_output.c,v 1.13 2018/03/30 22:54:37 maya Exp $"
 #include <netinet/icmp6.h>
 
 #endif /* INET6 */
-
-#include <net/net_osdep.h>
 
 #if defined(HAVE_NRL_INPCB) || defined(__FreeBSD__)
 #ifndef in6pcb

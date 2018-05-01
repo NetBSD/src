@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.207 2018/04/29 11:51:08 maxv Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.208 2018/05/01 07:21:39 maxv Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.207 2018/04/29 11:51:08 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.208 2018/05/01 07:21:39 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -105,9 +105,6 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.207 2018/04/29 11:51:08 maxv Exp $"
 #include <netipsec/ipsec6.h>
 #include <netipsec/key.h>
 #endif
-
-
-#include <net/net_osdep.h>
 
 extern pfil_head_t *inet6_pfil_hook;	/* XXX */
 

@@ -1,5 +1,5 @@
 /*	$KAME: sctp_timer.c,v 1.30 2005/06/16 18:29:25 jinmei Exp $	*/
-/*	$NetBSD: sctp_timer.c,v 1.4 2017/12/10 11:03:58 rjs Exp $	*/
+/*	$NetBSD: sctp_timer.c,v 1.5 2018/05/01 07:21:39 maxv Exp $	*/
 
 /*
  * Copyright (C) 2002, 2003, 2004 Cisco Systems Inc,
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_timer.c,v 1.4 2017/12/10 11:03:58 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_timer.c,v 1.5 2018/05/01 07:21:39 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -91,8 +91,6 @@ __KERNEL_RCSID(0, "$NetBSD: sctp_timer.c,v 1.4 2017/12/10 11:03:58 rjs Exp $");
 
 #include <netinet/sctp.h>
 #include <netinet/sctp_uio.h>
-
-#include <net/net_osdep.h>
 
 #ifdef SCTP_DEBUG
 extern u_int32_t sctp_debug_on;

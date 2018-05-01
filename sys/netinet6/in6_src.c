@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_src.c,v 1.84 2017/12/06 14:17:42 roy Exp $	*/
+/*	$NetBSD: in6_src.c,v 1.85 2018/05/01 07:21:39 maxv Exp $	*/
 /*	$KAME: in6_src.c,v 1.159 2005/10/19 01:40:32 t-momose Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.84 2017/12/06 14:17:42 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.85 2018/05/01 07:21:39 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -103,8 +103,6 @@ __KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.84 2017/12/06 14:17:42 roy Exp $");
 #include <netinet6/ip6_private.h>
 #include <netinet6/nd6.h>
 #include <netinet6/scope6_var.h>
-
-#include <net/net_osdep.h>
 
 #ifdef MIP6
 #include <netinet6/mip6.h>

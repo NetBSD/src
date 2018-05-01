@@ -1,4 +1,4 @@
-/*	$NetBSD: if_l2tp.c,v 1.24 2018/04/27 09:55:27 knakahara Exp $	*/
+/*	$NetBSD: if_l2tp.c,v 1.25 2018/05/01 07:21:39 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.24 2018/04/27 09:55:27 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.25 2018/05/01 07:21:39 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -93,7 +93,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.24 2018/04/27 09:55:27 knakahara Exp $
 #endif
 
 #include <net/bpf.h>
-#include <net/net_osdep.h>
 
 /*
  * l2tp global variable definitions

@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.114 2018/01/24 03:44:10 ozaki-r Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.115 2018/05/01 07:21:39 maxv Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.114 2018/01/24 03:44:10 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.115 2018/05/01 07:21:39 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,8 +58,6 @@ __KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.114 2018/01/24 03:44:10 ozaki-r E
 #include <netinet6/nd6.h>
 #include <netinet6/ip6_mroute.h>
 #include <netinet6/scope6_var.h>
-
-#include <net/net_osdep.h>
 
 unsigned long in6_maxmtu = 0;
 
