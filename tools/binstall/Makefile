@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.12 2018/05/01 00:04:34 christos Exp $
+#	$NetBSD: Makefile,v 1.13 2018/05/01 12:38:39 christos Exp $
 
-NOMAN=
 .include <bsd.init.mk>
 
 HOSTPROGNAME=	${MACHINE_GNU_PLATFORM}-install
