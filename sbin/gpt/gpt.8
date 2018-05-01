@@ -1,4 +1,4 @@
-.\" $NetBSD: gpt.8,v 1.60 2018/05/01 08:17:13 martin Exp $
+.\" $NetBSD: gpt.8,v 1.61 2018/05/01 21:03:37 wiz Exp $
 .\"
 .\" Copyright (c) 2002 Marcel Moolenaar
 .\" All rights reserved.
@@ -678,6 +678,12 @@ They may be used by
 .Nx
 code in the future.
 .El
+.Sh EXIT STATUS
+The
+.Nm
+command exits with a failure status (1) when the header command
+is used and no GPT header is found.
+This can be used to check for the existance of a GPT in shell scripts.
 .Sh EXAMPLES
 .Bd -literal
 nas# gpt show wd3
@@ -735,12 +741,6 @@ xotica# installboot /dev/rdk0 /usr/mdec/bootxx_ffsv1
 xotica# mount /dev/dk0 /mnt
 xotica# cp /usr/mdec/boot /mnt
 .Ed
-.Sh EXIT STATUS
-The
-.Nm
-command exits with a failure status (1) when the header command
-is used and no GPT header is found.
-This can be used to check for the existance of a GPT in shell scripts.
 .Sh SEE ALSO
 .Xr boot 8 ,
 .Xr dkctl 8 ,
