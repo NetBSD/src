@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_output.c,v 1.74 2018/04/28 15:45:16 maxv Exp $	*/
+/*	$NetBSD: ipsec_output.c,v 1.75 2018/05/01 05:42:26 maxv Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.74 2018/04/28 15:45:16 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.75 2018/05/01 05:42:26 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -623,7 +623,7 @@ bad:
 #endif
 
 #ifdef INET6
-static void
+static int
 compute_ipsec_pos(struct mbuf *m, int *i, int *off)
 {
 	struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
@@ -640,7 +640,11 @@ compute_ipsec_pos(struct mbuf *m, int *i, int *off)
 	 * put AH/ESP/IPcomp header.
 	 *     IPv6 hbh dest1 rthdr ah* [esp* dest2 payload]
 	 */
-	do {
+	while (1) {
+		if (*i + sizeof(ip6e) > m->m_pkthdr.len) {
+			return EINVAL;
+		}
+
 		switch (nxt) {
 		case IPPROTO_AH:
 		case IPPROTO_ESP:
@@ -649,7 +653,7 @@ compute_ipsec_pos(struct mbuf *m, int *i, int *off)
 		 * we should not skip security header added
 		 * beforehand.
 		 */
-			return;
+			return 0;
 
 		case IPPROTO_HOPOPTS:
 		case IPPROTO_DSTOPTS:
@@ -659,7 +663,7 @@ compute_ipsec_pos(struct mbuf *m, int *i, int *off)
 		 * we should stop there.
 		 */
 			if (nxt == IPPROTO_DSTOPTS && dstopt)
-				return;
+				return 0;
 
 			if (nxt == IPPROTO_DSTOPTS) {
 				/*
@@ -679,16 +683,14 @@ compute_ipsec_pos(struct mbuf *m, int *i, int *off)
 			m_copydata(m, *i, sizeof(ip6e), &ip6e);
 			nxt = ip6e.ip6e_nxt;
 			*off = *i + offsetof(struct ip6_ext, ip6e_nxt);
-			/*
-			 * we will never see nxt == IPPROTO_AH
-			 * so it is safe to omit AH case.
-			 */
 			*i += (ip6e.ip6e_len + 1) << 3;
 			break;
 		default:
-			return;
+			return 0;
 		}
-	} while (*i + sizeof(ip6e) < m->m_pkthdr.len);
+	}
+
+	return 0;
 }
 
 static int
@@ -788,7 +790,9 @@ ipsec6_process_packet(struct mbuf *m, const struct ipsecrequest *isr)
 		i = ip->ip_hl << 2;
 		off = offsetof(struct ip, ip_p);
 	} else {
-		compute_ipsec_pos(m, &i, &off);
+		error = compute_ipsec_pos(m, &i, &off);
+		if (error)
+			goto unrefsav;
 	}
 	error = (*sav->tdb_xform->xf_output)(m, isr, sav, NULL, i, off);
 	KEY_SA_UNREF(&sav);
