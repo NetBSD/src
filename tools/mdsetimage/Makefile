@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.16 2018/05/01 12:38:40 christos Exp $
+#	$NetBSD: Makefile,v 1.17 2018/05/01 19:59:47 christos Exp $
 
-.include <bsd.init.mk>
+.include <bsd.hostinit.mk>
 
 HOSTPROGNAME=	${MACHINE_GNU_PLATFORM}-mdsetimage
 

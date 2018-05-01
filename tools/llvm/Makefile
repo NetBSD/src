@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.21 2017/01/11 12:08:34 joerg Exp $
+#	$NetBSD: Makefile,v 1.22 2018/05/01 19:59:47 christos Exp $
 
-.include <bsd.init.mk>
+.include <bsd.hostinit.mk>
 
 #
 # Do *not* set HOSTPROG or HOSTLIB at this point otherwise

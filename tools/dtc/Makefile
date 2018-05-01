@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.4 2018/05/01 12:38:39 christos Exp $
+#	$NetBSD: Makefile,v 1.5 2018/05/01 19:59:46 christos Exp $
 
-.include <bsd.init.mk>
+.include <bsd.hostinit.mk>
 
 LIBFDT_DIR=	${.CURDIR}/../../sys/external/bsd/libfdt/dist
 HOST_CPPFLAGS+=	-I${LIBFDT_DIR}

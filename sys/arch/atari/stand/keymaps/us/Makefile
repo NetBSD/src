@@ -1,4 +1,6 @@
-# $NetBSD: Makefile,v 1.2 2002/04/15 17:27:34 bjh21 Exp $
+# $NetBSD: Makefile,v 1.3 2018/05/01 19:59:45 christos Exp $
+
+.include <bsd.hostinit.mk>
 
 HOSTPROG=us-kbdmap
 MAP=us.map
