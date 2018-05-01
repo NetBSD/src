@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.91 2018/02/01 07:49:19 maxv Exp $	*/
+/*	$NetBSD: mld6.c,v 1.92 2018/05/01 07:21:39 maxv Exp $	*/
 /*	$KAME: mld6.c,v 1.25 2001/01/16 14:14:18 itojun Exp $	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.91 2018/02/01 07:49:19 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.92 2018/05/01 07:21:39 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -132,9 +132,6 @@ __KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.91 2018/02/01 07:49:19 maxv Exp $");
 #include <netinet/icmp6.h>
 #include <netinet6/icmp6_private.h>
 #include <netinet6/mld6_var.h>
-
-#include <net/net_osdep.h>
-
 
 static krwlock_t	in6_multilock __cacheline_aligned;
 
