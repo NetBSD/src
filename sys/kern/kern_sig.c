@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.340 2018/04/24 18:34:46 kamil Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.341 2018/05/01 13:48:38 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.340 2018/04/24 18:34:46 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.341 2018/05/01 13:48:38 kamil Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_dtrace.h"
@@ -2268,21 +2268,45 @@ void
 proc_stoptrace(int trapno)
 {
 	struct lwp *l = curlwp;
-	struct proc *p = l->l_proc, *pp;
+	struct proc *p = l->l_proc;
+	struct sigacts *ps;
+	sigset_t *mask;
+	sig_t action;
+	ksiginfo_t ksi;
+	const int signo = SIGTRAP;
+
+	KASSERT((trapno == TRAP_SCE) || (trapno == TRAP_SCX));
+
+	KSI_INIT_TRAP(&ksi);
+	ksi.ksi_lid = l->l_lid;
+	ksi.ksi_info._signo = signo;
+	ksi.ksi_info._code = trapno;
 
 	mutex_enter(p->p_lock);
-	pp = p->p_pptr;
-	if (pp->p_pid == 1) {
-		CLR(p->p_slflag, PSL_SYSCALL);	/* XXXSMP */
-		mutex_exit(p->p_lock);
-		return;
-	}
 
-	p->p_xsig = SIGTRAP;
-	p->p_sigctx.ps_info._signo = p->p_xsig;
-	p->p_sigctx.ps_info._code = trapno;
-	sigswitch(0, p->p_xsig);
+	/* Needed for ktrace */
+	ps = p->p_sigacts;
+	action = SIGACTION_PS(ps, signo).sa_handler;
+	mask = &l->l_sigmask;
+
+	/* initproc (PID1) cannot became a debugger */
+	KASSERT(p->p_pptr != initproc);
+
+	KASSERT(ISSET(p->p_slflag, PSL_TRACED));
+	KASSERT(ISSET(p->p_slflag, PSL_SYSCALL));
+
+	p->p_xsig = signo;
+	p->p_sigctx.ps_lwp = ksi.ksi_lid;
+	p->p_sigctx.ps_info = ksi.ksi_info;
+	sigswitch(0, signo);
 	mutex_exit(p->p_lock);
+
+	if (ktrpoint(KTR_PSIG)) {
+		if (p->p_emul->e_ktrpsig)
+			p->p_emul->e_ktrpsig(signo, action, mask, &ksi);
+		else
+			ktrpsig(signo, action, mask, &ksi);
+	}
 }
 
 static int
