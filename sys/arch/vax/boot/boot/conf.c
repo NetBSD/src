@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.17 2017/05/22 16:59:32 ragge Exp $ */
+/*	$NetBSD: conf.c,v 1.18 2018/05/01 07:03:47 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -84,7 +84,7 @@ int     ndevs = (sizeof(devsw)/sizeof(devsw[0]));
 
 struct fs_ops file_system[] = {
 	FS_OPS(ffsv1),
-	//FS_OPS(ffsv2),
+	FS_OPS(ffsv2),
 	FS_OPS(nfs),
 	FS_OPS(cd9660),
 	FS_OPS(ustarfs),
