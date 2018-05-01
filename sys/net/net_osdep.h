@@ -1,4 +1,4 @@
-/*	$NetBSD: net_osdep.h,v 1.19 2018/02/08 21:02:05 maxv Exp $	*/
+/*	$NetBSD: net_osdep.h,v 1.20 2018/05/01 06:50:06 maxv Exp $	*/
 /*	$KAME: net_osdep.h,v 1.51 2001/07/06 06:21:43 itojun Exp $	*/
 
 /*
@@ -300,8 +300,6 @@
 #ifndef _NET_NET_OSDEP_H_
 #define _NET_NET_OSDEP_H_
 #ifdef _KERNEL
-
-#define if_name(ifp)	((ifp)->if_xname)
 
 #endif /*_KERNEL*/
 #endif /* !_NET_NET_OSDEP_H_ */
