@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_compat.h,v 1.11 2016/08/05 09:05:02 christos Exp $	*/
+/*	$NetBSD: ip_compat.h,v 1.12 2018/05/01 07:07:00 maxv Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -762,7 +762,6 @@ typedef	struct	udphdr	udphdr_t;
 typedef	struct	icmp	icmphdr_t;
 typedef	struct	ip	ip_t;
 typedef	struct	ether_header	ether_header_t;
-typedef	struct	tcpiphdr	tcpiphdr_t;
 
 #ifndef	FR_GROUPLEN
 # define	FR_GROUPLEN	16
