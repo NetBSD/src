@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.37 2018/04/29 13:56:00 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.38 2018/05/01 16:37:23 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.37 2018/04/29 13:56:00 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.38 2018/05/01 16:37:23 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1189,8 +1189,6 @@ ATF_TC_BODY(eventmask3, tc)
 	ptrace_event_t set_event, get_event;
 	const int len = sizeof(ptrace_event_t);
 
-	atf_tc_expect_fail("PR kern/51630");
-
 	DPRINTF("Before forking process PID=%d\n", getpid());
 	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
@@ -1211,7 +1209,7 @@ ATF_TC_BODY(eventmask3, tc)
 	validate_status_stopped(status, sigval);
 
 	set_event.pe_set_event = PTRACE_VFORK;
-	SYSCALL_REQUIRE(ptrace(PT_SET_EVENT_MASK, child, &set_event, len) != -1 || errno == ENOTSUP);
+	SYSCALL_REQUIRE(ptrace(PT_SET_EVENT_MASK, child, &set_event, len) != -1);
 	SYSCALL_REQUIRE(ptrace(PT_GET_EVENT_MASK, child, &get_event, len) != -1);
 	ATF_REQUIRE(memcmp(&set_event, &get_event, len) == 0);
 
@@ -1408,10 +1406,6 @@ fork_body(pid_t (*fn)(void), bool trackfork, bool trackvfork,
 	const int slen = sizeof(state);
 	ptrace_event_t event;
 	const int elen = sizeof(event);
-
-	if (trackvfork) {
-		atf_tc_expect_fail("PR kern/51630");
-	}
 
 	DPRINTF("Before forking process PID=%d\n", getpid());
 	SYSCALL_REQUIRE((child = fork()) != -1);
@@ -5722,7 +5716,7 @@ ATF_TC_BODY(signal6, tc)
 	ptrace_event_t event;
 	const int elen = sizeof(event);
 
-	atf_tc_expect_timeout("PR kern/51918");
+	atf_tc_expect_fail("PR kern/51918");
 
 	DPRINTF("Before forking process PID=%d\n", getpid());
 	SYSCALL_REQUIRE((child = fork()) != -1);
@@ -5853,7 +5847,7 @@ ATF_TC_BODY(signal7, tc)
 	ptrace_event_t event;
 	const int elen = sizeof(event);
 
-	atf_tc_expect_fail("PR kern/51918 PR kern/51630");
+	atf_tc_expect_fail("PR kern/51918");
 
 	DPRINTF("Before forking process PID=%d\n", getpid());
 	SYSCALL_REQUIRE((child = fork()) != -1);
@@ -6676,6 +6670,8 @@ ATF_TC_BODY(syscall1, tc)
 	DPRINTF("Before calling ptrace(2) with PT_GET_SIGINFO for child\n");
 	SYSCALL_REQUIRE(ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
 
+	DPRINTF("Before checking siginfo_t and lwpid\n");
+	ATF_REQUIRE_EQ(info.psi_lwpid, 1);
 	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, SIGTRAP);
 	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, TRAP_SCE);
 
@@ -6691,7 +6687,8 @@ ATF_TC_BODY(syscall1, tc)
 	DPRINTF("Before calling ptrace(2) with PT_GET_SIGINFO for child\n");
 	SYSCALL_REQUIRE(ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
 
-	DPRINTF("Before checking siginfo_t\n");
+	DPRINTF("Before checking siginfo_t and lwpid\n");
+	ATF_REQUIRE_EQ(info.psi_lwpid, 1);
 	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, SIGTRAP);
 	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, TRAP_SCX);
 
