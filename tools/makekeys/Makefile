@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.1 2015/06/24 22:20:26 matt Exp $
+#	$NetBSD: Makefile,v 1.2 2018/05/01 00:04:36 christos Exp $
 
 #NOMAN=
 
-#.include <bsd.own.mk>
+#.include <bsd.init.mk>
 
 HOSTPROG=       ${_TOOL_PREFIX}makekeys
 HOST_SRCDIR=	external/mit/xorg/tools/makekeys
