@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2661.c,v 1.36 2017/10/23 09:31:17 msaitoh Exp $	*/
+/*	$NetBSD: rt2661.c,v 1.37 2018/05/01 16:18:13 maya Exp $	*/
 /*	$OpenBSD: rt2661.c,v 1.17 2006/05/01 08:41:11 damien Exp $	*/
 /*	$FreeBSD: rt2560.c,v 1.5 2006/06/02 19:59:31 csjp Exp $	*/
 
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2661.c,v 1.36 2017/10/23 09:31:17 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2661.c,v 1.37 2018/05/01 16:18:13 maya Exp $");
 
 
 #include <sys/param.h>
@@ -167,18 +167,6 @@ static void	rt2661_enable_tsf_sync(struct rt2661_softc *);
 static int	rt2661_get_rssi(struct rt2661_softc *, uint8_t);
 static void	rt2661_softintr(void *);
 
-/*
- * Supported rates for 802.11a/b/g modes (in 500Kbps unit).
- */
-static const struct ieee80211_rateset rt2661_rateset_11a =
-	{ 8, { 12, 18, 24, 36, 48, 72, 96, 108 } };
-
-static const struct ieee80211_rateset rt2661_rateset_11b =
-	{ 4, { 2, 4, 11, 22 } };
-
-static const struct ieee80211_rateset rt2661_rateset_11g =
-	{ 12, { 2, 4, 11, 22, 12, 18, 24, 36, 48, 72, 96, 108 } };
-
 static const struct {
 	uint32_t	reg;
 	uint32_t	val;
@@ -309,7 +297,7 @@ rt2661_attach(void *xsc, int id)
 
 	if (sc->rf_rev == RT2661_RF_5225 || sc->rf_rev == RT2661_RF_5325) {
 		/* set supported .11a rates */
-		ic->ic_sup_rates[IEEE80211_MODE_11A] = rt2661_rateset_11a;
+		ic->ic_sup_rates[IEEE80211_MODE_11A] = ieee80211_std_rateset_11a;
 
 		/* set supported .11a channels */
 		for (i = 36; i <= 64; i += 4) {
@@ -330,8 +318,8 @@ rt2661_attach(void *xsc, int id)
 	}
 
 	/* set supported .11b and .11g rates */
-	ic->ic_sup_rates[IEEE80211_MODE_11B] = rt2661_rateset_11b;
-	ic->ic_sup_rates[IEEE80211_MODE_11G] = rt2661_rateset_11g;
+	ic->ic_sup_rates[IEEE80211_MODE_11B] = ieee80211_std_rateset_11b;
+	ic->ic_sup_rates[IEEE80211_MODE_11G] = ieee80211_std_rateset_11g;
 
 	/* set supported .11b and .11g channels (1 through 14) */
 	for (i = 1; i <= 14; i++) {
@@ -2180,7 +2168,7 @@ rt2661_set_basicrates(struct rt2661_softc *sc,
 		 * Find h/w rate index.  We know it exists because the rate
 		 * set has already been negotiated.
 		 */
-		for (j = 0; rt2661_rateset_11g.rs_rates[j] != RV(rate); j++);
+		for (j = 0; ieee80211_std_rateset_11g.rs_rates[j] != RV(rate); j++);
 
 		mask |= 1 << j;
 	}
