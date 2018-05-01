@@ -1,10 +1,8 @@
-#	$NetBSD: Makefile,v 1.6 2013/05/03 16:05:12 matt Exp $
+#	$NetBSD: Makefile,v 1.7 2018/05/01 12:38:39 christos Exp $
 
 HOSTPROGNAME=	nbdisklabel
 HOST_SRCDIR=	sbin/disklabel
 HOST_SRCS=	disklabel.c
-
-NOMAN=	# defined
 
 .include "${.CURDIR}/../Makefile.nbincludes"
 .include "${.CURDIR}/../Makefile.host"
