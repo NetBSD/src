@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipcomp.c,v 1.63 2018/04/28 15:45:16 maxv Exp $	*/
+/*	$NetBSD: xform_ipcomp.c,v 1.64 2018/05/01 08:13:37 maxv Exp $	*/
 /*	$FreeBSD: xform_ipcomp.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /* $OpenBSD: ip_ipcomp.c,v 1.1 2001/07/05 12:08:52 jjbg Exp $ */
 
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.63 2018/04/28 15:45:16 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.64 2018/05/01 08:13:37 maxv Exp $");
 
 /* IP payload compression protocol (IPComp), see RFC 2393 */
 #if defined(_KERNEL_OPT)
@@ -70,7 +70,6 @@ __KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.63 2018/04/28 15:45:16 maxv Exp $
 
 #include <opencrypto/cryptodev.h>
 #include <opencrypto/deflate.h>
-#include <opencrypto/xform.h>
 
 percpu_t *ipcompstat_percpu;
 
