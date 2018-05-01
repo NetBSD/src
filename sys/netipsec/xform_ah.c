@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ah.c,v 1.96 2018/05/01 08:16:34 maxv Exp $	*/
+/*	$NetBSD: xform_ah.c,v 1.97 2018/05/01 08:27:13 maxv Exp $	*/
 /*	$FreeBSD: xform_ah.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ah.c,v 1.63 2001/06/26 06:18:58 angelos Exp $ */
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.96 2018/05/01 08:16:34 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.97 2018/05/01 08:27:13 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -532,10 +532,8 @@ ah_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 	/* XXX don't pullup, just copy header */
 	IP6_EXTHDR_GET(ah, struct newah *, m, skip, rplen);
 	if (ah == NULL) {
-		DPRINTF(("%s: cannot pullup header\n", __func__));
-		error = ENOBUFS;
-		stat = AH_STAT_HDROPS;	/*XXX*/
-		goto bad;
+		/* m already freed */
+		return ENOBUFS;
 	}
 
 	nxt = ah->ah_nxt;
