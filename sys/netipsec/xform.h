@@ -1,4 +1,4 @@
-/*	$NetBSD: xform.h,v 1.15 2018/04/19 08:27:39 maxv Exp $	*/
+/*	$NetBSD: xform.h,v 1.16 2018/05/01 08:08:46 maxv Exp $	*/
 /*	$FreeBSD: xform.h,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ipsp.h,v 1.119 2002/03/14 01:27:11 millert Exp $	*/
 /*
@@ -45,19 +45,6 @@
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <opencrypto/xform.h>
-
-#define	AH_HMAC_INITIAL_RPL	1	/* replay counter initial value */
-
-/*
- * Packet tag assigned on completion of IPsec processing; used
- * to speedup processing when/if the packet comes back for more
- * processing.
- */
-struct tdb_ident {
-	u_int32_t spi;
-	union sockaddr_union dst;
-	u_int8_t proto;
-};
 
 /*
  * Opaque data structure hung off a crypto operation descriptor.
