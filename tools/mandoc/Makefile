@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.10 2017/09/07 18:57:47 joerg Exp $
+#	$NetBSD: Makefile,v 1.11 2018/05/01 00:04:36 christos Exp $
 
 HOSTPROGNAME=	${_TOOL_PREFIX}mandoc
 HOST_SRCDIR=	external/bsd/mdocml/bin/mandoc
 
 NOMAN=		# defined
 
-.include <bsd.own.mk>
+.include <bsd.init.mk>
 
 NETBSD_MINOR!=	${HOST_SH} ${NETBSDSRCDIR}/sys/conf/osrelease.sh -n
 NETBSD_OSNAME=	"NetBSD ${NETBSD_MINOR}"

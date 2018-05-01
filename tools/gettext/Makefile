@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.6 2013/03/06 14:34:01 apb Exp $
+#	$NetBSD: Makefile,v 1.7 2018/05/01 00:04:35 christos Exp $
 
-.include <bsd.own.mk>
+.include <bsd.init.mk>
 
 MODULE=		gettext
 

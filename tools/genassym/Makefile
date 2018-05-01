@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.6 2012/12/02 12:48:32 apb Exp $
+#	$NetBSD: Makefile,v 1.7 2018/05/01 00:04:35 christos Exp $
 
-.include <bsd.own.mk>
+.include <bsd.init.mk>
 
 .PATH.sh:	${.CURDIR}/../../usr.bin/genassym
 

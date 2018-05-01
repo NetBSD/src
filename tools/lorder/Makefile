@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.12 2012/12/02 12:48:33 apb Exp $
+#	$NetBSD: Makefile,v 1.13 2018/05/01 00:04:36 christos Exp $
 
-.include <bsd.own.mk>
+.include <bsd.init.mk>
 
 .-include	"${TOOLDIR}/share/compat/defs.mk"
 
