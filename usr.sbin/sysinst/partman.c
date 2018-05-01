@@ -1,4 +1,4 @@
-/*	$NetBSD: partman.c,v 1.20 2018/05/01 21:26:41 kre Exp $ */
+/*	$NetBSD: partman.c,v 1.21 2018/05/01 21:28:39 kre Exp $ */
 
 /*
  * Copyright 2012 Eugene Lozovoy
@@ -1173,7 +1173,7 @@ pm_cgd_commit(void)
 
 /* Add lvm logical volumes to pm list */
 /* XXX: rewrite */
-static int
+static void
 pm_lvm_find(void)
 {
 	int i, ii, already_found;
@@ -1213,7 +1213,6 @@ pm_lvm_find(void)
 			memset(pm_new, 0, sizeof *pm_new);
 		}
 	}
-	return 0;
 }
 
 static int
