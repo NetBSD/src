@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_emac.c,v 1.13 2018/02/19 20:22:48 jmcneill Exp $ */
+/* $NetBSD: sunxi_emac.c,v 1.14 2018/05/01 21:18:23 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2016-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "opt_net_mpsafe.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_emac.c,v 1.13 2018/02/19 20:22:48 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_emac.c,v 1.14 2018/05/01 21:18:23 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -952,7 +952,7 @@ sunxi_emac_setup_phy(struct sunxi_emac_softc *sc)
 		reg |= (rx_delay << EMAC_CLK_ERXDC_SHIFT);
 	}
 
-	if (sc->type == EMAC_H3) {
+	if (sc->type == EMAC_H3 || sc->type == EMAC_H6) {
 		if (sunxi_emac_has_internal_phy(sc)) {
 			reg |= EMAC_CLK_EPHY_SELECT;
 			reg &= ~EMAC_CLK_EPHY_SHUTDOWN;
