@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.249 2018/04/28 13:26:57 maxv Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.250 2018/05/01 08:42:41 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.249 2018/04/28 13:26:57 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.250 2018/05/01 08:42:41 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -103,7 +103,6 @@ __KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.249 2018/04/28 13:26:57 maxv Exp $"
 
 #ifdef INET6
 #include <netinet/ip6.h>
-#include <netinet/icmp6.h>
 #include <netinet6/ip6_var.h>
 #include <netinet6/ip6_private.h>
 #include <netinet6/in6_pcb.h>
@@ -119,9 +118,6 @@ __KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.249 2018/04/28 13:26:57 maxv Exp $"
 #ifdef IPSEC
 #include <netipsec/ipsec.h>
 #include <netipsec/esp.h>
-#ifdef INET6
-#include <netipsec/ipsec6.h>
-#endif
 #endif
 
 #ifdef IPKDB
@@ -137,8 +133,7 @@ percpu_t *udpstat_percpu;
 
 #ifdef INET
 #ifdef IPSEC
-static int udp4_espinudp(struct mbuf **, int, struct sockaddr *,
-    struct socket *);
+static int udp4_espinudp(struct mbuf **, int, struct socket *);
 #endif
 static void udp4_sendup(struct mbuf *, int, struct sockaddr *,
     struct socket *);
@@ -605,9 +600,7 @@ udp4_realinput(struct sockaddr_in *src, struct sockaddr_in *dst,
 #ifdef IPSEC
 		/* Handle ESP over UDP */
 		if (inp->inp_flags & INP_ESPINUDP_ALL) {
-			struct sockaddr *sa = (struct sockaddr *)src;
-
-			switch (udp4_espinudp(mp, off, sa, inp->inp_socket)) {
+			switch (udp4_espinudp(mp, off, inp->inp_socket)) {
 			case -1: /* Error, m was freed */
 				rcvcnt = -1;
 				goto bad;
@@ -1252,8 +1245,7 @@ udp_statinc(u_int stat)
  *    -1 if an error occurred and m was freed
  */
 static int
-udp4_espinudp(struct mbuf **mp, int off, struct sockaddr *src,
-    struct socket *so)
+udp4_espinudp(struct mbuf **mp, int off, struct socket *so)
 {
 	size_t len;
 	void *data;
