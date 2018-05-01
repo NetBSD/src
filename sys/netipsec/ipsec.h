@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.79 2018/04/29 11:51:08 maxv Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.80 2018/05/01 08:34:08 maxv Exp $	*/
 /*	$FreeBSD: ipsec.h,v 1.2.4.2 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: ipsec.h,v 1.53 2001/11/20 08:32:38 itojun Exp $	*/
 
@@ -61,12 +61,6 @@ struct secpolicyindex {
 	u_int8_t prefs;			/* prefix length in bits for src */
 	u_int8_t prefd;			/* prefix length in bits for dst */
 	u_int16_t ul_proto;		/* upper layer Protocol */
-#ifdef notyet
-	uid_t uids;
-	uid_t uidd;
-	gid_t gids;
-	gid_t gidd;
-#endif
 };
 
 /* Security Policy Data Base */
