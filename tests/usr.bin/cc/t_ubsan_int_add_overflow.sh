@@ -162,14 +162,13 @@ EOF
 	cat ./ftype32
 	echo "64bit Binz are on the other hand:"
 	cat ./ftype64
-    atf_check -o not-match:"^[+]?\d+([.]\d+)" -e match:"signed integer overflow" ./md32 #match that the output int is not positive(:overflown)
+	atf_check -o not-match:"^[+]?\d+([.]\d+)" -e match:"signed integer overflow" ./md32
 
 	# Another test with profile 32bit binaries, just to make sure everything has been thoroughly done
 	cat > test.c << EOF
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
-/* Alternatively we could just do a return ternary of the style "return (int == result of addition)?0:-1;"*/ 
 int main(int argc, char **argv) { int l = INT_MAX; l+= argc; printf("%d\n", l); exit(0); }
 EOF
 
@@ -198,6 +197,4 @@ atf_init_test_cases()
 	atf_add_test_case int_add_overflow_pie
 	atf_add_test_case int_add_overflow_pic
 	atf_add_test_case int_add_overflow32
-    # static option IS NOT supported
-    # gcc 5.5.0 | clang 5.0.1
 }

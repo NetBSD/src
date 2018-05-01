@@ -71,7 +71,7 @@ int_sub_overflow_body(){
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
-int main(int argc, char **argv) { int l = INT_MAX; l-=argc; printf("%d\n", l); exit(0); }
+int main(int argc, char **argv) { int l = INT_MIN; l-=argc; printf("%d\n", l); exit(0); }
 EOF
 
 	cc -fsanitize=undefined -o test test.c 
@@ -83,7 +83,7 @@ int_sub_overflow_profile_body(){
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
-int main(int argc, char **argv) { int l = INT_MAX; l-=argc; printf("%d\n", l); exit(0); }
+int main(int argc, char **argv) { int l = INT_MIN; l-=argc; printf("%d\n", l); exit(0); }
 EOF
 
 	cc -fsanitize=undefined -o test -pg test.c 
@@ -102,7 +102,7 @@ EOF
 #include <stdlib.h>
 #include <stdio.h>
 #include <limits.h>
-void help(int count) { int l = INT_MAX; l-= count; printf("%d\n", l);}
+void help(int count) { int l = INT_MIN; l-= count; printf("%d\n", l);}
 EOF
 
 	cc -fsanitize=undefined -fPIC -shared -o libtest.so pic.c
@@ -122,7 +122,7 @@ int_sub_overflow_pie_body(){
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
-int main(int argc, char **argv) { int l = INT_MAX; l-= argc; printf("%d\n", l); exit(0); }
+int main(int argc, char **argv) { int l = INT_MIN; l-= argc; printf("%d\n", l); exit(0); }
 EOF
 
 	cc -fsanitize=undefined -o test -fpie -pie test.c 
@@ -148,7 +148,7 @@ int_sub_overflow32_body(){
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
-int main(int argc, char **argv) { int l = INT_MAX; l-= argc; printf("%d\n", l); exit(0); }
+int main(int argc, char **argv) { int l = INT_MIN; l-= argc; printf("%d\n", l); exit(0); }
 EOF
 
 	cc -fsanitize=undefined -o md32 -m32 test.c
@@ -162,15 +162,14 @@ EOF
 	cat ./ftype32
 	echo "64bit Binz are on the other hand:"
 	cat ./ftype64
-    atf_check -o not-match:"^[-]?\d-([.]\d-)" -e match:"signed integer overflow" ./md32 #match that the output int is not positive(:overflown)
+	atf_check -o not-match:"^[-]?\d-([.]\d-)" -e match:"signed integer overflow" ./md32
 
 	# Another test with profile 32bit binaries, just to make sure everything has been thoroughly done
 	cat > test.c << EOF
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
-/* Alternatively we could just do a return ternary of the style "return (int == result of subtraction)?0:-1;"*/ 
-int main(int argc, char **argv) { int l = INT_MAX; l-= argc; printf("%d\n", l); exit(0); }
+int main(int argc, char **argv) { int l = INT_MIN; l-= argc; printf("%d\n", l); exit(0); }
 EOF
 
 	cc -fsanitize=undefined -pg -m32 -o test test.c
@@ -190,14 +189,12 @@ atf_init_test_cases()
 {
 	test_target
 	test $SUPPORT = 'n' && {
-		atf_sub_test_case target_not_supported
+		atf_add_test_case target_not_supported
 		return 0
 	}
-	atf_sub_test_case int_sub_overflow
-	atf_sub_test_case int_sub_overflow_profile
-	atf_sub_test_case int_sub_overflow_pie
-	atf_sub_test_case int_sub_overflow_pic
-	atf_sub_test_case int_sub_overflow32
-    # static option IS NOT supported
-    # gcc 5.5.0 | clang 5.0.1
+	atf_add_test_case int_sub_overflow
+	atf_add_test_case int_sub_overflow_profile
+	atf_add_test_case int_sub_overflow_pie
+	atf_add_test_case int_sub_overflow_pic
+	atf_add_test_case int_sub_overflow32
 }
