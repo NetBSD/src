@@ -1,5 +1,5 @@
 /*	$KAME: sctp_input.c,v 1.28 2005/04/21 18:36:21 nishida Exp $	*/
-/*	$NetBSD: sctp_input.c,v 1.8 2018/02/26 09:04:29 maxv Exp $	*/
+/*	$NetBSD: sctp_input.c,v 1.9 2018/05/01 07:21:39 maxv Exp $	*/
 
 /*
  * Copyright (C) 2002, 2003, 2004 Cisco Systems Inc,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_input.c,v 1.8 2018/02/26 09:04:29 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_input.c,v 1.9 2018/05/01 07:21:39 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -87,8 +87,6 @@ __KERNEL_RCSID(0, "$NetBSD: sctp_input.c,v 1.8 2018/02/26 09:04:29 maxv Exp $");
 #include <netipsec/ipsec.h>
 #include <netipsec/key.h>
 #endif /*IPSEC*/
-
-#include <net/net_osdep.h>
 
 #ifdef SCTP_DEBUG
 extern u_int32_t sctp_debug_on;
