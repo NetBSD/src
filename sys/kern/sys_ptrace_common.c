@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace_common.c,v 1.39 2018/05/01 14:09:53 kamil Exp $	*/
+/*	$NetBSD: sys_ptrace_common.c,v 1.40 2018/05/01 16:37:23 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.39 2018/05/01 14:09:53 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.40 2018/05/01 16:37:23 kamil Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -634,23 +634,22 @@ ptrace_set_event_mask(struct proc *t, void *addr, size_t data)
 		SET(t->p_slflag, PSL_TRACEFORK);
 	else
 		CLR(t->p_slflag, PSL_TRACEFORK);
-#if notyet
+
 	if (pe.pe_set_event & PTRACE_VFORK)
 		SET(t->p_slflag, PSL_TRACEVFORK);
 	else
 		CLR(t->p_slflag, PSL_TRACEVFORK);
-#else
-	if (pe.pe_set_event & PTRACE_VFORK)
-		return ENOTSUP;
-#endif
+
 	if (pe.pe_set_event & PTRACE_VFORK_DONE)
 		SET(t->p_slflag, PSL_TRACEVFORK_DONE);
 	else
 		CLR(t->p_slflag, PSL_TRACEVFORK_DONE);
+
 	if (pe.pe_set_event & PTRACE_LWP_CREATE)
 		SET(t->p_slflag, PSL_TRACELWP_CREATE);
 	else
 		CLR(t->p_slflag, PSL_TRACELWP_CREATE);
+
 	if (pe.pe_set_event & PTRACE_LWP_EXIT)
 		SET(t->p_slflag, PSL_TRACELWP_EXIT);
 	else
