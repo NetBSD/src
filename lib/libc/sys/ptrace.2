@@ -1,7 +1,7 @@
-.\"	$NetBSD: ptrace.2,v 1.68 2018/03/05 11:24:35 kamil Exp $
+.\"	$NetBSD: ptrace.2,v 1.69 2018/05/01 16:37:23 kamil Exp $
 .\"
 .\" This file is in the public domain.
-.Dd April 7, 2017
+.Dd May 1, 2018
 .Dt PTRACE 2
 .Os
 .Sh NAME
@@ -840,10 +840,6 @@ to
 .Fn ptrace
 .Ec ,
 should be able to sidestep this.
-.Pp
-.Dv PTRACE_VFORK
-is currently unimplemented and it will return
-.Er ENOTSUP .
 .Pp
 .Dv PT_SET_SIGINFO ,
 .Dv PT_RESUME
