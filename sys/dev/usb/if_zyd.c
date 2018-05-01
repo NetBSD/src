@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_zyd.c,v 1.52 2007/02/11 00:08:04 jsg Exp $	*/
-/*	$NetBSD: if_zyd.c,v 1.46 2018/04/30 01:14:07 maya Exp $	*/
+/*	$NetBSD: if_zyd.c,v 1.47 2018/05/01 16:18:13 maya Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.46 2018/04/30 01:14:07 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.47 2018/05/01 16:18:13 maya Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -239,12 +239,6 @@ Static void	zyd_iter_func(void *, struct ieee80211_node *);
 Static void	zyd_amrr_timeout(void *);
 Static void	zyd_newassoc(struct ieee80211_node *, int);
 
-static const struct ieee80211_rateset zyd_rateset_11b =
-	{ 4, { 2, 4, 11, 22 } };
-
-static const struct ieee80211_rateset zyd_rateset_11g =
-	{ 12, { 2, 4, 11, 22, 12, 18, 24, 36, 48, 72, 96, 108 } };
-
 int
 zyd_match(device_t parent, cfdata_t match, void *aux)
 {
@@ -417,8 +411,8 @@ zyd_complete_attach(struct zyd_softc *sc)
 	    IEEE80211_C_WEP;		/* s/w WEP */
 
 	/* set supported .11b and .11g rates */
-	ic->ic_sup_rates[IEEE80211_MODE_11B] = zyd_rateset_11b;
-	ic->ic_sup_rates[IEEE80211_MODE_11G] = zyd_rateset_11g;
+	ic->ic_sup_rates[IEEE80211_MODE_11B] = ieee80211_std_rateset_11b;
+	ic->ic_sup_rates[IEEE80211_MODE_11G] = ieee80211_std_rateset_11g;
 
 	/* set supported .11b and .11g channels (1 through 14) */
 	for (i = 1; i <= 14; i++) {

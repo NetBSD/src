@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipw.c,v 1.67 2018/01/16 07:05:24 maxv Exp $	*/
+/*	$NetBSD: if_ipw.c,v 1.68 2018/05/01 16:18:13 maya Exp $	*/
 /*	FreeBSD: src/sys/dev/ipw/if_ipw.c,v 1.15 2005/11/13 17:17:40 damien Exp 	*/
 
 /*-
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.67 2018/01/16 07:05:24 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.68 2018/05/01 16:18:13 maya Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2100 MiniPCI driver
@@ -132,12 +132,6 @@ static void	ipw_read_mem_1(struct ipw_softc *, bus_size_t, uint8_t *,
     bus_size_t);
 static void	ipw_write_mem_1(struct ipw_softc *, bus_size_t, uint8_t *,
     bus_size_t);
-
-/*
- * Supported rates for 802.11b mode (in 500Kbps unit).
- */
-static const struct ieee80211_rateset ipw_rateset_11b =
-	{ 4, { 2, 4, 11, 22 } };
 
 static inline uint8_t
 MEM_READ_1(struct ipw_softc *sc, uint32_t addr)
@@ -282,7 +276,7 @@ ipw_attach(device_t parent, device_t self, void *aux)
 	ic->ic_myaddr[5] = val & 0xff;
 
 	/* set supported .11b rates */
-	ic->ic_sup_rates[IEEE80211_MODE_11B] = ipw_rateset_11b;
+	ic->ic_sup_rates[IEEE80211_MODE_11B] = ieee80211_std_rateset_11b;
 
 	/* set supported .11b channels (read from EEPROM) */
 	if ((val = ipw_read_prom_word(sc, IPW_EEPROM_CHANNEL_LIST)) == 0)

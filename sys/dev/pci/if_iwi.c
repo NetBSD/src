@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.105 2018/01/16 07:05:24 maxv Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.106 2018/05/01 16:18:13 maya Exp $  */
 /*	$OpenBSD: if_iwi.c,v 1.111 2010/11/15 19:11:57 damien Exp $	*/
 
 /*-
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.105 2018/01/16 07:05:24 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.106 2018/05/01 16:18:13 maya Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -146,18 +146,6 @@ static void	iwi_stop(struct ifnet *, int);
 static int	iwi_getrfkill(struct iwi_softc *);
 static void	iwi_led_set(struct iwi_softc *, uint32_t, int);
 static void	iwi_sysctlattach(struct iwi_softc *);
-
-/*
- * Supported rates for 802.11a/b/g modes (in 500Kbps unit).
- */
-static const struct ieee80211_rateset iwi_rateset_11a =
-	{ 8, { 12, 18, 24, 36, 48, 72, 96, 108 } };
-
-static const struct ieee80211_rateset iwi_rateset_11b =
-	{ 4, { 2, 4, 11, 22 } };
-
-static const struct ieee80211_rateset iwi_rateset_11g =
-	{ 12, { 2, 4, 11, 22, 12, 18, 24, 36, 48, 72, 96, 108 } };
 
 static inline uint8_t
 MEM_READ_1(struct iwi_softc *sc, uint32_t addr)
@@ -329,7 +317,7 @@ iwi_attach(device_t parent, device_t self, void *aux)
 	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_PRO_WL_2915ABG_1 ||
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_PRO_WL_2915ABG_2) {
 		/* set supported .11a rates (2915ABG only) */
-		ic->ic_sup_rates[IEEE80211_MODE_11A] = iwi_rateset_11a;
+		ic->ic_sup_rates[IEEE80211_MODE_11A] = ieee80211_std_rateset_11a;
 
 		/* set supported .11a channels */
 		for (i = 36; i <= 64; i += 4) {
@@ -345,8 +333,8 @@ iwi_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* set supported .11b and .11g rates */
-	ic->ic_sup_rates[IEEE80211_MODE_11B] = iwi_rateset_11b;
-	ic->ic_sup_rates[IEEE80211_MODE_11G] = iwi_rateset_11g;
+	ic->ic_sup_rates[IEEE80211_MODE_11B] = ieee80211_std_rateset_11b;
+	ic->ic_sup_rates[IEEE80211_MODE_11G] = ieee80211_std_rateset_11g;
 
 	/* set supported .11b and .11g channels (1 through 14) */
 	for (i = 1; i <= 14; i++) {

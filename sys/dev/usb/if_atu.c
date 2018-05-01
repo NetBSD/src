@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atu.c,v 1.56 2018/01/21 13:57:11 skrll Exp $ */
+/*	$NetBSD: if_atu.c,v 1.57 2018/05/01 16:18:13 maya Exp $ */
 /*	$OpenBSD: if_atu.c,v 1.48 2004/12/30 01:53:21 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.56 2018/01/21 13:57:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.57 2018/05/01 16:18:13 maya Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1434,11 +1434,7 @@ atu_complete_attach(struct atu_softc *sc)
 #endif
 
 	i = 0;
-	ic->ic_sup_rates[IEEE80211_MODE_11B].rs_rates[i++] = 2;
-	ic->ic_sup_rates[IEEE80211_MODE_11B].rs_rates[i++] = 4;
-	ic->ic_sup_rates[IEEE80211_MODE_11B].rs_rates[i++] = 11;
-	ic->ic_sup_rates[IEEE80211_MODE_11B].rs_rates[i++] = 22;
-	ic->ic_sup_rates[IEEE80211_MODE_11B].rs_nrates = i;
+	ic->ic_sup_rates[IEEE80211_MODE_11B] = ieee80211_std_rateset_11b;
 
 	for (i = 1; i <= 14; i++) {
 		ic->ic_channels[i].ic_flags = IEEE80211_CHAN_B |
