@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.162 2017/10/23 09:25:31 msaitoh Exp $  */
+/*	$NetBSD: atw.c,v 1.163 2018/05/01 16:18:13 maya Exp $  */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.162 2017/10/23 09:25:31 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.163 2018/05/01 16:18:13 maya Exp $");
 
 
 #include <sys/param.h>
@@ -514,7 +514,7 @@ atw_attach(struct atw_softc *sc)
 	};
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &sc->sc_if;
-	int country_code, error, i, nrate, srom_major;
+	int country_code, error, i, srom_major;
 	u_int32_t reg;
 	static const char *type_strings[] = {"Intersil (not supported)",
 	    "RFMD", "Marvel (not supported)"};
@@ -781,12 +781,7 @@ atw_attach(struct atw_softc *sc)
 	ic->ic_caps = IEEE80211_C_PMGT | IEEE80211_C_IBSS |
 	    IEEE80211_C_HOSTAP | IEEE80211_C_MONITOR;
 
-	nrate = 0;
-	ic->ic_sup_rates[IEEE80211_MODE_11B].rs_rates[nrate++] = 2;
-	ic->ic_sup_rates[IEEE80211_MODE_11B].rs_rates[nrate++] = 4;
-	ic->ic_sup_rates[IEEE80211_MODE_11B].rs_rates[nrate++] = 11;
-	ic->ic_sup_rates[IEEE80211_MODE_11B].rs_rates[nrate++] = 22;
-	ic->ic_sup_rates[IEEE80211_MODE_11B].rs_nrates = nrate;
+	ic->ic_sup_rates[IEEE80211_MODE_11B] = ieee80211_std_rateset_11b;
 
 	/*
 	 * Call MI attach routines.
