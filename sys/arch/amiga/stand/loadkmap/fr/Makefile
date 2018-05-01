@@ -1,4 +1,6 @@
-# $NetBSD: Makefile,v 1.4 2001/12/12 01:49:36 tv Exp $
+# $NetBSD: Makefile,v 1.5 2018/05/01 19:59:44 christos Exp $
+
+.include <bsd.hostinit.mk>
 
 HOSTPROG=	fr-kbdmap
 NOMAN=		# defined
