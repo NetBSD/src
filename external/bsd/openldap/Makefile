@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile,v 1.2 2008/07/23 00:21:19 lukem Exp $
+#	$NetBSD: Makefile,v 1.3 2018/05/01 19:59:43 christos Exp $
 
 .include "openldap.mk"
+
+.include <bsd.hostinit.mk>
 
 SUBDIR=		include
 
