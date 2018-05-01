@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.84 2018/02/02 01:02:41 mrg Exp $
+#	$NetBSD: Makefile,v 1.85 2018/05/01 00:04:35 christos Exp $
 
-.include <bsd.own.mk>
+.include <bsd.init.mk>
 
 GCC_LANGUAGES=c c++ objc
 MODULE=			gcc4

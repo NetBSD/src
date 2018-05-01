@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.12 2017/12/27 21:34:11 christos Exp $
+#	$NetBSD: Makefile,v 1.13 2018/05/01 00:04:35 christos Exp $
 
 NOMAN=	# defined
 
-.include <bsd.own.mk>
+.include <bsd.init.mk>
 
 HOSTPROGNAME=	${MACHINE_GNU_PLATFORM}-dbsym
 

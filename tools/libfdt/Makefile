@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.2 2017/06/08 17:09:29 skrll Exp $
+#	$NetBSD: Makefile,v 1.3 2018/05/01 00:04:36 christos Exp $
 
 HOSTLIB=	fdt
 
-.include <bsd.own.mk>
+.include <bsd.init.mk>
 
 LIBFDT_DIR=	${.CURDIR}/../../sys/external/bsd/libfdt/dist
 
