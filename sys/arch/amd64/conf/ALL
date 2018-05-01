@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.85 2018/04/08 00:52:38 mrg Exp $
+# $NetBSD: ALL,v 1.86 2018/05/01 16:16:05 maya Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"ALL-$Revision: 1.85 $"
+#ident		"ALL-$Revision: 1.86 $"
 
 maxusers	64		# estimated number of users
 
@@ -241,7 +241,7 @@ options 	ALTQ_WFQ	# Weighted Fair Queueing
 options 	ACPIVERBOSE	# verbose ACPI device autoconfig messages
 options 	EISAVERBOSE	# verbose EISA device autoconfig messages
 options 	MIIVERBOSE	# verbose PHY autoconfig messages
-options 	MPVERBOSE	# verbose mpbios config messages
+options 	MPVERBOSE=1	# verbose mpbios config messages
 options 	PCIVERBOSE	# verbose PCI device autoconfig messages
 options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
