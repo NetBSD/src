@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.13 2017/01/13 05:49:27 christos Exp $ */
+/*	$NetBSD: disks.c,v 1.14 2018/05/01 09:01:45 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1480,11 +1480,12 @@ incoregpt(pm_devs_t *pm_cur, partinfo *lp)
 static bool
 is_gpt(const char *dev)
 {
+
 	check_available_binaries();
 
 	if (!have_gpt)
 		return false;
 
-	return !run_program(RUN_SILENT | RUN_ERROR_OK,
-		"sh -c 'gpt show %s |grep -e Pri\\ GPT\\ table'", dev);
+	return run_program(RUN_SILENT | RUN_ERROR_OK,
+		"gpt -qr header %s", dev) == 0;
 }
