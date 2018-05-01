@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.4 2018/04/28 20:35:05 jmcneill Exp $
+#	$NetBSD: GENERIC64,v 1.5 2018/05/01 20:06:13 jmcneill Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -35,6 +35,8 @@ makeoptions	DTS="
 	sun50i-h5-orangepi-zero-plus.dts
 	sun50i-h5-orangepi-zero-plus2.dts
 
+	sun50i-h6-pine-h64.dts
+
 	tegra210-p2371-0000.dts
 	tegra210-p2371-2180.dts
 	tegra210-p2571.dts
@@ -46,6 +48,7 @@ options 	SOC_BCM2837
 options 	SOC_TEGRA210
 options 	SOC_SUN50I_A64
 options 	SOC_SUN50I_H5
+options 	SOC_SUN50I_H6
 #options 	MULTIPROCESSOR
 
 pseudo-device 	openfirm	# /dev/openfirm
@@ -128,6 +131,7 @@ bcmaux*		at fdt? pass 1		# Broadcom BCM283x Aux Periph Clocks
 sun8ih3ccu*	at fdt? pass 2		# Allwinner H3/H5 CCU
 sun8ih3rccu*	at fdt? pass 2		# Allwinner H3/H5 CCU (PRCM)
 sun50ia64ccu*	at fdt? pass 2		# Allwinner A64 CCU
+sun50ih6ccu*	at fdt? pass 2		# Allwinner H6 CCU
 sunxiresets*	at fdt? pass 1		# Allwinner misc. resets
 sunxigates*	at fdt? pass 1		# Allwinner misc. gates
 sunxigmacclk*	at fdt? pass 2		# Allwinner GMAC MII/RGMII clock mux
