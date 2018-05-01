@@ -1,4 +1,4 @@
-#	$NetBSD: files.sunxi,v 1.49 2018/05/01 19:53:14 jmcneill Exp $
+#	$NetBSD: files.sunxi,v 1.50 2018/05/01 23:59:42 jmcneill Exp $
 #
 # Configuration info for Allwinner sunxi family SoCs
 #
@@ -117,6 +117,10 @@ defparam opt_sunximmc.h				SUNXI_MMC_DEBUG
 device	sunxiusbphy
 attach	sunxiusbphy at fdt with sunxi_usbphy
 file	arch/arm/sunxi/sunxi_usbphy.c		sunxi_usbphy
+
+device	sunxiusb3phy
+attach	sunxiusb3phy at fdt with sunxi_usb3phy
+file	arch/arm/sunxi/sunxi_usb3phy.c		sunxi_usb3phy
 
 # EHCI
 attach	ehci at fdt with ehci_fdt
