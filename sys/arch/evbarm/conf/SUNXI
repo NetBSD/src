@@ -1,5 +1,5 @@
 #
-#	$NetBSD: SUNXI,v 1.64 2018/04/28 18:47:53 jmcneill Exp $
+#	$NetBSD: SUNXI,v 1.65 2018/05/01 20:06:13 jmcneill Exp $
 #
 #	Allwinner sunxi family
 #
@@ -126,6 +126,8 @@ makeoptions	DTS="
 	sun50i-h5-orangepi-prime.dts
 	sun50i-h5-orangepi-zero-plus.dts
 	sun50i-h5-orangepi-zero-plus2.dts
+
+	sun50i-h6-pine-h64.dts
 "
 
 options 	MULTIPROCESSOR
@@ -143,6 +145,7 @@ options 	SOC_SUN8I_H3
 options 	SOC_SUN9I_A80
 options 	SOC_SUN50I_A64
 options 	SOC_SUN50I_H5
+options 	SOC_SUN50I_H6
 
 pseudo-device 	openfirm	# /dev/openfirm
 
@@ -181,6 +184,7 @@ sun8ih3ccu*	at fdt? pass 2		# H3 CCU
 sun8ih3rccu*	at fdt? pass 2		# H3 CCU (PRCM)
 sun9ia80ccu*	at fdt? pass 2		# A80 CCU
 sun50ia64ccu*	at fdt? pass 2		# A64 CCU
+sun50ih6ccu*	at fdt? pass 2		# H6 CCU
 sunxiresets*	at fdt? pass 1		# Misc. clock resets
 sunxigates*	at fdt? pass 1		# Misc. clock gates
 sunxigmacclk*	at fdt? pass 2		# GMAC MII/RGMII clock mux
