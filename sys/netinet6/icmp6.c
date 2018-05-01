@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.235 2018/04/29 07:05:13 maxv Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.236 2018/05/01 07:21:39 maxv Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.235 2018/04/29 07:05:13 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.236 2018/05/01 07:21:39 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -112,8 +112,6 @@ __KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.235 2018/04/29 07:05:13 maxv Exp $");
 #if defined(NFAITH) && 0 < NFAITH
 #include <net/if_faith.h>
 #endif
-
-#include <net/net_osdep.h>
 
 extern struct domain inet6domain;
 

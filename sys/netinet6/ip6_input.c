@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.200 2018/04/26 19:22:17 maxv Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.201 2018/05/01 07:21:39 maxv Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.200 2018/04/26 19:22:17 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.201 2018/05/01 07:21:39 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -122,8 +122,6 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.200 2018/04/26 19:22:17 maxv Exp $")
 #include <netinet6/ip6protosw.h>
 
 #include "faith.h"
-
-#include <net/net_osdep.h>
 
 extern struct domain inet6domain;
 

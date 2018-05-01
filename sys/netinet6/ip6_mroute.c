@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.126 2018/04/29 07:05:13 maxv Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.127 2018/05/01 07:21:39 maxv Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.49 2001/07/25 09:21:18 jinmei Exp $	*/
 
 /*
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.126 2018/04/29 07:05:13 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.127 2018/05/01 07:21:39 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -155,8 +155,6 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.126 2018/04/29 07:05:13 maxv Exp $"
 #include <netinet6/pim6.h>
 #include <netinet6/pim6_var.h>
 #include <netinet6/nd6.h>
-
-#include <net/net_osdep.h>
 
 static int ip6_mdq(struct mbuf *, struct ifnet *, struct mf6c *);
 static void phyint_send(struct ip6_hdr *, struct mif6 *, struct mbuf *);
