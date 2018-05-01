@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.260 2018/04/19 21:20:43 christos Exp $	*/
+/*	$NetBSD: if.h,v 1.261 2018/05/01 06:50:06 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -405,6 +405,7 @@ typedef struct ifnet {
 #define	if_iqdrops	if_data.ifi_iqdrops
 #define	if_noproto	if_data.ifi_noproto
 #define	if_lastchange	if_data.ifi_lastchange
+#define	if_name(ifp)	((ifp)->if_xname)
 
 #define	IFF_UP		0x0001		/* interface is up */
 #define	IFF_BROADCAST	0x0002		/* broadcast address valid */
