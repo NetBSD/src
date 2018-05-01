@@ -1,4 +1,4 @@
-#	$NetBSD: files.sunxi,v 1.48 2018/04/03 12:52:16 bouyer Exp $
+#	$NetBSD: files.sunxi,v 1.49 2018/05/01 19:53:14 jmcneill Exp $
 #
 # Configuration info for Allwinner sunxi family SoCs
 #
@@ -58,6 +58,11 @@ file	arch/arm/sunxi/sun9i_a80_ccu.c		sunxi_a80_ccu
 device	sun50ia64ccu: sunxi_ccu
 attach	sun50ia64ccu at fdt with sunxi_a64_ccu
 file	arch/arm/sunxi/sun50i_a64_ccu.c		sunxi_a64_ccu
+
+# CCU (H6)
+device	sun50ih6ccu: sunxi_ccu
+attach	sun50ih6ccu at fdt with sunxi_h6_ccu
+file	arch/arm/sunxi/sun50i_h6_ccu.c		sunxi_h6_ccu
 
 # Misc. clock resets
 device	sunxiresets
