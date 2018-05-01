@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile,v 1.12 2012/12/02 12:44:06 apb Exp $
+#	$NetBSD: Makefile,v 1.13 2018/05/01 19:59:47 christos Exp $
+
+.include <bsd.hostinit.mk>
 
 HOSTPROG= 	host-mkdep
 HOSTPROGNAME=	${_TOOL_PREFIX}host-mkdep
 HOST_BINDIR=	${TOOLDIR}/bin
 
-NOMAN=	# defined
 SRCS=	# empty
 
 CLEANFILES+=	config.cache config.log config.status host-mkdep

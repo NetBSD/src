@@ -1,8 +1,6 @@
-# $NetBSD: Makefile,v 1.4 2017/01/30 02:38:50 jakllsch Exp $
+# $NetBSD: Makefile,v 1.5 2018/05/01 19:59:42 christos Exp $
 
-NOMAN=		# defined
-
-.include <bsd.own.mk>
+.include <bsd.hostinit.mk>
 .include <${.CURDIR}/../../../Makefile.inc>
 
 .PATH:	${HEIMDIST}/lib/com_err	\

@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.2 2011/07/05 17:15:51 joerg Exp $
+#	$NetBSD: Makefile,v 1.3 2018/05/01 19:59:47 christos Exp $
 
-.include <bsd.init.mk>
+.include <bsd.hostinit.mk>
 
 NO_LLVM_DEVELOPER=	yes
 

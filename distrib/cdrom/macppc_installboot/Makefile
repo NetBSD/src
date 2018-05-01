@@ -1,8 +1,6 @@
-#	$NetBSD: Makefile,v 1.10 2016/03/09 15:44:49 christos Exp $
+#	$NetBSD: Makefile,v 1.11 2018/05/01 19:59:43 christos Exp $
 
-NOMAN=	# defined
-
-.include <bsd.init.mk>
+.include <bsd.hostinit.mk>
 HOSTPROG=	macppc_installboot
 SRCS=		installboot.c cd9660.c cd9660_util.c
 

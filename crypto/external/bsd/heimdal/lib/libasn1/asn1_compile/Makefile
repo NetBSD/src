@@ -1,9 +1,6 @@
-# $NetBSD: Makefile,v 1.2 2011/04/15 19:41:11 elric Exp $
+# $NetBSD: Makefile,v 1.3 2018/05/01 19:59:42 christos Exp $
 
-NOLINT=		# defined
-NOMAN=		# defined
-
-.include <bsd.own.mk>
+.include <bsd.hostinit.mk>
 .include <${.CURDIR}/../../../Makefile.inc>
 
 .PATH:	${HEIMDIST}/lib/asn1	\

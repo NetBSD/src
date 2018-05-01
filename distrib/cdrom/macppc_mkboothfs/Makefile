@@ -1,12 +1,11 @@
-#	$NetBSD: Makefile,v 1.5 2012/12/02 12:55:27 apb Exp $
+#	$NetBSD: Makefile,v 1.6 2018/05/01 19:59:43 christos Exp $
 
 HOSTPROG=	macppc_mkboothfs
 SRCS=		mkboothfs.c
-NOMAN=		# defined
 
 CLEANFILES+=	boothfs
 
-.include <bsd.own.mk>
+.include <bsd.hostinit.mk>
 
 .ifndef NOCOMPATLIB
 .-include	"${TOOLDIR}/share/compat/defs.mk"

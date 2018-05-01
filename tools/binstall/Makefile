@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.13 2018/05/01 12:38:39 christos Exp $
+#	$NetBSD: Makefile,v 1.14 2018/05/01 19:59:46 christos Exp $
 
-.include <bsd.init.mk>
+.include <bsd.hostinit.mk>
 
 HOSTPROGNAME=	${MACHINE_GNU_PLATFORM}-install
 HOST_SRCDIR=	usr.bin/xinstall

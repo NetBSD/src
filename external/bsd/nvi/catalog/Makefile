@@ -1,10 +1,8 @@
-#	$NetBSD: Makefile,v 1.2 2013/11/22 16:11:08 christos Exp $
+#	$NetBSD: Makefile,v 1.3 2018/05/01 19:59:43 christos Exp $
 #
 #	@(#)Makefile	8.29 (Berkeley) 10/19/96
 
-NOMAN=		# defined
-
-.include "../Makefile.inc"
+.include <bsd.hostinit.mk>
 
 .PATH:	${DIST}/catalog
 

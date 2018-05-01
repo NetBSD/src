@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.8 2018/05/01 17:42:00 christos Exp $
+#	$NetBSD: Makefile,v 1.9 2018/05/01 19:59:43 christos Exp $
 
-.include <bsd.init.mk>
+.include <bsd.hostinit.mk>
 
 HOSTPROG=	bdftopcf
 .PATH:		${X11SRCDIR.bdftopcf}

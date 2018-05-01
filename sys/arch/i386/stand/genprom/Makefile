@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.6 2002/02/17 20:03:10 thorpej Exp $
+#	$NetBSD: Makefile,v 1.7 2018/05/01 19:59:45 christos Exp $
+
+.include <bsd.hostinit.mk>
 
 HOSTPROG= genprom
 NOMAN=	# defined
