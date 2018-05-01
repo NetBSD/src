@@ -1,7 +1,8 @@
-#	$NetBSD: files.x86,v 1.99 2018/03/28 14:56:59 maxv Exp $
+#	$NetBSD: files.x86,v 1.100 2018/05/01 10:15:27 pgoyette Exp $
 
 # options for MP configuration through the MP spec
-defflag opt_mpbios.h MPBIOS MPVERBOSE MPDEBUG MPBIOS_SCANPCI
+defflag opt_mpbios.h MPBIOS MPDEBUG MPBIOS_SCANPCI
+defparam opt_mpbios.h MPVERBOSE
 
 # MTRR support
 defflag                 MTRR
