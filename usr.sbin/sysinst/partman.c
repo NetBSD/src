@@ -1,4 +1,4 @@
-/*	$NetBSD: partman.c,v 1.19 2018/05/01 08:27:39 martin Exp $ */
+/*	$NetBSD: partman.c,v 1.20 2018/05/01 21:26:41 kre Exp $ */
 
 /*
  * Copyright 2012 Eugene Lozovoy
@@ -2609,7 +2609,8 @@ pm_upddevlist(menudesc *m, void *arg)
 			pm_i->found = 0;
 	/* Detect all present devices */
 	(void)find_disks("partman");
-	pm_lvm_find();
+	if (have_lvm)
+		pm_lvm_find();
 	pm_clean();
 
 	if (m == NULL || arg == NULL)
