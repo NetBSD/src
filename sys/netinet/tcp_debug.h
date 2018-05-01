@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_debug.h,v 1.17 2007/03/04 06:03:22 christos Exp $	*/
+/*	$NetBSD: tcp_debug.h,v 1.18 2018/05/01 07:03:33 maxv Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -44,7 +44,10 @@ struct	tcp_debug {
 	short	td_ostate;
 	void *	td_tcb;
 	int	td_family;
-	struct	tcpiphdr td_ti;
+	struct {
+		struct ip ip4;
+		struct tcphdr th;
+	} __packed td_ti;
 	struct {
 #ifdef INET6
 		struct ip6_hdr ip6;
