@@ -1,8 +1,6 @@
-#	$NetBSD: Makefile,v 1.8 2016/02/28 22:12:26 riastradh Exp $
+#	$NetBSD: Makefile,v 1.9 2018/05/01 17:42:01 christos Exp $
 
-NOMAN=		1
-
-.include <bsd.own.mk>
+.include <bsd.init.mk>
 
 HOSTPROG=	mkfontscale
 

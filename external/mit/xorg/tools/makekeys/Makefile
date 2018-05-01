@@ -1,8 +1,6 @@
-#	$NetBSD: Makefile,v 1.5 2018/03/14 23:41:05 mrg Exp $
+#	$NetBSD: Makefile,v 1.6 2018/05/01 17:42:01 christos Exp $
 
-NOMAN=	1
-
-.include <bsd.own.mk>
+.include <bsd.init.mk>
 
 .PATH:	${X11SRCDIR.X11}/src/util
 
