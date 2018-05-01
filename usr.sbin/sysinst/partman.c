@@ -1,4 +1,4 @@
-/*	$NetBSD: partman.c,v 1.18 2018/02/04 09:01:13 mrg Exp $ */
+/*	$NetBSD: partman.c,v 1.19 2018/05/01 08:27:39 martin Exp $ */
 
 /*
  * Copyright 2012 Eugene Lozovoy
@@ -889,7 +889,7 @@ pm_vnd_check(void *arg)
 	return dev_ptr->enabled;
 }
 
-/* XXX: vnconfig always return 0? */
+/* XXX: vndconfig always return 0? */
 static int
 pm_vnd_commit(void)
 {
@@ -941,12 +941,12 @@ pm_vnd_commit(void)
 		/* If this is a new image with manual geometry */
 		if (!vnds[i].is_exist && vnds[i].manual_geom)
 			error += run_program(RUN_DISPLAY | RUN_PROGRESS,
-						"vnconfig %s vnd%d %s %d %d %d %d", r_o, vnds[i].node,
+						"vndconfig %s vnd%d %s %d %d %d %d", r_o, vnds[i].node,
 						resultpath, vnds[i].secsize, vnds[i].nsectors,
 						vnds[i].ntracks, vnds[i].ncylinders);
 		/* If this is a existing image or image without manual geometry */
 		else
-			error += run_program(RUN_DISPLAY | RUN_PROGRESS, "vnconfig %s vnd%d %s",
+			error += run_program(RUN_DISPLAY | RUN_PROGRESS, "vndconfig %s vnd%d %s",
 						r_o, vnds[i].node, resultpath);
 
 		if (! error) {
@@ -2222,7 +2222,7 @@ pm_unconfigure(pm_devs_t *pm_cur)
 			((cgds_t*)pm_cur->refdev)->blocked = 0;
  		}
  	} else if (! strncmp(pm_cur->diskdev, "vnd", 3)) {
-		error = run_program(RUN_DISPLAY | RUN_PROGRESS, "vnconfig -u %s", pm_cur->diskdev);
+		error = run_program(RUN_DISPLAY | RUN_PROGRESS, "vndconfig -u %s", pm_cur->diskdev);
  		if (! error && pm_cur->refdev != NULL) {
 			((vnds_t*)pm_cur->refdev)->pm->blocked--;
 			((vnds_t*)pm_cur->refdev)->blocked = 0;
@@ -2711,7 +2711,7 @@ check_available_binaries()
 	did_test = 1;
 
 	have_raid = binary_available("raidctl");
-	have_vnd = binary_available("vnconfig");
+	have_vnd = binary_available("vndconfig");
 	have_cgd = binary_available("cgdconfig");
 	have_lvm = binary_available("lvm");
 	have_gpt = binary_available("gpt");
