@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.204 2018/04/16 14:51:59 kamil Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.205 2018/05/01 16:37:23 kamil Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.204 2018/04/16 14:51:59 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.205 2018/05/01 16:37:23 kamil Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
@@ -218,7 +218,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	int		count;
 	vaddr_t		uaddr;
 	int		tnprocs;
-	int		tracefork, tracevforkdone;
+	int		tracefork, tracevfork, tracevforkdone;
 	int		error = 0;
 
 	p1 = l1->l_proc;
@@ -478,21 +478,19 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	 */
 	tracefork = (p1->p_slflag & (PSL_TRACEFORK|PSL_TRACED)) ==
 	    (PSL_TRACEFORK|PSL_TRACED) && (flags && FORK_PPWAIT) == 0;
+	tracevfork = (p1->p_slflag & (PSL_TRACEVFORK|PSL_TRACED)) ==
+	    (PSL_TRACEVFORK|PSL_TRACED) && (flags && FORK_PPWAIT) != 0;
 	tracevforkdone = (p1->p_slflag & (PSL_TRACEVFORK_DONE|PSL_TRACED)) ==
 	    (PSL_TRACEVFORK_DONE|PSL_TRACED) && (flags && FORK_PPWAIT);
-	if (tracefork) {
+	if (tracefork || tracevfork)
 		proc_changeparent(p2, p1->p_pptr);
-		/*
-		 * Set ptrace status.
-		 */
+	if (tracefork) {
 		p1->p_fpid = p2->p_pid;
 		p2->p_fpid = p1->p_pid;
 	}
-	if (tracevforkdone) {
-		/*
-		 * Set ptrace status.
-		 */
-		p1->p_vfpid_done = p2->p_pid;
+	if (tracevfork) {
+		p1->p_vfpid = p2->p_pid;
+		p2->p_vfpid = p1->p_pid;
 	}
 
 	LIST_INSERT_AFTER(p1, p2, p_pglist);
@@ -579,19 +577,35 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 		retval[0] = p2->p_pid;
 		retval[1] = 0;
 	}
+
 	mutex_exit(p2->p_lock);
+
+	/*
+	 * Let the parent know that we are tracing its child.
+	 */
+	if (tracefork || tracevfork) {
+		mutex_enter(p1->p_lock);
+		p1->p_xsig = SIGTRAP;
+		p1->p_sigctx.ps_faked = true; // XXX
+		p1->p_sigctx.ps_info._signo = p1->p_xsig;
+		p1->p_sigctx.ps_info._code = TRAP_CHLD;
+		sigswitch(0, SIGTRAP, false);
+		// XXX ktrpoint(KTR_PSIG)
+		mutex_exit(p1->p_lock);
+		mutex_enter(proc_lock);
+	}
 
 	/*
 	 * Preserve synchronization semantics of vfork.  If waiting for
 	 * child to exec or exit, sleep until it clears LP_VFORKWAIT.
 	 */
-	while (p2->p_lflag & PL_PPWAIT)
+	while (p2->p_lflag & PL_PPWAIT) // XXX: p2 can go invalid
 		cv_wait(&p1->p_waitcv, proc_lock);
 
 	/*
 	 * Let the parent know that we are tracing its child.
 	 */
-	if (tracefork || tracevforkdone) {
+	if (tracevforkdone) {
 		ksiginfo_t ksi;
 
 		KSI_INIT_EMPTY(&ksi);
@@ -599,6 +613,8 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 		ksi.ksi_code = TRAP_CHLD;
 		ksi.ksi_lid = l1->l_lid;
 		kpsignal(p1, &ksi, NULL);
+
+		p1->p_vfpid_done = retval[0];
 	}
 	mutex_exit(proc_lock);
 
