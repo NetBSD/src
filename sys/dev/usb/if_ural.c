@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ural.c,v 1.53 2018/01/21 13:57:12 skrll Exp $ */
+/*	$NetBSD: if_ural.c,v 1.54 2018/05/01 16:18:13 maya Exp $ */
 /*	$FreeBSD: /repoman/r/ncvs/src/sys/dev/usb/if_ural.c,v 1.40 2006/06/02 23:14:40 sam Exp $	*/
 
 /*-
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.53 2018/01/21 13:57:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.54 2018/05/01 16:18:13 maya Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -172,18 +172,6 @@ Static void		ural_amrr_start(struct ural_softc *,
 Static void		ural_amrr_timeout(void *);
 Static void		ural_amrr_update(struct usbd_xfer *, void *,
 			    usbd_status status);
-
-/*
- * Supported rates for 802.11a/b/g modes (in 500Kbps unit).
- */
-static const struct ieee80211_rateset ural_rateset_11a =
-	{ 8, { 12, 18, 24, 36, 48, 72, 96, 108 } };
-
-static const struct ieee80211_rateset ural_rateset_11b =
-	{ 4, { 2, 4, 11, 22 } };
-
-static const struct ieee80211_rateset ural_rateset_11g =
-	{ 12, { 2, 4, 11, 22, 12, 18, 24, 36, 48, 72, 96, 108 } };
 
 /*
  * Default values for MAC registers; values taken from the reference driver.
@@ -470,7 +458,7 @@ ural_attach(device_t parent, device_t self, void *aux)
 
 	if (sc->rf_rev == RAL_RF_5222) {
 		/* set supported .11a rates */
-		ic->ic_sup_rates[IEEE80211_MODE_11A] = ural_rateset_11a;
+		ic->ic_sup_rates[IEEE80211_MODE_11A] = ieee80211_std_rateset_11a;
 
 		/* set supported .11a channels */
 		for (i = 36; i <= 64; i += 4) {
@@ -491,8 +479,8 @@ ural_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* set supported .11b and .11g rates */
-	ic->ic_sup_rates[IEEE80211_MODE_11B] = ural_rateset_11b;
-	ic->ic_sup_rates[IEEE80211_MODE_11G] = ural_rateset_11g;
+	ic->ic_sup_rates[IEEE80211_MODE_11B] = ieee80211_std_rateset_11b;
+	ic->ic_sup_rates[IEEE80211_MODE_11G] = ieee80211_std_rateset_11g;
 
 	/* set supported .11b and .11g channels (1 through 14) */
 	for (i = 1; i <= 14; i++) {
