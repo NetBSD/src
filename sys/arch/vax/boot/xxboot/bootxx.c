@@ -1,4 +1,4 @@
-/* $NetBSD: bootxx.c,v 1.37 2013/06/28 01:13:40 matt Exp $ */
+/* $NetBSD: bootxx.c,v 1.38 2018/05/01 07:03:47 ragge Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -187,7 +187,7 @@ die:
 struct fs_ops file_system[] = {
 #ifdef NEED_UFS
 	{ ffsv1_open, 0, ffsv1_read, 0, 0, ffsv1_stat },
-	//{ ffsv2_open, 0, ffsv2_read, 0, 0, ffsv2_stat },
+	{ ffsv2_open, 0, ffsv2_read, 0, 0, ffsv2_stat },
 #endif
 #ifdef NEED_CD9660
 	{ cd9660_open, 0, cd9660_read, 0, 0, cd9660_stat },
