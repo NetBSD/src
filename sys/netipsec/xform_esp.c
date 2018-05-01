@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_esp.c,v 1.82 2018/04/28 15:45:16 maxv Exp $	*/
+/*	$NetBSD: xform_esp.c,v 1.83 2018/05/01 08:13:37 maxv Exp $	*/
 /*	$FreeBSD: xform_esp.c,v 1.2.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_esp.c,v 1.69 2001/06/26 06:18:59 angelos Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.82 2018/04/28 15:45:16 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.83 2018/05/01 08:13:37 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -83,7 +83,6 @@ __KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.82 2018/04/28 15:45:16 maxv Exp $");
 #include <netipsec/key_debug.h>
 
 #include <opencrypto/cryptodev.h>
-#include <opencrypto/xform.h>
 
 percpu_t *espstat_percpu;
 
