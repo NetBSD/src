@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.7 2010/10/27 18:29:46 martin Exp $
+#	$NetBSD: Makefile,v 1.7.58.1 2018/05/02 07:20:04 pgoyette Exp $
+
+.include <bsd.hostinit.mk>
 
 MISC_FILES=	rawrite.c
 UUDECODE_FILES=	pfdisk.doc pfdisk.exe pfdisktc.zip \

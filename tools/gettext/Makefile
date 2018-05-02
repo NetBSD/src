@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.6 2013/03/06 14:34:01 apb Exp $
+#	$NetBSD: Makefile,v 1.6.28.1 2018/05/02 07:20:26 pgoyette Exp $
 
-.include <bsd.own.mk>
+.include <bsd.hostinit.mk>
 
 MODULE=		gettext
 

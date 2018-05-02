@@ -1,4 +1,4 @@
-/*	$NetBSD: tegra210-car.h,v 1.1.1.3 2017/11/30 19:40:51 jmcneill Exp $	*/
+/*	$NetBSD: tegra210-car.h,v 1.1.1.3.4.1 2018/05/02 07:20:21 pgoyette Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
@@ -97,7 +97,7 @@
 #define TEGRA210_CLK_CSITE 73
 /* 74 */
 /* 75 */
-/* 76 */
+#define TEGRA210_CLK_LA 76
 /* 77 */
 #define TEGRA210_CLK_SOC_THERM 78
 #define TEGRA210_CLK_DTV 79

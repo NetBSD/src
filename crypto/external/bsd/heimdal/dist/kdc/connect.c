@@ -1,4 +1,4 @@
-/*	$NetBSD: connect.c,v 1.2 2017/01/28 21:31:44 christos Exp $	*/
+/*	$NetBSD: connect.c,v 1.2.10.1 2018/05/02 07:19:58 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Kungliga Tekniska Högskolan
@@ -1193,7 +1193,7 @@ start_kdc(krb5_context context,
                 break;
             default:
                 for (i=0; i < max_kdcs; i++) {
-                    if (pids[i] == 0) {
+                    if (pids[i] < 1) {
                         pids[i] = pid;
                         break;
                     }

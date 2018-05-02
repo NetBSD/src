@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_mbuf.c,v 1.21.2.2 2018/04/22 07:20:28 pgoyette Exp $	*/
+/*	$NetBSD: ipsec_mbuf.c,v 1.21.2.3 2018/05/02 07:20:24 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_mbuf.c,v 1.21.2.2 2018/04/22 07:20:28 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_mbuf.c,v 1.21.2.3 2018/05/02 07:20:24 pgoyette Exp $");
 
 /*
  * IPsec-specific mbuf routines.
@@ -94,7 +94,7 @@ m_clone(struct mbuf *m0)
 		/*
 		 * Writable mbufs are left alone (for now).
 		 */
-		if (M_EXT_WRITABLE(m)) {
+		if (!M_READONLY(m)) {
 			mprev = m;
 			continue;
 		}

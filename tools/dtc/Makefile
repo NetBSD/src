@@ -1,8 +1,6 @@
-#	$NetBSD: Makefile,v 1.2 2017/06/08 17:16:44 skrll Exp $
+#	$NetBSD: Makefile,v 1.2.6.1 2018/05/02 07:20:26 pgoyette Exp $
 
-NOMAN=	# defined
-
-.include <bsd.own.mk>
+.include <bsd.hostinit.mk>
 
 LIBFDT_DIR=	${.CURDIR}/../../sys/external/bsd/libfdt/dist
 HOST_CPPFLAGS+=	-I${LIBFDT_DIR}

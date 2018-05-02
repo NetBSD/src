@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.106.2.1 2018/04/07 04:12:11 pgoyette Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.106.2.2 2018/05/02 07:20:03 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include "opt_cputypes.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.106.2.1 2018/04/07 04:12:11 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.106.2.2 2018/05/02 07:20:03 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -585,8 +585,8 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 			error = EFAULT;
 			break;
 		}
-		switch (m->m_flags & (M_EXT|M_CLUSTER|M_EXT_PAGES)) {
-		case M_EXT|M_CLUSTER:
+		switch (m->m_flags & (M_EXT|M_EXT_CLUSTER|M_EXT_PAGES)) {
+		case M_EXT|M_EXT_CLUSTER:
 			/* XXX KDASSERT */
 			KASSERT(m->m_ext.ext_paddr != M_PADDR_INVALID);
 			paddr = m->m_ext.ext_paddr +

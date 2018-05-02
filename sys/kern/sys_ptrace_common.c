@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace_common.c,v 1.35.2.1 2018/04/16 02:00:08 pgoyette Exp $	*/
+/*	$NetBSD: sys_ptrace_common.c,v 1.35.2.2 2018/05/02 07:20:22 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.35.2.1 2018/04/16 02:00:08 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.35.2.2 2018/05/02 07:20:22 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -377,7 +377,25 @@ ptrace_allowed(struct lwp *l, int req, struct proc *t, struct proc *p)
 	/* Make sure we can operate on it. */
 	switch (req) {
 	case PT_TRACE_ME:
-		/* Saying that you're being traced is always legal. */
+		/*
+		 * You can't say to the parent of a process to start tracing if:
+		 *	(1) the parent is initproc,
+		 */
+		if (p->p_pptr == initproc)
+			return EPERM;
+
+		/*
+		 *	(2) the process is initproc, or
+		 */
+		if (p == initproc)
+			return EPERM;
+
+		/*
+		 *	(3) the child is already traced.
+		 */
+		if (ISSET(p->p_slflag, PSL_TRACED))
+			return EBUSY;
+
 		return 0;
 
 	case PT_ATTACH:
@@ -389,19 +407,25 @@ ptrace_allowed(struct lwp *l, int req, struct proc *t, struct proc *p)
 			return EINVAL;
 
 		/*
-		 *  (2) it's a system process
+		 *	(2) it's a system process,
 		 */
 		if (t->p_flag & PK_SYSTEM)
 			return EPERM;
 
 		/*
-		 *	(3) it's already being traced, or
+		 *	(3) the tracer is initproc,
+		 */
+		if (p == initproc)
+			return EPERM;
+
+		/*
+		 *	(4) it's already being traced, or
 		 */
 		if (ISSET(t->p_slflag, PSL_TRACED))
 			return EBUSY;
 
 		/*
-		 * 	(4) the tracer is chrooted, and its root directory is
+		 * 	(5) the tracer is chrooted, and its root directory is
 		 * 	    not at or above the root directory of the tracee
 		 */
 		mutex_exit(t->p_lock);	/* XXXSMP */
@@ -610,23 +634,22 @@ ptrace_set_event_mask(struct proc *t, void *addr, size_t data)
 		SET(t->p_slflag, PSL_TRACEFORK);
 	else
 		CLR(t->p_slflag, PSL_TRACEFORK);
-#if notyet
+
 	if (pe.pe_set_event & PTRACE_VFORK)
 		SET(t->p_slflag, PSL_TRACEVFORK);
 	else
 		CLR(t->p_slflag, PSL_TRACEVFORK);
-#else
-	if (pe.pe_set_event & PTRACE_VFORK)
-		return ENOTSUP;
-#endif
+
 	if (pe.pe_set_event & PTRACE_VFORK_DONE)
 		SET(t->p_slflag, PSL_TRACEVFORK_DONE);
 	else
 		CLR(t->p_slflag, PSL_TRACEVFORK_DONE);
+
 	if (pe.pe_set_event & PTRACE_LWP_CREATE)
 		SET(t->p_slflag, PSL_TRACELWP_CREATE);
 	else
 		CLR(t->p_slflag, PSL_TRACELWP_CREATE);
+
 	if (pe.pe_set_event & PTRACE_LWP_EXIT)
 		SET(t->p_slflag, PSL_TRACELWP_EXIT);
 	else
@@ -1020,12 +1043,21 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 		t->p_opptr = t->p_pptr;
 		break;
 
-	case PT_WRITE_I:		/* XXX no separate I and D spaces */
+	/*
+	 * The I and D separate address space has been inherited from PDP-11.
+	 * The 16-bit UNIX started with a single address space per program,
+	 * but was extended to two 16-bit (2 x 64kb) address spaces.
+	 *
+	 * We no longer maintain this feature in maintained architectures, but
+	 * we keep the API for backward compatiblity. Currently the I and D
+	 * operations are exactly the same and not distinguished in debuggers.
+	 */
+	case PT_WRITE_I:
 	case PT_WRITE_D:
 		write = 1;
 		tmp = data;
 		/* FALLTHROUGH */
-	case PT_READ_I:			/* XXX no separate I and D spaces */
+	case PT_READ_I:
 	case PT_READ_D:
 		piod.piod_addr = &tmp;
 		piod.piod_len = sizeof(tmp);

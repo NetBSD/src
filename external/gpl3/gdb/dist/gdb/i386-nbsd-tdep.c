@@ -312,7 +312,8 @@ i386nbsd_trapframe_cache(struct frame_info *this_frame, void **this_cache)
   sp = get_frame_register_unsigned (this_frame, I386_ESP_REGNUM);
 
   find_pc_partial_function (func, &name, NULL, NULL);
-  if (name && strncmp (name, "Xintr", 5) == 0)
+  if (name && (strncmp (name, "Xintr", 5) == 0 ||
+               strncmp (name, "Xhandle", 7) == 0))
     {
       /* It's an interrupt frame. */
       tmp = read_memory_unsigned_integer (sp + 4, 4, byte_order);
@@ -391,16 +392,19 @@ i386nbsd_trapframe_sniffer (const struct frame_unwind *self,
 
   find_pc_partial_function (get_frame_pc (this_frame), &name, NULL, NULL);
   return (name && ((strcmp (name, "alltraps") == 0)
-		   || (strcmp (name, "calltrap") == 0)
-		   || (strncmp (name, "Xtrap", 5) == 0)
-		   || (strcmp (name, "syscall1") == 0)
-		   || (strcmp (name, "Xsyscall") == 0)
-		   || (strncmp (name, "Xintr", 5) == 0)
-		   || (strncmp (name, "Xresume", 7) == 0)
-		   || (strncmp (name, "Xstray", 6) == 0)
-		   || (strncmp (name, "Xrecurse", 8) == 0)
-		   || (strncmp (name, "Xsoft", 5) == 0)
-		   || (strncmp (name, "Xdoreti", 5) == 0)));
+	        || (strcmp (name, "calltrap") == 0)
+		|| (strcmp (name, "syscall1") == 0)
+		|| (strcmp (name, "Xdoreti") == 0)
+		|| (strncmp (name, "Xintr", 5) == 0)
+		|| (strncmp (name, "Xhandle", 7) == 0)
+		|| (strncmp (name, "Xpreempt", 8) == 0)
+		|| (strncmp (name, "Xrecurse", 8) == 0)
+		|| (strncmp (name, "Xresume", 7) == 0)
+		|| (strncmp (name, "Xsoft", 5) == 0)
+		|| (strncmp (name, "Xstray", 6) == 0)
+		|| (strncmp (name, "Xsyscall", 8) == 0)
+		|| (strncmp (name, "Xtrap", 5) == 0)
+	    ));
 }
 
 const struct frame_unwind i386nbsd_trapframe_unwind = {

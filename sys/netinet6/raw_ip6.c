@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.165.2.2 2018/04/16 02:00:09 pgoyette Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.165.2.3 2018/05/02 07:20:24 pgoyette Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.165.2.2 2018/04/16 02:00:09 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.165.2.3 2018/05/02 07:20:24 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -99,7 +99,6 @@ __KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.165.2.2 2018/04/16 02:00:09 pgoyette E
 
 #ifdef IPSEC
 #include <netipsec/ipsec.h>
-#include <netipsec/ipsec_var.h>
 #include <netipsec/ipsec6.h>
 #endif
 
@@ -198,7 +197,7 @@ rip6_input(struct mbuf **mp, int *offp, int proto)
 			/* do not inject data into pcb */
 		}
 #endif
-		else if ((n = m_copy(m, 0, (int)M_COPYALL)) != NULL) {
+		else if ((n = m_copypacket(m, M_DONTWAIT)) != NULL) {
 			if (last->in6p_flags & IN6P_CONTROLOPTS)
 				ip6_savecontrol(last, &opts, ip6, n);
 			/* strip intermediate headers */

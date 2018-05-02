@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.34 2017/11/29 04:24:35 christos Exp $
+#	$NetBSD: Makefile,v 1.34.2.1 2018/05/02 07:20:26 pgoyette Exp $
 
-.include <bsd.own.mk>
+.include <bsd.hostinit.mk>
 
 MODULE=		gdb
 GDBDIR=		${.CURDIR}/../../external/gpl3/${EXTERNAL_GDB_SUBDIR}

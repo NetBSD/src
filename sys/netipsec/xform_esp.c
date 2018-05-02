@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_esp.c,v 1.79.2.1 2018/04/22 07:20:28 pgoyette Exp $	*/
+/*	$NetBSD: xform_esp.c,v 1.79.2.2 2018/05/02 07:20:24 pgoyette Exp $	*/
 /*	$FreeBSD: xform_esp.c,v 1.2.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_esp.c,v 1.69 2001/06/26 06:18:59 angelos Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.79.2.1 2018/04/22 07:20:28 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.79.2.2 2018/05/02 07:20:24 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -83,7 +83,6 @@ __KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.79.2.1 2018/04/22 07:20:28 pgoyette 
 #include <netipsec/key_debug.h>
 
 #include <opencrypto/cryptodev.h>
-#include <opencrypto/xform.h>
 
 percpu_t *espstat_percpu;
 
@@ -303,8 +302,6 @@ esp_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 	struct cryptodesc *crde;
 	struct cryptop *crp;
 
-	IPSEC_SPLASSERT_SOFTNET(__func__);
-
 	KASSERT(sav != NULL);
 	KASSERT(sav->tdb_encalgxform != NULL);
 	KASSERTMSG((skip&3) == 0 && (m->m_pkthdr.len&3) == 0,
@@ -315,7 +312,7 @@ esp_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 	IP6_EXTHDR_GET(esp, struct newesp *, m, skip, sizeof(struct newesp));
 	if (esp == NULL) {
 		/* m already freed */
-		return EINVAL;
+		return ENOBUFS;
 	}
 
 	esph = sav->tdb_authalgxform;
@@ -357,7 +354,7 @@ esp_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 		DPRINTF(("%s: packet replay check for %s\n", __func__,
 		    ipsec_logsastr(sav, logbuf, sizeof(logbuf))));
 		stat = ESP_STAT_REPLAY;
-		error = ENOBUFS; /* XXX */
+		error = EACCES;
 		goto out;
 	}
 
@@ -705,8 +702,6 @@ esp_output(struct mbuf *m, const struct ipsecrequest *isr, struct secasvar *sav,
 
 	struct cryptodesc *crde = NULL, *crda = NULL;
 	struct cryptop *crp;
-
-	IPSEC_SPLASSERT_SOFTNET(__func__);
 
 	esph = sav->tdb_authalgxform;
 	KASSERT(sav->tdb_encalgxform != NULL);

@@ -1,8 +1,6 @@
-#	$NetBSD: Makefile,v 1.6.26.1 2018/03/15 09:12:00 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.6.26.2 2018/05/02 07:20:00 pgoyette Exp $
 
-NOMAN=		1
-
-.include <bsd.own.mk>
+.include <bsd.hostinit.mk>
 
 HOSTPROG=	bdftopcf
 .PATH:		${X11SRCDIR.bdftopcf}

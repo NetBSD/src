@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ah.c,v 1.87.2.2 2018/04/22 07:20:28 pgoyette Exp $	*/
+/*	$NetBSD: xform_ah.c,v 1.87.2.3 2018/05/02 07:20:24 pgoyette Exp $	*/
 /*	$FreeBSD: xform_ah.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ah.c,v 1.63 2001/06/26 06:18:58 angelos Exp $ */
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.87.2.2 2018/04/22 07:20:28 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.87.2.3 2018/05/02 07:20:24 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -273,7 +273,6 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 #ifdef INET6
 	struct ip6_ext *ip6e;
 	struct ip6_hdr ip6;
-	struct ip6_rthdr *rh;
 	int alloc, nxt;
 #endif
 
@@ -475,42 +474,7 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 				break;
 
 			case IPPROTO_ROUTING:
-				/*
-				 * Always include routing headers in
-				 * computation.
-				 */
 				ip6e = (struct ip6_ext *)(ptr + off);
-				rh = (struct ip6_rthdr *)(ptr + off);
-				/*
-				 * must adjust content to make it look like
-				 * its final form (as seen at the final
-				 * destination).
-				 * we only know how to massage type 0 routing
-				 * header.
-				 */
-				if (out && rh->ip6r_type == IPV6_RTHDR_TYPE_0) {
-					struct ip6_rthdr0 *rh0;
-					struct in6_addr *addr, finaldst;
-					int i;
-
-					rh0 = (struct ip6_rthdr0 *)rh;
-					addr = (struct in6_addr *)(rh0 + 1);
-
-					for (i = 0; i < rh0->ip6r0_segleft; i++)
-						in6_clearscope(&addr[i]);
-
-					finaldst = addr[rh0->ip6r0_segleft - 1];
-					memmove(&addr[1], &addr[0],
-						sizeof(struct in6_addr) *
-						(rh0->ip6r0_segleft - 1));
-
-					m_copydata(m, 0, sizeof(ip6), &ip6);
-					addr[0] = ip6.ip6_dst;
-					ip6.ip6_dst = finaldst;
-					m_copyback(m, 0, sizeof(ip6), &ip6);
-
-					rh0->ip6r0_segleft = 0;
-				}
 
 				/* advance */
 				off += ((ip6e->ip6e_len + 1) << 3);
@@ -558,8 +522,6 @@ ah_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 	bool pool_used;
 	uint8_t nxt;
 
-	IPSEC_SPLASSERT_SOFTNET(__func__);
-
 	KASSERT(sav != NULL);
 	KASSERT(sav->key_auth != NULL);
 	KASSERT(sav->tdb_authalgxform != NULL);
@@ -570,10 +532,8 @@ ah_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 	/* XXX don't pullup, just copy header */
 	IP6_EXTHDR_GET(ah, struct newah *, m, skip, rplen);
 	if (ah == NULL) {
-		DPRINTF(("%s: cannot pullup header\n", __func__));
-		error = ENOBUFS;
-		stat = AH_STAT_HDROPS;	/*XXX*/
-		goto bad;
+		/* m already freed */
+		return ENOBUFS;
 	}
 
 	nxt = ah->ah_nxt;
@@ -584,7 +544,7 @@ ah_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 		DPRINTF(("%s: packet replay failure: %s\n", __func__,
 		    ipsec_logsastr(sav, buf, sizeof(buf))));
 		stat = AH_STAT_REPLAY;
-		error = ENOBUFS;
+		error = EACCES;
 		goto bad;
 	}
 
@@ -865,7 +825,7 @@ ah_input_cb(struct cryptop *crp)
 	/*
 	 * Header is now authenticated.
 	 */
-	m->m_flags |= M_AUTHIPHDR|M_AUTHIPDGM;
+	m->m_flags |= M_AUTHIPHDR;
 
 	/*
 	 * Update replay sequence number, if appropriate.
@@ -937,8 +897,6 @@ ah_output(struct mbuf *m, const struct ipsecrequest *isr, struct secasvar *sav,
 	struct newah *ah;
 	size_t ipoffs;
 	bool pool_used;
-
-	IPSEC_SPLASSERT_SOFTNET(__func__);
 
 	KASSERT(sav != NULL);
 	KASSERT(sav->tdb_authalgxform != NULL);

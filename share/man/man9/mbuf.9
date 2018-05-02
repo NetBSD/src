@@ -1,4 +1,4 @@
-.\"	$NetBSD: mbuf.9,v 1.56.2.1 2018/04/16 01:59:51 pgoyette Exp $
+.\"	$NetBSD: mbuf.9,v 1.56.2.2 2018/05/02 07:20:02 pgoyette Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 10, 2018
+.Dd April 28, 2018
 .Dt MBUF 9
 .Os
 .Sh NAME
@@ -43,7 +43,6 @@
 .Nm m_cat ,
 .Nm m_dup ,
 .Nm m_makewritable ,
-.Nm m_prepend ,
 .Nm m_pulldown ,
 .Nm m_pullup ,
 .Nm m_copyup ,
@@ -70,13 +69,13 @@
 .Sh SYNOPSIS
 .In sys/mbuf.h
 .Ft struct mbuf *
-.Fn m_get "int nowait" "int type"
+.Fn m_get "int how" "int type"
 .Ft struct mbuf *
-.Fn m_gethdr "int nowait" "int type"
+.Fn m_gethdr "int how" "int type"
 .Ft struct mbuf *
 .Fn m_devget "char *buf" "int totlen" "int off0" "struct ifnet *ifp" "void (*copy)(const void *, void *, size_t)"
 .Ft struct mbuf *
-.Fn m_copym "struct mbuf *m" "int off0" "int len" "int wait"
+.Fn m_copym "struct mbuf *m" "int off" "int len" "int wait"
 .Ft struct mbuf *
 .Fn m_copypacket "struct mbuf *m" "int how"
 .Ft void
@@ -90,9 +89,7 @@
 .Ft void
 .Fn m_cat "struct mbuf *m" "struct mbuf *n"
 .Ft struct mbuf *
-.Fn m_dup "struct mbuf *m" "int off0" "int len" "int wait"
-.Ft struct mbuf *
-.Fn m_prepend "struct mbuf *m" "int len" "int how"
+.Fn m_dup "struct mbuf *m" "int off" "int len" "int wait"
 .Ft struct mbuf *
 .Fn m_pulldown "struct mbuf *m" "int off" "int len" "int *offp"
 .Ft struct mbuf *
@@ -100,7 +97,7 @@
 .Ft struct mbuf *
 .Fn m_copyup "struct mbuf *m" "int len" "int dstoff"
 .Ft struct mbuf *
-.Fn m_split "struct mbuf *m0" "int len0" "int wait"
+.Fn m_split "struct mbuf *m0" "int len" "int wait"
 .Ft void
 .Fn m_adj "struct mbuf *mp" "int req_len"
 .Ft int
@@ -194,8 +191,6 @@ has external storage
 is start of record
 .It Dv M_EOR
 is end of record
-.It Dv M_CLUSTER
-external storage is a cluster.
 .El
 .Pp
 If an
@@ -236,10 +231,10 @@ flag is raised for an mbuf,
 the external storage area could be shared among multiple mbufs.
 Be careful when you attempt to overwrite the data content of the mbuf.
 .Bl -tag -width compact
-.It Fn m_get "int nowait" "int type"
+.It Fn m_get "int how" "int type"
 Allocates an mbuf and initializes it to contain internal data.
 The
-.Fa nowait
+.Fa how
 parameter is a choice of
 .Dv M_WAIT / M_DONTWAIT
 from caller.
@@ -248,11 +243,11 @@ means the call cannot fail, but may take forever.
 The
 .Fa type
 parameter is an mbuf type.
-.It Fn m_gethdr "int nowait" "int type"
+.It Fn m_gethdr "int how" "int type"
 Allocates an mbuf and initializes it to contain a packet header and internal
 data.
 The
-.Fa nowait
+.Fa how
 parameter is a choice of
 .Dv M_WAIT / M_DONTWAIT
 from caller.
@@ -270,9 +265,9 @@ is non-zero, the packet is supposed to be trailer-encapsulated and
 .Fa off
 bytes plus the type and length fields will be skipped before copying.
 Returns the top of the mbuf chain it created.
-.It Fn m_copym "struct mbuf *m" "int off0" "int len" "int wait"
+.It Fn m_copym "struct mbuf *m" "int off" "int len" "int wait"
 Creates a copy of an mbuf chain starting
-.Fa off0
+.Fa off
 bytes from the beginning, continuing for
 .Fa len
 bytes.
@@ -287,9 +282,15 @@ parameter is a choice of
 .Dv M_WAIT / M_DONTWAIT
 from caller.
 .It Fn m_copypacket "struct mbuf *m" "int how"
-Copies an entire packet, including header (which must be present).
+Copies an entire packet, including header.
 This function is an optimization of the common case
 .Li m_copym ( m , 0 , Dv M_COPYALL , Fa how ) .
+However, contrary to
+.Fn m_copym ,
+a header must be present.
+It is incorrect to use
+.Fn m_copypacket
+with an mbuf that does not have a header.
 .It Fn m_copydata "struct mbuf *m" "int off" "int len" "void *cp"
 Copies
 .Fa len
@@ -388,11 +389,11 @@ to
 Both chains must be of the same type; packet headers will
 .Em not
 be updated if present.
-.It Fn m_dup "struct mbuf *m" "int off0" "int len" "int wait"
+.It Fn m_dup "struct mbuf *m" "int off" "int len" "int wait"
 Similarly to
 .Fn m_copym ,
 the function creates a copy of an mbuf chain starting
-.Fa off0
+.Fa off
 bytes from the beginning, continuing for
 .Fa len
 bytes.
@@ -404,23 +405,6 @@ flag,
 .Fn m_dup
 will deep-copy the whole data content into new mbuf chain
 and avoids shared external storage.
-.It Fn m_prepend "struct mbuf *m" "int len" "int how"
-Lesser-used path for
-.Fn M_PREPEND :
-allocates new mbuf
-.Fa m
-of size
-.Fa len
-to prepend to the chain, copying junk along.
-The
-.Fa how
-parameter is a choice of
-.Dv M_WAIT / M_DONTWAIT
-from caller.
-It is illegal for the
-.Fa len
-parameter to be greater than
-.Dv MHLEN .
 .It Fn m_pulldown "struct mbuf *m" "int off" "int len" "int *offp"
 Rearranges an mbuf chain so that
 .Fa len
@@ -495,10 +479,10 @@ the function does not allocate mbuf clusters, so
 .Fa len + dstoff
 must be less than
 .Dv MHLEN .
-.It Fn m_split "struct mbuf *m0" "int len0" "int wait"
+.It Fn m_split "struct mbuf *m0" "int len" "int wait"
 Partitions an mbuf chain in two pieces, returning the tail,
 which is all but the first
-.Fa len0
+.Fa len
 bytes.
 In case of failure, it returns
 .Dv NULL
@@ -709,6 +693,10 @@ and allocation fails, the original mbuf chain is freed and
 .Fa m
 is set to
 .Dv NULL .
+It is illegal for the
+.Fa plen
+parameter to be greater than
+.Dv MHLEN .
 Implemented as a macro.
 .It Fn MCHTYPE "struct mbuf *m" "int type"
 Change mbuf

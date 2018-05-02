@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.84.2.1 2018/04/22 07:20:26 pgoyette Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.84.2.2 2018/05/02 07:20:11 pgoyette Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.137 2016/04/13 11:03:37 mpi Exp $ */
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.84.2.1 2018/04/22 07:20:26 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.84.2.2 2018/05/02 07:20:11 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -523,6 +523,30 @@ axe_setmulti(struct axe_softc *sc)
 	axe_unlock_mii(sc);
 }
 
+static void
+axe_ax_init(struct axe_softc *sc)
+{
+	int cmd = AXE_178_CMD_READ_NODEID;
+
+	if (sc->axe_flags & AX178) {
+		axe_ax88178_init(sc);
+	} else if (sc->axe_flags & AX772) {
+		axe_ax88772_init(sc);
+	} else if (sc->axe_flags & AX772A) {
+		axe_ax88772a_init(sc);
+	} else if (sc->axe_flags & AX772B) {
+		axe_ax88772b_init(sc);
+		return;
+	} else {
+		cmd = AXE_172_CMD_READ_NODEID;
+	}
+
+	if (axe_cmd(sc, cmd, 0, 0, sc->axe_enaddr)) {
+		aprint_error_dev(sc->axe_dev,
+		    "failed to read ethernet address\n");
+	}
+}
+
 
 static void
 axe_reset(struct axe_softc *sc)
@@ -546,15 +570,8 @@ axe_reset(struct axe_softc *sc)
 #else
 	axe_lock_mii(sc);
 
-	if (sc->axe_flags & AX178) {
-		axe_ax88178_init(sc);
-	} else if (sc->axe_flags & AX772) {
-		axe_ax88772_init(sc);
-	} else if (sc->axe_flags & AX772A) {
-		axe_ax88772a_init(sc);
-	} else if (sc->axe_flags & AX772B) {
-		axe_ax88772b_init(sc);
-	}
+	axe_ax_init(sc);
+
 	axe_unlock_mii(sc);
 #endif
 }
@@ -971,23 +988,7 @@ axe_attach(device_t parent, device_t self, void *aux)
 
 	/* Initialize controller and get station address. */
 
-	if (sc->axe_flags & AX178) {
-		axe_ax88178_init(sc);
-	} else if (sc->axe_flags & AX772) {
-		axe_ax88772_init(sc);
-	} else if (sc->axe_flags & AX772A) {
-		axe_ax88772a_init(sc);
-	} else if (sc->axe_flags & AX772B) {
-		axe_ax88772b_init(sc);
-	}
-
-	if (!(sc->axe_flags & AX772B)) {
-		if (axe_cmd(sc, AXE_172_CMD_READ_NODEID, 0, 0, sc->axe_enaddr))
-		{
-			aprint_debug_dev(self,
-			    "failed to read ethernet address\n");
-		}
-	}
+	axe_ax_init(sc);
 
 	/*
 	 * Fetch IPG values.

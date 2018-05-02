@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.193.2.3 2018/04/16 02:00:09 pgoyette Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.193.2.4 2018/05/02 07:20:23 pgoyette Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.193.2.3 2018/04/16 02:00:09 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.193.2.4 2018/05/02 07:20:23 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -123,8 +123,6 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.193.2.3 2018/04/16 02:00:09 pgoyette
 
 #include "faith.h"
 
-#include <net/net_osdep.h>
-
 extern struct domain inet6domain;
 
 u_char ip6_protox[IPPROTO_MAX];
@@ -138,6 +136,7 @@ percpu_t *ip6_forward_rt_percpu __cacheline_aligned;
 
 static void ip6_init2(void);
 static void ip6intr(void *);
+static bool ip6_badaddr(struct ip6_hdr *);
 static struct m_tag *ip6_setdstifaddr(struct mbuf *, const struct in6_ifaddr *);
 
 static int ip6_process_hopopts(struct mbuf *, u_int8_t *, int, u_int32_t *,
@@ -320,53 +319,11 @@ ip6_input(struct mbuf *m, struct ifnet *rcvif)
 		goto bad;
 	}
 
-	/*
-	 * Check against address spoofing/corruption.
-	 */
-	if (IN6_IS_ADDR_MULTICAST(&ip6->ip6_src) ||
-	    IN6_IS_ADDR_UNSPECIFIED(&ip6->ip6_dst)) {
-		/*
-		 * XXX: "badscope" is not very suitable for a multicast source.
-		 */
+	if (ip6_badaddr(ip6)) {
 		IP6_STATINC(IP6_STAT_BADSCOPE);
 		in6_ifstat_inc(rcvif, ifs6_in_addrerr);
 		goto bad;
 	}
-
-	/*
-	 * The following check is not documented in specs.  A malicious
-	 * party may be able to use IPv4 mapped addr to confuse tcp/udp stack
-	 * and bypass security checks (act as if it was from 127.0.0.1 by using
-	 * IPv6 src ::ffff:127.0.0.1).  Be cautious.
-	 *
-	 * This check chokes if we are in an SIIT cloud.  As none of BSDs
-	 * support IPv4-less kernel compilation, we cannot support SIIT
-	 * environment at all.  So, it makes more sense for us to reject any
-	 * malicious packets for non-SIIT environment, than try to do a
-	 * partial support for SIIT environment.
-	 */
-	if (IN6_IS_ADDR_V4MAPPED(&ip6->ip6_src) ||
-	    IN6_IS_ADDR_V4MAPPED(&ip6->ip6_dst)) {
-		IP6_STATINC(IP6_STAT_BADSCOPE);
-		in6_ifstat_inc(rcvif, ifs6_in_addrerr);
-		goto bad;
-	}
-
-#if 0
-	/*
-	 * Reject packets with IPv4 compatible addresses (auto tunnel).
-	 *
-	 * The code forbids auto tunnel relay case in RFC1933 (the check is
-	 * stronger than RFC1933).  We may want to re-enable it if mech-xx
-	 * is revised to forbid relaying case.
-	 */
-	if (IN6_IS_ADDR_V4COMPAT(&ip6->ip6_src) ||
-	    IN6_IS_ADDR_V4COMPAT(&ip6->ip6_dst)) {
-		IP6_STATINC(IP6_STAT_BADSCOPE);
-		in6_ifstat_inc(rcvif, ifs6_in_addrerr);
-		goto bad;
-	}
-#endif
 
 	/*
 	 * Assume that we can create a fast-forward IP flow entry
@@ -804,6 +761,43 @@ bad:
 	return;
 }
 
+static bool
+ip6_badaddr(struct ip6_hdr *ip6)
+{
+	/* Check against address spoofing/corruption. */
+	if (IN6_IS_ADDR_MULTICAST(&ip6->ip6_src) ||
+	    IN6_IS_ADDR_UNSPECIFIED(&ip6->ip6_dst)) {
+		return true;
+	}
+
+	/*
+	 * The following check is not documented in specs.  A malicious
+	 * party may be able to use IPv4 mapped addr to confuse tcp/udp stack
+	 * and bypass security checks (act as if it was from 127.0.0.1 by using
+	 * IPv6 src ::ffff:127.0.0.1).  Be cautious.
+	 *
+	 * This check chokes if we are in an SIIT cloud.  As none of BSDs
+	 * support IPv4-less kernel compilation, we cannot support SIIT
+	 * environment at all.  So, it makes more sense for us to reject any
+	 * malicious packets for non-SIIT environment, than try to do a
+	 * partial support for SIIT environment.
+	 */
+	if (IN6_IS_ADDR_V4MAPPED(&ip6->ip6_src) ||
+	    IN6_IS_ADDR_V4MAPPED(&ip6->ip6_dst)) {
+		return true;
+	}
+
+	/*
+	 * Reject packets with IPv4-compatible IPv6 addresses (RFC4291).
+	 */
+	if (IN6_IS_ADDR_V4COMPAT(&ip6->ip6_src) ||
+	    IN6_IS_ADDR_V4COMPAT(&ip6->ip6_dst)) {
+		return true;
+	}
+
+	return false;
+}
+
 /*
  * set/grab in6_ifaddr correspond to IPv6 destination address.
  */
@@ -1078,7 +1072,7 @@ ip6_savecontrol(struct in6pcb *in6p, struct mbuf **mp,
 #endif
 
 	if (SOOPT_TIMESTAMP(so->so_options))
-		mp = sbsavetimestamp(so->so_options, m, mp);
+		mp = sbsavetimestamp(so->so_options, mp);
 
 	/* some OSes call this logic with IPv4 packet, for SO_TIMESTAMP */
 	if ((ip6->ip6_vfc & IPV6_VERSION_MASK) != IPV6_VERSION)

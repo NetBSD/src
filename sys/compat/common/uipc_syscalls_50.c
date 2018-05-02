@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls_50.c,v 1.3.56.7 2018/04/26 09:37:22 pgoyette Exp $	*/
+/*	$NetBSD: uipc_syscalls_50.c,v 1.3.56.8 2018/05/02 07:20:06 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_50.c,v 1.3.56.7 2018/04/26 09:37:22 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_50.c,v 1.3.56.8 2018/05/02 07:20:06 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

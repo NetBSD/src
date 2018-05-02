@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf2.c,v 1.30.28.1 2018/04/16 02:00:08 pgoyette Exp $	*/
+/*	$NetBSD: uipc_mbuf2.c,v 1.30.28.2 2018/05/02 07:20:22 pgoyette Exp $	*/
 /*	$KAME: uipc_mbuf2.c,v 1.29 2001/02/14 13:42:10 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf2.c,v 1.30.28.1 2018/04/16 02:00:08 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf2.c,v 1.30.28.2 2018/05/02 07:20:22 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -191,7 +191,7 @@ m_pulldown(struct mbuf *m, int off, int len, int *offp)
 	}
 
 	/*
-	 * Now, we need to do the hard way. Don't m_copy as there's no room
+	 * Now, we need to do the hard way. Don't copy as there's no room
 	 * on both ends.
 	 */
 	o = m_get(M_DONTWAIT, m->m_type);

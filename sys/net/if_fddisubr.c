@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.105 2017/02/14 03:05:06 ozaki-r Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.105.12.1 2018/05/02 07:20:22 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.105 2017/02/14 03:05:06 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.105.12.1 2018/05/02 07:20:22 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -243,7 +243,7 @@ fddi_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
 			return error == EWOULDBLOCK ? 0 : error;
 		/* If broadcasting on a simplex interface, loopback a copy */
 		if ((m->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX))
-			mcopy = m_copy(m, 0, (int)M_COPYALL);
+			mcopy = m_copym(m, 0, (int)M_COPYALL, M_DONTWAIT);
 		etype = htons(ETHERTYPE_IP);
 		break;
 	}
@@ -322,16 +322,18 @@ fddi_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
 
 		/*
 		 * In the phase 2 case, we need to prepend an mbuf for the llc
-		 * header. Since we must preserve the value of m, which is
-		 * passed to us by value, we m_copy() the first mbuf, and use
-		 * it for our llc header.
+		 * header.
+		 *
+		 * XXX XXX: Do we need to preserve the value of m?
 		 */
 		if (aa->aa_flags & AFA_PHASE2) {
 			struct llc llc;
 
 			M_PREPEND(m, sizeof(struct llc), M_NOWAIT);
-			if (m == 0)
+			if (m == NULL) {
+				pserialize_read_exit(s);
 				senderr(ENOBUFS);
+			}
 			llc.llc_dsap = llc.llc_ssap = LLC_SNAP_LSAP;
 			llc.llc_control = LLC_UI;
 			memcpy(llc.llc_snap_org_code, at_org_code,

@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.249.2.2 2018/04/22 07:20:28 pgoyette Exp $	*/
+/*	$NetBSD: key.c,v 1.249.2.3 2018/05/02 07:20:24 pgoyette Exp $	*/
 /*	$FreeBSD: key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.249.2.2 2018/04/22 07:20:28 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.249.2.3 2018/05/02 07:20:24 pgoyette Exp $");
 
 /*
  * This code is referred to RFC 2367
@@ -1078,7 +1078,6 @@ key_checkrequest(const struct ipsecrequest *isr, const struct secasindex *saidx,
 	 * temporarily null out below.  Need to rethink how we
 	 * handle bundled SA's in the callback thread.
 	 */
-	IPSEC_SPLASSERT_SOFTNET("key_checkrequest");
 
 	sav = key_lookup_sa_bysaidx(saidx);
 	if (sav != NULL) {

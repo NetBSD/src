@@ -1,8 +1,6 @@
-#	$NetBSD: Makefile,v 1.11 2017/08/29 09:02:10 mrg Exp $
+#	$NetBSD: Makefile,v 1.11.2.1 2018/05/02 07:20:00 pgoyette Exp $
 
-NOMAN=		1
-
-.include <bsd.own.mk>
+.include <bsd.hostinit.mk>
 
 HOSTPROG=	fc-cache
 

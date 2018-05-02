@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.138 2018/01/26 06:49:02 ozaki-r Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.138.2.1 2018/05/02 07:20:23 pgoyette Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.138 2018/01/26 06:49:02 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.138.2.1 2018/05/02 07:20:23 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -63,8 +63,6 @@ __KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.138 2018/01/26 06:49:02 ozaki-r Exp $"
 #include <netinet/icmp6.h>
 #include <netinet6/icmp6_private.h>
 #include <netinet6/scope6_var.h>
-
-#include <net/net_osdep.h>
 
 static int rtpref(struct nd_defrouter *);
 static struct nd_defrouter *defrtrlist_update(struct nd_defrouter *);
@@ -1118,19 +1116,10 @@ prelist_update(struct nd_prefixctl *newprc,
 	int ss;
 	char ip6buf[INET6_ADDRSTRLEN];
 
+	KASSERT(m != NULL);
 	ND6_ASSERT_WLOCK();
 
-	auth = 0;
-	if (m) {
-		/*
-		 * Authenticity for NA consists authentication for
-		 * both IP header and IP datagrams, doesn't it ?
-		 */
-#if defined(M_AUTHIPHDR) && defined(M_AUTHIPDGM)
-		auth = (m->m_flags & M_AUTHIPHDR
-		     && m->m_flags & M_AUTHIPDGM) ? 1 : 0;
-#endif
-	}
+	auth = (m->m_flags & M_AUTHIPHDR) ? 1 : 0;
 
 	if ((pr = nd6_prefix_lookup(newprc)) != NULL) {
 		/*

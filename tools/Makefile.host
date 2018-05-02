@@ -1,10 +1,6 @@
-#	$NetBSD: Makefile.host,v 1.31 2013/06/14 16:10:02 tsutsui Exp $
+#	$NetBSD: Makefile.host,v 1.31.26.1 2018/05/02 07:20:25 pgoyette Exp $
 
-NOINFO=		# defined
-NOLINT=		# defined
-NOMAN=		# defined
-
-.include <bsd.own.mk>
+.include <bsd.hostinit.mk>
 
 .ifndef NOCOMPATLIB
 # Use TOOLDIR copy of libnbcompat and associated *.h files

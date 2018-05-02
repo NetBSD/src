@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipsec.c,v 1.3.4.2 2018/04/07 04:12:19 pgoyette Exp $  */
+/*	$NetBSD: if_ipsec.c,v 1.3.4.3 2018/05/02 07:20:22 pgoyette Exp $  */
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipsec.c,v 1.3.4.2 2018/04/07 04:12:19 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipsec.c,v 1.3.4.3 2018/05/02 07:20:22 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -220,7 +220,7 @@ if_ipsec_ro_init_pc(void *p, void *arg __unused, struct cpu_info *ci __unused)
 {
 	struct ipsec_ro *iro = p;
 
-	mutex_init(&iro->ir_lock, MUTEX_DEFAULT, IPL_NONE);
+	iro->ir_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
 }
 
 static void
@@ -230,7 +230,7 @@ if_ipsec_ro_fini_pc(void *p, void *arg __unused, struct cpu_info *ci __unused)
 
 	rtcache_free(&iro->ir_ro);
 
-	mutex_destroy(&iro->ir_lock);
+	mutex_obj_free(iro->ir_lock);
 }
 
 static int
@@ -1339,10 +1339,11 @@ if_ipsec_add_mbuf_optalign(struct mbuf *m0, void *data, size_t len, bool align)
 {
 	struct mbuf *m;
 
-	MGET(m, M_WAITOK | M_ZERO, MT_DATA);
-	if (align)
+	MGET(m, M_WAIT, MT_DATA);
+	if (align) {
 		m->m_len = PFKEY_ALIGN8(len);
-	else
+		memset(mtod(m, void *), 0, m->m_len);
+	} else
 		m->m_len = len;
 	m_copyback(m, 0, len, data);
 	m_cat(m0, m);
@@ -1378,8 +1379,9 @@ if_ipsec_add_pad(struct mbuf *m0, size_t len)
 	if (len == 0)
 		return;
 
-	MGET(m, M_WAITOK | M_ZERO, MT_DATA);
+	MGET(m, M_WAIT, MT_DATA);
 	m->m_len = len;
+	memset(mtod(m, void *), 0, m->m_len);
 	m_cat(m0, m);
 }
 
@@ -1556,7 +1558,7 @@ if_ipsec_add_sp0(struct sockaddr *src, in_port_t sport,
 	memset(&xpl, 0, sizeof(xpl));
 	memset(&xisr, 0, sizeof(xisr));
 
-	MGETHDR(m, M_WAITOK, MT_DATA);
+	MGETHDR(m, M_WAIT, MT_DATA);
 
 	size = if_ipsec_set_sadb_src(&xsrc, src, proto);
 	ext_msg_len += PFKEY_UNIT64(size);
@@ -1683,7 +1685,7 @@ if_ipsec_del_sp0(struct secpolicy *sp)
 	memset(&msg, 0, sizeof(msg));
 	memset(&xpl, 0, sizeof(xpl));
 
-	MGETHDR(m, M_WAITOK, MT_DATA);
+	MGETHDR(m, M_WAIT, MT_DATA);
 
 	size = if_ipsec_set_sadb_x_policy(&xpl, NULL, 0, 0, sp->id, 0, NULL, NULL);
 	ext_msg_len += PFKEY_UNIT64(size);
