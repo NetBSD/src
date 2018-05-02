@@ -1,4 +1,4 @@
-.\"	$NetBSD: mremap.2,v 1.5 2017/05/06 21:34:51 joerg Exp $
+.\"	$NetBSD: mremap.2,v 1.6 2018/05/02 15:25:13 christos Exp $
 .\"
 .\" Copyright (c) 2007 Thomas Klausner and Joerg Sonnenberger
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\" ------------------------------------------------------------
-.Dd April 28, 2017
+.Dd May 2, 2018
 .Dt MREMAP 2
 .Os
 .Sh NAME
@@ -91,6 +91,127 @@ Both address ranges reference the same pages, but can have different protection 
 returns the new address or
 .Dv MAP_FAILED ,
 if the remap failed.
+.Sh EXAMPLES
+The following example program creates a two mappings for the same
+memory range, one RW- and one R-X.
+.Bd -literal
+#include <sys/types.h>
+#include <sys/mman.h>
+
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <err.h>
+
+static int
+return_1(void)
+{
+	return 1;
+}
+
+static void
+return_1_end(void)
+{
+}
+
+static int
+return_2(void)
+{
+	return 2;
+}
+
+static void
+return_2_end(void)
+{
+}
+
+int
+main(int argc, char *argv[])
+{
+        void *maprw, *maprx;
+	int rv;
+	size_t page = (size_t)sysconf(_SC_PAGESIZE);
+
+	// Create the first mapping that has no protections, but intended
+	// protections only
+	maprw = mmap(NULL, page,
+	    PROT_MPROTECT(PROT_EXEC|PROT_WRITE|PROT_READ),
+            MAP_ANON, -1, 0);
+	if (maprw == MAP_FAILED)
+		err(EXIT_FAILURE, "mmap failed");
+
+        // Create the second mapping for the same physical space, which
+	// again has no protections.
+	maprx = mremap(maprw, page, NULL, page, MAP_REMAPDUP);
+	if (maprx == MAP_FAILED)
+		err(EXIT_FAILURE, "mremap failed");
+
+	// Set the first mapping read/write
+        if (mprotect(maprw, page, PROT_READ|PROT_WRITE) == -1)
+		err(EXIT_FAILURE, "mprotect(rw) failed");
+
+	// Set the second mapping read/execute
+        if (mprotect(maprx, page, PROT_READ|PROT_EXEC) == -1)
+		err(EXIT_FAILURE, "mprotect(rx) failed");
+
+#define XS(a) (size_t)((uintptr_t)(a ## _end) - (uintptr_t)(a))
+
+	// Copy and run the first function
+	memcpy(maprw, return_1, XS(return_1));
+	__builtin___clear_cache(maprw, (void *)((uintptr_t)maprw + page));
+	rv = ((int (*)(void))maprx)();
+	printf("%d\en", rv);
+
+	// Copy and run the second function
+	memcpy(maprw, return_2, XS(return_2));
+	__builtin___clear_cache(maprw, (void *)((uintptr_t)maprw + page));
+	rv = ((int (*)(void))maprx)();
+	printf("%d\en", rv);
+
+	return EXIT_SUCCESS;
+}
+.Ed
+.Sh ERRORS
+The
+.Fn mremap
+function fails if:
+.Bl -tag -width Er
+.It Bq Er EINVAL
+If 
+.Fa oldp
+or
+.Fa newp
+are not page aligned, or
+.Fa oldsize
+or
+.Fa newsize
+are not a multiple of the page size, or if 
+.Fa oldp +
+.Fa oldsize
+or
+.Fa newp +
+.Fa newsize
+wrap around, or if an invalid alignment was requested in the
+.Fa flags
+argument, or if the request was to extend
+.Fa oldp
+and the extension address space either did not fit, was already occupied,
+or had set permissions.
+.It Bq Er ENOMEM
+If there was either no space to allocate/move memory,
+or if a fixed allocation was requested in the
+.Fa flags
+that could not be accommodated.
+.It Bq Er ENOENT
+If the
+.Fa oldp
+segmented was not already mapped.
+.It Bq Er E2BIG
+A request to extend
+.Fa oldp
+failed because of address overflow.
+.El
 .Sh COMPATIBILITY
 The semantics of
 .Fn mremap
