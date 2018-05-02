@@ -1,4 +1,4 @@
-/*	$NetBSD: filecomplete.c,v 1.48 2017/10/27 18:16:09 abhinav Exp $	*/
+/*	$NetBSD: filecomplete.c,v 1.49 2018/05/02 08:45:03 abhinav Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: filecomplete.c,v 1.48 2017/10/27 18:16:09 abhinav Exp $");
+__RCSID("$NetBSD: filecomplete.c,v 1.49 2018/05/02 08:45:03 abhinav Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -151,6 +151,8 @@ needs_escaping(char c)
 	case '{':
 	case '}':
 	case '&':
+	case '*':
+	case '[':
 		return 1;
 	default:
 		return 0;
