@@ -22,7 +22,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd January 8, 2018
+.Dd April 29, 2018
 .Dt DHCPCD 8
 .Os
 .Sh NAME
@@ -753,6 +753,17 @@ to rebind, reconfigure or exit need to include the same restrictive flags
 so that
 .Nm
 knows which process to signal.
+.Pp
+Some DHCP servers implement ClientID filtering.
+If
+.Nm
+is replacing an in-use DHCP client then you might need to adjust the clientid
+option
+.Nm
+sends to match.
+If using a DUID in place of the ClientID, edit
+.Pa @DBDIR@/duid
+accordingly.
 .Sh FILES
 .Bl -ohang
 .It Pa @SYSCONFDIR@/dhcpcd.conf
