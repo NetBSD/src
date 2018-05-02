@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.203 2018/03/17 01:53:06 uwe Exp $
+.\"	$NetBSD: sh.1,v 1.204 2018/05/02 21:43:38 pgoyette Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"	@(#)sh.1	8.6 (Berkeley) 5/4/95
 .\"
-.Dd October 24, 2017
+.Dd May 3, 2018
 .Dt SH 1
 .\" everything except c o and s (keep them ordered)
 .ds flags abCEeFfhIiLmnpquVvXx
@@ -2321,7 +2321,7 @@ or
 .Xr fcntl 2
 .Dv F_SETFD /
 .Dv FD_CLOEXEC ) ,
-unless the descriptors they point to refer to the standard input,
+unless the descriptors to which they point refer to the standard input,
 output, or error (file descriptors 0, 1, 2).
 Traditionally Bourne-like shells
 (except
