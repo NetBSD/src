@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2384 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2385 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -149,3 +149,4 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	file(1): Upgraded to 5.33. [christos 20180415]
 	netpgp(3lua): Add Lua binding for libnetpgp(3). [sevan 20180429]
 	arm: Add support for Allwinner H6 SoC. [jmcneill 20180501]
+	dhcpcd: Import 7.0.4. [roy 20180502]
