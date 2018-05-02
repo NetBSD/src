@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.7 2018/05/02 10:09:15 jmcneill Exp $
+#	$NetBSD: GENERIC64,v 1.8 2018/05/02 11:02:42 jmcneill Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -132,6 +132,7 @@ sun8ih3ccu*	at fdt? pass 2		# Allwinner H3/H5 CCU
 sun8ih3rccu*	at fdt? pass 2		# Allwinner H3/H5 CCU (PRCM)
 sun50ia64ccu*	at fdt? pass 2		# Allwinner A64 CCU
 sun50ih6ccu*	at fdt? pass 2		# Allwinner H6 CCU
+sun50ih6rccu*	at fdt? pass 2		# Allwinner H6 CCU (PRCM)
 sunxiresets*	at fdt? pass 1		# Allwinner misc. resets
 sunxigates*	at fdt? pass 1		# Allwinner misc. gates
 sunxigmacclk*	at fdt? pass 2		# Allwinner GMAC MII/RGMII clock mux
