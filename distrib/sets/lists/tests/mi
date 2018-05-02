@@ -3661,6 +3661,8 @@
 ./usr/tests/usr.bin/cc/t_ubsan_int_sub_overflow		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/cc/t_ubsan_int_neg_overflow		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/cc/t_ubsan_int_divzero		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/cc/t_ubsan_vla_out_of_bounds		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/cc/t_ubsan_ptr_null_ref		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/cmp				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/cmp/Atffile			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/cmp/Kyuafile		tests-usr.bin-tests	compattestfile,atf,kyua
