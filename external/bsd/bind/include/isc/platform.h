@@ -349,7 +349,7 @@
 /*
  * Define if the hash functions must be provided by OpenSSL.
  */
-#undef ISC_PLATFORM_OPENSSLHASH
+#define ISC_PLATFORM_OPENSSLHASH
 
 /*
  * Define if AES support is wanted
