@@ -29,11 +29,11 @@
 test_target()
 {
 	SUPPORT='n'
-	if ! echo __GNUC__ | cc -E - | grep -q __GNUC__; then
+	if ! echo __GNUC__ | c++ -E - | grep -q __GNUC__; then
 		SUPPORT='y'
 	fi
 
-	if ! echo __clang__ | cc -E - | grep -q __clang__; then
+	if ! echo __clang__ | c++ -E - | grep -q __clang__; then
 		SUPPORT='y'
 	fi
 }
@@ -41,72 +41,72 @@ test_target()
 atf_test_case int_sub_overflow
 int_sub_overflow_head() {
 	atf_set "descr" "Test Undefined Behavior for int subtraction overflows"
-	atf_set "require.progs" "cc"
+	atf_set "require.progs" "c++"
 }
 
 atf_test_case int_sub_overflow_profile
 int_sub_overflow_profile_head() {
 	atf_set "descr" "Test Undefined Behavior for int subtraction overflows with profiling option"
-	atf_set "require.progs" "cc"
+	atf_set "require.progs" "c++"
 }
 atf_test_case int_sub_overflow_pic
 int_sub_overflow_pic_head() {
 	atf_set "descr" "Test Undefined Behavior for int subtraction overflows with position independent code (PIC) flag"
-	atf_set "require.progs" "cc"
+	atf_set "require.progs" "c++"
 }
 atf_test_case int_sub_overflow_pie
 int_sub_overflow_pie_head() {
 	atf_set "descr" "Test Undefined Behavior for int subtraction overflows with position independent execution (PIE) flag"
-	atf_set "require.progs" "cc"
+	atf_set "require.progs" "c++"
 }
 atf_test_case int_sub_overflow32
 int_sub_overflow32_head() {
 	atf_set "descr" "Test Undefined Behavior for int subtraction overflows in NetBSD_32 emulation"
-	atf_set "require.progs" "cc file diff cat"
+	atf_set "require.progs" "c++ file diff cat"
 }
 
 
 int_sub_overflow_body(){
-	cat > test.c << EOF
+	cat > test.cpp << EOF
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 int main(int argc, char **argv) { volatile int l = INT_MIN; l-=argc; return l; }
 EOF
 
-	cc -fsanitize=undefined -o test test.c
+	c++ -fsanitize=undefined -o test test.cpp
 	atf_check -s ignore -e match:"signed integer overflow" ./test
 }
 
 int_sub_overflow_profile_body(){
-	cat > test.c << EOF
+	cat > test.cpp << EOF
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 int main(int argc, char **argv) { volatile int l = INT_MIN; l-=argc; return l; }
 EOF
 
-	cc -fsanitize=undefined -o test -pg test.c
+	c++ -fsanitize=undefined -o test -pg test.cpp
 	atf_check -s ignore -e match:"signed integer overflow" ./test
 }
 
 int_sub_overflow_pic_body(){
-	cat > test.c << EOF
+	cat > test.cpp << EOF
 #include <stdio.h>
 #include <stdlib.h>
 int help(int);
 int main(int argc, char **argv) { volatile int k = help(argc); return k; }
 EOF
 
-	cat > pic.c << EOF
+	cat > pic.cpp << EOF
 #include <stdlib.h>
 #include <stdio.h>
 #include <limits.h>
 int help(int count) { volatile int l = INT_MIN; l-= count; return l;}
 EOF
 
-	cc -fsanitize=undefined -fPIC -shared -o libtest.so pic.c
-	cc -o test test.c -fsanitize=undefined -L. -ltest
+	c++ -fsanitize=undefined -fPIC -shared -o libtest.so pic.cpp
+	c++ -o test test.cpp -fsanitize=undefined -L. -ltest
 
 	export LD_LIBRARY_PATH=.
 	atf_check -s ignore -e match:"signed integer overflow" ./test
@@ -115,17 +115,17 @@ EOF
 int_sub_overflow_pie_body(){
 
 	#check whether -pie flag is supported on this architecture
-	if ! cc -pie -dM -E - < /dev/null 2>/dev/null >/dev/null; then
-		atf_set_skip "cc -pie not supported on this architecture"
+	if ! c++ -pie -dM -E - < /dev/null 2>/dev/null >/dev/null; then
+		atf_set_skip "c++ -pie not supported on this architecture"
 	fi
-	cat > test.c << EOF
+	cat > test.cpp << EOF
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 int main(int argc, char **argv) { volatile int l = INT_MIN; l-= argc; return l; }
 EOF
 
-	cc -fsanitize=undefined -o test -fpie -pie test.c
+	c++ -fsanitize=undefined -o test -fpie -pie test.cpp
 	atf_check -s ignore -e match:"signed integer overflow" ./test
 }
 
@@ -133,26 +133,26 @@ EOF
 int_sub_overflow32_body(){
 
 	# check what this architecture is, after all
-	if ! cc -dM -E - < /dev/null | grep -F -q _LP64; then
+	if ! c++ -dM -E - < /dev/null | grep -F -q _LP64; then
 		atf_skip "This is not a 64 bit architecture"
 	fi
-	if ! cc -m32 -dM -E - < /dev/null 2>/dev/null > ./def32; then
-		atf_skip "cc -m32 Not supported on this architecture"
+	if ! c++ -m32 -dM -E - < /dev/null 2>/dev/null > ./def32; then
+		atf_skip "c++ -m32 Not supported on this architecture"
 	else
 		if grep -F -q _LP64 ./def32; then
-		atf_fail "cc -m32 Does not generate NetBSD32 binaries"
+		atf_fail "c++ -m32 Does not generate NetBSD32 binaries"
 		fi
 	fi
 
-	cat > test.c << EOF
+	cat > test.cpp << EOF
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 int main(int argc, char **argv) { volatile int l = INT_MIN; l-= argc; return l; }
 EOF
 
-	cc -fsanitize=undefined -o md32 -m32 test.c
-	cc -fsanitize=undefined -o md64 test.c
+	c++ -fsanitize=undefined -o md32 -m32 test.cpp
+	c++ -fsanitize=undefined -o md64 test.cpp
 	file -b ./md32 > ./ftype32
 	file -b ./md64 > ./ftype64
 	if diff ./ftype32 ./ftype64 >/dev/null; then
@@ -165,14 +165,14 @@ EOF
 	atf_check -s ignore -e match:"signed integer overflow" ./md32
 
 	# Another test with profile 32bit binaries, just to make sure everything has been thoroughly done
-	cat > test.c << EOF
+	cat > test.cpp << EOF
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 int main(int argc, char **argv) { volatile int l = INT_MIN; l-= argc; return l; }
 EOF
 
-	cc -fsanitize=undefined -pg -m32 -o test test.c
+	c++ -fsanitize=undefined -pg -m32 -o test test.cpp
 	atf_check -s ignore -e match:"signed integer overflow" ./test
 }
 
