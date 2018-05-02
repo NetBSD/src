@@ -1,4 +1,4 @@
-#	$NetBSD: files.sunxi,v 1.51 2018/05/02 11:02:21 jmcneill Exp $
+#	$NetBSD: files.sunxi,v 1.52 2018/05/02 21:20:20 jmcneill Exp $
 #
 # Configuration info for Allwinner sunxi family SoCs
 #
@@ -93,6 +93,10 @@ file	arch/arm/sunxi/sun9i_a80_mmcclk.c	sunxi_a80_mmcclk
 device	sunxiintc: pic, pic_splfuncs
 attach	sunxiintc at fdt with sunxi_intc
 file	arch/arm/sunxi/sunxi_intc.c		sunxi_intc
+
+device	sunxinmi
+attach	sunxinmi at fdt with sunxi_nmi
+file	arch/arm/sunxi/sunxi_nmi.c		sunxi_nmi
 
 # GPIO
 device	sunxigpio: gpiobus
