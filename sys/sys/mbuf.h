@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.178.2.4 2018/04/22 07:20:29 pgoyette Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.178.2.5 2018/05/02 07:20:24 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -118,8 +118,8 @@ struct mowner {
 enum mowner_counter_index {
 	MOWNER_COUNTER_CLAIMS,		/* # of small mbuf claimed */
 	MOWNER_COUNTER_RELEASES,	/* # of small mbuf released */
-	MOWNER_COUNTER_CLUSTER_CLAIMS,	/* # of M_CLUSTER mbuf claimed */
-	MOWNER_COUNTER_CLUSTER_RELEASES,/* # of M_CLUSTER mbuf released */
+	MOWNER_COUNTER_CLUSTER_CLAIMS,	/* # of cluster mbuf claimed */
+	MOWNER_COUNTER_CLUSTER_RELEASES,/* # of cluster mbuf released */
 	MOWNER_COUNTER_EXT_CLAIMS,	/* # of M_EXT mbuf claimed */
 	MOWNER_COUNTER_EXT_RELEASES,	/* # of M_EXT mbuf released */
 
@@ -259,7 +259,6 @@ struct pkthdr {
  */
 struct _m_ext_storage {
 	unsigned int ext_refcnt;
-	int ext_flags;
 	char *ext_buf;			/* start of buffer */
 	void (*ext_free)		/* free routine if not the usual */
 		(struct mbuf *, void *, size_t, void *);
@@ -276,13 +275,6 @@ struct _m_ext_storage {
 	} ext_un;
 #define	ext_paddr	ext_un.extun_paddr
 #define	ext_pgs		ext_un.extun_pgs
-
-#ifdef DEBUG
-	const char *ext_ofile;
-	const char *ext_nfile;
-	int ext_oline;
-	int ext_nline;
-#endif
 };
 
 struct _m_ext {
@@ -351,17 +343,12 @@ MBUF_DEFINE(mbuf, MHLEN, MLEN);
 #define	M_PROTO1	0x00000008	/* protocol-specific */
 
 /* mbuf pkthdr flags, also in m_flags */
-#define	M_AUTHIPHDR	0x00000010	/* data origin authentication for
-					 * IP header */
-#define	M_DECRYPTED	0x00000020	/* confidentiality */
+#define	M_AUTHIPHDR	0x00000010	/* authenticated (IPsec) */
+#define	M_DECRYPTED	0x00000020	/* decrypted (IPsec) */
 #define	M_LOOP		0x00000040	/* for Mbuf statistics */
-#define	M_AUTHIPDGM	0x00000080	/* data origin authentication */
-#define	M_BCAST		0x00000100	/* send/received as link-level
-					 * broadcast */
-#define	M_MCAST		0x00000200	/* send/received as link-level
-					 * multicast */
-#define	M_CANFASTFWD	0x00000400	/* used by filters to indicate
-					 * packet can be fast-forwarded */
+#define	M_BCAST		0x00000100	/* send/received as L2 broadcast */
+#define	M_MCAST		0x00000200	/* send/received as L2 multicast */
+#define	M_CANFASTFWD	0x00000400	/* packet can be fast-forwarded */
 #define	M_ANYCAST6	0x00000800	/* received as IPv6 anycast */
 
 #define	M_LINK0		0x00001000	/* link layer specific flag */
@@ -383,11 +370,10 @@ MBUF_DEFINE(mbuf, MHLEN, MLEN);
 #define	M_EXT_RW	0x08000000	/* ext storage is writable */
 
 /* for source-level compatibility */
-#define	M_CLUSTER	M_EXT_CLUSTER
 #define	M_NOTIFICATION	M_PROTO1
 
 #define M_FLAGS_BITS \
-    "\20\1EXT\2PKTHDR\3EOR\4PROTO1\5AUTHIPHDR\6DECRYPTED\7LOOP\10AUTHIPDGM" \
+    "\20\1EXT\2PKTHDR\3EOR\4PROTO1\5AUTHIPHDR\6DECRYPTED\7LOOP\10NONE" \
     "\11BCAST\12MCAST\13CANFASTFWD\14ANYCAST6\15LINK0\16LINK1\17LINK2\20LINK3" \
     "\21LINK4\22LINK5\23LINK6\24LINK7" \
     "\25VLANTAG" \
@@ -396,7 +382,7 @@ MBUF_DEFINE(mbuf, MHLEN, MLEN);
 /* flags copied when copying m_pkthdr */
 #define	M_COPYFLAGS	(M_PKTHDR|M_EOR|M_BCAST|M_MCAST|M_CANFASTFWD| \
     M_ANYCAST6|M_LINK0|M_LINK1|M_LINK2|M_AUTHIPHDR|M_DECRYPTED|M_LOOP| \
-    M_AUTHIPDGM|M_VLANTAG)
+    M_VLANTAG)
 
 /* flag copied when shallow-copying external storage */
 #define	M_EXTCOPYFLAGS	(M_EXT|M_EXT_FLAGS)
@@ -471,33 +457,12 @@ void m_claimm(struct mbuf *, struct mowner *);
 
 #if defined(_KERNEL)
 #define	_M_
-/*
- * Macros for tracking external storage associated with an mbuf.
- */
-#ifdef DEBUG
-#define MCLREFDEBUGN(m, file, line)					\
-do {									\
-	(m)->m_ext.ext_nfile = (file);					\
-	(m)->m_ext.ext_nline = (line);					\
-} while (/* CONSTCOND */ 0)
-
-#define MCLREFDEBUGO(m, file, line)					\
-do {									\
-	(m)->m_ext.ext_ofile = (file);					\
-	(m)->m_ext.ext_oline = (line);					\
-} while (/* CONSTCOND */ 0)
-#else
-#define MCLREFDEBUGN(m, file, line)
-#define MCLREFDEBUGO(m, file, line)
-#endif
 
 #define	MCLINITREFERENCE(m)						\
 do {									\
 	KASSERT(((m)->m_flags & M_EXT) == 0);				\
 	(m)->m_ext_ref = (m);						\
 	(m)->m_ext.ext_refcnt = 1;					\
-	MCLREFDEBUGO((m), __FILE__, __LINE__);				\
-	MCLREFDEBUGN((m), NULL, 0);					\
 } while (/* CONSTCOND */ 0)
 
 /*
@@ -513,41 +478,16 @@ do {									\
  * a normal mbuf; the flag M_EXT is set upon success.
  */
 
-#define	_MCLGET(m, pool_cache, size, how)				\
-do {									\
-	(m)->m_ext_storage.ext_buf = (char *)				\
-	    pool_cache_get_paddr((pool_cache),				\
-		(how) == M_WAIT ? (PR_WAITOK|PR_LIMITFAIL) : PR_NOWAIT,	\
-		&(m)->m_ext_storage.ext_paddr);				\
-	if ((m)->m_ext_storage.ext_buf != NULL) {			\
-		MCLINITREFERENCE(m);					\
-		(m)->m_data = (m)->m_ext.ext_buf;			\
-		(m)->m_flags = ((m)->m_flags & ~M_EXTCOPYFLAGS) |	\
-				M_EXT|M_CLUSTER|M_EXT_RW;		\
-		(m)->m_ext.ext_flags = 0;				\
-		(m)->m_ext.ext_size = (size);				\
-		(m)->m_ext.ext_free = NULL;				\
-		(m)->m_ext.ext_arg = (pool_cache);			\
-		/* ext_paddr initialized above */			\
-		mowner_ref((m), M_EXT|M_CLUSTER);			\
-	}								\
-} while (/* CONSTCOND */ 0)
-
-/*
- * The standard mbuf cluster pool.
- */
-#define	MCLGET(m, how)	_MCLGET((m), mcl_cache, MCLBYTES, (how))
+#define	MCLGET(m, how)	m_clget((m), (how))
 
 #define	MEXTMALLOC(m, size, how)					\
 do {									\
-	(m)->m_ext_storage.ext_buf = (char *)				\
-	    malloc((size), mbtypes[(m)->m_type], (how));		\
+	(m)->m_ext_storage.ext_buf = malloc((size), 0, (how));		\
 	if ((m)->m_ext_storage.ext_buf != NULL) {			\
 		MCLINITREFERENCE(m);					\
 		(m)->m_data = (m)->m_ext.ext_buf;			\
 		(m)->m_flags = ((m)->m_flags & ~M_EXTCOPYFLAGS) |	\
 				M_EXT|M_EXT_RW;				\
-		(m)->m_ext.ext_flags = 0;				\
 		(m)->m_ext.ext_size = (size);				\
 		(m)->m_ext.ext_free = NULL;				\
 		(m)->m_ext.ext_arg = NULL;				\
@@ -560,7 +500,6 @@ do {									\
 	MCLINITREFERENCE(m);						\
 	(m)->m_data = (m)->m_ext.ext_buf = (char *)(buf);		\
 	(m)->m_flags = ((m)->m_flags & ~M_EXTCOPYFLAGS) | M_EXT;	\
-	(m)->m_ext.ext_flags = 0;					\
 	(m)->m_ext.ext_size = (size);					\
 	(m)->m_ext.ext_free = (free);					\
 	(m)->m_ext.ext_arg = (arg);					\
@@ -580,24 +519,7 @@ do {									\
 		(m)->m_data = (m)->m_dat;				\
 } while (/* CONSTCOND */ 0)
 
-/*
- * Copy mbuf pkthdr from `from' to `to'.
- * `from' must have M_PKTHDR set, and `to' must be empty.
- */
-#define	M_COPY_PKTHDR(to, from)						\
-do {									\
-	KASSERT(((from)->m_flags & M_PKTHDR) != 0);			\
-	(to)->m_pkthdr = (from)->m_pkthdr;				\
-	(to)->m_flags = (from)->m_flags & M_COPYFLAGS;			\
-	SLIST_INIT(&(to)->m_pkthdr.tags);				\
-	m_tag_copy_chain((to), (from));					\
-	(to)->m_data = (to)->m_pktdat;					\
-} while (/* CONSTCOND */ 0)
-
-/*
- * Move mbuf pkthdr from `from' to `to'.
- * `from' must have M_PKTHDR set, and `to' must be empty.
- */
+#define	M_COPY_PKTHDR(to, from)	m_copy_pkthdr(to, from)
 #define	M_MOVE_PKTHDR(to, from)	m_move_pkthdr(to, from)
 
 /*
@@ -711,7 +633,7 @@ do {									\
 #define M_VERIFY_PACKET(m)	/* nothing */
 #endif
 
-/* length to m_copy to copy all */
+/* The "copy all" special length. */
 #define	M_COPYALL	-1
 
 /* compatibility with 4.3 */
@@ -874,14 +796,12 @@ void	m_copydata(struct mbuf *, int, int, void *);
 void	m_verify_packet(struct mbuf *);
 struct	mbuf *m_free(struct mbuf *);
 void	m_freem(struct mbuf *);
-void	m_reclaim(void *, int);
 void	mbinit(void);
+void	m_copy_pkthdr(struct mbuf *, struct mbuf *);
 void	m_move_pkthdr(struct mbuf *, struct mbuf *);
 
 bool	m_ensure_contig(struct mbuf **, int);
 struct mbuf *m_add(struct mbuf *, struct mbuf *);
-void	m_align(struct mbuf *, int);
-int	m_append(struct mbuf *, int, const void *);
 
 /* Inline routines. */
 static __inline u_int m_length(const struct mbuf *) __unused;
@@ -940,14 +860,14 @@ m_length(const struct mbuf *m)
 static __inline void
 m_set_rcvif(struct mbuf *m, const struct ifnet *ifp)
 {
-
+	KASSERT(m->m_flags & M_PKTHDR);
 	m->m_pkthdr.rcvif_index = ifp->if_index;
 }
 
 static __inline void
 m_reset_rcvif(struct mbuf *m)
 {
-
+	KASSERT(m->m_flags & M_PKTHDR);
 	/* A caller may expect whole _rcvif union is zeroed */
 	/* m->m_pkthdr.rcvif_index = 0; */
 	m->m_pkthdr._rcvif.ctx = NULL;
@@ -956,7 +876,8 @@ m_reset_rcvif(struct mbuf *m)
 static __inline void
 m_copy_rcvif(struct mbuf *m, const struct mbuf *n)
 {
-
+	KASSERT(m->m_flags & M_PKTHDR);
+	KASSERT(n->m_flags & M_PKTHDR);
 	m->m_pkthdr.rcvif_index = n->m_pkthdr.rcvif_index;
 }
 
@@ -978,6 +899,7 @@ m_get_rcvif(const struct mbuf *m, int *s)
 {
 	struct ifnet *ifp;
 
+	KASSERT(m->m_flags & M_PKTHDR);
 	*s = pserialize_read_enter();
 	ifp = if_byindex(m->m_pkthdr.rcvif_index);
 	if (__predict_false(ifp == NULL))
@@ -1004,7 +926,7 @@ m_put_rcvif(struct ifnet *ifp, int *s)
 static __inline struct ifnet *
 m_get_rcvif_psref(const struct mbuf *m, struct psref *psref)
 {
-
+	KASSERT(m->m_flags & M_PKTHDR);
 	return if_get_byindex(m->m_pkthdr.rcvif_index, psref);
 }
 
@@ -1025,7 +947,7 @@ m_put_rcvif_psref(struct ifnet *ifp, struct psref *psref)
 static __inline struct ifnet *
 m_get_rcvif_NOMPSAFE(const struct mbuf *m)
 {
-
+	KASSERT(m->m_flags & M_PKTHDR);
 	return if_byindex(m->m_pkthdr.rcvif_index);
 }
 

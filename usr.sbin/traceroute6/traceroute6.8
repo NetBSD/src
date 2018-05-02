@@ -1,4 +1,4 @@
-.\"	$NetBSD: traceroute6.8,v 1.17 2017/08/05 20:24:17 wiz Exp $
+.\"	$NetBSD: traceroute6.8,v 1.17.2.1 2018/05/02 07:20:28 pgoyette Exp $
 .\"	$KAME: traceroute6.8,v 1.8 2000/06/12 16:29:18 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -28,7 +28,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd January 18, 2007
+.Dd April 23, 2018
 .Dt TRACEROUTE6 8
 .Os
 .\"
@@ -41,7 +41,6 @@
 .Op Fl adIlnrv
 .Op Fl A Ar as_server
 .Op Fl f Ar firsthop
-.Op Fl g Ar gateway
 .Op Fl m Ar hoplimit
 .Op Fl p Ar port
 .Op Fl q Ar probes
@@ -74,12 +73,6 @@ Turn on AS# lookups for each hop encountered.
 Turn on socket-level debugging.
 .It Fl f Ar firsthop
 Specify how many hops to skip in trace.
-.It Fl g Ar gateway
-Specify intermediate gateway
-.Po
-.Nm
-uses routing header
-.Pc .
 .It Fl I
 Use ICMP6 ECHO instead of UDP datagrams.
 .It Fl l

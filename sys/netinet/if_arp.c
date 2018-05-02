@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.268.2.2 2018/04/16 02:00:08 pgoyette Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.268.2.3 2018/05/02 07:20:23 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.268.2.2 2018/04/16 02:00:08 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.268.2.3 2018/05/02 07:20:23 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -109,7 +109,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.268.2.2 2018/04/16 02:00:08 pgoyette Ex
 #include <net/if_types.h>
 #include <net/if_ether.h>
 #include <net/if_llatbl.h>
-#include <net/net_osdep.h>
 #include <net/route.h>
 #include <net/net_stats.h>
 

@@ -1,5 +1,7 @@
-#       $NetBSD: Makefile,v 1.4 2015/11/11 16:13:55 phx Exp $
+#       $NetBSD: Makefile,v 1.4.14.1 2018/05/02 07:19:59 pgoyette Exp $
 #
+
+#include <bsd.hostinit.mk>
 
 MISC_FILES=	runbootblock.README
 UUDECODE_FILES=	device-streams.tar.gz \

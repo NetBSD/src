@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_netbsd.c,v 1.47.2.1 2018/04/22 07:20:28 pgoyette Exp $	*/
+/*	$NetBSD: ipsec_netbsd.c,v 1.47.2.2 2018/05/02 07:20:24 pgoyette Exp $	*/
 /*	$KAME: esp_input.c,v 1.60 2001/09/04 08:43:19 itojun Exp $	*/
 /*	$KAME: ah_input.c,v 1.64 2001/09/04 08:43:19 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.47.2.1 2018/04/22 07:20:28 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.47.2.2 2018/05/02 07:20:24 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -624,6 +624,12 @@ sysctl_net_inet_ipsec_setup(struct sysctllog **clog)
 		       CTL_NET, PF_INET, ipproto_ipsec,
 		       IPSECCTL_DEBUG, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "ipip_spoofcheck", NULL,
+		       NULL, 0, &ipip_spoofcheck, 0,
+		       CTL_NET, PF_INET, ipproto_ipsec,
+		       CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
 		       CTLTYPE_STRUCT, "ipsecstats", NULL,
 		       sysctl_net_inet_ipsec_stats, 0, NULL, 0,
@@ -714,7 +720,7 @@ sysctl_net_inet6_ipsec6_setup(struct sysctllog **clog)
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "def_policy",
 		       SYSCTL_DESCR("Default action for non-IPSec packets"),
-		       sysctl_ipsec, 0, (void *)&ip6_def_policy, 0,
+		       sysctl_ipsec, 0, &ip6_def_policy.policy, 0,
 		       CTL_NET, PF_INET6, IPPROTO_AH,
 		       IPSECCTL_DEF_POLICY, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,

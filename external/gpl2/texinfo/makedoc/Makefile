@@ -1,8 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2016/01/14 00:34:53 christos Exp $
+#	$NetBSD: Makefile,v 1.1.14.1 2018/05/02 07:20:00 pgoyette Exp $
 
-NOMAN=
-MAKEDOC=
-.include <bsd.init.mk>
+.include <bsd.hostinit.mk>
 
 HOSTPROG=	makedoc
 SRCS=		makedoc.c xexit.c xmalloc.c xstrdup.c

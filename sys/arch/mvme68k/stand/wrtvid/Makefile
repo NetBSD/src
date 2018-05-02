@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile,v 1.11 2002/01/23 21:06:28 scw Exp $
+#	$NetBSD: Makefile,v 1.11.28.1 2018/05/02 07:20:05 pgoyette Exp $
 
 S=${.CURDIR}/../../../../
 
+.include <bsd.hostinit.mk>
+
 HOSTPROG=	wrtvid
-NOMAN=
 
 # only needed during build
 proginstall::

@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.219.2.4 2018/04/22 07:20:28 pgoyette Exp $	*/
+/*	$NetBSD: in.c,v 1.219.2.5 2018/05/02 07:20:23 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.219.2.4 2018/04/22 07:20:28 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.219.2.5 2018/05/02 07:20:23 pgoyette Exp $");
 
 #include "arp.h"
 
@@ -479,9 +479,14 @@ in_control0(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 		} else if (in_hosteq(ia->ia_addr.sin_addr,
 		           ifra->ifra_addr.sin_addr))
 			hostIsNew = 0;
+		if (ifra->ifra_addr.sin_family != AF_INET) {
+			error = EAFNOSUPPORT;
+			goto out;
+		}
 		/* FALLTHROUGH */
 	case SIOCSIFDSTADDR:
-		if (ifreq_getaddr(cmd, ifr)->sa_family != AF_INET) {
+		if (cmd == SIOCSIFDSTADDR &&
+		    ifreq_getaddr(cmd, ifr)->sa_family != AF_INET) {
 			error = EAFNOSUPPORT;
 			goto out;
 		}

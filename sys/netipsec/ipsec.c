@@ -1,4 +1,4 @@
-/* $NetBSD: ipsec.c,v 1.151.2.2 2018/04/22 07:20:28 pgoyette Exp $ */
+/* $NetBSD: ipsec.c,v 1.151.2.3 2018/05/02 07:20:24 pgoyette Exp $ */
 /* $FreeBSD: ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $ */
 /* $KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $ */
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.151.2.2 2018/04/22 07:20:28 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.151.2.3 2018/05/02 07:20:24 pgoyette Exp $");
 
 /*
  * IPsec controller part.
@@ -1104,9 +1104,8 @@ ipsec_delpcbpolicy(struct inpcbpolicy *p)
 	kmem_intr_free(p, sizeof(*p));
 }
 
-/* initialize policy in PCB */
 int
-ipsec_init_policy(struct socket *so, struct inpcbpolicy **policy)
+ipsec_init_pcbpolicy(struct socket *so, struct inpcbpolicy **policy)
 {
 	struct inpcbpolicy *new;
 
@@ -1152,7 +1151,7 @@ ipsec_destroy_policy(struct secpolicy *sp)
 }
 
 int
-ipsec_set_policy(void *inp, int optname, const void *request, size_t len,
+ipsec_set_policy(void *inp, const void *request, size_t len,
     kauth_cred_t cred)
 {
 	struct inpcb_hdr *inph = (struct inpcb_hdr *)inp;
@@ -1611,8 +1610,6 @@ ipsec_chkreplay(u_int32_t seq, const struct secasvar *sav)
 	u_int32_t wsizeb;	/* constant: bits of window size */
 	int frlast;		/* constant: last frame */
 
-	IPSEC_SPLASSERT_SOFTNET(__func__);
-
 	KASSERT(sav != NULL);
 	KASSERT(sav->replay != NULL);
 
@@ -1668,8 +1665,6 @@ ipsec_updatereplay(u_int32_t seq, const struct secasvar *sav)
 	int fr;
 	u_int32_t wsizeb;	/* constant: bits of window size */
 	int frlast;		/* constant: last frame */
-
-	IPSEC_SPLASSERT_SOFTNET(__func__);
 
 	KASSERT(sav != NULL);
 	KASSERT(sav->replay != NULL);
@@ -1812,30 +1807,6 @@ ipsec_logsastr(const struct secasvar *sav, char *buf, size_t size)
 	    ipsec_address(&saidx->dst, dbuf, sizeof(dbuf)));
 
 	return buf;
-}
-
-void
-ipsec_dumpmbuf(struct mbuf *m)
-{
-	int totlen;
-	int i;
-	u_char *p;
-
-	totlen = 0;
-	printf("---\n");
-	while (m) {
-		p = mtod(m, u_char *);
-		for (i = 0; i < m->m_len; i++) {
-			printf("%02x ", p[i]);
-			totlen++;
-			if (totlen % 16 == 0)
-				printf("\n");
-		}
-		m = m->m_next;
-	}
-	if (totlen % 16 != 0)
-		printf("\n");
-	printf("---\n");
 }
 
 #ifdef INET6

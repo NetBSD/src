@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.146.2.2 2018/04/22 07:20:29 pgoyette Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.146.2.3 2018/05/02 07:20:24 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -283,7 +283,7 @@ struct mbuf *
 struct mbuf *
 	sbcreatecontrol1(void **, int, int, int, int);
 struct mbuf **
-	sbsavetimestamp(int, struct mbuf *, struct mbuf **);
+	sbsavetimestamp(int, struct mbuf **);
 void	sbdrop(struct sockbuf *, int);
 void	sbdroprecord(struct sockbuf *);
 void	sbflush(struct sockbuf *);

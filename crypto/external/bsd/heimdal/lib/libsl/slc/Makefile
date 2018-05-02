@@ -1,8 +1,6 @@
-# $NetBSD: Makefile,v 1.4 2017/01/30 02:38:50 jakllsch Exp $
+# $NetBSD: Makefile,v 1.4.10.1 2018/05/02 07:19:58 pgoyette Exp $
 
-NOMAN=		# defined
-
-.include <bsd.own.mk>
+.include <bsd.hostinit.mk>
 .include <${.CURDIR}/../../../Makefile.inc>
 
 .PATH:		${HEIMDIST}/lib/sl ${HEIMDIST}/lib/roken ${HEIMDIST}/lib/vers

@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.8 2014/03/09 17:10:12 christos Exp $
+#	$NetBSD: Makefile,v 1.8.24.1 2018/05/02 07:20:26 pgoyette Exp $
 
 HOSTLIB=	elf
 
-.include <bsd.own.mk>
+.include <bsd.hostinit.mk>
 
 SRCS=		elf_begin.c						\
 		elf_cntl.c						\

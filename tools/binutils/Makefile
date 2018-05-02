@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.26 2016/10/11 03:57:00 mrg Exp $
+#	$NetBSD: Makefile,v 1.26.12.1 2018/05/02 07:20:25 pgoyette Exp $
 
-.include <bsd.own.mk>
+.include <bsd.hostinit.mk>
 
 MODULE=		binutils
 

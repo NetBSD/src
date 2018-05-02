@@ -1,4 +1,4 @@
-/* $NetBSD: param.h,v 1.1.28.1 2018/04/07 04:12:11 pgoyette Exp $ */
+/* $NetBSD: param.h,v 1.1.28.2 2018/05/02 07:20:02 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
 
 
 #ifndef MSGBUFSIZE
-#define MSGBUFSIZE		NBPG	/* default message buffer size */
+#define MSGBUFSIZE		16384	/* default message buffer size */
 #endif
 
 #ifdef _KERNEL

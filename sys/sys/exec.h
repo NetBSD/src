@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.152.2.1 2018/03/07 09:33:26 pgoyette Exp $	*/
+/*	$NetBSD: exec.h,v 1.152.2.2 2018/05/02 07:20:24 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -310,7 +310,9 @@ int	check_posix_spawn	(struct lwp *);
 void	posix_spawn_fa_free(struct posix_spawn_file_actions *, size_t);
 int	do_posix_spawn(struct lwp *, pid_t *, bool*, const char *,
     struct posix_spawn_file_actions *, struct posix_spawnattr *,
-    char *const *argv, char *const *, execve_fetch_element_t);
+    char *const *, char *const *, execve_fetch_element_t);
+int      exec_makepathbuf(struct lwp *, const char *, enum uio_seg,
+    struct pathbuf **, size_t *);
 
 extern int	maxexec;
 

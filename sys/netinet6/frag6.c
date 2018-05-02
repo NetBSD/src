@@ -1,4 +1,4 @@
-/*	$NetBSD: frag6.c,v 1.66.2.2 2018/04/16 02:00:09 pgoyette Exp $	*/
+/*	$NetBSD: frag6.c,v 1.66.2.3 2018/05/02 07:20:23 pgoyette Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.66.2.2 2018/04/16 02:00:09 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.66.2.3 2018/05/02 07:20:23 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -55,8 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.66.2.2 2018/04/16 02:00:09 pgoyette Exp 
 #include <netinet6/ip6_var.h>
 #include <netinet6/ip6_private.h>
 #include <netinet/icmp6.h>
-
-#include <net/net_osdep.h>
 
 /*
  * IPv6 reassembly queue structure. Each fragment being reassembled is

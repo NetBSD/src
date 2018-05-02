@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.1.2.2 2018/04/07 04:12:12 pgoyette Exp $
+#	$NetBSD: GENERIC64,v 1.1.2.3 2018/05/02 07:20:04 pgoyette Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -26,12 +26,16 @@ makeoptions	DTS="
 	sun50i-a64-pine64.dts
 	sun50i-a64-pinebook.dts
 	sun50i-a64-sopine-baseboard.dts
+	sun50i-a64-teres-i.dts
 
 	sun50i-h5-nanopi-neo-plus2.dts
 	sun50i-h5-nanopi-neo2.dts
 	sun50i-h5-orangepi-pc2.dts
 	sun50i-h5-orangepi-prime.dts
+	sun50i-h5-orangepi-zero-plus.dts
 	sun50i-h5-orangepi-zero-plus2.dts
+
+	sun50i-h6-pine-h64.dts
 
 	tegra210-p2371-0000.dts
 	tegra210-p2371-2180.dts
@@ -44,6 +48,7 @@ options 	SOC_BCM2837
 options 	SOC_TEGRA210
 options 	SOC_SUN50I_A64
 options 	SOC_SUN50I_H5
+options 	SOC_SUN50I_H6
 #options 	MULTIPROCESSOR
 
 pseudo-device 	openfirm	# /dev/openfirm
@@ -114,6 +119,7 @@ sun6idma*	at fdt?			# Allwinner DMA controller (sun6i)
 tegraapbdma*	at fdt? pass 4		# NVIDIA Tegra APB DMA
 
 # FUSE controller
+sunxisid*	at fdt? pass 4		# Allwinner SID
 tegrafuse*	at fdt? pass 4		# NVIDIA Tegra FUSE
 
 # Power management controller
@@ -125,6 +131,7 @@ bcmaux*		at fdt? pass 1		# Broadcom BCM283x Aux Periph Clocks
 sun8ih3ccu*	at fdt? pass 2		# Allwinner H3/H5 CCU
 sun8ih3rccu*	at fdt? pass 2		# Allwinner H3/H5 CCU (PRCM)
 sun50ia64ccu*	at fdt? pass 2		# Allwinner A64 CCU
+sun50ih6ccu*	at fdt? pass 2		# Allwinner H6 CCU
 sunxiresets*	at fdt? pass 1		# Allwinner misc. resets
 sunxigates*	at fdt? pass 1		# Allwinner misc. gates
 sunxigmacclk*	at fdt? pass 2		# Allwinner GMAC MII/RGMII clock mux
@@ -273,14 +280,16 @@ pseudo-device	wsfont
 #nouveau*	at fdt?			# NVIDIA GPU
 
 # Thermal throttling controller
+sunxithermal*	at fdt?			# Allwinner thermal sensor controller
 tegrasoctherm*	at fdt?			# NVIDIA Tegra SOC_THERM
 
 # USB
 sunxiusbphy*	at fdt? pass 9		# Allwinner USB PHY
+sunxiusb3phy*	at fdt? pass 9		# Allwinner USB3 PHY
 tegrausbphy*	at fdt?			# NVIDIA Tegra USB PHY
 dwctwo*		at fdt?			# Designware USB DRD
 ehci*		at fdt?			# EHCI
-#motg*		at fdt?			# Mentor Graphics USB OTG
+motg*		at fdt?			# Mentor Graphics USB OTG
 ohci*		at fdt?			# OHCI
 xhci*		at fdt?			# XHCI
 usb*		at usbus?

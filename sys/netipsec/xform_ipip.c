@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipip.c,v 1.63.2.1 2018/04/22 07:20:28 pgoyette Exp $	*/
+/*	$NetBSD: xform_ipip.c,v 1.63.2.2 2018/05/02 07:20:24 pgoyette Exp $	*/
 /*	$FreeBSD: xform_ipip.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ipip.c,v 1.25 2002/06/10 18:04:55 itojun Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.63.2.1 2018/04/22 07:20:28 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.63.2.2 2018/05/02 07:20:24 pgoyette Exp $");
 
 /*
  * IP-inside-IP processing
@@ -85,9 +85,9 @@ __KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.63.2.1 2018/04/22 07:20:28 pgoyette
 #include <netipsec/key_debug.h>
 
 /* XXX IPCOMP */
-#define	M_IPSEC	(M_AUTHIPHDR|M_AUTHIPDGM|M_DECRYPTED)
+#define	M_IPSEC	(M_AUTHIPHDR|M_DECRYPTED)
 
-int ipip_allow = 0;
+int ipip_spoofcheck = 1;
 percpu_t *ipipstat_percpu;
 
 void ipe4_attach(void);
@@ -254,7 +254,7 @@ _ipip_input(struct mbuf *m, int iphlen)
 	/* Check for local address spoofing. */
 	if ((m_get_rcvif_NOMPSAFE(m) == NULL ||
 	    !(m_get_rcvif_NOMPSAFE(m)->if_flags & IFF_LOOPBACK)) &&
-	    ipip_allow != 2) {
+	    ipip_spoofcheck) {
 		int s = pserialize_read_enter();
 		IFNET_READER_FOREACH(ifp) {
 			IFADDR_READER_FOREACH(ifa, ifp) {
@@ -333,7 +333,6 @@ ipip_output(struct mbuf *m, const struct ipsecrequest *isr,
 	struct ip6_hdr *ip6, *ip6o;
 #endif
 
-	IPSEC_SPLASSERT_SOFTNET(__func__);
 	KASSERT(sav != NULL);
 
 	/* XXX Deal with empty TDB source/destination addresses. */
@@ -507,10 +506,6 @@ nofamily:
 
 	IPIP_STATINC(IPIP_STAT_OPACKETS);
 	IPIP_STATADD(IPIP_STAT_OBYTES, m->m_pkthdr.len - iphlen);
-#if 0
-	if (sav->tdb_xform->xf_type == XF_IP4)
-		tdb->tdb_cur_bytes += m->m_pkthdr.len - iphlen;
-#endif
 
 	*mp = m;
 	return 0;

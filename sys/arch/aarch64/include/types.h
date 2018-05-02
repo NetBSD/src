@@ -1,4 +1,4 @@
-/* $NetBSD: types.h,v 1.5.16.1 2018/04/07 04:12:11 pgoyette Exp $ */
+/* $NetBSD: types.h,v 1.5.16.2 2018/05/02 07:20:02 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -106,6 +106,8 @@ typedef unsigned long long int __register_t;
 #define __HAVE___LWP_GETPRIVATE_FAST
 #define __HAVE_COMMON___TLS_GET_ADDR
 #define __HAVE_TLS_VARIANT_I
+#define __HAVE_OLD_DISKLABEL	/* compatibility */
+#define __HAVE_ATOMIC64_OPS
 
 #if defined(_KERNEL) || defined(_KMEMUSER)
 #define PCU_FPU			0

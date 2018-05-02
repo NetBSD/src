@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.1.28.2 2018/04/16 01:59:52 pgoyette Exp $ */
+/* $NetBSD: pmap.h,v 1.1.28.3 2018/05/02 07:20:02 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -68,9 +68,6 @@ struct vm_page_md {
 
 	/* VM_PROT_READ means referenced, VM_PROT_WRITE means modified */
 	uint32_t mdpg_flags;
-
-	u_int mdpg_kenter;		/* num of pmap_kenter_pa()'ed */
-	u_int mdpg_wiredcount;		/* num of pmap_enter with PMAP_WIRED */
 };
 
 /* each mdpg_pvlock will be initialized in pmap_init() */
@@ -78,8 +75,6 @@ struct vm_page_md {
 	do {						\
 		TAILQ_INIT(&(pg)->mdpage.mdpg_pvhead);	\
 		(pg)->mdpage.mdpg_flags = 0;		\
-		(pg)->mdpage.mdpg_kenter = 0;		\
-		(pg)->mdpage.mdpg_wiredcount = 0;	\
 	} while (/*CONSTCOND*/ 0)
 
 #define l0pde_pa(pde)		((paddr_t)((pde) & LX_TBL_PA))

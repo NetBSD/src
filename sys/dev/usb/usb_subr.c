@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.223.2.1 2018/03/29 11:20:03 pgoyette Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.223.2.2 2018/05/02 07:20:11 pgoyette Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.223.2.1 2018/03/29 11:20:03 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.223.2.2 2018/05/02 07:20:11 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -856,7 +856,9 @@ usbd_attach_roothub(device_t parent, struct usbd_device *dev)
 	uaa.uaa_subclass = dd->bDeviceSubClass;
 	uaa.uaa_proto = dd->bDeviceProtocol;
 
+	KERNEL_LOCK(1, curlwp);
 	dv = config_found_ia(parent, "usbroothubif", &uaa, 0);
+	KERNEL_UNLOCK_ONE(curlwp);
 	if (dv) {
 		dev->ud_subdevs = kmem_alloc(sizeof(dv), KM_SLEEP);
 		dev->ud_subdevs[0] = dv;
@@ -901,10 +903,10 @@ usbd_attachwholedevice(device_t parent, struct usbd_device *dev, int port,
 	dlocs[USBDEVIFCF_CONFIGURATION] = -1;
 	dlocs[USBDEVIFCF_INTERFACE] = -1;
 
-	KERNEL_LOCK(1, NULL);
+	KERNEL_LOCK(1, curlwp);
 	dv = config_found_sm_loc(parent, "usbdevif", dlocs, &uaa, usbd_print,
 				 config_stdsubmatch);
-	KERNEL_UNLOCK_ONE(NULL);
+	KERNEL_UNLOCK_ONE(curlwp);
 	if (dv) {
 		dev->ud_subdevs = kmem_alloc(sizeof(dv), KM_SLEEP);
 		dev->ud_subdevs[0] = dv;
@@ -978,10 +980,10 @@ usbd_attachinterfaces(device_t parent, struct usbd_device *dev,
 			    loc != uiaa.uiaa_ifaceno)
 				continue;
 		}
-		KERNEL_LOCK(1, NULL);
+		KERNEL_LOCK(1, curlwp);
 		dv = config_found_sm_loc(parent, "usbifif", ilocs, &uiaa,
 					 usbd_ifprint, config_stdsubmatch);
-		KERNEL_UNLOCK_ONE(NULL);
+		KERNEL_UNLOCK_ONE(curlwp);
 		if (!dv)
 			continue;
 
@@ -1655,7 +1657,10 @@ usb_disconnect_port(struct usbd_port *up, device_t parent, int flags)
 				continue;
 			strlcpy(subdevname, device_xname(subdev),
 			    sizeof(subdevname));
-			if ((rc = config_detach(subdev, flags)) != 0)
+			KERNEL_LOCK(1, curlwp);
+			rc = config_detach(subdev, flags);
+			KERNEL_UNLOCK_ONE(curlwp);
+			if (rc != 0)
 				return rc;
 			printf("%s: at %s", subdevname, hubname);
 			if (up->up_portno != 0)

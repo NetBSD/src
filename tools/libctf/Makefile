@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.6 2015/12/27 21:37:50 christos Exp $
+#	$NetBSD: Makefile,v 1.6.14.1 2018/05/02 07:20:26 pgoyette Exp $
 
 HOSTLIB=	ctf
 
-.include <bsd.own.mk>
+.include <bsd.hostinit.mk>
 
 SRCS=		ctf_create.c \
 		ctf_decl.c \

@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_gif.c,v 1.90.2.1 2018/03/15 09:12:07 pgoyette Exp $	*/
+/*	$NetBSD: in6_gif.c,v 1.90.2.2 2018/05/02 07:20:23 pgoyette Exp $	*/
 /*	$KAME: in6_gif.c,v 1.62 2001/07/29 04:27:25 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.90.2.1 2018/03/15 09:12:07 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.90.2.2 2018/05/02 07:20:23 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -68,8 +68,6 @@ __KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.90.2.1 2018/03/15 09:12:07 pgoyette Ex
 #include <netinet/ip_ecn.h>
 
 #include <net/if_gif.h>
-
-#include <net/net_osdep.h>
 
 static int gif_validate6(const struct ip6_hdr *, struct gif_variant *,
 	struct ifnet *);
@@ -182,11 +180,11 @@ in6_gif_output(struct gif_variant *var, int family, struct mbuf *m)
 
 	sc = ifp->if_softc;
 	gro = percpu_getref(sc->gif_ro_percpu);
-	mutex_enter(&gro->gr_lock);
+	mutex_enter(gro->gr_lock);
 	ro = &gro->gr_ro;
 	rt = rtcache_lookup(ro, var->gv_pdst);
 	if (rt == NULL) {
-		mutex_exit(&gro->gr_lock);
+		mutex_exit(gro->gr_lock);
 		percpu_putref(sc->gif_ro_percpu);
 		m_freem(m);
 		return ENETUNREACH;
@@ -196,7 +194,7 @@ in6_gif_output(struct gif_variant *var, int family, struct mbuf *m)
 	if (rt->rt_ifp == ifp) {
 		rtcache_unref(rt, ro);
 		rtcache_free(ro);
-		mutex_exit(&gro->gr_lock);
+		mutex_exit(gro->gr_lock);
 		percpu_putref(sc->gif_ro_percpu);
 		m_freem(m);
 		return ENETUNREACH;	/* XXX */
@@ -213,7 +211,7 @@ in6_gif_output(struct gif_variant *var, int family, struct mbuf *m)
 #else
 	error = ip6_output(m, 0, ro, 0, NULL, NULL, NULL);
 #endif
-	mutex_exit(&gro->gr_lock);
+	mutex_exit(gro->gr_lock);
 	percpu_putref(sc->gif_ro_percpu);
 	return (error);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.260.2.1 2018/04/16 02:00:08 pgoyette Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.260.2.2 2018/05/02 07:20:22 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.260.2.1 2018/04/16 02:00:08 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.260.2.2 2018/05/02 07:20:22 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -247,7 +247,7 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 		}
 		/* If broadcasting on a simplex interface, loopback a copy */
 		if ((m->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX))
-			mcopy = m_copy(m, 0, M_COPYALL);
+			mcopy = m_copym(m, 0, M_COPYALL, M_DONTWAIT);
 		etype = htons(ETHERTYPE_IP);
 		break;
 
@@ -328,9 +328,9 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 
 		/*
 		 * In the phase 2 case, we need to prepend an mbuf for the
-		 * llc header.  Since we must preserve the value of m,
-		 * which is passed to us by value, we m_copy() the first
-		 * mbuf, and use it for our llc header.
+		 * llc header.
+		 *
+		 * XXX XXX: Do we need to preserve the value of m?
 		 */
 		if (aa->aa_flags & AFA_PHASE2) {
 			struct llc llc;

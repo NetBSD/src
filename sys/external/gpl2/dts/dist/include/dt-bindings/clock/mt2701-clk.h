@@ -1,4 +1,4 @@
-/*	$NetBSD: mt2701-clk.h,v 1.1.1.2 2017/10/28 10:30:32 jmcneill Exp $	*/
+/*	$NetBSD: mt2701-clk.h,v 1.1.1.2.4.1 2018/05/02 07:20:21 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2014 MediaTek Inc.
@@ -178,7 +178,8 @@
 #define CLK_TOP_AUD_EXT1			156
 #define CLK_TOP_AUD_EXT2			157
 #define CLK_TOP_NFI1X_PAD			158
-#define CLK_TOP_NR				159
+#define CLK_TOP_AXISEL_D4			159
+#define CLK_TOP_NR				160
 
 /* APMIXEDSYS */
 

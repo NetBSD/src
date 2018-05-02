@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.26 2012/06/01 06:26:38 matt Exp $ */
+/*	$NetBSD: asm.h,v 1.26.38.1 2018/05/02 07:20:05 pgoyette Exp $ */
 /*
  * Copyright (c) 1982, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -81,6 +81,11 @@
 #define ALTENTRY(x)		.globl _C_LABEL(x); _C_LABEL(x):
 #define RCSID(name)		.pushsection ".ident"; .asciz name; .popsection
 
+#ifdef NO_KERNEL_RCSIDS
+#define __KERNEL_RCSID(_n, _s)  /* nothing */
+#else
+#define __KERNEL_RCSID(_n, _s)  RCSID(_s)
+#endif
 
 #define	WEAK_ALIAS(alias,sym)						\
 	.weak alias;							\
