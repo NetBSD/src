@@ -359,7 +359,7 @@ rt_add(struct rt *nrt, struct rt *ort)
 	 * As such, we need to delete and re-add the route to flush children
 	 * to correct the flags. */
 	if (change && ort != NULL && ort->rt_flags & RTF_CLONING)
-		change = true;
+		change = false;
 #endif
 
 	if (change) {
