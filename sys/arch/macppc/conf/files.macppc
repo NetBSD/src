@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.109 2018/04/20 18:22:50 macallan Exp $
+#	$NetBSD: files.macppc,v 1.110 2018/05/02 22:07:37 macallan Exp $
 #
 # macppc-specific configuration info
 
@@ -106,7 +106,7 @@ device grackle: pcibus, pic_heathrow
 attach grackle at mainbus
 file arch/macppc/pci/grackle.c			grackle
 
-device uninorth: pcibus, pic_openpic, ipi_openpic, pic_u3_ht
+device uninorth: pcibus, pic_openpic, ipi_openpic
 attach uninorth at mainbus
 file arch/macppc/pci/uninorth.c			uninorth
 
