@@ -15,6 +15,7 @@ TESTS_SH+=	t_ubsan_int_add_overflow
 TESTS_SH+=	t_ubsan_int_sub_overflow
 TESTS_SH+=	t_ubsan_int_neg_overflow
 TESTS_SH+=	t_ubsan_int_divzero
+TESTS_SH+=	t_ubsan_vla_out_of_bounds
 TESTS_SH+=	t_call_once
 TESTS_SH+=	t_call_once2
 TESTS_SH+=	t_cxxruntime
