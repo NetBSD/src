@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.90 2018/04/23 19:55:00 jdolecek Exp $	*/
+/*	$NetBSD: xhci.c,v 1.91 2018/05/02 09:55:22 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.90 2018/04/23 19:55:00 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.91 2018/05/02 09:55:22 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -3403,7 +3403,7 @@ xhci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 #define sd ((usb_string_descriptor_t *)buf)
 		case C(2, UDESC_STRING):
 			/* Product */
-			totlen = usb_makestrdesc(sd, len, "xHCI Root Hub");
+			totlen = usb_makestrdesc(sd, len, "xHCI root hub");
 			break;
 #undef sd
 		default:
