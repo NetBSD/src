@@ -32,7 +32,7 @@
 -- command line args
 dofile "optparse.lua"
 
-opt = OptionParser{usage="%prog [options] root [vhost]", version="20091105"}                           
+opt = OptionParser{usage="%prog [options] root [vhost]", version="20180502"}                           
 
 opt.add_option{"-C", "--cgimap", action="store", dest="cgimap", help="--cgimap 's t'"}
 opt.add_option{"-E", "--enable-user-cgibin", action="store_true", dest="enableusercgibin", help="--enable-user-cgibin"}
@@ -75,22 +75,22 @@ prefs = bozohttpd.init_prefs()
 -- parse command line args
 options,args = opt.parse_args()
 if options.portnum then
-        bozohttpd.set_pref(prefs, "port number", options.portnum)
+        bozohttpd.set_pref(httpd, prefs, "port number", options.portnum)
 end
 if options.background then
-        bozohttpd.set_pref(prefs, "background", options.background)
+        bozohttpd.set_pref(httpd, prefs, "background", options.background)
 end
 if options.numeric then
-        bozohttpd.set_pref(prefs, "numeric", "true")
+        bozohttpd.set_pref(httpd, prefs, "numeric", "true")
 end
 if options.logstderr then
-        bozohttpd.set_pref(prefs, "log to stderr", "true")
+        bozohttpd.set_pref(httpd, prefs, "log to stderr", "true")
 end
 if options.foreground then
-        bozohttpd.set_pref(prefs, "foreground", "true")
+        bozohttpd.set_pref(httpd, prefs, "foreground", "true")
 end
 if options.trustedref then
-        bozohttpd.set_pref(prefs, "trusted referal", "true")
+        bozohttpd.set_pref(httpd, prefs, "trusted referal", "true")
 end
 if options.dynmime then
 	suffix, type, s1, s2 = string.find(options.dynmime,
@@ -98,29 +98,29 @@ if options.dynmime then
         bozohttpd.dynamic_mime(httpd, suffix, type, s1, s2)
 end
 if options.serversw then
-        bozohttpd.set_pref(prefs, "server software", options.serversw)
+        bozohttpd.set_pref(httpd, prefs, "server software", options.serversw)
 end
 if options.ssl then
 	cert, priv = string.find(options.ssl, "(%S+)%s+(%S+)")
         bozohttpd.dynamic_mime(httpd, cert, priv)
 end
 if options.username then
-        bozohttpd.set_pref(prefs, "username", options.username)
+        bozohttpd.set_pref(httpd, prefs, "username", options.username)
 end
 if options.unknownslash then
-        bozohttpd.set_pref(prefs, "unknown slash", "true")
+        bozohttpd.set_pref(httpd, prefs, "unknown slash", "true")
 end
 if options.virtbase then
-        bozohttpd.set_pref(prefs, "virtual base", options.virtbase)
+        bozohttpd.set_pref(httpd, prefs, "virtual base", options.virtbase)
 end
 if options.indexhtml then
-        bozohttpd.set_pref(prefs, "index.html", options.indexhtml)
+        bozohttpd.set_pref(httpd, prefs, "index.html", options.indexhtml)
 end
 if options.dirtyenv then
-        bozohttpd.set_pref(prefs, "dirty environment", "true")
+        bozohttpd.set_pref(httpd, prefs, "dirty environment", "true")
 end
 if options.bindaddr then
-        bozohttpd.set_pref(prefs, "bind address", options.bindaddr)
+        bozohttpd.set_pref(httpd, prefs, "bind address", options.bindaddr)
 end
 if options.cgibin then
         bozohttpd.cgi_setbin(httpd, options.cgibin)
@@ -130,22 +130,22 @@ if options.cgimap then
         bozohttpd.cgi_map(httpd, name, handler)
 end
 if options.public_html then
-        bozohttpd.set_pref(prefs, "public_html", options.public_html)
+        bozohttpd.set_pref(httpd, prefs, "public_html", options.public_html)
 end
 if options.chroot then
-        bozohttpd.set_pref(prefs, "chroot dir", options.chroot)
+        bozohttpd.set_pref(httpd, prefs, "chroot dir", options.chroot)
 end
 if options.enableusers then
-        bozohttpd.set_pref(prefs, "enable users", "true")
+        bozohttpd.set_pref(httpd, prefs, "enable users", "true")
 end
 if options.hidedots then
-        bozohttpd.set_pref(prefs, "hide dots", "true")
+        bozohttpd.set_pref(httpd, prefs, "hide dots", "true")
 end
 if options.enableusercgibin then
-        bozohttpd.set_pref(prefs, "enable user cgibin", "true")
+        bozohttpd.set_pref(httpd, prefs, "enable user cgibin", "true")
 end
 if options.dirindex then
-        bozohttpd.set_pref(prefs, "directory indexing", "true")
+        bozohttpd.set_pref(httpd, prefs, "directory indexing", "true")
 end
 
 if #args < 1 then
@@ -159,7 +159,7 @@ else
 	local numreps = options.background or 0
 	repeat
 		req = bozohttpd.read_request(httpd)
-		bozohttpd.process_request(httpd, req)
+		bozohttpd.process_request(req)
 		bozohttpd.clean_request(req)
 	until numreps == 0
 end
