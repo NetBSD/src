@@ -70,22 +70,22 @@ int_divzero_body(){
 	cat > test.c << EOF
 #include <stdio.h>
 #include <stdlib.h>
-int main(int argc, char **argv) { int l = argc; int k = 0; l/= k; printf("CHECK\n"); exit(0); }
+int main(int argc, char **argv) { volatile int l = argc; volatile int k = 0; l/= k; return(l); }
 EOF
 
-	cc -fsanitize=undefined -o test test.c 
-	atf_check -s not-exit:0 -o not-match:"CHECK" -e match:"division by zero" ./test
+	cc -fsanitize=integer-divide-by-zero -o test test.c 
+	atf_check -s signal:8  -e match:"division by zero" ./test
 }
 
 int_divzero_profile_body(){
 	cat > test.c << EOF
 #include <stdio.h>
 #include <stdlib.h>
-int main(int argc, char **argv) { int l = argc; int k = 0; l/= k; printf("CHECK\n"); exit(0); }
+int main(int argc, char **argv) { int l = argc; int k = 0; l/= k;  return(l); }
 EOF
 
-	cc -fsanitize=undefined -o test -pg test.c 
-	atf_check -s not-exit:0 -o not-match:"CHECK" -e match:"division by zero" ./test
+	cc -fsanitize=integer-divide-by-zero -o test -pg test.c 
+	atf_check -s signal:8  -e match:"division by zero" ./test
 }
 
 int_divzero_pic_body(){
@@ -93,22 +93,21 @@ int_divzero_pic_body(){
 #include <stdio.h>
 #include <stdlib.h>
 void help(int);
-int main(int argc, char **argv) { help(argc); exit(0); }
+int main(int argc, char **argv) { help(argc); }
 EOF
 
 	cat > pic.c << EOF
 #include <stdlib.h>
 #include <stdio.h>
-void help(int count) { int l = count; int k = 0; l /= k; printf("CHECK\n");}
+void help(int count) { volatile int l = count; volatile int k = 0; l /= k;}
 EOF
 
-	cc -fsanitize=undefined -fPIC -shared -o libtest.so pic.c
-	cc -o test test.c -fsanitize=undefined -L. -ltest
+	cc -fsanitize=integer-divide-by-zero -fPIC -shared -o libtest.so pic.c
+	cc -o test test.c -fsanitize=integer-divide-by-zero -L. -ltest
 
 	export LD_LIBRARY_PATH=.
+	atf_check -s signal:8 -e match:"division by zero" ./test
 }
-	atf_check -s not-exit:0 -o not-match:"CHECK" -e match:"division by zero" ./test
-
 int_divzero_pie_body(){
 	
 	#check whether -pie flag is supported on this architecture
@@ -118,11 +117,11 @@ int_divzero_pie_body(){
 	cat > test.c << EOF
 #include <stdio.h>
 #include <stdlib.h>
-int main(int argc, char **argv) { int l = argc; int k = 0; l/= k; printf("CHECK\n"); exit(0); }
+int main(int argc, char **argv) { int l = argc; int k = 0; l/= k;; return(l); }
 EOF
 
-	cc -fsanitize=undefined -o test -fpie -pie test.c 
-	atf_check -s not-exit:0 -o not-match:"CHECK" -e match:"division by zero" ./test
+	cc -fsanitize=integer-divide-by-zero -o test -fpie -pie test.c 
+	atf_check -s signal:8 -e match:"division by zero" ./test
 }
 
 
@@ -143,11 +142,11 @@ int_divzero32_body(){
 	cat > test.c << EOF
 #include <stdio.h>
 #include <stdlib.h>
-int main(int argc, char **argv) { int l = argc; int k = 0; l/= k; printf("CHECK\n"); exit(0); }
+int main(int argc, char **argv) { int l = argc; int k = 0; l/= k; return(l); }
 EOF
 
-	cc -fsanitize=undefined -o md32 -m32 test.c
-	cc -fsanitize=undefined -o md64 test.c
+	cc -fsanitize=integer-divide-by-zero -o md32 -m32 test.c
+	cc -fsanitize=integer-divide-by-zero -o md64 test.c
 	file -b ./md32 > ./ftype32
 	file -b ./md64 > ./ftype64
 	if diff ./ftype32 ./ftype64 >/dev/null; then
@@ -157,17 +156,17 @@ EOF
 	cat ./ftype32
 	echo "64bit Binz are on the other hand:"
 	cat ./ftype64
-	atf_check -s not-exit:0 -o not-match:"CHECK" -e match:"division by zero" ./md32
+	atf_check -s signal:8 -e match:"division by zero" ./md32
 
 	# Another test with profile 32bit binaries, just to make sure everything has been thoroughly done
 	cat > test.c << EOF
 #include <stdio.h>
 #include <stdlib.h>
-int main(int argc, char **argv) { int l = argc; int k = 0;  l /= k; printf("CHECK\n"); exit(0); }
+int main(int argc, char **argv) { int l = argc; int k = 0;  l /= k; return(l); }
 EOF
 
-	cc -fsanitize=undefined -pg -m32 -o test test.c
-	atf_check -s not-exit:0 -o not-match:"CHECK" -e match:"division by zero" ./test
+	cc -fsanitize=integer-divide-by-zero -pg -m32 -o test test.c
+	atf_check -s signal:8  -e match:"division by zero" ./test
 }
 
 atf_test_case target_not_supported
