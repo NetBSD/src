@@ -1,4 +1,4 @@
-.\"	$NetBSD: mmap.2,v 1.51 2017/06/12 14:59:04 abhinav Exp $
+.\"	$NetBSD: mmap.2,v 1.52 2018/05/02 16:00:20 christos Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)mmap.2	8.4 (Berkeley) 5/11/95
 .\"
-.Dd April 27, 2017
+.Dd May 2, 2018
 .Dt MMAP 2
 .Os
 .Sh NAME
@@ -89,12 +89,22 @@ Placeholder when requesting no access permission.
 .Pp
 As a
 .Nx
-extension,
+extension, the
 .Dv PROT_MPROTECT
-can be used to request additional permissions for later use with
+macro can be used to request additional permissions for later use with
 .Fn mprotect 2 .
+For example
+.Dv PROT_MPROTECT(PROT_READ)
+requests that future
+.Dv PROT_READ
+mappings are allowed and can be enabled using
+.Xr mprotect 2 ,
+but does not currently grant read mappings to the returned memory segment.
 This is necessary for switching pages between writable and executable
-when PAX mprotect restrictions are in place.
+when PaX MPROTECT restrictions are in place.
+See
+.Xr mremap 2
+for a sample use case.
 .Pp
 .Bf -symbolic
 Note that, due to hardware limitations, on some platforms
@@ -137,6 +147,21 @@ size as returned by
 with the
 .Dv _SC_PAGESIZE
 request.
+The following constants are defined for convenience:
+.Bl -bullet -compact -offset indent
+.It
+.Dv MAP_ALIGNMENT_64KB
+.It
+.Dv MAP_ALIGNMENT_16MB
+.It
+.Dv MAP_ALIGNMENT_4GB
+.It
+.Dv MAP_ALIGNMENT_1TB
+.It
+.Dv MAP_ALIGNMENT_256TB
+.It
+.Dv MAP_ALIGNMENT_64PB
+.El
 .It Dv MAP_ANON
 Map anonymous memory not associated with any specific file.
 The file descriptor is not used for creating
@@ -170,6 +195,23 @@ handling may be necessary.
 Permit regions to be inherited across
 .Xr execve 2
 system calls.
+.It Dv MAP_NORESERVE
+Only reserve address space, but do not reserve swap space or any other
+resources for this mapping.
+Access to the address space is not guaranteed and may result in a segmentation
+violation.
+Unimplemented.
+.It Dv MAP_REMAPDUP
+Only valid for
+.Xr mremap 2 .
+.It Dv MAP_RENAME
+Assign the referenced private pages to the file descriptor provided.
+Unimplemented.
+.It Dv MAP_STACK
+Allocate a memory segment that can be used either for a process or thread stack.
+This currently has no effect, but its use is reserved for architectures
+that might require special treatment of that address space.
+Unimplemented.
 .It Dv MAP_TRYFIXED
 Attempt to use the address
 .Fa addr
@@ -303,6 +345,7 @@ would exceed the offset maximum established in its open file description.
 .Xr mincore 2 ,
 .Xr mlock 2 ,
 .Xr mprotect 2 ,
+.Xr mremap 2 ,
 .Xr msync 2 ,
 .Xr munmap 2 ,
 .Xr getpagesize 3 ,
