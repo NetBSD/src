@@ -29,11 +29,11 @@
 test_target()
 {
 	SUPPORT='n'
-	if ! echo __GNUC__ | cc -E - | grep -q __GNUC__; then 
+	if ! echo __GNUC__ | cc -E - | grep -q __GNUC__; then
 		SUPPORT='y'
 	fi
 
-	if ! echo __clang__ | cc -E - | grep -q __clang__; then 
+	if ! echo __clang__ | cc -E - | grep -q __clang__; then
 		SUPPORT='y'
 	fi
 }
@@ -71,11 +71,11 @@ int_add_overflow_body(){
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
-int main(int argc, char **argv) { int l = INT_MAX; l+=argc; printf("%d\n", l); exit(0); }
+int main(int argc, char **argv) { volatile int l = INT_MAX; l+=argc; return l; }
 EOF
 
-	cc -fsanitize=undefined -o test test.c 
-	atf_check -o not-match:"^[+]?\d+([.]\d+)" -e match:"signed integer overflow" ./test
+	cc -fsanitize=undefined -o test test.c
+	atf_check -e match:"signed integer overflow" ./test
 }
 
 int_add_overflow_profile_body(){
@@ -83,55 +83,55 @@ int_add_overflow_profile_body(){
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
-int main(int argc, char **argv) { int l = INT_MAX; l+=argc; printf("%d\n", l); exit(0); }
+int main(int argc, char **argv) { volatile int l = INT_MAX; l+=argc; return l; }
 EOF
 
-	cc -fsanitize=undefined -o test -pg test.c 
-	atf_check -o not-match:"^[+]?\d+([.]\d+)" -e match:"signed integer overflow" ./test
+	cc -fsanitize=undefined -o test -pg test.c
+	atf_check -e match:"signed integer overflow" ./test
 }
 
 int_add_overflow_pic_body(){
 	cat > test.c << EOF
 #include <stdio.h>
 #include <stdlib.h>
-void help(int);
-int main(int argc, char **argv) { help(argc); exit(0); }
+int help(int);
+int main(int argc, char **argv) { volatile int k = help(argc); return k;}
 EOF
 
 	cat > pic.c << EOF
 #include <stdlib.h>
 #include <stdio.h>
 #include <limits.h>
-void help(int count) { int l = INT_MAX; l+= count; printf("%d\n", l);}
+int help(int count) {volatile int l = INT_MAX; l+= count; return l;}
 EOF
 
 	cc -fsanitize=undefined -fPIC -shared -o libtest.so pic.c
 	cc -o test test.c -fsanitize=undefined -L. -ltest
 
 	export LD_LIBRARY_PATH=.
-	atf_check -o not-match:"^[+]?\d+([.]\d+)" -e match:"signed integer overflow" ./test
+	atf_check -e match:"signed integer overflow" ./test
 }
 
 int_add_overflow_pie_body(){
-	
+
 	#check whether -pie flag is supported on this architecture
-	if ! cc -pie -dM -E - < /dev/null 2>/dev/null >/dev/null; then 
+	if ! cc -pie -dM -E - < /dev/null 2>/dev/null >/dev/null; then
 		atf_set_skip "cc -pie not supported on this architecture"
 	fi
 	cat > test.c << EOF
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
-int main(int argc, char **argv) { int l = INT_MAX; l+= argc; printf("%d\n", l); exit(0); }
+int main(int argc, char **argv) { volatile int l = INT_MAX; l+= argc; return l; }
 EOF
 
-	cc -fsanitize=undefined -o test -fpie -pie test.c 
-	atf_check -o not-match:"^[+]?\d+([.]\d+)" -e match:"signed integer overflow" ./test
+	cc -fsanitize=undefined -o test -fpie -pie test.c
+	atf_check -e match:"signed integer overflow" ./test
 }
 
 
 int_add_overflow32_body(){
-	
+
 	# check what this architecture is, after all
 	if ! cc -dM -E - < /dev/null | grep -F -q _LP64; then
 		atf_skip "This is not a 64 bit architecture"
@@ -148,7 +148,7 @@ int_add_overflow32_body(){
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
-int main(int argc, char **argv) { int l = INT_MAX; l+= argc; printf("%d\n", l); exit(0); }
+int main(int argc, char **argv) { volatile int l = INT_MAX; l+= argc; return l; }
 EOF
 
 	cc -fsanitize=undefined -o md32 -m32 test.c
@@ -162,18 +162,18 @@ EOF
 	cat ./ftype32
 	echo "64bit Binz are on the other hand:"
 	cat ./ftype64
-	atf_check -o not-match:"^[+]?\d+([.]\d+)" -e match:"signed integer overflow" ./md32
+	atf_check -e match:"signed integer overflow" ./md32
 
 	# Another test with profile 32bit binaries, just to make sure everything has been thoroughly done
 	cat > test.c << EOF
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
-int main(int argc, char **argv) { int l = INT_MAX; l+= argc; printf("%d\n", l); exit(0); }
+int main(int argc, char **argv) { volatile int l = INT_MAX; l+= argc; return l; }
 EOF
 
 	cc -fsanitize=undefined -pg -m32 -o test test.c
-	atf_check -o not-match:"^[+]?\d+([.]\d+)" -e match:"signed integer overflow" ./test
+	atf_check -e match:"signed integer overflow" ./test
 }
 
 atf_test_case target_not_supported
