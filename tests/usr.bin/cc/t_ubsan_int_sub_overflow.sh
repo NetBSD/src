@@ -75,7 +75,7 @@ int main(int argc, char **argv) { volatile int l = INT_MIN; l-=argc; return l; }
 EOF
 
 	cc -fsanitize=undefined -o test test.c
-	atf_check -e match:"signed integer overflow" ./test
+	atf_check -s ignore -e match:"signed integer overflow" ./test
 }
 
 int_sub_overflow_profile_body(){
@@ -87,7 +87,7 @@ int main(int argc, char **argv) { volatile int l = INT_MIN; l-=argc; return l; }
 EOF
 
 	cc -fsanitize=undefined -o test -pg test.c
-	atf_check -e match:"signed integer overflow" ./test
+	atf_check -s ignore -e match:"signed integer overflow" ./test
 }
 
 int_sub_overflow_pic_body(){
@@ -109,7 +109,7 @@ EOF
 	cc -o test test.c -fsanitize=undefined -L. -ltest
 
 	export LD_LIBRARY_PATH=.
-	atf_check -e match:"signed integer overflow" ./test
+	atf_check -s ignore -e match:"signed integer overflow" ./test
 }
 
 int_sub_overflow_pie_body(){
@@ -126,7 +126,7 @@ int main(int argc, char **argv) { volatile int l = INT_MIN; l-= argc; return l; 
 EOF
 
 	cc -fsanitize=undefined -o test -fpie -pie test.c
-	atf_check -e match:"signed integer overflow" ./test
+	atf_check -s ignore -e match:"signed integer overflow" ./test
 }
 
 
@@ -162,7 +162,7 @@ EOF
 	cat ./ftype32
 	echo "64bit Binz are on the other hand:"
 	cat ./ftype64
-	atf_check -e match:"signed integer overflow" ./md32
+	atf_check -s ignore -e match:"signed integer overflow" ./md32
 
 	# Another test with profile 32bit binaries, just to make sure everything has been thoroughly done
 	cat > test.c << EOF
@@ -173,7 +173,7 @@ int main(int argc, char **argv) { volatile int l = INT_MIN; l-= argc; return l; 
 EOF
 
 	cc -fsanitize=undefined -pg -m32 -o test test.c
-	atf_check -e match:"signed integer overflow" ./test
+	atf_check -s ignore -e match:"signed integer overflow" ./test
 }
 
 atf_test_case target_not_supported
