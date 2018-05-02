@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.5 2018/05/01 20:06:13 jmcneill Exp $
+#	$NetBSD: GENERIC64,v 1.6 2018/05/02 00:02:15 jmcneill Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -285,6 +285,7 @@ tegrasoctherm*	at fdt?			# NVIDIA Tegra SOC_THERM
 
 # USB
 sunxiusbphy*	at fdt? pass 9		# Allwinner USB PHY
+sunxiusb3phy*	at fdt? pass 9		# Allwinner USB3 PHY
 tegrausbphy*	at fdt?			# NVIDIA Tegra USB PHY
 dwctwo*		at fdt?			# Designware USB DRD
 ehci*		at fdt?			# EHCI
