@@ -11,6 +11,12 @@ TESTS_SH+=	t_asan_heap_overflow
 TESTS_SH+=	t_asan_off_by_one
 TESTS_SH+=	t_asan_poison
 TESTS_SH+=	t_asan_uaf
+TESTS_SH+=	t_ubsan_int_add_overflow
+TESTS_SH+=	t_ubsan_int_sub_overflow
+TESTS_SH+=	t_ubsan_int_neg_overflow
+TESTS_SH+=	t_ubsan_int_divzero
+TESTS_SH+=	t_ubsan_ptr_null_ref
+TESTS_SH+=	t_ubsan_vla_out_of_bounds
 TESTS_SH+=	t_hello
 
 .include <bsd.test.mk>
