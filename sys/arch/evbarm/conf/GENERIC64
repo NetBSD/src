@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.6 2018/05/02 00:02:15 jmcneill Exp $
+#	$NetBSD: GENERIC64,v 1.7 2018/05/02 10:09:15 jmcneill Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -208,6 +208,7 @@ seeprom*	at iic?
 as3722pmic*	at iic?
 as3722reg*	at as3722pmic?
 max77620pmic*	at iic?
+pcf8563rtc*	at iic?			# PCF8563 RTC
 tcagpio*	at iic?
 
 # Random number generators
