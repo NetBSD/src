@@ -1,5 +1,5 @@
 #
-#	$NetBSD: SUNXI,v 1.67 2018/05/02 11:02:42 jmcneill Exp $
+#	$NetBSD: SUNXI,v 1.68 2018/05/02 21:20:58 jmcneill Exp $
 #
 #	Allwinner sunxi family
 #
@@ -214,6 +214,7 @@ sunxiwdt*	at fdt?			# Allwinner watchdog
 gic*		at fdt? pass 1		# GIC
 armgic0		at gic?
 sunxiintc*	at fdt? pass 1		# Allwinner INTC
+sunxinmi*	at fdt? pass 2		# Allwinner NMI / R_INTC
 
 # Memory controller
 
