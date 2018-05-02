@@ -1,5 +1,5 @@
 #
-#	$NetBSD: SUNXI,v 1.65 2018/05/01 20:06:13 jmcneill Exp $
+#	$NetBSD: SUNXI,v 1.66 2018/05/02 00:02:06 jmcneill Exp $
 #
 #	Allwinner sunxi family
 #
@@ -329,8 +329,10 @@ pseudo-device	wsmux
 
 # USB 2.0
 sunxiusbphy*	at fdt?	pass 9		# USB PHY
+sunxiusb3phy*	at fdt? pass 9		# USB3 PHY
 ehci*		at fdt?			# EHCI
 ohci*		at fdt?			# OHCI
+xhci*		at fdt?			# XHCI
 motg*		at fdt?			# USB OTG
 usb*		at ehci?
 usb*		at ohci?
