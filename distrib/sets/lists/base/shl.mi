@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.837 2018/05/03 22:27:58 sevan Exp $
+# $NetBSD: shl.mi,v 1.838 2018/05/03 22:51:17 sevan Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -877,6 +877,7 @@
 ./usr/lib/lua/5.1/gpio.so                    	base-obsolete		obsolete
 ./usr/lib/lua/5.1/sqlite.so                    	base-obsolete		obsolete
 ./usr/lib/lua/5.1/syslog.so                    	base-obsolete		obsolete
+./usr/lib/lua/5.3/bozohttpd.so			base-sys-shlib		compatfile
 ./usr/lib/lua/5.3/gpio.so                    	base-sys-shlib		compatfile
 ./usr/lib/lua/5.3/netpgp.so 			base-sys-shlib		compatfile
 ./usr/lib/lua/5.3/sqlite.so                    	base-sys-shlib		compatfile
