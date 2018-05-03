@@ -1,4 +1,4 @@
-/* $NetBSD: axp806.c,v 1.2 2018/05/03 01:15:49 jmcneill Exp $ */
+/* $NetBSD: axp806.c,v 1.3 2018/05/03 02:10:17 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: axp806.c,v 1.2 2018/05/03 01:15:49 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: axp806.c,v 1.3 2018/05/03 02:10:17 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -38,6 +38,9 @@ __KERNEL_RCSID(0, "$NetBSD: axp806.c,v 1.2 2018/05/03 01:15:49 jmcneill Exp $");
 #include <sys/kmem.h>
 
 #include <dev/i2c/i2cvar.h>
+
+#include <dev/sysmon/sysmonvar.h>
+#include <dev/sysmon/sysmon_taskq.h>
 
 #include <dev/fdt/fdtvar.h>
 
@@ -71,12 +74,14 @@ __KERNEL_RCSID(0, "$NetBSD: axp806.c,v 1.2 2018/05/03 01:15:49 jmcneill Exp $");
 #define AXP_CLDO3_CTRL_REG	0x26
 #define AXP_POWER_WAKE_CTRL_REG	0x31
 #define AXP_POWER_DISABLE_REG	0x32
+#define	 AXP_POWER_DISABLE_CTRL	__BIT(7)
 #define AXP_WAKEUP_PINFUNC_REG	0x35
 #define AXP_POK_SETTING_REG	0x36
-#define AXP_MODE_SEL_REG	0x3e
+#define AXP_MODE_SEL_REG	0axp806_power_funcsx3e
 #define AXP_SPECIAL_CTRL_REG	0x3f
 #define AXP_IRQ_ENABLE1_REG	0x40
 #define AXP_IRQ_ENABLE2_REG	0x41
+#define	 AXP_IRQ2_POKSIRQ	__BIT(1)
 #define AXP_IRQ_STATUS1_REG	0x48
 #define AXP_IRQ_STATUS2_REG	0x49
 #define AXP_VREF_TEMP_WARN_REG	0xf3
@@ -153,6 +158,8 @@ struct axp806_softc {
 	i2c_tag_t	sc_i2c;
 	i2c_addr_t	sc_addr;
 	int		sc_phandle;
+
+	struct sysmon_pswitch sc_smpsw;
 };
 
 struct axp806reg_softc {
@@ -176,17 +183,15 @@ static const char *compatible[] = {
 };
 
 static int
-axp806_read(i2c_tag_t tag, i2c_addr_t addr, uint8_t reg, uint8_t *val)
+axp806_read(i2c_tag_t tag, i2c_addr_t addr, uint8_t reg, uint8_t *val, int flags)
 {
-	return iic_smbus_read_byte(tag, addr, reg, val,
-	    cold ? I2C_F_POLL : 0);
+	return iic_smbus_read_byte(tag, addr, reg, val, flags);
 }
 
 static int
-axp806_write(i2c_tag_t tag, i2c_addr_t addr, uint8_t reg, uint8_t val)
+axp806_write(i2c_tag_t tag, i2c_addr_t addr, uint8_t reg, uint8_t val, int flags)
 {
-	return iic_smbus_write_byte(tag, addr, reg, val,
-	    cold ? I2C_F_POLL : 0);
+	return iic_smbus_write_byte(tag, addr, reg, val, flags);
 }
 
 static int
@@ -220,10 +225,10 @@ axp806_set_voltage(i2c_tag_t tag, i2c_addr_t addr, const struct axp806_ctrl *c, 
 		return EINVAL;
 
 	iic_acquire_bus(tag, flags);
-	if ((error = axp806_read(tag, addr, c->c_voltage_reg, &val)) == 0) {
+	if ((error = axp806_read(tag, addr, c->c_voltage_reg, &val, flags)) == 0) {
 		val &= ~c->c_voltage_mask;
 		val |= __SHIFTIN(reg_val, c->c_voltage_mask);
-		error = axp806_write(tag, addr, c->c_voltage_reg, val);
+		error = axp806_write(tag, addr, c->c_voltage_reg, val, flags);
 	}
 	iic_release_bus(tag, flags);
 
@@ -241,7 +246,7 @@ axp806_get_voltage(i2c_tag_t tag, i2c_addr_t addr, const struct axp806_ctrl *c, 
 		return EINVAL;
 
 	iic_acquire_bus(tag, flags);
-	error = axp806_read(tag, addr, c->c_voltage_reg, &val);
+	error = axp806_read(tag, addr, c->c_voltage_reg, &val, flags);
 	iic_release_bus(tag, flags);
 	if (error)
 		return error;
@@ -255,6 +260,52 @@ axp806_get_voltage(i2c_tag_t tag, i2c_addr_t addr, const struct axp806_ctrl *c, 
 	}
 
 	return 0;
+}
+
+static void
+axp806_power_poweroff(device_t dev)
+{
+	struct axp806_softc *sc = device_private(dev);
+
+	delay(1000000);
+
+	iic_acquire_bus(sc->sc_i2c, I2C_F_POLL);
+	axp806_write(sc->sc_i2c, sc->sc_addr, AXP_POWER_DISABLE_REG, AXP_POWER_DISABLE_CTRL, I2C_F_POLL);
+	iic_release_bus(sc->sc_i2c, I2C_F_POLL);
+}
+
+static struct fdtbus_power_controller_func axp806_power_funcs = {
+	.poweroff = axp806_power_poweroff,
+};
+
+static void
+axp806_task_shut(void *priv)
+{
+	struct axp806_softc *sc = priv;
+
+	sysmon_pswitch_event(&sc->sc_smpsw, PSWITCH_EVENT_PRESSED);
+}
+
+static int
+axp806_intr(void *priv)
+{
+	struct axp806_softc *sc = priv;
+	const int flags = I2C_F_POLL;
+	uint8_t stat1, stat2;
+
+	iic_acquire_bus(sc->sc_i2c, flags);
+	if (axp806_read(sc->sc_i2c, sc->sc_addr, AXP_IRQ_STATUS1_REG, &stat1, flags) == 0) {
+		axp806_write(sc->sc_i2c, sc->sc_addr, AXP_IRQ_STATUS1_REG, stat1, flags);
+	}
+	if (axp806_read(sc->sc_i2c, sc->sc_addr, AXP_IRQ_STATUS2_REG, &stat2, flags) == 0) {
+		if (stat2 & AXP_IRQ2_POKSIRQ)
+			sysmon_task_queue_sched(0, axp806_task_shut, sc);
+
+		axp806_write(sc->sc_i2c, sc->sc_addr, AXP_IRQ_STATUS2_REG, stat2, flags);
+	}
+	iic_release_bus(sc->sc_i2c, flags);
+
+	return 1;
 }
 
 static int
@@ -275,6 +326,7 @@ axp806_attach(device_t parent, device_t self, void *aux)
 	struct axp806reg_attach_args aaa;
 	struct i2c_attach_args *ia = aux;
 	int phandle, child, i;
+	void *ih;
 
 	sc->sc_dev = self;
 	sc->sc_i2c = ia->ia_tag;
@@ -283,6 +335,24 @@ axp806_attach(device_t parent, device_t self, void *aux)
 
 	aprint_naive("\n");
 	aprint_normal(": PMIC\n");
+
+	sc->sc_smpsw.smpsw_name = device_xname(self);
+	sc->sc_smpsw.smpsw_type = PSWITCH_TYPE_POWER;
+	sysmon_pswitch_register(&sc->sc_smpsw);
+
+	iic_acquire_bus(sc->sc_i2c, I2C_F_POLL);
+	axp806_write(sc->sc_i2c, sc->sc_addr, AXP_IRQ_ENABLE1_REG, 0x00, I2C_F_POLL);
+	axp806_write(sc->sc_i2c, sc->sc_addr, AXP_IRQ_ENABLE2_REG, AXP_IRQ2_POKSIRQ, I2C_F_POLL);
+	iic_release_bus(sc->sc_i2c, I2C_F_POLL);
+
+	ih = fdtbus_intr_establish(sc->sc_phandle, 0, IPL_VM, FDT_INTR_MPSAFE,
+	    axp806_intr, sc);
+	if (ih == NULL) {
+		aprint_error_dev(self, "WARNING: couldn't establish interrupt handler\n");
+	}
+
+	fdtbus_register_power_controller(sc->sc_dev, sc->sc_phandle,
+	    &axp806_power_funcs);
 
 	phandle = of_find_firstchild_byname(sc->sc_phandle, "regulators");
 	if (phandle <= 0)
@@ -325,12 +395,12 @@ axp806reg_enable(device_t dev, bool enable)
 		return EINVAL;
 
 	iic_acquire_bus(sc->sc_i2c, flags);
-	if ((error = axp806_read(sc->sc_i2c, sc->sc_addr, c->c_enable_reg, &val)) == 0) {
+	if ((error = axp806_read(sc->sc_i2c, sc->sc_addr, c->c_enable_reg, &val, flags)) == 0) {
 		if (enable)
 			val |= c->c_enable_mask;
 		else
 			val &= ~c->c_enable_mask;
-		error = axp806_write(sc->sc_i2c, sc->sc_addr, c->c_enable_reg, val);
+		error = axp806_write(sc->sc_i2c, sc->sc_addr, c->c_enable_reg, val, flags);
 	}
 	iic_release_bus(sc->sc_i2c, flags);
 
