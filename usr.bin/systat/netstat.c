@@ -1,4 +1,4 @@
-/*	$NetBSD: netstat.c,v 1.29 2013/11/24 13:13:12 mlelstv Exp $	*/
+/*	$NetBSD: netstat.c,v 1.30 2018/05/03 07:13:48 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)netstat.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: netstat.c,v 1.29 2013/11/24 13:13:12 mlelstv Exp $");
+__RCSID("$NetBSD: netstat.c,v 1.30 2018/05/03 07:13:48 maxv Exp $");
 #endif /* not lint */
 
 /*
@@ -61,7 +61,6 @@ __RCSID("$NetBSD: netstat.c,v 1.29 2013/11/24 13:13:12 mlelstv Exp $");
 #include <netinet6/in6_pcb.h>
 #endif
 #include <netinet/tcp.h>
-#include <netinet/tcpip.h>
 #include <netinet/tcp_seq.h>
 #define TCPSTATES
 #include <netinet/tcp_fsm.h>
