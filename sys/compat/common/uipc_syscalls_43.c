@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls_43.c,v 1.48 2018/03/16 17:25:04 christos Exp $	*/
+/*	$NetBSD: uipc_syscalls_43.c,v 1.49 2018/05/03 21:43:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_43.c,v 1.48 2018/03/16 17:25:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_43.c,v 1.49 2018/05/03 21:43:33 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -216,7 +216,7 @@ compat_43_sys_recvmsg(struct lwp *l, const struct compat_43_sys_recvmsg_args *ua
 	msg.msg_iov	= omsg.msg_iov;
 	msg.msg_flags	= (SCARG(uap, flags) & MSG_USERFLAGS) | MSG_IOVUSRSPACE;
 
-	error = do_sys_recvmsg(l, SCARG(uap, s), &msg, NULL, 0, &from,
+	error = do_sys_recvmsg(l, SCARG(uap, s), &msg, &from,
 	    omsg.msg_accrights != NULL ? &control : NULL, retval);
 	if (error != 0)
 		return error;
@@ -363,7 +363,7 @@ compat_43_sys_sendmsg(struct lwp *l, const struct compat_43_sys_sendmsg_args *ua
 		goto bad;
 
 	return do_sys_sendmsg(l, SCARG(uap, s), &msg, SCARG(uap, flags),
-	    NULL, 0, retval);
+	    retval);
 
     bad:
 	if (nam != NULL)
