@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.122 2018/03/15 08:15:21 maxv Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.123 2018/05/03 06:41:30 maxv Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.122 2018/03/15 08:15:21 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.123 2018/05/03 06:41:30 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -137,8 +137,6 @@ __KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.122 2018/03/15 08:15:21 maxv Exp $")
 #endif
 
 #include <netinet6/ip6protosw.h>
-
-#include <net/net_osdep.h>
 
 /*
  * TCP/IP protocol family: IP6, ICMP6, UDP, TCP.
