@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_43.c,v 1.55 2018/03/16 17:25:04 christos Exp $	*/
+/*	$NetBSD: netbsd32_compat_43.c,v 1.56 2018/05/03 21:43:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_43.c,v 1.55 2018/03/16 17:25:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_43.c,v 1.56 2018/05/03 21:43:33 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_43.h"
@@ -451,7 +451,7 @@ compat_43_netbsd32_orecvmsg(struct lwp *l, const struct compat_43_netbsd32_orecv
 	msg.msg_iov	= iov;
 	msg.msg_flags	= SCARG(uap, flags) & MSG_USERFLAGS;
 
-	error = do_sys_recvmsg(l, SCARG(uap, s), &msg, NULL, 0, &from,
+	error = do_sys_recvmsg(l, SCARG(uap, s), &msg, &from,
 	    NETBSD32PTR64(omsg.msg_accrights) != NULL ? &control : NULL,
 	    retval);
 	if (error != 0)
@@ -548,7 +548,7 @@ compat_43_netbsd32_osendmsg(struct lwp *l, const struct compat_43_netbsd32_osend
 	}
 
 	error = do_sys_sendmsg(l, SCARG(uap, s), &msg, SCARG(uap, flags),
-	    &omsg, sizeof(omsg), retval);
+	    retval);
 
     out:
 	if (iov != aiov)

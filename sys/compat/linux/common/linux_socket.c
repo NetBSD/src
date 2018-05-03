@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.140 2018/03/16 17:25:04 christos Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.141 2018/05/03 21:43:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.140 2018/03/16 17:25:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.141 2018/05/03 21:43:33 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -434,8 +434,7 @@ linux_sys_sendto(struct lwp *l, const struct linux_sys_sendto_args *uap, registe
 	aiov.iov_base = __UNCONST(SCARG(uap, msg));
 	aiov.iov_len = SCARG(uap, len);
 
-	return do_sys_sendmsg(l, SCARG(uap, s), &msg, bflags,
-	    NULL, 0, retval);
+	return do_sys_sendmsg(l, SCARG(uap, s), &msg, bflags, retval);
 }
 
 static void
@@ -624,8 +623,7 @@ linux_sys_sendmsg(struct lwp *l, const struct linux_sys_sendmsg_args *uap, regis
 	}
 
 skipcmsg:
-	error = do_sys_sendmsg(l, SCARG(uap, s), &msg, bflags,
-	    NULL, 0, retval);
+	error = do_sys_sendmsg(l, SCARG(uap, s), &msg, bflags, retval);
 	/* Freed internally */
 	ctl_mbuf = NULL;
 
@@ -787,7 +785,7 @@ linux_sys_recvmsg(struct lwp *l, const struct linux_sys_recvmsg_args *uap, regis
 	}
 	msg.msg_flags |= MSG_IOVUSRSPACE;
 
-	error = do_sys_recvmsg(l, SCARG(uap, s), &msg, NULL, 0, &from,
+	error = do_sys_recvmsg(l, SCARG(uap, s), &msg, &from,
 	    msg.msg_control != NULL ? &control : NULL, retval);
 	if (error != 0)
 		return error;
@@ -1789,8 +1787,7 @@ linux_sys_sendmmsg(struct lwp *l, const struct linux_sys_sendmmsg_args *uap,
 
 		msg->msg_flags = flags;
 
-		error = do_sys_sendmsg_so(l, s, so, fp, msg, flags,
-		    &msg, sizeof(msg), retval);
+		error = do_sys_sendmsg_so(l, s, so, fp, msg, flags, retval);
 		if (error)
 			break;
 
@@ -1871,7 +1868,7 @@ linux_sys_recvmmsg(struct lwp *l, const struct linux_sys_recvmmsg_args *uap,
 			from = NULL;
 		}
 
-		error = do_sys_recvmsg_so(l, s, so, msg, NULL, 0, &from,
+		error = do_sys_recvmsg_so(l, s, so, msg, &from,
 		    msg->msg_control != NULL ? &control : NULL, retval);
 		if (error) {
 			if (error == EAGAIN && dg > 0)
