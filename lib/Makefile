@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.255 2018/05/01 19:50:34 christos Exp $
+#	$NetBSD: Makefile,v 1.256 2018/05/03 22:27:58 sevan Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -209,6 +209,8 @@ SUBDIR+=	../external/bsd/fetch/lib	# depends on libssl
 .if (${MKLDAP} != "no")
 SUBDIR+=	../external/bsd/openldap/lib	# depends on libcrypto, ...
 .endif
+
+SUBDIR+= 	../libexec/httpd/libbozohttpd 	# depends on libssl & libcrypto
 
 #==================== 3rd library dependency barrier ====================
 SUBDIR+=	.WAIT
