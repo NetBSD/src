@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.87 2018/03/16 22:11:53 macallan Exp $
+#	$NetBSD: files.i2c,v 1.88 2018/05/03 01:15:49 jmcneill Exp $
 
 obsolete defflag	opt_i2cbus.h		I2C_SCAN
 define	i2cbus { }
@@ -233,9 +233,11 @@ attach	axp22x at iic
 file	dev/i2c/axp22x.c			axp22x
 
 # AXP806 Power Management Unit
-device	axp806pm
-attach	axp806pm at iic
-file	dev/i2c/axp806.c			axp806pm	needs-flag
+device	axp806pmic { }
+device	axp806reg: axp806pmic
+attach	axp806pmic at iic
+attach	axp806reg at axp806pmic
+file	dev/i2c/axp806.c			axp806pmic	needs-flag
 
 # AXP809 Power Management Unit
 device	axp809pm
