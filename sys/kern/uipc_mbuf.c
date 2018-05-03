@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.145.2.1 2013/02/08 19:18:12 riz Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.145.2.2 2018/05/03 15:00:37 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.145.2.1 2013/02/08 19:18:12 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.145.2.2 2018/05/03 15:00:37 martin Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_nmbclusters.h"
@@ -1266,30 +1266,35 @@ m_makewritable(struct mbuf **mp, int off, int len, int how)
 }
 
 /*
- * Copy the mbuf chain to a new mbuf chain that is as short as possible.
- * Return the new mbuf chain on success, NULL on failure.  On success,
- * free the old mbuf chain.
+ * Compress the mbuf chain. Return the new mbuf chain on success, NULL on
+ * failure. The first mbuf is preserved, and on success the pointer returned
+ * is the same as the one passed.
  */
 struct mbuf *
 m_defrag(struct mbuf *mold, int flags)
 {
 	struct mbuf *m0, *mn, *n;
-	size_t sz = mold->m_pkthdr.len;
+	int sz;
 
 #ifdef DIAGNOSTIC
 	if ((mold->m_flags & M_PKTHDR) == 0)
 		panic("m_defrag: not a mbuf chain header");
 #endif
 
-	MGETHDR(m0, flags, MT_DATA);
+	if (mold->m_next == NULL)
+		return mold;
+
+	m0 = m_get(flags, MT_DATA);
 	if (m0 == NULL)
 		return NULL;
-	M_COPY_PKTHDR(m0, mold);
 	mn = m0;
 
+	sz = mold->m_pkthdr.len - mold->m_len;
+	KASSERT(sz >= 0);
+
 	do {
-		if (sz > MHLEN) {
-			MCLGET(mn, M_DONTWAIT);
+		if (sz > MLEN) {
+			MCLGET(mn, flags);
 			if ((mn->m_flags & M_EXT) == 0) {
 				m_freem(m0);
 				return NULL;
@@ -1305,7 +1310,7 @@ m_defrag(struct mbuf *mold, int flags)
 
 		if (sz > 0) {
 			/* need more mbufs */
-			MGET(n, M_NOWAIT, MT_DATA);
+			n = m_get(flags, MT_DATA);
 			if (n == NULL) {
 				m_freem(m0);
 				return NULL;
@@ -1316,9 +1321,10 @@ m_defrag(struct mbuf *mold, int flags)
 		}
 	} while (sz > 0);
 
-	m_freem(mold);
+	m_freem(mold->m_next);
+	mold->m_next = m0;
 
-	return m0;
+	return mold;
 }
 
 int
