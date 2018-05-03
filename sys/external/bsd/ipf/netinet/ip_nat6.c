@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat6.c,v 1.10 2016/10/04 14:36:46 sborrill Exp $	*/
+/*	$NetBSD: ip_nat6.c,v 1.11 2018/05/03 07:13:48 maxv Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -87,7 +87,6 @@ extern struct ifnet vpnif;
 #include <netinet/udp.h>
 #include <netinet/ip_icmp.h>
 #include "netinet/ip_compat.h"
-#include <netinet/tcpip.h>
 #include "netinet/ip_fil.h"
 #include "netinet/ip_nat.h"
 #include "netinet/ip_frag.h"
