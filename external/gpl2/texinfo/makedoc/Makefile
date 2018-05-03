@@ -1,5 +1,6 @@
-#	$NetBSD: Makefile,v 1.2 2018/05/01 19:59:43 christos Exp $
+#	$NetBSD: Makefile,v 1.3 2018/05/03 01:12:26 nonaka Exp $
 
+MAKEDOC=
 .include <bsd.hostinit.mk>
 
 HOSTPROG=	makedoc
