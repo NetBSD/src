@@ -1,4 +1,4 @@
-/*	$NetBSD: gttwsi_core.c,v 1.3 2017/10/29 14:59:05 jmcneill Exp $	*/
+/*	$NetBSD: gttwsi_core.c,v 1.4 2018/05/03 02:08:52 jmcneill Exp $	*/
 /*
  * Copyright (c) 2008 Eiji Kawauchi.
  * All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gttwsi_core.c,v 1.3 2017/10/29 14:59:05 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gttwsi_core.c,v 1.4 2018/05/03 02:08:52 jmcneill Exp $");
 #include "locators.h"
 
 #include <sys/param.h>
@@ -148,7 +148,7 @@ gttwsi_attach_subr(device_t self, bus_space_tag_t iot, bus_space_handle_t ioh)
 	if (sc->sc_reg_write == NULL)
 		sc->sc_reg_write = gttwsi_default_write_4;
 
-	mutex_init(&sc->sc_buslock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&sc->sc_buslock, MUTEX_DEFAULT, IPL_VM);
 	mutex_init(&sc->sc_mtx, MUTEX_DEFAULT, IPL_BIO);
 	cv_init(&sc->sc_cv, device_xname(self));
 
