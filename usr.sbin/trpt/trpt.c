@@ -1,4 +1,4 @@
-/*	$NetBSD: trpt.c,v 1.27 2011/08/30 20:49:29 joerg Exp $	*/
+/*	$NetBSD: trpt.c,v 1.28 2018/05/03 07:13:49 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2005, 2006 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)trpt.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: trpt.c,v 1.27 2011/08/30 20:49:29 joerg Exp $");
+__RCSID("$NetBSD: trpt.c,v 1.28 2018/05/03 07:13:49 maxv Exp $");
 #endif
 #endif /* not lint */
 
@@ -107,7 +107,6 @@ __RCSID("$NetBSD: trpt.c,v 1.27 2011/08/30 20:49:29 joerg Exp $");
 #define	TCPTIMERS
 #include <netinet/tcp_timer.h>
 #include <netinet/tcp_var.h>
-#include <netinet/tcpip.h>
 #define	TANAMES
 #include <netinet/tcp_debug.h>
 

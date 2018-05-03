@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_log.c,v 1.6 2013/03/28 20:14:18 christos Exp $	*/
+/*	$NetBSD: ip_log.c,v 1.7 2018/05/03 07:13:48 maxv Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_log.c,v 1.6 2013/03/28 20:14:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_log.c,v 1.7 2018/05/03 07:13:48 maxv Exp $");
 
 #include <sys/param.h>
 #if defined(KERNEL) || defined(_KERNEL)
@@ -123,7 +123,6 @@ struct file;
 # include <syslog.h>
 #endif
 #include "netinet/ip_compat.h"
-#include <netinet/tcpip.h>
 #include "netinet/ip_fil.h"
 #include "netinet/ip_nat.h"
 #include "netinet/ip_frag.h"
