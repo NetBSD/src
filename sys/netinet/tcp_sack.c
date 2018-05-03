@@ -1,4 +1,4 @@
-/* $NetBSD: tcp_sack.c,v 1.34 2018/03/29 07:46:43 maxv Exp $ */
+/* $NetBSD: tcp_sack.c,v 1.35 2018/05/03 07:13:48 maxv Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_sack.c,v 1.34 2018/03/29 07:46:43 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_sack.c,v 1.35 2018/05/03 07:13:48 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -153,7 +153,6 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_sack.c,v 1.34 2018/03/29 07:46:43 maxv Exp $");
 #include <netinet/tcp_seq.h>
 #include <netinet/tcp_timer.h>
 #include <netinet/tcp_var.h>
-#include <netinet/tcpip.h>
 #include <netinet/tcp_debug.h>
 
 /* SACK block pool. */

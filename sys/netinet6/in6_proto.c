@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.123 2018/05/03 06:41:30 maxv Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.124 2018/05/03 07:13:48 maxv Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.123 2018/05/03 06:41:30 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.124 2018/05/03 07:13:48 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -99,7 +99,6 @@ __KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.123 2018/05/03 06:41:30 maxv Exp $")
 #include <netinet/tcp_seq.h>
 #include <netinet/tcp_timer.h>
 #include <netinet/tcp_var.h>
-#include <netinet/tcpip.h>
 #include <netinet/tcp_debug.h>
 
 #include <netinet6/udp6.h>

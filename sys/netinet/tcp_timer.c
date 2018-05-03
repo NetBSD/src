@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.c,v 1.94 2018/03/29 07:46:43 maxv Exp $	*/
+/*	$NetBSD: tcp_timer.c,v 1.95 2018/05/03 07:13:48 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.94 2018/03/29 07:46:43 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.95 2018/05/03 07:13:48 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -133,7 +133,6 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.94 2018/03/29 07:46:43 maxv Exp $");
 #include <netinet/tcp_var.h>
 #include <netinet/tcp_private.h>
 #include <netinet/tcp_congctl.h>
-#include <netinet/tcpip.h>
 #ifdef TCP_DEBUG
 #include <netinet/tcp_debug.h>
 #endif

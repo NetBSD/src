@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.218 2018/04/07 13:48:50 maxv Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.219 2018/05/03 07:13:48 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.218 2018/04/07 13:48:50 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.219 2018/05/03 07:13:48 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -149,7 +149,6 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.218 2018/04/07 13:48:50 maxv Exp $"
 #include <netinet/tcp_var.h>
 #include <netinet/tcp_private.h>
 #include <netinet/tcp_congctl.h>
-#include <netinet/tcpip.h>
 #include <netinet/tcp_debug.h>
 #include <netinet/tcp_vtw.h>
 
