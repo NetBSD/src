@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.127 2018/03/15 08:15:21 maxv Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.128 2018/05/03 07:13:48 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.127 2018/03/15 08:15:21 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.128 2018/05/03 07:13:48 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mrouting.h"
@@ -109,7 +109,6 @@ __KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.127 2018/03/15 08:15:21 maxv Exp $");
 #include <netinet/tcp_seq.h>
 #include <netinet/tcp_timer.h>
 #include <netinet/tcp_var.h>
-#include <netinet/tcpip.h>
 #include <netinet/tcp_debug.h>
 #include <netinet/udp.h>
 #include <netinet/udp_var.h>
