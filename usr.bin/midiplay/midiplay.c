@@ -1,4 +1,4 @@
-/*	$NetBSD: midiplay.c,v 1.31 2018/05/03 01:12:57 mrg Exp $	*/
+/*	$NetBSD: midiplay.c,v 1.32 2018/05/03 05:14:55 wiz Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: midiplay.c,v 1.31 2018/05/03 01:12:57 mrg Exp $");
+__RCSID("$NetBSD: midiplay.c,v 1.32 2018/05/03 05:14:55 wiz Exp $");
 #endif
 
 
@@ -155,8 +155,8 @@ static u_char silence_sample[] = {
 static void __attribute__((__noreturn__))
 usage(void)
 {
-	fprintf(stderr, "usage: %s [-d unit] [-f file] [-l] [-m] [-p pgm] [-q] "
-	       "[-t %%tempo] [-v] [-x] [-s] [file ...]\n",
+	fprintf(stderr, "usage: %s [-lmqsvx] [-d devno] [-f file] "
+		"[-p pgm] [-t tempo] [file ...]\n",
 		getprogname());
 	exit(1);
 }
