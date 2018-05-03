@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.204 2018/05/03 08:39:28 maxv Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.205 2018/05/03 21:37:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -397,7 +397,7 @@ MBUF_DEFINE(mbuf, MHLEN, MLEN);
 #define MT_OOBDATA	7	/* expedited data  */
 
 #ifdef MBUFTYPES
-static const char * const mbuftypes[] = {
+const char * const mbuftypes[] = {
 	"mbfree",
 	"mbdata",
 	"mbheader",
@@ -407,6 +407,8 @@ static const char * const mbuftypes[] = {
 	"mbcontrol",
 	"mboobdata",
 };
+#else
+extern const char * const mbuftypes[];
 #endif
 
 /* flags to m_get/MGET */
