@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.335 2018/04/18 07:19:23 msaitoh Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.336 2018/05/03 14:58:46 martin Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -21233,3 +21233,16 @@ sys/netipsec/ipsec_mbuf.c			1.23-1.24
 	Don't assume M_PKTHDR is set only on the first mbuf of the chain.
 	Fix a pretty bad mistake (IPsec DoS).
 	[maxv, ticket #1545]
+
+sys/netipsec/ipsec_output.c			1.67,1.75 (patch)
+
+	compute_ipsec_pos: strengthen checks to avoid overruns,
+	allow the function to fail (and drop the misformed packet).
+	[maxv, ticket #1546]
+
+sys/kern/uipc_mbuf.c				1.211
+
+	Modify m_defrag, so that it never frees the first mbuf of
+	the chain.
+	[maxv, ticket #1547]
+
