@@ -1,4 +1,5 @@
-.\" $NetBSD: midiplay.1,v 1.19 2010/01/16 08:50:29 mbalmer Exp $
+.\" $NetBSD: midiplay.1,v 1.20 2018/05/03 01:12:57 mrg Exp $
+.\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
@@ -25,7 +26,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 16, 2010
+.Dd May 2, 2018
 .Dt MIDIPLAY 1
 .Os
 .Sh NAME
@@ -39,6 +40,7 @@
 .Op Fl m
 .Op Fl p Ar pgm
 .Op Fl q
+.Op Fl s
 .Op Fl t Ar tempo
 .Op Fl v
 .Op Fl x
@@ -86,6 +88,11 @@ There is no way at present to have
 selectively map channels or instruments.
 .It Fl q
 specifies that the MIDI file should not be played, just parsed.
+.It Fl s
+send an
+.Dq ALL SOUNDS OFF
+MIDI event.
+Useful if an interrupted MIDI file left notes playing.
 .It Fl t Ar tempo-adjust
 specifies an adjustment (in percent) to the tempi recorded in the file.
 The default of 100 plays as specified in the file, 50 halves every tempo,
@@ -123,3 +130,8 @@ It may take a long while before playing stops when
 .Nm
 is interrupted, as the data already buffered in the sequencer will contain
 timing events.
+Use
+.Nm
+with the
+.Fl s
+option to silence any sounds left after an interrupted call.
