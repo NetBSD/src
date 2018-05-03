@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.2 2018/05/01 12:38:40 christos Exp $
+#	$NetBSD: Makefile,v 1.3 2018/05/03 01:09:04 christos Exp $
+
+.include <bsd.hostinit.mk>
 
 HOSTPROGNAME=	${_TOOL_PREFIX}m68k-elf2aout
 HOST_SRCDIR=	usr.bin/elf2aout
