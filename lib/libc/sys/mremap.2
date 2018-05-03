@@ -1,4 +1,4 @@
-.\"	$NetBSD: mremap.2,v 1.6 2018/05/02 15:25:13 christos Exp $
+.\"	$NetBSD: mremap.2,v 1.7 2018/05/03 05:09:48 wiz Exp $
 .\"
 .\" Copyright (c) 2007 Thomas Klausner and Joerg Sonnenberger
 .\" All rights reserved.
@@ -172,13 +172,25 @@ main(int argc, char *argv[])
 	return EXIT_SUCCESS;
 }
 .Ed
+.Sh COMPATIBILITY
+The semantics of
+.Fn mremap
+differ from the one provided by glibc on Linux in that the
+.Ar newp
+argument was added and a different set of
+.Ar flags
+are implemented.
 .Sh ERRORS
 The
 .Fn mremap
 function fails if:
 .Bl -tag -width Er
+.It Bq Er E2BIG
+A request to extend
+.Fa oldp
+failed because of address overflow.
 .It Bq Er EINVAL
-If 
+If
 .Fa oldp
 or
 .Fa newp
@@ -186,7 +198,7 @@ are not page aligned, or
 .Fa oldsize
 or
 .Fa newsize
-are not a multiple of the page size, or if 
+are not a multiple of the page size, or if
 .Fa oldp +
 .Fa oldsize
 or
@@ -198,28 +210,16 @@ argument, or if the request was to extend
 .Fa oldp
 and the extension address space either did not fit, was already occupied,
 or had set permissions.
+.It Bq Er ENOENT
+If the
+.Fa oldp
+segmented was not already mapped.
 .It Bq Er ENOMEM
 If there was either no space to allocate/move memory,
 or if a fixed allocation was requested in the
 .Fa flags
 that could not be accommodated.
-.It Bq Er ENOENT
-If the
-.Fa oldp
-segmented was not already mapped.
-.It Bq Er E2BIG
-A request to extend
-.Fa oldp
-failed because of address overflow.
 .El
-.Sh COMPATIBILITY
-The semantics of
-.Fn mremap
-differ from the one provided by glibc on Linux in that the
-.Ar newp
-argument was added and a different set of
-.Ar flags
-are implemented.
 .Sh SEE ALSO
 .Xr mmap 2 ,
 .Xr munmap 2
