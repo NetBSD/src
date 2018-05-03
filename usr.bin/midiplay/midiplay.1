@@ -1,4 +1,4 @@
-.\" $NetBSD: midiplay.1,v 1.20 2018/05/03 01:12:57 mrg Exp $
+.\" $NetBSD: midiplay.1,v 1.21 2018/05/03 05:13:20 wiz Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,16 +34,11 @@
 .Nd play MIDI and RMID files
 .Sh SYNOPSIS
 .Nm
+.Op Fl lmqsvx
 .Op Fl d Ar devno
 .Op Fl f Ar file
-.Op Fl l
-.Op Fl m
 .Op Fl p Ar pgm
-.Op Fl q
-.Op Fl s
 .Op Fl t Ar tempo
-.Op Fl v
-.Op Fl x
 .Op Ar file ...
 .Sh DESCRIPTION
 The
