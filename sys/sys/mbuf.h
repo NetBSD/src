@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.202 2018/05/03 07:25:49 maxv Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.203 2018/05/03 08:14:29 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -345,7 +345,7 @@ MBUF_DEFINE(mbuf, MHLEN, MLEN);
 /* mbuf pkthdr flags, also in m_flags */
 #define	M_AUTHIPHDR	0x00000010	/* authenticated (IPsec) */
 #define	M_DECRYPTED	0x00000020	/* decrypted (IPsec) */
-#define	M_LOOP		0x00000040	/* for Mbuf statistics */
+#define	M_LOOP		0x00000040	/* received on loopback */
 #define	M_BCAST		0x00000100	/* send/received as L2 broadcast */
 #define	M_MCAST		0x00000200	/* send/received as L2 multicast */
 #define	M_CANFASTFWD	0x00000400	/* packet can be fast-forwarded */
