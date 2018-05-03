@@ -1,7 +1,7 @@
-/* $NetBSD: axp806.c,v 1.1 2014/12/07 00:33:26 jmcneill Exp $ */
+/* $NetBSD: axp806.c,v 1.2 2018/05/03 01:15:49 jmcneill Exp $ */
 
 /*-
- * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
+ * Copyright (c) 2014-2018 Jared McNeill <jmcneill@invisible.ca>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,10 +26,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define AXP_DEBUG
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: axp806.c,v 1.1 2014/12/07 00:33:26 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: axp806.c,v 1.2 2018/05/03 01:15:49 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,7 +38,8 @@ __KERNEL_RCSID(0, "$NetBSD: axp806.c,v 1.1 2014/12/07 00:33:26 jmcneill Exp $");
 #include <sys/kmem.h>
 
 #include <dev/i2c/i2cvar.h>
-#include <dev/i2c/axp806.h>
+
+#include <dev/fdt/fdtvar.h>
 
 #define AXP_STARTUP_SOURCE_REG	0x00
 #define AXP_IC_TYPE_REG		0x03
@@ -117,35 +116,35 @@ struct axp806_ctrl {
 	  .c_voltage_reg = AXP_##vreg##_REG, .c_voltage_mask = (vmask) }
 
 static const struct axp806_ctrl axp806_ctrls[] = {
-	AXP_CTRL2("DCDCA", 600, 1520, 10, 51, 20, 21,
+	AXP_CTRL2("dcdca", 600, 1520, 10, 51, 20, 21,
 		OUT_CTRL1, __BIT(0), DCDCA_CTRL, __BITS(6,0)),
-	AXP_CTRL("DCDCB", 1000, 2550, 50,
+	AXP_CTRL("dcdcb", 1000, 2550, 50,
 		OUT_CTRL1, __BIT(1), DCDCB_CTRL, __BITS(4,0)),
-	AXP_CTRL2("DCDCC", 600, 1520, 10, 51, 20, 21,
+	AXP_CTRL2("dcdcc", 600, 1520, 10, 51, 20, 21,
 		OUT_CTRL1, __BIT(2), DCDCC_CTRL, __BITS(6,0)),
-	AXP_CTRL2("DCDCD", 600, 3300, 20, 46, 100, 18,
+	AXP_CTRL2("dcdcd", 600, 3300, 20, 46, 100, 18,
 		OUT_CTRL1, __BIT(3), DCDCD_CTRL, __BITS(5,0)),
-	AXP_CTRL("DCDCE", 1100, 3400, 100,
+	AXP_CTRL("dcdce", 1100, 3400, 100,
 		OUT_CTRL1, __BIT(4), DCDCE_CTRL, __BITS(4,0)),
-	AXP_CTRL("ALDO1", 700, 3300, 100,
+	AXP_CTRL("aldo1", 700, 3300, 100,
 		OUT_CTRL1, __BIT(5), ALDO1_CTRL, __BITS(4,0)),
-	AXP_CTRL("ALDO2", 700, 3400, 100,
+	AXP_CTRL("aldo2", 700, 3400, 100,
 		OUT_CTRL1, __BIT(6), ALDO2_CTRL, __BITS(4,0)),
-	AXP_CTRL("ALDO3", 700, 3300, 100,
+	AXP_CTRL("aldo3", 700, 3300, 100,
 		OUT_CTRL1, __BIT(7), ALDO3_CTRL, __BITS(4,0)),
-	AXP_CTRL("BLDO1", 700, 1900, 100,
+	AXP_CTRL("bldo1", 700, 1900, 100,
 		OUT_CTRL2, __BIT(0), BLDO1_CTRL, __BITS(3,0)),
-	AXP_CTRL("BLDO2", 700, 1900, 100,
+	AXP_CTRL("bldo2", 700, 1900, 100,
 		OUT_CTRL2, __BIT(1), BLDO2_CTRL, __BITS(3,0)),
-	AXP_CTRL("BLDO3", 700, 1900, 100,
+	AXP_CTRL("bldo3", 700, 1900, 100,
 		OUT_CTRL2, __BIT(2), BLDO3_CTRL, __BITS(3,0)),
-	AXP_CTRL("BLDO4", 700, 1900, 100,
+	AXP_CTRL("bldo4", 700, 1900, 100,
 		OUT_CTRL2, __BIT(3), BLDO4_CTRL, __BITS(3,0)),
-	AXP_CTRL("CLDO1", 700, 3300, 100, 
+	AXP_CTRL("cldo1", 700, 3300, 100, 
 		OUT_CTRL2, __BIT(4), CLDO1_CTRL, __BITS(4,0)),
-	AXP_CTRL2("CLDO2", 700, 4200, 100, 28, 200, 4,
+	AXP_CTRL2("cldo2", 700, 4200, 100, 28, 200, 4,
 		OUT_CTRL2, __BIT(5), CLDO2_CTRL, __BITS(4,0)),
-	AXP_CTRL("CLDO3", 700, 3300, 100, 
+	AXP_CTRL("cldo3", 700, 3300, 100, 
 		OUT_CTRL2, __BIT(6), CLDO3_CTRL, __BITS(4,0)),
 };
 
@@ -153,117 +152,47 @@ struct axp806_softc {
 	device_t	sc_dev;
 	i2c_tag_t	sc_i2c;
 	i2c_addr_t	sc_addr;
-
-	u_int		sc_nctrl;
-	struct axp806_ctrl *sc_ctrl;
+	int		sc_phandle;
 };
 
-static int	axp806_match(device_t, cfdata_t, void *);
-static void	axp806_attach(device_t, device_t, void *);
+struct axp806reg_softc {
+	device_t	sc_dev;
+	i2c_tag_t	sc_i2c;
+	i2c_addr_t	sc_addr;
+	const struct axp806_ctrl *sc_ctrl;
+};
 
-static int	axp806_read(struct axp806_softc *, uint8_t, uint8_t *);
-static int	axp806_write(struct axp806_softc *, uint8_t, uint8_t);
+struct axp806reg_attach_args {
+	const struct axp806_ctrl *reg_ctrl;
+	int		reg_phandle;
+	i2c_tag_t	reg_i2c;
+	i2c_addr_t	reg_addr;
+};
 
-static void	axp806_print(struct axp806_ctrl *c);
-
-CFATTACH_DECL_NEW(axp806pm, sizeof(struct axp806_softc),
-    axp806_match, axp806_attach, NULL, NULL);
-
-static int
-axp806_match(device_t parent, cfdata_t match, void *aux)
-{
-	return 1;
-}
-
-static void
-axp806_attach(device_t parent, device_t self, void *aux)
-{
-	struct axp806_softc *sc = device_private(self);
-	struct i2c_attach_args *ia = aux;
-	u_int n;
-
-	sc->sc_dev = self;
-	sc->sc_i2c = ia->ia_tag;
-	sc->sc_addr = ia->ia_addr;
-
-	aprint_naive("\n");
-	aprint_normal("\n");
-
-	sc->sc_nctrl = __arraycount(axp806_ctrls);
-	sc->sc_ctrl = kmem_alloc(sizeof(axp806_ctrls), KM_SLEEP);
-	memcpy(sc->sc_ctrl, axp806_ctrls, sizeof(axp806_ctrls));
-	for (n = 0; n < sc->sc_nctrl; n++) {
-		sc->sc_ctrl[n].c_dev = self;
-	}
-
-#ifdef AXP_DEBUG
-	for (n = 0; n < sc->sc_nctrl; n++) {
-		axp806_print(&sc->sc_ctrl[n]);
-	}
-#endif
-}
+static const char *compatible[] = {
+	"x-powers,axp805",
+	"x-powers,axp806",
+	NULL
+};
 
 static int
-axp806_read(struct axp806_softc *sc, uint8_t reg, uint8_t *val)
+axp806_read(i2c_tag_t tag, i2c_addr_t addr, uint8_t reg, uint8_t *val)
 {
-	return iic_smbus_read_byte(sc->sc_i2c, sc->sc_addr, reg, val,
+	return iic_smbus_read_byte(tag, addr, reg, val,
 	    cold ? I2C_F_POLL : 0);
 }
 
 static int
-axp806_write(struct axp806_softc *sc, uint8_t reg, uint8_t val)
+axp806_write(i2c_tag_t tag, i2c_addr_t addr, uint8_t reg, uint8_t val)
 {
-	return iic_smbus_write_byte(sc->sc_i2c, sc->sc_addr, reg, val,
+	return iic_smbus_write_byte(tag, addr, reg, val,
 	    cold ? I2C_F_POLL : 0);
 }
 
-static void
-axp806_print(struct axp806_ctrl *c)
+static int
+axp806_set_voltage(i2c_tag_t tag, i2c_addr_t addr, const struct axp806_ctrl *c, u_int min, u_int max)
 {
-	struct axp806_softc *sc = device_private(c->c_dev);
-	u_int voltage;
-	bool enabled;
-
-	device_printf(sc->sc_dev, "%s:", c->c_name);
-	if (c->c_voltage_reg) {
-		if (axp806_get_voltage(c, &voltage)) {
-			printf(" [??? V]");
-		} else {
-			printf(" [%d.%03dV]", voltage / 1000,
-			    voltage % 1000);
-		}
-	}
-	if (c->c_enable_reg) {
-		if (axp806_is_enabled(c, &enabled)) {
-			printf(" [unknown state]");
-		} else {
-			printf(" [%s]", enabled ? "ON" : "OFF");
-		}
-	}
-	printf("\n");
-}
-
-struct axp806_ctrl *
-axp806_lookup(device_t dev, const char *name)
-{
-	struct axp806_softc *sc = device_private(dev);
-	struct axp806_ctrl *c;
-	u_int n;
-
-	for (n = 0; n < sc->sc_nctrl; n++) {
-		c = &sc->sc_ctrl[n];
-		if (strcmp(c->c_name, name) == 0) {
-			return c;
-		}
-	}
-
-	return NULL;
-}
-
-int
-axp806_set_voltage(struct axp806_ctrl *c, u_int min, u_int max)
-{
-	struct axp806_softc *sc = device_private(c->c_dev);
+	const int flags = (cold ? I2C_F_POLL : 0);
 	u_int vol, reg_val;
 	int nstep, error;
 	uint8_t val;
@@ -290,35 +219,30 @@ axp806_set_voltage(struct axp806_ctrl *c, u_int min, u_int max)
 	if (vol > max)
 		return EINVAL;
 
-	iic_acquire_bus(sc->sc_i2c, 0);
-	if ((error = axp806_read(sc, c->c_voltage_reg, &val)) != 0)
-		goto done;
-	val &= ~c->c_voltage_mask;
-	val |= __SHIFTIN(reg_val, c->c_voltage_mask);
-	error = axp806_write(sc, c->c_voltage_reg, val);
+	iic_acquire_bus(tag, flags);
+	if ((error = axp806_read(tag, addr, c->c_voltage_reg, &val)) == 0) {
+		val &= ~c->c_voltage_mask;
+		val |= __SHIFTIN(reg_val, c->c_voltage_mask);
+		error = axp806_write(tag, addr, c->c_voltage_reg, val);
+	}
+	iic_release_bus(tag, flags);
 
-done:
-	iic_release_bus(sc->sc_i2c, 0);
-#ifdef AXP_DEBUG
-	if (error == 0)
-		axp806_print(c);
-#endif
 	return error;
 }
 
-int
-axp806_get_voltage(struct axp806_ctrl *c, u_int *pvol)
+static int
+axp806_get_voltage(i2c_tag_t tag, i2c_addr_t addr, const struct axp806_ctrl *c, u_int *pvol)
 {
-	struct axp806_softc *sc = device_private(c->c_dev);
+	const int flags = (cold ? I2C_F_POLL : 0);
 	int reg_val, error;
 	uint8_t val;
 
 	if (!c->c_voltage_mask)
 		return EINVAL;
 
-	iic_acquire_bus(sc->sc_i2c, 0);
-	error = axp806_read(sc, c->c_voltage_reg, &val);
-	iic_release_bus(sc->sc_i2c, 0);
+	iic_acquire_bus(tag, flags);
+	error = axp806_read(tag, addr, c->c_voltage_reg, &val);
+	iic_release_bus(tag, flags);
 	if (error)
 		return error;
 
@@ -333,72 +257,152 @@ axp806_get_voltage(struct axp806_ctrl *c, u_int *pvol)
 	return 0;
 }
 
-int
-axp806_is_enabled(struct axp806_ctrl *c, bool *penabled)
+static int
+axp806_match(device_t parent, cfdata_t match, void *aux)
 {
-	struct axp806_softc *sc = device_private(c->c_dev);
-	uint8_t val;
-	int error;
+	struct i2c_attach_args *ia = aux;
 
-	if (!c->c_enable_mask)
-		return EINVAL;
+	if (ia->ia_name != NULL)
+		return iic_compat_match(ia, compatible);
 
-	iic_acquire_bus(sc->sc_i2c, 0);
-	error = axp806_read(sc, c->c_enable_reg, &val);
-	iic_release_bus(sc->sc_i2c, 0);
-	if (error)
-		return error;
+	return 1;
+}
 
-	*penabled = !!(val & c->c_enable_mask);
+static void
+axp806_attach(device_t parent, device_t self, void *aux)
+{
+	struct axp806_softc *sc = device_private(self);
+	struct axp806reg_attach_args aaa;
+	struct i2c_attach_args *ia = aux;
+	int phandle, child, i;
+
+	sc->sc_dev = self;
+	sc->sc_i2c = ia->ia_tag;
+	sc->sc_addr = ia->ia_addr;
+	sc->sc_phandle = ia->ia_cookie;
+
+	aprint_naive("\n");
+	aprint_normal(": PMIC\n");
+
+	phandle = of_find_firstchild_byname(sc->sc_phandle, "regulators");
+	if (phandle <= 0)
+		return;
+
+	aaa.reg_i2c = sc->sc_i2c;
+	aaa.reg_addr = sc->sc_addr;
+	for (i = 0; i < __arraycount(axp806_ctrls); i++) {
+		const struct axp806_ctrl *ctrl = &axp806_ctrls[i];
+		child = of_find_firstchild_byname(phandle, ctrl->c_name);
+		if (child <= 0)
+			continue;
+		aaa.reg_ctrl = ctrl;
+		aaa.reg_phandle = child;
+		config_found(sc->sc_dev, &aaa, NULL);
+	}
+}
+
+static int
+axp806reg_acquire(device_t dev)
+{
 	return 0;
 }
 
-int
-axp806_enable(struct axp806_ctrl *c)
+static void
+axp806reg_release(device_t dev)
 {
-	struct axp806_softc *sc = device_private(c->c_dev);
+}
+
+static int
+axp806reg_enable(device_t dev, bool enable)
+{
+	struct axp806reg_softc *sc = device_private(dev);
+	const struct axp806_ctrl *c = sc->sc_ctrl;
+	const int flags = (cold ? I2C_F_POLL : 0);
 	uint8_t val;
 	int error;
 
 	if (!c->c_enable_mask)
 		return EINVAL;
 
-	iic_acquire_bus(sc->sc_i2c, 0);
-	if ((error = axp806_read(sc, c->c_enable_reg, &val)) != 0)
-		goto done;
-	val |= c->c_enable_mask;
-	error = axp806_write(sc, c->c_enable_reg, val);
-done:
-	iic_release_bus(sc->sc_i2c, 0);
-#ifdef AXP_DEBUG
-	if (error == 0)
-		axp806_print(c);
-#endif
+	iic_acquire_bus(sc->sc_i2c, flags);
+	if ((error = axp806_read(sc->sc_i2c, sc->sc_addr, c->c_enable_reg, &val)) == 0) {
+		if (enable)
+			val |= c->c_enable_mask;
+		else
+			val &= ~c->c_enable_mask;
+		error = axp806_write(sc->sc_i2c, sc->sc_addr, c->c_enable_reg, val);
+	}
+	iic_release_bus(sc->sc_i2c, flags);
 
 	return error;
 }
 
-int
-axp806_disable(struct axp806_ctrl *c)
+static int
+axp806reg_set_voltage(device_t dev, u_int min_uvol, u_int max_uvol)
 {
-	struct axp806_softc *sc = device_private(c->c_dev);
-	uint8_t val;
-	int error;
+	struct axp806reg_softc *sc = device_private(dev);
+	const struct axp806_ctrl *c = sc->sc_ctrl;
 
-	if (!c->c_enable_mask)
-		return EINVAL;
-
-	iic_acquire_bus(sc->sc_i2c, 0);
-	if ((error = axp806_read(sc, c->c_enable_reg, &val)) != 0)
-		goto done;
-	val &= ~c->c_enable_mask;
-	error = axp806_write(sc, c->c_enable_reg, val);
-done:
-	iic_release_bus(sc->sc_i2c, 0);
-#ifdef AXP_DEBUG
-	if (error == 0)
-		axp806_print(c);
-#endif
-
-	return error;
+	return axp806_set_voltage(sc->sc_i2c, sc->sc_addr, c,
+	    min_uvol / 1000, max_uvol / 1000);
 }
+
+static int
+axp806reg_get_voltage(device_t dev, u_int *puvol)
+{
+	struct axp806reg_softc *sc = device_private(dev);
+	const struct axp806_ctrl *c = sc->sc_ctrl;
+	int error;
+	u_int vol;
+
+	error = axp806_get_voltage(sc->sc_i2c, sc->sc_addr, c, &vol);
+	if (error)
+		return error;
+
+	*puvol = vol * 1000;
+	return 0;
+}
+
+static struct fdtbus_regulator_controller_func axp806reg_funcs = {
+	.acquire = axp806reg_acquire,
+	.release = axp806reg_release,
+	.enable = axp806reg_enable,
+	.set_voltage = axp806reg_set_voltage,
+	.get_voltage = axp806reg_get_voltage,
+};
+
+static int
+axp806reg_match(device_t parent, cfdata_t match, void *aux)
+{
+	return 1;
+}
+
+static void
+axp806reg_attach(device_t parent, device_t self, void *aux)
+{
+	struct axp806reg_softc *sc = device_private(self);
+	struct axp806reg_attach_args *aaa = aux;
+	const int phandle = aaa->reg_phandle;
+	const char *name;
+
+	sc->sc_dev = self;
+	sc->sc_i2c = aaa->reg_i2c;
+	sc->sc_addr = aaa->reg_addr;
+	sc->sc_ctrl = aaa->reg_ctrl;
+
+	fdtbus_register_regulator_controller(self, phandle,
+	    &axp806reg_funcs);
+
+	aprint_naive("\n");
+	name = fdtbus_get_string(phandle, "regulator-name");
+	if (name)
+		aprint_normal(": %s\n", name);
+	else
+		aprint_normal("\n");
+}
+
+CFATTACH_DECL_NEW(axp806pmic, sizeof(struct axp806_softc),
+    axp806_match, axp806_attach, NULL, NULL);
+
+CFATTACH_DECL_NEW(axp806reg, sizeof(struct axp806reg_softc),
+    axp806reg_match, axp806reg_attach, NULL, NULL);
