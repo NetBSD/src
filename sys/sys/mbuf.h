@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.203 2018/05/03 08:14:29 maxv Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.204 2018/05/03 08:39:28 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -329,7 +329,6 @@ MBUF_DEFINE(_mbuf_dummy, 1, 1);
 #define	MHLEN		(MSIZE - offsetof(struct _mbuf_dummy, m_pktdat))
 
 #define	MINCLSIZE	(MHLEN+MLEN+1)	/* smallest amount to put in cluster */
-#define	M_MAXCOMPRESS	(MHLEN / 2)	/* max amount to copy for compression */
 
 /*
  * The *real* struct mbuf
