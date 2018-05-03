@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.265 2018/01/13 03:35:40 pgoyette Exp $
+$NetBSD: acronyms,v 1.266 2018/05/03 15:38:13 htodd Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
@@ -365,6 +365,7 @@ NRFPT	not ready for prime time
 NRN	no reply necessary
 NRN	not right now
 NSFW	not suitable for work
+NTBF	not to be fixed
 NTN	no thanks needed
 NUNP	no users, no problems
 NVM	never mind
