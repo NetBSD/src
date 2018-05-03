@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_reass.c,v 1.15 2018/04/11 07:15:12 maxv Exp $	*/
+/*	$NetBSD: ip_reass.c,v 1.16 2018/05/03 07:25:49 maxv Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_reass.c,v 1.15 2018/04/11 07:15:12 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_reass.c,v 1.16 2018/05/03 07:25:49 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -389,7 +389,7 @@ insert:
 		t = q->ipqe_m;
 		nq = TAILQ_NEXT(q, ipqe_q);
 		pool_cache_put(ipfren_cache, q);
-		m_pkthdr_remove(t);
+		m_remove_pkthdr(t);
 		m_cat(m, t);
 	}
 
