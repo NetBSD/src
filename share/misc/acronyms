@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.267 2018/05/03 17:01:08 kamil Exp $
+$NetBSD: acronyms,v 1.268 2018/05/03 17:03:20 kamil Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
@@ -552,7 +552,7 @@ UTSL	use the source, Luke
 VCR	video cassette recorder
 VEG	very evil grin
 VIP	very important person
-VLC	variable length array
+VLA	variable length array
 W/	with
 W/E	whatever
 W/O	without
