@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_output.c,v 1.61 2018/01/18 16:23:43 maxv Exp $	*/
+/*	$NetBSD: ieee80211_output.c,v 1.62 2018/05/03 17:14:37 maxv Exp $	*/
 
 /*
  * Copyright (c) 2001 Atsushi Onoe
@@ -37,7 +37,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_output.c,v 1.34 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.61 2018/01/18 16:23:43 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.62 2018/05/03 17:14:37 maxv Exp $");
 #endif
 
 #ifdef _KERNEL_OPT
@@ -2084,7 +2084,7 @@ ieee80211_beacon_update(struct ieee80211com *ic, struct ieee80211_node *ni,
 			}
 			if (timlen != bo->bo_tim_len) {
 				/* copy up/down trailer */
-				ovbcopy(bo->bo_trailer, tie->tim_bitmap+timlen,
+				memmove(tie->tim_bitmap+timlen, bo->bo_trailer,
 					bo->bo_trailer_len);
 				bo->bo_trailer = tie->tim_bitmap+timlen;
 				bo->bo_wme = bo->bo_trailer;
