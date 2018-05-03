@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.9 2018/05/02 21:20:58 jmcneill Exp $
+#	$NetBSD: GENERIC64,v 1.10 2018/05/03 01:17:04 jmcneill Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -209,6 +209,8 @@ titemp*		at iic?
 seeprom*	at iic?
 as3722pmic*	at iic?
 as3722reg*	at as3722pmic?
+axp806pmic*	at iic?			# AXP805/806 Power Management IC
+axp806reg*	at axp806pmic?
 max77620pmic*	at iic?
 pcf8563rtc*	at iic?			# PCF8563 RTC
 tcagpio*	at iic?
