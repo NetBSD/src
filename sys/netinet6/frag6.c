@@ -1,4 +1,4 @@
-/*	$NetBSD: frag6.c,v 1.72 2018/05/01 07:21:39 maxv Exp $	*/
+/*	$NetBSD: frag6.c,v 1.73 2018/05/03 07:25:49 maxv Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.72 2018/05/01 07:21:39 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.73 2018/05/03 07:25:49 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -439,7 +439,7 @@ insert:
 			t = t->m_next;
 		t->m_next = af6->ip6af_m;
 		m_adj(t->m_next, af6->ip6af_offset);
-		m_pkthdr_remove(t->m_next);
+		m_remove_pkthdr(t->m_next);
 		kmem_intr_free(af6, sizeof(struct ip6asfrag));
 		af6 = af6dwn;
 	}
