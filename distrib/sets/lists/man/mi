@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1580 2018/05/01 23:41:51 kamil Exp $
+# $NetBSD: mi,v 1.1581 2018/05/03 22:27:59 sevan Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3844,6 +3844,7 @@
 ./usr/share/man/html1/zless.html		man-util-htmlman	html
 ./usr/share/man/html1/zmore.html		man-util-htmlman	html
 ./usr/share/man/html1/znew.html			man-util-htmlman	html
+./usr/share/man/html3/libbozohttpd.html		man-sys-htmlman		html
 ./usr/share/man/html3/libunbound.html		man-netutil-htmlman	html,unbound
 ./usr/share/man/html3lua/gpio.attach.html	man-sys-htmlman		html
 ./usr/share/man/html3lua/gpio.close.html	man-sys-htmlman		html
@@ -6705,6 +6706,7 @@
 ./usr/share/man/man3/atari/ahdi_writelabel.3	man-obsolete		obsolete
 ./usr/share/man/man3/i386			man-obsolete		obsolete
 ./usr/share/man/man3/i386/keycap.3		man-obsolete		obsolete
+./usr/share/man/man3/libbozohttpd.3		man-sys-man		.man
 ./usr/share/man/man3/libunbound.3		man-netutil-man		.man,unbound
 ./usr/share/man/man3lua/gpio.3lua		man-sys-man		.man
 ./usr/share/man/man3lua/gpio.attach.3lua	man-sys-man		.man
