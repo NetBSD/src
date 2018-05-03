@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_output.c,v 1.40 2013/11/03 18:37:10 mrg Exp $	*/
+/*	$NetBSD: ipsec_output.c,v 1.40.4.1 2018/05/03 14:47:22 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.40 2013/11/03 18:37:10 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.40.4.1 2018/05/03 14:47:22 martin Exp $");
 
 /*
  * IPsec output processing.
@@ -624,7 +624,7 @@ bad:
 #endif
 
 #ifdef INET6
-static void
+static int
 compute_ipsec_pos(struct mbuf *m, int *i, int *off)
 {
 	int nxt;
@@ -641,7 +641,11 @@ compute_ipsec_pos(struct mbuf *m, int *i, int *off)
 	 * put AH/ESP/IPcomp header.
 	 *  IPv6 hbh dest1 rthdr ah* [esp* dest2 payload]
 	 */
-	do {
+	while (1) {
+		if (*i + sizeof(ip6e) > m->m_pkthdr.len) {
+			return EINVAL;
+		}
+
 		switch (nxt) {
 		case IPPROTO_AH:
 		case IPPROTO_ESP:
@@ -650,7 +654,7 @@ compute_ipsec_pos(struct mbuf *m, int *i, int *off)
 		 * we should not skip security header added
 		 * beforehand.
 		 */
-			return;
+			return 0;
 
 		case IPPROTO_HOPOPTS:
 		case IPPROTO_DSTOPTS:
@@ -660,7 +664,7 @@ compute_ipsec_pos(struct mbuf *m, int *i, int *off)
 		 * we should stop there.
 		 */
 			if (nxt == IPPROTO_DSTOPTS && dstopt)
-				return;
+				return 0;
 
 			if (nxt == IPPROTO_DSTOPTS) {
 				/*
@@ -680,16 +684,14 @@ compute_ipsec_pos(struct mbuf *m, int *i, int *off)
 			m_copydata(m, *i, sizeof(ip6e), &ip6e);
 			nxt = ip6e.ip6e_nxt;
 			*off = *i + offsetof(struct ip6_ext, ip6e_nxt);
-			/*
-			 * we will never see nxt == IPPROTO_AH
-			 * so it is safe to omit AH case.
-			 */
 			*i += (ip6e.ip6e_len + 1) << 3;
 			break;
 		default:
-			return;
+			return 0;
 		}
-	} while (*i < m->m_pkthdr.len);
+	}
+
+	return 0;
 }
 
 static int
@@ -791,7 +793,9 @@ ipsec6_process_packet(
 		i = ip->ip_hl << 2;
 		off = offsetof(struct ip, ip_p);
 	} else {	
-		compute_ipsec_pos(m, &i, &off);
+		error = compute_ipsec_pos(m, &i, &off);
+		if (error)
+			goto bad;
 	}
 	error = (*sav->tdb_xform->xf_output)(m, isr, NULL, i, off);
 	splx(s);
