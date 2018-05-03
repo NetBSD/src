@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.200 2018/04/29 07:13:10 maxv Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.201 2018/05/03 07:01:08 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -635,9 +635,6 @@ do {									\
 
 /* The "copy all" special length. */
 #define	M_COPYALL	-1
-
-/* compatibility with 4.3 */
-#define  m_copy(m, o, l)	m_copym((m), (o), (l), M_DONTWAIT)
 
 /*
  * Allow drivers and/or protocols to store private context information.
