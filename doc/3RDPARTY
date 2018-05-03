@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1518 2018/05/02 22:11:49 roy Exp $
+#	$NetBSD: 3RDPARTY,v 1.1519 2018/05/03 20:15:49 jnemeth Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -763,7 +763,7 @@ All changes should come via import from upstream SVN.
 
 Package:	lvm2tools
 Version:	2.02.56
-Current Vers:	2.02.114
+Current Vers:	2.02.177
 Maintainer:	lvm-devel@redhat.com
 Archive Site:	ftp://sources.redhat.com/pub/lvm2/
 Home Page:	http://sources.redhat.com/lvm2/
