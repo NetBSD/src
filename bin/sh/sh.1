@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.205 2018/05/03 00:32:11 kre Exp $
+.\"	$NetBSD: sh.1,v 1.206 2018/05/03 05:11:43 wiz Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -175,7 +175,6 @@ Place commands within the
 and
 .Dq Ic esac
 below (these commands are described later):
-.Pp
 .Bd -literal -offset indent
 case $- in *i*)
         # commands for interactive use only
@@ -3280,7 +3279,6 @@ The choice between hard limit (which no process is allowed to
 violate, and which may not be raised once it has been lowered) and soft
 limit (which causes processes to be signaled but not necessarily killed,
 and which may be raised) is made with these flags:
-.Pp
 .Bl -tag -width Fl
 .It Fl H
 set or inquire about hard limits
@@ -3297,7 +3295,6 @@ If both are specified, the last one wins.
 .Pp
 The limit to be interrogated or set, then, is chosen by specifying
 any one of these flags:
-.Pp
 .Bl -tag -width Fl
 .It Fl a
 show all the current limits
