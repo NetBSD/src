@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_sem.c,v 1.48 2017/11/30 20:25:55 christos Exp $	*/
+/*	$NetBSD: uipc_sem.c,v 1.49 2018/05/04 19:56:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.48 2017/11/30 20:25:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.49 2018/05/04 19:56:58 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -85,7 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.48 2017/11/30 20:25:55 christos Exp $
 
 MODULE(MODULE_CLASS_MISC, ksem, NULL);
 
-#define	SEM_MAX_NAMELEN		14
+#define	SEM_MAX_NAMELEN		NAME_MAX
 
 #define	SEM_NSEMS_MAX		256
 #define	KS_UNLINKED		0x01
