@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.153 2018/04/26 19:22:17 maxv Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.154 2018/05/04 08:33:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -283,7 +283,7 @@ struct mbuf *
 struct mbuf *
 	sbcreatecontrol1(void **, int, int, int, int);
 struct mbuf **
-	sbsavetimestamp(int, struct mbuf **);
+	sbsavetimestamp(int, struct mbuf *, struct mbuf **);
 void	sbdrop(struct sockbuf *, int);
 void	sbdroprecord(struct sockbuf *);
 void	sbflush(struct sockbuf *);
@@ -363,16 +363,14 @@ void	free_control_mbuf(struct lwp *, struct mbuf *, struct mbuf *);
 int	do_sys_getpeername(int, struct sockaddr *);
 int	do_sys_getsockname(int, struct sockaddr *);
 
-int	do_sys_sendmsg(struct lwp *, int, struct msghdr *, int,
-	    const void *, size_t, register_t *);
+int	do_sys_sendmsg(struct lwp *, int, struct msghdr *, int, register_t *);
 int	do_sys_sendmsg_so(struct lwp *, int, struct socket *, file_t *,
-	    struct msghdr *, int, const void *, size_t, register_t *);
+	    struct msghdr *, int, register_t *);
 
 int	do_sys_recvmsg(struct lwp *, int, struct msghdr *,
-	    const void *, size_t, struct mbuf **, struct mbuf **, register_t *);
+	    struct mbuf **, struct mbuf **, register_t *);
 int	do_sys_recvmsg_so(struct lwp *, int, struct socket *,
-	    struct msghdr *mp, const void *, size_t, struct mbuf **,
-	    struct mbuf **, register_t *);
+	    struct msghdr *mp, struct mbuf **, struct mbuf **, register_t *);
 
 int	do_sys_bind(struct lwp *, int, struct sockaddr *);
 int	do_sys_connect(struct lwp *, int, struct sockaddr *);
