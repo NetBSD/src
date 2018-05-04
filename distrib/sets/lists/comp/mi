@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2189 2018/05/03 22:27:59 sevan Exp $
+#	$NetBSD: mi,v 1.2190 2018/05/04 19:11:59 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -3282,9 +3282,6 @@
 ./usr/lib/libatf_p.a				comp-obsolete		obsolete
 ./usr/lib/libavl.a				comp-zfs-lib		compatfile,zfs
 ./usr/lib/libavl_p.a				comp-zfs-proflib	compatfile,profile,zfs
-./usr/lib/libbozohttpd.a			comp-c-lib		compatfile
-./usr/lib/libbozohttpd_p.a			comp-c-lib		compatfile
-./usr/lib/libbozohttpd_pic.a			comp-c-lib		compatfile
 ./usr/lib/libbfd.a				comp-obsolete		obsolete
 ./usr/lib/libbind9.a				comp-bind-lib		compatfile
 ./usr/lib/libbind9_p.a				comp-bind-proflib	compatfile,profile
@@ -3292,6 +3289,9 @@
 ./usr/lib/libblacklist_p.a			comp-c-proflib		compatfile,profile
 ./usr/lib/libbluetooth.a			comp-c-lib		compatfile
 ./usr/lib/libbluetooth_p.a			comp-c-proflib		compatfile,profile
+./usr/lib/libbozohttpd.a			comp-c-lib		compatfile
+./usr/lib/libbozohttpd_p.a			comp-c-lib		compatfile
+./usr/lib/libbozohttpd_pic.a			comp-c-lib		compatfile
 ./usr/lib/libbsdmalloc.a			comp-c-lib		compatfile
 ./usr/lib/libbsdmalloc_p.a			comp-c-proflib		compatfile,profile
 ./usr/lib/libbz2.a				comp-c-lib		compatfile
@@ -3797,6 +3797,7 @@
 ./usr/libdata/lint/llib-lbind9.ln		comp-bind-lintlib	lint
 ./usr/libdata/lint/llib-lblacklist.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lbluetooth.ln		comp-c-lintlib		lint
+./usr/libdata/lint/llib-lbozohttpd.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lbsdmalloc.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lbz2.ln			comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lc.ln			comp-c-lintlib		lint
