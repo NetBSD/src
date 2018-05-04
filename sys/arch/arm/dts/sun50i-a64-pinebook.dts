@@ -1,4 +1,4 @@
-/* $NetBSD: sun50i-a64-pinebook.dts,v 1.4 2018/04/28 11:49:48 jmcneill Exp $ */
+/* $NetBSD: sun50i-a64-pinebook.dts,v 1.5 2018/05/04 23:04:09 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -26,16 +26,26 @@
  * SUCH DAMAGE.
  */
 
-#include "../../../external/gpl2/dts/dist/arch/arm64/boot/dts/allwinner/sun50i-a64-pine64.dts"
+/dts-v1/;
+
+#include "../../../external/gpl2/dts/dist/arch/arm64/boot/dts/allwinner/sun50i-a64.dtsi"
 #include "sun50i-a64.dtsi"
 
+#include <dt-bindings/gpio/gpio.h>
 #include <dt-bindings/input/linux-event-codes.h>
+#include <dt-bindings/interrupt-controller/irq.h>
 
 / {
 	model = "Pine64 Pinebook";
 	compatible = "pine64,pinebook", "allwinner,sun50i-a64";
 
+	aliases {
+		serial0 = &uart0;
+	};
+
 	chosen {
+		stdout-path = "serial0:115200n8";
+
 		framebuffer@0 {
 			allwinner,pipeline = "mixer0-lcd0";
 		};
@@ -52,6 +62,41 @@
 			linux,can-disable;
 		};
 	};
+
+	reg_vcc3v3: vcc3v3 {
+		regulator-fixed;
+		regulator-name = "vcc3v3";
+		regulator-min-microvolt = <3300000>;
+		regulator-max-microvolt = <3300000>;
+	};
+};
+
+&ehci1 {
+	status = "okay";
+};
+
+&ohci1 {
+	status = "okay";
+};
+
+&usb_otg {
+	dr_mode = "host";
+	status = "okay";
+
+};
+
+&usbphy {
+	status = "okay";
+};
+
+&mmc0 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&mmc0_pins>;
+	vmmc-supply = <&reg_vcc3v3>;
+	cd-gpios = <&pio 5 6 GPIO_ACTIVE_LOW>;
+	disable-wp;
+	bus-width = <4>;
+	status = "okay";
 };
 
 &mmc2 {
@@ -63,3 +108,22 @@
 	cap-mmc-hw-reset;
 	status = "okay";
 };
+
+&uart0 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&uart0_pins_a>;
+	status = "okay";
+};
+
+&r_rsb {
+	status = "okay";
+
+	axp803: pmic@3a3 {
+		compatible = "x-powers,axp803";
+		reg = <0x3a3>;
+		interrupt-parent = <&r_intc>;
+		interrupts = <0 IRQ_TYPE_LEVEL_LOW>;
+	};
+};
+
+#include "axp803.dtsi"
