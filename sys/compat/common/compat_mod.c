@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_mod.c,v 1.28 2018/04/12 18:50:13 christos Exp $	*/
+/*	$NetBSD: compat_mod.c,v 1.29 2018/05/04 08:55:25 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.28 2018/04/12 18:50:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.29 2018/05/04 08:55:25 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -73,15 +73,13 @@ MODULE(MODULE_CLASS_EXEC, compat, NULL);
 
 int	ttcompat(struct tty *, u_long, void *, int, struct lwp *);
 
-#ifdef _MODULE
 #ifdef COMPAT_16
 #if !defined(__amd64__) || defined(COMPAT_NETBSD32)
 #define COMPAT_SIGCONTEXT
 extern char sigcode[], esigcode[];
 struct uvm_object *emul_netbsd_object;
-#endif
-#endif
-#endif /* _MODULE */
+#endif /* !defined(__amd64__) || defined(COMPAT_NETBSD32) */
+#endif /* COMPAT_16 */
 
 extern krwlock_t exec_lock;
 extern krwlock_t ttcompat_lock;
