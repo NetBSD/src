@@ -1,4 +1,4 @@
-/* $NetBSD: axp806.c,v 1.3 2018/05/03 02:10:17 jmcneill Exp $ */
+/* $NetBSD: axp806.c,v 1.4 2018/05/04 20:26:50 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: axp806.c,v 1.3 2018/05/03 02:10:17 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: axp806.c,v 1.4 2018/05/04 20:26:50 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: axp806.c,v 1.3 2018/05/03 02:10:17 jmcneill Exp $");
 #define	 AXP_POWER_DISABLE_CTRL	__BIT(7)
 #define AXP_WAKEUP_PINFUNC_REG	0x35
 #define AXP_POK_SETTING_REG	0x36
-#define AXP_MODE_SEL_REG	0axp806_power_funcsx3e
+#define AXP_MODE_SEL_REG	0x3e
 #define AXP_SPECIAL_CTRL_REG	0x3f
 #define AXP_IRQ_ENABLE1_REG	0x40
 #define AXP_IRQ_ENABLE2_REG	0x41
