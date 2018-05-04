@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.104 2018/03/22 15:18:05 macallan Exp $	*/
+/*	$NetBSD: cpu.h,v 1.105 2018/05/04 17:01:29 macallan Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -164,6 +164,8 @@ struct cpu_hatch_data {
 	uint32_t hatch_tbl;
 #if defined(PPC_OEA64_BRIDGE) || defined (_ARCH_PPC64)
 	uint64_t hatch_hid0;
+	uint64_t hatch_hid4;
+	uint64_t hatch_hid5;
 #else
 	uint32_t hatch_hid0;
 #endif
