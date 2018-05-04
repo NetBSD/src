@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.193 2018/05/03 21:43:33 christos Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.194 2018/05/04 08:47:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,12 +61,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.193 2018/05/03 21:43:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.194 2018/05/04 08:47:55 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pipe.h"
 #endif
 
+#define MBUFTYPES
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/filedesc.h>
