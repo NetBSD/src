@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.246 2018/04/03 18:03:16 christos Exp $
+# $NetBSD: mi,v 1.247 2018/05/04 12:44:40 sevan Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -34,6 +34,7 @@
 ./usr/lib/libbind9_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libblacklist_g.a			comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libbluetooth_g.a			comp-c-debuglib		debuglib,compatfile
+./usr/lib/libbozohttpd_g.a			comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libbsdmalloc_g.a			comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libbz2_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libc++_g.a				comp-c-debuglib		debuglib,compatfile,libcxx
