@@ -1,7 +1,7 @@
-#	$NetBSD: bsd.hostprog.mk,v 1.79 2017/11/25 23:22:41 jmcneill Exp $
+#	$NetBSD: bsd.hostprog.mk,v 1.80 2018/05/04 14:50:40 christos Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
-.include <bsd.init.mk>
+.include <bsd.hostinit.mk>
 .include <bsd.sys.mk>
 
 ##### Basic targets
