@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.189 2018/04/19 15:55:21 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.190 2018/05/04 16:26:29 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -13139,3 +13139,26 @@ sys/dev/pci/nvme_pci.c				1.20
 sys/sys/param.h					changed manually
 
 	Welcome to 8.0 RC1
+
+sys/arch/macppc/conf/GENERIC			(patch)
+
+	Disable radeonfb since it still fails on some hardware.
+	macallan, ticket #783]
+
+sys/arch/x86/acpi/acpi_wakeup.c			1.46
+
+	Save and restore xcr0 when doing ACPI sleeps.
+	[maya, ticket #784]
+
+sbin/gpt/gpt.8					1.53-1.57,1.59
+sbin/gpt/gpt.c					1.74
+sbin/gpt/map.c					1.14
+
+	Document the bootme flag.
+	Fix a typo, and make a couple of minor wording improvements.
+	Clarify that alignment is the number of bytes to align to.
+	Explain what suffixes are accepted when specifying a size.
+	Add information about how to boot from gpt.
+	If a new map entry doesn't fit, be more verbose about the sizes.
+	[mrg, ticket #785]
+
