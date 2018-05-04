@@ -155,6 +155,9 @@ l_bozo_process_request(lua_State *L)
 	bozo_httpreq_t	*req;
 
 	req = lua_touserdata(L, 1);
+	if (req == NULL) {
+		return 0;
+	}
 	bozo_process_request(req);
 	lua_pushnumber(L, 1);
 	return 1;
@@ -167,6 +170,9 @@ l_bozo_clean_request(lua_State *L)
 	bozo_httpreq_t	*req;
 
 	req = lua_touserdata(L, 1);
+	if (req == NULL) {
+		return 0;
+	}
 	bozo_clean_request(req);
 	lua_pushnumber(L, 1);
 	return 1;
