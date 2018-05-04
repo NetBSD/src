@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.111 2018/01/25 22:48:42 christos Exp $	*/
+/*	$NetBSD: localtime.c,v 1.112 2018/05/04 15:51:00 christos Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -10,7 +10,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	8.17";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.111 2018/01/25 22:48:42 christos Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.112 2018/05/04 15:51:00 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -95,9 +95,8 @@ static const char	gmt[] = "GMT";
 /*
 ** The DST rules to use if TZ has no rules and we can't load TZDEFRULES.
 ** Default to US rules as of 2017-05-07.
-** POSIX 1003.1 section 8.1.1 says that the default DST rules are
-** implementation dependent; for historical reasons, US rules are a
-** common default.
+** POSIX does not specify the default DST rules;
+** for historical reasons, US rules are a common default.
 */
 #ifndef TZDEFRULESTRING
 #define TZDEFRULESTRING ",M3.2.0,M11.1.0"
@@ -448,7 +447,13 @@ tzloadbody(char const *name, struct state *sp, bool doextend,
 
 	if (name[0] == ':')
 		++name;
+#ifdef SUPPRESS_TZDIR
+	/* Do not prepend TZDIR.  This is intended for specialized
+	   applications only, due to its security implications.  */
+	doaccess = true;
+#else
 	doaccess = name[0] == '/';
+#endif
 	if (!doaccess) {
 		size_t namelen = strlen(name);
 		if (sizeof lsp->fullname - sizeof tzdirslash <= namelen)
@@ -1277,12 +1282,13 @@ tzparse(const char *name, struct state *sp, bool lastditch)
 					/* No adjustment to transition time */
 				} else {
 					/*
-					** If summer time is in effect, and the
-					** transition time was not specified as
-					** standard time, add the summer time
-					** offset to the transition time;
-					** otherwise, add the standard time
-					** offset to the transition time.
+					** If daylight saving time is in
+					** effect, and the transition time was
+					** not specified as standard time, add
+					** the daylight saving time offset to
+					** the transition time; otherwise, add
+					** the standard time offset to the
+					** transition time.
 					*/
 					/*
 					** Transitions from DST to DDST
@@ -2361,7 +2367,7 @@ timeoff(struct tm *tmp, long offset)
 #ifdef STD_INSPIRED
 
 /*
-** IEEE Std 1003.1-1988 (POSIX) legislates that 536457599
+** IEEE Std 1003.1 (POSIX) says that 536457599
 ** shall correspond to "Wed Dec 31 23:59:59 UTC 1986", which
 ** is not the case if we are accounting for leap seconds.
 ** So, we provide the following conversion routines for use

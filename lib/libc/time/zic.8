@@ -1,5 +1,5 @@
-.\"	$NetBSD: zic.8,v 1.28 2018/01/25 22:48:42 christos Exp $
-.Dd January 25, 2018
+.\"	$NetBSD: zic.8,v 1.29 2018/05/04 15:51:00 christos Exp $
+.Dd May 5, 2018
 .Dt ZIC 8
 .Os
 .Sh NAME
@@ -156,11 +156,11 @@ abbreviation must be unambiguous in context.
 .Pp
 A rule line has the form
 .Pp
-.Dl Rule	NAME	FROM	TO	TYPE	IN	ON		AT	SAVE	LETTER/S
+.Dl Rule	NAME	FROM	TO	TYPE	IN	ON		AT		SAVE		LETTER/S
 .Pp
 For example:
 .Pp
-.Dl Rule	US	1967	1973	\-	Apr	lastSun	2:00	1:00	D
+.Dl Rule	US	1967	1973	\-	Apr	lastSun	2:00s	1:00d	D
 .Pp
 The fields that make up a rule line are:
 .Bl -tag -width "LETTER/S"
@@ -233,13 +233,15 @@ field.
 Gives the time of day at which the rule takes effect.
 Recognized forms include:
 .Pp
-.Bl -tag -width "01X28X14" -compact -offset indent
+.Bl -tag -width "00X19X32X13" -compact -offset indent
 .It 2
 time in hours
 .It 2:00
 time in hours and minutes
 .It 01:28:14
 time in hours, minutes, and seconds
+.It 00:19:32.13
+time with fractional seconds
 .It 15:00
 24-hour format time (for times after noon)
 .It 260:00
@@ -252,6 +254,12 @@ equivalent to 0
 .Pp
 where hour 0 is midnight at the start of the day,
 and hour 24 is midnight at the end of the day.
+Although
+.I zic
+rounds times to the nearest integer second
+(breaking ties to the even integer), the fractions may be useful
+to other applications requiring greater precision.
+The source format does not specify any maximum precision.
 Any of these forms may be followed by the letter
 .Em w
 if the given time is local
@@ -275,16 +283,23 @@ clock/calendar set to the type of time specified in the
 field would show the specified date and time of day.
 .It SAVE
 Gives the amount of time to be added to local standard time when the rule is in
-effect.
+effect, and whether the resulting time is standard or daylight saving.
 This field has the same format as the
 .Em AT
 field
-(although, of course, the
-suffixes are not used).
+.Em s
+for standard time and
+.Em d
+for daylight saving time.
+The suffix letter is typically omitted, and defaults to
+.Em s
+if the offset is zero and to
+.Em d
+otherwise.
 Negative offsets are allowed; in Ireland, for example, daylight saving
 time is observed in winter and has a negative offset relative to
 Irish Standard Time.
-Only the sum of standard time and this amount matters; for example,
+The offset is merely added to standard time; for example,
 .Nm
 does not distinguish a 10:30 standard time plus an 0:30
 .Em SAVE
@@ -337,7 +352,9 @@ fields of rule lines;
 begin the field with a minus sign if time must be subtracted from UT.
 .It RULES
 The name of the rules that apply in the time zone or,
-alternatively, an amount of time to add to local standard time.
+alternatively, a field in the same format as a rule-line SAVE column,
+giving of the amount of time to be added to local standard time
+effect, and whether the resulting time is standard or daylight saving.
 If this field is
 .Em \&-
 then standard time always applies in the time zone.
@@ -350,7 +367,7 @@ The pair of characters
 is used to show where the
 .Dq variable part
 of the time zone abbreviation goes.
-Alternately, a format can use the pair of characters
+Alternatively, a format can use the pair of characters
 .Em %z
 +to stand for the UT offset in the form
 .Em \(+- hh ,
