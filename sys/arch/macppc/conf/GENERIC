@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.329.2.4 2018/02/26 01:08:26 snj Exp $
+# $NetBSD: GENERIC,v 1.329.2.5 2018/05/04 16:03:32 martin Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.329.2.4 $"
+#ident 		"GENERIC-$Revision: 1.329.2.5 $"
 
 maxusers	32
 
@@ -294,8 +294,8 @@ r128fb*		at pci? function ?	# ATI Rage 128
 voodoofb*	at pci? function ?	# 3Dfx Voodoo3 
 
 # ATI Radeon. Still has problems on some hardware
-radeonfb*	at pci? function ?
-options 	RADEONFB_ALWAYS_ACCEL_PUTCHAR
+#radeonfb*	at pci? function ?
+#options 	RADEONFB_ALWAYS_ACCEL_PUTCHAR
 
 # generic PCI framebuffer, should work with everything supported by OF
 genfb*		at pci? function ?
