@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig_16.c,v 1.2.38.2 2018/04/17 07:24:55 pgoyette Exp $	*/
+/*	$NetBSD: kern_sig_16.c,v 1.2.38.3 2018/05/04 08:19:47 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig_16.c,v 1.2.38.2 2018/04/17 07:24:55 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig_16.c,v 1.2.38.3 2018/05/04 08:19:47 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -99,6 +99,7 @@ static const struct syscall_package kern_sig_16_syscalls[] = {
 #ifdef COMPAT_SIGCONTEXT
 	{ SYS_compat_16___sigaction14, 0,
 	    (sy_call_t *)compat_16_sys___sigaction14 },
+	/* compat_16_sigreturn14 is in MD code! */
 	{ SYS_compat_16___sigreturn14, 0,
 	    (sy_call_t *)compat_16_sys___sigreturn14 },
 #endif
