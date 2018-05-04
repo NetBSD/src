@@ -156,11 +156,11 @@ EOF
 	file -b ./md32 > ./ftype32
 	file -b ./md64 > ./ftype64
 	if diff ./ftype32 ./ftype64 >/dev/null; then
-		atf_fail "Generated binz ain't no different"
+		atf_fail "Generated 32bit binaries do not differ from 64bit ones"
 	fi
-	echo "32bit Binz on this platform are:"
+	echo "32bit binaries on this platform are:"
 	cat ./ftype32
-	echo "64bit Binz are on the other hand:"
+	echo "64bit binaries are on the other hand:"
 	cat ./ftype64
 	atf_check -s ignore -e match:"signed integer overflow" ./md32
 
