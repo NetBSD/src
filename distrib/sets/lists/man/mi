@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1582 2018/05/04 14:15:41 kamil Exp $
+# $NetBSD: mi,v 1.1583 2018/05/04 14:23:19 kamil Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -659,7 +659,7 @@
 ./usr/share/man/cat3/atari/ahdi_writelabel.0	man-obsolete		obsolete
 ./usr/share/man/cat3/i386			man-obsolete		obsolete
 ./usr/share/man/cat3/i386/keycap.0		man-obsolete		obsolete
-./usr/share/man/cat3/libbozohttpd.0		man-netutil-catman	.cat
+./usr/share/man/cat3/libbozohttpd.0		man-sys-catman		.cat
 ./usr/share/man/cat3/libunbound.0		man-netutil-catman	.cat,unbound
 ./usr/share/man/cat3lua/gpio.0			man-sys-catman		.cat
 ./usr/share/man/cat3lua/gpio.attach.0		man-sys-catman		.cat
