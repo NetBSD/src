@@ -1,4 +1,4 @@
-/*	$NetBSD: filecomplete.c,v 1.49 2018/05/02 08:45:03 abhinav Exp $	*/
+/*	$NetBSD: filecomplete.c,v 1.50 2018/05/04 16:39:14 abhinav Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: filecomplete.c,v 1.49 2018/05/02 08:45:03 abhinav Exp $");
+__RCSID("$NetBSD: filecomplete.c,v 1.50 2018/05/04 16:39:14 abhinav Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -528,6 +528,48 @@ fn_display_match_list(EditLine * el, char **matches, size_t num, size_t width,
 	}
 }
 
+static wchar_t *
+find_word_to_complete(const wchar_t * cursor, const wchar_t * buffer,
+    const wchar_t * word_break, const wchar_t * special_prefixes, size_t * length)
+{
+	/* We now look backwards for the start of a filename/variable word */
+	const wchar_t *ctemp = cursor;
+	int cursor_at_quote;
+	size_t len;
+	wchar_t *temp;
+
+	/* if the cursor is placed at a slash or a quote, we need to find the
+	 * word before it
+	 */
+	if (ctemp > buffer) {
+		switch (ctemp[-1]) {
+		case '\\':
+		case '\'':
+		case '"':
+			cursor_at_quote = 1;
+			ctemp--;
+			break;
+		default:
+			cursor_at_quote = 0;
+		}
+	}
+	while (ctemp > buffer
+	    && !wcschr(word_break, ctemp[-1])
+	    && (!special_prefixes || !wcschr(special_prefixes, ctemp[-1])))
+		ctemp--;
+
+	len = (size_t) (cursor - ctemp - cursor_at_quote);
+	temp = el_malloc((len + 1) * sizeof(*temp));
+	if (temp == NULL)
+		return NULL;
+	(void) wcsncpy(temp, ctemp, len);
+	temp[len] = '\0';
+	if (cursor_at_quote)
+		len++;
+	*length = len;
+	return temp;
+}
+
 /*
  * Complete the word at or before point,
  * 'what_to_do' says what to do with the completion.
@@ -551,7 +593,6 @@ fn_complete(EditLine *el,
 	const LineInfoW *li;
 	wchar_t *temp;
 	char **matches;
-	const wchar_t *ctemp;
 	size_t len;
 	int what_to_do = '\t';
 	int retval = CC_NORM;
@@ -568,20 +609,11 @@ fn_complete(EditLine *el,
 	if (!app_func)
 		app_func = append_char_function;
 
-	/* We now look backwards for the start of a filename/variable word */
 	li = el_wline(el);
-	ctemp = li->cursor;
-	while (ctemp > li->buffer
-	    && !wcschr(word_break, ctemp[-1])
-	    && (!special_prefixes || !wcschr(special_prefixes, ctemp[-1]) ) )
-		ctemp--;
-
-	len = (size_t)(li->cursor - ctemp);
-	temp = el_malloc((len + 1) * sizeof(*temp));
+	temp = find_word_to_complete(li->cursor,
+	    li->buffer, word_break, special_prefixes, &len);
 	if (temp == NULL)
 		goto out;
-	(void)wcsncpy(temp, ctemp, len);
-	temp[len] = '\0';
 
 	/* these can be used by function called in completion_matches() */
 	/* or (*attempted_completion_function)() */
