@@ -79,6 +79,7 @@ AeDoOptions (
 
 /* Globals */
 
+BOOLEAN                     AcpiGbl_UseLocalFaultHandler = TRUE;
 UINT8                       AcpiGbl_RegionFillValue = 0;
 BOOLEAN                     AcpiGbl_IgnoreErrors = FALSE;
 BOOLEAN                     AcpiGbl_AbortLoopOnTimeout = FALSE;
@@ -140,6 +141,7 @@ usage (
     printf ("\n");
 
     ACPI_OPTION ("-da",                 "Disable method abort on error");
+    ACPI_OPTION ("-df",                 "Disable Local fault handler");
     ACPI_OPTION ("-di",                 "Disable execution of STA/INI methods during init");
     ACPI_OPTION ("-do",                 "Disable Operation Region address simulation");
     ACPI_OPTION ("-dp",                 "Disable TermList parsing for scope objects");
@@ -220,6 +222,11 @@ AeDoOptions (
         case 'a':
 
             AcpiGbl_IgnoreErrors = TRUE;
+            break;
+
+        case 'f':
+
+            AcpiGbl_UseLocalFaultHandler = FALSE;
             break;
 
         case 'i':
@@ -492,7 +499,10 @@ main (
     ACPI_DEBUG_INITIALIZE (); /* For debug version only */
 
     signal (SIGINT, AeSignalHandler);
-    signal (SIGSEGV, AeSignalHandler);
+    if (AcpiGbl_UseLocalFaultHandler)
+    {
+        signal (SIGSEGV, AeSignalHandler);
+    }
 
     /* Init debug globals */
 
