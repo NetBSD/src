@@ -1,6 +1,6 @@
-#	$NetBSD: bsd.hostlib.mk,v 1.19 2014/12/01 01:34:30 erh Exp $
+#	$NetBSD: bsd.hostlib.mk,v 1.20 2018/05/04 14:50:40 christos Exp $
 
-.include <bsd.init.mk>
+.include <bsd.hostinit.mk>
 .include <bsd.sys.mk>
 
 ##### Basic targets
