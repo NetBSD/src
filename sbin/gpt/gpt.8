@@ -1,4 +1,4 @@
-.\" $NetBSD: gpt.8,v 1.52.4.1 2018/04/09 12:54:00 bouyer Exp $
+.\" $NetBSD: gpt.8,v 1.52.4.2 2018/05/04 16:24:46 martin Exp $
 .\"
 .\" Copyright (c) 2002 Marcel Moolenaar
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" $FreeBSD: src/sbin/gpt/gpt.8,v 1.17 2006/06/22 22:22:32 marcel Exp $
 .\"
-.Dd February 15, 2017
+.Dd March 5, 2018
 .Dt GPT 8
 .Os
 .Sh NAME
@@ -132,7 +132,8 @@ The command-specific options can be used to control this behaviour.
 The
 .Fl a Ar alignment
 option allows the user to specify an alignment for the start and size.
-The alignment may have a suffix to indicate its magnitude.
+The alignment is given in bytes and may have a suffix to indicate its
+magnitude.
 .Nm
 will attempt to align the partition.
 .Pp
@@ -162,6 +163,15 @@ or
 .Sq S
 then size is in sectors, otherwise size is in bytes which must be
 a multiple of the device's sector size.
+Accepted suffix units are
+.Sq b
+to denote bytes,
+.Sq k
+to denote kilobytes,
+.Sq m
+to denote megabytes and
+.Sq g
+to denote gigabytes.
 The minimum size is 1 sector.
 .Pp
 The
@@ -180,15 +190,20 @@ BIOS Boot
 .It Cm efi
 EFI System
 .It Cm fbsd-legacy
-FreeBSD legacy
+.Fx
+legacy
 .It Cm fbsd-swap
-FreeBSD swap
+.Fx
+swap
 .It Cm fbsd-ufs
-FreeBSD UFS/UFS2
+.Fx
+UFS/UFS2
 .It Cm fbsd-vinum
-FreeBSD vinum
+.Fx
+vinum
 .It Cm fbsd-zfs
-FreeBSD ZFS
+.Fx
+ZFS
 .It Cm linux-data
 Linux data
 .It Cm linux-raid
@@ -202,17 +217,23 @@ Windows basic data
 .It Cm windows-reserved
 Windows reserved
 .It Cm ccd
-NetBSD ccd component
+.Nx
+ccd component
 .It Cm cgd
-NetBSD Cryptographic Disk
+.Nx
+Cryptographic Disk
 .It Cm ffs
-NetBSD FFSv1/FFSv2
+.Nx
+FFSv1/FFSv2
 .It Cm lfs
-NetBSD LFS
+.Nx
+LFS
 .It Cm raid
-NetBSD RAIDFrame component
+.Nx
+RAIDFrame component
 .It Cm swap
-NetBSD swap
+.Nx
+swap
 .El
 as aliases for the most commonly used partition types.
 .\" ==== backup ====
@@ -256,8 +277,8 @@ bootstrap code, as installed via
 The
 .Fl L
 option selects the partition by label.
-If there are multiple partitions with the same label, it will use the
-first one found.
+If there are multiple partitions with the same label, the
+first one found will be used.
 .\" ==== create ====
 .It Nm Ic create Oo Fl AfP Oc Oo Fl p Ar partitions Oc
 The
@@ -462,6 +483,15 @@ or
 .Sq S
 then size is in sectors, otherwise size is in bytes which must be
 a multiple of the device's sector size.
+Accepted suffix units are
+.Sq b
+to denote bytes,
+.Sq k
+to denote kilobytes,
+.Sq m
+to denote megabytes and
+.Sq g
+to denote gigabytes.
 The minimum size is 1 sector.
 If the
 .Fl a
@@ -491,6 +521,15 @@ or
 .Sq S
 then size is in sectors, otherwise size is in bytes which must be
 a multiple of the device's sector size.
+Accepted suffix units are
+.Sq b
+to denote bytes,
+.Sq k
+to denote kilobytes,
+.Sq m
+to denote megabytes and
+.Sq g
+to denote gigabytes.
 Using the
 .Fl s
 option allows you to move the backup copy prior to resizing the medium.
@@ -543,14 +582,15 @@ by legacy BIOS boot code.
 See the
 .Ic biosboot
 command for more information.
+The bootme flag is used to indicate which partition should be booted
+by UEFI boot code.
 The other attributes are for compatibility with
 .Fx
-and are not currently used by any
-.Nx
-code.
+and are not currently used by
+.Nx .
 They may be used by
 .Nx
-code in the future.
+in the future.
 .\" ==== show ====
 .It Nm Ic show Oo Fl aglu Oc Oo Fl i Ar index Oc
 The
@@ -676,6 +716,25 @@ nas# gpt show -l wd3
   3907029167           1         Sec GPT header
 nas#
 .Ed
+.Pp
+Booting from GPT on an BIOS system.
+This creates a bootable partition that can be manually installed to.
+Note that
+.Xr sysinst 8
+does not yet properly support this setup.
+.Bd -literal
+xotica# gpt create wd1
+xotica# gpt add -b 1024 -l bootroot -t ffs -s 1g wd1
+/dev/rwd1: Partition 1 added: 49f48d5a-b10e-11dc-b99b-0019d1879648 1024 2097152
+xotica ~# dmesg | tail -2
+wd1: GPT GUID: 660e0630-0a3f-47c0-bc52-c88bcec79392
+dk0 at wd1: "bootroot", 2097152 blocks at 1024, type: ffs
+xotica# gpt biosboot -L bootroot wd1
+xotica# newfs dk0
+xotica# installboot /dev/rdk0 /usr/mdec/bootxx_ffsv1
+xotica# mount /dev/dk0 /mnt
+xotica# cp /usr/mdec/boot /mnt
+.Ed
 .Sh SEE ALSO
 .Xr boot 8 ,
 .Xr dkctl 8 ,
@@ -683,7 +742,7 @@ nas#
 .Xr installboot 8 ,
 .Xr mount 8 ,
 .Xr newfs 8 ,
-.Xr swapon 8
+.Xr swapctl 8
 .Sh HISTORY
 The
 .Nm
