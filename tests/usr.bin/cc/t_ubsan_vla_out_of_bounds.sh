@@ -40,28 +40,28 @@ test_target()
 
 atf_test_case vla_out_of_bounds
 vla_out_of_bounds_head() {
-	atf_set "descr" "Test Undefined Behavior for vla out of bounds"
+	atf_set "descr" "Test Undefined Behavior for vla (Variable Length Array) out of bounds"
 	atf_set "require.progs" "cc"
 }
 
 atf_test_case vla_out_of_bounds_profile
 vla_out_of_bounds_profile_head() {
-	atf_set "descr" "Test Undefined Behavior for vla out of bounds with profiling option"
+	atf_set "descr" "Test Undefined Behavior for vla (Variable Length Array) out of bounds with profiling option"
 	atf_set "require.progs" "cc"
 }
 atf_test_case vla_out_of_bounds_pic
 vla_out_of_bounds_pic_head() {
-	atf_set "descr" "Test Undefined Behavior for vla out of bounds with position independent code (PIC) flag"
+	atf_set "descr" "Test Undefined Behavior for vla (Variable Length Array) out of bounds with position independent code (PIC) flag"
 	atf_set "require.progs" "cc"
 }
 atf_test_case vla_out_of_bounds_pie
 vla_out_of_bounds_pie_head() {
-	atf_set "descr" "Test Undefined Behavior for vla out of bounds with position independent execution (PIE) flag"
+	atf_set "descr" "Test Undefined Behavior for vla (Variable Length Array) out of bounds with position independent execution (PIE) flag"
 	atf_set "require.progs" "cc"
 }
 atf_test_case vla_out_of_bounds32
 vla_out_of_bounds32_head() {
-	atf_set "descr" "Test Undefined Behavior for vla out of bounds in NetBSD_32 emulation"
+	atf_set "descr" "Test Undefined Behavior for vla (Variable Length Array) out of bounds in NetBSD_32 emulation"
 	atf_set "require.progs" "cc file diff cat"
 }
 
