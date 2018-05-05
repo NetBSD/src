@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.314 2018/04/16 12:25:18 christos Exp $
+# $NetBSD: shl.mi,v 1.315 2018/05/05 01:09:08 sevan Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -16,6 +16,7 @@
 ./usr/lib/libbind9_pic.a			comp-bind-piclib	compatfile,picinstall
 ./usr/lib/libblacklist_pic.a			comp-c-piclib		compatfile,picinstall
 ./usr/lib/libbluetooth_pic.a			comp-c-piclib		compatfile,picinstall
+./usr/lib/libbozohttpd_pic.a			comp-c-piclib		compatfile,picinstall
 ./usr/lib/libbsdmalloc_pic.a			comp-c-piclib		compatfile,picinstall
 ./usr/lib/libbz2_pic.a				comp-c-piclib		compatfile,picinstall
 ./usr/lib/libc++_pic.a				comp-c-piclib		compatfile,picinstall,libcxx
