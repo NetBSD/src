@@ -1,4 +1,4 @@
-/* $NetBSD: sun50i_a64_ccu.c,v 1.3 2017/09/07 23:19:45 jmcneill Exp $ */
+/* $NetBSD: sun50i_a64_ccu.c,v 1.4 2018/05/05 13:28:23 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sun50i_a64_ccu.c,v 1.3 2017/09/07 23:19:45 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun50i_a64_ccu.c,v 1.4 2018/05/05 13:28:23 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -52,6 +52,7 @@ __KERNEL_RCSID(1, "$NetBSD: sun50i_a64_ccu.c,v 1.3 2017/09/07 23:19:45 jmcneill 
 #define	BUS_CLK_GATING_REG2	0x068
 #define	BUS_CLK_GATING_REG3	0x06c
 #define	BUS_CLK_GATING_REG4	0x070
+#define	THS_CLK_REG		0x074
 #define	SDMMC0_CLK_REG		0x088
 #define	SDMMC1_CLK_REG		0x08c
 #define	SDMMC2_CLK_REG		0x090
@@ -141,6 +142,7 @@ static const char *ahb2_parents[] = { "ahb1", "pll_periph0" };
 static const char *apb1_parents[] = { "ahb1" };
 static const char *apb2_parents[] = { "losc", "hosc", "pll_periph0" };
 static const char *mod_parents[] = { "hosc", "pll_periph0", "pll_periph1" };
+static const char *ths_parents[] = { "hosc", NULL, NULL, NULL };
 
 static struct sunxi_ccu_clk sun50i_a64_ccu_clks[] = {
 	SUNXI_CCU_NKMP(A64_CLK_PLL_PERIPH0, "pll_periph0", "hosc",
@@ -191,6 +193,13 @@ static struct sunxi_ccu_clk sun50i_a64_ccu_clks[] = {
 	SUNXI_CCU_NM(A64_CLK_MMC2, "mmc2", mod_parents,
 	    SDMMC2_CLK_REG, __BITS(17, 16), __BITS(3,0), __BITS(25, 24), __BIT(31),
 	    SUNXI_CCU_NM_POWER_OF_TWO|SUNXI_CCU_NM_ROUND_DOWN),
+
+	SUNXI_CCU_DIV_GATE(A64_CLK_THS, "ths", ths_parents,
+	    THS_CLK_REG,	/* reg */
+	    __BITS(1,0),	/* div */
+	    __BITS(25,24),	/* sel */
+	    __BIT(31),		/* enable */
+	    SUNXI_CCU_DIV_TIMES_TWO),
 
 	SUNXI_CCU_GATE(A64_CLK_BUS_MIPI_DSI, "bus-mipi-dsi", "ahb1",
 	    BUS_CLK_GATING_REG0, 1),
@@ -250,6 +259,8 @@ static struct sunxi_ccu_clk sun50i_a64_ccu_clks[] = {
 	SUNXI_CCU_GATE(A64_CLK_BUS_SPINLOCK, "bus-spinlock", "ahb1",
 	    BUS_CLK_GATING_REG1, 22),
 
+	SUNXI_CCU_GATE(A64_CLK_BUS_THS, "bus-ths", "apb1",
+	    BUS_CLK_GATING_REG2, 8),
 
 	SUNXI_CCU_GATE(A64_CLK_BUS_CODEC, "bus-codec", "apb1",
 	    BUS_CLK_GATING_REG3, 0),
@@ -257,8 +268,6 @@ static struct sunxi_ccu_clk sun50i_a64_ccu_clks[] = {
 	    BUS_CLK_GATING_REG3, 1),
 	SUNXI_CCU_GATE(A64_CLK_BUS_PIO, "bus-pio", "apb1",
 	    BUS_CLK_GATING_REG3, 5),
-	SUNXI_CCU_GATE(A64_CLK_BUS_THS, "bus-ths", "apb1",
-	    BUS_CLK_GATING_REG3, 8),
 	SUNXI_CCU_GATE(A64_CLK_BUS_I2S0, "bus-i2s0", "apb1",
 	    BUS_CLK_GATING_REG3, 12),
 	SUNXI_CCU_GATE(A64_CLK_BUS_I2S1, "bus-i2s1", "apb1",
