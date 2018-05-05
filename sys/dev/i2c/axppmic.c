@@ -1,4 +1,4 @@
-/* $NetBSD: axppmic.c,v 1.3 2018/05/05 10:25:59 jmcneill Exp $ */
+/* $NetBSD: axppmic.c,v 1.4 2018/05/05 10:56:40 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: axppmic.c,v 1.3 2018/05/05 10:25:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: axppmic.c,v 1.4 2018/05/05 10:56:40 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -207,6 +207,9 @@ struct axppmic_softc {
 	struct sysmon_envsys *sc_sme;
 
 	envsys_data_t	sc_sensor[AXP_NSENSORS];
+
+	u_int		sc_warn_thres;
+	u_int		sc_shut_thres;
 };
 
 struct axpreg_softc {
@@ -374,7 +377,7 @@ axppmic_sensor_refresh(struct sysmon_envsys *sme, envsys_data_t *e)
 {
 	struct axppmic_softc *sc = sme->sme_cookie;
 	const int flags = I2C_F_POLL;
-	uint8_t val, warn_val;
+	uint8_t val;
 
 	e->state = ENVSYS_SINVALID;
 
@@ -411,16 +414,12 @@ axppmic_sensor_refresh(struct sysmon_envsys *sme, envsys_data_t *e)
 		    (val & AXP_POWER_MODE_BATT_VALID) != 0 &&
 		    (val & AXP_POWER_MODE_BATT_PRESENT) != 0 &&
 		    axppmic_read(sc->sc_i2c, sc->sc_addr, AXP_BATT_CAP_REG, &val, flags) == 0 &&
-		    (val & AXP_BATT_CAP_VALID) != 0 &&
-		    axppmic_read(sc->sc_i2c, sc->sc_addr, AXP_BATT_CAP_WARN_REG, &warn_val, flags) == 0) {
-			const u_int warn_thres = __SHIFTOUT(warn_val, AXP_BATT_CAP_WARN_LV1) + 5;
-			const u_int shut_thres = __SHIFTOUT(warn_val, AXP_BATT_CAP_WARN_LV2);
-
+		    (val & AXP_BATT_CAP_VALID) != 0) {
 			const u_int batt_val = __SHIFTOUT(val, AXP_BATT_CAP_PERCENT);
-			if (batt_val <= shut_thres) {
+			if (batt_val <= sc->sc_shut_thres) {
 				e->state = ENVSYS_SCRITICAL;
 				e->value_cur = ENVSYS_BATTERY_CAPACITY_CRITICAL;
-			} else if (batt_val <= warn_thres) {
+			} else if (batt_val <= sc->sc_warn_thres) {
 				e->state = ENVSYS_SWARNUNDER;
 				e->value_cur = ENVSYS_BATTERY_CAPACITY_WARNING;
 			} else {
@@ -467,6 +466,14 @@ static void
 axppmic_attach_battery(struct axppmic_softc *sc)
 {
 	envsys_data_t *e;
+	uint8_t val;
+
+	iic_acquire_bus(sc->sc_i2c, I2C_F_POLL);
+	if (axppmic_read(sc->sc_i2c, sc->sc_addr, AXP_BATT_CAP_WARN_REG, &val, I2C_F_POLL) == 0) {
+		sc->sc_warn_thres = __SHIFTOUT(val, AXP_BATT_CAP_WARN_LV1) + 5;
+		sc->sc_shut_thres = __SHIFTOUT(val, AXP_BATT_CAP_WARN_LV2);
+	}
+	iic_release_bus(sc->sc_i2c, I2C_F_POLL);
 
 	e = &sc->sc_sensor[AXP_SENSOR_BATT_PRESENT];
 	e->private = AXP_SENSOR_BATT_PRESENT;
