@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.126 2018/05/05 20:20:43 christos Exp $
+.\"	$NetBSD: sysctl.7,v 1.127 2018/05/05 21:33:53 wiz Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -2112,7 +2112,7 @@ deferred for cleanup by a kernel task.
 .Pp
 Other variables are specific to a socket type:
 .Bl -column "seqpacket" "sendspace" "integer" "Changeable" -offset indent
-.It Sy "Socket Type" Sy 	Variable	Type Ta Sy Changeable
+.It Sy "Socket Type"  	Sy Variable	Type Ta Sy Changeable
 .It dgram	pcblist	struct	no
 .It dgram	recvspace	integer	yes
 .It dgram	sendspace	integer	yes
