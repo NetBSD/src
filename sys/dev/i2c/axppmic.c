@@ -1,4 +1,4 @@
-/* $NetBSD: axppmic.c,v 1.2 2018/05/05 00:39:59 jmcneill Exp $ */
+/* $NetBSD: axppmic.c,v 1.3 2018/05/05 10:25:59 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: axppmic.c,v 1.2 2018/05/05 00:39:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: axppmic.c,v 1.3 2018/05/05 10:25:59 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,6 +43,10 @@ __KERNEL_RCSID(0, "$NetBSD: axppmic.c,v 1.2 2018/05/05 00:39:59 jmcneill Exp $")
 #include <dev/sysmon/sysmon_taskq.h>
 
 #include <dev/fdt/fdtvar.h>
+
+#define	AXP_POWER_SOURCE_REG	0x00
+#define	 AXP_POWER_SOURCE_ACIN_PRESENT	__BIT(7)
+#define	 AXP_POWER_SOURCE_VBUS_PRESENT	__BIT(5)
 
 #define	AXP_POWER_MODE_REG	0x01
 #define	 AXP_POWER_MODE_BATT_VALID	__BIT(4)
@@ -180,6 +184,8 @@ struct axppmic_config {
 };
 
 enum axppmic_sensor {
+	AXP_SENSOR_ACIN_PRESENT,
+	AXP_SENSOR_VBUS_PRESENT,
 	AXP_SENSOR_BATT_PRESENT,
 	AXP_SENSOR_BATT_CHARGING,
 	AXP_SENSOR_BATT_CHARGE_STATE,
@@ -199,6 +205,7 @@ struct axppmic_softc {
 	struct sysmon_pswitch sc_smpsw;
 
 	struct sysmon_envsys *sc_sme;
+
 	envsys_data_t	sc_sensor[AXP_NSENSORS];
 };
 
@@ -373,12 +380,23 @@ axppmic_sensor_refresh(struct sysmon_envsys *sme, envsys_data_t *e)
 
 	iic_acquire_bus(sc->sc_i2c, flags);
 	switch (e->private) {
+	case AXP_SENSOR_ACIN_PRESENT:
+		if (axppmic_read(sc->sc_i2c, sc->sc_addr, AXP_POWER_SOURCE_REG, &val, flags) == 0) {
+			e->state = ENVSYS_SVALID;
+			e->value_cur = !!(val & AXP_POWER_SOURCE_ACIN_PRESENT);
+		}
+		break;
+	case AXP_SENSOR_VBUS_PRESENT:
+		if (axppmic_read(sc->sc_i2c, sc->sc_addr, AXP_POWER_SOURCE_REG, &val, flags) == 0) {
+			e->state = ENVSYS_SVALID;
+			e->value_cur = !!(val & AXP_POWER_SOURCE_VBUS_PRESENT);
+		}
+		break;
 	case AXP_SENSOR_BATT_PRESENT:
 		if (axppmic_read(sc->sc_i2c, sc->sc_addr, AXP_POWER_MODE_REG, &val, flags) == 0) {
 			if (val & AXP_POWER_MODE_BATT_VALID) {
 				e->state = ENVSYS_SVALID;
 				e->value_cur = !!(val & AXP_POWER_MODE_BATT_PRESENT);
-				break;
 			}
 		}
 		break;
@@ -423,6 +441,26 @@ axppmic_sensor_refresh(struct sysmon_envsys *sme, envsys_data_t *e)
 		break;
 	}
 	iic_release_bus(sc->sc_i2c, flags);
+}
+
+static void
+axppmic_attach_acadapter(struct axppmic_softc *sc)
+{
+	envsys_data_t *e;
+
+	e = &sc->sc_sensor[AXP_SENSOR_ACIN_PRESENT];
+	e->private = AXP_SENSOR_ACIN_PRESENT;
+	e->units = ENVSYS_INDICATOR;
+	e->state = ENVSYS_SINVALID;
+	strlcpy(e->desc, "ACIN present", sizeof(e->desc));
+	sysmon_envsys_sensor_attach(sc->sc_sme, e);
+
+	e = &sc->sc_sensor[AXP_SENSOR_VBUS_PRESENT];
+	e->private = AXP_SENSOR_VBUS_PRESENT;
+	e->units = ENVSYS_INDICATOR;
+	e->state = ENVSYS_SINVALID;
+	strlcpy(e->desc, "VBUS present", sizeof(e->desc));
+	sysmon_envsys_sensor_attach(sc->sc_sme, e);
 }
 
 static void
@@ -475,6 +513,7 @@ axppmic_attach_sensors(struct axppmic_softc *sc)
 		sc->sc_sme->sme_class = SME_CLASS_BATTERY;
 		sc->sc_sme->sme_flags = SME_POLL_ONLY | SME_INIT_REFRESH;
 
+		axppmic_attach_acadapter(sc);
 		axppmic_attach_battery(sc);
 
 		sysmon_envsys_register(sc->sc_sme);
