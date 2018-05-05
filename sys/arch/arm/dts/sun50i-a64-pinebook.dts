@@ -1,4 +1,4 @@
-/* $NetBSD: sun50i-a64-pinebook.dts,v 1.6 2018/05/05 11:12:46 jmcneill Exp $ */
+/* $NetBSD: sun50i-a64-pinebook.dts,v 1.7 2018/05/05 11:16:30 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -71,7 +71,15 @@
 	};
 };
 
+&ehci0 {
+	status = "okay";
+};
+
 &ehci1 {
+	status = "okay";
+};
+
+&ohci0 {
 	status = "okay";
 };
 
@@ -82,7 +90,6 @@
 &usb_otg {
 	dr_mode = "host";
 	status = "okay";
-
 };
 
 &usbphy {
