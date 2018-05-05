@@ -1,4 +1,4 @@
-/* $NetBSD: cgdconfig.c,v 1.41 2017/01/10 20:45:19 christos Exp $ */
+/* $NetBSD: cgdconfig.c,v 1.42 2018/05/05 11:28:44 kre Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 2002, 2003\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: cgdconfig.c,v 1.41 2017/01/10 20:45:19 christos Exp $");
+__RCSID("$NetBSD: cgdconfig.c,v 1.42 2018/05/05 11:28:44 kre Exp $");
 #endif
 
 #include <err.h>
@@ -514,6 +514,20 @@ configure(int argc, char **argv, struct params *inparams, int flags)
 	char		 cgdname[PATH_MAX];
 	char		 devicename[PATH_MAX];
 	const char	*dev = NULL;	/* XXX: gcc */
+
+	if ((
+	  fd = opendisk1(*argv, O_RDWR, cgdname, sizeof(cgdname), 1, prog_open)
+	    ) != -1) {
+		struct cgd_user cgu;
+
+		cgu.cgu_unit = -1;
+		if (prog_ioctl(fd, CGDIOCGET, &cgu) != -1 && cgu.cgu_dev != 0) {
+			warnx("device %s already in use", *argv);
+			close(fd);
+			return -1;
+		}
+		close(fd);
+	}
 
 	if (argc == 2 || argc == 3) {
 		dev = getfsspecname(devicename, sizeof(devicename), argv[1]);
