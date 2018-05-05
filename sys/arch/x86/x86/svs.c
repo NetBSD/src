@@ -1,4 +1,4 @@
-/*	$NetBSD: svs.c,v 1.14.2.3 2018/04/02 08:43:58 martin Exp $	*/
+/*	$NetBSD: svs.c,v 1.14.2.4 2018/05/05 15:11:53 martin Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.14.2.3 2018/04/02 08:43:58 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.14.2.4 2018/05/05 15:11:53 martin Exp $");
 
 #include "opt_svs.h"
 
@@ -38,6 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.14.2.3 2018/04/02 08:43:58 martin Exp $");
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/cpu.h>
+#include <sys/kauth.h>
 #include <sys/sysctl.h>
 #include <sys/xcall.h>
 
@@ -737,11 +738,13 @@ sysctl_machdep_svs_enabled(SYSCTLFN_ARGS)
 			error = 0;
 		else
 			error = EOPNOTSUPP;
-	} else {
-		if (svs_enabled)
+	} else if (svs_enabled) {
+		error = kauth_authorize_machdep(kauth_cred_get(),
+		    KAUTH_MACHDEP_SVS_DISABLE, NULL, NULL, NULL, NULL);
+		if (!error)
 			error = svs_disable();
-		else
-			error = 0;
+	} else {
+		error = 0;
 	}
 
 	return error;
