@@ -1,4 +1,4 @@
-/*	$NetBSD: net_stub.c,v 1.33 2018/04/28 14:21:03 maxv Exp $	*/
+/*	$NetBSD: net_stub.c,v 1.34 2018/05/05 23:42:00 christos Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: net_stub.c,v 1.33 2018/04/28 14:21:03 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: net_stub.c,v 1.34 2018/05/05 23:42:00 christos Exp $");
 
 #include <sys/mutex.h>
 #include <sys/param.h>
@@ -34,6 +34,8 @@ __KERNEL_RCSID(0, "$NetBSD: net_stub.c,v 1.33 2018/04/28 14:21:03 maxv Exp $");
 #include <sys/socketvar.h>
 #include <sys/pslist.h>
 #include <sys/psref.h>
+#include <sys/sysctl.h>
+#include <sys/un.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -82,6 +84,12 @@ int ipsec_enabled;
 int ipsec_used;
 percpu_t *ipsecstat_percpu;
 u_int ipsec_spdgen;
+
+/* sysctl */
+void
+unp_sysctl_create(struct sysctllog **clog)
+{
+}
 
 __weak_alias(ah4_ctlinput,rumpnet_stub);
 __weak_alias(ah6_ctlinput,rumpnet_stub);
