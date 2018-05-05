@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2191 2018/05/05 01:09:08 sevan Exp $
+#	$NetBSD: mi,v 1.2192 2018/05/05 02:14:59 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -3290,7 +3290,7 @@
 ./usr/lib/libbluetooth.a			comp-c-lib		compatfile
 ./usr/lib/libbluetooth_p.a			comp-c-proflib		compatfile,profile
 ./usr/lib/libbozohttpd.a			comp-c-lib		compatfile
-./usr/lib/libbozohttpd_p.a			comp-c-lib		compatfile,profile
+./usr/lib/libbozohttpd_p.a			comp-c-proflib		compatfile,profile
 ./usr/lib/libbsdmalloc.a			comp-c-lib		compatfile
 ./usr/lib/libbsdmalloc_p.a			comp-c-proflib		compatfile,profile
 ./usr/lib/libbz2.a				comp-c-lib		compatfile
