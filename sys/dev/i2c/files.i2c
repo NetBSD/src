@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.90 2018/05/04 21:09:55 jmcneill Exp $
+#	$NetBSD: files.i2c,v 1.91 2018/05/05 02:01:34 jmcneill Exp $
 
 obsolete defflag	opt_i2cbus.h		I2C_SCAN
 define	i2cbus { }
@@ -233,7 +233,7 @@ attach	axp22x at iic
 file	dev/i2c/axp22x.c			axp22x
 
 # X-Powers AXP Power Management IC
-device	axppmic { }: sysmon_taskq
+device	axppmic { }: sysmon_envsys, sysmon_taskq
 device	axpreg: axppmic
 attach	axppmic at iic
 attach	axpreg at axppmic
