@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.6 2016/03/17 18:43:29 christos Exp $
+#	$NetBSD: Makefile,v 1.6.8.1 2018/05/05 19:25:56 martin Exp $
 
 NOMAN=	# defined
 
-.include <bsd.own.mk>
+.include <bsd.init.mk>
 
 HOSTPROGNAME=   ${_TOOL_PREFIX}ctfconvert
 HOST_SRCDIR=    external/cddl/osnet/usr.bin/ctfconvert

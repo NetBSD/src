@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.13 2017/01/06 20:27:19 christos Exp $
+#	$NetBSD: Makefile,v 1.13.6.1 2018/05/05 19:25:55 martin Exp $
 
 NOMAN=	# defined
 
-.include <bsd.own.mk>
+.include <bsd.init.mk>
 
 HOSTPROGNAME=	${MACHINE_GNU_PLATFORM}-mdsetimage
 
