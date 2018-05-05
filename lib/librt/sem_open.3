@@ -1,4 +1,4 @@
-.\" $NetBSD: sem_open.3,v 1.7 2018/05/04 20:28:51 christos Exp $
+.\" $NetBSD: sem_open.3,v 1.8 2018/05/05 06:39:10 wiz Exp $
 .\"
 .\" Copyright (C) 2000 Jason Evans <jasone@FreeBSD.org>.
 .\" All rights reserved.
@@ -150,15 +150,14 @@ are set but the semaphore already exists.
 .It Bq Er EINTR
 The call was interrupted by a signal.
 .It Bq Er EINVAL
-The 
-.Fa name 
+The
+.Fa name
 argument does not begin with a
 .Sq /
 or contains more slashes.
 This is implementation-specific behavior and allowed by
 .St -p1003.1-96 .
-.It Bq Er EINVAL
-The
+Or, the
 .Fa value
 argument is greater than
 .Dv SEM_VALUE_MAX .
@@ -170,7 +169,7 @@ The specified
 .Fa name
 is longer than
 .Dv NAME_MAX ,
-or longer than the implementing filesystem will allow.
+or longer than the implementing file system will allow.
 .It Bq Er ENFILE
 The system limit on semaphores has been reached.
 .It Bq Er ENOENT
@@ -201,7 +200,7 @@ The specified
 .Fa name
 is longer than
 .Dv NAME_MAX ,
-or longer than the implementing filesystem will allow.
+or longer than the implementing file system will allow.
 .It Bq Er ENOENT
 The named semaphore does not exist.
 .El
