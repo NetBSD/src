@@ -1,4 +1,4 @@
-/*	$NetBSD: wbsio.c,v 1.10.10.3 2018/04/16 14:28:23 martin Exp $	*/
+/*	$NetBSD: wbsio.c,v 1.10.10.4 2018/05/05 15:08:14 martin Exp $	*/
 /*	$OpenBSD: wbsio.c,v 1.10 2015/03/14 03:38:47 jsg Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
@@ -546,7 +546,7 @@ wbsio_gpio_rt_init(struct wbsio_softc *sc)
 	aprint_normal_dev(sc->sc_dev, "GPIO: port 0x%x-0x%x\n",
 	    iobase, iobase + WBSIO_GPIO_IOSIZE);
 
-	mutex_init(&sc->sc_gpio_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&sc->sc_gpio_lock, MUTEX_DEFAULT, IPL_VM);
 
 	return 0;
 }
