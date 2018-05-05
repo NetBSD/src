@@ -1,4 +1,4 @@
-/* $NetBSD: sun50i-a64.dtsi,v 1.5 2018/05/04 23:03:41 jmcneill Exp $ */
+/* $NetBSD: sun50i-a64.dtsi,v 1.6 2018/05/05 13:31:35 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -37,6 +37,18 @@
 				     "simple-framebuffer";
 			allwinner,pipeline = "mixer1-lcd1-hdmi";
 			status = "disabled";
+		};
+	};
+
+	soc {
+		rtp: rtp@1c25000 {
+			compatible = "allwinner,sun50i-a64-ts";
+			reg = <0x01c25000 0x400>;
+			interrupts = <GIC_SPI 31 IRQ_TYPE_LEVEL_HIGH>;
+			clocks = <&ccu CLK_BUS_THS>, <&ccu CLK_THS>;
+			clock-names = "ahb", "ths";
+			resets = <&ccu RST_BUS_THS>;
+			#thermal-sensor-cells = <0>;
 		};
 	};
 };
