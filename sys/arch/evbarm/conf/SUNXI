@@ -1,5 +1,5 @@
 #
-#	$NetBSD: SUNXI,v 1.70 2018/05/04 21:09:55 jmcneill Exp $
+#	$NetBSD: SUNXI,v 1.71 2018/05/05 09:55:38 jmcneill Exp $
 #
 #	Allwinner sunxi family
 #
@@ -184,6 +184,7 @@ sun8ih3ccu*	at fdt? pass 2		# H3 CCU
 sun8ih3rccu*	at fdt? pass 2		# H3 CCU (PRCM)
 sun9ia80ccu*	at fdt? pass 2		# A80 CCU
 sun50ia64ccu*	at fdt? pass 2		# A64 CCU
+sun50ia64rccu*	at fdt? pass 2		# A64 CCU (PRCM)
 sun50ih6ccu*	at fdt? pass 2		# H6 CCU
 sun50ih6rccu*	at fdt? pass 2		# H6 CCU (PRCM)
 sunxiresets*	at fdt? pass 1		# Misc. clock resets
