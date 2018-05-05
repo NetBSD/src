@@ -1,4 +1,4 @@
-.\"     $NetBSD: bozohttpd.3lua,v 1.1 2018/05/05 13:31:48 sevan Exp $
+.\"     $NetBSD: bozohttpd.3lua,v 1.2 2018/05/05 16:24:26 wiz Exp $
 .\"
 .\" Copyright (c) 2018 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,7 +56,7 @@ functionality from Lua
 .Sh DESCRIPTION
 The
 .Nm
-Lua binding provides access to functionality availabile in
+Lua binding provides access to functionality available in
 .Xr libbozohttpd 3 .
 .Sh EXAMPLES
 The following example code demonstrates the process of instantiating an instance
@@ -65,9 +65,7 @@ of
 as a background daemon.
 The instance is set to serve files from
 .Pa /var/www
-for the hostname www.example.com on
-.Tn TCP
-port 8080.
+for the hostname www.example.com on TCP port 8080.
 .Bd -literal
 local bozo = require 'bozohttpd'
 myhttpd = bozo.new()
