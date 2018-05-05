@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1583 2018/05/04 14:23:19 kamil Exp $
+# $NetBSD: mi,v 1.1584 2018/05/05 13:31:48 sevan Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -661,6 +661,7 @@
 ./usr/share/man/cat3/i386/keycap.0		man-obsolete		obsolete
 ./usr/share/man/cat3/libbozohttpd.0		man-sys-catman		.cat
 ./usr/share/man/cat3/libunbound.0		man-netutil-catman	.cat,unbound
+./usr/share/man/cat3lua/bozohttpd.0		man-sys-catman		.cat
 ./usr/share/man/cat3lua/gpio.0			man-sys-catman		.cat
 ./usr/share/man/cat3lua/gpio.attach.0		man-sys-catman		.cat
 ./usr/share/man/cat3lua/gpio.close.0		man-sys-catman		.cat
@@ -3847,6 +3848,7 @@
 ./usr/share/man/html1/znew.html			man-util-htmlman	html
 ./usr/share/man/html3/libbozohttpd.html		man-sys-htmlman		html
 ./usr/share/man/html3/libunbound.html		man-netutil-htmlman	html,unbound
+./usr/share/man/html3lua/bozohttpd.html		man-sys-htmlman		html
 ./usr/share/man/html3lua/gpio.attach.html	man-sys-htmlman		html
 ./usr/share/man/html3lua/gpio.close.html	man-sys-htmlman		html
 ./usr/share/man/html3lua/gpio.html		man-sys-htmlman		html
@@ -6709,6 +6711,7 @@
 ./usr/share/man/man3/i386/keycap.3		man-obsolete		obsolete
 ./usr/share/man/man3/libbozohttpd.3		man-sys-man		.man
 ./usr/share/man/man3/libunbound.3		man-netutil-man		.man,unbound
+./usr/share/man/man3lua/bozohttpd.3lua		man-sys-man		.man
 ./usr/share/man/man3lua/gpio.3lua		man-sys-man		.man
 ./usr/share/man/man3lua/gpio.attach.3lua	man-sys-man		.man
 ./usr/share/man/man3lua/gpio.close.3lua		man-sys-man		.man
