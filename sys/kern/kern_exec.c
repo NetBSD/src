@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.457 2018/04/27 18:33:24 christos Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.458 2018/05/06 13:40:51 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.457 2018/04/27 18:33:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.458 2018/05/06 13:40:51 kamil Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -216,7 +216,6 @@ struct emul emul_netbsd = {
 #endif
 	.e_sendsig =		sendsig,
 	.e_trapsignal =		trapsignal,
-	.e_tracesig =		NULL,
 	.e_sigcode =		NULL,
 	.e_esigcode =		NULL,
 	.e_sigobject =		NULL,
