@@ -1,4 +1,4 @@
-/* $NetBSD: sun50i_a64_gpio.c,v 1.2 2018/04/03 16:01:25 bouyer Exp $ */
+/* $NetBSD: sun50i_a64_gpio.c,v 1.3 2018/05/06 10:34:23 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2016 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sun50i_a64_gpio.c,v 1.2 2018/04/03 16:01:25 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sun50i_a64_gpio.c,v 1.3 2018/05/06 10:34:23 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,7 +88,7 @@ static const struct sunxi_gpio_pins a64_pins[] = {
 	{ "PD19", 3, 19,  { "gpio_in", "gpio_out", "lcd", "lvds", "emac" } },
 	{ "PD20", 3, 20,  { "gpio_in", "gpio_out", "lcd", "lvds", "emac" } },
 	{ "PD21", 3, 21,  { "gpio_in", "gpio_out", "lcd", "lvds", "emac" } },
-	{ "PD22", 3, 22,  { "gpio_in", "gpio_out", "pwm0", NULL, "emac" } },
+	{ "PD22", 3, 22,  { "gpio_in", "gpio_out", "pwm", NULL, "emac" } },
 	{ "PD23", 3, 23,  { "gpio_in", "gpio_out", NULL, NULL, "emac" } },
 	{ "PD24", 3, 24,  { "gpio_in", "gpio_out" } },
 
