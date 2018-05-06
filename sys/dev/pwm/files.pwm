@@ -1,0 +1,5 @@
+# $NetBSD: files.pwm,v 1.1 2018/05/06 10:32:33 jmcneill Exp $
+
+define	pwm
+
+file	dev/pwm/pwm.c				pwm
