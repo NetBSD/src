@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_exec.c,v 1.45 2018/01/09 20:55:43 maya Exp $ */
+/* $NetBSD: osf1_exec.c,v 1.46 2018/05/06 13:40:51 kamil Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_exec.c,v 1.45 2018/01/09 20:55:43 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_exec.c,v 1.46 2018/05/06 13:40:51 kamil Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -77,7 +77,6 @@ struct emul emul_osf1 = {
 #endif
 	.e_sendsig =		sendsig_sigcontext,
 	.e_trapsignal =		trapsignal,
-	.e_tracesig =		NULL,
 	.e_sigcode =		osf1_sigcode,
 	.e_esigcode =		osf1_esigcode,
 	.e_sigobject =		&emul_osf1_object,
