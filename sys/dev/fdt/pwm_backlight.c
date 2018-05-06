@@ -1,4 +1,4 @@
-/* $NetBSD: pwm_backlight.c,v 1.1 2018/05/06 10:33:21 jmcneill Exp $ */
+/* $NetBSD: pwm_backlight.c,v 1.2 2018/05/06 10:45:32 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pwm_backlight.c,v 1.1 2018/05/06 10:33:21 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pwm_backlight.c,v 1.2 2018/05/06 10:45:32 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -100,6 +100,7 @@ pwm_backlight_attach(device_t parent, device_t self, void *aux)
 			aprint_error(": couldn't acquire enable gpio\n");
 			return;
 		}
+		fdtbus_gpio_write(sc->sc_pin, 1);
 	}
 
 	levels = fdtbus_get_prop(phandle, "brightness-levels", &len);
@@ -246,7 +247,8 @@ pwm_backlight_display_on(device_t dev)
 {
 	struct pwm_backlight_softc * const sc = device_private(dev);
 
-	pwm_enable(sc->sc_pwm);
+	if (sc->sc_pin)
+		fdtbus_gpio_write(sc->sc_pin, 1);
 }
 
 static void
@@ -254,7 +256,8 @@ pwm_backlight_display_off(device_t dev)
 {
 	struct pwm_backlight_softc * const sc = device_private(dev);
 
-	pwm_disable(sc->sc_pwm);
+	if (sc->sc_pin)
+		fdtbus_gpio_write(sc->sc_pin, 0);
 }
 
 static void
