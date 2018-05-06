@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.192 2018/05/06 09:49:33 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.193 2018/05/06 13:10:10 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -13293,4 +13293,9 @@ crypto/external/bsd/netpgp/dist/src/netpgpverify/netpgpverify.1 1.12,1.13
 
 	Various documentation fixes for netpgp.
 	[sevan, ticket #810]
+
+sys/net/if_vlan.c				1.122
+
+	Avoid a bogus kmem_alloc(9) call with zero size.
+	[spz, ticket #813]
 
