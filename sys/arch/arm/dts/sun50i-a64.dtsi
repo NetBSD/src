@@ -1,4 +1,4 @@
-/* $NetBSD: sun50i-a64.dtsi,v 1.6 2018/05/05 13:31:35 jmcneill Exp $ */
+/* $NetBSD: sun50i-a64.dtsi,v 1.7 2018/05/06 10:43:32 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -41,6 +41,14 @@
 	};
 
 	soc {
+		pwm: pwm@1c21400 {
+			compatible = "allwinner,sun50i-a64-pwm";
+			reg = <0x01c21400 0x8>;
+			clocks = <&osc24M>;
+			#pwm-cells = <3>;
+			status = "disabled";
+		};
+
 		rtp: rtp@1c25000 {
 			compatible = "allwinner,sun50i-a64-ts";
 			reg = <0x01c25000 0x400>;
@@ -50,5 +58,12 @@
 			resets = <&ccu RST_BUS_THS>;
 			#thermal-sensor-cells = <0>;
 		};
+	};
+};
+
+&pio {
+	pwm0_pins: pwm0 {
+		pins = "PD22";
+		function = "pwm";
 	};
 };
