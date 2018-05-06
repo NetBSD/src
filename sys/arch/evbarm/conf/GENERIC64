@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.12 2018/05/05 09:55:38 jmcneill Exp $
+#	$NetBSD: GENERIC64,v 1.13 2018/05/06 10:36:06 jmcneill Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -146,6 +146,9 @@ sunxigpio*	at fdt? pass 3		# Allwinner GPIO
 tegragpio*	at fdt? pass 2		# NVIDIA Tegra GPIO
 gpio*		at gpiobus?
 
+# PWM controller
+sunxipwm*	at fdt? pass 3		# Allwinner PWM
+
 # MPIO / Pinmux
 tegrapinmux*	at fdt?			# NVIDIA Tegra MPIO
 
@@ -284,6 +287,9 @@ pseudo-device	wsfont
 
 # GPU
 #nouveau*	at fdt?			# NVIDIA GPU
+
+# Backlight
+pwmbacklight*	at fdt?			# PWM Backlight controls
 
 # Thermal throttling controller
 sunxithermal*	at fdt?			# Allwinner thermal sensor controller
