@@ -1,4 +1,4 @@
-/* $NetBSD: fdtvar.h,v 1.29 2018/04/07 18:05:08 bouyer Exp $ */
+/* $NetBSD: fdtvar.h,v 1.30 2018/05/06 10:33:21 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -34,6 +34,7 @@
 #include <sys/termios.h>
 
 #include <dev/i2c/i2cvar.h>
+#include <dev/pwm/pwmvar.h>
 #include <dev/clk/clk.h>
 
 #include <dev/clock_subr.h>
@@ -185,6 +186,10 @@ struct fdtbus_phy_controller_func {
 	int	(*enable)(device_t, void *, bool);
 };
 
+struct fdtbus_pwm_controller_func {
+	pwm_tag_t (*get_tag)(device_t, const void *, size_t);
+};
+
 struct fdtbus_mmc_pwrseq;
 
 struct fdtbus_mmc_pwrseq_func {
@@ -234,6 +239,8 @@ int		fdtbus_register_power_controller(device_t, int,
 		    const struct fdtbus_power_controller_func *);
 int		fdtbus_register_phy_controller(device_t, int,
 		    const struct fdtbus_phy_controller_func *);
+int		fdtbus_register_pwm_controller(device_t, int,
+		    const struct fdtbus_pwm_controller_func *);
 int		fdtbus_register_mmc_pwrseq(device_t, int,
 		    const struct fdtbus_mmc_pwrseq_func *);
 
@@ -257,6 +264,8 @@ int		fdtbus_gpio_read(struct fdtbus_gpio_pin *);
 void		fdtbus_gpio_write(struct fdtbus_gpio_pin *, int);
 int		fdtbus_gpio_read_raw(struct fdtbus_gpio_pin *);
 void		fdtbus_gpio_write_raw(struct fdtbus_gpio_pin *, int);
+pwm_tag_t	fdtbus_pwm_acquire(int, const char *);
+pwm_tag_t	fdtbus_pwm_acquire_index(int, const char *, int);
 void		fdtbus_pinctrl_configure(void);
 int		fdtbus_pinctrl_set_config_index(int, u_int);
 int		fdtbus_pinctrl_set_config(int, const char *);
