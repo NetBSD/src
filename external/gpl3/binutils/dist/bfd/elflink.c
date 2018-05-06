@@ -2804,6 +2804,8 @@ _bfd_elf_fix_symbol_flags (struct elf_link_hash_entry *h,
   if (h->is_weakalias)
     {
       struct elf_link_hash_entry *def = weakdef (h);
+      while (def->root.type == bfd_link_hash_indirect)
+        def = (struct elf_link_hash_entry *) def->root.u.i.link;
 
       /* If the real definition is defined by a regular object file,
 	 don't do anything special.  See the longer description in
