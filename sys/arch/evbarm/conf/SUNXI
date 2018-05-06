@@ -1,5 +1,5 @@
 #
-#	$NetBSD: SUNXI,v 1.71 2018/05/05 09:55:38 jmcneill Exp $
+#	$NetBSD: SUNXI,v 1.72 2018/05/06 10:36:06 jmcneill Exp $
 #
 #	Allwinner sunxi family
 #
@@ -227,6 +227,9 @@ sun6idma*	at fdt?			# DMA controller (sun6i)
 sunxigpio*	at fdt? pass 3		# GPIO
 gpio*		at gpiobus?
 
+# PWM controller
+sunxipwm*	at fdt? pass 3		# Allwinner PWM
+
 # Ethernet
 emac*		at fdt?		# Allwinner Fast or Gigabit Ethernet (EMAC)
 awge*		at fdt?			# Allwinner Gigabit Ethernet (GMAC)
@@ -266,6 +269,9 @@ sunxirtc*	at fdt?			# RTC
 
 # Security ID EFUSE
 sunxisid*	at fdt?	pass 4		# SID
+
+# Backlight
+pwmbacklight*	at fdt?			# PWM Backlight controls
 
 # Thermal sensor
 sunxithermal*	at fdt?			# Thermal sensor controller
