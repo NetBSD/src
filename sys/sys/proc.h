@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.346 2018/04/19 21:19:07 christos Exp $	*/
+/*	$NetBSD: proc.h,v 1.347 2018/05/06 13:40:52 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -156,7 +156,6 @@ struct emul {
 	void		(*e_sendsig)(const struct ksiginfo *,
 					  const sigset_t *);
 	void		(*e_trapsignal)(struct lwp *, struct ksiginfo *);
-	int		(*e_tracesig)(struct proc *, int);
 	char		*e_sigcode;	/* Start of sigcode */
 	char		*e_esigcode;	/* End of sigcode */
 					/* Set registers before execution */
