@@ -1,4 +1,4 @@
-#	$NetBSD: files.sunxi,v 1.53 2018/05/05 09:54:53 jmcneill Exp $
+#	$NetBSD: files.sunxi,v 1.54 2018/05/06 10:34:34 jmcneill Exp $
 #
 # Configuration info for Allwinner sunxi family SoCs
 #
@@ -120,6 +120,11 @@ file	arch/arm/sunxi/sun50i_h6_gpio.c		sunxi_gpio & soc_sun50i_h6
 # UART
 attach	com at fdt with sunxi_com
 file	arch/arm/sunxi/sunxi_com.c		sunxi_com needs-flag
+
+# PWM
+device	sunxipwm: pwm
+attach	sunxipwm at fdt with sunxi_pwm
+file	arch/arm/sunxi/sunxi_pwm.c		sunxi_pwm
 
 # SD/MMC
 device	sunximmc: sdmmcbus
