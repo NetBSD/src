@@ -1,4 +1,4 @@
-/* $NetBSD: cgdconfig.c,v 1.42 2018/05/05 11:28:44 kre Exp $ */
+/* $NetBSD: cgdconfig.c,v 1.43 2018/05/06 20:55:42 kre Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 2002, 2003\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: cgdconfig.c,v 1.42 2018/05/05 11:28:44 kre Exp $");
+__RCSID("$NetBSD: cgdconfig.c,v 1.43 2018/05/06 20:55:42 kre Exp $");
 #endif
 
 #include <err.h>
@@ -523,10 +523,10 @@ configure(int argc, char **argv, struct params *inparams, int flags)
 		cgu.cgu_unit = -1;
 		if (prog_ioctl(fd, CGDIOCGET, &cgu) != -1 && cgu.cgu_dev != 0) {
 			warnx("device %s already in use", *argv);
-			close(fd);
+			prog_close(fd);
 			return -1;
 		}
-		close(fd);
+		prog_close(fd);
 	}
 
 	if (argc == 2 || argc == 3) {
