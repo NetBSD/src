@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_sem.c,v 1.50 2018/05/05 22:14:45 christos Exp $	*/
+/*	$NetBSD: uipc_sem.c,v 1.51 2018/05/06 00:46:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.50 2018/05/05 22:14:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.51 2018/05/06 00:46:09 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -72,7 +72,6 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.50 2018/05/05 22:14:45 christos Exp $
 #include <sys/stat.h>
 #include <sys/kmem.h>
 #include <sys/fcntl.h>
-#include <sys/namei.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
 #include <sys/kauth.h>
@@ -135,6 +134,28 @@ static const struct syscall_package ksem_syscalls[] = {
 
 struct sysctllog *ksem_clog;
 int ksem_max;
+
+static int
+name_copyin(const char *uname, char **name)
+{
+	*name = kmem_alloc(SEM_MAX_NAMELEN, KM_SLEEP);
+
+	int error = copyinstr(uname, *name, SEM_MAX_NAMELEN, NULL);
+	if (error)
+		kmem_free(*name, SEM_MAX_NAMELEN);
+
+	return error;
+}
+
+static void
+name_destroy(char **name)
+{
+	if (!*name)
+		return;
+
+	kmem_free(*name, SEM_MAX_NAMELEN);
+	*name = NULL;
+}
 
 static int
 ksem_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
@@ -446,21 +467,20 @@ int
 do_ksem_open(struct lwp *l, const char *semname, int oflag, mode_t mode,
      unsigned int value, intptr_t *idp, copyout_t docopyout)
 {
-	const char *name;
-	struct pathbuf *pb;
+	char *name;
 	proc_t *p = l->l_proc;
 	ksem_t *ksnew = NULL, *ks;
 	file_t *fp;
 	intptr_t id;
 	int fd, error;
 
-	error = pathbuf_copyin(semname, &pb);
+	error = name_copyin(semname, &name);
 	if (error) {
 		return error;
 	}
 	error = fd_allocfile(&fp, &fd);
 	if (error) {
-		pathbuf_destroy(pb);
+		name_destroy(&name);
 		return error;
 	}
 	fp->f_type = DTYPE_SEM;
@@ -477,12 +497,10 @@ do_ksem_open(struct lwp *l, const char *semname, int oflag, mode_t mode,
 		goto err;
 	}
 
-	name = pathbuf_stringcopy_get(pb);
 	if (oflag & O_CREAT) {
 		/* Create a new semaphore. */
 		error = ksem_create(l, name, &ksnew, mode, value);
 		if (error) {
-			pathbuf_stringcopy_put(pb, name);
 			goto err;
 		}
 		KASSERT(ksnew != NULL);
@@ -491,7 +509,7 @@ do_ksem_open(struct lwp *l, const char *semname, int oflag, mode_t mode,
 	/* Lookup for a semaphore with such name. */
 	mutex_enter(&ksem_lock);
 	ks = ksem_lookup(name);
-	pathbuf_stringcopy_put(pb, name);
+	name_destroy(&name);
 	if (ks) {
 		KASSERT(mutex_owned(&ks->ks_lock));
 		mutex_exit(&ksem_lock);
@@ -545,7 +563,7 @@ do_ksem_open(struct lwp *l, const char *semname, int oflag, mode_t mode,
 	fp->f_ksem = ks;
 	fd_affix(p, fp, fd);
 err:
-	pathbuf_destroy(pb);
+	name_destroy(&name);
 	if (error) {
 		fd_abort(p, fp, fd);
 	}
@@ -647,21 +665,18 @@ sys__ksem_unlink(struct lwp *l, const struct sys__ksem_unlink_args *uap,
 	/* {
 		const char *name;
 	} */
-	const char *name;
-	struct pathbuf *pb;
+	char *name;
 	ksem_t *ks;
 	u_int refcnt;
 	int error;
 
-	error = pathbuf_copyin(SCARG(uap, name), &pb);
+	error = name_copyin(SCARG(uap, name), &name);
 	if (error)
 		return error;
 
 	mutex_enter(&ksem_lock);
-	name = pathbuf_stringcopy_get(pb);
 	ks = ksem_lookup(name);
-	pathbuf_stringcopy_put(pb, name);
-	pathbuf_destroy(pb);
+	name_destroy(&name);
 	if (ks == NULL) {
 		mutex_exit(&ksem_lock);
 		return ENOENT;
