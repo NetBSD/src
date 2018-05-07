@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_output.c,v 1.77 2018/05/07 09:25:04 maxv Exp $	*/
+/*	$NetBSD: ipsec_output.c,v 1.78 2018/05/07 09:33:51 maxv Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.77 2018/05/07 09:25:04 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.78 2018/05/07 09:33:51 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -534,10 +534,6 @@ noneed:
 	/* Do the appropriate encapsulation, if necessary */
 	if (isr->saidx.mode == IPSEC_MODE_TUNNEL || /* Tunnel requ'd */
 	    dst->sa.sa_family != AF_INET ||	    /* PF mismatch */
-#if 0
-	    (sav->flags & SADB_X_SAFLAGS_TUNNEL) || /* Tunnel requ'd */
-	    sav->tdb_xform->xf_type == XF_IP4 ||    /* ditto */
-#endif
 	    (dst->sa.sa_family == AF_INET &&	    /* Proxy */
 	     dst->sin.sin_addr.s_addr != INADDR_ANY &&
 	     dst->sin.sin_addr.s_addr != ip->ip_dst.s_addr)) {
