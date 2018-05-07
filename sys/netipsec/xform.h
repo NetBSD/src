@@ -1,4 +1,4 @@
-/*	$NetBSD: xform.h,v 1.18 2018/05/07 09:16:46 maxv Exp $	*/
+/*	$NetBSD: xform.h,v 1.19 2018/05/07 09:25:04 maxv Exp $	*/
 /*	$FreeBSD: xform.h,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ipsp.h,v 1.119 2002/03/14 01:27:11 millert Exp $	*/
 /*
@@ -90,8 +90,7 @@ int xform_init(struct secasvar *sav, int);
 struct cryptoini;
 
 /* XF_IP4 */
-int ipip_output(struct mbuf *, const struct ipsecrequest *, struct secasvar *,
-    struct mbuf **, int, int);
+int ipip_output(struct mbuf *, struct secasvar *, struct mbuf **);
 
 /* XF_AH */
 int ah_init0(struct secasvar *, const struct xformsw *, struct cryptoini *);
