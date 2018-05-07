@@ -1,4 +1,4 @@
-/* $NetBSD: pwm_backlight.c,v 1.2 2018/05/06 10:45:32 jmcneill Exp $ */
+/* $NetBSD: pwm_backlight.c,v 1.3 2018/05/07 12:58:58 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pwm_backlight.c,v 1.2 2018/05/06 10:45:32 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pwm_backlight.c,v 1.3 2018/05/07 12:58:58 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -223,7 +223,7 @@ pwm_backlight_sysctl_init(struct pwm_backlight_softc *sc)
 
 	error = sysctl_createv(&log, 0, &pwmnode, NULL,
 	    0, CTLTYPE_STRING, "levels", NULL,
-	    NULL, 0, sc->sc_levelstr, NULL,
+	    NULL, 0, sc->sc_levelstr, 0,
 	    CTL_CREATE, CTL_EOL);
 	if (error)
 		goto failed;
