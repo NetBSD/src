@@ -1,4 +1,4 @@
-.\" $NetBSD: gpt.8,v 1.52.4.2 2018/05/04 16:24:46 martin Exp $
+.\" $NetBSD: gpt.8,v 1.52.4.3 2018/05/07 04:00:18 snj Exp $
 .\"
 .\" Copyright (c) 2002 Marcel Moolenaar
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" $FreeBSD: src/sbin/gpt/gpt.8,v 1.17 2006/06/22 22:22:32 marcel Exp $
 .\"
-.Dd March 5, 2018
+.Dd May 1, 2018
 .Dt GPT 8
 .Os
 .Sh NAME
@@ -678,6 +678,12 @@ They may be used by
 .Nx
 code in the future.
 .El
+.Sh EXIT STATUS
+The
+.Nm
+command exits with a failure status (1) when the header command
+is used and no GPT header is found.
+This can be used to check for the existence of a GPT in shell scripts.
 .Sh EXAMPLES
 .Bd -literal
 nas# gpt show wd3
