@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.157 2018/04/11 06:26:00 maxv Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.158 2018/05/07 19:34:03 maxv Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.157 2018/04/11 06:26:00 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.158 2018/05/07 19:34:03 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -3066,6 +3066,13 @@ pim_input(struct mbuf *m, ...)
 				log(LOG_DEBUG, "pim_input: invalid IP version (%d) "
 				    "of the inner packet\n", encap_ip->ip_v);
 			}
+			m_freem(m);
+			return;
+		}
+
+		/* verify the inner packet doesn't have options */
+		if (encap_ip->ip_hl != (sizeof(struct ip) >> 2)) {
+			pimstat.pims_rcv_badregisters++;
 			m_freem(m);
 			return;
 		}
