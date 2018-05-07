@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_output.c,v 1.75 2018/05/01 05:42:26 maxv Exp $	*/
+/*	$NetBSD: ipsec_output.c,v 1.76 2018/05/07 09:16:46 maxv Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.75 2018/05/01 05:42:26 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.76 2018/05/07 09:16:46 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -604,7 +604,7 @@ noneed:
 			i = sizeof(struct ip6_hdr);
 			off = offsetof(struct ip6_hdr, ip6_nxt);
 		}
-		error = (*sav->tdb_xform->xf_output)(m, isr, sav, NULL, i, off);
+		error = (*sav->tdb_xform->xf_output)(m, isr, sav, i, off);
 	} else {
 		error = ipsec_process_done(m, isr, sav);
 	}
@@ -794,7 +794,7 @@ ipsec6_process_packet(struct mbuf *m, const struct ipsecrequest *isr)
 		if (error)
 			goto unrefsav;
 	}
-	error = (*sav->tdb_xform->xf_output)(m, isr, sav, NULL, i, off);
+	error = (*sav->tdb_xform->xf_output)(m, isr, sav, i, off);
 	KEY_SA_UNREF(&sav);
 	splx(s);
 	return error;
