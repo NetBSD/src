@@ -1,4 +1,4 @@
-/*	$NetBSD: partman.c,v 1.15.6.1 2018/05/07 03:49:16 snj Exp $ */
+/*	$NetBSD: partman.c,v 1.15.6.2 2018/05/07 03:51:01 snj Exp $ */
 
 /*
  * Copyright 2012 Eugene Lozovoy
@@ -1099,10 +1099,11 @@ pm_cgd_check(void *arg)
 		return 0;
 	if (dev_ptr->pm == NULL)
 		dev_ptr->enabled = 0;
-	else
+	else {
 		pm_manage_getfreenode(&(dev_ptr->node), "cgd", &cgds_t_info);
 		if (dev_ptr->node < 0)
 			dev_ptr->enabled = 0;
+	}
 	return dev_ptr->enabled;
 }
 
