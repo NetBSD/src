@@ -1,4 +1,4 @@
-/*	$NetBSD: partman.c,v 1.15.6.2 2018/05/07 03:51:01 snj Exp $ */
+/*	$NetBSD: partman.c,v 1.15.6.3 2018/05/07 04:06:31 snj Exp $ */
 
 /*
  * Copyright 2012 Eugene Lozovoy
@@ -1173,7 +1173,7 @@ pm_cgd_commit(void)
 
 /* Add lvm logical volumes to pm list */
 /* XXX: rewrite */
-static int
+static void
 pm_lvm_find(void)
 {
 	int i, ii, already_found;
@@ -1213,7 +1213,6 @@ pm_lvm_find(void)
 			memset(pm_new, 0, sizeof *pm_new);
 		}
 	}
-	return 0;
 }
 
 static int
@@ -2609,7 +2608,8 @@ pm_upddevlist(menudesc *m, void *arg)
 			pm_i->found = 0;
 	/* Detect all present devices */
 	(void)find_disks("partman");
-	pm_lvm_find();
+	if (have_lvm)
+		pm_lvm_find();
 	pm_clean();
 
 	if (m == NULL || arg == NULL)
