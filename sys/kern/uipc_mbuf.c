@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.214 2018/05/03 07:46:17 maxv Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.215 2018/05/07 09:57:37 maxv Exp $	*/
 
 /*
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.214 2018/05/03 07:46:17 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.215 2018/05/07 09:57:37 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
@@ -1546,19 +1546,21 @@ m_remove_pkthdr(struct mbuf *m)
 void
 m_copy_pkthdr(struct mbuf *to, struct mbuf *from)
 {
+	KASSERT((to->m_flags & M_EXT) == 0);
+	KASSERT((to->m_flags & M_PKTHDR) == 0 || m_tag_first(to) == NULL);
 	KASSERT((from->m_flags & M_PKTHDR) != 0);
 
 	to->m_pkthdr = from->m_pkthdr;
 	to->m_flags = from->m_flags & M_COPYFLAGS;
+	to->m_data = to->m_pktdat;
+
 	SLIST_INIT(&to->m_pkthdr.tags);
 	m_tag_copy_chain(to, from);
-	to->m_data = to->m_pktdat;
 }
 
 void
 m_move_pkthdr(struct mbuf *to, struct mbuf *from)
 {
-
 	KASSERT((to->m_flags & M_EXT) == 0);
 	KASSERT((to->m_flags & M_PKTHDR) == 0 || m_tag_first(to) == NULL);
 	KASSERT((from->m_flags & M_PKTHDR) != 0);
