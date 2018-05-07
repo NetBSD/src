@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee1394subr.c,v 1.60 2018/04/26 19:56:55 maxv Exp $	*/
+/*	$NetBSD: if_ieee1394subr.c,v 1.61 2018/05/07 09:51:02 maxv Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.60 2018/04/26 19:56:55 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.61 2018/05/07 09:51:02 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -442,8 +442,7 @@ ieee1394_reass(struct ifnet *ifp, struct mbuf *m0, uint16_t src)
 	len = m0->m_pkthdr.len;
 	id = dgl | (src << 16);
 	if (ftype & IEEE1394_FT_SUBSEQ) {
-		m_tag_delete_chain(m0, NULL);
-		m0->m_flags &= ~M_PKTHDR;
+		m_remove_pkthdr(m0);
 		etype = 0;
 		off = ntohs(ifh->ifh_etype_off);
 	} else {

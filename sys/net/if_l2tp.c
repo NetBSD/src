@@ -1,4 +1,4 @@
-/*	$NetBSD: if_l2tp.c,v 1.25 2018/05/01 07:21:39 maxv Exp $	*/
+/*	$NetBSD: if_l2tp.c,v 1.26 2018/05/07 09:51:02 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.25 2018/05/01 07:21:39 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.26 2018/05/07 09:51:02 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -534,8 +534,7 @@ l2tp_input(struct mbuf *m, struct ifnet *ifp)
 			 * Already copied mtag with M_COPY_PKTHDR.
 			 * but don't delete mtag in case cut off M_PKTHDR flag
 			 */
-			m_tag_delete_chain(m, NULL);
-			m->m_flags &= ~M_PKTHDR;
+			m_remove_pkthdr(m);
 			m_head->m_next = m;
 		}
 
