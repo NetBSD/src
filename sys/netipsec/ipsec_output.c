@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_output.c,v 1.76 2018/05/07 09:16:46 maxv Exp $	*/
+/*	$NetBSD: ipsec_output.c,v 1.77 2018/05/07 09:25:04 maxv Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.76 2018/05/07 09:16:46 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.77 2018/05/07 09:25:04 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -550,7 +550,7 @@ noneed:
 		ip->ip_sum = in_cksum(m, ip->ip_hl << 2);
 
 		/* Encapsulate the packet */
-		error = ipip_output(m, isr, sav, &mp, 0, 0);
+		error = ipip_output(m, sav, &mp);
 		if (mp == NULL && !error) {
 			/* Should never happen. */
 			IPSECLOG(LOG_DEBUG,
@@ -763,7 +763,7 @@ ipsec6_process_packet(struct mbuf *m, const struct ipsecrequest *isr)
 		ip6->ip6_plen = htons(m->m_pkthdr.len - sizeof(*ip6));
 
 		/* Encapsulate the packet */
-		error = ipip_output(m, isr, sav, &mp, 0, 0);
+		error = ipip_output(m, sav, &mp);
 		if (mp == NULL && !error) {
 			/* Should never happen. */
 			IPSECLOG(LOG_DEBUG,
