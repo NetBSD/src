@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.194 2018/05/07 05:09:40 snj Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.195 2018/05/07 13:28:35 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -13332,4 +13332,11 @@ usr.sbin/sysinst/partman.c			1.20-1.21
 	is used on a system where the lvm command is not present.
 	PR install/53220.
 	[kre, ticket #801]
+
+sys/dev/usb/if_axe.c				1.85-1.89
+
+	Fix unintialized variable, merge duplicate code.
+	Use the proper station nodeid read command.
+	[nonaka, ticket #782]
+
 
