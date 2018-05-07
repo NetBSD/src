@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.206 2018/05/03 07:13:48 maxv Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.207 2018/05/07 23:42:13 uwe Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -135,7 +135,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.206 2018/05/03 07:13:48 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.207 2018/05/07 23:42:13 uwe Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -987,16 +987,27 @@ again:
 		 * taking into account that we are limited by
 		 * TCP_MAXWIN << tp->rcv_scale.
 		 */
-		long adv = min(win, (long)TCP_MAXWIN << tp->rcv_scale) -
-			(tp->rcv_adv - tp->rcv_nxt);
+		long recwin = min(win, (long)TCP_MAXWIN << tp->rcv_scale);
+		long oldwin, adv;
 
 		/*
-		 * If the new window size ends up being the same as the old
-		 * size when it is scaled, then don't force a window update.
+		 * rcv_nxt may overtake rcv_adv when we accept a
+		 * zero-window probe.
 		 */
-		if ((tp->rcv_adv - tp->rcv_nxt) >> tp->rcv_scale ==
-		    (adv + tp->rcv_adv - tp->rcv_nxt) >> tp->rcv_scale)
+		if (SEQ_GT(tp->rcv_adv, tp->rcv_nxt))
+			oldwin = tp->rcv_adv - tp->rcv_nxt;
+		else
+			oldwin = 0;
+
+		/*
+		 * If the new window size ends up being the same as or
+		 * less than the old size when it is scaled, then
+		 * don't force a window update.
+		 */
+		if (recwin >> tp->rcv_scale <= oldwin >> tp->rcv_scale)
 			goto dontupdate;
+
+		adv = recwin - oldwin;
 		if (adv >= (long) (2 * rxsegsize))
 			goto send;
 		if (2 * adv >= (long) so->so_rcv.sb_hiwat)
