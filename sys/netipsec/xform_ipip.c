@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipip.c,v 1.73 2018/05/07 09:25:04 maxv Exp $	*/
+/*	$NetBSD: xform_ipip.c,v 1.74 2018/05/07 09:33:51 maxv Exp $	*/
 /*	$FreeBSD: xform_ipip.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ipip.c,v 1.25 2002/06/10 18:04:55 itojun Exp $ */
 
@@ -39,26 +39,27 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.73 2018/05/07 09:25:04 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.74 2018/05/07 09:33:51 maxv Exp $");
 
-/*
- * IP-inside-IP processing
- */
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
 #endif
 
+/*
+ * IP-inside-IP processing.
+ *
+ * The input point is encapsw{4,6}, called via the encap callback. The
+ * output point is ipip_output, called directly. XF_IP4 has no more
+ * meaning here, ipe4_xformsw is dummy.
+ */
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
-#include <sys/socket.h>
 #include <sys/kernel.h>
 #include <sys/protosw.h>
-#include <sys/sysctl.h>
 
 #include <net/if.h>
-#include <net/route.h>
-#include <net/netisr.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
