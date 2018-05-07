@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.177 2018/04/08 11:43:01 mlelstv Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.178 2018/05/07 21:03:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.177 2018/04/08 11:43:01 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.178 2018/05/07 21:03:45 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -577,6 +577,7 @@ getrusage1(struct proc *p, int who, struct rusage *ru) {
 	switch (who) {
 	case RUSAGE_SELF:
 		mutex_enter(p->p_lock);
+		ruspace(p);
 		memcpy(ru, &p->p_stats->p_ru, sizeof(*ru));
 		calcru(p, &ru->ru_utime, &ru->ru_stime, NULL, NULL);
 		rulwps(p, ru);
@@ -592,6 +593,17 @@ getrusage1(struct proc *p, int who, struct rusage *ru) {
 	}
 
 	return 0;
+}
+
+void
+ruspace(struct proc *p)
+{
+	struct vmspace *vm = p->p_vmspace;
+	struct rusage *ru = &p->p_stats->p_ru;
+
+	ru->ru_ixrss = vm->vm_tsize << (PAGE_SHIFT - 10);
+	ru->ru_idrss = vm->vm_dsize << (PAGE_SHIFT - 10);
+	ru->ru_isrss = vm->vm_ssize << (PAGE_SHIFT - 10);
 }
 
 void
