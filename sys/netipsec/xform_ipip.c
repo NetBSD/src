@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipip.c,v 1.70 2018/04/29 14:35:35 maxv Exp $	*/
+/*	$NetBSD: xform_ipip.c,v 1.71 2018/05/07 09:08:06 maxv Exp $	*/
 /*	$FreeBSD: xform_ipip.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ipip.c,v 1.25 2002/06/10 18:04:55 itojun Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.70 2018/04/29 14:35:35 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.71 2018/05/07 09:08:06 maxv Exp $");
 
 /*
  * IP-inside-IP processing
@@ -90,12 +90,10 @@ __KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.70 2018/04/29 14:35:35 maxv Exp $")
 int ipip_spoofcheck = 1;
 percpu_t *ipipstat_percpu;
 
-void ipe4_attach(void);
-
 static void _ipip_input(struct mbuf *, int);
 
 #ifdef INET6
-int
+static int
 ip4_input6(struct mbuf **m, int *offp, int proto, void *eparg __unused)
 {
 	_ipip_input(*m, *offp);
@@ -104,7 +102,7 @@ ip4_input6(struct mbuf **m, int *offp, int proto, void *eparg __unused)
 #endif
 
 #ifdef INET
-void
+static void
 ip4_input(struct mbuf *m, int off, int proto, void *eparg __unused)
 {
 	_ipip_input(m, off);
@@ -517,41 +515,6 @@ bad:
 	return error;
 }
 
-static int
-ipe4_init(struct secasvar *sav, const struct xformsw *xsp)
-{
-	sav->tdb_xform = xsp;
-	return 0;
-}
-
-static int
-ipe4_zeroize(struct secasvar *sav)
-{
-	sav->tdb_xform = NULL;
-	return 0;
-}
-
-static int
-ipe4_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
-{
-	/* This is a rather serious mistake, so no conditional printing. */
-	printf("%s: should never be called\n", __func__);
-	if (m)
-		m_freem(m);
-	return EOPNOTSUPP;
-}
-
-static struct xformsw ipe4_xformsw = {
-	.xf_type	= XF_IP4,
-	.xf_flags	= 0,
-	.xf_name	= "IPv4 Simple Encapsulation",
-	.xf_init	= ipe4_init,
-	.xf_zeroize	= ipe4_zeroize,
-	.xf_input	= ipe4_input,
-	.xf_output	= ipip_output,
-	.xf_next	= NULL,
-};
-
 #ifdef INET
 static struct encapsw ipe4_encapsw = {
 	.encapsw4 = {
@@ -583,6 +546,52 @@ ipe4_encapcheck(struct mbuf *m, int off, int proto, void *arg)
 	 */
 	return ((m->m_flags & M_IPSEC) != 0 ? 1 : 0);
 }
+
+/* -------------------------------------------------------------------------- */
+
+static int
+ipe4_init(struct secasvar *sav, const struct xformsw *xsp)
+{
+	sav->tdb_xform = xsp;
+	return 0;
+}
+
+static int
+ipe4_zeroize(struct secasvar *sav)
+{
+	sav->tdb_xform = NULL;
+	return 0;
+}
+
+static int
+ipe4_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
+{
+	/* This is a rather serious mistake, so no conditional printing. */
+	printf("%s: should never be called\n", __func__);
+	if (m)
+		m_freem(m);
+	return EOPNOTSUPP;
+}
+
+static int
+ipe4_output(struct mbuf *m, const struct ipsecrequest *isr,
+    struct secasvar *sav, struct mbuf **mp, int skip, int protoff)
+{
+	panic("%s: should not have been called", __func__);
+}
+
+static struct xformsw ipe4_xformsw = {
+	.xf_type	= XF_IP4,
+	.xf_flags	= 0,
+	.xf_name	= "IPv4 Simple Encapsulation",
+	.xf_init	= ipe4_init,
+	.xf_zeroize	= ipe4_zeroize,
+	.xf_input	= ipe4_input,
+	.xf_output	= ipe4_output,
+	.xf_next	= NULL,
+};
+
+/* -------------------------------------------------------------------------- */
 
 void
 ipe4_attach(void)
