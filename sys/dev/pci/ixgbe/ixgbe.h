@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.h,v 1.46 2018/04/25 08:46:19 msaitoh Exp $ */
+/* $NetBSD: ixgbe.h,v 1.47 2018/05/08 09:45:54 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -154,7 +154,7 @@
  * pass between any two TX clean operations, such only happening
  * when the TX hardware is functioning.
  */
-#define IXGBE_WATCHDOG  (10 * hz)
+#define IXGBE_TX_TIMEOUT 10
 
 /*
  * This parameters control when the driver calls the routine to reclaim
@@ -219,8 +219,6 @@
 #define IXGBE_VFTA_SIZE                 128
 #define IXGBE_BR_SIZE                   4096
 #define IXGBE_QUEUE_MIN_FREE            32
-#define IXGBE_MAX_TX_BUSY               10
-#define IXGBE_QUEUE_HUNG                0x80000000
 
 #define IXGBE_EITR_DEFAULT		128
 
@@ -323,7 +321,6 @@ struct ix_queue {
 	u32              eitr_setting;
 	u32              me;
 	struct resource  *res;
-	int              busy;
 	struct tx_ring   *txr;
 	struct rx_ring   *rxr;
 	struct work      wq_cookie;
@@ -353,7 +350,8 @@ struct tx_ring {
 	kmutex_t		tx_mtx;
 	u32			me;
 	u32			tail;
-	int			busy;
+	bool			sending;	/* enable/disable watchdog */
+	time_t			lastsent;
 	union ixgbe_adv_tx_desc	*tx_base;
 	struct ixgbe_tx_buf	*tx_buffers;
 	struct ixgbe_dma_alloc	txdma;
