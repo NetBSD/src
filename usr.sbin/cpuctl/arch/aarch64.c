@@ -1,4 +1,4 @@
-/*	$NetBSD: aarch64.c,v 1.1 2018/05/03 15:47:36 ryo Exp $	*/
+/*	$NetBSD: aarch64.c,v 1.2 2018/05/08 11:42:43 ryo Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: aarch64.c,v 1.1 2018/05/03 15:47:36 ryo Exp $");
+__RCSID("$NetBSD: aarch64.c,v 1.2 2018/05/08 11:42:43 ryo Exp $");
 #endif /* no lint */
 
 #include <sys/types.h>
@@ -239,8 +239,8 @@ struct fieldinfo id_aa64mmfr0_fieldinfo[] = {
 	{
 		.bitpos = 24, .bitwidth = 4, .name = "TGran64",
 		.info = (const char *[16]) { /* 16=4bit */
-			[0] = "No 64KB granule",
-			[15] = "64KB granule"
+			[0] = "64KB granule",
+			[15] = "No 64KB granule"
 		}
 	},
 	{
