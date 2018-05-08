@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_ccu.h,v 1.17 2018/04/01 21:19:17 bouyer Exp $ */
+/* $NetBSD: sunxi_ccu.h,v 1.18 2018/05/08 22:05:25 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -341,6 +341,8 @@ struct sunxi_ccu_fixed_factor {
 
 u_int	sunxi_ccu_fixed_factor_get_rate(struct sunxi_ccu_softc *,
 					struct sunxi_ccu_clk *);
+int	sunxi_ccu_fixed_factor_set_rate(struct sunxi_ccu_softc *,
+					struct sunxi_ccu_clk *, u_int);
 const char *sunxi_ccu_fixed_factor_get_parent(struct sunxi_ccu_softc *,
 					      struct sunxi_ccu_clk *);
 
@@ -353,6 +355,7 @@ const char *sunxi_ccu_fixed_factor_get_parent(struct sunxi_ccu_softc *,
 		.u.fixed_factor.mult = (_mult),				\
 		.get_rate = sunxi_ccu_fixed_factor_get_rate,		\
 		.get_parent = sunxi_ccu_fixed_factor_get_parent,	\
+		.set_rate = sunxi_ccu_fixed_factor_set_rate,		\
 	}
 
 struct sunxi_ccu_fractional {
