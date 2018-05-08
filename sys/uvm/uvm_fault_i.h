@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault_i.h,v 1.30 2018/05/07 21:00:14 christos Exp $	*/
+/*	$NetBSD: uvm_fault_i.h,v 1.31 2018/05/08 19:33:57 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -52,7 +52,9 @@ uvmfault_unlockmaps(struct uvm_faultinfo *ufi, bool write_locked)
 		return;
 	}
 
+#ifndef __HAVE_NO_PMAP_STATS
 	uvmfault_update_stats(ufi);
+#endif
 	if (write_locked) {
 		vm_map_unlock(ufi->map);
 	} else {
