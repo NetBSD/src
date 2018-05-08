@@ -1,4 +1,4 @@
-/* $NetBSD: sun50i_a64_ccu.c,v 1.4 2018/05/05 13:28:23 jmcneill Exp $ */
+/* $NetBSD: sun50i_a64_ccu.c,v 1.5 2018/05/08 22:07:02 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sun50i_a64_ccu.c,v 1.4 2018/05/05 13:28:23 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun50i_a64_ccu.c,v 1.5 2018/05/08 22:07:02 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -144,6 +144,11 @@ static const char *apb2_parents[] = { "losc", "hosc", "pll_periph0" };
 static const char *mod_parents[] = { "hosc", "pll_periph0", "pll_periph1" };
 static const char *ths_parents[] = { "hosc", NULL, NULL, NULL };
 
+static const struct sunxi_ccu_nkmp_tbl sun50i_a64_ac_dig_table[] = {
+	{ 24576000, 0x55, 0, 0x14, 0x3 },
+	{ 0 }
+};
+
 static struct sunxi_ccu_clk sun50i_a64_ccu_clks[] = {
 	SUNXI_CCU_NKMP(A64_CLK_PLL_PERIPH0, "pll_periph0", "hosc",
 	    PLL_PERIPH0_CTRL_REG,	/* reg */
@@ -153,6 +158,22 @@ static struct sunxi_ccu_clk sun50i_a64_ccu_clks[] = {
 	    __BITS(17,16),		/* p */
 	    __BIT(31),			/* enable */
 	    SUNXI_CCU_NKMP_DIVIDE_BY_TWO),
+
+	SUNXI_CCU_NKMP_TABLE(A64_CLK_PLL_AUDIO_BASE, "pll_audio_base", "hosc",
+	    PLL_AUDIO_CTRL_REG,		/* reg */
+	    __BITS(14,8),		/* n */
+	    0,				/* k */
+	    __BITS(4,0),		/* m */
+	    __BITS(19,16),		/* p */
+	    __BIT(31),			/* enable */
+	    __BIT(28),			/* lock */
+	    sun50i_a64_ac_dig_table,	/* table */
+	    0),
+
+	SUNXI_CCU_FIXED_FACTOR(A64_CLK_PLL_AUDIO, "pll_audio", "pll_audio_base", 1, 1),
+	SUNXI_CCU_FIXED_FACTOR(A64_CLK_PLL_AUDIO_2X, "pll_audio_2x", "pll_audio_base", 1, 2),
+	SUNXI_CCU_FIXED_FACTOR(A64_CLK_PLL_AUDIO_4X, "pll_audio_4x", "pll_audio_base", 1, 4),
+	SUNXI_CCU_FIXED_FACTOR(A64_CLK_PLL_AUDIO_8X, "pll_audio_8x", "pll_audio_base", 1, 8),
 
 	SUNXI_CCU_PREDIV(A64_CLK_AHB1, "ahb1", ahb1_parents,
 	    AHB1_APB1_CFG_REG,	/* reg */
@@ -200,6 +221,11 @@ static struct sunxi_ccu_clk sun50i_a64_ccu_clks[] = {
 	    __BITS(25,24),	/* sel */
 	    __BIT(31),		/* enable */
 	    SUNXI_CCU_DIV_TIMES_TWO),
+
+	SUNXI_CCU_GATE(A64_CLK_AC_DIG, "ac-dig", "pll_audio",
+	    AC_DIG_CLK_REG, 31),
+	SUNXI_CCU_GATE(A64_CLK_AC_DIG_4X, "ac-dig-4x", "pll_audio_4x",
+	    AC_DIG_CLK_REG, 30),
 
 	SUNXI_CCU_GATE(A64_CLK_BUS_MIPI_DSI, "bus-mipi-dsi", "ahb1",
 	    BUS_CLK_GATING_REG0, 1),
