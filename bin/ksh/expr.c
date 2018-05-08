@@ -1,4 +1,4 @@
-/*	$NetBSD: expr.c,v 1.11 2017/07/01 23:12:08 joerg Exp $	*/
+/*	$NetBSD: expr.c,v 1.12 2018/05/08 16:37:59 kamil Exp $	*/
 
 /*
  * Korn expression evaluation
@@ -9,7 +9,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: expr.c,v 1.11 2017/07/01 23:12:08 joerg Exp $");
+__RCSID("$NetBSD: expr.c,v 1.12 2018/05/08 16:37:59 kamil Exp $");
 #endif
 
 
@@ -570,7 +570,7 @@ assign_check(es, op, vasn)
 static struct tbl *
 tempvar()
 {
-	register struct tbl *vp;
+	struct tbl *vp;
 
 	vp = (struct tbl*) alloc(sizeof(struct tbl), ATEMP);
 	vp->flag = ISSET|INTEGER;
