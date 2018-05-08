@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.76 2018/03/04 10:13:08 jdolecek Exp $	*/
+/*	$NetBSD: pmap.h,v 1.77 2018/05/08 17:20:44 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -163,6 +163,7 @@ struct pcpu_entry {
 	uint8_t ist0[PAGE_SIZE];
 	uint8_t ist1[PAGE_SIZE];
 	uint8_t ist2[PAGE_SIZE];
+	uint8_t ist3[PAGE_SIZE];
 	uint8_t rsp0[2 * PAGE_SIZE];
 } __packed;
 
