@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.95 2018/04/19 07:40:12 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.96 2018/05/08 09:45:54 msaitoh Exp $*/
 
 /******************************************************************************
 
@@ -101,6 +101,8 @@ static int      ixv_configure_interrupts(struct adapter *);
 static void	ixv_free_pci_resources(struct adapter *);
 static void     ixv_local_timer(void *);
 static void     ixv_local_timer_locked(void *);
+static void	ixv_watchdog(struct ifnet *);
+static bool	ixv_watchdog_txq(struct ifnet *, struct tx_ring *, bool *);
 static int      ixv_setup_interface(device_t, struct adapter *);
 static int      ixv_negotiate_api(struct adapter *);
 
@@ -1189,11 +1191,8 @@ static void
 ixv_local_timer_locked(void *arg)
 {
 	struct adapter	*adapter = arg;
-	device_t	dev = adapter->dev;
 	struct ix_queue	*que = adapter->queues;
-	u64		queues = 0;
 	u64		v0, v1, v2, v3, v4, v5, v6, v7;
-	int		hung = 0;
 	int		i;
 
 	KASSERT(mutex_owned(&adapter->core_mtx));
@@ -1227,57 +1226,85 @@ ixv_local_timer_locked(void *arg)
 	adapter->enomem_tx_dma_setup.ev_count = v6;
 	adapter->tso_err.ev_count = v7;
 
-	/*
-	 * Check the TX queues status
-	 *      - mark hung queues so we don't schedule on them
-	 *      - watchdog only if all queues show hung
-	 */
-	que = adapter->queues;
-	for (i = 0; i < adapter->num_queues; i++, que++) {
-		/* Keep track of queues with work for soft irq */
-		if (que->txr->busy)
-			queues |= ((u64)1 << que->me);
-		/*
-		 * Each time txeof runs without cleaning, but there
-		 * are uncleaned descriptors it increments busy. If
-		 * we get to the MAX we declare it hung.
-		 */
-		if (que->busy == IXGBE_QUEUE_HUNG) {
-			++hung;
-			/* Mark the queue as inactive */
-			adapter->active_queues &= ~((u64)1 << que->me);
-			continue;
-		} else {
-			/* Check if we've come back from hung */
-			if ((adapter->active_queues & ((u64)1 << que->me)) == 0)
-				adapter->active_queues |= ((u64)1 << que->me);
-		}
-		if (que->busy >= IXGBE_MAX_TX_BUSY) {
-			device_printf(dev,
-			    "Warning queue %d appears to be hung!\n", i);
-			que->txr->busy = IXGBE_QUEUE_HUNG;
-			++hung;
-		}
-	}
-
-	/* Only truly watchdog if all queues show hung */
-	if (hung == adapter->num_queues)
-		goto watchdog;
-	else if (queues != 0) { /* Force an IRQ on queues with work */
-		ixv_rearm_queues(adapter, queues);
-	}
+	ixv_watchdog(adapter->ifp);
 
 	callout_reset(&adapter->timer, hz, ixv_local_timer, adapter);
 
 	return;
-
-watchdog:
-
-	device_printf(adapter->dev, "Watchdog timeout -- resetting\n");
-	adapter->ifp->if_flags &= ~IFF_RUNNING;
-	adapter->watchdog_events.ev_count++;
-	ixv_init_locked(adapter);
 } /* ixv_local_timer */
+
+static void
+ixv_watchdog(struct ifnet *ifp)
+{
+	struct adapter  *adapter = ifp->if_softc;
+	struct ix_queue *que;
+	struct tx_ring  *txr;
+	u64		queues = 0;
+	bool		hung = false;
+	bool		sending = false;
+	int		i;
+
+	txr = adapter->tx_rings;
+	for (i = 0; i < adapter->num_queues; i++, txr++) {
+		hung = ixv_watchdog_txq(ifp, txr, &sending);
+		if (hung)
+			break;
+		else if (sending)
+			queues |= ((u64)1 << txr->me);
+	}
+
+	if (hung) {
+		ifp->if_flags &= ~IFF_RUNNING;
+		ifp->if_oerrors++;
+		adapter->watchdog_events.ev_count++;
+		ixv_init_locked(adapter);
+	} else if (queues != 0) {
+		/*
+		 * Force an IRQ on queues with work
+		 *
+		 * Calling ixv_rearm_queues() might not required. I've never
+		 * seen any device timeout on ixv(4).
+		 */
+		que = adapter->queues;
+		for (i = 0; i < adapter->num_queues; i++, que++) {
+			u64 index = queues & ((u64)1 << i);
+
+			mutex_enter(&que->dc_mtx);
+			if ((index != 0) && (que->disabled_count == 0))
+				ixv_rearm_queues(adapter, index);
+			mutex_exit(&que->dc_mtx);
+		}
+	}
+}
+
+static bool
+ixv_watchdog_txq(struct ifnet *ifp, struct tx_ring *txr, bool *sending)
+{
+	struct adapter *adapter = ifp->if_softc;
+	device_t dev = adapter->dev;
+	bool hung = false;
+	bool more = false;
+
+	IXGBE_TX_LOCK(txr);
+	*sending = txr->sending;
+	if (*sending && ((time_uptime - txr->lastsent) > IXGBE_TX_TIMEOUT)) {
+		/*
+		 * Since we're using delayed interrupts, sweep up before we
+		 * report an error.
+		 */
+		do {
+			more = ixgbe_txeof(txr);
+		} while (more);
+		hung = true;
+		device_printf(dev,
+		    "Watchdog timeout (queue %d%s)-- resetting\n", txr->me,
+		    (txr->tx_avail == txr->num_desc)
+		    ? ", lost interrupt?" : "");
+	}
+	IXGBE_TX_UNLOCK(txr);
+
+	return hung;
+}
 
 /************************************************************************
  * ixv_update_link_status - Update OS on link state
@@ -1361,6 +1388,8 @@ ixv_stop(void *arg)
 	struct ifnet    *ifp;
 	struct adapter  *adapter = arg;
 	struct ixgbe_hw *hw = &adapter->hw;
+	struct tx_ring  *txr;
+	int i;
 
 	ifp = adapter->ifp;
 
@@ -1368,6 +1397,14 @@ ixv_stop(void *arg)
 
 	INIT_DEBUGOUT("ixv_stop: begin\n");
 	ixv_disable_intr(adapter);
+	callout_stop(&adapter->timer);
+
+	txr = adapter->tx_rings;
+	for (i = 0; i < adapter->num_queues; i++, txr++) {
+		IXGBE_TX_LOCK(txr);
+		txr->sending = false;
+		IXGBE_TX_UNLOCK(txr);
+	}
 
 	/* Tell the stack that the interface is no longer active */
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
@@ -1375,7 +1412,6 @@ ixv_stop(void *arg)
 	hw->mac.ops.reset_hw(hw);
 	adapter->hw.adapter_stopped = FALSE;
 	hw->mac.ops.stop_adapter(hw);
-	callout_stop(&adapter->timer);
 
 	/* reprogram the RAR[0] in case user changed it. */
 	hw->mac.ops.set_rar(hw, 0, hw->mac.addr, 0, IXGBE_RAH_AV);
@@ -2877,7 +2913,7 @@ ixv_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 {
 	device_t	dev = adapter->dev;
 	struct ix_queue *que = adapter->queues;
-	struct		tx_ring *txr = adapter->tx_rings;
+	struct tx_ring	*txr = adapter->tx_rings;
 	int 		error, msix_ctrl, rid, vector = 0;
 	pci_chipset_tag_t pc;
 	pcitag_t	tag;
