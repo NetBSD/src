@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.231 2018/04/26 20:10:44 maxv Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.232 2018/05/08 16:47:58 maxv Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.231 2018/04/26 20:10:44 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.232 2018/05/08 16:47:58 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -942,10 +942,7 @@ nfsm_disct(struct mbuf **mdp, char **dposp, int siz, int left, char **cp2)
 			*mdp = m1 = m_get(M_WAIT, MT_DATA);
 			MCLAIM(m1, m2->m_owner);
 			if ((m2->m_flags & M_PKTHDR) != 0) {
-				/* XXX MOVE */
-				M_COPY_PKTHDR(m1, m2);
-				m_tag_delete_chain(m2, NULL);
-				m2->m_flags &= ~M_PKTHDR;
+				M_MOVE_PKTHDR(m1, m2);
 			}
 			if (havebuf) {
 				havebuf->m_next = m1;
