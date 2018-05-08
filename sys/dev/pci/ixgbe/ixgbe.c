@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.149 2018/04/19 07:40:12 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.150 2018/05/08 09:45:54 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -184,6 +184,8 @@ static void	ixgbe_free_pciintr_resources(struct adapter *);
 static void	ixgbe_free_pci_resources(struct adapter *);
 static void	ixgbe_local_timer(void *);
 static void	ixgbe_local_timer1(void *);
+static void	ixgbe_watchdog(struct ifnet *);
+static bool	ixgbe_watchdog_txq(struct ifnet *, struct tx_ring *, bool *);
 static int	ixgbe_setup_interface(device_t, struct adapter *);
 static void	ixgbe_config_gpie(struct adapter *);
 static void	ixgbe_config_dmac(struct adapter *);
@@ -4257,11 +4259,8 @@ static void
 ixgbe_local_timer1(void *arg)
 {
 	struct adapter	*adapter = arg;
-	device_t	dev = adapter->dev;
 	struct ix_queue *que = adapter->queues;
-	u64		queues = 0;
 	u64		v0, v1, v2, v3, v4, v5, v6, v7;
-	int		hung = 0;
 	int		i;
 
 	KASSERT(mutex_owned(&adapter->core_mtx));
@@ -4298,63 +4297,93 @@ ixgbe_local_timer1(void *arg)
 	adapter->enomem_tx_dma_setup.ev_count = v6;
 	adapter->tso_err.ev_count = v7;
 
-	/*
-	 * Check the TX queues status
-	 *      - mark hung queues so we don't schedule on them
-	 *      - watchdog only if all queues show hung
-	 */
-	que = adapter->queues;
-	for (i = 0; i < adapter->num_queues; i++, que++) {
-		/* Keep track of queues with work for soft irq */
-		if (que->txr->busy)
-			queues |= ((u64)1 << que->me);
-		/*
-		 * Each time txeof runs without cleaning, but there
-		 * are uncleaned descriptors it increments busy. If
-		 * we get to the MAX we declare it hung.
-		 */
-		if (que->busy == IXGBE_QUEUE_HUNG) {
-			++hung;
-			/* Mark the queue as inactive */
-			adapter->active_queues &= ~((u64)1 << que->me);
-			continue;
-		} else {
-			/* Check if we've come back from hung */
-			if ((adapter->active_queues & ((u64)1 << que->me)) == 0)
-				adapter->active_queues |= ((u64)1 << que->me);
-		}
-		if (que->busy >= IXGBE_MAX_TX_BUSY) {
-			device_printf(dev,
-			    "Warning queue %d appears to be hung!\n", i);
-			que->txr->busy = IXGBE_QUEUE_HUNG;
-			++hung;
-		}
-	}
-
-	/* Only truely watchdog if all queues show hung */
-	if (hung == adapter->num_queues)
-		goto watchdog;
-	else if (queues != 0) { /* Force an IRQ on queues with work */
-		que = adapter->queues;
-		for (i = 0; i < adapter->num_queues; i++, que++) {
-			mutex_enter(&que->dc_mtx);
-			if (que->disabled_count == 0)
-				ixgbe_rearm_queues(adapter,
-				    queues & ((u64)1 << i));
-			mutex_exit(&que->dc_mtx);
-		}
-	}
+	ixgbe_watchdog(adapter->ifp);
 
 out:
 	callout_reset(&adapter->timer, hz, ixgbe_local_timer, adapter);
-	return;
-
-watchdog:
-	device_printf(adapter->dev, "Watchdog timeout -- resetting\n");
-	adapter->ifp->if_flags &= ~IFF_RUNNING;
-	adapter->watchdog_events.ev_count++;
-	ixgbe_init_locked(adapter);
 } /* ixgbe_local_timer */
+
+static void
+ixgbe_watchdog(struct ifnet *ifp)
+{
+	struct adapter  *adapter = ifp->if_softc;
+	struct ix_queue *que;
+	struct tx_ring  *txr;
+	u64		queues = 0;
+	bool		hung = false;
+	bool		sending = false;
+	int		i;
+
+	txr = adapter->tx_rings;
+	for (i = 0; i < adapter->num_queues; i++, txr++) {
+		hung = ixgbe_watchdog_txq(ifp, txr, &sending);
+		if (hung)
+			break;
+		else if (sending)
+			queues |= ((u64)1 << txr->me);
+	}
+
+	if (hung) {
+		ifp->if_flags &= ~IFF_RUNNING;
+		ifp->if_oerrors++;
+		adapter->watchdog_events.ev_count++;
+		ixgbe_init_locked(adapter);
+	} else if (queues != 0) {
+		/*
+		 * Force an IRQ on queues with work.
+		 *
+		 * It's supporsed not to be called ixgbe_rearm_queues() if
+		 * any chips have no bug. In reality, ixgbe_rearm_queues() is
+		 * required on 82599 and newer chip AND other than queue 0 to
+		 * prevent device timeout. When it occured, packet was sent but
+		 * the descriptor's DD bot wasn't set even though
+		 * IXGBE_TXD_CMD_EOP and IXGBE_TXD_CMD_RS were set. After
+		 * forcing interrupt by writing EICS register in
+		 * ixgbe_rearm_queues(), DD is set. Why? Is this an
+		 * undocumented errata? It might be possible not call
+		 * rearm_queues on 82598 or queue 0, we call in any cases in
+		 * case the problem occurs.
+		 */
+		que = adapter->queues;
+		for (i = 0; i < adapter->num_queues; i++, que++) {
+			u64 index = queues & ((u64)1 << i);
+
+			mutex_enter(&que->dc_mtx);
+			if ((index != 0) && (que->disabled_count == 0))
+				ixgbe_rearm_queues(adapter, index);
+			mutex_exit(&que->dc_mtx);
+		}
+	}
+}
+
+static bool
+ixgbe_watchdog_txq(struct ifnet *ifp, struct tx_ring *txr, bool *sending)
+{
+	struct adapter *adapter = ifp->if_softc;
+	device_t dev = adapter->dev;
+	bool hung = false;
+	bool more = false;
+
+	IXGBE_TX_LOCK(txr);
+	*sending = txr->sending;
+	if (*sending && ((time_uptime - txr->lastsent) > IXGBE_TX_TIMEOUT)) {
+		/*
+		 * Since we're using delayed interrupts, sweep up before we
+		 * report an error.
+		 */
+		do {
+			more = ixgbe_txeof(txr);
+		} while (more);
+		hung = true;
+		device_printf(dev,
+		    "Watchdog timeout (queue %d%s)-- resetting\n", txr->me,
+		    (txr->tx_avail == txr->num_desc)
+		    ? ", lost interrupt?" : "");
+	}
+	IXGBE_TX_UNLOCK(txr);
+
+	return hung;
+}
 
 /************************************************************************
  * ixgbe_sfp_probe
@@ -4514,6 +4543,8 @@ ixgbe_stop(void *arg)
 	struct ifnet    *ifp;
 	struct adapter  *adapter = arg;
 	struct ixgbe_hw *hw = &adapter->hw;
+	struct tx_ring  *txr;
+	int i;
 
 	ifp = adapter->ifp;
 
@@ -4522,6 +4553,13 @@ ixgbe_stop(void *arg)
 	INIT_DEBUGOUT("ixgbe_stop: begin\n");
 	ixgbe_disable_intr(adapter);
 	callout_stop(&adapter->timer);
+
+	txr = adapter->tx_rings;
+	for (i = 0; i < adapter->num_queues; i++, txr++) {
+		IXGBE_TX_LOCK(txr);
+		txr->sending = false;
+		IXGBE_TX_UNLOCK(txr);
+	}
 
 	/* Let the stack know...*/
 	ifp->if_flags &= ~IFF_RUNNING;
@@ -6116,8 +6154,8 @@ static int
 ixgbe_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 {
 	device_t        dev = adapter->dev;
-	struct 		ix_queue *que = adapter->queues;
-	struct  	tx_ring *txr = adapter->tx_rings;
+	struct ix_queue *que = adapter->queues;
+	struct tx_ring  *txr = adapter->tx_rings;
 	pci_chipset_tag_t pc;
 	char		intrbuf[PCI_INTRSTR_LEN];
 	char		intr_xname[32];
@@ -6457,7 +6495,7 @@ ixgbe_handle_link(void *context)
 /************************************************************************
  * ixgbe_rearm_queues
  ************************************************************************/
-static void
+static inline void
 ixgbe_rearm_queues(struct adapter *adapter, u64 queues)
 {
 	u32 mask;
