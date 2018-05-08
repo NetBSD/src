@@ -210,6 +210,7 @@ struct bnx_softc
 	uint32_t		tx_prod_bseq;	/* Counts the bytes used.  */
 
 	struct callout		bnx_timeout;
+	int			bnx_detaching;
 
 	/* Frame size and mbuf allocation size for RX frames. */
 	uint32_t		max_frame_size;
