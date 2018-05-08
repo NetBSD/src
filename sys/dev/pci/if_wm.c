@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.576 2018/04/23 01:35:25 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.577 2018/05/08 07:59:56 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.576 2018/04/23 01:35:25 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.577 2018/05/08 07:59:56 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -6508,8 +6508,8 @@ wm_alloc_txrx_queues(struct wm_softc *sc)
 		WM_Q_INTR_EVCNT_ATTACH(rxq, rxintr, rxq, i, xname);
 		WM_Q_INTR_EVCNT_ATTACH(rxq, rxdefer, rxq, i, xname);
 
-		WM_Q_INTR_EVCNT_ATTACH(rxq, rxipsum, rxq, i, xname);
-		WM_Q_INTR_EVCNT_ATTACH(rxq, rxtusum, rxq, i, xname);
+		WM_Q_MISC_EVCNT_ATTACH(rxq, rxipsum, rxq, i, xname);
+		WM_Q_MISC_EVCNT_ATTACH(rxq, rxtusum, rxq, i, xname);
 #endif /* WM_EVENT_COUNTERS */
 
 		rx_done++;
