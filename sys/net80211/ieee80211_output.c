@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_output.c,v 1.62 2018/05/03 17:14:37 maxv Exp $	*/
+/*	$NetBSD: ieee80211_output.c,v 1.63 2018/05/08 07:02:07 maxv Exp $	*/
 
 /*
  * Copyright (c) 2001 Atsushi Onoe
@@ -37,15 +37,12 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_output.c,v 1.34 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.62 2018/05/03 17:14:37 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.63 2018/05/08 07:02:07 maxv Exp $");
 #endif
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
 #endif
-
-#ifdef __NetBSD__
-#endif /* __NetBSD__ */
 
 #include <sys/param.h>
 #include <sys/systm.h> 
@@ -247,7 +244,6 @@ ieee80211_send_nulldata(struct ieee80211_node *ni)
 
 	MGETHDR(m, M_NOWAIT, MT_HEADER);
 	if (m == NULL) {
-		/* XXX debug msg */
 		ic->ic_stats.is_tx_nobuf++;
 		ieee80211_unref_node(&ni);
 		return ENOMEM;
@@ -434,8 +430,6 @@ ieee80211_mbuf_adjust(struct ieee80211com *ic, int hdrsize,
 	if (M_LEADINGSPACE(m) < needed_space - TO_BE_RECLAIMED) {
 		struct mbuf *n = m_gethdr(M_NOWAIT, m->m_type);
 		if (n == NULL) {
-			IEEE80211_DPRINTF(ic, IEEE80211_MSG_OUTPUT,
-			    "%s: cannot expand storage\n", __func__);
 			ic->ic_stats.is_tx_nobuf++;
 			m_freem(m);
 			return NULL;
@@ -997,7 +991,7 @@ bad:
 	/* reclaim fragments but leave original frame for caller to free */
 	for (m = m0->m_nextpkt; m != NULL; m = next) {
 		next = m->m_nextpkt;
-		m->m_nextpkt = NULL; /* XXX paranoid */
+		m->m_nextpkt = NULL;
 		m_freem(m);
 	}
 	m0->m_nextpkt = NULL;
