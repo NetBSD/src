@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.577 2018/05/08 07:59:56 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.578 2018/05/08 11:36:39 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.577 2018/05/08 07:59:56 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.578 2018/05/08 11:36:39 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -6703,6 +6703,7 @@ wm_init_tx_queue(struct wm_softc *sc, struct wm_queue *wmq,
 	wm_init_tx_regs(sc, wmq, txq);
 	wm_init_tx_buffer(sc, txq);
 
+	txq->txq_flags = 0; /* Clear WM_TXQ_NO_SPACE */
 	txq->txq_sending = false;
 }
 
