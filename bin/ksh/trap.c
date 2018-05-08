@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.13 2017/06/30 04:41:19 kamil Exp $	*/
+/*	$NetBSD: trap.c,v 1.14 2018/05/08 16:37:59 kamil Exp $	*/
 
 /*
  * signal handling
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: trap.c,v 1.13 2017/06/30 04:41:19 kamil Exp $");
+__RCSID("$NetBSD: trap.c,v 1.14 2018/05/08 16:37:59 kamil Exp $");
 #endif
 
 #include "sh.h"
@@ -95,7 +95,7 @@ gettrap(name, igncase)
 	int igncase;
 {
 	int i;
-	register Trap *p;
+	Trap *p;
 
 	if (digit(*name)) {
 		int n;
@@ -200,7 +200,7 @@ runtraps(flag)
 	int flag;
 {
 	int i;
-	register Trap *p;
+	Trap *p;
 
 #ifdef KSH
 	if (ksh_tmout_state == TMOUT_LEAVING) {
