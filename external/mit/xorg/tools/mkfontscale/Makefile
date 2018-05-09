@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2018/05/09 07:28:45 maya Exp $
+#	$NetBSD: Makefile,v 1.12 2018/05/09 08:13:23 mrg Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -89,7 +89,8 @@ HOST_CPPFLAGS+=	-DFT_CONFIG_OPTION_DISABLE_BZIP2
 # fontconfig atomic ops.
 HOST_CPPFLAGS+=	-DFC_NO_MT=1
 
-HOST_CPPFLAGS+=	-I${FREETYPE}/include -I${DESTDIR}${X11INCDIR} \
+HOST_CPPFLAGS+=	-I${FREETYPE}/include -I${FREETYPE}/include/freetype \
+		-I${DESTDIR}${X11INCDIR} \
 		-I${DESTDIR}${X11INCDIR}/freetype2
 
 .include <bsd.x11.mk>
