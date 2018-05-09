@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2018/05/09 07:28:44 maya Exp $
+#	$NetBSD: Makefile,v 1.19 2018/05/09 08:13:23 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -89,6 +89,7 @@ CPPFLAGS+=	-DFT_CONFIG_OPTION_SYSTEM_ZLIB \
 		-DFT2_BUILD_LIBRARY \
 		-DFT_CONFIG_MODULES_H="<ftmodule.h>"
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/freetype2 \
+		-I${DESTDIR}${X11INCDIR}/freetype2/freetype \
 		-I${DESTDIR}${X11INCDIR}/freetype2/freetype/config \
 		-I${X11SRCDIR.${LIB}}/include
 
