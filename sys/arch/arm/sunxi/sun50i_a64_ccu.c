@@ -1,4 +1,4 @@
-/* $NetBSD: sun50i_a64_ccu.c,v 1.5 2018/05/08 22:07:02 jmcneill Exp $ */
+/* $NetBSD: sun50i_a64_ccu.c,v 1.6 2018/05/09 19:38:40 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sun50i_a64_ccu.c,v 1.5 2018/05/08 22:07:02 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun50i_a64_ccu.c,v 1.6 2018/05/09 19:38:40 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -285,40 +285,39 @@ static struct sunxi_ccu_clk sun50i_a64_ccu_clks[] = {
 	SUNXI_CCU_GATE(A64_CLK_BUS_SPINLOCK, "bus-spinlock", "ahb1",
 	    BUS_CLK_GATING_REG1, 22),
 
+	SUNXI_CCU_GATE(A64_CLK_BUS_CODEC, "bus-codec", "apb1",
+	    BUS_CLK_GATING_REG2, 0),
+	SUNXI_CCU_GATE(A64_CLK_BUS_SPDIF, "bus-spdif", "apb1",
+	    BUS_CLK_GATING_REG2, 1),
+	SUNXI_CCU_GATE(A64_CLK_BUS_PIO, "bus-pio", "apb1",
+	    BUS_CLK_GATING_REG2, 5),
 	SUNXI_CCU_GATE(A64_CLK_BUS_THS, "bus-ths", "apb1",
 	    BUS_CLK_GATING_REG2, 8),
-
-	SUNXI_CCU_GATE(A64_CLK_BUS_CODEC, "bus-codec", "apb1",
-	    BUS_CLK_GATING_REG3, 0),
-	SUNXI_CCU_GATE(A64_CLK_BUS_SPDIF, "bus-spdif", "apb1",
-	    BUS_CLK_GATING_REG3, 1),
-	SUNXI_CCU_GATE(A64_CLK_BUS_PIO, "bus-pio", "apb1",
-	    BUS_CLK_GATING_REG3, 5),
 	SUNXI_CCU_GATE(A64_CLK_BUS_I2S0, "bus-i2s0", "apb1",
-	    BUS_CLK_GATING_REG3, 12),
+	    BUS_CLK_GATING_REG2, 12),
 	SUNXI_CCU_GATE(A64_CLK_BUS_I2S1, "bus-i2s1", "apb1",
-	    BUS_CLK_GATING_REG3, 13),
+	    BUS_CLK_GATING_REG2, 13),
 	SUNXI_CCU_GATE(A64_CLK_BUS_I2S2, "bus-i2s2", "apb1",
-	    BUS_CLK_GATING_REG3, 14),
+	    BUS_CLK_GATING_REG2, 14),
 
 	SUNXI_CCU_GATE(A64_CLK_BUS_I2C0, "bus-i2c0", "apb2",
-	    BUS_CLK_GATING_REG4, 0),
+	    BUS_CLK_GATING_REG3, 0),
 	SUNXI_CCU_GATE(A64_CLK_BUS_I2C1, "bus-i2c1", "apb2",
-	    BUS_CLK_GATING_REG4, 1),
+	    BUS_CLK_GATING_REG3, 1),
 	SUNXI_CCU_GATE(A64_CLK_BUS_I2C2, "bus-i2c2", "apb2",
-	    BUS_CLK_GATING_REG4, 2),
+	    BUS_CLK_GATING_REG3, 2),
 	SUNXI_CCU_GATE(A64_CLK_BUS_SCR, "bus-scr", "apb2",
-	    BUS_CLK_GATING_REG4, 5),
+	    BUS_CLK_GATING_REG3, 5),
 	SUNXI_CCU_GATE(A64_CLK_BUS_UART0, "bus-uart0", "apb2",
-	    BUS_CLK_GATING_REG4, 16),
+	    BUS_CLK_GATING_REG3, 16),
 	SUNXI_CCU_GATE(A64_CLK_BUS_UART1, "bus-uart1", "apb2",
-	    BUS_CLK_GATING_REG4, 17),
+	    BUS_CLK_GATING_REG3, 17),
 	SUNXI_CCU_GATE(A64_CLK_BUS_UART2, "bus-uart2", "apb2",
-	    BUS_CLK_GATING_REG4, 18),
+	    BUS_CLK_GATING_REG3, 18),
 	SUNXI_CCU_GATE(A64_CLK_BUS_UART3, "bus-uart3", "apb2",
-	    BUS_CLK_GATING_REG4, 19),
+	    BUS_CLK_GATING_REG3, 19),
 	SUNXI_CCU_GATE(A64_CLK_BUS_UART4, "bus-uart4", "apb2",
-	    BUS_CLK_GATING_REG4, 20),
+	    BUS_CLK_GATING_REG3, 20),
 
 	SUNXI_CCU_GATE(A64_CLK_USB_PHY0, "usb-phy0", "hosc",
 	    USBPHY_CFG_REG, 8),
