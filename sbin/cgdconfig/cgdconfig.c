@@ -1,4 +1,4 @@
-/* $NetBSD: cgdconfig.c,v 1.43 2018/05/06 20:55:42 kre Exp $ */
+/* $NetBSD: cgdconfig.c,v 1.44 2018/05/09 13:19:33 kre Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 2002, 2003\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: cgdconfig.c,v 1.43 2018/05/06 20:55:42 kre Exp $");
+__RCSID("$NetBSD: cgdconfig.c,v 1.44 2018/05/09 13:19:33 kre Exp $");
 #endif
 
 #include <err.h>
@@ -515,6 +515,15 @@ configure(int argc, char **argv, struct params *inparams, int flags)
 	char		 devicename[PATH_MAX];
 	const char	*dev = NULL;	/* XXX: gcc */
 
+	if (argc < 2 || argc > 3) {
+		/* print usage and exit, only if called from main() */
+		if (flags == CONFIG_FLAGS_FROMMAIN) {
+			warnx("wrong number of args");
+			usage();
+		}
+		return -1;
+	}
+
 	if ((
 	  fd = opendisk1(*argv, O_RDWR, cgdname, sizeof(cgdname), 1, prog_open)
 	    ) != -1) {
@@ -529,12 +538,10 @@ configure(int argc, char **argv, struct params *inparams, int flags)
 		prog_close(fd);
 	}
 
-	if (argc == 2 || argc == 3) {
-		dev = getfsspecname(devicename, sizeof(devicename), argv[1]);
-		if (dev == NULL) {
-			warnx("getfsspecname failed: %s", devicename);
-			return -1;
-		}
+	dev = getfsspecname(devicename, sizeof(devicename), argv[1]);
+	if (dev == NULL) {
+		warnx("getfsspecname failed: %s", devicename);
+		return -1;
 	}
 
 	if (argc == 2) {
@@ -543,16 +550,8 @@ configure(int argc, char **argv, struct params *inparams, int flags)
 		/* make string writable for basename */
 		strlcpy(pfile, dev, sizeof(pfile));
 		p = params_cget(basename(pfile));
-	} else if (argc == 3) {
+	} else
 		p = params_cget(argv[2]);
-	} else {
-		/* print usage and exit, only if called from main() */
-		if (flags == CONFIG_FLAGS_FROMMAIN) {
-			warnx("wrong number of args");
-			usage();
-		}
-		return -1;
-	}
 
 	if (!p)
 		return -1;
