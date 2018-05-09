@@ -1,4 +1,4 @@
-.\" $NetBSD: cgdconfig.8,v 1.39 2018/05/09 18:11:56 alnsn Exp $
+.\" $NetBSD: cgdconfig.8,v 1.40 2018/05/09 20:23:35 kre Exp $
 .\"
 .\" Copyright (c) 2002, The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -449,14 +449,4 @@ The
 utility appeared in
 .Nx 2.0 .
 .Sh BUGS
-Since
-.Nm
-without
-.Fl p
-uses
-.Xr getpass 3
-to read in the passphrase,
-it is limited to sysconf(_SC_PASS_MAX) (128) characters.
-With
-.Fl p
-the limit is 1023 characters.
+Pass phrases are limited to 1023 bytes.
