@@ -1,4 +1,4 @@
-/* $NetBSD: t_getrusage.c,v 1.7 2018/05/09 06:32:52 martin Exp $ */
+/* $NetBSD: t_getrusage.c,v 1.8 2018/05/09 08:45:03 mrg Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_getrusage.c,v 1.7 2018/05/09 06:32:52 martin Exp $");
+__RCSID("$NetBSD: t_getrusage.c,v 1.8 2018/05/09 08:45:03 mrg Exp $");
 
 #include <sys/resource.h>
 #include <sys/time.h>
@@ -154,7 +154,7 @@ ATF_TC_BODY(getrusage_maxrss, tc)
 
 	ATF_REQUIRE(getrusage(RUSAGE_SELF, &ru) == 0);
 	ATF_REQUIRE_MSG(maxrss < ru.ru_maxrss,
-	    "maxrss: %zu, ru.ru_maxrss: %zu", maxrss, ru.ru_maxrss);
+	    "maxrss: %ld, ru.ru_maxrss: %ld", maxrss, ru.ru_maxrss);
 }
 
 ATF_TC(getrusage_msgsnd);
