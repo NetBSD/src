@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2018/03/13 02:23:28 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2018/05/09 08:39:54 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -109,6 +109,7 @@ CPPFLAGS+=	-I${XFONT2DIR}/../include
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11/fonts
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/freetype2
+CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/freetype2/freetype
 
 LIBDPLIBS=\
 	Xt	${.CURDIR}/../libXt \

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2018/03/14 06:06:40 mrg Exp $
+#	$NetBSD: Makefile,v 1.17 2018/05/09 08:39:55 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -16,6 +16,7 @@ CPPFLAGS+=	-I. \
 		-I${X11SRCDIR.${PROG}} \
 		-I${X11SRCDIR.${PROG}}/../include \
 		-I${DESTDIR}${X11INCDIR}/freetype2 \
+		-I${DESTDIR}${X11INCDIR}/freetype2/freetype \
 		-DPROJECTROOT=${X11ROOTDIR} \
 		-DHAVE_CONFIG_H \
 		-D_REENTRANT \
