@@ -1,4 +1,4 @@
-/* $NetBSD: cgdconfig.c,v 1.47 2018/05/09 18:18:11 alnsn Exp $ */
+/* $NetBSD: cgdconfig.c,v 1.48 2018/05/09 19:38:46 alnsn Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 2002, 2003\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: cgdconfig.c,v 1.47 2018/05/09 18:18:11 alnsn Exp $");
+__RCSID("$NetBSD: cgdconfig.c,v 1.48 2018/05/09 19:38:46 alnsn Exp $");
 #endif
 
 #include <err.h>
@@ -412,7 +412,7 @@ maybe_getpass(char *prompt)
 		err(EXIT_FAILURE, "failed to read passphrase");
 
 	pass = estrdup(p);
-	memset(buf, 0, sizeof(buf));
+	explicit_memset(buf, 0, sizeof(buf));
 
 	return pass;
 }
@@ -448,7 +448,7 @@ getkey_pkcs5_pbkdf2(const char *target, struct keygen *kg, size_t keylen,
 
 	ret = bits_new(tmp, keylen);
 	kg->kg_key = bits_dup(ret);
-	memset(passp, 0, strlen(passp));
+	explicit_memset(passp, 0, strlen(passp));
 	free(passp);
 	free(tmp);
 	return ret;
