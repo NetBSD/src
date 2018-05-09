@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.347 2018/05/06 13:40:52 kamil Exp $	*/
+/*	$NetBSD: proc.h,v 1.348 2018/05/09 19:55:35 kre Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -293,6 +293,8 @@ struct proc {
 	u_quad_t 	p_uticks;	/* t: Statclock hits in user mode */
 	u_quad_t 	p_sticks;	/* t: Statclock hits in system mode */
 	u_quad_t 	p_iticks;	/* t: Statclock hits processing intr */
+	uint64_t	p_xutime;	/* p: utime exposed to userspace */
+	uint64_t	p_xstime;	/* p: stime exposed to userspace */
 
 	int		p_traceflag;	/* k: Kernel trace points */
 	void		*p_tracep;	/* k: Trace private data */
