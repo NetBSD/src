@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tokensubr.c,v 1.82 2018/04/26 19:56:55 maxv Exp $	*/
+/*	$NetBSD: if_tokensubr.c,v 1.83 2018/05/09 06:35:10 maxv Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -92,7 +92,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.82 2018/04/26 19:56:55 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.83 2018/05/09 06:35:10 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -235,7 +235,7 @@ token_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
 		}
 		/* If broadcasting on a simplex interface, loopback a copy. */
 		if ((m->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX))
-			mcopy = m_copym(m, 0, (int)M_COPYALL, M_DONTWAIT);
+			mcopy = m_copypacket(m, M_DONTWAIT);
 		etype = htons(ETHERTYPE_IP);
 		break;
 	case AF_ARP:
