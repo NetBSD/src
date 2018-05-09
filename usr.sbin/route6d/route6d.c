@@ -1,4 +1,4 @@
-/*	$NetBSD: route6d.c,v 1.68 2016/04/04 07:37:08 ozaki-r Exp $	*/
+/*	$NetBSD: route6d.c,v 1.69 2018/05/09 07:05:42 maxv Exp $	*/
 /*	$KAME: route6d.c,v 1.94 2002/10/26 20:08:55 itojun Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef	lint
-__RCSID("$NetBSD: route6d.c,v 1.68 2016/04/04 07:37:08 ozaki-r Exp $");
+__RCSID("$NetBSD: route6d.c,v 1.69 2018/05/09 07:05:42 maxv Exp $");
 #endif
 
 #include <stdbool.h>
@@ -610,19 +610,11 @@ init(void)
 	}
 
 	i = 1;
-#ifdef IPV6_RECVPKTINFO
 	if (setsockopt(ripsock, IPPROTO_IPV6, IPV6_RECVPKTINFO, &i,
 	    sizeof(i)) < 0) {
 		fatal("rip IPV6_RECVPKTINFO");
 		/*NOTREACHED*/
 	}
-#else  /* old adv. API */
-	if (setsockopt(ripsock, IPPROTO_IPV6, IPV6_PKTINFO, &i,
-	    sizeof(i)) < 0) {
-		fatal("rip IPV6_PKTINFO");
-		/*NOTREACHED*/
-	}
-#endif 
 
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = PF_INET6;
