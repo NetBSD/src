@@ -1,4 +1,4 @@
-/* $NetBSD: t_getrusage.c,v 1.6 2018/05/08 01:02:38 christos Exp $ */
+/* $NetBSD: t_getrusage.c,v 1.7 2018/05/09 06:32:52 martin Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_getrusage.c,v 1.6 2018/05/08 01:02:38 christos Exp $");
+__RCSID("$NetBSD: t_getrusage.c,v 1.7 2018/05/09 06:32:52 martin Exp $");
 
 #include <sys/resource.h>
 #include <sys/time.h>
@@ -42,6 +42,7 @@ __RCSID("$NetBSD: t_getrusage.c,v 1.6 2018/05/08 01:02:38 christos Exp $");
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <fcntl.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 
@@ -131,7 +132,12 @@ ATF_TC_BODY(getrusage_maxrss, tc)
 {
 	struct rusage ru;
 	long maxrss;
-	int i;
+	int i, fd;
+
+#define	DUMP_FILE	"dump"
+
+	fd = open(DUMP_FILE, O_WRONLY|O_CREAT|O_TRUNC, 0222);
+	ATF_REQUIRE(fd != -1);
 
 	(void)memset(&ru, 0, sizeof(struct rusage));
 	ATF_REQUIRE(getrusage(RUSAGE_SELF, &ru) == 0);
@@ -141,9 +147,14 @@ ATF_TC_BODY(getrusage_maxrss, tc)
 	for (i = 0; i < 40; i++) {
 		void *p = malloc(CHUNK);
 		memset(p, 0, CHUNK);
+		write(fd, p, CHUNK);
 	}
+	close(fd);
+	unlink(DUMP_FILE);
+
 	ATF_REQUIRE(getrusage(RUSAGE_SELF, &ru) == 0);
-	ATF_REQUIRE(maxrss < ru.ru_maxrss);
+	ATF_REQUIRE_MSG(maxrss < ru.ru_maxrss,
+	    "maxrss: %zu, ru.ru_maxrss: %zu", maxrss, ru.ru_maxrss);
 }
 
 ATF_TC(getrusage_msgsnd);
