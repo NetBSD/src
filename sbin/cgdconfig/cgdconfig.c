@@ -1,4 +1,4 @@
-/* $NetBSD: cgdconfig.c,v 1.46 2018/05/09 18:11:56 alnsn Exp $ */
+/* $NetBSD: cgdconfig.c,v 1.47 2018/05/09 18:18:11 alnsn Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 2002, 2003\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: cgdconfig.c,v 1.46 2018/05/09 18:11:56 alnsn Exp $");
+__RCSID("$NetBSD: cgdconfig.c,v 1.47 2018/05/09 18:18:11 alnsn Exp $");
 #endif
 
 #include <err.h>
@@ -599,7 +599,9 @@ configure(int argc, char **argv, struct params *inparams, int flags)
 	 * a password.
 	 */
 
-	for (kg = p->keygen; pflag == PFLAG_GETPASS && kg; kg = kg->next)
+	for (kg = p->keygen;
+	    (pflag & PFLAG_GETPASS_MASK) && kg;
+	    kg = kg->next)
 		if ((kg->kg_method == KEYGEN_PKCS5_PBKDF2_SHA1) ||
 		    (kg->kg_method == KEYGEN_PKCS5_PBKDF2_OLD )) {
 			loop = 1;
