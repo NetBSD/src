@@ -1,4 +1,4 @@
-/*	$NetBSD: route6d.c,v 1.70 2018/05/09 07:21:08 maxv Exp $	*/
+/*	$NetBSD: route6d.c,v 1.71 2018/05/09 07:30:21 maxv Exp $	*/
 /*	$KAME: route6d.c,v 1.94 2002/10/26 20:08:55 itojun Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef	lint
-__RCSID("$NetBSD: route6d.c,v 1.70 2018/05/09 07:21:08 maxv Exp $");
+__RCSID("$NetBSD: route6d.c,v 1.71 2018/05/09 07:30:21 maxv Exp $");
 #endif
 
 #include <stdbool.h>
@@ -243,7 +243,7 @@ static int	addroute(struct riprt *, const struct in6_addr *, struct ifc *);
 static int	delroute(struct netinfo6 *, struct in6_addr *);
 static void	krtread(int);
 static int	tobeadv(struct riprt *, struct ifc *);
-static char *	allocopy(char *);
+static char *	xstrdup(char *);
 static char *	hms(void);
 static const char *
 	inet6_n2p(const struct in6_addr *);
@@ -293,7 +293,7 @@ main(int argc, char **argv)
 				fatal("Exceeds MAXFILTER");
 			}
 			filtertype[nfilter] = ch;
-			filter[nfilter++] = allocopy(optarg);
+			filter[nfilter++] = xstrdup(optarg);
 			break;
 		case 't':
 			ep = NULL;
@@ -1336,7 +1336,7 @@ ifconfig(void)
 			ifcp->ifc_next = ifc;
 			ifc = ifcp;
 			nifc++;
-			ifcp->ifc_name = allocopy(ifa->ifa_name);
+			ifcp->ifc_name = xstrdup(ifa->ifa_name);
 			ifcp->ifc_addr = 0;
 			ifcp->ifc_filter = 0;
 			ifcp->ifc_flags = ifa->ifa_flags;
@@ -3084,17 +3084,13 @@ plen2mask(int n)
 }
 
 static char *
-allocopy(char *p)
+xstrdup(char *p)
 {
-	int len = strlen(p) + 1;
-	char *q = (char *)malloc(len);
-
-	if (!q) {
-		fatal("malloc");
+	char *buf = strdup(p);
+	if (buf == NULL) {
+		fatal("strdup");
 	}
-
-	strlcpy(q, p, len);
-	return q;
+	return buf;
 }
 
 static char *
