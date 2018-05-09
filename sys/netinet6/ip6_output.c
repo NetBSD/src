@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.208 2018/05/01 07:21:39 maxv Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.209 2018/05/09 06:35:10 maxv Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.208 2018/05/01 07:21:39 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.209 2018/05/09 06:35:10 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -3257,7 +3257,7 @@ ip6_mloopback(struct ifnet *ifp, struct mbuf *m,
 	struct mbuf *copym;
 	struct ip6_hdr *ip6;
 
-	copym = m_copym(m, 0, M_COPYALL, M_DONTWAIT);
+	copym = m_copypacket(m, M_DONTWAIT);
 	if (copym == NULL)
 		return;
 
