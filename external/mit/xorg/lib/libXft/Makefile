@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2018/02/02 01:02:40 mrg Exp $
+#	$NetBSD: Makefile,v 1.9 2018/05/09 08:39:54 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -19,6 +19,7 @@ MAN=	Xft.3
 CPPFLAGS+=	${X11FLAGS.THREADLIB}
 CPPFLAGS+=	-DFREETYPE2 -I${DESTDIR}${X11INCDIR}/freetype2 -DXFREE86_FT2
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11/Xft
+CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/freetype2/freetype
 
 LIBDPLIBS=	X11		${.CURDIR}/../libX11/dynamic \
 		fontconfig	${.CURDIR}/../fontconfig/src \
