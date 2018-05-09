@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.179 2018/05/08 19:34:54 christos Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.180 2018/05/09 19:55:35 kre Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.179 2018/05/08 19:34:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.180 2018/05/09 19:55:35 kre Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -533,16 +533,41 @@ calcru(struct proc *p, struct timeval *up, struct timeval *sp,
 		st = (u * st) / tot;
 		ut = (u * ut) / tot;
 	}
+
+	/*
+	 * Try to avoid lying to the users (too much)
+	 *
+	 * Of course, user/sys time are based on sampling (ie: statistics)
+	 * so that would be impossible, but convincing the mark
+	 * that we have used less ?time this call than we had
+	 * last time, is beyond reasonable...  (the con fails!)
+	 *
+	 * Note that since actual used time cannot decrease, either
+	 * utime or stime (or both) must be greater now than last time
+	 * (or both the same) - if one seems to have decreased, hold
+	 * it constant and steal the necessary bump from the other
+	 * which must have increased.
+	 */
+	if (p->p_xutime > ut) {
+		st -= p->p_xutime - ut;
+		ut = p->p_xutime;
+	} else if (p->p_xstime > st) {
+		ut -= p->p_xstime - st;
+		st = p->p_xstime;
+	}
+
 	if (sp != NULL) {
+		p->p_xstime = st;
 		sp->tv_sec = st / 1000000;
 		sp->tv_usec = st % 1000000;
 	}
 	if (up != NULL) {
+		p->p_xutime = ut;
 		up->tv_sec = ut / 1000000;
 		up->tv_usec = ut % 1000000;
 	}
 	if (ip != NULL) {
-		if (it != 0)
+		if (it != 0)		/* it != 0 --> tot != 0 */
 			it = (u * it) / tot;
 		ip->tv_sec = it / 1000000;
 		ip->tv_usec = it % 1000000;
