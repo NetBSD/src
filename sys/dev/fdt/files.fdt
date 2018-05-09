@@ -1,4 +1,4 @@
-# $NetBSD: files.fdt,v 1.25 2018/05/06 10:33:21 jmcneill Exp $
+# $NetBSD: files.fdt,v 1.26 2018/05/09 23:59:05 jmcneill Exp $
 
 include	"external/bsd/libfdt/conf/files.libfdt"
 
@@ -47,6 +47,7 @@ file	dev/fdt/panel_fdt.c			fdt_panel
 file	dev/fdt/fdt_openfirm.c			fdtbus
 file	dev/fdt/fdt_subr.c			fdtbus
 file	dev/fdt/fdt_clock.c			fdtbus
+file	dev/fdt/fdt_dai.c			fdtbus
 file	dev/fdt/fdt_dma.c			fdtbus
 file	dev/fdt/fdt_gpio.c			fdtbus
 file	dev/fdt/fdt_i2c.c			fdtbus
@@ -71,6 +72,10 @@ file	dev/fdt/mmc_pwrseq_simple.c		mmcpwrseq
 device	pwmbacklight
 attach	pwmbacklight at fdt
 file	dev/fdt/pwm_backlight.c			pwmbacklight
+
+device	ausoc: audiobus
+attach	ausoc at fdt
+file	dev/fdt/ausoc.c				ausoc
 
 define	fdt_display_timing
 file	dev/fdt/display_timing.c		fdt_display_timing
