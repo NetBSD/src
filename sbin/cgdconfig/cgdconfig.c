@@ -1,4 +1,4 @@
-/* $NetBSD: cgdconfig.c,v 1.44 2018/05/09 13:19:33 kre Exp $ */
+/* $NetBSD: cgdconfig.c,v 1.45 2018/05/09 14:27:41 kre Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 2002, 2003\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: cgdconfig.c,v 1.44 2018/05/09 13:19:33 kre Exp $");
+__RCSID("$NetBSD: cgdconfig.c,v 1.45 2018/05/09 14:27:41 kre Exp $");
 #endif
 
 #include <err.h>
@@ -136,17 +136,19 @@ static void
 usage(void)
 {
 
-	(void)fprintf(stderr, "usage: %s [-nv] [-V vmeth] cgd dev [paramsfile]\n",
+	(void)fprintf(stderr, "usage: %s [-npv] [-V vmeth] cgd dev "
+	    "[paramsfile]\n", getprogname());
+	(void)fprintf(stderr, "       %s -C [-npv] [-f configfile]\n",
 	    getprogname());
-	(void)fprintf(stderr, "       %s -C [-nv] [-f configfile]\n", getprogname());
-	(void)fprintf(stderr, "       %s -G [-nv] [-i ivmeth] [-k kgmeth] "
+	(void)fprintf(stderr, "       %s -G [-npv] [-i ivmeth] [-k kgmeth] "
 	    "[-o outfile] paramsfile\n", getprogname());
 	(void)fprintf(stderr, "       %s -g [-nv] [-i ivmeth] [-k kgmeth] "
 	    "[-o outfile] alg [keylen]\n", getprogname());
-	(void)fprintf(stderr, "       %s -l\n", getprogname());
+	(void)fprintf(stderr, "       %s -l [-v[v]] [cgd]\n", getprogname());
 	(void)fprintf(stderr, "       %s -s [-nv] [-i ivmeth] cgd dev alg "
 	    "[keylen]\n", getprogname());
-	(void)fprintf(stderr, "       %s -U [-nv] [-f configfile]\n", getprogname());
+	(void)fprintf(stderr, "       %s -U [-nv] [-f configfile]\n",
+	    getprogname());
 	(void)fprintf(stderr, "       %s -u [-nv] cgd\n", getprogname());
 	exit(EXIT_FAILURE);
 }
