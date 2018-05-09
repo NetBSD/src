@@ -1,4 +1,4 @@
-/* $NetBSD: gemini_gmac.c,v 1.14 2018/04/26 19:33:02 maxv Exp $ */
+/* $NetBSD: gemini_gmac.c,v 1.15 2018/05/09 06:55:26 maxv Exp $ */
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -49,7 +49,7 @@
 
 #include <sys/gpio.h>
 
-__KERNEL_RCSID(0, "$NetBSD: gemini_gmac.c,v 1.14 2018/04/26 19:33:02 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_gmac.c,v 1.15 2018/05/09 06:55:26 maxv Exp $");
 
 #define	SWFREEQ_DESCS	256	/* one page worth */
 #define	HWFREEQ_DESCS	256	/* one page worth */
@@ -853,7 +853,6 @@ gmac_hwqueue_rxconsume(gmac_hwqueue_t *hwq, const gmac_desc_t *d)
 	case DESC0_RXSTS_GOOD:
 	case DESC0_RXSTS_LONG:
 		m->m_data += 2;
-		KASSERT(m_length(m) == m->m_pkthdr.len);
 		if_percpuq_enqueue(ifp->if_percpuq, m);
 		break;
 	default:
