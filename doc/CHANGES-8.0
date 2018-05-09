@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.195 2018/05/07 13:28:35 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.196 2018/05/09 15:38:05 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -13339,4 +13339,31 @@ sys/dev/usb/if_axe.c				1.85-1.89
 	Use the proper station nodeid read command.
 	[nonaka, ticket #782]
 
+sys/dev/pci/if_bnx.c				1.64
+sys/dev/pci/if_bnxvar.h				1.7
+
+	- Fix potential panic in bnx(4) on shutdown.
+	- Use pci_intr_establish_xname().
+	[msaitoh, ticket #814]
+
+sys/dev/ic/hme.c				1.97
+
+	Fix mis-placed parenthesis.
+	[pgoyette, ticket #815]
+
+sys/dev/pci/if_wm.c				1.578
+
+	- Fix a bug that TX might stall after initializing wm interface.
+	- Fix a bug that watchdog timer doesn't reinitialize the interface
+	  correctly.
+	[msaitoh, ticket #816]
+
+sys/net/npf/npf.h				1.56
+sys/net/npf/npf_alg_icmp.c			1.26
+sys/net/npf/npf_handler.c			1.38,1.39
+sys/net/npf/npf_inet.c				1.38-1.44
+sys/net/npf/npf_sendpkt.c			1.17,1.18
+
+	Various fixes for NPF.
+	[maxv, ticket #817]
 
