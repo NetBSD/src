@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.108 2018/04/29 07:16:28 maxv Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.109 2018/05/09 06:35:10 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.108 2018/04/29 07:16:28 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.109 2018/05/09 06:35:10 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -243,7 +243,7 @@ fddi_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
 			return error == EWOULDBLOCK ? 0 : error;
 		/* If broadcasting on a simplex interface, loopback a copy */
 		if ((m->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX))
-			mcopy = m_copym(m, 0, (int)M_COPYALL, M_DONTWAIT);
+			mcopy = m_copypacket(m, M_DONTWAIT);
 		etype = htons(ETHERTYPE_IP);
 		break;
 	}
