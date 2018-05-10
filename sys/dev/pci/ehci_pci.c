@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_pci.c,v 1.66 2018/04/09 16:21:10 jakllsch Exp $	*/
+/*	$NetBSD: ehci_pci.c,v 1.67 2018/05/10 03:41:00 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.66 2018/04/09 16:21:10 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.67 2018/05/10 03:41:00 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -191,7 +191,7 @@ ehci_pci_attach(device_t parent, device_t self, void *aux)
 	}
 	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
 
-	switch(pci_conf_read(pc, tag, PCI_USBREV) & PCI_USBREV_MASK) {
+	switch (pci_conf_read(pc, tag, PCI_USBREV) & PCI_USBREV_MASK) {
 	case PCI_USBREV_PRE_1_0:
 	case PCI_USBREV_1_0:
 	case PCI_USBREV_1_1:
