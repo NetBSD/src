@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.141 2018/05/03 21:43:33 christos Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.142 2018/05/10 01:32:24 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.141 2018/05/03 21:43:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.142 2018/05/10 01:32:24 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1183,7 +1183,7 @@ linux_getifconf(struct lwp *l, register_t *retval, void *data)
 			ifa_release(ifa, &psref_ifa);
 		}
 
-		s = pserialize_read_enter();
+		KASSERT(pserialize_in_read_section());
 		if_release(ifp, &psref);
 	}
 	pserialize_read_exit(s);
