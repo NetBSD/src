@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.14 2018/05/10 00:02:10 jmcneill Exp $
+#	$NetBSD: GENERIC64,v 1.15 2018/05/10 00:05:22 jmcneill Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -256,8 +256,12 @@ options 	HDAUDIOVERBOSE
 options 	HDAUDIO_32BIT_ACCESS
 options 	HDAUDIO_ENABLE_HDMI
 options 	HDAUDIO_ENABLE_DISPLAYPORT
+ausoc*		at fdt?			# Simple SoC audio card
 sunxicodec*	at fdt?			# Allwinner audio codec
+sun8icodec*	at fdt?			# Allwinner audio codec (sun8i/sun50i)
 h3codec*	at fdt?			# Allwinner H3 audio codec (analog part)
+a64acodec*	at fdt?			# Allwinner A64 audio codec (analog part)
+sunxii2s*	at fdt?			# Allwinner I2S/PCM
 audio*		at audiobus?
 
 spkr*		at audio?		# PC speaker (synthesized)
