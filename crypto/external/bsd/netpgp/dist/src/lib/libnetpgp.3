@@ -1,4 +1,4 @@
-.\" $NetBSD: libnetpgp.3,v 1.26 2018/05/09 23:34:25 sevan Exp $
+.\" $NetBSD: libnetpgp.3,v 1.27 2018/05/10 15:00:36 sevan Exp $
 .\"
 .\" Copyright (c) 2009,2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -233,6 +233,17 @@ function is used.
 To list all the keys in a keyring as a JSON encoded string, the
 .Fn netpgp_list_keys_json
 function is used.
+To find and list keys in a keyring, the
+.Fn netpgp_match_keys
+function is used.
+To find and list keys in a keyring, output as a JSON encoded string,
+the
+.Fn netpgp_match_keys_json
+function is used.
+To find and list keys in a better suited machine-readble format, such as for
+redirection to other parsing engines, the
+.Fn netpgp_match_pubkeys
+function is used.
 The signature subkey fields can also be displayed
 using this function.
 .Pp
@@ -245,6 +256,14 @@ manner, depending on the value of the argument provided.
 If the subdirectory argument is provided, this subdirectory
 is appended to the home directory in order to search for
 the keyrings.
+.Pp
+To print key information from a JSON encoded string, stored in a file, the
+.Fn netpgp_format_json
+function is used.
+.Pp
+To validate the signature of keys in a public key keyring, the
+.Fn netpgp_validate_sigs
+function is used.
 .Pp
 To export a key, the
 .Fn netpgp_export_key
