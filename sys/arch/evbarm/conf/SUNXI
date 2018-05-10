@@ -1,5 +1,5 @@
 #
-#	$NetBSD: SUNXI,v 1.72 2018/05/06 10:36:06 jmcneill Exp $
+#	$NetBSD: SUNXI,v 1.73 2018/05/10 00:05:22 jmcneill Exp $
 #
 #	Allwinner sunxi family
 #
@@ -277,8 +277,12 @@ pwmbacklight*	at fdt?			# PWM Backlight controls
 sunxithermal*	at fdt?			# Thermal sensor controller
 
 # Audio
+ausoc*		at fdt?			# Simple SoC audio card
 sunxicodec*	at fdt?			# Audio codec
+sun8icodec*	at fdt?			# Audio codec (sun8i/sun50i)
 h3codec*	at fdt?			# H3 audio codec (analog part)
+a64acodec*	at fdt?			# A64 audio codec (analog part)
+sunxii2s*	at fdt?			# I2S/PCM
 audio*		at audiobus?
 spkr*		at audio?
 
