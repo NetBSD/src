@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.80 2018/05/01 08:34:08 maxv Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.81 2018/05/10 05:08:53 maxv Exp $	*/
 /*	$FreeBSD: ipsec.h,v 1.2.4.2 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: ipsec.h,v 1.53 2001/11/20 08:32:38 itojun Exp $	*/
 
@@ -257,7 +257,8 @@ void ipsec_invalpcbcacheall(void);
 struct inpcb;
 int ipsec4_output(struct mbuf *, struct inpcb *, int, u_long *, bool *, bool *);
 int ipsec4_input(struct mbuf *, int);
-int ipsec4_forward(struct mbuf *, int *);
+
+void ipsec_mtu(struct mbuf *, int *);
 
 struct inpcb;
 int ipsec_init_pcbpolicy(struct socket *so, struct inpcbpolicy **);
