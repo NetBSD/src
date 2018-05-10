@@ -1,4 +1,4 @@
-/* $NetBSD: pwm_backlight.c,v 1.3 2018/05/07 12:58:58 jmcneill Exp $ */
+/* $NetBSD: pwm_backlight.c,v 1.4 2018/05/10 13:11:21 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pwm_backlight.c,v 1.3 2018/05/07 12:58:58 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pwm_backlight.c,v 1.4 2018/05/10 13:11:21 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -50,6 +50,8 @@ struct pwm_backlight_softc {
 	u_int			sc_nlevels;
 
 	char			*sc_levelstr;
+
+	bool			sc_lid_state;
 };
 
 static int	pwm_backlight_match(device_t, cfdata_t, void *);
@@ -121,6 +123,8 @@ pwm_backlight_attach(device_t parent, device_t self, void *aux)
 	}
 	aprint_verbose(">");
 	aprint_normal("\n");
+
+	sc->sc_lid_state = true;
 
 	if (of_getprop_uint32(phandle, "default-brightness-level", &default_level) == 0) {
 		/* set the default level now */
@@ -247,7 +251,7 @@ pwm_backlight_display_on(device_t dev)
 {
 	struct pwm_backlight_softc * const sc = device_private(dev);
 
-	if (sc->sc_pin)
+	if (sc->sc_pin && sc->sc_lid_state)
 		fdtbus_gpio_write(sc->sc_pin, 1);
 }
 
@@ -255,6 +259,28 @@ static void
 pwm_backlight_display_off(device_t dev)
 {
 	struct pwm_backlight_softc * const sc = device_private(dev);
+
+	if (sc->sc_pin)
+		fdtbus_gpio_write(sc->sc_pin, 0);
+}
+
+static void
+pwm_backlight_chassis_lid_open(device_t dev)
+{
+	struct pwm_backlight_softc * const sc = device_private(dev);
+
+	sc->sc_lid_state = true;
+
+	if (sc->sc_pin)
+		fdtbus_gpio_write(sc->sc_pin, 1);
+}
+
+static void
+pwm_backlight_chassis_lid_close(device_t dev)
+{
+	struct pwm_backlight_softc * const sc = device_private(dev);
+
+	sc->sc_lid_state = false;
 
 	if (sc->sc_pin)
 		fdtbus_gpio_write(sc->sc_pin, 0);
@@ -289,6 +315,10 @@ pwm_backlight_pmf_init(struct pwm_backlight_softc *sc)
 	    pwm_backlight_display_on, true);
 	pmf_event_register(sc->sc_dev, PMFE_DISPLAY_OFF,
 	    pwm_backlight_display_off, true);
+	pmf_event_register(sc->sc_dev, PMFE_CHASSIS_LID_OPEN,
+	    pwm_backlight_chassis_lid_open, true);
+	pmf_event_register(sc->sc_dev, PMFE_CHASSIS_LID_CLOSE,
+	    pwm_backlight_chassis_lid_close, true);
 	pmf_event_register(sc->sc_dev, PMFE_DISPLAY_BRIGHTNESS_UP,
 	    pwm_backlight_display_brightness_up, true);
 	pmf_event_register(sc->sc_dev, PMFE_DISPLAY_BRIGHTNESS_DOWN,
