@@ -1,4 +1,4 @@
-/* $NetBSD: axppmic.c,v 1.5 2018/05/06 14:25:48 jmcneill Exp $ */
+/* $NetBSD: axppmic.c,v 1.6 2018/05/10 23:57:31 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: axppmic.c,v 1.5 2018/05/06 14:25:48 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: axppmic.c,v 1.6 2018/05/10 23:57:31 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,11 +128,11 @@ static const struct axppmic_ctrl axp803_ctrls[] = {
 		0x13, __BIT(3), 0x1d, __BITS(3,0)),
 	AXP_CTRL("dcdc1", 1600, 3400, 100,
 		0x10, __BIT(0), 0x20, __BITS(4,0)),
-	AXP_CTRL2("dcdc2", 500, 1300, 10, 71, 20, 5,
+	AXP_CTRL2("dcdc2", 500, 1300, 10, 70, 20, 5,
 		0x10, __BIT(1), 0x21, __BITS(6,0)),
-	AXP_CTRL2("dcdc3", 500, 1300, 10, 71, 20, 5,
+	AXP_CTRL2("dcdc3", 500, 1300, 10, 70, 20, 5,
 		0x10, __BIT(2), 0x22, __BITS(6,0)),
-	AXP_CTRL2("dcdc4", 500, 1300, 10, 71, 20, 5,
+	AXP_CTRL2("dcdc4", 500, 1300, 10, 70, 20, 5,
 		0x10, __BIT(3), 0x23, __BITS(6,0)),
 	AXP_CTRL2("dcdc5", 800, 1840, 10, 33, 20, 36,
 		0x10, __BIT(4), 0x24, __BITS(6,0)),
