@@ -1,4 +1,4 @@
-/* $NetBSD: sun50i_a64_acodec.c,v 1.1 2018/05/10 00:00:21 jmcneill Exp $ */
+/* $NetBSD: sun50i_a64_acodec.c,v 1.2 2018/05/10 00:30:56 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sun50i_a64_acodec.c,v 1.1 2018/05/10 00:00:21 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sun50i_a64_acodec.c,v 1.2 2018/05/10 00:30:56 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -215,9 +215,10 @@ a64_acodec_trigger_output(void *priv, void *start, void *end, int blksize,
 {
 	struct a64_acodec_softc * const sc = priv;
 
-	/* Enable DAC analog l/r channels and output mixer */
+	/* Enable DAC analog l/r channels, HP PA, and output mixer */
 	a64_acodec_pr_set_clear(sc, A64_MIX_DAC_CTRL,
-	    A64_DACAREN | A64_DACALEN | A64_RMIXEN | A64_LMIXEN, 0);
+	    A64_DACAREN | A64_DACALEN | A64_RMIXEN | A64_LMIXEN |
+	    A64_RHPPAMUTE | A64_LHPPAMUTE, 0);
 	/* Unmute DAC l/r channels to output mixer */
 	a64_acodec_pr_set_clear(sc, A64_OL_MIX_CTRL,
 	    A64_LMIXMUTE_LDAC, 0);
@@ -250,9 +251,10 @@ a64_acodec_halt_output(void *priv)
 	    0, A64_LMIXMUTE_LDAC);
 	a64_acodec_pr_set_clear(sc, A64_OR_MIX_CTRL,
 	    0, A64_RMIXMUTE_RDAC);
-	/* Disable DAC analog l/r channels and output mixer */
+	/* Disable DAC analog l/r channels, HP PA, and output mixer */
 	a64_acodec_pr_set_clear(sc, A64_MIX_DAC_CTRL,
-	    0, A64_DACAREN | A64_DACALEN | A64_RMIXEN | A64_LMIXEN);
+	    0, A64_DACAREN | A64_DACALEN | A64_RMIXEN | A64_LMIXEN |
+	    A64_RHPPAMUTE | A64_LHPPAMUTE);
 
 	return 0;
 }
