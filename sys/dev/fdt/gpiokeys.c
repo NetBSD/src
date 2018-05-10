@@ -1,4 +1,4 @@
-/* $NetBSD: gpiokeys.c,v 1.7 2018/04/28 11:49:06 jmcneill Exp $ */
+/* $NetBSD: gpiokeys.c,v 1.8 2018/05/10 13:05:18 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpiokeys.c,v 1.7 2018/04/28 11:49:06 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpiokeys.c,v 1.8 2018/05/10 13:05:18 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -84,7 +84,7 @@ struct gpiokeys_key {
 	u_int			key_code;
 	struct sysmon_pswitch	key_pswitch;
 	uint8_t			key_usbcode;
-	u_int			key_state;
+	int			key_state;
 
 	struct gpiokeys_key	*key_next;
 };
@@ -219,6 +219,7 @@ gpiokeys_attach(device_t parent, device_t self, void *aux)
 			key->key_pswitch.smpsw_name = key->key_label;
 			switch (code) {
 			case SW_LID:
+				key->key_state = -1;	/* Send notification on attach */
 				key->key_pswitch.smpsw_type = PSWITCH_TYPE_LID;
 				break;
 			default:
