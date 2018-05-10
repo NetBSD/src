@@ -1,4 +1,4 @@
-/* $NetBSD: ipsec.c,v 1.161 2018/04/29 11:51:08 maxv Exp $ */
+/* $NetBSD: ipsec.c,v 1.162 2018/05/10 05:08:53 maxv Exp $ */
 /* $FreeBSD: ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $ */
 /* $KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $ */
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.161 2018/04/29 11:51:08 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.162 2018/05/10 05:08:53 maxv Exp $");
 
 /*
  * IPsec controller part.
@@ -737,8 +737,8 @@ ipsec4_input(struct mbuf *m, int flags)
  *
  * XXX: And what if the MTU goes negative?
  */
-int
-ipsec4_forward(struct mbuf *m, int *destmtu)
+void
+ipsec_mtu(struct mbuf *m, int *destmtu)
 {
 	struct secpolicy *sp;
 	size_t ipsechdr;
@@ -747,14 +747,14 @@ ipsec4_forward(struct mbuf *m, int *destmtu)
 	sp = ipsec_getpolicybyaddr(m, IPSEC_DIR_OUTBOUND, IP_FORWARDING,
 	    &error);
 	if (sp == NULL) {
-		return EINVAL;
+		return;
 	}
 
 	/* Count IPsec header size. */
 	ipsechdr = ipsec_sp_hdrsiz(sp, m);
 
 	/*
-	 * Find the correct route for outer IPv4 header, compute tunnel MTU.
+	 * Find the correct route for outer IP header, compute tunnel MTU.
 	 */
 	if (sp->req) {
 		struct secasvar *sav;
@@ -776,7 +776,6 @@ ipsec4_forward(struct mbuf *m, int *destmtu)
 		}
 	}
 	KEY_SP_UNREF(&sp);
-	return 0;
 }
 
 static int
