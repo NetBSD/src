@@ -1,4 +1,4 @@
-/* $NetBSD: sun50i-a64-pinebook.dts,v 1.8 2018/05/06 10:43:52 jmcneill Exp $ */
+/* $NetBSD: sun50i-a64-pinebook.dts,v 1.9 2018/05/10 00:05:01 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -163,3 +163,20 @@
 };
 
 #include "axp803.dtsi"
+
+&codec {
+	allwinner,pa-gpios = <&pio 7 7 GPIO_ACTIVE_HIGH>;	/* PH7 */
+	status = "okay";
+};
+
+&codec_analog {
+	status = "okay";
+};
+
+&dai {
+	status = "okay";
+};
+
+&sound {
+	status = "okay";
+};
