@@ -1,4 +1,4 @@
-/* $NetBSD: ipsec.c,v 1.162 2018/05/10 05:08:53 maxv Exp $ */
+/* $NetBSD: ipsec.c,v 1.163 2018/05/10 05:15:14 maxv Exp $ */
 /* $FreeBSD: ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $ */
 /* $KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $ */
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.162 2018/05/10 05:08:53 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.163 2018/05/10 05:15:14 maxv Exp $");
 
 /*
  * IPsec controller part.
@@ -814,29 +814,10 @@ ipsec_setspidx(struct mbuf *m, struct secpolicyindex *spidx, int needport)
 	struct ip *ip = NULL;
 	struct ip ipbuf;
 	u_int v;
-	struct mbuf *n;
-	int len;
 	int error;
 
 	KASSERT(m != NULL);
-
-	/*
-	 * validate m->m_pkthdr.len.  we see incorrect length if we
-	 * mistakenly call this function with inconsistent mbuf chain
-	 * (like 4.4BSD tcp/udp processing).
-	 *
-	 * XXX XXX XXX: We should remove this.
-	 */
-	len = 0;
-	for (n = m; n; n = n->m_next)
-		len += n->m_len;
-	if (m->m_pkthdr.len != len) {
-		KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_DUMP,
-		    "total of m_len(%d) != pkthdr.len(%d), ignored.\n",
-		    len, m->m_pkthdr.len);
-		KASSERTMSG(0, "impossible");
-		return EINVAL;
-	}
+	M_VERIFY_PACKET(m);
 
 	if (m->m_pkthdr.len < sizeof(struct ip)) {
 		KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_DUMP,
