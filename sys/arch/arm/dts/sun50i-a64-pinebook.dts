@@ -1,4 +1,4 @@
-/* $NetBSD: sun50i-a64-pinebook.dts,v 1.9 2018/05/10 00:05:01 jmcneill Exp $ */
+/* $NetBSD: sun50i-a64-pinebook.dts,v 1.10 2018/05/10 11:06:13 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -78,6 +78,14 @@
 		regulator-min-microvolt = <3300000>;
 		regulator-max-microvolt = <3300000>;
 	};
+
+	sound_spdif {
+		status = "disabled";
+	};
+};
+
+&spdif_out {
+	status = "disabled";
 };
 
 &ehci0 {
