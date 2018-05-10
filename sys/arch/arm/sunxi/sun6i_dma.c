@@ -1,4 +1,4 @@
-/* $NetBSD: sun6i_dma.c,v 1.4 2018/05/09 17:17:33 jmcneill Exp $ */
+/* $NetBSD: sun6i_dma.c,v 1.5 2018/05/10 00:07:08 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sun6i_dma.c,v 1.4 2018/05/09 17:17:33 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sun6i_dma.c,v 1.5 2018/05/10 00:07:08 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -396,7 +396,7 @@ sun6idma_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	conf = of_search_compatible(phandle, compat_data)->data;
+	conf = (void *)of_search_compatible(phandle, compat_data)->data;
 
 	sc->sc_nchan = conf->num_channels;
 	sc->sc_chan = kmem_alloc(sizeof(*sc->sc_chan) * sc->sc_nchan, KM_SLEEP);
