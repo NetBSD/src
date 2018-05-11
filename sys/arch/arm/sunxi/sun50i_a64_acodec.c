@@ -1,4 +1,4 @@
-/* $NetBSD: sun50i_a64_acodec.c,v 1.2 2018/05/10 00:30:56 jmcneill Exp $ */
+/* $NetBSD: sun50i_a64_acodec.c,v 1.3 2018/05/11 22:51:12 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sun50i_a64_acodec.c,v 1.2 2018/05/10 00:30:56 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sun50i_a64_acodec.c,v 1.3 2018/05/11 22:51:12 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -89,6 +89,10 @@ __KERNEL_RCSID(0, "$NetBSD: sun50i_a64_acodec.c,v 1.2 2018/05/10 00:30:56 jmcnei
 #define	 A64_ADCREN		__BIT(7)
 #define	 A64_ADCLEN		__BIT(6)
 #define	 A64_ADCG		__BITS(2,0)
+#define	A64_JACK_MIC_CTRL	0x1d
+#define	 A64_JACKDETEN		__BIT(7)
+#define	 A64_INNERRESEN		__BIT(6)
+#define	 A64_AUTOPLEN		__BIT(1)
 
 struct a64_acodec_softc {
 	device_t		sc_dev;
@@ -430,6 +434,29 @@ static struct fdtbus_dai_controller_func a64_acodec_dai_funcs = {
 	.get_tag = a64_acodec_dai_get_tag
 };
 
+static int
+a64_acodec_dai_jack_detect(audio_dai_tag_t dai, u_int jack, int present)
+{
+	struct a64_acodec_softc * const sc = audio_dai_private(dai);
+	const uint32_t lineout_mask = A64_LINEOUT_LEFT_EN | A64_LINEOUT_RIGHT_EN;
+
+	switch (jack) {
+	case AUDIO_DAI_JACK_HP:
+		if (present)
+			a64_acodec_pr_set_clear(sc, A64_LINEOUT_CTRL0,
+			    0, lineout_mask);
+		else
+			a64_acodec_pr_set_clear(sc, A64_LINEOUT_CTRL0,
+			    lineout_mask, 0);
+		break;
+	case AUDIO_DAI_JACK_MIC:
+		/* XXX TODO */
+		break;
+	}
+
+	return 0;
+}
+
 static const char * compatible[] = {
 	"allwinner,sun50i-a64-codec-analog",
 	NULL
@@ -474,7 +501,11 @@ a64_acodec_attach(device_t parent, device_t self, void *aux)
 	/* Right & Left Headphone PA enable */
 	a64_acodec_pr_set_clear(sc, A64_HP_CTRL,
 	    A64_HPPA_EN, 0);
+	/* Jack detect enable */
+	a64_acodec_pr_set_clear(sc, A64_JACK_MIC_CTRL,
+	    A64_JACKDETEN | A64_INNERRESEN | A64_AUTOPLEN, 0);
 
+	sc->sc_dai.dai_jack_detect = a64_acodec_dai_jack_detect;
 	sc->sc_dai.dai_hw_if = &a64_acodec_hw_if;
 	sc->sc_dai.dai_dev = self;
 	sc->sc_dai.dai_priv = sc;
