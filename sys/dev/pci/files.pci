@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.394 2018/03/01 04:29:37 pgoyette Exp $
+#	$NetBSD: files.pci,v 1.395 2018/05/11 07:42:22 maya Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -1072,6 +1072,10 @@ include "dev/pci/n8/files.n8"
 #
 attach	bwi at pci with bwi_pci
 file	dev/pci/if_bwi_pci.c		bwi_pci
+
+# Broadcom FullMAC USB wireless adapter
+attach	bwfm at pci with bwfm_pci: firmload
+file	dev/pci/if_bwfm_pci.c		bwfm_pci
 
 # Marvell Serial-ATA Host Controller
 attach	mvsata at pci with mvsata_pci
