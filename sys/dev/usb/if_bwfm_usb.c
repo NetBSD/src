@@ -1,4 +1,4 @@
-/* $NetBSD: if_bwfm_usb.c,v 1.5 2018/05/11 07:41:11 maya Exp $ */
+/* $NetBSD: if_bwfm_usb.c,v 1.6 2018/05/11 10:59:30 jmcneill Exp $ */
 /* $OpenBSD: if_bwfm_usb.c,v 1.2 2017/10/15 14:55:13 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -485,7 +485,7 @@ bwfm_usb_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 		goto resubmit;
 	len -= sizeof(*hdr);
 	off += sizeof(*hdr);
-	if (len < hdr->data_offset << 2)
+	if (len <= hdr->data_offset << 2)
 		goto resubmit;
 	len -= hdr->data_offset << 2;
 	off += hdr->data_offset << 2;
