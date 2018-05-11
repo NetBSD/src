@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.194 2018/05/11 14:39:25 sevan Exp $
+$NetBSD: acronyms.comp,v 1.195 2018/05/11 14:42:03 sevan Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -596,6 +596,7 @@ IETF	Internet Engineering Task Force
 IF	intermediate frequency
 IFCM	isochronous flow control mode
 IFF	Interchange File Format
+IFS	internal field separator
 IGD	Internet gateway device
 IGMP	Internet Group Management Protocol
 IGP	interior gateway protocol
