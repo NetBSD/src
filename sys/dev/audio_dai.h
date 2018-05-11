@@ -1,4 +1,4 @@
-/* $NetBSD: audio_dai.h,v 1.1 2018/05/09 23:57:58 jmcneill Exp $ */
+/* $NetBSD: audio_dai.h,v 1.2 2018/05/11 22:48:55 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -57,9 +57,14 @@
 #define	AUDIO_DAI_CLOCK_IN		0
 #define	AUDIO_DAI_CLOCK_OUT		1
 
+#define	AUDIO_DAI_JACK_HP		0
+#define	AUDIO_DAI_JACK_MIC		1
+
 typedef struct audio_dai_device {
 	int	(*dai_set_sysclk)(struct audio_dai_device *, u_int, int);
 	int	(*dai_set_format)(struct audio_dai_device *, u_int);
+	int	(*dai_add_device)(struct audio_dai_device *, struct audio_dai_device *);
+	int	(*dai_jack_detect)(struct audio_dai_device *, u_int, int);
 
 	const struct audio_hw_if *dai_hw_if;		/* audio driver callbacks */
 
@@ -95,6 +100,24 @@ audio_dai_set_format(audio_dai_tag_t dai, u_int format)
 		return 0;
 
 	return dai->dai_set_format(dai, format);
+}
+
+static inline int
+audio_dai_add_device(audio_dai_tag_t dai, audio_dai_tag_t aux)
+{
+	if (!dai->dai_add_device)
+		return 0;
+
+	return dai->dai_add_device(dai, aux);
+}
+
+static inline int
+audio_dai_jack_detect(audio_dai_tag_t dai, u_int jack, bool present)
+{
+	if (!dai->dai_jack_detect)
+		return 0;
+
+	return dai->dai_jack_detect(dai, jack, present);
 }
 
 static inline int
