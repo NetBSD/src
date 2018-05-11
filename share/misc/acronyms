@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.269 2018/05/10 14:06:59 sevan Exp $
+$NetBSD: acronyms,v 1.270 2018/05/11 14:39:25 sevan Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
@@ -210,7 +210,6 @@ HF	have fun
 HHIS	hanging head in shame
 HHOS	ha ha, only serious
 HICA	here it comes again
-HKP	OpenPGP HTTP Keyserver Protocol
 HME	home medical equipment
 HNY	happy new year
 HOAS	hold on a second
