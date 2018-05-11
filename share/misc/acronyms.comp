@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.193 2018/03/01 19:09:33 ginsbach Exp $
+$NetBSD: acronyms.comp,v 1.194 2018/05/11 14:39:25 sevan Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -544,6 +544,7 @@ HDTV	high-definition television
 HF	high frequency
 HFM	highest frequency mode
 HID	human interface device
+HKP	HTTP Keyserver Protocol
 HLL	high-level language
 HMA	high memory area
 HMI	human-machine interface
