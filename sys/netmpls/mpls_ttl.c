@@ -1,4 +1,4 @@
-/*	$NetBSD: mpls_ttl.c,v 1.12 2018/04/11 06:37:32 maxv Exp $ */
+/*	$NetBSD: mpls_ttl.c,v 1.13 2018/05/11 14:38:28 maxv Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpls_ttl.c,v 1.12 2018/04/11 06:37:32 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpls_ttl.c,v 1.13 2018/05/11 14:38:28 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -177,11 +177,6 @@ mpls_icmp_error(struct mbuf *n, int type, int code, n_long dest,
 
 	mpls_icmp_ext.ms.s_addr = shim->s_addr;
 
-#ifdef ICMPPRINTFS
-	if (icmpprintfs)
-		printf("mpls_icmp_error(%p, type:%d, code:%d)\n", oip, type,
-			code);
-#endif
 	if (type != ICMP_REDIRECT)
 		ICMP_STATINC(ICMP_STAT_ERROR);
 
