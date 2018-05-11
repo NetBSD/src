@@ -1,4 +1,4 @@
-/* $NetBSD: sun50i-a64.dtsi,v 1.8 2018/05/10 00:04:46 jmcneill Exp $ */
+/* $NetBSD: sun50i-a64.dtsi,v 1.9 2018/05/11 00:00:04 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -111,6 +111,10 @@
 			status = "disabled";
 		};
 	};
+};
+
+&cpu0 {
+	clocks = <&ccu 1>; /* 1=CLK_PLL_CPUX */
 };
 
 &pio {
