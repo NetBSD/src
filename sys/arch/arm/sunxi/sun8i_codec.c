@@ -1,4 +1,4 @@
-/* $NetBSD: sun8i_codec.c,v 1.2 2018/05/11 22:51:12 jmcneill Exp $ */
+/* $NetBSD: sun8i_codec.c,v 1.3 2018/05/11 23:05:41 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sun8i_codec.c,v 1.2 2018/05/11 22:51:12 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sun8i_codec.c,v 1.3 2018/05/11 23:05:41 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -118,7 +118,6 @@ struct sun8i_codec_softc {
 
 	struct audio_dai_device	sc_dai;
 	audio_dai_tag_t		sc_codec_analog;
-	uint32_t		sc_jackdet;
 	int			sc_jackdet_pol;
 
 	struct fdtbus_gpio_pin	*sc_pin_pa;
@@ -260,23 +259,21 @@ sun8i_codec_set_jackdet(struct sun8i_codec_softc *sc, bool enable)
 static int
 sun8i_codec_intr(void *priv)
 {
-	struct sun8i_codec_softc * const sc = priv;
 	const uint32_t mask =
 	    HMIC_STS_JACK_DET_OIRQ |
 	    HMIC_STS_JACK_DET_IIRQ |
 	    HMIC_STS_MIC_DET_ST;
+	struct sun8i_codec_softc * const sc = priv;
+	uint32_t val;
 
-	sc->sc_jackdet = RD4(sc, HMIC_STS);
-
-	if (sc->sc_jackdet & mask) {
+	val = RD4(sc, HMIC_STS);
+	if (val & mask) {
 		/* Disable jack detect IRQ until work is complete */
 		sun8i_codec_set_jackdet(sc, false);
 
 		/* Schedule pending jack detect task */
 		workqueue_enqueue(sc->sc_workq, &sc->sc_work, NULL);
 	}
-
-	WR4(sc, HMIC_STS, sc->sc_jackdet);
 
 	return 1;
 }
@@ -286,17 +283,19 @@ static void
 sun8i_codec_thread(struct work *wk, void *priv)
 {
 	struct sun8i_codec_softc * const sc = priv;
-	const uint32_t sts = sc->sc_jackdet;
 	int hpdet = -1, micdet = -1;
+	uint32_t val;
+
+	val = RD4(sc, HMIC_STS);
 
 	if (sc->sc_codec_analog) {
-		if (sts & HMIC_STS_JACK_DET_OIRQ)
+		if (val & HMIC_STS_JACK_DET_OIRQ)
 			hpdet = 0 ^ sc->sc_jackdet_pol;
-		else if (sts & HMIC_STS_JACK_DET_IIRQ)
+		else if (val & HMIC_STS_JACK_DET_IIRQ)
 			hpdet = 1 ^ sc->sc_jackdet_pol;
 
-		if (sts & HMIC_STS_MIC_DET_ST)
-			micdet = !!(sts & HMIC_STS_MIC_PRESENT);
+		if (val & HMIC_STS_MIC_DET_ST)
+			micdet = !!(val & HMIC_STS_MIC_PRESENT);
 
 		if (hpdet != -1) {
 			audio_dai_jack_detect(sc->sc_codec_analog,
@@ -307,6 +306,8 @@ sun8i_codec_thread(struct work *wk, void *priv)
 			    AUDIO_DAI_JACK_MIC, micdet);
 		}
 	}
+
+	WR4(sc, HMIC_STS, val);
 
 	/* Re-enable jack detect IRQ */
 	sun8i_codec_set_jackdet(sc, true);
