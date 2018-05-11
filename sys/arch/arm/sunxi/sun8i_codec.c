@@ -1,4 +1,4 @@
-/* $NetBSD: sun8i_codec.c,v 1.1 2018/05/10 00:00:21 jmcneill Exp $ */
+/* $NetBSD: sun8i_codec.c,v 1.2 2018/05/11 22:51:12 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sun8i_codec.c,v 1.1 2018/05/10 00:00:21 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sun8i_codec.c,v 1.2 2018/05/11 22:51:12 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -36,6 +36,7 @@ __KERNEL_RCSID(0, "$NetBSD: sun8i_codec.c,v 1.1 2018/05/10 00:00:21 jmcneill Exp
 #include <sys/kmem.h>
 #include <sys/bitops.h>
 #include <sys/gpio.h>
+#include <sys/workqueue.h>
 
 #include <dev/audio_dai.h>
 
@@ -82,6 +83,21 @@ __KERNEL_RCSID(0, "$NetBSD: sun8i_codec.c,v 1.1 2018/05/10 00:00:21 jmcneill Exp
 #define	ADC_DIG_CTRL		0x100
 #define	 ADC_DIG_CTRL_ENAD	__BIT(15)
 
+#define	HMIC_CTRL1		0x110
+#define	 HMIC_CTRL1_N		__BITS(11,8)
+#define	 HMIC_CTRL1_JACK_IN_IRQ_EN __BIT(4)
+#define	 HMIC_CTRL1_JACK_OUT_IRQ_EN __BIT(3)
+#define	 HMIC_CTRL1_MIC_DET_IRQ_EN __BIT(0)
+
+#define	HMIC_CTRL2		0x114
+#define	 HMIC_CTRL2_MDATA_THRES	__BITS(12,8)
+
+#define	HMIC_STS		0x118
+#define	 HMIC_STS_MIC_PRESENT	__BIT(6)
+#define	 HMIC_STS_JACK_DET_OIRQ	__BIT(4)
+#define	 HMIC_STS_JACK_DET_IIRQ	__BIT(3)
+#define	 HMIC_STS_MIC_DET_ST	__BIT(0)
+
 #define	DAC_DIG_CTRL		0x120
 #define	 DAC_DIG_CTRL_ENDA	__BIT(15)
 
@@ -97,7 +113,13 @@ struct sun8i_codec_softc {
 	bus_space_handle_t	sc_bsh;
 	int			sc_phandle;
 
+	struct workqueue	*sc_workq;
+	struct work		sc_work;
+
 	struct audio_dai_device	sc_dai;
+	audio_dai_tag_t		sc_codec_analog;
+	uint32_t		sc_jackdet;
+	int			sc_jackdet_pol;
 
 	struct fdtbus_gpio_pin	*sc_pin_pa;
 
@@ -205,6 +227,91 @@ sun8i_codec_dai_set_format(audio_dai_tag_t dai, u_int format)
 	return 0;
 }
 
+static int
+sun8i_codec_dai_add_device(audio_dai_tag_t dai, audio_dai_tag_t aux)
+{
+	struct sun8i_codec_softc * const sc = audio_dai_private(dai);
+
+	if (sc->sc_codec_analog != NULL)
+		return 0;
+
+	sc->sc_codec_analog = aux;
+
+	return 0;
+}
+
+static void
+sun8i_codec_set_jackdet(struct sun8i_codec_softc *sc, bool enable)
+{
+	const uint32_t mask =
+	    HMIC_CTRL1_JACK_IN_IRQ_EN |
+	    HMIC_CTRL1_JACK_OUT_IRQ_EN |
+	    HMIC_CTRL1_MIC_DET_IRQ_EN;
+	uint32_t val;
+
+	val = RD4(sc, HMIC_CTRL1);
+	if (enable)
+		val |= mask;
+	else
+		val &= ~mask;
+	WR4(sc, HMIC_CTRL1, val);
+}
+
+static int
+sun8i_codec_intr(void *priv)
+{
+	struct sun8i_codec_softc * const sc = priv;
+	const uint32_t mask =
+	    HMIC_STS_JACK_DET_OIRQ |
+	    HMIC_STS_JACK_DET_IIRQ |
+	    HMIC_STS_MIC_DET_ST;
+
+	sc->sc_jackdet = RD4(sc, HMIC_STS);
+
+	if (sc->sc_jackdet & mask) {
+		/* Disable jack detect IRQ until work is complete */
+		sun8i_codec_set_jackdet(sc, false);
+
+		/* Schedule pending jack detect task */
+		workqueue_enqueue(sc->sc_workq, &sc->sc_work, NULL);
+	}
+
+	WR4(sc, HMIC_STS, sc->sc_jackdet);
+
+	return 1;
+}
+
+
+static void
+sun8i_codec_thread(struct work *wk, void *priv)
+{
+	struct sun8i_codec_softc * const sc = priv;
+	const uint32_t sts = sc->sc_jackdet;
+	int hpdet = -1, micdet = -1;
+
+	if (sc->sc_codec_analog) {
+		if (sts & HMIC_STS_JACK_DET_OIRQ)
+			hpdet = 0 ^ sc->sc_jackdet_pol;
+		else if (sts & HMIC_STS_JACK_DET_IIRQ)
+			hpdet = 1 ^ sc->sc_jackdet_pol;
+
+		if (sts & HMIC_STS_MIC_DET_ST)
+			micdet = !!(sts & HMIC_STS_MIC_PRESENT);
+
+		if (hpdet != -1) {
+			audio_dai_jack_detect(sc->sc_codec_analog,
+			    AUDIO_DAI_JACK_HP, hpdet);
+		}
+		if (micdet != -1) {
+			audio_dai_jack_detect(sc->sc_codec_analog,
+			    AUDIO_DAI_JACK_MIC, micdet);
+		}
+	}
+
+	/* Re-enable jack detect IRQ */
+	sun8i_codec_set_jackdet(sc, true);
+}
+
 static const char * compatible[] = {
 	"allwinner,sun50i-a64-codec",
 	NULL
@@ -224,20 +331,29 @@ sun8i_codec_attach(device_t parent, device_t self, void *aux)
 	struct sun8i_codec_softc * const sc = device_private(self);
 	struct fdt_attach_args * const faa = aux;
 	const int phandle = faa->faa_phandle;
+	char intrstr[128];
 	bus_addr_t addr;
 	bus_size_t size;
 	uint32_t val;
+	void *ih;
 
-	sc->sc_dev = self;
 	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
 		aprint_error(": couldn't get registers\n");
 		return;
 	}
+
+	if (!fdtbus_intr_str(phandle, 0, intrstr, sizeof(intrstr))) {
+		aprint_error(": couldn't decode interrupt\n");
+		return;
+	}
+
+	sc->sc_dev = self;
 	sc->sc_bst = faa->faa_bst;
 	if (bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh) != 0) {
 		aprint_error(": couldn't map registers\n");
 		return;
 	}
+	sc->sc_jackdet_pol = 1;
 
 	sc->sc_clk_gate = fdtbus_clock_get(phandle, "bus");
 	sc->sc_clk_mod = fdtbus_clock_get(phandle, "mod");
@@ -254,6 +370,12 @@ sun8i_codec_attach(device_t parent, device_t self, void *aux)
 
 	aprint_naive("\n");
 	aprint_normal(": Audio Codec\n");
+
+	if (workqueue_create(&sc->sc_workq, "jackdet", sun8i_codec_thread,
+	    sc, PRI_NONE, IPL_VM, 0) != 0) {
+		aprint_error_dev(self, "couldn't create jackdet workqueue\n");
+		return;
+	}
 
 	/* Enable clocks */
 	val = RD4(sc, SYSCLK_CTL);
@@ -301,7 +423,30 @@ sun8i_codec_attach(device_t parent, device_t self, void *aux)
 	if (sc->sc_pin_pa)
 		fdtbus_gpio_write(sc->sc_pin_pa, 1);
 
+	/* Enable jack detect */
+	val = RD4(sc, HMIC_CTRL1);
+	val |= __SHIFTIN(0xff, HMIC_CTRL1_N);
+	WR4(sc, HMIC_CTRL1, val);
+
+	val = RD4(sc, HMIC_CTRL2);
+	val &= ~HMIC_CTRL2_MDATA_THRES;
+	val |= __SHIFTIN(0x17, HMIC_CTRL2_MDATA_THRES);
+	WR4(sc, HMIC_CTRL2, val);
+
+	/* Schedule initial jack detect task */
+	workqueue_enqueue(sc->sc_workq, &sc->sc_work, NULL);
+
+	ih = fdtbus_intr_establish(phandle, 0, IPL_VM, FDT_INTR_MPSAFE,
+	    sun8i_codec_intr, sc);
+	if (ih == NULL) {
+		aprint_error_dev(self, "couldn't establish interrupt on %s\n",
+		    intrstr);
+		return;
+	}
+	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
+
 	sc->sc_dai.dai_set_format = sun8i_codec_dai_set_format;
+	sc->sc_dai.dai_add_device = sun8i_codec_dai_add_device;
 	sc->sc_dai.dai_hw_if = &sun8i_codec_hw_if;
 	sc->sc_dai.dai_dev = self;
 	sc->sc_dai.dai_priv = sc;
