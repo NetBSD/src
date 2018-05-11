@@ -1,4 +1,4 @@
-/* $NetBSD: sun50i_a64_acodec.c,v 1.3 2018/05/11 22:51:12 jmcneill Exp $ */
+/* $NetBSD: sun50i_a64_acodec.c,v 1.4 2018/05/11 23:05:41 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sun50i_a64_acodec.c,v 1.3 2018/05/11 22:51:12 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sun50i_a64_acodec.c,v 1.4 2018/05/11 23:05:41 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -439,15 +439,21 @@ a64_acodec_dai_jack_detect(audio_dai_tag_t dai, u_int jack, int present)
 {
 	struct a64_acodec_softc * const sc = audio_dai_private(dai);
 	const uint32_t lineout_mask = A64_LINEOUT_LEFT_EN | A64_LINEOUT_RIGHT_EN;
+	const uint32_t hppa_mask = A64_HPPA_EN;
 
 	switch (jack) {
 	case AUDIO_DAI_JACK_HP:
-		if (present)
+		if (present) {
 			a64_acodec_pr_set_clear(sc, A64_LINEOUT_CTRL0,
 			    0, lineout_mask);
-		else
+			a64_acodec_pr_set_clear(sc, A64_HP_CTRL,
+			    hppa_mask, 0);
+		} else {
 			a64_acodec_pr_set_clear(sc, A64_LINEOUT_CTRL0,
 			    lineout_mask, 0);
+			a64_acodec_pr_set_clear(sc, A64_HP_CTRL,
+			    0, hppa_mask);
+		}
 		break;
 	case AUDIO_DAI_JACK_MIC:
 		/* XXX TODO */
@@ -495,12 +501,10 @@ a64_acodec_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": A64 Audio Codec (analog part)\n");
 
-	/* Right & Left LINEOUT enable */
-	a64_acodec_pr_set_clear(sc, A64_LINEOUT_CTRL0,
-	    A64_LINEOUT_LEFT_EN | A64_LINEOUT_RIGHT_EN, 0);
 	/* Right & Left Headphone PA enable */
 	a64_acodec_pr_set_clear(sc, A64_HP_CTRL,
 	    A64_HPPA_EN, 0);
+
 	/* Jack detect enable */
 	a64_acodec_pr_set_clear(sc, A64_JACK_MIC_CTRL,
 	    A64_JACKDETEN | A64_INNERRESEN | A64_AUTOPLEN, 0);
