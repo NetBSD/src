@@ -1,4 +1,4 @@
-/* $NetBSD: ausoc.c,v 1.1 2018/05/09 23:59:05 jmcneill Exp $ */
+/* $NetBSD: ausoc.c,v 1.2 2018/05/11 22:49:19 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ausoc.c,v 1.1 2018/05/09 23:59:05 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ausoc.c,v 1.2 2018/05/11 22:49:19 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -505,11 +505,14 @@ ausoc_attach_link(struct ausoc_softc *sc, struct ausoc_link *link,
 		for (n = 0; n < link->link_naux; n++) {
 			link->link_aux[n] = fdtbus_dai_acquire_index(card_phandle,
 			    "simple-audio-card,aux-devs", n);
+			KASSERT(link->link_aux[n] != NULL);
+
+			/* Attach aux devices to codec */
+			audio_dai_add_device(link->link_codec, link->link_aux[n]);
 		}
 	}
 
 	of_getprop_uint32(link_phandle, mclk_fs_prop, &link->link_mclk_fs);
-#if 1
 	if (ausoc_link_format(sc, link, link_phandle, codec_phandle, single_link, &format) != 0) {
 		aprint_error_dev(sc->sc_dev, "couldn't parse format properties\n");
 		return;
@@ -522,18 +525,6 @@ ausoc_attach_link(struct ausoc_softc *sc, struct ausoc_link *link,
 		aprint_error_dev(sc->sc_dev, "couldn't set codec format\n");
 		return;
 	}
-#else
-	if (ausoc_link_format(sc, link, link_phandle, cpu_phandle, single_link, &format) != 0 ||
-	    audio_dai_set_format(link->link_cpu, format) != 0) {
-		aprint_error_dev(sc->sc_dev, "couldn't set cpu format\n");
-		return;
-	}
-	if (ausoc_link_format(sc, link, link_phandle, codec_phandle, single_link, &format) != 0 ||
-	    audio_dai_set_format(link->link_codec, format) != 0) {
-		aprint_error_dev(sc->sc_dev, "couldn't set codec format\n");
-		return;
-	}
-#endif
 
 	aprint_normal_dev(sc->sc_dev, "codec: %s, cpu: %s",
 	    device_xname(audio_dai_device(link->link_codec)),
