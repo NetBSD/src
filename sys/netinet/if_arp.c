@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.274 2018/05/01 07:21:39 maxv Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.275 2018/05/11 13:56:43 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.274 2018/05/01 07:21:39 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.275 2018/05/11 13:56:43 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -255,7 +255,7 @@ arp_fasttimo(void)
 	}
 }
 
-const struct protosw arpsw[] = {
+static const struct protosw arpsw[] = {
 	{
 		.pr_type = 0,
 		.pr_domain = &arpdomain,
