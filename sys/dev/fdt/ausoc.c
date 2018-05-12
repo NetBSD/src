@@ -1,4 +1,4 @@
-/* $NetBSD: ausoc.c,v 1.2 2018/05/11 22:49:19 jmcneill Exp $ */
+/* $NetBSD: ausoc.c,v 1.3 2018/05/12 23:51:06 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ausoc.c,v 1.2 2018/05/11 22:49:19 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ausoc.c,v 1.3 2018/05/12 23:51:06 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -43,9 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: ausoc.c,v 1.2 2018/05/11 22:49:19 jmcneill Exp $");
 #include <dev/fdt/fdtvar.h>
 
 static const char *compatible[] = { "simple-audio-card", NULL };
-
-#define	AUSOC_MIXER_DAI(link)	\
-	((link)->link_naux > 0 ? (link)->link_aux[0] : (link)->link_codec)
 
 struct ausoc_link {
 	const char		*link_name;
@@ -148,7 +145,7 @@ ausoc_set_port(void *priv, mixer_ctrl_t *mc)
 {
 	struct ausoc_link * const link = priv;
 
-	return audio_dai_set_port(AUSOC_MIXER_DAI(link), mc);
+	return audio_dai_set_port(link->link_codec, mc);
 }
 
 static int
@@ -156,7 +153,7 @@ ausoc_get_port(void *priv, mixer_ctrl_t *mc)
 {
 	struct ausoc_link * const link = priv;
 
-	return audio_dai_get_port(AUSOC_MIXER_DAI(link), mc);
+	return audio_dai_get_port(link->link_codec, mc);
 }
 
 static int
@@ -164,7 +161,7 @@ ausoc_query_devinfo(void *priv, mixer_devinfo_t *di)
 {
 	struct ausoc_link * const link = priv;
 
-	return audio_dai_query_devinfo(AUSOC_MIXER_DAI(link), di);
+	return audio_dai_query_devinfo(link->link_codec, di);
 }
 
 static void *

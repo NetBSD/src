@@ -1,4 +1,4 @@
-/* $NetBSD: sun8i_codec.c,v 1.3 2018/05/11 23:05:41 jmcneill Exp $ */
+/* $NetBSD: sun8i_codec.c,v 1.4 2018/05/12 23:51:06 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sun8i_codec.c,v 1.3 2018/05/11 23:05:41 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sun8i_codec.c,v 1.4 2018/05/12 23:51:06 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -147,8 +147,44 @@ sun8i_codec_set_params(void *priv, int setmode, int usemode,
 	return 0;
 }
 
+static int
+sun8i_codec_set_port(void *priv, mixer_ctrl_t *mc)
+{
+	struct sun8i_codec_softc * const sc = priv;
+
+	if (!sc->sc_codec_analog)
+		return ENXIO;
+
+	return audio_dai_set_port(sc->sc_codec_analog, mc);
+}
+
+static int
+sun8i_codec_get_port(void *priv, mixer_ctrl_t *mc)
+{
+	struct sun8i_codec_softc * const sc = priv;
+
+	if (!sc->sc_codec_analog)
+		return ENXIO;
+
+	return audio_dai_get_port(sc->sc_codec_analog, mc);
+}
+
+static int
+sun8i_codec_query_devinfo(void *priv, mixer_devinfo_t *di)
+{
+	struct sun8i_codec_softc * const sc = priv;
+
+	if (!sc->sc_codec_analog)
+		return ENXIO;
+
+	return audio_dai_query_devinfo(sc->sc_codec_analog, di);
+}
+
 static const struct audio_hw_if sun8i_codec_hw_if = {
 	.set_params = sun8i_codec_set_params,
+	.set_port = sun8i_codec_set_port,
+	.get_port = sun8i_codec_get_port,
+	.query_devinfo = sun8i_codec_query_devinfo,
 };
 
 static audio_dai_tag_t
