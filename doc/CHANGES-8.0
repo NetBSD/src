@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.196 2018/05/09 15:38:05 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.197 2018/05/12 10:44:25 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -13366,4 +13366,37 @@ sys/net/npf/npf_sendpkt.c			1.17,1.18
 
 	Various fixes for NPF.
 	[maxv, ticket #817]
+
+sys/compat/linux/common/linux_socket.c		1.142
+sys/compat/linux32/common/linux32_socket.c	1.29
+
+	Fix pserialize enter/exit pairs in linux_getifconf and
+	linux32_getifconf.
+	[ozaki-r, ticket #818]
+
+distrib/sets/lists/man/mi			1.1585
+share/man/man4/Makefile				1.652
+share/man/man4/ixg.4				1.11,1.12
+share/man/man4/ixv.4				1.1,1.2
+
+	Add a maunal page for ixv(4).
+	ixg.4: Macro fix and cosmetic change.
+	[msaitoh, ticket #819]
+
+usr.bin/midiplay/midiplay.1			1.20,1.21
+usr.bin/midiplay/midiplay.c			1.31,1.32
+
+	If just parsing don't try to read the uninitialised device name,
+	or display the unit number.
+	Add a "-s" option that sends an ALL_SOUNDS_OFF midi event.
+	Merge options without arguments in synopsis.
+	Sync usage with manpage.
+	[mrg, ticket #820]
+
+sys/kern/uipc_usrreq.c				1.186
+sys/net/raw_cb.h				1.29
+sys/netinet6/in6_proto.c			1.125
+
+	Increase the default size of some receive buffers from 8k to 16k.
+	[roy, ticket #821]
 
