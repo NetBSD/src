@@ -1,4 +1,4 @@
-/* $NetBSD: vmparam.h,v 1.3 2018/04/01 04:35:03 ryo Exp $ */
+/* $NetBSD: vmparam.h,v 1.4 2018/05/12 15:14:49 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -35,6 +35,11 @@
 #ifdef __aarch64__
 
 #define	__USE_TOPDOWN_VM
+
+/*
+ * Default pager_map of 16MB is small and we have plenty of VA to burn.
+ */
+#define	PAGER_MAP_DEFAULT_SIZE	(512 * 1024 * 1024)
 
 /*
  * AARCH64 supports 3 page sizes: 4KB, 16KB, 64KB.  Each page table can
