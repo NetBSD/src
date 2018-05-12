@@ -1,4 +1,4 @@
-.\"	$NetBSD: ubc.9,v 1.14 2018/05/12 14:49:34 jdolecek Exp $
+.\"	$NetBSD: ubc.9,v 1.15 2018/05/12 15:03:19 jdolecek Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
 .\" All rights reserved.
@@ -78,9 +78,7 @@ UBC memory window is a kernel mapping of
 .Fa uobj
 starting at offset
 .Fa offset .
-The desired length of the mapping is pointed to by
-.Fa lenp ,
-but the actual mapping may be smaller than this.
+.Pp
 Once the mapping is created, it must be accessed only by methods that can
 handle faults, such as
 .Xr uiomove 9
@@ -89,7 +87,17 @@ or
 Page faults on the mapping will result in the object's pager
 method being called to resolve the fault.
 .Pp
-The mapping may be cached to speed future accesses to the same region
+Size of individual UBC memory window is limited to
+.Va ubc_winsize .
+.Fn ubc_uiomove
+sequentially creates the UBC memory windows to eventually process
+the whole range according to
+.Fa offset
+and
+.Fa len
+parameters.
+.Pp
+The mappings may be cached to speed future accesses to the same region
 of the object, unless
 .Dv UBC_UNMAP
 was specified in
