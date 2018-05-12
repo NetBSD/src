@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.181.8.1 2018/04/09 13:34:10 bouyer Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.181.8.2 2018/05/12 10:42:22 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.181.8.1 2018/04/09 13:34:10 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.181.8.2 2018/05/12 10:42:22 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -665,7 +665,7 @@ uipc_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 u_long	unpst_sendspace = PIPSIZ;
 u_long	unpst_recvspace = PIPSIZ;
 u_long	unpdg_sendspace = 2*1024;	/* really max datagram size */
-u_long	unpdg_recvspace = 4*1024;
+u_long	unpdg_recvspace = 16*1024;
 
 u_int	unp_rights;			/* files in flight */
 u_int	unp_rights_ratio = 2;		/* limit, fraction of maxfiles */

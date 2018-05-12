@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.117.4.4 2018/03/31 10:41:06 martin Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.117.4.5 2018/05/12 10:42:22 martin Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.117.4.4 2018/03/31 10:41:06 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.117.4.5 2018/05/12 10:42:22 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -605,7 +605,7 @@ int pmtu_expire = 60*10;
  * Nominal space allocated to a raw ip socket.
  */
 #define	RIPV6SNDQ	8192
-#define	RIPV6RCVQ	8192
+#define	RIPV6RCVQ	16384
 
 u_long	rip6_sendspace = RIPV6SNDQ;
 u_long	rip6_recvspace = RIPV6RCVQ;
