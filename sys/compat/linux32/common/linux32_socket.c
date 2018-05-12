@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_socket.c,v 1.27.6.1 2017/11/30 15:57:36 martin Exp $ */
+/*	$NetBSD: linux32_socket.c,v 1.27.6.2 2018/05/12 10:29:08 martin Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_socket.c,v 1.27.6.1 2017/11/30 15:57:36 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_socket.c,v 1.27.6.2 2018/05/12 10:29:08 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -478,7 +478,7 @@ linux32_getifconf(struct lwp *l, register_t *retval, void *data)
 			ifa_release(ifa, &psref_ifa);
 		}
 
-		s = pserialize_read_enter();
+		KASSERT(pserialize_in_read_section());
 		if_release(ifp, &psref);
 	}
 	pserialize_read_exit(s);
