@@ -1,4 +1,4 @@
-/* $NetBSD: axppmic.c,v 1.6 2018/05/10 23:57:31 jmcneill Exp $ */
+/* $NetBSD: axppmic.c,v 1.7 2018/05/12 01:31:07 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: axppmic.c,v 1.6 2018/05/10 23:57:31 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: axppmic.c,v 1.7 2018/05/12 01:31:07 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,8 +61,6 @@ __KERNEL_RCSID(0, "$NetBSD: axppmic.c,v 1.6 2018/05/10 23:57:31 jmcneill Exp $")
 #define	 AXP_IRQ1_ACIN_LOWER	__BIT(5)
 #define	 AXP_IRQ1_VBUS_RAISE	__BIT(3)
 #define	 AXP_IRQ1_VBUS_LOWER	__BIT(2)
-#define	 AXP_IRQ2_POKSIRQ	__BIT(1)
-#define	 AXP_IRQ2_
 #define AXP_IRQ_STATUS_REG(n)	(0x48 + (n) - 1)
 
 #define	AXP_FUEL_GAUGE_CTRL_REG	0xb8
@@ -186,8 +184,8 @@ struct axppmic_config {
 	u_int irq_regs;
 	bool has_battery;
 	bool has_fuel_gauge;
-	u_int poksirq_reg;
-	uint8_t poksirq_mask;
+	u_int poklirq_reg;
+	uint8_t poklirq_mask;
 };
 
 enum axppmic_sensor {
@@ -208,8 +206,8 @@ struct axppmic_softc {
 
 	bool		sc_has_battery;
 	bool		sc_has_fuel_gauge;
-	u_int		sc_poksirq_reg;
-	uint8_t		sc_poksirq_mask;
+	u_int		sc_poklirq_reg;
+	uint8_t		sc_poklirq_mask;
 
 	u_int		sc_irq_regs;
 
@@ -244,8 +242,8 @@ static const struct axppmic_config axp803_config = {
 	.irq_regs = 6,
 	.has_battery = true,
 	.has_fuel_gauge = true,
-	.poksirq_reg = 5,
-	.poksirq_mask = __BIT(4),
+	.poklirq_reg = 5,
+	.poklirq_mask = __BIT(3),
 };
 
 static const struct axppmic_config axp805_config = {
@@ -253,8 +251,8 @@ static const struct axppmic_config axp805_config = {
 	.controls = axp805_ctrls,
 	.ncontrols = __arraycount(axp805_ctrls),
 	.irq_regs = 2,
-	.poksirq_reg = 2,
-	.poksirq_mask = __BIT(1),
+	.poklirq_reg = 2,
+	.poklirq_mask = __BIT(0),
 };
 
 static const struct of_compat_data compat_data[] = {
@@ -379,11 +377,11 @@ axppmic_intr(void *priv)
 	iic_acquire_bus(sc->sc_i2c, flags);
 	for (n = 1; n <= sc->sc_irq_regs; n++) {
 		if (axppmic_read(sc->sc_i2c, sc->sc_addr, AXP_IRQ_STATUS_REG(n), &stat, flags) == 0) {
-			if (n == sc->sc_poksirq_reg && (stat & sc->sc_poksirq_mask) != 0)
+			if (n == sc->sc_poklirq_reg && (stat & sc->sc_poklirq_mask) != 0)
 				sysmon_task_queue_sched(0, axppmic_task_shut, sc);
 
 			axppmic_write(sc->sc_i2c, sc->sc_addr,
-			    AXP_IRQ_STATUS_REG(sc->sc_poksirq_reg), stat, flags);
+			    AXP_IRQ_STATUS_REG(sc->sc_poklirq_reg), stat, flags);
 		}
 	}
 	iic_release_bus(sc->sc_i2c, flags);
@@ -582,8 +580,8 @@ axppmic_attach(device_t parent, device_t self, void *aux)
 	sc->sc_has_battery = c->has_battery;
 	sc->sc_has_fuel_gauge = c->has_fuel_gauge;
 	sc->sc_irq_regs = c->irq_regs;
-	sc->sc_poksirq_reg = c->poksirq_reg;
-	sc->sc_poksirq_mask = c->poksirq_mask;
+	sc->sc_poklirq_reg = c->poklirq_reg;
+	sc->sc_poklirq_mask = c->poklirq_mask;
 
 	aprint_naive("\n");
 	aprint_normal(": %s\n", c->name);
@@ -595,8 +593,8 @@ axppmic_attach(device_t parent, device_t self, void *aux)
 	iic_acquire_bus(sc->sc_i2c, I2C_F_POLL);
 	for (i = 1; i <= c->irq_regs; i++) {
 		irq_mask = 0;
-		if (i == c->poksirq_reg)
-			irq_mask |= c->poksirq_mask;
+		if (i == c->poklirq_reg)
+			irq_mask |= c->poklirq_mask;
 		axppmic_write(sc->sc_i2c, sc->sc_addr, AXP_IRQ_ENABLE_REG(i), irq_mask, I2C_F_POLL);
 	}
 	iic_release_bus(sc->sc_i2c, I2C_F_POLL);
