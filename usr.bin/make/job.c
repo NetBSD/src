@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.193 2018/05/12 18:17:04 sjg Exp $	*/
+/*	$NetBSD: job.c,v 1.194 2018/05/13 12:10:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.193 2018/05/12 18:17:04 sjg Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.194 2018/05/13 12:10:36 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.193 2018/05/12 18:17:04 sjg Exp $");
+__RCSID("$NetBSD: job.c,v 1.194 2018/05/13 12:10:36 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2944,15 +2944,14 @@ Job_TokenWithdraw(void)
     count = read(tokenWaitJob.inPipe, &tok, 1);
     if (count == 0)
 	Fatal("eof on job pipe!");
-    if (count < 0) {
+    if (count < 0 && jobTokensRunning != 0) {
 	if (errno != EAGAIN) {
 	    Fatal("job pipe read: %s", strerror(errno));
 	}
 	if (DEBUG(JOB))
 	    fprintf(debug_file, "(%d) blocked for token\n", getpid());
-	if (jobTokensRunning)
-	    return FALSE;
-	sleep(1);			/* avoid busy wait */
+	wantToken = 1;
+	return FALSE;
     }
 
     if (count == 1 && tok != '+') {
