@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.270 2018/05/11 14:39:25 sevan Exp $
+$NetBSD: acronyms,v 1.271 2018/05/13 16:53:04 maya Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
@@ -34,6 +34,7 @@ AKA	also known as
 AM	ante meridiem
 AMA	ask me anything
 AMOL	a mountain of love
+APM	alternative payment model
 ASAIC	as soon as I can
 ASAP	as soon as possible
 ASL	age/sex/location
