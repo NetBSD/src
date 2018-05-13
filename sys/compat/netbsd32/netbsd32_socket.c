@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_socket.c,v 1.46 2018/05/10 02:36:07 christos Exp $	*/
+/*	$NetBSD: netbsd32_socket.c,v 1.47 2018/05/13 00:04:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.46 2018/05/10 02:36:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.47 2018/05/13 00:04:23 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -501,6 +501,7 @@ msg_send_copyin(struct lwp *l, const struct netbsd32_msghdr *msg32,
 	if (error)
 		goto out;
 	msg->msg_iov = iov;
+	return 0;
 out:
 	if (msg->msg_control)
 		m_free(msg->msg_control);
