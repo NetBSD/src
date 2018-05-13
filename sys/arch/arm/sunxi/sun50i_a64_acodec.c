@@ -1,4 +1,4 @@
-/* $NetBSD: sun50i_a64_acodec.c,v 1.4 2018/05/11 23:05:41 jmcneill Exp $ */
+/* $NetBSD: sun50i_a64_acodec.c,v 1.5 2018/05/13 01:01:37 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sun50i_a64_acodec.c,v 1.4 2018/05/11 23:05:41 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sun50i_a64_acodec.c,v 1.5 2018/05/13 01:01:37 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: sun50i_a64_acodec.c,v 1.4 2018/05/11 23:05:41 jmcnei
 #define	A64_LINEOUT_CTRL0	0x05
 #define	 A64_LINEOUT_LEFT_EN	__BIT(7)
 #define	 A64_LINEOUT_RIGHT_EN	__BIT(6)
+#define	 A64_LINEOUT_EN		(A64_LINEOUT_LEFT_EN|A64_LINEOUT_RIGHT_EN)
 #define	A64_LINEOUT_CTRL1	0x06
 #define	 A64_LINEOUT_VOL	__BITS(4,0)
 #define	A64_MIC1_CTRL		0x07
@@ -101,6 +102,7 @@ struct a64_acodec_softc {
 	int			sc_phandle;
 
 	struct audio_dai_device	sc_dai;
+	int			sc_master_dev;
 };
 
 enum a64_acodec_mixer_ctrl {
@@ -109,16 +111,20 @@ enum a64_acodec_mixer_ctrl {
 	A64_CODEC_RECORD_CLASS,
 
 	A64_CODEC_OUTPUT_MASTER_VOLUME,
-	A64_CODEC_OUTPUT_HP_VOLUME,
-	A64_CODEC_INPUT_DAC_VOLUME,
-	A64_CODEC_INPUT_LINEIN_VOLUME,
-	A64_CODEC_INPUT_MIC1_VOLUME,
-	A64_CODEC_INPUT_MIC2_VOLUME,
+	A64_CODEC_OUTPUT_SOURCE,
+	A64_CODEC_INPUT_LINE_VOLUME,
+	A64_CODEC_INPUT_HP_VOLUME,
+	A64_CODEC_RECORD_LINE_VOLUME,
+	A64_CODEC_RECORD_MIC1_VOLUME,
+	A64_CODEC_RECORD_MIC2_VOLUME,
 	A64_CODEC_RECORD_AGC_VOLUME,
 	A64_CODEC_RECORD_SOURCE,
 
 	A64_CODEC_MIXER_CTRL_LAST
 };
+
+#define	A64_OUTPUT_SOURCE_LINE	__BIT(0)
+#define	A64_OUTPUT_SOURCE_HP	__BIT(1)
 
 static const struct a64_acodec_mixer {
 	const char *			name;
@@ -126,18 +132,17 @@ static const struct a64_acodec_mixer {
 	u_int				reg;
 	u_int				mask;
 } a64_acodec_mixers[A64_CODEC_MIXER_CTRL_LAST] = {
-	[A64_CODEC_OUTPUT_MASTER_VOLUME]	= { AudioNmaster,
-	    A64_CODEC_OUTPUT_CLASS, A64_LINEOUT_CTRL1, A64_LINEOUT_VOL },
-	[A64_CODEC_OUTPUT_HP_VOLUME]	= { AudioNheadphone,
-	    A64_CODEC_OUTPUT_CLASS, A64_HP_CTRL, A64_HPVOL },
-	[A64_CODEC_INPUT_DAC_VOLUME]	= { AudioNdac,
+	[A64_CODEC_INPUT_LINE_VOLUME]	= { AudioNline,
 	    A64_CODEC_INPUT_CLASS, A64_LINEOUT_CTRL1, A64_LINEOUT_VOL },
-	[A64_CODEC_INPUT_LINEIN_VOLUME]	= { AudioNline,
-	    A64_CODEC_INPUT_CLASS, A64_LINEIN_CTRL, A64_LINEING },
-	[A64_CODEC_INPUT_MIC1_VOLUME]	= { "mic1",
-	    A64_CODEC_INPUT_CLASS, A64_MIC1_CTRL, A64_MIC1G },
-	[A64_CODEC_INPUT_MIC2_VOLUME]	= { "mic2",
-	    A64_CODEC_INPUT_CLASS, A64_MIC2_CTRL, A64_MIC2G },
+	[A64_CODEC_INPUT_HP_VOLUME]	= { AudioNheadphone,
+	    A64_CODEC_INPUT_CLASS, A64_HP_CTRL, A64_HPVOL },
+
+	[A64_CODEC_RECORD_LINE_VOLUME]	= { AudioNline,
+	    A64_CODEC_RECORD_CLASS, A64_LINEIN_CTRL, A64_LINEING },
+	[A64_CODEC_RECORD_MIC1_VOLUME]	= { "mic1",
+	    A64_CODEC_RECORD_CLASS, A64_MIC1_CTRL, A64_MIC1G },
+	[A64_CODEC_RECORD_MIC2_VOLUME]	= { "mic2",
+	    A64_CODEC_RECORD_CLASS, A64_MIC2_CTRL, A64_MIC2G },
 	[A64_CODEC_RECORD_AGC_VOLUME]	= { AudioNagc,
 	    A64_CODEC_RECORD_CLASS, A64_ADC_CTRL, A64_ADCG },
 };
@@ -281,23 +286,42 @@ a64_acodec_set_port(void *priv, mixer_ctrl_t *mc)
 	struct a64_acodec_softc * const sc = priv;
 	const struct a64_acodec_mixer *mix;
 	u_int val, shift;
-	int nvol;
+	int nvol, dev;
 
-	switch (mc->dev) {
-	case A64_CODEC_OUTPUT_MASTER_VOLUME:
-	case A64_CODEC_OUTPUT_HP_VOLUME:
-	case A64_CODEC_INPUT_DAC_VOLUME:
-	case A64_CODEC_INPUT_LINEIN_VOLUME:
-	case A64_CODEC_INPUT_MIC1_VOLUME:
-	case A64_CODEC_INPUT_MIC2_VOLUME:
+	dev = mc->dev;
+	if (dev == A64_CODEC_OUTPUT_MASTER_VOLUME)
+		dev = sc->sc_master_dev;
+
+	switch (dev) {
+	case A64_CODEC_INPUT_LINE_VOLUME:
+	case A64_CODEC_INPUT_HP_VOLUME:
+	case A64_CODEC_RECORD_LINE_VOLUME:
+	case A64_CODEC_RECORD_MIC1_VOLUME:
+	case A64_CODEC_RECORD_MIC2_VOLUME:
 	case A64_CODEC_RECORD_AGC_VOLUME:
-		mix = &a64_acodec_mixers[mc->dev];
+		mix = &a64_acodec_mixers[dev];
 		val = a64_acodec_pr_read(sc, mix->reg);
 		shift = 8 - fls32(__SHIFTOUT_MASK(mix->mask));
 		nvol = mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT] >> shift;
 		val &= ~mix->mask;
 		val |= __SHIFTIN(nvol, mix->mask);
 		a64_acodec_pr_write(sc, mix->reg, val);
+		return 0;
+
+	case A64_CODEC_OUTPUT_SOURCE:
+		if (mc->un.mask & A64_OUTPUT_SOURCE_LINE)
+			a64_acodec_pr_set_clear(sc, A64_LINEOUT_CTRL0,
+			    A64_LINEOUT_EN, 0);
+		else
+			a64_acodec_pr_set_clear(sc, A64_LINEOUT_CTRL0,
+			    0, A64_LINEOUT_EN);
+
+		if (mc->un.mask & A64_OUTPUT_SOURCE_HP)
+			a64_acodec_pr_set_clear(sc, A64_HP_CTRL,
+			    A64_HPPA_EN, 0);
+		else
+			a64_acodec_pr_set_clear(sc, A64_HP_CTRL,
+			    0, A64_HPPA_EN);
 		return 0;
 
 	case A64_CODEC_RECORD_SOURCE:
@@ -315,22 +339,33 @@ a64_acodec_get_port(void *priv, mixer_ctrl_t *mc)
 	struct a64_acodec_softc * const sc = priv;
 	const struct a64_acodec_mixer *mix;
 	u_int val, shift;
-	int nvol;
+	int nvol, dev;
 
-	switch (mc->dev) {
-	case A64_CODEC_OUTPUT_MASTER_VOLUME:
-	case A64_CODEC_OUTPUT_HP_VOLUME:
-	case A64_CODEC_INPUT_DAC_VOLUME:
-	case A64_CODEC_INPUT_LINEIN_VOLUME:
-	case A64_CODEC_INPUT_MIC1_VOLUME:
-	case A64_CODEC_INPUT_MIC2_VOLUME:
+	dev = mc->dev;
+	if (dev == A64_CODEC_OUTPUT_MASTER_VOLUME)
+		dev = sc->sc_master_dev;
+
+	switch (dev) {
+	case A64_CODEC_INPUT_LINE_VOLUME:
+	case A64_CODEC_INPUT_HP_VOLUME:
+	case A64_CODEC_RECORD_LINE_VOLUME:
+	case A64_CODEC_RECORD_MIC1_VOLUME:
+	case A64_CODEC_RECORD_MIC2_VOLUME:
 	case A64_CODEC_RECORD_AGC_VOLUME:
-		mix = &a64_acodec_mixers[mc->dev];
+		mix = &a64_acodec_mixers[dev];
 		val = a64_acodec_pr_read(sc, mix->reg);
 		shift = 8 - fls32(__SHIFTOUT_MASK(mix->mask));
 		nvol = __SHIFTOUT(val, mix->mask) << shift;
 		mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT] = nvol;
 		mc->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] = nvol;
+		return 0;
+
+	case A64_CODEC_OUTPUT_SOURCE:
+		mc->un.mask = 0;
+		if (a64_acodec_pr_read(sc, A64_LINEOUT_CTRL0) & A64_LINEOUT_EN)
+			mc->un.mask |= A64_OUTPUT_SOURCE_LINE;
+		if (a64_acodec_pr_read(sc, A64_HP_CTRL) & A64_HPPA_EN)
+			mc->un.mask |= A64_OUTPUT_SOURCE_HP;
 		return 0;
 
 	case A64_CODEC_RECORD_SOURCE:
@@ -346,6 +381,7 @@ a64_acodec_get_port(void *priv, mixer_ctrl_t *mc)
 static int
 a64_acodec_query_devinfo(void *priv, mixer_devinfo_t *di)
 {
+	struct a64_acodec_softc * const sc = priv;
 	const struct a64_acodec_mixer *mix;
 
 	switch (di->index) {
@@ -371,11 +407,22 @@ a64_acodec_query_devinfo(void *priv, mixer_devinfo_t *di)
 		return 0;
 
 	case A64_CODEC_OUTPUT_MASTER_VOLUME:
-	case A64_CODEC_OUTPUT_HP_VOLUME:
-	case A64_CODEC_INPUT_DAC_VOLUME:
-	case A64_CODEC_INPUT_LINEIN_VOLUME:
-	case A64_CODEC_INPUT_MIC1_VOLUME:
-	case A64_CODEC_INPUT_MIC2_VOLUME:
+		mix = &a64_acodec_mixers[sc->sc_master_dev];
+		di->mixer_class = A64_CODEC_OUTPUT_CLASS;
+		strcpy(di->label.name, AudioNmaster);
+		di->un.v.delta =
+		    256 / (__SHIFTOUT_MASK(mix->mask) + 1);
+		di->type = AUDIO_MIXER_VALUE;
+		di->next = di->prev = AUDIO_MIXER_LAST;
+		di->un.v.num_channels = 2;
+		strcpy(di->un.v.units.name, AudioNvolume);
+		return 0;
+
+	case A64_CODEC_INPUT_LINE_VOLUME:
+	case A64_CODEC_INPUT_HP_VOLUME:
+	case A64_CODEC_RECORD_LINE_VOLUME:
+	case A64_CODEC_RECORD_MIC1_VOLUME:
+	case A64_CODEC_RECORD_MIC2_VOLUME:
 	case A64_CODEC_RECORD_AGC_VOLUME:
 		mix = &a64_acodec_mixers[di->index];
 		di->mixer_class = mix->mixer_class;
@@ -386,6 +433,18 @@ a64_acodec_query_devinfo(void *priv, mixer_devinfo_t *di)
 		di->next = di->prev = AUDIO_MIXER_LAST;
 		di->un.v.num_channels = 2;
 		strcpy(di->un.v.units.name, AudioNvolume);
+		return 0;
+
+	case A64_CODEC_OUTPUT_SOURCE:
+		di->mixer_class = A64_CODEC_OUTPUT_CLASS;
+		strcpy(di->label.name, AudioNsource);
+		di->type = AUDIO_MIXER_SET;
+		di->next = di->prev = AUDIO_MIXER_LAST;
+		di->un.s.num_mem = 2;
+		strcpy(di->un.s.member[0].label.name, AudioNline);
+		di->un.s.member[0].mask = A64_OUTPUT_SOURCE_LINE;
+		strcpy(di->un.s.member[1].label.name, AudioNheadphone);
+		di->un.s.member[1].mask = A64_OUTPUT_SOURCE_HP;
 		return 0;
 
 	case A64_CODEC_RECORD_SOURCE:
@@ -438,23 +497,27 @@ static int
 a64_acodec_dai_jack_detect(audio_dai_tag_t dai, u_int jack, int present)
 {
 	struct a64_acodec_softc * const sc = audio_dai_private(dai);
-	const uint32_t lineout_mask = A64_LINEOUT_LEFT_EN | A64_LINEOUT_RIGHT_EN;
-	const uint32_t hppa_mask = A64_HPPA_EN;
 
 	switch (jack) {
 	case AUDIO_DAI_JACK_HP:
 		if (present) {
 			a64_acodec_pr_set_clear(sc, A64_LINEOUT_CTRL0,
-			    0, lineout_mask);
+			    0, A64_LINEOUT_EN);
 			a64_acodec_pr_set_clear(sc, A64_HP_CTRL,
-			    hppa_mask, 0);
+			    A64_HPPA_EN, 0);
 		} else {
 			a64_acodec_pr_set_clear(sc, A64_LINEOUT_CTRL0,
-			    lineout_mask, 0);
+			    A64_LINEOUT_EN, 0);
 			a64_acodec_pr_set_clear(sc, A64_HP_CTRL,
-			    0, hppa_mask);
+			    0, A64_HPPA_EN);
 		}
+
+		/* Master volume controls either HP or line out */
+		sc->sc_master_dev = present ?
+		    A64_CODEC_INPUT_HP_VOLUME : A64_CODEC_INPUT_LINE_VOLUME;
+
 		break;
+
 	case AUDIO_DAI_JACK_MIC:
 		/* XXX TODO */
 		break;
@@ -506,6 +569,7 @@ a64_acodec_attach(device_t parent, device_t self, void *aux)
 	    A64_HPPA_EN, 0);
 
 	/* Jack detect enable */
+	sc->sc_master_dev = A64_CODEC_INPUT_HP_VOLUME;
 	a64_acodec_pr_set_clear(sc, A64_JACK_MIC_CTRL,
 	    A64_JACKDETEN | A64_INNERRESEN | A64_AUTOPLEN, 0);
 
