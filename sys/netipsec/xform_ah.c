@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ah.c,v 1.99 2018/05/11 15:43:07 maxv Exp $	*/
+/*	$NetBSD: xform_ah.c,v 1.100 2018/05/13 18:34:59 maxv Exp $	*/
 /*	$FreeBSD: xform_ah.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ah.c,v 1.63 2001/06/26 06:18:58 angelos Exp $ */
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.99 2018/05/11 15:43:07 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.100 2018/05/13 18:34:59 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -725,8 +725,6 @@ ah_input_cb(struct cryptop *crp)
 	uint8_t nxt;
 	char *ptr;
 	int authsize;
-	uint16_t dport;
-	uint16_t sport;
 	bool pool_used;
 	size_t size;
 	IPSEC_DECLARE_LOCK_VARIABLE;
@@ -737,9 +735,6 @@ ah_input_cb(struct cryptop *crp)
 	nxt = tc->tc_nxt;
 	protoff = tc->tc_protoff;
 	m = crp->crp_buf;
-
-	/* find the source port for NAT-T */
-	nat_t_ports_get(m, &dport, &sport);
 
 	IPSEC_ACQUIRE_GLOBAL_LOCKS();
 
