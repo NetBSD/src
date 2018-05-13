@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.195 2018/05/11 14:42:03 sevan Exp $
+$NetBSD: acronyms.comp,v 1.196 2018/05/13 16:53:04 maya Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -56,6 +56,8 @@ AP	application processor
 API	application programming interface
 APIC	advanced programmable interrupt controller
 APIPA	automatic private IP addressing
+APM	application performance management
+APU	accelerated processing unit
 APT	advanced persistent threat
 AQM	active queue management
 ARAT	always running APIC timer
@@ -1471,6 +1473,7 @@ YP	Yellow Pages
 YTD	year to date
 ZBR	zone bit recording
 ZFOD	zero-filled on demand
+ZFS    zettabyte file system
 ZIF	zero insertion force
 ZIFS	zero insertion force socket
 ZMA	zone multicast address
