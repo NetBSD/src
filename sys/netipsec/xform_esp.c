@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_esp.c,v 1.87 2018/05/11 15:43:07 maxv Exp $	*/
+/*	$NetBSD: xform_esp.c,v 1.88 2018/05/13 18:34:59 maxv Exp $	*/
 /*	$FreeBSD: xform_esp.c,v 1.2.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_esp.c,v 1.69 2001/06/26 06:18:59 angelos Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.87 2018/05/11 15:43:07 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.88 2018/05/13 18:34:59 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -509,8 +509,6 @@ esp_input_cb(struct cryptop *crp)
 	struct secasvar *sav;
 	struct secasindex *saidx;
 	void *ptr;
-	uint16_t dport;
-	uint16_t sport;
 	IPSEC_DECLARE_LOCK_VARIABLE;
 
 	KASSERT(crp->crp_desc != NULL);
@@ -520,9 +518,6 @@ esp_input_cb(struct cryptop *crp)
 	skip = tc->tc_skip;
 	protoff = tc->tc_protoff;
 	m = crp->crp_buf;
-
-	/* find the source port for NAT-T */
-	nat_t_ports_get(m, &dport, &sport);
 
 	IPSEC_ACQUIRE_GLOBAL_LOCKS();
 
