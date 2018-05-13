@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.180 2018/05/09 19:55:35 kre Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.181 2018/05/13 14:45:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.180 2018/05/09 19:55:35 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.181 2018/05/13 14:45:23 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -631,7 +631,7 @@ ruspace(struct proc *p)
 	ru->ru_isrss = vm->vm_ssize << (PAGE_SHIFT - 10);
 #ifdef __HAVE_NO_PMAP_STATS
 	/* We don't keep track of the max so we get the current */
-	ru->ru_maxrss = vm_resident_space(vm) << (PAGE_SHIFT - 10);
+	ru->ru_maxrss = vm_resident_count(vm) << (PAGE_SHIFT - 10);
 #else
 	ru->ru_maxrss = vm->vm_rssmax << (PAGE_SHIFT - 10);
 #endif
