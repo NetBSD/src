@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.h,v 1.3 2018/04/28 17:56:55 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.h,v 1.4 2018/05/13 23:01:25 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -408,6 +408,35 @@ check_happy(unsigned n)
 		n = total;
 	}
 }
+
+#if defined(HAVE_DBREGS)
+static bool
+can_we_set_dbregs(void)
+{
+	static long euid = -1;
+	static int user_set_dbregs  = -1;
+	size_t user_set_dbregs_len = sizeof(user_set_dbregs);
+
+	if (euid == -1)
+		euid = geteuid();
+
+	if (euid == 0)
+		return true;
+
+	if (user_set_dbregs == -1) {
+		if (sysctlbyname("security.models.extensions.user_set_dbregs",
+			&user_set_dbregs, &user_set_dbregs_len, NULL, 0)
+			== -1) {
+			return false;
+		}
+	}
+
+	if (user_set_dbregs > 0)
+		return true;
+	else
+		return false;
+}
+#endif
 
 #if defined(TWAIT_HAVE_PID)
 #define ATF_TP_ADD_TC_HAVE_PID(a,b)	ATF_TP_ADD_TC(a,b)
