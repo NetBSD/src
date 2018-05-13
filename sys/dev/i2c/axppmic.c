@@ -1,4 +1,4 @@
-/* $NetBSD: axppmic.c,v 1.8 2018/05/13 11:13:02 jmcneill Exp $ */
+/* $NetBSD: axppmic.c,v 1.9 2018/05/13 22:58:58 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: axppmic.c,v 1.8 2018/05/13 11:13:02 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: axppmic.c,v 1.9 2018/05/13 22:58:58 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -554,7 +554,7 @@ axppmic_attach_battery(struct axppmic_softc *sc)
 	e->private = AXP_SENSOR_BATT_CHARGE_STATE;
 	e->units = ENVSYS_BATTERY_CAPACITY;
 	e->flags = ENVSYS_FMONSTCHANGED;
-	e->state = ENVSYS_SVALID;
+	e->state = ENVSYS_SINVALID;
 	e->value_cur = ENVSYS_BATTERY_CAPACITY_NORMAL;
 	strlcpy(e->desc, "charge state", sizeof(e->desc));
 	sysmon_envsys_sensor_attach(sc->sc_sme, e);
