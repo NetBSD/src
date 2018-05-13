@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.64 2018/05/11 22:48:38 macallan Exp $	*/
+/*	$NetBSD: cpu.c,v 1.65 2018/05/13 14:55:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.64 2018/05/11 22:48:38 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.65 2018/05/13 14:55:35 christos Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -204,8 +204,13 @@ ohare_init(void)
 
 #ifdef MULTIPROCESSOR
 
+#if NPIC_U3_HT > 0
 extern int have_u3_ht(void);
 extern void __u3_ht_set_priority(int, int);
+#else
+#define have_u3_ht() 0
+#define __u3_ht_set_priority(a, b)
+#define 
 
 int
 md_setup_trampoline(volatile struct cpu_hatch_data *h, struct cpu_info *ci)
