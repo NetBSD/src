@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.382 2018/05/10 05:08:53 maxv Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.383 2018/05/14 17:34:26 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.382 2018/05/10 05:08:53 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.383 2018/05/14 17:34:26 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -729,7 +729,7 @@ ip_input(struct mbuf *m)
 #ifdef IPSEC
 		/* Check the security policy (SP) for the packet */
 		if (ipsec_used) {
-			if (ipsec4_input(m, IP_FORWARDING) != 0) {
+			if (ipsec_ip_input(m, true) != 0) {
 				goto out;
 			}
 		}
@@ -776,7 +776,7 @@ ours:
 	 */
 	if (ipsec_used &&
 	    (inetsw[ip_protox[ip->ip_p]].pr_flags & PR_LASTHDR) != 0) {
-		if (ipsec4_input(m, 0) != 0) {
+		if (ipsec_ip_input(m, false) != 0) {
 			goto out;
 		}
 	}
