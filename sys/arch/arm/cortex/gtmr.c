@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmr.c,v 1.25 2018/05/14 17:09:41 joerg Exp $	*/
+/*	$NetBSD: gtmr.c,v 1.26 2018/05/14 17:11:38 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.25 2018/05/14 17:09:41 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.26 2018/05/14 17:11:38 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -172,9 +172,6 @@ gtmr_init_cpu_clock(struct cpu_info *ci)
 	 */
 	gtmr_cntv_ctl_write(CNTCTL_ENABLE);
 	gtmr_cntp_ctl_write(CNTCTL_ENABLE);
-#if 0
-	printf("%s: cntctl=%#x\n", __func__, gtmr_cntv_ctl_read());
-#endif
 
 	/*
 	 * Get now and update the compare timer.
@@ -182,47 +179,8 @@ gtmr_init_cpu_clock(struct cpu_info *ci)
 	arm_isb();
 	ci->ci_lastintr = gtmr_cntvct_read();
 	gtmr_cntv_tval_write(sc->sc_autoinc);
-#if 0
-	printf("%s: %s: delta cval = %"PRIu64"\n",
-	    __func__, ci->ci_data.cpu_name,
-	    gtmr_cntv_cval_read() - ci->ci_lastintr);
-#endif
 	splx(s);
 	KASSERT(gtmr_cntvct_read() != 0);
-#if 0
-	printf("%s: %s: ctl %#x cmp %#"PRIx64" now %#"PRIx64"\n",
-	    __func__, ci->ci_data.cpu_name, gtmr_cntv_ctl_read(),
-	    gtmr_cntv_cval_read(), gtmr_cntvct_read());
-
-	s = splsched();
-
-	arm_isb();
-	uint64_t now64;
-	uint64_t start64 = gtmr_cntvct_read();
-	do {
-		arm_isb();
-		now64 = gtmr_cntvct_read();
-	} while (start64 == now64);
-	start64 = now64;
-	uint64_t end64 = start64 + 64;
-	uint32_t start32 = arm_pmccntr_read();
-	do {
-		arm_isb();
-		now64 = gtmr_cntvct_read();
-	} while (end64 != now64);
-	uint32_t end32 = arm_pmccntr_read();
-
-	uint32_t diff32 = end64 - start64;
-	printf("%s: %s: %u cycles per tick\n",
-	    __func__, ci->ci_data.cpu_name, (end32 - start32) / diff32);
-
-	printf("%s: %s: status %#x cmp %#"PRIx64" now %#"PRIx64"\n",
-	    __func__, ci->ci_data.cpu_name, gtmr_cntv_ctl_read(),
-	    gtmr_cntv_cval_read(), gtmr_cntvct_read());
-	splx(s);
-#elif 0
-	delay(1000000 / hz + 1000);
-#endif
 }
 
 void
@@ -299,10 +257,6 @@ gtmr_intr(void *arg)
 	    "%"PRId64, then + pc->pc_delta - ci->ci_lastintr - sc->sc_autoinc);
 #endif
 
-#if 0
-	printf("%s(%p): %s: now %#"PRIx64" delta %"PRIu64"\n",
-	     __func__, cf, ci->ci_data.cpu_name, now, delta);
-#endif
 	KASSERTMSG(delta > sc->sc_autoinc / 100,
 	    "%s: interrupting too quickly (delta=%"PRIu64") autoinc=%lu",
 	    ci->ci_data.cpu_name, delta, sc->sc_autoinc);
