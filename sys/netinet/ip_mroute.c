@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.158 2018/05/07 19:34:03 maxv Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.159 2018/05/14 17:26:16 maxv Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.158 2018/05/07 19:34:03 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.159 2018/05/14 17:26:16 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1828,7 +1828,7 @@ vif_encapcheck(struct mbuf *m, int off, int proto, void *arg)
 	 */
 
 	/* Obtain the outer IP header and the vif pointer. */
-	m_copydata((struct mbuf *)m, 0, sizeof(ip), (void *)&ip);
+	m_copydata(m, 0, sizeof(ip), (void *)&ip);
 	vifp = (struct vif *)arg;
 
 	/*
@@ -1849,7 +1849,9 @@ vif_encapcheck(struct mbuf *m, int off, int proto, void *arg)
 		return 0;
 
 	/* Check that the inner destination is multicast. */
-	m_copydata((struct mbuf *)m, off, sizeof(ip), (void *)&ip);
+	if (off + sizeof(ip) > m->m_pkthdr.len)
+		return 0;
+	m_copydata(m, off, sizeof(ip), (void *)&ip);
 	if (!IN_MULTICAST(ip.ip_dst.s_addr))
 		return 0;
 
