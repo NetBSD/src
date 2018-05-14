@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmr.c,v 1.24 2018/04/01 04:35:04 ryo Exp $	*/
+/*	$NetBSD: gtmr.c,v 1.25 2018/05/14 17:09:41 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.24 2018/04/01 04:35:04 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.25 2018/05/14 17:09:41 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -268,23 +268,6 @@ gtmr_delay(unsigned int n)
 			delta %= incr_per_us;
 		}
 	}
-}
-
-void
-gtmr_bootdelay(unsigned int ticks)
-{
-	const uint32_t ctl = gtmr_cntv_ctl_read();
-	gtmr_cntv_ctl_write(ctl | CNTCTL_ENABLE | CNTCTL_IMASK);
-
-	/* Write Timer/Value to set new compare time */
-	gtmr_cntv_tval_write(ticks);
-
-	/* Spin until compare time is hit */
-	while ((gtmr_cntv_ctl_read() & CNTCTL_ISTATUS) == 0) {
-		/* spin */
-	}
-
-	gtmr_cntv_ctl_write(ctl);
 }
 
 /*
