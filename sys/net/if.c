@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.420 2018/04/12 18:44:59 christos Exp $	*/
+/*	$NetBSD: if.c,v 1.421 2018/05/14 02:53:29 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.420 2018/04/12 18:44:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.421 2018/05/14 02:53:29 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -704,8 +704,7 @@ if_initialize(ifnet_t *ifp)
 
 	if (if_is_link_state_changeable(ifp)) {
 		u_int flags = SOFTINT_NET;
-		flags |= ISSET(ifp->if_extflags, IFEF_MPSAFE) ?
-		    SOFTINT_MPSAFE : 0;
+		flags |= if_is_mpsafe(ifp) ? SOFTINT_MPSAFE : 0;
 		ifp->if_link_si = softint_establish(flags,
 		    if_link_state_change_si, ifp);
 		if (ifp->if_link_si == NULL) {
