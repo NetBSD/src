@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.2,v 1.1.2.88 2018/05/06 09:54:18 martin Exp $
+# $NetBSD: CHANGES-7.2,v 1.1.2.89 2018/05/14 16:21:48 martin Exp $
 
 A complete list of changes from the NetBSD 7.1 release to the NetBSD 7.2
 release:
@@ -5469,4 +5469,15 @@ sys/kern/kern_runq.c				1.46
 	Add sysctl kern.sched_average_weight to change the weight of
 	historical data.
 	[mlelstv, ticket #1603]
+
+sys/dev/ic/hme.c				1.97
+
+	Fix mis-placed right parenthesis.
+	[pgoyette, ticket #1604]
+
+sys/net/npf/npf_alg_icmp.c			1.27-1.29
+sys/net/npf/npf_inet.c				1.45
+
+	Fix use-after-free.
+	[maxv, ticket #1605]
 
