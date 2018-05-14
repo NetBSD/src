@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_amd64_wait.h,v 1.3 2018/05/13 23:14:47 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_amd64_wait.h,v 1.4 2018/05/14 12:42:34 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -239,7 +239,6 @@ trigger_cve_2018_8897(void)
 
 ATF_TC_BODY(x86_64_cve_2018_8897, tc)
 {
-	const int exitval = 5;
 	const int sigval = SIGSTOP;
 	pid_t child, wpid;
 #if defined(TWAIT_HAVE_STATUS)
@@ -274,8 +273,8 @@ ATF_TC_BODY(x86_64_cve_2018_8897, tc)
 
 		trigger_cve_2018_8897();
 
-		DPRINTF("Before exiting of the child process\n");
-		_exit(exitval);
+		/* NOTREACHED */
+		FORKEE_ASSERTX(0 && "This shall not be reached");
 	}
 	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
