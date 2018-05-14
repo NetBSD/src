@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.380 2018/05/14 21:11:39 thorpej Exp $
+# $NetBSD: GENERIC,v 1.381 2018/05/14 22:11:30 jakllsch Exp $
 #
 # This machine description file is used to generate the default NetBSD
 # kernel.
@@ -19,7 +19,7 @@ include 	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"GENERIC-$Revision: 1.380 $"
+ident		"GENERIC-$Revision: 1.381 $"
 
 maxusers 32
 
@@ -536,7 +536,7 @@ ld*	at	mlx? unit ?
 
 # Acer Labs M7101 SMBus controller
 alipm* 	at pci? dev ? function ?
-iic0 	at alipm?
+iic1 	at alipm?
 
 # AlphaServer DS20L i2c devices
 #lmenv* 	at iic0 addr 0x2c
