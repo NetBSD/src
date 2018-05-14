@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.421 2018/05/14 02:53:29 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.422 2018/05/14 02:55:03 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.421 2018/05/14 02:53:29 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.422 2018/05/14 02:55:03 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -821,11 +821,13 @@ struct if_percpuq *
 if_percpuq_create(struct ifnet *ifp)
 {
 	struct if_percpuq *ipq;
+	u_int flags = SOFTINT_NET;
+
+	flags |= if_is_mpsafe(ifp) ? SOFTINT_MPSAFE : 0;
 
 	ipq = kmem_zalloc(sizeof(*ipq), KM_SLEEP);
 	ipq->ipq_ifp = ifp;
-	ipq->ipq_si = softint_establish(SOFTINT_NET|SOFTINT_MPSAFE,
-	    if_percpuq_softint, ipq);
+	ipq->ipq_si = softint_establish(flags, if_percpuq_softint, ipq);
 	ipq->ipq_ifqs = percpu_alloc(sizeof(struct ifqueue));
 	percpu_foreach(ipq->ipq_ifqs, &if_percpuq_init_ifq, NULL);
 
