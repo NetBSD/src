@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.91 2018/05/02 09:55:22 jmcneill Exp $	*/
+/*	$NetBSD: xhci.c,v 1.92 2018/05/14 00:26:02 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.91 2018/05/02 09:55:22 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.92 2018/05/14 00:26:02 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2367,6 +2367,7 @@ xhci_new_device(device_t parent, struct usbd_bus *bus, int depth,
 		/* Allow device time to set new address */
 		usbd_delay_ms(dev, USB_SET_ADDRESS_SETTLE);
 
+		usb_syncmem(&xs->xs_dc_dma, 0, sc->sc_pgsz, BUS_DMASYNC_POSTREAD);
 		cp = xhci_slot_get_dcv(sc, xs, XHCI_DCI_SLOT);
 		HEXDUMP("slot context", cp, sc->sc_ctxsz);
 		uint8_t addr = XHCI_SCTX_3_DEV_ADDR_GET(le32toh(cp[3]));
