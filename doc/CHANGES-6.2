@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.337 2018/05/03 15:05:46 martin Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.338 2018/05/14 16:08:15 martin Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -21245,4 +21245,9 @@ sys/kern/uipc_mbuf.c				1.211 (patch)
 	Modify m_defrag, so that it never frees the first mbuf of
 	the chain.
 	[maxv, ticket #1547]
+
+sys/dev/ic/hme.c				1.97
+
+	Fix mis-placed right parenthesis.
+	[pgoyette, ticket #1548]
 
