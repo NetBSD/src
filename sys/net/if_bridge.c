@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.154 2018/04/18 06:37:17 ozaki-r Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.155 2018/05/14 02:55:03 ozaki-r Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.154 2018/04/18 06:37:17 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.155 2018/05/14 02:55:03 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bridge_ipf.h"
@@ -1575,13 +1575,11 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *sa,
 				m_set_rcvif(mc, dst_if);
 				mc->m_flags &= ~M_PROMISC;
 
-#ifndef NET_MPSAFE
 				s = splsoftnet();
-#endif
+				KERNEL_LOCK_UNLESS_IFP_MPSAFE(dst_if);
 				ether_input(dst_if, mc);
-#ifndef NET_MPSAFE
+				KERNEL_UNLOCK_UNLESS_IFP_MPSAFE(dst_if);
 				splx(s);
-#endif
 			}
 
 next:
