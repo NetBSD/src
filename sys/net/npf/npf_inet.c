@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_inet.c,v 1.32 2014/07/20 00:37:41 rmind Exp $	*/
+/*	$NetBSD: npf_inet.c,v 1.32.10.1 2018/05/14 16:17:19 martin Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.32 2014/07/20 00:37:41 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.32.10.1 2018/05/14 16:17:19 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -459,6 +459,11 @@ again:
 	}
 	hlen = npc->npc_hlen;
 
+	/*
+	 * Note: we guarantee that the potential "Query Id" field of the
+	 * ICMPv4/ICMPv6 packets is in the nbuf. This field is used in the
+	 * ICMP ALG.
+	 */
 	switch (npc->npc_proto) {
 	case IPPROTO_TCP:
 		/* Cache: layer 4 - TCP. */
@@ -475,13 +480,13 @@ again:
 	case IPPROTO_ICMP:
 		/* Cache: layer 4 - ICMPv4. */
 		npc->npc_l4.icmp = nbuf_advance(nbuf, hlen,
-		    offsetof(struct icmp, icmp_void));
+		    ICMP_MINLEN);
 		l4flags = NPC_LAYER4 | NPC_ICMP;
 		break;
 	case IPPROTO_ICMPV6:
 		/* Cache: layer 4 - ICMPv6. */
 		npc->npc_l4.icmp6 = nbuf_advance(nbuf, hlen,
-		    offsetof(struct icmp6_hdr, icmp6_data32));
+		    sizeof(struct icmp6_hdr));
 		l4flags = NPC_LAYER4 | NPC_ICMP;
 		break;
 	default:
