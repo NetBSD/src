@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.201 2018/05/01 07:21:39 maxv Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.202 2018/05/14 17:34:26 maxv Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.201 2018/05/01 07:21:39 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.202 2018/05/14 17:34:26 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -742,7 +742,7 @@ hbhcheck:
 			    & PR_LASTHDR) != 0) {
 				int error;
 
-				error = ipsec6_input(m);
+				error = ipsec_ip_input(m, false);
 				if (error)
 					goto bad;
 			}
