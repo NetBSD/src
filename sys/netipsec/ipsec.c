@@ -1,4 +1,4 @@
-/* $NetBSD: ipsec.c,v 1.163 2018/05/10 05:15:14 maxv Exp $ */
+/* $NetBSD: ipsec.c,v 1.164 2018/05/14 17:34:26 maxv Exp $ */
 /* $FreeBSD: ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $ */
 /* $KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $ */
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.163 2018/05/10 05:15:14 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.164 2018/05/14 17:34:26 maxv Exp $");
 
 /*
  * IPsec controller part.
@@ -697,7 +697,7 @@ ipsec4_output(struct mbuf *m, struct inpcb *inp, int flags,
 }
 
 int
-ipsec4_input(struct mbuf *m, int flags)
+ipsec_ip_input(struct mbuf *m, bool forward)
 {
 	struct secpolicy *sp;
 	int error, s;
@@ -709,8 +709,7 @@ ipsec4_input(struct mbuf *m, int flags)
 		return EINVAL;
 	}
 
-	if (flags == 0) {
-		/* We are done. */
+	if (!forward || !(m->m_flags & M_CANFASTFWD)) {
 		return 0;
 	}
 
@@ -719,12 +718,14 @@ ipsec4_input(struct mbuf *m, int flags)
 	 * it is a Fast Forward candidate.
 	 */
 	s = splsoftnet();
-	sp = ipsec_checkpolicy(m, IPSEC_DIR_OUTBOUND, flags, &error, NULL);
+	sp = ipsec_checkpolicy(m, IPSEC_DIR_OUTBOUND, IP_FORWARDING,
+	    &error, NULL);
 	if (sp != NULL) {
 		m->m_flags &= ~M_CANFASTFWD;
 		KEY_SP_UNREF(&sp);
 	}
 	splx(s);
+
 	return 0;
 }
 
@@ -1827,21 +1828,6 @@ skippolicycheck:
 	*errorp = error;
 	*needipsecp = needipsec;
 	return sp;
-}
-
-int
-ipsec6_input(struct mbuf *m)
-{
-	int s, error;
-
-	s = splsoftnet();
-	error = ipsec_in_reject(m, NULL);
-	splx(s);
-	if (error) {
-		return EINVAL;
-	}
-
-	return 0;
 }
 #endif /* INET6 */
 
