@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_tcp.c,v 1.20 2018/05/11 13:50:38 maxv Exp $ */
+/*	$NetBSD: xform_tcp.c,v 1.21 2018/05/14 02:16:29 ozaki-r Exp $ */
 /*	$FreeBSD: xform_tcp.c,v 1.1.2.1 2004/02/14 22:24:09 bms Exp $ */
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_tcp.c,v 1.20 2018/05/11 13:50:38 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_tcp.c,v 1.21 2018/05/14 02:16:29 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -49,6 +49,11 @@ __KERNEL_RCSID(0, "$NetBSD: xform_tcp.c,v 1.20 2018/05/11 13:50:38 maxv Exp $");
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
+#ifdef TCP_SIGNATURE
+#include <netinet/tcp_timer.h>
+#include <netinet/tcp.h>
+#include <netinet/tcp_var.h>
+#endif
 
 #include <netipsec/ipsec.h>
 #include <netipsec/xform.h>
