@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.197 2018/05/12 10:44:25 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.198 2018/05/14 19:24:10 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -13399,4 +13399,25 @@ sys/netinet6/in6_proto.c			1.125
 
 	Increase the default size of some receive buffers from 8k to 16k.
 	[roy, ticket #821]
+
+sys/kern/kern_lwp.c				1.192
+
+	Revert previous, do not wait interruptibly when exiting.
+	The change caused other deadlocks and the golang issue
+	is not reproducable with later versions.
+	[gson, ticket #805]
+
+lib/libc/string/stresep.c			1.4
+tests/lib/libc/string/t_stresep.c		1.4
+
+	Fix memmove with of-by-one length in stresep(3) and add
+	a test.
+	[maya, ticket #822]
+
+sys/net/npf/npf_alg_icmp.c			1.27-1.30
+sys/net/npf/npf_inet.c				1.45-1.47
+sys/net/npf/npf_sendpkt.c			1.19
+
+	Fix use-after-free and strengthen.
+	[maxv, ticket #823]
 
