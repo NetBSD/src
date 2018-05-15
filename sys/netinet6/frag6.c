@@ -1,4 +1,4 @@
-/*	$NetBSD: frag6.c,v 1.73 2018/05/03 07:25:49 maxv Exp $	*/
+/*	$NetBSD: frag6.c,v 1.74 2018/05/15 19:16:38 maxv Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.73 2018/05/03 07:25:49 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.74 2018/05/15 19:16:38 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -76,6 +76,7 @@ struct	ip6q {
 	struct ip6q	*ip6q_prev;
 	int		ip6q_unfrglen;	/* len of unfragmentable part */
 	int		ip6q_nfrag;	/* # of fragments */
+	int		ip6q_ipsec;	/* IPsec flags */
 };
 
 struct	ip6asfrag {
@@ -162,6 +163,7 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 	struct ip6q *q6;
 	struct ip6asfrag *af6, *ip6af, *af6dwn;
 	int offset = *offp, nxt, i, next;
+	int ipsecflags = m->m_flags & (M_DECRYPTED|M_AUTHIPHDR);
 	int first_frag = 0;
 	int fragoff, frgpartlen;	/* must be larger than u_int16_t */
 	struct ifnet *dstifp;
@@ -247,6 +249,13 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 		    IN6_ARE_ADDR_EQUAL(&ip6->ip6_dst, &q6->ip6q_dst))
 			break;
 
+	if (q6 != &ip6q) {
+		/* All fragments must have the same IPsec flags. */
+		if (q6->ip6q_ipsec != ipsecflags) {
+			goto dropfrag;
+		}
+	}
+
 	if (q6 == &ip6q) {
 		/*
 		 * the first fragment to arrive, create a reassembly queue.
@@ -279,8 +288,8 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 		q6->ip6q_src	= ip6->ip6_src;
 		q6->ip6q_dst	= ip6->ip6_dst;
 		q6->ip6q_unfrglen = -1;	/* The 1st fragment has not arrived. */
-
 		q6->ip6q_nfrag = 0;
+		q6->ip6q_ipsec = ipsecflags;
 	}
 
 	/*
