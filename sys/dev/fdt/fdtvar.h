@@ -1,4 +1,4 @@
-/* $NetBSD: fdtvar.h,v 1.31 2018/05/09 23:59:05 jmcneill Exp $ */
+/* $NetBSD: fdtvar.h,v 1.32 2018/05/15 10:17:55 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -36,7 +36,13 @@
 #include <dev/i2c/i2cvar.h>
 #include <dev/pwm/pwmvar.h>
 #include <dev/clk/clk.h>
+
+#include "audio.h"
+#if NAUDIO > 0
 #include <dev/audio_dai.h>
+#else
+typedef void *audio_dai_tag_t;
+#endif
 
 #include <dev/clock_subr.h>
 
