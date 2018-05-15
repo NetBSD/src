@@ -1,4 +1,4 @@
-/* $NetBSD: sun50i_a64_acodec.c,v 1.5 2018/05/13 01:01:37 jmcneill Exp $ */
+/* $NetBSD: sun50i_a64_acodec.c,v 1.6 2018/05/15 01:26:45 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sun50i_a64_acodec.c,v 1.5 2018/05/13 01:01:37 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sun50i_a64_acodec.c,v 1.6 2018/05/15 01:26:45 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -111,6 +111,7 @@ enum a64_acodec_mixer_ctrl {
 	A64_CODEC_RECORD_CLASS,
 
 	A64_CODEC_OUTPUT_MASTER_VOLUME,
+	A64_CODEC_OUTPUT_MUTE,
 	A64_CODEC_OUTPUT_SOURCE,
 	A64_CODEC_INPUT_LINE_VOLUME,
 	A64_CODEC_INPUT_HP_VOLUME,
@@ -228,11 +229,6 @@ a64_acodec_trigger_output(void *priv, void *start, void *end, int blksize,
 	a64_acodec_pr_set_clear(sc, A64_MIX_DAC_CTRL,
 	    A64_DACAREN | A64_DACALEN | A64_RMIXEN | A64_LMIXEN |
 	    A64_RHPPAMUTE | A64_LHPPAMUTE, 0);
-	/* Unmute DAC l/r channels to output mixer */
-	a64_acodec_pr_set_clear(sc, A64_OL_MIX_CTRL,
-	    A64_LMIXMUTE_LDAC, 0);
-	a64_acodec_pr_set_clear(sc, A64_OR_MIX_CTRL,
-	    A64_RMIXMUTE_RDAC, 0);
 
 	return 0;
 }
@@ -255,11 +251,6 @@ a64_acodec_halt_output(void *priv)
 {
 	struct a64_acodec_softc * const sc = priv;
 
-	/* Mute DAC l/r channels to output mixer */
-	a64_acodec_pr_set_clear(sc, A64_OL_MIX_CTRL,
-	    0, A64_LMIXMUTE_LDAC);
-	a64_acodec_pr_set_clear(sc, A64_OR_MIX_CTRL,
-	    0, A64_RMIXMUTE_RDAC);
 	/* Disable DAC analog l/r channels, HP PA, and output mixer */
 	a64_acodec_pr_set_clear(sc, A64_MIX_DAC_CTRL,
 	    0, A64_DACAREN | A64_DACALEN | A64_RMIXEN | A64_LMIXEN |
@@ -306,6 +297,22 @@ a64_acodec_set_port(void *priv, mixer_ctrl_t *mc)
 		val &= ~mix->mask;
 		val |= __SHIFTIN(nvol, mix->mask);
 		a64_acodec_pr_write(sc, mix->reg, val);
+		return 0;
+
+	case A64_CODEC_OUTPUT_MUTE:
+		if (mc->un.ord < 0 || mc->un.ord > 1)
+			return EINVAL;
+		if (mc->un.ord) {
+			a64_acodec_pr_set_clear(sc, A64_OL_MIX_CTRL,
+			    0, A64_LMIXMUTE_LDAC);
+			a64_acodec_pr_set_clear(sc, A64_OR_MIX_CTRL,
+			    0, A64_RMIXMUTE_RDAC);
+		} else {
+			a64_acodec_pr_set_clear(sc, A64_OL_MIX_CTRL,
+			    A64_LMIXMUTE_LDAC, 0);
+			a64_acodec_pr_set_clear(sc, A64_OR_MIX_CTRL,
+			    A64_RMIXMUTE_RDAC, 0);
+		}
 		return 0;
 
 	case A64_CODEC_OUTPUT_SOURCE:
@@ -358,6 +365,14 @@ a64_acodec_get_port(void *priv, mixer_ctrl_t *mc)
 		nvol = __SHIFTOUT(val, mix->mask) << shift;
 		mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT] = nvol;
 		mc->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] = nvol;
+		return 0;
+
+	case A64_CODEC_OUTPUT_MUTE:
+		mc->un.ord = 1;
+		if (a64_acodec_pr_read(sc, A64_OL_MIX_CTRL) & A64_LMIXMUTE_LDAC)
+			mc->un.ord = 0;
+		if (a64_acodec_pr_read(sc, A64_OR_MIX_CTRL) & A64_RMIXMUTE_RDAC)
+			mc->un.ord = 0;
 		return 0;
 
 	case A64_CODEC_OUTPUT_SOURCE:
@@ -433,6 +448,18 @@ a64_acodec_query_devinfo(void *priv, mixer_devinfo_t *di)
 		di->next = di->prev = AUDIO_MIXER_LAST;
 		di->un.v.num_channels = 2;
 		strcpy(di->un.v.units.name, AudioNvolume);
+		return 0;
+
+	case A64_CODEC_OUTPUT_MUTE:
+		di->mixer_class = A64_CODEC_OUTPUT_CLASS;
+		strcpy(di->label.name, AudioNmute);
+		di->type = AUDIO_MIXER_ENUM;
+		di->next = di->prev = AUDIO_MIXER_LAST;
+		di->un.e.num_mem = 2;
+		strcpy(di->un.e.member[0].label.name, AudioNoff);
+		di->un.e.member[0].ord = 0;
+		strcpy(di->un.e.member[1].label.name, AudioNon);
+		di->un.e.member[1].ord = 1;
 		return 0;
 
 	case A64_CODEC_OUTPUT_SOURCE:
@@ -572,6 +599,12 @@ a64_acodec_attach(device_t parent, device_t self, void *aux)
 	sc->sc_master_dev = A64_CODEC_INPUT_HP_VOLUME;
 	a64_acodec_pr_set_clear(sc, A64_JACK_MIC_CTRL,
 	    A64_JACKDETEN | A64_INNERRESEN | A64_AUTOPLEN, 0);
+
+	/* Unmute DAC to output mixer */
+	a64_acodec_pr_set_clear(sc, A64_OL_MIX_CTRL,
+	    A64_LMIXMUTE_LDAC, 0);
+	a64_acodec_pr_set_clear(sc, A64_OR_MIX_CTRL,
+	    A64_RMIXMUTE_RDAC, 0);
 
 	sc->sc_dai.dai_jack_detect = a64_acodec_dai_jack_detect;
 	sc->sc_dai.dai_hw_if = &a64_acodec_hw_if;
