@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.452 2018/02/06 04:39:18 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.453 2018/05/15 00:19:08 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.452 2018/02/06 04:39:18 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.453 2018/05/15 00:19:08 nat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -5784,6 +5784,9 @@ unitscopy(mixer_devinfo_t *di, const char *name)
 static int
 audio_query_devinfo(struct audio_softc *sc, mixer_devinfo_t *di)
 {
+	struct audio_chan *chan;
+	unsigned int j;
+
 	KASSERT(mutex_owned(sc->sc_lock));
 
 	if (sc->sc_static_nmixer_states == 0 || sc->sc_nmixer_states == 0)
@@ -5799,18 +5802,40 @@ audio_query_devinfo(struct audio_softc *sc, mixer_devinfo_t *di)
 			di->type = AUDIO_MIXER_CLASS;
 		} else if ((di->index - sc->sc_static_nmixer_states) % 2 == 0) {
 			di->mixer_class = sc->sc_static_nmixer_states -1;
+			j = 0;
+			SIMPLEQ_FOREACH(chan, &sc->sc_audiochan, entries) {
+				if (j == (di->index -
+				    sc->sc_static_nmixer_states) / 2)
+					break;
+				j++;
+			}
+			if (j != (di->index - sc->sc_static_nmixer_states) / 2)
+				return 0;
+
+			j = chan->deschan;
+
 			snprintf(di->label.name, sizeof(di->label.name),
-			    AudioNdac"%d",
-			    (di->index - sc->sc_static_nmixer_states) / 2);
+			    AudioNdac"%d", j);
 			di->type = AUDIO_MIXER_VALUE;
 			di->next = di->prev = AUDIO_MIXER_LAST;
 			di->un.v.num_channels = 1;
 			unitscopy(di, AudioNvolume);
 		} else {
 			di->mixer_class = sc->sc_static_nmixer_states -1;
+			j = 0;
+			SIMPLEQ_FOREACH(chan, &sc->sc_audiochan, entries) {
+				if (j == (di->index -
+				    sc->sc_static_nmixer_states) / 2)
+					break;
+				j++;
+			}
+			if (j != (di->index - sc->sc_static_nmixer_states) / 2)
+				return 0;
+
+			j = chan->deschan;
+
 			snprintf(di->label.name, sizeof(di->label.name),
-			    AudioNmicrophone "%d",
-			    (di->index - sc->sc_static_nmixer_states) / 2);
+			    AudioNmicrophone "%d", j);
 			di->type = AUDIO_MIXER_VALUE;
 			di->next = di->prev = AUDIO_MIXER_LAST;
 			di->un.v.num_channels = 1;
