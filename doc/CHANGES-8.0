@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.198 2018/05/14 19:24:10 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.199 2018/05/15 13:50:20 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -13420,4 +13420,36 @@ sys/net/npf/npf_sendpkt.c			1.19
 
 	Fix use-after-free and strengthen.
 	[maxv, ticket #823]
+
+sys/dev/pci/ixgbe/ixv.c				1.97
+
+	Fix panic or hangup when enabling debugging.
+	[msaitoh, ticket #824]
+
+distrib/sets/lists/man/mi			1.1586
+share/man/man4/audio.4				1.85
+share/man/man7/Makefile				1.32
+share/man/man7/audio.7				1.1,1.2
+share/man/man7/intro.7				1.24
+share/man/man9/audio.9				1.46
+sys/dev/audio.c					1.453-1.455
+
+	Bring audio in line with specification published in
+	audio.7, in particular consistient naming of vchans for
+	audioctl & mixerctl as well as exposure of the audio_info
+	structure for the mix ring.
+
+	Addition of an audio specification to describe the workings
+	of the audio mixer.
+	[nat, ticket #825]
+
+sys/net/bpf.c					1.224
+sys/net/if.c					1.421-1.423
+sys/net/if_bridge.c				1.155
+
+	Use if_is_mpsafe.
+	Protect packet input routines with KERNEL_LOCK and splsoftnet.
+	Protect if_deferred_start_softint with KERNEL_LOCK if the interface
+	is not MP-safe,
+	[ozaki-r, ticket #826]
 
