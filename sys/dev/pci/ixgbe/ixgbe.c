@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.151 2018/05/10 03:15:28 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.152 2018/05/15 09:30:56 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -583,7 +583,7 @@ ixgbe_initialize_receive_units(struct adapter *adapter)
 
 	for (i = 0; i < adapter->num_queues; i++, rxr++) {
 		u64 rdba = rxr->rxdma.dma_paddr;
-		u32 tqsmreg, reg;
+		u32 reg;
 		int regnum = i / 4;	/* 1 register per 4 queues */
 		int regshift = i % 4;	/* 4 bits per 1 queue */
 		j = rxr->me;
@@ -607,20 +607,6 @@ ixgbe_initialize_receive_units(struct adapter *adapter)
 		reg &= ~(0x000000ff << (regshift * 8));
 		reg |= i << (regshift * 8);
 		IXGBE_WRITE_REG(hw, IXGBE_RQSMR(regnum), reg);
-
-		/*
-		 * Set RQSMR (Receive Queue Statistic Mapping) register.
-		 * Register location for queue 0...7 are different between
-		 * 82598 and newer.
-		 */
-		if (adapter->hw.mac.type == ixgbe_mac_82598EB)
-			tqsmreg = IXGBE_TQSMR(regnum);
-		else
-			tqsmreg = IXGBE_TQSM(regnum);
-		reg = IXGBE_READ_REG(hw, tqsmreg);
-		reg &= ~(0x000000ff << (regshift * 8));
-		reg |= i << (regshift * 8);
-		IXGBE_WRITE_REG(hw, tqsmreg, reg);
 
 		/*
 		 * Set DROP_EN iff we have no flow control and >1 queue.
@@ -687,6 +673,9 @@ ixgbe_initialize_transmit_units(struct adapter *adapter)
 	for (i = 0; i < adapter->num_queues; i++, txr++) {
 		u64 tdba = txr->txdma.dma_paddr;
 		u32 txctrl = 0;
+		u32 tqsmreg, reg;
+		int regnum = i / 4;	/* 1 register per 4 queues */
+		int regshift = i % 4;	/* 4 bits per 1 queue */
 		int j = txr->me;
 
 		IXGBE_WRITE_REG(hw, IXGBE_TDBAL(j),
@@ -694,6 +683,19 @@ ixgbe_initialize_transmit_units(struct adapter *adapter)
 		IXGBE_WRITE_REG(hw, IXGBE_TDBAH(j), (tdba >> 32));
 		IXGBE_WRITE_REG(hw, IXGBE_TDLEN(j),
 		    adapter->num_tx_desc * sizeof(union ixgbe_adv_tx_desc));
+
+		/*
+		 * Set TQSMR (Transmit Queue Statistic Mapping) register.
+		 * Register location is different between 82598 and others.
+		 */
+		if (adapter->hw.mac.type == ixgbe_mac_82598EB)
+			tqsmreg = IXGBE_TQSMR(regnum);
+		else
+			tqsmreg = IXGBE_TQSM(regnum);
+		reg = IXGBE_READ_REG(hw, tqsmreg);
+		reg &= ~(0x000000ff << (regshift * 8));
+		reg |= i << (regshift * 8);
+		IXGBE_WRITE_REG(hw, tqsmreg, reg);
 
 		/* Setup the HW Tx Head and Tail descriptor pointers */
 		IXGBE_WRITE_REG(hw, IXGBE_TDH(j), 0);
