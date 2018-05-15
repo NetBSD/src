@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.98 2018/05/15 00:57:15 thorpej Exp $
+# $NetBSD: GENERIC,v 1.99 2018/05/15 01:07:06 thorpej Exp $
 #
 # machine description file for GENERIC NAS
 # 
@@ -22,7 +22,7 @@ include 	"arch/sandpoint/conf/std.sandpoint"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.98 $"
+#ident 		"GENERIC-$Revision: 1.99 $"
 
 maxusers	32
 
@@ -175,12 +175,12 @@ com0		at eumb? unit 0			# console at 0x4500
 satmgr0 	at eumb? unit 1 		# satmgr at 0x4600
 ociic*		at eumb?
 iic*		at ociic?
-lmtemp*		at iic0 addr 0x48		# LM75 temperature sensor
-rs5c372rtc*	at iic0 addr 0x32
-s390rtc*	at iic0 addr 0x30
-pcf8563rtc*	at iic0 addr 0x51
-dsrtc*		at iic0 addr 0x68
-strtc*		at iic0 addr 0x68
+lmtemp*		at iic? addr 0x48		# LM75 temperature sensor
+rs5c372rtc*	at iic? addr 0x32
+s390rtc*	at iic? addr 0x30
+pcf8563rtc*	at iic? addr 0x51
+dsrtc*		at iic? addr 0x68
+strtc*		at iic? addr 0x68
 options 	STRTC_NO_WATCHDOG
 options 	STRTC_NO_USERRAM
 
