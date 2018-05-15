@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.454 2018/05/15 00:28:00 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.455 2018/05/15 10:23:03 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.454 2018/05/15 00:28:00 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.455 2018/05/15 10:23:03 nat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -4567,6 +4567,7 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai, bool reset,
 	pp = vc->sc_pparams;	/* Temporary encoding storage in */
 	rp = vc->sc_rparams;	/* case setting the modes fails. */
 	nr = np = 0;
+	setmode = 0;
 
 	if (vc == &sc->sc_mixring)
 		goto done;
@@ -4624,7 +4625,6 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai, bool reset,
 	if (np > 0 && (error = audio_check_params(&pp)))
 		return error;
 
-	setmode = 0;
 	if (nr > 0) {
 		if (!cleared) {
 			audio_clear_intr_unlocked(sc, vc);
