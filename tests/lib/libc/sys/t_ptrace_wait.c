@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.40 2018/05/16 00:42:15 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.41 2018/05/16 01:27:27 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.40 2018/05/16 00:42:15 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.41 2018/05/16 01:27:27 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -453,6 +453,49 @@ TRACEME_VFORK_RAISE(traceme_vfork_raise1, SIGKILL) /* non-maskable */
 TRACEME_VFORK_RAISE(traceme_vfork_raise3, SIGABRT) /* regular abort trap */
 TRACEME_VFORK_RAISE(traceme_vfork_raise4, SIGHUP)  /* hangup */
 TRACEME_VFORK_RAISE(traceme_vfork_raise5, SIGCONT) /* continued? */
+
+/// ----------------------------------------------------------------------------
+
+ATF_TC(traceme_vfork_breakpoint);
+ATF_TC_HEAD(traceme_vfork_breakpoint, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Verify software breakpoint in a vfork(2)ed child");
+}
+
+ATF_TC_BODY(traceme_vfork_breakpoint, tc)
+{
+	pid_t child, wpid;
+#if defined(TWAIT_HAVE_STATUS)
+	int status;
+#endif
+
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = vfork()) != -1);
+	if (child == 0) {
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
+		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
+
+		DPRINTF("Before executing a software breakpoint\n");
+#ifdef PTRACE_BREAKPOINT_ASM
+		PTRACE_BREAKPOINT_ASM;
+#else
+		/* port me */
+#endif
+
+		/* NOTREACHED */
+		FORKEE_ASSERTX(0 && "This shall not be reached");
+	}
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_signaled(status, SIGTRAP, 1);
+
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
+}
 
 /// ----------------------------------------------------------------------------
 
@@ -6922,6 +6965,8 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, traceme_vfork_raise3);
 	ATF_TP_ADD_TC(tp, traceme_vfork_raise4);
 	ATF_TP_ADD_TC(tp, traceme_vfork_raise5);
+
+	ATF_TP_ADD_TC(tp, traceme_vfork_breakpoint);
 
 	ATF_TP_ADD_TC_HAVE_PID(tp, attach1);
 	ATF_TP_ADD_TC_HAVE_PID(tp, attach2);
