@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.43 2018/05/16 02:47:25 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.44 2018/05/16 03:18:38 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.43 2018/05/16 02:47:25 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.44 2018/05/16 03:18:38 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -461,7 +461,8 @@ ATF_TC(traceme_vfork_breakpoint);
 ATF_TC_HEAD(traceme_vfork_breakpoint, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
-	    "Verify software breakpoint in a vfork(2)ed child");
+	    "Verify PT_TRACE_ME followed by a software breakpoint in a "
+	    "vfork(2)ed child");
 }
 
 ATF_TC_BODY(traceme_vfork_breakpoint, tc)
