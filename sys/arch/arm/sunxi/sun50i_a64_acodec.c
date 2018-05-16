@@ -1,4 +1,4 @@
-/* $NetBSD: sun50i_a64_acodec.c,v 1.7 2018/05/16 00:12:57 jmcneill Exp $ */
+/* $NetBSD: sun50i_a64_acodec.c,v 1.8 2018/05/16 10:23:43 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sun50i_a64_acodec.c,v 1.7 2018/05/16 00:12:57 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sun50i_a64_acodec.c,v 1.8 2018/05/16 10:23:43 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -85,7 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: sun50i_a64_acodec.c,v 1.7 2018/05/16 00:12:57 jmcnei
 #define	 A64_ADCMIX_SRC_MIC1	__BIT(6)
 #define	 A64_ADCMIX_SRC_MIC2	__BIT(5)
 #define	 A64_ADCMIX_SRC_LINEIN	__BIT(2)
-#define	 A64_ADCMIX_SRC_OMIXER	__BIT(0)
+#define	 A64_ADCMIX_SRC_OMIXER	__BIT(1)
 #define	A64_ADC_CTRL		0x0d
 #define	 A64_ADCREN		__BIT(7)
 #define	 A64_ADCLEN		__BIT(6)
@@ -117,7 +117,9 @@ enum a64_acodec_mixer_ctrl {
 	A64_CODEC_INPUT_HP_VOLUME,
 	A64_CODEC_RECORD_LINE_VOLUME,
 	A64_CODEC_RECORD_MIC1_VOLUME,
+	A64_CODEC_RECORD_MIC1_PREAMP,
 	A64_CODEC_RECORD_MIC2_VOLUME,
+	A64_CODEC_RECORD_MIC2_PREAMP,
 	A64_CODEC_RECORD_AGC_VOLUME,
 	A64_CODEC_RECORD_SOURCE,
 
@@ -299,6 +301,26 @@ a64_acodec_set_port(void *priv, mixer_ctrl_t *mc)
 		a64_acodec_pr_write(sc, mix->reg, val);
 		return 0;
 
+	case A64_CODEC_RECORD_MIC1_PREAMP:
+		if (mc->un.ord < 0 || mc->un.ord > 1)
+			return EINVAL;
+		if (mc->un.ord) {
+			a64_acodec_pr_set_clear(sc, A64_MIC1_CTRL, A64_MIC1AMPEN, 0);
+		} else {
+			a64_acodec_pr_set_clear(sc, A64_MIC1_CTRL, 0, A64_MIC1AMPEN);
+		}
+		return 0;
+			
+	case A64_CODEC_RECORD_MIC2_PREAMP:
+		if (mc->un.ord < 0 || mc->un.ord > 1)
+			return EINVAL;
+		if (mc->un.ord) {
+			a64_acodec_pr_set_clear(sc, A64_MIC2_CTRL, A64_MIC2AMPEN, 0);
+		} else {
+			a64_acodec_pr_set_clear(sc, A64_MIC2_CTRL, 0, A64_MIC2AMPEN);
+		}
+		return 0;
+
 	case A64_CODEC_OUTPUT_MUTE:
 		if (mc->un.ord < 0 || mc->un.ord > 1)
 			return EINVAL;
@@ -365,6 +387,14 @@ a64_acodec_get_port(void *priv, mixer_ctrl_t *mc)
 		nvol = __SHIFTOUT(val, mix->mask) << shift;
 		mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT] = nvol;
 		mc->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] = nvol;
+		return 0;
+
+	case A64_CODEC_RECORD_MIC1_PREAMP:
+		mc->un.ord = !!(a64_acodec_pr_read(sc, A64_MIC1_CTRL) & A64_MIC1AMPEN);
+		return 0;
+			
+	case A64_CODEC_RECORD_MIC2_PREAMP:
+		mc->un.ord = !!(a64_acodec_pr_read(sc, A64_MIC2_CTRL) & A64_MIC2AMPEN);
 		return 0;
 
 	case A64_CODEC_OUTPUT_MUTE:
@@ -445,9 +475,32 @@ a64_acodec_query_devinfo(void *priv, mixer_devinfo_t *di)
 		di->un.v.delta =
 		    256 / (__SHIFTOUT_MASK(mix->mask) + 1);
 		di->type = AUDIO_MIXER_VALUE;
-		di->next = di->prev = AUDIO_MIXER_LAST;
+		di->prev = AUDIO_MIXER_LAST;
+		if (di->index == A64_CODEC_RECORD_MIC1_VOLUME)
+			di->next = A64_CODEC_RECORD_MIC1_PREAMP;
+		else if (di->index == A64_CODEC_RECORD_MIC2_VOLUME)
+			di->next = A64_CODEC_RECORD_MIC2_PREAMP;
+		else
+			di->next = AUDIO_MIXER_LAST;
 		di->un.v.num_channels = 2;
 		strcpy(di->un.v.units.name, AudioNvolume);
+		return 0;
+
+	case A64_CODEC_RECORD_MIC1_PREAMP:
+	case A64_CODEC_RECORD_MIC2_PREAMP:
+		di->mixer_class = A64_CODEC_RECORD_CLASS;
+		strcpy(di->label.name, AudioNpreamp);
+		di->type = AUDIO_MIXER_ENUM;
+		if (di->index == A64_CODEC_RECORD_MIC1_PREAMP)
+			di->prev = A64_CODEC_RECORD_MIC1_VOLUME;
+		else
+			di->prev = A64_CODEC_RECORD_MIC2_VOLUME;
+		di->next = AUDIO_MIXER_LAST;
+		di->un.e.num_mem = 2;
+		strcpy(di->un.e.member[0].label.name, AudioNoff);
+		di->un.e.member[0].ord = 0;
+		strcpy(di->un.e.member[1].label.name, AudioNon);
+		di->un.e.member[1].ord = 1;
 		return 0;
 
 	case A64_CODEC_OUTPUT_MUTE:
