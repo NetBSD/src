@@ -22159,7 +22159,7 @@ dwarf_decode_macro_bytes (bfd *abfd,
 	  }
 	  break;
 
-        case DW_MACINFO_vendor_ext:
+        case (int)DW_MACINFO_vendor_ext:
 	  if (!section_is_gnu)
 	    {
 	      unsigned int bytes_read;
@@ -22336,7 +22336,7 @@ dwarf_decode_macros (struct dwarf2_cu *cu, unsigned int offset,
 	  mac_ptr += offset_size;
 	  break;
 
-	case DW_MACINFO_vendor_ext:
+	case (int)DW_MACINFO_vendor_ext:
 	  /* Only skip the data by MAC_PTR.  */
 	  if (!section_is_gnu)
 	    {
