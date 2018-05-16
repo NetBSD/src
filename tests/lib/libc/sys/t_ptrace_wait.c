@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.41 2018/05/16 01:27:27 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.42 2018/05/16 01:36:29 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.41 2018/05/16 01:27:27 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.42 2018/05/16 01:36:29 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -439,7 +439,8 @@ ATF_TC(test);									\
 ATF_TC_HEAD(test, tc)								\
 {										\
 	atf_tc_set_md_var(tc, "descr",						\
-	    "Verify " #sig " followed by _exit(2) in a vfork(2)ed child");	\
+	    "Verify PT_TRACE_ME followed by raise of " #sig " in a vfork(2)ed "	\
+	    "child");								\
 }										\
 										\
 ATF_TC_BODY(test, tc)								\
