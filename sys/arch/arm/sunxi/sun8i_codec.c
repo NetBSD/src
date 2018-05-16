@@ -1,4 +1,4 @@
-/* $NetBSD: sun8i_codec.c,v 1.4 2018/05/12 23:51:06 jmcneill Exp $ */
+/* $NetBSD: sun8i_codec.c,v 1.5 2018/05/16 10:22:54 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sun8i_codec.c,v 1.4 2018/05/12 23:51:06 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sun8i_codec.c,v 1.5 2018/05/16 10:22:54 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -427,7 +427,7 @@ sun8i_codec_attach(device_t parent, device_t self, void *aux)
 
 	/* Enable digital parts */
 	WR4(sc, DAC_DIG_CTRL, DAC_DIG_CTRL_ENDA);
-	WR4(sc, ADC_DIG_CTRL, ADC_DIG_CTRL_ENAD);	
+	WR4(sc, ADC_DIG_CTRL, ADC_DIG_CTRL_ENAD);
 
 	/* Set AIF1 to 48 kHz */
 	val = RD4(sc, SYS_SR_CTRL);
