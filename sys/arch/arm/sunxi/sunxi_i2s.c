@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_i2s.c,v 1.1 2018/05/10 00:00:21 jmcneill Exp $ */
+/* $NetBSD: sunxi_i2s.c,v 1.2 2018/05/16 10:15:20 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_i2s.c,v 1.1 2018/05/10 00:00:21 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_i2s.c,v 1.2 2018/05/16 10:15:20 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -336,7 +336,7 @@ static int
 sunxi_i2s_get_props(void *priv)
 {
 	return AUDIO_PROP_PLAYBACK|AUDIO_PROP_CAPTURE|
-	    AUDIO_PROP_MMAP|AUDIO_PROP_FULLDUPLEX;
+	    AUDIO_PROP_MMAP|AUDIO_PROP_FULLDUPLEX|AUDIO_PROP_INDEPENDENT;
 }
 
 static int
