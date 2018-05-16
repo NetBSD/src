@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.39 2018/05/13 23:14:47 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.40 2018/05/16 00:42:15 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.39 2018/05/13 23:14:47 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.40 2018/05/16 00:42:15 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -376,6 +376,83 @@ ATF_TC_BODY(traceme_pid1_parent, tc)
 	DPRINTF("Wait for exiting of child2\n");
 	PARENT_FROM_CHILD("child2 exiting", parent_child, msg);
 }
+
+/// ----------------------------------------------------------------------------
+
+static void
+traceme_vfork_raise(int sigval)
+{
+	const int exitval = 5;
+	pid_t child, wpid;
+#if defined(TWAIT_HAVE_STATUS)
+	int status;
+	int expect_core = (sigval == SIGABRT) ? 1 : 0;
+#endif
+
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = vfork()) != -1);
+	if (child == 0) {
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
+		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
+
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
+		FORKEE_ASSERT(raise(sigval) == 0);
+
+		switch (sigval) {
+		case SIGKILL:
+		case SIGABRT:
+		case SIGHUP:
+			/* NOTREACHED */
+			FORKEE_ASSERTX(0 && "This shall not be reached");
+		default:
+			DPRINTF("Before exiting of the child process\n");
+			_exit(exitval);
+		}
+	}
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	switch (sigval) {
+	case SIGKILL:
+	case SIGABRT:
+	case SIGHUP:
+		validate_status_signaled(status, sigval, expect_core);
+		break;
+	case SIGSTOP:
+	case SIGCONT:
+		validate_status_exited(status, exitval);
+		break;
+	default:
+		/* NOTREACHED */
+		ATF_REQUIRE(0 && "NOT IMPLEMENTED");
+		break;
+	}
+
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
+}
+
+#define TRACEME_VFORK_RAISE(test, sig)						\
+ATF_TC(test);									\
+ATF_TC_HEAD(test, tc)								\
+{										\
+	atf_tc_set_md_var(tc, "descr",						\
+	    "Verify " #sig " followed by _exit(2) in a vfork(2)ed child");	\
+}										\
+										\
+ATF_TC_BODY(test, tc)								\
+{										\
+										\
+	traceme_vfork_raise(sig);						\
+}
+
+TRACEME_VFORK_RAISE(traceme_vfork_raise1, SIGKILL) /* non-maskable */
+// TRACEME_VFORK_RAISE(traceme_vfork_raise2, SIGSTOP) /* non-maskable */ // TODO
+TRACEME_VFORK_RAISE(traceme_vfork_raise3, SIGABRT) /* regular abort trap */
+TRACEME_VFORK_RAISE(traceme_vfork_raise4, SIGHUP)  /* hangup */
+TRACEME_VFORK_RAISE(traceme_vfork_raise5, SIGCONT) /* continued? */
 
 /// ----------------------------------------------------------------------------
 
@@ -6839,6 +6916,12 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, traceme_signal_nohandler5);
 
 	ATF_TP_ADD_TC(tp, traceme_pid1_parent);
+
+	ATF_TP_ADD_TC(tp, traceme_vfork_raise1);
+//	ATF_TP_ADD_TC(tp, traceme_vfork_raise2); // not yet
+	ATF_TP_ADD_TC(tp, traceme_vfork_raise3);
+	ATF_TP_ADD_TC(tp, traceme_vfork_raise4);
+	ATF_TP_ADD_TC(tp, traceme_vfork_raise5);
 
 	ATF_TP_ADD_TC_HAVE_PID(tp, attach1);
 	ATF_TP_ADD_TC_HAVE_PID(tp, attach2);
