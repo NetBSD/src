@@ -1,4 +1,4 @@
-/* $NetBSD: ix_txrx.c,v 1.42 2018/05/08 09:45:54 msaitoh Exp $ */
+/* $NetBSD: ix_txrx.c,v 1.43 2018/05/16 07:51:17 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -1215,6 +1215,9 @@ ixgbe_txeof(struct tx_ring *txr)
 
 	work += txr->num_desc;
 	txr->next_to_clean = work;
+
+	if (txr->tx_avail == txr->num_desc)
+		txr->sending = false;
 
 	return ((limit > 0) ? false : true);
 } /* ixgbe_txeof */
