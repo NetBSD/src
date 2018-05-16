@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.5 2018/04/29 12:07:05 ryo Exp $	*/
+/*	$NetBSD: pmap.c,v 1.6 2018/05/16 08:32:07 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.5 2018/04/29 12:07:05 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.6 2018/05/16 08:32:07 ryo Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -1229,10 +1229,10 @@ pmap_create(void)
 	memset(pm, 0, sizeof(*pm));
 	pm->pm_refcnt = 1;
 	pm->pm_asid = -1;
-	pm->pm_l0table = _pmap_alloc_pdp(pm, &pm->pm_l0table_pa);
-	KASSERT(((vaddr_t)pm->pm_l0table & (PAGE_SIZE - 1)) == 0);
 	SLIST_INIT(&pm->pm_vmlist);
 	mutex_init(&pm->pm_lock, MUTEX_DEFAULT, IPL_VM);
+	pm->pm_l0table = _pmap_alloc_pdp(pm, &pm->pm_l0table_pa);
+	KASSERT(((vaddr_t)pm->pm_l0table & (PAGE_SIZE - 1)) == 0);
 
 	UVMHIST_LOG(pmaphist, "pm=%p, pm_l0table=%016lx, pm_l0table_pa=%016lx",
 	    pm, pm->pm_l0table, pm->pm_l0table_pa, 0);
