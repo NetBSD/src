@@ -1,4 +1,4 @@
-/* $NetBSD: sun50i_a64_acodec.c,v 1.6 2018/05/15 01:26:45 jmcneill Exp $ */
+/* $NetBSD: sun50i_a64_acodec.c,v 1.7 2018/05/16 00:12:57 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sun50i_a64_acodec.c,v 1.6 2018/05/15 01:26:45 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sun50i_a64_acodec.c,v 1.7 2018/05/16 00:12:57 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -140,9 +140,9 @@ static const struct a64_acodec_mixer {
 
 	[A64_CODEC_RECORD_LINE_VOLUME]	= { AudioNline,
 	    A64_CODEC_RECORD_CLASS, A64_LINEIN_CTRL, A64_LINEING },
-	[A64_CODEC_RECORD_MIC1_VOLUME]	= { "mic1",
+	[A64_CODEC_RECORD_MIC1_VOLUME]	= { AudioNmicrophone,
 	    A64_CODEC_RECORD_CLASS, A64_MIC1_CTRL, A64_MIC1G },
-	[A64_CODEC_RECORD_MIC2_VOLUME]	= { "mic2",
+	[A64_CODEC_RECORD_MIC2_VOLUME]	= { AudioNmicrophone "2",
 	    A64_CODEC_RECORD_CLASS, A64_MIC2_CTRL, A64_MIC2G },
 	[A64_CODEC_RECORD_AGC_VOLUME]	= { AudioNagc,
 	    A64_CODEC_RECORD_CLASS, A64_ADC_CTRL, A64_ADCG },
@@ -482,9 +482,9 @@ a64_acodec_query_devinfo(void *priv, mixer_devinfo_t *di)
 		di->un.s.num_mem = 4;
 		strcpy(di->un.s.member[0].label.name, AudioNline);
 		di->un.s.member[0].mask = A64_ADCMIX_SRC_LINEIN;
-		strcpy(di->un.s.member[1].label.name, "mic1");
+		strcpy(di->un.s.member[1].label.name, AudioNmicrophone);
 		di->un.s.member[1].mask = A64_ADCMIX_SRC_MIC1;
-		strcpy(di->un.s.member[2].label.name, "mic2");
+		strcpy(di->un.s.member[2].label.name, AudioNmicrophone "2");
 		di->un.s.member[2].mask = A64_ADCMIX_SRC_MIC2;
 		strcpy(di->un.s.member[3].label.name, AudioNdac);
 		di->un.s.member[3].mask = A64_ADCMIX_SRC_OMIXER;
