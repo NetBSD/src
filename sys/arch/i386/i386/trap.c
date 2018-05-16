@@ -1,5 +1,5 @@
 
-/*	$NetBSD: trap.c,v 1.294 2018/05/16 08:16:36 maxv Exp $	*/
+/*	$NetBSD: trap.c,v 1.295 2018/05/16 16:33:23 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.294 2018/05/16 08:16:36 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.295 2018/05/16 16:33:23 maxv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -128,7 +128,9 @@ dtrace_doubletrap_func_t	dtrace_doubletrap_func = NULL;
 void trap(struct trapframe *);
 void trap_tss(struct i386tss *, int, int);
 void trap_return_fault_return(struct trapframe *) __dead;
+#ifndef XEN
 int ss_shadow(struct trapframe *tf);
+#endif
 
 const char * const trap_type[] = {
 	"privileged instruction fault",		/*  0 T_PRIVINFLT */
@@ -237,6 +239,7 @@ trap_print(const struct trapframe *frame, const lwp_t *l)
 	    l, l->l_proc->p_pid, l->l_lid, KSTACK_LOWEST_ADDR(l));
 }
 
+#ifndef XEN
 int
 ss_shadow(struct trapframe *tf)
 {
@@ -255,6 +258,7 @@ ss_shadow(struct trapframe *tf)
 
 	return 0;
 }
+#endif
 
 /*
  * trap(frame): exception, fault, and trap interface to BSD kernel.
