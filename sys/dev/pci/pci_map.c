@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_map.c,v 1.33 2017/03/17 11:21:45 msaitoh Exp $	*/
+/*	$NetBSD: pci_map.c,v 1.34 2018/05/16 19:02:00 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_map.c,v 1.33 2017/03/17 11:21:45 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_map.c,v 1.34 2018/05/16 19:02:00 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -287,11 +287,17 @@ pci_mapreg_submap(const struct pci_attach_args *pa, int reg, pcireg_t type,
 	bus_space_handle_t handle;
 	bus_addr_t base;
 	bus_size_t realmaxsize;
-	int flags;
+	pcireg_t csr;
+	int flags, s;
 
 	if (PCI_MAPREG_TYPE(type) == PCI_MAPREG_TYPE_IO) {
 		if ((pa->pa_flags & PCI_FLAGS_IO_OKAY) == 0)
 			return 1;
+		s = splhigh();
+		csr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
+		csr |= PCI_COMMAND_IO_ENABLE;
+		pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, csr);
+		splx(s);
 		if (pci_io_find(pa->pa_pc, pa->pa_tag, reg, type, &base,
 		    &realmaxsize, &flags))
 			return 1;
@@ -299,6 +305,11 @@ pci_mapreg_submap(const struct pci_attach_args *pa, int reg, pcireg_t type,
 	} else {
 		if ((pa->pa_flags & PCI_FLAGS_MEM_OKAY) == 0)
 			return 1;
+		s = splhigh();
+		csr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
+		csr |= PCI_COMMAND_MEM_ENABLE;
+		pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, csr);
+		splx(s);
 		if (pci_mem_find(pa->pa_pc, pa->pa_tag, reg, type, &base,
 		    &realmaxsize, &flags))
 			return 1;
@@ -307,7 +318,6 @@ pci_mapreg_submap(const struct pci_attach_args *pa, int reg, pcireg_t type,
 
 	if (reg == PCI_MAPREG_ROM) {
 		pcireg_t 	mask;
-		int		s;
 		/* we have to enable the ROM address decoder... */
 		s = splhigh();
 		mask = pci_conf_read(pa->pa_pc, pa->pa_tag, reg);
