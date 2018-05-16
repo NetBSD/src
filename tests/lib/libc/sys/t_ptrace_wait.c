@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.44 2018/05/16 03:18:38 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.45 2018/05/16 03:52:35 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.44 2018/05/16 03:18:38 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.45 2018/05/16 03:52:35 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -93,6 +93,9 @@ traceme_raise(int sigval)
 	int status;
 #endif
 
+	struct ptrace_siginfo info;
+	memset(&info, 0, sizeof(info));
+
 	DPRINTF("Before forking process PID=%d\n", getpid());
 	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
@@ -122,6 +125,20 @@ traceme_raise(int sigval)
 		break;
 	default:
 		validate_status_stopped(status, sigval);
+
+		DPRINTF("Before calling ptrace(2) with PT_GET_SIGINFO for "
+		        "child\n");
+		SYSCALL_REQUIRE(ptrace(PT_GET_SIGINFO, child, &info,
+		                       sizeof(info)) != -1);
+
+		DPRINTF("Signal traced to lwpid=%d\n", info.psi_lwpid);
+		DPRINTF("Signal properties: si_signo=%#x si_code=%#x "
+		        "si_errno=%#x\n",
+		        info.psi_siginfo.si_signo, info.psi_siginfo.si_code,
+		        info.psi_siginfo.si_errno);
+
+		ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, sigval);
+		ATF_REQUIRE_EQ(info.psi_siginfo.si_code, SI_LWP);
 
 		DPRINTF("Before resuming the child process where it left off "
 		    "and without signal to be sent\n");
@@ -170,6 +187,9 @@ traceme_sighandler_catch(int sigsent, void (*sah)(int arg), int *traceme_caught)
 	int status;
 #endif
 
+	struct ptrace_siginfo info;
+	memset(&info, 0, sizeof(info));
+
 	DPRINTF("Before forking process PID=%d\n", getpid());
 	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
@@ -196,6 +216,18 @@ traceme_sighandler_catch(int sigsent, void (*sah)(int arg), int *traceme_caught)
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
+
+	DPRINTF("Before calling ptrace(2) with PT_GET_SIGINFO for child\n");
+	SYSCALL_REQUIRE(ptrace(PT_GET_SIGINFO, child, &info, sizeof(info))
+	                != -1);
+
+	DPRINTF("Signal traced to lwpid=%d\n", info.psi_lwpid);
+	DPRINTF("Signal properties: si_signo=%#x si_code=%#x si_errno=%#x\n",
+	    info.psi_siginfo.si_signo, info.psi_siginfo.si_code,
+	    info.psi_siginfo.si_errno);
+
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, sigval);
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, SI_LWP);
 
 	DPRINTF("Before resuming the child process where it left off and with "
 	    "signal %s to be sent\n", strsignal(sigsent));
@@ -253,6 +285,9 @@ traceme_signal_nohandler(int sigsent)
 	int expect_core = (sigsent == SIGABRT) ? 1 : 0;
 #endif
 
+	struct ptrace_siginfo info;
+	memset(&info, 0, sizeof(info));
+
 	DPRINTF("Before forking process PID=%d\n", getpid());
 	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
@@ -276,6 +311,18 @@ traceme_signal_nohandler(int sigsent)
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
+
+	DPRINTF("Before calling ptrace(2) with PT_GET_SIGINFO for child\n");
+	SYSCALL_REQUIRE(ptrace(PT_GET_SIGINFO, child, &info, sizeof(info))
+	                != -1);
+
+	DPRINTF("Signal traced to lwpid=%d\n", info.psi_lwpid);
+	DPRINTF("Signal properties: si_signo=%#x si_code=%#x si_errno=%#x\n",
+	    info.psi_siginfo.si_signo, info.psi_siginfo.si_code,
+	    info.psi_siginfo.si_errno);
+
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, sigval);
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, SI_LWP);
 
 	DPRINTF("Before resuming the child process where it left off and with "
 	    "signal %s to be sent\n", strsignal(sigsent));
