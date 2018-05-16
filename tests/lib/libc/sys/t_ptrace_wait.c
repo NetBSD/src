@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.42 2018/05/16 01:36:29 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.43 2018/05/16 02:47:25 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.42 2018/05/16 01:36:29 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.43 2018/05/16 02:47:25 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -493,6 +493,67 @@ ATF_TC_BODY(traceme_vfork_breakpoint, tc)
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_signaled(status, SIGTRAP, 1);
+
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
+}
+
+/// ----------------------------------------------------------------------------
+
+ATF_TC(traceme_vfork_exec);
+ATF_TC_HEAD(traceme_vfork_exec, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Verify PT_TRACE_ME followed by exec(3) in a vfork(2)ed child");
+}
+
+ATF_TC_BODY(traceme_vfork_exec, tc)
+{
+	const int sigval = SIGTRAP;
+	pid_t child, wpid;
+#if defined(TWAIT_HAVE_STATUS)
+	int status;
+#endif
+
+	struct ptrace_siginfo info;
+	memset(&info, 0, sizeof(info));
+
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = vfork()) != -1);
+	if (child == 0) {
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
+		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
+
+		DPRINTF("Before calling execve(2) from child\n");
+		execlp("/bin/echo", "/bin/echo", NULL);
+
+		/* NOTREACHED */
+		FORKEE_ASSERTX(0 && "Not reached");
+	}
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_stopped(status, sigval);
+
+	DPRINTF("Before calling ptrace(2) with PT_GET_SIGINFO for child\n");
+	SYSCALL_REQUIRE(ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
+
+	DPRINTF("Signal traced to lwpid=%d\n", info.psi_lwpid);
+	DPRINTF("Signal properties: si_signo=%#x si_code=%#x si_errno=%#x\n",
+	    info.psi_siginfo.si_signo, info.psi_siginfo.si_code,
+	    info.psi_siginfo.si_errno);
+
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, sigval);
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, TRAP_EXEC);
+
+	DPRINTF("Before resuming the child process where it left off and "
+	    "without signal to be sent\n");
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
@@ -6968,6 +7029,8 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, traceme_vfork_raise5);
 
 	ATF_TP_ADD_TC(tp, traceme_vfork_breakpoint);
+
+	ATF_TP_ADD_TC(tp, traceme_vfork_exec);
 
 	ATF_TP_ADD_TC_HAVE_PID(tp, attach1);
 	ATF_TP_ADD_TC_HAVE_PID(tp, attach2);
