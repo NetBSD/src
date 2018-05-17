@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.199 2018/05/15 13:50:20 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.200 2018/05/17 14:08:18 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -13452,4 +13452,30 @@ sys/net/if_bridge.c				1.155
 	Protect if_deferred_start_softint with KERNEL_LOCK if the interface
 	is not MP-safe,
 	[ozaki-r, ticket #826]
+
+sys/dev/pci/if_wm.c				1.577
+
+	Fix eventcounter type for rxipsum and rxtusum.
+	[msaitoh, ticket #827]
+
+sys/net/if_ipsec.c				1.12
+
+	Fix zero padding of PF_KEY messages for ipsecif(4).
+	[knakahara, ticket #828]
+
+sys/net/if_gif.c				1.140
+sys/net/if_gif.h				1.31
+sys/net/if_ipsec.c				1.13
+sys/net/if_ipsec.h				1.3
+sys/net/if_l2tp.c				1.24
+sys/net/if_l2tp.h				1.5
+sys/netinet/in_gif.c				1.93
+sys/netinet/in_l2tp.c				1.13
+sys/netinet6/in6_gif.c				1.92
+sys/netinet6/in6_l2tp.c				1.15
+sys/netipsec/ipsecif.c				1.8
+
+	Fix LOCKDEBUG kernel panic when many (about 200) tunnel interfaces
+	are created.
+	[knakahara, ticket #829]
 
