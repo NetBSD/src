@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1.6,v 1.1.2.141 2018/05/03 15:05:21 martin Exp $
+# $NetBSD: CHANGES-6.1.6,v 1.1.2.142 2018/05/17 13:51:22 martin Exp $
 
 A complete list of changes from the NetBSD 6.1.5 release to the NetBSD 6.1.6
 release:
@@ -15140,4 +15140,10 @@ sys/kern/uipc_mbuf.c				1.211 (patch)
 	Modify m_defrag, so that it never frees the first mbuf of
 	the chain.
 	[maxv, ticket #1547]
+
+sys/net/npf/npf_alg_icmp.c			1.27,1.28 (patch)
+sys/net/npf/npf_inet.c				1.45 (patch)
+
+	Fix use-after-free.
+	[maxv, ticket #1549]
 
