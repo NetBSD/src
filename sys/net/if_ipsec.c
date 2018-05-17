@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipsec.c,v 1.3.2.6 2018/05/17 14:02:31 martin Exp $  */
+/*	$NetBSD: if_ipsec.c,v 1.3.2.7 2018/05/17 14:07:03 martin Exp $  */
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipsec.c,v 1.3.2.6 2018/05/17 14:02:31 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipsec.c,v 1.3.2.7 2018/05/17 14:07:03 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -220,7 +220,7 @@ if_ipsec_ro_init_pc(void *p, void *arg __unused, struct cpu_info *ci __unused)
 {
 	struct ipsec_ro *iro = p;
 
-	mutex_init(&iro->ir_lock, MUTEX_DEFAULT, IPL_NONE);
+	iro->ir_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
 }
 
 static void
@@ -230,7 +230,7 @@ if_ipsec_ro_fini_pc(void *p, void *arg __unused, struct cpu_info *ci __unused)
 
 	rtcache_free(&iro->ir_ro);
 
-	mutex_destroy(&iro->ir_lock);
+	mutex_obj_free(iro->ir_lock);
 }
 
 static int

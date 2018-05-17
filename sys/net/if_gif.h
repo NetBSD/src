@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.h,v 1.25.8.2 2018/01/02 10:48:51 snj Exp $	*/
+/*	$NetBSD: if_gif.h,v 1.25.8.3 2018/05/17 14:07:03 martin Exp $	*/
 /*	$KAME: if_gif.h,v 1.23 2001/07/27 09:21:42 itojun Exp $	*/
 
 /*
@@ -56,7 +56,7 @@ struct encaptab;
 
 struct gif_ro {
 	struct route gr_ro;
-	kmutex_t gr_lock;
+	kmutex_t *gr_lock;
 };
 
 struct gif_variant {
