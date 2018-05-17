@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_nfs.8,v 1.46 2017/07/03 21:33:41 wiz Exp $
+.\"	$NetBSD: mount_nfs.8,v 1.47 2018/05/17 02:34:31 thorpej Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994, 1995
 .\"	The Regents of the University of California.  All rights reserved.
@@ -37,7 +37,7 @@
 .Nd mount NFS file systems
 .Sh SYNOPSIS
 .Nm
-.Op Fl 23bCcdilPpqsTUX
+.Op Fl 23bCcdilPpqsTUuX
 .Op Fl a Ar maxreadahead
 .Op Fl D Ar deadthresh
 .Op Fl g Ar maxgroups
@@ -241,6 +241,9 @@ Same as
 .It Cm tcp
 Same as
 .Fl T .
+.It Cm udp
+Same as
+.Fl u .
 .It Cm timeo Ns = Ns Aq Ar timeout
 Same as
 .Fl t Ar timeout .
@@ -294,11 +297,8 @@ Use
 .Tn TCP
 transport instead of
 .Tn UDP .
-This is recommended for servers that are not on the same physical network as
-the client.
-Not all
-.Tn NFS
-servers, especially not old ones, support this.
+This is the default;
+the flag is maintained for backwards compatibility.
 .It Fl t Ar timeout
 Set the initial retransmit timeout to the specified value in 0.1 seconds.
 May be useful for fine tuning
@@ -323,6 +323,12 @@ mounts.
 This is necessary for some old
 .Bx
 servers.
+.It Fl u
+Use
+.Tn UDP
+transport instead of
+.Tn TCP .
+This may be necessary for some very old servers.
 .It Fl w Ar writesize
 Set the write data size to the specified value in bytes.
 .Pp
