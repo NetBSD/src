@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.455 2018/05/15 10:23:03 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.456 2018/05/17 11:35:31 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.455 2018/05/15 10:23:03 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.456 2018/05/17 11:35:31 nat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -4766,8 +4766,8 @@ done:
 
 	if (SPECIFIED(r->gain)) {
 		if (!sc->sc_usemixer || vc == &sc->sc_mixring) {
-			au_get_gain(sc, &sc->sc_outports, &gain, &balance);
-			error = au_set_gain(sc, &sc->sc_outports, r->gain, balance);
+			au_get_gain(sc, &sc->sc_inports, &gain, &balance);
+			error = au_set_gain(sc, &sc->sc_inports, r->gain, balance);
 			if (error)
 				goto cleanup;
 		} else
