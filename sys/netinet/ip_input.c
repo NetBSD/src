@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.383 2018/05/14 17:34:26 maxv Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.384 2018/05/17 11:59:36 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.383 2018/05/14 17:34:26 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.384 2018/05/17 11:59:36 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -587,8 +587,10 @@ ip_input(struct mbuf *m)
 			m = NULL;
 			goto out;
 		}
+		KASSERT(m->m_len >= sizeof(struct ip));
 		ip = mtod(m, struct ip *);
 		hlen = ip->ip_hl << 2;
+		KASSERT(m->m_len >= hlen);
 
 		/*
 		 * XXX The setting of "srcrt" here is to prevent ip_forward()
