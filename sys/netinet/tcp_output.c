@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.207 2018/05/07 23:42:13 uwe Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.208 2018/05/17 07:30:13 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -135,7 +135,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.207 2018/05/07 23:42:13 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.208 2018/05/17 07:30:13 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1073,12 +1073,12 @@ just_return:
 
 send:
 	/*
-	 * Before ESTABLISHED, force sending of initial options
-	 * unless TCP set not to do any options.
-	 * NOTE: we assume that the IP/TCP header plus TCP options
-	 * always fit in a single mbuf, leaving room for a maximum
-	 * link header, i.e.
-	 *	max_linkhdr + sizeof (struct tcpiphdr) + optlen <= MCLBYTES
+	 * Before ESTABLISHED, force sending of initial options unless TCP set
+	 * not to do any options.
+	 *
+	 * Note: we assume that the IP/TCP header plus TCP options always fit
+	 * in a single mbuf, leaving room for a maximum link header, i.e.:
+	 *     max_linkhdr + IP_header + TCP_header + optlen <= MCLBYTES
 	 */
 	optlen = 0;
 	optp = opt;
