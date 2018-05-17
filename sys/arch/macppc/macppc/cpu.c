@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.66 2018/05/13 16:03:25 macallan Exp $	*/
+/*	$NetBSD: cpu.c,v 1.67 2018/05/17 19:08:51 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.66 2018/05/13 16:03:25 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.67 2018/05/17 19:08:51 macallan Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -68,6 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.66 2018/05/13 16:03:25 macallan Exp $");
 #include <machine/trap.h>
 
 #include "pic_openpic.h"
+#include "pic_u3_ht.h"
 
 #ifndef OPENPIC
 #if NPIC_OPENPIC > 0
