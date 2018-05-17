@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.154 2018/05/01 07:21:39 maxv Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.155 2018/05/17 12:07:48 maxv Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.154 2018/05/01 07:21:39 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.155 2018/05/17 12:07:48 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -392,8 +392,8 @@ nd6_ns_output(struct ifnet *ifp, const struct in6_addr *daddr6,
 	/* estimate the size of message */
 	maxlen = sizeof(*ip6) + sizeof(*nd_ns);
 	maxlen += (sizeof(struct nd_opt_hdr) + ifp->if_addrlen + 7) & ~7;
-	KASSERTMSG(max_linkhdr + maxlen < MCLBYTES,
-	    "max_linkhdr + maxlen >= MCLBYTES (%d + %d >= %d)",
+	KASSERTMSG(max_linkhdr + maxlen <= MCLBYTES,
+	    "max_linkhdr + maxlen > MCLBYTES (%d + %d > %d)",
 	    max_linkhdr, maxlen, MCLBYTES);
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
@@ -922,8 +922,8 @@ nd6_na_output(
 	/* estimate the size of message */
 	maxlen = sizeof(*ip6) + sizeof(*nd_na);
 	maxlen += (sizeof(struct nd_opt_hdr) + ifp->if_addrlen + 7) & ~7;
-	KASSERTMSG(max_linkhdr + maxlen < MCLBYTES,
-	    "max_linkhdr + maxlen >= MCLBYTES (%d + %d >= %d)",
+	KASSERTMSG(max_linkhdr + maxlen <= MCLBYTES,
+	    "max_linkhdr + maxlen > MCLBYTES (%d + %d > %d)",
 	    max_linkhdr, maxlen, MCLBYTES);
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
