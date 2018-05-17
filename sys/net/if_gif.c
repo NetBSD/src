@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.126.2.9 2018/03/08 13:22:26 martin Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.126.2.10 2018/05/17 14:07:03 martin Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.126.2.9 2018/03/08 13:22:26 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.126.2.10 2018/05/17 14:07:03 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -319,7 +319,7 @@ gif_ro_init_pc(void *p, void *arg __unused, struct cpu_info *ci __unused)
 {
 	struct gif_ro *gro = p;
 
-	mutex_init(&gro->gr_lock, MUTEX_DEFAULT, IPL_NONE);
+	gro->gr_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
 }
 
 static void
@@ -329,7 +329,7 @@ gif_ro_fini_pc(void *p, void *arg __unused, struct cpu_info *ci __unused)
 
 	rtcache_free(&gro->gr_ro);
 
-	mutex_destroy(&gro->gr_lock);
+	mutex_obj_free(gro->gr_lock);
 }
 
 void
