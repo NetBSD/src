@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.338 2018/05/14 16:08:15 martin Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.339 2018/05/17 13:46:08 martin Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -21250,4 +21250,10 @@ sys/dev/ic/hme.c				1.97
 
 	Fix mis-placed right parenthesis.
 	[pgoyette, ticket #1548]
+
+sys/net/npf/npf_alg_icmp.c			1.27,1.28 (patch)
+sys/net/npf/npf_inet.c				1.45 (patch)
+
+	Fix use-after-free.
+	[maxv, ticket #1549]
 
