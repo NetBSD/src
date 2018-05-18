@@ -1,4 +1,4 @@
-/* $NetBSD: tcp_sack.c,v 1.35 2018/05/03 07:13:48 maxv Exp $ */
+/* $NetBSD: tcp_sack.c,v 1.36 2018/05/18 18:58:51 maxv Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_sack.c,v 1.35 2018/05/03 07:13:48 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_sack.c,v 1.36 2018/05/18 18:58:51 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -144,7 +144,6 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_sack.c,v 1.35 2018/05/03 07:13:48 maxv Exp $");
 #endif
 
 #ifndef INET6
-/* always need ip6.h for IP6_EXTHDR_GET */
 #include <netinet/ip6.h>
 #endif
 
