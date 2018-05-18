@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.c,v 1.87 2015/12/21 20:44:54 christos Exp $ */
+/* $NetBSD: thunk.c,v 1.88 2018/05/18 05:51:23 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -28,10 +28,10 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__RCSID("$NetBSD: thunk.c,v 1.87 2015/12/21 20:44:54 christos Exp $");
+__RCSID("$NetBSD: thunk.c,v 1.88 2018/05/18 05:51:23 reinoud Exp $");
 #endif
 
-#include <sys/types.h>
+#include "../include/types.h"
 #include <sys/mman.h>
 #include <stdarg.h>
 #include <sys/reboot.h>
