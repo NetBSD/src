@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_esp.c,v 1.88 2018/05/13 18:34:59 maxv Exp $	*/
+/*	$NetBSD: xform_esp.c,v 1.89 2018/05/18 19:02:49 maxv Exp $	*/
 /*	$FreeBSD: xform_esp.c,v 1.2.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_esp.c,v 1.69 2001/06/26 06:18:59 angelos Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.88 2018/05/13 18:34:59 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.89 2018/05/18 19:02:49 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -309,7 +309,7 @@ esp_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 	    skip, m->m_pkthdr.len);
 
 	/* XXX don't pullup, just copy header */
-	IP6_EXTHDR_GET(esp, struct newesp *, m, skip, sizeof(struct newesp));
+	M_REGION_GET(esp, struct newesp *, m, skip, sizeof(struct newesp));
 	if (esp == NULL) {
 		/* m already freed */
 		return ENOBUFS;
