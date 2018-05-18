@@ -1,4 +1,4 @@
-/* $NetBSD: sun50i_a64_ccu.c,v 1.7 2018/05/10 23:58:05 jmcneill Exp $ */
+/* $NetBSD: sun50i_a64_ccu.c,v 1.8 2018/05/18 01:52:58 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sun50i_a64_ccu.c,v 1.7 2018/05/10 23:58:05 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun50i_a64_ccu.c,v 1.8 2018/05/18 01:52:58 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -141,7 +141,7 @@ static const char *ahb1_parents[] = { "losc", "hosc", "axi", "pll_periph0" };
 static const char *ahb2_parents[] = { "ahb1", "pll_periph0" };
 static const char *apb1_parents[] = { "ahb1" };
 static const char *apb2_parents[] = { "losc", "hosc", "pll_periph0" };
-static const char *mod_parents[] = { "hosc", "pll_periph0", "pll_periph1" };
+static const char *mmc_parents[] = { "hosc", "pll_periph0_2x", "pll_periph1_2x" };
 static const char *ths_parents[] = { "hosc", NULL, NULL, NULL };
 
 static const struct sunxi_ccu_nkmp_tbl sun50i_a64_cpux_table[] = {
@@ -241,6 +241,7 @@ static struct sunxi_ccu_clk sun50i_a64_ccu_clks[] = {
 	    __BITS(17,16),		/* p */
 	    __BIT(31),			/* enable */
 	    SUNXI_CCU_NKMP_DIVIDE_BY_TWO),
+	SUNXI_CCU_FIXED_FACTOR(A64_CLK_PLL_PERIPH0_2X, "pll_periph0_2x", "pll_periph0", 1, 2),
 
 	SUNXI_CCU_NKMP_TABLE(A64_CLK_PLL_AUDIO_BASE, "pll_audio_base", "hosc",
 	    PLL_AUDIO_CTRL_REG,		/* reg */
@@ -288,14 +289,26 @@ static struct sunxi_ccu_clk sun50i_a64_ccu_clks[] = {
 	    0,			/* enable */
 	    SUNXI_CCU_NM_POWER_OF_TWO),
 
-	SUNXI_CCU_NM(A64_CLK_MMC0, "mmc0", mod_parents,
-	    SDMMC0_CLK_REG, __BITS(17, 16), __BITS(3,0), __BITS(25, 24), __BIT(31),
+	SUNXI_CCU_NM(A64_CLK_MMC0, "mmc0", mmc_parents,
+	    SDMMC0_CLK_REG,	/* reg */
+	    __BITS(17,16),	/* n */
+	    __BITS(3,0),	/* m */
+	    __BITS(25,24),	/* sel */
+	    __BIT(31),		/* enable */
 	    SUNXI_CCU_NM_POWER_OF_TWO|SUNXI_CCU_NM_ROUND_DOWN),
-	SUNXI_CCU_NM(A64_CLK_MMC1, "mmc1", mod_parents,
-	    SDMMC1_CLK_REG, __BITS(17, 16), __BITS(3,0), __BITS(25, 24), __BIT(31),
+	SUNXI_CCU_NM(A64_CLK_MMC1, "mmc1", mmc_parents,
+	    SDMMC1_CLK_REG,	/* reg */
+	    __BITS(17,16),	/* n */
+	    __BITS(3,0),	/* m */
+	    __BITS(25,24),	/* sel */
+	    __BIT(31),		/* enable */
 	    SUNXI_CCU_NM_POWER_OF_TWO|SUNXI_CCU_NM_ROUND_DOWN),
-	SUNXI_CCU_NM(A64_CLK_MMC2, "mmc2", mod_parents,
-	    SDMMC2_CLK_REG, __BITS(17, 16), __BITS(3,0), __BITS(25, 24), __BIT(31),
+	SUNXI_CCU_NM(A64_CLK_MMC2, "mmc2", mmc_parents,
+	    SDMMC2_CLK_REG,	/* reg */
+	    __BITS(17,16),	/* n */
+	    __BITS(3,0),	/* m */
+	    __BITS(25,24),	/* sel */
+	    __BIT(31),		/* enable */
 	    SUNXI_CCU_NM_POWER_OF_TWO|SUNXI_CCU_NM_ROUND_DOWN),
 
 	SUNXI_CCU_DIV_GATE(A64_CLK_THS, "ths", ths_parents,
