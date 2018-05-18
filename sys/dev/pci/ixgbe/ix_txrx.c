@@ -1,4 +1,4 @@
-/* $NetBSD: ix_txrx.c,v 1.44 2018/05/16 08:08:24 msaitoh Exp $ */
+/* $NetBSD: ix_txrx.c,v 1.45 2018/05/18 10:09:02 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -130,10 +130,9 @@ static void	ixgbe_setup_hw_rsc(struct rx_ring *);
 int
 ixgbe_legacy_start_locked(struct ifnet *ifp, struct tx_ring *txr)
 {
+	int rc;
 	struct mbuf    *m_head;
 	struct adapter *adapter = txr->adapter;
-	int enqueued = 0;
-	int rc;
 
 	IXGBE_TX_LOCK_ASSERT(txr);
 
@@ -159,7 +158,6 @@ ixgbe_legacy_start_locked(struct ifnet *ifp, struct tx_ring *txr)
 		if ((rc = ixgbe_xmit(txr, m_head)) == EAGAIN) {
 			break;
 		}
-		enqueued++;
 		IFQ_DEQUEUE(&ifp->if_snd, m_head);
 		if (rc != 0) {
 			m_freem(m_head);
@@ -168,11 +166,6 @@ ixgbe_legacy_start_locked(struct ifnet *ifp, struct tx_ring *txr)
 
 		/* Send a copy of the frame to the BPF listener */
 		bpf_mtap(ifp, m_head);
-	}
-
-	if (enqueued) {
-		txr->lastsent = time_uptime;
-		txr->sending = true;
 	}
 
 	return IXGBE_SUCCESS;
@@ -321,11 +314,6 @@ ixgbe_mq_start_locked(struct ifnet *ifp, struct tx_ring *txr)
 		bpf_mtap(ifp, next);
 		if ((ifp->if_flags & IFF_RUNNING) == 0)
 			break;
-	}
-
-	if (enqueued) {
-		txr->lastsent = time_uptime;
-		txr->sending = true;
 	}
 
 	if (txr->tx_avail < IXGBE_TX_CLEANUP_THRESHOLD(txr->adapter))
@@ -552,6 +540,10 @@ retry:
 	if (m_head->m_flags & M_MCAST)
 		ifp->if_omcasts++;
 
+	/* Mark queue as having work */
+	if (txr->busy == 0)
+		txr->busy = 1;
+
 	return (0);
 } /* ixgbe_xmit */
 
@@ -677,7 +669,6 @@ ixgbe_setup_transmit_ring(struct tx_ring *txr)
 	/* Free any existing tx buffers. */
 	txbuf = txr->tx_buffers;
 	for (int i = 0; i < txr->num_desc; i++, txbuf++) {
-		txr->sending = false;
 		if (txbuf->m_head != NULL) {
 			bus_dmamap_sync(txr->txtag->dt_dmat, txbuf->map,
 			    0, txbuf->m_head->m_pkthdr.len,
@@ -1138,7 +1129,7 @@ ixgbe_txeof(struct tx_ring *txr)
 #endif /* DEV_NETMAP */
 
 	if (txr->tx_avail == txr->num_desc) {
-		txr->sending = false;
+		txr->busy = 0;
 		return false;
 	}
 
@@ -1220,8 +1211,25 @@ ixgbe_txeof(struct tx_ring *txr)
 	work += txr->num_desc;
 	txr->next_to_clean = work;
 
+	/*
+	 * Queue Hang detection, we know there's
+	 * work outstanding or the first return
+	 * would have been taken, so increment busy
+	 * if nothing managed to get cleaned, then
+	 * in local_timer it will be checked and
+	 * marked as HUNG if it exceeds a MAX attempt.
+	 */
+	if ((processed == 0) && (txr->busy != IXGBE_QUEUE_HUNG))
+		++txr->busy;
+	/*
+	 * If anything gets cleaned we reset state to 1,
+	 * note this will turn off HUNG if its set.
+	 */
+	if (processed)
+		txr->busy = 1;
+
 	if (txr->tx_avail == txr->num_desc)
-		txr->sending = false;
+		txr->busy = 0;
 
 	return ((limit > 0) ? false : true);
 } /* ixgbe_txeof */
