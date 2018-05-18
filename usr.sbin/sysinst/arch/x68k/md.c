@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.4 2015/05/10 10:14:03 martin Exp $ */
+/*	$NetBSD: md.c,v 1.5 2018/05/18 12:23:23 joerg Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -280,7 +280,7 @@ md_post_newfs(void)
 	    "/usr/mdec/installboot.new /usr/mdec/sdboot_ufs /dev/r%sa",
 	    pm->diskdev))
 		process_menu(MENU_ok,
-			deconst("Warning: disk is probably not bootable"));
+			__UNCONST("Warning: disk is probably not bootable"));
 	return 0;
 }
 
