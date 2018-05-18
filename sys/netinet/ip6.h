@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6.h,v 1.23 2007/12/25 18:33:46 perry Exp $	*/
+/*	$NetBSD: ip6.h,v 1.24 2018/05/18 18:28:40 maxv Exp $	*/
 /*	$KAME: ip6.h,v 1.45 2003/06/05 04:46:38 keiichi Exp $	*/
 
 /*
@@ -126,13 +126,12 @@ struct ip6_hdr_pseudo {
  * Extension Headers
  */
 
-struct	ip6_ext {
+struct ip6_ext {
 	u_int8_t ip6e_nxt;
 	u_int8_t ip6e_len;
 } __packed;
 
 /* Hop-by-Hop options header */
-/* XXX should we pad it to force alignment on an 8-byte boundary? */
 struct ip6_hbh {
 	u_int8_t ip6h_nxt;	/* next header */
 	u_int8_t ip6h_len;	/* length in units of 8 octets */
@@ -140,7 +139,6 @@ struct ip6_hbh {
 } __packed;
 
 /* Destination options header */
-/* XXX should we pad it to force alignment on an 8-byte boundary? */
 struct ip6_dest {
 	u_int8_t ip6d_nxt;	/* next header */
 	u_int8_t ip6d_len;	/* length in units of 8 octets */
@@ -159,7 +157,7 @@ struct ip6_dest {
 #define IP6OPT_RTALERT_LEN	4
 #define IP6OPT_RTALERT_MLD	0	/* Datagram contains an MLD message */
 #define IP6OPT_RTALERT_RSVP	1	/* Datagram contains an RSVP message */
-#define IP6OPT_RTALERT_ACTNET	2 	/* contains an Active Networks msg */
+#define IP6OPT_RTALERT_ACTNET	2	/* contains an Active Networks msg */
 #define IP6OPT_MINLEN		2
 
 #define IP6OPT_TYPE(o)		((o) & 0xC0)
@@ -222,10 +220,10 @@ struct ip6_opt_router {
 
 /* Routing header */
 struct ip6_rthdr {
-	u_int8_t  ip6r_nxt;	/* next header */
-	u_int8_t  ip6r_len;	/* length in units of 8 octets */
-	u_int8_t  ip6r_type;	/* routing type */
-	u_int8_t  ip6r_segleft;	/* segments left */
+	u_int8_t ip6r_nxt;	/* next header */
+	u_int8_t ip6r_len;	/* length in units of 8 octets */
+	u_int8_t ip6r_type;	/* routing type */
+	u_int8_t ip6r_segleft;	/* segments left */
 	/* followed by routing type specific data */
 } __packed;
 
@@ -273,10 +271,6 @@ struct ip6_frag {
  * "len") is located in single mbuf, on contiguous memory region.
  * The pointer to the region will be returned to pointer variable "val",
  * with type "typ".
- * IP6_EXTHDR_GET0 does the same, except that it aligns the structure at the
- * very top of mbuf.  GET0 is likely to make memory copy than GET.
- *
- * XXX we're now testing this, needs m_pulldown()
  */
 #define IP6_EXTHDR_GET(val, typ, m, off, len) \
 do {									\
@@ -290,24 +284,6 @@ do {									\
 			if (_t->m_len < _tmp + (len))			\
 				panic("m_pulldown malfunction");	\
 			(val) = (typ)(mtod(_t, char *) + _tmp);	\
-		} else {						\
-			(val) = (typ)NULL;				\
-			(m) = NULL;					\
-		}							\
-	}								\
-} while (/*CONSTCOND*/ 0)
-
-#define IP6_EXTHDR_GET0(val, typ, m, off, len) \
-do {									\
-	struct mbuf *_t;						\
-	if ((off) == 0 && (m)->m_len >= len)				\
-		(val) = (typ)mtod((m), void *);			\
-	else {								\
-		_t = m_pulldown((m), (off), (len), NULL);		\
-		if (_t) {						\
-			if (_t->m_len < (len))				\
-				panic("m_pulldown malfunction");	\
-			(val) = (typ)mtod(_t, void *);			\
 		} else {						\
 			(val) = (typ)NULL;				\
 			(m) = NULL;					\
