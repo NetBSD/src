@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_x86_64.c,v 1.3 2018/05/18 20:11:48 reinoud Exp $ */
+/* $NetBSD: cpu_x86_64.c,v 1.4 2018/05/18 21:05:10 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -27,15 +27,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Note that this machdep.c uses the `dummy' mcontext_t defined for usermode.
- * This is basicly a blob of PAGE_SIZE big. We might want to switch over to
- * non-generic mcontext_t's one day, but will this break non-NetBSD hosts?
- */
-
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_x86_64.c,v 1.3 2018/05/18 20:11:48 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_x86_64.c,v 1.4 2018/05/18 21:05:10 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
