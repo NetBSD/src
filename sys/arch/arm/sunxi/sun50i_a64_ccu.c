@@ -1,4 +1,4 @@
-/* $NetBSD: sun50i_a64_ccu.c,v 1.8 2018/05/18 01:52:58 jmcneill Exp $ */
+/* $NetBSD: sun50i_a64_ccu.c,v 1.9 2018/05/18 02:03:00 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sun50i_a64_ccu.c,v 1.8 2018/05/18 01:52:58 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun50i_a64_ccu.c,v 1.9 2018/05/18 02:03:00 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -295,21 +295,21 @@ static struct sunxi_ccu_clk sun50i_a64_ccu_clks[] = {
 	    __BITS(3,0),	/* m */
 	    __BITS(25,24),	/* sel */
 	    __BIT(31),		/* enable */
-	    SUNXI_CCU_NM_POWER_OF_TWO|SUNXI_CCU_NM_ROUND_DOWN),
+	    SUNXI_CCU_NM_POWER_OF_TWO|SUNXI_CCU_NM_ROUND_DOWN|SUNXI_CCU_NM_DIVIDE_BY_TWO),
 	SUNXI_CCU_NM(A64_CLK_MMC1, "mmc1", mmc_parents,
 	    SDMMC1_CLK_REG,	/* reg */
 	    __BITS(17,16),	/* n */
 	    __BITS(3,0),	/* m */
 	    __BITS(25,24),	/* sel */
 	    __BIT(31),		/* enable */
-	    SUNXI_CCU_NM_POWER_OF_TWO|SUNXI_CCU_NM_ROUND_DOWN),
+	    SUNXI_CCU_NM_POWER_OF_TWO|SUNXI_CCU_NM_ROUND_DOWN|SUNXI_CCU_NM_DIVIDE_BY_TWO),
 	SUNXI_CCU_NM(A64_CLK_MMC2, "mmc2", mmc_parents,
 	    SDMMC2_CLK_REG,	/* reg */
 	    __BITS(17,16),	/* n */
 	    __BITS(3,0),	/* m */
 	    __BITS(25,24),	/* sel */
 	    __BIT(31),		/* enable */
-	    SUNXI_CCU_NM_POWER_OF_TWO|SUNXI_CCU_NM_ROUND_DOWN),
+	    SUNXI_CCU_NM_POWER_OF_TWO|SUNXI_CCU_NM_ROUND_DOWN|SUNXI_CCU_NM_DIVIDE_BY_TWO),
 
 	SUNXI_CCU_DIV_GATE(A64_CLK_THS, "ths", ths_parents,
 	    THS_CLK_REG,	/* reg */
