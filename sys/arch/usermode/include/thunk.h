@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.h,v 1.62 2015/02/06 10:25:13 prlw1 Exp $ */
+/* $NetBSD: thunk.h,v 1.63 2018/05/18 20:24:57 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #ifndef _ARCH_USERMODE_INCLUDE_THUNK_H
 #define _ARCH_USERMODE_INCLUDE_THUNK_H
 
-#include <sys/types.h>
+#include "types.h"
 #include <sys/time.h>
 #include <sys/stat.h>
 #include <sys/fcntl.h>
