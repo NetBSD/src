@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.205 2018/05/03 21:37:29 christos Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.206 2018/05/18 18:52:17 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -643,6 +643,31 @@ do {									\
 #define	M_GETCTX(m, t)		((t)(m)->m_pkthdr._rcvif.ctx)
 #define	M_SETCTX(m, c)		((void)((m)->m_pkthdr._rcvif.ctx = (void *)(c)))
 #define	M_CLEARCTX(m)		M_SETCTX((m), NULL)
+
+/*
+ * M_REGION_GET ensures that the "len"-sized region of type "typ" starting
+ * from "off" within "m" is located in a single mbuf, contiguously.
+ *
+ * The pointer to the region will be returned to pointer variable "val".
+ */
+#define M_REGION_GET(val, typ, m, off, len) \
+do {									\
+	struct mbuf *_t;						\
+	int _tmp;							\
+	if ((m)->m_len >= (off) + (len))				\
+		(val) = (typ)(mtod((m), char *) + (off));		\
+	else {								\
+		_t = m_pulldown((m), (off), (len), &_tmp);		\
+		if (_t) {						\
+			if (_t->m_len < _tmp + (len))			\
+				panic("m_pulldown malfunction");	\
+			(val) = (typ)(mtod(_t, char *) + _tmp);	\
+		} else {						\
+			(val) = (typ)NULL;				\
+			(m) = NULL;					\
+		}							\
+	}								\
+} while (/*CONSTCOND*/ 0)
 
 #endif /* defined(_KERNEL) */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6.h,v 1.24 2018/05/18 18:28:40 maxv Exp $	*/
+/*	$NetBSD: ip6.h,v 1.25 2018/05/18 18:52:17 maxv Exp $	*/
 /*	$KAME: ip6.h,v 1.45 2003/06/05 04:46:38 keiichi Exp $	*/
 
 /*
@@ -266,30 +266,8 @@ struct ip6_frag {
 #define IPV6_MAXPACKET	65535	/* ip6 max packet size without Jumbo payload*/
 
 #ifdef _KERNEL
-/*
- * IP6_EXTHDR_GET ensures that intermediate protocol header (from "off" to
- * "len") is located in single mbuf, on contiguous memory region.
- * The pointer to the region will be returned to pointer variable "val",
- * with type "typ".
- */
 #define IP6_EXTHDR_GET(val, typ, m, off, len) \
-do {									\
-	struct mbuf *_t;						\
-	int _tmp;							\
-	if ((m)->m_len >= (off) + (len))				\
-		(val) = (typ)(mtod((m), char *) + (off));		\
-	else {								\
-		_t = m_pulldown((m), (off), (len), &_tmp);		\
-		if (_t) {						\
-			if (_t->m_len < _tmp + (len))			\
-				panic("m_pulldown malfunction");	\
-			(val) = (typ)(mtod(_t, char *) + _tmp);	\
-		} else {						\
-			(val) = (typ)NULL;				\
-			(m) = NULL;					\
-		}							\
-	}								\
-} while (/*CONSTCOND*/ 0)
+	M_REGION_GET(val, typ, m, off, len)
 #endif /*_KERNEL*/
 
 #endif /* !_NETINET_IP6_H_ */
