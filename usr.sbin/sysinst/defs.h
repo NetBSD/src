@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.9 2015/05/11 13:07:57 martin Exp $	*/
+/*	$NetBSD: defs.h,v 1.10 2018/05/18 12:23:22 joerg Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -44,12 +44,6 @@
 #include <sys/disk.h>
 
 const char *getfslabelname(uint8_t);
-
-static inline void *
-deconst(const void *p)
-{
-	return (char *)0 + ((const char *)p - (const char *)0);
-}
 
 #include "msg_defs.h"
 #include "menu_defs.h"
