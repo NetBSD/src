@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.782 2018/05/02 18:46:05 kamil Exp $
+# $NetBSD: mi,v 1.783 2018/05/18 06:39:59 kamil Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2757,6 +2757,7 @@
 ./usr/tests/lib/libc/sys/t_connect		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/sys/t_context		tests-obsolete		obsolete
 ./usr/tests/lib/libc/sys/t_dup			tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libc/sys/t_fork			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/sys/t_fsync		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/sys/t_getcontext		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/sys/t_getgroups		tests-lib-tests		compattestfile,atf
@@ -2817,6 +2818,7 @@
 ./usr/tests/lib/libc/sys/t_ucontext		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/sys/t_umask		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/sys/t_unlink		tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libc/sys/t_vfork		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/sys/t_wait			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/sys/t_wait_noproc		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/sys/t_wait_noproc_wnohang	tests-lib-tests		compattestfile,atf
