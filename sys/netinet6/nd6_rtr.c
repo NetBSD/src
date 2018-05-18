@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.141 2018/05/01 07:21:39 maxv Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.142 2018/05/18 21:03:33 maxv Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.141 2018/05/01 07:21:39 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.142 2018/05/18 21:03:33 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -177,6 +177,7 @@ nd6_rs_input(struct mbuf *m, int off, int icmp6len)
 	IP6_EXTHDR_GET(nd_rs, struct nd_router_solicit *, m, off, icmp6len);
 	if (nd_rs == NULL) {
 		ICMP6_STATINC(ICMP6_STAT_TOOSHORT);
+		m_put_rcvif_psref(ifp, &psref);
 		return;
 	}
 
