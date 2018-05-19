@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.211 2018/05/08 19:33:57 christos Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.212 2018/05/19 11:39:37 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -617,32 +617,6 @@ int			ubc_uiomove(struct uvm_object *, struct uio *, vsize_t,
 			    int, int);
 void			ubc_zerorange(struct uvm_object *, off_t, size_t, int);
 void			ubc_purge(struct uvm_object *);
-
-/* uvm_emap.c */
-void			uvm_emap_sysinit(void);
-#ifdef __HAVE_PMAP_EMAP
-void			uvm_emap_switch(lwp_t *);
-#else
-#define			uvm_emap_switch(l)
-#endif
-
-u_int			uvm_emap_gen_return(void);
-void			uvm_emap_update(u_int);
-
-vaddr_t			uvm_emap_alloc(vsize_t, bool);
-void			uvm_emap_free(vaddr_t, size_t);
-
-void			uvm_emap_enter(vaddr_t, struct vm_page **, u_int,
-			    vm_prot_t);
-void			uvm_emap_remove(vaddr_t, vsize_t);
-
-#ifdef __HAVE_PMAP_EMAP
-void			uvm_emap_consume(u_int);
-u_int			uvm_emap_produce(void);
-#else
-#define			uvm_emap_consume(x)
-#define			uvm_emap_produce()	UVM_EMAP_INACTIVE
-#endif
 
 /* uvm_fault.c */
 #define uvm_fault(m, a, p) uvm_fault_internal(m, a, p, 0)
