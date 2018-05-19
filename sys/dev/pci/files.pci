@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.395 2018/05/11 07:42:22 maya Exp $
+#	$NetBSD: files.pci,v 1.396 2018/05/19 09:27:09 jdolecek Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -1193,3 +1193,10 @@ include "external/bsd/drm2/pci/files.drmkms_pci"
 device	ismt: i2cbus
 attach	ismt at pci
 file	dev/pci/ismt.c		ismt
+
+# Amazon Elastic Network Adapter (ENA) family
+device	ena: ether, ifnet, arp
+attach	ena at pci
+file	dev/pci/if_ena.c			ena
+file	external/bsd/ena-com/ena_com.c		ena
+file	external/bsd/ena-com/ena_eth_com.c	ena
