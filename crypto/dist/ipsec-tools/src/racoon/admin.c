@@ -1,4 +1,4 @@
-/*	$NetBSD: admin.c,v 1.39 2013/06/03 05:49:31 tteras Exp $	*/
+/*	$NetBSD: admin.c,v 1.40 2018/05/19 19:23:15 maxv Exp $	*/
 
 /* Id: admin.c,v 1.25 2006/04/06 14:31:04 manubsd Exp */
 
@@ -327,7 +327,6 @@ admin_process(so2, combuf)
 
 #ifdef ENABLE_HYBRID
 	case ADMIN_LOGOUT_USER: {
-		struct ph1handle *iph1;
 		char user[LOGINLEN+1];
 		int found = 0, len = com->ac_len - sizeof(*com);
 
@@ -427,7 +426,6 @@ admin_process(so2, combuf)
 		case ADMIN_PROTO_ISAKMP: {
 			struct ph1handle *ph1;
 			struct remoteconf *rmconf;
-			u_int16_t port;
 
 			l_ac_errno = -1;
 
