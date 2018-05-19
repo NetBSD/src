@@ -1484,7 +1484,7 @@ fragment <<EOF
 	  if (path)
 	    {
 	      path = gld${EMULATION_NAME}_add_sysroot (path);
-	      found = gld${EMULATION_NAME}_search_needed (path, &n, force, 1);
+	      found = gld${EMULATION_NAME}_search_needed (path, &n, force, 0);
 	      free ((char *) path);
 	      if (found)
 		break;
