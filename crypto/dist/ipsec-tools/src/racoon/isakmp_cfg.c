@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_cfg.c,v 1.27 2018/05/19 19:32:16 maxv Exp $	*/
+/*	$NetBSD: isakmp_cfg.c,v 1.28 2018/05/19 19:47:47 maxv Exp $	*/
 
 /* Id: isakmp_cfg.c,v 1.55 2006/08/22 18:17:17 manubsd Exp */
 
@@ -740,7 +740,7 @@ isakmp_cfg_set(iph1, attrpl)
 		delph1(iph1);
 		iph1 = NULL;
 	}
-end:
+
 	vfree(payload);
 
 	/* 
