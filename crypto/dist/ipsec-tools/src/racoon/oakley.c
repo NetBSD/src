@@ -1,4 +1,4 @@
-/*	$NetBSD: oakley.c,v 1.24 2012/08/29 11:34:37 tteras Exp $	*/
+/*	$NetBSD: oakley.c,v 1.25 2018/05/19 19:23:15 maxv Exp $	*/
 
 /* Id: oakley.c,v 1.32 2006/05/26 12:19:46 manubsd Exp */
 
@@ -1674,9 +1674,6 @@ get_plainrsa_fromlocal(iph1, my)
 	struct ph1handle *iph1;
 	int my;
 {
-	char path[MAXPATHLEN];
-	vchar_t *cert = NULL;
-	char *certfile;
 	int error = -1;
 
 	iph1->rsa_candidates = rsa_lookup_keys(iph1, my);
@@ -2091,8 +2088,6 @@ oakley_savecert(iph1, gen)
 		}
 
 		for (i = 0; i < sk_X509_num(certs); i++) {
-			int len;
-			u_char *bp;
 			X509 *cert = sk_X509_value(certs,i);
 
 			plog(LLV_DEBUG, LOCATION, NULL, 

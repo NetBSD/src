@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_inf.c,v 1.51 2017/01/24 19:23:56 christos Exp $	*/
+/*	$NetBSD: isakmp_inf.c,v 1.52 2018/05/19 19:23:15 maxv Exp $	*/
 
 /* Id: isakmp_inf.c,v 1.44 2006/05/06 20:45:52 manubsd Exp */
 
@@ -129,7 +129,7 @@ isakmp_info_recv(iph1, msg0)
 	int error = -1;
 	struct isakmp *isakmp;
 	struct isakmp_gen *gen;
-	struct isakmp_parse_t *pa, *pap;
+	struct isakmp_parse_t *pa;
 	void *p;
 	vchar_t *hash, *payload;
 	struct isakmp_gen *nd;
@@ -453,10 +453,7 @@ isakmp_info_recv_d(iph1, delete, msgid, encrypted)
 	int encrypted;
 {
 	int tlen, num_spi;
-	vchar_t *pbuf;
-	int protected = 0;
 	struct ph1handle *del_ph1;
-	struct ph2handle *iph2;
 	union {
 		u_int32_t spi32;
 		u_int16_t spi16[2];

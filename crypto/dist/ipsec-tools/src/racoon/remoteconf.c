@@ -1,4 +1,4 @@
-/*	$NetBSD: remoteconf.c,v 1.28 2012/01/01 15:57:31 tteras Exp $	*/
+/*	$NetBSD: remoteconf.c,v 1.29 2018/05/19 19:23:15 maxv Exp $	*/
 
 /* Id: remoteconf.c,v 1.38 2006/05/06 15:52:44 manubsd Exp */
 
@@ -168,8 +168,6 @@ rmconf_match_etype_and_approval(rmconf, etype, approval)
 	int etype;
 	struct isakmpsa *approval;
 {
-	struct isakmpsa *p;
-
 	if (check_etypeok(rmconf, (void *) (intptr_t) etype) == 0)
 		return ISAKMP_NTYPE_NO_PROPOSAL_CHOSEN;
 
@@ -392,7 +390,6 @@ getrmconf(remote, flags)
 	int flags;
 {
 	struct rmconf_find_context ctx;
-	int n = 0;
 
 	memset(&ctx, 0, sizeof(ctx));
 	ctx.sel.flags = flags;
@@ -592,7 +589,6 @@ duprmconf_shallow (rmconf)
 	struct remoteconf *rmconf;
 {
 	struct remoteconf *new;
-	struct proposalspec *prspec;
 
 	new = racoon_calloc(1, sizeof(*new));
 	if (new == NULL)
@@ -1109,10 +1105,7 @@ script_path_add(path)
 {
 	char *script_dir;
 	vchar_t *new_path;
-	vchar_t *new_storage;
-	vchar_t **sp;
 	size_t len;
-	size_t size;
 
 	script_dir = lcconf->pathinfo[LC_PATHTYPE_SCRIPT];
 

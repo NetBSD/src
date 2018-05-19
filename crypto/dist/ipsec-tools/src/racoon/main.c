@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.14 2018/05/19 18:51:59 maxv Exp $	*/
+/*	$NetBSD: main.c,v 1.15 2018/05/19 19:23:15 maxv Exp $	*/
 
 /* Id: main.c,v 1.25 2006/06/20 20:31:34 manubsd Exp */
 
@@ -90,7 +90,7 @@ static char version[] = "@(#) racoon / IPsec-tools";
 #endif
 
 static void
-print_version()
+print_version(void)
 {
 	printf("%s\n"
 	       "\n"
@@ -133,7 +133,7 @@ print_version()
 }
 
 static void
-usage()
+usage(void)
 {
 	printf("usage: racoon [-BdFv"
 #ifdef INET6
@@ -264,8 +264,6 @@ parse(int ac, char **av)
 int
 main(int ac, char **av)
 {
-	int error;
-
 	initlcconf();
 	parse(ac, av);
 
