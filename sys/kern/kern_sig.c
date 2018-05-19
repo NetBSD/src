@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.344 2018/05/16 00:42:15 kamil Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.345 2018/05/19 02:42:58 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.344 2018/05/16 00:42:15 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.345 2018/05/19 02:42:58 kamil Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_dtrace.h"
@@ -114,6 +114,7 @@ static callout_t	proc_stop_ch	__cacheline_aligned;
 
 sigset_t		contsigmask	__cacheline_aligned;
 static sigset_t		stopsigmask	__cacheline_aligned;
+static sigset_t		vforksigmask	__cacheline_aligned;
 sigset_t		sigcantmask	__cacheline_aligned;
 
 static void	ksiginfo_exechook(struct proc *, void *);
@@ -322,6 +323,7 @@ siginit(struct proc *p)
 	ps = p->p_sigacts;
 	sigemptyset(&contsigmask);
 	sigemptyset(&stopsigmask);
+	sigemptyset(&vforksigmask);
 	sigemptyset(&sigcantmask);
 	for (signo = 1; signo < NSIG; signo++) {
 		prop = sigprop[signo];
@@ -329,6 +331,8 @@ siginit(struct proc *p)
 			sigaddset(&contsigmask, signo);
 		if (prop & SA_STOP)
 			sigaddset(&stopsigmask, signo);
+		if (prop & SA_STOP && signo != SIGSTOP)
+			sigaddset(&vforksigmask, signo);
 		if (prop & SA_CANTMASK)
 			sigaddset(&sigcantmask, signo);
 		if (prop & SA_IGNORE && signo != SIGCONT)
@@ -1682,14 +1686,14 @@ issignal(struct lwp *l)
 			sp = &l->l_sigpend;
 			ss = sp->sp_set;
 			if ((p->p_lflag & PL_PPWAIT) != 0)
-				sigminusset(&stopsigmask, &ss);
+				sigminusset(&vforksigmask, &ss);
 			sigminusset(&l->l_sigmask, &ss);
 
 			if ((signo = firstsig(&ss)) == 0) {
 				sp = &p->p_sigpend;
 				ss = sp->sp_set;
 				if ((p->p_lflag & PL_PPWAIT) != 0)
-					sigminusset(&stopsigmask, &ss);
+					sigminusset(&vforksigmask, &ss);
 				sigminusset(&l->l_sigmask, &ss);
 
 				if ((signo = firstsig(&ss)) == 0) {

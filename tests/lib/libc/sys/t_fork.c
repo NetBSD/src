@@ -1,4 +1,4 @@
-/*	$NetBSD: t_fork.c,v 1.1 2018/05/18 06:39:58 kamil Exp $	*/
+/*	$NetBSD: t_fork.c,v 1.2 2018/05/19 02:42:58 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2018\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_fork.c,v 1.1 2018/05/18 06:39:58 kamil Exp $");
+__RCSID("$NetBSD: t_fork.c,v 1.2 2018/05/19 02:42:58 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -138,12 +138,6 @@ raise_raw(int sig)
 	int rv, status;
 	pid_t child, parent, watcher, wpid;
 	int expect_core = (sig == SIGABRT) ? 1 : 0;
-
-#ifdef VFORK
-	if (sig == SIGSTOP) {
-		atf_tc_expect_fail("SIGSTOP shall not be ignored");
-	}
-#endif
 
 	/*
 	 * Spawn a dedicated thread to watch for a stopped child and emit
