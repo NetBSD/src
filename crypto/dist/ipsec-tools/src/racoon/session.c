@@ -1,4 +1,4 @@
-/*	$NetBSD: session.c,v 1.33 2018/05/19 19:23:15 maxv Exp $	*/
+/*	$NetBSD: session.c,v 1.34 2018/05/19 19:47:47 maxv Exp $	*/
 
 /*	$KAME: session.c,v 1.32 2003/09/24 02:01:17 jinmei Exp $	*/
 
@@ -111,11 +111,9 @@ struct fd_monitor {
 #define NUM_PRIORITIES 2
 
 static void close_session __P((void));
-static void initfds __P((void));
 static void init_signal __P((void));
 static int set_signal __P((int sig, RETSIGTYPE (*func) __P((int))));
 static void check_sigreq __P((void));
-static void check_flushsa __P((void));
 static int close_sockets __P((void));
 
 static fd_set preset_mask, active_mask;

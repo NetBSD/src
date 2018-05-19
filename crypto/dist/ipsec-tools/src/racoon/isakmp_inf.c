@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_inf.c,v 1.52 2018/05/19 19:23:15 maxv Exp $	*/
+/*	$NetBSD: isakmp_inf.c,v 1.53 2018/05/19 19:47:47 maxv Exp $	*/
 
 /* Id: isakmp_inf.c,v 1.44 2006/05/06 20:45:52 manubsd Exp */
 
@@ -109,8 +109,6 @@ static int isakmp_info_recv_r_u_ack __P((struct ph1handle *,
 	struct isakmp_pl_ru *, u_int32_t));
 static void isakmp_info_send_r_u __P((struct sched *));
 #endif
-
-static void purge_isakmp_spi __P((int, isakmp_index *, size_t));
 
 /* %%%
  * Information Exchange
@@ -1071,32 +1069,6 @@ isakmp_add_pl_n(buf0, np_p, type, pr, data)
 
 	return buf;
 }
-
-static void
-purge_isakmp_spi(proto, spi, n)
-	int proto;
-	isakmp_index *spi;	/*network byteorder*/
-	size_t n;
-{
-	struct ph1handle *iph1;
-	size_t i;
-
-	for (i = 0; i < n; i++) {
-		iph1 = getph1byindex(&spi[i]);
-		if (!iph1)
-			continue;
-
-		plog(LLV_INFO, LOCATION, NULL,
-			"purged ISAKMP-SA proto_id=%s spi=%s.\n",
-			s_ipsecdoi_proto(proto),
-			isakmp_pindex(&spi[i], 0));
-
-		iph1->status = PHASE1ST_EXPIRED;
-		isakmp_ph1delete(iph1);
-	}
-}
-
-
 
 void
 purge_ipsec_spi(dst0, proto, spi, n)
