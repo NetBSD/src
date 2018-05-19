@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp.c,v 1.76 2017/01/24 19:23:56 christos Exp $	*/
+/*	$NetBSD: isakmp.c,v 1.77 2018/05/19 19:23:15 maxv Exp $	*/
 
 /* Id: isakmp.c,v 1.74 2006/05/07 21:32:59 manubsd Exp */
 
@@ -1581,7 +1581,7 @@ int
 isakmp_open(struct sockaddr *addr, int udp_encap)
 {
 	const int yes = 1;
-	int ifnum = 0, encap_ifnum = 0, fd;
+	int fd;
 	struct sockaddr_in *sin = (struct sockaddr_in *) addr;
 #ifdef INET6
 	struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *) addr;
@@ -1963,7 +1963,6 @@ isakmp_ph1dying(iph1)
 {
 	struct ph1handle *new_iph1;
 	struct ph2handle *p;
-	struct remoteconf *rmconf;
 
 	if (iph1->status >= PHASE1ST_DYING)
 		return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_doi.c,v 1.49 2013/06/18 05:39:50 tteras Exp $	*/
+/*	$NetBSD: ipsec_doi.c,v 1.50 2018/05/19 19:23:15 maxv Exp $	*/
 
 /* Id: ipsec_doi.c,v 1.55 2006/08/17 09:20:41 vanhu Exp */
 
@@ -264,8 +264,6 @@ get_ph1approval(iph1, doitype, sittype, pair)
 		for (s = pair[i]; s; s = s->next) {
 			/* compare proposal and select one */
 			for (p = s; p; p = p->tnext) {
-				struct isakmp_pl_p *prop = p->prop;
-
 				sa = newisakmpsa();
 				ctx.p = p;
 				ctx.sa = sa;
@@ -3894,7 +3892,7 @@ set_identifier_qual(vpp, type, value, qual)
 		if (loglevel >= LLV_DEBUG) {
 			X509_NAME *xn;
 			BIO *bio;
-			unsigned char *ptr = (unsigned char *) new->v, *buf;
+			unsigned char *ptr = (unsigned char *) new->v;
 			size_t len;
 			char save;
 
