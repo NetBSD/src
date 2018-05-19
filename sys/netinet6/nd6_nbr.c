@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.155 2018/05/17 12:07:48 maxv Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.156 2018/05/19 08:22:58 maxv Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.155 2018/05/17 12:07:48 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.156 2018/05/19 08:22:58 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -164,7 +164,6 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 		}
 	}
 
-
 	if (IN6_IS_ADDR_MULTICAST(&taddr6)) {
 		nd6log(LOG_INFO, "bad NS target (multicast)\n");
 		goto bad;
@@ -197,7 +196,7 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 	 * Otherwise					MAY be omitted
 	 *
 	 * In this implementation, we omit the target link-layer address
-	 * in the "MAY" case. 
+	 * in the "MAY" case.
 	 */
 #if 0 /* too much! */
 	ifa = (struct ifaddr *)in6ifa_ifpwithaddr(ifp, &daddr6);

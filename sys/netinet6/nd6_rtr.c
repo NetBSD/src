@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.142 2018/05/18 21:03:33 maxv Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.143 2018/05/19 08:22:58 maxv Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.142 2018/05/18 21:03:33 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.143 2018/05/19 08:22:58 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -230,12 +230,6 @@ nd6_ra_input(struct mbuf *m, int off, int icmp6len)
 	struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
 	struct nd_router_advert *nd_ra;
 	struct in6_addr saddr6 = ip6->ip6_src;
-#if 0
-	struct in6_addr daddr6 = ip6->ip6_dst;
-	int flags; /* = nd_ra->nd_ra_flags_reserved; */
-	int is_managed = ((flags & ND_RA_FLAG_MANAGED) != 0);
-	int is_other = ((flags & ND_RA_FLAG_OTHER) != 0);
-#endif
 	int mcast = 0;
 	union nd_opts ndopts;
 	struct nd_defrouter *dr;
@@ -248,9 +242,9 @@ nd6_ra_input(struct mbuf *m, int off, int icmp6len)
 
 	ndi = ND_IFINFO(ifp);
 	/*
-	 * We only accept RAs when
-	 * the system-wide variable allows the acceptance, and the
-	 * per-interface variable allows RAs on the receiving interface.
+	 * We only accept RAs when the system-wide variable allows the
+	 * acceptance, and the per-interface variable allows RAs on the
+	 * receiving interface.
 	 */
 	if (!nd6_accepts_rtadv(ndi))
 		goto freeit;
@@ -958,7 +952,7 @@ restart:
 }
 
 static int
-nd6_prelist_add(struct nd_prefixctl *prc, struct nd_defrouter *dr, 
+nd6_prelist_add(struct nd_prefixctl *prc, struct nd_defrouter *dr,
 	struct nd_prefix **newp)
 {
 	struct nd_prefix *newpr = NULL;
@@ -968,8 +962,8 @@ nd6_prelist_add(struct nd_prefixctl *prc, struct nd_defrouter *dr,
 
 	ND6_ASSERT_WLOCK();
 
-	if (ip6_maxifprefixes >= 0) { 
-		if (ext->nprefixes >= ip6_maxifprefixes / 2) 
+	if (ip6_maxifprefixes >= 0) {
+		if (ext->nprefixes >= ip6_maxifprefixes / 2)
 			purge_detached(prc->ndprc_ifp);
 		if (ext->nprefixes >= ip6_maxifprefixes)
 			return ENOMEM;
@@ -1104,7 +1098,7 @@ nd6_prelist_remove(struct nd_prefix *pr)
 static int
 prelist_update(struct nd_prefixctl *newprc,
 	struct nd_defrouter *dr, /* may be NULL */
-	struct mbuf *m, 
+	struct mbuf *m,
 	int mcast)
 {
 	struct in6_ifaddr *ia6_match = NULL;
@@ -2024,7 +2018,7 @@ in6_ifadd(struct nd_prefixctl *prc, int mcast, struct psref *psref)
 int
 in6_tmpifadd(
 	const struct in6_ifaddr *ia0, /* corresponding public address */
-	int forcegen, 
+	int forcegen,
 	int dad_delay)
 {
 	struct ifnet *ifp = ia0->ia_ifa.ifa_ifp;
