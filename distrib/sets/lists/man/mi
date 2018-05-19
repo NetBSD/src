@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1586 2018/05/15 00:54:01 nat Exp $
+# $NetBSD: mi,v 1.1587 2018/05/19 14:15:39 thorpej Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1123,6 +1123,7 @@
 ./usr/share/man/cat4/gpioiic.0			man-sys-catman		.cat
 ./usr/share/man/cat4/gpiolock.0			man-sys-catman		.cat
 ./usr/share/man/cat4/gpioow.0			man-sys-catman		.cat
+./usr/share/man/cat4/gpioirq.0			man-sys-catman		.cat
 ./usr/share/man/cat4/gpiopwm.0			man-sys-catman		.cat
 ./usr/share/man/cat4/gpiosim.0			man-sys-catman		.cat
 ./usr/share/man/cat4/gre.0			man-sys-catman		.cat
@@ -4263,6 +4264,7 @@
 ./usr/share/man/html4/gpioiic.html		man-sys-htmlman		html
 ./usr/share/man/html4/gpiolock.html		man-sys-htmlman		html
 ./usr/share/man/html4/gpioow.html		man-sys-htmlman		html
+./usr/share/man/html4/gpioirq.html		man-sys-htmlman		html
 ./usr/share/man/html4/gpiopwm.html		man-sys-htmlman		html
 ./usr/share/man/html4/gpiosim.html		man-sys-htmlman		html
 ./usr/share/man/html4/gre.html			man-sys-htmlman		html
@@ -7177,6 +7179,7 @@
 ./usr/share/man/man4/gpioiic.4			man-sys-man		.man
 ./usr/share/man/man4/gpiolock.4			man-sys-man		.man
 ./usr/share/man/man4/gpioow.4			man-sys-man		.man
+./usr/share/man/man4/gpioirq.4			man-sys-man		.man
 ./usr/share/man/man4/gpiopwm.4			man-sys-man		.man
 ./usr/share/man/man4/gpiosim.4			man-sys-man		.man
 ./usr/share/man/man4/gre.4			man-sys-man		.man
