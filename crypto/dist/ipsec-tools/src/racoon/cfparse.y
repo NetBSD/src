@@ -1,4 +1,4 @@
-/*	$NetBSD: cfparse.y,v 1.50 2018/05/19 19:32:16 maxv Exp $	*/
+/*	$NetBSD: cfparse.y,v 1.51 2018/05/19 20:14:56 maxv Exp $	*/
 
 /* Id: cfparse.y,v 1.66 2006/08/22 18:17:17 manubsd Exp */
 
@@ -172,7 +172,7 @@ static int load_x509(const char *file, char **filenameptr,
 	return 0;
 }
 
-static int process_rmconf()
+static int process_rmconf(void)
 {
 
 	/* check a exchange mode */
@@ -2611,8 +2611,7 @@ insspspec(rmconf, spspec)
 }
 
 static struct secprotospec *
-dupspspec(spspec)
-	struct secprotospec *spspec;
+dupspspec(struct secprotospec *spspec)
 {
 	struct secprotospec *new;
 

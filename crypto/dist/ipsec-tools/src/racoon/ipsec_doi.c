@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_doi.c,v 1.50 2018/05/19 19:23:15 maxv Exp $	*/
+/*	$NetBSD: ipsec_doi.c,v 1.51 2018/05/19 20:14:56 maxv Exp $	*/
 
 /* Id: ipsec_doi.c,v 1.55 2006/08/17 09:20:41 vanhu Exp */
 
@@ -197,9 +197,7 @@ ipsecdoi_checkph1proposal(sa, iph1)
 }
 
 static void
-print_ph1proposal(pair, s)
-	struct prop_pair *pair;
-	struct isakmpsa *s;
+print_ph1proposal(struct prop_pair *pair, struct isakmpsa *s)
 {
 	struct isakmp_pl_p *prop = pair->prop;
 	struct isakmp_pl_t *trns = pair->trns;
@@ -3302,9 +3300,7 @@ doi2ipproto(proto)
  */
 
 int
-ipsecdoi_subnetisaddr_v4( subnet, address )
-	const vchar_t *subnet;
-	const vchar_t *address;
+ipsecdoi_subnetisaddr_v4(const vchar_t *subnet, const vchar_t *address)
 {
 	struct in_addr *mask;
 
@@ -3325,9 +3321,7 @@ ipsecdoi_subnetisaddr_v4( subnet, address )
 #ifdef INET6
 
 int
-ipsecdoi_subnetisaddr_v6( subnet, address )
-	const vchar_t *subnet;
-	const vchar_t *address;
+ipsecdoi_subnetisaddr_v6(const vchar_t *subnet, const vchar_t *address)
 {
 	struct in6_addr *mask;
 	int i;
