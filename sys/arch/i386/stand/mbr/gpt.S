@@ -1,4 +1,4 @@
-/*	$NetBSD: gpt.S,v 1.2 2018/05/19 18:18:16 jakllsch Exp $ */
+/*	$NetBSD: gpt.S,v 1.3 2018/05/19 18:19:37 jakllsch Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  *
  * NO_LBA_CHECK	- no check if bios supports LBA reads
  * NO_CRC_CHECK	- disable crc checks for GPT
- * NO_BANNER    - do not output title line 'banner'
+ * NO_BANNER	- do not output title line 'banner'
  */
 
 #ifdef COM_PORT
@@ -143,7 +143,7 @@ ENTRY(start)
 	mov	%ax, %es
 	mov	%ax, %ds
 	movw	$mbr, %di
-	mov     $BOOTADDR + (mbr - start), %si
+	mov	$BOOTADDR + (mbr - start), %si
 	push	%ax			/* zero for %cs of lret */
 	push	%di
 	movw	$(bss_start - mbr), %cx
