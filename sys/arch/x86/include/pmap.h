@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.78 2018/05/19 11:39:37 jdolecek Exp $	*/
+/*	$NetBSD: pmap.h,v 1.79 2018/05/19 16:55:59 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -316,10 +316,6 @@ void		pmap_remove_all(struct pmap *);
 void		pmap_ldt_cleanup(struct lwp *);
 void		pmap_ldt_sync(struct pmap *);
 void		pmap_kremove_local(vaddr_t, vsize_t);
-
-void		pmap_emap_enter(vaddr_t, paddr_t, vm_prot_t);
-void		pmap_emap_remove(vaddr_t, vsize_t);
-void		pmap_emap_sync(bool);
 
 #define	__HAVE_PMAP_PV_TRACK	1
 void		pmap_pv_init(void);
