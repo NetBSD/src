@@ -265,7 +265,7 @@ static int yygrowstack(YYSTACKDATA *data)
         newsize = YYMAXDEPTH;
 
     i = (int) (data->s_mark - data->s_base);
-    newss = realloc(data->s_base, newsize * sizeof(*newss));
+    newss = (YYINT *)realloc(data->s_base, newsize * sizeof(*newss));
     if (newss == 0)
         return YYENOMEM;
 
@@ -329,13 +329,13 @@ yyNewState(unsigned size)
 #endif
         return p;
     }
-    p->yystack.s_base    = malloc(size * sizeof(YYINT));
+    p->yystack.s_base    = (YYINT *) malloc(size * sizeof(YYINT));
     if (p->yystack.s_base == NULL) return NULL;
-    p->yystack.l_base    = malloc(size * sizeof(YYSTYPE));
+    p->yystack.l_base    = (YYSTYPE *) malloc(size * sizeof(YYSTYPE));
     if (p->yystack.l_base == NULL) return NULL;
     memset(p->yystack.l_base, 0, size * sizeof(YYSTYPE));
 #if defined(YYLTYPE) || defined(YYLTYPE_IS_DECLARED)
-    p->yystack.p_base    = malloc(size * sizeof(YYLTYPE));
+    p->yystack.p_base    = (YYLTYPE *) malloc(size * sizeof(YYLTYPE));
     if (p->yystack.p_base == NULL) return NULL;
     memset(p->yystack.p_base, 0, size * sizeof(YYLTYPE));
 #endif
@@ -449,10 +449,10 @@ yyloop:
                 size_t s = (size_t) (yylvlim - yylvals);
 
                 s += YYLVQUEUEGROWTH;
-                if ((yylexemes = realloc(yylexemes, s * sizeof(YYINT))) == NULL) goto yyenomem;
-                if ((yylvals   = realloc(yylvals, s * sizeof(YYSTYPE))) == NULL) goto yyenomem;
+                if ((yylexemes = (YYINT *)realloc(yylexemes, s * sizeof(YYINT))) == NULL) goto yyenomem;
+                if ((yylvals   = (YYSTYPE *)realloc(yylvals, s * sizeof(YYSTYPE))) == NULL) goto yyenomem;
 #if defined(YYLTYPE) || defined(YYLTYPE_IS_DECLARED)
-                if ((yylpsns   = realloc(yylpsns, s * sizeof(YYLTYPE))) == NULL) goto yyenomem;
+                if ((yylpsns   = (YYLTYPE *)realloc(yylpsns, s * sizeof(YYLTYPE))) == NULL) goto yyenomem;
 #endif
                 yylvp   = yylve = yylvals + p;
                 yylvlim = yylvals + s;
@@ -563,7 +563,7 @@ yyloop:
                 /* If this is a first conflict in the stack, start saving lexemes */
                 if (!yylexemes)
                 {
-                    yylexemes = malloc((YYLVQUEUEGROWTH) * sizeof(YYINT));
+                    yylexemes = (YYINT *) malloc((YYLVQUEUEGROWTH) * sizeof(YYINT));
                     if (yylexemes == NULL) goto yyenomem;
                     yylvals   = (YYSTYPE *) malloc((YYLVQUEUEGROWTH) * sizeof(YYSTYPE));
                     if (yylvals == NULL) goto yyenomem;
@@ -968,12 +968,12 @@ yyreduce:
                     size_t s = (size_t) (yylvlim - yylvals);
 
                     s += YYLVQUEUEGROWTH;
-                    if ((yylexemes = realloc(yylexemes, s * sizeof(YYINT))) == NULL)
+                    if ((yylexemes = (YYINT *)realloc(yylexemes, s * sizeof(YYINT))) == NULL)
                         goto yyenomem;
-                    if ((yylvals   = realloc(yylvals, s * sizeof(YYSTYPE))) == NULL)
+                    if ((yylvals   = (YYSTYPE *)realloc(yylvals, s * sizeof(YYSTYPE))) == NULL)
                         goto yyenomem;
 #if defined(YYLTYPE) || defined(YYLTYPE_IS_DECLARED)
-                    if ((yylpsns   = realloc(yylpsns, s * sizeof(YYLTYPE))) == NULL)
+                    if ((yylpsns   = (YYLTYPE *)realloc(yylpsns, s * sizeof(YYLTYPE))) == NULL)
                         goto yyenomem;
 #endif
                     yylvp   = yylve = yylvals + p;
