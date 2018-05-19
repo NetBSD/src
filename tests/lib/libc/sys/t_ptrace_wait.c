@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.46 2018/05/19 05:07:42 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.47 2018/05/19 05:25:21 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.46 2018/05/19 05:07:42 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.47 2018/05/19 05:25:21 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -513,6 +513,9 @@ traceme_vfork_raise(int sigval)
 		validate_status_signaled(status, SIGKILL, 0);
 		break;
 	case SIGCONT:
+	case SIGTSTP:
+	case SIGTTIN:
+	case SIGTTOU:
 		validate_status_exited(status, exitval);
 		break;
 	default:
@@ -542,9 +545,12 @@ ATF_TC_BODY(test, tc)								\
 
 TRACEME_VFORK_RAISE(traceme_vfork_raise1, SIGKILL) /* non-maskable */
 TRACEME_VFORK_RAISE(traceme_vfork_raise2, SIGSTOP) /* non-maskable */
-TRACEME_VFORK_RAISE(traceme_vfork_raise3, SIGABRT) /* regular abort trap */
-TRACEME_VFORK_RAISE(traceme_vfork_raise4, SIGHUP)  /* hangup */
-TRACEME_VFORK_RAISE(traceme_vfork_raise5, SIGCONT) /* continued? */
+TRACEME_VFORK_RAISE(traceme_vfork_raise3, SIGTSTP) /* ignored in vfork(2) */
+TRACEME_VFORK_RAISE(traceme_vfork_raise4, SIGTTIN) /* ignored in vfork(2) */
+TRACEME_VFORK_RAISE(traceme_vfork_raise5, SIGTTOU) /* ignored in vfork(2) */
+TRACEME_VFORK_RAISE(traceme_vfork_raise6, SIGABRT) /* regular abort trap */
+TRACEME_VFORK_RAISE(traceme_vfork_raise7, SIGHUP)  /* hangup */
+TRACEME_VFORK_RAISE(traceme_vfork_raise8, SIGCONT) /* continued? */
 
 /// ----------------------------------------------------------------------------
 
@@ -7119,6 +7125,9 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, traceme_vfork_raise3);
 	ATF_TP_ADD_TC(tp, traceme_vfork_raise4);
 	ATF_TP_ADD_TC(tp, traceme_vfork_raise5);
+	ATF_TP_ADD_TC(tp, traceme_vfork_raise6);
+	ATF_TP_ADD_TC(tp, traceme_vfork_raise7);
+	ATF_TP_ADD_TC(tp, traceme_vfork_raise8);
 
 	ATF_TP_ADD_TC(tp, traceme_vfork_breakpoint);
 
