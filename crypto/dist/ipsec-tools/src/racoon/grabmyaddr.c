@@ -1,4 +1,4 @@
-/*	$NetBSD: grabmyaddr.c,v 1.35 2017/04/12 16:47:39 roy Exp $	*/
+/*	$NetBSD: grabmyaddr.c,v 1.36 2018/05/19 19:23:15 maxv Exp $	*/
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * Copyright (C) 2008 Timo Teras <timo.teras@iki.fi>.
@@ -140,7 +140,7 @@ myaddr_open_all_configured(addr)
 	struct sockaddr *addr;
 {
 	/* create all configured, not already opened addresses */
-	struct myaddr *cfg, *my;
+	struct myaddr *cfg;
 
 	if (addr != NULL) {
 		switch (addr->sa_family) {
@@ -859,7 +859,6 @@ kernel_sync()
 	caddr_t ref, buf, end;
 	size_t bufsiz;
 	struct if_msghdr *ifm;
-	struct interface *ifp;
 
 #define MIBSIZ 6
 	int mib[MIBSIZ] = {
