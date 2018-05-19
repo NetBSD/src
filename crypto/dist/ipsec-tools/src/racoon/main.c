@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.13 2013/07/12 13:11:50 tteras Exp $	*/
+/*	$NetBSD: main.c,v 1.14 2018/05/19 18:51:59 maxv Exp $	*/
 
 /* Id: main.c,v 1.25 2006/06/20 20:31:34 manubsd Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -17,7 +17,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -85,9 +85,9 @@ static int loading_sa = 0;	/* install sa when racoon boots up. */
 
 #ifdef TOP_PACKAGE
 static char version[] = "@(#)" TOP_PACKAGE_STRING " (" TOP_PACKAGE_URL ")";
-#else /* TOP_PACKAGE */
+#else
 static char version[] = "@(#) racoon / IPsec-tools";
-#endif /* TOP_PACKAGE */
+#endif
 
 static void
 print_version()
@@ -162,9 +162,7 @@ usage()
 }
 
 static void
-parse(ac, av)
-	int ac;
-	char **av;
+parse(int ac, char **av)
 {
 	extern char *optarg;
 	extern int optind;
@@ -264,9 +262,7 @@ parse(ac, av)
 }
 
 int
-main(ac, av)
-	int ac;
-	char **av;
+main(int ac, char **av)
 {
 	int error;
 
@@ -308,7 +304,7 @@ main(ac, av)
 	plog(LLV_INFO, LOCATION, NULL, "@(#)"
 	    "This product linked %s (http://www.openssl.org/)"
 	    "\n", eay_version());
-	plog(LLV_INFO, LOCATION, NULL, "Reading configuration from \"%s\"\n", 
+	plog(LLV_INFO, LOCATION, NULL, "Reading configuration from \"%s\"\n",
 	    lcconf->racoon_conf);
 
 	/*
@@ -346,4 +342,3 @@ main(ac, av)
 
 	return 0;
 }
-
