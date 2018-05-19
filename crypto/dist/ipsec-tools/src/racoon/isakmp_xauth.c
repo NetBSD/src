@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_xauth.c,v 1.29 2018/05/19 19:32:16 maxv Exp $	*/
+/*	$NetBSD: isakmp_xauth.c,v 1.30 2018/05/19 20:14:56 maxv Exp $	*/
 
 /* Id: isakmp_xauth.c,v 1.38 2006/08/22 18:17:17 manubsd Exp */
 
@@ -1316,10 +1316,8 @@ xauth_login_system(usr, pwd)
 	return -1;
 }
 
-int
-xauth_group_system(usr, grp)
-	char * usr;
-	char * grp;
+static int
+xauth_group_system(char *usr, char *grp)
 {
 	struct group * gr;
 	char * member;

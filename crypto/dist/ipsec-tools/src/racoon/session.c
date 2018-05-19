@@ -1,4 +1,4 @@
-/*	$NetBSD: session.c,v 1.34 2018/05/19 19:47:47 maxv Exp $	*/
+/*	$NetBSD: session.c,v 1.35 2018/05/19 20:14:56 maxv Exp $	*/
 
 /*	$KAME: session.c,v 1.32 2003/09/24 02:01:17 jinmei Exp $	*/
 
@@ -374,7 +374,8 @@ signal_handler(sig)
 
 /* XXX possible mem leaks and no way to go back for now !!!
  */
-static void reload_conf(){
+static void reload_conf(void)
+{
 	int error;
 
 #ifdef ENABLE_HYBRID
