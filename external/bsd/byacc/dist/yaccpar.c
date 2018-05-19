@@ -1,10 +1,8 @@
-/*	$NetBSD: yaccpar.c,v 1.5 2017/06/05 18:54:30 christos Exp $	*/
-
 /* This file generated automatically using
- * @Id: skel2c,v 1.4 2016/06/07 00:26:09 tom Exp @
+ * Id: skel2c,v 1.4 2016/06/07 00:26:09 tom Exp 
  */
 
-/* @Id: yaccpar.skel,v 1.8 2016/12/02 21:44:42 tom Exp @ */
+/* Id: yaccpar.skel,v 1.9 2017/04/30 23:28:17 tom Exp  */
 
 #include "defs.h"
 
