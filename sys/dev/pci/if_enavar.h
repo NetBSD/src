@@ -1,3 +1,5 @@
+/*	$NetBSD: if_enavar.h,v 1.2 2018/05/19 09:32:55 jdolecek Exp $	*/
+
 /*-
  * BSD LICENSE
  *
@@ -36,8 +38,8 @@
 
 #include <sys/types.h>
 
-#include "ena-com/ena_com.h"
-#include "ena-com/ena_eth_com.h"
+#include "external/bsd/ena-com/ena_com.h"
+#include "external/bsd/ena-com/ena_eth_com.h"
 
 #define DRV_MODULE_VER_MAJOR	0
 #define DRV_MODULE_VER_MINOR	8
@@ -47,9 +49,9 @@
 
 #ifndef DRV_MODULE_VERSION
 #define DRV_MODULE_VERSION				\
-	__XSTRING(DRV_MODULE_VER_MAJOR) "."		\
-	__XSTRING(DRV_MODULE_VER_MINOR) "."		\
-	__XSTRING(DRV_MODULE_VER_SUBMINOR)
+	__STRING(DRV_MODULE_VER_MAJOR) "."		\
+	__STRING(DRV_MODULE_VER_MINOR) "."		\
+	__STRING(DRV_MODULE_VER_SUBMINOR)
 #endif
 #define DEVICE_NAME	"Elastic Network Adapter (ENA)"
 #define DEVICE_DESC	"ENA adapter"
@@ -159,7 +161,7 @@ typedef struct _ena_vendor_info_t {
 struct ena_irq {
 	/* Interrupt resources */
 	struct resource *res;
-	driver_intr_t *handler;
+	void *handler;
 	void *data;
 	void *cookie;
 	unsigned int vector;
@@ -199,28 +201,28 @@ struct ena_rx_buffer {
 } __aligned(CACHE_LINE_SIZE);
 
 struct ena_stats_tx {
-	counter_u64_t cnt;
-	counter_u64_t bytes;
-	counter_u64_t prepare_ctx_err;
-	counter_u64_t dma_mapping_err;
-	counter_u64_t doorbells;
-	counter_u64_t missing_tx_comp;
-	counter_u64_t bad_req_id;
-	counter_u64_t collapse;
-	counter_u64_t collapse_err;
+	struct evcnt cnt;
+	struct evcnt bytes;
+	struct evcnt prepare_ctx_err;
+	struct evcnt dma_mapping_err;
+	struct evcnt doorbells;
+	struct evcnt missing_tx_comp;
+	struct evcnt bad_req_id;
+	struct evcnt collapse;
+	struct evcnt collapse_err;
 };
 
 struct ena_stats_rx {
-	counter_u64_t cnt;
-	counter_u64_t bytes;
-	counter_u64_t refil_partial;
-	counter_u64_t bad_csum;
-	counter_u64_t mjum_alloc_fail;
-	counter_u64_t mbuf_alloc_fail;
-	counter_u64_t dma_mapping_err;
-	counter_u64_t bad_desc_num;
-	counter_u64_t bad_req_id;
-	counter_u64_t empty_rx_ring;
+	struct evcnt cnt;
+	struct evcnt bytes;
+	struct evcnt refil_partial;
+	struct evcnt bad_csum;
+	struct evcnt mjum_alloc_fail;
+	struct evcnt mbuf_alloc_fail;
+	struct evcnt dma_mapping_err;
+	struct evcnt bad_desc_num;
+	struct evcnt bad_req_id;
+	struct evcnt empty_rx_ring;
 };
 
 struct ena_ring {
@@ -251,7 +253,9 @@ struct ena_ring {
 	enum ena_intr_moder_level moder_tbl_idx;
 
 	struct ena_que *que;
+#ifdef LRO
 	struct lro_ctrl lro;
+#endif
 
 	uint16_t next_to_use;
 	uint16_t next_to_clean;
@@ -264,17 +268,17 @@ struct ena_ring {
 
 	struct buf_ring *br; /* only for TX */
 
-	struct mtx ring_mtx;
+	kmutex_t ring_mtx;
 	char mtx_name[16];
 
 	union {
 		struct {
-			struct task enqueue_task;
-			struct taskqueue *enqueue_tq;
+			struct work enqueue_task;
+			struct workqueue *enqueue_tq;
 		};
 		struct {
-			struct task cmpl_task;
-			struct taskqueue *cmpl_tq;
+			struct work cmpl_task;
+			struct workqueue *cmpl_tq;
 		};
 	};
 
@@ -287,20 +291,20 @@ struct ena_ring {
 } __aligned(CACHE_LINE_SIZE);
 
 struct ena_stats_dev {
-	counter_u64_t wd_expired;
-	counter_u64_t interface_up;
-	counter_u64_t interface_down;
-	counter_u64_t admin_q_pause;
+	struct evcnt wd_expired;
+	struct evcnt interface_up;
+	struct evcnt interface_down;
+	struct evcnt admin_q_pause;
 };
 
 struct ena_hw_stats {
-	counter_u64_t rx_packets;
-	counter_u64_t tx_packets;
+	struct evcnt rx_packets;
+	struct evcnt tx_packets;
 
-	counter_u64_t rx_bytes;
-	counter_u64_t tx_bytes;
+	struct evcnt rx_bytes;
+	struct evcnt tx_bytes;
 
-	counter_u64_t rx_drops;
+	struct evcnt rx_drops;
 };
 
 /* Board specific private data structure */
@@ -308,25 +312,25 @@ struct ena_adapter {
 	struct ena_com_dev *ena_dev;
 
 	/* OS defined structs */
-	if_t ifp;
 	device_t pdev;
+        struct ethercom sc_ec;
+	struct ifnet *ifp;		/* set to point to sc_ec */
 	struct ifmedia	media;
 
 	/* OS resources */
 	struct resource *memory;
 	struct resource *registers;
 
-	struct mtx global_mtx;
-	struct sx ioctl_sx;
+	kmutex_t global_mtx;
+	krwlock_t ioctl_sx;
 
 	/* MSI-X */
 	uint32_t msix_enabled;
 	struct msix_entry *msix_entries;
 	int msix_vecs;
 
-	/* DMA tags used throughout the driver adapter for Tx and Rx */
-	bus_dma_tag_t tx_buf_tag;
-	bus_dma_tag_t rx_buf_tag;
+	/* DMA tag used throughout the driver adapter for Tx and Rx */
+	bus_dma_tag_t sc_dmat;
 	int dma_width;
 
 	uint32_t max_mtu;
@@ -370,13 +374,13 @@ struct ena_adapter {
 
 	/* Timer service */
 	struct callout timer_service;
-	sbintime_t keep_alive_timestamp;
+	struct bintime keep_alive_timestamp;
 	uint32_t next_monitored_tx_qid;
-	struct task reset_task;
-	struct taskqueue *reset_tq;
+	struct work reset_task;
+	struct workqueue *reset_tq;
 	int wd_active;
-	sbintime_t keep_alive_timeout;
-	sbintime_t missing_tx_timeout;
+	struct bintime keep_alive_timeout;
+	struct bintime missing_tx_timeout;
 	uint32_t missing_tx_max_queues;
 	uint32_t missing_tx_threshold;
 
@@ -387,9 +391,9 @@ struct ena_adapter {
 	enum ena_regs_reset_reason_types reset_reason;
 };
 
-#define	ENA_RING_MTX_LOCK(_ring)		mtx_lock(&(_ring)->ring_mtx)
-#define	ENA_RING_MTX_TRYLOCK(_ring)		mtx_trylock(&(_ring)->ring_mtx)
-#define	ENA_RING_MTX_UNLOCK(_ring)		mtx_unlock(&(_ring)->ring_mtx)
+#define	ENA_RING_MTX_LOCK(_ring)	mutex_enter(&(_ring)->ring_mtx)
+#define	ENA_RING_MTX_TRYLOCK(_ring)	mutex_tryenter(&(_ring)->ring_mtx)
+#define	ENA_RING_MTX_UNLOCK(_ring)	mutex_exit(&(_ring)->ring_mtx)
 
 static inline int ena_mbuf_count(struct mbuf *mbuf)
 {
