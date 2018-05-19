@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.345 2018/05/19 02:42:58 kamil Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.346 2018/05/19 05:01:42 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.345 2018/05/19 02:42:58 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.346 2018/05/19 05:01:42 kamil Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_dtrace.h"
@@ -1781,7 +1781,9 @@ issignal(struct lwp *l)
 				 * XXX Don't hold proc_lock for p_lflag,
 				 * but it's not a big deal.
 				 */
-				if (p->p_slflag & PSL_TRACED ||
+				if ((ISSET(p->p_slflag, PSL_TRACED) &&
+				     !(ISSET(p->p_lflag, PL_PPWAIT) &&
+				     (p->p_pptr == p->p_opptr))) ||
 				    ((p->p_lflag & PL_ORPHANPG) != 0 &&
 				    prop & SA_TTYSTOP)) {
 					/* Ignore the signal. */
