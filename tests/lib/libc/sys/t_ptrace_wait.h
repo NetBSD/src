@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.h,v 1.4 2018/05/13 23:01:25 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.h,v 1.5 2018/05/19 05:04:09 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -150,6 +150,17 @@ do {									\
 	if (!ret)							\
 		errx(EXIT_FAILURE, "%s:%d %s(): Assertion failed for: "	\
 		    "%s(%ju) == %s(%ju)", __FILE__, __LINE__, __func__,	\
+		    #x, vx, #y, vy);					\
+} while (/*CONSTCOND*/0)
+
+#define FORKEE_ASSERT_NEQ(x, y)						\
+do {									\
+	uintmax_t vx = (x);						\
+	uintmax_t vy = (y);						\
+	int ret = vx != vy;						\
+	if (!ret)							\
+		errx(EXIT_FAILURE, "%s:%d %s(): Assertion failed for: "	\
+		    "%s(%ju) != %s(%ju)", __FILE__, __LINE__, __func__,	\
 		    #x, vx, #y, vy);					\
 } while (/*CONSTCOND*/0)
 
@@ -362,6 +373,61 @@ await_zombie(pid_t process)
 {
 
 	await_zombie_raw(process, 1000);
+}
+
+static pid_t __used
+await_stopped_child(pid_t process)
+{
+	struct kinfo_proc2 *p = NULL;
+	size_t i, len;
+	pid_t child = -1;
+
+	int name[] = {
+		[0] = CTL_KERN,
+		[1] = KERN_PROC2,
+		[2] = KERN_PROC_ALL,
+		[3] = 0,
+		[4] = sizeof(struct kinfo_proc2),
+		[5] = 0
+	};
+
+	const size_t namelen = __arraycount(name);
+
+	/* Await the process becoming a zombie */
+	while(1) {
+		name[5] = 0;
+
+		FORKEE_ASSERT_EQ(sysctl(name, namelen, 0, &len, NULL, 0), 0);
+
+		FORKEE_ASSERT_EQ(reallocarr(&p,
+		                            len,
+		                            sizeof(struct kinfo_proc2)), 0);
+
+		name[5] = len;
+
+		FORKEE_ASSERT_EQ(sysctl(name, namelen, p, &len, NULL, 0), 0);
+
+		for (i = 0; i < len/sizeof(struct kinfo_proc2); i++) {
+			if (p[i].p_pid == getpid())
+				continue;
+			if (p[i].p_ppid != process)
+				continue;
+			if (p[i].p_stat != LSSTOP)
+				continue;
+			child = p[i].p_pid;
+			break;
+		}
+
+		if (child != -1)
+			break;
+
+		FORKEE_ASSERT_EQ(usleep(1000), 0);
+	}
+
+	/* Free the buffer */
+	FORKEE_ASSERT_EQ(reallocarr(&p, 0, sizeof(struct kinfo_proc2)), 0);
+
+	return child;
 }
 
 /* Happy number sequence -- this function is used to just consume cpu cycles */
