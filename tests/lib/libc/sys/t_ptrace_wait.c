@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.45 2018/05/16 03:52:35 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.46 2018/05/19 05:07:42 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.45 2018/05/16 03:52:35 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.46 2018/05/19 05:07:42 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -429,12 +429,53 @@ ATF_TC_BODY(traceme_pid1_parent, tc)
 static void
 traceme_vfork_raise(int sigval)
 {
-	const int exitval = 5;
-	pid_t child, wpid;
+	const int exitval = 5, exitval_watcher = 10;
+	pid_t child, parent, watcher, wpid;
+	int rv;
 #if defined(TWAIT_HAVE_STATUS)
 	int status;
 	int expect_core = (sigval == SIGABRT) ? 1 : 0;
 #endif
+
+	/*
+	 * Spawn a dedicated thread to watch for a stopped child and emit
+	 * the SIGKILL signal to it.
+	 *
+	 * vfork(2) might clobber watcher, this means that it's safer and
+	 * simpler to reparent this process to initproc and forget about it.
+	 */
+	if (sigval == SIGSTOP) {
+		parent = getpid();
+
+		watcher = fork();
+		ATF_REQUIRE(watcher != 1);
+		if (watcher == 0) {
+			/* Double fork(2) trick to reparent to initproc */
+			watcher = fork();
+			FORKEE_ASSERT_NEQ(watcher, -1);
+			if (watcher != 0)
+				_exit(exitval_watcher);
+
+			child = await_stopped_child(parent);
+
+			errno = 0;
+			rv = kill(child, SIGKILL);
+			FORKEE_ASSERT_EQ(rv, 0);
+			FORKEE_ASSERT_EQ(errno, 0);
+
+			/* This exit value will be collected by initproc */
+			_exit(0);
+		}
+		DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
+		TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(watcher, &status, 0),
+		                      watcher);
+
+		validate_status_exited(status, exitval_watcher);
+
+		DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
+		TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(watcher,
+		                                                   &status, 0));
+	}
 
 	DPRINTF("Before forking process PID=%d\n", getpid());
 	SYSCALL_REQUIRE((child = vfork()) != -1);
@@ -446,6 +487,7 @@ traceme_vfork_raise(int sigval)
 		FORKEE_ASSERT(raise(sigval) == 0);
 
 		switch (sigval) {
+		case SIGSTOP:
 		case SIGKILL:
 		case SIGABRT:
 		case SIGHUP:
@@ -468,6 +510,8 @@ traceme_vfork_raise(int sigval)
 		validate_status_signaled(status, sigval, expect_core);
 		break;
 	case SIGSTOP:
+		validate_status_signaled(status, SIGKILL, 0);
+		break;
 	case SIGCONT:
 		validate_status_exited(status, exitval);
 		break;
@@ -497,7 +541,7 @@ ATF_TC_BODY(test, tc)								\
 }
 
 TRACEME_VFORK_RAISE(traceme_vfork_raise1, SIGKILL) /* non-maskable */
-// TRACEME_VFORK_RAISE(traceme_vfork_raise2, SIGSTOP) /* non-maskable */ // TODO
+TRACEME_VFORK_RAISE(traceme_vfork_raise2, SIGSTOP) /* non-maskable */
 TRACEME_VFORK_RAISE(traceme_vfork_raise3, SIGABRT) /* regular abort trap */
 TRACEME_VFORK_RAISE(traceme_vfork_raise4, SIGHUP)  /* hangup */
 TRACEME_VFORK_RAISE(traceme_vfork_raise5, SIGCONT) /* continued? */
@@ -7071,7 +7115,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, traceme_pid1_parent);
 
 	ATF_TP_ADD_TC(tp, traceme_vfork_raise1);
-//	ATF_TP_ADD_TC(tp, traceme_vfork_raise2); // not yet
+	ATF_TP_ADD_TC(tp, traceme_vfork_raise2);
 	ATF_TP_ADD_TC(tp, traceme_vfork_raise3);
 	ATF_TP_ADD_TC(tp, traceme_vfork_raise4);
 	ATF_TP_ADD_TC(tp, traceme_vfork_raise5);
