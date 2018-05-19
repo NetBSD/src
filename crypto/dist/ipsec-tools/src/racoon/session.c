@@ -1,4 +1,4 @@
-/*	$NetBSD: session.c,v 1.32 2011/03/02 15:09:16 vanhu Exp $	*/
+/*	$NetBSD: session.c,v 1.33 2018/05/19 19:23:15 maxv Exp $	*/
 
 /*	$KAME: session.c,v 1.32 2003/09/24 02:01:17 jinmei Exp $	*/
 
@@ -124,7 +124,6 @@ static TAILQ_HEAD(fd_monitor_list, fd_monitor) fd_monitor_tree[NUM_PRIORITIES];
 static int nfds = 0;
 
 static volatile sig_atomic_t sigreq[NSIG + 1];
-static struct sched scflushsa = SCHED_INITIALIZER();
 
 void
 monitor_fd(int fd, int (*callback)(void *, int), void *ctx, int priority)
