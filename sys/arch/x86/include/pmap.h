@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.77 2018/05/08 17:20:44 maxv Exp $	*/
+/*	$NetBSD: pmap.h,v 1.78 2018/05/19 11:39:37 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -365,8 +365,6 @@ void		pmap_tlb_cpu_init(struct cpu_info *);
 void		pmap_tlb_shootdown(pmap_t, vaddr_t, pt_entry_t, tlbwhy_t);
 void		pmap_tlb_shootnow(void);
 void		pmap_tlb_intr(void);
-
-#define	__HAVE_PMAP_EMAP
 
 #define PMAP_GROWKERNEL		/* turn on pmap_growkernel interface */
 #define PMAP_FORK		/* turn on pmap_fork interface */
