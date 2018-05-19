@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.275 2018/02/02 01:02:41 mrg Exp $
+#	$NetBSD: bsd.sys.mk,v 1.276 2018/05/19 17:44:44 christos Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -29,6 +29,7 @@ CPPFLAGS+=	-Wp,-iremap,${X11SRCDIR}:/usr/xsrc
 REPROFLAGS+=	-fdebug-prefix-map=\$$NETBSDSRCDIR=/usr/src
 REPROFLAGS+=	-fdebug-prefix-map=\$$X11SRCDIR=/usr/xsrc
 LINTFLAGS+=	-R${NETBSDSRCDIR}=/usr/src -R${X11SRCDIR}=/usr/xsrc
+LINTFLAGS+=	-R${DESTDIR}=
 
 REPROFLAGS+=	-fdebug-regex-map='/usr/src/(.*)/obj.*=/usr/obj/\1'
 REPROFLAGS+=	-fdebug-regex-map='/usr/src/(.*)/obj.*/(.*)=/usr/obj/\1/\2'
