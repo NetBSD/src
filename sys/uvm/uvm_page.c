@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.196 2018/04/24 16:35:53 jakllsch Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.197 2018/05/19 11:02:33 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.196 2018/04/24 16:35:53 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.197 2018/05/19 11:02:33 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvm.h"
@@ -1591,6 +1591,7 @@ uvm_pagewire(struct vm_page *pg)
 		uvmexp.wired++;
 	}
 	pg->wire_count++;
+	KASSERT(pg->wire_count > 0);	/* detect wraparound */
 }
 
 /*
