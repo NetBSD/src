@@ -1,4 +1,4 @@
-/*	$NetBSD: t_fork.c,v 1.2 2018/05/19 02:42:58 kamil Exp $	*/
+/*	$NetBSD: t_fork.c,v 1.3 2018/05/19 05:10:16 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2018\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_fork.c,v 1.2 2018/05/19 02:42:58 kamil Exp $");
+__RCSID("$NetBSD: t_fork.c,v 1.3 2018/05/19 05:10:16 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -141,7 +141,7 @@ raise_raw(int sig)
 
 	/*
 	 * Spawn a dedicated thread to watch for a stopped child and emit
-	 * the SIGTERM signal to it.
+	 * the SIGKILL signal to it.
 	 *
 	 * This is required in vfork(2)ing parent and optional in fork(2).
 	 *
