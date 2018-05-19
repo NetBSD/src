@@ -1,3 +1,4 @@
+#!/usr/bin/awk -f
 # vile: awkmode
 function noident(given) {
 	gsub(/\$/,"@", given);
