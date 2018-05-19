@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_map.c,v 1.35 2018/05/19 17:18:57 jakllsch Exp $	*/
+/*	$NetBSD: pci_map.c,v 1.36 2018/05/19 17:21:42 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_map.c,v 1.35 2018/05/19 17:18:57 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_map.c,v 1.36 2018/05/19 17:21:42 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,7 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_map.c,v 1.35 2018/05/19 17:18:57 jakllsch Exp $"
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 
-bool pci_mapreg_map_enable_decode = false;
+bool pci_mapreg_map_enable_decode = true;
 
 static int
 pci_io_find(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t type,
