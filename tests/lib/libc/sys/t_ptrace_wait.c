@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.47 2018/05/19 05:25:21 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.48 2018/05/20 03:51:31 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.47 2018/05/19 05:25:21 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.48 2018/05/20 03:51:31 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -299,6 +299,7 @@ traceme_signal_nohandler(int sigsent)
 
 		switch (sigsent) {
 		case SIGCONT:
+		case SIGSTOP:
 			_exit(exitval);
 		default:
 			/* NOTREACHED */
@@ -332,6 +333,30 @@ traceme_signal_nohandler(int sigsent)
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	switch (sigsent) {
+	case SIGSTOP:
+		validate_status_stopped(status, sigsent);
+		DPRINTF("Before calling ptrace(2) with PT_GET_SIGINFO for "
+		        "child\n");
+		SYSCALL_REQUIRE(ptrace(PT_GET_SIGINFO, child, &info,
+		                       sizeof(info)) != -1);
+
+		DPRINTF("Signal traced to lwpid=%d\n", info.psi_lwpid);
+		DPRINTF("Signal properties: si_signo=%#x si_code=%#x "
+		        "si_errno=%#x\n",
+			info.psi_siginfo.si_signo, info.psi_siginfo.si_code,
+		        info.psi_siginfo.si_errno);
+
+		ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, sigval);
+		ATF_REQUIRE_EQ(info.psi_siginfo.si_code, SI_LWP);
+
+		DPRINTF("Before resuming the child process where it left off "
+		        "and with signal %s to be sent\n", strsignal(sigsent));
+		SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+
+		DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
+		TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0),
+		                      child);
+		/* FALLTHROUGH */
 	case SIGCONT:
 		validate_status_exited(status, exitval);
 		break;
@@ -360,7 +385,7 @@ ATF_TC_BODY(test, tc)								\
 }
 
 TRACEME_SIGNAL_NOHANDLER(traceme_signal_nohandler1, SIGKILL) /* non-maskable */
-//TRACEME_SIGNAL_NOHANDLER(traceme_signal_nohandler2, SIGSTOP) /* non-maskable */
+TRACEME_SIGNAL_NOHANDLER(traceme_signal_nohandler2, SIGSTOP) /* non-maskable */
 TRACEME_SIGNAL_NOHANDLER(traceme_signal_nohandler3, SIGABRT) /* abort trap */
 TRACEME_SIGNAL_NOHANDLER(traceme_signal_nohandler4, SIGHUP)  /* hangup */
 TRACEME_SIGNAL_NOHANDLER(traceme_signal_nohandler5, SIGCONT) /* continued? */
@@ -7113,7 +7138,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, traceme_sighandler_catch3);
 
 	ATF_TP_ADD_TC(tp, traceme_signal_nohandler1);
-//	ATF_TP_ADD_TC(tp, traceme_signal_nohandler2); // not yet
+	ATF_TP_ADD_TC(tp, traceme_signal_nohandler2);
 	ATF_TP_ADD_TC(tp, traceme_signal_nohandler3);
 	ATF_TP_ADD_TC(tp, traceme_signal_nohandler4);
 	ATF_TP_ADD_TC(tp, traceme_signal_nohandler5);
