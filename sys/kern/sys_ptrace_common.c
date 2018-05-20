@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace_common.c,v 1.40 2018/05/01 16:37:23 kamil Exp $	*/
+/*	$NetBSD: sys_ptrace_common.c,v 1.41 2018/05/20 03:51:31 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.40 2018/05/01 16:37:23 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.41 2018/05/20 03:51:31 kamil Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -865,7 +865,16 @@ ptrace_sendsig(struct proc *t, struct lwp *lt, int signo, int resume_all)
 		 * an LWP runs to see it.
 		 */
 		t->p_xsig = signo;
-		if (resume_all)
+
+		/*
+		 * signo > 0 check precents a potential panic, as
+		 * sigismember(&...,0) is invalid check and signo
+		 * can be equal to 0 as a special case of no-signal.
+		 */
+		if (signo > 0 && sigismember(&stopsigmask, signo)) {
+			t->p_waited = 0;
+			child_psignal(t, 0);
+		} else if (resume_all)
 			proc_unstop(t);
 		else
 			lwp_unstop(lt);
