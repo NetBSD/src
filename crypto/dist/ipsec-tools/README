@@ -41,6 +41,11 @@ source code was moved into NetBSD's CVS repository, in:
 However, many distributions still take their tarballs from SourceForge, and
 each distribution maintains local patches.
 
+FreeBSD maintains its own libipsec and setkey tools, in:
+
+	head/lib/libipsec/
+	head/sbin/setkey/
+
 A Trac used to exist, at the following address:
 
 	https://trac.ipsec-tools.net/
