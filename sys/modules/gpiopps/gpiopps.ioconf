@@ -1,0 +1,8 @@
+#	$NetBSD: gpiopps.ioconf,v 1.1 2018/05/20 15:15:41 thorpej Exp $
+
+ioconf		gpiopps
+
+include		"conf/files"
+
+pseudo-root	gpio*
+gpiopps*	at gpio? offset ? mask ? flag ?
