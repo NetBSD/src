@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.48 2018/05/20 03:51:31 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.49 2018/05/20 23:47:16 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.48 2018/05/20 03:51:31 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.49 2018/05/20 23:47:16 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -5786,18 +5786,6 @@ ATF_TC_BODY(signal3, tc)
 #endif
 	sigset_t intmask;
 
-	atf_tc_expect_fail("PR kern/51918");
-
-	// This test breaks now on some ports, temporarily disable it
-	ATF_REQUIRE(0 && "In order to get reliable failure, abort");
-
-#if defined(__sparc__)
-	atf_tc_expect_timeout("PR kern/52167");
-
-	// timeout wins, failure still valid
-	// atf_tc_expect_fail("PR kern/51918");
-#endif
-
 	DPRINTF("Before forking process PID=%d\n", getpid());
 	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
@@ -5840,12 +5828,12 @@ ATF_TC_BODY(signal3, tc)
 
 	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_KILL, child, NULL, 0) != -1);
 
 	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
-	validate_status_exited(status, exitval);
+	validate_status_signaled(status, SIGKILL, 0);
 
 	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
