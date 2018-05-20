@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.346 2018/05/19 05:01:42 kamil Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.347 2018/05/20 04:00:35 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.346 2018/05/19 05:01:42 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.347 2018/05/20 04:00:35 kamil Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_dtrace.h"
@@ -113,7 +113,7 @@ static pool_cache_t	ksiginfo_cache	__read_mostly;
 static callout_t	proc_stop_ch	__cacheline_aligned;
 
 sigset_t		contsigmask	__cacheline_aligned;
-static sigset_t		stopsigmask	__cacheline_aligned;
+sigset_t		stopsigmask	__cacheline_aligned;
 static sigset_t		vforksigmask	__cacheline_aligned;
 sigset_t		sigcantmask	__cacheline_aligned;
 

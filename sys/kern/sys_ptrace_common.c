@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace_common.c,v 1.41 2018/05/20 03:51:31 kamil Exp $	*/
+/*	$NetBSD: sys_ptrace_common.c,v 1.42 2018/05/20 04:00:35 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.41 2018/05/20 03:51:31 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.42 2018/05/20 04:00:35 kamil Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -867,7 +867,7 @@ ptrace_sendsig(struct proc *t, struct lwp *lt, int signo, int resume_all)
 		t->p_xsig = signo;
 
 		/*
-		 * signo > 0 check precents a potential panic, as
+		 * signo > 0 check prevents a potential panic, as
 		 * sigismember(&...,0) is invalid check and signo
 		 * can be equal to 0 as a special case of no-signal.
 		 */
