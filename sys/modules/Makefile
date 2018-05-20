@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.203 2018/05/19 14:15:40 thorpej Exp $
+#	$NetBSD: Makefile,v 1.204 2018/05/20 14:08:33 thorpej Exp $
 
 .include <bsd.own.mk>
 
@@ -48,6 +48,7 @@ SUBDIR+=	gpioiic
 SUBDIR+=	gpioow
 SUBDIR+=	gpiosim
 SUBDIR+=	gpioirq
+SUBDIR+=	gpiopps
 SUBDIR+=	hfs
 SUBDIR+=	hythygtemp
 SUBDIR+=	si70xxtemp

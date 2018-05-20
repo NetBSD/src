@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.115 2018/05/19 14:15:39 thorpej Exp $
+# $NetBSD: mi,v 1.116 2018/05/20 14:08:33 thorpej Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -136,6 +136,8 @@
 ./@MODULEDIR@/gpioirq/gpioirq.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/gpioow				base-kernel-modules	kmod
 ./@MODULEDIR@/gpioow/gpioow.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/gpiopps				base-kernel-modules	kmod
+./@MODULEDIR@/gpiopps/gpiopps.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/gpiosim				base-kernel-modules	kmod
 ./@MODULEDIR@/gpiosim/gpiosim.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/hfs				base-kernel-modules	kmod
