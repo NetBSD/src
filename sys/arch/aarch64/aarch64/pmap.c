@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.6 2018/05/16 08:32:07 ryo Exp $	*/
+/*	$NetBSD: pmap.c,v 1.7 2018/05/20 06:45:00 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.6 2018/05/16 08:32:07 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.7 2018/05/20 06:45:00 ryo Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -1436,17 +1436,10 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 			    "pmap_enter: failed to allocate pv_entry");
 		}
 
-		if (flags & PMAP_WIRED) {
-			/*
-			 * initial value of ref/mod are equal to prot,
-			 * and pte RW are same as prot.
-			 */
-			VM_PAGE_TO_MD(pg)->mdpg_flags |=
-			    (prot & mdattr);
-		} else {
-			/* pte RW will be masked by ref/mod for ref/mod emul */
-			mdattr &= VM_PAGE_TO_MD(pg)->mdpg_flags;
-		}
+		/* update referenced/modified flags */
+		VM_PAGE_TO_MD(pg)->mdpg_flags |=
+		    (flags & (VM_PROT_READ | VM_PROT_WRITE));
+		mdattr &= VM_PAGE_TO_MD(pg)->mdpg_flags;
 	}
 
 #ifdef PMAPCOUNTERS
