@@ -1,4 +1,4 @@
-# $NetBSD: t_trapsignal.sh,v 1.1 2017/12/07 19:46:40 christos Exp $
+# $NetBSD: t_trapsignal.sh,v 1.2 2018/05/21 08:49:03 kamil Exp $
 #
 # Copyright (c) 2017 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -85,10 +85,23 @@ trap_handle_recurse_body()
 		${HELPER} handle recurse
 }
 
+atf_test_case trap_ignore
+trap_ignore()
+{
+	atf_set "descr" "Test ignored trap with right exit code"
+}
+
+trap_ignore_body()
+{
+	atf_check -s signal:11 -o "inline:" -e "inline:" \
+		${HELPER} ignore
+}
+
 atf_init_test_cases()
 {
 	atf_add_test_case trap_simple
 	atf_add_test_case trap_handle
 	atf_add_test_case trap_mask
 	atf_add_test_case trap_handle_recurse
+	atf_add_test_case trap_ignore
 }

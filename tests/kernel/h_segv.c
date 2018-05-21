@@ -1,4 +1,4 @@
-/*	$NetBSD: h_segv.c,v 1.2 2017/12/08 14:40:45 christos Exp $	*/
+/*	$NetBSD: h_segv.c,v 1.3 2018/05/21 08:49:03 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: h_segv.c,v 1.2 2017/12/08 14:40:45 christos Exp $");
+__RCSID("$NetBSD: h_segv.c,v 1.3 2018/05/21 08:49:03 kamil Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -45,6 +45,7 @@ static int flags;
 #define F_RECURSE 	1
 #define F_HANDLE	2
 #define F_MASK		4
+#define F_IGNORE	8
 
 static struct {
 	const char *n;
@@ -53,6 +54,7 @@ static struct {
 	{ "recurse",	F_RECURSE },
 	{ "handle",	F_HANDLE },
 	{ "mask",	F_MASK },
+	{ "ignore",	F_IGNORE }
 };
 
 static void
@@ -110,6 +112,16 @@ main(int argc, char *argv[])
 		sigaddset(&set, SIGSEGV);
 		if (sigprocmask(SIG_BLOCK, &set, NULL) == -1)
 			err(EXIT_FAILURE, "sigprocmask");
+	}
+
+	if (flags & F_IGNORE) {
+		struct sigaction sa;
+
+		memset(&sa, 0, sizeof(sa));
+		sa.sa_handler = SIG_IGN;
+		sigemptyset(&sa.sa_mask);
+		if (sigaction(SIGSEGV, &sa, NULL) == -1)
+			err(EXIT_FAILURE, "sigaction");
 	}
 
         *p = 1;
