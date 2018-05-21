@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_sync.c,v 1.5 2013/09/14 12:18:06 martin Exp $	*/
+/*	$NetBSD: ip_sync.c,v 1.5.28.1 2018/05/21 04:36:14 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -78,7 +78,6 @@ struct file;
 #include <netinet/udp.h>
 #include <netinet/ip_icmp.h>
 #include "netinet/ip_compat.h"
-#include <netinet/tcpip.h>
 #include "netinet/ip_fil.h"
 #include "netinet/ip_nat.h"
 #include "netinet/ip_frag.h"
@@ -100,7 +99,7 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_sync.c,v 1.5 2013/09/14 12:18:06 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_sync.c,v 1.5.28.1 2018/05/21 04:36:14 pgoyette Exp $");
 #else
 static const char rcsid[] = "@(#)Id: ip_sync.c,v 1.1.1.2 2012/07/22 13:45:38 darrenr Exp";
 #endif

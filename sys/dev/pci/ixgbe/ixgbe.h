@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.h,v 1.32.2.5 2018/05/02 07:20:11 pgoyette Exp $ */
+/* $NetBSD: ixgbe.h,v 1.32.2.6 2018/05/21 04:36:12 pgoyette Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause

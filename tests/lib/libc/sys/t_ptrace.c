@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace.c,v 1.1.14.1 2018/05/02 07:20:25 pgoyette Exp $	*/
+/*	$NetBSD: t_ptrace.c,v 1.1.14.2 2018/05/21 04:36:17 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace.c,v 1.1.14.1 2018/05/02 07:20:25 pgoyette Exp $");
+__RCSID("$NetBSD: t_ptrace.c,v 1.1.14.2 2018/05/21 04:36:17 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>

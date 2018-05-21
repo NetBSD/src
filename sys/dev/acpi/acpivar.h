@@ -1,4 +1,4 @@
-/*	$NetBSD: acpivar.h,v 1.74 2016/06/21 11:33:33 nonaka Exp $	*/
+/*	$NetBSD: acpivar.h,v 1.74.16.1 2018/05/21 04:36:05 pgoyette Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -302,6 +302,8 @@ extern const struct acpi_resource_parse_ops acpi_resource_parse_ops_quiet;
 int		acpi_probe(void);
 void		acpi_disable(void);
 int		acpi_check(device_t, const char *);
+
+bool    	acpi_device_present(ACPI_HANDLE);
 
 int		acpi_reset(void);
 

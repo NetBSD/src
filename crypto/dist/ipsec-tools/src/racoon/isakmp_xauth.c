@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_xauth.c,v 1.28 2016/03/09 15:58:25 christos Exp $	*/
+/*	$NetBSD: isakmp_xauth.c,v 1.28.14.1 2018/05/21 04:35:49 pgoyette Exp $	*/
 
 /* Id: isakmp_xauth.c,v 1.38 2006/08/22 18:17:17 manubsd Exp */
 
@@ -655,7 +655,6 @@ PAM_conv(msg_count, msg, rsp, dontcare)
 	void *dontcare;
 {
 	int i;
-	int replies = 0;
 	struct pam_response *reply = NULL;
 
 	if ((reply = racoon_malloc(sizeof(*reply) * msg_count)) == NULL) 
@@ -712,10 +711,6 @@ xauth_login_pam(port, raddr, usr, pwd)
 	char *pwd;
 {
 	int error;
-	int res;
-	const void *data;
-	size_t len;
-	int type;
 	char *remote = NULL;
 	pam_handle_t *pam = NULL;
 
@@ -1321,10 +1316,8 @@ xauth_login_system(usr, pwd)
 	return -1;
 }
 
-int
-xauth_group_system(usr, grp)
-	char * usr;
-	char * grp;
+static int
+xauth_group_system(char *usr, char *grp)
 {
 	struct group * gr;
 	char * member;
@@ -1630,7 +1623,6 @@ isakmp_xauth_set(iph1, attr)
 {
 	int type;
 	vchar_t *buffer = NULL;
-	char *data;
 	struct xauth_state *xst;
 	size_t dlen = 0;
 	char* mraw = NULL, *mdata;

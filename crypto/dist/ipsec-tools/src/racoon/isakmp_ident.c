@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_ident.c,v 1.15 2016/03/16 21:09:39 christos Exp $	*/
+/*	$NetBSD: isakmp_ident.c,v 1.15.14.1 2018/05/21 04:35:49 pgoyette Exp $	*/
 
 /* Id: isakmp_ident.c,v 1.21 2006/04/06 16:46:08 manubsd Exp */
 
@@ -1746,7 +1746,6 @@ ident_ir3mx(iph1)
 	int need_cert = 0;
 	int error = -1;
 #ifdef HAVE_GSSAPI
-	int nptype;
 	vchar_t *gsstoken = NULL;
 	vchar_t *gsshash = NULL;
 #endif

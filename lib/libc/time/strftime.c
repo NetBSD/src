@@ -1,4 +1,4 @@
-/*	$NetBSD: strftime.c,v 1.40 2017/10/24 17:38:17 christos Exp $	*/
+/*	$NetBSD: strftime.c,v 1.40.2.1 2018/05/21 04:35:55 pgoyette Exp $	*/
 
 /* Convert a broken-down timestamp to a string.  */
 
@@ -35,7 +35,7 @@
 static char	elsieid[] = "@(#)strftime.c	7.64";
 static char	elsieid[] = "@(#)strftime.c	8.3";
 #else
-__RCSID("$NetBSD: strftime.c,v 1.40 2017/10/24 17:38:17 christos Exp $");
+__RCSID("$NetBSD: strftime.c,v 1.40.2.1 2018/05/21 04:35:55 pgoyette Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -213,7 +213,7 @@ label:
 				**	%Ec %EC %Ex %EX %Ey %EY
 				**	%Od %oe %OH %OI %Om %OM
 				**	%OS %Ou %OU %OV %Ow %OW %Oy
-				** are supposed to provide alternate
+				** are supposed to provide alternative
 				** representations.
 				*/
 				goto label;

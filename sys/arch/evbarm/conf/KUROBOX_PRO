@@ -1,4 +1,4 @@
-#	$NetBSD: KUROBOX_PRO,v 1.8 2015/07/18 15:05:52 htodd Exp $
+#	$NetBSD: KUROBOX_PRO,v 1.8.16.1 2018/05/21 04:36:00 pgoyette Exp $
 #
 #  KUROBOX_PRO -- KUROUTOSHIKOU. KURO-BOX/PRO platform kernel
 #
@@ -36,7 +36,7 @@ makeoptions	COPY_SYMTAB=1
 no gtpci* at mvsoc?
 no pci*	at gtpci?
 
-rs5c372rtc* at iic? addr 0x32		# RICOH RS5C372 RTC
+rs5c372rtc* at iic0 addr 0x32		# RICOH RS5C372 RTC
 
 # PCI network interfaces
 #mskc*	at pci? dev ? function ?	# Marvell Yukon 2 Gigabit Ethernet

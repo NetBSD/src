@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.165.2.3 2018/05/02 07:20:24 pgoyette Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.165.2.4 2018/05/21 04:36:16 pgoyette Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.165.2.3 2018/05/02 07:20:24 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.165.2.4 2018/05/21 04:36:16 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -134,6 +134,28 @@ rip6_init(void)
 	rip6stat_percpu = percpu_alloc(sizeof(uint64_t) * RIP6_NSTATS);
 }
 
+static void
+rip6_sbappendaddr(struct in6pcb *last, struct ip6_hdr *ip6,
+    const struct sockaddr *sa, int hlen, struct mbuf *n)
+{
+	struct mbuf *opts = NULL;
+
+	if (last->in6p_flags & IN6P_CONTROLOPTS)
+		ip6_savecontrol(last, &opts, ip6, n);
+
+	m_adj(n, hlen);
+
+	if (sbappendaddr(&last->in6p_socket->so_rcv, sa, n, opts) == 0) {
+		soroverflow(last->in6p_socket);
+		m_freem(n);
+		if (opts)
+			m_freem(opts);
+		RIP6_STATINC(RIP6_STAT_FULLSOCK);
+	} else {
+		sorwakeup(last->in6p_socket);
+	}
+}
+
 /*
  * Setup generic address and protocol structures
  * for raw_input routine, then pass them along with
@@ -148,7 +170,7 @@ rip6_input(struct mbuf **mp, int *offp, int proto)
 	struct in6pcb *in6p;
 	struct in6pcb *last = NULL;
 	struct sockaddr_in6 rip6src;
-	struct mbuf *n, *opts = NULL;
+	struct mbuf *n;
 
 	RIP6_STATINC(RIP6_STAT_IPACKETS);
 
@@ -198,21 +220,8 @@ rip6_input(struct mbuf **mp, int *offp, int proto)
 		}
 #endif
 		else if ((n = m_copypacket(m, M_DONTWAIT)) != NULL) {
-			if (last->in6p_flags & IN6P_CONTROLOPTS)
-				ip6_savecontrol(last, &opts, ip6, n);
-			/* strip intermediate headers */
-			m_adj(n, *offp);
-			if (sbappendaddr(&last->in6p_socket->so_rcv,
-			    sin6tosa(&rip6src), n, opts) == 0) {
-				soroverflow(last->in6p_socket);
-				m_freem(n);
-				if (opts)
-					m_freem(opts);
-				RIP6_STATINC(RIP6_STAT_FULLSOCK);
-			} else {
-				sorwakeup(last->in6p_socket);
-			}
-			opts = NULL;
+			rip6_sbappendaddr(last, ip6, sin6tosa(&rip6src),
+			    *offp, n);
 		}
 
 		last = in6p;
@@ -225,20 +234,8 @@ rip6_input(struct mbuf **mp, int *offp, int proto)
 		/* do not inject data into pcb */
 	} else
 #endif
-	if (last) {
-		if (last->in6p_flags & IN6P_CONTROLOPTS)
-			ip6_savecontrol(last, &opts, ip6, m);
-		/* strip intermediate headers */
-		m_adj(m, *offp);
-		if (sbappendaddr(&last->in6p_socket->so_rcv,
-		    sin6tosa(&rip6src), m, opts) == 0) {
-			soroverflow(last->in6p_socket);
-			m_freem(m);
-			if (opts)
-				m_freem(opts);
-			RIP6_STATINC(RIP6_STAT_FULLSOCK);
-		} else
-			sorwakeup(last->in6p_socket);
+	if (last != NULL) {
+		rip6_sbappendaddr(last, ip6, sin6tosa(&rip6src), *offp, m);
 	} else {
 		RIP6_STATINC(RIP6_STAT_NOSOCK);
 		if (m->m_flags & M_MCAST)

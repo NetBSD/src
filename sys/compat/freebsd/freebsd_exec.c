@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_exec.c,v 1.40 2018/01/09 20:55:42 maya Exp $	*/
+/*	$NetBSD: freebsd_exec.c,v 1.40.2.1 2018/05/21 04:36:03 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_exec.c,v 1.40 2018/01/09 20:55:42 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_exec.c,v 1.40.2.1 2018/05/21 04:36:03 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -79,7 +79,6 @@ struct emul emul_freebsd = {
 #endif
 	.e_sendsig =		freebsd_sendsig,
 	.e_trapsignal =		trapsignal,
-	.e_tracesig =		NULL,
 	.e_sigcode =		freebsd_sigcode,
 	.e_esigcode =		freebsd_esigcode,
 	.e_sigobject =		&emul_freebsd_object,

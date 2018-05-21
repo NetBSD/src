@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.116.2.1 2018/04/16 01:59:56 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.116.2.2 2018/05/21 04:36:03 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008, 2015 Matthew R. Green
@@ -713,6 +713,12 @@ struct netbsd32_omsghdr {
 	int		 msg_iovlen;		/* # elements in msg_iov */
 	netbsd32_caddr_t msg_accrights;		/* access rights sent/recvd */
 	int		 msg_accrightslen;
+};
+
+typedef netbsd32_pointer_t netbsd32_mmsghdrp_t;
+struct netbsd32_mmsghdr {
+	struct netbsd32_msghdr msg_hdr;
+	unsigned int msg_len;
 };
 
 /* from <sys/stat.h> */

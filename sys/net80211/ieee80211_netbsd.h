@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_netbsd.h,v 1.19.26.1 2018/05/02 07:20:23 pgoyette Exp $ */
+/* $NetBSD: ieee80211_netbsd.h,v 1.19.26.2 2018/05/21 04:36:16 pgoyette Exp $ */
 /*-
  * Copyright (c) 2003-2005 Sam Leffler, Errno Consulting
  * All rights reserved.
@@ -231,7 +231,6 @@ struct ieee80211_michael_event {
 
 #ifdef _KERNEL
 #define	ticks	hardclock_ticks
-#define	ovbcopy(__src, __dst, __n)	((void)memmove(__dst, __src, __n))
 
 void	if_printf(struct ifnet *, const char *, ...);
 void	get_random_bytes(void *, size_t);

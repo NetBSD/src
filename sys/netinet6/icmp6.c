@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.223.2.3 2018/05/02 07:20:23 pgoyette Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.223.2.4 2018/05/21 04:36:16 pgoyette Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.223.2.3 2018/05/02 07:20:23 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.223.2.4 2018/05/21 04:36:16 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -766,7 +766,7 @@ _icmp6_input(struct mbuf *m, int off, int proto)
 			memset(p, 0, 4);
 			memcpy(p + 4, hostname, maxhlen); /* meaningless TTL */
 
-			M_COPY_PKTHDR(n, m); /* just for rcvif */
+			M_COPY_PKTHDR(n, m);
 			n->m_pkthdr.len = n->m_len = sizeof(struct ip6_hdr) +
 				sizeof(struct icmp6_hdr) + 4 + maxhlen;
 			nicmp6->icmp6_type = ICMP6_WRUREPLY;
@@ -1407,7 +1407,7 @@ ni6_input(struct mbuf *m, int off)
 	if (n == NULL) {
 		goto bad;
 	}
-	M_MOVE_PKTHDR(n, m); /* just for rcvif */
+	M_MOVE_PKTHDR(n, m);
 	if (replylen > MHLEN) {
 		if (replylen > MCLBYTES) {
 			/*

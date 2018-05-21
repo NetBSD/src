@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.h,v 1.15 2015/11/21 09:06:03 mlelstv Exp $ */
+/* $NetBSD: gpio.h,v 1.15.16.1 2018/05/21 04:36:17 pgoyette Exp $ */
 /*	$OpenBSD: gpio.h,v 1.7 2008/11/26 14:51:20 mbalmer Exp $	*/
 /*
  * Copyright (c) 2009, 2011 Marc Balmer <marc@msys.ch>
@@ -52,9 +52,32 @@
 #define GPIO_PIN_ALT5		0x00200000	/* alternate function 5 */
 #define GPIO_PIN_ALT6		0x00400000	/* alternate function 6 */
 #define GPIO_PIN_ALT7		0x00800000	/* alternate function 7 */
-#define GPIO_PIN_EVENTS		0x10000000	/* deliver events */
-#define GPIO_PIN_LEVEL 		0x20000000	/* interrupt on level/edge */
-#define GPIO_PIN_FALLING	0x40000000	/* interrupt on falling/rising */
+
+#define	GPIO_PIN_HWCAPS		(GPIO_PIN_INPUT | GPIO_PIN_OUTPUT | \
+				 GPIO_PIN_INOUT | GPIO_PIN_OPENDRAIN | \
+				 GPIO_PIN_PUSHPULL | GPIO_PIN_TRISTATE | \
+				 GPIO_PIN_PULLUP | GPIO_PIN_PULLDOWN | \
+				 GPIO_PIN_PULSATE | GPIO_PIN_ALT0 | \
+				 GPIO_PIN_ALT1 | GPIO_PIN_ALT2 | \
+				 GPIO_PIN_ALT3 | GPIO_PIN_ALT4 | \
+				 GPIO_PIN_ALT5 | GPIO_PIN_ALT6 | \
+				 GPIO_PIN_ALT7)
+
+/* GPIO interrupt flags */
+#define	GPIO_INTR_POS_EDGE	0x00000001	/* interrupt on rising edge */
+#define	GPIO_INTR_NEG_EDGE	0x00000002	/* interrupt on falling edge */
+#define	GPIO_INTR_DOUBLE_EDGE	0x00000004	/* interrupt on both edges */
+#define	GPIO_INTR_HIGH_LEVEL	0x00000008	/* interrupt on high level */
+#define	GPIO_INTR_LOW_LEVEL	0x00000010	/* interrupt on low level */
+#define	GPIO_INTR_MPSAFE	0x80000000	/* MP-safe handling */
+
+#define	GPIO_INTR_EDGE_MASK	(GPIO_INTR_POS_EDGE | \
+				 GPIO_INTR_NEG_EDGE | \
+				 GPIO_INTR_DOUBLE_EDGE)
+#define	GPIO_INTR_LEVEL_MASK	(GPIO_INTR_HIGH_LEVEL | \
+				 GPIO_INTR_LOW_LEVEL)
+#define	GPIO_INTR_MODE_MASK	(GPIO_INTR_EDGE_MASK | \
+				 GPIO_INTR_LEVEL_MASK)
 
 /* GPIO controller description */
 struct gpio_info {

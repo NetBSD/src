@@ -1,6 +1,5 @@
-# $NetBSD: Makefile,v 1.7.28.1 2018/05/02 07:20:03 pgoyette Exp $
+# $NetBSD: Makefile,v 1.7.28.2 2018/05/21 04:35:58 pgoyette Exp $
 
-.include <bsd.hostinit.mk>
 
 HOSTPROG=	din-kbdmap
 FILES=		din.map

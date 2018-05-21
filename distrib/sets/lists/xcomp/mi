@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.192.10.1 2018/03/15 09:11:54 pgoyette Exp $
+#	 $NetBSD: mi,v 1.192.10.2 2018/05/21 04:35:50 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -564,15 +564,16 @@
 ./usr/X11R7/include/freetype2/freetype/config/ftstdlib.h	-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/freetype.h	-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/ftadvanc.h	-unknown-	xorg
-./usr/X11R7/include/freetype2/freetype/ftautoh.h	-unknown-	xorg
+./usr/X11R7/include/freetype2/freetype/ftautoh.h	-unknown-	obsolete
 ./usr/X11R7/include/freetype2/freetype/ftbbox.h		-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/ftbdf.h		-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/ftbitmap.h	-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/ftbzip2.h	-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/ftcache.h	-unknown-	xorg
-./usr/X11R7/include/freetype2/freetype/ftcffdrv.h	-unknown-	xorg
+./usr/X11R7/include/freetype2/freetype/ftcffdrv.h	-unknown-	obsolete
 ./usr/X11R7/include/freetype2/freetype/ftchapters.h	-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/ftcid.h		-unknown-	xorg
+./usr/X11R7/include/freetype2/freetype/ftdriver.h		-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/fterrdef.h	-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/fterrors.h	-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/ftfntfmt.h	-unknown-	xorg
@@ -591,6 +592,7 @@
 ./usr/X11R7/include/freetype2/freetype/ftmoderr.h	-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/ftotval.h	-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/ftoutln.h	-unknown-	xorg
+./usr/X11R7/include/freetype2/freetype/ftparams.h		-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/ftpfr.h		-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/ftrender.h	-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/ftsizes.h	-unknown-	xorg
@@ -599,7 +601,7 @@
 ./usr/X11R7/include/freetype2/freetype/ftsynth.h	-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/ftsystem.h	-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/fttrigon.h	-unknown-	xorg
-./usr/X11R7/include/freetype2/freetype/ftttdrv.h	-unknown-	xorg
+./usr/X11R7/include/freetype2/freetype/ftttdrv.h	-unknown-	obsolete
 ./usr/X11R7/include/freetype2/freetype/fttypes.h	-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/ftwinfnt.h	-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/ftxf86.h		-unknown-	obsolete
@@ -636,7 +638,7 @@
 ./usr/X11R7/include/freetype2/freetype/ttnameid.h	-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/tttables.h	-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/tttags.h		-unknown-	xorg
-./usr/X11R7/include/freetype2/freetype/ttunpat.h	-unknown-	xorg
+./usr/X11R7/include/freetype2/freetype/ttunpat.h	-unknown-	obsolete
 ./usr/X11R7/include/freetype2/ft2build.h		-unknown-	xorg
 ./usr/X11R7/include/freetype2/ftadvanc.h		-unknown-	obsolete
 ./usr/X11R7/include/freetype2/ftautoh.h			-unknown-	obsolete

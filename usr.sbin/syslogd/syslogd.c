@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.124 2017/09/10 17:01:07 ginsbach Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.124.2.1 2018/05/21 04:36:20 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.124 2017/09/10 17:01:07 ginsbach Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.124.2.1 2018/05/21 04:36:20 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -113,6 +113,7 @@ typedef struct deadq_entry {
  */
 #define DQ_TIMO_INIT	2
 
+#define	RCVBUFLEN	16384
 /*
  * Intervals at which we flush out "message repeated" messages,
  * in seconds after previous message is logged.	 After each flush,
@@ -271,6 +272,8 @@ static inline void
 		free_incoming_tls_sockets(void);
 #endif /* !DISABLE_TLS */
 static int writev1(int, struct iovec *, size_t);
+
+static void setsockbuf(int, const char *);
 
 /* for make_timestamp() */
 char	timestamp[MAX_TIMESTAMPLEN + 1];
@@ -492,6 +495,7 @@ getgroup:
 			logerror("Cannot create `%s'", *pp);
 			die(0, 0, NULL);
 		}
+		setsockbuf(funix[j], *pp);
 		DPRINTF(D_NET, "Listening on unix dgram socket `%s'\n", *pp);
 	}
 
@@ -658,6 +662,24 @@ usage(void)
 	    "\t[-p log_socket2 ...]] [-t chroot_dir] [-u user]\n",
 	    getprogname());
 	exit(1);
+}
+
+static void
+setsockbuf(int fd, const char *name)
+{
+	int buflen;
+	socklen_t socklen = sizeof(buflen);
+	if (getsockopt(fd, SOL_SOCKET, SO_RCVBUF, &buflen, &socklen) == -1) {
+		logerror("getsockopt: SO_RCVBUF: `%s'", name);
+		return;
+	}
+	if (buflen >= RCVBUFLEN)
+		return;
+	buflen = RCVBUFLEN;
+	if (setsockopt(fd, SOL_SOCKET, SO_RCVBUF, &buflen, socklen) == -1) {
+		logerror("setsockopt: SO_RCVBUF: `%s'", name);
+		return;
+	}
 }
 
 /*

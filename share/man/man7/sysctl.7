@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.124.2.1 2018/04/22 07:20:17 pgoyette Exp $
+.\"	$NetBSD: sysctl.7,v 1.124.2.2 2018/05/21 04:35:56 pgoyette Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd February 22, 2018
+.Dd May 5, 2018
 .Dt SYSCTL 7
 .Os
 .Sh NAME
@@ -2041,7 +2041,6 @@ The currently defined variable and names are:
 .It esp_auth	integer	yes
 .It ah_keymin	integer	yes
 .El
-.Pp
 The variables are as follows:
 .Bl -tag -width "123456"
 .It Li debug
@@ -2090,6 +2089,66 @@ on ACQUIRE PF_KEY message.
 Minimum AH key length, in bits,
 The value is used when the kernel creates proposal payload
 on ACQUIRE PF_KEY message.
+.El
+.It Li net.local ( Dv PF_LOCAL )
+Get or set various global information about
+.Dv AF_LOCAL
+type sockets.
+For some variables, the third level name is the variable name:
+.Bl -column "Variable" "integer" "Changeable" -offset indent
+.It Sy Variable	Type Ta Sy Changeable
+.It inflight	integer	no
+.It deferred	integer	no
+.El
+The variables are as follows:
+.Bl -tag -width "123456"
+.It Li inflight
+The number of file descriptors currently passed between processes,
+.Qq in flight .
+.It Li deferred
+The number of file descriptors passed between processes that have been
+deferred for cleanup by a kernel task.
+.El
+.Pp
+Other variables are specific to a socket type:
+.Bl -column "seqpacket" "sendspace" "integer" "Changeable" -offset indent
+.It Sy "Socket Type"  	Sy Variable	Type Ta Sy Changeable
+.It dgram	pcblist	struct	no
+.It dgram	recvspace	integer	yes
+.It dgram	sendspace	integer	yes
+.It seqpacket	pcblist	struct	no
+.It stream	pcblist	struct	no
+.It stream	recvspace	integer	yes
+.It stream	sendspace	integer	yes
+.El
+The variables are as follows:
+.Bl -tag -width "123456"
+.It Li dgram.pcblist
+The Protocol Control Block list structure for datagram sockets.
+Parsed by
+.Xr netstat 8
+or
+.Xr sockstat 8 .
+.It Li dgram.recvspace
+The default datagram receive buffer size.
+.It Li dgram.sendspace
+The default datagram send buffer size.
+.It Li seqpacket.pcblist
+The Protocol Control Block list structure for Sequential Packet sockets.
+Parsed by
+.Xr netstat 8
+or
+.Xr sockstat 8 .
+.It Li stream.pcblist
+The Protocol Control Block list structure for stream sockets.
+Parsed by
+.Xr netstat 8
+or
+.Xr sockstat 8 .
+.It Li stream.recvspace
+The default stream receive buffer size.
+.It Li stream.sendspace
+The default stream send buffer size.
 .El
 .El
 .Ss The proc.* subtree

@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ah.c,v 1.87.2.3 2018/05/02 07:20:24 pgoyette Exp $	*/
+/*	$NetBSD: xform_ah.c,v 1.87.2.4 2018/05/21 04:36:16 pgoyette Exp $	*/
 /*	$FreeBSD: xform_ah.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ah.c,v 1.63 2001/06/26 06:18:58 angelos Exp $ */
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.87.2.3 2018/05/02 07:20:24 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.87.2.4 2018/05/21 04:36:16 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -530,7 +530,7 @@ ah_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 	rplen = HDRSIZE(sav);
 
 	/* XXX don't pullup, just copy header */
-	IP6_EXTHDR_GET(ah, struct newah *, m, skip, rplen);
+	M_REGION_GET(ah, struct newah *, m, skip, rplen);
 	if (ah == NULL) {
 		/* m already freed */
 		return ENOBUFS;
@@ -725,8 +725,6 @@ ah_input_cb(struct cryptop *crp)
 	uint8_t nxt;
 	char *ptr;
 	int authsize;
-	uint16_t dport;
-	uint16_t sport;
 	bool pool_used;
 	size_t size;
 	IPSEC_DECLARE_LOCK_VARIABLE;
@@ -737,9 +735,6 @@ ah_input_cb(struct cryptop *crp)
 	nxt = tc->tc_nxt;
 	protoff = tc->tc_protoff;
 	m = crp->crp_buf;
-
-	/* find the source port for NAT-T */
-	nat_t_ports_get(m, &dport, &sport);
 
 	IPSEC_ACQUIRE_GLOBAL_LOCKS();
 
@@ -837,7 +832,7 @@ ah_input_cb(struct cryptop *crp)
 		    sizeof(seq), &seq);
 		if (ipsec_updatereplay(ntohl(seq), sav)) {
 			AH_STATINC(AH_STAT_REPLAY);
-			error = ENOBUFS; /* XXX */
+			error = EACCES;
 			goto bad;
 		}
 	}
@@ -883,7 +878,7 @@ bad:
  */
 static int
 ah_output(struct mbuf *m, const struct ipsecrequest *isr, struct secasvar *sav,
-    struct mbuf **mp, int skip, int protoff)
+    int skip, int protoff)
 {
 	char buf[IPSEC_ADDRSTRLEN];
 	const struct auth_hash *ahx;

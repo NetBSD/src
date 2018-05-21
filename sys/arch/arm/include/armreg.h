@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.118.2.2 2018/04/07 04:12:12 pgoyette Exp $	*/
+/*	$NetBSD: armreg.h,v 1.118.2.3 2018/05/21 04:35:59 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -969,6 +969,13 @@ gtmr_cntp_ctl_write(uint32_t val)
 /*
  * Counter-timer Virtual Timer TimerValue register
  */
+static inline uint32_t
+gtmr_cntv_tval_read(void)
+{
+
+	return armreg_cntv_tval_read();
+}
+
 static inline void
 gtmr_cntv_tval_write(uint32_t val)
 {

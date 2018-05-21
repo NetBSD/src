@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.17 2017/06/30 04:41:19 kamil Exp $	*/
+/*	$NetBSD: io.c,v 1.17.4.1 2018/05/21 04:35:48 pgoyette Exp $	*/
 
 /*
  * shell buffered IO and formatted output
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: io.c,v 1.17 2017/06/30 04:41:19 kamil Exp $");
+__RCSID("$NetBSD: io.c,v 1.17.4.1 2018/05/21 04:35:48 pgoyette Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -284,7 +284,7 @@ restfd(fd, ofd)
 
 void
 openpipe(pv)
-	register int *pv;
+	int *pv;
 {
 	if (pipe(pv) < 0)
 		errorf("can't create pipe - try again");
@@ -294,7 +294,7 @@ openpipe(pv)
 
 void
 closepipe(pv)
-	register int *pv;
+	int *pv;
 {
 	close(pv[0]);
 	close(pv[1]);

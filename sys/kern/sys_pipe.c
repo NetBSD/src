@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.143.2.1 2018/04/22 07:20:27 pgoyette Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.143.2.2 2018/05/21 04:36:15 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.143.2.1 2018/04/22 07:20:27 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.143.2.2 2018/05/21 04:36:15 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,8 +92,6 @@ __KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.143.2.1 2018/04/22 07:20:27 pgoyette 
 #include <sys/atomic.h>
 #include <sys/pipe.h>
 
-#include <uvm/uvm_extern.h>
-
 /*
  * Use this to disable direct I/O and decrease the code size:
  * #define PIPE_NODIRECT
@@ -101,6 +99,10 @@ __KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.143.2.1 2018/04/22 07:20:27 pgoyette 
 
 /* XXX Disabled for now; rare hangs switching between direct/buffered */        
 #define PIPE_NODIRECT
+
+#ifndef PIPE_NODIRECT
+#include <uvm/uvm.h>
+#endif
 
 static int	pipe_read(file_t *, off_t *, struct uio *, kauth_cred_t, int);
 static int	pipe_write(file_t *, off_t *, struct uio *, kauth_cred_t, int);
@@ -509,7 +511,6 @@ again:
 			 * Direct copy, bypassing a kernel buffer.
 			 */
 			void *va;
-			u_int gen;
 
 			KASSERT(rpipe->pipe_state & PIPE_DIRECTW);
 
@@ -518,15 +519,8 @@ again:
 				size = uio->uio_resid;
 
 			va = (char *)rmap->kva + rmap->pos;
-			gen = rmap->egen;
 			mutex_exit(lock);
-
-			/*
-			 * Consume emap and read the data from loaned pages.
-			 */
-			uvm_emap_consume(gen);
 			error = uiomove(va, size, uio);
-
 			mutex_enter(lock);
 			if (error)
 				break;
@@ -660,7 +654,6 @@ pipe_loan_free(struct pipe *wpipe)
 	struct pipemapping * const wmap = &wpipe->pipe_map;
 	const vsize_t len = ptoa(wmap->npages);
 
-	uvm_emap_remove(wmap->kva, len);	/* XXX */
 	uvm_km_free(kernel_map, wmap->kva, len, UVM_KMF_VAONLY);
 	wmap->kva = 0;
 	atomic_add_int(&amountpipekva, -len);
@@ -746,10 +739,12 @@ pipe_direct_write(file_t *fp, struct pipe *wpipe, struct uio *uio)
 		return (ENOMEM); /* so that caller fallback to ordinary write */
 	}
 
-	/* Enter the loaned pages to KVA, produce new emap generation number. */
-	uvm_emap_enter(wmap->kva + ptoa(starting_color), pgs, npages,
-	    VM_PROT_READ);
-	wmap->egen = uvm_emap_produce();
+ 	/* Enter the loaned pages to kva */
+ 	vaddr_t kva = wpipe->pipe_map.kva;
+ 	for (int j = 0; j < npages; j++, kva += PAGE_SIZE) {
+ 		pmap_kenter_pa(kva, VM_PAGE_TO_PHYS(pgs[j]), VM_PROT_READ, 0);
+ 	}
+ 	pmap_update(pmap_kernel());
 
 	/* Now we can put the pipe in direct write mode */
 	wmap->pos = bpos + ptoa(starting_color);
@@ -791,7 +786,8 @@ pipe_direct_write(file_t *fp, struct pipe *wpipe, struct uio *uio)
 	mutex_exit(lock);
 
 	if (pgs != NULL) {
-		/* XXX: uvm_emap_remove */
+		pmap_kremove(wpipe->pipe_map.kva, blen);
+		pmap_update(pmap_kernel());
 		uvm_unloan(pgs, npages, UVM_LOAN_TOPAGE);
 	}
 	if (error || amountpipekva > maxpipekva)
@@ -813,7 +809,7 @@ pipe_direct_write(file_t *fp, struct pipe *wpipe, struct uio *uio)
 			return (error);
 		}
 
-		bcnt -= wpipe->cnt;
+		bcnt -= wmap->cnt;
 	}
 
 	uio->uio_resid -= bcnt;
@@ -918,7 +914,7 @@ pipe_write(file_t *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 		 */
 		if ((uio->uio_iov->iov_len >= PIPE_MINDIRECT) &&
 		    (fp->f_flag & FNONBLOCK) == 0 &&
-		    (wmap->kva || (amountpipekva < limitpipekva))) {
+		    (wpipe->pipe_map.kva || (amountpipekva < limitpipekva))) {
 			error = pipe_direct_write(fp, wpipe, uio);
 
 			/*

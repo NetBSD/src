@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.22 2017/06/30 04:41:19 kamil Exp $	*/
+/*	$NetBSD: main.c,v 1.22.4.1 2018/05/21 04:35:48 pgoyette Exp $	*/
 
 /*
  * startup, main loop, environments and error handling
@@ -10,7 +10,7 @@
 #include <time.h>
 
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.22 2017/06/30 04:41:19 kamil Exp $");
+__RCSID("$NetBSD: main.c,v 1.22.4.1 2018/05/21 04:35:48 pgoyette Exp $");
 #endif
 
 
@@ -93,7 +93,7 @@ static const char *const initcoms [] = {
 int
 main(int argc, char *argv[])
 {
-	register int i;
+	int i;
 	int argi;
 	Source *s;
 	struct block *l;
@@ -421,7 +421,7 @@ include(name, argc, argv, intr_ok)
 	char **argv;
 	int intr_ok;
 {
-	register Source *volatile s = NULL;
+	Source *volatile s = NULL;
 	struct shf *shf;
 	char **volatile old_argv;
 	volatile int old_argc;
@@ -490,7 +490,7 @@ int
 command(comm)
 	const char *comm;
 {
-	register Source *s;
+	Source *s;
 	int r;
 
 	s = pushs(SSTRING, ATEMP);
@@ -653,7 +653,7 @@ void
 newenv(type)
 	int type;
 {
-	register struct env *ep;
+	struct env *ep;
 
 	ep = (struct env *) alloc(sizeof(*ep), ATEMP);
 	ep->type = type;
@@ -669,8 +669,8 @@ newenv(type)
 void
 quitenv()
 {
-	register struct env *ep = e;
-	register int fd;
+	struct env *ep = e;
+	int fd;
 
 	if (ep->oenv && ep->oenv->loc != ep->loc)
 		popblock();

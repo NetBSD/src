@@ -1,4 +1,4 @@
-/*      $NetBSD: usbhidaction.c,v 1.28 2017/12/10 20:38:14 bouyer Exp $ */
+/*      $NetBSD: usbhidaction.c,v 1.28.2.1 2018/05/21 04:36:19 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: usbhidaction.c,v 1.28 2017/12/10 20:38:14 bouyer Exp $");
+__RCSID("$NetBSD: usbhidaction.c,v 1.28.2.1 2018/05/21 04:36:19 pgoyette Exp $");
 #endif
 
 #include <stdio.h>
@@ -95,13 +95,14 @@ main(int argc, char **argv)
 	struct command *cmd;
 	int reportid;
 	const char *table = NULL;
+	const char *pidfn = NULL;
 
 	setprogname(argv[0]);
 	(void)setlinebuf(stdout);
 
 	demon = 1;
 	ignore = 0;
-	while ((ch = getopt(argc, argv, "c:df:it:v")) != -1) {
+	while ((ch = getopt(argc, argv, "c:df:ip:t:v")) != -1) {
 		switch(ch) {
 		case 'c':
 			conf = optarg;
@@ -114,6 +115,9 @@ main(int argc, char **argv)
 			break;
 		case 'f':
 			dev = optarg;
+			break;
+		case 'p':
+			pidfn = optarg;
 			break;
 		case 't':
 			table = optarg;
@@ -169,7 +173,7 @@ main(int argc, char **argv)
 	if (demon) {
 		if (daemon(0, 0) < 0)
 			err(EXIT_FAILURE, "daemon()");
-		(void)pidfile(NULL);
+		(void)pidfile(pidfn);
 		isdemon = 1;
 	}
 
@@ -214,7 +218,7 @@ usage(void)
 {
 
 	(void)fprintf(stderr, "usage: %s -c config_file [-d] -f hid_dev "
-		"[-i] [-t table] [-v]\n", getprogname());
+		"[-i] [-p pidfile] [-t table] [-v]\n", getprogname());
 	exit(EXIT_FAILURE);
 }
 

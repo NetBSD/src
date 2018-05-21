@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.268.2.1 2018/04/16 01:59:57 pgoyette Exp $	*/
+/*	$NetBSD: acpi.c,v 1.268.2.2 2018/05/21 04:36:05 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.268.2.1 2018/04/16 01:59:57 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.268.2.2 2018/05/21 04:36:05 pgoyette Exp $");
 
 #include "pci.h"
 #include "opt_acpi.h"
@@ -897,6 +897,17 @@ acpi_rescan_nodes(struct acpi_softc *sc)
 			continue;
 
 		di = ad->ad_devinfo;
+
+		/*
+		 * We only attach devices which are present, enabled, and
+		 * functioning properly. However, if a device is enabled,
+		 * it is decoding resources and we should claim these,
+		 * if possible. This requires changes to bus_space(9).
+		 */
+		if (di->Type == ACPI_TYPE_DEVICE &&
+		    !acpi_device_present(ad->ad_handle)) {
+			continue;
+		}
 
 		if (di->Type == ACPI_TYPE_POWER)
 			continue;
@@ -1749,6 +1760,22 @@ acpi_is_scope(struct acpi_devnode *ad)
 	return false;
 }
 
+bool
+acpi_device_present(ACPI_HANDLE handle)
+{
+	ACPI_STATUS rv;
+	ACPI_INTEGER sta;
+
+	rv = acpi_eval_integer(handle, "_STA", &sta);
+
+	if (ACPI_FAILURE(rv)) {
+		/* No _STA method -> must be there */
+		return rv == AE_NOT_FOUND;
+	}
+
+	return (sta & ACPI_STA_OK) == ACPI_STA_OK;
+}
+
 /*
  * ACPIVERBOSE.
  */
@@ -1797,11 +1824,15 @@ acpi_activate_device(ACPI_HANDLE handle, ACPI_DEVICE_INFO **di)
 	ACPI_DEVICE_INFO *newdi;
 	ACPI_STATUS rv;
 
+
 	/*
 	 * If the device is valid and present,
 	 * but not enabled, try to activate it.
 	 */
 	if (((*di)->Valid & valid) != valid)
+		return;
+
+	if (!acpi_device_present(handle))
 		return;
 
 	rv = acpi_allocate_resources(handle);

@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2185.2.3 2018/04/22 07:20:07 pgoyette Exp $
+#	$NetBSD: mi,v 1.2185.2.4 2018/05/21 04:35:49 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -206,6 +206,7 @@
 ./usr/include/blacklist.h			comp-c-include
 ./usr/include/bluetooth.h			comp-c-include
 ./usr/include/bm.h				comp-c-include
+./usr/include/bozohttpd.h			comp-c-include
 ./usr/include/bzlib.h				comp-c-include
 ./usr/include/c++/__bit_reference		comp-cxx-include	libcxx
 ./usr/include/c++/__config			comp-cxx-include	libcxx
@@ -3288,6 +3289,8 @@
 ./usr/lib/libblacklist_p.a			comp-c-proflib		compatfile,profile
 ./usr/lib/libbluetooth.a			comp-c-lib		compatfile
 ./usr/lib/libbluetooth_p.a			comp-c-proflib		compatfile,profile
+./usr/lib/libbozohttpd.a			comp-c-lib		compatfile
+./usr/lib/libbozohttpd_p.a			comp-c-proflib		compatfile,profile
 ./usr/lib/libbsdmalloc.a			comp-c-lib		compatfile
 ./usr/lib/libbsdmalloc_p.a			comp-c-proflib		compatfile,profile
 ./usr/lib/libbz2.a				comp-c-lib		compatfile
@@ -3793,6 +3796,7 @@
 ./usr/libdata/lint/llib-lbind9.ln		comp-bind-lintlib	lint
 ./usr/libdata/lint/llib-lblacklist.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lbluetooth.ln		comp-c-lintlib		lint
+./usr/libdata/lint/llib-lbozohttpd.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lbsdmalloc.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lbz2.ln			comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lc.ln			comp-c-lintlib		lint
@@ -11643,9 +11647,9 @@
 ./usr/share/man/cat9/uao_detach.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/uao_reference.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/ubc.0			comp-sys-catman		.cat
-./usr/share/man/cat9/ubc_alloc.0		comp-sys-catman		.cat
+./usr/share/man/cat9/ubc_alloc.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/ubc_purge.0		comp-sys-catman		.cat
-./usr/share/man/cat9/ubc_release.0		comp-sys-catman		.cat
+./usr/share/man/cat9/ubc_release.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/ubc_uiomove.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/ubc_zerorange.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/ucas.0			comp-sys-catman		.cat
@@ -19295,9 +19299,9 @@
 ./usr/share/man/html9/uao_detach.html		comp-sys-htmlman	html
 ./usr/share/man/html9/uao_reference.html	comp-sys-htmlman	html
 ./usr/share/man/html9/ubc.html			comp-sys-htmlman	html
-./usr/share/man/html9/ubc_alloc.html		comp-sys-htmlman	html
+./usr/share/man/html9/ubc_alloc.html		comp-obsolete		obsolete
 ./usr/share/man/html9/ubc_purge.html		comp-sys-htmlman	html
-./usr/share/man/html9/ubc_release.html		comp-sys-htmlman	html
+./usr/share/man/html9/ubc_release.html		comp-obsolete		obsolete
 ./usr/share/man/html9/ubc_uiomove.html		comp-sys-htmlman	html
 ./usr/share/man/html9/ubc_zerorange.html	comp-sys-htmlman	html
 ./usr/share/man/html9/ucas.html			comp-sys-htmlman	html
@@ -27155,9 +27159,9 @@
 ./usr/share/man/man9/uao_detach.9		comp-sys-man		.man
 ./usr/share/man/man9/uao_reference.9		comp-sys-man		.man
 ./usr/share/man/man9/ubc.9			comp-sys-man		.man
-./usr/share/man/man9/ubc_alloc.9		comp-sys-man		.man
+./usr/share/man/man9/ubc_alloc.9		comp-obsolete		obsolete
 ./usr/share/man/man9/ubc_purge.9		comp-sys-man		.man
-./usr/share/man/man9/ubc_release.9		comp-sys-man		.man
+./usr/share/man/man9/ubc_release.9		comp-obsolete		obsolete
 ./usr/share/man/man9/ubc_uiomove.9		comp-sys-man		.man
 ./usr/share/man/man9/ubc_zerorange.9		comp-sys-man		.man
 ./usr/share/man/man9/ucas.9			comp-sys-man		.man

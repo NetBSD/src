@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.96 2017/05/23 02:19:14 ozaki-r Exp $	*/
+/*	$NetBSD: hme.c,v 1.96.8.1 2018/05/21 04:36:05 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.96 2017/05/23 02:19:14 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.96.8.1 2018/05/21 04:36:05 pgoyette Exp $");
 
 /* #define HMEDEBUG */
 
@@ -753,7 +753,7 @@ hme_get(struct hme_softc *sc, int ri, uint32_t flags)
 			pktlen = m0->m_pkthdr.len - ETHER_HDR_LEN;
 		} else if (ntohs(eh->ether_type) == ETHERTYPE_VLAN) {
 			evh = (struct ether_vlan_header *)eh;
-			if (ntohs(evh->evl_proto != ETHERTYPE_IP))
+			if (ntohs(evh->evl_proto) != ETHERTYPE_IP)
 				goto swcsum;
 			ip = (struct ip *)((char *)eh + ETHER_HDR_LEN +
 			    ETHER_VLAN_ENCAP_LEN);

@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_gpio.c,v 1.6 2017/12/10 21:38:26 skrll Exp $	*/
+/*	$NetBSD: bcm2835_gpio.c,v 1.6.2.1 2018/05/21 04:35:58 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2013, 2014, 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_gpio.c,v 1.6 2017/12/10 21:38:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_gpio.c,v 1.6.2.1 2018/05/21 04:35:58 pgoyette Exp $");
 
 /*
  * Driver for BCM2835 GPIO
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: bcm2835_gpio.c,v 1.6 2017/12/10 21:38:26 skrll Exp $
 #include <sys/intr.h>
 #include <sys/kernel.h>
 #include <sys/kmem.h>
+#include <sys/proc.h>
 #include <sys/gpio.h>
 
 #include <sys/bitops.h>
@@ -66,6 +67,29 @@ int bcm2835gpiodebug = 3;
 
 #define	BCMGPIO_MAXPINS	54
 
+struct bcmgpio_eint {
+	 int			(*eint_func)(void *);
+	 void			*eint_arg;
+	 int			eint_flags;
+	 int			eint_bank;
+	 int			eint_num;
+};
+
+#define	BCMGPIO_INTR_POS_EDGE	0x01
+#define	BCMGPIO_INTR_NEG_EDGE	0x02
+#define	BCMGPIO_INTR_HIGH_LEVEL	0x04
+#define	BCMGPIO_INTR_LOW_LEVEL	0x08
+#define	BCMGPIO_INTR_MPSAFE	0x10
+
+struct bcmgpio_softc;
+struct bcmgpio_bank {
+	struct bcmgpio_softc	*sc_bcm;
+	void			*sc_ih;
+	struct bcmgpio_eint	sc_eint[32];
+	int			sc_bankno;
+};
+#define	BCMGPIO_NBANKS	2
+
 struct bcmgpio_softc {
 	device_t		sc_dev;
 	bus_space_tag_t		sc_iot;
@@ -74,6 +98,9 @@ struct bcmgpio_softc {
 
 	kmutex_t		sc_lock;
 	gpio_pin_t		sc_gpio_pins[BCMGPIO_MAXPINS];
+
+	/* For interrupt support. */
+	struct bcmgpio_bank	sc_banks[BCMGPIO_NBANKS];
 };
 
 struct bcmgpio_pin {
@@ -89,6 +116,13 @@ static void	bcmgpio_attach(device_t, device_t, void *);
 static int	bcm2835gpio_gpio_pin_read(void *, int);
 static void	bcm2835gpio_gpio_pin_write(void *, int, int);
 static void	bcm2835gpio_gpio_pin_ctl(void *, int, int);
+
+static void *	bcmgpio_gpio_intr_establish(void *, int, int, int,
+					    int (*)(void *), void *);
+static void	bcmgpio_gpio_intr_disestablish(void *, void *);
+static bool	bcmgpio_gpio_intrstr(void *, int, int, char *, size_t);
+
+static int	bcmgpio_intr(void *);
 
 u_int		bcm283x_pin_getfunc(const struct bcmgpio_softc * const, u_int);
 void		bcm283x_pin_setfunc(const struct bcmgpio_softc * const, u_int,
@@ -108,6 +142,17 @@ static struct fdtbus_gpio_controller_func bcmgpio_funcs = {
 	.release = bcmgpio_fdt_release,
 	.read = bcmgpio_fdt_read,
 	.write = bcmgpio_fdt_write
+};
+
+static void *	bcmgpio_fdt_intr_establish(device_t, u_int *, int, int,
+		    int (*func)(void *), void *);
+static void	bcmgpio_fdt_intr_disestablish(device_t, void *);
+static bool	bcmgpio_fdt_intrstr(device_t, u_int *, char *, size_t);
+
+static struct fdtbus_interrupt_controller_func bcmgpio_fdt_intrfuncs = {
+	.establish = bcmgpio_fdt_intr_establish,
+	.disestablish = bcmgpio_fdt_intr_disestablish,
+	.intrstr = bcmgpio_fdt_intrstr,
 };
 
 CFATTACH_DECL_NEW(bcmgpio, sizeof(struct bcmgpio_softc),
@@ -208,6 +253,7 @@ bcmgpio_attach(device_t parent, device_t self, void *aux)
 	u_int func;
 	int error;
 	int pin;
+	int bank;
 
 	const int phandle = faa->faa_phandle;
 	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
@@ -238,10 +284,18 @@ bcmgpio_attach(device_t parent, device_t self, void *aux)
 
 		if (func == BCM2835_GPIO_IN ||
 		    func == BCM2835_GPIO_OUT) {
+			/* XXX TRISTATE?  Really? */
 			sc->sc_gpio_pins[pin].pin_caps = GPIO_PIN_INPUT |
 				GPIO_PIN_OUTPUT |
 				GPIO_PIN_PUSHPULL | GPIO_PIN_TRISTATE |
 				GPIO_PIN_PULLUP | GPIO_PIN_PULLDOWN;
+			sc->sc_gpio_pins[pin].pin_intrcaps =
+				GPIO_INTR_POS_EDGE |
+				GPIO_INTR_NEG_EDGE |
+				GPIO_INTR_DOUBLE_EDGE |
+				GPIO_INTR_HIGH_LEVEL |
+				GPIO_INTR_LOW_LEVEL |
+				GPIO_INTR_MPSAFE;
 			/* read initial state */
 			sc->sc_gpio_pins[pin].pin_state =
 				bcm2835gpio_gpio_pin_read(sc, pin);
@@ -253,19 +307,33 @@ bcmgpio_attach(device_t parent, device_t self, void *aux)
 		}
 	}
 
-	/* create controller tag */
-	sc->sc_gpio_gc.gp_cookie = sc;
-	sc->sc_gpio_gc.gp_pin_read = bcm2835gpio_gpio_pin_read;
-	sc->sc_gpio_gc.gp_pin_write = bcm2835gpio_gpio_pin_write;
-	sc->sc_gpio_gc.gp_pin_ctl = bcm2835gpio_gpio_pin_ctl;
+	/* Initialize interrupts. */
+	for (bank = 0; bank < BCMGPIO_NBANKS; bank++) {
+		char intrstr[128];
 
-	gba.gba_gc = &sc->sc_gpio_gc;
-	for (pin = 0; pin < BCMGPIO_MAXPINS;) {
-		const int npins = MIN(BCMGPIO_MAXPINS - pin, 32);
-		gba.gba_pins = &sc->sc_gpio_pins[pin];
-		gba.gba_npins = npins;
-		config_found_ia(self, "gpiobus", &gba, gpiobus_print);
-		pin += npins;
+		if (!fdtbus_intr_str(phandle, bank, intrstr, sizeof(intrstr))) {
+			aprint_error_dev(self, "failed to decode interrupt\n");
+			continue;
+		}
+
+		sc->sc_banks[bank].sc_bankno = bank;
+		sc->sc_banks[bank].sc_bcm = sc;
+		sc->sc_banks[bank].sc_ih =
+		    fdtbus_intr_establish(phandle, bank, IPL_VM,
+		    			  FDT_INTR_MPSAFE,
+					  bcmgpio_intr, &sc->sc_banks[bank]);
+		if (sc->sc_banks[bank].sc_ih) {
+			aprint_normal_dev(self,
+			    "pins %d..%d interrupting on %s\n",
+			    bank * 32,
+			    MIN((bank * 32) + 31, BCMGPIO_MAXPINS),
+			    intrstr);
+		} else {
+			aprint_normal_dev(self,
+			    "failed to establish interrupt for pins %d..%d\n",
+			    bank * 32,
+			    MIN((bank * 32) + 31, BCMGPIO_MAXPINS));
+		}
 	}
 
 	fdtbus_register_gpio_controller(self, faa->faa_phandle, &bcmgpio_funcs);
@@ -278,6 +346,344 @@ bcmgpio_attach(device_t parent, device_t self, void *aux)
 	}
 
 	fdtbus_pinctrl_configure();
+
+	fdtbus_register_interrupt_controller(self, phandle,
+	    &bcmgpio_fdt_intrfuncs);
+
+	/* create controller tag */
+	sc->sc_gpio_gc.gp_cookie = sc;
+	sc->sc_gpio_gc.gp_pin_read = bcm2835gpio_gpio_pin_read;
+	sc->sc_gpio_gc.gp_pin_write = bcm2835gpio_gpio_pin_write;
+	sc->sc_gpio_gc.gp_pin_ctl = bcm2835gpio_gpio_pin_ctl;
+	sc->sc_gpio_gc.gp_intr_establish = bcmgpio_gpio_intr_establish;
+	sc->sc_gpio_gc.gp_intr_disestablish = bcmgpio_gpio_intr_disestablish;
+	sc->sc_gpio_gc.gp_intr_str = bcmgpio_gpio_intrstr;
+
+	gba.gba_gc = &sc->sc_gpio_gc;
+	gba.gba_pins = &sc->sc_gpio_pins[0];
+	gba.gba_npins = BCMGPIO_MAXPINS;
+	(void) config_found_ia(self, "gpiobus", &gba, gpiobus_print);
+}
+
+/* GPIO interrupt support functions */
+
+static int
+bcmgpio_intr(void *arg)
+{
+	struct bcmgpio_bank * const b = arg;
+	struct bcmgpio_softc * const sc = b->sc_bcm;
+	struct bcmgpio_eint *eint;
+	uint32_t status, pending, bit;
+	uint32_t clear_level;
+	int (*func)(void *);
+	int rv = 0;
+
+	for (;;) {
+		status = pending = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
+		    BCM2835_GPIO_GPEDS(b->sc_bankno));
+		if (status == 0)
+			break;
+
+		/*
+		 * This will clear the indicator for any pending
+		 * edge-triggered pins, but level-triggered pins
+		 * will still be indicated until the pin is
+		 * de-asserted.  We'll have to clear level-triggered
+		 * indicators below.
+		 */
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+		    BCM2835_GPIO_GPEDS(b->sc_bankno), status);
+		clear_level = 0;
+
+		while ((bit = ffs32(pending)) != 0) {
+			pending &= ~__BIT(bit - 1);
+			eint = &b->sc_eint[bit - 1];
+			if ((func = eint->eint_func) == NULL)
+				continue;
+			if (eint->eint_flags & (BCMGPIO_INTR_HIGH_LEVEL |
+						BCMGPIO_INTR_LOW_LEVEL))
+				clear_level |= __BIT(bit - 1);
+			const bool mpsafe =
+			    (eint->eint_flags & BCMGPIO_INTR_MPSAFE) != 0;
+			if (!mpsafe)
+				KERNEL_LOCK(1, curlwp);
+			rv |= (*func)(eint->eint_arg);
+			if (!mpsafe)
+				KERNEL_UNLOCK_ONE(curlwp);
+		}
+		
+		/*
+		 * Now that all of the handlers have been called,
+		 * we can clear the indicators for any level-triggered
+		 * pins.
+		 */
+		if (clear_level)
+			bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+			    BCM2835_GPIO_GPEDS(b->sc_bankno), clear_level);
+	}
+
+	return (rv);
+}
+
+static void *
+bmcgpio_intr_enable(struct bcmgpio_softc *sc, int (*func)(void *), void *arg,
+		    int bank, int pin, int flags)
+{
+	struct bcmgpio_eint *eint;
+	uint32_t mask, enabled_ren, enabled_fen, enabled_hen, enabled_len;
+	int has_edge = flags & (BCMGPIO_INTR_POS_EDGE|BCMGPIO_INTR_NEG_EDGE);
+	int has_level = flags &
+	    (BCMGPIO_INTR_HIGH_LEVEL|BCMGPIO_INTR_LOW_LEVEL);
+
+	if (bank < 0 || bank >= BCMGPIO_NBANKS)
+		return NULL;
+	if (pin < 0 || pin >= 32)
+		return (NULL);
+
+	/* Must specify a mode. */
+	if (!has_edge && !has_level)
+		return (NULL);
+
+	/* Can't have HIGH and LOW together. */
+	if (has_level == (BCMGPIO_INTR_HIGH_LEVEL|BCMGPIO_INTR_LOW_LEVEL))
+		return (NULL);
+	
+	/* Can't have EDGE and LEVEL together. */
+	if (has_edge && has_level)
+		return (NULL);
+
+	eint = &sc->sc_banks[bank].sc_eint[pin];
+
+	mask = __BIT(pin);
+
+	mutex_enter(&sc->sc_lock);
+
+	if (eint->eint_func != NULL) {
+		mutex_exit(&sc->sc_lock);
+		return (NULL);	/* in use */
+	}
+
+	eint->eint_func = func;
+	eint->eint_arg = arg;
+	eint->eint_flags = flags;
+	eint->eint_bank = bank;
+	eint->eint_num = pin;
+
+	enabled_ren = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
+				       BCM2835_GPIO_GPREN(bank));
+	enabled_fen = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
+				       BCM2835_GPIO_GPFEN(bank));
+	enabled_hen = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
+				       BCM2835_GPIO_GPHEN(bank));
+	enabled_len = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
+				       BCM2835_GPIO_GPLEN(bank));
+
+	enabled_ren &= ~mask;
+	enabled_fen &= ~mask;
+	enabled_hen &= ~mask;
+	enabled_len &= ~mask;
+
+	if (flags & BCMGPIO_INTR_POS_EDGE)
+		enabled_ren |= mask;
+	if (flags & BCMGPIO_INTR_NEG_EDGE)
+		enabled_fen |= mask;
+	if (flags & BCMGPIO_INTR_HIGH_LEVEL)
+		enabled_hen |= mask;
+	if (flags & BCMGPIO_INTR_LOW_LEVEL)
+		enabled_len |= mask;
+
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+			  BCM2835_GPIO_GPREN(bank), enabled_ren);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+			  BCM2835_GPIO_GPFEN(bank), enabled_fen);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+			  BCM2835_GPIO_GPHEN(bank), enabled_hen);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+			  BCM2835_GPIO_GPLEN(bank), enabled_len);
+
+	mutex_exit(&sc->sc_lock);
+	return (eint);
+}
+
+static void
+bcmgpio_intr_disable(struct bcmgpio_softc *sc, struct bcmgpio_eint *eint)
+{
+	uint32_t mask, enabled_ren, enabled_fen, enabled_hen, enabled_len;
+	int bank = eint->eint_bank;
+
+	mask = __BIT(eint->eint_num);
+
+	KASSERT(eint->eint_func != NULL);
+
+	mutex_enter(&sc->sc_lock);
+
+	enabled_ren = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
+				       BCM2835_GPIO_GPREN(bank));
+	enabled_fen = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
+				       BCM2835_GPIO_GPFEN(bank));
+	enabled_hen = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
+				       BCM2835_GPIO_GPHEN(bank));
+	enabled_len = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
+				       BCM2835_GPIO_GPLEN(bank));
+
+	enabled_ren &= ~mask;
+	enabled_fen &= ~mask;
+	enabled_hen &= ~mask;
+	enabled_len &= ~mask;
+
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+			  BCM2835_GPIO_GPREN(bank), enabled_ren);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+			  BCM2835_GPIO_GPFEN(bank), enabled_fen);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+			  BCM2835_GPIO_GPHEN(bank), enabled_hen);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+			  BCM2835_GPIO_GPLEN(bank), enabled_len);
+
+	eint->eint_func = NULL;
+	eint->eint_arg = NULL;
+	eint->eint_flags = 0;
+
+	mutex_exit(&sc->sc_lock);
+}
+
+static void *
+bcmgpio_fdt_intr_establish(device_t dev, u_int *specifier, int ipl, int flags,
+    int (*func)(void *), void *arg)
+{
+	struct bcmgpio_softc * const sc = device_private(dev);
+	int eint_flags = (flags & FDT_INTR_MPSAFE) ? BCMGPIO_INTR_MPSAFE : 0;
+
+	if (ipl != IPL_VM) {
+		aprint_error_dev(dev, "%s: wrong IPL %d (expected %d)\n",
+		    __func__, ipl, IPL_VM);
+		return (NULL);
+	}
+
+	/* 1st cell is the bank */
+	/* 2nd cell is the pin */
+	/* 3rd cell is flags */
+	const u_int bank = be32toh(specifier[0]);
+	const u_int pin = be32toh(specifier[1]);
+	const u_int type = be32toh(specifier[2]) & 0xf;
+
+	switch (type) {
+	case 0x1:
+		eint_flags |= BCMGPIO_INTR_POS_EDGE;
+		break;
+	case 0x2:
+		eint_flags |= BCMGPIO_INTR_NEG_EDGE;
+		break;
+	case 0x3:
+		eint_flags |= BCMGPIO_INTR_POS_EDGE | BCMGPIO_INTR_NEG_EDGE;
+		break;
+	case 0x4:
+		eint_flags |= BCMGPIO_INTR_HIGH_LEVEL;
+		break;
+	case 0x8:
+		eint_flags |= BCMGPIO_INTR_LOW_LEVEL;
+		break;
+	default:
+		aprint_error_dev(dev, "%s: unsupported irq type 0x%x\n",
+		    __func__, type);
+		return (NULL);
+	}
+
+	return (bmcgpio_intr_enable(sc, func, arg, bank, pin, eint_flags));
+}
+
+static void
+bcmgpio_fdt_intr_disestablish(device_t dev, void *ih)
+{
+	struct bcmgpio_softc * const sc = device_private(dev);
+	struct bcmgpio_eint * const eint = ih;
+
+	bcmgpio_intr_disable(sc, eint);
+}
+
+static void *
+bcmgpio_gpio_intr_establish(void *vsc, int pin, int ipl, int irqmode,
+			    int (*func)(void *), void *arg)
+{
+	struct bcmgpio_softc * const sc = vsc;
+	int eint_flags = (irqmode & GPIO_INTR_MPSAFE) ? BCMGPIO_INTR_MPSAFE : 0;
+	int bank = pin / 32;
+	int type = irqmode & GPIO_INTR_MODE_MASK;
+
+	pin %= 32;
+
+	if (ipl != IPL_VM) {
+		aprint_error_dev(sc->sc_dev, "%s: wrong IPL %d (expected %d)\n",
+		    __func__, ipl, IPL_VM);
+		return (NULL);
+	}
+
+	switch (type) {
+	case GPIO_INTR_POS_EDGE:
+		eint_flags |= BCMGPIO_INTR_POS_EDGE;
+		break;
+	case GPIO_INTR_NEG_EDGE:
+		eint_flags |= BCMGPIO_INTR_NEG_EDGE;
+		break;
+	case GPIO_INTR_DOUBLE_EDGE:
+		eint_flags |= BCMGPIO_INTR_POS_EDGE | BCMGPIO_INTR_NEG_EDGE;
+		break;
+	case GPIO_INTR_HIGH_LEVEL:
+		eint_flags |= BCMGPIO_INTR_HIGH_LEVEL;
+		break;
+	case GPIO_INTR_LOW_LEVEL:
+		eint_flags |= BCMGPIO_INTR_LOW_LEVEL;
+		break;
+	default:
+		aprint_error_dev(sc->sc_dev, "%s: unsupported irq type 0x%x\n",
+		    __func__, type);
+		return (NULL);
+	}
+
+	return (bmcgpio_intr_enable(sc, func, arg, bank, pin, eint_flags));
+}
+
+static void
+bcmgpio_gpio_intr_disestablish(void *vsc, void *ih)
+{
+	struct bcmgpio_softc * const sc = vsc;
+	struct bcmgpio_eint * const eint = ih;
+
+	bcmgpio_intr_disable(sc, eint);
+}
+
+static bool
+bcmgpio_gpio_intrstr(void *vsc, int pin, int irqmode, char *buf, size_t buflen)
+{
+
+	if (pin < 0 || pin >= BCMGPIO_MAXPINS)
+		return (false);
+
+	snprintf(buf, buflen, "GPIO %d", pin);
+
+	return (true);
+}
+
+static bool
+bcmgpio_fdt_intrstr(device_t dev, u_int *specifier, char *buf, size_t buflen)
+{
+
+	/* 1st cell is the bank */
+	/* 2nd cell is the pin */
+	/* 3rd cell is flags */
+	if (!specifier)
+		return (false);
+	const u_int bank = be32toh(specifier[0]);
+	const u_int pin = be32toh(specifier[1]);
+
+	if (bank >= BCMGPIO_NBANKS)
+		return (false);
+	if (pin >= 32)
+		return (false);
+	
+	snprintf(buf, buflen, "GPIO %u", (bank * 32) + pin);
+
+	return (true);
 }
 
 /* GPIO support functions */

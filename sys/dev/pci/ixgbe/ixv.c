@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.84.2.6 2018/04/22 07:20:26 pgoyette Exp $*/
+/*$NetBSD: ixv.c,v 1.84.2.7 2018/05/21 04:36:12 pgoyette Exp $*/
 
 /******************************************************************************
 
@@ -2603,21 +2603,18 @@ ixv_print_debug_info(struct adapter *adapter)
 static int
 ixv_sysctl_debug(SYSCTLFN_ARGS)
 {
-	struct sysctlnode node;
-	struct adapter *adapter;
+	struct sysctlnode node = *rnode;
+	struct adapter *adapter = (struct adapter *)node.sysctl_data;
 	int            error, result;
 
-	node = *rnode;
 	node.sysctl_data = &result;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 
 	if (error || newp == NULL)
 		return error;
 
-	if (result == 1) {
-		adapter = (struct adapter *)node.sysctl_data;
+	if (result == 1)
 		ixv_print_debug_info(adapter);
-	}
 
 	return 0;
 } /* ixv_sysctl_debug */

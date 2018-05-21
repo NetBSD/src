@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1504.2.6 2018/05/02 07:19:59 pgoyette Exp $
+#	$NetBSD: 3RDPARTY,v 1.1504.2.7 2018/05/21 04:35:50 pgoyette Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -40,8 +40,8 @@
 #
 
 Package:	acpica
-Version:	20180313
-Current Vers:	20180313
+Version:	20180427
+Current Vers:	20180427
 Maintainer:	Intel
 Archive Site:	http://www.acpica.org/downloads/
 Home Page:	http://www.acpica.org/
@@ -334,8 +334,8 @@ Notes:
 Use the dhcp2netbsd script.
 
 Package:	dhcpcd
-Version:	7.0.3
-Current Vers:	7.0.3
+Version:	7.0.4
+Current Vers:	7.0.4
 Maintainer:	roy
 Archive Site:	ftp://roy.marples.name/pub/dhcpcd/
 Home Page:	http://roy.marples.name/projects/dhcpcd/
@@ -452,7 +452,7 @@ There is a flex2netbsd script to help newer imports.
 
 Package:	gcc
 Version:	5.5
-Current Vers:	5.5/6.4/7.2
+Current Vers:	5.5/6.4/7.2/8.1
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/gcc/
 Home Page:	http://www.gnu.org/software/gcc/
@@ -763,7 +763,7 @@ All changes should come via import from upstream SVN.
 
 Package:	lvm2tools
 Version:	2.02.56
-Current Vers:	2.02.114
+Current Vers:	2.02.177
 Maintainer:	lvm-devel@redhat.com
 Archive Site:	ftp://sources.redhat.com/pub/lvm2/
 Home Page:	http://sources.redhat.com/lvm2/
@@ -1411,8 +1411,8 @@ Notes:
 Added changes from a5 -> a12 manually.
 
 Package:	tz
-Version:	tzcode2018c / tzdata2018d
-Current Vers:	tzcode2018d / tzdata2018d
+Version:	tzcode2018e / tzdata2018e
+Current Vers:	tzcode2018e / tzdata2018e
 Maintainer:	Paul Eggert <eggert@cs.ucla.edu>
 Archive Site:	ftp://ftp.iana.org/tz/releases/
 Archive Site:	ftp://munnari.oz.au/pub/oldtz/

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.75 2017/09/14 07:58:44 mrg Exp $
+#	$NetBSD: GENERIC,v 1.75.2.1 2018/05/21 04:36:03 pgoyette Exp $
 #
 # GENERIC machine description file
 #
@@ -192,7 +192,7 @@ scoop0 at pxaip?
 scoop1 at pxaip?
 
 # alternate GPIO contoller for SL-C1000
-ioexp0 at iic? addr 0x18
+ioexp0 at iic0 addr 0x18
 
 # ADC, touchpad, backlight
 zssp0 at pxaip?
@@ -218,7 +218,7 @@ wsdisplay* at w100lcd? console ?
 lcdctl0 at zssp0
 
 # WM8750 Audio
-zaudio0 at iic? addr 0x1b
+zaudio0 at iic0 addr 0x1b
 audio* at zaudio?
 #options 	ZAUDIO_VOLUME_STRIDE=8
 

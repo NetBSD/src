@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_var.h,v 1.32 2018/01/16 07:53:02 maxv Exp $	*/
+/*	$NetBSD: ieee80211_var.h,v 1.32.2.1 2018/05/21 04:36:16 pgoyette Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -401,15 +401,9 @@ ieee80211_anyhdrspace(struct ieee80211com *ic, const void *data)
 	if (ieee80211_msg(_ic, _m))					\
 		ieee80211_note_mac(_ic, _mac, _fmt, __VA_ARGS__);	\
 } while (0)
-#define	IEEE80211_NOTE_FRAME(_ic, _m, _wh, _fmt, ...) do {		\
-	if (ieee80211_msg(_ic, _m))					\
-		ieee80211_note_frame(_ic, _wh, _fmt, __VA_ARGS__);	\
-} while (0)
 void	ieee80211_note(struct ieee80211com *ic, const char *fmt, ...);
 void	ieee80211_note_mac(struct ieee80211com *ic,
 		const u_int8_t mac[IEEE80211_ADDR_LEN], const char *fmt, ...);
-void	ieee80211_note_frame(struct ieee80211com *ic,
-		const struct ieee80211_frame *wh, const char *fmt, ...);
 #define	ieee80211_msg_debug(_ic) \
 	((_ic)->ic_debug & IEEE80211_MSG_DEBUG)
 #define	ieee80211_msg_dumppkts(_ic) \
@@ -429,7 +423,6 @@ void	ieee80211_note_frame(struct ieee80211com *ic,
 #else
 #define	IEEE80211_DPRINTF(_ic, _m, _fmt, ...)
 #define	IEEE80211_NOTE(_ic, _m, _ni, _fmt, ...)
-#define	IEEE80211_NOTE_FRAME(_ic, _m, _wh, _fmt, ...)
 #define	IEEE80211_NOTE_MAC(_ic, _m, _mac, _fmt, ...)
 #define	ieee80211_msg_dumppkts(_ic)	0
 #define	ieee80211_msg(_ic, _m)		0

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_20.c,v 1.36 2017/04/13 09:46:59 hannken Exp $	*/
+/*	$NetBSD: netbsd32_compat_20.c,v 1.36.10.1 2018/05/21 04:36:03 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_20.c,v 1.36 2017/04/13 09:46:59 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_20.c,v 1.36.10.1 2018/05/21 04:36:03 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -36,6 +36,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_20.c,v 1.36 2017/04/13 09:46:59 hann
 #include <sys/time.h>
 #include <sys/ktrace.h>
 #include <sys/vnode.h>
+#include <sys/socket.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
 #include <sys/namei.h>

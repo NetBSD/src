@@ -1,4 +1,4 @@
-/*	$NetBSD: session.c,v 1.32 2011/03/02 15:09:16 vanhu Exp $	*/
+/*	$NetBSD: session.c,v 1.32.46.1 2018/05/21 04:35:49 pgoyette Exp $	*/
 
 /*	$KAME: session.c,v 1.32 2003/09/24 02:01:17 jinmei Exp $	*/
 
@@ -111,11 +111,9 @@ struct fd_monitor {
 #define NUM_PRIORITIES 2
 
 static void close_session __P((void));
-static void initfds __P((void));
 static void init_signal __P((void));
 static int set_signal __P((int sig, RETSIGTYPE (*func) __P((int))));
 static void check_sigreq __P((void));
-static void check_flushsa __P((void));
 static int close_sockets __P((void));
 
 static fd_set preset_mask, active_mask;
@@ -124,7 +122,6 @@ static TAILQ_HEAD(fd_monitor_list, fd_monitor) fd_monitor_tree[NUM_PRIORITIES];
 static int nfds = 0;
 
 static volatile sig_atomic_t sigreq[NSIG + 1];
-static struct sched scflushsa = SCHED_INITIALIZER();
 
 void
 monitor_fd(int fd, int (*callback)(void *, int), void *ctx, int priority)
@@ -377,7 +374,8 @@ signal_handler(sig)
 
 /* XXX possible mem leaks and no way to go back for now !!!
  */
-static void reload_conf(){
+static void reload_conf(void)
+{
 	int error;
 
 #ifdef ENABLE_HYBRID

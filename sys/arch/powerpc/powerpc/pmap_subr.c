@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_subr.c,v 1.27 2012/02/01 09:54:03 matt Exp $	*/
+/*	$NetBSD: pmap_subr.c,v 1.27.46.1 2018/05/21 04:36:01 pgoyette Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_subr.c,v 1.27 2012/02/01 09:54:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_subr.c,v 1.27.46.1 2018/05/21 04:36:01 pgoyette Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_altivec.h"
@@ -425,7 +425,14 @@ pmap_copy_page(paddr_t src, paddr_t dst)
 void
 pmap_syncicache(paddr_t pa, psize_t len)
 {
-#ifdef MULTIPROCESSOR
+
+/* 
+ * XXX
+ * disabling the MULTIPROCESSOR case because:
+ * - _syncicache() takes a virtual addresses
+ * - this causes crashes on G5
+ */
+#ifdef MULTIPROCESSOR__
 	__syncicache((void *)pa, len);
 #else
 	const size_t linewidth = curcpu()->ci_ci.icache_line_size;

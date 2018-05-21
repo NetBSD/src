@@ -1,4 +1,4 @@
-/* $NetBSD: ix_txrx.c,v 1.34.2.5 2018/05/02 07:20:11 pgoyette Exp $ */
+/* $NetBSD: ix_txrx.c,v 1.34.2.6 2018/05/21 04:36:12 pgoyette Exp $ */
 
 /******************************************************************************
 
@@ -247,6 +247,8 @@ ixgbe_mq_start(struct ifnet *ifp, struct mbuf *m)
 		IXGBE_TX_UNLOCK(txr);
 	} else {
 		if (adapter->txrx_use_workqueue) {
+			u_int *enqueued;
+
 			/*
 			 * This function itself is not called in interrupt
 			 * context, however it can be called in fast softint
@@ -255,11 +257,12 @@ ixgbe_mq_start(struct ifnet *ifp, struct mbuf *m)
 			 * enqueuing when the machine uses both spontaneous
 			 * packets and forwarding packets.
 			 */
-			u_int *enqueued = percpu_getref(adapter->txr_wq_enqueued);
+			enqueued = percpu_getref(adapter->txr_wq_enqueued);
 			if (*enqueued == 0) {
 				*enqueued = 1;
 				percpu_putref(adapter->txr_wq_enqueued);
-				workqueue_enqueue(adapter->txr_wq, &txr->wq_cookie, curcpu());
+				workqueue_enqueue(adapter->txr_wq,
+				    &txr->wq_cookie, curcpu());
 			} else
 				percpu_putref(adapter->txr_wq_enqueued);
 		} else
@@ -1969,46 +1972,46 @@ ixgbe_rxeof(struct ix_queue *que)
 			if (adapter->num_queues > 1) {
 				sendmp->m_pkthdr.flowid =
 				    le32toh(cur->wb.lower.hi_dword.rss);
-				switch (pkt_info & IXGBE_RXDADV_RSSTYPE_MASK) {	 
-				    case IXGBE_RXDADV_RSSTYPE_IPV4:
+				switch (pkt_info & IXGBE_RXDADV_RSSTYPE_MASK) {
+				case IXGBE_RXDADV_RSSTYPE_IPV4:
 					M_HASHTYPE_SET(sendmp,
 					    M_HASHTYPE_RSS_IPV4);
 					break;
-				    case IXGBE_RXDADV_RSSTYPE_IPV4_TCP:
+				case IXGBE_RXDADV_RSSTYPE_IPV4_TCP:
 					M_HASHTYPE_SET(sendmp,
 					    M_HASHTYPE_RSS_TCP_IPV4);
 					break;
-				    case IXGBE_RXDADV_RSSTYPE_IPV6:
+				case IXGBE_RXDADV_RSSTYPE_IPV6:
 					M_HASHTYPE_SET(sendmp,
 					    M_HASHTYPE_RSS_IPV6);
 					break;
-				    case IXGBE_RXDADV_RSSTYPE_IPV6_TCP:
+				case IXGBE_RXDADV_RSSTYPE_IPV6_TCP:
 					M_HASHTYPE_SET(sendmp,
 					    M_HASHTYPE_RSS_TCP_IPV6);
 					break;
-				    case IXGBE_RXDADV_RSSTYPE_IPV6_EX:
+				case IXGBE_RXDADV_RSSTYPE_IPV6_EX:
 					M_HASHTYPE_SET(sendmp,
 					    M_HASHTYPE_RSS_IPV6_EX);
 					break;
-				    case IXGBE_RXDADV_RSSTYPE_IPV6_TCP_EX:
+				case IXGBE_RXDADV_RSSTYPE_IPV6_TCP_EX:
 					M_HASHTYPE_SET(sendmp,
 					    M_HASHTYPE_RSS_TCP_IPV6_EX);
 					break;
 #if __FreeBSD_version > 1100000
-				    case IXGBE_RXDADV_RSSTYPE_IPV4_UDP:
+				case IXGBE_RXDADV_RSSTYPE_IPV4_UDP:
 					M_HASHTYPE_SET(sendmp,
 					    M_HASHTYPE_RSS_UDP_IPV4);
 					break;
-				    case IXGBE_RXDADV_RSSTYPE_IPV6_UDP:
+				case IXGBE_RXDADV_RSSTYPE_IPV6_UDP:
 					M_HASHTYPE_SET(sendmp,
 					    M_HASHTYPE_RSS_UDP_IPV6);
 					break;
-				    case IXGBE_RXDADV_RSSTYPE_IPV6_UDP_EX:
+				case IXGBE_RXDADV_RSSTYPE_IPV6_UDP_EX:
 					M_HASHTYPE_SET(sendmp,
 					    M_HASHTYPE_RSS_UDP_IPV6_EX);
 					break;
 #endif
-				    default:
+				default:
 					M_HASHTYPE_SET(sendmp,
 					    M_HASHTYPE_OPAQUE_HASH);
 				}
@@ -2133,7 +2136,8 @@ ixgbe_dma_malloc(struct adapter *adapter, const bus_size_t size,
 			       &dma->dma_tag);
 	if (r != 0) {
 		aprint_error_dev(dev,
-		    "%s: ixgbe_dma_tag_create failed; error %d\n", __func__, r);
+		    "%s: ixgbe_dma_tag_create failed; error %d\n", __func__,
+		    r);
 		goto fail_0;
 	}
 

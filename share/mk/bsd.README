@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.367.2.2 2018/04/07 04:12:10 pgoyette Exp $
+#	$NetBSD: bsd.README,v 1.367.2.3 2018/05/21 04:35:57 pgoyette Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -789,6 +789,9 @@ EXTERNAL_TOOLCHAIN
 		assigned the value "no", since the external version of the
 		compiler may not be able to build the library components of
 		the in-tree compiler.
+
+		This variable should be used in conjunction with an appropiate
+		HAVE_GCC or HAVE_LLVM setting to control the compiler flags.
 
 		NOTE: This variable is not yet used in as many places as
 		it should be.  Expect the exact semantics of this variable

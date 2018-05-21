@@ -1,4 +1,4 @@
-/*	$NetBSD: nattraversal.c,v 1.14 2011/03/14 17:18:13 tteras Exp $	*/
+/*	$NetBSD: nattraversal.c,v 1.14.46.1 2018/05/21 04:35:49 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 2004 SuSE Linux AG, Nuernberg, Germany.
@@ -230,118 +230,117 @@ natt_udp_encap (int encmode)
 }
 
 int
-natt_fill_options (struct ph1natt_options *opts, int version)
+natt_fill_options(struct ph1natt_options *opts, int version)
 {
-  if (! opts)
-    return -1;
+	if (!opts)
+		return -1;
 
-  opts->version = version;
+	opts->version = version;
 
-  switch (version) {
-    case VENDORID_NATT_00:
-    case VENDORID_NATT_01:
-      opts->float_port = 0; /* No port floating for those drafts */
-      opts->payload_nat_d = ISAKMP_NPTYPE_NATD_DRAFT;
-      opts->payload_nat_oa = ISAKMP_NPTYPE_NATOA_DRAFT;
-      opts->mode_udp_tunnel = IPSECDOI_ATTR_ENC_MODE_UDPTUNNEL_DRAFT;
-      opts->mode_udp_transport = IPSECDOI_ATTR_ENC_MODE_UDPTRNS_DRAFT;
-      opts->encaps_type = UDP_ENCAP_ESPINUDP_NON_IKE;
+	switch (version) {
+	case VENDORID_NATT_00:
+	case VENDORID_NATT_01:
+		opts->float_port = 0; /* No port floating for those drafts */
+		opts->payload_nat_d = ISAKMP_NPTYPE_NATD_DRAFT;
+		opts->payload_nat_oa = ISAKMP_NPTYPE_NATOA_DRAFT;
+		opts->mode_udp_tunnel = IPSECDOI_ATTR_ENC_MODE_UDPTUNNEL_DRAFT;
+		opts->mode_udp_transport = IPSECDOI_ATTR_ENC_MODE_UDPTRNS_DRAFT;
+		opts->encaps_type = UDP_ENCAP_ESPINUDP_NON_IKE;
 		break;
+	case VENDORID_NATT_02:
+	case VENDORID_NATT_02_N:
+	case VENDORID_NATT_03:
+		opts->float_port = lcconf->port_isakmp_natt;
+		opts->payload_nat_d = ISAKMP_NPTYPE_NATD_DRAFT;
+		opts->payload_nat_oa = ISAKMP_NPTYPE_NATOA_DRAFT;
+		opts->mode_udp_tunnel = IPSECDOI_ATTR_ENC_MODE_UDPTUNNEL_DRAFT;
+		opts->mode_udp_transport = IPSECDOI_ATTR_ENC_MODE_UDPTRNS_DRAFT;
+		opts->encaps_type = UDP_ENCAP_ESPINUDP;
+		break;
+	case VENDORID_NATT_04:
+	case VENDORID_NATT_05:
+	case VENDORID_NATT_06:
+	case VENDORID_NATT_07:
+	case VENDORID_NATT_08:
+		opts->float_port = lcconf->port_isakmp_natt;
+		opts->payload_nat_d = ISAKMP_NPTYPE_NATD_BADDRAFT;
+		opts->payload_nat_oa = ISAKMP_NPTYPE_NATOA_BADDRAFT;
+		opts->mode_udp_tunnel = IPSECDOI_ATTR_ENC_MODE_UDPTUNNEL_RFC;
+		opts->mode_udp_transport = IPSECDOI_ATTR_ENC_MODE_UDPTRNS_RFC;
+		opts->encaps_type = UDP_ENCAP_ESPINUDP;
+		break;
+	case VENDORID_NATT_RFC:
+		opts->float_port = lcconf->port_isakmp_natt;
+		opts->payload_nat_d = ISAKMP_NPTYPE_NATD_RFC;
+		opts->payload_nat_oa = ISAKMP_NPTYPE_NATOA_RFC;
+		opts->mode_udp_tunnel = IPSECDOI_ATTR_ENC_MODE_UDPTUNNEL_RFC;
+		opts->mode_udp_transport = IPSECDOI_ATTR_ENC_MODE_UDPTRNS_RFC;
+		opts->encaps_type = UDP_ENCAP_ESPINUDP;
+		break;
+	default:
+		plog(LLV_ERROR, LOCATION, NULL,
+		    "unsupported NAT-T version: %s\n",
+		    vid_string_by_id(version));
+		return -1;
+	}
 
-    case VENDORID_NATT_02:
-    case VENDORID_NATT_02_N:
-    case VENDORID_NATT_03:
-      opts->float_port = lcconf->port_isakmp_natt;
-      opts->payload_nat_d = ISAKMP_NPTYPE_NATD_DRAFT;
-      opts->payload_nat_oa = ISAKMP_NPTYPE_NATOA_DRAFT;
-      opts->mode_udp_tunnel = IPSECDOI_ATTR_ENC_MODE_UDPTUNNEL_DRAFT;
-      opts->mode_udp_transport = IPSECDOI_ATTR_ENC_MODE_UDPTRNS_DRAFT;
-      opts->encaps_type = UDP_ENCAP_ESPINUDP;
-      break;
-    case VENDORID_NATT_04:
-    case VENDORID_NATT_05:
-    case VENDORID_NATT_06:
-    case VENDORID_NATT_07:
-    case VENDORID_NATT_08:
-      opts->float_port = lcconf->port_isakmp_natt;
-      opts->payload_nat_d = ISAKMP_NPTYPE_NATD_BADDRAFT;
-      opts->payload_nat_oa = ISAKMP_NPTYPE_NATOA_BADDRAFT;
-      opts->mode_udp_tunnel = IPSECDOI_ATTR_ENC_MODE_UDPTUNNEL_RFC;
-      opts->mode_udp_transport = IPSECDOI_ATTR_ENC_MODE_UDPTRNS_RFC;
-      opts->encaps_type = UDP_ENCAP_ESPINUDP;
-      break;
-    case VENDORID_NATT_RFC:
-      opts->float_port = lcconf->port_isakmp_natt;
-      opts->payload_nat_d = ISAKMP_NPTYPE_NATD_RFC;
-      opts->payload_nat_oa = ISAKMP_NPTYPE_NATOA_RFC;
-      opts->mode_udp_tunnel = IPSECDOI_ATTR_ENC_MODE_UDPTUNNEL_RFC;
-      opts->mode_udp_transport = IPSECDOI_ATTR_ENC_MODE_UDPTRNS_RFC;
-      opts->encaps_type = UDP_ENCAP_ESPINUDP;
-	  break;
-    default:
-      plog(LLV_ERROR, LOCATION, NULL, 
-	   "unsupported NAT-T version: %s\n",
-	   vid_string_by_id(version));
-      return -1;
-  }
- 
-  opts->mode_udp_diff = opts->mode_udp_tunnel - IPSECDOI_ATTR_ENC_MODE_TUNNEL;
+	opts->mode_udp_diff = opts->mode_udp_tunnel - IPSECDOI_ATTR_ENC_MODE_TUNNEL;
 
-  return 0;
+	return 0;
 }
 
 void
-natt_float_ports (struct ph1handle *iph1)
+natt_float_ports(struct ph1handle *iph1)
 {
-	if (! (iph1->natt_flags & NAT_DETECTED) )
+	if (!(iph1->natt_flags & NAT_DETECTED))
 		return;
-	if (! iph1->natt_options->float_port){
+	if (!iph1->natt_options->float_port) {
 		/* Drafts 00 / 01, just schedule keepalive */
 		natt_keepalive_add_ph1 (iph1);
 		return;
 	}
-	
-	set_port (iph1->local, iph1->natt_options->float_port);
-	set_port (iph1->remote, iph1->natt_options->float_port);
+
+	set_port(iph1->local, iph1->natt_options->float_port);
+	set_port(iph1->remote, iph1->natt_options->float_port);
 	iph1->natt_flags |= NAT_PORTS_CHANGED | NAT_ADD_NON_ESP_MARKER;
-	
-	natt_keepalive_add_ph1 (iph1);
+
+	natt_keepalive_add_ph1(iph1);
 }
 
 static int
-natt_is_enabled (struct remoteconf *rmconf, void *args)
+natt_is_enabled(struct remoteconf *rmconf, void *args)
 {
-  if (rmconf->nat_traversal)
-    return 1;
-  return 0;
+	if (rmconf->nat_traversal)
+		return 1;
+	return 0;
 }
 
 void
-natt_handle_vendorid (struct ph1handle *iph1, int vid_numeric)
+natt_handle_vendorid(struct ph1handle *iph1, int vid_numeric)
 {
-  if (iph1->rmconf == NULL) {
-    /* Check if any candidate remote conf allows nat-t */
-    struct rmconfselector rmconf;
-    rmconf_selector_from_ph1(&rmconf, iph1);
-    if (enumrmconf(&rmconf, natt_is_enabled, NULL) == 0)
-      return;
-  } else {
-    if (!iph1->rmconf->nat_traversal)
-      return;
-  }
+	if (iph1->rmconf == NULL) {
+		/* Check if any candidate remote conf allows nat-t */
+		struct rmconfselector rmconf;
+		rmconf_selector_from_ph1(&rmconf, iph1);
+		if (enumrmconf(&rmconf, natt_is_enabled, NULL) == 0)
+			return;
+	} else {
+		if (!iph1->rmconf->nat_traversal)
+			return;
+	}
 
-  if (! iph1->natt_options)
-    iph1->natt_options = racoon_calloc (1, sizeof (*iph1->natt_options));
+	if (!iph1->natt_options)
+		iph1->natt_options = racoon_calloc(1, sizeof(*iph1->natt_options));
 
-  if (! iph1->natt_options) {
-    plog (LLV_ERROR, LOCATION, NULL,
-	  "Allocating memory for natt_options failed!\n");
-    return;
-  }
-  
-  if (iph1->natt_options->version < vid_numeric)
-    if (natt_fill_options (iph1->natt_options, vid_numeric) == 0)
-      iph1->natt_flags |= NAT_ANNOUNCED;
+	if (!iph1->natt_options) {
+		plog(LLV_ERROR, LOCATION, NULL,
+		    "Allocating memory for natt_options failed!\n");
+		return;
+	}
+
+	if (iph1->natt_options->version < vid_numeric)
+		if (natt_fill_options(iph1->natt_options, vid_numeric) == 0)
+			iph1->natt_flags |= NAT_ANNOUNCED;
 }
 
 static void

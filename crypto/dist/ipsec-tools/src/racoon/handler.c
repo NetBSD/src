@@ -1,4 +1,4 @@
-/*	$NetBSD: handler.c,v 1.41 2012/01/01 15:57:31 tteras Exp $	*/
+/*	$NetBSD: handler.c,v 1.41.40.1 2018/05/21 04:35:49 pgoyette Exp $	*/
 
 /* Id: handler.c,v 1.28 2006/05/26 12:17:29 manubsd Exp */
 
@@ -1173,8 +1173,7 @@ rem_recvdpkt(r)
 }
 
 static void
-sweep_recvdpkt(dummy)
-	struct sched *dummy;
+sweep_recvdpkt(struct sched *dummy)
 {
 	struct recvdpkt *r, *next;
 	struct timeval now, diff, sweep;

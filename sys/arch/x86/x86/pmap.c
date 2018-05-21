@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.289 2018/03/04 23:25:35 jdolecek Exp $	*/
+/*	$NetBSD: pmap.c,v 1.289.2.1 2018/05/21 04:36:03 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -170,7 +170,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.289 2018/03/04 23:25:35 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.289.2.1 2018/05/21 04:36:03 pgoyette Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1014,67 +1014,6 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		pmap_tlb_shootdown(pmap_kernel(), va, opte, TLBSHOOT_KENTER);
 		kpreempt_enable();
 	}
-}
-
-void
-pmap_emap_enter(vaddr_t va, paddr_t pa, vm_prot_t prot)
-{
-	pt_entry_t *pte, npte;
-
-	KASSERT((prot & ~VM_PROT_ALL) == 0);
-	pte = (va < VM_MIN_KERNEL_ADDRESS) ? vtopte(va) : kvtopte(va);
-
-#ifdef DOM0OPS
-	if (pa < pmap_pa_start || pa >= pmap_pa_end) {
-		npte = pa;
-	} else
-#endif
-		npte = pmap_pa2pte(pa);
-
-	npte = pmap_pa2pte(pa);
-	npte |= protection_codes[prot] | PG_V;
-	pmap_pte_set(pte, npte);
-	pmap_pte_flush();
-}
-
-/*
- * pmap_emap_sync: perform TLB flush or pmap load, if it was deferred.
- */
-void
-pmap_emap_sync(bool canload)
-{
-	struct cpu_info *ci = curcpu();
-	struct pmap *pmap;
-
-	KASSERT(kpreempt_disabled());
-	if (__predict_true(ci->ci_want_pmapload && canload)) {
-		/*
-		 * XXX: Hint for pmap_reactivate(), which might suggest to
-		 * not perform TLB flush, if state has not changed.
-		 */
-		pmap = vm_map_pmap(&curlwp->l_proc->p_vmspace->vm_map);
-		if (__predict_false(pmap == ci->ci_pmap)) {
-			kcpuset_atomic_clear(pmap->pm_cpus, cpu_index(ci));
-		}
-		pmap_load();
-		KASSERT(ci->ci_want_pmapload == 0);
-	} else {
-		tlbflush();
-	}
-}
-
-void
-pmap_emap_remove(vaddr_t sva, vsize_t len)
-{
-	pt_entry_t *pte;
-	vaddr_t va, eva = sva + len;
-
-	for (va = sva; va < eva; va += PAGE_SIZE) {
-		pte = (va < VM_MIN_KERNEL_ADDRESS) ? vtopte(va) : kvtopte(va);
-		pmap_pte_set(pte, 0);
-	}
-
-	pmap_pte_flush();
 }
 
 __strict_weak_alias(pmap_kenter_ma, pmap_kenter_pa);
@@ -2925,9 +2864,7 @@ pmap_reactivate(struct pmap *pmap)
 		 */
 		kcpuset_atomic_set(pmap->pm_cpus, cid);
 
-		u_int gen = uvm_emap_gen_return();
 		tlbflush();
-		uvm_emap_update(gen);
 	}
 }
 
@@ -3027,9 +2964,7 @@ pmap_load(void)
 
 	lldt(pmap->pm_ldt_sel);
 
-	u_int gen = uvm_emap_gen_return();
 	cpu_load_pmap(pmap, oldpmap);
-	uvm_emap_update(gen);
 
 	ci->ci_want_pmapload = 0;
 

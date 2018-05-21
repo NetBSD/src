@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.82.2.4 2018/05/02 07:20:02 pgoyette Exp $
+# $NetBSD: ALL,v 1.82.2.5 2018/05/21 04:35:58 pgoyette Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"ALL-$Revision: 1.82.2.4 $"
+#ident		"ALL-$Revision: 1.82.2.5 $"
 
 maxusers	64		# estimated number of users
 
@@ -594,7 +594,7 @@ wbsio*	at isa? port 0x2e
 wbsio*	at isa? port 0x4e
 
 # IBM Hawk Integrated Systems Management Processor
-ibmhawk0	at iic? addr 0x37
+ibmhawk0	at iic0 addr 0x37
 
 # Intel Integrated Memory Controller SMBus (experimental)
 imc* at pci? dev ? function ?		# Intel Integrated Memory Controller,
@@ -610,8 +610,8 @@ lm*	at wbsio?
 smsc0	at isa? port 0x02e
 
 # SMSC LPC47M192 hardware monitor
-smscmon*	at iic? addr 0x2c
-smscmon*	at iic? addr 0x2d	# (alternate address)
+smscmon*	at iic0 addr 0x2c
+smscmon*	at iic0 addr 0x2d	# (alternate address)
 
 # AMD 768 and 8111 power/ACPI controllers
 amdpm*	at pci? dev ? function ?	# RNG and SMBus 1.0 interface
@@ -639,20 +639,20 @@ dwiic*		at pci?			# I2C controller
 iic*		at dwiic?
 
 # dbCool Thermal monitor and fan controller
-dbcool* at iic? addr 0x2C		# Unknown other motherboard(s)
-dbcool* at iic? addr 0x2D		# Tyan S2881
-dbcool* at iic? addr 0x2E		# Tyan S2882-D
+dbcool* at iic0 addr 0x2C		# Unknown other motherboard(s)
+dbcool* at iic0 addr 0x2D		# Tyan S2881
+dbcool* at iic0 addr 0x2E		# Tyan S2882-D
 
 # IBM Hawk Integrated Systems Management Processor
-ibmhawk0	at iic?	addr 0x37
+ibmhawk0	at iic0	addr 0x37
 
 # LM7[89] and compatible hardware monitors
 # Use flags to select temp sensor type (see lm(4) man page for details)
-lm0	at iic?	addr 0x2e flags 0x0
+lm0	at iic0	addr 0x2e flags 0x0
 
 # SMSC LPC47M192 hardware monitor
-smscmon*	at iic? addr 0x2c
-#smscmon*	at iic? addr 0x2d	# (alternate address)
+smscmon*	at iic0 addr 0x2c
+#smscmon*	at iic0 addr 0x2d	# (alternate address)
 
 # IBM Thinkpad Active Protection System
 aps0	at isa? port 0x1600
@@ -685,22 +685,22 @@ ug0	at isa? port 0xe0
 viaenv* 	at pci? dev ? function ?
 
 # Serial Presence Detect capable memory modules and optional temp sensors
-spdmem* at iic? addr 0x50
-spdmem* at iic? addr 0x51
-spdmem* at iic? addr 0x52
-spdmem* at iic? addr 0x53
-spdmem* at iic? addr 0x54
-spdmem* at iic? addr 0x55
-spdmem* at iic? addr 0x56
-spdmem* at iic? addr 0x57
-sdtemp* at iic? addr 0x18
-sdtemp* at iic? addr 0x19
-sdtemp* at iic? addr 0x1a
-sdtemp* at iic? addr 0x1b
-sdtemp* at iic? addr 0x1c
-sdtemp* at iic? addr 0x1d
-sdtemp* at iic? addr 0x1e
-sdtemp* at iic? addr 0x1f
+spdmem* at iic0 addr 0x50
+spdmem* at iic0 addr 0x51
+spdmem* at iic0 addr 0x52
+spdmem* at iic0 addr 0x53
+spdmem* at iic0 addr 0x54
+spdmem* at iic0 addr 0x55
+spdmem* at iic0 addr 0x56
+spdmem* at iic0 addr 0x57
+sdtemp* at iic0 addr 0x18
+sdtemp* at iic0 addr 0x19
+sdtemp* at iic0 addr 0x1a
+sdtemp* at iic0 addr 0x1b
+sdtemp* at iic0 addr 0x1c
+sdtemp* at iic0 addr 0x1d
+sdtemp* at iic0 addr 0x1e
+sdtemp* at iic0 addr 0x1f
 
 # I2C HID devices
 ihidev* at iic?
@@ -951,6 +951,7 @@ bwi*	at pci? dev ? function ?	# Broadcom BCM43xx wireless
 cas*	at pci? dev ? function ?	# Sun Cassini/Cassini+ Ethernet
 dge*	at pci? dev ? function ?	# Intel 82597 10GbE LR
 en*	at pci? dev ? function ?	# ENI/Adaptec ATM
+#ena*	at pci? dev ? function ?	# experimental - Amazon Elastic Network Adapter
 ep*	at pci? dev ? function ?	# 3Com 3c59x
 epic*	at pci? dev ? function ?	# SMC EPIC/100 Ethernet
 esh*	at pci? dev ? function ?	# Essential HIPPI card

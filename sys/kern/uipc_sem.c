@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_sem.c,v 1.48 2017/11/30 20:25:55 christos Exp $	*/
+/*	$NetBSD: uipc_sem.c,v 1.48.2.1 2018/05/21 04:36:15 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.48 2017/11/30 20:25:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.48.2.1 2018/05/21 04:36:15 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -85,7 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.48 2017/11/30 20:25:55 christos Exp $
 
 MODULE(MODULE_CLASS_MISC, ksem, NULL);
 
-#define	SEM_MAX_NAMELEN		14
+#define	SEM_MAX_NAMELEN		NAME_MAX
 
 #define	SEM_NSEMS_MAX		256
 #define	KS_UNLINKED		0x01
@@ -134,6 +134,28 @@ static const struct syscall_package ksem_syscalls[] = {
 
 struct sysctllog *ksem_clog;
 int ksem_max;
+
+static int
+name_copyin(const char *uname, char **name)
+{
+	*name = kmem_alloc(SEM_MAX_NAMELEN, KM_SLEEP);
+
+	int error = copyinstr(uname, *name, SEM_MAX_NAMELEN, NULL);
+	if (error)
+		kmem_free(*name, SEM_MAX_NAMELEN);
+
+	return error;
+}
+
+static void
+name_destroy(char **name)
+{
+	if (!*name)
+		return;
+
+	kmem_free(*name, SEM_MAX_NAMELEN);
+	*name = NULL;
+}
 
 static int
 ksem_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
@@ -445,19 +467,20 @@ int
 do_ksem_open(struct lwp *l, const char *semname, int oflag, mode_t mode,
      unsigned int value, intptr_t *idp, copyout_t docopyout)
 {
-	char name[SEM_MAX_NAMELEN + 1];
+	char *name;
 	proc_t *p = l->l_proc;
 	ksem_t *ksnew = NULL, *ks;
 	file_t *fp;
 	intptr_t id;
 	int fd, error;
 
-	error = copyinstr(semname, name, sizeof(name), NULL);
+	error = name_copyin(semname, &name);
 	if (error) {
 		return error;
 	}
 	error = fd_allocfile(&fp, &fd);
 	if (error) {
+		name_destroy(&name);
 		return error;
 	}
 	fp->f_type = DTYPE_SEM;
@@ -486,6 +509,7 @@ do_ksem_open(struct lwp *l, const char *semname, int oflag, mode_t mode,
 	/* Lookup for a semaphore with such name. */
 	mutex_enter(&ksem_lock);
 	ks = ksem_lookup(name);
+	name_destroy(&name);
 	if (ks) {
 		KASSERT(mutex_owned(&ks->ks_lock));
 		mutex_exit(&ksem_lock);
@@ -539,6 +563,7 @@ do_ksem_open(struct lwp *l, const char *semname, int oflag, mode_t mode,
 	fp->f_ksem = ks;
 	fd_affix(p, fp, fd);
 err:
+	name_destroy(&name);
 	if (error) {
 		fd_abort(p, fp, fd);
 	}
@@ -640,17 +665,18 @@ sys__ksem_unlink(struct lwp *l, const struct sys__ksem_unlink_args *uap,
 	/* {
 		const char *name;
 	} */
-	char name[SEM_MAX_NAMELEN + 1];
+	char *name;
 	ksem_t *ks;
 	u_int refcnt;
 	int error;
 
-	error = copyinstr(SCARG(uap, name), name, sizeof(name), NULL);
+	error = name_copyin(SCARG(uap, name), &name);
 	if (error)
 		return error;
 
 	mutex_enter(&ksem_lock);
 	ks = ksem_lookup(name);
+	name_destroy(&name);
 	if (ks == NULL) {
 		mutex_exit(&ksem_lock);
 		return ENOENT;

@@ -1,4 +1,4 @@
-/*	$NetBSD: backupsa.c,v 1.10 2010/04/02 15:15:00 christos Exp $	*/
+/*	$NetBSD: backupsa.c,v 1.10.48.1 2018/05/21 04:35:49 pgoyette Exp $	*/
 
 /*	$KAME: backupsa.c,v 1.16 2001/12/31 20:13:40 thorpej Exp $	*/
 
@@ -228,7 +228,6 @@ backupsa_from_file()
 		memset(&tm, 0, sizeof(tm));
 		p = str2tmx(buf, &tm);
 		if (*p != '%') {
-	err:
 			plog(LLV_ERROR, LOCATION, NULL,
 				"illegal format line#%d in %s: %s\n",
 				line, lcconf->pathinfo[LC_PATHTYPE_BACKUPSA], 

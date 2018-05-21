@@ -1,4 +1,4 @@
-/*	$NetBSD: efi.c,v 1.14 2017/10/22 01:29:26 maya Exp $	*/
+/*	$NetBSD: efi.c,v 1.14.4.1 2018/05/21 04:36:03 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efi.c,v 1.14 2017/10/22 01:29:26 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efi.c,v 1.14.4.1 2018/05/21 04:36:03 pgoyette Exp $");
 
 #include <sys/kmem.h>
 #include <sys/param.h>
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: efi.c,v 1.14 2017/10/22 01:29:26 maya Exp $");
 #include <x86/efi.h>
 
 #include <dev/mm.h>
+#include <dev/pci/pcivar.h> /* for pci_mapreg_map_enable_decode */
 
 const struct uuid EFI_UUID_ACPI20 = EFI_TABLE_ACPI20;
 const struct uuid EFI_UUID_ACPI10 = EFI_TABLE_ACPI10;
@@ -407,6 +408,7 @@ efi_init(void)
 		return;
 	}
 	bootmethod_efi = true;
+	pci_mapreg_map_enable_decode = true; /* PR port-amd64/53286 */
 }
 
 bool

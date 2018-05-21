@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.79 2014/01/01 16:09:04 matt Exp $ */
+/* $NetBSD: pmap.h,v 1.79.28.1 2018/05/21 04:35:57 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -228,11 +228,24 @@ pmap_remove_all(struct pmap *pmap)
 #define	PMAP_STEAL_MEMORY		/* enable pmap_steal_memory() */
 #define	PMAP_GROWKERNEL			/* enable pmap_growkernel() */
 
+#define	PMAP_DIRECT
+#define	PMAP_DIRECT_MAP(pa)		ALPHA_PHYS_TO_K0SEG((pa))
+#define	PMAP_DIRECT_UNMAP(va)		ALPHA_K0SEG_TO_PHYS((va))
+
+static __inline int
+pmap_direct_process(paddr_t pa, voff_t pgoff, size_t len,
+    int (*process)(void *, size_t, void *), void *arg)
+{
+	vaddr_t va = PMAP_DIRECT_MAP(pa);
+
+	return process((void *)(va + pgoff), len, arg);
+}
+
 /*
  * Alternate mapping hooks for pool pages.  Avoids thrashing the TLB.
  */
-#define	PMAP_MAP_POOLPAGE(pa)		ALPHA_PHYS_TO_K0SEG((pa))
-#define	PMAP_UNMAP_POOLPAGE(va)		ALPHA_K0SEG_TO_PHYS((va))
+#define	PMAP_MAP_POOLPAGE(pa)		PMAP_DIRECT_MAP(pa)
+#define	PMAP_UNMAP_POOLPAGE(va)		PMAP_DIRECT_UNMAP(va)
 
 /*
  * Other hooks for the pool allocator.

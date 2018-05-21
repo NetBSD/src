@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_nat.c,v 1.41.14.1 2018/05/02 07:20:23 pgoyette Exp $	*/
+/*	$NetBSD: npf_nat.c,v 1.41.14.2 2018/05/21 04:36:15 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2014 Mindaugas Rasiukevicius <rmind at netbsd org>
@@ -72,7 +72,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.41.14.1 2018/05/02 07:20:23 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.41.14.2 2018/05/21 04:36:15 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -692,7 +692,7 @@ npf_do_nat(npf_cache_t *npc, npf_conn_t *con, const int di)
 	int error;
 	bool forw;
 
-	/* All relevant IPv4 data should be already cached. */
+	/* All relevant data should be already cached. */
 	if (!npf_iscached(npc, NPC_IP46) || !npf_iscached(npc, NPC_LAYER4)) {
 		return 0;
 	}

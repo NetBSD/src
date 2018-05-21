@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmr.c,v 1.23.2.1 2018/04/07 04:12:11 pgoyette Exp $	*/
+/*	$NetBSD: gtmr.c,v 1.23.2.2 2018/05/21 04:35:58 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.23.2.1 2018/04/07 04:12:11 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.23.2.2 2018/05/21 04:35:58 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -49,6 +49,51 @@ __KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.23.2.1 2018/04/07 04:12:11 pgoyette Exp $
 
 #include <arm/cortex/gtmr_var.h>
 #include <arm/cortex/mpcore_var.h>
+
+#define stable_write(reg) \
+static void \
+reg ## _stable_write(struct gtmr_softc *sc, uint64_t val) \
+{ \
+	static int max_retry = 0; \
+	int retry; \
+	reg ## _write(val); \
+	retry = 0; \
+	while (reg ## _read() != (val) && retry++ < 200) \
+		reg ## _write(val); \
+	if (retry > max_retry) { \
+		aprint_verbose_dev(sc->sc_dev, #reg "_write max retries %d -> %d\n", \
+		    max_retry, retry); \
+		max_retry = retry; \
+	} \
+}
+
+stable_write(gtmr_cntv_tval);
+
+#define stable_read(reg) \
+static uint64_t \
+reg ## _stable_read(struct gtmr_softc *sc) \
+{ \
+	static int max_retry = 0; \
+	uint64_t oval, val; \
+	int retry = 0; \
+	val = reg ## _read(); \
+	while (++retry < 200) { \
+		oval = val; \
+		val = reg ## _read(); \
+		if (val == oval) \
+			break; \
+	} \
+	if (retry > max_retry) { \
+		aprint_verbose_dev(sc->sc_dev, #reg "_read max retries %d -> %d\n", \
+		    max_retry, retry); \
+		max_retry = retry; \
+	} \
+	return val; \
+}
+
+stable_read(gtmr_cntv_cval);
+stable_read(gtmr_cntvct);
+stable_read(gtmr_cntpct);
 
 static int gtmr_match(device_t, cfdata_t, void *);
 static void gtmr_attach(device_t, device_t, void *);
@@ -150,6 +195,7 @@ gtmr_attach(device_t parent, device_t self, void *aux)
 
 	gtmr_timecounter.tc_name = device_xname(sc->sc_dev);
 	gtmr_timecounter.tc_frequency = sc->sc_freq;
+	gtmr_timecounter.tc_priv = sc;
 
 	tc_init(&gtmr_timecounter);
 
@@ -172,57 +218,15 @@ gtmr_init_cpu_clock(struct cpu_info *ci)
 	 */
 	gtmr_cntv_ctl_write(CNTCTL_ENABLE);
 	gtmr_cntp_ctl_write(CNTCTL_ENABLE);
-#if 0
-	printf("%s: cntctl=%#x\n", __func__, gtmr_cntv_ctl_read());
-#endif
 
 	/*
 	 * Get now and update the compare timer.
 	 */
 	arm_isb();
-	ci->ci_lastintr = gtmr_cntvct_read();
-	gtmr_cntv_tval_write(sc->sc_autoinc);
-#if 0
-	printf("%s: %s: delta cval = %"PRIu64"\n",
-	    __func__, ci->ci_data.cpu_name,
-	    gtmr_cntv_cval_read() - ci->ci_lastintr);
-#endif
+	ci->ci_lastintr = gtmr_cntvct_stable_read(sc);
+	gtmr_cntv_tval_stable_write(sc, sc->sc_autoinc);
 	splx(s);
 	KASSERT(gtmr_cntvct_read() != 0);
-#if 0
-	printf("%s: %s: ctl %#x cmp %#"PRIx64" now %#"PRIx64"\n",
-	    __func__, ci->ci_data.cpu_name, gtmr_cntv_ctl_read(),
-	    gtmr_cntv_cval_read(), gtmr_cntvct_read());
-
-	s = splsched();
-
-	arm_isb();
-	uint64_t now64;
-	uint64_t start64 = gtmr_cntvct_read();
-	do {
-		arm_isb();
-		now64 = gtmr_cntvct_read();
-	} while (start64 == now64);
-	start64 = now64;
-	uint64_t end64 = start64 + 64;
-	uint32_t start32 = arm_pmccntr_read();
-	do {
-		arm_isb();
-		now64 = gtmr_cntvct_read();
-	} while (end64 != now64);
-	uint32_t end32 = arm_pmccntr_read();
-
-	uint32_t diff32 = end64 - start64;
-	printf("%s: %s: %u cycles per tick\n",
-	    __func__, ci->ci_data.cpu_name, (end32 - start32) / diff32);
-
-	printf("%s: %s: status %#x cmp %#"PRIx64" now %#"PRIx64"\n",
-	    __func__, ci->ci_data.cpu_name, gtmr_cntv_ctl_read(),
-	    gtmr_cntv_cval_read(), gtmr_cntvct_read());
-	splx(s);
-#elif 0
-	delay(1000000 / hz + 1000);
-#endif
 }
 
 void
@@ -252,11 +256,11 @@ gtmr_delay(unsigned int n)
 	unsigned int delta = 0, usecs = 0;
 
 	arm_isb();
-	uint64_t last = gtmr_cntpct_read();
+	uint64_t last = gtmr_cntpct_stable_read(sc);
 
 	while (n > usecs) {
 		arm_isb();
-		uint64_t curr = gtmr_cntpct_read();
+		uint64_t curr = gtmr_cntpct_stable_read(sc);
 		if (curr < last)
 			delta += curr + (UINT64_MAX - last);
 		else
@@ -268,23 +272,6 @@ gtmr_delay(unsigned int n)
 			delta %= incr_per_us;
 		}
 	}
-}
-
-void
-gtmr_bootdelay(unsigned int ticks)
-{
-	const uint32_t ctl = gtmr_cntv_ctl_read();
-	gtmr_cntv_ctl_write(ctl | CNTCTL_ENABLE | CNTCTL_IMASK);
-
-	/* Write Timer/Value to set new compare time */
-	gtmr_cntv_tval_write(ticks);
-
-	/* Spin until compare time is hit */
-	while ((gtmr_cntv_ctl_read() & CNTCTL_ISTATUS) == 0) {
-		/* spin */
-	}
-
-	gtmr_cntv_ctl_write(ctl);
 }
 
 /*
@@ -305,21 +292,17 @@ gtmr_intr(void *arg)
 	if ((ctl & CNTCTL_ISTATUS) == 0)
 		return 0;
 
-	const uint64_t now = gtmr_cntvct_read();
+	const uint64_t now = gtmr_cntvct_stable_read(sc);
 	uint64_t delta = now - ci->ci_lastintr;
 
 #ifdef DIAGNOSTIC
-	const uint64_t then = gtmr_cntv_cval_read();
+	const uint64_t then = gtmr_cntv_cval_stable_read(sc);
 	struct gtmr_percpu * const pc = percpu_getref(sc->sc_percpu);
 	KASSERTMSG(then <= now, "%"PRId64, now - then);
 	KASSERTMSG(then + pc->pc_delta >= ci->ci_lastintr + sc->sc_autoinc,
 	    "%"PRId64, then + pc->pc_delta - ci->ci_lastintr - sc->sc_autoinc);
 #endif
 
-#if 0
-	printf("%s(%p): %s: now %#"PRIx64" delta %"PRIu64"\n",
-	     __func__, cf, ci->ci_data.cpu_name, now, delta);
-#endif
 	KASSERTMSG(delta > sc->sc_autoinc / 100,
 	    "%s: interrupting too quickly (delta=%"PRIu64") autoinc=%lu",
 	    ci->ci_data.cpu_name, delta, sc->sc_autoinc);
@@ -334,7 +317,7 @@ gtmr_intr(void *arg)
 	} else {
 		delta = 0;
 	}
-	gtmr_cntv_tval_write(sc->sc_autoinc - delta);
+	gtmr_cntv_tval_stable_write(sc, sc->sc_autoinc - delta);
 
 	ci->ci_lastintr = now;
 
@@ -359,6 +342,7 @@ setstatclockrate(int newhz)
 static u_int
 gtmr_get_timecount(struct timecounter *tc)
 {
+	struct gtmr_softc * const sc = tc->tc_priv;
 	arm_isb();	// we want the time NOW, not some instructions later.
-	return (u_int) gtmr_cntpct_read();
+	return (u_int) gtmr_cntpct_stable_read(sc);
 }

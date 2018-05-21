@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi,v 1.11 2016/12/11 00:56:34 alnsn Exp $	*/
+/*	$NetBSD: menus.mi,v 1.11.12.1 2018/05/21 04:36:19 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -664,7 +664,7 @@ menu pmpartentry, x=50, y=5, exit, default exit;
 								};
 	option MSG_fmtasraid,	exit, action {
 									if (pm->gpt || pm->isspecial) {
-										process_menu(MENU_ok, deconst(MSG_notsupported));
+										process_menu(MENU_ok, __UNCONST(MSG_notsupported));
 										return -1;
 									}
 									pm->unsaved = 1;
@@ -673,7 +673,7 @@ menu pmpartentry, x=50, y=5, exit, default exit;
 								};
 	option MSG_fmtaslvm,	exit, action {
 									if (pm->gpt || pm->isspecial) {
-										process_menu(MENU_ok, deconst(MSG_notsupported));
+										process_menu(MENU_ok, __UNCONST(MSG_notsupported));
 										return -1;
 									}
 									pm->unsaved = 1;
@@ -683,7 +683,7 @@ menu pmpartentry, x=50, y=5, exit, default exit;
 								};
 	option MSG_encrypt,		exit, action {
 									if (pm->gpt || pm->isspecial) {
-										process_menu(MENU_ok, deconst(MSG_notsupported));
+										process_menu(MENU_ok, __UNCONST(MSG_notsupported));
 										return -1;
 									}
 									pm->unsaved = 1;

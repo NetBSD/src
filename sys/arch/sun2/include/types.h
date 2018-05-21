@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.11 2012/01/17 20:34:57 joerg Exp $	*/
+/*	$NetBSD: types.h,v 1.11.46.1 2018/05/21 04:36:02 pgoyette Exp $	*/
 
 #include <m68k/types.h>
 #define	__HAVE_MM_MD_KERNACC
@@ -6,3 +6,4 @@
 #define	__HAVE_MM_MD_READWRITE
 #define	__HAVE_MM_MD_MMAP
 #define	__HAVE_NO___THREAD
+#define __HAVE_NO_PMAP_STATS

@@ -1,4 +1,4 @@
-/* $NetBSD: TODO.modules,v 1.14 2017/12/15 21:57:09 pgoyette Exp $ */
+/* $NetBSD: TODO.modules,v 1.14.2.1 2018/05/21 04:35:50 pgoyette Exp $ */
 
 Some notes on the limitations of our current (as of 7.99.35) module
 subsystem.  This list was triggered by an Email exchange between
@@ -164,9 +164,31 @@ christos and pgoyette.
     mechanism to define and build modules, whether they are included as
     "built-in" modules or as separately-loadable modules.
 
+    (From John Nemeth) Some sort of mechanism for a (driver) module
+    to declare the list of vendor/product/other tuples that it can
+    handle would be nice.  Perhaps this would go in the module's .plist
+    file?  (See #17 below.)  Then drivers that scan for children might
+    be able to search the modules directory for an "appropriate" module
+    for each child, and auto-load.
+
 16. PR kern/52821 exposes another limitation of config(1) WRT modules.
     Here, an explicit device attachment is required, because we cannot
     rely on all kernel configs to contain the attribute at which the
     modular driver wants to attach.  Unfortunately, the explicit
     attachment causes conflicts with built-in drivers.  (See the PR for
     more details.)
+
+17. (From John Nemeth) It would be potentially useful if a "push" from
+    the bootloader could also load-and-push a module's .plist (if it
+    exists.
+
+18. (From John Nemeth) Some sort of schema for a module to declare the
+    options (or other things?) that the module understands.  This could
+    result in a module-options editor to manipulate the .plist 
+
+19. (From John Nemeth) Currently, the order of module initialization is
+    based on module classes and declared dependencies.  It might be
+    useful to have additional classes (or sub-classes) with additional
+    invocations of module_class_init(), and it might be useful to have a
+    non-dependency mechanism to provide "IF module-A and module-B are
+    BOTH present, module-A needs to be initialized before module-B".

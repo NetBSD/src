@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.c,v 1.118 2018/01/09 20:55:42 maya Exp $	*/
+/*	$NetBSD: linux_exec.c,v 1.118.2.1 2018/05/21 04:36:03 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998, 2000, 2007, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.118 2018/01/09 20:55:42 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.118.2.1 2018/05/21 04:36:03 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,7 +92,6 @@ struct emul emul_linux = {
 	.e_syscallnames =	linux_syscallnames,
 	.e_sendsig =		linux_sendsig,
 	.e_trapsignal =		linux_trapsignal,
-	.e_tracesig =		NULL,
 	.e_sigcode =		linux_sigcode,
 	.e_esigcode =		linux_esigcode,
 	.e_sigobject =		&emul_linux_object,

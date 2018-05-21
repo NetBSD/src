@@ -1,4 +1,4 @@
-/*	$NetBSD: cfparse.y,v 1.49 2016/02/17 20:11:17 christos Exp $	*/
+/*	$NetBSD: cfparse.y,v 1.49.14.1 2018/05/21 04:35:49 pgoyette Exp $	*/
 
 /* Id: cfparse.y,v 1.66 2006/08/22 18:17:17 manubsd Exp */
 
@@ -172,7 +172,7 @@ static int load_x509(const char *file, char **filenameptr,
 	return 0;
 }
 
-static int process_rmconf()
+static int process_rmconf(void)
 {
 
 	/* check a exchange mode */
@@ -1543,7 +1543,6 @@ sainfo_id
 		{
 			char portbuf[10];
 			struct sockaddr *laddr = NULL, *haddr = NULL;
-			char *cur = NULL;
 
 			if (($6 == IPPROTO_ICMP || $6 == IPPROTO_ICMPV6)
 			 && ($5 != IPSEC_PORT_ANY || $5 != IPSEC_PORT_ANY)) {
@@ -2013,7 +2012,6 @@ remote_spec
 	|	PEERS_CERTFILE CERT_PLAINRSA QUOTEDSTRING
 		{
 			char path[MAXPATHLEN];
-			int ret = 0;
 
 			if (cur_rmconf->peerscert != NULL) {
 				yyerror("peers_certfile already defined\n");
@@ -2365,7 +2363,6 @@ cert_spec
 	|	CERT_PLAINRSA QUOTEDSTRING
 		{
 			char path[MAXPATHLEN];
-			int ret = 0;
 
 			if (cur_rmconf->mycert != NULL) {
 				yyerror("certificate_type already defined\n");
@@ -2614,8 +2611,7 @@ insspspec(rmconf, spspec)
 }
 
 static struct secprotospec *
-dupspspec(spspec)
-	struct secprotospec *spspec;
+dupspspec(struct secprotospec *spspec)
 {
 	struct secprotospec *new;
 

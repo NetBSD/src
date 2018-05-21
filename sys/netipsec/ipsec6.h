@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec6.h,v 1.26.2.2 2018/05/02 07:20:24 pgoyette Exp $	*/
+/*	$NetBSD: ipsec6.h,v 1.26.2.3 2018/05/21 04:36:16 pgoyette Exp $	*/
 /*	$FreeBSD: ipsec6.h,v 1.1.4.1 2003/01/24 05:11:35 sam Exp $	*/
 /*	$KAME: ipsec.h,v 1.44 2001/03/23 08:08:47 itojun Exp $	*/
 
@@ -60,7 +60,6 @@ struct m_tag;
 int ipsec6_common_input(struct mbuf **, int *, int);
 int ipsec6_common_input_cb(struct mbuf *, struct secasvar *, int, int);
 int ipsec6_process_packet(struct mbuf *, const struct ipsecrequest *);
-int ipsec6_input(struct mbuf *);
 #endif /*_KERNEL*/
 
 #endif /* !_NETIPSEC_IPSEC6_H_ */

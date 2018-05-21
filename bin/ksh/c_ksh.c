@@ -1,4 +1,4 @@
-/*	$NetBSD: c_ksh.c,v 1.27 2018/01/24 09:53:20 kamil Exp $	*/
+/*	$NetBSD: c_ksh.c,v 1.27.2.1 2018/05/21 04:35:48 pgoyette Exp $	*/
 
 /*
  * built-in Korn commands: c_*
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: c_ksh.c,v 1.27 2018/01/24 09:53:20 kamil Exp $");
+__RCSID("$NetBSD: c_ksh.c,v 1.27.2.1 2018/05/21 04:35:48 pgoyette Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -317,7 +317,7 @@ c_print(wp)
 	Xinit(xs, xp, 128, ATEMP);
 
 	while (*wp != NULL) {
-		register int c;
+		int c;
 		s = *wp;
 		while ((c = *s++) != '\0') {
 			Xcheck(xs, xp);
@@ -995,8 +995,8 @@ int
 c_unalias(wp)
 	char **wp;
 {
-	register struct table *t = &aliases;
-	register struct tbl *ap;
+	struct table *t = &aliases;
+	struct tbl *ap;
 	int rv = 0, all = 0;
 	int optc;
 
@@ -1389,7 +1389,7 @@ c_bind(wp)
 	char **wp;
 {
 	int rv = 0, macro = 0, list = 0;
-	register char *cp;
+	char *cp;
 	int optc;
 
 	while ((optc = ksh_getopt(wp, &builtin_opt, "lm")) != EOF)

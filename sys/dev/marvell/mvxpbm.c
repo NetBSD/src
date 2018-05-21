@@ -1,4 +1,4 @@
-/*	$NetBSD: mvxpbm.c,v 1.1 2015/06/03 03:55:47 hsuenaga Exp $	*/
+/*	$NetBSD: mvxpbm.c,v 1.1.20.1 2018/05/21 04:36:05 pgoyette Exp $	*/
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvxpbm.c,v 1.1 2015/06/03 03:55:47 hsuenaga Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvxpbm.c,v 1.1.20.1 2018/05/21 04:36:05 pgoyette Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -322,8 +322,7 @@ mvxpbm_free_mbuf(struct mbuf *m, void *buf, size_t size, void *arg)
 	KASSERT(arg != NULL);
 
 	DPRINTFN(3, "free packet %p\n", m);
-	if (m->m_flags & M_PKTHDR)
-		m_tag_delete_chain((m), NULL);
+
 	chunk->m = NULL;
 	s = splvm();
 	pool_cache_put(mb_cache, m);

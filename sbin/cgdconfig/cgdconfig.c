@@ -1,4 +1,4 @@
-/* $NetBSD: cgdconfig.c,v 1.41 2017/01/10 20:45:19 christos Exp $ */
+/* $NetBSD: cgdconfig.c,v 1.41.12.1 2018/05/21 04:35:56 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 2002, 2003\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: cgdconfig.c,v 1.41 2017/01/10 20:45:19 christos Exp $");
+__RCSID("$NetBSD: cgdconfig.c,v 1.41.12.1 2018/05/21 04:35:56 pgoyette Exp $");
 #endif
 
 #include <err.h>
@@ -89,8 +89,10 @@ int	nflag = 0;
 
 /* if pflag is set to PFLAG_STDIN read from stdin rather than getpass(3) */
 
-#define	PFLAG_GETPASS	0x01
-#define	PFLAG_STDIN	0x02
+#define	PFLAG_GETPASS		0x01
+#define	PFLAG_GETPASS_ECHO	0x02
+#define	PFLAG_GETPASS_MASK	0x03
+#define	PFLAG_STDIN		0x04
 int	pflag = PFLAG_GETPASS;
 
 static int	configure(int, char **, struct params *, int);
@@ -136,17 +138,19 @@ static void
 usage(void)
 {
 
-	(void)fprintf(stderr, "usage: %s [-nv] [-V vmeth] cgd dev [paramsfile]\n",
+	(void)fprintf(stderr, "usage: %s [-enpv] [-V vmeth] cgd dev "
+	    "[paramsfile]\n", getprogname());
+	(void)fprintf(stderr, "       %s -C [-enpv] [-f configfile]\n",
 	    getprogname());
-	(void)fprintf(stderr, "       %s -C [-nv] [-f configfile]\n", getprogname());
-	(void)fprintf(stderr, "       %s -G [-nv] [-i ivmeth] [-k kgmeth] "
+	(void)fprintf(stderr, "       %s -G [-enpv] [-i ivmeth] [-k kgmeth] "
 	    "[-o outfile] paramsfile\n", getprogname());
 	(void)fprintf(stderr, "       %s -g [-nv] [-i ivmeth] [-k kgmeth] "
 	    "[-o outfile] alg [keylen]\n", getprogname());
-	(void)fprintf(stderr, "       %s -l\n", getprogname());
+	(void)fprintf(stderr, "       %s -l [-v[v]] [cgd]\n", getprogname());
 	(void)fprintf(stderr, "       %s -s [-nv] [-i ivmeth] cgd dev alg "
 	    "[keylen]\n", getprogname());
-	(void)fprintf(stderr, "       %s -U [-nv] [-f configfile]\n", getprogname());
+	(void)fprintf(stderr, "       %s -U [-nv] [-f configfile]\n",
+	    getprogname());
 	(void)fprintf(stderr, "       %s -u [-nv] cgd\n", getprogname());
 	exit(EXIT_FAILURE);
 }
@@ -199,7 +203,7 @@ main(int argc, char **argv)
 	p = params_new();
 	kg = NULL;
 
-	while ((ch = getopt(argc, argv, "CGUV:b:f:gi:k:lno:spuv")) != -1)
+	while ((ch = getopt(argc, argv, "CGUV:b:ef:gi:k:lno:spuv")) != -1)
 		switch (ch) {
 		case 'C':
 			set_action(&action, ACTION_CONFIGALL);
@@ -227,6 +231,9 @@ main(int argc, char **argv)
 					usage();
 				p = params_combine(p, tp);
 			}
+			break;
+		case 'e':
+			pflag = PFLAG_GETPASS_ECHO;
 			break;
 		case 'f':
 			if (cfile)
@@ -375,12 +382,17 @@ static char *
 maybe_getpass(char *prompt)
 {
 	char	 buf[1024];
-	char	*p = buf;
-	char	*tmp;
+	char	*p = NULL;
+	char	*tmp, *pass;
 
 	switch (pflag) {
 	case PFLAG_GETPASS:
-		p = getpass(prompt);
+		p = getpass_r(prompt, buf, sizeof(buf));
+		break;
+
+	case PFLAG_GETPASS_ECHO:
+		p = getpassfd(prompt, buf, sizeof(buf), NULL,
+		    GETPASS_ECHO|GETPASS_ECHO_NL|GETPASS_NEED_TTY, 0);
 		break;
 
 	case PFLAG_STDIN:
@@ -399,7 +411,10 @@ maybe_getpass(char *prompt)
 	if (!p)
 		err(EXIT_FAILURE, "failed to read passphrase");
 
-	return estrdup(p);
+	pass = estrdup(p);
+	explicit_memset(buf, 0, sizeof(buf));
+
+	return pass;
 }
 
 /*ARGSUSED*/
@@ -420,7 +435,8 @@ getkey_pkcs5_pbkdf2(const char *target, struct keygen *kg, size_t keylen,
 	char		 buf[1024];
 	u_int8_t	*tmp;
 
-	snprintf(buf, sizeof(buf), "%s's passphrase:", target);
+	snprintf(buf, sizeof(buf), "%s's passphrase%s:", target,
+	    pflag & PFLAG_GETPASS_ECHO ? " (echo)" : "");
 	passp = maybe_getpass(buf);
 	if (pkcs5_pbkdf2(&tmp, BITS2BYTES(keylen), (uint8_t *)passp,
 	    strlen(passp),
@@ -432,7 +448,7 @@ getkey_pkcs5_pbkdf2(const char *target, struct keygen *kg, size_t keylen,
 
 	ret = bits_new(tmp, keylen);
 	kg->kg_key = bits_dup(ret);
-	memset(passp, 0, strlen(passp));
+	explicit_memset(passp, 0, strlen(passp));
 	free(passp);
 	free(tmp);
 	return ret;
@@ -515,12 +531,33 @@ configure(int argc, char **argv, struct params *inparams, int flags)
 	char		 devicename[PATH_MAX];
 	const char	*dev = NULL;	/* XXX: gcc */
 
-	if (argc == 2 || argc == 3) {
-		dev = getfsspecname(devicename, sizeof(devicename), argv[1]);
-		if (dev == NULL) {
-			warnx("getfsspecname failed: %s", devicename);
+	if (argc < 2 || argc > 3) {
+		/* print usage and exit, only if called from main() */
+		if (flags == CONFIG_FLAGS_FROMMAIN) {
+			warnx("wrong number of args");
+			usage();
+		}
+		return -1;
+	}
+
+	if ((
+	  fd = opendisk1(*argv, O_RDWR, cgdname, sizeof(cgdname), 1, prog_open)
+	    ) != -1) {
+		struct cgd_user cgu;
+
+		cgu.cgu_unit = -1;
+		if (prog_ioctl(fd, CGDIOCGET, &cgu) != -1 && cgu.cgu_dev != 0) {
+			warnx("device %s already in use", *argv);
+			prog_close(fd);
 			return -1;
 		}
+		prog_close(fd);
+	}
+
+	dev = getfsspecname(devicename, sizeof(devicename), argv[1]);
+	if (dev == NULL) {
+		warnx("getfsspecname failed: %s", devicename);
+		return -1;
 	}
 
 	if (argc == 2) {
@@ -529,16 +566,8 @@ configure(int argc, char **argv, struct params *inparams, int flags)
 		/* make string writable for basename */
 		strlcpy(pfile, dev, sizeof(pfile));
 		p = params_cget(basename(pfile));
-	} else if (argc == 3) {
+	} else
 		p = params_cget(argv[2]);
-	} else {
-		/* print usage and exit, only if called from main() */
-		if (flags == CONFIG_FLAGS_FROMMAIN) {
-			warnx("wrong number of args");
-			usage();
-		}
-		return -1;
-	}
 
 	if (!p)
 		return -1;
@@ -570,7 +599,9 @@ configure(int argc, char **argv, struct params *inparams, int flags)
 	 * a password.
 	 */
 
-	for (kg = p->keygen; pflag == PFLAG_GETPASS && kg; kg = kg->next)
+	for (kg = p->keygen;
+	    (pflag & PFLAG_GETPASS_MASK) && kg;
+	    kg = kg->next)
 		if ((kg->kg_method == KEYGEN_PKCS5_PBKDF2_SHA1) ||
 		    (kg->kg_method == KEYGEN_PKCS5_PBKDF2_OLD )) {
 			loop = 1;

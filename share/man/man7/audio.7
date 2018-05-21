@@ -1,0 +1,308 @@
+.\"	$NetBSD: audio.7,v 1.2.4.2 2018/05/21 04:35:56 pgoyette Exp $
+.\"
+.\" Copyright (c) 2016 - 2018  Nathanial Sloss <nathanialsloss@yahoo.com.au>
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd May 4, 2018
+.Dt AUDIO 7
+.Os
+.Sh NAME
+.Nm audio
+.Nd the
+.Nx
+in-kernel audio mixer specification
+.Sh INTRODUCTION
+This document aims to describe all aspects of the in-kernel audio mixer
+included with
+.Nx 8
+and onwards, describing its current behavior as of 2018.
+.Sh VIRTUAL CHANNEL (VCHAN)
+This is the most fundamental element to the mixer.
+The vchan has all of the properties of the traditional single open
+.Nx
+audio channel.
+It consists of playback and record rings along with
+.Vt audio_info
+structures.
+.Pp
+Upon opening of
+.Pa /dev/audio
+or
+.Pa /dev/sound ,
+a new vchan and mixerctl structure is created.
+In the case of
+.Pa /dev/sound ,
+.Vt audio_info
+structures are inherited from the last open of
+.Pa /dev/audio
+or
+.Pa /dev/sound .
+.Pp
+All vchans are up or down sampled into the mix ring (intermediate) format
+before being sent to hardware.
+.Pp
+It is described in the following diagram:
+.Bd -literal
+	VCHAN1---------\\
+			\\   VCHAN0
+	VCHAN2-------------MIX RING ---- HARDWARE
+		...     /
+	VCHANn---------/
+.Ed
+.Pp
+In the case of
+.Xr sysctl 8
+.Dv usemixer=0
+(see below), there is only one vchan whose play
+and record rings are the hardware play/record rings.
+.Pp
+User accessible vchans are numbered starting at one (1).
+Vchan 0 is used internally by the mixer for the mix ring and its ring buffers
+are not user accessible.
+.Pp
+The only limit to the number of open vchans is the speed of the computer and the
+number of free file descriptors.
+.Sh BLOCK - SIZE / LATENCY
+A block of audio data is the basic unit for audio data.
+Audio applications will not commence playback until three (3) blocks have been
+written - this is the source of latency in the mixer along with the size of the
+audio data block.
+.Pp
+For normal uses of audio read/write there will be three blocks of audio data before
+playback commences one in the vchan, one in the mix ring and one in the
+hardware ring.
+.Pp
+The size of the audio data block is dependent on the audio format configured
+by the application the latency
+.Xr sysctl 8
+and the underlying audio hardware.
+.Pp
+Some audio hardware devices only support a static block size, as such the
+overall latency of the mixer for these devices cannot be changed.
+Other devices such as those supported by
+.Xr hdaudio 4
+allow the hardware block size
+to be changed, allowing the latency of the mixer to change from 4
+milliseconds (ms) to 128 ms with the mixer intermediate format being 16 bit,
+stereo, 48 kHz.
+.Pp
+With regard to mmapped audio, blocks are played back immediately so the latency
+presented to applications is one third of the latency
+.Xr sysctl 8
+value.
+.Pp
+Latency can be calculated by the following formula:
+.Bd -literal
+	Latency (ms) =	 blocksize(bytes) * num blocks * 1000
+			--------------------------------------
+			freq(Hz) * bytes per sample * channels
+.Ed
+.Pp
+Latency in the mixer and latency presented to audio applications is consistent,
+it will be the same regardless of the audio format requested by the audio
+application.
+.Pp
+The default latency configured at boot time is 150ms and is subject to the above
+constraints.
+.Sh ADDED IOCTLS
+Two new ioctls have been added to accommodate mixing of multiple vchans:
+.Bl -tag -width indent
+.It Dv AUDIO_SETCHAN :
+Allows setting the target vchan to operate on for subsequent
+.Xr ioctl 2
+calls.
+.It Dv AUDIO_GETCHAN :
+Returns the current vchan number.
+.El
+.Pp
+These ioctls were necessary as some audio applications like to open an
+.Xr audio 4
+device and an
+.Xr audioctl 4
+device so to check on buffer usage and samples played etc.
+.Pp
+As opening an
+.Xr audioctl 4
+device would result in a new vchan being created, these
+ioctls allow setting the target vchan and
+.Vt audio_info
+structure to that of an existing vchan.
+.Sh MIXERCTL INTERFACE / SOFTWARE VOLUME
+Mixerctl structures are allocated when a new vchan is created.
+The mixer control structure allows for setting the software volume for playback -
+.Li vchan.dacN
+or recording -
+.Li vchan.adcN .
+These are 8 bit values and the this value is applied during mixing into the mix
+ring.
+.Pp
+The software volume is applied to all channels (1, 2, 4 etc.) in the vchan and at
+present (2018-05-04) there are no balance controls for user accessible vchans.
+.Pp
+The first vchan corresponds to the
+.Li vchan.dac1/adc1
+mixer controls.
+.Pp
+All vchan mixer controls only have effect upon its own volume and writing to
+.Li outputs.master
+(or equivalent) control is required to change the volume of the hardware.
+.Pp
+Mixer controls are only present whilst the chan is in use and numbering starts
+at one (1).
+Mixer control numbers i.e.
+.Li dac/adc1
+correspond to their vchan number.
+.Sh AUDIOCTL / AUDIO_INFO INTERFACE
+Audioctl allows access to the
+.Vt audio_info
+structure of a given device.
+Due to the audio mixer a
+.Fl p
+flag was added to allow access to a given vchan's
+.Vt audio_info
+structure.
+The values for
+.Fl p
+are numbered starting at zero (0).
+.Pp
+Not specifying
+.Fl p
+will result in working with a new vchan and this is only
+desired when the next subsequent audio open is to be
+.Pa /dev/sound ,
+i.e.:
+.Pp
+.Dl audioctl -w play.gain=120
+.Dl open /dev/sound this will have an initial software volume level of 120.
+.Pp
+The parameters for playback and recording only effect the particular vchan
+being operated on (gain, sample rate, channels, encoding etc), except
+.Fl p Ar 0
+(the mix ring).
+Specifying
+.Fl p Ar 0
+will display the audio parameters of the mix ring and allow
+setting the hardware gain and balance.
+.Sh ADDED SYSCTLS
+With the introduction of the audio mixer the following
+.Xr sysctl 7 Ns s
+have been added:
+.Bl -tag -width indent
+.It Li hw.driverN.frequency :
+.It Li hw.driverN.precision :
+.It Li hw.driverN.channels :
+Intermediate mixing format.
+(see below)
+.It Li hw.driverN.latency :
+Expressed in milliseconds.
+(see above)
+.It Li hw.driverN.multiuser :
+Off/On (0/1), defaults to off.
+This
+.Xr sysctl 7
+determines if multiple users are allowed to access the sound hardware.
+The root user is always allowed access (i.e., for wsbell).
+The first user to open the audio device has full control of the audio device
+if this sysctl is set to off.
+There currently is an outstanding PR about affecting a privileged process -
+PR/52627.
+.Pp
+Ideally if root intervenes with the audio device, it should do so unaffected.
+.Pp
+If this control is set to on, then all users' audio data are mixed and all users
+have access to the audio hardware.
+.It Li hw.driverN.usemixer :
+Off/On (0/1), defaults to on.
+This
+.Xr sysctl 7
+enables or disables the audio mixer.
+When set to off, the audio device can support only one vchan.
+This vchan's play and record ring buffers are the hardware ring buffers.
+.Pp
+This option was added to aid older/slower systems where the extra overhead of
+the audio mixer might pose a problem.
+.El
+.Sh INTERMEDIATE / MIXING FORMAT
+The initial concept was to handle incoming audio data similarly to that of a
+superheterodyne radio receiver:
+.Pp
+.Dl		RF -> IF -> AF
+.Pp
+So the corresponding mixing concept is:
+.Pp
+.Dl		vchan -> mixing format -> hardware
+.Pp
+The
+.Xr sysctl 7 Ns s
+described above determine the format for mixing.
+All vchans are up or down sampled to this format before mixing takes place.
+.Pp
+On most systems this defaults to 16 bit stereo 48kHz.
+The
+.Xr sysctl 7 Ns s
+governing the mixing format may only be changed when there are no
+vchans in use.
+.Pp
+On faster systems the precision (8, 16, 32 bits) may be changed along with the
+sample rate and number of channels (mono, stereo, 4 etc.).
+.Pp
+On older/slower systems utilizing audio mixing, it may be required to lower the
+quality of this format to ease the amount of data processing whilst mixing.
+.Pp
+All possible audio formats (mulaw, alaw, slinear, ulinear, 8, 16, and 32 bit
+precision) are converted for use by the audio mixer.
+.Sh MEMORY MAPPED PLAYBACK
+It is possible to use mmap for audio playback, achieving reduced latency.
+However the audio applications selected format must match the
+mixing/intermediate format (see above).
+.Pp
+It is possible to obtain the
+.Vt audio_info
+for vchan0 which contains the
+intermediate/mixing format to ease applications configuring for mmapped audio.
+.Pp
+At present most applications don't use the mix ring's
+.Vt audio_info
+structure to obtain the requiredplay back parameters and some user
+intervention is required to set the audio format for the application.
+.Sh HARDWARE DRIVER REQUIREMENTS
+Audio mixing requires signed linear support in the host's endianness.
+Driver authors should support slinear_le and slinear_be formats.
+.Pp
+If the audio hardware is intended to be used with the mixer disabled, mulaw 1ch
+8000 hz needs to be supported also.
+.Pp
+This is easily achievable with the auconv framework/filters.
+All new drivers should consider the use of auconv where possible.
+.Sh SEE ALSO
+.Xr audioctl 1 ,
+.Xr mixerctl 1 ,
+.Xr audio 4 ,
+.Xr audio 9
+.Sh AUTHORS
+.An Nathanial Sloss
+.Sh SPECIAL THANKS
+Great appreciation goes to Onno van der Linden, isaki@, maya@, jmcneill@,
+pgoyette@, mrg@, riastradh@ and christos@ \(em without their input, this code would
+not be what it is currently.

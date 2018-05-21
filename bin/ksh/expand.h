@@ -1,9 +1,9 @@
-/*	$NetBSD: expand.h,v 1.6 2017/06/30 05:14:12 kamil Exp $	*/
+/*	$NetBSD: expand.h,v 1.6.4.1 2018/05/21 04:35:48 pgoyette Exp $	*/
 
 /*
  * Expanding strings
  */
-/* $Id: expand.h,v 1.6 2017/06/30 05:14:12 kamil Exp $ */
+/* $Id: expand.h,v 1.6.4.1 2018/05/21 04:35:48 pgoyette Exp $ */
 
 #define X_EXTRA		8	/* this many extra bytes in X string */
 
@@ -65,7 +65,7 @@ typedef struct XPtrV {
 } XPtrV;
 
 #define	XPinit(x, n) do { \
-			register void **vp__; \
+			void **vp__; \
 			vp__ = (void**) alloc(sizeofN(void*, n), ATEMP); \
 			(x).cur = (x).beg = vp__; \
 			(x).end = vp__ + n; \

@@ -9,30 +9,52 @@ in the Linux 2.6+ kernel. It works as well on NetBSD and FreeBSD.
 	- racoon, an IKEv1 keying daemon
 
 IPsec-tools were ported to Linux from the KAME project 
-(http://www.kame.net) by Derek Atkins  <derek@ihtfp.com>.
+(http://www.kame.net) by Derek Atkins <derek@ihtfp.com>.
 
-Currently the package is actively maintained and developed by: 
+Authors
+=======
+
+The ipsec-tools code has been maintained and developed by: 
+
 	Emmanuel Dreyfus <manu@netbsd.org>
 	VANHULLEBUS Yvan <vanhu@free.fr>
 	Matthew Grooms <mgrooms@shrew.net>
 	Timo Teräs <timo.teras@iki.fi>
+	IHTFP Consulting <http://www.ihtfp.com/>
+	SUSE Linux AG <http://www.suse.com/>
 
-Sources can be found at the IPsec-Tools home page at:
+Under the NetBSD CVS repository, several other people maintain it.
+
+History
+=======
+
+Ipsec-tools was originally developed by the KAME project. It was then moved
+on SourfeForge, at the following address:
+
 	http://ipsec-tools.sourceforge.net/
 
-And CVS repository is hosted at NetBSD tree:
-	cvs -danoncvs@anoncvs.netbsd.org:/cvsroot co ipsec-tools
+Due to too restricted commit accesses, the development stalled, and the
+source code was moved into NetBSD's CVS repository, in:
 
-Bug reports and project wiki is located at:
+	src/crypto/dist/ipsec-tools
+
+However, many distributions still take their tarballs from SourceForge, and
+each distribution maintains local patches.
+
+FreeBSD maintains its own libipsec and setkey tools, in:
+
+	head/lib/libipsec/
+	head/sbin/setkey/
+
+A Trac used to exist, at the following address:
+
 	https://trac.ipsec-tools.net/
 
-Please report any problems to the mailing list:
+but the domain expired and was not renewed.
+
+The mailing lists from SourceForge still exist:
+
 	ipsec-tools-devel@lists.sourceforge.net
 	ipsec-tools-users@lists.sourceforge.net
-
-You can also browse the list archive:
 	http://sf.net/mailarchive/forum.php?forum_name=ipsec-tools-devel
 
-Credits:
-	IHTFP Consulting, see http://www.ihtfp.com/
-	SUSE Linux AG, see http://www.suse.com/

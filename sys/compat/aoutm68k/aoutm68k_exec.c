@@ -1,4 +1,4 @@
-/*	$NetBSD: aoutm68k_exec.c,v 1.28 2018/01/09 20:55:42 maya Exp $	*/
+/*	$NetBSD: aoutm68k_exec.c,v 1.28.2.1 2018/05/21 04:36:03 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aoutm68k_exec.c,v 1.28 2018/01/09 20:55:42 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aoutm68k_exec.c,v 1.28.2.1 2018/05/21 04:36:03 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -69,7 +69,6 @@ struct emul emul_netbsd_aoutm68k = {
 #endif
 	.e_sendsig =		sendsig,
 	.e_trapsignal =		trapsignal,
-	.e_tracesig =		NULL,
 	.e_sigcode =		sigcode,
 	.e_esigcode =		esigcode,
 	.e_sigobject =		&emul_netbsd_aoutm68k_object,

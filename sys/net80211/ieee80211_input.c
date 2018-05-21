@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.110 2018/01/21 14:13:49 maxv Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.110.2.1 2018/05/21 04:36:16 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2001 Atsushi Onoe
@@ -37,7 +37,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.81 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.110 2018/01/21 14:13:49 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.110.2.1 2018/05/21 04:36:16 pgoyette Exp $");
 #endif
 
 #ifdef _KERNEL_OPT
@@ -173,9 +173,6 @@ ieee80211_input_data(struct ieee80211com *ic, struct mbuf **mp,
 
 	if (m->m_len < hdrspace &&
 	    (m = m_pullup(m, hdrspace)) == NULL) {
-		IEEE80211_DISCARD_MAC(ic, IEEE80211_MSG_ANY,
-		    ni->ni_macaddr, NULL,
-		    "data too short: expecting %u", hdrspace);
 		ic->ic_stats.is_rx_tooshort++;
 		goto out;
 	}
@@ -3245,23 +3242,6 @@ ieee80211_note(struct ieee80211com *ic, const char *fmt, ...)
 	va_end(ap);
 
 	if_printf(ic->ic_ifp, "%s", buf);	/* NB: no \n */
-}
-
-void
-ieee80211_note_frame(struct ieee80211com *ic,
-	const struct ieee80211_frame *wh,
-	const char *fmt, ...)
-{
-	char buf[128];		/* XXX */
-	va_list ap;
-	char ebuf[3 * ETHER_ADDR_LEN];
-
-	va_start(ap, fmt);
-	vsnprintf(buf, sizeof(buf), fmt, ap);
-	va_end(ap);
-	if_printf(ic->ic_ifp, "[%s] %s\n",
-	    ether_snprintf(ebuf, sizeof(ebuf),
-	    ieee80211_getbssid(ic, wh)), buf);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: locate.c,v 1.18 2016/09/05 00:40:29 sevan Exp $	*/
+/*	$NetBSD: locate.c,v 1.18.12.1 2018/05/21 04:36:18 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)locate.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: locate.c,v 1.18 2016/09/05 00:40:29 sevan Exp $");
+__RCSID("$NetBSD: locate.c,v 1.18.12.1 2018/05/21 04:36:18 pgoyette Exp $");
 #endif /* not lint */
 
 /*
@@ -153,15 +153,15 @@ main(int argc, char *argv[])
 	}
 	if (!locate_path)
 		locate_path = _PATH_FCODES;
-	if ((cp = strrchr(locate_path, ':'))) {
-		char *lp = strdup(locate_path);
-		while ((cp = strrchr(lp, ':'))) {
-			*cp++ = '\0';
-			add_db(cp);
-		}
-		free(lp);
+
+	char *lp = strdup(locate_path);
+	while ((cp = strrchr(lp, ':'))) {
+		*cp++ = '\0';
+		add_db(cp);
 	}
-	add_db(locate_path);
+	add_db(lp);
+	free(lp);
+
 	if (LIST_EMPTY(&db_list))
 		exit(1);
 	for (; optind < argc; ++optind) {

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.775.2.4 2018/04/16 01:57:32 pgoyette Exp $
+# $NetBSD: mi,v 1.775.2.5 2018/05/21 04:35:50 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2757,6 +2757,7 @@
 ./usr/tests/lib/libc/sys/t_connect		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/sys/t_context		tests-obsolete		obsolete
 ./usr/tests/lib/libc/sys/t_dup			tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libc/sys/t_fork			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/sys/t_fsync		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/sys/t_getcontext		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/sys/t_getgroups		tests-lib-tests		compattestfile,atf
@@ -2817,6 +2818,7 @@
 ./usr/tests/lib/libc/sys/t_ucontext		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/sys/t_umask		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/sys/t_unlink		tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libc/sys/t_vfork		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/sys/t_wait			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/sys/t_wait_noproc		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/sys/t_wait_noproc_wnohang	tests-lib-tests		compattestfile,atf
@@ -3641,6 +3643,11 @@
 ./usr/tests/usr.bin/c++/t_asan_off_by_one	tests-usr.bin-tests	compattestfile,atf,cxx
 ./usr/tests/usr.bin/c++/t_asan_poison		tests-usr.bin-tests	compattestfile,atf,cxx
 ./usr/tests/usr.bin/c++/t_asan_uaf		tests-usr.bin-tests	compattestfile,atf,cxx
+./usr/tests/usr.bin/c++/t_ubsan_int_add_overflow	tests-usr.bin-tests	compattestfile,atf,cxx
+./usr/tests/usr.bin/c++/t_ubsan_int_sub_overflow	tests-usr.bin-tests	compattestfile,atf,cxx
+./usr/tests/usr.bin/c++/t_ubsan_int_neg_overflow	tests-usr.bin-tests	compattestfile,atf,cxx
+./usr/tests/usr.bin/c++/t_ubsan_int_divzero	tests-usr.bin-tests	compattestfile,atf,cxx
+./usr/tests/usr.bin/c++/t_ubsan_vla_out_of_bounds	tests-usr.bin-tests	compattestfile,atf,cxx
 ./usr/tests/usr.bin/c++/t_call_once		tests-usr.bin-tests	compattestfile,atf,cxx
 ./usr/tests/usr.bin/c++/t_call_once2		tests-usr.bin-tests	compattestfile,atf,cxx
 ./usr/tests/usr.bin/c++/t_cxxruntime		tests-usr.bin-tests	compattestfile,atf,cxx
@@ -3657,6 +3664,11 @@
 ./usr/tests/usr.bin/cc/t_asan_off_by_one	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/cc/t_asan_poison		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/cc/t_asan_uaf		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/cc/t_ubsan_int_add_overflow		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/cc/t_ubsan_int_sub_overflow		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/cc/t_ubsan_int_neg_overflow		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/cc/t_ubsan_int_divzero		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/cc/t_ubsan_vla_out_of_bounds	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/cmp				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/cmp/Atffile			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/cmp/Kyuafile		tests-usr.bin-tests	compattestfile,atf,kyua

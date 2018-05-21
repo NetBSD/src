@@ -1,4 +1,4 @@
-.\"	$NetBSD: ti.4,v 1.13 2014/03/18 18:20:39 riastradh Exp $
+.\"	$NetBSD: ti.4,v 1.13.24.1 2018/05/21 04:35:56 pgoyette Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -38,7 +38,7 @@
 .Sh NAME
 .Nm ti
 .Nd
-Alteon Networks Tigon I and Tigon II gigabit
+Alteon Networks Tigon I and Tigon II Gigabit
 .Tn Ethernet
 driver
 .Sh SYNOPSIS
@@ -46,12 +46,12 @@ driver
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for PCI gigabit
+driver provides support for PCI Gigabit
 .Tn Ethernet
-adapters based on the Alteon Networks Tigon gigabit
+adapters based on the Alteon Networks Tigon Gigabit
 .Tn Ethernet
 controller chip.
-The Tigon contains an embedded R4000 CPU, gigabit MAC, dual DMA channels
+The Tigon contains an embedded R4000 CPU, Gigabit MAC, dual DMA channels
 and a PCI interface unit.
 The Tigon II contains two R4000 CPUs and other refinements.
 Either chip can be used in either a 32-bit or 64-bit PCI slot.
@@ -71,15 +71,15 @@ The
 driver has been tested with the following Tigon-based adapters:
 .Bl -bullet -offset indent
 .It
-The Alteon AceNIC V gigabit (1000BASE-SX and 1000BASE-T variants)
+The Alteon AceNIC V Gigabit (1000BASE-SX and 1000BASE-T variants)
 .Tn Ethernet
 adapter
 .It
-The 3Com 3c985-SX gigabit
+The 3Com 3c985-SX Gigabit
 .Tn Ethernet
 adapter
 .It
-The Netgear GA620 gigabit (1000BASE-SX and 1000BASE-T variants)
+The Netgear GA620 Gigabit (1000BASE-SX and 1000BASE-T variants)
 .Tn Ethernet
 adapter
 .It
@@ -89,7 +89,7 @@ The Digital EtherWORKS 1000SX PCI Gigabit Adapter (DEGPA)
 The following should also be supported but have not yet been tested:
 .Bl -bullet -offset indent
 .It
-Silicon Graphics PCI gigabit
+Silicon Graphics PCI Gigabit
 .Tn Ethernet
 adapter
 .El
@@ -134,13 +134,13 @@ or
 .Ar half-duplex
 modes.
 .It 1000baseSX
-Set 1000Mbps (gigabit
+Set 1000Mbps (Gigabit
 .Tn Ethernet over multimode fiber ) operation.
 Only full
 .Ar full-duplex
 mode is supported at this speed.
 .It 1000baseT
-Set 1000Mbps (gigabit
+Set 1000Mbps (Gigabit
 .Tn Ethernet over twisted pair ) operation.
 Only full
 .Ar full-duplex

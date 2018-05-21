@@ -1,5 +1,5 @@
 /*	$KAME: dccp_usrreq.c,v 1.67 2005/11/03 16:05:04 nishida Exp $	*/
-/*	$NetBSD: dccp_usrreq.c,v 1.17 2018/02/08 09:05:20 dholland Exp $ */
+/*	$NetBSD: dccp_usrreq.c,v 1.17.2.1 2018/05/21 04:36:16 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2003 Joacim Häggmark, Magnus Erixzon, Nils-Erik Mattsson 
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dccp_usrreq.c,v 1.17 2018/02/08 09:05:20 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dccp_usrreq.c,v 1.17.2.1 2018/05/21 04:36:16 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -230,7 +230,7 @@ dccp_input(struct mbuf *m, ...)
 	if (isipv6) {
 		DCCP_DEBUG((LOG_INFO, "Got DCCP ipv6 packet, iphlen = %u!\n", iphlen));
 		ip6 = mtod(m, struct ip6_hdr *);
-		IP6_EXTHDR_GET(dh, struct dccphdr *, m, iphlen, sizeof(*dh));
+		M_REGION_GET(dh, struct dccphdr *, m, iphlen, sizeof(*dh));
 		if (dh == NULL) {
 			dccpstat.dccps_badlen++;
 			return;
@@ -256,7 +256,7 @@ dccp_input(struct mbuf *m, ...)
 		 * Get IP and DCCP header together in first mbuf.
 		 */
 		ip = mtod(m, struct ip *);
-		IP6_EXTHDR_GET(dh, struct dccphdr *, m, iphlen, sizeof(*dh));
+		M_REGION_GET(dh, struct dccphdr *, m, iphlen, sizeof(*dh));
 		if (dh == NULL) {
 			dccpstat.dccps_badlen++;
 			return;
@@ -1413,7 +1413,8 @@ again:
 			mtod(m, char *) + hdrlen);
 			m->m_len += len;
 		} else {
-			m->m_next = m_copy(so->so_snd.sb_mb, off, (int) len);
+			m->m_next = m_copym(so->so_snd.sb_mb, off,
+			    (int)len, M_DONTWAIT);
 			if (m->m_next == 0) {
 				error = ENOBUFS;
 				goto release;

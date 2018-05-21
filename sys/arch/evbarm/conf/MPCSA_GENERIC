@@ -1,4 +1,4 @@
-# $NetBSD: MPCSA_GENERIC,v 1.55 2018/01/23 15:08:11 sevan Exp $
+# $NetBSD: MPCSA_GENERIC,v 1.55.2.1 2018/05/21 04:36:00 pgoyette Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/evbarm/conf/std.mpcsa"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.55 $"
+#ident 		"GENERIC-$Revision: 1.55.2.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -302,9 +302,9 @@ com*	at pcmcom? slave ?		# ...and the slave devices
 # Hardware monitors
 
 # AMD 768 and 8111 power/ACPI controllers
-#dbcool* at iic? addr 0x2C		# Unknown other motherboard(s)
-#dbcool* at iic? addr 0x2D		# Tyan S2881
-#dbcool* at iic? addr 0x2E		# Tyan S2882-D
+#dbcool* at iic0 addr 0x2C		# Unknown other motherboard(s)
+#dbcool* at iic0 addr 0x2D		# Tyan S2881
+#dbcool* at iic0 addr 0x2E		# Tyan S2882-D
 
 # 1-Wire support
 #gpioow* 	at gpio? offset 6 mask 0x1	# 1-wire bitbanging via gpio

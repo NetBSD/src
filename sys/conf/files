@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1196.2.8 2018/04/16 01:59:57 pgoyette Exp $
+#	$NetBSD: files,v 1.1196.2.9 2018/05/21 04:36:04 pgoyette Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20171118
@@ -396,6 +396,9 @@ include "dev/hid/files.hid"
 
 # I2C device support
 include "dev/i2c/files.i2c"
+
+# PWM device support
+include "dev/pwm/files.pwm"
 
 # SPI device support
 include "dev/spi/files.spi"

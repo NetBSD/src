@@ -1,4 +1,4 @@
-/*	$NetBSD: spr.h,v 1.4 2018/02/16 18:04:06 macallan Exp $	*/
+/*	$NetBSD: spr.h,v 1.4.2.1 2018/05/21 04:36:01 pgoyette Exp $	*/
 
 #ifndef _POWERPC_OEA_SPR_H_
 #define	_POWERPC_OEA_SPR_H_
@@ -85,6 +85,7 @@
 #define   MPCe300c1		  0x8083
 #define   MPCe300c2		  0x8084
 #define   MPCe300c3		  0x8085
+#define SPR_HIOR		0x137	/* .... HW Interrupt Offset (970) */
 
 #define	SPR_IBAT0U		0x210	/* ..68 Instruction BAT Reg 0 Upper */
 #define	SPR_IBAT0L		0x211	/* ..6. Instruction BAT Reg 0 Lower */

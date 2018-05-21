@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.26 2018/01/24 09:53:21 kamil Exp $	*/
+/*	$NetBSD: exec.c,v 1.26.2.1 2018/05/21 04:35:48 pgoyette Exp $	*/
 
 /*
  * execute command tree
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: exec.c,v 1.26 2018/01/24 09:53:21 kamil Exp $");
+__RCSID("$NetBSD: exec.c,v 1.26.2.1 2018/05/21 04:35:48 pgoyette Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -445,14 +445,14 @@ static int
 comexec(t, tp, ap, flags)
 	struct op *t;
 	struct tbl *volatile tp;
-	register char **ap;
+	char **ap;
 	int volatile flags;
 {
 	int i;
 	int leave = LLEAVE;
 	volatile int rv = 0;
-	register char *cp;
-	register char **lastp;
+	char *cp;
+	char **lastp;
 	static struct op texec; /* Must be static (XXX but why?) */
 	int type_flags;
 	int keepasn_ok;
@@ -749,8 +749,8 @@ comexec(t, tp, ap, flags)
 
 static void
 scriptexec(tp, ap)
-	register struct op *tp;
-	register char **ap;
+	struct op *tp;
+	char **ap;
 {
 	char *shellv;
 
@@ -771,9 +771,9 @@ scriptexec(tp, ap)
 
 int
 shcomexec(wp)
-	register char **wp;
+	char **wp;
 {
-	register struct tbl *tp;
+	struct tbl *tp;
 
 	tp = mytsearch(&builtins, *wp, hash(*wp));
 	if (tp == NULL)
@@ -863,7 +863,7 @@ builtin(name, func)
 	const char *name;
 	int (*func) ARGS((char **));
 {
-	register struct tbl *tp;
+	struct tbl *tp;
 	Tflag flag;
 
 	/* see if any flags should be set for this builtin */
@@ -1112,10 +1112,10 @@ call_builtin(tp, wp)
  */
 static int
 iosetup(iop, tp)
-	register struct ioword *iop;
+	struct ioword *iop;
 	struct tbl *tp;
 {
-	register int u = -1;
+	int u = -1;
 	char *cp = iop->name;
 	int iotype = iop->flag & IOTYPE;
 	int do_open = 1, do_close = 0, UNINITIALIZED(flags);

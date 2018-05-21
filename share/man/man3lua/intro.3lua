@@ -1,4 +1,4 @@
-.\"	$NetBSD: intro.3lua,v 1.7.10.1 2018/05/02 07:20:02 pgoyette Exp $
+.\"	$NetBSD: intro.3lua,v 1.7.10.2 2018/05/21 04:35:56 pgoyette Exp $
 .\"
 .\" Copyright (c) 2013, 2016 Marc Balmer <mbalmer@NetBSD.org>.
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"
-.Dd April 30, 2018
+.Dd May 5, 2018
 .Dt INTRO 3lua
 .Os
 .Sh NAME
@@ -43,6 +43,10 @@ The Lua modules provided by
 are:
 .Pp
 .Bl -tag -width syslog -compact
+.It Em bozohttpd
+Access
+.Xr libbozohttpd 3
+functionality.
 .It Em gpio
 Access
 .Xr gpio 4
@@ -63,6 +67,7 @@ functionality.
 .Sh SEE ALSO
 .Xr lua 1 ,
 .Xr luac 1 ,
+.Xr bozohttpd 3lua ,
 .Xr gpio 3lua ,
 .Xr netpgp 3lua ,
 .Xr sqlite 3lua ,

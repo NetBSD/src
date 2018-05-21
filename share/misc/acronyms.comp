@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.193 2018/03/01 19:09:33 ginsbach Exp $
+$NetBSD: acronyms.comp,v 1.193.2.1 2018/05/21 04:35:57 pgoyette Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -56,6 +56,9 @@ AP	application processor
 API	application programming interface
 APIC	advanced programmable interrupt controller
 APIPA	automatic private IP addressing
+APM	advanced power management
+APM	application performance management
+APU	accelerated processing unit
 APT	advanced persistent threat
 AQM	active queue management
 ARAT	always running APIC timer
@@ -544,6 +547,7 @@ HDTV	high-definition television
 HF	high frequency
 HFM	highest frequency mode
 HID	human interface device
+HKP	HTTP Keyserver Protocol
 HLL	high-level language
 HMA	high memory area
 HMI	human-machine interface
@@ -595,6 +599,7 @@ IETF	Internet Engineering Task Force
 IF	intermediate frequency
 IFCM	isochronous flow control mode
 IFF	Interchange File Format
+IFS	internal field separator
 IGD	Internet gateway device
 IGMP	Internet Group Management Protocol
 IGP	interior gateway protocol
@@ -1469,6 +1474,7 @@ YP	Yellow Pages
 YTD	year to date
 ZBR	zone bit recording
 ZFOD	zero-filled on demand
+ZFS    zettabyte file system
 ZIF	zero insertion force
 ZIFS	zero insertion force socket
 ZMA	zone multicast address

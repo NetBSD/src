@@ -1,4 +1,4 @@
-.\" $NetBSD: libnetpgp.3,v 1.16.24.3 2018/05/02 07:19:58 pgoyette Exp $
+.\" $NetBSD: libnetpgp.3,v 1.16.24.4 2018/05/21 04:35:49 pgoyette Exp $
 .\"
 .\" Copyright (c) 2009,2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 29, 2018
+.Dd May 10, 2018
 .Dt LIBNETPGP 3
 .Os
 .Sh NAME
@@ -204,6 +204,8 @@ member of the
 structure.
 These are set using the
 .Fn netpgp_setvar
+function and unset using the
+.Fn netpgp_unsetvar
 function.
 If no public key ring file is set, initial values will be taken from those
 in the
@@ -228,6 +230,20 @@ function returns 1 on success, 0 on failure.
 To list all the keys in a keyring, the
 .Fn netpgp_list_keys
 function is used.
+To list all the keys in a keyring as a JSON encoded string, the
+.Fn netpgp_list_keys_json
+function is used.
+To find and list keys in a keyring, the
+.Fn netpgp_match_keys
+function is used.
+To find and list keys in a keyring, output as a JSON encoded string,
+the
+.Fn netpgp_match_keys_json
+function is used.
+To find and list keys in a better suited machine-readble format, such as for
+redirection to other parsing engines, the
+.Fn netpgp_match_pubkeys
+function is used.
 The signature subkey fields can also be displayed
 using this function.
 .Pp
@@ -240,6 +256,14 @@ manner, depending on the value of the argument provided.
 If the subdirectory argument is provided, this subdirectory
 is appended to the home directory in order to search for
 the keyrings.
+.Pp
+To print key information from a JSON encoded string, stored in a file, the
+.Fn netpgp_format_json
+function is used.
+.Pp
+To validate the signature of keys in a public key keyring, the
+.Fn netpgp_validate_sigs
+function is used.
 .Pp
 To export a key, the
 .Fn netpgp_export_key
@@ -342,6 +366,8 @@ At the present time, two types are defined:
 .Dq version
 and
 .Dq maintainer .
+The maintainer information returned contains the name, email address,
+and PGP short key id.
 A failure to present a known
 .Ar type
 argument to

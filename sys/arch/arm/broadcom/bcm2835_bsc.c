@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_bsc.c,v 1.10 2018/03/03 16:03:38 skrll Exp $	*/
+/*	$NetBSD: bcm2835_bsc.c,v 1.10.2.1 2018/05/21 04:35:58 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2012 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_bsc.c,v 1.10 2018/03/03 16:03:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_bsc.c,v 1.10.2.1 2018/05/21 04:35:58 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_kernhist.h"
@@ -183,8 +183,6 @@ bsciic_attach(device_t parent, device_t self, void *aux)
 	iba.iba_child_devices = prop_dictionary_get(devs, "i2c-child-devices");
 	if (iba.iba_child_devices)
 		prop_object_retain(iba.iba_child_devices);
-	else
-		iba.iba_child_devices = prop_array_create();
 	prop_object_release(devs);
 
 	config_found_ia(self, "i2cbus", &iba, iicbus_print);

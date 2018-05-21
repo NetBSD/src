@@ -1,4 +1,4 @@
-/*	$NetBSD: grabmyaddr.c,v 1.35 2017/04/12 16:47:39 roy Exp $	*/
+/*	$NetBSD: grabmyaddr.c,v 1.35.10.1 2018/05/21 04:35:49 pgoyette Exp $	*/
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * Copyright (C) 2008 Timo Teras <timo.teras@iki.fi>.
@@ -81,8 +81,7 @@ struct myaddr {
 static LIST_HEAD(_myaddr_list_, myaddr) configured, opened;
 
 static void
-myaddr_delete(my)
-	struct myaddr *my;
+myaddr_delete(struct myaddr *my)
 {
 	if (my->fd != -1)
 		isakmp_close(my->fd);
@@ -91,8 +90,7 @@ myaddr_delete(my)
 }
 
 static int
-myaddr_configured(addr)
-	struct sockaddr *addr;
+myaddr_configured(struct sockaddr *addr)
 {
 	struct myaddr *cfg;
 
@@ -108,9 +106,7 @@ myaddr_configured(addr)
 }
 
 static int
-myaddr_open(addr, udp_encap)
-	struct sockaddr *addr;
-	int udp_encap;
+myaddr_open(struct sockaddr *addr, int udp_encap)
 {
 	struct myaddr *my;
 
@@ -136,11 +132,10 @@ myaddr_open(addr, udp_encap)
 }
 
 static int
-myaddr_open_all_configured(addr)
-	struct sockaddr *addr;
+myaddr_open_all_configured(struct sockaddr *addr)
 {
 	/* create all configured, not already opened addresses */
-	struct myaddr *cfg, *my;
+	struct myaddr *cfg;
 
 	if (addr != NULL) {
 		switch (addr->sa_family) {
@@ -178,8 +173,7 @@ myaddr_open_all_configured(addr)
 }
 
 static void
-myaddr_close_all_open(addr)
-	struct sockaddr *addr;
+myaddr_close_all_open(struct sockaddr *addr)
 {
 	/* delete all matching open sockets */
 	struct myaddr *my, *next;
@@ -195,8 +189,7 @@ myaddr_close_all_open(addr)
 }
 
 static void
-myaddr_flush_list(list)
-	struct _myaddr_list_ *list;
+myaddr_flush_list(struct _myaddr_list_ *list)
 {
 	struct myaddr *my, *next;
 
@@ -696,10 +689,7 @@ kernel_sync()
 #define SAROUNDUP(X)   ROUNDUP(((struct sockaddr *)(X))->sa_len)
 
 static size_t
-parse_address(start, end, dest)
-	caddr_t start;
-	caddr_t end;
-	struct sockaddr_storage *dest;
+parse_address(caddr_t start, caddr_t end, struct sockaddr_storage *dest)
 {
 	int len;
 
@@ -743,8 +733,7 @@ parse_addresses(start, end, flags, addr)
 }
 
 static void
-kernel_handle_message(msg)
-	caddr_t msg;
+kernel_handle_message(caddr_t msg)
 {
 	struct rt_msghdr *rtm = (struct rt_msghdr *) msg;
 	struct ifa_msghdr *ifa = (struct ifa_msghdr *) msg;
@@ -859,7 +848,6 @@ kernel_sync()
 	caddr_t ref, buf, end;
 	size_t bufsiz;
 	struct if_msghdr *ifm;
-	struct interface *ifp;
 
 #define MIBSIZ 6
 	int mib[MIBSIZ] = {

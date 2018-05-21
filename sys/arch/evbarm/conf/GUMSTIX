@@ -1,4 +1,4 @@
-#	$NetBSD: GUMSTIX,v 1.94 2017/09/14 07:58:40 mrg Exp $
+#	$NetBSD: GUMSTIX,v 1.94.2.1 2018/05/21 04:36:00 pgoyette Exp $
 #
 #	GUMSTIX -- Gumstix. Inc. gumstix platforms kernel
 #
@@ -229,7 +229,7 @@ smsh0	at gxio? addr 0x04000300 gpirq 99	# netmicroSD-vx, netpro-vx
 # Inter-Integrated Circuit controller
 gxiic0	at pxaip? addr 0x40300000
 iic*	at gxiic?
-#dsrtc*	at iic? addr 0x68		# Can mount DS1307 at console, breakout
+#dsrtc*	at iic0 addr 0x68		# Can mount DS1307 at console, breakout
 
 # integrated PCMCIA/CF controller
 pxapcic0 at pxaip? addr 0x20000000		# cfstix, netCF

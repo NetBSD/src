@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arcsubr.c,v 1.78.2.1 2018/05/02 07:20:22 pgoyette Exp $	*/
+/*	$NetBSD: if_arcsubr.c,v 1.78.2.2 2018/05/21 04:36:15 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.78.2.1 2018/05/02 07:20:22 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.78.2.2 2018/05/21 04:36:15 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -155,7 +155,7 @@ arc_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 		/* If broadcasting on a simplex interface, loopback a copy */
 		if ((m->m_flags & (M_BCAST|M_MCAST)) &&
 		    (ifp->if_flags & IFF_SIMPLEX))
-			mcopy = m_copym(m, 0, (int)M_COPYALL, M_DONTWAIT);
+			mcopy = m_copypacket(m, M_DONTWAIT);
 		if (ifp->if_flags & IFF_LINK0) {
 			atype = ARCTYPE_IP;
 			newencoding = 1;

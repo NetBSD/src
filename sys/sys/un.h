@@ -1,4 +1,4 @@
-/*	$NetBSD: un.h,v 1.57 2016/04/06 19:45:46 roy Exp $	*/
+/*	$NetBSD: un.h,v 1.57.16.1 2018/05/21 04:36:17 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -90,6 +90,7 @@ int	unp_connect(struct socket *, struct sockaddr *, struct lwp *);
 int	unp_connect2(struct socket *, struct socket *);
 void 	unp_dispose(struct mbuf *);
 int 	unp_externalize(struct mbuf *, struct lwp *, int);
+void	unp_sysctl_create(struct sysctllog **);
 
 #else /* !_KERNEL */
 

@@ -118,11 +118,10 @@
 #include <netinet/tcp_timer.h>
 #include <netinet/tcp_var.h>
 #include <netinet/tcp_private.h>
-#include <netinet/tcpip.h>
 
 #include <netinet/tcp_vtw.h>
 
-__KERNEL_RCSID(0, "$NetBSD: tcp_vtw.c,v 1.18 2017/06/01 02:45:14 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_vtw.c,v 1.18.8.1 2018/05/21 04:36:16 pgoyette Exp $");
 
 #define db_trace(__a, __b)	do { } while (/*CONSTCOND*/0)
 

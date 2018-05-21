@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.110.2.1 2018/04/22 07:20:26 pgoyette Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.110.2.2 2018/05/21 04:36:11 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -257,6 +257,8 @@ struct pci_softc {
 };
 
 extern struct cfdriver pci_cd;
+
+extern bool pci_mapreg_map_enable_decode;
 
 int pcibusprint(void *, const char *);
 

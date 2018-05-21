@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_var.h,v 1.17 2010/11/12 10:36:37 tteras Exp $	*/
+/*	$NetBSD: isakmp_var.h,v 1.17.48.1 2018/05/21 04:35:49 pgoyette Exp $	*/
 
 /* Id: isakmp_var.h,v 1.12 2005/05/07 14:45:31 manubsd Exp */
 
@@ -110,10 +110,8 @@ extern struct payload_list *isakmp_plist_append_full __P((
 	struct payload_list *plist, vchar_t *payload,
 	u_int8_t payload_type, u_int8_t free));
 
-static inline struct payload_list *isakmp_plist_append(plist, payload, payload_type)
-	struct payload_list *plist;
-	vchar_t *payload;
-	u_int8_t payload_type;
+static inline struct payload_list *
+isakmp_plist_append(struct payload_list *plist, vchar_t *payload, u_int8_t payload_type)
 {
 	return isakmp_plist_append_full(plist, payload, payload_type, 0);
 }

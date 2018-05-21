@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.265 2018/01/13 03:35:40 pgoyette Exp $
+$NetBSD: acronyms,v 1.265.2.1 2018/05/21 04:35:57 pgoyette Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
@@ -34,6 +34,7 @@ AKA	also known as
 AM	ante meridiem
 AMA	ask me anything
 AMOL	a mountain of love
+APM	alternative payment model
 ASAIC	as soon as I can
 ASAP	as soon as possible
 ASL	age/sex/location
@@ -365,6 +366,7 @@ NRFPT	not ready for prime time
 NRN	no reply necessary
 NRN	not right now
 NSFW	not suitable for work
+NTBF	not to be fixed
 NTN	no thanks needed
 NUNP	no users, no problems
 NVM	never mind
@@ -551,6 +553,7 @@ UTSL	use the source, Luke
 VCR	video cassette recorder
 VEG	very evil grin
 VIP	very important person
+VLA	variable length array
 W/	with
 W/E	whatever
 W/O	without

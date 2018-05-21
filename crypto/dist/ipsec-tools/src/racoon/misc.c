@@ -1,11 +1,11 @@
-/*	$NetBSD: misc.c,v 1.6 2008/07/15 00:47:09 mgrooms Exp $	*/
+/*	$NetBSD: misc.c,v 1.6.52.1 2018/05/21 04:35:49 pgoyette Exp $	*/
 
 /*	$KAME: misc.c,v 1.23 2001/08/16 14:37:29 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -17,7 +17,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -50,33 +50,8 @@
 #include "misc.h"
 #include "debug.h"
 
-#if 0
-static int bindump __P((void *, size_t));
-
-static int
-bindump(buf0, len)
-        void *buf0;
-        size_t len;
-{
-	unsigned char *buf = (unsigned char *)buf0;
-	size_t i;
-
-	for (i = 0; i < len; i++) {
-		if ((buf[i] & 0x80) || !isprint(buf[i]))
-			printf("\\x%x", buf[i]);
-		else
-			printf("%c", buf[i]);
-	}
-	printf("\n");
-
-	return 0;
-}
-#endif
-
 int
-racoon_hexdump(buf0, len)
-	void *buf0;
-	size_t len;
+racoon_hexdump(void *buf0, size_t len)
 {
 	caddr_t buf = (caddr_t)buf0;
 	size_t i;
@@ -94,8 +69,7 @@ racoon_hexdump(buf0, len)
 }
 
 char *
-bit2str(n, bl)
-	int n, bl;
+bit2str(int n, int bl)
 {
 #define MAXBITLEN 128
 	static char b[MAXBITLEN + 1];
@@ -115,10 +89,7 @@ bit2str(n, bl)
 }
 
 const char *
-debug_location(file, line, func)
-	const char *file;
-	int line;
-	const char *func;
+debug_location(const char *file, int line, const char *func)
 {
 	static char buf[1024];
 	const char *p;
@@ -143,23 +114,21 @@ debug_location(file, line, func)
  * -1: error occured.
  */
 int
-getfsize(path)
-	char *path;
+getfsize(char *path)
 {
-        struct stat st;
+	struct stat st;
 
-        if (stat(path, &st) != 0)
-                return -1;
-        else
-                return st.st_size;
+	if (stat(path, &st) != 0)
+		return -1;
+	else
+		return st.st_size;
 }
 
 /*
  * set the close-on-exec flag for file descriptor fd.
  */
 void
-close_on_exec(fd)
-	int fd;
+close_on_exec(int fd)
 {
 	fcntl(fd, F_SETFD, FD_CLOEXEC);
 }
@@ -170,8 +139,7 @@ close_on_exec(fd)
  * t2: end
  */
 double
-timedelta(t1, t2)
-	struct timeval *t1, *t2;
+timedelta(struct timeval *t1, struct timeval *t2)
 {
 	if (t2->tv_usec >= t1->tv_usec)
 		return t2->tv_sec - t1->tv_sec +

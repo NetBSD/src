@@ -1,5 +1,5 @@
 
-/*	$NetBSD: trap.c,v 1.293 2018/02/13 01:05:18 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.293.2.1 2018/05/21 04:36:00 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.293 2018/02/13 01:05:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.293.2.1 2018/05/21 04:36:00 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -128,6 +128,9 @@ dtrace_doubletrap_func_t	dtrace_doubletrap_func = NULL;
 void trap(struct trapframe *);
 void trap_tss(struct i386tss *, int, int);
 void trap_return_fault_return(struct trapframe *) __dead;
+#ifndef XEN
+int ss_shadow(struct trapframe *tf);
+#endif
 
 const char * const trap_type[] = {
 	"privileged instruction fault",		/*  0 T_PRIVINFLT */
@@ -235,6 +238,27 @@ trap_print(const struct trapframe *frame, const lwp_t *l)
 	printf("curlwp %p pid %d lid %d lowest kstack %p\n",
 	    l, l->l_proc->p_pid, l->l_lid, KSTACK_LOWEST_ADDR(l));
 }
+
+#ifndef XEN
+int
+ss_shadow(struct trapframe *tf)
+{
+	struct gate_descriptor *gd;
+	uintptr_t eip, func;
+	size_t i;
+
+	eip = tf->tf_eip;
+
+	for (i = 0; i < 256; i++) {
+		gd = &idt[i];
+		func = (gd->gd_hioffset << 16) | gd->gd_looffset;
+		if (eip == func)
+			return 1;
+	}
+
+	return 0;
+}
+#endif
 
 /*
  * trap(frame): exception, fault, and trap interface to BSD kernel.

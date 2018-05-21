@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_mmc.c,v 1.20.2.2 2018/04/22 07:20:17 pgoyette Exp $ */
+/* $NetBSD: sunxi_mmc.c,v 1.20.2.3 2018/05/21 04:35:59 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_sunximmc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_mmc.c,v 1.20.2.2 2018/04/22 07:20:17 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_mmc.c,v 1.20.2.3 2018/05/21 04:35:59 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -109,6 +109,7 @@ static int	sunxi_mmc_bus_clock(sdmmc_chipset_handle_t, int, bool);
 static int	sunxi_mmc_bus_width(sdmmc_chipset_handle_t, int);
 static int	sunxi_mmc_bus_rod(sdmmc_chipset_handle_t, int);
 static int	sunxi_mmc_signal_voltage(sdmmc_chipset_handle_t, int);
+static int	sunxi_mmc_execute_tuning(sdmmc_chipset_handle_t, int);
 static void	sunxi_mmc_exec_command(sdmmc_chipset_handle_t,
 				      struct sdmmc_command *);
 static void	sunxi_mmc_card_enable_intr(sdmmc_chipset_handle_t, int);
@@ -125,6 +126,7 @@ static struct sdmmc_chip_functions sunxi_mmc_chip_functions = {
 	.bus_width = sunxi_mmc_bus_width,
 	.bus_rod = sunxi_mmc_bus_rod,
 	.signal_voltage = sunxi_mmc_signal_voltage,
+	.execute_tuning = sunxi_mmc_execute_tuning,
 	.exec_command = sunxi_mmc_exec_command,
 	.card_enable_intr = sunxi_mmc_card_enable_intr,
 	.card_intr_ack = sunxi_mmc_card_intr_ack,
@@ -136,6 +138,7 @@ struct sunxi_mmc_config {
 #define	SUNXI_MMC_FLAG_CALIB_REG	0x01
 #define	SUNXI_MMC_FLAG_NEW_TIMINGS	0x02
 #define	SUNXI_MMC_FLAG_MASK_DATA0	0x04
+#define	SUNXI_MMC_FLAG_HS200		0x08
 	const struct sunxi_mmc_delay *delays;
 	uint32_t dma_ftrglevel;
 };
@@ -154,6 +157,8 @@ struct sunxi_mmc_softc {
 
 	int sc_mmc_width;
 	int sc_mmc_present;
+
+	u_int sc_max_frequency;
 
 	device_t sc_sdmmc_dev;
 
@@ -249,7 +254,8 @@ static const struct sunxi_mmc_config sun50i_a64_emmc_config = {
 	.idma_xferlen = 0x2000,
 	.dma_ftrglevel = 0x20070008,
 	.delays = NULL,
-	.flags = SUNXI_MMC_FLAG_CALIB_REG,
+	.flags = SUNXI_MMC_FLAG_CALIB_REG |
+		 SUNXI_MMC_FLAG_HS200,
 };
 
 static const struct sunxi_mmc_config sun50i_h6_mmc_config = {
@@ -366,6 +372,9 @@ sunxi_mmc_attach(device_t parent, device_t self, void *aux)
 	sc->sc_non_removable = of_hasprop(phandle, "non-removable");
 	sc->sc_broken_cd = of_hasprop(phandle, "broken-cd");
 
+	if (of_getprop_uint32(phandle, "max-frequency", &sc->sc_max_frequency))
+		sc->sc_max_frequency = 52000000;
+
 	if (sunxi_mmc_dmabounce_setup(sc) != 0 ||
 	    sunxi_mmc_idma_setup(sc) != 0) {
 		aprint_error_dev(self, "failed to setup DMA\n");
@@ -468,20 +477,26 @@ sunxi_mmc_set_clock(struct sunxi_mmc_softc *sc, u_int freq, bool ddr)
 	const struct sunxi_mmc_delay *delays;
 	int error, timing;
 
-	if (freq <= 400) {
-		timing = SUNXI_MMC_TIMING_400K;
-	} else if (freq <= 25000) {
-		timing = SUNXI_MMC_TIMING_25M;
-	} else if (freq <= 52000) {
-		if (ddr) {
-			timing = sc->sc_mmc_width == 8 ?
-			    SUNXI_MMC_TIMING_50M_DDR_8BIT :
-			    SUNXI_MMC_TIMING_50M_DDR;
-		} else {
-			timing = SUNXI_MMC_TIMING_50M;
-		}
-	} else
-		return EINVAL;
+	if (sc->sc_config->delays) {
+		if (freq <= 400) {
+			timing = SUNXI_MMC_TIMING_400K;
+		} else if (freq <= 25000) {
+			timing = SUNXI_MMC_TIMING_25M;
+		} else if (freq <= 52000) {
+			if (ddr) {
+				timing = sc->sc_mmc_width == 8 ?
+				    SUNXI_MMC_TIMING_50M_DDR_8BIT :
+				    SUNXI_MMC_TIMING_50M_DDR;
+			} else {
+				timing = SUNXI_MMC_TIMING_50M;
+			}
+		} else
+			return EINVAL;
+	}
+	if (sc->sc_max_frequency) {
+		if (freq * 1000 > sc->sc_max_frequency)
+			return EINVAL;
+	}
 
 	error = clk_set_rate(sc->sc_clk_mmc, (freq * 1000) << ddr);
 	if (error != 0)
@@ -510,6 +525,7 @@ static void
 sunxi_mmc_attach_i(device_t self)
 {
 	struct sunxi_mmc_softc *sc = device_private(self);
+	const u_int flags = sc->sc_config->flags;
 	struct sdmmcbus_attach_args saa;
 	uint32_t width;
 
@@ -532,7 +548,7 @@ sunxi_mmc_attach_i(device_t self)
 	saa.saa_sch = sc;
 	saa.saa_dmat = sc->sc_dmat;
 	saa.saa_clkmin = 400;
-	saa.saa_clkmax = 52000;
+	saa.saa_clkmax = sc->sc_max_frequency / 1000;
 	saa.saa_caps = SMC_CAPS_DMA |
 		       SMC_CAPS_MULTI_SEG_DMA |
 		       SMC_CAPS_AUTO_STOP |
@@ -540,6 +556,8 @@ sunxi_mmc_attach_i(device_t self)
 		       SMC_CAPS_MMC_HIGHSPEED |
 		       SMC_CAPS_MMC_DDR52 |
 		       SMC_CAPS_POLLING;
+	if (flags & SUNXI_MMC_FLAG_HS200)
+		saa.saa_caps |= SMC_CAPS_MMC_HS200;
 	if (width == 4)
 		saa.saa_caps |= SMC_CAPS_4BIT_MODE;
 	if (width == 8)
@@ -891,6 +909,19 @@ sunxi_mmc_signal_voltage(sdmmc_chipset_handle_t sch, int signal_voltage)
 		return error;
 
 	return fdtbus_regulator_enable(sc->sc_reg_vqmmc);
+}
+
+static int
+sunxi_mmc_execute_tuning(sdmmc_chipset_handle_t sch, int timing)
+{
+	switch (timing) {
+	case SDMMC_TIMING_MMC_HS200:
+		break;
+	default:
+		return EINVAL;
+	}
+
+	return 0;
 }
 
 static int

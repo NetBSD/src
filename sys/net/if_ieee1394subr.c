@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee1394subr.c,v 1.59.12.1 2018/05/02 07:20:22 pgoyette Exp $	*/
+/*	$NetBSD: if_ieee1394subr.c,v 1.59.12.2 2018/05/21 04:36:15 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.59.12.1 2018/05/02 07:20:22 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.59.12.2 2018/05/21 04:36:15 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -143,7 +143,7 @@ ieee1394_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 			return error == EWOULDBLOCK ? 0 : error;
 		/* if broadcasting on a simplex interface, loopback a copy */
 		if ((m0->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX))
-			mcopy = m_copym(m0, 0, M_COPYALL, M_DONTWAIT);
+			mcopy = m_copypacket(m0, M_DONTWAIT);
 		etype = htons(ETHERTYPE_IP);
 		break;
 	case AF_ARP:
@@ -442,8 +442,7 @@ ieee1394_reass(struct ifnet *ifp, struct mbuf *m0, uint16_t src)
 	len = m0->m_pkthdr.len;
 	id = dgl | (src << 16);
 	if (ftype & IEEE1394_FT_SUBSEQ) {
-		m_tag_delete_chain(m0, NULL);
-		m0->m_flags &= ~M_PKTHDR;
+		m_remove_pkthdr(m0);
 		etype = 0;
 		off = ntohs(ifh->ifh_etype_off);
 	} else {

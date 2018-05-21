@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.h,v 1.1.14.2 2018/05/02 07:20:25 pgoyette Exp $	*/
+/*	$NetBSD: t_ptrace_wait.h,v 1.1.14.3 2018/05/21 04:36:17 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -150,6 +150,17 @@ do {									\
 	if (!ret)							\
 		errx(EXIT_FAILURE, "%s:%d %s(): Assertion failed for: "	\
 		    "%s(%ju) == %s(%ju)", __FILE__, __LINE__, __func__,	\
+		    #x, vx, #y, vy);					\
+} while (/*CONSTCOND*/0)
+
+#define FORKEE_ASSERT_NEQ(x, y)						\
+do {									\
+	uintmax_t vx = (x);						\
+	uintmax_t vy = (y);						\
+	int ret = vx != vy;						\
+	if (!ret)							\
+		errx(EXIT_FAILURE, "%s:%d %s(): Assertion failed for: "	\
+		    "%s(%ju) != %s(%ju)", __FILE__, __LINE__, __func__,	\
 		    #x, vx, #y, vy);					\
 } while (/*CONSTCOND*/0)
 
@@ -364,6 +375,61 @@ await_zombie(pid_t process)
 	await_zombie_raw(process, 1000);
 }
 
+static pid_t __used
+await_stopped_child(pid_t process)
+{
+	struct kinfo_proc2 *p = NULL;
+	size_t i, len;
+	pid_t child = -1;
+
+	int name[] = {
+		[0] = CTL_KERN,
+		[1] = KERN_PROC2,
+		[2] = KERN_PROC_ALL,
+		[3] = 0,
+		[4] = sizeof(struct kinfo_proc2),
+		[5] = 0
+	};
+
+	const size_t namelen = __arraycount(name);
+
+	/* Await the process becoming a zombie */
+	while(1) {
+		name[5] = 0;
+
+		FORKEE_ASSERT_EQ(sysctl(name, namelen, 0, &len, NULL, 0), 0);
+
+		FORKEE_ASSERT_EQ(reallocarr(&p,
+		                            len,
+		                            sizeof(struct kinfo_proc2)), 0);
+
+		name[5] = len;
+
+		FORKEE_ASSERT_EQ(sysctl(name, namelen, p, &len, NULL, 0), 0);
+
+		for (i = 0; i < len/sizeof(struct kinfo_proc2); i++) {
+			if (p[i].p_pid == getpid())
+				continue;
+			if (p[i].p_ppid != process)
+				continue;
+			if (p[i].p_stat != LSSTOP)
+				continue;
+			child = p[i].p_pid;
+			break;
+		}
+
+		if (child != -1)
+			break;
+
+		FORKEE_ASSERT_EQ(usleep(1000), 0);
+	}
+
+	/* Free the buffer */
+	FORKEE_ASSERT_EQ(reallocarr(&p, 0, sizeof(struct kinfo_proc2)), 0);
+
+	return child;
+}
+
 /* Happy number sequence -- this function is used to just consume cpu cycles */
 #define	HAPPY_NUMBER	1
 
@@ -408,6 +474,35 @@ check_happy(unsigned n)
 		n = total;
 	}
 }
+
+#if defined(HAVE_DBREGS)
+static bool
+can_we_set_dbregs(void)
+{
+	static long euid = -1;
+	static int user_set_dbregs  = -1;
+	size_t user_set_dbregs_len = sizeof(user_set_dbregs);
+
+	if (euid == -1)
+		euid = geteuid();
+
+	if (euid == 0)
+		return true;
+
+	if (user_set_dbregs == -1) {
+		if (sysctlbyname("security.models.extensions.user_set_dbregs",
+			&user_set_dbregs, &user_set_dbregs_len, NULL, 0)
+			== -1) {
+			return false;
+		}
+	}
+
+	if (user_set_dbregs > 0)
+		return true;
+	else
+		return false;
+}
+#endif
 
 #if defined(TWAIT_HAVE_PID)
 #define ATF_TP_ADD_TC_HAVE_PID(a,b)	ATF_TP_ADD_TC(a,b)

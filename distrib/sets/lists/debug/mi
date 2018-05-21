@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.243.2.2 2018/04/07 04:11:57 pgoyette Exp $
+# $NetBSD: mi,v 1.243.2.3 2018/05/21 04:35:50 pgoyette Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -34,6 +34,7 @@
 ./usr/lib/libbind9_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libblacklist_g.a			comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libbluetooth_g.a			comp-c-debuglib		debuglib,compatfile
+./usr/lib/libbozohttpd_g.a			comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libbsdmalloc_g.a			comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libbz2_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libc++_g.a				comp-c-debuglib		debuglib,compatfile,libcxx
@@ -2072,6 +2073,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_connect.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_context.debug		tests-obsolete		obsolete,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_dup.debug			tests-lib-debug		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libc/sys/t_fork.debug			tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_fsync.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_getcontext.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_getgroups.debug		tests-lib-debug		debug,atf,compattestfile
@@ -2132,6 +2134,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_ucontext.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_umask.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_unlink.debug		tests-lib-debug		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libc/sys/t_vfork.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_wait.debug			tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_wait_noproc.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_wait_noproc_wnohang.debug	tests-lib-debug		debug,atf,compattestfile

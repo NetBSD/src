@@ -1,4 +1,4 @@
-/* $NetBSD: com_acpi.c,v 1.34 2017/03/29 20:08:40 jdolecek Exp $ */
+/* $NetBSD: com_acpi.c,v 1.34.12.1 2018/05/21 04:36:05 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_acpi.c,v 1.34 2017/03/29 20:08:40 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_acpi.c,v 1.34.12.1 2018/05/21 04:36:05 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -77,7 +77,7 @@ com_acpi_match(device_t parent, cfdata_t match, void *aux)
 	if (aa->aa_node->ad_type != ACPI_TYPE_DEVICE)
 		return 0;
 
-	return acpi_match_hid(aa->aa_node->ad_devinfo,com_acpi_ids);
+	return acpi_match_hid(aa->aa_node->ad_devinfo, com_acpi_ids);
 }
 
 /*

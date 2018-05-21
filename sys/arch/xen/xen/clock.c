@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.65 2017/11/06 15:27:09 cherry Exp $	*/
+/*	$NetBSD: clock.c,v 1.65.2.1 2018/05/21 04:36:03 pgoyette Exp $	*/
 
 /*
  *
@@ -29,7 +29,7 @@
 #include "opt_xen.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.65 2017/11/06 15:27:09 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.65.2.1 2018/05/21 04:36:03 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,7 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.65 2017/11/06 15:27:09 cherry Exp $");
 #include <dev/clock_subr.h>
 #include <x86/rtc.h>
 
-static int xen_timer_handler(void *);
+static int xen_timer_handler(void *, struct intrframe *);
+static int (*xen_timer_handler_stub)(void *) = (void *) xen_timer_handler;
 static struct intrhand *ih;
 
 /* A timecounter: Xen system_time extrapolated with a TSC. */
@@ -524,7 +525,7 @@ xen_resumeclocks(struct cpu_info *ci)
 	KASSERT(evtch != -1);
 
 	ih = intr_establish_xname(0, &xen_pic, evtch, IST_LEVEL, IPL_CLOCK,
-	    xen_timer_handler, ci, true, "clock");
+	    xen_timer_handler_stub, ci, true, "clock");
 
 	KASSERT(ih != NULL);
 
@@ -535,11 +536,10 @@ xen_resumeclocks(struct cpu_info *ci)
 
 /* ARGSUSED */
 static int
-xen_timer_handler(void *arg)
+xen_timer_handler(void *arg, struct intrframe *regs)
 {
 	int64_t delta;
 	struct cpu_info *ci = curcpu();
-	struct intrframe *regs = arg;
 
 	int err;
 again:

@@ -1,4 +1,4 @@
-/* $NetBSD: fdtvar.h,v 1.28.2.1 2018/04/16 01:59:57 pgoyette Exp $ */
+/* $NetBSD: fdtvar.h,v 1.28.2.2 2018/05/21 04:36:05 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -34,7 +34,15 @@
 #include <sys/termios.h>
 
 #include <dev/i2c/i2cvar.h>
+#include <dev/pwm/pwmvar.h>
 #include <dev/clk/clk.h>
+
+#include "audio.h"
+#if NAUDIO > 0
+#include <dev/audio_dai.h>
+#else
+typedef void *audio_dai_tag_t;
+#endif
 
 #include <dev/clock_subr.h>
 
@@ -120,6 +128,10 @@ struct fdtbus_reset_controller_func {
 	int	(*reset_deassert)(device_t, void *);
 };
 
+struct fdtbus_dai_controller_func {
+	audio_dai_tag_t (*get_tag)(device_t, const void *, size_t);
+};
+
 struct fdtbus_dma_controller;
 
 struct fdtbus_dma {
@@ -185,6 +197,10 @@ struct fdtbus_phy_controller_func {
 	int	(*enable)(device_t, void *, bool);
 };
 
+struct fdtbus_pwm_controller_func {
+	pwm_tag_t (*get_tag)(device_t, const void *, size_t);
+};
+
 struct fdtbus_mmc_pwrseq;
 
 struct fdtbus_mmc_pwrseq_func {
@@ -228,12 +244,16 @@ int		fdtbus_register_clock_controller(device_t, int,
 		    const struct fdtbus_clock_controller_func *);
 int		fdtbus_register_reset_controller(device_t, int,
 		    const struct fdtbus_reset_controller_func *);
+int		fdtbus_register_dai_controller(device_t, int,
+		    const struct fdtbus_dai_controller_func *);
 int		fdtbus_register_dma_controller(device_t, int,
 		    const struct fdtbus_dma_controller_func *);
 int		fdtbus_register_power_controller(device_t, int,
 		    const struct fdtbus_power_controller_func *);
 int		fdtbus_register_phy_controller(device_t, int,
 		    const struct fdtbus_phy_controller_func *);
+int		fdtbus_register_pwm_controller(device_t, int,
+		    const struct fdtbus_pwm_controller_func *);
 int		fdtbus_register_mmc_pwrseq(device_t, int,
 		    const struct fdtbus_mmc_pwrseq_func *);
 
@@ -257,6 +277,10 @@ int		fdtbus_gpio_read(struct fdtbus_gpio_pin *);
 void		fdtbus_gpio_write(struct fdtbus_gpio_pin *, int);
 int		fdtbus_gpio_read_raw(struct fdtbus_gpio_pin *);
 void		fdtbus_gpio_write_raw(struct fdtbus_gpio_pin *, int);
+audio_dai_tag_t	fdtbus_dai_acquire(int, const char *);
+audio_dai_tag_t	fdtbus_dai_acquire_index(int, const char *, int);
+pwm_tag_t	fdtbus_pwm_acquire(int, const char *);
+pwm_tag_t	fdtbus_pwm_acquire_index(int, const char *, int);
 void		fdtbus_pinctrl_configure(void);
 int		fdtbus_pinctrl_set_config_index(int, u_int);
 int		fdtbus_pinctrl_set_config(int, const char *);

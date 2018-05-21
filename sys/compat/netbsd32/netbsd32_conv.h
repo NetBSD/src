@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_conv.h,v 1.33.2.1 2018/04/22 07:20:19 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_conv.h,v 1.33.2.2 2018/05/21 04:36:03 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -286,6 +286,22 @@ netbsd32_from_msghdr(struct netbsd32_msghdr *mhp32, const struct msghdr *mhp)
 	NETBSD32PTR32(mhp32->msg_control, mhp->msg_control);
 	mhp32->msg_controllen = mhp->msg_controllen;
 	mhp32->msg_flags = mhp->msg_flags;
+}
+
+static __inline void
+netbsd32_to_mmsghdr(const struct netbsd32_mmsghdr *mmsg32,
+    struct mmsghdr *mmsg)
+{
+    netbsd32_to_msghdr(&mmsg32->msg_hdr, &mmsg->msg_hdr);
+    mmsg->msg_len = mmsg32->msg_len;
+}
+
+static __inline void
+netbsd32_from_mmsghdr(struct netbsd32_mmsghdr *mmsg32,
+    const struct mmsghdr *mmsg)
+{
+    netbsd32_from_msghdr(&mmsg32->msg_hdr, &mmsg->msg_hdr);
+    mmsg32->msg_len = mmsg->msg_len;
 }
 
 static __inline void

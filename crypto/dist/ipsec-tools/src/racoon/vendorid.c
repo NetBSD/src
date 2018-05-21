@@ -1,4 +1,4 @@
-/*	$NetBSD: vendorid.c,v 1.8 2009/09/01 12:22:09 tteras Exp $	*/
+/*	$NetBSD: vendorid.c,v 1.8.48.1 2018/05/21 04:35:49 pgoyette Exp $	*/
 
 /* Id: vendorid.c,v 1.10 2006/02/22 16:10:21 vanhu Exp */
 
@@ -133,7 +133,6 @@ static struct vendor_id *
 lookup_vendor_id_by_hash (const char *hash)
 {
 	int i;
-	unsigned char *h = (unsigned char *)hash;
 
 	for (i = 0; i < NUMVENDORIDS; i++)
 		if (strncmp(all_vendor_ids[i].hash->v, hash,
@@ -186,7 +185,6 @@ vchar_t *
 set_vendorid(int vendorid)
 {
 	struct vendor_id *current;
-	vchar_t vid, *new;
 
 	if (vendorid == VENDORID_UNKNOWN) {
 		/*
@@ -218,8 +216,7 @@ set_vendorid(int vendorid)
 static int
 check_vendorid(struct isakmp_gen *gen)
 {
-	vchar_t vid, *vidhash;
-	int i, vidlen;
+	int vidlen;
 	struct vendor_id *current;
 
 	if (gen == NULL)

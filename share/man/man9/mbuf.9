@@ -1,4 +1,4 @@
-.\"	$NetBSD: mbuf.9,v 1.56.2.2 2018/05/02 07:20:02 pgoyette Exp $
+.\"	$NetBSD: mbuf.9,v 1.56.2.3 2018/05/21 04:35:57 pgoyette Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 28, 2018
+.Dd May 7, 2018
 .Dt MBUF 9
 .Os
 .Sh NAME
@@ -59,6 +59,7 @@
 .Nm MCLGET ,
 .Nm M_COPY_PKTHDR ,
 .Nm M_MOVE_PKTHDR ,
+.Nm m_remove_pkthdr ,
 .Nm M_ALIGN ,
 .Nm MH_ALIGN ,
 .Nm M_LEADINGSPACE ,
@@ -123,6 +124,8 @@
 .Ft void
 .Fn M_MOVE_PKTHDR "struct mbuf *to" "struct mbuf *from"
 .Ft void
+.Fn m_remove_pkthdr "struct mbuf *m"
+.Ft void
 .Fn M_ALIGN "struct mbuf *m" "int len"
 .Ft void
 .Fn MH_ALIGN "struct mbuf *m" "int len"
@@ -145,7 +148,7 @@ consists of a header and a data area.
 It is of a fixed size,
 .Dv MSIZE
 .Pq defined in Aq Pa machine/param.h ,
-which includes overhead.
+which includes the size of the header.
 The header contains a pointer to the next
 .Nm
 in the
@@ -206,10 +209,6 @@ the record:
 sent/received as link-level broadcast
 .It Dv M_MCAST
 sent/received as link-level multicast
-.It Dv M_LINK0 ,
-.It Dv M_LINK1 ,
-.It Dv M_LINK2
-three link-level specific flags.
 .El
 .Pp
 An
@@ -219,7 +218,7 @@ may add a single
 of
 .Dv MCLBYTES
 bytes
-.Pq also defined in Aq Pa machine/param.h ,
+.Pq defined in Aq Pa machine/param.h ,
 which has no additional overhead
 and is used instead of the internal data area; this is done when at least
 .Dv MINCLSIZE
@@ -227,9 +226,10 @@ bytes of data must be stored.
 .Pp
 When the
 .Dv M_EXT
-flag is raised for an mbuf,
+flag is set on an mbuf,
 the external storage area could be shared among multiple mbufs.
-Be careful when you attempt to overwrite the data content of the mbuf.
+Therefore, care must be taken when overwriting the data content of an
+mbuf, because its external storage could be considered as read-only.
 .Bl -tag -width compact
 .It Fn m_get "int how" "int type"
 Allocates an mbuf and initializes it to contain internal data.
@@ -540,21 +540,18 @@ Returns a pointer to the data contained in the specified mbuf
 .Fa m ,
 type-casted to the specified data type
 .Fa datatype .
-Implemented as a macro.
 .It Fn MGET "struct mbuf *m" "int how" "int type"
 Allocates mbuf
 .Fa m
 and initializes it to contain internal data.
 See
 .Fn m_get .
-Implemented as a macro.
 .It Fn MGETHDR "struct mbuf *m" "int how" "int type"
 Allocates mbuf
 .Fa m
 and initializes it to contain a packet header.
 See
 .Fn m_gethdr .
-Implemented as a macro.
 .It Fn MEXTMALLOC "struct mbuf *m" "int len" "int how"
 Allocates external storage of size
 .Fa len
@@ -568,7 +565,6 @@ from caller.
 The flag
 .Dv M_EXT
 is set upon success.
-Implemented as a macro.
 .It Fn MEXTADD "struct mbuf *m" "void *buf" "int size" "int type" "void (*free)(struct mbuf *, void *, size_t, void *)" "void *arg"
 Adds pre-allocated external storage
 .Fa buf
@@ -594,7 +590,6 @@ is a possible argument to the free routine.
 The flag
 .Dv M_EXT
 is set upon success.
-Implemented as a macro.
 If a free routine is specified, it will be called when the mbuf is freed.
 In the case of former, the first argument for a free routine is the mbuf
 .Fa m
@@ -612,7 +607,6 @@ from caller.
 The flag
 .Dv M_EXT
 is set upon success.
-Implemented as a macro.
 .It Fn M_COPY_PKTHDR "struct mbuf *to" "struct mbuf *from"
 Copies the mbuf pkthdr from mbuf
 .Fa from
@@ -624,7 +618,6 @@ must have the type flag
 set, and
 .Fa to
 must be empty.
-Implemented as a macro.
 .It Fn M_MOVE_PKTHDR "struct mbuf *to" "struct mbuf *from"
 Moves the mbuf pkthdr from mbuf
 .Fa from
@@ -641,6 +634,14 @@ The flag
 in mbuf
 .Fa from
 will be cleared.
+.It Fn m_remove_pkthdr "struct mbuf *m"
+Removes the mbuf pkthdr from mbuf
+.Fa m .
+.Fa m
+must have the flag
+.Dv M_PKTHDR
+set.
+This flag will be cleared.
 .It Fn M_ALIGN "struct mbuf *m" "int len"
 Sets the data pointer of a newly allocated mbuf
 .Fa m
@@ -651,7 +652,6 @@ bytes from the end of the mbuf data area, so that
 bytes of data written to the mbuf
 .Fa m ,
 starting at the data pointer, will be aligned to the end of the data area.
-Implemented as a macro.
 .It Fn MH_ALIGN "struct mbuf *m" "int len"
 Sets the data pointer of a newly allocated packetheader mbuf
 .Fa m
@@ -662,21 +662,18 @@ bytes from the end of the mbuf data area, so that
 bytes of data written to the mbuf
 .Fa m ,
 starting at the data pointer, will be aligned to the end of the data area.
-Implemented as a macro.
 .It Fn M_LEADINGSPACE "struct mbuf *m"
 Returns the amount of space available before the current start of valid
 data in mbuf
 .Fa m .
 Returns 0 if the mbuf data part is shared across multiple mbufs
 .Pq i.e. not writable .
-Implemented as a macro.
 .It Fn M_TRAILINGSPACE "struct mbuf *m"
 Returns the amount of space available after the current end of valid
 data in mbuf
 .Fa m .
 Returns 0 if the mbuf data part is shared across multiple mbufs
 .Pq i.e. not writable .
-Implemented as a macro.
 .It Fn M_PREPEND "struct mbuf *m" "int plen" "int how"
 Prepends space of size
 .Fa plen
@@ -697,13 +694,11 @@ It is illegal for the
 .Fa plen
 parameter to be greater than
 .Dv MHLEN .
-Implemented as a macro.
 .It Fn MCHTYPE "struct mbuf *m" "int type"
 Change mbuf
 .Fa m
 to new type
 .Fa type .
-Implemented as a macro.
 .El
 .Sh CODE REFERENCES
 The

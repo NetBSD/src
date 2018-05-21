@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.181.2.5 2018/05/02 07:20:22 pgoyette Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.181.2.6 2018/05/21 04:36:15 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.181.2.5 2018/05/02 07:20:22 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.181.2.6 2018/05/21 04:36:15 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
@@ -1534,14 +1534,9 @@ m_defrag(struct mbuf *m, int how)
 }
 
 void
-m_pkthdr_remove(struct mbuf *m)
+m_remove_pkthdr(struct mbuf *m)
 {
 	KASSERT(m->m_flags & M_PKTHDR);
-
-	if (M_READONLY(m)) {
-		/* Nothing we can do. */
-		return;
-	}
 
 	m_tag_delete_chain(m, NULL);
 	m->m_flags &= ~M_PKTHDR;
@@ -1551,19 +1546,21 @@ m_pkthdr_remove(struct mbuf *m)
 void
 m_copy_pkthdr(struct mbuf *to, struct mbuf *from)
 {
+	KASSERT((to->m_flags & M_EXT) == 0);
+	KASSERT((to->m_flags & M_PKTHDR) == 0 || m_tag_first(to) == NULL);
 	KASSERT((from->m_flags & M_PKTHDR) != 0);
 
 	to->m_pkthdr = from->m_pkthdr;
 	to->m_flags = from->m_flags & M_COPYFLAGS;
+	to->m_data = to->m_pktdat;
+
 	SLIST_INIT(&to->m_pkthdr.tags);
 	m_tag_copy_chain(to, from);
-	to->m_data = to->m_pktdat;
 }
 
 void
 m_move_pkthdr(struct mbuf *to, struct mbuf *from)
 {
-
 	KASSERT((to->m_flags & M_EXT) == 0);
 	KASSERT((to->m_flags & M_PKTHDR) == 0 || m_tag_first(to) == NULL);
 	KASSERT((from->m_flags & M_PKTHDR) != 0);

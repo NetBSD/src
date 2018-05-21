@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.122.2.2 2018/05/02 07:20:23 pgoyette Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.122.2.3 2018/05/21 04:36:16 pgoyette Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.49 2001/07/25 09:21:18 jinmei Exp $	*/
 
 /*
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.122.2.2 2018/05/02 07:20:23 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.122.2.3 2018/05/21 04:36:16 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -685,10 +685,6 @@ add_m6if(struct mif6ctl *mifcp)
 	s = splsoftnet();
 	mifp->m6_flags     = mifcp->mif6c_flags;
 	mifp->m6_ifp       = ifp;
-#ifdef notyet
-	/* scaling up here allows division by 1024 in critical code */
-	mifp->m6_rate_limit = mifcp->mif6c_rate_limit * 1024 / 1000;
-#endif
 	/* initialize per mif pkt counters */
 	mifp->m6_pkt_in    = 0;
 	mifp->m6_pkt_out   = 0;

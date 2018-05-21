@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.173 2017/04/26 03:02:49 riastradh Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.173.10.1 2018/05/21 04:36:17 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.173 2017/04/26 03:02:49 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.173.10.1 2018/05/21 04:36:17 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -600,7 +600,10 @@ out:
 	}
 	len -= uiop->uio_resid;
 	padlen = nfsm_padlen(len);
-	if (uiop->uio_resid || padlen)
+	if (len == 0) {
+		m_freem(mp3);
+		mp3 = NULL;
+	} else if (uiop->uio_resid || padlen)
 		nfs_zeropad(mp3, uiop->uio_resid, padlen);
 	nfsm_build(tl, u_int32_t *, NFSX_UNSIGNED);
 	*tl = txdr_unsigned(len);

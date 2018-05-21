@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.80 2018/02/19 23:03:00 christos Exp $	*/
+/*	$NetBSD: pf.c,v 1.80.2.1 2018/05/21 04:36:12 pgoyette Exp $	*/
 /*	$OpenBSD: pf.c,v 1.552.2.1 2007/11/27 16:37:57 henning Exp $ */
 
 /*
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.80 2018/02/19 23:03:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.80.2.1 2018/05/21 04:36:12 pgoyette Exp $");
 
 #include "pflog.h"
 
@@ -1856,7 +1856,11 @@ pf_send_icmp(struct mbuf *m, u_int8_t type, u_int8_t code, sa_family_t af,
 	struct pf_mtag	*pf_mtag;
 #endif /* __NetBSD__ */
 
+#ifdef __NetBSD__
+	m0 = m_copym(m, 0, M_COPYALL, M_DONTWAIT);
+#else
 	m0 = m_copy(m, 0, M_COPYALL);
+#endif
 
 #ifdef __NetBSD__
 	if ((pf_mtag = pf_get_mtag(m0)) == NULL)

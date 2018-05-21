@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_congctl.c,v 1.23.14.1 2018/03/30 06:20:16 pgoyette Exp $	*/
+/*	$NetBSD: tcp_congctl.c,v 1.23.14.2 2018/05/21 04:36:16 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2005, 2006 The NetBSD Foundation, Inc.
@@ -135,7 +135,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_congctl.c,v 1.23.14.1 2018/03/30 06:20:16 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_congctl.c,v 1.23.14.2 2018/05/21 04:36:16 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -180,7 +180,6 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_congctl.c,v 1.23.14.1 2018/03/30 06:20:16 pgoyet
 #include <netinet/tcp_seq.h>
 #include <netinet/tcp_timer.h>
 #include <netinet/tcp_var.h>
-#include <netinet/tcpip.h>
 #include <netinet/tcp_congctl.h>
 #ifdef TCP_DEBUG
 #include <netinet/tcp_debug.h>

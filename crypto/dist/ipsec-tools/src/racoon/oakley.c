@@ -1,4 +1,4 @@
-/*	$NetBSD: oakley.c,v 1.24 2012/08/29 11:34:37 tteras Exp $	*/
+/*	$NetBSD: oakley.c,v 1.24.32.1 2018/05/21 04:35:49 pgoyette Exp $	*/
 
 /* Id: oakley.c,v 1.32 2006/05/26 12:19:46 manubsd Exp */
 
@@ -138,8 +138,7 @@ int oakley_get_certtype(cert)
 }
 
 static vchar_t *
-dump_isakmp_payload(gen)
-	struct isakmp_gen *gen;
+dump_isakmp_payload(struct isakmp_gen *gen)
 {
 	vchar_t p;
 
@@ -156,8 +155,7 @@ dump_isakmp_payload(gen)
 }
 
 static vchar_t *
-dump_x509(cert)
-	X509 *cert;
+dump_x509(X509 *cert)
 {
 	vchar_t *pl;
 	u_char *bp;
@@ -788,7 +786,6 @@ oakley_compute_hash3(iph1, msgid, body)
 {
 	vchar_t *buf = 0, *res = 0;
 	int len;
-	int error = -1;
 
 	/* create buffer */
 	len = 1 + sizeof(u_int32_t) + body->l;
@@ -812,8 +809,6 @@ oakley_compute_hash3(iph1, msgid, body)
 	res = oakley_prf(iph1->skeyid_a, buf, iph1);
 	if (res == NULL)
 		goto end;
-
-	error = 0;
 
 	plog(LLV_DEBUG, LOCATION, NULL, "HASH computed:\n");
 	plogdump(LLV_DEBUG, res->v, res->l);
@@ -843,7 +838,6 @@ oakley_compute_hash1(iph1, msgid, body)
 	vchar_t *buf = NULL, *res = NULL;
 	char *p;
 	int len;
-	int error = -1;
 
 	/* create buffer */
 	len = sizeof(u_int32_t) + body->l;
@@ -869,8 +863,6 @@ oakley_compute_hash1(iph1, msgid, body)
 	if (res == NULL)
 		goto end;
 
-	error = 0;
-
 	plog(LLV_DEBUG, LOCATION, NULL, "HASH computed:\n");
 	plogdump(LLV_DEBUG, res->v, res->l);
 
@@ -895,7 +887,6 @@ oakley_ph1hash_common(iph1, sw)
 	vchar_t *buf = NULL, *res = NULL, *bp;
 	char *p, *bp2;
 	int len, bl;
-	int error = -1;
 #ifdef HAVE_GSSAPI
 	vchar_t *gsstokens = NULL;
 #endif
@@ -988,8 +979,6 @@ oakley_ph1hash_common(iph1, sw)
 	if (res == NULL)
 		goto end;
 
-	error = 0;
-
 	plog(LLV_DEBUG, LOCATION, NULL, "HASH (%s) computed:\n",
 		iph1->side == INITIATOR ? "init" : "resp");
 	plogdump(LLV_DEBUG, res->v, res->l);
@@ -1021,7 +1010,6 @@ oakley_ph1hash_base_i(iph1, sw)
 	vchar_t *hash = NULL;	/* for signature mode */
 	char *p;
 	int len;
-	int error = -1;
 
 	/* sanity check */
 	if (iph1->etype != ISAKMP_ETYPE_BASE) {
@@ -1135,8 +1123,6 @@ oakley_ph1hash_base_i(iph1, sw)
 	if (res == NULL)
 		goto end;
 
-	error = 0;
-
 	plog(LLV_DEBUG, LOCATION, NULL, "HASH_I computed:\n");
 	plogdump(LLV_DEBUG, res->v, res->l);
 
@@ -1162,7 +1148,6 @@ oakley_ph1hash_base_r(iph1, sw)
 	vchar_t *hash = NULL;
 	char *p;
 	int len;
-	int error = -1;
 
 	/* sanity check */
 	if (iph1->etype != ISAKMP_ETYPE_BASE) {
@@ -1260,8 +1245,6 @@ oakley_ph1hash_base_r(iph1, sw)
 	res = oakley_prf(hash, buf, iph1);
 	if (res == NULL)
 		goto end;
-
-	error = 0;
 
 	plog(LLV_DEBUG, LOCATION, NULL, "HASH_R computed:\n");
 	plogdump(LLV_DEBUG, res->v, res->l);
@@ -1674,9 +1657,6 @@ get_plainrsa_fromlocal(iph1, my)
 	struct ph1handle *iph1;
 	int my;
 {
-	char path[MAXPATHLEN];
-	vchar_t *cert = NULL;
-	char *certfile;
 	int error = -1;
 
 	iph1->rsa_candidates = rsa_lookup_keys(iph1, my);
@@ -2091,8 +2071,6 @@ oakley_savecert(iph1, gen)
 		}
 
 		for (i = 0; i < sk_X509_num(certs); i++) {
-			int len;
-			u_char *bp;
 			X509 *cert = sk_X509_value(certs,i);
 
 			plog(LLV_DEBUG, LOCATION, NULL, 
@@ -2254,9 +2232,7 @@ struct append_cr_ctx {
 };
 
 static int
-oakley_append_rmconf_cr(rmconf, ctx)
-	struct remoteconf *rmconf;
-	void *ctx;
+oakley_append_rmconf_cr(struct remoteconf *rmconf, void *ctx)
 {
 	struct append_cr_ctx *actx = (struct append_cr_ctx *) ctx;
 	vchar_t *buf, *asn1dn = NULL;

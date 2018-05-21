@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.c,v 1.60 2017/10/28 04:53:56 riastradh Exp $ */
+/* $NetBSD: gpio.c,v 1.60.2.1 2018/05/21 04:36:05 pgoyette Exp $ */
 /*	$OpenBSD: gpio.c,v 1.6 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.60 2017/10/28 04:53:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.60.2.1 2018/05/21 04:36:05 pgoyette Exp $");
 
 /*
  * General Purpose Input/Output framework.
@@ -310,28 +310,6 @@ gpiobus_print(void *aux, const char *pnp)
 	return UNCONF;
 }
 
-/* called from backends when a interrupt even occurs */
-void
-gpio_intr(device_t self, uint32_t evts)
-{
-	struct gpio_softc *sc = device_private(self);
-	void (*callback)(void *);
-	void *callback_arg;
-
-	for (int i = 0; i < sc->sc_npins; i++) {
-		if (evts & (1 << i)) {
-			mutex_enter(&sc->sc_mtx);
-			callback = sc->sc_pins[i].pin_callback;
-			callback_arg = sc->sc_pins[i].pin_callback_arg;
-			DPRINTFN(2, ("gpio pin %d event callback %p\n", i, callback));
-			if (callback != NULL) {
-				callback(callback_arg);
-			}
-			mutex_exit(&sc->sc_mtx);
-		}
-	}
-}
-
 void *
 gpio_find_device(const char *name)
 {
@@ -426,46 +404,44 @@ gpio_pin_write(void *gpio, struct gpio_pinmap *map, int pin, int value)
 	sc->sc_pins[map->pm_map[pin]].pin_state = value;
 }
 
+int
+gpio_pin_get_conf(void *gpio, struct gpio_pinmap *map, int pin)
+{
+	struct gpio_softc *sc = gpio;
+	int rv;
+
+	mutex_enter(&sc->sc_mtx);
+	rv = sc->sc_pins[map->pm_map[pin]].pin_flags;
+	mutex_exit(&sc->sc_mtx);
+
+	return (rv);
+}
+
+bool
+gpio_pin_set_conf(void *gpio, struct gpio_pinmap *map, int pin, int flags)
+{
+	struct gpio_softc *sc = gpio;
+	int checkflags = flags & GPIO_PIN_HWCAPS;
+
+	if ((sc->sc_pins[map->pm_map[pin]].pin_caps & checkflags) != checkflags)
+		return (false);
+
+	gpio_pin_ctl(gpio, map, pin, flags);
+
+	return (true);
+}
+
 void
 gpio_pin_ctl(void *gpio, struct gpio_pinmap *map, int pin, int flags)
 {
 	struct gpio_softc *sc = gpio;
-	struct gpio_pin *pinp = &sc->sc_pins[map->pm_map[pin]];
 
-	KASSERT((flags & GPIO_PIN_EVENTS) == 0);
+	/* loosey-goosey version of gpio_pin_set_conf(). */
+
 	mutex_enter(&sc->sc_mtx);
 	gpiobus_pin_ctl(sc->sc_gc, map->pm_map[pin], flags);
-	pinp->pin_callback = NULL;
-	pinp->pin_callback_arg = NULL;
+	sc->sc_pins[map->pm_map[pin]].pin_flags = flags;
 	mutex_exit(&sc->sc_mtx);
-}
-
-int
-gpio_pin_ctl_intr(void *gpio, struct gpio_pinmap *map, int pin, int flags,
-    int ipl, void (*callback)(void *), void *arg)
-{
-	struct gpio_softc *sc = gpio;
-	struct gpio_pin *pinp = &sc->sc_pins[map->pm_map[pin]];
-	KASSERT((flags & GPIO_PIN_EVENTS) != 0);
-	if (ipl != IPL_VM)
-		return EINVAL;
-	mutex_enter(&sc->sc_mtx);
-	if (pinp->pin_callback != NULL) {
-		mutex_exit(&sc->sc_mtx);
-		return EEXIST;
-	}
-	pinp->pin_callback = callback;
-	pinp->pin_callback_arg = arg;
-	gpiobus_pin_ctl(sc->sc_gc, map->pm_map[pin], flags);
-	mutex_exit(&sc->sc_mtx);
-	return 0;
-}
-
-void
-gpio_pin_irqen(void *gpio, struct gpio_pinmap *map, int pin, bool en)
-{
-	struct gpio_softc *sc = gpio;
-	gpiobus_pin_irqen(sc->sc_gc, map->pm_map[pin], en);
 }
 
 int
@@ -474,6 +450,137 @@ gpio_pin_caps(void *gpio, struct gpio_pinmap *map, int pin)
 	struct gpio_softc *sc = gpio;
 
 	return sc->sc_pins[map->pm_map[pin]].pin_caps;
+}
+
+int
+gpio_pin_intrcaps(void *gpio, struct gpio_pinmap *map, int pin)
+{
+	struct gpio_softc *sc = gpio;
+
+	return sc->sc_pins[map->pm_map[pin]].pin_intrcaps;
+}
+
+static int
+gpio_irqmode_sanitize(int irqmode)
+{
+	int has_edge, has_level;
+
+	has_edge  = irqmode & GPIO_INTR_EDGE_MASK;
+	has_level = irqmode & GPIO_INTR_LEVEL_MASK;
+
+	/* Must specify an interrupt mode. */
+	if ((irqmode & GPIO_INTR_MODE_MASK) == 0)
+		return (0);
+
+	/* Can't specify edge and level together */
+	if (has_level && has_edge)
+		return (0);
+
+	/* "Be liberal in what you accept..." */
+	if (has_edge) {
+		if (irqmode & GPIO_INTR_DOUBLE_EDGE) {
+			/* if DOUBLE is set, just pass through DOUBLE */
+			irqmode = (irqmode & ~GPIO_INTR_EDGE_MASK) |
+			    GPIO_INTR_DOUBLE_EDGE;
+		} else if ((irqmode ^
+			    (GPIO_INTR_POS_EDGE | GPIO_INTR_NEG_EDGE)) == 0) {
+			/* both POS and NEG set; treat as DOUBLE */
+			irqmode = (irqmode & ~GPIO_INTR_EDGE_MASK) |
+			    GPIO_INTR_DOUBLE_EDGE;
+		}
+	} else {
+		/* Can't specify both levels together. */
+		if (has_level == GPIO_INTR_LEVEL_MASK)
+			return (0);
+	}
+
+	return (irqmode);
+}
+
+bool
+gpio_pin_irqmode_issupported(void *gpio, struct gpio_pinmap *map,
+			     int pin, int irqmode)
+{
+	struct gpio_softc *sc = gpio;
+	int match;
+
+	irqmode = gpio_irqmode_sanitize(irqmode) & GPIO_INTR_MODE_MASK;
+
+	/* Make sure the pin can do what is being asked. */
+	match = sc->sc_pins[map->pm_map[pin]].pin_intrcaps & irqmode;
+
+	return (irqmode && irqmode == match);
+}
+
+void *
+gpio_intr_establish(void *gpio, struct gpio_pinmap *map, int pin, int ipl,
+		    int irqmode, int (*func)(void *), void *arg)
+{
+	struct gpio_softc *sc = gpio;
+
+	if (sc->sc_gc->gp_intr_establish == NULL)
+		return (NULL);
+
+	irqmode = gpio_irqmode_sanitize(irqmode);
+	if (irqmode == 0)
+		return (NULL);
+
+	if (! gpio_pin_irqmode_issupported(gpio, map, pin, irqmode))
+		return (NULL);
+
+	/* XXX Right now, everything has to be at IPL_VM. */
+	if (ipl != IPL_VM)
+		return (NULL);
+
+	return ((*sc->sc_gc->gp_intr_establish)(sc->sc_gc->gp_cookie,
+	    sc->sc_pins[map->pm_map[pin]].pin_num, ipl, irqmode, func, arg));
+}
+
+void
+gpio_intr_disestablish(void *gpio, void *ih)
+{
+	struct gpio_softc *sc = gpio;
+
+	if (sc->sc_gc->gp_intr_disestablish != NULL && ih != NULL)
+		(*sc->sc_gc->gp_intr_disestablish)(sc->sc_gc->gp_cookie, ih);
+}
+
+bool
+gpio_intr_str(void *gpio, struct gpio_pinmap *map, int pin, int irqmode,
+	      char *intrstr, size_t intrstrlen)
+{
+	struct gpio_softc *sc = gpio;
+	const char *mode;
+	char hwstr[64];
+
+	if (sc->sc_gc->gp_intr_str == NULL)
+		return (false);
+
+	irqmode = gpio_irqmode_sanitize(irqmode);
+	if (irqmode == 0)
+		return (false);
+
+	if (irqmode & GPIO_INTR_DOUBLE_EDGE)
+		mode = "double edge";
+	else if (irqmode & GPIO_INTR_POS_EDGE)
+		mode = "positive edge";
+	else if (irqmode & GPIO_INTR_NEG_EDGE)
+		mode = "negative edge";
+	else if (irqmode & GPIO_INTR_HIGH_LEVEL)
+		mode = "high level";
+	else if (irqmode & GPIO_INTR_LOW_LEVEL)
+		mode = "low level";
+	else
+		return (false);
+
+	if (! (*sc->sc_gc->gp_intr_str)(sc->sc_gc->gp_cookie,
+					sc->sc_pins[map->pm_map[pin]].pin_num,
+					irqmode, hwstr, sizeof(hwstr)))
+		return (false);
+
+	(void) snprintf(intrstr, intrstrlen, "%s (%s)", hwstr, mode);
+	
+	return (true);
 }
 
 int

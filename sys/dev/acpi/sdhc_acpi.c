@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc_acpi.c,v 1.4 2017/02/17 10:51:48 nonaka Exp $	*/
+/*	$NetBSD: sdhc_acpi.c,v 1.4.14.1 2018/05/21 04:36:05 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@NetBSD.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc_acpi.c,v 1.4 2017/02/17 10:51:48 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc_acpi.c,v 1.4.14.1 2018/05/21 04:36:05 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -166,6 +166,10 @@ sdhc_acpi_attach(device_t parent, device_t self, void *opaque)
 	irq = acpi_res_irq(&res, 0);
 	if (mem == NULL || irq == NULL) {
 		aprint_error_dev(self, "incomplete resources\n");
+		goto cleanup;
+	}
+	if (mem->ar_length == 0) {
+		aprint_error_dev(self, "zero length memory resource\n");
 		goto cleanup;
 	}
 	sc->sc_memsize = mem->ar_length;

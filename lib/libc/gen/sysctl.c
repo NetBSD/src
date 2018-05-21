@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.36 2017/01/10 17:46:47 christos Exp $	*/
+/*	$NetBSD: sysctl.c,v 1.36.12.1 2018/05/21 04:35:55 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.2 (Berkeley) 1/4/94";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.36 2017/01/10 17:46:47 christos Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.36.12.1 2018/05/21 04:35:55 pgoyette Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -309,7 +309,7 @@ user_sysctl(const int *name, unsigned int namelen,
 				_DIAGASSERT(__type_fit(uint32_t, dlen));
 				d1->descr_len = (uint32_t)dlen;
 			}
-			d = (size_t)__sysc_desc_adv(NULL, d1->descr_len);
+			d = (size_t)__sysc_desc_len(d1->descr_len);
 			if (d2 != NULL)
 				memcpy(d2, d1, d);
 			sz += d;

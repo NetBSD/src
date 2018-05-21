@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_unix.c,v 1.16 2013/12/29 22:54:58 christos Exp $	*/
+/*	$NetBSD: pam_unix.c,v 1.16.24.1 2018/05/21 04:35:55 pgoyette Exp $	*/
 
 /*-
  * Copyright 1998 Juniper Networks, Inc.
@@ -40,7 +40,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_unix/pam_unix.c,v 1.49 2004/02/10 10:13:21 des Exp $");
 #else
-__RCSID("$NetBSD: pam_unix.c,v 1.16 2013/12/29 22:54:58 christos Exp $");
+__RCSID("$NetBSD: pam_unix.c,v 1.16.24.1 2018/05/21 04:35:55 pgoyette Exp $");
 #endif
 
 
@@ -248,6 +248,7 @@ yp_set_password(pam_handle_t *pamh, struct passwd *opwd,
 {
 	char *master;
 	int r, rpcport, status;
+	enum clnt_stat r2;
 	struct yppasswd yppwd;
 	CLIENT *client;
 	uid_t uid;
@@ -318,9 +319,9 @@ yp_set_password(pam_handle_t *pamh, struct passwd *opwd,
 	client->cl_auth = authunix_create_default();
 	tv.tv_sec = 2;
 	tv.tv_usec = 0;
-	r = clnt_call(client, YPPASSWDPROC_UPDATE,
+	r2 = clnt_call(client, YPPASSWDPROC_UPDATE,
 	    xdr_yppasswd, &yppwd, xdr_int, &status, tv);
-	if (r)
+	if (r2 != RPC_SUCCESS)
 		pam_error(pamh, "RPC to yppasswdd failed.");
 	else if (status)
 		pam_error(pamh, "Couldn't change NIS password.");

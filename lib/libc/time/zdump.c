@@ -1,4 +1,4 @@
-/*	$NetBSD: zdump.c,v 1.48 2018/01/25 22:48:42 christos Exp $	*/
+/*	$NetBSD: zdump.c,v 1.48.2.1 2018/05/21 04:35:55 pgoyette Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2009-05-17 by Arthur David Olson.
@@ -6,21 +6,11 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: zdump.c,v 1.48 2018/01/25 22:48:42 christos Exp $");
+__RCSID("$NetBSD: zdump.c,v 1.48.2.1 2018/05/21 04:35:55 pgoyette Exp $");
 #endif /* !defined lint */
-
-/*
-** This code has been made independent of the rest of the time
-** conversion package to increase confidence in the verification it provides.
-** You can use this code to help in verifying other implementations.
-** To do this, compile with -DUSE_LTZ=0 and link without the tz library.
-*/
 
 #ifndef NETBSD_INSPIRED
 # define NETBSD_INSPIRED 1
-#endif
-#ifndef USE_LTZ
-# define USE_LTZ 1
 #endif
 
 #include <err.h>
@@ -149,7 +139,7 @@ sumsize(size_t a, size_t b)
 
 /* Return a pointer to a newly allocated buffer of size SIZE, exiting
    on failure.  SIZE should be nonzero.  */
-static void *
+static void * ATTRIBUTE_MALLOC
 xmalloc(size_t size)
 {
   void *p = malloc(size);

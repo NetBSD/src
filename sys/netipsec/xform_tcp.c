@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_tcp.c,v 1.17.2.1 2018/04/22 07:20:28 pgoyette Exp $ */
+/*	$NetBSD: xform_tcp.c,v 1.17.2.2 2018/05/21 04:36:16 pgoyette Exp $ */
 /*	$FreeBSD: xform_tcp.c,v 1.1.2.1 2004/02/14 22:24:09 bms Exp $ */
 
 /*
@@ -28,10 +28,13 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* TCP MD5 Signature Option (RFC2385) */
+/*
+ * TCP MD5 Signature Option (RFC2385). Dummy code, everything is handled
+ * in TCP directly.
+ */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_tcp.c,v 1.17.2.1 2018/04/22 07:20:28 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_tcp.c,v 1.17.2.2 2018/05/21 04:36:16 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -40,28 +43,20 @@ __KERNEL_RCSID(0, "$NetBSD: xform_tcp.c,v 1.17.2.1 2018/04/22 07:20:28 pgoyette 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
-#include <sys/lock.h>
-#include <sys/socket.h>
 #include <sys/kernel.h>
-#include <sys/protosw.h>
-#include <sys/sysctl.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
+#ifdef TCP_SIGNATURE
 #include <netinet/tcp_timer.h>
 #include <netinet/tcp.h>
 #include <netinet/tcp_var.h>
+#endif
 
-#include <net/route.h>
 #include <netipsec/ipsec.h>
 #include <netipsec/xform.h>
-
-#ifdef INET6
-#include <netinet/ip6.h>
-#include <netipsec/ipsec6.h>
-#endif
 
 #include <netipsec/key.h>
 #include <netipsec/key_debug.h>
@@ -94,35 +89,29 @@ tcpsignature_init(struct secasvar *sav, const struct xformsw *xsp)
 	if (sav->spi != htonl(TCP_SIG_SPI)) {
 		DPRINTF(("%s: SPI %x must be TCP_SIG_SPI (0x1000)\n",
 		    __func__, sav->alg_auth));
-		return (EINVAL);
+		return EINVAL;
 	}
 	if (sav->alg_auth != SADB_X_AALG_TCP_MD5) {
 		DPRINTF(("%s: unsupported authentication algorithm %u\n",
 		    __func__, sav->alg_auth));
-		return (EINVAL);
+		return EINVAL;
 	}
 	if (sav->key_auth == NULL) {
 		DPRINTF(("%s: no authentication key present\n", __func__));
-		return (EINVAL);
+		return EINVAL;
 	}
 	keylen = _KEYLEN(sav->key_auth);
 	if ((keylen < TCP_KEYLEN_MIN) || (keylen > TCP_KEYLEN_MAX)) {
 		DPRINTF(("%s: invalid key length %u\n", __func__, keylen));
-		return (EINVAL);
+		return EINVAL;
 	}
 
-	return (0);
+	return 0;
 }
 
-/*
- * Paranoia.
- *
- * Called when the SA is deleted.
- */
 static int
 tcpsignature_zeroize(struct secasvar *sav)
 {
-
 	if (sav->key_auth) {
 		explicit_memset(_KEYBUF(sav->key_auth), 0,
 		    _KEYLEN(sav->key_auth));
@@ -132,33 +121,21 @@ tcpsignature_zeroize(struct secasvar *sav)
 	sav->tdb_authalgxform = NULL;
 	sav->tdb_xform = NULL;
 
-	return (0);
+	return 0;
 }
 
-/*
- * Verify that an input packet passes authentication.
- * Called from the ipsec layer.
- * We do this from within tcp itself, so this routine is just a stub.
- */
 static int
 tcpsignature_input(struct mbuf *m, struct secasvar *sav, int skip,
     int protoff)
 {
-	/* XXX m_freem(m)? */
-	return (0);
+	panic("%s: should not have been called", __func__);
 }
 
-/*
- * Prepend the authentication header.
- * Called from the ipsec layer.
- * We do this from within tcp itself, so this routine is just a stub.
- */
 static int
 tcpsignature_output(struct mbuf *m, const struct ipsecrequest *isr,
-    struct secasvar *sav, struct mbuf **mp, int skip, int protoff)
+    struct secasvar *sav, int skip, int protoff)
 {
-
-	return (EINVAL);
+	panic("%s: should not have been called", __func__);
 }
 
 static struct xformsw tcpsignature_xformsw = {
@@ -175,6 +152,5 @@ static struct xformsw tcpsignature_xformsw = {
 void
 tcpsignature_attach(void)
 {
-
 	xform_register(&tcpsignature_xformsw);
 }

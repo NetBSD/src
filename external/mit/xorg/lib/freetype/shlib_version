@@ -1,6 +1,12 @@
-#	$NetBSD: shlib_version,v 1.10 2016/05/16 22:19:10 christos Exp $
+#	$NetBSD: shlib_version,v 1.10.14.1 2018/05/21 04:35:54 pgoyette Exp $
 #
-# try to keep this in sync with builds/unix/configure.ac:version_info=
+# XXX our freetype shlib versioning is insane. the rest of the world
+# uses a major of 6. we used to, but it was bumped to 7 for 64 bit
+# time_t changes. should've stayed there, but it didn't, because of
+# confusion between libtool versioning and shlib versioning.
+# until upstream bumps their major, keep major at 18 and adjust
+# minor/teeny as indicated by xsrc/external/mit/freetype/dist/docs/VERSIONS.TXT
+
 major=18
 minor=0
 teeny=13

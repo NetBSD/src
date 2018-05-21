@@ -1,4 +1,4 @@
-/*	$NetBSD: t_zombie.c,v 1.1.2.2 2018/03/15 09:12:07 pgoyette Exp $	*/
+/*	$NetBSD: t_zombie.c,v 1.1.2.3 2018/05/21 04:36:17 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2018\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_zombie.c,v 1.1.2.2 2018/03/15 09:12:07 pgoyette Exp $");
+__RCSID("$NetBSD: t_zombie.c,v 1.1.2.3 2018/05/21 04:36:17 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/sysctl.h>
@@ -130,14 +130,14 @@ signal_raw(int sig)
 	pid_t child1, child2, pid;
 
 	child1 = atf_utils_fork();
-	ATF_REQUIRE(child1 != 1);
+	ATF_REQUIRE(child1 != -1);
 	if (child1 == 0) {
 		/* Just die and turn into a zombie */
 		_exit(0);
 	}
 
 	child2 = atf_utils_fork();
-	ATF_REQUIRE(child2 != 1);
+	ATF_REQUIRE(child2 != -1);
 	if (child2 == 0) {
 		await_zombie(child1);
 

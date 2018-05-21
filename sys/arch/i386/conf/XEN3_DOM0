@@ -1,4 +1,4 @@
-#	$NetBSD: XEN3_DOM0,v 1.127 2018/02/17 01:34:45 sevan Exp $
+#	$NetBSD: XEN3_DOM0,v 1.127.2.1 2018/05/21 04:36:00 pgoyette Exp $
 #
 #	XEN3_0: Xen 3.0 domain0 kernel
 
@@ -275,27 +275,27 @@ iic*		at dwiic?
 
 # dbCool thermal monitor and fan controller
 #iic*	at amdpm?			# sensors below are on this bus
-#dbcool* at iic? addr 0x2C		# Unknown other motherboard(s)
-#dbcool* at iic? addr 0x2D		# Tyan S2881
-#dbcool* at iic? addr 0x2E		# Tyan S2882-D
+#dbcool* at iic0 addr 0x2C		# Unknown other motherboard(s)
+#dbcool* at iic0 addr 0x2D		# Tyan S2881
+#dbcool* at iic0 addr 0x2E		# Tyan S2882-D
 
 # Serial Presence Detect capable memory modules
-#spdmem* at iic? addr 0x50
-#spdmem* at iic? addr 0x51
-#spdmem* at iic? addr 0x52
-#spdmem* at iic? addr 0x53
-#spdmem* at iic? addr 0x54
-#spdmem* at iic? addr 0x55
-#spdmem* at iic? addr 0x56
-#spdmem* at iic? addr 0x57
-#sdtemp* at iic? addr 0x18
-#sdtemp* at iic? addr 0x19
-#sdtemp* at iic? addr 0x1a
-#sdtemp* at iic? addr 0x1b
-#sdtemp* at iic? addr 0x1c
-#sdtemp* at iic? addr 0x1d
-#sdtemp* at iic? addr 0x1e
-#sdtemp* at iic? addr 0x1f
+#spdmem* at iic0 addr 0x50
+#spdmem* at iic0 addr 0x51
+#spdmem* at iic0 addr 0x52
+#spdmem* at iic0 addr 0x53
+#spdmem* at iic0 addr 0x54
+#spdmem* at iic0 addr 0x55
+#spdmem* at iic0 addr 0x56
+#spdmem* at iic0 addr 0x57
+#sdtemp* at iic0 addr 0x18
+#sdtemp* at iic0 addr 0x19
+#sdtemp* at iic0 addr 0x1a
+#sdtemp* at iic0 addr 0x1b
+#sdtemp* at iic0 addr 0x1c
+#sdtemp* at iic0 addr 0x1d
+#sdtemp* at iic0 addr 0x1e
+#sdtemp* at iic0 addr 0x1f
 
 # Winbond LPC Super I/O
 #wbsio*	at isa? port 0x2e

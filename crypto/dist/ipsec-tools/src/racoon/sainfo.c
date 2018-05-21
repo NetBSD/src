@@ -1,4 +1,4 @@
-/*	$NetBSD: sainfo.c,v 1.15 2012/01/01 15:29:28 tteras Exp $	*/
+/*	$NetBSD: sainfo.c,v 1.15.40.1 2018/05/21 04:35:49 pgoyette Exp $	*/
 
 /*	$KAME: sainfo.c,v 1.16 2003/06/27 07:32:39 sakane Exp $	*/
 
@@ -226,8 +226,8 @@ delsainfo(si)
 	racoon_free(si);
 }
 
-int prisainfo(s)
-	struct sainfo *s;
+static int
+prisainfo(struct sainfo *s)
 {
 	/*
 	 * determine the matching priority

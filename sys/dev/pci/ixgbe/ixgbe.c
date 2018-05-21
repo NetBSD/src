@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.128.2.6 2018/04/22 07:20:26 pgoyette Exp $ */
+/* $NetBSD: ixgbe.c,v 1.128.2.7 2018/05/21 04:36:12 pgoyette Exp $ */
 
 /******************************************************************************
 
@@ -581,7 +581,7 @@ ixgbe_initialize_receive_units(struct adapter *adapter)
 
 	for (i = 0; i < adapter->num_queues; i++, rxr++) {
 		u64 rdba = rxr->rxdma.dma_paddr;
-		u32 tqsmreg, reg;
+		u32 reg;
 		int regnum = i / 4;	/* 1 register per 4 queues */
 		int regshift = i % 4;	/* 4 bits per 1 queue */
 		j = rxr->me;
@@ -605,20 +605,6 @@ ixgbe_initialize_receive_units(struct adapter *adapter)
 		reg &= ~(0x000000ff << (regshift * 8));
 		reg |= i << (regshift * 8);
 		IXGBE_WRITE_REG(hw, IXGBE_RQSMR(regnum), reg);
-
-		/*
-		 * Set RQSMR (Receive Queue Statistic Mapping) register.
-		 * Register location for queue 0...7 are different between
-		 * 82598 and newer.
-		 */
-		if (adapter->hw.mac.type == ixgbe_mac_82598EB)
-			tqsmreg = IXGBE_TQSMR(regnum);
-		else
-			tqsmreg = IXGBE_TQSM(regnum);
-		reg = IXGBE_READ_REG(hw, tqsmreg);
-		reg &= ~(0x000000ff << (regshift * 8));
-		reg |= i << (regshift * 8);
-		IXGBE_WRITE_REG(hw, tqsmreg, reg);
 
 		/*
 		 * Set DROP_EN iff we have no flow control and >1 queue.
@@ -685,6 +671,9 @@ ixgbe_initialize_transmit_units(struct adapter *adapter)
 	for (i = 0; i < adapter->num_queues; i++, txr++) {
 		u64 tdba = txr->txdma.dma_paddr;
 		u32 txctrl = 0;
+		u32 tqsmreg, reg;
+		int regnum = i / 4;	/* 1 register per 4 queues */
+		int regshift = i % 4;	/* 4 bits per 1 queue */
 		int j = txr->me;
 
 		IXGBE_WRITE_REG(hw, IXGBE_TDBAL(j),
@@ -692,6 +681,19 @@ ixgbe_initialize_transmit_units(struct adapter *adapter)
 		IXGBE_WRITE_REG(hw, IXGBE_TDBAH(j), (tdba >> 32));
 		IXGBE_WRITE_REG(hw, IXGBE_TDLEN(j),
 		    adapter->num_tx_desc * sizeof(union ixgbe_adv_tx_desc));
+
+		/*
+		 * Set TQSMR (Transmit Queue Statistic Mapping) register.
+		 * Register location is different between 82598 and others.
+		 */
+		if (adapter->hw.mac.type == ixgbe_mac_82598EB)
+			tqsmreg = IXGBE_TQSMR(regnum);
+		else
+			tqsmreg = IXGBE_TQSM(regnum);
+		reg = IXGBE_READ_REG(hw, tqsmreg);
+		reg &= ~(0x000000ff << (regshift * 8));
+		reg |= i << (regshift * 8);
+		IXGBE_WRITE_REG(hw, tqsmreg, reg);
 
 		/* Setup the HW Tx Head and Tail descriptor pointers */
 		IXGBE_WRITE_REG(hw, IXGBE_TDH(j), 0);
@@ -1556,16 +1558,24 @@ ixgbe_update_stats_counters(struct adapter *adapter)
 	if (hw->mac.type == ixgbe_mac_X550)
 		stats->mbsdc.ev_count += IXGBE_READ_REG(hw, IXGBE_MBSDC);
 
+	/* 16 registers */
 	for (int i = 0; i < __arraycount(stats->qprc); i++) {
 		int j = i % adapter->num_queues;
+
 		stats->qprc[j].ev_count += IXGBE_READ_REG(hw, IXGBE_QPRC(i));
 		stats->qptc[j].ev_count += IXGBE_READ_REG(hw, IXGBE_QPTC(i));
-		stats->qprdc[j].ev_count += IXGBE_READ_REG(hw, IXGBE_QPRDC(i));
+		if (hw->mac.type >= ixgbe_mac_82599EB) {
+			stats->qprdc[j].ev_count
+			    += IXGBE_READ_REG(hw, IXGBE_QPRDC(i));
+		}
 	}
+
+	/* 8 registers */
 	for (int i = 0; i < __arraycount(stats->mpc); i++) {
 		uint32_t mp;
 		int j = i % adapter->num_queues;
 
+		/* MPC */
 		mp = IXGBE_READ_REG(hw, IXGBE_MPC(i));
 		/* global total per queue */
 		stats->mpc[j].ev_count += mp;
@@ -1575,7 +1585,24 @@ ixgbe_update_stats_counters(struct adapter *adapter)
 		if (hw->mac.type == ixgbe_mac_82598EB)
 			stats->rnbc[j].ev_count
 			    += IXGBE_READ_REG(hw, IXGBE_RNBC(i));
-		
+
+		stats->pxontxc[j].ev_count
+		    += IXGBE_READ_REG(hw, IXGBE_PXONTXC(i));
+		stats->pxofftxc[j].ev_count
+		    += IXGBE_READ_REG(hw, IXGBE_PXOFFTXC(i));
+		if (hw->mac.type >= ixgbe_mac_82599EB) {
+			stats->pxonrxc[j].ev_count
+			    += IXGBE_READ_REG(hw, IXGBE_PXONRXCNT(i));
+			stats->pxoffrxc[j].ev_count
+			    += IXGBE_READ_REG(hw, IXGBE_PXOFFRXCNT(i));
+			stats->pxon2offc[j].ev_count
+			    += IXGBE_READ_REG(hw, IXGBE_PXON2OFFCNT(i));
+		} else {
+			stats->pxonrxc[j].ev_count
+			    += IXGBE_READ_REG(hw, IXGBE_PXONRXC(i));
+			stats->pxoffrxc[j].ev_count
+			    += IXGBE_READ_REG(hw, IXGBE_PXOFFRXC(i));
+		}
 	}
 	stats->mpctotal.ev_count += total_missed_rx;
 
@@ -1826,8 +1853,10 @@ ixgbe_add_hw_stats(struct adapter *adapter)
 			evcnt_attach_dynamic(&stats->pxoffrxc[i],
 			    EVCNT_TYPE_MISC, NULL, adapter->queues[i].evnamebuf,
 			    "pxoffrxc");
-			evcnt_attach_dynamic(&stats->pxon2offc[i],
-			    EVCNT_TYPE_MISC, NULL, adapter->queues[i].evnamebuf,
+			if (hw->mac.type >= ixgbe_mac_82599EB)
+				evcnt_attach_dynamic(&stats->pxon2offc[i],
+				    EVCNT_TYPE_MISC, NULL,
+				    adapter->queues[i].evnamebuf,
 			    "pxon2offc");
 		}
 		if (i < __arraycount(stats->qprc)) {
@@ -1843,9 +1872,10 @@ ixgbe_add_hw_stats(struct adapter *adapter)
 			evcnt_attach_dynamic(&stats->qbtc[i],
 			    EVCNT_TYPE_MISC, NULL, adapter->queues[i].evnamebuf,
 			    "qbtc");
-			evcnt_attach_dynamic(&stats->qprdc[i],
-			    EVCNT_TYPE_MISC, NULL, adapter->queues[i].evnamebuf,
-			    "qprdc");
+			if (hw->mac.type >= ixgbe_mac_82599EB)
+				evcnt_attach_dynamic(&stats->qprdc[i],
+				    EVCNT_TYPE_MISC, NULL,
+				    adapter->queues[i].evnamebuf, "qprdc");
 		}
 
 		evcnt_attach_dynamic(&rxr->rx_packets, EVCNT_TYPE_MISC,
@@ -2034,14 +2064,16 @@ ixgbe_clear_evcnt(struct adapter *adapter)
 			stats->pxonrxc[i].ev_count = 0;
 			stats->pxofftxc[i].ev_count = 0;
 			stats->pxoffrxc[i].ev_count = 0;
-			stats->pxon2offc[i].ev_count = 0;
+			if (hw->mac.type >= ixgbe_mac_82599EB)
+				stats->pxon2offc[i].ev_count = 0;
 		}
 		if (i < __arraycount(stats->qprc)) {
 			stats->qprc[i].ev_count = 0;
 			stats->qptc[i].ev_count = 0;
 			stats->qbrc[i].ev_count = 0;
 			stats->qbtc[i].ev_count = 0;
-			stats->qprdc[i].ev_count = 0;
+			if (hw->mac.type >= ixgbe_mac_82599EB)
+				stats->qprdc[i].ev_count = 0;
 		}
 
 		rxr->rx_packets.ev_count = 0;
@@ -3472,14 +3504,16 @@ ixgbe_detach(device_t dev, int flags)
 			evcnt_detach(&stats->pxonrxc[i]);
 			evcnt_detach(&stats->pxofftxc[i]);
 			evcnt_detach(&stats->pxoffrxc[i]);
-			evcnt_detach(&stats->pxon2offc[i]);
+			if (hw->mac.type >= ixgbe_mac_82599EB)
+				evcnt_detach(&stats->pxon2offc[i]);
 		}
 		if (i < __arraycount(stats->qprc)) {
 			evcnt_detach(&stats->qprc[i]);
 			evcnt_detach(&stats->qptc[i]);
 			evcnt_detach(&stats->qbrc[i]);
 			evcnt_detach(&stats->qbtc[i]);
-			evcnt_detach(&stats->qprdc[i]);
+			if (hw->mac.type >= ixgbe_mac_82599EB)
+				evcnt_detach(&stats->qprdc[i]);
 		}
 
 		evcnt_detach(&rxr->rx_packets);

@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.23 2016/12/13 19:03:49 roy Exp $	*/
+/*	$NetBSD: net.c,v 1.23.12.1 2018/05/21 04:36:19 pgoyette Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -964,7 +964,7 @@ get_via_ftp(const char *xfer_type)
 	arg_rv arg;
 
 	arg.rv = -1;
-	arg.arg = deconst(xfer_type);
+	arg.arg = __UNCONST(xfer_type);
 	process_menu(MENU_ftpsource, &arg);
 	
 	if (arg.rv == SET_RETRY)

@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.193.2.2 2018/04/22 07:20:07 pgoyette Exp $
+# $NetBSD: shl.mi,v 1.193.2.3 2018/05/21 04:35:50 pgoyette Exp $
 ./usr/lib/libbfd_g.a						comp-c-debuglib	debuglib,compatfile,binutils
 ./usr/libdata/debug/lib						base-sys-usr	debug,dynamicroot,compatdir
 ./usr/libdata/debug/lib/libblacklist.so.0.0.debug		comp-sys-debug	debug,dynamicroot
@@ -68,6 +68,7 @@
 ./usr/libdata/debug/usr/lib/libbind9.so.8.5.debug		comp-bind-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libblacklist.so.0.0.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libbluetooth.so.4.2.debug		comp-sys-debug	debug,compatfile
+./usr/libdata/debug/usr/lib/libbozohttpd.so.0.0.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libbsdmalloc.so.0.0.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libbz2.so.1.1.debug			comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libc++.so.1.0.debug			comp-sys-debug	debug,compatfile,libcxx

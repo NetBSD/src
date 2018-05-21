@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.h,v 1.18 2018/02/06 06:32:25 maxv Exp $	*/
+/*	$NetBSD: ip6_mroute.h,v 1.18.2.1 2018/05/21 04:36:16 pgoyette Exp $	*/
 /*	$KAME: ip6_mroute.h,v 1.17 2001/02/10 02:05:52 itojun Exp $	*/
 
 /*
@@ -103,9 +103,6 @@ struct mif6ctl {
 	mifi_t	    mif6c_mifi;	    	/* the index of the mif to be added  */
 	u_char	    mif6c_flags;     	/* MIFF_ flags defined below         */
 	u_short	    mif6c_pifi;		/* the index of the physical IF */
-#ifdef notyet
-	u_int	    mif6c_rate_limit;    /* max rate           		     */
-#endif
 };
 
 #define	MIFF_REGISTER	0x1	/* mif represents a register end-point */

@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.120 2018/01/06 16:41:23 kamil Exp $
+	$NetBSD: syscalls.master,v 1.120.2.1 2018/05/21 04:36:04 pgoyette Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -1030,16 +1030,18 @@
 473	STD		{ int|netbsd32||__quotactl(const netbsd32_charp path, \
 			    netbsd32_voidp args); }
 474	NOERR		{ int|netbsd32||posix_spawn(netbsd32_pid_tp pid, \
-				const netbsd32_charp path, \
-				const netbsd32_posix_spawn_file_actionsp \
-				    file_actions, \
-				const netbsd32_posix_spawnattrp attrp, \
-				netbsd32_charpp argv, netbsd32_charpp envp); }
+			    const netbsd32_charp path, \
+			    const netbsd32_posix_spawn_file_actionsp \
+				file_actions, \
+			    const netbsd32_posix_spawnattrp attrp, \
+			    netbsd32_charpp argv, netbsd32_charpp envp); }
 
-475	UNIMPL		{ int|netbsd32||recvmmsg(int s, struct mmsghdr *mmsg, \
+475	STD		{ int|netbsd32||recvmmsg(int s, \
+			    netbsd32_mmsghdrp_t mmsg, \
 			    unsigned int vlen, unsigned int flags, \
 			    netbsd32_timespecp_t timeout); }
-476	UNIMPL		{ int|netbsd32||sendmmsg(int s, struct mmsghdr *mmsg, \
+476	STD		{ int|netbsd32||sendmmsg(int s, \
+			    netbsd32_mmsghdrp_t mmsg, \
 			    unsigned int vlen, unsigned int flags); }
 477	STD 		{ int|netbsd32||clock_nanosleep(\
 			    netbsd32_clockid_t clock_id, \

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_init.c,v 1.48 2016/12/23 07:15:28 cherry Exp $	*/
+/*	$NetBSD: uvm_init.c,v 1.48.14.1 2018/05/21 04:36:17 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.48 2016/12/23 07:15:28 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.48.14.1 2018/05/21 04:36:17 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -165,12 +165,6 @@ uvm_init(void)
 	 */
 
 	uvm_loan_init();
-
-	/*
-	 * Init emap subsystem.
-	 */
-
-	uvm_emap_sysinit();
 
 	/*
 	 * The VM system is now up!  Now that kmem is up we can resize the

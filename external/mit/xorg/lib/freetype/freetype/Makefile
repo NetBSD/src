@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2016/05/16 22:19:10 christos Exp $
+#	$NetBSD: Makefile,v 1.22.14.1 2018/05/21 04:35:54 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -9,13 +9,12 @@ SUBDIR=	config
 INCSDIR=${X11INCDIR}/freetype2/freetype
 
 INCS=	freetype.h ftadvanc.h ftbbox.h ftbdf.h ftbitmap.h ftbzip2.h ftcache.h \
-	ftchapters.h ftcid.h fterrdef.h fterrors.h ftfntfmt.h ftgasp.h \
+	ftchapters.h ftcid.h ftdriver.h fterrdef.h fterrors.h ftfntfmt.h ftgasp.h \
 	ftglyph.h ftgxval.h ftgzip.h ftimage.h ftincrem.h ftlcdfil.h ftlist.h \
 	ftlzw.h ftmac.h ftmm.h ftmodapi.h ftmoderr.h ftotval.h ftoutln.h \
-	ftpfr.h ftrender.h ftsizes.h ftsnames.h ftstroke.h ftsynth.h \
-	ftsystem.h fttrigon.h ftttdrv.h fttypes.h ftwinfnt.h \
-	t1tables.h ttnameid.h tttables.h tttags.h ttunpat.h \
-	ftautoh.h ftcffdrv.h
+	ftparams.h ftpfr.h ftrender.h ftsizes.h ftsnames.h ftstroke.h ftsynth.h \
+	ftsystem.h fttrigon.h fttypes.h ftwinfnt.h \
+	t1tables.h ttnameid.h tttables.h tttags.h
 
 SCRIPTS=	freetype-config
 

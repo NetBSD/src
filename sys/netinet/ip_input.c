@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.376.2.2 2018/05/02 07:20:23 pgoyette Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.376.2.3 2018/05/21 04:36:16 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.376.2.2 2018/05/02 07:20:23 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.376.2.3 2018/05/21 04:36:16 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -587,8 +587,10 @@ ip_input(struct mbuf *m)
 			m = NULL;
 			goto out;
 		}
+		KASSERT(m->m_len >= sizeof(struct ip));
 		ip = mtod(m, struct ip *);
 		hlen = ip->ip_hl << 2;
+		KASSERT(m->m_len >= hlen);
 
 		/*
 		 * XXX The setting of "srcrt" here is to prevent ip_forward()
@@ -729,7 +731,7 @@ ip_input(struct mbuf *m)
 #ifdef IPSEC
 		/* Check the security policy (SP) for the packet */
 		if (ipsec_used) {
-			if (ipsec4_input(m, IP_FORWARDING) != 0) {
+			if (ipsec_ip_input(m, true) != 0) {
 				goto out;
 			}
 		}
@@ -776,7 +778,7 @@ ours:
 	 */
 	if (ipsec_used &&
 	    (inetsw[ip_protox[ip->ip_p]].pr_flags & PR_LASTHDR) != 0) {
-		if (ipsec4_input(m, 0) != 0) {
+		if (ipsec_ip_input(m, false) != 0) {
 			goto out;
 		}
 	}
@@ -1468,7 +1470,7 @@ error:
 		}
 #ifdef IPSEC
 		if (ipsec_used)
-			(void)ipsec4_forward(mcopy, &destmtu);
+			ipsec_mtu(mcopy, &destmtu);
 #endif
 		IP_STATINC(IP_STAT_CANTFRAG);
 		break;

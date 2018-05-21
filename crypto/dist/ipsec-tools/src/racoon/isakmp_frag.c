@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_frag.c,v 1.7 2017/07/23 05:40:27 christos Exp $	*/
+/*	$NetBSD: isakmp_frag.c,v 1.7.2.1 2018/05/21 04:35:49 pgoyette Exp $	*/
 
 /* Id: isakmp_frag.c,v 1.4 2004/11/13 17:31:36 manubsd Exp */
 
@@ -219,7 +219,6 @@ isakmp_frag_extract(iph1, msg)
 	struct isakmp_frag *frag;
 	struct isakmp_frag_item *item;
 	vchar_t *buf;
-	size_t len;
 	int last_frag = 0;
 	char *data;
 	int i;

@@ -1,4 +1,4 @@
-/* $NetBSD: aarch64_machdep.c,v 1.1.28.1 2018/04/07 04:12:10 pgoyette Exp $ */
+/* $NetBSD: aarch64_machdep.c,v 1.1.28.2 2018/05/21 04:35:57 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.1.28.1 2018/04/07 04:12:10 pgoyette Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.1.28.2 2018/05/21 04:35:57 pgoyette Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -41,6 +41,7 @@ __KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.1.28.1 2018/04/07 04:12:10 pgo
 #include <sys/bus.h>
 #include <sys/kauth.h>
 #include <sys/msgbuf.h>
+#include <sys/sysctl.h>
 
 #include <dev/mm.h>
 
@@ -62,6 +63,15 @@ __KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.1.28.1 2018/04/07 04:12:10 pgo
 char cpu_model[32];
 char machine[] = MACHINE;
 char machine_arch[] = MACHINE_ARCH;
+
+/* sysctl node num */
+static int sysctlnode_machdep_cpu_id;
+static int sysctlnode_machdep_id_revidr;
+static int sysctlnode_machdep_id_mvfr;
+static int sysctlnode_machdep_id_mpidr;
+static int sysctlnode_machdep_id_aa64isar;
+static int sysctlnode_machdep_id_aa64mmfr;
+static int sysctlnode_machdep_id_aa64pfr;
 
 const pcu_ops_t * const pcu_ops_md_defs[PCU_UNIT_COUNT] = {
 	[PCU_FPU] = &pcu_fpu_ops
@@ -251,6 +261,130 @@ initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
 	return tf;
 }
 
+/*
+ * machine dependent system variables.
+ */
+static int
+aarch64_sysctl_machdep_sysreg_helper(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node;
+	uint64_t databuf[8];
+	void *data;
+
+	node = *rnode;
+	node.sysctl_data = data = &databuf;
+
+	/*
+	 * Don't keep values in advance due to system registers may have
+	 * different values on each CPU cores. (e.g. big.LITTLE)
+	 */
+	if (rnode->sysctl_num == sysctlnode_machdep_cpu_id) {
+		((uint32_t *)data)[0] = reg_midr_el1_read();
+		node.sysctl_size = sizeof(uint32_t);
+
+	} else if (rnode->sysctl_num == sysctlnode_machdep_id_revidr) {
+		((uint32_t *)data)[0] = reg_revidr_el1_read();
+		node.sysctl_size = sizeof(uint32_t);
+
+	} else if (rnode->sysctl_num == sysctlnode_machdep_id_mvfr) {
+		((uint32_t *)data)[0] = reg_mvfr0_el1_read();
+		((uint32_t *)data)[1] = reg_mvfr1_el1_read();
+		((uint32_t *)data)[2] = reg_mvfr2_el1_read();
+		node.sysctl_size = sizeof(uint32_t) * 3;
+
+	} else if (rnode->sysctl_num == sysctlnode_machdep_id_mpidr) {
+		((uint64_t *)data)[0] = reg_mpidr_el1_read();
+		node.sysctl_size = sizeof(uint64_t);
+
+	} else if (rnode->sysctl_num == sysctlnode_machdep_id_aa64isar) {
+		((uint64_t *)data)[0] = reg_id_aa64isar0_el1_read();
+		((uint64_t *)data)[1] = reg_id_aa64isar1_el1_read();
+		node.sysctl_size = sizeof(uint64_t) * 2;
+
+	} else if (rnode->sysctl_num == sysctlnode_machdep_id_aa64mmfr) {
+		((uint64_t *)data)[0] = reg_id_aa64mmfr0_el1_read();
+		((uint64_t *)data)[1] = reg_id_aa64mmfr1_el1_read();
+		node.sysctl_size = sizeof(uint64_t) * 2;
+
+	} else if (rnode->sysctl_num == sysctlnode_machdep_id_aa64pfr) {
+		((uint64_t *)data)[0] = reg_id_aa64pfr0_el1_read();
+		((uint64_t *)data)[1] = reg_id_aa64pfr1_el1_read();
+		node.sysctl_size = sizeof(uint64_t) * 2;
+
+	} else {
+		return EOPNOTSUPP;
+	}
+
+	return sysctl_lookup(SYSCTLFN_CALL(&node));
+}
+
+SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
+{
+	const struct sysctlnode *node;
+
+	sysctl_createv(clog, 0, NULL, NULL,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "machdep", NULL,
+	    NULL, 0, NULL, 0, CTL_MACHDEP, CTL_EOL);
+
+	sysctl_createv(clog, 0, NULL, &node,
+	    CTLFLAG_PERMANENT|CTLFLAG_READONLY, CTLTYPE_INT,
+	    "cpu_id",
+	    SYSCTL_DESCR("MIDR_EL1, Main ID Register"),
+	    aarch64_sysctl_machdep_sysreg_helper, 0, NULL, 0,
+	    CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+	sysctlnode_machdep_cpu_id = node->sysctl_num;
+
+	sysctl_createv(clog, 0, NULL, &node,
+	    CTLFLAG_PERMANENT|CTLFLAG_READONLY, CTLTYPE_INT,
+	    "id_revidr",
+	    SYSCTL_DESCR("REVIDR_EL1, Revision ID Register"),
+	    aarch64_sysctl_machdep_sysreg_helper, 0, NULL, 0,
+	    CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+	sysctlnode_machdep_id_revidr = node->sysctl_num;
+
+	sysctl_createv(clog, 0, NULL, &node,
+	    CTLFLAG_PERMANENT|CTLFLAG_READONLY, CTLTYPE_STRUCT,
+	    "id_mvfr",
+	    SYSCTL_DESCR("MVFRn_EL1, Media and VFP Feature Registers"),
+	    aarch64_sysctl_machdep_sysreg_helper, 0, NULL, 0,
+	    CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+	sysctlnode_machdep_id_mvfr = node->sysctl_num;
+
+	sysctl_createv(clog, 0, NULL, &node,
+	    CTLFLAG_PERMANENT|CTLFLAG_READONLY, CTLTYPE_STRUCT,
+	    "id_mpidr",
+	    SYSCTL_DESCR("MPIDR_EL1, Multiprocessor Affinity Register"),
+	    aarch64_sysctl_machdep_sysreg_helper, 0, NULL, 0,
+	    CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+	sysctlnode_machdep_id_mpidr = node->sysctl_num;
+
+	sysctl_createv(clog, 0, NULL, &node,
+	    CTLFLAG_PERMANENT|CTLFLAG_READONLY, CTLTYPE_STRUCT,
+	    "id_aa64isar",
+	    SYSCTL_DESCR("ID_AA64ISARn_EL1, "
+	    "AArch64 Instruction Set Attribute Registers"),
+	    aarch64_sysctl_machdep_sysreg_helper, 0, NULL, 0,
+	    CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+	sysctlnode_machdep_id_aa64isar = node->sysctl_num;
+
+	sysctl_createv(clog, 0, NULL, &node,
+	    CTLFLAG_PERMANENT|CTLFLAG_READONLY, CTLTYPE_STRUCT,
+	    "id_aa64mmfr",
+	    SYSCTL_DESCR("ID_AA64MMFRn_EL1, "
+	    "AArch64 Memory Model Feature Registers"),
+	    aarch64_sysctl_machdep_sysreg_helper, 0, NULL, 0,
+	    CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+	sysctlnode_machdep_id_aa64mmfr = node->sysctl_num;
+
+	sysctl_createv(clog, 0, NULL, &node,
+	    CTLFLAG_PERMANENT|CTLFLAG_READONLY, CTLTYPE_STRUCT,
+	    "id_aa64pfr",
+	    SYSCTL_DESCR("ID_AA64PFRn_EL1, "
+	    "AArch64 Processor Feature Registers"),
+	    aarch64_sysctl_machdep_sysreg_helper, 0, NULL, 0,
+	    CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+	sysctlnode_machdep_id_aa64pfr = node->sysctl_num;
+}
 
 void
 parse_mi_bootargs(char *args)

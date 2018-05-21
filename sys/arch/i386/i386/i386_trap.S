@@ -1,4 +1,4 @@
-/*	$NetBSD: i386_trap.S,v 1.12.2.1 2018/03/22 01:44:45 pgoyette Exp $	*/
+/*	$NetBSD: i386_trap.S,v 1.12.2.2 2018/05/21 04:36:00 pgoyette Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -66,7 +66,7 @@
 
 #if 0
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: i386_trap.S,v 1.12.2.1 2018/03/22 01:44:45 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i386_trap.S,v 1.12.2.2 2018/05/21 04:36:00 pgoyette Exp $");
 #endif
 
 /*
@@ -88,8 +88,49 @@ IDTVEC(trap00)
 	ZTRAP(T_DIVIDE)
 IDTVEC_END(trap00)
 
+/*
+ * Handle the SS shadow, CVE-2018-8897.
+ *
+ * We scan the IDT to determine if we hit an entry point. If so, we leave
+ * without restoring the segregs, because we could fault while doing that.
+ */
 IDTVEC(trap01)
+#ifndef XEN
+	pushl	$0
+	pushl	$T_TRCTRAP
+	INTRENTRY
+
+	testb	$SEL_UPL,TF_CS(%esp)
+	jnz	.Lnormal_dbentry
+
+	pushl	%esp
+	call	ss_shadow
+	addl	$4,%esp
+
+	cmpl	$1,%eax
+	jne	.Lnormal_dbentry
+
+	/* SS shadow, ignore the exception. */
+	xorl	%eax,%eax
+	movl	%eax,%dr6
+
+	/* INTRFASTEXIT, but without segregs. */
+	movl	TF_EDI(%esp),%edi
+	movl	TF_ESI(%esp),%esi
+	movl	TF_EBP(%esp),%ebp
+	movl	TF_EBX(%esp),%ebx
+	movl	TF_EDX(%esp),%edx
+	movl	TF_ECX(%esp),%ecx
+	movl	TF_EAX(%esp),%eax
+	addl	$(TF_PUSHSIZE+8),%esp
+	iret
+
+.Lnormal_dbentry:
+	STI(%eax)
+	jmp _C_LABEL(calltrap)
+#else
 	ZTRAP(T_TRCTRAP)
+#endif
 IDTVEC_END(trap01)
 
 /*

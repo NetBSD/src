@@ -2460,6 +2460,8 @@ MAKEOVERRIDES =
 ALLDEPFILES = \
 	aarch64-linux-nat.c \
 	aarch64-linux-tdep.c \
+	aarch64-nbsd-nat.c \
+	aarch64-nbsd-tdep.c \
 	aarch64-newlib-tdep.c \
 	aarch64-tdep.c \
 	aix-thread.c \

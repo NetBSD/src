@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.4.28.1 2018/05/02 07:20:02 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.4.28.2 2018/05/21 04:35:56 pgoyette Exp $
 
-MAN=	gpio.3lua intro.3lua netpgp.3lua sqlite.3lua syslog.3lua
+MAN=	bozohttpd.3lua gpio.3lua intro.3lua netpgp.3lua sqlite.3lua syslog.3lua
 
 MLINKS+=gpio.3lua gpio.open.3lua \
 	gpio.3lua gpio.info.3lua \

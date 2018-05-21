@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.90.2.1 2018/03/30 06:20:12 pgoyette Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.90.2.2 2018/05/21 04:36:01 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.90.2.1 2018/03/30 06:20:12 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.90.2.2 2018/05/21 04:36:01 pgoyette Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_ppccache.h"
@@ -1315,6 +1315,11 @@ cpu_spinup(device_t self, struct cpu_info *ci)
 	/* copy special registers */
 
 	h->hatch_hid0 = mfspr(SPR_HID0);
+#if defined(PPC_OEA64_BRIDGE) || defined (_ARCH_PPC64)
+	h->hatch_hid4 = mfspr(SPR_HID4);
+	h->hatch_hid5 = mfspr(SPR_HID5);
+	printf("HIDs: %016llx %016llx\n", h->hatch_hid4, h->hatch_hid5);
+#endif
 
 	__asm volatile ("mfsdr1 %0" : "=r"(h->hatch_sdr1));
 	for (i = 0; i < 16; i++) {
@@ -1432,7 +1437,11 @@ cpu_hatch(void)
 
 #ifdef PPC_OEA64_BRIDGE
 	if ((oeacpufeat & OEACPU_64_BRIDGE) != 0) {
+
 		mtspr64(SPR_HID0, h->hatch_hid0);
+		mtspr64(SPR_HID4, h->hatch_hid4);
+		mtspr64(SPR_HID5, h->hatch_hid5);
+		mtspr64(SPR_HIOR, 0);
 	} else
 #endif
 		mtspr(SPR_HID0, h->hatch_hid0);

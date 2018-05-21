@@ -1,9 +1,9 @@
-#	$NetBSD: files.nfs,v 1.14 2014/10/11 06:42:20 uebayasi Exp $
+#	$NetBSD: files.nfs,v 1.14.18.1 2018/05/21 04:36:17 pgoyette Exp $
 
 deffs				NFS
 
 defflag opt_nfs_boot.h		NFS_BOOT_BOOTP NFS_BOOT_BOOTPARAM NFS_BOOT_DHCP
-				NFS_BOOT_GATEWAY NFS_BOOT_TCP
+				NFS_BOOT_GATEWAY NFS_BOOT_TCP NFS_BOOT_UDP
 				NFS_BOOT_BOOTSTATIC
 
 defparam opt_nfs_boot.h		NFS_BOOT_BOOTP_REQFILE NFS_BOOT_OPTIONS

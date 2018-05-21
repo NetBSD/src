@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.85 2017/10/28 00:37:13 pgoyette Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.85.2.1 2018/05/21 04:36:17 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.85 2017/10/28 00:37:13 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.85.2.1 2018/05/21 04:36:17 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -424,6 +424,7 @@ uvm_loananon(struct uvm_faultinfo *ufi, void ***output, int flags,
 		pmap_page_protect(pg, VM_PROT_READ);
 	}
 	pg->loan_count++;
+	KASSERT(pg->loan_count > 0);	/* detect wrap-around */
 	uvm_pageactivate(pg);
 	mutex_exit(&uvm_pageqlock);
 	**output = pg;

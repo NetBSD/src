@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.45 2018/02/22 13:27:18 maxv Exp $	*/
+/*	$NetBSD: pmap.h,v 1.45.2.1 2018/05/21 04:35:58 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -317,6 +317,20 @@ pmap_pte_flush(void)
 	splx(s);
 }
 #endif
+
+#ifdef __HAVE_DIRECT_MAP
+#define PMAP_DIRECT
+
+static __inline int
+pmap_direct_process(paddr_t pa, voff_t pgoff, size_t len,
+    int (*process)(void *, size_t, void *), void *arg)
+{
+	vaddr_t va = PMAP_DIRECT_MAP(pa);
+
+	return process((void *)(va + pgoff), len, arg);
+}
+
+#endif /* __HAVE_DIRECT_MAP */
 
 void pmap_changeprot_local(vaddr_t, vm_prot_t);
 

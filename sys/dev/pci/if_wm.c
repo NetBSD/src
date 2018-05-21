@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.566.2.3 2018/05/02 07:20:06 pgoyette Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.566.2.4 2018/05/21 04:36:06 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.566.2.3 2018/05/02 07:20:06 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.566.2.4 2018/05/21 04:36:06 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -301,14 +301,14 @@ struct wm_softc;
 	struct evcnt qname##_ev_##evname;
 
 #define WM_Q_EVCNT_ATTACH(qname, evname, q, qnum, xname, evtype)	\
-	do{								\
+	do {								\
 		snprintf((q)->qname##_##evname##_evcnt_name,		\
 		    sizeof((q)->qname##_##evname##_evcnt_name),		\
 		    "%s%02d%s", #qname, (qnum), #evname);		\
 		evcnt_attach_dynamic(&(q)->qname##_ev_##evname,		\
 		    (evtype), NULL, (xname),				\
 		    (q)->qname##_##evname##_evcnt_name);		\
-	}while(0)
+	} while (0)
 
 #define WM_Q_MISC_EVCNT_ATTACH(qname, evname, q, qnum, xname)		\
 	WM_Q_EVCNT_ATTACH(qname, evname, q, qnum, xname, EVCNT_TYPE_MISC)
@@ -2203,7 +2203,7 @@ alloc_retry:
 		/* SPI */
 		sc->sc_flags |= WM_F_EEPROM_SPI;
 		wm_nvm_set_addrbits_size_eecd(sc);
-		if((sc->sc_type == WM_T_80003)
+		if ((sc->sc_type == WM_T_80003)
 		    || (sc->sc_nvm_wordsize < (1 << 15))) {
 			sc->nvm.read = wm_nvm_read_eerd;
 			/* Don't use WM_F_LOCK_EECD because we use EERD */
@@ -4905,7 +4905,7 @@ wm_init_rss(struct wm_softc *sc)
 		int qid, reta_ent;
 
 		qid  = i % sc->sc_nqueues;
-		switch(sc->sc_type) {
+		switch (sc->sc_type) {
 		case WM_T_82574:
 			reta_ent = __SHIFTIN(qid,
 			    RETA_ENT_QINDEX_MASK_82574);
@@ -4964,7 +4964,7 @@ wm_adjust_qnum(struct wm_softc *sc, int nvectors)
 		return;
 	}
 
-	switch(sc->sc_type) {
+	switch (sc->sc_type) {
 	case WM_T_82572:
 		hw_ntxqueues = 2;
 		hw_nrxqueues = 2;
@@ -5237,7 +5237,7 @@ wm_unset_stopping_flags(struct wm_softc *sc)
 	/*
 	 * must unset stopping flags in ascending order.
 	 */
-	for(i = 0; i < sc->sc_nqueues; i++) {
+	for (i = 0; i < sc->sc_nqueues; i++) {
 		struct wm_txqueue *txq = &sc->sc_queue[i].wmq_txq;
 		struct wm_rxqueue *rxq = &sc->sc_queue[i].wmq_rxq;
 
@@ -5265,7 +5265,7 @@ wm_set_stopping_flags(struct wm_softc *sc)
 	/*
 	 * must set stopping flags in ascending order.
 	 */
-	for(i = 0; i < sc->sc_nqueues; i++) {
+	for (i = 0; i < sc->sc_nqueues; i++) {
 		struct wm_rxqueue *rxq = &sc->sc_queue[i].wmq_rxq;
 		struct wm_txqueue *txq = &sc->sc_queue[i].wmq_txq;
 
@@ -6508,8 +6508,8 @@ wm_alloc_txrx_queues(struct wm_softc *sc)
 		WM_Q_INTR_EVCNT_ATTACH(rxq, rxintr, rxq, i, xname);
 		WM_Q_INTR_EVCNT_ATTACH(rxq, rxdefer, rxq, i, xname);
 
-		WM_Q_INTR_EVCNT_ATTACH(rxq, rxipsum, rxq, i, xname);
-		WM_Q_INTR_EVCNT_ATTACH(rxq, rxtusum, rxq, i, xname);
+		WM_Q_MISC_EVCNT_ATTACH(rxq, rxipsum, rxq, i, xname);
+		WM_Q_MISC_EVCNT_ATTACH(rxq, rxtusum, rxq, i, xname);
 #endif /* WM_EVENT_COUNTERS */
 
 		rx_done++;
@@ -6703,6 +6703,7 @@ wm_init_tx_queue(struct wm_softc *sc, struct wm_queue *wmq,
 	wm_init_tx_regs(sc, wmq, txq);
 	wm_init_tx_buffer(sc, txq);
 
+	txq->txq_flags = 0; /* Clear WM_TXQ_NO_SPACE */
 	txq->txq_sending = false;
 }
 
@@ -9147,7 +9148,7 @@ wm_linkintr_msix(void *arg)
 	if (sc->sc_core_stopping)
 		goto out;
 
-	if((reg & ICR_LSC) != 0) {
+	if ((reg & ICR_LSC) != 0) {
 		WM_EVCNT_INCR(&sc->sc_ev_linkintr);
 		wm_linkintr(sc, ICR_LSC);
 	}
@@ -11629,10 +11630,10 @@ wm_sfp_get_media_type(struct wm_softc *sc)
 
 	if ((val & (SFF_SFP_ETH_FLAGS_1000SX | SFF_SFP_ETH_FLAGS_1000LX)) != 0)
 		mediatype = WM_MEDIATYPE_SERDES;
-	else if ((val & SFF_SFP_ETH_FLAGS_1000T) != 0){
+	else if ((val & SFF_SFP_ETH_FLAGS_1000T) != 0) {
 		sc->sc_flags |= WM_F_SGMII;
 		mediatype = WM_MEDIATYPE_COPPER;
-	} else if ((val & SFF_SFP_ETH_FLAGS_100FX) != 0){
+	} else if ((val & SFF_SFP_ETH_FLAGS_100FX) != 0) {
 		sc->sc_flags |= WM_F_SGMII;
 		mediatype = WM_MEDIATYPE_SERDES;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci_pci.c,v 1.61.8.1 2018/04/16 02:00:01 pgoyette Exp $	*/
+/*	$NetBSD: uhci_pci.c,v 1.61.8.2 2018/05/21 04:36:12 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci_pci.c,v 1.61.8.1 2018/04/16 02:00:01 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci_pci.c,v 1.61.8.2 2018/05/21 04:36:12 pgoyette Exp $");
 
 #include "ehci.h"
 
@@ -154,7 +154,7 @@ uhci_pci_attach(device_t parent, device_t self, void *aux)
 	    bus_space_read_2(sc->sc.iot, sc->sc.ioh, UHCI_STS));
 	splx(s);
 
-	switch(pci_conf_read(pc, tag, PCI_USBREV) & PCI_USBREV_MASK) {
+	switch (pci_conf_read(pc, tag, PCI_USBREV) & PCI_USBREV_MASK) {
 	case PCI_USBREV_PRE_1_0:
 		sc->sc.sc_bus.ub_revision = USBREV_PRE_1_0;
 		break;

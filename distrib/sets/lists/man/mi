@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1577.2.1 2018/05/02 07:19:59 pgoyette Exp $
+# $NetBSD: mi,v 1.1577.2.2 2018/05/21 04:35:50 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -659,7 +659,9 @@
 ./usr/share/man/cat3/atari/ahdi_writelabel.0	man-obsolete		obsolete
 ./usr/share/man/cat3/i386			man-obsolete		obsolete
 ./usr/share/man/cat3/i386/keycap.0		man-obsolete		obsolete
+./usr/share/man/cat3/libbozohttpd.0		man-sys-catman		.cat
 ./usr/share/man/cat3/libunbound.0		man-netutil-catman	.cat,unbound
+./usr/share/man/cat3lua/bozohttpd.0		man-sys-catman		.cat
 ./usr/share/man/cat3lua/gpio.0			man-sys-catman		.cat
 ./usr/share/man/cat3lua/gpio.attach.0		man-sys-catman		.cat
 ./usr/share/man/cat3lua/gpio.close.0		man-sys-catman		.cat
@@ -1121,6 +1123,8 @@
 ./usr/share/man/cat4/gpioiic.0			man-sys-catman		.cat
 ./usr/share/man/cat4/gpiolock.0			man-sys-catman		.cat
 ./usr/share/man/cat4/gpioow.0			man-sys-catman		.cat
+./usr/share/man/cat4/gpioirq.0			man-sys-catman		.cat
+./usr/share/man/cat4/gpiopps.0			man-sys-catman		.cat
 ./usr/share/man/cat4/gpiopwm.0			man-sys-catman		.cat
 ./usr/share/man/cat4/gpiosim.0			man-sys-catman		.cat
 ./usr/share/man/cat4/gre.0			man-sys-catman		.cat
@@ -1360,6 +1364,7 @@
 ./usr/share/man/cat4/ix.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ixg.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ixpide.0			man-sys-catman		.cat
+./usr/share/man/cat4/ixv.0			man-sys-catman		.cat
 ./usr/share/man/cat4/iy.0			man-sys-catman		.cat
 ./usr/share/man/cat4/jme.0			man-sys-catman		.cat
 ./usr/share/man/cat4/jmide.0			man-sys-catman		.cat
@@ -2264,6 +2269,7 @@
 ./usr/share/man/cat5/wtmpx.0			man-sys-catman		.cat
 ./usr/share/man/cat5/ypserv.acl.0		man-obsolete		obsolete
 ./usr/share/man/cat7/ascii.0			man-reference-catman	.cat
+./usr/share/man/cat7/audio.0			man-reference-catman	.cat
 ./usr/share/man/cat7/atf.0			man-atf-catman		.cat,atf
 ./usr/share/man/cat7/c.0			man-reference-catman	.cat
 ./usr/share/man/cat7/c78.0			man-reference-catman	.cat
@@ -3844,7 +3850,9 @@
 ./usr/share/man/html1/zless.html		man-util-htmlman	html
 ./usr/share/man/html1/zmore.html		man-util-htmlman	html
 ./usr/share/man/html1/znew.html			man-util-htmlman	html
+./usr/share/man/html3/libbozohttpd.html		man-sys-htmlman		html
 ./usr/share/man/html3/libunbound.html		man-netutil-htmlman	html,unbound
+./usr/share/man/html3lua/bozohttpd.html		man-sys-htmlman		html
 ./usr/share/man/html3lua/gpio.attach.html	man-sys-htmlman		html
 ./usr/share/man/html3lua/gpio.close.html	man-sys-htmlman		html
 ./usr/share/man/html3lua/gpio.html		man-sys-htmlman		html
@@ -4257,6 +4265,8 @@
 ./usr/share/man/html4/gpioiic.html		man-sys-htmlman		html
 ./usr/share/man/html4/gpiolock.html		man-sys-htmlman		html
 ./usr/share/man/html4/gpioow.html		man-sys-htmlman		html
+./usr/share/man/html4/gpioirq.html		man-sys-htmlman		html
+./usr/share/man/html4/gpiopps.html		man-sys-htmlman		html
 ./usr/share/man/html4/gpiopwm.html		man-sys-htmlman		html
 ./usr/share/man/html4/gpiosim.html		man-sys-htmlman		html
 ./usr/share/man/html4/gre.html			man-sys-htmlman		html
@@ -4463,6 +4473,7 @@
 ./usr/share/man/html4/ix.html			man-sys-htmlman		html
 ./usr/share/man/html4/ixg.html			man-sys-htmlman		html
 ./usr/share/man/html4/ixpide.html		man-sys-htmlman		html
+./usr/share/man/html4/ixv.html			man-sys-htmlman		html
 ./usr/share/man/html4/iy.html			man-sys-htmlman		html
 ./usr/share/man/html4/jme.html			man-sys-htmlman		html
 ./usr/share/man/html4/jmide.html		man-sys-htmlman		html
@@ -5302,6 +5313,7 @@
 ./usr/share/man/html5/wtmp.html			man-sys-htmlman		html
 ./usr/share/man/html5/wtmpx.html		man-sys-htmlman		html
 ./usr/share/man/html7/ascii.html		man-reference-htmlman	html
+./usr/share/man/html7/audio.html		man-reference-htmlman	html
 ./usr/share/man/html7/atf.html			man-atf-htmlman		html,atf
 ./usr/share/man/html7/c.html			man-reference-htmlman	html
 ./usr/share/man/html7/c78.html			man-reference-htmlman	html
@@ -6705,7 +6717,9 @@
 ./usr/share/man/man3/atari/ahdi_writelabel.3	man-obsolete		obsolete
 ./usr/share/man/man3/i386			man-obsolete		obsolete
 ./usr/share/man/man3/i386/keycap.3		man-obsolete		obsolete
+./usr/share/man/man3/libbozohttpd.3		man-sys-man		.man
 ./usr/share/man/man3/libunbound.3		man-netutil-man		.man,unbound
+./usr/share/man/man3lua/bozohttpd.3lua		man-sys-man		.man
 ./usr/share/man/man3lua/gpio.3lua		man-sys-man		.man
 ./usr/share/man/man3lua/gpio.attach.3lua	man-sys-man		.man
 ./usr/share/man/man3lua/gpio.close.3lua		man-sys-man		.man
@@ -7167,6 +7181,8 @@
 ./usr/share/man/man4/gpioiic.4			man-sys-man		.man
 ./usr/share/man/man4/gpiolock.4			man-sys-man		.man
 ./usr/share/man/man4/gpioow.4			man-sys-man		.man
+./usr/share/man/man4/gpioirq.4			man-sys-man		.man
+./usr/share/man/man4/gpiopps.4			man-sys-man		.man
 ./usr/share/man/man4/gpiopwm.4			man-sys-man		.man
 ./usr/share/man/man4/gpiosim.4			man-sys-man		.man
 ./usr/share/man/man4/gre.4			man-sys-man		.man
@@ -7406,6 +7422,7 @@
 ./usr/share/man/man4/ix.4			man-sys-man		.man
 ./usr/share/man/man4/ixg.4			man-sys-man		.man
 ./usr/share/man/man4/ixpide.4			man-sys-man		.man
+./usr/share/man/man4/ixv.4			man-sys-man		.man
 ./usr/share/man/man4/iy.4			man-sys-man		.man
 ./usr/share/man/man4/jme.4			man-sys-man		.man
 ./usr/share/man/man4/jmide.4			man-sys-man		.man
@@ -8310,6 +8327,7 @@
 ./usr/share/man/man5/wtmpx.5			man-sys-man		.man
 ./usr/share/man/man5/ypserv.acl.5		man-obsolete		obsolete
 ./usr/share/man/man7/ascii.7			man-reference-man	.man
+./usr/share/man/man7/audio.7			man-reference-man	.man
 ./usr/share/man/man7/atf.7			man-atf-man		.man,atf
 ./usr/share/man/man7/c.7			man-reference-man	.man
 ./usr/share/man/man7/c78.7			man-reference-man	.man

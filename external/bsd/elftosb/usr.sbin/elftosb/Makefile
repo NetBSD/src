@@ -1,8 +1,12 @@
-# $NetBSD: Makefile,v 1.5 2017/06/19 20:12:34 christos Exp $
+# $NetBSD: Makefile,v 1.5.4.1 2018/05/21 04:35:51 pgoyette Exp $
 
 .include <bsd.init.mk>
 .include <bsd.endian.mk>
 .include <bsd.own.mk>
+
+.if !defined(DIST)
+.include "${.PARSEDIR}/../../Makefile.inc"
+.endif
 
 .PATH:		${DIST}/elftosb2
 

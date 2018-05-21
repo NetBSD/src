@@ -1,4 +1,4 @@
-/* $NetBSD: tcp_sack.c,v 1.33.14.1 2018/03/30 06:20:16 pgoyette Exp $ */
+/* $NetBSD: tcp_sack.c,v 1.33.14.2 2018/05/21 04:36:16 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_sack.c,v 1.33.14.1 2018/03/30 06:20:16 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_sack.c,v 1.33.14.2 2018/05/21 04:36:16 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -144,7 +144,6 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_sack.c,v 1.33.14.1 2018/03/30 06:20:16 pgoyette 
 #endif
 
 #ifndef INET6
-/* always need ip6.h for IP6_EXTHDR_GET */
 #include <netinet/ip6.h>
 #endif
 
@@ -153,7 +152,6 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_sack.c,v 1.33.14.1 2018/03/30 06:20:16 pgoyette 
 #include <netinet/tcp_seq.h>
 #include <netinet/tcp_timer.h>
 #include <netinet/tcp_var.h>
-#include <netinet/tcpip.h>
 #include <netinet/tcp_debug.h>
 
 /* SACK block pool. */

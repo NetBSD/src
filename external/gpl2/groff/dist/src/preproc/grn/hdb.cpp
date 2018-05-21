@@ -1,4 +1,4 @@
-/*	$NetBSD: hdb.cpp,v 1.1.1.1 2016/01/13 18:41:49 christos Exp $	*/
+/*	$NetBSD: hdb.cpp,v 1.1.1.1.14.1 2018/05/21 04:35:52 pgoyette Exp $	*/
 
  /* Last non-groff version: hdb.c  1.8 (Berkeley) 84/10/20
  *
@@ -33,7 +33,7 @@ extern POINT *PTInit();
 extern POINT *PTMakePoint(double x, double y, POINT ** pplist);
 
 
-int DBGetType(register char *s);
+int DBGetType(char *s);
 
 
 /*
@@ -59,7 +59,7 @@ DBCreateElt(int type,
 	    char *text,
 	    ELT **db)
 {
-  register ELT *temp;
+  ELT *temp;
 
   temp = (ELT *) malloc(sizeof(ELT));
   temp->nextelt = *db;
@@ -78,11 +78,11 @@ DBCreateElt(int type,
  * pointer to that database.
  */
 ELT *
-DBRead(register FILE *file)
+DBRead(FILE *file)
 {
-  register int i;
-  register int done;		/* flag for input exhausted */
-  register double nx;		/* x holder so x is not set before orienting */
+  int i;
+  int done;			/* flag for input exhausted */
+  double nx;			/* x holder so x is not set before orienting */
   int type;			/* element type */
   ELT *elist;			/* pointer to the file's elements */
   POINT *plist;			/* pointer for reading in points */
@@ -207,7 +207,7 @@ DBRead(register FILE *file)
  * New file format has literal names for element types.
  */
 int
-DBGetType(register char *s)
+DBGetType(char *s)
 {
   if (isdigit(s[0]) || (s[0] == '-'))	/* old element format or EOF */
     return (atoi(s));
@@ -293,7 +293,7 @@ xscanf(FILE *f,
        double *xp,
        double *yp)
 {
-  register int c, i, j, m, frac;
+  int c, i, j, m, frac;
   int iscale = 1, jscale = 1;	/* x = i/scale, y=j/jscale */
 
   while ((c = getc(f)) == ' ');

@@ -1,4 +1,4 @@
-/*	$NetBSD: midiplay.c,v 1.30 2015/03/22 22:47:43 mrg Exp $	*/
+/*	$NetBSD: midiplay.c,v 1.30.14.1 2018/05/21 04:36:18 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: midiplay.c,v 1.30 2015/03/22 22:47:43 mrg Exp $");
+__RCSID("$NetBSD: midiplay.c,v 1.30.14.1 2018/05/21 04:36:18 pgoyette Exp $");
 #endif
 
 
@@ -128,6 +128,13 @@ static u_char sample[] = {
 #undef E
 #undef F
 
+static u_char silence_sample[] = {
+	'M', 'T', 'h', 'd',  0, 0, 0, 6,  0, 1,  0, 1,  0, 8,
+	'M', 'T', 'r', 'k',  0, 0, 0, 8,
+	0, 0xb0, 0x78, 0x00, 
+	0, 0xff, 0x2f, 0
+};
+
 #define MARK_HEADER "MThd"
 #define MARK_TRACK "MTrk"
 #define MARK_LEN 4
@@ -148,8 +155,8 @@ static u_char sample[] = {
 static void __attribute__((__noreturn__))
 usage(void)
 {
-	fprintf(stderr, "usage: %s [-d unit] [-f file] [-l] [-m] [-p pgm] [-q] "
-	       "[-t %%tempo] [-v] [-x] [file ...]\n",
+	fprintf(stderr, "usage: %s [-lmqsvx] [-d devno] [-f file] "
+		"[-p pgm] [-t tempo] [file ...]\n",
 		getprogname());
 	exit(1);
 }
@@ -408,9 +415,12 @@ playdata(u_char *buf, u_int tot, const char *name)
 		err(1, "ioctl(SEQUENCER_INFO) failed");
 
 	end = buf + tot;
-	if (verbose)
-		printf("Playing %s (%d bytes) on %s (unit %d)... \n",
-		    name, tot, info.name, info.device);
+	if (verbose) {
+		printf("Playing %s (%d bytes)", name, tot);
+		if (play)
+			printf(" on %s (unit %d)...", info.name, info.device);
+		puts("\n");
+	}
 
 	if (tot < MARK_LEN + 4) {
 		warnx("Not a MIDI file, too short");
@@ -716,6 +726,7 @@ main(int argc, char **argv)
 	int ch;
 	int listdevs = 0;
 	int example = 0;
+	int silence = 0;
 	int nmidi;
 	const char *file = DEVMUSIC;
 	const char *sunit;
@@ -725,7 +736,7 @@ main(int argc, char **argv)
 	if ((sunit = getenv("MIDIUNIT")))
 		unit = parse_unit(sunit);
 
-	while ((ch = getopt(argc, argv, "?d:f:lmp:qt:vx")) != -1) {
+	while ((ch = getopt(argc, argv, "?d:f:lmp:qst:vx")) != -1) {
 		switch(ch) {
 		case 'd':
 			unit = parse_unit(optarg);
@@ -744,6 +755,9 @@ main(int argc, char **argv)
 			break;
 		case 'q':
 			play = 0;
+			break;
+		case 's':
+			silence++;
 			break;
 		case 't':
 			ttempo = atoi(optarg);
@@ -785,6 +799,10 @@ main(int argc, char **argv)
 	if (example)
 		while (example--)
 			playdata(sample, sizeof sample, "<Gubben Noa>");
+	else if (silence)
+		while (silence--)
+			playdata(silence_sample, sizeof silence_sample,
+				 "<Silence>");
 	else if (argc == 0)
 		playfile(stdin, "<stdin>");
 	else

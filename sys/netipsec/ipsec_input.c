@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_input.c,v 1.62.2.3 2018/05/02 07:20:24 pgoyette Exp $	*/
+/*	$NetBSD: ipsec_input.c,v 1.62.2.4 2018/05/21 04:36:16 pgoyette Exp $	*/
 /*	$FreeBSD: ipsec_input.c,v 1.2.4.2 2003/03/28 20:32:53 sam Exp $	*/
 /*	$OpenBSD: ipsec_input.c,v 1.63 2003/02/20 18:35:43 deraadt Exp $	*/
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.62.2.3 2018/05/02 07:20:24 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.62.2.4 2018/05/21 04:36:16 pgoyette Exp $");
 
 /*
  * IPsec input processing.
@@ -139,7 +139,7 @@ ipsec4_fixup_checksum(struct mbuf *m)
 
 	switch (ip->ip_p) {
 	case IPPROTO_TCP:
-		IP6_EXTHDR_GET(th, struct tcphdr *, m, poff, sizeof(*th));
+		M_REGION_GET(th, struct tcphdr *, m, poff, sizeof(*th));
 		if (th == NULL)
 			return NULL;
 		off = th->th_off << 2;
@@ -151,7 +151,7 @@ ipsec4_fixup_checksum(struct mbuf *m)
 		th->th_sum = in4_cksum(m, IPPROTO_TCP, poff, plen);
 		break;
 	case IPPROTO_UDP:
-		IP6_EXTHDR_GET(uh, struct udphdr *, m, poff, sizeof(*uh));
+		M_REGION_GET(uh, struct udphdr *, m, poff, sizeof(*uh));
 		if (uh == NULL)
 			return NULL;
 		off = sizeof(*uh);
