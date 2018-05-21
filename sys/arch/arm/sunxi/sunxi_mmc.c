@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_mmc.c,v 1.23 2018/05/17 23:07:47 jmcneill Exp $ */
+/* $NetBSD: sunxi_mmc.c,v 1.24 2018/05/21 22:04:27 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_sunximmc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_mmc.c,v 1.23 2018/05/17 23:07:47 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_mmc.c,v 1.24 2018/05/21 22:04:27 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -475,7 +475,7 @@ static int
 sunxi_mmc_set_clock(struct sunxi_mmc_softc *sc, u_int freq, bool ddr)
 {
 	const struct sunxi_mmc_delay *delays;
-	int error, timing;
+	int error, timing = SUNXI_MMC_TIMING_400K;
 
 	if (sc->sc_config->delays) {
 		if (freq <= 400) {
