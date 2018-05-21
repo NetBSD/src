@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmr.c,v 1.27 2018/05/14 17:15:54 joerg Exp $	*/
+/*	$NetBSD: gtmr.c,v 1.28 2018/05/21 10:28:13 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.27 2018/05/14 17:15:54 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.28 2018/05/21 10:28:13 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -51,29 +51,27 @@ __KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.27 2018/05/14 17:15:54 joerg Exp $");
 #include <arm/cortex/mpcore_var.h>
 
 #define stable_write(reg) \
+static struct evcnt reg ## _write_ev; \
 static void \
 reg ## _stable_write(struct gtmr_softc *sc, uint64_t val) \
 { \
-	static int max_retry = 0; \
 	int retry; \
 	reg ## _write(val); \
 	retry = 0; \
 	while (reg ## _read() != (val) && retry++ < 200) \
 		reg ## _write(val); \
-	if (retry > max_retry) { \
-		aprint_verbose_dev(sc->sc_dev, #reg "_write max retries %d -> %d\n", \
-		    max_retry, retry); \
-		max_retry = retry; \
+	if (retry > reg ## _write_ev.ev_count) { \
+		reg ## _write_ev.ev_count = retry; \
 	} \
 }
 
 stable_write(gtmr_cntv_tval);
 
 #define stable_read(reg) \
+static struct evcnt reg ## _read_ev; \
 static uint64_t \
 reg ## _stable_read(struct gtmr_softc *sc) \
 { \
-	static int max_retry = 0; \
 	uint64_t oval, val; \
 	int retry = 0; \
 	val = reg ## _read(); \
@@ -83,10 +81,8 @@ reg ## _stable_read(struct gtmr_softc *sc) \
 		if (val == oval) \
 			break; \
 	} \
-	if (retry > max_retry) { \
-		aprint_verbose_dev(sc->sc_dev, #reg "_read max retries %d -> %d\n", \
-		    max_retry, retry); \
-		max_retry = retry; \
+	if (retry > reg ## _read_ev.ev_count) { \
+		reg ## _read_ev.ev_count = retry; \
 	} \
 	return val; \
 }
@@ -174,6 +170,15 @@ gtmr_attach(device_t parent, device_t self, void *aux)
 
 	evcnt_attach_dynamic(&sc->sc_ev_missing_ticks, EVCNT_TYPE_MISC, NULL,
 	    device_xname(self), "missing interrupts");
+
+	evcnt_attach_dynamic(&gtmr_cntv_tval_write_ev, EVCNT_TYPE_MISC, NULL,
+	    device_xname(self), "CNTV_TVAL write retry max");
+	evcnt_attach_dynamic(&gtmr_cntv_cval_read_ev, EVCNT_TYPE_MISC, NULL,
+	    device_xname(self), "CNTV_CVAL read retry max");
+	evcnt_attach_dynamic(&gtmr_cntvct_read_ev, EVCNT_TYPE_MISC, NULL,
+	    device_xname(self), "CNTVCT read retry max");
+	evcnt_attach_dynamic(&gtmr_cntpct_read_ev, EVCNT_TYPE_MISC, NULL,
+	    device_xname(self), "CNTPCT read retry max");
 
 	if (mpcaa->mpcaa_irq != -1) {
 		sc->sc_global_ih = intr_establish(mpcaa->mpcaa_irq, IPL_CLOCK,
