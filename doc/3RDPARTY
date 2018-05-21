@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1523 2018/05/05 00:13:01 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1524 2018/05/21 14:48:55 taca Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1174,7 +1174,7 @@ now to do a new import.
 
 Package:	Postfix
 Version:	3.1.4
-Current Vers:	3.1.6/3.2.2
+Current Vers:	3.1.6/3.2.6/3.3.1
 Maintainer:	Wietse Venema <wietse@porcupine.org>
 Archive Site:	ftp://postfix.cloud9.net/official/
 Home Page:	http://www.postfix.org/
