@@ -1,5 +1,5 @@
 #
-#	$NetBSD: SUNXI,v 1.59.2.4 2018/05/02 07:20:04 pgoyette Exp $
+#	$NetBSD: SUNXI,v 1.59.2.5 2018/05/21 04:36:00 pgoyette Exp $
 #
 #	Allwinner sunxi family
 #
@@ -184,7 +184,9 @@ sun8ih3ccu*	at fdt? pass 2		# H3 CCU
 sun8ih3rccu*	at fdt? pass 2		# H3 CCU (PRCM)
 sun9ia80ccu*	at fdt? pass 2		# A80 CCU
 sun50ia64ccu*	at fdt? pass 2		# A64 CCU
+sun50ia64rccu*	at fdt? pass 2		# A64 CCU (PRCM)
 sun50ih6ccu*	at fdt? pass 2		# H6 CCU
+sun50ih6rccu*	at fdt? pass 2		# H6 CCU (PRCM)
 sunxiresets*	at fdt? pass 1		# Misc. clock resets
 sunxigates*	at fdt? pass 1		# Misc. clock gates
 sunxigmacclk*	at fdt? pass 2		# GMAC MII/RGMII clock mux
@@ -213,6 +215,7 @@ sunxiwdt*	at fdt?			# Allwinner watchdog
 gic*		at fdt? pass 1		# GIC
 armgic0		at gic?
 sunxiintc*	at fdt? pass 1		# Allwinner INTC
+sunxinmi*	at fdt? pass 2		# Allwinner NMI / R_INTC
 
 # Memory controller
 
@@ -223,6 +226,9 @@ sun6idma*	at fdt?			# DMA controller (sun6i)
 # GPIO controller
 sunxigpio*	at fdt? pass 3		# GPIO
 gpio*		at gpiobus?
+
+# PWM controller
+sunxipwm*	at fdt? pass 3		# Allwinner PWM
 
 # Ethernet
 emac*		at fdt?		# Allwinner Fast or Gigabit Ethernet (EMAC)
@@ -243,6 +249,8 @@ wskbd*		at tcakp? console ?
 axp20x*		at iic?			# AXP209 Power Management IC
 axp20xreg*	at axp20x?
 axp22x*		at iic?			# AXP221 Power Management IC
+axppmic*	at iic?			# X-Powers AXP Power Management IC
+axpreg*		at axppmic?
 sy8106a*	at iic?			# Silergy SY81061 regulator
 pcf8563rtc*	at iic?			# PCF8563 RTC
 seeprom*	at iic?			# AT24Cxx Serial EEPROM
@@ -262,12 +270,19 @@ sunxirtc*	at fdt?			# RTC
 # Security ID EFUSE
 sunxisid*	at fdt?	pass 4		# SID
 
+# Backlight
+pwmbacklight*	at fdt?			# PWM Backlight controls
+
 # Thermal sensor
 sunxithermal*	at fdt?			# Thermal sensor controller
 
 # Audio
+ausoc*		at fdt?			# Simple SoC audio card
 sunxicodec*	at fdt?			# Audio codec
+sun8icodec*	at fdt?			# Audio codec (sun8i/sun50i)
 h3codec*	at fdt?			# H3 audio codec (analog part)
+a64acodec*	at fdt?			# A64 audio codec (analog part)
+sunxii2s*	at fdt?			# I2S/PCM
 audio*		at audiobus?
 spkr*		at audio?
 

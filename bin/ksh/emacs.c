@@ -1,4 +1,4 @@
-/*	$NetBSD: emacs.c,v 1.37 2017/06/30 04:41:19 kamil Exp $	*/
+/*	$NetBSD: emacs.c,v 1.37.4.1 2018/05/21 04:35:48 pgoyette Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -10,7 +10,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: emacs.c,v 1.37 2017/06/30 04:41:19 kamil Exp $");
+__RCSID("$NetBSD: emacs.c,v 1.37.4.1 2018/05/21 04:35:48 pgoyette Exp $");
 #endif
 
 #include "config.h"
@@ -454,7 +454,7 @@ x_ins(s)
 	char	*s;
 {
 	char *cp = xcp;
-	register int	adj = x_adj_done;
+	int	adj = x_adj_done;
 
 	if (x_do_ins(s, strlen(s)) < 0)
 		return -1;
@@ -619,7 +619,7 @@ static int
 x_bword()
 {
 	int	nc = 0;
-	register char *cp = xcp;
+	char *cp = xcp;
 
 	if (cp == xbuf)  {
 		x_e_putc(BEL);
@@ -646,7 +646,7 @@ static int
 x_fword()
 {
 	int	nc = 0;
-	register char	*cp = xcp;
+	char	*cp = xcp;
 
 	if (cp == xep)  {
 		x_e_putc(BEL);
@@ -670,7 +670,7 @@ x_fword()
 
 static void
 x_goto(cp)
-	register char *cp;
+	char *cp;
 {
   if (cp < xbp || cp >= (xbp + x_displen))
   {
@@ -700,7 +700,7 @@ static void
 x_bs(c)
 	int c;
 {
-	register int i;
+	int i;
 	i = x_size(c);
 	while (i--)
 		x_e_putc('\b');
@@ -708,9 +708,9 @@ x_bs(c)
 
 static int
 x_size_str(cp)
-	register char *cp;
+	char *cp;
 {
-	register int size = 0;
+	int size = 0;
 	while (*cp)
 		size += x_size(*cp++);
 	return size;
@@ -729,9 +729,9 @@ x_size(c)
 
 static void
 x_zots(str)
-	register char *str;
+	char *str;
 {
-  register int	adj = x_adj_done;
+  int	adj = x_adj_done;
 
   x_lastcp();
   while (*str && str < xlp && adj == x_adj_done)
@@ -870,7 +870,7 @@ x_goto_hist(c)
 
 static void
 x_load_hist(hp)
-	register char **hp;
+	char **hp;
 {
 	int	oldsize;
 
@@ -915,7 +915,7 @@ x_search_hist(c)
 {
 	int offset = -1;	/* offset of match in xbuf, else -1 */
 	char pat [256+1];	/* pattern buffer */
-	register char *p = pat;
+	char *p = pat;
 	Findex f;
 
 	*p = '\0';
@@ -978,7 +978,7 @@ x_search(pat, sameline, offset)
 	int sameline;
 	int offset;
 {
-	register char **hp;
+	char **hp;
 	int i;
 
 	for (hp = x_histp - (sameline ? 0 : 1) ; hp >= histlist; --hp) {
@@ -1349,7 +1349,7 @@ x_mapout(c)
 	int c;
 {
 	static char buf[8];
-	register char *p = buf;
+	char *p = buf;
 
 	if (iscntrl((unsigned char)c))  {
 		*p++ = '^';
@@ -1473,7 +1473,7 @@ void
 x_init_emacs()
 {
 	size_t i;
-	register int j;
+	int j;
 	char *locale;
 
 	ainit(AEDIT);
@@ -1627,7 +1627,7 @@ x_game_of_life(c)
 	int c;
 {
 	char	newbuf [256+1];
-	register char *ip, *op;
+	char	*ip, *op;
 	int	i, len;
 
 	i = xep - xbuf;
@@ -1926,7 +1926,7 @@ static void
 x_e_puts(s)
 	const char *s;
 {
-  register int	adj = x_adj_done;
+  int	adj = x_adj_done;
 
   while (*s && adj == x_adj_done)
     x_e_putc(*s++);
@@ -2007,7 +2007,7 @@ static int
 x_prev_histword(c)
 	int c;
 {
-  register char *rcp;
+  char *rcp;
   char *cp;
 
   cp = *histptr;
@@ -2158,8 +2158,8 @@ x_fold_case(c)
 static char *
 x_lastcp()
 {
-  register char *rcp;
-  register int i;
+  char *rcp;
+  int i;
 
   if (!xlp_valid)
   {

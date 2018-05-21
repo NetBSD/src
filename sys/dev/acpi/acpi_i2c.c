@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_i2c.c,v 1.2.2.1 2018/04/16 01:59:57 pgoyette Exp $ */
+/* $NetBSD: acpi_i2c.c,v 1.2.2.2 2018/05/21 04:36:05 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_i2c.c,v 1.2.2.1 2018/04/16 01:59:57 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_i2c.c,v 1.2.2.2 2018/05/21 04:36:05 pgoyette Exp $");
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
@@ -227,6 +227,8 @@ acpi_enter_i2c_devs(struct acpi_devnode *devnode)
 
 	SIMPLEQ_FOREACH(ad, &devnode->ad_child_head, ad_child_list) {
 		if (ad->ad_devinfo->Type != ACPI_TYPE_DEVICE)
+			continue;
+		if (!acpi_device_present(ad->ad_handle))
 			continue;
 		acpi_enter_i2c_device(ad, array);
 	}

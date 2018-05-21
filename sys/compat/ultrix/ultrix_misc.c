@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.123 2018/01/09 20:55:43 maya Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.123.2.1 2018/05/21 04:36:04 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.123 2018/01/09 20:55:43 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.123.2.1 2018/05/21 04:36:04 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -179,7 +179,6 @@ struct emul emul_ultrix = {
 	.e_sendsig =		sendsig,
 #endif
 	.e_trapsignal =		trapsignal,
-	.e_tracesig =		NULL,
 	.e_sigcode =		ultrix_sigcode,
 	.e_esigcode =		ultrix_esigcode,
 	.e_sigobject =		&emul_ultrix_object,

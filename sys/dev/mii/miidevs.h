@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.129 2017/07/03 08:29:22 msaitoh Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.129.4.1 2018/05/21 04:36:05 pgoyette Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.126 2017/07/03 08:29:03 msaitoh Exp
+ *	NetBSD: miidevs,v 1.127 2018/05/10 02:49:41 msaitoh Exp
  */
 
 /*-
@@ -332,6 +332,8 @@
 #define	MII_STR_INTEL_I82579	"i82579 10/100/1000 media interface"
 #define	MII_MODEL_INTEL_I217	0x000a
 #define	MII_STR_INTEL_I217	"i217 10/100/1000 media interface"
+#define	MII_MODEL_INTEL_X540	0x0020
+#define	MII_STR_INTEL_X540	"X540 100M/1G/10G media interface"
 #define	MII_MODEL_INTEL_X550	0x0022
 #define	MII_STR_INTEL_X550	"X550 100M/1G/10G media interface"
 #define	MII_MODEL_INTEL_X557	0x0024

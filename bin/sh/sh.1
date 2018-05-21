@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.175.2.2 2018/03/22 01:44:39 pgoyette Exp $
+.\"	$NetBSD: sh.1,v 1.175.2.3 2018/05/21 04:35:48 pgoyette Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"	@(#)sh.1	8.6 (Berkeley) 5/4/95
 .\"
-.Dd October 24, 2017
+.Dd May 3, 2018
 .Dt SH 1
 .\" everything except c o and s (keep them ordered)
 .ds flags abCEeFfhIiLmnpquVvXx
@@ -175,7 +175,6 @@ Place commands within the
 and
 .Dq Ic esac
 below (these commands are described later):
-.Pp
 .Bd -literal -offset indent
 case $- in *i*)
         # commands for interactive use only
@@ -2321,15 +2320,12 @@ or
 .Xr fcntl 2
 .Dv F_SETFD /
 .Dv FD_CLOEXEC ) ,
-unless the descriptors they point to refer to the standard input,
+unless the descriptors refer to the standard input,
 output, or error (file descriptors 0, 1, 2).
 Traditionally Bourne-like shells
 (except
 .Xr ksh 1 ) ,
 made those file descriptors available to exec'ed processes.
-This behavior is required by the POSIX standard, so when the
-.Cm posix
-option is set, this shell also acts that way.
 To be assured the close-on-exec setting is off,
 redirect the descriptor to (or from) itself,
 either when invoking a command for which the descriptor is wanted open,
@@ -3283,7 +3279,6 @@ The choice between hard limit (which no process is allowed to
 violate, and which may not be raised once it has been lowered) and soft
 limit (which causes processes to be signaled but not necessarily killed,
 and which may be raised) is made with these flags:
-.Pp
 .Bl -tag -width Fl
 .It Fl H
 set or inquire about hard limits
@@ -3300,7 +3295,6 @@ If both are specified, the last one wins.
 .Pp
 The limit to be interrogated or set, then, is chosen by specifying
 any one of these flags:
-.Pp
 .Bl -tag -width Fl
 .It Fl a
 show all the current limits

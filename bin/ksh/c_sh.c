@@ -1,4 +1,4 @@
-/*	$NetBSD: c_sh.c,v 1.23 2017/06/30 04:41:19 kamil Exp $	*/
+/*	$NetBSD: c_sh.c,v 1.23.4.1 2018/05/21 04:35:48 pgoyette Exp $	*/
 
 /*
  * built-in Bourne commands
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: c_sh.c,v 1.23 2017/06/30 04:41:19 kamil Exp $");
+__RCSID("$NetBSD: c_sh.c,v 1.23.4.1 2018/05/21 04:35:48 pgoyette Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -31,8 +31,8 @@ int
 c_shift(wp)
 	char **wp;
 {
-	register struct block *l = e->loc;
-	register int n;
+	struct block *l = e->loc;
+	int n;
 	long val;
 	char *arg;
 
@@ -63,8 +63,8 @@ int
 c_umask(wp)
 	char **wp;
 {
-	register int i;
-	register char *cp;
+	int i;
+	char *cp;
 	int symbolic = 0;
 	int old_umask;
 	int optc;
@@ -245,11 +245,11 @@ int
 c_read(wp)
 	char **wp;
 {
-	register int c = 0;
+	int c = 0;
 	int expandv = 1, history = 0;
 	int expanding;
 	int ecode = 0;
-	register char *cp;
+	char *cp;
 	int fd = 0;
 	struct shf *shf;
 	int optc;
@@ -429,7 +429,7 @@ int
 c_eval(wp)
 	char **wp;
 {
-	register struct source *s;
+	struct source *s;
 	int rv;
 
 	if (ksh_getopt(wp, &builtin_opt, null) == '?')
@@ -475,7 +475,7 @@ c_trap(wp)
 {
 	int i;
 	char *s;
-	register Trap *p;
+	Trap *p;
 
 	if (ksh_getopt(wp, &builtin_opt, null) == '?')
 		return 1;
@@ -635,7 +635,7 @@ c_set(wp)
 {
 	int argi, setargs;
 	struct block *l = e->loc;
-	register char **owp = wp;
+	char **owp = wp;
 
 	if (wp[1] == NULL) {
 		static const char *const args [] = { "set", "-", NULL };
@@ -669,7 +669,7 @@ int
 c_unset(wp)
 	char **wp;
 {
-	register char *id;
+	char *id;
 	int optc, unset_var = 1;
 	int ret = 0;
 
@@ -816,8 +816,8 @@ clocktos(t)
 	clock_t t;
 {
 	static char temp[22]; /* enough for 64 bit clock_t */
-	register int i;
-	register char *cp = temp + sizeof(temp);
+	int i;
+	char *cp = temp + sizeof(temp);
 
 	/* note: posix says must use max precision, ie, if clk_tck is
 	 * 1000, must print 3 places after decimal (if non-zero, else 1).

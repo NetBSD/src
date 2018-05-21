@@ -1,4 +1,4 @@
-/*	$NetBSD: resourcevar.h,v 1.56 2015/10/18 00:28:15 jmcneill Exp $	*/
+/*	$NetBSD: resourcevar.h,v 1.56.16.1 2018/05/21 04:36:17 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -115,6 +115,7 @@ void	lim_setcorename(struct proc *, char *, size_t);
 void	lim_free(struct plimit *);
 
 void	resource_init(void);
+void	ruspace(struct proc *);
 void	ruadd(struct rusage *, struct rusage *);
 void	rulwps(proc_t *, struct rusage *);
 struct	pstats *pstatscopy(struct pstats *);

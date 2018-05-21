@@ -1,4 +1,4 @@
-#	$NetBSD: KURONAS_X4,v 1.1 2016/07/12 13:28:46 kiyohara Exp $
+#	$NetBSD: KURONAS_X4,v 1.1.20.1 2018/05/21 04:36:00 pgoyette Exp $
 #
 #  KUROBOX_PRO -- KUROUTOSHIKOU. KURO-BOX/PRO platform kernel
 #
@@ -32,7 +32,7 @@ makeoptions	COPY_SYMTAB=1
 #options 	AUDIO_DEBUG=2
 
 
-rs5c372rtc* at iic? addr 0x32		# RICOH RS5C372 RTC
+rs5c372rtc* at iic0 addr 0x32		# RICOH RS5C372 RTC
 
 # PCI network interfaces
 #mskc*	at pci? dev ? function ?	# Marvell Yukon 2 Gigabit Ethernet

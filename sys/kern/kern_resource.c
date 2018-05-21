@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.176.12.1 2018/04/16 02:00:07 pgoyette Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.176.12.2 2018/05/21 04:36:15 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.176.12.1 2018/04/16 02:00:07 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.176.12.2 2018/05/21 04:36:15 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -533,16 +533,41 @@ calcru(struct proc *p, struct timeval *up, struct timeval *sp,
 		st = (u * st) / tot;
 		ut = (u * ut) / tot;
 	}
+
+	/*
+	 * Try to avoid lying to the users (too much)
+	 *
+	 * Of course, user/sys time are based on sampling (ie: statistics)
+	 * so that would be impossible, but convincing the mark
+	 * that we have used less ?time this call than we had
+	 * last time, is beyond reasonable...  (the con fails!)
+	 *
+	 * Note that since actual used time cannot decrease, either
+	 * utime or stime (or both) must be greater now than last time
+	 * (or both the same) - if one seems to have decreased, hold
+	 * it constant and steal the necessary bump from the other
+	 * which must have increased.
+	 */
+	if (p->p_xutime > ut) {
+		st -= p->p_xutime - ut;
+		ut = p->p_xutime;
+	} else if (p->p_xstime > st) {
+		ut -= p->p_xstime - st;
+		st = p->p_xstime;
+	}
+
 	if (sp != NULL) {
+		p->p_xstime = st;
 		sp->tv_sec = st / 1000000;
 		sp->tv_usec = st % 1000000;
 	}
 	if (up != NULL) {
+		p->p_xutime = ut;
 		up->tv_sec = ut / 1000000;
 		up->tv_usec = ut % 1000000;
 	}
 	if (ip != NULL) {
-		if (it != 0)
+		if (it != 0)		/* it != 0 --> tot != 0 */
 			it = (u * it) / tot;
 		ip->tv_sec = it / 1000000;
 		ip->tv_usec = it % 1000000;
@@ -577,6 +602,7 @@ getrusage1(struct proc *p, int who, struct rusage *ru) {
 	switch (who) {
 	case RUSAGE_SELF:
 		mutex_enter(p->p_lock);
+		ruspace(p);
 		memcpy(ru, &p->p_stats->p_ru, sizeof(*ru));
 		calcru(p, &ru->ru_utime, &ru->ru_stime, NULL, NULL);
 		rulwps(p, ru);
@@ -592,6 +618,23 @@ getrusage1(struct proc *p, int who, struct rusage *ru) {
 	}
 
 	return 0;
+}
+
+void
+ruspace(struct proc *p)
+{
+	struct vmspace *vm = p->p_vmspace;
+	struct rusage *ru = &p->p_stats->p_ru;
+
+	ru->ru_ixrss = vm->vm_tsize << (PAGE_SHIFT - 10);
+	ru->ru_idrss = vm->vm_dsize << (PAGE_SHIFT - 10);
+	ru->ru_isrss = vm->vm_ssize << (PAGE_SHIFT - 10);
+#ifdef __HAVE_NO_PMAP_STATS
+	/* We don't keep track of the max so we get the current */
+	ru->ru_maxrss = vm_resident_count(vm) << (PAGE_SHIFT - 10);
+#else
+	ru->ru_maxrss = vm->vm_rssmax << (PAGE_SHIFT - 10);
+#endif
 }
 
 void

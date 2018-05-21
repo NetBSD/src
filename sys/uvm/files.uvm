@@ -1,4 +1,4 @@
-#	$NetBSD: files.uvm,v 1.28 2016/12/23 07:15:28 cherry Exp $
+#	$NetBSD: files.uvm,v 1.28.14.1 2018/05/21 04:36:17 pgoyette Exp $
 
 #
 # UVM options
@@ -25,7 +25,6 @@ file	uvm/uvm_aobj.c			uvm
 file	uvm/uvm_bio.c			uvm
 file	uvm/uvm_coredump.c		coredump
 file	uvm/uvm_device.c		uvm
-file	uvm/uvm_emap.c			uvm
 file	uvm/uvm_fault.c			uvm
 file	uvm/uvm_glue.c			uvm
 file	uvm/uvm_init.c			uvm

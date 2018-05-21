@@ -1,4 +1,4 @@
-/* $NetBSD: reg.h,v 1.3 2018/01/13 14:39:15 reinoud Exp $ */
+/* $NetBSD: reg.h,v 1.3.2.1 2018/05/21 04:36:02 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,10 +29,16 @@
 #ifndef _ARCH_USERMODE_INCLUDE_REG_H
 #define _ARCH_USERMODE_INCLUDE_REG_H
 
+#include "machine/mcontext.h"
+
+/* registers are already in the right order since they follow mcontext.h */
 struct reg {
+	__gregset_t regs;
 };
 
+/* registers are already in the right order since they follow mcontext.h */
 struct fpreg {
+        __fpregset_t fpregs;
 };
 
 /* x86_64 only */

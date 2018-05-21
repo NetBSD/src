@@ -1,4 +1,4 @@
-/* $NetBSD: gpioctl.c,v 1.23 2016/04/05 10:58:04 bouyer Exp $ */
+/* $NetBSD: gpioctl.c,v 1.23.14.1 2018/05/21 04:36:19 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2008, 2010, 2011, 2013 Marc Balmer <mbalmer@NetBSD.org>
@@ -72,9 +72,6 @@ static const struct bitstr {
 	{ GPIO_PIN_ALT5, "alt5" },
 	{ GPIO_PIN_ALT6, "alt6" },
 	{ GPIO_PIN_ALT7, "alt7" },
-	{ GPIO_PIN_EVENTS, "events" },
-	{ GPIO_PIN_LEVEL, "level" },
-	{ GPIO_PIN_FALLING, "falling" },
 	{ GPIO_PIN_USER, "user" },
 	{ 0, NULL },
 };

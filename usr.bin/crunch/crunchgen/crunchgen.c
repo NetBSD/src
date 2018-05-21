@@ -1,4 +1,4 @@
-/*	$NetBSD: crunchgen.c,v 1.85 2017/10/08 15:06:17 christos Exp $	*/
+/*	$NetBSD: crunchgen.c,v 1.85.2.1 2018/05/21 04:36:18 pgoyette Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: crunchgen.c,v 1.85 2017/10/08 15:06:17 christos Exp $");
+__RCSID("$NetBSD: crunchgen.c,v 1.85.2.1 2018/05/21 04:36:18 pgoyette Exp $");
 #endif
 
 #include <stdlib.h>
@@ -55,7 +55,7 @@ __RCSID("$NetBSD: crunchgen.c,v 1.85 2017/10/08 15:06:17 christos Exp $");
 #include <sys/param.h>
 #include <sys/utsname.h>
 
-#define CRUNCH_VERSION	"20050208"
+#define CRUNCH_VERSION	"20180508"
 
 #define MAXLINELEN	16384
 #define MAXFIELDS 	 2048
@@ -907,8 +907,8 @@ dir_search(char *progname)
     strlst_t *dir;
 
     for (dir=srcdirs; dir != NULL; dir=dir->next) {
-	(void)snprintf(path, sizeof(path), "%s/%s", dir->str, progname);
-	if (is_dir(path))
+	snprintf(path, sizeof(path), "%s/%s/Makefile", dir->str, progname);
+	if (is_nonempty_file(path))
 	    return dir->str;
     }
     return NULL;

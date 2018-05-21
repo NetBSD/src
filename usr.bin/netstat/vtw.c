@@ -1,4 +1,4 @@
-/*	$NetBSD: vtw.c,v 1.9 2016/02/29 18:19:46 christos Exp $	*/
+/*	$NetBSD: vtw.c,v 1.9.14.1 2018/05/21 04:36:18 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: vtw.c,v 1.9 2016/02/29 18:19:46 christos Exp $");
+__RCSID("$NetBSD: vtw.c,v 1.9.14.1 2018/05/21 04:36:18 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -93,7 +93,6 @@ __RCSID("$NetBSD: vtw.c,v 1.9 2016/02/29 18:19:46 christos Exp $");
 #include <netinet/ip_var.h>
 #include <netinet/pim_var.h>
 #include <netinet/tcp.h>
-#include <netinet/tcpip.h>
 #include <netinet/tcp_seq.h>
 #include <netinet/tcp_fsm.h>
 #include <netinet/tcp_timer.h>

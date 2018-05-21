@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.7 2015/05/11 13:07:57 martin Exp $	*/
+/*	$NetBSD: util.c,v 1.7.14.1 2018/05/21 04:36:19 pgoyette Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1724,7 +1724,7 @@ ask_yesno(const char* msgtxt)
 {
 	arg_rv p;
 
-	p.arg = deconst(msgtxt);
+	p.arg = __UNCONST(msgtxt);
 	p.rv = -1;
 
 	process_menu(MENU_yesno, &p);
@@ -1736,7 +1736,7 @@ ask_noyes(const char *msgtxt)
 {
 	arg_rv p;
 
-	p.arg = deconst(msgtxt);
+	p.arg = __UNCONST(msgtxt);
 	p.rv = -1;
 
 	process_menu(MENU_noyes, &p);

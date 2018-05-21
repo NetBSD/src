@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.57 2017/12/10 16:53:32 bouyer Exp $	*/
+/*	$NetBSD: i2c.c,v 1.57.2.1 2018/05/21 04:36:05 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.57 2017/12/10 16:53:32 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.57.2.1 2018/05/21 04:36:05 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,7 +121,7 @@ iic_print(void *aux, const char *pnp)
 {
 	struct i2c_attach_args *ia = aux;
 
-	if (ia->ia_addr != (i2c_addr_t)-1)
+	if (ia->ia_addr != (i2c_addr_t)IICCF_ADDR_DEFAULT)
 		aprint_normal(" addr 0x%x", ia->ia_addr);
 
 	return UNCONF;
@@ -132,6 +132,16 @@ iic_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
 	struct iic_softc *sc = device_private(parent);
 	struct i2c_attach_args ia;
+
+	/*
+	 * I2C doesn't have any regular probing capability.  If we
+	 * encounter a cfdata with a wild-carded address or a wild-
+	 * carded parent spec, we skip them because they can only
+	 * be used for direct-coniguration.
+	 */
+	if (cf->cf_loc[IICCF_ADDR] == IICCF_ADDR_DEFAULT ||
+	    cf->cf_pspec->cfp_unit == DVUNIT_ANY)
+		return 0;
 
 	ia.ia_tag = sc->sc_tag;
 	ia.ia_size = cf->cf_loc[IICCF_SIZE];
@@ -146,8 +156,7 @@ iic_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 		if (sc->sc_devices[ia.ia_addr] != NULL)
 			continue;
 
-		if (cf->cf_loc[IICCF_ADDR] != -1 &&
-		    cf->cf_loc[IICCF_ADDR] != ia.ia_addr)
+		if (cf->cf_loc[IICCF_ADDR] != ia.ia_addr)
 			continue;
 
 		if (config_match(parent, cf, &ia) > 0)

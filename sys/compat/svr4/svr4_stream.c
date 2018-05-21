@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stream.c,v 1.92 2017/09/16 09:05:29 martin Exp $	 */
+/*	$NetBSD: svr4_stream.c,v 1.92.2.1 2018/05/21 04:36:04 pgoyette Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2008 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_stream.c,v 1.92 2017/09/16 09:05:29 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_stream.c,v 1.92.2.1 2018/05/21 04:36:04 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1540,7 +1540,7 @@ svr4_sys_putmsg(struct lwp *l, const struct svr4_sys_putmsg_args *uap, register_
 		aiov.iov_base = NETBSD32PTR(dat.buf);
 		aiov.iov_len = dat.len;
 		error = do_sys_sendmsg(l, SCARG(uap, fd), &msg,
-			       SCARG(uap, flags),  NULL, 0, retval);
+			       SCARG(uap, flags), retval);
 
 		*retval = 0;
 		return error;
@@ -1781,7 +1781,7 @@ svr4_sys_getmsg(struct lwp *l, const struct svr4_sys_getmsg_args *uap, register_
 		aiov.iov_len = dat.maxlen;
 		msg.msg_flags = 0;
 
-		error = do_sys_recvmsg(l,  SCARG(uap, fd), &msg, NULL, 0,
+		error = do_sys_recvmsg(l,  SCARG(uap, fd), &msg,
 		    &name, NULL, retval);
 
 		if (error) {

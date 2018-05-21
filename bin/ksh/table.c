@@ -1,4 +1,4 @@
-/*	$NetBSD: table.c,v 1.6 2018/01/24 09:53:21 kamil Exp $	*/
+/*	$NetBSD: table.c,v 1.6.2.1 2018/05/21 04:35:48 pgoyette Exp $	*/
 
 /*
  * dynamic hashed associative table for commands and variables
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: table.c,v 1.6 2018/01/24 09:53:21 kamil Exp $");
+__RCSID("$NetBSD: table.c,v 1.6.2.1 2018/05/21 04:35:48 pgoyette Exp $");
 #endif
 
 
@@ -20,9 +20,9 @@ static int      tnamecmp    ARGS((void *p1, void *p2));
 
 unsigned int
 hash(n)
-	register const char * n;
+	const char * n;
 {
-	register unsigned int h = 0;
+	unsigned int h = 0;
 
 	while (*n != '\0')
 		h = 2*h + *n++;
@@ -31,8 +31,8 @@ hash(n)
 
 void
 tinit(tp, ap, tsize)
-	register struct table *tp;
-	register Area *ap;
+	struct table *tp;
+	Area *ap;
 	int tsize;
 {
 	tp->areap = ap;
@@ -44,12 +44,12 @@ tinit(tp, ap, tsize)
 
 static void
 texpand(tp, nsize)
-	register struct table *tp;
+	struct table *tp;
 	int nsize;
 {
-	register int i;
-	register struct tbl *tblp, **p;
-	register struct tbl **ntblp, **otblp = tp->tbls;
+	int i;
+	struct tbl *tblp, **p;
+	struct tbl **ntblp, **otblp = tp->tbls;
 	int osize = tp->size;
 
 	ntblp = (struct tbl**) alloc(sizeofN(struct tbl *, nsize), tp->areap);
@@ -80,11 +80,11 @@ texpand(tp, nsize)
 
 struct tbl *
 mytsearch(tp, n, h)
-	register struct table *tp;	/* table */
-	register const char *n;		/* name to enter */
+	struct table *tp;	/* table */
+	const char *n;		/* name to enter */
 	unsigned int h;			/* hash(n) */
 {
-	register struct tbl **pp, *p;
+	struct tbl **pp, *p;
 
 	if (tp->size == 0)
 		return NULL;
@@ -103,12 +103,12 @@ mytsearch(tp, n, h)
 
 struct tbl *
 tenter(tp, n, h)
-	register struct table *tp;	/* table */
-	register const char *n;		/* name to enter */
+	struct table *tp;	/* table */
+	const char *n;		/* name to enter */
 	unsigned int h;			/* hash(n) */
 {
-	register struct tbl **pp, *p;
-	register int len;
+	struct tbl **pp, *p;
+	int len;
 
 	if (tp->size == 0)
 		texpand(tp, INIT_TBLS);
@@ -145,7 +145,7 @@ tenter(tp, n, h)
 
 void
 mytdelete(p)
-	register struct tbl *p;
+	struct tbl *p;
 {
 	p->flag = 0;
 }
@@ -180,10 +180,10 @@ tnamecmp(p1, p2)
 
 struct tbl **
 tsort(tp)
-	register struct table *tp;
+	struct table *tp;
 {
-	register int i;
-	register struct tbl **p, **sp, **dp;
+	int i;
+	struct tbl **p, **sp, **dp;
 
 	p = (struct tbl **)alloc(sizeofN(struct tbl *, tp->size+1), ATEMP);
 	sp = tp->tbls;		/* source */
@@ -218,7 +218,7 @@ tprintinfo(tp)
 	shellf("    Ncmp name\n");
 	twalk(&ts, tp);
 	while ((te = tnext(&ts))) {
-		register struct tbl **pp, *p;
+		struct tbl **pp, *p;
 
 		h = hash(n = te->name);
 		ncmp = 0;

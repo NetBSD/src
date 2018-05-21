@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsecif.c,v 1.2.2.3 2018/05/02 07:20:24 pgoyette Exp $  */
+/*	$NetBSD: ipsecif.c,v 1.2.2.4 2018/05/21 04:36:16 pgoyette Exp $  */
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsecif.c,v 1.2.2.3 2018/05/02 07:20:24 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsecif.c,v 1.2.2.4 2018/05/21 04:36:16 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -91,7 +91,7 @@ static int ip6_ipsec_pmtu = 0; /* XXX: per interface configuration?? */
 static int ip6_ipsec_copy_tos = 0;
 #endif
 
-struct encapsw ipsecif4_encapsw = {
+static const struct encapsw ipsecif4_encapsw = {
 	.encapsw4 = {
 		.pr_input = ipsecif4_input,
 		.pr_ctlinput = NULL,

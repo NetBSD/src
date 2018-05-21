@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.63 2018/02/08 09:05:19 dholland Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.63.2.1 2018/05/21 04:36:05 pgoyette Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.85 2009/11/09 14:32:41 dlg Exp $ */
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.63 2018/02/08 09:05:19 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.63.2.1 2018/05/21 04:36:05 pgoyette Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -792,7 +792,8 @@ bnx_attach(device_t parent, device_t self, void *aux)
 	    IFCAP_CSUM_UDPv4_Tx | IFCAP_CSUM_UDPv4_Rx;
 
 	/* Hookup IRQ last. */
-	sc->bnx_intrhand = pci_intr_establish(pc, ih, IPL_NET, bnx_intr, sc);
+	sc->bnx_intrhand = pci_intr_establish_xname(pc, ih, IPL_NET, bnx_intr,
+	    sc, device_xname(self));
 	if (sc->bnx_intrhand == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt");
 		if (intrstr != NULL)
@@ -890,17 +891,7 @@ bnx_detach(device_t dev, int flags)
 
 	/* Stop and reset the controller. */
 	s = splnet();
-	if (ifp->if_flags & IFF_RUNNING)
-		bnx_stop(ifp, 1);
-	else {
-		/* Disable the transmit/receive blocks. */
-		REG_WR(sc, BNX_MISC_ENABLE_CLR_BITS, 0x5ffffff);
-		REG_RD(sc, BNX_MISC_ENABLE_CLR_BITS);
-		DELAY(20);
-		bnx_disable_intr(sc);
-		bnx_reset(sc, BNX_DRV_MSG_CODE_RESET);
-	}
-
+	bnx_stop(ifp, 1);
 	splx(s);
 
 	pmf_device_deregister(dev);
@@ -3371,10 +3362,11 @@ bnx_stop(struct ifnet *ifp, int disable)
 
 	DBPRINT(sc, BNX_VERBOSE_RESET, "Entering %s()\n", __func__);
 
-	if ((ifp->if_flags & IFF_RUNNING) == 0)
-		return;
-
-	callout_stop(&sc->bnx_timeout);
+	if (disable) {
+		sc->bnx_detaching = 1;
+		callout_halt(&sc->bnx_timeout, NULL);
+	} else
+		callout_stop(&sc->bnx_timeout);
 
 	mii_down(&sc->bnx_mii);
 
@@ -5694,9 +5686,6 @@ bnx_tick(void *xsc)
 	/* Update the statistics from the hardware statistics block. */
 	bnx_stats_update(sc);
 
-	/* Schedule the next tick. */
-	callout_reset(&sc->bnx_timeout, hz, bnx_tick, sc);
-
 	mii = &sc->bnx_mii;
 	mii_tick(mii);
 
@@ -5707,6 +5696,11 @@ bnx_tick(void *xsc)
 	bnx_get_buf(sc, &prod, &chain_prod, &prod_bseq);
 	sc->rx_prod = prod;
 	sc->rx_prod_bseq = prod_bseq;
+
+	/* Schedule the next tick. */
+	if (!sc->bnx_detaching)
+		callout_reset(&sc->bnx_timeout, hz, bnx_tick, sc);
+
 	splx(s);
 	return;
 }

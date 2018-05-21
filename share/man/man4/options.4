@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.483.2.2 2018/04/16 01:59:51 pgoyette Exp $
+.\"	$NetBSD: options.4,v 1.483.2.3 2018/05/21 04:35:56 pgoyette Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd April 5, 2018
+.Dd May 11, 2018
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -1681,13 +1681,6 @@ is not invoked directly.
 has no impact on protocols other than IP, such as CLNP).
 .Em GATEWAY
 option also compiles IPv4 and IPv6 fast forwarding code into the kernel.
-.It Cd options ICMPPRINTFS
-The
-.Em ICMPPRINTFS
-option will enable debugging information to be printed about
-the
-.Xr icmp 4
-protocol.
 .It Cd options IPFORWARDING=value
 If
 .Em value

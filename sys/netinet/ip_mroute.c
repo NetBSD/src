@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.154.2.2 2018/04/16 02:00:08 pgoyette Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.154.2.3 2018/05/21 04:36:16 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.154.2.2 2018/04/16 02:00:08 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.154.2.3 2018/05/21 04:36:16 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1828,7 +1828,7 @@ vif_encapcheck(struct mbuf *m, int off, int proto, void *arg)
 	 */
 
 	/* Obtain the outer IP header and the vif pointer. */
-	m_copydata((struct mbuf *)m, 0, sizeof(ip), (void *)&ip);
+	m_copydata(m, 0, sizeof(ip), (void *)&ip);
 	vifp = (struct vif *)arg;
 
 	/*
@@ -1849,7 +1849,9 @@ vif_encapcheck(struct mbuf *m, int off, int proto, void *arg)
 		return 0;
 
 	/* Check that the inner destination is multicast. */
-	m_copydata((struct mbuf *)m, off, sizeof(ip), (void *)&ip);
+	if (off + sizeof(ip) > m->m_pkthdr.len)
+		return 0;
+	m_copydata(m, off, sizeof(ip), (void *)&ip);
 	if (!IN_MULTICAST(ip.ip_dst.s_addr))
 		return 0;
 
@@ -3066,6 +3068,13 @@ pim_input(struct mbuf *m, ...)
 				log(LOG_DEBUG, "pim_input: invalid IP version (%d) "
 				    "of the inner packet\n", encap_ip->ip_v);
 			}
+			m_freem(m);
+			return;
+		}
+
+		/* verify the inner packet doesn't have options */
+		if (encap_ip->ip_hl != (sizeof(struct ip) >> 2)) {
+			pimstat.pims_rcv_badregisters++;
 			m_freem(m);
 			return;
 		}

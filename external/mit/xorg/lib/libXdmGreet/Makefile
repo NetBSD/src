@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2013/09/12 04:42:49 dholland Exp $
+#	$NetBSD: Makefile,v 1.4.26.1 2018/05/21 04:35:54 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -15,6 +15,7 @@ CPPFLAGS+=	-I${X11SRCDIR.xdm}/include -DRETSIGTYPE=void
 # be elided, causes xdm to fail to accept password input and
 # then crash at login "failure".
 #CPPFLAGS+=	-DGREET_LIB
+CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/freetype2/freetype
 
 LIBDPLIBS=\
 	Xext	${.CURDIR}/../libXext \

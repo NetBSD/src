@@ -44,6 +44,7 @@ mDNSexport void mDNSPlatformSourceAddrForDest(mDNSAddr *const src, const mDNSAdd
     int sock = socket(AF_INET, SOCK_DGRAM, 0);
     src->type = mDNSAddrType_None;
     if (sock == -1) return;
+    memset(&addr, 0, sizeof(addr));
     if (dst->type == mDNSAddrType_IPv4)
     {
         inner_len = sizeof(addr.a4);

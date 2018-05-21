@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_cb.h,v 1.28 2017/09/25 01:56:22 ozaki-r Exp $	*/
+/*	$NetBSD: raw_cb.h,v 1.28.2.1 2018/05/21 04:36:15 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -57,7 +57,7 @@ struct rawcb {
  * Nominal space allocated to a raw socket.
  */
 #define	RAWSNDQ		8192
-#define	RAWRCVQ		8192
+#define	RAWRCVQ		16384
 
 LIST_HEAD(rawcbhead, rawcb);
 

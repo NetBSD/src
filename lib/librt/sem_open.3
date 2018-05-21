@@ -1,4 +1,4 @@
-.\" $NetBSD: sem_open.3,v 1.6 2012/03/08 22:12:52 wiz Exp $
+.\" $NetBSD: sem_open.3,v 1.6.30.1 2018/05/21 04:35:55 pgoyette Exp $
 .\"
 .\" Copyright (C) 2000 Jason Evans <jasone@FreeBSD.org>.
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\" From: FreeBSD: src/lib/libc/gen/sem_open.3,v 1.12 2004/07/02 16:45:56 ru
 .\"
-.Dd February 29, 2012
+.Dd May 4, 2018
 .Dt SEM_OPEN 3
 .Os
 .Sh NAME
@@ -151,10 +151,13 @@ are set but the semaphore already exists.
 The call was interrupted by a signal.
 .It Bq Er EINVAL
 The
-.Fn sem_open
-operation is not supported for the given
-.Fa name ;
-or the
+.Fa name
+argument does not begin with a
+.Sq /
+or contains more slashes.
+This is implementation-specific behavior and allowed by
+.St -p1003.1-96 .
+Or, the
 .Fa value
 argument is greater than
 .Dv SEM_VALUE_MAX .
@@ -162,9 +165,11 @@ argument is greater than
 .\".It Bq Er EMFILE
 .\"Too many semaphores are in use by this process.
 .It Bq Er ENAMETOOLONG
-The
+The specified
 .Fa name
-argument is too long.
+is longer than
+.Dv NAME_MAX ,
+or longer than the implementing file system will allow.
 .It Bq Er ENFILE
 The system limit on semaphores has been reached.
 .It Bq Er ENOENT
@@ -193,7 +198,9 @@ Permission is denied to unlink the semaphore.
 .It Bq Er ENAMETOOLONG
 The specified
 .Fa name
-is too long.
+is longer than
+.Dv NAME_MAX ,
+or longer than the implementing file system will allow.
 .It Bq Er ENOENT
 The named semaphore does not exist.
 .El
@@ -218,11 +225,3 @@ functions conform to
 .Sh HISTORY
 Support for named semaphores first appeared in
 .Nx 2.0 .
-.Sh BUGS
-This implementation places strict requirements on the value of
-.Fa name :
-it must begin with a slash
-.Pq Ql / ,
-contain no other slash characters,
-and be less than 14 characters in length
-not including the terminating null character.

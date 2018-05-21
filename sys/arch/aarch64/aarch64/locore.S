@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.4.2.1 2018/04/07 04:12:10 pgoyette Exp $	*/
+/*	$NetBSD: locore.S,v 1.4.2.2 2018/05/21 04:35:57 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -36,7 +36,7 @@
 #include <aarch64/pte.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.4.2.1 2018/04/07 04:12:10 pgoyette Exp $")
+RCSID("$NetBSD: locore.S,v 1.4.2.2 2018/05/21 04:35:57 pgoyette Exp $")
 
 /* #define DEBUG_LOCORE */
 /* #define DEBUG_MMU */
@@ -692,6 +692,7 @@ sctlr_set:
 	.quad ( \
 	    SCTLR_LSMAOE |  /* Load/Store Multiple Atomicity and Ordering */ \
 	    SCTLR_nTLSMD |  /* no Trap Load/Store Multiple to Device */ \
+	    SCTLR_UCI |     /* Enables EL0 DC {CVAU,CIVAC,CVAC}, IC IVAU */ \
 	    SCTLR_SPAN |    /* This field resets to 1 */ \
 	    SCTLR_UCT |     /* Enables EL0 access to the CTR_EL0 */ \
 	    SCTLR_DZE |     /* Enables access to the DC ZVA instruction */ \
@@ -705,7 +706,6 @@ sctlr_set:
 	    0)
 sctlr_clear:
 	.quad ( \
-	    SCTLR_UCI |     /* Enable EL0  DC {CVAU,CIVAC,CVAC}, IC IVAU */ \
 	    SCTLR_IESB |    /* Enable Implicit ErrorSynchronizationBarrier */ \
 	    SCTLR_WXN |     /* Write permission implies Execute Never (W^X) */ \
 	    SCTLR_nTWE |    /* EL0 WFE non-trapping */ \

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.82 2017/11/14 06:43:23 mrg Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.82.2.1 2018/05/21 04:36:17 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -335,6 +335,11 @@ int uvm_page_lookup_freelist(struct vm_page *);
 
 struct vm_page *uvm_phys_to_vm_page(paddr_t);
 paddr_t uvm_vm_page_to_phys(const struct vm_page *);
+
+#if defined(PMAP_DIRECT)
+int uvm_direct_process(struct vm_page **, u_int, voff_t, vsize_t,
+	    int (*)(void *, size_t, void *), void *);
+#endif
 
 /*
  * macros

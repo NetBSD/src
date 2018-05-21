@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_boot.c,v 1.87 2016/11/15 01:50:06 ozaki-r Exp $	*/
+/*	$NetBSD: nfs_boot.c,v 1.87.14.1 2018/05/21 04:36:17 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -35,12 +35,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_boot.c,v 1.87 2016/11/15 01:50:06 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_boot.c,v 1.87.14.1 2018/05/21 04:36:17 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
 #include "opt_tftproot.h"
 #include "opt_nfs_boot.h"
+#endif
+
+#ifdef NFS_BOOT_TCP
+#undef NFS_BOOT_UDP
 #endif
 
 #include <sys/param.h>
@@ -597,10 +601,10 @@ nfs_boot_getfh(struct nfs_dlmount *ndm, struct lwp *l)
 	memset((void *) args, 0, sizeof(*args));
 	args->addr     = &ndm->ndm_saddr;
 	args->addrlen  = args->addr->sa_len;
-#ifdef NFS_BOOT_TCP
-	args->sotype   = SOCK_STREAM;
-#else
+#ifdef NFS_BOOT_UDP
 	args->sotype   = SOCK_DGRAM;
+#else
+	args->sotype   = SOCK_STREAM;
 #endif
 	args->fh       = ndm->ndm_fh;
 	args->hostname = ndm->ndm_host;

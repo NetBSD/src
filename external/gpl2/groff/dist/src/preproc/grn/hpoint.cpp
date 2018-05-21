@@ -1,4 +1,4 @@
-/*	$NetBSD: hpoint.cpp,v 1.1.1.1 2016/01/13 18:41:49 christos Exp $	*/
+/*	$NetBSD: hpoint.cpp,v 1.1.1.1.14.1 2018/05/21 04:35:52 pgoyette Exp $	*/
 
 /* Last non-groff version: hpoint.c  1.1  84/10/08 */
 
@@ -30,7 +30,7 @@ PTMakePoint(double x,
 	    double y,
 	    POINT **pplist)
 {
-  register POINT *pt;
+  POINT *pt;
 
   if (Nullpoint(pt = *pplist)) {	/* empty list */
     *pplist = (POINT *) malloc(sizeof(POINT));

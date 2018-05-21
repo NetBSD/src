@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.53 2017/10/04 11:33:01 kamil Exp $ */
+/*	$NetBSD: pmap.c,v 1.53.2.1 2018/05/21 04:36:19 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pmap.c,v 1.53 2017/10/04 11:33:01 kamil Exp $");
+__RCSID("$NetBSD: pmap.c,v 1.53.2.1 2018/05/21 04:36:19 pgoyette Exp $");
 #endif
 
 #include <string.h>
@@ -119,7 +119,7 @@ dump_vm_map(kvm_t *kd, struct kinfo_proc2 *proc,
 		printf(" vm_refcnt = %d,", D(vmspace, vmspace)->vm_refcnt);
 		printf(" vm_shm = %p,\n", D(vmspace, vmspace)->vm_shm);
 		printf("    vm_rssize = %d,", D(vmspace, vmspace)->vm_rssize);
-		printf(" vm_swrss = %d,", D(vmspace, vmspace)->vm_swrss);
+		printf(" vm_rssmax = %d,", D(vmspace, vmspace)->vm_rssmax);
 		printf(" vm_tsize = %d,", D(vmspace, vmspace)->vm_tsize);
 		printf(" vm_dsize = %d,\n", D(vmspace, vmspace)->vm_dsize);
 		printf("    vm_ssize = %d,", D(vmspace, vmspace)->vm_ssize);

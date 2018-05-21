@@ -1,4 +1,4 @@
-/*	$NetBSD: eficons.c,v 1.4.10.1 2018/03/30 06:20:11 pgoyette Exp $	*/
+/*	$NetBSD: eficons.c,v 1.4.10.2 2018/05/21 04:36:00 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -328,10 +328,10 @@ awaitkey(int timeout, int tell)
 	char c = 0;
 
 	for (;;) {
-		if (tell && timeout) {
-			char numbuf[32];
-			int len;
+		char numbuf[32];
+		int len;
 
+		if (tell && timeout) {
 			len = snprintf(numbuf, sizeof(numbuf), "%d seconds. ",
 			    timeout);
 			if (len > 0 && len < sizeof(numbuf)) {
@@ -340,7 +340,6 @@ awaitkey(int timeout, int tell)
 				printf("%s", numbuf);
 				while (*p)
 					*p++ = '\b';
-				printf("%s", numbuf);
 			}
 		}
 		if (iskey(1)) {
@@ -355,6 +354,8 @@ awaitkey(int timeout, int tell)
 			internal_waitforinputevent(10000000);
 		else
 			break;
+		if (tell)
+			printf("%s", numbuf);
 	}
 
 out:

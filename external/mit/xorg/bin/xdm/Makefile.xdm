@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.xdm,v 1.8 2013/06/05 00:01:16 mrg Exp $
+#	$NetBSD: Makefile.xdm,v 1.8.26.1 2018/05/21 04:35:53 pgoyette Exp $
 
 XDMVARDIR=	/var/db/xdm
 XDMDIR=		${X11ETCDIR}/xdm
@@ -33,6 +33,7 @@ CPPFLAGS+=	-DBINDIR=\"${X11BINDIR}\" -DXDMDIR=\"${XDMDIR}\" \
 		-I${X11SRCDIR.xdm} \
 		-I${X11SRCDIR.xdm}/include \
 		-I${DESTDIR}${X11INCDIR}/freetype2 \
+		-I${DESTDIR}${X11INCDIR}/freetype2/freetype \
 		${X11FLAGS.VERSION}
 
 LDFLAGS+=	-Wl,--export-dynamic

@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_crypto_ccmp.c,v 1.13 2018/01/19 07:54:34 maxv Exp $	*/
+/*	$NetBSD: ieee80211_crypto_ccmp.c,v 1.13.2.1 2018/05/21 04:36:16 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_crypto_ccmp.c,v 1.7 2005/07/11 03:06:23 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_ccmp.c,v 1.13 2018/01/19 07:54:34 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_ccmp.c,v 1.13.2.1 2018/05/21 04:36:16 pgoyette Exp $");
 #endif
 
 /*
@@ -243,7 +243,7 @@ ccmp_decap(struct ieee80211_key *k, struct mbuf *m, int hdrlen)
 	/*
 	 * Copy up 802.11 header and strip crypto bits.
 	 */
-	ovbcopy(mtod(m, void *), mtod(m, u_int8_t *) + ccmp.ic_header, hdrlen);
+	memmove(mtod(m, u_int8_t *) + ccmp.ic_header, mtod(m, void *), hdrlen);
 	m_adj(m, ccmp.ic_header);
 	m_adj(m, -ccmp.ic_trailer);
 

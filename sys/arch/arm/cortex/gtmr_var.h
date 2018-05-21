@@ -1,4 +1,4 @@
-/* $NetBSD: gtmr_var.h,v 1.9 2017/11/30 14:50:34 skrll Exp $ */
+/* $NetBSD: gtmr_var.h,v 1.9.2.1 2018/05/21 04:35:58 pgoyette Exp $ */
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -51,7 +51,6 @@ void	gtmr_init(device_t);
 int	gtmr_intr(void *);
 void	gtmr_init_cpu_clock(struct cpu_info *);
 void	gtmr_delay(unsigned int n);
-void	gtmr_bootdelay(unsigned int n);
 #ifdef __HAVE_GENERIC_CPU_INITCLOCKS
 void	gtmr_cpu_initclocks(void);
 #else

@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_rsb.c,v 1.1 2017/07/02 18:06:45 jmcneill Exp $ */
+/* $NetBSD: sunxi_rsb.c,v 1.1.10.1 2018/05/21 04:35:59 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_rsb.c,v 1.1 2017/07/02 18:06:45 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_rsb.c,v 1.1.10.1 2018/05/21 04:35:59 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -220,8 +220,6 @@ sunxi_rsb_attach(device_t parent, device_t self, void *aux)
 	iba.iba_child_devices = prop_dictionary_get(devs, "i2c-child-devices");
 	if (iba.iba_child_devices)
 		prop_object_retain(iba.iba_child_devices);
-	else
-		iba.iba_child_devices = prop_array_create();
 	prop_object_release(devs);
 
 	sc->sc_i2cdev = config_found_ia(self, "i2cbus", &iba, iicbus_print);

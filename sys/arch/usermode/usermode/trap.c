@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.66 2012/08/04 14:53:32 reinoud Exp $ */
+/* $NetBSD: trap.c,v 1.66.38.1 2018/05/21 04:36:02 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.66 2012/08/04 14:53:32 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.66.38.1 2018/05/21 04:36:02 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -62,6 +62,7 @@ static sigfunc_t sigio;
 static sigfunc_t pass_on;
 
 /* raw signal handlers */
+static char    sig_stack[SIGSTKSZ];
 static stack_t sigstk;
 ucontext_t jump_ucp;
 
@@ -108,8 +109,7 @@ setup_signal_handlers(void)
 	 * effects. Especially ld.so and friends have such tiny stacks that
 	 * its not feasable.
 	 */
-	if ((sigstk.ss_sp = thunk_malloc(SIGSTKSZ)) == NULL)
-		panic("can't allocate signal stack space\n");
+	sigstk.ss_sp    = sig_stack;
 	sigstk.ss_size  = SIGSTKSZ;
 	sigstk.ss_flags = 0;
 	if (thunk_sigaltstack(&sigstk, 0) < 0)
@@ -293,8 +293,8 @@ print_illegal_instruction_siginfo(int sig, siginfo_t *info, void *ctx,
 #endif
 }
 #else /* DEBUG */
-#define print_mem_access_siginfo(s, i, c, p, v, sp)
-#define print_illegal_instruction_siginfo(s, i, c, p, v, sp)
+#define print_mem_access_siginfo(s, i, c, p, v, sp) {}
+#define print_illegal_instruction_siginfo(s, i, c, p, v, sp) {}
 #endif /* DEBUG */
 
 
@@ -349,7 +349,7 @@ handle_signal(int sig, siginfo_t *info, void *ctx)
 		sp = fp - sizeof(register_t);	/* slack */
 
 		/* sanity check before copying */
-		if (fp - 2*PAGE_SIZE < (vaddr_t) pcb->sys_stack)
+		if (fp - 4*PAGE_SIZE < (vaddr_t) pcb->sys_stack)
 			panic("%s: out of system stack", __func__);
 	}
 
@@ -431,6 +431,11 @@ pagefault(siginfo_t *info, vaddr_t from_userland, vaddr_t pc, vaddr_t va)
 	}
 
 	/* ask UVM */
+#if 0
+thunk_printf("%s: l %p, pcb %p, ", __func__, l, pcb);
+thunk_printf("pc %p, va %p ", (void *) pc, (void *) va);
+thunk_printf("derived atype %d\n", atype);
+#endif
 	thunk_printf_debug("pmap fault couldn't handle it! : "
 		"derived atype %d\n", atype);
 
@@ -452,10 +457,6 @@ pagefault(siginfo_t *info, vaddr_t from_userland, vaddr_t pc, vaddr_t va)
 		goto out;
 	}
 
-	/* something got wrong */
-	thunk_printf("%s: uvm fault %d, pc %p, va %p, from_kernel %d\n",
-		__func__, error, (void *) pc, (void *) va, from_kernel);
-
 	/* check if its from copyin/copyout */
 	if (onfault) {
 		panic("%s: can't call onfault yet\n", __func__);
@@ -468,11 +469,18 @@ pagefault(siginfo_t *info, vaddr_t from_userland, vaddr_t pc, vaddr_t va)
 		goto out;
 	}
 
-	if (from_kernel)
+	if (from_kernel) {
+		thunk_printf("%s: uvm fault %d, pc %p, va %p, from_kernel %d\n",
+			__func__, error, (void *) pc, (void *) va, from_kernel);
 		panic("Unhandled page fault in kernel mode");
+	}
 
 	/* send signal */
-	thunk_printf("giving signal to userland\n");
+	/* something got wrong */
+	thunk_printf_debug("%s: uvm fault %d, pc %p, va %p, from_kernel %d\n",
+		__func__, error, (void *) pc, (void *) va, from_kernel);
+
+	thunk_printf_debug("giving signal to userland\n");
 
 	KASSERT(from_userland);
 	KSI_INIT_TRAP(&ksi);

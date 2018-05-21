@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.202.2.21 2018/04/17 23:06:11 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.202.2.22 2018/05/21 04:36:15 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -56,6 +56,8 @@ SUBDIR+=	gpio
 SUBDIR+=	gpioiic
 SUBDIR+=	gpioow
 SUBDIR+=	gpiosim
+SUBDIR+=	gpioirq
+SUBDIR+=	gpiopps
 SUBDIR+=	hfs
 SUBDIR+=	hythygtemp
 SUBDIR+=	si70xxtemp

@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.134.2.1 2018/04/22 07:20:27 pgoyette Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.134.2.2 2018/05/21 04:36:15 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.134.2.1 2018/04/22 07:20:27 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.134.2.2 2018/05/21 04:36:15 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pppoe.h"
@@ -944,13 +944,16 @@ done:
 static void
 pppoe_disc_input(struct mbuf *m)
 {
+	KASSERT(m->m_flags & M_PKTHDR);
 
-	/* avoid error messages if there is not a single pppoe instance */
+	/*
+	 * Avoid error messages if there is not a single PPPoE instance.
+	 */
 	if (!LIST_EMPTY(&pppoe_softc_list)) {
-		KASSERT(m->m_flags & M_PKTHDR);
 		pppoe_dispatch_disc_pkt(m, 0);
-	} else
+	} else {
 		m_freem(m);
+	}
 }
 
 static bool
@@ -976,6 +979,13 @@ pppoe_data_input(struct mbuf *m)
 	bool term_unknown = pppoe_term_unknown;
 
 	KASSERT(m->m_flags & M_PKTHDR);
+
+	/*
+	 * Avoid error messages if there is not a single PPPoE instance.
+	 */
+	if (LIST_EMPTY(&pppoe_softc_list)) {
+		goto drop;
+	}
 
 	if (term_unknown) {
 		memcpy(shost, mtod(m, struct ether_header*)->ether_shost,

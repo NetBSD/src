@@ -1,4 +1,4 @@
-/*	$NetBSD: deq.c,v 1.12 2017/09/27 22:31:53 macallan Exp $	*/
+/*	$NetBSD: deq.c,v 1.12.2.1 2018/05/21 04:36:01 pgoyette Exp $	*/
 
 /*-
  * Copyright (C) 2005 Michael Lorenz
@@ -32,7 +32,7 @@
  */
  
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: deq.c,v 1.12 2017/09/27 22:31:53 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: deq.c,v 1.12.2.1 2018/05/21 04:36:01 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,7 +87,7 @@ deq_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_node = ia->ia_cookie;
 	sc->sc_parent = parent;
-	sc->sc_address = (ia->ia_addr & 0x7f);
+	sc->sc_address = ia->ia_addr;
 	sc->sc_i2c = ia->ia_tag;
 	if (OF_getprop(sc->sc_node, "compatible", name, 256) <= 0) {
 		/* deq has no 'compatible' on my iBook G4 */

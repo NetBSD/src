@@ -1,4 +1,4 @@
-/*	$NetBSD: hgraph.cpp,v 1.1.1.1 2016/01/13 18:41:49 christos Exp $	*/
+/*	$NetBSD: hgraph.cpp,v 1.1.1.1.14.1 2018/05/21 04:35:52 pgoyette Exp $	*/
 
 /* Last non-groff version: hgraph.c  1.14 (Berkeley) 84/11/27
  *
@@ -50,7 +50,7 @@ extern double adj4;
 extern int res;
 
 void HGSetFont(int font, int size);
-void HGPutText(int justify, POINT pnt, register char *string);
+void HGPutText(int justify, POINT pnt, char *string);
 void HGSetBrush(int mode);
 void tmove2(int px, int py);
 void doarc(POINT cp, POINT sp, int angle);
@@ -60,8 +60,8 @@ void drawwig(POINT * ptr, int type);
 void HGtline(int x1, int y1);
 void deltax(double x);
 void deltay(double y);
-void HGArc(register int cx, register int cy, int px, int py, int angle);
-void picurve(register int *x, register int *y, int npts);
+void HGArc(int cx, int cy, int px, int py, int angle);
+void picurve(int *x, int *y, int npts);
 void HGCurve(int *x, int *y, int numpoints);
 void Paramaterize(int x[], int y[], double h[], int n);
 void PeriodicSpline(double h[], int z[],
@@ -85,10 +85,10 @@ void
 HGPrintElt(ELT *element,
 	   int /* baseline */)
 {
-  register POINT *p1;
-  register POINT *p2;
-  register int length;
-  register int graylevel;
+  POINT *p1;
+  POINT *p2;
+  int length;
+  int graylevel;
 
   if (!DBNullelt(element) && !Nullpoint((p1 = element->ptlist))) {
     /* p1 always has first point */
@@ -280,7 +280,7 @@ HGPrintElt(ELT *element,
 void
 HGPutText(int justify,
 	  POINT pnt,
-	  register char *string)
+	  char *string)
 {
   int savelasty = lasty;	/* vertical motion for text is to be */
 				/* ignored.  Save current y here     */
@@ -389,7 +389,7 @@ HGSetFont(int font,
 void
 HGSetBrush(int mode)
 {
-  register int printed = 0;
+  int printed = 0;
 
   if (linmod != style[--mode]) {
     /* Groff doesn't understand \Ds, so we take it out */
@@ -419,7 +419,7 @@ HGSetBrush(int mode)
 void
 deltax(double x)
 {
-  register int ix = (int) (x * troffscale);
+  int ix = (int) (x * troffscale);
 
   printf(" %du", ix - lastx);
   lastx = ix;
@@ -439,7 +439,7 @@ deltax(double x)
 void
 deltay(double y)
 {
-  register int iy = (int) (y * troffscale);
+  int iy = (int) (y * troffscale);
 
   printf(" %du", iy - lastyline);
   lastyline = iy;
@@ -459,8 +459,8 @@ void
 tmove2(int px,
        int py)
 {
-  register int dx;
-  register int dy;
+  int dx;
+  int dy;
 
   if ((dy = py - lasty)) {
     printf("\\v'%du'", dy);
@@ -485,10 +485,10 @@ tmove2(int px,
 void
 tmove(POINT * ptr)
 {
-  register int ix = (int) (ptr->x * troffscale);
-  register int iy = (int) (ptr->y * troffscale);
-  register int dx;
-  register int dy;
+  int ix = (int) (ptr->x * troffscale);
+  int iy = (int) (ptr->y * troffscale);
+  int dx;
+  int dy;
 
   if ((dy = iy - lasty)) {
     printf(".sp %du\n", dy);
@@ -549,7 +549,7 @@ void
 drawwig(POINT * ptr,
 	int type)
 {
-  register int npts;			/* point list index */
+  int npts;				/* point list index */
   int x[MAXPOINTS], y[MAXPOINTS];	/* point list */
 
   for (npts = 1; !Nullpoint(ptr); ptr = PTNextPoint(ptr), npts++) {
@@ -576,20 +576,20 @@ drawwig(POINT * ptr,
  *----------------------------------------------------------------------------*/
 
 void
-HGArc(register int cx,
-      register int cy,
+HGArc(int cx,
+      int cy,
       int px,
       int py,
       int angle)
 {
   double xs, ys, resolution, fullcircle;
   int m;
-  register int mask;
-  register int extent;
-  register int nx;
-  register int ny;
-  register int length;
-  register double epsilon;
+  int mask;
+  int extent;
+  int nx;
+  int ny;
+  int length;
+  double epsilon;
 
   xs = px - cx;
   ys = py - cy;
@@ -635,13 +635,13 @@ HGArc(register int cx,
  *----------------------------------------------------------------------------*/
 
 void
-picurve(register int *x,
-	register int *y,
+picurve(int *x,
+	int *y,
 	int npts)
 {
-  register int nseg;		/* effective resolution for each curve */
-  register int xp;		/* current point (and temporary) */
-  register int yp;
+  int nseg;			/* effective resolution for each curve */
+  int xp;			/* current point (and temporary) */
+  int yp;
   int pxp, pyp;			/* previous point (to make lines from) */
   int i;			/* inner curve segment traverser */
   int length = 0;
@@ -712,10 +712,10 @@ HGCurve(int *x,
   double h[MAXPOINTS], dx[MAXPOINTS], dy[MAXPOINTS];
   double d2x[MAXPOINTS], d2y[MAXPOINTS], d3x[MAXPOINTS], d3y[MAXPOINTS];
   double t, t2, t3;
-  register int j;
-  register int k;
-  register int nx;
-  register int ny;
+  int j;
+  int k;
+  int nx;
+  int ny;
   int lx, ly;
   int length = 0;
 
@@ -778,10 +778,10 @@ Paramaterize(int x[],
 	     double h[],
 	     int n)
 {
-  register int dx;
-  register int dy;
-  register int i;
-  register int j;
+  int dx;
+  int dy;
+  int i;
+  int j;
   double u[MAXPOINTS];
 
   for (i = 1; i <= n; ++i) {
@@ -939,9 +939,9 @@ NaturalEndSpline(double h[],	/* parameterization */
  *----------------------------------------------------------------------------*/
 
 void
-change(register int x,
-       register int y,
-       register int vis)
+change(int x,
+       int y,
+       int vis)
 {
   static int length = 0;
 
@@ -969,17 +969,17 @@ void
 HGtline(int x_1,
 	int y_1)
 {
-  register int x_0 = lastx;
-  register int y_0 = lasty;
-  register int dx;
-  register int dy;
-  register int oldcoord;
-  register int res1;
-  register int visible;
-  register int res2;
-  register int xinc;
-  register int yinc;
-  register int dotcounter;
+  int x_0 = lastx;
+  int y_0 = lasty;
+  int dx;
+  int dy;
+  int oldcoord;
+  int res1;
+  int visible;
+  int res2;
+  int xinc;
+  int yinc;
+  int dotcounter;
 
   if (linmod == SOLID) {
     line(x_1, y_1);

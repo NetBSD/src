@@ -21,6 +21,8 @@ HDRS="$HDRS param.h"
 HDRS="$HDRS ptrace.h"
 HDRS="$HDRS wchar_limits.h"
 HDRS="$HDRS cdefs.h"
+HDRS="$HDRS mcontext.h"
+HDRS="$HDRS frame_regs.h"
 
 for hdr in ${HDRS}; do
 	G="_USERMODE_$(echo ${hdr} | sed 's/\./_/g' | tr [a-z] [A-Z])"

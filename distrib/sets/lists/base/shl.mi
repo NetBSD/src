@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.832.2.3 2018/05/02 07:19:59 pgoyette Exp $
+# $NetBSD: shl.mi,v 1.832.2.4 2018/05/21 04:35:49 pgoyette Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -103,6 +103,9 @@
 ./lib/npf/ext_rndblock.so.0			base-npf-shlib		compatfile,npf
 ./lib/npf/ext_rndblock.so.0.0			base-npf-shlib		compatfile,npf
 ./libexec/ld.elf_so				base-sys-shlib		dynamicroot
+./usr/lib/libbozohttpd.so 			base-sys-shlib		compatfile
+./usr/lib/libbozohttpd.so.0			base-sys-shlib		compatfile
+./usr/lib/libbozohttpd.so.0.0			base-sys-shlib		compatfile
 ./usr/lib/i18n/libBIG5.so			base-i18n-shlib		compatfile
 ./usr/lib/i18n/libBIG5.so.5			base-i18n-shlib		compatfile
 ./usr/lib/i18n/libBIG5.so.5.0			base-i18n-shlib		compatfile
@@ -874,6 +877,7 @@
 ./usr/lib/lua/5.1/gpio.so                    	base-obsolete		obsolete
 ./usr/lib/lua/5.1/sqlite.so                    	base-obsolete		obsolete
 ./usr/lib/lua/5.1/syslog.so                    	base-obsolete		obsolete
+./usr/lib/lua/5.3/bozohttpd.so			base-sys-shlib		compatfile
 ./usr/lib/lua/5.3/gpio.so                    	base-sys-shlib		compatfile
 ./usr/lib/lua/5.3/netpgp.so 			base-sys-shlib		compatfile
 ./usr/lib/lua/5.3/sqlite.so                    	base-sys-shlib		compatfile

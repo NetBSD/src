@@ -1,11 +1,11 @@
-/*	$NetBSD: vmbuf.c,v 1.4 2006/09/09 16:22:10 manu Exp $	*/
+/*	$NetBSD: vmbuf.c,v 1.4.86.1 2018/05/21 04:35:49 pgoyette Exp $	*/
 
 /*	$KAME: vmbuf.c,v 1.11 2001/11/26 16:54:29 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -17,7 +17,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -50,8 +50,7 @@
 #include "gcmalloc.h"
 
 vchar_t *
-vmalloc(size)
-	size_t size;
+vmalloc(size_t size)
 {
 	vchar_t *var;
 
@@ -73,12 +72,10 @@ vmalloc(size)
 }
 
 vchar_t *
-vrealloc(ptr, size)
-	vchar_t *ptr;
-	size_t size;
+vrealloc(vchar_t *ptr, size_t size)
 {
 	caddr_t v;
-	
+
 	if (ptr != NULL) {
 		if (ptr->l == 0) {
 			(void)vfree(ptr);
@@ -103,8 +100,7 @@ vrealloc(ptr, size)
 }
 
 void
-vfree(var)
-	vchar_t *var;
+vfree(vchar_t *var)
 {
 	if (var == NULL)
 		return;
@@ -118,8 +114,7 @@ vfree(var)
 }
 
 vchar_t *
-vdup(src)
-	vchar_t *src;
+vdup(vchar_t *src)
 {
 	vchar_t *new;
 

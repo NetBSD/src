@@ -1,4 +1,4 @@
-/*	$NetBSD: localconf.c,v 1.9 2013/06/20 15:41:18 christos Exp $	*/
+/*	$NetBSD: localconf.c,v 1.9.26.1 2018/05/21 04:35:49 pgoyette Exp $	*/
 
 /*	$KAME: localconf.c,v 1.33 2001/08/09 07:32:19 sakane Exp $	*/
 
@@ -376,8 +376,7 @@ doitype2doi(doitype)
 
 
 static void
-saverestore_params(f)
-	int f;
+saverestore_params(int f)
 {
 	static u_int16_t s_port_isakmp;
 

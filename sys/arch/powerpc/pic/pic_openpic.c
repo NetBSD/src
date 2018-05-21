@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_openpic.c,v 1.12.2.1 2018/03/30 06:20:12 pgoyette Exp $ */
+/*	$NetBSD: pic_openpic.c,v 1.12.2.2 2018/05/21 04:36:01 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_openpic.c,v 1.12.2.1 2018/03/30 06:20:12 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_openpic.c,v 1.12.2.2 2018/05/21 04:36:01 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -66,7 +66,7 @@ setup_openpic(void *addr, int passthrough)
 	    "Supports %d CPUs and %d interrupt sources.\n",
 	    x & 0xff, ((x & 0x1f00) >> 8) + 1, ((x & 0x07ff0000) >> 16) + 1);
 
-	pic->pic_numintrs = ((x & 0x07ff0000) >> 16) + 2; /* one more slot for IPI */
+	pic->pic_numintrs = IPI_VECTOR + 1;
 	pic->pic_cookie = addr;
 	pic->pic_enable_irq = opic_enable_irq;
 	pic->pic_reenable_irq = opic_enable_irq;
@@ -92,7 +92,7 @@ setup_openpic(void *addr, int passthrough)
 #if 1
 	openpic_set_priority(0, 15);
 
-	for (irq = 0; irq < pic->pic_numintrs; irq++) {
+	for (irq = 0; irq < (pic->pic_numintrs - 1); irq++) {
 		/* make sure to keep disabled */
 		openpic_write(OPENPIC_SRC_VECTOR(irq), OPENPIC_IMASK);
 		/* send all interrupts to CPU 0 */
@@ -155,7 +155,10 @@ opic_establish_irq(struct pic_ops *pic, int irq, int type, int pri)
 		x |= OPENPIC_SENSE_LEVEL;
 
 	x |= realpri << OPENPIC_PRIORITY_SHIFT;
-	openpic_write(OPENPIC_SRC_VECTOR(irq), x);
+#ifdef MULTIPROCESSOR
+	if (irq < IPI_VECTOR)
+#endif 
+		openpic_write(OPENPIC_SRC_VECTOR(irq), x);
 
 	aprint_debug("%s: setting IRQ %d to priority %d\n", __func__, irq,
 	    realpri);
@@ -165,7 +168,9 @@ static void
 opic_enable_irq(struct pic_ops *pic, int irq, int type)
 {
 	u_int x;
-
+#ifdef MULTIPROCESSOR
+	if (irq == IPI_VECTOR) return;
+#endif
 	x = openpic_read(OPENPIC_SRC_VECTOR(irq));
 	x &= ~OPENPIC_IMASK;
 	openpic_write(OPENPIC_SRC_VECTOR(irq), x);
@@ -176,6 +181,9 @@ opic_disable_irq(struct pic_ops *pic, int irq)
 {
 	u_int x;
 
+#ifdef MULTIPROCESSOR
+	if (irq == IPI_VECTOR) return;
+#endif
 	x = openpic_read(OPENPIC_SRC_VECTOR(irq));
 	x |= OPENPIC_IMASK;
 	openpic_write(OPENPIC_SRC_VECTOR(irq), x);

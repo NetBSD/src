@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.1.28.2 2018/05/02 07:20:02 pgoyette Exp $	*/
+/*	$NetBSD: pmap.c,v 1.1.28.3 2018/05/21 04:35:57 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.1.28.2 2018/05/02 07:20:02 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.1.28.3 2018/05/21 04:35:57 pgoyette Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -1229,10 +1229,10 @@ pmap_create(void)
 	memset(pm, 0, sizeof(*pm));
 	pm->pm_refcnt = 1;
 	pm->pm_asid = -1;
-	pm->pm_l0table = _pmap_alloc_pdp(pm, &pm->pm_l0table_pa);
-	KASSERT(((vaddr_t)pm->pm_l0table & (PAGE_SIZE - 1)) == 0);
 	SLIST_INIT(&pm->pm_vmlist);
 	mutex_init(&pm->pm_lock, MUTEX_DEFAULT, IPL_VM);
+	pm->pm_l0table = _pmap_alloc_pdp(pm, &pm->pm_l0table_pa);
+	KASSERT(((vaddr_t)pm->pm_l0table & (PAGE_SIZE - 1)) == 0);
 
 	UVMHIST_LOG(pmaphist, "pm=%p, pm_l0table=%016lx, pm_l0table_pa=%016lx",
 	    pm, pm->pm_l0table, pm->pm_l0table_pa, 0);
@@ -1436,17 +1436,10 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 			    "pmap_enter: failed to allocate pv_entry");
 		}
 
-		if (flags & PMAP_WIRED) {
-			/*
-			 * initial value of ref/mod are equal to prot,
-			 * and pte RW are same as prot.
-			 */
-			VM_PAGE_TO_MD(pg)->mdpg_flags |=
-			    (prot & mdattr);
-		} else {
-			/* pte RW will be masked by ref/mod for ref/mod emul */
-			mdattr &= VM_PAGE_TO_MD(pg)->mdpg_flags;
-		}
+		/* update referenced/modified flags */
+		VM_PAGE_TO_MD(pg)->mdpg_flags |=
+		    (flags & (VM_PROT_READ | VM_PROT_WRITE));
+		mdattr &= VM_PAGE_TO_MD(pg)->mdpg_flags;
 	}
 
 #ifdef PMAPCOUNTERS

@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_tlb.c,v 1.1 2018/01/22 19:37:45 jdolecek Exp $	*/
+/*	$NetBSD: x86_tlb.c,v 1.1.2.1 2018/05/21 04:36:03 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008-2012 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_tlb.c,v 1.1 2018/01/22 19:37:45 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_tlb.c,v 1.1.2.1 2018/05/21 04:36:03 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -199,7 +199,6 @@ pmap_tlb_invalidate(const pmap_tlb_packet_t *tp)
 
 	/* Find out what we need to invalidate. */
 	if (tp->tp_count == (uint16_t)-1) {
-		u_int egen = uvm_emap_gen_return();
 		if (tp->tp_pte & PG_G) {
 			/* Invalidating user and kernel TLB entries. */
 			tlbflushg();
@@ -207,7 +206,6 @@ pmap_tlb_invalidate(const pmap_tlb_packet_t *tp)
 			/* Invalidating user TLB entries only. */
 			tlbflush();
 		}
-		uvm_emap_update(egen);
 	} else {
 		/* Invalidating a single page or a range of pages. */
 		for (i = tp->tp_count - 1; i >= 0; i--) {

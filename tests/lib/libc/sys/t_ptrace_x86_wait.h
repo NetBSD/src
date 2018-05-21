@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_x86_wait.h,v 1.3.2.2 2018/04/16 02:00:09 pgoyette Exp $	*/
+/*	$NetBSD: t_ptrace_x86_wait.h,v 1.3.2.3 2018/05/21 04:36:17 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -56,33 +56,6 @@ union u {
 		unsigned long len_dr3 : 2;			/* 30-31 */
 	} bits;
 };
-
-static bool
-can_we_set_dbregs(void)
-{
-	static long euid = -1;
-	static int user_set_dbregs  = -1;
-	size_t user_set_dbregs_len = sizeof(user_set_dbregs);
-
-	if (euid == -1)
-		euid = geteuid();
-
-	if (euid == 0)
-		return true;
-
-	if (user_set_dbregs == -1) {
-		if (sysctlbyname("security.models.extensions.user_set_dbregs",
-			&user_set_dbregs, &user_set_dbregs_len, NULL, 0)
-			== -1) {
-			return false;
-		}
-	}
-
-	if (user_set_dbregs > 0)
-		return true;
-	else
-		return false;
-}
 
 ATF_TC(dbregs_print);
 ATF_TC_HEAD(dbregs_print, tc)

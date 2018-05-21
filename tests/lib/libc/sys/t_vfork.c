@@ -1,7 +1,7 @@
-/* $NetBSD: axp806.h,v 1.1 2014/12/07 00:33:26 jmcneill Exp $ */
+/*	$NetBSD: t_vfork.c,v 1.1.2.2 2018/05/21 04:36:17 pgoyette Exp $	*/
 
 /*-
- * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
+ * Copyright (c) 2018 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,16 +26,5 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _DEV_I2C_AXP806_H
-#define _DEV_I2C_AXP806_H
-
-struct axp806_ctrl;
-
-struct axp806_ctrl *axp806_lookup(device_t, const char *);
-int	axp806_set_voltage(struct axp806_ctrl *, u_int, u_int);
-int	axp806_get_voltage(struct axp806_ctrl *, u_int *);
-int	axp806_is_enabled(struct axp806_ctrl *, bool *);
-int	axp806_enable(struct axp806_ctrl *);
-int	axp806_disable(struct axp806_ctrl *);
-
-#endif /* !_DEV_I2C_AXP806_H */
+#define VFORK
+#include "t_fork.c"

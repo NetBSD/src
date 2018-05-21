@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipcomp.c,v 1.59.2.3 2018/05/02 07:20:24 pgoyette Exp $	*/
+/*	$NetBSD: xform_ipcomp.c,v 1.59.2.4 2018/05/21 04:36:16 pgoyette Exp $	*/
 /*	$FreeBSD: xform_ipcomp.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /* $OpenBSD: ip_ipcomp.c,v 1.1 2001/07/05 12:08:52 jjbg Exp $ */
 
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.59.2.3 2018/05/02 07:20:24 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.59.2.4 2018/05/21 04:36:16 pgoyette Exp $");
 
 /* IP payload compression protocol (IPComp), see RFC 2393 */
 #if defined(_KERNEL_OPT)
@@ -250,8 +250,6 @@ ipcomp_input_cb(struct cryptop *crp)
 	int hlen = IPCOMP_HLENGTH, error, clen;
 	uint8_t nproto;
 	struct ipcomp *ipc;
-	uint16_t dport;
-	uint16_t sport;
 	IPSEC_DECLARE_LOCK_VARIABLE;
 
 	KASSERT(crp->crp_opaque != NULL);
@@ -259,9 +257,6 @@ ipcomp_input_cb(struct cryptop *crp)
 	skip = tc->tc_skip;
 	protoff = tc->tc_protoff;
 	m = crp->crp_buf;
-
-	/* find the source port for NAT-T */
-	nat_t_ports_get(m, &dport, &sport);
 
 	IPSEC_ACQUIRE_GLOBAL_LOCKS();
 
@@ -371,7 +366,7 @@ bad:
  */
 static int
 ipcomp_output(struct mbuf *m, const struct ipsecrequest *isr,
-    struct secasvar *sav, struct mbuf **mp, int skip, int protoff)
+    struct secasvar *sav, int skip, int protoff)
 {
 	char buf[IPSEC_ADDRSTRLEN];
 	const struct comp_algo *ipcompx;

@@ -1,4 +1,4 @@
-/*	$NetBSD: remoteconf.c,v 1.28 2012/01/01 15:57:31 tteras Exp $	*/
+/*	$NetBSD: remoteconf.c,v 1.28.40.1 2018/05/21 04:35:49 pgoyette Exp $	*/
 
 /* Id: remoteconf.c,v 1.38 2006/05/06 15:52:44 manubsd Exp */
 
@@ -163,13 +163,9 @@ rmconf_match_identity(rmconf, id_p)
 }
 
 static int
-rmconf_match_etype_and_approval(rmconf, etype, approval)
-	struct remoteconf *rmconf;
-	int etype;
-	struct isakmpsa *approval;
+rmconf_match_etype_and_approval(struct remoteconf *rmconf, int etype,
+    struct isakmpsa *approval)
 {
-	struct isakmpsa *p;
-
 	if (check_etypeok(rmconf, (void *) (intptr_t) etype) == 0)
 		return ISAKMP_NTYPE_NO_PROPOSAL_CHOSEN;
 
@@ -197,9 +193,7 @@ enum rmconf_match_t {
 };
 
 static int
-rmconf_match_type(rmsel, rmconf)
-	struct rmconfselector *rmsel;
-	struct remoteconf *rmconf;
+rmconf_match_type(struct rmconfselector *rmsel, struct remoteconf *rmconf)
 {
 	int ret = MATCH_NONE, tmp;
 
@@ -347,9 +341,7 @@ struct rmconf_find_context {
 };
 
 static int
-rmconf_find(rmconf, ctx)
-	struct remoteconf *rmconf;
-	void *ctx;
+rmconf_find(struct remoteconf *rmconf, void *ctx)
 {
 	struct rmconf_find_context *fctx = (struct rmconf_find_context *) ctx;
 	int match_type;
@@ -392,7 +384,6 @@ getrmconf(remote, flags)
 	int flags;
 {
 	struct rmconf_find_context ctx;
-	int n = 0;
 
 	memset(&ctx, 0, sizeof(ctx));
 	ctx.sel.flags = flags;
@@ -549,10 +540,8 @@ newrmconf()
 	return new;
 }
 
-void *
-dupidvl(entry, arg)
-	void *entry;
-	void *arg;
+static void *
+dupidvl(void *entry, void *arg)
 {
 	struct idspec *id;
 	struct idspec *old = (struct idspec *) entry;
@@ -570,10 +559,8 @@ dupidvl(entry, arg)
 	return NULL;
 }
 
-void *
-duprsa(entry, arg)
-	void *entry;
-	void *arg;
+static void *
+duprsa(void *entry, void *arg)
 {
 	struct rsa_key *new;
 
@@ -592,7 +579,6 @@ duprmconf_shallow (rmconf)
 	struct remoteconf *rmconf;
 {
 	struct remoteconf *new;
-	struct proposalspec *prspec;
 
 	new = racoon_calloc(1, sizeof(*new));
 	if (new == NULL)
@@ -1109,10 +1095,7 @@ script_path_add(path)
 {
 	char *script_dir;
 	vchar_t *new_path;
-	vchar_t *new_storage;
-	vchar_t **sp;
 	size_t len;
-	size_t size;
 
 	script_dir = lcconf->pathinfo[LC_PATHTYPE_SCRIPT];
 

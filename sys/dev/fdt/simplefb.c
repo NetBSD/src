@@ -1,4 +1,4 @@
-/* $NetBSD: simplefb.c,v 1.3.2.1 2018/04/07 04:12:14 pgoyette Exp $ */
+/* $NetBSD: simplefb.c,v 1.3.2.2 2018/05/21 04:36:05 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_wsdisplay_compat.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: simplefb.c,v 1.3.2.1 2018/04/07 04:12:14 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: simplefb.c,v 1.3.2.2 2018/05/21 04:36:05 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -70,6 +70,7 @@ simplefb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, lwp_t *l)
 	struct wsdisplayio_bus_id *busid;
 	struct wsdisplayio_fbinfo *fbi;
 	struct rasops_info *ri;
+	u_int video;
 	int error;
 
 	switch (cmd) {
@@ -87,6 +88,15 @@ simplefb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, lwp_t *l)
 		if (error == 0)
 			fbi->fbi_flags |= WSFB_VRAM_IS_RAM;
 		return error;
+	case WSDISPLAYIO_SVIDEO:
+		video = *(u_int *)data;
+		if (video == WSDISPLAYIO_VIDEO_OFF)
+			pmf_event_inject(NULL, PMFE_DISPLAY_OFF);
+		else if (video == WSDISPLAYIO_VIDEO_ON)
+			pmf_event_inject(NULL, PMFE_DISPLAY_ON);
+		else
+			return EINVAL;
+		return 0;
 	default:
 		return EPASSTHROUGH;
 	}

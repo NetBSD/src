@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.3 2015/05/10 10:14:02 martin Exp $	*/
+/*	$NetBSD: md.c,v 1.3.14.1 2018/05/21 04:36:20 pgoyette Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -171,7 +171,7 @@ md_post_extract(void)
 	if (ask_noyes(NULL)) {
 		if (run_program(RUN_DISPLAY | RUN_NO_CLEAR,
 		    "/bin/dd if=%s of=/dev/reflash0c bs=512", ldr_path))
-			process_menu(MENU_ok, deconst("Warning: the system "
+			process_menu(MENU_ok, __UNCONST("Warning: the system "
 			    "is probably not bootable"));
 	}
 

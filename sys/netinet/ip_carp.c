@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.94.2.1 2018/03/22 01:44:51 pgoyette Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.94.2.2 2018/05/21 04:36:16 pgoyette Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.94.2.1 2018/03/22 01:44:51 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.94.2.2 2018/05/21 04:36:16 pgoyette Exp $");
 
 /*
  * TODO:
@@ -615,7 +615,7 @@ _carp6_proto_input(struct mbuf *m, int off, int proto)
 
 	/* verify that we have a complete carp packet */
 	len = m->m_len;
-	IP6_EXTHDR_GET(ch, struct carp_header *, m, off, sizeof(*ch));
+	M_REGION_GET(ch, struct carp_header *, m, off, sizeof(*ch));
 	if (ch == NULL) {
 		CARP_STATINC(CARP_STAT_BADLEN);
 		CARP_LOG(sc, ("packet size %u too small", len));

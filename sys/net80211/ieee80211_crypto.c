@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_crypto.c,v 1.21.2.1 2018/04/16 02:00:08 pgoyette Exp $	*/
+/*	$NetBSD: ieee80211_crypto.c,v 1.21.2.2 2018/05/21 04:36:16 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2001 Atsushi Onoe
@@ -37,7 +37,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_crypto.c,v 1.12 2005/08/08 18:46:35 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto.c,v 1.21.2.1 2018/04/16 02:00:08 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto.c,v 1.21.2.2 2018/05/21 04:36:16 pgoyette Exp $");
 #endif
 
 #ifdef _KERNEL_OPT
@@ -647,9 +647,6 @@ ieee80211_crypto_decap(struct ieee80211com *ic,
 	}
 
 	if (m == NULL) {
-		IEEE80211_DPRINTF(ic, IEEE80211_MSG_CRYPTO,
-		    "[%s] unable to pullup %s header\n",
-		    ether_sprintf(wh->i_addr2), cip->ic_name);
 		ic->ic_stats.is_rx_tooshort++;
 		return NULL;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.270 2017/11/07 19:44:04 christos Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.270.2.1 2018/05/21 04:36:15 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.270 2017/11/07 19:44:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.270.2.1 2018/05/21 04:36:15 pgoyette Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
@@ -325,6 +325,7 @@ exit1(struct lwp *l, int exitcode, int signo)
 	 * we run at this moment, nothing runs in userland
 	 * anymore.
 	 */
+	ruspace(p);	/* Update our vm resource use */
 	uvm_proc_exit(p);
 
 	/*

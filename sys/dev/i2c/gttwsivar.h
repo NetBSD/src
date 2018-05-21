@@ -1,4 +1,4 @@
-/*	$NetBSD: gttwsivar.h,v 1.3 2017/10/29 14:59:05 jmcneill Exp $	*/
+/*	$NetBSD: gttwsivar.h,v 1.3.2.1 2018/05/21 04:36:05 pgoyette Exp $	*/
 /*
  * Copyright (c) 2008 Eiji Kawauchi.
  * All rights reserved.
@@ -86,6 +86,7 @@ struct gttwsi_softc {
 	struct i2c_controller sc_i2c;
 	kmutex_t sc_buslock;
 	kmutex_t sc_mtx;
+	bool sc_inuse;
 	kcondvar_t sc_cv;
 
 	bool sc_iflg_rwc;

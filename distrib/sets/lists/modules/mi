@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.114.2.18 2018/04/22 12:45:10 pgoyette Exp $
+# $NetBSD: mi,v 1.114.2.19 2018/05/21 04:35:50 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -170,8 +170,12 @@
 ./@MODULEDIR@/gpio/gpio.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/gpioiic				base-kernel-modules	kmod
 ./@MODULEDIR@/gpioiic/gpioiic.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/gpioirq				base-kernel-modules	kmod
+./@MODULEDIR@/gpioirq/gpioirq.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/gpioow				base-kernel-modules	kmod
 ./@MODULEDIR@/gpioow/gpioow.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/gpiopps				base-kernel-modules	kmod
+./@MODULEDIR@/gpiopps/gpiopps.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/gpiosim				base-kernel-modules	kmod
 ./@MODULEDIR@/gpiosim/gpiosim.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/hfs				base-kernel-modules	kmod

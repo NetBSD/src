@@ -1,4 +1,4 @@
-/*	$NetBSD: inet6.c,v 1.70 2017/12/19 17:05:15 kre Exp $	*/
+/*	$NetBSD: inet6.c,v 1.70.2.1 2018/05/21 04:36:18 pgoyette Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 
 /*
@@ -64,7 +64,7 @@
 #if 0
 static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet6.c,v 1.70 2017/12/19 17:05:15 kre Exp $");
+__RCSID("$NetBSD: inet6.c,v 1.70.2.1 2018/05/21 04:36:18 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -107,7 +107,6 @@ __RCSID("$NetBSD: inet6.c,v 1.70 2017/12/19 17:05:15 kre Exp $");
 #define TCP6_NSTATES	TCP_NSTATES
 #define tcp6cb tcpcb
 #include <netinet/tcp.h>
-#include <netinet/tcpip.h>
 #include <netinet/tcp_seq.h>
 #include <netinet/tcp_fsm.h>
 extern const char * const tcpstates[];

@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_inf.c,v 1.51 2017/01/24 19:23:56 christos Exp $	*/
+/*	$NetBSD: isakmp_inf.c,v 1.51.10.1 2018/05/21 04:35:49 pgoyette Exp $	*/
 
 /* Id: isakmp_inf.c,v 1.44 2006/05/06 20:45:52 manubsd Exp */
 
@@ -110,8 +110,6 @@ static int isakmp_info_recv_r_u_ack __P((struct ph1handle *,
 static void isakmp_info_send_r_u __P((struct sched *));
 #endif
 
-static void purge_isakmp_spi __P((int, isakmp_index *, size_t));
-
 /* %%%
  * Information Exchange
  */
@@ -129,7 +127,7 @@ isakmp_info_recv(iph1, msg0)
 	int error = -1;
 	struct isakmp *isakmp;
 	struct isakmp_gen *gen;
-	struct isakmp_parse_t *pa, *pap;
+	struct isakmp_parse_t *pa;
 	void *p;
 	vchar_t *hash, *payload;
 	struct isakmp_gen *nd;
@@ -453,10 +451,7 @@ isakmp_info_recv_d(iph1, delete, msgid, encrypted)
 	int encrypted;
 {
 	int tlen, num_spi;
-	vchar_t *pbuf;
-	int protected = 0;
 	struct ph1handle *del_ph1;
-	struct ph2handle *iph2;
 	union {
 		u_int32_t spi32;
 		u_int16_t spi16[2];
@@ -1074,32 +1069,6 @@ isakmp_add_pl_n(buf0, np_p, type, pr, data)
 
 	return buf;
 }
-
-static void
-purge_isakmp_spi(proto, spi, n)
-	int proto;
-	isakmp_index *spi;	/*network byteorder*/
-	size_t n;
-{
-	struct ph1handle *iph1;
-	size_t i;
-
-	for (i = 0; i < n; i++) {
-		iph1 = getph1byindex(&spi[i]);
-		if (!iph1)
-			continue;
-
-		plog(LLV_INFO, LOCATION, NULL,
-			"purged ISAKMP-SA proto_id=%s spi=%s.\n",
-			s_ipsecdoi_proto(proto),
-			isakmp_pindex(&spi[i], 0));
-
-		iph1->status = PHASE1ST_EXPIRED;
-		isakmp_ph1delete(iph1);
-	}
-}
-
-
 
 void
 purge_ipsec_spi(dst0, proto, spi, n)

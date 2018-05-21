@@ -1,4 +1,4 @@
-#	$NetBSD: sys.mk,v 1.130 2018/02/25 18:53:23 chs Exp $
+#	$NetBSD: sys.mk,v 1.130.2.1 2018/05/21 04:35:57 pgoyette Exp $
 #	@(#)sys.mk	8.2 (Berkeley) 3/21/94
 #
 # This file contains the basic rules for make(1) and is read first
@@ -55,7 +55,8 @@ CXXFLAGS?=	${CFLAGS:N-Wno-traditional:N-Wstrict-prototypes:N-Wmissing-prototypes
 __ALLSRC1=	${empty(DESTDIR):?${.ALLSRC}:${.ALLSRC:S|^${DESTDIR}|^destdir|}}
 __ALLSRC2=	${empty(MAKEOBJDIR):?${__ALLSRC1}:${__ALLSRC1:S|^${MAKEOBJDIR}|^obj|}}
 __ALLSRC3=	${empty(NETBSDSRCDIR):?${__ALLSRC2}:${__ALLSRC2:S|^${NETBSDSRCDIR}|^src|}}
-__BUILDSEED=	${BUILDSEED}/${__ALLSRC3:O}/${.TARGET}
+__ALLSRC4=	${empty(X11SRCDIR):?${__ALLSRC3}:${__ALLSRC3:S|^${X11SRCDIR}|^xsrc|}}
+__BUILDSEED=	${BUILDSEED}/${__ALLSRC4:O}/${.TARGET}
 _CXXSEED?=	${BUILDSEED:D-frandom-seed=${__BUILDSEED:hash}}
 
 COMPILE.cc?=	${CXX} ${_CXXSEED} ${CXXFLAGS} ${DTRACE_OPTS} ${CPPFLAGS} -c

@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.74 2017/06/01 02:45:08 chs Exp $ */
+/* $NetBSD: cpu.c,v 1.74.8.1 2018/05/21 04:36:02 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_hz.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.74 2017/06/01 02:45:08 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.74.8.1 2018/05/21 04:36:02 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -119,6 +119,8 @@ cpu_attach(device_t parent, device_t self, void *opaque)
 	sc->sc_ucp.uc_flags = _UC_STACK | _UC_CPU | _UC_SIGMASK;
 	thunk_sigaddset(&sc->sc_ucp.uc_sigmask, SIGALRM);
 	thunk_sigaddset(&sc->sc_ucp.uc_sigmask, SIGIO);
+	thunk_sigaddset(&sc->sc_ucp.uc_sigmask, SIGINT);
+	thunk_sigaddset(&sc->sc_ucp.uc_sigmask, SIGTSTP);
 }
 
 void
@@ -191,9 +193,13 @@ static
 void
 cpu_switchto_atomic(lwp_t *oldlwp, lwp_t *newlwp)
 {
-	struct pcb *oldpcb = oldlwp ? lwp_getpcb(oldlwp) : NULL;
-	struct pcb *newpcb = lwp_getpcb(newlwp);
-	struct cpu_info *ci = curcpu();
+	struct pcb *oldpcb;
+	struct pcb *newpcb;
+	struct cpu_info *ci;
+
+	oldpcb = oldlwp ? lwp_getpcb(oldlwp) : NULL;
+	newpcb = lwp_getpcb(newlwp);
+	ci = curcpu();
 
 	ci->ci_stash = oldlwp;
 
@@ -241,6 +247,7 @@ cpu_switchto(lwp_t *oldlwp, lwp_t *newlwp, bool returning)
 #endif /* !CPU_DEBUG */
 
 	/* create atomic switcher */
+	KASSERT(newlwp);
 	thunk_makecontext(&sc->sc_ucp, (void (*)(void)) cpu_switchto_atomic,
 			2, oldlwp, newlwp, NULL, NULL);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: history.c,v 1.18 2018/01/17 00:29:22 maya Exp $	*/
+/*	$NetBSD: history.c,v 1.18.2.1 2018/05/21 04:35:48 pgoyette Exp $	*/
 
 /*
  * command history
@@ -19,7 +19,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: history.c,v 1.18 2018/01/17 00:29:22 maya Exp $");
+__RCSID("$NetBSD: history.c,v 1.18.2.1 2018/05/21 04:35:48 pgoyette Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -617,7 +617,7 @@ histsave(lno, cmd, dowrite)
 	const char *cmd;
 	int dowrite;	/* ignored (compatibility with COMPLEX_HISTORY) */
 {
-	register char **hp = histptr;
+	char **hp = histptr;
 	char *cp;
 
 	if (++hp >= histlist + histsize) { /* remove oldest command */
@@ -738,8 +738,8 @@ hist_finish()
   static int once;
   int fd;
   FILE *fh;
-  register int i;
-  register char **hp;
+  int i;
+  char **hp;
 
   if (once++)
     return;
@@ -784,7 +784,7 @@ histsave(lno, cmd, dowrite)
 	const char *cmd;
 	int dowrite;
 {
-	register char **hp;
+	char **hp;
 	char *c, *cp;
 
 	c = str_save(cmd, APERM);
@@ -909,8 +909,8 @@ typedef enum state {
 
 static int
 hist_count_lines(base, bytes)
-	register unsigned char *base;
-	register int bytes;
+	unsigned char *base;
+	int bytes;
 {
 	State state = shdr;
 	int lines = 0;
@@ -1002,8 +1002,8 @@ hist_skip_back(base, bytes, no)
 	int *bytes;
 	int no;
 {
-	register int lines = 0;
-	register unsigned char *ep;
+	int lines = 0;
+	unsigned char *ep;
 
 	for (ep = base + *bytes; --ep > base; ) {
 		/* this doesn't really work: the 4 byte line number that is
@@ -1028,8 +1028,8 @@ hist_skip_back(base, bytes, no)
 static void
 histload(s, base, bytes)
 	Source *s;
-	register unsigned char *base;
-	register int bytes;
+	unsigned char *base;
+	int bytes;
 {
 	State state;
 	int	lno = 0;
@@ -1084,7 +1084,7 @@ histinsert(s, lno, line)
 	int lno;
 	unsigned char *line;
 {
-	register char **hp;
+	char **hp;
 
 	if (lno >= s->line-(histptr-histlist) && lno <= s->line) {
 		hp = &histptr[lno-s->line];

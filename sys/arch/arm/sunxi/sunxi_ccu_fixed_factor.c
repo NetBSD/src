@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_ccu_fixed_factor.c,v 1.1 2017/09/30 12:48:58 jmcneill Exp $ */
+/* $NetBSD: sunxi_ccu_fixed_factor.c,v 1.1.4.1 2018/05/21 04:35:59 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_ccu_fixed_factor.c,v 1.1 2017/09/30 12:48:58 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_ccu_fixed_factor.c,v 1.1.4.1 2018/05/21 04:35:59 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -62,6 +62,33 @@ sunxi_ccu_fixed_factor_get_rate(struct sunxi_ccu_softc *sc,
 		return 0;
 
 	return (u_int)(((uint64_t)p_rate * fixed_factor->mult) / fixed_factor->div);
+}
+
+static int
+sunxi_ccu_fixed_factor_set_parent_rate(struct clk *clkp, u_int rate)
+{
+	struct clk *clkp_parent;
+
+	clkp_parent = clk_get_parent(clkp);
+	if (clkp_parent == NULL)
+		return ENXIO;
+
+	return clk_set_rate(clkp_parent, rate);
+}
+
+int
+sunxi_ccu_fixed_factor_set_rate(struct sunxi_ccu_softc *sc,
+    struct sunxi_ccu_clk *clk, u_int rate)
+{
+	struct sunxi_ccu_fixed_factor *fixed_factor = &clk->u.fixed_factor;
+	struct clk *clkp = &clk->base;
+
+	KASSERT(clk->type == SUNXI_CCU_FIXED_FACTOR);
+
+	rate *= fixed_factor->div;
+	rate /= fixed_factor->mult;
+
+	return sunxi_ccu_fixed_factor_set_parent_rate(clkp, rate);
 }
 
 const char *

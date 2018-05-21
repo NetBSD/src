@@ -1,4 +1,4 @@
-/*	$NetBSD: net_stub.c,v 1.31.2.3 2018/05/02 07:20:24 pgoyette Exp $	*/
+/*	$NetBSD: net_stub.c,v 1.31.2.4 2018/05/21 04:36:17 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: net_stub.c,v 1.31.2.3 2018/05/02 07:20:24 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: net_stub.c,v 1.31.2.4 2018/05/21 04:36:17 pgoyette Exp $");
 
 #include <sys/mutex.h>
 #include <sys/param.h>
@@ -34,6 +34,8 @@ __KERNEL_RCSID(0, "$NetBSD: net_stub.c,v 1.31.2.3 2018/05/02 07:20:24 pgoyette E
 #include <sys/socketvar.h>
 #include <sys/pslist.h>
 #include <sys/psref.h>
+#include <sys/sysctl.h>
+#include <sys/un.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -83,18 +85,23 @@ int ipsec_used;
 percpu_t *ipsecstat_percpu;
 u_int ipsec_spdgen;
 
+/* sysctl */
+void
+unp_sysctl_create(struct sysctllog **clog)
+{
+}
+
 __weak_alias(ah4_ctlinput,rumpnet_stub);
 __weak_alias(ah6_ctlinput,rumpnet_stub);
 __weak_alias(esp4_ctlinput,rumpnet_stub);
 __weak_alias(esp6_ctlinput,rumpnet_stub);
 __weak_alias(ipsec4_output,rumpnet_stub);
 __weak_alias(ipsec4_common_input,rumpnet_stub);
-__weak_alias(ipsec4_forward,rumpnet_stub);
-__weak_alias(ipsec4_input,rumpnet_stub);
 __weak_alias(ipsec6_common_input,rumpnet_stub);
-__weak_alias(ipsec6_input,rumpnet_stub);
 __weak_alias(ipsec6_check_policy,rumpnet_stub);
 __weak_alias(ipsec6_process_packet,rumpnet_stub);
+__weak_alias(ipsec_mtu,rumpnet_stub);
+__weak_alias(ipsec_ip_input,rumpnet_stub);
 __weak_alias(ipsec_set_policy,rumpnet_stub);
 __weak_alias(ipsec_get_policy,rumpnet_stub);
 __weak_alias(ipsec_delete_pcbpolicy,rumpnet_stub);

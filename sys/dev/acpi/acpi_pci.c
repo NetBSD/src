@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_pci.c,v 1.20.8.1 2018/04/16 01:59:57 pgoyette Exp $ */
+/* $NetBSD: acpi_pci.c,v 1.20.8.2 2018/05/21 04:36:05 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci.c,v 1.20.8.1 2018/04/16 01:59:57 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci.c,v 1.20.8.2 2018/05/21 04:36:05 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -183,6 +183,9 @@ acpi_pcidev_scan(struct acpi_devnode *ad)
 	 * have changed since ad->ad_devinfo->CurrentStatus was set.
 	 */
 	if (ad->ad_devinfo->Type != ACPI_TYPE_DEVICE)
+		goto rec;
+
+	if (!acpi_device_present(ad->ad_handle))
 		goto rec;
 
 	if (ad->ad_devinfo->Flags & ACPI_PCI_ROOT_BRIDGE) {

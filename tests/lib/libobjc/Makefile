@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2011/05/20 13:03:45 joerg Exp $
+# $NetBSD: Makefile,v 1.2.42.1 2018/05/21 04:36:17 pgoyette Exp $
 
 TESTSDIR=	${TESTSBASE}/lib/libobjc
 
@@ -7,7 +7,7 @@ TESTSDIR=	${TESTSBASE}/lib/libobjc
 UNSUPPORTED_COMPILER.clang=	# defined
 UNSUPPORTED_COMPILER.pcc=	# defined
 
-.if !empty(AVAILABLE_COMPILER:Mgcc)
+.if ${HAVE_GCC:U0} > 0
 TESTS_C=	t_threads
 .endif
 

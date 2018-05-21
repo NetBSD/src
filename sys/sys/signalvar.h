@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.88.14.2 2018/05/02 07:20:24 pgoyette Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.88.14.3 2018/05/21 04:36:17 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -112,7 +112,7 @@ struct sigctx {
 
 #include <sys/systm.h>			/* for copyin_t/copyout_t */
 
-extern sigset_t contsigmask, sigcantmask;
+extern sigset_t contsigmask, stopsigmask, sigcantmask;
 
 struct vnode;
 struct coredump_iostate;

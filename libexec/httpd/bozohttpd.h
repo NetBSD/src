@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.h,v 1.47 2017/01/31 14:36:09 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.h,v 1.47.10.1 2018/05/21 04:35:56 pgoyette Exp $	*/
 
 /*	$eterna: bozohttpd.h,v 1.39 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -207,9 +207,12 @@ typedef struct bozoprefs_t {
 
 #define	strornull(x)	((x) ? (x) : "<null>")
 
-#if defined(__GNUC__) && __GNUC__ >= 3
+#if (defined(__GNUC__) && __GNUC__ >= 3) || defined(__lint__)
 #define BOZO_PRINTFLIKE(x,y) __attribute__((__format__(__printf__, x,y)))
 #define BOZO_DEAD __attribute__((__noreturn__))
+#else
+#define BOZO_PRINTFLIKE(x,y)
+#define BOZO_DEAD
 #endif
 
 #ifndef NO_DEBUG

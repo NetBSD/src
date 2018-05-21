@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupts.c,v 1.5.34.1 2018/03/30 06:20:11 pgoyette Exp $ */
+/*	$NetBSD: interrupts.c,v 1.5.34.2 2018/05/21 04:36:01 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupts.c,v 1.5.34.1 2018/03/30 06:20:11 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupts.c,v 1.5.34.2 2018/05/21 04:36:01 pgoyette Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -126,19 +126,21 @@ init_interrupt(void)
 		goto done;
 #endif
 #if NPIC_OPENPIC > 0
-	if (init_openpic(0))
+	if (init_openpic(0)) {
+#ifdef MULTIPROCESSOR
+		setup_openpic_ipi();
+#endif
 		goto done;
+	}
 #endif
 	panic("%s: no supported interrupt controller found", __func__);
 done:
 	oea_install_extint(pic_ext_intr);
 
 #ifdef MULTIPROCESSOR
-#if NPIC_OPENPIC > 0
-	setup_openpic_ipi();
-#else /*NPIC_OPENPIC*/
+#if (NPIC_OHARE + NPIC_HEATHROW) > 0
 	if (OF_finddevice("/hammerhead") != -1)
 		setup_hammerhead_ipi();
-#endif /*NPIC_OPENPIC*/
+#endif
 #endif /*MULTIPROCESSOR*/
 }

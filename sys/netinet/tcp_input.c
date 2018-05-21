@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.383.2.4 2018/05/02 07:20:23 pgoyette Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.383.2.5 2018/05/21 04:36:16 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.383.2.4 2018/05/02 07:20:23 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.383.2.5 2018/05/21 04:36:16 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -200,7 +200,6 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.383.2.4 2018/05/02 07:20:23 pgoyette
 #endif
 
 #ifndef INET6
-/* always need ip6.h for IP6_EXTHDR_GET */
 #include <netinet/ip6.h>
 #endif
 
@@ -210,7 +209,6 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.383.2.4 2018/05/02 07:20:23 pgoyette
 #include <netinet/tcp_timer.h>
 #include <netinet/tcp_var.h>
 #include <netinet/tcp_private.h>
-#include <netinet/tcpip.h>
 #include <netinet/tcp_congctl.h>
 #include <netinet/tcp_debug.h>
 
@@ -1239,7 +1237,7 @@ tcp_input(struct mbuf *m, ...)
 	}
 #endif
 
-	IP6_EXTHDR_GET(th, struct tcphdr *, m, toff, sizeof(struct tcphdr));
+	M_REGION_GET(th, struct tcphdr *, m, toff, sizeof(struct tcphdr));
 	if (th == NULL) {
 		TCP_STATINC(TCP_STAT_RCVSHORT);
 		return;
@@ -1337,7 +1335,7 @@ tcp_input(struct mbuf *m, ...)
 	tlen -= off;
 
 	if (off > sizeof(struct tcphdr)) {
-		IP6_EXTHDR_GET(th, struct tcphdr *, m, toff, off);
+		M_REGION_GET(th, struct tcphdr *, m, toff, off);
 		if (th == NULL) {
 			TCP_STATINC(TCP_STAT_RCVSHORT);
 			return;

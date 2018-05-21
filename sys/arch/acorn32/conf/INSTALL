@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.78 2017/09/14 07:58:38 mrg Exp $
+#	$NetBSD: INSTALL,v 1.78.2.1 2018/05/21 04:35:57 pgoyette Exp $
 #
 #	INSTALL -- NetBSD/acorn32 install configuration
 #
@@ -22,7 +22,7 @@ include 	"arch/acorn32/conf/std.acorn32"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"INSTALL-$Revision: 1.78 $"
+#ident		"INSTALL-$Revision: 1.78.2.1 $"
 
 # estimated number of users
 maxusers	32
@@ -148,7 +148,7 @@ iomdiic* at iomd?
 iic0 at iomdiic?
 
 # RTC device via IIC bus
-pcfrtc*	at iic? addr 0x50
+pcfrtc*	at iic0 addr 0x50
 
 # VIDC device
 vidc0		at mainbus?

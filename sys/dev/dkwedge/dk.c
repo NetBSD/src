@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.96 2017/03/05 23:07:12 mlelstv Exp $	*/
+/*	$NetBSD: dk.c,v 1.96.12.1 2018/05/21 04:36:05 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.96 2017/03/05 23:07:12 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.96.12.1 2018/05/21 04:36:05 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -1613,7 +1613,7 @@ dkdump(dev_t dev, daddr_t blkno, void *va, size_t size)
 		rv = EINVAL;
 		goto out;
 	}
-	if (blkno + size / DEV_BSIZE > sc->sc_size) {
+	if (blkno < 0 || blkno + size / DEV_BSIZE > sc->sc_size) {
 		printf("%s: blkno (%" PRIu64 ") + size / DEV_BSIZE (%zu) > "
 		    "sc->sc_size (%" PRIu64 ")\n", __func__, blkno,
 		    size / DEV_BSIZE, sc->sc_size);

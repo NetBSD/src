@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.149 2018/02/17 01:31:01 sevan Exp $
+# $NetBSD: XEN3_DOM0,v 1.149.2.1 2018/05/21 04:35:58 pgoyette Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -10,7 +10,7 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 #options 	UVMHIST_PRINT
 #options 	SYSCALL_DEBUG
 
-#ident		"XEN3_DOM0-$Revision: 1.149 $"
+#ident		"XEN3_DOM0-$Revision: 1.149.2.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -314,27 +314,27 @@ dwiic*		at pci?			# I2C controller
 iic*		at dwiic?
 
 # Thermal monitor and fan controller
-#dbcool* at iic? addr 0x2C		# Unknown other motherboard(s)
-#dbcool* at iic? addr 0x2D		# Tyan S2881
-#dbcool* at iic? addr 0x2E		# Tyan S2882-D
+#dbcool* at iic0 addr 0x2C		# Unknown other motherboard(s)
+#dbcool* at iic0 addr 0x2D		# Tyan S2881
+#dbcool* at iic0 addr 0x2E		# Tyan S2882-D
 
 # Serial Presence Detect capable memory modules
-#spdmem* at iic? addr 0x50
-#spdmem* at iic? addr 0x51
-#spdmem* at iic? addr 0x52
-#spdmem* at iic? addr 0x53
-#spdmem* at iic? addr 0x54
-#spdmem* at iic? addr 0x55
-#spdmem* at iic? addr 0x56
-#spdmem* at iic? addr 0x57
-#sdtemp* at iic? addr 0x18
-#sdtemp* at iic? addr 0x19
-#sdtemp* at iic? addr 0x1a
-#sdtemp* at iic? addr 0x1b
-#sdtemp* at iic? addr 0x1c
-#sdtemp* at iic? addr 0x1d
-#sdtemp* at iic? addr 0x1e
-#sdtemp* at iic? addr 0x1f
+#spdmem* at iic0 addr 0x50
+#spdmem* at iic0 addr 0x51
+#spdmem* at iic0 addr 0x52
+#spdmem* at iic0 addr 0x53
+#spdmem* at iic0 addr 0x54
+#spdmem* at iic0 addr 0x55
+#spdmem* at iic0 addr 0x56
+#spdmem* at iic0 addr 0x57
+#sdtemp* at iic0 addr 0x18
+#sdtemp* at iic0 addr 0x19
+#sdtemp* at iic0 addr 0x1a
+#sdtemp* at iic0 addr 0x1b
+#sdtemp* at iic0 addr 0x1c
+#sdtemp* at iic0 addr 0x1d
+#sdtemp* at iic0 addr 0x1e
+#sdtemp* at iic0 addr 0x1f
 
 # Winbond LPC Super I/O
 #wbsio*	at isa? port 0x2e

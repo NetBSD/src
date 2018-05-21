@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_cfg.c,v 1.26 2016/03/09 22:27:17 christos Exp $	*/
+/*	$NetBSD: isakmp_cfg.c,v 1.26.14.1 2018/05/21 04:35:49 pgoyette Exp $	*/
 
 /* Id: isakmp_cfg.c,v 1.55 2006/08/22 18:17:17 manubsd Exp */
 
@@ -322,7 +322,6 @@ isakmp_cfg_reply(iph1, attrpl)
 	size_t alen;
 	char *npp;
 	int type;
-	struct sockaddr_in *sin;
 	int error;
 
 	tlen = ntohs(attrpl->h.len);
@@ -741,7 +740,7 @@ isakmp_cfg_set(iph1, attrpl)
 		delph1(iph1);
 		iph1 = NULL;
 	}
-end:
+
 	vfree(payload);
 
 	/* 
@@ -782,7 +781,6 @@ isakmp_cfg_net(iph1, attr)
 {
 	int type;
 	int confsource;
-	in_addr_t addr4;
 
 	type = ntohs(attr->type);
 
@@ -1665,7 +1663,6 @@ isakmp_cfg_accounting_system(port, raddr, usr, inout)
 	char *usr;
 	int inout;
 {
-	int error = 0;
 	struct utmpx ut;
 	char addr[NI_MAXHOST];
 	
@@ -1880,8 +1877,6 @@ isakmp_cfg_setenv(iph1, envp, envc)
 	char defdom[MAXPATHLEN + 1];
 	int cidr, tmp;
 	char cidrstr[4];
-	int i, p;
-	int test;
 
 	plog(LLV_DEBUG, LOCATION, NULL, "Starting a script.\n");
 
@@ -2134,7 +2129,6 @@ isakmp_cfg_init(cold)
 	int cold;
 {
 	int i;
-	int error;
 
 	isakmp_cfg_config.network4 = (in_addr_t)0x00000000;
 	isakmp_cfg_config.netmask4 = (in_addr_t)0x00000000;
@@ -2184,6 +2178,7 @@ isakmp_cfg_init(cold)
 	isakmp_cfg_config.splitdns_len = 0;
 
 #if 0
+	int error;
 	if (cold == ISAKMP_CFG_INIT_COLD) {
 		if ((error = isakmp_cfg_resize_pool(ISAKMP_CFG_MAX_CNX)) != 0)
 			return error;

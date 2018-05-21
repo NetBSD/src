@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.419.2.6 2018/04/16 02:00:08 pgoyette Exp $	*/
+/*	$NetBSD: if.c,v 1.419.2.7 2018/05/21 04:36:15 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.419.2.6 2018/04/16 02:00:08 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.419.2.7 2018/05/21 04:36:15 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -704,8 +704,7 @@ if_initialize(ifnet_t *ifp)
 
 	if (if_is_link_state_changeable(ifp)) {
 		u_int flags = SOFTINT_NET;
-		flags |= ISSET(ifp->if_extflags, IFEF_MPSAFE) ?
-		    SOFTINT_MPSAFE : 0;
+		flags |= if_is_mpsafe(ifp) ? SOFTINT_MPSAFE : 0;
 		ifp->if_link_si = softint_establish(flags,
 		    if_link_state_change_si, ifp);
 		if (ifp->if_link_si == NULL) {
@@ -822,11 +821,13 @@ struct if_percpuq *
 if_percpuq_create(struct ifnet *ifp)
 {
 	struct if_percpuq *ipq;
+	u_int flags = SOFTINT_NET;
+
+	flags |= if_is_mpsafe(ifp) ? SOFTINT_MPSAFE : 0;
 
 	ipq = kmem_zalloc(sizeof(*ipq), KM_SLEEP);
 	ipq->ipq_ifp = ifp;
-	ipq->ipq_si = softint_establish(SOFTINT_NET|SOFTINT_MPSAFE,
-	    if_percpuq_softint, ipq);
+	ipq->ipq_si = softint_establish(flags, if_percpuq_softint, ipq);
 	ipq->ipq_ifqs = percpu_alloc(sizeof(struct ifqueue));
 	percpu_foreach(ipq->ipq_ifqs, &if_percpuq_init_ifq, NULL);
 
@@ -1054,11 +1055,13 @@ void
 if_deferred_start_init(struct ifnet *ifp, void (*func)(struct ifnet *))
 {
 	struct if_deferred_start *ids;
+	u_int flags = SOFTINT_NET;
+
+	flags |= if_is_mpsafe(ifp) ? SOFTINT_MPSAFE : 0;
 
 	ids = kmem_zalloc(sizeof(*ids), KM_SLEEP);
 	ids->ids_ifp = ifp;
-	ids->ids_si = softint_establish(SOFTINT_NET|SOFTINT_MPSAFE,
-	    if_deferred_start_softint, ids);
+	ids->ids_si = softint_establish(flags, if_deferred_start_softint, ids);
 	if (func != NULL)
 		ids->ids_if_start = func;
 	else

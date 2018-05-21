@@ -1,4 +1,4 @@
-/*	$NetBSD: privsep.c,v 1.23 2016/03/11 18:28:43 christos Exp $	*/
+/*	$NetBSD: privsep.c,v 1.23.14.1 2018/05/21 04:35:49 pgoyette Exp $	*/
 
 /* Id: privsep.c,v 1.15 2005/08/08 11:23:44 vanhu Exp */
 
@@ -332,7 +332,6 @@ privsep_init(void)
 		struct privsep_com_msg *combuf;
 		struct privsep_com_msg *reply;
 		char *data;
-		size_t *buflen;
 		size_t totallen;
 		char *bufs[PRIVSEP_NBUF_MAX];
 		int i;
@@ -698,7 +697,6 @@ privsep_init(void)
 
 #ifdef ENABLE_HYBRID
 		case PRIVSEP_ACCOUNTING_SYSTEM: {
-			int pool_size;
 			int port;
 			int inout;
 			struct sockaddr *raddr;
@@ -1059,7 +1057,6 @@ privsep_getpsk(str, keylen)
 	vchar_t *psk;
 	struct privsep_com_msg *msg;
 	size_t len;
-	int *keylenp;
 	char *data;
 
 	if (geteuid() == 0)
@@ -1121,7 +1118,7 @@ privsep_socket(domain, type, protocol)
 	size_t len;
 	char *data;
 	struct socket_args socket_args;
-	int s, saved_errno = 0;
+	int s;
 
 	if (geteuid() == 0)
 		return socket(domain, type, protocol);
@@ -1381,7 +1378,6 @@ privsep_accounting_system(port, raddr, usr, inout)
 	struct privsep_com_msg *msg;
 	size_t len;
 	char *data;
-	int result;
 
 	if (geteuid() == 0)
 		return isakmp_cfg_accounting_system(port, raddr,
@@ -1637,7 +1633,6 @@ privsep_accounting_pam(port, inout)
 	int *port_data;
 	int *inout_data;
 	int *pool_size_data;
-	int result;
 
 	if (geteuid() == 0)
 		return isakmp_cfg_accounting_pam(port, inout);
@@ -1697,7 +1692,6 @@ privsep_xauth_login_pam(port, raddr, usr, pwd)
 	struct privsep_com_msg *msg;
 	size_t len;
 	char *data;
-	int result;
 
 	if (geteuid() == 0)
 		return xauth_login_pam(port, raddr, usr, pwd);
@@ -1765,7 +1759,6 @@ privsep_cleanup_pam(port)
 	struct privsep_com_msg *msg;
 	size_t len;
 	char *data;
-	int result;
 
 	if (geteuid() == 0)
 		return cleanup_pam(port);

@@ -1,4 +1,4 @@
-/*	$NetBSD: private.h,v 1.51 2017/10/24 17:38:17 christos Exp $	*/
+/*	$NetBSD: private.h,v 1.51.2.1 2018/05/21 04:35:55 pgoyette Exp $	*/
 
 #ifndef PRIVATE_H
 #define PRIVATE_H
@@ -26,6 +26,16 @@
 ** Do NOT copy it to any system include directory.
 ** Thank you!
 */
+
+/*
+** zdump has been made independent of the rest of the time
+** conversion package to increase confidence in the verification it provides.
+** You can use zdump to help in verifying other implementations.
+** To do this, compile with -DUSE_LTZ=0 and link without the tz library.
+*/
+#ifndef USE_LTZ
+# define USE_LTZ 1
+#endif
 
 /* This string was in the Factory zone through version 2016f.  */
 #define GRANDPARENTED	"Local time zone must be set--see zic manual page"
@@ -76,6 +86,10 @@
 
 #ifndef HAVE_STRDUP
 #define HAVE_STRDUP 1
+#endif
+
+#ifndef HAVE_STRTOLL
+#define HAVE_STRTOLL 1
 #endif
 
 #ifndef HAVE_SYMLINK
@@ -282,14 +296,18 @@ typedef int int_fast32_t;
 #ifndef INTMAX_MAX
 # ifdef LLONG_MAX
 typedef long long intmax_t;
-#  define strtoimax strtoll
+#  if HAVE_STRTOLL
+#   define strtoimax strtoll
+#  endif
 #  define INTMAX_MAX LLONG_MAX
 #  define INTMAX_MIN LLONG_MIN
 # else
 typedef long intmax_t;
-#  define strtoimax strtol
 #  define INTMAX_MAX LONG_MAX
 #  define INTMAX_MIN LONG_MIN
+# endif
+# ifndef strtoimax
+#  define strtoimax strtol
 # endif
 #endif
 
@@ -340,12 +358,14 @@ typedef unsigned long uintmax_t;
 #define SIZE_MAX ((size_t) -1)
 #endif
 
-#if 2 < __GNUC__ + (96 <= __GNUC_MINOR__)
+#if 3 <= __GNUC__
 # define ATTRIBUTE_CONST __attribute__ ((__const__))
+# define ATTRIBUTE_MALLOC __attribute__ ((__malloc__))
 # define ATTRIBUTE_PURE __attribute__ ((__pure__))
 # define ATTRIBUTE_FORMAT(spec) __attribute__ ((__format__ spec))
 #else
 # define ATTRIBUTE_CONST /* empty */
+# define ATTRIBUTE_MALLOC /* empty */
 # define ATTRIBUTE_PURE /* empty */
 # define ATTRIBUTE_FORMAT(spec) /* empty */
 #endif
@@ -371,6 +391,16 @@ typedef unsigned long uintmax_t;
 #endif
 #ifndef EPOCH_OFFSET
 # define EPOCH_OFFSET 0
+#endif
+#ifndef RESERVE_STD_EXT_IDS
+# define RESERVE_STD_EXT_IDS 0
+#endif
+
+/* If standard C identifiers with external linkage (e.g., localtime)
+   are reserved and are not already being renamed anyway, rename them
+   as if compiling with '-Dtime_tz=time_t'.  */
+#if !defined time_tz && RESERVE_STD_EXT_IDS && USE_LTZ
+# define time_tz time_t
 #endif
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_output.c,v 1.71.2.2 2018/05/02 07:20:24 pgoyette Exp $	*/
+/*	$NetBSD: ipsec_output.c,v 1.71.2.3 2018/05/21 04:36:16 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.71.2.2 2018/05/02 07:20:24 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.71.2.3 2018/05/21 04:36:16 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -534,10 +534,6 @@ noneed:
 	/* Do the appropriate encapsulation, if necessary */
 	if (isr->saidx.mode == IPSEC_MODE_TUNNEL || /* Tunnel requ'd */
 	    dst->sa.sa_family != AF_INET ||	    /* PF mismatch */
-#if 0
-	    (sav->flags & SADB_X_SAFLAGS_TUNNEL) || /* Tunnel requ'd */
-	    sav->tdb_xform->xf_type == XF_IP4 ||    /* ditto */
-#endif
 	    (dst->sa.sa_family == AF_INET &&	    /* Proxy */
 	     dst->sin.sin_addr.s_addr != INADDR_ANY &&
 	     dst->sin.sin_addr.s_addr != ip->ip_dst.s_addr)) {
@@ -550,7 +546,7 @@ noneed:
 		ip->ip_sum = in_cksum(m, ip->ip_hl << 2);
 
 		/* Encapsulate the packet */
-		error = ipip_output(m, isr, sav, &mp, 0, 0);
+		error = ipip_output(m, sav, &mp);
 		if (mp == NULL && !error) {
 			/* Should never happen. */
 			IPSECLOG(LOG_DEBUG,
@@ -604,7 +600,7 @@ noneed:
 			i = sizeof(struct ip6_hdr);
 			off = offsetof(struct ip6_hdr, ip6_nxt);
 		}
-		error = (*sav->tdb_xform->xf_output)(m, isr, sav, NULL, i, off);
+		error = (*sav->tdb_xform->xf_output)(m, isr, sav, i, off);
 	} else {
 		error = ipsec_process_done(m, isr, sav);
 	}
@@ -763,7 +759,7 @@ ipsec6_process_packet(struct mbuf *m, const struct ipsecrequest *isr)
 		ip6->ip6_plen = htons(m->m_pkthdr.len - sizeof(*ip6));
 
 		/* Encapsulate the packet */
-		error = ipip_output(m, isr, sav, &mp, 0, 0);
+		error = ipip_output(m, sav, &mp);
 		if (mp == NULL && !error) {
 			/* Should never happen. */
 			IPSECLOG(LOG_DEBUG,
@@ -794,7 +790,7 @@ ipsec6_process_packet(struct mbuf *m, const struct ipsecrequest *isr)
 		if (error)
 			goto unrefsav;
 	}
-	error = (*sav->tdb_xform->xf_output)(m, isr, sav, NULL, i, off);
+	error = (*sav->tdb_xform->xf_output)(m, isr, sav, i, off);
 	KEY_SA_UNREF(&sav);
 	splx(s);
 	return error;

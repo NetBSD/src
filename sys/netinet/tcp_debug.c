@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_debug.c,v 1.30.16.1 2018/03/30 06:20:16 pgoyette Exp $	*/
+/*	$NetBSD: tcp_debug.c,v 1.30.16.2 2018/05/21 04:36:16 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_debug.c,v 1.30.16.1 2018/03/30 06:20:16 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_debug.c,v 1.30.16.2 2018/05/21 04:36:16 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -99,7 +99,6 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_debug.c,v 1.30.16.1 2018/03/30 06:20:16 pgoyette
 #include <netinet/tcp_seq.h>
 #include <netinet/tcp_timer.h>
 #include <netinet/tcp_var.h>
-#include <netinet/tcpip.h>
 #include <netinet/tcp_debug.h>
 
 struct	tcp_debug tcp_debug[TCP_NDEBUG];

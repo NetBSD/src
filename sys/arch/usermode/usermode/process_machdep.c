@@ -1,4 +1,4 @@
-/* $NetBSD: process_machdep.c,v 1.4 2018/01/13 15:15:03 reinoud Exp $ */
+/* $NetBSD: process_machdep.c,v 1.4.2.1 2018/05/21 04:36:02 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,58 +26,135 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+
+/* from sys/arch/amd64/amd64/process_machdep.c */
+/*
+ * This file may seem a bit stylized, but that so that it's easier to port.
+ * Functions to be implemented here are:
+ *
+ * process_read_regs(proc, regs)
+ *	Get the current user-visible register set from the process
+ *	and copy it into the regs structure (<machine/reg.h>).
+ *	The process is stopped at the time read_regs is called.
+ *
+ * process_write_regs(proc, regs)
+ *	Update the current register set from the passed in regs
+ *	structure.  Take care to avoid clobbering special CPU
+ *	registers or privileged bits in the PSL.
+ *	The process is stopped at the time write_regs is called.
+ *
+ * process_read_fpregs(proc, regs, sz)
+ *	Get the current user-visible register set from the process
+ *	and copy it into the regs structure (<machine/reg.h>).
+ *	The process is stopped at the time read_fpregs is called.
+ *
+ * process_write_fpregs(proc, regs, sz)
+ *	Update the current register set from the passed in regs
+ *	structure.  Take care to avoid clobbering special CPU
+ *	registers or privileged bits in the PSL.
+ *	The process is stopped at the time write_fpregs is called.
+ *
+ * process_read_dbregs(proc, regs, sz)
+ *	Get the current user-visible register set from the process
+ *	and copy it into the regs structure (<machine/reg.h>).
+ *	The process is stopped at the time read_dbregs is called.
+ *
+ * process_write_dbregs(proc, regs, sz)
+ *	Update the current register set from the passed in regs
+ *	structure.  Take care to avoid clobbering special CPU
+ *	registers or privileged bits in the PSL.
+ *	The process is stopped at the time write_dbregs is called.
+ *
+ * process_sstep(proc)
+ *	Arrange for the process to trap after executing a single instruction.
+ *
+ * process_set_pc(proc)
+ *	Set the process's program counter.
+ */
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.4 2018/01/13 15:15:03 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.4.2.1 2018/05/21 04:36:02 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/ptrace.h>
 
+#include <sys/ucontext.h>
+#include <machine/pcb.h>
+#include <sys/lwp.h>
+
+#include <machine/thunk.h>
+
 int
 process_read_regs(struct lwp *l, struct reg *regs)
 {
+ 	struct pcb *pcb = lwp_getpcb(l);
+	ucontext_t *ucp;
+ 	register_t *reg;
+
+	ucp = &pcb->pcb_userret_ucp;
+	reg = (register_t *) &ucp->uc_mcontext.__gregs;
+
+	memcpy(regs, reg, sizeof(__gregset_t));
+
 	return 0;
 }
 
 int
 process_read_fpregs(struct lwp *l, struct fpreg *regs, size_t *sz)
 {
+ 	struct pcb *pcb = lwp_getpcb(l);
+	ucontext_t *ucp;
+ 	register_t *reg;
+
+	ucp = &pcb->pcb_userret_ucp;
+	reg = (register_t *) &ucp->uc_mcontext.__fpregs;
+
+	*sz = sizeof(__fpregset_t);
+	memcpy(regs, reg, *sz);
+
 	return 0;
 }
 
 int
 process_write_regs(struct lwp *l, const struct reg *regs)
 {
+thunk_printf("%s called, not implemented\n", __func__);
 	return 0;
 }
 
 int
 process_write_fpregs(struct lwp *l, const struct fpreg *regs, size_t sz)
 {
+thunk_printf("%s called, not implemented\n", __func__);
 	return 0;
 }
 
 int
 process_sstep(struct lwp *l, int sstep)
 {
+thunk_printf("%s called, not implemented\n", __func__);
 	return 0;
 }
 
 int
 process_set_pc(struct lwp *l, void *addr)
 {
+thunk_printf("%s called, not implemented\n", __func__);
 	return 0;
 }
 
 int
 process_write_dbregs(struct lwp *l, const struct dbreg *regs, size_t sz)
 {
+thunk_printf("%s called, not implemented\n", __func__);
 	return 0;
 }
 
 int
 process_read_dbregs(struct lwp *l, struct dbreg *regs, size_t *sz)
 {
+thunk_printf("%s called, not implemented\n", __func__);
 	return 0;
 }
 

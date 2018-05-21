@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_i2c.c,v 1.16 2017/05/25 23:43:49 jmcneill Exp $ */
+/* $NetBSD: tegra_i2c.c,v 1.16.10.1 2018/05/21 04:35:59 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_i2c.c,v 1.16 2017/05/25 23:43:49 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_i2c.c,v 1.16.10.1 2018/05/21 04:35:59 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -199,11 +199,8 @@ tegra_i2c_attach(device_t parent, device_t self, void *aux)
 	memset(&iba, 0, sizeof(iba));
 	iba.iba_tag = &sc->sc_ic;
 	iba.iba_child_devices = prop_dictionary_get(devs, "i2c-child-devices");
-	if (iba.iba_child_devices != NULL) {
+	if (iba.iba_child_devices != NULL)
 		prop_object_retain(iba.iba_child_devices);
-	} else {
-		iba.iba_child_devices = prop_array_create();
-	}
 	prop_object_release(devs);
 
 	sc->sc_i2cdev = config_found_ia(self, "i2cbus", &iba, iicbus_print);

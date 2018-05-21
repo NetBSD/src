@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.301.2.2 2018/04/07 04:12:11 pgoyette Exp $	*/
+/*	$NetBSD: machdep.c,v 1.301.2.3 2018/05/21 04:35:57 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.301.2.2 2018/04/07 04:12:11 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.301.2.3 2018/05/21 04:35:57 pgoyette Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -544,6 +544,14 @@ cpu_init_tss(struct cpu_info *ci)
 	p = uvm_km_alloc(kernel_map, PAGE_SIZE, 0, UVM_KMF_WIRED|UVM_KMF_ZERO);
 #endif
 	cputss->tss.tss_ist[2] = p + PAGE_SIZE - 16;
+
+	/* DB */
+#ifdef __HAVE_PCPU_AREA
+	p = (vaddr_t)&pcpuarea->ent[cid].ist3;
+#else
+	p = uvm_km_alloc(kernel_map, PAGE_SIZE, 0, UVM_KMF_WIRED|UVM_KMF_ZERO);
+#endif
+	cputss->tss.tss_ist[3] = p + PAGE_SIZE - 16;
 
 	ci->ci_tss = cputss;
 	ci->ci_tss_sel = tss_alloc(&cputss->tss);
@@ -1773,6 +1781,9 @@ init_x86_64(paddr_t first_avail)
 #ifndef XEN
 		idt_vec_reserve(x);
 		switch (x) {
+		case 1:	/* DB */
+			ist = 4;
+			break;
 		case 2:	/* NMI */
 			ist = 3;
 			break;

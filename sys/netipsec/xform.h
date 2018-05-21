@@ -1,4 +1,4 @@
-/*	$NetBSD: xform.h,v 1.14.2.2 2018/05/02 07:20:24 pgoyette Exp $	*/
+/*	$NetBSD: xform.h,v 1.14.2.3 2018/05/21 04:36:16 pgoyette Exp $	*/
 /*	$FreeBSD: xform.h,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ipsp.h,v 1.119 2002/03/14 01:27:11 millert Exp $	*/
 /*
@@ -64,51 +64,46 @@ struct tdb_crypto {
 struct ipescrequest;
 
 struct xformsw {
-	u_short	xf_type;		/* xform ID */
+	u_short xf_type;
 #define	XF_IP4		1	/* IP inside IP */
 #define	XF_AH		2	/* AH */
 #define	XF_ESP		3	/* ESP */
 #define	XF_TCPSIGNATURE	5	/* TCP MD5 Signature option, RFC 2358 */
 #define	XF_IPCOMP	6	/* IPCOMP */
-	u_short	xf_flags;
+	u_short xf_flags;
 #define	XFT_AUTH	0x0001
 #define	XFT_CONF	0x0100
 #define	XFT_COMP	0x1000
-	const char	*xf_name;		/* human-readable name */
-	int	(*xf_init)(struct secasvar*, const struct xformsw*);/* setup */
-	int	(*xf_zeroize)(struct secasvar*);		/* cleanup */
-	int	(*xf_input)(struct mbuf*, struct secasvar*, /* input */
-			int, int);
-	int	(*xf_output)(struct mbuf*,	       		/* output */
-			const struct ipsecrequest *, struct secasvar *,
-			struct mbuf **, int, int);
-	struct xformsw *xf_next;		/* list of registered xforms */
+	const char *xf_name;
+	int (*xf_init)(struct secasvar *, const struct xformsw *);
+	int (*xf_zeroize)(struct secasvar *);
+	int (*xf_input)(struct mbuf *, struct secasvar *, int, int);
+	int (*xf_output)(struct mbuf *, const struct ipsecrequest *,
+	    struct secasvar *, int, int);
+	struct xformsw *xf_next;	/* list of registered xforms */
 };
 
 #ifdef _KERNEL
-extern void xform_register(struct xformsw*);
-extern int xform_init(struct secasvar *sav, int xftype);
+void xform_register(struct xformsw *);
+int xform_init(struct secasvar *sav, int);
 
 struct cryptoini;
 
 /* XF_IP4 */
-int ip4_input6(struct mbuf **m, int *offp, int proto, void *);
-void ip4_input(struct mbuf *m, int, int, void *);
-int ipip_output(struct mbuf *, const struct ipsecrequest *, struct secasvar *,
-    struct mbuf **, int, int);
+int ipip_output(struct mbuf *, struct secasvar *, struct mbuf **);
 
 /* XF_AH */
 int ah_init0(struct secasvar *, const struct xformsw *, struct cryptoini *);
-int ah_zeroize(struct secasvar *sav);
-const struct auth_hash *ah_algorithm_lookup(int alg);
+int ah_zeroize(struct secasvar *);
+const struct auth_hash *ah_algorithm_lookup(int);
 size_t ah_hdrsiz(const struct secasvar *);
 
 /* XF_ESP */
-const struct enc_xform *esp_algorithm_lookup(int alg);
-size_t esp_hdrsiz(const struct secasvar *sav);
+const struct enc_xform *esp_algorithm_lookup(int);
+size_t esp_hdrsiz(const struct secasvar *);
 
 /* XF_COMP */
-const struct comp_algo *ipcomp_algorithm_lookup(int alg);
+const struct comp_algo *ipcomp_algorithm_lookup(int);
 
 #endif /* _KERNEL */
 #endif /* !_NETIPSEC_XFORM_H_ */

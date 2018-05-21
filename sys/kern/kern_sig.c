@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.339.2.1 2018/05/02 07:20:22 pgoyette Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.339.2.2 2018/05/21 04:36:15 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.339.2.1 2018/05/02 07:20:22 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.339.2.2 2018/05/21 04:36:15 pgoyette Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_dtrace.h"
@@ -113,7 +113,8 @@ static pool_cache_t	ksiginfo_cache	__read_mostly;
 static callout_t	proc_stop_ch	__cacheline_aligned;
 
 sigset_t		contsigmask	__cacheline_aligned;
-static sigset_t		stopsigmask	__cacheline_aligned;
+sigset_t		stopsigmask	__cacheline_aligned;
+static sigset_t		vforksigmask	__cacheline_aligned;
 sigset_t		sigcantmask	__cacheline_aligned;
 
 static void	ksiginfo_exechook(struct proc *, void *);
@@ -322,6 +323,7 @@ siginit(struct proc *p)
 	ps = p->p_sigacts;
 	sigemptyset(&contsigmask);
 	sigemptyset(&stopsigmask);
+	sigemptyset(&vforksigmask);
 	sigemptyset(&sigcantmask);
 	for (signo = 1; signo < NSIG; signo++) {
 		prop = sigprop[signo];
@@ -329,6 +331,8 @@ siginit(struct proc *p)
 			sigaddset(&contsigmask, signo);
 		if (prop & SA_STOP)
 			sigaddset(&stopsigmask, signo);
+		if (prop & SA_STOP && signo != SIGSTOP)
+			sigaddset(&vforksigmask, signo);
 		if (prop & SA_CANTMASK)
 			sigaddset(&sigcantmask, signo);
 		if (prop & SA_IGNORE && signo != SIGCONT)
@@ -1682,14 +1686,14 @@ issignal(struct lwp *l)
 			sp = &l->l_sigpend;
 			ss = sp->sp_set;
 			if ((p->p_lflag & PL_PPWAIT) != 0)
-				sigminusset(&stopsigmask, &ss);
+				sigminusset(&vforksigmask, &ss);
 			sigminusset(&l->l_sigmask, &ss);
 
 			if ((signo = firstsig(&ss)) == 0) {
 				sp = &p->p_sigpend;
 				ss = sp->sp_set;
 				if ((p->p_lflag & PL_PPWAIT) != 0)
-					sigminusset(&stopsigmask, &ss);
+					sigminusset(&vforksigmask, &ss);
 				sigminusset(&l->l_sigmask, &ss);
 
 				if ((signo = firstsig(&ss)) == 0) {
@@ -1720,10 +1724,10 @@ issignal(struct lwp *l)
 		 * If traced, always stop, and stay stopped until released
 		 * by the debugger.  If the our parent is our debugger waiting
 		 * for us and we vforked, don't hang as we could deadlock.
-		 *
-		 * XXX: support PT_TRACE_ME called after vfork(2)
 		 */
-		if ((p->p_slflag & PSL_TRACED) != 0 && signo != SIGKILL) {
+		if (ISSET(p->p_slflag, PSL_TRACED) && signo != SIGKILL &&
+		    !(ISSET(p->p_lflag, PL_PPWAIT) &&
+		     (p->p_pptr == p->p_opptr))) {
 			/*
 			 * Take the signal, but don't remove it from the
 			 * siginfo queue, because the debugger can send
@@ -1733,10 +1737,8 @@ issignal(struct lwp *l)
 				sigdelset(&sp->sp_set, signo);
 			p->p_xsig = signo;
 
-			/* Emulation-specific handling of signal trace */
-			if (p->p_emul->e_tracesig == NULL ||
-			    (*p->p_emul->e_tracesig)(p, signo) == 0)
-				sigswitch(0, signo, true);
+			/* Handling of signal trace */
+			sigswitch(0, signo, true);
 
 			/* Check for a signal from the debugger. */
 			if ((signo = sigchecktrace()) == 0)
@@ -1779,7 +1781,9 @@ issignal(struct lwp *l)
 				 * XXX Don't hold proc_lock for p_lflag,
 				 * but it's not a big deal.
 				 */
-				if (p->p_slflag & PSL_TRACED ||
+				if ((ISSET(p->p_slflag, PSL_TRACED) &&
+				     !(ISSET(p->p_lflag, PL_PPWAIT) &&
+				     (p->p_pptr == p->p_opptr))) ||
 				    ((p->p_lflag & PL_ORPHANPG) != 0 &&
 				    prop & SA_TTYSTOP)) {
 					/* Ignore the signal. */

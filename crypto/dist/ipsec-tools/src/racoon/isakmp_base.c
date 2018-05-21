@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_base.c,v 1.12 2009/03/12 10:57:26 tteras Exp $	*/
+/*	$NetBSD: isakmp_base.c,v 1.12.48.1 2018/05/21 04:35:49 pgoyette Exp $	*/
 
 /*	$KAME: isakmp_base.c,v 1.49 2003/11/13 02:30:20 sakane Exp $	*/
 
@@ -297,10 +297,6 @@ base_i2recv(iph1, msg)
 	struct isakmp_parse_t *pa;
 	vchar_t *satmp = NULL;
 	int error = -1;
-#ifdef ENABLE_HYBRID
-	vchar_t *unity_vid;
-	vchar_t *xauth_vid;
-#endif
 
 	/* validity check */
 	if (iph1->status != PHASE1ST_MSG1SENT) {

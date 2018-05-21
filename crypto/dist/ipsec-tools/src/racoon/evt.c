@@ -1,4 +1,4 @@
-/*	$NetBSD: evt.c,v 1.10 2010/10/21 06:15:28 tteras Exp $	*/
+/*	$NetBSD: evt.c,v 1.10.48.1 2018/05/21 04:35:49 pgoyette Exp $	*/
 
 /* Id: evt.c,v 1.5 2006/06/22 20:11:35 manubsd Exp */
 
@@ -216,9 +216,7 @@ evt_dump(void) {
 }
 
 static struct evt_message *
-evtmsg_create(type, optdata)
-	int type;
-	vchar_t *optdata;
+evtmsg_create(int type, vchar_t *optdata)
 {
 	struct evt_message *e;
 	size_t len;
@@ -247,8 +245,7 @@ evtmsg_create(type, optdata)
 }
 
 static void
-evt_unsubscribe(l)
-	struct evt_listener *l;
+evt_unsubscribe(struct evt_listener *l)
 {
 	plog(LLV_DEBUG, LOCATION, NULL,
 	     "[%d] admin connection released\n", l->fd);
@@ -260,18 +257,14 @@ evt_unsubscribe(l)
 }
 
 static int
-evt_unsubscribe_cb(ctx, fd)
-	void *ctx;
-	int fd;
+evt_unsubscribe_cb(void *ctx, int fd)
 {
 	evt_unsubscribe((struct evt_listener *) ctx);
 	return 0;
 }
 
 static void
-evtmsg_broadcast(ll, e)
-	const struct evt_listener_list *ll;
-	struct evt_message *e;
+evtmsg_broadcast(const struct evt_listener_list *ll, struct evt_message *e)
 {
 	struct evt_listener *l, *nl;
 

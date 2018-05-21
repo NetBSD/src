@@ -1,4 +1,4 @@
-#	$NetBSD: files.sunxi,v 1.42.2.4 2018/05/02 07:20:04 pgoyette Exp $
+#	$NetBSD: files.sunxi,v 1.42.2.5 2018/05/21 04:35:59 pgoyette Exp $
 #
 # Configuration info for Allwinner sunxi family SoCs
 #
@@ -59,10 +59,20 @@ device	sun50ia64ccu: sunxi_ccu
 attach	sun50ia64ccu at fdt with sunxi_a64_ccu
 file	arch/arm/sunxi/sun50i_a64_ccu.c		sunxi_a64_ccu
 
+# CCU (A64 PRCM)
+device	sun50ia64rccu: sunxi_ccu
+attach	sun50ia64rccu at fdt with sunxi_a64_r_ccu
+file	arch/arm/sunxi/sun50i_a64_r_ccu.c	sunxi_a64_r_ccu
+
 # CCU (H6)
 device	sun50ih6ccu: sunxi_ccu
 attach	sun50ih6ccu at fdt with sunxi_h6_ccu
 file	arch/arm/sunxi/sun50i_h6_ccu.c		sunxi_h6_ccu
+
+# CCU (H6 PRCM)
+device	sun50ih6rccu: sunxi_ccu
+attach	sun50ih6rccu at fdt with sunxi_h6_r_ccu
+file	arch/arm/sunxi/sun50i_h6_r_ccu.c	sunxi_h6_r_ccu
 
 # Misc. clock resets
 device	sunxiresets
@@ -89,6 +99,10 @@ device	sunxiintc: pic, pic_splfuncs
 attach	sunxiintc at fdt with sunxi_intc
 file	arch/arm/sunxi/sunxi_intc.c		sunxi_intc
 
+device	sunxinmi
+attach	sunxinmi at fdt with sunxi_nmi
+file	arch/arm/sunxi/sunxi_nmi.c		sunxi_nmi
+
 # GPIO
 device	sunxigpio: gpiobus
 attach	sunxigpio at fdt with sunxi_gpio
@@ -106,6 +120,11 @@ file	arch/arm/sunxi/sun50i_h6_gpio.c		sunxi_gpio & soc_sun50i_h6
 # UART
 attach	com at fdt with sunxi_com
 file	arch/arm/sunxi/sunxi_com.c		sunxi_com needs-flag
+
+# PWM
+device	sunxipwm: pwm
+attach	sunxipwm at fdt with sunxi_pwm
+file	arch/arm/sunxi/sunxi_pwm.c		sunxi_pwm
 
 # SD/MMC
 device	sunximmc: sdmmcbus
@@ -189,10 +208,25 @@ file	arch/arm/sunxi/sunxi_codec.c		sunxi_codec
 file	arch/arm/sunxi/sun4i_a10_codec.c	sunxi_codec
 file	arch/arm/sunxi/sun6i_a31_codec.c	sunxi_codec
 
+# Audio codec (sun8i)
+device	sun8icodec
+attach	sun8icodec at fdt with sun8i_codec
+file	arch/arm/sunxi/sun8i_codec.c		sun8i_codec
+
 # H3 Audio codec (analog part)
 device	h3codec
 attach	h3codec at fdt with h3_codec
 file	arch/arm/sunxi/sun8i_h3_codec.c		h3_codec needs-flag
+
+# A64 Audio codec (analog part)
+device	a64acodec
+attach	a64acodec at fdt with a64_acodec
+file	arch/arm/sunxi/sun50i_a64_acodec.c	a64_acodec
+
+# I2S/PCM controller
+device	sunxii2s: auconv, mulaw, aurateconv
+attach	sunxii2s at fdt with sunxi_i2s
+file	arch/arm/sunxi/sunxi_i2s.c		sunxi_i2s
 
 # Display controller
 attach	genfb at fdt with simplefb

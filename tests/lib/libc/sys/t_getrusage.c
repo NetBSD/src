@@ -1,4 +1,4 @@
-/* $NetBSD: t_getrusage.c,v 1.5 2017/01/13 20:31:06 christos Exp $ */
+/* $NetBSD: t_getrusage.c,v 1.5.12.1 2018/05/21 04:36:17 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,17 +29,22 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_getrusage.c,v 1.5 2017/01/13 20:31:06 christos Exp $");
+__RCSID("$NetBSD: t_getrusage.c,v 1.5.12.1 2018/05/21 04:36:17 pgoyette Exp $");
 
 #include <sys/resource.h>
 #include <sys/time.h>
 
 #include <atf-c.h>
+#include <stdio.h>
 #include <errno.h>
 #include <limits.h>
 #include <signal.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <string.h>
+#include <fcntl.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
 
 static void		work(void);
 static void		sighandler(int);
@@ -117,6 +122,74 @@ ATF_TC_BODY(getrusage_sig, tc)
 		atf_tc_fail("getrusage(2) did not record signals");
 }
 
+ATF_TC(getrusage_maxrss);
+ATF_TC_HEAD(getrusage_maxrss, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test maxrss growing with getrusage(2)");
+}
+
+ATF_TC_BODY(getrusage_maxrss, tc)
+{
+	struct rusage ru;
+	long maxrss;
+	int i, fd;
+
+#define	DUMP_FILE	"dump"
+
+	fd = open(DUMP_FILE, O_WRONLY|O_CREAT|O_TRUNC, 0222);
+	ATF_REQUIRE(fd != -1);
+
+	(void)memset(&ru, 0, sizeof(struct rusage));
+	ATF_REQUIRE(getrusage(RUSAGE_SELF, &ru) == 0);
+	maxrss = ru.ru_maxrss;
+
+#define CHUNK (1024 * 1024)
+	for (i = 0; i < 40; i++) {
+		void *p = malloc(CHUNK);
+		memset(p, 0, CHUNK);
+		write(fd, p, CHUNK);
+	}
+	close(fd);
+	unlink(DUMP_FILE);
+
+	ATF_REQUIRE(getrusage(RUSAGE_SELF, &ru) == 0);
+	ATF_REQUIRE_MSG(maxrss < ru.ru_maxrss,
+	    "maxrss: %ld, ru.ru_maxrss: %ld", maxrss, ru.ru_maxrss);
+}
+
+ATF_TC(getrusage_msgsnd);
+ATF_TC_HEAD(getrusage_msgsnd, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test send growing with getrusage(2)");
+}
+
+ATF_TC_BODY(getrusage_msgsnd, tc)
+{
+	struct rusage ru;
+	long msgsnd;
+	int s, i;
+	struct sockaddr_in sin;
+
+	ATF_REQUIRE(getrusage(RUSAGE_SELF, &ru) == 0);
+	msgsnd = ru.ru_msgsnd;
+
+	s = socket(AF_INET, SOCK_DGRAM, 0);
+	ATF_REQUIRE(s >= 0);
+	memset(&sin, 0, sizeof(sin));
+	sin.sin_family = AF_INET;
+	sin.sin_len = sizeof(sin);
+	sin.sin_addr.s_addr = ntohl(INADDR_LOOPBACK);
+	sin.sin_port = htons(3333);
+
+	for (i = 0; i < 10; i++)
+		ATF_REQUIRE(sendto(s, &sin, sizeof(sin), 0, (void *)&sin,
+			(socklen_t)sizeof(sin)) != -1);
+
+	ATF_REQUIRE(getrusage(RUSAGE_SELF, &ru) == 0);
+	ATF_REQUIRE(msgsnd + 10 == ru.ru_msgsnd);
+	close(s);
+}
+
 ATF_TC(getrusage_utime_back);
 ATF_TC_HEAD(getrusage_utime_back, tc)
 {
@@ -192,6 +265,8 @@ ATF_TP_ADD_TCS(tp)
 
 	ATF_TP_ADD_TC(tp, getrusage_err);
 	ATF_TP_ADD_TC(tp, getrusage_sig);
+	ATF_TP_ADD_TC(tp, getrusage_maxrss);
+	ATF_TP_ADD_TC(tp, getrusage_msgsnd);
 	ATF_TP_ADD_TC(tp, getrusage_utime_back);
 	ATF_TP_ADD_TC(tp, getrusage_utime_zero);
 

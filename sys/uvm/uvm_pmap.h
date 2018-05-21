@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pmap.h,v 1.38 2013/02/02 14:06:58 matt Exp $	*/
+/*	$NetBSD: uvm_pmap.h,v 1.38.36.1 2018/05/21 04:36:17 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -212,6 +212,13 @@ vaddr_t		pmap_steal_memory(vsize_t, vaddr_t *, vaddr_t *);
 #if defined(PMAP_FORK)
 void		pmap_fork(pmap_t, pmap_t);
 #endif
+
+#if defined(PMAP_DIRECT)
+int		pmap_direct_process(paddr_t, voff_t, size_t,
+		    int (*)(void *, size_t, void *),
+		    void *);
+#endif
+
 #endif	/* kernel*/
 #endif  /* PMAP_EXCLUDE_DECLS */
 

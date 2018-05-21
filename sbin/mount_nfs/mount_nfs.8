@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_nfs.8,v 1.46 2017/07/03 21:33:41 wiz Exp $
+.\"	$NetBSD: mount_nfs.8,v 1.46.4.1 2018/05/21 04:35:56 pgoyette Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994, 1995
 .\"	The Regents of the University of California.  All rights reserved.
@@ -37,7 +37,7 @@
 .Nd mount NFS file systems
 .Sh SYNOPSIS
 .Nm
-.Op Fl 23bCcdilPpqsTUX
+.Op Fl 23bCcdilPpqsTUuX
 .Op Fl a Ar maxreadahead
 .Op Fl D Ar deadthresh
 .Op Fl g Ar maxgroups
@@ -55,9 +55,7 @@ The
 .Nm
 command calls the
 .Xr mount 2
-system call to prepare and graft a remote
-.Tn NFS
-file system (rhost:path)
+system call to prepare and graft a remote NFS file system (rhost:path)
 on to the file system tree at the mount point
 .Ar node .
 The directory specified by
@@ -72,13 +70,9 @@ Appendix I.
 The options are:
 .Bl -tag -width indent
 .It Fl 2
-Use the
-.Tn NFS
-Version 2 protocol.
+Use the NFS Version 2 protocol.
 .It Fl 3
-Use the
-.Tn NFS
-Version 3 protocol.
+Use the NFS Version 3 protocol.
 The default is to try version 3 first, and
 fall back to version 2 if the mount fails.
 .It Fl a Ar maxreadahead
@@ -94,28 +88,18 @@ Useful for
 .Xr fstab 5 ,
 where the filesystem mount is not critical to multiuser operation.
 .It Fl C
-For
-.Tn UDP
-mount points, do a
+For UDP mount points, do a
 .Xr connect 2 .
-Although this flag increases the efficiency of
-.Tn UDP
-mounts it cannot
+Although this flag increases the efficiency of UDP mounts it cannot
 be used for servers that do not reply to requests from the
-standard
-.Tn NFS
-port number 2049, or for servers with multiple network interfaces.
+standard NFS port number 2049, or for servers with multiple network interfaces.
 In these cases if the socket is connected and the server
 replies from a different port number or a different network interface
 the client will get ICMP port unreachable and the mount will hang.
 .It Fl c
-For
-.Tn UDP
-mount points, do not do a
+For UDP mount points, do not do a
 .Xr connect 2 .
-This flag is deprecated and connectionless
-.Tn UDP
-mounts are the default.
+This flag is deprecated and connectionless UDP mounts are the default.
 .It Fl D Ar deadthresh
 Set the
 .Dq "dead server threshold"
@@ -127,9 +111,7 @@ of retransmit timeouts,
 message is printed to a tty.
 .It Fl d
 Turn off the dynamic retransmit timeout estimator.
-This may be useful for
-.Tn UDP
-mounts that exhibit high retry rates,
+This may be useful for UDP mounts that exhibit high retry rates,
 since it is possible that the dynamically estimated timeout interval is too
 short.
 .It Fl g Ar maxgroups
@@ -153,19 +135,12 @@ when a
 termination signal is posted for the process.
 .It Fl L Ar leaseterm
 Ignored.
-It used to be
-.Tn NQNFS
-lease term.
+It used to be NQNFS lease term.
 .It Fl l
-Used with
-.Tn NFS
-Version 3 to specify that the
+Used with NFS Version 3 to specify that the
 .Fn ReaddirPlus
-.Tn RPC
-should be used.
-This option reduces
-.Tn RPC
-traffic for cases such as
+RPC should be used.
+This option reduces RPC traffic for cases such as
 .Ic "ls -l" ,
 but tends to flood the attribute and name caches with prefetched entries.
 Try this option and see whether performance improves or degrades.
@@ -179,9 +154,7 @@ See the
 .Xr mount 8
 man page for possible options and their meanings.
 .Pp
-The following
-.Tn NFS
-specific options are also available:
+The following NFS specific options are also available:
 .Bl -tag -width indent
 .It Cm bg
 Same as
@@ -220,12 +193,8 @@ Same as
 Same as
 .Fl q .
 .It Cm port Ns = Ns Aq Ar portnumber
-Use the specified port number for
-.Tn NFS
-requests.
-The default is to query the portmapper for the
-.Tn NFS
-port.
+Use the specified port number for NFS requests.
+The default is to query the portmapper for the NFS port.
 .It Cm rdirplus
 Same as
 .Fl l .
@@ -241,6 +210,9 @@ Same as
 .It Cm tcp
 Same as
 .Fl T .
+.It Cm udp
+Same as
+.Fl u .
 .It Cm timeo Ns = Ns Aq Ar timeout
 Same as
 .Fl t Ar timeout .
@@ -259,8 +231,7 @@ default behavior of not using a reserved port, and should rarely be useful.
 .It Fl q
 A synonym of
 .Fl 3 .
-It used to specify
-.Tn NQNFS .
+It used to specify NQNFS.
 .It Fl R Ar retrycnt
 Set the retry count for doing the mount to the specified value.
 The default is 10000.
@@ -268,9 +239,7 @@ The default is 10000.
 Set the read data size to the specified value in bytes.
 It should normally be a power of 2 greater than or equal to 1024.
 .Pp
-This should be used for
-.Tn UDP
-mounts when the
+This should be used for UDP mounts when the
 .Dq "fragments dropped after timeout"
 value is getting large while actively using a mount point.
 Use
@@ -290,20 +259,12 @@ after
 .Ar retrans
 round trip timeout intervals.
 .It Fl T
-Use
-.Tn TCP
-transport instead of
-.Tn UDP .
-This is recommended for servers that are not on the same physical network as
-the client.
-Not all
-.Tn NFS
-servers, especially not old ones, support this.
+Use TCP transport instead of UDP.
+This is the default;
+the flag is maintained for backwards compatibility.
 .It Fl t Ar timeout
 Set the initial retransmit timeout to the specified value in 0.1 seconds.
-May be useful for fine tuning
-.Tn UDP
-mounts over internetworks
+May be useful for fine tuning UDP mounts over internetworks
 with high packet loss rates or an overloaded server.
 Try increasing the interval if
 .Xr nfsstat 1
@@ -314,15 +275,13 @@ tune the timeout
 interval.
 The default is 3 seconds.
 .It Fl U
-Force the mount protocol to use
-.Tn UDP
-transport, even for
-.Tn TCP
-.Tn NFS
-mounts.
+Force the mount protocol to use UDP transport, even for TCP NFS mounts.
 This is necessary for some old
 .Bx
 servers.
+.It Fl u
+Use UDP transport instead of TCP.
+This may be necessary for some very old servers.
 .It Fl w Ar writesize
 Set the write data size to the specified value in bytes.
 .Pp
@@ -331,17 +290,13 @@ The same logic applies for use of this option as with the
 .Fl r
 option, but using the
 .Dq "fragments dropped after timeout"
-value on the
-.Tn NFS
-server instead of the client.
+value on the NFS server instead of the client.
 Note that both the
 .Fl r
 and
 .Fl w
 options should only be used as a last ditch effort at improving performance
-when mounting servers that do not support
-.Tn TCP
-mounts.
+when mounting servers that do not support TCP mounts.
 .It Fl X
 Perform 32 <-> 64 bit directory cookie translation for version 3 mounts.
 This may be needed in the case of a server using the upper 32 bits of
@@ -369,9 +324,7 @@ by using a line like:
 .Dl "remotehost:/home /home nfs rw 0 0"
 .Sh PERFORMANCE
 As can be derived from the comments accompanying the options, performance
-tuning of
-.Tn NFS
-can be a non-trivial task.
+tuning of NFS can be a non-trivial task.
 Here are some common points
 to watch:
 .Bl -bullet -offset indent
@@ -383,24 +336,16 @@ and
 options respectively will increase throughput if the network
 interface can handle the larger packet sizes.
 .Pp
-The default size for
-.Tn NFS
-version 2 is 8K when
-using
-.Tn UDP ,
-64K when using
-.Tn TCP .
+The default size for NFS version 2 is 8K when using UDP,
+64K when using TCP.
 .Pp
-The default size for
-.Tn NFS
-version 3 is platform dependent:
+The default size for NFS version 3 is platform dependent:
 on
 .Nx Ns /amd64
 and
 .Nx Ns /i386 ,
 the default is 32K, for other platforms it is 8K.
-Values over 32K are only supported for
-.Tn TCP ,
+Values over 32K are only supported for TCP,
 where 64K is the maximum.
 .Pp
 Any value over 32K is unlikely to get you more performance, unless
@@ -408,26 +353,18 @@ you have a very fast network.
 .It
 If the network interface cannot handle larger packet sizes or a
 long train of back to back packets, you may see low performance
-figures or even temporary hangups during
-.Tn NFS
-activity.
+figures or even temporary hangups during NFS activity.
 .Pp
-This can especially happen with older
-.Tn Ethernet
-network interfaces.
+This can especially happen with older Ethernet network interfaces.
 What happens is that either the receive buffer on the network
 interface on the client side is overflowing, or that similar events
 occur on the server, leading to a lot of dropped packets.
 .Pp
-In this case, decreasing the read and write size, using
-.Tn TCP ,
+In this case, decreasing the read and write size, using TCP,
 or a combination of both will usually lead to better throughput.
-Should you need to decrease the read and write size for all your
-.Tn NFS
-mounts because of a slow
-.Tn Ethernet
-network interface
-.Pq e.g. a USB 1.1 to 10/100 Tn Ethernet network interface ,
+Should you need to decrease the read and write size for all your NFS
+mounts because of a slow Ethernet network interface
+.Pq e.g. a USB 1.1 to 10/100 Ethernet network interface ,
 you can use
 .Pp
 .Bl -ohang -compact
@@ -439,11 +376,8 @@ in your kernel
 .Xr config 1
 file to avoid having do specify the sizes for all mounts.
 .It
-For connections that are not on the same
-.Tn LAN ,
-and/or may experience packet loss, using
-.Tn TCP
-is strongly recommended.
+For connections that are not on the same LAN,
+and/or may experience packet loss, using TCP is strongly recommended.
 .El
 .Sh ERRORS
 Some common problems with

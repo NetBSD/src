@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2017/12/13 21:52:55 joerg Exp $
+#	$NetBSD: Makefile,v 1.19.2.1 2018/05/21 04:35:53 pgoyette Exp $
 
 NOCTF=
 HOSTPROG_CXX=   1
@@ -83,4 +83,5 @@ CLEANDIRFILES+= \
 	go-exp.c \
 	jv-exp.c \
 	m2-exp.c \
-	p-exp.c
+	p-exp.c \
+	rust-exp.c

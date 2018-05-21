@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_auth.c,v 1.5 2014/05/30 02:16:17 rmind Exp $	*/
+/*	$NetBSD: ip_auth.c,v 1.5.26.1 2018/05/21 04:36:14 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -111,7 +111,6 @@ extern struct ifqueue   ipintrq;		/* ip packet input queue */
 #include <netinet/udp.h>
 #include <netinet/ip_icmp.h>
 #include "netinet/ip_compat.h"
-#include <netinet/tcpip.h>
 #include "netinet/ip_fil.h"
 #include "netinet/ip_auth.h"
 #if !defined(MENTAT) && !defined(linux)
@@ -131,7 +130,7 @@ extern struct ifqueue   ipintrq;		/* ip packet input queue */
 
 #if !defined(lint)
 #if defined(__NetBSD__)
-__KERNEL_RCSID(0, "$NetBSD: ip_auth.c,v 1.5 2014/05/30 02:16:17 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_auth.c,v 1.5.26.1 2018/05/21 04:36:14 pgoyette Exp $");
 #else
 static const char rcsid[] = "@(#)Id: ip_auth.c,v 1.1.1.2 2012/07/22 13:45:08 darrenr Exp";
 #endif

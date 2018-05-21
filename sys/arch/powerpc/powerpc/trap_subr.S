@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.78 2014/07/29 16:19:45 joerg Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.78.26.1 2018/05/21 04:36:01 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -598,7 +598,7 @@ _C_LABEL(tlbdlmsize) = .-_C_LABEL(tlbdlmiss)
 	.globl	_C_LABEL(tlbdsmiss),_C_LABEL(tlbdsmsize)
 _C_LABEL(tlbdsmiss):
 	mfspr	%r2,SPR_HASH1		/* get first pointer */
-	li	%r1,%r8
+	li	%r1,8
 	mfctr	%r0			/* save counter */
 	mfspr	%r3,SPR_DCMP		/* get first compare value */
 	addi	%r2,%r2,-8		/* predec pointer */

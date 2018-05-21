@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1172.2.1 2018/03/30 06:20:05 pgoyette Exp $
+# $NetBSD: mi,v 1.1172.2.2 2018/05/21 04:35:49 pgoyette Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -145,6 +145,9 @@
 ./libdata/firmware/if_bwfm/brcmfmac43236b.bin	base-firmware-root
 ./libdata/firmware/if_bwfm/brcmfmac43242a.bin	base-firmware-root
 ./libdata/firmware/if_bwfm/brcmfmac43569.bin	base-firmware-root
+./libdata/firmware/if_bwfm/brcmfmac4350-pcie.bin	base-firmware-root
+./libdata/firmware/if_bwfm/brcmfmac4350c2-pcie.bin	base-firmware-root
+./libdata/firmware/if_bwfm/brcmfmac43602-pcie.bin	base-firmware-root
 ./libdata/firmware/if_ipw			base-firmware-root
 ./libdata/firmware/if_ipw/LICENSE		base-firmware-root
 ./libdata/firmware/if_ipw/ipw2100-1.2-i.fw	base-firmware-root

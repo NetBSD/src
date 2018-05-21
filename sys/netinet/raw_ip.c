@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.171.2.3 2018/05/02 07:20:23 pgoyette Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.171.2.4 2018/05/21 04:36:16 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.171.2.3 2018/05/02 07:20:23 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.171.2.4 2018/05/21 04:36:16 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -355,6 +355,10 @@ rip_output(struct mbuf *m, struct inpcb *inp, struct mbuf *control,
 			error = EMSGSIZE;
 			goto release;
 		}
+		if (m->m_pkthdr.len < sizeof(struct ip)) {
+			error = EINVAL;
+			goto release;
+		}
 		ip = mtod(m, struct ip *);
 
 		/*
@@ -367,7 +371,7 @@ rip_output(struct mbuf *m, struct inpcb *inp, struct mbuf *control,
 
 			m = m_copyup(m, hlen, (max_linkhdr + 3) & ~3);
 			if (m == NULL) {
-				error = ENOMEM;	/* XXX */
+				error = ENOMEM;
 				goto release;
 			}
 			ip = mtod(m, struct ip *);
@@ -380,11 +384,14 @@ rip_output(struct mbuf *m, struct inpcb *inp, struct mbuf *control,
 		}
 		HTONS(ip->ip_len);
 		HTONS(ip->ip_off);
+
 		if (ip->ip_id != 0 || m->m_pkthdr.len < IP_MINFRAGSIZE)
 			flags |= IP_NOIPNEWID;
 		opts = NULL;
-		/* XXX prevent ip_output from overwriting header fields */
+
+		/* Prevent ip_output from overwriting header fields. */
 		flags |= IP_RAWOUTPUT;
+
 		IP_STATINC(IP_STAT_RAWOUT);
 	}
 

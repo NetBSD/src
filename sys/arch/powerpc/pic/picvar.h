@@ -1,4 +1,4 @@
-/*	$NetBSD: picvar.h,v 1.9 2011/06/18 06:41:44 matt Exp $ */
+/*	$NetBSD: picvar.h,v 1.9.52.1 2018/05/21 04:36:01 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: picvar.h,v 1.9 2011/06/18 06:41:44 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: picvar.h,v 1.9.52.1 2018/05/21 04:36:01 pgoyette Exp $");
 
 #ifndef PIC_VAR_H
 #define PIC_VAR_H
@@ -132,6 +132,6 @@ void opic_ack_irq(struct pic_ops *pic, int irq);
 /* IPI handler */
 int cpuintr(void *);
 /* XXX - may need to be PIC specific */
-#define IPI_VECTOR 64
+#define IPI_VECTOR 128
 
 #endif /* PIC_VAR_H */

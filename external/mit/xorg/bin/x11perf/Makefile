@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2011/11/20 21:02:23 dholland Exp $
+#	$NetBSD: Makefile,v 1.3.38.1 2018/05/21 04:35:53 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -9,6 +9,7 @@ SRCS=	x11perf.c bitmaps.c do_tests.c do_simple.c do_rects.c do_valgc.c \
 
 CPPFLAGS+=	-DMITSHM -DXRENDER
 CPPFLAGS+=	-DXFT -DXFREE86_FT2 -I${DESTDIR}${X11INCDIR}/freetype2
+CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/freetype2/freetype
 
 MAN=	Xmark.1 x11perf.1 x11perfcomp.1
 

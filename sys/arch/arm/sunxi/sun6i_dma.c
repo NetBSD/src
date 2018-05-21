@@ -1,4 +1,4 @@
-/* $NetBSD: sun6i_dma.c,v 1.3 2017/12/15 02:24:22 jmcneill Exp $ */
+/* $NetBSD: sun6i_dma.c,v 1.3.2.1 2018/05/21 04:35:59 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sun6i_dma.c,v 1.3 2017/12/15 02:24:22 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sun6i_dma.c,v 1.3.2.1 2018/05/21 04:35:59 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -92,11 +92,43 @@ struct sun6idma_desc {
 #define DMA_NULL	0xfffff800
 };
 
+struct sun6idma_config {
+	u_int		num_channels;
+	bool		autogate;
+	bus_size_t	autogate_reg;
+	uint32_t	autogate_mask;
+};
+
+static const struct sun6idma_config sun6i_a31_dma_config = {
+	.num_channels = 16
+};
+
+static const struct sun6idma_config sun8i_a83t_dma_config = {
+	.num_channels = 8,
+	.autogate = true,
+	.autogate_reg = 0x20,
+	.autogate_mask = 0x4,
+};
+
+static const struct sun6idma_config sun8i_h3_dma_config = {
+	.num_channels = 12,
+	.autogate = true,
+	.autogate_reg = 0x28,
+	.autogate_mask = 0x4,
+};
+
+static const struct sun6idma_config sun50i_a64_dma_config = {
+	.num_channels = 8,
+	.autogate = true,
+	.autogate_reg = 0x28,
+	.autogate_mask = 0x4,
+};
+
 static const struct of_compat_data compat_data[] = {
-	{ "allwinner,sun6i-a31-dma",		16 },
-	{ "allwinner,sun8i-a83t-dma",		8 },
-	{ "allwinner,sun8i-h3-dma",		12 },
-	{ "allwinner,sun50i-a64-dma",		8 },
+	{ "allwinner,sun6i-a31-dma",	(uintptr_t)&sun6i_a31_dma_config },
+	{ "allwinner,sun8i-a83t-dma",	(uintptr_t)&sun8i_a83t_dma_config },
+	{ "allwinner,sun8i-h3-dma",	(uintptr_t)&sun8i_h3_dma_config },
+	{ "allwinner,sun50i-a64-dma",	(uintptr_t)&sun50i_a64_dma_config },
 	{ NULL }
 };
 
@@ -324,6 +356,7 @@ sun6idma_attach(device_t parent, device_t self, void *aux)
 	struct fdt_attach_args * const faa = aux;
 	const int phandle = faa->faa_phandle;
 	const size_t desclen = sizeof(struct sun6idma_desc);
+	const struct sun6idma_config *conf;
 	struct fdtbus_reset *rst;
 	struct clk *clk;
 	char intrstr[128];
@@ -363,7 +396,9 @@ sun6idma_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	sc->sc_nchan = of_search_compatible(phandle, compat_data)->data;
+	conf = (void *)of_search_compatible(phandle, compat_data)->data;
+
+	sc->sc_nchan = conf->num_channels;
 	sc->sc_chan = kmem_alloc(sizeof(*sc->sc_chan) * sc->sc_nchan, KM_SLEEP);
 
 	aprint_naive("\n");
@@ -400,6 +435,9 @@ sun6idma_attach(device_t parent, device_t self, void *aux)
 
 		DMA_WRITE(sc, DMA_EN_REG(index), 0);
 	}
+
+	if (conf->autogate)
+		DMA_WRITE(sc, conf->autogate_reg, conf->autogate_mask);
 
 	sc->sc_ih = fdtbus_intr_establish(phandle, 0, IPL_SCHED, FDT_INTR_MPSAFE,
 	    sun6idma_intr, sc);

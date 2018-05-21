@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.148.2.3 2018/05/02 07:20:23 pgoyette Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.148.2.4 2018/05/21 04:36:16 pgoyette Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.148.2.3 2018/05/02 07:20:23 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.148.2.4 2018/05/21 04:36:16 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -164,7 +164,6 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 		}
 	}
 
-
 	if (IN6_IS_ADDR_MULTICAST(&taddr6)) {
 		nd6log(LOG_INFO, "bad NS target (multicast)\n");
 		goto bad;
@@ -197,7 +196,7 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 	 * Otherwise					MAY be omitted
 	 *
 	 * In this implementation, we omit the target link-layer address
-	 * in the "MAY" case. 
+	 * in the "MAY" case.
 	 */
 #if 0 /* too much! */
 	ifa = (struct ifaddr *)in6ifa_ifpwithaddr(ifp, &daddr6);
@@ -392,8 +391,8 @@ nd6_ns_output(struct ifnet *ifp, const struct in6_addr *daddr6,
 	/* estimate the size of message */
 	maxlen = sizeof(*ip6) + sizeof(*nd_ns);
 	maxlen += (sizeof(struct nd_opt_hdr) + ifp->if_addrlen + 7) & ~7;
-	KASSERTMSG(max_linkhdr + maxlen < MCLBYTES,
-	    "max_linkhdr + maxlen >= MCLBYTES (%d + %d >= %d)",
+	KASSERTMSG(max_linkhdr + maxlen <= MCLBYTES,
+	    "max_linkhdr + maxlen > MCLBYTES (%d + %d > %d)",
 	    max_linkhdr, maxlen, MCLBYTES);
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
@@ -922,8 +921,8 @@ nd6_na_output(
 	/* estimate the size of message */
 	maxlen = sizeof(*ip6) + sizeof(*nd_na);
 	maxlen += (sizeof(struct nd_opt_hdr) + ifp->if_addrlen + 7) & ~7;
-	KASSERTMSG(max_linkhdr + maxlen < MCLBYTES,
-	    "max_linkhdr + maxlen >= MCLBYTES (%d + %d >= %d)",
+	KASSERTMSG(max_linkhdr + maxlen <= MCLBYTES,
+	    "max_linkhdr + maxlen > MCLBYTES (%d + %d > %d)",
 	    max_linkhdr, maxlen, MCLBYTES);
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);

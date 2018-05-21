@@ -1,4 +1,4 @@
-/*	$NetBSD: route6d.h,v 1.7 2002/06/07 16:45:30 itojun Exp $	*/
+/*	$NetBSD: route6d.h,v 1.7.94.1 2018/05/21 04:36:19 pgoyette Exp $	*/
 /*	$KAME: route6d.h,v 1.4 2001/01/15 03:50:54 inoue Exp $	*/
 
 /*
@@ -30,10 +30,6 @@
  * SUCH DAMAGE.
  */
 
-/* not yet in use 
-#define	ROUTE6D_CONF	"/usr/local/v6/etc/route6d.conf"
-*/
-
 #define	ROUTE6D_DUMP	"/var/run/route6d_dump"
 
 #define	RIP6_VERSION	1
@@ -50,7 +46,7 @@ struct netinfo6 {
 	u_char	rip6_metric;
 };
 
-struct	rip6 {
+struct rip6 {
 	u_char	rip6_cmd;
 	u_char	rip6_vers;
 	u_char	rip6_res1[2];

@@ -1,4 +1,4 @@
-.\"	$NetBSD: bta2dpd.8,v 1.2 2017/01/28 23:52:45 wiz Exp $
+.\"	$NetBSD: bta2dpd.8,v 1.2.14.1 2018/05/21 04:36:19 pgoyette Exp $
 .\"
 .\" Copyright (c) 2015 - 2016  Nathanial Sloss <nathanialsloss@yahoo.com.au>
 .\" All rights reserved.
@@ -85,7 +85,7 @@ The
 daemon is used to transmit/receive audio to/from Bluetooth devices such as
 speakers or headphones, using the Advanced Audio Distribution Profile
 (A2DP).
-.Bl -tag -indent width
+.Bl -tag -width indent
 .It Fl a Ar address
 Remote device address.
 The
@@ -165,7 +165,7 @@ command as stated in
 .Sx EXAMPLES .
 .El
 .Ss Channel Modes
-.Bl -tag -indent width
+.Bl -tag -width indent
 .It Fl f Ar channel_mode
 .Bl -tag -width 2n
 .It Ar 0
@@ -194,9 +194,9 @@ This defaults to 44.1 kHz.
 A value of 0 will arbitrate from the highest to lowest frequency.
 .El
 .Ss Sub Band Codec (SBC) Encoding Options
-.Bl -tag -indent width
+.Bl -tag -width indent
 .It Fl A Ar bitpool_allocation
-.Bl -tag width 2n
+.Bl -tag -width 2n
 .It Ar 0
 Bit Allocation is negotiated starting with Loudness then SNR.
 .It Ar S

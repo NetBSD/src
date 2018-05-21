@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.106 2016/07/07 06:55:39 msaitoh Exp $ */
+/* $NetBSD: pmap.c,v 1.106.16.1 2018/05/21 04:36:02 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.106 2016/07/07 06:55:39 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.106.16.1 2018/05/21 04:36:02 pgoyette Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
@@ -230,6 +230,7 @@ pmap_bootstrap(void)
 	mem_fh = thunk_mkstemp(mem_name);
 	if (mem_fh < 0)
 		panic("pmap_bootstrap: can't create memory file\n");
+
 	/* unlink the file so space is freed when we quit */
 	if (thunk_unlink(mem_name) == -1)
 		panic("pmap_bootstrap: can't unlink %s", mem_name);
@@ -247,19 +248,14 @@ pmap_bootstrap(void)
 	}
 #else
 	{
-		void *block;
+		char block[PAGE_SIZE];
 
 		printf("Creating memory file\r");
-		block = thunk_malloc(PAGE_SIZE);
-		if (!block)
-			panic("pmap_bootstrap: can't malloc writeout block");
-
 		for (pg = 0; pg < file_len; pg += PAGE_SIZE) {
 			wlen = thunk_pwrite(mem_fh, block, PAGE_SIZE, pg);
 			if (wlen != PAGE_SIZE)
 				panic("pmap_bootstrap: write fails, disc full?");
 		}
-		thunk_free(block);
 	}
 #endif
 
@@ -1204,13 +1200,14 @@ pmap_zero_page(paddr_t pa)
 	if (pa & (PAGE_SIZE-1))
 		panic("%s: unaligned address passed : %p\n", __func__, (void *) pa);
 
-	/* XXX bug alart: can we allow the kernel to make a decision on this? */
 	blob = thunk_mmap(NULL, PAGE_SIZE,
 		THUNK_PROT_READ | THUNK_PROT_WRITE,
 		THUNK_MAP_FILE | THUNK_MAP_SHARED,
 		mem_fh, pa);
 	if (!blob)
 		panic("%s: couldn't get mapping", __func__);
+	if (blob < (char *) kmem_k_end)
+		panic("%s: mmap in illegal memory range", __func__);
 
 	memset(blob, 0, PAGE_SIZE);
 
@@ -1237,6 +1234,8 @@ pmap_copy_page(paddr_t src_pa, paddr_t dst_pa)
 		mem_fh, src_pa);
 	if (!sblob)
 		panic("%s: couldn't get src mapping", __func__);
+	if (sblob < (char *) kmem_k_end)
+		panic("%s: mmap in illegal memory range", __func__);
 
 	/* XXX bug alart: can we allow the kernel to make a decision on this? */
 	dblob = thunk_mmap(NULL, PAGE_SIZE,
@@ -1245,6 +1244,8 @@ pmap_copy_page(paddr_t src_pa, paddr_t dst_pa)
 		mem_fh, dst_pa);
 	if (!dblob)
 		panic("%s: couldn't get dst mapping", __func__);
+	if (dblob < (char *) kmem_k_end)
+		panic("%s: mmap in illegal memory range", __func__);
 
 	memcpy(dblob, sblob, PAGE_SIZE);
 

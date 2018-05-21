@@ -1,4 +1,4 @@
-.\" $NetBSD: gpio.4,v 1.32 2018/02/20 09:37:56 wiz Exp $
+.\" $NetBSD: gpio.4,v 1.32.2.1 2018/05/21 04:35:56 pgoyette Exp $
 .\"	$OpenBSD: gpio.4,v 1.5 2004/11/23 09:39:29 reyk Exp $
 .\"
 .\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
@@ -167,12 +167,6 @@ pulsate output
 .It Dv GPIO_PIN_ALT0 -
 .It Dv GPIO_PIN_ALT7
 select alternate pin function 0 to 7
-.It Dv GPIO_PIN_EVENTS
-deliver events
-.It Dv GPIO_PIN_LEVEL
-trigger on pin level instead of edge
-.It Dv GPIO_PIN_FALLING
-trigger on falling instead of rising edge
 .El
 .Pp
 Note that the GPIO controller

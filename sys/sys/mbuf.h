@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.178.2.5 2018/05/02 07:20:24 pgoyette Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.178.2.6 2018/05/21 04:36:17 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -329,7 +329,6 @@ MBUF_DEFINE(_mbuf_dummy, 1, 1);
 #define	MHLEN		(MSIZE - offsetof(struct _mbuf_dummy, m_pktdat))
 
 #define	MINCLSIZE	(MHLEN+MLEN+1)	/* smallest amount to put in cluster */
-#define	M_MAXCOMPRESS	(MHLEN / 2)	/* max amount to copy for compression */
 
 /*
  * The *real* struct mbuf
@@ -345,7 +344,7 @@ MBUF_DEFINE(mbuf, MHLEN, MLEN);
 /* mbuf pkthdr flags, also in m_flags */
 #define	M_AUTHIPHDR	0x00000010	/* authenticated (IPsec) */
 #define	M_DECRYPTED	0x00000020	/* decrypted (IPsec) */
-#define	M_LOOP		0x00000040	/* for Mbuf statistics */
+#define	M_LOOP		0x00000040	/* received on loopback */
 #define	M_BCAST		0x00000100	/* send/received as L2 broadcast */
 #define	M_MCAST		0x00000200	/* send/received as L2 multicast */
 #define	M_CANFASTFWD	0x00000400	/* packet can be fast-forwarded */
@@ -398,7 +397,7 @@ MBUF_DEFINE(mbuf, MHLEN, MLEN);
 #define MT_OOBDATA	7	/* expedited data  */
 
 #ifdef MBUFTYPES
-static const char * const mbuftypes[] = {
+const char * const mbuftypes[] = {
 	"mbfree",
 	"mbdata",
 	"mbheader",
@@ -408,6 +407,8 @@ static const char * const mbuftypes[] = {
 	"mbcontrol",
 	"mboobdata",
 };
+#else
+extern const char * const mbuftypes[];
 #endif
 
 /* flags to m_get/MGET */
@@ -636,15 +637,37 @@ do {									\
 /* The "copy all" special length. */
 #define	M_COPYALL	-1
 
-/* compatibility with 4.3 */
-#define  m_copy(m, o, l)	m_copym((m), (o), (l), M_DONTWAIT)
-
 /*
  * Allow drivers and/or protocols to store private context information.
  */
 #define	M_GETCTX(m, t)		((t)(m)->m_pkthdr._rcvif.ctx)
 #define	M_SETCTX(m, c)		((void)((m)->m_pkthdr._rcvif.ctx = (void *)(c)))
 #define	M_CLEARCTX(m)		M_SETCTX((m), NULL)
+
+/*
+ * M_REGION_GET ensures that the "len"-sized region of type "typ" starting
+ * from "off" within "m" is located in a single mbuf, contiguously.
+ *
+ * The pointer to the region will be returned to pointer variable "val".
+ */
+#define M_REGION_GET(val, typ, m, off, len) \
+do {									\
+	struct mbuf *_t;						\
+	int _tmp;							\
+	if ((m)->m_len >= (off) + (len))				\
+		(val) = (typ)(mtod((m), char *) + (off));		\
+	else {								\
+		_t = m_pulldown((m), (off), (len), &_tmp);		\
+		if (_t) {						\
+			if (_t->m_len < _tmp + (len))			\
+				panic("m_pulldown malfunction");	\
+			(val) = (typ)(mtod(_t, char *) + _tmp);	\
+		} else {						\
+			(val) = (typ)NULL;				\
+			(m) = NULL;					\
+		}							\
+	}								\
+} while (/*CONSTCOND*/ 0)
 
 #endif /* defined(_KERNEL) */
 
@@ -767,8 +790,6 @@ extern struct mowner revoked_mowner;
 MALLOC_DECLARE(M_MBUF);
 MALLOC_DECLARE(M_SONAME);
 
-void	m_pkthdr_remove(struct mbuf *);
-
 struct	mbuf *m_copym(struct mbuf *, int, int, int);
 struct	mbuf *m_copypacket(struct mbuf *, int);
 struct	mbuf *m_devget(char *, int, int, struct ifnet *,
@@ -797,6 +818,7 @@ void	m_verify_packet(struct mbuf *);
 struct	mbuf *m_free(struct mbuf *);
 void	m_freem(struct mbuf *);
 void	mbinit(void);
+void	m_remove_pkthdr(struct mbuf *);
 void	m_copy_pkthdr(struct mbuf *, struct mbuf *);
 void	m_move_pkthdr(struct mbuf *, struct mbuf *);
 

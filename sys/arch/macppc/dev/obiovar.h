@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obiovar.h,v 1.2 2008/09/26 03:40:26 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obiovar.h,v 1.2.88.1 2018/05/21 04:36:01 pgoyette Exp $");
 
 #ifndef OBIOVAR_H
 #define OBIOVAR_H
@@ -41,6 +41,7 @@ void obio_write_4(int, uint32_t);
 void obio_write_1(int, uint8_t);
 uint32_t obio_read_4(int);
 uint8_t obio_read_1(int);
+int obio_space_map(bus_addr_t, bus_size_t, bus_space_handle_t *);
 
 /* some common offsets */
 #define HEATHROW_FCR	0x38

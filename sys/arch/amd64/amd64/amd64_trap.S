@@ -1,4 +1,4 @@
-/*	$NetBSD: amd64_trap.S,v 1.37.2.2 2018/03/30 06:20:10 pgoyette Exp $	*/
+/*	$NetBSD: amd64_trap.S,v 1.37.2.3 2018/05/21 04:35:57 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008, 2017 The NetBSD Foundation, Inc.
@@ -106,14 +106,132 @@
 
 	.text
 
+/*
+ * ASM macro, used to leave the IST3 stack and to put ourselves on a non-IST
+ * stack. Only RDX, RCX and RAX are allowed to be used.
+ *
+ *                            +------------------------------+
+ * The iret frame we copy is: | rip | cs | rflags | rsp | ss |
+ *                            +------------------------------+
+ */
+.macro	IST3_LEAVE	is_user
+	.if	\is_user
+		movq	CPUVAR(CURLWP),%rax
+		movq	L_PCB(%rax),%rax
+		movq	PCB_RSP0(%rax),%rax
+	.else
+		movq	TF_RSP(%rsp),%rax
+	.endif
+
+	subq	$(5*8),%rax
+	movq	%rax,CPUVAR(SCRATCH)
+
+	/* Copy the iret frame. */
+	movq	TF_SS(%rsp),%rcx
+	movq	%rcx,(4*8)(%rax)
+	movq	TF_RSP(%rsp),%rcx
+	movq	%rcx,(3*8)(%rax)
+	movq	TF_RFLAGS(%rsp),%rcx
+	movq	%rcx,(2*8)(%rax)
+	movq	TF_CS(%rsp),%rcx
+	movq	%rcx,(1*8)(%rax)
+	movq	TF_RIP(%rsp),%rcx
+	movq	%rcx,(0*8)(%rax)
+
+	/* Restore. */
+	movq	TF_RDX(%rsp),%rdx
+	movq	TF_RCX(%rsp),%rcx
+	movq	TF_RAX(%rsp),%rax
+
+	/* Zero out the stack we used, RDX+RCX+RAX+IRET. */
+	movq	$0,TF_RDX(%rsp)
+	movq	$0,TF_RCX(%rsp)
+	movq	$0,TF_RAX(%rsp)
+	movq	$0,TF_RIP(%rsp)
+	movq	$0,TF_CS(%rsp)
+	movq	$0,TF_RFLAGS(%rsp)
+	movq	$0,TF_RSP(%rsp)
+	movq	$0,TF_SS(%rsp)
+
+	movq	CPUVAR(SCRATCH),%rsp
+.endm
+
 	TEXT_USER_BEGIN
 
 IDTVEC(trap00)
 	ZTRAP(T_DIVIDE)
 IDTVEC_END(trap00)
 
+/*
+ * Handle the SS shadow, CVE-2018-8897.
+ *
+ * We are running on the IST3 stack. If we are under an SS shadow, ignore
+ * the exception and return immediately. Otherwise, copy the iret frame
+ * onto the non-IST stack, and ZTRAP on it as usual.
+ *
+ * IST3 is used temporarily, and is mapped in userland by SVS. It contains
+ * a few secrets, the values of the CPU context. These secrets are zeroed
+ * out when we leave.
+ *
+ * When we ignore an SS shadow, we can't zero out the iret frame. It is
+ * not a problem, because in this particular case, the frame is known not
+ * to contain secrets.
+ */
 IDTVEC(trap01)
+#ifndef XEN
+	subq	$(TF_REGSIZE+16),%rsp
+
+	/* We clobber only RDX, RCX and RAX. */
+	movq	%rdx,TF_RDX(%rsp)
+	movq	%rcx,TF_RCX(%rsp)
+	movq	%rax,TF_RAX(%rsp)
+
+	testb	$SEL_UPL,TF_CS(%rsp)
+	jnz	.Luser_dbentry
+
+	movl	$MSR_GSBASE,%ecx
+	rdmsr
+	cmpl	$VM_MIN_KERNEL_ADDRESS_HIGH32,%edx
+	jae	.Lkern_dbentry
+
+	/* SS shadow, ignore the exception. */
+	xorq	%rax,%rax
+	movq	%rax,%dr6
+
+	/* Restore and zero out. */
+	movq	TF_RDX(%rsp),%rdx
+	movq	TF_RCX(%rsp),%rcx
+	movq	TF_RAX(%rsp),%rax
+	movq	$0,TF_RDX(%rsp)
+	movq	$0,TF_RCX(%rsp)
+	movq	$0,TF_RAX(%rsp)
+
+	addq	$(TF_REGSIZE+16),%rsp
+	iretq
+
+.Lkern_dbentry:
+	IST3_LEAVE	0
 	ZTRAP(T_TRCTRAP)
+
+.Luser_dbentry:
+	swapgs
+	SVS_ENTER_ALTSTACK
+	IST3_LEAVE	1
+	ZTRAP_NJ(T_TRCTRAP)
+	subq	$TF_REGSIZE,%rsp
+	INTR_SAVE_GPRS
+	cld
+	SMAP_ENABLE
+	IBRS_ENTER
+	movw	%gs,TF_GS(%rsp)
+	movw	%fs,TF_FS(%rsp)
+	movw	%es,TF_ES(%rsp)
+	movw	%ds,TF_DS(%rsp)
+
+	jmp	.Lalltraps_noentry
+#else
+	ZTRAP(T_TRCTRAP)
+#endif
 IDTVEC_END(trap01)
 
 /*

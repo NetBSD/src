@@ -1,11 +1,11 @@
-/*	$NetBSD: vmbuf.h,v 1.4 2006/09/09 16:22:10 manu Exp $	*/
+/*	$NetBSD: vmbuf.h,v 1.4.86.1 2018/05/21 04:35:49 pgoyette Exp $	*/
 
 /* Id: vmbuf.h,v 1.4 2005/10/30 10:28:44 vanhu Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -17,7 +17,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -62,7 +62,7 @@ do { \
 
 #if defined(__APPLE__) && defined(__MACH__)
 /* vfree is already defined in Apple's system libraries */
-#define vfree   vmbuf_free
+#define vfree	vmbuf_free
 #endif
 
 extern vchar_t *vmalloc __P((size_t));

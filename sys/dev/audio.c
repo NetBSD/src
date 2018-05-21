@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.452 2018/02/06 04:39:18 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.452.2.1 2018/05/21 04:36:04 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.452 2018/02/06 04:39:18 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.452.2.1 2018/05/21 04:36:04 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -3076,7 +3076,7 @@ audio_ioctl(dev_t dev, struct audio_softc *sc, u_long cmd, void *addr, int flag,
 
 	KASSERT(mutex_owned(sc->sc_lock));
 
-	if (sc->sc_usemixer) {
+	if (sc->sc_usemixer && chan->deschan != 0) {
 		SIMPLEQ_FOREACH(pchan, &sc->sc_audiochan, entries) {
 			if (pchan->chan == chan->deschan)
 				break;
@@ -3086,7 +3086,10 @@ audio_ioctl(dev_t dev, struct audio_softc *sc, u_long cmd, void *addr, int flag,
 	} else
 		pchan = chan;
 
-	vc = pchan->vc;
+	if (chan->deschan != 0)
+		vc = pchan->vc;
+	else
+		vc = &sc->sc_mixring;
 
 	DPRINTF(("audio_ioctl(%lu,'%c',%lu)\n",
 		 IOCPARM_LEN(cmd), (char)IOCGROUP(cmd), cmd&0xff));
@@ -3100,7 +3103,7 @@ audio_ioctl(dev_t dev, struct audio_softc *sc, u_long cmd, void *addr, int flag,
 			*(int*)addr = chan->chan;
 		break;
 	case AUDIO_SETCHAN:
-		if ((int *)addr != NULL && *(int*)addr > 0)
+		if ((int *)addr != NULL && *(int*)addr >= 0)
 			chan->deschan = *(int*)addr;
 		break;
 	case FIONBIO:
@@ -4195,6 +4198,12 @@ audio_set_vchan_defaults(struct audio_softc *sc, u_int mode)
 
 	if (error == 0)
 		error = audiosetinfo(sc, &ai, true, vc);
+	if (error == 0) {
+		vc = &sc->sc_mixring;
+
+		vc->sc_rparams = sc->sc_vchan_params;
+		vc->sc_pparams = sc->sc_vchan_params;
+	}
 
 	return error;
 }
@@ -4558,6 +4567,10 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai, bool reset,
 	pp = vc->sc_pparams;	/* Temporary encoding storage in */
 	rp = vc->sc_rparams;	/* case setting the modes fails. */
 	nr = np = 0;
+	setmode = 0;
+
+	if (vc == &sc->sc_mixring)
+		goto done;
 
 	if (SPECIFIED(p->sample_rate)) {
 		pp.sample_rate = p->sample_rate;
@@ -4612,7 +4625,6 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai, bool reset,
 	if (np > 0 && (error = audio_check_params(&pp)))
 		return error;
 
-	setmode = 0;
 	if (nr > 0) {
 		if (!cleared) {
 			audio_clear_intr_unlocked(sc, vc);
@@ -4644,9 +4656,10 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai, bool reset,
 			vc->sc_mode &= ~AUMODE_RECORD;
 	}
 
+done:
 	oldpus = vc->sc_pustream;
 	oldrus = vc->sc_rustream;
-	if (modechange || reset) {
+	if (vc != &sc->sc_mixring && (modechange || reset)) {
 		int indep;
 
 		indep = audio_get_props(sc) & AUDIO_PROP_INDEPENDENT;
@@ -4741,23 +4754,41 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai, bool reset,
 		if (error)
 			goto cleanup;
 	}
-	if (SPECIFIED(p->gain))
-		vc->sc_swvol = p->gain;
+	if (SPECIFIED(p->gain)) {
+		if (!sc->sc_usemixer || vc == &sc->sc_mixring) {
+			au_get_gain(sc, &sc->sc_outports, &gain, &balance);
+			error = au_set_gain(sc, &sc->sc_outports, p->gain, balance);
+			if (error)
+				goto cleanup;
+		} else
+			vc->sc_swvol = p->gain;
+	}
 
-	if (SPECIFIED(r->gain))
-		vc->sc_recswvol = r->gain;
+	if (SPECIFIED(r->gain)) {
+		if (!sc->sc_usemixer || vc == &sc->sc_mixring) {
+			au_get_gain(sc, &sc->sc_inports, &gain, &balance);
+			error = au_set_gain(sc, &sc->sc_inports, r->gain, balance);
+			if (error)
+				goto cleanup;
+		} else
+			vc->sc_recswvol = r->gain;
+	}
 
 	if (SPECIFIED_CH(p->balance)) {
-		au_get_gain(sc, &sc->sc_outports, &gain, &balance);
-		error = au_set_gain(sc, &sc->sc_outports, gain, p->balance);
-		if (error)
-			goto cleanup;
+		if (!sc->sc_usemixer || vc == &sc->sc_mixring) {
+			au_get_gain(sc, &sc->sc_outports, &gain, &balance);
+			error = au_set_gain(sc, &sc->sc_outports, gain, p->balance);
+			if (error)
+				goto cleanup;
+		}
 	}
 	if (SPECIFIED_CH(r->balance)) {
-		au_get_gain(sc, &sc->sc_inports, &gain, &balance);
-		error = au_set_gain(sc, &sc->sc_inports, gain, r->balance);
-		if (error)
-			goto cleanup;
+		if (!sc->sc_usemixer || vc == &sc->sc_mixring) {
+			au_get_gain(sc, &sc->sc_inports, &gain, &balance);
+			error = au_set_gain(sc, &sc->sc_inports, gain, r->balance);
+			if (error)
+				goto cleanup;
+		}
 	}
 
 	if (SPECIFIED(ai->monitor_gain) && sc->sc_monitor_port != -1) {
@@ -4901,8 +4932,13 @@ audiogetinfo(struct audio_softc *sc, struct audio_info *ai, int buf_only_mode,
 		r->avail_ports = sc->sc_inports.allports;
 		p->avail_ports = sc->sc_outports.allports;
 
-		au_get_gain(sc, &sc->sc_inports, &r->gain, &r->balance);
-		au_get_gain(sc, &sc->sc_outports, &p->gain, &p->balance);
+		if (!sc->sc_usemixer || vc == &sc->sc_mixring) {
+			au_get_gain(sc, &sc->sc_inports, &r->gain, &r->balance);
+			au_get_gain(sc, &sc->sc_outports, &p->gain, &p->balance);
+		} else {
+			p->gain = vc->sc_swvol;
+			r->gain = vc->sc_recswvol;
+		}
 	}
 
 	if (sc->sc_monitor_port != -1 && buf_only_mode == 0) {
@@ -5784,6 +5820,9 @@ unitscopy(mixer_devinfo_t *di, const char *name)
 static int
 audio_query_devinfo(struct audio_softc *sc, mixer_devinfo_t *di)
 {
+	struct audio_chan *chan;
+	unsigned int j;
+
 	KASSERT(mutex_owned(sc->sc_lock));
 
 	if (sc->sc_static_nmixer_states == 0 || sc->sc_nmixer_states == 0)
@@ -5799,18 +5838,40 @@ audio_query_devinfo(struct audio_softc *sc, mixer_devinfo_t *di)
 			di->type = AUDIO_MIXER_CLASS;
 		} else if ((di->index - sc->sc_static_nmixer_states) % 2 == 0) {
 			di->mixer_class = sc->sc_static_nmixer_states -1;
+			j = 0;
+			SIMPLEQ_FOREACH(chan, &sc->sc_audiochan, entries) {
+				if (j == (di->index -
+				    sc->sc_static_nmixer_states) / 2)
+					break;
+				j++;
+			}
+			if (j != (di->index - sc->sc_static_nmixer_states) / 2)
+				return 0;
+
+			j = chan->deschan;
+
 			snprintf(di->label.name, sizeof(di->label.name),
-			    AudioNdac"%d",
-			    (di->index - sc->sc_static_nmixer_states) / 2);
+			    AudioNdac"%d", j);
 			di->type = AUDIO_MIXER_VALUE;
 			di->next = di->prev = AUDIO_MIXER_LAST;
 			di->un.v.num_channels = 1;
 			unitscopy(di, AudioNvolume);
 		} else {
 			di->mixer_class = sc->sc_static_nmixer_states -1;
+			j = 0;
+			SIMPLEQ_FOREACH(chan, &sc->sc_audiochan, entries) {
+				if (j == (di->index -
+				    sc->sc_static_nmixer_states) / 2)
+					break;
+				j++;
+			}
+			if (j != (di->index - sc->sc_static_nmixer_states) / 2)
+				return 0;
+
+			j = chan->deschan;
+
 			snprintf(di->label.name, sizeof(di->label.name),
-			    AudioNmicrophone "%d",
-			    (di->index - sc->sc_static_nmixer_states) / 2);
+			    AudioNmicrophone "%d", j);
 			di->type = AUDIO_MIXER_VALUE;
 			di->next = di->prev = AUDIO_MIXER_LAST;
 			di->un.v.num_channels = 1;

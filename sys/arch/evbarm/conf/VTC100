@@ -1,5 +1,5 @@
 #
-#	$NetBSD: VTC100,v 1.15 2017/11/25 04:53:24 christos Exp $
+#	$NetBSD: VTC100,v 1.15.4.1 2018/05/21 04:36:00 pgoyette Exp $
 #
 #	VTC100 -- NEXCOM VTC100 Kernel
 #
@@ -193,12 +193,12 @@ gpio3		at omapgpio3
 # I2C Controller
 tiiic0		at obio0 addr 0x44e0b000 size 0x1000 intr 70
 iic*		at tiiic?
-#?		at iic? addr 0x00
-#tps65910pmic0	at iic? addr 0x12	# TPS65910 ID0 (SmartReflex)
-#tlv320aic3x	at iic? addr 0x18	# TLV320AIC3x
-#tps65910pmic1	at iic? addr 0x2d	# TPS65910 ID1	# RTC
-#micon		at iic? addr 0x5a
-#?		at iic? addr 0x76
+#?		at iic0 addr 0x00
+#tps65910pmic0	at iic0 addr 0x12	# TPS65910 ID0 (SmartReflex)
+#tlv320aic3x	at iic0 addr 0x18	# TLV320AIC3x
+#tps65910pmic1	at iic0 addr 0x2d	# TPS65910 ID1	# RTC
+#micon		at iic0 addr 0x5a
+#?		at iic0 addr 0x76
 
 # On-board 16550 UARTs
 com0		at obio1 addr 0x48022000 size 0x1000 intr 73 mult 4	# UART1

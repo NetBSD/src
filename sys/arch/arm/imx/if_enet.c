@@ -1,4 +1,4 @@
-/*	$NetBSD: if_enet.c,v 1.12 2018/02/16 08:42:45 ryo Exp $	*/
+/*	$NetBSD: if_enet.c,v 1.12.2.1 2018/05/21 04:35:59 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_enet.c,v 1.12 2018/02/16 08:42:45 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_enet.c,v 1.12.2.1 2018/05/21 04:35:59 pgoyette Exp $");
 
 #include "vlan.h"
 
@@ -607,7 +607,8 @@ enet_rx_intr(void *arg)
 
 			m->m_len = len;
 			amount += len;
-			m->m_flags &= ~M_PKTHDR;
+			if (m->m_flags & M_PKTHDR)
+				m_remove_pkthdr(m);
 			mprev->m_next = m;
 		}
 		mprev = m;

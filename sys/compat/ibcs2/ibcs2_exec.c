@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec.c,v 1.77 2018/01/09 20:55:42 maya Exp $	*/
+/*	$NetBSD: ibcs2_exec.c,v 1.77.2.1 2018/05/21 04:36:03 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec.c,v 1.77 2018/01/09 20:55:42 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec.c,v 1.77.2.1 2018/05/21 04:36:03 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -93,7 +93,6 @@ struct emul emul_ibcs2 = {
 #endif
 	.e_sendsig =		ibcs2_sendsig,
 	.e_trapsignal =		trapsignal,
-	.e_tracesig =		NULL,
 	.e_sigcode =		ibcs2_sigcode,
 	.e_esigcode =		ibcs2_esigcode,
 	.e_sigobject =		&emul_ibcs2_object,

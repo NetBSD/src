@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_i2c.c,v 1.13 2017/07/02 18:27:45 jmcneill Exp $ */
+/*	$NetBSD: exynos_i2c.c,v 1.13.4.1 2018/05/21 04:35:59 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "opt_arm_debug.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_i2c.c,v 1.13 2017/07/02 18:27:45 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_i2c.c,v 1.13.4.1 2018/05/21 04:35:59 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -198,8 +198,6 @@ exynos_i2c_attach(device_t parent, device_t self, void *aux)
 	iba.iba_child_devices = prop_dictionary_get(devs, "i2c-child-devices");
 	if (iba.iba_child_devices != NULL)
 		prop_object_retain(iba.iba_child_devices);
-	else
-		iba.iba_child_devices = prop_array_create();
 	prop_object_release(devs);
 
 	sc->sc_i2cdev = config_found_ia(self, "i2cbus", &iba, iicbus_print);

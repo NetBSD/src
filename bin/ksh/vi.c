@@ -1,4 +1,4 @@
-/*	$NetBSD: vi.c,v 1.19 2018/01/24 09:53:21 kamil Exp $	*/
+/*	$NetBSD: vi.c,v 1.19.2.1 2018/05/21 04:35:48 pgoyette Exp $	*/
 
 /*
  *	vi command editing
@@ -9,7 +9,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: vi.c,v 1.19 2018/01/24 09:53:21 kamil Exp $");
+__RCSID("$NetBSD: vi.c,v 1.19.2.1 2018/05/21 04:35:48 pgoyette Exp $");
 #endif
 
 #include "config.h"
@@ -1781,7 +1781,7 @@ outofwin()
 static void
 rewindow()
 {
-	register int	tcur, tcol;
+	int		tcur, tcol;
 	int		holdcur1, holdcol1;
 	int		holdcur2, holdcol2;
 

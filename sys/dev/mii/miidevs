@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.126 2017/07/03 08:29:03 msaitoh Exp $
+$NetBSD: miidevs,v 1.126.4.1 2018/05/21 04:36:05 pgoyette Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -232,6 +232,7 @@ model yyINTEL I82566		0x0039 i82566 10/100/1000 media interface
 model INTEL I82577		0x0005 i82577 10/100/1000 media interface
 model INTEL I82579		0x0009 i82579 10/100/1000 media interface
 model INTEL I217		0x000a i217 10/100/1000 media interface
+model INTEL X540		0x0020 X540 100M/1G/10G media interface
 model INTEL X550		0x0022 X550 100M/1G/10G media interface
 model INTEL X557		0x0024 X557 100M/1G/10G media interface
 model INTEL I82580		0x003a 82580 10/100/1000 media interface

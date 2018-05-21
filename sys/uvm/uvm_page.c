@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.195.2.1 2018/05/02 07:20:24 pgoyette Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.195.2.2 2018/05/21 04:36:17 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.195.2.1 2018/05/02 07:20:24 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.195.2.2 2018/05/21 04:36:17 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvm.h"
@@ -1591,6 +1591,7 @@ uvm_pagewire(struct vm_page *pg)
 		uvmexp.wired++;
 	}
 	pg->wire_count++;
+	KASSERT(pg->wire_count > 0);	/* detect wraparound */
 }
 
 /*
@@ -1756,6 +1757,51 @@ uvm_page_locked_p(struct vm_page *pg)
 	}
 	return true;
 }
+
+#ifdef PMAP_DIRECT
+/*
+ * Call pmap to translate physical address into a virtual and to run a callback
+ * for it. Used to avoid actually mapping the pages, pmap most likely uses direct map
+ * or equivalent.
+ */
+int
+uvm_direct_process(struct vm_page **pgs, u_int npages, voff_t off, vsize_t len,
+            int (*process)(void *, size_t, void *), void *arg)
+{
+	int error = 0;
+	paddr_t pa;
+	size_t todo;
+	voff_t pgoff = (off & PAGE_MASK);
+	struct vm_page *pg;
+
+	KASSERT(npages > 0 && len > 0);
+
+	for (int i = 0; i < npages; i++) {
+		pg = pgs[i];
+
+		KASSERT(len > 0);
+
+		/*
+		 * Caller is responsible for ensuring all the pages are
+		 * available.
+		 */
+		KASSERT(pg != NULL && pg != PGO_DONTCARE);
+
+		pa = VM_PAGE_TO_PHYS(pg);
+		todo = MIN(len, PAGE_SIZE - pgoff);
+
+		error = pmap_direct_process(pa, pgoff, todo, process, arg);
+		if (error)
+			break;
+
+		pgoff = 0;
+		len -= todo;
+	}
+
+	KASSERTMSG(error != 0 || len == 0, "len %lu != 0 for non-error", len);
+	return error;
+}
+#endif /* PMAP_DIRECT */
 
 #if defined(DDB) || defined(DEBUGPRINT)
 

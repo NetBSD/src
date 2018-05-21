@@ -1,4 +1,4 @@
-/* $NetBSD: bwfmvar.h,v 1.1 2017/10/19 23:58:41 jmcneill Exp $ */
+/* $NetBSD: bwfmvar.h,v 1.1.4.1 2018/05/21 04:36:05 pgoyette Exp $ */
 /* $OpenBSD: bwfmvar.h,v 1.1 2017/10/11 17:19:50 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -17,6 +17,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/pcq.h>
+
 /* Chipcommon Core Chip IDs */
 #define BRCM_CC_43143_CHIP_ID		43143
 #define BRCM_CC_43235_CHIP_ID		43235
@@ -33,7 +35,9 @@
 #define BRCM_CC_4339_CHIP_ID		0x4339
 #define BRCM_CC_43430_CHIP_ID		43430
 #define BRCM_CC_4345_CHIP_ID		0x4345
+#define BRCM_CC_43465_CHIP_ID		43465
 #define BRCM_CC_4350_CHIP_ID		0x4350
+#define BRCM_CC_43525_CHIP_ID		43525
 #define BRCM_CC_4354_CHIP_ID		0x4354
 #define BRCM_CC_4356_CHIP_ID		0x4356
 #define BRCM_CC_43566_CHIP_ID		43566
@@ -46,6 +50,7 @@
 #define BRCM_CC_4365_CHIP_ID		0x4365
 #define BRCM_CC_4366_CHIP_ID		0x4366
 #define BRCM_CC_4371_CHIP_ID		0x4371
+#define CY_CC_4373_CHIP_ID		0x4373
 
 /* Defaults */
 #define BWFM_DEFAULT_SCAN_CHANNEL_TIME	40
@@ -87,6 +92,7 @@ struct bwfm_chip {
 struct bwfm_bus_ops {
 	void (*bs_init)(struct bwfm_softc *);
 	void (*bs_stop)(struct bwfm_softc *);
+	int (*bs_txcheck)(struct bwfm_softc *);
 	int (*bs_txdata)(struct bwfm_softc *, struct mbuf *);
 	int (*bs_txctl)(struct bwfm_softc *, char *, size_t);
 	int (*bs_rxctl)(struct bwfm_softc *, char *, size_t *);
@@ -98,7 +104,7 @@ struct bwfm_buscore_ops {
 	int (*bc_prepare)(struct bwfm_softc *);
 	int (*bc_reset)(struct bwfm_softc *);
 	int (*bc_setup)(struct bwfm_softc *);
-	void (*bc_activate)(struct bwfm_softc *, uint32_t);
+	void (*bc_activate)(struct bwfm_softc *, const uint32_t);
 };
 
 struct bwfm_proto_ops {
@@ -163,8 +169,15 @@ struct bwfm_softc {
 };
 
 void bwfm_attach(struct bwfm_softc *);
+void bwfm_chip_socram_ramsize(struct bwfm_softc *, struct bwfm_core *);
+void bwfm_chip_sysmem_ramsize(struct bwfm_softc *, struct bwfm_core *);
+void bwfm_chip_tcm_ramsize(struct bwfm_softc *, struct bwfm_core *);
+void bwfm_chip_tcm_rambase(struct bwfm_softc *);
+void bwfm_start(struct ifnet *);
 int bwfm_detach(struct bwfm_softc *, int);
 int bwfm_chip_attach(struct bwfm_softc *);
+int bwfm_chip_set_active(struct bwfm_softc *, uint32_t);
+void bwfm_chip_set_passive(struct bwfm_softc *);
 struct bwfm_core *bwfm_chip_get_core(struct bwfm_softc *, int);
 struct bwfm_core *bwfm_chip_get_pmu(struct bwfm_softc *);
-void bwfm_rx(struct bwfm_softc *, char *, size_t);
+void bwfm_rx(struct bwfm_softc *, struct mbuf *m);

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.202 2017/11/20 21:06:54 chs Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.202.2.1 2018/05/21 04:36:17 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.202 2017/11/20 21:06:54 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.202.2.1 2018/05/21 04:36:17 pgoyette Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -653,6 +653,31 @@ done:
 	return error;
 }
 
+/*
+ * Update statistics after fault resolution.
+ * - maxrss
+ */
+void
+uvmfault_update_stats(struct uvm_faultinfo *ufi)
+{
+	struct vm_map		*map;
+	struct vmspace 		*vm;
+	struct proc		*p;
+	vsize_t			 res;
+
+	map = ufi->orig_map;
+
+	p = curproc;
+	KASSERT(p != NULL);
+	vm = p->p_vmspace;
+
+	if (&vm->vm_map != map)
+		return;
+
+	res = pmap_resident_count(map->pmap);
+	if (vm->vm_rssmax < res)
+		vm->vm_rssmax = res;
+}
 
 /*
  *   F A U L T   -   m a i n   e n t r y   p o i n t

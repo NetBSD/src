@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_nfs.c,v 1.71 2013/06/29 22:56:26 christos Exp $	*/
+/*	$NetBSD: mount_nfs.c,v 1.71.26.1 2018/05/21 04:35:56 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)mount_nfs.c	8.11 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: mount_nfs.c,v 1.71 2013/06/29 22:56:26 christos Exp $");
+__RCSID("$NetBSD: mount_nfs.c,v 1.71.26.1 2018/05/21 04:35:56 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -98,6 +98,7 @@ __RCSID("$NetBSD: mount_nfs.c,v 1.71 2013/06/29 22:56:26 christos Exp $");
 #define ALTF_DEADTHRESH	0x00200000
 #define ALTF_TIMEO	0x00400000
 #define ALTF_RETRANS	0x00800000
+#define ALTF_UDP	0x01000000
 
 static const struct mntopt mopts[] = {
 	MOPT_STDOPTS,
@@ -115,6 +116,7 @@ static const struct mntopt mopts[] = {
 	{ "nqnfs", 0, ALTF_NQNFS, 1 },
 	{ "soft", 0, ALTF_SOFT, 1 },
 	{ "tcp", 0, ALTF_TCP, 1 },
+	{ "udp", 0, ALTF_UDP, 1 },
 	{ "nfsv2", 0, ALTF_NFSV2, 1 },
 	{ "port", 0, ALTF_PORT, 1 },
 	{ "rsize", 0, ALTF_RSIZE, 1 },
@@ -133,7 +135,7 @@ struct nfs_args nfsdefargs = {
 	.version = NFS_ARGSVERSION,
 	.addr = NULL,
 	.addrlen = sizeof(struct sockaddr_in),
-	.sotype = SOCK_DGRAM,
+	.sotype = SOCK_STREAM,
 	.proto = 0,
 	.fh = NULL,
 	.fhsize = 0,
@@ -201,7 +203,7 @@ mount_nfs_parseargs(int argc, char *argv[],
 	memset(nfsargsp, 0, sizeof(*nfsargsp));
 	*nfsargsp = nfsdefargs;
 	while ((c = getopt(argc, argv,
-	    "23a:bcCdD:g:I:iKL:lm:o:PpqR:r:sTt:w:x:UX")) != -1)
+	    "23a:bcCdD:g:I:iKL:lm:o:PpqR:r:sTt:w:x:UuX")) != -1)
 		switch (c) {
 		case '3':
 		case 'q':
@@ -298,6 +300,13 @@ mount_nfs_parseargs(int argc, char *argv[],
 				nfsargsp->flags &= ~NFSMNT_RESVPORT;
 			if (altflags & ALTF_SOFT)
 				nfsargsp->flags |= NFSMNT_SOFT;
+			if (altflags & ALTF_UDP) {
+				nfsargsp->sotype = SOCK_DGRAM;
+			}
+			/*
+			 * After UDP, because TCP overrides if both
+			 * are present.
+			 */
 			if (altflags & ALTF_TCP) {
 				nfsargsp->sotype = SOCK_STREAM;
 			}
@@ -404,6 +413,9 @@ mount_nfs_parseargs(int argc, char *argv[],
 		case 'X':
 			nfsargsp->flags |= NFSMNT_XLATECOOKIE;
 			break;
+		case 'u':
+			nfsargsp->sotype = SOCK_DGRAM;
+			break;
 		case 'U':
 			mnttcp_ok = 0;
 			break;
@@ -500,7 +512,7 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr, "usage: %s %s\n%s\n%s\n%s\n%s\n", getprogname(),
-"[-23bCcdilPpqsTUX] [-a maxreadahead] [-D deadthresh]",
+"[-23bCcdilPpqsTUuX] [-a maxreadahead] [-D deadthresh]",
 "\t[-g maxgroups] [-I readdirsize] [-L leaseterm]",
 "\t[-o options] [-R retrycnt] [-r readsize] [-t timeout]",
 "\t[-w writesize] [-x retrans]",

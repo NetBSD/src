@@ -953,7 +953,7 @@ OpnDoDefinitionBlock (
         if (strlen (Gbl_TableSignature) != ACPI_NAME_SIZE)
         {
             AslError (ASL_ERROR, ASL_MSG_TABLE_SIGNATURE, Child,
-                "Length is not exactly 4");
+                "Length must be exactly 4 characters");
         }
 
         for (i = 0; i < ACPI_NAME_SIZE; i++)
@@ -970,6 +970,7 @@ OpnDoDefinitionBlock (
 
     Child = Child->Asl.Next;
     Child->Asl.ParseOpcode = PARSEOP_DEFAULT_ARG;
+
     /*
      * We used the revision to set the integer width earlier
      */
@@ -978,6 +979,12 @@ OpnDoDefinitionBlock (
 
     Child = Child->Asl.Next;
     Child->Asl.ParseOpcode = PARSEOP_DEFAULT_ARG;
+    if (Child->Asl.Value.String &&
+        strlen (Child->Asl.Value.String) > ACPI_OEM_ID_SIZE)
+    {
+        AslError (ASL_ERROR, ASL_MSG_OEM_ID, Child,
+            "Length cannot exceed 6 characters");
+    }
 
     /* OEM TableID */
 
@@ -986,6 +993,12 @@ OpnDoDefinitionBlock (
     if (Child->Asl.Value.String)
     {
         Length = strlen (Child->Asl.Value.String);
+        if (Length > ACPI_OEM_TABLE_ID_SIZE)
+        {
+            AslError (ASL_ERROR, ASL_MSG_OEM_TABLE_ID, Child,
+                "Length cannot exceed 8 characters");
+        }
+
         Gbl_TableId = UtLocalCacheCalloc (Length + 1);
         strcpy (Gbl_TableId, Child->Asl.Value.String);
 

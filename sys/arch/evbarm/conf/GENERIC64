@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.1.2.3 2018/05/02 07:20:04 pgoyette Exp $
+#	$NetBSD: GENERIC64,v 1.1.2.4 2018/05/21 04:36:00 pgoyette Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -105,6 +105,7 @@ bcmicu*		at fdt? pass 1		# Broadcom BCM283x ICU
 tegralic*	at fdt? pass 1		# NVIDIA Tegra LIC
 gic*		at fdt? pass 1		# ARM GIC
 armgic0		at gic?
+sunxinmi*	at fdt? pass 2		# Allwinner NMI / R_INTC
 
 # Memory controller
 tegramc*	at fdt?	pass 4		# NVIDIA Tegra MC
@@ -131,7 +132,9 @@ bcmaux*		at fdt? pass 1		# Broadcom BCM283x Aux Periph Clocks
 sun8ih3ccu*	at fdt? pass 2		# Allwinner H3/H5 CCU
 sun8ih3rccu*	at fdt? pass 2		# Allwinner H3/H5 CCU (PRCM)
 sun50ia64ccu*	at fdt? pass 2		# Allwinner A64 CCU
+sun50ia64rccu*	at fdt? pass 2		# Allwinner A64 CCU (PRCM)
 sun50ih6ccu*	at fdt? pass 2		# Allwinner H6 CCU
+sun50ih6rccu*	at fdt? pass 2		# Allwinner H6 CCU (PRCM)
 sunxiresets*	at fdt? pass 1		# Allwinner misc. resets
 sunxigates*	at fdt? pass 1		# Allwinner misc. gates
 sunxigmacclk*	at fdt? pass 2		# Allwinner GMAC MII/RGMII clock mux
@@ -142,6 +145,9 @@ bcmgpio*	at fdt?			# Broadcom BCM283x GPIO
 sunxigpio*	at fdt? pass 3		# Allwinner GPIO
 tegragpio*	at fdt? pass 2		# NVIDIA Tegra GPIO
 gpio*		at gpiobus?
+
+# PWM controller
+sunxipwm*	at fdt? pass 3		# Allwinner PWM
 
 # MPIO / Pinmux
 tegrapinmux*	at fdt?			# NVIDIA Tegra MPIO
@@ -207,7 +213,10 @@ titemp*		at iic?
 seeprom*	at iic?
 as3722pmic*	at iic?
 as3722reg*	at as3722pmic?
+axppmic*	at iic?			# X-Powers AXP Power Management IC
+axpreg*		at axppmic?
 max77620pmic*	at iic?
+pcf8563rtc*	at iic?			# PCF8563 RTC
 tcagpio*	at iic?
 
 # Random number generators
@@ -247,8 +256,12 @@ options 	HDAUDIOVERBOSE
 options 	HDAUDIO_32BIT_ACCESS
 options 	HDAUDIO_ENABLE_HDMI
 options 	HDAUDIO_ENABLE_DISPLAYPORT
+ausoc*		at fdt?			# Simple SoC audio card
 sunxicodec*	at fdt?			# Allwinner audio codec
+sun8icodec*	at fdt?			# Allwinner audio codec (sun8i/sun50i)
 h3codec*	at fdt?			# Allwinner H3 audio codec (analog part)
+a64acodec*	at fdt?			# Allwinner A64 audio codec (analog part)
+sunxii2s*	at fdt?			# Allwinner I2S/PCM
 audio*		at audiobus?
 
 spkr*		at audio?		# PC speaker (synthesized)
@@ -278,6 +291,9 @@ pseudo-device	wsfont
 
 # GPU
 #nouveau*	at fdt?			# NVIDIA GPU
+
+# Backlight
+pwmbacklight*	at fdt?			# PWM Backlight controls
 
 # Thermal throttling controller
 sunxithermal*	at fdt?			# Allwinner thermal sensor controller

@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_x86_64.c,v 1.2 2012/01/14 17:42:52 reinoud Exp $ */
+/* $NetBSD: cpu_x86_64.c,v 1.2.48.1 2018/05/21 04:36:02 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -27,15 +27,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Note that this machdep.c uses the `dummy' mcontext_t defined for usermode.
- * This is basicly a blob of PAGE_SIZE big. We might want to switch over to
- * non-generic mcontext_t's one day, but will this break non-NetBSD hosts?
- */
-
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_x86_64.c,v 1.2 2012/01/14 17:42:52 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_x86_64.c,v 1.2.48.1 2018/05/21 04:36:02 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -118,7 +112,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	KASSERT(mutex_owned(p->p_lock));
 
 	ucp = &pcb->pcb_userret_ucp;
-	reg = (register_t *) &ucp->uc_mcontext;
+	reg = (register_t *) &ucp->uc_mcontext.__gregs;
 #if 0
 	thunk_printf("%s: ", __func__);
 	thunk_printf("flags %d, ", (int) ksi->ksi_flags);
@@ -195,7 +189,7 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 
 	/* set up the user context */
 	ucp = &pcb->pcb_userret_ucp;
-	reg = (register_t *) &ucp->uc_mcontext;
+	reg = (register_t *) &ucp->uc_mcontext.__gregs;
 	for (i = 0; i < 15; i++)
 		reg[i] = 0;
 
@@ -213,7 +207,7 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 void
 md_syscall_get_syscallnumber(ucontext_t *ucp, uint32_t *code)
 {
-	register_t *reg = (register_t *) &ucp->uc_mcontext;
+	register_t *reg = (register_t *) &ucp->uc_mcontext.__gregs;
 	*code = reg[14];			/* RAX */
 }
 
@@ -221,7 +215,7 @@ int
 md_syscall_getargs(lwp_t *l, ucontext_t *ucp, int nargs, int argsize,
 	register_t *args)
 {
-	register_t *reg = (register_t *) &ucp->uc_mcontext;
+	register_t *reg = (register_t *) &ucp->uc_mcontext.__gregs;
 	register_t *sp = (register_t *) reg[24];/* RSP */
 	int ret;
 
@@ -251,7 +245,7 @@ void
 md_syscall_set_returnargs(lwp_t *l, ucontext_t *ucp,
 	int error, register_t *rval)
 {
-	register_t *reg = (register_t *) &ucp->uc_mcontext;
+	register_t *reg = (register_t *) &ucp->uc_mcontext.__gregs;
 
 	reg[23] &= ~PSL_C;		/* RFLAGS */
 	if (error > 0) {
@@ -270,7 +264,7 @@ md_syscall_set_returnargs(lwp_t *l, ucontext_t *ucp,
 register_t
 md_get_pc(ucontext_t *ucp)
 {
-	register_t *reg = (register_t *) &ucp->uc_mcontext;
+	register_t *reg = (register_t *) &ucp->uc_mcontext.__gregs;
 
 	return reg[21];			/* RIP */
 }
@@ -278,7 +272,7 @@ md_get_pc(ucontext_t *ucp)
 register_t
 md_get_sp(ucontext_t *ucp)
 {
-	register_t *reg = (register_t *) &ucp->uc_mcontext;
+	register_t *reg = (register_t *) &ucp->uc_mcontext.__gregs;
 
 	return reg[24];			/* RSP */
 }
@@ -306,7 +300,7 @@ md_syscall_check_opcode(ucontext_t *ucp)
 void
 md_syscall_get_opcode(ucontext_t *ucp, uint32_t *opcode)
 {
-	register_t *reg = (register_t *) &ucp->uc_mcontext;
+	register_t *reg = (register_t *) &ucp->uc_mcontext.__gregs;
 //	uint8_t  *p8  = (uint8_t *) (reg[21]);
 	uint16_t *p16 = (uint16_t*) (reg[21]);	/* RIP */
 
@@ -326,7 +320,7 @@ md_syscall_get_opcode(ucontext_t *ucp, uint32_t *opcode)
 void
 md_syscall_inc_pc(ucontext_t *ucp, uint32_t opcode)
 {
-	register_t *reg = (register_t *) &ucp->uc_mcontext;
+	register_t *reg = (register_t *) &ucp->uc_mcontext.__gregs;
 
 	/* advance program counter */
 	switch (opcode) {
@@ -346,7 +340,7 @@ md_syscall_inc_pc(ucontext_t *ucp, uint32_t opcode)
 void
 md_syscall_dec_pc(ucontext_t *ucp, uint32_t opcode)
 {
-	register_t *reg = (register_t *) &ucp->uc_mcontext;
+	register_t *reg = (register_t *) &ucp->uc_mcontext.__gregs;
 
 	switch (opcode) {
 	case 0xff0f:	/* UD1      */

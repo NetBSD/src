@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.55 2017/02/28 17:35:29 chs Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.55.12.1 2018/05/21 04:36:01 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -526,6 +526,18 @@ _ENTRY(cpu_lwp_bootstrap)
 ENTRY(cpu_spinup_trampoline)
 	li	%r0,0
 	mtmsr	%r0
+
+	lis	%r5,oeacpufeat@ha
+	lwz	%r5,oeacpufeat@l(%r5)
+	andi.	%r5,%r5,OEACPU_64_BRIDGE
+	beq	6f
+	sync
+	slbia
+	sync
+	isync
+	clrldi	%r0,%r0,32
+	mtmsrd	%r0
+6:
 	isync
 
 	lis	%r4,_C_LABEL(cpu_hatch_stack)@ha

@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_ioctl.h,v 1.23.16.1 2018/03/30 02:28:49 pgoyette Exp $	*/
+/*	$NetBSD: ieee80211_ioctl.h,v 1.23.16.2 2018/05/21 04:36:16 pgoyette Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -575,10 +575,6 @@ struct ieee80211_auth {
 	char		i_name[IFNAMSIZ];	/* if_name, e.g. "wi0" */
 	int		i_authtype;
 };
-
-#define	IEEE80211_AUTH_NONE	0
-#define	IEEE80211_AUTH_OPEN	1
-#define	IEEE80211_AUTH_SHARED	2
 
 #define	SIOCS80211AUTH		 _IOW('i', 236, struct ieee80211_auth)
 #define	SIOCG80211AUTH		_IOWR('i', 237, struct ieee80211_auth)

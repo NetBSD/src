@@ -1,4 +1,4 @@
-/*	$NetBSD: admin.c,v 1.39 2013/06/03 05:49:31 tteras Exp $	*/
+/*	$NetBSD: admin.c,v 1.39.26.1 2018/05/21 04:35:49 pgoyette Exp $	*/
 
 /* Id: admin.c,v 1.25 2006/04/06 14:31:04 manubsd Exp */
 
@@ -97,9 +97,7 @@ static int admin_process __P((int, char *));
 static int admin_reply __P((int, struct admin_com *, int, vchar_t *));
 
 static int
-admin_handler(ctx, fd)
-	void *ctx;
-	int fd;
+admin_handler(void *ctx, int fd)
 {
 	int so2;
 	struct sockaddr_storage from;
@@ -327,7 +325,6 @@ admin_process(so2, combuf)
 
 #ifdef ENABLE_HYBRID
 	case ADMIN_LOGOUT_USER: {
-		struct ph1handle *iph1;
 		char user[LOGINLEN+1];
 		int found = 0, len = com->ac_len - sizeof(*com);
 
@@ -427,7 +424,6 @@ admin_process(so2, combuf)
 		case ADMIN_PROTO_ISAKMP: {
 			struct ph1handle *ph1;
 			struct remoteconf *rmconf;
-			u_int16_t port;
 
 			l_ac_errno = -1;
 

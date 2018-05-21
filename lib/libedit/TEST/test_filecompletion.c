@@ -1,4 +1,4 @@
-/*	$NetBSD: test_filecompletion.c,v 1.2 2017/10/15 19:17:30 abhinav Exp $	*/
+/*	$NetBSD: test_filecompletion.c,v 1.2.2.1 2018/05/21 04:35:55 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2017 Abhinav Upadhyay <abhinav@NetBSD.org>
@@ -449,6 +449,27 @@ static test_input inputs[] = {
 		"dampers&and",
 		L"ls \"dampers&and\" "
 	},
+	{
+		/* test completion when cursor at \ */
+		L"ls foo\\",
+		"foo",
+		"foo bar",
+		L"ls foo\\ bar "
+	},
+	{
+		/* test completion when cursor at single quote */
+		L"ls foo'",
+		"foo",
+		"foo bar",
+		L"ls foo\\ bar "
+	},
+	{
+		/* test completion when cursor at double quote */
+		L"ls foo\"",
+		"foo",
+		"foo bar",
+		L"ls foo\\ bar "
+	}
 };
 
 static const wchar_t break_chars[] = L" \t\n\"\\'`@$><=;|&{(";

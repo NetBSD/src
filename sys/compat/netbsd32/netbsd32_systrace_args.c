@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_systrace_args.c,v 1.24 2018/01/06 16:41:23 kamil Exp $ */
+/* $NetBSD: netbsd32_systrace_args.c,v 1.24.2.1 2018/05/21 04:36:04 pgoyette Exp $ */
 
 /*
  * System call argument to DTrace register array converstion.
@@ -3392,6 +3392,27 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		uarg[4] = (intptr_t) SCARG(p, argv).i32; /* netbsd32_charpp */
 		uarg[5] = (intptr_t) SCARG(p, envp).i32; /* netbsd32_charpp */
 		*n_args = 6;
+		break;
+	}
+	/* netbsd32_recvmmsg */
+	case 475: {
+		const struct netbsd32_recvmmsg_args *p = params;
+		iarg[0] = SCARG(p, s); /* int */
+		uarg[1] = (intptr_t) SCARG(p, mmsg).i32; /* netbsd32_mmsghdrp_t */
+		uarg[2] = SCARG(p, vlen); /* unsigned int */
+		uarg[3] = SCARG(p, flags); /* unsigned int */
+		uarg[4] = (intptr_t) SCARG(p, timeout).i32; /* netbsd32_timespecp_t */
+		*n_args = 5;
+		break;
+	}
+	/* netbsd32_sendmmsg */
+	case 476: {
+		const struct netbsd32_sendmmsg_args *p = params;
+		iarg[0] = SCARG(p, s); /* int */
+		uarg[1] = (intptr_t) SCARG(p, mmsg).i32; /* netbsd32_mmsghdrp_t */
+		uarg[2] = SCARG(p, vlen); /* unsigned int */
+		uarg[3] = SCARG(p, flags); /* unsigned int */
+		*n_args = 4;
 		break;
 	}
 	/* netbsd32_clock_nanosleep */
@@ -9202,6 +9223,47 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		};
 		break;
+	/* netbsd32_recvmmsg */
+	case 475:
+		switch(ndx) {
+		case 0:
+			p = "int";
+			break;
+		case 1:
+			p = "netbsd32_mmsghdrp_t";
+			break;
+		case 2:
+			p = "unsigned int";
+			break;
+		case 3:
+			p = "unsigned int";
+			break;
+		case 4:
+			p = "netbsd32_timespecp_t";
+			break;
+		default:
+			break;
+		};
+		break;
+	/* netbsd32_sendmmsg */
+	case 476:
+		switch(ndx) {
+		case 0:
+			p = "int";
+			break;
+		case 1:
+			p = "netbsd32_mmsghdrp_t";
+			break;
+		case 2:
+			p = "unsigned int";
+			break;
+		case 3:
+			p = "unsigned int";
+			break;
+		default:
+			break;
+		};
+		break;
 	/* netbsd32_clock_nanosleep */
 	case 477:
 		switch(ndx) {
@@ -11249,6 +11311,16 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 		break;
 	/* netbsd32_posix_spawn */
 	case 474:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
+	/* netbsd32_recvmmsg */
+	case 475:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
+	/* netbsd32_sendmmsg */
+	case 476:
 		if (ndx == 0 || ndx == 1)
 			p = "int";
 		break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.198.2.3 2018/04/07 04:12:19 pgoyette Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.198.2.4 2018/05/21 04:36:16 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -135,7 +135,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.198.2.3 2018/04/07 04:12:19 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.198.2.4 2018/05/21 04:36:16 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -189,7 +189,6 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.198.2.3 2018/04/07 04:12:19 pgoyett
 #include <netinet/tcp_var.h>
 #include <netinet/tcp_private.h>
 #include <netinet/tcp_congctl.h>
-#include <netinet/tcpip.h>
 #include <netinet/tcp_debug.h>
 #include <netinet/in_offload.h>
 #include <netinet6/in6_offload.h>
@@ -988,16 +987,27 @@ again:
 		 * taking into account that we are limited by
 		 * TCP_MAXWIN << tp->rcv_scale.
 		 */
-		long adv = min(win, (long)TCP_MAXWIN << tp->rcv_scale) -
-			(tp->rcv_adv - tp->rcv_nxt);
+		long recwin = min(win, (long)TCP_MAXWIN << tp->rcv_scale);
+		long oldwin, adv;
 
 		/*
-		 * If the new window size ends up being the same as the old
-		 * size when it is scaled, then don't force a window update.
+		 * rcv_nxt may overtake rcv_adv when we accept a
+		 * zero-window probe.
 		 */
-		if ((tp->rcv_adv - tp->rcv_nxt) >> tp->rcv_scale ==
-		    (adv + tp->rcv_adv - tp->rcv_nxt) >> tp->rcv_scale)
+		if (SEQ_GT(tp->rcv_adv, tp->rcv_nxt))
+			oldwin = tp->rcv_adv - tp->rcv_nxt;
+		else
+			oldwin = 0;
+
+		/*
+		 * If the new window size ends up being the same as or
+		 * less than the old size when it is scaled, then
+		 * don't force a window update.
+		 */
+		if (recwin >> tp->rcv_scale <= oldwin >> tp->rcv_scale)
 			goto dontupdate;
+
+		adv = recwin - oldwin;
 		if (adv >= (long) (2 * rxsegsize))
 			goto send;
 		if (2 * adv >= (long) so->so_rcv.sb_hiwat)
@@ -1063,12 +1073,12 @@ just_return:
 
 send:
 	/*
-	 * Before ESTABLISHED, force sending of initial options
-	 * unless TCP set not to do any options.
-	 * NOTE: we assume that the IP/TCP header plus TCP options
-	 * always fit in a single mbuf, leaving room for a maximum
-	 * link header, i.e.
-	 *	max_linkhdr + sizeof (struct tcpiphdr) + optlen <= MCLBYTES
+	 * Before ESTABLISHED, force sending of initial options unless TCP set
+	 * not to do any options.
+	 *
+	 * Note: we assume that the IP/TCP header plus TCP options always fit
+	 * in a single mbuf, leaving room for a maximum link header, i.e.:
+	 *     max_linkhdr + IP_header + TCP_header + optlen <= MCLBYTES
 	 */
 	optlen = 0;
 	optp = opt;

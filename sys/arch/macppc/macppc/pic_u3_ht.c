@@ -32,6 +32,8 @@
 #include <sys/param.h>
 #include <sys/kmem.h>
 #include <sys/kernel.h>
+#include <sys/atomic.h>
+#include <sys/cpu.h>
 
 #include <machine/pio.h>
 #include <powerpc/openpic.h>
@@ -92,6 +94,7 @@ static void u3_ht_disable_ht_irq(struct u3_ht_ops *, int);
 static void u3_ht_ack_ht_irq(struct u3_ht_ops *, int);
 
 static void u3_ht_set_priority(struct u3_ht_ops *, int, int);
+void __u3_ht_set_priority(int, int);
 static int u3_ht_read_irq(struct u3_ht_ops *, int);
 static void u3_ht_eoi(struct u3_ht_ops *, int);
 
@@ -111,6 +114,17 @@ const char *pic_compat[] = {
 	"openpic",
 	NULL
 };
+
+static struct u3_ht_ops *u3ht0 = NULL;
+int have_u3_ht(void);
+
+#ifdef MULTIPROCESSOR
+
+extern struct ipi_ops ipiops;
+static void u3_ht_send_ipi(cpuid_t, uint32_t);
+static void u3_ht_establish_ipi(int, int, void *);
+
+#endif
 
 int init_u3_ht(void)
 {
@@ -170,7 +184,7 @@ setup_u3_ht(uint32_t addr, uint32_t len, int bigendian)
 	struct u3_ht_ops *u3_ht;
 	struct pic_ops *pic;
 	int irq;
-	u_int x;
+	uint32_t x;
 
 	u3_ht = kmem_alloc(sizeof(struct u3_ht_ops), KM_SLEEP);
 	bzero(u3_ht, sizeof(struct u3_ht_ops));
@@ -203,7 +217,8 @@ setup_u3_ht(uint32_t addr, uint32_t len, int bigendian)
 	    "Supports %d CPUs and %d interrupt sources.\n",
 	    x & 0xff, ((x & 0x1f00) >> 8) + 1, ((x & 0x07ff0000) >> 16) + 1);
 
-	pic->pic_numintrs = ((x & 0x07ff0000) >> 16) + 1;
+	/* up to 128 interrupt sources, plus IPI */
+	pic->pic_numintrs = 129;
 	pic->pic_cookie = (void *) addr;
 	pic->pic_enable_irq = u3_ht_enable_irq;
 	pic->pic_reenable_irq = u3_ht_enable_irq;
@@ -246,6 +261,18 @@ setup_u3_ht(uint32_t addr, uint32_t len, int bigendian)
 		u3_ht_read_irq(u3_ht, 0);
 		u3_ht_eoi(u3_ht, 0);
 	}
+
+#ifdef MULTIPROCESSOR
+	ipiops.ppc_send_ipi = u3_ht_send_ipi;
+	ipiops.ppc_establish_ipi = u3_ht_establish_ipi;
+	ipiops.ppc_ipi_vector = IPI_VECTOR;
+
+	x = u3_ht_read(u3_ht, OPENPIC_IPI_VECTOR(1));
+	x &= ~(OPENPIC_IMASK | OPENPIC_PRIORITY_MASK | OPENPIC_VECTOR_MASK);
+	x |= (15 << OPENPIC_PRIORITY_SHIFT) | ipiops.ppc_ipi_vector;
+	u3_ht_write(u3_ht, OPENPIC_IPI_VECTOR(1), x);
+	u3ht0 = u3_ht;
+#endif /* MULTIPROCESSOR */
 
 	return u3_ht;
 }
@@ -338,6 +365,9 @@ u3_ht_enable_irq(struct pic_ops *pic, int irq, int type)
 	struct u3_ht_ops *u3_ht = (struct u3_ht_ops *)pic;
 	u_int x;
 
+#ifdef MULTIPROCESSOR
+	if (irq == IPI_VECTOR) return;
+#endif	
 	x = u3_ht_read(u3_ht, OPENPIC_SRC_VECTOR(irq));
  	x &= ~OPENPIC_IMASK;
  	u3_ht_write(u3_ht, OPENPIC_SRC_VECTOR(irq), x);
@@ -352,6 +382,9 @@ u3_ht_disable_irq(struct pic_ops *pic, int irq)
 	struct u3_ht_ops *u3_ht = (struct u3_ht_ops *)pic;
 	u_int x;
 
+#ifdef MULTIPROCESSOR
+	if (irq == IPI_VECTOR) return;
+#endif	
  	x = u3_ht_read(u3_ht, OPENPIC_SRC_VECTOR(irq));
  	x |= OPENPIC_IMASK;
  	u3_ht_write(u3_ht, OPENPIC_SRC_VECTOR(irq), x);
@@ -511,6 +544,14 @@ u3_ht_set_priority(struct u3_ht_ops *u3_ht, int cpu, int pri)
 	u3_ht_write(u3_ht, OPENPIC_CPU_PRIORITY(cpu), x);
 }
 
+void
+__u3_ht_set_priority(int cpu, int pri)
+{
+	if (u3ht0 == NULL) return;
+
+	u3_ht_set_priority(u3ht0, cpu, pri);
+}
+
 static int
 u3_ht_read_irq(struct u3_ht_ops *u3_ht, int cpu)
 {
@@ -554,4 +595,48 @@ u3_ht_write_le(struct u3_ht_ops *u3_ht, u_int reg, uint32_t val)
 	volatile uint8_t *addr = u3_ht->ht_base + reg;
 
 	out32rb(addr, val);
+}
+
+#ifdef MULTIPROCESSOR
+
+static void
+u3_ht_send_ipi(cpuid_t target, uint32_t mesg)
+{
+	struct cpu_info * const ci = curcpu();
+	uint32_t cpumask = 0;
+
+	switch (target) {
+		case IPI_DST_ALL:
+		case IPI_DST_NOTME:
+			for (u_int i = 0; i < ncpu; i++) {
+				struct cpu_info * const dst_ci = cpu_lookup(i);
+				if (target == IPI_DST_ALL || dst_ci != ci) {
+					cpumask |= 1 << cpu_index(dst_ci);
+					atomic_or_32(&dst_ci->ci_pending_ipis,
+					    mesg);
+				}
+			}
+			break;
+		default: {
+			struct cpu_info * const dst_ci = cpu_lookup(target);
+			cpumask = 1 << cpu_index(dst_ci);
+			atomic_or_32(&dst_ci->ci_pending_ipis, mesg);
+			break;
+		}
+	}
+	u3_ht_write(u3ht0, OPENPIC_IPI(cpu_index(ci), 1), cpumask);
+}
+
+static void
+u3_ht_establish_ipi(int type, int level, void *ih_args)
+{
+	intr_establish(ipiops.ppc_ipi_vector, type, level, ipi_intr, ih_args);
+}
+
+#endif /*MULTIPROCESSOR*/
+
+int
+have_u3_ht(void)
+{
+	return (u3ht0 != NULL);
 }

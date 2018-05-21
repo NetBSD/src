@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.obj.mk,v 1.51 2016/12/10 23:12:39 christos Exp $
+#	$NetBSD: bsd.obj.mk,v 1.51.12.1 2018/05/21 04:35:57 pgoyette Exp $
 
 .if !defined(_BSD_OBJ_MK_)
 _BSD_OBJ_MK_=1
@@ -27,6 +27,7 @@ obj:
 		exit 1; \
 	fi;
 .endif
+.if ${.CURDIR} == ${.OBJDIR}
 	@if [ ! -d ${__objdir} ]; then \
 		mkdir -p ${__objdir}; \
 		if [ ! -d ${__objdir} ]; then \
@@ -34,6 +35,7 @@ obj:
 		fi; \
 		${_MKSHMSG} " objdir  ${__objdir}"; \
 	fi
+.endif
 .else
 PAWD?=		/bin/pwd
 

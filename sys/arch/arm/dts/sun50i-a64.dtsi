@@ -1,4 +1,4 @@
-/* $NetBSD: sun50i-a64.dtsi,v 1.4 2017/11/30 21:36:45 jmcneill Exp $ */
+/* $NetBSD: sun50i-a64.dtsi,v 1.4.4.1 2018/05/21 04:35:59 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -40,38 +40,86 @@
 		};
 	};
 
+	sound: sound {
+		compatible = "simple-audio-card";
+		simple-audio-card,name = "SUN50I Audio Card";
+		simple-audio-card,format = "i2s";
+		simple-audio-card,frame-master = <&cpudai>;
+		simple-audio-card,bitclock-master = <&cpudai>;
+		simple-audio-card,mclk-fs = <512>;
+		simple-audio-card,aux-devs = <&codec_analog>;
+		simple-audio-card,routing =
+				"Left DAC", "AIF1 Slot 0 Left",
+				"Right DAC", "AIF1 Slot 0 Right";
+		status = "disabled";
+
+		cpudai: simple-audio-card,cpu {
+			sound-dai = <&dai>;
+		};
+
+		link_codec: simple-audio-card,codec {
+			sound-dai = <&codec>;
+		};
+	};
+
 	soc {
-		emac: ethernet@1c30000 {
-			compatible = "allwinner,sun50i-a64-emac";
-			reg = <0x01c30000 0x104>, <0x01c00030 0x4>;
-			reg-names = "emac", "syscon";
-			interrupts = <GIC_SPI 82 IRQ_TYPE_LEVEL_HIGH>;
-			resets = <&ccu RST_BUS_EMAC>;
-			reset-names = "ahb";
-			clocks = <&ccu CLK_BUS_EMAC>;
-			clock-names = "ahb";
-			#address-cells = <1>;
-			#size-cells = <0>;
+		pwm: pwm@1c21400 {
+			compatible = "allwinner,sun50i-a64-pwm";
+			reg = <0x01c21400 0x8>;
+			clocks = <&osc24M>;
+			#pwm-cells = <3>;
+			status = "disabled";
+		};
+
+		dai: dai@1c22c00 {
+			#sound-dai-cells = <0>;
+			compatible = "allwinner,sun50i-a64-acodec-i2s";
+			reg = <0x01c22c00 0x200>;
+			interrupts = <GIC_SPI 29 IRQ_TYPE_LEVEL_HIGH>;
+			clocks = <&ccu CLK_BUS_CODEC>, <&ccu CLK_AC_DIG>;
+			clock-names = "apb", "mod";
+			resets = <&ccu RST_BUS_CODEC>;
+			reset-names = "rst";
+			dmas = <&dma 15>, <&dma 15>;
+			dma-names = "rx", "tx";
+			status = "disabled";
+		};
+
+		codec: codec@1c22e00 {
+			#sound-dai-cells = <0>;
+			compatible = "allwinner,sun50i-a64-codec";
+			reg = <0x01c22e00 0x600>;
+			interrupts = <GIC_SPI 28 IRQ_TYPE_LEVEL_HIGH>;
+			clocks = <&ccu CLK_BUS_CODEC>, <&ccu CLK_AC_DIG>;
+			clock-names = "bus", "mod";
+			status = "disabled";
+		};
+
+		rtp: rtp@1c25000 {
+			compatible = "allwinner,sun50i-a64-ts";
+			reg = <0x01c25000 0x400>;
+			interrupts = <GIC_SPI 31 IRQ_TYPE_LEVEL_HIGH>;
+			clocks = <&ccu CLK_BUS_THS>, <&ccu CLK_THS>;
+			clock-names = "ahb", "ths";
+			resets = <&ccu RST_BUS_THS>;
+			#thermal-sensor-cells = <0>;
+		};
+
+		codec_analog: codec-analog@1f015c0 {
+			compatible = "allwinner,sun50i-a64-codec-analog";
+			reg = <0x01f015c0 0x4>;
 			status = "disabled";
 		};
 	};
 };
 
-&pio {
-	rmii_pins: rmii_pins {
-		pins = "PD10", "PD11", "PD13", "PD14",
-		       "PD17", "PD18", "PD19", "PD20",
-		       "PD22", "PD23";
-		function = "emac";
-		drive-strength = <40>;
-	};
+&cpu0 {
+	clocks = <&ccu 1>; /* 1=CLK_PLL_CPUX */
+};
 
-	rgmii_pins: rgmii_pins {
-		pins = "PD8", "PD9", "PD10", "PD11",
-		       "PD12", "PD13", "PD15",
-		       "PD16", "PD17", "PD18", "PD19",
-		       "PD20", "PD21", "PD22", "PD23";
-		function = "emac";
-		drive-strength = <40>;
+&pio {
+	pwm0_pins: pwm0 {
+		pins = "PD22";
+		function = "pwm";
 	};
 };

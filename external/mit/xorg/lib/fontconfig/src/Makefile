@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2017/08/29 09:02:10 mrg Exp $
+#	$NetBSD: Makefile,v 1.20.2.1 2018/05/21 04:35:54 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -116,6 +116,7 @@ CPPFLAGS+=	${X11FLAGS.THREADLIB}
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/freetype2 \
 		-I${X11SRCDIR.freetype}/src \
 		-I${X11SRCDIR.freetype}/include \
+		-I${X11SRCDIR.freetype}/include/freetype \
 		-I${X11SRCDIR.${LIB}}/../include \
 		-I. \
 		-I${X11SRCDIR.${LIB}}

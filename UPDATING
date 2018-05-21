@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.291.2.2 2018/04/22 07:20:06 pgoyette Exp $
+$NetBSD: UPDATING,v 1.291.2.3 2018/05/21 04:35:48 pgoyette Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for

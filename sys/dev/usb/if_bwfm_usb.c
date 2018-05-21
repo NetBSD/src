@@ -1,4 +1,4 @@
-/* $NetBSD: if_bwfm_usb.c,v 1.4 2018/01/21 13:57:11 skrll Exp $ */
+/* $NetBSD: if_bwfm_usb.c,v 1.4.2.1 2018/05/21 04:36:12 pgoyette Exp $ */
 /* $OpenBSD: if_bwfm_usb.c,v 1.2 2017/10/15 14:55:13 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -199,16 +199,19 @@ void		 bwfm_usb_free_rx_list(struct bwfm_usb_softc *);
 int		 bwfm_usb_alloc_tx_list(struct bwfm_usb_softc *);
 void		 bwfm_usb_free_tx_list(struct bwfm_usb_softc *);
 
+int		 bwfm_usb_txcheck(struct bwfm_softc *);
 int		 bwfm_usb_txdata(struct bwfm_softc *, struct mbuf *);
 int		 bwfm_usb_txctl(struct bwfm_softc *, char *, size_t);
 int		 bwfm_usb_rxctl(struct bwfm_softc *, char *, size_t *);
 
+struct mbuf *	 bwfm_usb_newbuf(void);
 void		 bwfm_usb_rxeof(struct usbd_xfer *, void *, usbd_status);
 void		 bwfm_usb_txeof(struct usbd_xfer *, void *, usbd_status);
 
 struct bwfm_bus_ops bwfm_usb_bus_ops = {
 	.bs_init = NULL,
 	.bs_stop = NULL,
+	.bs_txcheck = bwfm_usb_txcheck,
 	.bs_txdata = bwfm_usb_txdata,
 	.bs_txctl = bwfm_usb_txctl,
 	.bs_rxctl = bwfm_usb_rxctl,
@@ -435,6 +438,26 @@ bwfm_usb_attachhook(device_t self)
 	}
 }
 
+struct mbuf *
+bwfm_usb_newbuf(void)
+{
+	struct mbuf *m;
+
+	MGETHDR(m, M_DONTWAIT, MT_DATA);
+	if (m == NULL)
+		return (NULL);
+
+	MCLGET(m, M_DONTWAIT);
+	if (!(m->m_flags & M_EXT)) {
+		m_freem(m);
+		return (NULL);
+	}
+
+	m->m_len = m->m_pkthdr.len = MCLBYTES;
+
+	return (m);
+}
+
 void
 bwfm_usb_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
@@ -443,6 +466,7 @@ bwfm_usb_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	struct bwfm_proto_bcdc_hdr *hdr;
 	usbd_status error;
 	uint32_t len, off;
+	struct mbuf *m;
 
 	DPRINTFN(2, ("%s: %s status %s\n", DEVNAME(sc), __func__,
 	    usbd_errstr(status)));
@@ -461,13 +485,19 @@ bwfm_usb_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 		goto resubmit;
 	len -= sizeof(*hdr);
 	off += sizeof(*hdr);
-	if (len < hdr->data_offset << 2)
+	if (len <= hdr->data_offset << 2)
 		goto resubmit;
 	len -= hdr->data_offset << 2;
 	off += hdr->data_offset << 2;
 
-	mutex_enter(&sc->sc_rx_lock);
-	bwfm_rx(&sc->sc_sc, &data->buf[off], len);
+	m = bwfm_usb_newbuf();
+	if (m == NULL)
+		goto resubmit;
+
+	memcpy(mtod(m, char *), data->buf + off, len);
+	m->m_len = m->m_pkthdr.len = len;
+	mutex_enter(&sc->sc_rx_lock); /* XXX */
+	bwfm_rx(&sc->sc_sc, m);
 	mutex_exit(&sc->sc_rx_lock);
 
 resubmit:
@@ -733,6 +763,23 @@ err:
 		usbd_destroy_xfer(xfer);
 	return 1;
 }
+
+int
+bwfm_usb_txcheck(struct bwfm_softc *bwfm)
+{
+	struct bwfm_usb_softc *sc = (void *)bwfm;
+
+	mutex_enter(&sc->sc_tx_lock);
+
+	if (TAILQ_EMPTY(&sc->sc_tx_free_list)) {
+		mutex_exit(&sc->sc_tx_lock);
+		return ENOBUFS;
+	}
+
+	mutex_exit(&sc->sc_tx_lock);
+	return 0;
+}
+
 
 int
 bwfm_usb_txdata(struct bwfm_softc *bwfm, struct mbuf *m)

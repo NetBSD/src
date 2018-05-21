@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_exec.c,v 1.67 2018/01/09 20:55:43 maya Exp $	 */
+/*	$NetBSD: svr4_exec.c,v 1.67.2.1 2018/05/21 04:36:04 pgoyette Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_exec.c,v 1.67 2018/01/09 20:55:43 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_exec.c,v 1.67.2.1 2018/05/21 04:36:04 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -77,7 +77,6 @@ struct emul emul_svr4 = {
 #endif
 	.e_sendsig =		svr4_sendsig,
 	.e_trapsignal =		trapsignal,
-	.e_tracesig =		NULL,
 	.e_sigcode =		svr4_sigcode,
 	.e_esigcode =		svr4_esigcode,
 	.e_sigobject =		&emul_svr4_object,

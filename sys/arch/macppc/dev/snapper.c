@@ -1,4 +1,4 @@
-/*	$NetBSD: snapper.c,v 1.43.2.1 2018/03/30 06:20:11 pgoyette Exp $	*/
+/*	$NetBSD: snapper.c,v 1.43.2.2 2018/05/21 04:36:01 pgoyette Exp $	*/
 /*	Id: snapper.c,v 1.11 2002/10/31 17:42:13 tsubai Exp	*/
 /*	Id: i2s.c,v 1.12 2005/01/15 14:32:35 tsubai Exp		*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.43.2.1 2018/03/30 06:20:11 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.43.2.2 2018/05/21 04:36:01 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -788,10 +788,8 @@ snapper_attach(device_t parent, device_t self, void *aux)
 #endif
 
 	bus_space_map(sc->sc_tag, reg[0], reg[1], 0, &sc->sc_bsh);
-	bus_space_map(sc->sc_tag, reg[2], reg[3],
-	    BUS_SPACE_MAP_LINEAR, &sc->sc_odmah);
-	bus_space_map(sc->sc_tag, reg[4], reg[5],
-	    BUS_SPACE_MAP_LINEAR, &sc->sc_idmah);
+	obio_space_map(reg[2], reg[3], &sc->sc_odmah);
+	obio_space_map(reg[4], reg[5], &sc->sc_idmah);
 
 	sc->sc_odma = bus_space_vaddr(sc->sc_tag, sc->sc_odmah);
 	sc->sc_idma = bus_space_vaddr(sc->sc_tag, sc->sc_idmah);

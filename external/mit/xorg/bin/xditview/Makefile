@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2013/05/31 06:50:45 mrg Exp $
+#	$NetBSD: Makefile,v 1.3.26.1 2018/05/21 04:35:53 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -8,6 +8,7 @@ SRCS=	xditview.c Dvi.c draw.c font.c lex.c page.c parse.c \
 
 CPPFLAGS+=	-DHAS_MKSTEMP
 CPPFLAGS+=	-DUSE_XFT -DXFREE86_FT2 -I${DESTDIR}${X11INCDIR}/freetype2
+CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/freetype2/freetype
 
 APPDEFS=Xditview Xditview-chrtr
 

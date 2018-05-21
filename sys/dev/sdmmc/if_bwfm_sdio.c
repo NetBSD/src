@@ -1,4 +1,4 @@
-/* $NetBSD: if_bwfm_sdio.c,v 1.1.4.1 2018/03/15 09:12:06 pgoyette Exp $ */
+/* $NetBSD: if_bwfm_sdio.c,v 1.1.4.2 2018/05/21 04:36:12 pgoyette Exp $ */
 /* $OpenBSD: if_bwfm_sdio.c,v 1.1 2017/10/11 17:19:50 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -87,6 +87,7 @@ void		 bwfm_sdio_buscore_write(struct bwfm_softc *, uint32_t,
 int		 bwfm_sdio_buscore_prepare(struct bwfm_softc *);
 void		 bwfm_sdio_buscore_activate(struct bwfm_softc *, uint32_t);
 
+int		 bwfm_sdio_txcheck(struct bwfm_softc *);
 int		 bwfm_sdio_txdata(struct bwfm_softc *, struct mbuf *);
 int		 bwfm_sdio_txctl(struct bwfm_softc *, char *, size_t);
 int		 bwfm_sdio_rxctl(struct bwfm_softc *, char *, size_t *);
@@ -94,6 +95,7 @@ int		 bwfm_sdio_rxctl(struct bwfm_softc *, char *, size_t *);
 struct bwfm_bus_ops bwfm_sdio_bus_ops = {
 	.bs_init = NULL,
 	.bs_stop = NULL,
+	.bs_txcheck = bwfm_sdio_txcheck,
 	.bs_txdata = bwfm_sdio_txdata,
 	.bs_txctl = bwfm_sdio_txctl,
 	.bs_rxctl = bwfm_sdio_rxctl,
@@ -403,6 +405,15 @@ bwfm_sdio_buscore_activate(struct bwfm_softc *bwfm, uint32_t rstvec)
 		bwfm_sdio_ram_write(&sc->sc_sc, 0, &rstvec, sizeof(rstvec));
 #endif
 }
+
+int
+bwfm_sdio_txcheck(struct bwfm_softc *bwfm, struct mbuf *m)
+{
+	DPRINTFN(2, ("%s: %s\n", DEVNAME(sc), __func__));
+
+	return 0;
+}
+
 
 int
 bwfm_sdio_txdata(struct bwfm_softc *bwfm, struct mbuf *m)

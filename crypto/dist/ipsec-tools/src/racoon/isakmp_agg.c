@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_agg.c,v 1.16 2009/09/18 10:31:11 tteras Exp $	*/
+/*	$NetBSD: isakmp_agg.c,v 1.16.48.1 2018/05/21 04:35:49 pgoyette Exp $	*/
 
 /* Id: isakmp_agg.c,v 1.28 2006/04/06 16:46:08 manubsd Exp */
 
@@ -329,10 +329,6 @@ agg_i2recv(iph1, msg)
 	vchar_t *satmp = NULL;
 	int error = -1;
 	int ptype;
-#ifdef ENABLE_HYBRID
-	vchar_t *unity_vid;
-	vchar_t *xauth_vid;
-#endif
 #ifdef HAVE_GSSAPI
 	vchar_t *gsstoken = NULL;
 #endif

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.126 2017/09/14 07:58:42 mrg Exp $
+#	$NetBSD: INSTALL,v 1.126.2.1 2018/05/21 04:36:01 pgoyette Exp $
 #
 # config file for INSTALL FLOPPY
 #
@@ -152,7 +152,7 @@ nvram*	at obio?			# nvram
 #adb*	at obio?			# Apple Desktop Bus
 #akbd*	at adb?				# ADB keyboard
 cuda*	at obio?			# Apple CUDA
-pmu*	at obio?			# Apple CUDA
+pmu*	at obio?			# Apple PMU
 nadb*	at cuda?			# new ADB Bus abstraction
 nadb*	at pmu?				# new ADB Bus abstraction
 adbkbd* at nadb?			# ADB keyboard

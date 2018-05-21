@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.314 2018/02/16 07:04:51 ozaki-r Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.314.2.1 2018/05/21 04:36:15 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.314 2018/02/16 07:04:51 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.314.2.1 2018/05/21 04:36:15 pgoyette Exp $");
 
 #include "opt_kstack.h"
 #include "opt_perfctrs.h"
@@ -730,7 +730,6 @@ mi_switch(lwp_t *l)
 		 * Restore VM context and IPL.
 		 */
 		pmap_activate(l);
-		uvm_emap_switch(l);
 		pcu_switchpoint(l);
 
 		if (prevlwp != NULL) {

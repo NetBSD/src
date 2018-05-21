@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.200 2018/02/01 09:09:14 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.200.2.1 2018/05/21 04:36:06 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.200 2018/02/01 09:09:14 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.200.2.1 2018/05/21 04:36:06 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -3846,7 +3846,7 @@ pci_conf_print_dpc_cap(const pcireg_t *regs, int extcapoff)
 	    extcapoff + PCI_DPC_RPPIO_HLOG);
 	printf("    RP PIO ImpSpec Log Register: start from 0x%03x\n",
 	    extcapoff + PCI_DPC_RPPIO_IMPSLOG);
-	printf("    RP PIO TPL Prefix Log Register: start from 0x%03x\n",
+	printf("    RP PIO TLP Prefix Log Register: start from 0x%03x\n",
 	    extcapoff + PCI_DPC_RPPIO_TLPPLOG);
 }
 

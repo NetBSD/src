@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.43.2.1 2018/03/30 06:20:11 pgoyette Exp $	*/
+/*	$NetBSD: obio.c,v 1.43.2.2 2018/05/21 04:36:01 pgoyette Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.43.2.1 2018/03/30 06:20:11 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.43.2.2 2018/05/21 04:36:01 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,7 +162,7 @@ obio_attach(device_t parent, device_t self, void *aux)
 	case PCI_PRODUCT_APPLE_K2:
 	case PCI_PRODUCT_APPLE_SHASTA:
 		node = OF_finddevice("mac-io");
-		map_size = 0x8000;
+		map_size = 0x10000;
 		break;
 
 	default:
@@ -337,6 +337,15 @@ uint8_t obio_read_1(int offset)
 	return bus_space_read_1(obio0->sc_tag, obio0->sc_bh, offset);
 }
 
+int
+obio_space_map(bus_addr_t addr, bus_size_t size, bus_space_handle_t *bh)
+{
+	if (obio0 == NULL)
+		return 0xff;
+	return bus_space_subregion(obio0->sc_tag, obio0->sc_bh,
+	    addr & 0xfffff, size, bh);
+}
+	
 #ifdef OBIO_SPEED_CONTROL
 
 static void

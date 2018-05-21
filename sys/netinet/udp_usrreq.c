@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.245.2.3 2018/05/02 07:20:23 pgoyette Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.245.2.4 2018/05/21 04:36:16 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.245.2.3 2018/05/02 07:20:23 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.245.2.4 2018/05/21 04:36:16 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -111,7 +111,6 @@ __KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.245.2.3 2018/05/02 07:20:23 pgoyett
 #endif
 
 #ifndef INET6
-/* always need ip6.h for IP6_EXTHDR_GET */
 #include <netinet/ip6.h>
 #endif
 
@@ -337,7 +336,7 @@ udp_input(struct mbuf *m, ...)
 	 * Get IP and UDP header together in first mbuf.
 	 */
 	ip = mtod(m, struct ip *);
-	IP6_EXTHDR_GET(uh, struct udphdr *, m, iphlen, sizeof(struct udphdr));
+	M_REGION_GET(uh, struct udphdr *, m, iphlen, sizeof(struct udphdr));
 	if (uh == NULL) {
 		UDP_STATINC(UDP_STAT_HDROPS);
 		return;
@@ -403,7 +402,7 @@ udp_input(struct mbuf *m, ...)
 	}
 
 	ip = mtod(m, struct ip *);
-	IP6_EXTHDR_GET(uh, struct udphdr *, m, iphlen, sizeof(struct udphdr));
+	M_REGION_GET(uh, struct udphdr *, m, iphlen, sizeof(struct udphdr));
 	if (uh == NULL) {
 		UDP_STATINC(UDP_STAT_HDROPS);
 		return;
@@ -1239,6 +1238,14 @@ udp_statinc(u_int stat)
 
 #if defined(INET) && defined(IPSEC)
 /*
+ * Handle ESP-in-UDP packets (RFC3948).
+ *
+ * We need to distinguish between ESP packets and IKE packets. We do so by
+ * looking at the Non-ESP and Non-IKE markers.
+ *
+ * If IKE, we process the UDP packet as usual. Otherwise, ESP, we invoke
+ * IPsec.
+ *
  * Returns:
  *     1 if the packet was processed
  *     0 if normal UDP processing should take place
@@ -1248,7 +1255,7 @@ static int
 udp4_espinudp(struct mbuf **mp, int off, struct socket *so)
 {
 	size_t len;
-	void *data;
+	uint8_t *data;
 	struct inpcb *inp;
 	size_t skip = 0;
 	size_t minlen;
@@ -1260,10 +1267,10 @@ udp4_espinudp(struct mbuf **mp, int off, struct socket *so)
 	struct mbuf *m = *mp;
 
 	/*
-	 * Collapse the mbuf chain if the first mbuf is too short
-	 * The longest case is: UDP + non ESP marker + ESP.
+	 * Collapse the mbuf chain if the first mbuf is too short.
+	 * The longest case is: UDP + max(Non-ESP, Non-IKE) + ESP.
 	 */
-	minlen = off + sizeof(u_int64_t) + sizeof(struct esp);
+	minlen = off + 2 * sizeof(uint32_t) + sizeof(struct esp);
 	if (minlen > m->m_pkthdr.len)
 		minlen = m->m_pkthdr.len;
 
@@ -1275,51 +1282,52 @@ udp4_espinudp(struct mbuf **mp, int off, struct socket *so)
 	}
 
 	len = m->m_len - off;
-	data = mtod(m, char *) + off;
+	data = mtod(m, uint8_t *) + off;
 	inp = sotoinpcb(so);
 
-	/* Ignore keepalive packets */
-	if ((len == 1) && (*(unsigned char *)data == 0xff)) {
+	/* Ignore keepalive packets. */
+	if ((len == 1) && (*data == 0xff)) {
 		m_freem(m);
-		*mp = NULL; /* avoid any further processing by caller ... */
+		*mp = NULL; /* avoid any further processing by caller */
 		return 1;
 	}
 
-	/*
-	 * Check that the payload is long enough to hold
-	 * an ESP header and compute the length of encapsulation
-	 * header to remove
-	 */
+	/* Handle Non-ESP marker (32bit). If zero, then IKE. */
 	if (inp->inp_flags & INP_ESPINUDP) {
-		u_int32_t *st = (u_int32_t *)data;
+		uint32_t *marker = (uint32_t *)data;
 
-		if ((len <= sizeof(struct esp)) || (*st == 0))
-			return 0; /* Normal UDP processing */
+		if (len <= sizeof(uint32_t))
+			return 0;
+		if (marker[0] == 0)
+			return 0;
 
 		skip = sizeof(struct udphdr);
 	}
 
+	/* Handle Non-IKE marker (64bit). If non-zero, then IKE. */
 	if (inp->inp_flags & INP_ESPINUDP_NON_IKE) {
-		u_int32_t *st = (u_int32_t *)data;
+		uint32_t *marker = (uint32_t *)data;
 
-		if ((len <= sizeof(u_int64_t) + sizeof(struct esp)) ||
-		    ((st[0] | st[1]) != 0))
-			return 0; /* Normal UDP processing */
+		if (len <= 2 * sizeof(uint32_t) + sizeof(struct esp))
+			return 0;
+		if (marker[0] != 0 || marker[1] != 0)
+			return 0;
 
-		skip = sizeof(struct udphdr) + sizeof(u_int64_t);
+		skip = sizeof(struct udphdr) + 2 * sizeof(uint32_t);
 	}
 
 	/*
-	 * Get the UDP ports. They are handled in network
-	 * order everywhere in IPSEC_NAT_T code.
+	 * Get the UDP ports. They are handled in network order
+	 * everywhere in the IPSEC_NAT_T code.
 	 */
 	udphdr = (struct udphdr *)((char *)data - skip);
 	sport = udphdr->uh_sport;
 	dport = udphdr->uh_dport;
 
 	/*
-	 * Remove the UDP header (and possibly the non ESP marker)
-	 * IP header length is iphdrlen
+	 * Remove the UDP header, plus a possible marker. IP header
+	 * length is iphdrlen.
+	 *
 	 * Before:
 	 *   <--- off --->
 	 *   +----+------+-----+
@@ -1342,12 +1350,11 @@ udp4_espinudp(struct mbuf **mp, int off, struct socket *so)
 
 	/*
 	 * We have modified the packet - it is now ESP, so we should not
-	 * return to UDP processing ...
+	 * return to UDP processing.
 	 *
-	 * Add a PACKET_TAG_IPSEC_NAT_T_PORT tag to remember
-	 * the source UDP port. This is required if we want
-	 * to select the right SPD for multiple hosts behind
-	 * same NAT
+	 * Add a PACKET_TAG_IPSEC_NAT_T_PORTS tag to remember the source
+	 * UDP port. This is required if we want to select the right SPD
+	 * for multiple hosts behind same NAT.
 	 */
 	if ((tag = m_tag_get(PACKET_TAG_IPSEC_NAT_T_PORTS,
 	    sizeof(sport) + sizeof(dport), M_DONTWAIT)) == NULL) {
