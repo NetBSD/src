@@ -84,6 +84,7 @@ case "${host}" in
 *-*-darwin*)		gdb_host=darwin ;;
 
 aarch64*-*-linux*)	gdb_host=linux ;;
+aarch64*-*-netbsd*)	gdb_host=nbsd ;;
 
 alpha*-*-linux*)	gdb_host=alpha-linux ;;
 alpha*-*-netbsd* | alpha*-*-knetbsd*-gnu)
