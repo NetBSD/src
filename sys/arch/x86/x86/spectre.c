@@ -1,4 +1,4 @@
-/*	$NetBSD: spectre.c,v 1.13 2018/05/22 08:15:26 maxv Exp $	*/
+/*	$NetBSD: spectre.c,v 1.14 2018/05/22 09:25:58 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 NetBSD Foundation, Inc.
@@ -30,11 +30,11 @@
  */
 
 /*
- * Mitigations for the Spectre V2 CPU flaw.
+ * Mitigations for the SpectreV2 and SpectreV4 CPU flaws.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spectre.c,v 1.13 2018/05/22 08:15:26 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spectre.c,v 1.14 2018/05/22 09:25:58 maxv Exp $");
 
 #include "opt_spectre.h"
 
@@ -51,18 +51,31 @@ __KERNEL_RCSID(0, "$NetBSD: spectre.c,v 1.13 2018/05/22 08:15:26 maxv Exp $");
 
 #include <x86/cputypes.h>
 
-enum spec_mitigation {
-	MITIGATION_NONE,
-	MITIGATION_AMD_DIS_IND,
-	MITIGATION_INTEL_IBRS
+enum v2_mitigation {
+	V2_MITIGATION_NONE,
+	V2_MITIGATION_AMD_DIS_IND,
+	V2_MITIGATION_INTEL_IBRS
 };
 
-bool spec_v2_mitigation_enabled __read_mostly = false;
-static enum spec_mitigation mitigation_v2_method = MITIGATION_NONE;
-char spec_v2_mitigation_name[64] = "(none)";
+enum v4_mitigation {
+	V4_MITIGATION_NONE,
+	V4_MITIGATION_INTEL_SSBD,
+	V4_MITIGATION_INTEL_SSB_NO
+};
+
+static enum v2_mitigation v2_mitigation_method = V2_MITIGATION_NONE;
+static enum v4_mitigation v4_mitigation_method = V4_MITIGATION_NONE;
+
+static bool v2_mitigation_enabled __read_mostly = false;
+static bool v4_mitigation_enabled __read_mostly = false;
+
+static char v2_mitigation_name[64] = "(none)";
+static char v4_mitigation_name[64] = "(none)";
+
+/* --------------------------------------------------------------------- */
 
 static void
-spec_v2_set_name(void)
+v2_set_name(void)
 {
 	char name[64] = "";
 	size_t nmitig = 0;
@@ -72,17 +85,17 @@ spec_v2_set_name(void)
 	nmitig++;
 #endif
 
-	if (!spec_v2_mitigation_enabled) {
+	if (!v2_mitigation_enabled) {
 		if (nmitig == 0)
 			strlcat(name, "(none)", sizeof(name));
 	} else {
 		if (nmitig)
 			strlcat(name, " + ", sizeof(name));
-		switch (mitigation_v2_method) {
-		case MITIGATION_AMD_DIS_IND:
+		switch (v2_mitigation_method) {
+		case V2_MITIGATION_AMD_DIS_IND:
 			strlcat(name, "[AMD DIS_IND]", sizeof(name));
 			break;
-		case MITIGATION_INTEL_IBRS:
+		case V2_MITIGATION_INTEL_IBRS:
 			strlcat(name, "[Intel IBRS]", sizeof(name));
 			break;
 		default:
@@ -90,12 +103,12 @@ spec_v2_set_name(void)
 		}
 	}
 
-	strlcpy(spec_v2_mitigation_name, name,
-	    sizeof(spec_v2_mitigation_name));
+	strlcpy(v2_mitigation_name, name,
+	    sizeof(v2_mitigation_name));
 }
 
 static void
-spec_v2_detect_method(void)
+v2_detect_method(void)
 {
 	struct cpu_info *ci = curcpu();
 	u_int descs[4];
@@ -106,15 +119,15 @@ spec_v2_detect_method(void)
 			if (descs[3] & CPUID_SEF_IBRS) {
 				/* descs[3] = %edx */
 #ifdef __x86_64__
-				mitigation_v2_method = MITIGATION_INTEL_IBRS;
+				v2_mitigation_method = V2_MITIGATION_INTEL_IBRS;
 #else
 				/* IBRS not supported on i386. */
-				mitigation_v2_method = MITIGATION_NONE;
+				v2_mitigation_method = V2_MITIGATION_NONE;
 #endif
 				return;
 			}
 		}
-		mitigation_v2_method = MITIGATION_NONE;
+		v2_mitigation_method = V2_MITIGATION_NONE;
 	} else if (cpu_vendor == CPUVENDOR_AMD) {
 		/*
 		 * The AMD Family 10h manual documents the IC_CFG.DIS_IND bit.
@@ -127,14 +140,14 @@ spec_v2_detect_method(void)
 		case 0x10:
 		case 0x12:
 		case 0x16:
-			mitigation_v2_method = MITIGATION_AMD_DIS_IND;
+			v2_mitigation_method = V2_MITIGATION_AMD_DIS_IND;
 			break;
 		default:
-			mitigation_v2_method = MITIGATION_NONE;
+			v2_mitigation_method = V2_MITIGATION_NONE;
 			break;
 		}
 	} else {
-		mitigation_v2_method = MITIGATION_NONE;
+		v2_mitigation_method = V2_MITIGATION_NONE;
 	}
 }
 
@@ -208,10 +221,10 @@ mitigation_v2_apply_cpu(struct cpu_info *ci, bool enabled)
 {
 	uint64_t msr;
 
-	switch (mitigation_v2_method) {
-	case MITIGATION_NONE:
+	switch (v2_mitigation_method) {
+	case V2_MITIGATION_NONE:
 		panic("impossible");
-	case MITIGATION_INTEL_IBRS:
+	case V2_MITIGATION_INTEL_IBRS:
 		/* cpu0 is the one that does the hotpatch job */
 		if (ci == &cpu_info_primary) {
 			if (enabled) {
@@ -224,7 +237,7 @@ mitigation_v2_apply_cpu(struct cpu_info *ci, bool enabled)
 			wrmsr(MSR_IA32_SPEC_CTRL, 0);
 		}
 		break;
-	case MITIGATION_AMD_DIS_IND:
+	case V2_MITIGATION_AMD_DIS_IND:
 		msr = rdmsr(MSR_IC_CFG);
 		if (enabled) {
 			msr |= IC_CFG_DIS_IND;
@@ -247,7 +260,7 @@ mitigation_v2_change_cpu(void *arg1, void *arg2)
 	u_long psl = 0;
 
 	/* Rendez-vous 1 (IBRS only). */
-	if (mitigation_v2_method == MITIGATION_INTEL_IBRS) {
+	if (v2_mitigation_method == V2_MITIGATION_INTEL_IBRS) {
 		psl = x86_read_psl();
 		x86_disable_intr();
 
@@ -260,7 +273,7 @@ mitigation_v2_change_cpu(void *arg1, void *arg2)
 	mitigation_v2_apply_cpu(ci, enabled);
 
 	/* Rendez-vous 2 (IBRS only). */
-	if (mitigation_v2_method == MITIGATION_INTEL_IBRS) {
+	if (v2_mitigation_method == V2_MITIGATION_INTEL_IBRS) {
 		atomic_dec_ulong(&ibrs_cpu_barrier2);
 		while (atomic_cas_ulong(&ibrs_cpu_barrier2, 0, 0) != 0) {
 			x86_pause();
@@ -281,7 +294,7 @@ mitigation_v2_change(bool enabled)
 	CPU_INFO_ITERATOR cii;
 	uint64_t xc;
 
-	spec_v2_detect_method();
+	v2_detect_method();
 
 	mutex_enter(&cpu_lock);
 
@@ -298,13 +311,13 @@ mitigation_v2_change(bool enabled)
 		}
 	}
 
-	switch (mitigation_v2_method) {
-	case MITIGATION_NONE:
+	switch (v2_mitigation_method) {
+	case V2_MITIGATION_NONE:
 		printf("[!] No mitigation available\n");
 		mutex_exit(&cpu_lock);
 		return EOPNOTSUPP;
-	case MITIGATION_AMD_DIS_IND:
-	case MITIGATION_INTEL_IBRS:
+	case V2_MITIGATION_AMD_DIS_IND:
+	case V2_MITIGATION_INTEL_IBRS:
 		/* Initialize the barriers */
 		ibrs_cpu_barrier1 = ncpu;
 		ibrs_cpu_barrier2 = ncpu;
@@ -315,18 +328,16 @@ mitigation_v2_change(bool enabled)
 		    (void *)enabled, NULL);
 		xc_wait(xc);
 		printf(" done!\n");
-		spec_v2_mitigation_enabled = enabled;
+		v2_mitigation_enabled = enabled;
 		mutex_exit(&cpu_lock);
-		spec_v2_set_name();
+		v2_set_name();
 		return 0;
 	default:
 		panic("impossible");
 	}
 }
 
-int sysctl_machdep_spectreV2_mitigated(SYSCTLFN_ARGS);
-
-int
+static int
 sysctl_machdep_spectreV2_mitigated(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node;
@@ -343,12 +354,12 @@ sysctl_machdep_spectreV2_mitigated(SYSCTLFN_ARGS)
 		return error;
 
 	if (val == 0) {
-		if (!spec_v2_mitigation_enabled)
+		if (!v2_mitigation_enabled)
 			error = 0;
 		else
 			error = mitigation_v2_change(false);
 	} else {
-		if (spec_v2_mitigation_enabled)
+		if (v2_mitigation_enabled)
 			error = 0;
 		else
 			error = mitigation_v2_change(true);
@@ -359,43 +370,60 @@ sysctl_machdep_spectreV2_mitigated(SYSCTLFN_ARGS)
 
 /* -------------------------------------------------------------------------- */
 
-bool spec_v4_mitigation_enabled __read_mostly = false;
-bool spec_v4_affected __read_mostly = true;
-
-int sysctl_machdep_spectreV4_mitigated(SYSCTLFN_ARGS);
-
-static bool ssbd_needed(void)
+static void
+v4_set_name(void)
 {
-	uint64_t msr;
+	char name[64] = "";
 
-	if (cpu_info_primary.ci_feat_val[7] & CPUID_SEF_ARCH_CAP) {
-		msr = rdmsr(MSR_IA32_ARCH_CAPABILITIES);
-		if (msr & IA32_ARCH_SSB_NO) {
-			/*
-			 * The processor indicates it is not vulnerable to the
-			 * Speculative Store Bypass (SpectreV4) flaw.
-			 */
-			return false;
+	if (!v4_mitigation_enabled) {
+		strlcat(name, "(none)", sizeof(name));
+	} else {
+		switch (v4_mitigation_method) {
+		case V4_MITIGATION_INTEL_SSBD:
+			strlcat(name, "[Intel SSBD]", sizeof(name));
+			break;
+		case V4_MITIGATION_INTEL_SSB_NO:
+			strlcat(name, "[Intel SSB_NO]", sizeof(name));
+			break;
+		default:
+			panic("%s: impossible", __func__);
 		}
 	}
 
-	return true;
+	strlcpy(v4_mitigation_name, name,
+	    sizeof(v4_mitigation_name));
 }
 
-static bool ssbd_supported(void)
+static void
+v4_detect_method(void)
 {
 	u_int descs[4];
+	uint64_t msr;
 
 	if (cpu_vendor == CPUVENDOR_INTEL) {
+		if (cpu_info_primary.ci_feat_val[7] & CPUID_SEF_ARCH_CAP) {
+			msr = rdmsr(MSR_IA32_ARCH_CAPABILITIES);
+			if (msr & IA32_ARCH_SSB_NO) {
+				/*
+				 * The processor indicates it is not vulnerable
+				 * to the Speculative Store Bypass (SpectreV4)
+				 * flaw.
+				 */
+				v4_mitigation_method = V4_MITIGATION_INTEL_SSB_NO;
+				return;
+			}
+		}
 		if (cpuid_level >= 7) {
 			x86_cpuid(7, descs);
 			if (descs[3] & CPUID_SEF_SSBD) {
 				/* descs[3] = %edx */
-				return true;
+				v4_mitigation_method = V4_MITIGATION_INTEL_SSBD;
+				return;
 			}
 		}
 	}
-	return false;
+
+	v4_mitigation_method = V4_MITIGATION_NONE;
 }
 
 static void
@@ -428,10 +456,7 @@ static int mitigation_v4_change(bool enabled)
 	CPU_INFO_ITERATOR cii;
 	uint64_t xc;
 
-	if (!ssbd_supported()) {
-			printf("[!] No mitigation available\n");
-			return EOPNOTSUPP;
-	}
+	v4_detect_method();
 
 	mutex_enter(&cpu_lock);
 
@@ -448,19 +473,32 @@ static int mitigation_v4_change(bool enabled)
 		}
 	}
 
-	printf("[+] %s SpectreV4 Mitigation...",
-	    enabled ? "Enabling" : "Disabling");
-	xc = xc_broadcast(0, mitigation_v4_change_cpu,
-	    (void *)enabled, NULL);
-	xc_wait(xc);
-	printf(" done!\n");
-	spec_v4_mitigation_enabled = enabled;
-	mutex_exit(&cpu_lock);
-
-	return 0;
+	switch (v4_mitigation_method) {
+	case V4_MITIGATION_NONE:
+		printf("[!] No mitigation available\n");
+		mutex_exit(&cpu_lock);
+		return EOPNOTSUPP;
+	case V4_MITIGATION_INTEL_SSBD:
+		printf("[+] %s SpectreV4 Mitigation...",
+		    enabled ? "Enabling" : "Disabling");
+		xc = xc_broadcast(0, mitigation_v4_change_cpu,
+		    (void *)enabled, NULL);
+		xc_wait(xc);
+		printf(" done!\n");
+		v4_mitigation_enabled = enabled;
+		mutex_exit(&cpu_lock);
+		v4_set_name();
+		return 0;
+	case V4_MITIGATION_INTEL_SSB_NO:
+		printf("[+] The CPU is not affected by SpectreV4\n");
+		mutex_exit(&cpu_lock);
+		return 0;
+	default:
+		panic("impossible");
+	}
 }
 
-int
+static int
 sysctl_machdep_spectreV4_mitigated(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node;
@@ -477,12 +515,12 @@ sysctl_machdep_spectreV4_mitigated(SYSCTLFN_ARGS)
 		return error;
 
 	if (val == 0) {
-		if (!spec_v4_mitigation_enabled)
+		if (!v4_mitigation_enabled)
 			error = 0;
 		else
 			error = mitigation_v4_change(false);
 	} else {
-		if (spec_v4_mitigation_enabled)
+		if (v4_mitigation_enabled)
 			error = 0;
 		else
 			error = mitigation_v4_change(true);
@@ -501,7 +539,7 @@ speculation_barrier(struct lwp *oldlwp, struct lwp *newlwp)
 	/*
 	 * Speculation barriers are applicable only to Spectre V2.
 	 */
-	if (!spec_v2_mitigation_enabled)
+	if (!v2_mitigation_enabled)
 		return;
 
 	/*
@@ -511,8 +549,8 @@ speculation_barrier(struct lwp *oldlwp, struct lwp *newlwp)
 	    (newlwp->l_flag & LW_SYSTEM))
 		return;
 
-	switch (mitigation_v2_method) {
-	case MITIGATION_INTEL_IBRS:
+	switch (v2_mitigation_method) {
+	case V2_MITIGATION_INTEL_IBRS:
 		wrmsr(MSR_IA32_PRED_CMD, IA32_PRED_CMD_IBPB);
 		break;
 	default:
@@ -531,23 +569,105 @@ cpu_speculation_init(struct cpu_info *ci)
 	 * variable.
 	 */
 	if (ci == &cpu_info_primary) {
-		spec_v2_detect_method();
-		spec_v2_mitigation_enabled =
-		    (mitigation_v2_method != MITIGATION_NONE);
-		spec_v2_set_name();
+		v2_detect_method();
+		v2_mitigation_enabled =
+		    (v2_mitigation_method != V2_MITIGATION_NONE);
+		v2_set_name();
 	}
-	if (mitigation_v2_method != MITIGATION_NONE) {
+	if (v2_mitigation_method != V2_MITIGATION_NONE) {
 		mitigation_v2_apply_cpu(ci, true);
 	}
 
 	/*
 	 * Spectre V4.
+	 *
+	 * cpu0 is the one that detects the method and sets the global
+	 * variable.
 	 */
-	if (ssbd_needed()) {
-		if (ci == &cpu_info_primary) {
-			spec_v4_affected = true;
-		}
-		/* mitigation_v4_apply_cpu(true); */
-		/* spec_v4_mitigation_enabled = true; */
+	if (ci == &cpu_info_primary) {
+		v4_detect_method();
+		v4_mitigation_enabled =
+		    (v4_mitigation_method != V4_MITIGATION_NONE);
+		v4_set_name();
 	}
+	if (v4_mitigation_method != V4_MITIGATION_NONE) {
+		/* Mitigation not applied by default yet. */
+	}
+}
+
+void sysctl_speculation_init(struct sysctllog **);
+
+void
+sysctl_speculation_init(struct sysctllog **clog)
+{
+	const struct sysctlnode *spec_rnode;
+
+	/* SpectreV1 */
+	spec_rnode = NULL;
+	sysctl_createv(clog, 0, NULL, &spec_rnode,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "spectre_v1", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_MACHDEP, CTL_CREATE);
+	sysctl_createv(clog, 0, &spec_rnode, &spec_rnode,
+		       CTLFLAG_PERMANENT | CTLFLAG_IMMEDIATE,
+		       CTLTYPE_BOOL, "mitigated",
+		       SYSCTL_DESCR("Whether Spectre Variant 1 is mitigated"),
+		       NULL, 0 /* mitigated=0 */, NULL, 0,
+		       CTL_CREATE, CTL_EOL);
+
+	/* SpectreV2 */
+	spec_rnode = NULL;
+	sysctl_createv(clog, 0, NULL, &spec_rnode,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "spectre_v2", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_MACHDEP, CTL_CREATE);
+	sysctl_createv(clog, 0, &spec_rnode, NULL,
+		       CTLFLAG_READWRITE,
+		       CTLTYPE_BOOL, "hwmitigated",
+		       SYSCTL_DESCR("Whether Spectre Variant 2 is HW-mitigated"),
+		       sysctl_machdep_spectreV2_mitigated, 0,
+		       &v2_mitigation_enabled, 0,
+		       CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &spec_rnode, NULL,
+		       CTLFLAG_PERMANENT | CTLFLAG_IMMEDIATE,
+		       CTLTYPE_BOOL, "swmitigated",
+		       SYSCTL_DESCR("Whether Spectre Variant 2 is SW-mitigated"),
+#if defined(SPECTRE_V2_GCC_MITIGATION)
+		       NULL, 1,
+#else
+		       NULL, 0,
+#endif
+		       NULL, 0,
+		       CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &spec_rnode, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRING, "method",
+		       SYSCTL_DESCR("Mitigation method in use"),
+		       NULL, 0,
+		       v2_mitigation_name, 0,
+		       CTL_CREATE, CTL_EOL);
+
+	/* SpectreV4 */
+	spec_rnode = NULL;
+	sysctl_createv(clog, 0, NULL, &spec_rnode,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "spectre_v4", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_MACHDEP, CTL_CREATE);
+	sysctl_createv(clog, 0, &spec_rnode, NULL,
+		       CTLFLAG_READWRITE,
+		       CTLTYPE_BOOL, "mitigated",
+		       SYSCTL_DESCR("Whether Spectre Variant 4 is mitigated"),
+		       sysctl_machdep_spectreV4_mitigated, 0,
+		       &v4_mitigation_enabled, 0,
+		       CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &spec_rnode, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRING, "method",
+		       SYSCTL_DESCR("Mitigation method in use"),
+		       NULL, 0,
+		       v4_mitigation_name, 0,
+		       CTL_CREATE, CTL_EOL);
 }
