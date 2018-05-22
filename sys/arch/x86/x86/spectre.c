@@ -1,4 +1,4 @@
-/*	$NetBSD: spectre.c,v 1.14 2018/05/22 09:25:58 maxv Exp $	*/
+/*	$NetBSD: spectre.c,v 1.15 2018/05/22 10:20:04 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spectre.c,v 1.14 2018/05/22 09:25:58 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spectre.c,v 1.15 2018/05/22 10:20:04 maxv Exp $");
 
 #include "opt_spectre.h"
 
@@ -60,7 +60,9 @@ enum v2_mitigation {
 enum v4_mitigation {
 	V4_MITIGATION_NONE,
 	V4_MITIGATION_INTEL_SSBD,
-	V4_MITIGATION_INTEL_SSB_NO
+	V4_MITIGATION_INTEL_SSB_NO,
+	V4_MITIGATION_AMD_NONARCH_F15H,
+	V4_MITIGATION_AMD_NONARCH_F16H
 };
 
 static enum v2_mitigation v2_mitigation_method = V2_MITIGATION_NONE;
@@ -379,14 +381,18 @@ v4_set_name(void)
 		strlcat(name, "(none)", sizeof(name));
 	} else {
 		switch (v4_mitigation_method) {
+		case V4_MITIGATION_NONE:
+			panic("%s: impossible", __func__);
 		case V4_MITIGATION_INTEL_SSBD:
 			strlcat(name, "[Intel SSBD]", sizeof(name));
 			break;
 		case V4_MITIGATION_INTEL_SSB_NO:
 			strlcat(name, "[Intel SSB_NO]", sizeof(name));
 			break;
-		default:
-			panic("%s: impossible", __func__);
+		case V4_MITIGATION_AMD_NONARCH_F15H:
+		case V4_MITIGATION_AMD_NONARCH_F16H:
+			strlcat(name, "[AMD NONARCH]", sizeof(name));
+			break;
 		}
 	}
 
@@ -397,6 +403,7 @@ v4_set_name(void)
 static void
 v4_detect_method(void)
 {
+	struct cpu_info *ci = curcpu();
 	u_int descs[4];
 	uint64_t msr;
 
@@ -421,6 +428,17 @@ v4_detect_method(void)
 				return;
 			}
 		}
+	} else if (cpu_vendor == CPUVENDOR_AMD) {
+		switch (CPUID_TO_FAMILY(ci->ci_signature)) {
+		case 0x15:
+			v4_mitigation_method = V4_MITIGATION_AMD_NONARCH_F15H;
+			return;
+		case 0x16:
+			v4_mitigation_method = V4_MITIGATION_AMD_NONARCH_F16H;
+			return;
+		default:
+			break;
+		}
 	}
 
 	v4_mitigation_method = V4_MITIGATION_NONE;
@@ -431,15 +449,38 @@ mitigation_v4_apply_cpu(bool enabled)
 {
 	uint64_t msr;
 
-	msr = rdmsr(MSR_IA32_SPEC_CTRL);
-
-	if (enabled) {
-		msr |= IA32_SPEC_CTRL_SSBD;
-	} else {
-		msr &= ~IA32_SPEC_CTRL_SSBD;
+	switch (v4_mitigation_method) {
+	case V4_MITIGATION_NONE:
+	case V4_MITIGATION_INTEL_SSB_NO:
+		panic("impossible");
+	case V4_MITIGATION_INTEL_SSBD:
+		msr = rdmsr(MSR_IA32_SPEC_CTRL);
+		if (enabled) {
+			msr |= IA32_SPEC_CTRL_SSBD;
+		} else {
+			msr &= ~IA32_SPEC_CTRL_SSBD;
+		}
+		wrmsr(MSR_IA32_SPEC_CTRL, msr);
+		break;
+	case V4_MITIGATION_AMD_NONARCH_F15H:
+		msr = rdmsr(MSR_LS_CFG);
+		if (enabled) {
+			msr |= LS_CFG_DIS_SSB_F15H;
+		} else {
+			msr &= ~LS_CFG_DIS_SSB_F15H;
+		}
+		wrmsr(MSR_LS_CFG, msr);
+		break;
+	case V4_MITIGATION_AMD_NONARCH_F16H:
+		msr = rdmsr(MSR_LS_CFG);
+		if (enabled) {
+			msr |= LS_CFG_DIS_SSB_F16H;
+		} else {
+			msr &= ~LS_CFG_DIS_SSB_F16H;
+		}
+		wrmsr(MSR_LS_CFG, msr);
+		break;
 	}
-
-	wrmsr(MSR_IA32_SPEC_CTRL, msr);
 }
 
 static void
