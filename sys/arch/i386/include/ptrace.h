@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.19 2017/04/08 02:02:30 kamil Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.20 2018/05/22 21:03:09 kamil Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -112,6 +112,7 @@
 #define PTRACE_REG_INTRV(r)	(r)->r_eax
 
 #define PTRACE_BREAKPOINT	((const uint8_t[]) { 0xcc })
+#define PTRACE_BREAKPOINT_ASM	__asm __volatile ("int3" : : : "memory")
 #define PTRACE_BREAKPOINT_SIZE	1
 #define PTRACE_BREAKPOINT_ADJ	sizeof(PTRACE_BREAKPOINT)
 
