@@ -1,4 +1,4 @@
-/*	$NetBSD: spectre.c,v 1.17 2018/05/22 16:44:42 maxv Exp $	*/
+/*	$NetBSD: spectre.c,v 1.18 2018/05/22 17:14:46 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spectre.c,v 1.17 2018/05/22 16:44:42 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spectre.c,v 1.18 2018/05/22 17:14:46 maxv Exp $");
 
 #include "opt_spectre.h"
 
@@ -62,7 +62,8 @@ enum v4_mitigation {
 	V4_MITIGATION_INTEL_SSBD,
 	V4_MITIGATION_INTEL_SSB_NO,
 	V4_MITIGATION_AMD_NONARCH_F15H,
-	V4_MITIGATION_AMD_NONARCH_F16H
+	V4_MITIGATION_AMD_NONARCH_F16H,
+	V4_MITIGATION_AMD_NONARCH_F17H
 };
 
 static enum v2_mitigation v2_mitigation_method = V2_MITIGATION_NONE;
@@ -381,6 +382,7 @@ v4_set_name(void)
 			break;
 		case V4_MITIGATION_AMD_NONARCH_F15H:
 		case V4_MITIGATION_AMD_NONARCH_F16H:
+		case V4_MITIGATION_AMD_NONARCH_F17H:
 			strlcat(name, "[AMD NONARCH]", sizeof(name));
 			break;
 		}
@@ -426,6 +428,9 @@ v4_detect_method(void)
 		case 0x16:
 			v4_mitigation_method = V4_MITIGATION_AMD_NONARCH_F16H;
 			return;
+		case 0x17:
+			v4_mitigation_method = V4_MITIGATION_AMD_NONARCH_F17H;
+			return;
 		default:
 			break;
 		}
@@ -437,40 +442,37 @@ v4_detect_method(void)
 static void
 mitigation_v4_apply_cpu(bool enabled)
 {
-	uint64_t msr;
+	uint64_t msr, msrval = 0, msrbit = 0;
 
 	switch (v4_mitigation_method) {
 	case V4_MITIGATION_NONE:
 	case V4_MITIGATION_INTEL_SSB_NO:
 		panic("impossible");
 	case V4_MITIGATION_INTEL_SSBD:
-		msr = rdmsr(MSR_IA32_SPEC_CTRL);
-		if (enabled) {
-			msr |= IA32_SPEC_CTRL_SSBD;
-		} else {
-			msr &= ~IA32_SPEC_CTRL_SSBD;
-		}
-		wrmsr(MSR_IA32_SPEC_CTRL, msr);
+		msrval = MSR_IA32_SPEC_CTRL;
+		msrbit = IA32_SPEC_CTRL_SSBD;
 		break;
 	case V4_MITIGATION_AMD_NONARCH_F15H:
-		msr = rdmsr(MSR_LS_CFG);
-		if (enabled) {
-			msr |= LS_CFG_DIS_SSB_F15H;
-		} else {
-			msr &= ~LS_CFG_DIS_SSB_F15H;
-		}
-		wrmsr(MSR_LS_CFG, msr);
+		msrval = MSR_LS_CFG;
+		msrbit = LS_CFG_DIS_SSB_F15H;
 		break;
 	case V4_MITIGATION_AMD_NONARCH_F16H:
-		msr = rdmsr(MSR_LS_CFG);
-		if (enabled) {
-			msr |= LS_CFG_DIS_SSB_F16H;
-		} else {
-			msr &= ~LS_CFG_DIS_SSB_F16H;
-		}
-		wrmsr(MSR_LS_CFG, msr);
+		msrval = MSR_LS_CFG;
+		msrbit = LS_CFG_DIS_SSB_F16H;
+		break;
+	case V4_MITIGATION_AMD_NONARCH_F17H:
+		msrval = MSR_LS_CFG;
+		msrbit = LS_CFG_DIS_SSB_F17H;
 		break;
 	}
+
+	msr = rdmsr(msrval);
+	if (enabled) {
+		msr |= msrbit;
+	} else {
+		msr &= ~msrbit;
+	}
+	wrmsr(msrval, msr);
 }
 
 static void
@@ -512,6 +514,7 @@ static int mitigation_v4_change(bool enabled)
 	case V4_MITIGATION_INTEL_SSBD:
 	case V4_MITIGATION_AMD_NONARCH_F15H:
 	case V4_MITIGATION_AMD_NONARCH_F16H:
+	case V4_MITIGATION_AMD_NONARCH_F17H:
 		printf("[+] %s SpectreV4 Mitigation...",
 		    enabled ? "Enabling" : "Disabling");
 		xc = xc_broadcast(0, mitigation_v4_change_cpu,
