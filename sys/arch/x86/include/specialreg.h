@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.121 2018/05/22 07:11:53 maxv Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.122 2018/05/22 07:24:08 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -661,6 +661,7 @@
 #define MSR_IA32_ARCH_CAPABILITIES 0x10a
 #define 	IA32_ARCH_RDCL_NO	0x01
 #define 	IA32_ARCH_IBRS_ALL	0x02
+#define 	IA32_ARCH_RSBA		0x04
 #define 	IA32_ARCH_SSB_NO	0x10
 #define MSR_BBL_CR_ADDR		0x116	/* PII+ only */
 #define MSR_BBL_CR_DECC		0x118	/* PII+ only */
