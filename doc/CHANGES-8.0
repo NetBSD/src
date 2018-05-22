@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.200 2018/05/17 14:08:18 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.201 2018/05/22 17:51:55 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -13478,4 +13478,21 @@ sys/netipsec/ipsecif.c				1.8
 	Fix LOCKDEBUG kernel panic when many (about 200) tunnel interfaces
 	are created.
 	[knakahara, ticket #829]
+
+sys/netinet6/nd6_rtr.c				1.142
+
+	Add missing m_put_rcvif_psref.
+	[maxv, ticket #830]
+
+sys/arch/i386/stand/efiboot/eficons.c		1.6
+
+	Avoid an invisible timer countdown on some UEFI implementations.
+	[jakllsch, ticket #831]
+
+sys/kern/uipc_mbuf.c				1.214
+
+	Revert ticket #770:
+	remove the M_READONLY check. The initial code was correct.
+	[maxv, ticket #833]
+
 
