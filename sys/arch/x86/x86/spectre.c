@@ -1,4 +1,4 @@
-/*	$NetBSD: spectre.c,v 1.12 2018/05/22 07:11:53 maxv Exp $	*/
+/*	$NetBSD: spectre.c,v 1.13 2018/05/22 08:15:26 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 NetBSD Foundation, Inc.
@@ -34,7 +34,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spectre.c,v 1.12 2018/05/22 07:11:53 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spectre.c,v 1.13 2018/05/22 08:15:26 maxv Exp $");
+
+#include "opt_spectre.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,22 +64,32 @@ char spec_v2_mitigation_name[64] = "(none)";
 static void
 spec_v2_set_name(void)
 {
-	const char *name;
+	char name[64] = "";
+	size_t nmitig = 0;
+
+#if defined(SPECTRE_V2_GCC_MITIGATION)
+	strlcat(name, "[GCC retpoline]", sizeof(name));
+	nmitig++;
+#endif
 
 	if (!spec_v2_mitigation_enabled) {
-		name = "(none)";
+		if (nmitig == 0)
+			strlcat(name, "(none)", sizeof(name));
 	} else {
+		if (nmitig)
+			strlcat(name, " + ", sizeof(name));
 		switch (mitigation_v2_method) {
 		case MITIGATION_AMD_DIS_IND:
-			name = "AMD DIS_IND";
+			strlcat(name, "[AMD DIS_IND]", sizeof(name));
 			break;
 		case MITIGATION_INTEL_IBRS:
-			name = "Intel IBRS";
+			strlcat(name, "[Intel IBRS]", sizeof(name));
 			break;
 		default:
 			panic("%s: impossible", __func__);
 		}
 	}
+
 	strlcpy(spec_v2_mitigation_name, name,
 	    sizeof(spec_v2_mitigation_name));
 }
