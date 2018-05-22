@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.114 2018/05/22 08:15:26 maxv Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.115 2018/05/22 09:25:58 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,16 +31,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.114 2018/05/22 08:15:26 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.115 2018/05/22 09:25:58 maxv Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
 #include "opt_splash.h"
 #include "opt_kaslr.h"
 #include "opt_svs.h"
-#ifndef XEN
-#include "opt_spectre.h"
-#endif
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1275,82 +1272,8 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 #endif
 
 #ifndef XEN
-	int sysctl_machdep_spectreV2_mitigated(SYSCTLFN_ARGS);
-	int sysctl_machdep_spectreV4_mitigated(SYSCTLFN_ARGS);
-	extern bool spec_v2_mitigation_enabled;
-	extern bool spec_v4_mitigation_enabled;
-	extern char spec_v2_mitigation_name[];
-	extern bool spec_v4_affected;
-	const struct sysctlnode *spec_rnode;
-
-	/* SpectreV1 */
-	spec_rnode = NULL;
-	sysctl_createv(clog, 0, NULL, &spec_rnode,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "spectre_v1", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_MACHDEP, CTL_CREATE);
-	sysctl_createv(clog, 0, &spec_rnode, &spec_rnode,
-		       CTLFLAG_PERMANENT | CTLFLAG_IMMEDIATE,
-		       CTLTYPE_BOOL, "mitigated",
-		       SYSCTL_DESCR("Whether Spectre Variant 1 is mitigated"),
-		       NULL, 0 /* mitigated=0 */, NULL, 0,
-		       CTL_CREATE, CTL_EOL);
-
-	/* SpectreV2 */
-	spec_rnode = NULL;
-	sysctl_createv(clog, 0, NULL, &spec_rnode,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "spectre_v2", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_MACHDEP, CTL_CREATE);
-	sysctl_createv(clog, 0, &spec_rnode, NULL,
-		       CTLFLAG_READWRITE,
-		       CTLTYPE_BOOL, "hwmitigated",
-		       SYSCTL_DESCR("Whether Spectre Variant 2 is HW-mitigated"),
-		       sysctl_machdep_spectreV2_mitigated, 0,
-		       &spec_v2_mitigation_enabled, 0,
-		       CTL_CREATE, CTL_EOL);
-	sysctl_createv(clog, 0, &spec_rnode, NULL,
-		       CTLFLAG_PERMANENT | CTLFLAG_IMMEDIATE,
-		       CTLTYPE_BOOL, "swmitigated",
-		       SYSCTL_DESCR("Whether Spectre Variant 2 is SW-mitigated"),
-#if defined(SPECTRE_V2_GCC_MITIGATION)
-		       NULL, 1,
-#else
-		       NULL, 0,
-#endif
-	           NULL, 0,
-		       CTL_CREATE, CTL_EOL);
-	sysctl_createv(clog, 0, &spec_rnode, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_STRING, "method",
-		       SYSCTL_DESCR("Mitigation method in use"),
-		       NULL, 0,
-		       spec_v2_mitigation_name, 0,
-		       CTL_CREATE, CTL_EOL);
-
-	/* SpectreV4 */
-	spec_rnode = NULL;
-	sysctl_createv(clog, 0, NULL, &spec_rnode,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "spectre_v4", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_MACHDEP, CTL_CREATE);
-	sysctl_createv(clog, 0, &spec_rnode, NULL,
-		       CTLFLAG_READWRITE,
-		       CTLTYPE_BOOL, "mitigated",
-		       SYSCTL_DESCR("Whether Spectre Variant 4 is mitigated"),
-		       sysctl_machdep_spectreV4_mitigated, 0,
-		       &spec_v4_mitigation_enabled, 0,
-		       CTL_CREATE, CTL_EOL);
-	sysctl_createv(clog, 0, &spec_rnode, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_BOOL, "affected",
-		       SYSCTL_DESCR("Whether the CPU is affected by SpectreV4"),
-		       NULL, 0,
-	           &spec_v4_affected, 0,
-		       CTL_CREATE, CTL_EOL);
+	void sysctl_speculation_init(struct sysctllog **);
+	sysctl_speculation_init(clog);
 #endif
 
 	/* None of these can ever change once the system has booted */
