@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.392 2018/04/07 19:38:06 mrg Exp $
+#	$NetBSD: files.i386,v 1.393 2018/05/22 11:09:57 maxv Exp $
 #
 # new style config file for i386 architecture
 #
@@ -78,6 +78,7 @@ file	arch/i386/i386/trap.c
 file	dev/cons.c
 file	arch/x86/x86/fpu.c
 file	arch/x86/x86/dbregs.c
+file	arch/x86/x86/spectre.c
 
 file	arch/i386/i386/mptramp.S	multiprocessor
 
