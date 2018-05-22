@@ -1,4 +1,4 @@
-/*	$NetBSD: spectre.c,v 1.15 2018/05/22 10:20:04 maxv Exp $	*/
+/*	$NetBSD: spectre.c,v 1.16 2018/05/22 16:36:19 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spectre.c,v 1.15 2018/05/22 10:20:04 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spectre.c,v 1.16 2018/05/22 16:36:19 maxv Exp $");
 
 #include "opt_spectre.h"
 
@@ -520,6 +520,8 @@ static int mitigation_v4_change(bool enabled)
 		mutex_exit(&cpu_lock);
 		return EOPNOTSUPP;
 	case V4_MITIGATION_INTEL_SSBD:
+	case V4_MITIGATION_AMD_NONARCH_F15H:
+	case V4_MITIGATION_AMD_NONARCH_F16H:
 		printf("[+] %s SpectreV4 Mitigation...",
 		    enabled ? "Enabling" : "Disabling");
 		xc = xc_broadcast(0, mitigation_v4_change_cpu,
