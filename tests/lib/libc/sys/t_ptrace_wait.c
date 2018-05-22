@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.49 2018/05/20 23:47:16 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.50 2018/05/22 10:48:06 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.49 2018/05/20 23:47:16 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.50 2018/05/22 10:48:06 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -177,7 +177,7 @@ TRACEME_RAISE(traceme_raise5, SIGCONT) /* continued? */
 /// ----------------------------------------------------------------------------
 
 static void
-traceme_sighandler_catch(int sigsent, void (*sah)(int arg), int *traceme_caught)
+traceme_sendsignal_handle(int sigsent, void (*sah)(int a), int *traceme_caught)
 {
 	const int exitval = 5;
 	const int sigval = SIGSTOP;
@@ -242,7 +242,7 @@ traceme_sighandler_catch(int sigsent, void (*sah)(int arg), int *traceme_caught)
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
-#define TRACEME_SIGHANDLER_CATCH(test, sig)					\
+#define TRACEME_SENDSIGNAL_HANDLE(test, sig)					\
 ATF_TC(test);									\
 ATF_TC_HEAD(test, tc)								\
 {										\
@@ -264,18 +264,185 @@ test##_sighandler(int arg)							\
 ATF_TC_BODY(test, tc)								\
 {										\
 										\
-	traceme_sighandler_catch(sig, test##_sighandler, & test##_caught);	\
+	traceme_sendsignal_handle(sig, test##_sighandler, & test##_caught);	\
 }
 
 // A signal handler for SIGKILL and SIGSTOP cannot be registered.
-TRACEME_SIGHANDLER_CATCH(traceme_sighandler_catch1, SIGABRT) /* abort trap */
-TRACEME_SIGHANDLER_CATCH(traceme_sighandler_catch2, SIGHUP)  /* hangup */
-TRACEME_SIGHANDLER_CATCH(traceme_sighandler_catch3, SIGCONT) /* continued? */
+TRACEME_SENDSIGNAL_HANDLE(traceme_sendsignal_handle1, SIGABRT) /* abort trap */
+TRACEME_SENDSIGNAL_HANDLE(traceme_sendsignal_handle2, SIGHUP)  /* hangup */
+TRACEME_SENDSIGNAL_HANDLE(traceme_sendsignal_handle3, SIGCONT) /* continued? */
 
 /// ----------------------------------------------------------------------------
 
 static void
-traceme_signal_nohandler(int sigsent)
+traceme_sendsignal_masked(int sigsent)
+{
+	const int exitval = 5;
+	const int sigval = SIGSTOP;
+	pid_t child, wpid;
+	sigset_t set;
+#if defined(TWAIT_HAVE_STATUS)
+	int status;
+#endif
+
+	struct ptrace_siginfo info;
+	memset(&info, 0, sizeof(info));
+
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
+	if (child == 0) {
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
+		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
+
+		sigemptyset(&set);
+		sigaddset(&set, sigsent);
+		FORKEE_ASSERT(sigprocmask(SIG_BLOCK, &set, NULL) != -1);
+
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
+		FORKEE_ASSERT(raise(sigval) == 0);
+
+		_exit(exitval);
+	}
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_stopped(status, sigval);
+
+	DPRINTF("Before calling ptrace(2) with PT_GET_SIGINFO for child\n");
+	SYSCALL_REQUIRE(ptrace(PT_GET_SIGINFO, child, &info, sizeof(info))
+	                != -1);
+
+	DPRINTF("Signal traced to lwpid=%d\n", info.psi_lwpid);
+	DPRINTF("Signal properties: si_signo=%#x si_code=%#x si_errno=%#x\n",
+	    info.psi_siginfo.si_signo, info.psi_siginfo.si_code,
+	    info.psi_siginfo.si_errno);
+
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, sigval);
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, SI_LWP);
+
+	DPRINTF("Before resuming the child process where it left off and with "
+	    "signal %s to be sent\n", strsignal(sigsent));
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, sigsent) != -1);
+
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_exited(status, exitval);
+
+	DPRINTF("Before calling %s() for the exited child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
+}
+
+#define TRACEME_SENDSIGNAL_MASKED(test, sig)					\
+ATF_TC(test);									\
+ATF_TC_HEAD(test, tc)								\
+{										\
+	atf_tc_set_md_var(tc, "descr",						\
+	    "Verify that a signal " #sig " emitted by a tracer to a child is "	\
+	    "handled correctly and the signal is masked by SIG_BLOCK");		\
+}										\
+										\
+ATF_TC_BODY(test, tc)								\
+{										\
+										\
+	traceme_sendsignal_masked(sig);						\
+}
+
+// A signal handler for SIGKILL and SIGSTOP cannot be masked.
+TRACEME_SENDSIGNAL_MASKED(traceme_sendsignal_masked1, SIGABRT) /* abort trap */
+TRACEME_SENDSIGNAL_MASKED(traceme_sendsignal_masked2, SIGHUP)  /* hangup */
+TRACEME_SENDSIGNAL_MASKED(traceme_sendsignal_masked3, SIGCONT) /* continued? */
+
+/// ----------------------------------------------------------------------------
+
+static void
+traceme_sendsignal_ignored(int sigsent)
+{
+	const int exitval = 5;
+	const int sigval = SIGSTOP;
+	pid_t child, wpid;
+	struct sigaction sa;
+#if defined(TWAIT_HAVE_STATUS)
+	int status;
+#endif
+
+	struct ptrace_siginfo info;
+	memset(&info, 0, sizeof(info));
+
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
+	if (child == 0) {
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
+		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
+
+		memset(&sa, 0, sizeof(sa));
+		sa.sa_handler = SIG_IGN;
+		sigemptyset(&sa.sa_mask);
+		FORKEE_ASSERT(sigaction(sigsent, &sa, NULL) != -1);
+
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
+		FORKEE_ASSERT(raise(sigval) == 0);
+
+		_exit(exitval);
+	}
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_stopped(status, sigval);
+
+	DPRINTF("Before calling ptrace(2) with PT_GET_SIGINFO for child\n");
+	SYSCALL_REQUIRE(ptrace(PT_GET_SIGINFO, child, &info, sizeof(info))
+	                != -1);
+
+	DPRINTF("Signal traced to lwpid=%d\n", info.psi_lwpid);
+	DPRINTF("Signal properties: si_signo=%#x si_code=%#x si_errno=%#x\n",
+	    info.psi_siginfo.si_signo, info.psi_siginfo.si_code,
+	    info.psi_siginfo.si_errno);
+
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, sigval);
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, SI_LWP);
+
+	DPRINTF("Before resuming the child process where it left off and with "
+	    "signal %s to be sent\n", strsignal(sigsent));
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, sigsent) != -1);
+
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_exited(status, exitval);
+
+	DPRINTF("Before calling %s() for the exited child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
+}
+
+#define TRACEME_SENDSIGNAL_IGNORED(test, sig)					\
+ATF_TC(test);									\
+ATF_TC_HEAD(test, tc)								\
+{										\
+	atf_tc_set_md_var(tc, "descr",						\
+	    "Verify that a signal " #sig " emitted by a tracer to a child is "	\
+	    "handled correctly and the signal is masked by SIG_IGN");		\
+}										\
+										\
+ATF_TC_BODY(test, tc)								\
+{										\
+										\
+	traceme_sendsignal_ignored(sig);					\
+}
+
+// A signal handler for SIGKILL and SIGSTOP cannot be ignored.
+TRACEME_SENDSIGNAL_IGNORED(traceme_sendsignal_ignored1, SIGABRT) /* abort trap */
+TRACEME_SENDSIGNAL_IGNORED(traceme_sendsignal_ignored2, SIGHUP)  /* hangup */
+TRACEME_SENDSIGNAL_IGNORED(traceme_sendsignal_ignored3, SIGCONT) /* continued? */
+
+/// ----------------------------------------------------------------------------
+
+static void
+traceme_sendsignal_simple(int sigsent)
 {
 	const int sigval = SIGSTOP;
 	int exitval = 0;
@@ -369,7 +536,7 @@ traceme_signal_nohandler(int sigsent)
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
-#define TRACEME_SIGNAL_NOHANDLER(test, sig)					\
+#define TRACEME_SENDSIGNAL_SIMPLE(test, sig)					\
 ATF_TC(test);									\
 ATF_TC_HEAD(test, tc)								\
 {										\
@@ -381,14 +548,14 @@ ATF_TC_HEAD(test, tc)								\
 ATF_TC_BODY(test, tc)								\
 {										\
 										\
-	traceme_signal_nohandler(sig);						\
+	traceme_sendsignal_simple(sig);						\
 }
 
-TRACEME_SIGNAL_NOHANDLER(traceme_signal_nohandler1, SIGKILL) /* non-maskable */
-TRACEME_SIGNAL_NOHANDLER(traceme_signal_nohandler2, SIGSTOP) /* non-maskable */
-TRACEME_SIGNAL_NOHANDLER(traceme_signal_nohandler3, SIGABRT) /* abort trap */
-TRACEME_SIGNAL_NOHANDLER(traceme_signal_nohandler4, SIGHUP)  /* hangup */
-TRACEME_SIGNAL_NOHANDLER(traceme_signal_nohandler5, SIGCONT) /* continued? */
+TRACEME_SENDSIGNAL_SIMPLE(traceme_sendsignal_simple1, SIGKILL) /* non-maskable */
+TRACEME_SENDSIGNAL_SIMPLE(traceme_sendsignal_simple2, SIGSTOP) /* non-maskable */
+TRACEME_SENDSIGNAL_SIMPLE(traceme_sendsignal_simple3, SIGABRT) /* abort trap */
+TRACEME_SENDSIGNAL_SIMPLE(traceme_sendsignal_simple4, SIGHUP)  /* hangup */
+TRACEME_SENDSIGNAL_SIMPLE(traceme_sendsignal_simple5, SIGCONT) /* continued? */
 
 /// ----------------------------------------------------------------------------
 
@@ -7121,15 +7288,23 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, traceme_raise4);
 	ATF_TP_ADD_TC(tp, traceme_raise5);
 
-	ATF_TP_ADD_TC(tp, traceme_sighandler_catch1);
-	ATF_TP_ADD_TC(tp, traceme_sighandler_catch2);
-	ATF_TP_ADD_TC(tp, traceme_sighandler_catch3);
+	ATF_TP_ADD_TC(tp, traceme_sendsignal_handle1);
+	ATF_TP_ADD_TC(tp, traceme_sendsignal_handle2);
+	ATF_TP_ADD_TC(tp, traceme_sendsignal_handle3);
 
-	ATF_TP_ADD_TC(tp, traceme_signal_nohandler1);
-	ATF_TP_ADD_TC(tp, traceme_signal_nohandler2);
-	ATF_TP_ADD_TC(tp, traceme_signal_nohandler3);
-	ATF_TP_ADD_TC(tp, traceme_signal_nohandler4);
-	ATF_TP_ADD_TC(tp, traceme_signal_nohandler5);
+	ATF_TP_ADD_TC(tp, traceme_sendsignal_masked1);
+	ATF_TP_ADD_TC(tp, traceme_sendsignal_masked2);
+	ATF_TP_ADD_TC(tp, traceme_sendsignal_masked3);
+
+	ATF_TP_ADD_TC(tp, traceme_sendsignal_ignored1);
+	ATF_TP_ADD_TC(tp, traceme_sendsignal_ignored2);
+	ATF_TP_ADD_TC(tp, traceme_sendsignal_ignored3);
+
+	ATF_TP_ADD_TC(tp, traceme_sendsignal_simple1);
+	ATF_TP_ADD_TC(tp, traceme_sendsignal_simple2);
+	ATF_TP_ADD_TC(tp, traceme_sendsignal_simple3);
+	ATF_TP_ADD_TC(tp, traceme_sendsignal_simple4);
+	ATF_TP_ADD_TC(tp, traceme_sendsignal_simple5);
 
 	ATF_TP_ADD_TC(tp, traceme_pid1_parent);
 
