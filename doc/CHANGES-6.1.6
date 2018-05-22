@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1.6,v 1.1.2.142 2018/05/17 13:51:22 martin Exp $
+# $NetBSD: CHANGES-6.1.6,v 1.1.2.143 2018/05/22 14:45:21 martin Exp $
 
 A complete list of changes from the NetBSD 6.1.5 release to the NetBSD 6.1.6
 release:
@@ -15146,4 +15146,25 @@ sys/net/npf/npf_inet.c				1.45 (patch)
 
 	Fix use-after-free.
 	[maxv, ticket #1549]
+
+sys/kern/kern_exec.c					(patch)
+sys/arch/amiga/conf/DRACO				(patch)
+sys/arch/amiga/conf/GENERIC				(patch)
+sys/arch/amiga/conf/GENERIC.in				(patch)
+sys/arch/hp300/conf/GENERIC				(patch)
+sys/arch/i386/conf/GENERIC				(patch)
+sys/arch/i386/conf/XEN3_DOM0				(patch)
+sys/arch/i386/conf/XEN3_DOMU				(patch)
+sys/arch/sparc/conf/BILL-THE-CAT			(patch)
+sys/arch/sparc/conf/GENERIC				(patch)
+sys/arch/sparc/conf/KRUPS				(patch)
+sys/arch/sparc/conf/MRCOFFEE				(patch)
+sys/arch/sparc/conf/TADPOLE3GX				(patch)
+sys/arch/sparc64/conf/GENERIC				(patch)
+sys/arch/sparc64/conf/NONPLUS64				(patch)
+
+	Disable compat_svr4 and compat_svr4_32 everywhere.
+	Disable compat_ibcs2 everywhere but on Vax.
+	Disable autoload of modules for svr4/svr4_32/ibcs2/freebsd.
+	[maxv, ticket #1500]
 
