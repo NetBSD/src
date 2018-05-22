@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.172.6.4 2018/05/06 09:20:43 martin Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.172.6.5 2018/05/22 17:50:27 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.172.6.4 2018/05/06 09:20:43 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.172.6.5 2018/05/22 17:50:27 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
@@ -459,11 +459,6 @@ void
 m_pkthdr_remove(struct mbuf *m)
 {
 	KASSERT(m->m_flags & M_PKTHDR);
-
-	if (M_READONLY(m)) {
-		/* Nothing we can do. */
-		return;
-	}
 
 	m_tag_delete_chain(m, NULL);
 	m->m_flags &= ~M_PKTHDR;
