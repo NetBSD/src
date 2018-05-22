@@ -1,4 +1,4 @@
-/*	$NetBSD: h_segv.c,v 1.3 2018/05/21 08:49:03 kamil Exp $	*/
+/*	$NetBSD: h_segv.c,v 1.4 2018/05/22 04:32:56 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -29,8 +29,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: h_segv.c,v 1.3 2018/05/21 08:49:03 kamil Exp $");
+__RCSID("$NetBSD: h_segv.c,v 1.4 2018/05/22 04:32:56 kamil Exp $");
 
+#include <sys/types.h>
+#include <sys/ptrace.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -57,21 +59,41 @@ static struct {
 	{ "ignore",	F_IGNORE }
 };
 
+static int sig;
+static struct {
+	const char *n;
+	int v;
+} sn[] = {
+	{ "segv",	SIGSEGV },
+	{ "trap",	SIGTRAP }
+};
+
 static void
 foo(int s)
 {
         char buf[64];
         int i = snprintf(buf, sizeof(buf), "got %d\n", s);
         write(2, buf, i);
-	if (flags & F_RECURSE)
-		*p = 0;
+	if (flags & F_RECURSE) {
+		if (sig == SIGSEGV)
+			*p = 0;
+		else if (sig == SIGTRAP) {
+#ifdef PTRACE_BREAKPOINT_ASM
+			PTRACE_BREAKPOINT_ASM;
+#else
+			/* port me */
+#endif
+		}
+	}
         exit(EXIT_SUCCESS);
 }
 
 static __dead void
 usage(void)
 {
-	fprintf(stderr, "Usage: %s recurse|mask|handle ...\n", getprogname());
+	const char *pname = getprogname();
+
+	fprintf(stderr, "Usage: %s recurse|mask|handle|ignore ...\n", pname);
 	exit(EXIT_FAILURE);
 }
 
@@ -83,16 +105,21 @@ main(int argc, char *argv[])
 
 	for (int i = 1; i < argc; i++) {
 		size_t j;
-		for (j = 0; j < __arraycount(nv); j++)
+		for (j = 0; j < __arraycount(nv); j++) {
 			if (strcmp(nv[j].n, argv[i]) == 0) {
 				flags |= nv[j].v;
 				break;
 			}
+			if (strcmp(sn[j].n, argv[i]) == 0) {
+				sig = sn[j].v;
+				break;
+			}
+		}
 		if (j == __arraycount(nv))
 			usage();
 	}
 
-	if (flags == 0)
+	if (flags == 0 || sig == 0)
 		usage();
 
 	if (flags & F_HANDLE) {
@@ -101,7 +128,7 @@ main(int argc, char *argv[])
 		sa.sa_flags = SA_RESTART;
 		sa.sa_handler = foo;
 		sigemptyset(&sa.sa_mask);
-		if (sigaction(SIGSEGV, &sa, NULL) == -1)
+		if (sigaction(sig, &sa, NULL) == -1)
 			err(EXIT_FAILURE, "sigaction");
 	}
 
@@ -109,7 +136,7 @@ main(int argc, char *argv[])
 		sigset_t set;
 
 		sigemptyset(&set);
-		sigaddset(&set, SIGSEGV);
+		sigaddset(&set, sig);
 		if (sigprocmask(SIG_BLOCK, &set, NULL) == -1)
 			err(EXIT_FAILURE, "sigprocmask");
 	}
@@ -120,10 +147,18 @@ main(int argc, char *argv[])
 		memset(&sa, 0, sizeof(sa));
 		sa.sa_handler = SIG_IGN;
 		sigemptyset(&sa.sa_mask);
-		if (sigaction(SIGSEGV, &sa, NULL) == -1)
+		if (sigaction(sig, &sa, NULL) == -1)
 			err(EXIT_FAILURE, "sigaction");
 	}
 
-        *p = 1;
+	if (sig == SIGSEGV)
+	        *p = 1;
+	else if (sig == SIGTRAP) {
+#ifdef PTRACE_BREAKPOINT_ASM
+		PTRACE_BREAKPOINT_ASM;
+#else
+		/* port me */
+#endif
+	}
 	return EXIT_SUCCESS;
 }
