@@ -1,4 +1,4 @@
-/*	$NetBSD: spectre.c,v 1.16 2018/05/22 16:36:19 maxv Exp $	*/
+/*	$NetBSD: spectre.c,v 1.17 2018/05/22 16:44:42 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spectre.c,v 1.16 2018/05/22 16:36:19 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spectre.c,v 1.17 2018/05/22 16:44:42 maxv Exp $");
 
 #include "opt_spectre.h"
 
@@ -355,19 +355,9 @@ sysctl_machdep_spectreV2_mitigated(SYSCTLFN_ARGS)
 	if (error != 0 || newp == NULL)
 		return error;
 
-	if (val == 0) {
-		if (!v2_mitigation_enabled)
-			error = 0;
-		else
-			error = mitigation_v2_change(false);
-	} else {
-		if (v2_mitigation_enabled)
-			error = 0;
-		else
-			error = mitigation_v2_change(true);
-	}
-
-	return error;
+	if (val == v2_mitigation_enabled)
+		return 0;
+	return mitigation_v2_change(val);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -557,19 +547,9 @@ sysctl_machdep_spectreV4_mitigated(SYSCTLFN_ARGS)
 	if (error != 0 || newp == NULL)
 		return error;
 
-	if (val == 0) {
-		if (!v4_mitigation_enabled)
-			error = 0;
-		else
-			error = mitigation_v4_change(false);
-	} else {
-		if (v4_mitigation_enabled)
-			error = 0;
-		else
-			error = mitigation_v4_change(true);
-	}
-
-	return error;
+	if (val == v4_mitigation_enabled)
+		return 0;
+	return mitigation_v4_change(val);
 }
 
 /* -------------------------------------------------------------------------- */
