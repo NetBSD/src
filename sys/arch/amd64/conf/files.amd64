@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.102 2018/04/07 19:38:06 mrg Exp $
+#	$NetBSD: files.amd64,v 1.103 2018/05/22 11:09:57 maxv Exp $
 #
 # new style config file for amd64 architecture
 #
@@ -57,6 +57,7 @@ file	arch/amd64/amd64/trap.c			machdep
 file	arch/x86/x86/fpu.c			machdep
 file	arch/x86/x86/dbregs.c			machdep
 file	arch/x86/x86/convert_xmm_s87.c		machdep
+file	arch/x86/x86/spectre.c			machdep
 file	arch/amd64/amd64/lock_stubs.S		machdep
 file	dev/cons.c				machdep
 
