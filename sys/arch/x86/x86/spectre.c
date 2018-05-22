@@ -1,4 +1,4 @@
-/*	$NetBSD: spectre.c,v 1.11 2018/05/22 06:31:05 maxv Exp $	*/
+/*	$NetBSD: spectre.c,v 1.12 2018/05/22 07:11:53 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spectre.c,v 1.11 2018/05/22 06:31:05 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spectre.c,v 1.12 2018/05/22 07:11:53 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -347,6 +347,140 @@ sysctl_machdep_spectreV2_mitigated(SYSCTLFN_ARGS)
 
 /* -------------------------------------------------------------------------- */
 
+bool spec_v4_mitigation_enabled __read_mostly = false;
+bool spec_v4_affected __read_mostly = true;
+
+int sysctl_machdep_spectreV4_mitigated(SYSCTLFN_ARGS);
+
+static bool ssbd_needed(void)
+{
+	uint64_t msr;
+
+	if (cpu_info_primary.ci_feat_val[7] & CPUID_SEF_ARCH_CAP) {
+		msr = rdmsr(MSR_IA32_ARCH_CAPABILITIES);
+		if (msr & IA32_ARCH_SSB_NO) {
+			/*
+			 * The processor indicates it is not vulnerable to the
+			 * Speculative Store Bypass (SpectreV4) flaw.
+			 */
+			return false;
+		}
+	}
+
+	return true;
+}
+
+static bool ssbd_supported(void)
+{
+	u_int descs[4];
+
+	if (cpu_vendor == CPUVENDOR_INTEL) {
+		if (cpuid_level >= 7) {
+			x86_cpuid(7, descs);
+			if (descs[3] & CPUID_SEF_SSBD) {
+				/* descs[3] = %edx */
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+static void
+mitigation_v4_apply_cpu(bool enabled)
+{
+	uint64_t msr;
+
+	msr = rdmsr(MSR_IA32_SPEC_CTRL);
+
+	if (enabled) {
+		msr |= IA32_SPEC_CTRL_SSBD;
+	} else {
+		msr &= ~IA32_SPEC_CTRL_SSBD;
+	}
+
+	wrmsr(MSR_IA32_SPEC_CTRL, msr);
+}
+
+static void
+mitigation_v4_change_cpu(void *arg1, void *arg2)
+{
+	bool enabled = (bool)arg1;
+
+	mitigation_v4_apply_cpu(enabled);
+}
+
+static int mitigation_v4_change(bool enabled)
+{
+	struct cpu_info *ci = NULL;
+	CPU_INFO_ITERATOR cii;
+	uint64_t xc;
+
+	if (!ssbd_supported()) {
+			printf("[!] No mitigation available\n");
+			return EOPNOTSUPP;
+	}
+
+	mutex_enter(&cpu_lock);
+
+	/*
+	 * We expect all the CPUs to be online.
+	 */
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		struct schedstate_percpu *spc = &ci->ci_schedstate;
+		if (spc->spc_flags & SPCF_OFFLINE) {
+			printf("[!] cpu%d offline, SpectreV4 not changed\n",
+			    cpu_index(ci));
+			mutex_exit(&cpu_lock);
+			return EOPNOTSUPP;
+		}
+	}
+
+	printf("[+] %s SpectreV4 Mitigation...",
+	    enabled ? "Enabling" : "Disabling");
+	xc = xc_broadcast(0, mitigation_v4_change_cpu,
+	    (void *)enabled, NULL);
+	xc_wait(xc);
+	printf(" done!\n");
+	spec_v4_mitigation_enabled = enabled;
+	mutex_exit(&cpu_lock);
+
+	return 0;
+}
+
+int
+sysctl_machdep_spectreV4_mitigated(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node;
+	int error;
+	bool val;
+
+	val = *(bool *)rnode->sysctl_data;
+
+	node = *rnode;
+	node.sysctl_data = &val;
+
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error != 0 || newp == NULL)
+		return error;
+
+	if (val == 0) {
+		if (!spec_v4_mitigation_enabled)
+			error = 0;
+		else
+			error = mitigation_v4_change(false);
+	} else {
+		if (spec_v4_mitigation_enabled)
+			error = 0;
+		else
+			error = mitigation_v4_change(true);
+	}
+
+	return error;
+}
+
+/* -------------------------------------------------------------------------- */
+
 void speculation_barrier(struct lwp *, struct lwp *);
 
 void
@@ -392,5 +526,16 @@ cpu_speculation_init(struct cpu_info *ci)
 	}
 	if (mitigation_v2_method != MITIGATION_NONE) {
 		mitigation_v2_apply_cpu(ci, true);
+	}
+
+	/*
+	 * Spectre V4.
+	 */
+	if (ssbd_needed()) {
+		if (ci == &cpu_info_primary) {
+			spec_v4_affected = true;
+		}
+		/* mitigation_v4_apply_cpu(true); */
+		/* spec_v4_mitigation_enabled = true; */
 	}
 }
