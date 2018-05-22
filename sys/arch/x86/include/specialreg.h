@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.120 2018/03/30 19:49:49 maxv Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.121 2018/05/22 07:11:53 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -405,11 +405,11 @@
 #define CPUID_SEF_IBRS		__BIT(26) /* IBRS / IBPB Speculation Control */
 #define CPUID_SEF_STIBP		__BIT(27) /* STIBP Speculation Control */
 #define CPUID_SEF_ARCH_CAP	__BIT(29) /* IA32_ARCH_CAPABILITIES */
+#define CPUID_SEF_SSBD		__BIT(31) /* Speculative Store Bypass Disable */
 
-#define CPUID_SEF_FLAGS2	"\20" \
-				"\3" "AVX512_4VNNIW" "\4" "AVX512_4FMAPS" \
-					"\33" "IBRS"	"\34" "STIBP"	\
-			"\36" "ARCH_CAP"
+#define CPUID_SEF_FLAGS2	\
+	"\20" "\3" "AVX512_4VNNIW" "\4" "AVX512_4FMAPS" \
+	"\33" "IBRS" "\34" "STIBP" "\36" "ARCH_CAP" "\38" "SSBD"
 
 /*
  * CPUID Processor extended state Enumeration Fn0000000d
@@ -643,6 +643,7 @@
 #define MSR_IA32_SPEC_CTRL	0x048
 #define 	IA32_SPEC_CTRL_IBRS	0x01
 #define 	IA32_SPEC_CTRL_STIBP	0x02
+#define 	IA32_SPEC_CTRL_SSBD	0x04
 #define MSR_IA32_PRED_CMD	0x049
 #define 	IA32_PRED_CMD_IBPB	0x01
 #define MSR_BIOS_UPDT_TRIG	0x079
@@ -660,6 +661,7 @@
 #define MSR_IA32_ARCH_CAPABILITIES 0x10a
 #define 	IA32_ARCH_RDCL_NO	0x01
 #define 	IA32_ARCH_IBRS_ALL	0x02
+#define 	IA32_ARCH_SSB_NO	0x10
 #define MSR_BBL_CR_ADDR		0x116	/* PII+ only */
 #define MSR_BBL_CR_DECC		0x118	/* PII+ only */
 #define MSR_BBL_CR_CTL		0x119	/* PII+ only */
