@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.113 2018/05/22 07:11:53 maxv Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.114 2018/05/22 08:15:26 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,13 +31,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.113 2018/05/22 07:11:53 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.114 2018/05/22 08:15:26 maxv Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
 #include "opt_splash.h"
 #include "opt_kaslr.h"
 #include "opt_svs.h"
+#ifndef XEN
+#include "opt_spectre.h"
+#endif
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1303,10 +1306,21 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 		       CTL_MACHDEP, CTL_CREATE);
 	sysctl_createv(clog, 0, &spec_rnode, NULL,
 		       CTLFLAG_READWRITE,
-		       CTLTYPE_BOOL, "mitigated",
-		       SYSCTL_DESCR("Whether Spectre Variant 2 is mitigated"),
+		       CTLTYPE_BOOL, "hwmitigated",
+		       SYSCTL_DESCR("Whether Spectre Variant 2 is HW-mitigated"),
 		       sysctl_machdep_spectreV2_mitigated, 0,
 		       &spec_v2_mitigation_enabled, 0,
+		       CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &spec_rnode, NULL,
+		       CTLFLAG_PERMANENT | CTLFLAG_IMMEDIATE,
+		       CTLTYPE_BOOL, "swmitigated",
+		       SYSCTL_DESCR("Whether Spectre Variant 2 is SW-mitigated"),
+#if defined(SPECTRE_V2_GCC_MITIGATION)
+		       NULL, 1,
+#else
+		       NULL, 0,
+#endif
+	           NULL, 0,
 		       CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, &spec_rnode, NULL,
 		       CTLFLAG_PERMANENT,
