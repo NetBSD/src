@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.169 2011/12/18 05:49:27 dholland Exp $
+# $NetBSD: GENERIC,v 1.169.8.1 2018/05/22 14:44:30 martin Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/hp300/conf/std.hp300"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.169 $"
+#ident 		"GENERIC-$Revision: 1.169.8.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -95,7 +95,7 @@ options 	COMPAT_AOUT_M68K	# NetBSD/m68k a.out binary compatibility
 options 	COMPAT_M68K4K	# NetBSD/m68k4k binary compatibility
 options 	COMPAT_SUNOS	# SunOS4 m68k binary compatibility
 options 	COMPAT_LINUX	# Linux/m68k binary compatibility
-options 	COMPAT_SVR4	# SVR4 binary compatibility
+#options 	COMPAT_SVR4	# SVR4 binary compatibility
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # Filesystems

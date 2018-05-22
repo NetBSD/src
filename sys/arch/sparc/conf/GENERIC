@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.230 2012/01/11 17:18:51 macallan Exp $
+# $NetBSD: GENERIC,v 1.230.8.1 2018/05/22 14:44:30 martin Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.230 $"
+#ident 		"GENERIC-$Revision: 1.230.8.1 $"
 
 maxusers	32
 
@@ -183,7 +183,7 @@ options 	COMPAT_30	# NetBSD 3.0 binary compatibility
 options 	COMPAT_40	# NetBSD 4.0 binary compatibility
 options 	COMPAT_50	# NetBSD 5.0 binary compatibility
 options 	COMPAT_SUNOS	# SunOS 4.x binary compatibility
-options 	COMPAT_SVR4	# SunOS 5.x binary compatibility
+#options 	COMPAT_SVR4	# SunOS 5.x binary compatibility
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 ## File systems.  You probably need at least one of FFS or NFS.
