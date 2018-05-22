@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.2,v 1.1.2.89 2018/05/14 16:21:48 martin Exp $
+# $NetBSD: CHANGES-7.2,v 1.1.2.90 2018/05/22 17:36:10 martin Exp $
 
 A complete list of changes from the NetBSD 7.1 release to the NetBSD 7.2
 release:
@@ -5480,4 +5480,10 @@ sys/net/npf/npf_inet.c				1.45
 
 	Fix use-after-free.
 	[maxv, ticket #1605]
+
+sys/kern/uipc_mbuf.c				1.214
+
+	Revert ticket #1598:
+	remove the M_READONLY check. The initial code was correct.
+	[maxv, ticket #1606]
 
