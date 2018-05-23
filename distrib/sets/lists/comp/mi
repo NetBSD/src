@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2193 2018/05/12 14:49:34 jdolecek Exp $
+#	$NetBSD: mi,v 1.2194 2018/05/23 02:06:03 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -4699,7 +4699,7 @@
 ./usr/share/man/cat3/GCQ_INIT.0			comp-sys-catman		.cat
 ./usr/share/man/cat3/GCQ_INIT_HEAD.0		comp-sys-catman		.cat
 ./usr/share/man/cat3/GCQ_ITEM.0			comp-sys-catman		.cat
-./usr/share/man/cat3/HMAC.0			comp-c-catman		.cat,openssl=11
+./usr/share/man/cat3/HMAC.0			comp-openssl		openssl
 ./usr/share/man/cat3/IFTODT.0			comp-c-catman		.cat
 ./usr/share/man/cat3/LIST.0			comp-c-catman		.cat
 ./usr/share/man/cat3/LIST_EMPTY.0		comp-c-catman		.cat
@@ -4731,7 +4731,7 @@
 ./usr/share/man/cat3/MD4Final.0			comp-c-catman		.cat
 ./usr/share/man/cat3/MD4Init.0			comp-c-catman		.cat
 ./usr/share/man/cat3/MD4Update.0		comp-c-catman		.cat
-./usr/share/man/cat3/MD5.0			comp-c-catman		.cat,openssl=11
+./usr/share/man/cat3/MD5.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/MD5Data.0			comp-c-catman		.cat
 ./usr/share/man/cat3/MD5End.0			comp-c-catman		.cat
 ./usr/share/man/cat3/MD5File.0			comp-c-catman		.cat
@@ -8413,6 +8413,10 @@
 ./usr/share/man/cat3/openpam_ttyconv.0		comp-c-catman		.cat,pam
 ./usr/share/man/cat3/openpgpsdk.0		comp-obsolete		obsolete
 ./usr/share/man/cat3/openpty.0			comp-c-catman		.cat
+./usr/share/man/cat3/openssl_HMAC.0		comp-c-catman		.cat,openssl=11
+./usr/share/man/cat3/openssl_MD2.0		comp-c-catman		.cat,openssl=11
+./usr/share/man/cat3/openssl_MD4.0		comp-c-catman		.cat,openssl=11
+./usr/share/man/cat3/openssl_MD5.0		comp-c-catman		.cat,openssl=11
 ./usr/share/man/cat3/openssl_bio.0		comp-c-catman		.cat
 ./usr/share/man/cat3/openssl_blowfish.0	comp-c-catman	.cat,openssl=10
 ./usr/share/man/cat3/openssl_bn.0	comp-c-catman	.cat,openssl=10
@@ -12516,7 +12520,7 @@
 ./usr/share/man/html3/GCQ_INIT.html		comp-sys-htmlman	html
 ./usr/share/man/html3/GCQ_INIT_HEAD.html	comp-sys-htmlman	html
 ./usr/share/man/html3/GCQ_ITEM.html		comp-sys-htmlman	html
-./usr/share/man/html3/HMAC.html	comp-c-htmlman	html,openssl=11
+./usr/share/man/html3/HMAC.html			comp-obsolete		obsolete
 ./usr/share/man/html3/IFTODT.html		comp-c-htmlman		html
 ./usr/share/man/html3/LIST.html			comp-c-htmlman		html
 ./usr/share/man/html3/LIST_EMPTY.html		comp-c-htmlman		html
@@ -12548,7 +12552,7 @@
 ./usr/share/man/html3/MD4Final.html		comp-c-htmlman		html
 ./usr/share/man/html3/MD4Init.html		comp-c-htmlman		html
 ./usr/share/man/html3/MD4Update.html		comp-c-htmlman		html
-./usr/share/man/html3/MD5.html	comp-c-htmlman	html,openssl=11
+./usr/share/man/html3/MD5.html			comp-obsolete		obsolete
 ./usr/share/man/html3/MD5Data.html		comp-c-htmlman		html
 ./usr/share/man/html3/MD5End.html		comp-c-htmlman		html
 ./usr/share/man/html3/MD5File.html		comp-c-htmlman		html
@@ -16154,6 +16158,10 @@
 ./usr/share/man/html3/openpam_ttyconv.html	comp-c-htmlman		html,pam
 ./usr/share/man/html3/openpgpsdk.html		comp-obsolete		obsolete
 ./usr/share/man/html3/openpty.html		comp-c-htmlman		html
+./usr/share/man/html3/openssl_HMAC.html		comp-c-htmlman		html,openssl=11
+./usr/share/man/html3/openssl_MD2.html		comp-c-htmlman		html,openssl=11
+./usr/share/man/html3/openssl_MD4.html		comp-c-htmlman		html,openssl=11
+./usr/share/man/html3/openssl_MD5.html		comp-c-htmlman		html,openssl=11
 ./usr/share/man/html3/openssl_bio.html		comp-c-htmlman		html
 ./usr/share/man/html3/openssl_blowfish.html	comp-c-htmlman	html,openssl=10
 ./usr/share/man/html3/openssl_blowfish.html	comp-obsolete	openssl=11,obsolete
@@ -20173,7 +20181,7 @@
 ./usr/share/man/man3/GCQ_INIT.3			comp-sys-man		.man
 ./usr/share/man/man3/GCQ_INIT_HEAD.3		comp-sys-man		.man
 ./usr/share/man/man3/GCQ_ITEM.3			comp-sys-man		.man
-./usr/share/man/man3/HMAC.3	comp-c-man	.man,openssl=11
+./usr/share/man/man3/HMAC.3			comp-obsolete		obsolete
 ./usr/share/man/man3/IFTODT.3			comp-c-man		.man
 ./usr/share/man/man3/LIST.3			comp-c-man		.man
 ./usr/share/man/man3/LIST_EMPTY.3		comp-c-man		.man
@@ -20205,7 +20213,7 @@
 ./usr/share/man/man3/MD4Final.3			comp-c-man		.man
 ./usr/share/man/man3/MD4Init.3			comp-c-man		.man
 ./usr/share/man/man3/MD4Update.3		comp-c-man		.man
-./usr/share/man/man3/MD5.3	comp-c-man	.man,openssl=11
+./usr/share/man/man3/MD5.3			comp-obsolete		obsolete
 ./usr/share/man/man3/MD5Data.3			comp-c-man		.man
 ./usr/share/man/man3/MD5End.3			comp-c-man		.man
 ./usr/share/man/man3/MD5File.3			comp-c-man		.man
@@ -23907,6 +23915,10 @@
 ./usr/share/man/man3/openpam_ttyconv.3		comp-c-man		.man,pam
 ./usr/share/man/man3/openpgpsdk.3		comp-obsolete		obsolete
 ./usr/share/man/man3/openpty.3			comp-c-man		.man
+./usr/share/man/man3/openssl_HMAC.3		comp-c-man		.man,openssl=11
+./usr/share/man/man3/openssl_MD2.3		comp-c-man		.man,openssl=11
+./usr/share/man/man3/openssl_MD4.3		comp-c-man		.man,openssl=11
+./usr/share/man/man3/openssl_MD5.3		comp-c-man		.man,openssl=11
 ./usr/share/man/man3/openssl_bio.3		comp-c-man		.man
 ./usr/share/man/man3/openssl_blowfish.3	comp-c-man	.man,openssl=10
 ./usr/share/man/man3/openssl_blowfish.3	comp-obsolete	openssl=11,obsolete
