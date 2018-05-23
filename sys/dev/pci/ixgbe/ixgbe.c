@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.154 2018/05/23 04:37:13 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.155 2018/05/23 10:11:07 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -702,6 +702,8 @@ ixgbe_initialize_transmit_units(struct adapter *adapter)
 
 		/* Cache the tail address */
 		txr->tail = IXGBE_TDT(j);
+
+		txr->txr_no_space = false;
 
 		/* Disable Head Writeback */
 		/*
