@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1588 2018/05/20 14:08:32 thorpej Exp $
+# $NetBSD: mi,v 1.1589 2018/05/23 01:05:47 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -38,7 +38,7 @@
 ./usr/share/info/texinfo.info			man-texinfo-info	info
 ./usr/share/info/uucp.info			man-obsolete		obsolete
 ./usr/share/info/vi.info			man-sys-info		doc,info
-./usr/share/man/cat1/Mail.0			man-mail-catman		.cat
+./usr/share/man/cat1/Mail.0			man-obsolete		obsolete
 ./usr/share/man/cat1/[.0			man-util-catman		.cat
 ./usr/share/man/cat1/agrep.0			man-util-catman		.cat
 ./usr/share/man/cat1/alias.0			man-util-catman		.cat
@@ -3263,7 +3263,7 @@
 ./usr/share/man/cat9lua/intro.0			man-sys-catman		.cat
 ./usr/share/man/cat9lua/pmf.0			man-sys-catman		.cat
 ./usr/share/man/cat9lua/systm.0			man-sys-catman		.cat
-./usr/share/man/html1/Mail.html			man-mail-htmlman	html
+./usr/share/man/html1/Mail.html			man-obsolete		obsolete
 ./usr/share/man/html1/[.html			man-util-htmlman	html
 ./usr/share/man/html1/agrep.html		man-util-htmlman	html
 ./usr/share/man/html1/alias.html		man-util-htmlman	html
@@ -6096,7 +6096,7 @@
 ./usr/share/man/html9lua/intro.html		man-sys-htmlman		html
 ./usr/share/man/html9lua/pmf.html		man-sys-htmlman		html
 ./usr/share/man/html9lua/systm.html		man-sys-htmlman		html
-./usr/share/man/man1/Mail.1			man-mail-man		.man
+./usr/share/man/man1/Mail.1			man-obsolete		obsolete
 ./usr/share/man/man1/[.1			man-util-man		.man
 ./usr/share/man/man1/agrep.1			man-util-man		.man
 ./usr/share/man/man1/alias.1			man-util-man		.man
