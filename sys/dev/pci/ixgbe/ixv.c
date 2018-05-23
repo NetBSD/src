@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.99 2018/05/23 04:37:13 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.100 2018/05/23 10:11:07 msaitoh Exp $*/
 
 /******************************************************************************
 
@@ -1588,6 +1588,8 @@ ixv_initialize_transmit_units(struct adapter *adapter)
 
 		/* Set Tx Tail register */
 		txr->tail = IXGBE_VFTDT(j);
+
+		txr->txr_no_space = false;
 
 		/* Set Ring parameters */
 		IXGBE_WRITE_REG(hw, IXGBE_VFTDBAL(j),
