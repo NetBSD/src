@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.28 2018/02/09 08:58:01 maxv Exp $	*/
+/*	$NetBSD: fpu.c,v 1.29 2018/05/23 07:34:40 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.  All
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.28 2018/02/09 08:58:01 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.29 2018/05/23 07:34:40 maxv Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -135,11 +135,11 @@ process_fpframe(struct lwp *lwp)
 	return &pcb->pcb_savefpu;
 }
 
-/* 
+/*
  * The following table is used to ensure that the FPE_... value
  * that is passed as a trapcode to the signal handler of the user
  * process does not have more than one bit set.
- * 
+ *
  * Multiple bits may be set if SSE simd instructions generate errors
  * on more than one value or if the user process modifies the control
  * word while a status word bit is already set (which this is a sign
@@ -160,7 +160,7 @@ process_fpframe(struct lwp *lwp)
  * 2) Throw away the bits currently masked in the control word,
  *    assuming the user isn't interested in them anymore.
  * 3) Reinsert status word bit 7 (stack fault) if it is set, which
- *    cannot be masked but must be presered.
+ *    cannot be masked but must be preserved.
  *    'Stack fault' is a sub-class of 'invalid operation'.
  * 4) Use the remaining bits to point into the trapcode table.
  *
@@ -171,12 +171,12 @@ process_fpframe(struct lwp *lwp)
  * 1b   Stack overflow
  * 1c   Operand of unsupported format
  * 1d   SNaN operand.
- * 2  QNaN operand (not an exception, irrelavant here)
+ * 2  QNaN operand (not an exception, irrelevant here)
  * 3  Any other invalid-operation not mentioned above or zero divide
  *      (FP_X_INV, FP_X_DZ)
  * 4  Denormal operand (FP_X_DNML)
  * 5  Numeric over/underflow (FP_X_OFL, FP_X_UFL)
- * 6  Inexact result (FP_X_IMP) 
+ * 6  Inexact result (FP_X_IMP)
  *
  * NB: the above seems to mix up the mxscr error bits and the x87 ones.
  * They are in the same order, but there is no EN_SW_STACK_FAULT in the mmx
@@ -405,30 +405,28 @@ fpudna(struct trapframe *frame)
 	pcb->pcb_fpcpu = ci;
 
 	switch (x86_fpu_save) {
-		case FPU_SAVE_FSAVE:
-			frstor(&pcb->pcb_savefpu);
-			break;
-
-		case FPU_SAVE_FXSAVE:
-			/*
-			 * AMD FPU's do not restore FIP, FDP, and FOP on
-			 * fxrstor, leaking other process's execution history.
-			 * Clear them manually by loading a zero.
-			 *
-			 * Clear the ES bit in the x87 status word if it is
-			 * currently set, in order to avoid causing a fault
-			 * in the upcoming load.
-			 */
-			if (fngetsw() & 0x80)
-				fnclex();
-			fldummy();
-			fxrstor(&pcb->pcb_savefpu);
-			break;
-
-		case FPU_SAVE_XSAVE:
-		case FPU_SAVE_XSAVEOPT:
-			xrstor(&pcb->pcb_savefpu, x86_xsave_features);
-			break;
+	case FPU_SAVE_FSAVE:
+		frstor(&pcb->pcb_savefpu);
+		break;
+	case FPU_SAVE_FXSAVE:
+		/*
+		 * AMD FPU's do not restore FIP, FDP, and FOP on
+		 * fxrstor, leaking other process's execution history.
+		 * Clear them manually by loading a zero.
+		 *
+		 * Clear the ES bit in the x87 status word if it is
+		 * currently set, in order to avoid causing a fault
+		 * in the upcoming load.
+		 */
+		if (fngetsw() & 0x80)
+			fnclex();
+		fldummy();
+		fxrstor(&pcb->pcb_savefpu);
+		break;
+	case FPU_SAVE_XSAVE:
+	case FPU_SAVE_XSAVEOPT:
+		xrstor(&pcb->pcb_savefpu, x86_xsave_features);
+		break;
 	}
 
 	KASSERT(ci == curcpu());
@@ -458,21 +456,18 @@ fpusave_cpu(bool save)
 		clts();
 
 		switch (x86_fpu_save) {
-			case FPU_SAVE_FSAVE:
-				fnsave(&pcb->pcb_savefpu);
-				break;
-
-			case FPU_SAVE_FXSAVE:
-				fxsave(&pcb->pcb_savefpu);
-				break;
-
-			case FPU_SAVE_XSAVE:
-				xsave(&pcb->pcb_savefpu, x86_xsave_features);
-				break;
-
-			case FPU_SAVE_XSAVEOPT:
-				xsaveopt(&pcb->pcb_savefpu, x86_xsave_features);
-				break;
+		case FPU_SAVE_FSAVE:
+			fnsave(&pcb->pcb_savefpu);
+			break;
+		case FPU_SAVE_FXSAVE:
+			fxsave(&pcb->pcb_savefpu);
+			break;
+		case FPU_SAVE_XSAVE:
+			xsave(&pcb->pcb_savefpu, x86_xsave_features);
+			break;
+		case FPU_SAVE_XSAVEOPT:
+			xsaveopt(&pcb->pcb_savefpu, x86_xsave_features);
+			break;
 		}
 	}
 
