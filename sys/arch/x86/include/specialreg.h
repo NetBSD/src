@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.124 2018/05/22 17:14:46 maxv Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.125 2018/05/23 07:24:37 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -104,10 +104,8 @@
 #define XCR0_Hi16_ZMM	0x00000080	/* AVX-512 512 bits upper registers */
 
 /*
- * Known fpu bits - only these get enabled
- * I think the XCR0_BNDREGS and XCR0_BNDCSR would need saving on
- * every context switch.
- * The save are is sized for all the fields below (max 2680 bytes).
+ * Known fpu bits - only these get enabled. The save area is sized for all the
+ * fields below (max 2680 bytes).
  */
 #define XCR0_FPU	(XCR0_X87 | XCR0_SSE | XCR0_YMM_Hi128 | \
 			XCR0_Opmask | XCR0_ZMM_Hi256 | XCR0_Hi16_ZMM)
