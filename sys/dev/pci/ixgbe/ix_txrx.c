@@ -1,4 +1,4 @@
-/* $NetBSD: ix_txrx.c,v 1.45 2018/05/18 10:09:02 msaitoh Exp $ */
+/* $NetBSD: ix_txrx.c,v 1.46 2018/05/23 04:45:24 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -1832,8 +1832,6 @@ ixgbe_rxeof(struct ix_queue *que)
 #endif
 
 		if ((staterr & IXGBE_RXD_STAT_DD) == 0)
-			break;
-		if ((ifp->if_flags & IFF_RUNNING) == 0)
 			break;
 
 		count--;
