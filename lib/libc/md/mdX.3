@@ -1,4 +1,4 @@
-.\"	$NetBSD: mdX.3,v 1.10 2003/06/13 01:28:41 lukem Exp $
+.\"	$NetBSD: mdX.3,v 1.11 2018/05/23 02:08:40 christos Exp $
 .\"
 .\" ----------------------------------------------------------------------------
 .\" "THE BEER-WARE LICENSE" (Revision 42):
@@ -9,7 +9,7 @@
 .\"
 .\"	from FreeBSD Id: mdX.3,v 1.7 1996/10/22 16:28:56 phk Exp
 .\"
-.Dd June 13, 2003
+.Dd May 22, 2018
 .Dt MDX 3
 .Os
 .Sh NAME
@@ -105,7 +105,10 @@ argument is non-null it must point to at least 33 characters of buffer space.
 .Sh SEE ALSO
 .Xr md2 3 ,
 .Xr md4 3 ,
-.Xr md5 3
+.Xr md5 3 ,
+.Xr openssl_MD2 3 ,
+.Xr openssl_MD4 3 ,
+.Xr openssl_MD5 3 ,
 .Rs
 .%A B. Kaliski
 .%T The MD2 Message-Digest Algorithm
