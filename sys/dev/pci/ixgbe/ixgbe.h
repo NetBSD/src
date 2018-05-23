@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.h,v 1.48 2018/05/18 10:09:02 msaitoh Exp $ */
+/* $NetBSD: ixgbe.h,v 1.49 2018/05/23 10:11:07 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -368,6 +368,7 @@ struct tx_ring {
 	pcq_t			*txr_interq;
 	struct work		wq_cookie;
 	void			*txr_si;
+	bool			txr_no_space; /* Like IFF_OACTIVE */
 
 	/* Flow Director */
 	u16			atr_sample;
