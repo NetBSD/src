@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.50 2018/05/22 10:48:06 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.51 2018/05/23 01:29:43 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.50 2018/05/22 10:48:06 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.51 2018/05/23 01:29:43 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -852,16 +852,14 @@ ATF_TC_BODY(traceme_vfork_exec, tc)
 /// ----------------------------------------------------------------------------
 
 #if defined(TWAIT_HAVE_PID)
-ATF_TC(attach1);
-ATF_TC_HEAD(attach1, tc)
-{
-	atf_tc_set_md_var(tc, "descr",
-	    "Assert that tracer sees process termination before the parent");
-}
-
 static void
-attach1_raw(bool raw)
+tracer_sees_terminaton_before_the_parent_raw(bool notimeout, bool unrelated)
 {
+	/*
+	 * notimeout - disable timeout in await zombie function
+	 * unrelated - attach from unrelated tracer reparented to initproc
+	 */
+
 	struct msg_fds parent_tracee, parent_tracer;
 	const int exitval_tracee = 5;
 	const int exitval_tracer = 10;
@@ -884,6 +882,13 @@ attach1_raw(bool raw)
 	SYSCALL_REQUIRE(msg_open(&parent_tracer) == 0);
 	tracer = atf_utils_fork();
 	if (tracer == 0) {
+		if(unrelated) {
+			/* Fork again and drop parent to reattach to PID 1 */
+			tracer = atf_utils_fork();
+			if (tracer != 0)
+				_exit(exitval_tracer);
+		}
+
 		DPRINTF("Before calling PT_ATTACH from tracee %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_ATTACH, tracee, NULL, 0) != -1);
 
@@ -910,7 +915,21 @@ attach1_raw(bool raw)
 		DPRINTF("Tracee %d exited with %d\n", tracee, exitval_tracee);
 
 		DPRINTF("Before exiting of the tracer process\n");
-		_exit(exitval_tracer);
+		_exit(unrelated ? 0 /* collect by initproc */ : exitval_tracer);
+	}
+
+	if (unrelated) {
+		DPRINTF("Wait for the tracer process (direct child) to exit "
+		    "calling %s()\n", TWAIT_FNAME);
+		TWAIT_REQUIRE_SUCCESS(
+		    wpid = TWAIT_GENERIC(tracer, &status, 0), tracer);
+
+		validate_status_exited(status, exitval_tracer);
+
+		DPRINTF("Wait for the non-exited tracee process with %s()\n",
+		    TWAIT_FNAME);
+		TWAIT_REQUIRE_SUCCESS(
+		    wpid = TWAIT_GENERIC(tracee, NULL, WNOHANG), 0);
 	}
 
 	DPRINTF("Wait for the tracer to attach to the tracee\n");
@@ -920,7 +939,7 @@ attach1_raw(bool raw)
 	PARENT_TO_CHILD("exit tracee", parent_tracee,  msg);
 
 	DPRINTF("Detect that tracee is zombie\n");
-	if (raw)
+	if (notimeout)
 		await_zombie_raw(tracee, 0);
 	else
 		await_zombie(tracee);
@@ -931,21 +950,26 @@ attach1_raw(bool raw)
 	TWAIT_REQUIRE_SUCCESS(
 	    wpid = TWAIT_GENERIC(tracee, &status, WNOHANG), 0);
 
-	DPRINTF("Tell the tracer child should have exited\n");
-	PARENT_TO_CHILD("wait for tracee exit", parent_tracer,  msg);
-	DPRINTF("Wait for tracer to finish its job and exit - calling %s()\n",
-	    TWAIT_FNAME);
+	if (unrelated) {
+		DPRINTF("Resume the tracer and let it detect exited tracee\n");
+		PARENT_TO_CHILD("Message 2", parent_tracer, msg);
+	} else {
+		DPRINTF("Tell the tracer child should have exited\n");
+		PARENT_TO_CHILD("wait for tracee exit", parent_tracer,  msg);
+		DPRINTF("Wait for tracer to finish its job and exit - calling "
+		        "%s()\n", TWAIT_FNAME);
 
-	DPRINTF("Wait from tracer child to complete waiting for tracee\n");
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(tracer, &status, 0),
-	    tracer);
+		DPRINTF("Wait from tracer child to complete waiting for "
+		        "tracee\n");
+		TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(tracer, &status, 0),
+		    tracer);
 
-	validate_status_exited(status, exitval_tracer);
+		validate_status_exited(status, exitval_tracer);
+	}
 
 	DPRINTF("Wait for tracee to finish its job and exit - calling %s()\n",
 	    TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(tracee, &status, WNOHANG),
-	    tracee);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(tracee, &status, 0), tracee);
 
 	validate_status_exited(status, exitval_tracee);
 
@@ -953,126 +977,76 @@ attach1_raw(bool raw)
 	msg_close(&parent_tracee);
 }
 
-ATF_TC_BODY(attach1, tc)
-{
-
-	/* Reuse this test with race1 */
-	attach1_raw(false);
-}
-
-#endif
-
-#if defined(TWAIT_HAVE_PID)
-ATF_TC(attach2);
-ATF_TC_HEAD(attach2, tc)
+ATF_TC(tracer_sees_terminaton_before_the_parent);
+ATF_TC_HEAD(tracer_sees_terminaton_before_the_parent, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
-	    "Assert that any tracer sees process termination before its "
-	    "parent");
+	    "Assert that tracer sees process termination before the parent");
 }
 
-ATF_TC_BODY(attach2, tc)
+ATF_TC_BODY(tracer_sees_terminaton_before_the_parent, tc)
 {
-	struct msg_fds parent_tracer, parent_tracee;
-	const int exitval_tracee = 5;
-	const int exitval_tracer1 = 10, exitval_tracer2 = 20;
-	pid_t tracee, tracer, wpid;
-	uint8_t msg = 0xde; /* dummy message for IPC based on pipe(2) */
-#if defined(TWAIT_HAVE_STATUS)
-	int status;
-#endif
 
-	DPRINTF("Spawn tracee\n");
-	SYSCALL_REQUIRE(msg_open(&parent_tracee) == 0);
-	tracee = atf_utils_fork();
-	if (tracee == 0) {
-		/* Wait for message from the parent */
-		CHILD_FROM_PARENT("Message 1", parent_tracee, msg);
-		_exit(exitval_tracee);
+	tracer_sees_terminaton_before_the_parent_raw(false, false);
+}
+
+ATF_TC(tracer_sysctl_lookup_without_duplicates);
+ATF_TC_HEAD(tracer_sysctl_lookup_without_duplicates, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Assert that await_zombie() in attach1 always finds a single "
+	    "process and no other error is reported");
+}
+
+ATF_TC_BODY(tracer_sysctl_lookup_without_duplicates, tc)
+{
+	time_t start, end;
+	double diff;
+	unsigned long N = 0;
+
+	/*
+	 * Reuse this test with tracer_sees_terminaton_before_the_parent_raw().
+	 * This test body isn't specific to this race, however it's just good
+	 * enough for this purposes, no need to invent a dedicated code flow.
+	 */
+
+	start = time(NULL);
+	while (true) {
+		DPRINTF("Step: %lu\n", N);
+		tracer_sees_terminaton_before_the_parent_raw(true, false);
+		end = time(NULL);
+		diff = difftime(end, start);
+		if (diff >= 5.0)
+			break;
+		++N;
 	}
+	DPRINTF("Iterations: %lu\n", N);
+}
 
-	DPRINTF("Spawn debugger\n");
-	SYSCALL_REQUIRE(msg_open(&parent_tracer) == 0);
-	tracer = atf_utils_fork();
-	if (tracer == 0) {
-		/* Fork again and drop parent to reattach to PID 1 */
-		tracer = atf_utils_fork();
-		if (tracer != 0)
-			_exit(exitval_tracer1);
+ATF_TC(unrelated_tracer_sees_terminaton_before_the_parent);
+ATF_TC_HEAD(unrelated_tracer_sees_terminaton_before_the_parent, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Assert that tracer sees process termination before the parent");
+}
 
-		DPRINTF("Before calling PT_ATTACH from tracee %d\n", getpid());
-		FORKEE_ASSERT(ptrace(PT_ATTACH, tracee, NULL, 0) != -1);
+ATF_TC_BODY(unrelated_tracer_sees_terminaton_before_the_parent, tc)
+{
 
-		/* Wait for tracee and assert that it was stopped w/ SIGSTOP */
-		FORKEE_REQUIRE_SUCCESS(
-		    wpid = TWAIT_GENERIC(tracee, &status, 0), tracee);
-
-		forkee_status_stopped(status, SIGSTOP);
-
-		/* Resume tracee with PT_CONTINUE */
-		FORKEE_ASSERT(ptrace(PT_CONTINUE, tracee, (void *)1, 0) != -1);
-
-		/* Inform parent that tracer has attached to tracee */
-		CHILD_TO_PARENT("Message 1", parent_tracer, msg);
-		CHILD_FROM_PARENT("Message 2", parent_tracer, msg);
-
-		/* Wait for tracee and assert that it exited */
-		FORKEE_REQUIRE_SUCCESS(
-		    wpid = TWAIT_GENERIC(tracee, &status, 0), tracee);
-
-		forkee_status_exited(status, exitval_tracee);
-
-		DPRINTF("Before exiting of the tracer process\n");
-		_exit(exitval_tracer2);
-	}
-	DPRINTF("Wait for the tracer process (direct child) to exit calling "
-	    "%s()\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(
-	    wpid = TWAIT_GENERIC(tracer, &status, 0), tracer);
-
-	validate_status_exited(status, exitval_tracer1);
-
-	DPRINTF("Wait for the non-exited tracee process with %s()\n",
-	    TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(
-	    wpid = TWAIT_GENERIC(tracee, NULL, WNOHANG), 0);
-
-	DPRINTF("Wait for the tracer to attach to the tracee\n");
-	PARENT_FROM_CHILD("Message 1", parent_tracer, msg);
-	DPRINTF("Resume the tracee and let it exit\n");
-	PARENT_TO_CHILD("Message 1", parent_tracee, msg);
-
-	DPRINTF("Detect that tracee is zombie\n");
-	await_zombie(tracee);
-
-	DPRINTF("Assert that there is no status about tracee - "
-	    "Tracer must detect zombie first - calling %s()\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(
-	    wpid = TWAIT_GENERIC(tracee, &status, WNOHANG), 0);
-
-	DPRINTF("Resume the tracer and let it detect exited tracee\n");
-	PARENT_TO_CHILD("Message 2", parent_tracer, msg);
-
-	DPRINTF("Wait for tracee to finish its job and exit - calling %s()\n",
-	    TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(tracee, &status, 0),
-	    tracee);
-
-	validate_status_exited(status, exitval_tracee);
-
-	msg_close(&parent_tracer);
-	msg_close(&parent_tracee);
+	tracer_sees_terminaton_before_the_parent_raw(false, true);
 }
 #endif
 
-ATF_TC(attach3);
-ATF_TC_HEAD(attach3, tc)
+/// ----------------------------------------------------------------------------
+
+ATF_TC(parent_attach_to_its_child);
+ATF_TC_HEAD(parent_attach_to_its_child, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Assert that tracer parent can PT_ATTACH to its child");
 }
 
-ATF_TC_BODY(attach3, tc)
+ATF_TC_BODY(parent_attach_to_its_child, tc)
 {
 	struct msg_fds parent_tracee;
 	const int exitval_tracee = 5;
@@ -1124,14 +1098,16 @@ ATF_TC_BODY(attach3, tc)
 	msg_close(&parent_tracee);
 }
 
-ATF_TC(attach4);
-ATF_TC_HEAD(attach4, tc)
+/// ----------------------------------------------------------------------------
+
+ATF_TC(child_attach_to_its_parent);
+ATF_TC_HEAD(child_attach_to_its_parent, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Assert that tracer child can PT_ATTACH to its parent");
 }
 
-ATF_TC_BODY(attach4, tc)
+ATF_TC_BODY(child_attach_to_its_parent, tc)
 {
 	struct msg_fds parent_tracee;
 	const int exitval_tracer = 5;
@@ -1188,16 +1164,18 @@ ATF_TC_BODY(attach4, tc)
 	msg_close(&parent_tracee);
 }
 
-#if defined(TWAIT_HAVE_PID)
-ATF_TC(attach5);
-ATF_TC_HEAD(attach5, tc)
-{
-	atf_tc_set_md_var(tc, "descr",
-	    "Assert that tracer sees its parent when attached to tracer "
-	    "(check getppid(2))");
-}
+/// ----------------------------------------------------------------------------
 
-ATF_TC_BODY(attach5, tc)
+#if defined(TWAIT_HAVE_PID)
+
+enum tracee_sees_its_original_parent_type {
+	TRACEE_SEES_ITS_ORIGINAL_PARENT_GETPPID,
+	TRACEE_SEES_ITS_ORIGINAL_PARENT_SYSCTL_KINFO_PROC2,
+	TRACEE_SEES_ITS_ORIGINAL_PARENT_PROCFS_STATUS
+};
+
+static void
+tracee_sees_its_original_parent(enum tracee_sees_its_original_parent_type type)
 {
 	struct msg_fds parent_tracer, parent_tracee;
 	const int exitval_tracee = 5;
@@ -1207,6 +1185,27 @@ ATF_TC_BODY(attach5, tc)
 #if defined(TWAIT_HAVE_STATUS)
 	int status;
 #endif
+	/* sysctl(3) - kinfo_proc2 */
+	int name[CTL_MAXNAME];
+	struct kinfo_proc2 kp;
+	size_t len = sizeof(kp);
+	unsigned int namelen;
+
+	/* procfs - status  */
+	FILE *fp;
+	struct stat st;
+	const char *fname = "/proc/curproc/status";
+	char s_executable[MAXPATHLEN];
+	int s_pid, s_ppid;
+	int rv;
+
+	if (type == TRACEE_SEES_ITS_ORIGINAL_PARENT_PROCFS_STATUS) {
+		SYSCALL_REQUIRE((rv = stat(fname, &st)) == 0 ||
+		                (errno == ENOENT));
+		if (rv != 0) {
+			atf_tc_skip("/proc/curproc/status not found");
+		}
+	}
 
 	DPRINTF("Spawn tracee\n");
 	SYSCALL_REQUIRE(msg_open(&parent_tracer) == 0);
@@ -1219,7 +1218,35 @@ ATF_TC_BODY(attach5, tc)
 		CHILD_TO_PARENT("tracee ready", parent_tracee, msg);
 		CHILD_FROM_PARENT("exit tracee", parent_tracee, msg);
 
-		FORKEE_ASSERT_EQ(parent, getppid());
+		switch (type) {
+		case TRACEE_SEES_ITS_ORIGINAL_PARENT_GETPPID:
+			FORKEE_ASSERT_EQ(parent, getppid());
+			break;
+		case TRACEE_SEES_ITS_ORIGINAL_PARENT_SYSCTL_KINFO_PROC2:
+			namelen = 0;
+			name[namelen++] = CTL_KERN;
+			name[namelen++] = KERN_PROC2;
+			name[namelen++] = KERN_PROC_PID;
+			name[namelen++] = getpid();
+			name[namelen++] = len;
+			name[namelen++] = 1;
+
+			FORKEE_ASSERT_EQ(sysctl(name, namelen, &kp, &len, NULL,
+			                        0),
+			                 0);
+			FORKEE_ASSERT_EQ(parent, kp.p_ppid);
+			break;
+		case TRACEE_SEES_ITS_ORIGINAL_PARENT_PROCFS_STATUS:
+			/*
+			 * Format:
+			 *  EXECUTABLE PID PPID ...
+			 */
+			FORKEE_ASSERT((fp = fopen(fname, "r")) != NULL);
+			fscanf(fp, "%s %d %d", s_executable, &s_pid, &s_ppid);
+			FORKEE_ASSERT_EQ(fclose(fp), 0);
+			FORKEE_ASSERT_EQ(parent, s_ppid);
+			break;
+		}
 
 		_exit(exitval_tracee);
 	}
@@ -1291,248 +1318,37 @@ ATF_TC_BODY(attach5, tc)
 	msg_close(&parent_tracer);
 	msg_close(&parent_tracee);
 }
-#endif
 
-#if defined(TWAIT_HAVE_PID)
-ATF_TC(attach6);
-ATF_TC_HEAD(attach6, tc)
-{
-	atf_tc_set_md_var(tc, "descr",
-	    "Assert that tracer sees its parent when attached to tracer "
-	    "(check sysctl(7) and struct kinfo_proc2)");
+#define TRACEE_SEES_ITS_ORIGINAL_PARENT(test, type, descr)			\
+ATF_TC(test);									\
+ATF_TC_HEAD(test, tc)								\
+{										\
+	atf_tc_set_md_var(tc, "descr",						\
+	    "Assert that tracee sees its original parent when being traced "	\
+	    "(check " descr ")");						\
+}										\
+										\
+ATF_TC_BODY(test, tc)								\
+{										\
+										\
+	tracee_sees_its_original_parent(type);					\
 }
 
-ATF_TC_BODY(attach6, tc)
-{
-	struct msg_fds parent_tracee, parent_tracer;
-	const int exitval_tracee = 5;
-	const int exitval_tracer = 10;
-	pid_t parent, tracee, tracer, wpid;
-	uint8_t msg = 0xde; /* dummy message for IPC based on pipe(2) */
-#if defined(TWAIT_HAVE_STATUS)
-	int status;
-#endif
-	int name[CTL_MAXNAME];
-	struct kinfo_proc2 kp;
-	size_t len = sizeof(kp);
-	unsigned int namelen;
-
-	DPRINTF("Spawn tracee\n");
-	SYSCALL_REQUIRE(msg_open(&parent_tracee) == 0);
-	SYSCALL_REQUIRE(msg_open(&parent_tracer) == 0);
-	tracee = atf_utils_fork();
-	if (tracee == 0) {
-		parent = getppid();
-
-		/* Emit message to the parent */
-		CHILD_TO_PARENT("Message 1", parent_tracee, msg);
-		CHILD_FROM_PARENT("Message 2", parent_tracee, msg);
-
-		namelen = 0;
-		name[namelen++] = CTL_KERN;
-		name[namelen++] = KERN_PROC2;
-		name[namelen++] = KERN_PROC_PID;
-		name[namelen++] = getpid();
-		name[namelen++] = len;
-		name[namelen++] = 1;
-
-		FORKEE_ASSERT(sysctl(name, namelen, &kp, &len, NULL, 0) == 0);
-		FORKEE_ASSERT_EQ(parent, kp.p_ppid);
-
-		_exit(exitval_tracee);
-	}
-
-	DPRINTF("Wait for child to record its parent identifier (pid)\n");
-	PARENT_FROM_CHILD("Message 1", parent_tracee, msg);
-
-	DPRINTF("Spawn debugger\n");
-	tracer = atf_utils_fork();
-	if (tracer == 0) {
-		/* No IPC to communicate with the child */
-		DPRINTF("Before calling PT_ATTACH from tracee %d\n", getpid());
-		FORKEE_ASSERT(ptrace(PT_ATTACH, tracee, NULL, 0) != -1);
-
-		/* Wait for tracee and assert that it was stopped w/ SIGSTOP */
-		FORKEE_REQUIRE_SUCCESS(
-		    wpid = TWAIT_GENERIC(tracee, &status, 0), tracee);
-
-		forkee_status_stopped(status, SIGSTOP);
-
-		/* Resume tracee with PT_CONTINUE */
-		FORKEE_ASSERT(ptrace(PT_CONTINUE, tracee, (void *)1, 0) != -1);
-
-		/* Inform parent that tracer has attached to tracee */
-		CHILD_TO_PARENT("Message 1", parent_tracer, msg);
-
-		CHILD_FROM_PARENT("Message 2", parent_tracer, msg);
-
-		/* Wait for tracee and assert that it exited */
-		FORKEE_REQUIRE_SUCCESS(
-		    wpid = TWAIT_GENERIC(tracee, &status, 0), tracee);
-
-		forkee_status_exited(status, exitval_tracee);
-
-		DPRINTF("Before exiting of the tracer process\n");
-		_exit(exitval_tracer);
-	}
-
-	DPRINTF("Wait for the tracer to attach to the tracee\n");
-	PARENT_FROM_CHILD("Message 1", parent_tracer, msg);
-
-	DPRINTF("Resume the tracee and let it exit\n");
-	PARENT_TO_CHILD("Message 1", parent_tracee, msg);
-
-	DPRINTF("Detect that tracee is zombie\n");
-	await_zombie(tracee);
-
-	DPRINTF("Assert that there is no status about tracee - "
-	    "Tracer must detect zombie first - calling %s()\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(
-	    wpid = TWAIT_GENERIC(tracee, &status, WNOHANG), 0);
-
-	DPRINTF("Resume the tracer and let it detect exited tracee\n");
-	PARENT_TO_CHILD("Message 2", parent_tracer, msg);
-
-	DPRINTF("Wait for tracer to finish its job and exit - calling %s()\n",
-	    TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(tracer, &status, 0),
-	    tracer);
-
-	validate_status_exited(status, exitval_tracer);
-
-	DPRINTF("Wait for tracee to finish its job and exit - calling %s()\n",
-	    TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(tracee, &status, WNOHANG),
-	    tracee);
-
-	validate_status_exited(status, exitval_tracee);
-
-	msg_close(&parent_tracee);
-	msg_close(&parent_tracer);
-}
+TRACEE_SEES_ITS_ORIGINAL_PARENT(
+	tracee_sees_its_original_parent_getppid,
+	TRACEE_SEES_ITS_ORIGINAL_PARENT_GETPPID,
+	"getppid(2)");
+TRACEE_SEES_ITS_ORIGINAL_PARENT(
+	tracee_sees_its_original_parent_sysctl_kinfo_proc2,
+	TRACEE_SEES_ITS_ORIGINAL_PARENT_SYSCTL_KINFO_PROC2,
+	"sysctl(3) and kinfo_proc2");
+TRACEE_SEES_ITS_ORIGINAL_PARENT(
+	tracee_sees_its_original_parent_procfs_status,
+	TRACEE_SEES_ITS_ORIGINAL_PARENT_PROCFS_STATUS,
+	"the status file in procfs");
 #endif
 
-#if defined(TWAIT_HAVE_PID)
-ATF_TC(attach7);
-ATF_TC_HEAD(attach7, tc)
-{
-	atf_tc_set_md_var(tc, "descr",
-	    "Assert that tracer sees its parent when attached to tracer "
-	    "(check /proc/curproc/status 3rd column)");
-}
-
-ATF_TC_BODY(attach7, tc)
-{
-	struct msg_fds parent_tracee, parent_tracer;
-	int rv;
-	const int exitval_tracee = 5;
-	const int exitval_tracer = 10;
-	pid_t parent, tracee, tracer, wpid;
-	uint8_t msg = 0xde; /* dummy message for IPC based on pipe(2) */
-#if defined(TWAIT_HAVE_STATUS)
-	int status;
-#endif
-	FILE *fp;
-	struct stat st;
-	const char *fname = "/proc/curproc/status";
-	char s_executable[MAXPATHLEN];
-	int s_pid, s_ppid;
-	/*
-	 * Format:
-	 *  EXECUTABLE PID PPID ...
-	 */
-
-	SYSCALL_REQUIRE((rv = stat(fname, &st)) == 0 || (errno == ENOENT));
-	if (rv != 0) {
-		atf_tc_skip("/proc/curproc/status not found");
-	}
-
-	DPRINTF("Spawn tracee\n");
-	SYSCALL_REQUIRE(msg_open(&parent_tracee) == 0);
-	SYSCALL_REQUIRE(msg_open(&parent_tracer) == 0);
-	tracee = atf_utils_fork();
-	if (tracee == 0) {
-		parent = getppid();
-
-		// Wait for parent to let us exit
-		CHILD_TO_PARENT("tracee ready", parent_tracee, msg);
-		CHILD_FROM_PARENT("tracee exit", parent_tracee, msg);
-
-		FORKEE_ASSERT((fp = fopen(fname, "r")) != NULL);
-		fscanf(fp, "%s %d %d", s_executable, &s_pid, &s_ppid);
-		FORKEE_ASSERT(fclose(fp) == 0);
-		FORKEE_ASSERT_EQ(parent, s_ppid);
-
-		_exit(exitval_tracee);
-	}
-
-	DPRINTF("Wait for child to record its parent identifier (pid)\n");
-	PARENT_FROM_CHILD("tracee ready", parent_tracee, msg);
-
-	DPRINTF("Spawn debugger\n");
-	tracer = atf_utils_fork();
-	if (tracer == 0) {
-		DPRINTF("Before calling PT_ATTACH from tracee %d\n", getpid());
-		FORKEE_ASSERT(ptrace(PT_ATTACH, tracee, NULL, 0) != -1);
-
-		/* Wait for tracee and assert that it was stopped w/ SIGSTOP */
-		FORKEE_REQUIRE_SUCCESS(
-		    wpid = TWAIT_GENERIC(tracee, &status, 0), tracee);
-
-		forkee_status_stopped(status, SIGSTOP);
-
-		/* Resume tracee with PT_CONTINUE */
-		FORKEE_ASSERT(ptrace(PT_CONTINUE, tracee, (void *)1, 0) != -1);
-
-		/* Inform parent that tracer has attached to tracee */
-		CHILD_TO_PARENT("tracer ready", parent_tracer, msg);
-
-		/* Wait for parent to tell use that tracee should have exited */
-		CHILD_FROM_PARENT("wait for tracee exit", parent_tracer, msg);
-
-		/* Wait for tracee and assert that it exited */
-		FORKEE_REQUIRE_SUCCESS(
-		    wpid = TWAIT_GENERIC(tracee, &status, 0), tracee);
-
-		forkee_status_exited(status, exitval_tracee);
-
-		DPRINTF("Before exiting of the tracer process\n");
-		_exit(exitval_tracer);
-	}
-	DPRINTF("Wait for the tracer to attach to the tracee\n");
-	PARENT_FROM_CHILD("tracer ready", parent_tracer, msg);
-	DPRINTF("Resume the tracee and let it exit\n");
-	PARENT_TO_CHILD("tracee exit", parent_tracee, msg);
-
-	DPRINTF("Detect that tracee is zombie\n");
-	await_zombie(tracee);
-
-	DPRINTF("Assert that there is no status about tracee - "
-	    "Tracer must detect zombie first - calling %s()\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(
-	    wpid = TWAIT_GENERIC(tracee, &status, WNOHANG), 0);
-
-	DPRINTF("Resume the tracer and let it detect exited tracee\n");
-	PARENT_TO_CHILD("Message 2", parent_tracer, msg);
-
-	DPRINTF("Wait for tracer to finish its job and exit - calling %s()\n",
-	    TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(tracer, &status, 0),
-	    tracer);
-
-	validate_status_exited(status, exitval_tracer);
-
-	DPRINTF("Wait for tracee to finish its job and exit - calling %s()\n",
-	    TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(tracee, &status, WNOHANG),
-	    tracee);
-
-	validate_status_exited(status, exitval_tracee);
-
-	msg_close(&parent_tracee);
-	msg_close(&parent_tracer);
-}
-#endif
+/// ----------------------------------------------------------------------------
 
 ATF_TC(eventmask1);
 ATF_TC_HEAD(eventmask1, tc)
@@ -7242,37 +7058,6 @@ ATF_TC_BODY(syscallemu1, tc)
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
-#if defined(TWAIT_HAVE_PID)
-ATF_TC(race1);
-ATF_TC_HEAD(race1, tc)
-{
-	atf_tc_set_md_var(tc, "descr",
-	    "Assert that await_zombie() in attach1 always finds a single "
-	    "process and no other error is reported");
-}
-
-ATF_TC_BODY(race1, tc)
-{
-	time_t start, end;
-	double diff;
-	unsigned long N = 0;
-
-	/* Reuse this test with attach1 */
-
-	start = time(NULL);
-	while (true) {
-		DPRINTF("Step: %lu\n", N);
-		attach1_raw(true);
-		end = time(NULL);
-		diff = difftime(end, start);
-		if (diff >= 5.0)
-			break;
-		++N;
-	}
-	DPRINTF("Iterations: %lu\n", N);
-}
-#endif
-
 #include "t_ptrace_amd64_wait.h"
 #include "t_ptrace_i386_wait.h"
 #include "t_ptrace_x86_wait.h"
@@ -7321,13 +7106,20 @@ ATF_TP_ADD_TCS(tp)
 
 	ATF_TP_ADD_TC(tp, traceme_vfork_exec);
 
-	ATF_TP_ADD_TC_HAVE_PID(tp, attach1);
-	ATF_TP_ADD_TC_HAVE_PID(tp, attach2);
-	ATF_TP_ADD_TC(tp, attach3);
-	ATF_TP_ADD_TC(tp, attach4);
-	ATF_TP_ADD_TC_HAVE_PID(tp, attach5);
-	ATF_TP_ADD_TC_HAVE_PID(tp, attach6);
-	ATF_TP_ADD_TC_HAVE_PID(tp, attach7);
+	ATF_TP_ADD_TC_HAVE_PID(tp, tracer_sees_terminaton_before_the_parent);
+	ATF_TP_ADD_TC_HAVE_PID(tp, tracer_sysctl_lookup_without_duplicates);
+	ATF_TP_ADD_TC_HAVE_PID(tp, unrelated_tracer_sees_terminaton_before_the_parent);
+
+	ATF_TP_ADD_TC(tp, parent_attach_to_its_child);
+
+	ATF_TP_ADD_TC(tp, child_attach_to_its_parent);
+
+	ATF_TP_ADD_TC_HAVE_PID(tp,
+		tracee_sees_its_original_parent_getppid);
+	ATF_TP_ADD_TC_HAVE_PID(tp,
+		tracee_sees_its_original_parent_sysctl_kinfo_proc2);
+	ATF_TP_ADD_TC_HAVE_PID(tp,
+		tracee_sees_its_original_parent_procfs_status);
 
 	ATF_TP_ADD_TC(tp, eventmask1);
 	ATF_TP_ADD_TC(tp, eventmask2);
@@ -7447,8 +7239,6 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, syscall1);
 
 	ATF_TP_ADD_TC(tp, syscallemu1);
-
-	ATF_TP_ADD_TC_HAVE_PID(tp, race1);
 
 	ATF_TP_ADD_TCS_PTRACE_WAIT_AMD64();
 	ATF_TP_ADD_TCS_PTRACE_WAIT_I386();
