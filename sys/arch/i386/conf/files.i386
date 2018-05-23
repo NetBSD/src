@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.393 2018/05/22 11:09:57 maxv Exp $
+#	$NetBSD: files.i386,v 1.394 2018/05/23 07:45:35 maxv Exp $
 #
 # new style config file for i386 architecture
 #
@@ -73,7 +73,6 @@ file	arch/i386/i386/machdep.c
 file 	arch/i386/i386/longrun.c
 file	arch/i386/i386/mtrr_k6.c	mtrr
 file	arch/i386/i386/process_machdep.c
-file	arch/x86/x86/convert_xmm_s87.c
 file	arch/i386/i386/trap.c
 file	dev/cons.c
 file	arch/x86/x86/fpu.c
