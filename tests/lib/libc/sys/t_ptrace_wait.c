@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.52 2018/05/23 13:51:27 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.53 2018/05/23 23:56:07 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.52 2018/05/23 13:51:27 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.53 2018/05/23 23:56:07 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1379,14 +1379,8 @@ TRACEE_SEES_ITS_ORIGINAL_PARENT(
 
 /// ----------------------------------------------------------------------------
 
-ATF_TC(eventmask1);
-ATF_TC_HEAD(eventmask1, tc)
-{
-	atf_tc_set_md_var(tc, "descr",
-	    "Verify that empty EVENT_MASK is preserved");
-}
-
-ATF_TC_BODY(eventmask1, tc)
+static void
+eventmask_preserved(int event)
 {
 	const int exitval = 5;
 	const int sigval = SIGSTOP;
@@ -1416,7 +1410,7 @@ ATF_TC_BODY(eventmask1, tc)
 
 	validate_status_stopped(status, sigval);
 
-	set_event.pe_set_event = 0;
+	set_event.pe_set_event = event;
 	SYSCALL_REQUIRE(ptrace(PT_SET_EVENT_MASK, child, &set_event, len) != -1);
 	SYSCALL_REQUIRE(ptrace(PT_GET_EVENT_MASK, child, &get_event, len) != -1);
 	ATF_REQUIRE(memcmp(&set_event, &get_event, len) == 0);
@@ -1434,280 +1428,28 @@ ATF_TC_BODY(eventmask1, tc)
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
-ATF_TC(eventmask2);
-ATF_TC_HEAD(eventmask2, tc)
-{
-	atf_tc_set_md_var(tc, "descr",
-	    "Verify that PTRACE_FORK in EVENT_MASK is preserved");
+#define EVENTMASK_PRESERVED(test, event)					\
+ATF_TC(test);									\
+ATF_TC_HEAD(test, tc)								\
+{										\
+	atf_tc_set_md_var(tc, "descr",						\
+	    "Verify that eventmask " #event " is preserved");			\
+}										\
+										\
+ATF_TC_BODY(test, tc)								\
+{										\
+										\
+	eventmask_preserved(event);						\
 }
 
-ATF_TC_BODY(eventmask2, tc)
-{
-	const int exitval = 5;
-	const int sigval = SIGSTOP;
-	pid_t child, wpid;
-#if defined(TWAIT_HAVE_STATUS)
-	int status;
-#endif
-	ptrace_event_t set_event, get_event;
-	const int len = sizeof(ptrace_event_t);
+EVENTMASK_PRESERVED(eventmask_preserved_empty, 0)
+EVENTMASK_PRESERVED(eventmask_preserved_fork, PTRACE_FORK)
+EVENTMASK_PRESERVED(eventmask_preserved_vfork, PTRACE_VFORK)
+EVENTMASK_PRESERVED(eventmask_preserved_vfork_done, PTRACE_VFORK_DONE)
+EVENTMASK_PRESERVED(eventmask_preserved_lwp_create, PTRACE_LWP_CREATE)
+EVENTMASK_PRESERVED(eventmask_preserved_lwp_exit, PTRACE_LWP_EXIT)
 
-	DPRINTF("Before forking process PID=%d\n", getpid());
-	SYSCALL_REQUIRE((child = fork()) != -1);
-	if (child == 0) {
-		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
-		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
-
-		DPRINTF("Before raising %s from child\n", strsignal(sigval));
-		FORKEE_ASSERT(raise(sigval) == 0);
-
-		DPRINTF("Before exiting of the child process\n");
-		_exit(exitval);
-	}
-	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
-
-	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_stopped(status, sigval);
-
-	set_event.pe_set_event = PTRACE_FORK;
-	SYSCALL_REQUIRE(ptrace(PT_SET_EVENT_MASK, child, &set_event, len) != -1);
-	SYSCALL_REQUIRE(ptrace(PT_GET_EVENT_MASK, child, &get_event, len) != -1);
-	ATF_REQUIRE(memcmp(&set_event, &get_event, len) == 0);
-
-	DPRINTF("Before resuming the child process where it left off and "
-	    "without signal to be sent\n");
-	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
-
-	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_exited(status, exitval);
-
-	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
-}
-
-ATF_TC(eventmask3);
-ATF_TC_HEAD(eventmask3, tc)
-{
-	atf_tc_set_md_var(tc, "descr",
-	    "Verify that PTRACE_VFORK in EVENT_MASK is preserved");
-}
-
-ATF_TC_BODY(eventmask3, tc)
-{
-	const int exitval = 5;
-	const int sigval = SIGSTOP;
-	pid_t child, wpid;
-#if defined(TWAIT_HAVE_STATUS)
-	int status;
-#endif
-	ptrace_event_t set_event, get_event;
-	const int len = sizeof(ptrace_event_t);
-
-	DPRINTF("Before forking process PID=%d\n", getpid());
-	SYSCALL_REQUIRE((child = fork()) != -1);
-	if (child == 0) {
-		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
-		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
-
-		DPRINTF("Before raising %s from child\n", strsignal(sigval));
-		FORKEE_ASSERT(raise(sigval) == 0);
-
-		DPRINTF("Before exiting of the child process\n");
-		_exit(exitval);
-	}
-	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
-
-	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_stopped(status, sigval);
-
-	set_event.pe_set_event = PTRACE_VFORK;
-	SYSCALL_REQUIRE(ptrace(PT_SET_EVENT_MASK, child, &set_event, len) != -1);
-	SYSCALL_REQUIRE(ptrace(PT_GET_EVENT_MASK, child, &get_event, len) != -1);
-	ATF_REQUIRE(memcmp(&set_event, &get_event, len) == 0);
-
-	DPRINTF("Before resuming the child process where it left off and "
-	    "without signal to be sent\n");
-	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
-
-	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_exited(status, exitval);
-
-	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
-}
-
-ATF_TC(eventmask4);
-ATF_TC_HEAD(eventmask4, tc)
-{
-	atf_tc_set_md_var(tc, "descr",
-	    "Verify that PTRACE_VFORK_DONE in EVENT_MASK is preserved");
-}
-
-ATF_TC_BODY(eventmask4, tc)
-{
-	const int exitval = 5;
-	const int sigval = SIGSTOP;
-	pid_t child, wpid;
-#if defined(TWAIT_HAVE_STATUS)
-	int status;
-#endif
-	ptrace_event_t set_event, get_event;
-	const int len = sizeof(ptrace_event_t);
-
-	DPRINTF("Before forking process PID=%d\n", getpid());
-	SYSCALL_REQUIRE((child = fork()) != -1);
-	if (child == 0) {
-		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
-		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
-
-		DPRINTF("Before raising %s from child\n", strsignal(sigval));
-		FORKEE_ASSERT(raise(sigval) == 0);
-
-		DPRINTF("Before exiting of the child process\n");
-		_exit(exitval);
-	}
-	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
-
-	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_stopped(status, sigval);
-
-	set_event.pe_set_event = PTRACE_VFORK_DONE;
-	SYSCALL_REQUIRE(ptrace(PT_SET_EVENT_MASK, child, &set_event, len) != -1);
-	SYSCALL_REQUIRE(ptrace(PT_GET_EVENT_MASK, child, &get_event, len) != -1);
-	ATF_REQUIRE(memcmp(&set_event, &get_event, len) == 0);
-
-	DPRINTF("Before resuming the child process where it left off and "
-	    "without signal to be sent\n");
-	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
-
-	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_exited(status, exitval);
-
-	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
-}
-
-ATF_TC(eventmask5);
-ATF_TC_HEAD(eventmask5, tc)
-{
-	atf_tc_set_md_var(tc, "descr",
-	    "Verify that PTRACE_LWP_CREATE in EVENT_MASK is preserved");
-}
-
-ATF_TC_BODY(eventmask5, tc)
-{
-	const int exitval = 5;
-	const int sigval = SIGSTOP;
-	pid_t child, wpid;
-#if defined(TWAIT_HAVE_STATUS)
-	int status;
-#endif
-	ptrace_event_t set_event, get_event;
-	const int len = sizeof(ptrace_event_t);
-
-	DPRINTF("Before forking process PID=%d\n", getpid());
-	SYSCALL_REQUIRE((child = fork()) != -1);
-	if (child == 0) {
-		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
-		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
-
-		DPRINTF("Before raising %s from child\n", strsignal(sigval));
-		FORKEE_ASSERT(raise(sigval) == 0);
-
-		DPRINTF("Before exiting of the child process\n");
-		_exit(exitval);
-	}
-	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
-
-	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_stopped(status, sigval);
-
-	set_event.pe_set_event = PTRACE_LWP_CREATE;
-	SYSCALL_REQUIRE(ptrace(PT_SET_EVENT_MASK, child, &set_event, len) != -1);
-	SYSCALL_REQUIRE(ptrace(PT_GET_EVENT_MASK, child, &get_event, len) != -1);
-	ATF_REQUIRE(memcmp(&set_event, &get_event, len) == 0);
-
-	DPRINTF("Before resuming the child process where it left off and "
-	    "without signal to be sent\n");
-	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
-
-	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_exited(status, exitval);
-
-	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
-}
-
-ATF_TC(eventmask6);
-ATF_TC_HEAD(eventmask6, tc)
-{
-	atf_tc_set_md_var(tc, "descr",
-	    "Verify that PTRACE_LWP_EXIT in EVENT_MASK is preserved");
-}
-
-ATF_TC_BODY(eventmask6, tc)
-{
-	const int exitval = 5;
-	const int sigval = SIGSTOP;
-	pid_t child, wpid;
-#if defined(TWAIT_HAVE_STATUS)
-	int status;
-#endif
-	ptrace_event_t set_event, get_event;
-	const int len = sizeof(ptrace_event_t);
-
-	DPRINTF("Before forking process PID=%d\n", getpid());
-	SYSCALL_REQUIRE((child = fork()) != -1);
-	if (child == 0) {
-		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
-		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
-
-		DPRINTF("Before raising %s from child\n", strsignal(sigval));
-		FORKEE_ASSERT(raise(sigval) == 0);
-
-		DPRINTF("Before exiting of the child process\n");
-		_exit(exitval);
-	}
-	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
-
-	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_stopped(status, sigval);
-
-	set_event.pe_set_event = PTRACE_LWP_EXIT;
-	SYSCALL_REQUIRE(ptrace(PT_SET_EVENT_MASK, child, &set_event, len) != -1);
-	SYSCALL_REQUIRE(ptrace(PT_GET_EVENT_MASK, child, &get_event, len) != -1);
-	ATF_REQUIRE(memcmp(&set_event, &get_event, len) == 0);
-
-	DPRINTF("Before resuming the child process where it left off and "
-	    "without signal to be sent\n");
-	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
-
-	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_exited(status, exitval);
-
-	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
-}
+/// ----------------------------------------------------------------------------
 
 static void
 fork_body(pid_t (*fn)(void), bool trackfork, bool trackvfork,
@@ -7149,12 +6891,12 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC_HAVE_PID(tp,
 		tracee_sees_its_original_parent_procfs_status);
 
-	ATF_TP_ADD_TC(tp, eventmask1);
-	ATF_TP_ADD_TC(tp, eventmask2);
-	ATF_TP_ADD_TC(tp, eventmask3);
-	ATF_TP_ADD_TC(tp, eventmask4);
-	ATF_TP_ADD_TC(tp, eventmask5);
-	ATF_TP_ADD_TC(tp, eventmask6);
+	ATF_TP_ADD_TC(tp, eventmask_preserved_empty);
+	ATF_TP_ADD_TC(tp, eventmask_preserved_fork);
+	ATF_TP_ADD_TC(tp, eventmask_preserved_vfork);
+	ATF_TP_ADD_TC(tp, eventmask_preserved_vfork_done);
+	ATF_TP_ADD_TC(tp, eventmask_preserved_lwp_create);
+	ATF_TP_ADD_TC(tp, eventmask_preserved_lwp_exit);
 
 	ATF_TP_ADD_TC(tp, fork1);
 	ATF_TP_ADD_TC_HAVE_PID(tp, fork2);
