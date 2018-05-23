@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.153 2018/05/18 10:09:02 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.154 2018/05/23 04:37:13 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -236,6 +236,7 @@ static int	ixgbe_sysctl_phy_overtemp_occurred(SYSCTLFN_PROTO);
 static int	ixgbe_sysctl_power_state(SYSCTLFN_PROTO);
 static int	ixgbe_sysctl_print_rss_config(SYSCTLFN_PROTO);
 #endif
+static int      ixgbe_sysctl_next_to_check_handler(SYSCTLFN_PROTO);
 static int      ixgbe_sysctl_rdh_handler(SYSCTLFN_PROTO);
 static int      ixgbe_sysctl_rdt_handler(SYSCTLFN_PROTO);
 static int      ixgbe_sysctl_tdt_handler(SYSCTLFN_PROTO);
@@ -1817,6 +1818,14 @@ ixgbe_add_hw_stats(struct adapter *adapter)
 		if (sysctl_createv(log, 0, &rnode, &cnode,
 		    CTLFLAG_READONLY,
 		    CTLTYPE_INT,
+		    "rxd_nxck", SYSCTL_DESCR("Receive Descriptor next to check"),
+			ixgbe_sysctl_next_to_check_handler, 0, (void *)rxr, 0,
+		    CTL_CREATE, CTL_EOL) != 0)
+			break;
+
+		if (sysctl_createv(log, 0, &rnode, &cnode,
+		    CTLFLAG_READONLY,
+		    CTLTYPE_INT,
 		    "rxd_head", SYSCTL_DESCR("Receive Descriptor Head"),
 		    ixgbe_sysctl_rdh_handler, 0, (void *)rxr, 0,
 		    CTL_CREATE, CTL_EOL) != 0)
@@ -2177,6 +2186,27 @@ ixgbe_sysctl_tdt_handler(SYSCTLFN_ARGS)
 	node.sysctl_data = &val;
 	return sysctl_lookup(SYSCTLFN_CALL(&node));
 } /* ixgbe_sysctl_tdt_handler */
+
+/************************************************************************
+ * ixgbe_sysctl_next_to_check_handler - Receive Descriptor next to check
+ * handler function
+ *
+ *   Retrieves the next_to_check value
+ ************************************************************************/
+static int 
+ixgbe_sysctl_next_to_check_handler(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node = *rnode;
+	struct rx_ring *rxr = (struct rx_ring *)node.sysctl_data;
+	uint32_t val;
+
+	if (!rxr)
+		return (0);
+
+	val = rxr->next_to_check;
+	node.sysctl_data = &val;
+	return sysctl_lookup(SYSCTLFN_CALL(&node));
+} /* ixgbe_sysctl_next_to_check_handler */
 
 /************************************************************************
  * ixgbe_sysctl_rdh_handler - Receive Descriptor Head handler function
