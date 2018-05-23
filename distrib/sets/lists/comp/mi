@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2194 2018/05/23 02:06:03 christos Exp $
+#	$NetBSD: mi,v 1.2195 2018/05/23 07:33:55 para Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -4699,7 +4699,7 @@
 ./usr/share/man/cat3/GCQ_INIT.0			comp-sys-catman		.cat
 ./usr/share/man/cat3/GCQ_INIT_HEAD.0		comp-sys-catman		.cat
 ./usr/share/man/cat3/GCQ_ITEM.0			comp-sys-catman		.cat
-./usr/share/man/cat3/HMAC.0			comp-openssl		openssl
+./usr/share/man/cat3/HMAC.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/IFTODT.0			comp-c-catman		.cat
 ./usr/share/man/cat3/LIST.0			comp-c-catman		.cat
 ./usr/share/man/cat3/LIST_EMPTY.0		comp-c-catman		.cat
