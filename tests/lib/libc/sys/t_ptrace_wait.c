@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.51 2018/05/23 01:29:43 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.52 2018/05/23 13:51:27 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.51 2018/05/23 01:29:43 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.52 2018/05/23 13:51:27 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -746,15 +746,8 @@ TRACEME_VFORK_RAISE(traceme_vfork_raise8, SIGCONT) /* continued? */
 
 /// ----------------------------------------------------------------------------
 
-ATF_TC(traceme_vfork_breakpoint);
-ATF_TC_HEAD(traceme_vfork_breakpoint, tc)
-{
-	atf_tc_set_md_var(tc, "descr",
-	    "Verify PT_TRACE_ME followed by a software breakpoint in a "
-	    "vfork(2)ed child");
-}
-
-ATF_TC_BODY(traceme_vfork_breakpoint, tc)
+static void
+traceme_vfork_crash(int sig)
 {
 	pid_t child, wpid;
 #if defined(TWAIT_HAVE_STATUS)
@@ -767,12 +760,27 @@ ATF_TC_BODY(traceme_vfork_breakpoint, tc)
 		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
-		DPRINTF("Before executing a software breakpoint\n");
-#ifdef PTRACE_BREAKPOINT_ASM
-		PTRACE_BREAKPOINT_ASM;
-#else
-		/* port me */
-#endif
+		DPRINTF("Before executing a trap\n");
+		switch (sig) {
+		case SIGTRAP:
+			trigger_trap();
+			break;
+		case SIGSEGV:
+			trigger_segv();
+			break;
+		case SIGILL:
+			trigger_ill();
+			break;
+		case SIGFPE:
+			trigger_fpe();
+			break;
+		case SIGBUS:
+			trigger_bus();
+			break;
+		default:
+			/* NOTREACHED */
+			FORKEE_ASSERTX(0 && "This shall not be reached");
+		}
 
 		/* NOTREACHED */
 		FORKEE_ASSERTX(0 && "This shall not be reached");
@@ -782,11 +790,32 @@ ATF_TC_BODY(traceme_vfork_breakpoint, tc)
 	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
-	validate_status_signaled(status, SIGTRAP, 1);
+	validate_status_signaled(status, sig, 1);
 
 	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
+
+#define TRACEME_VFORK_CRASH(test, sig)						\
+ATF_TC(test);									\
+ATF_TC_HEAD(test, tc)								\
+{										\
+	atf_tc_set_md_var(tc, "descr",						\
+	    "Verify PT_TRACE_ME followed by a crash signal " #sig " in a "	\
+	    "vfork(2)ed child");						\
+}										\
+										\
+ATF_TC_BODY(test, tc)								\
+{										\
+										\
+	traceme_vfork_crash(sig);						\
+}
+
+TRACEME_VFORK_CRASH(traceme_vfork_crash_trap, SIGTRAP)
+TRACEME_VFORK_CRASH(traceme_vfork_crash_segv, SIGSEGV)
+//TRACEME_VFORK_CRASH(traceme_vfork_crash_ill, SIGILL)
+TRACEME_VFORK_CRASH(traceme_vfork_crash_fpe, SIGFPE)
+TRACEME_VFORK_CRASH(traceme_vfork_crash_bus, SIGBUS)
 
 /// ----------------------------------------------------------------------------
 
@@ -5783,12 +5812,7 @@ ATF_TC_BODY(signal3, tc)
 		FORKEE_ASSERT(raise(sigval) == 0);
 
 		DPRINTF("Before raising software breakpoint from child\n");
-
-#ifdef PTRACE_BREAKPOINT_ASM
-		PTRACE_BREAKPOINT_ASM;
-#else
-		/* port me */
-#endif
+		trigger_trap();
 
 		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
@@ -7102,7 +7126,11 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, traceme_vfork_raise7);
 	ATF_TP_ADD_TC(tp, traceme_vfork_raise8);
 
-	ATF_TP_ADD_TC(tp, traceme_vfork_breakpoint);
+	ATF_TP_ADD_TC(tp, traceme_vfork_crash_trap);
+	ATF_TP_ADD_TC(tp, traceme_vfork_crash_segv);
+//	ATF_TP_ADD_TC(tp, traceme_vfork_crash_ill);
+	ATF_TP_ADD_TC(tp, traceme_vfork_crash_fpe);
+	ATF_TP_ADD_TC(tp, traceme_vfork_crash_bus);
 
 	ATF_TP_ADD_TC(tp, traceme_vfork_exec);
 
