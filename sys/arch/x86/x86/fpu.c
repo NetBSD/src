@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.31 2018/05/23 10:00:27 maxv Exp $	*/
+/*	$NetBSD: fpu.c,v 1.32 2018/05/23 10:21:43 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.  All
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.31 2018/05/23 10:00:27 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.32 2018/05/23 10:21:43 maxv Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -352,6 +352,10 @@ fpu_clear_amd(void)
 	 * Before that, clear the ES bit in the x87 status word if it is
 	 * currently set, in order to avoid causing a fault in the
 	 * upcoming load.
+	 *
+	 * Newer generations of AMD CPUs have CPUID_Fn80000008_EBX[2],
+	 * which indicates that FIP/FDP/FOP are restored (same behavior
+	 * as Intel). We're not using it though.
 	 */
 	if (fngetsw() & 0x80)
 		fnclex();
