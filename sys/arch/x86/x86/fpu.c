@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.30 2018/05/23 07:45:35 maxv Exp $	*/
+/*	$NetBSD: fpu.c,v 1.31 2018/05/23 10:00:27 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.  All
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.30 2018/05/23 07:45:35 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.31 2018/05/23 10:00:27 maxv Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -109,6 +109,8 @@ __KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.30 2018/05/23 07:45:35 maxv Exp $");
 #include <sys/kernel.h>
 
 #include <machine/cpu.h>
+#include <machine/cpuvar.h>
+#include <machine/cputypes.h>
 #include <machine/intr.h>
 #include <machine/cpufunc.h>
 #include <machine/pcb.h>
@@ -337,6 +339,25 @@ fputrap(struct trapframe *frame)
 	(*curlwp->l_proc->p_emul->e_trapsignal)(curlwp, &ksi);
 }
 
+static void
+fpu_clear_amd(void)
+{
+	/*
+	 * AMD FPUs do not restore FIP, FDP, and FOP on fxrstor and xrstor
+	 * when FSW.ES=0, leaking other threads' execution history.
+	 *
+	 * Clear them manually by loading a zero (fldummy). We do this
+	 * unconditionally, regardless of FSW.ES.
+	 *
+	 * Before that, clear the ES bit in the x87 status word if it is
+	 * currently set, in order to avoid causing a fault in the
+	 * upcoming load.
+	 */
+	if (fngetsw() & 0x80)
+		fnclex();
+	fldummy();
+}
+
 /*
  * Implement device not available (DNA) exception
  *
@@ -409,22 +430,14 @@ fpudna(struct trapframe *frame)
 		frstor(&pcb->pcb_savefpu);
 		break;
 	case FPU_SAVE_FXSAVE:
-		/*
-		 * AMD FPU's do not restore FIP, FDP, and FOP on
-		 * fxrstor, leaking other process's execution history.
-		 * Clear them manually by loading a zero.
-		 *
-		 * Clear the ES bit in the x87 status word if it is
-		 * currently set, in order to avoid causing a fault
-		 * in the upcoming load.
-		 */
-		if (fngetsw() & 0x80)
-			fnclex();
-		fldummy();
+		if (cpu_vendor == CPUVENDOR_AMD)
+			fpu_clear_amd();
 		fxrstor(&pcb->pcb_savefpu);
 		break;
 	case FPU_SAVE_XSAVE:
 	case FPU_SAVE_XSAVEOPT:
+		if (cpu_vendor == CPUVENDOR_AMD)
+			fpu_clear_amd();
 		xrstor(&pcb->pcb_savefpu, x86_xsave_features);
 		break;
 	}
