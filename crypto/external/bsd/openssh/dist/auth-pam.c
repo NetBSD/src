@@ -50,7 +50,7 @@
 /*
  * NetBSD local changes
  */
-__RCSID("$NetBSD: auth-pam.c,v 1.14 2018/04/06 18:58:59 christos Exp $");
+__RCSID("$NetBSD: auth-pam.c,v 1.15 2018/05/23 16:04:13 christos Exp $");
 #undef USE_POSIX_THREADS /* Not yet */
 #define HAVE_SECURITY_PAM_APPL_H
 #define HAVE_PAM_GETENVLIST
@@ -552,6 +552,7 @@ sshpam_thread(void *ctxtp)
 		ssh_msg_send(ctxt->pam_csock, PAM_MAXTRIES, &buffer);
 	else
 		ssh_msg_send(ctxt->pam_csock, PAM_AUTH_ERR, &buffer);
+	pfilter_notify(1);
 	buffer_free(&buffer);
 	pthread_exit(NULL);
 
@@ -830,6 +831,7 @@ sshpam_query(void *ctx, char **name, char **info,
 				free(msg);
 				return (0);
 			}
+			pfilter_notify(1);
 			error("PAM: %s for %s%.100s from %.100s", msg,
 			    sshpam_authctxt->valid ? "" : "illegal user ",
 			    sshpam_authctxt->user,
