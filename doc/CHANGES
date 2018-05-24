@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2389 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2390 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -150,6 +150,8 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	netpgp(3lua): Add Lua binding for libnetpgp(3). [sevan 20180429]
 	arm: Add support for Allwinner H6 SoC. [jmcneill 20180501]
 	dhcpcd: Import 7.0.4. [roy 20180502]
+	libbozohttpd(3): Add the embeddable version of bozohttpd [sevan 20180503]
+	bozohttpd(3lua): Add Lua binding for libbozohttpd(3lua) [sevan 20180503]
 	tzdata: updated to 2017e [kre 20180504]
 	libc: Update to tzcode2018e. [christos 20180504]
 	acpi(4): Updated ACPICA to 20180427. [christos 20180504]
