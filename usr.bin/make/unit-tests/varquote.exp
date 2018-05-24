@@ -1,0 +1,2 @@
+-fdebug-prefix-map=$NETBSDSRCDIR=/usr/src -fdebug-regex-map=/usr/src/(.*)/obj$=/usr/obj/\1
+exit status 0
