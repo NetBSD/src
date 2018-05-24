@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.218 2018/02/18 00:52:42 sjg Exp $	*/
+/*	$NetBSD: var.c,v 1.219 2018/05/24 00:27:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.218 2018/02/18 00:52:42 sjg Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.219 2018/05/24 00:27:24 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.218 2018/02/18 00:52:42 sjg Exp $");
+__RCSID("$NetBSD: var.c,v 1.219 2018/05/24 00:27:24 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2347,6 +2347,8 @@ VarQuote(char *str)
 	if (isspace((unsigned char)*str) || ismeta((unsigned char)*str))
 	    Buf_AddByte(&buf, '\\');
 	Buf_AddByte(&buf, *str);
+	if (*str == '$')
+	    Buf_AddBytes(&buf, 2, "\\$");
     }
 
     str = Buf_Destroy(&buf, FALSE);
