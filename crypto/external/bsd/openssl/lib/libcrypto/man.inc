@@ -1,4 +1,4 @@
-#	$NetBSD: man.inc,v 1.9 2018/05/23 01:58:40 christos Exp $
+#	$NetBSD: man.inc,v 1.10 2018/05/24 19:03:47 christos Exp $
 
 .PATH:	${.CURDIR}/man
 
@@ -88,7 +88,6 @@ CTLOG_STORE_new.3 \
 CTLOG_new.3 \
 CT_POLICY_EVAL_CTX_new.3 \
 DEFINE_STACK_OF.3 \
-DES_random_key.3 \
 DH_generate_key.3 \
 DH_generate_parameters.3 \
 DH_get0_pqg.3 \
