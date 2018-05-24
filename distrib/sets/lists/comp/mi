@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2195 2018/05/23 07:33:55 para Exp $
+#	$NetBSD: mi,v 1.2196 2018/05/24 22:37:58 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -4568,7 +4568,7 @@
 ./usr/share/man/cat3/CTLOG_new.0		comp-c-catman		.cat,openssl=11
 ./usr/share/man/cat3/CT_POLICY_EVAL_CTX_new.0	comp-c-catman		.cat,openssl=11
 ./usr/share/man/cat3/DEFINE_STACK_OF.0		comp-c-catman		.cat,openssl=11
-./usr/share/man/cat3/DES_random_key.0		comp-c-catman		.cat,openssl=11
+./usr/share/man/cat3/DES_random_key.0		comp-obsolete		obsolete
 ./usr/share/man/cat3/DH_generate_key.0		comp-c-catman		.cat
 ./usr/share/man/cat3/DH_generate_parameters.0	comp-c-catman		.cat
 ./usr/share/man/cat3/DH_get0_pqg.0		comp-c-catman		.cat,openssl=11
@@ -12386,7 +12386,7 @@
 ./usr/share/man/html3/CTLOG_new.html	comp-c-htmlman	html,openssl=11
 ./usr/share/man/html3/CT_POLICY_EVAL_CTX_new.html	comp-c-htmlman	html,openssl=11
 ./usr/share/man/html3/DEFINE_STACK_OF.html	comp-c-htmlman	html,openssl=11
-./usr/share/man/html3/DES_random_key.html	comp-c-htmlman	html,openssl=11
+./usr/share/man/html3/DES_random_key.html	comp-obsolete	obsolete
 ./usr/share/man/html3/DH_generate_key.html	comp-c-htmlman	html
 ./usr/share/man/html3/DH_generate_parameters.html	comp-c-htmlman	html
 ./usr/share/man/html3/DH_get0_pqg.html	comp-c-htmlman	html,openssl=11
@@ -20047,7 +20047,7 @@
 ./usr/share/man/man3/CTLOG_new.3	comp-c-man	.man,openssl=11
 ./usr/share/man/man3/CT_POLICY_EVAL_CTX_new.3	comp-c-man	.man,openssl=11
 ./usr/share/man/man3/DEFINE_STACK_OF.3	comp-c-man	.man,openssl=11
-./usr/share/man/man3/DES_random_key.3	comp-c-man	.man,openssl=11
+./usr/share/man/man3/DES_random_key.3		comp-obsolete		obsolete
 ./usr/share/man/man3/DH_generate_key.3		comp-c-man		.man
 ./usr/share/man/man3/DH_generate_parameters.3	comp-c-man		.man
 ./usr/share/man/man3/DH_get0_pqg.3	comp-c-man	.man,openssl=11
