@@ -1,4 +1,4 @@
-/*	$NetBSD: t_syscall.c,v 1.1 2018/05/25 15:42:30 martin Exp $	*/
+/*	$NetBSD: t_syscall.c,v 1.2 2018/05/25 16:30:03 martin Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_syscall.c,v 1.1 2018/05/25 15:42:30 martin Exp $");
+__RCSID("$NetBSD: t_syscall.c,v 1.2 2018/05/25 16:30:03 martin Exp $");
 
 
 #include <atf-c.h>
@@ -44,9 +44,9 @@ __RCSID("$NetBSD: t_syscall.c,v 1.1 2018/05/25 15:42:30 martin Exp $");
 #include <sys/syscall.h>
 
 #if !defined(_LP64) && BYTE_ORDER == _BIG_ENDIAN
-#define __SYSCALL_TO_UINPTRT(V)	((uintptr_t)((V)>>32))
+#define __SYSCALL_TO_UINTPTR_T(V)	((uintptr_t)((V)>>32))
 #else
-#define __SYSCALL_TO_UINPTRT(V)	((uintptr_t)(V))
+#define __SYSCALL_TO_UINTPTR_T(V)	((uintptr_t)(V))
 #endif
 
 static const char secrect_data[1024] = {
@@ -98,7 +98,7 @@ ATF_TC_BODY(mmap___syscall, tc)
 
 	write(fd, secrect_data, sizeof(secrect_data));
 
-	p = (const char *)__SYSCALL_TO_UINPTRT(__syscall(SYS_mmap,
+	p = (const char *)__SYSCALL_TO_UINTPTR_T(__syscall(SYS_mmap,
 		0, sizeof(secrect_data), PROT_READ, MAP_PRIVATE, fd, 0, 0, 0));
 	ATF_REQUIRE(p != NULL);
 
