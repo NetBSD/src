@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.784 2018/05/24 14:54:36 christos Exp $
+# $NetBSD: mi,v 1.785 2018/05/25 15:42:48 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2813,6 +2813,7 @@
 ./usr/tests/lib/libc/sys/t_socketpair		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/sys/t_stat			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/sys/t_swapcontext		tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libc/sys/t_syscall		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/sys/t_timer_create		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/sys/t_truncate		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/sys/t_ucontext		tests-lib-tests		compattestfile,atf
