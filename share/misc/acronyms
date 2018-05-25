@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.273 2018/05/22 02:54:32 ginsbach Exp $
+$NetBSD: acronyms,v 1.274 2018/05/25 00:31:07 riastradh Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
@@ -178,6 +178,7 @@ GA	go ahead
 GAC	get a clue
 GAL	get a life
 GBTW	get back to work
+GDPR	General Data Protection Regulation
 GF	girlfriend
 GFU	good for you
 GFY	good for you
