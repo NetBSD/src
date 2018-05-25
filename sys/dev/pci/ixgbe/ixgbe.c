@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.155 2018/05/23 10:11:07 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.156 2018/05/25 04:40:27 ozaki-r Exp $ */
 
 /******************************************************************************
 
@@ -1316,7 +1316,6 @@ ixgbe_setup_interface(device_t dev, struct adapter *adapter)
 	 * We use per TX queue softint, so if_deferred_start_init() isn't
 	 * used.
 	 */
-	if_register(ifp);
 	ether_set_ifflags_cb(ec, ixgbe_ifflags_cb);
 
 	adapter->max_frame_size = ifp->if_mtu + ETHER_HDR_LEN + ETHER_CRC_LEN;
@@ -1364,6 +1363,8 @@ ixgbe_setup_interface(device_t dev, struct adapter *adapter)
 
 	/* Set autoselect media by default */
 	ifmedia_set(&adapter->media, IFM_ETHER | IFM_AUTO);
+
+	if_register(ifp);
 
 	return (0);
 } /* ixgbe_setup_interface */
