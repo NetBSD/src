@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.36 2017/04/08 20:59:27 scole Exp $ */
+/* $NetBSD: pmap.c,v 1.37 2018/05/25 06:34:02 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.36 2017/04/08 20:59:27 scole Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.37 2018/05/25 06:34:02 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -438,7 +438,7 @@ pmap_bootstrap(void)
 	bufsz = buf_memcalc();
 	buf_setvalimit(bufsz);
 
-	nkpt = (((ubc_nwins << ubc_winshift) + uvm_emap_size +
+	nkpt = (((ubc_nwins << ubc_winshift) +
 		 bufsz + 16 * NCARGS + pager_map_size) / PAGE_SIZE +
 		USRIOSIZE + (maxproc * UPAGES) + nkmempages) / NKPTEPG;
 
