@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.51 2018/05/18 06:39:58 kamil Exp $
+# $NetBSD: Makefile,v 1.52 2018/05/25 15:42:30 martin Exp $
 
 MKMAN=	no
 
@@ -70,6 +70,7 @@ TESTS_C+=		t_sigtimedwait
 TESTS_C+=		t_socketpair
 TESTS_C+=		t_swapcontext
 TESTS_C+=		t_stat
+TESTS_C+=		t_syscall
 TESTS_C+=		t_timer_create
 TESTS_C+=		t_truncate
 TESTS_C+=		t_ucontext
