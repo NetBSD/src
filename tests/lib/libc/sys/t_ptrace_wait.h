@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.h,v 1.7 2018/05/24 08:28:40 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.h,v 1.8 2018/05/26 15:15:17 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -503,6 +503,23 @@ can_we_set_dbregs(void)
 		return false;
 }
 #endif
+
+static bool __used
+can_we_write_to_text(pid_t pid)
+{
+	int mib[3];
+	int paxflags;
+	size_t len = sizeof(int);
+
+	mib[0] = CTL_PROC;
+	mib[1] = pid;
+	mib[2] = PROC_PID_PAXFLAGS;
+
+	if (sysctl(mib, 3, &paxflags, &len, NULL, 0) == -1)
+		return false;
+
+	return !(paxflags & CTL_PROC_PAXFLAGS_MPROTECT);
+}
 
 static void __used
 trigger_trap(void)
