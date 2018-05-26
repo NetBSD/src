@@ -1,4 +1,4 @@
-/* $NetBSD: axppmic.c,v 1.9 2018/05/13 22:58:58 jmcneill Exp $ */
+/* $NetBSD: axppmic.c,v 1.10 2018/05/26 14:39:20 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: axppmic.c,v 1.9 2018/05/13 22:58:58 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: axppmic.c,v 1.10 2018/05/26 14:39:20 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: axppmic.c,v 1.9 2018/05/13 22:58:58 jmcneill Exp $")
 #define	AXP_POWER_SOURCE_REG	0x00
 #define	 AXP_POWER_SOURCE_ACIN_PRESENT	__BIT(7)
 #define	 AXP_POWER_SOURCE_VBUS_PRESENT	__BIT(5)
+#define	 AXP_POWER_SOURCE_CHARGE_DIRECTION __BIT(2)
 
 #define	AXP_POWER_MODE_REG	0x01
 #define	 AXP_POWER_MODE_BATT_VALID	__BIT(4)
@@ -63,8 +64,21 @@ __KERNEL_RCSID(0, "$NetBSD: axppmic.c,v 1.9 2018/05/13 22:58:58 jmcneill Exp $")
 #define	 AXP_IRQ1_VBUS_LOWER	__BIT(2)
 #define AXP_IRQ_STATUS_REG(n)	(0x48 + (n) - 1)
 
+#define	AXP_BATSENSE_HI_REG	0x78
+#define	AXP_BATSENSE_LO_REG	0x79
+
+#define	AXP_BATTCHG_HI_REG	0x7a
+#define	AXP_BATTCHG_LO_REG	0x7b
+
+#define	AXP_BATTDISCHG_HI_REG	0x7c
+#define	AXP_BATTDISCHG_LO_REG	0x7d
+
+#define	AXP_ADC_RAW(_hi, _lo)	\
+	(((u_int)(_hi) << 4) | ((lo) & 0xf))
+
 #define	AXP_FUEL_GAUGE_CTRL_REG	0xb8
 #define	 AXP_FUEL_GAUGE_CTRL_EN	__BIT(7)
+
 #define	AXP_BATT_CAP_REG	0xb9
 #define	 AXP_BATT_CAP_VALID	__BIT(7)
 #define	 AXP_BATT_CAP_PERCENT	__BITS(6,0)
@@ -198,6 +212,11 @@ struct axppmic_config {
 	struct axppmic_irq battirq;
 	struct axppmic_irq chargeirq;
 	struct axppmic_irq chargestirq;
+	u_int batsense_step;	/* uV */
+	u_int charge_step;	/* uA */
+	u_int discharge_step;	/* uA */
+	u_int maxcap_step;	/* uAh */
+	u_int coulomb_step;	/* uAh */
 };
 
 enum axppmic_sensor {
@@ -206,7 +225,10 @@ enum axppmic_sensor {
 	AXP_SENSOR_BATT_PRESENT,
 	AXP_SENSOR_BATT_CHARGING,
 	AXP_SENSOR_BATT_CHARGE_STATE,
-	AXP_SENSOR_BATT_CAPACITY,
+	AXP_SENSOR_BATT_VOLTAGE,
+	AXP_SENSOR_BATT_CHARGE_CURRENT,
+	AXP_SENSOR_BATT_DISCHARGE_CURRENT,
+	AXP_SENSOR_BATT_CAPACITY_PERCENT,
 	AXP_NSENSORS
 };
 
@@ -249,6 +271,9 @@ static const struct axppmic_config axp803_config = {
 	.irq_regs = 6,
 	.has_battery = true,
 	.has_fuel_gauge = true,
+	.batsense_step = 1100,
+	.charge_step = 1000,
+	.discharge_step = 1000,
 	.poklirq = AXPPMIC_IRQ(5, __BIT(3)),
 	.acinirq = AXPPMIC_IRQ(1, __BITS(6,5)),
 	.vbusirq = AXPPMIC_IRQ(1, __BITS(3,2)),
@@ -380,10 +405,15 @@ static void
 axppmic_sensor_update(struct sysmon_envsys *sme, envsys_data_t *e)
 {
 	struct axppmic_softc *sc = sme->sme_cookie;
+	const struct axppmic_config *c = sc->sc_conf;
 	const int flags = I2C_F_POLL;
-	uint8_t val;
+	uint8_t val, lo, hi;
 
 	e->state = ENVSYS_SINVALID;
+
+	const bool battery_present =
+	    sc->sc_sensor[AXP_SENSOR_BATT_PRESENT].state == ENVSYS_SVALID &&
+	    sc->sc_sensor[AXP_SENSOR_BATT_PRESENT].value_cur == 1;
 
 	switch (e->private) {
 	case AXP_SENSOR_ACIN_PRESENT:
@@ -413,9 +443,7 @@ axppmic_sensor_update(struct sysmon_envsys *sme, envsys_data_t *e)
 		}
 		break;
 	case AXP_SENSOR_BATT_CHARGE_STATE:
-		if (axppmic_read(sc->sc_i2c, sc->sc_addr, AXP_POWER_MODE_REG, &val, flags) == 0 &&
-		    (val & AXP_POWER_MODE_BATT_VALID) != 0 &&
-		    (val & AXP_POWER_MODE_BATT_PRESENT) != 0 &&
+		if (battery_present &&
 		    axppmic_read(sc->sc_i2c, sc->sc_addr, AXP_BATT_CAP_REG, &val, flags) == 0 &&
 		    (val & AXP_BATT_CAP_VALID) != 0) {
 			const u_int batt_val = __SHIFTOUT(val, AXP_BATT_CAP_PERCENT);
@@ -431,14 +459,40 @@ axppmic_sensor_update(struct sysmon_envsys *sme, envsys_data_t *e)
 			}
 		}
 		break;
-	case AXP_SENSOR_BATT_CAPACITY:
-		if (axppmic_read(sc->sc_i2c, sc->sc_addr, AXP_POWER_MODE_REG, &val, flags) == 0 &&
-		    (val & AXP_POWER_MODE_BATT_VALID) != 0 &&
-		    (val & AXP_POWER_MODE_BATT_PRESENT) != 0 &&
+	case AXP_SENSOR_BATT_CAPACITY_PERCENT:
+		if (battery_present &&
 		    axppmic_read(sc->sc_i2c, sc->sc_addr, AXP_BATT_CAP_REG, &val, flags) == 0 &&
 		    (val & AXP_BATT_CAP_VALID) != 0) {
 			e->state = ENVSYS_SVALID;
 			e->value_cur = __SHIFTOUT(val, AXP_BATT_CAP_PERCENT);
+		}
+		break;
+	case AXP_SENSOR_BATT_VOLTAGE:
+		if (battery_present &&
+		    axppmic_read(sc->sc_i2c, sc->sc_addr, AXP_BATSENSE_HI_REG, &hi, flags) == 0 &&
+		    axppmic_read(sc->sc_i2c, sc->sc_addr, AXP_BATSENSE_LO_REG, &lo, flags) == 0) {
+			e->state = ENVSYS_SVALID;
+			e->value_cur = AXP_ADC_RAW(hi, lo) * c->batsense_step;
+		}
+		break;
+	case AXP_SENSOR_BATT_CHARGE_CURRENT:
+		if (battery_present &&
+		    axppmic_read(sc->sc_i2c, sc->sc_addr, AXP_POWER_SOURCE_REG, &val, flags) == 0 &&
+		    (val & AXP_POWER_SOURCE_CHARGE_DIRECTION) != 0 &&
+		    axppmic_read(sc->sc_i2c, sc->sc_addr, AXP_BATTCHG_HI_REG, &hi, flags) == 0 &&
+		    axppmic_read(sc->sc_i2c, sc->sc_addr, AXP_BATTCHG_LO_REG, &lo, flags) == 0) {
+			e->state = ENVSYS_SVALID;
+			e->value_cur = AXP_ADC_RAW(hi, lo) * c->charge_step;
+		}
+		break;
+	case AXP_SENSOR_BATT_DISCHARGE_CURRENT:
+		if (battery_present &&
+		    axppmic_read(sc->sc_i2c, sc->sc_addr, AXP_POWER_SOURCE_REG, &val, flags) == 0 &&
+		    (val & AXP_POWER_SOURCE_CHARGE_DIRECTION) == 0 &&
+		    axppmic_read(sc->sc_i2c, sc->sc_addr, AXP_BATTDISCHG_HI_REG, &hi, flags) == 0 &&
+		    axppmic_read(sc->sc_i2c, sc->sc_addr, AXP_BATTDISCHG_LO_REG, &lo, flags) == 0) {
+			e->state = ENVSYS_SVALID;
+			e->value_cur = AXP_ADC_RAW(hi, lo) * c->discharge_step;
 		}
 		break;
 	}
@@ -451,8 +505,11 @@ axppmic_sensor_refresh(struct sysmon_envsys *sme, envsys_data_t *e)
 	const int flags = I2C_F_POLL;
 
 	switch (e->private) {
-	case AXP_SENSOR_BATT_CAPACITY:
-		/* Always update battery capacity (fuel gauge) */
+	case AXP_SENSOR_BATT_CAPACITY_PERCENT:
+	case AXP_SENSOR_BATT_VOLTAGE:
+	case AXP_SENSOR_BATT_CHARGE_CURRENT:
+	case AXP_SENSOR_BATT_DISCHARGE_CURRENT:
+		/* Always update battery capacity and ADCs */
 		iic_acquire_bus(sc->sc_i2c, flags);
 		axppmic_sensor_update(sme, e);
 		iic_release_bus(sc->sc_i2c, flags);
@@ -526,6 +583,7 @@ axppmic_attach_acadapter(struct axppmic_softc *sc)
 static void
 axppmic_attach_battery(struct axppmic_softc *sc)
 {
+	const struct axppmic_config *c = sc->sc_conf;
 	envsys_data_t *e;
 	uint8_t val;
 
@@ -559,9 +617,36 @@ axppmic_attach_battery(struct axppmic_softc *sc)
 	strlcpy(e->desc, "charge state", sizeof(e->desc));
 	sysmon_envsys_sensor_attach(sc->sc_sme, e);
 
-	if (sc->sc_conf->has_fuel_gauge) {
-		e = &sc->sc_sensor[AXP_SENSOR_BATT_CAPACITY];
-		e->private = AXP_SENSOR_BATT_CAPACITY;
+	if (c->batsense_step) {
+		e = &sc->sc_sensor[AXP_SENSOR_BATT_VOLTAGE];
+		e->private = AXP_SENSOR_BATT_VOLTAGE;
+		e->units = ENVSYS_SVOLTS_DC;
+		e->state = ENVSYS_SINVALID;
+		strlcpy(e->desc, "battery voltage", sizeof(e->desc));
+		sysmon_envsys_sensor_attach(sc->sc_sme, e);
+	}
+
+	if (c->charge_step) {
+		e = &sc->sc_sensor[AXP_SENSOR_BATT_CHARGE_CURRENT];
+		e->private = AXP_SENSOR_BATT_CHARGE_CURRENT;
+		e->units = ENVSYS_SAMPS;
+		e->state = ENVSYS_SINVALID;
+		strlcpy(e->desc, "battery charge current", sizeof(e->desc));
+		sysmon_envsys_sensor_attach(sc->sc_sme, e);
+	}
+
+	if (c->discharge_step) {
+		e = &sc->sc_sensor[AXP_SENSOR_BATT_DISCHARGE_CURRENT];
+		e->private = AXP_SENSOR_BATT_DISCHARGE_CURRENT;
+		e->units = ENVSYS_SAMPS;
+		e->state = ENVSYS_SINVALID;
+		strlcpy(e->desc, "battery discharge current", sizeof(e->desc));
+		sysmon_envsys_sensor_attach(sc->sc_sme, e);
+	}
+
+	if (c->has_fuel_gauge) {
+		e = &sc->sc_sensor[AXP_SENSOR_BATT_CAPACITY_PERCENT];
+		e->private = AXP_SENSOR_BATT_CAPACITY_PERCENT;
 		e->units = ENVSYS_INTEGER;
 		e->state = ENVSYS_SINVALID;
 		e->flags = ENVSYS_FPERCENT;
