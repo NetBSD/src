@@ -55,7 +55,8 @@ TODO
 
 2.  The rtsock compat code is a disaster, with rtsock_50.c #include-ing
     the main rtsock.c code with various manipulations of the COMPAT_50
-    macro.
+    macro.  Once rtsock is separated, compat_14 references to rtsock_50
+    routines needs to be verified.
 
 3.  The compat_60 module still needs some work for XEN systems.  We
     probably need some build infrastructure changes to ensure that
@@ -63,30 +64,20 @@ TODO
     macros defined and with -I directories specified in the same order
     as for building kernels.
 
-4.  Update syscalls.master to point the compat calls at the specific
-    modules rather than the monolithic compat module.  Update the
-    "required" lists of other modules, too.
-
-5.  The rtsock compatability code needs to be de-spaghetti'd and made
-    separable into rtsock_70 and rtsock_50 pieces.
-
-6.  Once rtsock is separated, compat_14 references to rtsock_50 routines
-    needs to be verified.
-
-7.  For compat_60, still need to figure out what to do with BSDPTY and
+4.  For compat_60, still need to figure out what to do with BSDPTY and
     tty_ptm
 
-8.  Also for compat_60, need to fix the building of XEN (and, for i386,
+5.  Also for compat_60, need to fix the building of XEN (and, for i386,
     XEN-PAE) module variants so that the obj-dir symlinks and the -I
     include order match those present in a kernel build.  See PR/53130
     (Currently, this affects the compat_60 module and its implementation
     of microcode updates for AMD processors - i386 and amd64.)
 
-9.  For compat_50, in addition to rtsock there are some things in dev/vnd,
+6.  For compat_50, in addition to rtsock there are some things in dev/vnd,
     dev/gpio, and dev/wscons/wsmux that I haven't been able to cleanly
     separate.
 
-10. There seems to be quite a bit of MD compat_xx code, in the various
+7.  There seems to be quite a bit of MD compat_xx code, in the various
     sys/arch/ directories.  I haven't yet looked at any of this.  But it
     seems to me that the MI compat build infrastructure should have some
     mechanism to "reach over" to the MD code, #include a Makefile.inc file,
