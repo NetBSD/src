@@ -1,3 +1,5 @@
+/* $NetBSD: COMPAT-branch-notes,v 1.1.2.17 2018/05/26 11:48:40 pgoyette Exp $ */
+
 DONE
 ----
 1.  Removed linking of the kernel compat object library into all kernels;
