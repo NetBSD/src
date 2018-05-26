@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.95 2018/05/19 15:13:26 jdolecek Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.96 2018/05/26 18:57:35 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.95 2018/05/19 15:13:26 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.96 2018/05/26 18:57:35 jdolecek Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ubc.h"
@@ -872,19 +872,31 @@ again:
 
 		/* Page must be writable by now */
 		KASSERT((pg->flags & PG_RDONLY) == 0 || (flags & UBC_WRITE) == 0);
-
-		mutex_enter(&uvm_pageqlock);
-		uvm_pageactivate(pg);
-		mutex_exit(&uvm_pageqlock);
-
-		/* Page will be changed, no longer clean */
-		/* XXX do this AFTER the write? */
-		if (flags & UBC_WRITE)
-			pg->flags &= ~(PG_FAKE|PG_CLEAN);
 	}
 	mutex_exit(uobj->vmobjlock);
 
 	return 0;
+}
+
+static void __noinline
+ubc_direct_release(struct uvm_object *uobj,
+	int flags, struct vm_page **pgs, int npages)
+{
+	mutex_enter(uobj->vmobjlock);
+	mutex_enter(&uvm_pageqlock);
+	for (int i = 0; i < npages; i++) {
+		struct vm_page *pg = pgs[i];
+
+		uvm_pageactivate(pg);
+
+		/* Page was changed, no longer fake and neither clean */
+		if (flags & UBC_WRITE)
+			pg->flags &= ~(PG_FAKE|PG_CLEAN);
+	}
+	mutex_exit(&uvm_pageqlock);
+
+	uvm_page_unbusy(pgs, npages);
+	mutex_exit(uobj->vmobjlock);
 }
 
 static int
@@ -942,9 +954,7 @@ ubc_uiomove_direct(struct uvm_object *uobj, struct uio *uio, vsize_t todo, int a
 			    ubc_zerorange_process, NULL);
 		}
 
-		mutex_enter(uobj->vmobjlock);
-		uvm_page_unbusy(pgs, npages);
-		mutex_exit(uobj->vmobjlock);
+		ubc_direct_release(uobj, flags, pgs, npages);
 
 		off += bytelen;
 		todo -= bytelen;
@@ -963,12 +973,14 @@ ubc_zerorange_direct(struct uvm_object *uobj, off_t off, size_t todo, int flags)
 	int error, npages;
 	struct vm_page *pgs[ubc_winsize >> PAGE_SHIFT];
 
+	flags |= UBC_WRITE;
+
 	error = 0;
 	while (todo > 0) {
 		vsize_t bytelen = todo;
 
 		error = ubc_alloc_direct(uobj, off, &bytelen, UVM_ADV_NORMAL,
-		    UBC_WRITE, pgs, &npages);
+		    flags, pgs, &npages);
 		if (error != 0) {
 			/* can't do anything, failed to get the pages */
 			break;
@@ -977,16 +989,10 @@ ubc_zerorange_direct(struct uvm_object *uobj, off_t off, size_t todo, int flags)
 		error = uvm_direct_process(pgs, npages, off, bytelen,
 		    ubc_zerorange_process, NULL);
 
-		mutex_enter(uobj->vmobjlock);
-		uvm_page_unbusy(pgs, npages);
-		mutex_exit(uobj->vmobjlock);
+		ubc_direct_release(uobj, flags, pgs, npages);
 
 		off += bytelen;
 		todo -= bytelen;
-
-		if (error != 0 && ISSET(flags, UBC_PARTIALOK)) {
-			break;
-		}
 	}
 }
 
