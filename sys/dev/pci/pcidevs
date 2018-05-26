@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1335 2018/05/24 04:29:25 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1336 2018/05/26 13:25:19 jakllsch Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -4117,6 +4117,7 @@ product INTEL 82Q45_HB		0x2e10	82Q45 Host Bridge
 product INTEL 82Q45_EXP		0x2e11	82Q45 PCI Express Bridge
 product INTEL 82Q45_IGD		0x2e12	82Q45 Integrated Graphics Device
 product INTEL 82Q45_IGD_1	0x2e13	82Q45 Integrated Graphics Device
+product INTEL 82Q45_IDER	0x2e16	82Q45 IDER
 product INTEL 82Q45_KT_1	0x2e17	82Q45 KT
 product INTEL 82G45_HB		0x2e20	82G45 Host Bridge
 product INTEL 82G45_IGD		0x2e22	82G45 Integrated Graphics Device
