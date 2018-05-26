@@ -1,4 +1,4 @@
-.\"	$NetBSD: ofctl.8,v 1.5 2018/05/26 10:21:41 jmcneill Exp $
+.\"	$NetBSD: ofctl.8,v 1.6 2018/05/26 12:40:06 wiz Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -35,8 +35,7 @@
 .Nd display the OpenPROM or OpenFirmware device tree
 .Sh SYNOPSIS
 .Nm
-.Op Fl p
-.Op Fl v
+.Op Fl pv
 .Op Fl f Ar file
 .Op Ar node
 .Sh DESCRIPTION
@@ -72,9 +71,9 @@ Display the full path name for each node.
 .El
 .Sh FILES
 .Bl -tag -width "/dev/openprom "
-.It /dev/openprom
+.It Pa /dev/openprom
 The openprom device on systems with OpenPROM.
-.It /dev/openfirm
+.It Pa /dev/openfirm
 The openfirm device on systems with OpenFirmware.
 .El
 .Sh SEE ALSO
