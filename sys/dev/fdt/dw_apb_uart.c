@@ -1,4 +1,4 @@
-/* $NetBSD: dw_apb_uart.c,v 1.1 2018/05/27 17:14:23 jmcneill Exp $ */
+/* $NetBSD: dw_apb_uart.c,v 1.2 2018/05/27 19:54:45 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dw_apb_uart.c,v 1.1 2018/05/27 17:14:23 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dw_apb_uart.c,v 1.2 2018/05/27 19:54:45 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -55,6 +55,7 @@ struct dw_apb_uart_softc {
 	void *ssc_ih;
 
 	struct clk *ssc_clk;
+	struct clk *ssc_pclk;
 	struct fdtbus_reset *ssc_rst;
 };
 
@@ -112,6 +113,12 @@ dw_apb_uart_attach(device_t parent, device_t self, void *aux)
 	}
 	if (clk_enable(ssc->ssc_clk) != 0) {
 		aprint_error(": couldn't enable clock\n");
+		return;
+	}
+
+	ssc->ssc_pclk = fdtbus_clock_get(faa->faa_phandle, "apb_pclk");
+	if (ssc->ssc_pclk != NULL && clk_enable(ssc->ssc_pclk) != 0) {
+		aprint_error(": couldn't enable peripheral clock\n");
 		return;
 	}
 
