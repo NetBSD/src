@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.55 2018/05/27 00:36:56 christos Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.56 2018/05/27 08:08:24 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.55 2018/05/27 00:36:56 christos Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.56 2018/05/27 08:08:24 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1734,7 +1734,8 @@ bytes_transfer(int operation, size_t size, enum bytes_transfer_type type)
 #if defined(TWAIT_HAVE_STATUS)
 	int status;
 #endif
-	AuxInfo ai[64], *aip;
+	/* 512 is more than enough, for the purposes of ATF it's good enough */
+	AuxInfo ai[512], *aip;
 
 	ATF_REQUIRE(size < sizeof(ai));
 
