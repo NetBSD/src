@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_com.c,v 1.5 2018/05/27 17:05:06 jmcneill Exp $ */
+/* $NetBSD: dw_apb_uart.c,v 1.1 2018/05/27 17:14:23 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sunxi_com.c,v 1.5 2018/05/27 17:05:06 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dw_apb_uart.c,v 1.1 2018/05/27 17:14:23 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -42,15 +42,15 @@ __KERNEL_RCSID(1, "$NetBSD: sunxi_com.c,v 1.5 2018/05/27 17:05:06 jmcneill Exp $
 
 #include <dev/fdt/fdtvar.h>
 
-static int sunxi_com_match(device_t, cfdata_t, void *);
-static void sunxi_com_attach(device_t, device_t, void *);
+static int dw_apb_uart_match(device_t, cfdata_t, void *);
+static void dw_apb_uart_attach(device_t, device_t, void *);
 
 static const char * const compatible[] = {
 	"snps,dw-apb-uart",
 	NULL
 };
 
-struct sunxi_com_softc {
+struct dw_apb_uart_softc {
 	struct com_softc ssc_sc;
 	void *ssc_ih;
 
@@ -58,11 +58,11 @@ struct sunxi_com_softc {
 	struct fdtbus_reset *ssc_rst;
 };
 
-CFATTACH_DECL_NEW(sunxi_com, sizeof(struct sunxi_com_softc),
-	sunxi_com_match, sunxi_com_attach, NULL, NULL);
+CFATTACH_DECL_NEW(dw_apb_uart, sizeof(struct dw_apb_uart_softc),
+	dw_apb_uart_match, dw_apb_uart_attach, NULL, NULL);
 
 static int
-sunxi_com_match(device_t parent, cfdata_t cf, void *aux)
+dw_apb_uart_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
@@ -70,9 +70,9 @@ sunxi_com_match(device_t parent, cfdata_t cf, void *aux)
 }
 
 static void
-sunxi_com_attach(device_t parent, device_t self, void *aux)
+dw_apb_uart_attach(device_t parent, device_t self, void *aux)
 {
-	struct sunxi_com_softc * const ssc = device_private(self);
+	struct dw_apb_uart_softc * const ssc = device_private(self);
 	struct com_softc * const sc = &ssc->ssc_sc;
 	struct fdt_attach_args * const faa = aux;
 	bus_space_handle_t bsh;
@@ -133,7 +133,6 @@ sunxi_com_attach(device_t parent, device_t self, void *aux)
 	COM_INIT_REGS(sc->sc_regs, bst, bsh, addr);
 
 	com_attach_subr(sc);
-	aprint_naive("\n");
 
 	if (!fdtbus_intr_str(faa->faa_phandle, 0, intrstr, sizeof(intrstr))) {
 		aprint_error_dev(self, "failed to decode interrupt\n");
@@ -154,13 +153,13 @@ sunxi_com_attach(device_t parent, device_t self, void *aux)
  */
 
 static int
-sunxi_com_console_match(int phandle)
+dw_apb_uart_console_match(int phandle)
 {
 	return of_match_compatible(phandle, compatible);
 }
 
 static void
-sunxi_com_console_consinit(struct fdt_attach_args *faa, u_int uart_freq)
+dw_apb_uart_console_consinit(struct fdt_attach_args *faa, u_int uart_freq)
 {
 	const int phandle = faa->faa_phandle;
 	bus_space_tag_t bst = faa->faa_a4x_bst;
@@ -175,12 +174,12 @@ sunxi_com_console_consinit(struct fdt_attach_args *faa, u_int uart_freq)
 	flags = fdtbus_get_stdout_flags();
 
 	if (comcnattach(bst, addr, speed, uart_freq, COM_TYPE_DW_APB, flags))
-		panic("Cannot initialize sunxi com console");
+		panic("Cannot initialize dw-apb-uart console");
 }
 
-static const struct fdt_console sunxi_com_console = {
-	.match = sunxi_com_console_match,
-	.consinit = sunxi_com_console_consinit,
+static const struct fdt_console dw_apb_uart_console = {
+	.match = dw_apb_uart_console_match,
+	.consinit = dw_apb_uart_console_consinit,
 };
 
-FDT_CONSOLE(sunxi_com, &sunxi_com_console);
+FDT_CONSOLE(dw_apb_uart, &dw_apb_uart_console);
