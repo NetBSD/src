@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_com.c,v 1.4 2017/10/29 14:07:11 jmcneill Exp $ */
+/* $NetBSD: sunxi_com.c,v 1.5 2018/05/27 17:05:06 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sunxi_com.c,v 1.4 2017/10/29 14:07:11 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sunxi_com.c,v 1.5 2018/05/27 17:05:06 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -122,7 +122,7 @@ sunxi_com_attach(device_t parent, device_t self, void *aux)
 	}
 
 	sc->sc_frequency = clk_get_rate(ssc->ssc_clk);
-	sc->sc_type = COM_TYPE_SUNXI;
+	sc->sc_type = COM_TYPE_DW_APB;
 
 	error = bus_space_map(bst, addr, size, 0, &bsh);
 	if (error) {
@@ -174,7 +174,7 @@ sunxi_com_console_consinit(struct fdt_attach_args *faa, u_int uart_freq)
 		speed = 115200;	/* default */
 	flags = fdtbus_get_stdout_flags();
 
-	if (comcnattach(bst, addr, speed, uart_freq, COM_TYPE_SUNXI, flags))
+	if (comcnattach(bst, addr, speed, uart_freq, COM_TYPE_DW_APB, flags))
 		panic("Cannot initialize sunxi com console");
 }
 
