@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2196 2018/05/24 22:37:58 christos Exp $
+#	$NetBSD: mi,v 1.2197 2018/05/27 21:09:39 maya Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -11561,7 +11561,7 @@
 ./usr/share/man/cat9/spltty.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/splvm.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/splx.0			comp-sys-catman		.cat
-./usr/share/man/cat9/sprintf.0			comp-sys-catman		.cat
+./usr/share/man/cat9/sprintf.0			comp-obsolete		obsolete
 ./usr/share/man/cat9/stathz.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/store.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/subyte.0			comp-sys-catman		.cat
@@ -11836,7 +11836,7 @@
 ./usr/share/man/cat9/vrele_async.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/vslock.0			comp-obsolete		obsolete
 ./usr/share/man/cat9/vsnprintf.0		comp-sys-catman		.cat
-./usr/share/man/cat9/vsprintf.0			comp-sys-catman		.cat
+./usr/share/man/cat9/vsprintf.0			comp-obsolete		obsolete
 ./usr/share/man/cat9/vsunlock.0			comp-obsolete		obsolete
 ./usr/share/man/cat9/vtruncbuf.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/vwakeup.0			comp-sys-catman		.cat
@@ -19222,7 +19222,7 @@
 ./usr/share/man/html9/spltty.html		comp-sys-htmlman	html
 ./usr/share/man/html9/splvm.html		comp-sys-htmlman	html
 ./usr/share/man/html9/splx.html			comp-sys-htmlman	html
-./usr/share/man/html9/sprintf.html		comp-sys-htmlman	html
+./usr/share/man/html9/sprintf.html		comp-obsolete		obsolete
 ./usr/share/man/html9/stathz.html		comp-sys-htmlman	html
 ./usr/share/man/html9/store.html		comp-sys-htmlman	html
 ./usr/share/man/html9/subyte.html		comp-sys-htmlman	html
@@ -19471,7 +19471,7 @@
 ./usr/share/man/html9/vrele.html		comp-sys-htmlman	html
 ./usr/share/man/html9/vrele_async.html		comp-sys-htmlman	html
 ./usr/share/man/html9/vsnprintf.html		comp-sys-htmlman	html
-./usr/share/man/html9/vsprintf.html		comp-sys-htmlman	html
+./usr/share/man/html9/vsprintf.html		comp-obsolete		obsolete
 ./usr/share/man/html9/vtruncbuf.html		comp-sys-htmlman	html
 ./usr/share/man/html9/vwakeup.html		comp-sys-htmlman	html
 ./usr/share/man/html9/wakeup.html		comp-sys-htmlman	html
@@ -27081,7 +27081,7 @@
 ./usr/share/man/man9/spltty.9			comp-sys-man		.man
 ./usr/share/man/man9/splvm.9			comp-sys-man		.man
 ./usr/share/man/man9/splx.9			comp-sys-man		.man
-./usr/share/man/man9/sprintf.9			comp-sys-man		.man
+./usr/share/man/man9/sprintf.9			comp-obsolete		obsolete
 ./usr/share/man/man9/stathz.9			comp-sys-man		.man
 ./usr/share/man/man9/store.9			comp-sys-man		.man
 ./usr/share/man/man9/subyte.9			comp-sys-man		.man
@@ -27356,7 +27356,7 @@
 ./usr/share/man/man9/vrele_async.9		comp-sys-man		.man
 ./usr/share/man/man9/vslock.9			comp-obsolete		obsolete
 ./usr/share/man/man9/vsnprintf.9		comp-sys-man		.man
-./usr/share/man/man9/vsprintf.9			comp-sys-man		.man
+./usr/share/man/man9/vsprintf.9			comp-obsolete		obsolete
 ./usr/share/man/man9/vsunlock.9			comp-obsolete		obsolete
 ./usr/share/man/man9/vtruncbuf.9		comp-sys-man		.man
 ./usr/share/man/man9/vwakeup.9			comp-sys-man		.man
