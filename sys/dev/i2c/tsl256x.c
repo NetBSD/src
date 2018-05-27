@@ -1,4 +1,4 @@
-/* $NetBSD: tsl256x.c,v 1.1 2018/05/27 05:31:20 thorpej Exp $ */
+/* $NetBSD: tsl256x.c,v 1.2 2018/05/27 14:03:56 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 Jason R. Thorpe
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsl256x.c,v 1.1 2018/05/27 05:31:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsl256x.c,v 1.2 2018/05/27 14:03:56 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,9 +79,8 @@ CFATTACH_DECL_NEW(tsllux, sizeof(struct tsllux_softc),
     tsllux_match, tsllux_attach, NULL, NULL);
 
 static const char *tsllux_compats[] = {
-	"taos,tsl2560",
-	"taos,tsl2561",
-	"taos,tsl256x",
+	"amstaos,tsl2560",
+	"amstaos,tsl2561",
 	NULL
 };
 
