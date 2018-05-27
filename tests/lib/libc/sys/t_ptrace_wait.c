@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.54 2018/05/26 15:32:31 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.55 2018/05/27 00:36:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.54 2018/05/26 15:32:31 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.55 2018/05/27 00:36:56 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1711,12 +1711,11 @@ bytes_transfer_dummy(int a, int b, int c, int d)
 }
 
 static void
-bytes_transfer(int operation, int size, enum bytes_transfer_type type)
+bytes_transfer(int operation, size_t size, enum bytes_transfer_type type)
 {
 	const int exitval = 5;
 	const int sigval = SIGSTOP;
 	pid_t child, wpid;
-
 	bool skip = false;
 
 	int lookup_me = 0;
@@ -1735,7 +1734,9 @@ bytes_transfer(int operation, int size, enum bytes_transfer_type type)
 #if defined(TWAIT_HAVE_STATUS)
 	int status;
 #endif
-	AuxInfo *ai = NULL, *aip;
+	AuxInfo ai[64], *aip;
+
+	ATF_REQUIRE(size < sizeof(ai));
 
 	/* Prepare variables for .TEXT transfers */
 	switch (type) {
@@ -1801,7 +1802,6 @@ bytes_transfer(int operation, int size, enum bytes_transfer_type type)
 		}
 		break;
 	case BYTES_TRANSFER_AUXV:
-		ai = alloca(size);
 		io.piod_op = operation;
 		io.piod_offs = 0;
 		io.piod_addr = ai;
