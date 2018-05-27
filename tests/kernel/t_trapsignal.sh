@@ -1,4 +1,4 @@
-# $NetBSD: t_trapsignal.sh,v 1.3 2018/05/22 04:32:56 kamil Exp $
+# $NetBSD: t_trapsignal.sh,v 1.4 2018/05/27 17:04:45 kamil Exp $
 #
 # Copyright (c) 2017 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -29,6 +29,9 @@
 #
 
 HELPER=$(atf_get_srcdir)/h_segv
+
+# SIGSEGV
+
 atf_test_case segv_simple
 segv_simple()
 {
@@ -96,6 +99,8 @@ segv_ignore_body()
 	atf_check -s signal:11 -o "inline:" -e "inline:" \
 		${HELPER} segv ignore
 }
+
+# SIGTRAP
 
 atf_test_case trap_simple
 trap_simple()
@@ -165,6 +170,146 @@ trap_ignore_body()
 		${HELPER} trap ignore
 }
 
+# SIGFPE
+
+atf_test_case fpe_simple
+fpe_simple()
+{
+	atf_set "descr" "Test unhandled SIGFPE with the right exit code"
+}
+fpe_simple_body()
+{
+	atf_check -s signal:8 -o "inline:" -e "inline:" \
+		${HELPER} fpe recurse
+}
+
+atf_test_case fpe_handle
+fpe_handle()
+{
+	atf_set "descr" "Test handled SIGFPE traps call the signal handler"
+}
+fpe_handle_body()
+{
+	atf_check -s exit:0 -o "inline:" -e "inline:got 8\n" \
+		${HELPER} fpe handle
+}
+
+atf_test_case fpe_mask
+fpe_mask()
+{
+	atf_set "descr" "Test that masking the trapped SIGFPE signal get reset"
+}
+fpe_mask_body()
+{
+	atf_check -s signal:8 -o "inline:" -e "inline:" \
+		${HELPER} fpe mask
+}
+
+atf_test_case fpe_handle_mask
+fpe_handle_mask()
+{
+	atf_set "descr" "Test handled and masked SIGFPE traps get reset"
+}
+fpe_handle_mask_body()
+{
+	atf_check -s signal:8 -o "inline:" -e "inline:" \
+		${HELPER} fpe mask handle
+}
+
+atf_test_case fpe_handle_recurse
+fpe_handle_recurse()
+{
+	atf_set "descr" "Test that receiving SIGFPE in the handler resets"
+}
+
+fpe_handle_recurse_body()
+{
+	atf_check -s signal:8 -o "inline:" -e "inline:got 8\n" \
+		${HELPER} fpe handle recurse
+}
+
+atf_test_case fpe_ignore
+fpe_ignore()
+{
+	atf_set "descr" "Test ignored trap with right exit code"
+}
+
+fpe_ignore_body()
+{
+	atf_check -s signal:8 -o "inline:" -e "inline:" \
+		${HELPER} fpe ignore
+}
+
+# SIGBUS
+
+atf_test_case bus_simple
+bus_simple()
+{
+	atf_set "descr" "Test unhandled SIGBUS with the right exit code"
+}
+bus_simple_body()
+{
+	atf_check -s signal:10 -o "inline:" -e "inline:" \
+		${HELPER} bus recurse
+}
+
+atf_test_case bus_handle
+bus_handle()
+{
+	atf_set "descr" "Test handled SIGBUS traps call the signal handler"
+}
+bus_handle_body()
+{
+	atf_check -s exit:0 -o "inline:" -e "inline:got 10\n" \
+		${HELPER} bus handle
+}
+
+atf_test_case bus_mask
+bus_mask()
+{
+	atf_set "descr" "Test that masking the trapped SIGBUS signal get reset"
+}
+bus_mask_body()
+{
+	atf_check -s signal:10 -o "inline:" -e "inline:" \
+		${HELPER} bus mask
+}
+
+atf_test_case bus_handle_mask
+bus_handle_mask()
+{
+	atf_set "descr" "Test handled and masked SIGBUS traps get reset"
+}
+bus_handle_mask_body()
+{
+	atf_check -s signal:10 -o "inline:" -e "inline:" \
+		${HELPER} bus mask handle
+}
+
+atf_test_case bus_handle_recurse
+bus_handle_recurse()
+{
+	atf_set "descr" "Test that receiving SIGBUS in the handler resets"
+}
+
+bus_handle_recurse_body()
+{
+	atf_check -s signal:10 -o "inline:" -e "inline:got 10\n" \
+		${HELPER} bus handle recurse
+}
+
+atf_test_case bus_ignore
+bus_ignore()
+{
+	atf_set "descr" "Test ignored trap with right exit code"
+}
+
+bus_ignore_body()
+{
+	atf_check -s signal:10 -o "inline:" -e "inline:" \
+		${HELPER} bus ignore
+}
+
 atf_init_test_cases()
 {
 	atf_add_test_case segv_simple
@@ -178,4 +323,22 @@ atf_init_test_cases()
 	atf_add_test_case trap_mask
 	atf_add_test_case trap_handle_recurse
 	atf_add_test_case trap_ignore
+
+#	atf_add_test_case ill_simple
+#	atf_add_test_case ill_handle
+#	atf_add_test_case ill_mask
+#	atf_add_test_case ill_handle_recurse
+#	atf_add_test_case ill_ignore
+
+	atf_add_test_case fpe_simple
+	atf_add_test_case fpe_handle
+	atf_add_test_case fpe_mask
+	atf_add_test_case fpe_handle_recurse
+	atf_add_test_case fpe_ignore
+
+	atf_add_test_case bus_simple
+	atf_add_test_case bus_handle
+	atf_add_test_case bus_mask
+	atf_add_test_case bus_handle_recurse
+	atf_add_test_case bus_ignore
 }
