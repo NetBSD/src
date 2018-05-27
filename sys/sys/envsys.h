@@ -1,4 +1,4 @@
-/* $NetBSD: envsys.h,v 1.37 2018/05/27 01:39:00 thorpej Exp $ */
+/* $NetBSD: envsys.h,v 1.38 2018/05/27 06:40:31 wiz Exp $ */
 
 /*-
  * Copyright (c) 1999, 2007, 2014 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@ enum envsys_units {
 	ENVSYS_BATTERY_CAPACITY,	/* Battery capacity */
 	ENVSYS_BATTERY_CHARGE,		/* Battery charging/discharging */
 	ENVSYS_SRELHUMIDITY,		/* relative humidity */
-	ENVSYS_LUX,			/* illumanice in lux */
+	ENVSYS_LUX,			/* illuminance in lux */
 	ENVSYS_NSENSORS
 };
 
