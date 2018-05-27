@@ -1,4 +1,4 @@
-.\"	$NetBSD: tsllux.4,v 1.1 2018/05/27 05:31:20 thorpej Exp $
+.\"	$NetBSD: tsllux.4,v 1.2 2018/05/27 07:12:26 wiz Exp $
 .\"
 .\" Copyright (c) 2018 Jason R Thorpe
 .\" All rights reserved.
@@ -40,7 +40,7 @@ The
 driver provides support for the
 .Tn Taos
 TSL2560 and TSL2561 light-to-digital converter
-.Pq ambient light sensor 
+.Pq ambient light sensor
 with the
 .Xr envsys 4
 API.
@@ -97,7 +97,7 @@ Writing to this variable implicitly disables auto-gain.
 This variable indicates the selected analog-to-digital converter
 integration time.
 Longer integration times correspond to more accurate readings, at the
-cost more costly read operation.
+cost of more costly read operation.
 Valid values are
 .Dv 13 Pq 13.7ms ,
 .Dv 101 Pq 101ms ,
@@ -126,7 +126,7 @@ driver first appeared in
 The
 .Nm
 driver was written by
-.An Jason R Thorpe Aq Mt thorpej@netbsd.org
+.An Jason R Thorpe Aq Mt thorpej@NetBSD.org .
 .Sh BUGS
 The driver does not currently support the sensor's interrupt features
 or the sensor's manual integration timing feature.
