@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.h,v 1.8 2018/05/26 15:15:17 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.h,v 1.9 2018/05/27 17:16:39 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -554,17 +554,14 @@ trigger_ill(void)
 #endif
 }
 
-static int __used
+static void __used
 trigger_fpe(void)
 {
-	static volatile int a = 1;
-	static volatile int b = 0;
-	static volatile int c;
+	volatile int a = getpid();
+	volatile int b = atoi("0");
 
 	/* Division by zero causes CPU trap, translated to SIGFPE */
-	c = a / b;
-
-	return c;
+	usleep(a / b);
 }
 
 static void __used
