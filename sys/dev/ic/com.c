@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.347 2018/04/08 13:38:32 jmcneill Exp $ */
+/* $NetBSD: com.c,v 1.348 2018/05/27 17:05:06 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.347 2018/04/08 13:38:32 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.348 2018/05/27 17:05:06 jmcneill Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -425,7 +425,7 @@ com_attach_subr(struct com_softc *sc)
 
 		switch (sc->sc_type) {
 		case COM_TYPE_16750:
-		case COM_TYPE_SUNXI:
+		case COM_TYPE_DW_APB:
 			/* Use in comintr(). */
  			sc->sc_lcr = cflag2lcr(comcons_info.cflag);
 			break;
@@ -1601,7 +1601,7 @@ com_iflush(struct com_softc *sc)
 
 	switch (sc->sc_type) {
 	case COM_TYPE_16750:
-	case COM_TYPE_SUNXI:
+	case COM_TYPE_DW_APB:
 		/*
 		 * Reset all Rx/Tx FIFO, preserve current FIFO length.
 		 * This should prevent triggering busy interrupt while
@@ -2059,8 +2059,8 @@ comintr(void *arg)
 		iir = CSR_READ_1(regsp, COM_REG_IIR);
 	}
 
-	/* Allwinner BUSY interrupt */
-	if (sc->sc_type == COM_TYPE_SUNXI &&
+	/* DesignWare APB UART BUSY interrupt */
+	if (sc->sc_type == COM_TYPE_DW_APB &&
 	    (iir & IIR_BUSY) == IIR_BUSY) {
 		if ((CSR_READ_1(regsp, COM_REG_USR) & 0x1) != 0) {
 			CSR_WRITE_1(regsp, COM_REG_HALT, HALT_CHCFG_EN);
