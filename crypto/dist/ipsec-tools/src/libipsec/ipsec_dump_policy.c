@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_dump_policy.c,v 1.10 2018/05/28 19:22:40 maxv Exp $	*/
+/*	$NetBSD: ipsec_dump_policy.c,v 1.11 2018/05/28 20:45:38 maxv Exp $	*/
 
 /* Id: ipsec_dump_policy.c,v 1.10 2005/06/29 09:12:37 manubsd Exp */
 
@@ -63,12 +63,12 @@ static const char *ipsp_policy_strs[] = {
 	"discard", "none", "ipsec", "entrust", "bypass",
 };
 
-static char *ipsec_dump_ipsecrequest __P((char *, size_t,
-	struct sadb_x_ipsecrequest *, size_t, int));
-static char *ipsec_dump_policy1 __P((void *, const char *, int));
-static int set_addresses __P((char *, size_t, struct sockaddr *,
-	struct sockaddr *, int));
-static char *set_address __P((char *, size_t, struct sockaddr *, int));
+static char *ipsec_dump_ipsecrequest(char *, size_t,
+	struct sadb_x_ipsecrequest *, size_t, int);
+static char *ipsec_dump_policy1(void *, const char *, int);
+static int set_addresses(char *, size_t, struct sockaddr *,
+	struct sockaddr *, int);
+static char *set_address(char *, size_t, struct sockaddr *, int);
 
 /*
  * policy is sadb_x_policy buffer.
