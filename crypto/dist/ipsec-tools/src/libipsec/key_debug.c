@@ -1,4 +1,4 @@
-/*	$NetBSD: key_debug.c,v 1.12 2018/05/28 19:22:40 maxv Exp $	*/
+/*	$NetBSD: key_debug.c,v 1.13 2018/05/28 19:39:21 maxv Exp $	*/
 
 /*	$KAME: key_debug.c,v 1.29 2001/08/16 14:25:41 itojun Exp $	*/
 
@@ -866,18 +866,6 @@ kdebug_sockaddr(struct sockaddr *addr)
 
 	return;
 }
-
-void
-ipsec_bindump(caddr_t buf, int len)
-{
-	int i;
-
-	for (i = 0; i < len; i++)
-		printf("%c", (unsigned char)buf[i]);
-
-	return;
-}
-
 
 void
 ipsec_hexdump(const void *buf, int len)
