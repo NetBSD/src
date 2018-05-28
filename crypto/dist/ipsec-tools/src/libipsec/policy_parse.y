@@ -1,4 +1,4 @@
-/*	$NetBSD: policy_parse.y,v 1.12 2018/05/28 19:22:40 maxv Exp $	*/
+/*	$NetBSD: policy_parse.y,v 1.13 2018/05/28 19:36:42 maxv Exp $	*/
 
 /*	$KAME: policy_parse.y,v 1.21 2003/12/12 08:01:26 itojun Exp $	*/
 
@@ -107,7 +107,7 @@ static struct sockaddr *p_src = NULL;
 static struct sockaddr *p_dst = NULL;
 
 struct _val;
-extern void yyerror __P((char *msg));
+extern void yyerror __P((const char *msg));
 static struct sockaddr *parse_sockaddr __P((struct _val *addrbuf,
     struct _val *portbuf));
 static int rule_check __P((void));
@@ -362,7 +362,7 @@ addresses
 %%
 
 void
-yyerror(char *msg)
+yyerror(const char *msg)
 {
 	fprintf(stderr, "libipsec: %s while parsing \"%s\"\n",
 		msg, __libipsectext);
