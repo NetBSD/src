@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.y,v 1.19 2017/07/05 01:22:40 ozaki-r Exp $	*/
+/*	$NetBSD: parse.y,v 1.20 2018/05/28 19:52:18 maxv Exp $	*/
 
 /*	$KAME: parse.y,v 1.81 2003/07/01 04:01:48 itojun Exp $	*/
 
@@ -939,11 +939,8 @@ exit_command
 %%
 
 int
-setkeymsg0(msg, type, satype, l)
-	struct sadb_msg *msg;
-	unsigned int type;
-	unsigned int satype;
-	size_t l;
+setkeymsg0(struct sadb_msg *msg, unsigned int type, unsigned int satype,
+    size_t l)
 {
 
 	msg->sadb_msg_version = PF_KEY_V2;
@@ -959,14 +956,8 @@ setkeymsg0(msg, type, satype, l)
 
 /* XXX NO BUFFER OVERRUN CHECK! BAD BAD! */
 static int
-setkeymsg_spdaddr(type, upper, policy, srcs, splen, dsts, dplen)
-	unsigned int type;
-	unsigned int upper;
-	vchar_t *policy;
-	struct addrinfo *srcs;
-	int splen;
-	struct addrinfo *dsts;
-	int dplen;
+setkeymsg_spdaddr(unsigned int type, unsigned int upper, vchar_t *policy,
+    struct addrinfo *srcs, int splen, struct addrinfo *dsts, int dplen)
 {
 	struct sadb_msg *msg;
 	char buf[BUFSIZ];
@@ -1108,10 +1099,7 @@ setkeymsg_spdaddr(type, upper, policy, srcs, splen, dsts, dplen)
 }
 
 static int
-setkeymsg_spdaddr_tag(type, tag, policy)
-	unsigned int type;
-	char *tag;
-	vchar_t *policy;
+setkeymsg_spdaddr_tag(unsigned int type, char *tag, vchar_t *policy)
 {
 	struct sadb_msg *msg;
 	char buf[BUFSIZ];
@@ -1149,12 +1137,8 @@ setkeymsg_spdaddr_tag(type, tag, policy)
 
 /* XXX NO BUFFER OVERRUN CHECK! BAD BAD! */
 static int
-setkeymsg_addr(type, satype, srcs, dsts, no_spi)
-	unsigned int type;
-	unsigned int satype;
-	struct addrinfo *srcs;
-	struct addrinfo *dsts;
-	int no_spi;
+setkeymsg_addr(unsigned int type, unsigned int satype, struct addrinfo *srcs,
+    struct addrinfo *dsts, int no_spi)
 {
 	struct sadb_msg *msg;
 	char buf[BUFSIZ];
@@ -1295,11 +1279,8 @@ static u_int16_t get_port (struct addrinfo *addr)
 
 /* XXX NO BUFFER OVERRUN CHECK! BAD BAD! */
 static int
-setkeymsg_add(type, satype, srcs, dsts)
-	unsigned int type;
-	unsigned int satype;
-	struct addrinfo *srcs;
-	struct addrinfo *dsts;
+setkeymsg_add(unsigned int type, unsigned int satype, struct addrinfo *srcs,
+    struct addrinfo *dsts)
 {
 	struct sadb_msg *msg;
 	char buf[BUFSIZ];
@@ -1577,9 +1558,7 @@ setkeymsg_add(type, satype, srcs, dsts)
 }
 
 static struct addrinfo *
-parse_addr(host, port)
-	char *host;
-	char *port;
+parse_addr(char *host, char *port)
 {
 	struct addrinfo hints, *res = NULL;
 	int error;
@@ -1598,9 +1577,7 @@ parse_addr(host, port)
 }
 
 static int
-fix_portstr(ulproto, spec, sport, dport)
-	int ulproto;
-	vchar_t *spec, *sport, *dport;
+fix_portstr(int ulproto, vchar_t *spec, vchar_t *sport, vchar_t *dport)
 {
 	char sp[16], dp[16];
 	int a, b, c, d;
@@ -1657,13 +1634,8 @@ fix_portstr(ulproto, spec, sport, dport)
 }
 
 static int
-setvarbuf(buf, off, ebuf, elen, vbuf, vlen)
-	char *buf;
-	int *off;
-	struct sadb_ext *ebuf;
-	int elen;
-	const void *vbuf;
-	int vlen;
+setvarbuf(char *buf, int *off, struct sadb_ext *ebuf, int elen,
+    const void *vbuf, int vlen)
 {
 	memset(buf + *off, 0, PFKEY_UNUNIT64(ebuf->sadb_ext_len));
 	memcpy(buf + *off, (caddr_t)ebuf, elen);
@@ -1674,7 +1646,7 @@ setvarbuf(buf, off, ebuf, elen, vbuf, vlen)
 }
 
 void
-parse_init()
+parse_init(void)
 {
 	p_spi = 0;
 
@@ -1705,7 +1677,7 @@ parse_init()
 }
 
 void
-free_buffer()
+free_buffer(void)
 {
 	/* we got tons of memory leaks in the parser anyways, leave them */
 
