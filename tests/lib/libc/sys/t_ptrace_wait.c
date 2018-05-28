@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.57 2018/05/28 11:15:48 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.58 2018/05/28 11:35:50 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.57 2018/05/28 11:15:48 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.58 2018/05/28 11:35:50 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -4064,16 +4064,16 @@ ATF_TC_HEAD(signal5, tc)
 
 ATF_TC_BODY(signal5, tc)
 {
-	const int exitval = 5;
 	const int sigval = SIGSTOP;
 	const int sigmasked = SIGTRAP;
 	pid_t child, wpid;
 #if defined(TWAIT_HAVE_STATUS)
 	int status;
 #endif
+	struct ptrace_siginfo info;
 	sigset_t intmask;
 
-	atf_tc_expect_fail("wrong signal");
+	memset(&info, 0, sizeof(info));
 
 	DPRINTF("Before forking process PID=%d\n", getpid());
 	SYSCALL_REQUIRE((child = fork()) != -1);
@@ -4091,8 +4091,8 @@ ATF_TC_BODY(signal5, tc)
 		DPRINTF("Before calling execve(2) from child\n");
 		execlp("/bin/echo", "/bin/echo", NULL);
 
-		DPRINTF("Before exiting of the child process\n");
-		_exit(exitval);
+		/* NOTREACHED */
+		FORKEE_ASSERTX(0 && "Not reached");
 	}
 	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
@@ -4110,14 +4110,23 @@ ATF_TC_BODY(signal5, tc)
 
 	validate_status_stopped(status, sigmasked);
 
+	DPRINTF("Before calling ptrace(2) with PT_GET_SIGINFO for child\n");
+	SYSCALL_REQUIRE(ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
+
+	DPRINTF("Signal traced to lwpid=%d\n", info.psi_lwpid);
+	DPRINTF("Signal properties: si_signo=%#x si_code=%#x si_errno=%#x\n",
+	    info.psi_siginfo.si_signo, info.psi_siginfo.si_code,
+	    info.psi_siginfo.si_errno);
+
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, sigmasked);
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, TRAP_EXEC);
+
 	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
 	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
 	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_exited(status, exitval);
 
 	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
