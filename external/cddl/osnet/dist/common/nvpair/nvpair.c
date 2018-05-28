@@ -20,14 +20,10 @@
  */
 
 /*
- * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
- * Use is subject to license terms.
+ * Copyright (c) 2000, 2010, Oracle and/or its affiliates. All rights reserved.
  */
 
-#include <sys/stropts.h>
 #include <sys/debug.h>
-#include <sys/isa_defs.h>
-#include <sys/int_limits.h>
 #include <sys/nvpair.h>
 #include <sys/nvpair_impl.h>
 #include <rpc/types.h>
@@ -35,7 +31,6 @@
 
 #if defined(_KERNEL) && !defined(_BOOT)
 #include <sys/varargs.h>
-#include <sys/ddi.h>
 #include <sys/sunddi.h>
 #else
 #include <stdarg.h>
@@ -48,6 +43,14 @@
 #define	offsetof(s, m)		((size_t)(&(((s *)0)->m)))
 #endif
 #define	skip_whitespace(p)	while ((*(p) == ' ') || (*(p) == '\t')) p++
+
+#if defined(__FreeBSD__) && !defined(_KERNEL)
+/*
+ * libnvpair is the lowest commen denominator for ZFS related libraries,
+ * defining aok here makes it usable by all ZFS related libraries
+ */
+int aok;
+#endif
 
 /*
  * nvpair.c - Provides kernel & userland interfaces for manipulating
@@ -255,6 +258,12 @@ nvlist_init(nvlist_t *nvl, uint32_t nvflag, nvpriv_t *priv)
 	nvl->nvl_priv = (uint64_t)(uintptr_t)priv;
 	nvl->nvl_flag = 0;
 	nvl->nvl_pad = 0;
+}
+
+uint_t
+nvlist_nvflag(nvlist_t *nvl)
+{
+	return (nvl->nvl_nvflag);
 }
 
 /*
@@ -535,8 +544,7 @@ nvpair_free(nvpair_t *nvp)
 		int i;
 
 		for (i = 0; i < NVP_NELEM(nvp); i++)
-			if (nvlp[i] != NULL)
-				nvlist_free(nvlp[i]);
+			nvlist_free(nvlp[i]);
 		break;
 	}
 	default:
@@ -1226,6 +1234,7 @@ nvpair_type_is_array(nvpair_t *nvp)
 	data_type_t type = NVP_TYPE(nvp);
 
 	if ((type == DATA_TYPE_BYTE_ARRAY) ||
+	    (type == DATA_TYPE_INT8_ARRAY) ||
 	    (type == DATA_TYPE_UINT8_ARRAY) ||
 	    (type == DATA_TYPE_INT16_ARRAY) ||
 	    (type == DATA_TYPE_UINT16_ARRAY) ||
@@ -1620,6 +1629,8 @@ nvlist_lookup_nvpair_ei_sep(nvlist_t *nvl, const char *name, const char sep,
 	if ((nvl == NULL) || (name == NULL))
 		return (EINVAL);
 
+	sepp = NULL;
+	idx = 0;
 	/* step through components of name */
 	for (np = name; np && *np; np = sepp) {
 		/* ensure unique names */
@@ -2250,7 +2261,7 @@ nvlist_common(nvlist_t *nvl, char *buf, size_t *buflen, int encoding,
 	int err = 0;
 	nvstream_t nvs;
 	int nvl_endian;
-#ifdef	_LITTLE_ENDIAN
+#if BYTE_ORDER == _LITTLE_ENDIAN
 	int host_endian = 1;
 #else
 	int host_endian = 0;
@@ -2377,7 +2388,7 @@ nvlist_xpack(nvlist_t *nvl, char **bufp, size_t *buflen, int encoding,
 	 */
 	nv_priv_init(&nvpriv, nva, 0);
 
-	if (err = nvlist_size(nvl, &alloc_size, encoding))
+	if ((err = nvlist_size(nvl, &alloc_size, encoding)))
 		return (err);
 
 	if ((buf = nv_mem_zalloc(&nvpriv, alloc_size)) == NULL)
@@ -2574,14 +2585,15 @@ nvpair_native_embedded(nvstream_t *nvs, nvpair_t *nvp)
 {
 	if (nvs->nvs_op == NVS_OP_ENCODE) {
 		nvs_native_t *native = (nvs_native_t *)nvs->nvs_private;
-		nvlist_t *packed = (void *)
+		char *packed = (void *)
 		    (native->n_curr - nvp->nvp_size + NVP_VALOFF(nvp));
 		/*
 		 * Null out the pointer that is meaningless in the packed
 		 * structure. The address may not be aligned, so we have
 		 * to use bzero.
 		 */
-		bzero(&packed->nvl_priv, sizeof (packed->nvl_priv));
+		bzero(packed + offsetof(nvlist_t, nvl_priv),
+		    sizeof(((nvlist_t *)NULL)->nvl_priv));
 	}
 
 	return (nvs_embedded(nvs, EMBEDDED_NVL(nvp)));
@@ -2594,7 +2606,6 @@ nvpair_native_embedded_array(nvstream_t *nvs, nvpair_t *nvp)
 		nvs_native_t *native = (nvs_native_t *)nvs->nvs_private;
 		char *value = native->n_curr - nvp->nvp_size + NVP_VALOFF(nvp);
 		size_t len = NVP_NELEM(nvp) * sizeof (uint64_t);
-		nvlist_t *packed = (nvlist_t *)((uintptr_t)value + len);
 		int i;
 		/*
 		 * Null out pointers that are meaningless in the packed
@@ -2603,13 +2614,17 @@ nvpair_native_embedded_array(nvstream_t *nvs, nvpair_t *nvp)
 		 */
 		bzero(value, len);
 
-		for (i = 0; i < NVP_NELEM(nvp); i++, packed++)
+		value += len;
+		for (i = 0; i < NVP_NELEM(nvp); i++) {
 			/*
 			 * Null out the pointer that is meaningless in the
 			 * packed structure. The address may not be aligned,
 			 * so we have to use bzero.
 			 */
-			bzero(&packed->nvl_priv, sizeof (packed->nvl_priv));
+			bzero(value + offsetof(nvlist_t, nvl_priv),
+			    sizeof(((nvlist_t *)NULL)->nvl_priv));
+			value += sizeof(nvlist_t);
+		}
 	}
 
 	return (nvs_embedded_nvl_array(nvs, nvp, NULL));

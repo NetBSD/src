@@ -33,7 +33,12 @@
  * APIs for the barrier synchronization primitive.
  */
 
+#ifdef illumos
 #include <synch.h>
+#else
+#include <semaphore.h>
+typedef sem_t	sema_t;
+#endif
 
 #ifdef __cplusplus
 extern "C" {

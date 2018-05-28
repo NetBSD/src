@@ -19,11 +19,8 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
- * Use is subject to license terms.
+ * Copyright (c) 2001, 2010, Oracle and/or its affiliates. All rights reserved.
  */
-
-#pragma ident	"%Z%%M%	%I%	%E% SMI"
 
 /*
  * This file is a sewer.
@@ -57,7 +54,7 @@ static int faketypenumber = 100000000;
 static tdesc_t *hash_table[BUCKETS];
 static tdesc_t *name_table[BUCKETS];
 
-list_t *typedbitfldmems;
+static list_t *typedbitfldmems;
 
 static void reset(void);
 static jmp_buf	resetbuf;
@@ -76,12 +73,11 @@ static char *tdefdecl(char *cp, int h, tdesc_t **rtdp);
 static char *intrinsic(char *cp, tdesc_t **rtdp);
 static char *arraydef(char *cp, tdesc_t **rtdp);
 
-extern int debug_level;
 int debug_parse = DEBUG_PARSE;
 
 /*PRINTFLIKE3*/
 static void
-parse_debug(int level, char *cp, char *fmt, ...)
+parse_debug(int level, char *cp, const char *fmt, ...)
 {
 	va_list ap;
 	char buf[1024];
@@ -113,9 +109,9 @@ parse_debug(int level, char *cp, char *fmt, ...)
 /* Report unexpected syntax in stabs. */
 static void
 _expected(
-	char *who,	/* what function, or part thereof, is reporting */
-	char *what,	/* what was expected */
-	char *where,	/* where we were in the line of input */
+	const char *who,	/* what function, or part thereof, is reporting */
+	const char *what,	/* what was expected */
+	const char *where,	/* where we were in the line of input */
 	int line)
 {
 	fprintf(stderr, "%s, expecting \"%s\" at \"%s\"\n", who, what, where);
@@ -126,7 +122,7 @@ _expected(
 
 /*ARGSUSED*/
 void
-parse_init(tdata_t *td)
+parse_init(tdata_t *td __unused)
 {
 	int i;
 
@@ -159,7 +155,7 @@ unres_new(int tid)
 	return (tdp);
 }
 
-char *
+static char *
 read_tid(char *cp, tdesc_t **tdpp)
 {
 	tdesc_t *tdp;
@@ -190,7 +186,7 @@ read_tid(char *cp, tdesc_t **tdpp)
 static iitype_t
 parse_fun(char *cp, iidesc_t *ii)
 {
-	iitype_t iitype;
+	iitype_t iitype = 0;
 	tdesc_t *tdp;
 	tdesc_t **args = NULL;
 	int nargs = 0;
@@ -250,7 +246,7 @@ static iitype_t
 parse_sym(char *cp, iidesc_t *ii)
 {
 	tdesc_t *tdp;
-	iitype_t iitype;
+	iitype_t iitype = 0;
 
 	/*
 	 * name:G		global variable
@@ -992,14 +988,28 @@ arraydef(char *cp, tdesc_t **rtdp)
 		expected("arraydef/2", ";", cp - 1);
 
 	if (*cp == 'S') {
-		/* variable length array - treat as null dimensioned */
+		/*
+		 * variable length array - treat as null dimensioned
+		 *
+		 * For VLA variables on sparc, SS12 generated stab entry
+		 * looks as follows:
+		 * .stabs "buf:(0,28)=zr(0,4);0;S-12;(0,1)", 0x80, 0, 0, -16
+		 * Whereas SS12u1 generated stab entry looks like this:
+		 * .stabs "buf:(0,28)=zr(0,4);0;S0;(0,1)", 0x80, 0, 0, 0
+		 * On x86, both versions generate the first type of entry.
+		 * We should be able to parse both.
+		 */
 		cp++;
-		if (*cp++ != '-')
-			expected("arraydef/fpoff-sep", "-", cp - 1);
+		if (*cp == '-')
+			cp++;
 		cp = number(cp, &end);
 		end = start;
 	} else {
-		/* normal fixed-dimension array */
+		/*
+		 * normal fixed-dimension array
+		 * Stab entry for this looks as follows :
+		 * .stabs "x:(0,28)=ar(0,4);0;9;(0,3)", 0x80, 0, 40, 0
+		 */
 		cp = number(cp, &end);  /* upper */
 	}
 
@@ -1039,14 +1049,14 @@ enumdef(char *cp, tdesc_t **rtdp)
 	}
 }
 
-tdesc_t *
-lookup_name(tdesc_t **hash, const char *name)
+static tdesc_t *
+lookup_name(tdesc_t **hash, const char *name1)
 {
-	int bucket = compute_sum(name);
+	int bucket = compute_sum(name1);
 	tdesc_t *tdp, *ttdp = NULL;
 
 	for (tdp = hash[bucket]; tdp != NULL; tdp = tdp->t_next) {
-		if (tdp->t_name != NULL && strcmp(tdp->t_name, name) == 0) {
+		if (tdp->t_name != NULL && strcmp(tdp->t_name, name1) == 0) {
 			if (tdp->t_type == STRUCT || tdp->t_type == UNION ||
 			    tdp->t_type == ENUM || tdp->t_type == INTRINSIC)
 				return (tdp);
@@ -1058,9 +1068,9 @@ lookup_name(tdesc_t **hash, const char *name)
 }
 
 tdesc_t *
-lookupname(const char *name)
+lookupname(const char *name1)
 {
-	return (lookup_name(name_table, name));
+	return (lookup_name(name_table, name1));
 }
 
 /*
@@ -1152,8 +1162,9 @@ check_hash(void)
 
 /*ARGSUSED1*/
 static int
-resolve_typed_bitfields_cb(mlist_t *ml, void *private)
+resolve_typed_bitfields_cb(void *arg, void *private __unused)
 {
+	mlist_t *ml = arg;
 	tdesc_t *tdp = ml->ml_type;
 
 	debug(3, "Resolving typed bitfields (member %s)\n",
@@ -1195,5 +1206,5 @@ void
 resolve_typed_bitfields(void)
 {
 	(void) list_iter(typedbitfldmems,
-	    (int (*)())resolve_typed_bitfields_cb, NULL);
+	    resolve_typed_bitfields_cb, NULL);
 }

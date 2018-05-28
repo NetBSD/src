@@ -47,10 +47,17 @@
 #include <rpc/xdr.h>
 #include <sys/isa_defs.h>
 
+#ifdef __NetBSD__
+__weak_alias(_solaris_xdr_int32_t,_solaris_xdr_int)
+__weak_alias(_solaris_xdr_uint32_t,_solaris_xdr_u_int)
+__weak_alias(_solaris_xdr_int64_t,_solaris_xdr_longlong_t)
+__weak_alias(_solaris_xdr_uint64_t,_solaris_xdr_u_longlong_t)
+#else
 #pragma weak xdr_int32_t = xdr_int
 #pragma weak xdr_uint32_t = xdr_u_int
 #pragma weak xdr_int64_t = xdr_longlong_t
 #pragma weak xdr_uint64_t = xdr_u_longlong_t
+#endif
 
 #if !defined(_BIG_ENDIAN) && !defined(_LITTLE_ENDIAN)
 #error "Exactly one of _BIG_ENDIAN or _LITTLE_ENDIAN must be defined"
