@@ -1,4 +1,4 @@
-/*	$NetBSD: setkey.c,v 1.17 2018/05/28 19:52:18 maxv Exp $	*/
+/*	$NetBSD: setkey.c,v 1.18 2018/05/28 20:34:45 maxv Exp $	*/
 
 /*	$KAME: setkey.c,v 1.36 2003/09/24 23:52:51 itojun Exp $	*/
 
@@ -71,20 +71,20 @@
 
 #define strlcpy(d,s,l) (strncpy(d,s,l), (d)[(l)-1] = '\0')
 
-void usage __P((int));
-int main __P((int, char **));
-int get_supported __P((void));
-void sendkeyshort __P((u_int));
-void promisc __P((void));
-int postproc __P((struct sadb_msg *, int));
-int verifypriority __P((struct sadb_msg *m));
-int fileproc __P((const char *));
-const char *numstr __P((int));
-void shortdump_hdr __P((void));
-void shortdump __P((struct sadb_msg *));
-static void printdate __P((void));
-static int32_t gmt2local __P((time_t));
-void stdin_loop __P((void));
+void usage(int);
+int main(int, char **);
+int get_supported(void);
+void sendkeyshort(u_int);
+void promisc(void);
+int postproc(struct sadb_msg *, int);
+int verifypriority(struct sadb_msg *m);
+int fileproc(const char *);
+const char *numstr(int);
+void shortdump_hdr(void);
+void shortdump(struct sadb_msg *);
+static void printdate(void);
+static int32_t gmt2local(time_t);
+void stdin_loop(void);
 
 #define MODE_SCRIPT	1
 #define MODE_CMDDUMP	2
