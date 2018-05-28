@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.139 2017/04/01 19:35:56 riastradh Exp $ */
+/* $NetBSD: udf_subr.c,v 1.140 2018/05/28 21:04:38 chs Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.139 2017/04/01 19:35:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.140 2018/05/28 21:04:38 chs Exp $");
 #endif /* not lint */
 
 
@@ -4028,6 +4028,7 @@ static const struct genfs_ops udf_genfsops = {
 	.gop_alloc = udf_gop_alloc,
 	.gop_write = genfs_gop_write_rwmap,
 	.gop_markupdate = udf_gop_markupdate,
+	.gop_putrange = genfs_gop_putrange,
 };
 
 

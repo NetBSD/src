@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs_vfsops.c,v 1.23 2017/02/17 08:31:24 hannken Exp $ */
+/* $NetBSD: nilfs_vfsops.c,v 1.24 2018/05/28 21:04:37 chs Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: nilfs_vfsops.c,v 1.23 2017/02/17 08:31:24 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nilfs_vfsops.c,v 1.24 2018/05/28 21:04:37 chs Exp $");
 #endif /* not lint */
 
 
@@ -148,6 +148,7 @@ static const struct genfs_ops nilfs_genfsops = {
 	.gop_alloc = nilfs_gop_alloc,
 	.gop_write = genfs_gop_write_rwmap,
 	.gop_markupdate = nilfs_gop_markupdate,
+	.gop_putrange = genfs_gop_putrange,
 };
 
 /* --------------------------------------------------------------------- */
