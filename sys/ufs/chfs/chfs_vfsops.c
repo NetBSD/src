@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vfsops.c,v 1.17 2017/11/14 22:06:40 riastradh Exp $	*/
+/*	$NetBSD: chfs_vfsops.c,v 1.18 2018/05/28 21:04:38 chs Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -99,6 +99,7 @@ const struct genfs_ops chfs_genfsops = {
 	.gop_alloc = chfs_gop_alloc,
 	.gop_write = genfs_gop_write,
 	.gop_markupdate = ufs_gop_markupdate,
+	.gop_putrange = genfs_gop_putrange,
 };
 
 struct pool chfs_inode_pool;

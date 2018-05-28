@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.122 2017/05/26 14:34:20 riastradh Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.123 2018/05/28 21:04:38 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.122 2017/05/26 14:34:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.123 2018/05/28 21:04:38 chs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -73,6 +73,7 @@ static const struct genfs_ops nfs_genfsops = {
 	.gop_size = nfs_gop_size,
 	.gop_alloc = nfs_gop_alloc,
 	.gop_write = nfs_gop_write,
+	.gop_putrange = genfs_gop_putrange,
 };
 
 /*
