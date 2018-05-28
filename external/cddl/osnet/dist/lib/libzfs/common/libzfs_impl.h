@@ -45,11 +45,6 @@
 extern "C" {
 #endif
 
-#ifdef	VERIFY
-#undef	VERIFY
-#endif
-#define	VERIFY	verify
-
 typedef struct libzfs_fru {
 	char *zf_device;
 	char *zf_fru;

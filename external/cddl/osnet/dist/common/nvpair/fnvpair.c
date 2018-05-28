@@ -1,4 +1,3 @@
-
 /*
  * CDDL HEADER START
  *
@@ -27,6 +26,7 @@
 #include <sys/nvpair.h>
 #ifndef _KERNEL
 #include <sys/zfs_context.h>
+#include <stdlib.h>
 #else
 #include <sys/debug.h>
 #include <sys/kmem.h>

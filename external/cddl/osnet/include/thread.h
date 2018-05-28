@@ -1,4 +1,4 @@
-/*	$NetBSD: thread.h,v 1.3 2010/05/10 06:26:11 haad Exp $	*/
+/*	$NetBSD: thread.h,v 1.4 2018/05/28 21:05:08 chs Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -52,7 +52,9 @@ typedef pthread_rwlock_t rwlock_t;
 #define	thr_main()		(1)
 #define	_mutex_init(l,f,a)	pthread_mutex_init(l,NULL)
 #define	_mutex_destroy(l)	pthread_mutex_destroy(l)
+#if 0
 #define _mutex_held(l)		pthread_mutex_held_np(l)
+#endif
 #define	mutex_lock(l)		pthread_mutex_lock(l)
 #define	mutex_trylock(l)	pthread_mutex_trylock(l)
 #define	mutex_unlock(l)		pthread_mutex_unlock(l)

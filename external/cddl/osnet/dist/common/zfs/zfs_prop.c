@@ -72,8 +72,10 @@ zfs_prop_init(void)
 		{ "fletcher4",	ZIO_CHECKSUM_FLETCHER_4 },
 		{ "sha256",	ZIO_CHECKSUM_SHA256 },
 		{ "noparity",	ZIO_CHECKSUM_NOPARITY },
+#ifndef __NetBSD__
 		{ "sha512",	ZIO_CHECKSUM_SHA512 },
 		{ "skein",	ZIO_CHECKSUM_SKEIN },
+#endif
 #ifdef illumos
 		{ "edonr",	ZIO_CHECKSUM_EDONR },
 #endif
@@ -87,12 +89,14 @@ zfs_prop_init(void)
 		{ "sha256",	ZIO_CHECKSUM_SHA256 },
 		{ "sha256,verify",
 				ZIO_CHECKSUM_SHA256 | ZIO_CHECKSUM_VERIFY },
+#ifndef __NetBSD__
 		{ "sha512",	ZIO_CHECKSUM_SHA512 },
 		{ "sha512,verify",
 				ZIO_CHECKSUM_SHA512 | ZIO_CHECKSUM_VERIFY },
 		{ "skein",	ZIO_CHECKSUM_SKEIN },
 		{ "skein,verify",
 				ZIO_CHECKSUM_SKEIN | ZIO_CHECKSUM_VERIFY },
+#endif
 #ifdef illumos
 		{ "edonr,verify",
 				ZIO_CHECKSUM_EDONR | ZIO_CHECKSUM_VERIFY },

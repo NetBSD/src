@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.838 2018/05/03 22:51:17 sevan Exp $
+# $NetBSD: shl.mi,v 1.839 2018/05/28 21:04:59 chs Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -871,6 +871,9 @@
 ./usr/lib/libzfs.so				base-zfs-shlib		compatfile,zfs
 ./usr/lib/libzfs.so.0				base-zfs-shlib		compatfile,zfs
 ./usr/lib/libzfs.so.0.0				base-zfs-shlib		compatfile,zfs
+./usr/lib/libzfs_core.so			base-zfs-shlib		compatfile,zfs
+./usr/lib/libzfs_core.so.0			base-zfs-shlib		compatfile,zfs
+./usr/lib/libzfs_core.so.0.0			base-zfs-shlib		compatfile,zfs
 ./usr/lib/libzpool.so				base-zfs-shlib		compatfile,zfs
 ./usr/lib/libzpool.so.0				base-zfs-shlib		compatfile,zfs
 ./usr/lib/libzpool.so.0.0			base-zfs-shlib		compatfile,zfs

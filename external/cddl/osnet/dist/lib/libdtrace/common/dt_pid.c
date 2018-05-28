@@ -572,12 +572,6 @@ dt_pid_usdt_mapping(void *data, const prmap_t *pmp, const char *oname)
 	prsyminfo_t sip;
 	dof_helper_t dh;
 	GElf_Half e_type;
-#if defined(__FreeBSD__) || defined(__NetBSD__)
-	dof_hdr_t hdr;
-	size_t sz;
-	uint64_t dofmax;
-	void *dof;
-#endif
 	const char *mname;
 	const char *syms[] = { "___SUNW_dof", "__SUNW_dof" };
 	int i, fd = -1;
@@ -607,61 +601,24 @@ dt_pid_usdt_mapping(void *data, const prmap_t *pmp, const char *oname)
 			continue;
 		}
 
-#if defined(__FreeBSD__) || defined(__NetBSD__)
+		dh.dofhp_dof = sym.st_value;
 		dh.dofhp_addr = (e_type == ET_EXEC) ? 0 : pmp->pr_vaddr;
-		if (Pread(P, &hdr, sizeof (hdr), sym.st_value) !=
-		    sizeof (hdr)) {
-			dt_dprintf("read of DOF header failed\n");
-			continue;
-		}
-
-		sz = sizeof(dofmax);
-		if (sysctlbyname("kern.dtrace.dof_maxsize", &dofmax, &sz,
-		    NULL, 0) != 0) {
-			dt_dprintf("failed to read dof_maxsize: %s\n",
-			    strerror(errno));
-			continue;
-		}
-		if (dofmax < hdr.dofh_loadsz) {
-			dt_dprintf("DOF load size exceeds maximum\n");
-			continue;
-		}
-
-		if ((dof = malloc(hdr.dofh_loadsz)) == NULL)
-			return (-1);
-
-		if (Pread(P, dof, hdr.dofh_loadsz, sym.st_value) !=
-		    hdr.dofh_loadsz) {
-			free(dof);
-			dt_dprintf("read of DOF section failed\n");
-			continue;
-		}
-
-		dh.dofhp_dof = (uintptr_t)dof;
-		dh.dofhp_pid = proc_getpid(P);
-
 		dt_pid_objname(dh.dofhp_mod, sizeof (dh.dofhp_mod),
 		    sip.prs_lmid, mname);
+
+#if defined(__FreeBSD__) || defined(__NetBSD__)
+		dh.dofhp_pid = proc_getpid(P);
 
 		if (fd == -1 &&
 		    (fd = open("/dev/dtrace/helper", O_RDWR, 0)) < 0) {
 			dt_dprintf("open of helper device failed: %s\n",
 			    strerror(errno));
-			free(dof);
 			return (-1); /* errno is set for us */
 		}
 
 		if (ioctl(fd, DTRACEHIOC_ADDDOF, &dh, sizeof (dh)) < 0)
 			dt_dprintf("DOF was rejected for %s\n", dh.dofhp_mod);
-
-		free(dof);
 #else
-		dh.dofhp_dof = sym.st_value;
-		dh.dofhp_addr = (e_type == ET_EXEC) ? 0 : pmp->pr_vaddr;
-
-		dt_pid_objname(dh.dofhp_mod, sizeof (dh.dofhp_mod),
-		    sip.prs_lmid, mname);
-
 		if (fd == -1 &&
 		    (fd = pr_open(P, "/dev/dtrace/helper", O_RDWR, 0)) < 0) {
 			dt_dprintf("pr_open of helper device failed: %s\n",
@@ -772,8 +729,13 @@ dt_pid_create_probes(dtrace_probedesc_t *pdp, dtrace_hdl_t *dtp, dt_pcb_t *pcb)
 	(void) snprintf(provname, sizeof (provname), "pid%d", (int)pid);
 
 	if (gmatch(provname, pdp->dtpd_provider) != 0) {
+#if defined(__FreeBSD__) || defined(__NetBSD__)
+		if ((P = dt_proc_grab(dtp, pid, 0, 1)) == NULL)
+#else
 		if ((P = dt_proc_grab(dtp, pid, PGRAB_RDONLY | PGRAB_FORCE,
-		    0)) == NULL) {
+		    0)) == NULL)
+#endif
+		{
 			(void) dt_pid_error(dtp, pcb, NULL, NULL, D_PROC_GRAB,
 			    "failed to grab process %d", (int)pid);
 			return (-1);
@@ -974,7 +936,6 @@ dt_pid_get_types(dtrace_hdl_t *dtp, const dtrace_probedesc_t *pdp,
 		mptr = pdp->dtpd_mod;
 		lmid = 0;
 	}
-	__USE(lmid);
 
 	if (Pxlookup_by_name(p, lmid, mptr, pdp->dtpd_func,
 	    &sym, &si) != 0) {
