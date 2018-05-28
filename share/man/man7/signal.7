@@ -1,4 +1,4 @@
-.\"	$NetBSD: signal.7,v 1.22 2018/05/23 07:06:45 wiz Exp $
+.\"	$NetBSD: signal.7,v 1.23 2018/05/28 15:48:23 wiz Exp $
 .\"
 .\" Copyright (c) 1999, 2016 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 22, 2018
+.Dd May 28, 2018
 .Dt SIGNAL 7
 .Os
 .Sh NAME
@@ -111,40 +111,40 @@ one can find and kill that process the situation is recoverable.)
 The following signals are defined in
 .Nx :
 .Pp
-.Bl -column ".Sy SIGVTALRM" "Profiling timer expired blablabla" -compact
-.\".It Sy "Symbol" Ta Sy "Descriptive name"
-.It Dv SIGHUP Ta "Hangup"
-.It Dv SIGINT Ta "Interrupt"
-.It Dv SIGQUIT Ta "Quit"
-.It Dv SIGILL Ta "Illegal instruction"
-.It Dv SIGTRAP Ta "Trace/BPT trap"
-.It Dv SIGABRT Ta "Abort trap"
-.It Dv SIGEMT Ta "EMT trap"
-.It Dv SIGFPE Ta "Floating point exception"
-.It Dv SIGKILL Ta "Killed"
-.It Dv SIGBUS Ta "Bus error"
-.It Dv SIGSEGV Ta "Segmentation fault"
-.It Dv SIGSYS Ta "Bad system call"
-.It Dv SIGPIPE Ta "Broken pipe"
-.It Dv SIGALRM Ta "Alarm clock"
-.It Dv SIGTERM Ta "Terminated"
-.It Dv SIGURG Ta "Urgent I/O condition"
-.It Dv SIGSTOP Ta "Suspended (signal)"
-.It Dv SIGTSTP Ta "Suspended"
-.It Dv SIGCONT Ta "Continued"
-.It Dv SIGCHLD Ta "Child exited, stopped or continued"
-.It Dv SIGTTIN Ta "Stopped (tty input)"
-.It Dv SIGTTOU Ta "Stopped (tty output)"
-.It Dv SIGIO Ta "I/O possible"
-.It Dv SIGXCPU Ta "CPU time limit exceeded"
-.It Dv SIGXFSZ Ta "File size limit exceeded"
-.It Dv SIGVTALRM Ta "Virtual timer expired"
-.It Dv SIGPROF Ta "Profiling timer expired"
-.It Dv SIGWINCH Ta "Window size changed"
-.It Dv SIGINFO Ta "Information request"
-.It Dv SIGUSR1 Ta "User defined signal 1"
-.It Dv SIGUSR2 Ta "User defined signal 2"
-.It Dv SIGPWR Ta "Power fail/restart"
+.Bl -column ".Sy SIGVTALRM" 3n "Profiling timer expired blablabla" -compact
+.\".It Sy "Symbol" Ta No Ta Sy "Descriptive name"
+.It Dv SIGHUP Ta 1 Ta "Hangup"
+.It Dv SIGINT Ta 2 Ta "Interrupt"
+.It Dv SIGQUIT Ta 3 Ta "Quit"
+.It Dv SIGILL Ta 4 Ta "Illegal instruction"
+.It Dv SIGTRAP Ta 5 Ta "Trace/BPT trap"
+.It Dv SIGABRT Ta 6 Ta "Abort trap"
+.It Dv SIGEMT Ta 7 Ta "EMT trap"
+.It Dv SIGFPE Ta 8 Ta "Floating point exception"
+.It Dv SIGKILL Ta 9 Ta "Killed"
+.It Dv SIGBUS Ta 10 Ta "Bus error"
+.It Dv SIGSEGV Ta 11 Ta "Segmentation fault"
+.It Dv SIGSYS Ta 12 Ta "Bad system call"
+.It Dv SIGPIPE Ta 13 Ta "Broken pipe"
+.It Dv SIGALRM Ta 14 Ta "Alarm clock"
+.It Dv SIGTERM Ta 15 Ta "Terminated"
+.It Dv SIGURG Ta 16 Ta "Urgent I/O condition"
+.It Dv SIGSTOP Ta 17 Ta "Suspended (signal)"
+.It Dv SIGTSTP Ta 18 Ta "Suspended"
+.It Dv SIGCONT Ta 19 Ta "Continued"
+.It Dv SIGCHLD Ta 20 Ta "Child exited, stopped or continued"
+.It Dv SIGTTIN Ta 21 Ta "Stopped (tty input)"
+.It Dv SIGTTOU Ta 22 Ta "Stopped (tty output)"
+.It Dv SIGIO Ta 23 Ta "I/O possible"
+.It Dv SIGXCPU Ta 24 Ta "CPU time limit exceeded"
+.It Dv SIGXFSZ Ta 25 Ta "File size limit exceeded"
+.It Dv SIGVTALRM Ta 26 Ta "Virtual timer expired"
+.It Dv SIGPROF Ta 27 Ta "Profiling timer expired"
+.It Dv SIGWINCH Ta 28 Ta "Window size changed"
+.It Dv SIGINFO Ta 29 Ta "Information request"
+.It Dv SIGUSR1 Ta 30 Ta "User defined signal 1"
+.It Dv SIGUSR2 Ta 31 Ta "User defined signal 2"
+.It Dv SIGPWR Ta 32 Ta "Power fail/restart"
 .El
 .Pp
 These are numbered 1 to 32.
