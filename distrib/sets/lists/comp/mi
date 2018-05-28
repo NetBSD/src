@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2199 2018/05/28 21:04:59 chs Exp $
+#	$NetBSD: mi,v 1.2200 2018/05/28 22:28:56 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -11125,8 +11125,11 @@
 ./usr/share/man/cat9/module_init.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/module_init_class.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/module_load.0		comp-sys-catman		.cat
+./usr/share/man/cat9/module_kernel.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/module_load_vfs_init.0	comp-sys-catman		.cat
+./usr/share/man/cat9/module_name.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/module_rele.0		comp-sys-catman		.cat
+./usr/share/man/cat9/module_source.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/module_start_unload_thread.0 comp-sys-catman	.cat
 ./usr/share/man/cat9/module_unload.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/mono_time.0		comp-obsolete		obsolete
@@ -18809,8 +18812,11 @@
 ./usr/share/man/html9/module_init.html		comp-sys-htmlman	html
 ./usr/share/man/html9/module_init_class.html	comp-sys-htmlman	html
 ./usr/share/man/html9/module_load.html		comp-sys-htmlman	html
+./usr/share/man/html9/module_kernel.html	comp-sys-htmlman	html
 ./usr/share/man/html9/module_load_vfs_init.html comp-sys-htmlman	html
+./usr/share/man/html9/module_name.html		comp-sys-htmlman	html
 ./usr/share/man/html9/module_rele.html		comp-sys-htmlman	html
+./usr/share/man/html9/module_source.html	comp-sys-htmlman	html
 ./usr/share/man/html9/module_start_unload_thread.html comp-sys-htmlman	html
 ./usr/share/man/html9/module_unload.html	comp-sys-htmlman	html
 ./usr/share/man/html9/mstohz.html		comp-sys-htmlman	html
@@ -26647,8 +26653,11 @@
 ./usr/share/man/man9/module_init.9		comp-sys-man		.man
 ./usr/share/man/man9/module_init_class.9	comp-sys-man		.man
 ./usr/share/man/man9/module_load.9		comp-sys-man		.man
+./usr/share/man/man9/module_kernel.9		comp-sys-man		.man
 ./usr/share/man/man9/module_load_vfs_init.9	comp-sys-man		.man
+./usr/share/man/man9/module_name.9		comp-sys-man		.man
 ./usr/share/man/man9/module_rele.9		comp-sys-man		.man
+./usr/share/man/man9/module_source.9		comp-sys-man		.man
 ./usr/share/man/man9/module_start_unload_thread.9 comp-sys-man		.man
 ./usr/share/man/man9/module_unload.9		comp-sys-man		.man
 ./usr/share/man/man9/mono_time.9		comp-obsolete		obsolete
