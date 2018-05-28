@@ -1,4 +1,4 @@
-	/*
+/*
  * CDDL HEADER START
  *
  * The contents of this file are subject to the terms of the
@@ -25,6 +25,8 @@
  */
 
 /*
+ * Copyright 2014 Garrett D'Amore <garrett@damore.org>
+ *
  * Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  */
@@ -32,11 +34,8 @@
 #ifndef _SYS_PROCESSOR_H
 #define	_SYS_PROCESSOR_H
 
-/* #pragma ident	"%Z%%M%	%I%	%E% SMI" */
-
 #include <sys/types.h>
 #include <sys/procset.h>
-#include <sys/pset.h>
 
 #ifdef	__cplusplus
 extern "C" {
@@ -54,9 +53,7 @@ typedef uint16_t lgrpid_t;
 /*
  * Type for processor name (CPU number).
  */
-#if defined(sun)
 typedef	int	processorid_t;
-#endif
 typedef int	chipid_t;
 
 /*
@@ -117,7 +114,6 @@ typedef struct {
  * User-level system call interface prototypes
  */
 #ifndef _KERNEL
-#ifdef __STDC__
 
 extern int	p_online(processorid_t processorid, int flag);
 extern int	processor_info(processorid_t processorid,
@@ -127,22 +123,13 @@ extern int	processor_bind(idtype_t idtype, id_t id,
 extern processorid_t getcpuid(void);
 extern lgrpid_t gethomelgroup(void);
 
-#else
-
-extern int	p_online();
-extern int	processor_info();
-extern int	processor_bind();
-extern processorid_t getcpuid();
-extern lgrpid_t gethomelgroup();
-
-#endif /* __STDC__ */
-
 #else   /* _KERNEL */
 
 /*
  * Internal interface prototypes
  */
 extern int	p_online_internal(processorid_t, int, int *);
+extern int	p_online_internal_locked(processorid_t, int, int *);
 
 #endif /* !_KERNEL */
 

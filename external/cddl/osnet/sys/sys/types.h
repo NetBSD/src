@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.17 2016/02/01 02:12:55 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.18 2018/05/28 21:05:10 chs Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/compat/opensolaris/sys/types.h,v 1.3 2007/11/28 21:49:16 jb Exp $
+ * $FreeBSD: head/sys/cddl/compat/opensolaris/sys/types.h 299459 2016-05-11 16:05:32Z cem $
  */
 
 #ifndef _OPENSOLARIS_SYS_TYPES_H_
@@ -63,6 +63,8 @@
 /*
  * This is a bag of dirty hacks to keep things compiling.
  */
+#define longlong_t __hide_longlong_t
+#define u_longlong_t __hide_u_longlong_t
 #ifndef _KERNEL
 #include <stdint.h>
 #else
@@ -79,6 +81,10 @@
 #undef _NETBSD_SOURCE
 #endif
 #endif
+#undef longlong_t
+#undef u_longlong_t
+typedef long long longlong_t;
+typedef unsigned long long u_longlong_t;
 
 #ifndef _KERNEL
 #include <stdarg.h>

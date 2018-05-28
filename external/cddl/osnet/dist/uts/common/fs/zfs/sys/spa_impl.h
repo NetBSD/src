@@ -44,6 +44,10 @@
 #include <sys/zfeature.h>
 #include <zfeature_common.h>
 
+#if defined(__NetBSD__) && defined(_HARDKERNEL)
+#include <sys/workqueue.h>
+#endif
+
 #ifdef	__cplusplus
 extern "C" {
 #endif
@@ -264,12 +268,19 @@ struct spa {
 	uint64_t	spa_feat_refcount_cache[SPA_FEATURES];
 #ifdef illumos
 	cyclic_id_t	spa_deadman_cycid;	/* cyclic id */
-#else	/* !illumos */
+#endif	/* illumos */
+#ifdef __FreeBSD__
 #ifdef _KERNEL
 	struct callout	spa_deadman_cycid;	/* callout id */
 	struct task	spa_deadman_task;
 #endif
-#endif	/* illumos */
+#endif /* __FreeBSD__ */
+#ifdef __NetBSD__
+#ifdef _HARDKERNEL
+	struct callout	spa_deadman_cycid;	/* callout id */
+	struct work	spa_deadman_work;
+#endif
+#endif /* __NetBSD__ */
 	uint64_t	spa_deadman_calls;	/* number of deadman calls */
 	hrtime_t	spa_sync_starttime;	/* starting time fo spa_sync */
 	uint64_t	spa_deadman_synctime;	/* deadman expiration timer */

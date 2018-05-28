@@ -42,9 +42,6 @@
 #ifndef _KERNEL
 #include <stdio.h> /* defines FILE *, used in ANSI C function prototypes */
 #endif
-#ifdef _KERNEL
-#include <sys/stream.h>
-#endif
 
 #ifdef __NetBSD__		/* Avoid conflicts with libc xdr.  */
 /* xdr.c */
@@ -77,6 +74,14 @@
 
 /* xdr_mem.c */
 #define	xdrmem_create		_solaris_xdrmem_create
+
+typedef void *mblk_t;
+
+#else	/* !__NetBSD__ */
+
+#ifdef _KERNEL
+#include <sys/stream.h>
+#endif
 #endif
 
 #ifdef __cplusplus

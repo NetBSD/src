@@ -19,8 +19,15 @@
  * CDDL HEADER END
  */
 /*
+ * Copyright 2014 Garrett D'Amore <garrett@damore.org>
+ *
  * Copyright 2010 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
+ */
+
+/*
+ * Copyright (c) 2012 by Delphix. All rights reserved.
+ * Copyright 2013 Saso Kiselkov. All rights reserved.
  */
 
 /*	Copyright (c) 1984, 1986, 1987, 1988, 1989 AT&T	*/
@@ -43,25 +50,13 @@ extern "C" {
  * ASSERT and is evaluated on both debug and non-debug kernels.
  */
 
-#if defined(__STDC__)
 extern int assfail(const char *, const char *, int);
 #define	VERIFY(EX) ((void)((EX) || assfail(#EX, __FILE__, __LINE__)))
-#ifndef ASSERT
-#if DEBUG
+#ifdef DEBUG
 #define	ASSERT(EX) ((void)((EX) || assfail(#EX, __FILE__, __LINE__)))
 #else
 #define	ASSERT(x)  ((void)0)
 #endif
-#endif
-#else	/* defined(__STDC__) */
-extern int assfail();
-#define	VERIFY(EX) ((void)((EX) || assfail("EX", __FILE__, __LINE__)))
-#if DEBUG
-#define	ASSERT(EX) ((void)((EX) || assfail("EX", __FILE__, __LINE__)))
-#else
-#define	ASSERT(x)  ((void)0)
-#endif
-#endif	/* defined(__STDC__) */
 
 /*
  * Assertion variants sensitive to the compilation data model
@@ -81,7 +76,7 @@ extern int assfail();
  * and
  *	if (a) then (b) *AND* if (b) then (a)
  */
-#if DEBUG
+#ifdef DEBUG
 #define	IMPLY(A, B) \
 	((void)(((!(A)) || (B)) || \
 	    assfail("(" #A ") implies (" #B ")", __FILE__, __LINE__)))
@@ -115,14 +110,32 @@ _NOTE(CONSTCOND) } while (0)
 #define	VERIFY3S(x, y, z)	VERIFY3_IMPL(x, y, z, int64_t)
 #define	VERIFY3U(x, y, z)	VERIFY3_IMPL(x, y, z, uint64_t)
 #define	VERIFY3P(x, y, z)	VERIFY3_IMPL(x, y, z, uintptr_t)
-#if DEBUG
+#define	VERIFY0(x)		VERIFY3_IMPL(x, ==, 0, uintmax_t)
+
+#ifdef DEBUG
 #define	ASSERT3S(x, y, z)	VERIFY3_IMPL(x, y, z, int64_t)
 #define	ASSERT3U(x, y, z)	VERIFY3_IMPL(x, y, z, uint64_t)
 #define	ASSERT3P(x, y, z)	VERIFY3_IMPL(x, y, z, uintptr_t)
+#define	ASSERT0(x)		VERIFY3_IMPL(x, ==, 0, uintmax_t)
 #else
 #define	ASSERT3S(x, y, z)	((void)0)
 #define	ASSERT3U(x, y, z)	((void)0)
 #define	ASSERT3P(x, y, z)	((void)0)
+#define	ASSERT0(x)		((void)0)
+#endif
+
+/*
+ * Compile-time assertion. The condition 'x' must be constant.
+ */
+#ifndef CTASSERT
+#define	CTASSERT(x)		_CTASSERT(x, __LINE__)
+#endif
+#ifndef _CTASSERT
+#define	_CTASSERT(x, y)		__CTASSERT(x, y)
+#endif
+#ifndef __CTASSERT
+#define	__CTASSERT(x, y) \
+	typedef char __compile_time_assertion__ ## y [(x) ? 1 : -1]
 #endif
 
 #ifdef	_KERNEL

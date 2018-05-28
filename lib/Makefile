@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.256 2018/05/03 22:27:58 sevan Exp $
+#	$NetBSD: Makefile,v 1.257 2018/05/28 21:05:00 chs Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -141,7 +141,7 @@ SUBDIR+=	../external/bsd/iscsi/lib	# depends on libpthread
 .endif
 
 .if (${MKZFS} != "no")
-SUBDIR+=        ../external/cddl/osnet/lib/libzfs
+SUBDIR+=        ../external/cddl/osnet/lib/libzfs_core
 SUBDIR+=        ../external/cddl/osnet/lib/libzpool
 .endif
 
@@ -208,6 +208,10 @@ SUBDIR+=	../external/bsd/fetch/lib	# depends on libssl
 
 .if (${MKLDAP} != "no")
 SUBDIR+=	../external/bsd/openldap/lib	# depends on libcrypto, ...
+.endif
+
+.if (${MKZFS} != "no")
+SUBDIR+=        ../external/cddl/osnet/lib/libzfs
 .endif
 
 SUBDIR+= 	../libexec/httpd/libbozohttpd 	# depends on libssl & libcrypto
