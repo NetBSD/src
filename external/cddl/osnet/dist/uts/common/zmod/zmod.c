@@ -24,7 +24,7 @@
  * Use is subject to license terms.
  */
 
-#include <sys/modctl.h>
+#include <sys/types.h>
 #include <sys/zmod.h>
 
 #include "zlib.h"
