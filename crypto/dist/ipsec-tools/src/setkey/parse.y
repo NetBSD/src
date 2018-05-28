@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.y,v 1.20 2018/05/28 19:52:18 maxv Exp $	*/
+/*	$NetBSD: parse.y,v 1.21 2018/05/28 20:34:45 maxv Exp $	*/
 
 /*	$KAME: parse.y,v 1.81 2003/07/01 04:01:48 itojun Exp $	*/
 
@@ -90,21 +90,21 @@ static struct addrinfo * p_natt_oa = NULL;
 
 static int p_aiflags = 0, p_aifamily = PF_UNSPEC;
 
-static struct addrinfo *parse_addr __P((char *, char *));
-static int fix_portstr __P((int, vchar_t *, vchar_t *, vchar_t *));
-static int setvarbuf __P((char *, int *, struct sadb_ext *, int, 
-    const void *, int));
-void parse_init __P((void));
-void free_buffer __P((void));
+static struct addrinfo *parse_addr(char *, char *);
+static int fix_portstr(int, vchar_t *, vchar_t *, vchar_t *);
+static int setvarbuf(char *, int *, struct sadb_ext *, int, 
+    const void *, int);
+void parse_init(void);
+void free_buffer(void);
 
-int setkeymsg0 __P((struct sadb_msg *, unsigned int, unsigned int, size_t));
-static int setkeymsg_spdaddr __P((unsigned int, unsigned int, vchar_t *,
-	struct addrinfo *, int, struct addrinfo *, int));
-static int setkeymsg_spdaddr_tag __P((unsigned int, char *, vchar_t *));
-static int setkeymsg_addr __P((unsigned int, unsigned int,
-	struct addrinfo *, struct addrinfo *, int));
-static int setkeymsg_add __P((unsigned int, unsigned int,
-	struct addrinfo *, struct addrinfo *));
+int setkeymsg0(struct sadb_msg *, unsigned int, unsigned int, size_t);
+static int setkeymsg_spdaddr(unsigned int, unsigned int, vchar_t *,
+	struct addrinfo *, int, struct addrinfo *, int);
+static int setkeymsg_spdaddr_tag(unsigned int, char *, vchar_t *);
+static int setkeymsg_addr(unsigned int, unsigned int,
+	struct addrinfo *, struct addrinfo *, int);
+static int setkeymsg_add(unsigned int, unsigned int,
+	struct addrinfo *, struct addrinfo *);
 %}
 
 %union {
