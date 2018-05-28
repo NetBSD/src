@@ -29,7 +29,7 @@
 #include <sys/zfs_context.h>
 #include <sys/spa.h>
 #include <sys/vdev_impl.h>
-#ifdef illumos
+#ifndef __FreeBSD__
 #include <sys/vdev_disk.h>
 #endif
 #include <sys/vdev_file.h>
@@ -38,7 +38,9 @@
 #include <sys/zio_checksum.h>
 #include <sys/fs/zfs.h>
 #include <sys/fm/fs/zfs.h>
+#ifdef __FreeBSD__
 #include <sys/bio.h>
+#endif
 
 /*
  * Virtual device vector for RAID-Z.

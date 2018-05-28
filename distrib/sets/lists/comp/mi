@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2198 2018/05/28 00:18:05 nat Exp $
+#	$NetBSD: mi,v 1.2199 2018/05/28 21:04:59 chs Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -3772,6 +3772,8 @@
 ./usr/lib/libz_p.a				comp-c-proflib		compatfile,profile
 ./usr/lib/libzfs.a				comp-zfs-lib		compatfile,zfs
 ./usr/lib/libzfs_p.a				comp-zfs-proflib	compatfile,zfs,profile
+./usr/lib/libzfs_core.a				comp-zfs-lib		compatfile,zfs
+./usr/lib/libzfs_core_p.a			comp-zfs-proflib	compatfile,zfs,profile
 ./usr/lib/libzpool.a				comp-zfs-lib		compatfile,zfs
 ./usr/lib/libzpool_p.a				comp-zfs-proflib	compatfile,zfs,profile
 ./usr/lib/pkgconfig				comp-c-lib

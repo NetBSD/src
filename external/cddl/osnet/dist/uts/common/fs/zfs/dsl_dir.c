@@ -707,11 +707,15 @@ dsl_enforce_ds_ss_limits(dsl_dir_t *dd, zfs_prop_t prop, cred_t *cr)
 	    prop == ZFS_PROP_SNAPSHOT_LIMIT);
 
 #ifdef _KERNEL
-#ifdef __FreeBSD__
-	if (jailed(cr))
-#else
+#ifdef illumos
 	if (crgetzoneid(cr) != GLOBAL_ZONEID)
 #endif
+#ifdef __FreeBSD__
+	if (jailed(cr))
+#endif
+#ifdef __NetBSD__
+	if (0)
+#endif		
 		return (ENFORCE_ALWAYS);
 
 	if (secpolicy_zfs(cr) == 0)

@@ -212,6 +212,9 @@ sa_cache_constructor(void *buf, void *unused, int kmflag)
 {
 	sa_handle_t *hdl = buf;
 
+#ifdef __NetBSD__
+	hdl = unused;
+#endif
 	mutex_init(&hdl->sa_lock, NULL, MUTEX_DEFAULT, NULL);
 	return (0);
 }
@@ -221,6 +224,10 @@ static void
 sa_cache_destructor(void *buf, void *unused)
 {
 	sa_handle_t *hdl = buf;
+
+#ifdef __NetBSD__
+	hdl = unused;
+#endif
 	mutex_destroy(&hdl->sa_lock);
 }
 
@@ -413,6 +420,9 @@ sa_add_layout_entry(objset_t *os, sa_attr_type_t *attrs, int attr_count,
 	ASSERT(MUTEX_HELD(&sa->sa_lock));
 	tb = kmem_zalloc(sizeof (sa_lot_t), KM_SLEEP);
 	tb->lot_attr_count = attr_count;
+#ifdef __NetBSD__
+	if (attr_count != 0)
+#endif
 	tb->lot_attrs = kmem_alloc(sizeof (sa_attr_type_t) * attr_count,
 	    KM_SLEEP);
 	bcopy(attrs, tb->lot_attrs, sizeof (sa_attr_type_t) * attr_count);
@@ -1136,6 +1146,9 @@ sa_tear_down(objset_t *os)
 
 	cookie = NULL;
 	while (layout = avl_destroy_nodes(&sa->sa_layout_num_tree, &cookie)) {
+#ifdef __NetBSD__
+		if (layout->lot_attr_count != 0)
+#endif
 		kmem_free(layout->lot_attrs,
 		    sizeof (sa_attr_type_t) * layout->lot_attr_count);
 		kmem_free(layout, sizeof (sa_lot_t));

@@ -1,4 +1,4 @@
-/*	$NetBSD: dtrace_anon.c,v 1.2 2010/02/21 01:46:33 darran Exp $	*/
+/*	$NetBSD: dtrace_anon.c,v 1.3 2018/05/28 21:05:03 chs Exp $	*/
 /*
  * CDDL HEADER START
  *
@@ -20,7 +20,7 @@
  *
  * CDDL HEADER END
  *
- * $FreeBSD: src/sys/cddl/dev/dtrace/dtrace_anon.c,v 1.1.4.1 2009/08/03 08:13:06 kensmith Exp $
+ * $FreeBSD: head/sys/cddl/dev/dtrace/dtrace_anon.c 179237 2008-05-23 05:59:42Z jb $
  */
 
 /*

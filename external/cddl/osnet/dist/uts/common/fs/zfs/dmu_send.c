@@ -62,6 +62,28 @@
 #define dump_write dmu_dump_write
 #endif
 
+#ifdef __NetBSD__
+#ifdef _KERNEL
+#define FOF_OFFSET FOF_UPDATE_OFFSET
+#define td_ucred l_cred
+#define bwillwrite() /* nothing */
+
+static int
+fo_write(struct file *fp, struct uio *uio, cred_t *cred, int flags, kthread_t *thr)
+{
+
+	return (*fp->f_ops->fo_write)(fp, &fp->f_offset, uio, cred, flags);
+}
+
+static int
+fo_read(struct file *fp, struct uio *uio, cred_t *cred, int flags, kthread_t *thr)
+{
+
+	return (*fp->f_ops->fo_read)(fp, &fp->f_offset, uio, cred, flags);
+}
+#endif
+#endif
+
 /* Set this tunable to TRUE to replace corrupt data with 0x2f5baddb10c */
 int zfs_send_corrupt_data = B_FALSE;
 int zfs_send_queue_length = 16 * 1024 * 1024;
@@ -127,10 +149,18 @@ dump_bytes(dmu_sendarg_t *dsp, void *buf, int len)
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
 	auio.uio_resid = len;
+#ifdef __NetBSD__
+#ifdef _KERNEL
+	auio.uio_vmspace = vmspace_kernel();
+#endif
+#else
 	auio.uio_segflg = UIO_SYSSPACE;
+#endif
 	auio.uio_rw = UIO_WRITE;
 	auio.uio_offset = (off_t)-1;
+#ifdef __FreeBSD__
 	auio.uio_td = dsp->dsa_td;
+#endif
 #ifdef _KERNEL
 	if (dsp->dsa_fp->f_type == DTYPE_VNODE)
 		bwillwrite();
@@ -1831,10 +1861,18 @@ restore_bytes(struct receive_arg *ra, void *buf, int len, off_t off, ssize_t *re
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
 	auio.uio_resid = len;
+#ifdef __NetBSD__
+#ifdef _KERNEL
+	auio.uio_vmspace = vmspace_kernel();
+#endif
+#else
 	auio.uio_segflg = UIO_SYSSPACE;
+#endif
 	auio.uio_rw = UIO_READ;
 	auio.uio_offset = off;
+#ifdef __FreeBSD__
 	auio.uio_td = ra->td;
+#endif
 #ifdef _KERNEL
 	error = fo_read(ra->fp, &auio, ra->td->td_ucred, FOF_OFFSET, ra->td);
 #else

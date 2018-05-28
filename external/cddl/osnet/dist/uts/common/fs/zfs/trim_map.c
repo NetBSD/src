@@ -555,9 +555,30 @@ trim_thread(void *arg)
 	spa_t *spa = arg;
 	zio_t *zio;
 
+#ifdef __FreeBSD__
 #ifdef _KERNEL
 	(void) snprintf(curthread->td_name, sizeof(curthread->td_name),
 	    "trim %s", spa_name(spa));
+#endif
+#endif
+#ifdef __NetBSD__
+#ifdef _KERNEL
+	size_t sz;
+	char *name, *oname;
+	struct lwp *l = curlwp;
+
+	name = kmem_alloc(MAXCOMLEN, KM_SLEEP);
+	snprintf(name, MAXCOMLEN, "trim %s", spa_name(spa));
+	name[MAXCOMLEN - 1] = 0;
+
+	lwp_lock(l);
+	oname = l->l_name;
+	l->l_name = name;
+	lwp_unlock(l);
+
+	if (oname != NULL)
+		kmem_free(oname, MAXCOMLEN);
+#endif
 #endif
 
 	for (;;) {

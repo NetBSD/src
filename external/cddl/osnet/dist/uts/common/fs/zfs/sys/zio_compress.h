@@ -70,8 +70,13 @@ extern size_t zle_compress(void *src, void *dst, size_t s_len, size_t d_len,
     int level);
 extern int zle_decompress(void *src, void *dst, size_t s_len, size_t d_len,
     int level);
+#ifdef __FreeBSD__
 extern void lz4_init(void);
 extern void lz4_fini(void);
+#else
+#define lz4_init() /* nothing */
+#define lz4_fini() /* nothing */
+#endif
 extern size_t lz4_compress(void *src, void *dst, size_t s_len, size_t d_len,
     int level);
 extern int lz4_decompress(void *src, void *dst, size_t s_len, size_t d_len,

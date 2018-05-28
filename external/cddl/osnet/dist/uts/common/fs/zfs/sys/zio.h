@@ -83,8 +83,10 @@ enum zio_checksum {
 	ZIO_CHECKSUM_SHA256,
 	ZIO_CHECKSUM_ZILOG2,
 	ZIO_CHECKSUM_NOPARITY,
+#ifndef __NetBSD__
 	ZIO_CHECKSUM_SHA512,
 	ZIO_CHECKSUM_SKEIN,
+#endif
 #ifdef illumos
 	ZIO_CHECKSUM_EDONR,
 #endif

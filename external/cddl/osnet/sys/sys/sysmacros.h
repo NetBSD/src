@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmacros.h,v 1.7 2016/02/01 02:12:55 christos Exp $	*/
+/*	$NetBSD: sysmacros.h,v 1.8 2018/05/28 21:05:10 chs Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -77,8 +77,6 @@ extern unsigned char bcd_to_byte[256];
 #define	BYTE_TO_BCD(x)	byte_to_bcd[(x) & 0xff]
 #define	BCD_TO_BYTE(x)	bcd_to_byte[(x) & 0xff]
 
-#define MAXMIN        0xfffffffful /* max minor value with 64b dev_t*/
-	
 #endif	/* _KERNEL */
 
 #ifndef __NetBSD__
@@ -400,6 +398,9 @@ extern unsigned char bcd_to_byte[256];
 static __inline int
 highbit(ulong_t i)
 {
+#if defined(__FreeBSD__) && defined(_KERNEL) && defined(HAVE_INLINE_FLSL)
+	return (flsl(i));
+#else
 	register int h = 1;
 
 	if (i == 0)
@@ -425,6 +426,43 @@ highbit(ulong_t i)
 		h += 1;
 	}
 	return (h);
+#endif
+}
+
+/*
+ * Find highest one bit set.
+ *	Returns bit number + 1 of highest bit that is set, otherwise returns 0.
+ */
+static __inline int
+highbit64(uint64_t i)
+{
+#if defined(__FreeBSD__) && defined(_KERNEL) && defined(HAVE_INLINE_FLSLL)
+	return (flsll(i));
+#else
+	int h = 1;
+
+	if (i == 0)
+		return (0);
+	if (i & 0xffffffff00000000ULL) {
+		h += 32; i >>= 32;
+	}
+	if (i & 0xffff0000) {
+		h += 16; i >>= 16;
+	}
+	if (i & 0xff00) {
+		h += 8; i >>= 8;
+	}
+	if (i & 0xf0) {
+		h += 4; i >>= 4;
+	}
+	if (i & 0xc) {
+		h += 2; i >>= 2;
+	}
+	if (i & 0x2) {
+		h += 1;
+	}
+	return (h);
+#endif
 }
 
 #ifdef	__cplusplus

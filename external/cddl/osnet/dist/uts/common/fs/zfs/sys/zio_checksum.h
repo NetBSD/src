@@ -82,6 +82,7 @@ extern zio_checksum_info_t zio_checksum_table[ZIO_CHECKSUM_FUNCTIONS];
  * Checksum routines.
  */
 extern zio_checksum_t zio_checksum_SHA256;
+#ifndef __NetBSD__
 extern zio_checksum_t zio_checksum_SHA512_native;
 extern zio_checksum_t zio_checksum_SHA512_byteswap;
 
@@ -90,6 +91,7 @@ extern zio_checksum_t zio_checksum_skein_native;
 extern zio_checksum_t zio_checksum_skein_byteswap;
 extern zio_checksum_tmpl_init_t zio_checksum_skein_tmpl_init;
 extern zio_checksum_tmpl_free_t zio_checksum_skein_tmpl_free;
+#endif
 
 #ifdef illumos
 /* Edon-R */

@@ -1,11 +1,8 @@
-/*	$NetBSD: anon.h,v 1.1 2009/08/07 20:57:58 haad Exp $	*/
+/*	$NetBSD: kmem.c,v 1.1 2018/05/28 21:05:09 chs Exp $	*/
 
 /*-
- * Copyright (c) 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2017 The NetBSD Foundation, Inc.
  * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -28,3 +25,43 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/kmem.h>
+
+#undef kmem_alloc
+#undef kmem_zalloc
+#undef kmem_free
+
+/*
+ * Solaris allows allocating zero bytes (which returns NULL)
+ * and freeing a NULL pointer (which does nothing),
+ * so allow that here with wrappers around the native functions
+ * (which do not allow those things).
+ */
+
+void *
+solaris_kmem_alloc(size_t size, int flags)
+{
+
+	if (size == 0)
+		return NULL;
+	return kmem_alloc(size, flags);
+}
+
+void *
+solaris_kmem_zalloc(size_t size, int flags)
+{
+
+	if (size == 0)
+		return NULL;
+	return kmem_zalloc(size, flags);
+}
+
+void
+solaris_kmem_free(void *buf, size_t size)
+{
+
+	if (buf == NULL)
+		return;
+	kmem_free(buf, size);
+}

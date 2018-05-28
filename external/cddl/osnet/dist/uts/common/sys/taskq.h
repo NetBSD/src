@@ -28,7 +28,9 @@
 
 #include <sys/types.h>
 #include <sys/proc.h>
+#ifdef __FreeBSD__
 #include <sys/taskqueue.h>
+#endif
 
 #ifdef	__cplusplus
 extern "C" {
@@ -36,20 +38,21 @@ extern "C" {
 
 #define	TASKQ_NAMELEN	31
 
+#ifdef __FreeBSD__
 struct taskqueue;
 struct taskq {
 	struct taskqueue	*tq_queue;
 };
-
-typedef struct taskq taskq_t;
-typedef uintptr_t taskqid_t;
-typedef void (task_func_t)(void *);
-
 typedef struct taskq_ent {
 	struct task	 tqent_task;
 	task_func_t	*tqent_func;
 	void		*tqent_arg;
 } taskq_ent_t;
+#endif
+
+typedef struct taskq taskq_t;
+typedef uintptr_t taskqid_t;
+typedef void (task_func_t)(void *);
 
 struct proc;
 
@@ -86,8 +89,10 @@ taskq_t	*taskq_create_proc(const char *, int, pri_t, int, int,
 taskq_t	*taskq_create_sysdc(const char *, int, int, int,
     struct proc *, uint_t, uint_t);
 taskqid_t taskq_dispatch(taskq_t *, task_func_t, void *, uint_t);
+#ifdef __FreeBSD__
 void	taskq_dispatch_ent(taskq_t *, task_func_t, void *, uint_t,
     taskq_ent_t *);
+#endif
 void	nulltask(void *);
 void	taskq_destroy(taskq_t *);
 void	taskq_wait(taskq_t *);

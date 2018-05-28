@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2016/02/29 17:46:54 riastradh Exp $
+#	$NetBSD: Makefile,v 1.9 2018/05/28 21:05:08 chs Exp $
 #
 #
 
@@ -17,6 +17,8 @@ SUBDIR+=	libavl
 SUBDIR+=	libnvpair
 SUBDIR+=	libumem
 SUBDIR+=	libuutil
+SUBDIR+=	.WAIT
+SUBDIR+=	libzfs_core
 SUBDIR+=	.WAIT
 SUBDIR+=	libzfs
 SUBDIR+=	libzpool

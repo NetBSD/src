@@ -120,8 +120,11 @@ zfs_onexit_minor_to_state(minor_t minor, zfs_onexit_t **zo)
 int
 zfs_onexit_fd_hold(int fd, minor_t *minorp)
 {
-	file_t *fp, *tmpfp;
+	file_t *fp;
 	zfs_onexit_t *zo;
+
+#ifdef __FreeBSD__
+	file_t *tmpfp;
 	cap_rights_t rights;
 	void *data;
 	int error;
@@ -138,6 +141,14 @@ zfs_onexit_fd_hold(int fd, minor_t *minorp)
 	curthread->td_fpop = tmpfp;
 	if (error != 0)
 		return (SET_ERROR(EBADF));
+#else
+	fp = getf(fd);
+	if (fp == NULL)
+		return (SET_ERROR(EBADF));
+
+	*minorp = getminor(fp->f_vnode->v_rdev);
+#endif
+
 	return (zfs_onexit_minor_to_state(*minorp, &zo));
 }
 

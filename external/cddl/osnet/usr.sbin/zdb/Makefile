@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2010/02/24 11:56:35 tron Exp $
+#	$NetBSD: Makefile,v 1.4 2018/05/28 21:05:11 chs Exp $
 
 .include "../../Makefile.zfs"
 
@@ -23,6 +23,9 @@ LDADD+=         -L${LIBUUTIL_OBJDIR} -luutil
 
 LIBZFS_OBJDIR!=  cd ${LIBZFS_SRCDIR} && ${PRINTOBJDIR}
 LDADD+=         -L${LIBZFS_OBJDIR} -lzfs
+
+LIBZFS_CORE_OBJDIR!=  cd ${LIBZFS_CORE_SRCDIR} && ${PRINTOBJDIR}
+LDADD+=         -L${LIBZFS_CORE_OBJDIR} -lzfs_core
 
 LIBZPOOL_OBJDIR!=  cd ${LIBZPOOL_SRCDIR} && ${PRINTOBJDIR}
 LDADD+=         -L${LIBZPOOL_OBJDIR} -lzpool

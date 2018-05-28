@@ -1,4 +1,4 @@
-/*	$NetBSD: varargs.h,v 1.4 2011/07/17 20:54:33 joerg Exp $	*/
+/*	$NetBSD: varargs.h,v 1.5 2018/05/28 21:05:10 chs Exp $	*/
 
 /*-
  * Copyright (c) 2007 Pawel Jakub Dawidek <pjd@FreeBSD.org>
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/compat/opensolaris/sys/varargs.h,v 1.1 2007/04/06 01:09:06 pjd Exp $
+ * $FreeBSD: head/sys/cddl/compat/opensolaris/sys/varargs.h 177698 2008-03-28 22:16:18Z jb $
  */
 
 #ifndef _OPENSOLARIS_SYS_VARARGS_H_

@@ -33,13 +33,14 @@
 #include <errno.h>
 #include <string.h>
 #include <libgen.h>
+#include <sys/ioctl.h>
 
 #include <dt_impl.h>
 #include <dt_pid.h>
 
 #include <dis_tables.h>
 
-#ifdef __FreeBSD__
+#if defined(__FreeBSD__) || defined(__NetBSD__)
 #include <libproc.h>
 #include <libproc_compat.h>
 #endif

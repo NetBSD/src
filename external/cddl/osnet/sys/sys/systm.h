@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.4 2013/06/21 16:22:46 christos Exp $	*/
+/*	$NetBSD: systm.h,v 1.5 2018/05/28 21:05:10 chs Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -54,13 +54,16 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/compat/opensolaris/sys/systm.h,v 1.1 2007/04/06 01:09:06 pjd Exp $
+ * $FreeBSD: head/sys/cddl/compat/opensolaris/sys/systm.h 296510 2016-03-08 17:27:13Z mav $
  */
+
+#include <sys/proc.h>
 
 #ifndef _OPENSOLARIS_SYS_SYSTM_H_
 #define	_OPENSOLARIS_SYS_SYSTM_H_
 
 #ifdef _KERNEL
+#define __HIDE_DELAY
 #include_next <sys/systm.h>
 #endif
 
@@ -73,10 +76,10 @@
 #define	PAGEOFFSET	(PAGESIZE - 1)
 #define	PAGEMASK	(~PAGEOFFSET)
 
-#define	xdelay(x)	kpause("soldelay", false, (x), NULL)
+#define	delay(x)	kpause("soldelay", false, (x), NULL)
 
-#define	xcopyin(u, k, s)	copyin(u, k, s)
-#define	xcopyout(k, u, s)	copyout(k, u, s)
+#define	timeout_generic(type, fn, arg, t, r, f) \
+    panic("timeout_generic() not implemented")
 
 #endif	/* _KERNEL */
 

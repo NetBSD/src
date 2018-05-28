@@ -359,6 +359,7 @@ fm_ereport_post(nvlist_t *ereport, int evc_flag)
 	size_t nvl_size = 0;
 	evchan_t *error_chan;
 
+#if 0
 	(void) nvlist_size(ereport, &nvl_size, NV_ENCODE_NATIVE);
 	if (nvl_size > ERPT_DATA_SZ || nvl_size == 0) {
 		printf("fm_ereport_post: dropped report\n");
@@ -367,7 +368,7 @@ fm_ereport_post(nvlist_t *ereport, int evc_flag)
 
 	fm_banner();
 	fm_nvprint(ereport);
-
+#endif
 }
 
 /*

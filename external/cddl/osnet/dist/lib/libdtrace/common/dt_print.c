@@ -263,7 +263,7 @@ dt_print_int(ctf_id_t base, ulong_t off, dt_printarg_t *pap)
 	 */
 	if (CTF_IS_CHAR(e)) {
 		char c = *(char *)addr;
-		if (isprint(c))
+		if (isprint((unsigned char)c))
 			(void) fprintf(fp, "'%c'", c);
 		else if (c == 0)
 			(void) fprintf(fp, "'\\0'");
@@ -395,7 +395,7 @@ dt_print_array(ctf_id_t base, ulong_t off, dt_printarg_t *pap)
 		char c;
 		for (i = 0; i < car.ctr_nelems; i++) {
 			c = *((char *)addr + eltsize * i);
-			if (!isprint(c) || c == '\0')
+			if (!isprint((unsigned char)c) || c == '\0')
 				break;
 		}
 

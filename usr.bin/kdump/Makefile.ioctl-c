@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.ioctl-c,v 1.34 2017/11/05 22:52:12 christos Exp $
+#	$NetBSD: Makefile.ioctl-c,v 1.35 2018/05/28 21:05:02 chs Exp $
 
 # NOTE: <bsd.own.mk> needs to be previously .included for NETBSDSRCDIR
 
@@ -50,6 +50,7 @@ CPPFLAGS+=	-I${DESTDIR}/usr/X11R7/include
 .if ${MKDTRACE} != "no"
 CPPFLAGS+=	-I${NETBSDSRCDIR}/external/cddl/osnet/sys
 CPPFLAGS+=	-I${NETBSDSRCDIR}/external/cddl/osnet/dist/uts/common
+CWARNFLAGS+=	-Wno-unknown-pragmas
 .endif
 CPPFLAGS+=	-D_DEV_IC_BT8XX_H_
 CPPFLAGS+=	-D_ALTQ_ALTQ_JOBS_H_	# redefinition of inline

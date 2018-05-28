@@ -52,8 +52,10 @@ typedef enum spa_feature {
 	SPA_FEATURE_BOOKMARKS,
 	SPA_FEATURE_FS_SS_LIMIT,
 	SPA_FEATURE_LARGE_BLOCKS,
+#ifndef __NetBSD__
 	SPA_FEATURE_SHA512,
 	SPA_FEATURE_SKEIN,
+#endif
 #ifdef illumos
 	SPA_FEATURE_EDONR,
 #endif

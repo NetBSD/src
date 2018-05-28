@@ -19,8 +19,7 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
- * Use is subject to license terms.
+ * Copyright (c) 2005, 2010, Oracle and/or its affiliates. All rights reserved.
  */
 
 #include <assert.h>
@@ -38,7 +37,7 @@
  */
 
 void
-nicenum(uint64_t num, char *buf, size_t buflen)
+nicenum(uint64_t num, char *buf)
 {
 	uint64_t n = num;
 	int index = 0;
@@ -52,15 +51,15 @@ nicenum(uint64_t num, char *buf, size_t buflen)
 	u = " KMGTPE"[index];
 
 	if (index == 0) {
-		(void) snprintf(buf, buflen, "%llu", (u_longlong_t)n);
+		(void) sprintf(buf, "%llu", (u_longlong_t)n);
 	} else if (n < 10 && (num & (num - 1)) != 0) {
-		(void) snprintf(buf, buflen, "%.2f%c",
+		(void) sprintf(buf, "%.2f%c",
 		    (double)num / (1ULL << 10 * index), u);
 	} else if (n < 100 && (num & (num - 1)) != 0) {
-		(void) snprintf(buf, buflen, "%.1f%c",
+		(void) sprintf(buf, "%.1f%c",
 		    (double)num / (1ULL << 10 * index), u);
 	} else {
-		(void) snprintf(buf, buflen, "%llu%c", (u_longlong_t)n, u);
+		(void) sprintf(buf, "%llu%c", (u_longlong_t)n, u);
 	}
 }
 
@@ -90,26 +89,26 @@ show_vdev_stats(const char *desc, const char *ctype, nvlist_t *nv, int indent)
 		if (is_log)
 			prefix = "log ";
 
-		if (nvlist_lookup_uint64_array(nv, ZPOOL_CONFIG_STATS,
+		if (nvlist_lookup_uint64_array(nv, ZPOOL_CONFIG_VDEV_STATS,
 		    (uint64_t **)&vs, &c) != 0)
 			vs = &v0;
 
 		sec = MAX(1, vs->vs_timestamp / NANOSEC);
 
-		nicenum(vs->vs_alloc, used, sizeof(used));
-		nicenum(vs->vs_space - vs->vs_alloc, avail, sizeof(avail));
-		nicenum(vs->vs_ops[ZIO_TYPE_READ] / sec, rops, sizeof(rops));
-		nicenum(vs->vs_ops[ZIO_TYPE_WRITE] / sec, wops, sizeof(wops));
-		nicenum(vs->vs_bytes[ZIO_TYPE_READ] / sec, rbytes, sizeof(rbytes));
-		nicenum(vs->vs_bytes[ZIO_TYPE_WRITE] / sec, wbytes, sizeof(wbytes));
-		nicenum(vs->vs_read_errors, rerr, sizeof(rerr));
-		nicenum(vs->vs_write_errors, werr, sizeof(werr));
-		nicenum(vs->vs_checksum_errors, cerr, sizeof(cerr));
+		nicenum(vs->vs_alloc, used);
+		nicenum(vs->vs_space - vs->vs_alloc, avail);
+		nicenum(vs->vs_ops[ZIO_TYPE_READ] / sec, rops);
+		nicenum(vs->vs_ops[ZIO_TYPE_WRITE] / sec, wops);
+		nicenum(vs->vs_bytes[ZIO_TYPE_READ] / sec, rbytes);
+		nicenum(vs->vs_bytes[ZIO_TYPE_WRITE] / sec, wbytes);
+		nicenum(vs->vs_read_errors, rerr);
+		nicenum(vs->vs_write_errors, werr);
+		nicenum(vs->vs_checksum_errors, cerr);
 
 		(void) printf("%*s%s%*s%*s%*s %5s %5s %5s %5s %5s %5s %5s\n",
 		    indent, "",
 		    prefix,
-		    indent + strlen(prefix) - 25 - (vs->vs_space ? 0 : 12),
+		    (int)(indent + strlen(prefix) - 25 - (vs->vs_space ? 0 : 12)),
 		    desc,
 		    vs->vs_space ? 6 : 0, vs->vs_space ? used : "",
 		    vs->vs_space ? 6 : 0, vs->vs_space ? avail : "",

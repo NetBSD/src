@@ -20,8 +20,8 @@
  */
 
 /*
- * Copyright 2010 Sun Microsystems, Inc.  All rights reserved.
- * Use is subject to license terms.
+ * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2015 by Delphix. All rights reserved.
  */
 
 #include <sys/zfs_context.h>
@@ -35,6 +35,17 @@
 #include <sys/dsl_pool.h>
 #include <sys/zio_checksum.h>
 #include <sys/zio_compress.h>
+#include <sys/dsl_scan.h>
+
+/*
+ * Enable/disable prefetching of dedup-ed blocks which are going to be freed.
+ */
+int zfs_dedup_prefetch = 1;
+
+SYSCTL_DECL(_vfs_zfs);
+SYSCTL_NODE(_vfs_zfs, OID_AUTO, dedup, CTLFLAG_RW, 0, "ZFS DEDUP");
+SYSCTL_INT(_vfs_zfs_dedup, OID_AUTO, prefetch, CTLFLAG_RWTUN, &zfs_dedup_prefetch,
+    0, "Enable/disable prefetching of dedup-ed blocks which are going to be freed");
 
 static const ddt_ops_t *ddt_ops[DDT_TYPES] = {
 	&ddt_zap_ops,
@@ -53,10 +64,11 @@ ddt_object_create(ddt_t *ddt, enum ddt_type type, enum ddt_class class,
 	spa_t *spa = ddt->ddt_spa;
 	objset_t *os = ddt->ddt_os;
 	uint64_t *objectp = &ddt->ddt_object[type][class];
-	boolean_t prehash = zio_checksum_table[ddt->ddt_checksum].ci_dedup;
+	boolean_t prehash = zio_checksum_table[ddt->ddt_checksum].ci_flags &
+	    ZCHECKSUM_FLAG_DEDUP;
 	char name[DDT_NAMELEN];
 
-	ddt_object_name(ddt, type, class, name, sizeof(name));
+	ddt_object_name(ddt, type, class, name);
 
 	ASSERT(*objectp == 0);
 	VERIFY(ddt_ops[type]->ddt_op_create(os, objectp, tx, prehash) == 0);
@@ -77,16 +89,18 @@ ddt_object_destroy(ddt_t *ddt, enum ddt_type type, enum ddt_class class,
 	spa_t *spa = ddt->ddt_spa;
 	objset_t *os = ddt->ddt_os;
 	uint64_t *objectp = &ddt->ddt_object[type][class];
+	uint64_t count;
 	char name[DDT_NAMELEN];
 
-	ddt_object_name(ddt, type, class, name, sizeof(name));
+	ddt_object_name(ddt, type, class, name);
 
 	ASSERT(*objectp != 0);
-	ASSERT(ddt_object_count(ddt, type, class) == 0);
+	VERIFY(ddt_object_count(ddt, type, class, &count) == 0 && count == 0);
 	ASSERT(ddt_histogram_empty(&ddt->ddt_histogram[type][class]));
 	VERIFY(zap_remove(os, DMU_POOL_DIRECTORY_OBJECT, name, tx) == 0);
 	VERIFY(zap_remove(os, spa->spa_ddt_stat_object, name, tx) == 0);
 	VERIFY(ddt_ops[type]->ddt_op_destroy(os, *objectp, tx) == 0);
+	bzero(&ddt->ddt_object_stats[type][class], sizeof (ddt_object_t));
 
 	*objectp = 0;
 }
@@ -94,36 +108,64 @@ ddt_object_destroy(ddt_t *ddt, enum ddt_type type, enum ddt_class class,
 static int
 ddt_object_load(ddt_t *ddt, enum ddt_type type, enum ddt_class class)
 {
+	ddt_object_t *ddo = &ddt->ddt_object_stats[type][class];
+	dmu_object_info_t doi;
+	uint64_t count;
 	char name[DDT_NAMELEN];
 	int error;
 
-	ddt_object_name(ddt, type, class, name, sizeof(name));
+	ddt_object_name(ddt, type, class, name);
 
 	error = zap_lookup(ddt->ddt_os, DMU_POOL_DIRECTORY_OBJECT, name,
 	    sizeof (uint64_t), 1, &ddt->ddt_object[type][class]);
 
-	if (error)
+	if (error != 0)
 		return (error);
 
-	error = zap_lookup(ddt->ddt_os, ddt->ddt_spa->spa_ddt_stat_object, name,
+	VERIFY0(zap_lookup(ddt->ddt_os, ddt->ddt_spa->spa_ddt_stat_object, name,
 	    sizeof (uint64_t), sizeof (ddt_histogram_t) / sizeof (uint64_t),
-	    &ddt->ddt_histogram[type][class]);
+	    &ddt->ddt_histogram[type][class]));
 
-	ASSERT(error == 0);
-	return (error);
+	/*
+	 * Seed the cached statistics.
+	 */
+	VERIFY(ddt_object_info(ddt, type, class, &doi) == 0);
+
+	error = ddt_object_count(ddt, type, class, &count);
+	if (error)
+		return error;
+
+	ddo->ddo_count = count;
+	ddo->ddo_dspace = doi.doi_physical_blocks_512 << 9;
+	ddo->ddo_mspace = doi.doi_fill_count * doi.doi_data_block_size;
+
+	return (0);
 }
 
 static void
 ddt_object_sync(ddt_t *ddt, enum ddt_type type, enum ddt_class class,
     dmu_tx_t *tx)
 {
+	ddt_object_t *ddo = &ddt->ddt_object_stats[type][class];
+	dmu_object_info_t doi;
+	uint64_t count;
 	char name[DDT_NAMELEN];
 
-	ddt_object_name(ddt, type, class, name, sizeof(name));
+	ddt_object_name(ddt, type, class, name);
 
 	VERIFY(zap_update(ddt->ddt_os, ddt->ddt_spa->spa_ddt_stat_object, name,
 	    sizeof (uint64_t), sizeof (ddt_histogram_t) / sizeof (uint64_t),
 	    &ddt->ddt_histogram[type][class], tx) == 0);
+
+	/*
+	 * Cache DDT statistics; this is the only time they'll change.
+	 */
+	VERIFY(ddt_object_info(ddt, type, class, &doi) == 0);
+	VERIFY(ddt_object_count(ddt, type, class, &count) == 0);
+
+	ddo->ddo_count = count;
+	ddo->ddo_dspace = doi.doi_physical_blocks_512 << 9;
+	ddo->ddo_mspace = doi.doi_fill_count * doi.doi_data_block_size;
 }
 
 static int
@@ -131,13 +173,24 @@ ddt_object_lookup(ddt_t *ddt, enum ddt_type type, enum ddt_class class,
     ddt_entry_t *dde)
 {
 	if (!ddt_object_exists(ddt, type, class))
-		return (ENOENT);
+		return (SET_ERROR(ENOENT));
 
 	return (ddt_ops[type]->ddt_op_lookup(ddt->ddt_os,
 	    ddt->ddt_object[type][class], dde));
 }
 
-static int
+static void
+ddt_object_prefetch(ddt_t *ddt, enum ddt_type type, enum ddt_class class,
+    ddt_entry_t *dde)
+{
+	if (!ddt_object_exists(ddt, type, class))
+		return;
+
+	ddt_ops[type]->ddt_op_prefetch(ddt->ddt_os,
+	    ddt->ddt_object[type][class], dde);
+}
+
+int
 ddt_object_update(ddt_t *ddt, enum ddt_type type, enum ddt_class class,
     ddt_entry_t *dde, dmu_tx_t *tx)
 {
@@ -167,13 +220,13 @@ ddt_object_walk(ddt_t *ddt, enum ddt_type type, enum ddt_class class,
 	    ddt->ddt_object[type][class], dde, walk));
 }
 
-uint64_t
-ddt_object_count(ddt_t *ddt, enum ddt_type type, enum ddt_class class)
+int
+ddt_object_count(ddt_t *ddt, enum ddt_type type, enum ddt_class class, uint64_t *count)
 {
 	ASSERT(ddt_object_exists(ddt, type, class));
 
 	return (ddt_ops[type]->ddt_op_count(ddt->ddt_os,
-	    ddt->ddt_object[type][class]));
+	    ddt->ddt_object[type][class], count));
 }
 
 int
@@ -181,7 +234,7 @@ ddt_object_info(ddt_t *ddt, enum ddt_type type, enum ddt_class class,
     dmu_object_info_t *doi)
 {
 	if (!ddt_object_exists(ddt, type, class))
-		return (ENOENT);
+		return (SET_ERROR(ENOENT));
 
 	return (dmu_object_info(ddt->ddt_os, ddt->ddt_object[type][class],
 	    doi));
@@ -195,9 +248,9 @@ ddt_object_exists(ddt_t *ddt, enum ddt_type type, enum ddt_class class)
 
 void
 ddt_object_name(ddt_t *ddt, enum ddt_type type, enum ddt_class class,
-    char *name, size_t namelen)
+    char *name)
 {
-	(void) snprintf(name, namelen, DMU_POOL_DDT,
+	(void) sprintf(name, DMU_POOL_DDT,
 	    zio_checksum_table[ddt->ddt_checksum].ci_name,
 	    ddt_ops[type]->ddt_op_name, ddt_class_name[class]);
 }
@@ -222,12 +275,13 @@ ddt_bp_create(enum zio_checksum checksum,
 		ddt_bp_fill(ddp, bp, ddp->ddp_phys_birth);
 
 	bp->blk_cksum = ddk->ddk_cksum;
+	bp->blk_fill = 1;
 
 	BP_SET_LSIZE(bp, DDK_GET_LSIZE(ddk));
 	BP_SET_PSIZE(bp, DDK_GET_PSIZE(ddk));
 	BP_SET_COMPRESS(bp, DDK_GET_COMPRESS(ddk));
 	BP_SET_CHECKSUM(bp, checksum);
-	BP_SET_TYPE(bp, DMU_OT_NONE);
+	BP_SET_TYPE(bp, DMU_OT_DEDUP);
 	BP_SET_LEVEL(bp, 0);
 	BP_SET_DEDUP(bp, 0);
 	BP_SET_BYTEORDER(bp, ZFS_HOST_BYTEORDER);
@@ -362,7 +416,7 @@ ddt_stat_update(ddt_t *ddt, ddt_entry_t *dde, uint64_t neg)
 
 	ddt_stat_generate(ddt, dde, &dds);
 
-	bucket = highbit(dds.dds_ref_blocks) - 1;
+	bucket = highbit64(dds.dds_ref_blocks) - 1;
 	ASSERT(bucket >= 0);
 
 	ddh = &ddt->ddt_histogram[dde->dde_type][dde->dde_class];
@@ -400,30 +454,27 @@ ddt_histogram_empty(const ddt_histogram_t *ddh)
 }
 
 void
-ddt_get_dedup_object_stats(spa_t *spa, ddt_object_t *ddo)
+ddt_get_dedup_object_stats(spa_t *spa, ddt_object_t *ddo_total)
 {
-	dmu_object_info_t doi;
-	uint64_t count;
-	int error;
-
+	/* Sum the statistics we cached in ddt_object_sync(). */
 	for (enum zio_checksum c = 0; c < ZIO_CHECKSUM_FUNCTIONS; c++) {
 		ddt_t *ddt = spa->spa_ddt[c];
 		for (enum ddt_type type = 0; type < DDT_TYPES; type++) {
 			for (enum ddt_class class = 0; class < DDT_CLASSES;
 			    class++) {
-				error = ddt_object_info(ddt, type, class, &doi);
-				if (error == ENOENT)
-					continue;
-				ASSERT3U(error, ==, 0);
-
-				count = ddt_object_count(ddt, type, class);
-				ddo->ddo_count += count;
-				ddo->ddo_dspace +=
-				    (doi.doi_physical_blocks_512 << 9) / count;
-				ddo->ddo_mspace += doi.doi_fill_count *
-				    doi.doi_data_block_size / count;
+				ddt_object_t *ddo =
+				    &ddt->ddt_object_stats[type][class];
+				ddo_total->ddo_count += ddo->ddo_count;
+				ddo_total->ddo_dspace += ddo->ddo_dspace;
+				ddo_total->ddo_mspace += ddo->ddo_mspace;
 			}
 		}
+	}
+
+	/* ... and compute the averages. */
+	if (ddo_total->ddo_count != 0) {
+		ddo_total->ddo_dspace /= ddo_total->ddo_count;
+		ddo_total->ddo_mspace /= ddo_total->ddo_count;
 	}
 }
 
@@ -436,7 +487,7 @@ ddt_get_dedup_histogram(spa_t *spa, ddt_histogram_t *ddh)
 			for (enum ddt_class class = 0; class < DDT_CLASSES;
 			    class++) {
 				ddt_histogram_add(ddh,
-				    &ddt->ddt_histogram[type][class]);
+				    &ddt->ddt_histogram_cache[type][class]);
 			}
 		}
 	}
@@ -543,7 +594,10 @@ ddt_compress(void *src, uchar_t *dst, size_t s_len, size_t d_len)
 		bcopy(src, dst, s_len);
 	}
 
-	*version = (ZFS_HOST_BYTEORDER & DDT_COMPRESS_BYTEORDER_MASK) | cpfunc;
+	*version = cpfunc;
+	/* CONSTCOND */
+	if (ZFS_HOST_BYTEORDER)
+		*version |= DDT_COMPRESS_BYTEORDER_MASK;
 
 	return (c_len + 1);
 }
@@ -560,7 +614,8 @@ ddt_decompress(uchar_t *src, void *dst, size_t s_len, size_t d_len)
 	else
 		bcopy(src, dst, d_len);
 
-	if ((version ^ ZFS_HOST_BYTEORDER) & DDT_COMPRESS_BYTEORDER_MASK)
+	if (((version & DDT_COMPRESS_BYTEORDER_MASK) != 0) !=
+	    (ZFS_HOST_BYTEORDER != 0))
 		byteswap_uint64_array(dst, d_len);
 }
 
@@ -689,6 +744,30 @@ ddt_lookup(ddt_t *ddt, const blkptr_t *bp, boolean_t add)
 	return (dde);
 }
 
+void
+ddt_prefetch(spa_t *spa, const blkptr_t *bp)
+{
+	ddt_t *ddt;
+	ddt_entry_t dde;
+
+	if (!zfs_dedup_prefetch || bp == NULL || !BP_GET_DEDUP(bp))
+		return;
+
+	/*
+	 * We only remove the DDT once all tables are empty and only
+	 * prefetch dedup blocks when there are entries in the DDT.
+	 * Thus no locking is required as the DDT can't disappear on us.
+	 */
+	ddt = ddt_select(spa, bp);
+	ddt_key_fill(&dde.dde_key, bp);
+
+	for (enum ddt_type type = 0; type < DDT_TYPES; type++) {
+		for (enum ddt_class class = 0; class < DDT_CLASSES; class++) {
+			ddt_object_prefetch(ddt, type, class, &dde);
+		}
+	}
+}
+
 int
 ddt_entry_compare(const void *x1, const void *x2)
 {
@@ -761,15 +840,21 @@ ddt_load(spa_t *spa)
 		return (error == ENOENT ? 0 : error);
 
 	for (enum zio_checksum c = 0; c < ZIO_CHECKSUM_FUNCTIONS; c++) {
+		ddt_t *ddt = spa->spa_ddt[c];
 		for (enum ddt_type type = 0; type < DDT_TYPES; type++) {
 			for (enum ddt_class class = 0; class < DDT_CLASSES;
 			    class++) {
-				ddt_t *ddt = spa->spa_ddt[c];
 				error = ddt_object_load(ddt, type, class);
 				if (error != 0 && error != ENOENT)
 					return (error);
 			}
 		}
+
+		/*
+		 * Seed the cached histograms.
+		 */
+		bcopy(ddt->ddt_histogram, &ddt->ddt_histogram_cache,
+		    sizeof (ddt->ddt_histogram));
 	}
 
 	return (0);
@@ -967,10 +1052,17 @@ ddt_sync_entry(ddt_t *ddt, ddt_entry_t *dde, dmu_tx_t *tx, uint64_t txg)
 			ddt_object_create(ddt, ntype, nclass, tx);
 		VERIFY(ddt_object_update(ddt, ntype, nclass, dde, tx) == 0);
 
-		if (dp->dp_scrub_func != SCRUB_FUNC_NONE &&
-		    oclass > nclass &&
-		    nclass <= dp->dp_scrub_ddt_class_max)
-			dsl_pool_scrub_ddt_entry(dp, ddt->ddt_checksum, dde);
+		/*
+		 * If the class changes, the order that we scan this bp
+		 * changes.  If it decreases, we could miss it, so
+		 * scan it right now.  (This covers both class changing
+		 * while we are doing ddt_walk(), and when we are
+		 * traversing.)
+		 */
+		if (nclass < oclass) {
+			dsl_scan_ddt_entry(dp->dp_scan,
+			    ddt->ddt_checksum, dde, tx);
+		}
 	}
 }
 
@@ -984,15 +1076,12 @@ ddt_sync_table(ddt_t *ddt, dmu_tx_t *tx, uint64_t txg)
 	if (avl_numnodes(&ddt->ddt_tree) == 0)
 		return;
 
-	ASSERT(spa_sync_pass(spa) == 1);
 	ASSERT(spa->spa_uberblock.ub_version >= SPA_VERSION_DEDUP);
 
 	if (spa->spa_ddt_stat_object == 0) {
-		spa->spa_ddt_stat_object = zap_create(ddt->ddt_os,
-		    DMU_OT_DDT_STATS, DMU_OT_NONE, 0, tx);
-		VERIFY(zap_add(ddt->ddt_os, DMU_POOL_DIRECTORY_OBJECT,
-		    DMU_POOL_DDT_STATS, sizeof (uint64_t), 1,
-		    &spa->spa_ddt_stat_object, tx) == 0);
+		spa->spa_ddt_stat_object = zap_create_link(ddt->ddt_os,
+		    DMU_OT_DDT_STATS, DMU_POOL_DIRECTORY_OBJECT,
+		    DMU_POOL_DDT_STATS, tx);
 	}
 
 	while ((dde = avl_destroy_nodes(&ddt->ddt_tree, &cookie)) != NULL) {
@@ -1001,14 +1090,23 @@ ddt_sync_table(ddt_t *ddt, dmu_tx_t *tx, uint64_t txg)
 	}
 
 	for (enum ddt_type type = 0; type < DDT_TYPES; type++) {
+		uint64_t add, count = 0;
 		for (enum ddt_class class = 0; class < DDT_CLASSES; class++) {
-			if (!ddt_object_exists(ddt, type, class))
-				continue;
-			ddt_object_sync(ddt, type, class, tx);
-			if (ddt_object_count(ddt, type, class) == 0)
+			if (ddt_object_exists(ddt, type, class)) {
+				ddt_object_sync(ddt, type, class, tx);
+				VERIFY(ddt_object_count(ddt, type, class,
+				    &add) == 0);
+				count += add;
+			}
+		}
+		for (enum ddt_class class = 0; class < DDT_CLASSES; class++) {
+			if (count == 0 && ddt_object_exists(ddt, type, class))
 				ddt_object_destroy(ddt, type, class, tx);
 		}
 	}
+
+	bcopy(ddt->ddt_histogram, &ddt->ddt_histogram_cache,
+	    sizeof (ddt->ddt_histogram));
 }
 
 void
@@ -1049,6 +1147,8 @@ ddt_walk(spa_t *spa, ddt_bookmark_t *ddb, ddt_entry_t *dde)
 					    ddb->ddb_type, ddb->ddb_class,
 					    &ddb->ddb_cursor, dde);
 				}
+				dde->dde_type = ddb->ddb_type;
+				dde->dde_class = ddb->ddb_class;
 				if (error == 0)
 					return (0);
 				if (error != ENOENT)
@@ -1060,5 +1160,5 @@ ddt_walk(spa_t *spa, ddt_bookmark_t *ddb, ddt_entry_t *dde)
 		ddb->ddb_type = 0;
 	} while (++ddb->ddb_class < DDT_CLASSES);
 
-	return (ENOENT);
+	return (SET_ERROR(ENOENT));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: zone.c,v 1.1 2009/08/07 20:57:57 haad Exp $	*/
+/*	$NetBSD: zone.c,v 1.2 2018/05/28 21:05:09 chs Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -34,14 +34,14 @@
 #include <sys/zone.h>
 
 int
-zone_dataset_attach(struct kauth_cred *cred, const char *dataset, int jailid)
+zone_dataset_attach(cred_t *cred, const char *dataset, int jailid)
 {
 
 	return 0;
 }
 
 int
-zone_dataset_detach(struct kauth_cred *cred, const char *dataset, int jailid)
+zone_dataset_detach(cred_t *cred, const char *dataset, int jailid)
 {
 
 	return 0;
