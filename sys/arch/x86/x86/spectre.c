@@ -1,4 +1,4 @@
-/*	$NetBSD: spectre.c,v 1.18 2018/05/22 17:14:46 maxv Exp $	*/
+/*	$NetBSD: spectre.c,v 1.19 2018/05/28 20:18:58 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spectre.c,v 1.18 2018/05/22 17:14:46 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spectre.c,v 1.19 2018/05/28 20:18:58 maxv Exp $");
 
 #include "opt_spectre.h"
 
@@ -610,6 +610,7 @@ cpu_speculation_init(struct cpu_info *ci)
 	 * cpu0 is the one that detects the method and sets the global
 	 * variable.
 	 */
+#if 0
 	if (ci == &cpu_info_primary) {
 		v4_detect_method();
 		v4_mitigation_enabled =
@@ -617,8 +618,9 @@ cpu_speculation_init(struct cpu_info *ci)
 		v4_set_name();
 	}
 	if (v4_mitigation_method != V4_MITIGATION_NONE) {
-		/* Mitigation not applied by default yet. */
+		mitigation_v4_apply_cpu(ci, true);
 	}
+#endif
 }
 
 void sysctl_speculation_init(struct sysctllog **);
