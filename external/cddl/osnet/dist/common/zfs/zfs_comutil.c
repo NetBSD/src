@@ -19,8 +19,8 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2010 Sun Microsystems, Inc.  All rights reserved.
- * Use is subject to license terms.
+ * Copyright (c) 2008, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012 by Delphix. All rights reserved.
  */
 
 /*
@@ -37,8 +37,8 @@
 
 #include <sys/types.h>
 #include <sys/fs/zfs.h>
-#include <sys/int_limits.h>
 #include <sys/nvpair.h>
+#include "zfs_comutil.h"
 
 /*
  * Are there allocatable vdevs?
@@ -103,3 +103,104 @@ zpool_get_rewind_policy(nvlist_t *nvl, zpool_rewind_policy_t *zrpp)
 	if (zrpp->zrp_request == 0)
 		zrpp->zrp_request = ZPOOL_NO_REWIND;
 }
+
+typedef struct zfs_version_spa_map {
+	int	version_zpl;
+	int	version_spa;
+} zfs_version_spa_map_t;
+
+/*
+ * Keep this table in monotonically increasing version number order.
+ */
+static zfs_version_spa_map_t zfs_version_table[] = {
+	{ZPL_VERSION_INITIAL, SPA_VERSION_INITIAL},
+	{ZPL_VERSION_DIRENT_TYPE, SPA_VERSION_INITIAL},
+	{ZPL_VERSION_FUID, SPA_VERSION_FUID},
+	{ZPL_VERSION_USERSPACE, SPA_VERSION_USERSPACE},
+	{ZPL_VERSION_SA, SPA_VERSION_SA},
+	{0, 0}
+};
+
+/*
+ * Return the max zpl version for a corresponding spa version
+ * -1 is returned if no mapping exists.
+ */
+int
+zfs_zpl_version_map(int spa_version)
+{
+	int i;
+	int version = -1;
+
+	for (i = 0; zfs_version_table[i].version_spa; i++) {
+		if (spa_version >= zfs_version_table[i].version_spa)
+			version = zfs_version_table[i].version_zpl;
+	}
+
+	return (version);
+}
+
+/*
+ * Return the min spa version for a corresponding spa version
+ * -1 is returned if no mapping exists.
+ */
+int
+zfs_spa_version_map(int zpl_version)
+{
+	int i;
+	int version = -1;
+
+	for (i = 0; zfs_version_table[i].version_zpl; i++) {
+		if (zfs_version_table[i].version_zpl >= zpl_version)
+			return (zfs_version_table[i].version_spa);
+	}
+
+	return (version);
+}
+
+/*
+ * This is the table of legacy internal event names; it should not be modified.
+ * The internal events are now stored in the history log as strings.
+ */
+const char *zfs_history_event_names[ZFS_NUM_LEGACY_HISTORY_EVENTS] = {
+	"invalid event",
+	"pool create",
+	"vdev add",
+	"pool remove",
+	"pool destroy",
+	"pool export",
+	"pool import",
+	"vdev attach",
+	"vdev replace",
+	"vdev detach",
+	"vdev online",
+	"vdev offline",
+	"vdev upgrade",
+	"pool clear",
+	"pool scrub",
+	"pool property set",
+	"create",
+	"clone",
+	"destroy",
+	"destroy_begin_sync",
+	"inherit",
+	"property set",
+	"quota set",
+	"permission update",
+	"permission remove",
+	"permission who remove",
+	"promote",
+	"receive",
+	"rename",
+	"reservation set",
+	"replay_inc_sync",
+	"replay_full_sync",
+	"rollback",
+	"snapshot",
+	"filesystem version upgrade",
+	"refquota set",
+	"refreservation set",
+	"pool scrub done",
+	"user hold",
+	"user release",
+	"pool split",
+};
