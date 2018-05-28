@@ -26,8 +26,6 @@
 
 #pragma ident	"%Z%%M%	%I%	%E% SMI"
 
-#include <sys/stropts.h>
-#include <sys/isa_defs.h>
 #include <sys/nvpair.h>
 #include <sys/sysmacros.h>
 #if defined(_KERNEL) && !defined(_BOOT)
