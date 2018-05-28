@@ -1,4 +1,4 @@
-/*	$NetBSD: pfkey_dump.c,v 1.23 2018/05/28 19:36:42 maxv Exp $	*/
+/*	$NetBSD: pfkey_dump.c,v 1.24 2018/05/28 20:45:38 maxv Exp $	*/
 
 /*	$KAME: pfkey_dump.c,v 1.45 2003/09/08 10:14:56 itojun Exp $	*/
 
@@ -105,12 +105,12 @@ do { \
 		printf("%u ", (num)); \
 } while (/*CONSTCOND*/0)
 
-static const char *str_ipaddr __P((struct sockaddr *));
-static const char *str_ipport __P((struct sockaddr *));
-static const char *str_prefport __P((u_int, u_int, u_int, u_int));
-static void str_upperspec __P((u_int, u_int, u_int));
-static char *str_time __P((time_t));
-static void str_lifetime_byte __P((struct sadb_lifetime *, const char *));
+static const char *str_ipaddr(struct sockaddr *);
+static const char *str_ipport(struct sockaddr *);
+static const char *str_prefport(u_int, u_int, u_int, u_int);
+static void str_upperspec(u_int, u_int, u_int);
+static char *str_time(time_t);
+static void str_lifetime_byte(struct sadb_lifetime *, const char *);
 static void pfkey_sadump1(struct sadb_msg *, int);
 static void pfkey_spdump1(struct sadb_msg *, int);
 
