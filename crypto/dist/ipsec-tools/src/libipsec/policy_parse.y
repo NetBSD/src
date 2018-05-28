@@ -1,4 +1,4 @@
-/*	$NetBSD: policy_parse.y,v 1.13 2018/05/28 19:36:42 maxv Exp $	*/
+/*	$NetBSD: policy_parse.y,v 1.14 2018/05/28 20:45:38 maxv Exp $	*/
 
 /*	$KAME: policy_parse.y,v 1.21 2003/12/12 08:01:26 itojun Exp $	*/
 
@@ -107,20 +107,20 @@ static struct sockaddr *p_src = NULL;
 static struct sockaddr *p_dst = NULL;
 
 struct _val;
-extern void yyerror __P((const char *msg));
-static struct sockaddr *parse_sockaddr __P((struct _val *addrbuf,
-    struct _val *portbuf));
-static int rule_check __P((void));
-static int init_x_policy __P((void));
-static int set_x_request __P((struct sockaddr *, struct sockaddr *));
-static int set_sockaddr __P((struct sockaddr *));
-static void policy_parse_request_init __P((void));
-static void *policy_parse __P((const char *, int));
+extern void yyerror(const char *msg);
+static struct sockaddr *parse_sockaddr(struct _val *addrbuf,
+    struct _val *portbuf);
+static int rule_check(void);
+static int init_x_policy(void);
+static int set_x_request(struct sockaddr *, struct sockaddr *);
+static int set_sockaddr(struct sockaddr *);
+static void policy_parse_request_init(void);
+static void *policy_parse(const char *, int);
 
-extern void __policy__strbuffer__init__ __P((const char *));
-extern void __policy__strbuffer__free__ __P((void));
-extern int yyparse __P((void));
-extern int yylex __P((void));
+extern void __policy__strbuffer__init__(const char *);
+extern void __policy__strbuffer__free__(void);
+extern int yyparse(void);
+extern int yylex(void);
 
 extern char *__libipsectext;	/*XXX*/
 
