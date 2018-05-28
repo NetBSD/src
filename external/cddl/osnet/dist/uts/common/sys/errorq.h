@@ -54,8 +54,8 @@ typedef void (*errorq_func_t)(void *, const void *, const errorq_elem_t *);
 
 #ifdef	_KERNEL
 
-/*extern errorq_t *errorq_create(const char *, errorq_func_t, void *,
-    ulong_t, size_t, uint_t, uint_t);*/
+extern errorq_t *errorq_create(const char *, errorq_func_t, void *,
+    ulong_t, size_t, uint_t, uint_t);
 
 extern errorq_t *errorq_nvcreate(const char *, errorq_func_t, void *,
     ulong_t, size_t, uint_t, uint_t);
@@ -68,7 +68,7 @@ extern void errorq_panic(void);
 extern errorq_elem_t *errorq_reserve(errorq_t *);
 extern void errorq_commit(errorq_t *, errorq_elem_t *, uint_t);
 extern void errorq_cancel(errorq_t *, errorq_elem_t *);
-/*extern nvlist_t *errorq_elem_nvl(errorq_t *, const errorq_elem_t *);*/
+extern nvlist_t *errorq_elem_nvl(errorq_t *, const errorq_elem_t *);
 extern nv_alloc_t *errorq_elem_nva(errorq_t *, const errorq_elem_t *);
 extern void *errorq_elem_dup(errorq_t *, const errorq_elem_t *,
     errorq_elem_t **);

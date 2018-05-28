@@ -20,14 +20,10 @@
  */
 
 /*
- * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
- * Use is subject to license terms.
+ * Copyright (c) 2000, 2010, Oracle and/or its affiliates. All rights reserved.
  */
 
-#include <sys/stropts.h>
 #include <sys/debug.h>
-#include <sys/isa_defs.h>
-#include <sys/int_limits.h>
 #include <sys/nvpair.h>
 #include <sys/nvpair_impl.h>
 #include <rpc/types.h>
@@ -35,7 +31,6 @@
 
 #if defined(_KERNEL) && !defined(_BOOT)
 #include <sys/varargs.h>
-#include <sys/ddi.h>
 #include <sys/sunddi.h>
 #else
 #include <stdarg.h>
@@ -48,6 +43,14 @@
 #define	offsetof(s, m)		((size_t)(&(((s *)0)->m)))
 #endif
 #define	skip_whitespace(p)	while ((*(p) == ' ') || (*(p) == '\t')) p++
+
+#if !defined(illumos) && !defined(_KERNEL)
+/*
+ * libnvpair is the lowest commen denominator for ZFS related libraries,
+ * defining aok here makes it usable by all ZFS related libraries
+ */
+int aok;
+#endif
 
 /*
  * nvpair.c - Provides kernel & userland interfaces for manipulating
@@ -535,8 +538,7 @@ nvpair_free(nvpair_t *nvp)
 		int i;
 
 		for (i = 0; i < NVP_NELEM(nvp); i++)
-			if (nvlp[i] != NULL)
-				nvlist_free(nvlp[i]);
+			nvlist_free(nvlp[i]);
 		break;
 	}
 	default:
@@ -1226,6 +1228,7 @@ nvpair_type_is_array(nvpair_t *nvp)
 	data_type_t type = NVP_TYPE(nvp);
 
 	if ((type == DATA_TYPE_BYTE_ARRAY) ||
+	    (type == DATA_TYPE_INT8_ARRAY) ||
 	    (type == DATA_TYPE_UINT8_ARRAY) ||
 	    (type == DATA_TYPE_INT16_ARRAY) ||
 	    (type == DATA_TYPE_UINT16_ARRAY) ||
@@ -1606,10 +1609,10 @@ nvlist_lookup_nvpair_ei_sep(nvlist_t *nvl, const char *name, const char sep,
 {
 	nvpair_t	*nvp;
 	const char	*np;
-	char		*sepp = NULL;
+	char		*sepp;
 	char		*idxp, *idxep;
 	nvlist_t	**nva;
-	long		idx = -1;
+	long		idx;
 	int		n;
 
 	if (ip)
@@ -1620,6 +1623,8 @@ nvlist_lookup_nvpair_ei_sep(nvlist_t *nvl, const char *name, const char sep,
 	if ((nvl == NULL) || (name == NULL))
 		return (EINVAL);
 
+	sepp = NULL;
+	idx = 0;
 	/* step through components of name */
 	for (np = name; np && *np; np = sepp) {
 		/* ensure unique names */

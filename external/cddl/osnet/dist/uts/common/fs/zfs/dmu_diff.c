@@ -41,13 +41,18 @@
 #include <sys/zfs_znode.h>
 
 struct diffarg {
+#ifdef __FreeBSD__
+	kthread_t *da_td;
 	struct file *da_fp;		/* file to which we are reporting */
+#else
+	struct vnode *da_vp;		/* file to which we are reporting */
+#endif
 	offset_t *da_offp;
 	int da_err;			/* error that stopped diff search */
 	dmu_diff_record_t da_ddr;
-	kthread_t *da_td;
 };
 
+#ifdef __FreeBSD__
 static int
 write_bytes(struct diffarg *da)
 {
@@ -59,9 +64,9 @@ write_bytes(struct diffarg *da)
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
 	auio.uio_resid = aiov.iov_len;
-	auio.uio_segflg = UIO_SYSSPACE;
 	auio.uio_rw = UIO_WRITE;
 	auio.uio_offset = (off_t)-1;
+	auio.uio_segflg = UIO_SYSSPACE;
 	auio.uio_td = da->da_td;
 #ifdef _KERNEL
 	if (da->da_fp->f_type == DTYPE_VNODE)
@@ -72,17 +77,25 @@ write_bytes(struct diffarg *da)
 	return (EOPNOTSUPP);
 #endif
 }
+#endif /* __FreeBSD__ */
 
 static int
 write_record(struct diffarg *da)
 {
+	ssize_t resid; /* have to get resid to get detailed errno */
 
 	if (da->da_ddr.ddr_type == DDR_NONE) {
 		da->da_err = 0;
 		return (0);
 	}
 
+#ifdef __FreeBSD__
 	da->da_err = write_bytes(da);
+#else
+	da->da_err = vn_rdwr(UIO_WRITE, da->da_vp, (caddr_t)&da->da_ddr,
+	    sizeof (da->da_ddr), 0, UIO_SYSSPACE, FAPPEND,
+	    RLIM64_INFINITY, CRED(), &resid);
+#endif
 	*da->da_offp += sizeof (da->da_ddr);
 	return (da->da_err);
 }
@@ -180,10 +193,10 @@ diff_cb(spa_t *spa, zilog_t *zilog, const blkptr_t *bp,
 
 int
 dmu_diff(const char *tosnap_name, const char *fromsnap_name,
-#ifdef illumos
-    struct vnode *vp, offset_t *offp)
-#else
+#ifdef __FreeBSD__
     struct file *fp, offset_t *offp)
+#else
+    struct vnode *vp, offset_t *offp)
 #endif
 {
 	struct diffarg da;
@@ -227,12 +240,16 @@ dmu_diff(const char *tosnap_name, const char *fromsnap_name,
 	dsl_dataset_long_hold(tosnap, FTAG);
 	dsl_pool_rele(dp, FTAG);
 
+#ifdef __FreeBSD__
+	da.da_td = curthread;
 	da.da_fp = fp;
+#else
+	da.da_vp = vp;
+#endif
 	da.da_offp = offp;
 	da.da_ddr.ddr_type = DDR_NONE;
 	da.da_ddr.ddr_first = da.da_ddr.ddr_last = 0;
 	da.da_err = 0;
-	da.da_td = curthread;
 
 	error = traverse_dataset(tosnap, fromtxg,
 	    TRAVERSE_PRE | TRAVERSE_PREFETCH_METADATA, diff_cb, &da);

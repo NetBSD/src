@@ -1,4 +1,4 @@
-/*	$NetBSD: zone.c,v 1.1 2009/08/07 20:57:56 haad Exp $	*/
+/*	$NetBSD: zone.c,v 1.2 2018/05/28 21:05:09 chs Exp $	*/
 
 /*-
  * Copyright (c) 2007 Pawel Jakub Dawidek <pjd@FreeBSD.org>
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/compat/opensolaris/misc/zone.c,v 1.1 2007/04/06 01:08:59 pjd Exp $
+ * $FreeBSD: head/cddl/compat/opensolaris/misc/zone.c 185029 2008-11-17 20:49:29Z pjd $
  */
 
 #include <stdlib.h>

@@ -26,8 +26,6 @@
 #ifndef _CTFTOOLS_H
 #define	_CTFTOOLS_H
 
-#pragma ident	"%Z%%M%	%I%	%E% SMI"
-
 /*
  * Functions and data structures used in the manipulation of stabs and CTF data
  */
@@ -38,6 +36,8 @@
 #include <libelf.h>
 #include <gelf.h>
 #include <pthread.h>
+
+#include <sys/ccompile.h>
 
 #ifdef __cplusplus
 extern "C" {
