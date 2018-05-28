@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.56 2018/05/27 08:08:24 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.57 2018/05/28 11:15:48 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.56 2018/05/27 08:08:24 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.57 2018/05/28 11:15:48 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1097,7 +1097,7 @@ ATF_TC_BODY(parent_attach_to_its_child, tc)
 		_exit(exitval_tracee);
 	}
 	PARENT_TO_CHILD("Message 1", parent_tracee, msg);
-	
+
 	DPRINTF("Before calling PT_ATTACH for tracee %d\n", tracee);
 	SYSCALL_REQUIRE(ptrace(PT_ATTACH, tracee, NULL, 0) != -1);
 
@@ -4224,7 +4224,7 @@ ATF_TC_BODY(signal6, tc)
 	DPRINTF("Before calling %s() for the forkee - expected exited\n",
 	    TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child2, &status, 0),
-	    child2);                                                                                                                                         
+	    child2);
 
 	validate_status_exited(status, exitval2);
 
@@ -4235,11 +4235,11 @@ ATF_TC_BODY(signal6, tc)
 
 	DPRINTF("Before calling %s() for the child - expected stopped "
 	    "SIGCHLD\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);                                                                               
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, SIGCHLD);
 
-	DPRINTF("Before resuming the child process where it left off and "                                                                                    
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
 	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
@@ -4250,7 +4250,7 @@ ATF_TC_BODY(signal6, tc)
 	validate_status_exited(status, exitval);
 
 	DPRINTF("Before calling %s() for the child - expected no process\n",
-	    TWAIT_FNAME);                                                                                                                                    
+	    TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 #endif
@@ -4355,7 +4355,7 @@ ATF_TC_BODY(signal7, tc)
 	DPRINTF("Before calling %s() for the forkee - expected exited\n",
 	    TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child2, &status, 0),
-	    child2);                                                                                                                                         
+	    child2);
 
 	validate_status_exited(status, exitval2);
 
@@ -4366,11 +4366,11 @@ ATF_TC_BODY(signal7, tc)
 
 	DPRINTF("Before calling %s() for the child - expected stopped "
 	    "SIGCHLD\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);                                                                               
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, SIGCHLD);
 
-	DPRINTF("Before resuming the child process where it left off and "                                                                                    
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
 	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
@@ -4381,7 +4381,7 @@ ATF_TC_BODY(signal7, tc)
 	validate_status_exited(status, exitval);
 
 	DPRINTF("Before calling %s() for the child - expected no process\n",
-	    TWAIT_FNAME);                                                                                                                                    
+	    TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 #endif
@@ -4471,11 +4471,11 @@ ATF_TC_BODY(signal8, tc)
 
 	DPRINTF("Before calling %s() for the child - expected stopped "
 	    "SIGCHLD\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);                                                                               
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, SIGCHLD);
 
-	DPRINTF("Before resuming the child process where it left off and "                                                                                    
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
 	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
@@ -4486,7 +4486,7 @@ ATF_TC_BODY(signal8, tc)
 	validate_status_exited(status, exitval);
 
 	DPRINTF("Before calling %s() for the child - expected no process\n",
-	    TWAIT_FNAME);                                                                                                                                    
+	    TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
