@@ -1,4 +1,4 @@
-/*	$NetBSD: token.l,v 1.20 2017/07/05 01:22:40 ozaki-r Exp $	*/
+/*	$NetBSD: token.l,v 1.21 2018/05/28 19:52:18 maxv Exp $	*/
 
 /*	$KAME: token.l,v 1.44 2003/10/21 07:20:58 itojun Exp $	*/
 
@@ -326,23 +326,20 @@ any		{ return(ANY); }
 %%
 
 void
-yyfatal(s)
-	const char *s;
+yyfatal(const char *s)
 {
 	yyerror(s);
 	exit(1);
 }
 
 void
-yyerror(s)
-	const char *s;
+yyerror(const char *s)
 {
 	printf("line %d: %s at [%s]\n", lineno, s, yytext);
 }
 
 int
-parse(fp)
-	FILE **fp;
+parse(FILE **fp)
 {
 	yyin = *fp;
 
