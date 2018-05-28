@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1175 2018/05/23 01:05:47 christos Exp $
+# $NetBSD: mi,v 1.1176 2018/05/28 13:22:34 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -4784,6 +4784,7 @@
 ./usr/share/mk/bsd.files.mk			base-mk-share		share
 ./usr/share/mk/bsd.gcc.mk			base-mk-share		share
 ./usr/share/mk/bsd.host.mk			base-mk-share		share
+./usr/share/mk/bsd.hostinit.mk			base-mk-share		share
 ./usr/share/mk/bsd.hostlib.mk			base-mk-share		share
 ./usr/share/mk/bsd.hostprog.mk			base-mk-share		share
 ./usr/share/mk/bsd.inc.mk			base-mk-share		share
