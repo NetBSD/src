@@ -42,7 +42,11 @@
 
 #if defined(_KERNEL)
 #include <sys/systm.h>
+#ifdef __FreeBSD__
 #include <sys/libkern.h>
+#else
+#include <util/qsort.h>
+#endif
 #else
 #include <stdlib.h>
 #include <string.h>

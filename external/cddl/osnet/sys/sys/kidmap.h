@@ -1,4 +1,4 @@
-/*	$NetBSD: kidmap.h,v 1.3 2010/02/21 01:46:36 darran Exp $	*/
+/*	$NetBSD: kidmap.h,v 1.4 2018/05/28 21:05:10 chs Exp $	*/
 
 /*-
  * Copyright (c) 2007 Pawel Jakub Dawidek <pjd@FreeBSD.org>
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD$
+ * $FreeBSD: head/sys/cddl/compat/opensolaris/sys/kidmap.h 185029 2008-11-17 20:49:29Z pjd $
  */
 
 #ifndef _OPENSOLARIS_SYS_KIDMAP_H_

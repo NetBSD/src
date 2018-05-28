@@ -1,4 +1,4 @@
-/*	$NetBSD: opensolaris.c,v 1.1 2010/03/12 21:37:37 darran Exp $	*/
+/*	$NetBSD: opensolaris.c,v 1.2 2018/05/28 21:05:09 chs Exp $	*/
 /*-
  * Copyright 2007 John Birrell <jb@FreeBSD.org>
  *
@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/cddl/compat/opensolaris/kern/opensolaris.c,v 1.4.2.2 2009/08/13 13:56:05 trasz Exp $
+ * $FreeBSD: head/sys/cddl/compat/opensolaris/kern/opensolaris.c 222670 2011-06-04 07:02:06Z avg $
  *
  */
 

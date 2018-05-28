@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/compat/opensolaris/machine/endian.h,v 1.1 2007/04/06 01:09:06 pjd Exp $
+ * $FreeBSD: head/sys/cddl/compat/opensolaris/machine/endian.h 177698 2008-03-28 22:16:18Z jb $
  */
 
 #ifndef	_OPENSOLARIS_MACHINE_ENDIAN_H_

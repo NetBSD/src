@@ -208,7 +208,7 @@ dt_handle_err(dtrace_hdl_t *dtp, dtrace_probedata_t *data)
 	case DTRACEFLT_BADALIGN:
 	case DTRACEFLT_BADSTACK:
 		(void) sprintf(details, " (0x%llx)",
-		    (unsigned long long)err.dteda_addr);
+		    (u_longlong_t)err.dteda_addr);
 		break;
 
 	default:
@@ -335,7 +335,7 @@ dt_handle_cpudrop(dtrace_hdl_t *dtp, processorid_t cpu,
 	}
 
 	(void) snprintf(s, size, "%llu %sdrop%s on CPU %d\n",
-	    (unsigned long long)howmany,
+	    (u_longlong_t)howmany,
 	    what == DTRACEDROP_PRINCIPAL ? "" : "aggregation ",
 	    howmany > 1 ? "s" : "", (int)cpu);
 
@@ -429,7 +429,7 @@ dt_handle_status(dtrace_hdl_t *dtp, dtrace_status_t *old, dtrace_status_t *new)
 		}
 
 		(void) snprintf(s, size, "%llu %s%s%s\n",
-		    (unsigned long long)(nval - oval),
+		    (u_longlong_t)(nval - oval),
 		    _dt_droptab[i].dtdrt_str, (nval - oval > 1) ? "s" : "",
 		    _dt_droptab[i].dtdrt_msg != NULL ?
 		    _dt_droptab[i].dtdrt_msg : "");

@@ -5,8 +5,8 @@
 #define	FMNAMESZ	8
 
 #if defined(__APPLE__) || defined(HAVE_NBTOOL_CONFIG_H)
-typedef int64_t longlong_t;
-typedef uint64_t u_longlong_t;
+typedef long long longlong_t;
+typedef unsigned long long u_longlong_t;
 typedef unsigned long vsize_t;
 #endif
 
@@ -14,6 +14,7 @@ typedef unsigned int	size32_t;
 typedef unsigned int	caddr32_t;
 
 typedef	struct timespec	timestruc_t;
+typedef	struct timespec	timespec_t;
 typedef unsigned int	uint_t;
 typedef unsigned char	uchar_t;
 typedef unsigned short	ushort_t;
