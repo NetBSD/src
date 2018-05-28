@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1336 2018/05/26 13:25:19 jakllsch Exp $
+$NetBSD: pcidevs,v 1.1337 2018/05/28 02:27:32 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -4038,8 +4038,12 @@ product INTEL 82965GME_HB	0x2a10	82965GME Host Bridge
 product INTEL 82965GME_IGD	0x2a12	82965GME Integrated Graphics Device
 product INTEL 82965GME_KT	0x2a17	82965GME KT
 product INTEL 82GM45_HB		0x2a40	82GM45 Host Bridge
+product INTEL 82GM45_PCIE	0x2a41	82GM45 PCIe
 product INTEL 82GM45_IGD	0x2a42	82GM45 Integrated Graphics Device
 product INTEL 82GM45_IGD_1	0x2a43	82GM45 Integrated Graphics Device
+product INTEL 82GM45_MEI_1	0x2a44	82GM45 MEI
+product INTEL 82GM45_MEI_2	0x2a45	82GM45 MEI
+product INTEL 82GM45_IDER	0x2a46	82GM45 IDER
 product INTEL 82GM45_KT		0x2a47	82GM45 KT
 product INTEL XE55_QP_SAD	0x2c01	QuickPath System Address Decoder
 product INTEL XE55_QPI_LINK0	0x2c10	Xeon 5500 QPI Link 0
@@ -4111,7 +4115,11 @@ product INTEL XE56_IMC_CH2_ADDR 0x2db1	Xeon 5600 IMC Channel 2 Address
 product INTEL XE56_IMC_CH2_RANK 0x2db2	Xeon 5600 IMC Channel 2 Rank
 product INTEL XE56_IMC_CH2_THERM 0x2db3	Xeon 5600 IMC Channel 2 Thermal Control
 product INTEL 82IGD_E_HB	0x2e00	82IGD_E Host Bridge
+product INTEL 82Q45_PCIE	0x2e01	82IGD_E PCIe
 product INTEL 82IGD_E_IGD	0x2e02	82IGD_E Integrated Graphics
+product INTEL 82Q45_HECI_1	0x2e04	82Q45 ME HECI
+product INTEL 82Q45_HECI_2	0x2e05	82Q45 ME HECI
+product INTEL 82Q45_IDER_2	0x2e06	82Q45 ME IDER
 product INTEL 82Q45_KT		0x2e07	82Q45 KT
 product INTEL 82Q45_HB		0x2e10	82Q45 Host Bridge
 product INTEL 82Q45_EXP		0x2e11	82Q45 PCI Express Bridge
