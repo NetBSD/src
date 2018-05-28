@@ -1,4 +1,4 @@
-/*	$NetBSD: policy_parse.y,v 1.11 2009/02/16 18:36:21 tteras Exp $	*/
+/*	$NetBSD: policy_parse.y,v 1.12 2018/05/28 19:22:40 maxv Exp $	*/
 
 /*	$KAME: policy_parse.y,v 1.21 2003/12/12 08:01:26 itojun Exp $	*/
 
@@ -362,8 +362,7 @@ addresses
 %%
 
 void
-yyerror(msg)
-	char *msg;
+yyerror(char *msg)
 {
 	fprintf(stderr, "libipsec: %s while parsing \"%s\"\n",
 		msg, __libipsectext);
@@ -372,9 +371,7 @@ yyerror(msg)
 }
 
 static struct sockaddr *
-parse_sockaddr(addrbuf, portbuf)
-	struct _val *addrbuf;
-	struct _val *portbuf;
+parse_sockaddr(struct _val *addrbuf, struct _val *portbuf)
 {
 	struct addrinfo hints, *res;
 	char *addr;
@@ -438,7 +435,7 @@ parse_sockaddr(addrbuf, portbuf)
 }
 
 static int
-rule_check()
+rule_check(void)
 {
 	if (p_type == IPSEC_POLICY_IPSEC) {
 		if (p_protocol == IPPROTO_IP) {
@@ -469,7 +466,7 @@ rule_check()
 }
 
 static int
-init_x_policy()
+init_x_policy(void)
 {
 	struct sadb_x_policy *p;
 
@@ -510,8 +507,7 @@ init_x_policy()
 }
 
 static int
-set_x_request(src, dst)
-	struct sockaddr *src, *dst;
+set_x_request(struct sockaddr *src, struct sockaddr *dst)
 {
 	struct sadb_x_ipsecrequest *p;
 	int reqlen;
@@ -545,8 +541,7 @@ set_x_request(src, dst)
 }
 
 static int
-set_sockaddr(addr)
-	struct sockaddr *addr;
+set_sockaddr(struct sockaddr *addr)
 {
 	if (addr == NULL) {
 		__ipsec_errcode = EIPSEC_NO_ERROR;
@@ -564,7 +559,7 @@ set_sockaddr(addr)
 }
 
 static void
-policy_parse_request_init()
+policy_parse_request_init(void)
 {
 	p_protocol = IPPROTO_IP;
 	p_mode = IPSEC_MODE_ANY;
@@ -583,9 +578,7 @@ policy_parse_request_init()
 }
 
 static void *
-policy_parse(msg, msglen)
-	const char *msg;
-	int msglen;
+policy_parse(const char *msg, int msglen)
 {
 	int error;
 
@@ -616,9 +609,7 @@ policy_parse(msg, msglen)
 }
 
 ipsec_policy_t
-ipsec_set_policy(msg, msglen)
-	__ipsec_const char *msg;
-	int msglen;
+ipsec_set_policy(__ipsec_const char *msg, int msglen)
 {
 	caddr_t policy;
 
