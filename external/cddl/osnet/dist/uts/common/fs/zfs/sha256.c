@@ -27,12 +27,16 @@
  */
 #include <sys/zfs_context.h>
 #include <sys/zio.h>
+#ifdef __FreeBSD__
 #ifdef _KERNEL
 #include <crypto/sha2/sha256.h>
 #include <crypto/sha2/sha512t.h>
 #else
 #include <sha256.h>
 #include <sha512t.h>
+#endif
+#else
+#include <sys/sha2.h>
 #endif
 
 /*ARGSUSED*/
@@ -60,6 +64,7 @@ zio_checksum_SHA256(const void *buf, uint64_t size,
 	zcp->zc_word[3] = BE_64(tmp.zc_word[3]);
 }
 
+#ifndef __NetBSD__
 /*ARGSUSED*/
 void
 zio_checksum_SHA512_native(const void *buf, uint64_t size,
@@ -85,3 +90,4 @@ zio_checksum_SHA512_byteswap(const void *buf, uint64_t size,
 	zcp->zc_word[2] = BSWAP_64(tmp.zc_word[2]);
 	zcp->zc_word[3] = BSWAP_64(tmp.zc_word[3]);
 }
+#endif

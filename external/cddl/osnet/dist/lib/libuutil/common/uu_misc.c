@@ -20,13 +20,12 @@
  */
 
 /*
- * Copyright 2007 Sun Microsystems, Inc.  All rights reserved.
- * Use is subject to license terms.
+ * Copyright (c) 2004, 2010, Oracle and/or its affiliates. All rights reserved.
  */
 
-#pragma ident	"%Z%%M%	%I%	%E% SMI"
-
 #include "libuutil_common.h"
+
+#define HAVE_ASSFAIL	1
 
 #include <assert.h>
 #include <errno.h>
@@ -39,6 +38,7 @@
 #include <sys/debug.h>
 #include <thread.h>
 #include <unistd.h>
+#include <ctype.h>
 
 #if !defined(TEXT_DOMAIN)
 #define	TEXT_DOMAIN "SYS_TEST"
@@ -74,10 +74,7 @@ static uint32_t		_uu_main_error;
 void
 uu_set_error(uint_t code)
 {
-	if (thr_main() != 0) {
-		_uu_main_error = code;
-		return;
-	}
+
 #if defined(PTHREAD_ONCE_KEY_NP)
 	if (pthread_key_create_once_np(&uu_error_key, NULL) != 0)
 		uu_error_key_setup = -1;
@@ -103,8 +100,6 @@ uu_set_error(uint_t code)
 uint32_t
 uu_error(void)
 {
-	if (thr_main() != 0)
-		return (_uu_main_error);
 
 	if (uu_error_key_setup < 0)	/* can't happen? */
 		return (UU_ERROR_UNKNOWN);
@@ -253,4 +248,31 @@ static void
 uu_init(void)
 {
 	(void) pthread_atfork(uu_lockup, uu_release, uu_release_child);
+}
+
+/*
+ * Dump a block of memory in hex+ascii, for debugging
+ */
+void
+uu_dump(FILE *out, const char *prefix, const void *buf, size_t len)
+{
+	const unsigned char *p = buf;
+	int i;
+
+	for (i = 0; i < len; i += 16) {
+		int j;
+
+		(void) fprintf(out, "%s", prefix);
+		for (j = 0; j < 16 && i + j < len; j++) {
+			(void) fprintf(out, "%2.2x ", p[i + j]);
+		}
+		for (; j < 16; j++) {
+			(void) fprintf(out, "   ");
+		}
+		for (j = 0; j < 16 && i + j < len; j++) {
+			(void) fprintf(out, "%c",
+			    isprint(p[i + j]) ? p[i + j] : '.');
+		}
+		(void) fprintf(out, "\n");
+	}
 }

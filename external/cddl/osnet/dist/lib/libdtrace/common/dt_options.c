@@ -751,7 +751,7 @@ dt_opt_rate(dtrace_hdl_t *dtp, const char *arg, uintptr_t option)
 			}
 		}
 
-		if ((suffix[i].name == NULL && *end != '\0') || val < 0)
+		if (suffix[i].name == NULL && *end != '\0' || val < 0)
 			return (dt_set_errno(dtp, EDT_BADOPTVAL));
 
 		if (mul == 0) {
