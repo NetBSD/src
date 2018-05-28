@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.102 2017/01/04 10:06:43 hannken Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.103 2018/05/28 21:04:35 chs Exp $	*/
 
 /*
  * Copyright (c) 2005-2013 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.102 2017/01/04 10:06:43 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.103 2018/05/28 21:04:35 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/cprng.h>
@@ -275,7 +275,7 @@ tmpfs_newvnode(struct mount *mp, struct vnode *dvp, struct vnode *vp,
 	case VREG:
 		/* Regular file.  Create an underlying UVM object. */
 		node->tn_spec.tn_reg.tn_aobj =
-		    uao_create(INT32_MAX - PAGE_SIZE, 0);
+		    uao_create(INT64_MAX - PAGE_SIZE, 0);
 		node->tn_spec.tn_reg.tn_aobj_pages = 0;
 		break;
 	default:
