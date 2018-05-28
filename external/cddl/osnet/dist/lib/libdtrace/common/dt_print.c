@@ -190,7 +190,7 @@ print_bitfield(dt_printarg_t *pap, ulong_t off, ctf_encoding_t *ep)
 		value >>= shift;
 	value &= mask;
 
-	(void) fprintf(fp, "%#llx", (unsigned long long)value);
+	(void) fprintf(fp, "%#llx", (u_longlong_t)value);
 }
 
 /*
@@ -263,7 +263,7 @@ dt_print_int(ctf_id_t base, ulong_t off, dt_printarg_t *pap)
 	 */
 	if (CTF_IS_CHAR(e)) {
 		char c = *(char *)addr;
-		if (isprint((unsigned char)c))
+		if (isprint(c))
 			(void) fprintf(fp, "'%c'", c);
 		else if (c == 0)
 			(void) fprintf(fp, "'\\0'");
@@ -395,7 +395,7 @@ dt_print_array(ctf_id_t base, ulong_t off, dt_printarg_t *pap)
 		char c;
 		for (i = 0; i < car.ctr_nelems; i++) {
 			c = *((char *)addr + eltsize * i);
-			if (!isprint((unsigned char)c) || c == '\0')
+			if (!isprint(c) || c == '\0')
 				break;
 		}
 

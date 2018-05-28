@@ -19,14 +19,17 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
- * Use is subject to license terms.
+ * Copyright (c) 2005, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015 by Delphix. All rights reserved.
+ * Copyright 2014 HybridCluster. All rights reserved.
  */
 
 #include <sys/dmu.h>
 #include <sys/dmu_objset.h>
 #include <sys/dmu_tx.h>
 #include <sys/dnode.h>
+#include <sys/zap.h>
+#include <sys/zfeature.h>
 
 uint64_t
 dmu_object_alloc(objset_t *os, dmu_object_type_t ot, int blocksize,
@@ -34,7 +37,7 @@ dmu_object_alloc(objset_t *os, dmu_object_type_t ot, int blocksize,
 {
 	uint64_t object;
 	uint64_t L2_dnode_count = DNODES_PER_BLOCK <<
-	    (os->os_meta_dnode->dn_indblkshift - SPA_BLKPTRSHIFT);
+	    (DMU_META_DNODE(os)->dn_indblkshift - SPA_BLKPTRSHIFT);
 	dnode_t *dn = NULL;
 	int restarted = B_FALSE;
 
@@ -47,10 +50,16 @@ dmu_object_alloc(objset_t *os, dmu_object_type_t ot, int blocksize,
 		 * reasonably sparse (at most 1/4 full).  Look from the
 		 * beginning once, but after that keep looking from here.
 		 * If we can't find one, just keep going from here.
+		 *
+		 * Note that dmu_traverse depends on the behavior that we use
+		 * multiple blocks of the dnode object before going back to
+		 * reuse objects.  Any change to this algorithm should preserve
+		 * that property or find another solution to the issues
+		 * described in traverse_visitbp.
 		 */
 		if (P2PHASE(object, L2_dnode_count) == 0) {
 			uint64_t offset = restarted ? object << DNODE_SHIFT : 0;
-			int error = dnode_next_offset(os->os_meta_dnode,
+			int error = dnode_next_offset(DMU_META_DNODE(os),
 			    DNODE_FIND_HOLE,
 			    &offset, 2, DNODES_PER_BLOCK >> 2, 0);
 			restarted = B_TRUE;
@@ -91,7 +100,7 @@ dmu_object_claim(objset_t *os, uint64_t object, dmu_object_type_t ot,
 	int err;
 
 	if (object == DMU_META_DNODE_OBJECT && !dmu_tx_private_ok(tx))
-		return (EBADF);
+		return (SET_ERROR(EBADF));
 
 	err = dnode_hold_impl(os, object, DNODE_MUST_BE_FREE, FTAG, &dn);
 	if (err)
@@ -105,55 +114,22 @@ dmu_object_claim(objset_t *os, uint64_t object, dmu_object_type_t ot,
 
 int
 dmu_object_reclaim(objset_t *os, uint64_t object, dmu_object_type_t ot,
-    int blocksize, dmu_object_type_t bonustype, int bonuslen)
+    int blocksize, dmu_object_type_t bonustype, int bonuslen, dmu_tx_t *tx)
 {
 	dnode_t *dn;
-	dmu_tx_t *tx;
-	int nblkptr;
 	int err;
 
 	if (object == DMU_META_DNODE_OBJECT)
-		return (EBADF);
+		return (SET_ERROR(EBADF));
 
 	err = dnode_hold_impl(os, object, DNODE_MUST_BE_ALLOCATED,
 	    FTAG, &dn);
 	if (err)
 		return (err);
 
-	if (dn->dn_type == ot && dn->dn_datablksz == blocksize &&
-	    dn->dn_bonustype == bonustype && dn->dn_bonuslen == bonuslen) {
-		/* nothing is changing, this is a noop */
-		dnode_rele(dn, FTAG);
-		return (0);
-	}
-
-	nblkptr = 1 + ((DN_MAX_BONUSLEN - bonuslen) >> SPA_BLKPTRSHIFT);
-
-	/*
-	 * If we are losing blkptrs or changing the block size this must
-	 * be a new file instance.   We must clear out the previous file
-	 * contents before we can change this type of metadata in the dnode.
-	 */
-	if (dn->dn_nblkptr > nblkptr || dn->dn_datablksz != blocksize) {
-		err = dmu_free_long_range(os, object, 0, DMU_OBJECT_END);
-		if (err)
-			goto out;
-	}
-
-	tx = dmu_tx_create(os);
-	dmu_tx_hold_bonus(tx, object);
-	err = dmu_tx_assign(tx, TXG_WAIT);
-	if (err) {
-		dmu_tx_abort(tx);
-		goto out;
-	}
-
 	dnode_reallocate(dn, ot, blocksize, bonustype, bonuslen, tx);
 
-	dmu_tx_commit(tx);
-out:
 	dnode_rele(dn, FTAG);
-
 	return (err);
 }
 
@@ -178,16 +154,72 @@ dmu_object_free(objset_t *os, uint64_t object, dmu_tx_t *tx)
 	return (0);
 }
 
+/*
+ * Return (in *objectp) the next object which is allocated (or a hole)
+ * after *object, taking into account only objects that may have been modified
+ * after the specified txg.
+ */
 int
 dmu_object_next(objset_t *os, uint64_t *objectp, boolean_t hole, uint64_t txg)
 {
 	uint64_t offset = (*objectp + 1) << DNODE_SHIFT;
 	int error;
 
-	error = dnode_next_offset(os->os_meta_dnode,
+	error = dnode_next_offset(DMU_META_DNODE(os),
 	    (hole ? DNODE_FIND_HOLE : 0), &offset, 0, DNODES_PER_BLOCK, txg);
 
 	*objectp = offset >> DNODE_SHIFT;
 
 	return (error);
+}
+
+/*
+ * Turn this object from old_type into DMU_OTN_ZAP_METADATA, and bump the
+ * refcount on SPA_FEATURE_EXTENSIBLE_DATASET.
+ *
+ * Only for use from syncing context, on MOS objects.
+ */
+void
+dmu_object_zapify(objset_t *mos, uint64_t object, dmu_object_type_t old_type,
+    dmu_tx_t *tx)
+{
+	dnode_t *dn;
+
+	ASSERT(dmu_tx_is_syncing(tx));
+
+	VERIFY0(dnode_hold(mos, object, FTAG, &dn));
+	if (dn->dn_type == DMU_OTN_ZAP_METADATA) {
+		dnode_rele(dn, FTAG);
+		return;
+	}
+	ASSERT3U(dn->dn_type, ==, old_type);
+	ASSERT0(dn->dn_maxblkid);
+	dn->dn_next_type[tx->tx_txg & TXG_MASK] = dn->dn_type =
+	    DMU_OTN_ZAP_METADATA;
+	dnode_setdirty(dn, tx);
+	dnode_rele(dn, FTAG);
+
+	mzap_create_impl(mos, object, 0, 0, tx);
+
+	spa_feature_incr(dmu_objset_spa(mos),
+	    SPA_FEATURE_EXTENSIBLE_DATASET, tx);
+}
+
+void
+dmu_object_free_zapified(objset_t *mos, uint64_t object, dmu_tx_t *tx)
+{
+	dnode_t *dn;
+	dmu_object_type_t t;
+
+	ASSERT(dmu_tx_is_syncing(tx));
+
+	VERIFY0(dnode_hold(mos, object, FTAG, &dn));
+	t = dn->dn_type;
+	dnode_rele(dn, FTAG);
+
+	if (t == DMU_OTN_ZAP_METADATA) {
+		spa_feature_decr(dmu_objset_spa(mos),
+		    SPA_FEATURE_EXTENSIBLE_DATASET, tx);
+	}
+	VERIFY0(dmu_object_free(mos, object, tx));
 }

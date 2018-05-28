@@ -29,7 +29,6 @@
 #include <sys/systm.h>
 #include <sys/cmn_err.h>
 #include <sys/kobj.h>
-#include <sys/kobj_impl.h>
 
 struct zchdr {
 	uint_t zch_magic;
