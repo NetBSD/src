@@ -19,8 +19,8 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
- * Use is subject to license terms.
+ * Copyright (c) 2005, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015 by Delphix. All rights reserved.
  */
 
 #include <sys/types.h>
@@ -29,7 +29,6 @@
 #include <sys/sysmacros.h>
 #include <sys/cmn_err.h>
 #include <sys/kmem.h>
-#include <sys/thread.h>
 #include <sys/file.h>
 #include <sys/fcntl.h>
 #include <sys/vfs.h>
@@ -42,10 +41,10 @@
 #include <sys/zil.h>
 #include <sys/byteorder.h>
 #include <sys/stat.h>
-#include <sys/mode.h>
 #include <sys/acl.h>
 #include <sys/atomic.h>
 #include <sys/cred.h>
+#include <sys/namei.h>
 
 /*
  * Functions to replay ZFS intent log (ZIL) records
@@ -55,14 +54,18 @@
 
 static void
 zfs_init_vattr(vattr_t *vap, uint64_t mask, uint64_t mode,
-	uint64_t uid, uint64_t gid, uint64_t rdev, uint64_t nodeid)
+    uint64_t uid, uint64_t gid, uint64_t rdev, uint64_t nodeid)
 {
-	bzero(vap, sizeof (*vap));
+	VATTR_NULL(vap);
 	vap->va_mask = (uint_t)mask;
-	vap->va_type = IFTOVT(mode);
-	vap->va_mode = mode & MODEMASK;
-	vap->va_uid = (uid_t)(IS_EPHEMERAL(uid)) ? -1 : uid;
-	vap->va_gid = (gid_t)(IS_EPHEMERAL(gid)) ? -1 : gid;
+	if (mask & AT_TYPE)
+		vap->va_type = IFTOVT(mode);
+	if (mask & AT_MODE)
+		vap->va_mode = mode & MODEMASK;
+	if (mask & AT_UID)
+		vap->va_uid = (uid_t)(IS_EPHEMERAL(uid)) ? -1 : uid;
+	if (mask & AT_GID)
+		vap->va_gid = (gid_t)(IS_EPHEMERAL(gid)) ? -1 : gid;
 	vap->va_rdev = zfs_cmpldev(rdev);
 	vap->va_nodeid = nodeid;
 }
@@ -71,7 +74,7 @@ zfs_init_vattr(vattr_t *vap, uint64_t mask, uint64_t mode,
 static int
 zfs_replay_error(zfsvfs_t *zfsvfs, lr_t *lr, boolean_t byteswap)
 {
-	return (ENOTSUP);
+	return (SET_ERROR(ENOTSUP));
 }
 
 static void
@@ -129,6 +132,10 @@ zfs_replay_xvattr(lr_attr_t *lrattr, xvattr_t *xvap)
 		bcopy(scanstamp, xoap->xoa_av_scanstamp, AV_SCANSTAMP_SZ);
 	if (XVA_ISSET_REQ(xvap, XAT_REPARSE))
 		xoap->xoa_reparse = ((*attrs & XAT0_REPARSE) != 0);
+	if (XVA_ISSET_REQ(xvap, XAT_OFFLINE))
+		xoap->xoa_offline = ((*attrs & XAT0_OFFLINE) != 0);
+	if (XVA_ISSET_REQ(xvap, XAT_SPARSE))
+		xoap->xoa_sparse = ((*attrs & XAT0_SPARSE) != 0);
 }
 
 static int
@@ -348,8 +355,12 @@ zfs_replay_create_acl(zfsvfs_t *zfsvfs,
 			    lr->lr_uid, lr->lr_gid);
 		}
 
+#ifdef TODO
 		error = VOP_CREATE(ZTOV(dzp), name, &xva.xva_vattr,
 		    0, 0, &vp, kcred, vflg, NULL, &vsec);
+#else
+		panic("%s:%u: unsupported condition", __func__, __LINE__);
+#endif
 		break;
 	case TX_MKDIR_ACL:
 		aclstart = (caddr_t)(lracl + 1);
@@ -378,11 +389,15 @@ zfs_replay_create_acl(zfsvfs_t *zfsvfs,
 			    (void *)&name, lracl->lr_fuidcnt, lracl->lr_domcnt,
 			    lr->lr_uid, lr->lr_gid);
 		}
+#ifdef TODO
 		error = VOP_MKDIR(ZTOV(dzp), name, &xva.xva_vattr,
 		    &vp, kcred, NULL, vflg, &vsec);
+#else
+		panic("%s:%u: unsupported condition", __func__, __LINE__);
+#endif
 		break;
 	default:
-		error = ENOTSUP;
+		error = SET_ERROR(ENOTSUP);
 	}
 
 bail:
@@ -412,6 +427,7 @@ zfs_replay_create(zfsvfs_t *zfsvfs, lr_create_t *lr, boolean_t byteswap)
 	void *start;
 	size_t xvatlen;
 	uint64_t txtype;
+	struct componentname cn;
 	int error;
 
 	txtype = (lr->lr_common.lrc_txtype & ~TX_CI);
@@ -461,6 +477,11 @@ zfs_replay_create(zfsvfs_t *zfsvfs, lr_create_t *lr, boolean_t byteswap)
 		    lr->lr_uid, lr->lr_gid);
 	}
 
+	cn.cn_cred = kcred;
+	cn.cn_thread = curthread;
+	cn.cn_flags = SAVENAME;
+
+	vn_lock(ZTOV(dzp), LK_EXCLUSIVE | LK_RETRY);
 	switch (txtype) {
 	case TX_CREATE_ATTR:
 		lrattr = (lr_attr_t *)(caddr_t)(lr + 1);
@@ -477,8 +498,8 @@ zfs_replay_create(zfsvfs_t *zfsvfs, lr_create_t *lr, boolean_t byteswap)
 		if (name == NULL)
 			name = (char *)start;
 
-		error = VOP_CREATE(ZTOV(dzp), name, &xva.xva_vattr,
-		    0, 0, &vp, kcred, vflg, NULL, NULL);
+		cn.cn_nameptr = name;
+		error = VOP_CREATE(ZTOV(dzp), &vp, &cn, &xva.xva_vattr /*,vflg*/);
 		break;
 	case TX_MKDIR_ATTR:
 		lrattr = (lr_attr_t *)(caddr_t)(lr + 1);
@@ -495,8 +516,8 @@ zfs_replay_create(zfsvfs_t *zfsvfs, lr_create_t *lr, boolean_t byteswap)
 		if (name == NULL)
 			name = (char *)(lr + 1);
 
-		error = VOP_MKDIR(ZTOV(dzp), name, &xva.xva_vattr,
-		    &vp, kcred, NULL, vflg, NULL);
+		cn.cn_nameptr = name;
+		error = VOP_MKDIR(ZTOV(dzp), &vp, &cn, &xva.xva_vattr /*,vflg*/);
 		break;
 	case TX_MKXATTR:
 		error = zfs_make_xattrdir(dzp, &xva.xva_vattr, &vp, kcred);
@@ -504,16 +525,17 @@ zfs_replay_create(zfsvfs_t *zfsvfs, lr_create_t *lr, boolean_t byteswap)
 	case TX_SYMLINK:
 		name = (char *)(lr + 1);
 		link = name + strlen(name) + 1;
-		error = VOP_SYMLINK(ZTOV(dzp), name, &xva.xva_vattr,
-		    link, kcred, NULL, vflg);
+		cn.cn_nameptr = name;
+		error = VOP_SYMLINK(ZTOV(dzp), &vp, &cn, &xva.xva_vattr, link /*,vflg*/);
 		break;
 	default:
-		error = ENOTSUP;
+		error = SET_ERROR(ENOTSUP);
 	}
+	VOP_UNLOCK(ZTOV(dzp), 0);
 
 out:
 	if (error == 0 && vp != NULL)
-		VN_RELE(vp);
+		VN_URELE(vp);
 
 	VN_RELE(ZTOV(dzp));
 
@@ -528,6 +550,8 @@ zfs_replay_remove(zfsvfs_t *zfsvfs, lr_remove_t *lr, boolean_t byteswap)
 {
 	char *name = (char *)(lr + 1);	/* name follows lr_remove_t */
 	znode_t *dzp;
+	struct componentname cn;
+	vnode_t *vp;
 	int error;
 	int vflg = 0;
 
@@ -539,18 +563,34 @@ zfs_replay_remove(zfsvfs_t *zfsvfs, lr_remove_t *lr, boolean_t byteswap)
 
 	if (lr->lr_common.lrc_txtype & TX_CI)
 		vflg |= FIGNORECASE;
+	cn.cn_nameptr = name;
+	cn.cn_namelen = strlen(name);
+	cn.cn_nameiop = DELETE;
+	cn.cn_flags = ISLASTCN | SAVENAME;
+	cn.cn_lkflags = LK_EXCLUSIVE | LK_RETRY;
+	cn.cn_cred = kcred;
+	cn.cn_thread = curthread;
+	vn_lock(ZTOV(dzp), LK_EXCLUSIVE | LK_RETRY);
+	error = VOP_LOOKUP(ZTOV(dzp), &vp, &cn);
+	if (error != 0) {
+		VOP_UNLOCK(ZTOV(dzp), 0);
+		goto fail;
+	}
 
 	switch ((int)lr->lr_common.lrc_txtype) {
 	case TX_REMOVE:
-		error = VOP_REMOVE(ZTOV(dzp), name, kcred, NULL, vflg);
+		error = VOP_REMOVE(ZTOV(dzp), vp, &cn /*,vflg*/);
 		break;
 	case TX_RMDIR:
-		error = VOP_RMDIR(ZTOV(dzp), name, NULL, kcred, NULL, vflg);
+		error = VOP_RMDIR(ZTOV(dzp), vp, &cn /*,vflg*/);
 		break;
 	default:
-		error = ENOTSUP;
+		error = SET_ERROR(ENOTSUP);
 	}
+	vput(vp);
+	VOP_UNLOCK(ZTOV(dzp), 0);
 
+fail:
 	VN_RELE(ZTOV(dzp));
 
 	return (error);
@@ -561,6 +601,7 @@ zfs_replay_link(zfsvfs_t *zfsvfs, lr_link_t *lr, boolean_t byteswap)
 {
 	char *name = (char *)(lr + 1);	/* name follows lr_link_t */
 	znode_t *dzp, *zp;
+	struct componentname cn;
 	int error;
 	int vflg = 0;
 
@@ -578,7 +619,16 @@ zfs_replay_link(zfsvfs_t *zfsvfs, lr_link_t *lr, boolean_t byteswap)
 	if (lr->lr_common.lrc_txtype & TX_CI)
 		vflg |= FIGNORECASE;
 
-	error = VOP_LINK(ZTOV(dzp), ZTOV(zp), name, kcred, NULL, vflg);
+	cn.cn_nameptr = name;
+	cn.cn_cred = kcred;
+	cn.cn_thread = curthread;
+	cn.cn_flags = SAVENAME;
+
+	vn_lock(ZTOV(dzp), LK_EXCLUSIVE | LK_RETRY);
+	vn_lock(ZTOV(zp), LK_EXCLUSIVE | LK_RETRY);
+	error = VOP_LINK(ZTOV(dzp), ZTOV(zp), &cn /*,vflg*/);
+	VOP_UNLOCK(ZTOV(zp), 0);
+	VOP_UNLOCK(ZTOV(dzp), 0);
 
 	VN_RELE(ZTOV(zp));
 	VN_RELE(ZTOV(dzp));
@@ -592,6 +642,9 @@ zfs_replay_rename(zfsvfs_t *zfsvfs, lr_rename_t *lr, boolean_t byteswap)
 	char *sname = (char *)(lr + 1);	/* sname and tname follow lr_rename_t */
 	char *tname = sname + strlen(sname) + 1;
 	znode_t *sdzp, *tdzp;
+	struct componentname scn, tcn;
+	vnode_t *svp, *tvp;
+	kthread_t *td = curthread;
 	int error;
 	int vflg = 0;
 
@@ -608,10 +661,45 @@ zfs_replay_rename(zfsvfs_t *zfsvfs, lr_rename_t *lr, boolean_t byteswap)
 
 	if (lr->lr_common.lrc_txtype & TX_CI)
 		vflg |= FIGNORECASE;
+	svp = tvp = NULL;
 
-	error = VOP_RENAME(ZTOV(sdzp), sname, ZTOV(tdzp), tname, kcred,
-	    NULL, vflg);
+	scn.cn_nameptr = sname;
+	scn.cn_namelen = strlen(sname);
+	scn.cn_nameiop = DELETE;
+	scn.cn_flags = ISLASTCN | SAVENAME;
+	scn.cn_lkflags = LK_EXCLUSIVE | LK_RETRY;
+	scn.cn_cred = kcred;
+	scn.cn_thread = td;
+	vn_lock(ZTOV(sdzp), LK_EXCLUSIVE | LK_RETRY);
+	error = VOP_LOOKUP(ZTOV(sdzp), &svp, &scn);
+	VOP_UNLOCK(ZTOV(sdzp), 0);
+	if (error != 0)
+		goto fail;
+	VOP_UNLOCK(svp, 0);
 
+	tcn.cn_nameptr = tname;
+	tcn.cn_namelen = strlen(tname);
+	tcn.cn_nameiop = RENAME;
+	tcn.cn_flags = ISLASTCN | SAVENAME;
+	tcn.cn_lkflags = LK_EXCLUSIVE | LK_RETRY;
+	tcn.cn_cred = kcred;
+	tcn.cn_thread = td;
+	vn_lock(ZTOV(tdzp), LK_EXCLUSIVE | LK_RETRY);
+	error = VOP_LOOKUP(ZTOV(tdzp), &tvp, &tcn);
+	if (error == EJUSTRETURN)
+		tvp = NULL;
+	else if (error != 0) {
+		VOP_UNLOCK(ZTOV(tdzp), 0);
+		goto fail;
+	}
+
+	error = VOP_RENAME(ZTOV(sdzp), svp, &scn, ZTOV(tdzp), tvp, &tcn /*,vflg*/);
+	return (error);
+fail:
+	if (svp != NULL)
+		vrele(svp);
+	if (tvp != NULL)
+		vrele(tvp);
 	VN_RELE(ZTOV(tdzp));
 	VN_RELE(ZTOV(sdzp));
 
@@ -625,7 +713,7 @@ zfs_replay_write(zfsvfs_t *zfsvfs, lr_write_t *lr, boolean_t byteswap)
 	znode_t	*zp;
 	int error;
 	ssize_t resid;
-	uint64_t orig_eof, eod, offset, length;
+	uint64_t eod, offset, length;
 
 	if (byteswap)
 		byteswap_uint64_array(lr, sizeof (*lr));
@@ -643,9 +731,20 @@ zfs_replay_write(zfsvfs_t *zfsvfs, lr_write_t *lr, boolean_t byteswap)
 
 	offset = lr->lr_offset;
 	length = lr->lr_length;
-	eod = offset + length;		/* end of data for this write */
+	eod = offset + length;	/* end of data for this write */
 
-	orig_eof = zp->z_phys->zp_size;
+	/*
+	 * This may be a write from a dmu_sync() for a whole block,
+	 * and may extend beyond the current end of the file.
+	 * We can't just replay what was written for this TX_WRITE as
+	 * a future TX_WRITE2 may extend the eof and the data for that
+	 * write needs to be there. So we write the whole block and
+	 * reduce the eof. This needs to be done within the single dmu
+	 * transaction created within vn_rdwr -> zfs_write. So a possible
+	 * new end of file is passed through in zfsvfs->z_replay_eof
+	 */
+
+	zfsvfs->z_replay_eof = 0; /* 0 means don't change end of file */
 
 	/* If it's a dmu_sync() block, write the whole block */
 	if (lr->lr_common.lrc_reclen == sizeof (lr_write_t)) {
@@ -654,23 +753,15 @@ zfs_replay_write(zfsvfs_t *zfsvfs, lr_write_t *lr, boolean_t byteswap)
 			offset -= offset % blocksize;
 			length = blocksize;
 		}
+		if (zp->z_size < eod)
+			zfsvfs->z_replay_eof = eod;
 	}
 
 	error = vn_rdwr(UIO_WRITE, ZTOV(zp), data, length, offset,
 	    UIO_SYSSPACE, 0, RLIM64_INFINITY, kcred, &resid);
 
-	/*
-	 * This may be a write from a dmu_sync() for a whole block,
-	 * and may extend beyond the current end of the file.
-	 * We can't just replay what was written for this TX_WRITE as
-	 * a future TX_WRITE2 may extend the eof and the data for that
-	 * write needs to be there. So we write the whole block and
-	 * reduce the eof.
-	 */
-	if (orig_eof < zp->z_phys->zp_size) /* file length grew ? */
-		zp->z_phys->zp_size = eod;
-
 	VN_RELE(ZTOV(zp));
+	zfsvfs->z_replay_eof = 0;	/* safety */
 
 	return (error);
 }
@@ -694,10 +785,31 @@ zfs_replay_write2(zfsvfs_t *zfsvfs, lr_write_t *lr, boolean_t byteswap)
 	if ((error = zfs_zget(zfsvfs, lr->lr_foid, &zp)) != 0)
 		return (error);
 
+top:
 	end = lr->lr_offset + lr->lr_length;
-	if (end > zp->z_phys->zp_size) {
-		ASSERT3U(end - zp->z_phys->zp_size, <, zp->z_blksz);
-		zp->z_phys->zp_size = end;
+	if (end > zp->z_size) {
+		dmu_tx_t *tx = dmu_tx_create(zfsvfs->z_os);
+
+		zp->z_size = end;
+		dmu_tx_hold_sa(tx, zp->z_sa_hdl, B_FALSE);
+		error = dmu_tx_assign(tx, TXG_WAIT);
+		if (error) {
+			VN_RELE(ZTOV(zp));
+			if (error == ERESTART) {
+				dmu_tx_wait(tx);
+				dmu_tx_abort(tx);
+				goto top;
+			}
+			dmu_tx_abort(tx);
+			return (error);
+		}
+		(void) sa_update(zp->z_sa_hdl, SA_ZPL_SIZE(zfsvfs),
+		    (void *)&zp->z_size, sizeof (uint64_t), tx);
+
+		/* Ensure the replayed seq is updated */
+		(void) zil_replaying(zfsvfs->z_log, tx);
+
+		dmu_tx_commit(tx);
 	}
 
 	VN_RELE(ZTOV(zp));
@@ -708,6 +820,7 @@ zfs_replay_write2(zfsvfs_t *zfsvfs, lr_write_t *lr, boolean_t byteswap)
 static int
 zfs_replay_truncate(zfsvfs_t *zfsvfs, lr_truncate_t *lr, boolean_t byteswap)
 {
+#ifdef illumos
 	znode_t *zp;
 	flock64_t fl;
 	int error;
@@ -730,6 +843,10 @@ zfs_replay_truncate(zfsvfs_t *zfsvfs, lr_truncate_t *lr, boolean_t byteswap)
 	VN_RELE(ZTOV(zp));
 
 	return (error);
+#else
+	ZFS_LOG(0, "Unexpected code path, report to pjd@FreeBSD.org");
+	return (EOPNOTSUPP);
+#endif
 }
 
 static int
@@ -738,6 +855,7 @@ zfs_replay_setattr(zfsvfs_t *zfsvfs, lr_setattr_t *lr, boolean_t byteswap)
 	znode_t *zp;
 	xvattr_t xva;
 	vattr_t *vap = &xva.xva_vattr;
+	vnode_t *vp;
 	int error;
 	void *start;
 
@@ -775,20 +893,27 @@ zfs_replay_setattr(zfsvfs_t *zfsvfs, lr_setattr_t *lr, boolean_t byteswap)
 	zfsvfs->z_fuid_replay = zfs_replay_fuid_domain(start, &start,
 	    lr->lr_uid, lr->lr_gid);
 
-	error = VOP_SETATTR(ZTOV(zp), vap, 0, kcred, NULL);
+	vp = ZTOV(zp);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	error = VOP_SETATTR(vp, vap, kcred);
+	VOP_UNLOCK(vp, 0);
 
 	zfs_fuid_info_free(zfsvfs->z_fuid_replay);
 	zfsvfs->z_fuid_replay = NULL;
-	VN_RELE(ZTOV(zp));
+	VN_RELE(vp);
 
 	return (error);
 }
+
+extern int zfs_setsecattr(vnode_t *vp, vsecattr_t *vsecp, int flag, cred_t *cr,
+    caller_context_t *ct);
 
 static int
 zfs_replay_acl_v0(zfsvfs_t *zfsvfs, lr_acl_v0_t *lr, boolean_t byteswap)
 {
 	ace_t *ace = (ace_t *)(lr + 1);	/* ace array follows lr_acl_t */
 	vsecattr_t vsa;
+	vnode_t *vp;
 	znode_t *zp;
 	int error;
 
@@ -807,9 +932,12 @@ zfs_replay_acl_v0(zfsvfs_t *zfsvfs, lr_acl_v0_t *lr, boolean_t byteswap)
 	vsa.vsa_aclflags = 0;
 	vsa.vsa_aclentp = ace;
 
-	error = VOP_SETSECATTR(ZTOV(zp), &vsa, 0, kcred, NULL);
+	vp = ZTOV(zp);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	error = zfs_setsecattr(vp, &vsa, 0, kcred, NULL);
+	VOP_UNLOCK(vp, 0);
 
-	VN_RELE(ZTOV(zp));
+	VN_RELE(vp);
 
 	return (error);
 }
@@ -834,6 +962,7 @@ zfs_replay_acl(zfsvfs_t *zfsvfs, lr_acl_t *lr, boolean_t byteswap)
 	ace_t *ace = (ace_t *)(lr + 1);
 	vsecattr_t vsa;
 	znode_t *zp;
+	vnode_t *vp;
 	int error;
 
 	if (byteswap) {
@@ -865,13 +994,16 @@ zfs_replay_acl(zfsvfs_t *zfsvfs, lr_acl_t *lr, boolean_t byteswap)
 		    lr->lr_fuidcnt, lr->lr_domcnt, 0, 0);
 	}
 
-	error = VOP_SETSECATTR(ZTOV(zp), &vsa, 0, kcred, NULL);
+	vp = ZTOV(zp);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	error = zfs_setsecattr(vp, &vsa, 0, kcred, NULL);
+	VOP_UNLOCK(vp, 0);
 
 	if (zfsvfs->z_fuid_replay)
 		zfs_fuid_info_free(zfsvfs->z_fuid_replay);
 
 	zfsvfs->z_fuid_replay = NULL;
-	VN_RELE(ZTOV(zp));
+	VN_RELE(vp);
 
 	return (error);
 }

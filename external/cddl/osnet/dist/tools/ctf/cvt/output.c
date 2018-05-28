@@ -23,8 +23,6 @@
  * Use is subject to license terms.
  */
 
-#pragma ident	"%Z%%M%	%I%	%E% SMI"
-
 /*
  * Routines for preparing tdata trees for conversion into CTF data, and
  * for placing the resulting data into an output file.
@@ -79,7 +77,7 @@ burst_iitypes(void *data, void *arg)
 
 /*ARGSUSED1*/
 static int
-save_type_by_id(tdesc_t *tdp, tdesc_t **tdpp, void *private)
+save_type_by_id(tdesc_t *tdp, tdesc_t **tdpp __unused, void *private)
 {
 	iiburst_t *iiburst = private;
 
@@ -159,8 +157,10 @@ iiburst_free(iiburst_t *iiburst)
  * a global type description.
  */
 static int
-matching_iidesc(iidesc_t *iidesc, iidesc_match_t *match)
+matching_iidesc(void *arg1, void *arg2)
 {
+	iidesc_t *iidesc = arg1;
+	iidesc_match_t *match = arg2;
 	if (streq(iidesc->ii_name, match->iim_name) == 0)
 		return (0);
 
@@ -185,6 +185,8 @@ matching_iidesc(iidesc_t *iidesc, iidesc_match_t *match)
 			return (-1);
 		}
 		break;
+	default:
+		break;
 	}
 	return (0);
 }
@@ -194,7 +196,7 @@ find_iidesc(tdata_t *td, iidesc_match_t *match)
 {
 	match->iim_ret = NULL;
 	iter_iidescs_by_name(td, match->iim_name,
-	    (int (*)())matching_iidesc, match);
+	    matching_iidesc, match);
 	return (match->iim_ret);
 }
 
@@ -239,10 +241,12 @@ check_for_weak(GElf_Sym *weak, char const *weakfile,
     GElf_Sym *retsym, char **curfilep)
 {
 	char *curfile = NULL;
-	char *tmpfile;
+	char *tmpfile1 = NULL;
 	GElf_Sym tmpsym;
 	int candidate = 0;
 	int i;
+	tmpsym.st_info = 0;
+	tmpsym.st_name = 0;
 
 	if (GELF_ST_BIND(weak->st_info) != STB_WEAK)
 		return (0);
@@ -276,7 +280,7 @@ check_for_weak(GElf_Sym *weak, char const *weakfile,
 		    (curfile == NULL || weakfile == NULL ||
 		    strcmp(curfile, weakfile) != 0)) {
 			candidate = 1;
-			tmpfile = curfile;
+			tmpfile1 = curfile;
 			tmpsym = sym;
 			continue;
 		}
@@ -287,7 +291,7 @@ check_for_weak(GElf_Sym *weak, char const *weakfile,
 	}
 
 	if (candidate) {
-		*curfilep = tmpfile;
+		*curfilep = tmpfile1;
 		*retsym = tmpsym;
 		return (1);
 	}
@@ -357,6 +361,7 @@ sort_iidescs(Elf *elf, const char *file, tdata_t *td, int fuzzymatch,
 
 	for (i = 0; i < nent; i++) {
 		GElf_Sym sym;
+		char *bname;
 		iidesc_t **tolist;
 		GElf_Sym ssym;
 		iidesc_match_t smatch;
@@ -371,7 +376,8 @@ sort_iidescs(Elf *elf, const char *file, tdata_t *td, int fuzzymatch,
 
 		switch (GELF_ST_TYPE(sym.st_info)) {
 		case STT_FILE:
-			match.iim_file = match.iim_name;
+			bname = strrchr(match.iim_name, '/');
+			match.iim_file = bname == NULL ? match.iim_name : bname + 1;
 			continue;
 		case STT_OBJECT:
 			tolist = iiburst->iib_objts;
@@ -496,14 +502,14 @@ write_file(Elf *src, const char *srcname, Elf *dst, const char *dstname,
 	secxlate = xmalloc(sizeof (int) * sehdr.e_shnum);
 	for (srcidx = dstidx = 0; srcidx < sehdr.e_shnum; srcidx++) {
 		Elf_Scn *scn = elf_getscn(src, srcidx);
-		GElf_Shdr shdr;
+		GElf_Shdr shdr1;
 		char *sname;
 
-		gelf_getshdr(scn, &shdr);
-		sname = elf_strptr(src, sehdr.e_shstrndx, shdr.sh_name);
+		gelf_getshdr(scn, &shdr1);
+		sname = elf_strptr(src, sehdr.e_shstrndx, shdr1.sh_name);
 		if (sname == NULL) {
 			elfterminate(srcname, "Can't find string at %u",
-			    shdr.sh_name);
+			    shdr1.sh_name);
 		}
 
 		if (strcmp(sname, CTF_ELF_SCN_NAME) == 0) {
@@ -514,7 +520,7 @@ write_file(Elf *src, const char *srcname, Elf *dst, const char *dstname,
 		    strncmp(sname, ".rel.debug", 10) == 0 ||
 		    strncmp(sname, ".rela.debug", 11) == 0)) {
 			secxlate[srcidx] = -1;
-		} else if (dynsym && shdr.sh_type == SHT_SYMTAB) {
+		} else if (dynsym && shdr1.sh_type == SHT_SYMTAB) {
 			/*
 			 * If we're building CTF against the dynsym,
 			 * we'll rip out the symtab so debuggers aren't
@@ -567,11 +573,31 @@ write_file(Elf *src, const char *srcname, Elf *dst, const char *dstname,
 			elfterminate(srcname, "Can't find string at %u",
 			    shdr.sh_name);
 		}
+
+#ifndef illumos
+		if (gelf_update_shdr(dscn, &shdr) == 0)
+			elfterminate(dstname, "Cannot update sect %s", sname);
+#endif
+
 		if ((sdata = elf_getdata(sscn, NULL)) == NULL)
 			elfterminate(srcname, "Cannot get sect %s data", sname);
 		if ((ddata = elf_newdata(dscn)) == NULL)
 			elfterminate(dstname, "Can't make sect %s data", sname);
+#ifdef illumos
 		bcopy(sdata, ddata, sizeof (Elf_Data));
+#else
+		/*
+		 * FreeBSD's Elf_Data has private fields which the
+		 * elf_* routines manage. Simply copying the 
+		 * entire structure corrupts the data. So we need
+		 * to copy the public fields explictly.
+		 */
+		ddata->d_align = sdata->d_align;
+		ddata->d_off = sdata->d_off;
+		ddata->d_size = sdata->d_size;
+		ddata->d_type = sdata->d_type;
+		ddata->d_version = sdata->d_version;
+#endif
 
 		if (srcidx == sehdr.e_shstrndx) {
 			char seclen = strlen(CTF_ELF_SCN_NAME);
@@ -601,7 +627,8 @@ write_file(Elf *src, const char *srcname, Elf *dst, const char *dstname,
 				GElf_Sym sym;
 				short newscn;
 
-				(void) gelf_getsym(ddata, i, &sym);
+				if (gelf_getsym(ddata, i, &sym) == NULL)
+					printf("Could not get symbol %d\n",i);
 
 				if (sym.st_shndx >= SHN_LORESERVE)
 					continue;
@@ -616,7 +643,14 @@ write_file(Elf *src, const char *srcname, Elf *dst, const char *dstname,
 			}
 		}
 
-		if (gelf_update_shdr(dscn, &shdr) == NULL)
+#ifndef illumos
+		if (ddata->d_buf == NULL && sdata->d_buf != NULL) {
+			ddata->d_buf = xmalloc(shdr.sh_size);
+			bcopy(sdata->d_buf, ddata->d_buf, shdr.sh_size);
+		}
+#endif
+
+		if (gelf_update_shdr(dscn, &shdr) == 0)
 			elfterminate(dstname, "Cannot update sect %s", sname);
 
 		new_offset = (off_t)shdr.sh_offset;
@@ -651,6 +685,7 @@ write_file(Elf *src, const char *srcname, Elf *dst, const char *dstname,
 	ddata->d_buf = ctfdata;
 	ddata->d_size = ctfsize;
 	ddata->d_align = shdr.sh_addralign;
+	ddata->d_off = 0;
 
 	gelf_update_shdr(dscn, &shdr);
 
@@ -682,7 +717,7 @@ make_ctf_data(tdata_t *td, Elf *elf, const char *file, size_t *lenp, int flags)
 
 	iiburst = sort_iidescs(elf, file, td, flags & CTF_FUZZY_MATCH,
 	    flags & CTF_USE_DYNSYM);
-	data = ctf_gen(iiburst, lenp, flags & CTF_COMPRESS);
+	data = ctf_gen(iiburst, lenp, flags & (CTF_COMPRESS |  CTF_SWAP_BYTES));
 
 	iiburst_free(iiburst);
 
@@ -695,10 +730,12 @@ write_ctf(tdata_t *td, const char *curname, const char *newname, int flags)
 	struct stat st;
 	Elf *elf = NULL;
 	Elf *telf = NULL;
+	GElf_Ehdr ehdr;
 	caddr_t data;
 	size_t len;
 	int fd = -1;
 	int tfd = -1;
+	int byteorder;
 
 	(void) elf_version(EV_CURRENT);
 	if ((fd = open(curname, O_RDONLY)) < 0 || fstat(fd, &st) < 0)
@@ -710,6 +747,22 @@ write_ctf(tdata_t *td, const char *curname, const char *newname, int flags)
 		terminate("Cannot open temp file %s for writing", newname);
 	if ((telf = elf_begin(tfd, ELF_C_WRITE, NULL)) == NULL)
 		elfterminate(curname, "Cannot write");
+
+	if (gelf_getehdr(elf, &ehdr)) {
+#if BYTE_ORDER == _BIG_ENDIAN
+		byteorder = ELFDATA2MSB;
+#else
+		byteorder = ELFDATA2LSB;
+#endif
+		/*
+		 * If target and host has the same byte order
+		 * clear byte swapping request
+		 */
+		if  (ehdr.e_ident[EI_DATA] == byteorder)
+			flags &= ~CTF_SWAP_BYTES;
+	}
+	else 
+		elfterminate(curname, "Failed to get EHDR");
 
 	data = make_ctf_data(td, elf, curname, &len, flags);
 	write_file(elf, curname, telf, newname, data, len, flags);
