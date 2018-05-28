@@ -1,4 +1,4 @@
-/*	$NetBSD: key_debug.c,v 1.13 2018/05/28 19:39:21 maxv Exp $	*/
+/*	$NetBSD: key_debug.c,v 1.14 2018/05/28 20:45:38 maxv Exp $	*/
 
 /*	$KAME: key_debug.c,v 1.29 2001/08/16 14:25:41 itojun Exp $	*/
 
@@ -71,35 +71,35 @@
 #include "config.h"
 #include "libpfkey.h"
 
-static void kdebug_sadb_prop __P((struct sadb_ext *));
-static void kdebug_sadb_identity __P((struct sadb_ext *));
-static void kdebug_sadb_supported __P((struct sadb_ext *));
-static void kdebug_sadb_lifetime __P((struct sadb_ext *));
-static void kdebug_sadb_sa __P((struct sadb_ext *));
-static void kdebug_sadb_address __P((struct sadb_ext *));
-static void kdebug_sadb_key __P((struct sadb_ext *));
-static void kdebug_sadb_x_sa2 __P((struct sadb_ext *));
-static void kdebug_sadb_x_policy __P((struct sadb_ext *ext));
-static void kdebug_sockaddr __P((struct sockaddr *addr));
+static void kdebug_sadb_prop(struct sadb_ext *);
+static void kdebug_sadb_identity(struct sadb_ext *);
+static void kdebug_sadb_supported(struct sadb_ext *);
+static void kdebug_sadb_lifetime(struct sadb_ext *);
+static void kdebug_sadb_sa(struct sadb_ext *);
+static void kdebug_sadb_address(struct sadb_ext *);
+static void kdebug_sadb_key(struct sadb_ext *);
+static void kdebug_sadb_x_sa2(struct sadb_ext *);
+static void kdebug_sadb_x_policy(struct sadb_ext *ext);
+static void kdebug_sockaddr(struct sockaddr *addr);
 
 #ifdef SADB_X_EXT_NAT_T_TYPE
-static void kdebug_sadb_x_nat_t_type __P((struct sadb_ext *ext));
-static void kdebug_sadb_x_nat_t_port __P((struct sadb_ext *ext));
+static void kdebug_sadb_x_nat_t_type(struct sadb_ext *ext);
+static void kdebug_sadb_x_nat_t_port(struct sadb_ext *ext);
 #ifdef SADB_X_EXT_NAT_T_FRAG
-static void kdebug_sadb_x_nat_t_frag __P((struct sadb_ext *ext));
+static void kdebug_sadb_x_nat_t_frag(struct sadb_ext *ext);
 #endif
 #endif
 
 #ifdef SADB_X_EXT_PACKET
-static void kdebug_sadb_x_packet __P((struct sadb_ext *));
+static void kdebug_sadb_x_packet(struct sadb_ext *);
 #endif
 
 #ifdef SADB_X_EXT_KMADDRESS
-static void kdebug_sadb_x_kmaddress __P((struct sadb_ext *));
+static void kdebug_sadb_x_kmaddress(struct sadb_ext *);
 #endif
 
 #ifdef _KERNEL
-static void kdebug_secreplay __P((struct secreplay *));
+static void kdebug_secreplay(struct secreplay *);
 #endif
 
 #ifndef _KERNEL
