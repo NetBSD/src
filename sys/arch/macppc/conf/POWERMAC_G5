@@ -115,7 +115,7 @@ options         NFS_BOOT_DHCP
 
 mainbus* at root
 
-cpu* 		at mainbus?
+cpu0 	at mainbus?
 uni_n*	at mainbus?
 memory* at mainbus?
 spdmem* at memory? addr ?
