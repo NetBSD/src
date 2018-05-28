@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.347 2018/05/20 04:00:35 kamil Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.348 2018/05/28 13:12:54 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.347 2018/05/20 04:00:35 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.348 2018/05/28 13:12:54 kamil Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_dtrace.h"
@@ -904,13 +904,24 @@ trapsignal(struct lwp *l, ksiginfo_t *ksi)
 	KASSERT(!cpu_intr_p());
 	mutex_enter(proc_lock);
 	mutex_enter(p->p_lock);
+
+	if (ISSET(p->p_slflag, PSL_TRACED) && (p->p_pptr != p->p_opptr)) {
+		p->p_xsig = signo;
+		p->p_sigctx.ps_faked = true; // XXX
+		p->p_sigctx.ps_info._signo = signo;
+		p->p_sigctx.ps_info._code = ksi->ksi_code;
+		sigswitch(0, signo, false);
+		// XXX ktrpoint(KTR_PSIG)
+		mutex_exit(p->p_lock);
+		return;
+	}
+
 	mask = &l->l_sigmask;
 	ps = p->p_sigacts;
 
-	const bool traced = (p->p_slflag & PSL_TRACED) != 0;
 	const bool caught = sigismember(&p->p_sigctx.ps_sigcatch, signo);
 	const bool masked = sigismember(mask, signo);
-	if (!traced && caught && !masked) {
+	if (caught && !masked) {
 		mutex_exit(proc_lock);
 		l->l_ru.ru_nsignals++;
 		kpsendsig(l, ksi, mask);
