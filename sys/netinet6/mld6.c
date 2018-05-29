@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.92 2018/05/01 07:21:39 maxv Exp $	*/
+/*	$NetBSD: mld6.c,v 1.93 2018/05/29 04:35:28 ozaki-r Exp $	*/
 /*	$KAME: mld6.c,v 1.25 2001/01/16 14:14:18 itojun Exp $	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.92 2018/05/01 07:21:39 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.93 2018/05/29 04:35:28 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -221,10 +221,7 @@ mld_stoptimer(struct in6_multi *in6m)
 
 	rw_exit(&in6_multilock);
 
-	if (mutex_owned(softnet_lock))
-		callout_halt(&in6m->in6m_timer_ch, softnet_lock);
-	else
-		callout_halt(&in6m->in6m_timer_ch, NULL);
+	callout_halt(&in6m->in6m_timer_ch, NULL);
 
 	rw_enter(&in6_multilock, RW_WRITER);
 
@@ -238,7 +235,7 @@ mld_timeo(void *arg)
 
 	KASSERT(in6m->in6m_refcount > 0);
 
-	SOFTNET_KERNEL_LOCK_UNLESS_NET_MPSAFE();
+	KERNEL_LOCK_UNLESS_NET_MPSAFE();
 	rw_enter(&in6_multilock, RW_WRITER);
 	if (in6m->in6m_timer == IN6M_TIMER_UNDEF)
 		goto out;
@@ -256,7 +253,7 @@ mld_timeo(void *arg)
 
 out:
 	rw_exit(&in6_multilock);
-	SOFTNET_KERNEL_UNLOCK_UNLESS_NET_MPSAFE();
+	KERNEL_UNLOCK_UNLESS_NET_MPSAFE();
 }
 
 static u_long
@@ -805,10 +802,8 @@ in6m_destroy(struct in6_multi *in6m)
 
 	/* Tell mld_timeo we're halting the timer */
 	in6m->in6m_timer = IN6M_TIMER_UNDEF;
-	if (mutex_owned(softnet_lock))
-		callout_halt(&in6m->in6m_timer_ch, softnet_lock);
-	else
-		callout_halt(&in6m->in6m_timer_ch, NULL);
+
+	callout_halt(&in6m->in6m_timer_ch, NULL);
 	callout_destroy(&in6m->in6m_timer_ch);
 
 	free(in6m, M_IPMADDR);
