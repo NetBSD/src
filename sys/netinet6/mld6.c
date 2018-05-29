@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.94 2018/05/29 04:36:15 ozaki-r Exp $	*/
+/*	$NetBSD: mld6.c,v 1.95 2018/05/29 04:36:47 ozaki-r Exp $	*/
 /*	$KAME: mld6.c,v 1.25 2001/01/16 14:14:18 itojun Exp $	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.94 2018/05/29 04:36:15 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.95 2018/05/29 04:36:47 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -815,12 +815,12 @@ in6m_destroy(struct in6_multi *in6m)
  * Delete a multicast address record.
  */
 void
-in6_delmulti(struct in6_multi *in6m)
+in6_delmulti_locked(struct in6_multi *in6m)
 {
 
+	KASSERT(rw_write_held(&in6_multilock));
 	KASSERT(in6m->in6m_refcount > 0);
 
-	rw_enter(&in6_multilock, RW_WRITER);
 	/*
 	 * The caller should have a reference to in6m. So we don't need to care
 	 * of releasing the lock in mld_stoptimer.
@@ -828,6 +828,14 @@ in6_delmulti(struct in6_multi *in6m)
 	mld_stoptimer(in6m);
 	if (--in6m->in6m_refcount == 0)
 		in6m_destroy(in6m);
+}
+
+void
+in6_delmulti(struct in6_multi *in6m)
+{
+
+	rw_enter(&in6_multilock, RW_WRITER);
+	in6_delmulti_locked(in6m);
 	rw_exit(&in6_multilock);
 }
 
@@ -937,12 +945,13 @@ in6_leavegroup(struct in6_multi_mship *imm)
 {
 	struct in6_multi *in6m;
 
-	rw_enter(&in6_multilock, RW_READER);
+	rw_enter(&in6_multilock, RW_WRITER);
 	in6m = imm->i6mm_maddr;
-	rw_exit(&in6_multilock);
+	imm->i6mm_maddr = NULL;
 	if (in6m != NULL) {
-		in6_delmulti(in6m);
+		in6_delmulti_locked(in6m);
 	}
+	rw_exit(&in6_multilock);
 	free(imm, M_IPMADDR);
 	return 0;
 }
