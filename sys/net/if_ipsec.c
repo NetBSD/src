@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipsec.c,v 1.14 2018/05/24 07:00:28 knakahara Exp $  */
+/*	$NetBSD: if_ipsec.c,v 1.15 2018/05/29 03:38:24 knakahara Exp $  */
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipsec.c,v 1.14 2018/05/24 07:00:28 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipsec.c,v 1.15 2018/05/29 03:38:24 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1599,11 +1599,11 @@ if_ipsec_add_sp0(struct sockaddr *src, in_port_t sport,
 		 */
 		if_ipsec_add_mbuf_addr_port(m, src, sport, false);
 		if_ipsec_add_mbuf_addr_port(m, dst, dport, false);
-	}
-	padlen = PFKEY_UNUNIT64(xpl.sadb_x_policy_len) - sizeof(xpl);
-	if (src != NULL && dst != NULL)
+
+		padlen = PFKEY_UNUNIT64(xpl.sadb_x_policy_len) - sizeof(xpl);
 		padlen -= PFKEY_ALIGN8(src->sa_len + dst->sa_len);
-	if_ipsec_add_pad(m, padlen);
+		if_ipsec_add_pad(m, padlen);
+	}
 
 	/* key_kpi_spdadd() has already done KEY_SP_REF(). */
 	return key_kpi_spdadd(m);
