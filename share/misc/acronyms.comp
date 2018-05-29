@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.197 2018/05/13 18:52:00 sevan Exp $
+$NetBSD: acronyms.comp,v 1.198 2018/05/29 02:42:34 ginsbach Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -13,7 +13,7 @@ ACK	Amsterdam compiler kit
 ACK	acknowledgement
 ACL	access control list
 ACL	active current loop
-ACP	auxillary control {process,program}
+ACP	auxiliary control {process,program}
 ACPI	advanced configuration and power interface
 ACS	access control set
 ACU	automatic calling unit
@@ -76,7 +76,7 @@ ASCII	American Standard Code for Information Interchange
 ASD	agile software development
 ASE	advanced software environment
 ASIC	application-specific integrated circuit
-ASK	amplitude shif keying
+ASK	amplitude shift keying
 ASLR	address space layout randomization
 ASN	autonomous system number
 ASPM	active state power management
@@ -181,7 +181,7 @@ CAU	control access unit
 CAV	constant angular velocity
 CBC	cipher block chaining
 CBR	constant bit rate
-CC	carbon coby
+CC	carbon copy
 CCD	charge coupled device
 CCI	co-channel interferer
 CCNUMA	cache-coherent non-uniform memory access
