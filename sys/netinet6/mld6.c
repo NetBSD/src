@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.93 2018/05/29 04:35:28 ozaki-r Exp $	*/
+/*	$NetBSD: mld6.c,v 1.94 2018/05/29 04:36:15 ozaki-r Exp $	*/
 /*	$KAME: mld6.c,v 1.25 2001/01/16 14:14:18 itojun Exp $	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.93 2018/05/29 04:35:28 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.94 2018/05/29 04:36:15 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -803,10 +803,12 @@ in6m_destroy(struct in6_multi *in6m)
 	/* Tell mld_timeo we're halting the timer */
 	in6m->in6m_timer = IN6M_TIMER_UNDEF;
 
+	rw_exit(&in6_multilock);
 	callout_halt(&in6m->in6m_timer_ch, NULL);
 	callout_destroy(&in6m->in6m_timer_ch);
 
 	free(in6m, M_IPMADDR);
+	rw_enter(&in6_multilock, RW_WRITER);
 }
 
 /*
