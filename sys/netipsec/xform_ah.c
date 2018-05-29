@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ah.c,v 1.101 2018/05/18 19:02:49 maxv Exp $	*/
+/*	$NetBSD: xform_ah.c,v 1.102 2018/05/29 09:25:44 ozaki-r Exp $	*/
 /*	$FreeBSD: xform_ah.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ah.c,v 1.63 2001/06/26 06:18:58 angelos Exp $ */
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.101 2018/05/18 19:02:49 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.102 2018/05/29 09:25:44 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -266,11 +266,12 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 {
 	struct mbuf *m = *m0;
 	unsigned char *ptr;
-	int off, count, optlen;
+	int off, optlen;
 #ifdef INET
 	struct ip *ip;
 #endif
 #ifdef INET6
+	int count;
 	struct ip6_ext *ip6e;
 	struct ip6_hdr ip6;
 	int alloc, nxt;
