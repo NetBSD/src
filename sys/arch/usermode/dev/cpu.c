@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.77 2018/05/29 07:09:21 reinoud Exp $ */
+/* $NetBSD: cpu.c,v 1.78 2018/05/29 07:35:40 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_hz.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.77 2018/05/29 07:09:21 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.78 2018/05/29 07:35:40 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -193,6 +193,22 @@ cpu_need_proftick(struct lwp *l)
 {
 }
 
+int
+cpu_lwp_setprivate(lwp_t *l, void *ptr)
+{
+	struct pcb *pcb = lwp_getpcb(l);
+
+	/* set both ucontexts up for TLS just in case */
+	pcb->pcb_ucp.uc_mcontext._mc_tlsbase =
+		(uintptr_t) ptr;
+	pcb->pcb_ucp.uc_flags |= _UC_TLSBASE;
+
+	pcb->pcb_userret_ucp.uc_mcontext._mc_tlsbase =
+		(uintptr_t) ptr;
+	pcb->pcb_userret_ucp.uc_flags |= _UC_TLSBASE;
+
+	return 0;
+}
 
 static
 void
@@ -214,18 +230,8 @@ cpu_switchto_atomic(lwp_t *oldlwp, lwp_t *newlwp)
 		oldpcb->pcb_errno = thunk_geterrno();
 
 	thunk_seterrno(newpcb->pcb_errno);
-
-	/* set both ucontexts up for TLS just in case */
-
-	newpcb->pcb_ucp.uc_mcontext._mc_tlsbase =
-		(uintptr_t) newlwp->l_private;
-	newpcb->pcb_ucp.uc_flags |= _UC_TLSBASE;
-
-	newpcb->pcb_userret_ucp.uc_mcontext._mc_tlsbase =
-		(uintptr_t) newlwp->l_private;
-	newpcb->pcb_userret_ucp.uc_flags |= _UC_TLSBASE;
-
 	curlwp = newlwp;
+
 	splx(s);
 
 	if (thunk_setcontext(&newpcb->pcb_ucp))
