@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.98 2018/05/29 04:38:59 ozaki-r Exp $	*/
+/*	$NetBSD: mld6.c,v 1.99 2018/05/29 04:39:26 ozaki-r Exp $	*/
 /*	$KAME: mld6.c,v 1.25 2001/01/16 14:14:18 itojun Exp $	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.98 2018/05/29 04:38:59 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.99 2018/05/29 04:39:26 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -777,12 +777,13 @@ in6m_destroy(struct in6_multi *in6m)
 	KASSERT(in6m->in6m_refcount == 0);
 
 	/*
-	 * Unlink from list.  This must be done before mld_stop_listening
-	 * because it releases in6_multilock and that allows someone to
-	 * look up the removing in6m from the list and add a reference to the
-	 * entry unexpectedly.
+	 * Unlink from list if it's listed.  This must be done before
+	 * mld_stop_listening because it releases in6_multilock and that allows
+	 * someone to look up the removing in6m from the list and add a
+	 * reference to the entry unexpectedly.
 	 */
-	LIST_REMOVE(in6m, in6m_entry);
+	if (in6_lookup_multi(&in6m->in6m_addr, in6m->in6m_ifp) != NULL)
+		LIST_REMOVE(in6m, in6m_entry);
 
 	/*
 	 * No remaining claims to this record; let MLD6 know
