@@ -1,4 +1,4 @@
-/*	$NetBSD: synaptics.c,v 1.36 2017/12/05 18:04:21 jmcneill Exp $	*/
+/*	$NetBSD: synaptics.c,v 1.37 2018/05/29 11:38:24 ryoon Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -48,7 +48,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.36 2017/12/05 18:04:21 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.37 2018/05/29 11:38:24 ryoon Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -469,7 +469,7 @@ pms_synaptics_enable(void *vsc)
 		aprint_error("synaptics: set mode error\n");
 
 	synaptics_poll_cmd(psc, PMS_SET_SAMPLE, SYNAPTICS_CMD_SET_MODE2, 0);
-	
+
 	/* a couple of set scales to clear out pending commands */
 	for (int i = 0; i < 2; i++)
 		synaptics_poll_cmd(psc, PMS_SET_SCALE11, 0);
