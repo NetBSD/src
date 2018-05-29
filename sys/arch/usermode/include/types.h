@@ -1,4 +1,4 @@
-/* $NetBSD: types.h,v 1.12 2017/01/26 15:55:10 christos Exp $ */
+/* $NetBSD: types.h,v 1.13 2018/05/29 07:35:39 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -67,6 +67,7 @@ typedef long int	__register_t;
 #endif
 
 #define __HAVE_CPU_DATA_FIRST
+#define __HAVE_CPU_LWP_SETPRIVATE
 #define __HAVE_MM_MD_KERNACC
 #define	__HAVE_COMPAT_NETBSD32
 
