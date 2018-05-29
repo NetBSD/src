@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.76 2018/05/24 19:39:04 reinoud Exp $ */
+/* $NetBSD: cpu.c,v 1.77 2018/05/29 07:09:21 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_hz.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.76 2018/05/24 19:39:04 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.77 2018/05/29 07:09:21 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -194,7 +194,6 @@ cpu_need_proftick(struct lwp *l)
 }
 
 
-/* XXX make sure this is atomic? */
 static
 void
 cpu_switchto_atomic(lwp_t *oldlwp, lwp_t *newlwp)
@@ -202,19 +201,22 @@ cpu_switchto_atomic(lwp_t *oldlwp, lwp_t *newlwp)
 	struct pcb *oldpcb;
 	struct pcb *newpcb;
 	struct cpu_info *ci;
+	int s;
 
 	oldpcb = oldlwp ? lwp_getpcb(oldlwp) : NULL;
 	newpcb = lwp_getpcb(newlwp);
 	ci = curcpu();
 
-	ci->ci_stash = oldlwp;
+	s = splhigh();
 
+	ci->ci_stash = oldlwp;
 	if (oldpcb)
 		oldpcb->pcb_errno = thunk_geterrno();
 
 	thunk_seterrno(newpcb->pcb_errno);
 
 	/* set both ucontexts up for TLS just in case */
+
 	newpcb->pcb_ucp.uc_mcontext._mc_tlsbase =
 		(uintptr_t) newlwp->l_private;
 	newpcb->pcb_ucp.uc_flags |= _UC_TLSBASE;
@@ -224,8 +226,11 @@ cpu_switchto_atomic(lwp_t *oldlwp, lwp_t *newlwp)
 	newpcb->pcb_userret_ucp.uc_flags |= _UC_TLSBASE;
 
 	curlwp = newlwp;
+	splx(s);
+
 	if (thunk_setcontext(&newpcb->pcb_ucp))
 		panic("setcontext failed");
+
 	/* not reached */
 }
 
@@ -341,11 +346,28 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 #ifdef CPU_DEBUG
 	thunk_printf_debug("cpu_setmcontext\n");
 #endif
-	ucp->uc_flags = flags;
-	memcpy(&ucp->uc_mcontext, mcp, sizeof(mcontext_t));
+	if ((flags & _UC_CPU) != 0)
+		memcpy(&ucp->uc_mcontext.__gregs, mcp->__gregs, sizeof(__gregset_t));
+	if ((flags & _UC_FPU) != 0)
+		memcpy(&ucp->uc_mcontext.__fpregs, mcp->__fpregs, sizeof(__fpregset_t));
+	if ((flags & _UC_TLSBASE) != 0)
+		lwp_setprivate(l, (void *) (uintptr_t) mcp->_mc_tlsbase);
 
-	/* update our private, it might be altered in userland */
-	l->l_private = (void *) ucp->uc_mcontext._mc_tlsbase;
+#if 0
+	/*
+	 * XXX we ignore the set and clear stack since signals are done
+	 * slightly differently.
+	 */
+thunk_printf("%s: flags %x\n", __func__, flags);
+	mutex_enter(l->l_proc->p_lock);
+	if (flags & _UC_SETSTACK)
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
+	if (flags & _UC_CLRSTACK)
+		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
+	mutex_exit(l->l_proc->p_lock);
+#endif
+
+	ucp->uc_flags |= (flags & (_UC_CPU | _UC_FPU | _UC_TLSBASE));
 
 	return 0;
 }
@@ -410,7 +432,6 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	    l2 ? l2->l_name : "none", l2,
 	    stack, (int)stacksize);
 #endif
-
 	if (stack)
 		panic("%s: stack passed, can't handle\n", __func__);
 
