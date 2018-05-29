@@ -15,6 +15,7 @@ DESCRIPTION
      * readhappy       - basic implementation of read(9) with happy numbers
      * readhappy_mpsafe- demonstrates how to make a module MPSAFE
      * sysctl          - demonstrates adding a sysctl handle dynamically
+     * panic_string    - shows how panic is being called through a device
 
      To build the examples you need a local copy of NetBSD sources. You also
      need the comp set with toolchain. To build the module just enter a
@@ -61,6 +62,9 @@ HISTORY
 
      The readhappy_mpsafe, executor and sysctls modules first appeared in NetBSD
      9.0 and were authored by Siddharth Muralee.
+
+     The panic_string module first appeared in NetBSD 9.0 
+     and were authored by Harry Pantazis.
 
 AUTHORS
      This document was written by Kamil Rytarowski.

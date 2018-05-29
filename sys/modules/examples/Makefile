@@ -11,5 +11,6 @@ SUBDIR+=	properties
 SUBDIR+=	readhappy
 SUBDIR+=	readhappy_mpsafe	# Contains an additional helper program
 SUBDIR+=	sysctl
+SUBDIR+=	panic_string		# Crashes the system
 
 .include <bsd.subdir.mk>
