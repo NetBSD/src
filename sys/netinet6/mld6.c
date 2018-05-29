@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.96 2018/05/29 04:37:58 ozaki-r Exp $	*/
+/*	$NetBSD: mld6.c,v 1.97 2018/05/29 04:38:29 ozaki-r Exp $	*/
 /*	$KAME: mld6.c,v 1.25 2001/01/16 14:14:18 itojun Exp $	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.96 2018/05/29 04:37:58 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.97 2018/05/29 04:38:29 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -859,6 +859,19 @@ in6_lookup_multi(const struct in6_addr *addr, const struct ifnet *ifp)
 			break;
 	}
 	return in6m;
+}
+
+void
+in6_lookup_and_delete_multi(const struct in6_addr *addr,
+    const struct ifnet *ifp)
+{
+	struct in6_multi *in6m;
+
+	rw_enter(&in6_multilock, RW_WRITER);
+	in6m = in6_lookup_multi(addr, ifp);
+	if (in6m != NULL)
+		in6_delmulti_locked(in6m);
+	rw_exit(&in6_multilock);
 }
 
 bool
