@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.209 2018/05/09 06:35:10 maxv Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.210 2018/05/29 16:21:30 maxv Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.209 2018/05/09 06:35:10 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.210 2018/05/29 16:21:30 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -875,32 +875,9 @@ ip6_output(
 		const int hlen = unfragpartlen;
 		struct ip6_frag *ip6f;
 		u_char nextproto;
-#if 0		/* see below */
-		struct ip6ctlparam ip6cp;
-		u_int32_t mtu32;
-#endif
 
 		if (mtu > IPV6_MAXPACKET)
 			mtu = IPV6_MAXPACKET;
-
-#if 0
-		/*
-		 * It is believed this code is a leftover from the
-		 * development of the IPV6_RECVPATHMTU sockopt and
-		 * associated work to implement RFC3542.
-		 * It's not entirely clear what the intent of the API
-		 * is at this point, so disable this code for now.
-		 * The IPV6_RECVPATHMTU sockopt and/or IPV6_DONTFRAG
-		 * will send notifications if the application requests.
-		 */
-
-		/* Notify a proper path MTU to applications. */
-		mtu32 = (u_int32_t)mtu;
-		memset(&ip6cp, 0, sizeof(ip6cp));
-		ip6cp.ip6c_cmdarg = (void *)&mtu32;
-		pfctlinput2(PRC_MSGSIZE,
-		    rtcache_getdst(ro_pmtu), &ip6cp);
-#endif
 
 		/*
 		 * Must be able to put at least 8 bytes per fragment.
