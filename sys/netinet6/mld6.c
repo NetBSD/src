@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.97 2018/05/29 04:38:29 ozaki-r Exp $	*/
+/*	$NetBSD: mld6.c,v 1.98 2018/05/29 04:38:59 ozaki-r Exp $	*/
 /*	$KAME: mld6.c,v 1.25 2001/01/16 14:14:18 itojun Exp $	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.97 2018/05/29 04:38:29 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.98 2018/05/29 04:38:59 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -896,6 +896,7 @@ in6_purge_multi(struct ifnet *ifp)
 
 	rw_enter(&in6_multilock, RW_WRITER);
 	LIST_FOREACH_SAFE(in6m, &ifp->if_multiaddrs, in6m_entry, next) {
+		LIST_REMOVE(in6m, in6m_entry);
 		/*
 		 * Normally multicast addresses are already purged at this
 		 * point. Remaining references aren't accessible via ifp,
@@ -903,7 +904,6 @@ in6_purge_multi(struct ifnet *ifp)
 		 * accessed via in6m by removing it from the list of ifp.
 		 */
 		mld_stoptimer(in6m);
-		LIST_REMOVE(in6m, in6m_entry);
 	}
 	rw_exit(&in6_multilock);
 }
