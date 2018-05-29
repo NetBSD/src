@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.95 2018/05/29 04:36:47 ozaki-r Exp $	*/
+/*	$NetBSD: mld6.c,v 1.96 2018/05/29 04:37:58 ozaki-r Exp $	*/
 /*	$KAME: mld6.c,v 1.25 2001/01/16 14:14:18 itojun Exp $	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.95 2018/05/29 04:36:47 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.96 2018/05/29 04:37:58 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -777,15 +777,18 @@ in6m_destroy(struct in6_multi *in6m)
 	KASSERT(in6m->in6m_refcount == 0);
 
 	/*
+	 * Unlink from list.  This must be done before mld_stop_listening
+	 * because it releases in6_multilock and that allows someone to
+	 * look up the removing in6m from the list and add a reference to the
+	 * entry unexpectedly.
+	 */
+	LIST_REMOVE(in6m, in6m_entry);
+
+	/*
 	 * No remaining claims to this record; let MLD6 know
 	 * that we are leaving the multicast group.
 	 */
 	mld_stop_listening(in6m);
-
-	/*
-	 * Unlink from list.
-	 */
-	LIST_REMOVE(in6m, in6m_entry);
 
 	/*
 	 * Delete all references of this multicasting group from
