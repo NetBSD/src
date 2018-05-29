@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.267 2018/05/29 08:24:59 maxv Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.268 2018/05/29 16:24:34 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.267 2018/05/29 08:24:59 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.268 2018/05/29 16:24:34 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -307,9 +307,6 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 		KERNEL_LOCK(1, NULL);
 
 		if (!aarpresolve(ifp, m, (const struct sockaddr_at *)dst, edst)) {
-#ifdef NETATALKDEBUG
-			printf("aarpresolve failed\n");
-#endif
 			KERNEL_UNLOCK_ONE(NULL);
 			return 0;
 		}
@@ -329,8 +326,6 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 		/*
 		 * In the phase 2 case, we need to prepend an mbuf for the
 		 * llc header.
-		 *
-		 * XXX XXX: Do we need to preserve the value of m?
 		 */
 		if (aa->aa_flags & AFA_PHASE2) {
 			struct llc llc;
