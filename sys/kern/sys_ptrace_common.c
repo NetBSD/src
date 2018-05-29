@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace_common.c,v 1.42 2018/05/20 04:00:35 kamil Exp $	*/
+/*	$NetBSD: sys_ptrace_common.c,v 1.43 2018/05/29 23:34:18 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.42 2018/05/20 04:00:35 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.43 2018/05/29 23:34:18 kamil Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -419,13 +419,19 @@ ptrace_allowed(struct lwp *l, int req, struct proc *t, struct proc *p)
 			return EPERM;
 
 		/*
-		 *	(4) it's already being traced, or
+		 *	(4) it's already being traced,
 		 */
 		if (ISSET(t->p_slflag, PSL_TRACED))
 			return EBUSY;
 
 		/*
-		 * 	(5) the tracer is chrooted, and its root directory is
+		 *	(5) it's a vfork(2)ed parent of the current process, or
+		 */
+		if (ISSET(p->p_lflag, PL_PPWAIT) && p->p_pptr == t)
+			return EPERM;
+
+		/*
+		 * 	(6) the tracer is chrooted, and its root directory is
 		 * 	    not at or above the root directory of the tracee
 		 */
 		mutex_exit(t->p_lock);	/* XXXSMP */
