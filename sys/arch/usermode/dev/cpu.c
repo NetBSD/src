@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.78 2018/05/29 07:35:40 reinoud Exp $ */
+/* $NetBSD: cpu.c,v 1.79 2018/05/29 09:25:01 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_hz.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.78 2018/05/29 07:35:40 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.79 2018/05/29 09:25:01 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -322,9 +322,9 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 #endif
 	memcpy(mcp, &ucp->uc_mcontext, sizeof(mcontext_t));
 
-	/* XXX be overzealous and provide all */
+	/* report we have the CPU FPU and TLSBASE registers */
 	mcp->_mc_tlsbase = (uintptr_t) l->l_private;
-	*flags = _UC_CPU | _UC_STACK | _UC_SIGMASK | _UC_FPU | _UC_TLSBASE;
+	*flags = _UC_CPU | _UC_FPU | _UC_TLSBASE;
 
 	return;
 }
@@ -338,7 +338,7 @@ cpu_mcontext_validate(struct lwp *l, const mcontext_t *mcp)
 	 */
 	/* XXX NO CHECKING! XXX */
 #ifdef CPU_DEBUG
-	thunk_printf("cpu_mcontext_validate\n");
+	thunk_printf_debug("cpu_mcontext_validate\n");
 #endif
 	return 0;
 }
