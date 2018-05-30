@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.h,v 1.10 2018/05/30 17:31:34 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.h,v 1.11 2018/05/30 17:48:13 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -574,7 +574,12 @@ trigger_bus(void)
 	fp = tmpfile();
 	FORKEE_ASSERT_NEQ((uintptr_t)fp, (uintptr_t)NULL);
 
-	/* Map an empty file with mmap(2) to a pointer. */
+	/*
+	 * Map an empty file with mmap(2) to a pointer.
+	 *
+	 * PROT_READ handles read-modify-write sequences emitted for
+	 * certain combinations of CPUs and compilers (e.g. Alpha AXP).
+	 */
 	p = mmap(0, 1, PROT_READ|PROT_WRITE, MAP_PRIVATE, fileno(fp), 0);
 	FORKEE_ASSERT_NEQ((uintptr_t)p, (uintptr_t)MAP_FAILED);
 
