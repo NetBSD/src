@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_esp.c,v 1.89 2018/05/18 19:02:49 maxv Exp $	*/
+/*	$NetBSD: xform_esp.c,v 1.90 2018/05/30 16:15:19 maxv Exp $	*/
 /*	$FreeBSD: xform_esp.c,v 1.2.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_esp.c,v 1.69 2001/06/26 06:18:59 angelos Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.89 2018/05/18 19:02:49 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.90 2018/05/30 16:15:19 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -687,11 +687,11 @@ esp_output(struct mbuf *m, const struct ipsecrequest *isr, struct secasvar *sav,
 	char buf[IPSEC_ADDRSTRLEN];
 	const struct enc_xform *espx;
 	const struct auth_hash *esph;
-	int hlen, rlen, padding, blks, alen, i, roff;
+	int hlen, rlen, padlen, blks, alen, i, roff;
 	struct mbuf *mo = NULL;
 	struct tdb_crypto *tc;
 	struct secasindex *saidx;
-	unsigned char *pad;
+	unsigned char *tail;
 	uint8_t prot;
 	int error, maxpacketsize;
 
@@ -699,28 +699,30 @@ esp_output(struct mbuf *m, const struct ipsecrequest *isr, struct secasvar *sav,
 	struct cryptop *crp;
 
 	esph = sav->tdb_authalgxform;
-	KASSERT(sav->tdb_encalgxform != NULL);
 	espx = sav->tdb_encalgxform;
+	KASSERT(espx != NULL);
 
 	if (sav->flags & SADB_X_EXT_OLD)
 		hlen = sizeof(struct esp) + sav->ivlen;
 	else
 		hlen = sizeof(struct newesp) + sav->ivlen;
 
-	rlen = m->m_pkthdr.len - skip;	/* Raw payload length. */
+	if (esph)
+		alen = esph->authsize;
+	else
+		alen = 0;
+
 	/*
 	 * NB: The null encoding transform has a blocksize of 4
 	 *     so that headers are properly aligned.
 	 */
 	blks = espx->blocksize;		/* IV blocksize */
 
-	/* XXX clamp padding length a la KAME??? */
-	padding = ((blks - ((rlen + 2) % blks)) % blks) + 2;
+	/* Raw payload length. */
+	rlen = m->m_pkthdr.len - skip;
 
-	if (esph)
-		alen = esph->authsize;
-	else
-		alen = 0;
+	/* XXX clamp padding length a la KAME??? */
+	padlen = ((blks - ((rlen + 2) % blks)) % blks) + 2;
 
 	ESP_STATINC(ESP_STAT_OUTPUT);
 
@@ -746,12 +748,12 @@ esp_output(struct mbuf *m, const struct ipsecrequest *isr, struct secasvar *sav,
 		error = EPFNOSUPPORT;
 		goto bad;
 	}
-	if (skip + hlen + rlen + padding + alen > maxpacketsize) {
+	if (skip + hlen + rlen + padlen + alen > maxpacketsize) {
 		DPRINTF(("%s: packet in SA %s/%08lx got too big (len %u, "
 		    "max len %u)\n", __func__,
 		    ipsec_address(&saidx->dst, buf, sizeof(buf)),
 		    (u_long) ntohl(sav->spi),
-		    skip + hlen + rlen + padding + alen, maxpacketsize));
+		    skip + hlen + rlen + padlen + alen, maxpacketsize));
 		ESP_STATINC(ESP_STAT_TOOBIG);
 		error = EMSGSIZE;
 		goto bad;
@@ -799,15 +801,14 @@ esp_output(struct mbuf *m, const struct ipsecrequest *isr, struct secasvar *sav,
 	}
 
 	/*
-	 * Add padding -- better to do it ourselves than use the crypto engine,
-	 * although if/when we support compression, we'd have to do that.
+	 * Grow the mbuf, we will append data at the tail.
 	 */
-	pad = m_pad(m, padding + alen);
-	if (pad == NULL) {
+	tail = m_pad(m, padlen + alen);
+	if (tail == NULL) {
 		DPRINTF(("%s: m_pad failed for SA %s/%08lx\n", __func__,
 		    ipsec_address(&saidx->dst, buf, sizeof(buf)),
 		    (u_long) ntohl(sav->spi)));
-		m = NULL;		/* NB: free'd by m_pad */
+		m = NULL;
 		error = ENOBUFS;
 		goto bad;
 	}
@@ -817,21 +818,21 @@ esp_output(struct mbuf *m, const struct ipsecrequest *isr, struct secasvar *sav,
 	 */
 	switch (sav->flags & SADB_X_EXT_PMASK) {
 	case SADB_X_EXT_PSEQ:
-		for (i = 0; i < padding - 2; i++)
-			pad[i] = i+1;
+		for (i = 0; i < padlen - 2; i++)
+			tail[i] = i + 1;
 		break;
 	case SADB_X_EXT_PRAND:
-		(void)cprng_fast(pad, padding - 2);
+		(void)cprng_fast(tail, padlen - 2);
 		break;
 	case SADB_X_EXT_PZERO:
 	default:
-		memset(pad, 0, padding - 2);
+		memset(tail, 0, padlen - 2);
 		break;
 	}
 
 	/* Fix padding length and Next Protocol in padding itself. */
-	pad[padding - 2] = padding - 2;
-	m_copydata(m, protoff, sizeof(uint8_t), pad + padding - 1);
+	tail[padlen - 2] = padlen - 2;
+	m_copydata(m, protoff, sizeof(uint8_t), tail + padlen - 1);
 
 	/* Fix Next Protocol in IPv4/IPv6 header. */
 	prot = IPPROTO_ESP;
