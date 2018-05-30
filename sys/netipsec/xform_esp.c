@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_esp.c,v 1.91 2018/05/30 16:32:26 maxv Exp $	*/
+/*	$NetBSD: xform_esp.c,v 1.92 2018/05/30 16:43:29 maxv Exp $	*/
 /*	$FreeBSD: xform_esp.c,v 1.2.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_esp.c,v 1.69 2001/06/26 06:18:59 angelos Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.91 2018/05/30 16:32:26 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.92 2018/05/30 16:43:29 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -695,8 +695,7 @@ esp_output(struct mbuf *m, const struct ipsecrequest *isr, struct secasvar *sav,
 	uint8_t prot;
 	int error, maxpacketsize;
 	struct esptail *esptail;
-
-	struct cryptodesc *crde = NULL, *crda = NULL;
+	struct cryptodesc *crde, *crda;
 	struct cryptop *crp;
 
 	esph = sav->tdb_authalgxform;
@@ -844,7 +843,7 @@ esp_output(struct mbuf *m, const struct ipsecrequest *isr, struct secasvar *sav,
 	m_copyback(m, protoff, sizeof(uint8_t), &prot);
 
 	/* Get crypto descriptors. */
-	crp = crypto_getreq(esph && espx ? 2 : 1);
+	crp = crypto_getreq(esph ? 2 : 1);
 	if (crp == NULL) {
 		DPRINTF(("%s: failed to acquire crypto descriptors\n",
 		    __func__));
@@ -853,26 +852,22 @@ esp_output(struct mbuf *m, const struct ipsecrequest *isr, struct secasvar *sav,
 		goto bad;
 	}
 
-	if (espx) {
-		crde = crp->crp_desc;
-		crda = crde->crd_next;
+	/* Get the descriptors. */
+	crde = crp->crp_desc;
+	crda = crde->crd_next;
 
-		/* Encryption descriptor. */
-		crde->crd_skip = skip + hlen;
-		if (espx->type == CRYPTO_AES_GMAC)
-			crde->crd_len = 0;
-		else
-			crde->crd_len = m->m_pkthdr.len - (skip + hlen + alen);
-		crde->crd_flags = CRD_F_ENCRYPT;
-		crde->crd_inject = skip + hlen - sav->ivlen;
-
-		/* Encryption operation. */
-		crde->crd_alg = espx->type;
-		crde->crd_key = _KEYBUF(sav->key_enc);
-		crde->crd_klen = _KEYBITS(sav->key_enc);
-		/* XXX Rounds ? */
-	} else
-		crda = crp->crp_desc;
+	/* Encryption descriptor. */
+	crde->crd_skip = skip + hlen;
+	if (espx->type == CRYPTO_AES_GMAC)
+		crde->crd_len = 0;
+	else
+		crde->crd_len = m->m_pkthdr.len - (skip + hlen + alen);
+	crde->crd_flags = CRD_F_ENCRYPT;
+	crde->crd_inject = skip + hlen - sav->ivlen;
+	crde->crd_alg = espx->type;
+	crde->crd_key = _KEYBUF(sav->key_enc);
+	crde->crd_klen = _KEYBITS(sav->key_enc);
+	/* XXX Rounds ? */
 
 	/* IPsec-specific opaque crypto info. */
 	tc = pool_cache_get(esp_tdb_crypto_pool_cache, PR_NOWAIT);
@@ -922,7 +917,7 @@ esp_output(struct mbuf *m, const struct ipsecrequest *isr, struct secasvar *sav,
 	if (esph) {
 		/* Authentication descriptor. */
 		crda->crd_skip = skip;
-		if (espx && espx->type == CRYPTO_AES_GCM_16)
+		if (espx->type == CRYPTO_AES_GCM_16)
 			crda->crd_len = hlen - sav->ivlen;
 		else
 			crda->crd_len = m->m_pkthdr.len - (skip + alen);
@@ -930,8 +925,8 @@ esp_output(struct mbuf *m, const struct ipsecrequest *isr, struct secasvar *sav,
 
 		/* Authentication operation. */
 		crda->crd_alg = esph->type;
-		if (espx && (espx->type == CRYPTO_AES_GCM_16 ||
-			     espx->type == CRYPTO_AES_GMAC)) {
+		if (espx->type == CRYPTO_AES_GCM_16 ||
+		    espx->type == CRYPTO_AES_GMAC) {
 			crda->crd_key = _KEYBUF(sav->key_enc);
 			crda->crd_klen = _KEYBITS(sav->key_enc);
 		} else {
