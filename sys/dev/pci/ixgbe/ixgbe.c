@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.156 2018/05/25 04:40:27 ozaki-r Exp $ */
+/* $NetBSD: ixgbe.c,v 1.157 2018/05/30 08:35:26 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -3794,6 +3794,7 @@ ixgbe_init_locked(struct adapter *adapter)
 	struct ifnet   *ifp = adapter->ifp;
 	device_t 	dev = adapter->dev;
 	struct ixgbe_hw *hw = &adapter->hw;
+	struct ix_queue *que;
 	struct tx_ring  *txr;
 	struct rx_ring  *rxr;
 	u32		txdctl, mhadd;
@@ -3809,6 +3810,8 @@ ixgbe_init_locked(struct adapter *adapter)
 	hw->adapter_stopped = FALSE;
 	ixgbe_stop_adapter(hw);
         callout_stop(&adapter->timer);
+	for (i = 0, que = adapter->queues; i < adapter->num_queues; i++, que++)
+		que->disabled_count = 0;
 
 	/* XXX I moved this here from the SIOCSIFMTU case in ixgbe_ioctl(). */
 	adapter->max_frame_size =
