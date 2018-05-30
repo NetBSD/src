@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace_common.c,v 1.43 2018/05/29 23:34:18 kamil Exp $	*/
+/*	$NetBSD: sys_ptrace_common.c,v 1.44 2018/05/30 23:54:03 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.43 2018/05/29 23:34:18 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.44 2018/05/30 23:54:03 kamil Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -403,7 +403,7 @@ ptrace_allowed(struct lwp *l, int req, struct proc *t, struct proc *p)
 		 * You can't attach to a process if:
 		 *	(1) it's the process that's doing the attaching,
 		 */
-		if (t->p_pid == p->p_pid)
+		if (t == p)
 			return EINVAL;
 
 		/*
