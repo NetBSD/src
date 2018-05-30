@@ -1,4 +1,4 @@
-/*	$NetBSD: h_segv.c,v 1.6 2018/05/30 17:31:34 kamil Exp $	*/
+/*	$NetBSD: h_segv.c,v 1.7 2018/05/30 17:48:13 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: h_segv.c,v 1.6 2018/05/30 17:31:34 kamil Exp $");
+__RCSID("$NetBSD: h_segv.c,v 1.7 2018/05/30 17:48:13 kamil Exp $");
 
 #include <sys/types.h>
 #include <sys/mman.h>
@@ -119,7 +119,12 @@ trigger_bus(void)
 	if (fp == NULL)
 		err(EXIT_FAILURE, "tmpfile");
 
-	/* Map an empty file with mmap(2) to a pointer. */
+	/*
+	 * Map an empty file with mmap(2) to a pointer.
+	 *
+	 * PROT_READ handles read-modify-write sequences emitted for
+	 * certain combinations of CPUs and compilers (e.g. Alpha AXP).
+	 */
 	p = mmap(0, 1, PROT_READ|PROT_WRITE, MAP_PRIVATE, fileno(fp), 0);
 	if (p == MAP_FAILED)
 		err(EXIT_FAILURE, "mmap");
