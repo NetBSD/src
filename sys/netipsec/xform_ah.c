@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ah.c,v 1.104 2018/05/30 17:17:11 maxv Exp $	*/
+/*	$NetBSD: xform_ah.c,v 1.105 2018/05/30 18:02:40 maxv Exp $	*/
 /*	$FreeBSD: xform_ah.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ah.c,v 1.63 2001/06/26 06:18:58 angelos Exp $ */
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.104 2018/05/30 17:17:11 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.105 2018/05/30 18:02:40 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -167,11 +167,21 @@ ah_hdrsiz(const struct secasvar *sav)
 	size_t size;
 
 	if (sav != NULL) {
-		int authsize;
+		int authsize, rplen, align;
+
 		KASSERT(sav->tdb_authalgxform != NULL);
 		/*XXX not right for null algorithm--does it matter??*/
+
+		/* RFC4302: use the correct alignment. */
+		align = sizeof(uint32_t);
+#ifdef INET6
+		if (sav->sah->saidx.dst.sa.sa_family == AF_INET6) {
+			align = sizeof(uint64_t);
+		}
+#endif
+		rplen = HDRSIZE(sav);
 		authsize = AUTHSIZE(sav);
-		size = roundup(authsize, sizeof(uint32_t)) + HDRSIZE(sav);
+		size = roundup(rplen + authsize, align);
 	} else {
 		/* default guess */
 		size = sizeof(struct ah) + sizeof(uint32_t) + ah_max_authsize;
@@ -520,7 +530,7 @@ ah_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 	const struct auth_hash *ahx;
 	struct tdb_crypto *tc = NULL;
 	struct newah *ah;
-	int hl, rplen, authsize, error, stat = AH_STAT_HDROPS;
+	int hl, rplen, authsize, ahsize, error, stat = AH_STAT_HDROPS;
 	struct cryptodesc *crda;
 	struct cryptop *crp = NULL;
 	bool pool_used;
@@ -553,25 +563,26 @@ ah_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 	}
 
 	/* Verify AH header length. */
-	hl = ah->ah_len * sizeof(uint32_t);
+	hl = sizeof(struct ah) + (ah->ah_len * sizeof(uint32_t));
 	ahx = sav->tdb_authalgxform;
 	authsize = AUTHSIZE(sav);
-	if (hl != authsize + rplen - sizeof(struct ah)) {
+	ahsize = ah_hdrsiz(sav);
+	if (hl != ahsize) {
 		char buf[IPSEC_ADDRSTRLEN];
 		DPRINTF(("%s: bad authenticator length %u (expecting %lu)"
 			" for packet in SA %s/%08lx\n", __func__,
-			hl, (u_long) (authsize + rplen - sizeof(struct ah)),
+			hl, (u_long)ahsize,
 			ipsec_address(&sav->sah->saidx.dst, buf, sizeof(buf)),
 			(u_long) ntohl(sav->spi)));
 		stat = AH_STAT_BADAUTHL;
 		error = EACCES;
 		goto bad;
 	}
-	if (skip + authsize + rplen > m->m_pkthdr.len) {
+	if (skip + ahsize > m->m_pkthdr.len) {
 		char buf[IPSEC_ADDRSTRLEN];
 		DPRINTF(("%s: bad mbuf length %u (expecting >= %lu)"
 			" for packet in SA %s/%08lx\n", __func__,
-			m->m_pkthdr.len, (u_long)(skip + authsize + rplen),
+			m->m_pkthdr.len, (u_long)(skip + ahsize),
 			ipsec_address(&sav->sah->saidx.dst, buf, sizeof(buf)),
 			(u_long) ntohl(sav->spi)));
 		stat = AH_STAT_BADAUTHL;
@@ -720,7 +731,7 @@ static int
 ah_input_cb(struct cryptop *crp)
 {
 	char buf[IPSEC_ADDRSTRLEN];
-	int rplen, error, skip, protoff;
+	int rplen, ahsize, error, skip, protoff;
 	unsigned char calc[AH_ALEN_MAX];
 	struct mbuf *m;
 	struct tdb_crypto *tc;
@@ -751,6 +762,7 @@ ah_input_cb(struct cryptop *crp)
 	/* Figure out header size. */
 	rplen = HDRSIZE(sav);
 	authsize = AUTHSIZE(sav);
+	ahsize = ah_hdrsiz(sav);
 
 	size = sizeof(*tc) + skip + rplen + authsize;
 	if (__predict_true(size <= ah_pool_item_size))
@@ -844,7 +856,7 @@ ah_input_cb(struct cryptop *crp)
 	/*
 	 * Remove the AH header and authenticator from the mbuf.
 	 */
-	error = m_striphdr(m, skip, rplen + authsize);
+	error = m_striphdr(m, skip, ahsize);
 	if (error) {
 		DPRINTF(("%s: mangled mbuf chain for SA %s/%08lx\n", __func__,
 		    ipsec_address(&saidx->dst, buf, sizeof(buf)),
@@ -891,7 +903,7 @@ ah_output(struct mbuf *m, const struct ipsecrequest *isr, struct secasvar *sav,
 	struct mbuf *mi;
 	struct cryptop *crp;
 	uint16_t iplen;
-	int error, rplen, authsize, maxpacketsize, roff;
+	int error, rplen, authsize, ahsize, maxpacketsize, roff;
 	uint8_t prot;
 	struct newah *ah;
 	size_t ipoffs;
@@ -905,6 +917,8 @@ ah_output(struct mbuf *m, const struct ipsecrequest *isr, struct secasvar *sav,
 
 	/* Figure out header size. */
 	rplen = HDRSIZE(sav);
+	authsize = AUTHSIZE(sav);
+	ahsize = ah_hdrsiz(sav);
 
 	/* Check for maximum packet size violations. */
 	switch (sav->sah->saidx.dst.sa.sa_family) {
@@ -930,13 +944,12 @@ ah_output(struct mbuf *m, const struct ipsecrequest *isr, struct secasvar *sav,
 		error = EPFNOSUPPORT;
 		goto bad;
 	}
-	authsize = AUTHSIZE(sav);
-	if (rplen + authsize + m->m_pkthdr.len > maxpacketsize) {
+	if (ahsize + m->m_pkthdr.len > maxpacketsize) {
 		DPRINTF(("%s: packet in SA %s/%08lx got too big "
 		    "(len %u, max len %u)\n", __func__,
 		    ipsec_address(&sav->sah->saidx.dst, buf, sizeof(buf)),
 		    (u_long) ntohl(sav->spi),
-		    rplen + authsize + m->m_pkthdr.len, maxpacketsize));
+		    ahsize + m->m_pkthdr.len, maxpacketsize));
 		AH_STATINC(AH_STAT_TOOBIG);
 		error = EMSGSIZE;
 		goto bad;
@@ -956,11 +969,10 @@ ah_output(struct mbuf *m, const struct ipsecrequest *isr, struct secasvar *sav,
 	}
 
 	/* Inject AH header. */
-	mi = m_makespace(m, skip, rplen + authsize, &roff);
+	mi = m_makespace(m, skip, ahsize, &roff);
 	if (mi == NULL) {
 		DPRINTF(("%s: failed to inject %u byte AH header for SA "
-		    "%s/%08lx\n", __func__,
-		    rplen + authsize,
+		    "%s/%08lx\n", __func__, ahsize,
 		    ipsec_address(&sav->sah->saidx.dst, buf, sizeof(buf)),
 		    (u_long) ntohl(sav->spi)));
 		AH_STATINC(AH_STAT_HDROPS);
@@ -976,12 +988,16 @@ ah_output(struct mbuf *m, const struct ipsecrequest *isr, struct secasvar *sav,
 
 	/* Initialize the AH header. */
 	m_copydata(m, protoff, sizeof(uint8_t), &ah->ah_nxt);
-	ah->ah_len = (rplen + authsize - sizeof(struct ah)) / sizeof(uint32_t);
+	ah->ah_len = (ahsize - sizeof(struct ah)) / sizeof(uint32_t);
 	ah->ah_reserve = 0;
 	ah->ah_spi = sav->spi;
 
 	/* Zeroize authenticator. */
 	m_copyback(m, skip + rplen, authsize, ipseczeroes);
+
+	/* Zeroize padding. */
+	m_copyback(m, skip + rplen + authsize, ahsize - (rplen + authsize),
+	    ipseczeroes);
 
 	/* Insert packet replay counter, as requested.  */
 	if (sav->replay) {
@@ -1051,7 +1067,7 @@ ah_output(struct mbuf *m, const struct ipsecrequest *isr, struct secasvar *sav,
 	 * header length as it will be fixed by our caller.
 	 */
 	memcpy(&iplen, pext + ipoffs, sizeof(iplen));
-	iplen = htons(ntohs(iplen) + rplen + authsize);
+	iplen = htons(ntohs(iplen) + ahsize);
 	m_copyback(m, ipoffs, sizeof(iplen), &iplen);
 
 	/* Fix the Next Header field in saved header. */
