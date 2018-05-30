@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.157 2018/05/30 08:35:26 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.158 2018/05/30 09:17:17 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -242,6 +242,7 @@ static int      ixgbe_sysctl_rdt_handler(SYSCTLFN_PROTO);
 static int      ixgbe_sysctl_tdt_handler(SYSCTLFN_PROTO);
 static int      ixgbe_sysctl_tdh_handler(SYSCTLFN_PROTO);
 static int      ixgbe_sysctl_eee_state(SYSCTLFN_PROTO);
+static int	ixgbe_sysctl_debug(SYSCTLFN_PROTO);
 static int	ixgbe_sysctl_wol_enable(SYSCTLFN_PROTO);
 static int	ixgbe_sysctl_wufc(SYSCTLFN_PROTO);
 
@@ -3213,6 +3214,12 @@ ixgbe_add_device_sysctls(struct adapter *adapter)
 	}
 
 	if (sysctl_createv(log, 0, &rnode, &cnode,
+	    CTLFLAG_READWRITE, CTLTYPE_INT,
+	    "debug", SYSCTL_DESCR("Debug Info"),
+	    ixgbe_sysctl_debug, 0, (void *)adapter, 0, CTL_CREATE, CTL_EOL) != 0)
+		aprint_error_dev(dev, "could not create sysctl\n");
+
+	if (sysctl_createv(log, 0, &rnode, &cnode,
 	    CTLFLAG_READONLY, CTLTYPE_INT,
 	    "num_rx_desc", SYSCTL_DESCR("Number of rx descriptors"),
 	    NULL, 0, &adapter->num_rx_desc, 0, CTL_CREATE, CTL_EOL) != 0)
@@ -5695,6 +5702,115 @@ ixgbe_sysctl_eee_state(SYSCTLFN_ARGS)
 
 	return (error);
 } /* ixgbe_sysctl_eee_state */
+
+#define PRINTQS(adapter, regname)					\
+	do {								\
+		struct ixgbe_hw	*_hw = &(adapter)->hw;			\
+		int _i;							\
+									\
+		printf("%s: %s", device_xname((adapter)->dev), #regname); \
+		for (_i = 0; _i < (adapter)->num_queues; _i++) {	\
+			printf((_i == 0) ? "\t" : " ");			\
+			printf("%08x", IXGBE_READ_REG(_hw,		\
+				IXGBE_##regname(_i)));			\
+		}							\
+		printf("\n");						\
+	} while (0)
+
+/************************************************************************
+ * ixgbe_print_debug_info
+ *
+ *   Called only when em_display_debug_stats is enabled.
+ *   Provides a way to take a look at important statistics
+ *   maintained by the driver and hardware.
+ ************************************************************************/
+static void
+ixgbe_print_debug_info(struct adapter *adapter)
+{
+        device_t        dev = adapter->dev;
+        struct ixgbe_hw *hw = &adapter->hw;
+	int table_size;
+	int i;
+
+	switch (adapter->hw.mac.type) {
+	case ixgbe_mac_X550:
+	case ixgbe_mac_X550EM_x:
+	case ixgbe_mac_X550EM_a:
+		table_size = 128;
+		break;
+	default:
+		table_size = 32;
+		break;
+	}
+	
+	device_printf(dev, "[E]RETA:\n");
+	for (i = 0; i < table_size; i++) {
+		if (i < 32)
+			printf("%02x: %08x\n", i, IXGBE_READ_REG(hw,
+				IXGBE_RETA(i)));
+		else
+			printf("%02x: %08x\n", i, IXGBE_READ_REG(hw,
+				IXGBE_ERETA(i - 32)));
+	}
+
+	device_printf(dev, "queue:");
+	for (i = 0; i < adapter->num_queues; i++) {
+		printf((i == 0) ? "\t" : " ");
+		printf("%8d", i);
+	}
+	printf("\n");
+	PRINTQS(adapter, RDBAL);
+	PRINTQS(adapter, RDBAH);
+	PRINTQS(adapter, RDLEN);
+	PRINTQS(adapter, SRRCTL);
+	PRINTQS(adapter, RDH);
+	PRINTQS(adapter, RDT);
+	PRINTQS(adapter, RXDCTL);
+
+	device_printf(dev, "RQSMR:");
+	for (i = 0; i < adapter->num_queues / 4; i++) {
+		printf((i == 0) ? "\t" : " ");
+		printf("%08x", IXGBE_READ_REG(hw, IXGBE_RQSMR(i)));
+	}
+	printf("\n");
+
+	device_printf(dev, "disabled_count:");
+	for (i = 0; i < adapter->num_queues; i++) {
+		printf((i == 0) ? "\t" : " ");
+		printf("%8d", adapter->queues[i].disabled_count);
+	}
+	printf("\n");
+	
+	device_printf(dev, "EIMS:\t%08x\n", IXGBE_READ_REG(hw, IXGBE_EIMS));
+	if (hw->mac.type != ixgbe_mac_82598EB) {
+		device_printf(dev, "EIMS_EX(0):\t%08x\n",
+			      IXGBE_READ_REG(hw, IXGBE_EIMS_EX(0)));
+		device_printf(dev, "EIMS_EX(1):\t%08x\n",
+			      IXGBE_READ_REG(hw, IXGBE_EIMS_EX(1)));
+	}
+} /* ixgbe_print_debug_info */
+
+/************************************************************************
+ * ixgbe_sysctl_debug
+ ************************************************************************/
+static int
+ixgbe_sysctl_debug(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node = *rnode;
+	struct adapter *adapter = (struct adapter *)node.sysctl_data;
+	int            error, result = 0;
+
+	node.sysctl_data = &result;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+
+	if (error || newp == NULL)
+		return error;
+
+	if (result == 1)
+		ixgbe_print_debug_info(adapter);
+
+	return 0;
+} /* ixgbe_sysctl_debug */
 
 /************************************************************************
  * ixgbe_init_device_features
