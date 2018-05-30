@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ah.c,v 1.103 2018/05/29 16:50:38 maxv Exp $	*/
+/*	$NetBSD: xform_ah.c,v 1.104 2018/05/30 17:17:11 maxv Exp $	*/
 /*	$FreeBSD: xform_ah.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ah.c,v 1.63 2001/06/26 06:18:58 angelos Exp $ */
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.103 2018/05/29 16:50:38 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.104 2018/05/30 17:17:11 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -146,6 +146,19 @@ ah_algorithm_lookup(int alg)
 		return &auth_hash_aes_xcbc_mac_96;
 	}
 	return NULL;
+}
+
+size_t
+ah_authsiz(const struct secasvar *sav)
+{
+	size_t size;
+
+	if (sav == NULL) {
+		return ah_max_authsize;
+	}
+
+	size = AUTHSIZE(sav);
+	return roundup(size, sizeof(uint32_t));
 }
 
 size_t
