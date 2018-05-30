@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.101 2018/05/25 04:40:27 ozaki-r Exp $*/
+/*$NetBSD: ixv.c,v 1.102 2018/05/30 08:35:26 msaitoh Exp $*/
 
 /******************************************************************************
 
@@ -719,7 +719,7 @@ ixv_init_locked(struct adapter *adapter)
 	struct ifnet	*ifp = adapter->ifp;
 	device_t 	dev = adapter->dev;
 	struct ixgbe_hw *hw = &adapter->hw;
-	struct ix_queue	*que = adapter->queues;
+	struct ix_queue	*que;
 	int             error = 0;
 	uint32_t mask;
 	int i;
@@ -729,6 +729,8 @@ ixv_init_locked(struct adapter *adapter)
 	hw->adapter_stopped = FALSE;
 	hw->mac.ops.stop_adapter(hw);
 	callout_stop(&adapter->timer);
+	for (i = 0, que = adapter->queues; i < adapter->num_queues; i++, que++)
+		que->disabled_count = 0;
 
 	/* reprogram the RAR[0] in case user changed it. */
 	hw->mac.ops.set_rar(hw, 0, hw->mac.addr, 0, IXGBE_RAH_AV);
@@ -798,7 +800,7 @@ ixv_init_locked(struct adapter *adapter)
 
 	/* Set up auto-mask */
 	mask = (1 << adapter->vector);
-	for (i = 0; i < adapter->num_queues; i++, que++)
+	for (i = 0, que = adapter->queues; i < adapter->num_queues; i++, que++)
 		mask |= (1 << que->msix);
 	IXGBE_WRITE_REG(hw, IXGBE_VTEIAM, mask);
 
