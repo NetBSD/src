@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_esp.c,v 1.93 2018/05/30 16:49:38 maxv Exp $	*/
+/*	$NetBSD: xform_esp.c,v 1.94 2018/05/30 17:17:11 maxv Exp $	*/
 /*	$FreeBSD: xform_esp.c,v 1.2.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_esp.c,v 1.69 2001/06/26 06:18:59 angelos Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.93 2018/05/30 16:49:38 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.94 2018/05/30 17:17:11 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -141,25 +141,34 @@ esp_hdrsiz(const struct secasvar *sav)
 	if (sav != NULL) {
 		/*XXX not right for null algorithm--does it matter??*/
 		KASSERT(sav->tdb_encalgxform != NULL);
+
+		/*
+		 *   base header size
+		 * + iv length for CBC mode
+		 * + max pad length
+		 * + sizeof(esp trailer)
+		 * + icv length (if any).
+		 */
 		if (sav->flags & SADB_X_EXT_OLD)
 			size = sizeof(struct esp);
 		else
 			size = sizeof(struct newesp);
-		size += sav->tdb_encalgxform->ivsize + 9;
+		size += sav->tdb_encalgxform->ivsize + 9 +
+		    sizeof(struct esptail);
+
 		/*XXX need alg check???*/
 		if (sav->tdb_authalgxform != NULL && sav->replay)
-			size += ah_hdrsiz(sav);
+			size += ah_authsiz(sav);
 	} else {
 		/*
 		 *   base header size
 		 * + max iv length for CBC mode
 		 * + max pad length
-		 * + sizeof(pad length field)
-		 * + sizeof(next header field)
+		 * + sizeof(esp trailer)
 		 * + max icv supported.
 		 */
 		size = sizeof(struct newesp) + esp_max_ivlen + 9 +
-		    ah_hdrsiz(NULL);
+		    sizeof(struct esptail) + ah_authsiz(NULL);
 	}
 	return size;
 }
