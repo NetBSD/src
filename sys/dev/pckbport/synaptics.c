@@ -1,4 +1,4 @@
-/*	$NetBSD: synaptics.c,v 1.37 2018/05/29 11:38:24 ryoon Exp $	*/
+/*	$NetBSD: synaptics.c,v 1.38 2018/05/30 13:20:39 ryoon Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -48,7 +48,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.37 2018/05/29 11:38:24 ryoon Exp $");
+__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.38 2018/05/30 13:20:39 ryoon Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -451,7 +451,7 @@ pms_synaptics_enable(void *vsc)
 	enable_modes =
 	   SYNAPTICS_MODE_ABSOLUTE | SYNAPTICS_MODE_W | SYNAPTICS_MODE_RATE;
 
-	if (sc->flags & SYN_FLAG_HAS_EXTENDED_WMODE) 
+	if (sc->flags & SYN_FLAG_HAS_EXTENDED_WMODE)
 		enable_modes |= SYNAPTICS_MODE_EXTENDED_W;
 
 	/*
@@ -823,7 +823,7 @@ pms_sysctl_synaptics_verify(SYSCTLFN_ARGS)
 			return (EINVAL);
 	} else
 	if (node.sysctl_num == synaptics_button_boundary_nodenum) {
-		if (t < 0 || t < SYNAPTICS_EDGE_BOTTOM || 
+		if (t < 0 || t < SYNAPTICS_EDGE_BOTTOM ||
 		    t > SYNAPTICS_EDGE_TOP)
 			return (EINVAL);
 	} else
@@ -862,7 +862,7 @@ pms_synaptics_parse(struct pms_softc *psc)
 	   ((psc->packet[0] & 0x04) >> 1) +
 	   ((psc->packet[3] & 0x04) >> 2);
 	sp.sp_finger = 0;
-	if (sp.sp_w ==  SYNAPTICS_WIDTH_EXTENDED_W) {
+	if (sp.sp_w == SYNAPTICS_WIDTH_EXTENDED_W) {
 		ew_mode = psc->packet[5] >> 4;
 		switch (ew_mode)
 		{
@@ -936,7 +936,7 @@ pms_synaptics_parse(struct pms_softc *psc)
 		new_buttons = 0;
 		if(sc->flags & SYN_FLAG_HAS_ONE_BUTTON_CLICKPAD) {
 			/* This is not correctly specified. Read this button press
-		 	* from L/U bit.  Emulate 3 buttons by checking the 
+		 	* from L/U bit.  Emulate 3 buttons by checking the
 		 	* coordinates of the click and returning the appropriate
 		 	* button code.  Outside the button region default to a
 		 	* left click.
