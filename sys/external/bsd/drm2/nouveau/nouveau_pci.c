@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_pci.c,v 1.9 2018/05/21 08:58:47 mrg Exp $	*/
+/*	$NetBSD: nouveau_pci.c,v 1.10 2018/05/31 09:18:31 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_pci.c,v 1.9 2018/05/21 08:58:47 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_pci.c,v 1.10 2018/05/31 09:18:31 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>
@@ -93,6 +93,36 @@ nouveau_pci_match(device_t parent, cfdata_t match, void *aux)
 
 #define IS_BETWEEN(x,y) \
 	(PCI_PRODUCT(pa->pa_id) >= (x) && PCI_PRODUCT(pa->pa_id) <= (y))
+
+	/*
+	 * NetBSD drm2 doesn't support Pascal-based cards:
+	 *   0x1580-0x15ff 	GP100
+	 *   0x1b00-0x1b7f 	GP102
+	 *   0x1b80-0x1bff 	GP104
+	 *   0x1c00-0x1c7f 	GP106
+	 *   0x1c80-0x1cff 	GP107
+	 *   0x1d00-0x1d7f 	GP108
+	 *   0x1d80-0x1dff 	GV100
+	 */
+	
+	if (IS_BETWEEN(0x1580, 0x15ff) ||
+	    IS_BETWEEN(0x1b00, 0x1b7f) ||
+	    IS_BETWEEN(0x1b80, 0x1bff) ||
+	    IS_BETWEEN(0x1c00, 0x1c7f) ||
+	    IS_BETWEEN(0x1c80, 0x1cff) ||
+	    IS_BETWEEN(0x1d00, 0x1d7f) ||
+	    IS_BETWEEN(0x1d80, 0x1dff))
+		return 0;
+#undef IS_BETWEEN
+
+#define IS_BETWEEN(x,y) \
+	(PCI_PRODUCT(pa->pa_id) >= (x) && PCI_PRODUCT(pa->pa_id) <= (y))
+	/*
+	 * NetBSD drm2 needs missing-so-far firmware for Maxwell-based cards:
+	 *   0x1380-0x13bf 	GM107
+	 */
+	if (IS_BETWEEN(0x1380, 0x13bf))
+		return 0;
 
 	/*
 	 * NetBSD drm2 doesn't support Pascal-based cards:
