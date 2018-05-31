@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_esp.c,v 1.94 2018/05/30 17:17:11 maxv Exp $	*/
+/*	$NetBSD: xform_esp.c,v 1.95 2018/05/31 05:52:09 maxv Exp $	*/
 /*	$FreeBSD: xform_esp.c,v 1.2.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_esp.c,v 1.69 2001/06/26 06:18:59 angelos Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.94 2018/05/30 17:17:11 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.95 2018/05/31 05:52:09 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -243,7 +243,7 @@ esp_init(struct secasvar *sav, const struct xformsw *xsp)
 			DPRINTF(("%s: invalid key length %u, must be either of "
 				"20, 28 or 36\n", __func__, keylen));
 			return EINVAL;
-                }
+		}
 
 		memset(&cria, 0, sizeof(cria));
 		cria.cri_alg = sav->tdb_authalgxform->type;
@@ -313,7 +313,7 @@ esp_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 
 	KASSERT(sav != NULL);
 	KASSERT(sav->tdb_encalgxform != NULL);
-	KASSERTMSG((skip&3) == 0 && (m->m_pkthdr.len&3) == 0,
+	KASSERTMSG((skip & 3) == 0 && (m->m_pkthdr.len & 3) == 0,
 	    "misaligned packet, skip %u pkt len %u",
 	    skip, m->m_pkthdr.len);
 
@@ -369,7 +369,7 @@ esp_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 	}
 
 	/* Update the counters */
-	ESP_STATADD(ESP_STAT_IBYTES, m->m_pkthdr.len - skip - hlen - alen);
+	ESP_STATADD(ESP_STAT_IBYTES, plen);
 
 	/* Get crypto descriptors */
 	crp = crypto_getreq(esph ? 2 : 1);
@@ -489,15 +489,15 @@ out:
 }
 
 #ifdef INET6
-#define	IPSEC_COMMON_INPUT_CB(m, sav, skip, protoff) do {		     \
-	if (saidx->dst.sa.sa_family == AF_INET6) {			     \
-		error = ipsec6_common_input_cb(m, sav, skip, protoff);	     \
-	} else {							     \
-		error = ipsec4_common_input_cb(m, sav, skip, protoff);	     \
-	}								     \
+#define	IPSEC_COMMON_INPUT_CB(m, sav, skip, protoff) do {		\
+	if (saidx->dst.sa.sa_family == AF_INET6) {			\
+		error = ipsec6_common_input_cb(m, sav, skip, protoff);	\
+	} else {							\
+		error = ipsec4_common_input_cb(m, sav, skip, protoff);	\
+	}								\
 } while (0)
 #else
-#define	IPSEC_COMMON_INPUT_CB(m, sav, skip, protoff)			     \
+#define	IPSEC_COMMON_INPUT_CB(m, sav, skip, protoff)			\
 	(error = ipsec4_common_input_cb(m, sav, skip, protoff))
 #endif
 
@@ -709,15 +709,13 @@ esp_output(struct mbuf *m, const struct ipsecrequest *isr, struct secasvar *sav,
 	espx = sav->tdb_encalgxform;
 	KASSERT(espx != NULL);
 
+	/* Determine the ESP header length */
 	if (sav->flags & SADB_X_EXT_OLD)
 		hlen = sizeof(struct esp) + sav->ivlen;
 	else
 		hlen = sizeof(struct newesp) + sav->ivlen;
-
-	if (esph)
-		alen = esph->authsize;
-	else
-		alen = 0;
+	/* Authenticator hash size */
+	alen = esph ? esph->authsize : 0;
 
 	/*
 	 * NB: The null encoding transform has a blocksize of 4
