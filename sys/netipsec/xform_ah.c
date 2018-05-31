@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ah.c,v 1.105 2018/05/30 18:02:40 maxv Exp $	*/
+/*	$NetBSD: xform_ah.c,v 1.106 2018/05/31 06:25:41 maxv Exp $	*/
 /*	$FreeBSD: xform_ah.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ah.c,v 1.63 2001/06/26 06:18:58 angelos Exp $ */
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.105 2018/05/30 18:02:40 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.106 2018/05/31 06:25:41 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -104,7 +104,7 @@ percpu_t *ahstat_percpu;
 int ah_enable = 1;			/* control flow of packets with AH */
 int ip4_ah_cleartos = 1;		/* clear ip_tos when doing AH calc */
 
-static unsigned char ipseczeroes[256];	/* larger than an ip6 extension hdr */
+static const char ipseczeroes[256];
 
 int ah_max_authsize;			/* max authsize over all algorithms */
 
@@ -375,7 +375,7 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 
 			default:
 				/* Zeroize all other options. */
-				memcpy(ptr + off, ipseczeroes, optlen);
+				memset(ptr + off, 0, optlen);
 				break;
 			}
 
