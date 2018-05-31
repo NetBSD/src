@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1338 2018/05/31 02:50:14 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1339 2018/05/31 09:11:47 mrg Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -6244,9 +6244,50 @@ product NVIDIA	GEFORCE_610M	0x1058	GeForce 610M
 product NVIDIA	GEFORCE_610M2	0x1059	GeForce 610M
 product NVIDIA	GT610M		0x105A	GeForce GT 610M
 product NVIDIA	GF116		0x1244	GeForce GTX 550 Ti
+product NVIDIA	TESLA_12G	0x15f7 	Tesla P100 PCIe 12GB
+product NVIDIA	TESLA_16G	0x15f8 	Tesla P100 PCIe 16GB
+product NVIDIA	TESLA_16G_SXM2	0x15f9 	Tesla P100 SXM2 16GB
+product NVIDIA	GF_TITAN_X	0x1b00 	GeForce TITAN X
+product NVIDIA	GF_GTX1080_TI	0x1b06 	GeForce GTX 1080 Ti
+product NVIDIA	QUADRO_P6000	0x1b30 	Quadro P6000
+product NVIDIA	TESLA_P40	0x1b38 	Tesla P40
+product NVIDIA	GF_GTX1080	0x1b80 	GeForce GTX 1080
+product NVIDIA	GF_GTX1070	0x1b81 	GeForce GTX 1070
+product NVIDIA	GF_GTX1060	0x1b84 	GeForce GTX 1060 3GB
+product NVIDIA	GF_GTX1080M	0x1ba0 	GeForce GTX 1080 Mobile
+product NVIDIA	GF_GTX1070M	0x1ba1 	GeForce GTX 1070 Mobile
+product NVIDIA	QUADRO_P5000	0x1bb0 	Quadro P5000
+product NVIDIA	TESLA_P4	0x1bb3 	Tesla P4
+product NVIDIA	QUADRO_P5000M	0x1bb6 	Quadro P5000 Mobile
+product NVIDIA	QUADRO_P4000M	0x1bb7 	Quadro P4000 Mobile
+product NVIDIA	QUADRO_P3000M	0x1bb8 	Quadro P3000 Mobile
+product NVIDIA	GF_GTX1080M_2	0x1be0 	GeForce GTX 1080 Mobile
+product NVIDIA	GF_GTX1070M_2	0x1be1 	GeForce GTX 1070 Mobile
+product NVIDIA	GF_GTX1060_3	0x1c02 	GeForce GTX 1060 3GB
+product NVIDIA	GF_GTX1060_6	0x1c03 	GeForce GTX 1060 6GB
+product NVIDIA	GF_GTX1060M	0x1c20 	GeForce GTX 1060 Mobile
+product NVIDIA	GF_GTX1060M_2	0x1c60 	GeForce GTX 1060 Mobile
+product NVIDIA	GF_GTX1060_TiM	0x1c61 	GeForce GTX 1060 Ti Mobile
+product NVIDIA	GF_GTX1060_M	0x1c62 	GeForce GTX 1060 Mobile
+product NVIDIA	GF_GTX1050_X	0x1c81 	GeForce GTX 1050
+product NVIDIA	GF_GTX1050_Ti	0x1c82 	GeForce GTX 1050 Ti
+product NVIDIA	GF_GTX1050_TiM	0x1c8c 	GeForce GTX 1050 Ti Mobile
+product NVIDIA	GF_GTX1050_M	0x1c8d 	GeForce GTX 1050 Mobile
+
+product NVIDIA	GF_GTX1030	0x1d01 	GeForce GT 1030
+product NVIDIA	GF_MX150	0x1d10 	GeForce MX150
+
+product NVIDIA	TITAN_V		0x1d81 	GV100 TITAN V
+product NVIDIA	TESLA_V100SXM16	0x1db1 	Tesla V100 SXM2 16GB
+product NVIDIA	TESLA_V100PCI16	0x1db4 	Tesla V100 PCIe 16GB
+product NVIDIA	TESLA_V100SXM32	0x1db5 	Tesla V100 SXM2 32GB
+product NVIDIA 	TESLA_V100PCI32	0x1db6 	Tesla V100 PCIe 32GB
+product NVIDIA	QUADRO_GV100	0x1dba 	Quadro GV100
+
 
 /* Nvidia & SGS-Thomson Microelectronics */
 product NVIDIA_SGS	RIVA128	0x0018	Riva 128
+product NVIDIA_SGS	RIVA128_ZX	0x0019	Riva 128 ZX
 
 /* Oak Technologies products */
 product OAKTECH OTI1007	0x0107	OTI107
@@ -6750,8 +6791,9 @@ product SGI RAD1	0x0005	PsiTech RAD1
 product SGI TIGON	0x0009	Tigon Gigabit Ethernet
 
 /* SGS-Thomson products */
-product SGSTHOMSON 2000	0x0008	STG 2000X
-product SGSTHOMSON 1764	0x1746	STG 1764X
+product SGSTHOMSON 2000		0x0008	STG 2000X
+product SGSTHOMSON 2000_VGA	0x0009	STG 2000X VGA
+product SGSTHOMSON 1764		0x1746	STG 1764X
 
 /* Broadcom (SiByte) products */
 product SIBYTE BCM1250_PCIHB	0x0001	BCM1250 PCI Host Bridge
