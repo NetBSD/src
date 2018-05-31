@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.15 2017/01/24 23:26:58 christos Exp $	
+# $NetBSD: Makefile,v 1.16 2018/05/31 09:08:25 mrg Exp $	
 
 USE_SHLIBDIR=yes
 .include <bsd.own.mk>
@@ -153,7 +153,7 @@ scanner.d scanner.o: tokdefs.h
 tokdefs.h: grammar.h
 	cp $? $@
 
-CLEANFILES+=	tokdefs.h
+CLEANFILES+=	tokdefs.h scanner.h
 COPTS.bpf_image.c = -Wno-format-nonliteral
 
 .include <bsd.lib.mk>
