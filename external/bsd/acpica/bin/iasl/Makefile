@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.18 2018/04/07 15:49:50 christos Exp $
+# $NetBSD: Makefile,v 1.19 2018/05/31 09:08:25 mrg Exp $
 
 .if (${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64")
 PROG=	iasl
@@ -325,6 +325,8 @@ CLEANFILES+=	aslcompilerparse.y  aslcompilerparse.c	\
 		prparserparse.h				\
 		prparserlex.l prparserlex.c		\
 		prparser.y.h prparserparse.output	\
+							\
+		y.output y.tab.h
 
 .include <bsd.prog.mk>
 
