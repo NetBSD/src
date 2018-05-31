@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.125 2018/05/23 07:24:37 maxv Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.126 2018/05/31 03:29:01 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -405,9 +405,10 @@
 #define CPUID_SEF_ARCH_CAP	__BIT(29) /* IA32_ARCH_CAPABILITIES */
 #define CPUID_SEF_SSBD		__BIT(31) /* Speculative Store Bypass Disable */
 
-#define CPUID_SEF_FLAGS2	\
-	"\20" "\3" "AVX512_4VNNIW" "\4" "AVX512_4FMAPS" \
-	"\33" "IBRS" "\34" "STIBP" "\36" "ARCH_CAP" "\38" "SSBD"
+#define CPUID_SEF_FLAGS2	"\20" \
+				"\3" "AVX512_4VNNIW" "\4" "AVX512_4FMAPS" \
+					"\33" "IBRS"	"\34" "STIBP"	\
+			"\36" "ARCH_CAP"		"\40" "SSBD"
 
 /*
  * CPUID Processor extended state Enumeration Fn0000000d
