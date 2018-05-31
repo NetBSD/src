@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_output.c,v 1.78 2018/05/07 09:33:51 maxv Exp $	*/
+/*	$NetBSD: ipsec_output.c,v 1.79 2018/05/31 07:03:57 maxv Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.78 2018/05/07 09:33:51 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.79 2018/05/31 07:03:57 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -151,7 +151,6 @@ ipsec_process_done(struct mbuf *m, const struct ipsecrequest *isr,
 #endif
 	struct mbuf *mo;
 	struct udphdr *udp = NULL;
-	uint64_t *data = NULL;
 	int hlen, roff;
 
 	KASSERT(m != NULL);
@@ -164,8 +163,6 @@ ipsec_process_done(struct mbuf *m, const struct ipsecrequest *isr,
 		ip = mtod(m, struct ip *);
 
 		hlen = sizeof(struct udphdr);
-		if (sav->natt_type == UDP_ENCAP_ESPINUDP_NON_IKE)
-			hlen += sizeof(uint64_t);
 
 		mo = m_makespace(m, sizeof(struct ip), hlen, &roff);
 		if (mo == NULL) {
@@ -179,16 +176,7 @@ ipsec_process_done(struct mbuf *m, const struct ipsecrequest *isr,
 		}
 
 		udp = (struct udphdr *)(mtod(mo, char *) + roff);
-		data = (uint64_t *)(udp + 1);
-
-		if (sav->natt_type == UDP_ENCAP_ESPINUDP_NON_IKE)
-			*data = 0; /* NON-IKE Marker */
-
-		if (sav->natt_type == UDP_ENCAP_ESPINUDP_NON_IKE)
-			udp->uh_sport = htons(UDP_ENCAP_ESPINUDP_PORT);
-		else
-			udp->uh_sport = key_portfromsaddr(&saidx->src);
-
+		udp->uh_sport = key_portfromsaddr(&saidx->src);
 		udp->uh_dport = key_portfromsaddr(&saidx->dst);
 		udp->uh_sum = 0;
 		udp->uh_ulen = htons(m->m_pkthdr.len - (ip->ip_hl << 2));
@@ -495,8 +483,7 @@ ipsec4_process_packet(struct mbuf *m, const struct ipsecrequest *isr,
 	if (isr == isr->sp->req) { /* Check only if called from ipsec4_output */
 		KASSERT(mtu != NULL);
 		ip = mtod(m, struct ip *);
-		if (!(sav->natt_type &
-		    (UDP_ENCAP_ESPINUDP|UDP_ENCAP_ESPINUDP_NON_IKE))) {
+		if (!(sav->natt_type & UDP_ENCAP_ESPINUDP)) {
 			goto noneed;
 		}
 		if (ntohs(ip->ip_len) <= sav->esp_frag)
