@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1337 2018/05/28 02:27:32 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1338 2018/05/31 02:50:14 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -4032,10 +4032,16 @@ product INTEL 80862A01		0x2a01  80862A01 Mobile PCI Express Root Port
 product INTEL 82965PM_IGD	0x2a02	82965PM Integrated Graphics Device
 product INTEL 82965PM_IGD_1	0x2a03	82965PM Integrated Graphics Device
 product INTEL 82965PM_MEI	0x2a04	82965PM MEI Controller
-product INTEL 82965PM_IDE	0x2a06	82965PM IDE Interface
+product INTEL 82965PM_MEI_2	0x2a05	82965PM MEI Controller
+product INTEL 82965PM_IDE	0x2a06	82965PM IDER Interface
 product INTEL 82965PM_KT	0x2a07	82965PM/GM KT
 product INTEL 82965GME_HB	0x2a10	82965GME Host Bridge
+product INTEL 82965GME_PCIE	0x2a11	82965GME PCIe
 product INTEL 82965GME_IGD	0x2a12	82965GME Integrated Graphics Device
+product INTEL 82965GME_IGD_2	0x2a13	82965GME Integrated Graphics Device
+product INTEL 82965GME_MEI	0x2a14	82965GME MEI Controller
+product INTEL 82965GME_MEI_2	0x2a15	82965GME MEI Controller
+product INTEL 82965GME_IDER	0x2a16	82965PM IDER Interface
 product INTEL 82965GME_KT	0x2a17	82965GME KT
 product INTEL 82GM45_HB		0x2a40	82GM45 Host Bridge
 product INTEL 82GM45_PCIE	0x2a41	82GM45 PCIe
