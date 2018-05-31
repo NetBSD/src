@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1592 2018/05/28 21:05:00 chs Exp $
+# $NetBSD: mi,v 1.1593 2018/05/31 00:25:38 kamil Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2317,7 +2317,7 @@
 ./usr/share/man/cat7/symlink.0			man-reference-catman	.cat
 ./usr/share/man/cat7/sysctl.0			man-reference-catman	.cat
 ./usr/share/man/cat7/tests.0			man-reference-catman	.cat
-./usr/share/man/cat7/zpool-features.8		man-zfs-catman		zfs,.cat
+./usr/share/man/cat7/zpool-features.0		man-zfs-catman		zfs,.cat
 ./usr/share/man/cat8/MAKEDEV.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/MAKEDEV.local.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/ac.0			man-sysutil-catman	.cat
