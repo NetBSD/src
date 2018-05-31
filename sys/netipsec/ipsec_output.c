@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_output.c,v 1.79 2018/05/31 07:03:57 maxv Exp $	*/
+/*	$NetBSD: ipsec_output.c,v 1.80 2018/05/31 15:06:45 maxv Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.79 2018/05/31 07:03:57 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.80 2018/05/31 15:06:45 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -624,39 +624,39 @@ compute_ipsec_pos(struct mbuf *m, int *i, int *off)
 	 *     IPv6 hbh dest1 rthdr ah* [esp* dest2 payload]
 	 */
 	while (1) {
-		if (*i + sizeof(ip6e) > m->m_pkthdr.len) {
-			return EINVAL;
-		}
-
 		switch (nxt) {
 		case IPPROTO_AH:
 		case IPPROTO_ESP:
 		case IPPROTO_IPCOMP:
-		/*
-		 * we should not skip security header added
-		 * beforehand.
-		 */
+			/*
+			 * We should not skip security header added
+			 * beforehand.
+			 */
 			return 0;
 
 		case IPPROTO_HOPOPTS:
 		case IPPROTO_DSTOPTS:
 		case IPPROTO_ROUTING:
-		/*
-		 * if we see 2nd destination option header,
-		 * we should stop there.
-		 */
+			if (*i + sizeof(ip6e) > m->m_pkthdr.len) {
+				return EINVAL;
+			}
+
+			/*
+			 * If we see 2nd destination option header,
+			 * we should stop there.
+			 */
 			if (nxt == IPPROTO_DSTOPTS && dstopt)
 				return 0;
 
 			if (nxt == IPPROTO_DSTOPTS) {
 				/*
-				 * seen 1st or 2nd destination option.
+				 * Seen 1st or 2nd destination option.
 				 * next time we see one, it must be 2nd.
 				 */
 				dstopt = 1;
 			} else if (nxt == IPPROTO_ROUTING) {
 				/*
-				 * if we see destination option next
+				 * If we see destination option next
 				 * time, it must be dest2.
 				 */
 				dstopt = 2;
@@ -667,6 +667,9 @@ compute_ipsec_pos(struct mbuf *m, int *i, int *off)
 			nxt = ip6e.ip6e_nxt;
 			*off = *i + offsetof(struct ip6_ext, ip6e_nxt);
 			*i += (ip6e.ip6e_len + 1) << 3;
+			if (*i > m->m_pkthdr.len) {
+				return EINVAL;
+			}
 			break;
 		default:
 			return 0;
