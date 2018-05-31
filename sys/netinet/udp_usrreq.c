@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.253 2018/05/31 07:03:57 maxv Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.254 2018/05/31 13:51:56 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.253 2018/05/31 07:03:57 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.254 2018/05/31 13:51:56 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1259,11 +1259,7 @@ udp4_espinudp(struct mbuf **mp, int off, struct socket *so)
 	struct mbuf *m = *mp;
 	uint32_t *marker;
 
-	/*
-	 * Collapse the mbuf chain if the first mbuf is too short.
-	 * The longest case is: UDP + max(Non-ESP, Non-IKE) + ESP.
-	 */
-	minlen = off + 2 * sizeof(uint32_t) + sizeof(struct esp);
+	minlen = off + sizeof(struct esp);
 	if (minlen > m->m_pkthdr.len)
 		minlen = m->m_pkthdr.len;
 
