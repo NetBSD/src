@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.c,v 1.88 2018/05/18 05:51:23 reinoud Exp $ */
+/* $NetBSD: thunk.c,v 1.89 2018/06/01 08:04:57 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -28,8 +28,12 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__RCSID("$NetBSD: thunk.c,v 1.88 2018/05/18 05:51:23 reinoud Exp $");
+__RCSID("$NetBSD: thunk.c,v 1.89 2018/06/01 08:04:57 reinoud Exp $");
 #endif
+
+#define _KMEMUSER
+#define _X86_64_MACHTYPES_H_
+#define _I386_MACHTYPES_H_
 
 #include "../include/types.h"
 #include <sys/mman.h>
@@ -42,7 +46,6 @@ __RCSID("$NetBSD: thunk.c,v 1.88 2018/05/18 05:51:23 reinoud Exp $");
 #include <sys/shm.h>
 #include <sys/ioctl.h>
 
-#define _KMEMUSER
 #include <machine/vmparam.h>
 
 #include <net/if.h>
@@ -70,6 +73,7 @@ __RCSID("$NetBSD: thunk.c,v 1.88 2018/05/18 05:51:23 reinoud Exp $");
 #include <time.h>
 #include <ucontext.h>
 #include <unistd.h>
+#include <stdbool.h>
 
 #include "../include/thunk.h"
 
