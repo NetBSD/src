@@ -1,4 +1,4 @@
-/*	$NetBSD: if_alc.c,v 1.25 2017/09/26 07:42:06 knakahara Exp $	*/
+/*	$NetBSD: if_alc.c,v 1.26 2018/06/01 09:34:39 maxv Exp $	*/
 /*	$OpenBSD: if_alc.c,v 1.1 2009/08/08 09:31:13 kevlo Exp $	*/
 /*-
  * Copyright (c) 2009, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -2537,7 +2537,7 @@ alc_rxeof(struct alc_softc *sc, struct rx_rdesc *rrd)
 			sc->alc_cdata.alc_rxhead = mp;
 			sc->alc_cdata.alc_rxtail = mp;
 		} else {
-			mp->m_flags &= ~M_PKTHDR;
+			m_remove_pkthdr(mp);
 			sc->alc_cdata.alc_rxprev_tail =
 			    sc->alc_cdata.alc_rxtail;
 			sc->alc_cdata.alc_rxtail->m_next = mp;
@@ -2547,7 +2547,7 @@ alc_rxeof(struct alc_softc *sc, struct rx_rdesc *rrd)
 		if (count == nsegs - 1) {
 			/* Last desc. for this frame. */
 			m = sc->alc_cdata.alc_rxhead;
-			m->m_flags |= M_PKTHDR;
+			KASSERT(m->m_flags & M_PKTHDR);
 			/*
 			 * It seems that L1C/L2C controller has no way
 			 * to tell hardware to strip CRC bytes.
