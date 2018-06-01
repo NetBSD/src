@@ -1,4 +1,4 @@
-/*	$NetBSD: svwsata.c,v 1.21 2018/06/01 16:12:01 macallan Exp $	*/
+/*	$NetBSD: svwsata.c,v 1.22 2018/06/01 18:14:33 macallan Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svwsata.c,v 1.21 2018/06/01 16:12:01 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svwsata.c,v 1.22 2018/06/01 18:14:33 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -322,9 +322,8 @@ svwsata_mapchan(struct pciide_channel *cp)
 	bus_space_write_4(sc->sc_ba5_st, sc->sc_ba5_sh,
 	    (wdc_cp->ch_channel << 8) + SVWSATA_SIM, 0);
 
-#ifndef notyet
 	cp->ata_channel.ch_flags |= ATACH_DMA_BEFORE_CMD;
-#endif
+
 	wdcattach(wdc_cp);
 	return;
 
