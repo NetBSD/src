@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.18 2018/05/28 21:05:10 chs Exp $	*/
+/*	$NetBSD: types.h,v 1.19 2018/06/01 00:56:19 kre Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -83,8 +83,11 @@
 #endif
 #undef longlong_t
 #undef u_longlong_t
+#ifndef __defined_ll_t
+#define __defined_ll_t
 typedef long long longlong_t;
 typedef unsigned long long u_longlong_t;
+#endif
 
 #ifndef _KERNEL
 #include <stdarg.h>
