@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.580 2018/05/25 04:40:26 ozaki-r Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.581 2018/06/01 08:56:00 maxv Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.580 2018/05/25 04:40:26 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.581 2018/06/01 08:56:00 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -6917,7 +6917,7 @@ wm_tx_offload(struct wm_softc *sc, struct wm_txqueue *txq,
 	    (M_CSUM_TSOv4 | M_CSUM_UDPv4 | M_CSUM_TCPv4 | M_CSUM_IPv4)) != 0) {
 		iphl = M_CSUM_DATA_IPv4_IPHL(m0->m_pkthdr.csum_data);
 	} else {
-		iphl = M_CSUM_DATA_IPv6_HL(m0->m_pkthdr.csum_data);
+		iphl = M_CSUM_DATA_IPv6_IPHL(m0->m_pkthdr.csum_data);
 	}
 	ipcse = offset + iphl - 1;
 
@@ -7524,7 +7524,7 @@ wm_nq_tx_offload(struct wm_softc *sc, struct wm_txqueue *txq,
 	    (M_CSUM_TSOv4 | M_CSUM_UDPv4 | M_CSUM_TCPv4 | M_CSUM_IPv4)) != 0) {
 		iphl = M_CSUM_DATA_IPv4_IPHL(m0->m_pkthdr.csum_data);
 	} else {
-		iphl = M_CSUM_DATA_IPv6_HL(m0->m_pkthdr.csum_data);
+		iphl = M_CSUM_DATA_IPv6_IPHL(m0->m_pkthdr.csum_data);
 	}
 	vl_len |= (iphl << NQTXC_VLLEN_IPLEN_SHIFT);
 	KASSERT((iphl & ~NQTXC_VLLEN_IPLEN_MASK) == 0);

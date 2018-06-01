@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.210 2018/05/29 16:21:30 maxv Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.211 2018/06/01 08:56:00 maxv Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.210 2018/05/29 16:21:30 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.211 2018/06/01 08:56:00 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -241,7 +241,7 @@ ip6_output(
 	}
 #endif
 
-	M_CSUM_DATA_IPv6_HL_SET(m->m_pkthdr.csum_data, sizeof(struct ip6_hdr));
+	M_CSUM_DATA_IPv6_SET(m->m_pkthdr.csum_data, sizeof(struct ip6_hdr));
 
 #define MAKE_EXTHDR(hp, mp)						\
     do {								\
@@ -400,7 +400,7 @@ ip6_output(
 		MAKE_CHAIN(exthdrs.ip6e_rthdr, mprev, nexthdrp,
 		    IPPROTO_ROUTING);
 
-		M_CSUM_DATA_IPv6_HL_SET(m->m_pkthdr.csum_data,
+		M_CSUM_DATA_IPv6_SET(m->m_pkthdr.csum_data,
 		    sizeof(struct ip6_hdr) + optlen);
 	}
 
@@ -1084,7 +1084,7 @@ in6_delayed_cksum(struct mbuf *m)
 	KASSERT((m->m_pkthdr.csum_flags
 	    & (M_CSUM_UDPv4|M_CSUM_TCPv4|M_CSUM_TSOv4)) == 0);
 
-	offset = M_CSUM_DATA_IPv6_HL(m->m_pkthdr.csum_data);
+	offset = M_CSUM_DATA_IPv6_IPHL(m->m_pkthdr.csum_data);
 	csum = in6_cksum(m, 0, offset, m->m_pkthdr.len - offset);
 	if (csum == 0 && (m->m_pkthdr.csum_flags & M_CSUM_UDPv6) != 0) {
 		csum = 0xffff;
