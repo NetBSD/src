@@ -31,7 +31,7 @@
 #if 0
 __FBSDID("$FreeBSD: head/sys/dev/ena/ena.c 333456 2018-05-10 09:37:54Z mw $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_ena.c,v 1.2 2018/05/19 09:32:55 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ena.c,v 1.3 2018/06/01 09:34:39 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1441,7 +1441,7 @@ ena_rx_mbuf(struct ena_ring *rx_ring, struct ena_com_rx_buf_info *ena_bufs,
 	    rx_info, rx_info->mbuf, (uintmax_t)rx_info->ena_buf.paddr);
 
 	mbuf = rx_info->mbuf;
-	mbuf->m_flags |= M_PKTHDR;
+	KASSERT(mbuf->m_flags & M_PKTHDR);
 	mbuf->m_pkthdr.len = len;
 	mbuf->m_len = len;
 	mbuf->m_pkthdr.rcvif = rx_ring->que->adapter->ifp;
