@@ -1,5 +1,6 @@
-# $NetBSD: Makefile.usermode,v 1.41 2018/01/13 16:20:33 reinoud Exp $
+# $NetBSD: Makefile.usermode,v 1.42 2018/06/01 07:22:33 reinoud Exp $
 
+MKCTF?=				no
 USETOOLS?=			no
 NEED_OWN_INSTALL_TARGET?=	no
 .include <bsd.own.mk>
