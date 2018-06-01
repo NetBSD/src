@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.79 2018/05/29 09:25:01 reinoud Exp $ */
+/* $NetBSD: cpu.c,v 1.80 2018/06/01 07:26:15 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_hz.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.79 2018/05/29 09:25:01 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.80 2018/06/01 07:26:15 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -353,9 +353,9 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 	thunk_printf_debug("cpu_setmcontext\n");
 #endif
 	if ((flags & _UC_CPU) != 0)
-		memcpy(&ucp->uc_mcontext.__gregs, mcp->__gregs, sizeof(__gregset_t));
+		memcpy(&ucp->uc_mcontext.__gregs, &mcp->__gregs, sizeof(__gregset_t));
 	if ((flags & _UC_FPU) != 0)
-		memcpy(&ucp->uc_mcontext.__fpregs, mcp->__fpregs, sizeof(__fpregset_t));
+		memcpy(&ucp->uc_mcontext.__fpregs, &mcp->__fpregs, sizeof(__fpregset_t));
 	if ((flags & _UC_TLSBASE) != 0)
 		lwp_setprivate(l, (void *) (uintptr_t) mcp->_mc_tlsbase);
 
