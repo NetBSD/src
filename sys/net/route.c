@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.209 2018/04/12 04:38:13 ozaki-r Exp $	*/
+/*	$NetBSD: route.c,v 1.210 2018/06/01 07:13:35 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.209 2018/04/12 04:38:13 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.210 2018/06/01 07:13:35 ozaki-r Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -1959,7 +1959,12 @@ rt_timer_work(struct work *wk, void *arg)
 		    (r->rtt_time + rtq->rtq_timeout) < time_uptime) {
 			LIST_REMOVE(r, rtt_link);
 			TAILQ_REMOVE(&rtq->rtq_head, r, rtt_next);
-			rt_ref(r->rtt_rt); /* XXX */
+			/*
+			 * Take a reference to avoid the rtentry is freed
+			 * accidentally after RT_UNLOCK.  The callback
+			 * (rtt_func) must rt_unref it by itself.
+			 */
+			rt_ref(r->rtt_rt);
 			RT_REFCNT_TRACE(r->rtt_rt);
 			RT_UNLOCK();
 			(*r->rtt_func)(r->rtt_rt, r);
