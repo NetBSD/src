@@ -154,7 +154,7 @@ wsmouse* at ums?
 
 genfb*	at pci? dev ? function ?
 wdc* 	at pci? dev ? function ?		# Kauai ATA
-#svwsata* at pci? dev ? function ?		# ServerWorks SATA controllers
+svwsata* at pci? dev ? function ?		# ServerWorks SATA controllers
 obio*	at pci? dev ? function ?
 zsc*	at obio?
 zstty*	at zsc? channel ?
