@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.9 2018/05/28 21:05:10 chs Exp $	*/
+/*	$NetBSD: time.h,v 1.10 2018/06/01 00:56:19 kre Exp $	*/
 
 /*-
  * Copyright (c) 2007 Pawel Jakub Dawidek <pjd@FreeBSD.org>
@@ -45,7 +45,10 @@
 #define	NSEC2SEC(n)	((n) / (NANOSEC / SEC))
 #define	SEC2NSEC(m)	((hrtime_t)(m) * (NANOSEC / SEC))
 
+#ifndef __defined_hr_t
+#define __defined_hr_t
 typedef longlong_t	hrtime_t;
+#endif
 
 #if defined(__i386__) || defined(__powerpc__)
 #define	TIMESPEC_OVERFLOW(ts)						\
