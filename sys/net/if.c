@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.426 2018/06/01 07:14:13 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.427 2018/06/01 07:16:23 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.426 2018/06/01 07:14:13 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.427 2018/06/01 07:16:23 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1404,6 +1404,14 @@ again:
 	}
 
 	if_free_sadl(ifp, 1);
+
+restart:
+	IFADDR_WRITER_FOREACH(ifa, ifp) {
+		family = ifa->ifa_addr->sa_family;
+		KASSERT(family == AF_LINK);
+		ifa_remove(ifp, ifa);
+		goto restart;
+	}
 
 	/* Delete stray routes from the routing table. */
 	for (i = 0; i <= AF_MAX; i++)
