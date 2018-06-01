@@ -1,4 +1,4 @@
-# $NetBSD: files.fdt,v 1.27 2018/05/27 17:14:23 jmcneill Exp $
+# $NetBSD: files.fdt,v 1.28 2018/06/01 22:11:53 jmcneill Exp $
 
 include	"external/bsd/libfdt/conf/files.libfdt"
 
@@ -79,6 +79,10 @@ file	dev/fdt/ausoc.c				ausoc
 
 define	fdt_display_timing
 file	dev/fdt/display_timing.c		fdt_display_timing
+
+# Display controller
+attach	genfb at fdt with simplefb
+file	dev/fdt/simplefb.c			simplefb
 
 # Designware APB UART
 attach	com at fdt with dw_apb_uart
