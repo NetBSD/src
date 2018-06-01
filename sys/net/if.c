@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.425 2018/05/31 02:10:23 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.426 2018/06/01 07:14:13 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.425 2018/05/31 02:10:23 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.426 2018/06/01 07:14:13 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -202,7 +202,7 @@ static void if_detach_queues(struct ifnet *, struct ifqueue *);
 static void sysctl_sndq_setup(struct sysctllog **, const char *,
     struct ifaltq *);
 static void if_slowtimo(void *);
-static void if_free_sadl(struct ifnet *);
+static void if_free_sadl(struct ifnet *, int);
 static void if_attachdomain1(struct ifnet *);
 static int ifconf(u_long, void *);
 static int if_transmit(struct ifnet *, struct mbuf *);
@@ -425,6 +425,7 @@ if_set_sadl(struct ifnet *ifp, const void *lla, u_char addrlen, bool factory)
 
 	(void)sockaddr_dl_setaddr(sdl, sdl->sdl_len, lla, ifp->if_addrlen);
 	if (factory) {
+		KASSERT(ifp->if_hwdl == NULL);
 		ifp->if_hwdl = ifp->if_dl;
 		ifaref(ifp->if_hwdl);
 	}
@@ -492,7 +493,7 @@ if_alloc_sadl(struct ifnet *ifp)
 	 * link types, and thus switch link names often.
 	 */
 	if (ifp->if_sadl != NULL)
-		if_free_sadl(ifp);
+		if_free_sadl(ifp, 0);
 
 	ifa = if_dl_create(ifp, &sdl);
 
@@ -568,10 +569,16 @@ if_activate_sadl(struct ifnet *ifp, struct ifaddr *ifa0,
  * a detach helper.  This is called from if_detach().
  */
 static void
-if_free_sadl(struct ifnet *ifp)
+if_free_sadl(struct ifnet *ifp, int factory)
 {
 	struct ifaddr *ifa;
 	int s;
+
+	if (factory && ifp->if_hwdl != NULL) {
+		ifa = ifp->if_hwdl;
+		ifp->if_hwdl = NULL;
+		ifafree(ifa);
+	}
 
 	ifa = ifp->if_dl;
 	if (ifa == NULL) {
@@ -585,10 +592,6 @@ if_free_sadl(struct ifnet *ifp)
 	rtinit(ifa, RTM_DELETE, 0);
 	ifa_remove(ifp, ifa);
 	if_deactivate_sadl(ifp);
-	if (ifp->if_hwdl == ifa) {
-		ifafree(ifa);
-		ifp->if_hwdl = NULL;
-	}
 	splx(s);
 }
 
@@ -1400,7 +1403,7 @@ again:
 		goto again;
 	}
 
-	if_free_sadl(ifp);
+	if_free_sadl(ifp, 1);
 
 	/* Delete stray routes from the routing table. */
 	for (i = 0; i <= AF_MAX; i++)
