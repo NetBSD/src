@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mkioctls,v 1.50 2018/05/29 14:29:53 martin Exp $
+#	$NetBSD: mkioctls,v 1.51 2018/06/02 20:07:15 mrg Exp $
 #
 # Copyright (c) 1994
 #	The Regents of the University of California.  All rights reserved.
@@ -49,10 +49,10 @@ echo "typedef struct crap videomemory_t;" # XXX arm video lossage
 echo "typedef struct crap RF_AccTotals_t;" # XXX Raidframe lossage
 echo "struct rf_test_acc { int _xxx; };" # XXX Raidframe lossage
 echo "struct map_info { int _xxx[22]; };" # XXX Xorg lossage
-echo "typedef struct kmutex kmutex_t;" # XXX needed by ZFS headers
 echo "#include <stdio.h>"
 echo "#include <sys/types.h>"
 echo "#include <sys/param.h>"
+echo "#include <sys/mutex.h>"
 echo "#ifndef NBPG"
 echo "#define NBPG 4096 /* workaround / dummy for sparc */"
 echo "#endif /* NBPG */"
