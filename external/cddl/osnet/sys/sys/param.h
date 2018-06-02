@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.4 2018/05/28 21:05:10 chs Exp $	*/
+/*	$NetBSD: param.h,v 1.5 2018/06/02 15:47:22 christos Exp $	*/
 
 /*
  * Copyright (C) 2007 John Birrell <jb@freebsd.org>
@@ -28,8 +28,6 @@
  * $FreeBSD: head/sys/cddl/compat/opensolaris/sys/param.h 185029 2008-11-17 20:49:29Z pjd $
  *
  */
-
-#include <sys/proc.h>
 
 #ifndef _COMPAT_OPENSOLARIS_SYS_PARAM_H_
 #define _COMPAT_OPENSOLARIS_SYS_PARAM_H_
