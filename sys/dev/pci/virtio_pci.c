@@ -1,4 +1,4 @@
-/* $NetBSD: virtio_pci.c,v 1.2 2018/02/15 19:05:10 uwe Exp $ */
+/* $NetBSD: virtio_pci.c,v 1.3 2018/06/02 13:30:32 jakllsch Exp $ */
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD");
+__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.3 2018/06/02 13:30:32 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
