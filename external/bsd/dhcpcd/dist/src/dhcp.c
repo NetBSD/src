@@ -3276,7 +3276,7 @@ valid_udp_packet(void *data, size_t data_len, struct in_addr *from,
 	struct bootp_pkt *p;
 	uint16_t bytes;
 
-	if (data_len < sizeof(p->ip) + sizeof(p->udp)) {
+	if (data_len < sizeof(p->ip)) {
 		if (from)
 			from->s_addr = INADDR_ANY;
 		errno = ERANGE;
@@ -3291,6 +3291,12 @@ valid_udp_packet(void *data, size_t data_len, struct in_addr *from,
 	}
 
 	bytes = ntohs(p->ip.ip_len);
+	/* Check we have a payload */
+	if (bytes <= sizeof(p->ip) + sizeof(p->udp)) {
+		errno = ERANGE;
+		return -1;
+	}
+	/* Check we don't go beyond the payload */
 	if (bytes > data_len) {
 		errno = ENOBUFS;
 		return -1;
@@ -3334,7 +3340,7 @@ dhcp_handlepacket(struct interface *ifp, uint8_t *data, size_t len)
 			     state->bpf_flags & RAW_PARTIALCSUM) == -1)
 	{
 		if (errno == EINVAL)
-			logerrx("%s: UDP checksum failure from %s",
+			logerrx("%s: checksum failure from %s",
 			  ifp->name, inet_ntoa(from));
 		else
 			logerr("%s: invalid UDP packet from %s",
