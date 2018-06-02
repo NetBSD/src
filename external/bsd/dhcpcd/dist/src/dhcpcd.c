@@ -770,20 +770,23 @@ dhcpcd_handlecarrier(struct dhcpcd_ctx *ctx, int carrier, unsigned int flags,
 }
 
 static void
-warn_iaid_conflict(struct interface *ifp, uint8_t *iaid)
+warn_iaid_conflict(struct interface *ifp, uint16_t ia_type, uint8_t *iaid)
 {
 	struct interface *ifn;
 	size_t i;
+	struct if_ia *ia;
 
 	TAILQ_FOREACH(ifn, ifp->ctx->ifaces, next) {
 		if (ifn == ifp || !ifn->active)
 			continue;
-		if (memcmp(ifn->options->iaid, iaid,
+		if (ia_type == 0 &&
+		    memcmp(ifn->options->iaid, iaid,
 		    sizeof(ifn->options->iaid)) == 0)
 			break;
 		for (i = 0; i < ifn->options->ia_len; i++) {
-			if (memcmp(&ifn->options->ia[i].iaid, iaid,
-			    sizeof(ifn->options->ia[i].iaid)) == 0)
+			ia = &ifn->options->ia[i];
+			if (ia->ia_type == ia_type &&
+			    memcmp(ia->iaid, iaid, sizeof(ia->iaid)) == 0)
 				break;
 		}
 	}
@@ -839,20 +842,21 @@ dhcpcd_startinterface(void *arg)
 	}
 
 	if (ifo->options & (DHCPCD_DUID | DHCPCD_IPV6)) {
+		struct if_ia *ia;
+
 		/* Report IAIDs */
 		loginfox("%s: IAID %s", ifp->name,
 		    hwaddr_ntoa(ifo->iaid, sizeof(ifo->iaid),
 		    buf, sizeof(buf)));
-		warn_iaid_conflict(ifp, ifo->iaid);
+		warn_iaid_conflict(ifp, 0, ifo->iaid);
 		for (i = 0; i < ifo->ia_len; i++) {
-			if (memcmp(ifo->iaid, ifo->ia[i].iaid,
-			    sizeof(ifo->iaid)))
-			{
-				loginfox("%s: IAID %s",
-				    ifp->name, hwaddr_ntoa(ifo->ia[i].iaid,
-				    sizeof(ifo->ia[i].iaid),
+			ia = &ifo->ia[i];
+			if (memcmp(ifo->iaid, ia->iaid, sizeof(ifo->iaid))) {
+				loginfox("%s: IA type %u IAID %s",
+				    ifp->name, ia->ia_type,
+				    hwaddr_ntoa(ia->iaid, sizeof(ia->iaid),
 				    buf, sizeof(buf)));
-				warn_iaid_conflict(ifp, ifo->ia[i].iaid);
+				warn_iaid_conflict(ifp, ia->ia_type, ia->iaid);
 			}
 		}
 	}
