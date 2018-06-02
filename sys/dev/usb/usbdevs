@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.747 2018/04/02 00:45:06 jakllsch Exp $
+$NetBSD: usbdevs,v 1.748 2018/06/02 21:15:33 sevan Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -884,6 +884,7 @@ product APPLE IPAD_2		0x12a2	Apple iPad 2
 product APPLE IPAD_3		0x12a6	Apple iPad 3
 product APPLE IPAD_MINI		0x12ab	Apple iPad Mini
 product APPLE ETHERNET		0x1402	Apple USB to Ethernet
+product APPLE BLUETOOTH1	0x8203	Bluetooth
 product APPLE BLUETOOTH2	0x8205	Bluetooth
 product APPLE BLUETOOTH_HOST_1	0x8213	Bluetooth USB Host Controller MacBookPro 7,1
 product APPLE BLUETOOTH_HOST_2	0x8215	Bluetooth USB Host Controller iMac 11,1
