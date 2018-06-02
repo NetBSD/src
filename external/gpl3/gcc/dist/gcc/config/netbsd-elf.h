@@ -90,9 +90,9 @@ along with GCC; see the file COPYING3.  If not see
        %(netbsd_link_ld_elf_so)} \
      %{static:-static \
        %{pie: %(netbsd_link_ld_elf_so)}}} \
-   %{!nostdlib:%{!nodefaultlibs:\
+   %{!shared:%{!nostdlib:%{!nodefaultlibs:\
      %{%:sanitize(address): -lasan } \
-     %{%:sanitize(undefined): -lubsan}}}"
+     %{%:sanitize(undefined): -lubsan}}}}"
 
 /* Provide the standard list of subtarget extra specs for NetBSD targets.  */
 #define NETBSD_SUBTARGET_EXTRA_SPECS \
