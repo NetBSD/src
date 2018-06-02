@@ -1268,8 +1268,8 @@ dt_module_update(dtrace_hdl_t *dtp, struct kld_file_stat *k_stat)
 #ifdef __NetBSD__
 	mapbase = 0;
 	if (ismod) {
-		int maxmodules = 512;
-		modstat_t modstat_buf[maxmodules], *ms;
+#define	MAXMODULES 512
+		modstat_t modstat_buf[MAXMODULES], *ms;
 		struct iovec iov = { modstat_buf, sizeof(modstat_buf) };
 
 		if (modctl(MODCTL_STAT, &iov) < 0) {
@@ -1278,14 +1278,14 @@ dt_module_update(dtrace_hdl_t *dtp, struct kld_file_stat *k_stat)
 			return;
 		}
 
-		for (i = 0; i < maxmodules; i++) {
+		for (i = 0; i < MAXMODULES; i++) {
 			ms = &modstat_buf[i];
 			if (!strcmp(name, ms->ms_name)) {
 				mapbase = ms->ms_addr;
 				break;
 			}
 		}
-		if (i == maxmodules) {
+		if (i == MAXMODULES) {
 			dt_dprintf("module %s not found\n", name);
 			return;
 		}
