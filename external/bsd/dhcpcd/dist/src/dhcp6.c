@@ -98,6 +98,11 @@ struct dhcp6_ia_na {
 };
 __CTASSERT(sizeof(struct dhcp6_ia_na) == 12);
 
+struct dhcp6_ia_ta {
+	uint8_t iaid[4];
+};
+__CTASSERT(sizeof(struct dhcp6_ia_ta) == 4);
+
 struct dhcp6_ia_addr {
 	struct in6_addr addr;
 	uint32_t pltime;
@@ -479,20 +484,18 @@ again:
 
 #ifndef SMALL
 static const struct if_sla *
-dhcp6_findselfsla(struct interface *ifp, const uint8_t *iaid)
+dhcp6_findselfsla(struct interface *ifp)
 {
 	size_t i, j;
+	struct if_ia *ia;
 
 	for (i = 0; i < ifp->options->ia_len; i++) {
-		if (iaid == NULL ||
-		    memcmp(&ifp->options->ia[i].iaid, iaid,
-		    sizeof(ifp->options->ia[i].iaid)) == 0)
-		{
-			for (j = 0; j < ifp->options->ia[i].sla_len; j++) {
-				if (strcmp(ifp->options->ia[i].sla[j].ifname,
-				    ifp->name) == 0)
-					return &ifp->options->ia[i].sla[j];
-			}
+		ia = &ifp->options->ia[i];
+		if (ia->ia_type != D6_OPTION_IA_PD)
+			continue;
+		for (j = 0; j < ia->sla_len; j++) {
+			if (strcmp(ia->sla[j].ifname, ifp->name) == 0)
+				return &ia->sla[j];
 		}
 	}
 	return NULL;
@@ -629,6 +632,7 @@ dhcp6_makemessage(struct interface *ifp)
 	int fqdn;
 	struct dhcp6_ia_na ia_na;
 	uint16_t ia_na_len;
+	struct if_ia *ifia;
 #ifdef AUTH
 	uint16_t auth_len;
 #endif
@@ -693,7 +697,7 @@ dhcp6_makemessage(struct interface *ifp)
 				len += sizeof(o.len);
 			}
 		}
-		if (dhcp6_findselfsla(ifp, NULL)) {
+		if (dhcp6_findselfsla(ifp)) {
 			n_options++;
 			len += sizeof(o.len);
 		}
@@ -772,7 +776,13 @@ dhcp6_makemessage(struct interface *ifp)
 		}
 		/* FALLTHROUGH */
 	case DH6S_INIT:
-		len += ifo->ia_len * (sizeof(o) + (sizeof(uint32_t) * 3));
+		for (l = 0; l < ifo->ia_len; l++) {
+			ifia = &ifo->ia[l];
+			len += sizeof(o) + sizeof(uint32_t); /* IAID */
+			/* IA_TA does not have T1 or T2 timers */
+			if (ifo->ia[l].ia_type != D6_OPTION_IA_TA)
+				len += sizeof(uint32_t) + sizeof(uint32_t);
+		}
 		IA = 1;
 		break;
 	default:
@@ -899,19 +909,29 @@ dhcp6_makemessage(struct interface *ifp)
 		COPYIN1(D6_OPTION_RAPID_COMMIT, 0);
 
 	for (l = 0; IA && l < ifo->ia_len; l++) {
+		ifia = &ifo->ia[l];
 		o_lenp = NEXTLEN;
-		ia_na_len = sizeof(ia_na);
-		memcpy(ia_na.iaid, ifo->ia[l].iaid, sizeof(ia_na.iaid));
+		/* TA structure is the same as the others,
+		 * it just lacks the T1 and T2 timers.
+		 * These happen to be at the end of the struct,
+		 * so we just don't copy them in. */
+		if (ifia->ia_type == D6_OPTION_IA_TA)
+			ia_na_len = sizeof(struct dhcp6_ia_ta);
+		else
+			ia_na_len = sizeof(ia_na);
+		memcpy(ia_na.iaid, ifia->iaid, sizeof(ia_na.iaid));
 		ia_na.t1 = 0;
 		ia_na.t2 = 0;
-		COPYIN(ifo->ia[l].ia_type, &ia_na, sizeof(ia_na));
+		COPYIN(ifia->ia_type, &ia_na, ia_na_len);
 		TAILQ_FOREACH(ap, &state->addrs, next) {
 			if (ap->flags & IPV6_AF_STALE)
 				continue;
 			if (ap->prefix_vltime == 0 &&
 			    !(ap->flags & IPV6_AF_REQUEST))
 				continue;
-			if (memcmp(ifo->ia[l].iaid, ap->iaid, sizeof(uint32_t)))
+			if (ap->ia_type != ifia->ia_type)
+				continue;
+			if (memcmp(ap->iaid, ifia->iaid, sizeof(ap->iaid)))
 				continue;
 			if (ap->ia_type == D6_OPTION_IA_PD) {
 #ifndef SMALL
@@ -1054,7 +1074,7 @@ dhcp6_makemessage(struct interface *ifp)
 					    (o.len + sizeof(o.code));
 				}
 			}
-			if (dhcp6_findselfsla(ifp, NULL)) {
+			if (dhcp6_findselfsla(ifp)) {
 				o.code = htons(D6_OPTION_PD_EXCLUDE);
 				memcpy(p, &o.code, sizeof(o.code));
 				p += sizeof(o.code);
@@ -2195,6 +2215,7 @@ dhcp6_findia(struct interface *ifp, struct dhcp6_message *m, size_t l,
 	uint8_t iaid[4];
 	char buf[sizeof(iaid) * 3];
 	struct ipv6_addr *ap;
+	struct if_ia *ifia;
 
 	if (l < sizeof(*m)) {
 		/* Should be impossible with guards at packet in
@@ -2248,21 +2269,15 @@ dhcp6_findia(struct interface *ifp, struct dhcp6_message *m, size_t l,
 		o.len = (uint16_t)(o.len - nl);
 
 		for (j = 0; j < ifo->ia_len; j++) {
-			if (memcmp(&ifo->ia[j].iaid, ia.iaid,
-			    sizeof(ia.iaid)) == 0)
+			ifia = &ifo->ia[j];
+			if (ifia->ia_type == o.code &&
+			    memcmp(ifia->iaid, ia.iaid, sizeof(ia.iaid)) == 0)
 				break;
 		}
 		if (j == ifo->ia_len &&
 		    !(ifo->ia_len == 0 && ifp->ctx->options & DHCPCD_DUMPLEASE))
 		{
 			logdebugx("%s: ignoring unrequested IAID %s",
-			    ifp->name,
-			    hwaddr_ntoa(ia.iaid, sizeof(ia.iaid),
-			    buf, sizeof(buf)));
-			continue;
-		}
-		if ( j < ifo->ia_len && ifo->ia[j].ia_type != o.code) {
-			logerrx("%s: IAID %s: option type mismatch",
 			    ifp->name,
 			    hwaddr_ntoa(ia.iaid, sizeof(ia.iaid),
 			    buf, sizeof(buf)));
@@ -2773,6 +2788,8 @@ dhcp6_delegate_prefix(struct interface *ifp)
 			}
 			for (i = 0; i < ifo->ia_len; i++) {
 				ia = &ifo->ia[i];
+				if (ia->ia_type != D6_OPTION_IA_PD)
+					continue;
 				if (memcmp(ia->iaid, ap->iaid,
 				    sizeof(ia->iaid)))
 					continue;
@@ -2869,6 +2886,8 @@ dhcp6_find_delegates(struct interface *ifp)
 				continue;
 			for (i = 0; i < ifo->ia_len; i++) {
 				ia = &ifo->ia[i];
+				if (ia->ia_type != D6_OPTION_IA_PD)
+					continue;
 				if (memcmp(ia->iaid, ap->iaid,
 				    sizeof(ia->iaid)))
 					continue;
@@ -3646,6 +3665,8 @@ dhcp6_activateinterfaces(struct interface *ifp)
 
 	for (i = 0; i < ifp->options->ia_len; i++) {
 		ia = &ifp->options->ia[i];
+		if (ia->ia_type != D6_OPTION_IA_PD)
+			continue;
 		for (j = 0; j < ia->sla_len; j++) {
 			sla = &ia->sla[j];
 			ifd = if_find(ifp->ctx->ifaces, sla->ifname);
@@ -3702,7 +3723,7 @@ dhcp6_start1(void *arg)
 
 #ifndef SMALL
 	/* Rapid commit won't work with Prefix Delegation Exclusion */
-	if (dhcp6_findselfsla(ifp, NULL))
+	if (dhcp6_findselfsla(ifp))
 		del_option_mask(ifo->requestmask6, D6_OPTION_RAPID_COMMIT);
 #endif
 
