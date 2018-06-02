@@ -1360,6 +1360,7 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 		for (sl = 0; sl < ifo->ia_len; sl++) {
 			if ((arg == NULL && !ifo->ia[sl].iaid_set) ||
 			    (arg != NULL && ifo->ia[sl].iaid_set &&
+			    ifo->ia[sl].ia_type == (uint16_t)i &&
 			    ifo->ia[sl].iaid[0] == iaid[0] &&
 			    ifo->ia[sl].iaid[1] == iaid[1] &&
 			    ifo->ia[sl].iaid[2] == iaid[2] &&
@@ -1368,10 +1369,6 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 			        ia = &ifo->ia[sl];
 				break;
 			}
-		}
-		if (ia && ia->ia_type != (uint16_t)i) {
-			logerrx("Cannot mix IA for the same IAID");
-			break;
 		}
 		if (ia == NULL) {
 			ia = reallocarray(ifo->ia,
