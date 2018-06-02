@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.278 2018/06/02 01:41:49 christos Exp $
+#	$NetBSD: bsd.sys.mk,v 1.279 2018/06/02 03:02:30 christos Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -70,13 +70,6 @@ CFLAGS+=	${${ACTIVE_CC} == "gcc" :? -Wno-traditional :}
 CFLAGS+=	${${ACTIVE_CC} == "gcc" :? -Wa,--fatal-warnings :}
 .endif
 
-.if ${MKRELRO:Uno} != "no"
-LDFLAGS+=	-Wl,-z,relro
-.endif
-.if ${MKRELRO:Uno} == "full"
-LDFLAGS+=	-Wl,-z,now
-.endif
-
 # Set linker warnings to be fatal
 # XXX no proper way to avoid "FOO is a patented algorithm" warnings
 # XXX on linking static libs
@@ -87,12 +80,6 @@ LDFLAGS+=	-Wl,-z,now
 LDFLAGS+=	-Wl,--fatal-warnings
 . endif
 .endif
-.endif
-
-.if ${MKSANITIZER:Uno} == "yes"
-CFLAGS+=	-fsanitize=${USE_SANITIZER}
-CXXFLAGS+=	-fsanitize=${USE_SANITIZER}
-LDFLAGS+=	-fsanitize=${USE_SANITIZER}
 .endif
 
 LDFLAGS+=	-Wl,--warn-shared-textrel
@@ -134,6 +121,20 @@ CFLAGS+=	-Wno-uninitialized
 CFLAGS+=	-Wno-maybe-uninitialized
 .endif
 .endif
+
+.if ${MKRELRO:Uno} != "no"
+LDFLAGS+=	-Wl,-z,relro
+.endif
+.if ${MKRELRO:Uno} == "full"
+LDFLAGS+=	-Wl,-z,now
+.endif
+
+.if ${MKSANITIZER:Uno} == "yes"
+CFLAGS+=	-fsanitize=${USE_SANITIZER}
+CXXFLAGS+=	-fsanitize=${USE_SANITIZER}
+LDFLAGS+=	-fsanitize=${USE_SANITIZER}
+.endif
+
 
 CWARNFLAGS+=	${CWARNFLAGS.${ACTIVE_CC}}
 
