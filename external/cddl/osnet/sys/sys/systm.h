@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.5 2018/05/28 21:05:10 chs Exp $	*/
+/*	$NetBSD: systm.h,v 1.6 2018/06/02 18:46:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -57,8 +57,6 @@
  * $FreeBSD: head/sys/cddl/compat/opensolaris/sys/systm.h 296510 2016-03-08 17:27:13Z mav $
  */
 
-#include <sys/proc.h>
-
 #ifndef _OPENSOLARIS_SYS_SYSTM_H_
 #define	_OPENSOLARIS_SYS_SYSTM_H_
 
@@ -67,10 +65,9 @@
 #include_next <sys/systm.h>
 #endif
 
-#include <sys/param.h>
-
 #ifdef _KERNEL
 #include <sys/string.h>
+#include <sys/errno.h>
 
 #define	PAGESIZE	PAGE_SIZE
 #define	PAGEOFFSET	(PAGESIZE - 1)

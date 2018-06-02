@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.10 2018/06/01 00:56:19 kre Exp $	*/
+/*	$NetBSD: time.h,v 1.11 2018/06/02 18:46:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007 Pawel Jakub Dawidek <pjd@FreeBSD.org>
@@ -62,7 +62,6 @@ typedef longlong_t	hrtime_t;
 #define	NSEC_TO_TICK(nsec)	((nsec) / (NANOSEC / hz))
 
 #ifdef _KERNEL
-#include <sys/systm.h>
 
 static __inline hrtime_t
 gethrtime(void) {
