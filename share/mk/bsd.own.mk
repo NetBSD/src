@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1062 2018/05/31 05:27:46 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.1063 2018/06/02 01:41:49 christos Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -939,7 +939,7 @@ dependall:	.NOTMAIN realdepend .MAKE
 #
 .for var in \
 	NOCRYPTO NODOC NOHTML NOINFO NOLINKLIB NOLINT NOMAN NONLS NOOBJ NOPIC \
-	NOPICINSTALL NOPROFILE NOSHARE NOSTATICLIB NODEBUGLIB
+	NOPICINSTALL NOPROFILE NOSHARE NOSTATICLIB NODEBUGLIB NOSANITIZER
 .if defined(${var})
 MK${var:S/^NO//}:=	no
 .endif
@@ -1089,6 +1089,12 @@ ${var}?=	${${var}.${MACHINE_ARCH}:Uyes}
 #
 _MKVARS.yes += MKGCCCMDS
 MKGCCCMDS?=	${MKGCC}
+
+#
+# Sanitizers, only "address" and "undefined" are supported by gcc
+#
+MKSANITIZER?=	no
+USE_SANITIZER?=	address
 
 #
 # Exceptions to the above:
