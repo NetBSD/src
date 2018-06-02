@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.277 2018/05/24 02:06:31 christos Exp $
+#	$NetBSD: bsd.sys.mk,v 1.278 2018/06/02 01:41:49 christos Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -87,6 +87,12 @@ LDFLAGS+=	-Wl,-z,now
 LDFLAGS+=	-Wl,--fatal-warnings
 . endif
 .endif
+.endif
+
+.if ${MKSANITIZER:Uno} == "yes"
+CFLAGS+=	-fsanitize=${USE_SANITIZER}
+CXXFLAGS+=	-fsanitize=${USE_SANITIZER}
+LDFLAGS+=	-fsanitize=${USE_SANITIZER}
 .endif
 
 LDFLAGS+=	-Wl,--warn-shared-textrel
