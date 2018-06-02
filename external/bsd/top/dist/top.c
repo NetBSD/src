@@ -119,7 +119,6 @@ quit(int status)
 
 {
     screen_end();
-    chdir("/tmp");
     exit(status);
     /* NOTREACHED */
 }
@@ -725,6 +724,16 @@ main(int argc, char *argv[])
 
     struct statics statics;
     globalstate *gstate;
+
+    /*
+     * Since top(1) is often long running and
+     * doesn't typically care about where its running from
+     * chdir to the root to allow unmounting of its
+     * original wd. Failure is alright as this is
+     * just a courtesy for users.
+     */
+    chdir("/");
+
 
     /* get our name */
     if (argc > 0)
