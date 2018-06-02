@@ -1152,8 +1152,11 @@ ipv6_handleifa(struct dhcpcd_ctx *ctx,
 			}
 #endif
 
-			if (ia->dadcallback)
+			if (ia->dadcallback) {
 				ia->dadcallback(ia);
+				if (ctx->options & DHCPCD_FORKED)
+					goto out;
+			}
 
 			if (IN6_IS_ADDR_LINKLOCAL(&ia->addr) &&
 			    !(ia->addr_flags & IN6_IFF_NOTUSEABLE))
@@ -1168,20 +1171,24 @@ ipv6_handleifa(struct dhcpcd_ctx *ctx,
 					    cb, next);
 					cb->callback(cb->arg);
 					free(cb);
+					if (ctx->options & DHCPCD_FORKED)
+						goto out;
 				}
 			}
 		}
 		break;
 	}
 
-	if (ia != NULL) {
-		ipv6nd_handleifa(cmd, ia, pid);
-		dhcp6_handleifa(cmd, ia, pid);
+	if (ia == NULL)
+		return;
 
-		/* Done with the ia now, so free it. */
-		if (cmd == RTM_DELADDR)
-			ipv6_freeaddr(ia);
-	}
+	ipv6nd_handleifa(cmd, ia, pid);
+	dhcp6_handleifa(cmd, ia, pid);
+
+out:
+	/* Done with the ia now, so free it. */
+	if (cmd == RTM_DELADDR)
+		ipv6_freeaddr(ia);
 }
 
 int
