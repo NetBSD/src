@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atu.c,v 1.57 2018/05/01 16:18:13 maya Exp $ */
+/*	$NetBSD: if_atu.c,v 1.58 2018/06/03 10:59:35 maxv Exp $ */
 /*	$OpenBSD: if_atu.c,v 1.48 2004/12/30 01:53:21 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.57 2018/05/01 16:18:13 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.58 2018/06/03 10:59:35 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -108,7 +108,7 @@ int atudebug = 1;
 /*
  * Various supported device vendors/products/radio type.
  */
-struct atu_type atu_devs[] = {
+static const struct atu_type atu_devs[] = {
 	{ USB_VENDOR_3COM,	USB_PRODUCT_3COM_3CRSHEW696,
 	  RadioRFMD,		ATU_NO_QUIRK },
 	{ USB_VENDOR_ABOCOM,	USB_PRODUCT_ABOCOM_BWU613,
@@ -1101,7 +1101,7 @@ atu_match(device_t parent, cfdata_t match, void *aux)
 	int			i;
 
 	for (i = 0; i < __arraycount(atu_devs); i++) {
-		struct atu_type *t = &atu_devs[i];
+		const struct atu_type *t = &atu_devs[i];
 
 		if (uaa->uaa_vendor == t->atu_vid &&
 		    uaa->uaa_product == t->atu_pid) {
@@ -1280,7 +1280,7 @@ atu_attach(device_t parent, device_t self, void *aux)
 	 * basically does the same as atu_match
 	 */
 	for (i = 0; i < __arraycount(atu_devs); i++) {
-		struct atu_type *t = &atu_devs[i];
+		const struct atu_type *t = &atu_devs[i];
 
 		if (uaa->uaa_vendor == t->atu_vid &&
 		    uaa->uaa_product == t->atu_pid) {
