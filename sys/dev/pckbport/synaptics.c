@@ -1,4 +1,4 @@
-/*	$NetBSD: synaptics.c,v 1.40 2018/06/03 14:41:05 christos Exp $	*/
+/*	$NetBSD: synaptics.c,v 1.41 2018/06/03 15:10:12 christos Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -48,7 +48,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.40 2018/06/03 14:41:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.41 2018/06/03 15:10:12 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -392,6 +392,7 @@ pms_synaptics_probe_init(void *vsc)
 				sep = comma;
 			}
 		}
+		aprint_normal("\n");
 	}
 
 done:
