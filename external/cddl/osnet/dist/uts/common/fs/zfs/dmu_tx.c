@@ -1151,7 +1151,11 @@ dmu_tx_delay(dmu_tx_t *tx, uint64_t dirty)
 	    zfs_delay_resolution_ns * SBT_1NS, C_ABSOLUTE);
 #endif
 #ifdef __NetBSD__
-	kpause("dmu_tx_delay", false, (wakeup - now) * hz / 1000000000, NULL);
+	int timo = (wakeup - now) * hz / 1000000000;
+
+	if (timo == 0)
+		timo = 1;
+	kpause("dmu_tx_delay", false, timo, NULL);
 #endif
 #else
 	hrtime_t delta = wakeup - gethrtime();
