@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_frag.c,v 1.6 2018/05/03 07:13:48 maxv Exp $	*/
+/*	$NetBSD: ip_frag.c,v 1.7 2018/06/03 10:37:23 maxv Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -86,7 +86,7 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_frag.c,v 1.6 2018/05/03 07:13:48 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_frag.c,v 1.7 2018/06/03 10:37:23 maxv Exp $");
 #else
 static const char sccsid[] = "@(#)ip_frag.c	1.11 3/24/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_frag.c,v 1.1.1.2 2012/07/22 13:45:17 darrenr Exp";
@@ -135,21 +135,6 @@ static void ipf_frag_delete(ipf_main_softc_t *, ipfr_t *, ipfr_t ***);
 static void ipf_frag_free(ipf_frag_softc_t *, ipfr_t *);
 
 static frentry_t ipfr_block;
-
-ipftuneable_t ipf_tuneables[] = {
-	{ { (void *)offsetof(ipf_frag_softc_t, ipfr_size) },
-		"frag_size",		1,	0x7fffffff,
-		stsizeof(ipf_frag_softc_t, ipfr_size),
-		IPFT_WRDISABLED,	NULL,	NULL },
-	{ { (void *)offsetof(ipf_frag_softc_t, ipfr_ttl) },
-		"frag_ttl",		1,	0x7fffffff,
-		stsizeof(ipf_frag_softc_t, ipfr_ttl),
-		0,			NULL,	NULL },
-	{ { NULL },
-		NULL,			0,	0,
-		0,
-		0,			NULL,	NULL }
-};
 
 #define	FBUMP(x)	softf->ipfr_stats.x++
 #define	FBUMPD(x)	do { softf->ipfr_stats.x++; DT(x); } while (0)
