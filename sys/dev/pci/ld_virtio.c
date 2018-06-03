@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_virtio.c,v 1.16 2017/08/09 16:44:40 mlelstv Exp $	*/
+/*	$NetBSD: ld_virtio.c,v 1.17 2018/06/03 02:13:09 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.16 2017/08/09 16:44:40 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.17 2018/06/03 02:13:09 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,10 +71,10 @@ __KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.16 2017/08/09 16:44:40 mlelstv Exp $
 #define VIRTIO_BLK_F_SCSI	(1<<7)
 #define VIRTIO_BLK_F_FLUSH	(1<<9)
 
-/*      
+/*
  * Each block request uses at least two segments - one for the header
  * and one for the status.
-*/     
+*/
 #define	VIRTIO_BLK_MIN_SEGMENTS	2
 
 #define VIRTIO_BLK_FLAG_BITS \
@@ -504,7 +504,7 @@ ld_virtio_dump(struct ld_softc *ld, void *data, int blkno, int blkcnt)
 	if (r != 0)
 		return r;
 
-	r = virtio_enqueue_reserve(vsc, vq, slot, vr->vr_payload->dm_nsegs + 
+	r = virtio_enqueue_reserve(vsc, vq, slot, vr->vr_payload->dm_nsegs +
 	    VIRTIO_BLK_MIN_SEGMENTS);
 	if (r != 0) {
 		bus_dmamap_unload(virtio_dmat(vsc), vr->vr_payload);
@@ -549,7 +549,7 @@ ld_virtio_dump(struct ld_softc *ld, void *data, int blkno, int blkcnt)
 		} else
 			break;
 	}
-		
+
 	bus_dmamap_sync(virtio_dmat(vsc), vr->vr_cmdsts,
 			0, sizeof(struct virtio_blk_req_hdr),
 			BUS_DMASYNC_POSTWRITE);
@@ -612,7 +612,7 @@ MODULE(MODULE_CLASS_DRIVER, ld_virtio, "ld,virtio");
 #define CFDRIVER_DECL(name, class, attr)
 #include "ioconf.c"
 #endif
- 
+
 static int
 ld_virtio_modcmd(modcmd_t cmd, void *opaque)
 {
@@ -624,7 +624,7 @@ ld_virtio_modcmd(modcmd_t cmd, void *opaque)
 	static struct cfdriver * const no_cfdriver_vec[] = { NULL };
 #endif
 	int error = 0;
- 
+
 #ifdef _MODULE
 	switch (cmd) {
 	case MODULE_CMD_INIT:
