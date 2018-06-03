@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.158 2018/05/30 09:17:17 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.159 2018/06/03 10:24:24 maxv Exp $ */
 
 /******************************************************************************
 
@@ -80,7 +80,7 @@
 /************************************************************************
  * Driver version
  ************************************************************************/
-char ixgbe_driver_version[] = "4.0.1-k";
+static const char ixgbe_driver_version[] = "4.0.1-k";
 
 
 /************************************************************************
@@ -92,7 +92,7 @@ char ixgbe_driver_version[] = "4.0.1-k";
  *
  *   { Vendor ID, Device ID, SubVendor ID, SubDevice ID, String Index }
  ************************************************************************/
-static ixgbe_vendor_info_t ixgbe_vendor_info_array[] =
+static const ixgbe_vendor_info_t ixgbe_vendor_info_array[] =
 {
 	{IXGBE_INTEL_VENDOR_ID, IXGBE_DEV_ID_82598AF_DUAL_PORT, 0, 0, 0},
 	{IXGBE_INTEL_VENDOR_ID, IXGBE_DEV_ID_82598AF_SINGLE_PORT, 0, 0, 0},
@@ -266,7 +266,7 @@ static void	ixgbe_handle_phy(void *);
 /* Workqueue handler for deferred work */
 static void	ixgbe_handle_que_work(struct work *, void *);
 
-static ixgbe_vendor_info_t *ixgbe_lookup(const struct pci_attach_args *);
+static const ixgbe_vendor_info_t *ixgbe_lookup(const struct pci_attach_args *);
 
 /************************************************************************
  *  NetBSD Device Interface Entry Points
@@ -769,7 +769,7 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 	u32		ctrl_ext;
 	u16		high, low, nvmreg;
 	pcireg_t	id, subid;
-	ixgbe_vendor_info_t *ent;
+	const ixgbe_vendor_info_t *ent;
 	struct pci_attach_args *pa = aux;
 	const char *str;
 	char buf[256];
@@ -5934,10 +5934,10 @@ ixgbe_probe(device_t dev, cfdata_t cf, void *aux)
 	return (ixgbe_lookup(pa) != NULL) ? 1 : 0;
 }
 
-static ixgbe_vendor_info_t *
+static const ixgbe_vendor_info_t *
 ixgbe_lookup(const struct pci_attach_args *pa)
 {
-	ixgbe_vendor_info_t *ent;
+	const ixgbe_vendor_info_t *ent;
 	pcireg_t subid;
 
 	INIT_DEBUGOUT("ixgbe_lookup: begin");
