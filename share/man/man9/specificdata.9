@@ -1,4 +1,4 @@
-.\"	$NetBSD: specificdata.9,v 1.1 2018/06/03 09:22:34 pgoyette Exp $
+.\"	$NetBSD: specificdata.9,v 1.2 2018/06/03 11:55:27 pgoyette Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -78,39 +78,49 @@ within a particular domain.
 .Sh FUNCTIONS
 .Bl -tag -width abcd
 .It Fn specificdata_domain_create
-Create a new domain.
+Create a new
+.Nm domain .
 .It Fn specificdata_domain_delete sd
-Delete a domain.
+Deletes domain
+.Fa sd .
 .It Fn specificdata_key_create sd keyp dtor
-Create a new key for the domain.
-The
+Create a new key for
+.Fa sd .
+If the
 .Fa dtor
-argument specifies a destructor which is called when an item with the
-specified key is deleted.
+argument is not
+.Dv NULL ,
+it specifies a destructor which will be called when a datum associated
+with the specified key is deleted from a container within the
+.Fa sd .
+The unique identifier of the created key is returned in
+.Fa keyp .
 .It Fn specificdata_key_delete sd key
-Delete a key for the domain, and delete any associated values.
+Delete a key for
+.Fa sd ,
+and delete any associated data from all containers within the domain.
 .It Fn specificdata_init sd ref
 Initialize the
 .Nm
 container
 .Fa ref
-for use in the specified domain.
+for use in
+.Fa sd .
 .It Fn specificdata_fini sd ref
 Destroy the
 .Nm
 container
 .Fa ref ,
-and destroy all of the data values stuffed into the container.
-.It Fn specificdata_getspecific "specificdata_domain_t sd" \
-"specificdata_reference *ref" "specificdata_key_t key"
-Retrieve the data value from the
+and destroy all of the data stuffed into the container.
+.It Fn specificdata_getspecific sd ref key
+Retrieve the datum from the
 .Nm
 container
 .Fa ref
 associated with
 .Fa key .
 .It Fn specificdata_getspecific_unlocked sd ref key
-Retrieve the data value from the
+Retrieve the datum from the
 .Nm
 container
 .Fa ref
@@ -123,7 +133,7 @@ to become invalid (i.e. point at the wrong container) by issuing a
 .Fn setspecific
 call or by destroying the container.
 .It Fn specificdata_setspecific sd ref key data
-Store the value
+Store
 .Fa data
 in the
 .Nm
@@ -131,8 +141,8 @@ container
 .Fa ref
 and associate it with
 .Fa key .
-If a value has previously been set, the new value replaces the original
-value.
+If a datum has previously been stored, the new value replaces the original;
+the original value is not destroyed, i.e. its destructor is not invoked.
 .It Fn specificdata_setspecific_nowait sd ref key data
 (Unimplemented)
 .El
@@ -154,7 +164,7 @@ subsystem first appeared in
 .An -nosplit
 The
 .Nm
-system was written by
+subsystem was written by
 .An Jason Thorpe Aq Mt thorpej@NetBSD.org .
 This manual page was written by
 .An Paul Goyette Aq Mt pgoyette@NetBSD.org .
