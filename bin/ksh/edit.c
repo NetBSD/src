@@ -1,4 +1,4 @@
-/*	$NetBSD: edit.c,v 1.34 2017/07/01 23:12:08 joerg Exp $	*/
+/*	$NetBSD: edit.c,v 1.35 2018/06/03 12:18:29 kamil Exp $	*/
 
 /*
  * Command line editing - common code
@@ -7,7 +7,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: edit.c,v 1.34 2017/07/01 23:12:08 joerg Exp $");
+__RCSID("$NetBSD: edit.c,v 1.35 2018/06/03 12:18:29 kamil Exp $");
 #endif
 
 #include <stdbool.h>
@@ -938,7 +938,7 @@ glob_table(pat, wp, tp)
 	struct tstate ts;
 	struct tbl *te;
 
-	for (twalk(&ts, tp); (te = tnext(&ts)); ) {
+	for (ksh_twalk(&ts, tp); (te = tnext(&ts)); ) {
 		if (gmatch(te->name, pat, false))
 			XPput(*wp, str_save(te->name, ATEMP));
 	}
