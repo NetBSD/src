@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.425 2018/06/03 09:22:34 pgoyette Exp $
+#       $NetBSD: Makefile,v 1.426 2018/06/03 10:34:59 pgoyette Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -522,6 +522,7 @@ MLINKS+=microuptime.9 binuptime.9 \
 MLINKS+=module.9 module_autoload.9 \
 	module.9 module_builtin_require_force.9 \
 	module.9 module_find_section.9 \
+	module.9 module_getspecific.9 \
 	module.9 module_hold.9 \
 	module.9 module_init.9 \
 	module.9 module_init_class.9 \
@@ -530,7 +531,10 @@ MLINKS+=module.9 module_autoload.9 \
 	module.9 module_load_vfs_init.9 \
 	module.9 module_name.9 \
 	module.9 module_rele.9 \
+	module.9 module_setspecific.9 \
 	module.9 module_source.9 \
+	module.9 module_specific_key_create.9 \
+	module.9 module_specific_key_delete.9 \
 	module.9 module_start_unload_thread.9 \
 	module.9 module_unload.9 \
 	module.9 module_register_callbacks.9 \
