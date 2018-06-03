@@ -1,4 +1,4 @@
-/* $NetBSD: alps.c,v 1.4 2017/08/16 21:18:58 nat Exp $ */
+/* $NetBSD: alps.c,v 1.5 2018/06/03 15:02:56 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2017 Ryo ONODERA <ryo@tetera.org>
@@ -30,7 +30,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: alps.c,v 1.4 2017/08/16 21:18:58 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: alps.c,v 1.5 2018/06/03 15:02:56 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -261,7 +261,7 @@ pms_alps_ecsig(struct pms_softc *psc, uint8_t *ecsig)
 	return 0;
 
 err:
-	aprint_error_dev(psc->sc_dev, "Failed to get EC signature.\n");
+	aprint_debug_dev(psc->sc_dev, "Failed to get EC signature.\n");
 	return res;
 }
 
@@ -752,7 +752,7 @@ err:
 	cmd[0] = PMS_RESET;
 	(void)pckbport_poll_cmd(psc->sc_kbctag, psc->sc_kbcslot, cmd,
 	    1, 2, resp, 1);
-	aprint_error_dev(psc->sc_dev, "Failed to initialize an ALPS device.\n");
+	aprint_verbose_dev(psc->sc_dev, "Failed to initialize an ALPS device.\n");
 	return res;
 }
 
