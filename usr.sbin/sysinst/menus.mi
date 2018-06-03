@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi,v 1.12 2018/05/18 12:23:22 joerg Exp $	*/
+/*	$NetBSD: menus.mi,v 1.13 2018/06/03 13:23:58 martin Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -327,8 +327,8 @@ menu sizechoice, sub menu, y=0, title MSG_Choose_your_size_specifier;
 
 menu distmedium, title MSG_Select_medium, y=-5;
 	option MSG_cdrom,     exit, action { *(int *)arg = get_via_cdrom(); };
-	option MSG_ftp,	      exit, action { *(int *)arg = get_via_ftp("ftp"); };
 	option MSG_http,      exit, action { *(int *)arg = get_via_ftp("http"); };
+	option MSG_ftp,	      exit, action { *(int *)arg = get_via_ftp("ftp"); };
 	option MSG_nfs,	      exit, action { *(int *)arg = get_via_nfs(); };
 	option MSG_floppy,    exit, action { *(int *)arg = get_via_floppy(); };
 	option MSG_local_fs,  exit, action { *(int *)arg = get_via_localfs(); };
