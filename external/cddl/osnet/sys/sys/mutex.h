@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.4 2018/05/28 21:05:10 chs Exp $	*/
+/*	$NetBSD: mutex.h,v 1.5 2018/06/03 14:56:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -32,9 +32,9 @@
 #ifndef _OPENSOLARIS_SYS_MUTEX_H_
 #define	_OPENSOLARIS_SYS_MUTEX_H_
 
-#ifdef _KERNEL
-
 #include_next <sys/mutex.h>
+
+#ifdef _KERNEL
 
 #define	MUTEX_HELD(x)		(mutex_owned(x))
 #define	MUTEX_NOT_HELD(x)	(!mutex_owned(x) || panicstr != NULL)
