@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_virtio.c,v 1.18 2018/06/03 19:47:35 jakllsch Exp $	*/
+/*	$NetBSD: ld_virtio.c,v 1.19 2018/06/03 19:50:20 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.18 2018/06/03 19:47:35 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.19 2018/06/03 19:50:20 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -447,6 +447,7 @@ ld_virtio_vq_done1(struct ld_virtio_softc *sc, struct virtio_softc *vsc,
 			0, bp->b_bcount,
 			(bp->b_flags & B_READ)?BUS_DMASYNC_POSTREAD
 					      :BUS_DMASYNC_POSTWRITE);
+	bus_dmamap_unload(virtio_dmat(vsc), vr->vr_payload);
 	bus_dmamap_sync(virtio_dmat(vsc), vr->vr_cmdsts,
 			sizeof(struct virtio_blk_req_hdr), sizeof(uint8_t),
 			BUS_DMASYNC_POSTREAD);
