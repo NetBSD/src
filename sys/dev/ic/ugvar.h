@@ -1,4 +1,4 @@
-/* $NetBSD: ugvar.h,v 1.4 2008/03/26 16:09:37 xtraeme Exp $ */
+/* $NetBSD: ugvar.h,v 1.5 2018/06/03 10:04:40 maxv Exp $ */
 
 /*
  * Copyright (c) 2007 Mihai Chelaru <kefren@netbsd.ro>
@@ -35,7 +35,7 @@ struct ug_softc {
 	struct sysmon_envsys *sc_sme;
 	envsys_data_t sc_sensor[UG_MAX_SENSORS];
 	uint8_t version;
-	void *mbsens;
+	const void *mbsens;
 };
 
 struct ug2_sensor_info {
