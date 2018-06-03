@@ -1,4 +1,4 @@
-/*	$NetBSD: synaptics.c,v 1.38 2018/05/30 13:20:39 ryoon Exp $	*/
+/*	$NetBSD: synaptics.c,v 1.39 2018/06/03 07:24:18 ryoon Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -48,7 +48,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.38 2018/05/30 13:20:39 ryoon Exp $");
+__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.39 2018/06/03 07:24:18 ryoon Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -433,6 +433,7 @@ pms_synaptics_enable(void *vsc)
 	struct synaptics_softc *sc = &psc->u.synaptics;
 	u_char enable_modes;
 	int res;
+	u_char cmd[1], resp[3];
 
 	if (sc->flags & SYN_FLAG_HAS_PASSTHROUGH) {
 		/*
@@ -473,6 +474,50 @@ pms_synaptics_enable(void *vsc)
 	/* a couple of set scales to clear out pending commands */
 	for (int i = 0; i < 2; i++)
 		synaptics_poll_cmd(psc, PMS_SET_SCALE11, 0);
+
+	/*
+	 * Enable multi-finger capability in cold boot case with
+	 * undocumented dequence.
+	 * Parameters from
+	 * https://github.com/RehabMan/OS-X-Voodoo-PS2-Controller/
+	 * VoodooPS2Trackpad/VoodooPS2SynapticsTouchPad.cpp
+	 * setTouchPadModeByte function.
+	 */
+	if (sc->flags & SYN_FLAG_HAS_EXTENDED_WMODE) {
+		cmd[0] = 0xe6;
+		(void)pckbport_poll_cmd(psc->sc_kbctag, psc->sc_kbcslot,
+		    cmd, 1, 3, resp, 0);
+		cmd[0] = 0xe8;
+		(void)pckbport_poll_cmd(psc->sc_kbctag, psc->sc_kbcslot,
+		    cmd, 1, 3, resp, 0);
+		cmd[0] = 0x00;
+		(void)pckbport_poll_cmd(psc->sc_kbctag, psc->sc_kbcslot,
+		    cmd, 1, 3, resp, 0);
+		cmd[0] = 0xe8;
+		(void)pckbport_poll_cmd(psc->sc_kbctag, psc->sc_kbcslot,
+		    cmd, 1, 3, resp, 0);
+		cmd[0] = 0x00;
+		(void)pckbport_poll_cmd(psc->sc_kbctag, psc->sc_kbcslot,
+		    cmd, 1, 3, resp, 0);
+		cmd[0] = 0xe8;
+		(void)pckbport_poll_cmd(psc->sc_kbctag, psc->sc_kbcslot,
+		    cmd, 1, 3, resp, 0);
+		cmd[0] = 0x00;
+		(void)pckbport_poll_cmd(psc->sc_kbctag, psc->sc_kbcslot,
+		    cmd, 1, 3, resp, 0);
+		cmd[0] = 0xe8;
+		(void)pckbport_poll_cmd(psc->sc_kbctag, psc->sc_kbcslot,
+		    cmd, 1, 3, resp, 0);
+		cmd[0] = 0x03;
+		(void)pckbport_poll_cmd(psc->sc_kbctag, psc->sc_kbcslot,
+		    cmd, 1, 3, resp, 0);
+		cmd[0] = 0xf3;
+		(void)pckbport_poll_cmd(psc->sc_kbctag, psc->sc_kbcslot,
+		    cmd, 1, 3, resp, 0);
+		cmd[0] = 0xc8;
+		(void)pckbport_poll_cmd(psc->sc_kbctag, psc->sc_kbcslot,
+		    cmd, 1, 3, resp, 0);
+	}
 
 	synaptics_poll_cmd(psc, PMS_DEV_ENABLE, 0);
 
