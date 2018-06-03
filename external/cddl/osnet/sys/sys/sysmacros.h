@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmacros.h,v 1.8 2018/05/28 21:05:10 chs Exp $	*/
+/*	$NetBSD: sysmacros.h,v 1.9 2018/06/03 05:55:08 chs Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -32,6 +32,16 @@
 #ifndef _SYS_SYSMACROS_H
 #define	_SYS_SYSMACROS_H
 
+/*
+ * Linux includes <sys/sysmacros.h> from <sys/types.h> with
+ * __SYSMACROS_DEPRECATED_INCLUSION defined during the include,
+ * but some of the definitions here break in that context,
+ * so if that symbol is defined then only define the few macros
+ * that we need there.
+ */
+
+#ifndef __SYSMACROS_DEPRECATED_INCLUSION
+
 #include <sys/param.h>
 #include <sys/opentypes.h>
 
@@ -52,6 +62,8 @@ extern "C" {
 #define	btodt(BB)	((BB) >> DEV_BSHIFT)
 #define	lbtod(BB)	(((offset_t)(BB) + DEV_BSIZE - 1) >> DEV_BSHIFT)
 
+#endif /* __SYSMACROS_DEPRECATED_INCLUSION */
+
 /* common macros */
 #ifndef MIN
 #define	MIN(a, b)	((a) < (b) ? (a) : (b))
@@ -65,6 +77,8 @@ extern "C" {
 #ifndef	SIGNOF
 #define	SIGNOF(a)	((a) < 0 ? -1 : (a) > 0)
 #endif
+
+#ifndef __SYSMACROS_DEPRECATED_INCLUSION
 
 #ifdef _KERNEL
 
@@ -468,5 +482,7 @@ highbit64(uint64_t i)
 #ifdef	__cplusplus
 }
 #endif
+
+#endif	/* __SYSMACROS_DEPRECATED_INCLUSION */
 
 #endif	/* _SYS_SYSMACROS_H */
