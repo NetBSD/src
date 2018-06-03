@@ -1,9 +1,14 @@
-/*	$NetBSD: conv.h,v 1.2 2013/11/22 15:52:05 christos Exp $	*/
+/*	$NetBSD: conv.h,v 1.3 2018/06/03 08:08:36 rin Exp $	*/
+
+/*
+ * We ensure that every wide char occupies at least one display width.
+ * See vs_line.c for more details.
+ */
+#define WIDE_COL(sp, ch)						\
+	(CHAR_WIDTH(sp, ch) >= 0 ? CHAR_WIDTH(sp, ch) : 1)
+
 #define KEY_COL(sp, ch)							\
-	(INTISWIDE(ch) ? 						\
-	    (CHAR_WIDTH(sp, ch) >= 0) ?					\
-	       (size_t)CHAR_WIDTH(sp, ch) : 1 /* extra space */		\
-	    : KEY_LEN(sp,ch))
+	(INTISWIDE(ch) ? (size_t)WIDE_COL(sp, ch) : KEY_LEN(sp, ch))
 
 struct _conv_win {
     void    *bp1;
