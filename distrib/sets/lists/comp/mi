@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2202 2018/06/03 10:35:57 pgoyette Exp $
+#	$NetBSD: mi,v 1.2203 2018/06/03 22:32:57 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -11130,14 +11130,14 @@
 ./usr/share/man/cat9/module_load_vfs_init.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/module_name.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/module_rele.0		comp-sys-catman		.cat
-./usr/share/man/cat9/module_register.0		comp-sys-catman		.cat
+./usr/share/man/cat9/module_register_callbacks.0 	comp-sys-catman		.cat
 ./usr/share/man/cat9/module_setspecific.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/module_source.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/module_specific_key_create.0 comp-sys-catman	.cat
 ./usr/share/man/cat9/module_specific_key_delete.0 comp-sys-catman	.cat
 ./usr/share/man/cat9/module_start_unload_thread.0 comp-sys-catman	.cat
 ./usr/share/man/cat9/module_unload.0		comp-sys-catman		.cat
-./usr/share/man/cat9/module_unregister.0	comp-sys-catman		.cat
+./usr/share/man/cat9/module_unregister_callbacks.0 comp-sys-catman		.cat
 ./usr/share/man/cat9/mono_time.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/mstohz.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/mtocl.0			comp-sys-catman		.cat
@@ -18836,12 +18836,12 @@
 ./usr/share/man/html9/module_load_vfs_init.html comp-sys-htmlman	html
 ./usr/share/man/html9/module_name.html		comp-sys-htmlman	html
 ./usr/share/man/html9/module_rele.html		comp-sys-htmlman	html
-./usr/share/man/html9/module_register.html	comp-sys-htmlman	html
+./usr/share/man/html9/module_register_callbacks.html comp-sys-htmlman	html
 ./usr/share/man/html9/module_setspecific.html	comp-sys-htmlman	html
 ./usr/share/man/html9/module_source.html	comp-sys-htmlman	html
 ./usr/share/man/html9/module_start_unload_thread.html comp-sys-htmlman	html
 ./usr/share/man/html9/module_unload.html	comp-sys-htmlman	html
-./usr/share/man/html9/module_unregister.html	comp-sys-htmlman	html
+./usr/share/man/html9/module_unregister_callbacks.html comp-sys-htmlman	html
 ./usr/share/man/html9/mstohz.html		comp-sys-htmlman	html
 ./usr/share/man/html9/mtocl.html		comp-sys-htmlman	html
 ./usr/share/man/html9/mtod.html			comp-sys-htmlman	html
@@ -26692,14 +26692,14 @@
 ./usr/share/man/man9/module_load_vfs_init.9	comp-sys-man		.man
 ./usr/share/man/man9/module_name.9		comp-sys-man		.man
 ./usr/share/man/man9/module_rele.9		comp-sys-man		.man
-./usr/share/man/man9/module_register.9		comp-sys-man		.man
+./usr/share/man/man9/module_register_callbacks.9 	comp-sys-man		.man
 ./usr/share/man/man9/module_setspecific.9	comp-sys-man		.man
 ./usr/share/man/man9/module_source.9		comp-sys-man		.man
 ./usr/share/man/man9/module_specific_key_create.9 comp-sys-man		.man
 ./usr/share/man/man9/module_specific_key_delete.9 comp-sys-man		.man
 ./usr/share/man/man9/module_start_unload_thread.9 comp-sys-man		.man
 ./usr/share/man/man9/module_unload.9		comp-sys-man		.man
-./usr/share/man/man9/module_unregister.9	comp-sys-man		.man
+./usr/share/man/man9/module_unregister_callbacks.9 comp-sys-man		.man
 ./usr/share/man/man9/mono_time.9		comp-obsolete		obsolete
 ./usr/share/man/man9/mstohz.9			comp-sys-man		.man
 ./usr/share/man/man9/mtocl.9			comp-sys-man		.man
