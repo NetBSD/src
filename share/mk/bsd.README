@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.373 2018/06/02 01:41:49 christos Exp $
+#	$NetBSD: bsd.README,v 1.374 2018/06/03 04:38:12 wiz Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -389,7 +389,7 @@ MKREPRO         If "yes", create reproducible builds. This enables
 
 MKSANITIZER	if "yes", use the selected sanitizer to compile userland
 		programs as defined in USE_SANITIZER, which defaults to
-		"memory". Available sanitizers are:
+		"address". Available sanitizers are:
 			address:	A memory error detector (default)
 			thread:		A data race detector
 			memory:		An uninitializer read detector
@@ -397,7 +397,7 @@ MKSANITIZER	if "yes", use the selected sanitizer to compile userland
 			dataflow:	A general data flow analysis
 			cfi:		A control flow detector
 			safe-stack:	Protect against stack-based corruption
-		Only "address" is currently available for gcc(1)
+		Only "address" is currently available for gcc(1).
 
 MKSHARE		If "no", act as "MKCATPAGES=no MKDOC=no MKHTML=no MKINFO=no
 		MKMAN=no MKNLS=no".
