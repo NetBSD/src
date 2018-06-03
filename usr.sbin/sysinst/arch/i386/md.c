@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.9 2018/06/03 13:16:30 martin Exp $ */
+/*	$NetBSD: md.c,v 1.10 2018/06/03 14:38:28 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -316,6 +316,19 @@ md_post_newfs(void)
 	static int conmib[] = {CTL_MACHDEP, CPU_CONSDEV};
 	struct termios t;
 	dev_t condev;
+
+	/*
+	 * Get console device, should either be ttyE0 or tty0n.
+	 * Too hard to double check, so just 'know' the device numbers.
+	 */
+	len = sizeof condev;
+	if (sysctl(conmib, __arraycount(conmib), &condev, &len, NULL, 0) != -1
+	    && (condev & ~3) == 0x800) {
+		/* Motherboard serial port */
+		boottype.bp_consdev = (condev & 3) + 1;
+		/* Defaulting the baud rate to that of stdin should suffice */
+		if (tcgetattr(0, &t) != -1)
+			boottype.bp_conspeed = t.c_ispeed;
 
 	if (pm == NULL || !pm->no_part) {
 		/*
