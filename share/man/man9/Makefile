@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.424 2018/06/03 01:52:47 pgoyette Exp $
+#       $NetBSD: Makefile,v 1.425 2018/06/03 09:22:34 pgoyette Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -51,7 +51,8 @@ MAN=	accept_filter.9 accf_data.9 accf_http.9 \
 	secmodel_bsd44.9 secmodel_extensions.9 \
 	secmodel_overlay.9 secmodel_securelevel.9 secmodel_suser.9 \
 	SET.9 setbit.9 setjmp.9 shutdownhook_establish.9 \
-	signal.9 skpc.9 sockopt.9 softintr.9 spl.9 splraiseipl.9 \
+	signal.9 skpc.9 sockopt.9 softintr.9 spl.9 specificdata.9 \
+	splraiseipl.9 \
 	store.9 suspendsched.9 \
 	sysctl.9 sysmon_envsys.9 sysmon_pswitch.9 sysmon_taskq.9 tc.9 \
 	tcp_congctl.9 timecounter.9 time_second.9 todr.9 ts2timo.9 tvtohz.9 \
@@ -873,6 +874,16 @@ MLINKS+=softintr.9 softintr_establish.9 softintr.9 softintr_disestablish.9 \
 	softintr.9 softintr_schedule.9 softintr.9 softint.9 \
 	softintr.9 softint_establish.9 softintr.9 softint_disestablish.9 \
 	softintr.9 softint_schedule.9
+MLINKS+=specificdata.9 specificdata_domain_create.9 \
+	specificdata.9 specificdata_domain_delete.9 \
+	specificdata.9 specificdata_key_create.9 \
+	specificdata.9 specificdata_key_delete.9 \
+	specificdata.9 specificdata_init.9 \
+	specificdata.9 specificdata_fini.9 \
+	specificdata.9 specificdata_getspecific.9 \
+	specificdata.9 specificdata_getspecific_unlocked.9 \
+	specificdata.9 specificdata_setspecific.9 \
+	specificdata.9 specificdata_setspecific_nowait .9
 MLINKS+=spl.9 spl0.9 spl.9 splbio.9 spl.9 splclock.9 spl.9 splhigh.9 \
 	spl.9 splimp.9 \
 	spl.9 spllowersoftclock.9 spl.9 splnet.9 \
