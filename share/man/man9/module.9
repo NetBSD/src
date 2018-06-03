@@ -1,4 +1,4 @@
-.\"	$NetBSD: module.9,v 1.45 2018/06/03 01:52:47 pgoyette Exp $
+.\"	$NetBSD: module.9,v 1.46 2018/06/03 10:34:59 pgoyette Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -43,7 +43,11 @@
 .Nm module_name ,
 .Nm module_source ,
 .Nm module_register_callbacks ,
-.Nm module_unregister_callbacks
+.Nm module_unregister_callbacks ,
+.Nm module_specific_key_create ,
+.Nm module_specific_key_delete ,
+.Nm module_getspecific ,
+.Nm module_setspecific
 .Nd kernel module loader
 .Sh SYNOPSIS
 .In sys/module.h
@@ -82,6 +86,15 @@
 "void (*unload)(struct module *)"
 .Ft void
 .Fn module_unregister_callbacks "void *"
+.Ft specificdata_key_t
+.Fn module_specific_key_create "specificdata_key_t *keyp" \
+"specificdata_dtor_t dtor"
+.Ft void
+.Fn module_specific_key_delete "specificdata_key_t key"
+.Ft "void *"
+.Fn module_getspecific "module_t *mod" "specificdata_key_t key"
+.Ft "void *"
+.Fn module_setspecific "module_t *mod" "specificdata_key_t key" "void *data"
 .Sh DESCRIPTION
 Modules are sections of code that can be independently linked and selectively
 loaded into or unloaded from a running kernel.
@@ -479,6 +492,31 @@ The
 argument should be the return value from the previous
 .Fn module_register_callbacks
 call.
+.It module_specific_key_create "specificdata_key_t *keyp" \
+"specificdata_dtor_t dtor"
+Creates a new specificdata_key for use within the
+.Nm
+domain.
+The key identifier is returned in
+.Fa keyp .
+.It module_specific_key_delete "specificdata_key_t key"
+Deletes the specified specificdata_key
+.Fa key
+from the
+.Nm domain.
+.It module_getspecific "module_t *mod" "specificdata_key_t key"
+Retrieves the value associated with
+.Fa key
+from module
+.Fa mod .
+.It module_setspecific "module_t *mod" "specificdata_key_t key" "void *data"
+Stores
+.Fa data
+as the value associated with
+.Fa key
+for module
+.Fa mod .
+
 .El
 .Sh PROGRAMMING CONSIDERATIONS
 The module subsystem is designed to be called recursively, but only within
