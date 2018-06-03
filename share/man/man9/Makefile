@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.426 2018/06/03 10:34:59 pgoyette Exp $
+#       $NetBSD: Makefile,v 1.427 2018/06/03 12:54:51 gson Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -887,7 +887,7 @@ MLINKS+=specificdata.9 specificdata_domain_create.9 \
 	specificdata.9 specificdata_getspecific.9 \
 	specificdata.9 specificdata_getspecific_unlocked.9 \
 	specificdata.9 specificdata_setspecific.9 \
-	specificdata.9 specificdata_setspecific_nowait .9
+	specificdata.9 specificdata_setspecific_nowait.9
 MLINKS+=spl.9 spl0.9 spl.9 splbio.9 spl.9 splclock.9 spl.9 splhigh.9 \
 	spl.9 splimp.9 \
 	spl.9 spllowersoftclock.9 spl.9 splnet.9 \
