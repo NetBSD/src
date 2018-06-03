@@ -1,4 +1,4 @@
-/* $NetBSD: db_interface.c,v 1.3 2018/05/31 09:37:16 ryo Exp $ */
+/* $NetBSD: db_interface.c,v 1.4 2018/06/03 20:18:10 christos Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.3 2018/05/31 09:37:16 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.4 2018/06/03 20:18:10 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -147,7 +147,7 @@ db_fetch_reg(unsigned int reg, db_regs_t *regs, bool use_sp)
 static inline uint64_t
 SignExtend(int bitwidth, uint64_t imm, unsigned int multiply)
 {
-	const uint64_t signbit = (1 << (bitwidth - 1));
+	const uint64_t signbit = ((uint64_t)1 << (bitwidth - 1));
 	const uint64_t immmax = signbit << 1;
 
 	if (imm & signbit)
