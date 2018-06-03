@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_virtio.c,v 1.17 2018/06/03 02:13:09 jakllsch Exp $	*/
+/*	$NetBSD: ld_virtio.c,v 1.18 2018/06/03 19:47:35 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.17 2018/06/03 02:13:09 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.18 2018/06/03 19:47:35 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.17 2018/06/03 02:13:09 jakllsch Exp 
 #define VIRTIO_BLK_CONFIG_GEOMETRY_H	18 /* 8bit */
 #define VIRTIO_BLK_CONFIG_GEOMETRY_S	19 /* 8bit */
 #define VIRTIO_BLK_CONFIG_BLK_SIZE	20 /* 32bit */
+#define VIRTIO_BLK_CONFIG_WRITEBACK	32 /* 8bit */
 
 /* Feature bits */
 #define VIRTIO_BLK_F_BARRIER	(1<<0)
@@ -70,6 +71,8 @@ __KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.17 2018/06/03 02:13:09 jakllsch Exp 
 #define VIRTIO_BLK_F_BLK_SIZE	(1<<6)
 #define VIRTIO_BLK_F_SCSI	(1<<7)
 #define VIRTIO_BLK_F_FLUSH	(1<<9)
+#define VIRTIO_BLK_F_TOPOLOGY	(1<<10)
+#define VIRTIO_BLK_F_CONFIG_WCE	(1<<11)
 
 /*
  * Each block request uses at least two segments - one for the header
@@ -79,6 +82,8 @@ __KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.17 2018/06/03 02:13:09 jakllsch Exp 
 
 #define VIRTIO_BLK_FLAG_BITS \
 	VIRTIO_COMMON_FLAG_BITS \
+	"\x0c""CONFIG_WCE" \
+	"\x0b""TOPOLOGY" \
 	"\x0a""FLUSH" \
 	"\x08""SCSI" \
 	"\x07""BLK_SIZE" \
@@ -91,11 +96,13 @@ __KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.17 2018/06/03 02:13:09 jakllsch Exp 
 /* Command */
 #define VIRTIO_BLK_T_IN		0
 #define VIRTIO_BLK_T_OUT	1
+#define VIRTIO_BLK_T_FLUSH	4
 #define VIRTIO_BLK_T_BARRIER	0x80000000
 
 /* Status */
 #define VIRTIO_BLK_S_OK		0
 #define VIRTIO_BLK_S_IOERR	1
+#define VIRTIO_BLK_S_UNSUPP	2
 
 /* Request header structure */
 struct virtio_blk_req_hdr {
