@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.19 2018/06/01 00:56:19 kre Exp $	*/
+/*	$NetBSD: types.h,v 1.20 2018/06/03 05:55:08 chs Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -65,11 +65,13 @@
  */
 #define longlong_t __hide_longlong_t
 #define u_longlong_t __hide_u_longlong_t
+
 #ifndef _KERNEL
 #include <stdint.h>
 #else
 #include <sys/stdint.h>
 #endif
+
 #ifndef HAVE_NBTOOLS_CONFIG_H
 #ifdef _NETBSD_SOURCE
 #include_next <sys/types.h>
@@ -81,6 +83,7 @@
 #undef _NETBSD_SOURCE
 #endif
 #endif
+
 #undef longlong_t
 #undef u_longlong_t
 #ifndef __defined_ll_t
