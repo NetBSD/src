@@ -1,4 +1,4 @@
-.\"	$NetBSD: module.9,v 1.44 2018/06/03 01:50:28 pgoyette Exp $
+.\"	$NetBSD: module.9,v 1.45 2018/06/03 01:52:47 pgoyette Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -41,7 +41,9 @@
 .Nm module_find_section ,
 .Nm module_kernel ,
 .Nm module_name ,
-.Nm module_source
+.Nm module_source ,
+.Nm module_register_callbacks ,
+.Nm module_unregister_callbacks
 .Nd kernel module loader
 .Sh SYNOPSIS
 .In sys/module.h

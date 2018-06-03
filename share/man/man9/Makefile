@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.423 2018/05/28 22:25:12 pgoyette Exp $
+#       $NetBSD: Makefile,v 1.424 2018/06/03 01:52:47 pgoyette Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -531,7 +531,9 @@ MLINKS+=module.9 module_autoload.9 \
 	module.9 module_rele.9 \
 	module.9 module_source.9 \
 	module.9 module_start_unload_thread.9 \
-	module.9 module_unload.9
+	module.9 module_unload.9 \
+	module.9 module_register_callbacks.9 \
+	module.9 module_unregister_callbacks.9
 MLINKS+=mstohz.9 hztoms.9
 MLINKS+=mutex.9 mutex_init.9 mutex.9 mutex_destroy.9 mutex.9 mutex_enter.9 \
 	mutex.9 mutex_exit.9 mutex.9 mutex_tryenter.9 mutex.9 mutex_owned.9 \
