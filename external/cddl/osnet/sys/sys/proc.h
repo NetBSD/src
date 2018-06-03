@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.7 2018/06/02 18:46:34 christos Exp $	*/
+/*	$NetBSD: proc.h,v 1.8 2018/06/03 05:55:08 chs Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,9 @@
 #define	_OPENSOLARIS_SYS_PROC_H_
 
 #include_next <sys/proc.h>
+#ifdef __NetBSD__
 #include <sys/stdint.h>
+#endif
 
 #ifdef _KERNEL
 
