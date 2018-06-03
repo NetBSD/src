@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.15 2018/06/03 13:16:30 martin Exp $ */
+/*	$NetBSD: disks.c,v 1.16 2018/06/03 13:18:06 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1039,8 +1039,8 @@ make_fstab(void)
 #endif
 	}
 
-	scripting_fprintf(f, "# NetBSD %s/etc/fstab\n# See /usr/share/examples/"
-			"fstab/ for more examples.\n", target_prefix());
+	scripting_fprintf(f, "# NetBSD /etc/fstab\n# See /usr/share/examples/"
+			"fstab/ for more examples.\n");
 
 	if (pm->no_part) {
 		/* single dk? target */
