@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.10 2018/06/03 14:38:28 martin Exp $ */
+/*	$NetBSD: md.c,v 1.11 2018/06/03 18:59:45 christos Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -329,6 +329,7 @@ md_post_newfs(void)
 		/* Defaulting the baud rate to that of stdin should suffice */
 		if (tcgetattr(0, &t) != -1)
 			boottype.bp_conspeed = t.c_ispeed;
+	}
 
 	if (pm == NULL || !pm->no_part) {
 		/*
