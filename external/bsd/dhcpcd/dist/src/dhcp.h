@@ -267,7 +267,6 @@ void dhcp_close(struct interface *);
 void dhcp_free(struct interface *);
 int dhcp_dump(struct interface *);
 #else
-#define dhcp_drop(a, b) {}
 #define dhcp_start(a) {}
 #define dhcp_abort(a) {}
 #define dhcp_renew(a) {}
