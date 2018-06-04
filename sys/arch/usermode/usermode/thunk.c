@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.c,v 1.89 2018/06/01 08:04:57 reinoud Exp $ */
+/* $NetBSD: thunk.c,v 1.90 2018/06/04 19:53:01 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__RCSID("$NetBSD: thunk.c,v 1.89 2018/06/01 08:04:57 reinoud Exp $");
+__RCSID("$NetBSD: thunk.c,v 1.90 2018/06/04 19:53:01 reinoud Exp $");
 #endif
 
 #define _KMEMUSER
@@ -36,6 +36,7 @@ __RCSID("$NetBSD: thunk.c,v 1.89 2018/06/01 08:04:57 reinoud Exp $");
 #define _I386_MACHTYPES_H_
 
 #include "../include/types.h"
+
 #include <sys/mman.h>
 #include <stdarg.h>
 #include <sys/reboot.h>
@@ -344,6 +345,12 @@ thunk_usleep(useconds_t microseconds)
 }
 
 void
+thunk_kill(pid_t pid, int sig)
+{
+	kill(pid, sig);
+}
+
+void
 thunk_exit(int status)
 {
 	return exit(status);
@@ -646,6 +653,18 @@ thunk_atexit(void (*function)(void))
 	return atexit(function);
 }
 
+pid_t
+thunk_fork(void)
+{
+	return fork();
+}
+
+int
+thunk_ioctl(int fd, unsigned long request, void *opaque)
+{
+	return ioctl(fd, request, opaque);
+}
+
 int
 thunk_aio_read(struct aiocb *aiocbp)
 {
@@ -861,6 +880,21 @@ thunk_pollout_tap(int fd, int timeout)
 
 	return poll(fds, __arraycount(fds), timeout);
 }
+
+
+/* simply make sure its present... yeah its silly */
+int
+thunk_assert_presence(vaddr_t from, size_t size)
+{
+	vaddr_t va;
+	int t = 0;
+
+	for (va = from; va < from + (vaddr_t) size; va += PAGE_SIZE) {
+		t += *(int *) va;
+	}
+	return t;
+}
+
 
 int
 thunk_audio_open(const char *path)
