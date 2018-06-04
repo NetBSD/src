@@ -1183,7 +1183,9 @@ ipv6_handleifa(struct dhcpcd_ctx *ctx,
 		return;
 
 	ipv6nd_handleifa(cmd, ia, pid);
+#ifdef DHCP6
 	dhcp6_handleifa(cmd, ia, pid);
+#endif
 
 out:
 	/* Done with the ia now, so free it. */
