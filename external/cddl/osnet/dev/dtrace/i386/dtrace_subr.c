@@ -1,4 +1,4 @@
-/*	$NetBSD: dtrace_subr.c,v 1.10 2018/06/04 20:12:45 kre Exp $	*/
+/*	$NetBSD: dtrace_subr.c,v 1.11 2018/06/04 21:35:29 christos Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -33,7 +33,6 @@
  * Copyright (c) 2011, Joyent, Inc. All rights reserved.
  */
 
-#include <sys/proc.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/types.h>
