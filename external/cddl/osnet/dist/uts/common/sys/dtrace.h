@@ -59,6 +59,7 @@ extern "C" {
 #include <sys/param.h>
 #include <sys/linker.h>
 #include <sys/ioccom.h>
+#include <sys/proc.h>
 #include <sys/ucred.h>
 typedef int model_t;
 #endif
