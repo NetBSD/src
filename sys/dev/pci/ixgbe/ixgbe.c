@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.159 2018/06/03 10:24:24 maxv Exp $ */
+/* $NetBSD: ixgbe.c,v 1.160 2018/06/04 02:42:23 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -4411,6 +4411,7 @@ ixgbe_local_timer1(void *arg)
 	/* Only truely watchdog if all queues show hung */
 	if (hung == adapter->num_queues)
 		goto watchdog;
+#if 0 /* XXX Avoid unexpectedly disabling interrupt forever (PR#53294) */
 	else if (queues != 0) { /* Force an IRQ on queues with work */
 		que = adapter->queues;
 		for (i = 0; i < adapter->num_queues; i++, que++) {
@@ -4421,6 +4422,7 @@ ixgbe_local_timer1(void *arg)
 			mutex_exit(&que->dc_mtx);
 		}
 	}
+#endif
 
 out:
 	callout_reset(&adapter->timer, hz, ixgbe_local_timer, adapter);
@@ -6643,7 +6645,7 @@ ixgbe_handle_link(void *context)
 /************************************************************************
  * ixgbe_rearm_queues
  ************************************************************************/
-static void
+static __inline void
 ixgbe_rearm_queues(struct adapter *adapter, u64 queues)
 {
 	u32 mask;

@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.103 2018/06/03 10:24:24 maxv Exp $*/
+/*$NetBSD: ixv.c,v 1.104 2018/06/04 02:42:23 msaitoh Exp $*/
 
 /******************************************************************************
 
@@ -1266,9 +1266,11 @@ ixv_local_timer_locked(void *arg)
 	/* Only truly watchdog if all queues show hung */
 	if (hung == adapter->num_queues)
 		goto watchdog;
+#if 0
 	else if (queues != 0) { /* Force an IRQ on queues with work */
 		ixv_rearm_queues(adapter, queues);
 	}
+#endif
 
 	callout_reset(&adapter->timer, hz, ixv_local_timer, adapter);
 
