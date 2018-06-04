@@ -363,13 +363,24 @@ static void
 dhcpcd_drop(struct interface *ifp, int stop)
 {
 
+#ifdef DHCP6
 	dhcp6_drop(ifp, stop ? NULL : "EXPIRE6");
+#endif
+#ifdef INET6
 	ipv6nd_drop(ifp);
 	ipv6_drop(ifp);
+#endif
+#ifdef IPV4LL
 	ipv4ll_drop(ifp);
+#endif
+#ifdef DHCP
 	dhcp_drop(ifp, stop ? "STOP" : "EXPIRE");
+#endif
 #ifdef ARP
 	arp_drop(ifp);
+#endif
+#if !defined(DHCP6) && !defined(DHCP)
+	UNUSED(stop);
 #endif
 }
 
@@ -773,8 +784,10 @@ static void
 warn_iaid_conflict(struct interface *ifp, uint16_t ia_type, uint8_t *iaid)
 {
 	struct interface *ifn;
+#ifdef INET6
 	size_t i;
 	struct if_ia *ia;
+#endif
 
 	TAILQ_FOREACH(ifn, ifp->ctx->ifaces, next) {
 		if (ifn == ifp || !ifn->active)
@@ -783,12 +796,14 @@ warn_iaid_conflict(struct interface *ifp, uint16_t ia_type, uint8_t *iaid)
 		    memcmp(ifn->options->iaid, iaid,
 		    sizeof(ifn->options->iaid)) == 0)
 			break;
+#ifdef INET6
 		for (i = 0; i < ifn->options->ia_len; i++) {
 			ia = &ifn->options->ia[i];
 			if (ia->ia_type == ia_type &&
 			    memcmp(ia->iaid, iaid, sizeof(ia->iaid)) == 0)
 				break;
 		}
+#endif
 	}
 
 	/* This is only a problem if the interfaces are on the same network. */
@@ -802,7 +817,6 @@ dhcpcd_startinterface(void *arg)
 {
 	struct interface *ifp = arg;
 	struct if_options *ifo = ifp->options;
-	size_t i;
 	char buf[DUID_LEN * 3];
 	int carrier;
 	struct timespec tv;
@@ -842,13 +856,17 @@ dhcpcd_startinterface(void *arg)
 	}
 
 	if (ifo->options & (DHCPCD_DUID | DHCPCD_IPV6)) {
+#ifdef INET6
+		size_t i;
 		struct if_ia *ia;
+#endif
 
 		/* Report IAIDs */
 		loginfox("%s: IAID %s", ifp->name,
 		    hwaddr_ntoa(ifo->iaid, sizeof(ifo->iaid),
 		    buf, sizeof(buf)));
 		warn_iaid_conflict(ifp, 0, ifo->iaid);
+#ifdef INET6
 		for (i = 0; i < ifo->ia_len; i++) {
 			ia = &ifo->ia[i];
 			if (memcmp(ifo->iaid, ia->iaid, sizeof(ifo->iaid))) {
@@ -859,6 +877,7 @@ dhcpcd_startinterface(void *arg)
 				warn_iaid_conflict(ifp, ia->ia_type, ia->iaid);
 			}
 		}
+#endif
 	}
 
 	if (ifo->options & DHCPCD_IPV6 && ipv6_start(ifp) == -1) {
