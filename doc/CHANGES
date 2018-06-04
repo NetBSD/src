@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2392 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2393 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -158,4 +158,4 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	gpio(4): Overhauled interrupt support.  Added GPIO interrupt
 		capability for Broadcom BCM283x SoCs (e.g.
 		Raspberry Pi). [thorpej 20180519]
-	dhcpcd: Import 7.0.5a. [roy 20180604]
+	dhcpcd: Import 7.0.5b. [roy 20180604]
