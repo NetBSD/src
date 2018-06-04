@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.42 2016/12/20 06:13:19 maya Exp $
+# $NetBSD: Makefile,v 1.43 2018/06/04 09:13:47 maya Exp $
 
 .include <bsd.own.mk>
 
@@ -11,6 +11,7 @@ COPTS+=	-mfloat-ieee -mieee-with-inexact -mfp-trap-mode=sui -mtrap-precision=i
 CPPFLAGS.t_fenv.c+=	-D__TEST_FENV
 CPPFLAGS.t_fe_round.c+=	-D__TEST_FENV
 CPPFLAGS.t_ilogb.c+=	-D__TEST_FENV
+CPPFLAGS.t_scalbn.c+=	-D__TEST_FENV
 CPPFLAGS.t_fmod.c+=	-I${.CURDIR}/../libc/gen
 
 TESTS_C+=	t_acos
