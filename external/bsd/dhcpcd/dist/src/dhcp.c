@@ -2101,8 +2101,10 @@ dhcp_arp_probed(struct arp_state *astate)
 	if (ifp->ctx->options & DHCPCD_FORKED)
 		return;
 
+#ifdef IPV4LL
 	/* Stop IPv4LL now we have a working DHCP address */
 	ipv4ll_drop(ifp);
+#endif
 
 	if (ifo->options & DHCPCD_INFORM)
 		dhcp_inform(ifp);
