@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.749 2018/06/05 09:28:26 eadler Exp $
+$NetBSD: usbdevs,v 1.750 2018/06/05 13:21:15 martin Exp $
 
 /*-
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -327,6 +327,7 @@ vendor STSN		0x07ef	STSN
 vendor BEWAN		0x07fa	Bewan
 vendor CENTURY		0x07f7	CENTURY Corporation
 vendor ZOOM		0x0803	Zoom Telephonics
+vendor ZORAN		0x0595	Zoran Microelectronics
 vendor SYNET		0x0812	Synet Electronics
 vendor BROADLOGIC	0x0827	BroadLogic
 vendor HANDSPRING	0x082d	Handspring
