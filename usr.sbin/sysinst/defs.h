@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.9 2015/05/11 13:07:57 martin Exp $	*/
+/*	$NetBSD: defs.h,v 1.9.8.1 2018/06/05 08:12:54 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -300,6 +300,7 @@ typedef struct pm_devs_t {
     partinfo bsdlabel[MAXPARTITIONS]; /* What we want it to look like */
     int gpt;
     int no_mbr; /* set for raid (etc) */
+    int no_part;	/* can not be partitioned, e.g. dk0 */
     int rootpart; /* partition we install into */
     const char *disktype; /* ST506, SCSI, ... */
     const char *doessf;
