@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.54 2016/12/22 14:47:59 cherry Exp $ */
+/* $NetBSD: machdep.c,v 1.55 2018/06/05 20:02:43 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -37,7 +37,7 @@
 #include "opt_memsize.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.54 2016/12/22 14:47:59 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.55 2018/06/05 20:02:43 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -57,10 +57,15 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.54 2016/12/22 14:47:59 cherry Exp $");
 #include <dev/mm.h>
 #include <machine/vmparam.h>
 #include <machine/machdep.h>
+#include <machine/mainbus.h>
 #include <machine/thunk.h>
 
 #ifndef MAX_DISK_IMAGES
 #define MAX_DISK_IMAGES	4
+#endif
+
+#ifndef MAX_VDEVS
+#define MAX_VDEVS 4
 #endif
 
 char machine[_SYS_NMLN] = "";
@@ -73,6 +78,10 @@ static char **saved_argv;
 
 char *usermode_disk_image_path[MAX_DISK_IMAGES];
 int usermode_disk_image_path_count = 0;
+
+int   usermode_vdev_type[MAX_VDEVS];
+char *usermode_vdev_path[MAX_VDEVS];
+int usermode_vdev_count = 0;
 
 static char usermode_tap_devicebuf[PATH_MAX] = "";
 char *usermode_tap_device = NULL;
@@ -95,15 +104,31 @@ usage(const char *pn)
 	    " [audio=<audiodev>]"
 	    " [disk=<diskimg> ...]"
 	    " [root=<device>]"
-	    " [vnc=<width>x<height>,<port>]\n",
+	    " [vnc=<width>x<height>,<port>]"
+	    " [vdev=atapi,device]\n",
 	    pn);
 	printf("       (ex. \"%s"
 	    " net=tap0,00:00:be:ef:ca:fe"
 	    " audio=audio0"
 	    " disk=root.fs"
 	    " root=ld0"
-	    " vnc=640x480,5900\")\n", pn);
+	    " vnc=640x480,5900"
+	    " vdev=atapi,/dev/rcd0d\")\n", pn);
 }
+
+
+static int
+vdev_type(const char *type)
+{
+	if (strcasecmp(type, "atapi")==0)
+		return THUNKBUS_TYPE_VATAPI;
+#if 0
+	if (strcasecmp(type, "scsi")==0)
+		return THUNKBUS_TYPE_VSCSI;
+#endif
+	return -1;
+}
+
 
 void
 main(int argc, char *argv[])
@@ -111,7 +136,7 @@ main(int argc, char *argv[])
 	extern void ttycons_consinit(void);
 	extern void pmap_bootstrap(void);
 	extern void kernmain(void);
-	int i, j, r, tmpopt = 0;
+	int type, i, j, r, tmpopt = 0;
 
 	saved_argv = argv;
 
@@ -189,6 +214,32 @@ main(int argc, char *argv[])
 				usermode_disk_image_path[
 				    usermode_disk_image_path_count++] =
 				    argv[i] + strlen("disk=");
+			} else if (strncmp(argv[i], "vdev=",
+			    strlen("vdev=")) == 0) {
+				char *vdev = argv[i] + strlen("vdev=");
+				char *t, *p;
+				if (usermode_disk_image_path_count ==
+				    MAX_VDEVS) {
+					printf("too many vdevs "
+					    "(increase MAX_VDEVS)\n");
+					usage(argv[0]);
+					return;
+				}
+				t = vdev;
+				p = strchr(t, ',');
+				if (p == NULL) {
+					printf("bad vdev= format\n");
+					return;
+				}
+				*p++ = '\0';
+				type = vdev_type(t);
+				if (type < 0) {
+					printf("unknown vdev device type\n");
+					return;
+				}
+				usermode_vdev_type[usermode_vdev_count] = type;
+				usermode_vdev_path[usermode_vdev_count] = p;
+				usermode_vdev_count++;
 			} else if (strncmp(argv[i], "root=",
 			    strlen("root=")) == 0) {
 				usermode_root_device = argv[i] +
