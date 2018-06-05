@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.5 2015/05/10 10:14:02 martin Exp $ */
+/*	$NetBSD: mbr.c,v 1.5.8.1 2018/06/05 08:12:54 bouyer Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1267,8 +1267,11 @@ edit_mbr(mbr_info_t *mbri)
 	uint bsdstart, bsdsize;
 	uint start;
 
-	/* Ask full/part */
+	/* If targeting a wedge, do not ask for further partitioning */
+	if (pm && pm->no_part)
+		return 1;
 
+	/* Ask full/part */
 	part = &mbrs->mbr_parts[0];
 	get_ptn_alignment(part);  /* update ptn_alignment */
 	if (partman_go)

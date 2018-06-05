@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.6.8.1 2018/04/12 13:54:11 martin Exp $ */
+/*	$NetBSD: md.c,v 1.6.8.2 2018/06/05 08:12:54 bouyer Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -322,7 +322,7 @@ md_post_newfs(void)
 	 * Too hard to double check, so just 'know' the device numbers.
 	 */
 	len = sizeof condev;
-	if (sysctl(conmib, nelem(conmib), &condev, &len, NULL, 0) != -1
+	if (sysctl(conmib, __arraycount(conmib), &condev, &len, NULL, 0) != -1
 	    && (condev & ~3) == 0x800) {
 		/* Motherboard serial port */
 		boottype.bp_consdev = (condev & 3) + 1;
@@ -331,18 +331,36 @@ md_post_newfs(void)
 			boottype.bp_conspeed = t.c_ispeed;
 	}
 
-	process_menu(MENU_getboottype, &boottype);
-	msg_display(MSG_dobootblks, pm->diskdev);
-	if (boottype.bp_consdev == ~0u)
-		/* Use existing bootblocks */
-		return 0;
+	if (pm == NULL || !pm->no_part) {
+		/*
+		 * Get console device, should either be ttyE0 or tty0n.
+		 * Too hard to double check, so just 'know' the device numbers.
+		 */
+		len = sizeof condev;
+		if (sysctl(conmib, nelem(conmib), &condev, &len, NULL, 0) != -1
+		    && (condev & ~3) == 0x800) {
+			/* Motherboard serial port */
+			boottype.bp_consdev = (condev & 3) + 1;
+			/* Defaulting the baud rate to that of stdin should suffice */
+			if (tcgetattr(0, &t) != -1)
+				boottype.bp_conspeed = t.c_ispeed;
+		}
+
+		process_menu(MENU_getboottype, &boottype);
+		msg_display(MSG_dobootblks, pm->diskdev);
+		if (boottype.bp_consdev == ~0u)
+			/* Use existing bootblocks */
+			return 0;
+	}
 
 	ret = cp_to_target("/usr/mdec/boot", "/boot");
 	if (ret)
 		return ret;
+	if (pm && pm->no_part)
+		return 0;
 
-        bootxx_filename = bootxx_name();                                                 
-        if (bootxx_filename != NULL) {                                                   
+        bootxx_filename = bootxx_name();
+        if (bootxx_filename != NULL) {
 		snprintf(boot_options, sizeof boot_options,
 		    "console=%s,speed=%u", consoles[boottype.bp_consdev],
 		    boottype.bp_conspeed);

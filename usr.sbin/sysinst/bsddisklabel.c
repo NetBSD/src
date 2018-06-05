@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.2 2014/08/03 16:09:38 martin Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.2.20.1 2018/06/05 08:12:54 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -565,6 +565,9 @@ make_bsd_partitions(void)
 	daddr_t ptend;
 	int no_swap = 0, valid_part = -1;
 	partinfo *p, savedlabel[MAXPARTITIONS];
+
+	if (pm && pm->no_part)
+		return 1;
 
 	memcpy(&savedlabel, &pm->bsdlabel, sizeof savedlabel);
 
