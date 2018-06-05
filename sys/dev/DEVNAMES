@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.310 2018/04/09 20:16:53 christos Exp $
+#	$NetBSD: DEVNAMES,v 1.311 2018/06/05 08:03:29 hkenken Exp $
 #
 # This file contains all used device names and defined attributes in
 # alphabetical order. New devices added to the system somewhere should first
@@ -13,7 +13,6 @@ a2kbbc			amiga
 a2kbbc			amigappc
 a34kbbc			amiga
 a34kbbc			amigappc
-a9tmr			arm
 a9wdt			arm
 aac			MI
 abtn			macppc
@@ -90,6 +89,7 @@ arbus			evbmips
 arc			MI		Attribute
 arcmsr			MI
 aria			MI
+arma9tmr		arm
 armgic			arm
 arml2cc			arm
 armperiph		arm
