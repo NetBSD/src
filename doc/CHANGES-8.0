@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.201 2018/05/22 17:51:55 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.202 2018/06/05 08:13:27 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -13495,4 +13495,35 @@ sys/kern/uipc_mbuf.c				1.214
 	remove the M_READONLY check. The initial code was correct.
 	[maxv, ticket #833]
 
+
+sys/arch/arm/arm/syscall.c			1.65
+
+	PR kern/53261: handle SYS_syscall indirection in MD code - the generic
+	version would misalign the argument array.
+	[martin, ticket #859]
+
+usr.sbin/sysinst/arch/i386/md.c			1.10
+usr.sbin/sysinst/arch/i386/md.c			1.11
+usr.sbin/sysinst/arch/i386/md.c			1.9
+usr.sbin/sysinst/bsddisklabel.c			1.4
+usr.sbin/sysinst/defs.h				1.11
+usr.sbin/sysinst/disks.c			1.15
+usr.sbin/sysinst/disks.c			1.16
+usr.sbin/sysinst/mbr.c				1.6
+usr.sbin/sysinst/menus.mi			1.13
+usr.sbin/sysinst/msg.mi.de			1.7
+usr.sbin/sysinst/msg.mi.en			1.11
+usr.sbin/sysinst/msg.mi.es			1.7
+usr.sbin/sysinst/msg.mi.fr			1.10
+usr.sbin/sysinst/msg.mi.pl			1.9
+
+	Add an option to install onto a pre-configured wedge.
+	Greatly simmplifies (U)EFI setups (but does not fully automate
+	them yet).
+	In the generated /etc/fstab, do not use the (temporary, during sysinst)
+	path name for the file in the comment, but instead the one it will
+	have on the target system.
+	Reorder fetch options: http before ftp
+	Default console device and speed to that used by syinst
+	[martin, ticket #860]
 
