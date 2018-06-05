@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.372 2017/05/29 03:52:43 christos Exp $
+#	$NetBSD: bsd.lib.mk,v 1.373 2018/06/05 00:56:51 christos Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -541,7 +541,7 @@ _INSTRANLIB=${empty(PRESERVE):?-a "${RANLIB} -t":}
 .if !target(__archivebuild)
 __archivebuild: .USE
 	${_MKTARGET_BUILD}
-	rm -f ${.TARGET}
+	@rm -f ${.TARGET}
 	${AR} ${_ARFL} ${.TARGET} `NM=${NM} ${LORDER} ${.ALLSRC:M*o} | ${TSORT}`
 .endif
 
@@ -555,6 +555,21 @@ __archiveinstall: .USE
 __archivesymlinkpic: .USE
 	${_MKTARGET_INSTALL}
 	${INSTALL_SYMLINK} ${.ALLSRC} ${.TARGET}
+
+.if !target(__buildstdlib)
+__buildstdlib: .USE
+	@echo building standard ${.TARGET:T:S/.o//:S/lib//} library
+	@rm -f ${.TARGET}
+	@${LINK.c} -nostdlib ${LDFLAGS} -r -o ${.TARGET} `NM=${NM} ${LORDER} ${.ALLSRC:M*o} | ${TSORT}`
+.endif
+
+.if !target(__buildproflib)
+__buildproflib: .USE
+	@echo building profiled ${.TARGET:T:S/.o//:S/lib//} library
+	${_MKTARGET_BUILD}
+	@rm -f ${.TARGET}
+	@${LINK.c} -nostdlib ${LDFLAGS} -r -o ${.TARGET} `NM=${NM} ${LORDER} ${.ALLSRC:M*po} | ${TSORT}`
+.endif
 
 DPSRCS+=	${_YLSRCS}
 CLEANFILES+=	${_YLSRCS}
