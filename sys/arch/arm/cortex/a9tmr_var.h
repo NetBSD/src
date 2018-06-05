@@ -1,4 +1,4 @@
-/* $NetBSD: a9tmr_var.h,v 1.4 2015/01/02 21:58:03 jmcneill Exp $ */
+/* $NetBSD: a9tmr_var.h,v 1.5 2018/06/05 08:03:28 hkenken Exp $ */
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -45,8 +45,15 @@ struct a9tmr_softc {
 };
 
 #ifdef _KERNEL
+#include "opt_arm_timer.h"
 struct cpu_info;
 void	a9tmr_init_cpu_clock(struct cpu_info *);
+#ifdef __HAVE_GENERIC_CPU_INITCLOCKS
+void	a9tmr_cpu_initclocks(void);
+#else
+#define a9tmr_cpu_initclocks	cpu_initclocks
+#endif
+int	a9tmr_intr(void *);
 void	a9tmr_update_freq(uint32_t);
 void	a9tmr_delay(unsigned int n);
 #endif
