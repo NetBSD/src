@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.373 2018/06/05 00:56:51 christos Exp $
+#	$NetBSD: bsd.lib.mk,v 1.374 2018/06/05 15:37:52 christos Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -560,7 +560,7 @@ __archivesymlinkpic: .USE
 __buildstdlib: .USE
 	@echo building standard ${.TARGET:T:S/.o//:S/lib//} library
 	@rm -f ${.TARGET}
-	@${LINK.c} -nostdlib ${LDFLAGS} -r -o ${.TARGET} `NM=${NM} ${LORDER} ${.ALLSRC:M*o} | ${TSORT}`
+	@${LINK.c:S/-nostdinc//} -nostdlib ${LDFLAGS} -r -o ${.TARGET} `NM=${NM} ${LORDER} ${.ALLSRC:M*o} | ${TSORT}`
 .endif
 
 .if !target(__buildproflib)
@@ -568,7 +568,7 @@ __buildproflib: .USE
 	@echo building profiled ${.TARGET:T:S/.o//:S/lib//} library
 	${_MKTARGET_BUILD}
 	@rm -f ${.TARGET}
-	@${LINK.c} -nostdlib ${LDFLAGS} -r -o ${.TARGET} `NM=${NM} ${LORDER} ${.ALLSRC:M*po} | ${TSORT}`
+	@${LINK.c:S/-nostdinc//} -nostdlib ${LDFLAGS} -r -o ${.TARGET} `NM=${NM} ${LORDER} ${.ALLSRC:M*po} | ${TSORT}`
 .endif
 
 DPSRCS+=	${_YLSRCS}
