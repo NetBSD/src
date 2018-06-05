@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.202 2018/06/05 08:13:27 bouyer Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.203 2018/06/05 08:14:25 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -13517,13 +13517,8 @@ usr.sbin/sysinst/msg.mi.es			1.7
 usr.sbin/sysinst/msg.mi.fr			1.10
 usr.sbin/sysinst/msg.mi.pl			1.9
 
-	Add an option to install onto a pre-configured wedge.
-	Greatly simmplifies (U)EFI setups (but does not fully automate
-	them yet).
-	In the generated /etc/fstab, do not use the (temporary, during sysinst)
-	path name for the file in the comment, but instead the one it will
-	have on the target system.
-	Reorder fetch options: http before ftp
-	Default console device and speed to that used by syinst
+	Allow installation to a pre-configured wedge (dk* device).
+	Prefer http over ftp downloads.
+	Auto-select the bootblock details like the current console.
 	[martin, ticket #860]
 
