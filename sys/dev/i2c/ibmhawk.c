@@ -1,4 +1,4 @@
-/* $NetBSD: ibmhawk.c,v 1.5 2018/05/09 02:46:22 thorpej Exp $ */
+/* $NetBSD: ibmhawk.c,v 1.6 2018/06/06 01:49:08 maya Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -210,7 +210,7 @@ static int
 ibmhawk_request(struct ibmhawk_softc *sc, uint8_t request,
     ibmhawk_response_t *response)
 {
-	int i, error, retries;;
+	int i, error, retries;
 	uint8_t buf[sizeof(ibmhawk_response_t)+3], dummy;
 
 	error = EIO;	/* Fail until we have a valid response. */

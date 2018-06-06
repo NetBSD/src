@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.275 2017/08/20 00:03:12 maya Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.276 2018/06/06 01:49:09 maya Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.275 2017/08/20 00:03:12 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.276 2018/06/06 01:49:09 maya Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -499,7 +499,7 @@ lfs_writevnodes_selector(void *cl, struct vnode *vp)
 	}
 	if (op == VN_EMPTY && !VPISEMPTY(vp)) {
 		vndebug(vp,"empty");
-		return false;;
+		return false;
 	}
 	if (op == VN_CLEAN && ip->i_number != LFS_IFILE_INUM &&
 	    vp != c->fs->lfs_flushvp && !(ip->i_state & IN_CLEANING)) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwm.c,v 1.79 2018/06/05 12:17:18 knakahara Exp $	*/
+/*	$NetBSD: if_iwm.c,v 1.80 2018/06/06 01:49:08 maya Exp $	*/
 /*	OpenBSD: if_iwm.c,v 1.148 2016/11/19 21:07:08 stsp Exp	*/
 #define IEEE80211_NO_HT
 /*
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.79 2018/06/05 12:17:18 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.80 2018/06/06 01:49:08 maya Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -7729,7 +7729,7 @@ static int
 iwm_preinit(struct iwm_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifnet *ifp = IC2IFP(&sc->sc_ic);;
+	struct ifnet *ifp = IC2IFP(&sc->sc_ic);
 	int err;
 
 	if (ISSET(sc->sc_flags, IWM_FLAG_ATTACHED))

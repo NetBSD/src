@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.140 2018/05/28 21:04:38 chs Exp $ */
+/* $NetBSD: udf_subr.c,v 1.141 2018/06/06 01:49:09 maya Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.140 2018/05/28 21:04:38 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.141 2018/06/06 01:49:09 maya Exp $");
 #endif /* not lint */
 
 
@@ -5889,7 +5889,7 @@ udf_newvnode(struct mount *mp, struct vnode *dvp, struct vnode *vp,
 	gid = parent_gid;
 	udf_setownership(udf_node, uid, gid);
 
-	*key_len = sizeof(udf_node->loc.loc);;
+	*key_len = sizeof(udf_node->loc.loc);
 	*new_key = &udf_node->loc.loc;
 
 	return 0;

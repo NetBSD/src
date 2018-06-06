@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.280 2018/04/09 16:21:11 jakllsch Exp $	*/
+/*	$NetBSD: ohci.c,v 1.281 2018/06/06 01:49:09 maya Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.280 2018/04/09 16:21:11 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.281 2018/06/06 01:49:09 maya Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2893,7 +2893,7 @@ ohci_device_bulk_init(struct usbd_xfer *xfer)
 {
 	ohci_softc_t *sc = OHCI_XFER2SC(xfer);
 	int len = xfer->ux_bufsize;
-	int endpt = xfer->ux_pipe->up_endpoint->ue_edesc->bEndpointAddress;;
+	int endpt = xfer->ux_pipe->up_endpoint->ue_edesc->bEndpointAddress;
 	int isread = UE_GET_DIR(endpt) == UE_DIR_IN;
 	int err;
 
@@ -3091,7 +3091,7 @@ ohci_device_intr_init(struct usbd_xfer *xfer)
 	struct ohci_xfer *ox = OHCI_XFER2OXFER(xfer);
 	ohci_softc_t *sc = OHCI_XFER2SC(xfer);
 	int len = xfer->ux_bufsize;
-	int endpt = xfer->ux_pipe->up_endpoint->ue_edesc->bEndpointAddress;;
+	int endpt = xfer->ux_pipe->up_endpoint->ue_edesc->bEndpointAddress;
 	int isread = UE_GET_DIR(endpt) == UE_DIR_IN;
 	int err;
 
