@@ -1,4 +1,4 @@
-/*	$NetBSD: svwsata.c,v 1.22 2018/06/01 18:14:33 macallan Exp $	*/
+/*	$NetBSD: svwsata.c,v 1.23 2018/06/06 20:05:36 kamil Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svwsata.c,v 1.22 2018/06/01 18:14:33 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svwsata.c,v 1.23 2018/06/06 20:05:36 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -369,7 +369,7 @@ svwsata_intr(void *arg)
 			continue;
 		}
 		crv = wdcintr(wdc_cp);
-		if ((crv == 0)) {
+		if (crv == 0) {
 			bus_space_write_1(sc->sc_dma_iot, 
 			    cp->dma_iohs[IDEDMA_CTL], 0, dmastat);
 		}
