@@ -1,11 +1,10 @@
-#	$NetBSD: Makefile,v 1.1 2016/09/27 03:53:09 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.2 2018/06/06 16:11:36 jakllsch Exp $
 
 .include "../Makefile.inc"
 
 .PATH:	${S}/dev/pci
 
 KMOD=	virtio
-IOCONF=	virtio.ioconf
 
 SRCS+=	virtio.c
 
