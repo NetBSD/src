@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2018/05/28 21:05:11 chs Exp $
+#	$NetBSD: Makefile,v 1.11 2018/06/06 14:31:45 kamil Exp $
 
 # $FreeBSD: head/cddl/usr.sbin/dtrace/Makefile 314654 2017-03-04 11:30:04Z ngie $
 
@@ -32,9 +32,11 @@ COPTS.dtrace.c += -Wno-stack-protector
 COPTS.dtrace.c += -Wno-format-extra-args
 
 COPTS.dtrace.c += -Wno-shadow
+.if defined(HAVE_GCC)
 COPTS.dtrace.c += -Wno-discarded-qualifiers
-COPTS.dtrace.c += -Wno-missing-field-initializers
 COPTS.dtrace.c += -Wno-unused-but-set-variable
+.endif
+COPTS.dtrace.c += -Wno-missing-field-initializers
 COPTS.dtrace.c += -Wno-format
 
 LDFLAGS+=	-pthread
