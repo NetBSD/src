@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.94 2018/01/24 05:35:58 riastradh Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.95 2018/06/06 01:49:08 maya Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.94 2018/01/24 05:35:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.95 2018/06/06 01:49:08 maya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -4201,7 +4201,7 @@ radeonfb_switch_backlight(struct radeonfb_display *dp, int on)
 static int 
 radeonfb_set_backlight(struct radeonfb_display *dp, int level)
 {
-	struct radeonfb_softc *sc = dp->rd_softc;;
+	struct radeonfb_softc *sc = dp->rd_softc;
 	int rlevel, s;
 	uint32_t lvds;
 

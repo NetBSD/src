@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_i386.c,v 1.6 2018/05/22 14:38:10 reinoud Exp $ */
+/* $NetBSD: cpu_i386.c,v 1.7 2018/06/06 01:49:08 maya Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -29,7 +29,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_i386.c,v 1.6 2018/05/22 14:38:10 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_i386.c,v 1.7 2018/06/06 01:49:08 maya Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu_i386.c,v 1.6 2018/05/22 14:38:10 reinoud Exp $")
 #include "opt_exec.h"
 
 #if 0
-static void dump_regs(register_t *reg);;
+static void dump_regs(register_t *reg);
 
 static void
 dump_regs(register_t *reg)
