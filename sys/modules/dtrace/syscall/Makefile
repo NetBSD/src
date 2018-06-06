@@ -13,7 +13,7 @@ CPPFLAGS+=	-I${NETBSDSRCDIR}/external/cddl/osnet/sys \
 
 CPPFLAGS+=	-Wno-unknown-pragmas
 
-.if defined(HAVE_LLVM)
+.if defined(HAVE_GCC)
 CPPFLAGS+=	-Wno-discarded-qualifiers
 .endif
 
