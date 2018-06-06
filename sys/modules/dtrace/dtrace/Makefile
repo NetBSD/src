@@ -54,8 +54,10 @@ COPTS.dis_tables.c+= \
 		-Wno-parentheses \
 		-Wno-uninitialized
 
+.if defined(HAVE_GCC)
 COPTS.dtrace.c+= \
-		-Wno-unused-but-set-variable \
+		-Wno-unused-but-set-variable
+.endif
 
 COPTS.dtrace_subr.c+= \
 		-Wno-unused-value
