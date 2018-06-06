@@ -1,4 +1,4 @@
-/* $NetBSD: virtio_pci.c,v 1.4 2018/06/02 22:43:15 jakllsch Exp $ */
+/* $NetBSD: virtio_pci.c,v 1.5 2018/06/06 16:11:36 jakllsch Exp $ */
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,11 +26,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.4 2018/06/02 22:43:15 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.5 2018/06/06 16:11:36 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kmem.h>
+#include <sys/module.h>
 
 #include <sys/device.h>
 
@@ -727,3 +728,34 @@ virtio_pci_msix_config_intr(void *arg)
 		r = (sc->sc_config_change)(sc);
 	return r;
 }
+
+MODULE(MODULE_CLASS_DRIVER, virtio_pci, "pci,virtio");
+
+#ifdef _MODULE
+#include "ioconf.c"
+#endif
+
+static int
+virtio_pci_modcmd(modcmd_t cmd, void *opaque)
+{
+	int error = 0;
+
+#ifdef _MODULE
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		error = config_init_component(cfdriver_ioconf_virtio_pci,
+		    cfattach_ioconf_virtio_pci, cfdata_ioconf_virtio_pci);
+		break;
+	case MODULE_CMD_FINI:
+		error = config_fini_component(cfdriver_ioconf_virtio_pci,
+		    cfattach_ioconf_virtio_pci, cfdata_ioconf_virtio_pci);
+		break;
+	default:
+		error = ENOTTY;
+		break;
+	}
+#endif
+
+	return error;
+}
+

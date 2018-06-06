@@ -1,4 +1,4 @@
-/*	$NetBSD: virtio.c,v 1.31 2018/06/02 22:43:15 jakllsch Exp $	*/
+/*	$NetBSD: virtio.c,v 1.32 2018/06/06 16:11:36 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.31 2018/06/02 22:43:15 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.32 2018/06/06 16:11:36 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -932,7 +932,7 @@ virtio_features(struct virtio_softc *sc)
 	return sc->sc_features;
 }
 
-MODULE(MODULE_CLASS_DRIVER, virtio, "pci");
+MODULE(MODULE_CLASS_DRIVER, virtio, NULL);
  
 #ifdef _MODULE
 #include "ioconf.c"
