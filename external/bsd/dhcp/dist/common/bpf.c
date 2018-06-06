@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.3 2014/07/12 12:09:37 spz Exp $	*/
+/*	$NetBSD: bpf.c,v 1.3.2.1 2018/06/06 15:31:58 martin Exp $	*/
 /* bpf.c
 
    BPF socket interface code, originally contributed by Archie Cobbs. */
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bpf.c,v 1.3 2014/07/12 12:09:37 spz Exp $");
+__RCSID("$NetBSD: bpf.c,v 1.3.2.1 2018/06/06 15:31:58 martin Exp $");
 
 #include "dhcpd.h"
 #if defined (USE_BPF_SEND) || defined (USE_BPF_RECEIVE)	\
@@ -623,6 +623,9 @@ get_hw_addr(const char *name, struct hardware *hw) {
 	 */
         switch (sa->sdl_type) {
                 case IFT_ETHER:
+#ifdef IFT_CARP
+			case IFT_CARP:
+#endif
                         hw->hlen = sa->sdl_alen + 1;
                         hw->hbuf[0] = HTYPE_ETHER;
                         memcpy(&hw->hbuf[1], LLADDR(sa), sa->sdl_alen);
