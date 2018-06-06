@@ -508,7 +508,7 @@ renice_procs(char *str)
     /* move to the first process number */
     if ((str = next_field(str)) == NULL)
     {
-	message_error(" remice: no processes specified");
+	message_error(" renice: no processes specified");
 	return;
     }
 
