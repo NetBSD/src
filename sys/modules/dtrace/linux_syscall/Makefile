@@ -14,4 +14,8 @@ CPPFLAGS+=	-I${NETBSDSRCDIR}/external/cddl/osnet/sys \
 CPPFLAGS+=	-Wno-unknown-pragmas \
 		-Wno-discarded-qualifiers
 
+.if defined(HAVE_LLVM)
+CPPFLAGS+=	-Wno-discarded-qualifiers
+.endif
+
 .include <bsd.kmodule.mk>

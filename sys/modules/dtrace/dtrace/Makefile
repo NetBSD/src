@@ -42,8 +42,11 @@ CPPFLAGS+=	-I${OSNETDIR}/sys \
 CPPFLAGS+=	-Wno-unknown-pragmas \
 		-Wno-shadow \
 		-Wno-unused-variable \
-		-Wno-discarded-qualifiers \
 		-Wno-unused-function
+
+.if defined(HAVE_LLVM)
+CPPFLAGS+=	 -Wno-discarded-qualifiers
+.endif
 
 COPTS.dis_tables.c+= \
 		-Wno-missing-field-initializers \
