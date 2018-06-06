@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.680.2.8 2017/04/05 19:54:20 snj Exp $
+$NetBSD: usbdevs,v 1.680.2.9 2018/06/06 15:41:47 martin Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -3254,6 +3254,7 @@ product TOSHIBA HSDPA_MODEM_EU870DT1	0x1302	HSDPA 3G Modem Card
 
 /* TP-Link products */
 product TPLINK RTL8192CU	0x0100	RTL8192CU
+product TPLINK RTL8188EU	0x010c	RTL8188EU
 
 /* Trek Technology products */
 product TREK THUMBDRIVE		0x1111	ThumbDrive
