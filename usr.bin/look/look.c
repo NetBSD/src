@@ -1,4 +1,4 @@
-/*	$NetBSD: look.c,v 1.16 2012/02/23 22:57:53 joerg Exp $	*/
+/*	$NetBSD: look.c,v 1.16.10.1 2018/06/06 15:15:01 martin Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)look.c	8.2 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: look.c,v 1.16 2012/02/23 22:57:53 joerg Exp $");
+__RCSID("$NetBSD: look.c,v 1.16.10.1 2018/06/06 15:15:01 martin Exp $");
 #endif /* not lint */
 
 /*
@@ -147,7 +147,7 @@ main(int argc, char *argv[])
 		err(2, "%s", file);
 	}
 	if ((front = mmap(NULL, len,
-	    PROT_READ, MAP_FILE|MAP_SHARED, fd, (off_t)0)) == NULL)
+	    PROT_READ, MAP_FILE|MAP_SHARED, fd, (off_t)0)) == MAP_FAILED)
 		err(2, "%s", file);
 	back = front + len;
 	exit(look(string, front, back));
