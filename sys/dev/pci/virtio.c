@@ -1,4 +1,4 @@
-/*	$NetBSD: virtio.c,v 1.32 2018/06/06 16:11:36 jakllsch Exp $	*/
+/*	$NetBSD: virtio.c,v 1.33 2018/06/06 17:17:31 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.32 2018/06/06 16:11:36 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.33 2018/06/06 17:17:31 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -36,10 +36,6 @@ __KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.32 2018/06/06 16:11:36 jakllsch Exp $")
 #include <sys/device.h>
 #include <sys/kmem.h>
 #include <sys/module.h>
-
-#include <dev/pci/pcidevs.h>
-#include <dev/pci/pcireg.h>
-#include <dev/pci/pcivar.h>
 
 #define VIRTIO_PRIVATE
 
