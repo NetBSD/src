@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.204 2018/05/20 14:08:33 thorpej Exp $
+#	$NetBSD: Makefile,v 1.205 2018/06/06 16:46:02 jakllsch Exp $
 
 .include <bsd.own.mk>
 
@@ -423,6 +423,7 @@ SUBDIR+=	twa
 SUBDIR+=	twe
 SUBDIR+=	viomb
 SUBDIR+=	virtio
+SUBDIR+=	virtio_pci
 SUBDIR+=	vioscsi
 .endif
 
