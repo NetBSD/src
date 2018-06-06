@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.160 2018/06/04 02:42:23 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.161 2018/06/06 20:02:31 kamil Exp $ */
 
 /******************************************************************************
 
@@ -191,7 +191,9 @@ static void	ixgbe_config_delay_values(struct adapter *);
 static void	ixgbe_config_link(struct adapter *);
 static void	ixgbe_check_wol_support(struct adapter *);
 static int	ixgbe_setup_low_power_mode(struct adapter *);
+#if 0
 static void	ixgbe_rearm_queues(struct adapter *, u64);
+#endif
 
 static void     ixgbe_initialize_transmit_units(struct adapter *);
 static void     ixgbe_initialize_receive_units(struct adapter *);
@@ -6642,6 +6644,7 @@ ixgbe_handle_link(void *context)
 	IXGBE_CORE_UNLOCK(adapter);
 } /* ixgbe_handle_link */
 
+#if 0
 /************************************************************************
  * ixgbe_rearm_queues
  ************************************************************************/
@@ -6669,3 +6672,4 @@ ixgbe_rearm_queues(struct adapter *adapter, u64 queues)
 		break;
 	}
 } /* ixgbe_rearm_queues */
+#endif

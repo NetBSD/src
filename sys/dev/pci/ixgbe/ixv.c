@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.104 2018/06/04 02:42:23 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.105 2018/06/06 20:02:31 kamil Exp $*/
 
 /******************************************************************************
 
@@ -873,12 +873,14 @@ out:
 	mutex_exit(&que->dc_mtx);
 } /* ixv_disable_queue */
 
+#if 0
 static inline void
 ixv_rearm_queues(struct adapter *adapter, u64 queues)
 {
 	u32 mask = (IXGBE_EIMS_RTX_QUEUE & queues);
 	IXGBE_WRITE_REG(&adapter->hw, IXGBE_VTEICS, mask);
 } /* ixv_rearm_queues */
+#endif
 
 
 /************************************************************************
