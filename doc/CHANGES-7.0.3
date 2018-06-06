@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.3,v 1.1.2.105 2018/05/22 17:38:48 martin Exp $
+# $NetBSD: CHANGES-7.0.3,v 1.1.2.106 2018/06/06 14:51:16 martin Exp $
 
 A complete list of changes from the NetBSD 7.0.2 release to the NetBSD 7.0.3
 release:
@@ -5441,4 +5441,10 @@ sys/kern/uipc_mbuf.c				1.214
 	Revert ticket #1598:
 	remove the M_READONLY check. The initial code was correct.
 	[maxv, ticket #1606]
+
+sys/netinet/udp_usrreq.c			1.237 (patch)
+
+	Fix bad/wrong memory deallocations and dangling pointer
+	issues in NAT-T.
+	[maxv, ticket #1607]
 
