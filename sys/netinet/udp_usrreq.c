@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.217 2014/08/09 05:33:01 rtr Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.217.2.1 2018/06/06 09:48:50 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.217 2014/08/09 05:33:01 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.217.2.1 2018/06/06 09:48:50 martin Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -395,7 +395,15 @@ udp_input(struct mbuf *m, ...)
 		 */
 		return;
 	}
+
 	ip = mtod(m, struct ip *);
+	IP6_EXTHDR_GET(uh, struct udphdr *, m, iphlen, sizeof(struct udphdr));
+	if (uh == NULL) {
+		UDP_STATINC(UDP_STAT_HDROPS);
+		return;
+	}
+	/* XXX Re-enforce alignment? */
+
 #ifdef INET6
 	if (IN_MULTICAST(ip->ip_dst.s_addr) || n == 0) {
 		struct sockaddr_in6 src6, dst6;
@@ -1301,7 +1309,7 @@ udp4_espinudp(struct mbuf **mp, int off, struct sockaddr *src,
 
 	/* Ignore keepalive packets */
 	if ((len == 1) && (*(unsigned char *)data == 0xff)) {
-		m_free(m);
+		m_freem(m);
 		*mp = NULL; /* avoid any further processiong by caller ... */
 		return 1;
 	}
@@ -1383,7 +1391,8 @@ udp4_espinudp(struct mbuf **mp, int off, struct sockaddr *src,
 #ifdef IPSEC
 	if (ipsec_used)
 		ipsec4_common_input(m, iphdrlen, IPPROTO_ESP);
-	/* XXX: else */
+	else
+		m_freem(m);
 #else
 	esp4_input(m, iphdrlen);
 #endif
