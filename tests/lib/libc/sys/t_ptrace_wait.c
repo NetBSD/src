@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.61 2018/06/01 05:48:29 kre Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.62 2018/06/06 13:16:32 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.61 2018/06/01 05:48:29 kre Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.62 2018/06/06 13:16:32 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -190,6 +190,10 @@ traceme_crash(int sig)
 	struct ptrace_siginfo info;
 
 	memset(&info, 0, sizeof(info));
+
+	if (sig == SIGBUS) {
+		atf_tc_expect_fail("lib/53343");
+	}
 
 	DPRINTF("Before forking process PID=%d\n", getpid());
 	SYSCALL_REQUIRE((child = fork()) != -1);
