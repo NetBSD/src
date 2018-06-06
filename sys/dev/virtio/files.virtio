@@ -1,0 +1,4 @@
+#	$NetBSD: files.virtio,v 1.1 2018/06/06 18:10:35 jakllsch Exp $
+
+# XXX the contents of the following included file should be moved here
+include "dev/pci/files.virtio"
