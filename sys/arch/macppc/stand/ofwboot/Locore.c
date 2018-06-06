@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.30 2018/06/06 22:56:25 uwe Exp $	*/
+/*	$NetBSD: Locore.c,v 1.31 2018/06/06 23:50:29 uwe Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -178,6 +178,24 @@ startup(void *vpd, int res, int (*openfirm)(void *), char *arg, int argl)
 	main();
 	OF_exit();
 }
+
+#if 0
+void
+OF_enter(void)
+{
+	static struct {
+		const char *name;
+		int nargs;
+		int nreturns;
+	} args = {
+		"enter",
+		0,
+		0
+	};
+
+	openfirmware(&args);
+}
+#endif	/* OF_enter */
 
 __dead void
 OF_exit(void)
