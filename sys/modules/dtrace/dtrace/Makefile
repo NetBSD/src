@@ -44,7 +44,7 @@ CPPFLAGS+=	-Wno-unknown-pragmas \
 		-Wno-unused-variable \
 		-Wno-unused-function
 
-.if defined(HAVE_LLVM)
+.if defined(HAVE_GCC)
 CPPFLAGS+=	 -Wno-discarded-qualifiers
 .endif
 

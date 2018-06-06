@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.zfs,v 1.6 2018/06/06 14:47:54 kamil Exp $
+#	$NetBSD: Makefile.zfs,v 1.7 2018/06/06 15:01:13 kamil Exp $
 
 .include <bsd.own.mk>
 
@@ -42,7 +42,7 @@ CPPFLAGS+=      -I${ZFSDIR}/dist/common
 CWARNFLAGS+=	-Wno-missing-field-initializers
 CWARNFLAGS+=	-Wno-strict-prototypes
 CWARNFLAGS+=	-Wno-cast-qual
-.if defined(HAVE_LLVM)
+.if defined(HAVE_GCC)
 CWARNFLAGS+=	-Wno-discarded-qualifiers
 .endif
 CWARNFLAGS+=	-Wno-switch
