@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.29 2013/08/11 01:54:35 dholland Exp $	*/
+/*	$NetBSD: str.c,v 1.29.4.1 2018/06/06 15:13:00 martin Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)str.c	8.2 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: str.c,v 1.29 2013/08/11 01:54:35 dholland Exp $");
+__RCSID("$NetBSD: str.c,v 1.29.4.1 2018/06/06 15:13:00 martin Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -417,6 +417,8 @@ backslash(STR *s)
 	}
 	if (cnt) {
 		/* We saw digits, so return their value */
+		if (val >= OOBCH)
+			errx(1, "Invalid octal character value");
 		return val;
 	}
 	if (ch == '\0') {
