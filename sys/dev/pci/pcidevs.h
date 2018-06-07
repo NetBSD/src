@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1281.2.6 2018/04/18 14:21:39 martin Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1281.2.7 2018/06/07 18:13:38 martin Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1289.2.6 2018/04/18 14:20:25 martin Exp
+ *	NetBSD: pcidevs,v 1.1289.2.7 2018/06/07 18:12:17 martin Exp
  */
 
 /*
@@ -6257,6 +6257,7 @@
 #define	PCI_PRODUCT_OXFORDSEMI_OXPCIE952_4	0xc141		/* OXPCIe952 */
 #define	PCI_PRODUCT_OXFORDSEMI_OXPCIE952_5	0xc144		/* OXPCIe952 */
 #define	PCI_PRODUCT_OXFORDSEMI_OXPCIE952_6	0xc145		/* OXPCIe952 */
+#define	PCI_PRODUCT_OXFORDSEMI_OXPCIE954	0xc208		/* OXPCIe954 */
 
 /* Packet Engines products */
 #define	PCI_PRODUCT_PACKETENGINES_GNICII	0x0911		/* G-NIC II Ethernet */
