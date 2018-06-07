@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.36.4.1 2017/07/25 02:11:14 snj Exp $
+#	$NetBSD: Makefile,v 1.36.4.2 2018/06/07 15:59:27 martin Exp $
 
 PROG=		crash
 MAN=		crash.8
@@ -83,10 +83,18 @@ SRCS+=	generic.c
 
 COPTS.db_output.c += -Wno-format-nonliteral
 
+.if ${MKREPRO} == "yes"
+.       if ${MKREPRO_TIMESTAMP:U0} != 0
+NVFLAGS+=-r ${MKREPRO_TIMESTAMP}
+.       else
+NVFLAGS+=-R
+.       endif
+.endif
+
 # vers.c
 SRCS+=	vers.c
 vers.c:	${S}/conf/newvers.sh ${_NETBSD_VERSION_DEPENDS}
-	${HOST_SH} ${S}/conf/newvers.sh -r -n
+	${HOST_SH} ${S}/conf/newvers.sh ${NVFLAGS} -n -m ${MACHINE} -i CRASH
 CLEANFILES+=	vers.c version
 
 .else				# } {
