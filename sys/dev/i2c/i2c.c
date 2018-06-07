@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.58 2018/05/15 02:02:18 thorpej Exp $	*/
+/*	$NetBSD: i2c.c,v 1.59 2018/06/07 05:54:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.58 2018/05/15 02:02:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.59 2018/06/07 05:54:23 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,6 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.58 2018/05/15 02:02:18 thorpej Exp $");
 #endif
 
 struct iic_softc {
+	device_t sc_dev;
 	i2c_tag_t sc_tag;
 	int sc_type;
 	device_t sc_devices[I2C_MAX_ADDR + 1];
@@ -127,21 +128,160 @@ iic_print(void *aux, const char *pnp)
 	return UNCONF;
 }
 
+static bool
+iic_is_special_address(i2c_addr_t addr)
+{
+
+	/*
+	 * See: https://www.i2c-bus.org/addressing/
+	 */
+
+	/* General Call (read) / Start Byte (write) */
+	if (addr == 0x00)
+		return (true);
+
+	/* CBUS Addresses */
+	if (addr == 0x01)
+		return (true);
+
+	/* Reserved for Different Bus Formats */
+	if (addr == 0x02)
+		return (true);
+
+	/* Reserved for future purposes */
+	if (addr == 0x03)
+		return (true);
+
+	/* High Speed Master Code */
+	if ((addr & 0x7c) == 0x04)
+		return (true);
+
+	/* 10-bit Slave Addressing prefix */
+	if ((addr & 0x7c) == 0x78)
+		return (true);
+	
+	/* Reserved for future purposes */
+	if ((addr & 0x7c) == 0x7c)
+		return (true);
+	
+	return (false);
+}
+
+static int
+iic_probe_none(struct iic_softc *sc,
+	       const struct i2c_attach_args *ia, int flags)
+{
+
+	return (0);
+}
+
+static int
+iic_probe_smbus_quick_write(struct iic_softc *sc,
+			    const struct i2c_attach_args *ia, int flags)
+{
+	int error;
+
+	if ((error = iic_acquire_bus(ia->ia_tag, flags)) == 0) {
+		error = iic_smbus_quick_write(ia->ia_tag, ia->ia_addr, flags);
+	}
+	(void) iic_release_bus(ia->ia_tag, flags);
+
+	return (error);
+}
+
+static int
+iic_probe_smbus_receive_byte(struct iic_softc *sc,
+			     const struct i2c_attach_args *ia, int flags)
+{
+	int error;
+
+	if ((error = iic_acquire_bus(ia->ia_tag, flags)) == 0) {
+		uint8_t dummy;
+
+		error = iic_smbus_receive_byte(ia->ia_tag, ia->ia_addr,
+					       &dummy, flags);
+	}
+	(void) iic_release_bus(ia->ia_tag, flags);
+
+	return (error);
+}
+
+static bool
+iic_indirect_driver_is_whitelisted(struct iic_softc *sc, cfdata_t cf)
+{
+	prop_object_iterator_t iter;
+	prop_array_t whitelist;
+	prop_string_t pstr;
+	prop_type_t ptype;
+	bool rv = false;
+
+	whitelist = prop_dictionary_get(device_properties(sc->sc_dev),
+					I2C_PROP_INDIRECT_DEVICE_WHITELIST);
+	if (whitelist == NULL) {
+		/* No whitelist -> everything allowed */
+		return (true);
+	}
+
+	if ((ptype = prop_object_type(whitelist)) != PROP_TYPE_ARRAY) {
+		aprint_error_dev(sc->sc_dev,
+		    "invalid property type (%d) for '%s'; must be array (%d)\n",
+		    ptype, I2C_PROP_INDIRECT_DEVICE_WHITELIST, PROP_TYPE_ARRAY);
+		return (false);
+	}
+
+	iter = prop_array_iterator(whitelist);
+	while ((pstr = prop_object_iterator_next(iter)) != NULL) {
+		if (prop_string_equals_cstring(pstr, cf->cf_name)) {
+			rv = true;
+			break;
+		}
+	}
+	prop_object_iterator_release(iter);
+
+	return (rv);
+}
+
 static int
 iic_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
 	struct iic_softc *sc = device_private(parent);
 	struct i2c_attach_args ia;
+	int (*probe_func)(struct iic_softc *,
+			  const struct i2c_attach_args *, int);
+	prop_string_t pstr;
+	i2c_addr_t first_addr, last_addr;
 
 	/*
-	 * I2C doesn't have any regular probing capability.  If we
-	 * encounter a cfdata with a wild-carded address or a wild-
-	 * carded parent spec, we skip them because they can only
-	 * be used for direct-coniguration.
+	 * Before we do any more work, consult the allowed-driver
+	 * white-list for this bus (if any).
 	 */
-	if (cf->cf_loc[IICCF_ADDR] == IICCF_ADDR_DEFAULT ||
-	    cf->cf_pspec->cfp_unit == DVUNIT_ANY)
-		return 0;
+	if (iic_indirect_driver_is_whitelisted(sc, cf) == false)
+		return (0);
+
+	/* default to "quick write". */
+	probe_func = iic_probe_smbus_quick_write;
+
+	pstr = prop_dictionary_get(device_properties(sc->sc_dev),
+				   I2C_PROP_INDIRECT_PROBE_STRATEGY);
+	if (pstr == NULL) {
+		/* Use the default. */
+	} else if (prop_string_equals_cstring(pstr,
+					I2C_PROBE_STRATEGY_QUICK_WRITE)) {
+		probe_func = iic_probe_smbus_quick_write;
+	} else if (prop_string_equals_cstring(pstr,
+					I2C_PROBE_STRATEGY_RECEIVE_BYTE)) {
+		probe_func = iic_probe_smbus_receive_byte;
+	} else if (prop_string_equals_cstring(pstr,
+					I2C_PROBE_STRATEGY_NONE)) {
+		probe_func = iic_probe_none;
+	} else {
+		aprint_error_dev(sc->sc_dev,
+			"unknown probe strategy '%s'; defaulting to '%s'\n",
+			prop_string_cstring_nocopy(pstr),
+			I2C_PROBE_STRATEGY_QUICK_WRITE);
+
+		/* Use the default. */
+	}
 
 	ia.ia_tag = sc->sc_tag;
 	ia.ia_size = cf->cf_loc[IICCF_SIZE];
@@ -152,16 +292,74 @@ iic_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	ia.ia_compat = NULL;
 	ia.ia_prop = NULL;
 
-	for (ia.ia_addr = 0; ia.ia_addr <= I2C_MAX_ADDR; ia.ia_addr++) {
+	if (cf->cf_loc[IICCF_ADDR] == IICCF_ADDR_DEFAULT) {
+		/*
+		 * This particular config directive has
+		 * wildcarded the address, so we will
+		 * scan the entire bus for it.
+		 */
+		first_addr = 0;
+		last_addr = I2C_MAX_ADDR;
+	} else {
+		/*
+		 * This config directive hard-wires the i2c
+		 * bus address for the device, so there is
+		 * no need to go poking around at any other
+		 * addresses.
+		 */
+		if (cf->cf_loc[IICCF_ADDR] < 0 ||
+		    cf->cf_loc[IICCF_ADDR] > I2C_MAX_ADDR) {
+			/* Invalid config directive! */
+			return (0);
+		}
+		first_addr = last_addr = cf->cf_loc[IICCF_ADDR];
+	}
+
+	for (ia.ia_addr = first_addr; ia.ia_addr <= last_addr; ia.ia_addr++) {
+		int error, match_result;
+
+		/*
+		 * Skip I2C addresses that are reserved for
+		 * special purposes.
+		 */
+		if (iic_is_special_address(ia.ia_addr))
+			continue;
+
+		/*
+		 * Skip addresses where a device is already attached.
+		 */
 		if (sc->sc_devices[ia.ia_addr] != NULL)
 			continue;
 
-		if (cf->cf_loc[IICCF_ADDR] != ia.ia_addr)
+		/*
+		 * Call the "match" routine for the device.  If that
+		 * returns success, then call the probe strategy
+		 * function.
+		 *
+		 * We do it in this order because i2c devices tend
+		 * to be found at a small number of possible addresses
+		 * (e.g. read-time clocks that are only ever found at
+		 * 0x68).  This gives the driver a chance to skip any
+		 * address that are not valid for the device, saving
+		 * us from having to poke at the bus to see if anything
+		 * is there.
+		 */
+		match_result = config_match(parent, cf, &ia);
+		if (match_result <= 0)
 			continue;
 
-		if (config_match(parent, cf, &ia) > 0)
-			sc->sc_devices[ia.ia_addr] =
-			    config_attach(parent, cf, &ia, iic_print);
+		/*
+		 * If the quality of the match by the driver was low
+		 * (i.e. matched on being a valid address only, didn't
+		 * perform any hardware probe), invoke our probe routine
+		 * to see if it looks like something is really there.
+		 */
+		if (match_result == I2C_MATCH_ADDRESS_ONLY &&
+		    (error = (*probe_func)(sc, &ia, I2C_F_POLL)) != 0)
+			continue;
+
+		sc->sc_devices[ia.ia_addr] =
+		    config_attach(parent, cf, &ia, iic_print);
 	}
 
 	return 0;
@@ -209,6 +407,7 @@ iic_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": I2C bus\n");
 
+	sc->sc_dev = self;
 	sc->sc_tag = iba->iba_tag;
 	sc->sc_type = iba->iba_type;
 	ic = sc->sc_tag;
