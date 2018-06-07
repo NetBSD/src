@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.204 2018/06/07 16:25:06 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.205 2018/06/07 18:37:04 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -13574,3 +13574,106 @@ sys/net/if_ipsec.c				1.15,1.16
 	Fix a panic when ipsecif(4) adds discard policy.
 	[knakahara, ticket #840]
 
+sys/dev/isa/isadma.c				1.67
+sys/dev/isa/isadmareg.h				1.9
+sys/dev/isa/isareg.h				1.10
+
+	Map one register less for the ISA DMA page resisters (to allow
+	access to that port for other drivers).
+	[jdolecek, ticket #841]
+
+sys/dev/pci/if_wm.c				1.580
+sys/dev/pci/ixgbe/ixgbe.c			1.156
+sys/dev/pci/ixgbe/ixv.c				1.101
+sys/net/if_bridge.c				1.156
+sys/net/if_gif.c				1.142
+sys/net/if_pppoe.c				1.138
+
+	Ensure to call if_register after interface initialization is complete.
+	[ozaki-r, ticket #843]
+
+sys/netinet6/in6.c				1.267,1.268
+sys/netinet6/in6_var.h				1.99,1.100
+sys/netinet6/mld6.c				1.93-1.99
+sys/netinet6/nd6.c				1.249
+
+	Don't hold softnet_lock in mld_timeo.
+	Release in6_multilock on callout_halt of mld_timeo to avoid a deadlock.
+	Improve atomicity of in6_leavegroup and in6_delmulti.
+	Avoid NULL pointer dereference on imm->i6mm_maddr.
+	Make a refcount decrement and a removal from a list of an item atomic.
+	Make a deletion of in6m in nd6_rtrequest atomic.
+	Move LIST_REMOVE. Avoid double LIST_REMOVE which corrupts lists.
+	[ozaki-r, ticket #842]
+
+sys/net/if.c					1.425
+
+	Relax a lock check in if_mcast_op unless NET_MPSAFE.
+	[ozaki-r, ticket #844]
+
+external/mit/xorg/lib/xkeyboard-config/Makefile.xkbdata 1.4
+external/mit/xorg/lib/xkeyboard-config/rules/Makefile 1.4
+
+	Generate xml files properly.
+	[youri, ticket #845]
+
+sys/dev/pci/pcidevs				1.1334
+sys/dev/pci/pucdata.c				1.102
+sys/dev/pci/pcidevs.h				(regen)
+sys/dev/pci/pcidevs_data.h			(regen)
+
+	Add Oxford Semiconductor OXPCIe954 PCIe 4-port serial card.
+	[jnemeth, ticket #846]
+
+sys/dev/usb/if_urtwn.c				1.58
+
+	Fix support for 8192eu, notably TPLINK TL-WN823NV2.
+	[nat, ticket #847]
+
+distrib/sets/lists/comp/mi			1.2198
+distrib/sets/lists/man/mi			1.1591
+share/man/man4/audio.4				1.86
+share/man/man7/Makefile				1.33
+share/man/man7/audio.7				delete
+share/man/man7/intro.7				1.26
+share/man/man9/Makefile				1.422
+share/man/man9/audio.9				1.47
+share/man/man9/audio_system.9			1.1
+share/man/man9/intro.9				1.20
+sys/dev/audio.c					1.456,1.457
+
+	Fix a typo with sc_out/inports when setting the hardware recording
+	gain on the mix ring.
+	Using audioctl without the -p switch defaults to the mix ring. This
+	allows setting the hardware gain etc.
+	Update the audio spec in audio.7 to reflect these changes.
+	Move the audio specification to section 9 under audio_system.
+	[nat, ticket #848]
+
+external/bsd/dhcpcd/dist/Makefile               up to 1.1.1.5
+external/bsd/dhcpcd/dist/src/arp.c              up to 1.1.1.7
+external/bsd/dhcpcd/dist/src/auth.c             up to 1.1.1.5
+external/bsd/dhcpcd/dist/src/auth.h             up to 1.1.1.3
+external/bsd/dhcpcd/dist/src/bpf.c              up to 1.7
+external/bsd/dhcpcd/dist/src/defs.h             up to 1.1.1.13
+external/bsd/dhcpcd/dist/src/dhcp.c             up to 1.11
+external/bsd/dhcpcd/dist/src/dhcp.h             up to 1.1.1.6
+external/bsd/dhcpcd/dist/src/dhcp6.c            up to 1.1.1.12
+external/bsd/dhcpcd/dist/src/dhcp6.h            up to 1.1.1.6
+external/bsd/dhcpcd/dist/src/dhcpcd-definitions.conf up to 1.1.1.2
+external/bsd/dhcpcd/dist/src/dhcpcd.8.in        up to 1.1.1.9
+external/bsd/dhcpcd/dist/src/dhcpcd.c           up to 1.12
+external/bsd/dhcpcd/dist/src/dhcpcd.conf.5.in   up to 1.1.1.9
+external/bsd/dhcpcd/dist/src/if-bsd.c           up to 1.1.1.8
+external/bsd/dhcpcd/dist/src/if-linux.c         up to 1.1.1.9
+external/bsd/dhcpcd/dist/src/if-options.c       up to 1.10
+external/bsd/dhcpcd/dist/src/ipv4ll.h           up to 1.1.1.4
+external/bsd/dhcpcd/dist/src/ipv6.c             up to 1.1.1.10
+external/bsd/dhcpcd/dist/src/ipv6.h             up to 1.1.1.7
+external/bsd/dhcpcd/dist/src/ipv6nd.c           up to 1.1.1.8
+external/bsd/dhcpcd/dist/src/ipv6nd.h           up to 1.1.1.6
+external/bsd/dhcpcd/dist/src/route.c            up to 1.1.1.7
+doc/3RDPARTY					(manually modified)
+
+	Import dhcpcd 7.0.5b.
+	[roy, ticket #849]
