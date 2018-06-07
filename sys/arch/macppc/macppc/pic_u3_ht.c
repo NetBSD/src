@@ -218,7 +218,7 @@ setup_u3_ht(uint32_t addr, uint32_t len, int bigendian)
 	    x & 0xff, ((x & 0x1f00) >> 8) + 1, ((x & 0x07ff0000) >> 16) + 1);
 
 	/* up to 128 interrupt sources, plus IPI */
-	pic->pic_numintrs = 129;
+	pic->pic_numintrs = IPI_VECTOR + 1;
 	pic->pic_cookie = (void *) addr;
 	pic->pic_enable_irq = u3_ht_enable_irq;
 	pic->pic_reenable_irq = u3_ht_enable_irq;
@@ -437,7 +437,7 @@ u3_ht_establish_irq(struct pic_ops *pic, int irq, int type, int pri)
 	if (u3_ht_is_ht_irq(u3_ht, irq))
 		u3_ht_establish_ht_irq(u3_ht, irq, type);
 
-	aprint_error("%s: setting IRQ %d %d to priority %d %x\n", __func__, irq,
+	DPRINTF("%s: setting IRQ %d %d to priority %d %x\n", __func__, irq,
 	    type, realpri, x);
 }
 
