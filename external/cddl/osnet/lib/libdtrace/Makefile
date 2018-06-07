@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2018/06/06 14:18:39 kamil Exp $
+#	$NetBSD: Makefile,v 1.19 2018/06/07 13:21:44 kamil Exp $
 
 # $FreeBSD: head/cddl/lib/libdtrace/Makefile 314654 2017-03-04 11:30:04Z ngie $
 
@@ -87,13 +87,9 @@ COPTS.dt_provider.c	+= -Wno-stack-protector
 COPTS.dt_subr.c		+= -Wno-stack-protector
 
 COPTS.dt_consume.c	+= -Wno-parentheses
-.if defined(HAVE_GCC)
-COPTS.dt_consume.c	+= -Wno-maybe-uninitialized
-.endif
+COPTS.dt_consume.c	+= ${${ACTIVE_CC} == "gcc" :? -Wno-maybe-uninitialized :}
 COPTS.dt_options.c	+= -Wno-parentheses
-.if defined(HAVE_GCC)
-COPTS.dt_pid.c		+= -Wno-unused-but-set-variable
-.endif
+COPTS.dt_pid.c		+= ${${ACTIVE_CC} == "gcc" :? -Wno-unused-but-set-variable :}
 COPTS.dt_isadep.c	+= -Wno-unused-variable
 
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
@@ -102,9 +98,7 @@ CPPFLAGS+=	-I${.CURDIR}/../../dev/dtrace/x86
 .PATH:		${.CURDIR}/../../dist/lib/libdtrace/i386 ${.CURDIR}/../../dev/dtrace/x86
 SRCS+=		dis_tables.c
 COPTS.dis_tables.c	+= -Wno-parentheses
-.if defined(HAVE_GCC)
-COPTS.dis_tables.c	+= -Wno-maybe-uninitialized
-.endif
+COPTS.dis_tables.c	+= ${${ACTIVE_CC} == "gcc" :? -Wno-maybe-uninitialized :}
 .elif ${MACHINE_ARCH} == "sparc64"
 CPPFLAGS+=	-I${OPENSOLARIS_SYS_DISTDIR}/uts/sparc
 .elif ${MACHINE_CPU} == "arm"
