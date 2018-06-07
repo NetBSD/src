@@ -13,8 +13,6 @@ CPPFLAGS+=	-I${NETBSDSRCDIR}/external/cddl/osnet/sys \
 
 CPPFLAGS+=	-Wno-unknown-pragmas
 
-.if defined(HAVE_GCC)
-CPPFLAGS+=	-Wno-discarded-qualifiers
-.endif
+CPPFLAGS+=	${${ACTIVE_CC} == "gcc" :? -Wno-discarded-qualifiers :}
 
 .include <bsd.kmodule.mk>
