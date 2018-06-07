@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2138.2.5 2018/02/11 21:17:33 snj Exp $
+#	$NetBSD: mi,v 1.2138.2.6 2018/06/07 18:24:15 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -10145,6 +10145,7 @@
 ./usr/share/man/cat9/arpresolve.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/atop.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/audio.0			comp-sys-catman		.cat
+./usr/share/man/cat9/audio_system.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/autoconf.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/bawrite.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/bcdtobin.0			comp-sys-catman		.cat
@@ -17631,6 +17632,7 @@
 ./usr/share/man/html9/arpresolve.html		comp-sys-htmlman	html
 ./usr/share/man/html9/atop.html			comp-sys-htmlman	html
 ./usr/share/man/html9/audio.html		comp-sys-htmlman	html
+./usr/share/man/html9/audio_system.html		comp-sys-htmlman	html
 ./usr/share/man/html9/autoconf.html		comp-sys-htmlman	html
 ./usr/share/man/html9/bawrite.html		comp-sys-htmlman	html
 ./usr/share/man/html9/bcdtobin.html		comp-sys-htmlman	html
@@ -25221,6 +25223,7 @@
 ./usr/share/man/man9/arpresolve.9		comp-sys-man		.man
 ./usr/share/man/man9/atop.9			comp-sys-man		.man
 ./usr/share/man/man9/audio.9			comp-sys-man		.man
+./usr/share/man/man9/audio_system.9		comp-sys-man		.man
 ./usr/share/man/man9/autoconf.9			comp-sys-man		.man
 ./usr/share/man/man9/bawrite.9			comp-sys-man		.man
 ./usr/share/man/man9/bcdtobin.9			comp-sys-man		.man
