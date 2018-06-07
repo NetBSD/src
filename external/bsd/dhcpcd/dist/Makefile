@@ -8,7 +8,8 @@ DIST!=		if test -f .fslckout; then echo "dist-fossil"; \
 FOSSILID?=	current
 GITREF?=	HEAD
 
-DISTPREFIX?=	dhcpcd-${VERSION}
+DISTSUFFIX=
+DISTPREFIX?=	dhcpcd-${VERSION}${DISTSUFFIX}
 DISTFILEGZ?=	${DISTPREFIX}.tar.gz
 DISTFILE?=	${DISTPREFIX}.tar.xz
 DISTINFO=	${DISTFILE}.distinfo

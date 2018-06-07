@@ -75,7 +75,6 @@ void ipv4ll_freedrop(struct interface *, int);
 #define	ipv4ll_defaultroute(route, ifp)	(0)
 #define	ipv4ll_handlert(a, b, c)	(0)
 #define	ipv4ll_free(a)			{}
-#define	ipv4ll_drop(a)			{}
 #endif
 
 #endif

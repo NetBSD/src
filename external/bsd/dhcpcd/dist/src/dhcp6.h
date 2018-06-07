@@ -67,6 +67,7 @@
 #define D6_OPTION_UNICAST		12
 #define D6_OPTION_STATUS_CODE		13
 #define D6_OPTION_RAPID_COMMIT		14
+#define D6_OPTION_USER_CLASS		15
 #define D6_OPTION_VENDOR_CLASS		16
 #define D6_OPTION_VENDOR_OPTS		17
 #define D6_OPTION_INTERFACE_ID		18
@@ -244,7 +245,6 @@ int dhcp6_dump(struct interface *);
 #define dhcp6_renew(a) {}
 #define dhcp6_env(a, b, c, d, e) (0)
 #define dhcp6_free(a) {}
-#define dhcp6_handleifa(a, b) {}
 #define dhcp6_dadcompleted(a) (0)
 #define dhcp6_drop(a, b) {}
 #define dhcp6_dropnondelegates(a) {}
