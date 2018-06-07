@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipsec.c,v 1.3.2.7 2018/05/17 14:07:03 martin Exp $  */
+/*	$NetBSD: if_ipsec.c,v 1.3.2.8 2018/06/07 16:19:47 martin Exp $  */
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipsec.c,v 1.3.2.7 2018/05/17 14:07:03 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipsec.c,v 1.3.2.8 2018/06/07 16:19:47 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1574,13 +1574,18 @@ if_ipsec_add_sp0(struct sockaddr *src, in_port_t sport,
 	m_copyback(m, 0, sizeof(msg), &msg);
 
 	if_ipsec_add_mbuf(m, &xsrc, sizeof(xsrc));
-	if_ipsec_add_mbuf_addr_port(m, src, sport, true);
+	/*
+	 * secpolicy.spidx.{src, dst} must not be set port number,
+	 * even if it is used for NAT-T.
+	 */
+	if_ipsec_add_mbuf_addr_port(m, src, 0, true);
 	padlen = PFKEY_UNUNIT64(xsrc.sadb_address_len)
 		- (sizeof(xsrc) + PFKEY_ALIGN8(src->sa_len));
 	if_ipsec_add_pad(m, padlen);
 
 	if_ipsec_add_mbuf(m, &xdst, sizeof(xdst));
-	if_ipsec_add_mbuf_addr_port(m, dst, dport, true);
+	/* ditto */
+	if_ipsec_add_mbuf_addr_port(m, dst, 0, true);
 	padlen = PFKEY_UNUNIT64(xdst.sadb_address_len)
 		- (sizeof(xdst) + PFKEY_ALIGN8(dst->sa_len));
 	if_ipsec_add_pad(m, padlen);
@@ -1588,6 +1593,10 @@ if_ipsec_add_sp0(struct sockaddr *src, in_port_t sport,
 	if_ipsec_add_mbuf(m, &xpl, sizeof(xpl));
 	if (policy == IPSEC_POLICY_IPSEC) {
 		if_ipsec_add_mbuf(m, &xisr, sizeof(xisr));
+		/*
+		 * secpolicy.req->saidx.{src, dst} must be set port number,
+		 * when it is used for NAT-T.
+		 */
 		if_ipsec_add_mbuf_addr_port(m, src, sport, false);
 		if_ipsec_add_mbuf_addr_port(m, dst, dport, false);
 	}
