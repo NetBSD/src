@@ -1,4 +1,4 @@
-/* $NetBSD: tsl256x.c,v 1.2 2018/05/27 14:03:56 thorpej Exp $ */
+/* $NetBSD: tsl256x.c,v 1.3 2018/06/07 05:54:23 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 Jason R. Thorpe
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsl256x.c,v 1.2 2018/05/27 14:03:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsl256x.c,v 1.3 2018/06/07 05:54:23 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -189,7 +189,8 @@ tsllux_attach(device_t parent, device_t self, void *aux)
 		      sc->sc_cs_package ? " (CS package)" : "");
 
 	/* Inititalize timing to reasonable defaults. */
-	sc->sc_gain = TIMING_GAIN_1X;
+	sc->sc_auto_gain = true;
+	sc->sc_gain = TIMING_GAIN_16X;
 	if (tsllux_set_integration_time(sc, TIMING_INTEG_101ms)) {
 		aprint_error_dev(self, ": unable to set integration time\n");
 		goto out;
