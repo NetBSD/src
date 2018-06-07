@@ -108,7 +108,7 @@ bpf_open(struct interface *ifp, int (*filter)(struct interface *, int))
 	size_t buf_len;
 	struct bpf_version pv;
 #ifdef BIOCIMMEDIATE
-	int flags;
+	unsigned int flags;
 #endif
 #ifndef O_CLOEXEC
 	int fd_opts;
@@ -411,7 +411,7 @@ static const struct bpf_insn bpf_arp_ether [] = {
 	/* Make sure the hardware length matches. */
 	BPF_STMT(BPF_LD + BPF_B + BPF_IND, offsetof(struct arphdr, ar_hln)),
 	BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K,
-	         sizeof((struct ether_arp *)0)->arp_sha, 1, 0),
+	         sizeof(((struct ether_arp *)0)->arp_sha), 1, 0),
 	BPF_STMT(BPF_RET + BPF_K, 0),
 };
 #define bpf_arp_ether_len	__arraycount(bpf_arp_ether)
@@ -540,7 +540,7 @@ static const struct bpf_insn bpf_bootp_ether[] = {
 #define BPF_BOOTP_ETHER_LEN	__arraycount(bpf_bootp_ether)
 
 static const struct bpf_insn bpf_bootp_filter[] = {
-	/* Make sure it's an IPv4 packet. */
+	/* Make sure it's an optionless IPv4 packet. */
 	BPF_STMT(BPF_LD + BPF_B + BPF_IND, 0),
 	BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, 0x45, 1, 0),
 	BPF_STMT(BPF_RET + BPF_K, 0),

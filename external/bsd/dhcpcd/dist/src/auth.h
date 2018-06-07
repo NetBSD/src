@@ -71,6 +71,8 @@ struct auth {
 	uint64_t last_replay;
 	uint8_t last_replay_set;
 	struct token_head tokens;
+	uint32_t token_snd_secretid;
+	uint32_t token_rcv_secretid;
 #endif
 };
 

@@ -22,7 +22,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd February 2, 2018
+.Dd May 3, 2018
 .Dt DHCPCD.CONF 5
 .Os
 .Sh NAME
@@ -74,9 +74,16 @@ Example:
 .D1 # A generic 192.168.0.1 network
 .D1 profile 192.168.0.1
 .D1 static ip_address=192.168.0.98/24
-.It Ic authprotocol Ar protocol Ar algorithm Ar rdm
+.It Ic authprotocol Ar protocol Op Ar algorithm Op Ar rdm
 Authenticate DHCP messages.
 See the Supported Authentication Protocols section.
+If
+.Ar protocol
+is
+.Ar token
+then
+.Ar algorithm is
+snd_secretid/rcv_secretid so you can send and recieve different tokens.
 .It Ic authtoken Ar secretid Ar realm Ar expire Ar key
 Define a shared key for use in authentication.
 .Ar realm
@@ -378,7 +385,8 @@ interface eth0
 Only configure IPv4.
 .It Ic ipv6only
 Only configure IPv6.
-.It Ic fqdn Op disable | ptr | both
+.It Ic fqdn Op disable | none | ptr | both
+none will not ask the DHCP server to update DNS.
 ptr just asks the DHCP server to update the PTR
 record of the host in DNS whereas both also updates the A record.
 disable will disable the FQDN option.
@@ -863,7 +871,11 @@ References an option from the global definition.
 .Ss Supported Authentication Protocols
 .Bl -tag -width -indent
 .It Ic token
-Sends and expects the token with the secretid 0 and realm of "" in each message.
+Sends a plain text token the server expects and matches a token sent by
+the server.
+The tokens to not have to be the same.
+If unspecified, the token with secretid of 0 will be used in sending messages
+and validating received messages.
 .It Ic delayedrealm
 Delayed Authentication.
 .Nm dhcpcd

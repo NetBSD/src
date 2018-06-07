@@ -496,13 +496,12 @@ if_route(unsigned char cmd, const struct rt *rt)
 
 		rtm->rtm_flags |= RTF_UP;
 		rtm->rtm_addrs |= RTA_GATEWAY;
-#ifdef RTA_LABEL
-		rtm->rtm_addrs |= RTA_LABEL;
-#endif
 		if (!(rtm->rtm_flags & RTF_REJECT) &&
 		    !sa_is_loopback(&rt->rt_gateway))
 		{
-			rtm->rtm_addrs |= RTA_IFP;
+			rtm->rtm_index = (unsigned short)rt->rt_ifp->index;
+			if (!gateway_unspec)
+				rtm->rtm_addrs |= RTA_IFP;
 			if (!sa_is_unspecified(&rt->rt_ifa))
 				rtm->rtm_addrs |= RTA_IFA;
 		}
@@ -574,10 +573,8 @@ if_route(unsigned char cmd, const struct rt *rt)
 	if (rtm->rtm_addrs & RTA_NETMASK)
 		ADDSA(&rt->rt_netmask);
 
-	if (rtm->rtm_addrs & RTA_IFP) {
-		rtm->rtm_index = (unsigned short)rt->rt_ifp->index;
+	if (rtm->rtm_addrs & RTA_IFP)
 		ADDSA((struct sockaddr *)&sdl);
-	}
 
 	if (rtm->rtm_addrs & RTA_IFA)
 		ADDSA(&rt->rt_ifa);

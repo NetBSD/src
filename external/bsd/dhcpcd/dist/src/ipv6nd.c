@@ -749,7 +749,8 @@ ipv6nd_handlera(struct dhcpcd_ctx *ctx, struct interface *ifp,
 	struct in6_addr pi_prefix;
 	struct ipv6_addr *ap;
 	struct dhcp_opt *dho;
-	uint8_t new_rap, new_data;
+	bool new_rap, new_data;
+	uint32_t old_lifetime;
 	__printflike(1, 2) void (*logfunc)(const char *, ...);
 #ifdef IPV6_MANAGETEMPADDR
 	uint8_t new_ap;
@@ -764,25 +765,25 @@ ipv6nd_handlera(struct dhcpcd_ctx *ctx, struct interface *ifp,
 	}
 
 	if (len < sizeof(struct nd_router_advert)) {
-		logerr("IPv6 RA packet too short from %s", ctx->sfrom);
+		logerrx("IPv6 RA packet too short from %s", ctx->sfrom);
 		return;
 	}
 
 	/* RFC 4861 7.1.2 */
 	if (hoplimit != 255) {
-		logerr("invalid hoplimit(%d) in RA from %s",
+		logerrx("invalid hoplimit(%d) in RA from %s",
 		    hoplimit, ctx->sfrom);
 		return;
 	}
 
 	if (!IN6_IS_ADDR_LINKLOCAL(&ctx->from.sin6_addr)) {
-		logerr("RA from non local address %s", ctx->sfrom);
+		logerrx("RA from non local address %s", ctx->sfrom);
 		return;
 	}
 
 	if (!(ifp->options->options & DHCPCD_IPV6RS)) {
 #ifdef DEBUG_RS
-		logerr("%s: unexpected RA from %s",
+		logerrx("%s: unexpected RA from %s",
 		    ifp->name, ctx->sfrom);
 #endif
 		return;
@@ -820,9 +821,9 @@ ipv6nd_handlera(struct dhcpcd_ctx *ctx, struct interface *ifp,
 			free(rap->data);
 			rap->data_len = 0;
 		}
-		new_data = 1;
+		new_data = true;
 	} else
-		new_data = 0;
+		new_data = false;
 	if (rap == NULL) {
 		rap = calloc(1, sizeof(*rap));
 		if (rap == NULL) {
@@ -833,9 +834,9 @@ ipv6nd_handlera(struct dhcpcd_ctx *ctx, struct interface *ifp,
 		rap->from = ctx->from.sin6_addr;
 		strlcpy(rap->sfrom, ctx->sfrom, sizeof(rap->sfrom));
 		TAILQ_INIT(&rap->addrs);
-		new_rap = 1;
+		new_rap = true;
 	} else
-		new_rap = 0;
+		new_rap = false;
 	if (rap->data_len == 0) {
 		rap->data = malloc(len);
 		if (rap->data == NULL) {
@@ -858,7 +859,11 @@ ipv6nd_handlera(struct dhcpcd_ctx *ctx, struct interface *ifp,
 
 	clock_gettime(CLOCK_MONOTONIC, &rap->acquired);
 	rap->flags = nd_ra->nd_ra_flags_reserved;
+	old_lifetime = rap->lifetime;
 	rap->lifetime = ntohs(nd_ra->nd_ra_router_lifetime);
+	if (!new_rap && rap->lifetime == 0 && old_lifetime != 0)
+		logwarnx("%s: %s: no longer a default router",
+		    ifp->name, rap->sfrom);
 	if (nd_ra->nd_ra_reachable) {
 		rap->reachable = ntohl(nd_ra->nd_ra_reachable);
 		if (rap->reachable > MAX_REACHABLE_TIME)
@@ -1529,9 +1534,6 @@ ipv6nd_handledata(void *arg)
 	len = recvmsg_realloc(ctx->nd_fd, &ctx->rcvhdr, 0);
 	if (len == -1) {
 		logerr(__func__);
-		eloop_event_delete(ctx->eloop, ctx->nd_fd);
-		close(ctx->nd_fd);
-		ctx->nd_fd = -1;
 		return;
 	}
 	ctx->sfrom = inet_ntop(AF_INET6, &ctx->from.sin6_addr,

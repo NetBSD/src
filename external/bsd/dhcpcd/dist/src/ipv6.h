@@ -285,7 +285,6 @@ bool inet6_getroutes(struct dhcpcd_ctx *, struct rt_head *);
 #define ipv6_hasaddr(a) (0)
 #define ipv6_free_ll_callbacks(a) {}
 #define ipv6_free(a) {}
-#define ipv6_drop(a) {}
 #define ipv6_ctxfree(a) {}
 #define ipv6_gentempifid(a) {}
 #endif

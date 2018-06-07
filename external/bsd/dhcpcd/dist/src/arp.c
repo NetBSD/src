@@ -128,13 +128,16 @@ arp_packet(struct interface *ifp, uint8_t *data, size_t len)
 	/* Protocol must be IP. */
 	if (ar.ar_pro != htons(ETHERTYPE_IP))
 		continue;
-	/* Only these types are recognised */
-	if (ar.ar_op != htons(ARPOP_REPLY) &&
-	    ar.ar_op != htons(ARPOP_REQUEST))
+	/* lladdr length matches */
+	if (ar.ar_hln != ifp->hwlen)
 		continue;
 	/* Protocol length must match in_addr_t */
 	if (ar.ar_pln != sizeof(arm.sip.s_addr))
 		return;
+	/* Only these types are recognised */
+	if (ar.ar_op != htons(ARPOP_REPLY) &&
+	    ar.ar_op != htons(ARPOP_REQUEST))
+		continue;
 #endif
 
 	/* Get pointers to the hardware addresses */
