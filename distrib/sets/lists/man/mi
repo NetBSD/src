@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1557.2.4 2018/05/15 13:42:50 martin Exp $
+# $NetBSD: mi,v 1.1557.2.5 2018/06/07 18:24:16 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2251,7 +2251,7 @@
 ./usr/share/man/cat5/wtmpx.0			man-sys-catman		.cat
 ./usr/share/man/cat5/ypserv.acl.0		man-obsolete		obsolete
 ./usr/share/man/cat7/ascii.0			man-reference-catman	.cat
-./usr/share/man/cat7/audio.0			man-reference-catman	.cat
+./usr/share/man/cat7/audio.0			man-obsolete		obsolete
 ./usr/share/man/cat7/atf.0			man-atf-catman		.cat,atf
 ./usr/share/man/cat7/c.0			man-reference-catman	.cat
 ./usr/share/man/cat7/c78.0			man-reference-catman	.cat
@@ -5272,7 +5272,7 @@
 ./usr/share/man/html5/wtmp.html			man-sys-htmlman		html
 ./usr/share/man/html5/wtmpx.html		man-sys-htmlman		html
 ./usr/share/man/html7/ascii.html		man-reference-htmlman	html
-./usr/share/man/html7/audio.html		man-reference-htmlman	html
+./usr/share/man/html7/audio.html		man-obsolete		obsolete
 ./usr/share/man/html7/atf.html			man-atf-htmlman		html,atf
 ./usr/share/man/html7/c.html			man-reference-htmlman	html
 ./usr/share/man/html7/c78.html			man-reference-htmlman	html
@@ -8263,7 +8263,7 @@
 ./usr/share/man/man5/wtmpx.5			man-sys-man		.man
 ./usr/share/man/man5/ypserv.acl.5		man-obsolete		obsolete
 ./usr/share/man/man7/ascii.7			man-reference-man	.man
-./usr/share/man/man7/audio.7			man-reference-man	.man
+./usr/share/man/man7/audio.7			man-obsolete		obsolete
 ./usr/share/man/man7/atf.7			man-atf-man		.man,atf
 ./usr/share/man/man7/c.7			man-reference-man	.man
 ./usr/share/man/man7/c78.7			man-reference-man	.man

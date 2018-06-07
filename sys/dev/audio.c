@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.357.2.12 2018/05/15 13:42:50 martin Exp $	*/
+/*	$NetBSD: audio.c,v 1.357.2.13 2018/06/07 18:24:16 martin Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.357.2.12 2018/05/15 13:42:50 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.357.2.13 2018/06/07 18:24:16 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -234,6 +234,8 @@ int	audiosetinfo(struct audio_softc *, struct audio_info *, bool,
 int	audiogetinfo(struct audio_softc *, struct audio_info *, int,
 		     struct virtual_channel *);
 
+int	audioctl_open(dev_t, struct audio_softc *, int, int, struct lwp *,
+		   struct file **);
 int	audio_open(dev_t, struct audio_softc *, int, int, struct lwp *,
 		   struct file **);
 int	audio_close(struct audio_softc *, int, struct audio_chan *);
@@ -1677,8 +1679,10 @@ audioopen(dev_t dev, int flags, int ifmt, struct lwp *l)
 	switch (AUDIODEV(dev)) {
 	case SOUND_DEVICE:
 	case AUDIO_DEVICE:
-	case AUDIOCTL_DEVICE:
 		error = audio_open(dev, sc, flags, ifmt, l, &fp);
+		break;
+	case AUDIOCTL_DEVICE:
+		error = audioctl_open(dev, sc, flags, ifmt, l, &fp);
 		break;
 	case MIXER_DEVICE:
 		error = mixer_open(dev, sc, flags, ifmt, l, &fp);
@@ -1713,8 +1717,10 @@ audioclose(struct file *fp)
 	switch (AUDIODEV(dev)) {
 	case SOUND_DEVICE:
 	case AUDIO_DEVICE:
-	case AUDIOCTL_DEVICE:
 		error = audio_close(sc, fp->f_flag, chan);
+		break;
+	case AUDIOCTL_DEVICE:
+		error = 0;
 		break;
 	case MIXER_DEVICE:
 		error = mixer_close(sc, fp->f_flag, chan);
@@ -2143,6 +2149,50 @@ audio_calcwater(struct audio_softc *sc, struct virtual_channel *vc)
 }
 
 int
+audioctl_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
+    struct lwp *l, struct file **nfp)
+{
+	struct file *fp;
+	int error, fd;
+	const struct audio_hw_if *hw;
+	struct virtual_channel *vc;
+	struct audio_chan *chan;
+
+	KASSERT(mutex_owned(sc->sc_lock));
+
+	if (sc->sc_usemixer && !sc->sc_ready)
+		return ENXIO;
+
+	hw = sc->hw_if;
+	if (hw == NULL)
+		return ENXIO;
+
+	chan = kmem_zalloc(sizeof(struct audio_chan), KM_SLEEP);
+	if (sc->sc_usemixer)
+		vc = &sc->sc_mixring;
+	else
+		vc = sc->sc_hwvc;
+	chan->vc = vc;
+
+	error = fd_allocfile(&fp, &fd);
+	if (error)
+		goto bad;
+
+	chan->dev = dev;
+	chan->chan = 0;
+	chan->deschan = 0;
+
+	error = fd_clone(fp, fd, flags, &audio_fileops, chan);
+	KASSERT(error == EMOVEFD);
+
+	*nfp = fp;
+	return error;
+bad:
+	kmem_free(chan, sizeof(struct audio_chan));
+	return error;
+}
+
+int
 audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
     struct lwp *l, struct file **nfp)
 {
@@ -2173,9 +2223,6 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 	else
 		vc = sc->sc_hwvc;
 	chan->vc = vc;
-
-	if (!sc->sc_usemixer && AUDIODEV(dev) == AUDIOCTL_DEVICE)
-		goto audioctl_dev;
 
 	if (sc->sc_usemixer) {
 		vc->sc_open = 0;
@@ -2294,12 +2341,9 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 	/* audio_close() decreases sc_mpr[n].usedlow, recalculate here */
 	audio_calcwater(sc, vc);
 
-audioctl_dev:
 	error = fd_allocfile(&fp, &fd);
 	if (error)
 		goto bad;
-	if (!sc->sc_usemixer && AUDIODEV(dev) == AUDIOCTL_DEVICE)
-		goto setup_chan;
 
 	DPRINTF(("audio_open: done sc_mode = 0x%x\n", vc->sc_mode));
 
@@ -2310,7 +2354,6 @@ audioctl_dev:
 	if (flags & FWRITE)
 		sc->sc_opens++;
 
-setup_chan:
 	chan->dev = dev;
 	chan->chan = n;
 	chan->deschan = n;
@@ -2487,9 +2530,6 @@ audio_close(struct audio_softc *sc, int flags, struct audio_chan *chan)
 
 	KASSERT(mutex_owned(sc->sc_lock));
 	
-	if (!sc->sc_usemixer && AUDIODEV(chan->dev) == AUDIOCTL_DEVICE)
-		return 0;
-
 	if (sc->sc_opens == 0 && sc->sc_recopens == 0)
 		return ENXIO;
 
@@ -3085,7 +3125,7 @@ audio_ioctl(dev_t dev, struct audio_softc *sc, u_long cmd, void *addr, int flag,
 	} else
 		pchan = chan;
 
-	if (chan->deschan != 0)
+	if (!sc->sc_usemixer || chan->deschan != 0)
 		vc = pchan->vc;
 	else
 		vc = &sc->sc_mixring;
@@ -4757,8 +4797,8 @@ done:
 
 	if (SPECIFIED(r->gain)) {
 		if (!sc->sc_usemixer || vc == &sc->sc_mixring) {
-			au_get_gain(sc, &sc->sc_outports, &gain, &balance);
-			error = au_set_gain(sc, &sc->sc_outports, r->gain, balance);
+			au_get_gain(sc, &sc->sc_inports, &gain, &balance);
+			error = au_set_gain(sc, &sc->sc_inports, r->gain, balance);
 			if (error)
 				goto cleanup;
 		} else
