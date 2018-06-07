@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.508.4.19 2018/05/17 13:58:07 martin Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.508.4.20 2018/06/07 17:42:25 martin Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.508.4.19 2018/05/17 13:58:07 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.508.4.20 2018/06/07 17:42:25 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -2825,8 +2825,8 @@ alloc_retry:
 	}
 	sc->sc_ipq = if_percpuq_create(&sc->sc_ethercom.ec_if);
 	ether_ifattach(ifp, enaddr);
-	if_register(ifp);
 	ether_set_ifflags_cb(&sc->sc_ethercom, wm_ifflags_cb);
+	if_register(ifp);
 	rnd_attach_source(&sc->rnd_source, xname, RND_TYPE_NET,
 			  RND_FLAG_DEFAULT);
 
