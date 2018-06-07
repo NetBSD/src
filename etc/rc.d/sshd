@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: sshd,v 1.23.8.2 2017/12/10 09:44:48 snj Exp $
+# $NetBSD: sshd,v 1.23.8.3 2018/06/07 16:11:49 martin Exp $
 #
 
 # PROVIDE: sshd
@@ -32,7 +32,8 @@ sshd_keygen()
 			0)	bitarg="${ssh_keygen_flags}";;
 			*)	bitarg="-b ${bits}";;
 			esac
-			"${keygen}" -t "${type}" ${bitarg} -f "${f}" -N ''
+			"${keygen}" -t "${type}" ${bitarg} -f "${f}" -N '' -q && \
+			    printf "ssh-keygen: " && "${keygen}" -f "${f}" -l
 		fi
 	done << _EOF
 dsa	1024	ssh_host_dsa_key	2	DSA
