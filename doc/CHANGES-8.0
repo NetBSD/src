@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.203 2018/06/05 08:14:25 bouyer Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.204 2018/06/07 16:25:06 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -13521,4 +13521,56 @@ usr.sbin/sysinst/msg.mi.pl			1.9
 	Prefer http over ftp downloads.
 	Auto-select the bootblock details like the current console.
 	[martin, ticket #860]
+
+sys/arch/x86/x86/efi.c				1.15 (patch)
+sys/dev/pci/pci_map.c				1.34,1.35
+sys/dev/pci/pcivar.h				1.112
+
+	Enable the appropriate memory or I/O space decode in the PCI
+	Command/Status Register upon mapping a BAR if booted via EFI.
+	[jakllsch, ticket #832]
+
+share/mk/bsd.obj.mk				1.52
+share/mk/bsd.sys.mk				1.276,1.277
+share/mk/sys.mk					1.131
+usr.bin/make/var.c				1.219
+usr.sbin/crash/Makefile				1.40
+
+	Various fixes for reproducable builds:
+	 - Prevent 'make obj' creating an objdir inside an objdir.
+	 - Delete ${DESTDIR} for lint.
+	 - Also substitute ${X11SRCDIR} for the random seed for reproducible
+	   builds so that the random seed is consistent.
+	 - Since ${MAKE} converts $$ -> $ during parsing we need to put it
+	   back to preserve the original variable value with :Q.
+	 - Be more selective about remapping object directories otherwise we
+	   pick objdump and objcopy with the regex.
+	[christos, ticket #834]
+
+external/gpl2/gmake/dist/glob/glob.c		1.5
+
+	Fix build failure on Ubuntu 18.04.
+	[nonaka, ticket #836]
+
+sys/netinet/udp_usrreq.c			1.237
+
+	Fix bad/wrong memory deallocations and dangling pointer
+	issues in NAT-T.
+	[maxv, ticket #837]
+
+etc/rc.d/sshd					1.28
+
+	Do not show ASCII art when generating a host key, instead
+	print the key fingerprint.
+	[jmcneill, ticket #838]
+
+sys/net/if_ipsec.c				1.14
+
+	Fix the port numbers when using NAT-T.
+	[knakahara, ticket #839]
+
+sys/net/if_ipsec.c				1.15,1.16
+
+	Fix a panic when ipsecif(4) adds discard policy.
+	[knakahara, ticket #840]
 
