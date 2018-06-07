@@ -1,4 +1,4 @@
-/*	$NetBSD: isareg.h,v 1.9 2005/12/11 12:22:02 christos Exp $	*/
+/*	$NetBSD: isareg.h,v 1.9.156.1 2018/06/07 19:39:54 martin Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -55,7 +55,7 @@
 #define	IO_PPI		0x061		/* Programmable Peripheral Interface */
 #define	IO_RTC		0x070		/* RTC */
 #define	IO_NMI		IO_RTC		/* NMI Control */
-#define	IO_DMAPG	0x080		/* DMA Page Registers */
+#define	IO_DMAPG	0x081		/* DMA Page Registers */
 #define	IO_ICU2		0x0A0		/* 8259A Interrupt Controller #2 */
 #define	IO_DMA2		0x0C0		/* 8237A DMA Controller #2 */
 #define	IO_NPX		0x0F0		/* Numeric Coprocessor */

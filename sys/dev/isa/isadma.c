@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma.c,v 1.66 2010/11/13 13:52:03 uebayasi Exp $	*/
+/*	$NetBSD: isadma.c,v 1.66.52.1 2018/06/07 19:39:54 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isadma.c,v 1.66 2010/11/13 13:52:03 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isadma.c,v 1.66.52.1 2018/06/07 19:39:54 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,15 +53,19 @@ __KERNEL_RCSID(0, "$NetBSD: isadma.c,v 1.66 2010/11/13 13:52:03 uebayasi Exp $")
 struct isa_mem *isa_mem_head;
 
 /*
- * High byte of DMA address is stored in this DMAPG register for
- * the Nth DMA channel.
+ * DMA Channel to Address Page Register offset mapping
+ *
+ * Offset from IO_DMAPG is stored in this 2D array -- first dimension is
+ * the DMA controller, second dimension is the DMA channel.
+ *
+ * e.g. dmapageport[0][1] gives us the offset for DMA ch 1 on DMA1
  */
-static int dmapageport[2][4] = {
-	{0x7, 0x3, 0x1, 0x2},
-	{0xf, 0xb, 0x9, 0xa}
+static const int dmapageport[2][4] = {
+	{0x6, 0x2, 0x0, 0x1},
+	{0xe, 0xa, 0x8, 0x9}
 };
 
-static u_int8_t dmamode[] = {
+static const u_int8_t dmamode[] = {
 	/* write to device/read from device */
 	DMA37MD_READ | DMA37MD_SINGLE,
 	DMA37MD_WRITE | DMA37MD_SINGLE,
@@ -169,7 +173,7 @@ _isa_dmainit(struct isa_dma_state *ids, bus_space_tag_t bst, bus_dma_tag_t dmat,
 		if (bus_space_map(ids->ids_bst, IO_DMA2, DMA2_IOSIZE, 0,
 		    &ids->ids_dma2h))
 			panic("_isa_dmainit: unable to map DMA controller #2");
-		if (bus_space_map(ids->ids_bst, IO_DMAPG, 0xf, 0,
+		if (bus_space_map(ids->ids_bst, IO_DMAPG, DMAPG_IOSIZE, 0,
 		    &ids->ids_dmapgh))
 			panic("_isa_dmainit: unable to map DMA page registers");
 
@@ -211,7 +215,7 @@ _isa_dmadestroy(struct isa_dma_state *ids)
 	/*
 	 * Unmap the registers used by the ISA DMA controller.
 	 */
-	bus_space_unmap(ids->ids_bst, ids->ids_dmapgh, 0xf);
+	bus_space_unmap(ids->ids_bst, ids->ids_dmapgh, DMAPG_IOSIZE);
 	bus_space_unmap(ids->ids_bst, ids->ids_dma2h, DMA2_IOSIZE);
 	bus_space_unmap(ids->ids_bst, ids->ids_dma1h, DMA1_IOSIZE);
 
