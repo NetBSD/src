@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_mmc.c,v 1.24 2018/05/21 22:04:27 jmcneill Exp $ */
+/* $NetBSD: sunxi_mmc.c,v 1.25 2018/06/07 00:39:27 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_sunximmc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_mmc.c,v 1.24 2018/05/21 22:04:27 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_mmc.c,v 1.25 2018/06/07 00:39:27 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -254,8 +254,7 @@ static const struct sunxi_mmc_config sun50i_a64_emmc_config = {
 	.idma_xferlen = 0x2000,
 	.dma_ftrglevel = 0x20070008,
 	.delays = NULL,
-	.flags = SUNXI_MMC_FLAG_CALIB_REG |
-		 SUNXI_MMC_FLAG_HS200,
+	.flags = SUNXI_MMC_FLAG_CALIB_REG,
 };
 
 static const struct sunxi_mmc_config sun50i_h6_mmc_config = {
@@ -554,10 +553,14 @@ sunxi_mmc_attach_i(device_t self)
 		       SMC_CAPS_AUTO_STOP |
 		       SMC_CAPS_SD_HIGHSPEED |
 		       SMC_CAPS_MMC_HIGHSPEED |
-		       SMC_CAPS_MMC_DDR52 |
 		       SMC_CAPS_POLLING;
+
+	if (sc->sc_config->delays || (flags & SUNXI_MMC_FLAG_NEW_TIMINGS))
+		saa.saa_caps |= SMC_CAPS_MMC_DDR52;
+
 	if (flags & SUNXI_MMC_FLAG_HS200)
 		saa.saa_caps |= SMC_CAPS_MMC_HS200;
+
 	if (width == 4)
 		saa.saa_caps |= SMC_CAPS_4BIT_MODE;
 	if (width == 8)
@@ -967,7 +970,8 @@ sunxi_mmc_dma_prepare(struct sunxi_mmc_softc *sc, struct sdmmc_command *cmd)
 			if (desc == sc->sc_idma_ndesc)
 				break;
 			len = min(sc->sc_config->idma_xferlen, resid);
-			dma[desc].dma_buf_size = htole32(len);
+			dma[desc].dma_buf_size =
+			    htole32(len == sc->sc_config->idma_xferlen ? 0 : len);
 			dma[desc].dma_buf_addr = htole32(paddr + off);
 			dma[desc].dma_config = htole32(SUNXI_MMC_IDMA_CONFIG_CH |
 					       SUNXI_MMC_IDMA_CONFIG_OWN);
