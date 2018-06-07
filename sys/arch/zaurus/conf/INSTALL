@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.36 2018/05/15 00:44:56 thorpej Exp $
+# $NetBSD: INSTALL,v 1.37 2018/06/07 13:36:29 thorpej Exp $
 #
 # INSTALL config file (GENERIC with memory disk root)
 #
@@ -68,7 +68,7 @@ no zrc0 at pxaip?
 no ztp0 at zssp?
 no wsmouse* at ztp?
 
-no zaudio0 at iic0
+no zaudio0 at iic?
 no audio* at zaudio?
 no spkr* at audio?
 
