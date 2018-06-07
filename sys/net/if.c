@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.394.2.10 2018/05/15 13:48:37 martin Exp $	*/
+/*	$NetBSD: if.c,v 1.394.2.11 2018/06/07 17:50:54 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.394.2.10 2018/05/15 13:48:37 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.394.2.11 2018/06/07 17:50:54 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -3601,9 +3601,12 @@ if_mcast_op(ifnet_t *ifp, const unsigned long cmd, const struct sockaddr *sa)
 	int rc;
 	struct ifreq ifr;
 
+	/* There remain some paths that don't hold IFNET_LOCK yet */
+#ifdef NET_MPSAFE
 	/* CARP and MROUTING still don't deal with the lock yet */
 #if (!defined(NCARP) || (NCARP == 0)) && !defined(MROUTING)
 	KASSERT(IFNET_LOCKED(ifp));
+#endif
 #endif
 	if (ifp->if_mcastop != NULL)
 		rc = (*ifp->if_mcastop)(ifp, cmd, sa);
