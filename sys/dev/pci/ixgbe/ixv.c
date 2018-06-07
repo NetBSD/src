@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.56.2.15 2018/05/15 13:37:24 martin Exp $*/
+/*$NetBSD: ixv.c,v 1.56.2.16 2018/06/07 17:42:24 martin Exp $*/
 
 /******************************************************************************
 
@@ -1526,7 +1526,6 @@ ixv_setup_interface(device_t dev, struct adapter *adapter)
 	 * We use per TX queue softint, so if_deferred_start_init() isn't
 	 * used.
 	 */
-	if_register(ifp);
 	ether_set_ifflags_cb(ec, ixv_ifflags_cb);
 
 	adapter->max_frame_size = ifp->if_mtu + IXGBE_MTU_HDR;
@@ -1564,6 +1563,8 @@ ixv_setup_interface(device_t dev, struct adapter *adapter)
 	    ixv_media_status);
 	ifmedia_add(&adapter->media, IFM_ETHER | IFM_AUTO, 0, NULL);
 	ifmedia_set(&adapter->media, IFM_ETHER | IFM_AUTO);
+
+	if_register(ifp);
 
 	return 0;
 } /* ixv_setup_interface */

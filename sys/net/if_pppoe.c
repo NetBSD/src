@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.125.6.7 2018/04/18 14:16:57 martin Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.125.6.8 2018/06/07 17:42:25 martin Exp $ */
 
 /*-
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.125.6.7 2018/04/18 14:16:57 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.125.6.8 2018/06/07 17:42:25 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pppoe.h"
@@ -336,12 +336,12 @@ pppoe_clone_create(struct if_clone *ifc, int unit)
 	}
 	sc->sc_sppp.pp_if.if_percpuq = if_percpuq_create(&sc->sc_sppp.pp_if);
 	sppp_attach(&sc->sc_sppp.pp_if);
-	if_register(&sc->sc_sppp.pp_if);
 
 	bpf_attach(&sc->sc_sppp.pp_if, DLT_PPP_ETHER, 0);
 	if (LIST_EMPTY(&pppoe_softc_list)) {
 		pfil_add_ihook(pppoe_ifattach_hook, NULL, PFIL_IFNET, if_pfil);
 	}
+	if_register(&sc->sc_sppp.pp_if);
 
 	rw_init(&sc->sc_lock);
 
