@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL_C700,v 1.3 2018/05/15 00:44:56 thorpej Exp $
+# $NetBSD: INSTALL_C700,v 1.4 2018/06/07 13:36:29 thorpej Exp $
 #
 # INSTALL config file (C700 with memory disk root)
 #
@@ -15,7 +15,7 @@ no makeoptions	LOADADDRESS
 makeoptions	LOADADDRESS="0xc0400000"
 
 no scoop1 at pxaip?
-no ioexp0 at iic0
+no ioexp0 at iic?
 
 no lcd0 at pxaip?
 no wsdisplay* at lcd?

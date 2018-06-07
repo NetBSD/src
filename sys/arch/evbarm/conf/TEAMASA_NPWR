@@ -1,4 +1,4 @@
-#	$NetBSD: TEAMASA_NPWR,v 1.93 2018/05/15 01:24:23 thorpej Exp $
+#	$NetBSD: TEAMASA_NPWR,v 1.94 2018/06/07 13:36:28 thorpej Exp $
 #
 #	TEAMASA_NPWR -- Team ASA, Inc. Npwr -- XScale/IOP310-based
 #	server appliance.
@@ -146,7 +146,7 @@ iopxs*		at mainbus?
 
 iopiic*		at iopxs? 			# I2C Controller Unit
 iic*		at iopiic?
-m41trtc*	at iic0 addr 0x68
+m41trtc*	at iic? addr 0x68
 
 pci*		at iopxs? bus ?
 

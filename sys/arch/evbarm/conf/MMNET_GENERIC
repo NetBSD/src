@@ -1,4 +1,4 @@
-# $NetBSD: MMNET_GENERIC,v 1.35 2018/05/15 01:24:23 thorpej Exp $
+# $NetBSD: MMNET_GENERIC,v 1.36 2018/06/07 13:36:28 thorpej Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/evbarm/conf/std.mmnet"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.35 $"
+#ident 		"GENERIC-$Revision: 1.36 $"
 
 maxusers	32		# estimated number of users
 
@@ -288,9 +288,9 @@ iic0		at at91twi?
 # Hardware monitors
 
 # AMD 768 and 8111 power/ACPI controllers
-#dbcool* at iic0 addr 0x2C		# Unknown other motherboard(s)
-#dbcool* at iic0 addr 0x2D		# Tyan S2881
-#dbcool* at iic0 addr 0x2E		# Tyan S2882-D
+#dbcool* at iic? addr 0x2C		# Unknown other motherboard(s)
+#dbcool* at iic? addr 0x2D		# Tyan S2881
+#dbcool* at iic? addr 0x2E		# Tyan S2882-D
 
 # 1-Wire support
 #gpioow* 	at gpio? offset 6 mask 0x1	# 1-wire bitbanging via gpio
