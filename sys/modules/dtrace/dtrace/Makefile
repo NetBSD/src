@@ -44,9 +44,7 @@ CPPFLAGS+=	-Wno-unknown-pragmas \
 		-Wno-unused-variable \
 		-Wno-unused-function
 
-.if defined(HAVE_GCC)
-CPPFLAGS+=	 -Wno-discarded-qualifiers
-.endif
+CPPFLAGS+=	 ${${ACTIVE_CC} == "gcc" :? -Wno-discarded-qualifiers :}
 
 COPTS.dis_tables.c+= \
 		-Wno-missing-field-initializers \
@@ -54,10 +52,7 @@ COPTS.dis_tables.c+= \
 		-Wno-parentheses \
 		-Wno-uninitialized
 
-.if defined(HAVE_GCC)
-COPTS.dtrace.c+= \
-		-Wno-unused-but-set-variable
-.endif
+COPTS.dtrace.c+=	${${ACTIVE_CC} == "gcc" :? -Wno-unused-but-set-variable :}
 
 COPTS.dtrace_subr.c+= \
 		-Wno-unused-value
