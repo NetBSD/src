@@ -1,4 +1,4 @@
-/*	$NetBSD: efiboot.c,v 1.7 2018/04/11 10:32:09 nonaka Exp $	*/
+/*	$NetBSD: efiboot.c,v 1.8 2018/06/08 11:52:30 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -28,7 +28,6 @@
 
 #include "efiboot.h"
 
-#include "biosdisk_ll.h"
 #include "bootinfo.h"
 #include "devopen.h"
 
