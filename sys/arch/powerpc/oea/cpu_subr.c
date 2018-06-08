@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.95 2018/06/01 18:06:58 macallan Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.96 2018/06/08 23:40:44 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.95 2018/06/01 18:06:58 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.96 2018/06/08 23:40:44 macallan Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_ppccache.h"
@@ -1144,7 +1144,6 @@ cpu_get_dfs(void)
 void
 cpu_set_dfs(int div)
 {
-	uint64_t where;
 	u_int dfs_mask, pvr, vers;
 
 	pvr = mfpvr();
@@ -1162,9 +1161,13 @@ cpu_set_dfs(int div)
 		return;
 
 	}
-
+#ifdef MULTIPROCESSOR
+	uint64_t where;
 	where = xc_broadcast(0, (xcfunc_t)cpu_set_dfs_xcall, &div, &dfs_mask);
 	xc_wait(where);
+#else
+	cpu_set_dfs_xcall(&div, &dfs_mask);
+#endif
 }
 
 static void
