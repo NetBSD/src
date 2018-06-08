@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.161.6.1 2018/03/31 10:38:53 martin Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.161.6.2 2018/06/08 10:14:33 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.161.6.1 2018/03/31 10:38:53 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.161.6.2 2018/06/08 10:14:33 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -1310,6 +1310,7 @@ ip_next_mtu(u_int mtu, int dir)	/* XXX */
 static void
 icmp_mtudisc_timeout(struct rtentry *rt, struct rttimer *r)
 {
+	struct rtentry *retrt;
 
 	KASSERT(rt != NULL);
 	rt_assert_referenced(rt);
@@ -1317,7 +1318,9 @@ icmp_mtudisc_timeout(struct rtentry *rt, struct rttimer *r)
 	if ((rt->rt_flags & (RTF_DYNAMIC | RTF_HOST)) ==
 	    (RTF_DYNAMIC | RTF_HOST)) {
 		rtrequest(RTM_DELETE, rt_getkey(rt),
-		    rt->rt_gateway, rt_mask(rt), rt->rt_flags, NULL);
+		    rt->rt_gateway, rt_mask(rt), rt->rt_flags, &retrt);
+		rt_unref(rt);
+		rt_free(retrt);
 	} else {
 		if ((rt->rt_rmx.rmx_locks & RTV_MTU) == 0) {
 			rt->rt_rmx.rmx_mtu = 0;
@@ -1328,6 +1331,7 @@ icmp_mtudisc_timeout(struct rtentry *rt, struct rttimer *r)
 static void
 icmp_redirect_timeout(struct rtentry *rt, struct rttimer *r)
 {
+	struct rtentry *retrt;
 
 	KASSERT(rt != NULL);
 	rt_assert_referenced(rt);
@@ -1335,7 +1339,9 @@ icmp_redirect_timeout(struct rtentry *rt, struct rttimer *r)
 	if ((rt->rt_flags & (RTF_DYNAMIC | RTF_HOST)) ==
 	    (RTF_DYNAMIC | RTF_HOST)) {
 		rtrequest(RTM_DELETE, rt_getkey(rt),
-		    rt->rt_gateway, rt_mask(rt), rt->rt_flags, NULL);
+		    rt->rt_gateway, rt_mask(rt), rt->rt_flags, &retrt);
+		rt_unref(rt);
+		rt_free(retrt);
 	}
 }
 
