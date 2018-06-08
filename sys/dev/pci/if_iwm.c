@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwm.c,v 1.81 2018/06/08 11:09:24 knakahara Exp $	*/
+/*	$NetBSD: if_iwm.c,v 1.82 2018/06/08 11:18:23 knakahara Exp $	*/
 /*	OpenBSD: if_iwm.c,v 1.148 2016/11/19 21:07:08 stsp Exp	*/
 #define IEEE80211_NO_HT
 /*
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.81 2018/06/08 11:09:24 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.82 2018/06/08 11:18:23 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -8140,7 +8140,13 @@ iwm_attach(device_t parent, device_t self, void *aux)
 #if 0
 	ieee80211_ifattach(ic);
 #else
-	ether_ifattach(ifp, NULL);	/* XXX */
+	/*
+	 * XXX
+	 * To avoid setting ifp->if_hwdl in if_set_sadl(), we fake
+	 *  ic->ic_myaddr as local address.
+	 */
+	ic->ic_myaddr[0] = 0x02;
+	ether_ifattach(ifp,  ic->ic_myaddr);	/* XXX */
 #endif
 	/* Use common softint-based if_input */
 	ifp->if_percpuq = if_percpuq_create(ifp);
