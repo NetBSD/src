@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_clntsocket.c,v 1.5 2016/06/17 14:28:29 christos Exp $	*/
+/*	$NetBSD: nfs_clntsocket.c,v 1.5.10.1 2018/06/08 10:25:23 martin Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_clntsocket.c,v 1.5 2016/06/17 14:28:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_clntsocket.c,v 1.5.10.1 2018/06/08 10:25:23 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -294,9 +294,11 @@ errout:
 			rcvflg = 0;
 			error =  (*so->so_receive)(so, getnam, &auio, mp,
 				NULL, &rcvflg);
-			if (error == EWOULDBLOCK &&
-			    (rep->r_flags & R_SOFTTERM))
-				return (EINTR);
+			if (error == EWOULDBLOCK) {
+				int intr = nfs_sigintr(rep->r_nmp, rep, l);
+				if (intr)
+					error = intr;
+			}
 		} while (error == EWOULDBLOCK);
 		len -= auio.uio_resid;
 		if (!error && *mp == NULL)
@@ -403,6 +405,7 @@ nfsmout:
 		 * Iff no match, just drop the datagram
 		 */
 		s = splsoftnet();
+		mutex_enter(&nfs_reqq_lock);
 		TAILQ_FOREACH(rep, &nfs_reqq, r_chain) {
 			if (rep->r_mrep != NULL || rxid != rep->r_xid)
 				continue;
@@ -468,6 +471,7 @@ nfsmout:
 			nmp->nm_timeouts = 0;
 			break;
 		}
+		mutex_exit(&nfs_reqq_lock);
 		splx(s);
 		nfs_rcvunlock(nmp);
 		/*
@@ -653,7 +657,9 @@ tryagain:
 	 * to put it LAST so timer finds oldest requests first.
 	 */
 	s = splsoftnet();
+	mutex_enter(&nfs_reqq_lock);
 	TAILQ_INSERT_TAIL(&nfs_reqq, rep, r_chain);
+	mutex_exit(&nfs_reqq_lock);
 	nfs_timer_start();
 
 	/*
@@ -695,7 +701,9 @@ tryagain:
 	 * RPC done, unlink the request.
 	 */
 	s = splsoftnet();
+	mutex_enter(&nfs_reqq_lock);
 	TAILQ_REMOVE(&nfs_reqq, rep, r_chain);
+	mutex_exit(&nfs_reqq_lock);
 
 	/*
 	 * Decrement the outstanding request count.

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.75 2015/04/20 13:12:24 riastradh Exp $	*/
+/*	$NetBSD: nfs.h,v 1.75.10.1 2018/06/08 10:25:23 martin Exp $	*/
 /*
  * Copyright (c) 1989, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -341,6 +341,7 @@ struct nfsreq {
  * Queue head for nfsreq's
  */
 extern TAILQ_HEAD(nfsreqhead, nfsreq) nfs_reqq;
+extern kmutex_t nfs_reqq_lock;
 
 /* Flag values for r_flags */
 #define R_TIMING	0x01		/* timing request (in mntp) */
