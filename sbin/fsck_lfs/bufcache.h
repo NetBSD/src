@@ -1,4 +1,4 @@
-/*	$NetBSD: bufcache.h,v 1.13 2016/08/18 08:08:02 christos Exp $	*/
+/*	$NetBSD: bufcache.h,v 1.13.6.1 2018/06/08 10:21:12 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@ void bufrehash(int);
 void bufstats(void);
 void buf_destroy(struct ubuf *);
 void bremfree(struct ubuf *);
-struct ubuf *incore(struct uvnode *, int);
+struct ubuf *incore(struct uvnode *, daddr_t);
 struct ubuf *getblk(struct uvnode *, daddr_t, int);
 void bwrite(struct ubuf *);
 void brelse(struct ubuf *, int);
