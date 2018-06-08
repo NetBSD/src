@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwm.c,v 1.80 2018/06/06 01:49:08 maya Exp $	*/
+/*	$NetBSD: if_iwm.c,v 1.81 2018/06/08 11:09:24 knakahara Exp $	*/
 /*	OpenBSD: if_iwm.c,v 1.148 2016/11/19 21:07:08 stsp Exp	*/
 #define IEEE80211_NO_HT
 /*
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.80 2018/06/06 01:49:08 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.81 2018/06/08 11:09:24 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -7762,6 +7762,11 @@ iwm_preinit(struct iwm_softc *sc)
 		ic->ic_sup_rates[IEEE80211_MODE_11A] = ieee80211_std_rateset_11a;
 
 	ether_ifdetach(ifp);
+	/*
+	 * XXX
+	 * ether_ifdetach() overwrites ifp->if_ioctl, so restore it here.
+	 */
+	ifp->if_ioctl = iwm_ioctl;
 	ieee80211_ifattach(ic);
 
 	ic->ic_node_alloc = iwm_node_alloc;
