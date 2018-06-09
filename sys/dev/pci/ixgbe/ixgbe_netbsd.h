@@ -1,4 +1,4 @@
-/*$NetBSD: ixgbe_netbsd.h,v 1.7 2017/02/08 04:32:43 msaitoh Exp $*/
+/*$NetBSD: ixgbe_netbsd.h,v 1.7.6.1 2018/06/09 14:59:43 martin Exp $*/
 /*
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -93,7 +93,6 @@ void ixgbe_dmamap_destroy(ixgbe_dma_tag_t *, bus_dmamap_t);
 void ixgbe_dmamap_sync(ixgbe_dma_tag_t *, bus_dmamap_t, int);
 void ixgbe_dmamap_unload(ixgbe_dma_tag_t *, bus_dmamap_t);
 
-void ixgbe_jcl_reinit(ixgbe_extmem_head_t *, bus_dma_tag_t, int, size_t);
 struct mbuf *ixgbe_getjcl(ixgbe_extmem_head_t *, int, int, int, size_t);
 void ixgbe_pci_enable_busmaster(pci_chipset_tag_t, pcitag_t);
 

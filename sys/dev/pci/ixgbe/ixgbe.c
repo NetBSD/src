@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.88.2.19 2018/06/07 17:42:24 martin Exp $ */
+/* $NetBSD: ixgbe.c,v 1.88.2.20 2018/06/09 14:59:43 martin Exp $ */
 
 /******************************************************************************
 
@@ -80,7 +80,7 @@
 /************************************************************************
  * Driver version
  ************************************************************************/
-char ixgbe_driver_version[] = "4.0.1-k";
+static const char ixgbe_driver_version[] = "4.0.1-k";
 
 
 /************************************************************************
@@ -92,7 +92,7 @@ char ixgbe_driver_version[] = "4.0.1-k";
  *
  *   { Vendor ID, Device ID, SubVendor ID, SubDevice ID, String Index }
  ************************************************************************/
-static ixgbe_vendor_info_t ixgbe_vendor_info_array[] =
+static const ixgbe_vendor_info_t ixgbe_vendor_info_array[] =
 {
 	{IXGBE_INTEL_VENDOR_ID, IXGBE_DEV_ID_82598AF_DUAL_PORT, 0, 0, 0},
 	{IXGBE_INTEL_VENDOR_ID, IXGBE_DEV_ID_82598AF_SINGLE_PORT, 0, 0, 0},
@@ -208,7 +208,7 @@ static void     ixgbe_update_link_status(struct adapter *);
 static void	ixgbe_set_ivar(struct adapter *, u8, u8, s8);
 static void	ixgbe_configure_ivars(struct adapter *);
 static u8 *	ixgbe_mc_array_itr(struct ixgbe_hw *, u8 **, u32 *);
-static void	ixgbe_eitr_write(struct ix_queue *, uint32_t);
+static void	ixgbe_eitr_write(struct adapter *, uint32_t, uint32_t);
 
 static void	ixgbe_setup_vlan_hw_support(struct adapter *);
 #if 0
@@ -236,11 +236,13 @@ static int	ixgbe_sysctl_phy_overtemp_occurred(SYSCTLFN_PROTO);
 static int	ixgbe_sysctl_power_state(SYSCTLFN_PROTO);
 static int	ixgbe_sysctl_print_rss_config(SYSCTLFN_PROTO);
 #endif
+static int      ixgbe_sysctl_next_to_check_handler(SYSCTLFN_PROTO);
 static int      ixgbe_sysctl_rdh_handler(SYSCTLFN_PROTO);
 static int      ixgbe_sysctl_rdt_handler(SYSCTLFN_PROTO);
 static int      ixgbe_sysctl_tdt_handler(SYSCTLFN_PROTO);
 static int      ixgbe_sysctl_tdh_handler(SYSCTLFN_PROTO);
 static int      ixgbe_sysctl_eee_state(SYSCTLFN_PROTO);
+static int	ixgbe_sysctl_debug(SYSCTLFN_PROTO);
 static int	ixgbe_sysctl_wol_enable(SYSCTLFN_PROTO);
 static int	ixgbe_sysctl_wufc(SYSCTLFN_PROTO);
 
@@ -264,7 +266,7 @@ static void	ixgbe_handle_phy(void *);
 /* Workqueue handler for deferred work */
 static void	ixgbe_handle_que_work(struct work *, void *);
 
-static ixgbe_vendor_info_t *ixgbe_lookup(const struct pci_attach_args *);
+static const ixgbe_vendor_info_t *ixgbe_lookup(const struct pci_attach_args *);
 
 /************************************************************************
  *  NetBSD Device Interface Entry Points
@@ -581,7 +583,7 @@ ixgbe_initialize_receive_units(struct adapter *adapter)
 
 	for (i = 0; i < adapter->num_queues; i++, rxr++) {
 		u64 rdba = rxr->rxdma.dma_paddr;
-		u32 tqsmreg, reg;
+		u32 reg;
 		int regnum = i / 4;	/* 1 register per 4 queues */
 		int regshift = i % 4;	/* 4 bits per 1 queue */
 		j = rxr->me;
@@ -605,20 +607,6 @@ ixgbe_initialize_receive_units(struct adapter *adapter)
 		reg &= ~(0x000000ff << (regshift * 8));
 		reg |= i << (regshift * 8);
 		IXGBE_WRITE_REG(hw, IXGBE_RQSMR(regnum), reg);
-
-		/*
-		 * Set RQSMR (Receive Queue Statistic Mapping) register.
-		 * Register location for queue 0...7 are different between
-		 * 82598 and newer.
-		 */
-		if (adapter->hw.mac.type == ixgbe_mac_82598EB)
-			tqsmreg = IXGBE_TQSMR(regnum);
-		else
-			tqsmreg = IXGBE_TQSM(regnum);
-		reg = IXGBE_READ_REG(hw, tqsmreg);
-		reg &= ~(0x000000ff << (regshift * 8));
-		reg |= i << (regshift * 8);
-		IXGBE_WRITE_REG(hw, tqsmreg, reg);
 
 		/*
 		 * Set DROP_EN iff we have no flow control and >1 queue.
@@ -685,6 +673,9 @@ ixgbe_initialize_transmit_units(struct adapter *adapter)
 	for (i = 0; i < adapter->num_queues; i++, txr++) {
 		u64 tdba = txr->txdma.dma_paddr;
 		u32 txctrl = 0;
+		u32 tqsmreg, reg;
+		int regnum = i / 4;	/* 1 register per 4 queues */
+		int regshift = i % 4;	/* 4 bits per 1 queue */
 		int j = txr->me;
 
 		IXGBE_WRITE_REG(hw, IXGBE_TDBAL(j),
@@ -693,12 +684,27 @@ ixgbe_initialize_transmit_units(struct adapter *adapter)
 		IXGBE_WRITE_REG(hw, IXGBE_TDLEN(j),
 		    adapter->num_tx_desc * sizeof(union ixgbe_adv_tx_desc));
 
+		/*
+		 * Set TQSMR (Transmit Queue Statistic Mapping) register.
+		 * Register location is different between 82598 and others.
+		 */
+		if (adapter->hw.mac.type == ixgbe_mac_82598EB)
+			tqsmreg = IXGBE_TQSMR(regnum);
+		else
+			tqsmreg = IXGBE_TQSM(regnum);
+		reg = IXGBE_READ_REG(hw, tqsmreg);
+		reg &= ~(0x000000ff << (regshift * 8));
+		reg |= i << (regshift * 8);
+		IXGBE_WRITE_REG(hw, tqsmreg, reg);
+
 		/* Setup the HW Tx Head and Tail descriptor pointers */
 		IXGBE_WRITE_REG(hw, IXGBE_TDH(j), 0);
 		IXGBE_WRITE_REG(hw, IXGBE_TDT(j), 0);
 
 		/* Cache the tail address */
 		txr->tail = IXGBE_TDT(j);
+
+		txr->txr_no_space = false;
 
 		/* Disable Head Writeback */
 		/*
@@ -763,7 +769,7 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 	u32		ctrl_ext;
 	u16		high, low, nvmreg;
 	pcireg_t	id, subid;
-	ixgbe_vendor_info_t *ent;
+	const ixgbe_vendor_info_t *ent;
 	struct pci_attach_args *pa = aux;
 	const char *str;
 	char buf[256];
@@ -1557,16 +1563,24 @@ ixgbe_update_stats_counters(struct adapter *adapter)
 	if (hw->mac.type == ixgbe_mac_X550)
 		stats->mbsdc.ev_count += IXGBE_READ_REG(hw, IXGBE_MBSDC);
 
+	/* 16 registers */
 	for (int i = 0; i < __arraycount(stats->qprc); i++) {
 		int j = i % adapter->num_queues;
+
 		stats->qprc[j].ev_count += IXGBE_READ_REG(hw, IXGBE_QPRC(i));
 		stats->qptc[j].ev_count += IXGBE_READ_REG(hw, IXGBE_QPTC(i));
-		stats->qprdc[j].ev_count += IXGBE_READ_REG(hw, IXGBE_QPRDC(i));
+		if (hw->mac.type >= ixgbe_mac_82599EB) {
+			stats->qprdc[j].ev_count
+			    += IXGBE_READ_REG(hw, IXGBE_QPRDC(i));
+		}
 	}
+
+	/* 8 registers */
 	for (int i = 0; i < __arraycount(stats->mpc); i++) {
 		uint32_t mp;
 		int j = i % adapter->num_queues;
 
+		/* MPC */
 		mp = IXGBE_READ_REG(hw, IXGBE_MPC(i));
 		/* global total per queue */
 		stats->mpc[j].ev_count += mp;
@@ -1576,7 +1590,24 @@ ixgbe_update_stats_counters(struct adapter *adapter)
 		if (hw->mac.type == ixgbe_mac_82598EB)
 			stats->rnbc[j].ev_count
 			    += IXGBE_READ_REG(hw, IXGBE_RNBC(i));
-		
+
+		stats->pxontxc[j].ev_count
+		    += IXGBE_READ_REG(hw, IXGBE_PXONTXC(i));
+		stats->pxofftxc[j].ev_count
+		    += IXGBE_READ_REG(hw, IXGBE_PXOFFTXC(i));
+		if (hw->mac.type >= ixgbe_mac_82599EB) {
+			stats->pxonrxc[j].ev_count
+			    += IXGBE_READ_REG(hw, IXGBE_PXONRXCNT(i));
+			stats->pxoffrxc[j].ev_count
+			    += IXGBE_READ_REG(hw, IXGBE_PXOFFRXCNT(i));
+			stats->pxon2offc[j].ev_count
+			    += IXGBE_READ_REG(hw, IXGBE_PXON2OFFCNT(i));
+		} else {
+			stats->pxonrxc[j].ev_count
+			    += IXGBE_READ_REG(hw, IXGBE_PXONRXC(i));
+			stats->pxoffrxc[j].ev_count
+			    += IXGBE_READ_REG(hw, IXGBE_PXOFFRXC(i));
+		}
 	}
 	stats->mpctotal.ev_count += total_missed_rx;
 
@@ -1791,6 +1822,14 @@ ixgbe_add_hw_stats(struct adapter *adapter)
 		if (sysctl_createv(log, 0, &rnode, &cnode,
 		    CTLFLAG_READONLY,
 		    CTLTYPE_INT,
+		    "rxd_nxck", SYSCTL_DESCR("Receive Descriptor next to check"),
+			ixgbe_sysctl_next_to_check_handler, 0, (void *)rxr, 0,
+		    CTL_CREATE, CTL_EOL) != 0)
+			break;
+
+		if (sysctl_createv(log, 0, &rnode, &cnode,
+		    CTLFLAG_READONLY,
+		    CTLTYPE_INT,
 		    "rxd_head", SYSCTL_DESCR("Receive Descriptor Head"),
 		    ixgbe_sysctl_rdh_handler, 0, (void *)rxr, 0,
 		    CTL_CREATE, CTL_EOL) != 0)
@@ -1827,8 +1866,10 @@ ixgbe_add_hw_stats(struct adapter *adapter)
 			evcnt_attach_dynamic(&stats->pxoffrxc[i],
 			    EVCNT_TYPE_MISC, NULL, adapter->queues[i].evnamebuf,
 			    "pxoffrxc");
-			evcnt_attach_dynamic(&stats->pxon2offc[i],
-			    EVCNT_TYPE_MISC, NULL, adapter->queues[i].evnamebuf,
+			if (hw->mac.type >= ixgbe_mac_82599EB)
+				evcnt_attach_dynamic(&stats->pxon2offc[i],
+				    EVCNT_TYPE_MISC, NULL,
+				    adapter->queues[i].evnamebuf,
 			    "pxon2offc");
 		}
 		if (i < __arraycount(stats->qprc)) {
@@ -1844,9 +1885,10 @@ ixgbe_add_hw_stats(struct adapter *adapter)
 			evcnt_attach_dynamic(&stats->qbtc[i],
 			    EVCNT_TYPE_MISC, NULL, adapter->queues[i].evnamebuf,
 			    "qbtc");
-			evcnt_attach_dynamic(&stats->qprdc[i],
-			    EVCNT_TYPE_MISC, NULL, adapter->queues[i].evnamebuf,
-			    "qprdc");
+			if (hw->mac.type >= ixgbe_mac_82599EB)
+				evcnt_attach_dynamic(&stats->qprdc[i],
+				    EVCNT_TYPE_MISC, NULL,
+				    adapter->queues[i].evnamebuf, "qprdc");
 		}
 
 		evcnt_attach_dynamic(&rxr->rx_packets, EVCNT_TYPE_MISC,
@@ -2035,14 +2077,16 @@ ixgbe_clear_evcnt(struct adapter *adapter)
 			stats->pxonrxc[i].ev_count = 0;
 			stats->pxofftxc[i].ev_count = 0;
 			stats->pxoffrxc[i].ev_count = 0;
-			stats->pxon2offc[i].ev_count = 0;
+			if (hw->mac.type >= ixgbe_mac_82599EB)
+				stats->pxon2offc[i].ev_count = 0;
 		}
 		if (i < __arraycount(stats->qprc)) {
 			stats->qprc[i].ev_count = 0;
 			stats->qptc[i].ev_count = 0;
 			stats->qbrc[i].ev_count = 0;
 			stats->qbtc[i].ev_count = 0;
-			stats->qprdc[i].ev_count = 0;
+			if (hw->mac.type >= ixgbe_mac_82599EB)
+				stats->qprdc[i].ev_count = 0;
 		}
 
 		rxr->rx_packets.ev_count = 0;
@@ -2146,6 +2190,27 @@ ixgbe_sysctl_tdt_handler(SYSCTLFN_ARGS)
 	node.sysctl_data = &val;
 	return sysctl_lookup(SYSCTLFN_CALL(&node));
 } /* ixgbe_sysctl_tdt_handler */
+
+/************************************************************************
+ * ixgbe_sysctl_next_to_check_handler - Receive Descriptor next to check
+ * handler function
+ *
+ *   Retrieves the next_to_check value
+ ************************************************************************/
+static int 
+ixgbe_sysctl_next_to_check_handler(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node = *rnode;
+	struct rx_ring *rxr = (struct rx_ring *)node.sysctl_data;
+	uint32_t val;
+
+	if (!rxr)
+		return (0);
+
+	val = rxr->next_to_check;
+	node.sysctl_data = &val;
+	return sysctl_lookup(SYSCTLFN_CALL(&node));
+} /* ixgbe_sysctl_next_to_check_handler */
 
 /************************************************************************
  * ixgbe_sysctl_rdh_handler - Receive Descriptor Head handler function
@@ -2560,7 +2625,7 @@ ixgbe_msix_que(void *arg)
 	 *    the last interval.
 	 */
 	if (que->eitr_setting)
-		ixgbe_eitr_write(que, que->eitr_setting);
+		ixgbe_eitr_write(adapter, que->msix, que->eitr_setting);
 
 	que->eitr_setting = 0;
 
@@ -3043,16 +3108,15 @@ ixgbe_msix_link(void *arg)
 } /* ixgbe_msix_link */
 
 static void
-ixgbe_eitr_write(struct ix_queue *que, uint32_t itr)
+ixgbe_eitr_write(struct adapter *adapter, uint32_t index, uint32_t itr)
 {
-	struct adapter *adapter = que->adapter;
 	
         if (adapter->hw.mac.type == ixgbe_mac_82598EB)
                 itr |= itr << 16;
         else
                 itr |= IXGBE_EITR_CNT_WDIS;
 
-	IXGBE_WRITE_REG(&adapter->hw, IXGBE_EITR(que->msix), itr);
+	IXGBE_WRITE_REG(&adapter->hw, IXGBE_EITR(index), itr);
 }
 
 
@@ -3100,7 +3164,7 @@ ixgbe_sysctl_interrupt_rate_handler(SYSCTLFN_ARGS)
 		ixgbe_max_interrupt_rate = rate;
 	} else
 		ixgbe_max_interrupt_rate = 0;
-	ixgbe_eitr_write(que, reg);
+	ixgbe_eitr_write(adapter, que->msix, reg);
 
 	return (0);
 } /* ixgbe_sysctl_interrupt_rate_handler */
@@ -3148,6 +3212,12 @@ ixgbe_add_device_sysctls(struct adapter *adapter)
 		aprint_error_dev(dev, "could not create sysctl root\n");
 		return;
 	}
+
+	if (sysctl_createv(log, 0, &rnode, &cnode,
+	    CTLFLAG_READWRITE, CTLTYPE_INT,
+	    "debug", SYSCTL_DESCR("Debug Info"),
+	    ixgbe_sysctl_debug, 0, (void *)adapter, 0, CTL_CREATE, CTL_EOL) != 0)
+		aprint_error_dev(dev, "could not create sysctl\n");
 
 	if (sysctl_createv(log, 0, &rnode, &cnode,
 	    CTLFLAG_READONLY, CTLTYPE_INT,
@@ -3474,14 +3544,16 @@ ixgbe_detach(device_t dev, int flags)
 			evcnt_detach(&stats->pxonrxc[i]);
 			evcnt_detach(&stats->pxofftxc[i]);
 			evcnt_detach(&stats->pxoffrxc[i]);
-			evcnt_detach(&stats->pxon2offc[i]);
+			if (hw->mac.type >= ixgbe_mac_82599EB)
+				evcnt_detach(&stats->pxon2offc[i]);
 		}
 		if (i < __arraycount(stats->qprc)) {
 			evcnt_detach(&stats->qprc[i]);
 			evcnt_detach(&stats->qptc[i]);
 			evcnt_detach(&stats->qbrc[i]);
 			evcnt_detach(&stats->qbtc[i]);
-			evcnt_detach(&stats->qprdc[i]);
+			if (hw->mac.type >= ixgbe_mac_82599EB)
+				evcnt_detach(&stats->qprdc[i]);
 		}
 
 		evcnt_detach(&rxr->rx_packets);
@@ -3729,6 +3801,7 @@ ixgbe_init_locked(struct adapter *adapter)
 	struct ifnet   *ifp = adapter->ifp;
 	device_t 	dev = adapter->dev;
 	struct ixgbe_hw *hw = &adapter->hw;
+	struct ix_queue *que;
 	struct tx_ring  *txr;
 	struct rx_ring  *rxr;
 	u32		txdctl, mhadd;
@@ -3744,6 +3817,8 @@ ixgbe_init_locked(struct adapter *adapter)
 	hw->adapter_stopped = FALSE;
 	ixgbe_stop_adapter(hw);
         callout_stop(&adapter->timer);
+	for (i = 0, que = adapter->queues; i < adapter->num_queues; i++, que++)
+		que->disabled_count = 0;
 
 	/* XXX I moved this here from the SIOCSIFMTU case in ixgbe_ioctl(). */
 	adapter->max_frame_size =
@@ -3920,7 +3995,7 @@ ixgbe_init_locked(struct adapter *adapter)
 	}
 
 	/* Set moderation on the Link interrupt */
-	IXGBE_WRITE_REG(hw, IXGBE_EITR(adapter->vector), IXGBE_LINK_ITR);
+	ixgbe_eitr_write(adapter, adapter->vector, IXGBE_LINK_ITR);
 
 	/* Enable power to the phy. */
 	ixgbe_set_phy_power(hw, TRUE);
@@ -4055,7 +4130,7 @@ ixgbe_configure_ivars(struct adapter *adapter)
 		/* ... and the TX */
 		ixgbe_set_ivar(adapter, txr->me, que->msix, 1);
 		/* Set an Initial EITR value */
-		ixgbe_eitr_write(que, newitr);
+		ixgbe_eitr_write(adapter, que->msix, newitr);
 		/*
 		 * To eliminate influence of the previous state.
 		 * At this point, Tx/Rx interrupt handler
@@ -4336,6 +4411,7 @@ ixgbe_local_timer1(void *arg)
 	/* Only truely watchdog if all queues show hung */
 	if (hung == adapter->num_queues)
 		goto watchdog;
+#if 0 /* XXX Avoid unexpectedly disabling interrupt forever (PR#53294) */
 	else if (queues != 0) { /* Force an IRQ on queues with work */
 		que = adapter->queues;
 		for (i = 0; i < adapter->num_queues; i++, que++) {
@@ -4346,6 +4422,7 @@ ixgbe_local_timer1(void *arg)
 			mutex_exit(&que->dc_mtx);
 		}
 	}
+#endif
 
 out:
 	callout_reset(&adapter->timer, hz, ixgbe_local_timer, adapter);
@@ -5628,6 +5705,115 @@ ixgbe_sysctl_eee_state(SYSCTLFN_ARGS)
 	return (error);
 } /* ixgbe_sysctl_eee_state */
 
+#define PRINTQS(adapter, regname)					\
+	do {								\
+		struct ixgbe_hw	*_hw = &(adapter)->hw;			\
+		int _i;							\
+									\
+		printf("%s: %s", device_xname((adapter)->dev), #regname); \
+		for (_i = 0; _i < (adapter)->num_queues; _i++) {	\
+			printf((_i == 0) ? "\t" : " ");			\
+			printf("%08x", IXGBE_READ_REG(_hw,		\
+				IXGBE_##regname(_i)));			\
+		}							\
+		printf("\n");						\
+	} while (0)
+
+/************************************************************************
+ * ixgbe_print_debug_info
+ *
+ *   Called only when em_display_debug_stats is enabled.
+ *   Provides a way to take a look at important statistics
+ *   maintained by the driver and hardware.
+ ************************************************************************/
+static void
+ixgbe_print_debug_info(struct adapter *adapter)
+{
+        device_t        dev = adapter->dev;
+        struct ixgbe_hw *hw = &adapter->hw;
+	int table_size;
+	int i;
+
+	switch (adapter->hw.mac.type) {
+	case ixgbe_mac_X550:
+	case ixgbe_mac_X550EM_x:
+	case ixgbe_mac_X550EM_a:
+		table_size = 128;
+		break;
+	default:
+		table_size = 32;
+		break;
+	}
+	
+	device_printf(dev, "[E]RETA:\n");
+	for (i = 0; i < table_size; i++) {
+		if (i < 32)
+			printf("%02x: %08x\n", i, IXGBE_READ_REG(hw,
+				IXGBE_RETA(i)));
+		else
+			printf("%02x: %08x\n", i, IXGBE_READ_REG(hw,
+				IXGBE_ERETA(i - 32)));
+	}
+
+	device_printf(dev, "queue:");
+	for (i = 0; i < adapter->num_queues; i++) {
+		printf((i == 0) ? "\t" : " ");
+		printf("%8d", i);
+	}
+	printf("\n");
+	PRINTQS(adapter, RDBAL);
+	PRINTQS(adapter, RDBAH);
+	PRINTQS(adapter, RDLEN);
+	PRINTQS(adapter, SRRCTL);
+	PRINTQS(adapter, RDH);
+	PRINTQS(adapter, RDT);
+	PRINTQS(adapter, RXDCTL);
+
+	device_printf(dev, "RQSMR:");
+	for (i = 0; i < adapter->num_queues / 4; i++) {
+		printf((i == 0) ? "\t" : " ");
+		printf("%08x", IXGBE_READ_REG(hw, IXGBE_RQSMR(i)));
+	}
+	printf("\n");
+
+	device_printf(dev, "disabled_count:");
+	for (i = 0; i < adapter->num_queues; i++) {
+		printf((i == 0) ? "\t" : " ");
+		printf("%8d", adapter->queues[i].disabled_count);
+	}
+	printf("\n");
+	
+	device_printf(dev, "EIMS:\t%08x\n", IXGBE_READ_REG(hw, IXGBE_EIMS));
+	if (hw->mac.type != ixgbe_mac_82598EB) {
+		device_printf(dev, "EIMS_EX(0):\t%08x\n",
+			      IXGBE_READ_REG(hw, IXGBE_EIMS_EX(0)));
+		device_printf(dev, "EIMS_EX(1):\t%08x\n",
+			      IXGBE_READ_REG(hw, IXGBE_EIMS_EX(1)));
+	}
+} /* ixgbe_print_debug_info */
+
+/************************************************************************
+ * ixgbe_sysctl_debug
+ ************************************************************************/
+static int
+ixgbe_sysctl_debug(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node = *rnode;
+	struct adapter *adapter = (struct adapter *)node.sysctl_data;
+	int            error, result = 0;
+
+	node.sysctl_data = &result;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+
+	if (error || newp == NULL)
+		return error;
+
+	if (result == 1)
+		ixgbe_print_debug_info(adapter);
+
+	return 0;
+} /* ixgbe_sysctl_debug */
+
 /************************************************************************
  * ixgbe_init_device_features
  ************************************************************************/
@@ -5750,10 +5936,10 @@ ixgbe_probe(device_t dev, cfdata_t cf, void *aux)
 	return (ixgbe_lookup(pa) != NULL) ? 1 : 0;
 }
 
-static ixgbe_vendor_info_t *
+static const ixgbe_vendor_info_t *
 ixgbe_lookup(const struct pci_attach_args *pa)
 {
-	ixgbe_vendor_info_t *ent;
+	const ixgbe_vendor_info_t *ent;
 	pcireg_t subid;
 
 	INIT_DEBUGOUT("ixgbe_lookup: begin");
@@ -6283,7 +6469,6 @@ ixgbe_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 	    adapter->osdep.intrs[vector], IPL_NET, ixgbe_msix_link, adapter,
 	    intr_xname);
 	if (adapter->osdep.ihs[vector] == NULL) {
-		adapter->res = NULL;
 		aprint_error_dev(dev, "Failed to register LINK handler\n");
 		error = ENXIO;
 		goto err_out;
@@ -6460,7 +6645,7 @@ ixgbe_handle_link(void *context)
 /************************************************************************
  * ixgbe_rearm_queues
  ************************************************************************/
-static void
+static __inline void
 ixgbe_rearm_queues(struct adapter *adapter, u64 queues)
 {
 	u32 mask;
