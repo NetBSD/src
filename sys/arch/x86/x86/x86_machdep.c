@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.91.4.2 2018/03/22 16:59:04 martin Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.91.4.3 2018/06/09 15:12:21 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.91.4.2 2018/03/22 16:59:04 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.91.4.3 2018/06/09 15:12:21 martin Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -1194,6 +1194,11 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 		       SYSCTL_DESCR("Whether the kernel uses SVS"),
 		       sysctl_machdep_svs_enabled, 0, &svs_enabled, 0,
 		       CTL_CREATE, CTL_EOL);
+#endif
+
+#ifndef XEN
+	void sysctl_speculation_init(struct sysctllog **);
+	sysctl_speculation_init(clog);
 #endif
 
 	/* None of these can ever change once the system has booted */

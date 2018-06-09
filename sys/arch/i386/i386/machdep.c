@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.782.6.5 2018/04/05 18:15:02 martin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.782.6.6 2018/06/09 15:12:21 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.782.6.5 2018/04/05 18:15:02 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.782.6.6 2018/06/09 15:12:21 martin Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -1187,6 +1187,9 @@ init386(paddr_t first_avail)
 
 	cpu_probe(&cpu_info_primary);
 	cpu_init_msrs(&cpu_info_primary, true);
+#ifndef XEN
+	cpu_speculation_init(&cpu_info_primary);
+#endif
 
 #ifdef PAE
 	use_pae = 1;
