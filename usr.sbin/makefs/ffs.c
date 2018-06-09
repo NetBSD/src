@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.69 2017/02/08 21:27:26 christos Exp $	*/
+/*	$NetBSD: ffs.c,v 1.69.4.1 2018/06/09 14:35:21 martin Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs.c,v 1.69 2017/02/08 21:27:26 christos Exp $");
+__RCSID("$NetBSD: ffs.c,v 1.69.4.1 2018/06/09 14:35:21 martin Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -1115,7 +1115,7 @@ ffs_write_inode(union dinode *dp, uint32_t ino, const fsinfo_t *fsopts)
 	 * Initialize inode blocks on the fly for UFS2.
 	 */
 	initediblk = ufs_rw32(cgp->cg_initediblk, fsopts->needswap);
-	if (ffs_opts->version == 2 &&
+	while (ffs_opts->version == 2 &&
 	    (uint32_t)(cgino + FFS_INOPB(fs)) > initediblk &&
 	    initediblk < ufs_rw32(cgp->cg_niblk, fsopts->needswap)) {
 		memset(buf, 0, fs->fs_bsize);
