@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.255.2.2 2018/04/09 13:34:10 bouyer Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.255.2.3 2018/06/09 15:16:30 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.255.2.2 2018/04/09 13:34:10 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.255.2.3 2018/06/09 15:16:30 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1240,11 +1240,16 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 		if (m == NULL && so->so_rcv.sb_cc)
 			panic("receive 1");
 #endif
-		if (so->so_error) {
+		if (so->so_error || so->so_rerror) {
 			if (m != NULL)
 				goto dontblock;
-			error = so->so_error;
-			so->so_error = 0;
+			if (so->so_error) {
+				error = so->so_error;
+				so->so_error = 0;
+			} else {
+				error = so->so_rerror;
+				so->so_rerror = 0;
+			}
 			goto release;
 		}
 		if (so->so_state & SS_CANTRCVMORE) {
@@ -1564,7 +1569,8 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 		 */
 		while (flags & MSG_WAITALL && m == NULL && uio->uio_resid > 0 &&
 		    !sosendallatonce(so) && !nextrecord) {
-			if (so->so_error || so->so_state & SS_CANTRCVMORE)
+			if (so->so_error || so->so_rerror ||
+			    so->so_state & SS_CANTRCVMORE)
 				break;
 			/*
 			 * If we are peeking and the socket receive buffer is
@@ -2250,7 +2256,7 @@ filt_soread(struct knote *kn, long hint)
 		kn->kn_flags |= EV_EOF;
 		kn->kn_fflags = so->so_error;
 		rv = 1;
-	} else if (so->so_error)
+	} else if (so->so_error || so->so_rerror)
 		rv = 1;
 	else if (kn->kn_sfflags & NOTE_LOWAT)
 		rv = (kn->kn_data >= kn->kn_sdata);
