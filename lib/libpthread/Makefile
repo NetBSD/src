@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.89 2018/06/09 22:41:55 christos Exp $
+#	$NetBSD: Makefile,v 1.90 2018/06/09 23:45:56 christos Exp $
 #
 
-#NOSANITIZER=	# defined
+NOSANITIZER=	# defined
 WARNS?=	5
 LIB=	pthread
 
