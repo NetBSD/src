@@ -1,4 +1,4 @@
-/* $NetBSD: ix_txrx.c,v 1.24.2.10 2018/04/14 10:25:11 martin Exp $ */
+/* $NetBSD: ix_txrx.c,v 1.24.2.11 2018/06/09 14:59:43 martin Exp $ */
 
 /******************************************************************************
 
@@ -146,7 +146,9 @@ ixgbe_legacy_start_locked(struct ifnet *ifp, struct tx_ring *txr)
 	}
 	if ((ifp->if_flags & IFF_RUNNING) == 0)
 		return (ENETDOWN);
-
+	if (txr->txr_no_space)
+		return (ENETDOWN);
+	
 	while (!IFQ_IS_EMPTY(&ifp->if_snd)) {
 		if (txr->tx_avail <= IXGBE_QUEUE_MIN_FREE)
 			break;
@@ -247,6 +249,8 @@ ixgbe_mq_start(struct ifnet *ifp, struct mbuf *m)
 		IXGBE_TX_UNLOCK(txr);
 	} else {
 		if (adapter->txrx_use_workqueue) {
+			u_int *enqueued;
+
 			/*
 			 * This function itself is not called in interrupt
 			 * context, however it can be called in fast softint
@@ -255,11 +259,12 @@ ixgbe_mq_start(struct ifnet *ifp, struct mbuf *m)
 			 * enqueuing when the machine uses both spontaneous
 			 * packets and forwarding packets.
 			 */
-			u_int *enqueued = percpu_getref(adapter->txr_wq_enqueued);
+			enqueued = percpu_getref(adapter->txr_wq_enqueued);
 			if (*enqueued == 0) {
 				*enqueued = 1;
 				percpu_putref(adapter->txr_wq_enqueued);
-				workqueue_enqueue(adapter->txr_wq, &txr->wq_cookie, curcpu());
+				workqueue_enqueue(adapter->txr_wq,
+				    &txr->wq_cookie, curcpu());
 			} else
 				percpu_putref(adapter->txr_wq_enqueued);
 		} else
@@ -287,6 +292,8 @@ ixgbe_mq_start_locked(struct ifnet *ifp, struct tx_ring *txr)
 		return (ENETDOWN);
 	}
 	if ((ifp->if_flags & IFF_RUNNING) == 0)
+		return (ENETDOWN);
+	if (txr->txr_no_space)
 		return (ENETDOWN);
 
 	/* Process the queue */
@@ -458,6 +465,7 @@ retry:
 
 	/* Make certain there are enough descriptors */
 	if (txr->tx_avail < (map->dm_nsegs + 2)) {
+		txr->txr_no_space = true;
 		txr->no_desc_avail.ev_count++;
 		ixgbe_dmamap_unload(txr->txtag, txbuf->map);
 		return EAGAIN;
@@ -494,8 +502,7 @@ retry:
 		segaddr = htole64(map->dm_segs[j].ds_addr);
 
 		txd->read.buffer_addr = segaddr;
-		txd->read.cmd_type_len = htole32(txr->txd_cmd |
-		    cmd_type_len | seglen);
+		txd->read.cmd_type_len = htole32(cmd_type_len | seglen);
 		txd->read.olinfo_status = htole32(olinfo_status);
 
 		if (++i == txr->num_desc)
@@ -1157,6 +1164,7 @@ ixgbe_txeof(struct tx_ring *txr)
 			buf->m_head = NULL;
 		}
 		buf->eop = NULL;
+		txr->txr_no_space = false;
 		++txr->tx_avail;
 
 		/* We clean the range if multi segment */
@@ -1608,7 +1616,7 @@ ixgbe_setup_receive_structures(struct adapter *adapter)
 	 * or size of jumbo mbufs may have changed.
 	 * Assume all of rxr->ptag are the same.
 	 */
-	ixgbe_jcl_reinit(&adapter->jcl_head, rxr->ptag->dt_dmat,
+	ixgbe_jcl_reinit(adapter, rxr->ptag->dt_dmat,
 	    (2 * adapter->num_rx_desc) * adapter->num_queues,
 	    adapter->rx_mbuf_sz);
 
@@ -1831,8 +1839,6 @@ ixgbe_rxeof(struct ix_queue *que)
 
 		if ((staterr & IXGBE_RXD_STAT_DD) == 0)
 			break;
-		if ((ifp->if_flags & IFF_RUNNING) == 0)
-			break;
 
 		count--;
 		sendmp = NULL;
@@ -1970,46 +1976,46 @@ ixgbe_rxeof(struct ix_queue *que)
 			if (adapter->num_queues > 1) {
 				sendmp->m_pkthdr.flowid =
 				    le32toh(cur->wb.lower.hi_dword.rss);
-				switch (pkt_info & IXGBE_RXDADV_RSSTYPE_MASK) {	 
-				    case IXGBE_RXDADV_RSSTYPE_IPV4:
+				switch (pkt_info & IXGBE_RXDADV_RSSTYPE_MASK) {
+				case IXGBE_RXDADV_RSSTYPE_IPV4:
 					M_HASHTYPE_SET(sendmp,
 					    M_HASHTYPE_RSS_IPV4);
 					break;
-				    case IXGBE_RXDADV_RSSTYPE_IPV4_TCP:
+				case IXGBE_RXDADV_RSSTYPE_IPV4_TCP:
 					M_HASHTYPE_SET(sendmp,
 					    M_HASHTYPE_RSS_TCP_IPV4);
 					break;
-				    case IXGBE_RXDADV_RSSTYPE_IPV6:
+				case IXGBE_RXDADV_RSSTYPE_IPV6:
 					M_HASHTYPE_SET(sendmp,
 					    M_HASHTYPE_RSS_IPV6);
 					break;
-				    case IXGBE_RXDADV_RSSTYPE_IPV6_TCP:
+				case IXGBE_RXDADV_RSSTYPE_IPV6_TCP:
 					M_HASHTYPE_SET(sendmp,
 					    M_HASHTYPE_RSS_TCP_IPV6);
 					break;
-				    case IXGBE_RXDADV_RSSTYPE_IPV6_EX:
+				case IXGBE_RXDADV_RSSTYPE_IPV6_EX:
 					M_HASHTYPE_SET(sendmp,
 					    M_HASHTYPE_RSS_IPV6_EX);
 					break;
-				    case IXGBE_RXDADV_RSSTYPE_IPV6_TCP_EX:
+				case IXGBE_RXDADV_RSSTYPE_IPV6_TCP_EX:
 					M_HASHTYPE_SET(sendmp,
 					    M_HASHTYPE_RSS_TCP_IPV6_EX);
 					break;
 #if __FreeBSD_version > 1100000
-				    case IXGBE_RXDADV_RSSTYPE_IPV4_UDP:
+				case IXGBE_RXDADV_RSSTYPE_IPV4_UDP:
 					M_HASHTYPE_SET(sendmp,
 					    M_HASHTYPE_RSS_UDP_IPV4);
 					break;
-				    case IXGBE_RXDADV_RSSTYPE_IPV6_UDP:
+				case IXGBE_RXDADV_RSSTYPE_IPV6_UDP:
 					M_HASHTYPE_SET(sendmp,
 					    M_HASHTYPE_RSS_UDP_IPV6);
 					break;
-				    case IXGBE_RXDADV_RSSTYPE_IPV6_UDP_EX:
+				case IXGBE_RXDADV_RSSTYPE_IPV6_UDP_EX:
 					M_HASHTYPE_SET(sendmp,
 					    M_HASHTYPE_RSS_UDP_IPV6_EX);
 					break;
 #endif
-				    default:
+				default:
 					M_HASHTYPE_SET(sendmp,
 					    M_HASHTYPE_OPAQUE_HASH);
 				}
@@ -2134,7 +2140,8 @@ ixgbe_dma_malloc(struct adapter *adapter, const bus_size_t size,
 			       &dma->dma_tag);
 	if (r != 0) {
 		aprint_error_dev(dev,
-		    "%s: ixgbe_dma_tag_create failed; error %d\n", __func__, r);
+		    "%s: ixgbe_dma_tag_create failed; error %d\n", __func__,
+		    r);
 		goto fail_0;
 	}
 
@@ -2266,8 +2273,6 @@ ixgbe_allocate_queues(struct adapter *adapter)
 		txr->num_desc = adapter->num_tx_desc;
 
 		/* Initialize the TX side lock */
-		snprintf(txr->mtx_name, sizeof(txr->mtx_name), "%s:tx(%d)",
-		    device_xname(dev), txr->me);
 		mutex_init(&txr->tx_mtx, MUTEX_DEFAULT, IPL_NET);
 
 		if (ixgbe_dma_malloc(adapter, tsize, &txr->txdma,
@@ -2318,8 +2323,6 @@ ixgbe_allocate_queues(struct adapter *adapter)
 		rxr->num_desc = adapter->num_rx_desc;
 
 		/* Initialize the RX side lock */
-		snprintf(rxr->mtx_name, sizeof(rxr->mtx_name), "%s:rx(%d)",
-		    device_xname(dev), rxr->me);
 		mutex_init(&rxr->rx_mtx, MUTEX_DEFAULT, IPL_NET);
 
 		if (ixgbe_dma_malloc(adapter, rsize, &rxr->rxdma,

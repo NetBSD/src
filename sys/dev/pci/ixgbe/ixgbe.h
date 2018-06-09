@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.h,v 1.24.6.11 2018/04/17 08:20:06 martin Exp $ */
+/* $NetBSD: ixgbe.h,v 1.24.6.12 2018/06/09 14:59:43 martin Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -173,8 +173,6 @@
 
 /* Flow control constants */
 #define IXGBE_FC_PAUSE        0xFFFF
-#define IXGBE_FC_HI           0x20000
-#define IXGBE_FC_LO           0x10000
 
 /*
  * Used for optimizing small rx mbufs.  Effort is made to keep the copy
@@ -322,11 +320,9 @@ struct ixgbe_mc_addr {
 struct ix_queue {
 	struct adapter   *adapter;
 	u32              msix;           /* This queue's MSI-X vector */
-	u32              eims;           /* This queue's EIMS bit */
 	u32              eitr_setting;
 	u32              me;
 	struct resource  *res;
-	void             *tag;
 	int              busy;
 	struct tx_ring   *txr;
 	struct rx_ring   *rxr;
@@ -365,12 +361,14 @@ struct tx_ring {
 	u16			next_avail_desc;
 	u16			next_to_clean;
 	u16			num_desc;
-	u32			txd_cmd;
 	ixgbe_dma_tag_t		*txtag;
-	char			mtx_name[16];
+#if 0
+	char			mtx_name[16]; /* NetBSD has no mutex name */
+#endif
 	pcq_t			*txr_interq;
 	struct work		wq_cookie;
 	void			*txr_si;
+	bool			txr_no_space; /* Like IFF_OACTIVE */
 
 	/* Flow Director */
 	u16			atr_sample;
@@ -415,7 +413,9 @@ struct rx_ring {
         u16 			next_to_check;
 	u16			num_desc;
 	u16			mbuf_sz;
-	char			mtx_name[16];
+#if 0
+	char			mtx_name[16]; /* NetBSD has no mutex name */
+#endif
 	struct ixgbe_rx_buf	*rx_buffers;
 	ixgbe_dma_tag_t		*ptag;
 
@@ -461,17 +461,10 @@ struct adapter {
 	struct resource		*pci_mem;
 	struct resource		*msix_mem;
 
-	/*
-	 * Interrupt resources: this set is
-	 * either used for legacy, or for Link
-	 * when doing MSI-X
-	 */
-	void			*tag;
-	struct resource 	*res;
+	/* NetBSD: Interrupt resources are in osdep */
 
 	struct ifmedia		media;
 	callout_t		timer;
-	int			link_rid;
 	int			if_flags;
 
 	kmutex_t		core_mtx;
@@ -758,6 +751,9 @@ bool ixgbe_txeof(struct tx_ring *);
 bool ixgbe_rxeof(struct ix_queue *);
 
 const struct sysctlnode *ixgbe_sysctl_instance(struct adapter *);
+
+/* For NetBSD */
+void ixgbe_jcl_reinit(struct adapter *, bus_dma_tag_t, int, size_t);
 
 #include "ixgbe_bypass.h"
 #include "ixgbe_fdir.h"

@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.56.2.16 2018/06/07 17:42:24 martin Exp $*/
+/*$NetBSD: ixv.c,v 1.56.2.17 2018/06/09 14:59:43 martin Exp $*/
 
 /******************************************************************************
 
@@ -46,7 +46,7 @@
 /************************************************************************
  * Driver version
  ************************************************************************/
-char ixv_driver_version[] = "2.0.1-k";
+static const char ixv_driver_version[] = "2.0.1-k";
 
 /************************************************************************
  * PCI Device ID Table
@@ -57,7 +57,7 @@ char ixv_driver_version[] = "2.0.1-k";
  *
  *   { Vendor ID, Device ID, SubVendor ID, SubDevice ID, String Index }
  ************************************************************************/
-static ixgbe_vendor_info_t ixv_vendor_info_array[] =
+static const ixgbe_vendor_info_t ixv_vendor_info_array[] =
 {
 	{IXGBE_INTEL_VENDOR_ID, IXGBE_DEV_ID_82599_VF, 0, 0, 0},
 	{IXGBE_INTEL_VENDOR_ID, IXGBE_DEV_ID_X540_VF, 0, 0, 0},
@@ -117,7 +117,7 @@ static int	ixv_sysctl_debug(SYSCTLFN_PROTO);
 static void	ixv_set_ivar(struct adapter *, u8, u8, s8);
 static void	ixv_configure_ivars(struct adapter *);
 static u8 *	ixv_mc_array_itr(struct ixgbe_hw *, u8 **, u32 *);
-static void	ixv_eitr_write(struct ix_queue *, uint32_t);
+static void	ixv_eitr_write(struct adapter *, uint32_t, uint32_t);
 
 static void	ixv_setup_vlan_support(struct adapter *);
 #if 0
@@ -136,6 +136,7 @@ static void	ixv_add_stats_sysctls(struct adapter *);
 static void	ixv_set_sysctl_value(struct adapter *, const char *,
 		    const char *, int *, int);
 static int      ixv_sysctl_interrupt_rate_handler(SYSCTLFN_PROTO);
+static int      ixv_sysctl_next_to_check_handler(SYSCTLFN_PROTO);
 static int      ixv_sysctl_rdh_handler(SYSCTLFN_PROTO);
 static int      ixv_sysctl_rdt_handler(SYSCTLFN_PROTO);
 static int      ixv_sysctl_tdt_handler(SYSCTLFN_PROTO);
@@ -153,7 +154,7 @@ static void     ixv_handle_link(void *);
 static void	ixv_handle_que_work(struct work *, void *);
 
 const struct sysctlnode *ixv_sysctl_instance(struct adapter *);
-static ixgbe_vendor_info_t *ixv_lookup(const struct pci_attach_args *);
+static const ixgbe_vendor_info_t *ixv_lookup(const struct pci_attach_args *);
 
 /************************************************************************
  * FreeBSD Device Interface Entry Points
@@ -265,10 +266,10 @@ ixv_probe(device_t dev, cfdata_t cf, void *aux)
 #endif
 } /* ixv_probe */
 
-static ixgbe_vendor_info_t *
+static const ixgbe_vendor_info_t *
 ixv_lookup(const struct pci_attach_args *pa)
 {
-	ixgbe_vendor_info_t *ent;
+	const ixgbe_vendor_info_t *ent;
 	pcireg_t subid;
 
 	INIT_DEBUGOUT("ixv_lookup: begin");
@@ -308,7 +309,7 @@ ixv_attach(device_t parent, device_t dev, void *aux)
 	struct ixgbe_hw *hw;
 	int             error = 0;
 	pcireg_t	id, subid;
-	ixgbe_vendor_info_t *ent;
+	const ixgbe_vendor_info_t *ent;
 	const struct pci_attach_args *pa = aux;
 	const char *apivstr;
 	const char *str;
@@ -725,7 +726,7 @@ ixv_init_locked(struct adapter *adapter)
 	struct ifnet	*ifp = adapter->ifp;
 	device_t 	dev = adapter->dev;
 	struct ixgbe_hw *hw = &adapter->hw;
-	struct ix_queue	*que = adapter->queues;
+	struct ix_queue	*que;
 	int             error = 0;
 	uint32_t mask;
 	int i;
@@ -735,6 +736,8 @@ ixv_init_locked(struct adapter *adapter)
 	hw->adapter_stopped = FALSE;
 	hw->mac.ops.stop_adapter(hw);
 	callout_stop(&adapter->timer);
+	for (i = 0, que = adapter->queues; i < adapter->num_queues; i++, que++)
+		que->disabled_count = 0;
 
 	/* reprogram the RAR[0] in case user changed it. */
 	hw->mac.ops.set_rar(hw, 0, hw->mac.addr, 0, IXGBE_RAH_AV);
@@ -804,12 +807,12 @@ ixv_init_locked(struct adapter *adapter)
 
 	/* Set up auto-mask */
 	mask = (1 << adapter->vector);
-	for (i = 0; i < adapter->num_queues; i++, que++)
+	for (i = 0, que = adapter->queues; i < adapter->num_queues; i++, que++)
 		mask |= (1 << que->msix);
 	IXGBE_WRITE_REG(hw, IXGBE_VTEIAM, mask);
 
 	/* Set moderation on the Link interrupt */
-	IXGBE_WRITE_REG(hw, IXGBE_VTEITR(adapter->vector), IXGBE_LINK_ITR);
+	ixv_eitr_write(adapter, adapter->vector, IXGBE_LINK_ITR);
 
 	/* Stats init */
 	ixv_init_stats(adapter);
@@ -923,7 +926,7 @@ ixv_msix_que(void *arg)
 	 *    the last interval.
 	 */
 	if (que->eitr_setting)
-		ixv_eitr_write(que, que->eitr_setting);
+		ixv_eitr_write(adapter, que->msix, que->eitr_setting);
 
 	que->eitr_setting = 0;
 
@@ -998,9 +1001,8 @@ ixv_msix_mbx(void *arg)
 } /* ixv_msix_mbx */
 
 static void
-ixv_eitr_write(struct ix_queue *que, uint32_t itr)
+ixv_eitr_write(struct adapter *adapter, uint32_t index, uint32_t itr)
 {
-	struct adapter *adapter = que->adapter;
 
 	/*
 	 * Newer devices than 82598 have VF function, so this function is
@@ -1008,7 +1010,7 @@ ixv_eitr_write(struct ix_queue *que, uint32_t itr)
 	 */
 	itr |= IXGBE_EITR_CNT_WDIS;
 
-	IXGBE_WRITE_REG(&adapter->hw, IXGBE_VTEITR(que->msix), itr);
+	IXGBE_WRITE_REG(&adapter->hw, IXGBE_VTEITR(index), itr);
 }
 
 
@@ -1271,9 +1273,11 @@ ixv_local_timer_locked(void *arg)
 	/* Only truly watchdog if all queues show hung */
 	if (hung == adapter->num_queues)
 		goto watchdog;
+#if 0
 	else if (queues != 0) { /* Force an IRQ on queues with work */
 		ixv_rearm_queues(adapter, queues);
 	}
+#endif
 
 	callout_reset(&adapter->timer, hz, ixv_local_timer, adapter);
 
@@ -1597,6 +1601,8 @@ ixv_initialize_transmit_units(struct adapter *adapter)
 		/* Set Tx Tail register */
 		txr->tail = IXGBE_VFTDT(j);
 
+		txr->txr_no_space = false;
+
 		/* Set Ring parameters */
 		IXGBE_WRITE_REG(hw, IXGBE_VFTDBAL(j),
 		    (tdba & 0x00000000ffffffffULL));
@@ -1887,6 +1893,27 @@ ixv_sysctl_tdt_handler(SYSCTLFN_ARGS)
 } /* ixv_sysctl_tdt_handler */
 
 /************************************************************************
+ * ixv_sysctl_next_to_check_handler - Receive Descriptor next to check
+ * handler function
+ *
+ *   Retrieves the next_to_check value
+ ************************************************************************/
+static int 
+ixv_sysctl_next_to_check_handler(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node = *rnode;
+	struct rx_ring *rxr = (struct rx_ring *)node.sysctl_data;
+	uint32_t val;
+
+	if (!rxr)
+		return (0);
+
+	val = rxr->next_to_check;
+	node.sysctl_data = &val;
+	return sysctl_lookup(SYSCTLFN_CALL(&node));
+} /* ixv_sysctl_next_to_check_handler */
+
+/************************************************************************
  * ixv_sysctl_rdh_handler - Receive Descriptor Head handler function
  *
  *   Retrieves the RDH value from the hardware
@@ -2132,7 +2159,7 @@ ixv_configure_ivars(struct adapter *adapter)
 		/* ... and the TX */
 		ixv_set_ivar(adapter, i, que->msix, 1);
 		/* Set an initial value in EITR */
-		ixv_eitr_write(que, IXGBE_EITR_DEFAULT);
+		ixv_eitr_write(adapter, que->msix, IXGBE_EITR_DEFAULT);
 	}
 
 	/* For the mailbox interrupt */
@@ -2285,7 +2312,7 @@ ixv_sysctl_interrupt_rate_handler(SYSCTLFN_ARGS)
 		ixv_max_interrupt_rate = rate;
 	} else
 		ixv_max_interrupt_rate = 0;
-	ixv_eitr_write(que, reg);
+	ixv_eitr_write(adapter, que->msix, reg);
 
 	return (0);
 } /* ixv_sysctl_interrupt_rate_handler */
@@ -2447,6 +2474,14 @@ ixv_add_stats_sysctls(struct adapter *adapter)
 #ifdef LRO
 		struct lro_ctrl *lro = &rxr->lro;
 #endif /* LRO */
+
+		if (sysctl_createv(log, 0, &rnode, &cnode,
+		    CTLFLAG_READONLY,
+		    CTLTYPE_INT,
+		    "rxd_nxck", SYSCTL_DESCR("Receive Descriptor next to check"),
+			ixv_sysctl_next_to_check_handler, 0, (void *)rxr, 0,
+		    CTL_CREATE, CTL_EOL) != 0)
+			break;
 
 		if (sysctl_createv(log, 0, &rnode, &cnode,
 		    CTLFLAG_READONLY,
@@ -2979,7 +3014,6 @@ ixv_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 	    adapter->osdep.intrs[vector], IPL_NET, ixv_msix_mbx, adapter,
 	    intr_xname);
 	if (adapter->osdep.ihs[vector] == NULL) {
-		adapter->res = NULL;
 		aprint_error_dev(dev, "Failed to register LINK handler\n");
 		kcpuset_destroy(affinity);
 		return (ENXIO);
