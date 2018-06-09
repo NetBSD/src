@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmr.c,v 1.28 2018/05/21 10:28:13 jmcneill Exp $	*/
+/*	$NetBSD: gtmr.c,v 1.29 2018/06/09 01:17:35 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.28 2018/05/21 10:28:13 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.29 2018/06/09 01:17:35 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -206,7 +206,6 @@ gtmr_attach(device_t parent, device_t self, void *aux)
 
 	/* Disable the timer until we are ready */
 	gtmr_cntv_ctl_write(0);
-	gtmr_cntp_ctl_write(0);
 }
 
 void
@@ -222,7 +221,6 @@ gtmr_init_cpu_clock(struct cpu_info *ci)
 	 * enable timer and stop masking the timer.
 	 */
 	gtmr_cntv_ctl_write(CNTCTL_ENABLE);
-	gtmr_cntp_ctl_write(CNTCTL_ENABLE);
 
 	/*
 	 * Get now and update the compare timer.
