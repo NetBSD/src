@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.2.20.1 2018/06/05 08:12:54 bouyer Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.2.20.2 2018/06/09 15:19:27 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -803,7 +803,7 @@ check_partitions(void)
 	} else
 		rv = -1;
 	if (rv != 0) {
-		process_menu(MENU_ok, deconst(MSG_No_Bootcode));
+		process_menu(MENU_ok, __UNCONST(MSG_No_Bootcode));
 		return 0;
 	}
 #endif
@@ -811,7 +811,7 @@ check_partitions(void)
 	fstype = pm->bsdlabel[pm->rootpart].pi_fstype;
 	if (fstype == FS_BSDFFS &&
 	    (pm->bsdlabel[pm->rootpart].pi_flags & PIF_FFSv2) != 0) {
-		process_menu(MENU_ok, deconst(MSG_cannot_ufs2_root));
+		process_menu(MENU_ok, __UNCONST(MSG_cannot_ufs2_root));
 		return 0;
 	}
 #endif
