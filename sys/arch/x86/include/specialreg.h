@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.98.2.4 2018/04/18 14:14:17 martin Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.98.2.5 2018/06/09 15:12:21 martin Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -104,10 +104,8 @@
 #define XCR0_Hi16_ZMM	0x00000080	/* AVX-512 512 bits upper registers */
 
 /*
- * Known fpu bits - only these get enabled
- * I think the XCR0_BNDREGS and XCR0_BNDCSR would need saving on
- * every context switch.
- * The save are is sized for all the fields below (max 2680 bytes).
+ * Known fpu bits - only these get enabled. The save area is sized for all the
+ * fields below (max 2680 bytes).
  */
 #define XCR0_FPU	(XCR0_X87 | XCR0_SSE | XCR0_YMM_Hi128 | \
 			XCR0_Opmask | XCR0_ZMM_Hi256 | XCR0_Hi16_ZMM)
@@ -405,11 +403,12 @@
 #define CPUID_SEF_IBRS		__BIT(26) /* IBRS / IBPB Speculation Control */
 #define CPUID_SEF_STIBP		__BIT(27) /* STIBP Speculation Control */
 #define CPUID_SEF_ARCH_CAP	__BIT(29) /* IA32_ARCH_CAPABILITIES */
+#define CPUID_SEF_SSBD		__BIT(31) /* Speculative Store Bypass Disable */
 
 #define CPUID_SEF_FLAGS2	"\20" \
 				"\3" "AVX512_4VNNIW" "\4" "AVX512_4FMAPS" \
 					"\33" "IBRS"	"\34" "STIBP"	\
-			"\36" "ARCH_CAP"
+			"\36" "ARCH_CAP"		"\40" "SSBD"
 
 /*
  * CPUID Processor extended state Enumeration Fn0000000d
@@ -643,6 +642,7 @@
 #define MSR_IA32_SPEC_CTRL	0x048
 #define 	IA32_SPEC_CTRL_IBRS	0x01
 #define 	IA32_SPEC_CTRL_STIBP	0x02
+#define 	IA32_SPEC_CTRL_SSBD	0x04
 #define MSR_IA32_PRED_CMD	0x049
 #define 	IA32_PRED_CMD_IBPB	0x01
 #define MSR_BIOS_UPDT_TRIG	0x079
@@ -660,6 +660,8 @@
 #define MSR_IA32_ARCH_CAPABILITIES 0x10a
 #define 	IA32_ARCH_RDCL_NO	0x01
 #define 	IA32_ARCH_IBRS_ALL	0x02
+#define 	IA32_ARCH_RSBA		0x04
+#define 	IA32_ARCH_SSB_NO	0x10
 #define MSR_BBL_CR_ADDR		0x116	/* PII+ only */
 #define MSR_BBL_CR_DECC		0x118	/* PII+ only */
 #define MSR_BBL_CR_CTL		0x119	/* PII+ only */
@@ -855,6 +857,9 @@
 
 #define MSR_LS_CFG	0xc0011020
 #define 	LS_CFG_DIS_LS2_SQUISH	0x02000000
+#define 	LS_CFG_DIS_SSB_F15H	0x0040000000000000ULL
+#define 	LS_CFG_DIS_SSB_F16H	0x0000000200000000ULL
+#define 	LS_CFG_DIS_SSB_F17H	0x0000000000000400ULL
 
 #define MSR_IC_CFG	0xc0011021
 #define 	IC_CFG_DIS_SEQ_PREFETCH	0x00000800
