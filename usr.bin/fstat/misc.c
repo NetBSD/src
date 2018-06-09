@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.17 2016/12/30 21:08:23 christos Exp $	*/
+/*	$NetBSD: misc.c,v 1.17.6.1 2018/06/09 15:41:37 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: misc.c,v 1.17 2016/12/30 21:08:23 christos Exp $");
+__RCSID("$NetBSD: misc.c,v 1.17.6.1 2018/06/09 15:41:37 martin Exp $");
 
 #include <stdbool.h>
 #include <sys/param.h>
@@ -102,7 +102,11 @@ static struct nlist nl[] = {
     { .n_name = "vnops" },
 #define NL_XENEVT	17
     { .n_name = "xenevt_fileops" },
-#define NL_MAX		18
+#define NL_AUDIO	18
+    { .n_name = "audio_fileops" },
+#define NL_PAD		19
+    { .n_name = "pad_fileops" },
+#define NL_MAX		20
     { .n_name = NULL }
 };
 
@@ -276,6 +280,12 @@ pmisc(struct file *f, const char *name)
 		return 0;
 	case NL_CRYPTO:
 		printf("* crypto %p\n", f->f_data);
+		return 0;
+	case NL_AUDIO:
+		printf("* audio %p\n", f->f_data);
+		return 0;
+	case NL_PAD:
+		printf("* pad %p\n", f->f_data);
 		return 0;
 	case NL_MAX:
 		printf("* %s ops=%p %p\n", name, f->f_ops, f->f_data);
