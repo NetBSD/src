@@ -1,4 +1,4 @@
-/*	$NetBSD: if_llatbl.c,v 1.18.6.3 2018/03/13 13:27:10 martin Exp $	*/
+/*	$NetBSD: if_llatbl.c,v 1.18.6.4 2018/06/09 14:44:33 martin Exp $	*/
 /*
  * Copyright (c) 2004 Luigi Rizzo, Alessandro Cerri. All rights reserved.
  * Copyright (c) 2004-2008 Qing Li. All rights reserved.
@@ -112,8 +112,8 @@ lltable_dump_entry(struct lltable *llt, struct llentry *lle,
 		/* Need to copy by myself */
 		rtm->rtm_index = ifp->if_index;
 		rtm->rtm_rmx.rmx_mtu = 0;
-		rtm->rtm_rmx.rmx_expire =
-		    (lle->la_flags & LLE_STATIC) ? 0 : lle->la_expire;
+		rtm->rtm_rmx.rmx_expire = (lle->la_flags & LLE_STATIC) ? 0 :
+		    time_mono_to_wall(lle->la_expire);
 		rtm->rtm_flags = RTF_UP;
 		rtm->rtm_flags |= RTF_HOST; /* For ndp */
 		/* For backward compatibility */
