@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.752.2.9 2018/02/11 21:17:34 snj Exp $
+# $NetBSD: mi,v 1.752.2.10 2018/06/09 17:59:43 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3857,6 +3857,8 @@
 ./usr/tests/usr.bin/make/unit-tests/varcmd.mk	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/varmisc.exp	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/varmisc.mk	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/varquote.exp	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/varquote.mk	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/varshell.exp	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/varshell.mk	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/mixerctl			tests-usr.bin-tests	compattestfile,atf
