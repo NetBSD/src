@@ -1,4 +1,4 @@
-/* $NetBSD: if_msk.c,v 1.55 2017/10/20 12:01:43 christos Exp $ */
+/* $NetBSD: if_msk.c,v 1.56 2018/06/09 18:53:16 jdolecek Exp $ */
 /*	$OpenBSD: if_msk.c,v 1.42 2007/01/17 02:43:02 krw Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.55 2017/10/20 12:01:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.56 2018/06/09 18:53:16 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,31 +154,39 @@ static const struct msk_product {
 	{ PCI_VENDOR_DLINK,		PCI_PRODUCT_DLINK_DGE550SX },
 	{ PCI_VENDOR_DLINK,		PCI_PRODUCT_DLINK_DGE560SX },
 	{ PCI_VENDOR_DLINK,		PCI_PRODUCT_DLINK_DGE560T },
-	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_1 },
-	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_C032 },
-	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_C033 },
-	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_C034 },
-	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_C036 },
-	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_C042 },
+	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKONII_8021CU },
+	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKONII_8021X },
+	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKONII_8022CU },
+	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKONII_8022X },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8035 },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8036 },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8038 },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8039 },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8040 },
+	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8048 },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8050 },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8052 },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8053 },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8055 },
+	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8055_2 },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8056 },
+	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8057 },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8058 },
-	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKONII_8021CU },
-	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKONII_8021X },
-	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKONII_8022CU },
-	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKONII_8022X },
+	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8059 },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKONII_8061CU },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKONII_8061X },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKONII_8062CU },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKONII_8062X },
+	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8070 },
+	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8071 },
+	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8072 },
+	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8075 },
+	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8079 },
+	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_C032 },
+	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_C033 },
+	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_C034 },
+	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_C036 },
+	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_C042 },
 	{ PCI_VENDOR_SCHNEIDERKOCH,	PCI_PRODUCT_SCHNEIDERKOCH_SK_9SXX },
 	{ PCI_VENDOR_SCHNEIDERKOCH,	PCI_PRODUCT_SCHNEIDERKOCH_SK_9E21 }
 };
@@ -754,6 +762,12 @@ msk_update_int_mod(struct sk_softc *sc, int verbose)
 	switch (sc->sk_type) {
 	case SK_YUKON_EC:
 	case SK_YUKON_EC_U:
+	case SK_YUKON_EX:
+	case SK_YUKON_SUPR:
+	case SK_YUKON_ULTRA2:
+	case SK_YUKON_OPTIMA:
+	case SK_YUKON_PRM:
+	case SK_YUKON_OPTIMA2:
 		imtimer_ticks = SK_IMTIMER_TICKS_YUKON_EC;
 		break;
 	case SK_YUKON_FE:
@@ -825,7 +839,8 @@ void msk_reset(struct sk_softc *sc)
 	else
 		reg1 &= ~(SK_Y2_REG1_PHY1_COMA | SK_Y2_REG1_PHY2_COMA);
 
-	if (sc->sk_type == SK_YUKON_EC_U) {
+	if (sc->sk_type == SK_YUKON_EC_U || sc->sk_type == SK_YUKON_EX ||
+	    sc->sk_type >= SK_YUKON_FE_P) {
 		uint32_t our;
 
 		CSR_WRITE_2(sc, SK_CSR, SK_CSR_WOL_ON);
@@ -861,6 +876,11 @@ void msk_reset(struct sk_softc *sc)
 	DELAY(1000);
 	CSR_WRITE_2(sc, SK_LINK_CTRL, SK_LINK_RESET_CLEAR);
 	CSR_WRITE_2(sc, SK_LINK_CTRL + SK_WIN_LEN, SK_LINK_RESET_CLEAR);
+
+	if (sc->sk_type == SK_YUKON_EX || sc->sk_type == SK_YUKON_SUPR) {
+		CSR_WRITE_2(sc, SK_GMAC_CTRL, SK_GMAC_BYP_MACSECRX |
+		    SK_GMAC_BYP_MACSECTX | SK_GMAC_BYP_RETR_FIFO);
+        }
 
 	sk_win_write_1(sc, SK_TESTCTL1, 1);
 
@@ -971,9 +991,15 @@ msk_probe(device_t parent, cfdata_t match, void *aux)
 	switch (sa->skc_type) {
 	case SK_YUKON_XL:
 	case SK_YUKON_EC_U:
+	case SK_YUKON_EX:
 	case SK_YUKON_EC:
 	case SK_YUKON_FE:
 	case SK_YUKON_FE_P:
+	case SK_YUKON_SUPR:
+	case SK_YUKON_ULTRA2:
+	case SK_YUKON_OPTIMA:
+	case SK_YUKON_PRM:
+	case SK_YUKON_OPTIMA2:
 		return (1);
 	}
 
@@ -1333,11 +1359,32 @@ mskc_attach(device_t parent, device_t self, void *aux)
 	case SK_YUKON_EC_U:
 		sc->sk_name = "Yukon-2 EC Ultra";
 		break;
+	case SK_YUKON_EX:
+		sc->sk_name = "Yukon-2 Extreme";
+		break;
 	case SK_YUKON_EC:
 		sc->sk_name = "Yukon-2 EC";
 		break;
 	case SK_YUKON_FE:
 		sc->sk_name = "Yukon-2 FE";
+		break;
+	case SK_YUKON_FE_P:
+		sc->sk_name = "Yukon-2 FE+";
+		break;
+	case SK_YUKON_SUPR:
+		sc->sk_name = "Yukon-2 Supreme";
+		break;
+	case SK_YUKON_ULTRA2:
+		sc->sk_name = "Yukon-2 Ultra 2";
+		break;
+	case SK_YUKON_OPTIMA:
+		sc->sk_name = "Yukon-2 Optima";
+		break;
+	case SK_YUKON_PRM:
+		sc->sk_name = "Yukon-2 Optima Prime";
+		break;
+	case SK_YUKON_OPTIMA2:
+		sc->sk_name = "Yukon-2 Optima 2";
 		break;
 	default:
 		sc->sk_name = "Yukon (Unknown)";
@@ -1414,9 +1461,70 @@ mskc_attach(device_t parent, device_t self, void *aux)
 		case SK_YUKON_EC_U_REV_B0:
 			revstr = "B0";
 			break;
+		case SK_YUKON_EC_U_REV_B1:
+			revstr = "B1";
+			break;
 		default:
 			sc->sk_workaround = 0;
 			break;
+		}
+	}
+
+	if (sc->sk_type == SK_YUKON_FE) {
+		switch (sc->sk_rev) {
+		case SK_YUKON_FE_REV_A1:
+			revstr = "A1";
+			break;
+		case SK_YUKON_FE_REV_A2:
+			revstr = "A2";
+			break;
+		default:
+			;
+		}
+	}
+
+	if (sc->sk_type == SK_YUKON_FE_P && sc->sk_rev == SK_YUKON_FE_P_REV_A0)
+		revstr = "A0";
+
+	if (sc->sk_type == SK_YUKON_EX) {
+		switch (sc->sk_rev) {
+		case SK_YUKON_EX_REV_A0:
+			revstr = "A0";
+			break;
+		case SK_YUKON_EX_REV_B0:
+			revstr = "B0";
+			break;
+		default:
+			;
+		}
+	}
+
+	if (sc->sk_type == SK_YUKON_SUPR) {
+		switch (sc->sk_rev) {
+		case SK_YUKON_SUPR_REV_A0:
+			revstr = "A0";
+			break;
+		case SK_YUKON_SUPR_REV_B0:
+			revstr = "B0";
+			break;
+		case SK_YUKON_SUPR_REV_B1:
+			revstr = "B1";
+			break;
+		default:
+			;
+		}
+	}
+
+	if (sc->sk_type == SK_YUKON_PRM) {
+		switch (sc->sk_rev) {
+		case SK_YUKON_PRM_REV_Z1:
+			revstr = "Z1";
+			break;
+		case SK_YUKON_PRM_REV_A0:
+			revstr = "A0";
+			break;
+		default:
+			;
 		}
 	}
 
@@ -2053,7 +2161,8 @@ msk_init_yukon(struct sk_if_softc *sc_if)
 	      YU_SMR_MFL_VLAN |
 	      YU_SMR_IPG_DATA(0x1e);
 
-	if (sc->sk_type != SK_YUKON_FE)
+	if (sc->sk_type != SK_YUKON_FE &&
+	    sc->sk_type != SK_YUKON_FE)
 		reg |= YU_SMR_MFL_JUMBO;
 
 	SK_YU_WRITE_2(sc_if, YUKON_SMR, reg);
@@ -2200,6 +2309,12 @@ msk_init(struct ifnet *ifp)
 	switch (sc->sk_type) {
 	case SK_YUKON_EC:
 	case SK_YUKON_EC_U:
+	case SK_YUKON_EX:
+	case SK_YUKON_SUPR:
+	case SK_YUKON_ULTRA2:
+	case SK_YUKON_OPTIMA:
+	case SK_YUKON_PRM:
+	case SK_YUKON_OPTIMA2:
 		imtimer_ticks = SK_IMTIMER_TICKS_YUKON_EC;
 		break;
 	case SK_YUKON_FE:
