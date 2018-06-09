@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock_50.c,v 1.4 2015/08/24 22:50:33 pooka Exp $	*/
+/*	$NetBSD: rtsock_50.c,v 1.4.10.1 2018/06/09 14:38:18 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock_50.c,v 1.4 2015/08/24 22:50:33 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock_50.c,v 1.4.10.1 2018/06/09 14:38:18 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -92,6 +92,7 @@ compat_50_rt_oifmsg(struct ifnet *ifp)
 	oifm.ifm_data.ifi_type = ifp->if_data.ifi_type;
 	oifm.ifm_data.ifi_addrlen = ifp->if_data.ifi_addrlen;
 	oifm.ifm_data.ifi_hdrlen = ifp->if_data.ifi_hdrlen;
+	oifm.ifm_data.ifi_link_state = ifp->if_data.ifi_link_state;
 	oifm.ifm_data.ifi_mtu = ifp->if_data.ifi_mtu;
 	oifm.ifm_data.ifi_metric = ifp->if_data.ifi_metric;
 	oifm.ifm_data.ifi_baudrate = ifp->if_data.ifi_baudrate;
@@ -128,6 +129,7 @@ compat_50_iflist(struct ifnet *ifp, struct rt_walkarg *w,
 	ifm->ifm_data.ifi_type = ifp->if_data.ifi_type;
 	ifm->ifm_data.ifi_addrlen = ifp->if_data.ifi_addrlen;
 	ifm->ifm_data.ifi_hdrlen = ifp->if_data.ifi_hdrlen;
+	ifm->ifm_data.ifi_link_state = ifp->if_data.ifi_link_state;
 	ifm->ifm_data.ifi_mtu = ifp->if_data.ifi_mtu;
 	ifm->ifm_data.ifi_metric = ifp->if_data.ifi_metric;
 	ifm->ifm_data.ifi_baudrate = ifp->if_data.ifi_baudrate;
