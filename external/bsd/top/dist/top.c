@@ -135,6 +135,7 @@ set_signal(int sig, RETSIGTYPE (*handler)(int))
 #ifdef HAVE_SIGACTION
     struct sigaction action;
 
+    sigemptyset(&action.sa_mask);
     action.sa_handler = handler;
     action.sa_flags = 0;
     (void) sigaction(sig, &action, NULL);
