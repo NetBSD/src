@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.3 2016/03/22 08:25:22 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.3.10.1 2018/06/09 15:35:38 martin Exp $
 #
 #	Configuration variables (default values are below):
 #
@@ -22,12 +22,12 @@ RISCOSLIB=		${RISCOSDST}/libriscos.a
 RISCOSMAKE= \
 	cd ${RISCOSDIR} && MAKEOBJDIRPREFIX= && unset MAKEOBJDIRPREFIX && \
 	  MAKEOBJDIR=${RISCOSDST} ${MAKE} \
-	    CC=${CC:Q} CFLAGS=${CFLAGS:Q} \
-	    AS=${AS:Q} AFLAGS=${AFLAGS:Q} \
-	    LD=${LD:Q} STRIP=${STRIP:Q} \
-	    MACHINE=${MACHINE} MACHINE_ARCH=${MACHINE_ARCH:Q} \
-	    RISCOSCPPFLAGS=${CPPFLAGS:S@^-I.@-I../../.@g:Q} \
-	    RISCOSMISCCPPFLAGS=${RISCOSMISCCPPFLAGS:Q} \
+	    CC=${CC:q} CFLAGS=${CFLAGS:q} \
+	    AS=${AS:q} AFLAGS=${AFLAGS:q} \
+	    LD=${LD:q} STRIP=${STRIP:q} \
+	    MACHINE=${MACHINE} MACHINE_ARCH=${MACHINE_ARCH:q} \
+	    RISCOSCPPFLAGS=${CPPFLAGS:S@^-I.@-I../../.@g:q} \
+	    RISCOSMISCCPPFLAGS=${RISCOSMISCCPPFLAGS:q} \
 	    ${RISCOSMISCMAKEFLAGS}
 
 ${RISCOSLIB}:		.NOTMAIN .MAKE __always_make_riscoslib

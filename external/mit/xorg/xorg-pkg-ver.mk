@@ -1,4 +1,4 @@
-#	$NetBSD: xorg-pkg-ver.mk,v 1.8 2015/08/09 10:09:07 aymeric Exp $
+#	$NetBSD: xorg-pkg-ver.mk,v 1.8.8.1 2018/06/09 15:35:37 martin Exp $
 
 # when including this make sure PROG is set so that $X11SRCDIR.$PROG
 # is a valid setting.  set XORG_PKG_VER_PROG if PROG is wrong.
@@ -19,7 +19,7 @@ XORG_PKG_PACKAGE_VERSION!= \
 	}' ${X11SRCDIR.${XORG_PKG_VER_PROG}}/configure
 .if !empty(XORG_PKG_PACKAGE_VERSION)
 CPPFLAGS+=	-DPACKAGE_VERSION=\"${XORG_PKG_PACKAGE_VERSION:Q}\"
-CPPFLAGS+=	-DVERSION=\"${XORG_PKG_PACKAGE_VERSION:Q}\"
+CPPFLAGS+=	-DVERSION=\"${XORG_PKG_PACKAGE_VERSION:q}\"
 .endif
 
 XORG_PKG_PACKAGE_STRING!= \

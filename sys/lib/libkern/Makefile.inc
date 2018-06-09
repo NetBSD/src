@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.44 2015/10/29 00:18:55 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.44.10.1 2018/06/09 15:35:38 martin Exp $
 #
 #	Configuration variables (default values are below):
 #
@@ -21,7 +21,7 @@ KERNDST?=	${.OBJDIR}/lib/kern
 KERN_AS?=	library
 KERNDOTDIR?= ../../.
 
-KERNDIR=	${S:S@^.@${KERNDOTDIR}@:Q}/lib/libkern
+KERNDIR=	${S:S@^.@${KERNDOTDIR}@:q}/lib/libkern
 .if (${KERN_AS} == "obj")
 KERNLIB=	${KERNDST}/libkern.o
 KERNLIB_PROF=	${KERNDST}/libkern.po
@@ -34,21 +34,21 @@ LIBKERNLNBN=	llib-lkern.ln
 KERNLIBLN=	${KERNDST}/${LIBKERNLNBN}
 
 KERNMAKE= \
-	cd ${KERNDST} && ${MAKE} -f ${KERNDIR:Q}/Makefile \
-	    KERNDIR=${KERNDIR:Q} \
-	    CC=${CC:Q} CFLAGS=${CFLAGS:Q} CPUFLAGS= \
-	    AS=${AS:Q} AFLAGS=${AFLAGS:Q} \
-	    LORDER=${LORDER:Q} \
-	    TSORT=${TSORT:Q} \
-	    LD=${LD:Q} STRIP=${STRIP:Q} \
-	    AR=${AR:Q} NM=${NM:Q} \
-	    RANLIB=${RANLIB:Q} SIZE=${SIZE:Q} \
-	    MACHINE=${MACHINE} MACHINE_ARCH=${MACHINE_ARCH:Q} \
-	    KERNCPPFLAGS=${CPPFLAGS:S@^-I.@-I${KERNDOTDIR}@g:Q} \
-	    KERNMISCCPPFLAGS=${KERNMISCCPPFLAGS:Q} \
-	    LINTFLAGS=${KERNLINTFLAGS:Q} \
-	    LIBKERN_ARCH=${LIBKERN_ARCH:Q} \
-	    COMMON_MACHINE_ARCH=${COMMON_MACHINE_ARCH:Q} \
+	cd ${KERNDST} && ${MAKE} -f ${KERNDIR:q}/Makefile \
+	    KERNDIR=${KERNDIR:q} \
+	    CC=${CC:q} CFLAGS=${CFLAGS:q} CPUFLAGS= \
+	    AS=${AS:q} AFLAGS=${AFLAGS:q} \
+	    LORDER=${LORDER:q} \
+	    TSORT=${TSORT:q} \
+	    LD=${LD:q} STRIP=${STRIP:q} \
+	    AR=${AR:q} NM=${NM:q} \
+	    RANLIB=${RANLIB:q} SIZE=${SIZE:q} \
+	    MACHINE=${MACHINE} MACHINE_ARCH=${MACHINE_ARCH:q} \
+	    KERNCPPFLAGS=${CPPFLAGS:S@^-I.@-I${KERNDOTDIR}@g:q} \
+	    KERNMISCCPPFLAGS=${KERNMISCCPPFLAGS:q} \
+	    LINTFLAGS=${KERNLINTFLAGS:q} \
+	    LIBKERN_ARCH=${LIBKERN_ARCH:q} \
+	    COMMON_MACHINE_ARCH=${COMMON_MACHINE_ARCH:q} \
 	    ${KERNMISCMAKEFLAGS}
 
 ${KERNLIB}:		.NOTMAIN .MAKE __always_make_kernlib

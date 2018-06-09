@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.215.4.1 2018/06/07 15:59:27 martin Exp $	*/
+/*	$NetBSD: var.c,v 1.215.4.2 2018/06/09 15:35:38 martin Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.215.4.1 2018/06/07 15:59:27 martin Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.215.4.2 2018/06/09 15:35:38 martin Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.215.4.1 2018/06/07 15:59:27 martin Exp $");
+__RCSID("$NetBSD: var.c,v 1.215.4.2 2018/06/09 15:35:38 martin Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -325,7 +325,7 @@ static Boolean VarLoopExpand(GNode *, Var_Parse_State *,
 static char *VarGetPattern(GNode *, Var_Parse_State *,
 			   int, const char **, int, int *, int *,
 			   VarPattern *);
-static char *VarQuote(char *);
+static char *VarQuote(char *, Boolean);
 static char *VarHash(char *);
 static char *VarModify(GNode *, Var_Parse_State *,
     const char *,
@@ -2315,6 +2315,7 @@ VarGetPattern(GNode *ctxt, Var_Parse_State *vpstate MAKE_ATTR_UNUSED,
  *-----------------------------------------------------------------------
  * VarQuote --
  *	Quote shell meta-characters and space characters in the string
+ *	if quoteDollar is set, also quote and double any '$' characters.
  *
  * Results:
  *	The quoted string
@@ -2325,7 +2326,7 @@ VarGetPattern(GNode *ctxt, Var_Parse_State *vpstate MAKE_ATTR_UNUSED,
  *-----------------------------------------------------------------------
  */
 static char *
-VarQuote(char *str)
+VarQuote(char *str, Boolean quoteDollar)
 {
 
     Buffer  	  buf;
@@ -2346,7 +2347,7 @@ VarQuote(char *str)
 	if (isspace((unsigned char)*str) || ismeta((unsigned char)*str))
 	    Buf_AddByte(&buf, '\\');
 	Buf_AddByte(&buf, *str);
-	if (*str == '$')
+	if (quoteDollar && *str == '$')
 	    Buf_AddBytes(&buf, 2, "\\$");
     }
 
@@ -3487,9 +3488,10 @@ ApplyModifiers(char *nstr, const char *tstr,
 		break;
 	    }
 #endif
+	case 'q':
 	case 'Q':
 	    if (tstr[1] == endc || tstr[1] == ':') {
-		newStr = VarQuote(nstr);
+		newStr = VarQuote(nstr, modifier == 'q');
 		cp = tstr + 1;
 		termc = *cp;
 		break;

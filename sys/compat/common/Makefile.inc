@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.22 2016/03/22 08:25:23 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.22.10.1 2018/06/09 15:35:37 martin Exp $
 #
 #	Configuration variables (default values are below):
 #
@@ -33,19 +33,19 @@ LIBCOMPATLNBN=	llib-lcompat.ln
 COMPATLIBLN=	${COMPATDST}/${LIBCOMPATLNBN}
 
 COMPATMAKE= \
-	cd ${COMPATDST} && ${MAKE} -f ${COMPATDIR:Q}/Makefile \
-	    COMPATDIR=${COMPATDIR:Q} \
-	    CC=${CC:Q} CFLAGS=${CFLAGS:Q} \
-	    AS=${AS:Q} AFLAGS=${AFLAGS:Q} \
-	    AR=${AR:Q} NM=${NM:Q} \
-	    LORDER=${LORDER:Q} \
-	    TSORT=${TSORT:Q} \
-	    RANLIB=${RANLIB:Q} \
-	    LD=${LD:Q} LDFLAGS=${LDFLAGS:Q} \
-	    STRIP=${STRIP:Q} \
-	    MACHINE=${MACHINE} MACHINE_ARCH=${MACHINE_ARCH:Q} \
-	    COMPATCPPFLAGS=${CPPFLAGS:S@^-I.@-I${COMPATDOTDIR}@g:Q} \
-	    LINTFLAGS=${KERNLINTFLAGS:Q} \
+	cd ${COMPATDST} && ${MAKE} -f ${COMPATDIR:q}/Makefile \
+	    COMPATDIR=${COMPATDIR:q} \
+	    CC=${CC:q} CFLAGS=${CFLAGS:q} \
+	    AS=${AS:q} AFLAGS=${AFLAGS:q} \
+	    AR=${AR:q} NM=${NM:q} \
+	    LORDER=${LORDER:q} \
+	    TSORT=${TSORT:q} \
+	    RANLIB=${RANLIB:q} \
+	    LD=${LD:q} LDFLAGS=${LDFLAGS:q} \
+	    STRIP=${STRIP:q} \
+	    MACHINE=${MACHINE} MACHINE_ARCH=${MACHINE_ARCH:q} \
+	    COMPATCPPFLAGS=${CPPFLAGS:S@^-I.@-I${COMPATDOTDIR}@g:q} \
+	    LINTFLAGS=${KERNLINTFLAGS:q} \
 	    ${COMPATMISCMAKEFLAGS}
 
 ${COMPATLIB}:		.NOTMAIN .MAKE __always_make_compatlib
