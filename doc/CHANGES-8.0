@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.205 2018/06/07 18:37:04 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.206 2018/06/09 15:46:27 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -13677,3 +13677,202 @@ doc/3RDPARTY					(manually modified)
 
 	Import dhcpcd 7.0.5b.
 	[roy, ticket #849]
+
+usr.bin/tr/str.c				1.30
+
+	Do not accept invalid octal character values.
+	[leot, ticket #850]
+
+sys/external/bsd/drm2/nouveau/nouveau_pci.c	1.9-1.11
+
+	Disable drm2 on modern nouveau cards (Pascal-based)
+	and second generation of Maxwell, they are not supported
+	by this version of the drm code.
+	[mrg, ticket #851]
+
+sys/net/route.c					1.210
+sys/netinet/ip_icmp.c				1.171
+sys/netinet6/icmp6.c				1.238
+
+	Fix _rt_free via rtrequest(RTM_DELETE) hangs in rt_timer handlers.
+	[ozaki-r, ticket #852]
+
+external/mpl/dhcp/dist/common/bpf.c		1.3
+(as external/bsd/dhcp/dist/common/bpf.c)
+
+	Handle carp interfaces.
+	[maya, ticket #854]
+
+sbin/fsck_lfs/bufcache.c			1.20
+sbin/fsck_lfs/bufcache.h			1.14
+
+	Fix incore(), use a 64bit logical block number.
+	[maya, ticket #855]
+
+sys/nfs/nfs.h					1.76
+sys/nfs/nfs_clntsocket.c			1.6
+sys/nfs/nfs_socket.c				1.199
+sys/nfs/nfs_subs.c				1.230
+
+	Protect the nfs request queue with its own mutex.
+	Make the nfs_receive queue check for signals so that intr mounts
+	can be interrupted.
+	[maya, ticket #856]
+
+sys/dev/pci/mpii.c				1.9
+
+	Fix malloc flags to avoid a sleep in interrupt context.
+	[maya, ticket #857]
+
+usr.sbin/makefs/ffs.c				1.70
+
+	Fix makefs UFS2 lazy inode initialization.
+	[maya, ticket #858]
+
+sys/compat/common/rtsock_50.c			1.7
+
+	Added missing ifi_link_state at compat_50_rt_oifmsg() and
+	compat_50_iflist().
+	[nonaka, ticket #861]
+
+
+sys/net/if_llatbl.c				1.27
+
+	It is necessary to use wall time instead of monotonic time
+	for rmx_expire.
+	[nonaka, ticket #862]
+
+sys/arch/macppc/stand/fixcoff/elf32_powerpc_merge.x 1.6,1.7 (patch)
+
+	Work around a binutils problem by adding a .pad section.
+	[uwe, ticket #863]
+
+sys/dev/pci/ixgbe/ix_txrx.c			1.40-1.47 (patch)
+sys/dev/pci/ixgbe/ixgbe.c			1.148,1.149,1.151,1.152,1.154
+						1.155,1.157-1.160 (patch)
+sys/dev/pci/ixgbe/ixgbe.h			1.43,1.44,1.46,1.49 (patch)
+sys/dev/pci/ixgbe/ixgbe_netbsd.c		1.7 (patch)
+sys/dev/pci/ixgbe/ixgbe_netbsd.h		1.8 (patch)
+sys/dev/pci/ixgbe/ixgbe_osdep.h			1.22 (patch)
+sys/dev/pci/ixgbe/ixv.c				1.100-1.104 (patch)
+sys/dev/pci/ixgbe/ixv.c				1.94,1.95,1.99 (patch)
+
+	- Use ixgbe_eitr_write() when writing the EITR for the link interrupt
+	  like queue's EITR to write the register safely.
+	- Don't free and reallocate bus_dmamem when it's not required.
+	- QPRDC register is only for 82599 and newer.
+	- Count IXGBE_QPRDC, PX{ON,OFF}{T,R}XC[NT].
+	- The TQSMR register is not for receiving but for transmitting, so
+	  move the initialization from ixgbe_initialize_receive_units()
+	  to ixgbe_initialize_transmit_units().
+	- Add rxd_nxck (Receive Descriptor next to check) read only sysctl.
+	-  Don't check IFF_RUNNING in ixgbe_rxeof(). Doing break and leaving
+	  a descriptor with DD bit is worse than just processing the entry.
+	  And it's also racy to check IFF_RUNNING in rxeof().
+	- Add "bool txr_no_space" for TX descriptor shortage. Use it like
+	  IFF_OACTIVE.
+	- Clear que->disabled_count in {ixgbe,ixv}_init_locked(). Without
+	  this, interrupt mask state and EIMS may mismatch and if_init
+	  doesn't recover from TX/RX stall problem.
+	- Add hw.ixgN.debug sysctl. "sysctl -w hw.ixgN.debug=1" dumps some
+	  registers to console.
+	- Constify several variables in ixgbe/ so that they land in
+	  .rodata (1038 bytes).
+	- Don't call ixgbe_rearm_queues() in ixgbe_local_timer1() to avoid
+	  disabling TX/RX interrupt forever (PR#53294).
+	- Remove unused structure entries and macros.
+	- Whitespace fix.
+	[msaitoh, ticket #864]
+
+sys/arch/amd64/amd64/machdep.c		1.303 (patch)
+sys/arch/amd64/conf/GENERIC		1.492 (patch)
+sys/arch/amd64/conf/files.amd64		1.103 (patch)
+sys/arch/i386/i386/machdep.c		1.806 (patch)
+sys/arch/i386/conf/GENERIC		1.1179 (patch)
+sys/arch/i386/conf/files.i386		1.393 (patch)
+sys/arch/x86/include/cpu.h		1.91 (patch)
+sys/arch/x86/include/specialreg.h	upto 1.126 (patch)
+sys/arch/x86/x86/x86_machdep.c		upto 1.115 (patch, adapted)
+sys/arch/x86/x86/spectre.c		upto 1.19 (patch, adapted, no IBRS,
+					SpectreV2 mitigations not enabled
+					by default)
+
+	Backport the hardware SpectreV2 and SpectreV4 mitigations.
+	[maxv, ticket #865]
+
+sys/arch/x86/x86/procfs_machdep.c		1.23
+
+	Add SSBD bit for Intel.
+	[msaitoh, ticket #867]
+
+sys/kern/uipc_socket.c				1.264
+sys/kern/uipc_socket2.c				1.130
+sys/sys/socketvar.h				1.156
+
+	Separate receive socket errors from general socket errors.
+	[roy, ticket #868]
+
+usr.sbin/sysinst/arch/alpha/md.c		1.3
+usr.sbin/sysinst/arch/emips/md.c		1.4
+usr.sbin/sysinst/arch/hp300/md.c		1.5
+usr.sbin/sysinst/arch/hppa/md.c			1.3
+usr.sbin/sysinst/arch/i386/md.c			1.8
+usr.sbin/sysinst/arch/landisk/md.c		1.4
+usr.sbin/sysinst/arch/mipsco/md.c		1.3
+usr.sbin/sysinst/arch/mvme68k/md.c		1.5
+usr.sbin/sysinst/arch/pmax/md.c			1.3
+usr.sbin/sysinst/arch/x68k/md.c			1.5
+usr.sbin/sysinst/bsddisklabel.c			1.3
+usr.sbin/sysinst/defs.h				1.10
+usr.sbin/sysinst/menus.mi			1.12
+usr.sbin/sysinst/net.c				1.24
+usr.sbin/sysinst/partman.c			1.22
+usr.sbin/sysinst/util.c				1.8
+
+	Replace deconst with __UNCONST, the former involves undefined
+	behaviour with NULL arithmetic.
+	[joerg, ticket #869]
+
+external/mit/xorg/xorg-pkg-ver.mk		1.9
+sys/arch/acorn32/stand/lib/Makefile.inc		1.4
+sys/arch/hppa/spmath/Makefile.inc		1.10
+sys/arch/i386/stand/lib/Makefile.inc		1.17
+sys/arch/ia64/stand/efi/libefi/Makefile.inc	1.5
+sys/arch/m68k/fpsp/Makefile.inc			1.21
+sys/compat/common/Makefile.inc			1.25
+sys/lib/libgnuefi/Makefile.inc			1.5
+sys/lib/libkern/Makefile.inc			1.45
+sys/lib/libsa/Makefile.inc			1.24
+sys/lib/libz/Makefile.inc			1.17
+usr.bin/make/make.1				1.273
+usr.bin/make/unit-tests/Makefile		1.53
+usr.bin/make/unit-tests/varquote.exp		upto 1.2
+usr.bin/make/unit-tests/varquote.mk		upto 1.2
+usr.bin/make/var.c				1.220
+
+	- Introduce :q modifier for make variables and make it double escape
+	   $'s so that passing variables to recursive makes with :q works as
+	   expected.
+	- Adjust makefiles that use recursive make to use :q
+	[christos, ticket #870]
+
+external/bsd/top/dist/top.c			1.10
+
+	Fix unitialized signal mask passed to sigaction(2) in top(1).
+	[kamil, ticket #871]
+
+external/bsd/top/dist/machine/m_netbsd.c	1.20
+
+	Fix read of unitialized array elements in top(1).
+	[kamil, ticket #872]
+
+usr.bin/fstat/misc.c				1.18
+
+	Update fstat for audio(4) and pad(4) devices.
+	[nat, ticket #873]
+
+share/i18n/esdb/ISO-8859/ISO-8859.alias		1.4
+
+	Add more aliases for Hebrew and Arabic ISO-8859-... encodings.
+	[maya, ticket #874]
+
