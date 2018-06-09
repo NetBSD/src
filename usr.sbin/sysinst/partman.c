@@ -1,4 +1,4 @@
-/*	$NetBSD: partman.c,v 1.15.6.3 2018/05/07 04:06:31 snj Exp $ */
+/*	$NetBSD: partman.c,v 1.15.6.4 2018/06/09 15:19:27 martin Exp $ */
 
 /*
  * Copyright 2012 Eugene Lozovoy
@@ -227,7 +227,7 @@ pm_edit(int menu_entries_count, void (*menu_fmt)(menudesc *, int, void *),
 			}
 		if (!ok) {
 			/* We do not have free device slots */
-			process_menu(MENU_ok, deconst(MSG_limitcount));
+			process_menu(MENU_ok, __UNCONST(MSG_limitcount));
 			return -1;
 		}
 	}
@@ -357,7 +357,7 @@ pm_manage_getfreenode(void *node, const char *d, structinfo_t *s)
 			return i;
 		}
 	}
-	process_menu(MENU_ok, deconst(MSG_nofreedev));
+	process_menu(MENU_ok, __UNCONST(MSG_nofreedev));
 	return -1;
 }
 
@@ -467,7 +467,7 @@ pm_raid_set_value(menudesc *m, void *arg)
 				dev_ptr->raid_level = retvalue;
 			return 0;
 		case PMR_MENU_NUMROW:
-			process_menu(MENU_ok, deconst(MSG_raid_nomultidim));
+			process_menu(MENU_ok, __UNCONST(MSG_raid_nomultidim));
 			return 0;
 #if 0 /* notyet */
 			msg_to_show = MSG_raid_numrow_ask;
@@ -1748,7 +1748,7 @@ pm_wedges_fill(pm_devs_t *pm_cur)
 		if (pm_cur->bsdlabel[i].pi_fstype != FS_UNUSED) {
 			current = pm_wedge_getfree();
 			if (current < 0) {
-				process_menu(MENU_ok, deconst(MSG_limitcount));
+				process_menu(MENU_ok, __UNCONST(MSG_limitcount));
 				return;
 			}
 			wedges[current].pm = pm_cur;

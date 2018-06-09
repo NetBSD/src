@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.6.8.2 2018/06/05 08:12:54 bouyer Exp $ */
+/*	$NetBSD: md.c,v 1.6.8.3 2018/06/09 15:19:27 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -251,7 +251,7 @@ md_check_partitions(void)
 	free(bootxx);
 	if (rval == 0)
 		return 1;
-	process_menu(MENU_ok, deconst(MSG_No_Bootcode));
+	process_menu(MENU_ok, __UNCONST(MSG_No_Bootcode));
 	return 0;
 }
 
@@ -380,7 +380,7 @@ md_post_newfs(void)
                                                                                 
         if (ret != 0)                                                         
                 process_menu(MENU_ok,                                           
-                    deconst("Warning: disk is probably not bootable"));         
+                    __UNCONST("Warning: disk is probably not bootable"));         
 
 	return ret;
 }
