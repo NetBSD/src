@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_virtio.c,v 1.20 2018/06/07 23:32:30 jakllsch Exp $	*/
+/*	$NetBSD: ld_virtio.c,v 1.21 2018/06/10 14:43:07 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.20 2018/06/07 23:32:30 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.21 2018/06/10 14:43:07 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,6 +99,9 @@ __KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.20 2018/06/07 23:32:30 jakllsch Exp 
 #define VIRTIO_BLK_T_FLUSH	4
 #define VIRTIO_BLK_T_BARRIER	0x80000000
 
+/* Sector */
+#define VIRTIO_BLK_BSIZE	512
+
 /* Status */
 #define VIRTIO_BLK_S_OK		0
 #define VIRTIO_BLK_S_IOERR	1
@@ -110,7 +113,7 @@ struct virtio_blk_req_hdr {
 	uint32_t	ioprio;
 	uint64_t	sector;
 } __packed;
-/* 512*virtio_blk_req_hdr.sector byte payload and 1 byte status follows */
+/* payload and 1 byte status follows */
 
 
 /*
@@ -294,7 +297,7 @@ ld_virtio_attach(device_t parent, device_t self, void *aux)
 		ld->sc_secsize = virtio_read_device_config_4(vsc,
 					VIRTIO_BLK_CONFIG_BLK_SIZE);
 	} else
-		ld->sc_secsize = 512;
+		ld->sc_secsize = VIRTIO_BLK_BSIZE;
 
 	/* At least genfs_io assumes maxxfer == MAXPHYS. */
 	if (features & VIRTIO_BLK_F_SIZE_MAX) {
@@ -344,7 +347,7 @@ ld_virtio_attach(device_t parent, device_t self, void *aux)
 
 	ld->sc_dv = self;
 	ld->sc_secperunit = virtio_read_device_config_8(vsc,
-				VIRTIO_BLK_CONFIG_CAPACITY);
+	    VIRTIO_BLK_CONFIG_CAPACITY) / (ld->sc_secsize / VIRTIO_BLK_BSIZE);
 	ld->sc_maxxfer = maxxfersize;
 	if (features & VIRTIO_BLK_F_GEOMETRY) {
 		ld->sc_ncylinders = virtio_read_device_config_2(vsc,
@@ -420,7 +423,8 @@ ld_virtio_start(struct ld_softc *ld, struct buf *bp)
 	vr->vr_bp = bp;
 	vr->vr_hdr.type = isread?VIRTIO_BLK_T_IN:VIRTIO_BLK_T_OUT;
 	vr->vr_hdr.ioprio = 0;
-	vr->vr_hdr.sector = bp->b_rawblkno * sc->sc_ld.sc_secsize / 512;
+	vr->vr_hdr.sector = bp->b_rawblkno * sc->sc_ld.sc_secsize /
+	    VIRTIO_BLK_BSIZE;
 
 	bus_dmamap_sync(virtio_dmat(vsc), vr->vr_cmdsts,
 			0, sizeof(struct virtio_blk_req_hdr),
@@ -546,7 +550,8 @@ ld_virtio_dump(struct ld_softc *ld, void *data, int blkno, int blkcnt)
 	vr->vr_bp = (void*)0xdeadbeef;
 	vr->vr_hdr.type = VIRTIO_BLK_T_OUT;
 	vr->vr_hdr.ioprio = 0;
-	vr->vr_hdr.sector = (daddr_t) blkno * ld->sc_secsize / 512;
+	vr->vr_hdr.sector = (daddr_t) blkno * ld->sc_secsize /
+	    VIRTIO_BLK_BSIZE;
 
 	bus_dmamap_sync(virtio_dmat(vsc), vr->vr_cmdsts,
 			0, sizeof(struct virtio_blk_req_hdr),
