@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.34 2018/06/10 17:17:46 kamil Exp $
+#	$NetBSD: Makefile,v 1.35 2018/06/10 17:55:11 christos Exp $
 #	from @(#)Makefile	8.1 (Berkeley) 6/5/93
 
 # Missing:  ms
@@ -18,6 +18,8 @@ SUBDIR+=doc
 SUBDIR+=i18n locale nls
 .endif
 .endif
+
+SUBDIR.roff+= doc
 
 # Speedup stubs for some subtrees that don't need to run these rules
 includes-examples includes-man:

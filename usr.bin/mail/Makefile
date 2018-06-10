@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.37 2018/05/23 01:03:46 christos Exp $
+#	$NetBSD: Makefile,v 1.38 2018/06/10 17:55:11 christos Exp $
 #	@(#)Makefile	8.3 (Berkeley) 4/20/95
 
 .include <bsd.own.mk>
@@ -71,7 +71,7 @@ FILESDIR=		/usr/share/misc
 FILES=			mail.help mail.tildehelp
 .endif
 
-SUBDIR+= USD.doc
+SUBDIR.roff+= USD.doc
 
 CONFIGFILES=		mail.rc
 FILESDIR_mail.rc=	/etc
