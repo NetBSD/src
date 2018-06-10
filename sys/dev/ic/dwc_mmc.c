@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_mmc.c,v 1.11 2017/06/19 22:03:02 jmcneill Exp $ */
+/* $NetBSD: dwc_mmc.c,v 1.12 2018/06/10 17:52:20 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_mmc.c,v 1.11 2017/06/19 22:03:02 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_mmc.c,v 1.12 2018/06/10 17:52:20 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -755,6 +755,23 @@ dwc_mmc_card_intr_ack(sdmmc_chipset_handle_t sch)
 int
 dwc_mmc_init(struct dwc_mmc_softc *sc)
 {
+	uint32_t val;
+
+	if (sc->sc_fifo_reg == 0) {
+		val = MMC_READ(sc, DWC_MMC_VERID);
+		const u_int id = __SHIFTOUT(val, DWC_MMC_VERID_ID);
+
+		if (id < DWC_MMC_VERID_240A)
+			sc->sc_fifo_reg = 0x100;
+		else
+			sc->sc_fifo_reg = 0x200;
+	}
+
+	if (sc->sc_fifo_depth == 0) {
+		val = MMC_READ(sc, DWC_MMC_FIFOTH);
+		sc->sc_fifo_depth = __SHIFTOUT(val, DWC_MMC_FIFOTH_RX_WMARK) + 1;
+	}
+
 	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_BIO);
 	cv_init(&sc->sc_intr_cv, "dwcmmcirq");
 	cv_init(&sc->sc_idst_cv, "dwcmmcdma");
