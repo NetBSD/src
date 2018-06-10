@@ -1,4 +1,4 @@
-/* 	$NetBSD: viornd.c,v 1.11 2017/03/25 18:02:06 jdolecek Exp $ */
+/* 	$NetBSD: viornd.c,v 1.12 2018/06/10 14:59:23 jakllsch Exp $ */
 /*	$OpenBSD: viornd.c,v 1.1 2014/01/21 21:14:58 sf Exp $	*/
 
 /*
@@ -53,9 +53,6 @@
 #include <sys/callout.h>
 #include <sys/rndsource.h>
 #include <sys/mutex.h>
-#include <dev/pci/pcidevs.h>
-#include <dev/pci/pcivar.h>
-#include <dev/pci/pcivar.h>
 #include <dev/pci/virtioreg.h>
 #include <dev/pci/virtiovar.h>
 
