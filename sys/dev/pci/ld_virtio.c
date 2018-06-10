@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_virtio.c,v 1.21 2018/06/10 14:43:07 jakllsch Exp $	*/
+/*	$NetBSD: ld_virtio.c,v 1.22 2018/06/10 14:59:23 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.21 2018/06/10 14:43:07 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.22 2018/06/10 14:59:23 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -38,10 +38,6 @@ __KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.21 2018/06/10 14:43:07 jakllsch Exp 
 #include <sys/disk.h>
 #include <sys/mutex.h>
 #include <sys/module.h>
-
-#include <dev/pci/pcidevs.h>
-#include <dev/pci/pcireg.h>
-#include <dev/pci/pcivar.h>
 
 #include <dev/ldvar.h>
 #include <dev/pci/virtioreg.h>
