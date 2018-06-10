@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.subdir.mk,v 1.52 2010/05/26 00:48:15 uwe Exp $
+#	$NetBSD: bsd.subdir.mk,v 1.53 2018/06/10 17:17:46 kamil Exp $
 #	@(#)bsd.subdir.mk	8.1 (Berkeley) 6/8/93
 
 .include <bsd.init.mk>
@@ -6,6 +6,8 @@
 .if !defined(NOSUBDIR)					# {
 
 .for dir in ${SUBDIR}
+.if ("${dir}" != "USD.doc" && "${dir}" != "PSD.doc" && "${dir}" != "SMM.doc") \
+    || ${MKGROFF} == "yes"
 .if "${dir}" == ".WAIT"
 # Don't play with .WAIT
 __REALSUBDIR+=${dir}
@@ -23,6 +25,7 @@ __REALSUBDIR+=${dir}
 __REALSUBDIR+=${dir}.${MACHINE}
 .else
 __REALSUBDIR+=${dir}
+.endif
 .endif
 .endif
 .endif
