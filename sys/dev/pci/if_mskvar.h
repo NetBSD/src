@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_mskvar.h,v 1.3 2006/12/28 16:34:42 kettenis Exp $	*/
-/*	$NetBSD: if_mskvar.h,v 1.12 2015/04/13 16:33:25 riastradh Exp $	*/
+/*	$NetBSD: if_mskvar.h,v 1.13 2018/06/11 19:13:38 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -193,7 +193,6 @@ struct sk_softc {
 	u_int32_t		sk_workaround;
 	u_int8_t		sk_macs;	/* # of MACs */
 	const char		*sk_name;
-	u_int32_t		sk_rboff;	/* RAMbuffer offset */
 	u_int32_t		sk_ramsize;	/* amount of RAM on NIC */
 	u_int32_t		sk_intrmask;
 	struct sysctllog	*sk_clog;
