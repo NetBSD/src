@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.109 2017/10/03 01:43:03 christos Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.110 2018/06/11 18:48:24 maya Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -1296,6 +1296,10 @@ __GEN_ENDIAN_DEC(64, le)
 			(((y) <<  0) & 0x000000ff)))
 #ifndef NBBY
 #define NBBY 8
+#endif
+
+#if !HAVE_U_LONGLONG_T
+typedef uint64_t u_longlong_t;
 #endif
 
 #if !HAVE_U_QUAD_T

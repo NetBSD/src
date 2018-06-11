@@ -1,6 +1,6 @@
 /* nbtool_config.h.in.  Generated from configure.ac by autoheader.  */
 
-/*      $NetBSD: nbtool_config.h.in,v 1.42 2017/12/09 04:23:22 sevan Exp $    */
+/*      $NetBSD: nbtool_config.h.in,v 1.43 2018/06/11 18:48:25 maya Exp $    */
  
 #ifndef __NETBSD_NBTOOL_CONFIG_H__
 #define __NETBSD_NBTOOL_CONFIG_H__
@@ -779,6 +779,9 @@
 
 /* Define to 1 if the system has the type `u_long'. */
 #undef HAVE_U_LONG
+
+/* Define to 1 if the system has the type `u_longlong_t'. */
+#undef HAVE_U_LONGLONG_T
 
 /* Define to 1 if the system has the type `u_quad_t'. */
 #undef HAVE_U_QUAD_T
