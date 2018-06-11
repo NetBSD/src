@@ -1,4 +1,4 @@
-/*	$NetBSD: af_inet.c,v 1.24 2016/10/01 20:59:49 kre Exp $	*/
+/*	$NetBSD: af_inet.c,v 1.25 2018/06/11 17:45:50 kamil Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_inet.c,v 1.24 2016/10/01 20:59:49 kre Exp $");
+__RCSID("$NetBSD: af_inet.c,v 1.25 2018/06/11 17:45:50 kamil Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -99,7 +99,7 @@ in_prefixlen(struct sockaddr *sa)
 
 	if (cidr < 32) {		/* more than 1 bit in mask */
 		/* check for non-contig netmask */
-		if ((mask ^ (((1 << cidr) - 1) << (32 - cidr))) != 0)
+		if ((mask ^ (((1U << cidr) - 1) << (32 - cidr))) != 0)
 			return -1;	/* noncontig, no pfxlen */
 	}
 
