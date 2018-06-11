@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.207 2018/06/09 18:01:24 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.208 2018/06/11 08:48:57 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -13850,6 +13850,7 @@ usr.bin/make/unit-tests/varquote.exp		upto 1.2
 usr.bin/make/unit-tests/varquote.mk		upto 1.2
 usr.bin/make/var.c				1.220
 distrib/sets/lists/tests/mi			1.784
+sys/arch/acorn26/stand/lib/Makefile.inc		(patch)
 
 	- Introduce :q modifier for make variables and make it double escape
 	   $'s so that passing variables to recursive makes with :q works as
