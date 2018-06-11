@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile,v 1.6 2018/06/11 12:47:47 christos Exp $
+#	$NetBSD: Makefile,v 1.7 2018/06/11 15:29:33 christos Exp $
 
 UNSUPPORTED_COMPILER.clang=	# defined
+LIBISCXX = yes
 
 .include <bsd.own.mk>
 
@@ -28,7 +29,6 @@ COPTS.${_s}.cc+=-frtti
 
 LIB=	ubsan
 SRCS+=	${UBSAN_SRCS}
-LIBDPLIBS+= stdc++ ${.CURDIR}/../libstdc++-v3
 LIBDPLIBS+= rt ${NETBSDSRCDIR}/lib/librt
 
 .if ${MACHINE_ARCH} == "vax"
