@@ -1,4 +1,4 @@
-/* $NetBSD: vexpress_platform.c,v 1.7 2018/03/17 18:34:09 ryo Exp $ */
+/* $NetBSD: vexpress_platform.c,v 1.8 2018/06/11 19:49:18 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_fdt_arm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vexpress_platform.c,v 1.7 2018/03/17 18:34:09 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vexpress_platform.c,v 1.8 2018/06/11 19:49:18 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: vexpress_platform.c,v 1.7 2018/03/17 18:34:09 ryo Ex
 
 #include <arm/cortex/gic_reg.h>
 
-#include <evbarm/dev/plcomvar.h>
+#include <evbarm/dev/plcomreg.h>
 
 #include <arm/vexpress/vexpress_platform.h>
 
@@ -178,6 +178,21 @@ vexpress_platform_init_attach_args(struct fdt_attach_args *faa)
 static void
 vexpress_platform_early_putchar(char c)
 {
+#ifdef CONSADDR
+#define CONSADDR_VA ((CONSADDR - VEXPRESS_CORE_PBASE) + VEXPRESS_CORE_VBASE)
+	volatile uint32_t *uartaddr = cpu_earlydevice_va_p() ?
+	    (volatile uint32_t *)CONSADDR_VA :
+	    (volatile uint32_t *)CONSADDR;
+
+	while ((le32toh(uartaddr[PL01XCOM_FR / 4]) & PL01X_FR_TXFF) != 0)
+		continue;
+
+	uartaddr[PL01XCOM_DR / 4] = htole32(c);
+	arm_dsb();
+
+	while ((le32toh(uartaddr[PL01XCOM_FR / 4]) & PL01X_FR_TXFE) == 0)
+		continue;
+#endif
 }
 
 static void
