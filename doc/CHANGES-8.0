@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.208 2018/06/11 08:48:57 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.209 2018/06/11 08:51:20 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -13877,4 +13877,9 @@ share/i18n/esdb/ISO-8859/ISO-8859.alias		1.4
 
 	Add more aliases for Hebrew and Arabic ISO-8859-... encodings.
 	[maya, ticket #874]
+
+usr.sbin/arp/arp.c				1.59
+
+	Fix usage of `arp -d'.
+	[nonaka, ticket #875]
 
