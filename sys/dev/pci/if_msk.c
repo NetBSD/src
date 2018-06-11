@@ -1,4 +1,4 @@
-/* $NetBSD: if_msk.c,v 1.56 2018/06/09 18:53:16 jdolecek Exp $ */
+/* $NetBSD: if_msk.c,v 1.57 2018/06/11 19:13:38 jdolecek Exp $ */
 /*	$OpenBSD: if_msk.c,v 1.42 2007/01/17 02:43:02 krw Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.56 2018/06/09 18:53:16 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.57 2018/06/11 19:13:38 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1029,7 +1029,7 @@ msk_attach(device_t parent, device_t self, void *aux)
 	void *kva;
 	bus_dma_segment_t seg;
 	int i, rseg;
-	u_int32_t chunk, val;
+	u_int32_t chunk;
 
 	sc_if->sk_dev = self;
 	sc_if->sk_port = sa->skc_port;
@@ -1055,25 +1055,18 @@ msk_attach(device_t parent, device_t self, void *aux)
 	    ether_sprintf(sc_if->sk_enaddr));
 
 	/*
-	 * Set up RAM buffer addresses. The NIC will have a certain
-	 * amount of SRAM on it, somewhere between 512K and 2MB. We
-	 * need to divide this up a) between the transmitter and
- 	 * receiver and b) between the two XMACs, if this is a
-	 * dual port NIC. Our algorithm is to divide up the memory
-	 * evenly so that everyone gets a fair share.
-	 *
-	 * Just to be contrary, Yukon2 appears to have separate memory
-	 * for each MAC.
+	 * Set up RAM buffer addresses. The Yukon2 has a small amount
+	 * of SRAM on it, somewhere between 4K and 48K.  We need to
+	 * divide this up between the transmitter and receiver.  We
+	 * give the receiver 2/3 of the memory (rounded down), and the
+	 * transmitter whatever remains.
 	 */
-	chunk = sc->sk_ramsize  - (sc->sk_ramsize + 2) / 3;
-	val = sc->sk_rboff / sizeof(u_int64_t);
-	sc_if->sk_rx_ramstart = val;
-	val += (chunk / sizeof(u_int64_t));
-	sc_if->sk_rx_ramend = val - 1;
-	chunk = sc->sk_ramsize - chunk;
-	sc_if->sk_tx_ramstart = val;
-	val += (chunk / sizeof(u_int64_t));
-	sc_if->sk_tx_ramend = val - 1;
+	chunk = (2 * (sc->sk_ramsize / sizeof(u_int64_t)) / 3) & ~0xff;
+	sc_if->sk_rx_ramstart = 0;
+	sc_if->sk_rx_ramend = sc_if->sk_rx_ramstart + chunk - 1;
+	chunk = (sc->sk_ramsize / sizeof(u_int64_t)) - chunk;
+	sc_if->sk_tx_ramstart = sc_if->sk_rx_ramend + 1;
+	sc_if->sk_tx_ramend = sc_if->sk_tx_ramstart + chunk - 1;
 
 	DPRINTFN(2, ("msk_attach: rx_ramstart=%#x rx_ramend=%#x\n"
 		     "           tx_ramstart=%#x tx_ramend=%#x\n",
@@ -1214,7 +1207,7 @@ mskc_attach(device_t parent, device_t self, void *aux)
 	const char *intrstr = NULL;
 	bus_size_t size;
 	int rc, sk_nodenum;
-	u_int8_t hw, skrs;
+	u_int8_t hw;
 	const char *revstr = NULL;
 	const struct sysctlnode *node;
 	void *kva;
@@ -1334,23 +1327,14 @@ mskc_attach(device_t parent, device_t self, void *aux)
 	}
 	sc->sk_status_ring = (struct msk_status_desc *)kva;
 
-
 	sc->sk_int_mod = SK_IM_DEFAULT;
 	sc->sk_int_mod_pending = 0;
 
 	/* Reset the adapter. */
 	msk_reset(sc);
 
-	skrs = sk_win_read_1(sc, SK_EPROM0);
-	if (skrs == 0x00)
-		sc->sk_ramsize = 0x20000;
-	else
-		sc->sk_ramsize = skrs * (1<<12);
-	sc->sk_rboff = SK_RBOFF_0;
-
-	DPRINTFN(2, ("mskc_attach: ramsize=%d (%dk), rboff=%d\n",
-		     sc->sk_ramsize, sc->sk_ramsize / 1024,
-		     sc->sk_rboff));
+	sc->sk_ramsize = sk_win_read_1(sc, SK_EPROM0) * 4096;
+	DPRINTFN(2, ("mskc_attach: ramsize=%dK\n", sc->sk_ramsize / 1024));
 
 	switch (sc->sk_type) {
 	case SK_YUKON_XL:
