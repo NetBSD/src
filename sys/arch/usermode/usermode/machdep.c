@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.55 2018/06/05 20:02:43 reinoud Exp $ */
+/* $NetBSD: machdep.c,v 1.56 2018/06/11 19:35:56 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -37,7 +37,7 @@
 #include "opt_memsize.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.55 2018/06/05 20:02:43 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.56 2018/06/11 19:35:56 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -99,7 +99,7 @@ void	usermode_reboot(void);
 static void
 usage(const char *pn)
 {
-	printf("usage: %s [-acdqsvxz]"
+	thunk_printf("usage: %s [-acdqsvxz]"
 	    " [net=<tapdev>,<eaddr>]"
 	    " [audio=<audiodev>]"
 	    " [disk=<diskimg> ...]"
@@ -107,7 +107,7 @@ usage(const char *pn)
 	    " [vnc=<width>x<height>,<port>]"
 	    " [vdev=atapi,device]\n",
 	    pn);
-	printf("       (ex. \"%s"
+	thunk_printf("       (ex. \"%s"
 	    " net=tap0,00:00:be:ef:ca:fe"
 	    " audio=audio0"
 	    " disk=root.fs"
@@ -156,7 +156,7 @@ main(int argc, char *argv[])
 				char *mac = strchr(tap, ',');
 				char *p = usermode_tap_devicebuf;
 				if (mac == NULL) {
-					printf("bad net= format\n");
+					thunk_printf("bad net= format\n");
 					return;
 				}
 				memset(usermode_tap_devicebuf, 0,
@@ -189,13 +189,13 @@ main(int argc, char *argv[])
 				w = vnc;
 				h = strchr(w, 'x');
 				if (h == NULL) {
-					printf("bad vnc= format\n");
+					thunk_printf("bad vnc= format\n");
 					return;
 				}
 				*h++ = '\0';
 				p = strchr(h, ',');
 				if (p == NULL) {
-					printf("bad vnc= format\n");
+					thunk_printf("bad vnc= format\n");
 					return;
 				}
 				*p++ = '\0';
@@ -206,7 +206,7 @@ main(int argc, char *argv[])
 			    strlen("disk=")) == 0) {
 				if (usermode_disk_image_path_count ==
 				    MAX_DISK_IMAGES) {
-					printf("too many disk images "
+					thunk_printf("too many disk images "
 					    "(increase MAX_DISK_IMAGES)\n");
 					usage(argv[0]);
 					return;
@@ -220,7 +220,7 @@ main(int argc, char *argv[])
 				char *t, *p;
 				if (usermode_disk_image_path_count ==
 				    MAX_VDEVS) {
-					printf("too many vdevs "
+					thunk_printf("too many vdevs "
 					    "(increase MAX_VDEVS)\n");
 					usage(argv[0]);
 					return;
@@ -228,13 +228,13 @@ main(int argc, char *argv[])
 				t = vdev;
 				p = strchr(t, ',');
 				if (p == NULL) {
-					printf("bad vdev= format\n");
+					thunk_printf("bad vdev= format\n");
 					return;
 				}
 				*p++ = '\0';
 				type = vdev_type(t);
 				if (type < 0) {
-					printf("unknown vdev device type\n");
+					thunk_printf("unknown vdev device type\n");
 					return;
 				}
 				usermode_vdev_type[usermode_vdev_count] = type;
@@ -245,7 +245,7 @@ main(int argc, char *argv[])
 				usermode_root_device = argv[i] +
 				    strlen("root=");
 			} else {
-				printf("%s: unknown parameter\n", argv[i]);
+				thunk_printf("%s: unknown parameter\n", argv[i]);
 				usage(argv[0]);
 				return;
 			}
@@ -255,7 +255,7 @@ main(int argc, char *argv[])
 			r = 0;
 			BOOT_FLAG(argv[i][j], r);
 			if (r == 0) {
-				printf("-%c: unknown flag\n", argv[i][j]);
+				thunk_printf("unknown kernel boot flag '%c'\n", argv[i][j]);
 				usage(argv[0]);
 				return;
 			}
