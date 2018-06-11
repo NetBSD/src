@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.4 2018/05/27 01:14:50 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.5 2018/06/11 21:36:20 christos Exp $
 #
 #	Configuration variables (default values are below):
 #
@@ -22,7 +22,7 @@ RISCOSLIB=		${RISCOSDST}/libriscos.a
 RISCOSMAKE= \
 	cd ${RISCOSDIR} && MAKEOBJDIRPREFIX= && unset MAKEOBJDIRPREFIX && \
 	  MAKEOBJDIR=${RISCOSDST} ${MAKE} \
-	    CC=${CC:q} CFLAGS=${CFLAGS:q} \
+	    CC=${CC:q} CFLAGS=${CFLAGS:S/MAKEOBJDIRPREFIX/MAKEOBJDIR/:q} \
 	    AS=${AS:q} AFLAGS=${AFLAGS:q} \
 	    LD=${LD:q} STRIP=${STRIP:q} \
 	    MACHINE=${MACHINE} MACHINE_ARCH=${MACHINE_ARCH:q} \
