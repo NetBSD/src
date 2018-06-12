@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.85 2016/12/15 09:28:05 ozaki-r Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.86 2018/06/12 21:36:34 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.85 2016/12/15 09:28:05 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.86 2018/06/12 21:36:34 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -551,8 +551,6 @@ sk_marv_miibus_statchg(struct ifnet *ifp)
 		     SK_YU_READ_2(((struct sk_if_softc *)ifp->if_softc),
 		     YUKON_GPCR)));
 }
-
-#define SK_HASH_BITS		6
 
 u_int32_t
 sk_xmac_hash(void *addr)

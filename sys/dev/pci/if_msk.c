@@ -1,4 +1,4 @@
-/* $NetBSD: if_msk.c,v 1.60 2018/06/12 20:27:54 jdolecek Exp $ */
+/* $NetBSD: if_msk.c,v 1.61 2018/06/12 21:36:34 jdolecek Exp $ */
 /*	$OpenBSD: if_msk.c,v 1.42 2007/01/17 02:43:02 krw Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.60 2018/06/12 20:27:54 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.61 2018/06/12 21:36:34 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -329,8 +329,6 @@ msk_miibus_statchg(struct ifnet *ifp)
 		     SK_YU_READ_2(sc_if, YUKON_GPCR)));
 }
 
-#define HASH_BITS	6
-
 void
 msk_setfilt(struct sk_if_softc *sc_if, void *addrv, int slot)
 {
@@ -381,7 +379,7 @@ allmulti:
 				goto allmulti;
 			}
 			h = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN) &
-			    ((1 << HASH_BITS) - 1);
+			    ((1 << SK_HASH_BITS) - 1);
 			if (h < 32)
 				hashes[0] |= (1 << h);
 			else
