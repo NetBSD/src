@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.209 2018/06/11 08:51:20 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.210 2018/06/12 16:36:26 snj Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -13882,4 +13882,11 @@ usr.sbin/arp/arp.c				1.59
 
 	Fix usage of `arp -d'.
 	[nonaka, ticket #875]
+
+sys/net/if_vlan.c				1.126
+tests/net/if_vlan/t_vlan.sh			1.9
+
+	Fix panic upon shutdown of a system with bridges on top of vlans.
+	PR kern/53357.
+	[ozaki-r, ticket #876]
 
