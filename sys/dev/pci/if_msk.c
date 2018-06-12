@@ -1,4 +1,4 @@
-/* $NetBSD: if_msk.c,v 1.59 2018/06/12 19:35:00 jdolecek Exp $ */
+/* $NetBSD: if_msk.c,v 1.60 2018/06/12 20:27:54 jdolecek Exp $ */
 /*	$OpenBSD: if_msk.c,v 1.42 2007/01/17 02:43:02 krw Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.59 2018/06/12 19:35:00 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.60 2018/06/12 20:27:54 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -152,6 +152,7 @@ static const struct msk_product {
 	pci_product_id_t        msk_product;
 } msk_products[] = {
 	{ PCI_VENDOR_DLINK,		PCI_PRODUCT_DLINK_DGE550SX },
+	{ PCI_VENDOR_DLINK,		PCI_PRODUCT_DLINK_DGE550T_B1 },
 	{ PCI_VENDOR_DLINK,		PCI_PRODUCT_DLINK_DGE560SX },
 	{ PCI_VENDOR_DLINK,		PCI_PRODUCT_DLINK_DGE560T },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKONII_8021CU },
@@ -163,6 +164,8 @@ static const struct msk_product {
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8038 },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8039 },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8040 },
+	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8040T },
+	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8042 },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8048 },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8050 },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8052 },
@@ -294,7 +297,8 @@ msk_miibus_statchg(struct ifnet *ifp)
 	gpcr = SK_YU_READ_2(sc_if, YUKON_GPCR);
 	gpcr &= (YU_GPCR_TXEN | YU_GPCR_RXEN);
 
-	if (IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO) {
+	if (IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO ||
+	    sc_if->sk_softc->sk_type == SK_YUKON_FE_P) {
 		/* Set speed. */
 		gpcr |= YU_GPCR_SPEED_DIS;
 		switch (IFM_SUBTYPE(mii->mii_media_active)) {
@@ -859,6 +863,11 @@ void msk_reset(struct sk_softc *sc)
 	}
 
 	/* release PHY from PowerDown/Coma mode. */
+	reg1 = sk_win_read_4(sc, SK_Y2_PCI_REG(SK_PCI_OURREG1));
+	if (sc->sk_type == SK_YUKON_XL && sc->sk_rev > SK_YUKON_XL_REV_A1)
+		reg1 |= (SK_Y2_REG1_PHY1_COMA | SK_Y2_REG1_PHY2_COMA);
+	else
+		reg1 &= ~(SK_Y2_REG1_PHY1_COMA | SK_Y2_REG1_PHY2_COMA);
 	sk_win_write_4(sc, SK_Y2_PCI_REG(SK_PCI_OURREG1), reg1);
 
 	if (sc->sk_type == SK_YUKON_XL && sc->sk_rev > SK_YUKON_XL_REV_A1)
@@ -926,16 +935,26 @@ void msk_reset(struct sk_softc *sc)
 	switch (sc->sk_type) {
 	case SK_YUKON_EC:
 	case SK_YUKON_EC_U:
+	case SK_YUKON_EX:
+	case SK_YUKON_SUPR:
+	case SK_YUKON_ULTRA2:
+	case SK_YUKON_OPTIMA:
+	case SK_YUKON_PRM:
+	case SK_YUKON_OPTIMA2:
 		imtimer_ticks = SK_IMTIMER_TICKS_YUKON_EC;
 		break;
 	case SK_YUKON_FE:
 		imtimer_ticks = SK_IMTIMER_TICKS_YUKON_FE;
+		break;
+	case SK_YUKON_FE_P:
+		imtimer_ticks = SK_IMTIMER_TICKS_YUKON_FE_P;
 		break;
 	case SK_YUKON_XL:
 		imtimer_ticks = SK_IMTIMER_TICKS_YUKON_XL;
 		break;
 	default:
 		imtimer_ticks = SK_IMTIMER_TICKS_YUKON;
+		break;
 	}
 
 	/* Reset status ring. */
@@ -2146,7 +2165,7 @@ msk_init_yukon(struct sk_if_softc *sc_if)
 	      YU_SMR_IPG_DATA(0x1e);
 
 	if (sc->sk_type != SK_YUKON_FE &&
-	    sc->sk_type != SK_YUKON_FE)
+	    sc->sk_type != SK_YUKON_FE_P)
 		reg |= YU_SMR_MFL_JUMBO;
 
 	SK_YU_WRITE_2(sc_if, YUKON_SMR, reg);
@@ -2303,6 +2322,9 @@ msk_init(struct ifnet *ifp)
 		break;
 	case SK_YUKON_FE:
 		imtimer_ticks = SK_IMTIMER_TICKS_YUKON_FE;
+		break;
+	case SK_YUKON_FE_P:
+		imtimer_ticks = SK_IMTIMER_TICKS_YUKON_FE_P;
 		break;
 	case SK_YUKON_XL:
 		imtimer_ticks = SK_IMTIMER_TICKS_YUKON_XL;
