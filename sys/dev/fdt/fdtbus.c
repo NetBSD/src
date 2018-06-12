@@ -1,4 +1,4 @@
-/* $NetBSD: fdtbus.c,v 1.16 2018/04/07 18:05:08 bouyer Exp $ */
+/* $NetBSD: fdtbus.c,v 1.17 2018/06/12 00:19:17 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.16 2018/04/07 18:05:08 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.17 2018/06/12 00:19:17 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,7 +75,7 @@ static void	fdt_add_node(struct fdt_node *);
 static u_int	fdt_get_order(int);
 
 static const char * const fdtbus_compatible[] =
-    { "simple-bus", NULL };
+    { "simple-bus", "simple-mfd", NULL };
 
 CFATTACH_DECL_NEW(fdt, sizeof(struct fdt_softc),
     fdt_match, fdt_attach, NULL, NULL);
