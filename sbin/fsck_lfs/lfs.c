@@ -1,4 +1,4 @@
-/* $NetBSD: lfs.c,v 1.73 2017/06/10 08:13:15 pgoyette Exp $ */
+/* $NetBSD: lfs.c,v 1.74 2018/06/12 20:12:21 zafer Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -363,9 +363,7 @@ lfs_raw_vget(struct lfs * fs, ino_t ino, int fd, daddr_t daddr)
 	ip->inode_ext.lfs = ecalloc(1, sizeof(*ip->inode_ext.lfs));
 	vp->v_data = ip;
 	/* ip->i_vnode = vp; */
-	ip->i_number = ino;
 	ip->i_lockf = 0;
-	ip->i_lfs_effnblks = 0;
 	ip->i_state = 0;
 
 	/* Load inode block and find inode */
