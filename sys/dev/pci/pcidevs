@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1340 2018/06/09 18:39:32 jdolecek Exp $
+$NetBSD: pcidevs,v 1.1341 2018/06/12 20:25:25 jdolecek Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2282,6 +2282,7 @@ product DLINK DGE528T		0x4300	DGE-528T Gigabit Ethernet
 product DLINK DGE560T		0x4b00	DGE-560T Gigabit Ethernet
 product DLINK DGE560T_2		0x4b01	DGE-560T_2 Gigabit Ethernet
 product DLINK DGE560SX		0x4b02	DGE-560SX
+product DLINK DGE550T_B1	0x4b03	DGE-550T B1
 product DLINK DGE530T		0x4c00	DGE-530T Gigabit Ethernet
 
 /* Distributed Processing Technology products */
@@ -2501,6 +2502,7 @@ product MARVELL YUKON_8038	0x4352	Yukon 88E8038
 product MARVELL YUKON_8039	0x4353	Yukon 88E8039
 product MARVELL YUKON_8040	0x4354	Yukon 88E8040
 product MARVELL YUKON_8040T	0x4355	Yukon 88E8040T
+product MARVELL YUKON_8042	0x4357	Yukon 88E8042
 product MARVELL YUKON_8048	0x435a	Yukon 88E8048
 product MARVELL YUKON_C033	0x4356	Yukon 88EC033
 product MARVELL YUKON_8052	0x4360	Yukon 88E8052
