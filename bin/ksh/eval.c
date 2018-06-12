@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.24 2018/06/03 16:09:31 kamil Exp $	*/
+/*	$NetBSD: eval.c,v 1.25 2018/06/12 14:13:55 kamil Exp $	*/
 
 /*
  * Expansion - quoting, separation, substitution, globbing
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: eval.c,v 1.24 2018/06/03 16:09:31 kamil Exp $");
+__RCSID("$NetBSD: eval.c,v 1.25 2018/06/12 14:13:55 kamil Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -173,7 +173,8 @@ expand(cp, wp, f)
 	Expand x;		/* expansion variables */
 	SubType st_head, *st;
 	int UNINITIALIZED(newlines); /* For trailing newlines in COMSUB */
-	int saw_eq, tilde_ok;
+	int saw_eq;
+	unsigned int tilde_ok;
 	int make_magic;
 	size_t len;
 
