@@ -1,4 +1,4 @@
-/* $NetBSD: if_skreg.h,v 1.17 2018/06/12 20:27:54 jdolecek Exp $ */
+/* $NetBSD: if_skreg.h,v 1.18 2018/06/12 21:36:34 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -2345,4 +2345,6 @@ struct msk_status_desc {
 #define XM_RESAB_FDMODESEL	0x0020
 #define XM_RESAB_HDMODESEL	0x0040
 #define XM_RESAB_PAUSEBITS	0x0180
+
+#define SK_HASH_BITS		6
 #endif /* _DEV_PCI_IF_SKREG_H_ */
