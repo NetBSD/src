@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.125 2018/03/16 17:00:35 tih Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.126 2018/06/12 04:20:36 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.125 2018/03/16 17:00:35 tih Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.126 2018/06/12 04:20:36 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -625,7 +625,13 @@ vlan_unconfig_locked(struct ifvlan *ifv, struct ifvlan_linkmib *nmib)
 			IFNET_UNLOCK(p);
 		}
 
+		/* XXX ether_ifdetach must not be called with IFNET_LOCK */
+		mutex_exit(&ifv->ifv_lock);
+		IFNET_UNLOCK(ifp);
 		ether_ifdetach(ifp);
+		IFNET_LOCK(ifp);
+		mutex_enter(&ifv->ifv_lock);
+
 		/* Restore vlan_ioctl overwritten by ether_ifdetach */
 		ifp->if_ioctl = vlan_ioctl;
 		vlan_reset_linkname(ifp);
