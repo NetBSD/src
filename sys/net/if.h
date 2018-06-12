@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.261 2018/05/01 06:50:06 maxv Exp $	*/
+/*	$NetBSD: if.h,v 1.262 2018/06/12 07:12:35 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -1299,6 +1299,9 @@ __END_DECLS
 #define IFNET_LOCK(ifp)		mutex_enter((ifp)->if_ioctl_lock)
 #define IFNET_UNLOCK(ifp)	mutex_exit((ifp)->if_ioctl_lock)
 #define IFNET_LOCKED(ifp)	mutex_owned((ifp)->if_ioctl_lock)
+
+#define IFNET_ASSERT_UNLOCKED(ifp)	\
+	KDASSERT(mutex_ownable((ifp)->if_ioctl_lock))
 
 extern struct pslist_head ifnet_pslist;
 extern kmutex_t ifnet_mtx;

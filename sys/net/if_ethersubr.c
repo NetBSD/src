@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.268 2018/05/29 16:24:34 maxv Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.269 2018/06/12 07:12:35 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.268 2018/05/29 16:24:34 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.269 2018/06/12 07:12:35 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1021,6 +1021,7 @@ ether_ifdetach(struct ifnet *ifp)
 	struct ethercom *ec = (void *) ifp;
 	struct ether_multi *enm;
 
+	IFNET_ASSERT_UNLOCKED(ifp);
 	/*
 	 * Prevent further calls to ioctl (for example turning off
 	 * promiscuous mode from the bridge code), which eventually can
