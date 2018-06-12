@@ -1,4 +1,4 @@
-#	$NetBSD: t_vlan.sh,v 1.1.8.2 2018/02/26 00:41:14 snj Exp $
+#	$NetBSD: t_vlan.sh,v 1.1.8.3 2018/06/12 16:34:04 snj Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -511,6 +511,80 @@ vlan_configs6_cleanup()
 	cleanup
 }
 
+vlan_bridge_body_common()
+{
+
+	rump_server_add_iface $SOCK_LOCAL shmif0 $BUS
+
+	export RUMP_SERVER=$SOCK_LOCAL
+	atf_check -s exit:0 rump.ifconfig shmif0 up
+
+	atf_check -s exit:0 rump.ifconfig vlan0 create
+	atf_check -s exit:0 rump.ifconfig vlan0 vlan 10 vlanif shmif0
+	atf_check -s exit:0 rump.ifconfig vlan0 up
+	$DEBUG && rump.ifconfig vlan0
+
+	atf_check -s exit:0 rump.ifconfig bridge0 create
+	# Adjust to the MTU of a vlan on a shmif
+	atf_check -s exit:0 rump.ifconfig bridge0 mtu 1496
+	atf_check -s exit:0 rump.ifconfig bridge0 up
+	# Test brconfig add
+	atf_check -s exit:0 $HIJACKING brconfig bridge0 add vlan0
+	$DEBUG && brconfig bridge0
+	# Test brconfig delete
+	atf_check -s exit:0 $HIJACKING brconfig bridge0 delete vlan0
+
+	atf_check -s exit:0 $HIJACKING brconfig bridge0 add vlan0
+	# Test vlan destruction with bridge
+	atf_check -s exit:0 rump.ifconfig vlan0 destroy
+
+	rump_server_destroy_ifaces
+}
+
+atf_test_case vlan_bridge cleanup
+vlan_bridge_head()
+{
+
+	atf_set "descr" "tests of vlan interfaces with bridges (IPv4)"
+	atf_set "require.progs" "rump_server"
+}
+
+vlan_bridge_body()
+{
+
+	rump_server_start $SOCK_LOCAL vlan bridge
+	vlan_bridge_body_common
+}
+
+vlan_bridge_cleanup()
+{
+
+	$DEBUG && dump
+	cleanup
+}
+
+atf_test_case vlan_bridge6 cleanup
+vlan_bridge6_head()
+{
+
+	atf_set "descr" "tests of vlan interfaces with bridges (IPv6)"
+	atf_set "require.progs" "rump_server"
+}
+
+vlan_bridge6_body()
+{
+
+	rump_server_start $SOCK_LOCAL vlan netinet6 bridge
+	vlan_bridge_body_common
+}
+
+vlan_bridge6_cleanup()
+{
+
+	$DEBUG && dump
+	cleanup
+}
+
 atf_init_test_cases()
 {
 
@@ -518,9 +592,11 @@ atf_init_test_cases()
 	atf_add_test_case vlan_basic
 	atf_add_test_case vlan_vlanid
 	atf_add_test_case vlan_configs
+	atf_add_test_case vlan_bridge
 
 	atf_add_test_case vlan_create_destroy6
 	atf_add_test_case vlan_basic6
 	atf_add_test_case vlan_vlanid6
 	atf_add_test_case vlan_configs6
+	atf_add_test_case vlan_bridge6
 }
