@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.ioctl-c,v 1.36 2018/06/12 15:40:39 christos Exp $
+#	$NetBSD: Makefile.ioctl-c,v 1.37 2018/06/12 15:41:35 christos Exp $
 
 # NOTE: <bsd.own.mk> needs to be previously .included for NETBSDSRCDIR
 
@@ -62,7 +62,7 @@ CPPFLAGS+=	-D__MGA_DRM_H__		# Dup ioctls
 
 ${PROG}-ioctl.c: mkioctls Makefile ${DEPFILES} ${SETFILES}
 	${_MKTARGET_CREATE}
-	AWK=${TOOL_AWK:q} CC="${CC:q}" DESTDIR=${DESTDIR:q} SED=${TOOL_SED:q} \
+	AWK=${TOOL_AWK:q} CC=${CC:q} DESTDIR=${DESTDIR:q} SED=${TOOL_SED:q} \
 	    NETBSDSRCDIR=${NETBSDSRCDIR:q} CPPFLAGS=${CPPFLAGS:q} \
 	    ${HOST_SH} ${NETBSDSRCDIR}/usr.bin/kdump/mkioctls \
 	    ${DEPFILES} >${.TARGET}
