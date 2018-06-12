@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.ioctl-c,v 1.35 2018/05/28 21:05:02 chs Exp $
+#	$NetBSD: Makefile.ioctl-c,v 1.36 2018/06/12 15:40:39 christos Exp $
 
 # NOTE: <bsd.own.mk> needs to be previously .included for NETBSDSRCDIR
 
@@ -35,11 +35,6 @@ DEPFILEGLOB = ${TOOL_SED} \
 DEPFILES != (${DEPFILEGLOB}; echo ${EXTRAS}) | xargs egrep -l '(_IO\(|_IOR\(|_IOW\(|_IOWR\()' 2>/dev/null || :
 .endif
 
-${PROG}-ioctl.c: mkioctls Makefile ${DEPFILES} ${SETFILES}
-	${_MKTARGET_CREATE}
-	AWK=${TOOL_AWK:Q} CC="${CC}" DESTDIR="${DESTDIR}" SED=${TOOL_SED:Q} \
-	    ${HOST_SH} ${NETBSDSRCDIR}/usr.bin/kdump/mkioctls \
-	    ${DEPFILES} >${.TARGET}
 
 SRCS+=		${PROG}-ioctl.c
 CLEANFILES+=	${PROG}-ioctl.c
@@ -64,5 +59,12 @@ CPPFLAGS+=	-D__SAVAGE_DRM_H__	# Dup ioctls
 CPPFLAGS+=	-D__RADEON_DRM_H__	# Dup ioctls
 CPPFLAGS+=	-D__MACH64_DRM_H__	# Dup ioctls
 CPPFLAGS+=	-D__MGA_DRM_H__		# Dup ioctls
+
+${PROG}-ioctl.c: mkioctls Makefile ${DEPFILES} ${SETFILES}
+	${_MKTARGET_CREATE}
+	AWK=${TOOL_AWK:q} CC="${CC:q}" DESTDIR=${DESTDIR:q} SED=${TOOL_SED:q} \
+	    NETBSDSRCDIR=${NETBSDSRCDIR:q} CPPFLAGS=${CPPFLAGS:q} \
+	    ${HOST_SH} ${NETBSDSRCDIR}/usr.bin/kdump/mkioctls \
+	    ${DEPFILES} >${.TARGET}
 
 ${DEPFILES}: .PRECIOUS
