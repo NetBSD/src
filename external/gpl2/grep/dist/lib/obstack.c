@@ -1,4 +1,4 @@
-/*	$NetBSD: obstack.c,v 1.1.1.1 2016/01/10 21:36:18 christos Exp $	*/
+/*	$NetBSD: obstack.c,v 1.2 2018/06/13 17:32:29 kamil Exp $	*/
 
 /* obstack.c - subroutines used implicitly by object stack macros
    Copyright (C) 1988-1994,96,97,98,99 Free Software Foundation, Inc.
@@ -61,8 +61,23 @@
 
 /* Determine default alignment.  */
 struct fooalign {char x; double d;};
+
+#if defined(__NetBSD__)
+#include <sys/param.h>
+#endif
+
+#ifndef __NetBSD_Prereq__
+#define __NetBSD_Prereq__(a,b,c) 0
+#endif
+
+#if __NetBSD_Prereq__(8,0,0)
+#include <stdalign.h>
+// Avoid Undefined Behavior
+#define DEFAULT_ALIGNMENT ((int)alignof(struct fooalign))
+#else
 #define DEFAULT_ALIGNMENT  \
   ((PTR_INT_TYPE) ((char *) &((struct fooalign *) 0)->d - (char *) 0))
+#endif
 /* If malloc were really smart, it would round addresses to DEFAULT_ALIGNMENT.
    But in fact it might be less smart and round addresses to as much as
    DEFAULT_ROUNDING.  So we prepare for it to do that.  */
