@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.11 2018/06/11 21:37:29 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.12 2018/06/13 16:05:14 christos Exp $
 
 #	$OpenBSD: Makefile.inc,v 1.4 2001/03/29 03:58:17 mickey Exp $
 #
@@ -15,7 +15,7 @@ SPMATH_PROF=	${SPMATHDST}/spmath.po
 SPMATHMAKE= \
 	cd ${SPMATHDIR} && MAKEOBJDIRPREFIX= && unset MAKEOBJDIRPREFIX && \
 	  MAKEOBJDIR=${SPMATHDST} ${MAKE} \
-	    CC=${CC:q} CFLAGS=${CFLAGS:S/MAKEOBJDIRPREFIX/MAKEOBJDIR/:q} \
+	    CC=${CC:q} CFLAGS=${CFLAGS:q} \
 	    SPMATHCPPFLAGS=${CPPFLAGS:S@^-I.@-I. -I../../.@g:q} \
 	    AS=${AS:q} AFLAGS=${AFLAGS:q} \
 	    LD=${LD:q} STRIP=${STRIP:q} \
