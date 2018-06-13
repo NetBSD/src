@@ -1,4 +1,4 @@
-/* $NetBSD: wsevent.c,v 1.37 2017/10/25 08:12:39 maya Exp $ */
+/* $NetBSD: wsevent.c,v 1.38 2018/06/13 02:09:09 uwe Exp $ */
 
 /*-
  * Copyright (c) 2006, 2008 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsevent.c,v 1.37 2017/10/25 08:12:39 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsevent.c,v 1.38 2018/06/13 02:09:09 uwe Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -202,6 +202,9 @@ wsevent_copyout_events50(const struct wscons_event *events, int cnt,
 
 		ev50.type = ev->type;
 		ev50.value = ev->value;
+#if INT32_MAX < LONG_MAX	/* scrub padding */
+		memset(&ev50.time, 0, offsetof(struct timespec50, tv_nsec));
+#endif
 		timespec_to_timespec50(&ev->time, &ev50.time);
 
 		error = uiomove(&ev50, sizeof(ev50), uio);
