@@ -1,4 +1,4 @@
-/* $NetBSD: vatapi.c,v 1.1 2018/06/05 20:02:43 reinoud Exp $ */
+/* $NetBSD: vatapi.c,v 1.2 2018/06/13 19:59:14 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2018 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vatapi.c,v 1.1 2018/06/05 20:02:43 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vatapi.c,v 1.2 2018/06/13 19:59:14 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -47,6 +47,8 @@ __KERNEL_RCSID(0, "$NetBSD: vatapi.c,v 1.1 2018/06/05 20:02:43 reinoud Exp $");
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsipiconf.h>
 #include <dev/scsipi/atapiconf.h>
+
+#include "opt_scsi.h"
 
 /* parameter? */
 #define VDEV_ATAPI_DRIVE	0
@@ -68,7 +70,9 @@ static void	vatapi_probe_device(struct atapibus_softc *, int);
 static void	vatapi_complete(void *arg);
 
 /* for debugging */
+#ifdef SCSIVERBOSE
 void	scsipi_print_sense_data_real(struct scsi_sense_data *sense, int verbosity);
+#endif
 
 
 /* Note its one vdev, one adapter, one channel for now */
@@ -279,6 +283,21 @@ vatapi_scsipi_request(struct scsipi_channel *chan,
 
 
 static void
+vatapi_report_problem(scsireq_t *kreq)
+{
+#ifdef SCSIVERBOSE
+	printf("vatapi cmd failed: ");
+	for (int i = 0; i < kreq->cmdlen; i++) {
+		printf("%02x ", kreq->cmd[i]);
+	}
+	printf("\n");
+	scsipi_print_sense_data_real(
+		(struct scsi_sense_data *) kreq->sense, 1);
+#endif
+}
+
+
+static void
 vatapi_complete(void *arg)
 {
 	struct vatapi_softc *sc = arg;
@@ -316,8 +335,7 @@ vatapi_complete(void *arg)
 			xs->error = XS_SHORTSENSE;	/* ATAPI */
 			memcpy(&xs->sense.scsi_sense, kreq.sense,
 				sizeof(struct scsi_sense_data));
-//			scsipi_print_sense_data_real(
-//				(struct scsi_sense_data *) kreq.sense, 1);
+			vatapi_report_problem(&kreq);
 			break;
 		default:
 			thunk_printf("unhandled/unknown retstst %d\n", kreq.retsts);
