@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_mmc.c,v 1.25 2018/06/07 00:39:27 jmcneill Exp $ */
+/* $NetBSD: sunxi_mmc.c,v 1.26 2018/06/13 11:17:02 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_sunximmc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_mmc.c,v 1.25 2018/06/07 00:39:27 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_mmc.c,v 1.26 2018/06/13 11:17:02 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -970,8 +970,7 @@ sunxi_mmc_dma_prepare(struct sunxi_mmc_softc *sc, struct sdmmc_command *cmd)
 			if (desc == sc->sc_idma_ndesc)
 				break;
 			len = min(sc->sc_config->idma_xferlen, resid);
-			dma[desc].dma_buf_size =
-			    htole32(len == sc->sc_config->idma_xferlen ? 0 : len);
+			dma[desc].dma_buf_size = htole32(len);
 			dma[desc].dma_buf_addr = htole32(paddr + off);
 			dma[desc].dma_config = htole32(SUNXI_MMC_IDMA_CONFIG_CH |
 					       SUNXI_MMC_IDMA_CONFIG_OWN);
