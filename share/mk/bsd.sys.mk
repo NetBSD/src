@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.280 2018/06/11 01:34:03 christos Exp $
+#	$NetBSD: bsd.sys.mk,v 1.281 2018/06/13 15:46:26 christos Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -26,17 +26,19 @@ REPROFLAGS+=	-fdebug-prefix-map=\$$DESTDIR=
 CPPFLAGS+=	-Wp,-fno-canonical-system-headers
 CPPFLAGS+=	-Wp,-iremap,${NETBSDSRCDIR}:/usr/src
 CPPFLAGS+=	-Wp,-iremap,${X11SRCDIR}:/usr/xsrc
+
 REPROFLAGS+=	-fdebug-prefix-map=\$$NETBSDSRCDIR=/usr/src
 REPROFLAGS+=	-fdebug-prefix-map=\$$X11SRCDIR=/usr/xsrc
 .if defined(MAKEOBJDIRPREFIX)
-REPROFLAGS+=	-fdebug-prefix-map=\$$MAKEOBJDIRPREFIX=/usr/obj
+NETBSDOBJDIR=	${MAKEOBJDIRPREFIX}${NETBSDSRCDIR}
+.export NETBSDOBJDIR
+REPROFLAGS+=	-fdebug-prefix-map=\$$NETBSDOBJDIR=/usr/obj
 .endif
-.if defined(MAKEOBJDIR)
-REPROFLAGS+=	-fdebug-prefix-map=\$$MAKEOBJDIR=/usr/obj
-.endif
+
 LINTFLAGS+=	-R${NETBSDSRCDIR}=/usr/src -R${X11SRCDIR}=/usr/xsrc
 LINTFLAGS+=	-R${DESTDIR}=
 
+# XXX: Cannot handle MAKEOBJDIR, yet.
 REPROFLAGS+=	-fdebug-regex-map='/usr/src/(.*)/obj$$=/usr/obj/\1'
 REPROFLAGS+=	-fdebug-regex-map='/usr/src/(.*)/obj/(.*)=/usr/obj/\1/\2'
 REPROFLAGS+=	-fdebug-regex-map='/usr/src/(.*)/obj\..*=/usr/obj/\1'
