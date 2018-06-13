@@ -1,6 +1,6 @@
 /* nbtool_config.h.in.  Generated from configure.ac by autoheader.  */
 
-/*      $NetBSD: nbtool_config.h.in,v 1.43 2018/06/11 18:48:25 maya Exp $    */
+/*      $NetBSD: nbtool_config.h.in,v 1.44 2018/06/13 04:17:43 maya Exp $    */
  
 #ifndef __NETBSD_NBTOOL_CONFIG_H__
 #define __NETBSD_NBTOOL_CONFIG_H__
@@ -779,9 +779,6 @@
 
 /* Define to 1 if the system has the type `u_long'. */
 #undef HAVE_U_LONG
-
-/* Define to 1 if the system has the type `u_longlong_t'. */
-#undef HAVE_U_LONGLONG_T
 
 /* Define to 1 if the system has the type `u_quad_t'. */
 #undef HAVE_U_QUAD_T

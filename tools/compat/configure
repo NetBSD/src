@@ -4227,17 +4227,6 @@ _ACEOF
 
 fi
 
-ac_fn_c_check_type "$LINENO" "u_longlong_t" "ac_cv_type_u_longlong_t" "#include <sys/types.h>
-"
-if test "x$ac_cv_type_u_longlong_t" = xyes; then :
-
-cat >>confdefs.h <<_ACEOF
-#define HAVE_U_LONGLONG_T 1
-_ACEOF
-
-
-fi
-
 ac_fn_c_check_type "$LINENO" "socklen_t" "ac_cv_type_socklen_t" "#include <sys/types.h>
 #ifdef HAVE_RPC_TYPES_H
 #include <rpc/types.h>
