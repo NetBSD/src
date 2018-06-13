@@ -1,4 +1,4 @@
-/* $NetBSD: if_msk.c,v 1.61 2018/06/12 21:36:34 jdolecek Exp $ */
+/* $NetBSD: if_msk.c,v 1.62 2018/06/13 19:28:18 jdolecek Exp $ */
 /*	$OpenBSD: if_msk.c,v 1.42 2007/01/17 02:43:02 krw Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.61 2018/06/12 21:36:34 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.62 2018/06/13 19:28:18 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1952,11 +1952,7 @@ msk_tick(void *xsc_if)
 	int s;
 
 	s = splnet();
-	gpsr = SK_YU_READ_2(sc_if, YUKON_GPSR);
-	if ((gpsr & YU_GPSR_MII_PHY_STC) != 0) {
-		SK_YU_WRITE_2(sc_if, YUKON_GPSR, YU_GPSR_MII_PHY_STC);
-		mii_tick(mii);
-	}
+	mii_tick(mii);
 	splx(s);
 
 	callout_schedule(&sc_if->sk_tick_ch, hz);
