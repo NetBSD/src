@@ -1,5 +1,5 @@
-/* $NetBSD: if_msk.c,v 1.62 2018/06/13 19:28:18 jdolecek Exp $ */
-/*	$OpenBSD: if_msk.c,v 1.42 2007/01/17 02:43:02 krw Exp $	*/
+/* $NetBSD: if_msk.c,v 1.63 2018/06/13 19:37:23 jdolecek Exp $ */
+/*	$OpenBSD: if_msk.c,v 1.65 2008/09/10 14:01:22 blambert Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.62 2018/06/13 19:28:18 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.63 2018/06/13 19:37:23 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,10 +94,14 @@ __KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.62 2018/06/13 19:28:18 jdolecek Exp $")
 
 int mskc_probe(device_t, cfdata_t, void *);
 void mskc_attach(device_t, device_t, void *);
+int mskc_detach(device_t, int);
+void mskc_reset(struct sk_softc *);
 static bool mskc_suspend(device_t, const pmf_qual_t *);
 static bool mskc_resume(device_t, const pmf_qual_t *);
 int msk_probe(device_t, cfdata_t, void *);
 void msk_attach(device_t, device_t, void *);
+int msk_detach(device_t, int);
+void msk_reset(struct sk_if_softc *);
 int mskcprint(void *, const char *);
 int msk_intr(void *);
 void msk_intr_yukon(struct sk_if_softc *);
@@ -110,7 +114,6 @@ int msk_init(struct ifnet *);
 void msk_init_yukon(struct sk_if_softc *);
 void msk_stop(struct ifnet *, int);
 void msk_watchdog(struct ifnet *);
-void msk_reset(struct sk_softc *);
 int msk_newbuf(struct sk_if_softc *, int, struct mbuf *, bus_dmamap_t);
 int msk_alloc_jumbo_mem(struct sk_if_softc *);
 void *msk_jalloc(struct sk_if_softc *);
@@ -124,7 +127,6 @@ int msk_miibus_readreg(device_t, int, int);
 void msk_miibus_writereg(device_t, int, int, int);
 void msk_miibus_statchg(struct ifnet *);
 
-void msk_setfilt(struct sk_if_softc *, void *, int);
 void msk_setmulti(struct sk_if_softc *);
 void msk_setpromisc(struct sk_if_softc *);
 void msk_tick(void *);
@@ -327,17 +329,6 @@ msk_miibus_statchg(struct ifnet *ifp)
 
 	DPRINTFN(9, ("msk_miibus_statchg: gpcr=%x\n",
 		     SK_YU_READ_2(sc_if, YUKON_GPCR)));
-}
-
-void
-msk_setfilt(struct sk_if_softc *sc_if, void *addrv, int slot)
-{
-	char *addr = addrv;
-	int base = XM_RXFILT_ENTRY(slot);
-
-	SK_XM_WRITE_2(sc_if, base, *(u_int16_t *)(&addr[0]));
-	SK_XM_WRITE_2(sc_if, base + 2, *(u_int16_t *)(&addr[2]));
-	SK_XM_WRITE_2(sc_if, base + 4, *(u_int16_t *)(&addr[4]));
 }
 
 void
@@ -819,12 +810,13 @@ mskc_probe(device_t parent, cfdata_t match, void *aux)
 /*
  * Force the GEnesis into reset, then bring it out of reset.
  */
-void msk_reset(struct sk_softc *sc)
+void
+mskc_reset(struct sk_softc *sc)
 {
 	u_int32_t imtimer_ticks, reg1;
 	int reg;
 
-	DPRINTFN(2, ("msk_reset\n"));
+	DPRINTFN(2, ("mskc_reset\n"));
 
 	CSR_WRITE_1(sc, SK_CSR, SK_CSR_SW_RESET);
 	CSR_WRITE_1(sc, SK_CSR, SK_CSR_MASTER_RESET);
@@ -891,8 +883,8 @@ void msk_reset(struct sk_softc *sc)
 
 	sk_win_write_1(sc, SK_TESTCTL1, 1);
 
-	DPRINTFN(2, ("msk_reset: sk_csr=%x\n", CSR_READ_1(sc, SK_CSR)));
-	DPRINTFN(2, ("msk_reset: sk_link_ctrl=%x\n",
+	DPRINTFN(2, ("mskc_reset: sk_csr=%x\n", CSR_READ_1(sc, SK_CSR)));
+	DPRINTFN(2, ("mskc_reset: sk_link_ctrl=%x\n",
 		     CSR_READ_2(sc, SK_LINK_CTRL)));
 
 	/* Disable ASF */
@@ -1023,6 +1015,18 @@ msk_probe(device_t parent, cfdata_t match, void *aux)
 	return (0);
 }
 
+void
+msk_reset(struct sk_if_softc *sc_if)
+{
+	/* GMAC and GPHY Reset */
+	SK_IF_WRITE_4(sc_if, 0, SK_GMAC_CTRL, SK_GMAC_RESET_SET);
+	SK_IF_WRITE_4(sc_if, 0, SK_GPHY_CTRL, SK_GPHY_RESET_SET);
+	DELAY(1000);
+	SK_IF_WRITE_4(sc_if, 0, SK_GPHY_CTRL, SK_GPHY_RESET_CLEAR);
+	SK_IF_WRITE_4(sc_if, 0, SK_GMAC_CTRL, SK_GMAC_LOOP_OFF |
+		      SK_GMAC_PAUSE_ON | SK_GMAC_RESET_CLEAR);
+}
+
 static bool
 msk_resume(device_t dv, const pmf_qual_t *qual)
 {
@@ -1044,9 +1048,9 @@ msk_attach(device_t parent, device_t self, void *aux)
 	struct skc_attach_args *sa = aux;
 	struct ifnet *ifp;
 	void *kva;
-	bus_dma_segment_t seg;
-	int i, rseg;
+	int i;
 	u_int32_t chunk;
+	int mii_flags;
 
 	sc_if->sk_dev = self;
 	sc_if->sk_port = sa->skc_port;
@@ -1092,11 +1096,13 @@ msk_attach(device_t parent, device_t self, void *aux)
 
 	/* Allocate the descriptor queues. */
 	if (bus_dmamem_alloc(sc->sc_dmatag, sizeof(struct msk_ring_data),
-	    PAGE_SIZE, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) {
+	    PAGE_SIZE, 0, &sc_if->sk_ring_seg, 1, &sc_if->sk_ring_nseg,
+	    BUS_DMA_NOWAIT)) {
 		aprint_error(": can't alloc rx buffers\n");
 		goto fail;
 	}
-	if (bus_dmamem_map(sc->sc_dmatag, &seg, rseg,
+	if (bus_dmamem_map(sc->sc_dmatag, &sc_if->sk_ring_seg,
+	    sc_if->sk_ring_nseg,
 	    sizeof(struct msk_ring_data), &kva, BUS_DMA_NOWAIT)) {
 		aprint_error(": can't map dma buffers (%zu bytes)\n",
 		       sizeof(struct msk_ring_data));
@@ -1138,6 +1144,8 @@ msk_attach(device_t parent, device_t self, void *aux)
 	IFQ_SET_READY(&ifp->if_snd);
 	strlcpy(ifp->if_xname, device_xname(sc_if->sk_dev), IFNAMSIZ);
 
+	msk_reset(sc_if);
+
 	/*
 	 * Do miibus setup.
 	 */
@@ -1153,8 +1161,11 @@ msk_attach(device_t parent, device_t self, void *aux)
 	sc_if->sk_ethercom.ec_mii = &sc_if->sk_mii;
 	ifmedia_init(&sc_if->sk_mii.mii_media, 0,
 	    ether_mediachange, ether_mediastatus);
-	mii_attach(self, &sc_if->sk_mii, 0xffffffff, MII_PHY_ANY,
-	    MII_OFFSET_ANY, MIIF_DOPAUSE|MIIF_FORCEANEG);
+	mii_flags = MIIF_DOPAUSE;
+	if (sc->sk_fibertype)
+		mii_flags |= MIIF_HAVEFIBER;
+	mii_attach(self, &sc_if->sk_mii, 0xffffffff, 0,
+	    MII_OFFSET_ANY, mii_flags);
 	if (LIST_FIRST(&sc_if->sk_mii.mii_phys) == NULL) {
 		aprint_error_dev(sc_if->sk_dev, "no PHY found!\n");
 		ifmedia_add(&sc_if->sk_mii.mii_media, IFM_ETHER|IFM_MANUAL,
@@ -1190,9 +1201,46 @@ fail_3:
 fail_2:
 	bus_dmamem_unmap(sc->sc_dmatag, kva, sizeof(struct msk_ring_data));
 fail_1:
-	bus_dmamem_free(sc->sc_dmatag, &seg, rseg);
+	bus_dmamem_free(sc->sc_dmatag, &sc_if->sk_ring_seg, sc_if->sk_ring_nseg);
 fail:
 	sc->sk_if[sa->skc_port] = NULL;
+}
+
+int
+msk_detach(device_t self, int flags)
+{
+	struct sk_if_softc *sc_if = (struct sk_if_softc *)self;
+	struct sk_softc *sc = sc_if->sk_softc;
+	struct ifnet *ifp = &sc_if->sk_ethercom.ec_if;
+
+	if (sc->sk_if[sc_if->sk_port] == NULL)
+		return (0);
+
+	rnd_detach_source(&sc->rnd_source);
+
+	callout_halt(&sc_if->sk_tick_ch, NULL);
+	callout_destroy(&sc_if->sk_tick_ch);
+
+	/* Detach any PHYs we might have. */
+	if (LIST_FIRST(&sc_if->sk_mii.mii_phys) != NULL)
+		mii_detach(&sc_if->sk_mii, MII_PHY_ANY, MII_OFFSET_ANY);
+
+	/* Delete any remaining media. */
+	ifmedia_delete_instance(&sc_if->sk_mii.mii_media, IFM_INST_ANY);
+
+	pmf_device_deregister(self);
+
+	ether_ifdetach(ifp);
+	if_detach(ifp);
+
+	bus_dmamap_destroy(sc->sc_dmatag, sc_if->sk_ring_map);
+	bus_dmamem_unmap(sc->sc_dmatag, sc_if->sk_rdata,
+	    sizeof(struct msk_ring_data));
+	bus_dmamem_free(sc->sc_dmatag,
+	    &sc_if->sk_ring_seg, sc_if->sk_ring_nseg);
+	sc->sk_if[sc_if->sk_port] = NULL;
+
+	return (0);
 }
 
 int
@@ -1224,12 +1272,10 @@ mskc_attach(device_t parent, device_t self, void *aux)
 	const char *intrstr = NULL;
 	bus_size_t size;
 	int rc, sk_nodenum;
-	u_int8_t hw;
+	u_int8_t hw, pmd;
 	const char *revstr = NULL;
 	const struct sysctlnode *node;
 	void *kva;
-	bus_dma_segment_t seg;
-	int rseg;
 	char intrbuf[PCI_INTRSTR_LEN];
 
 	DPRINTFN(2, ("begin mskc_attach\n"));
@@ -1268,17 +1314,9 @@ mskc_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Map control/status registers.
 	 */
-
 	memtype = pci_mapreg_type(pc, pa->pa_tag, SK_PCI_LOMEM);
-	switch (memtype) {
-	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT:
-	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT:
-		if (pci_mapreg_map(pa, SK_PCI_LOMEM,
-				   memtype, 0, &sc->sk_btag, &sc->sk_bhandle,
-				   NULL, &size) == 0) {
-			break;
-		}
-	default:
+	if (pci_mapreg_map(pa, SK_PCI_LOMEM, memtype, 0, &sc->sk_btag,
+	    &sc->sk_bhandle, NULL, &size)) {
 		aprint_error(": can't map mem space\n");
 		return;
 	}
@@ -1314,15 +1352,17 @@ mskc_attach(device_t parent, device_t self, void *aux)
 		aprint_error("\n");
 		goto fail_1;
 	}
+	sc->sk_pc = pc;
 
 	if (bus_dmamem_alloc(sc->sc_dmatag,
-	    MSK_STATUS_RING_CNT * sizeof(struct msk_status_desc),
-	    PAGE_SIZE, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) {
+	    MSK_STATUS_RING_CNT * sizeof(struct msk_status_desc), PAGE_SIZE,
+	    0, &sc->sk_status_seg, 1, &sc->sk_status_nseg, BUS_DMA_NOWAIT)) {
 		aprint_error(": can't alloc status buffers\n");
 		goto fail_2;
 	}
 
-	if (bus_dmamem_map(sc->sc_dmatag, &seg, rseg,
+	if (bus_dmamem_map(sc->sc_dmatag,
+	    &sc->sk_status_seg, sc->sk_status_nseg,
 	    MSK_STATUS_RING_CNT * sizeof(struct msk_status_desc),
 	    &kva, BUS_DMA_NOWAIT)) {
 		aprint_error(": can't map dma buffers (%zu bytes)\n",
@@ -1348,10 +1388,14 @@ mskc_attach(device_t parent, device_t self, void *aux)
 	sc->sk_int_mod_pending = 0;
 
 	/* Reset the adapter. */
-	msk_reset(sc);
+	mskc_reset(sc);
 
 	sc->sk_ramsize = sk_win_read_1(sc, SK_EPROM0) * 4096;
 	DPRINTFN(2, ("mskc_attach: ramsize=%dK\n", sc->sk_ramsize / 1024));
+
+	pmd = sk_win_read_1(sc, SK_PMDTYPE);
+	if (pmd == 'L' || pmd == 'S' || pmd == 'P')
+		sc->sk_fibertype = 1;
 
 	switch (sc->sk_type) {
 	case SK_YUKON_XL:
@@ -1597,11 +1641,42 @@ fail_4:
 	bus_dmamem_unmap(sc->sc_dmatag, kva,
 	    MSK_STATUS_RING_CNT * sizeof(struct msk_status_desc));
 fail_3:
-	bus_dmamem_free(sc->sc_dmatag, &seg, rseg);
+	bus_dmamem_free(sc->sc_dmatag,
+	    &sc->sk_status_seg, sc->sk_status_nseg);
+	sc->sk_status_nseg = 0;
 fail_2:
 	pci_intr_disestablish(pc, sc->sk_intrhand);
+	sc->sk_intrhand = NULL;
 fail_1:
 	bus_space_unmap(sc->sk_btag, sc->sk_bhandle, size);
+	sc->sk_bsize = 0;
+}
+
+int
+mskc_detach(device_t self, int flags)
+{
+	struct sk_softc *sc = (struct sk_softc *)self;
+	int rv;
+
+	rv = config_detach_children(self, flags);
+	if (rv != 0)
+		return (rv);
+
+	if (sc->sk_status_nseg > 0) {
+		bus_dmamap_destroy(sc->sc_dmatag, sc->sk_status_map);
+		bus_dmamem_unmap(sc->sc_dmatag, sc->sk_status_ring,
+		    MSK_STATUS_RING_CNT * sizeof(struct msk_status_desc));
+		bus_dmamem_free(sc->sc_dmatag,
+		    &sc->sk_status_seg, sc->sk_status_nseg);
+	}
+
+	if (sc->sk_intrhand)
+		pci_intr_disestablish(sc->sk_pc, sc->sk_intrhand);
+
+	if (sc->sk_bsize > 0)
+		bus_space_unmap(sc->sk_btag, sc->sk_bhandle, sc->sk_bsize);
+
+	return(0);
 }
 
 int
@@ -1775,7 +1850,8 @@ msk_watchdog(struct ifnet *ifp)
 			ifp->if_oerrors++;
 
 			/* XXX Resets both ports; we shouldn't do that. */
-			msk_reset(sc_if->sk_softc);
+			mskc_reset(sc_if->sk_softc);
+			msk_reset(sc_if);
 			msk_init(ifp);
 		}
 	}
@@ -1801,7 +1877,7 @@ mskc_resume(device_t dv, const pmf_qual_t *qual)
 
 	DPRINTFN(2, ("mskc_resume\n"));
 
-	msk_reset(sc);
+	mskc_reset(sc);
 	CSR_WRITE_2(sc, SK_LED, SK_LED_GREEN_ON);
 
 	return true;
@@ -1948,7 +2024,6 @@ msk_tick(void *xsc_if)
 {
 	struct sk_if_softc *sc_if = xsc_if;
 	struct mii_data *mii = &sc_if->sk_mii;
-	uint16_t gpsr;
 	int s;
 
 	s = splnet();
@@ -2101,17 +2176,6 @@ msk_init_yukon(struct sk_if_softc *sc_if)
 		     CSR_READ_4(sc_if->sk_softc, SK_CSR)));
 
 	DPRINTFN(6, ("msk_init_yukon: 1\n"));
-
-	/* GMAC and GPHY Reset */
-	SK_IF_WRITE_4(sc_if, 0, SK_GMAC_CTRL, SK_GMAC_RESET_SET);
-	SK_IF_WRITE_4(sc_if, 0, SK_GPHY_CTRL, SK_GPHY_RESET_SET);
-	DELAY(1000);
-
-	DPRINTFN(6, ("msk_init_yukon: 2\n"));
-
-	SK_IF_WRITE_4(sc_if, 0, SK_GPHY_CTRL, SK_GPHY_RESET_CLEAR);
-	SK_IF_WRITE_4(sc_if, 0, SK_GMAC_CTRL, SK_GMAC_LOOP_OFF |
-		      SK_GMAC_PAUSE_ON | SK_GMAC_RESET_CLEAR);
 
 	DPRINTFN(3, ("msk_init_yukon: gmac_ctrl=%#x\n",
 		     SK_IF_READ_4(sc_if, 0, SK_GMAC_CTRL)));
@@ -2451,10 +2515,10 @@ msk_stop(struct ifnet *ifp, int disable)
 }
 
 CFATTACH_DECL_NEW(mskc, sizeof(struct sk_softc), mskc_probe, mskc_attach,
-	NULL, NULL);
+	mskc_detach, NULL);
 
 CFATTACH_DECL_NEW(msk, sizeof(struct sk_if_softc), msk_probe, msk_attach,
-	NULL, NULL);
+	msk_detach, NULL);
 
 #ifdef MSK_DEBUG
 void

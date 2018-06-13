@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_mskvar.h,v 1.3 2006/12/28 16:34:42 kettenis Exp $	*/
-/*	$NetBSD: if_mskvar.h,v 1.13 2018/06/11 19:13:38 jdolecek Exp $	*/
+/*	$NetBSD: if_mskvar.h,v 1.14 2018/06/13 19:37:23 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -187,7 +187,10 @@ struct sk_softc {
 	device_t		sk_dev;
 	bus_space_handle_t	sk_bhandle;	/* bus space handle */
 	bus_space_tag_t		sk_btag;	/* bus space tag */
+	bus_size_t		sk_bsize;	/* bus space size */
 	void			*sk_intrhand;	/* irq handler handle */
+	pci_chipset_tag_t	sk_pc;
+	u_int8_t		sk_fibertype;
 	u_int8_t		sk_type;
 	u_int8_t		sk_rev;
 	u_int32_t		sk_workaround;
@@ -202,6 +205,8 @@ struct sk_softc {
 	struct sk_if_softc	*sk_if[2];
 	struct msk_status_desc	*sk_status_ring;
 	bus_dmamap_t		sk_status_map;
+	bus_dma_segment_t	sk_status_seg;
+	int			sk_status_nseg;
 	int			sk_status_idx;
 	int			sk_status_own_idx;
 	krndsource_t     rnd_source;
@@ -224,6 +229,8 @@ struct sk_if_softc {
 	struct msk_chain_data	sk_cdata;
 	struct msk_ring_data	*sk_rdata;
 	bus_dmamap_t		sk_ring_map;
+	bus_dma_segment_t	sk_ring_seg;
+	int			sk_ring_nseg;
 	int			sk_status_idx;
 	struct sk_softc		*sk_softc;	/* parent controller */
 	int			sk_if_flags;
