@@ -1,4 +1,4 @@
-/* $NetBSD: if_msk.c,v 1.63 2018/06/13 19:37:23 jdolecek Exp $ */
+/* $NetBSD: if_msk.c,v 1.64 2018/06/13 20:18:54 jdolecek Exp $ */
 /*	$OpenBSD: if_msk.c,v 1.65 2008/09/10 14:01:22 blambert Exp $ */
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.63 2018/06/13 19:37:23 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.64 2018/06/13 20:18:54 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1249,7 +1249,7 @@ mskcprint(void *aux, const char *pnp)
 	struct skc_attach_args *sa = aux;
 
 	if (pnp)
-		aprint_normal("sk port %c at %s",
+		aprint_normal("msk port %c at %s",
 		    (sa->skc_port == SK_PORT_A) ? 'A' : 'B', pnp);
 	else
 		aprint_normal(" port %c", (sa->skc_port == SK_PORT_A) ? 'A' : 'B');
