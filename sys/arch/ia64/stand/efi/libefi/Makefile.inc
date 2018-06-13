@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.6 2018/06/11 21:38:27 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.7 2018/06/13 16:04:55 christos Exp $
 #
 #	Configuration variables (default values are below):
 #
@@ -22,7 +22,7 @@ EFILIB=			${EFIDST}/libefi.a
 EFIMAKE= \
 	cd ${EFIDIR} && MAKEOBJDIRPREFIX= && unset MAKEOBJDIRPREFIX && \
 	    MAKEOBJDIR=${EFIDST} ${MAKE} \
-	    CC=${CC:q} CFLAGS=${CFLAGS:S/MAKEOBJDIRPREFIX/MAKEOBJDIR/:q} \
+	    CC=${CC:q} CFLAGS=${CFLAGS:q} \
 	    AS=${AS:q} AFLAGS=${AFLAGS:q} \
 	    LD=${LD:q} STRIP=${STRIP:q} \
 	    MACHINE=${MACHINE} MACHINE_ARCH=${MACHINE_ARCH:q} \
