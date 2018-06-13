@@ -1,4 +1,4 @@
-/* $NetBSD: if_skreg.h,v 1.18 2018/06/12 21:36:34 jdolecek Exp $ */
+/* $NetBSD: if_skreg.h,v 1.19 2018/06/13 20:17:03 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -404,7 +404,7 @@
 #define SK_IS_YUKON(sc) \
     ((sc)->sk_type >= SK_YUKON && (sc)->sk_type <= SK_YUKON_LP)
 #define SK_IS_YUKON2(sc) \
-    ((sc)->sk_type >= SK_YUKON_XL && (sc)->sk_type <= SK_YUKON_FE_P)
+    ((sc)->sk_type >= SK_YUKON_XL && (sc)->sk_type <= SK_YUKON_OPTIMA2)
 
 /* Known revisions in SK_CONFIG */
 #define SK_YUKON_LITE_REV_A0	0x0 /* invented, see test in skc_attach */
