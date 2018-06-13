@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2395 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2396 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -158,7 +158,7 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	gpio(4): Overhauled interrupt support.  Added GPIO interrupt
 		capability for Broadcom BCM283x SoCs (e.g.
 		Raspberry Pi). [thorpej 20180519]
-	macppc: Enable fast_ipsec(4) and ipsecif(4) support in GENERIC kernel by
+	macppc: Enable ipsec(4) and ipsecif(4) support in GENERIC kernel by
 		default. [sevan 20180602]
 	dhcpcd: Import 7.0.5b. [roy 20180604]
 	virtio(4): Add MMIO transport and fdt(4) attachment. [jakllsch 20180606]
