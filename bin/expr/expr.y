@@ -1,4 +1,4 @@
-/* $NetBSD: expr.y,v 1.40 2018/06/12 18:12:18 kamil Exp $ */
+/* $NetBSD: expr.y,v 1.41 2018/06/13 17:35:15 kamil Exp $ */
 
 /*_
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 %{
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: expr.y,v 1.40 2018/06/12 18:12:18 kamil Exp $");
+__RCSID("$NetBSD: expr.y,v 1.41 2018/06/13 17:35:15 kamil Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -309,8 +309,8 @@ perform_arith_op(const char *left, const char *op, const char *right)
 		/*
 		 * Check for over-& underflow.
 		 */
-		if ((l > 0 && r <= INT64_MAX - l) ||
-		    (l < 0 && r >= INT64_MIN - l)) {
+		if ((l >= 0 && r <= INT64_MAX - l) ||
+		    (l <= 0 && r >= INT64_MIN - l)) {
 			res = l + r;
 		} else {
 			yyerror("integer overflow or underflow occurred for "
