@@ -1,4 +1,4 @@
-/* $NetBSD: expr.y,v 1.41 2018/06/13 17:35:15 kamil Exp $ */
+/* $NetBSD: expr.y,v 1.42 2018/06/14 02:44:16 christos Exp $ */
 
 /*_
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 %{
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: expr.y,v 1.41 2018/06/13 17:35:15 kamil Exp $");
+__RCSID("$NetBSD: expr.y,v 1.42 2018/06/14 02:44:16 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -453,6 +453,6 @@ main(int argc, const char * const *argv)
 
 	av = argv + 1;
 
-	exit(yyparse());
+	return yyparse();
 	/* NOTREACHED */
 }
