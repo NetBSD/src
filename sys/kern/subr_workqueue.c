@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_workqueue.c,v 1.33.30.2 2018/02/05 14:55:16 martin Exp $	*/
+/*	$NetBSD: subr_workqueue.c,v 1.33.30.3 2018/06/14 19:59:18 martin Exp $	*/
 
 /*-
  * Copyright (c)2002, 2005, 2006, 2007 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.33.30.2 2018/02/05 14:55:16 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.33.30.3 2018/06/14 19:59:18 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -286,6 +286,8 @@ workqueue_q_wait(struct workqueue_queue *q, work_impl_t *wk_target)
 	bool found = false;
 
 	mutex_enter(&q->q_mutex);
+	if (q->q_worker == curlwp)
+		goto out;
     again:
 	SIMPLEQ_FOREACH(wk, &q->q_queue_pending, wk_entry) {
 		if (wk == wk_target)
@@ -305,6 +307,7 @@ workqueue_q_wait(struct workqueue_queue *q, work_impl_t *wk_target)
 	}
 	if (q->q_waiter != NULL)
 		q->q_waiter = NULL;
+    out:
 	mutex_exit(&q->q_mutex);
 
 	return found;
