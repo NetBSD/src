@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.269 2018/06/12 07:12:35 ozaki-r Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.270 2018/06/14 07:54:57 yamaguchi Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.269 2018/06/12 07:12:35 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.270 2018/06/14 07:54:57 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1282,7 +1282,7 @@ ether_addmulti(const struct sockaddr *sa, struct ethercom *ec)
 	/*
 	 * See if the address range is already in the list.
 	 */
-	ETHER_LOOKUP_MULTI(addrlo, addrhi, ec, _enm);
+	_enm = ether_lookup_multi(addrlo, addrhi, ec);
 	if (_enm != NULL) {
 		/*
 		 * Found it; just increment the reference count.
@@ -1334,7 +1334,7 @@ ether_delmulti(const struct sockaddr *sa, struct ethercom *ec)
 	/*
 	 * Look up the address in our list.
 	 */
-	ETHER_LOOKUP_MULTI(addrlo, addrhi, ec, enm);
+	enm = ether_lookup_multi(addrlo, addrhi, ec);
 	if (enm == NULL) {
 		error = ENXIO;
 		goto error;
