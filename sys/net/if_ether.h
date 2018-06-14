@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.72 2018/04/19 21:20:43 christos Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.73 2018/06/14 07:39:16 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -205,6 +205,13 @@ struct eccapreq {
 	int		eccr_capenable;		/* capabilities enabled */
 };
 
+/* sysctl for Ethernet multicast addresses */
+struct ether_multi_sysctl {
+	u_int   enm_refcount;
+	uint8_t enm_addrlo[ETHER_ADDR_LEN];
+	uint8_t enm_addrhi[ETHER_ADDR_LEN];
+};
+
 #ifdef	_KERNEL
 extern const uint8_t etherbroadcastaddr[ETHER_ADDR_LEN];
 extern const uint8_t ethermulticastaddr_slowprotocols[ETHER_ADDR_LEN];
@@ -217,7 +224,6 @@ int	ether_addmulti(const struct sockaddr *, struct ethercom *);
 int	ether_delmulti(const struct sockaddr *, struct ethercom *);
 int	ether_multiaddr(const struct sockaddr *, uint8_t[], uint8_t[]);
 void    ether_input(struct ifnet *, struct mbuf *);
-#endif /* _KERNEL */
 
 /*
  * Ethernet multicast address structure.  There is one of these for each
@@ -230,12 +236,6 @@ struct ether_multi {
 	uint8_t enm_addrhi[ETHER_ADDR_LEN]; /* high or only address of range */
 	u_int	 enm_refcount;		/* no. claims to this addr/range */
 	LIST_ENTRY(ether_multi) enm_list;
-};
-
-struct ether_multi_sysctl {
-	u_int   enm_refcount;
-	uint8_t enm_addrlo[ETHER_ADDR_LEN];
-	uint8_t enm_addrhi[ETHER_ADDR_LEN];
 };
 
 /*
@@ -287,8 +287,6 @@ struct ether_multistep {
 	(step).e_enm = LIST_FIRST(&(ec)->ec_multiaddrs); \
 	ETHER_NEXT_MULTI((step), (enm)); \
 }
-
-#ifdef _KERNEL
 
 #define ETHER_LOCK(ec)		mutex_enter((ec)->ec_lock)
 #define ETHER_UNLOCK(ec)	mutex_exit((ec)->ec_lock)
