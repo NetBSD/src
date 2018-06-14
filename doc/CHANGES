@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2397 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2398 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -80,7 +80,6 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	kernhist(9): Reworked the export-via-sysctl code to use uintptr_t
 		arguments, PR kern/52639.  Requires contemporaneous update
 		of vmstat(1). [pgoyette 20171028]
-	x86: Add support for XSAVEOPT [maxv 20171104]
 	acpi(4): Updated ACPICA to 20171110. [christos 20171111]
 	sunxinand(4): Add driver for Allwinner NAND Flash Controller.
 		[jmcneill 20171113]
@@ -158,6 +157,7 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	gpio(4): Overhauled interrupt support.  Added GPIO interrupt
 		capability for Broadcom BCM283x SoCs (e.g.
 		Raspberry Pi). [thorpej 20180519]
+	x86: Add SpectreV4 mitigations. [maxv 20180522]
 	macppc: Enable ipsec(4) and ipsecif(4) support in GENERIC kernel by
 		default. [sevan 20180602]
 	dhcpcd: Import 7.0.5b. [roy 20180604]
