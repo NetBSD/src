@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.15 2018/05/10 00:05:22 jmcneill Exp $
+#	$NetBSD: GENERIC64,v 1.16 2018/06/14 10:56:39 jmcneill Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -49,6 +49,7 @@ options 	SOC_TEGRA210
 options 	SOC_SUN50I_A64
 options 	SOC_SUN50I_H5
 options 	SOC_SUN50I_H6
+options 	SOC_VIRT
 #options 	MULTIPROCESSOR
 
 pseudo-device 	openfirm	# /dev/openfirm
@@ -63,6 +64,7 @@ options 	VERBOSE_INIT_ARM # verbose bootstrapping messages
 #options 	EARLYCONS=bcm2837
 #options 	EARLYCONS=sunxi, CONSADDR=0x01c28000
 #options 	EARLYCONS=tegra, CONSADDR=0x70006000
+#options 	EARLYCONS=virt
 
 makeoptions	DEBUG="-g"	# compile full symbol table
 makeoptions	COPY_SYMTAB=1

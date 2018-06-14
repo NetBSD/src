@@ -1,0 +1,9 @@
+#	$NetBSD: files.virt,v 1.1 2018/06/14 10:56:39 jmcneill Exp $
+#
+# Configuration info for QEMU virtual boards.
+#
+#
+
+file	arch/arm/virt/virt_platform.c		soc_virt
+
+defflag	opt_soc.h				SOC_VIRT
