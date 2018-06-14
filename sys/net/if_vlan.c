@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.128 2018/06/14 08:06:07 yamaguchi Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.129 2018/06/14 08:33:18 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.128 2018/06/14 08:06:07 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.129 2018/06/14 08:33:18 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1229,6 +1229,17 @@ vlan_ether_delmulti(struct ifvlan *ifv, struct ifreq *ifr)
 	ETHER_LOCK(&ifv->ifv_ec);
 	enm = ether_lookup_multi(addrlo, addrhi, &ifv->ifv_ec);
 	ETHER_UNLOCK(&ifv->ifv_ec);
+	if (enm == NULL)
+		return EINVAL;
+
+	LIST_FOREACH(mc, &ifv->ifv_mc_listhead, mc_entries) {
+		if (mc->mc_enm == enm)
+			break;
+	}
+
+	/* We woun't delete entries we didn't add */
+	if (mc == NULL)
+		return EINVAL;
 
 	error = ether_delmulti(sa, &ifv->ifv_ec);
 	if (error != ENETRESET)
@@ -1242,17 +1253,11 @@ vlan_ether_delmulti(struct ifvlan *ifv, struct ifreq *ifr)
 
 	if (error == 0) {
 		/* And forget about this address. */
-		for (mc = LIST_FIRST(&ifv->ifv_mc_listhead); mc != NULL;
-		    mc = LIST_NEXT(mc, mc_entries)) {
-			if (mc->mc_enm == enm) {
-				LIST_REMOVE(mc, mc_entries);
-				free(mc, M_DEVBUF);
-				break;
-			}
-		}
-		KASSERT(mc != NULL);
-	} else
+		LIST_REMOVE(mc, mc_entries);
+		free(mc, M_DEVBUF);
+	} else {
 		(void)ether_addmulti(sa, &ifv->ifv_ec);
+	}
 
 	return error;
 }
@@ -1276,7 +1281,7 @@ vlan_ether_purgemulti(struct ifvlan *ifv)
 	while ((mc = LIST_FIRST(&ifv->ifv_mc_listhead)) != NULL) {
 		IFNET_LOCK(mib->ifvm_p);
 		(void)if_mcast_op(mib->ifvm_p, SIOCDELMULTI,
-		    (const struct sockaddr *)&mc->mc_addr);
+		    sstocsa(&mc->mc_addr));
 		IFNET_UNLOCK(mib->ifvm_p);
 		LIST_REMOVE(mc, mc_entries);
 		free(mc, M_DEVBUF);
