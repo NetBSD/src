@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.126 2018/06/12 04:20:36 ozaki-r Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.127 2018/06/14 07:54:57 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.126 2018/06/12 04:20:36 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.127 2018/06/14 07:54:57 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1176,7 +1176,7 @@ vlan_ether_addmulti(struct ifvlan *ifv, struct ifreq *ifr)
 	 */
 	error = ether_multiaddr(sa, addrlo, addrhi);
 	KASSERT(error == 0);
-	ETHER_LOOKUP_MULTI(addrlo, addrhi, &ifv->ifv_ec, mc->mc_enm);
+	mc->mc_enm = ether_lookup_multi(addrlo, addrhi, &ifv->ifv_ec);
 	KASSERT(mc->mc_enm != NULL);
 
 	memcpy(&mc->mc_addr, sa, sa->sa_len);
@@ -1221,7 +1221,7 @@ vlan_ether_delmulti(struct ifvlan *ifv, struct ifreq *ifr)
 	 */
 	if ((error = ether_multiaddr(sa, addrlo, addrhi)) != 0)
 		return error;
-	ETHER_LOOKUP_MULTI(addrlo, addrhi, &ifv->ifv_ec, enm);
+	enm = ether_lookup_multi(addrlo, addrhi, &ifv->ifv_ec);
 
 	error = ether_delmulti(sa, &ifv->ifv_ec);
 	if (error != ENETRESET)
