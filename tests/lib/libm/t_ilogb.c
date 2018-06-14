@@ -1,4 +1,4 @@
-/* $NetBSD: t_ilogb.c,v 1.8 2018/06/14 21:11:08 maya Exp $ */
+/* $NetBSD: t_ilogb.c,v 1.9 2018/06/14 21:57:25 maya Exp $ */
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ilogb.c,v 1.8 2018/06/14 21:11:08 maya Exp $");
+__RCSID("$NetBSD: t_ilogb.c,v 1.9 2018/06/14 21:57:25 maya Exp $");
 
 #include <atf-c.h>
 #include <fenv.h>
@@ -45,7 +45,7 @@ __RCSID("$NetBSD: t_ilogb.c,v 1.8 2018/06/14 21:11:08 maya Exp $");
 # define ATF_CHECK_RAISED_INVALID do { \
 	int r = fetestexcept(FE_ALL_EXCEPT); \
 	ATF_CHECK_MSG((r & FE_INVALID) != 0, \
-	    "r & FE_INVALID !=0 (r=%#x, FE_INVALID=%#x\n", \
+	    "r & FE_INVALID == 0 (r=%#x, FE_INVALID=%#x)\n", \
 	     r, FE_INVALID); \
 	(void)feclearexcept(FE_ALL_EXCEPT); \
 } while (/*CONSTCOND*/0)
