@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.33 2018/06/14 14:36:46 maxv Exp $	*/
+/*	$NetBSD: fpu.c,v 1.34 2018/06/14 18:00:15 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.  All
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.33 2018/06/14 14:36:46 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.34 2018/06/14 18:00:15 maxv Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -644,6 +644,14 @@ fpu_save_area_clear(struct lwp *l, unsigned int x87_cw)
 		fpu_save->sv_87.s87_cw = x87_cw;
 	}
 	pcb->pcb_fpu_dflt_cw = x87_cw;
+
+	/*
+	 * If using eager-switch, install the FPU state on the current
+	 * CPU.
+	 */
+	if (x86_fpu_eager) {
+		fpu_eagerswitch(NULL, l);
+	}
 }
 
 void
