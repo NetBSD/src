@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1341 2018/06/12 20:25:25 jdolecek Exp $
+$NetBSD: pcidevs,v 1.1342 2018/06/14 03:59:53 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1605,6 +1605,8 @@ product ATI RADEON_HD2400_M72	0x94c9	Mobility Radeon HD 2400
 product ATI RADEON_HD2400	0x94cc	Radeon HD 2400
 product ATI RADEON_HD3870	0x9501	Radeon HD3870
 product ATI RADEON_HD4350	0x954f	Radeon HD4350
+product ATI RADEON_HD4300_M	0x9552	Mobility Radeon HD 4300
+product ATI RADEON_HD4500_M	0x9553	Mobility Radeon HD 4500
 product ATI RADEON_HD4500_M93	0x9555	Mobility Radeon HD 4500
 product ATI RADEON_HD2600_M76	0x9581	Mobility Radeon HD 2600
 product ATI RADEON_HD2600PROAGP	0x9587	Radeon HD2600 Pro AGP
