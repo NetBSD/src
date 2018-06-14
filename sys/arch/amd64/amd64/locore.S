@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.165 2018/04/23 22:53:04 joerg Exp $	*/
+/*	$NetBSD: locore.S,v 1.166 2018/06/14 14:36:46 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1097,7 +1097,7 @@ ENTRY(cpu_switchto)
 .Lskip_svs:
 	popq	%rdx
 
-	/* Restore rdi/rsi for speculation_barrier */
+	/* RDI/RSI got clobbered. */
 	movq	%r13,%rdi
 	movq	%r12,%rsi
 #endif
@@ -1105,6 +1105,18 @@ ENTRY(cpu_switchto)
 #ifndef XEN
 	pushq	%rdx
 	callq	_C_LABEL(speculation_barrier)
+	popq	%rdx
+
+	/* RDI/RSI got clobbered. */
+	movq	%r13,%rdi
+	movq	%r12,%rsi
+
+	pushq	%rdx
+	movb	_C_LABEL(x86_fpu_eager),%dl
+	testb	%dl,%dl
+	jz	.Lno_eagerfpu
+	callq	_C_LABEL(fpu_eagerswitch)
+.Lno_eagerfpu:
 	popq	%rdx
 #endif
 

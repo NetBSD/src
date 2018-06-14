@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.32 2018/05/23 10:21:43 maxv Exp $	*/
+/*	$NetBSD: fpu.c,v 1.33 2018/06/14 14:36:46 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.  All
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.32 2018/05/23 10:21:43 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.33 2018/06/14 14:36:46 maxv Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -126,6 +126,8 @@ __KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.32 2018/05/23 10:21:43 maxv Exp $");
 #define clts() HYPERVISOR_fpu_taskswitch(0)
 #define stts() HYPERVISOR_fpu_taskswitch(1)
 #endif
+
+bool x86_fpu_eager __read_mostly = false;
 
 static uint32_t x86_fpu_mxcsr_mask __read_mostly = 0;
 
@@ -263,6 +265,109 @@ fpuinit_mxcsr_mask(void)
 #endif
 }
 
+static void
+fpu_clear_amd(void)
+{
+	/*
+	 * AMD FPUs do not restore FIP, FDP, and FOP on fxrstor and xrstor
+	 * when FSW.ES=0, leaking other threads' execution history.
+	 *
+	 * Clear them manually by loading a zero (fldummy). We do this
+	 * unconditionally, regardless of FSW.ES.
+	 *
+	 * Before that, clear the ES bit in the x87 status word if it is
+	 * currently set, in order to avoid causing a fault in the
+	 * upcoming load.
+	 *
+	 * Newer generations of AMD CPUs have CPUID_Fn80000008_EBX[2],
+	 * which indicates that FIP/FDP/FOP are restored (same behavior
+	 * as Intel). We're not using it though.
+	 */
+	if (fngetsw() & 0x80)
+		fnclex();
+	fldummy();
+}
+
+static void
+fpu_save(struct lwp *l)
+{
+	struct pcb *pcb = lwp_getpcb(l);
+
+	switch (x86_fpu_save) {
+	case FPU_SAVE_FSAVE:
+		fnsave(&pcb->pcb_savefpu);
+		break;
+	case FPU_SAVE_FXSAVE:
+		fxsave(&pcb->pcb_savefpu);
+		break;
+	case FPU_SAVE_XSAVE:
+		xsave(&pcb->pcb_savefpu, x86_xsave_features);
+		break;
+	case FPU_SAVE_XSAVEOPT:
+		xsaveopt(&pcb->pcb_savefpu, x86_xsave_features);
+		break;
+	}
+}
+
+static void
+fpu_restore(struct lwp *l)
+{
+	struct pcb *pcb = lwp_getpcb(l);
+
+	switch (x86_fpu_save) {
+	case FPU_SAVE_FSAVE:
+		frstor(&pcb->pcb_savefpu);
+		break;
+	case FPU_SAVE_FXSAVE:
+		if (cpu_vendor == CPUVENDOR_AMD)
+			fpu_clear_amd();
+		fxrstor(&pcb->pcb_savefpu);
+		break;
+	case FPU_SAVE_XSAVE:
+	case FPU_SAVE_XSAVEOPT:
+		if (cpu_vendor == CPUVENDOR_AMD)
+			fpu_clear_amd();
+		xrstor(&pcb->pcb_savefpu, x86_xsave_features);
+		break;
+	}
+}
+
+static void
+fpu_reset(void)
+{
+	clts();
+	fninit();
+	stts();
+}
+
+static void
+fpu_eagerrestore(struct lwp *l)
+{
+	struct pcb *pcb = lwp_getpcb(l);
+	struct cpu_info *ci = curcpu();
+
+	clts();
+	ci->ci_fpcurlwp = l;
+	pcb->pcb_fpcpu = ci;
+	fpu_restore(l);
+}
+
+void
+fpu_eagerswitch(struct lwp *oldlwp, struct lwp *newlwp)
+{
+	int s;
+
+	s = splhigh();
+	fpusave_cpu(true);
+	if (newlwp->l_flag & LW_SYSTEM)
+		fpu_reset();
+	else
+		fpu_eagerrestore(newlwp);
+	splx(s);
+}
+
+/* -------------------------------------------------------------------------- */
+
 /*
  * This is a synchronous trap on either an x87 instruction (due to an
  * unmasked error on the previous x87 instruction) or on an SSE/SSE2 etc
@@ -339,29 +444,6 @@ fputrap(struct trapframe *frame)
 	(*curlwp->l_proc->p_emul->e_trapsignal)(curlwp, &ksi);
 }
 
-static void
-fpu_clear_amd(void)
-{
-	/*
-	 * AMD FPUs do not restore FIP, FDP, and FOP on fxrstor and xrstor
-	 * when FSW.ES=0, leaking other threads' execution history.
-	 *
-	 * Clear them manually by loading a zero (fldummy). We do this
-	 * unconditionally, regardless of FSW.ES.
-	 *
-	 * Before that, clear the ES bit in the x87 status word if it is
-	 * currently set, in order to avoid causing a fault in the
-	 * upcoming load.
-	 *
-	 * Newer generations of AMD CPUs have CPUID_Fn80000008_EBX[2],
-	 * which indicates that FIP/FDP/FOP are restored (same behavior
-	 * as Intel). We're not using it though.
-	 */
-	if (fngetsw() & 0x80)
-		fnclex();
-	fldummy();
-}
-
 /*
  * Implement device not available (DNA) exception
  *
@@ -429,22 +511,7 @@ fpudna(struct trapframe *frame)
 	ci->ci_fpcurlwp = l;
 	pcb->pcb_fpcpu = ci;
 
-	switch (x86_fpu_save) {
-	case FPU_SAVE_FSAVE:
-		frstor(&pcb->pcb_savefpu);
-		break;
-	case FPU_SAVE_FXSAVE:
-		if (cpu_vendor == CPUVENDOR_AMD)
-			fpu_clear_amd();
-		fxrstor(&pcb->pcb_savefpu);
-		break;
-	case FPU_SAVE_XSAVE:
-	case FPU_SAVE_XSAVEOPT:
-		if (cpu_vendor == CPUVENDOR_AMD)
-			fpu_clear_amd();
-		xrstor(&pcb->pcb_savefpu, x86_xsave_features);
-		break;
-	}
+	fpu_restore(l);
 
 	KASSERT(ci == curcpu());
 	splx(s);
@@ -471,21 +538,7 @@ fpusave_cpu(bool save)
 
 	if (save) {
 		clts();
-
-		switch (x86_fpu_save) {
-		case FPU_SAVE_FSAVE:
-			fnsave(&pcb->pcb_savefpu);
-			break;
-		case FPU_SAVE_FXSAVE:
-			fxsave(&pcb->pcb_savefpu);
-			break;
-		case FPU_SAVE_XSAVE:
-			xsave(&pcb->pcb_savefpu, x86_xsave_features);
-			break;
-		case FPU_SAVE_XSAVEOPT:
-			xsaveopt(&pcb->pcb_savefpu, x86_xsave_features);
-			break;
-		}
+		fpu_save(l);
 	}
 
 	stts();
@@ -630,7 +683,7 @@ fpu_save_area_fork(struct pcb *pcb2, const struct pcb *pcb1)
 		memcpy(pcb2 + 1, pcb1 + 1, extra);
 }
 
-/* ------------------------------------------------------------------------- */
+/* -------------------------------------------------------------------------- */
 
 static void
 process_xmm_to_s87(const struct fxsave *sxmm, struct save87 *s87)
