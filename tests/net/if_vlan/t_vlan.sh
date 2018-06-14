@@ -1,4 +1,4 @@
-#	$NetBSD: t_vlan.sh,v 1.10 2018/06/14 08:22:52 yamaguchi Exp $
+#	$NetBSD: t_vlan.sh,v 1.11 2018/06/14 08:38:24 yamaguchi Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -655,7 +655,7 @@ vlan_multicast_body_common()
 	atf_check -s exit:0 $HIJACKING $siocXmulti del vlan0 $mcaddr
 
 	# delete the address with invalid interface
-	atf_check -s not-exit:0 -e match:"Device not configured" \
+	atf_check -s not-exit:0 -e match:"Invalid argument" \
 	    $HIJACKING $siocXmulti del vlan0 $mcaddr
 
 	atf_check -s exit:0 $HIJACKING $siocXmulti del vlan1 $mcaddr
