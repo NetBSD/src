@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.3,v 1.1.2.106 2018/06/06 14:51:16 martin Exp $
+# $NetBSD: CHANGES-7.0.3,v 1.1.2.107 2018/06/14 19:49:28 martin Exp $
 
 A complete list of changes from the NetBSD 7.0.2 release to the NetBSD 7.0.3
 release:
@@ -5447,4 +5447,20 @@ sys/netinet/udp_usrreq.c			1.237 (patch)
 	Fix bad/wrong memory deallocations and dangling pointer
 	issues in NAT-T.
 	[maxv, ticket #1607]
+
+sbin/fsck_lfs/bufcache.c			1.20
+sbin/fsck_lfs/bufcache.h			1.14
+
+	Fix incore(), use a 64bit logical block number.
+	[maya, ticket #1612]
+
+usr.sbin/makefs/ffs.c				1.70
+
+	Fix makefs UFS2 lazy inode initialization.
+	[maya, ticket #1615]
+
+share/i18n/esdb/ISO-8859/ISO-8859.alias		1.4
+
+	Add more aliases for Hebrew and Arabic ISO-8859-... encodings.
+	[maya, ticket #1616]
 
