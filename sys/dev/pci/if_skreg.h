@@ -1,4 +1,4 @@
-/* $NetBSD: if_skreg.h,v 1.19 2018/06/13 20:17:03 jdolecek Exp $ */
+/* $NetBSD: if_skreg.h,v 1.20 2018/06/14 06:58:15 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -426,7 +426,7 @@
 #define SK_YUKON_EC_U_REV_B1	0x5
 
 #define SK_YUKON_FE_REV_A1	0x1
-#define SK_YUKON_FE_REV_A2	0x3
+#define SK_YUKON_FE_REV_A2	0x2
 
 #define SK_YUKON_FE_P_REV_A0	0x0
 
