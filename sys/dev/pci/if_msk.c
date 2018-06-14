@@ -1,4 +1,4 @@
-/* $NetBSD: if_msk.c,v 1.64 2018/06/13 20:18:54 jdolecek Exp $ */
+/* $NetBSD: if_msk.c,v 1.65 2018/06/14 09:29:55 msaitoh Exp $ */
 /*	$OpenBSD: if_msk.c,v 1.65 2008/09/10 14:01:22 blambert Exp $ */
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.64 2018/06/13 20:18:54 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.65 2018/06/14 09:29:55 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -241,7 +241,7 @@ msk_miibus_readreg(device_t dev, int phy, int reg)
 
 	SK_YU_WRITE_2(sc_if, YUKON_SMICR, YU_SMICR_PHYAD(phy) |
 		      YU_SMICR_REGAD(reg) | YU_SMICR_OP_READ);
-	
+
 	for (i = 0; i < SK_TIMEOUT; i++) {
 		DELAY(1);
 		val = SK_YU_READ_2(sc_if, YUKON_SMICR);
@@ -253,7 +253,7 @@ msk_miibus_readreg(device_t dev, int phy, int reg)
 		aprint_error_dev(sc_if->sk_dev, "phy failed to come ready\n");
 		return (0);
 	}
-	
+
  	DPRINTFN(9, ("msk_miibus_readreg: i=%d, timeout=%d\n", i,
 		     SK_TIMEOUT));
 
@@ -492,7 +492,7 @@ msk_newbuf(struct sk_if_softc *sc_if, int i, struct mbuf *m,
 		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
 		if (m_new == NULL)
 			return (ENOBUFS);
-	
+
 		/* Allocate the jumbo buffer */
 		buf = msk_jalloc(sc_if);
 		if (buf == NULL) {
@@ -838,7 +838,7 @@ mskc_reset(struct sk_softc *sc)
 		uint32_t our;
 
 		CSR_WRITE_2(sc, SK_CSR, SK_CSR_WOL_ON);
-	
+
 		/* enable all clocks. */
 		sk_win_write_4(sc, SK_Y2_PCI_REG(SK_PCI_OURREG3), 0);
 		our = sk_win_read_4(sc, SK_Y2_PCI_REG(SK_PCI_OURREG4));
