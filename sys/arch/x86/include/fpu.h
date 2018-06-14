@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.h,v 1.8 2018/05/23 07:45:35 maxv Exp $	*/
+/*	$NetBSD: fpu.h,v 1.9 2018/06/14 14:36:46 maxv Exp $	*/
 
 #ifndef	_X86_FPU_H_
 #define	_X86_FPU_H_
@@ -15,6 +15,8 @@ void fpuinit(struct cpu_info *);
 void fpuinit_mxcsr_mask(void);
 void fpusave_lwp(struct lwp *, bool);
 void fpusave_cpu(bool);
+
+void fpu_eagerswitch(struct lwp *, struct lwp *);
 
 void fpu_set_default_cw(struct lwp *, unsigned int);
 
