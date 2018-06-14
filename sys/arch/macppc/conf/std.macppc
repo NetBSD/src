@@ -1,4 +1,4 @@
-#	$NetBSD: std.macppc,v 1.23 2008/12/11 05:42:18 alc Exp $
+#	$NetBSD: std.macppc,v 1.23.58.1 2018/06/14 20:01:28 martin Exp $
 #
 # Standard/required options for NetBSD/macppc.
 
@@ -16,6 +16,11 @@ options 	EXEC_AOUT	# (native) a.out binary support (deprecated)
 options 	EXEC_SCRIPT	# shell script support
 
 options 	INTSTK=0x2000
+
+# some *Books have both ADB keyboards and Bluetooth modules which pose as USB
+# HID devices - for them to coexist on the same mux we tell the adbkbd driver
+# pose as a USB keyboard
+options 	ADBKBD_EMUL_USB
 
 # Atheros HAL options
 include "external/isc/atheros_hal/conf/std.ath_hal"
