@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsxreg.h,v 1.2 2014/10/29 14:24:09 nonaka Exp $	*/
+/*	$NetBSD: rtsxreg.h,v 1.2.12.1 2018/06/14 19:57:24 martin Exp $	*/
 /*	$OpenBSD: rtsxreg.h,v 1.3 2013/11/26 20:33:16 deraadt Exp $	*/
 
 /*
@@ -543,6 +543,14 @@
 #define	RTSX_EFUSE_CONTENT	0xFE5F
 
 #define	RTSX_DUMMY_REG		0xFE90
+
+#define	RTSX_LDO_VCC_CFG1	0xFF73
+#define	RTSX_LDO_VCC_REF_TUNE_MASK	0x30
+#define	RTSX_LDO_VCC_REF_1V2		0x20
+#define	RTSX_LDO_VCC_TUNE_MASK		0x07
+#define	RTSX_LDO_VCC_1V8		0x04
+#define	RTSX_LDO_VCC_3V3		0x07
+#define	RTSX_LDO_VCC_LMT_EN		0x08
 
 #define	RTSX_SG_INT		0x04
 #define	RTSX_SG_END		0x02

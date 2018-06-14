@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsxvar.h,v 1.2 2014/10/29 14:24:09 nonaka Exp $	*/
+/*	$NetBSD: rtsxvar.h,v 1.2.12.1 2018/06/14 19:57:24 martin Exp $	*/
 /*	$OpenBSD: rtsxvar.h,v 1.3 2014/08/19 17:55:03 phessler Exp $	*/
 
 /*
@@ -57,10 +57,11 @@ struct rtsx_softc {
 #define	RTSX_F_5227		__BIT(3)
 #define	RTSX_F_5229		__BIT(4)
 #define	RTSX_F_5229_TYPE_C	__BIT(5)
-#define	RTSX_F_8402		__BIT(6)
-#define	RTSX_F_8411		__BIT(7)
-#define	RTSX_F_8411B		__BIT(8)
-#define	RTSX_F_8411B_QFN48	__BIT(9)
+#define	RTSX_F_525A		__BIT(6)
+#define	RTSX_F_8402		__BIT(7)
+#define	RTSX_F_8411		__BIT(8)
+#define	RTSX_F_8411B		__BIT(9)
+#define	RTSX_F_8411B_QFN48	__BIT(10)
 };
 
 #define	RTSX_IS_RTS5209(sc)	(((sc)->sc_flags & RTSX_F_5209) == RTSX_F_5209)
@@ -69,6 +70,7 @@ struct rtsx_softc {
 #define	RTSX_IS_RTS5229_TYPE_C(sc)					\
 	(((sc)->sc_flags & (RTSX_F_5229|RTSX_F_5229_TYPE_C)) ==		\
 	                   (RTSX_F_5229|RTSX_F_5229_TYPE_C))
+#define	RTSX_IS_RTS525A(sc)	(((sc)->sc_flags & RTSX_F_525A) == RTSX_F_525A)
 #define	RTSX_IS_RTL8402(sc)	(((sc)->sc_flags & RTSX_F_8402) == RTSX_F_8402)
 #define	RTSX_IS_RTL8411(sc)	(((sc)->sc_flags & RTSX_F_8411) == RTSX_F_8411)
 #define	RTSX_IS_RTL8411B(sc)						\
