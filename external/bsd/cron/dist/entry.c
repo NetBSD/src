@@ -1,4 +1,4 @@
-/*	$NetBSD: entry.c,v 1.7 2015/11/20 23:43:52 christos Exp $	*/
+/*	$NetBSD: entry.c,v 1.8 2018/06/14 22:04:28 christos Exp $	*/
 
 /*
  * Copyright 1988,1990,1993,1994 by Paul Vixie
@@ -26,7 +26,7 @@
 #if 0
 static char rcsid[] = "Id: entry.c,v 1.17 2004/01/23 18:56:42 vixie Exp";
 #else
-__RCSID("$NetBSD: entry.c,v 1.7 2015/11/20 23:43:52 christos Exp $");
+__RCSID("$NetBSD: entry.c,v 1.8 2018/06/14 22:04:28 christos Exp $");
 #endif
 #endif
 
@@ -342,13 +342,31 @@ load_entry(FILE *file, void (*error_func)(const char *), struct passwd *pw,
 
 	/* If the first character of the command is '-' it is a cron option.
 	 */
-	while ((ch = get_char(file)) == '-') {
+	ch = get_char(file);
+	while (ch == '-') {
 		switch (ch = get_char(file)) {
+		case 'n':
+			/* only allow the user to set the option once */
+			if ((e->flags & MAIL_WHEN_ERR) == MAIL_WHEN_ERR) {
+				ecode = e_option;
+				goto eof;
+			}
+			e->flags |= MAIL_WHEN_ERR;
+			break;
 		case 'q':
+			/* only allow the user to set the option once */
+			if ((e->flags & DONT_LOG) == DONT_LOG) {
+				ecode = e_option;
+				goto eof;
+			}
 			e->flags |= DONT_LOG;
-			Skip_Nonblanks(ch, file);
 			break;
 		default:
+			ecode = e_option;
+			goto eof;
+		}
+		ch = get_char(file);
+		if (ch != '\t' && ch != ' ') {
 			ecode = e_option;
 			goto eof;
 		}
