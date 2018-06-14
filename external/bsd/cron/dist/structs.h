@@ -1,5 +1,3 @@
-/*	$NetBSD: structs.h,v 1.2 2010/05/06 18:53:17 christos Exp $	*/
-
 /*
  * Id: structs.h,v 1.7 2004/01/23 18:56:43 vixie Exp
  */
@@ -38,6 +36,7 @@ typedef	struct _entry {
 #define	DOW_STAR	0x08
 #define	WHEN_REBOOT	0x10
 #define	DONT_LOG	0x20
+#define	MAIL_WHEN_ERR	0x40
 } entry;
 
 			/* the crontab database will be a list of the
