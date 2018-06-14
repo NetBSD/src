@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.210 2018/06/12 16:36:26 snj Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.211 2018/06/14 20:11:02 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -13889,4 +13889,36 @@ tests/net/if_vlan/t_vlan.sh			1.9
 	Fix panic upon shutdown of a system with bridges on top of vlans.
 	PR kern/53357.
 	[ozaki-r, ticket #876]
+
+usr.sbin/user/user.c				1.132
+
+	Fix handling of homeperm values in usermgmt.conf.
+	[zafer, ticket #877]
+
+share/man/man4/rtsx.4				1.5
+sys/dev/ic/rtsx.c				1.3
+sys/dev/ic/rtsxreg.h				1.3
+sys/dev/ic/rtsxvar.h				1.3
+sys/dev/pci/pcidevs				1.1331
+sys/dev/pci/rtsx_pci.c				1.7
+
+	rtsx(4): Add support for RT525A.
+	[maya, ticket #878]
+
+sys/kern/subr_workqueue.c			1.37
+
+	Don't wait on workqueue_wait if called from worker itself.
+	[ozaki-r, ticket #879]
+
+sys/arch/macppc/conf/std.macppc			1.24
+
+	Set options ADBKBD_EMUL_USB by default, to allow co-existances
+	of ADB and USB keyboards.
+	[macallan, ticket #880]
+
+share/mk/bsd.sys.mk				1.280, 1.281
+
+	Fix MKREPRO for more objdir variations.
+	[christos, ticket #881]
+
 
