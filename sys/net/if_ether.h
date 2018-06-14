@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.74 2018/06/14 07:44:31 yamaguchi Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.75 2018/06/14 08:00:24 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -268,12 +268,6 @@ ether_lookup_multi(const uint8_t *addrlo, const uint8_t *addrhi,
 
 	return enm;
 }
-#define ETHER_LOOKUP_MULTI(addrlo, addrhi, ec, enm)			\
-	/* uint8_t addrlo[ETHER_ADDR_LEN]; */				\
-	/* uint8_t addrhi[ETHER_ADDR_LEN]; */				\
-	/* struct ethercom *ec; */					\
-	/* struct ether_multi *enm; */					\
-	(enm) = ether_lookup_multi((addrlo), (addrhi), (ec))
 
 /*
  * step through all of the ether_multi records, one at a time.
