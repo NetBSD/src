@@ -1,4 +1,4 @@
-/* $NetBSD: bufcache.c,v 1.14 2013/10/19 01:09:58 christos Exp $ */
+/* $NetBSD: bufcache.c,v 1.14.6.1 2018/06/14 19:37:56 martin Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -193,7 +193,7 @@ bremfree(struct ubuf * bp)
 
 /* Return a buffer if it is in the cache, otherwise return NULL. */
 struct ubuf *
-incore(struct uvnode * vp, int lbn)
+incore(struct uvnode * vp, daddr_t lbn)
 {
 	struct ubuf *bp;
 	int hash, depth;
