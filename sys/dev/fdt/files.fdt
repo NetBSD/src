@@ -1,4 +1,4 @@
-# $NetBSD: files.fdt,v 1.29 2018/06/06 20:35:36 jakllsch Exp $
+# $NetBSD: files.fdt,v 1.30 2018/06/15 15:07:56 jakllsch Exp $
 
 include	"external/bsd/libfdt/conf/files.libfdt"
 
@@ -95,3 +95,7 @@ file	dev/fdt/dwc3_fdt.c			dwc3_fdt
 # Virtio virtio,mmio
 attach	virtio at fdt with virtio_mmio_fdt:	virtio_mmio
 file	dev/fdt/virtio_mmio_fdt.c		virtio_mmio_fdt
+
+# QEMU Firmware Configuration (fw_cfg) device
+attach 	qemufwcfg at fdt with qemufwcfg_fdt
+file	dev/fdt/qemufwcfg_fdt.c			qemufwcfg_fdt
