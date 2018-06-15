@@ -1,4 +1,4 @@
-/*	$NetBSD: time_types.h,v 1.2 2018/06/14 10:30:55 uwe Exp $	*/
+/*	$NetBSD: time_types.h,v 1.3 2018/06/15 07:33:27 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -33,6 +33,13 @@
 
 #ifndef _COMPAT_SYS_TIME_TYPES_H_
 #define	_COMPAT_SYS_TIME_TYPES_H_
+
+#ifdef _KERNEL
+#include <lib/libkern/libkern.h>
+#else
+#include <stddef.h>
+#include <string.h>
+#endif
 
 /*
  * Structure returned by gettimeofday(2) system call,
