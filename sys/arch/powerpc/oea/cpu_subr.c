@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.96 2018/06/08 23:40:44 macallan Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.97 2018/06/15 23:11:39 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.96 2018/06/08 23:40:44 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.97 2018/06/15 23:11:39 uwe Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_ppccache.h"
@@ -97,7 +97,7 @@ static const struct fmttab cpu_7450_l2cr_formats[] = {
 	{ L2CR_L2DO|L2CR_L2IO, L2CR_L2DO|L2CR_L2IO, " locked" },
 	{ L2CR_L2E, ~0, " 256KB L2 cache" },
 	{ L2CR_L2PE, 0, " no parity" },
-	{ L2CR_L2PE, ~0, " parity enabled" },
+	{ L2CR_L2PE, L2CR_L2PE, " parity enabled" },
 	{ 0, 0, NULL }
 };
 
@@ -108,7 +108,7 @@ static const struct fmttab cpu_7448_l2cr_formats[] = {
 	{ L2CR_L2DO|L2CR_L2IO, L2CR_L2DO|L2CR_L2IO, " locked" },
 	{ L2CR_L2E, ~0, " 1MB L2 cache" },
 	{ L2CR_L2PE, 0, " no parity" },
-	{ L2CR_L2PE, ~0, " parity enabled" },
+	{ L2CR_L2PE, L2CR_L2PE, " parity enabled" },
 	{ 0, 0, NULL }
 };
 
@@ -119,7 +119,7 @@ static const struct fmttab cpu_7457_l2cr_formats[] = {
 	{ L2CR_L2DO|L2CR_L2IO, L2CR_L2DO|L2CR_L2IO, " locked" },
 	{ L2CR_L2E, ~0, " 512KB L2 cache" },
 	{ L2CR_L2PE, 0, " no parity" },
-	{ L2CR_L2PE, ~0, " parity enabled" },
+	{ L2CR_L2PE, L2CR_L2PE, " parity enabled" },
 	{ 0, 0, NULL }
 };
 
