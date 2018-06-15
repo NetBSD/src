@@ -1,4 +1,4 @@
-.\"	$NetBSD: specificdata.9,v 1.4 2018/06/15 21:51:32 uwe Exp $
+.\"	$NetBSD: specificdata.9,v 1.5 2018/06/15 22:10:44 pgoyette Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -73,13 +73,13 @@
 .Sh DESCRIPTION
 The
 .Nm
-facility provides a mechanism for attaching arbitrary data to the objects
-within a particular domain.
+facility provides a mechanism for storing arbitrary data, identified by
+an index key, within containers which exist within the objects associated
+with a particular domain.
 .Sh FUNCTIONS
 .Bl -tag -width abcd
 .It Fn specificdata_domain_create
-Create a new
-.Nm domain .
+Create and initialize a new domain.
 .It Fn specificdata_domain_delete sd
 Deletes domain
 .Fa sd .
@@ -100,29 +100,21 @@ Delete a key for
 .Fa sd ,
 and delete any associated data from all containers within the domain.
 .It Fn specificdata_init sd ref
-Initialize the
-.Nm
-container
+Initialize the container
 .Fa ref
 for use in
 .Fa sd .
 .It Fn specificdata_fini sd ref
-Destroy the
-.Nm
-container
+Destroy the container
 .Fa ref ,
 and destroy all of the data stuffed into the container.
 .It Fn specificdata_getspecific sd ref key
-Retrieve the datum from the
-.Nm
-container
+Retrieve the datum from the container
 .Fa ref
 associated with
 .Fa key .
 .It Fn specificdata_getspecific_unlocked sd ref key
-Retrieve the datum from the
-.Nm
-container
+Retrieve the datum from the container
 .Fa ref
 associated with
 .Fa key
@@ -135,9 +127,7 @@ call or by destroying the container.
 .It Fn specificdata_setspecific sd ref key data
 Store
 .Fa data
-in the
-.Nm
-container
+in the container
 .Fa ref
 and associate it with
 .Fa key .
