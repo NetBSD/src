@@ -1,4 +1,4 @@
-/*	$NetBSD: virtio.c,v 1.33 2018/06/06 17:17:31 jakllsch Exp $	*/
+/*	$NetBSD: virtio.c,v 1.34 2018/06/15 01:37:40 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.33 2018/06/06 17:17:31 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.34 2018/06/15 01:37:40 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -404,7 +404,7 @@ virtio_alloc_vq(struct virtio_softc *sc, struct virtqueue *vq, int index,
 	}
 
 	/* set the vq address */
-	sc->sc_ops->setup_queue(sc, vq->vq_index,
+	sc->sc_ops->setup_queue(sc, index,
 	    vq->vq_dmamap->dm_segs[0].ds_addr / VIRTIO_PAGE_SIZE);
 
 	/* remember addresses and offsets for later use */
@@ -449,7 +449,7 @@ virtio_alloc_vq(struct virtio_softc *sc, struct virtqueue *vq, int index,
 	return 0;
 
 err:
-	sc->sc_ops->setup_queue(sc, vq->vq_index, 0);
+	sc->sc_ops->setup_queue(sc, index, 0);
 	if (vq->vq_dmamap)
 		bus_dmamap_destroy(sc->sc_dmat, vq->vq_dmamap);
 	if (vq->vq_vaddr)
