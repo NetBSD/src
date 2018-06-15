@@ -1,4 +1,4 @@
-/*	$NetBSD: time_types.h,v 1.3 2018/06/15 07:33:27 mrg Exp $	*/
+/*	$NetBSD: time_types.h,v 1.4 2018/06/15 07:46:59 kre Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -97,7 +97,7 @@ static __inline void timespec_to_timespec50(const struct timespec *ts,
     struct timespec50 *ts50)
 {
 #if INT32_MAX < LONG_MAX	/* scrub padding */
-	memset(ts50, 0, offsetof(struct timespec50, tv_nsec));
+	memset(ts50, 0, sizeof(struct timespec50));
 #endif
 	ts50->tv_sec = (int32_t)ts->tv_sec;
 	ts50->tv_nsec = ts->tv_nsec;
