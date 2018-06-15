@@ -1,4 +1,4 @@
-/*	$NetBSD: virtiovar.h,v 1.11 2018/06/02 22:43:15 jakllsch Exp $	*/
+/*	$NetBSD: virtiovar.h,v 1.12 2018/06/15 17:13:43 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -224,6 +224,7 @@ uint32_t	virtio_features(struct virtio_softc *);
 
 /* autoconf(9) common */
 void virtio_set_status(struct virtio_softc *, int);
+int virtiobusprint(void *aux, const char *);
 
 #define virtio_device_reset(sc)	virtio_set_status((sc), 0)
 

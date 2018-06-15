@@ -1,4 +1,4 @@
-/*	$NetBSD: virtio.c,v 1.34 2018/06/15 01:37:40 jakllsch Exp $	*/
+/*	$NetBSD: virtio.c,v 1.35 2018/06/15 17:13:43 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.34 2018/06/15 01:37:40 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.35 2018/06/15 17:13:43 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -926,6 +926,17 @@ uint32_t
 virtio_features(struct virtio_softc *sc)
 {
 	return sc->sc_features;
+}
+
+int
+virtiobusprint(void *aux, const char *pnp)
+{
+	struct virtio_attach_args * const va = aux;
+
+	if (pnp)
+		aprint_normal("Device ID %d at %s", va->sc_childdevid, pnp);
+
+	return UNCONF;
 }
 
 MODULE(MODULE_CLASS_DRIVER, virtio, NULL);
