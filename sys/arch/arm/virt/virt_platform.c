@@ -1,4 +1,4 @@
-/* $NetBSD: virt_platform.c,v 1.1 2018/06/14 10:56:39 jmcneill Exp $ */
+/* $NetBSD: virt_platform.c,v 1.2 2018/06/15 14:37:35 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "opt_fdt_arm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virt_platform.c,v 1.1 2018/06/14 10:56:39 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virt_platform.c,v 1.2 2018/06/15 14:37:35 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -96,12 +96,13 @@ virt_platform_early_putchar(char c)
 		(volatile uint32_t *)VIRT_CORE_PTOV(VIRT_UART_BASE) :
 		(volatile uint32_t *)VIRT_UART_BASE;
 
-	while ((uartaddr[PL01XCOM_FR / 4] & PL01X_FR_TXFF) != 0)
+	while ((le32toh(uartaddr[PL01XCOM_FR / 4]) & PL01X_FR_TXFF) != 0)
 		continue;
 
-	uartaddr[PL01XCOM_DR / 4] = c;
+	uartaddr[PL01XCOM_DR / 4] = htole32(c);
+	arm_dsb();
 
-	while ((uartaddr[PL01XCOM_FR / 4] & PL01X_FR_TXFE) == 0)
+	while ((le32toh(uartaddr[PL01XCOM_FR / 4]) & PL01X_FR_TXFE) == 0)
 		continue;
 }
 
