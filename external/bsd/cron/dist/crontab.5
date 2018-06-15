@@ -1,4 +1,4 @@
-.\" $NetBSD: crontab.5,v 1.6 2018/06/14 22:02:57 christos Exp $
+.\" $NetBSD: crontab.5,v 1.7 2018/06/15 23:15:56 wiz Exp $
 .\"
 .\"/* Copyright 1988,1990,1993,1994 by Paul Vixie
 .\" * All rights reserved
@@ -21,7 +21,7 @@
 .\"
 .\" $OpenBSD: crontab.5,v 1.36 2018/06/13 13:27:37 jmc Exp $
 .\"
-.Dd June 14 2018
+.Dd June 14, 2018
 .Dt CRONTAB 5
 .Os
 .Sh NAME
@@ -261,7 +261,7 @@ The
 variable can be set to an alternate time zone in order to affect when the job
 is run.
 Note that this only affects the scheduling of the job, not the time zone
-that the job perceives when it is run. 
+that the job perceives when it is run.
 If
 .Ev CRON_TZ
 is defined but empty
@@ -277,7 +277,7 @@ On a heavily loaded system, or on a system that has just been
 jobs will sometimes start later than originally intended, and by
 skipping non-critical jobs because of delays, system load can be
 lightened.
-If 
+If
 .Ev CRON_WITHIN
 is defined but empty
 .Pq Ev CRON_WITHIN Ns = Ns \&"" ,
