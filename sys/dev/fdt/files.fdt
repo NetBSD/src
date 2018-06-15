@@ -1,4 +1,4 @@
-# $NetBSD: files.fdt,v 1.30 2018/06/15 15:07:56 jakllsch Exp $
+# $NetBSD: files.fdt,v 1.31 2018/06/15 19:52:01 jakllsch Exp $
 
 include	"external/bsd/libfdt/conf/files.libfdt"
 
@@ -99,3 +99,8 @@ file	dev/fdt/virtio_mmio_fdt.c		virtio_mmio_fdt
 # QEMU Firmware Configuration (fw_cfg) device
 attach 	qemufwcfg at fdt with qemufwcfg_fdt
 file	dev/fdt/qemufwcfg_fdt.c			qemufwcfg_fdt
+
+# ARM PrimeCell  General Purpose Input/Output (PL061)
+device	pl061gpio: gpiobus
+attach 	pl061gpio at fdt with pl061gpio_fdt
+file	dev/fdt/pl061gpio_fdt.c			pl061gpio_fdt
