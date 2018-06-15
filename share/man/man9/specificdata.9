@@ -1,4 +1,4 @@
-.\"	$NetBSD: specificdata.9,v 1.6 2018/06/15 22:11:17 pgoyette Exp $
+.\"	$NetBSD: specificdata.9,v 1.7 2018/06/15 22:27:40 pgoyette Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -133,6 +133,7 @@ and associate it with
 .Fa key .
 If a datum has previously been stored, the new value replaces the original;
 the original value is not destroyed, i.e. its destructor is not invoked.
+Note that there is no provision for removing a datum without replacing it.
 .It Fn specificdata_setspecific_nowait sd ref key data
 (Unimplemented)
 .El
