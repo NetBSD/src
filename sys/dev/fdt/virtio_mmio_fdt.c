@@ -1,4 +1,4 @@
-/* $NetBSD: virtio_mmio_fdt.c,v 1.1 2018/06/06 20:35:36 jakllsch Exp $ */
+/* $NetBSD: virtio_mmio_fdt.c,v 1.2 2018/06/15 17:13:43 jakllsch Exp $ */
 
 /*
  * Copyright (c) 2018 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio_mmio_fdt.c,v 1.1 2018/06/06 20:35:36 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio_mmio_fdt.c,v 1.2 2018/06/15 17:13:43 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,11 +122,9 @@ virtio_mmio_fdt_rescan(device_t self, const char *attr, const int *scan_flags)
 	memset(&va, 0, sizeof(va));
 	va.sc_childdevid = vsc->sc_childdevid;
 
-	config_found_ia(self, attr, &va, NULL);
+	config_found_ia(self, attr, &va, virtiobusprint);
 
 	if (vsc->sc_child == NULL) {
-		aprint_error_dev(self,
-		    "no matching child driver; not configured\n");
 		return 0;
 	}
 
