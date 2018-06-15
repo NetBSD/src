@@ -1,5 +1,5 @@
 #
-#	$NetBSD: VIRT,v 1.1 2018/06/14 10:56:39 jmcneill Exp $
+#	$NetBSD: VIRT,v 1.2 2018/06/15 15:00:14 jakllsch Exp $
 #
 #	QEMU ARM 'virt' virtual machine
 #
@@ -7,7 +7,9 @@
 include	"arch/evbarm/conf/std.virt"
 include	"arch/evbarm/conf/GENERIC.common"
 
+options 	CPU_CORTEXA7
 options 	CPU_CORTEXA15
+options 	CPU_CORTEXA17
 options 	SOC_VIRT
 options 	MULTIPROCESSOR
 
@@ -19,6 +21,7 @@ pseudo-device 	openfirm	# /dev/openfirm
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	IPKDB		# remote kernel debugging
 #options 	VERBOSE_INIT_ARM # verbose bootstrapping messages
+#options 	CONSADDR=0x09000000
 
 makeoptions	DEBUG="-g"	# compile full symbol table
 makeoptions	COPY_SYMTAB=1
@@ -35,6 +38,8 @@ cpu*		at cpus?
 
 fclock*		at fdt? pass 4
 fregulator*	at fdt? pass 4
+gpiokeys*	at fdt?
+wskbd*		at gpiokeys? console ? mux 1
 
 # Power state coordination interface
 psci*		at fdt?
@@ -52,5 +57,24 @@ plcom*		at fdt?			# ARM PL011 UART
 
 # RTC
 plrtc*		at fdt?			# ARM PrimeCell RTC
+
+# Virtio devices
+virtio*	at fdt?				# Virtio MMIO device
+# the balloon driver can not work on machines with non-4k pages
+#viomb*	at virtio?			# Virtio memory balloon device
+ld*	at virtio?			# Virtio disk device
+vioif*	at virtio?			# Virtio network device
+viornd* at virtio?			# Virtio entropy device
+vioscsi* at virtio?			# Virtio SCSI device
+
+# SCSI
+scsibus* at scsi?
+sd*	at scsibus? target ? lun ?	# SCSI disks
+st*	at scsibus? target ? lun ?	# SCSI tapes
+cd*	at scsibus? target ? lun ?	# SCSI CD-ROMs
+ch*	at scsibus? target ? lun ?	# SCSI changer devices
+ss*	at scsibus? target ? lun ?	# SCSI scanners
+ses*	at scsibus? target ? lun ?	# SCSI SES/SAF-TE devices
+uk*	at scsibus? target ? lun ?	# unknown SCSI
 
 cinclude "arch/evbarm/conf/VIRT.local"
