@@ -1,4 +1,4 @@
-/* $NetBSD: psci_fdt.c,v 1.4 2018/05/26 22:49:03 jmcneill Exp $ */
+/* $NetBSD: psci_fdt.c,v 1.5 2018/06/15 16:03:59 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psci_fdt.c,v 1.4 2018/05/26 22:49:03 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psci_fdt.c,v 1.5 2018/06/15 16:03:59 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -126,8 +126,7 @@ psci_fdt_init(const int phandle)
 		return EINVAL;
 	}
 
-	const char * const compat_0_1[] = { "arm,psci", NULL };
-	if (of_match_compatible(phandle, compat_0_1)) {
+	if (of_match_compatible(phandle, compatible) == 1) {
 		psci_clearfunc();
 		if (of_getprop_uint32(phandle, "cpu_on", &val) == 0)
 			psci_setfunc(PSCI_FUNC_CPU_ON, val);
