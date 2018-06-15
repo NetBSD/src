@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_fdt.c,v 1.5 2018/04/01 04:35:04 ryo Exp $ */
+/* $NetBSD: cpu_fdt.c,v 1.6 2018/06/15 14:27:57 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_fdt.c,v 1.5 2018/04/01 04:35:04 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_fdt.c,v 1.6 2018/06/15 14:27:57 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -59,6 +59,7 @@ struct cpu_fdt_softc {
 static const struct of_compat_data compat_data[] = {
 	{ "arm,arm1176jzf-s",		ARM_CPU_UP },
 
+	{ "arm,arm-v7",			ARM_CPU_ARMV7 },
 	{ "arm,cortex-a5",		ARM_CPU_ARMV7 },
 	{ "arm,cortex-a7",		ARM_CPU_ARMV7 },
 	{ "arm,cortex-a8",		ARM_CPU_ARMV7 },
