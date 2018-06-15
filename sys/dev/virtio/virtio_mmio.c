@@ -1,4 +1,4 @@
-/*	$NetBSD: virtio_mmio.c,v 1.1 2018/06/06 20:35:36 jakllsch Exp $	*/
+/*	$NetBSD: virtio_mmio.c,v 1.2 2018/06/15 17:13:43 jakllsch Exp $	*/
 /*	$OpenBSD: virtio_mmio.c,v 1.2 2017/02/24 17:12:31 patrick Exp $	*/
 
 /*
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio_mmio.c,v 1.1 2018/06/06 20:35:36 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio_mmio.c,v 1.2 2018/06/15 17:13:43 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,7 +162,6 @@ virtio_mmio_common_attach(struct virtio_mmio_softc *sc)
 	}
 
 	id = bus_space_read_4(sc->sc_iot, sc->sc_ioh, VIRTIO_MMIO_DEVICE_ID);
-	aprint_verbose_dev(vsc->sc_dev, "Virtio ID 0x%08x\n", id);
 
 	/* we could use PAGE_SIZE, but virtio(4) assumes 4KiB for now */
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, VIRTIO_MMIO_GUEST_PAGE_SIZE,
