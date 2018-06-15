@@ -1,4 +1,4 @@
-/*	$NetBSD: virt_start.S,v 1.1 2018/06/14 10:56:39 jmcneill Exp $	*/
+/*	$NetBSD: virt_start.S,v 1.2 2018/06/15 14:32:29 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <arm/virt/virt_platform.h>
 
-RCSID("$NetBSD: virt_start.S,v 1.1 2018/06/14 10:56:39 jmcneill Exp $")
+RCSID("$NetBSD: virt_start.S,v 1.2 2018/06/15 14:32:29 jakllsch Exp $")
 
 #ifdef VERBOSE_INIT_ARM
 #define	XPUTC(n)	mov r0, n; bl xputc
@@ -138,7 +138,7 @@ _C_LABEL(virt_start):
 	.type	xputc,%function
 xputc:
 	movw	r2, #0x0000
-	movt	r2, #0x1c09
+	movt	r2, #0x0900
 	str	r0, [r2]
 	bx	lr
 
