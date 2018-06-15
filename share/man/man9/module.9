@@ -1,4 +1,4 @@
-.\"	$NetBSD: module.9,v 1.46 2018/06/03 10:34:59 pgoyette Exp $
+.\"	$NetBSD: module.9,v 1.47 2018/06/15 15:14:15 wiz Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -503,7 +503,8 @@ The key identifier is returned in
 Deletes the specified specificdata_key
 .Fa key
 from the
-.Nm domain.
+.Nm
+domain.
 .It module_getspecific "module_t *mod" "specificdata_key_t key"
 Retrieves the value associated with
 .Fa key
@@ -516,7 +517,6 @@ as the value associated with
 .Fa key
 for module
 .Fa mod .
-
 .El
 .Sh PROGRAMMING CONSIDERATIONS
 The module subsystem is designed to be called recursively, but only within
