@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.96 2018/06/14 17:41:27 macallan Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.97 2018/06/15 21:22:35 macallan Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.96 2018/06/14 17:41:27 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.97 2018/06/15 21:22:35 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1642,14 +1642,19 @@ radeonfb_calc_dividers(struct radeonfb_softc *sc, uint32_t dotclock,
 
 	DPRINTF(("dot clock: %u\n", dotclock));
 	for (i = 0; (div = radeonfb_dividers[i].divider) != 0; i++) {
-		if ((flags & NO_ODD_FBDIV) && ((div & 1) != 0)) continue;
+
+		if ((flags & NO_ODD_FBDIV) && ((div & 1) != 0))
+			continue;
+
 		/*
 		 * XXX
 		 * the rv350 in my last generation 14" iBook G4 produces
 		 * garbage with dividers > 4. No idea if this is a hardware
 		 * limitation or an error in the divider table.
 		 */
-		if ((sc->sc_family == RADEON_RV350) && (div > 4)) continue;
+		if ((sc->sc_family == RADEON_RV350) && (div > 4))
+			continue;
+
 		outfreq = div * dotclock;
 		if ((outfreq >= sc->sc_minpll) &&
 		    (outfreq <= sc->sc_maxpll)) {
