@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.786 2018/06/14 08:22:52 yamaguchi Exp $
+# $NetBSD: mi,v 1.787 2018/06/15 09:54:02 yamaguchi Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -161,6 +161,7 @@
 ./usr/libdata/debug/usr/tests/net/icmp					tests-net-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/net/if					tests-net-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/net/if_loop				tests-net-debug		compattestfile,atf
+./usr/libdata/debug/usr/tests/net/if_vlan				tests-net-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/net/in_cksum				tests-net-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/net/ipsec					tests-net-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/net/mcast					tests-net-debug		compattestfile,atf
