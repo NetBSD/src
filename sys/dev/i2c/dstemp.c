@@ -1,4 +1,4 @@
-/* $NetBSD: dstemp.c,v 1.1 2018/02/01 21:44:17 macallan Exp $ */
+/* $NetBSD: dstemp.c,v 1.2 2018/06/16 21:22:13 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dstemp.c,v 1.1 2018/02/01 21:44:17 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dstemp.c,v 1.2 2018/06/16 21:22:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,15 +81,15 @@ static int
 dstemp_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct i2c_attach_args *ia = aux;
+	int match_result;
 
-	if (ia->ia_name == NULL) {
-		/* no ID registers on this chip */
-		if ((ia->ia_addr & 0xf8) == 0x48)
-			return 1;
-		return 0;
-	} else {
-		return iic_compat_match(ia, dstemp_compats);
-	}
+	if (iic_use_direct_match(ia, match, dstemp_compats, &match_result))
+		return match_result;
+	
+	if ((ia->ia_addr & 0xf8) == 0x48)
+		return I2C_MATCH_ADDRESS_ONLY;
+
+	return 0;
 }
 
 static void

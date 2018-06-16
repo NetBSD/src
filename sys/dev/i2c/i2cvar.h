@@ -1,4 +1,4 @@
-/*	$NetBSD: i2cvar.h,v 1.13 2018/06/07 13:30:49 thorpej Exp $	*/
+/*	$NetBSD: i2cvar.h,v 1.14 2018/06/16 21:22:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -38,6 +38,7 @@
 #ifndef _DEV_I2C_I2CVAR_H_
 #define	_DEV_I2C_I2CVAR_H_
 
+#include <sys/device.h>
 #include <dev/i2c/i2c_io.h>
 #include <prop/proplib.h>
 
@@ -159,7 +160,13 @@ struct i2c_attach_args {
  * API presented to i2c controllers.
  */
 int	iicbus_print(void *, const char *);
-int	iic_compat_match(struct i2c_attach_args*, const char **);
+
+/*
+ * API presented to i2c devices.
+ */
+int	iic_compat_match(const struct i2c_attach_args *, const char **);
+bool	iic_use_direct_match(const struct i2c_attach_args *,
+			     const cfdata_t, const char **, int *);
 
 /*
  * Constants to indicate the quality of a match made by a driver's
@@ -176,7 +183,8 @@ int	iic_compat_match(struct i2c_attach_args*, const char **);
 #define	I2C_MATCH_ADDRESS_ONLY		1
 #define	I2C_MATCH_ADDRESS_AND_PROBE	2
 #define	I2C_MATCH_DIRECT_COMPATIBLE	10
-#define	I2C_MATCH_DIRECT_SPECIFIC	50
+#define	I2C_MATCH_DIRECT_COMPATIBLE_MAX	99
+#define	I2C_MATCH_DIRECT_SPECIFIC	100
 
 #ifdef _I2C_PRIVATE
 /*
