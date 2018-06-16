@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adm1026.c,v 1.2 2016/01/11 18:23:52 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adm1026.c,v 1.3 2018/06/16 21:22:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,22 +132,18 @@ adm1026_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct i2c_attach_args *ia = aux;
 	struct adm1026_softc sc;	/* For chip ident */
+	int match_result;
+
 	sc.sc_tag = ia->ia_tag;
 	sc.sc_address = ia->ia_addr;
 	sc.sc_iic_flags = 0;
 
-	/* Direct config - match compats */
-	if (ia->ia_name) {
-		if (ia->ia_ncompat > 0) {
-			if (iic_compat_match(ia, adm1026_compats))
-				return 1;
-		}
-	/* Indirect config - check address and chip ID/rev. */
-	} else {
-		if ((ia->ia_addr & ADM1026_ADDRMASK) == ADM1026_ADDR &&
-		    adm1026_ident(&sc))
-			return 1;
-	}
+	if (iic_use_direct_match(ia, cf, adm1026_compats, &match_result))
+		return match_result;
+
+	if ((ia->ia_addr & ADM1026_ADDRMASK) == ADM1026_ADDR &&
+	    adm1026_ident(&sc))
+		return I2C_MATCH_ADDRESS_AND_PROBE;
 
 	return 0;
 }
