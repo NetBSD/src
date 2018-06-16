@@ -7133,7 +7133,7 @@ zfs_modcmd(modcmd_t cmd, void *arg)
 		printf("WARNING: ZFS on NetBSD is under development\n");
 		availrmem = (uint64_t)physmem * PAGE_SIZE / 1048576;
 		if (availrmem < ZFS_MIN_MEGS * 80 / 100) {
-			printf("ERROR: at least %dMB of memory required to"
+			printf("ERROR: at least %dMB of memory required to "
 			    "use ZFS\n", ZFS_MIN_MEGS);
 			return ENOMEM;
 		}
