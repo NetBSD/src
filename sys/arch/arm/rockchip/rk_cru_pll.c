@@ -1,4 +1,4 @@
-/* $NetBSD: rk_cru_pll.c,v 1.1 2018/06/16 00:19:04 jmcneill Exp $ */
+/* $NetBSD: rk_cru_pll.c,v 1.2 2018/06/16 13:24:04 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_cru_pll.c,v 1.1 2018/06/16 00:19:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_cru_pll.c,v 1.2 2018/06/16 13:24:04 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -96,7 +96,7 @@ rk_cru_pll_get_rate(struct rk_cru_softc *sc,
 		foutvco = fref / refdiv * fbdiv;
 	} else {
 		/* fractional mode */
-		foutvco = fref / refdiv * (fbdiv + fracdiv / 224);
+		foutvco = fref / refdiv * fbdiv + ((fref * fracdiv) >> 24);
 	}
 	foutpostdiv = foutvco / postdiv1 / postdiv2;
 
