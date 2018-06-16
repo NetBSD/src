@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2398 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2399 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -163,3 +163,4 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	dhcpcd: Import 7.0.5b. [roy 20180604]
 	virtio(4): Add MMIO transport and fdt(4) attachment. [jakllsch 20180606]
 	arm: Add support for QEMU ARM Virtual Machine ("virt"). [jmcneill 20180614]
+	arm: Add support for Rockchip RK3328 SoC. [jmcneill 20180615]
