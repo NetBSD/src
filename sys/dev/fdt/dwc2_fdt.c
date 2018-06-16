@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_fdt.c,v 1.1 2018/06/16 00:19:04 jmcneill Exp $	*/
+/*	$NetBSD: dwc2_fdt.c,v 1.2 2018/06/16 23:44:26 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2_fdt.c,v 1.1 2018/06/16 00:19:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2_fdt.c,v 1.2 2018/06/16 23:44:26 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,8 +76,12 @@ static const struct dwc2_fdt_config dwc2_fdt_rk3066_config = {
 	.params = dwc2_fdt_rockchip_params,
 };
 
+static const struct dwc2_fdt_config dwc2_fdt_generic_config = {
+};
+
 static const struct of_compat_data compat_data[] = {
 	{ "rockchip,rk3066-usb",	(uintptr_t)&dwc2_fdt_rk3066_config },
+	{ "snps,dwc2",			(uintptr_t)&dwc2_fdt_generic_config },
 	{ NULL }
 };
 
