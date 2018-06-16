@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.97 2018/06/15 21:22:35 macallan Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.98 2018/06/16 01:25:23 macallan Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.97 2018/06/15 21:22:35 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.98 2018/06/16 01:25:23 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2226,7 +2226,11 @@ radeonfb_modeswitch(struct radeonfb_display *dp)
 	PUT32(sc, RADEON_GEN_INT_CNTL, 0);
 	PUT32(sc, RADEON_CAP0_TRIG_CNTL, 0);
 	PUT32(sc, RADEON_CAP1_TRIG_CNTL, 0);
-	PUT32(sc, RADEON_SURFACE_CNTL, 0);
+	/*
+	 * Apple OF hands us R3xx radeons with tiling enabled - explicitly
+	 * disable it here
+	 */
+	PUT32(sc, RADEON_SURFACE_CNTL, RADEON_SURF_TRANSLATION_DIS);
 
 	for (i = 0; i < dp->rd_ncrtcs; i++)
 		radeonfb_setcrtc(dp, i);
