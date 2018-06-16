@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.61 2018/06/07 13:30:49 thorpej Exp $	*/
+/*	$NetBSD: i2c.c,v 1.62 2018/06/16 21:22:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.61 2018/06/07 13:30:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.62 2018/06/16 21:22:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,8 +109,9 @@ iic_print_direct(void *aux, const char *pnp)
 	struct i2c_attach_args *ia = aux;
 
 	if (pnp != NULL)
-		aprint_normal("%s at %s addr 0x%02x", ia->ia_name, pnp,
-			ia->ia_addr);
+		aprint_normal("%s at %s addr 0x%02x",
+			      ia->ia_name ? ia->ia_name : "(unknown)",
+			      pnp, ia->ia_addr);
 	else
 		aprint_normal(" addr 0x%02x", ia->ia_addr);
 
@@ -452,8 +453,10 @@ iic_attach(device_t parent, device_t self, void *aux)
 			dev = prop_array_get(child_devices, i);
 			if (!dev) continue;
  			if (!prop_dictionary_get_cstring_nocopy(
-			    dev, "name", &name))
-				continue;
+			    dev, "name", &name)) {
+				/* "name" property is optional. */
+				name = NULL;
+			}
 			if (!prop_dictionary_get_uint32(dev, "addr", &addr))
 				continue;
 			if (!prop_dictionary_get_uint64(dev, "cookie", &cookie))
@@ -480,14 +483,21 @@ iic_attach(device_t parent, device_t self, void *aux)
 				    prop_data_data_nocopy(cdata),
 				    prop_data_size(cdata), &buf);
 
-			if (addr > I2C_MAX_ADDR) {
+			if (name == NULL && cdata == NULL) {
 				aprint_error_dev(self,
-				    "WARNING: ignoring bad device address "
-				    "@ 0x%02x\n", addr);
-			} else if (sc->sc_devices[addr] == NULL) {
-				sc->sc_devices[addr] =
-				    config_found_sm_loc(self, "iic", loc, &ia,
-					iic_print_direct, NULL);
+				    "WARNING: ignoring bad child device entry "
+				    "for address 0x%02x\n", addr);
+			} else {
+				if (addr > I2C_MAX_ADDR) {
+					aprint_error_dev(self,
+					    "WARNING: ignoring bad device "
+					    "address @ 0x%02x\n", addr);
+				} else if (sc->sc_devices[addr] == NULL) {
+					sc->sc_devices[addr] =
+					    config_found_sm_loc(self, "iic",
+					        loc, &ia, iic_print_direct,
+						NULL);
+				}
 			}
 
 			if (ia.ia_compat)
@@ -680,18 +690,58 @@ iic_fill_compat(struct i2c_attach_args *ia, const char *compat, size_t len,
 	ia->ia_ncompat = count;
 }
 
+/*
+ * iic_compat_match --
+ *	Match a device's "compatible" property against the list
+ *	of compatible strings provided by the driver.  Note that
+ *	we weight the match to the reverse index of the device's
+ *	"compatible" property strings so that a driver that matches
+ *	an lower-indexed "compatible" property is given a higher
+ *	match priority than one that matches a higher-indexed
+ *	"compatible" property.
+ */
 int
-iic_compat_match(struct i2c_attach_args *ia, const char ** compats)
+iic_compat_match(const struct i2c_attach_args *ia, const char **compats)
 {
-	int i;
+	int match_result = 0, i, ri;
+
+	if (ia->ia_ncompat == 0 || ia->ia_compat == NULL)
+		return 0;
 
 	for (; compats && *compats; compats++) {
-		for (i = 0; i < ia->ia_ncompat; i++) {
-			if (strcmp(*compats, ia->ia_compat[i]) == 0)
-				return 1;
+		for (i = 0, ri = ia->ia_ncompat - 1;
+		     i < ia->ia_ncompat;
+		     i++, ri--) {
+			if (strcmp(*compats, ia->ia_compat[i]) == 0) {
+				KASSERT(ri >= 0);
+				match_result =
+				    I2C_MATCH_DIRECT_COMPATIBLE + ri;
+			}
 		}
 	}
-	return 0;
+	match_result = MIN(match_result, I2C_MATCH_DIRECT_COMPATIBLE_MAX);
+	return match_result;
+}
+
+bool
+iic_use_direct_match(const struct i2c_attach_args *ia, const cfdata_t cf,
+		     const char **compats, int *match_resultp)
+{
+
+	KASSERT(match_resultp != NULL);
+
+	if (ia->ia_name != NULL &&
+	    strcmp(ia->ia_name, cf->cf_name) == 0) {
+		*match_resultp = I2C_MATCH_DIRECT_SPECIFIC;
+		return true;
+	}
+
+	if (ia->ia_ncompat > 0 && ia->ia_compat != NULL) {
+		*match_resultp = iic_compat_match(ia, compats);
+		return true;
+	}
+
+	return false;
 }
 
 static int

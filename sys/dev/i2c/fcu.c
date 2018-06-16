@@ -1,4 +1,4 @@
-/* $NetBSD: fcu.c,v 1.3 2018/03/21 15:41:34 macallan Exp $ */
+/* $NetBSD: fcu.c,v 1.4 2018/06/16 21:22:13 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fcu.c,v 1.3 2018/03/21 15:41:34 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fcu.c,v 1.4 2018/06/16 21:22:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,15 +124,15 @@ static int
 fcu_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct i2c_attach_args *ia = aux;
+	int match_result;
 
-	if (ia->ia_name == NULL) {
-		/* no ID registers on this chip */
-		if (ia->ia_addr == 0x2f)
-			return 1;
-		return 0;
-	} else {
-		return iic_compat_match(ia, fcu_compats);
-	}
+	if (iic_use_direct_match(ia, match, fcu_compats, &match_result))
+		return match_result;
+	
+	if (ia->ia_addr == 0x2f)
+		return I2C_MATCH_ADDRESS_ONLY;
+	
+	return 0;
 }
 
 static void

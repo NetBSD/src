@@ -1,4 +1,4 @@
-/* $NetBSD: titemp.c,v 1.4 2018/04/30 20:37:01 jmcneill Exp $ */
+/* $NetBSD: titemp.c,v 1.5 2018/06/16 21:22:13 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: titemp.c,v 1.4 2018/04/30 20:37:01 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: titemp.c,v 1.5 2018/06/16 21:22:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,25 +94,24 @@ titemp_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct i2c_attach_args *ia = aux;
 	uint8_t mfid;
-	int error;
+	int error, match_result;
 
-	if (ia->ia_name == NULL) {
-		if (ia->ia_addr != 0x4c)
-			return 0;
+	if (iic_use_direct_match(ia, match, titemp_compats, &match_result))
+		return match_result;
+	
+	if (ia->ia_addr != 0x4c)
+		return 0;
 
-		if (iic_acquire_bus(ia->ia_tag, I2C_F_POLL) != 0)
-			return 0;
-		error = iic_smbus_read_byte(ia->ia_tag, ia->ia_addr,
-		    TITEMP_MFID_REG, &mfid, I2C_F_POLL);
-		iic_release_bus(ia->ia_tag, I2C_F_POLL);
+	if (iic_acquire_bus(ia->ia_tag, I2C_F_POLL) != 0)
+		return 0;
+	error = iic_smbus_read_byte(ia->ia_tag, ia->ia_addr,
+	    TITEMP_MFID_REG, &mfid, I2C_F_POLL);
+	iic_release_bus(ia->ia_tag, I2C_F_POLL);
 
-		if (error || mfid != TITEMP_MFID_TMP451)
-			return 0;
+	if (error || mfid != TITEMP_MFID_TMP451)
+		return 0;
 
-		return 1;
-	} else {
-		return iic_compat_match(ia, titemp_compats);
-	}
+	return I2C_MATCH_ADDRESS_AND_PROBE;
 }
 
 static void

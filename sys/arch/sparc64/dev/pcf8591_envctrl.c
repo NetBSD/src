@@ -1,4 +1,4 @@
-/*	$NetBSD: pcf8591_envctrl.c,v 1.6 2012/03/18 05:26:58 mrg Exp $	*/
+/*	$NetBSD: pcf8591_envctrl.c,v 1.7 2018/06/16 21:22:13 thorpej Exp $	*/
 /*	$OpenBSD: pcf8591_envctrl.c,v 1.6 2007/10/25 21:17:20 kettenis Exp $ */
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcf8591_envctrl.c,v 1.6 2012/03/18 05:26:58 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcf8591_envctrl.c,v 1.7 2018/06/16 21:22:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,9 +78,12 @@ static int
 ecadc_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct i2c_attach_args *ia = aux;
+	int match_result;
 
-	if (iic_compat_match(ia, ecadc_compats))
-		return 1;
+	if (iic_use_direct_match(ia, cf, ecadc_compats, &match_result))
+		return match_result;
+
+	/* This driver is direct-config only. */
 
 	return 0;
 }

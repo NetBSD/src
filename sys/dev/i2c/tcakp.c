@@ -1,4 +1,4 @@
-/* $NetBSD: tcakp.c,v 1.6 2018/04/30 20:33:09 jmcneill Exp $ */
+/* $NetBSD: tcakp.c,v 1.7 2018/06/16 21:22:13 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcakp.c,v 1.6 2018/04/30 20:33:09 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcakp.c,v 1.7 2018/06/16 21:22:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -316,13 +316,15 @@ static int
 tcakp_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct i2c_attach_args *ia = aux;
+	int match_result;
 
-	if (ia->ia_name == NULL) {
-		if (ia->ia_addr == 0x34)
-			return 1;
-		return 0;
-	} else
-		return iic_compat_match(ia, tcakp_compats);
+	if (iic_use_direct_match(ia, match, tcakp_compats, &match_result))
+		return match_result;
+
+	if (ia->ia_addr == 0x34)
+		return I2C_MATCH_ADDRESS_ONLY;
+	
+	return 0;
 }
 
 static void

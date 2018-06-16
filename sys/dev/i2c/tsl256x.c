@@ -1,4 +1,4 @@
-/* $NetBSD: tsl256x.c,v 1.3 2018/06/07 05:54:23 thorpej Exp $ */
+/* $NetBSD: tsl256x.c,v 1.4 2018/06/16 21:22:13 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 Jason R. Thorpe
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsl256x.c,v 1.3 2018/06/07 05:54:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsl256x.c,v 1.4 2018/06/16 21:22:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,38 +110,35 @@ tsllux_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct i2c_attach_args *ia = aux;
 	uint8_t id_reg;
-	int error;
+	int error, match_result;
 
-	if (ia->ia_name == NULL) {
-		switch (ia->ia_addr) {
-		case TSL256x_SLAVEADDR_GND:
-		case TSL256x_SLAVEADDR_FLOAT:
-		case TSL256x_SLAVEADDR_VDD:
-			break;
+	if (iic_use_direct_match(ia, match, tsllux_compats, &match_result))
+		return (match_result);
 
-		default:
-			return (0);
-		}
+	switch (ia->ia_addr) {
+	case TSL256x_SLAVEADDR_GND:
+	case TSL256x_SLAVEADDR_FLOAT:
+	case TSL256x_SLAVEADDR_VDD:
+		break;
 
-		if (iic_acquire_bus(ia->ia_tag, I2C_F_POLL) != 0)
-			return (0);
-		error = iic_smbus_read_byte(ia->ia_tag, ia->ia_addr,
-		    TSL256x_REG_ID | COMMAND_CMD, &id_reg, I2C_F_POLL);
-		iic_release_bus(ia->ia_tag, I2C_F_POLL);
-
-		if (error)
-			return (0);
-
-		/*
-		 * XXX This loses if we have a 2560 rev. 0.
-		 */
-		if (id_reg == 0)
-			return (0);
-
-		return (1);
-	} else {
-		return iic_compat_match(ia, tsllux_compats);
+	default:
+		return (0);
 	}
+
+	if (iic_acquire_bus(ia->ia_tag, I2C_F_POLL) != 0)
+		return (0);
+	error = iic_smbus_read_byte(ia->ia_tag, ia->ia_addr,
+	    TSL256x_REG_ID | COMMAND_CMD, &id_reg, I2C_F_POLL);
+	iic_release_bus(ia->ia_tag, I2C_F_POLL);
+
+	if (error)
+		return (0);
+
+	/* XXX This loses if we have a 2560 rev. 0. */
+	if (id_reg == 0)
+		return (I2C_MATCH_ADDRESS_ONLY);
+
+	return (I2C_MATCH_ADDRESS_AND_PROBE);
 }
 
 static void
@@ -517,7 +514,7 @@ static int
 tsllux_write2(struct tsllux_softc *sc, uint8_t reg, uint16_t val)
 {
 	reg = (reg & REGMASK) | COMMAND_CMD | COMMAND_WORD;
-	return (iic_smbus_write_byte(sc->sc_i2c, sc->sc_addr, reg, val,
+	return (iic_smbus_write_word(sc->sc_i2c, sc->sc_addr, reg, val,
 				     sc->sc_i2c_flags));
 }
 #endif

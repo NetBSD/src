@@ -1,4 +1,4 @@
-/* $NetBSD: ibmhawk.c,v 1.6 2018/06/06 01:49:08 maya Exp $ */
+/* $NetBSD: ibmhawk.c,v 1.7 2018/06/16 21:22:13 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -109,7 +109,8 @@ ibmhawk_match(device_t parent, cfdata_t match, void *aux)
 	sc.sc_addr = ia->ia_addr;
 	if (ibmhawk_request(&sc, IHR_EQUIP, &resp))
 		return 0;
-	return 1;
+
+	return I2C_MATCH_ADDRESS_AND_PROBE;
 }
 
 static void

@@ -1,4 +1,4 @@
-/* $NetBSD: axp20x.c,v 1.10 2017/10/22 11:00:28 jmcneill Exp $ */
+/* $NetBSD: axp20x.c,v 1.11 2018/06/16 21:22:13 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: axp20x.c,v 1.10 2017/10/22 11:00:28 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: axp20x.c,v 1.11 2018/06/16 21:22:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,6 +46,8 @@ __KERNEL_RCSID(0, "$NetBSD: axp20x.c,v 1.10 2017/10/22 11:00:28 jmcneill Exp $")
 #ifdef FDT
 #include <dev/fdt/fdtvar.h>
 #endif
+
+#define	AXP209_I2C_ADDR		0x34
 
 #define AXP_INPUT_STATUS	0x00
 #define AXP_INPUT_STATUS_AC_PRESENT	__BIT(7)
@@ -221,11 +223,14 @@ static int
 axp20x_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct i2c_attach_args * const ia = aux;
+	int match_result;
 
-	if (ia->ia_name != NULL)
-		return iic_compat_match(ia, compatible);
+	if (iic_use_direct_match(ia, match, compatible, &match_result))
+		return match_result;
 
-	return 1;
+	/* This device is direct-config only. */
+
+	return 0;
 }
 
 static void

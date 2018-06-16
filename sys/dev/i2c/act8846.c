@@ -1,4 +1,4 @@
-/* $NetBSD: act8846.c,v 1.4 2018/04/30 20:26:09 jmcneill Exp $ */
+/* $NetBSD: act8846.c,v 1.5 2018/06/16 21:22:13 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 //#define ACT_DEBUG
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: act8846.c,v 1.4 2018/04/30 20:26:09 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: act8846.c,v 1.5 2018/06/16 21:22:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,7 +151,7 @@ act8846_match(device_t parent, cfdata_t match, void *aux)
 	struct i2c_attach_args *ia = aux;
 
 	if (ia->ia_addr == 0x5a)
-		return 1;
+		return I2C_MATCH_ADDRESS_ONLY;
 
 	return 0;
 }
