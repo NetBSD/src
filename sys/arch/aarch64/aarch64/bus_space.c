@@ -1,4 +1,4 @@
-/* $NetBSD: bus_space.c,v 1.4 2018/06/08 18:09:43 jmcneill Exp $ */
+/* $NetBSD: bus_space.c,v 1.5 2018/06/16 13:53:45 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: bus_space.c,v 1.4 2018/06/08 18:09:43 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bus_space.c,v 1.5 2018/06/16 13:53:45 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -166,6 +166,8 @@ struct bus_space arm_generic_bs_tag = {
 };
 
 struct bus_space aarch64_generic_dsb_bs_tag = {
+	.bs_cookie = &aarch64_generic_dsb_bs_tag,
+
 	.bs_stride = 0,
 	.bs_flags = 0,
 
@@ -408,6 +410,8 @@ struct bus_space arm_generic_a4x_bs_tag = {
 };
 
 struct bus_space aarch64_generic_a4x_dsb_bs_tag = {
+	.bs_cookie = &aarch64_generic_a4x_dsb_bs_tag,
+
 	.bs_stride = 2,
 	.bs_flags = 0,
 
