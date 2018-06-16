@@ -1,4 +1,4 @@
-/* $NetBSD: rk_iomux.c,v 1.1 2018/06/16 00:19:04 jmcneill Exp $ */
+/* $NetBSD: rk_iomux.c,v 1.2 2018/06/16 23:13:29 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_iomux.c,v 1.1 2018/06/16 00:19:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_iomux.c,v 1.2 2018/06/16 23:13:29 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -39,11 +39,6 @@ __KERNEL_RCSID(0, "$NetBSD: rk_iomux.c,v 1.1 2018/06/16 00:19:04 jmcneill Exp $"
 #include <sys/lwp.h>
 
 #include <dev/fdt/fdtvar.h>
-
-#define	GRF_GPIO_IOMUX_REG(_bank, _idx)	(0x0000 + (_bank) * 0x10 + ((_idx) >> 3) * 4)
-#define	 GRF_GPIO_IOMUX_SEL(_idx)	(0x3 << (((_idx) & 7) * 2))
-#define	  GRF_GPIO_IOMUX_SEL_MASK	0x3
-#define	 GRF_GPIO_IOMUX_WRITE_EN(_idx)	(0x3 << (((_idx) & 7) * 2 + 16))
 
 #define	GRF_GPIO_P_REG(_bank, _idx)	(0x0100 + (_bank) * 0x10 + ((_idx) >> 3) * 4)
 #define	 GRF_GPIO_P_CTL(_idx)		(0x3 << (((_idx) & 7) * 2))
