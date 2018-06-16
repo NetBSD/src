@@ -1,4 +1,4 @@
-/*	$NetBSD: deq.c,v 1.13 2018/05/04 17:15:23 macallan Exp $	*/
+/*	$NetBSD: deq.c,v 1.14 2018/06/16 21:22:13 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 2005 Michael Lorenz
@@ -32,7 +32,7 @@
  */
  
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: deq.c,v 1.13 2018/05/04 17:15:23 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: deq.c,v 1.14 2018/06/16 21:22:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,15 +65,13 @@ int
 deq_match(device_t parent, struct cfdata *cf, void *aux)
 {
 	struct i2c_attach_args *ia = aux;
-	
-	if (ia->ia_name) {
-		if (ia->ia_ncompat > 0) {
-			if (iic_compat_match(ia, deq_compats))
-				return 1;
-		}
-		if (strcmp(ia->ia_name, "deq") == 0)
-			return 1;
-	}
+	int match_result;
+
+	if (iic_use_direct_match(ia, cf, deq_compats, &match_result))
+		return match_result;
+
+	/* This driver is direct-config only. */
+
 	return 0;
 }
 

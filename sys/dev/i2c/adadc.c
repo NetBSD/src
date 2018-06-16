@@ -1,4 +1,4 @@
-/* $NetBSD: adadc.c,v 1.3 2018/03/16 22:10:31 macallan Exp $ */
+/* $NetBSD: adadc.c,v 1.4 2018/06/16 21:22:13 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 Michael Lorenz
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adadc.c,v 1.3 2018/03/16 22:10:31 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adadc.c,v 1.4 2018/06/16 21:22:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,19 +105,20 @@ static int
 adadc_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct i2c_attach_args *ia = aux;
+	int match_result;
 
-	if (ia->ia_name == NULL) {
-		/*
-		 * XXX
-		 * this driver is pretty much useless without OF, should
-		 * probably remove this
-		 */
-		if ((ia->ia_addr & 0x2b) == 0x2b)
-			return 1;
-		return 0;
-	} else {
-		return iic_compat_match(ia, dstemp_compats);
-	}
+	if (iic_use_direct_match(ia, match, dstemp_compats, &match_result))
+		return match_result;
+
+	/*
+	 * XXX
+	 * this driver is pretty much useless without OF, should
+	 * probably remove this
+	 */
+	if ((ia->ia_addr & 0x2b) == 0x2b)
+		return I2C_MATCH_ADDRESS_ONLY;
+
+	return 0;
 }
 
 static void

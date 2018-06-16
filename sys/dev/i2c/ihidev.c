@@ -1,4 +1,4 @@
-/* $NetBSD: ihidev.c,v 1.2 2018/03/20 12:14:52 bouyer Exp $ */
+/* $NetBSD: ihidev.c,v 1.3 2018/06/16 21:22:13 thorpej Exp $ */
 /* $OpenBSD ihidev.c,v 1.13 2017/04/08 02:57:23 deraadt Exp $ */
 
 /*-
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ihidev.c,v 1.2 2018/03/20 12:14:52 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ihidev.c,v 1.3 2018/06/16 21:22:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,11 +129,11 @@ static int
 ihidev_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct i2c_attach_args * const ia = aux;
+	int match_result;
 
-	if (ia->ia_ncompat > 0) {
-		if (iic_compat_match(ia, ihidev_compats))
-			return 1;
-	}
+	if (iic_use_direct_match(ia, match, ihidev_compats, &match_result))
+		return I2C_MATCH_DIRECT_COMPATIBLE;
+
 	return 0;
 }
 

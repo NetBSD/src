@@ -1,4 +1,4 @@
-/* $NetBSD: tcagpio.c,v 1.1 2017/09/22 18:12:31 jmcneill Exp $ */
+/* $NetBSD: tcagpio.c,v 1.2 2018/06/16 21:22:13 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcagpio.c,v 1.1 2017/09/22 18:12:31 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcagpio.c,v 1.2 2018/06/16 21:22:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -246,11 +246,12 @@ static int
 tcagpio_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct i2c_attach_args *ia = aux;
+	int match_result;
 
-	if (ia->ia_name == NULL)
-		return 0;
+	if (iic_use_direct_match(ia, match, compatible, &match_result))
+		return match_result;
 
-	return iic_compat_match(ia, compatible);
+	return 0;
 }
 
 static void
