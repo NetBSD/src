@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.116 2018/06/14 14:36:46 maxv Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.117 2018/06/16 17:11:13 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.116 2018/06/14 14:36:46 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.117 2018/06/16 17:11:13 maxv Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -1277,12 +1277,8 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 #endif
 
 #ifndef XEN
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_READWRITE,
-		       CTLTYPE_BOOL, "fpu_eager",
-		       SYSCTL_DESCR("Whether the kernel uses Eager FPU Switch"),
-		       NULL, 0, &x86_fpu_eager, 0,
-		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+	void sysctl_eagerfpu_init(struct sysctllog **);
+	sysctl_eagerfpu_init(clog);
 #endif
 
 	/* None of these can ever change once the system has booted */
