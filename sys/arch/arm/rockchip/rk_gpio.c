@@ -1,4 +1,4 @@
-/* $NetBSD: rk_gpio.c,v 1.1 2018/06/16 00:19:04 jmcneill Exp $ */
+/* $NetBSD: rk_gpio.c,v 1.2 2018/06/16 12:49:46 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_gpio.c,v 1.1 2018/06/16 00:19:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_gpio.c,v 1.2 2018/06/16 12:49:46 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -190,8 +190,10 @@ rk_gpio_write(device_t dev, void *priv, int val, bool raw)
 
 	mutex_enter(&sc->sc_lock);
 	data = RD4(sc, GPIO_SWPORTA_DR_REG);
-	data &= ~data_mask;
-	data |= __SHIFTIN(val, data_mask);
+	if (val)
+		data |= data_mask;
+	else
+		data &= ~data_mask;
 	WR4(sc, GPIO_SWPORTA_DR_REG, data);
 	mutex_exit(&sc->sc_lock);
 }
@@ -215,7 +217,7 @@ rk_gpio_pin_read(void *priv, int pin)
 	const uint32_t data_mask = __BIT(pin);
 
 	/* No lock required for reads */
-	data = RD4(sc, GPIO_SWPORTA_DR_REG);
+	data = RD4(sc, GPIO_EXT_PORTA_REG);
 	val = __SHIFTOUT(data, data_mask);
 
 	return val;
