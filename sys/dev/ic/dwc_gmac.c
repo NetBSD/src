@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac.c,v 1.45 2017/12/21 12:09:43 martin Exp $ */
+/* $NetBSD: dwc_gmac.c,v 1.46 2018/06/16 00:15:00 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.45 2017/12/21 12:09:43 martin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.46 2018/06/16 00:15:00 jmcneill Exp $");
 
 /* #define	DWC_GMAC_DEBUG	1 */
 
@@ -123,7 +123,6 @@ static uint32_t	bitrev32(uint32_t x);
 #define	AWIN_DEF_MAC_INTRMASK	\
 	(AWIN_GMAC_MAC_INT_TSI | AWIN_GMAC_MAC_INT_ANEG |	\
 	AWIN_GMAC_MAC_INT_LINKCHG | AWIN_GMAC_MAC_INT_RGSMII)
-
 
 #ifdef DWC_GMAC_DEBUG
 static void dwc_gmac_dump_dma(struct dwc_gmac_softc *sc);
@@ -734,6 +733,8 @@ dwc_gmac_miibus_statchg(struct ifnet *ifp)
 	case IFM_1000_T:
 		break;
 	}
+	if (sc->sc_set_speed)
+		sc->sc_set_speed(sc, IFM_SUBTYPE(mii->mii_media_active));
 
 	flow = 0;
 	if (IFM_OPTIONS(mii->mii_media_active) & IFM_FDX) {
@@ -822,9 +823,11 @@ dwc_gmac_init_locked(struct ifnet *ifp)
 	/*
 	 * Start RX/TX part
 	 */
-	bus_space_write_4(sc->sc_bst, sc->sc_bsh,
-	    AWIN_GMAC_DMA_OPMODE, GMAC_DMA_OP_RXSTART | GMAC_DMA_OP_TXSTART |
-	    GMAC_DMA_OP_RXSTOREFORWARD | GMAC_DMA_OP_TXSTOREFORWARD);
+	uint32_t opmode = GMAC_DMA_OP_RXSTART | GMAC_DMA_OP_TXSTART;
+	if ((sc->sc_flags & DWC_GMAC_FORCE_THRESH_DMA_MODE) == 0) {
+		opmode |= GMAC_DMA_OP_RXSTOREFORWARD | GMAC_DMA_OP_TXSTOREFORWARD;
+	}
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_DMA_OPMODE, opmode);
 
 	sc->sc_stopping = false;
 
