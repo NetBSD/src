@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.34 2018/06/14 18:00:15 maxv Exp $	*/
+/*	$NetBSD: fpu.c,v 1.35 2018/06/16 05:52:17 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.  All
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.34 2018/06/14 18:00:15 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.35 2018/06/16 05:52:17 maxv Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -333,14 +333,6 @@ fpu_restore(struct lwp *l)
 }
 
 static void
-fpu_reset(void)
-{
-	clts();
-	fninit();
-	stts();
-}
-
-static void
 fpu_eagerrestore(struct lwp *l)
 {
 	struct pcb *pcb = lwp_getpcb(l);
@@ -359,9 +351,7 @@ fpu_eagerswitch(struct lwp *oldlwp, struct lwp *newlwp)
 
 	s = splhigh();
 	fpusave_cpu(true);
-	if (newlwp->l_flag & LW_SYSTEM)
-		fpu_reset();
-	else
+	if (!(newlwp->l_flag & LW_SYSTEM))
 		fpu_eagerrestore(newlwp);
 	splx(s);
 }
