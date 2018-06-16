@@ -1,4 +1,4 @@
-/* $NetBSD: axppmic.c,v 1.10 2018/05/26 14:39:20 jmcneill Exp $ */
+/* $NetBSD: axppmic.c,v 1.11 2018/06/16 21:22:13 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: axppmic.c,v 1.10 2018/05/26 14:39:20 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: axppmic.c,v 1.11 2018/06/16 21:22:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -679,14 +679,25 @@ axppmic_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct i2c_attach_args *ia = aux;
 
+	/* XXXJRT Gross. */
 	if (ia->ia_name != NULL) {
-		if (ia->ia_cookie)
-			return of_match_compat_data(ia->ia_cookie, compat_data);
-		else
+		if (ia->ia_cookie) {
+			int match_result =
+			    of_match_compat_data(ia->ia_cookie, compat_data);
+			if (match_result) {
+				match_result = match_result - 1 +
+				    I2C_MATCH_DIRECT_COMPATIBLE;
+				match_result = MIN(match_result,
+				    I2C_MATCH_DIRECT_COMPATIBLE_MAX);
+			}
+			return match_result;
+		} else
 			return 0;
 	}
 
-	return 1;
+	/* This device is direct-config only. */
+
+	return 0;
 }
 
 static void
