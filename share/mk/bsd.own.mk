@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1064 2018/06/02 14:30:35 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.1065 2018/06/16 19:05:17 mrg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1177,7 +1177,7 @@ _MKVARS.no= \
 	MKX11 MKX11MOTIF MKXORG_SERVER \
 	MKZFS
 .for var in ${_MKVARS.no}
-${var}?=	${${var}.${MACHINE_ARCH}:Uno}
+${var}?=	${${var}.${MACHINE_ARCH}:U${${var}.${MACHINE}:Uno}}
 .endfor
 
 .if ${MACHINE_ARCH} == "i386" || \
