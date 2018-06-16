@@ -1,4 +1,4 @@
-/*	$NetBSD: g760a.c,v 1.4 2012/07/29 07:04:09 mlelstv Exp $	*/
+/*	$NetBSD: g760a.c,v 1.5 2018/06/16 21:22:13 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 2008 A.Leo.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: g760a.c,v 1.4 2012/07/29 07:04:09 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: g760a.c,v 1.5 2018/06/16 21:22:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,7 +79,7 @@ g760a_match(device_t parent, struct cfdata* cf, void* arg)
 		/*
 		 * TODO: set up minimal speed? 
 		 */
-		return 1;
+		return I2C_MATCH_ADDRESS_ONLY;
 	}
 
 	return 0;

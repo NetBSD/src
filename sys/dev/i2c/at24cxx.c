@@ -1,4 +1,4 @@
-/*	$NetBSD: at24cxx.c,v 1.25 2017/10/28 04:53:55 riastradh Exp $	*/
+/*	$NetBSD: at24cxx.c,v 1.26 2018/06/16 21:22:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at24cxx.c,v 1.25 2017/10/28 04:53:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at24cxx.c,v 1.26 2018/06/16 21:22:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,21 +131,15 @@ static int
 seeprom_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct i2c_attach_args *ia = aux;
+	int match_result;
 
-	if (ia->ia_name) {
-		if (ia->ia_ncompat > 0) {
-			if (iic_compat_match(ia, seeprom_compats))
-				return (1);
-		} else {
-			if (strcmp(ia->ia_name, "seeprom") == 0)
-				return (1);
-		}
-	} else {
-		if ((ia->ia_addr & AT24CXX_ADDRMASK) == AT24CXX_ADDR)
-			return (1);
-	}
+	if (iic_use_direct_match(ia, cf, seeprom_compats, &match_result))
+		return match_result;
 
-	return (0);
+	if ((ia->ia_addr & AT24CXX_ADDRMASK) == AT24CXX_ADDR)
+		return I2C_MATCH_ADDRESS_ONLY;
+
+	return 0;
 }
 
 static void
