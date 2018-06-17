@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.36 2018/06/16 17:11:13 maxv Exp $	*/
+/*	$NetBSD: fpu.c,v 1.37 2018/06/17 06:03:40 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.  All
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.36 2018/06/16 17:11:13 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.37 2018/06/17 06:03:40 maxv Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -397,10 +397,6 @@ fputrap(struct trapframe *frame)
 	if (!USERMODE(frame->tf_cs))
 		panic("fpu trap from kernel, trapframe %p\n", frame);
 
-	if (__predict_false(x86_fpu_eager)) {
-		panic("%s: got DNA with EagerFPU enabled", __func__);
-	}
-
 	/*
 	 * At this point, fpcurlwp should be curlwp.  If it wasn't, the TS bit
 	 * should be set, and we should have gotten a DNA exception.
@@ -473,6 +469,11 @@ fpudna(struct trapframe *frame)
 	pcb = lwp_getpcb(l);
 	fl = ci->ci_fpcurlwp;
 	if (fl != NULL) {
+		if (__predict_false(x86_fpu_eager)) {
+			panic("%s: FPU busy with EagerFPU enabled",
+			    __func__);
+		}
+
 		/*
 		 * It seems we can get here on Xen even if we didn't
 		 * switch lwp.  In this case do nothing
@@ -488,6 +489,11 @@ fpudna(struct trapframe *frame)
 
 	/* Save our state if on a remote CPU. */
 	if (pcb->pcb_fpcpu != NULL) {
+		if (__predict_false(x86_fpu_eager)) {
+			panic("%s: LWP busy with EagerFPU enabled",
+			    __func__);
+		}
+
 		/* Explicitly disable preemption before dropping spl. */
 		kpreempt_disable();
 		splx(s);
