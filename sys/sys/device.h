@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.151 2018/03/04 07:13:11 mlelstv Exp $ */
+/* $NetBSD: device.h,v 1.152 2018/06/17 15:06:27 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -123,6 +123,29 @@ typedef struct cfdriver *cfdriver_t;
 typedef struct cfattach *cfattach_t;
 
 #if defined(_KERNEL) || defined(_KMEMUSER)
+struct device_compatible_entry {
+	const char **	dce_compat_strings;
+	union {
+		uintptr_t dceu_val;
+		const void *dceu_ptr;
+	} dce_un;
+};
+#define	DEVICE_COMPAT_ENTRY_WITH_DATA(strings, opaque)			\
+	{ .dce_compat_strings = (strings),				\
+	  .dce_un.dceu_val = (uintptr_t)(opaque) }
+
+#define	DEVICE_COMPAT_ENTRY(strings)					\
+	DEVICE_COMPAT_ENTRY_WITH_DATA(strings, 0)
+
+#define	DEVICE_COMPAT_TERMINATOR					\
+	{ .dce_compat_strings = NULL }
+
+#define	DEVICE_COMPAT_ENTRY_GET_STRINGS(_dce)	((_dce)->dce_compat_strings)
+#define	DEVICE_COMPAT_ENTRY_GET_NUM(_dce)	((_dce)->dce_un.dceu_val)
+#define	DEVICE_COMPAT_ENTRY_GET_PTR(_dce)	((_dce)->dce_un.dceu_ptr)
+#define	DEVICE_COMPAT_ENTRY_IS_TERMINATOR(_dce)				\
+	(((_dce) == NULL || (_dce)->dce_compat_strings == NULL) ? true : false)
+
 struct device_lock {
 	int		dvl_nwait;
 	int		dvl_nlock;
