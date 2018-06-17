@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.153 2017/11/19 03:23:01 kre Exp $	*/
+/*	$NetBSD: eval.c,v 1.154 2018/06/17 17:19:06 kre Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.153 2017/11/19 03:23:01 kre Exp $");
+__RCSID("$NetBSD: eval.c,v 1.154 2018/06/17 17:19:06 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -931,7 +931,7 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 			cmd_flags |= DO_NOFUNC;
 			argsused = parse_command_args(argc, argv, &use_syspath);
 			if (argsused == 0) {
-				/* use 'type' builting to display info */
+				/* use 'type' builtin to display info */
 				cmdentry.u.bltin = typecmd;
 				break;
 			}
