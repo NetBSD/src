@@ -1,4 +1,4 @@
-/* $NetBSD: rk_cru.c,v 1.1 2018/06/16 00:19:04 jmcneill Exp $ */
+/* $NetBSD: rk_cru.c,v 1.2 2018/06/17 11:52:38 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_fdt_arm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_cru.c,v 1.1 2018/06/16 00:19:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_cru.c,v 1.2 2018/06/17 11:52:38 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -64,10 +64,10 @@ rk_cru_reset_assert(device_t dev, void *priv)
 {
 	struct rk_cru_softc * const sc = device_private(dev);
 	const uintptr_t reset_id = (uintptr_t)priv;
-	const bus_size_t reg = CRU_SOFTRST_CON0 + (reset_id / 32) * 4;
-	const u_int shift = reset_id % 32;
+	const bus_size_t reg = CRU_SOFTRST_CON0 + (reset_id / 16) * 4;
+	const u_int shift = reset_id % 16;
 
-	CRU_WRITE(sc, reg, (1 << (shift + 16)) | (0 << shift));
+	CRU_WRITE(sc, reg, (1 << (shift + 16)) | (1 << shift));
 
 	return 0;
 }
@@ -77,10 +77,10 @@ rk_cru_reset_deassert(device_t dev, void *priv)
 {
 	struct rk_cru_softc * const sc = device_private(dev);
 	const uintptr_t reset_id = (uintptr_t)priv;
-	const bus_size_t reg = CRU_SOFTRST_CON0 + (reset_id / 32) * 4;
-	const u_int shift = reset_id % 32;
+	const bus_size_t reg = CRU_SOFTRST_CON0 + (reset_id / 16) * 4;
+	const u_int shift = reset_id % 16;
 
-	CRU_WRITE(sc, reg, (1 << (shift + 16)) | (1 << shift));
+	CRU_WRITE(sc, reg, (1 << (shift + 16)) | (0 << shift));
 
 	return 0;
 }
