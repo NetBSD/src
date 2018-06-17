@@ -1,4 +1,4 @@
-/*	$NetBSD: am2315.c,v 1.3 2018/06/16 21:22:13 thorpej Exp $	*/
+/*	$NetBSD: am2315.c,v 1.4 2018/06/17 01:07:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2017 Brad Spencer <brad@anduin.eldar.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: am2315.c,v 1.3 2018/06/16 21:22:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am2315.c,v 1.4 2018/06/17 01:07:06 thorpej Exp $");
 
 /*
  * Driver for the Aosong AM2315
@@ -172,7 +172,6 @@ am2315_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct i2c_attach_args *ia = aux;
 	int rv;
-	const bool matchdebug = false;
 	int match_result;
 
 	if (iic_use_direct_match(ia, match, NULL, &match_result))
