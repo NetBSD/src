@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmr.c,v 1.29 2018/06/09 01:17:35 jakllsch Exp $	*/
+/*	$NetBSD: gtmr.c,v 1.30 2018/06/17 22:42:41 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.29 2018/06/09 01:17:35 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.30 2018/06/17 22:42:41 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -89,7 +89,6 @@ reg ## _stable_read(struct gtmr_softc *sc) \
 
 stable_read(gtmr_cntv_cval);
 stable_read(gtmr_cntvct);
-stable_read(gtmr_cntpct);
 
 static int gtmr_match(device_t, cfdata_t, void *);
 static void gtmr_attach(device_t, device_t, void *);
@@ -177,8 +176,6 @@ gtmr_attach(device_t parent, device_t self, void *aux)
 	    device_xname(self), "CNTV_CVAL read retry max");
 	evcnt_attach_dynamic(&gtmr_cntvct_read_ev, EVCNT_TYPE_MISC, NULL,
 	    device_xname(self), "CNTVCT read retry max");
-	evcnt_attach_dynamic(&gtmr_cntpct_read_ev, EVCNT_TYPE_MISC, NULL,
-	    device_xname(self), "CNTPCT read retry max");
 
 	if (mpcaa->mpcaa_irq != -1) {
 		sc->sc_global_ih = intr_establish(mpcaa->mpcaa_irq, IPL_CLOCK,
@@ -256,24 +253,19 @@ gtmr_delay(unsigned int n)
 	KASSERT(freq != 0);
 
 	const unsigned int incr_per_us = howmany(freq, 1000000);
-	unsigned int delta = 0, usecs = 0;
+	int64_t ticks = (int64_t)n * incr_per_us;
 
 	arm_isb();
-	uint64_t last = gtmr_cntpct_stable_read(sc);
+	uint64_t last = gtmr_cntvct_stable_read(sc);
 
-	while (n > usecs) {
+	while (ticks > 0) {
 		arm_isb();
-		uint64_t curr = gtmr_cntpct_stable_read(sc);
-		if (curr < last)
-			delta += curr + (UINT64_MAX - last);
+		uint64_t curr = gtmr_cntvct_stable_read(sc);
+		if (curr > last)
+			ticks -= (curr - last);
 		else
-			delta += curr - last;
-
+			ticks -= (UINT64_MAX - curr + last);
 		last = curr;
-		if (delta >= incr_per_us) {
-			usecs += delta / incr_per_us;
-			delta %= incr_per_us;
-		}
 	}
 }
 
@@ -347,5 +339,5 @@ gtmr_get_timecount(struct timecounter *tc)
 {
 	struct gtmr_softc * const sc = tc->tc_priv;
 	arm_isb();	// we want the time NOW, not some instructions later.
-	return (u_int) gtmr_cntpct_stable_read(sc);
+	return (u_int) gtmr_cntvct_stable_read(sc);
 }
