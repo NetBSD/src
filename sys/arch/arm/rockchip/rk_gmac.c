@@ -1,4 +1,4 @@
-/* $NetBSD: rk_gmac.c,v 1.1 2018/06/16 00:19:04 jmcneill Exp $ */
+/* $NetBSD: rk_gmac.c,v 1.2 2018/06/17 00:33:05 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rk_gmac.c,v 1.1 2018/06/16 00:19:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_gmac.c,v 1.2 2018/06/17 00:33:05 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -79,11 +79,10 @@ struct rk_gmac_softc {
 static int
 rk_gmac_reset(const int phandle)
 {
-#if notyet
 	struct fdtbus_gpio_pin *pin_reset;
 	const u_int *reset_delay_us;
 	bool reset_active_low;
-	int len, val;
+	int len;
 
 	if (!of_hasprop(phandle, "snps,reset-gpio"))
 		return 0;
@@ -98,18 +97,12 @@ rk_gmac_reset(const int phandle)
 
 	reset_active_low = of_hasprop(phandle, "snps,reset-active-low");
 
-	val = reset_active_low ? 1 : 0;
-
-	fdtbus_gpio_write(pin_reset, val);
-	if (be32toh(reset_delay_us[0]) > 0)
-		delay(be32toh(reset_delay_us[0]));
-	fdtbus_gpio_write(pin_reset, !val);
-	if (be32toh(reset_delay_us[1]) > 0)
-		delay(be32toh(reset_delay_us[1]));
-	fdtbus_gpio_write(pin_reset, val);
-	if (be32toh(reset_delay_us[2]) > 0)
-		delay(be32toh(reset_delay_us[2]));
-#endif
+	fdtbus_gpio_write_raw(pin_reset, reset_active_low ? 1 : 0);
+	delay(be32toh(reset_delay_us[0]));
+	fdtbus_gpio_write_raw(pin_reset, reset_active_low ? 0 : 1);
+	delay(be32toh(reset_delay_us[1]));
+	fdtbus_gpio_write_raw(pin_reset, reset_active_low ? 1 : 0);
+	delay(be32toh(reset_delay_us[2]));
 
 	return 0;
 }
