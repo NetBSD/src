@@ -1,4 +1,4 @@
-/* $NetBSD: rk_cru_gate.c,v 1.1 2018/06/16 00:19:04 jmcneill Exp $ */
+/* $NetBSD: rk_cru_gate.c,v 1.2 2018/06/17 14:48:15 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_cru_gate.c,v 1.1 2018/06/16 00:19:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_cru_gate.c,v 1.2 2018/06/17 14:48:15 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -45,7 +45,7 @@ rk_cru_gate_enable(struct rk_cru_softc *sc, struct rk_cru_clk *clk,
 	KASSERT(clk->type == RK_CRU_GATE);
 
 	const uint32_t write_mask = gate->mask << 16;
-	const uint32_t write_val = __SHIFTIN(!enable, gate->mask);
+	const uint32_t write_val = enable ? 0 : gate->mask;
 
 	CRU_WRITE(sc, gate->reg, write_mask | write_val);
 
