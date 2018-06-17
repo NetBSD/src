@@ -1,4 +1,4 @@
-/* $NetBSD: max77620.c,v 1.3 2018/06/16 21:22:13 thorpej Exp $ */
+/* $NetBSD: max77620.c,v 1.4 2018/06/17 14:50:54 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: max77620.c,v 1.3 2018/06/16 21:22:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: max77620.c,v 1.4 2018/06/17 14:50:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -260,7 +260,7 @@ max77620_match(device_t parent, cfdata_t match, void *aux)
 	struct i2c_attach_args *ia = aux;
 	int match_result;
 
-	if (iic_use_direct_match(ia, match, max77620_compats, match_result))
+	if (iic_use_direct_match(ia, match, max77620_compats, &match_result))
 		return match_result;
 
 	return 0;
