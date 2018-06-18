@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac.c,v 1.48 2018/06/18 22:57:18 jmcneill Exp $ */
+/* $NetBSD: dwc_gmac.c,v 1.49 2018/06/18 23:50:35 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.48 2018/06/18 22:57:18 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.49 2018/06/18 23:50:35 jmcneill Exp $");
 
 /* #define	DWC_GMAC_DEBUG	1 */
 
@@ -317,13 +317,13 @@ static void
 dwc_gmac_write_hwaddr(struct dwc_gmac_softc *sc,
     uint8_t enaddr[ETHER_ADDR_LEN])
 {
-	uint32_t lo, hi;
+	uint32_t hi, lo;
 
+	hi = enaddr[4] | (enaddr[5] << 8);
 	lo = enaddr[0] | (enaddr[1] << 8) | (enaddr[2] << 16)
 	    | (enaddr[3] << 24);
-	hi = enaddr[4] | (enaddr[5] << 8);
-	bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_MAC_ADDR0LO, lo);
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_MAC_ADDR0HI, hi);
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_MAC_ADDR0LO, lo);
 }
 
 static int
