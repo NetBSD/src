@@ -1,4 +1,4 @@
-/* $NetBSD: psci.c,v 1.1.4.2 2017/07/18 19:13:08 snj Exp $ */
+/* $NetBSD: psci.c,v 1.1.4.3 2018/06/18 15:34:34 martin Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_diagnostic.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psci.c,v 1.1.4.2 2017/07/18 19:13:08 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psci.c,v 1.1.4.3 2018/06/18 15:34:34 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -43,9 +43,9 @@ __KERNEL_RCSID(0, "$NetBSD: psci.c,v 1.1.4.2 2017/07/18 19:13:08 snj Exp $");
 #define	PSCI_SYSTEM_OFF		0x84000008
 #define	PSCI_SYSTEM_RESET	0x84000009
 #if defined(__aarch64__)
-#define	PSCI_CPU_ON		0xc4000002
+#define	PSCI_CPU_ON		0xc4000003
 #else
-#define	PSCI_CPU_ON		0x84000002
+#define	PSCI_CPU_ON		0x84000003
 #endif
 
 static psci_fn psci_call_fn;
