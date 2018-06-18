@@ -1,4 +1,4 @@
-/*	$NetBSD: adm1021.c,v 1.17 2018/06/16 21:22:13 thorpej Exp $ */
+/*	$NetBSD: adm1021.c,v 1.18 2018/06/18 17:07:07 thorpej Exp $ */
 /*	$OpenBSD: adm1021.c,v 1.27 2007/06/24 05:34:35 dlg Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adm1021.c,v 1.17 2018/06/16 21:22:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adm1021.c,v 1.18 2018/06/18 17:07:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,13 +158,18 @@ static const char * admtemp_compats[] = {
 	NULL
 };
 
+static const struct device_compatible_entry admtemp_compat_data[] = {
+	DEVICE_COMPAT_ENTRY(admtemp_compats),
+	DEVICE_COMPAT_TERMINATOR
+};
+
 int
 admtemp_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct i2c_attach_args *ia = aux;
 	int match_result;
 
-	if (iic_use_direct_match(ia, match, admtemp_compats, &match_result))
+	if (iic_use_direct_match(ia, match, admtemp_compat_data, &match_result))
 		return match_result;
 	
 	/*

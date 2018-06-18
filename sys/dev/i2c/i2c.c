@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.62 2018/06/16 21:22:13 thorpej Exp $	*/
+/*	$NetBSD: i2c.c,v 1.63 2018/06/18 17:07:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.62 2018/06/16 21:22:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.63 2018/06/18 17:07:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -691,41 +691,39 @@ iic_fill_compat(struct i2c_attach_args *ia, const char *compat, size_t len,
 }
 
 /*
- * iic_compat_match --
+ * iic_compatible_match --
  *	Match a device's "compatible" property against the list
- *	of compatible strings provided by the driver.  Note that
- *	we weight the match to the reverse index of the device's
- *	"compatible" property strings so that a driver that matches
- *	an lower-indexed "compatible" property is given a higher
- *	match priority than one that matches a higher-indexed
- *	"compatible" property.
+ *	of compatible strings provided by the driver.
  */
-int
-iic_compat_match(const struct i2c_attach_args *ia, const char **compats)
+const struct device_compatible_entry *
+iic_compatible_match(const struct i2c_attach_args *ia,
+		     const struct device_compatible_entry *compats,
+		     int *match_resultp)
 {
-	int match_result = 0, i, ri;
+	const struct device_compatible_entry *dce;
+	int match_weight;
 
-	if (ia->ia_ncompat == 0 || ia->ia_compat == NULL)
-		return 0;
-
-	for (; compats && *compats; compats++) {
-		for (i = 0, ri = ia->ia_ncompat - 1;
-		     i < ia->ia_ncompat;
-		     i++, ri--) {
-			if (strcmp(*compats, ia->ia_compat[i]) == 0) {
-				KASSERT(ri >= 0);
-				match_result =
-				    I2C_MATCH_DIRECT_COMPATIBLE + ri;
-			}
-		}
+	dce = device_compatible_match(ia->ia_compat, ia->ia_ncompat,
+				      compats, &match_weight);
+	if (dce != NULL && match_resultp != NULL) {
+		*match_resultp = MIN(I2C_MATCH_DIRECT_COMPATIBLE + match_weight,
+				     I2C_MATCH_DIRECT_COMPATIBLE_MAX);
 	}
-	match_result = MIN(match_result, I2C_MATCH_DIRECT_COMPATIBLE_MAX);
-	return match_result;
+
+	return dce;
 }
 
+/*
+ * iic_use_direct_match --
+ *	Helper for direct-config of i2c.  Returns true if this is
+ *	a direct-config situation, along with with match result.
+ *	Returns false if the driver should use indirect-config
+ *	matching logic.
+ */
 bool
 iic_use_direct_match(const struct i2c_attach_args *ia, const cfdata_t cf,
-		     const char **compats, int *match_resultp)
+		     const struct device_compatible_entry *compats,
+		     int *match_resultp)
 {
 
 	KASSERT(match_resultp != NULL);
@@ -737,7 +735,7 @@ iic_use_direct_match(const struct i2c_attach_args *ia, const cfdata_t cf,
 	}
 
 	if (ia->ia_ncompat > 0 && ia->ia_compat != NULL) {
-		*match_resultp = iic_compat_match(ia, compats);
+		(void) iic_compatible_match(ia, compats, match_resultp);
 		return true;
 	}
 

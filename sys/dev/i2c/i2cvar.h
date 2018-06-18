@@ -1,4 +1,4 @@
-/*	$NetBSD: i2cvar.h,v 1.14 2018/06/16 21:22:13 thorpej Exp $	*/
+/*	$NetBSD: i2cvar.h,v 1.15 2018/06/18 17:07:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -164,9 +164,11 @@ int	iicbus_print(void *, const char *);
 /*
  * API presented to i2c devices.
  */
-int	iic_compat_match(const struct i2c_attach_args *, const char **);
-bool	iic_use_direct_match(const struct i2c_attach_args *,
-			     const cfdata_t, const char **, int *);
+const struct device_compatible_entry *
+	iic_compatible_match(const struct i2c_attach_args *,
+			     const struct device_compatible_entry *, int *);
+bool	iic_use_direct_match(const struct i2c_attach_args *, const cfdata_t,
+			     const struct device_compatible_entry *, int *);
 
 /*
  * Constants to indicate the quality of a match made by a driver's

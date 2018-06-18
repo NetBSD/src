@@ -1,4 +1,4 @@
-/*	$NetBSD: lm87.c,v 1.8 2018/06/16 21:22:13 thorpej Exp $	*/
+/*	$NetBSD: lm87.c,v 1.9 2018/06/18 17:07:07 thorpej Exp $	*/
 /*	$OpenBSD: lm87.c,v 1.20 2008/11/10 05:19:48 cnst Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lm87.c,v 1.8 2018/06/16 21:22:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lm87.c,v 1.9 2018/06/18 17:07:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,6 +144,11 @@ static const char * lmenv_compats[] = {
 	NULL
 };
 
+static const struct device_compatible_entry lmenv_compat_data[] = {
+	DEVICE_COMPAT_ENTRY(lmenv_compats),
+	DEVICE_COMPAT_TERMINATOR,
+};
+
 int
 lmenv_match(device_t parent, cfdata_t match, void *aux)
 {
@@ -151,7 +156,7 @@ lmenv_match(device_t parent, cfdata_t match, void *aux)
 	u_int8_t cmd, val;
 	int error, i, match_result;
 
-	if (iic_use_direct_match(ia, match, lmenv_compats, &match_result))
+	if (iic_use_direct_match(ia, match, lmenv_compat_data, &match_result))
 		return match_result;
 	
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: dbcool.c,v 1.49 2018/06/16 21:22:13 thorpej Exp $ */
+/*	$NetBSD: dbcool.c,v 1.50 2018/06/18 17:07:07 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.49 2018/06/16 21:22:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.50 2018/06/18 17:07:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -738,6 +738,12 @@ static const char * dbcool_compats[] = {
 	"adm1030",
 	NULL
 };
+
+static const struct device_compatible_entry dbcool_compat_data[] = {
+	DEVICE_COMPAT_ENTRY(dbcool_compats),
+	DEVICE_COMPAT_TERMINATOR
+};
+
 int
 dbcool_match(device_t parent, cfdata_t cf, void *aux)
 {
@@ -750,7 +756,7 @@ dbcool_match(device_t parent, cfdata_t cf, void *aux)
 	dc.dc_writereg = dbcool_writereg;
 	int match_result;
 
-	if (iic_use_direct_match(ia, cf, dbcool_compats, &match_result))
+	if (iic_use_direct_match(ia, cf, dbcool_compat_data, &match_result))
 		return match_result;
 
 	if ((ia->ia_addr & DBCOOL_ADDRMASK) != DBCOOL_ADDR)
