@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.139 2018/06/18 09:49:05 yamaguchi Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.140 2018/06/18 09:53:45 yamaguchi Exp $ */
 
 /*-
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.139 2018/06/18 09:49:05 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.140 2018/06/18 09:53:45 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pppoe.h"
@@ -277,8 +277,11 @@ pppoedetach(void)
 {
 	int error = 0;
 
-	if (!LIST_EMPTY(&pppoe_softc_list))
+	rw_enter(&pppoe_softc_list_lock, RW_READER);
+	if (!LIST_EMPTY(&pppoe_softc_list)) {
+		rw_exit(&pppoe_softc_list_lock);
 		error = EBUSY;
+	}
 
 	if (error == 0) {
 		if_clone_detach(&pppoe_cloner);
@@ -338,9 +341,12 @@ pppoe_clone_create(struct if_clone *ifc, int unit)
 	sppp_attach(&sc->sc_sppp.pp_if);
 
 	bpf_attach(&sc->sc_sppp.pp_if, DLT_PPP_ETHER, 0);
+	rw_enter(&pppoe_softc_list_lock, RW_READER);
 	if (LIST_EMPTY(&pppoe_softc_list)) {
 		pfil_add_ihook(pppoe_ifattach_hook, NULL, PFIL_IFNET, if_pfil);
 	}
+	rw_exit(&pppoe_softc_list_lock);
+
 	if_register(&sc->sc_sppp.pp_if);
 
 	rw_init(&sc->sc_lock);
@@ -424,14 +430,18 @@ pppoe_find_softc_by_hunique(uint8_t *token, size_t len,
 {
 	struct pppoe_softc *sc, *t;
 
-	if (LIST_EMPTY(&pppoe_softc_list))
+	rw_enter(&pppoe_softc_list_lock, RW_READER);
+	if (LIST_EMPTY(&pppoe_softc_list)) {
+		rw_exit(&pppoe_softc_list_lock);
 		return NULL;
+	}
 
-	if (len != sizeof sc)
+	if (len != sizeof sc) {
+		rw_exit(&pppoe_softc_list_lock);
 		return NULL;
+	}
 	memcpy(&t, token, len);
 
-	rw_enter(&pppoe_softc_list_lock, RW_READER);
 	LIST_FOREACH(sc, &pppoe_softc_list, sc_list) {
 		if (sc == t) {
 			PPPOE_LOCK(sc, lock);
@@ -703,9 +713,12 @@ breakbreak:;
 		 * got service name, concentrator name, and/or host unique.
 		 * ignore if we have no interfaces with IFF_PASSIVE|IFF_UP.
 		 */
-		if (LIST_EMPTY(&pppoe_softc_list))
-			goto done;
 		rw_enter(&pppoe_softc_list_lock, RW_READER);
+		if (LIST_EMPTY(&pppoe_softc_list)) {
+			rw_exit(&pppoe_softc_list_lock);
+			goto done;
+		}
+
 		LIST_FOREACH(sc, &pppoe_softc_list, sc_list) {
 			PPPOE_LOCK(sc, RW_WRITER);
 			if (!(sc->sc_sppp.pp_if.if_flags & IFF_UP)) {
@@ -768,8 +781,12 @@ breakbreak:;
 		m_put_rcvif_psref(rcvif, &psref);
 		if (sc == NULL) {
 			/* be quiet if there is not a single pppoe instance */
-			if (!LIST_EMPTY(&pppoe_softc_list))
-				printf("pppoe: received PADR but could not find request for it\n");
+			rw_enter(&pppoe_softc_list_lock, RW_READER);
+			if (!LIST_EMPTY(&pppoe_softc_list)) {
+				printf("pppoe: received PADR"
+				    " but could not find request for it\n");
+			}
+			rw_exit(&pppoe_softc_list_lock);
 			goto done;
 		}
 
@@ -818,8 +835,12 @@ breakbreak:;
 
 		if (sc == NULL) {
 			/* be quiet if there is not a single pppoe instance */
-			if (!LIST_EMPTY(&pppoe_softc_list))
-				printf("pppoe: received PADO but could not find request for it\n");
+			rw_enter(&pppoe_softc_list_lock, RW_READER);
+			if (!LIST_EMPTY(&pppoe_softc_list)) {
+				printf("pppoe: received PADO"
+				    " but could not find request for it\n");
+			}
+			rw_exit(&pppoe_softc_list_lock);
 			goto done;
 		}
 
@@ -959,9 +980,12 @@ pppoe_disc_input(struct mbuf *m)
 	/*
 	 * Avoid error messages if there is not a single PPPoE instance.
 	 */
+	rw_enter(&pppoe_softc_list_lock, RW_READER);
 	if (!LIST_EMPTY(&pppoe_softc_list)) {
+		rw_exit(&pppoe_softc_list_lock);
 		pppoe_dispatch_disc_pkt(m, 0);
 	} else {
+		rw_exit(&pppoe_softc_list_lock);
 		m_freem(m);
 	}
 }
@@ -993,9 +1017,12 @@ pppoe_data_input(struct mbuf *m)
 	/*
 	 * Avoid error messages if there is not a single PPPoE instance.
 	 */
+	rw_enter(&pppoe_softc_list_lock, RW_READER);
 	if (LIST_EMPTY(&pppoe_softc_list)) {
+		rw_exit(&pppoe_softc_list_lock);
 		goto drop;
 	}
+	rw_exit(&pppoe_softc_list_lock);
 
 	if (term_unknown) {
 		memcpy(shost, mtod(m, struct ether_header*)->ether_shost,
