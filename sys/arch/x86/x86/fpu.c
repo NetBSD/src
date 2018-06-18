@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.37 2018/06/17 06:03:40 maxv Exp $	*/
+/*	$NetBSD: fpu.c,v 1.38 2018/06/18 20:20:27 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.  All
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.37 2018/06/17 06:03:40 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.38 2018/06/18 20:20:27 maxv Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -628,6 +628,7 @@ fpu_save_area_clear(struct lwp *l, unsigned int x87_cw)
 	fpusave_lwp(l, false);
 	fpu_save = process_fpframe(l);
 	pcb = lwp_getpcb(l);
+	KASSERT(pcb->pcb_fpcpu == NULL);
 
 	if (i386_use_fxsave) {
 		memset(&fpu_save->sv_xmm, 0, x86_fpu_save_size);
@@ -654,6 +655,7 @@ fpu_save_area_clear(struct lwp *l, unsigned int x87_cw)
 	 * CPU.
 	 */
 	if (x86_fpu_eager) {
+		KASSERT(l == curlwp);
 		fpu_eagerswitch(NULL, l);
 	}
 }
@@ -693,6 +695,8 @@ fpu_save_area_fork(struct pcb *pcb2, const struct pcb *pcb1)
 
 	if (extra > 0)
 		memcpy(pcb2 + 1, pcb1 + 1, extra);
+
+	KASSERT(pcb2->pcb_fpcpu == NULL);
 }
 
 /* -------------------------------------------------------------------------- */
