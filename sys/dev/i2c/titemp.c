@@ -1,4 +1,4 @@
-/* $NetBSD: titemp.c,v 1.5 2018/06/16 21:22:13 thorpej Exp $ */
+/* $NetBSD: titemp.c,v 1.6 2018/06/18 17:07:07 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: titemp.c,v 1.5 2018/06/16 21:22:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: titemp.c,v 1.6 2018/06/18 17:07:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,6 +89,11 @@ static const char * titemp_compats[] = {
 	NULL
 };
 
+static const struct device_compatible_entry titemp_compat_data[] = {
+	DEVICE_COMPAT_ENTRY(titemp_compats),
+	DEVICE_COMPAT_TERMINATOR
+};
+
 static int
 titemp_match(device_t parent, cfdata_t match, void *aux)
 {
@@ -96,7 +101,7 @@ titemp_match(device_t parent, cfdata_t match, void *aux)
 	uint8_t mfid;
 	int error, match_result;
 
-	if (iic_use_direct_match(ia, match, titemp_compats, &match_result))
+	if (iic_use_direct_match(ia, match, titemp_compat_data, &match_result))
 		return match_result;
 	
 	if (ia->ia_addr != 0x4c)
