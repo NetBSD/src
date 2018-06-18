@@ -1,4 +1,4 @@
-/* $NetBSD: adadc.c,v 1.4 2018/06/16 21:22:13 thorpej Exp $ */
+/* $NetBSD: adadc.c,v 1.5 2018/06/18 17:07:07 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 Michael Lorenz
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adadc.c,v 1.4 2018/06/16 21:22:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adadc.c,v 1.5 2018/06/18 17:07:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,9 +93,14 @@ static void	adadc_sensors_refresh(struct sysmon_envsys *, envsys_data_t *);
 CFATTACH_DECL_NEW(adadc, sizeof(struct adadc_softc),
     adadc_match, adadc_attach, NULL, NULL);
 
-static const char * dstemp_compats[] = {
+static const char * adadc_compats[] = {
 	"ad7417",
 	NULL
+};
+
+static const struct device_compatible_entry adadc_compat_data[] = {
+	DEVICE_COMPAT_ENTRY(adadc_compats),
+	DEVICE_COMPAT_TERMINATOR
 };
 
 /* calibaration table from Darwin via Linux */
@@ -107,7 +112,7 @@ adadc_match(device_t parent, cfdata_t match, void *aux)
 	struct i2c_attach_args *ia = aux;
 	int match_result;
 
-	if (iic_use_direct_match(ia, match, dstemp_compats, &match_result))
+	if (iic_use_direct_match(ia, match, adadc_compat_data, &match_result))
 		return match_result;
 
 	/*

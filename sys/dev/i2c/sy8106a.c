@@ -1,4 +1,4 @@
-/* $NetBSD: sy8106a.c,v 1.2 2018/06/16 21:22:13 thorpej Exp $ */
+/* $NetBSD: sy8106a.c,v 1.3 2018/06/18 17:07:07 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sy8106a.c,v 1.2 2018/06/16 21:22:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sy8106a.c,v 1.3 2018/06/18 17:07:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,6 +62,11 @@ struct sy8106a_softc {
 static const char * compatible[] = {
 	"silergy,sy8106a",
 	NULL
+};
+
+static const struct device_compatible_entry sy8106a_compat_data[] = {
+	DEVICE_COMPAT_ENTRY(compatible),
+	DEVICE_COMPAT_TERMINATOR
 };
 
 static uint8_t
@@ -187,7 +192,7 @@ sy8106a_match(device_t parent, cfdata_t match, void *aux)
 	struct i2c_attach_args *ia = aux;
 	int match_result;
 
-	if (iic_use_direct_match(ia, match, compatible, &match_result))
+	if (iic_use_direct_match(ia, match, sy8106a_compat_data, &match_result))
 		return match_result;
 	
 	return 0;
