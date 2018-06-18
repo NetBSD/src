@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.29 2018/04/05 18:44:57 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.30 2018/06/18 14:56:24 christos Exp $	*/
 
 /* main.c: This file contains the main control and user-interface routines
    for the ed line editor. */
@@ -39,7 +39,7 @@ __COPYRIGHT(
 #if 0
 static char *rcsid = "@(#)main.c,v 1.1 1994/02/01 00:34:42 alm Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.29 2018/04/05 18:44:57 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.30 2018/06/18 14:56:24 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -865,14 +865,11 @@ exec_command(void)
 		printf("%ld\n", addr_cnt ? second_addr : addr_last);
 		break;
 	case '!':
-		if (secure) {
-			seterrmsg("'!' not allowed");
-			return ERR;
-		}
 		if (addr_cnt > 0) {
 			seterrmsg("unexpected address");
 			return ERR;
-		} else if ((sflags = get_shell_command()) < 0)
+		}
+		if ((sflags = get_shell_command()) < 0)
 			return ERR;
 		GET_COMMAND_SUFFIX();
 		if (sflags) printf("%s\n", shcmd + 1);
@@ -994,7 +991,7 @@ get_shell_command(void)
 	int i = 0;
 	int j = 0;
 
-	if (red) {
+	if (red || secure) {
 		seterrmsg("shell access restricted");
 		return ERR;
 	} else if ((s = ibufp = get_extended_line(&j, 1)) == NULL)
