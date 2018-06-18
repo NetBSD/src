@@ -1,4 +1,4 @@
-/*	$NetBSD: e1000phyreg.h,v 1.1 2018/06/16 17:44:53 jdolecek Exp $	*/
+/*	$NetBSD: e1000phyreg.h,v 1.2 2018/06/18 09:12:17 msaitoh Exp $	*/
 /* $FreeBSD: head/sys/dev/mii/e1000phyreg.h 326022 2017-11-20 19:36:21Z pfg $ */
 /*-
  * Principal Author: Parag Patel
@@ -73,147 +73,12 @@
 
 #define E1000_MAX_REG_ADDRESS		0x1F
 
-#define E1000_CR			0x00	/* control register */
-#define E1000_CR_SPEED_SELECT_MSB	0x0040
-#define E1000_CR_COLL_TEST_ENABLE	0x0080
-#define E1000_CR_FULL_DUPLEX		0x0100
-#define E1000_CR_RESTART_AUTO_NEG	0x0200
-#define E1000_CR_ISOLATE		0x0400
-#define E1000_CR_POWER_DOWN		0x0800
-#define E1000_CR_AUTO_NEG_ENABLE	0x1000
-#define E1000_CR_SPEED_SELECT_LSB	0x2000
-#define E1000_CR_LOOPBACK		0x4000
-#define E1000_CR_RESET			0x8000
-
-#define E1000_CR_SPEED_1000		0x0040
-#define E1000_CR_SPEED_100		0x2000
-#define E1000_CR_SPEED_10		0x0000
-
-#define E1000_SR			0x01	/* status register */
-#define E1000_SR_EXTENDED		0x0001
-#define E1000_SR_JABBER_DETECT		0x0002
-#define E1000_SR_LINK_STATUS		0x0004
-#define E1000_SR_AUTO_NEG		0x0008
-#define E1000_SR_REMOTE_FAULT		0x0010
-#define E1000_SR_AUTO_NEG_COMPLETE	0x0020
-#define E1000_SR_PREAMBLE_SUPPRESS	0x0040
-#define E1000_SR_EXTENDED_STATUS	0x0100
-#define E1000_SR_100T2			0x0200
-#define E1000_SR_100T2_FD		0x0400
-#define E1000_SR_10T			0x0800
-#define E1000_SR_10T_FD			0x1000
-#define E1000_SR_100TX			0x2000
-#define E1000_SR_100TX_FD		0x4000
-#define E1000_SR_100T4			0x8000
-
-#define E1000_ID1			0x02	/* ID register 1 */
-#define E1000_ID2			0x03	/* ID register 2 */
-#define E1000_ID_88E1000		0x01410C50
-#define E1000_ID_88E1000S		0x01410C40
-#define E1000_ID_88E1011		0x01410C20
-#define E1000_ID_MASK			0xFFFFFFF0
-
-#define E1000_AR			0x04	/* autonegotiation advertise reg */
-#define E1000_AR_SELECTOR_FIELD		0x0001
-#define E1000_AR_10T			0x0020
-#define E1000_AR_10T_FD			0x0040
-#define E1000_AR_100TX			0x0080
-#define E1000_AR_100TX_FD		0x0100
-#define E1000_AR_100T4			0x0200
-#define E1000_AR_PAUSE			0x0400
-#define E1000_AR_ASM_DIR		0x0800
-#define E1000_AR_REMOTE_FAULT		0x2000
-#define E1000_AR_NEXT_PAGE		0x8000
-#define E1000_AR_SPEED_MASK		0x01E0
-
-/* Autonegotiation register bits for fiber cards (Alaska Only!) */
-#define E1000_FA_1000X_FD		0x0020
-#define E1000_FA_1000X			0x0040
-#define E1000_FA_SYM_PAUSE		0x0080
-#define E1000_FA_ASYM_PAUSE		0x0100
-#define E1000_FA_FAULT1			0x1000
-#define E1000_FA_FAULT2			0x2000
-#define E1000_FA_NEXT_PAGE		0x8000
-
-#define E1000_LPAR			0x05	/* autoneg link partner abilities reg */
-#define E1000_LPAR_SELECTOR_FIELD	0x0001
-#define E1000_LPAR_10T			0x0020
-#define E1000_LPAR_10T_FD		0x0040
-#define E1000_LPAR_100TX		0x0080
-#define E1000_LPAR_100TX_FD		0x0100
-#define E1000_LPAR_100T4		0x0200
-#define E1000_LPAR_PAUSE		0x0400
-#define E1000_LPAR_ASM_DIR		0x0800
-#define E1000_LPAR_REMOTE_FAULT		0x2000
-#define E1000_LPAR_ACKNOWLEDGE		0x4000
-#define E1000_LPAR_NEXT_PAGE		0x8000
-
-/* autoneg link partner ability register bits for fiber cards (Alaska Only!) */
-#define E1000_FPAR_1000X_FD		0x0020
-#define E1000_FPAR_1000X		0x0040
-#define E1000_FPAR_SYM_PAUSE		0x0080
-#define E1000_FPAR_ASYM_PAUSE		0x0100
-#define E1000_FPAR_FAULT1		0x1000
-#define E1000_FPAR_FAULT2		0x2000
-#define E1000_FPAR_ACK			0x4000
-#define E1000_FPAR_NEXT_PAGE		0x8000
-
-#define E1000_ER			0x06	/* autoneg expansion reg */
-#define E1000_ER_LP_NWAY		0x0001
-#define E1000_ER_PAGE_RXD		0x0002
-#define E1000_ER_NEXT_PAGE		0x0004
-#define E1000_ER_LP_NEXT_PAGE		0x0008
-#define E1000_ER_PAR_DETECT_FAULT	0x0100
-
-#define E1000_NPTX			0x07	/* autoneg next page TX */
-#define E1000_NPTX_MSG_CODE_FIELD	0x0001
-#define E1000_NPTX_TOGGLE		0x0800
-#define E1000_NPTX_ACKNOWLDGE2		0x1000
-#define E1000_NPTX_MSG_PAGE		0x2000
-#define E1000_NPTX_NEXT_PAGE		0x8000
-
-#define E1000_RNPR			0x08	/* autoneg link-partner (?) next page */
-#define E1000_RNPR_MSG_CODE_FIELD	0x0001
-#define E1000_RNPR_TOGGLE		0x0800
-#define E1000_RNPR_ACKNOWLDGE2		0x1000
-#define E1000_RNPR_MSG_PAGE		0x2000
-#define E1000_RNPR_ACKNOWLDGE		0x4000
-#define E1000_RNPR_NEXT_PAGE		0x8000
-
-#define E1000_1GCR			0x09	/* 1000T (1G) control reg */
-#define E1000_1GCR_ASYM_PAUSE		0x0080
-#define E1000_1GCR_1000T		0x0100
-#define E1000_1GCR_1000T_FD		0x0200
-#define E1000_1GCR_REPEATER_DTE		0x0400
-#define E1000_1GCR_MS_VALUE		0x0800
-#define E1000_1GCR_MS_ENABLE		0x1000
-#define E1000_1GCR_TEST_MODE_NORMAL	0x0000
-#define E1000_1GCR_TEST_MODE_1		0x2000
-#define E1000_1GCR_TEST_MODE_2		0x4000
-#define E1000_1GCR_TEST_MODE_3		0x6000
-#define E1000_1GCR_TEST_MODE_4		0x8000
-#define E1000_1GCR_SPEED_MASK		0x0300
-
-#define E1000_1GSR			0x0A	/* 1000T (1G) status reg */
-#define E1000_1GSR_IDLE_ERROR_CNT	0x0000
-#define E1000_1GSR_ASYM_PAUSE_DIR	0x0100
-#define E1000_1GSR_LP			0x0400
-#define E1000_1GSR_LP_FD		0x0800
-#define E1000_1GSR_REMOTE_RX_STATUS	0x1000
-#define E1000_1GSR_LOCAL_RX_STATUS	0x2000
-#define E1000_1GSR_MS_CONFIG_RES	0x4000
-#define E1000_1GSR_MS_CONFIG_FAULT	0x8000
-
-#define E1000_ESR			0x0F	/* IEEE extended status reg */
-#define E1000_ESR_1000T			0x1000
-#define E1000_ESR_1000T_FD		0x2000
-#define E1000_ESR_1000X			0x4000
-#define E1000_ESR_1000X_FD		0x8000
-
+#if 0 /* XXX What is this? */
 #define E1000_TX_POLARITY_MASK		0x0100
 #define E1000_TX_NORMAL_POLARITY	0
 
 #define E1000_AUTO_POLARITY_DISABLE	0x0010
+#endif
 
 #define E1000_SCR			0x10	/* special control register */
 #define E1000_SCR_JABBER_DISABLE	0x0001

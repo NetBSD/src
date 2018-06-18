@@ -1,4 +1,4 @@
-/*	$NetBSD: makphy.c,v 1.44 2018/06/16 17:44:53 jdolecek Exp $	*/
+/*	$NetBSD: makphy.c,v 1.45 2018/06/18 09:12:17 msaitoh Exp $	*/
 /*	$OpenBSD: eephy.c,v 1.56 2015/03/14 03:38:48 jsg Exp $	*/
 
 /*-
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.44 2018/06/16 17:44:53 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.45 2018/06/18 09:12:17 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -286,14 +286,14 @@ makphy_reset(struct mii_softc *sc)
 {
 	int reg, i;
 
-	reg = PHY_READ(sc, E1000_CR);
-	reg |= E1000_CR_RESET;
-	PHY_WRITE(sc, E1000_CR, reg);
+	reg = PHY_READ(sc, MII_BMCR);
+	reg |= BMCR_RESET;
+	PHY_WRITE(sc, MII_BMCR, reg);
 	
 	for (i = 0; i < 500; i++) {
 		DELAY(1);
-		reg = PHY_READ(sc, E1000_CR);
-		if (!(reg & E1000_CR_RESET))
+		reg = PHY_READ(sc, MII_BMCR);
+		if (!(reg & BMCR_RESET))
 			break;
 	}
 
@@ -363,9 +363,9 @@ makphy_reset(struct mii_softc *sc)
 	 * Disable autonegotiation, such that all capabilities get
 	 * advertised when it is switched back on.
 	 */
-	reg = PHY_READ(sc, E1000_CR);
-	reg &= ~E1000_CR_AUTO_NEG_ENABLE;
-	PHY_WRITE(sc, E1000_CR, reg | E1000_CR_RESET);
+	reg = PHY_READ(sc, MII_BMCR);
+	reg &= ~BMCR_AUTOEN;
+	PHY_WRITE(sc, MII_BMCR, reg | BMCR_RESET);
 }
 
 static int
@@ -392,8 +392,8 @@ makphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		 * isolate ourselves.
 		 */
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst) {
-			bmcr = PHY_READ(sc, E1000_CR);
-			PHY_WRITE(sc, E1000_CR, bmcr | E1000_CR_ISOLATE);
+			bmcr = PHY_READ(sc, MII_BMCR);
+			PHY_WRITE(sc, MII_BMCR, bmcr | BMCR_ISO);
 			return (0);
 		}
 
@@ -410,8 +410,8 @@ makphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		 * software reset for the settings to take effect.
 		 */
 		if (IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO) {
-			bmcr = PHY_READ(sc, E1000_CR);
-			PHY_WRITE(sc, E1000_CR, bmcr | E1000_CR_RESET);
+			bmcr = PHY_READ(sc, MII_BMCR);
+			PHY_WRITE(sc, MII_BMCR, bmcr | BMCR_RESET);
 		}
 		break;
 
@@ -423,12 +423,12 @@ makphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 			return (0);
 
 		if (mii_phy_tick(sc) == EJUSTRETURN)
-                        return (0);
+			return (0);
 		break;
 
 	case MII_DOWN:
 		mii_phy_down(sc);
-                return (0);
+		return (0);
 	}
 
 	/* Update the media status. */
@@ -448,13 +448,19 @@ makphy_status(struct mii_softc *sc)
 	mii->mii_media_status = IFM_AVALID;
 	mii->mii_media_active = IFM_ETHER;
 
-	bmcr = PHY_READ(sc, E1000_CR);
+	bmcr = PHY_READ(sc, MII_BMCR);
 	ssr = PHY_READ(sc, E1000_SSR);
 
 	if (ssr & E1000_SSR_LINK)
 		mii->mii_media_status |= IFM_ACTIVE;
 
-	if (bmcr & E1000_CR_LOOPBACK)
+	if (bmcr & BMCR_ISO) {
+		mii->mii_media_active |= IFM_NONE;
+		mii->mii_media_status = 0;
+		return;
+	}
+
+	if (bmcr & BMCR_LOOP)
 		mii->mii_media_active |= IFM_LOOP;
 
 	if (!(ssr & E1000_SSR_SPD_DPLX_RESOLVED)) {
@@ -480,8 +486,8 @@ makphy_status(struct mii_softc *sc)
 		mii->mii_media_active |= IFM_HDX;
 
 	if (IFM_SUBTYPE(mii->mii_media_active) == IFM_1000_T) {
-		gsr = PHY_READ(sc, E1000_1GSR) | PHY_READ(sc, E1000_1GSR);
-		if (gsr & E1000_1GSR_MS_CONFIG_RES)
+		gsr = PHY_READ(sc, MII_100T2SR) | PHY_READ(sc, MII_100T2SR);
+		if (gsr & GTSR_MS_RES)
 			mii->mii_media_active |= IFM_ETH_MASTER;
 	}
 }
