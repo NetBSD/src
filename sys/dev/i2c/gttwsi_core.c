@@ -1,4 +1,4 @@
-/*	$NetBSD: gttwsi_core.c,v 1.6 2018/06/12 13:18:48 thorpej Exp $	*/
+/*	$NetBSD: gttwsi_core.c,v 1.7 2018/06/18 12:42:29 jakllsch Exp $	*/
 /*
  * Copyright (c) 2008 Eiji Kawauchi.
  * All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gttwsi_core.c,v 1.6 2018/06/12 13:18:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gttwsi_core.c,v 1.7 2018/06/18 12:42:29 jakllsch Exp $");
 #include "locators.h"
 
 #include <sys/param.h>
@@ -283,7 +283,9 @@ gttwsi_initiate_xfer(void *v, i2c_addr_t addr, int flags)
 
 	KASSERT(sc->sc_inuse);
 
-	gttwsi_send_start(v, flags);
+	error = gttwsi_send_start(v, flags);
+	if (error)
+		return error;
 
 	read = (flags & I2C_F_READ) != 0;
 	if (read) {
