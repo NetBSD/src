@@ -1,4 +1,4 @@
-/*	$NetBSD: lm75.c,v 1.31 2018/06/16 21:22:13 thorpej Exp $	*/
+/*	$NetBSD: lm75.c,v 1.32 2018/06/18 17:07:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lm75.c,v 1.31 2018/06/16 21:22:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lm75.c,v 1.32 2018/06/18 17:07:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,6 +111,11 @@ static const char * lmtemp_compats[] = {
 	NULL
 };
 
+static const struct device_compatible_entry lmtemp_compat_data[] = {
+	DEVICE_COMPAT_ENTRY(lmtemp_compats),
+	DEVICE_COMPAT_TERMINATOR
+};
+
 enum {
 	lmtemp_lm75 = 0,
 	lmtemp_ds75,
@@ -148,7 +153,7 @@ lmtemp_match(device_t parent, cfdata_t cf, void *aux)
 	struct i2c_attach_args *ia = aux;
 	int i, match_result;
 
-	if (iic_use_direct_match(ia, cf, lmtemp_compats, &match_result))
+	if (iic_use_direct_match(ia, cf, lmtemp_compat_data, &match_result))
 		return match_result;
 
 	/*
