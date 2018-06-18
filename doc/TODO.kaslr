@@ -1,0 +1,41 @@
+====== POINTER LEAKS ======
+
+-- Change the permissions of /dev/ksyms, as discussed in:
+       http://mail-index.netbsd.org/tech-kern/2018/01/17/msg022960.html
+
+-- The address of a non-public section is leaked because of Meltdown,
+   "jmp handler". This can easily be fixed by pushing the handlers into
+   their own section.
+
+-- Replace the "%p" fmt by something relative to the kernel section (if
+   any). Eg, from
+       printf("%p", &some_global_var); --> "0xffffffffe38010f0"
+   to
+       printf("%p", &some_global_var); --> ".data.4:0x8010f0"
+   This eases debugging and also prevents leaks if a driver prints
+   kernel addresses as debug (I've seen that already).
+
+-- PPPoE sends a kernel address as host unique. (What is this shit.)
+
+-- "netstat -nat" leaks kernel addresses.
+
+-- Investigate some other tools.
+
+-- Be careful with dmesg.
+
+====== RANDOMIZATION ======
+
+-- Randomize the PTE space.
+
+-- Randomize the kernel main memory (VM_MIN_KERNEL_ADDRESS).
+
+-- Randomize the direct map.
+
+-- Randomize the PCPU area.
+
+====== GENERAL ======
+
+-- Sort the kernel sections by size, from largest to smallest, to save
+   memory.
+
+-- Add the "pkboot" command in the EFI bootloader.
