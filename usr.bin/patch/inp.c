@@ -1,7 +1,7 @@
 /*
  * $OpenBSD: inp.c,v 1.34 2006/03/11 19:41:30 otto Exp $
  * $DragonFly: src/usr.bin/patch/inp.c,v 1.6 2007/09/29 23:11:10 swildner Exp $
- * $NetBSD: inp.c,v 1.25 2018/06/16 00:40:14 christos Exp $
+ * $NetBSD: inp.c,v 1.26 2018/06/18 18:33:31 christos Exp $
  */
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: inp.c,v 1.25 2018/06/16 00:40:14 christos Exp $");
+__RCSID("$NetBSD: inp.c,v 1.26 2018/06/18 18:33:31 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/file.h>
@@ -118,11 +118,12 @@ scan_input(const char *filename)
 static bool
 reallocate_lines(size_t *lines_allocated)
 {
+	char	**p;
 	size_t	new_size;
 
 	new_size = *lines_allocated * 3 / 2;
-	int res = reallocarr(&i_ptr, new_size + 2,  sizeof(char *));
-	if (res != 0) {	/* shucks, it was a near thing */
+	p = pch_realloc(i_ptr, new_size + 2,  sizeof(char *));
+	if (p == NULL) {	/* shucks, it was a near thing */
 		munmap(i_womp, i_size);
 		i_womp = NULL;
 		free(i_ptr);
@@ -131,6 +132,7 @@ reallocate_lines(size_t *lines_allocated)
 		return false;
 	}
 	*lines_allocated = new_size;
+	i_ptr = p;
 	return true;
 }
 
