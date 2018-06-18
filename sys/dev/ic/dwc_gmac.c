@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac.c,v 1.47 2018/06/17 13:12:25 jmcneill Exp $ */
+/* $NetBSD: dwc_gmac.c,v 1.48 2018/06/18 22:57:18 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.47 2018/06/17 13:12:25 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.48 2018/06/18 22:57:18 jmcneill Exp $");
 
 /* #define	DWC_GMAC_DEBUG	1 */
 
@@ -926,6 +926,8 @@ dwc_gmac_stop_locked(struct ifnet *ifp, int disable)
 	mii_down(&sc->sc_mii);
 	dwc_gmac_reset_tx_ring(sc, &sc->sc_txq);
 	dwc_gmac_reset_rx_ring(sc, &sc->sc_rxq);
+
+	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 }
 
 /*
