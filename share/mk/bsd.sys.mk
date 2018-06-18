@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.271.4.2 2018/06/14 20:08:36 martin Exp $
+#	$NetBSD: bsd.sys.mk,v 1.271.4.3 2018/06/18 15:42:29 martin Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -31,6 +31,9 @@ REPROFLAGS+=	-fdebug-prefix-map=\$$NETBSDSRCDIR=/usr/src
 REPROFLAGS+=	-fdebug-prefix-map=\$$X11SRCDIR=/usr/xsrc
 .if defined(MAKEOBJDIRPREFIX)
 NETBSDOBJDIR=	${MAKEOBJDIRPREFIX}${NETBSDSRCDIR}
+.endif
+
+.if defined(NETBSDOBJDIR)
 .export NETBSDOBJDIR
 REPROFLAGS+=	-fdebug-prefix-map=\$$NETBSDOBJDIR=/usr/obj
 .endif
