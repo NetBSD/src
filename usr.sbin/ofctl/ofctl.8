@@ -1,4 +1,4 @@
-.\"	$NetBSD: ofctl.8,v 1.4 2008/09/25 22:44:51 reed Exp $
+.\"	$NetBSD: ofctl.8,v 1.4.52.1 2018/06/18 15:31:49 martin Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 29, 2006
+.Dd June 18, 2018
 .Dt OFCTL 8
 .Os
 .Sh NAME
@@ -35,8 +35,10 @@
 .Nd display the OpenPROM or OpenFirmware device tree
 .Sh SYNOPSIS
 .Nm
-.Op Fl p
+.Op Fl lp
 .Op Fl f Ar file
+.Op Fl r Ar propfile
+.Op Fl w Ar propfile
 .Op Ar node
 .Sh DESCRIPTION
 .Nm
@@ -54,7 +56,7 @@ When given the name of a specific node,
 will display that node and its child nodes.
 .Pp
 The options are as follows:
-.Bl -tag -offset indent -width 8n
+.Bl -tag -offset indent -width 12n
 .It Fl f Ar file
 On systems with OpenPROM, use
 .Ar file
@@ -64,14 +66,29 @@ On systems with OpenFirmware, use
 .Ar file
 instead of the default
 .Pa /dev/openfirm .
+.It Fl l
+Dump a partial tree starting from
+.Ar node .
 .It Fl p
 Display each node's properties.
+.It Fl r Ar propfile
+Instead of reading from the openprom or openfirm device,
+use the proplib file
+.Ar propfile
+as input.
+See also
+.Fl w .
+.It Fl w Ar propfile
+Write the device tree to the proplib file
+.Ar propfile .
+See also
+.Fl r .
 .El
 .Sh FILES
 .Bl -tag -width "/dev/openprom "
-.It /dev/openprom
+.It Pa /dev/openprom
 The openprom device on systems with OpenPROM.
-.It /dev/openfirm
+.It Pa /dev/openfirm
 The openfirm device on systems with OpenFirmware.
 .El
 .Sh SEE ALSO
