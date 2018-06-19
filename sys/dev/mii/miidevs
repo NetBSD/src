@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.128 2018/06/13 23:25:25 jdolecek Exp $
+$NetBSD: miidevs,v 1.129 2018/06/19 05:14:16 msaitoh Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -269,7 +269,7 @@ model xxMARVELL E1111		0x000c Marvell 88E1111 Gigabit PHY
 model xxMARVELL E1145		0x000d Marvell 88E1145 Quad Gigabit PHY
 model xxMARVELL E6060		0x0010 Marvell 88E6060 6-Port 10/100 Fast Ethernet Switch
 model xxMARVELL I347		0x001c Intel I347-AT4 Gigabit PHY
-model xxMARVELL E1512		0x001d Marvell 88E1512 Gigabit PHY
+model xxMARVELL E1512		0x001d Marvell 88E151[0248] Gigabit PHY
 model xxMARVELL E1340M		0x001f Marvell 88E1340 Gigabit PHY
 model xxMARVELL E1116		0x0021 Marvell 88E1116 Gigabit PHY
 model xxMARVELL E1118		0x0022 Marvell 88E1118 Gigabit PHY
