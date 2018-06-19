@@ -1,4 +1,4 @@
-/* $NetBSD: alps.c,v 1.8 2018/06/19 22:53:17 uwe Exp $ */
+/* $NetBSD: alps.c,v 1.9 2018/06/19 23:03:28 uwe Exp $ */
 
 /*-
  * Copyright (c) 2017 Ryo ONODERA <ryo@tetera.org>
@@ -30,7 +30,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: alps.c,v 1.8 2018/06/19 22:53:17 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: alps.c,v 1.9 2018/06/19 23:03:28 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -690,7 +690,7 @@ pms_alps_probe_init(void *opaque)
 	uint8_t e7sig[3];
 	uint8_t ecsig[3];
 	int res;
-	u_char cmd[1], resp[3];
+	u_char cmd[1];
 
 	sc->last_x1 = 0;
 	sc->last_y1 = 0;
@@ -755,8 +755,8 @@ pms_alps_probe_init(void *opaque)
 
 err:
 	cmd[0] = PMS_RESET;
-	(void)pckbport_poll_cmd(psc->sc_kbctag, psc->sc_kbcslot, cmd,
-	    1, 2, resp, 1);
+	(void)pckbport_poll_cmd(psc->sc_kbctag, psc->sc_kbcslot,
+	    cmd, 1, 2, NULL, 1);
 	if (res != ENODEV)
 		aprint_verbose_dev(psc->sc_dev, "Failed to initialize an ALPS device.\n");
 	return res;
