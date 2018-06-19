@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.38 2018/06/18 20:20:27 maxv Exp $	*/
+/*	$NetBSD: fpu.c,v 1.39 2018/06/19 09:25:13 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.  All
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.38 2018/06/18 20:20:27 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.39 2018/06/19 09:25:13 maxv Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -624,10 +624,22 @@ fpu_save_area_clear(struct lwp *l, unsigned int x87_cw)
 {
 	union savefpu *fpu_save;
 	struct pcb *pcb;
+	int s;
 
-	fpusave_lwp(l, false);
+	KASSERT(l == curlwp);
+	KASSERT((l->l_flag & LW_SYSTEM) == 0);
 	fpu_save = process_fpframe(l);
 	pcb = lwp_getpcb(l);
+
+	s = splhigh();
+	if (x86_fpu_eager) {
+		KASSERT(pcb->pcb_fpcpu == NULL ||
+		    pcb->pcb_fpcpu == curcpu());
+		fpusave_cpu(false);
+	} else {
+		splx(s);
+		fpusave_lwp(l, false);
+	}
 	KASSERT(pcb->pcb_fpcpu == NULL);
 
 	if (i386_use_fxsave) {
@@ -650,13 +662,9 @@ fpu_save_area_clear(struct lwp *l, unsigned int x87_cw)
 	}
 	pcb->pcb_fpu_dflt_cw = x87_cw;
 
-	/*
-	 * If using eager-switch, install the FPU state on the current
-	 * CPU.
-	 */
 	if (x86_fpu_eager) {
-		KASSERT(l == curlwp);
-		fpu_eagerswitch(NULL, l);
+		fpu_eagerrestore(l);
+		splx(s);
 	}
 }
 
