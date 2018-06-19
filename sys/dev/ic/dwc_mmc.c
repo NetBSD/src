@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_mmc.c,v 1.12 2018/06/10 17:52:20 jmcneill Exp $ */
+/* $NetBSD: dwc_mmc.c,v 1.13 2018/06/19 22:44:33 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_mmc.c,v 1.12 2018/06/10 17:52:20 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_mmc.c,v 1.13 2018/06/19 22:44:33 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -355,7 +355,12 @@ static int
 dwc_mmc_set_clock(struct dwc_mmc_softc *sc, u_int freq)
 {
 	const u_int pll_freq = sc->sc_clock_freq / 1000;
-	const u_int clk_div = howmany(pll_freq, freq * 2);
+	u_int clk_div;
+
+	if (freq != pll_freq)
+		clk_div = howmany(pll_freq, freq);
+	else
+		clk_div = 0;
 
 	MMC_WRITE(sc, DWC_MMC_CLKDIV, clk_div);
 
@@ -374,6 +379,9 @@ dwc_mmc_bus_clock(sdmmc_chipset_handle_t sch, int freq)
 		return 1;
 
 	if (freq) {
+		if (sc->sc_bus_clock && sc->sc_bus_clock(sc, freq) != 0)
+			return 1;
+
 		if (dwc_mmc_set_clock(sc, freq) != 0)
 			return 1;
 

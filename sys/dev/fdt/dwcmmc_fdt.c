@@ -1,4 +1,4 @@
-/* $NetBSD: dwcmmc_fdt.c,v 1.1 2018/06/16 00:19:04 jmcneill Exp $ */
+/* $NetBSD: dwcmmc_fdt.c,v 1.2 2018/06/19 22:44:33 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwcmmc_fdt.c,v 1.1 2018/06/16 00:19:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwcmmc_fdt.c,v 1.2 2018/06/19 22:44:33 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -46,6 +46,7 @@ static int	dwcmmc_fdt_match(device_t, cfdata_t, void *);
 static void	dwcmmc_fdt_attach(device_t, device_t, void *);
 
 static int	dwcmmc_fdt_card_detect(struct dwc_mmc_softc *);
+static int	dwcmmc_fdt_bus_clock(struct dwc_mmc_softc *, int);
 
 struct dwcmmc_fdt_config {
 	u_int		ciu_div;
@@ -66,6 +67,7 @@ struct dwcmmc_fdt_softc {
 	struct clk		*sc_clk_ciu;
 	struct fdtbus_gpio_pin	*sc_pin_cd;
 	const struct dwcmmc_fdt_config *sc_conf;
+	u_int			sc_ciu_div;
 };
 
 CFATTACH_DECL_NEW(dwcmmc_fdt, sizeof(struct dwc_mmc_softc),
@@ -86,10 +88,10 @@ dwcmmc_fdt_attach(device_t parent, device_t self, void *aux)
 	struct dwc_mmc_softc *sc = &esc->sc;
 	struct fdt_attach_args * const faa = aux;
 	const int phandle = faa->faa_phandle;
+	u_int fifo_depth, max_freq;
 	char intrstr[128];
 	bus_addr_t addr;
 	bus_size_t size;
-	u_int fifo_depth;
 	int error;
 
 	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
@@ -135,9 +137,14 @@ dwcmmc_fdt_attach(device_t parent, device_t self, void *aux)
 
 	const u_int ciu_div = esc->sc_conf->ciu_div > 0 ? esc->sc_conf->ciu_div : 1;
 
-	sc->sc_clock_freq = clk_get_rate(esc->sc_clk_ciu) / (ciu_div + 1);
+	if (of_getprop_uint32(phandle, "max-frequency", &max_freq) == 0)
+		sc->sc_clock_freq = max_freq;
+	else
+		sc->sc_clock_freq = clk_get_rate(esc->sc_clk_ciu) / ciu_div;
+
 	sc->sc_fifo_depth = fifo_depth;
 	sc->sc_flags = DWC_MMC_F_USE_HOLD_REG | DWC_MMC_F_DMA;
+	sc->sc_bus_clock = dwcmmc_fdt_bus_clock;
 
 	esc->sc_pin_cd = fdtbus_gpio_acquire(phandle, "cd-gpios",
 	    GPIO_PIN_INPUT);
@@ -145,7 +152,7 @@ dwcmmc_fdt_attach(device_t parent, device_t self, void *aux)
 		sc->sc_card_detect = dwcmmc_fdt_card_detect;
 
 	aprint_naive("\n");
-	aprint_normal(": SD/MMC controller (%u Hz)\n", sc->sc_clock_freq);
+	aprint_normal(": DesignWare SD/MMC\n");
 
 	if (!fdtbus_intr_str(phandle, 0, intrstr, sizeof(intrstr))) {
 		aprint_error_dev(self, "failed to decode interrupt\n");
@@ -173,4 +180,26 @@ dwcmmc_fdt_card_detect(struct dwc_mmc_softc *sc)
 	KASSERT(esc->sc_pin_cd != NULL);
 
 	return fdtbus_gpio_read(esc->sc_pin_cd);
+}
+
+static int
+dwcmmc_fdt_bus_clock(struct dwc_mmc_softc *sc, int rate)
+{
+	struct dwcmmc_fdt_softc *esc = device_private(sc->sc_dev);
+        const u_int ciu_div = esc->sc_conf->ciu_div > 0 ? esc->sc_conf->ciu_div : 1;
+	int error;
+
+	error = clk_set_rate(esc->sc_clk_ciu, 1000 * rate * ciu_div);
+	if (error != 0) {
+		aprint_error_dev(sc->sc_dev, "failed to set rate to %u kHz: %d\n",
+		    rate * ciu_div, error);
+		return error;
+	}
+
+	sc->sc_clock_freq = (clk_get_rate(esc->sc_clk_ciu) / ciu_div) / 1000;
+
+	aprint_debug_dev(sc->sc_dev, "set clock rate to %u kHz (target %u kHz)\n",
+	    sc->sc_clock_freq, rate);
+
+	return 0;
 }
