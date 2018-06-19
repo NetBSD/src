@@ -1,4 +1,4 @@
-/* $NetBSD: rk_gmac.c,v 1.2 2018/06/17 00:33:05 jmcneill Exp $ */
+/* $NetBSD: rk_gmac.c,v 1.3 2018/06/19 23:43:11 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rk_gmac.c,v 1.2 2018/06/17 00:33:05 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_gmac.c,v 1.3 2018/06/19 23:43:11 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -117,20 +117,25 @@ static void
 rk3328_gmac_set_mode_rgmii(struct dwc_gmac_softc *sc, u_int tx_delay, u_int rx_delay)
 {
 	struct rk_gmac_softc * const rk_sc = (struct rk_gmac_softc *)sc;
+	uint32_t write_mask, write_val;
 
-	const uint32_t write_mask =
-	    (RK3328_GRF_MAC_CON1_MODE | RK3328_GRF_MAC_CON1_SEL |
-	     RK3328_GRF_MAC_CON1_RXDLY_EN | RK3328_GRF_MAC_CON1_TXDLY_EN) << 16;
-	const uint32_t write_val =
-	    __SHIFTIN(RK3328_GRF_MAC_CON1_SEL_RGMII, RK3328_GRF_MAC_CON1_SEL) |
-	    RK3328_GRF_MAC_CON1_RXDLY_EN | RK3328_GRF_MAC_CON1_TXDLY_EN;
+	write_mask = (RK3328_GRF_MAC_CON1_MODE | RK3328_GRF_MAC_CON1_SEL) << 16;
+	write_val = __SHIFTIN(RK3328_GRF_MAC_CON1_SEL_RGMII, RK3328_GRF_MAC_CON1_SEL);
+	bus_space_write_4(sc->sc_bst, rk_sc->sc_grf_bsh, RK3328_GRF_MAC_CON1,
+	    write_mask | write_val);
 
-	bus_space_write_4(sc->sc_bst, rk_sc->sc_grf_bsh, RK3328_GRF_MAC_CON1, write_mask | write_val);
+#if notyet
+	write_mask = (RK3328_GRF_MAC_CON0_TXDLY | RK3328_GRF_MAC_CON0_RXDLY) << 16;
+	write_val = __SHIFTIN(tx_delay, RK3328_GRF_MAC_CON0_TXDLY) |
+		    __SHIFTIN(rx_delay, RK3328_GRF_MAC_CON0_RXDLY);
 	bus_space_write_4(sc->sc_bst, rk_sc->sc_grf_bsh, RK3328_GRF_MAC_CON0,
-	    (RK3328_GRF_MAC_CON0_TXDLY << 16) |
-	    (RK3328_GRF_MAC_CON0_RXDLY << 16) |
-	    __SHIFTIN(tx_delay, RK3328_GRF_MAC_CON0_TXDLY) |
-	    __SHIFTIN(rx_delay, RK3328_GRF_MAC_CON0_RXDLY));
+	    write_mask | write_val);
+
+	write_mask = (RK3328_GRF_MAC_CON1_RXDLY_EN | RK3328_GRF_MAC_CON1_TXDLY_EN) << 16;
+	write_val = RK3328_GRF_MAC_CON1_RXDLY_EN | RK3328_GRF_MAC_CON1_TXDLY_EN;
+	bus_space_write_4(sc->sc_bst, rk_sc->sc_grf_bsh, RK3328_GRF_MAC_CON1,
+	    write_mask | write_val);
+#endif
 }
 
 static void
@@ -173,6 +178,7 @@ rk_gmac_setup_clocks(int phandle)
 		"aclk_mac",
 		"pclk_mac",
 		"mac_clk_tx",
+		"mac_clk_rx"
 #endif
 	};
 	static const char * const rstnames[] = {
@@ -282,8 +288,10 @@ rk_gmac_attach(device_t parent, device_t self, void *aux)
 	if (rk_gmac_reset(phandle) != 0)
 		aprint_error_dev(self, "PHY reset failed\n");
 
+#if notyet
 	if (of_hasprop(phandle, "snps,force_thresh_dma_mode"))
 		sc->sc_flags |= DWC_GMAC_FORCE_THRESH_DMA_MODE;
+#endif
 
 	phy_mode = fdtbus_get_string(phandle, "phy-mode");
 	if (phy_mode == NULL) {
