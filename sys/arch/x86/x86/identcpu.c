@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.72 2018/06/17 07:13:02 maxv Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.73 2018/06/19 19:50:19 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.72 2018/06/17 07:13:02 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.73 2018/06/19 19:50:19 jdolecek Exp $");
 
 #include "opt_xen.h"
 
@@ -819,12 +819,7 @@ cpu_probe_fpu(struct cpu_info *ci)
 	if (descs[2] > 512)
 		x86_fpu_save_size = descs[2];
 
-#ifdef XEN
-	/* Don't use xsave, force fxsave with x86_xsave_features = 0. */
-	x86_fpu_save = FPU_SAVE_FXSAVE;
-#else
 	x86_xsave_features = (uint64_t)descs[3] << 32 | descs[0];
-#endif
 }
 
 void
