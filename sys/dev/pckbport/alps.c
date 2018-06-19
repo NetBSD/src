@@ -1,4 +1,4 @@
-/* $NetBSD: alps.c,v 1.6 2018/06/19 21:21:04 uwe Exp $ */
+/* $NetBSD: alps.c,v 1.7 2018/06/19 21:47:28 uwe Exp $ */
 
 /*-
  * Copyright (c) 2017 Ryo ONODERA <ryo@tetera.org>
@@ -30,7 +30,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: alps.c,v 1.6 2018/06/19 21:21:04 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: alps.c,v 1.7 2018/06/19 21:47:28 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -165,8 +165,10 @@ pms_alps_e6sig(struct pms_softc *psc, uint8_t *e6sig)
 		goto err;
 
 	/* ALPS input device returns 00-00-64 as E6 signature */
-	if (e6sig[0] != 0x00 || e6sig[1] != 0x00 ||
-		e6sig[2] != 0x64) {
+	if ((e6sig[0] & ~0x07u) != 0x00 || /* ignore buttons */
+	    e6sig[1] != 0x00 ||
+	    e6sig[2] != 0x64)
+	{
 		return EINVAL;
 	}
 
