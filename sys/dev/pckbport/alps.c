@@ -1,4 +1,4 @@
-/* $NetBSD: alps.c,v 1.9 2018/06/19 23:03:28 uwe Exp $ */
+/* $NetBSD: alps.c,v 1.10 2018/06/19 23:25:59 uwe Exp $ */
 
 /*-
  * Copyright (c) 2017 Ryo ONODERA <ryo@tetera.org>
@@ -30,7 +30,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: alps.c,v 1.9 2018/06/19 23:03:28 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: alps.c,v 1.10 2018/06/19 23:25:59 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -169,7 +169,7 @@ pms_alps_e6sig(struct pms_softc *psc, uint8_t *e6sig)
 	    e6sig[1] != 0x00 ||
 	    e6sig[2] != 0x64)
 	{
-		return ENODEV;
+		return ENODEV;	/* This is not an ALPS device */
 	}
 
 	aprint_debug_dev(psc->sc_dev,
@@ -219,7 +219,7 @@ pms_alps_e7sig(struct pms_softc *psc, uint8_t *e7sig)
 		e7sig[0], e7sig[1], e7sig[2]);
 
 	if (e7sig[0] != 0x73)
-		return ENODEV;
+		return ENODEV;	/* This is not an ALPS device */
 
 	return 0;
 err:
@@ -701,7 +701,7 @@ pms_alps_probe_init(void *opaque)
 	pckbport_flush(psc->sc_kbctag, psc->sc_kbcslot);
 
 	if ((res = pms_alps_e6sig(psc, e6sig)) != 0)
-		return res; /* This is not ALPS device */
+		goto err;
 
 	if ((res = pms_alps_e7sig(psc, e7sig)) != 0)
 		goto err;
@@ -758,7 +758,7 @@ err:
 	(void)pckbport_poll_cmd(psc->sc_kbctag, psc->sc_kbcslot,
 	    cmd, 1, 2, NULL, 1);
 	if (res != ENODEV)
-		aprint_verbose_dev(psc->sc_dev, "Failed to initialize an ALPS device.\n");
+		aprint_error_dev(psc->sc_dev, "Failed to initialize an ALPS device.\n");
 	return res;
 }
 
