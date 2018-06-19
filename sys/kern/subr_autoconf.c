@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.259 2018/06/18 16:31:42 thorpej Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.260 2018/06/19 04:10:51 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.259 2018/06/18 16:31:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.260 2018/06/19 04:10:51 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -2286,12 +2286,13 @@ device_compatible_entry_matches(const struct device_compatible_entry *dce,
 {
 	const char **cpp = DEVICE_COMPAT_ENTRY_GET_STRINGS(dce);
 
-	if (cpp == NULL)
+	if (dce == NULL || cpp == NULL)
 		return false;
 	
-	while (*cpp != NULL)
-		if (strcmp(*cpp++, compatible) == 0)
+	for (; *cpp != NULL; cpp++) {
+		if (strcmp(*cpp, compatible) == 0)
 			return true;
+	}
 
 	return false;
 }
