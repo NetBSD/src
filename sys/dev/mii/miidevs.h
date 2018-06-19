@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.131 2018/06/13 23:25:41 jdolecek Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.132 2018/06/19 05:14:36 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.128 2018/06/13 23:25:25 jdolecek Exp
+ *	NetBSD: miidevs,v 1.129 2018/06/19 05:14:16 msaitoh Exp
  */
 
 /*-
@@ -400,7 +400,7 @@
 #define	MII_MODEL_xxMARVELL_I347	0x001c
 #define	MII_STR_xxMARVELL_I347	"Intel I347-AT4 Gigabit PHY"
 #define	MII_MODEL_xxMARVELL_E1512	0x001d
-#define	MII_STR_xxMARVELL_E1512	"Marvell 88E1512 Gigabit PHY"
+#define	MII_STR_xxMARVELL_E1512	"Marvell 88E151[0248] Gigabit PHY"
 #define	MII_MODEL_xxMARVELL_E1340M	0x001f
 #define	MII_STR_xxMARVELL_E1340M	"Marvell 88E1340 Gigabit PHY"
 #define	MII_MODEL_xxMARVELL_E1116	0x0021
