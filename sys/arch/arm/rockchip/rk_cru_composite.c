@@ -1,4 +1,4 @@
-/* $NetBSD: rk_cru_composite.c,v 1.2 2018/06/17 14:48:15 jmcneill Exp $ */
+/* $NetBSD: rk_cru_composite.c,v 1.3 2018/06/19 01:24:17 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_cru_composite.c,v 1.2 2018/06/17 14:48:15 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_cru_composite.c,v 1.3 2018/06/19 01:24:17 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -35,6 +35,8 @@ __KERNEL_RCSID(0, "$NetBSD: rk_cru_composite.c,v 1.2 2018/06/17 14:48:15 jmcneil
 #include <dev/clk/clk_backend.h>
 
 #include <arm/rockchip/rk_cru.h>
+
+#include <dev/fdt/fdtvar.h>
 
 int
 rk_cru_composite_enable(struct rk_cru_softc *sc, struct rk_cru_clk *clk,
@@ -85,7 +87,8 @@ rk_cru_composite_set_rate(struct rk_cru_softc *sc,
 {
 	struct rk_cru_composite *composite = &clk->u.composite;
 	u_int best_div, best_mux, best_diff;
-	struct rk_cru_clk *clk_parent;
+	struct rk_cru_clk *rclk_parent;
+	struct clk *clk_parent;
 
 	KASSERT(clk->type == RK_CRU_COMPOSITE);
 
@@ -93,10 +96,15 @@ rk_cru_composite_set_rate(struct rk_cru_softc *sc,
 	best_mux = 0;
 	best_diff = INT_MAX;
 	for (u_int mux = 0; mux < composite->nparents; mux++) {
-		clk_parent = rk_cru_clock_find(sc, composite->parents[mux]);
+		rclk_parent = rk_cru_clock_find(sc, composite->parents[mux]);
+		if (rclk_parent != NULL)
+			clk_parent = &rclk_parent->base;
+		else
+			clk_parent = fdtbus_clock_byname(composite->parents[mux]);
 		if (clk_parent == NULL)
 			continue;
-		const u_int prate = clk_get_rate(&clk_parent->base);
+
+		const u_int prate = clk_get_rate(clk_parent);
 		if (prate == 0)
 			continue;
 
