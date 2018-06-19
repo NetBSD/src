@@ -1,4 +1,4 @@
-/* $NetBSD: alps.c,v 1.5 2018/06/03 15:02:56 jakllsch Exp $ */
+/* $NetBSD: alps.c,v 1.6 2018/06/19 21:21:04 uwe Exp $ */
 
 /*-
  * Copyright (c) 2017 Ryo ONODERA <ryo@tetera.org>
@@ -30,7 +30,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: alps.c,v 1.5 2018/06/03 15:02:56 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: alps.c,v 1.6 2018/06/19 21:21:04 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -159,7 +159,7 @@ pms_alps_e6sig(struct pms_softc *psc, uint8_t *e6sig)
 		goto err;
 	e6sig[0] = e6sig[1] = e6sig[2] = 0;
 	/* Get E6 signature */
-	cmd[0] = PMS_GET_SCALE; /* E9 */
+	cmd[0] = PMS_SEND_DEV_STATUS; /* E9 */
 	if ((res = pckbport_poll_cmd(psc->sc_kbctag, psc->sc_kbcslot,
 	    cmd, 1, 3, e6sig, 0)) != 0)
 		goto err;
@@ -207,7 +207,7 @@ pms_alps_e7sig(struct pms_softc *psc, uint8_t *e7sig)
 	    cmd, 1, 0, NULL, 0)) != 0)
 		goto err;
 	e7sig[0] = e7sig[1] = e7sig[2] = 0;
-	cmd[0] = PMS_GET_SCALE; /* E9 */
+	cmd[0] = PMS_SEND_DEV_STATUS; /* E9 */
 	if ((res = pckbport_poll_cmd(psc->sc_kbctag, psc->sc_kbcslot,
 	    cmd, 1, 3, e7sig, 0)) != 0)
 		goto err;
@@ -249,7 +249,7 @@ pms_alps_ecsig(struct pms_softc *psc, uint8_t *ecsig)
 	    cmd, 1, 0, NULL, 0)) != 0)
 		goto err;
 	ecsig[0] = ecsig[1] = ecsig[2] = 0;
-	cmd[0] = PMS_GET_SCALE; /* E9 */
+	cmd[0] = PMS_SEND_DEV_STATUS; /* E9 */
 	if ((res = pckbport_poll_cmd(psc->sc_kbctag, psc->sc_kbcslot,
 	    cmd, 1, 3, ecsig, 0)) != 0)
 		goto err;
@@ -288,7 +288,7 @@ pms_alps_start_command_mode(struct pms_softc *psc)
 	    cmd, 1, 0, NULL, 0)) != 0)
 		goto err;
 	resp[0] = resp[1] = resp[2] = 0;
-	cmd[0] = PMS_GET_SCALE; /* E9 */
+	cmd[0] = PMS_SEND_DEV_STATUS; /* E9 */
 	if ((res = pckbport_poll_cmd(psc->sc_kbctag, psc->sc_kbcslot,
 	    cmd, 1, 3, resp, 0)) != 0)
 		goto err;
