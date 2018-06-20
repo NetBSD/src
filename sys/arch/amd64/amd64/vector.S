@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.62 2018/04/03 07:20:52 christos Exp $	*/
+/*	$NetBSD: vector.S,v 1.63 2018/06/20 11:45:25 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -630,6 +630,8 @@ LABEL(name ## _stubs)				; \
 	INTRSTUB_ENTRY(name ## 30)		; \
 	INTRSTUB_ENTRY(name ## 31)		; \
 END(name ## _stubs)
+
+	.section .rodata
 
 INTRSTUB_ARRAY_16(legacy)
 
