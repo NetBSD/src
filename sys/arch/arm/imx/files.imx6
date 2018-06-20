@@ -1,4 +1,4 @@
-#	$NetBSD: files.imx6,v 1.13 2018/03/17 18:34:09 ryo Exp $
+#	$NetBSD: files.imx6,v 1.14 2018/06/20 07:05:37 hkenken Exp $
 #
 # Configuration info for the Freescale i.MX6
 #
@@ -36,6 +36,8 @@ device	imxccm
 attach	imxccm at axi
 file	arch/arm/imx/imx6_ccm.c			imxccm	needs-flag
 defflag opt_imx6clk.h				IMXCCMDEBUG
+defparam opt_imx6clk.h				IMX6_OSC_FREQ
+defparam opt_imx6clk.h				IMX6_CKIL_FREQ
 
 # iMX6 Enhanced Periodic Interrupt Timer
 device	imxclock
