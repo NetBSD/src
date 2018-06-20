@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.40 2018/06/19 19:50:19 jdolecek Exp $	*/
+/*	$NetBSD: fpu.c,v 1.41 2018/06/20 20:43:21 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.  All
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.40 2018/06/19 19:50:19 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.41 2018/06/20 20:43:21 jdolecek Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -237,10 +237,10 @@ fpuinit(struct cpu_info *ci)
  * Get the value of MXCSR_MASK supported by the CPU.
  */
 void
-fpuinit_mxcsr_mask(uint32_t cr4)
+fpuinit_mxcsr_mask(bool has_fxsave)
 {
 
-	if ((cr4 & CR4_OSXSAVE) == 0) {
+	if (!has_fxsave) {
 		x86_fpu_mxcsr_mask = __INITIAL_MXCSR_MASK__;
 		return;
 	}
