@@ -1,4 +1,4 @@
-/* $NetBSD: a9tmr_var.h,v 1.5 2018/06/05 08:03:28 hkenken Exp $ */
+/* $NetBSD: a9tmr_var.h,v 1.6 2018/06/20 05:01:39 hkenken Exp $ */
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,8 +36,6 @@ struct a9tmr_softc {
 	bus_space_tag_t sc_memt;
 	bus_space_handle_t sc_memh;
 	bus_space_handle_t sc_global_memh;
-	bus_space_handle_t sc_private_memh;
-	bus_space_handle_t sc_wdog_memh;
 	struct evcnt sc_ev_missing_ticks;
 	uint32_t sc_freq;
 	u_long sc_autoinc;
