@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_reg.h,v 1.7 2017/11/09 05:57:23 hkenken Exp $	*/
+/*	$NetBSD: imx6_reg.h,v 1.8 2018/06/20 07:05:37 hkenken Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -131,9 +131,10 @@
 #define	AIPS1_DCIC2_BASE	0x000e8000
 #define	AIPS1_DCIC1_BASE	0x000e4000
 #define	AIPS1_IOMUXC_BASE	0x000e0000
-#define	AIPS1_IOMUXC_SIZE	0x00005000
+#define	AIPS1_IOMUXC_SIZE	0x00004000
 #define	AIPS1_GPC_BASE		0x000dc000
 #define	AIPS1_SRC_BASE		0x000d8000
+#define	AIPS1_SRC_SIZE		0x00004000
 #define	AIPS1_EPIT2_BASE	0x000d4000
 #define	AIPS1_EPIT1_BASE	0x000d0000
 #define	AIPS1_EPIT_SIZE		0x00000020
