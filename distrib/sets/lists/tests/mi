@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.787 2018/06/15 09:54:02 yamaguchi Exp $
+# $NetBSD: mi,v 1.788 2018/06/20 03:51:27 maya Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2994,6 +2994,7 @@
 ./usr/tests/lib/libm/t_acos			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libm/t_asin			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libm/t_atan			tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libm/t_cabsl			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libm/t_casinh			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libm/t_cbrt			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libm/t_ceil			tests-lib-tests		compattestfile,atf
