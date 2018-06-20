@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.200 2018/06/15 21:59:17 sevan Exp $
+$NetBSD: acronyms.comp,v 1.201 2018/06/20 21:53:15 sevan Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -1040,7 +1040,7 @@ POSIX	Portable Operating System Interface [for Unix]
 POST	power on self test
 POTS	plain old telephone system
 POWER	Performance Optimization With Enhanced RISC
-PowerPC	Performance Optimization With Enhanced RISC - Performance Computing
+POWERPC	Performance Optimization With Enhanced RISC - Performance Computing
 PP	pair programming
 PPB	PCI [to] PCI bridge
 PPC	PowerPC
