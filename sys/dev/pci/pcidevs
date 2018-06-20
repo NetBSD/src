@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1342 2018/06/14 03:59:53 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1343 2018/06/20 09:10:33 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -613,6 +613,7 @@ vendor LINKSYS		0x1737	Linksys
 vendor ALTIMA		0x173b	Altima
 vendor ANTARES		0x1754	Antares Microsystems
 vendor CAVIUM		0x177d	Cavium
+vendor NSYS		0x1794	nSYS Technologies
 vendor FZJZEL		0x1796	FZ Juelich / ZEL
 vendor BELKIN		0x1799	Belkin
 vendor HAWKING		0x17b3	Hawking Technology
