@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.212 2018/06/18 15:44:05 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.213 2018/06/20 12:41:45 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -13951,3 +13951,6 @@ share/mk/bsd.sys.mk				1.282
 	MAKEOBJDIRPREFIX. Keep using our standard NETBSDOBJDIR if it was set.
 	[christos, ticket #886]
 
+distrib/notes/common/main			(changed manually)
+
+	Updated for the upcoming release.
