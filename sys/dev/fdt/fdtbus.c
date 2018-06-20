@@ -1,4 +1,4 @@
-/* $NetBSD: fdtbus.c,v 1.17 2018/06/12 00:19:17 jmcneill Exp $ */
+/* $NetBSD: fdtbus.c,v 1.18 2018/06/20 05:59:17 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.17 2018/06/12 00:19:17 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.18 2018/06/20 05:59:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -336,7 +336,7 @@ fdtbus_print(void *aux, const char *pnp)
 			compat += (strlen(compat) + 1);
 		}
 	} else
-		aprint_debug(" (%s)", name);
+		aprint_normal(" (%s)", name);
 
 	return UNCONF;
 }
