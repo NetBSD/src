@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.79 2018/05/19 16:55:59 jakllsch Exp $	*/
+/*	$NetBSD: pmap.h,v 1.80 2018/06/20 11:49:38 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -149,7 +149,8 @@ struct bootspace {
 	/* Virtual address of the page directory. */
 	vaddr_t pdir;
 
-	/* End of the area dedicated to kernel modules (amd64 only). */
+	/* Area dedicated to kernel modules (amd64 only). */
+	vaddr_t smodule;
 	vaddr_t emodule;
 };
 
