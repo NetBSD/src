@@ -1,4 +1,4 @@
-/*	$NetBSD: a9tmr.c,v 1.15 2018/06/05 08:03:28 hkenken Exp $	*/
+/*	$NetBSD: a9tmr.c,v 1.16 2018/06/20 05:01:39 hkenken Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: a9tmr.c,v 1.15 2018/06/05 08:03:28 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a9tmr.c,v 1.16 2018/06/20 05:01:39 hkenken Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -147,12 +147,8 @@ a9tmr_attach(device_t parent, device_t self, void *aux)
 	evcnt_attach_dynamic(&sc->sc_ev_missing_ticks, EVCNT_TYPE_MISC, NULL,
 	    device_xname(self), "missing interrupts");
 
-	bus_space_subregion(sc->sc_memt, sc->sc_memh, 
-	    TMR_GLOBAL_BASE, TMR_GLOBAL_SIZE, &sc->sc_global_memh);
-	bus_space_subregion(sc->sc_memt, sc->sc_memh, 
-	    TMR_PRIVATE_BASE, TMR_PRIVATE_SIZE, &sc->sc_private_memh);
-	bus_space_subregion(sc->sc_memt, sc->sc_memh, 
-	    TMR_WDOG_BASE, TMR_WDOG_SIZE, &sc->sc_wdog_memh);
+	bus_space_subregion(sc->sc_memt, sc->sc_memh,
+	    mpcaa->mpcaa_off1, TMR_GLOBAL_SIZE, &sc->sc_global_memh);
 
 	if (mpcaa->mpcaa_irq != -1) {
 		sc->sc_global_ih = intr_establish(mpcaa->mpcaa_irq, IPL_CLOCK,
