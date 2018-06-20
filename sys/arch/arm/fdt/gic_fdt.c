@@ -1,4 +1,4 @@
-/* $NetBSD: gic_fdt.c,v 1.9 2018/06/06 19:49:51 jakllsch Exp $ */
+/* $NetBSD: gic_fdt.c,v 1.10 2018/06/20 05:50:09 hkenken Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic_fdt.c,v 1.9 2018/06/06 19:49:51 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic_fdt.c,v 1.10 2018/06/20 05:50:09 hkenken Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -140,8 +140,9 @@ gic_fdt_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	const bus_addr_t addr = addr_d;
-	const bus_size_t size = (addr_c + size_c) - addr_d;
+	const bus_addr_t addr = min(addr_d, addr_c);
+	const bus_size_t end = max(addr_d + size_d, addr_c + size_c);
+	const bus_size_t size = end - addr;
 
 	error = bus_space_map(faa->faa_bst, addr, size, 0, &bsh);
 	if (error) {
@@ -153,8 +154,8 @@ gic_fdt_attach(device_t parent, device_t self, void *aux)
 		.mpcaa_name = "armgic",
 		.mpcaa_memt = faa->faa_bst,
 		.mpcaa_memh = bsh,
-		.mpcaa_off1 = 0,
-		.mpcaa_off2 = addr_c - addr_d
+		.mpcaa_off1 = addr_d - addr,
+		.mpcaa_off2 = addr_c - addr,
 	};
 
 	config_found(self, &mpcaa, NULL);
