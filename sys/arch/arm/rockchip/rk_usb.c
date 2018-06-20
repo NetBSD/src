@@ -1,4 +1,4 @@
-/* $NetBSD: rk_usb.c,v 1.1 2018/06/16 00:19:04 jmcneill Exp $ */
+/* $NetBSD: rk_usb.c,v 1.2 2018/06/20 20:12:51 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rk_usb.c,v 1.1 2018/06/16 00:19:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_usb.c,v 1.2 2018/06/20 20:12:51 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -174,6 +174,7 @@ rk_usb_attach(device_t parent, device_t self, void *aux)
 
 	if (fdtbus_get_reg(OF_parent(phandle), 0, &grf_addr, NULL) != 0) {
 		aprint_error(": couldn't get grf registers\n");
+		return;
 	}
 	if (fdtbus_get_reg(phandle, 0, &phy_addr, &phy_size) != 0) {
 		aprint_error(": couldn't get phy registers\n");
