@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.535 2017/05/16 17:40:01 snj Exp $
+.\"	$NetBSD: main,v 1.535.2.1 2018/06/20 12:39:52 martin Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -480,7 +480,23 @@ possible,
 would not exist.
 .
 .if \n[FOR_RELEASE] \{\
-.Ss Changes Between The NetBSD 6.0 and 7.0 Releases
+.Ss "Dedication"
+.Pp
+.
+.Nx
+8.0 is dedicated to the memory of Nicolas Joly, who
+passed away in June 2017.
+.Pp
+Nicolas' technical contributions are too many to list here in full.
+He commited more than 1000 changes all over the
+.Nx
+source tree and pkgsrc.
+.Pp
+Beyond that he was always helpful and friendly. His
+example encouraged users to contribute to the project and share their
+work with the community.
+.Pp
+.Ss Changes Between The NetBSD 7.0 and 8.0 Releases
 .Pp
 The
 .Nx
@@ -497,12 +513,15 @@ went into the
 \*V release.
 The complete list of changes can be found in the
 CHANGES:
-.Lk http://ftp.NetBSD.org/pub/NetBSD/NetBSD-7.0/CHANGES
+.Lk https://cdn.netbsd.org/pub/NetBSD/NetBSD-8.0_RC2/CHANGES
 and
-CHANGES-7.0:
-.Lk http://ftp.NetBSD.org/pub/NetBSD/NetBSD-7.0/CHANGES-7.0
-files in the top level directory of the NetBSD 7.0 release tree.
+CHANGES-8.0:
+.Lk https://cdn.netbsd.org/pub/NetBSD/NetBSD-8.0_RC2/CHANGES-8.0
+files in the top level directory of the NetBSD 8.0 release tree.
 .Pp
+The release anouncements, status, updates and links to other resources
+can be found at
+.Lk https://www.netbsd.org/releases/formal-8/
 .\" fill in with changes.mdoc
 .
 .\} \" \n[FOR_RELEASE]
@@ -566,9 +585,9 @@ The root directory of the
 .Pa .../NetBSD-\*V/
 .(tag README.files
 .It Li CHANGES
-Changes between the 6.0 and 7.0 releases.
-.It Li CHANGES-7.0
-Changes between the initial 7.0 branch and final release of 7.0.
+Changes between the 7.0 and 8.0 releases.
+.It Li CHANGES-8.0
+Changes between the initial 8.0 branch and final release of 8.0.
 .It Li CHANGES.prev
 Changes in previous
 .Nx
@@ -740,12 +759,6 @@ and thus all issues that are fixed by
 .Ic postinstall
 by default will be handled.
 .Pp
-A number of things have been removed from the
-.Nx
-\*V release.
-See the
-.Dq Components removed from NetBSD
-section near the beginning of this document for a list.
 .if \n[arm] \{\
 .Ss2 Important note regarding ABI change on ARM ports
 .Pp
@@ -803,7 +816,7 @@ again.
 .\}
 .Ss2 Issues affecting an upgrade from NetBSD 5.x releases
 .Pp
-See the section below on upgrading from NetBSD 6.x as well.
+See the section below on upgrading from NetBSD 6.x and 7.x as well.
 .Pp
 The following users need to be created:
 .(bullet -compact -offset indent
@@ -836,6 +849,8 @@ algorithms (hmac_sha256, hmac_sha384, hmac_sha512) is used.
 .
 .Ss2 Issues affecting an upgrade from NetBSD 6.x releases
 .Pp
+See the section on upgrading from NetBSD 7.x as well
+.Pp
 The following user needs to be created:
 .(bullet -compact -offset indent
 _rtadvd
@@ -846,6 +861,22 @@ The following groups need to be created:
 _gpio
 .It
 _rtadvd
+.bullet)
+.
+.Ss2 Issues affecting an upgrade from NetBSD 7.x releases
+.Pp
+The following user needs to be created:
+.(bullet -compact -offset indent
+_unbound
+.It
+_nsd
+.bullet)
+.Pp
+The following groups need to be created:
+.(bullet -compact -offset indent
+_unbound
+.It
+_nsd
 .bullet)
 .
 .Ss "Using online NetBSD documentation"
