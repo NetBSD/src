@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.6 2018/05/17 08:24:28 ryo Exp $	*/
+/*	$NetBSD: locore.S,v 1.7 2018/06/21 11:57:05 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -36,7 +36,7 @@
 #include <aarch64/pte.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.6 2018/05/17 08:24:28 ryo Exp $")
+RCSID("$NetBSD: locore.S,v 1.7 2018/06/21 11:57:05 ryo Exp $")
 
 /* #define DEBUG_LOCORE */
 /* #define DEBUG_MMU */
@@ -181,11 +181,11 @@ ENTRY_NP(aarch64_start)
 	PRINT("DAIF            = ")
 	mrs	x0, daif
 	bl	print_x0
-#endif
 
 	PRINT("VSTART          = ")
 	ldr	x0, =vstart	# virtual address of vstart
 	bl	print_x0
+#endif
 
 	ldr	x0, =vstart	# virtual address of vstart
 	br	x0		# jump to the kernel virtual address
