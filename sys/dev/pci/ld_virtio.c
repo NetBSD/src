@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_virtio.c,v 1.22 2018/06/10 14:59:23 jakllsch Exp $	*/
+/*	$NetBSD: ld_virtio.c,v 1.23 2018/06/21 16:47:06 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.22 2018/06/10 14:59:23 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.23 2018/06/21 16:47:06 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -628,6 +628,9 @@ ld_virtio_detach(device_t self, int flags)
 	bus_dmamem_free(dmat, &sc->sc_reqs_seg, 1);
 
 	ldenddetach(ld);
+
+	cv_destroy(&sc->sc_sync_wait);
+	mutex_destroy(&sc->sc_sync_wait_lock);
 
 	virtio_child_detach(sc->sc_virtio);
 
