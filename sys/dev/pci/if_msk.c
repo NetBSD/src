@@ -1,4 +1,4 @@
-/* $NetBSD: if_msk.c,v 1.65 2018/06/14 09:29:55 msaitoh Exp $ */
+/* $NetBSD: if_msk.c,v 1.66 2018/06/21 09:09:50 msaitoh Exp $ */
 /*	$OpenBSD: if_msk.c,v 1.65 2008/09/10 14:01:22 blambert Exp $ */
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.65 2018/06/14 09:29:55 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.66 2018/06/21 09:09:50 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -443,8 +443,7 @@ msk_init_tx_ring(struct sk_if_softc *sc_if)
 	struct sk_txmap_entry	*entry;
 	int			i, nexti;
 
-	memset(sc_if->sk_rdata->sk_tx_ring, 0,
-	    sizeof(struct msk_tx_desc) * MSK_TX_RING_CNT);
+	memset(rd->sk_tx_ring, 0, sizeof(struct msk_tx_desc) * MSK_TX_RING_CNT);
 
 	SIMPLEQ_INIT(&sc_if->sk_txmap_head);
 	for (i = 0; i < MSK_TX_RING_CNT; i++) {
@@ -2304,7 +2303,7 @@ msk_init(struct ifnet *ifp)
 	s = splnet();
 
 	/* Cancel pending I/O and free all RX/TX buffers. */
-	msk_stop(ifp,0);
+	msk_stop(ifp, 0);
 
 	/* Configure I2C registers */
 
@@ -2353,7 +2352,7 @@ msk_init(struct ifnet *ifp)
 	if (msk_init_rx_ring(sc_if) == ENOBUFS) {
 		aprint_error_dev(sc_if->sk_dev, "initialization failed: no "
 		    "memory for rx buffers\n");
-		msk_stop(ifp,0);
+		msk_stop(ifp, 0);
 		splx(s);
 		return ENOBUFS;
 	}
@@ -2361,7 +2360,7 @@ msk_init(struct ifnet *ifp)
 	if (msk_init_tx_ring(sc_if) == ENOBUFS) {
 		aprint_error_dev(sc_if->sk_dev, "initialization failed: no "
 		    "memory for tx buffers\n");
-		msk_stop(ifp,0);
+		msk_stop(ifp, 0);
 		splx(s);
 		return ENOBUFS;
 	}
