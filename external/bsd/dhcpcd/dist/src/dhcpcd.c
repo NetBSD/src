@@ -373,7 +373,7 @@ dhcpcd_drop(struct interface *ifp, int stop)
 #ifdef IPV4LL
 	ipv4ll_drop(ifp);
 #endif
-#ifdef DHCP
+#ifdef INET
 	dhcp_drop(ifp, stop ? "STOP" : "EXPIRE");
 #endif
 #ifdef ARP
