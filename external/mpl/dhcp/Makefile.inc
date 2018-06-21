@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.1 2018/04/07 22:31:36 christos Exp $
+# $NetBSD: Makefile.inc,v 1.2 2018/06/21 11:02:48 kamil Exp $
 
 WARNS?=	1	# XXX -Wshadow -Wcast-qual -Wsign-compare
 
@@ -30,7 +30,7 @@ CPPFLAGS+= -I${BIND}/lib/${dir}/pthreads/include
 CPPFLAGS+= -DLOCALSTATEDIR='"/var"'
 LDADD+= ${COBJDIR}/libdhcp.a
 LDADD+= ${OMOBJDIR}/libomapi.a
-.if defined(PROG) && ${PROG} == "dhclient"
+.if defined(PROG) && ${PROG} == "dhclient" && ${MKSANITIZER:Uno} != "yes"
 LDADD+=-Wl,-Bstatic
 .endif
 LDADD+= -lirs -lisccfg -ldns -lisc
@@ -39,12 +39,12 @@ LDADD+=-lpthread
 LDADD+= -lgssapi -lheimntlm ${LIBKRB5_LDADD} ${LIBKRB5_STATIC_LDADD}
 DPADD+= ${LIBKRB5_DPADD} ${LIBHEIMNTLM} ${LIBGSSAPI} ${LIBKRB5_STATIC_DPADD}
 .endif
-.if defined(PROG) && ${PROG} == "dhclient"
+.if defined(PROG) && ${PROG} == "dhclient" && ${MKSANITIZER:Uno} != "yes"
 LDADD+=-Wl,-Bdynamic
 .endif
 LDADD+= -lcrypto -lipsec -lcrypt
 DPADD+= ${LIBCRYPTO} ${LIBIPSEC} ${LIBCRYPT}
-.if defined(PROG) && ${PROG} == "dhclient"
+.if defined(PROG) && ${PROG} == "dhclient" && ${MKSANITIZER:Uno} != "yes"
 LDADD+=-Wl,-Bdynamic
 .endif
 DPADD+= ${COBJDIR}/libdhcp.a
