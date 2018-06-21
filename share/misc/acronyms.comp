@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.201 2018/06/20 21:53:15 sevan Exp $
+$NetBSD: acronyms.comp,v 1.202 2018/06/21 22:56:42 sevan Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -29,6 +29,7 @@ ADSL	asymmetric digital subscriber line
 ADT	abstract data type
 AER	advanced error reporting
 AES	Advanced Encryption Standard
+AFP	Apple Filing Protocol
 AFS	Andrew File System
 AGC	automatic gain control
 AGP	accelerated graphics port
@@ -43,6 +44,7 @@ ALUA	asymmetric logical unit access
 AM	access method
 AM	alignment mask
 AM	amplitude modulation
+AMD	Advanced Micro Devices Inc
 AMI	alternate mark inversion
 AMP	asymmetric multiprocessing
 AMQP	advanced message queuing protocol
@@ -74,6 +76,7 @@ ARQ	automatic repeat request
 ARR	address range register
 ARU	audio response unit
 AS	autonomous system
+ASA	Adaptive Security Appliance
 ASC	advanced smart cache
 ASCII	American Standard Code for Information Interchange
 ASD	agile software development
@@ -153,6 +156,7 @@ BS	backspace
 BS	binary sequence
 BSA	basic service area
 BSD	Berkeley Software Distribution
+BSDP	Boot Service Discovery Protocol
 BSF	bit scan forward
 BSOD	blue screen of death
 BSP	binary space partition
@@ -322,6 +326,7 @@ DDWG	Digital Display Working Group
 DE	debugging extensions
 DE	desktop environment
 DEA	data encryption algorithm
+DEC	Digital Equipment Corporation
 DEK	data encryption key
 DEP	data execution prevention
 DER	distinguished encoding rules
@@ -643,6 +648,7 @@ IP	intellectual property
 IPC	interprocess communication
 IPE	integrated programming environment
 IPI	interprocessor interrupt
+IPL	Initial Program Load
 IPMB	Intelligent Platform Management Bus
 IPMI	Intelligent Platform Management Interface
 IPNG	Internet Protocol, Next Generation
@@ -786,6 +792,7 @@ MD	machine-dependent
 MD-SAL	model-driven service abstraction layer
 MDA	mail delivery agent
 MDA	Monochrome Display Adapter
+MDMX	MIPS Digital Media eXtension
 MDRAM	multibank dynamic random access memory
 MESI	modified, exclusive, shared, invalid
 MFC	merge from current
@@ -803,6 +810,7 @@ MIMD	multiple instruction, multiple data
 MIME	Multipurpose Internet Mail Extensions
 MIMO	multiple input multiple output
 MIPS	million instructions per second
+MIPS	Microprocessor without Interlocked Pipeline Stage
 MISD	multiple instruction, single data
 MIT	Massachusetts Institute of Technology
 MITM	man in the middle
@@ -1016,6 +1024,7 @@ PIPT	physically indexed, physically tagged
 PIQ	prefetch input queue
 PIT	programmable interrupt timer
 PIV	personal identity verification
+PIX	Private Internet eXchange
 PKCS	public-key cryptography standards
 PKI	public key infrastructure
 PLC	programmable logic controller
@@ -1059,6 +1068,7 @@ PRN	pseudorandom {noise,number}
 PRNG	pseudorandom number generator
 PROM	programmable read only memory
 PRP	pseudorandom permutation
+PRU	Programmable Realtime Unit
 PSD	power spectral density
 PSE	page size extensions
 PSK	phase shift keying
@@ -1502,6 +1512,7 @@ XBAR	crossbar
 XDMCP	X Display Manager control protocol
 XER	XML encoding rules
 XGA	Extended Graphics Array
+XHR	XMLHttpRequest
 XIP	execute in place
 XML	Extensible Markup Language
 XOR	exclusive or
