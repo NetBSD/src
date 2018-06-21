@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.111 2018/05/08 07:02:07 maxv Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.112 2018/06/21 16:53:10 maxv Exp $	*/
 
 /*
  * Copyright (c) 2001 Atsushi Onoe
@@ -37,7 +37,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.81 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.111 2018/05/08 07:02:07 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.112 2018/06/21 16:53:10 maxv Exp $");
 #endif
 
 #ifdef _KERNEL_OPT
@@ -762,14 +762,15 @@ ieee80211_defrag(struct ieee80211com *ic, struct ieee80211_node *ni,
 {
 	struct ieee80211_frame *wh = mtod(m, struct ieee80211_frame *);
 	struct ieee80211_frame *lwh;
-	u_int16_t rxseq;
+	u_int16_t rxseq, iseq;
 	u_int8_t fragno;
 	const u_int8_t more_frag = wh->i_fc[1] & IEEE80211_FC1_MORE_FRAG;
 	struct mbuf *mfrag;
 
 	IASSERT(!IEEE80211_IS_MULTICAST(wh->i_addr1), ("multicast fragm?"));
 
-	rxseq = le16toh(*(u_int16_t *)wh->i_seq);
+	iseq = *(u_int16_t *)wh->i_seq;
+	rxseq = le16toh(iseq);
 	fragno = rxseq & IEEE80211_SEQ_FRAG_MASK;
 
 	/* Quick way out, if there's nothing to defragment */
@@ -827,16 +828,19 @@ ieee80211_defrag(struct ieee80211com *ic, struct ieee80211_node *ni,
 		}
 		mfrag = m;
 	} else {
+		int mlen;
+
 		/* Strip header and concatenate */
 		m_adj(m, hdrspace);
+		mlen = m->m_pkthdr.len;
 		m_cat(mfrag, m);
 
 		/* NB: m_cat doesn't update the packet header */
-		mfrag->m_pkthdr.len += m->m_pkthdr.len;
+		mfrag->m_pkthdr.len += mlen;
 
 		/* track last seqnum and fragno */
 		lwh = mtod(mfrag, struct ieee80211_frame *);
-		*(u_int16_t *)lwh->i_seq = *(u_int16_t *)wh->i_seq;
+		*(u_int16_t *)lwh->i_seq = iseq;
 	}
 
 	if (more_frag) {
