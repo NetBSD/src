@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.171 2018/06/01 07:13:35 ozaki-r Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.172 2018/06/21 10:37:50 knakahara Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.171 2018/06/01 07:13:35 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.172 2018/06/21 10:37:50 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -679,6 +679,11 @@ reflect:
 	}
 
 raw:
+	/*
+	 * Currently, pim_input() is always called holding softnet_lock
+	 * by ipintr()(!NET_MPSAFE) or PR_INPUT_WRAP()(NET_MPSAFE).
+	 */
+	KASSERT(mutex_owned(softnet_lock));
 	rip_input(m, hlen, proto);
 	return;
 

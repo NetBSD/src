@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_encap.c,v 1.68 2018/05/01 07:21:39 maxv Exp $	*/
+/*	$NetBSD: ip_encap.c,v 1.69 2018/06/21 10:37:50 knakahara Exp $	*/
 /*	$KAME: ip_encap.c,v 1.73 2001/10/02 08:30:58 itojun Exp $	*/
 
 /*
@@ -68,7 +68,7 @@
 #define USE_RADIX
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.68 2018/05/01 07:21:39 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.69 2018/06/21 10:37:50 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mrouting.h"
@@ -372,7 +372,9 @@ encap4_input(struct mbuf *m, ...)
 	}
 
 	/* last resort: inject to raw socket */
+	SOFTNET_LOCK_IF_NET_MPSAFE();
 	rip_input(m, off, proto);
+	SOFTNET_UNLOCK_IF_NET_MPSAFE();
 }
 #endif
 
@@ -494,6 +496,7 @@ encap6_input(struct mbuf **mp, int *offp, int proto)
 	const struct encapsw *esw;
 	struct encaptab *match;
 	struct psref match_psref;
+	int rv;
 
 	match = encap6_lookup(m, *offp, proto, INBOUND, &match_psref);
 
@@ -516,7 +519,10 @@ encap6_input(struct mbuf **mp, int *offp, int proto)
 	}
 
 	/* last resort: inject to raw socket */
-	return rip6_input(mp, offp, proto);
+	SOFTNET_LOCK_IF_NET_MPSAFE();
+	rv = rip6_input(mp, offp, proto);
+	SOFTNET_UNLOCK_IF_NET_MPSAFE();
+	return rv;
 }
 #endif
 
