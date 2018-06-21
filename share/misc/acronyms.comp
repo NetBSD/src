@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.202 2018/06/21 22:56:42 sevan Exp $
+$NetBSD: acronyms.comp,v 1.203 2018/06/21 23:05:44 maya Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -810,7 +810,7 @@ MIMD	multiple instruction, multiple data
 MIME	Multipurpose Internet Mail Extensions
 MIMO	multiple input multiple output
 MIPS	million instructions per second
-MIPS	Microprocessor without Interlocked Pipeline Stage
+MIPS	Microprocessor without Interlocked Pipeline Stages
 MISD	multiple instruction, single data
 MIT	Massachusetts Institute of Technology
 MITM	man in the middle
