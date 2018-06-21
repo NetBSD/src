@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.2 2014/03/02 03:55:19 matt Exp $
+#	$NetBSD: Makefile,v 1.3 2018/06/21 10:41:45 kamil Exp $
+
+NOSANITIZER=		# defined
 
 .include <bsd.own.mk>		# for MKDYNAMICROOT definition
 

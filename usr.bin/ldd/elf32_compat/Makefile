@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2009/12/13 08:50:56 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2018/06/21 10:41:46 kamil Exp $
+
+NOSANITIZER=		# defined
 
 .include <bsd.own.mk>
 .include <bsd.init.mk>
