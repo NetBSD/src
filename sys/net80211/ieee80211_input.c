@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.112 2018/06/21 16:53:10 maxv Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.113 2018/06/21 17:03:45 maxv Exp $	*/
 
 /*
  * Copyright (c) 2001 Atsushi Onoe
@@ -37,7 +37,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.81 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.112 2018/06/21 16:53:10 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.113 2018/06/21 17:03:45 maxv Exp $");
 #endif
 
 #ifdef _KERNEL_OPT
@@ -132,9 +132,9 @@ static void ieee80211_discard_mac(struct ieee80211com *,
 #define	IEEE80211_DEBUGVAR(a)
 #endif /* IEEE80211_DEBUG */
 
-static struct mbuf *ieee80211_defrag(struct ieee80211com *,
-	struct ieee80211_node *, struct mbuf *, int);
-static struct mbuf *ieee80211_decap(struct ieee80211com *, struct mbuf *, int);
+static struct mbuf *ieee80211_defrag(struct ieee80211_node *,
+    struct mbuf *, int);
+static struct mbuf *ieee80211_decap(struct mbuf *, int);
 static void ieee80211_send_error(struct ieee80211com *, struct ieee80211_node *,
 	const u_int8_t *mac, int subtype, int arg);
 static void ieee80211_deliver_data(struct ieee80211com *,
@@ -291,7 +291,7 @@ ieee80211_input_data(struct ieee80211com *ic, struct mbuf **mp,
 	 * Next up, any fragmentation.
 	 */
 	if (!IEEE80211_IS_MULTICAST(wh->i_addr1)) {
-		m = ieee80211_defrag(ic, ni, m, hdrspace);
+		m = ieee80211_defrag(ni, m, hdrspace);
 		if (m == NULL) {
 			/* Fragment dropped or frame not complete yet */
 			goto out;
@@ -314,7 +314,7 @@ ieee80211_input_data(struct ieee80211com *ic, struct mbuf **mp,
 	/*
 	 * Finally, strip the 802.11 header.
 	 */
-	m = ieee80211_decap(ic, m, hdrspace);
+	m = ieee80211_decap(m, hdrspace);
 	if (m == NULL) {
 		/* don't count Null data frames as errors */
 		if (subtype == IEEE80211_FC0_SUBTYPE_NODATA)
@@ -757,8 +757,7 @@ out:
  * This function reassembles fragments.
  */
 static struct mbuf *
-ieee80211_defrag(struct ieee80211com *ic, struct ieee80211_node *ni,
-	struct mbuf *m, int hdrspace)
+ieee80211_defrag(struct ieee80211_node *ni, struct mbuf *m, int hdrspace)
 {
 	struct ieee80211_frame *wh = mtod(m, struct ieee80211_frame *);
 	struct ieee80211_frame *lwh;
@@ -932,7 +931,7 @@ ieee80211_deliver_data(struct ieee80211com *ic,
 }
 
 static struct mbuf *
-ieee80211_decap(struct ieee80211com *ic, struct mbuf *m, int hdrlen)
+ieee80211_decap(struct mbuf *m, int hdrlen)
 {
 	struct ieee80211_qosframe_addr4 wh; /* Max size address frames */
 	struct ether_header *eh;
