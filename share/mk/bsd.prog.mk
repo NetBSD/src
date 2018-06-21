@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.313 2018/06/02 15:19:45 christos Exp $
+#	$NetBSD: bsd.prog.mk,v 1.314 2018/06/21 11:24:38 kamil Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -6,6 +6,12 @@
 .include <bsd.init.mk>
 .include <bsd.shlib.mk>
 .include <bsd.gcc.mk>
+
+##### Sanitizer specific flags.
+
+CFLAGS+=	${SANITIZERFLAGS}
+CXXFLAGS+=	${SANITIZERFLAGS}
+LDFLAGS+=	${SANITIZERFLAGS}
 
 #
 # Definitions and targets shared among all programs built by a single
