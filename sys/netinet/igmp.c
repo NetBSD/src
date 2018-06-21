@@ -1,4 +1,4 @@
-/*	$NetBSD: igmp.c,v 1.67 2018/04/10 08:22:35 maxv Exp $	*/
+/*	$NetBSD: igmp.c,v 1.68 2018/06/21 10:37:50 knakahara Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igmp.c,v 1.67 2018/04/10 08:22:35 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igmp.c,v 1.68 2018/06/21 10:37:50 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mrouting.h"
@@ -474,6 +474,11 @@ igmp_input(struct mbuf *m, ...)
 	 * Pass all valid IGMP packets up to any process(es) listening
 	 * on a raw IGMP socket.
 	 */
+	/*
+	 * Currently, igmp_input() is always called holding softnet_lock
+	 * by ipintr()(!NET_MPSAFE) or PR_INPUT_WRAP()(NET_MPSAFE).
+	 */
+	KASSERT(mutex_owned(softnet_lock));
 	rip_input(m, iphlen, proto);
 	return;
 
