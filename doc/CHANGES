@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2401 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2402 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -166,3 +166,4 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	arm: Add support for Rockchip RK3328 SoC. [jmcneill 20180615]
 	xen: Enabled XSAVE and AVX support on hardware with proper XSAVE
 		support, PR kern/50332. [jdolecek 20180619]
+	dhcpcd: Import 7.0.6. [roy 20180621]
