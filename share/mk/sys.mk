@@ -1,4 +1,4 @@
-#	$NetBSD: sys.mk,v 1.132 2018/06/20 02:15:13 maya Exp $
+#	$NetBSD: sys.mk,v 1.133 2018/06/22 11:25:03 maya Exp $
 #	@(#)sys.mk	8.2 (Berkeley) 3/21/94
 #
 # This file contains the basic rules for make(1) and is read first
@@ -50,6 +50,8 @@ CTFFLAGS	?=	-g -L VERSION
 CTFMFLAGS	?=	-t -g -L VERSION
 
 CXX?=		c++
+# Strip flags unsupported by C++ compilers
+# Remove -Wsystem-headers because C++ headers aren't clean of warnings
 CXXFLAGS?=	${CFLAGS:N-Wno-traditional:N-Wstrict-prototypes:N-Wmissing-prototypes:N-Wno-pointer-sign:N-ffreestanding:N-std=gnu[0-9][0-9]:N-Wold-style-definition:N-Wno-format-zero-length:N-Wsystem-headers}
 
 __ALLSRC1=	${empty(DESTDIR):?${.ALLSRC}:${.ALLSRC:S|^${DESTDIR}|^destdir|}}
