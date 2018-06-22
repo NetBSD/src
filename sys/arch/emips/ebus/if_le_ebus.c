@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ebus.c,v 1.13 2016/12/15 09:28:02 ozaki-r Exp $	*/
+/*	$NetBSD: if_le_ebus.c,v 1.14 2018/06/22 04:17:40 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_ebus.c,v 1.13 2016/12/15 09:28:02 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_ebus.c,v 1.14 2018/06/22 04:17:40 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -51,14 +51,12 @@ __KERNEL_RCSID(0, "$NetBSD: if_le_ebus.c,v 1.13 2016/12/15 09:28:02 ozaki-r Exp 
 #include <net/if_dl.h>
 #include <net/if_ether.h>
 #include <net/if_media.h>
+#include <net/bpf.h>
 
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_inarp.h>
 #endif
-
-#include <net/bpf.h>
-#include <net/bpfdesc.h>
 
 #include <sys/rndsource.h>
 

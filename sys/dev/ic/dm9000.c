@@ -1,4 +1,4 @@
-/*	$NetBSD: dm9000.c,v 1.12 2017/07/29 01:31:20 riastradh Exp $	*/
+/*	$NetBSD: dm9000.c,v 1.13 2018/06/22 04:17:42 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2009 Paul Fleischer
@@ -102,13 +102,12 @@
 #include <net/if.h>
 #include <net/if_ether.h>
 #include <net/if_media.h>
+#include <net/bpf.h>
+
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_inarp.h>
 #endif
-
-#include <net/bpf.h>
-#include <net/bpfdesc.h>
 
 #include <sys/bus.h>
 #include <sys/intr.h>
