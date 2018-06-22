@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.121 2017/10/06 21:09:45 kre Exp $	*/
+/*	$NetBSD: expand.c,v 1.122 2018/06/22 17:22:34 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.121 2017/10/06 21:09:45 kre Exp $");
+__RCSID("$NetBSD: expand.c,v 1.122 2018/06/22 17:22:34 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -1777,8 +1777,10 @@ patmatch(const char *pattern, const char *string, int squoted)
 				}
 				if (c == '[' && *p == ':') {
 					found |= match_charclass(p, chr, &end);
-					if (end != NULL)
+					if (end != NULL) {
 						p = end;
+						continue;
+					}
 				}
 				if (c == CTLESC)
 					c = *p++;
