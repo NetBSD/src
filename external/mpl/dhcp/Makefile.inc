@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.2 2018/06/21 11:02:48 kamil Exp $
+# $NetBSD: Makefile.inc,v 1.3 2018/06/22 20:48:43 christos Exp $
 
 WARNS?=	1	# XXX -Wshadow -Wcast-qual -Wsign-compare
 
@@ -31,6 +31,10 @@ CPPFLAGS+= -DLOCALSTATEDIR='"/var"'
 LDADD+= ${COBJDIR}/libdhcp.a
 LDADD+= ${OMOBJDIR}/libomapi.a
 .if defined(PROG) && ${PROG} == "dhclient" && ${MKSANITIZER:Uno} != "yes"
+# We link the libraries that are in /usr/lib and not in /lib statically
+# because dhclient is in /sbin and is needed before /usr is mounted in
+# some configurations with a split / and /usr. Another way to fix this,
+# would be to install the libraries in /lib...
 LDADD+=-Wl,-Bstatic
 .endif
 LDADD+= -lirs -lisccfg -ldns -lisc
