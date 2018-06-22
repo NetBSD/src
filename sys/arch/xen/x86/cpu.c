@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.119 2018/06/20 20:43:20 jdolecek Exp $	*/
+/*	$NetBSD: cpu.c,v 1.120 2018/06/22 06:22:37 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.119 2018/06/20 20:43:20 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.120 2018/06/22 06:22:37 maxv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -564,8 +564,7 @@ cpu_init(struct cpu_info *ci)
 	}
 
 	if (x86_fpu_save >= FPU_SAVE_FXSAVE) {
-		/* XXX fxsave() faults on Xen with no-xsave flag, why? */
-		fpuinit_mxcsr_mask((cr4 & CR4_OSXSAVE) != 0);
+		fpuinit_mxcsr_mask();
 	}
 
 	/*
