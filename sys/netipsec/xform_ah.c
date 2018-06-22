@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ah.c,v 1.54.2.6 2018/04/01 08:48:39 martin Exp $	*/
+/*	$NetBSD: xform_ah.c,v 1.54.2.7 2018/06/22 17:54:47 martin Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ah.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ah.c,v 1.63 2001/06/26 06:18:58 angelos Exp $ */
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.54.2.6 2018/04/01 08:48:39 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.54.2.7 2018/06/22 17:54:47 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -276,15 +276,15 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 {
 	struct mbuf *m = *m0;
 	unsigned char *ptr;
-	int off, count;
+	int off, optlen;
 #ifdef INET
 	struct ip *ip;
 #endif
 #ifdef INET6
+	int count, ip6optlen;
 	struct ip6_ext *ip6e;
 	struct ip6_hdr ip6;
-	struct ip6_rthdr *rh;
-	int alloc, ad, nxt;
+	int alloc, nxt;
 #endif
 
 	switch (proto) {
@@ -339,56 +339,32 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 
 		/* IPv4 option processing */
 		for (off = sizeof(struct ip); off < skip;) {
-			if (ptr[off] == IPOPT_EOL || ptr[off] == IPOPT_NOP ||
-			    off + 1 < skip)
-				;
-			else {
-				DPRINTF(("%s: illegal IPv4 option length for "
-				    "option %d\n", __func__, ptr[off]));
-
+			if (ptr[off] == IPOPT_EOL) {
+				break;
+			} else if (ptr[off] == IPOPT_NOP) {
+				optlen = 1;
+			} else if (off + 1 < skip) {
+				optlen = ptr[off + 1];
+				if (optlen < 2 || off + optlen > skip) {
+					m_freem(m);
+					return EINVAL;
+				}
+			} else {
 				m_freem(m);
 				return EINVAL;
 			}
 
 			switch (ptr[off]) {
-			case IPOPT_EOL:
-				off = skip;  /* End the loop. */
-				break;
-
 			case IPOPT_NOP:
-				off++;
-				break;
-
-			case IPOPT_SECURITY:	/* 0x82 */
+			case IPOPT_SECURITY:
 			case 0x85:	/* Extended security. */
 			case 0x86:	/* Commercial security. */
 			case 0x94:	/* Router alert */
 			case 0x95:	/* RFC1770 */
-				/* Sanity check for option length. */
-				if (ptr[off + 1] < 2) {
-					DPRINTF(("%s: illegal IPv4 option "
-					    "length for option %d\n", __func__,
-					    ptr[off]));
-
-					m_freem(m);
-					return EINVAL;
-				}
-
-				off += ptr[off + 1];
 				break;
 
 			case IPOPT_LSRR:
 			case IPOPT_SSRR:
-				/* Sanity check for option length. */
-				if (ptr[off + 1] < 2) {
-					DPRINTF(("%s: illegal IPv4 option "
-					    "length for option %d\n", __func__,
-					    ptr[off]));
-
-					m_freem(m);
-					return EINVAL;
-				}
-
 				/*
 				 * On output, if we have either of the
 				 * source routing options, we should
@@ -400,32 +376,21 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 				 */
 				if (out)
 					memcpy(&ip->ip_dst,
-					    ptr + off + ptr[off + 1] -
+					    ptr + off + optlen -
 					    sizeof(struct in_addr),
 					    sizeof(struct in_addr));
+				/* FALLTHROUGH */
 
-				/* Fall through */
 			default:
-				/* Sanity check for option length. */
-				if (ptr[off + 1] < 2) {
-					DPRINTF(("%s: illegal IPv4 option "
-					    "length for option %d\n", __func__,
-					    ptr[off]));
-					m_freem(m);
-					return EINVAL;
-				}
-
 				/* Zeroize all other options. */
-				count = ptr[off + 1];
-				memcpy(ptr + off, ipseczeroes, count);
-				off += count;
+				memcpy(ptr + off, ipseczeroes, optlen);
 				break;
 			}
 
+			off += optlen;
+
 			/* Sanity check. */
 			if (off > skip)	{
-				DPRINTF(("%s: malformed IPv4 options header\n",
-					__func__));
 				m_freem(m);
 				return EINVAL;
 			}
@@ -460,11 +425,12 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 		/* Done with IPv6 header. */
 		m_copyback(m, 0, sizeof(struct ip6_hdr), &ip6);
 
+		ip6optlen = skip - sizeof(struct ip6_hdr);
+
 		/* Let's deal with the remaining headers (if any). */
-		if (skip - sizeof(struct ip6_hdr) > 0) {
+		if (ip6optlen > 0) {
 			if (m->m_len <= skip) {
-				ptr = malloc(skip - sizeof(struct ip6_hdr),
-				    M_XDATA, M_NOWAIT);
+				ptr = malloc(ip6optlen, M_XDATA, M_NOWAIT);
 				if (ptr == NULL) {
 					DPRINTF(("%s: failed to allocate "
 					    "memory for IPv6 headers\n",
@@ -478,7 +444,7 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 				 * the IPv6 header.
 				 */
 				m_copydata(m, sizeof(struct ip6_hdr),
-				    skip - sizeof(struct ip6_hdr), ptr);
+				    ip6optlen, ptr);
 				alloc = 1;
 			} else {
 				/* No need to allocate memory. */
@@ -491,23 +457,22 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 
 		nxt = ip6.ip6_nxt & 0xff; /* Next header type. */
 
-		for (off = 0; off < skip - sizeof(struct ip6_hdr);) {
+		for (off = 0; off < ip6optlen;) {
 			int noff;
+
+			if (off + sizeof(*ip6e) > ip6optlen) {
+				goto error6;
+			}
+			ip6e = (struct ip6_ext *)(ptr + off);
+			noff = off + ((ip6e->ip6e_len + 1) << 3);
+			if (noff > ip6optlen) {
+				goto error6;
+			}
 
 			switch (nxt) {
 			case IPPROTO_HOPOPTS:
 			case IPPROTO_DSTOPTS:
-				ip6e = (struct ip6_ext *)(ptr + off);
-				noff = off + ((ip6e->ip6e_len + 1) << 3);
-
-				/* Sanity check. */
-				if (noff > skip - sizeof(struct ip6_hdr)) {
-					goto error6;
-				}
-
-				/*
-				 * Zero out mutable options.
-				 */
+				/* Zero out mutable options. */
 				for (count = off + sizeof(struct ip6_ext);
 				     count < noff;) {
 					if (ptr[count] == IP6OPT_PAD1) {
@@ -518,74 +483,30 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 					if (count + 1 >= noff) {
 						goto error6;
 					}
-					ad = ptr[count + 1] + 2;
+					optlen = ptr[count + 1] + 2;
 
-					if (count + ad > noff) {
+					if (count + optlen > noff) {
 						goto error6;
 					}
 
 					if (ptr[count] & IP6OPT_MUTABLE) {
-						memset(ptr + count, 0, ad);
+						memset(ptr + count, 0, optlen);
 					}
 
-					count += ad;
+					count += optlen;
 				}
-
 				if (count != noff) {
 					goto error6;
 				}
-
-				/* Advance. */
-				off += ((ip6e->ip6e_len + 1) << 3);
-				nxt = ip6e->ip6e_nxt;
-				break;
+				/* FALLTHROUGH */
 
 			case IPPROTO_ROUTING:
-				/*
-				 * Always include routing headers in
-				 * computation.
-				 */
-				ip6e = (struct ip6_ext *)(ptr + off);
-				rh = (struct ip6_rthdr *)(ptr + off);
-				/*
-				 * must adjust content to make it look like
-				 * its final form (as seen at the final
-				 * destination).
-				 * we only know how to massage type 0 routing
-				 * header.
-				 */
-				if (out && rh->ip6r_type == IPV6_RTHDR_TYPE_0) {
-					struct ip6_rthdr0 *rh0;
-					struct in6_addr *addr, finaldst;
-					int i;
-
-					rh0 = (struct ip6_rthdr0 *)rh;
-					addr = (struct in6_addr *)(rh0 + 1);
-
-					for (i = 0; i < rh0->ip6r0_segleft; i++)
-						in6_clearscope(&addr[i]);
-
-					finaldst = addr[rh0->ip6r0_segleft - 1];
-					memmove(&addr[1], &addr[0],
-						sizeof(struct in6_addr) *
-						(rh0->ip6r0_segleft - 1));
-
-					m_copydata(m, 0, sizeof(ip6), &ip6);
-					addr[0] = ip6.ip6_dst;
-					ip6.ip6_dst = finaldst;
-					m_copyback(m, 0, sizeof(ip6), &ip6);
-
-					rh0->ip6r0_segleft = 0;
-				}
-
-				/* advance */
-				off += ((ip6e->ip6e_len + 1) << 3);
+				/* Advance. */
+				off = noff;
 				nxt = ip6e->ip6e_nxt;
 				break;
 
 			default:
-				DPRINTF(("%s: unexpected IPv6 header type %d\n",
-				    __func__, off));
 error6:
 				if (alloc)
 					free(ptr, M_XDATA);
@@ -596,8 +517,7 @@ error6:
 
 		/* Copyback and free, if we allocated. */
 		if (alloc) {
-			m_copyback(m, sizeof(struct ip6_hdr),
-			    skip - sizeof(struct ip6_hdr), ptr);
+			m_copyback(m, sizeof(struct ip6_hdr), ip6optlen, ptr);
 			free(ptr, M_XDATA);
 		}
 
