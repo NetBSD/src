@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.169 2018/06/22 19:08:28 maya Exp $
+.\"	$NetBSD: rc.conf.5,v 1.170 2018/06/22 19:35:25 maya Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -638,6 +638,12 @@ with the
 .Dq Li -l
 flag and suppresses warnings about interfaces in this list that
 do not have an ifconfig file or variable.
+.It Sy blacklistd
+Boolean value.
+Runs
+.Xr blacklistd 8
+to dynamically block hosts on a DoS according to configuration set in
+.Xr blacklistd.conf 5
 .It Sy dhclient
 Boolean value.
 Set true to configure some or all network interfaces using
@@ -868,6 +874,17 @@ Runs
 to load in IPsec manual keys and policies from
 .Pa /etc/ipsec.conf
 at network boot time, before any interfaces are configured.
+.It Sy npf
+Boolean value.
+Loads
+.Xr npf.conf 5
+at network boot time, and starts
+.Xr npf 7 .
+.It Sy npfd
+Boolean value.
+Runs
+.Xr npfd 8 ,
+the NPF packet filter logging and state synchronization daemon.
 .It Sy net_interfaces
 A string.
 The list of network interfaces to be configured at boot time.
