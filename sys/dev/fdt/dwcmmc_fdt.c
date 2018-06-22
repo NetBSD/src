@@ -1,4 +1,4 @@
-/* $NetBSD: dwcmmc_fdt.c,v 1.2 2018/06/19 22:44:33 jmcneill Exp $ */
+/* $NetBSD: dwcmmc_fdt.c,v 1.3 2018/06/22 10:17:04 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwcmmc_fdt.c,v 1.2 2018/06/19 22:44:33 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwcmmc_fdt.c,v 1.3 2018/06/22 10:17:04 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -88,8 +88,8 @@ dwcmmc_fdt_attach(device_t parent, device_t self, void *aux)
 	struct dwc_mmc_softc *sc = &esc->sc;
 	struct fdt_attach_args * const faa = aux;
 	const int phandle = faa->faa_phandle;
-	u_int fifo_depth, max_freq;
 	char intrstr[128];
+	u_int fifo_depth;
 	bus_addr_t addr;
 	bus_size_t size;
 	int error;
@@ -135,12 +135,9 @@ dwcmmc_fdt_attach(device_t parent, device_t self, void *aux)
 	}
 	esc->sc_conf = of_search_compatible(phandle, compat_data)->data;
 
-	const u_int ciu_div = esc->sc_conf->ciu_div > 0 ? esc->sc_conf->ciu_div : 1;
 
-	if (of_getprop_uint32(phandle, "max-frequency", &max_freq) == 0)
-		sc->sc_clock_freq = max_freq;
-	else
-		sc->sc_clock_freq = clk_get_rate(esc->sc_clk_ciu) / ciu_div;
+	if (of_getprop_uint32(phandle, "max-frequency", &sc->sc_clock_freq) != 0)
+		sc->sc_clock_freq = UINT_MAX;
 
 	sc->sc_fifo_depth = fifo_depth;
 	sc->sc_flags = DWC_MMC_F_USE_HOLD_REG | DWC_MMC_F_DMA;
