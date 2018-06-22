@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.h,v 1.11 2018/06/20 20:43:20 jdolecek Exp $	*/
+/*	$NetBSD: fpu.h,v 1.12 2018/06/22 06:22:37 maxv Exp $	*/
 
 #ifndef	_X86_FPU_H_
 #define	_X86_FPU_H_
@@ -12,7 +12,7 @@ struct lwp;
 struct trapframe;
 
 void fpuinit(struct cpu_info *);
-void fpuinit_mxcsr_mask(bool);
+void fpuinit_mxcsr_mask(void);
 void fpusave_lwp(struct lwp *, bool);
 void fpusave_cpu(bool);
 
