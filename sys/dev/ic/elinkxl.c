@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.121 2017/02/20 07:43:29 ozaki-r Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.122 2018/06/22 04:17:42 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.121 2017/02/20 07:43:29 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.122 2018/06/22 04:17:42 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,9 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.121 2017/02/20 07:43:29 ozaki-r Exp $"
 #include <net/if_dl.h>
 #include <net/if_ether.h>
 #include <net/if_media.h>
-
 #include <net/bpf.h>
-#include <net/bpfdesc.h>
 
 #include <sys/cpu.h>
 #include <sys/bus.h>

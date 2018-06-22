@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.62 2018/04/27 07:53:07 maxv Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.63 2018/06/22 04:17:41 msaitoh Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.62 2018/04/27 07:53:07 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.63 2018/06/22 04:17:41 msaitoh Exp $");
 
 #include "opt_xen.h"
 
@@ -49,7 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.62 2018/04/27 07:53:07 maxv 
 #include <net/route.h>
 #include <net/netisr.h>
 #include <net/bpf.h>
-#include <net/bpfdesc.h>
 
 #include <net/if_ether.h>
 

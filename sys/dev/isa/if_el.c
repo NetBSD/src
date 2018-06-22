@@ -1,4 +1,4 @@
-/*	$NetBSD: if_el.c,v 1.94 2016/12/15 09:28:05 ozaki-r Exp $	*/
+/*	$NetBSD: if_el.c,v 1.95 2018/06/22 04:17:42 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1994, Matthew E. Kimmel.  Permission is hereby granted
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_el.c,v 1.94 2016/12/15 09:28:05 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_el.c,v 1.95 2018/06/22 04:17:42 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -36,6 +36,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_el.c,v 1.94 2016/12/15 09:28:05 ozaki-r Exp $");
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_types.h>
+#include <net/bpf.h>
 
 #include <net/if_ether.h>
 
@@ -46,10 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_el.c,v 1.94 2016/12/15 09:28:05 ozaki-r Exp $");
 #include <netinet/ip.h>
 #include <netinet/if_inarp.h>
 #endif
-
-
-#include <net/bpf.h>
-#include <net/bpfdesc.h>
 
 #include <sys/cpu.h>
 #include <sys/intr.h>

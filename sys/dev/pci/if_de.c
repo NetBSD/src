@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.151 2018/03/19 03:12:09 msaitoh Exp $	*/
+/*	$NetBSD: if_de.c,v 1.152 2018/06/22 04:17:42 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -37,7 +37,7 @@
  *   board which support 21040, 21041, or 21140 (mostly).
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.151 2018/03/19 03:12:09 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.152 2018/06/22 04:17:42 msaitoh Exp $");
 
 #define	TULIP_HDR_DATA
 
@@ -74,14 +74,12 @@ __KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.151 2018/03/19 03:12:09 msaitoh Exp $");
 #include <net/if_dl.h>
 #include <net/route.h>
 #include <net/netisr.h>
+#include <net/bpf.h>
 
 #if defined(__bsdi__) && _BSDI_VERSION >= 199701
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 #endif
-
-#include <net/bpf.h>
-#include <net/bpfdesc.h>
 
 #ifdef INET
 #include <netinet/in.h>

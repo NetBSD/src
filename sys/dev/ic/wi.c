@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.244 2017/10/23 09:31:17 msaitoh Exp $	*/
+/*	$NetBSD: wi.c,v 1.245 2018/06/22 04:17:42 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.244 2017/10/23 09:31:17 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.245 2018/06/22 04:17:42 msaitoh Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -126,15 +126,13 @@ __KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.244 2017/10/23 09:31:17 msaitoh Exp $");
 #include <net/if_media.h>
 #include <net/if_ether.h>
 #include <net/route.h>
+#include <net/bpf.h>
 
 #include <net80211/ieee80211_netbsd.h>
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_ioctl.h>
 #include <net80211/ieee80211_radiotap.h>
 #include <net80211/ieee80211_rssadapt.h>
-
-#include <net/bpf.h>
-#include <net/bpfdesc.h>
 
 #include <sys/bus.h>
 #include <sys/intr.h>

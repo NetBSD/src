@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smap.c,v 1.24 2018/02/08 09:05:18 dholland Exp $	*/
+/*	$NetBSD: if_smap.c,v 1.25 2018/06/22 04:17:41 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_smap.c,v 1.24 2018/02/08 09:05:18 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_smap.c,v 1.25 2018/06/22 04:17:41 msaitoh Exp $");
 
 #include "debug_playstation2.h"
 
@@ -48,9 +48,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_smap.c,v 1.24 2018/02/08 09:05:18 dholland Exp $"
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_types.h>
-
 #include <net/if_ether.h>
 #include <net/if_media.h>
+#include <net/bpf.h>
 
 #include <dev/mii/miivar.h>
 
@@ -59,9 +59,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_smap.c,v 1.24 2018/02/08 09:05:18 dholland Exp $"
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/if_inarp.h>
-
-#include <net/bpf.h>
-#include <net/bpfdesc.h>
 
 #include <playstation2/dev/spdvar.h>
 #include <playstation2/dev/spdreg.h>

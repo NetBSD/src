@@ -1,4 +1,4 @@
-/*	$NetBSD: lance.c,v 1.52 2016/12/15 09:28:05 ozaki-r Exp $	*/
+/*	$NetBSD: lance.c,v 1.53 2018/06/22 04:17:42 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lance.c,v 1.52 2016/12/15 09:28:05 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lance.c,v 1.53 2018/06/22 04:17:42 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,10 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: lance.c,v 1.52 2016/12/15 09:28:05 ozaki-r Exp $");
 #include <net/if_dl.h>
 #include <net/if_ether.h>
 #include <net/if_media.h>
-
-
 #include <net/bpf.h>
-#include <net/bpfdesc.h>
 
 #include <dev/ic/lancereg.h>
 #include <dev/ic/lancevar.h>
