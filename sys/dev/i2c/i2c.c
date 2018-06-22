@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.63 2018/06/18 17:07:07 thorpej Exp $	*/
+/*	$NetBSD: i2c.c,v 1.64 2018/06/22 15:52:00 martin Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.63 2018/06/18 17:07:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.64 2018/06/22 15:52:00 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -735,7 +735,8 @@ iic_use_direct_match(const struct i2c_attach_args *ia, const cfdata_t cf,
 	}
 
 	if (ia->ia_ncompat > 0 && ia->ia_compat != NULL) {
-		(void) iic_compatible_match(ia, compats, match_resultp);
+		if (iic_compatible_match(ia, compats, match_resultp) == NULL)
+			*match_resultp = 0;
 		return true;
 	}
 
