@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atu.c,v 1.58 2018/06/03 10:59:35 maxv Exp $ */
+/*	$NetBSD: if_atu.c,v 1.59 2018/06/22 04:17:42 msaitoh Exp $ */
 /*	$OpenBSD: if_atu.c,v 1.48 2004/12/30 01:53:21 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.58 2018/06/03 10:59:35 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.59 2018/06/22 04:17:42 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -79,8 +79,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.58 2018/06/03 10:59:35 maxv Exp $");
 #include <dev/microcode/atmel/atmel_rfmd_fw.h>
 
 #include <net/bpf.h>
-#include <net/bpfdesc.h>
-
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>

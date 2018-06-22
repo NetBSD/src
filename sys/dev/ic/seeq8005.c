@@ -1,4 +1,4 @@
-/* $NetBSD: seeq8005.c,v 1.57 2016/12/15 09:28:05 ozaki-r Exp $ */
+/* $NetBSD: seeq8005.c,v 1.58 2018/06/22 04:17:42 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Ben Harris
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: seeq8005.c,v 1.57 2016/12/15 09:28:05 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: seeq8005.c,v 1.58 2018/06/22 04:17:42 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,9 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: seeq8005.c,v 1.57 2016/12/15 09:28:05 ozaki-r Exp $"
 #include <net/if_types.h>
 #include <net/if_ether.h>
 #include <net/if_media.h>
-
 #include <net/bpf.h>
-#include <net/bpfdesc.h>
 
 #include <sys/rndsource.h>
 
