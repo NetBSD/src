@@ -197,6 +197,6 @@ aarch64_nbsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 void
 _initialize_aarch64_nbsd_tdep (void)
 {
-  gdbarch_register_osabi (bfd_arch_aarch64, 0, GDB_OSABI_FREEBSD,
+  gdbarch_register_osabi (bfd_arch_aarch64, 0, GDB_OSABI_NETBSD,
 			  aarch64_nbsd_init_abi);
 }
