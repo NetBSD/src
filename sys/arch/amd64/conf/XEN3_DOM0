@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.151 2018/06/07 13:36:28 thorpej Exp $
+# $NetBSD: XEN3_DOM0,v 1.152 2018/06/22 02:51:17 darcy Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -10,7 +10,7 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 #options 	UVMHIST_PRINT
 #options 	SYSCALL_DEBUG
 
-#ident		"XEN3_DOM0-$Revision: 1.151 $"
+#ident		"XEN3_DOM0-$Revision: 1.152 $"
 
 maxusers	32		# estimated number of users
 
@@ -256,12 +256,9 @@ ichlpcib* at pci? dev ? function ?	# Intel ICH PCI-ISA w/ timecounter,
 					# watchdog and SpeedStep support
 pcib*	at pci? dev ? function ?	# PCI-ISA bridges
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
-options 	AGP_X86
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 # XXX 'puc's aren't really bridges, but there's no better place for them here
 puc*	at pci? dev ? function ?	# PCI "universal" comm. cards
-
-agp*	at pchb?
 
 # ISA bus support
 isa0	at ichlpcib?
