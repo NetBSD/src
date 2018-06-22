@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.73 2018/06/19 19:50:19 jdolecek Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.74 2018/06/22 23:00:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.73 2018/06/19 19:50:19 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.74 2018/06/22 23:00:54 christos Exp $");
 
 #include "opt_xen.h"
 
@@ -679,23 +679,17 @@ cpu_probe_vortex86(struct cpu_info *ci)
 	outl(PCI_MODE1_ADDRESS_REG, PCI_MODE1_ENABLE | 0x90);
 	reg = inl(PCI_MODE1_DATA_REG);
 
-	switch(reg) {
-	case 0x31504d44:
-		strcpy(cpu_brand_string, "Vortex86SX");
-		break;
-	case 0x32504d44:
-		strcpy(cpu_brand_string, "Vortex86DX");
-		break;
-	case 0x33504d44:
-		strcpy(cpu_brand_string, "Vortex86MX");
-		break;
-	case 0x37504d44:
-		strcpy(cpu_brand_string, "Vortex86EX");
-		break;
-	default:
-		strcpy(cpu_brand_string, "Unknown Vortex86");
-		break;
+	if ((reg & 0xf8ffffff) != 0x30504d44) {
+		reg = 0;
+	} else {
+		reg = (reg >> 24) & 7;
 	}
+
+	static const char *cpu_vortex86_flavor[] = {
+	    "??", "SX", "DX", "MX", "DX2", "MX+", "DX3", "EX",
+	};
+	snprintf(cpu_brand_string, sizeof(cpu_brand_string), "Vortex86%s",
+	    cpu_vortex86_flavor[reg]);
 
 #undef PCI_MODE1_ENABLE
 #undef PCI_MODE1_ADDRESS_REG
