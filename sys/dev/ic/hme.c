@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.97 2018/05/08 10:41:56 pgoyette Exp $	*/
+/*	$NetBSD: hme.c,v 1.98 2018/06/22 04:17:42 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.97 2018/05/08 10:41:56 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.98 2018/06/22 04:17:42 msaitoh Exp $");
 
 /* #define HMEDEBUG */
 
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.97 2018/05/08 10:41:56 pgoyette Exp $");
 #include <net/if_dl.h>
 #include <net/if_ether.h>
 #include <net/if_media.h>
+#include <net/bpf.h>
 
 #ifdef INET
 #include <net/if_vlanvar.h>
@@ -67,10 +68,6 @@ __KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.97 2018/05/08 10:41:56 pgoyette Exp $");
 #include <netinet/tcp.h>
 #include <netinet/udp.h>
 #endif
-
-
-#include <net/bpf.h>
-#include <net/bpfdesc.h>
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
