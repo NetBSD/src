@@ -156,7 +156,7 @@ localfontdir=$(dataprogramdir)/site-font
 legacyfontdir=/usr/lib/font
 
 # `fontpath' says where to look for dev*/*.
-fontpath=$(localfontdir)$(RT_SEP)$(fontdir)$(RT_SEP)$(legacyfontdir)
+fontpath=$(localfontdir)$(RT_SEP)$(fontdir)
 
 # `tmacdir' says where to install macros.
 tmacdir=$(datasubdir)/tmac
