@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.544 2018/03/11 11:48:39 tih Exp $
+.\"	$NetBSD: main,v 1.545 2018/06/22 18:23:59 roy Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -523,11 +523,6 @@ and
 .Xr groff 1
 can still be found in pkgsrc as
 .Pa textproc/groff .
-.It
-.Xr rtsol 8
-and
-.Xr rtsold 8 .
-.bullet)
 .
 .Ss "The NetBSD Foundation"
 .Pp
