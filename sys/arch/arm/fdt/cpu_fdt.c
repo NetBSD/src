@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_fdt.c,v 1.6 2018/06/15 14:27:57 jakllsch Exp $ */
+/* $NetBSD: cpu_fdt.c,v 1.7 2018/06/22 23:46:04 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_fdt.c,v 1.6 2018/06/15 14:27:57 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_fdt.c,v 1.7 2018/06/22 23:46:04 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -68,10 +68,12 @@ static const struct of_compat_data compat_data[] = {
 	{ "arm,cortex-a15",		ARM_CPU_ARMV7 },
 	{ "arm,cortex-a17",		ARM_CPU_ARMV7 },
 
+	{ "arm,arm-v8",			ARM_CPU_ARMV8 },
 	{ "arm,cortex-a53",		ARM_CPU_ARMV8 },
 	{ "arm,cortex-a57",		ARM_CPU_ARMV8 },
 	{ "arm,cortex-a72",		ARM_CPU_ARMV8 },
 	{ "arm,cortex-a73",		ARM_CPU_ARMV8 },
+
 	{ NULL }
 };
 
