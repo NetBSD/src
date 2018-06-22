@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.122 2018/06/22 17:22:34 kre Exp $	*/
+/*	$NetBSD: expand.c,v 1.123 2018/06/22 18:19:41 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.122 2018/06/22 17:22:34 kre Exp $");
+__RCSID("$NetBSD: expand.c,v 1.123 2018/06/22 18:19:41 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -1659,19 +1659,26 @@ match_charclass(const char *p, wchar_t chr, const char **end)
 	*end = NULL;
 	p++;
 	nameend = strstr(p, ":]");
-	if (nameend == NULL || (size_t)(nameend - p) >= sizeof(name) ||
-	    nameend == p)
+	if (nameend == NULL || nameend == p)	/* not a valid class */
 		return 0;
+
+	if (!is_alpha(*p) || strspn(p,		/* '_' is a local extension */
+	    "0123456789"  "_"
+	    "abcdefghijklmnopqrstuvwxyz"
+	    "ABCDEFGHIJKLMNOPQRSTUVWXYZ") != (size_t)(nameend - p))
+		return 0;
+
+	*end = nameend + 2;		/* committed to it being a char class */
+	if ((size_t)(nameend - p) >= sizeof(name))	/* but too long */
+		return 0;				/* so no match */
 	memcpy(name, p, nameend - p);
 	name[nameend - p] = '\0';
-	*end = nameend + 2;
 	cclass = wctype(name);
 	/* An unknown class matches nothing but is valid nevertheless. */
 	if (cclass == 0)
 		return 0;
 	return iswctype(chr, cclass);
 }
-
 
 
 /*
