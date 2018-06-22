@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.213 2018/06/20 12:41:45 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.214 2018/06/22 18:06:22 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -13954,3 +13954,28 @@ share/mk/bsd.sys.mk				1.282
 distrib/notes/common/main			(changed manually)
 
 	Updated for the upcoming release.
+
+bin/ed/main.c					1.30
+
+	Prevent shell execution also in the 'r ! dobad' case.
+	[christos, ticket #887]
+
+sys/dev/pci/ld_virtio.c				1.17-1.21,1.23
+
+	Remove trailing whitespace.
+	Add feature/register definitions from virtio-v1.0-cs04.
+	Unload payload dma map upon command completion.
+	Make ld_virtio aware of a possible device-side write cache.
+	The virtio block device capacity config item is expressed always in
+	request protocol sector units of 512 bytes.
+	Also, add and use a symbolic constant to refer to request protocol
+	sector units.
+	Destroy 'sc_sync_wait' condvar and mutex upon detach.
+	[jakllsch, ticket #888]
+
+sys/netinet6/ip6_output.c			1.205
+sys/netipsec/xform_ah.c				1.90,1.93,1.102,1.103
+
+	Simplify and strengthen the AH parser.
+	[maxv, ticket #889]
+
