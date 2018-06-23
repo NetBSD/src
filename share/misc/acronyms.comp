@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.204 2018/06/23 15:00:22 sevan Exp $
+$NetBSD: acronyms.comp,v 1.205 2018/06/23 19:40:59 sevan Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -793,6 +793,10 @@ MD	machine-dependent
 MD-SAL	model-driven service abstraction layer
 MDA	mail delivery agent
 MDA	Monochrome Display Adapter
+MDC	Management Data Clock
+MDI	Medium Dependent Interface
+MDI-X	Medium Dependent Interface Crossover
+MDIO	Management Data Input/Output
 MDMX	MIPS Digital Media eXtension
 MDRAM	multibank dynamic random access memory
 MESI	modified, exclusive, shared, invalid
