@@ -387,6 +387,69 @@ void ERR_load_DH_strings(void);
 # define DH_R_PEER_KEY_ERROR                              113
 # define DH_R_SHARED_INFO_ERROR                           114
 
+#if OPENSSL_API_COMPAT >= 0x10100000L
+static inline void
+DH_get0_key(const DH *dh, const BIGNUM **pub_key, const BIGNUM **priv_key)
+{
+	if (pub_key)
+		*pub_key = dh->pub_key;
+	if (priv_key)
+		*priv_key = dh->priv_key;
+}
+
+static inline int
+DH_set0_key(DH *dh, BIGNUM *pub_key, BIGNUM *priv_key)
+{
+	if (pub_key) {
+		BN_free(dh->pub_key);
+		dh->pub_key = pub_key;
+	}
+	if (priv_key) {
+		BN_free(dh->priv_key);
+		dh->priv_key = priv_key;
+	}
+	return 1;
+}
+
+static inline void
+DH_get0_pqg(const DH *dh, const BIGNUM **p, const BIGNUM **q,
+    const BIGNUM **g)
+{
+	if (p)
+		*p = dh->p;
+	if (q)
+		*q = dh->q;
+	if (g)
+		*g = dh->g;
+}
+
+static inline int
+DH_set0_pqg(DH *dh, BIGNUM *p, BIGNUM *q, BIGNUM *g)
+{
+	if (p)
+		dh->p = p;
+	if (q)
+		dh->q = q;
+	if (g)
+		dh->g = g;
+	return 1;
+}
+
+static inline void
+DH_set_length(DH *dh, long length)
+{
+	dh->length = length;
+}
+
+static inline const char *
+DH_meth_get0_name(const DH_METHOD *meth)
+{
+	return meth->name;
+}   
+
+
+#endif
+
 #ifdef  __cplusplus
 }
 #endif
