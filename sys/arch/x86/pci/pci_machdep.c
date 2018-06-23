@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.80 2018/04/11 10:34:19 nonaka Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.81 2018/06/23 16:05:05 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.80 2018/04/11 10:34:19 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.81 2018/06/23 16:05:05 jakllsch Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -433,6 +433,30 @@ pci_conf_select(uint32_t sel)
 	}
 }
 
+static int
+pci_mode_check(void)
+{
+	pcireg_t x;
+	pcitag_t t;
+	int device;
+	const int maxdev = pci_bus_maxdevs(NULL, 0);
+
+	for (device = 0; device < maxdev; device++) {
+		t = pci_make_tag(NULL, 0, device, 0);
+		x = pci_conf_read(NULL, t, PCI_CLASS_REG);
+		if (PCI_CLASS(x) == PCI_CLASS_BRIDGE &&
+		    PCI_SUBCLASS(x) == PCI_SUBCLASS_BRIDGE_HOST)
+			return 0;
+		x = pci_conf_read(NULL, t, PCI_ID_REG);
+		switch (PCI_VENDOR(x)) {
+		case PCI_VENDOR_COMPAQ:
+		case PCI_VENDOR_INTEL:
+		case PCI_VENDOR_VIATECH:
+			return 0;
+		}
+	}
+	return -1;
+}
 #ifdef __HAVE_PCI_MSI_MSIX
 static int
 pci_has_msi_quirk(pcireg_t id, int type)
@@ -769,6 +793,13 @@ pci_mode_detect(void)
 #ifdef DEBUG
 		printf("%s: mode 1 enable failed (%x)\n", __func__, val);
 #endif
+		/* Try out mode 1 to see if we can find a host bridge. */
+		if (pci_mode_check() == 0) {
+#ifdef DEBUG
+			printf("%s: mode 1 functional, using\n", __func__);
+#endif
+			return (pci_mode);
+		}
 		goto not1;
 	}
 	outl(PCI_MODE1_ADDRESS_REG, 0);
