@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.12.8.1 2017/12/21 19:33:15 snj Exp $	*/
+/*	$NetBSD: fpu.c,v 1.12.8.2 2018/06/23 11:39:02 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.  All
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.12.8.1 2017/12/21 19:33:15 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.12.8.2 2018/06/23 11:39:02 martin Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -107,6 +107,8 @@ __KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.12.8.1 2017/12/21 19:33:15 snj Exp $");
 #include <sys/file.h>
 #include <sys/proc.h>
 #include <sys/kernel.h>
+#include <sys/sysctl.h>
+#include <sys/xcall.h>
 
 #include <machine/cpu.h>
 #include <machine/intr.h>
@@ -124,6 +126,8 @@ __KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.12.8.1 2017/12/21 19:33:15 snj Exp $");
 #define clts() HYPERVISOR_fpu_taskswitch(0)
 #define stts() HYPERVISOR_fpu_taskswitch(1)
 #endif
+
+bool x86_fpu_eager __read_mostly = false;
 
 static inline union savefpu *
 process_fpframe(struct lwp *lwp)
@@ -226,6 +230,89 @@ fpuinit(struct cpu_info *ci)
 	fninit();
 	stts();
 }
+
+static void
+fpu_clear_amd(void)
+{
+	/*
+	 * AMD FPUs do not restore FIP, FDP, and FOP on fxrstor and xrstor
+	 * when FSW.ES=0, leaking other threads' execution history.
+	 *
+	 * Clear them manually by loading a zero (fldummy). We do this
+	 * unconditionally, regardless of FSW.ES.
+	 *
+	 * Before that, clear the ES bit in the x87 status word if it is
+	 * currently set, in order to avoid causing a fault in the
+	 * upcoming load.
+	 *
+	 * Newer generations of AMD CPUs have CPUID_Fn80000008_EBX[2],
+	 * which indicates that FIP/FDP/FOP are restored (same behavior
+	 * as Intel). We're not using it though.
+	 */
+	if (fngetsw() & 0x80)
+		fnclex();
+	fldummy();
+}
+
+static void
+fpu_save(struct lwp *l)
+{
+	struct pcb *pcb = lwp_getpcb(l);
+
+	if (i386_use_fxsave) {
+		if (x86_xsave_features != 0)
+			xsave(&pcb->pcb_savefpu, x86_xsave_features);
+		else
+			fxsave(&pcb->pcb_savefpu);
+	} else {
+		fnsave(&pcb->pcb_savefpu);
+	}
+}
+
+static void
+fpu_restore(struct lwp *l)
+{
+	struct pcb *pcb = lwp_getpcb(l);
+
+	if (i386_use_fxsave) {
+		if (x86_xsave_features != 0) {
+			xrstor(&pcb->pcb_savefpu, x86_xsave_features);
+		} else {
+			fpu_clear_amd();
+			fxrstor(&pcb->pcb_savefpu);
+		}
+	} else {
+		frstor(&pcb->pcb_savefpu);
+	}
+}
+
+static void
+fpu_eagerrestore(struct lwp *l)
+{
+	struct pcb *pcb = lwp_getpcb(l);
+	struct cpu_info *ci = curcpu();
+
+	clts();
+	KASSERT(ci->ci_fpcurlwp == NULL);
+	KASSERT(pcb->pcb_fpcpu == NULL);
+	ci->ci_fpcurlwp = l;
+	pcb->pcb_fpcpu = ci;
+	fpu_restore(l);
+}
+
+void
+fpu_eagerswitch(struct lwp *oldlwp, struct lwp *newlwp)
+{
+	int s;
+
+	s = splhigh();
+	fpusave_cpu(true);
+	if (!(newlwp->l_flag & LW_SYSTEM))
+		fpu_eagerrestore(newlwp);
+	splx(s);
+}
+
+/* -------------------------------------------------------------------------- */
 
 static void
 send_sigill(void *rip)
@@ -358,6 +445,11 @@ fpudna(struct trapframe *frame)
 	pcb = lwp_getpcb(l);
 	fl = ci->ci_fpcurlwp;
 	if (fl != NULL) {
+		if (__predict_false(x86_fpu_eager)) {
+			panic("%s: FPU busy with EagerFPU enabled",
+			    __func__);
+		}
+
 		/*
 		 * It seems we can get here on Xen even if we didn't
 		 * switch lwp.  In this case do nothing
@@ -373,6 +465,11 @@ fpudna(struct trapframe *frame)
 
 	/* Save our state if on a remote CPU. */
 	if (pcb->pcb_fpcpu != NULL) {
+		if (__predict_false(x86_fpu_eager)) {
+			panic("%s: LWP busy with EagerFPU enabled",
+			    __func__);
+		}
+
 		/* Explicitly disable preemption before dropping spl. */
 		kpreempt_disable();
 		splx(s);
@@ -394,28 +491,7 @@ fpudna(struct trapframe *frame)
 	ci->ci_fpcurlwp = l;
 	pcb->pcb_fpcpu = ci;
 
-	if (i386_use_fxsave) {
-		if (x86_xsave_features != 0) {
-			xrstor(&pcb->pcb_savefpu, x86_xsave_features);
-		} else {
-			/*
-			 * AMD FPU's do not restore FIP, FDP, and FOP on
-			 * fxrstor, leaking other process's execution history.
-			 * Clear them manually by loading a zero.
-			 *
-			 * Clear the ES bit in the x87 status word if it is
-			 * currently set, in order to avoid causing a fault
-			 * in the upcoming load.
-			 */
-			if (fngetsw() & 0x80)
-				fnclex();
-			fldummy();
-
-			fxrstor(&pcb->pcb_savefpu);
-		}
-	} else {
-		frstor(&pcb->pcb_savefpu);
-	}
+	fpu_restore(l);
 
 	KASSERT(ci == curcpu());
 	splx(s);
@@ -442,14 +518,7 @@ fpusave_cpu(bool save)
 
 	if (save) {
 		clts();
-		if (i386_use_fxsave) {
-			if (x86_xsave_features != 0)
-				xsave(&pcb->pcb_savefpu, x86_xsave_features);
-			else
-				fxsave(&pcb->pcb_savefpu);
-		} else {
-			fnsave(&pcb->pcb_savefpu);
-		}
+		fpu_save(l);
 	}
 
 	stts();
@@ -516,17 +585,28 @@ fpu_set_default_cw(struct lwp *l, unsigned int x87_cw)
 	fpu_save->sv_os.fxo_dflt_cw = x87_cw;
 }
 
-/*
- * Exec needs to clear the fpu save area to avoid leaking info from the
- * old process to userspace.
- */
 void
 fpu_save_area_clear(struct lwp *l, unsigned int x87_cw)
 {
 	union savefpu *fpu_save;
+	struct pcb *pcb __diagused;
+	int s;
 
-	fpusave_lwp(l, false);
+	KASSERT(l == curlwp);
+	KASSERT((l->l_flag & LW_SYSTEM) == 0);
 	fpu_save = process_fpframe(l);
+	pcb = lwp_getpcb(l);
+
+	s = splhigh();
+	if (x86_fpu_eager) {
+		KASSERT(pcb->pcb_fpcpu == NULL ||
+		    pcb->pcb_fpcpu == curcpu());
+		fpusave_cpu(false);
+	} else {
+		splx(s);
+		fpusave_lwp(l, false);
+	}
+	KASSERT(pcb->pcb_fpcpu == NULL);
 
 	if (i386_use_fxsave) {
 		memset(&fpu_save->sv_xmm, 0, sizeof(fpu_save->sv_xmm));
@@ -539,6 +619,11 @@ fpu_save_area_clear(struct lwp *l, unsigned int x87_cw)
 		fpu_save->sv_87.s87_cw = x87_cw;
 	}
 	fpu_save->sv_os.fxo_dflt_cw = x87_cw;
+
+	if (x86_fpu_eager) {
+		fpu_eagerrestore(l);
+		splx(s);
+	}
 }
 
 /* For signal handlers the register values don't matter */
@@ -572,6 +657,8 @@ fpu_save_area_fork(struct pcb *pcb2, const struct pcb *pcb1)
 
 	if (extra > 0)
 		memcpy(pcb2 + 1, pcb1 + 1, extra);
+
+	KASSERT(pcb2->pcb_fpcpu == NULL);
 }
 
 
@@ -650,4 +737,111 @@ process_read_fpregs_s87(struct lwp *l, struct save87 *fpregs)
 	} else {
 		memcpy(fpregs, &fpu_save->sv_87, sizeof(fpu_save->sv_87));
 	}
+}
+
+/* -------------------------------------------------------------------------- */
+
+static volatile unsigned long eagerfpu_cpu_barrier1 __cacheline_aligned;
+static volatile unsigned long eagerfpu_cpu_barrier2 __cacheline_aligned;
+
+static void
+eager_change_cpu(void *arg1, void *arg2)
+{
+	struct cpu_info *ci = curcpu();
+	bool enabled = (bool)arg1;
+	int s;
+
+	s = splhigh();
+
+	/* Rendez-vous 1. */
+	atomic_dec_ulong(&eagerfpu_cpu_barrier1);
+	while (atomic_cas_ulong(&eagerfpu_cpu_barrier1, 0, 0) != 0) {
+		x86_pause();
+	}
+
+	fpusave_cpu(true);
+	if (ci == &cpu_info_primary) {
+		x86_fpu_eager = enabled;
+	}
+
+	/* Rendez-vous 2. */
+	atomic_dec_ulong(&eagerfpu_cpu_barrier2);
+	while (atomic_cas_ulong(&eagerfpu_cpu_barrier2, 0, 0) != 0) {
+		x86_pause();
+	}
+
+	splx(s);
+}
+
+static int
+eager_change(bool enabled)
+{
+	struct cpu_info *ci = NULL;
+	CPU_INFO_ITERATOR cii;
+	uint64_t xc;
+
+	mutex_enter(&cpu_lock);
+
+	/*
+	 * We expect all the CPUs to be online.
+	 */
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		struct schedstate_percpu *spc = &ci->ci_schedstate;
+		if (spc->spc_flags & SPCF_OFFLINE) {
+			printf("[!] cpu%d offline, EagerFPU not changed\n",
+			    cpu_index(ci));
+			mutex_exit(&cpu_lock);
+			return EOPNOTSUPP;
+		}
+	}
+
+	/* Initialize the barriers */
+	eagerfpu_cpu_barrier1 = ncpu;
+	eagerfpu_cpu_barrier2 = ncpu;
+
+	printf("[+] %s EagerFPU...",
+	    enabled ? "Enabling" : "Disabling");
+	xc = xc_broadcast(0, eager_change_cpu,
+	    (void *)enabled, NULL);
+	xc_wait(xc);
+	printf(" done!\n");
+
+	mutex_exit(&cpu_lock);
+
+	return 0;
+}
+
+static int
+sysctl_machdep_fpu_eager(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node;
+	int error;
+	bool val;
+
+	val = *(bool *)rnode->sysctl_data;
+
+	node = *rnode;
+	node.sysctl_data = &val;
+
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error != 0 || newp == NULL)
+		return error;
+
+	if (val == x86_fpu_eager)
+		return 0;
+	return eager_change(val);
+}
+
+void sysctl_eagerfpu_init(struct sysctllog **);
+
+void
+sysctl_eagerfpu_init(struct sysctllog **clog)
+{
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_READWRITE,
+		       CTLTYPE_BOOL, "fpu_eager",
+		       SYSCTL_DESCR("Whether the kernel uses Eager FPU Switch"),
+		       sysctl_machdep_fpu_eager, 0,
+		       &x86_fpu_eager, 0,
+		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
 }

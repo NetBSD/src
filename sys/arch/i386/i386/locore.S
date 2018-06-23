@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.145.6.3 2018/03/13 15:47:44 martin Exp $	*/
+/*	$NetBSD: locore.S,v 1.145.6.4 2018/06/23 11:39:02 martin Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -128,7 +128,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.145.6.3 2018/03/13 15:47:44 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.145.6.4 2018/06/23 11:39:02 martin Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_copy_symtab.h"
@@ -1088,6 +1088,19 @@ ENTRY(cpu_switchto)
 	movl	%esp,PCB_ESP(%eax)
 	movl	%ebp,PCB_EBP(%eax)
 skip_save:
+
+#ifndef XEN
+	pushl	%edx
+	movb	_C_LABEL(x86_fpu_eager),%dl
+	testb	%dl,%dl
+	jz	.Lno_eagerfpu
+	pushl	%edi
+	pushl	%esi
+	call	_C_LABEL(fpu_eagerswitch)
+	addl	$8,%esp
+.Lno_eagerfpu:
+	popl	%edx
+#endif
 
 	/* Switch to newlwp's stack. */
 	movl	L_PCB(%edi),%ebx
