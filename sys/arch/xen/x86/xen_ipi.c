@@ -1,4 +1,4 @@
-/* $NetBSD: xen_ipi.c,v 1.23 2017/11/06 15:27:09 cherry Exp $ */
+/* $NetBSD: xen_ipi.c,v 1.24 2018/06/23 15:53:14 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -33,10 +33,12 @@
 
 /* 
  * Based on: x86/ipi.c
- * __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.23 2017/11/06 15:27:09 cherry Exp $");
+ * __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.24 2018/06/23 15:53:14 jdolecek Exp $");
  */
 
-__KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.23 2017/11/06 15:27:09 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.24 2018/06/23 15:53:14 jdolecek Exp $");
+
+#include "opt_ddb.h"
 
 #include <sys/types.h>
 
@@ -59,11 +61,13 @@ __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.23 2017/11/06 15:27:09 cherry Exp $");
 #include <xen/hypervisor.h>
 #include <xen/xen-public/vcpu.h>
 
+#ifdef DDB
 extern void ddb_ipi(struct trapframe);
+static void xen_ipi_ddb(struct cpu_info *, struct intrframe *);
+#endif
 
 static void xen_ipi_halt(struct cpu_info *, struct intrframe *);
 static void xen_ipi_synch_fpu(struct cpu_info *, struct intrframe *);
-static void xen_ipi_ddb(struct cpu_info *, struct intrframe *);
 static void xen_ipi_xcall(struct cpu_info *, struct intrframe *);
 static void xen_ipi_hvcb(struct cpu_info *, struct intrframe *);
 static void xen_ipi_generic(struct cpu_info *, struct intrframe *);
@@ -72,7 +76,11 @@ static void (*ipifunc[XEN_NIPIS])(struct cpu_info *, struct intrframe *) =
 {	/* In order of priority (see: xen/include/intrdefs.h */
 	xen_ipi_halt,
 	xen_ipi_synch_fpu,
+#ifdef DDB
 	xen_ipi_ddb,
+#else
+	NULL,
+#endif
 	xen_ipi_xcall,
 	xen_ipi_hvcb,
 	xen_ipi_generic,
@@ -229,6 +237,7 @@ xen_ipi_synch_fpu(struct cpu_info *ci, struct intrframe *intrf)
 	fpusave_cpu(true);
 }
 
+#ifdef DDB
 static void
 xen_ipi_ddb(struct cpu_info *ci, struct intrframe *intrf)
 {
@@ -260,6 +269,7 @@ xen_ipi_ddb(struct cpu_info *ci, struct intrframe *intrf)
 	ddb_ipi(tf);
 #endif
 }
+#endif /* DDB */
 
 static void
 xen_ipi_xcall(struct cpu_info *ci, struct intrframe *intrf)
