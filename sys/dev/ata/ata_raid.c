@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raid.c,v 1.39 2016/09/27 08:05:34 pgoyette Exp $	*/
+/*	$NetBSD: ata_raid.c,v 1.39.8.1 2018/06/23 11:05:21 martin Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_raid.c,v 1.39 2016/09/27 08:05:34 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_raid.c,v 1.39.8.1 2018/06/23 11:05:21 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -338,26 +338,27 @@ ataraid_modcmd(modcmd_t cmd, void *arg)
 		error = config_cfdriver_attach(&ataraid_cd);
 		if (error) 
 			break;
+#endif
 
 		error = config_cfattach_attach(ataraid_cd.cd_name, &ataraid_ca);
 		if (error) {
+#ifdef _MODULE
 			config_cfdriver_detach(&ataraid_cd);
+#endif
 			aprint_error("%s: unable to register cfattach for \n"
 			    "%s, error %d", __func__, ataraid_cd.cd_name,
 			    error);
 			break;
 		}
-#endif
 		break;
 	case MODULE_CMD_FINI:
-#ifdef _MODULE
-
 		error = config_cfattach_detach(ataraid_cd.cd_name, &ataraid_ca);
 		if (error) {
 			aprint_error("%s: failed to detach %s cfattach, "
 			    "error %d\n", __func__, ataraid_cd.cd_name, error);
 			break;
 		}
+#ifdef _MODULE
 		error = config_cfdriver_detach(&ataraid_cd);
 		if (error) {
 			(void)config_cfattach_attach(ataraid_cd.cd_name,
