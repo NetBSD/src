@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.81 2018/06/23 16:05:05 jakllsch Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.82 2018/06/23 16:09:53 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.81 2018/06/23 16:05:05 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.82 2018/06/23 16:09:53 jakllsch Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -204,6 +204,7 @@ const struct {
 	/* XXX Triflex2 not tested */
 	_qe(0, 0, 0, PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_TRIFLEX2),
 	_qe(0, 0, 0, PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_TRIFLEX4),
+#if 0
 	/* Triton needed for Connectix Virtual PC */
 	_qe(0, 0, 0, PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82437FX),
 	/* Connectix Virtual PC 5 has a 440BX */
@@ -217,6 +218,7 @@ const struct {
 	_qe(0, 0, 0, PCI_VENDOR_SIS, PCI_PRODUCT_SIS_741),
 	/* VIA Technologies VX900 */
 	_qe(0, 0, 0, PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VX900_HB)
+#endif
 };
 #undef _tag
 #undef _qe
@@ -730,7 +732,6 @@ pci_mode_detect(void)
 	uint32_t sav, val;
 	int i;
 	pcireg_t idreg;
-	extern char cpu_brand_string[];
 
 	if (pci_mode != -1)
 		return pci_mode;
@@ -761,6 +762,8 @@ pci_mode_detect(void)
 		}
 	}
 
+#if 0
+	extern char cpu_brand_string[];
 	const char *reason, *system_vendor, *system_product;
 	if (memcmp(cpu_brand_string, "QEMU", 4) == 0)
 		/* PR 45671, https://bugs.launchpad.net/qemu/+bug/897771 */
@@ -779,7 +782,7 @@ pci_mode_detect(void)
 #endif
 		return (pci_mode);
 	}
-
+#endif
 	/*
 	 * Strong check for standard compliant mode 1:
 	 * 1. bit 31 ("enable") can be set
