@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.152 2018/06/22 02:51:17 darcy Exp $
+# $NetBSD: XEN3_DOM0,v 1.153 2018/06/23 14:14:42 jakllsch Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -10,7 +10,7 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 #options 	UVMHIST_PRINT
 #options 	SYSCALL_DEBUG
 
-#ident		"XEN3_DOM0-$Revision: 1.152 $"
+#ident		"XEN3_DOM0-$Revision: 1.153 $"
 
 maxusers	32		# estimated number of users
 
@@ -229,7 +229,8 @@ acpiacad*	at acpi?		# ACPI AC Adapter
 acpibat*	at acpi?		# ACPI Battery
 acpibut*	at acpi?		# ACPI Button
 acpidalb*	at acpi?		# ACPI Direct Application Launch Button
-acpiec* 	at acpi?		# ACPI Embedded Controller
+acpiec* 	at acpi?		# ACPI Embedded Controller (late)
+acpiecdt*	at acpi?		# ACPI Embedded Controller (early)
 acpilid*	at acpi?		# ACPI Lid Switch
 acpitz* 	at acpi?		# ACPI Thermal Zone
 aibs*		at acpi?		# ASUSTeK AI Booster hardware monitor
