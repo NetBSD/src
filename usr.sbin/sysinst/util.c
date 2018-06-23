@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.7.8.1 2018/06/09 15:19:27 martin Exp $	*/
+/*	$NetBSD: util.c,v 1.7.8.2 2018/06/23 11:09:24 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1681,14 +1681,16 @@ set_menu_select(menudesc *m, void *arg)
 int
 binary_available(const char *prog)
 {
-        char *p, tmp[MAXPATHLEN], *path = getenv("PATH");
+        char *p, tmp[MAXPATHLEN], *path = getenv("PATH"), *opath;
  
         if (path == NULL)
                 return access(prog, X_OK) == 0;
         path = strdup(path);
         if (path == NULL)
                 return 0;
- 
+
+	opath = path;
+
         while ((p = strsep(&path, ":")) != NULL) {
                 if (strlcpy(tmp, p, MAXPATHLEN) >= MAXPATHLEN)
                         continue;
@@ -1697,11 +1699,11 @@ binary_available(const char *prog)
                 if (strlcat(tmp, prog, MAXPATHLEN) >= MAXPATHLEN)
                         continue;
                 if (access(tmp, X_OK) == 0) {
-                        free(path);
+                        free(opath);
                         return 1;
                 }
         }
-        free(path);
+        free(opath);
         return 0;
 }
 
