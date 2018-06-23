@@ -1,6 +1,6 @@
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2015 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2018 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -25,12 +25,18 @@
  * SUCH DAMAGE.
  */
 
-#define DUID_TIME_EPOCH 946684800
-#define DUID_LLT	1
-#define DUID_LL		3
+#define	UUID_LEN	36
+#define	DUID_TIME_EPOCH 946684800
+#define	DUID_LLT	1
+#define	DUID_LL		3
+#define	DUID_UUID	4
 
+#include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#ifdef BSD
+#  include <sys/sysctl.h>
+#endif
 
 #include <arpa/inet.h>
 
@@ -53,6 +59,66 @@
 #include "dhcpcd.h"
 #include "duid.h"
 #include "logerr.h"
+
+static size_t
+duid_machineuuid(char *uuid, size_t uuid_len)
+{
+	int r;
+	size_t len = uuid_len;
+
+#if defined(HW_UUID) /* OpenBSD */
+	int mib[] = { CTL_HW, HW_UUID };
+
+	r = sysctl(mib, sizeof(mib)/sizeof(mib[0]), uuid, &len, NULL, 0);
+#elif defined(KERN_HOSTUUID) /* FreeBSD */
+	int mib[] = { CTL_KERN, KERN_HOSTUUID };
+
+	r = sysctl(mib, sizeof(mib)/sizeof(mib[0]), uuid, &len, NULL, 0);
+#elif defined(__NetBSD__)
+	r = sysctlbyname("machdep.dmi.system-uuid", uuid, &len, NULL, 0);
+#elif defined(__linux__)
+	FILE *fp;
+
+	fp = fopen("/sys/class/dmi/id/product_uuid", "r");
+	if (fp == NULL)
+		return 0;
+	if (fgets(uuid, (int)uuid_len, fp) == NULL) {
+		fclose(fp);
+		return 0;
+	}
+	len = strlen(uuid) + 1;
+	fclose(fp);
+	r = 0;
+#else
+	r = -1;
+	errno = ENOSYS;
+#endif
+
+	if (r == -1)
+		return 0;
+	return len;
+}
+
+static size_t
+duid_make_uuid(uint8_t *d)
+{
+	uint16_t type = htons(DUID_UUID);
+	char uuid[UUID_LEN + 1];
+	size_t l;
+
+	if (duid_machineuuid(uuid, sizeof(uuid)) != sizeof(uuid))
+		return 0;
+
+	/* All zeros UUID is not valid */
+	if (strcmp("00000000-0000-0000-0000-000000000000", uuid) == 0)
+		return 0;
+
+	memcpy(d, &type, sizeof(type));
+	l = sizeof(type);
+	d += sizeof(type);
+	l += hwaddr_aton(d, uuid);
+	return l;
+}
 
 static size_t
 duid_make(uint8_t *d, const struct interface *ifp, uint16_t type)
@@ -115,7 +181,12 @@ duid_get(uint8_t **d, const struct interface *ifp)
 	/* Regardless of what happens we will create a DUID to use. */
 	*d = data;
 
-	/* No file? OK, lets make one based on our interface */
+	/* No file? OK, lets make one based the machines UUID */
+	len = duid_make_uuid(data);
+	if (len > 0)
+		return len;
+
+	/* No UUID? OK, lets make one based on our interface */
 	if (ifp->family == ARPHRD_NETROM) {
 		logwarnx("%s: is a NET/ROM pseudo interface", ifp->name);
 		TAILQ_FOREACH(ifp2, ifp->ctx->ifaces, next) {
