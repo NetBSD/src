@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.76 2018/06/23 10:02:39 maxv Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.77 2018/06/23 10:30:22 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.76 2018/06/23 10:02:39 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.77 2018/06/23 10:30:22 jdolecek Exp $");
 
 #include "opt_xen.h"
 
@@ -795,14 +795,22 @@ cpu_probe_fpu(struct cpu_info *ci)
 
 	x86_fpu_save = FPU_SAVE_FXSAVE;
 
-#ifdef XEN
-	/* We don't support XSAVE on Xen. */
-	return;
-#endif
-
 	/* See if xsave (for AVX) is supported */
 	if ((ci->ci_feat_val[1] & CPUID2_XSAVE) == 0)
 		return;
+
+#ifdef XEN
+	/*
+	 * Xen kernel can disable XSAVE via "no-xsave" option, in that case
+	 * XSAVE instructions like xrstor become privileged and trigger
+	 * supervisor trap. OSXSAVE flag seems to be reliably set according
+	 * to whether XSAVE is actually available.
+	 */
+#ifdef XEN_USE_XSAVE
+	if ((ci->ci_feat_val[1] & CPUID2_OSXSAVE) == 0)
+#endif
+		return;
+#endif
 
 	x86_fpu_save = FPU_SAVE_XSAVE;
 
