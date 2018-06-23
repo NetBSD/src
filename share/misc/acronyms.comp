@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.203 2018/06/21 23:05:44 maya Exp $
+$NetBSD: acronyms.comp,v 1.204 2018/06/23 15:00:22 sevan Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -89,7 +89,7 @@ ASPM	active state power management
 ASQ	automated software quality
 ASR	address space register
 AST	abstract syntax tree
-AST	asynchronous trap
+AST	asynchronous system trap
 AT	access time
 AT	advanced technology
 ATA	advanced technology attachment
@@ -649,6 +649,7 @@ IPC	interprocess communication
 IPE	integrated programming environment
 IPI	interprocessor interrupt
 IPL	Initial Program Load
+IPL	Interrupt Priority Level
 IPMB	Intelligent Platform Management Bus
 IPMI	Intelligent Platform Management Interface
 IPNG	Internet Protocol, Next Generation
@@ -1112,6 +1113,7 @@ RBF	radial basis function
 RBT	red-black tree
 RC	release candidate
 RC	remote control
+RC	run commands
 RCS	Revision Control System
 RCS	revision control system
 RCU	read, copy, update
