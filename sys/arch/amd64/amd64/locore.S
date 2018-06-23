@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.123.6.6 2018/05/05 15:00:29 martin Exp $	*/
+/*	$NetBSD: locore.S,v 1.123.6.7 2018/06/23 11:39:01 martin Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1091,6 +1091,20 @@ skip_save:
 	jz	.Lskip_svs
 	callq	_C_LABEL(svs_lwp_switch)
 .Lskip_svs:
+	popq	%rdx
+#endif
+
+#ifndef XEN
+	/* RDI/RSI got clobbered. */
+	movq	%r13,%rdi
+	movq	%r12,%rsi
+
+	pushq	%rdx
+	movb	_C_LABEL(x86_fpu_eager),%dl
+	testb	%dl,%dl
+	jz	.Lno_eagerfpu
+	callq	_C_LABEL(fpu_eagerswitch)
+.Lno_eagerfpu:
 	popq	%rdx
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.55.2.3 2018/04/01 08:51:47 martin Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.55.2.4 2018/06/23 11:39:02 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.55.2.3 2018/04/01 08:51:47 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.55.2.4 2018/06/23 11:39:02 martin Exp $");
 
 #include "opt_xen.h"
 
@@ -730,10 +730,58 @@ cpu_probe_old_fpu(struct cpu_info *ci)
 }
 #endif
 
+#ifndef XEN
+static void
+cpu_probe_fpu_leak(struct cpu_info *ci)
+{
+	/*
+	 * INTEL-SA-00145. Affected CPUs are from Family 6.
+	 */
+	if (cpu_vendor != CPUVENDOR_INTEL) {
+		return;
+	}
+	if (CPUID_TO_FAMILY(ci->ci_signature) != 6) {
+		return;
+	}
+
+	switch (CPUID_TO_MODEL(ci->ci_signature)) {
+	/* Atom CPUs are not vulnerable. */
+	case 0x1c: /* Pineview */
+	case 0x26: /* Lincroft */
+	case 0x27: /* Penwell */
+	case 0x35: /* Cloverview */
+	case 0x36: /* Cedarview */
+	case 0x37: /* Baytrail / Valleyview (Silvermont) */
+	case 0x4d: /* Avaton / Rangely (Silvermont) */
+	case 0x4c: /* Cherrytrail / Brasswell */
+	case 0x4a: /* Merrifield */
+	case 0x5a: /* Moorefield */
+	case 0x5c: /* Goldmont */
+	case 0x5f: /* Denverton */
+	case 0x7a: /* Gemini Lake */
+		break;
+
+	/* Knights CPUs are not vulnerable. */
+	case 0x57: /* Knights Landing */
+	case 0x85: /* Knights Mill */
+		break;
+
+	/* The rest is vulnerable. */
+	default:
+		x86_fpu_eager = true;
+		break;
+	}
+}
+#endif
+
 static void
 cpu_probe_fpu(struct cpu_info *ci)
 {
 	u_int descs[4];
+
+#ifndef XEN
+	cpu_probe_fpu_leak(ci);
+#endif
 
 #ifdef i386 /* amd64 always has fxsave, sse and sse2 */
 	/* If we have FXSAVE/FXRESTOR, use them. */
