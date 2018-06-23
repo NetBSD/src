@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.9 2018/06/21 23:05:28 kamil Exp $	*/
+/*	$NetBSD: util.c,v 1.10 2018/06/23 22:35:29 kamil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -78,7 +78,7 @@ static const char *msg_yes, *msg_no, *msg_all, *msg_some, *msg_none;
 static const char *msg_cur_distsets_row;
 static int select_menu_width;
 
-static uint8_t set_status[SET_GROUP_END];
+static uint8_t set_status[SET_GROUP_END + 1];
 #define SET_VALID	0x01
 #define SET_SELECTED	0x02
 #define SET_SKIPPED	0x04
