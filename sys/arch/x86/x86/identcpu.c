@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.75 2018/06/23 09:51:34 maxv Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.76 2018/06/23 10:02:39 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.75 2018/06/23 09:51:34 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.76 2018/06/23 10:02:39 maxv Exp $");
 
 #include "opt_xen.h"
 
@@ -795,6 +795,11 @@ cpu_probe_fpu(struct cpu_info *ci)
 
 	x86_fpu_save = FPU_SAVE_FXSAVE;
 
+#ifdef XEN
+	/* We don't support XSAVE on Xen. */
+	return;
+#endif
+
 	/* See if xsave (for AVX) is supported */
 	if ((ci->ci_feat_val[1] & CPUID2_XSAVE) == 0)
 		return;
@@ -802,7 +807,6 @@ cpu_probe_fpu(struct cpu_info *ci)
 	x86_fpu_save = FPU_SAVE_XSAVE;
 
 #if 0 /* XXX PR 52966 */
-	/* xsaveopt ought to be faster than xsave */
 	x86_cpuid2(0xd, 1, descs);
 	if (descs[0] & CPUID_PES1_XSAVEOPT)
 		x86_fpu_save = FPU_SAVE_XSAVEOPT;
@@ -813,12 +817,7 @@ cpu_probe_fpu(struct cpu_info *ci)
 	if (descs[2] > 512)
 		x86_fpu_save_size = descs[2];
 
-#ifdef XEN
-	/* Don't use xsave, force fxsave with x86_xsave_features = 0. */
-	x86_fpu_save = FPU_SAVE_FXSAVE;
-#else
 	x86_xsave_features = (uint64_t)descs[3] << 32 | descs[0];
-#endif
 }
 
 void
