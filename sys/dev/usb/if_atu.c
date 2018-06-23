@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atu.c,v 1.59 2018/06/22 04:17:42 msaitoh Exp $ */
+/*	$NetBSD: if_atu.c,v 1.60 2018/06/23 06:57:24 maxv Exp $ */
 /*	$OpenBSD: if_atu.c,v 1.48 2004/12/30 01:53:21 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.59 2018/06/22 04:17:42 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.60 2018/06/23 06:57:24 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -209,7 +209,7 @@ static const struct atu_type atu_devs[] = {
 	  RadioIntersil,	ATU_NO_QUIRK },
 };
 
-struct atu_radfirm {
+static const struct atu_radfirm {
 	enum	atu_radio_type atur_type;
 	unsigned char	*atur_internal;
 	size_t		atur_internal_sz;
