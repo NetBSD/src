@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.120 2018/06/22 06:22:37 maxv Exp $	*/
+/*	$NetBSD: cpu.c,v 1.121 2018/06/23 09:51:34 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.120 2018/06/22 06:22:37 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.121 2018/06/23 09:51:34 maxv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -527,62 +527,22 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 void
 cpu_init(struct cpu_info *ci)
 {
-	uint32_t cr4 = 0;
 
 	/*
 	 * If we have FXSAVE/FXRESTOR, use them.
 	 */
 	if (cpu_feature[0] & CPUID_FXSR) {
-		cr4 |= CR4_OSFXSR;
+		lcr4(rcr4() | CR4_OSFXSR);
 
 		/*
 		 * If we have SSE/SSE2, enable XMM exceptions.
 		 */
 		if (cpu_feature[0] & (CPUID_SSE|CPUID_SSE2))
-			cr4 |= CR4_OSXMMEXCPT;
-	}
-
-	/*
-	 * Xen kernel sets OSXSAVE if appropriate for the hardware,
-	 * or disables it with no-xsave flag or due to security bugs with
-	 * particular CPUs.
-	 * If it's unset, it also means the xrstor() et.al. are privileged
-	 * and trigger supervisor trap. So, contrary to what regular x86
-	 * does, here we only set CR4_OSXSAVE if the feature is already
-	 * enabled according to CPUID.
-	 */
-	if (cpu_feature[1] & CPUID2_OSXSAVE)
-		cr4 |= CR4_OSXSAVE;
-	else {
-		x86_xsave_features = 0;
-		x86_fpu_save = FPU_SAVE_FXSAVE;
-	}
-
-	if (cr4) {
-		cr4 |= rcr4();
-		lcr4(cr4);
+			lcr4(rcr4() | CR4_OSXMMEXCPT);
 	}
 
 	if (x86_fpu_save >= FPU_SAVE_FXSAVE) {
 		fpuinit_mxcsr_mask();
-	}
-
-	/*
-	 * Changing CR4 register may change cpuid values. For example, setting
-	 * CR4_OSXSAVE sets CPUID2_OSXSAVE. The CPUID2_OSXSAVE is in
-	 * ci_feat_val[1], so update it.
-	 * XXX Other than ci_feat_val[1] might be changed.
-	 */
-	if (cpuid_level >= 1) {
-		u_int descs[4];
-
-		x86_cpuid(1, descs);
-		ci->ci_feat_val[1] = descs[2];
-	}
-
-	/* If xsave is enabled, enable all fpu features */
-	if (cr4 & CR4_OSXSAVE) {
-		wrxcr(0, x86_xsave_features & XCR0_FPU);
 	}
 
 	atomic_or_32(&ci->ci_flags, CPUF_RUNNING);
