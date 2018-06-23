@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.214 2018/06/22 18:06:22 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.215 2018/06/23 11:41:11 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -13979,3 +13979,63 @@ sys/netipsec/xform_ah.c				1.90,1.93,1.102,1.103
 	Simplify and strengthen the AH parser.
 	[maxv, ticket #889]
 
+crypto/external/bsd/openssl/dist/crypto/asn1/asn1.h	(patch)
+crypto/external/bsd/openssl/dist/crypto/dh/dh.h		(patch)
+crypto/external/bsd/openssl/dist/crypto/dsa/dsa.h	(patch)
+crypto/external/bsd/openssl/dist/crypto/ecdsa/ecdsa.h	(patch)
+crypto/external/bsd/openssl/dist/crypto/evp/evp.h	(patch)
+crypto/external/bsd/openssl/dist/crypto/hmac/hmac.h	(patch)
+crypto/external/bsd/openssl/dist/crypto/rsa/rsa.h	(patch)
+crypto/external/bsd/openssl/dist/crypto/x509v3/x509v3.h	(patch)
+
+	Provide a future proof API if OPENSSL_API_COMPAT is defined
+	to >= 0x10100000L.
+	[christos, ticket #891]
+
+
+lib/libc/sys/sched.c				1.5
+
+	Return PRI_NONE for sched_get_priority_m{in,ax} and SCHED_OTHER.
+	[maya, ticket #892]
+
+sys/netinet6/icmp6.c				1.228,1.230
+
+	Remove the RH0 code from ICMPv6, and fix a length calculation.
+	[maxv, ticket #893]
+
+
+sys/dev/ata/ata_raid.c				1.40
+
+	Call config_cfattach_attach() regardless of whether the module is
+	being built as part of a kernel or as a external module.
+	[pgoyette, ticket #894]
+
+usr.sbin/sysinst/util.c				1.9
+
+	Fix invalid free(3) in sysinst(8).
+	[kamil, ticket #895]
+
+external/bsd/dhcpcd/dist/src/common.c           up to 1.1.1.5
+external/bsd/dhcpcd/dist/src/defs.h             up to 1.1.1.14
+external/bsd/dhcpcd/dist/src/dhcpcd.8.in        up to 1.1.1.10
+external/bsd/dhcpcd/dist/src/dhcpcd.c           up to 1.13
+external/bsd/dhcpcd/dist/src/dhcpcd.conf.5.in   up to 1.1.1.10
+external/bsd/dhcpcd/dist/src/duid.c             up to 1.1.1.3
+doc/3RDPARTY					(adjusted manually)
+
+	Import dhcpcd-7.0.6.
+	[roy, ticket #896]
+
+sys/arch/amd64/amd64/locore.S		1.166 (patch)
+sys/arch/i386/i386/locore.S		1.157 (patch)
+sys/arch/x86/include/cpu.h		1.92 (patch)
+sys/arch/x86/include/fpu.h		1.9 (patch)
+sys/arch/x86/x86/fpu.c			1.33-1.39 (patch)
+sys/arch/x86/x86/identcpu.c		1.72 (patch)
+sys/arch/x86/x86/vm_machdep.c		1.34 (patch)
+sys/arch/x86/x86/x86_machdep.c		1.116,1.117 (patch)
+
+	Support eager fpu switch, to work around INTEL-SA-00145.
+	Provide a sysctl machdep.fpu_eager, which gets automatically
+	initialized to 1 on affected CPUs.
+	[maxv, ticket #897]
