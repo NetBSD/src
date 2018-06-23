@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.2,v 1.1.2.92 2018/06/14 19:44:56 martin Exp $
+# $NetBSD: CHANGES-7.2,v 1.1.2.93 2018/06/23 10:44:47 martin Exp $
 
 A complete list of changes from the NetBSD 7.1 release to the NetBSD 7.2
 release:
@@ -5544,4 +5544,10 @@ share/i18n/esdb/ISO-8859/ISO-8859.alias		1.4
 
 	Add more aliases for Hebrew and Arabic ISO-8859-... encodings.
 	[maya, ticket #1616]
+
+external/gpl3/gcc/dist/libstdc++-v3/include/std/complex 1.2
+
+	Use the c99 cabs math builtins directly, because cabs and cabsf
+	have broken ABI's and cabsl does not exist.
+	[maya, ticket #1617]
 
