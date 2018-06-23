@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.42 2018/06/22 06:22:37 maxv Exp $	*/
+/*	$NetBSD: fpu.c,v 1.43 2018/06/23 10:06:02 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.  All
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.42 2018/06/22 06:22:37 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.43 2018/06/23 10:06:02 maxv Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -263,6 +263,11 @@ fpuinit_mxcsr_mask(void)
 		x86_fpu_mxcsr_mask = fpusave.sv_xmm.fx_mxcsr_mask;
 	}
 #else
+	/*
+	 * XXX XXX XXX: On Xen the FXSAVE above faults. That's because
+	 * &fpusave is not 16-byte aligned. Stack alignment problem
+	 * somewhere, it seems.
+	 */
 	x86_fpu_mxcsr_mask = __INITIAL_MXCSR_MASK__;
 #endif
 }
