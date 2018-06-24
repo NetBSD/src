@@ -1,4 +1,4 @@
-/*	$NetBSD: math.h,v 1.63 2013/09/16 15:54:42 martin Exp $	*/
+/*	$NetBSD: math.h,v 1.64 2018/06/24 22:07:46 christos Exp $	*/
 
 /*
  * ====================================================
@@ -263,7 +263,6 @@ double	log1p(double);
 double	logb(double);
 double	nextafter(double, double);
 double	remainder(double, double);
-double	rint(double);
 double	scalb(double, double);
 #endif /* (_XOPEN_SOURCE - 0) >= 500 || defined(_NETBSD_SOURCE)*/
 #endif /* _XOPEN_SOURCE || _NETBSD_SOURCE */
@@ -381,13 +380,13 @@ long double	lgammal(long double);
 long double	tgammal(long double);
 
 /* 7.12.9 nearest integer */
-
 /* LONGLONG */
 long long int	llrint(double);
 long int	lround(double);
 /* LONGLONG */
 long long int	llround(double);
 long int	lrint(double);
+double	rint(double);
 double	round(double);
 double	trunc(double);
 
