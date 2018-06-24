@@ -1,4 +1,4 @@
-/*      $NetBSD: pciback.c,v 1.12 2017/07/16 06:14:24 cherry Exp $      */
+/*      $NetBSD: pciback.c,v 1.13 2018/06/24 13:35:33 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2009 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciback.c,v 1.12 2017/07/16 06:14:24 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciback.c,v 1.13 2018/06/24 13:35:33 jdolecek Exp $");
 
 #include "opt_xen.h"
 
@@ -619,7 +619,7 @@ pciback_xenbus_frontend_changed(void *arg, XenbusState new_state)
 		xenbus_switch_state(xbusd, NULL, XenbusStateConnected);
 		x86_sfence();
 		event_set_handler(pbxi->pbx_evtchn, pciback_xenbus_evthandler,
-		    pbxi, IPL_BIO, "pciback");
+		    pbxi, IPL_BIO, "pciback", "pciback"); // XXX intr info?
 		hypervisor_enable_event(pbxi->pbx_evtchn);
 		hypervisor_notify_via_evtchn(pbxi->pbx_evtchn);
 		break;
