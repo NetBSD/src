@@ -1,4 +1,4 @@
-/*	$NetBSD: kern.ldscript.Xen,v 1.15 2018/06/24 17:11:57 jdolecek Exp $	*/
+/*	$NetBSD: kern.ldscript.Xen,v 1.16 2018/06/24 18:24:53 maxv Exp $	*/
 
 #include "assym.h"
 
@@ -7,12 +7,13 @@ __PAGE_SIZE = 0x1000 ;
 ENTRY(_start)
 SECTIONS
 {
-	.text :
+	.text : AT (ADDR(.text))
 	{
 		*(.text)
 		*(.text.*)
 		*(.stub)
-	}
+		. = ALIGN(__PAGE_SIZE);
+	} =0xCC
 	_etext = . ;
 	PROVIDE (etext = .) ;
 
@@ -77,11 +78,3 @@ SECTIONS
 	}
 }
 
-SECTIONS
-{
-	.text :
-	AT (ADDR(.text))
-	{
-		*(.text)
-	} = 0
-}
