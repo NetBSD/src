@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmr.c,v 1.30 2018/06/17 22:42:41 jmcneill Exp $	*/
+/*	$NetBSD: gtmr.c,v 1.31 2018/06/24 19:04:30 ryo Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.30 2018/06/17 22:42:41 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.31 2018/06/24 19:04:30 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -261,7 +261,7 @@ gtmr_delay(unsigned int n)
 	while (ticks > 0) {
 		arm_isb();
 		uint64_t curr = gtmr_cntvct_stable_read(sc);
-		if (curr > last)
+		if (curr >= last)
 			ticks -= (curr - last);
 		else
 			ticks -= (UINT64_MAX - curr + last);
