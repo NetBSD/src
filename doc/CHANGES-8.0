@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.215 2018/06/23 11:41:11 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.216 2018/06/24 09:24:34 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -14039,3 +14039,56 @@ sys/arch/x86/x86/x86_machdep.c		1.116,1.117 (patch)
 	Provide a sysctl machdep.fpu_eager, which gets automatically
 	initialized to 1 on affected CPUs.
 	[maxv, ticket #897]
+
+distrib/notes/i386/prep			(manual change)
+distrib/notes/amd64/prep		(manual change)
+
+	Document workarounds due to restrictions of sysinst
+	on UEFI and modern disk environments.
+
+distrib/notes/acorn26/contents			(equivalent to acorn32 1.3)
+distrib/notes/acorn32/contents			1.3
+distrib/notes/alpha/contents			1.17
+distrib/notes/amd64/contents			1.6
+distrib/notes/amiga/contents			1.21
+distrib/notes/arc/contents			1.3
+distrib/notes/atari/contents			1.21
+distrib/notes/bebox/contents			1.3
+distrib/notes/cats/contents			1.3
+distrib/notes/common/contents			1.173
+distrib/notes/common/xfer			1.75
+distrib/notes/emips/contents			1.3
+distrib/notes/evbarm/contents			1.3
+distrib/notes/evbppc/contents			1.4
+distrib/notes/ews4800mips/contents		1.3
+distrib/notes/hp300/contents			1.18
+distrib/notes/hpcarm/contents			1.4
+distrib/notes/hpcmips/contents			1.11
+distrib/notes/hpcsh/contents			1.4
+distrib/notes/hppa/contents			1.3
+distrib/notes/i386/contents			1.30
+distrib/notes/landisk/contents			1.4
+distrib/notes/mac68k/contents			1.21
+distrib/notes/macppc/contents			1.13
+distrib/notes/mmeye/contents			1.4
+distrib/notes/mvme68k/contents			1.14
+distrib/notes/news68k/contents			1.7
+distrib/notes/newsmips/contents			1.3
+distrib/notes/next68k/contents			1.8
+distrib/notes/ofppc/contents			1.4
+distrib/notes/pmax/contents			1.18
+distrib/notes/prep/contents			1.3
+distrib/notes/rs6000/contents			1.3
+distrib/notes/sandpoint/contents		1.3
+distrib/notes/sgimips/contents			1.3
+distrib/notes/shark/contents			1.3
+distrib/notes/sparc/contents			1.22
+distrib/notes/sparc64/contents			1.6
+distrib/notes/sun2/contents			1.3
+distrib/notes/sun3/contents			1.17
+distrib/notes/vax/contents			1.12
+distrib/notes/x68k/contents			1.18
+
+	Document debug sets and kernel module directory.
+
+
