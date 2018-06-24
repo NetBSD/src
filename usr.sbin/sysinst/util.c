@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.10 2018/06/23 22:35:29 kamil Exp $	*/
+/*	$NetBSD: util.c,v 1.11 2018/06/24 19:53:35 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -78,7 +78,7 @@ static const char *msg_yes, *msg_no, *msg_all, *msg_some, *msg_none;
 static const char *msg_cur_distsets_row;
 static int select_menu_width;
 
-static uint8_t set_status[SET_GROUP_END + 1];
+static uint8_t set_status[SET_GROUP_END];
 #define SET_VALID	0x01
 #define SET_SELECTED	0x02
 #define SET_SKIPPED	0x04
@@ -1010,16 +1010,15 @@ get_and_unpack_sets(int update, msg setupdone_msg, msg success_msg, msg failure_
 
 	/* Accurately count selected sets */
 	for (dist = dist_list; (set = dist->set) != SET_LAST; dist++) {
+		if (dist->name == NULL)
+			continue;
 		if ((set_status[set] & (SET_VALID | SET_SELECTED))
 		    == (SET_VALID | SET_SELECTED))
 			tarstats.nselected++;
 	}
 
 	status = SET_RETRY;
-	for (dist = dist_list; ; dist++) {
-		set = dist->set;
-		if (set == SET_LAST)
-			break;
+	for (dist = dist_list; (set = dist->set) != SET_LAST; dist++) {
 		if (dist->name == NULL)
 			continue;
 		if (set_status[set] != (SET_VALID | SET_SELECTED))
