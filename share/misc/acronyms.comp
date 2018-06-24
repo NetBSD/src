@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.206 2018/06/24 19:47:20 sevan Exp $
+$NetBSD: acronyms.comp,v 1.207 2018/06/24 19:48:46 sevan Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -1495,7 +1495,7 @@ WAN	wide area network
 WAP	Wireless Application Protocol
 WAP	wireless access point
 WDM	Windows Driver Model
-WDDM	Windows Display Driver Mode
+WDDM	Windows Display Driver Model
 WDT	watchdog timer
 WEP	Wired Equivalent Privacy
 WFI	wait for interrupt
