@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.66 2018/06/24 20:15:00 jdolecek Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.67 2018/06/24 20:28:58 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.66 2018/06/24 20:15:00 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.67 2018/06/24 20:28:58 jdolecek Exp $");
 
 #include <sys/atomic.h>
 #include <sys/buf.h>
@@ -1783,7 +1783,7 @@ xbdback_map_shm(struct xbdback_io *xbd_io)
 		xbd_io->xio_mapped = 1;
 		return xbdi;
 	case ENOMEM:
-		s = splvm();
+		s = splvm(); /* XXXSMP */
 		if (!xbdback_shmcb) {
 			if (xen_shm_callback(xbdback_shm_callback, xbdi)
 			    != 0) {
@@ -1819,7 +1819,7 @@ xbdback_shm_callback(void *arg)
 	 * IPL_BIO and IPL_NET levels. Raise to the lowest priority level
 	 * that can mask both.
 	 */
-	s = splvm();
+	s = splvm(); /* XXXSMP */
 	while(!SIMPLEQ_EMPTY(&xbdback_shmq)) {
 		struct xbdback_instance *xbdi;
 		struct xbdback_io *xbd_io;
