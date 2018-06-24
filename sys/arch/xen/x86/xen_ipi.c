@@ -1,4 +1,4 @@
-/* $NetBSD: xen_ipi.c,v 1.24 2018/06/23 15:53:14 jdolecek Exp $ */
+/* $NetBSD: xen_ipi.c,v 1.25 2018/06/24 13:35:32 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -33,10 +33,10 @@
 
 /* 
  * Based on: x86/ipi.c
- * __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.24 2018/06/23 15:53:14 jdolecek Exp $");
+ * __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.25 2018/06/24 13:35:32 jdolecek Exp $");
  */
 
-__KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.24 2018/06/23 15:53:14 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.25 2018/06/24 13:35:32 jdolecek Exp $");
 
 #include "opt_ddb.h"
 
@@ -122,6 +122,7 @@ xen_ipi_init(void)
 	cpuid_t vcpu;
 	evtchn_port_t evtchn;
 	struct cpu_info *ci;
+	char intr_xname[INTRDEVNAMEBUF];
 
 	ci = curcpu();
 
@@ -133,8 +134,11 @@ xen_ipi_init(void)
 
 	KASSERT(evtchn != -1 && evtchn < NR_EVENT_CHANNELS);
 
-	if(intr_establish_xname(0, &xen_pic, evtchn, IST_LEVEL, IPL_HIGH,
-		xen_ipi_handler, ci, true, "ipi") == NULL) {
+	snprintf(intr_xname, sizeof(intr_xname), "%s ipi",
+	    device_xname(ci->ci_dev));
+
+	if (intr_establish_xname(0, &xen_pic, evtchn, IST_LEVEL, IPL_HIGH,
+		xen_ipi_handler, ci, true, intr_xname) == NULL) {
 		panic("%s: unable to register ipi handler\n", __func__);
 		/* NOTREACHED */
 	}
@@ -215,7 +219,6 @@ xen_broadcast_ipi(uint32_t ipimask)
 }
 
 /* MD wrapper for the xcall(9) callback. */
-#define PRIuCPUID	"lu" /* XXX: move this somewhere more appropriate */
 
 static void
 xen_ipi_halt(struct cpu_info *ci, struct intrframe *intrf)
@@ -223,7 +226,7 @@ xen_ipi_halt(struct cpu_info *ci, struct intrframe *intrf)
 	KASSERT(ci == curcpu());
 	KASSERT(ci != NULL);
 	if (HYPERVISOR_vcpu_op(VCPUOP_down, ci->ci_cpuid, NULL)) {
-		panic("vcpu%" PRIuCPUID "shutdown failed.\n", ci->ci_cpuid);
+		panic("%s shutdown failed.\n", device_xname(ci->ci_dev));
 	}
 
 }
