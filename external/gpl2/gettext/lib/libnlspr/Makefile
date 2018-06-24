@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2018/06/23 20:15:23 kamil Exp $
+#	$NetBSD: Makefile,v 1.5 2018/06/24 19:27:26 kamil Exp $
 
 LIBISPRIVATE=	yes
 
@@ -102,7 +102,7 @@ COPTS.write-tcl.c = -Wno-stack-protector
 COPTS.msgl-fsearch.c = -Wno-variably-modified
 
 CWARNFLAGS.clang+=	-Wno-tautological-compare
-CWARNFLAGS.clang+=	-Wno-format-extra-arg
+CWARNFLAGS.clang+=	-Wno-format-extra-args
 
 .include <bsd.lib.mk>
 
