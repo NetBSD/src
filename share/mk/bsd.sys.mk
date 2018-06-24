@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.283 2018/06/21 11:24:38 kamil Exp $
+#	$NetBSD: bsd.sys.mk,v 1.284 2018/06/24 19:35:12 kamil Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -143,7 +143,7 @@ LDFLAGS+=	-Wl,-z,now
 .if ${MKSANITIZER:Uno} == "yes"
 SANITIZERFLAGS+=	-fsanitize=${USE_SANITIZER}
 .else
-SANITIZERFLAGS+=	# empty
+SANITIZERFLAGS=		# empty
 .endif
 
 
