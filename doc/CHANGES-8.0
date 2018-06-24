@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.217 2018/06/24 09:36:12 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.218 2018/06/24 09:51:46 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -14101,4 +14101,8 @@ lib/libutil/passwd.c				1.53
 	Prevent read access out of bounds in trim_whitespace()
 	when passing a white space only string.
 	[kamil, ticket #899]
+
+sys/sys/param.h					changed manually
+
+	Welcome to 8.0 RC2
 
