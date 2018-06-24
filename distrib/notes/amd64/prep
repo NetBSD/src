@@ -1,4 +1,4 @@
-.\"$NetBSD: prep,v 1.2 2009/04/25 21:21:48 snj Exp $
+.\"$NetBSD: prep,v 1.2.40.1 2018/06/24 09:11:28 martin Exp $
 .
 .Pp
 It is strongly recommended that as part of the installation procedure, you
@@ -13,3 +13,20 @@ behaviour and frequent system crashes with
 and other
 .Ul
 operating systems on x86 hardware.
+.Pp
+.Ss "Semi-manually installing on UEFI systems"
+Unfortunately the
+.Nx
+installer does not properly support installation on machines using
+.Sy UEFI
+firmware or when targetting disks with more than 2 TB size.
+A semi-manual mode of installation is supported and quite painless.
+This shortcoming will be addressesed in the upcoming next release.
+.Pp
+Please refer to 
+.Lk https://wiki.netbsd.org/Installation_on_UEFI_systems/
+when installing on
+.Sy UEFI
+systems. See this
+.Lk https://wiki.netbsd.org/users/spz/moderndisk/
+for expert / manual installation suggestions on modern disk systems.
