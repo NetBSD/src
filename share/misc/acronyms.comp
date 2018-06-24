@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.205 2018/06/23 19:40:59 sevan Exp $
+$NetBSD: acronyms.comp,v 1.206 2018/06/24 19:47:20 sevan Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -525,6 +525,7 @@ GAS	generic address structure
 GC	garbage collector
 GCM	Galois counter mode
 GCR	group-coded recording
+GDI	Graphics Device Interface
 GDT	global descriptor table
 GEM	graphics environment manager
 GEM	graphics execution manager
@@ -886,6 +887,7 @@ NCQ	native command queuing
 ND	neighbor discovery
 NDFA	nondeterministic finite automaton
 NE	numeric error
+NEWS	Network extensible Window System
 NFA	nondeterministic finite automaton
 NFC	near-field communication
 NFCI	no functional change intended
@@ -1065,6 +1067,7 @@ PPP	Point-to-Point Protocol
 PPPOA	Point-to-Point Protocol over ATM
 PPPOE	Point-to-Point Protocol over Ethernet
 PPU	physics processing unit
+PRAM	Parameter RAM
 PRBS	pseudorandom bit sequence
 PRG	pseudorandom generator
 PRF	pseudorandom function [family]
@@ -1074,6 +1077,7 @@ PRNG	pseudorandom number generator
 PROM	programmable read only memory
 PRP	pseudorandom permutation
 PRU	Programmable Realtime Unit
+PS	PostScript
 PSD	power spectral density
 PSE	page size extensions
 PSK	phase shift keying
@@ -1139,6 +1143,7 @@ RHEL	Red Hat Enterprise Linux
 RHL	Red Hat Linux
 RIB	routing information base
 RIFF	Resource Interchange File Format
+RIP	Raster Image Processor
 RIP	Routing Information Protocol
 RIR	regional Internet registry
 RISC	reduced instruction set {computer,computing}
@@ -1489,6 +1494,8 @@ WAMP	Web Application Messaging Protocol
 WAN	wide area network
 WAP	Wireless Application Protocol
 WAP	wireless access point
+WDM	Windows Driver Model
+WDDM	Windows Display Driver Mode
 WDT	watchdog timer
 WEP	Wired Equivalent Privacy
 WFI	wait for interrupt
