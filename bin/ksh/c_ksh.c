@@ -1,4 +1,4 @@
-/*	$NetBSD: c_ksh.c,v 1.27.2.1 2018/05/21 04:35:48 pgoyette Exp $	*/
+/*	$NetBSD: c_ksh.c,v 1.27.2.2 2018/06/25 07:25:04 pgoyette Exp $	*/
 
 /*
  * built-in Korn commands: c_*
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: c_ksh.c,v 1.27.2.1 2018/05/21 04:35:48 pgoyette Exp $");
+__RCSID("$NetBSD: c_ksh.c,v 1.27.2.2 2018/06/25 07:25:04 pgoyette Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -1032,7 +1032,7 @@ c_unalias(wp)
 	if (all) {
 		struct tstate ts;
 
-		for (twalk(&ts, t); (ap = tnext(&ts)); ) {
+		for (ksh_twalk(&ts, t); (ap = tnext(&ts)); ) {
 			if (ap->flag&ALLOC) {
 				ap->flag &= ~(ALLOC|ISSET);
 				afree((void*)ap->val.s, APERM);

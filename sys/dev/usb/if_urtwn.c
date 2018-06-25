@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.57 2018/02/08 09:05:20 dholland Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.57.2.1 2018/06/25 07:26:02 pgoyette Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.42 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.57 2018/02/08 09:05:20 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.57.2.1 2018/06/25 07:26:02 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -3800,12 +3800,19 @@ urtwn_bb_init(struct urtwn_softc *sc)
 		DELAY(1);
 		urtwn_bb_write(sc, R92C_OFDM0_AGCCORE1(0), 0x69553420);
 		DELAY(1);
+	}
 
-		if (ISSET(sc->chip, URTWN_CHIP_92EU)) {
-			urtwn_write_2(sc, R92C_AFE_CTRL3, urtwn_read_2(sc,
-			    R92C_AFE_CTRL3));
-		}
-
+	if (ISSET(sc->chip, URTWN_CHIP_92EU)) {
+		crystalcap = sc->r88e_rom[0xb9];
+		if (crystalcap == 0x00)
+			crystalcap = 0x20;
+		crystalcap &= 0x3f;
+		reg = urtwn_bb_read(sc, R92C_AFE_CTRL3);
+		urtwn_bb_write(sc, R92C_AFE_CTRL3,
+		    RW(reg, R92C_AFE_XTAL_CTRL_ADDR,
+		    crystalcap | crystalcap << 6));
+		urtwn_write_4(sc, R92C_AFE_XTAL_CTRL, 0xf81fb);
+	} else if (ISSET(sc->chip, URTWN_CHIP_88E)) {
 		crystalcap = sc->r88e_rom[0xb9];
 		if (crystalcap == 0xff)
 			crystalcap = 0x20;

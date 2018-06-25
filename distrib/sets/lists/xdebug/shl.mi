@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.41.2.1 2018/03/15 09:11:54 pgoyette Exp $
+# $NetBSD: shl.mi,v 1.41.2.2 2018/06/25 07:25:10 pgoyette Exp $
 ./usr/libdata/debug/usr/X11R7/lib	-unknown-		xorg,debug,compatx11dir
 ./usr/libdata/debug/usr/X11R7/lib/X11/locale/lib/common/libximcp.so.2.0.debug	obsolete		xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/X11/locale/lib/common/libxlcDef.so.2.0.debug	obsolete		xorg,obsolete
@@ -61,7 +61,7 @@
 ./usr/libdata/debug/usr/X11R7/lib/libexpat.so.2.0.debug	-obsolete-		obsolete,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libfontconfig.so.2.3.debug	-unknown-		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libfontenc.so.2.0.debug	-unknown-		xorg,debug,compatx11file
-./usr/libdata/debug/usr/X11R7/lib/libfreetype.so.18.0.13.debug	-unknown-		xorg,debug,compatx11file
+./usr/libdata/debug/usr/X11R7/lib/libfreetype.so.18.16.1.debug	-unknown-		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libgbm.so.1.0.debug	-unknown-		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libglapi.so.1.0.debug	-unknown-		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libglut.so.4.0.debug	-unknown-		xorg,debug,compatx11file

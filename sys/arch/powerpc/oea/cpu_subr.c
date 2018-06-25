@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.90.2.2 2018/05/21 04:36:01 pgoyette Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.90.2.3 2018/06/25 07:25:45 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.90.2.2 2018/05/21 04:36:01 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.90.2.3 2018/06/25 07:25:45 pgoyette Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_ppccache.h"
@@ -73,6 +73,8 @@ static void cpu_tau_setup(struct cpu_info *);
 static void cpu_tau_refresh(struct sysmon_envsys *, envsys_data_t *);
 #endif
 
+extern void init_scom_speedctl(void);
+
 int cpu = -1;
 int ncpus;
 
@@ -95,7 +97,7 @@ static const struct fmttab cpu_7450_l2cr_formats[] = {
 	{ L2CR_L2DO|L2CR_L2IO, L2CR_L2DO|L2CR_L2IO, " locked" },
 	{ L2CR_L2E, ~0, " 256KB L2 cache" },
 	{ L2CR_L2PE, 0, " no parity" },
-	{ L2CR_L2PE, ~0, " parity enabled" },
+	{ L2CR_L2PE, L2CR_L2PE, " parity enabled" },
 	{ 0, 0, NULL }
 };
 
@@ -106,7 +108,7 @@ static const struct fmttab cpu_7448_l2cr_formats[] = {
 	{ L2CR_L2DO|L2CR_L2IO, L2CR_L2DO|L2CR_L2IO, " locked" },
 	{ L2CR_L2E, ~0, " 1MB L2 cache" },
 	{ L2CR_L2PE, 0, " no parity" },
-	{ L2CR_L2PE, ~0, " parity enabled" },
+	{ L2CR_L2PE, L2CR_L2PE, " parity enabled" },
 	{ 0, 0, NULL }
 };
 
@@ -117,7 +119,7 @@ static const struct fmttab cpu_7457_l2cr_formats[] = {
 	{ L2CR_L2DO|L2CR_L2IO, L2CR_L2DO|L2CR_L2IO, " locked" },
 	{ L2CR_L2E, ~0, " 512KB L2 cache" },
 	{ L2CR_L2PE, 0, " no parity" },
-	{ L2CR_L2PE, ~0, " parity enabled" },
+	{ L2CR_L2PE, L2CR_L2PE, " parity enabled" },
 	{ 0, 0, NULL }
 };
 
@@ -757,6 +759,11 @@ cpu_setup(device_t self, struct cpu_info *ci)
 		cpu_tau_setup(ci);
 #endif
 
+#if defined(PPC_OEA64) || defined(PPC_OEA64_BRIDGE)
+	if (vers == IBM970MP)
+		init_scom_speedctl();
+#endif
+
 	evcnt_attach_dynamic(&ci->ci_ev_clock, EVCNT_TYPE_INTR,
 		NULL, xname, "clock");
 	evcnt_attach_dynamic(&ci->ci_ev_traps, EVCNT_TYPE_TRAP,
@@ -1137,7 +1144,6 @@ cpu_get_dfs(void)
 void
 cpu_set_dfs(int div)
 {
-	uint64_t where;
 	u_int dfs_mask, pvr, vers;
 
 	pvr = mfpvr();
@@ -1155,9 +1161,13 @@ cpu_set_dfs(int div)
 		return;
 
 	}
-
+#ifdef MULTIPROCESSOR
+	uint64_t where;
 	where = xc_broadcast(0, (xcfunc_t)cpu_set_dfs_xcall, &div, &dfs_mask);
 	xc_wait(where);
+#else
+	cpu_set_dfs_xcall(&div, &dfs_mask);
+#endif
 }
 
 static void
@@ -1316,9 +1326,9 @@ cpu_spinup(device_t self, struct cpu_info *ci)
 
 	h->hatch_hid0 = mfspr(SPR_HID0);
 #if defined(PPC_OEA64_BRIDGE) || defined (_ARCH_PPC64)
+	h->hatch_hid1 = mfspr(SPR_HID1);
 	h->hatch_hid4 = mfspr(SPR_HID4);
 	h->hatch_hid5 = mfspr(SPR_HID5);
-	printf("HIDs: %016llx %016llx\n", h->hatch_hid4, h->hatch_hid5);
 #endif
 
 	__asm volatile ("mfsdr1 %0" : "=r"(h->hatch_sdr1));
@@ -1439,6 +1449,7 @@ cpu_hatch(void)
 	if ((oeacpufeat & OEACPU_64_BRIDGE) != 0) {
 
 		mtspr64(SPR_HID0, h->hatch_hid0);
+		mtspr64(SPR_HID1, h->hatch_hid1);
 		mtspr64(SPR_HID4, h->hatch_hid4);
 		mtspr64(SPR_HID5, h->hatch_hid5);
 		mtspr64(SPR_HIOR, 0);

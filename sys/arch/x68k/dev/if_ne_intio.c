@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_intio.c,v 1.18 2015/05/20 09:17:18 ozaki-r Exp $	*/
+/*	$NetBSD: if_ne_intio.c,v 1.18.16.1 2018/06/25 07:25:47 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_intio.c,v 1.18 2015/05/20 09:17:18 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_intio.c,v 1.18.16.1 2018/06/25 07:25:47 pgoyette Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -57,7 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_ne_intio.c,v 1.18 2015/05/20 09:17:18 ozaki-r Exp
 
 #if BPFILTER > 0
 #include <net/bpf.h>
-#include <net/bpfdesc.h>
 #endif
 
 #include <machine/bus.h>

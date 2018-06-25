@@ -19,9 +19,12 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2010 Sun Microsystems, Inc.  All rights reserved.
- * Use is subject to license terms.
+ * Copyright (c) 2005, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012 by Delphix. All rights reserved.
+ * Copyright (c) 2014 Integros [integros.com]
  */
+
+/* Portions Copyright 2010 Robert Milkowski */
 
 #ifndef	_SYS_ZIL_IMPL_H
 #define	_SYS_ZIL_IMPL_H
@@ -39,6 +42,7 @@ extern "C" {
 typedef struct lwb {
 	zilog_t		*lwb_zilog;	/* back pointer to log struct */
 	blkptr_t	lwb_blk;	/* on disk address of this log blk */
+	boolean_t	lwb_slog;	/* lwb_blk is on SLOG device */
 	int		lwb_nused;	/* # used bytes in buffer */
 	int		lwb_sz;		/* size of block and buffer */
 	char		*lwb_buf;	/* log write buffer */
@@ -47,6 +51,27 @@ typedef struct lwb {
 	uint64_t	lwb_max_txg;	/* highest txg in this lwb */
 	list_node_t	lwb_node;	/* zilog->zl_lwb_list linkage */
 } lwb_t;
+
+/*
+ * Intent log transaction lists
+ */
+typedef struct itxs {
+	list_t		i_sync_list;	/* list of synchronous itxs */
+	avl_tree_t	i_async_tree;	/* tree of foids for async itxs */
+} itxs_t;
+
+typedef struct itxg {
+	kmutex_t	itxg_lock;	/* lock for this structure */
+	uint64_t	itxg_txg;	/* txg for this chain */
+	itxs_t		*itxg_itxs;	/* sync and async itxs */
+} itxg_t;
+
+/* for async nodes we build up an AVL tree of lists of async itxs per file */
+typedef struct itx_async_node {
+	uint64_t	ia_foid;	/* file object id */
+	list_t		ia_list;	/* list of async itxs for this foid */
+	avl_node_t	ia_node;	/* AVL tree linkage */
+} itx_async_node_t;
 
 /*
  * Vdev flushing: during a zil_commit(), we build up an AVL tree of the vdevs
@@ -70,9 +95,7 @@ struct zilog {
 	objset_t	*zl_os;		/* object set we're logging */
 	zil_get_data_t	*zl_get_data;	/* callback to get object content */
 	zio_t		*zl_root_zio;	/* log writer root zio */
-	uint64_t	zl_itx_seq;	/* next in-core itx sequence number */
 	uint64_t	zl_lr_seq;	/* on-disk log record sequence number */
-	uint64_t	zl_commit_seq;	/* committed upto this number */
 	uint64_t	zl_commit_lr_seq; /* last committed on-disk lr seq */
 	uint64_t	zl_destroy_txg;	/* txg of last zil_destroy() */
 	uint64_t	zl_replayed_seq[TXG_SIZE]; /* last replayed rec seq */
@@ -86,15 +109,18 @@ struct zilog {
 	uint8_t		zl_stop_sync;	/* for debugging */
 	uint8_t		zl_writer;	/* boolean: write setup in progress */
 	uint8_t		zl_logbias;	/* latency or throughput */
+	uint8_t		zl_sync;	/* synchronous or asynchronous */
 	int		zl_parse_error;	/* last zil_parse() error */
 	uint64_t	zl_parse_blk_seq; /* highest blk seq on last parse */
 	uint64_t	zl_parse_lr_seq; /* highest lr seq on last parse */
 	uint64_t	zl_parse_blk_count; /* number of blocks parsed */
 	uint64_t	zl_parse_lr_count; /* number of log records parsed */
-	list_t		zl_itx_list;	/* in-memory itx list */
-	uint64_t	zl_itx_list_sz;	/* total size of records on list */
+	uint64_t	zl_next_batch;	/* next batch number */
+	uint64_t	zl_com_batch;	/* committed batch number */
+	kcondvar_t	zl_cv_batch[2];	/* batch condition variables */
+	itxg_t		zl_itxg[TXG_SIZE]; /* intent log txg chains */
+	list_t		zl_itx_commit_list; /* itx list to be committed */
 	uint64_t	zl_cur_used;	/* current commit log size used */
-	uint64_t	zl_prev_used;	/* previous commit log size used */
 	list_t		zl_lwb_list;	/* in-flight log write list */
 	kmutex_t	zl_vdev_lock;	/* protects zl_vdev_tree */
 	avl_tree_t	zl_vdev_tree;	/* vdevs to flush in zil_commit() */
@@ -105,6 +131,7 @@ struct zilog {
 	zil_header_t	zl_old_header;	/* debugging aid */
 	uint_t		zl_prev_blks[ZIL_PREV_BLKS]; /* size - sector rounded */
 	uint_t		zl_prev_rotor;	/* rotor for zl_prev[] */
+	txg_node_t	zl_dirty_link;	/* protected by dp_dirty_zilogs list */
 };
 
 typedef struct zil_bp_node {
@@ -112,8 +139,10 @@ typedef struct zil_bp_node {
 	avl_node_t	zn_node;
 } zil_bp_node_t;
 
-#define	ZIL_MAX_LOG_DATA (SPA_MAXBLOCKSIZE - sizeof (zil_chain_t) - \
+#define	ZIL_MAX_LOG_DATA (SPA_OLD_MAXBLOCKSIZE - sizeof (zil_chain_t) - \
     sizeof (lr_write_t))
+#define	ZIL_MAX_COPIED_DATA \
+    ((SPA_OLD_MAXBLOCKSIZE - sizeof (zil_chain_t)) / 2 - sizeof (lr_write_t))
 
 #ifdef	__cplusplus
 }

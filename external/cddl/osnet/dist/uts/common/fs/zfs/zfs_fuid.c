@@ -19,8 +19,7 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2010 Sun Microsystems, Inc.  All rights reserved.
- * Use is subject to license terms.
+ * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
  */
 
 #include <sys/zfs_context.h>
@@ -376,7 +375,7 @@ zfs_fuid_find_by_idx(zfsvfs_t *zfsvfs, uint32_t idx)
 
 	rw_enter(&zfsvfs->z_fuid_lock, RW_READER);
 
-	if (zfsvfs->z_fuid_obj)
+	if (zfsvfs->z_fuid_obj || zfsvfs->z_fuid_dirty)
 		domain = zfs_fuid_idx_domain(&zfsvfs->z_fuid_idx, idx);
 	else
 		domain = nulldomain;
@@ -389,10 +388,8 @@ zfs_fuid_find_by_idx(zfsvfs_t *zfsvfs, uint32_t idx)
 void
 zfs_fuid_map_ids(znode_t *zp, cred_t *cr, uid_t *uidp, uid_t *gidp)
 {
-	*uidp = zfs_fuid_map_id(zp->z_zfsvfs, zp->z_phys->zp_uid,
-	    cr, ZFS_OWNER);
-	*gidp = zfs_fuid_map_id(zp->z_zfsvfs, zp->z_phys->zp_gid,
-	    cr, ZFS_GROUP);
+	*uidp = zfs_fuid_map_id(zp->z_zfsvfs, zp->z_uid, cr, ZFS_OWNER);
+	*gidp = zfs_fuid_map_id(zp->z_zfsvfs, zp->z_gid, cr, ZFS_GROUP);
 }
 
 uid_t
@@ -409,6 +406,7 @@ zfs_fuid_map_id(zfsvfs_t *zfsvfs, uint64_t fuid,
 	domain = zfs_fuid_find_by_idx(zfsvfs, index);
 	ASSERT(domain != NULL);
 
+#ifdef illumos
 	if (type == ZFS_OWNER || type == ZFS_ACE_USER) {
 		(void) kidmap_getuidbysid(crgetzone(cr), domain,
 		    FUID_RID(fuid), &id);
@@ -416,6 +414,9 @@ zfs_fuid_map_id(zfsvfs_t *zfsvfs, uint64_t fuid,
 		(void) kidmap_getgidbysid(crgetzone(cr), domain,
 		    FUID_RID(fuid), &id);
 	}
+#else
+	id = UID_NOBODY;
+#endif
 	return (id);
 }
 
@@ -487,6 +488,11 @@ zfs_fuid_node_add(zfs_fuid_info_t **fuidpp, const char *domain, uint32_t rid,
 
 /*
  * Create a file system FUID, based on information in the users cred
+ *
+ * If cred contains KSID_OWNER then it should be used to determine
+ * the uid otherwise cred's uid will be used. By default cred's gid
+ * is used unless it's an ephemeral ID in which case KSID_GROUP will
+ * be used if it exists.
  */
 uint64_t
 zfs_fuid_create_cred(zfsvfs_t *zfsvfs, zfs_fuid_type_t type,
@@ -501,32 +507,28 @@ zfs_fuid_create_cred(zfsvfs_t *zfsvfs, zfs_fuid_type_t type,
 
 	VERIFY(type == ZFS_OWNER || type == ZFS_GROUP);
 
-	if (type == ZFS_OWNER)
-		id = crgetuid(cr);
-	else
-		id = crgetgid(cr);
-	
-#ifdef PORT_SOLARIS	
 	ksid = crgetsid(cr, (type == ZFS_OWNER) ? KSID_OWNER : KSID_GROUP);
-	if (ksid) {
-		id = ksid_getid(ksid);
-	} else {
-		if (type == ZFS_OWNER)
-			id = crgetuid(cr);
-		else
-			id = crgetgid(cr);
 
-		if (IS_EPHEMERAL(id)) {
-			return ((uint64_t)(type == ZFS_OWNER ?
-			    UID_NOBODY : GID_NOBODY));
-		}
+	if (!zfsvfs->z_use_fuids || (ksid == NULL)) {
+		id = (type == ZFS_OWNER) ? crgetuid(cr) : crgetgid(cr);
+
+		if (IS_EPHEMERAL(id))
+			return ((type == ZFS_OWNER) ? UID_NOBODY : GID_NOBODY);
+
+		return ((uint64_t)id);
 	}
-#endif
 
-	if (!zfsvfs->z_use_fuids || (!IS_EPHEMERAL(id)))
+	/*
+	 * ksid is present and FUID is supported
+	 */
+	id = (type == ZFS_OWNER) ? ksid_getid(ksid) : crgetgid(cr);
+
+	if (!IS_EPHEMERAL(id))
 		return ((uint64_t)id);
 
-#ifdef PORT_SOLARIS
+	if (type == ZFS_GROUP)
+		id = ksid_getid(ksid);
+
 	rid = ksid_getrid(ksid);
 	domain = ksid_getdomain(ksid);
 
@@ -535,9 +537,6 @@ zfs_fuid_create_cred(zfsvfs_t *zfsvfs, zfs_fuid_type_t type,
 	zfs_fuid_node_add(fuidp, kdomain, rid, idx, id, type);
 
 	return (FUID_ENCODE(idx, rid));
-#else
-	panic(__func__);
-#endif	
 }
 
 /*
@@ -561,9 +560,9 @@ zfs_fuid_create(zfsvfs_t *zfsvfs, uint64_t id, cred_t *cr,
 	uint32_t fuid_idx = FUID_INDEX(id);
 	uint32_t rid;
 	idmap_stat status;
-	uint64_t idx;
+	uint64_t idx = 0;
 	zfs_fuid_t *zfuid = NULL;
-	zfs_fuid_info_t *fuidp;
+	zfs_fuid_info_t *fuidp = NULL;
 
 	/*
 	 * If POSIX ID, or entry is already a FUID then
@@ -585,10 +584,11 @@ zfs_fuid_create(zfsvfs_t *zfsvfs, uint64_t id, cred_t *cr,
 		 * This is most likely a result of idmap service
 		 * not being available.
 		 */
-		/* XXX NetBSD we need to define UID_NOBODY in
-		   kernel sources otherwise */
 		if (fuidp == NULL)
-			return (crgetuid(cr));
+			return (UID_NOBODY);
+
+		VERIFY3U(type, >=, ZFS_OWNER);
+		VERIFY3U(type, <=, ZFS_ACE_GROUP);
 
 		switch (type) {
 		case ZFS_ACE_USER:
@@ -606,9 +606,8 @@ zfs_fuid_create(zfsvfs_t *zfsvfs, uint64_t id, cred_t *cr,
 			idx = FUID_INDEX(fuidp->z_fuid_group);
 			break;
 		};
-		domain = fuidp->z_domain_table[idx -1];
+		domain = fuidp->z_domain_table[idx - 1];
 	} else {
-#ifdef PORT_SOLARIS
 		if (type == ZFS_OWNER || type == ZFS_ACE_USER)
 			status = kidmap_getsidbyuid(crgetzone(cr), id,
 			    &domain, &rid);
@@ -625,9 +624,6 @@ zfs_fuid_create(zfsvfs_t *zfsvfs, uint64_t id, cred_t *cr,
 			rid = UID_NOBODY;
 			domain = nulldomain;
 		}
-#else
-		panic(__func__);
-#endif
 	}
 
 	idx = zfs_fuid_find_by_domain(zfsvfs, domain, &kdomain, B_TRUE);
@@ -707,12 +703,13 @@ zfs_fuid_info_free(zfs_fuid_info_t *fuidp)
 boolean_t
 zfs_groupmember(zfsvfs_t *zfsvfs, uint64_t id, cred_t *cr)
 {
+#ifdef illumos
 	ksid_t		*ksid = crgetsid(cr, KSID_GROUP);
+	ksidlist_t	*ksidlist = crgetsidlist(cr);
+#endif
 	uid_t		gid;
 
-#ifdef PORT_SOLARIS
-	ksidlist_t	*ksidlist = crgetsidlist(cr);
-		
+#ifdef illumos
 	if (ksid && ksidlist) {
 		int 		i;
 		ksid_t		*ksid_groups;
@@ -744,7 +741,8 @@ zfs_groupmember(zfsvfs_t *zfsvfs, uint64_t id, cred_t *cr)
 			}
 		}
 	}
-#endif
+#endif	/* illumos */
+
 	/*
 	 * Not found in ksidlist, check posix groups
 	 */

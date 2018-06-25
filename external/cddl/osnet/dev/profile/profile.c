@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.c,v 1.7 2017/01/07 21:39:52 christos Exp $	*/
+/*	$NetBSD: profile.c,v 1.7.12.1 2018/06/25 07:25:15 pgoyette Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -22,7 +22,7 @@
  *
  * Portions Copyright 2006-2008 John Birrell jb@freebsd.org
  *
- * $FreeBSD: src/sys/cddl/dev/profile/profile.c,v 1.1.4.1 2009/08/03 08:13:06 kensmith Exp $
+ * $FreeBSD: head/sys/cddl/dev/profile/profile.c 300618 2016-05-24 16:41:37Z br $
  *
  */
 
@@ -44,7 +44,9 @@
 #include <sys/kernel.h>
 #include <sys/kmem.h>
 #include <sys/kthread.h>
-#include <sys/syslimits.h>
+#ifdef __FreeBSD__
+#include <sys/limits.h>
+#endif
 #include <sys/linker.h>
 #include <sys/lock.h>
 #include <sys/malloc.h>
@@ -55,17 +57,22 @@
 #include <sys/selinfo.h>
 #ifdef __FreeBSD__
 #include <sys/smp.h>
+#include <sys/sysctl.h>
 #endif
 #include <sys/uio.h>
 #include <sys/unistd.h>
-
-#ifdef __NetBSD__
-#include <sys/atomic.h>
-#include <sys/cpu.h>
-#define ASSERT(x) KASSERT(x)
+#ifdef __FreeBSD__
+#include <machine/cpu.h>
+#include <machine/stdarg.h>
 #endif
 
+#ifdef __NetBSD__
+#include <sys/syslimits.h>
+#include <sys/atomic.h>
+#include <sys/cpu.h>
 #include <sys/cyclic.h>
+#endif
+
 #include <sys/dtrace.h>
 #include <sys/dtrace_bsd.h>
 
@@ -109,7 +116,7 @@
  */
 #ifdef __FreeBSD__
 #ifdef __amd64
-#define	PROF_ARTIFICIAL_FRAMES	7
+#define	PROF_ARTIFICIAL_FRAMES	10
 #else
 #ifdef __i386
 #define	PROF_ARTIFICIAL_FRAMES	6
@@ -123,7 +130,43 @@
 #endif
 #endif
 #endif
+
+#ifdef __mips
+/*
+ * This value is bogus just to make module compilable on mips
+ */
+#define	PROF_ARTIFICIAL_FRAMES	3
 #endif
+
+#ifdef __powerpc__
+/*
+ * This value is bogus just to make module compilable on powerpc
+ */
+#define	PROF_ARTIFICIAL_FRAMES	3
+#endif
+
+struct profile_probe_percpu;
+
+#ifdef __mips
+/* bogus */
+#define	PROF_ARTIFICIAL_FRAMES	3
+#endif
+
+#ifdef __arm__
+#define	PROF_ARTIFICIAL_FRAMES	3
+#endif
+
+#ifdef __aarch64__
+/* TODO: verify */
+#define	PROF_ARTIFICIAL_FRAMES	10
+#endif
+
+#ifdef __riscv__
+/* TODO: verify */
+#define	PROF_ARTIFICIAL_FRAMES	10
+#endif
+
+#endif /* __FreeBSD__ */
 
 #ifdef __NetBSD__
 #define	PROF_ARTIFICIAL_FRAMES	3
@@ -133,14 +176,25 @@ typedef struct profile_probe {
 	char		prof_name[PROF_NAMELEN];
 	dtrace_id_t	prof_id;
 	int		prof_kind;
+#if defined(illumos) || defined(__NetBSD__)
 	hrtime_t	prof_interval;
 	cyclic_id_t	prof_cyclic;
+#endif
+#ifdef __FreeBSD__
+	sbintime_t	prof_interval;
+	struct callout	prof_cyclic;
+	sbintime_t	prof_expected;
+	struct profile_probe_percpu **prof_pcpus;
+#endif
 } profile_probe_t;
 
 typedef struct profile_probe_percpu {
 	hrtime_t	profc_expected;
 	hrtime_t	profc_interval;
 	profile_probe_t	*profc_probe;
+#ifdef __FreeBSD__
+	struct callout	profc_cyclic;
+#endif
 } profile_probe_percpu_t;
 
 #ifdef __FreeBSD__
@@ -152,7 +206,7 @@ static void	profile_destroy(void *, dtrace_id_t, void *);
 static int	profile_enable(void *, dtrace_id_t, void *);
 static void	profile_disable(void *, dtrace_id_t, void *);
 static void	profile_load(void *);
-static void	profile_provide(void *, const dtrace_probedesc_t *);
+static void	profile_provide(void *, dtrace_probedesc_t *);
 
 static int profile_rates[] = {
     97, 199, 499, 997, 1999,
@@ -213,8 +267,105 @@ static struct cdev		*profile_cdev;
 #endif
 static dtrace_provider_id_t	profile_id;
 static hrtime_t			profile_interval_min = NANOSEC / 5000;	/* 5000 hz */
-static int			profile_aframes = 0;			/* override */
+static int			profile_aframes = PROF_ARTIFICIAL_FRAMES;
 
+#ifdef __FreeBSD__
+SYSCTL_DECL(_kern_dtrace);
+SYSCTL_NODE(_kern_dtrace, OID_AUTO, profile, CTLFLAG_RD, 0, "DTrace profile parameters");
+SYSCTL_INT(_kern_dtrace_profile, OID_AUTO, aframes, CTLFLAG_RW, &profile_aframes,
+    0, "Skipped frames for profile provider");
+
+static sbintime_t
+nsec_to_sbt(hrtime_t nsec)
+{
+	time_t sec;
+
+	/*
+	 * We need to calculate nsec * 2^32 / 10^9
+	 * Seconds and nanoseconds are split to avoid overflow.
+	 */
+	sec = nsec / NANOSEC;
+	nsec = nsec % NANOSEC;
+	return (((sbintime_t)sec << 32) | ((sbintime_t)nsec << 32) / NANOSEC);
+}
+
+static hrtime_t
+sbt_to_nsec(sbintime_t sbt)
+{
+
+	return ((sbt >> 32) * NANOSEC +
+	    (((uint32_t)sbt * (hrtime_t)NANOSEC) >> 32));
+}
+
+static void
+profile_fire(void *arg)
+{
+	profile_probe_percpu_t *pcpu = arg;
+	profile_probe_t *prof = pcpu->profc_probe;
+	hrtime_t late;
+	struct trapframe *frame;
+	uintfptr_t pc, upc;
+
+#ifdef illumos
+	late = gethrtime() - pcpu->profc_expected;
+#else
+	late = sbt_to_nsec(sbinuptime() - pcpu->profc_expected);
+#endif
+
+	pc = 0;
+	upc = 0;
+
+	/*
+	 * td_intr_frame can be unset if this is a catch up event
+	 * after waking up from idle sleep.
+	 * This can only happen on a CPU idle thread.
+	 */
+	frame = curthread->td_intr_frame;
+	if (frame != NULL) {
+		if (TRAPF_USERMODE(frame))
+			upc = TRAPF_PC(frame);
+		else
+			pc = TRAPF_PC(frame);
+	}
+	dtrace_probe(prof->prof_id, pc, upc, late, 0, 0);
+
+	pcpu->profc_expected += pcpu->profc_interval;
+	callout_schedule_sbt_curcpu(&pcpu->profc_cyclic,
+	    pcpu->profc_expected, 0, C_DIRECT_EXEC | C_ABSOLUTE);
+}
+
+static void
+profile_tick(void *arg)
+{
+	profile_probe_t *prof = arg;
+	struct trapframe *frame;
+	uintfptr_t pc, upc;
+
+	pc = 0;
+	upc = 0;
+
+	/*
+	 * td_intr_frame can be unset if this is a catch up event
+	 * after waking up from idle sleep.
+	 * This can only happen on a CPU idle thread.
+	 */
+	frame = curthread->td_intr_frame;
+	if (frame != NULL) {
+		if (TRAPF_USERMODE(frame))
+			upc = TRAPF_PC(frame);
+		else
+			pc = TRAPF_PC(frame);
+	}
+	dtrace_probe(prof->prof_id, pc, upc, 0, 0, 0);
+
+	prof->prof_expected += prof->prof_interval;
+	callout_schedule_sbt(&prof->prof_cyclic,
+	    prof->prof_expected, 0, C_DIRECT_EXEC | C_ABSOLUTE);
+}
+
+#endif
+
+#ifdef __NetBSD__
 static void
 profile_fire(void *arg)
 {
@@ -240,6 +391,8 @@ profile_tick(void *arg)
 	    c->cpu_profile_upc, 0, 0, 0);
 }
 
+#endif
+
 static void
 profile_create(hrtime_t interval, char *name, int kind)
 {
@@ -259,17 +412,22 @@ profile_create(hrtime_t interval, char *name, int kind)
 
 	prof = kmem_zalloc(sizeof (profile_probe_t), KM_SLEEP);
 	(void) strcpy(prof->prof_name, name);
+#ifdef __FreeBSD__
+	prof->prof_interval = nsec_to_sbt(interval);
+	callout_init(&prof->prof_cyclic, 1);
+#else
 	prof->prof_interval = interval;
 	prof->prof_cyclic = CYCLIC_NONE;
+#endif
 	prof->prof_kind = kind;
 	prof->prof_id = dtrace_probe_create(profile_id,
 	    NULL, NULL, name,
-	    profile_aframes ? profile_aframes : PROF_ARTIFICIAL_FRAMES, prof);
+	    profile_aframes, prof);
 }
 
 /*ARGSUSED*/
 static void
-profile_provide(void *arg, const dtrace_probedesc_t *desc)
+profile_provide(void *arg, dtrace_probedesc_t *desc)
 {
 	int i, j, rate, kind;
 	hrtime_t val = 0, mult = 1, len = 0;
@@ -333,7 +491,7 @@ profile_provide(void *arg, const dtrace_probedesc_t *desc)
 		return;
 	}
 
-	name = (char *)desc->dtpd_name;
+	name = desc->dtpd_name;
 
 	for (i = 0; types[i].prefix != NULL; i++) {
 		len = strlen(types[i].prefix);
@@ -405,12 +563,18 @@ profile_destroy(void *arg, dtrace_id_t id, void *parg)
 {
 	profile_probe_t *prof = parg;
 
+#ifdef __FreeBSD__
+	ASSERT(!callout_active(&prof->prof_cyclic) && prof->prof_pcpus == NULL);
+#else
 	ASSERT(prof->prof_cyclic == CYCLIC_NONE);
+#endif
 	kmem_free(prof, sizeof (profile_probe_t));
 
 	ASSERT(profile_total >= 1);
 	atomic_add_32(&profile_total, -1);
 }
+
+#ifndef __FreeBSD__
 
 /*ARGSUSED*/
 static void
@@ -487,6 +651,81 @@ profile_disable(void *arg, dtrace_id_t id, void *parg)
 	cyclic_remove(prof->prof_cyclic);
 	prof->prof_cyclic = CYCLIC_NONE;
 }
+
+#else
+
+static void
+profile_enable_omni(profile_probe_t *prof)
+{
+	profile_probe_percpu_t *pcpu;
+	int cpu;
+
+	prof->prof_pcpus = kmem_zalloc((mp_maxid + 1) * sizeof(pcpu), KM_SLEEP);
+	CPU_FOREACH(cpu) {
+		pcpu = kmem_zalloc(sizeof(profile_probe_percpu_t), KM_SLEEP);
+		prof->prof_pcpus[cpu] = pcpu;
+		pcpu->profc_probe = prof;
+		pcpu->profc_expected = sbinuptime() + prof->prof_interval;
+		pcpu->profc_interval = prof->prof_interval;
+		callout_init(&pcpu->profc_cyclic, 1);
+		callout_reset_sbt_on(&pcpu->profc_cyclic,
+		    pcpu->profc_expected, 0, profile_fire, pcpu,
+		    cpu, C_DIRECT_EXEC | C_ABSOLUTE);
+	}
+}
+
+static void
+profile_disable_omni(profile_probe_t *prof)
+{
+	profile_probe_percpu_t *pcpu;
+	int cpu;
+
+	ASSERT(prof->prof_pcpus != NULL);
+	CPU_FOREACH(cpu) {
+		pcpu = prof->prof_pcpus[cpu];
+		ASSERT(pcpu->profc_probe == prof);
+		ASSERT(callout_active(&pcpu->profc_cyclic));
+		callout_stop(&pcpu->profc_cyclic);
+		callout_drain(&pcpu->profc_cyclic);
+		kmem_free(pcpu, sizeof(profile_probe_percpu_t));
+	}
+	kmem_free(prof->prof_pcpus, (mp_maxid + 1) * sizeof(pcpu));
+	prof->prof_pcpus = NULL;
+}
+
+/* ARGSUSED */
+static void
+profile_enable(void *arg, dtrace_id_t id, void *parg)
+{
+	profile_probe_t *prof = parg;
+
+	if (prof->prof_kind == PROF_TICK) {
+		prof->prof_expected = sbinuptime() + prof->prof_interval;
+		callout_reset_sbt(&prof->prof_cyclic,
+		    prof->prof_expected, 0, profile_tick, prof,
+		    C_DIRECT_EXEC | C_ABSOLUTE);
+	} else {
+		ASSERT(prof->prof_kind == PROF_PROFILE);
+		profile_enable_omni(prof);
+	}
+}
+
+/* ARGSUSED */
+static void
+profile_disable(void *arg, dtrace_id_t id, void *parg)
+{
+	profile_probe_t *prof = parg;
+
+	if (prof->prof_kind == PROF_TICK) {
+		ASSERT(callout_active(&prof->prof_cyclic));
+		callout_stop(&prof->prof_cyclic);
+		callout_drain(&prof->prof_cyclic);
+	} else {
+		ASSERT(prof->prof_kind == PROF_PROFILE);
+		profile_disable_omni(prof);
+	}
+}
+#endif
 
 static void
 profile_load(void *dummy)

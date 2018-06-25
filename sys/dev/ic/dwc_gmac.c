@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac.c,v 1.45 2017/12/21 12:09:43 martin Exp $ */
+/* $NetBSD: dwc_gmac.c,v 1.45.2.1 2018/06/25 07:25:50 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.45 2017/12/21 12:09:43 martin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.45.2.1 2018/06/25 07:25:50 pgoyette Exp $");
 
 /* #define	DWC_GMAC_DEBUG	1 */
 
@@ -123,7 +123,6 @@ static uint32_t	bitrev32(uint32_t x);
 #define	AWIN_DEF_MAC_INTRMASK	\
 	(AWIN_GMAC_MAC_INT_TSI | AWIN_GMAC_MAC_INT_ANEG |	\
 	AWIN_GMAC_MAC_INT_LINKCHG | AWIN_GMAC_MAC_INT_RGSMII)
-
 
 #ifdef DWC_GMAC_DEBUG
 static void dwc_gmac_dump_dma(struct dwc_gmac_softc *sc);
@@ -318,13 +317,13 @@ static void
 dwc_gmac_write_hwaddr(struct dwc_gmac_softc *sc,
     uint8_t enaddr[ETHER_ADDR_LEN])
 {
-	uint32_t lo, hi;
+	uint32_t hi, lo;
 
+	hi = enaddr[4] | (enaddr[5] << 8);
 	lo = enaddr[0] | (enaddr[1] << 8) | (enaddr[2] << 16)
 	    | (enaddr[3] << 24);
-	hi = enaddr[4] | (enaddr[5] << 8);
-	bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_MAC_ADDR0LO, lo);
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_MAC_ADDR0HI, hi);
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_MAC_ADDR0LO, lo);
 }
 
 static int
@@ -636,11 +635,13 @@ dwc_gmac_txdesc_sync(struct dwc_gmac_softc *sc, int start, int end, int ops)
 	    TX_DESC_OFFSET(start),
 	    TX_DESC_OFFSET(AWGE_TX_RING_COUNT)-TX_DESC_OFFSET(start),
 	    ops);
-	/* sync from start of ring to 'end' */
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_dma_ring_map,
-	    TX_DESC_OFFSET(0),
-	    TX_DESC_OFFSET(end)-TX_DESC_OFFSET(0),
-	    ops);
+	if (TX_DESC_OFFSET(end) - TX_DESC_OFFSET(0) > 0) {
+		/* sync from start of ring to 'end' */
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_dma_ring_map,
+		    TX_DESC_OFFSET(0),
+		    TX_DESC_OFFSET(end)-TX_DESC_OFFSET(0),
+		    ops);
+	}
 }
 
 static void
@@ -734,6 +735,8 @@ dwc_gmac_miibus_statchg(struct ifnet *ifp)
 	case IFM_1000_T:
 		break;
 	}
+	if (sc->sc_set_speed)
+		sc->sc_set_speed(sc, IFM_SUBTYPE(mii->mii_media_active));
 
 	flow = 0;
 	if (IFM_OPTIONS(mii->mii_media_active) & IFM_FDX) {
@@ -822,9 +825,11 @@ dwc_gmac_init_locked(struct ifnet *ifp)
 	/*
 	 * Start RX/TX part
 	 */
-	bus_space_write_4(sc->sc_bst, sc->sc_bsh,
-	    AWIN_GMAC_DMA_OPMODE, GMAC_DMA_OP_RXSTART | GMAC_DMA_OP_TXSTART |
-	    GMAC_DMA_OP_RXSTOREFORWARD | GMAC_DMA_OP_TXSTOREFORWARD);
+	uint32_t opmode = GMAC_DMA_OP_RXSTART | GMAC_DMA_OP_TXSTART;
+	if ((sc->sc_flags & DWC_GMAC_FORCE_THRESH_DMA_MODE) == 0) {
+		opmode |= GMAC_DMA_OP_RXSTOREFORWARD | GMAC_DMA_OP_TXSTOREFORWARD;
+	}
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_DMA_OPMODE, opmode);
 
 	sc->sc_stopping = false;
 
@@ -921,6 +926,8 @@ dwc_gmac_stop_locked(struct ifnet *ifp, int disable)
 	mii_down(&sc->sc_mii);
 	dwc_gmac_reset_tx_ring(sc, &sc->sc_txq);
 	dwc_gmac_reset_rx_ring(sc, &sc->sc_rxq);
+
+	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 }
 
 /*

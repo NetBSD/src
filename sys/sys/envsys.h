@@ -1,4 +1,4 @@
-/* $NetBSD: envsys.h,v 1.36 2016/01/23 01:26:14 dholland Exp $ */
+/* $NetBSD: envsys.h,v 1.36.16.1 2018/06/25 07:26:07 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 1999, 2007, 2014 The NetBSD Foundation, Inc.
@@ -64,6 +64,7 @@ enum envsys_units {
 	ENVSYS_BATTERY_CAPACITY,	/* Battery capacity */
 	ENVSYS_BATTERY_CHARGE,		/* Battery charging/discharging */
 	ENVSYS_SRELHUMIDITY,		/* relative humidity */
+	ENVSYS_LUX,			/* illuminance in lux */
 	ENVSYS_NSENSORS
 };
 
@@ -162,7 +163,7 @@ typedef struct envsys_tre_data envsys_tre_data_t;
 #ifdef ENVSYSUNITNAMES
 static const char * const envsysunitnames[] = {
     "degC", "RPM", "VAC", "V", "Ohms", "W",
-    "A", "Wh", "Ah", "bool", "integer", "drive", "%rH", "Unk"
+    "A", "Wh", "Ah", "bool", "integer", "drive", "%rH", "lux", "Unk"
 };
 static const char * const envsysdrivestatus[] = {
     "unknown", "empty", "ready", "powering up", "online", "idle", "active",

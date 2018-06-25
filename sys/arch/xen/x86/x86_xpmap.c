@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.74 2017/09/16 09:28:38 maxv Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.74.2.1 2018/06/25 07:25:47 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.74 2017/09/16 09:28:38 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.74.2.1 2018/06/25 07:25:47 pgoyette Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -186,7 +186,7 @@ xen_set_ldt(vaddr_t base, uint32_t entries)
 		    base, entries, ptp));
 		pmap_pte_clearbits(ptp, PG_RW);
 	}
-	s = splvm();
+	s = splvm(); /* XXXSMP */
 	xpq_queue_set_ldt(base, entries);
 	splx(s);
 }
@@ -320,7 +320,7 @@ xpq_queue_tlb_flush(void)
 void
 xpq_flush_cache(void)
 {
-	int s = splvm();
+	int s = splvm(); /* XXXSMP */
 
 	xpq_flush_queue();
 
@@ -955,7 +955,7 @@ void
 xen_set_user_pgd(paddr_t page)
 {
 	struct mmuext_op op;
-	int s = splvm();
+	int s = splvm(); /* XXXSMP */
 
 	xpq_flush_queue();
 	op.cmd = MMUEXT_NEW_USER_BASEPTR;

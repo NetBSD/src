@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac_var.h,v 1.7 2017/01/21 10:30:15 skrll Exp $ */
+/* $NetBSD: dwc_gmac_var.h,v 1.7.14.1 2018/06/25 07:25:50 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -80,6 +80,8 @@ struct dwc_gmac_softc {
 	bus_space_tag_t sc_bst;
 	bus_space_handle_t sc_bsh;
 	bus_dma_tag_t sc_dmat;
+	uint32_t sc_flags;
+#define	DWC_GMAC_FORCE_THRESH_DMA_MODE	0x01	/* force DMA to use threshold mode */
 	struct ethercom sc_ec;
 	struct mii_data sc_mii;
 	kmutex_t sc_mdio_lock;
@@ -94,6 +96,8 @@ struct dwc_gmac_softc {
 	kmutex_t *sc_lock;			/* lock for softc operations */
 
 	struct if_percpuq *sc_ipq;		/* softint-based input queues */
+
+	void (*sc_set_speed)(struct dwc_gmac_softc *, int);
 };
 
 void dwc_gmac_attach(struct dwc_gmac_softc*, uint32_t /*mii_clk*/);

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.141.2.1 2018/05/21 04:36:12 pgoyette Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.141.2.2 2018/06/25 07:26:02 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.141.2.1 2018/05/21 04:36:12 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.141.2.2 2018/06/25 07:26:02 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -578,7 +578,7 @@ sysmon_envsys_sensor_attach(struct sysmon_envsys *sme, envsys_data_t *edata)
 	 * Find the correct units for this sensor.
 	 */
 	sdt_units = sme_find_table_entry(SME_DESC_UNITS, edata->units);
-	if (sdt_units->type == -1)
+	if (sdt_units == NULL || sdt_units->type == -1)
 		return EINVAL;
 
 	/*

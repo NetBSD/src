@@ -1,4 +1,4 @@
-# $NetBSD: GDIUM,v 1.29.2.1 2018/05/21 04:36:00 pgoyette Exp $
+# $NetBSD: GDIUM,v 1.29.2.2 2018/06/25 07:25:41 pgoyette Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/evbmips/conf/std.gdium"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GDIUM-$Revision: 1.29.2.1 $"
+#ident 		"GDIUM-$Revision: 1.29.2.2 $"
 
 maxusers	16
 
@@ -152,11 +152,11 @@ bonito0		at mainbus0
 pci0		at bonito0
 voyager0	at pci0 dev ? function ?
 voyagerfb0	at voyager0
-iic0		at voyager0
-strtc*	at iic0 addr 0x68
+iic*		at voyager0
+strtc*	at iic? addr 0x68
 options	STRTC_NO_USERRAM
-lmtemp*	at iic0 addr 0x48
-#stvii*	at iic0 addr 0x40
+lmtemp*	at iic? addr 0x48
+#stvii*	at iic? addr 0x40
 #genfb0		at pci0 dev ? function ?
 wsdisplay0	at wsemuldisplaydev?
 ehci*		at pci0 dev ? function ?

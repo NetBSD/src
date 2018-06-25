@@ -1,4 +1,4 @@
-/*	$NetBSD: videopll.c,v 1.2 2017/09/22 04:01:41 macallan Exp $	*/
+/*	$NetBSD: videopll.c,v 1.2.2.1 2018/06/25 07:25:43 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2012 Michael Lorenz
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: videopll.c,v 1.2 2017/09/22 04:01:41 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: videopll.c,v 1.2.2.1 2018/06/25 07:25:43 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,9 +70,12 @@ static int
 videopll_match(device_t parent, cfdata_t cfdata, void *aux)
 {
 	struct i2c_attach_args *ia = aux;
+	int match_result;
 
-	if (strcmp(ia->ia_name, "videopll") == 0)
-		return 100;
+	if (iic_use_direct_match(ia, cfdata, NULL, &match_result))
+		return match_result;
+	
+	/* This driver is direct-config only. */
 
 	return 0;
 }

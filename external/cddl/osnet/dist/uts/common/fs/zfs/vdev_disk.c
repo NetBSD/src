@@ -1,4 +1,3 @@
-
 /*
  * CDDL HEADER START
  *
@@ -20,8 +19,10 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
- * Use is subject to license terms.
+ * Copyright (c) 2005, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2015 by Delphix. All rights reserved.
+ * Copyright 2013 Nexenta Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013 Joyent, Inc.  All rights reserved.
  */
 
 #include <sys/zfs_context.h>
@@ -37,11 +38,84 @@
 #include <sys/dkio.h>
 #include <sys/workqueue.h>
 
+#ifdef __NetBSD__
+static int
+geterror(struct buf *bp)
+{
+
+	return (bp->b_error);
+}
+#endif
+
 /*
  * Virtual device vector for disks.
  */
 
 static void	vdev_disk_io_intr(buf_t *);
+
+static void
+vdev_disk_alloc(vdev_t *vd)
+{
+	vdev_disk_t *dvd;
+
+	dvd = vd->vdev_tsd = kmem_zalloc(sizeof (vdev_disk_t), KM_SLEEP);
+
+#ifdef illumos
+	/*
+	 * Create the LDI event callback list.
+	 */
+	list_create(&dvd->vd_ldi_cbs, sizeof (vdev_disk_ldi_cb_t),
+	    offsetof(vdev_disk_ldi_cb_t, lcb_next));
+#endif
+}
+
+
+static void
+vdev_disk_free(vdev_t *vd)
+{
+	vdev_disk_t *dvd = vd->vdev_tsd;
+#ifdef illumos
+	vdev_disk_ldi_cb_t *lcb;
+#endif
+
+	if (dvd == NULL)
+		return;
+
+#ifdef illumos
+	/*
+	 * We have already closed the LDI handle. Clean up the LDI event
+	 * callbacks and free vd->vdev_tsd.
+	 */
+	while ((lcb = list_head(&dvd->vd_ldi_cbs)) != NULL) {
+		list_remove(&dvd->vd_ldi_cbs, lcb);
+		(void) ldi_ev_remove_callbacks(lcb->lcb_id);
+		kmem_free(lcb, sizeof (vdev_disk_ldi_cb_t));
+	}
+	list_destroy(&dvd->vd_ldi_cbs);
+#endif
+	kmem_free(dvd, sizeof (vdev_disk_t));
+	vd->vdev_tsd = NULL;
+}
+
+
+/*
+ * It's not clear what these hold/rele functions are supposed to do.
+ */
+static void
+vdev_disk_hold(vdev_t *vd)
+{
+
+	ASSERT(spa_config_held(vd->vdev_spa, SCL_STATE, RW_WRITER));
+
+}
+
+static void
+vdev_disk_rele(vdev_t *vd)
+{
+
+	ASSERT(spa_config_held(vd->vdev_spa, SCL_STATE, RW_WRITER));
+
+}
 
 static void
 vdev_disk_flush(struct work *work, void *cookie)
@@ -54,20 +128,20 @@ vdev_disk_flush(struct work *work, void *cookie)
 	bp = (struct buf *)work;
 	vp = bp->b_vp;
 	dvd = cookie;
-	
-	KASSERT(vp == dvd->vd_vn);
 
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	KASSERT(vp == dvd->vd_vp);
+
 	cmd = 1;
-	error = VOP_IOCTL(vp, DIOCCACHESYNC, &cmd, FREAD|FWRITE,
-	    kauth_cred_get());
-	VOP_UNLOCK(vp);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	error = VOP_IOCTL(vp, DIOCCACHESYNC, &cmd, FREAD|FWRITE, kcred);
+	VOP_UNLOCK(vp, 0);
 	bp->b_error = error;
 	vdev_disk_io_intr(bp);
 }
 
 static int
-vdev_disk_open(vdev_t *vd, uint64_t *psize, uint64_t *ashift)
+vdev_disk_open(vdev_t *vd, uint64_t *psize, uint64_t *max_psize,
+    uint64_t *ashift, uint64_t *pashift)
 {
 	spa_t *spa = vd->vdev_spa;
 	vdev_disk_t *dvd;
@@ -80,7 +154,7 @@ vdev_disk_open(vdev_t *vd, uint64_t *psize, uint64_t *ashift)
 	 */
 	if (vd->vdev_path == NULL || vd->vdev_path[0] != '/') {
 		vd->vdev_stat.vs_aux = VDEV_AUX_BAD_LABEL;
-		return (EINVAL);
+		return (SET_ERROR(EINVAL));
 	}
 
 	/*
@@ -90,10 +164,16 @@ vdev_disk_open(vdev_t *vd, uint64_t *psize, uint64_t *ashift)
 	if (vd->vdev_tsd != NULL) {
 		ASSERT(vd->vdev_reopening);
 		dvd = vd->vdev_tsd;
+		vp = dvd->vd_vp;
+		KASSERT(vp != NULL);
 		goto skip_open;
 	}
 
-	dvd = vd->vdev_tsd = kmem_zalloc(sizeof (vdev_disk_t), KM_SLEEP);
+	/*
+	 * Create vd->vdev_tsd.
+	 */
+	vdev_disk_alloc(vd);
+	dvd = vd->vdev_tsd;
 
 	/*
 	 * When opening a disk device, we want to preserve the user's original
@@ -113,6 +193,13 @@ vdev_disk_open(vdev_t *vd, uint64_t *psize, uint64_t *ashift)
 	 */
 	if (vd->vdev_devid != NULL) {
 		/* XXXNETBSD wedges */
+#ifdef illumos
+		if (ddi_devid_str_decode(vd->vdev_devid, &dvd->vd_devid,
+		    &dvd->vd_minor) != 0) {
+			vd->vdev_stat.vs_aux = VDEV_AUX_BAD_LABEL;
+			return (SET_ERROR(EINVAL));
+		}
+#endif
 	}
 
 	error = EINVAL;		/* presume failure */
@@ -121,33 +208,17 @@ vdev_disk_open(vdev_t *vd, uint64_t *psize, uint64_t *ashift)
 	    &vp, CRCREAT, 0);
 	if (error != 0) {
 		vd->vdev_stat.vs_aux = VDEV_AUX_OPEN_FAILED;
-		return error;
+		return (SET_ERROR(error));
 	}
 	if (vp->v_type != VBLK) {
 		vrele(vp);
 		vd->vdev_stat.vs_aux = VDEV_AUX_OPEN_FAILED;
-		return EINVAL;
+		return (SET_ERROR(EINVAL));
 	}
 
 	/*
 	 * XXXNETBSD Compare the devid to the stored value.
 	 */
-
-skip_open:
-	/*
-	 * Determine the actual size of the device.
-	 * XXXNETBSD wedges.
-	 */
-	error = VOP_IOCTL(vp, DIOCGPARTINFO, &pinfo, FREAD|FWRITE,
-	    kauth_cred_get());
-	if (error != 0) {
-		vrele(vp);
-		vd->vdev_stat.vs_aux = VDEV_AUX_OPEN_FAILED;
-		return error;
-	}
-	*psize = pinfo.pi_size * pinfo.pi_secsize;
-	*ashift = highbit(MAX(pinfo.pi_secsize, SPA_MINBLOCKSIZE)) - 1;
-	vd->vdev_wholedisk = (pinfo.pi_offset == 0); /* XXXNETBSD */
 
 	/*
 	 * Create a workqueue to process cache-flushes concurrently.
@@ -156,8 +227,27 @@ skip_open:
 	    vdev_disk_flush, dvd, PRI_NONE, IPL_NONE, WQ_MPSAFE);
 	if (error != 0) {
 		vrele(vp);
-		return error;
+		return (SET_ERROR(error));
 	}
+
+	dvd->vd_vp = vp;
+
+skip_open:
+	/*
+	 * Determine the actual size of the device.
+	 * XXXNETBSD wedges.
+	 */
+	error = VOP_IOCTL(vp, DIOCGPARTINFO, &pinfo, FREAD|FWRITE, kcred);
+	if (error != 0) {
+		vd->vdev_stat.vs_aux = VDEV_AUX_OPEN_FAILED;
+		return (SET_ERROR(error));
+	}
+	*psize = pinfo.pi_size * pinfo.pi_secsize;
+	*max_psize = *psize;
+
+	*ashift = highbit(MAX(pinfo.pi_secsize, SPA_MINBLOCKSIZE)) - 1;
+	*pashift = *ashift;
+	vd->vdev_wholedisk = (pinfo.pi_offset == 0); /* XXXNETBSD */
 
 	/*
 	 * Clear the nowritecache bit, so that on a vdev_reopen() we will
@@ -165,30 +255,90 @@ skip_open:
 	 */
 	vd->vdev_nowritecache = B_FALSE;
 
-	dvd->vd_vn = vp;
-	return 0;
+	return (0);
 }
 
 static void
 vdev_disk_close(vdev_t *vd)
 {
 	vdev_disk_t *dvd = vd->vdev_tsd;
-	vnode_t *vp;
 
 	if (vd->vdev_reopening || dvd == NULL)
 		return;
 
-	if ((vp = dvd->vd_vn) != NULL) {
-/* XXX NetBSD Sometimes we deadlock on this why ? */
-//		vprint("vnode close info", vp);
-		vn_close(vp, FREAD|FWRITE, kauth_cred_get());
-//		vprint("vnode close info", vp);
-/* XXX is this needed ?		vrele(vp); */
-		workqueue_destroy(dvd->vd_wq);
+#ifdef illumos
+	if (dvd->vd_minor != NULL) {
+		ddi_devid_str_free(dvd->vd_minor);
+		dvd->vd_minor = NULL;
 	}
 
-	kmem_free(dvd, sizeof (vdev_disk_t));
-	vd->vdev_tsd = NULL;
+	if (dvd->vd_devid != NULL) {
+		ddi_devid_free(dvd->vd_devid);
+		dvd->vd_devid = NULL;
+	}
+
+	if (dvd->vd_lh != NULL) {
+		(void) ldi_close(dvd->vd_lh, spa_mode(vd->vdev_spa), kcred);
+		dvd->vd_lh = NULL;
+	}
+#endif
+
+#ifdef __NetBSD__
+	if (dvd->vd_vp != NULL) {
+		vn_close(dvd->vd_vp, FREAD|FWRITE, kcred);
+		dvd->vd_vp = NULL;
+	}
+	if (dvd->vd_wq != NULL) {
+		workqueue_destroy(dvd->vd_wq);
+		dvd->vd_wq = NULL;
+	}
+#endif
+
+	vd->vdev_delayed_close = B_FALSE;
+#ifdef illumos
+	/*
+	 * If we closed the LDI handle due to an offline notify from LDI,
+	 * don't free vd->vdev_tsd or unregister the callbacks here;
+	 * the offline finalize callback or a reopen will take care of it.
+	 */
+	if (dvd->vd_ldi_offline)
+		return;
+#endif
+
+	vdev_disk_free(vd);
+}
+
+int
+vdev_disk_physio(vdev_t *vd, caddr_t data,
+    size_t size, uint64_t offset, int flags, boolean_t isdump)
+{
+#ifdef illumos
+	vdev_disk_t *dvd = vd->vdev_tsd;
+
+	/*
+	 * If the vdev is closed, it's likely in the REMOVED or FAULTED state.
+	 * Nothing to be done here but return failure.
+	 */
+	if (dvd == NULL || (dvd->vd_ldi_offline && dvd->vd_lh == NULL))
+		return (EIO);
+
+	ASSERT(vd->vdev_ops == &vdev_disk_ops);
+
+	/*
+	 * If in the context of an active crash dump, use the ldi_dump(9F)
+	 * call instead of ldi_strategy(9F) as usual.
+	 */
+	if (isdump) {
+		ASSERT3P(dvd, !=, NULL);
+		return (ldi_dump(dvd->vd_lh, data, lbtodb(offset),
+		    lbtodb(size)));
+	}
+
+	return (vdev_disk_ldi_physio(dvd->vd_lh, data, size, offset, flags));
+#endif
+#ifdef __NetBSD__
+	return (EIO);
+#endif
 }
 
 static void
@@ -201,19 +351,13 @@ vdev_disk_io_intr(buf_t *bp)
 	 * Rather than teach the rest of the stack about other error
 	 * possibilities (EFAULT, etc), we normalize the error value here.
 	 */
-	if (bp->b_error == 0) {
-		if (bp->b_resid != 0) {
-			zio->io_error = EIO;
-		} else {
-			zio->io_error = 0;
-		}
-	} else {
-		zio->io_error = EIO;
-	}
+	zio->io_error = (geterror(bp) != 0 ? SET_ERROR(EIO) : 0);
 
+	if (zio->io_error == 0 && bp->b_resid != 0)
+		zio->io_error = SET_ERROR(EIO);
 
 	putiobuf(bp);
-	zio_interrupt(zio);
+	zio_delay_interrupt(zio);
 }
 
 static void
@@ -237,7 +381,7 @@ vdev_disk_ioctl_done(void *zio_arg, int error)
 	zio_interrupt(zio);
 }
 
-static int
+static void
 vdev_disk_io_start(zio_t *zio)
 {
 	vdev_t *vd = zio->io_vd;
@@ -246,12 +390,32 @@ vdev_disk_io_start(zio_t *zio)
 	buf_t *bp, *nbp;
 	int error, size, off, resid;
 
-	vp = dvd->vd_vn;
+	/*
+	 * If the vdev is closed, it's likely in the REMOVED or FAULTED state.
+	 * Nothing to be done here but return failure.
+	 */
+#ifdef illumos
+	if (dvd == NULL || (dvd->vd_ldi_offline && dvd->vd_lh == NULL)) {
+		zio->io_error = SET_ERROR(ENXIO);
+		zio_interrupt(zio);
+		return;
+	}
+#endif
+#ifdef __NetBSD__
+	if (dvd == NULL) {
+		zio->io_error = SET_ERROR(ENXIO);
+		zio_interrupt(zio);
+		return;
+	}
+	vp = dvd->vd_vp;
+#endif
+
 	if (zio->io_type == ZIO_TYPE_IOCTL) {
 		/* XXPOLICY */
 		if (!vdev_readable(vd)) {
-			zio->io_error = ENXIO;
-			return (ZIO_PIPELINE_CONTINUE);
+			zio->io_error = SET_ERROR(ENXIO);
+			zio_interrupt(zio);
+			return;
 		}
 
 		switch (zio->io_cmd) {
@@ -268,15 +432,15 @@ vdev_disk_io_start(zio_t *zio)
 			bp = getiobuf(vp, true);
 			bp->b_private = zio;
 			workqueue_enqueue(dvd->vd_wq, &bp->b_work, NULL);
-			return (ZIO_PIPELINE_STOP);
-			break;
+			return;
 
 		default:
-			zio->io_error = ENOTSUP;
+			zio->io_error = SET_ERROR(ENOTSUP);
 			break;
 		}
 
-		return (ZIO_PIPELINE_CONTINUE);
+		zio_execute(zio);
+		return;
 	}
 
 	bp = getiobuf(vp, true);
@@ -294,7 +458,7 @@ vdev_disk_io_start(zio_t *zio)
 		vp->v_numoutput++;
 		mutex_exit(vp->v_interlock);
 	}
-	
+
 	if (bp->b_bcount <= MAXPHYS) {
 		/* We can do this I/O in one pass. */
 		(void)VOP_STRATEGY(vp, bp);
@@ -316,15 +480,40 @@ vdev_disk_io_start(zio_t *zio)
 			off += size;
 		}
 	}
-	
-	return (ZIO_PIPELINE_STOP);
 }
 
 static void
 vdev_disk_io_done(zio_t *zio)
 {
+#ifdef illumos
+	vdev_t *vd = zio->io_vd;
 
-	/* NetBSD: nothing */
+	/*
+	 * If the device returned EIO, then attempt a DKIOCSTATE ioctl to see if
+	 * the device has been removed.  If this is the case, then we trigger an
+	 * asynchronous removal of the device. Otherwise, probe the device and
+	 * make sure it's still accessible.
+	 */
+	if (zio->io_error == EIO && !vd->vdev_remove_wanted) {
+		vdev_disk_t *dvd = vd->vdev_tsd;
+		int state = DKIO_NONE;
+
+		if (ldi_ioctl(dvd->vd_lh, DKIOCSTATE, (intptr_t)&state,
+		    FKIOCTL, kcred, NULL) == 0 && state != DKIO_INSERTED) {
+			/*
+			 * We post the resource as soon as possible, instead of
+			 * when the async removal actually happens, because the
+			 * DE is using this information to discard previous I/O
+			 * errors.
+			 */
+			zfs_post_remove(zio->io_spa, vd);
+			vd->vdev_remove_wanted = B_TRUE;
+			spa_async_request(zio->io_spa, SPA_ASYNC_REMOVE);
+		} else if (!vd->vdev_delayed_close) {
+			vd->vdev_delayed_close = B_TRUE;
+		}
+	}
+#endif
 }
 
 vdev_ops_t vdev_disk_ops = {
@@ -334,6 +523,8 @@ vdev_ops_t vdev_disk_ops = {
 	vdev_disk_io_start,
 	vdev_disk_io_done,
 	NULL,
+	vdev_disk_hold,
+	vdev_disk_rele,
 	VDEV_TYPE_DISK,		/* name of this vdev type */
 	B_TRUE			/* leaf vdev */
 };
@@ -345,6 +536,78 @@ vdev_ops_t vdev_disk_ops = {
 int
 vdev_disk_read_rootlabel(char *devpath, char *devid, nvlist_t **config)
 {
+#ifdef __NetBSD__
+	return (ENOTSUP);
+#else
+	ldi_handle_t vd_lh;
+	vdev_label_t *label;
+	uint64_t s, size;
+	int l;
+	ddi_devid_t tmpdevid;
+	int error = -1;
+	char *minor_name;
 
-	return EOPNOTSUPP;
+	/*
+	 * Read the device label and build the nvlist.
+	 */
+	if (devid != NULL && ddi_devid_str_decode(devid, &tmpdevid,
+	    &minor_name) == 0) {
+		error = ldi_open_by_devid(tmpdevid, minor_name,
+		    FREAD, kcred, &vd_lh, zfs_li);
+		ddi_devid_free(tmpdevid);
+		ddi_devid_str_free(minor_name);
+	}
+
+	if (error && (error = ldi_open_by_name(devpath, FREAD, kcred, &vd_lh,
+	    zfs_li)))
+		return (error);
+
+	if (ldi_get_size(vd_lh, &s)) {
+		(void) ldi_close(vd_lh, FREAD, kcred);
+		return (SET_ERROR(EIO));
+	}
+
+	size = P2ALIGN_TYPED(s, sizeof (vdev_label_t), uint64_t);
+	label = kmem_alloc(sizeof (vdev_label_t), KM_SLEEP);
+
+	*config = NULL;
+	for (l = 0; l < VDEV_LABELS; l++) {
+		uint64_t offset, state, txg = 0;
+
+		/* read vdev label */
+		offset = vdev_label_offset(size, l, 0);
+		if (vdev_disk_ldi_physio(vd_lh, (caddr_t)label,
+		    VDEV_SKIP_SIZE + VDEV_PHYS_SIZE, offset, B_READ) != 0)
+			continue;
+
+		if (nvlist_unpack(label->vl_vdev_phys.vp_nvlist,
+		    sizeof (label->vl_vdev_phys.vp_nvlist), config, 0) != 0) {
+			*config = NULL;
+			continue;
+		}
+
+		if (nvlist_lookup_uint64(*config, ZPOOL_CONFIG_POOL_STATE,
+		    &state) != 0 || state >= POOL_STATE_DESTROYED) {
+			nvlist_free(*config);
+			*config = NULL;
+			continue;
+		}
+
+		if (nvlist_lookup_uint64(*config, ZPOOL_CONFIG_POOL_TXG,
+		    &txg) != 0 || txg == 0) {
+			nvlist_free(*config);
+			*config = NULL;
+			continue;
+		}
+
+		break;
+	}
+
+	kmem_free(label, sizeof (vdev_label_t));
+	(void) ldi_close(vd_lh, FREAD, kcred);
+	if (*config == NULL)
+		error = SET_ERROR(EIDRM);
+
+	return (error);
+#endif
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: tps65217pmic.c,v 1.11 2016/10/15 14:40:41 kiyohara Exp $ */
+/*	$NetBSD: tps65217pmic.c,v 1.11.14.1 2018/06/25 07:25:50 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tps65217pmic.c,v 1.11 2016/10/15 14:40:41 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tps65217pmic.c,v 1.11.14.1 2018/06/25 07:25:50 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -280,10 +280,8 @@ tps65217pmic_match(device_t parent, cfdata_t cf, void *aux)
 		/* we can only have one */
 		if (matched)
 			return 0;
-		else
-			matched = true;
 
-		return 1;
+		return I2C_MATCH_ADDRESS_ONLY;
 	}
 	return 0;
 }
@@ -295,6 +293,9 @@ tps65217pmic_attach(device_t parent, device_t self, void *aux)
 	struct i2c_attach_args *ia = aux;
 	prop_dictionary_t dict;
 	int isel, fdim, brightness;
+
+	/* XXXJRT But what if you have multiple i2c busses? */
+	matched = true;
 
 	sc->sc_dev = self;
 	sc->sc_addr = ia->ia_addr;

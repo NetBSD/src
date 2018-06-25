@@ -26,8 +26,6 @@
 #ifndef	_SYS_FS_ZFS_RLOCK_H
 #define	_SYS_FS_ZFS_RLOCK_H
 
-#pragma ident	"%Z%%M%	%I%	%E% SMI"
-
 #ifdef	__cplusplus
 extern "C" {
 #endif
@@ -54,20 +52,17 @@ typedef struct rl {
 	uint8_t r_proxy;	/* acting for original range */
 	uint8_t r_write_wanted;	/* writer wants to lock this range */
 	uint8_t r_read_wanted;	/* reader wants to lock this range */
-	unsigned long r_refcnt; /* reference count for cv waits */
 } rl_t;
 
 /*
- * Lock a range (offset, length) as either shared (READER)
- * or exclusive (WRITER or APPEND). APPEND is a special type that
- * is converted to WRITER that specified to lock from the start of the
- * end of file.  zfs_range_lock() returns the range lock structure.
+ * Lock a range (offset, length) as either shared (RL_READER)
+ * or exclusive (RL_WRITER or RL_APPEND).  RL_APPEND is a special type that
+ * is converted to RL_WRITER that specified to lock from the start of the
+ * end of file.  Returns the range lock structure.
  */
 rl_t *zfs_range_lock(znode_t *zp, uint64_t off, uint64_t len, rl_type_t type);
 
-/*
- * Unlock range and destroy range lock structure.
- */
+/* Unlock range and destroy range lock structure. */
 void zfs_range_unlock(rl_t *rl);
 
 /*
@@ -77,7 +72,8 @@ void zfs_range_unlock(rl_t *rl);
 void zfs_range_reduce(rl_t *rl, uint64_t off, uint64_t len);
 
 /*
- * AVL comparison function used to compare range locks
+ * AVL comparison function used to order range locks
+ * Locks are ordered on the start offset of the range.
  */
 int zfs_range_compare(const void *arg1, const void *arg2);
 

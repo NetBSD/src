@@ -1,4 +1,4 @@
-/* $NetBSD: tcakp.c,v 1.5.2.1 2018/05/02 07:20:06 pgoyette Exp $ */
+/* $NetBSD: tcakp.c,v 1.5.2.2 2018/06/25 07:25:50 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcakp.c,v 1.5.2.1 2018/05/02 07:20:06 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcakp.c,v 1.5.2.2 2018/06/25 07:25:50 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,6 +116,11 @@ CFATTACH_DECL_NEW(tcakp, sizeof(struct tcakp_softc),
 static const char * tcakp_compats[] = {
 	"ti,tca8418",
 	NULL
+};
+
+static const struct device_compatible_entry tcakp_compat_data[] = {
+	DEVICE_COMPAT_ENTRY(tcakp_compats),
+	DEVICE_COMPAT_TERMINATOR
 };
 
 static u_int
@@ -316,13 +321,15 @@ static int
 tcakp_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct i2c_attach_args *ia = aux;
+	int match_result;
 
-	if (ia->ia_name == NULL) {
-		if (ia->ia_addr == 0x34)
-			return 1;
-		return 0;
-	} else
-		return iic_compat_match(ia, tcakp_compats);
+	if (iic_use_direct_match(ia, match, tcakp_compat_data, &match_result))
+		return match_result;
+
+	if (ia->ia_addr == 0x34)
+		return I2C_MATCH_ADDRESS_ONLY;
+	
+	return 0;
 }
 
 static void

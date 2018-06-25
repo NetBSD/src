@@ -32,8 +32,6 @@
 #ifndef _SYS_DTRACE_H
 #define	_SYS_DTRACE_H
 
-/* #pragma ident	"%Z%%M%	%I%	%E% SMI" */
-
 #ifdef	__cplusplus
 extern "C" {
 #endif
@@ -57,12 +55,12 @@ extern "C" {
 #ifdef illumos
 #include <sys/systm.h>
 #else
-#include <sys/proc.h>
+#include <sys/cpuvar.h>
 #include <sys/param.h>
 #include <sys/linker.h>
 #include <sys/ioccom.h>
+#include <sys/proc.h>
 #include <sys/ucred.h>
-#include <sys/pset.h>
 typedef int model_t;
 #endif
 #include <sys/ctf_api.h>
@@ -88,7 +86,7 @@ typedef int model_t;
 
 #define	DTRACE_PROVNAMELEN	64
 #define	DTRACE_MODNAMELEN	64
-#define	DTRACE_FUNCNAMELEN	128
+#define	DTRACE_FUNCNAMELEN	192
 #define	DTRACE_NAMELEN		64
 #define	DTRACE_FULLNAMELEN	(DTRACE_PROVNAMELEN + DTRACE_MODNAMELEN + \
 				DTRACE_FUNCNAMELEN + DTRACE_NAMELEN + 4)
@@ -309,15 +307,14 @@ typedef enum dtrace_probespec {
 #define	DIF_SUBR_TOUPPER		44
 #define	DIF_SUBR_TOLOWER		45
 #define	DIF_SUBR_MEMREF			46
-#define	DIF_SUBR_TYPEREF		47
-#define	DIF_SUBR_SX_SHARED_HELD		48
-#define	DIF_SUBR_SX_EXCLUSIVE_HELD	49
-#define	DIF_SUBR_SX_ISEXCLUSIVE		50
-#define	DIF_SUBR_MEMSTR			51
-#define	DIF_SUBR_GETF			52
-#define	DIF_SUBR_JSON			53
-#define	DIF_SUBR_STRTOLL		54
-#define	DIF_SUBR_MAX			54	/* max subroutine value */
+#define	DIF_SUBR_SX_SHARED_HELD		47
+#define	DIF_SUBR_SX_EXCLUSIVE_HELD	48
+#define	DIF_SUBR_SX_ISEXCLUSIVE		49
+#define	DIF_SUBR_MEMSTR			50
+#define	DIF_SUBR_GETF			51
+#define	DIF_SUBR_JSON			52
+#define	DIF_SUBR_STRTOLL		53
+#define	DIF_SUBR_MAX			53	/* max subroutine value */
 
 typedef uint32_t dif_instr_t;
 
@@ -430,7 +427,6 @@ typedef struct dtrace_difv {
 #define	DTRACEACT_TRACEMEM		6	/* tracemem() action */
 #define	DTRACEACT_TRACEMEM_DYNSIZE	7	/* dynamic tracemem() size */
 #define	DTRACEACT_PRINTM		8	/* printm() action (BSD) */
-#define	DTRACEACT_PRINTT		9	/* printt() action (BSD) */
 
 #define	DTRACEACT_PROC			0x0100
 #define	DTRACEACT_USTACK		(DTRACEACT_PROC + 1)
@@ -740,8 +736,8 @@ typedef struct dof_sec {
 	((x) == DOF_SECT_PRARGS) || ((x) == DOF_SECT_PROFFS) ||		\
 	((x) == DOF_SECT_INTTAB) || ((x) == DOF_SECT_XLTAB) ||		\
 	((x) == DOF_SECT_XLMEMBERS) || ((x) == DOF_SECT_XLIMPORT) ||	\
-	((x) == DOF_SECT_XLIMPORT) || ((x) == DOF_SECT_XLEXPORT) ||	\
-	((x) == DOF_SECT_PREXPORT) || ((x) == DOF_SECT_PRENOFFS))
+	((x) == DOF_SECT_XLEXPORT) ||  ((x) == DOF_SECT_PREXPORT) || 	\
+	((x) == DOF_SECT_PRENOFFS))
 
 typedef struct dof_ecbdesc {
 	dof_secidx_t dofe_probes;	/* link to DOF_SECT_PROBEDESC */
@@ -789,6 +785,7 @@ typedef struct dof_relodesc {
 
 #define	DOF_RELO_NONE	0		/* empty relocation entry */
 #define	DOF_RELO_SETX	1		/* relocate setx value */
+#define	DOF_RELO_DOFREL	2		/* relocate DOF-relative value */
 
 typedef struct dof_optdesc {
 	uint32_t dofo_option;		/* option identifier */
@@ -1415,7 +1412,6 @@ typedef struct {
 #define	DTRACEHIOC_REMOVE	(DTRACEHIOC | 2)	/* remove helper */
 #define	DTRACEHIOC_ADDDOF	(DTRACEHIOC | 3)	/* add helper DOF */
 #else
-#define	DTRACEHIOC_ADD		_IOWR('z', 1, dof_hdr_t)/* add helper */
 #define	DTRACEHIOC_REMOVE	_IOW('z', 2, int)	/* remove helper */
 #define	DTRACEHIOC_ADDDOF	_IOWR('z', 3, dof_helper_t)/* add helper DOF */
 #endif
@@ -1506,7 +1502,7 @@ typedef struct dof_helper {
  *   DTrace routines, including dtrace_probe_create(), dtrace_probe_lookup(),
  *   and dtrace_probe_arg().
  *
- * 1.3  void dtps_provide_module(void *arg, dtrace_modctl_t *mp)
+ * 1.3  void dtps_provide_module(void *arg, modctl_t *mp)
  *
  * 1.3.1  Overview
  *
@@ -2125,12 +2121,9 @@ typedef struct dof_helper {
  *   instrument the kernel arbitrarily should be sure to not instrument these
  *   routines.
  */
-
-typedef dtrace_modctl_t *mymodctl_p;
-
 typedef struct dtrace_pops {
-	void (*dtps_provide)(void *arg, const dtrace_probedesc_t *spec);
-	void (*dtps_provide_module)(void *arg, dtrace_modctl_t *mp);
+	void (*dtps_provide)(void *arg, dtrace_probedesc_t *spec);
+	void (*dtps_provide_module)(void *arg, modctl_t *mp);
 	int (*dtps_enable)(void *arg, dtrace_id_t id, void *parg);
 	void (*dtps_disable)(void *arg, dtrace_id_t id, void *parg);
 	void (*dtps_suspend)(void *arg, dtrace_id_t id, void *parg);
@@ -2156,8 +2149,8 @@ extern int dtrace_register(const char *, const dtrace_pattr_t *, uint32_t,
 extern int dtrace_unregister(dtrace_provider_id_t);
 extern int dtrace_condense(dtrace_provider_id_t);
 extern void dtrace_invalidate(dtrace_provider_id_t);
-extern dtrace_id_t dtrace_probe_lookup(dtrace_provider_id_t, const char *,
-    const char *, const char *);
+extern dtrace_id_t dtrace_probe_lookup(dtrace_provider_id_t, char *,
+    char *, char *);
 extern dtrace_id_t dtrace_probe_create(dtrace_provider_id_t, const char *,
     const char *, const char *, int, void *);
 extern void *dtrace_probe_arg(dtrace_provider_id_t, dtrace_id_t);
@@ -2209,12 +2202,18 @@ extern void dtrace_probe(dtrace_id_t, uintptr_t arg0, uintptr_t arg1,
  *
  * 1.2.4  Caller's context
  *
- *   dtms_create_probe() is called from either ioctl() or module load context.
- *   The DTrace framework is locked in such a way that meta providers may not
- *   register or unregister. This means that the meta provider cannot call
- *   dtrace_meta_register() or dtrace_meta_unregister(). However, the context is
- *   such that the provider may (and is expected to) call provider-related
- *   DTrace provider APIs including dtrace_probe_create().
+ *   dtms_create_probe() is called from either ioctl() or module load context
+ *   in the context of a newly-created provider (that is, a provider that
+ *   is a result of a call to dtms_provide_pid()). The DTrace framework is
+ *   locked in such a way that meta providers may not register or unregister,
+ *   such that no other thread can call into a meta provider operation and that
+ *   atomicity is assured with respect to meta provider operations across
+ *   dtms_provide_pid() and subsequent calls to dtms_create_probe().
+ *   The context is thus effectively single-threaded with respect to the meta
+ *   provider, and that the meta provider cannot call dtrace_meta_register()
+ *   or dtrace_meta_unregister(). However, the context is such that the
+ *   provider may (and is expected to) call provider-related DTrace provider
+ *   APIs including dtrace_probe_create().
  *
  * 1.3  void *dtms_provide_pid(void *arg, dtrace_meta_provider_t *mprov,
  *	      pid_t pid)
@@ -2362,8 +2361,8 @@ extern void dtrace_membar_consumer(void);
 
 extern void (*dtrace_cpu_init)(processorid_t);
 #ifdef illumos
-extern void (*dtrace_modload)(dtrace_modctl_t *);
-extern void (*dtrace_modunload)(dtrace_modctl_t *);
+extern void (*dtrace_modload)(modctl_t *);
+extern void (*dtrace_modunload)(modctl_t *);
 #endif
 extern void (*dtrace_helpers_cleanup)(void);
 extern void (*dtrace_helpers_fork)(proc_t *parent, proc_t *child);
@@ -2452,17 +2451,14 @@ extern void dtrace_helpers_destroy(proc_t *);
 #define DTRACE_INVOP_POPM	2
 #define DTRACE_INVOP_B		3
 
-#define	DTRACE_INVOP_MOV_IP_SP		1
-#define	DTRACE_INVOP_BX_LR		2
-#define	DTRACE_INVOP_MOV_PC_LR		3
-#define	DTRACE_INVOP_LDM		4
-#define	DTRACE_INVOP_LDMIB		5
-#define	DTRACE_INVOP_LDR_IMM		6
-#define	DTRACE_INVOP_MOVW		7
-#define	DTRACE_INVOP_MOV_IMM		8
-#define	DTRACE_INVOP_CMP_IMM		9
-#define	DTRACE_INVOP_B_LABEL		10
-#define	DTRACE_INVOP_PUSH		11
+#define	DTRACE_INVOP_MOV_IP_SP	4
+#define	DTRACE_INVOP_BX_LR	5
+#define	DTRACE_INVOP_MOV_PC_LR	6
+#define	DTRACE_INVOP_LDM	7
+#define	DTRACE_INVOP_LDR_IMM	8
+#define	DTRACE_INVOP_MOVW	9
+#define	DTRACE_INVOP_MOV_IMM	10
+#define	DTRACE_INVOP_CMP_IMM	11
 
 #elif defined(__aarch64__)
 
@@ -2492,6 +2488,28 @@ extern void dtrace_helpers_destroy(proc_t *);
 #define	DTRACE_INVOP_PUSHM	1
 #define	DTRACE_INVOP_RET	2
 #define	DTRACE_INVOP_B		3
+
+#elif defined(__mips__)
+
+#define	INSN_SIZE		4
+
+/* Load/Store double RA to/from SP */
+#define	LDSD_RA_SP_MASK		0xffff0000
+#define	LDSD_DATA_MASK		0x0000ffff
+#define	SD_RA_SP		0xffbf0000
+#define	LD_RA_SP		0xdfbf0000
+
+#define	DTRACE_INVOP_SD		1
+#define	DTRACE_INVOP_LD		2
+
+#elif defined(__riscv__)
+
+#define	SD_RA_SP_MASK		0x01fff07f
+#define	SD_RA_SP		0x00113023
+
+#define	DTRACE_INVOP_SD		1
+#define	DTRACE_INVOP_RET	2
+#define	DTRACE_INVOP_NOP	3
 
 #endif
 

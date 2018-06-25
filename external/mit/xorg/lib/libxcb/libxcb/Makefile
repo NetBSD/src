@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2017/03/05 09:27:53 mrg Exp $
+#	$NetBSD: Makefile,v 1.9.10.1 2018/06/25 07:25:32 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -44,7 +44,10 @@ INCS=	\
 	damage.h \
 	dpms.h \
 	dri2.h \
+	dri3.h \
+	ge.h \
 	glx.h \
+	present.h \
 	randr.h \
 	record.h \
 	render.h \
@@ -57,6 +60,7 @@ INCS=	\
 	xcb.h \
 	xcbext.h \
 	xf86dri.h \
+	xf86vidmode.h \
 	xfixes.h \
 	xinerama.h \
 	xinput.h \

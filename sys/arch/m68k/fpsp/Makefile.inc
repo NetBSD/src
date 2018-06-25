@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.20 2016/03/22 08:25:22 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.20.16.1 2018/06/25 07:25:43 pgoyette Exp $
 #
 #	Configuration variables (default values are below):
 #
@@ -18,27 +18,27 @@
 FPSPDST?=	${.OBJDIR}/lib/fpsp
 FPSPDOTDIR?= ../../.
 
-FPSPDIR=	${S:S@^.@${FPSPDOTDIR}@:Q}/arch/m68k/fpsp
+FPSPDIR=	${S:S@^.@${FPSPDOTDIR}@:q}/arch/m68k/fpsp
 FPSPOBJ=	${FPSPDST}/fpsp.o
 HAS_FPSP!=	grep '^\#define	FPSP	1$$' opt_fpsp.h || echo
 .if !empty(HAS_FPSP)
 FPSP=		${FPSPOBJ}
 .endif
 
-#	    CC=${CC:Q} CFLAGS=${CFLAGS:Q} \
-#	    AS=${AS:Q} AFLAGS=${AFLAGS:Q} \
-#	    LD=${LD:Q} STRIP=${STRIP:Q} \
+#	    CC=${CC:q} CFLAGS=${CFLAGS:q} \
+#	    AS=${AS:q} AFLAGS=${AFLAGS:q} \
+#	    LD=${LD:q} STRIP=${STRIP:q} \
 
 FPSPMAKE= \
-	cd ${FPSPDST} && ${MAKE} -f ${FPSPDIR:Q}/Makefile \
-	    FPSPDIR=${FPSPDIR:Q} \
-	    CC=${CC:Q} CFLAGS=${CFLAGS:Q} \
-	    LD=${LD:Q} STRIP=${STRIP:Q} \
+	cd ${FPSPDST} && ${MAKE} -f ${FPSPDIR:q}/Makefile \
+	    FPSPDIR=${FPSPDIR:q} \
+	    CC=${CC:q} CFLAGS=${CFLAGS:q} \
+	    LD=${LD:q} STRIP=${STRIP:q} \
 	    MACHINE=${MACHINE} \
-	    MACHINE_ARCH=${MACHINE_ARCH:Q} \
-	    FPSPCPPFLAGS=${CPPFLAGS:S@^-I.@-I${FPSPDOTDIR}@g:Q} \
-	    FPSPMISCCPPFLAGS=${FPSPMISCCPPFLAGS:Q} \
-	    FPSPDIR=${FPSPDIR:Q} \
+	    MACHINE_ARCH=${MACHINE_ARCH:q} \
+	    FPSPCPPFLAGS=${CPPFLAGS:S@^-I.@-I${FPSPDOTDIR}@g:q} \
+	    FPSPMISCCPPFLAGS=${FPSPMISCCPPFLAGS:q} \
+	    FPSPDIR=${FPSPDIR:q} \
 	    ${FPSPMISCMAKEFLAGS}
 
 ${FPSP}:		.NOTMAIN __always_make_fpsp

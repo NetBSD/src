@@ -1,4 +1,4 @@
-/*	$NetBSD: h_fsmacros.h,v 1.41 2017/01/13 21:30:39 christos Exp $	*/
+/*	$NetBSD: h_fsmacros.h,v 1.41.12.1 2018/06/25 07:26:08 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@ do {									\
 		atf_tc_fail_errno("newfs failed");			\
 	if (_fs_##_fstest_mount(_tc_, _args_, FSTEST_MNTNAME, 0) != 0)	\
 		atf_tc_fail_errno("mount failed");			\
-} while (/*CONSTCOND*/0);
+} while (/*CONSTCOND*/0)
 
 #define FSTEST_CONSTRUCTOR_FSPRIV(_tc_, _fs_, _args_, _privargs_)	\
 do {									\
@@ -91,7 +91,7 @@ do {									\
 		atf_tc_fail_errno("newfs failed");			\
 	if (_fs_##_fstest_mount(_tc_, _args_, FSTEST_MNTNAME, 0) != 0)	\
 		atf_tc_fail_errno("mount failed");			\
-} while (/*CONSTCOND*/0);
+} while (/*CONSTCOND*/0)
 
 #define FSTEST_DESTRUCTOR(_tc_, _fs_, _args_)				\
 do {									\
@@ -101,7 +101,7 @@ do {									\
 	}								\
 	if (_fs_##_fstest_delfs(_tc_, _args_) != 0)			\
 		atf_tc_fail_errno("delfs failed");			\
-} while (/*CONSTCOND*/0);
+} while (/*CONSTCOND*/0)
 
 #define ATF_TC_FSADD(fs,type,func,desc)					\
 	ATF_TC(fs##_##func);						\

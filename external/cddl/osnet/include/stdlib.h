@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.3 2010/02/21 01:46:34 darran Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.3.44.1 2018/06/25 07:25:24 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 2007 John Birrell <jb@freebsd.org>
@@ -25,14 +25,14 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/compat/opensolaris/include/stdlib.h,v 1.1 2007/11/28 21:40:07 jb Exp $
+ * $FreeBSD: head/cddl/compat/opensolaris/include/stdlib.h 234856 2012-04-30 23:12:16Z rmh $
  *
  */
 
+#include_next <stdlib.h>
+
 #ifndef _COMPAT_OPENSOLARIS_STDLIB_H_
 #define _COMPAT_OPENSOLARIS_STDLIB_H_
-
-#include_next <stdlib.h>
 
 #define getexecname	getprogname
 

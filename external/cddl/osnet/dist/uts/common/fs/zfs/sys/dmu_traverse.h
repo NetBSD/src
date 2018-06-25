@@ -19,8 +19,8 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2010 Sun Microsystems, Inc.  All rights reserved.
- * Use is subject to license terms.
+ * Copyright (c) 2005, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2014 by Delphix. All rights reserved.
  */
 
 #ifndef	_SYS_DMU_TRAVERSE_H
@@ -37,9 +37,10 @@ extern "C" {
 struct dnode_phys;
 struct dsl_dataset;
 struct zilog;
+struct arc_buf;
 
 typedef int (blkptr_cb_t)(spa_t *spa, zilog_t *zilog, const blkptr_t *bp,
-    const zbookmark_t *zb, const struct dnode_phys *dnp, void *arg);
+    const zbookmark_phys_t *zb, const struct dnode_phys *dnp, void *arg);
 
 #define	TRAVERSE_PRE			(1<<0)
 #define	TRAVERSE_POST			(1<<1)
@@ -48,8 +49,16 @@ typedef int (blkptr_cb_t)(spa_t *spa, zilog_t *zilog, const blkptr_t *bp,
 #define	TRAVERSE_PREFETCH (TRAVERSE_PREFETCH_METADATA | TRAVERSE_PREFETCH_DATA)
 #define	TRAVERSE_HARD			(1<<4)
 
+/* Special traverse error return value to indicate skipping of children */
+#define	TRAVERSE_VISIT_NO_CHILDREN	-1
+
 int traverse_dataset(struct dsl_dataset *ds,
     uint64_t txg_start, int flags, blkptr_cb_t func, void *arg);
+int traverse_dataset_resume(struct dsl_dataset *ds, uint64_t txg_start,
+    zbookmark_phys_t *resume, int flags, blkptr_cb_t func, void *arg);
+int traverse_dataset_destroyed(spa_t *spa, blkptr_t *blkptr,
+    uint64_t txg_start, zbookmark_phys_t *resume, int flags,
+    blkptr_cb_t func, void *arg);
 int traverse_pool(spa_t *spa,
     uint64_t txg_start, int flags, blkptr_cb_t func, void *arg);
 

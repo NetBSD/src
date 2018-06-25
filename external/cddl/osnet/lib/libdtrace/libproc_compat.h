@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
  * SUCH DAMAGE. 
  *
- * $FreeBSD: head/cddl/lib/libdtrace/libproc_compat.h 281257 2015-04-08 02:36:37Z markj $
+ * $FreeBSD: head/cddl/lib/libdtrace/libproc_compat.h 309597 2016-12-06 04:22:38Z markj $
  */
 
 /*
@@ -34,6 +34,9 @@
  * Functions sorted alphabetically.
  */
 #define	PR_LMID_EVERY 0
+#define	PGRAB_RDONLY	PATTACH_RDONLY
+#define	PGRAB_FORCE	PATTACH_FORCE
+
 #define	Psetrun(p, a1, a2) proc_continue((p))
 #define	Pxlookup_by_addr(p, a, n, s, sym, i) \
     proc_addr2sym(p, a, n, s, sym)

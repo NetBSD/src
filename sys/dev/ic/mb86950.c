@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86950.c,v 1.26 2017/02/20 07:43:29 ozaki-r Exp $	*/
+/*	$NetBSD: mb86950.c,v 1.26.12.1 2018/06/25 07:25:50 pgoyette Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -67,7 +67,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb86950.c,v 1.26 2017/02/20 07:43:29 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb86950.c,v 1.26.12.1 2018/06/25 07:25:50 pgoyette Exp $");
 
 /*
  * Device driver for Fujitsu mb86950 based Ethernet cards.
@@ -136,6 +136,7 @@ __KERNEL_RCSID(0, "$NetBSD: mb86950.c,v 1.26 2017/02/20 07:43:29 ozaki-r Exp $")
 #include <net/if_types.h>
 #include <net/if_media.h>
 #include <net/if_ether.h>
+#include <net/bpf.h>
 
 #ifdef INET
 #include <netinet/in.h>
@@ -144,10 +145,6 @@ __KERNEL_RCSID(0, "$NetBSD: mb86950.c,v 1.26 2017/02/20 07:43:29 ozaki-r Exp $")
 #include <netinet/ip.h>
 #include <netinet/if_inarp.h>
 #endif
-
-
-#include <net/bpf.h>
-#include <net/bpfdesc.h>
 
 #include <sys/bus.h>
 

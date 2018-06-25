@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.26.2.1 2018/05/21 04:35:48 pgoyette Exp $	*/
+/*	$NetBSD: exec.c,v 1.26.2.2 2018/06/25 07:25:04 pgoyette Exp $	*/
 
 /*
  * execute command tree
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: exec.c,v 1.26.2.1 2018/05/21 04:35:48 pgoyette Exp $");
+__RCSID("$NetBSD: exec.c,v 1.26.2.2 2018/06/25 07:25:04 pgoyette Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -999,7 +999,7 @@ flushcom(all)
 	struct tbl *tp;
 	struct tstate ts;
 
-	for (twalk(&ts, &taliases); (tp = tnext(&ts)) != NULL; )
+	for (ksh_twalk(&ts, &taliases); (tp = tnext(&ts)) != NULL; )
 		if ((tp->flag&ISSET) && (all || !ISDIRSEP(tp->val.s[0]))) {
 			if (tp->flag&ALLOC) {
 				tp->flag &= ~(ALLOC|ISSET);

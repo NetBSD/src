@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: mountall,v 1.9 2014/07/22 17:11:09 wiz Exp $
+# $NetBSD: mountall,v 1.9.22.1 2018/06/25 07:25:11 pgoyette Exp $
 #
 
 # REQUIRE: mountcritremote named ypbind
@@ -18,8 +18,6 @@ mountall_start()
 	if [ -f /etc/zfs/zpool.cache ]; then
 		# Get ZFS module loaded (and thereby, zvols created).
 		zfs list > /dev/null 2>&1
-		# Initialize zvols so they can be mounted 
-		zfs volinit
 		# Mount file systems noted in fstab.
 		mount -a
 		# Mount ZFS file systems.

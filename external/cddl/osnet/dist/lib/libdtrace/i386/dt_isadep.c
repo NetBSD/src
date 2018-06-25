@@ -40,9 +40,8 @@
 
 #include <dis_tables.h>
 
-#ifndef illumos
-#define PR_MODEL_ILP32	1
-#define PR_MODEL_LP64	2
+#if defined(__FreeBSD__) || defined(__NetBSD__)
+#include <libproc.h>
 #include <libproc_compat.h>
 #endif
 
@@ -94,11 +93,7 @@ dt_pid_has_jump_table(struct ps_prochandle *P, dtrace_hdl_t *dtp,
 	char dmodel = Pstatus(P)->pr_dmodel;
 #else
 	pid_t pid = proc_getpid(P);
-#if __i386__
-	char dmodel = PR_MODEL_ILP32;
-#elif __amd64__
-	char dmodel = PR_MODEL_LP64;
-#endif
+	char dmodel = proc_getmodel(P);
 #endif
 
 	/*
@@ -150,11 +145,7 @@ dt_pid_create_return_probe(struct ps_prochandle *P, dtrace_hdl_t *dtp,
 	char dmodel = Pstatus(P)->pr_dmodel;
 #else
 	pid_t pid = proc_getpid(P);
-#if __i386__
-	char dmodel = PR_MODEL_ILP32;
-#elif __amd64__
-	char dmodel = PR_MODEL_LP64;
-#endif
+	char dmodel = proc_getmodel(P);
 #endif
 
 	/*
@@ -311,11 +302,7 @@ dt_pid_create_offset_probe(struct ps_prochandle *P, dtrace_hdl_t *dtp,
 		char dmodel = Pstatus(P)->pr_dmodel;
 #else
 		pid_t pid = proc_getpid(P);
-#if __i386__
-		char dmodel = PR_MODEL_ILP32;
-#elif __amd64__
-		char dmodel = PR_MODEL_LP64;
-#endif
+		char dmodel = proc_getmodel(P);
 #endif
 
 		if ((text = malloc(symp->st_size)) == NULL) {
@@ -394,11 +381,7 @@ dt_pid_create_glob_offset_probes(struct ps_prochandle *P, dtrace_hdl_t *dtp,
 	char dmodel = Pstatus(P)->pr_dmodel;
 #else
 	pid_t pid = proc_getpid(P);
-#if __i386__
-	char dmodel = PR_MODEL_ILP32;
-#elif __amd64__
-	char dmodel = PR_MODEL_LP64;
-#endif
+	char dmodel = proc_getmodel(P);
 #endif
 
 	ftp->ftps_type = DTFTP_OFFSETS;
@@ -522,13 +505,8 @@ dt_instr_size(uchar_t *instr, dtrace_hdl_t *dtp, pid_t pid, uintptr_t addr,
 
 	cpu_mode = (dmodel == PR_MODEL_ILP32) ? SIZE32 : SIZE64;
 
-#ifdef notyet
-	// XXX: does not compile!
 	if (dtrace_disx86(&x86dis, cpu_mode) != 0)
 		return (-1);
-#else
-	__USE(cpu_mode);
-#endif
 
 	/*
 	 * If the instruction was a single-byte breakpoint, there may be

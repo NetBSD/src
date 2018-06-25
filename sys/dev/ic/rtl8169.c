@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.152 2017/09/26 07:42:06 knakahara Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.152.2.1 2018/06/25 07:25:50 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.152 2017/09/26 07:42:06 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.152.2.1 2018/06/25 07:25:50 pgoyette Exp $");
 /* $FreeBSD: /repoman/r/ncvs/src/sys/dev/re/if_re.c,v 1.20 2004/04/11 20:34:08 ru Exp $ */
 
 /*
@@ -1189,7 +1189,7 @@ re_rxeof(struct rtk_softc *sc)
 			if (sc->re_head == NULL)
 				sc->re_head = sc->re_tail = m;
 			else {
-				m->m_flags &= ~M_PKTHDR;
+				m_remove_pkthdr(m);
 				sc->re_tail->m_next = m;
 				sc->re_tail = m;
 			}
@@ -1276,7 +1276,7 @@ re_rxeof(struct rtk_softc *sc)
 				m_freem(m);
 			} else {
 				m->m_len -= ETHER_CRC_LEN;
-				m->m_flags &= ~M_PKTHDR;
+				m_remove_pkthdr(m);
 				sc->re_tail->m_next = m;
 			}
 			m = sc->re_head;

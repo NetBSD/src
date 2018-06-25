@@ -27,13 +27,28 @@
 #define	_SYS_TASKQ_H
 
 #include <sys/types.h>
-#include <sys/thread.h>
+#include <sys/proc.h>
+#ifdef __FreeBSD__
+#include <sys/taskqueue.h>
+#endif
 
 #ifdef	__cplusplus
 extern "C" {
 #endif
 
 #define	TASKQ_NAMELEN	31
+
+#ifdef __FreeBSD__
+struct taskqueue;
+struct taskq {
+	struct taskqueue	*tq_queue;
+};
+typedef struct taskq_ent {
+	struct task	 tqent_task;
+	task_func_t	*tqent_func;
+	void		*tqent_arg;
+} taskq_ent_t;
+#endif
 
 typedef struct taskq taskq_t;
 typedef uintptr_t taskqid_t;
@@ -64,24 +79,27 @@ struct proc;
 
 extern taskq_t *system_taskq;
 
-extern void	taskq_init(void);
-extern void	taskq_mp_init(void);
+void	taskq_init(void);
+void	taskq_mp_init(void);
 
-extern taskq_t	*taskq_create(const char *, int, pri_t, int, int, uint_t);
-extern taskq_t	*taskq_create_instance(const char *, int, int, pri_t, int,
-    int, uint_t);
-extern taskq_t	*taskq_create_proc(const char *, int, pri_t, int, int,
+taskq_t	*taskq_create(const char *, int, pri_t, int, int, uint_t);
+taskq_t	*taskq_create_instance(const char *, int, int, pri_t, int, int, uint_t);
+taskq_t	*taskq_create_proc(const char *, int, pri_t, int, int,
     struct proc *, uint_t);
-extern taskq_t	*taskq_create_sysdc(const char *, int, int, int,
+taskq_t	*taskq_create_sysdc(const char *, int, int, int,
     struct proc *, uint_t, uint_t);
-extern taskqid_t taskq_dispatch(taskq_t *, task_func_t, void *, uint_t);
-extern void	nulltask(void *);
-extern void	taskq_destroy(taskq_t *);
-extern void	taskq_wait(taskq_t *);
-extern void	taskq_suspend(taskq_t *);
-extern int	taskq_suspended(taskq_t *);
-extern void	taskq_resume(taskq_t *);
-extern int	taskq_member(taskq_t *, kthread_t *);
+taskqid_t taskq_dispatch(taskq_t *, task_func_t, void *, uint_t);
+#ifdef __FreeBSD__
+void	taskq_dispatch_ent(taskq_t *, task_func_t, void *, uint_t,
+    taskq_ent_t *);
+#endif
+void	nulltask(void *);
+void	taskq_destroy(taskq_t *);
+void	taskq_wait(taskq_t *);
+void	taskq_suspend(taskq_t *);
+int	taskq_suspended(taskq_t *);
+void	taskq_resume(taskq_t *);
+int	taskq_member(taskq_t *, kthread_t *);
 
 #endif	/* _KERNEL */
 

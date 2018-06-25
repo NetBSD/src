@@ -1,4 +1,4 @@
-/*	$NetBSD: amlogic_machdep.c,v 1.21 2015/08/08 13:54:05 jmcneill Exp $ */
+/*	$NetBSD: amlogic_machdep.c,v 1.21.18.1 2018/06/25 07:25:40 pgoyette Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amlogic_machdep.c,v 1.21 2015/08/08 13:54:05 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amlogic_machdep.c,v 1.21.18.1 2018/06/25 07:25:40 pgoyette Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -525,7 +525,7 @@ amlogic_device_register(device_t self, void *aux)
 	 * We need to tell the A9 Global/Watchdog Timer
 	 * what frequency it runs at.
 	 */
-	if (device_is_a(self, "a9tmr") || device_is_a(self, "a9wdt")) {
+	if (device_is_a(self, "arma9tmr") || device_is_a(self, "a9wdt")) {
                 prop_dictionary_set_uint32(dict, "frequency",
 		    amlogic_get_rate_a9periph());
 

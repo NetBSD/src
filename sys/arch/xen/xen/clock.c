@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.65.2.1 2018/05/21 04:36:03 pgoyette Exp $	*/
+/*	$NetBSD: clock.c,v 1.65.2.2 2018/06/25 07:25:48 pgoyette Exp $	*/
 
 /*
  *
@@ -29,7 +29,7 @@
 #include "opt_xen.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.65.2.1 2018/05/21 04:36:03 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.65.2.2 2018/06/25 07:25:48 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -519,19 +519,24 @@ xen_suspendclocks(struct cpu_info *ci)
 void
 xen_resumeclocks(struct cpu_info *ci)
 {
+	char intr_xname[INTRDEVNAMEBUF];
 	int evtch;
        
 	evtch = bind_virq_to_evtch(VIRQ_TIMER);
 	KASSERT(evtch != -1);
 
+	snprintf(intr_xname, sizeof(intr_xname), "%s clock",
+	    device_xname(ci->ci_dev));
+
 	ih = intr_establish_xname(0, &xen_pic, evtch, IST_LEVEL, IPL_CLOCK,
-	    xen_timer_handler_stub, ci, true, "clock");
+	    xen_timer_handler_stub, ci, true, intr_xname);
 
 	KASSERT(ih != NULL);
 
 	hypervisor_enable_event(evtch);
 
-	aprint_verbose("Xen clock: using event channel %d\n", evtch);
+	aprint_verbose("Xen %s: using event channel %d\n",
+	    intr_xname, evtch);
 }
 
 /* ARGSUSED */

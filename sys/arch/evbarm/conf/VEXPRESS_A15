@@ -1,5 +1,5 @@
 #
-#	$NetBSD: VEXPRESS_A15,v 1.17 2017/06/16 21:37:11 jmcneill Exp $
+#	$NetBSD: VEXPRESS_A15,v 1.17.6.1 2018/06/25 07:25:40 pgoyette Exp $
 #
 #	ARM Versatile Express A15
 #
@@ -20,6 +20,7 @@ pseudo-device 	openfirm	# /dev/openfirm
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	IPKDB		# remote kernel debugging
 #options 	VERBOSE_INIT_ARM # verbose bootstrapping messages
+#options 	CONSADDR=0x1c090000
 
 makeoptions	DEBUG="-g"	# compile full symbol table
 makeoptions	COPY_SYMTAB=1
@@ -94,6 +95,25 @@ pckbd*		at pckbport?
 wskbd*		at pckbd? console ?
 pms*		at pckbport?
 wsmouse*	at pms? mux 0
+
+# Virtio devices
+virtio*	at fdt?				# Virtio MMIO device
+# the baloon driver can not work on machines with non-4k pages
+#viomb*	at virtio?			# Virtio memory balloon device
+ld*	at virtio?			# Virtio disk device
+vioif*	at virtio?			# Virtio network device
+viornd* at virtio?			# Virtio entropy device
+vioscsi* at virtio?			# Virtio SCSI device
+
+# SCSI
+scsibus* at scsi?
+sd*	at scsibus? target ? lun ?	# SCSI disks
+st*	at scsibus? target ? lun ?	# SCSI tapes
+cd*	at scsibus? target ? lun ?	# SCSI CD-ROMs
+ch*	at scsibus? target ? lun ?	# SCSI changer devices
+ss*	at scsibus? target ? lun ?	# SCSI scanners
+ses*	at scsibus? target ? lun ?	# SCSI SES/SAF-TE devices
+uk*	at scsibus? target ? lun ?	# unknown SCSI
 
 # wscons pseudo-devices
 pseudo-device	wsfont

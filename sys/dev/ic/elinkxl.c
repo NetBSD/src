@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.121 2017/02/20 07:43:29 ozaki-r Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.121.12.1 2018/06/25 07:25:50 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.121 2017/02/20 07:43:29 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.121.12.1 2018/06/25 07:25:50 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,9 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.121 2017/02/20 07:43:29 ozaki-r Exp $"
 #include <net/if_dl.h>
 #include <net/if_ether.h>
 #include <net/if_media.h>
-
 #include <net/bpf.h>
-#include <net/bpfdesc.h>
 
 #include <sys/cpu.h>
 #include <sys/bus.h>
@@ -121,7 +119,7 @@ struct ex_media {
  * Media table for 3c90x chips.  Note that chips with MII have no
  * `native' media.
  */
-struct ex_media ex_native_media[] = {
+static const struct ex_media ex_native_media[] = {
 	{ ELINK_PCI_10BASE_T,	"10baseT",	IFM_ETHER|IFM_10_T,
 	  ELINKMEDIA_10BASE_T },
 	{ ELINK_PCI_10BASE_T,	"10baseT-FDX",	IFM_ETHER|IFM_10_T|IFM_FDX,
@@ -525,7 +523,7 @@ ex_probemedia(struct ex_softc *sc)
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	struct ifmedia *ifm = &sc->ex_mii.mii_media;
-	struct ex_media *exm;
+	const struct ex_media *exm;
 	uint16_t config1, reset_options, default_media;
 	int defmedia = 0;
 	const char *sep = "", *defmedianame = NULL;

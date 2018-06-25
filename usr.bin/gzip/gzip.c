@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.112 2017/08/23 13:04:17 christos Exp $	*/
+/*	$NetBSD: gzip.c,v 1.112.2.1 2018/06/25 07:26:10 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003, 2004, 2006, 2008, 2009, 2010, 2011, 2015, 2017
@@ -31,7 +31,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003, 2004, 2006, 2008,\
  2009, 2010, 2011, 2015, 2017 Matthew R. Green.  All rights reserved.");
-__RCSID("$NetBSD: gzip.c,v 1.112 2017/08/23 13:04:17 christos Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.112.2.1 2018/06/25 07:26:10 pgoyette Exp $");
 #endif /* not lint */
 
 /*
@@ -2118,12 +2118,16 @@ print_list(int fd, off_t out, const char *outfile, time_t ts)
 				maybe_warnx("read of uncompressed size");
 
 			else {
-				usize = buf[4] | buf[5] << 8 |
-					buf[6] << 16 | buf[7] << 24;
+				usize = buf[4];
+				usize |= (unsigned int)buf[5] << 8;
+				usize |= (unsigned int)buf[6] << 16;
+				usize |= (unsigned int)buf[7] << 24;
 				in = (off_t)usize;
 #ifndef SMALL
-				crc = buf[0] | buf[1] << 8 |
-				      buf[2] << 16 | buf[3] << 24;
+				crc = buf[0];
+				crc |= (unsigned int)buf[1] << 8;
+				crc |= (unsigned int)buf[2] << 16;
+				crc |= (unsigned int)buf[3] << 24;
 #endif
 			}
 		}

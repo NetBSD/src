@@ -1,4 +1,4 @@
-/*	$NetBSD: ahd_pci.c,v 1.36 2018/01/15 12:43:42 maya Exp $	*/
+/*	$NetBSD: ahd_pci.c,v 1.36.2.1 2018/06/25 07:25:51 pgoyette Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahd_pci.c,v 1.36 2018/01/15 12:43:42 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahd_pci.c,v 1.36.2.1 2018/06/25 07:25:51 pgoyette Exp $");
 
 #define AHD_PCI_IOADDR	PCI_MAPREG_START	/* I/O Address */
 #define AHD_PCI_MEMADDR	(PCI_MAPREG_START + 4)	/* Mem I/O Address */
@@ -129,7 +129,7 @@ static ahd_device_setup_t ahd_aic7901A_setup;
 static ahd_device_setup_t ahd_aic7902_setup;
 static ahd_device_setup_t ahd_aic790X_setup;
 
-static struct ahd_pci_identity ahd_pci_ident_table [] =
+static const struct ahd_pci_identity ahd_pci_ident_table[] =
 {
 	/* aic7901 based controllers */
 	{

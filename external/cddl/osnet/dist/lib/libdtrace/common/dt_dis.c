@@ -176,7 +176,7 @@ dt_dis_setx(const dtrace_difo_t *dp, const char *name, dif_instr_t in, FILE *fp)
 
 	if (intptr < dp->dtdo_intlen) {
 		(void) fprintf(fp, "\t\t! 0x%llx",
-		    (unsigned long long)dp->dtdo_inttab[intptr]);
+		    (u_longlong_t)dp->dtdo_inttab[intptr]);
 	}
 }
 
@@ -334,8 +334,8 @@ dt_dis_rtab(const char *rtag, const dtrace_difo_t *dp, FILE *fp,
 
 	for (; len != 0; len--, rp++) {
 		(void) fprintf(fp, "%-4u %-8llu %-8llu %s\n",
-		    rp->dofr_type, (unsigned long long)rp->dofr_offset,
-		    (unsigned long long)rp->dofr_data,
+		    rp->dofr_type, (u_longlong_t)rp->dofr_offset,
+		    (u_longlong_t)rp->dofr_data,
 		    &dp->dtdo_strtab[rp->dofr_name]);
 	}
 }

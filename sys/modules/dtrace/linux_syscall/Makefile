@@ -8,8 +8,11 @@ KMOD=		dtrace_syscall_linux
 SRCS=		systrace.c
 
 CPPFLAGS+=	-I${NETBSDSRCDIR}/external/cddl/osnet/sys \
-		-I${NETBSDSRCDIR}/external/cddl/osnet/dist/uts/common 
+		-I${NETBSDSRCDIR}/external/cddl/osnet/dist/uts/common \
+		-I${NETBSDSRCDIR}/external/cddl/osnet/dev/dtrace
 
 CPPFLAGS+=	-Wno-unknown-pragmas
+
+CPPFLAGS+=	${${ACTIVE_CC} == "gcc" :? -Wno-discarded-qualifiers :}
 
 .include <bsd.kmodule.mk>

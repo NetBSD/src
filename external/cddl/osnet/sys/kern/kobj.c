@@ -1,4 +1,4 @@
-/*	$NetBSD: kobj.c,v 1.4 2012/10/11 08:01:23 njoly Exp $	*/
+/*	$NetBSD: kobj.c,v 1.4.28.1 2018/06/25 07:25:25 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -56,8 +56,8 @@
  */
 
 #include <sys/cdefs.h>
-/* __FBSDID("$FreeBSD: src/sys/compat/opensolaris/kern/opensolaris_kobj.c,v 1.4 2007/05/31 11:51:49 kib Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kobj.c,v 1.4 2012/10/11 08:01:23 njoly Exp $");
+/* __FBSDID("$FreeBSD: head/sys/cddl/compat/opensolaris/kern/opensolaris_kobj.c 285391 2015-07-11 16:22:48Z mjg $"); */
+__KERNEL_RCSID(0, "$NetBSD: kobj.c,v 1.4.28.1 2018/06/25 07:25:25 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -122,7 +122,7 @@ kobj_get_filesize_vnode(struct _buf *file, uint64_t *size)
 	struct vattr va;
 	int error;
 
-	error = VOP_GETATTR(file->ptr, &va, 0, kauth_cred_get(), NULL);
+	error = VOP_GETATTR(file->ptr, &va, 0, kcred, NULL);
 	if (error == 0)
 		*size = (uint64_t)va.va_size;
 	return (error);
@@ -142,7 +142,7 @@ kobj_read_file_vnode(struct _buf *file, char *buf, unsigned size, unsigned off)
 	size_t resid;
 
 	error = vn_rdwr(UIO_READ, file->ptr, buf, size, off, UIO_SYSSPACE, 0,
-	    RLIM64_INFINITY, kauth_cred_get(), &resid);
+	    RLIM64_INFINITY, kcred, &resid);
 	return (error != 0 ? -1 : size - resid);
 }
 
@@ -158,7 +158,7 @@ kobj_close_file(struct _buf *file)
 {
 
 	if (file->mounted) {
-		vn_close(file->ptr, FREAD, kauth_cred_get());
+		vn_close(file->ptr, FREAD, kcred);
 	}
 	kmem_free(file, sizeof(*file));
 }

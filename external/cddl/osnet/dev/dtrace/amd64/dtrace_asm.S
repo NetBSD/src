@@ -1,4 +1,4 @@
-/*	$NetBSD: dtrace_asm.S,v 1.7 2017/02/27 06:46:59 chs Exp $	*/
+/*	$NetBSD: dtrace_asm.S,v 1.7.10.1 2018/06/25 07:25:14 pgoyette Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -22,7 +22,7 @@
  *
  * Portions Copyright 2008 John Birrell <jb@freebsd.org>
  *
- * $FreeBSD: src/sys/cddl/dev/dtrace/amd64/dtrace_asm.S,v 1.1.4.1 2009/08/03 08:13:06 kensmith Exp $
+ * $FreeBSD: head/sys/cddl/dev/dtrace/amd64/dtrace_asm.S 298171 2016-04-17 23:08:47Z markj $
  *
  */
 /*

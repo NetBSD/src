@@ -1,4 +1,4 @@
-/*	$NetBSD: lockstat.c,v 1.8 2015/03/09 01:42:26 christos Exp $	*/
+/*	$NetBSD: lockstat.c,v 1.8.14.1 2018/06/25 07:25:15 pgoyette Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -26,9 +26,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.8 2015/03/09 01:42:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.8.14.1 2018/06/25 07:25:15 pgoyette Exp $");
 
 #include <sys/types.h>
+#include <sys/proc.h>
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/dtrace.h>
@@ -40,8 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.8 2015/03/09 01:42:26 christos Exp $"
 
 #define NLOCKSTAT 1
 #include <dev/lockstat.h>
-
-#define	ASSERT	KASSERT
 
 typedef struct lockstat_probe {
 	const char	*lsp_func;
@@ -100,7 +99,7 @@ lockstat_disable(void *arg, dtrace_id_t id __unused, void *parg)
 
 /*ARGSUSED*/
 static void
-lockstat_provide(void *arg, const dtrace_probedesc_t *desc)
+lockstat_provide(void *arg, dtrace_probedesc_t *desc)
 {
 	int i = 0;
 

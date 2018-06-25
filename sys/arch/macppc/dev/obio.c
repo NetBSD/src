@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.43.2.2 2018/05/21 04:36:01 pgoyette Exp $	*/
+/*	$NetBSD: obio.c,v 1.43.2.3 2018/06/25 07:25:43 pgoyette Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.43.2.2 2018/05/21 04:36:01 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.43.2.3 2018/06/25 07:25:43 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -425,7 +425,8 @@ obio_setup_gpios(struct obio_softc *sc, int node)
 	if (hiclock != 0)
 		sc->sc_spd_hi = (hiclock + 500000) / 1000000;
 	printf("hiclock: %d\n", sc->sc_spd_hi);
-	
+	if (use_dfs) sc->sc_spd_lo = sc->sc_spd_hi / 2;
+
 	sysctl_node = NULL;
 
 	if (sysctl_createv(NULL, 0, NULL, 

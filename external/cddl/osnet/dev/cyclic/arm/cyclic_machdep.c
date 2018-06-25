@@ -1,4 +1,4 @@
-/*	$NetBSD: cyclic_machdep.c,v 1.1 2014/03/05 06:35:44 ozaki-r Exp $	*/
+/*	$NetBSD: cyclic_machdep.c,v 1.1.28.1 2018/06/25 07:25:13 pgoyette Exp $	*/
 
 /*
  * Copyright 2006-2008 John Birrell <jb@FreeBSD.org>
@@ -24,7 +24,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD$
+ * $FreeBSD: head/sys/cddl/dev/cyclic/i386/cyclic_machdep.c 222813 2011-06-07 08:46:13Z attilio $
  *
  */
 

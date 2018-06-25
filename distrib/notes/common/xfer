@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.74 2015/05/09 08:13:35 snj Exp $
+.\"	$NetBSD: xfer,v 1.74.14.1 2018/06/25 07:25:06 pgoyette Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -39,7 +39,7 @@ Installation is supported from several media types, including:
 .It
 .\} \" \n[amiga]
 .
-CD-ROM / DVD
+CD-ROM / DVD / USB-stick
 .
 .It
 FTP
@@ -83,7 +83,7 @@ kernel for 32-bit sparc computers which does not boot on \*M systems.
 .Note)
 .\}
 .
-.(tag CD-ROM\ /\ DVD
+.(tag CD-ROM\ /\ DVD\ /\ USB-stick
 .
 .if \n[amiga] \{\
 .It Em AmigaDOS partition
@@ -103,7 +103,7 @@ Once you have done this, you can proceed to the next
 step in the installation process, preparing your hard disk.
 .\} \" \n[amiga]
 .
-.It Em CD-ROM / DVD
+.It Em CD-ROM / DVD / USB-stick
 .if \n[amiga] \{\
 To install
 .Nx
@@ -122,11 +122,14 @@ or it is an ATAPI cd-rom connected to the A1200/A4000 internal IDE
 connector, simply put the CD into the drive before installation.
 .Pp
 .\} \" \n[amiga]
-Find out where the distribution set files are on the CD-ROM or DVD.
+Find out where the distribution set files are on the CD-ROM, DVD or USB stick.
 Likely locations are
 .Pa binary/sets
 and
 .Pa \*M/binary/sets .
+(You only need to know this if you are mixing installer and installation
+media from different versions - the installer will know the proper
+default location for the sets it comes with).
 .Pp
 Proceed to the instructions on installation.
 .

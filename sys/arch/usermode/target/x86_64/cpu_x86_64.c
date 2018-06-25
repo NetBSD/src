@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_x86_64.c,v 1.2.48.1 2018/05/21 04:36:02 pgoyette Exp $ */
+/* $NetBSD: cpu_x86_64.c,v 1.2.48.2 2018/06/25 07:25:46 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -29,7 +29,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_x86_64.c,v 1.2.48.1 2018/05/21 04:36:02 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_x86_64.c,v 1.2.48.2 2018/06/25 07:25:46 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -49,10 +49,10 @@ __KERNEL_RCSID(0, "$NetBSD: cpu_x86_64.c,v 1.2.48.1 2018/05/21 04:36:02 pgoyette
 #include <dev/mm.h>
 #include <machine/machdep.h>
 #include <machine/thunk.h>
-
+#include <machine/mcontext.h>
 
 #if 0
-static void dump_regs(register_t *reg);;
+static void dump_regs(register_t *reg);
 
 static void
 dump_regs(register_t *reg)
@@ -84,16 +84,9 @@ struct sigframe_siginfo {
 };
 
 
-/* should be the same as i386 */
 /*
  * mcontext extensions to handle signal delivery.
  */
-#define _UC_SETSTACK	0x00010000
-#define _UC_CLRSTACK	0x00020000
-#define _UC_VM		0x00040000
-#define	_UC_TLSBASE	0x00080000
-
-
 void
 sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 {

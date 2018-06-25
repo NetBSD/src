@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.193.2.1 2018/05/21 04:35:57 pgoyette Exp $
+$NetBSD: acronyms.comp,v 1.193.2.2 2018/06/25 07:25:37 pgoyette Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -6,6 +6,7 @@ AAA	authentication, authorization, [and] accounting
 AAT	average access time
 ABI	application binary interface
 ABR	available bit rate
+ABRT	automatic bug reporting tool
 AC	alternating current
 ACI	adjacent channel interferer
 ACID	atomicity, consistency, isolation, durability
@@ -13,7 +14,7 @@ ACK	Amsterdam compiler kit
 ACK	acknowledgement
 ACL	access control list
 ACL	active current loop
-ACP	auxillary control {process,program}
+ACP	auxiliary control {process,program}
 ACPI	advanced configuration and power interface
 ACS	access control set
 ACU	automatic calling unit
@@ -26,7 +27,9 @@ ADPCM	adaptive differential pulse code modulation
 ADS	alternate data stream
 ADSL	asymmetric digital subscriber line
 ADT	abstract data type
+AER	advanced error reporting
 AES	Advanced Encryption Standard
+AFP	Apple Filing Protocol
 AFS	Andrew File System
 AGC	automatic gain control
 AGP	accelerated graphics port
@@ -41,6 +44,7 @@ ALUA	asymmetric logical unit access
 AM	access method
 AM	alignment mask
 AM	amplitude modulation
+AMD	Advanced Micro Devices Inc
 AMI	alternate mark inversion
 AMP	asymmetric multiprocessing
 AMQP	advanced message queuing protocol
@@ -54,6 +58,7 @@ AOS	add or subtract
 AP	access point
 AP	application processor
 API	application programming interface
+APEI	ACPI platform error interface
 APIC	advanced programmable interrupt controller
 APIPA	automatic private IP addressing
 APM	advanced power management
@@ -71,19 +76,20 @@ ARQ	automatic repeat request
 ARR	address range register
 ARU	audio response unit
 AS	autonomous system
+ASA	Adaptive Security Appliance
 ASC	advanced smart cache
 ASCII	American Standard Code for Information Interchange
 ASD	agile software development
 ASE	advanced software environment
 ASIC	application-specific integrated circuit
-ASK	amplitude shif keying
+ASK	amplitude shift keying
 ASLR	address space layout randomization
 ASN	autonomous system number
 ASPM	active state power management
 ASQ	automated software quality
 ASR	address space register
 AST	abstract syntax tree
-AST	asynchronous trap
+AST	asynchronous system trap
 AT	access time
 AT	advanced technology
 ATA	advanced technology attachment
@@ -109,6 +115,7 @@ BDUF	big design up front
 BEDO	burst extended data output
 BER	basic encoding rules
 BER	bit error {rate,ratio}
+BERT	boot error record table
 BFD	binary {file,format} descriptor
 BFKL	big fscking kernel lock
 BFS	breadth-first search
@@ -149,6 +156,7 @@ BS	backspace
 BS	binary sequence
 BSA	basic service area
 BSD	Berkeley Software Distribution
+BSDP	Boot Service Discovery Protocol
 BSF	bit scan forward
 BSOD	blue screen of death
 BSP	binary space partition
@@ -181,7 +189,7 @@ CAU	control access unit
 CAV	constant angular velocity
 CBC	cipher block chaining
 CBR	constant bit rate
-CC	carbon coby
+CC	carbon copy
 CCD	charge coupled device
 CCI	co-channel interferer
 CCNUMA	cache-coherent non-uniform memory access
@@ -219,6 +227,8 @@ CLUT	color look-up table
 CLV	constant linear velocity
 CM	configuration management
 CMA	concert multithread architecture
+CMC	chassis management controller
+CMC	corrected machine check
 CMS	{configuration,content,course} management system
 CMI	control {management,method} interface
 CMOS	complementary metal-oxide-semiconductor
@@ -234,10 +244,13 @@ COFF	common object file format
 COM	component object model
 COMA	cache-only memory architecture
 CORBA	common object request broker architecture
+COS	class of service
 COW	copy-on-write
 CP	continuous pilot
 CPB	core performance boost
 CPE	common phase error
+CPE	common platform enumeration
+CPER	common platform error record
 CPG	clock pulse generator
 CPL	current privilege level
 CPLD	complex programmable logic device
@@ -250,6 +263,7 @@ CRC	cyclic redundancy check
 CRL	carrier recovery loop
 CRLF	carriage return line feed
 CRT	cathode ray tube
+CRUD	create, read, update, and delete
 CS	cable select
 CS	chip select
 CS	code segment
@@ -312,6 +326,7 @@ DDWG	Digital Display Working Group
 DE	debugging extensions
 DE	desktop environment
 DEA	data encryption algorithm
+DEC	Digital Equipment Corporation
 DEK	data encryption key
 DEP	data execution prevention
 DER	distinguished encoding rules
@@ -409,6 +424,7 @@ ECN	explicit congestion notification
 ECP	enhanced capability port
 ECS	enhanced chip set
 ECS	extended configuration space
+EDAC	error detection and correction
 EDAT	enhanced dynamic acceleration technology
 EdDSA	Edwards curve digital signature algorithm
 EDGE	explicit data graph execution
@@ -425,6 +441,7 @@ EGP	exterior gateway protocol
 EH	extension header
 EIDE	enhanced IDE
 EISA	extended industry standard architecture
+EINJ	error injection table
 ELF	executable and linking format
 ELS	entry level system
 EMI	electro-magnetic interference
@@ -441,6 +458,8 @@ EPROM	erasable programmable read only memory
 ERD	emergency recovery disk
 ERD	entity relationship diagram
 ERE	extended regular expression
+ERST	error record serialization table
+ESB	enterprise service bus
 ESDRAM	enhanced synchronous dynamic random access memory
 ESS	electronic switching system
 ESS	extended service set
@@ -506,11 +525,14 @@ GAS	generic address structure
 GC	garbage collector
 GCM	Galois counter mode
 GCR	group-coded recording
+GDI	Graphics Device Interface
 GDT	global descriptor table
 GEM	graphics environment manager
 GEM	graphics execution manager
 GENA	general event notification architecture
 GHC	Glasgow Haskell compiler
+GHES	generic hardware error source
+GIC	generic interrupt controller
 GID	group identifier
 GIF	graphics interchange format
 GMCH	graphics and memory controller hub
@@ -534,6 +556,7 @@ GVFS    git virtual file system
 HA	high availability
 HAL	hardware abstraction layer
 HAT	hashed array tree
+HATEOAS	hypermedia as the engine of application state
 HBA	host bus adapter
 HCF	halt and catch fire
 HCI	host controller interface
@@ -544,6 +567,8 @@ HDD	hard disk drive
 HDL	hardware description language
 HDMI	High-Definition Multimedia Interface
 HDTV	high-definition television
+HECI	host embedded controller interface
+HEST	hardware error source table
 HF	high frequency
 HFM	highest frequency mode
 HID	human interface device
@@ -624,6 +649,10 @@ IP	intellectual property
 IPC	interprocess communication
 IPE	integrated programming environment
 IPI	interprocessor interrupt
+IPL	Initial Program Load
+IPL	Interrupt Priority Level
+IPMB	Intelligent Platform Management Bus
+IPMI	Intelligent Platform Management Interface
 IPNG	Internet Protocol, Next Generation
 IPS	in-plane switching
 IPS	intrusion prevention system
@@ -651,6 +680,7 @@ ISV	independent software vendor
 IT	information technology
 ITB	Intel Turbo Boost
 ITIL	information technology infrastructure library
+ITP	in-target probe
 ITSM	IT service management
 IV	initialization vector
 IVT	interrupt vector table
@@ -659,12 +689,14 @@ JFET	junction [gate] field-effect transistor
 JIT	just in time
 JPEG	Joint Photographic Experts Group
 JRE	Java Runtime Environment
+JSON	JavaScript Object Notation
 JTAG	joint test action group
 KASLR	kernel address space layout randomization
 KB	keyboard
 KB	kilobyte
 KBD	keyboard
 KBD	kilobaud
+KCS	keyboard controller style
 KLOC	thousand lines of code
 KMS	kernel-mode setting
 KPI	kernel programming interface
@@ -759,8 +791,14 @@ MCH	memory controller hub
 MCM	multi-chip module
 MCQ	memory controlled queue
 MD	machine-dependent
+MD-SAL	model-driven service abstraction layer
 MDA	mail delivery agent
 MDA	Monochrome Display Adapter
+MDC	Management Data Clock
+MDI	Medium Dependent Interface
+MDI-X	Medium Dependent Interface Crossover
+MDIO	Management Data Input/Output
+MDMX	MIPS Digital Media eXtension
 MDRAM	multibank dynamic random access memory
 MESI	modified, exclusive, shared, invalid
 MFC	merge from current
@@ -778,6 +816,7 @@ MIMD	multiple instruction, multiple data
 MIME	Multipurpose Internet Mail Extensions
 MIMO	multiple input multiple output
 MIPS	million instructions per second
+MIPS	Microprocessor without Interlocked Pipeline Stages
 MISD	multiple instruction, single data
 MIT	Massachusetts Institute of Technology
 MITM	man in the middle
@@ -811,6 +850,7 @@ MPLS	Multiprotocol Label Switching
 MPP	massively parallel processor
 MPS	memory pool system
 MPS	multiprocessor specification
+MQTT	Message Queuing Telemetry Transport
 MR	modem ready
 MRU	most recently used
 MS	Microsoft
@@ -819,7 +859,7 @@ MSE	mean square error
 MSF	minutes seconds frames
 MSI	message signaled interrupt
 MSI	modified, shared, invalid
-MSR	machine state register
+MSR	{machine state,model-specific} register
 MSS	maximum segment size
 MSTP	Multiple Spanning Tree Protocol
 MT	machine translation
@@ -847,6 +887,7 @@ NCQ	native command queuing
 ND	neighbor discovery
 NDFA	nondeterministic finite automaton
 NE	numeric error
+NEWS	Network extensible Window System
 NFA	nondeterministic finite automaton
 NFC	near-field communication
 NFCI	no functional change intended
@@ -878,6 +919,7 @@ NVRAM	non-volatile random access memory
 NW	not write-through
 NX	no execute
 OAEP	optimal asymmetric encryption padding
+OAM	operations, administration, and {management,maintenance}
 OBO	off by one
 OBOE	off by one error
 OCL	object constraint language
@@ -945,7 +987,10 @@ PCB	printed circuit board
 PCB	process control block
 PCC	Portable C Compiler
 PCD	page-level cache disable
+PCE	path computation element
 PCE	performance-monitor counter enable
+PCEP	Path Computation Element Protocol
+PCH	platform controller hub
 PCI	peripheral component interconnect
 PCM	phase change memory
 PCM	pulse code modulation
@@ -986,6 +1031,7 @@ PIPT	physically indexed, physically tagged
 PIQ	prefetch input queue
 PIT	programmable interrupt timer
 PIV	personal identity verification
+PIX	Private Internet eXchange
 PKCS	public-key cryptography standards
 PKI	public key infrastructure
 PLC	programmable logic controller
@@ -1009,15 +1055,19 @@ POP	power on password
 POSIX	Portable Operating System Interface [for Unix]
 POST	power on self test
 POTS	plain old telephone system
+POWER	Performance Optimization With Enhanced RISC
+POWERPC	Performance Optimization With Enhanced RISC - Performance Computing
 PP	pair programming
 PPB	PCI [to] PCI bridge
 PPC	PowerPC
+PPC	Power Performance Computing
 PPI	pixels per inch
 PPM	pages per minute
 PPP	Point-to-Point Protocol
 PPPOA	Point-to-Point Protocol over ATM
 PPPOE	Point-to-Point Protocol over Ethernet
 PPU	physics processing unit
+PRAM	Parameter RAM
 PRBS	pseudorandom bit sequence
 PRG	pseudorandom generator
 PRF	pseudorandom function [family]
@@ -1026,6 +1076,8 @@ PRN	pseudorandom {noise,number}
 PRNG	pseudorandom number generator
 PROM	programmable read only memory
 PRP	pseudorandom permutation
+PRU	Programmable Realtime Unit
+PS	PostScript
 PSD	power spectral density
 PSE	page size extensions
 PSK	phase shift keying
@@ -1069,6 +1121,7 @@ RBF	radial basis function
 RBT	red-black tree
 RC	release candidate
 RC	remote control
+RC	run commands
 RCS	Revision Control System
 RCS	revision control system
 RCU	read, copy, update
@@ -1090,6 +1143,7 @@ RHEL	Red Hat Enterprise Linux
 RHL	Red Hat Linux
 RIB	routing information base
 RIFF	Resource Interchange File Format
+RIP	Raster Image Processor
 RIP	Routing Information Protocol
 RIR	regional Internet registry
 RISC	reduced instruction set {computer,computing}
@@ -1142,7 +1196,7 @@ SA	structured analysis
 SAAS	software as a service
 SACD	super audio compact disc
 SAD	security association database
-SAL	system abstraction layer
+SAL	{service,system} abstraction layer
 SAM	serial access memory
 SAM	sum addressed memory
 SAN	storage area network
@@ -1152,6 +1206,7 @@ SASD	structured analysis, structured design
 SASI	Shugart Associates System Interface
 SASL	simple authentication [and] security layer
 SATA	serial advanced technology attachment
+SAX	simple API for XML
 SB	sound blaster
 SBU	standard build unit
 SC	store conditional
@@ -1168,6 +1223,7 @@ SCM	storage-class memory
 SCP	secure copy
 SCSI	Small Computer System Interface
 SCTP	Stream Control Transmission Protocol
+SDEI	software delegated exception interface
 SDI	symbol deinterleave
 SDK	software development kit
 SDL	Simple Declarative Language
@@ -1177,6 +1233,7 @@ SDN	software defined networking
 SDRAM	synchronous dynamic random access memory
 SDS	software defined storage
 SDT	syntax-directed translation
+SEA	synchronous external abort
 SEGV	segmentation violation
 SEO	search engine optimization
 SFC	sequential function chart
@@ -1197,6 +1254,7 @@ SIP	Session Initiation Protocol
 SIR	signal-to-interference ratio
 SIR	slow infrared
 SISD	single instruction, single data
+SLAAC	stateless address auto-configuration
 SLC	single-level cell
 SLDRAM	synchronous-link dynamic random access memory
 SLED	single large expensive disk
@@ -1209,6 +1267,8 @@ SMAF	system management action field
 SMAP	Simple Mail Access Protocol
 SMAP	supervisor mode access prevention
 SMART	self-monitoring analysis and reporting technology
+SMB	Server Message Block
+SMB	system management bus
 SMBIOS	System Management BIOS
 SMC	system management controller
 SMEP	supervisor mode execution protection
@@ -1221,6 +1281,7 @@ SMT	simultaneous multithreading
 SMTP	Simple Mail Transfer Protocol
 SMU	system management unit
 SNAP	Sub-Network Access Protocol
+SNIA	Storage Networking Industry Association
 SNMP	Simple Network Management Protocol
 SNR	signal-to-noise ratio
 SOA	service oriented architecture
@@ -1269,6 +1330,7 @@ SUS	Single Unix Specification
 SUT	system under test
 SVG	scalable vector graphics
 SVGA	Super Video Graphics Array
+SVI	{switch,switched} virtual interface
 SVM	secure virtual machine
 SVM	support vector machine
 SVR	System V Release
@@ -1335,6 +1397,7 @@ TS	time stamp
 TS	transport stream
 TSC	time stamp counter
 TSD	time stamp disable
+TSDB	time series database
 TSL	test, set, lock
 TSO	time sharing option
 TSO	Total Store Ordering
@@ -1405,7 +1468,7 @@ VFO	variable-frequency oscillator
 VG	volume group
 VGA	Video Graphics Array
 VHDCI	very high density cable interconnect
-VID	voltage level identifier
+VID	{VLAN,voltage level} identifier
 VIPT	virtually indexed, physically tagged
 VIVT	virtually indexed, virtually tagged
 VLAN	virtual local area network
@@ -1427,9 +1490,12 @@ VSTP	VLAN Spanning Tree Protocol
 VTP	VLAN Trunking Protocol
 W	watt
 W3C	World Wide Web Consortium
+WAMP	Web Application Messaging Protocol
 WAN	wide area network
 WAP	Wireless Application Protocol
 WAP	wireless access point
+WDM	Windows Driver Model
+WDDM	Windows Display Driver Model
 WDT	watchdog timer
 WEP	Wired Equivalent Privacy
 WFI	wait for interrupt
@@ -1459,6 +1525,7 @@ XBAR	crossbar
 XDMCP	X Display Manager control protocol
 XER	XML encoding rules
 XGA	Extended Graphics Array
+XHR	XMLHttpRequest
 XIP	execute in place
 XML	Extensible Markup Language
 XOR	exclusive or
@@ -1469,6 +1536,7 @@ XSS	cross site scripting
 XT	extended technology
 XUL	XML user interface language
 YACC	yet another compiler compiler
+YANG	yet another next generation
 YAWPFAPR	you are welcome; please file a problem report
 YP	Yellow Pages
 YTD	year to date

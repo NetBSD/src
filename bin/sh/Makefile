@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.113 2017/06/30 23:05:45 kre Exp $
+#	$NetBSD: Makefile,v 1.113.4.1 2018/06/25 07:25:04 pgoyette Exp $
 #	@(#)Makefile	8.4 (Berkeley) 5/5/95
 
 .include <bsd.own.mk>
@@ -87,7 +87,7 @@ optinit.h: mkoptions.sh option.list
 NBCOMPATLIB=   -L${TOOLDIR}/lib -lnbcompat
 .endif
 
-SUBDIR+=USD.doc
+SUBDIR.roff+=USD.doc
 
 COPTS.printf.c = -Wno-format-nonliteral
 COPTS.jobs.c = -Wno-format-nonliteral

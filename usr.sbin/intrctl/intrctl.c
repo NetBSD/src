@@ -1,4 +1,4 @@
-/*	$NetBSD: intrctl.c,v 1.7 2016/11/02 11:03:33 ryo Exp $	*/
+/*	$NetBSD: intrctl.c,v 1.7.12.1 2018/06/25 07:26:12 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: intrctl.c,v 1.7 2016/11/02 11:03:33 ryo Exp $");
+__RCSID("$NetBSD: intrctl.c,v 1.7.12.1 2018/06/25 07:26:12 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -184,7 +184,7 @@ intrctl_list(int argc, char **argv)
 		printf("%-*s ", (int)intridlen, illine->ill_intrid);
 		if (compact) {
 			uint64_t total = 0;
-			char *affinity, *oaffinity = NULL;
+			char *affinity = NULL, *oaffinity = NULL;
 			for (i = 0; i < ncpus; i++) {
 				illc = &illine->ill_cpu[i];
 				total += illc->illc_count;
@@ -200,7 +200,8 @@ intrctl_list(int argc, char **argv)
 			}
 			printf("%20" PRIu64 " ", total);
 			printf("%5s ", affinity ? affinity : "none");
-			free(affinity);
+			if (affinity)
+				free(affinity);
 		} else {
 			for (i = 0; i < ncpus; i++) {
 				illc = &illine->ill_cpu[i];

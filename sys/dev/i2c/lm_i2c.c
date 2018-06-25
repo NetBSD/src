@@ -1,4 +1,4 @@
-/*	$NetBSD: lm_i2c.c,v 1.4 2017/08/18 04:07:51 msaitoh Exp $	*/
+/*	$NetBSD: lm_i2c.c,v 1.4.2.1 2018/06/25 07:25:50 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lm_i2c.c,v 1.4 2017/08/18 04:07:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lm_i2c.c,v 1.4.2.1 2018/06/25 07:25:50 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,6 +71,8 @@ lm_i2c_match(device_t parent, cfdata_t match, void *aux)
 	if (ia->ia_addr < 1)
 		return 0;
 
+	/* XXXJRT filter addresses //at all// please? */
+
 	/* Bus independent probe */
 	sc.sc_lmsc.lm_writereg = lm_i2c_writereg;
 	sc.sc_lmsc.lm_readreg = lm_i2c_readreg;
@@ -78,7 +80,7 @@ lm_i2c_match(device_t parent, cfdata_t match, void *aux)
 	sc.sc_addr = ia->ia_addr;
 	rv = lm_match(&sc.sc_lmsc);
 
-	return rv;
+	return rv ? I2C_MATCH_ADDRESS_AND_PROBE : 0;
 }
 
 

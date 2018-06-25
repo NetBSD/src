@@ -1,4 +1,4 @@
-#	$NetBSD: xorg-pkg-ver.mk,v 1.8 2015/08/09 10:09:07 aymeric Exp $
+#	$NetBSD: xorg-pkg-ver.mk,v 1.8.14.1 2018/06/25 07:25:31 pgoyette Exp $
 
 # when including this make sure PROG is set so that $X11SRCDIR.$PROG
 # is a valid setting.  set XORG_PKG_VER_PROG if PROG is wrong.
@@ -19,7 +19,7 @@ XORG_PKG_PACKAGE_VERSION!= \
 	}' ${X11SRCDIR.${XORG_PKG_VER_PROG}}/configure
 .if !empty(XORG_PKG_PACKAGE_VERSION)
 CPPFLAGS+=	-DPACKAGE_VERSION=\"${XORG_PKG_PACKAGE_VERSION:Q}\"
-CPPFLAGS+=	-DVERSION=\"${XORG_PKG_PACKAGE_VERSION:Q}\"
+CPPFLAGS+=	-DVERSION=\"${XORG_PKG_PACKAGE_VERSION:q}\"
 .endif
 
 XORG_PKG_PACKAGE_STRING!= \
@@ -35,13 +35,24 @@ CPPFLAGS+=	-DPACKAGE_STRING=\"${XORG_PKG_PACKAGE_STRING:Q}\"
 
 XORG_PKG_PACKAGE_NAME!= \
 	${TOOL_AWK} -F= '/^PACKAGE_NAME=/ {			\
-	     match($$2, "'"'"'[-_a-zA-Z0-9]+'"'"'");		\
+	     match($$2, "[-_a-zA-Z0-9]+");			\
 	     name = substr($$2, RSTART, RLENGTH);		\
 	     print name;					\
 	     exit 0;						\
 	}' ${X11SRCDIR.${XORG_PKG_VER_PROG}}/configure
 .if !empty(XORG_PKG_PACKAGE_NAME)
 CPPFLAGS+=	-DPACKAGE_NAME=\"${XORG_PKG_PACKAGE_NAME:Q}\"
+.endif
+
+XORG_PKG_RELEASE_DATE!= \
+	${TOOL_AWK} -F= '/^RELEASE_DATE=/ {			\
+	     match($$2, "[-_a-zA-Z0-9]+");			\
+	     name = substr($$2, RSTART, RLENGTH);		\
+	     print name;					\
+	     exit 0;						\
+	}' ${X11SRCDIR.${XORG_PKG_VER_PROG}}/configure
+.if !empty(XORG_PKG_RELEASE_DATE)
+CPPFLAGS+=	-DRELEASE_DATE=\"${XORG_PKG_RELEASE_DATE:Q}\"
 .endif
 
 .endif

@@ -1,12 +1,10 @@
-#	$NetBSD: Makefile,v 1.9 2016/08/04 17:07:24 christos Exp $
+#	$NetBSD: Makefile,v 1.9.12.1 2018/06/25 07:25:24 pgoyette Exp $
 
-# $FreeBSD: src/cddl/lib/libctf/Makefile,v 1.2.2.1 2009/08/03 08:13:06 kensmith Exp $
+# $FreeBSD: head/cddl/lib/libctf/Makefile 314654 2017-03-04 11:30:04Z ngie $
 
 .include <bsd.init.mk>
 
 LIB=		ctf
-MAN=		ctf.5
-
 SRCS=		ctf_create.c \
 		ctf_decl.c \
 		ctf_error.c \
@@ -18,6 +16,7 @@ SRCS=		ctf_create.c \
 		ctf_subr.c \
 		ctf_types.c \
 		ctf_util.c
+MAN=		ctf.5
 
 .PATH:		${.CURDIR}/../../dist/common/ctf
 .PATH:		${.CURDIR}/../../dist/lib/libctf/common

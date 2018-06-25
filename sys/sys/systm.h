@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.275 2018/02/04 17:31:51 maxv Exp $	*/
+/*	$NetBSD: systm.h,v 1.275.2.1 2018/06/25 07:26:08 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -267,6 +267,7 @@ typedef int	(*copyout_t)(const void *, void *, size_t);
 
 int	copyin_proc(struct proc *, const void *, void *, size_t);
 int	copyout_proc(struct proc *, const void *, void *, size_t);
+int	copyin_pid(pid_t, const void *, void *, size_t);
 int	copyin_vmspace(struct vmspace *, const void *, void *, size_t);
 int	copyout_vmspace(struct vmspace *, const void *, void *, size_t);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: qe.c,v 1.67 2016/12/15 09:28:06 ozaki-r Exp $	*/
+/*	$NetBSD: qe.c,v 1.67.14.1 2018/06/25 07:26:01 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.67 2016/12/15 09:28:06 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.67.14.1 2018/06/25 07:26:01 pgoyette Exp $");
 
 #define QEDEBUG
 
@@ -90,6 +90,7 @@ __KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.67 2016/12/15 09:28:06 ozaki-r Exp $");
 #include <net/netisr.h>
 #include <net/if_media.h>
 #include <net/if_ether.h>
+#include <net/bpf.h>
 
 #ifdef INET
 #include <netinet/in.h>
@@ -98,10 +99,6 @@ __KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.67 2016/12/15 09:28:06 ozaki-r Exp $");
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
 #endif
-
-
-#include <net/bpf.h>
-#include <net/bpfdesc.h>
 
 #include <sys/bus.h>
 #include <sys/intr.h>

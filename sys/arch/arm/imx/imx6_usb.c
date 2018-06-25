@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_usb.c,v 1.2.4.1 2018/03/22 01:44:42 pgoyette Exp $	*/
+/*	$NetBSD: imx6_usb.c,v 1.2.4.2 2018/06/25 07:25:39 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2012  Genetec Corporation.  All rights reserved.
@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_usb.c,v 1.2.4.1 2018/03/22 01:44:42 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_usb.c,v 1.2.4.2 2018/06/25 07:25:39 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,7 +72,7 @@ imxusbc_attach_common(device_t parent, device_t self, bus_space_tag_t iot)
 
 	/* USBOH3 clock enable */
 	v = imx6_ccm_read(CCM_CCGR6);
-	imx6_ccm_write(CCM_CCGR6, v | CCM_CCGR6_USBOH3_CLK_ENABLE(3));
+	imx6_ccm_write(CCM_CCGR6, v | __SHIFTIN(3, CCM_CCGR6_USBOH3_CLK_ENABLE));
 
 	/* attach OTG/EHCI host controllers */
 	config_search_ia(imxusbc_search, self, "imxusbc", NULL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: intrctl_io.c,v 1.3 2016/08/05 06:58:55 knakahara Exp $	*/
+/*	$NetBSD: intrctl_io.c,v 1.3.12.1 2018/06/25 07:26:12 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: intrctl_io.c,v 1.3 2016/08/05 06:58:55 knakahara Exp $");
+__RCSID("$NetBSD: intrctl_io.c,v 1.3.12.1 2018/06/25 07:26:12 pgoyette Exp $");
 
 #include <sys/sysctl.h>
 #include <sys/intrio.h>
@@ -108,8 +108,15 @@ struct intrio_list_line *
 intrctl_io_firstline(void *handle)
 {
 	struct intrio_list *list = handle;
+	struct intrio_list_line *next;
+	char *buf_end;
 
-	return (struct intrio_list_line *)((char *)list + list->il_lineoffset);
+	buf_end = (char *)list + list->il_bufsize;
+	next = (struct intrio_list_line *)((char *)list + list->il_lineoffset);
+	if ((char *)next >= buf_end)
+		return NULL;
+
+	return next;
 }
 
 struct intrio_list_line *

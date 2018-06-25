@@ -1,4 +1,4 @@
-/*	$NetBSD: dnlc.h,v 1.3 2010/02/21 01:46:35 darran Exp $	*/
+/*	$NetBSD: dnlc.h,v 1.3.44.1 2018/06/25 07:25:26 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007 Pawel Jakub Dawidek <pjd@FreeBSD.org>
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/compat/opensolaris/sys/dnlc.h,v 1.2 2007/05/24 13:44:45 pjd Exp $
+ * $FreeBSD: head/sys/cddl/compat/opensolaris/sys/dnlc.h 301997 2016-06-17 17:34:28Z kib $
  */
 
 #ifndef _OPENSOLARIS_SYS_DNLC_H_

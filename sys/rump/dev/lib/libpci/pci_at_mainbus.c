@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_at_mainbus.c,v 1.7 2016/01/26 23:12:15 pooka Exp $	*/
+/*	$NetBSD: pci_at_mainbus.c,v 1.7.16.1 2018/06/25 07:26:07 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_at_mainbus.c,v 1.7 2016/01/26 23:12:15 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_at_mainbus.c,v 1.7.16.1 2018/06/25 07:26:07 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -81,7 +81,7 @@ RUMP_COMPONENT(RUMP_COMPONENT_DEV_AFTERMAINBUS)
 	pba.pba_dmat64 = (void *)0x40;
 #endif
 	pba.pba_flags = PCI_FLAGS_MEM_OKAY |
-	    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY | PCI_FLAGS_MWI_OKAY;;
+	    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY | PCI_FLAGS_MWI_OKAY;
 
 #ifdef RUMPCOMP_USERFEATURE_PCI_IOSPACE
 	int error;

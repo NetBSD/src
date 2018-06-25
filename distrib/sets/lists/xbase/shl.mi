@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.79.2.1 2018/03/15 09:11:54 pgoyette Exp $
+# $NetBSD: shl.mi,v 1.79.2.2 2018/06/25 07:25:10 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -181,7 +181,7 @@
 ./usr/X11R7/lib/libfontenc.so.2.0		-unknown-		xorg,compatx11file
 ./usr/X11R7/lib/libfreetype.so			-unknown-		xorg,compatx11file
 ./usr/X11R7/lib/libfreetype.so.18		-unknown-		xorg,compatx11file
-./usr/X11R7/lib/libfreetype.so.18.0.13		-unknown-		xorg,compatx11file
+./usr/X11R7/lib/libfreetype.so.18.16.1		-unknown-		xorg,compatx11file
 ./usr/X11R7/lib/libgbm.so			-unknown-		xorg,compatx11file
 ./usr/X11R7/lib/libgbm.so.1			-unknown-		xorg,compatx11file
 ./usr/X11R7/lib/libgbm.so.1.0			-unknown-		xorg,compatx11file

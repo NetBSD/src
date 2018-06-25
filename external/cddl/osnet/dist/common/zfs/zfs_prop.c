@@ -19,9 +19,14 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2010 Sun Microsystems, Inc.  All rights reserved.
- * Use is subject to license terms.
+ * Copyright (c) 2005, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2014 by Delphix. All rights reserved.
+ * Copyright (c) 2013 by Saso Kiselkov. All rights reserved.
+ * Copyright (c) 2013, Joyent, Inc. All rights reserved.
+ * Copyright (c) 2014 Integros [integros.com]
  */
+
+/* Portions Copyright 2010 Robert Milkowski */
 
 #include <sys/zio.h>
 #include <sys/spa.h>
@@ -66,6 +71,14 @@ zfs_prop_init(void)
 		{ "fletcher2",	ZIO_CHECKSUM_FLETCHER_2 },
 		{ "fletcher4",	ZIO_CHECKSUM_FLETCHER_4 },
 		{ "sha256",	ZIO_CHECKSUM_SHA256 },
+		{ "noparity",	ZIO_CHECKSUM_NOPARITY },
+#ifndef __NetBSD__
+		{ "sha512",	ZIO_CHECKSUM_SHA512 },
+		{ "skein",	ZIO_CHECKSUM_SKEIN },
+#endif
+#ifdef illumos
+		{ "edonr",	ZIO_CHECKSUM_EDONR },
+#endif
 		{ NULL }
 	};
 
@@ -76,6 +89,18 @@ zfs_prop_init(void)
 		{ "sha256",	ZIO_CHECKSUM_SHA256 },
 		{ "sha256,verify",
 				ZIO_CHECKSUM_SHA256 | ZIO_CHECKSUM_VERIFY },
+#ifndef __NetBSD__
+		{ "sha512",	ZIO_CHECKSUM_SHA512 },
+		{ "sha512,verify",
+				ZIO_CHECKSUM_SHA512 | ZIO_CHECKSUM_VERIFY },
+		{ "skein",	ZIO_CHECKSUM_SKEIN },
+		{ "skein,verify",
+				ZIO_CHECKSUM_SKEIN | ZIO_CHECKSUM_VERIFY },
+#endif
+#ifdef illumos
+		{ "edonr,verify",
+				ZIO_CHECKSUM_EDONR | ZIO_CHECKSUM_VERIFY },
+#endif
 		{ NULL }
 	};
 
@@ -94,6 +119,7 @@ zfs_prop_init(void)
 		{ "gzip-8",	ZIO_COMPRESS_GZIP_8 },
 		{ "gzip-9",	ZIO_COMPRESS_GZIP_9 },
 		{ "zle",	ZIO_COMPRESS_ZLE },
+		{ "lz4",	ZIO_COMPRESS_LZ4 },
 		{ NULL }
 	};
 
@@ -107,6 +133,7 @@ zfs_prop_init(void)
 		{ "discard",	ZFS_ACL_DISCARD },
 		{ "groupmask",	ZFS_ACL_GROUPMASK },
 		{ "passthrough", ZFS_ACL_PASSTHROUGH },
+		{ "restricted", ZFS_ACL_RESTRICTED },
 		{ NULL }
 	};
 
@@ -153,6 +180,7 @@ zfs_prop_init(void)
 		{ "2",		2 },
 		{ "3",		3 },
 		{ "4",		4 },
+		{ "5",		5 },
 		{ "current",	ZPL_VERSION },
 		{ NULL }
 	};
@@ -183,185 +211,260 @@ zfs_prop_init(void)
 		{ NULL }
 	};
 
+	static zprop_index_t sync_table[] = {
+		{ "standard",	ZFS_SYNC_STANDARD },
+		{ "always",	ZFS_SYNC_ALWAYS },
+		{ "disabled",	ZFS_SYNC_DISABLED },
+		{ NULL }
+	};
+
+	static zprop_index_t volmode_table[] = {
+		{ "default",	ZFS_VOLMODE_DEFAULT },
+		{ "geom",	ZFS_VOLMODE_GEOM },
+		{ "dev",	ZFS_VOLMODE_DEV },
+		{ "none",	ZFS_VOLMODE_NONE },
+		{ NULL }
+	};
+
+	static zprop_index_t redundant_metadata_table[] = {
+		{ "all",	ZFS_REDUNDANT_METADATA_ALL },
+		{ "most",	ZFS_REDUNDANT_METADATA_MOST },
+		{ NULL }
+	};
+
 	/* inherit index properties */
-	register_index(ZFS_PROP_CHECKSUM, "checksum", ZIO_CHECKSUM_DEFAULT,
+	zprop_register_index(ZFS_PROP_REDUNDANT_METADATA, "redundant_metadata",
+	    ZFS_REDUNDANT_METADATA_ALL,
 	    PROP_INHERIT, ZFS_TYPE_FILESYSTEM | ZFS_TYPE_VOLUME,
-	    "on | off | fletcher2 | fletcher4 | sha256", "CHECKSUM",
-	    checksum_table);
-	register_index(ZFS_PROP_DEDUP, "dedup", ZIO_CHECKSUM_OFF,
+	    "all | most", "REDUND_MD",
+	    redundant_metadata_table);
+	zprop_register_index(ZFS_PROP_SYNC, "sync", ZFS_SYNC_STANDARD,
 	    PROP_INHERIT, ZFS_TYPE_FILESYSTEM | ZFS_TYPE_VOLUME,
-	    "on | off | verify | sha256[,verify]", "DEDUP",
-	    dedup_table);
-	register_index(ZFS_PROP_COMPRESSION, "compression",
+	    "standard | always | disabled", "SYNC",
+	    sync_table);
+	zprop_register_index(ZFS_PROP_CHECKSUM, "checksum",
+	    ZIO_CHECKSUM_DEFAULT, PROP_INHERIT, ZFS_TYPE_FILESYSTEM |
+	    ZFS_TYPE_VOLUME,
+	    "on | off | fletcher2 | fletcher4 | sha256 | sha512 | "
+	    "skein | edonr", "CHECKSUM", checksum_table);
+	zprop_register_index(ZFS_PROP_DEDUP, "dedup", ZIO_CHECKSUM_OFF,
+	    PROP_INHERIT, ZFS_TYPE_FILESYSTEM | ZFS_TYPE_VOLUME,
+	    "on | off | verify | sha256[,verify], sha512[,verify], "
+	    "skein[,verify], edonr,verify", "DEDUP", dedup_table);
+	zprop_register_index(ZFS_PROP_COMPRESSION, "compression",
 	    ZIO_COMPRESS_DEFAULT, PROP_INHERIT,
 	    ZFS_TYPE_FILESYSTEM | ZFS_TYPE_VOLUME,
-	    "on | off | lzjb | gzip | gzip-[1-9] | zle", "COMPRESS",
-	    compress_table);
-	register_index(ZFS_PROP_SNAPDIR, "snapdir", ZFS_SNAPDIR_HIDDEN,
+	    "on | off | lzjb | gzip | gzip-[1-9] | zle | lz4",
+	    "COMPRESS", compress_table);
+	zprop_register_index(ZFS_PROP_SNAPDIR, "snapdir", ZFS_SNAPDIR_HIDDEN,
 	    PROP_INHERIT, ZFS_TYPE_FILESYSTEM,
 	    "hidden | visible", "SNAPDIR", snapdir_table);
-	register_index(ZFS_PROP_ACLMODE, "aclmode", ZFS_ACL_GROUPMASK,
+	zprop_register_index(ZFS_PROP_ACLMODE, "aclmode", ZFS_ACL_DISCARD,
 	    PROP_INHERIT, ZFS_TYPE_FILESYSTEM,
-	    "discard | groupmask | passthrough", "ACLMODE", acl_mode_table);
-	register_index(ZFS_PROP_ACLINHERIT, "aclinherit", ZFS_ACL_RESTRICTED,
-	    PROP_INHERIT, ZFS_TYPE_FILESYSTEM,
+	    "discard | groupmask | passthrough | restricted", "ACLMODE",
+	    acl_mode_table);
+	zprop_register_index(ZFS_PROP_ACLINHERIT, "aclinherit",
+	    ZFS_ACL_RESTRICTED, PROP_INHERIT, ZFS_TYPE_FILESYSTEM,
 	    "discard | noallow | restricted | passthrough | passthrough-x",
 	    "ACLINHERIT", acl_inherit_table);
-	register_index(ZFS_PROP_COPIES, "copies", 1,
-	    PROP_INHERIT, ZFS_TYPE_FILESYSTEM | ZFS_TYPE_VOLUME,
+	zprop_register_index(ZFS_PROP_COPIES, "copies", 1, PROP_INHERIT,
+	    ZFS_TYPE_FILESYSTEM | ZFS_TYPE_VOLUME,
 	    "1 | 2 | 3", "COPIES", copies_table);
-	register_index(ZFS_PROP_PRIMARYCACHE, "primarycache",
+	zprop_register_index(ZFS_PROP_PRIMARYCACHE, "primarycache",
 	    ZFS_CACHE_ALL, PROP_INHERIT,
 	    ZFS_TYPE_FILESYSTEM | ZFS_TYPE_SNAPSHOT | ZFS_TYPE_VOLUME,
 	    "all | none | metadata", "PRIMARYCACHE", cache_table);
-	register_index(ZFS_PROP_SECONDARYCACHE, "secondarycache",
+	zprop_register_index(ZFS_PROP_SECONDARYCACHE, "secondarycache",
 	    ZFS_CACHE_ALL, PROP_INHERIT,
 	    ZFS_TYPE_FILESYSTEM | ZFS_TYPE_SNAPSHOT | ZFS_TYPE_VOLUME,
 	    "all | none | metadata", "SECONDARYCACHE", cache_table);
-	register_index(ZFS_PROP_LOGBIAS, "logbias", ZFS_LOGBIAS_LATENCY,
+	zprop_register_index(ZFS_PROP_LOGBIAS, "logbias", ZFS_LOGBIAS_LATENCY,
 	    PROP_INHERIT, ZFS_TYPE_FILESYSTEM | ZFS_TYPE_VOLUME,
 	    "latency | throughput", "LOGBIAS", logbias_table);
+	zprop_register_index(ZFS_PROP_VOLMODE, "volmode",
+	    ZFS_VOLMODE_DEFAULT, PROP_INHERIT,
+	    ZFS_TYPE_FILESYSTEM | ZFS_TYPE_SNAPSHOT | ZFS_TYPE_VOLUME,
+	    "default | geom | dev | none", "VOLMODE", volmode_table);
 
 	/* inherit index (boolean) properties */
-	register_index(ZFS_PROP_ATIME, "atime", 1, PROP_INHERIT,
+	zprop_register_index(ZFS_PROP_ATIME, "atime", 1, PROP_INHERIT,
 	    ZFS_TYPE_FILESYSTEM, "on | off", "ATIME", boolean_table);
-	register_index(ZFS_PROP_DEVICES, "devices", 1, PROP_INHERIT,
+	zprop_register_index(ZFS_PROP_DEVICES, "devices", 1, PROP_INHERIT,
 	    ZFS_TYPE_FILESYSTEM | ZFS_TYPE_SNAPSHOT, "on | off", "DEVICES",
 	    boolean_table);
-	register_index(ZFS_PROP_EXEC, "exec", 1, PROP_INHERIT,
+	zprop_register_index(ZFS_PROP_EXEC, "exec", 1, PROP_INHERIT,
 	    ZFS_TYPE_FILESYSTEM | ZFS_TYPE_SNAPSHOT, "on | off", "EXEC",
 	    boolean_table);
-	register_index(ZFS_PROP_SETUID, "setuid", 1, PROP_INHERIT,
+	zprop_register_index(ZFS_PROP_SETUID, "setuid", 1, PROP_INHERIT,
 	    ZFS_TYPE_FILESYSTEM | ZFS_TYPE_SNAPSHOT, "on | off", "SETUID",
 	    boolean_table);
-	register_index(ZFS_PROP_READONLY, "readonly", 0, PROP_INHERIT,
+	zprop_register_index(ZFS_PROP_READONLY, "readonly", 0, PROP_INHERIT,
 	    ZFS_TYPE_FILESYSTEM | ZFS_TYPE_VOLUME, "on | off", "RDONLY",
 	    boolean_table);
-	register_index(ZFS_PROP_ZONED, "zoned", 0, PROP_INHERIT,
-	    ZFS_TYPE_FILESYSTEM, "on | off", "ZONED", boolean_table);
-	register_index(ZFS_PROP_XATTR, "xattr", 1, PROP_INHERIT,
+	zprop_register_index(ZFS_PROP_ZONED, "jailed", 0, PROP_INHERIT,
+	    ZFS_TYPE_FILESYSTEM, "on | off", "JAILED", boolean_table);
+	zprop_register_index(ZFS_PROP_XATTR, "xattr", 1, PROP_INHERIT,
 	    ZFS_TYPE_FILESYSTEM | ZFS_TYPE_SNAPSHOT, "on | off", "XATTR",
 	    boolean_table);
-	register_index(ZFS_PROP_VSCAN, "vscan", 0, PROP_INHERIT,
+	zprop_register_index(ZFS_PROP_VSCAN, "vscan", 0, PROP_INHERIT,
 	    ZFS_TYPE_FILESYSTEM, "on | off", "VSCAN",
 	    boolean_table);
-	register_index(ZFS_PROP_NBMAND, "nbmand", 0, PROP_INHERIT,
+	zprop_register_index(ZFS_PROP_NBMAND, "nbmand", 0, PROP_INHERIT,
 	    ZFS_TYPE_FILESYSTEM | ZFS_TYPE_SNAPSHOT, "on | off", "NBMAND",
 	    boolean_table);
 
 	/* default index properties */
-	register_index(ZFS_PROP_VERSION, "version", 0, PROP_DEFAULT,
+	zprop_register_index(ZFS_PROP_VERSION, "version", 0, PROP_DEFAULT,
 	    ZFS_TYPE_FILESYSTEM | ZFS_TYPE_SNAPSHOT,
-	    "1 | 2 | 3 | 4 | current", "VERSION", version_table);
-	register_index(ZFS_PROP_CANMOUNT, "canmount", ZFS_CANMOUNT_ON,
+	    "1 | 2 | 3 | 4 | 5 | current", "VERSION", version_table);
+	zprop_register_index(ZFS_PROP_CANMOUNT, "canmount", ZFS_CANMOUNT_ON,
 	    PROP_DEFAULT, ZFS_TYPE_FILESYSTEM, "on | off | noauto",
 	    "CANMOUNT", canmount_table);
 
 	/* readonly index (boolean) properties */
-	register_index(ZFS_PROP_MOUNTED, "mounted", 0, PROP_READONLY,
+	zprop_register_index(ZFS_PROP_MOUNTED, "mounted", 0, PROP_READONLY,
 	    ZFS_TYPE_FILESYSTEM, "yes | no", "MOUNTED", boolean_table);
-	register_index(ZFS_PROP_DEFER_DESTROY, "defer_destroy", 0,
+	zprop_register_index(ZFS_PROP_DEFER_DESTROY, "defer_destroy", 0,
 	    PROP_READONLY, ZFS_TYPE_SNAPSHOT, "yes | no", "DEFER_DESTROY",
 	    boolean_table);
 
 	/* set once index properties */
-	register_index(ZFS_PROP_NORMALIZE, "normalization", 0,
+	zprop_register_index(ZFS_PROP_NORMALIZE, "normalization", 0,
 	    PROP_ONETIME, ZFS_TYPE_FILESYSTEM | ZFS_TYPE_SNAPSHOT,
 	    "none | formC | formD | formKC | formKD", "NORMALIZATION",
 	    normalize_table);
-	register_index(ZFS_PROP_CASE, "casesensitivity", ZFS_CASE_SENSITIVE,
-	    PROP_ONETIME, ZFS_TYPE_FILESYSTEM | ZFS_TYPE_SNAPSHOT,
+	zprop_register_index(ZFS_PROP_CASE, "casesensitivity",
+	    ZFS_CASE_SENSITIVE, PROP_ONETIME, ZFS_TYPE_FILESYSTEM |
+	    ZFS_TYPE_SNAPSHOT,
 	    "sensitive | insensitive | mixed", "CASE", case_table);
 
 	/* set once index (boolean) properties */
-	register_index(ZFS_PROP_UTF8ONLY, "utf8only", 0, PROP_ONETIME,
+	zprop_register_index(ZFS_PROP_UTF8ONLY, "utf8only", 0, PROP_ONETIME,
 	    ZFS_TYPE_FILESYSTEM | ZFS_TYPE_SNAPSHOT,
 	    "on | off", "UTF8ONLY", boolean_table);
 
 	/* string properties */
-	register_string(ZFS_PROP_ORIGIN, "origin", NULL, PROP_READONLY,
+	zprop_register_string(ZFS_PROP_ORIGIN, "origin", NULL, PROP_READONLY,
 	    ZFS_TYPE_FILESYSTEM | ZFS_TYPE_VOLUME, "<snapshot>", "ORIGIN");
-	register_string(ZFS_PROP_MOUNTPOINT, "mountpoint", "/", PROP_INHERIT,
-	    ZFS_TYPE_FILESYSTEM, "<path> | legacy | none", "MOUNTPOINT");
-	register_string(ZFS_PROP_SHARENFS, "sharenfs", "off", PROP_INHERIT,
-	    ZFS_TYPE_FILESYSTEM, "on | off | share(1M) options", "SHARENFS");
-	register_string(ZFS_PROP_SHAREISCSI, "shareiscsi", "off", PROP_INHERIT,
-	    ZFS_TYPE_DATASET, "on | off | type=<type>", "SHAREISCSI");
-	register_string(ZFS_PROP_TYPE, "type", NULL, PROP_READONLY,
-	    ZFS_TYPE_DATASET, "filesystem | volume | snapshot", "TYPE");
-	register_string(ZFS_PROP_SHARESMB, "sharesmb", "off", PROP_INHERIT,
-	    ZFS_TYPE_FILESYSTEM, "on | off | sharemgr(1M) options", "SHARESMB");
-	register_string(ZFS_PROP_MLSLABEL, "mlslabel", ZFS_MLSLABEL_DEFAULT,
-	    PROP_INHERIT, ZFS_TYPE_DATASET, "<sensitivity label>", "MLSLABEL");
+	zprop_register_string(ZFS_PROP_CLONES, "clones", NULL, PROP_READONLY,
+	    ZFS_TYPE_SNAPSHOT, "<dataset>[,...]", "CLONES");
+	zprop_register_string(ZFS_PROP_MOUNTPOINT, "mountpoint", "/",
+	    PROP_INHERIT, ZFS_TYPE_FILESYSTEM, "<path> | legacy | none",
+	    "MOUNTPOINT");
+	zprop_register_string(ZFS_PROP_SHARENFS, "sharenfs", "off",
+	    PROP_INHERIT, ZFS_TYPE_FILESYSTEM, "on | off | share(1M) options",
+	    "SHARENFS");
+	zprop_register_string(ZFS_PROP_TYPE, "type", NULL, PROP_READONLY,
+	    ZFS_TYPE_DATASET | ZFS_TYPE_BOOKMARK,
+	    "filesystem | volume | snapshot | bookmark", "TYPE");
+	zprop_register_string(ZFS_PROP_SHARESMB, "sharesmb", "off",
+	    PROP_INHERIT, ZFS_TYPE_FILESYSTEM,
+	    "on | off | sharemgr(1M) options", "SHARESMB");
+	zprop_register_string(ZFS_PROP_MLSLABEL, "mlslabel",
+	    ZFS_MLSLABEL_DEFAULT, PROP_INHERIT, ZFS_TYPE_DATASET,
+	    "<sensitivity label>", "MLSLABEL");
+	zprop_register_string(ZFS_PROP_RECEIVE_RESUME_TOKEN,
+	    "receive_resume_token",
+	    NULL, PROP_READONLY, ZFS_TYPE_FILESYSTEM | ZFS_TYPE_VOLUME,
+	    "<string token>", "RESUMETOK");
 
 	/* readonly number properties */
-	register_number(ZFS_PROP_USED, "used", 0, PROP_READONLY,
+	zprop_register_number(ZFS_PROP_USED, "used", 0, PROP_READONLY,
 	    ZFS_TYPE_DATASET, "<size>", "USED");
-	register_number(ZFS_PROP_AVAILABLE, "available", 0, PROP_READONLY,
+	zprop_register_number(ZFS_PROP_AVAILABLE, "available", 0, PROP_READONLY,
 	    ZFS_TYPE_FILESYSTEM | ZFS_TYPE_VOLUME, "<size>", "AVAIL");
-	register_number(ZFS_PROP_REFERENCED, "referenced", 0, PROP_READONLY,
-	    ZFS_TYPE_DATASET, "<size>", "REFER");
-	register_number(ZFS_PROP_COMPRESSRATIO, "compressratio", 0,
+	zprop_register_number(ZFS_PROP_REFERENCED, "referenced", 0,
+	    PROP_READONLY, ZFS_TYPE_DATASET, "<size>", "REFER");
+	zprop_register_number(ZFS_PROP_COMPRESSRATIO, "compressratio", 0,
 	    PROP_READONLY, ZFS_TYPE_DATASET,
 	    "<1.00x or higher if compressed>", "RATIO");
-	register_number(ZFS_PROP_VOLBLOCKSIZE, "volblocksize",
+	zprop_register_number(ZFS_PROP_REFRATIO, "refcompressratio", 0,
+	    PROP_READONLY, ZFS_TYPE_DATASET,
+	    "<1.00x or higher if compressed>", "REFRATIO");
+	zprop_register_number(ZFS_PROP_VOLBLOCKSIZE, "volblocksize",
 	    ZVOL_DEFAULT_BLOCKSIZE, PROP_ONETIME,
 	    ZFS_TYPE_VOLUME, "512 to 128k, power of 2",	"VOLBLOCK");
-	register_number(ZFS_PROP_USEDSNAP, "usedbysnapshots", 0, PROP_READONLY,
-	    ZFS_TYPE_FILESYSTEM | ZFS_TYPE_VOLUME, "<size>", "USEDSNAP");
-	register_number(ZFS_PROP_USEDDS, "usedbydataset", 0, PROP_READONLY,
-	    ZFS_TYPE_FILESYSTEM | ZFS_TYPE_VOLUME, "<size>", "USEDDS");
-	register_number(ZFS_PROP_USEDCHILD, "usedbychildren", 0, PROP_READONLY,
-	    ZFS_TYPE_FILESYSTEM | ZFS_TYPE_VOLUME, "<size>", "USEDCHILD");
-	register_number(ZFS_PROP_USEDREFRESERV, "usedbyrefreservation", 0,
+	zprop_register_number(ZFS_PROP_USEDSNAP, "usedbysnapshots", 0,
+	    PROP_READONLY, ZFS_TYPE_FILESYSTEM | ZFS_TYPE_VOLUME, "<size>",
+	    "USEDSNAP");
+	zprop_register_number(ZFS_PROP_USEDDS, "usedbydataset", 0,
+	    PROP_READONLY, ZFS_TYPE_FILESYSTEM | ZFS_TYPE_VOLUME, "<size>",
+	    "USEDDS");
+	zprop_register_number(ZFS_PROP_USEDCHILD, "usedbychildren", 0,
+	    PROP_READONLY, ZFS_TYPE_FILESYSTEM | ZFS_TYPE_VOLUME, "<size>",
+	    "USEDCHILD");
+	zprop_register_number(ZFS_PROP_USEDREFRESERV, "usedbyrefreservation", 0,
 	    PROP_READONLY,
 	    ZFS_TYPE_FILESYSTEM | ZFS_TYPE_VOLUME, "<size>", "USEDREFRESERV");
-	register_number(ZFS_PROP_USERREFS, "userrefs", 0, PROP_READONLY,
+	zprop_register_number(ZFS_PROP_USERREFS, "userrefs", 0, PROP_READONLY,
 	    ZFS_TYPE_SNAPSHOT, "<count>", "USERREFS");
+	zprop_register_number(ZFS_PROP_WRITTEN, "written", 0, PROP_READONLY,
+	    ZFS_TYPE_DATASET, "<size>", "WRITTEN");
+	zprop_register_number(ZFS_PROP_LOGICALUSED, "logicalused", 0,
+	    PROP_READONLY, ZFS_TYPE_DATASET, "<size>", "LUSED");
+	zprop_register_number(ZFS_PROP_LOGICALREFERENCED, "logicalreferenced",
+	    0, PROP_READONLY, ZFS_TYPE_DATASET, "<size>", "LREFER");
 
 	/* default number properties */
-	register_number(ZFS_PROP_QUOTA, "quota", 0, PROP_DEFAULT,
+	zprop_register_number(ZFS_PROP_QUOTA, "quota", 0, PROP_DEFAULT,
 	    ZFS_TYPE_FILESYSTEM, "<size> | none", "QUOTA");
-	register_number(ZFS_PROP_RESERVATION, "reservation", 0, PROP_DEFAULT,
-	    ZFS_TYPE_FILESYSTEM | ZFS_TYPE_VOLUME, "<size> | none", "RESERV");
-	register_number(ZFS_PROP_VOLSIZE, "volsize", 0, PROP_DEFAULT,
+	zprop_register_number(ZFS_PROP_RESERVATION, "reservation", 0,
+	    PROP_DEFAULT, ZFS_TYPE_FILESYSTEM | ZFS_TYPE_VOLUME,
+	    "<size> | none", "RESERV");
+	zprop_register_number(ZFS_PROP_VOLSIZE, "volsize", 0, PROP_DEFAULT,
 	    ZFS_TYPE_VOLUME, "<size>", "VOLSIZE");
-	register_number(ZFS_PROP_REFQUOTA, "refquota", 0, PROP_DEFAULT,
+	zprop_register_number(ZFS_PROP_REFQUOTA, "refquota", 0, PROP_DEFAULT,
 	    ZFS_TYPE_FILESYSTEM, "<size> | none", "REFQUOTA");
-	register_number(ZFS_PROP_REFRESERVATION, "refreservation", 0,
+	zprop_register_number(ZFS_PROP_REFRESERVATION, "refreservation", 0,
 	    PROP_DEFAULT, ZFS_TYPE_FILESYSTEM | ZFS_TYPE_VOLUME,
 	    "<size> | none", "REFRESERV");
+	zprop_register_number(ZFS_PROP_FILESYSTEM_LIMIT, "filesystem_limit",
+	    UINT64_MAX, PROP_DEFAULT, ZFS_TYPE_FILESYSTEM,
+	    "<count> | none", "FSLIMIT");
+	zprop_register_number(ZFS_PROP_SNAPSHOT_LIMIT, "snapshot_limit",
+	    UINT64_MAX, PROP_DEFAULT, ZFS_TYPE_FILESYSTEM | ZFS_TYPE_VOLUME,
+	    "<count> | none", "SSLIMIT");
+	zprop_register_number(ZFS_PROP_FILESYSTEM_COUNT, "filesystem_count",
+	    UINT64_MAX, PROP_DEFAULT, ZFS_TYPE_FILESYSTEM,
+	    "<count>", "FSCOUNT");
+	zprop_register_number(ZFS_PROP_SNAPSHOT_COUNT, "snapshot_count",
+	    UINT64_MAX, PROP_DEFAULT, ZFS_TYPE_FILESYSTEM | ZFS_TYPE_VOLUME,
+	    "<count>", "SSCOUNT");
 
 	/* inherit number properties */
-	register_number(ZFS_PROP_RECORDSIZE, "recordsize", SPA_MAXBLOCKSIZE,
-	    PROP_INHERIT,
-	    ZFS_TYPE_FILESYSTEM, "512 to 128k, power of 2", "RECSIZE");
+	zprop_register_number(ZFS_PROP_RECORDSIZE, "recordsize",
+	    SPA_OLD_MAXBLOCKSIZE, PROP_INHERIT,
+	    ZFS_TYPE_FILESYSTEM, "512 to 1M, power of 2", "RECSIZE");
 
 	/* hidden properties */
-	register_hidden(ZFS_PROP_CREATETXG, "createtxg", PROP_TYPE_NUMBER,
-	    PROP_READONLY, ZFS_TYPE_DATASET, "CREATETXG");
-	register_hidden(ZFS_PROP_NUMCLONES, "numclones", PROP_TYPE_NUMBER,
+	zprop_register_hidden(ZFS_PROP_CREATETXG, "createtxg", PROP_TYPE_NUMBER,
+	    PROP_READONLY, ZFS_TYPE_DATASET | ZFS_TYPE_BOOKMARK, "CREATETXG");
+	zprop_register_hidden(ZFS_PROP_NUMCLONES, "numclones", PROP_TYPE_NUMBER,
 	    PROP_READONLY, ZFS_TYPE_SNAPSHOT, "NUMCLONES");
-	register_hidden(ZFS_PROP_NAME, "name", PROP_TYPE_STRING,
-	    PROP_READONLY, ZFS_TYPE_DATASET, "NAME");
-	register_hidden(ZFS_PROP_ISCSIOPTIONS, "iscsioptions", PROP_TYPE_STRING,
-	    PROP_INHERIT, ZFS_TYPE_VOLUME, "ISCSIOPTIONS");
-	register_hidden(ZFS_PROP_STMF_SHAREINFO, "stmf_sbd_lu",
+	zprop_register_hidden(ZFS_PROP_NAME, "name", PROP_TYPE_STRING,
+	    PROP_READONLY, ZFS_TYPE_DATASET | ZFS_TYPE_BOOKMARK, "NAME");
+	zprop_register_hidden(ZFS_PROP_ISCSIOPTIONS, "iscsioptions",
+	    PROP_TYPE_STRING, PROP_INHERIT, ZFS_TYPE_VOLUME, "ISCSIOPTIONS");
+	zprop_register_hidden(ZFS_PROP_STMF_SHAREINFO, "stmf_sbd_lu",
 	    PROP_TYPE_STRING, PROP_INHERIT, ZFS_TYPE_VOLUME,
 	    "STMF_SBD_LU");
-	register_hidden(ZFS_PROP_GUID, "guid", PROP_TYPE_NUMBER, PROP_READONLY,
-	    ZFS_TYPE_DATASET, "GUID");
-	register_hidden(ZFS_PROP_USERACCOUNTING, "useraccounting",
+	zprop_register_hidden(ZFS_PROP_GUID, "guid", PROP_TYPE_NUMBER,
+	    PROP_READONLY, ZFS_TYPE_DATASET | ZFS_TYPE_BOOKMARK, "GUID");
+	zprop_register_hidden(ZFS_PROP_USERACCOUNTING, "useraccounting",
 	    PROP_TYPE_NUMBER, PROP_READONLY, ZFS_TYPE_DATASET,
 	    "USERACCOUNTING");
-	register_hidden(ZFS_PROP_UNIQUE, "unique", PROP_TYPE_NUMBER,
+	zprop_register_hidden(ZFS_PROP_UNIQUE, "unique", PROP_TYPE_NUMBER,
 	    PROP_READONLY, ZFS_TYPE_DATASET, "UNIQUE");
-	register_hidden(ZFS_PROP_OBJSETID, "objsetid", PROP_TYPE_NUMBER,
+	zprop_register_hidden(ZFS_PROP_OBJSETID, "objsetid", PROP_TYPE_NUMBER,
 	    PROP_READONLY, ZFS_TYPE_DATASET, "OBJSETID");
+	zprop_register_hidden(ZFS_PROP_INCONSISTENT, "inconsistent",
+	    PROP_TYPE_NUMBER, PROP_READONLY, ZFS_TYPE_DATASET, "INCONSISTENT");
+	zprop_register_hidden(ZFS_PROP_PREV_SNAP, "prevsnap", PROP_TYPE_STRING,
+	    PROP_READONLY, ZFS_TYPE_FILESYSTEM | ZFS_TYPE_VOLUME, "PREVSNAP");
 
 	/* oddball properties */
-	register_impl(ZFS_PROP_CREATION, "creation", PROP_TYPE_NUMBER, 0, NULL,
-	    PROP_READONLY, ZFS_TYPE_DATASET,
+	zprop_register_impl(ZFS_PROP_CREATION, "creation", PROP_TYPE_NUMBER, 0,
+	    NULL, PROP_READONLY, ZFS_TYPE_DATASET | ZFS_TYPE_BOOKMARK,
 	    "<date>", "CREATION", B_FALSE, B_TRUE, NULL);
 }
 
@@ -440,6 +543,18 @@ zfs_prop_userquota(const char *name)
 	}
 
 	return (B_FALSE);
+}
+
+/*
+ * Returns true if this is a valid written@ property.
+ * Note that after the @, any character is valid (eg, another @, for
+ * written@pool/fs@origin).
+ */
+boolean_t
+zfs_prop_written(const char *name)
+{
+	static const char *prefix = "written@";
+	return (strncmp(name, prefix, strlen(prefix)) == 0);
 }
 
 /*

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.367.2.3 2018/05/21 04:35:57 pgoyette Exp $
+#	$NetBSD: bsd.README,v 1.367.2.4 2018/06/25 07:25:37 pgoyette Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -194,6 +194,14 @@ MKEXTSRC        If not "no", 'make build' also descends into either src/extsrc
 		users, and automatically enables creation of those sets.
 		Default: no
 
+MKFIRMWARE      If not "no", install the /libdata/firmware directory,
+		which is necessary for several drivers: athn(4), bwfm(4),
+		ipw(4), iwi(4), iwm(4), iwn(4), otus(4), rtwn(4), urtwn(4),
+		wpi(4), ral(4), rum(4), run(4), zyd(4), bcm43xx(4), and
+		the Tegra 124 SoC.
+		Default: yes on amd64, cobalt, evbarm evbmips, evbppc, hpcarm,
+		hppa, i386, mac68k, macppc, sandpoint, and sparc64, no elsewhere.
+
 MKGCC		If "no", don't build gcc(1) or any of the GCC-related
 		libraries (libgcc, libobjc, libstdc++).
 		Default: yes
@@ -378,6 +386,26 @@ MKREPRO         If "yes", create reproducible builds. This enables
 		different switches to make two builds from the same source tree
 		result in the same build results.
 		Default: no
+
+MKSANITIZER	if "yes", use the selected sanitizer to compile userland
+		programs as defined in USE_SANITIZER, which defaults to
+		"address". A selection of available sanitizers:
+			address:	A memory error detector (default)
+			thread:		A data race detector
+			memory:		An uninitializer read detector
+			undefined:	An undefined behavior detector
+			leak:		A memory leak detector
+			dataflow:	A general data flow analysis
+			cfi:		A control flow detector
+			safe-stack:	Protect against stack-based corruption
+			scudo:		The Scudo Hardened allocator
+		It's possible to specify multiple sanitizers within the
+		USE_SANITIZER option (comma separated) and some combinations of
+		them work. The USE_SANITIZER value is passed to the -fsanitize=
+		argument to a compiler.
+		Additional arguments can be passed through SANITIZERFLAGS.
+		The list of supported features depends on the compiler version
+		and target CPU architecture.
 
 MKSHARE		If "no", act as "MKCATPAGES=no MKDOC=no MKHTML=no MKINFO=no
 		MKMAN=no MKNLS=no".

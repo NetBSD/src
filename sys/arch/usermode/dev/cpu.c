@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.74.8.1 2018/05/21 04:36:02 pgoyette Exp $ */
+/* $NetBSD: cpu.c,v 1.74.8.2 2018/06/25 07:25:46 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_hz.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.74.8.1 2018/05/21 04:36:02 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.74.8.2 2018/06/25 07:25:46 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -65,6 +65,11 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.74.8.1 2018/05/21 04:36:02 pgoyette Exp $"
 
 static int	cpu_match(device_t, cfdata_t, void *);
 static void	cpu_attach(device_t, device_t, void *);
+
+/* XXX */
+//extern void *_lwp_getprivate(void);
+//extern int _lwp_setprivate(void *);
+
 
 struct cpu_info cpu_info_primary = {
 	.ci_dev = 0,
@@ -130,7 +135,6 @@ cpu_configure(void)
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("configure: mainbus not configured");
 
-
 	spl0();
 }
 
@@ -189,6 +193,23 @@ cpu_need_proftick(struct lwp *l)
 {
 }
 
+int
+cpu_lwp_setprivate(lwp_t *l, void *ptr)
+{
+	struct pcb *pcb = lwp_getpcb(l);
+
+	/* set both ucontexts up for TLS just in case */
+	pcb->pcb_ucp.uc_mcontext._mc_tlsbase =
+		(uintptr_t) ptr;
+	pcb->pcb_ucp.uc_flags |= _UC_TLSBASE;
+
+	pcb->pcb_userret_ucp.uc_mcontext._mc_tlsbase =
+		(uintptr_t) ptr;
+	pcb->pcb_userret_ucp.uc_flags |= _UC_TLSBASE;
+
+	return 0;
+}
+
 static
 void
 cpu_switchto_atomic(lwp_t *oldlwp, lwp_t *newlwp)
@@ -196,23 +217,29 @@ cpu_switchto_atomic(lwp_t *oldlwp, lwp_t *newlwp)
 	struct pcb *oldpcb;
 	struct pcb *newpcb;
 	struct cpu_info *ci;
+	int s;
 
 	oldpcb = oldlwp ? lwp_getpcb(oldlwp) : NULL;
 	newpcb = lwp_getpcb(newlwp);
 	ci = curcpu();
 
-	ci->ci_stash = oldlwp;
+	s = splhigh();
 
+	ci->ci_stash = oldlwp;
 	if (oldpcb)
 		oldpcb->pcb_errno = thunk_geterrno();
 
 	thunk_seterrno(newpcb->pcb_errno);
-
 	curlwp = newlwp;
+
+	splx(s);
+
 	if (thunk_setcontext(&newpcb->pcb_ucp))
 		panic("setcontext failed");
+
 	/* not reached */
 }
+
 
 lwp_t *
 cpu_switchto(lwp_t *oldlwp, lwp_t *newlwp, bool returning)
@@ -232,17 +259,23 @@ cpu_switchto(lwp_t *oldlwp, lwp_t *newlwp, bool returning)
 	    newlwp ? newlwp->l_lid : -1);
 	if (oldpcb) {
 		thunk_printf_debug("    oldpcb uc_link=%p, uc_stack.ss_sp=%p, "
-		    "uc_stack.ss_size=%d\n",
+		    "uc_stack.ss_size=%d, l_private %p, uc_mcontext._mc_tlsbase=%p(%s)\n",
 		    oldpcb->pcb_ucp.uc_link,
 		    oldpcb->pcb_ucp.uc_stack.ss_sp,
-		    (int)oldpcb->pcb_ucp.uc_stack.ss_size);
+		    (int)oldpcb->pcb_ucp.uc_stack.ss_size,
+		    (void *) oldlwp->l_private,
+		    (void *) oldpcb->pcb_ucp.uc_mcontext._mc_tlsbase,
+		    oldpcb->pcb_ucp.uc_flags & _UC_TLSBASE? "ON":"off");
 	}
 	if (newpcb) {
-		thunk_printf_debug("    newpcb uc_link=%p, uc_stack.ss_sp=%p, "
-		    "uc_stack.ss_size=%d\n",
+		thunk_printf_debug("    newpewcb uc_link=%p, uc_stack.ss_sp=%p, "
+		    "uc_stack.ss_size=%d, l_private %p, uc_mcontext._mc_tlsbase=%p(%s)\n",
 		    newpcb->pcb_ucp.uc_link,
 		    newpcb->pcb_ucp.uc_stack.ss_sp,
-		    (int)newpcb->pcb_ucp.uc_stack.ss_size);
+		    (int)newpcb->pcb_ucp.uc_stack.ss_size,
+		    (void *) newlwp->l_private,
+		    (void *) newpcb->pcb_ucp.uc_mcontext._mc_tlsbase,
+		    newpcb->pcb_ucp.uc_flags & _UC_TLSBASE? "ON":"off");
 	}
 #endif /* !CPU_DEBUG */
 
@@ -250,7 +283,6 @@ cpu_switchto(lwp_t *oldlwp, lwp_t *newlwp, bool returning)
 	KASSERT(newlwp);
 	thunk_makecontext(&sc->sc_ucp, (void (*)(void)) cpu_switchto_atomic,
 			2, oldlwp, newlwp, NULL, NULL);
-
 	KASSERT(sc);
 	if (oldpcb) {
 		thunk_swapcontext(&oldpcb->pcb_ucp, &sc->sc_ucp);
@@ -284,11 +316,16 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 {
 	struct pcb *pcb = lwp_getpcb(l);
 	ucontext_t *ucp = &pcb->pcb_userret_ucp;
-	
+
 #ifdef CPU_DEBUG
 	thunk_printf_debug("cpu_getmcontext\n");
 #endif
 	memcpy(mcp, &ucp->uc_mcontext, sizeof(mcontext_t));
+
+	/* report we have the CPU FPU and TLSBASE registers */
+	mcp->_mc_tlsbase = (uintptr_t) l->l_private;
+	*flags = _UC_CPU | _UC_FPU | _UC_TLSBASE;
+
 	return;
 }
 
@@ -299,6 +336,10 @@ cpu_mcontext_validate(struct lwp *l, const mcontext_t *mcp)
 	 * can we check here? or should that be done in the target
 	 * specific places?
 	 */
+	/* XXX NO CHECKING! XXX */
+#ifdef CPU_DEBUG
+	thunk_printf_debug("cpu_mcontext_validate\n");
+#endif
 	return 0;
 }
 
@@ -311,7 +352,29 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 #ifdef CPU_DEBUG
 	thunk_printf_debug("cpu_setmcontext\n");
 #endif
-	memcpy(&ucp->uc_mcontext, mcp, sizeof(mcontext_t));
+	if ((flags & _UC_CPU) != 0)
+		memcpy(&ucp->uc_mcontext.__gregs, &mcp->__gregs, sizeof(__gregset_t));
+	if ((flags & _UC_FPU) != 0)
+		memcpy(&ucp->uc_mcontext.__fpregs, &mcp->__fpregs, sizeof(__fpregset_t));
+	if ((flags & _UC_TLSBASE) != 0)
+		lwp_setprivate(l, (void *) (uintptr_t) mcp->_mc_tlsbase);
+
+#if 0
+	/*
+	 * XXX we ignore the set and clear stack since signals are done
+	 * slightly differently.
+	 */
+thunk_printf("%s: flags %x\n", __func__, flags);
+	mutex_enter(l->l_proc->p_lock);
+	if (flags & _UC_SETSTACK)
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
+	if (flags & _UC_CLRSTACK)
+		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
+	mutex_exit(l->l_proc->p_lock);
+#endif
+
+	ucp->uc_flags |= (flags & (_UC_CPU | _UC_FPU | _UC_TLSBASE));
+
 	return 0;
 }
 
@@ -375,16 +438,19 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	    l2 ? l2->l_name : "none", l2,
 	    stack, (int)stacksize);
 #endif
-
 	if (stack)
 		panic("%s: stack passed, can't handle\n", __func__);
 
 	/* copy the PCB and its switchframes from parent */
 	memcpy(pcb2, pcb1, sizeof(struct pcb));
 
-	/* refresh context */
+	/* refresh context, XXX needed? */
 	if (thunk_getcontext(&pcb2->pcb_ucp))
 		panic("getcontext failed");
+
+	/* set up for TLS */
+	pcb2->pcb_ucp.uc_mcontext._mc_tlsbase = (intptr_t) l2->l_private;
+	pcb2->pcb_ucp.uc_flags |= _UC_TLSBASE;
 
 	/* recalculate the system stack top */
 	pcb2->sys_stack_top = pcb2->sys_stack + TRAPSTACKSIZE;
@@ -395,7 +461,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	pcb2->pcb_ucp.uc_link = &pcb2->pcb_userret_ucp;
 
 	thunk_sigemptyset(&pcb2->pcb_ucp.uc_sigmask);
-	pcb2->pcb_ucp.uc_flags = _UC_STACK | _UC_CPU | _UC_SIGMASK;
+
 	thunk_makecontext(&pcb2->pcb_ucp,
 	    (void (*)(void)) cpu_lwp_trampoline,
 	    3, &pcb2->pcb_ucp, func, arg, NULL);

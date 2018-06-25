@@ -1,4 +1,4 @@
-/*	$NetBSD: dtrace_modevent.c,v 1.5 2015/11/28 22:41:36 pgoyette Exp $	*/
+/*	$NetBSD: dtrace_modevent.c,v 1.5.14.1 2018/06/25 07:25:14 pgoyette Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -20,7 +20,7 @@
  *
  * CDDL HEADER END
  *
- * $FreeBSD: src/sys/cddl/dev/dtrace/dtrace_modevent.c,v 1.1.4.1 2009/08/03 08:13:06 kensmith Exp $
+ * $FreeBSD: head/sys/cddl/dev/dtrace/dtrace_load.c 309069 2016-11-23 22:50:20Z gnn $
  *
  */
 

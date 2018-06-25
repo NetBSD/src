@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.124.2.1 2018/03/22 01:44:51 pgoyette Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.124.2.2 2018/06/25 07:26:06 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.124.2.1 2018/03/22 01:44:51 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.124.2.2 2018/06/25 07:26:06 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -625,7 +625,13 @@ vlan_unconfig_locked(struct ifvlan *ifv, struct ifvlan_linkmib *nmib)
 			IFNET_UNLOCK(p);
 		}
 
+		/* XXX ether_ifdetach must not be called with IFNET_LOCK */
+		mutex_exit(&ifv->ifv_lock);
+		IFNET_UNLOCK(ifp);
 		ether_ifdetach(ifp);
+		IFNET_LOCK(ifp);
+		mutex_enter(&ifv->ifv_lock);
+
 		/* Restore vlan_ioctl overwritten by ether_ifdetach */
 		ifp->if_ioctl = vlan_ioctl;
 		vlan_reset_linkname(ifp);
@@ -1170,7 +1176,11 @@ vlan_ether_addmulti(struct ifvlan *ifv, struct ifreq *ifr)
 	 */
 	error = ether_multiaddr(sa, addrlo, addrhi);
 	KASSERT(error == 0);
-	ETHER_LOOKUP_MULTI(addrlo, addrhi, &ifv->ifv_ec, mc->mc_enm);
+
+	ETHER_LOCK(&ifv->ifv_ec);
+	mc->mc_enm = ether_lookup_multi(addrlo, addrhi, &ifv->ifv_ec);
+	ETHER_UNLOCK(&ifv->ifv_ec);
+
 	KASSERT(mc->mc_enm != NULL);
 
 	memcpy(&mc->mc_addr, sa, sa->sa_len);
@@ -1215,7 +1225,21 @@ vlan_ether_delmulti(struct ifvlan *ifv, struct ifreq *ifr)
 	 */
 	if ((error = ether_multiaddr(sa, addrlo, addrhi)) != 0)
 		return error;
-	ETHER_LOOKUP_MULTI(addrlo, addrhi, &ifv->ifv_ec, enm);
+
+	ETHER_LOCK(&ifv->ifv_ec);
+	enm = ether_lookup_multi(addrlo, addrhi, &ifv->ifv_ec);
+	ETHER_UNLOCK(&ifv->ifv_ec);
+	if (enm == NULL)
+		return EINVAL;
+
+	LIST_FOREACH(mc, &ifv->ifv_mc_listhead, mc_entries) {
+		if (mc->mc_enm == enm)
+			break;
+	}
+
+	/* We woun't delete entries we didn't add */
+	if (mc == NULL)
+		return EINVAL;
 
 	error = ether_delmulti(sa, &ifv->ifv_ec);
 	if (error != ENETRESET)
@@ -1229,17 +1253,11 @@ vlan_ether_delmulti(struct ifvlan *ifv, struct ifreq *ifr)
 
 	if (error == 0) {
 		/* And forget about this address. */
-		for (mc = LIST_FIRST(&ifv->ifv_mc_listhead); mc != NULL;
-		    mc = LIST_NEXT(mc, mc_entries)) {
-			if (mc->mc_enm == enm) {
-				LIST_REMOVE(mc, mc_entries);
-				free(mc, M_DEVBUF);
-				break;
-			}
-		}
-		KASSERT(mc != NULL);
-	} else
+		LIST_REMOVE(mc, mc_entries);
+		free(mc, M_DEVBUF);
+	} else {
 		(void)ether_addmulti(sa, &ifv->ifv_ec);
+	}
 
 	return error;
 }
@@ -1263,7 +1281,7 @@ vlan_ether_purgemulti(struct ifvlan *ifv)
 	while ((mc = LIST_FIRST(&ifv->ifv_mc_listhead)) != NULL) {
 		IFNET_LOCK(mib->ifvm_p);
 		(void)if_mcast_op(mib->ifvm_p, SIOCDELMULTI,
-		    (const struct sockaddr *)&mc->mc_addr);
+		    sstocsa(&mc->mc_addr));
 		IFNET_UNLOCK(mib->ifvm_p);
 		LIST_REMOVE(mc, mc_entries);
 		free(mc, M_DEVBUF);

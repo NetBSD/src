@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.d,v 1.2 2010/02/21 01:46:35 darran Exp $	*/
+/*	$NetBSD: nfs.d,v 1.2.44.1 2018/06/25 07:25:24 pgoyette Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -22,15 +22,13 @@
  *
  * Portions Copyright 2006-2008 John Birrell jb@freebsd.org
  *
- * $FreeBSD: src/cddl/lib/libdtrace/nfs.d,v 1.1.4.1 2009/08/03 08:13:06 kensmith Exp $
+ * $FreeBSD: head/cddl/lib/libdtrace/nfs.d 286420 2015-08-07 19:56:22Z markj $
  */
 
 /*
  * Copyright 2007 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  */
-
-#pragma ident	"%Z%%M%	%I%	%E% SMI"
 
 #pragma	D depends_on library ip.d
 #pragma	D depends_on library net.d
@@ -95,4 +93,20 @@ translator conninfo_t < rfs4_client_t *P > {
 translator nfsv4cbinfo_t < rfs4_deleg_state_t *P > {
 	nci_curpath = (P->finfo->vp == NULL) ? "<unknown>" :
 	    P->finfo->vp->v_path;
+};
+
+typedef struct nfsv3opinfo {
+	uint64_t noi_xid;	/* unique transation ID */
+	cred_t *noi_cred;	/* credentials for operation */
+	string noi_curpath;	/* current file handle path (if any) */
+} nfsv3opinfo_t;
+
+typedef struct nfsv3oparg nfsv3oparg_t;
+
+#pragma D binding "1.5" translator
+translator nfsv3opinfo_t < nfsv3oparg_t *P > {
+	noi_xid = ((struct svc_req *)arg0)->rq_xprt->xp_xid;
+	noi_cred = (cred_t *)arg1;
+	noi_curpath = (arg2 == 0 || ((vnode_t *)arg2)->v_path == NULL) ?
+	    "<unknown>" : ((vnode_t *)arg2)->v_path;
 };

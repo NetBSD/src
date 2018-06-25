@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.h,v 1.7 2007/12/24 15:46:45 perry Exp $	*/
+/*	$NetBSD: openfirm.h,v 1.7.96.1 2018/06/25 07:25:44 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -39,6 +39,7 @@
 
 #include "boot.h"
 
+void OF_enter(void);
 __dead void OF_exit(void);
 int OF_finddevice(const char *);
 int OF_instance_to_package(int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.h,v 1.42 2017/09/01 10:19:10 christos Exp $	*/
+/*	$NetBSD: readline.h,v 1.42.2.1 2018/06/25 07:25:35 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,11 +38,13 @@
 
 /* typedefs */
 typedef int	  Function(const char *, int);
+typedef char     *CPFunction(const char *, int);
 typedef void	  VFunction(void);
 typedef void	  rl_vcpfunc_t(char *);
 typedef char	**rl_completion_func_t(const char *, int, int);
 typedef char     *rl_compentry_func_t(const char *, int);
 typedef int	  rl_command_func_t(int, int);
+typedef int	  rl_hook_func_t(void);
 
 /* only supports length */
 typedef struct {
@@ -137,6 +139,7 @@ extern VFunction	*rl_redisplay_function;
 extern VFunction	*rl_completion_display_matches_hook;
 extern VFunction	*rl_prep_term_function;
 extern VFunction	*rl_deprep_term_function;
+extern rl_hook_func_t	*rl_event_hook;
 extern int		readline_echoing_p;
 extern int		_rl_print_completions_horizontally;
 
@@ -177,7 +180,7 @@ char		*filename_completion_function(const char *, int);
 char		*username_completion_function(const char *, int);
 int		 rl_complete(int, int);
 int		 rl_read_key(void);
-char	       **completion_matches(const char *, rl_compentry_func_t *);
+char	       **completion_matches(/* const */ char *, rl_compentry_func_t *);
 void		 rl_display_match_list(char **, int, int);
 
 int		 rl_insert(int, int);

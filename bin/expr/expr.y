@@ -1,4 +1,4 @@
-/* $NetBSD: expr.y,v 1.39 2016/09/05 01:00:07 sevan Exp $ */
+/* $NetBSD: expr.y,v 1.39.12.1 2018/06/25 07:25:04 pgoyette Exp $ */
 
 /*_
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 %{
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: expr.y,v 1.39 2016/09/05 01:00:07 sevan Exp $");
+__RCSID("$NetBSD: expr.y,v 1.39.12.1 2018/06/25 07:25:04 pgoyette Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -273,8 +273,7 @@ is_integer(const char *str)
 static int64_t
 perform_arith_op(const char *left, const char *op, const char *right)
 {
-	int64_t res, sign, l, r;
-	u_int64_t temp;
+	int64_t res, l, r;
 
 	res = 0;
 
@@ -307,66 +306,68 @@ perform_arith_op(const char *left, const char *op, const char *right)
 
 	switch(op[0]) {
 	case '+':
-		/* 
-		 * Do the op into an unsigned to avoid overflow and then cast
-		 * back to check the resulting signage. 
+		/*
+		 * Check for over-& underflow.
 		 */
-		temp = l + r;
-		res = (int64_t) temp;
-		/* very simplistic check for over-& underflow */
-		if ((res < 0 && l > 0 && r > 0)
-	  	    || (res > 0 && l < 0 && r < 0)) 
+		if ((l >= 0 && r <= INT64_MAX - l) ||
+		    (l <= 0 && r >= INT64_MIN - l)) {
+			res = l + r;
+		} else {
 			yyerror("integer overflow or underflow occurred for "
                             "operation '%s %s %s'", left, op, right);
+		}
 		break;
 	case '-':
-		/* 
-		 * Do the op into an unsigned to avoid overflow and then cast
-		 * back to check the resulting signage. 
+		/*
+		 * Check for over-& underflow.
 		 */
-		temp = l - r;
-		res = (int64_t) temp;
-		/* very simplistic check for over-& underflow */
-		if ((res < 0 && l > 0 && l > r)
-		    || (res > 0 && l < 0 && l < r) ) 
+		if ((r > 0 && l < INT64_MIN + r) ||
+		    (r < 0 && l > INT64_MAX + r)) {
 			yyerror("integer overflow or underflow occurred for "
 			    "operation '%s %s %s'", left, op, right);
+		} else {
+			res = l - r;
+		}
 		break;
 	case '/':
-		if (r == 0) 
+		if (r == 0)
 			yyerror("second argument to '%s' must not be zero", op);
+		if (l == INT64_MIN && r == -1)
+			yyerror("integer overflow or underflow occurred for "
+			    "operation '%s %s %s'", left, op, right);
 		res = l / r;
 			
 		break;
 	case '%':
 		if (r == 0)
 			yyerror("second argument to '%s' must not be zero", op);
+		if (l == INT64_MIN && r == -1)
+			yyerror("integer overflow or underflow occurred for "
+			    "operation '%s %s %s'", left, op, right);
 		res = l % r;
 		break;
 	case '*':
-		/* shortcut */
-		if ((l == 0) || (r == 0)) {
-			res = 0;
-			break;
-		}
-				
-		sign = 1;
-		if (l < 0)
-			sign *= -1;
-		if (r < 0)
-			sign *= -1;
-
-		res = l * r;
 		/*
-		 * XXX: not the most portable but works on anything with 2's
-		 * complement arithmetic. If the signs don't match or the
-		 * result was 0 on 2's complement this overflowed.
+		 * Check for over-& underflow.
 		 */
-		if ((res < 0 && sign > 0) || (res > 0 && sign < 0) || 
-		    (res == 0))
+
+		/* Simplify the conditions */
+		if (l < 0 && r < 0 && l != INT64_MIN && r != INT64_MIN) {
+			l = -l;
+			r = -r;
+		}
+
+		if ((l < 0 && r < 0) ||
+		    ((l != 0 && r != 0) &&
+		     (((l > 0 && r > 0) && (l > INT64_MAX / r)) ||
+		     ((((l < 0 && r > 0) || (l > 0 && r < 0)) &&
+		      (r != -1 && (l < INT64_MIN / r))))))) {
 			yyerror("integer overflow or underflow occurred for "
 			    "operation '%s %s %s'", left, op, right);
 			/* NOTREACHED */
+		} else {
+			res = l * r;
+		}
 		break;
 	}
 	return res;
@@ -452,6 +453,5 @@ main(int argc, const char * const *argv)
 
 	av = argv + 1;
 
-	exit(yyparse());
-	/* NOTREACHED */
+	return yyparse();
 }

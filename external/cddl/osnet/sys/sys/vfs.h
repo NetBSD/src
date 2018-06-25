@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs.h,v 1.4 2010/02/28 14:45:47 haad Exp $	*/
+/*	$NetBSD: vfs.h,v 1.4.44.1 2018/06/25 07:25:26 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007 Pawel Jakub Dawidek <pjd@FreeBSD.org>
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/compat/opensolaris/sys/vfs.h,v 1.2 2007/06/04 11:31:45 pjd Exp $
+ * $FreeBSD: head/sys/cddl/compat/opensolaris/sys/vfs.h 297513 2016-04-02 16:25:46Z avg $
  */
 
 #ifndef _OPENSOLARIS_SYS_VFS_H_
@@ -45,29 +45,17 @@ typedef	struct mount	vfs_t;
 #define	vfs_flag	mnt_flag
 #define	vfs_data	mnt_data
 #define	vfs_count	mnt_refcnt
-#define	vfs_fsid 	mnt_stat.f_fsid
 #define	vfs_bsize	mnt_stat.f_bsize
+#define	vfs_resource	mnt_stat.f_mntfromname
 
 #define	v_flag		v_vflag
 #define	v_vfsp		v_mount
 
-#define f_basetype      f_fstypename
-
-#define vfs_setfsops(a, b, c)    vfs_attach(&b)
-#define vfs_freevfsops_by_type(zfsfstype) do { } while (0)
-
 #define	VFS_RDONLY	MNT_RDONLY
 #define	VFS_NOSETUID	MNT_NOSUID
 #define	VFS_NOEXEC	MNT_NOEXEC
-#define VFS_NODEVICES   MNT_NODEV
-#define VFS_NOTRUNC     0
 
-#define	VFS_HOLD(vfsp)	do {						\
-	/* XXXNETBSD nothing */						\
-} while (0)
-#define	VFS_RELE(vfsp)	do {						\
-	/* XXXNETBSD nothing */						\
-} while (0)
+#define fs_vscan(vp, cr, async) (0)
 
 #define	VROOT		VV_ROOT
 
@@ -101,9 +89,6 @@ typedef struct mntopt {
 #define	VFS_CREATEOPT	0x08		/* Create the opt if it's not there */
 #define VFS_UNMOUNTED   0x100           /* file system has been unmounted */
 
-#define MS_SYSSPACE     0x0008          /* Mounta already in kernel space */
-#define MS_DATA         0
-
 /*
  * Structure holding mount option strings for the mounted file system.
  */
@@ -133,21 +118,38 @@ struct mounta {
 };
 
 #define vfs_devismounted(dev) 0
-#define fs_vscan(vp, cr, async) (0)
 
 void vfs_setmntopt(vfs_t *vfsp, const char *name, const char *arg,
     int flags __unused);
 void vfs_clearmntopt(vfs_t *vfsp, const char *name);
 int vfs_optionisset(const vfs_t *vfsp, const char *opt, char **argp);
-int traverse(vnode_t **cvpp, int lktype);
-int domount(kthread_t *td, vnode_t *vp, const char *fstype, char *fspath,
-    char *fspec, int fsflags);
+int mount_snapshot(kthread_t *td, vnode_t **vpp, const char *fstype,
+    char *fspath, char *fspec, int fsflags);
 
-#define vfs_set_feature(vfsp, feature)  do { } while (0)
-#define vfs_has_feature(vfsp, feature)  (0)
+typedef	uint64_t	vfs_feature_t;
 
-int zfs_vfsinit(int fstype, char *name);
-int zfs_vfsfini(void);
+#define	VFSFT_XVATTR		0x100000001	/* Supports xvattr for attrs */
+#define	VFSFT_CASEINSENSITIVE	0x100000002	/* Supports case-insensitive */
+#define	VFSFT_NOCASESENSITIVE	0x100000004	/* NOT case-sensitive */
+#define	VFSFT_DIRENTFLAGS	0x100000008	/* Supports dirent flags */
+#define	VFSFT_ACLONCREATE	0x100000010	/* Supports ACL on create */
+#define	VFSFT_ACEMASKONACCESS	0x100000020	/* Can use ACEMASK for access */
+#define	VFSFT_SYSATTR_VIEWS	0x100000040	/* Supports sysattr view i/f */
+#define	VFSFT_ACCESS_FILTER	0x100000080	/* dirents filtered by access */
+#define	VFSFT_REPARSE		0x100000100	/* Supports reparse point */
+#define	VFSFT_ZEROCOPY_SUPPORTED	0x100000200
+				/* Support loaning /returning cache buffer */
+
+#define	vfs_set_feature(vfsp, feature)		do { } while (0)
+#define	vfs_clear_feature(vfsp, feature)	do { } while (0)
+#define	vfs_has_feature(vfsp, feature)		(0)
+
+#define	VFS_HOLD(vfsp)	do {						\
+	/* XXXNETBSD nothing */						\
+} while (0)
+#define	VFS_RELE(vfsp)	do {						\
+	/* XXXNETBSD nothing */						\
+} while (0)
 
 #endif	/* _KERNEL */
 

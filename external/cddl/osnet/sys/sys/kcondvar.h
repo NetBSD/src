@@ -1,4 +1,4 @@
-/*	$NetBSD: kcondvar.h,v 1.3 2010/02/21 01:46:36 darran Exp $	*/
+/*	$NetBSD: kcondvar.h,v 1.3.44.1 2018/06/25 07:25:26 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -41,7 +41,34 @@ typedef enum {
 	CV_DRIVER
 } kcv_type_t;
 
+typedef enum {
+	TR_CLOCK_TICK,
+} time_res_t;
+
 #define	cv_init(a, b, c, d)	cv_init(a, "zfscv")
+
+static inline clock_t
+cv_timedwait_hires(kcondvar_t *cvp, kmutex_t *mp, hrtime_t tim, hrtime_t res,
+    int flag)
+{
+	extern int hz;
+	int ticks = ((uint64_t)tim * hz) / 1000000000;
+
+	return cv_timedwait(cvp, mp, ticks);
+}
+
+static inline clock_t
+cv_reltimedwait(kcondvar_t *cvp, kmutex_t *mp, clock_t delta, time_res_t res)
+{
+
+	cv_wait(cvp, mp);
+	return 0;
+}
+
+#else
+
+extern	clock_t cv_timedwait_hires(kcondvar_t *, kmutex_t *, hrtime_t, hrtime_t,
+    int);
 
 #endif	/* _KERNEL */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.339.2.2 2018/05/21 04:36:15 pgoyette Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.339.2.3 2018/06/25 07:26:04 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.339.2.2 2018/05/21 04:36:15 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.339.2.3 2018/06/25 07:26:04 pgoyette Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_dtrace.h"

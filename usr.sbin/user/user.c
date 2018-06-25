@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.131 2012/11/28 11:31:27 blymn Exp $ */
+/* $NetBSD: user.c,v 1.131.28.1 2018/06/25 07:26:13 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.131 2012/11/28 11:31:27 blymn Exp $");
+__RCSID("$NetBSD: user.c,v 1.131.28.1 2018/06/25 07:26:13 pgoyette Exp $");
 #endif
 
 #include <sys/types.h>
@@ -819,6 +819,7 @@ read_defaults(def_t *dp)
 	NEWARRAY(range_t, up->u_rv, up->u_rsize, exit(1));
 	up->u_inactive = DEF_INACTIVE;
 	up->u_expire = DEF_EXPIRE;
+	up->u_homeperm = DEF_HOMEPERM;
 	gp->g_rsize = 16;
 	gp->g_defrc = 0;
 	NEWARRAY(range_t, gp->g_rv, gp->g_rsize, exit(1));
@@ -903,7 +904,6 @@ read_defaults(def_t *dp)
 		up->u_rc += 1;
 	}
 	up->u_defrc = up->u_rc;
-	up->u_homeperm = DEF_HOMEPERM;
 }
 
 /* return the next valid unused uid */

@@ -1,4 +1,4 @@
-/* $NetBSD: dwc3_fdt.c,v 1.1.2.2 2018/05/02 07:20:06 pgoyette Exp $ */
+/* $NetBSD: dwc3_fdt.c,v 1.1.2.3 2018/06/25 07:25:49 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc3_fdt.c,v 1.1.2.2 2018/05/02 07:20:06 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc3_fdt.c,v 1.1.2.3 2018/06/25 07:25:49 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -54,9 +54,22 @@ __KERNEL_RCSID(0, "$NetBSD: dwc3_fdt.c,v 1.1.2.2 2018/05/02 07:20:06 pgoyette Ex
 
 #define	DWC3_GUSB2PHYCFG(n)		(0xc200 + ((n) * 4))
 #define	 GUSB2PHYCFG_PHYSOFTRST		__BIT(31)
+#define	 GUSB2PHYCFG_U2_FREECLK_EXISTS	__BIT(30)
+#define	 GUSB2PHYCFG_USBTRDTIM		__BITS(13,10)
+#define	 GUSB2PHYCFG_SUSPHY		__BIT(6)
+#define	 GUSB2PHYCFG_PHYIF		__BIT(3)
+#define	 GUSB2PHYCFG_ENBLSLPM		__BIT(0)
 
 #define	DWC3_GUSB3PIPECTL(n)		(0xc2c0 + ((n) * 4))
 #define	 GUSB3PIPECTL_PHYSOFTRST	__BIT(31)
+
+#define	DWC3_DCFG			0xc700
+#define	 DCFG_SPEED			__BITS(2,0)
+#define	  DCFG_SPEED_HS			0
+#define	  DCFG_SPEED_FS			1
+#define	  DCFG_SPEED_LS			2
+#define	  DCFG_SPEED_SS			4
+#define	  DCFG_SPEED_SS_PLUS		5
 
 static int	dwc3_fdt_match(device_t, cfdata_t, void *);
 static void	dwc3_fdt_attach(device_t, device_t, void *);
@@ -101,6 +114,52 @@ dwc3_fdt_soft_reset(struct xhci_softc *sc)
 }
 
 static void
+dwc3_fdt_enable_phy(struct xhci_softc *sc, const int phandle)
+{
+	const char *max_speed;
+	u_int phyif_utmi_bits;
+	uint32_t val;
+
+	val = RD4(sc, DWC3_GUSB2PHYCFG(0));
+	if (of_getprop_uint32(phandle, "snps,phyif-utmi-bits", &phyif_utmi_bits) == 0) {
+		if (phyif_utmi_bits == 16) {
+			val |= GUSB2PHYCFG_PHYIF;
+			val &= ~GUSB2PHYCFG_USBTRDTIM;
+			val |= __SHIFTIN(5, GUSB2PHYCFG_USBTRDTIM);
+		} else if (phyif_utmi_bits == 8) {
+			val &= ~GUSB2PHYCFG_PHYIF;
+			val &= ~GUSB2PHYCFG_USBTRDTIM;
+			val |= __SHIFTIN(9, GUSB2PHYCFG_USBTRDTIM);
+		}
+	}
+	if (of_hasprop(phandle, "snps,dis-enblslpm-quirk"))
+		val &= ~GUSB2PHYCFG_ENBLSLPM;
+	if (of_hasprop(phandle, "snps,dis-u2-freeclk-exists-quirk"))
+		val &= ~GUSB2PHYCFG_U2_FREECLK_EXISTS;
+	if (of_hasprop(phandle, "snps,dis-u2-susphy-quirk"))
+		val &= ~GUSB2PHYCFG_SUSPHY;
+	WR4(sc, DWC3_GUSB2PHYCFG(0), val);
+
+	max_speed = fdtbus_get_string(phandle, "maximum-speed");
+	if (max_speed == NULL)
+		max_speed = "super-speed";
+
+	val = RD4(sc, DWC3_DCFG);
+	val &= ~DCFG_SPEED;
+	if (strcmp(max_speed, "low-speed") == 0)
+		val |= __SHIFTIN(DCFG_SPEED_LS, DCFG_SPEED);
+	else if (strcmp(max_speed, "full-speed") == 0)
+		val |= __SHIFTIN(DCFG_SPEED_FS, DCFG_SPEED);
+	else if (strcmp(max_speed, "high-speed") == 0)
+		val |= __SHIFTIN(DCFG_SPEED_HS, DCFG_SPEED);
+	else if (strcmp(max_speed, "super-speed") == 0)
+		val |= __SHIFTIN(DCFG_SPEED_SS, DCFG_SPEED);
+	else
+		val |= __SHIFTIN(DCFG_SPEED_SS, DCFG_SPEED);	/* default to super speed */
+	WR4(sc, DWC3_DCFG, val);
+}
+
+static void
 dwc3_fdt_set_mode(struct xhci_softc *sc, u_int mode)
 {
 	uint32_t val;
@@ -116,6 +175,7 @@ dwc3_fdt_match(device_t parent, cfdata_t cf, void *aux)
 {
 	const char * const compatible[] = {
 		"allwinner,sun50i-h6-dwc3",
+		"rockchip,rk3328-dwc3",
 		NULL
 	};
 	struct fdt_attach_args * const faa = aux;
@@ -166,13 +226,6 @@ dwc3_fdt_attach(device_t parent, device_t self, void *aux)
 			return;
 		}
 
-	/* Enable phy */
-	phy = fdtbus_phy_get(dwc3_phandle, "usb3-phy");
-	if (!phy || fdtbus_phy_enable(phy, true) != 0) {
-		aprint_error(": couldn't enable phy\n");
-		return;
-	}
-
 	/* Get resources */
 	if (fdtbus_get_reg(dwc3_phandle, 0, &addr, &size) != 0) {
 		aprint_error(": couldn't get registers\n");
@@ -191,7 +244,14 @@ dwc3_fdt_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": DesignWare USB3 XHCI\n");
 
+	/* Enable phy */
+	phy = fdtbus_phy_get(dwc3_phandle, "usb3-phy");
+	if (!phy || fdtbus_phy_enable(phy, true) != 0) {
+		aprint_error_dev(self, "couldn't enable usb3-phy\n");
+	}
+
 	dwc3_fdt_soft_reset(sc);
+	dwc3_fdt_enable_phy(sc, phandle);
 	dwc3_fdt_set_mode(sc, GCTL_PRTCAP_HOST);
 
 	if (!fdtbus_intr_str(dwc3_phandle, 0, intrstr, sizeof(intrstr))) {

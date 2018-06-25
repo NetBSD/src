@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.139 2017/04/01 19:35:56 riastradh Exp $ */
+/* $NetBSD: udf_subr.c,v 1.139.12.1 2018/06/25 07:26:04 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.139 2017/04/01 19:35:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.139.12.1 2018/06/25 07:26:04 pgoyette Exp $");
 #endif /* not lint */
 
 
@@ -4028,6 +4028,7 @@ static const struct genfs_ops udf_genfsops = {
 	.gop_alloc = udf_gop_alloc,
 	.gop_write = genfs_gop_write_rwmap,
 	.gop_markupdate = udf_gop_markupdate,
+	.gop_putrange = genfs_gop_putrange,
 };
 
 
@@ -5888,7 +5889,7 @@ udf_newvnode(struct mount *mp, struct vnode *dvp, struct vnode *vp,
 	gid = parent_gid;
 	udf_setownership(udf_node, uid, gid);
 
-	*key_len = sizeof(udf_node->loc.loc);;
+	*key_len = sizeof(udf_node->loc.loc);
 	*new_key = &udf_node->loc.loc;
 
 	return 0;

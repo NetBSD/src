@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.273.2.3 2018/05/21 04:36:16 pgoyette Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.273.2.4 2018/06/25 07:26:07 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.273.2.3 2018/05/21 04:36:16 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.273.2.4 2018/06/25 07:26:07 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1918,6 +1918,10 @@ tcp_mss_from_peer(struct tcpcb *tp, int offer)
 	if (tp->t_in6pcb)
 		mss -= ip6_optlen(tp->t_in6pcb);
 #endif
+	/*
+	 * XXX XXX What if mss goes negative or zero? This can happen if a
+	 * socket has large IPv6 options. We crash below.
+	 */
 
 	/*
 	 * If there's a pipesize, change the socket buffer to that size.

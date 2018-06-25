@@ -1,4 +1,4 @@
-/* $NetBSD: ddc.c,v 1.6 2015/07/25 15:20:49 jmcneill Exp $ */
+/* $NetBSD: ddc.c,v 1.6.16.1 2018/06/25 07:25:50 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */ 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddc.c,v 1.6 2015/07/25 15:20:49 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddc.c,v 1.6.16.1 2018/06/25 07:25:50 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,7 +70,7 @@ ddc_match(device_t parent, cfdata_t cf, void *aux)
 	struct i2c_attach_args *ia = aux;
 
 	if (ia->ia_addr == DDC_ADDR)
-		return 1;
+		return I2C_MATCH_ADDRESS_ONLY;
 	return 0;
 }
 

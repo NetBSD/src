@@ -1,8 +1,11 @@
-# $NetBSD: Makefile.efiboot,v 1.9.10.3 2018/04/16 01:59:54 pgoyette Exp $
+# $NetBSD: Makefile.efiboot,v 1.9.10.4 2018/06/25 07:25:42 pgoyette Exp $
 
 S=		${.CURDIR}/../../../../..
 
 NOMAN=		# defined
+NOPIE=		# defined
+NOSANITIZER=	# defined
+NORELRO=	# defined
 PROG?=		boot.efi
 NEWVERSWHAT?=	"EFI Boot"
 
@@ -16,11 +19,7 @@ LIBI386SRCS= biosdisk.c bootinfo.c bootinfo_biosgeom.c bootmenu.c
 LIBI386SRCS+= diskbuf.c exec.c menuutils.c parseutils.c pread.c
 SRCS= ${SOURCES} ${EXTRA_SOURCES} ${LIBI386SRCS}
 
-PIE_CFLAGS=
-PIE_LDFLAGS=
-PIE_AFLAGS=
-
-.include <bsd.own.mk>
+.include <bsd.init.mk>
 
 STRIPFLAG=	# nothing
 

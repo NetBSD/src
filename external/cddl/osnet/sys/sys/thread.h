@@ -1,4 +1,4 @@
-/*	$NetBSD: thread.h,v 1.1 2009/08/07 20:57:58 haad Exp $	*/
+/*	$NetBSD: thread.h,v 1.1.44.1 2018/06/25 07:25:26 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -28,4 +28,3 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-

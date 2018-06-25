@@ -1,4 +1,4 @@
-/*	$NetBSD: mnttab.h,v 1.3 2010/02/21 01:46:34 darran Exp $	*/
+/*	$NetBSD: mnttab.h,v 1.3.44.1 2018/06/25 07:25:24 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -32,11 +32,22 @@
 #ifndef	_OPENSOLARIS_MNTTAB_H_
 #define	_OPENSOLARIS_MNTTAB_H_
 
+#include <sys/param.h>
+#include <sys/mount.h>
+
 #include <stdio.h>
 #include <paths.h>
 
 #define	MNTTAB		_PATH_DEVNULL
 #define	MNT_LINE_MAX	1024
+
+#if 0
+#define	MS_OVERLAY	0x0
+#define	MS_NOMNTTAB	0x0
+#define	MS_RDONLY	0x1
+
+#define	umount2(p, f)	unmount(p, f)
+#endif
 
 struct mnttab {
 	char	*mnt_special;
@@ -44,7 +55,13 @@ struct mnttab {
 	char	*mnt_fstype;
 	char	*mnt_mntopts;
 };
+#define	extmnttab	mnttab
 
 int getmntany(FILE *fd, struct mnttab *mgetp, struct mnttab *mrefp);
+int getmntent(FILE *fp, struct mnttab *mp);
+char *hasmntopt(struct mnttab *mnt, char *opt);
+
+struct statvfs;
+void statvfs2mnttab(struct statvfs *sfs, struct mnttab *mp);
 
 #endif	/* !_OPENSOLARIS_MNTTAB_H_ */

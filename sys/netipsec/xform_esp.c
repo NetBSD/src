@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_esp.c,v 1.79.2.3 2018/05/21 04:36:16 pgoyette Exp $	*/
+/*	$NetBSD: xform_esp.c,v 1.79.2.4 2018/06/25 07:26:07 pgoyette Exp $	*/
 /*	$FreeBSD: xform_esp.c,v 1.2.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_esp.c,v 1.69 2001/06/26 06:18:59 angelos Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.79.2.3 2018/05/21 04:36:16 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.79.2.4 2018/06/25 07:26:07 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -141,25 +141,34 @@ esp_hdrsiz(const struct secasvar *sav)
 	if (sav != NULL) {
 		/*XXX not right for null algorithm--does it matter??*/
 		KASSERT(sav->tdb_encalgxform != NULL);
+
+		/*
+		 *   base header size
+		 * + iv length for CBC mode
+		 * + max pad length
+		 * + sizeof(esp trailer)
+		 * + icv length (if any).
+		 */
 		if (sav->flags & SADB_X_EXT_OLD)
 			size = sizeof(struct esp);
 		else
 			size = sizeof(struct newesp);
-		size += sav->tdb_encalgxform->ivsize + 9;
+		size += sav->tdb_encalgxform->ivsize + 9 +
+		    sizeof(struct esptail);
+
 		/*XXX need alg check???*/
 		if (sav->tdb_authalgxform != NULL && sav->replay)
-			size += ah_hdrsiz(sav);
+			size += ah_authsiz(sav);
 	} else {
 		/*
 		 *   base header size
 		 * + max iv length for CBC mode
 		 * + max pad length
-		 * + sizeof(pad length field)
-		 * + sizeof(next header field)
+		 * + sizeof(esp trailer)
 		 * + max icv supported.
 		 */
 		size = sizeof(struct newesp) + esp_max_ivlen + 9 +
-		    ah_hdrsiz(NULL);
+		    sizeof(struct esptail) + ah_authsiz(NULL);
 	}
 	return size;
 }
@@ -234,7 +243,7 @@ esp_init(struct secasvar *sav, const struct xformsw *xsp)
 			DPRINTF(("%s: invalid key length %u, must be either of "
 				"20, 28 or 36\n", __func__, keylen));
 			return EINVAL;
-                }
+		}
 
 		memset(&cria, 0, sizeof(cria));
 		cria.cri_alg = sav->tdb_authalgxform->type;
@@ -304,7 +313,7 @@ esp_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 
 	KASSERT(sav != NULL);
 	KASSERT(sav->tdb_encalgxform != NULL);
-	KASSERTMSG((skip&3) == 0 && (m->m_pkthdr.len&3) == 0,
+	KASSERTMSG((skip & 3) == 0 && (m->m_pkthdr.len & 3) == 0,
 	    "misaligned packet, skip %u pkt len %u",
 	    skip, m->m_pkthdr.len);
 
@@ -317,6 +326,7 @@ esp_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 
 	esph = sav->tdb_authalgxform;
 	espx = sav->tdb_encalgxform;
+	KASSERT(espx != NULL);
 
 	/* Determine the ESP header length */
 	if (sav->flags & SADB_X_EXT_OLD)
@@ -327,14 +337,14 @@ esp_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 	alen = esph ? esph->authsize : 0;
 
 	/*
-	 * Verify payload length is multiple of encryption algorithm
-	 * block size.
+	 * Verify payload length is multiple of encryption algorithm block
+	 * size.
 	 *
-	 * NB: This works for the null algorithm because the blocksize
-	 *     is 4 and all packets must be 4-byte aligned regardless
-	 *     of the algorithm.
+	 * The payload must also be 4-byte-aligned. This is implicitly
+	 * verified here too, since the blocksize is always 4-byte-aligned.
 	 */
 	plen = m->m_pkthdr.len - (skip + hlen + alen);
+	KASSERT((espx->blocksize & 3) == 0);
 	if ((plen & (espx->blocksize - 1)) || (plen <= 0)) {
 		char buf[IPSEC_ADDRSTRLEN];
 		DPRINTF(("%s: payload of %d octets not a multiple of %d octets,"
@@ -359,10 +369,10 @@ esp_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 	}
 
 	/* Update the counters */
-	ESP_STATADD(ESP_STAT_IBYTES, m->m_pkthdr.len - skip - hlen - alen);
+	ESP_STATADD(ESP_STAT_IBYTES, plen);
 
 	/* Get crypto descriptors */
-	crp = crypto_getreq(esph && espx ? 2 : 1);
+	crp = crypto_getreq(esph ? 2 : 1);
 	if (crp == NULL) {
 		DPRINTF(("%s: failed to acquire crypto descriptors\n",
 		    __func__));
@@ -396,15 +406,15 @@ esp_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 
 		/* Authentication descriptor */
 		crda->crd_skip = skip;
-		if (espx && espx->type == CRYPTO_AES_GCM_16)
+		if (espx->type == CRYPTO_AES_GCM_16)
 			crda->crd_len = hlen - sav->ivlen;
 		else
 			crda->crd_len = m->m_pkthdr.len - (skip + alen);
 		crda->crd_inject = m->m_pkthdr.len - alen;
 
 		crda->crd_alg = esph->type;
-		if (espx && (espx->type == CRYPTO_AES_GCM_16 ||
-			     espx->type == CRYPTO_AES_GMAC)) {
+		if (espx->type == CRYPTO_AES_GCM_16 ||
+		    espx->type == CRYPTO_AES_GMAC) {
 			crda->crd_key = _KEYBUF(sav->key_enc);
 			crda->crd_klen = _KEYBITS(sav->key_enc);
 		} else {
@@ -454,20 +464,17 @@ esp_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 	tc->tc_sav = sav;
 
 	/* Decryption descriptor */
-	if (espx) {
-		KASSERTMSG(crde != NULL, "null esp crypto descriptor");
-		crde->crd_skip = skip + hlen;
-		if (espx->type == CRYPTO_AES_GMAC)
-			crde->crd_len = 0;
-		else
-			crde->crd_len = m->m_pkthdr.len - (skip + hlen + alen);
-		crde->crd_inject = skip + hlen - sav->ivlen;
-
-		crde->crd_alg = espx->type;
-		crde->crd_key = _KEYBUF(sav->key_enc);
-		crde->crd_klen = _KEYBITS(sav->key_enc);
-		/* XXX Rounds ? */
-	}
+	KASSERTMSG(crde != NULL, "null esp crypto descriptor");
+	crde->crd_skip = skip + hlen;
+	if (espx->type == CRYPTO_AES_GMAC)
+		crde->crd_len = 0;
+	else
+		crde->crd_len = m->m_pkthdr.len - (skip + hlen + alen);
+	crde->crd_inject = skip + hlen - sav->ivlen;
+	crde->crd_alg = espx->type;
+	crde->crd_key = _KEYBUF(sav->key_enc);
+	crde->crd_klen = _KEYBITS(sav->key_enc);
+	/* XXX Rounds ? */
 
 	return crypto_dispatch(crp);
 
@@ -482,15 +489,15 @@ out:
 }
 
 #ifdef INET6
-#define	IPSEC_COMMON_INPUT_CB(m, sav, skip, protoff) do {		     \
-	if (saidx->dst.sa.sa_family == AF_INET6) {			     \
-		error = ipsec6_common_input_cb(m, sav, skip, protoff);	     \
-	} else {							     \
-		error = ipsec4_common_input_cb(m, sav, skip, protoff);	     \
-	}								     \
+#define	IPSEC_COMMON_INPUT_CB(m, sav, skip, protoff) do {		\
+	if (saidx->dst.sa.sa_family == AF_INET6) {			\
+		error = ipsec6_common_input_cb(m, sav, skip, protoff);	\
+	} else {							\
+		error = ipsec4_common_input_cb(m, sav, skip, protoff);	\
+	}								\
 } while (0)
 #else
-#define	IPSEC_COMMON_INPUT_CB(m, sav, skip, protoff)			     \
+#define	IPSEC_COMMON_INPUT_CB(m, sav, skip, protoff)			\
 	(error = ipsec4_common_input_cb(m, sav, skip, protoff))
 #endif
 
@@ -687,40 +694,43 @@ esp_output(struct mbuf *m, const struct ipsecrequest *isr, struct secasvar *sav,
 	char buf[IPSEC_ADDRSTRLEN];
 	const struct enc_xform *espx;
 	const struct auth_hash *esph;
-	int hlen, rlen, padding, blks, alen, i, roff;
+	int hlen, rlen, tlen, padlen, blks, alen, i, roff;
 	struct mbuf *mo = NULL;
 	struct tdb_crypto *tc;
 	struct secasindex *saidx;
-	unsigned char *pad;
+	unsigned char *tail;
 	uint8_t prot;
 	int error, maxpacketsize;
-
-	struct cryptodesc *crde = NULL, *crda = NULL;
+	struct esptail *esptail;
+	struct cryptodesc *crde, *crda;
 	struct cryptop *crp;
 
 	esph = sav->tdb_authalgxform;
-	KASSERT(sav->tdb_encalgxform != NULL);
 	espx = sav->tdb_encalgxform;
+	KASSERT(espx != NULL);
 
+	/* Determine the ESP header length */
 	if (sav->flags & SADB_X_EXT_OLD)
 		hlen = sizeof(struct esp) + sav->ivlen;
 	else
 		hlen = sizeof(struct newesp) + sav->ivlen;
+	/* Authenticator hash size */
+	alen = esph ? esph->authsize : 0;
 
-	rlen = m->m_pkthdr.len - skip;	/* Raw payload length. */
 	/*
 	 * NB: The null encoding transform has a blocksize of 4
 	 *     so that headers are properly aligned.
 	 */
 	blks = espx->blocksize;		/* IV blocksize */
 
-	/* XXX clamp padding length a la KAME??? */
-	padding = ((blks - ((rlen + 2) % blks)) % blks) + 2;
+	/* Raw payload length. */
+	rlen = m->m_pkthdr.len - skip;
 
-	if (esph)
-		alen = esph->authsize;
-	else
-		alen = 0;
+	/* Encryption padding. */
+	padlen = ((blks - ((rlen + sizeof(struct esptail)) % blks)) % blks);
+
+	/* Length of what we append (tail). */
+	tlen = padlen + sizeof(struct esptail) + alen;
 
 	ESP_STATINC(ESP_STAT_OUTPUT);
 
@@ -746,12 +756,12 @@ esp_output(struct mbuf *m, const struct ipsecrequest *isr, struct secasvar *sav,
 		error = EPFNOSUPPORT;
 		goto bad;
 	}
-	if (skip + hlen + rlen + padding + alen > maxpacketsize) {
+	if (skip + hlen + rlen + tlen > maxpacketsize) {
 		DPRINTF(("%s: packet in SA %s/%08lx got too big (len %u, "
 		    "max len %u)\n", __func__,
 		    ipsec_address(&saidx->dst, buf, sizeof(buf)),
 		    (u_long) ntohl(sav->spi),
-		    skip + hlen + rlen + padding + alen, maxpacketsize));
+		    skip + hlen + rlen + tlen, maxpacketsize));
 		ESP_STATINC(ESP_STAT_TOOBIG);
 		error = EMSGSIZE;
 		goto bad;
@@ -799,15 +809,14 @@ esp_output(struct mbuf *m, const struct ipsecrequest *isr, struct secasvar *sav,
 	}
 
 	/*
-	 * Add padding -- better to do it ourselves than use the crypto engine,
-	 * although if/when we support compression, we'd have to do that.
+	 * Grow the mbuf, we will append data at the tail.
 	 */
-	pad = m_pad(m, padding + alen);
-	if (pad == NULL) {
+	tail = m_pad(m, tlen);
+	if (tail == NULL) {
 		DPRINTF(("%s: m_pad failed for SA %s/%08lx\n", __func__,
 		    ipsec_address(&saidx->dst, buf, sizeof(buf)),
 		    (u_long) ntohl(sav->spi)));
-		m = NULL;		/* NB: free'd by m_pad */
+		m = NULL;
 		error = ENOBUFS;
 		goto bad;
 	}
@@ -817,28 +826,29 @@ esp_output(struct mbuf *m, const struct ipsecrequest *isr, struct secasvar *sav,
 	 */
 	switch (sav->flags & SADB_X_EXT_PMASK) {
 	case SADB_X_EXT_PSEQ:
-		for (i = 0; i < padding - 2; i++)
-			pad[i] = i+1;
+		for (i = 0; i < padlen; i++)
+			tail[i] = i + 1;
 		break;
 	case SADB_X_EXT_PRAND:
-		(void)cprng_fast(pad, padding - 2);
+		(void)cprng_fast(tail, padlen);
 		break;
 	case SADB_X_EXT_PZERO:
 	default:
-		memset(pad, 0, padding - 2);
+		memset(tail, 0, padlen);
 		break;
 	}
 
-	/* Fix padding length and Next Protocol in padding itself. */
-	pad[padding - 2] = padding - 2;
-	m_copydata(m, protoff, sizeof(uint8_t), pad + padding - 1);
+	/* Build the ESP Trailer. */
+	esptail = (struct esptail *)&tail[padlen];
+	esptail->esp_padlen = padlen;
+	m_copydata(m, protoff, sizeof(uint8_t), &esptail->esp_nxt);
 
 	/* Fix Next Protocol in IPv4/IPv6 header. */
 	prot = IPPROTO_ESP;
 	m_copyback(m, protoff, sizeof(uint8_t), &prot);
 
 	/* Get crypto descriptors. */
-	crp = crypto_getreq(esph && espx ? 2 : 1);
+	crp = crypto_getreq(esph ? 2 : 1);
 	if (crp == NULL) {
 		DPRINTF(("%s: failed to acquire crypto descriptors\n",
 		    __func__));
@@ -847,26 +857,22 @@ esp_output(struct mbuf *m, const struct ipsecrequest *isr, struct secasvar *sav,
 		goto bad;
 	}
 
-	if (espx) {
-		crde = crp->crp_desc;
-		crda = crde->crd_next;
+	/* Get the descriptors. */
+	crde = crp->crp_desc;
+	crda = crde->crd_next;
 
-		/* Encryption descriptor. */
-		crde->crd_skip = skip + hlen;
-		if (espx->type == CRYPTO_AES_GMAC)
-			crde->crd_len = 0;
-		else
-			crde->crd_len = m->m_pkthdr.len - (skip + hlen + alen);
-		crde->crd_flags = CRD_F_ENCRYPT;
-		crde->crd_inject = skip + hlen - sav->ivlen;
-
-		/* Encryption operation. */
-		crde->crd_alg = espx->type;
-		crde->crd_key = _KEYBUF(sav->key_enc);
-		crde->crd_klen = _KEYBITS(sav->key_enc);
-		/* XXX Rounds ? */
-	} else
-		crda = crp->crp_desc;
+	/* Encryption descriptor. */
+	crde->crd_skip = skip + hlen;
+	if (espx->type == CRYPTO_AES_GMAC)
+		crde->crd_len = 0;
+	else
+		crde->crd_len = m->m_pkthdr.len - (skip + hlen + alen);
+	crde->crd_flags = CRD_F_ENCRYPT;
+	crde->crd_inject = skip + hlen - sav->ivlen;
+	crde->crd_alg = espx->type;
+	crde->crd_key = _KEYBUF(sav->key_enc);
+	crde->crd_klen = _KEYBITS(sav->key_enc);
+	/* XXX Rounds ? */
 
 	/* IPsec-specific opaque crypto info. */
 	tc = pool_cache_get(esp_tdb_crypto_pool_cache, PR_NOWAIT);
@@ -916,7 +922,7 @@ esp_output(struct mbuf *m, const struct ipsecrequest *isr, struct secasvar *sav,
 	if (esph) {
 		/* Authentication descriptor. */
 		crda->crd_skip = skip;
-		if (espx && espx->type == CRYPTO_AES_GCM_16)
+		if (espx->type == CRYPTO_AES_GCM_16)
 			crda->crd_len = hlen - sav->ivlen;
 		else
 			crda->crd_len = m->m_pkthdr.len - (skip + alen);
@@ -924,8 +930,8 @@ esp_output(struct mbuf *m, const struct ipsecrequest *isr, struct secasvar *sav,
 
 		/* Authentication operation. */
 		crda->crd_alg = esph->type;
-		if (espx && (espx->type == CRYPTO_AES_GCM_16 ||
-			     espx->type == CRYPTO_AES_GMAC)) {
+		if (espx->type == CRYPTO_AES_GCM_16 ||
+		    espx->type == CRYPTO_AES_GMAC) {
 			crda->crd_key = _KEYBUF(sav->key_enc);
 			crda->crd_klen = _KEYBITS(sav->key_enc);
 		} else {

@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_ahcisata.c,v 1.6 2017/11/09 05:57:23 hkenken Exp $	*/
+/*	$NetBSD: imx6_ahcisata.c,v 1.6.4.1 2018/06/25 07:25:39 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_ahcisata.c,v 1.6 2017/11/09 05:57:23 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_ahcisata.c,v 1.6.4.1 2018/06/25 07:25:39 pgoyette Exp $");
 
 #include "locators.h"
 #include "opt_imx.h"
@@ -59,7 +59,7 @@ static int imx6_ahcisata_match(device_t, cfdata_t, void *);
 static void imx6_ahcisata_attach(device_t, device_t, void *);
 static int imx6_ahcisata_detach(device_t, int);
 
-static int ixm6_ahcisata_init(struct imx_ahci_softc *);
+static int imx6_ahcisata_init(struct imx_ahci_softc *);
 static int imx6_ahcisata_phy_ctrl(struct imx_ahci_softc *, uint32_t, int);
 static int imx6_ahcisata_phy_addr(struct imx_ahci_softc *, uint32_t);
 static int imx6_ahcisata_phy_write(struct imx_ahci_softc *, uint32_t, uint16_t);
@@ -114,7 +114,7 @@ imx6_ahcisata_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	if (ixm6_ahcisata_init(sc) != 0) {
+	if (imx6_ahcisata_init(sc) != 0) {
 		aprint_error_dev(self, "couldn't init ahci\n");
 		return;
 	}
@@ -257,14 +257,14 @@ imx6_ahcisata_phy_read(struct imx_ahci_softc *sc, uint32_t addr)
 }
 
 static int
-ixm6_ahcisata_init(struct imx_ahci_softc *sc)
+imx6_ahcisata_init(struct imx_ahci_softc *sc)
 {
 	uint32_t v;
 	int timeout, pllstat;
 
 	/* AHCISATA clock enable */
 	v = imx6_ccm_read(CCM_CCGR5);
-	imx6_ccm_write(CCM_CCGR5, v | CCM_CCGR5_100M_CLK_ENABLE(3));
+	imx6_ccm_write(CCM_CCGR5, v | __SHIFTIN(3, CCM_CCGR5_SATA_CLK_ENABLE));
 
 	/* PLL power up */
 	if (imx6_pll_power(CCM_ANALOG_PLL_ENET, 1,

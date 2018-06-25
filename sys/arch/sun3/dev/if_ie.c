@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.62 2017/02/22 09:45:16 nonaka Exp $ */
+/*	$NetBSD: if_ie.c,v 1.62.12.1 2018/06/25 07:25:46 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.
@@ -98,7 +98,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.62 2017/02/22 09:45:16 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.62.12.1 2018/06/25 07:25:46 pgoyette Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -118,9 +118,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.62 2017/02/22 09:45:16 nonaka Exp $");
 #include <net/if_types.h>
 #include <net/if_dl.h>
 #include <net/if_ether.h>
-
 #include <net/bpf.h>
-#include <net/bpfdesc.h>
 
 #ifdef INET
 #include <netinet/in.h>
@@ -726,13 +724,6 @@ iexmit(struct ie_softc *sc)
 		printf("%s: xmit buffer %d\n", device_xname(sc->sc_dev),
 		    sc->xctail);
 #endif
-
-	/*
-	 * If BPF is listening on this interface, let it see the packet before
-	 * we push it on the wire.
-	 */
-	bpf_tap(ifp, sc->xmit_cbuffs[sc->xctail],
-	    SWAP(sc->xmit_buffs[sc->xctail]->ie_xmit_flags));
 
 	sc->xmit_buffs[sc->xctail]->ie_xmit_flags |= IE_XMIT_LAST;
 	sc->xmit_buffs[sc->xctail]->ie_xmit_next = SWAP(0xffff);

@@ -1,4 +1,4 @@
-/* $NetBSD: if_ie.c,v 1.40 2017/06/25 12:07:23 maxv Exp $ */
+/* $NetBSD: if_ie.c,v 1.40.4.1 2018/06/25 07:25:38 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.40 2017/06/25 12:07:23 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.40.4.1 2018/06/25 07:25:38 pgoyette Exp $");
 
 #define IGNORE_ETHER1_IDROM_CHECKSUM
 
@@ -101,7 +101,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.40 2017/06/25 12:07:23 maxv Exp $");
 /* BPF support */
 
 #include <net/bpf.h>
-#include <net/bpfdesc.h>
 
 /* Some useful defines and macros */
 

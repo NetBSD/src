@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_state.c,v 1.10 2017/10/12 20:54:36 christos Exp $	*/
+/*	$NetBSD: ip_state.c,v 1.10.2.1 2018/06/25 07:26:03 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -100,7 +100,7 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_state.c,v 1.10 2017/10/12 20:54:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_state.c,v 1.10.2.1 2018/06/25 07:26:03 pgoyette Exp $");
 #else
 static const char sccsid[] = "@(#)ip_state.c	1.8 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_state.c,v 1.1.1.2 2012/07/22 13:45:37 darrenr Exp";
@@ -108,7 +108,7 @@ static const char rcsid[] = "@(#)Id: ip_state.c,v 1.1.1.2 2012/07/22 13:45:37 da
 #endif
 
 
-static ipftuneable_t ipf_state_tuneables[] = {
+static const ipftuneable_t ipf_state_tuneables[] = {
 	{ { (void *)offsetof(ipf_state_softc_t, ipf_state_max) },
 		"state_max",		1,	0x7fffffff,
 		stsizeof(ipf_state_softc_t, ipf_state_max),

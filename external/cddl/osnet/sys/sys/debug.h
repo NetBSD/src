@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.h,v 1.3 2010/02/21 01:46:35 darran Exp $	*/
+/*	$NetBSD: debug.h,v 1.3.44.1 2018/06/25 07:25:26 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007 Pawel Jakub Dawidek <pjd@FreeBSD.org>
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/compat/opensolaris/sys/debug.h,v 1.1 2007/04/06 01:09:06 pjd Exp $
+ * $FreeBSD: head/sys/cddl/compat/opensolaris/sys/debug.h 240415 2012-09-12 18:05:43Z mm $
  */
 
 #ifndef _OPENSOLARIS_SYS_DEBUG_H_
@@ -44,7 +44,44 @@
 	panic("solaris assert: %s (0x%jx %s 0x%jx), file: %s, line: %d", \
 	    (a), (uintmax_t)(lv), (op), (uintmax_t)(rv), (f), (l))
 #else	/* !_KERNEL */
+
+#include <stdio.h>
+#include <stdlib.h>
+
 #include_next <sys/debug.h>
+
+#ifndef HAVE_ASSFAIL
+extern int aok;
+
+static __inline int
+__assfail(const char *expr, const char *file, int line)
+{
+
+	(void)fprintf(stderr, "Assertion failed: (%s), file %s, line %d.\n",
+	    expr, file, line);
+	if (!aok)
+		abort();
+	return (0);
+}
+#define assfail __assfail
 #endif
+
+#ifndef HAVE_ASSFAIL3
+extern int aok;
+
+static inline void
+__assfail3(const char *expr, uintmax_t lv, const char *op, uintmax_t rv,
+    const char *file, int line) {
+
+	(void)fprintf(stderr,
+	    "Assertion failed: %s (0x%jx %s 0x%jx), file %s, line %d.\n",
+	    expr, lv, op, rv, file, line);
+	if (!aok)
+		abort();
+}
+#define assfail3 __assfail3
+#endif
+
+#endif	/* !_KERNEL */
 
 #endif	/* _OPENSOLARIS_SYS_DEBUG_H_ */

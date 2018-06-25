@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmr.c,v 1.23.2.2 2018/05/21 04:35:58 pgoyette Exp $	*/
+/*	$NetBSD: gtmr.c,v 1.23.2.3 2018/06/25 07:25:39 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.23.2.2 2018/05/21 04:35:58 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.23.2.3 2018/06/25 07:25:39 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -51,29 +51,27 @@ __KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.23.2.2 2018/05/21 04:35:58 pgoyette Exp $
 #include <arm/cortex/mpcore_var.h>
 
 #define stable_write(reg) \
+static struct evcnt reg ## _write_ev; \
 static void \
 reg ## _stable_write(struct gtmr_softc *sc, uint64_t val) \
 { \
-	static int max_retry = 0; \
 	int retry; \
 	reg ## _write(val); \
 	retry = 0; \
 	while (reg ## _read() != (val) && retry++ < 200) \
 		reg ## _write(val); \
-	if (retry > max_retry) { \
-		aprint_verbose_dev(sc->sc_dev, #reg "_write max retries %d -> %d\n", \
-		    max_retry, retry); \
-		max_retry = retry; \
+	if (retry > reg ## _write_ev.ev_count) { \
+		reg ## _write_ev.ev_count = retry; \
 	} \
 }
 
 stable_write(gtmr_cntv_tval);
 
 #define stable_read(reg) \
+static struct evcnt reg ## _read_ev; \
 static uint64_t \
 reg ## _stable_read(struct gtmr_softc *sc) \
 { \
-	static int max_retry = 0; \
 	uint64_t oval, val; \
 	int retry = 0; \
 	val = reg ## _read(); \
@@ -83,17 +81,14 @@ reg ## _stable_read(struct gtmr_softc *sc) \
 		if (val == oval) \
 			break; \
 	} \
-	if (retry > max_retry) { \
-		aprint_verbose_dev(sc->sc_dev, #reg "_read max retries %d -> %d\n", \
-		    max_retry, retry); \
-		max_retry = retry; \
+	if (retry > reg ## _read_ev.ev_count) { \
+		reg ## _read_ev.ev_count = retry; \
 	} \
 	return val; \
 }
 
 stable_read(gtmr_cntv_cval);
 stable_read(gtmr_cntvct);
-stable_read(gtmr_cntpct);
 
 static int gtmr_match(device_t, cfdata_t, void *);
 static void gtmr_attach(device_t, device_t, void *);
@@ -175,6 +170,13 @@ gtmr_attach(device_t parent, device_t self, void *aux)
 	evcnt_attach_dynamic(&sc->sc_ev_missing_ticks, EVCNT_TYPE_MISC, NULL,
 	    device_xname(self), "missing interrupts");
 
+	evcnt_attach_dynamic(&gtmr_cntv_tval_write_ev, EVCNT_TYPE_MISC, NULL,
+	    device_xname(self), "CNTV_TVAL write retry max");
+	evcnt_attach_dynamic(&gtmr_cntv_cval_read_ev, EVCNT_TYPE_MISC, NULL,
+	    device_xname(self), "CNTV_CVAL read retry max");
+	evcnt_attach_dynamic(&gtmr_cntvct_read_ev, EVCNT_TYPE_MISC, NULL,
+	    device_xname(self), "CNTVCT read retry max");
+
 	if (mpcaa->mpcaa_irq != -1) {
 		sc->sc_global_ih = intr_establish(mpcaa->mpcaa_irq, IPL_CLOCK,
 		    IST_LEVEL | IST_MPSAFE, gtmr_intr, NULL);
@@ -201,7 +203,6 @@ gtmr_attach(device_t parent, device_t self, void *aux)
 
 	/* Disable the timer until we are ready */
 	gtmr_cntv_ctl_write(0);
-	gtmr_cntp_ctl_write(0);
 }
 
 void
@@ -217,7 +218,6 @@ gtmr_init_cpu_clock(struct cpu_info *ci)
 	 * enable timer and stop masking the timer.
 	 */
 	gtmr_cntv_ctl_write(CNTCTL_ENABLE);
-	gtmr_cntp_ctl_write(CNTCTL_ENABLE);
 
 	/*
 	 * Get now and update the compare timer.
@@ -253,24 +253,19 @@ gtmr_delay(unsigned int n)
 	KASSERT(freq != 0);
 
 	const unsigned int incr_per_us = howmany(freq, 1000000);
-	unsigned int delta = 0, usecs = 0;
+	int64_t ticks = (int64_t)n * incr_per_us;
 
 	arm_isb();
-	uint64_t last = gtmr_cntpct_stable_read(sc);
+	uint64_t last = gtmr_cntvct_stable_read(sc);
 
-	while (n > usecs) {
+	while (ticks > 0) {
 		arm_isb();
-		uint64_t curr = gtmr_cntpct_stable_read(sc);
-		if (curr < last)
-			delta += curr + (UINT64_MAX - last);
+		uint64_t curr = gtmr_cntvct_stable_read(sc);
+		if (curr >= last)
+			ticks -= (curr - last);
 		else
-			delta += curr - last;
-
+			ticks -= (UINT64_MAX - curr + last);
 		last = curr;
-		if (delta >= incr_per_us) {
-			usecs += delta / incr_per_us;
-			delta %= incr_per_us;
-		}
 	}
 }
 
@@ -344,5 +339,5 @@ gtmr_get_timecount(struct timecounter *tc)
 {
 	struct gtmr_softc * const sc = tc->tc_priv;
 	arm_isb();	// we want the time NOW, not some instructions later.
-	return (u_int) gtmr_cntpct_stable_read(sc);
+	return (u_int) gtmr_cntvct_stable_read(sc);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.29 2016/04/22 18:25:41 christos Exp $	*/
+/*	$NetBSD: Locore.c,v 1.29.16.1 2018/06/25 07:25:44 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -31,6 +31,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/param.h>
 #include <lib/libsa/stand.h>
 
 #include <machine/cpu.h>
@@ -42,6 +43,13 @@ static int (*openfirmware)(void *);
 static void startup(void *, int, int (*)(void *), char *, int)
 		__attribute__((__used__));
 static void setup(void);
+
+#ifdef HEAP_VARIABLE
+#ifndef HEAP_SIZE
+#define HEAP_SIZE 0x20000
+#endif
+char *heapspace;
+#endif
 
 static int stack[8192/4 + 4] __attribute__((__used__));
 
@@ -170,6 +178,24 @@ startup(void *vpd, int res, int (*openfirm)(void *), char *arg, int argl)
 	main();
 	OF_exit();
 }
+
+#if 0
+void
+OF_enter(void)
+{
+	static struct {
+		const char *name;
+		int nargs;
+		int nreturns;
+	} args = {
+		"enter",
+		0,
+		0
+	};
+
+	openfirmware(&args);
+}
+#endif	/* OF_enter */
 
 __dead void
 OF_exit(void)
@@ -621,6 +647,15 @@ setup(void)
 	    OF_getprop(chosen, "stdout", &stdout, sizeof(stdout)) !=
 	    sizeof(stdout))
 		OF_exit();
+
+#ifdef HEAP_VARIABLE
+	heapspace = OF_claim(0, HEAP_SIZE, NBPG);
+	if (heapspace == (char *)-1) {
+		panic("Failed to allocate heap");
+	}
+
+	setheap(heapspace, heapspace + HEAP_SIZE);
+#endif	/* HEAP_VARIABLE */
 }
 
 void

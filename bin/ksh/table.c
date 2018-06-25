@@ -1,4 +1,4 @@
-/*	$NetBSD: table.c,v 1.6.2.1 2018/05/21 04:35:48 pgoyette Exp $	*/
+/*	$NetBSD: table.c,v 1.6.2.2 2018/06/25 07:25:04 pgoyette Exp $	*/
 
 /*
  * dynamic hashed associative table for commands and variables
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: table.c,v 1.6.2.1 2018/05/21 04:35:48 pgoyette Exp $");
+__RCSID("$NetBSD: table.c,v 1.6.2.2 2018/06/25 07:25:04 pgoyette Exp $");
 #endif
 
 
@@ -151,7 +151,7 @@ mytdelete(p)
 }
 
 void
-twalk(ts, tp)
+ksh_twalk(ts, tp)
 	struct tstate *ts;
 	struct table *tp;
 {
@@ -216,7 +216,7 @@ tprintinfo(tp)
 
 	shellf("table size %d, nfree %d\n", tp->size, tp->nfree);
 	shellf("    Ncmp name\n");
-	twalk(&ts, tp);
+	ksh_twalk(&ts, tp);
 	while ((te = tnext(&ts))) {
 		struct tbl **pp, *p;
 

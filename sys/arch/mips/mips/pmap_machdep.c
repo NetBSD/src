@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_machdep.c,v 1.21 2017/06/09 06:39:24 skrll Exp $	*/
+/*	$NetBSD: pmap_machdep.c,v 1.21.6.1 2018/06/25 07:25:44 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.21 2017/06/09 06:39:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.21.6.1 2018/06/25 07:25:44 pgoyette Exp $");
 
 /*
  *	Manages physical address maps.
@@ -525,7 +525,7 @@ pmap_md_alloc_ephemeral_address_space(struct cpu_info *ci)
 #endif
 	    || MIPS_CACHE_VIRTUAL_ALIAS
 	    || MIPS_ICACHE_VIRTUAL_ALIAS) {
-		vsize_t size = max(mci->mci_pdcache_way_size, mci->mci_picache_way_size);;
+		vsize_t size = max(mci->mci_pdcache_way_size, mci->mci_picache_way_size);
 		const u_int __diagused mask = pmap_page_cache_alias_mask;
 
 		ci->ci_pmap_dstbase = uvm_km_alloc(kernel_map, size, size,

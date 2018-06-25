@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.h,v 1.3 2010/02/21 01:46:36 darran Exp $	*/
+/*	$NetBSD: misc.h,v 1.3.44.1 2018/06/25 07:25:26 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007 Pawel Jakub Dawidek <pjd@FreeBSD.org>
@@ -25,11 +25,20 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/compat/opensolaris/sys/misc.h,v 1.2 2007/04/23 00:52:06 pjd Exp $
+ * $FreeBSD: head/sys/cddl/compat/opensolaris/sys/misc.h 219089 2011-02-27 19:41:40Z pjd $
  */
 
 #ifndef _OPENSOLARIS_SYS_MISC_H_
 #define	_OPENSOLARIS_SYS_MISC_H_
+
+#include <sys/syslimits.h>
+
+#define	MAXUID	UID_MAX
+
+#define	SPEC_MAXOFFSET_T	LLONG_MAX
+
+#define _ACL_ACLENT_ENABLED     0x1
+#define _ACL_ACE_ENABLED        0x2
 
 #define	_FIOFFS		(INT_MIN)
 #define	_FIOGDIO	(INT_MIN+1)

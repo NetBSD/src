@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.28 2018/02/09 08:58:01 maxv Exp $	*/
+/*	$NetBSD: fpu.c,v 1.28.2.1 2018/06/25 07:25:47 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.  All
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.28 2018/02/09 08:58:01 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.28.2.1 2018/06/25 07:25:47 pgoyette Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -107,8 +107,12 @@ __KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.28 2018/02/09 08:58:01 maxv Exp $");
 #include <sys/file.h>
 #include <sys/proc.h>
 #include <sys/kernel.h>
+#include <sys/sysctl.h>
+#include <sys/xcall.h>
 
 #include <machine/cpu.h>
+#include <machine/cpuvar.h>
+#include <machine/cputypes.h>
 #include <machine/intr.h>
 #include <machine/cpufunc.h>
 #include <machine/pcb.h>
@@ -125,6 +129,8 @@ __KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.28 2018/02/09 08:58:01 maxv Exp $");
 #define stts() HYPERVISOR_fpu_taskswitch(1)
 #endif
 
+bool x86_fpu_eager __read_mostly = false;
+
 static uint32_t x86_fpu_mxcsr_mask __read_mostly = 0;
 
 static inline union savefpu *
@@ -135,11 +141,11 @@ process_fpframe(struct lwp *lwp)
 	return &pcb->pcb_savefpu;
 }
 
-/* 
+/*
  * The following table is used to ensure that the FPE_... value
  * that is passed as a trapcode to the signal handler of the user
  * process does not have more than one bit set.
- * 
+ *
  * Multiple bits may be set if SSE simd instructions generate errors
  * on more than one value or if the user process modifies the control
  * word while a status word bit is already set (which this is a sign
@@ -160,7 +166,7 @@ process_fpframe(struct lwp *lwp)
  * 2) Throw away the bits currently masked in the control word,
  *    assuming the user isn't interested in them anymore.
  * 3) Reinsert status word bit 7 (stack fault) if it is set, which
- *    cannot be masked but must be presered.
+ *    cannot be masked but must be preserved.
  *    'Stack fault' is a sub-class of 'invalid operation'.
  * 4) Use the remaining bits to point into the trapcode table.
  *
@@ -171,12 +177,12 @@ process_fpframe(struct lwp *lwp)
  * 1b   Stack overflow
  * 1c   Operand of unsupported format
  * 1d   SNaN operand.
- * 2  QNaN operand (not an exception, irrelavant here)
+ * 2  QNaN operand (not an exception, irrelevant here)
  * 3  Any other invalid-operation not mentioned above or zero divide
  *      (FP_X_INV, FP_X_DZ)
  * 4  Denormal operand (FP_X_DNML)
  * 5  Numeric over/underflow (FP_X_OFL, FP_X_UFL)
- * 6  Inexact result (FP_X_IMP) 
+ * 6  Inexact result (FP_X_IMP)
  *
  * NB: the above seems to mix up the mxscr error bits and the x87 ones.
  * They are in the same order, but there is no EN_SW_STACK_FAULT in the mmx
@@ -257,9 +263,109 @@ fpuinit_mxcsr_mask(void)
 		x86_fpu_mxcsr_mask = fpusave.sv_xmm.fx_mxcsr_mask;
 	}
 #else
+	/*
+	 * XXX XXX XXX: On Xen the FXSAVE above faults. That's because
+	 * &fpusave is not 16-byte aligned. Stack alignment problem
+	 * somewhere, it seems.
+	 */
 	x86_fpu_mxcsr_mask = __INITIAL_MXCSR_MASK__;
 #endif
 }
+
+static void
+fpu_clear_amd(void)
+{
+	/*
+	 * AMD FPUs do not restore FIP, FDP, and FOP on fxrstor and xrstor
+	 * when FSW.ES=0, leaking other threads' execution history.
+	 *
+	 * Clear them manually by loading a zero (fldummy). We do this
+	 * unconditionally, regardless of FSW.ES.
+	 *
+	 * Before that, clear the ES bit in the x87 status word if it is
+	 * currently set, in order to avoid causing a fault in the
+	 * upcoming load.
+	 *
+	 * Newer generations of AMD CPUs have CPUID_Fn80000008_EBX[2],
+	 * which indicates that FIP/FDP/FOP are restored (same behavior
+	 * as Intel). We're not using it though.
+	 */
+	if (fngetsw() & 0x80)
+		fnclex();
+	fldummy();
+}
+
+static void
+fpu_save(struct lwp *l)
+{
+	struct pcb *pcb = lwp_getpcb(l);
+
+	switch (x86_fpu_save) {
+	case FPU_SAVE_FSAVE:
+		fnsave(&pcb->pcb_savefpu);
+		break;
+	case FPU_SAVE_FXSAVE:
+		fxsave(&pcb->pcb_savefpu);
+		break;
+	case FPU_SAVE_XSAVE:
+		xsave(&pcb->pcb_savefpu, x86_xsave_features);
+		break;
+	case FPU_SAVE_XSAVEOPT:
+		xsaveopt(&pcb->pcb_savefpu, x86_xsave_features);
+		break;
+	}
+}
+
+static void
+fpu_restore(struct lwp *l)
+{
+	struct pcb *pcb = lwp_getpcb(l);
+
+	switch (x86_fpu_save) {
+	case FPU_SAVE_FSAVE:
+		frstor(&pcb->pcb_savefpu);
+		break;
+	case FPU_SAVE_FXSAVE:
+		if (cpu_vendor == CPUVENDOR_AMD)
+			fpu_clear_amd();
+		fxrstor(&pcb->pcb_savefpu);
+		break;
+	case FPU_SAVE_XSAVE:
+	case FPU_SAVE_XSAVEOPT:
+		if (cpu_vendor == CPUVENDOR_AMD)
+			fpu_clear_amd();
+		xrstor(&pcb->pcb_savefpu, x86_xsave_features);
+		break;
+	}
+}
+
+static void
+fpu_eagerrestore(struct lwp *l)
+{
+	struct pcb *pcb = lwp_getpcb(l);
+	struct cpu_info *ci = curcpu();
+
+	clts();
+	KASSERT(ci->ci_fpcurlwp == NULL);
+	KASSERT(pcb->pcb_fpcpu == NULL);
+	ci->ci_fpcurlwp = l;
+	pcb->pcb_fpcpu = ci;
+	fpu_restore(l);
+}
+
+void
+fpu_eagerswitch(struct lwp *oldlwp, struct lwp *newlwp)
+{
+	int s;
+
+	s = splhigh();
+	fpusave_cpu(true);
+	if (!(newlwp->l_flag & LW_SYSTEM))
+		fpu_eagerrestore(newlwp);
+	splx(s);
+}
+
+/* -------------------------------------------------------------------------- */
 
 /*
  * This is a synchronous trap on either an x87 instruction (due to an
@@ -368,6 +474,11 @@ fpudna(struct trapframe *frame)
 	pcb = lwp_getpcb(l);
 	fl = ci->ci_fpcurlwp;
 	if (fl != NULL) {
+		if (__predict_false(x86_fpu_eager)) {
+			panic("%s: FPU busy with EagerFPU enabled",
+			    __func__);
+		}
+
 		/*
 		 * It seems we can get here on Xen even if we didn't
 		 * switch lwp.  In this case do nothing
@@ -383,6 +494,11 @@ fpudna(struct trapframe *frame)
 
 	/* Save our state if on a remote CPU. */
 	if (pcb->pcb_fpcpu != NULL) {
+		if (__predict_false(x86_fpu_eager)) {
+			panic("%s: LWP busy with EagerFPU enabled",
+			    __func__);
+		}
+
 		/* Explicitly disable preemption before dropping spl. */
 		kpreempt_disable();
 		splx(s);
@@ -404,32 +520,7 @@ fpudna(struct trapframe *frame)
 	ci->ci_fpcurlwp = l;
 	pcb->pcb_fpcpu = ci;
 
-	switch (x86_fpu_save) {
-		case FPU_SAVE_FSAVE:
-			frstor(&pcb->pcb_savefpu);
-			break;
-
-		case FPU_SAVE_FXSAVE:
-			/*
-			 * AMD FPU's do not restore FIP, FDP, and FOP on
-			 * fxrstor, leaking other process's execution history.
-			 * Clear them manually by loading a zero.
-			 *
-			 * Clear the ES bit in the x87 status word if it is
-			 * currently set, in order to avoid causing a fault
-			 * in the upcoming load.
-			 */
-			if (fngetsw() & 0x80)
-				fnclex();
-			fldummy();
-			fxrstor(&pcb->pcb_savefpu);
-			break;
-
-		case FPU_SAVE_XSAVE:
-		case FPU_SAVE_XSAVEOPT:
-			xrstor(&pcb->pcb_savefpu, x86_xsave_features);
-			break;
-	}
+	fpu_restore(l);
 
 	KASSERT(ci == curcpu());
 	splx(s);
@@ -456,24 +547,7 @@ fpusave_cpu(bool save)
 
 	if (save) {
 		clts();
-
-		switch (x86_fpu_save) {
-			case FPU_SAVE_FSAVE:
-				fnsave(&pcb->pcb_savefpu);
-				break;
-
-			case FPU_SAVE_FXSAVE:
-				fxsave(&pcb->pcb_savefpu);
-				break;
-
-			case FPU_SAVE_XSAVE:
-				xsave(&pcb->pcb_savefpu, x86_xsave_features);
-				break;
-
-			case FPU_SAVE_XSAVEOPT:
-				xsaveopt(&pcb->pcb_savefpu, x86_xsave_features);
-				break;
-		}
+		fpu_save(l);
 	}
 
 	stts();
@@ -555,10 +629,23 @@ fpu_save_area_clear(struct lwp *l, unsigned int x87_cw)
 {
 	union savefpu *fpu_save;
 	struct pcb *pcb;
+	int s;
 
-	fpusave_lwp(l, false);
+	KASSERT(l == curlwp);
+	KASSERT((l->l_flag & LW_SYSTEM) == 0);
 	fpu_save = process_fpframe(l);
 	pcb = lwp_getpcb(l);
+
+	s = splhigh();
+	if (x86_fpu_eager) {
+		KASSERT(pcb->pcb_fpcpu == NULL ||
+		    pcb->pcb_fpcpu == curcpu());
+		fpusave_cpu(false);
+	} else {
+		splx(s);
+		fpusave_lwp(l, false);
+	}
+	KASSERT(pcb->pcb_fpcpu == NULL);
 
 	if (i386_use_fxsave) {
 		memset(&fpu_save->sv_xmm, 0, x86_fpu_save_size);
@@ -579,6 +666,11 @@ fpu_save_area_clear(struct lwp *l, unsigned int x87_cw)
 		fpu_save->sv_87.s87_cw = x87_cw;
 	}
 	pcb->pcb_fpu_dflt_cw = x87_cw;
+
+	if (x86_fpu_eager) {
+		fpu_eagerrestore(l);
+		splx(s);
+	}
 }
 
 void
@@ -616,6 +708,128 @@ fpu_save_area_fork(struct pcb *pcb2, const struct pcb *pcb1)
 
 	if (extra > 0)
 		memcpy(pcb2 + 1, pcb1 + 1, extra);
+
+	KASSERT(pcb2->pcb_fpcpu == NULL);
+}
+
+/* -------------------------------------------------------------------------- */
+
+static void
+process_xmm_to_s87(const struct fxsave *sxmm, struct save87 *s87)
+{
+	unsigned int tag, ab_tag;
+	const struct fpaccfx *fx_reg;
+	struct fpacc87 *s87_reg;
+	int i;
+
+	/*
+	 * For historic reasons core dumps and ptrace all use the old save87
+	 * layout.  Convert the important parts.
+	 * getucontext gets what we give it.
+	 * setucontext should return something given by getucontext, but
+	 * we are (at the moment) willing to change it.
+	 *
+	 * It really isn't worth setting the 'tag' bits to 01 (zero) or
+	 * 10 (NaN etc) since the processor will set any internal bits
+	 * correctly when the value is loaded (the 287 believed them).
+	 *
+	 * Additionally the s87_tw and s87_tw are 'indexed' by the actual
+	 * register numbers, whereas the registers themselves have ST(0)
+	 * first. Pairing the values and tags can only be done with
+	 * reference to the 'top of stack'.
+	 *
+	 * If any x87 registers are used, they will typically be from
+	 * r7 downwards - so the high bits of the tag register indicate
+	 * used registers. The conversions are not optimised for this.
+	 *
+	 * The ABI we use requires the FP stack to be empty on every
+	 * function call. I think this means that the stack isn't expected
+	 * to overflow - overflow doesn't drop a core in my testing.
+	 *
+	 * Note that this code writes to all of the 's87' structure that
+	 * actually gets written to userspace.
+	 */
+
+	/* FPU control/status */
+	s87->s87_cw = sxmm->fx_cw;
+	s87->s87_sw = sxmm->fx_sw;
+	/* tag word handled below */
+	s87->s87_ip = sxmm->fx_ip;
+	s87->s87_opcode = sxmm->fx_opcode;
+	s87->s87_dp = sxmm->fx_dp;
+
+	/* FP registers (in stack order) */
+	fx_reg = sxmm->fx_87_ac;
+	s87_reg = s87->s87_ac;
+	for (i = 0; i < 8; fx_reg++, s87_reg++, i++)
+		*s87_reg = fx_reg->r;
+
+	/* Tag word and registers. */
+	ab_tag = sxmm->fx_tw & 0xff;	/* Bits set if valid */
+	if (ab_tag == 0) {
+		/* none used */
+		s87->s87_tw = 0xffff;
+		return;
+	}
+
+	tag = 0;
+	/* Separate bits of abridged tag word with zeros */
+	for (i = 0x80; i != 0; tag <<= 1, i >>= 1)
+		tag |= ab_tag & i;
+	/* Replicate and invert so that 0 => 0b11 and 1 => 0b00 */
+	s87->s87_tw = (tag | tag >> 1) ^ 0xffff;
+}
+
+static void
+process_s87_to_xmm(const struct save87 *s87, struct fxsave *sxmm)
+{
+	unsigned int tag, ab_tag;
+	struct fpaccfx *fx_reg;
+	const struct fpacc87 *s87_reg;
+	int i;
+
+	/*
+	 * ptrace gives us registers in the save87 format and
+	 * we must convert them to the correct format.
+	 *
+	 * This code is normally used when overwriting the processes
+	 * registers (in the pcb), so it musn't change any other fields.
+	 *
+	 * There is a lot of pad in 'struct fxsave', if the destination
+	 * is written to userspace, it must be zeroed first.
+	 */
+
+	/* FPU control/status */
+	sxmm->fx_cw = s87->s87_cw;
+	sxmm->fx_sw = s87->s87_sw;
+	/* tag word handled below */
+	sxmm->fx_ip = s87->s87_ip;
+	sxmm->fx_opcode = s87->s87_opcode;
+	sxmm->fx_dp = s87->s87_dp;
+
+	/* Tag word */
+	tag = s87->s87_tw;	/* 0b11 => unused */
+	if (tag == 0xffff) {
+		/* All unused - values don't matter, zero for safety */
+		sxmm->fx_tw = 0;
+		memset(&sxmm->fx_87_ac, 0, sizeof sxmm->fx_87_ac);
+		return;
+	}
+
+	tag ^= 0xffff;		/* So 0b00 is unused */
+	tag |= tag >> 1;	/* Look at even bits */
+	ab_tag = 0;
+	i = 1;
+	do
+		ab_tag |= tag & i;
+	while ((tag >>= 1) >= (i <<= 1));
+	sxmm->fx_tw = ab_tag;
+
+	/* FP registers (in stack order) */
+	fx_reg = sxmm->fx_87_ac;
+	s87_reg = s87->s87_ac;
+	for (i = 0; i < 8; fx_reg++, s87_reg++, i++)
+		fx_reg->r = *s87_reg;
 }
 
 void
@@ -706,4 +920,111 @@ process_read_fpregs_s87(struct lwp *l, struct save87 *fpregs)
 	} else {
 		memcpy(fpregs, &fpu_save->sv_87, sizeof(fpu_save->sv_87));
 	}
+}
+
+/* -------------------------------------------------------------------------- */
+
+static volatile unsigned long eagerfpu_cpu_barrier1 __cacheline_aligned;
+static volatile unsigned long eagerfpu_cpu_barrier2 __cacheline_aligned;
+
+static void
+eager_change_cpu(void *arg1, void *arg2)
+{
+	struct cpu_info *ci = curcpu();
+	bool enabled = (bool)arg1;
+	int s;
+
+	s = splhigh();
+
+	/* Rendez-vous 1. */
+	atomic_dec_ulong(&eagerfpu_cpu_barrier1);
+	while (atomic_cas_ulong(&eagerfpu_cpu_barrier1, 0, 0) != 0) {
+		x86_pause();
+	}
+
+	fpusave_cpu(true);
+	if (ci == &cpu_info_primary) {
+		x86_fpu_eager = enabled;
+	}
+
+	/* Rendez-vous 2. */
+	atomic_dec_ulong(&eagerfpu_cpu_barrier2);
+	while (atomic_cas_ulong(&eagerfpu_cpu_barrier2, 0, 0) != 0) {
+		x86_pause();
+	}
+
+	splx(s);
+}
+
+static int
+eager_change(bool enabled)
+{
+	struct cpu_info *ci = NULL;
+	CPU_INFO_ITERATOR cii;
+	uint64_t xc;
+
+	mutex_enter(&cpu_lock);
+
+	/*
+	 * We expect all the CPUs to be online.
+	 */
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		struct schedstate_percpu *spc = &ci->ci_schedstate;
+		if (spc->spc_flags & SPCF_OFFLINE) {
+			printf("[!] cpu%d offline, EagerFPU not changed\n",
+			    cpu_index(ci));
+			mutex_exit(&cpu_lock);
+			return EOPNOTSUPP;
+		}
+	}
+
+	/* Initialize the barriers */
+	eagerfpu_cpu_barrier1 = ncpu;
+	eagerfpu_cpu_barrier2 = ncpu;
+
+	printf("[+] %s EagerFPU...",
+	    enabled ? "Enabling" : "Disabling");
+	xc = xc_broadcast(0, eager_change_cpu,
+	    (void *)enabled, NULL);
+	xc_wait(xc);
+	printf(" done!\n");
+
+	mutex_exit(&cpu_lock);
+
+	return 0;
+}
+
+static int
+sysctl_machdep_fpu_eager(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node;
+	int error;
+	bool val;
+
+	val = *(bool *)rnode->sysctl_data;
+
+	node = *rnode;
+	node.sysctl_data = &val;
+
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error != 0 || newp == NULL)
+		return error;
+
+	if (val == x86_fpu_eager)
+		return 0;
+	return eager_change(val);
+}
+
+void sysctl_eagerfpu_init(struct sysctllog **);
+
+void
+sysctl_eagerfpu_init(struct sysctllog **clog)
+{
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_READWRITE,
+		       CTLTYPE_BOOL, "fpu_eager",
+		       SYSCTL_DESCR("Whether the kernel uses Eager FPU Switch"),
+		       sysctl_machdep_fpu_eager, 0,
+		       &x86_fpu_eager, 0,
+		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
 }

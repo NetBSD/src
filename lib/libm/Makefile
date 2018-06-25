@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.203 2017/09/26 16:01:59 maya Exp $
+#  $NetBSD: Makefile,v 1.203.2.1 2018/06/25 07:25:35 pgoyette Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -12,6 +12,8 @@
 #  ====================================================
 #
 #
+
+NOSANITIZER=		# defined
 
 #
 # There are two options in making libm at fdlibm compile time:

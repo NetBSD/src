@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_reboot.c,v 1.10 2015/11/11 14:50:08 jmcneill Exp $	*/
+/*	$NetBSD: arm32_reboot.c,v 1.10.16.1 2018/06/25 07:25:38 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -122,7 +122,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_reboot.c,v 1.10 2015/11/11 14:50:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_reboot.c,v 1.10.16.1 2018/06/25 07:25:38 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -138,7 +138,7 @@ __KERNEL_RCSID(0, "$NetBSD: arm32_reboot.c,v 1.10 2015/11/11 14:50:08 jmcneill E
 
 void (*cpu_powerdown_address)(void);
 
-static int
+static void
 docpureset(int howto)
 {
 	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {

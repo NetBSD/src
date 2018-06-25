@@ -1,10 +1,9 @@
-#	$NetBSD: Makefile,v 1.24 2016/01/23 22:29:29 christos Exp $
+#	$NetBSD: Makefile,v 1.24.16.1 2018/06/25 07:25:43 pgoyette Exp $
 
 S=	${.CURDIR}/../../../..
 
 BASE?= pxeboot_ia32
 PROG= ${BASE}.bin
-NOMAN=	# defined
 NEWVERSWHAT=	"PXE Boot"
 STARTFILE=	${PXESTART}
 RELOC=		0x0
@@ -19,11 +18,7 @@ SRCS= main.c dev_net.c devopen.c conf.c exec.c pxe.c pxe_call.S
 .PATH: ${.CURDIR}/../libsa
 SRCS+= nfs.c
 
-PIE_CFLAGS=
-PIE_AFLAGS=
-PIE_LDFLAGS=
-
-.include <bsd.own.mk>
+.include <bsd.init.mk>
 
 .if ${MACHINE_ARCH} == "x86_64"
 LDFLAGS+=	-Wl,-m,elf_i386

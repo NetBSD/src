@@ -1,4 +1,4 @@
-/*	$NetBSD: arp.c,v 1.58 2017/06/28 08:17:50 ozaki-r Exp $ */
+/*	$NetBSD: arp.c,v 1.58.4.1 2018/06/25 07:26:11 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1984, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1984, 1993\
 #if 0
 static char sccsid[] = "@(#)arp.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: arp.c,v 1.58 2017/06/28 08:17:50 ozaki-r Exp $");
+__RCSID("$NetBSD: arp.c,v 1.58.4.1 2018/06/25 07:26:11 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -597,7 +597,7 @@ usage(void)
 	progname = getprogname();
 	(void)fprintf(stderr, "Usage: %s [-n] hostname\n", progname);
 	(void)fprintf(stderr, "       %s [-nv] -a\n", progname);
-	(void)fprintf(stderr, "       %s [-v] -d [-a|hostname [pub [proxy]]]\n",
+	(void)fprintf(stderr, "       %s [-v] -d [-a|hostname [proxy]]\n",
 	    progname);
 	(void)fprintf(stderr, "       %s -s hostname ether_addr [temp] [pub [proxy]]\n",
 	    progname);

@@ -1,4 +1,4 @@
-#	$NetBSD: ARMADILLO210,v 1.38.2.1 2018/05/21 04:36:00 pgoyette Exp $
+#	$NetBSD: ARMADILLO210,v 1.38.2.2 2018/06/25 07:25:40 pgoyette Exp $
 #
 #	ARMADILLO210 -- Atmark Techno, Armadillo-210
 #
@@ -156,7 +156,7 @@ epled0		at epgpio0 port 4 bit1 1 bit2 0
 # I^2C Controller Unit
 armadillo9iic0	at epgpio0 port 1 bit1 4 bit2 5
 iic*		at armadillo9iic?
-seeprom0	at iic0 addr 0x50 size 128
+seeprom0	at iic? addr 0x50 size 128
 
 # MII/PHY support
 lxtphy* at mii? phy ?			# Level One LXT-970 PHYs

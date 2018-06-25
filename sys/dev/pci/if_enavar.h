@@ -1,4 +1,4 @@
-/*	$NetBSD: if_enavar.h,v 1.2.2.2 2018/05/21 04:36:06 pgoyette Exp $	*/
+/*	$NetBSD: if_enavar.h,v 1.2.2.3 2018/06/25 07:25:51 pgoyette Exp $	*/
 
 /*-
  * BSD LICENSE
@@ -147,6 +147,8 @@
 #define	PCI_DEV_ID_ENA_VF	0xec20
 #define	PCI_DEV_ID_ENA_LLQ_VF	0xec21
 
+typedef __int64_t sbintime_t;
+
 struct msix_entry {
 	int entry;
 	int vector;
@@ -157,18 +159,6 @@ typedef struct _ena_vendor_info_t {
 	unsigned int device_id;
 	unsigned int index;
 } ena_vendor_info_t;
-
-struct ena_irq {
-	/* Interrupt resources */
-	struct resource *res;
-	void *handler;
-	void *data;
-	void *cookie;
-	unsigned int vector;
-	bool requested;
-	int cpu;
-	char name[ENA_IRQNAME_SIZE];
-};
 
 struct ena_que {
 	struct ena_adapter *adapter;
@@ -201,6 +191,7 @@ struct ena_rx_buffer {
 } __aligned(CACHE_LINE_SIZE);
 
 struct ena_stats_tx {
+	char name[16];
 	struct evcnt cnt;
 	struct evcnt bytes;
 	struct evcnt prepare_ctx_err;
@@ -213,6 +204,7 @@ struct ena_stats_tx {
 };
 
 struct ena_stats_rx {
+	char name[16];
 	struct evcnt cnt;
 	struct evcnt bytes;
 	struct evcnt refil_partial;
@@ -291,6 +283,7 @@ struct ena_ring {
 } __aligned(CACHE_LINE_SIZE);
 
 struct ena_stats_dev {
+	char name[16];
 	struct evcnt wd_expired;
 	struct evcnt interface_up;
 	struct evcnt interface_down;
@@ -298,6 +291,7 @@ struct ena_stats_dev {
 };
 
 struct ena_hw_stats {
+	char name[16];
 	struct evcnt rx_packets;
 	struct evcnt tx_packets;
 
@@ -318,16 +312,17 @@ struct ena_adapter {
 	struct ifmedia	media;
 
 	/* OS resources */
-	struct resource *memory;
-	struct resource *registers;
-
 	kmutex_t global_mtx;
 	krwlock_t ioctl_sx;
 
-	/* MSI-X */
-	uint32_t msix_enabled;
-	struct msix_entry *msix_entries;
-	int msix_vecs;
+	void *sc_ihs[ENA_MAX_MSIX_VEC(ENA_MAX_NUM_IO_QUEUES)];
+	pci_intr_handle_t *sc_intrs;
+	int sc_nintrs;
+	struct pci_attach_args sc_pa;
+
+	/* Registers */
+	bus_space_handle_t sc_bhandle;
+	bus_space_tag_t	sc_btag;
 
 	/* DMA tag used throughout the driver adapter for Tx and Rx */
 	bus_dma_tag_t sc_dmat;
@@ -370,17 +365,15 @@ struct ena_adapter {
 	struct ena_ring rx_ring[ENA_MAX_NUM_IO_QUEUES]
 	    __aligned(CACHE_LINE_SIZE);
 
-	struct ena_irq irq_tbl[ENA_MAX_MSIX_VEC(ENA_MAX_NUM_IO_QUEUES)];
-
 	/* Timer service */
 	struct callout timer_service;
-	struct bintime keep_alive_timestamp;
+	sbintime_t keep_alive_timestamp;
 	uint32_t next_monitored_tx_qid;
 	struct work reset_task;
 	struct workqueue *reset_tq;
 	int wd_active;
-	struct bintime keep_alive_timeout;
-	struct bintime missing_tx_timeout;
+	sbintime_t keep_alive_timeout;
+	sbintime_t missing_tx_timeout;
 	uint32_t missing_tx_max_queues;
 	uint32_t missing_tx_threshold;
 
@@ -404,5 +397,91 @@ static inline int ena_mbuf_count(struct mbuf *mbuf)
 
 	return count;
 }
+
+/* provide FreeBSD-compatible macros */
+#define	if_getcapenable(ifp)		(ifp)->if_capenable
+#define	if_setcapenable(ifp, s)		SET((ifp)->if_capenable, s)
+#define if_getcapabilities(ifp)		(ifp)->if_capabilities
+#define if_setcapabilities(ifp, s)	SET((ifp)->if_capabilities, s)
+#define if_setcapabilitiesbit(ifp, s, c) do {	\
+		CLR((ifp)->if_capabilities, c);	\
+		SET((ifp)->if_capabilities, s);	\
+	} while (0)
+#define	if_getsoftc(ifp)		(ifp)->if_softc
+#define if_setmtu(ifp, new_mtu)		(ifp)->if_mtu = (new_mtu)
+#define if_getdrvflags(ifp)		(ifp)->if_flags
+#define if_setdrvflagbits(ifp, s, c)	do {	\
+		CLR((ifp)->if_flags, c);	\
+		SET((ifp)->if_flags, s);	\
+	} while (0)
+#define	if_setflags(ifp, s)		SET((ifp)->if_flags, s)
+#define if_sethwassistbits(ifp, s, c)	do {		\
+		CLR((ifp)->if_csum_flags_rx, c);	\
+		SET((ifp)->if_csum_flags_rx, s);	\
+	} while (0)
+#define if_clearhwassist(ifp)		(ifp)->if_csum_flags_rx = 0
+#define if_setbaudrate(ifp, r)		(ifp)->if_baudrate = (r)
+#define if_setdev(ifp, dev)		do { } while (0)
+#define if_setsoftc(ifp, softc)		(ifp)->if_softc = (softc)
+#define if_setinitfn(ifp, initfn)	(ifp)->if_init = (initfn)
+#define if_settransmitfn(ifp, txfn)	(ifp)->if_transmit = (txfn)
+#define if_setioctlfn(ifp, ioctlfn)	(ifp)->if_ioctl = (ioctlfn)
+#define if_setsendqlen(ifp, sqlen)	\
+	IFQ_SET_MAXLEN(&(ifp)->if_snd, max(sqlen, IFQ_MAXLEN))
+#define if_setsendqready(ifp)		IFQ_SET_READY(&(ifp)->if_snd)
+#define if_setifheaderlen(ifp, len)	(ifp)->if_hdrlen = (len)
+
+#define	SBT_1S	((sbintime_t)1 << 32)
+#define bintime_clear(a)	((a)->sec = (a)->frac = 0)
+#define	bintime_isset(a)	((a)->sec || (a)->frac)
+
+static __inline sbintime_t
+bttosbt(const struct bintime _bt)
+{
+	return (((sbintime_t)_bt.sec << 32) + (_bt.frac >> 32));
+}
+
+static __inline sbintime_t
+getsbinuptime(void)
+{
+	struct bintime _bt;
+
+	getbinuptime(&_bt);
+	return (bttosbt(_bt));
+}
+
+/* Intentionally non-atomic, it's just unnecessary overhead */
+#define counter_u64_add(x, cnt)			(x).ev_count += (cnt)
+#define counter_u64_zero(x)			(x).ev_count = 0
+#define counter_u64_free(x)			evcnt_detach(&(x))
+
+#define counter_u64_add_protected(x, cnt)	(x).ev_count += (cnt)
+#define counter_enter()				do {} while (0)
+#define counter_exit()				do {} while (0)
+
+/* Misc other constants */
+#define	mp_ncpus			ncpu
+#define osreldate			__NetBSD_Version__
+
+/*
+ * XXX XXX XXX just to make compile, must provide replacement XXX XXX XXX
+ * Other than that, TODO:
+ * - decide whether to import <sys/buf_ring.h>
+ * - recheck the M_CSUM/IPCAP mapping
+ * - recheck workqueue use - FreeBSD taskqueues might have different semantics
+ */
+#define buf_ring_alloc(a, b, c, d)	(void *)&a
+#define drbr_free(ifp, b)		do { } while (0)
+#define drbr_flush(ifp, b)		do { } while (0)
+#define drbr_advance(ifp, b)		do { } while (0)
+#define drbr_putback(ifp, b, m)		do { } while (0)
+#define drbr_empty(ifp, b)		false
+#define drbr_peek(ifp, b)		NULL
+#define drbr_enqueue(ifp, b, m)		0
+#define m_getjcl(a, b, c, d)		NULL
+#define MJUM16BYTES			MCLBYTES
+#define m_append(m, len, cp)		0
+#define m_collapse(m, how, maxfrags)	NULL
+/* XXX XXX XXX */
 
 #endif /* !(ENA_H) */

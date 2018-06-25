@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1196.2.9 2018/05/21 04:36:04 pgoyette Exp $
+#	$NetBSD: files,v 1.1196.2.10 2018/06/25 07:25:48 pgoyette Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20171118
@@ -1009,6 +1009,10 @@ file	dev/ic/rtl81x9.c		rtk | re
 #
 device	re: ether, ifnet, arp, mii
 file	dev/ic/rtl8169.c		re
+
+# Virtual I/O Device (VIRTIO) bus controller and devices
+#
+include "dev/virtio/files.virtio"
 
 # Common code for ESDI/IDE/etc. controllers
 #

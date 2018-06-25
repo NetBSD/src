@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_copy.c,v 1.7 2016/05/25 17:43:58 christos Exp $	*/
+/*	$NetBSD: subr_copy.c,v 1.7.16.1 2018/06/25 07:26:04 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_copy.c,v 1.7 2016/05/25 17:43:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_copy.c,v 1.7.16.1 2018/06/25 07:26:04 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/fcntl.h>
@@ -296,6 +296,33 @@ copyout_proc(struct proc *p, const void *kaddr, void *uaddr, size_t len)
 	error = copyout_vmspace(vm, kaddr, uaddr, len);
 	uvmspace_free(vm);
 
+	return error;
+}
+
+/*
+ * Like copyin(), but operates on an arbitrary pid.
+ */
+int
+copyin_pid(pid_t pid, const void *uaddr, void *kaddr, size_t len)
+{
+	struct proc *p;
+	struct vmspace *vm;
+	int error;
+
+	mutex_enter(proc_lock);
+	p = proc_find(pid);
+	if (p == NULL) {
+		mutex_exit(proc_lock);
+		return ESRCH;
+	}
+	mutex_enter(p->p_lock);
+	proc_vmspace_getref(p, &vm);
+	mutex_exit(p->p_lock);
+	mutex_exit(proc_lock);
+
+	error = copyin_vmspace(vm, uaddr, kaddr, len);
+
+	uvmspace_free(vm);
 	return error;
 }
 

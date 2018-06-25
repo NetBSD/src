@@ -26,7 +26,6 @@
 
 #pragma ident	"%Z%%M%	%I%	%E% SMI"
 
-#include <rpc/types.h>
 #include <sys/nvpair.h>
 
 static void *

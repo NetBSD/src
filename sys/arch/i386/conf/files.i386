@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.390.2.2 2018/04/16 01:59:54 pgoyette Exp $
+#	$NetBSD: files.i386,v 1.390.2.3 2018/06/25 07:25:42 pgoyette Exp $
 #
 # new style config file for i386 architecture
 #
@@ -73,11 +73,11 @@ file	arch/i386/i386/machdep.c
 file 	arch/i386/i386/longrun.c
 file	arch/i386/i386/mtrr_k6.c	mtrr
 file	arch/i386/i386/process_machdep.c
-file	arch/x86/x86/convert_xmm_s87.c
 file	arch/i386/i386/trap.c
 file	dev/cons.c
 file	arch/x86/x86/fpu.c
 file	arch/x86/x86/dbregs.c
+file	arch/x86/x86/spectre.c
 
 file	arch/i386/i386/mptramp.S	multiprocessor
 

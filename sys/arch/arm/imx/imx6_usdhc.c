@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_usdhc.c,v 1.5 2017/10/26 05:08:30 ryo Exp $ */
+/*	$NetBSD: imx6_usdhc.c,v 1.5.4.1 2018/06/25 07:25:39 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2012  Genetec Corporation.  All rights reserved.
@@ -30,7 +30,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_usdhc.c,v 1.5 2017/10/26 05:08:30 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_usdhc.c,v 1.5.4.1 2018/06/25 07:25:39 pgoyette Exp $");
 
 #include "imxgpio.h"
 
@@ -132,28 +132,28 @@ sdhc_attach(device_t parent, device_t self, void *aux)
 	switch (aa->aa_addr) {
 	case IMX6_AIPS2_BASE + AIPS2_USDHC1_BASE:
 		v = imx6_ccm_read(CCM_CCGR6);
-		imx6_ccm_write(CCM_CCGR6, v | CCM_CCGR6_USDHC1_CLK_ENABLE(3));
+		imx6_ccm_write(CCM_CCGR6, v | __SHIFTIN(3, CCM_CCGR6_USDHC1_CLK_ENABLE));
 		perclk = imx6_get_clock(IMX6CLK_USDHC1);
 		imx6_set_gpio(self, "usdhc1-cd-gpio", &sc->sc_gpio_cd,
 		    &sc->sc_gpio_cd_active, GPIO_DIR_IN);
 		break;
 	case IMX6_AIPS2_BASE + AIPS2_USDHC2_BASE:
 		v = imx6_ccm_read(CCM_CCGR6);
-		imx6_ccm_write(CCM_CCGR6, v | CCM_CCGR6_USDHC2_CLK_ENABLE(3));
+		imx6_ccm_write(CCM_CCGR6, v | __SHIFTIN(3, CCM_CCGR6_USDHC2_CLK_ENABLE));
 		perclk = imx6_get_clock(IMX6CLK_USDHC2);
 		imx6_set_gpio(self, "usdhc2-cd-gpio", &sc->sc_gpio_cd,
 		    &sc->sc_gpio_cd_active, GPIO_DIR_IN);
 		break;
 	case IMX6_AIPS2_BASE + AIPS2_USDHC3_BASE:
 		v = imx6_ccm_read(CCM_CCGR6);
-		imx6_ccm_write(CCM_CCGR6, v | CCM_CCGR6_USDHC3_CLK_ENABLE(3));
+		imx6_ccm_write(CCM_CCGR6, v | __SHIFTIN(3, CCM_CCGR6_USDHC3_CLK_ENABLE));
 		perclk = imx6_get_clock(IMX6CLK_USDHC3);
 		imx6_set_gpio(self, "usdhc3-cd-gpio", &sc->sc_gpio_cd,
 		    &sc->sc_gpio_cd_active, GPIO_DIR_IN);
 		break;
 	case IMX6_AIPS2_BASE + AIPS2_USDHC4_BASE:
 		v = imx6_ccm_read(CCM_CCGR6);
-		imx6_ccm_write(CCM_CCGR6, v | CCM_CCGR6_USDHC4_CLK_ENABLE(3));
+		imx6_ccm_write(CCM_CCGR6, v | __SHIFTIN(3, CCM_CCGR6_USDHC4_CLK_ENABLE));
 		perclk = imx6_get_clock(IMX6CLK_USDHC4);
 		imx6_set_gpio(self, "usdhc4-cd-gpio", &sc->sc_gpio_cd,
 		    &sc->sc_gpio_cd_active, GPIO_DIR_IN);

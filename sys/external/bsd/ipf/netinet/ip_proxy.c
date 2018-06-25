@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_proxy.c,v 1.5.38.1 2018/05/21 04:36:14 pgoyette Exp $	*/
+/*	$NetBSD: ip_proxy.c,v 1.5.38.2 2018/06/25 07:26:03 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -103,7 +103,7 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_proxy.c,v 1.5.38.1 2018/05/21 04:36:14 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_proxy.c,v 1.5.38.2 2018/06/25 07:26:03 pgoyette Exp $");
 #else
 static const char rcsid[] = "@(#)Id: ip_proxy.c,v 1.1.1.2 2012/07/22 13:45:33 darrenr Exp";
 #endif
@@ -124,7 +124,7 @@ typedef struct ipf_proxy_softc_s {
 	ipftuneable_t	*ipf_proxy_tune;
 } ipf_proxy_softc_t;
 
-static ipftuneable_t ipf_proxy_tuneables[] = {
+static const ipftuneable_t ipf_proxy_tuneables[] = {
 	{ { (void *)offsetof(ipf_proxy_softc_t, ips_proxy_debug) },
 		"proxy_debug",	0,	0x1f,
 		stsizeof(ipf_proxy_softc_t, ips_proxy_debug),

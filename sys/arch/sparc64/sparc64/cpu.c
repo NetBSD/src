@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.134 2018/01/19 12:47:41 nakayama Exp $ */
+/*	$NetBSD: cpu.c,v 1.134.2.1 2018/06/25 07:25:45 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.134 2018/01/19 12:47:41 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.134.2.1 2018/06/25 07:25:45 pgoyette Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -160,7 +160,7 @@ static int
 cpu_cache_info_sun4v(const char *type, int level, const char *prop)
 {
 	int idx = 0;
-	uint64_t val = 0;;
+	uint64_t val = 0;
 	idx = mdesc_find_node_by_idx(idx, "cache");
 	while (idx != -1 && val == 0) {
 		const char *name = mdesc_name_by_idx(idx);

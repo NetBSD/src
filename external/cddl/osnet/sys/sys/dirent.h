@@ -1,4 +1,4 @@
-/*	$NetBSD: dirent.h,v 1.3 2010/02/21 01:46:35 darran Exp $	*/
+/*	$NetBSD: dirent.h,v 1.3.44.1 2018/06/25 07:25:26 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007 Pawel Jakub Dawidek <pjd@FreeBSD.org>
@@ -25,22 +25,25 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/compat/opensolaris/sys/dirent.h,v 1.1 2007/04/06 01:09:06 pjd Exp $
+ * $FreeBSD: head/sys/cddl/compat/opensolaris/sys/dirent.h 219089 2011-02-27 19:41:40Z pjd $
  */
 
 #ifndef _OPENSOLARIS_SYS_DIRENT_H_
 #define	_OPENSOLARIS_SYS_DIRENT_H_
 
+#include <sys/types.h>
+
 #include_next <sys/dirent.h>
 
 typedef	struct dirent	dirent64_t;
+typedef ino_t		ino64_t;
+
 #define	dirent64	dirent
-#define	ino64_t		ino_t
 
 #define	d_ino	d_fileno
 
-#define	DIRENT64_RECLEN(len)	((sizeof(struct dirent) -		\
-				 sizeof(((struct dirent *)NULL)->d_name) + \
-				 (len) + 1 + 3) & ~3)
+#define	__DIRENT64_NAMEOFF	__builtin_offsetof(struct dirent, d_name)
+#define	DIRENT64_RECLEN(len)	\
+	roundup2(__DIRENT64_NAMEOFF + (len) + 1, sizeof(ino_t))
 
 #endif	/* !_OPENSOLARIS_SYS_DIRENT_H_ */

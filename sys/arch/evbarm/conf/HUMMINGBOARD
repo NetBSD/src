@@ -1,5 +1,5 @@
 #
-#	$NetBSD: HUMMINGBOARD,v 1.3 2017/11/25 04:53:24 christos Exp $
+#	$NetBSD: HUMMINGBOARD,v 1.3.4.1 2018/06/25 07:25:40 pgoyette Exp $
 #
 #	Hummingboard -- Freescale i.MX6 Eval Board Kernel
 #
@@ -54,7 +54,7 @@ cpu*		at mainbus?
 armperiph0	at mainbus?		# A9 On-Chip Peripherals
 armgic0 	at armperiph?		# ARM Generic Interrupt Controller
 arml2cc0	at armperiph? flags 0	# ARM PL310 L2CC
-a9tmr0		at armperiph?		# A9 Global Timer
+arma9tmr0	at armperiph?		# A9 Global Timer
 #a9wdt0		at armperiph? flags 0	# A9 Watchdog Timer
 
 axi0		at mainbus?

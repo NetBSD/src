@@ -1,4 +1,4 @@
-/*	$NetBSD: popen.c,v 1.5 2017/06/09 17:36:30 christos Exp $	*/
+/*	$NetBSD: popen.c,v 1.5.4.1 2018/06/25 07:25:12 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -44,7 +44,7 @@
 static sccsid[] = "@(#)popen.c	8.3 (Berkeley) 4/6/94";
 static char rcsid[] = "Id: popen.c,v 1.6 2003/02/16 04:40:01 vixie Exp";
 #else
-__RCSID("$NetBSD: popen.c,v 1.5 2017/06/09 17:36:30 christos Exp $");
+__RCSID("$NetBSD: popen.c,v 1.5.4.1 2018/06/25 07:25:12 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -163,8 +163,8 @@ cron_popen(char *program, const char *type, struct passwd *pw) {
 	return (iop);
 }
 
-int
-cron_pclose(FILE *iop) {
+static int
+cron_finalize(FILE *iop, int sig) {
 	int fdes;
 	PID_T pid;
 	WAIT_T status;
@@ -176,7 +176,13 @@ cron_pclose(FILE *iop) {
 	 */
 	if (pids == 0 || pids[fdes = fileno(iop)] == 0)
 		return (-1);
-	(void)fclose(iop);
+
+	if (sig) {
+		if (kill(pids[fdes], sig) == -1)
+			return -1;
+	} else {
+		(void)fclose(iop);
+	}
 	(void)sigemptyset(&sset);
 	(void)sigaddset(&sset, SIGINT);
 	(void)sigaddset(&sset, SIGQUIT);
@@ -185,11 +191,24 @@ cron_pclose(FILE *iop) {
 	while ((pid = waitpid(pids[fdes], &status, 0)) < 0 && errno == EINTR)
 		continue;
 	(void)sigprocmask(SIG_SETMASK, &osset, NULL);
+	if (sig)
+		(void)fclose(iop);
 	pids[fdes] = 0;
 	if (pid < 0)
-		return (pid);
+		return pid;
 	if (WIFEXITED(status))
-		return (WEXITSTATUS(status));
+		return WEXITSTATUS(status);
 	else
 		return WTERMSIG(status);
+}
+
+int
+cron_pclose(FILE *iop) {
+	return cron_finalize(iop, 0);
+}
+
+int
+cron_pabort(FILE *iop) {
+	int e = cron_finalize(iop, SIGKILL);
+	return e == SIGKILL ? 0 : e;
 }

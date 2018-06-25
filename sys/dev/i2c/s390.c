@@ -1,4 +1,4 @@
-/*	$NetBSD: s390.c,v 1.3 2014/11/20 16:34:26 christos Exp $	*/
+/*	$NetBSD: s390.c,v 1.3.18.1 2018/06/25 07:25:50 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2011 Frank Wille.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s390.c,v 1.3 2014/11/20 16:34:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s390.c,v 1.3.18.1 2018/06/25 07:25:50 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,16 +66,15 @@ static int
 s390rtc_match(device_t parent, cfdata_t cf, void *arg)
 {
 	struct i2c_attach_args *ia = arg;
+	int match_result;
 
-	if (ia->ia_name) {
-		/* direct config - check name */
-		if (strcmp(ia->ia_name, "s390rtc") == 0)
-			return 1;
-	} else {
-		/* indirect config - check typical address */
-		if (ia->ia_addr == S390_ADDR)
-			return 1;
-	}
+	if (iic_use_direct_match(ia, cf, NULL, &match_result))
+		return match_result;
+	
+	/* indirect config - check typical address */
+	if (ia->ia_addr == S390_ADDR)
+		return I2C_MATCH_ADDRESS_ONLY;
+
 	return 0;
 }
 

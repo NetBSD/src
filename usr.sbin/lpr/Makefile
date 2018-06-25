@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.11 2014/07/05 19:22:05 dholland Exp $
+#	$NetBSD: Makefile,v 1.11.22.1 2018/06/25 07:26:12 pgoyette Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
 
 SUBDIR=	common_source .WAIT lp lpc lpd lpq lpr lprm lptest pac filters
-SUBDIR+= SMM.doc
+SUBDIR.roff+= SMM.doc
 
 .include <bsd.subdir.mk>

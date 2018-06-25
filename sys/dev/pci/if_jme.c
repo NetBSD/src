@@ -1,4 +1,4 @@
-/*	$NetBSD: if_jme.c,v 1.32 2017/09/26 07:42:06 knakahara Exp $	*/
+/*	$NetBSD: if_jme.c,v 1.32.2.1 2018/06/25 07:25:52 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2008 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.32 2017/09/26 07:42:06 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.32.2.1 2018/06/25 07:25:52 pgoyette Exp $");
 
 
 #include <sys/param.h>
@@ -83,9 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.32 2017/09/26 07:42:06 knakahara Exp $"
 #include <net/if_dl.h>
 #include <net/route.h>
 #include <net/netisr.h>
-
 #include <net/bpf.h>
-#include <net/bpfdesc.h>
 
 #include <sys/rndsource.h>
 
@@ -1361,7 +1359,7 @@ jme_encap(struct jme_softc *sc, struct mbuf **m_head)
 		bool v4 = ((*m_head)->m_pkthdr.csum_flags & M_CSUM_TSOv4) != 0;
 		int iphl = v4 ?
 		    M_CSUM_DATA_IPv4_IPHL((*m_head)->m_pkthdr.csum_data) :
-		    M_CSUM_DATA_IPv6_HL((*m_head)->m_pkthdr.csum_data);
+		    M_CSUM_DATA_IPv6_IPHL((*m_head)->m_pkthdr.csum_data);
 		/*
 		 * note: we support vlan offloading, so we should never have
 		 * a ETHERTYPE_VLAN packet here - so ETHER_HDR_LEN is always

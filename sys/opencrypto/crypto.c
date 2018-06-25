@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.105 2018/01/08 23:34:56 knakahara Exp $ */
+/*	$NetBSD: crypto.c,v 1.105.2.1 2018/06/25 07:26:07 pgoyette Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.105 2018/01/08 23:34:56 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.105.2.1 2018/06/25 07:26:07 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -1794,7 +1794,7 @@ crypto_done(struct cryptop *crp)
 		{
 			int wasempty;
 			struct crypto_crp_ret_qs *qs;
-			struct crypto_crp_ret_q *crp_ret_q;;
+			struct crypto_crp_ret_q *crp_ret_q;
 
 			qs = crypto_get_crp_ret_qs(crp->reqcpu);
 			crp_ret_q = &qs->crp_ret_q;
@@ -1840,7 +1840,7 @@ crypto_kdone(struct cryptkop *krp)
 	} else {
 		int wasempty;
 		struct crypto_crp_ret_qs *qs;
-		struct crypto_crp_ret_kq *crp_ret_kq;;
+		struct crypto_crp_ret_kq *crp_ret_kq;
 
 		qs = crypto_get_crp_ret_qs(krp->reqcpu);
 		crp_ret_kq = &qs->crp_ret_kq;
@@ -2048,8 +2048,8 @@ static void
 cryptoret_softint(void *arg __unused)
 {
 	struct crypto_crp_ret_qs *qs;
-	struct crypto_crp_ret_q *crp_ret_q;;
-	struct crypto_crp_ret_kq *crp_ret_kq;;
+	struct crypto_crp_ret_q *crp_ret_q;
+	struct crypto_crp_ret_kq *crp_ret_kq;
 
 	qs = crypto_get_crp_ret_qs(curcpu());
 	crp_ret_q = &qs->crp_ret_q;

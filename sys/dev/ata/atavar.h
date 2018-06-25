@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.95.2.1 2018/04/22 07:20:20 pgoyette Exp $	*/
+/*	$NetBSD: atavar.h,v 1.95.2.2 2018/06/25 07:25:49 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -407,6 +407,7 @@ struct ata_channel {
 #define ATACH_TH_RESET 0x200	/* someone ask the thread to reset */
 #define ATACH_TH_RESCAN 0x400	/* rescan requested */
 #define ATACH_NCQ	0x800	/* channel executing NCQ commands */
+#define ATACH_DMA_BEFORE_CMD	0x1000	/* start DMA first */
 
 	/* for the reset callback */
 	int ch_reset_flags;

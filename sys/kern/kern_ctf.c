@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ctf.c,v 1.6 2016/07/07 06:55:43 msaitoh Exp $	*/
+/*	$NetBSD: kern_ctf.c,v 1.6.16.1 2018/06/25 07:26:04 pgoyette Exp $	*/
 /*-
  * Copyright (c) 2008 John Birrell <jb@freebsd.org>
  * All rights reserved.
@@ -28,6 +28,7 @@
  */
 
 #define ELFSIZE ARCH_ELFSIZE
+#include <sys/proc.h>
 #include <sys/module.h>
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
@@ -69,9 +70,9 @@ z_free(void *nil, void *ptr)
 }
 
 int
-mod_ctf_get(struct module *mod, mod_ctf_t *mc)
+mod_ctf_get(struct module *mod, mod_ctf_t **mcp)
 {
-	mod_ctf_t *cmc;
+	mod_ctf_t *mc;
 	struct ksyms_symtab *st;
 	void * ctftab = NULL;
 	size_t sz;
@@ -82,22 +83,24 @@ mod_ctf_get(struct module *mod, mod_ctf_t *mc)
 	uint8_t *ctfaddr;
 	size_t ctfsize;
 
-	if (mc == NULL) {
-		return EINVAL;
-	}
+	/*
+	 * Return the cached mc if there is one already.
+	 */
 
-	/* Set the defaults for no CTF present. That's not a crime! */
-	memset(mc, 0, sizeof(*mc));
+	extern specificdata_key_t fbt_module_key;
 
-	/* cached mc? */
-	if (mod->mod_ctf != NULL) {
-		cmc = mod->mod_ctf;
-		*mc = *cmc;
+	mc = module_getspecific(mod, fbt_module_key);
+	if (mc != NULL) {
+		*mcp = mc;
 		return (0);
 	}
 
-	st = ksyms_get_mod(mod->mod_info->mi_name);
+	/*
+	 * Allocate and initialize a new mc.
+	 */
 
+	mc = kmem_zalloc(sizeof(mod_ctf_t), KM_SLEEP);
+	st = ksyms_get_mod(module_name(mod));
 	if (st != NULL) {
 		mc->nmap     = st->sd_nmap;
 		mc->nmapsize = st->sd_nmapsize;
@@ -106,7 +109,8 @@ mod_ctf_get(struct module *mod, mod_ctf_t *mc)
 	if (mod->mod_kobj == NULL) {
 	    	/* no kobj entry, try building from ksyms list */
 		if (st == NULL) {
-			return ENOENT;
+			error = ENOENT;
+			goto out;
 		}
 
 		ctfaddr = st->sd_ctfstart;
@@ -118,7 +122,8 @@ mod_ctf_get(struct module *mod, mod_ctf_t *mc)
 		mc->nsym   = st->sd_symsize / sizeof(Elf_Sym);
 	} else {
 		if (kobj_find_section(mod->mod_kobj, ".SUNW_ctf", (void **)&ctfaddr, &ctfsize)) {
-			return ENOENT;
+			error = ENOENT;
+			goto out;
 		}
 
 		mc->symtab = mod->mod_kobj->ko_symtab;
@@ -216,21 +221,19 @@ mod_ctf_get(struct module *mod, mod_ctf_t *mc)
 	}
 
 	/* Got the CTF data! */
-	mc->ctftab = ctftab;
 	mc->ctfcnt = ctfsize;
-
-	/* cache it */
-	cmc = kmem_alloc(sizeof(mod_ctf_t), KM_SLEEP);
-
-	*cmc = *mc;
-	mod->mod_ctf = cmc;
-
-	/* We'll retain the memory allocated for the CTF data. */
+	mc->ctftab = ctftab;
 	ctfbuf = NULL;
+
+	module_setspecific(mod, fbt_module_key, mc);
+	*mcp = mc;
+	mc = NULL;
 
 out:
 	if (ctfbuf != NULL)
 		free(ctfbuf, M_TEMP);
+	if (mc != NULL)
+		kmem_free(mc, sizeof(*mc));
 
 	return (error);
 }

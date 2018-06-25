@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.245.2.4 2018/05/21 04:36:16 pgoyette Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.245.2.5 2018/06/25 07:26:07 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.245.2.4 2018/05/21 04:36:16 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.245.2.5 2018/06/25 07:26:07 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -598,7 +598,7 @@ udp4_realinput(struct sockaddr_in *src, struct sockaddr_in *dst,
 
 #ifdef IPSEC
 		/* Handle ESP over UDP */
-		if (inp->inp_flags & INP_ESPINUDP_ALL) {
+		if (inp->inp_flags & INP_ESPINUDP) {
 			switch (udp4_espinudp(mp, off, inp->inp_socket)) {
 			case -1: /* Error, m was freed */
 				rcvcnt = -1;
@@ -732,18 +732,13 @@ udp_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 
 			switch(optval) {
 			case 0:
-				inp->inp_flags &= ~INP_ESPINUDP_ALL;
+				inp->inp_flags &= ~INP_ESPINUDP;
 				break;
 
 			case UDP_ENCAP_ESPINUDP:
-				inp->inp_flags &= ~INP_ESPINUDP_ALL;
 				inp->inp_flags |= INP_ESPINUDP;
 				break;
 
-			case UDP_ENCAP_ESPINUDP_NON_IKE:
-				inp->inp_flags &= ~INP_ESPINUDP_ALL;
-				inp->inp_flags |= INP_ESPINUDP_NON_IKE;
-				break;
 			default:
 				error = EINVAL;
 				break;
@@ -1241,10 +1236,8 @@ udp_statinc(u_int stat)
  * Handle ESP-in-UDP packets (RFC3948).
  *
  * We need to distinguish between ESP packets and IKE packets. We do so by
- * looking at the Non-ESP and Non-IKE markers.
- *
- * If IKE, we process the UDP packet as usual. Otherwise, ESP, we invoke
- * IPsec.
+ * looking at the Non-ESP marker. If IKE, we process the UDP packet as usual.
+ * Otherwise, ESP, we invoke IPsec.
  *
  * Returns:
  *     1 if the packet was processed
@@ -1254,10 +1247,9 @@ udp_statinc(u_int stat)
 static int
 udp4_espinudp(struct mbuf **mp, int off, struct socket *so)
 {
+	const size_t skip = sizeof(struct udphdr);
 	size_t len;
 	uint8_t *data;
-	struct inpcb *inp;
-	size_t skip = 0;
 	size_t minlen;
 	size_t iphdrlen;
 	struct ip *ip;
@@ -1265,12 +1257,9 @@ udp4_espinudp(struct mbuf **mp, int off, struct socket *so)
 	struct udphdr *udphdr;
 	u_int16_t sport, dport;
 	struct mbuf *m = *mp;
+	uint32_t *marker;
 
-	/*
-	 * Collapse the mbuf chain if the first mbuf is too short.
-	 * The longest case is: UDP + max(Non-ESP, Non-IKE) + ESP.
-	 */
-	minlen = off + 2 * sizeof(uint32_t) + sizeof(struct esp);
+	minlen = off + sizeof(struct esp);
 	if (minlen > m->m_pkthdr.len)
 		minlen = m->m_pkthdr.len;
 
@@ -1283,7 +1272,6 @@ udp4_espinudp(struct mbuf **mp, int off, struct socket *so)
 
 	len = m->m_len - off;
 	data = mtod(m, uint8_t *) + off;
-	inp = sotoinpcb(so);
 
 	/* Ignore keepalive packets. */
 	if ((len == 1) && (*data == 0xff)) {
@@ -1293,28 +1281,11 @@ udp4_espinudp(struct mbuf **mp, int off, struct socket *so)
 	}
 
 	/* Handle Non-ESP marker (32bit). If zero, then IKE. */
-	if (inp->inp_flags & INP_ESPINUDP) {
-		uint32_t *marker = (uint32_t *)data;
-
-		if (len <= sizeof(uint32_t))
-			return 0;
-		if (marker[0] == 0)
-			return 0;
-
-		skip = sizeof(struct udphdr);
-	}
-
-	/* Handle Non-IKE marker (64bit). If non-zero, then IKE. */
-	if (inp->inp_flags & INP_ESPINUDP_NON_IKE) {
-		uint32_t *marker = (uint32_t *)data;
-
-		if (len <= 2 * sizeof(uint32_t) + sizeof(struct esp))
-			return 0;
-		if (marker[0] != 0 || marker[1] != 0)
-			return 0;
-
-		skip = sizeof(struct udphdr) + 2 * sizeof(uint32_t);
-	}
+	marker = (uint32_t *)data;
+	if (len <= sizeof(uint32_t))
+		return 0;
+	if (marker[0] == 0)
+		return 0;
 
 	/*
 	 * Get the UDP ports. They are handled in network order

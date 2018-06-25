@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.3 2010/02/21 01:46:36 darran Exp $	*/
+/*	$NetBSD: param.h,v 1.3.44.1 2018/06/25 07:25:26 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 2007 John Birrell <jb@freebsd.org>
@@ -25,13 +25,14 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/compat/opensolaris/sys/param.h,v 1.1 2007/11/28 21:50:40 jb Exp $
+ * $FreeBSD: head/sys/cddl/compat/opensolaris/sys/param.h 185029 2008-11-17 20:49:29Z pjd $
  *
  */
 
 #ifndef _COMPAT_OPENSOLARIS_SYS_PARAM_H_
 #define _COMPAT_OPENSOLARIS_SYS_PARAM_H_
 
+#define __HIDE_DELAY
 #include_next <sys/param.h>
 
 #ifdef _KERNEL

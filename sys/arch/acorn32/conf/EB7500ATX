@@ -1,4 +1,4 @@
-#	$NetBSD: EB7500ATX,v 1.64.2.1 2018/05/21 04:35:57 pgoyette Exp $
+#	$NetBSD: EB7500ATX,v 1.64.2.2 2018/06/25 07:25:37 pgoyette Exp $
 #
 #	EB7500ATX --- NetBSD/acorn32 complete configuration
 #
@@ -22,7 +22,7 @@ include 	"arch/acorn32/conf/std.acorn32"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"EB7500ATX-$Revision: 1.64.2.1 $"
+#ident		"EB7500ATX-$Revision: 1.64.2.2 $"
 
 # estimated number of users
 maxusers	32
@@ -159,10 +159,10 @@ clock*	at iomd?
 
 # IIC bus device
 #iomdiic* at iomd?
-#iic0 at iomdiic?
+#iic* at iomdiic?
 
 # RTC device via IIC bus
-#pcfrtc*	at iic0 addr 0x50
+#pcfrtc*	at iic? addr 0x50
 
 # VIDC device
 vidc0		at mainbus?

@@ -1,4 +1,4 @@
-/*	$NetBSD: luaconf.h,v 1.21 2017/04/26 13:17:33 mbalmer Exp $	*/
+/*	$NetBSD: luaconf.h,v 1.21.8.1 2018/06/25 07:25:31 pgoyette Exp $	*/
 
 /*
 ** Id: luaconf.h,v 1.259 2016/12/22 13:08:50 roberto Exp 
@@ -757,7 +757,9 @@
 ** smaller buffer would force a memory allocation for each call to
 ** 'string.format'.)
 */
-#if LUA_FLOAT_TYPE == LUA_FLOAT_LONGDOUBLE
+#ifdef _KERNEL
+#define LUAL_BUFFERSIZE		128
+#elif LUA_FLOAT_TYPE == LUA_FLOAT_LONGDOUBLE
 #define LUAL_BUFFERSIZE		8192
 #else
 #define LUAL_BUFFERSIZE   ((int)(0x80 * sizeof(void*) * sizeof(lua_Integer)))

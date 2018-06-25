@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm53xx_board.c,v 1.23 2016/10/20 09:53:07 skrll Exp $	*/
+/*	$NetBSD: bcm53xx_board.c,v 1.23.14.1 2018/06/25 07:25:39 pgoyette Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_board.c,v 1.23 2016/10/20 09:53:07 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_board.c,v 1.23.14.1 2018/06/25 07:25:39 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -615,7 +615,7 @@ bcm53xx_device_register(device_t self, void *aux)
 	 * We need to tell the A9 Global/Watchdog Timer
 	 * what frequency it runs at.
 	 */
-	if (device_is_a(self, "a9tmr") || device_is_a(self, "a9wdt")) {
+	if (device_is_a(self, "arma9tmr") || device_is_a(self, "a9wdt")) {
 		/*
 		 * This clock always runs at (arm_clk div 2) and only goes
 		 * to timers that are part of the A9 MP core subsystem.

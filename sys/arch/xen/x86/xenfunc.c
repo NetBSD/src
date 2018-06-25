@@ -1,4 +1,4 @@
-/*	$NetBSD: xenfunc.c,v 1.17 2017/10/15 10:58:32 maxv Exp $	*/
+/*	$NetBSD: xenfunc.c,v 1.17.2.1 2018/06/25 07:25:47 pgoyette Exp $	*/
 
 /*
  *
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenfunc.c,v 1.17 2017/10/15 10:58:32 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenfunc.c,v 1.17.2.1 2018/06/25 07:25:47 pgoyette Exp $");
 
 #include <sys/param.h>
 
@@ -53,7 +53,7 @@ void xen_set_ldt(vaddr_t, uint32_t);
 void 
 invlpg(vaddr_t addr)
 {
-	int s = splvm();
+	int s = splvm(); /* XXXSMP */
 	xpq_queue_invlpg(addr);
 	splx(s);
 }  
@@ -101,7 +101,7 @@ rcr0(void)
 void
 lcr3(vaddr_t val)
 {
-	int s = splvm();
+	int s = splvm(); /* XXXSMP */
 	xpq_queue_pt_switch(xpmap_ptom_masked(val));
 	splx(s);
 }
@@ -110,7 +110,7 @@ lcr3(vaddr_t val)
 void
 tlbflush(void)
 {
-	int s = splvm();
+	int s = splvm(); /* XXXSMP */
 	xpq_queue_tlb_flush();
 	splx(s);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: am7990.c,v 1.77 2017/05/23 04:51:31 ozaki-r Exp $	*/
+/*	$NetBSD: am7990.c,v 1.77.8.1 2018/06/25 07:25:50 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: am7990.c,v 1.77 2017/05/23 04:51:31 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am7990.c,v 1.77.8.1 2018/06/25 07:25:50 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,9 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: am7990.c,v 1.77 2017/05/23 04:51:31 ozaki-r Exp $");
 #include <net/if_dl.h>
 #include <net/if_ether.h>
 #include <net/if_media.h>
-
 #include <net/bpf.h>
-#include <net/bpfdesc.h>
 
 #include <dev/ic/lancereg.h>
 #include <dev/ic/lancevar.h>

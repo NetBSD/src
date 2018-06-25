@@ -1,4 +1,4 @@
-/*	$NetBSD: isadmareg.h,v 1.8 2008/04/28 20:23:52 martin Exp $	*/
+/*	$NetBSD: isadmareg.h,v 1.8.86.1 2018/06/25 07:25:50 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -46,6 +46,9 @@
 
 #define	ISA_DMA_MAXSIZE_DEFAULT(chan)					\
 	(((chan) & 4) ? ISA_DMA_MAXSIZE_16BIT : ISA_DMA_MAXSIZE_8BIT)
+
+/* DMA Page Address Registers size */
+#define	DMAPG_IOSIZE	(1*15)
 
 /*
  * Register definitions for DMA controller 1 (channels 0..3):

@@ -1,4 +1,4 @@
-/*	$NetBSD: refstr.h,v 1.2 2010/02/21 01:46:36 darran Exp $	*/
+/*	$NetBSD: refstr.h,v 1.2.44.1 2018/06/25 07:25:26 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007 Pawel Jakub Dawidek <pjd@FreeBSD.org>
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- $ $FreeBSD: src/sys/cddl/compat/opensolaris/sys/refstr.h,v 1.1.4.1 2009/08/03 08:13:06 kensmith Exp $
+ $ $FreeBSD: head/sys/cddl/compat/opensolaris/sys/refstr.h 185029 2008-11-17 20:49:29Z pjd $
  */
 
 #ifndef _OPENSOLARIS_SYS_REFSTR_H_

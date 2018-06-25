@@ -1,4 +1,4 @@
-#	$NetBSD: t_vlan.sh,v 1.8 2018/02/01 05:22:02 ozaki-r Exp $
+#	$NetBSD: t_vlan.sh,v 1.8.2.1 2018/06/25 07:26:09 pgoyette Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -32,10 +32,14 @@ IP_LOCAL0=10.0.0.1
 IP_LOCAL1=10.0.1.1
 IP_REMOTE0=10.0.0.2
 IP_REMOTE1=10.0.1.2
+IP_MCADDR0=224.0.0.10
 IP6_LOCAL0=fc00:0::1
 IP6_LOCAL1=fc00:1::1
 IP6_REMOTE0=fc00:0::2
 IP6_REMOTE1=fc00:1::2
+IP6_MCADDR0=ff11::10
+ETH_IP_MCADDR0=01:00:5e:00:00:0a
+ETH_IP6_MCADDR0=33:33:00:00:00:10
 
 DEBUG=${DEBUG:-false}
 
@@ -524,6 +528,197 @@ vlan_configs6_cleanup()
 	cleanup
 }
 
+vlan_bridge_body_common()
+{
+
+	rump_server_add_iface $SOCK_LOCAL shmif0 $BUS
+
+	export RUMP_SERVER=$SOCK_LOCAL
+	atf_check -s exit:0 rump.ifconfig shmif0 up
+
+	atf_check -s exit:0 rump.ifconfig vlan0 create
+	atf_check -s exit:0 rump.ifconfig vlan0 vlan 10 vlanif shmif0
+	atf_check -s exit:0 rump.ifconfig vlan0 up
+	$DEBUG && rump.ifconfig vlan0
+
+	atf_check -s exit:0 rump.ifconfig bridge0 create
+	# Adjust to the MTU of a vlan on a shmif
+	atf_check -s exit:0 rump.ifconfig bridge0 mtu 1496
+	atf_check -s exit:0 rump.ifconfig bridge0 up
+	# Test brconfig add
+	atf_check -s exit:0 $HIJACKING brconfig bridge0 add vlan0
+	$DEBUG && brconfig bridge0
+	# Test brconfig delete
+	atf_check -s exit:0 $HIJACKING brconfig bridge0 delete vlan0
+
+	atf_check -s exit:0 $HIJACKING brconfig bridge0 add vlan0
+	# Test vlan destruction with bridge
+	atf_check -s exit:0 rump.ifconfig vlan0 destroy
+
+	rump_server_destroy_ifaces
+}
+
+atf_test_case vlan_bridge cleanup
+vlan_bridge_head()
+{
+
+	atf_set "descr" "tests of vlan interfaces with bridges (IPv4)"
+	atf_set "require.progs" "rump_server"
+}
+
+vlan_bridge_body()
+{
+
+	rump_server_start $SOCK_LOCAL vlan bridge
+	vlan_bridge_body_common
+}
+
+vlan_bridge_cleanup()
+{
+
+	$DEBUG && dump
+	cleanup
+}
+
+atf_test_case vlan_bridge6 cleanup
+vlan_bridge6_head()
+{
+
+	atf_set "descr" "tests of vlan interfaces with bridges (IPv6)"
+	atf_set "require.progs" "rump_server"
+}
+
+vlan_bridge6_body()
+{
+
+	rump_server_start $SOCK_LOCAL vlan netinet6 bridge
+	vlan_bridge_body_common
+}
+
+vlan_bridge6_cleanup()
+{
+
+	$DEBUG && dump
+	cleanup
+}
+
+vlan_multicast_body_common()
+{
+
+	local af="inet"
+	local local0=$IP_LOCAL0
+	local local1=$IP_LOCAL1
+	local mcaddr=$IP_MCADDR0
+	local eth_mcaddr=$ETH_IP_MCADDR0
+	local prefix=24
+	local siocXmulti="$(atf_get_srcdir)/siocXmulti"
+
+	if [ x"$1" =  x"inet6" ]; then
+		af="inet6"
+		prefix=64
+		local0=$IP6_LOCAL0
+		local1=$IP6_LOCAL1
+		mcaddr=$IP6_MCADDR0
+		eth_mcaddr=$ETH_IP6_MCADDR0
+	fi
+
+	export RUMP_SERVER=$SOCK_LOCAL
+
+	atf_check -s exit:0 rump.ifconfig shmif0 create
+	atf_check -s exit:0 rump.ifconfig shmif0 linkstr net0 up
+	atf_check -s exit:0 rump.ifconfig vlan0 create
+	atf_check -s exit:0 rump.ifconfig vlan0 vlan 10 vlanif shmif0
+	atf_check -s exit:0 rump.ifconfig vlan0 $af $local0/$prefix up
+	atf_check -s exit:0 rump.ifconfig vlan1 create
+	atf_check -s exit:0 rump.ifconfig vlan1 vlan 11 vlanif shmif0
+	atf_check -s exit:0 rump.ifconfig vlan1 $af $local1/$prefix up
+	atf_check -s exit:0 rump.ifconfig -w 10
+
+	# check the initial state
+	atf_check -s exit:0 -o not-match:"$eth_mcaddr" $HIJACKING ifmcstat
+
+	# add a multicast address
+	atf_check -s exit:0 $HIJACKING $siocXmulti add vlan0 $mcaddr
+	atf_check -s exit:0 -o match:"$eth_mcaddr" $HIJACKING ifmcstat
+
+	# delete the address
+	atf_check -s exit:0 $HIJACKING $siocXmulti del vlan0 $mcaddr
+	atf_check -s exit:0 -o not-match:"$eth_mcaddr" $HIJACKING ifmcstat
+
+	# delete a non-existing address
+	atf_check -s not-exit:0 -e ignore $HIJACKING $siocXmulti del vlan0 $mcaddr
+
+	# add an address to different interfaces
+	atf_check -s exit:0 $HIJACKING $siocXmulti add vlan0 $mcaddr
+	atf_check -s exit:0 $HIJACKING $siocXmulti add vlan1 $mcaddr
+	atf_check -s exit:0 -o match:"${eth_mcaddr}: 2" $HIJACKING ifmcstat
+	atf_check -s exit:0 $HIJACKING $siocXmulti del vlan0 $mcaddr
+
+	# delete the address with invalid interface
+	atf_check -s not-exit:0 -e match:"Invalid argument" \
+	    $HIJACKING $siocXmulti del vlan0 $mcaddr
+
+	atf_check -s exit:0 $HIJACKING $siocXmulti del vlan1 $mcaddr
+
+	# add and delete a same address more than once
+	atf_check -s exit:0 $HIJACKING $siocXmulti add vlan0 $mcaddr
+	atf_check -s exit:0 $HIJACKING $siocXmulti add vlan0 $mcaddr
+	atf_check -s exit:0 $HIJACKING $siocXmulti add vlan0 $mcaddr
+	atf_check -s exit:0 -o match:"${eth_mcaddr}: 3" $HIJACKING ifmcstat
+	atf_check -s exit:0 $HIJACKING $siocXmulti del vlan0 $mcaddr
+	atf_check -s exit:0 $HIJACKING $siocXmulti del vlan0 $mcaddr
+	atf_check -s exit:0 $HIJACKING $siocXmulti del vlan0 $mcaddr
+	atf_check -s exit:0 -o not-match:"$eth_mcaddr" $HIJACKING ifmcstat
+
+	# delete all address added to parent device when remove
+	# the config of parent interface
+	atf_check -s exit:0 $HIJACKING $siocXmulti add vlan0 $mcaddr
+	atf_check -s exit:0 $HIJACKING $siocXmulti add vlan0 $mcaddr
+	atf_check -s exit:0 $HIJACKING $siocXmulti add vlan0 $mcaddr
+	atf_check -s exit:0 rump.ifconfig vlan0 -vlanif shmif0
+	atf_check -s exit:0 -o not-match:"$eth_mcaddr" $HIJACKING ifmcstat
+}
+
+atf_test_case vlan_multicast cleanup
+vlan_multicast_head()
+{
+	atf_set "descr" "tests of multicast address adding and deleting"
+	atf_set "require.progs" "rump_server"
+}
+
+vlan_multicast_body()
+{
+	rump_server_start $SOCK_LOCAL vlan
+
+	vlan_multicast_body_common inet
+}
+
+vlan_multicast_cleanup()
+{
+	$DEBUG && dump
+	cleanup
+}
+
+atf_test_case vlan_multicast6 cleanup
+vlan_multicast6_head()
+{
+	atf_set "descr" "tests of multicast address adding and deleting with IPv6"
+	atf_set "require.progs" "rump_server"
+}
+
+vlan_multicast6_body()
+{
+	rump_server_start $SOCK_LOCAL vlan netinet6
+
+	vlan_multicast_body_common inet6
+}
+
+vlan_multicast6_cleanup()
+{
+	$DEBUG && dump
+	cleanup
+}
+
 atf_init_test_cases()
 {
 
@@ -531,9 +726,13 @@ atf_init_test_cases()
 	atf_add_test_case vlan_basic
 	atf_add_test_case vlan_vlanid
 	atf_add_test_case vlan_configs
+	atf_add_test_case vlan_bridge
+	atf_add_test_case vlan_multicast
 
 	atf_add_test_case vlan_create_destroy6
 	atf_add_test_case vlan_basic6
 	atf_add_test_case vlan_vlanid6
 	atf_add_test_case vlan_configs6
+	atf_add_test_case vlan_bridge6
+	atf_add_test_case vlan_multicast6
 }

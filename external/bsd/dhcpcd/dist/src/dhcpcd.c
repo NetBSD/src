@@ -363,13 +363,24 @@ static void
 dhcpcd_drop(struct interface *ifp, int stop)
 {
 
+#ifdef DHCP6
 	dhcp6_drop(ifp, stop ? NULL : "EXPIRE6");
+#endif
+#ifdef INET6
 	ipv6nd_drop(ifp);
 	ipv6_drop(ifp);
+#endif
+#ifdef IPV4LL
 	ipv4ll_drop(ifp);
+#endif
+#ifdef INET
 	dhcp_drop(ifp, stop ? "STOP" : "EXPIRE");
+#endif
 #ifdef ARP
 	arp_drop(ifp);
+#endif
+#if !defined(DHCP6) && !defined(DHCP)
+	UNUSED(stop);
 #endif
 }
 
@@ -770,22 +781,29 @@ dhcpcd_handlecarrier(struct dhcpcd_ctx *ctx, int carrier, unsigned int flags,
 }
 
 static void
-warn_iaid_conflict(struct interface *ifp, uint8_t *iaid)
+warn_iaid_conflict(struct interface *ifp, uint16_t ia_type, uint8_t *iaid)
 {
 	struct interface *ifn;
+#ifdef INET6
 	size_t i;
+	struct if_ia *ia;
+#endif
 
 	TAILQ_FOREACH(ifn, ifp->ctx->ifaces, next) {
 		if (ifn == ifp || !ifn->active)
 			continue;
-		if (memcmp(ifn->options->iaid, iaid,
+		if (ia_type == 0 &&
+		    memcmp(ifn->options->iaid, iaid,
 		    sizeof(ifn->options->iaid)) == 0)
 			break;
+#ifdef INET6
 		for (i = 0; i < ifn->options->ia_len; i++) {
-			if (memcmp(&ifn->options->ia[i].iaid, iaid,
-			    sizeof(ifn->options->ia[i].iaid)) == 0)
+			ia = &ifn->options->ia[i];
+			if (ia->ia_type == ia_type &&
+			    memcmp(ia->iaid, iaid, sizeof(ia->iaid)) == 0)
 				break;
 		}
+#endif
 	}
 
 	/* This is only a problem if the interfaces are on the same network. */
@@ -799,7 +817,6 @@ dhcpcd_startinterface(void *arg)
 {
 	struct interface *ifp = arg;
 	struct if_options *ifo = ifp->options;
-	size_t i;
 	char buf[DUID_LEN * 3];
 	int carrier;
 	struct timespec tv;
@@ -839,22 +856,28 @@ dhcpcd_startinterface(void *arg)
 	}
 
 	if (ifo->options & (DHCPCD_DUID | DHCPCD_IPV6)) {
+#ifdef INET6
+		size_t i;
+		struct if_ia *ia;
+#endif
+
 		/* Report IAIDs */
 		loginfox("%s: IAID %s", ifp->name,
 		    hwaddr_ntoa(ifo->iaid, sizeof(ifo->iaid),
 		    buf, sizeof(buf)));
-		warn_iaid_conflict(ifp, ifo->iaid);
+		warn_iaid_conflict(ifp, 0, ifo->iaid);
+#ifdef INET6
 		for (i = 0; i < ifo->ia_len; i++) {
-			if (memcmp(ifo->iaid, ifo->ia[i].iaid,
-			    sizeof(ifo->iaid)))
-			{
-				loginfox("%s: IAID %s",
-				    ifp->name, hwaddr_ntoa(ifo->ia[i].iaid,
-				    sizeof(ifo->ia[i].iaid),
+			ia = &ifo->ia[i];
+			if (memcmp(ifo->iaid, ia->iaid, sizeof(ifo->iaid))) {
+				loginfox("%s: IA type %u IAID %s",
+				    ifp->name, ia->ia_type,
+				    hwaddr_ntoa(ia->iaid, sizeof(ia->iaid),
 				    buf, sizeof(buf)));
-				warn_iaid_conflict(ifp, ifo->ia[i].iaid);
+				warn_iaid_conflict(ifp, ia->ia_type, ia->iaid);
 			}
 		}
+#endif
 	}
 
 	if (ifo->options & DHCPCD_IPV6 && ipv6_start(ifp) == -1) {

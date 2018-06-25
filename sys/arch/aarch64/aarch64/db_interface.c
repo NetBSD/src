@@ -1,4 +1,4 @@
-/* $NetBSD: db_interface.c,v 1.1.28.1 2018/04/07 04:12:10 pgoyette Exp $ */
+/* $NetBSD: db_interface.c,v 1.1.28.2 2018/06/25 07:25:37 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.1.28.1 2018/04/07 04:12:10 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.1.28.2 2018/06/25 07:25:37 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -128,17 +128,82 @@ db_write_bytes(vaddr_t addr, size_t size, const char *data)
 	}
 }
 
+/*
+ * return register value of $X0..$X30, $SP or 0($XZR)
+ */
+static uint64_t
+db_fetch_reg(unsigned int reg, db_regs_t *regs, bool use_sp)
+{
+	if (reg >= 32)
+		panic("db_fetch_reg: botch");
+
+	if (reg == 31) {
+		/* $SP or $XZR */
+		return use_sp ? regs->tf_sp : 0;
+	}
+	return regs->tf_reg[reg];
+}
+
+static inline uint64_t
+SignExtend(int bitwidth, uint64_t imm, unsigned int multiply)
+{
+	const uint64_t signbit = ((uint64_t)1 << (bitwidth - 1));
+	const uint64_t immmax = signbit << 1;
+
+	if (imm & signbit)
+		imm -= immmax;
+	return imm * multiply;
+}
+
 db_addr_t
 db_branch_taken(db_expr_t inst, db_addr_t pc, db_regs_t *regs)
 {
-	/* XXX */
-	return pc + 4;
+#define INSN_FMT_RN(insn)		(((insn) >> 5) & 0x1f)
+#define INSN_FMT_IMM26(insn)	((insn) & 0x03ffffff)
+#define INSN_FMT_IMM19(insn)	(((insn) >> 5) & 0x7ffff)
+#define INSN_FMT_IMM14(insn)	(((insn) >> 5) & 0x3fff)
+
+	if (((inst & 0xfffffc1f) == 0xd65f0000) ||	/* ret xN */
+	    ((inst & 0xfffffc1f) == 0xd63f0000) ||	/* blr xN */
+	    ((inst & 0xfffffc1f) == 0xd61f0000)) {	/* br xN */
+		return db_fetch_reg(INSN_FMT_RN(inst), regs, false);
+	}
+
+	if (((inst & 0xfc000000) == 0x94000000) ||	/* bl imm */
+	    ((inst & 0xfc000000) == 0x14000000)) {	/* b imm */
+		return SignExtend(26, INSN_FMT_IMM26(inst), 4) + pc;
+	}
+
+	if (((inst & 0xff000010) == 0x54000000) ||	/* b.cond */
+	    ((inst & 0x7f000000) == 0x35000000) ||	/* cbnz */
+	    ((inst & 0x7f000000) == 0x34000000)) {	/* cbz */
+		return SignExtend(19, INSN_FMT_IMM19(inst), 4) + pc;
+	}
+
+	if (((inst & 0x7f000000) == 0x37000000) ||	/* tbnz */
+	    ((inst & 0x7f000000) == 0x36000000)) {	/* tbz */
+		return SignExtend(14, INSN_FMT_IMM14(inst), 4) + pc;
+	}
+
+	panic("branch_taken: botch");
 }
 
 bool
 db_inst_unconditional_flow_transfer(db_expr_t inst)
 {
-	/* XXX */
+	if (((inst & 0xfffffc1f) == 0xd65f0000) ||	/* ret xN */
+	    ((inst & 0xfc000000) == 0x94000000) ||	/* bl */
+	    ((inst & 0xfffffc1f) == 0xd63f0000) ||	/* blr */
+	    ((inst & 0xfc000000) == 0x14000000) ||	/* b imm */
+	    ((inst & 0xfffffc1f) == 0xd61f0000))	/* br */
+		return true;
+
+#define INSN_FMT_COND(insn)	((insn) & 0xf)
+#define CONDITION_AL	14
+
+	if (((inst & 0xff000010) == 0x54000000) &&	/* b.cond */
+	    (INSN_FMT_COND(inst) == CONDITION_AL))	/* always? */
+		return true;
+
 	return false;
 }
-

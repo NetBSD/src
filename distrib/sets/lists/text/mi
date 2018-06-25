@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.46 2015/12/18 19:00:45 christos Exp $
+# $NetBSD: mi,v 1.46.14.1 2018/06/25 07:25:10 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -497,7 +497,7 @@
 ./usr/share/man/cat7/mandoc_tbl.0		text-mdocml-catman	.cat
 ./usr/share/man/cat7/manuals.0			text-obsolete		obsolete
 ./usr/share/man/cat7/mdoc.samples.0		text-groff-catman	.cat,groff
-./usr/share/man/cat7/me.0			text-groff-catman	.cat
+./usr/share/man/cat7/me.0			text-groff-catman	.cat,groff
 ./usr/share/man/cat7/mm.0			text-groff-catman	.cat,groff
 ./usr/share/man/cat7/mmse.0			text-groff-catman	.cat,groff
 ./usr/share/man/cat7/ms.0			text-groff-catman	.cat,groff
@@ -556,7 +556,7 @@
 ./usr/share/man/html7/mandoc_tbl.html		text-mdocml-htmlman	html
 ./usr/share/man/html7/manuals.html		text-obsolete		obsolete
 ./usr/share/man/html7/mdoc.samples.html		text-groff-htmlman	html,groff
-./usr/share/man/html7/me.html			text-groff-htmlman	html
+./usr/share/man/html7/me.html			text-groff-htmlman	html,groff
 ./usr/share/man/html7/mm.html			text-groff-htmlman	html,groff
 ./usr/share/man/html7/mmse.html			text-groff-htmlman	html,groff
 ./usr/share/man/html7/ms.html			text-groff-htmlman	html,groff
@@ -618,7 +618,7 @@
 ./usr/share/man/man7/mandoc_tbl.7		text-mdocml-man		.man
 ./usr/share/man/man7/manuals.7			text-obsolete		obsolete
 ./usr/share/man/man7/mdoc.samples.7		text-groff-man		.man,groff
-./usr/share/man/man7/me.7			text-groff-man		.man
+./usr/share/man/man7/me.7			text-groff-man		.man,groff
 ./usr/share/man/man7/mm.7			text-groff-man		.man,groff
 ./usr/share/man/man7/mmse.7			text-groff-man		.man,groff
 ./usr/share/man/man7/ms.7			text-groff-man		.man,groff

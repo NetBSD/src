@@ -1,4 +1,4 @@
-/*	$NetBSD: kern.ldscript.Xen,v 1.15 2018/01/07 12:42:47 maxv Exp $	*/
+/*	$NetBSD: kern.ldscript.Xen,v 1.15.2.1 2018/06/25 07:25:42 pgoyette Exp $	*/
 
 #include "assym.h"
 
@@ -6,12 +6,13 @@ __PAGE_SIZE = 0x1000 ;
 
 SECTIONS
 {
-	.text :
+	.text : AT (ADDR(.text))
 	{
 		*(.text)
 		*(.text.*)
 		*(.stub)
-	}
+		. = ALIGN(__PAGE_SIZE);
+	} =0xCC
 	_etext = . ;
 	PROVIDE (etext = .) ;
 
@@ -60,28 +61,19 @@ SECTIONS
 		*(.bss)
 		*(.bss.*)
 		*(COMMON)
-		. = ALIGN(32 / 8);
+		. = ALIGN(__PAGE_SIZE);
 	}
-	. = ALIGN(32 / 8);
-	_end = . ;
-	PROVIDE (end = .) ;
 
 	. = ALIGN(__PAGE_SIZE);
 
 	/* End of the kernel image */
 	__kernel_end = . ;
 
+	_end = . ;
+	PROVIDE (end = .) ;
 	.note.netbsd.ident :
 	{
 		KEEP(*(.note.netbsd.ident));
 	}
 }
 
-SECTIONS
-{
-	.text :
-	AT (ADDR(.text))
-	{
-		*(.text)
-	} = 0
-}

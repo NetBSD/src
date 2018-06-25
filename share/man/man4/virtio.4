@@ -1,4 +1,4 @@
-.\"	$NetBSD: virtio.4,v 1.8 2017/05/16 23:21:53 jdolecek Exp $
+.\"	$NetBSD: virtio.4,v 1.8.8.1 2018/06/25 07:25:36 pgoyette Exp $
 .\"
 .\" Copyright (c) 2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -24,13 +24,14 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 17, 2017
+.Dd June 7, 2018
 .Dt VIRTIO 4
 .Os
 .Sh NAME
 .Nm virtio
 .Nd Para-virtualized I/O in a virtual machine
 .Sh SYNOPSIS
+.Cd "virtio* at fdt?"
 .Cd "virtio* at pci? dev ? function ?"
 .Cd "ld* at virtio?"
 .Cd "vioif* at virtio?"
@@ -43,7 +44,7 @@ defines an interface for efficient, standard and extensible I/O between the
 hypervisor and the virtual machine.
 The
 .Nm
-device driver represents an emulated PCI device that the hypervisor makes
+device driver represents an emulated device that the hypervisor makes
 available to the virtual machine.
 .Pp
 .Nm

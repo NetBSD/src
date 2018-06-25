@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.5 2010/03/13 22:31:15 christos Exp $	*/
+/*	$NetBSD: proc.h,v 1.5.44.1 2018/06/25 07:25:26 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -54,15 +54,16 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/compat/opensolaris/sys/proc.h,v 1.4 2007/11/28 21:50:05 jb Exp $
+ * $FreeBSD: head/sys/cddl/compat/opensolaris/sys/proc.h 306304 2016-09-24 21:40:14Z markj $
  */
 
 #ifndef _OPENSOLARIS_SYS_PROC_H_
 #define	_OPENSOLARIS_SYS_PROC_H_
 
-#include <sys/param.h>
 #include_next <sys/proc.h>
+#ifdef __NetBSD__
 #include <sys/stdint.h>
+#endif
 
 #ifdef _KERNEL
 
@@ -98,8 +99,6 @@ kthread_t *thread_create(void *, size_t, void (*)(void *), void *, size_t,
 			 proc_t *, int, pri_t);
 void	thread_exit(void);
 void	thread_join(uint64_t);
-
-int newproc(void (*)(void *), caddr_t, id_t, int, struct contract **, pid_t);
 
 #endif	/* _KERNEL */
 

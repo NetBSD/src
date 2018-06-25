@@ -1,4 +1,4 @@
-/* $NetBSD: mkdep.c,v 1.44 2015/06/16 22:54:10 christos Exp $ */
+/* $NetBSD: mkdep.c,v 1.44.14.1 2018/06/25 07:26:11 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #if !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\
  All rights reserved.");
-__RCSID("$NetBSD: mkdep.c,v 1.44 2015/06/16 22:54:10 christos Exp $");
+__RCSID("$NetBSD: mkdep.c,v 1.44.14.1 2018/06/25 07:26:11 pgoyette Exp $");
 #endif /* not lint */
 
 #include <sys/mman.h>
@@ -82,12 +82,6 @@ static int verbose;
 static void save_for_optional(const char *, const char *);
 static size_t write_optional(int, opt_t *, size_t);
 
-static inline void *
-deconst(const void *p)
-{
-	return (const char *)p - (const char *)0 + (char *)0;
-}
-
 __dead static void
 usage(void)
 {
@@ -119,8 +113,8 @@ run_cc(int argc, char **argv, const char **fname)
 	if ((args = malloc((argc + 3) * sizeof(char *))) == NULL)
 		err(EXIT_FAILURE, "malloc");
 
-	args[0] = deconst(CC);
-	args[1] = deconst("-M");
+	args[0] = __UNCONST(CC);
+	args[1] = __UNCONST("-M");
 	(void)memcpy(&args[2], argv, (argc + 1) * sizeof(char *));
 
 	if ((tmpdir = getenv("TMPDIR")) == NULL)

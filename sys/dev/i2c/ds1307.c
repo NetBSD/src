@@ -1,4 +1,4 @@
-/*	$NetBSD: ds1307.c,v 1.25 2017/10/28 04:53:55 riastradh Exp $	*/
+/*	$NetBSD: ds1307.c,v 1.25.2.1 2018/06/25 07:25:50 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ds1307.c,v 1.25 2017/10/28 04:53:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ds1307.c,v 1.25.2.1 2018/06/25 07:25:50 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: ds1307.c,v 1.25 2017/10/28 04:53:55 riastradh Exp $"
 #include "ioconf.h"
 
 struct dsrtc_model {
+	const i2c_addr_t *dm_valid_addrs;
 	uint16_t dm_model;
 	uint8_t dm_ch_reg;
 	uint8_t dm_ch_value;
@@ -74,66 +75,103 @@ struct dsrtc_model {
 #define	DSRTC_FLAG_CLOCK_HOLD_REVERSED	0x20
 };
 
-static const struct dsrtc_model dsrtc_models[] = {
-	{
-		.dm_model = 1307,
-		.dm_ch_reg = DSXXXX_SECONDS,
-		.dm_ch_value = DS1307_SECONDS_CH,
-		.dm_rtc_start = DS1307_RTC_START,
-		.dm_rtc_size = DS1307_RTC_SIZE,
-		.dm_nvram_start = DS1307_NVRAM_START,
-		.dm_nvram_size = DS1307_NVRAM_SIZE,
-		.dm_flags = DSRTC_FLAG_BCD | DSRTC_FLAG_CLOCK_HOLD,
-	}, {
-		.dm_model = 1339,
-		.dm_rtc_start = DS1339_RTC_START,
-		.dm_rtc_size = DS1339_RTC_SIZE,
-		.dm_flags = DSRTC_FLAG_BCD,
-	}, {
-		.dm_model = 1340,
-		.dm_ch_reg = DSXXXX_SECONDS,
-		.dm_ch_value = DS1340_SECONDS_EOSC,
-		.dm_rtc_start = DS1340_RTC_START,
-		.dm_rtc_size = DS1340_RTC_SIZE,
-		.dm_flags = DSRTC_FLAG_BCD,
-	}, {
-		.dm_model = 1672,
-		.dm_rtc_start = DS1672_RTC_START,
-		.dm_rtc_size = DS1672_RTC_SIZE,
-		.dm_ch_reg = DS1672_CONTROL,
-		.dm_ch_value = DS1672_CONTROL_CH,
-		.dm_flags = 0,
-	}, {
-		.dm_model = 3231,
-		.dm_rtc_start = DS3232_RTC_START,
-		.dm_rtc_size = DS3232_RTC_SIZE,
-		/*
-		 * XXX
-		 * the DS3232 likely has the temperature sensor too but I can't
-		 * easily verify or test that right now
-		 */
-		.dm_flags = DSRTC_FLAG_BCD | DSRTC_FLAG_TEMP,
-	}, {
-		.dm_model = 3232,
-		.dm_rtc_start = DS3232_RTC_START,
-		.dm_rtc_size = DS3232_RTC_SIZE,
-		.dm_nvram_start = DS3232_NVRAM_START,
-		.dm_nvram_size = DS3232_NVRAM_SIZE,
-		.dm_flags = DSRTC_FLAG_BCD,
-	}, {
-		/* MCP7940 */
-		.dm_model = 7940,
-		.dm_rtc_start = DS1307_RTC_START,
-		.dm_rtc_size = DS1307_RTC_SIZE,
-		.dm_ch_reg = DSXXXX_SECONDS,
-		.dm_ch_value = DS1307_SECONDS_CH,
-		.dm_vbaten_reg = DSXXXX_DAY,
-		.dm_vbaten_value = MCP7940_TOD_DAY_VBATEN,
-		.dm_nvram_start = MCP7940_NVRAM_START,
-		.dm_nvram_size = MCP7940_NVRAM_SIZE,
-		.dm_flags = DSRTC_FLAG_BCD | DSRTC_FLAG_CLOCK_HOLD |
-			DSRTC_FLAG_VBATEN | DSRTC_FLAG_CLOCK_HOLD_REVERSED,
-	},
+static const char *ds1307_compats[] = { "dallas,ds1307", "maxim,ds1307", NULL };
+static const i2c_addr_t ds1307_valid_addrs[] = { DS1307_ADDR, 0 };
+static const struct dsrtc_model ds1307_model = {
+	.dm_valid_addrs = ds1307_valid_addrs,
+	.dm_model = 1307,
+	.dm_ch_reg = DSXXXX_SECONDS,
+	.dm_ch_value = DS1307_SECONDS_CH,
+	.dm_rtc_start = DS1307_RTC_START,
+	.dm_rtc_size = DS1307_RTC_SIZE,
+	.dm_nvram_start = DS1307_NVRAM_START,
+	.dm_nvram_size = DS1307_NVRAM_SIZE,
+	.dm_flags = DSRTC_FLAG_BCD | DSRTC_FLAG_CLOCK_HOLD,
+};
+
+static const char *ds1339_compats[] = { "dallas,ds1339", "maxim,ds1339", NULL };
+static const struct dsrtc_model ds1339_model = {
+	.dm_valid_addrs = ds1307_valid_addrs,
+	.dm_model = 1339,
+	.dm_rtc_start = DS1339_RTC_START,
+	.dm_rtc_size = DS1339_RTC_SIZE,
+	.dm_flags = DSRTC_FLAG_BCD,
+};
+
+static const char *ds1340_compats[] = { "dallas,ds1340", "maxim,ds1340", NULL };
+static const struct dsrtc_model ds1340_model = {
+	.dm_valid_addrs = ds1307_valid_addrs,
+	.dm_model = 1340,
+	.dm_ch_reg = DSXXXX_SECONDS,
+	.dm_ch_value = DS1340_SECONDS_EOSC,
+	.dm_rtc_start = DS1340_RTC_START,
+	.dm_rtc_size = DS1340_RTC_SIZE,
+	.dm_flags = DSRTC_FLAG_BCD,
+};
+
+static const char *ds1672_compats[] = { "dallas,ds1672", "maxim,ds1672", NULL };
+static const struct dsrtc_model ds1672_model = {
+	.dm_valid_addrs = ds1307_valid_addrs,
+	.dm_model = 1672,
+	.dm_rtc_start = DS1672_RTC_START,
+	.dm_rtc_size = DS1672_RTC_SIZE,
+	.dm_ch_reg = DS1672_CONTROL,
+	.dm_ch_value = DS1672_CONTROL_CH,
+	.dm_flags = 0,
+};
+
+static const char *ds3231_compats[] = { "dallas,ds3231", "maxim,ds3231", NULL };
+static const struct dsrtc_model ds3231_model = {
+	.dm_valid_addrs = ds1307_valid_addrs,
+	.dm_model = 3231,
+	.dm_rtc_start = DS3232_RTC_START,
+	.dm_rtc_size = DS3232_RTC_SIZE,
+	.dm_flags = DSRTC_FLAG_BCD | DSRTC_FLAG_TEMP,
+};
+
+static const char *ds3232_compats[] = { "dallas,ds3232", "maxim,ds3232", NULL };
+static const struct dsrtc_model ds3232_model = {
+	.dm_valid_addrs = ds1307_valid_addrs,
+	.dm_model = 3232,
+	.dm_rtc_start = DS3232_RTC_START,
+	.dm_rtc_size = DS3232_RTC_SIZE,
+	.dm_nvram_start = DS3232_NVRAM_START,
+	.dm_nvram_size = DS3232_NVRAM_SIZE,
+	/*
+	 * XXX
+	 * the DS3232 likely has the temperature sensor too but I can't
+	 * easily verify or test that right now
+	 */
+	.dm_flags = DSRTC_FLAG_BCD,
+};
+
+				/* XXX vendor prefix */
+static const char *mcp7940_compats[] = { "microchip,mcp7940", NULL };
+static const i2c_addr_t mcp7940_valid_addrs[] = { MCP7940_ADDR, 0 };
+static const struct dsrtc_model mcp7940_model = {
+	.dm_valid_addrs = mcp7940_valid_addrs,
+	.dm_model = 7940,
+	.dm_rtc_start = DS1307_RTC_START,
+	.dm_rtc_size = DS1307_RTC_SIZE,
+	.dm_ch_reg = DSXXXX_SECONDS,
+	.dm_ch_value = DS1307_SECONDS_CH,
+	.dm_vbaten_reg = DSXXXX_DAY,
+	.dm_vbaten_value = MCP7940_TOD_DAY_VBATEN,
+	.dm_nvram_start = MCP7940_NVRAM_START,
+	.dm_nvram_size = MCP7940_NVRAM_SIZE,
+	.dm_flags = DSRTC_FLAG_BCD | DSRTC_FLAG_CLOCK_HOLD |
+		DSRTC_FLAG_VBATEN | DSRTC_FLAG_CLOCK_HOLD_REVERSED,
+};
+
+static const struct device_compatible_entry dsrtc_compat_data[] = {
+	DEVICE_COMPAT_ENTRY_WITH_DATA(ds1307_compats,  &ds1307_model),
+	DEVICE_COMPAT_ENTRY_WITH_DATA(ds1339_compats,  &ds1339_model),
+	DEVICE_COMPAT_ENTRY_WITH_DATA(ds1340_compats,  &ds1340_model),
+	DEVICE_COMPAT_ENTRY_WITH_DATA(ds1672_compats,  &ds1672_model),
+	DEVICE_COMPAT_ENTRY_WITH_DATA(ds3231_compats,  &ds3231_model),
+	DEVICE_COMPAT_ENTRY_WITH_DATA(ds3232_compats,  &ds3232_model),
+	DEVICE_COMPAT_ENTRY_WITH_DATA(mcp7940_compats, &mcp7940_model),
+	DEVICE_COMPAT_TERMINATOR
 };
 
 struct dsrtc_softc {
@@ -187,34 +225,65 @@ static int dsrtc_read_temp(struct dsrtc_softc *, uint32_t *);
 static void dsrtc_refresh(struct sysmon_envsys *, envsys_data_t *);
 
 static const struct dsrtc_model *
-dsrtc_model(u_int model)
+dsrtc_model_by_number(u_int model)
 {
-	/* no model given, assume it's a DS1307 (the first one) */
-	if (model == 0)
-		return &dsrtc_models[0];
+	const struct device_compatible_entry *dce;
+	const struct dsrtc_model *dm;
 
-	for (const struct dsrtc_model *dm = dsrtc_models;
-	     dm < dsrtc_models + __arraycount(dsrtc_models); dm++) {
+	/* no model given, assume it's a DS1307 */
+	if (model == 0)
+		return &ds1307_model;
+
+	for (dce = dsrtc_compat_data;
+	     DEVICE_COMPAT_ENTRY_IS_TERMINATOR(dce) == false; dce++) {
+		dm = DEVICE_COMPAT_ENTRY_GET_PTR(dce);
 		if (dm->dm_model == model)
 			return dm;
 	}
 	return NULL;
 }
 
+static const struct dsrtc_model *
+dsrtc_model_by_compat(const struct i2c_attach_args *ia)
+{
+	const struct dsrtc_model *dm = NULL;
+	const struct device_compatible_entry *dce;
+
+	dce = iic_compatible_match(ia, dsrtc_compat_data, NULL);
+	if (dce != NULL)
+		dm = DEVICE_COMPAT_ENTRY_GET_PTR(dce);
+
+	return dm;
+}
+
+static bool
+dsrtc_is_valid_addr_for_model(const struct dsrtc_model *dm, i2c_addr_t addr)
+{
+
+	for (int i = 0; dm->dm_valid_addrs[i] != 0; i++) {
+		if (addr == dm->dm_valid_addrs[i])
+			return true;
+	}
+	return false;
+}
+
 static int
 dsrtc_match(device_t parent, cfdata_t cf, void *arg)
 {
 	struct i2c_attach_args *ia = arg;
+	const struct dsrtc_model *dm;
+	int match_result;
 
-	if (ia->ia_name) {
-		/* direct config - check name */
-		if (strcmp(ia->ia_name, "dsrtc") == 0)
-			return 1;
-	} else {
-		/* indirect config - check typical address */
-		if (ia->ia_addr == DS1307_ADDR || ia->ia_addr == MCP7940_ADDR)
-			return dsrtc_model(cf->cf_flags & 0xffff) != NULL;
-	}
+	if (iic_use_direct_match(ia, cf, dsrtc_compat_data, &match_result))
+		return match_result;
+
+	dm = dsrtc_model_by_number(cf->cf_flags & 0xffff);
+	if (dm == NULL)
+		return 0;
+
+	if (dsrtc_is_valid_addr_for_model(dm, ia->ia_addr))
+		return I2C_MATCH_ADDRESS_ONLY;
+
 	return 0;
 }
 
@@ -223,8 +292,15 @@ dsrtc_attach(device_t parent, device_t self, void *arg)
 {
 	struct dsrtc_softc *sc = device_private(self);
 	struct i2c_attach_args *ia = arg;
-	const struct dsrtc_model * const dm =
-	    dsrtc_model(device_cfdata(self)->cf_flags);
+	const struct dsrtc_model *dm;
+
+	if ((dm = dsrtc_model_by_compat(ia)) == NULL)
+		dm = dsrtc_model_by_number(device_cfdata(self)->cf_flags);
+
+	if (dm == NULL) {
+		aprint_error(": unable to determine model!\n");
+		return;
+	}
 
 	aprint_naive(": Real-time Clock%s\n",
 	    dm->dm_nvram_size > 0 ? "/NVRAM" : "");

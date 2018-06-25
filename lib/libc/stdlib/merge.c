@@ -1,4 +1,4 @@
-/*	$NetBSD: merge.c,v 1.15 2017/08/12 01:10:04 ginsbach Exp $	*/
+/*	$NetBSD: merge.c,v 1.15.2.1 2018/06/25 07:25:34 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)merge.c	8.2 (Berkeley) 2/14/94";
 #else
-__RCSID("$NetBSD: merge.c,v 1.15 2017/08/12 01:10:04 ginsbach Exp $");
+__RCSID("$NetBSD: merge.c,v 1.15.2.1 2018/06/25 07:25:34 pgoyette Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -101,8 +101,7 @@ static void insertionsort(u_char *, size_t, size_t,
  */
 /* Assumption: PSIZE is a power of 2. */
 #define EVAL(p) ((u_char **)(void *)					\
-    ((u_char *)0 +							\
-    (((u_char *)(void *)(p) + PSIZE - 1 - (u_char *) 0) & ~(PSIZE - 1))))
+    (((u_char *)(void *)(p) + PSIZE - 1 - (u_char *) 0) & ~(PSIZE - 1)))
 
 /*
  * Arguments are as for qsort.

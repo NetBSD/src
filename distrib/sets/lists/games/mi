@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.54 2015/08/23 18:28:40 mrg Exp $
+# $NetBSD: mi,v 1.54.14.1 2018/06/25 07:25:10 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -96,11 +96,11 @@
 ./usr/libexec/ching/castching			games-games-bin
 ./usr/libexec/ching/printching			games-games-bin
 ./usr/share/doc/reference/ref6/rogue/rogue.html		games-usd-doc		doc,html,groffhtmldoc
-./usr/share/doc/reference/ref6/rogue/rogue.ps.gz	games-usd-doc		doc
-./usr/share/doc/reference/ref6/rogue/rogue.txt		games-usd-doc		doc
+./usr/share/doc/reference/ref6/rogue/rogue.ps.gz	games-usd-doc		doc,groff
+./usr/share/doc/reference/ref6/rogue/rogue.txt		games-usd-doc		doc,groff
 ./usr/share/doc/reference/ref6/trek/trek.html		games-usd-doc		doc,html,groffhtmldoc
-./usr/share/doc/reference/ref6/trek/trek.ps.gz		games-usd-doc		doc
-./usr/share/doc/reference/ref6/trek/trek.txt		games-usd-doc		doc
+./usr/share/doc/reference/ref6/trek/trek.ps.gz		games-usd-doc		doc,groff
+./usr/share/doc/reference/ref6/trek/trek.txt		games-usd-doc		doc,groff
 ./usr/share/doc/usd/30.rogue/Makefile		games-obsolete		obsolete
 ./usr/share/doc/usd/30.rogue/rogue.me		games-obsolete		obsolete
 ./usr/share/doc/usd/31.trek/Makefile		games-obsolete		obsolete

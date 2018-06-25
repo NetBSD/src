@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_offload.c,v 1.7 2017/02/14 03:05:06 ozaki-r Exp $	*/
+/*	$NetBSD: in6_offload.c,v 1.7.12.1 2018/06/25 07:26:07 pgoyette Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_offload.c,v 1.7 2017/02/14 03:05:06 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_offload.c,v 1.7.12.1 2018/06/25 07:26:07 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -214,7 +214,7 @@ ip6_undefer_csum(struct mbuf *m, size_t hdrlen, int csum_flags)
 	}
 	plen = ntohs(plen);
 
-	l4hdroff = M_CSUM_DATA_IPv6_HL(m->m_pkthdr.csum_data);
+	l4hdroff = M_CSUM_DATA_IPv6_IPHL(m->m_pkthdr.csum_data);
 	l4offset = hdrlen + l4hdroff;
 	csum = in6_cksum(m, 0, l4offset, plen - l4hdroff);
 

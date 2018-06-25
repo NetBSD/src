@@ -1,0 +1,45 @@
+#	$NetBSD: files.rockchip,v 1.12.2.1 2018/06/25 07:25:39 pgoyette Exp $
+#
+# Configuration info for Rockchip family SoCs
+#
+#
+
+file	arch/arm/rockchip/rk_platform.c		soc_rockchip
+
+# Clock and reset unit (CRU)
+device	rkcru: rk_cru
+file	arch/arm/rockchip/rk_cru.c		rk_cru
+file	arch/arm/rockchip/rk_cru_arm.c		rk_cru
+file	arch/arm/rockchip/rk_cru_composite.c	rk_cru
+file	arch/arm/rockchip/rk_cru_gate.c		rk_cru
+file	arch/arm/rockchip/rk_cru_mux.c		rk_cru
+file	arch/arm/rockchip/rk_cru_pll.c		rk_cru
+
+# RK3328 clock and reset unit
+attach	rkcru at fdt with rk3328_cru
+file	arch/arm/rockchip/rk3328_cru.c		rk3328_cru & soc_rk3328
+
+# IOMUX control
+device	rkiomux { }
+attach	rkiomux at fdt with rk_iomux
+file	arch/arm/rockchip/rk_iomux.c		rk_iomux
+
+# GPIO
+device	rkgpio: gpiobus
+attach	rkgpio at rkiomux with rk_gpio
+file	arch/arm/rockchip/rk_gpio.c		rk_gpio
+
+# USB PHY
+device	rkusb { }
+attach	rkusb at fdt with rk_usb
+device	rkusbphy
+attach	rkusbphy at rkusb with rk_usbphy
+file	arch/arm/rockchip/rk_usb.c		rk_usb | rk_usbphy
+
+# GMAC
+attach	awge at fdt with rk_gmac
+file	arch/arm/rockchip/rk_gmac.c		rk_gmac
+
+# SOC parameters
+defflag	opt_soc.h			SOC_ROCKCHIP
+defflag	opt_soc.h			SOC_RK3328: SOC_ROCKCHIP

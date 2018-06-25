@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.60 2017/09/07 06:36:24 skrll Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.60.2.1 2018/06/25 07:25:44 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -79,7 +79,7 @@
  * in an instruction.
  */
 #define	USRSTACK	(VM_MAXUSER_ADDRESS-0x8000) /* Start of user stack */
-#define	USRSTACK32	((uint32_t)VM_MAXUSER32_ADDRESS-0x8000)
+#define	USRSTACK32	((uint32_t)VM_MAXUSER_ADDRESS32-0x8000)
 
 /*
  * Virtual memory related constants, all in bytes
@@ -177,7 +177,7 @@
 #define VM_MAX_KERNEL_ADDRESS	((vaddr_t)-0x00004000)	/* 0xFFFFFFFFFFFFC000 */
 #endif
 #endif
-#define VM_MAXUSER32_ADDRESS	((vaddr_t)(1UL << 31))	/* 0x0000000080000000 */
+#define VM_MAXUSER_ADDRESS32	((vaddr_t)(1UL << 31))	/* 0x0000000080000000 */
 
 /*
  * The address to which unspecified mapping requests default

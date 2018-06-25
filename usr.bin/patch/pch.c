@@ -1,7 +1,7 @@
 /*
  * $OpenBSD: pch.c,v 1.37 2007/09/02 15:19:33 deraadt Exp $
  * $DragonFly: src/usr.bin/patch/pch.c,v 1.6 2008/08/10 23:35:40 joerg Exp $
- * $NetBSD: pch.c,v 1.28.14.1 2018/04/07 04:12:21 pgoyette Exp $
+ * $NetBSD: pch.c,v 1.28.14.2 2018/06/25 07:26:11 pgoyette Exp $
  */
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pch.c,v 1.28.14.1 2018/04/07 04:12:21 pgoyette Exp $");
+__RCSID("$NetBSD: pch.c,v 1.28.14.2 2018/06/25 07:26:11 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -156,15 +156,15 @@ grow_hunkmax(void)
 	if (p_line == NULL || p_len == NULL || p_char == NULL)
 		fatal("Internal memory allocation error\n");
 
-	new_p_line = realloc(p_line, new_hunkmax * sizeof(char *));
+	new_p_line = pch_realloc(p_line, new_hunkmax, sizeof(char *));
 	if (new_p_line == NULL)
 		free(p_line);
 
-	new_p_len = realloc(p_len, new_hunkmax * sizeof(short));
+	new_p_len = pch_realloc(p_len, new_hunkmax, sizeof(short));
 	if (new_p_len == NULL)
 		free(p_len);
 
-	new_p_char = realloc(p_char, new_hunkmax * sizeof(char));
+	new_p_char = pch_realloc(p_char, new_hunkmax, sizeof(char));
 	if (new_p_char == NULL)
 		free(p_char);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: awi.c,v 1.92 2017/05/23 02:19:14 ozaki-r Exp $	*/
+/*	$NetBSD: awi.c,v 1.92.8.1 2018/06/25 07:25:50 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.92 2017/05/23 02:19:14 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.92.8.1 2018/06/25 07:25:50 pgoyette Exp $");
 
 #include "opt_inet.h"
 
@@ -159,7 +159,7 @@ static struct mbuf *awi_ether_modcap(struct awi_softc *, struct mbuf *);
 	 (((u_int8_t *)(p))[2] = (((u_int32_t)(v) >> 16) & 0xff)),	\
 	 (((u_int8_t *)(p))[3] = (((u_int32_t)(v) >> 24) & 0xff)))
 
-struct awi_chanset awi_chanset[] = {
+static const struct awi_chanset awi_chanset[] = {
     /* PHY type        domain            min max def */
     { AWI_PHY_TYPE_FH, AWI_REG_DOMAIN_JP,  6, 17,  6 },
     { AWI_PHY_TYPE_FH, AWI_REG_DOMAIN_ES,  0, 26,  1 },
@@ -1358,7 +1358,7 @@ awi_init_mibs(struct awi_softc *sc)
 {
 	int chan, i, error;
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct awi_chanset *cs;
+	const struct awi_chanset *cs;
 
 	if ((error = awi_mib(sc, AWI_CMD_GET_MIB, AWI_MIB_LOCAL, AWI_WAIT)) ||
 	    (error = awi_mib(sc, AWI_CMD_GET_MIB, AWI_MIB_ADDR, AWI_WAIT)) ||

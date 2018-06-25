@@ -1,4 +1,4 @@
-/* $NetBSD: ug.c,v 1.12 2011/06/20 18:12:06 pgoyette Exp $ */
+/* $NetBSD: ug.c,v 1.12.52.1 2018/06/25 07:25:50 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2007 Mihai Chelaru <kefren@netbsd.ro>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ug.c,v 1.12 2011/06/20 18:12:06 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ug.c,v 1.12.52.1 2018/06/25 07:25:50 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,7 +56,7 @@ uint8_t ug_ver;
  * Imported from linux driver
  */
 
-struct ug2_motherboard_info ug2_mb[] = {
+static const struct ug2_motherboard_info ug2_mb[] = {
 	{ 0x000C, "unknown. Please send-pr(1)", {
 		{ "CPU Core", 0, 0, 10, 1, 0 },
 		{ "DDR", 1, 0, 10, 1, 0 },
@@ -485,8 +485,8 @@ ug2_attach(device_t dv)
 	struct ug_softc *sc = device_private(dv);
 	uint8_t buf[2];
 	int i;
-	struct ug2_motherboard_info *ai;
-	struct ug2_sensor_info *si;
+	const struct ug2_motherboard_info *ai;
+	const struct ug2_sensor_info *si;
 
 	aprint_normal(": Abit uGuru 2005 system monitor\n");
 
@@ -509,7 +509,7 @@ ug2_attach(device_t dv)
 	aprint_normal_dev(dv, "mainboard %s (%.2X%.2X)\n",
 	    ai->name, buf[0], buf[1]);
 
-	sc->mbsens = (void*)ai->sensors;
+	sc->mbsens = (const void *)ai->sensors;
 	sc->sc_sme = sysmon_envsys_create();
 
 	for (i = 0, si = ai->sensors; si && si->name; si++, i++) {
@@ -552,7 +552,8 @@ void
 ug2_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 {
 	struct ug_softc *sc = sme->sme_cookie;
-	struct ug2_sensor_info *si = (struct ug2_sensor_info *)sc->mbsens;
+	const struct ug2_sensor_info *si =
+	    (const struct ug2_sensor_info *)sc->mbsens;
 	int rfact = 1;
 	uint8_t v;
 

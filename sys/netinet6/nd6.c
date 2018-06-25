@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.245.2.2 2018/05/02 07:20:23 pgoyette Exp $	*/
+/*	$NetBSD: nd6.c,v 1.245.2.3 2018/06/25 07:26:07 pgoyette Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.245.2.2 2018/05/02 07:20:23 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.245.2.3 2018/06/25 07:26:07 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -1606,18 +1606,14 @@ nd6_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 		if ((rt->rt_flags & RTF_ANNOUNCE) != 0 &&
 		    (ifp->if_flags & IFF_MULTICAST) != 0) {
 			struct in6_addr llsol;
-			struct in6_multi *in6m;
 
 			llsol = satocsin6(rt_getkey(rt))->sin6_addr;
 			llsol.s6_addr32[0] = htonl(0xff020000);
 			llsol.s6_addr32[1] = 0;
 			llsol.s6_addr32[2] = htonl(1);
 			llsol.s6_addr8[12] = 0xff;
-			if (in6_setscope(&llsol, ifp, NULL) == 0) {
-				in6m = in6_lookup_multi(&llsol, ifp);
-				if (in6m)
-					in6_delmulti(in6m);
-			}
+			if (in6_setscope(&llsol, ifp, NULL) == 0)
+				in6_lookup_and_delete_multi(&llsol, ifp);
 		}
 		break;
 	}

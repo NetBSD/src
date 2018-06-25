@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.257.2.1 2018/04/16 02:00:02 pgoyette Exp $ */
+/*	$NetBSD: ehci.c,v 1.257.2.2 2018/06/25 07:26:02 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.257.2.1 2018/04/16 02:00:02 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.257.2.2 2018/06/25 07:26:02 pgoyette Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -4256,8 +4256,8 @@ ehci_device_fs_isoc_transfer(struct usbd_xfer *xfer)
 
 	KASSERT(err == USBD_NORMAL_COMPLETION);
 
-	struct ehci_pipe *epipe = EHCI_XFER2EPIPE(xfer);;
-	struct usbd_device *dev = xfer->ux_pipe->up_dev;;
+	struct ehci_pipe *epipe = EHCI_XFER2EPIPE(xfer);
+	struct usbd_device *dev = xfer->ux_pipe->up_dev;
 	struct ehci_xfer *exfer = EHCI_XFER2EXFER(xfer);
 	ehci_soft_sitd_t *sitd;
 	usb_dma_t *dma_buf;

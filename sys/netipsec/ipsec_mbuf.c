@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_mbuf.c,v 1.21.2.3 2018/05/02 07:20:24 pgoyette Exp $	*/
+/*	$NetBSD: ipsec_mbuf.c,v 1.21.2.4 2018/06/25 07:26:07 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_mbuf.c,v 1.21.2.3 2018/05/02 07:20:24 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_mbuf.c,v 1.21.2.4 2018/06/25 07:26:07 pgoyette Exp $");
 
 /*
  * IPsec-specific mbuf routines.
@@ -65,25 +65,15 @@ m_clone(struct mbuf *m0)
 	for (m = m0; m != NULL; m = mprev->m_next) {
 		/*
 		 * Regular mbufs are ignored unless there's a cluster
-		 * in front of it that we can use to coalesce.  We do
-		 * the latter mainly so later clusters can be coalesced
-		 * also w/o having to handle them specially (i.e. convert
-		 * mbuf+cluster -> cluster).  This optimization is heavily
-		 * influenced by the assumption that we're running over
-		 * Ethernet where MCLBYTES is large enough that the max
-		 * packet size will permit lots of coalescing into a
-		 * single cluster.  This in turn permits efficient
-		 * crypto operations, especially when using hardware.
+		 * in front of it that we can use to coalesce.
 		 */
 		if ((m->m_flags & M_EXT) == 0) {
 			if (mprev && (mprev->m_flags & M_EXT) &&
 			    m->m_len <= M_TRAILINGSPACE(mprev)) {
-				/* XXX: this ignores mbuf types */
 				memcpy(mtod(mprev, char *) + mprev->m_len,
-				       mtod(m, char *), m->m_len);
+				    mtod(m, char *), m->m_len);
 				mprev->m_len += m->m_len;
-				mprev->m_next = m->m_next;	/* unlink from chain */
-				m_free(m);			/* reclaim mbuf */
+				mprev->m_next = m_free(m);
 				IPSEC_STATINC(IPSEC_STAT_MBCOALESCED);
 			} else {
 				mprev = m;
@@ -92,7 +82,7 @@ m_clone(struct mbuf *m0)
 		}
 
 		/*
-		 * Writable mbufs are left alone (for now).
+		 * Writable mbufs are left alone.
 		 */
 		if (!M_READONLY(m)) {
 			mprev = m;
@@ -105,16 +95,14 @@ m_clone(struct mbuf *m0)
 		 * it anyway, we try to reduce the number of mbufs and
 		 * clusters so that future work is easier).
 		 */
-		KASSERTMSG(m->m_flags & M_EXT, "m_flags 0x%x", m->m_flags);
-		/* NB: we only coalesce into a cluster or larger */
+
+		/* We only coalesce into a cluster. */
 		if (mprev != NULL && (mprev->m_flags & M_EXT) &&
 		    m->m_len <= M_TRAILINGSPACE(mprev)) {
-			/* XXX: this ignores mbuf types */
 			memcpy(mtod(mprev, char *) + mprev->m_len,
-			       mtod(m, char *), m->m_len);
+			    mtod(m, char *), m->m_len);
 			mprev->m_len += m->m_len;
-			mprev->m_next = m->m_next;	/* unlink from chain */
-			m_free(m);			/* reclaim mbuf */
+			mprev->m_next = m_free(m);
 			IPSEC_STATINC(IPSEC_STAT_CLCOALESCED);
 			continue;
 		}
@@ -123,12 +111,6 @@ m_clone(struct mbuf *m0)
 		 * Allocate new space to hold the copy...
 		 */
 		if (mprev == NULL && (m->m_flags & M_PKTHDR)) {
-			/*
-			 * NB: if a packet header is present we must
-			 * allocate the mbuf separately from any cluster
-			 * because M_MOVE_PKTHDR will smash the data
-			 * pointer and drop the M_EXT marker.
-			 */
 			MGETHDR(n, M_DONTWAIT, m->m_type);
 			if (n == NULL) {
 				m_freem(m0);
@@ -162,7 +144,7 @@ m_clone(struct mbuf *m0)
 		mfirst = n;
 		mlast = NULL;
 		for (;;) {
-			int cc = min(len, MCLBYTES);
+			const int cc = min(len, MCLBYTES);
 			memcpy(mtod(n, char *), mtod(m, char *) + off, cc);
 			n->m_len = cc;
 			if (mlast != NULL)

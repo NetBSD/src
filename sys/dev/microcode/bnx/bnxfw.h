@@ -60,7 +60,7 @@ static int bnx_COM_b06FwSbssLen = 0x38;
 static u_int32_t bnx_COM_b06FwSDataAddr = 0x00000000;
 static int bnx_COM_b06FwSDataLen = 0x0;
 #endif
-static u_int32_t bnx_COM_b06FwText[(0x4df0/4) + 1] = {
+static const u_int32_t bnx_COM_b06FwText[(0x4df0/4) + 1] = {
 0xa00003e, 0x0, 0x0, 
 0xd, 0x636f6d34, 0x2e362e31, 0x37000000, 
 0x4061102, 0x0, 0x3, 0x14, 
@@ -1309,15 +1309,15 @@ static u_int32_t bnx_COM_b06FwText[(0x4df0/4) + 1] = {
 0xaf5101c0, 0xa34201c4, 0x3c021000, 0xaf4201f8, 
 0x8fbf0018, 0x8fb10014, 0x8fb00010, 0x3e00008, 
 0x27bd0020, 0x0 };
-static u_int32_t bnx_COM_b06FwData[(0x0/4) + 1] = { 0x0 };
-static u_int32_t bnx_COM_b06FwRodata[(0x14/4) + 1] = {
+static const u_int32_t bnx_COM_b06FwData[(0x0/4) + 1] = { 0x0 };
+static const u_int32_t bnx_COM_b06FwRodata[(0x14/4) + 1] = {
 0x8000ec8, 
 0x8000f10, 0x8000f50, 0x8000f9c, 0x8000fd0, 
 0x0 };
-static u_int32_t bnx_COM_b06FwBss[(0xbc/4) + 1] = { 0x0 };
-static u_int32_t bnx_COM_b06FwSbss[(0x38/4) + 1] = { 0x0 };
+static const u_int32_t bnx_COM_b06FwBss[(0xbc/4) + 1] = { 0x0 };
+static const u_int32_t bnx_COM_b06FwSbss[(0x38/4) + 1] = { 0x0 };
 #ifdef unused
-static u_int32_t bnx_COM_b06FwSdata[(0x0/4) + 1] = { 0x0 };
+static const u_int32_t bnx_COM_b06FwSdata[(0x0/4) + 1] = { 0x0 };
 #endif
 
 
@@ -1339,7 +1339,7 @@ static int bnx_RXP_b06FwSbssLen = 0x54;
 static u_int32_t bnx_RXP_b06FwSDataAddr = 0x00000000;
 static int bnx_RXP_b06FwSDataLen = 0x0;
 #endif
-static u_int32_t bnx_RXP_b06FwText[(0x70dc/4) + 1] = {
+static const u_int32_t bnx_RXP_b06FwText[(0x70dc/4) + 1] = {
 0xa000c76, 0x0, 0x0,
 0xd, 0x72787034, 0x2e362e31, 0x37000000,
 0x4061103, 0x0, 0x1, 0x0,
@@ -3147,16 +3147,16 @@ static u_int32_t bnx_RXP_b06FwText[(0x70dc/4) + 1] = {
 0x8fb3001c, 0x8fb20018, 0x8fb10014, 0x8fb00010,
 0x3c021000, 0x27bd0028, 0x3e00008, 0xaf4201b8,
 0x0 };
-static u_int32_t bnx_RXP_b06FwData[(0x0/4) + 1] = { 0x0 };
-static u_int32_t bnx_RXP_b06FwRodata[(0x24/4) + 1] = {
+static const u_int32_t bnx_RXP_b06FwData[(0x0/4) + 1] = { 0x0 };
+static const u_int32_t bnx_RXP_b06FwRodata[(0x24/4) + 1] = {
 0x8004c28,
 0x8004c28, 0x8004ba0, 0x8004bd8, 0x8004c0c,
 0x8004c30, 0x8004c30, 0x8004c30, 0x8004b10,
 0x0 };
-static u_int32_t bnx_RXP_b06FwBss[(0x450/4) + 1] = { 0x0 };
-static u_int32_t bnx_RXP_b06FwSbss[(0x54/4) + 1] = { 0x0 };
+static const u_int32_t bnx_RXP_b06FwBss[(0x450/4) + 1] = { 0x0 };
+static const u_int32_t bnx_RXP_b06FwSbss[(0x54/4) + 1] = { 0x0 };
 #ifdef unused
-static u_int32_t bnx_RXP_b06FwSdata[(0x0/4) + 1] = { 0x0 };
+static const u_int32_t bnx_RXP_b06FwSdata[(0x0/4) + 1] = { 0x0 };
 #endif
 
 
@@ -3178,7 +3178,7 @@ static int bnx_TPAT_b06FwSbssLen = 0x44;
 static u_int32_t bnx_TPAT_b06FwSDataAddr = 0x00000000;
 static int bnx_TPAT_b06FwSDataLen = 0x0;
 #endif
-static u_int32_t bnx_TPAT_b06FwText[(0x175c/4) + 1] = {
+static const u_int32_t bnx_TPAT_b06FwText[(0x175c/4) + 1] = {
 0xa000122, 0x0, 0x0,
 0xd, 0x74706134, 0x2e362e31, 0x37000000,
 0x4061101, 0x0, 0x0, 0x0,
@@ -3554,12 +3554,12 @@ static u_int32_t bnx_TPAT_b06FwText[(0x175c/4) + 1] = {
 0xc35021, 0x8fbf0010, 0xa4c02, 0x312200ff,
 0x27bd0018, 0xaf8a002c, 0x3e00008, 0xaf890030,
 0x0 };
-static u_int32_t bnx_TPAT_b06FwData[(0x0/4) + 1] = { 0x0 };
-static u_int32_t bnx_TPAT_b06FwRodata[(0x0/4) + 1] = { 0x0 };
-static u_int32_t bnx_TPAT_b06FwBss[(0x450/4) + 1] = { 0x0 };
-static u_int32_t bnx_TPAT_b06FwSbss[(0x44/4) + 1] = { 0x0 };
+static const u_int32_t bnx_TPAT_b06FwData[(0x0/4) + 1] = { 0x0 };
+static const u_int32_t bnx_TPAT_b06FwRodata[(0x0/4) + 1] = { 0x0 };
+static const u_int32_t bnx_TPAT_b06FwBss[(0x450/4) + 1] = { 0x0 };
+static const u_int32_t bnx_TPAT_b06FwSbss[(0x44/4) + 1] = { 0x0 };
 #ifdef unused
-static u_int32_t bnx_TPAT_b06FwSdata[(0x0/4) + 1] = { 0x0 };
+static const u_int32_t bnx_TPAT_b06FwSdata[(0x0/4) + 1] = { 0x0 };
 #endif
 
 
@@ -3581,7 +3581,7 @@ static int bnx_TXP_b06FwSbssLen = 0x68;
 static u_int32_t bnx_TXP_b06FwSDataAddr = 0x00000000;
 static int bnx_TXP_b06FwSDataLen = 0x0;
 #endif
-static u_int32_t bnx_TXP_b06FwText[(0x3a74/4) + 1] = {
+static const u_int32_t bnx_TXP_b06FwText[(0x3a74/4) + 1] = {
 0xa000026, 0x0, 0x0,
 0xd, 0x74787034, 0x2e362e31, 0x37000000,
 0x4061100, 0xa, 0x136, 0xea60,
@@ -4518,12 +4518,12 @@ static u_int32_t bnx_TXP_b06FwText[(0x3a74/4) + 1] = {
 0x3c010800, 0xac253c44, 0x3c010800, 0xac243c40,
 0x3c010800, 0xac233c50, 0x3c010800, 0xac223c48,
 0x3e00008, 0x0, 0x0 };
-static u_int32_t bnx_TXP_b06FwData[(0x0/4) + 1] = { 0x0 };
-static u_int32_t bnx_TXP_b06FwRodata[(0x0/4) + 1] = { 0x0 };
-static u_int32_t bnx_TXP_b06FwBss[(0x14c/4) + 1] = { 0x0 };
-static u_int32_t bnx_TXP_b06FwSbss[(0x68/4) + 1] = { 0x0 };
+static const u_int32_t bnx_TXP_b06FwData[(0x0/4) + 1] = { 0x0 };
+static const u_int32_t bnx_TXP_b06FwRodata[(0x0/4) + 1] = { 0x0 };
+static const u_int32_t bnx_TXP_b06FwBss[(0x14c/4) + 1] = { 0x0 };
+static const u_int32_t bnx_TXP_b06FwSbss[(0x68/4) + 1] = { 0x0 };
 #ifdef unused
-static u_int32_t bnx_TXP_b06FwSdata[(0x0/4) + 1] = { 0x0 };
+static const u_int32_t bnx_TXP_b06FwSdata[(0x0/4) + 1] = { 0x0 };
 #endif
 
 
@@ -4544,7 +4544,7 @@ static u_int32_t bnx_CP_b06FwSbssAddr = 0x080058a4;
 static int bnx_CP_b06FwSbssLen = 0xf1;
 static u_int32_t bnx_CP_b06FwSDataAddr = 0x00000000;
 static int bnx_CP_b06FwSDataLen = 0x0;
-static u_int32_t bnx_CP_b06FwText[(0x56cc/4) + 1] = {
+static const u_int32_t bnx_CP_b06FwText[(0x56cc/4) + 1] = {
 0xa000020, 0x0, 0x0,
 0xd, 0x6370342e, 0x362e3137, 0x0,
 0x4061104, 0x0, 0x0, 0x0,
@@ -5935,7 +5935,7 @@ static u_int32_t bnx_CP_b06FwText[(0x56cc/4) + 1] = {
 0x10400003, 0x0, 0x3e00008, 0x0,
 0x8c640010, 0x8c650008, 0xa001538, 0x8c66000c,
 0x0 };
-static u_int32_t bnx_CP_b06FwData[(0x84/4) + 1] = {
+static const u_int32_t bnx_CP_b06FwData[(0x84/4) + 1] = {
 0x0,
 0x1b, 0xf, 0xa, 0x8,
 0x6, 0x5, 0x5, 0x4,
@@ -5946,7 +5946,7 @@ static u_int32_t bnx_CP_b06FwData[(0x84/4) + 1] = {
 0x2, 0x2, 0x2, 0x2,
 0x2, 0x1, 0x1, 0x1,
 0x0 };
-static u_int32_t bnx_CP_b06FwRodata[(0x134/4) + 1] = {
+static const u_int32_t bnx_CP_b06FwRodata[(0x134/4) + 1] = {
 0x8000f30, 0x8000d88, 0x8000fc4,
 0x800106c, 0x8000f58, 0x8000f98, 0x80011a4,
 0x8000da4, 0x80011c8, 0x8000df4, 0x8001498,
@@ -5967,9 +5967,9 @@ static u_int32_t bnx_CP_b06FwRodata[(0x134/4) + 1] = {
 0x8002e20, 0x8002e2c, 0x8002e38, 0x8002e44,
 0x800532c, 0x80052ec, 0x80052b8, 0x800528c,
 0x8005268, 0x8005224, 0x0 };
-static u_int32_t bnx_CP_b06FwBss[(0x5d8/4) + 1] = { 0x0 };
-static u_int32_t bnx_CP_b06FwSbss[(0xf1/4) + 1] = { 0x0 };
-static u_int32_t bnx_CP_b06FwSdata[(0x0/4) + 1] = { 0x0 };
+static const u_int32_t bnx_CP_b06FwBss[(0x5d8/4) + 1] = { 0x0 };
+static const u_int32_t bnx_CP_b06FwSbss[(0xf1/4) + 1] = { 0x0 };
+static const u_int32_t bnx_CP_b06FwSdata[(0x0/4) + 1] = { 0x0 };
 #endif /* unused */
 
 
@@ -6847,7 +6847,7 @@ static int bnx_TXP_b09FwSbssLen = 0x6c;
 static u_int32_t bnx_TXP_b09FwSDataAddr = 0x00000000;
 static int bnx_TXP_b09FwSDataLen = 0x0;
 #endif
-static u_int32_t bnx_TXP_b09FwText[(0x3afc/4) + 1] = {
+static const u_int32_t bnx_TXP_b09FwText[(0x3afc/4) + 1] = {
 0xa000026,
 0x0, 0x0, 0xd, 0x74787034,
 0x2e362e31, 0x36000000, 0x4061000, 0xa,
@@ -7793,16 +7793,16 @@ static u_int32_t bnx_TXP_b09FwText[(0x3afc/4) + 1] = {
 0x3c010800, 0xac253e08, 0x3c010800, 0xac243e04,
 0x3c010800, 0xac233e14, 0x3c010800, 0xac223e0c,
 0x3e00008, 0x0, 0x0 };
-static u_int32_t bnx_TXP_b09FwData[(0x0/4) + 1] = { 0x0 };
-static u_int32_t bnx_TXP_b09FwRodata[(0x30/4) + 1] = {
+static const u_int32_t bnx_TXP_b09FwData[(0x0/4) + 1] = { 0x0 };
+static const u_int32_t bnx_TXP_b09FwRodata[(0x30/4) + 1] = {
 0x80000940, 0x80000900, 0x80080100,
 0x80080080, 0x80080000, 0x800e0000, 0x80080080,
 0x80080000, 0x80000a80, 0x80000a00, 0x80000980,
 0x80000900, 0x0 };
-static u_int32_t bnx_TXP_b09FwBss[(0x24c/4) + 1] = { 0x0 };
-static u_int32_t bnx_TXP_b09FwSbss[(0x6c/4) + 1] = { 0x0 };
+static const u_int32_t bnx_TXP_b09FwBss[(0x24c/4) + 1] = { 0x0 };
+static const u_int32_t bnx_TXP_b09FwSbss[(0x6c/4) + 1] = { 0x0 };
 #ifdef unused
-static u_int32_t bnx_TXP_b09FwSdata[(0x0/4) + 1] = { 0x0 };
+static const u_int32_t bnx_TXP_b09FwSdata[(0x0/4) + 1] = { 0x0 };
 #endif
 
 static int bnx_TPAT_b09FwReleaseMajor = 0x1;
@@ -7823,7 +7823,7 @@ static int bnx_TPAT_b09FwSbssLen = 0x40;
 static u_int32_t bnx_TPAT_b09FwSDataAddr = 0x00000000;
 static int bnx_TPAT_b09FwSDataLen = 0x0;
 #endif
-static u_int32_t bnx_TPAT_b09FwText[(0x13a4/4) + 1] = {
+static const u_int32_t bnx_TPAT_b09FwText[(0x13a4/4) + 1] = {
 0xa000122,
 0x0, 0x0, 0xd, 0x74706134,
 0x2e362e31, 0x36000000, 0x4061001, 0x0,
@@ -8140,14 +8140,14 @@ static u_int32_t bnx_TPAT_b09FwText[(0x13a4/4) + 1] = {
 0x0, 0x0, 0x2402ffff, 0x2463ffff,
 0x1462fffa, 0x24840004, 0x3e00008, 0x0,
 0x0 };
-static u_int32_t bnx_TPAT_b09FwData[(0x0/4) + 1] = { 0x0 };
-static u_int32_t bnx_TPAT_b09FwRodata[(0x4/4) + 1] = {
+static const u_int32_t bnx_TPAT_b09FwData[(0x0/4) + 1] = { 0x0 };
+static const u_int32_t bnx_TPAT_b09FwRodata[(0x4/4) + 1] = {
 0x1,
 0x0 };
-static u_int32_t bnx_TPAT_b09FwBss[(0x12b4/4) + 1] = { 0x0 };
-static u_int32_t bnx_TPAT_b09FwSbss[(0x40/4) + 1] = { 0x0 };
+static const u_int32_t bnx_TPAT_b09FwBss[(0x12b4/4) + 1] = { 0x0 };
+static const u_int32_t bnx_TPAT_b09FwSbss[(0x40/4) + 1] = { 0x0 };
 #ifdef unused
-static u_int32_t bnx_TPAT_b09FwSdata[(0x0/4) + 1] = { 0x0 };
+static const u_int32_t bnx_TPAT_b09FwSdata[(0x0/4) + 1] = { 0x0 };
 #endif
 
 
@@ -8169,7 +8169,7 @@ static int bnx_COM_b09FwSbssLen = 0x38;
 static u_int32_t bnx_COM_b09FwSDataAddr = 0x00000000;
 static int bnx_COM_b09FwSDataLen = 0x0;
 #endif
-static u_int32_t bnx_COM_b09FwText[(0x4ac8/4) + 1] = {
+static const u_int32_t bnx_COM_b09FwText[(0x4ac8/4) + 1] = {
 0xa00003e,
 0x0, 0x0, 0xd, 0x636f6d34,
 0x2e362e31, 0x36000000, 0x4061002, 0x0,
@@ -9368,16 +9368,16 @@ static u_int32_t bnx_COM_b09FwText[(0x4ac8/4) + 1] = {
 0x8fb10014, 0x8fb00010, 0xa000f48, 0x27bd0020,
 0x8fbf0018, 0x8fb10014, 0x8fb00010, 0x3e00008,
 0x27bd0020, 0x0 };
-static u_int32_t bnx_COM_b09FwData[(0x0/4) + 1] = { 0x0 };
-static u_int32_t bnx_COM_b09FwRodata[(0x30/4) + 1] = {
+static const u_int32_t bnx_COM_b09FwData[(0x0/4) + 1] = { 0x0 };
+static const u_int32_t bnx_COM_b09FwRodata[(0x30/4) + 1] = {
 0x80080100, 0x80080080, 0x80080000,
 0x80080240, 0x8000ef0, 0x8000f48, 0x8000f8c,
 0x8001020, 0x8001064, 0x80080100, 0x80080080,
 0x80080000, 0x0 };
-static u_int32_t bnx_COM_b09FwBss[(0xc0/4) + 1] = { 0x0 };
-static u_int32_t bnx_COM_b09FwSbss[(0x38/4) + 1] = { 0x0 };
+static const u_int32_t bnx_COM_b09FwBss[(0xc0/4) + 1] = { 0x0 };
+static const u_int32_t bnx_COM_b09FwSbss[(0x38/4) + 1] = { 0x0 };
 #ifdef unused
-static u_int32_t bnx_COM_b09FwSdata[(0x0/4) + 1] = { 0x0 };
+static const u_int32_t bnx_COM_b09FwSdata[(0x0/4) + 1] = { 0x0 };
 #endif
 
 
@@ -9399,7 +9399,7 @@ static int bnx_RXP_b09FwSbssLen = 0x58;
 static u_int32_t bnx_RXP_b09FwSDataAddr = 0x00000000;
 static int bnx_RXP_b09FwSDataLen = 0x0;
 #endif
-static u_int32_t bnx_RXP_b09FwText[(0x7908/4) + 1] = {
+static const u_int32_t bnx_RXP_b09FwText[(0x7908/4) + 1] = {
 0xa000c76,
 0x0, 0x0, 0xd, 0x72787034,
 0x2e362e31, 0x36000000, 0x4061003, 0x0,
@@ -11338,8 +11338,8 @@ static u_int32_t bnx_RXP_b09FwText[(0x7908/4) + 1] = {
 0x24070004, 0xa0c700ec, 0x8f87002c, 0x24086084,
 0x2406000d, 0xa4a80008, 0xa0a60005, 0xa001dc2,
 0x240f0002, 0x0 };
-static u_int32_t bnx_RXP_b09FwData[(0x0/4) + 1] = { 0x0 };
-static u_int32_t bnx_RXP_b09FwRodata[(0x124/4) + 1] = {
+static const u_int32_t bnx_RXP_b09FwData[(0x0/4) + 1] = { 0x0 };
+static const u_int32_t bnx_RXP_b09FwRodata[(0x124/4) + 1] = {
 0x5f865437, 0xe4ac62cc, 0x50103a45,
 0x36621985, 0xbf14c0e8, 0x1bc27a1e, 0x84f4b556,
 0x94ea6fe, 0x7dda01e7, 0xc04d7481, 0x80080100,
@@ -11359,10 +11359,10 @@ static u_int32_t bnx_RXP_b09FwRodata[(0x124/4) + 1] = {
 0x800775c, 0x800775c, 0x800775c, 0x800775c,
 0x800775c, 0x800775c, 0x800775c, 0x800775c,
 0x800775c, 0x8007784, 0x0 };
-static u_int32_t bnx_RXP_b09FwBss[(0x20/4) + 1] = { 0x0 };
-static u_int32_t bnx_RXP_b09FwSbss[(0x58/4) + 1] = { 0x0 };
+static const u_int32_t bnx_RXP_b09FwBss[(0x20/4) + 1] = { 0x0 };
+static const u_int32_t bnx_RXP_b09FwSbss[(0x58/4) + 1] = { 0x0 };
 #ifdef unused
-static u_int32_t bnx_RXP_b09FwSdata[(0x0/4) + 1] = { 0x0 };
+static const u_int32_t bnx_RXP_b09FwSdata[(0x0/4) + 1] = { 0x0 };
 #endif
 
 
@@ -11383,7 +11383,7 @@ static u_int32_t bnx_CP_b09FwSbssAddr = 0x08005624;
 static int bnx_CP_b09FwSbssLen = 0x91;
 static u_int32_t bnx_CP_b09FwSDataAddr = 0x00000000;
 static int bnx_CP_b09FwSDataLen = 0x0;
-static u_int32_t bnx_CP_b09FwText[(0x5418/4) + 1] = {
+static const u_int32_t bnx_CP_b09FwText[(0x5418/4) + 1] = {
 0xa000020,
 0x0, 0x0, 0xd, 0x6370342e,
 0x362e3136, 0x0, 0x4061004, 0x0,
@@ -12731,7 +12731,7 @@ static u_int32_t bnx_CP_b09FwText[(0x5418/4) + 1] = {
 0x8c620004, 0x10400003, 0x0, 0x3e00008,
 0x0, 0x8c640010, 0x8c650008, 0xa00149f,
 0x8c66000c, 0x0 };
-static u_int32_t bnx_CP_b09FwData[(0x84/4) + 1] = {
+static const u_int32_t bnx_CP_b09FwData[(0x84/4) + 1] = {
 0x0,
 0x1b, 0xf, 0xa, 0x8,
 0x6, 0x5, 0x5, 0x4,
@@ -12742,7 +12742,7 @@ static u_int32_t bnx_CP_b09FwData[(0x84/4) + 1] = {
 0x2, 0x2, 0x2, 0x2,
 0x2, 0x1, 0x1, 0x1,
 0x0 };
-static u_int32_t bnx_CP_b09FwRodata[(0x16c/4) + 1] = {
+static const u_int32_t bnx_CP_b09FwRodata[(0x16c/4) + 1] = {
 0x80080100,
 0x80080080, 0x80080000, 0x8001800, 0x8001800,
 0x8001838, 0x8001838, 0x800184c, 0x800181c,
@@ -12767,9 +12767,9 @@ static u_int32_t bnx_CP_b09FwRodata[(0x16c/4) + 1] = {
 0x80037c0, 0x8003794, 0x8003760, 0x8003734,
 0x8003714, 0x80036c8, 0x80080100, 0x80080080,
 0x80080000, 0x80080080, 0x0 };
-static u_int32_t bnx_CP_b09FwBss[(0x19c/4) + 1] = { 0x0 };
-static u_int32_t bnx_CP_b09FwSbss[(0x91/4) + 1] = { 0x0 };
-static u_int32_t bnx_CP_b09FwSdata[(0x0/4) + 1] = { 0x0 };
+static const u_int32_t bnx_CP_b09FwBss[(0x19c/4) + 1] = { 0x0 };
+static const u_int32_t bnx_CP_b09FwSbss[(0x91/4) + 1] = { 0x0 };
+static const u_int32_t bnx_CP_b09FwSdata[(0x0/4) + 1] = { 0x0 };
 #endif /* unused */
 
 

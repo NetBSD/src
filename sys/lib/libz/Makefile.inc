@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.16 2016/03/22 08:25:23 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.16.16.1 2018/06/25 07:26:05 pgoyette Exp $
 #
 #	Configuration variables (default values are below):
 #
@@ -21,7 +21,7 @@ ZDST?=		${.OBJDIR}/lib/z
 Z_AS?=		library
 ZDOTDIR?= ../../.
 
-ZDIR=		${S:S@^.@${ZDOTDIR}@:Q}/lib/libz
+ZDIR=		${S:S@^.@${ZDOTDIR}@:q}/lib/libz
 .if (${Z_AS} == "obj")
 ZLIB=		${ZDST}/libz.o
 ZLIB_PROF=	${ZDST}/libz.po
@@ -31,18 +31,18 @@ ZLIB_PROF=	${ZDST}/libz_p.a
 .endif
 
 ZMAKE= \
-	cd ${ZDST} && ${MAKE} -f ${ZDIR:Q}/Makefile \
-	    ZDIR=${ZDIR:Q} \
-	    CC=${CC:Q} CFLAGS=${CFLAGS:Q} CPUFLAGS= \
-	    AS=${AS:Q} AFLAGS=${AFLAGS:Q} \
-	    LORDER=${LORDER:Q} \
-	    TSORT=${TSORT:Q} \
-	    LD=${LD:Q} STRIP=${STRIP:Q} \
-	    AR=${AR:Q} NM=${NM:Q} \
-	    RANLIB=${RANLIB:Q} SIZE=${SIZE:Q} \
-	    MACHINE=${MACHINE} MACHINE_ARCH=${MACHINE_ARCH:Q} \
-	    ZCPPFLAGS=${CPPFLAGS:S@^-I.@-I${ZDOTDIR}@g:Q} \
-	    ZMISCCPPFLAGS=${ZMISCCPPFLAGS:Q} \
+	cd ${ZDST} && ${MAKE} -f ${ZDIR:q}/Makefile \
+	    ZDIR=${ZDIR:q} \
+	    CC=${CC:q} CFLAGS=${CFLAGS:q} CPUFLAGS= \
+	    AS=${AS:q} AFLAGS=${AFLAGS:q} \
+	    LORDER=${LORDER:q} \
+	    TSORT=${TSORT:q} \
+	    LD=${LD:q} STRIP=${STRIP:q} \
+	    AR=${AR:q} NM=${NM:q} \
+	    RANLIB=${RANLIB:q} SIZE=${SIZE:q} \
+	    MACHINE=${MACHINE} MACHINE_ARCH=${MACHINE_ARCH:q} \
+	    ZCPPFLAGS=${CPPFLAGS:S@^-I.@-I${ZDOTDIR}@g:q} \
+	    ZMISCCPPFLAGS=${ZMISCCPPFLAGS:q} \
 	    ${ZMISCMAKEFLAGS}
 
 ${ZLIB}:		.NOTMAIN .MAKE __always_make_zlib

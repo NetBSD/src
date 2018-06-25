@@ -1,4 +1,4 @@
-#	$NetBSD: shlib_version,v 1.10.14.1 2018/05/21 04:35:54 pgoyette Exp $
+#	$NetBSD: shlib_version,v 1.10.14.2 2018/06/25 07:25:31 pgoyette Exp $
 #
 # XXX our freetype shlib versioning is insane. the rest of the world
 # uses a major of 6. we used to, but it was bumped to 7 for 64 bit
@@ -8,5 +8,5 @@
 # minor/teeny as indicated by xsrc/external/mit/freetype/dist/docs/VERSIONS.TXT
 
 major=18
-minor=0
-teeny=13
+minor=16
+teeny=1

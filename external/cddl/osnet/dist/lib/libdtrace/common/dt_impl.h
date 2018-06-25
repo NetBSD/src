@@ -26,7 +26,7 @@
 
 /*
  * Copyright (c) 2013, Joyent, Inc. All rights reserved.
- * Copyright (c) 2012 by Delphix. All rights reserved.
+ * Copyright (c) 2011, 2016 by Delphix. All rights reserved.
  */
 
 #ifndef	_DT_IMPL_H
@@ -362,6 +362,7 @@ struct dtrace_hdl {
 	int dt_indent;		/* recommended flow indent */
 	dtrace_epid_t dt_last_epid;	/* most recently consumed EPID */
 	uint64_t dt_last_timestamp;	/* most recently consumed timestamp */
+	boolean_t dt_has_sugar;	/* syntactic sugar used? */
 };
 
 /*
@@ -487,7 +488,6 @@ struct dtrace_hdl {
 #define	DT_ACT_SETOPT		DT_ACT(28)	/* setopt() action */
 #define	DT_ACT_PRINT		DT_ACT(29)	/* print() action */
 #define	DT_ACT_PRINTM		DT_ACT(30)	/* printm() action */
-#define	DT_ACT_PRINTT		DT_ACT(31)	/* printt() action */
 
 /*
  * Sentinel to tell freopen() to restore the saved stdout.  This must not
@@ -744,13 +744,17 @@ extern int _dtrace_argmax;		/* default maximum probe arguments */
 extern const char *_dtrace_libdir;	/* default library directory */
 extern const char *_dtrace_moddir;	/* default kernel module directory */
 
-#ifndef illumos
-extern const char *dt_bootfile(char *, size_t);
-#endif
-
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 extern int gmatch(const char *, const char *);
 extern int yylex(void);
+#endif
+
+#ifdef __NetBSD__
+extern const char *dt_bootfile(char *, size_t);
+
+#define longlong_t long long
+#define u_longlong_t unsigned long long
+#define __DECONST(a, b) __UNCONST(b)
 #endif
 
 #ifdef	__cplusplus

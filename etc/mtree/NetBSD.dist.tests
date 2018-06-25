@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.150 2018/01/10 11:06:06 knakahara Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.150.2.1 2018/06/25 07:25:11 pgoyette Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -141,6 +141,7 @@
 ./usr/libdata/debug/usr/tests/net/icmp
 ./usr/libdata/debug/usr/tests/net/if
 ./usr/libdata/debug/usr/tests/net/if_loop
+./usr/libdata/debug/usr/tests/net/if_vlan
 ./usr/libdata/debug/usr/tests/net/in_cksum
 ./usr/libdata/debug/usr/tests/net/ipsec
 ./usr/libdata/debug/usr/tests/net/mcast

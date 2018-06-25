@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.155 2017/07/26 07:45:05 maya Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.155.2.1 2018/06/25 07:26:02 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1999, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.155 2017/07/26 07:45:05 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.155.2.1 2018/06/25 07:26:02 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1585,7 +1585,7 @@ uaudio_process_as(struct uaudio_softc *sc, const char *tbuf, int *offsp,
 		return USBD_INVAL;
 
 	if (asf1d->bFormatType != FORMAT_TYPE_I) {
-		aprint_error_dev(sc->sc_dev,
+		aprint_normal_dev(sc->sc_dev,
 		    "ignored setting with type %d format\n", UGETW(asid->wFormatTag));
 		return USBD_NORMAL_COMPLETION;
 	}
@@ -1616,7 +1616,7 @@ uaudio_process_as(struct uaudio_softc *sc, const char *tbuf, int *offsp,
 	if (dir == UE_DIR_IN && type == UE_ISO_ADAPT) {
 		sync = TRUE;
 #ifndef UAUDIO_MULTIPLE_ENDPOINTS
-		aprint_error_dev(sc->sc_dev,
+		aprint_normal_dev(sc->sc_dev,
 		    "ignored input endpoint of type adaptive\n");
 		return USBD_NORMAL_COMPLETION;
 #endif
@@ -1624,7 +1624,7 @@ uaudio_process_as(struct uaudio_softc *sc, const char *tbuf, int *offsp,
 	if (dir != UE_DIR_IN && type == UE_ISO_ASYNC) {
 		sync = TRUE;
 #ifndef UAUDIO_MULTIPLE_ENDPOINTS
-		aprint_error_dev(sc->sc_dev,
+		aprint_normal_dev(sc->sc_dev,
 		    "ignored output endpoint of type async\n");
 		return USBD_NORMAL_COMPLETION;
 #endif
@@ -1693,7 +1693,7 @@ uaudio_process_as(struct uaudio_softc *sc, const char *tbuf, int *offsp,
 	chan = asf1d->bNrChannels;
 	prec = asf1d->bBitResolution;
 	if (prec != 8 && prec != 16 && prec != 24) {
-		aprint_error_dev(sc->sc_dev,
+		aprint_normal_dev(sc->sc_dev,
 		    "ignored setting with precision %d\n", prec);
 		return USBD_NORMAL_COMPLETION;
 	}
@@ -1726,7 +1726,7 @@ uaudio_process_as(struct uaudio_softc *sc, const char *tbuf, int *offsp,
 		break;
 	case UA_FMT_IEEE_FLOAT:
 	default:
-		aprint_error_dev(sc->sc_dev,
+		aprint_normal_dev(sc->sc_dev,
 		    "ignored setting with format %d\n", format);
 		return USBD_NORMAL_COMPLETION;
 	}

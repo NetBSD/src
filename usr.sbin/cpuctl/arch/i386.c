@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.82.2.2 2018/04/07 04:12:21 pgoyette Exp $	*/
+/*	$NetBSD: i386.c,v 1.82.2.3 2018/06/25 07:26:11 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.82.2.2 2018/04/07 04:12:21 pgoyette Exp $");
+__RCSID("$NetBSD: i386.c,v 1.82.2.3 2018/06/25 07:26:11 pgoyette Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -92,7 +92,7 @@ __RCSID("$NetBSD: i386.c,v 1.82.2.2 2018/04/07 04:12:21 pgoyette Exp $");
 
 struct cpu_info {
 	const char	*ci_dev;
-	int32_t		ci_cpu_type;     /* for cpu's without cpuid */
+	int32_t		ci_cpu_type;	 /* for cpu's without cpuid */
 	int32_t		ci_cpuid_level;	 /* highest cpuid supported */
 	uint32_t	ci_cpuid_extlevel; /* highest cpuid extended func lv */
 	uint32_t	ci_signature;	 /* X86 cpuid type */
@@ -161,9 +161,9 @@ static const struct x86_cache_info intel_cpuid_cache_info[] = INTEL_CACHE_INFO;
 static const char * const i386_intel_brand[] = {
 	"",		    /* Unsupported */
 	"Celeron",	    /* Intel (R) Celeron (TM) processor */
-	"Pentium III",      /* Intel (R) Pentium (R) III processor */
+	"Pentium III",	    /* Intel (R) Pentium (R) III processor */
 	"Pentium III Xeon", /* Intel (R) Pentium (R) III Xeon (TM) processor */
-	"Pentium III",      /* Intel (R) Pentium (R) III processor */
+	"Pentium III",	    /* Intel (R) Pentium (R) III processor */
 	"",		    /* 0x05: Reserved */
 	"Mobile Pentium III",/* Mobile Intel (R) Pentium (R) III processor-M */
 	"Mobile Celeron",   /* Mobile Intel (R) Celeron (R) processor */    
@@ -177,11 +177,11 @@ static const char * const i386_intel_brand[] = {
 	"Mobile Celeron",   /* Mobile Intel (R) Celeron (R) processor */
 	"",		    /* 0x10: Reserved */
 	"Mobile Genuine",   /* Moblie Genuine Intel (R) processor */
-	"Celeron M",        /* Intel (R) Celeron (R) M processor */
+	"Celeron M",	    /* Intel (R) Celeron (R) M processor */
 	"Mobile Celeron",   /* Mobile Intel (R) Celeron (R) processor */
-	"Celeron",          /* Intel (R) Celeron (R) processor */
+	"Celeron",	    /* Intel (R) Celeron (R) processor */
 	"Mobile Genuine",   /* Moblie Genuine Intel (R) processor */
-	"Pentium M",        /* Intel (R) Pentium (R) M processor */
+	"Pentium M",	    /* Intel (R) Pentium (R) M processor */
 	"Mobile Celeron",   /* Mobile Intel (R) Celeron (R) processor */
 };
 
@@ -215,8 +215,8 @@ static void	powernow_probe(struct cpu_info *);
 static void	intel_family_new_probe(struct cpu_info *);
 static void	via_cpu_probe(struct cpu_info *);
 /* (Cache) Info functions */
-static void 	intel_cpu_cacheinfo(struct cpu_info *);
-static void 	amd_cpu_cacheinfo(struct cpu_info *);
+static void	intel_cpu_cacheinfo(struct cpu_info *);
+static void	amd_cpu_cacheinfo(struct cpu_info *);
 static void	via_cpu_cacheinfo(struct cpu_info *);
 static void	tmx86_get_longrun_status(u_int *, u_int *, u_int *);
 static void	transmeta_cpu_info(struct cpu_info *);
@@ -251,7 +251,7 @@ const struct cpu_nocpuid_nameclass i386_nocpuid_cpus[] = {
 	  NULL, NULL, NULL },			/* CPU_486DLC */
 	{ CPUVENDOR_CYRIX, "Cyrix", "6x86",	CPUCLASS_486,
 	  NULL, NULL, NULL },		/* CPU_6x86 */
-	{ CPUVENDOR_NEXGEN,"NexGen","586",      CPUCLASS_386,
+	{ CPUVENDOR_NEXGEN,"NexGen","586",	CPUCLASS_386,
 	  NULL, NULL, NULL },			/* CPU_NX586 */
 };
 
@@ -1684,7 +1684,7 @@ cpu_probe_base_features(struct cpu_info *ci, const char *cpuname)
 
 	/* Additional flags (eg xsaveopt support) */
 	x86_cpuid2(0xd, 1, descs);
-	ci->ci_feat_val[8] = descs[0];   /* Actually 64 bits */
+	ci->ci_feat_val[8] = descs[0];	 /* Actually 64 bits */
 }
 
 static void
@@ -1928,7 +1928,7 @@ identifycpu(int fd, const char *cpuname)
 			cpufam = &cpup->cpu_family[family - CPU_MINFAMILY];
 			name = cpufam->cpu_models[ci->ci_model];
 			if (name == NULL || *name == '\0')
-			    name = cpufam->cpu_model_default;
+				name = cpufam->cpu_model_default;
 			class = cpufam->cpu_class;
 			ci->ci_info = cpufam->cpu_info;
 
@@ -1944,7 +1944,7 @@ identifycpu(int fd, const char *cpuname)
 				    __arraycount(i386_intel_brand) &&
 				    i386_intel_brand[ci->ci_brand_id])
 					name =
-					     i386_intel_brand[ci->ci_brand_id];
+					    i386_intel_brand[ci->ci_brand_id];
 			}
 
 			if (cpu_vendor == CPUVENDOR_AMD) {
@@ -2049,7 +2049,7 @@ identifycpu(int fd, const char *cpuname)
 
 	if (ci->ci_max_xsave != 0) {
 		aprint_normal("%s: xsave area size: current %d, maximum %d",
-			cpuname, ci->ci_cur_xsave, ci->ci_max_xsave);
+		    cpuname, ci->ci_cur_xsave, ci->ci_max_xsave);
 		aprint_normal(", xgetbv %sabled\n",
 		    ci->ci_feat_val[1] & CPUID2_OSXSAVE ? "en" : "dis");
 		if (ci->ci_feat_val[1] & CPUID2_OSXSAVE)
@@ -2103,13 +2103,13 @@ identifycpu(int fd, const char *cpuname)
 			powernow_probe(ci);
 
 		if ((data[0] >= 0x8000000a)
-		   && (ci->ci_feat_val[3] & CPUID_SVM) != 0) {
+		    && (ci->ci_feat_val[3] & CPUID_SVM) != 0) {
 			x86_cpuid(0x8000000a, data);
 			aprint_verbose("%s: SVM Rev. %d\n", cpuname,
 			    data[0] & 0xf);
 			aprint_verbose("%s: SVM NASID %d\n", cpuname, data[1]);
-			print_bits(cpuname, "SVM features", CPUID_AMD_SVM_FLAGS,
-				   data[3]);
+			print_bits(cpuname, "SVM features",
+			    CPUID_AMD_SVM_FLAGS, data[3]);
 		}
 	} else if (cpu_vendor == CPUVENDOR_INTEL) {
 		uint32_t data[4];
@@ -2176,7 +2176,7 @@ identifycpu(int fd, const char *cpuname)
 		printf("%s: UCode version: 0x%"PRIx64"\n", cpuname, ucvers.amd.version);
 	else if (cpu_vendor == CPUVENDOR_INTEL)
 		printf("%s: microcode version 0x%x, platform ID %d\n", cpuname,
-		       ucvers.intel1.ucodeversion, ucvers.intel1.platformid);
+		    ucvers.intel1.ucodeversion, ucvers.intel1.platformid);
 }
 
 static const struct x86_cache_info *
@@ -2213,14 +2213,14 @@ print_cache_config(struct cpu_info *ci, int cache_tag, const char *name,
 		aprint_verbose("%s ", cai->cai_string);
 	} else {
 		(void)humanize_number(human_num, sizeof(human_num),
-			cai->cai_totalsize, "B", HN_AUTOSCALE, HN_NOSPACE);
+		    cai->cai_totalsize, "B", HN_AUTOSCALE, HN_NOSPACE);
 		aprint_verbose("%s %dB/line ", human_num, cai->cai_linesize);
 	}
 	switch (cai->cai_associativity) {
-	case    0:
+	case	0:
 		aprint_verbose("disabled");
 		break;
-	case    1:
+	case	1:
 		aprint_verbose("direct-mapped");
 		break;
 	case 0xff:
@@ -2254,7 +2254,7 @@ print_tlb_config(struct cpu_info *ci, int cache_tag, const char *name,
 		aprint_verbose("%s", cai->cai_string);
 	} else {
 		(void)humanize_number(human_num, sizeof(human_num),
-			cai->cai_linesize, "B", HN_AUTOSCALE, HN_NOSPACE);
+		    cai->cai_linesize, "B", HN_AUTOSCALE, HN_NOSPACE);
 		aprint_verbose("%d %s entries ", cai->cai_totalsize,
 		    human_num);
 		switch (cai->cai_associativity) {
@@ -2299,7 +2299,7 @@ x86_print_cache_and_tlb_info(struct cpu_info *ci)
 	}
 	if (ci->ci_cinfo[CAI_PREFETCH].cai_linesize != 0) {
 		aprint_verbose_dev(ci->ci_dev, "%dB prefetching",
-			ci->ci_cinfo[CAI_PREFETCH].cai_linesize);
+		    ci->ci_cinfo[CAI_PREFETCH].cai_linesize);
 		if (sep != NULL)
 			aprint_verbose("\n");
 	}

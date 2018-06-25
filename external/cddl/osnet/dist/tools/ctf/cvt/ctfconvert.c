@@ -68,7 +68,7 @@ usage(void)
 static void
 terminate_cleanup(void)
 {
-#if 0
+#if !defined(__FreeBSD__) && !defined(__NetBSD__)
 	if (!outfile) {
 		fprintf(stderr, "Removing %s\n", infile);
 		unlink(infile);
@@ -159,7 +159,7 @@ main(int argc, char **argv)
 	int keep_stabs = 0;
 	int c;
 
-#if defined(sun)
+#ifdef illumos
 	sighold(SIGINT);
 	sighold(SIGQUIT);
 	sighold(SIGTERM);
@@ -225,7 +225,7 @@ main(int argc, char **argv)
 	 */
 	set_terminate_cleanup(terminate_cleanup);
 
-#if defined(sun)
+#ifdef illumos
 	sigset(SIGINT, handle_sig);
 	sigset(SIGQUIT, handle_sig);
 	sigset(SIGTERM, handle_sig);

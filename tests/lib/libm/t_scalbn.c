@@ -1,4 +1,4 @@
-/* $NetBSD: t_scalbn.c,v 1.14 2017/01/13 21:09:12 agc Exp $ */
+/* $NetBSD: t_scalbn.c,v 1.14.12.1 2018/06/25 07:26:09 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,12 +29,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_scalbn.c,v 1.14 2017/01/13 21:09:12 agc Exp $");
+__RCSID("$NetBSD: t_scalbn.c,v 1.14.12.1 2018/06/25 07:26:09 pgoyette Exp $");
 
 #include <math.h>
 #include <limits.h>
 #include <float.h>
 #include <errno.h>
+#include <fenv.h>
 
 #include <atf-c.h>
 
@@ -46,16 +47,17 @@ struct testcase {
 	double inval;
 	double result;
 	int error;
+	int except;
 };
 struct testcase test_vals[] = {
-	{ 0,		1.00085,	1.00085,	0 },
-	{ 0,		0.99755,	0.99755,	0 },
-	{ 0,		-1.00085,	-1.00085,	0 },
-	{ 0,		-0.99755,	-0.99755,	0 },
-	{ 1,		1.00085,	2.0* 1.00085,	0 },
-	{ 1,		0.99755,	2.0* 0.99755,	0 },
-	{ 1,		-1.00085,	2.0* -1.00085,	0 },
-	{ 1,		-0.99755,	2.0* -0.99755,	0 },
+	{ 0,		1.00085,	1.00085,	0, 0 },
+	{ 0,		0.99755,	0.99755,	0, 0 },
+	{ 0,		-1.00085,	-1.00085,	0, 0 },
+	{ 0,		-0.99755,	-0.99755,	0, 0 },
+	{ 1,		1.00085,	2.0* 1.00085,	0, 0 },
+	{ 1,		0.99755,	2.0* 0.99755,	0, 0 },
+	{ 1,		-1.00085,	2.0* -1.00085,	0, 0 },
+	{ 1,		-0.99755,	2.0* -0.99755,	0, 0 },
 
 	/*
 	 * We could add more corner test cases here, but we would have to
@@ -82,10 +84,19 @@ ATF_TC_BODY(scalbn_val, tc)
 
 	for (i = 0; i < tcnt; i++) {
 		errno = 0;
+#ifndef __vax__
+		feclearexcept(FE_ALL_EXCEPT);
+#endif
 		rv = scalbn(tests[i].inval, tests[i].exp);
 		ATF_CHECK_EQ_MSG(errno, tests[i].error,
 		    "test %zu: errno %d instead of %d", i, errno,
 		    tests[i].error);
+#ifndef __vax__
+		ATF_CHECK_EQ_MSG(errno, tests[i].error,
+		    "test %zu: fetestexcept %d instead of %d", i,
+		    fetestexcept(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW | FE_UNDERFLOW),
+		    tests[i].except);
+#endif
 		ATF_CHECK_MSG(fabs(rv-tests[i].result)<2.0*DBL_EPSILON,
 		    "test %zu: return value %g instead of %g (difference %g)",
 		    i, rv, tests[i].result, tests[i].result-rv);

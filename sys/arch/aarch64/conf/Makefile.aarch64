@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.aarch64,v 1.8.2.1 2018/04/07 04:12:10 pgoyette Exp $
+#	$NetBSD: Makefile.aarch64,v 1.8.2.2 2018/06/25 07:25:37 pgoyette Exp $
 
 # Makefile for NetBSD
 #
@@ -50,7 +50,7 @@ KERN_AS=	obj
 ##
 MD_OBJS+=	${SYSTEM_FIRST_OBJ} locore.o
 MD_CFILES+=
-MD_SFILES+=	${SYSTEM_FIRST_SFILE}
+MD_SFILES+=	${SYSTEM_FIRST_SFILE} ${A64}/aarch64/locore.S
 
 .if defined(SYSTEM_FIRST_OBJ)
 ${SYSTEM_FIRST_OBJ}: ${SYSTEM_FIRST_SFILE} assym.h

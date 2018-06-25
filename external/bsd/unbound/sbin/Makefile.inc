@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.3.2.1 2018/03/15 09:11:55 pgoyette Exp $
+# $NetBSD: Makefile.inc,v 1.3.2.2 2018/06/25 07:25:13 pgoyette Exp $
 
 .include "../Makefile.inc"
 
@@ -28,6 +28,6 @@ ${PROG}.8: ${PROG}.8.in __subst
 
 .if defined(SCRIPTS)
 .PATH: ${UNBOUND}/smallapp
-CLEANFILES+=${SCRIPTS}.sh
+CLEANFILES+=${SCRIPTS}.sh ${SCRIPTS}
 ${SCRIPTS}.sh: ${SCRIPTS}.sh.in __subst
 .endif

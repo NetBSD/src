@@ -1,4 +1,4 @@
-#	$NetBSD: files.x86,v 1.97.2.4 2018/05/02 07:20:06 pgoyette Exp $
+#	$NetBSD: files.x86,v 1.97.2.5 2018/06/25 07:25:47 pgoyette Exp $
 
 # options for MP configuration through the MP spec
 defflag opt_mpbios.h MPBIOS MPDEBUG MPBIOS_SCANPCI
@@ -98,7 +98,6 @@ file 	arch/x86/x86/pmap.c		machdep
 file 	arch/x86/x86/x86_tlb.c		machdep
 file 	arch/x86/x86/pmc.c		machdep
 file	arch/x86/x86/procfs_machdep.c	procfs
-file	arch/x86/x86/spectre.c		machdep
 file 	arch/x86/x86/svs.c		machdep & svs
 file	arch/x86/x86/sys_machdep.c	machdep
 file	arch/x86/x86/syscall.c		machdep

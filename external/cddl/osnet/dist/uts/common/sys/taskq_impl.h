@@ -28,7 +28,9 @@
 
 #include <sys/taskq.h>
 #include <sys/inttypes.h>
+#ifdef _KERNEL
 #include <sys/vmem.h>
+#endif
 #include <sys/list.h>
 #include <sys/kstat.h>
 
@@ -46,7 +48,10 @@ typedef struct taskq_ent {
 	taskq_bucket_t		*tqent_bucket;
 	kthread_t		*tqent_thread;
 	kcondvar_t		tqent_cv;
+	uintptr_t		tqent_flags;
 } taskq_ent_t;
+
+#define	TQENT_FLAG_PREALLOC	0x1
 
 /*
  * Taskq Statistics fields are not protected by any locks.
@@ -138,6 +143,10 @@ struct taskq {
 	int		tq_tcreates;
 	int		tq_tdeaths;
 };
+
+/* Special form of taskq dispatch that uses preallocated entries. */
+void taskq_dispatch_ent(taskq_t *, task_func_t, void *, uint_t, taskq_ent_t *);
+
 
 #define	tq_thread tq_thr._tq_thread
 #define	tq_threadlist tq_thr._tq_threadlist

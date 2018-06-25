@@ -186,20 +186,20 @@
 #endif
 #include <pthread.h>
 #include <assert.h>
-#if defined(sun)
+#ifdef illumos
 #include <synch.h>
 #endif
 #include <signal.h>
 #include <libgen.h>
 #include <string.h>
 #include <errno.h>
-#if defined(sun)
+#ifdef illumos
 #include <alloca.h>
 #endif
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/mman.h>
-#if defined(sun)
+#ifdef illumos
 #include <sys/sysconf.h>
 #endif
 
@@ -222,10 +222,9 @@ static char *outfile = NULL;
 static char *tmpname = NULL;
 static int dynsym;
 int debug_level = DEBUG_LEVEL;
-#if 0
+#ifdef illumos
 static size_t maxpgsize = 0x400000;
 #endif
-static int maxslots = MERGE_PHASE1_MAX_SLOTS;
 
 
 static void
@@ -245,7 +244,7 @@ usage(void)
 	    progname, progname);
 }
 
-#if defined(sun)
+#ifdef illumos
 static void
 bigheap(void)
 {
@@ -624,7 +623,7 @@ terminate_cleanup(void)
 	if (outfile == NULL)
 		return;
 
-#if 0
+#if !defined (__FreeBSD__) && !defined(__NetBSD__)
 	if (dounlink) {
 		fprintf(stderr, "Removing %s\n", outfile);
 		unlink(outfile);
@@ -658,7 +657,7 @@ wq_init(workqueue_t *wq, int nfiles)
 	if (getenv("CTFMERGE_MAX_SLOTS"))
 		nslots = atoi(getenv("CTFMERGE_MAX_SLOTS"));
 	else
-		nslots = maxslots;
+		nslots = MERGE_PHASE1_MAX_SLOTS;
 
 	if (getenv("CTFMERGE_PHASE1_BATCH_SIZE"))
 		wq->wq_maxbatchsz = atoi(getenv("CTFMERGE_PHASE1_BATCH_SIZE"));
@@ -733,7 +732,7 @@ start_threads(workqueue_t *wq)
 		    (void *(*)(void *))worker_thread, wq);
 	}
 
-#if defined(sun)
+#ifdef illumos
 	sigset(SIGINT, handle_sig);
 	sigset(SIGQUIT, handle_sig);
 	sigset(SIGTERM, handle_sig);

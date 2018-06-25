@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.64 2018/01/24 09:04:44 skrll Exp $	*/
+/*	$NetBSD: syscall.c,v 1.64.2.1 2018/06/25 07:25:38 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.64 2018/01/24 09:04:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.64.2.1 2018/06/25 07:25:38 pgoyette Exp $");
 
 #include <sys/cpu.h>
 #include <sys/device.h>
@@ -185,9 +185,10 @@ syscall(struct trapframe *tf, lwp_t *l, uint32_t insn)
 	struct proc * const p = l->l_proc;
 	const struct sysent *callp;
 	int error;
-	u_int nargs;
+	u_int nargs, off = 0;
 	register_t *args;
-	uint64_t copyargs64[sizeof(register_t)*(2+SYS_MAXSYSARGS+1)/sizeof(uint64_t)];
+	uint64_t copyargs64[sizeof(register_t) *
+			    (2+SYS_MAXSYSARGS+1)/sizeof(uint64_t)];
 	register_t *copyargs = (register_t *)copyargs64;
 	register_t rval[2];
 	ksiginfo_t ksi;
@@ -221,17 +222,29 @@ syscall(struct trapframe *tf, lwp_t *l, uint32_t insn)
 	}
 
 	code &= (SYS_NSYSENT - 1);
+
+	if (__predict_false(code == SYS_syscall)) {
+		off = 1;
+		code = tf->tf_r0;
+		code &= (SYS_NSYSENT - 1);
+		if (__predict_false(code == SYS_syscall)) {
+			error = EINVAL;
+			goto bad;
+		}
+	}
+
 	callp = p->p_emul->e_sysent + code;
 	nargs = callp->sy_narg;
-	if (nargs > 4) {
+
+	if ((nargs+off) > 4) {
 		args = copyargs;
-		memcpy(args, &tf->tf_r0, 4 * sizeof(register_t));
-		error = copyin((void *)tf->tf_usr_sp, args + 4,
-		    (nargs - 4) * sizeof(register_t));
+		memcpy(args, &tf->tf_r0+off, (4-off) * sizeof(register_t));
+		error = copyin((void *)tf->tf_usr_sp, args + 4 - off,
+		    (nargs - 4 + off) * sizeof(register_t));
 		if (error)
 			goto bad;
 	} else {
-		args = &tf->tf_r0;
+		args = &tf->tf_r0 + off;
 	}
 
 	error = sy_invoke(callp, l, args, rval, code);

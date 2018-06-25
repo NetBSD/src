@@ -1,14 +1,13 @@
-# $NetBSD: Makefile.bootxx,v 1.49 2015/08/20 11:38:27 uebayasi Exp $
+# $NetBSD: Makefile.bootxx,v 1.49.16.1 2018/06/25 07:25:42 pgoyette Exp $
 
 S=	${.CURDIR}/../../../../..
 
 AFLAGS.bootxx.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 AFLAGS.pbr.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 
-PIE_CFLAGS=
-PIE_LDFLAGS=
-PIE_AFLAGS=
+NOPIE=
 NOMAN=
+NOSANITIZER=
 PROG?= bootxx_${FS}
 BINDIR= /usr/mdec
 BINMODE= 0444
@@ -23,7 +22,7 @@ BOOTXX_MAXSIZE?= $$(( ${BOOTXX_SECTORS} * 512 ))
 
 SRCS= pbr.S label.S bootxx.S boot1.c
 
-.include <bsd.own.mk>
+.include <bsd.init.mk>
 
 STRIPFLAG=	# nothing
 

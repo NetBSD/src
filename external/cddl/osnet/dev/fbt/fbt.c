@@ -1,4 +1,4 @@
-/*	$NetBSD: fbt.c,v 1.23.2.1 2018/04/01 23:06:51 pgoyette Exp $	*/
+/*	$NetBSD: fbt.c,v 1.23.2.2 2018/06/25 07:25:14 pgoyette Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -23,7 +23,7 @@
  * Portions Copyright 2006-2008 John Birrell jb@freebsd.org
  * Portions Copyright 2010 Darran Hunt darran@NetBSD.org
  *
- * $FreeBSD: src/sys/cddl/dev/fbt/fbt.c,v 1.1.4.1 2009/08/03 08:13:06 kensmith Exp $
+ * $FreeBSD: head/sys/cddl/dev/fbt/fbt.c 309786 2016-12-10 03:13:11Z markj $
  *
  */
 
@@ -33,6 +33,7 @@
  */
 
 #include <sys/cdefs.h>
+#include <sys/proc.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -56,22 +57,6 @@
 #include <sys/syscall.h>
 #include <sys/uio.h>
 #include <sys/unistd.h>
-
-#include <machine/cpu.h>
-#if defined(__i386__) || defined(__amd64__)
-#include <machine/cpufunc.h>
-#include <machine/specialreg.h>
-#if 0
-#include <x86/cpuvar.h>
-#endif
-#include <x86/cputypes.h>
-#elif __arm__
-#include <machine/trap.h>
-#include <arm/cpufunc.h>
-#include <arm/armreg.h>
-#include <arm/frame.h>
-#endif
-
 #include <sys/exec_elf.h>
 
 #include <sys/dtrace.h>
@@ -79,76 +64,25 @@
 #include <sys/kern_ctf.h>
 #include <sys/dtrace_impl.h>
 
+#include "fbt.h"
+
 mod_ctf_t *modptr;
 
-MALLOC_DEFINE(M_FBT, "fbt", "Function Boundary Tracing");
-
-#if defined(__i386__) || defined(__amd64__)
-#define	FBT_PUSHL_EBP		0x55
-#define	FBT_MOVL_ESP_EBP0_V0	0x8b
-#define	FBT_MOVL_ESP_EBP1_V0	0xec
-#define	FBT_MOVL_ESP_EBP0_V1	0x89
-#define	FBT_MOVL_ESP_EBP1_V1	0xe5
-#define	FBT_REX_RSP_RBP		0x48
-
-#define	FBT_POPL_EBP		0x5d
-#define	FBT_RET			0xc3
-#define	FBT_RET_IMM16		0xc2
-#define	FBT_LEAVE		0xc9
-#endif
-
-#ifdef __amd64__
-#define	FBT_PATCHVAL		0xcc
-#elif defined(__i386__)
-#define	FBT_PATCHVAL		0xf0
-
-#elif defined(__arm__)
-#define	FBT_PATCHVAL		DTRACE_BREAKPOINT
-
-/* entry and return */
-#define	FBT_BX_LR_P(insn)	(((insn) & ~INSN_COND_MASK) == 0x012fff1e)
-#define	FBT_B_LABEL_P(insn)	(((insn) & 0xff000000) == 0xea000000)
-/* entry */
-#define	FBT_MOV_IP_SP_P(insn)	((insn) == 0xe1a0c00d)
-/* index=1, add=1, wback=0 */
-#define	FBT_LDR_IMM_P(insn)	(((insn) & 0xfff00000) == 0xe5900000)
-#define	FBT_MOVW_P(insn)	(((insn) & 0xfff00000) == 0xe3000000)
-#define	FBT_MOV_IMM_P(insn)	(((insn) & 0xffff0000) == 0xe3a00000)
-#define	FBT_CMP_IMM_P(insn)	(((insn) & 0xfff00000) == 0xe3500000)
-#define	FBT_PUSH_P(insn)	(((insn) & 0xffff0000) == 0xe92d0000)
-/* return */
-/* cond=always, writeback=no, rn=sp and register_list includes pc */
-#define	FBT_LDM_P(insn)	(((insn) & 0x0fff8000) == 0x089d8000)
-#define	FBT_LDMIB_P(insn)	(((insn) & 0x0fff8000) == 0x099d8000)
-#define	FBT_MOV_PC_LR_P(insn)	(((insn) & ~INSN_COND_MASK) == 0x01a0f00e)
-/* cond=always, writeback=no, rn=sp and register_list includes lr, but not pc */
-#define	FBT_LDM_LR_P(insn)	(((insn) & 0xffffc000) == 0xe89d4000)
-#define	FBT_LDMIB_LR_P(insn)	(((insn) & 0xffffc000) == 0xe99d4000)
-
-/* rval = insn | invop_id (overwriting cond with invop ID) */
-#define	BUILD_RVAL(insn, id)	(((insn) & ~INSN_COND_MASK) | __SHIFTIN((id), INSN_COND_MASK))
-/* encode cond in the first byte */
-#define	PATCHVAL_ENCODE_COND(insn)	(FBT_PATCHVAL | __SHIFTOUT((insn), INSN_COND_MASK))
-
-#else
-#error "architecture not supported"
-#endif
+dtrace_provider_id_t	fbt_id;
+fbt_probe_t		**fbt_probetab;
+int			fbt_probetab_mask;
+static int			fbt_probetab_size;
 
 static dev_type_open(fbt_open);
 static int	fbt_unload(void);
 static void	fbt_getargdesc(void *, dtrace_id_t, void *, dtrace_argdesc_t *);
-static void	fbt_provide_module(void *, dtrace_modctl_t *);
+static void	fbt_provide_module(void *, modctl_t *);
 static void	fbt_destroy(void *, dtrace_id_t, void *);
 static int	fbt_enable(void *, dtrace_id_t, void *);
 static void	fbt_disable(void *, dtrace_id_t, void *);
 static void	fbt_load(void);
 static void	fbt_suspend(void *, dtrace_id_t, void *);
 static void	fbt_resume(void *, dtrace_id_t, void *);
-
-#define	FBT_ENTRY	"entry"
-#define	FBT_RETURN	"return"
-#define	FBT_ADDR2NDX(addr)	((((uintptr_t)(addr)) >> 4) & fbt_probetab_mask)
-#define	FBT_PROBETAB_SIZE	0x8000		/* 32k entries -- 128K total */
 
 static const struct cdevsw fbt_cdevsw = {
 	.d_open		= fbt_open,
@@ -186,258 +120,70 @@ static dtrace_pops_t fbt_pops = {
 	fbt_destroy
 };
 
-typedef struct fbt_probe {
-	struct fbt_probe *fbtp_hashnext;
-#if defined(__i386__) || defined(__amd64__)
-	uint8_t		*fbtp_patchpoint;
-	int8_t		fbtp_rval;
-	uint8_t		fbtp_patchval;
-	uint8_t		fbtp_savedval;
-#elif __arm__
-	uint32_t	*fbtp_patchpoint;
-	int32_t		fbtp_rval;
-	uint32_t	fbtp_patchval;
-	uint32_t	fbtp_savedval;
-#endif
-	uintptr_t	fbtp_roffset;
-	dtrace_id_t	fbtp_id;
-	const char	*fbtp_name;
-	dtrace_modctl_t	*fbtp_ctl;
-	int		fbtp_loadcnt;
-	int		fbtp_primary;
-	int		fbtp_invop_cnt;
-	int		fbtp_symindx;
-	struct fbt_probe *fbtp_next;
-} fbt_probe_t;
-
-#ifdef notyet
-static struct cdev		*fbt_cdev;
+#ifdef __FreeBSD__
 static int			fbt_verbose = 0;
-#endif
-static dtrace_provider_id_t	fbt_id;
-static fbt_probe_t		**fbt_probetab;
-static int			fbt_probetab_size;
-static int			fbt_probetab_mask;
 
-#ifdef __arm__
-extern void (* dtrace_emulation_jump_addr)(int, struct trapframe *);
+static struct cdev		*fbt_cdev;
+#endif /* __FreeBSD__ */
 
-static uint32_t
-expand_imm(uint32_t imm12)
+#ifdef __NetBSD__
+specificdata_key_t fbt_module_key;
+
+#define version xversion
+#endif /* __NetBSD__ */
+
+int
+fbt_excluded(const char *name)
 {
-	uint32_t unrot = imm12 & 0xff;
-	int amount = 2 * (imm12 >> 8);
 
-	if (amount)
-		return (unrot >> amount) | (unrot << (32 - amount));
-	else
-		return unrot;
-}
-
-static uint32_t
-add_with_carry(uint32_t x, uint32_t y, int carry_in,
-	int *carry_out, int *overflow)
-{
-	uint32_t result;
-	uint64_t unsigned_sum = x + y + (uint32_t)carry_in;
-	int64_t signed_sum = (int32_t)x + (int32_t)y + (int32_t)carry_in;
-	KASSERT(carry_in == 1);
-
-	result = (uint32_t)(unsigned_sum & 0xffffffff);
-	*carry_out = ((uint64_t)result == unsigned_sum) ? 1 : 0;
-	*overflow = ((int64_t)result == signed_sum) ? 0 : 1;
-	
-	return result;
-}
-
-static void
-fbt_emulate(int _op, struct trapframe *frame)
-{
-	uint32_t op = _op;
-
-	switch (op >> 28) {
-	case DTRACE_INVOP_MOV_IP_SP:
-		/* mov ip, sp */
-		frame->tf_ip = frame->tf_svc_sp;
-		frame->tf_pc += 4;
-		break;
-	case DTRACE_INVOP_BX_LR:
-		/* bx lr */
-		frame->tf_pc = frame->tf_svc_lr;
-		break;
-	case DTRACE_INVOP_MOV_PC_LR:
-		/* mov pc, lr */
-		frame->tf_pc = frame->tf_svc_lr;
-		break;
-	case DTRACE_INVOP_LDM:
-		/* ldm sp, {..., pc} */
-		/* FALLTHRU */
-	case DTRACE_INVOP_LDMIB: {
-		/* ldmib sp, {..., pc} */
-		uint32_t register_list = (op & 0xffff);
-		uint32_t *sp = (uint32_t *)(intptr_t)frame->tf_svc_sp;
-		uint32_t *regs = &frame->tf_r0;
-		int i;
-
-		/* IDMIB */
-		if ((op >> 28) == 5)
-			sp++;
-
-		for (i=0; i <= 12; i++) {
-			if (register_list & (1 << i))
-				regs[i] = *sp++;
-		}
-		if (register_list & (1 << 13))
-			frame->tf_svc_sp = *sp++;
-		if (register_list & (1 << 14))
-			frame->tf_svc_lr = *sp++;
-		frame->tf_pc = *sp;
-		break;
-	}
-	case DTRACE_INVOP_LDR_IMM: {
-		/* ldr r?, [{pc,r?}, #?] */
-		uint32_t rt = (op >> 12) & 0xf;
-		uint32_t rn = (op >> 16) & 0xf;
-		uint32_t imm = op & 0xfff;
-		uint32_t *regs = &frame->tf_r0;
-		KDASSERT(rt <= 12);
-		KDASSERT(rn == 15 || rn =< 12);
-		if (rn == 15)
-			regs[rt] = *((uint32_t *)(intptr_t)(frame->tf_pc + 8 + imm));
-		else
-			regs[rt] = *((uint32_t *)(intptr_t)(regs[rn] + imm));
-		frame->tf_pc += 4;
-		break;
-	}
-	case DTRACE_INVOP_MOVW: {
-		/* movw r?, #? */
-		uint32_t rd = (op >> 12) & 0xf;
-		uint32_t imm = (op & 0xfff) | ((op & 0xf0000) >> 4);
-		uint32_t *regs = &frame->tf_r0;
-		KDASSERT(rd <= 12);
-		regs[rd] = imm;
-		frame->tf_pc += 4;
-		break;
-	}
-	case DTRACE_INVOP_MOV_IMM: {
-		/* mov r?, #? */
-		uint32_t rd = (op >> 12) & 0xf;
-		uint32_t imm = expand_imm(op & 0xfff);
-		uint32_t *regs = &frame->tf_r0;
-		KDASSERT(rd <= 12);
-		regs[rd] = imm;
-		frame->tf_pc += 4;
-		break;
-	}
-	case DTRACE_INVOP_CMP_IMM: {
-		/* cmp r?, #? */
-		uint32_t rn = (op >> 16) & 0xf;
-		uint32_t *regs = &frame->tf_r0;
-		uint32_t imm = expand_imm(op & 0xfff);
-		uint32_t spsr = frame->tf_spsr;
-		uint32_t result;
-		int carry;
-		int overflow;
+	if (strncmp(name, "dtrace_", 7) == 0 &&
+	    strncmp(name, "dtrace_safe_", 12) != 0) {
 		/*
-		 * (result, carry, overflow) = AddWithCarry(R[n], NOT(imm32), ’1’);
-		 * APSR.N = result<31>;
-		 * APSR.Z = IsZeroBit(result);
-		 * APSR.C = carry;
-		 * APSR.V = overflow; 
+		 * Anything beginning with "dtrace_" may be called
+		 * from probe context unless it explicitly indicates
+		 * that it won't be called from probe context by
+		 * using the prefix "dtrace_safe_".
 		 */
-		KDASSERT(rn <= 12);
-		result = add_with_carry(regs[rn], ~imm, 1, &carry, &overflow);
-		if (result & 0x80000000)
-			spsr |= PSR_N_bit;
-		else
-			spsr &= ~PSR_N_bit;
-		if (result == 0)
-			spsr |= PSR_Z_bit;
-		else
-			spsr &= ~PSR_Z_bit;
-		if (carry)
-			spsr |= PSR_C_bit;
-		else
-			spsr &= ~PSR_C_bit;
-		if (overflow)
-			spsr |= PSR_V_bit;
-		else
-			spsr &= ~PSR_V_bit;
+		return (1);
+	}
 
-#if 0
-		aprint_normal("pc=%x Rn=%x imm=%x %c%c%c%c\n", frame->tf_pc, regs[rn], imm,
-		    (spsr & PSR_N_bit) ? 'N' : 'n',
-		    (spsr & PSR_Z_bit) ? 'Z' : 'z',
-		    (spsr & PSR_C_bit) ? 'C' : 'c',
-		    (spsr & PSR_V_bit) ? 'V' : 'v');
+#ifdef __FreeBSD__
+	/*
+	 * Lock owner methods may be called from probe context.
+	 */
+	if (strcmp(name, "owner_mtx") == 0 ||
+	    strcmp(name, "owner_rm") == 0 ||
+	    strcmp(name, "owner_rw") == 0 ||
+	    strcmp(name, "owner_sx") == 0)
+		return (1);
+
+	/*
+	 * When DTrace is built into the kernel we need to exclude
+	 * the FBT functions from instrumentation.
+	 */
+#ifndef _KLD_MODULE
+	if (strncmp(name, "fbt_", 4) == 0)
+		return (1);
 #endif
-		frame->tf_spsr = spsr;
-		frame->tf_pc += 4;
-		break;
-	}
-	case DTRACE_INVOP_B_LABEL: {
-		/* b ??? */
-		uint32_t imm = (op & 0x00ffffff) << 2;
-		int32_t diff;
-		/* SignExtend(imm26, 32) */
-		if (imm & 0x02000000)
-			imm |= 0xfc000000;
-		diff = (int32_t)imm;
-		frame->tf_pc += 8 + diff;
-		break;
-	}
-	/* FIXME: push will overwrite trapframe... */
-	case DTRACE_INVOP_PUSH: {
-		/* push {...} */
-		uint32_t register_list = (op & 0xffff);
-		uint32_t *sp = (uint32_t *)(intptr_t)frame->tf_svc_sp;
-		uint32_t *regs = &frame->tf_r0;
-		int i;
-		int count = 0;
-
-#if 0
-		if ((op & 0x0fff0fff) == 0x052d0004) {
-			/* A2: str r4, [sp, #-4]! */
-			*(sp - 1) = regs[4];
-			frame->tf_pc += 4;
-			break;
-		}
 #endif
 
-		for (i=0; i < 16; i++) {
-			if (register_list & (1 << i))
-				count++;
-		}
-		sp -= count;
+#ifdef __NetBSD__
+	if (name[0] == '_' && name[1] == '_')
+		return (1);
 
-		for (i=0; i <= 12; i++) {
-			if (register_list & (1 << i))
-				*sp++ = regs[i];
-		}
-		if (register_list & (1 << 13))
-			*sp++ = frame->tf_svc_sp;
-		if (register_list & (1 << 14))
-			*sp++ = frame->tf_svc_lr;
-		if (register_list & (1 << 15))
-			*sp = frame->tf_pc + 8;
-
-		/* make sure the caches and memory are in sync */
-		cpu_dcache_wbinv_range(frame->tf_svc_sp, count * 4);
-
-		/* In case the current page tables have been modified ... */
-		cpu_tlb_flushID();
-		cpu_cpwait();
-
-		frame->tf_svc_sp -= count * 4;
-		frame->tf_pc += 4;
-
-		break;
+	if (strcmp(name, "cpu_index") == 0 ||
+	    strncmp(name, "db_", 3) == 0 ||
+	    strncmp(name, "ddb_", 4) == 0 ||
+	    strncmp(name, "kdb_", 4) == 0 ||
+	    strncmp(name, "lockdebug_", 10) == 0 ||
+	    strncmp(name, "kauth_", 5) == 0 ||
+	    strncmp(name, "ktext_write", 11) == 0) {
+		return (1);
 	}
-	default:
-		KDASSERTMSG(0, "op=%u\n", op >> 28);
-	}
+#endif
+
+	return (0);
 }
-#endif
 
 static void
 fbt_doubletrap(void)
@@ -449,489 +195,70 @@ fbt_doubletrap(void)
 		fbt = fbt_probetab[i];
 
 		for (; fbt != NULL; fbt = fbt->fbtp_next)
-			*fbt->fbtp_patchpoint = fbt->fbtp_savedval;
+			fbt_patch_tracepoint(fbt, fbt->fbtp_savedval);
 	}
 }
 
-
-static int
-fbt_invop(uintptr_t addr, struct trapframe *frame, uintptr_t rval)
-{
-	solaris_cpu_t *cpu;
-	uintptr_t *stack;
-	uintptr_t arg0, arg1, arg2, arg3, arg4;
-	fbt_probe_t *fbt;
-
-#ifdef __amd64__
-	stack = (uintptr_t *)frame->tf_rsp;
-#endif
-#ifdef __i386__
-	/* Skip hardware-saved registers. */
-	stack = (uintptr_t *)&frame->tf_esp;
-#endif
-#ifdef __arm__
-	stack = (uintptr_t *)frame->tf_svc_sp;
-#endif
-
-	cpu = &solaris_cpu[cpu_number()];
-	fbt = fbt_probetab[FBT_ADDR2NDX(addr)];
-	for (; fbt != NULL; fbt = fbt->fbtp_hashnext) {
-		if ((uintptr_t)fbt->fbtp_patchpoint == addr) {
-			fbt->fbtp_invop_cnt++;
-			if (fbt->fbtp_roffset == 0) {
-#ifdef __amd64__
-				/* fbt->fbtp_rval == DTRACE_INVOP_PUSHQ_RBP */
-				DTRACE_CPUFLAG_SET(CPU_DTRACE_NOFAULT);
-				cpu->cpu_dtrace_caller = stack[0];
-				DTRACE_CPUFLAG_CLEAR(CPU_DTRACE_NOFAULT |
-				    CPU_DTRACE_BADADDR);
-
-				arg0 = frame->tf_rdi;
-				arg1 = frame->tf_rsi;
-				arg2 = frame->tf_rdx;
-				arg3 = frame->tf_rcx;
-				arg4 = frame->tf_r8;
-#else
-				int i = 0;
-
-				/*
-				 * When accessing the arguments on the stack,
-				 * we must protect against accessing beyond
-				 * the stack.  We can safely set NOFAULT here
-				 * -- we know that interrupts are already
-				 * disabled.
-				 */
-				DTRACE_CPUFLAG_SET(CPU_DTRACE_NOFAULT);
-				cpu->cpu_dtrace_caller = stack[i++];
-				arg0 = stack[i++];
-				arg1 = stack[i++];
-				arg2 = stack[i++];
-				arg3 = stack[i++];
-				arg4 = stack[i++];
-				DTRACE_CPUFLAG_CLEAR(CPU_DTRACE_NOFAULT |
-				    CPU_DTRACE_BADADDR);
-#endif
-
-				dtrace_probe(fbt->fbtp_id, arg0, arg1,
-				    arg2, arg3, arg4);
-
-				cpu->cpu_dtrace_caller = 0;
-			} else {
-#ifdef __amd64__
-				/*
-				 * On amd64, we instrument the ret, not the
-				 * leave.  We therefore need to set the caller
-				 * to ensure that the top frame of a stack()
-				 * action is correct.
-				 */
-				DTRACE_CPUFLAG_SET(CPU_DTRACE_NOFAULT);
-				cpu->cpu_dtrace_caller = stack[0];
-				DTRACE_CPUFLAG_CLEAR(CPU_DTRACE_NOFAULT |
-				    CPU_DTRACE_BADADDR);
-#endif
-
-				dtrace_probe(fbt->fbtp_id, fbt->fbtp_roffset,
-				    rval, 0, 0, 0);
-				cpu->cpu_dtrace_caller = 0;
-			}
-
-			return (fbt->fbtp_rval);
-		}
-	}
-
-	return (0);
-}
-
-#if defined(__i386__) || defined(__amd64__)
-static int
-fbt_provide_module_cb(const char *name, int symindx, void *value,
-	uint32_t symsize, int type, void *opaque)
-{
-	fbt_probe_t *fbt, *retfbt;
-	u_int8_t *instr, *limit;
-	dtrace_modctl_t *mod = opaque;
-	const char *modname = mod->mod_info->mi_name;
-	int j;
-	int size;
-
-	/* got a function? */
-	if (ELF_ST_TYPE(type) != STT_FUNC) {
-	    return 0;
-	}
-
-	if (strncmp(name, "dtrace_", 7) == 0 &&
-	    strncmp(name, "dtrace_safe_", 12) != 0) {
-		/*
-		 * Anything beginning with "dtrace_" may be called
-		 * from probe context unless it explicitly indicates
-		 * that it won't be called from probe context by
-		 * using the prefix "dtrace_safe_".
-		 */
-		return (0);
-	}
-
-	if (name[0] == '_' && name[1] == '_')
-		return (0);
-
-	/*
-	 * Exclude some more symbols which can be called from probe context.
-	 */
-	if (strcmp(name, "x86_curcpu") == 0 /* CPU */
-	    || strcmp(name, "x86_curlwp") == 0 /* curproc, curlwp, curthread */
-	    || strcmp(name, "cpu_index") == 0 /* cpu_number, curcpu_id */
-	    || strncmp(name, "db_", 3) == 0 /* debugger */
-	    || strncmp(name, "ddb_", 4) == 0 /* debugger */
-	    || strncmp(name, "kdb_", 4) == 0 /* debugger */
-	    || strncmp(name, "lockdebug_", 10) == 0 /* lockdebug XXX for now */
-	    || strncmp(name, "kauth_", 5) == 0 /* CRED XXX for now */
-	    ) {
-		return 0;
-	}
-
-	instr = (u_int8_t *) value;
-	limit = (u_int8_t *) value + symsize;
-
-#ifdef __amd64__
-	while (instr < limit) {
-		if (*instr == FBT_PUSHL_EBP)
-			break;
-
-		if ((size = dtrace_instr_size(instr)) <= 0)
-			break;
-
-		instr += size;
-	}
-
-	if (instr >= limit || *instr != FBT_PUSHL_EBP) {
-		/*
-		 * We either don't save the frame pointer in this
-		 * function, or we ran into some disassembly
-		 * screw-up.  Either way, we bail.
-		 */
-		return (0);
-	}
-#else
-	if (instr[0] != FBT_PUSHL_EBP) {
-		return (0);
-	}
-
-	if (!(instr[1] == FBT_MOVL_ESP_EBP0_V0 &&
-	    instr[2] == FBT_MOVL_ESP_EBP1_V0) &&
-	    !(instr[1] == FBT_MOVL_ESP_EBP0_V1 &&
-	    instr[2] == FBT_MOVL_ESP_EBP1_V1)) {
-		return (0);
-	}
-#endif
-	fbt = malloc(sizeof (fbt_probe_t), M_FBT, M_WAITOK | M_ZERO);
-	fbt->fbtp_name = name;
-	fbt->fbtp_id = dtrace_probe_create(fbt_id, modname,
-	    name, FBT_ENTRY, 3, fbt);
-	fbt->fbtp_patchpoint = instr;
-	fbt->fbtp_ctl = mod;
-	/* fbt->fbtp_loadcnt = lf->loadcnt; */
-	fbt->fbtp_rval = DTRACE_INVOP_PUSHL_EBP;
-	fbt->fbtp_savedval = *instr;
-	fbt->fbtp_patchval = FBT_PATCHVAL;
-	fbt->fbtp_symindx = symindx;
-
-	fbt->fbtp_hashnext = fbt_probetab[FBT_ADDR2NDX(instr)];
-	fbt_probetab[FBT_ADDR2NDX(instr)] = fbt;
-	mod->mod_fbtentries++;
-
-	retfbt = NULL;
-
-	while (instr < limit) {
-		if (instr >= limit)
-			return (0);
-
-		/*
-		 * If this disassembly fails, then we've likely walked off into
-		 * a jump table or some other unsuitable area.  Bail out of the
-		 * disassembly now.
-		 */
-		if ((size = dtrace_instr_size(instr)) <= 0)
-			return (0);
-
-#ifdef __amd64__
-		/*
-		 * We only instrument "ret" on amd64 -- we don't yet instrument
-		 * ret imm16, largely because the compiler doesn't seem to
-		 * (yet) emit them in the kernel...
-		 */
-		if (*instr != FBT_RET) {
-			instr += size;
-			continue;
-		}
-#else
-		if (!(size == 1 &&
-		    (*instr == FBT_POPL_EBP || *instr == FBT_LEAVE) &&
-		    (*(instr + 1) == FBT_RET ||
-		    *(instr + 1) == FBT_RET_IMM16))) {
-			instr += size;
-			continue;
-		}
-#endif
-
-		/*
-		 * We (desperately) want to avoid erroneously instrumenting a
-		 * jump table, especially given that our markers are pretty
-		 * short:  two bytes on x86, and just one byte on amd64.  To
-		 * determine if we're looking at a true instruction sequence
-		 * or an inline jump table that happens to contain the same
-		 * byte sequences, we resort to some heuristic sleeze:  we
-		 * treat this instruction as being contained within a pointer,
-		 * and see if that pointer points to within the body of the
-		 * function.  If it does, we refuse to instrument it.
-		 */
-		for (j = 0; j < sizeof (uintptr_t); j++) {
-			caddr_t check = (caddr_t) instr - j;
-			uint8_t *ptr;
-
-			if (check < (caddr_t)value)
-				break;
-
-			if (check + sizeof (caddr_t) > (caddr_t)limit)
-				continue;
-
-			ptr = *(uint8_t **)check;
-
-			if (ptr >= (uint8_t *) value && ptr < limit) {
-				instr += size;
-				continue;
-			}
-		}
-
-		/*
-		 * We have a winner!
-		 */
-		fbt = malloc(sizeof (fbt_probe_t), M_FBT, M_WAITOK | M_ZERO);
-		fbt->fbtp_name = name;
-
-		if (retfbt == NULL) {
-			fbt->fbtp_id = dtrace_probe_create(fbt_id, modname,
-			    name, FBT_RETURN, 3, fbt);
-		} else {
-			retfbt->fbtp_next = fbt;
-			fbt->fbtp_id = retfbt->fbtp_id;
-		}
-
-		retfbt = fbt;
-		fbt->fbtp_patchpoint = instr;
-		fbt->fbtp_ctl = mod;
-		/* fbt->fbtp_loadcnt = lf->loadcnt; */
-		fbt->fbtp_symindx = symindx;
-
-#ifndef __amd64__
-		if (*instr == FBT_POPL_EBP) {
-			fbt->fbtp_rval = DTRACE_INVOP_POPL_EBP;
-		} else {
-			ASSERT(*instr == FBT_LEAVE);
-			fbt->fbtp_rval = DTRACE_INVOP_LEAVE;
-		}
-		fbt->fbtp_roffset =
-		    (uintptr_t)(instr - (uint8_t *) value) + 1;
-
-#else
-		ASSERT(*instr == FBT_RET);
-		fbt->fbtp_rval = DTRACE_INVOP_RET;
-		fbt->fbtp_roffset =
-		    (uintptr_t)(instr - (uint8_t *) value);
-#endif
-
-		fbt->fbtp_savedval = *instr;
-		fbt->fbtp_patchval = FBT_PATCHVAL;
-		fbt->fbtp_hashnext = fbt_probetab[FBT_ADDR2NDX(instr)];
-		fbt_probetab[FBT_ADDR2NDX(instr)] = fbt;
-
-		mod->mod_fbtentries++;
-
-		instr += size;
-	}
-
-	return 0;
-}
-
-#elif defined(__arm__)
-
-static int
-fbt_provide_module_cb(const char *name, int symindx, void *value,
-	uint32_t symsize, int type, void *opaque)
-{
-	fbt_probe_t *fbt, *retfbt;
-	uint32_t *instr, *limit;
-	bool was_ldm_lr = false;
-	dtrace_modctl_t *mod = opaque;
-	const char *modname = mod->mod_info->mi_name;
-	int size;
-
-	/* got a function? */
-	if (ELF_ST_TYPE(type) != STT_FUNC) {
-	    return 0;
-	}
-
-	if (strncmp(name, "dtrace_", 7) == 0 &&
-	    strncmp(name, "dtrace_safe_", 12) != 0) {
-		/*
-		 * Anything beginning with "dtrace_" may be called
-		 * from probe context unless it explicitly indicates
-		 * that it won't be called from probe context by
-		 * using the prefix "dtrace_safe_".
-		 */
-		return (0);
-	}
-
-	if (name[0] == '_' && name[1] == '_')
-		return (0);
-
-	/*
-	 * Exclude some more symbols which can be called from probe context.
-	 */
-	if (strncmp(name, "db_", 3) == 0 /* debugger */
-	    || strncmp(name, "ddb_", 4) == 0 /* debugger */
-	    || strncmp(name, "kdb_", 4) == 0 /* debugger */
-	    || strncmp(name, "lockdebug_", 10) == 0 /* lockdebug XXX for now */
-	    || strncmp(name, "kauth_", 5) == 0 /* CRED XXX for now */
-	    /* Sensitive functions on ARM */
-	    || strncmp(name, "_spl", 4) == 0
-	    || strcmp(name, "binuptime") == 0
-	    || strcmp(name, "dosoftints") == 0
-	    || strcmp(name, "fbt_emulate") == 0
-	    || strcmp(name, "nanouptime") == 0
-	    || strcmp(name, "undefinedinstruction") == 0
-	    || strncmp(name, "dmt_", 4) == 0 /* omap */
-	    || strncmp(name, "mvsoctmr_", 9) == 0 /* marvell */
-	    ) {
-		return 0;
-	}
-
-	instr = (uint32_t *) value;
-	limit = (uint32_t *)((uintptr_t)value + symsize);
-
-	if (!FBT_MOV_IP_SP_P(*instr)
-	    && !FBT_BX_LR_P(*instr)
-	    && !FBT_MOVW_P(*instr)
-	    && !FBT_MOV_IMM_P(*instr)
-	    && !FBT_B_LABEL_P(*instr)
-	    && !FBT_LDR_IMM_P(*instr)
-	    && !FBT_CMP_IMM_P(*instr)
-	    /* && !FBT_PUSH_P(*instr) */
-	    ) {
-		return 0;
-	}
-
-	fbt = malloc(sizeof (fbt_probe_t), M_FBT, M_WAITOK | M_ZERO);
-	fbt->fbtp_name = name;
-	fbt->fbtp_id = dtrace_probe_create(fbt_id, modname,
-	    name, FBT_ENTRY, 3, fbt);
-	fbt->fbtp_patchpoint = instr;
-	fbt->fbtp_ctl = mod;
-	/* fbt->fbtp_loadcnt = lf->loadcnt; */
-	if (FBT_MOV_IP_SP_P(*instr))
-		fbt->fbtp_rval = BUILD_RVAL(*instr, DTRACE_INVOP_MOV_IP_SP);
-	else if (FBT_LDR_IMM_P(*instr))
-		fbt->fbtp_rval = BUILD_RVAL(*instr, DTRACE_INVOP_LDR_IMM);
-	else if (FBT_MOVW_P(*instr))
-		fbt->fbtp_rval = BUILD_RVAL(*instr, DTRACE_INVOP_MOVW);
-	else if (FBT_MOV_IMM_P(*instr))
-		fbt->fbtp_rval = BUILD_RVAL(*instr, DTRACE_INVOP_MOV_IMM);
-	else if (FBT_CMP_IMM_P(*instr))
-		fbt->fbtp_rval = BUILD_RVAL(*instr, DTRACE_INVOP_CMP_IMM);
-	else if (FBT_BX_LR_P(*instr))
-		fbt->fbtp_rval = BUILD_RVAL(*instr, DTRACE_INVOP_BX_LR);
-	else if (FBT_PUSH_P(*instr))
-		fbt->fbtp_rval = BUILD_RVAL(*instr, DTRACE_INVOP_PUSH);
-	else if (FBT_B_LABEL_P(*instr))
-		fbt->fbtp_rval = BUILD_RVAL(*instr, DTRACE_INVOP_B_LABEL);
-
-	fbt->fbtp_patchval = PATCHVAL_ENCODE_COND(*instr);
-	fbt->fbtp_savedval = *instr;
-	fbt->fbtp_symindx = symindx;
-
-	fbt->fbtp_hashnext = fbt_probetab[FBT_ADDR2NDX(instr)];
-	fbt_probetab[FBT_ADDR2NDX(instr)] = fbt;
-	mod->mod_fbtentries++;
-
-	retfbt = NULL;
-
-	while (instr < limit) {
-		if (instr >= limit)
-			return (0);
-
-		size = 1;
-
-		if (!FBT_BX_LR_P(*instr)
-		    && !FBT_MOV_PC_LR_P(*instr)
-		    && !FBT_LDM_P(*instr)
-		    && !FBT_LDMIB_P(*instr)
-		    && !(was_ldm_lr && FBT_B_LABEL_P(*instr))
-		    ) {
-			if (FBT_LDM_LR_P(*instr) || FBT_LDMIB_LR_P(*instr))
-				was_ldm_lr = true;
-			else
-				was_ldm_lr = false;
-			instr += size;
-			continue;
-		}
-
-		/*
-		 * We have a winner!
-		 */
-		fbt = malloc(sizeof (fbt_probe_t), M_FBT, M_WAITOK | M_ZERO);
-		fbt->fbtp_name = name;
-
-		if (retfbt == NULL) {
-			fbt->fbtp_id = dtrace_probe_create(fbt_id, modname,
-			    name, FBT_RETURN, 3, fbt);
-		} else {
-			retfbt->fbtp_next = fbt;
-			fbt->fbtp_id = retfbt->fbtp_id;
-		}
-
-		retfbt = fbt;
-		fbt->fbtp_patchpoint = instr;
-		fbt->fbtp_ctl = mod;
-		/* fbt->fbtp_loadcnt = lf->loadcnt; */
-		fbt->fbtp_symindx = symindx;
-
-		if (FBT_BX_LR_P(*instr))
-			fbt->fbtp_rval = BUILD_RVAL(*instr, DTRACE_INVOP_BX_LR);
-		else if (FBT_MOV_PC_LR_P(*instr))
-			fbt->fbtp_rval = BUILD_RVAL(*instr, DTRACE_INVOP_MOV_PC_LR);
-		else if (FBT_LDM_P(*instr))
-			fbt->fbtp_rval = BUILD_RVAL(*instr, DTRACE_INVOP_LDM);
-		else if (FBT_LDMIB_P(*instr))
-			fbt->fbtp_rval = BUILD_RVAL(*instr, DTRACE_INVOP_LDMIB);
-		else if (FBT_B_LABEL_P(*instr))
-			fbt->fbtp_rval = BUILD_RVAL(*instr, DTRACE_INVOP_B_LABEL);
-
-		fbt->fbtp_roffset = (uintptr_t)(instr - (uint32_t *) value);
-		fbt->fbtp_patchval = PATCHVAL_ENCODE_COND(*instr);
-
-		fbt->fbtp_savedval = *instr;
-		fbt->fbtp_hashnext = fbt_probetab[FBT_ADDR2NDX(instr)];
-		fbt_probetab[FBT_ADDR2NDX(instr)] = fbt;
-
-		mod->mod_fbtentries++;
-
-		instr += size;
-		was_ldm_lr = false;
-	}
-
-	return 0;
-}
-#else
-#error "architecture not supported"
-#endif
-
-
+#ifdef __FreeBSD__
 static void
-fbt_provide_module(void *arg, dtrace_modctl_t *mod)
+fbt_provide_module(void *arg, modctl_t *lf)
 {
 	char modname[MAXPATHLEN];
 	int i;
 	size_t len;
 
-	strlcpy(modname, mod->mod_info->mi_name, sizeof(modname));
+	strlcpy(modname, lf->filename, sizeof(modname));
+	len = strlen(modname);
+	if (len > 3 && strcmp(modname + len - 3, ".ko") == 0)
+		modname[len - 3] = '\0';
+
+	/*
+	 * Employees of dtrace and their families are ineligible.  Void
+	 * where prohibited.
+	 */
+	if (strcmp(modname, "dtrace") == 0)
+		return;
+
+	/*
+	 * To register with DTrace, a module must list 'dtrace' as a
+	 * dependency in order for the kernel linker to resolve
+	 * symbols like dtrace_register(). All modules with such a
+	 * dependency are ineligible for FBT tracing.
+	 */
+	for (i = 0; i < lf->ndeps; i++)
+		if (strncmp(lf->deps[i]->filename, "dtrace", 6) == 0)
+			return;
+
+	if (lf->fbt_nentries) {
+		/*
+		 * This module has some FBT entries allocated; we're afraid
+		 * to screw with it.
+		 */
+		return;
+	}
+
+	/*
+	 * List the functions in the module and the symbol values.
+	 */
+	(void) linker_file_function_listall(lf, fbt_provide_module_function, modname);
+}
+#endif
+#ifdef __NetBSD__
+static void
+fbt_provide_module(void *arg, modctl_t *mod)
+{
+	struct fbt_ksyms_arg fka;
+	struct mod_ctf *mc;
+	char modname[MAXPATHLEN];
+	int i;
+	size_t len;
+
+	if (mod_ctf_get(mod, &mc)) {
+		printf("fbt: no CTF data for module %s\n", module_name(mod));
+		return;
+	}
+
+	strlcpy(modname, module_name(mod), sizeof(modname));
 	len = strlen(modname);
 	if (len > 5 && strcmp(modname + len - 3, ".kmod") == 0)
 		modname[len - 4] = '\0';
@@ -957,36 +284,52 @@ fbt_provide_module(void *arg, dtrace_modctl_t *mod)
 	 * dependency are ineligible for FBT tracing.
 	 */
 	for (i = 0; i < mod->mod_nrequired; i++) {
-		if (strncmp((*mod->mod_required)[i]->mod_info->mi_name,
+		if (strncmp(module_name(mod->mod_required[i]),
 			    "dtrace", 6) == 0)
 			return;
 	}
-
-	if (mod->mod_fbtentries) {
-		/*
-		 * This module has some FBT entries allocated; we're afraid
-		 * to screw with it.
-		 */
+	if (mc->fbt_provided) {
 		return;
 	}
 
 	/*
 	 * List the functions in the module and the symbol values.
 	 */
-	ksyms_mod_foreach(modname, fbt_provide_module_cb, mod);
+	memset(&fka, 0, sizeof(fka));
+	fka.fka_mod = mod;
+	fka.fka_mc = mc;
+	ksyms_mod_foreach(modname, fbt_provide_module_cb, &fka);
+	mc->fbt_provided = true;
 }
+
+static void
+fbt_module_dtor(void *arg)
+{
+	mod_ctf_t *mc = arg;
+
+	if (mc->ctfalloc)
+		free(mc->ctftab, M_TEMP);
+	kmem_free(mc, sizeof(*mc));
+}
+#endif
 
 static void
 fbt_destroy(void *arg, dtrace_id_t id, void *parg)
 {
 	fbt_probe_t *fbt = parg, *next, *hash, *last;
-	dtrace_modctl_t *ctl;
+	modctl_t *ctl;
 	int ndx;
 
 	do {
 		ctl = fbt->fbtp_ctl;
 
+#ifdef __FreeBSD__
 		ctl->mod_fbtentries--;
+#endif
+#ifdef __NetBSD__
+		mod_ctf_t *mc = module_getspecific(ctl, fbt_module_key);
+		mc->fbt_provided = false;
+#endif
 
 		/*
 		 * Now we need to remove this probe from the fbt_probetab.
@@ -1008,305 +351,102 @@ fbt_destroy(void *arg, dtrace_id_t id, void *parg)
 		}
 
 		next = fbt->fbtp_next;
-		free(fbt, M_FBT);
+		kmem_free(fbt, sizeof(*fbt));
 
 		fbt = next;
 	} while (fbt != NULL);
 }
 
-#if defined(__i386__) || defined(__amd64__)
-
 static int
 fbt_enable(void *arg, dtrace_id_t id, void *parg)
 {
 	fbt_probe_t *fbt = parg;
-#if 0
-	dtrace_modctl_t *ctl = fbt->fbtp_ctl;
-#endif
-	u_long psl;
-	u_long cr0;
+	modctl_t *ctl = fbt->fbtp_ctl;
 
-
-#if 0	/* XXX TBD */
-	ctl->nenabled++;
-
-	/*
-	 * Now check that our modctl has the expected load count.  If it
-	 * doesn't, this module must have been unloaded and reloaded -- and
-	 * we're not going to touch it.
-	 */
-	if (ctl->loadcnt != fbt->fbtp_loadcnt) {
-		if (fbt_verbose) {
-			printf("fbt is failing for probe %s "
-			    "(module %s reloaded)",
-			    fbt->fbtp_name, ctl->filename);
-		}
-
-		return;
-	}
-#endif
-
-	/* Disable interrupts. */
-	psl = x86_read_psl();
-	x86_disable_intr();
-
-	/* Disable write protection in supervisor mode. */
-	cr0 = rcr0();
-	lcr0(cr0 & ~CR0_WP);
-
-	for (; fbt != NULL; fbt = fbt->fbtp_next) {
-		*fbt->fbtp_patchpoint = fbt->fbtp_patchval;
-	}
-
-	/* Write back and invalidate cache, flush pipelines. */
-	wbinvd();
-	x86_flush();
-	x86_write_psl(psl);
-
-	/* Re-enable write protection. */
-	lcr0(cr0);
-
-	return 0;
-}
-
-static void
-fbt_disable(void *arg, dtrace_id_t id, void *parg)
-{
-	fbt_probe_t *fbt = parg;
-#if 0
-	dtrace_modctl_t *ctl = fbt->fbtp_ctl;
-#endif
-	u_long psl;
-	u_long cr0;
-
-#if 0	/* XXX TBD */
-	ASSERT(ctl->nenabled > 0);
-	ctl->nenabled--;
-
-	if ((ctl->loadcnt != fbt->fbtp_loadcnt))
-		return;
-#endif
-	/* Disable interrupts. */
-	psl = x86_read_psl();
-	x86_disable_intr();
-
-	/* Disable write protection in supervisor mode. */
-	cr0 = rcr0();
-	lcr0(cr0 & ~CR0_WP);
-
-	for (; fbt != NULL; fbt = fbt->fbtp_next)
-		*fbt->fbtp_patchpoint = fbt->fbtp_savedval;
-
-	/* Write back and invalidate cache, flush pipelines. */
-	wbinvd();
-	x86_flush();
-	x86_write_psl(psl);
-
-	/* Re-enable write protection. */
-	lcr0(cr0);
-}
-
-static void
-fbt_suspend(void *arg, dtrace_id_t id, void *parg)
-{
-	fbt_probe_t *fbt = parg;
-#if 0
-	dtrace_modctl_t *ctl = fbt->fbtp_ctl;
-#endif
-	u_long psl;
-	u_long cr0;
-
-#if 0	/* XXX TBD */
-	ASSERT(ctl->nenabled > 0);
-
-	if ((ctl->loadcnt != fbt->fbtp_loadcnt))
-		return;
-#endif
-
-	/* Disable interrupts. */
-	psl = x86_read_psl();
-	x86_disable_intr();
-
-	/* Disable write protection in supervisor mode. */
-	cr0 = rcr0();
-	lcr0(cr0 & ~CR0_WP);
-
-	for (; fbt != NULL; fbt = fbt->fbtp_next)
-		*fbt->fbtp_patchpoint = fbt->fbtp_savedval;
-
-	/* Write back and invalidate cache, flush pipelines. */
-	wbinvd();
-	x86_flush();
-	x86_write_psl(psl);
-
-	/* Re-enable write protection. */
-	lcr0(cr0);
-}
-
-static void
-fbt_resume(void *arg, dtrace_id_t id, void *parg)
-{
-	fbt_probe_t *fbt = parg;
-#if 0
-	dtrace_modctl_t *ctl = fbt->fbtp_ctl;
-#endif
-	u_long psl;
-	u_long cr0;
-
-#if 0	/* XXX TBD */
-	ASSERT(ctl->nenabled > 0);
-
-	if ((ctl->loadcnt != fbt->fbtp_loadcnt))
-		return;
-#endif
-	/* Disable interrupts. */
-	psl = x86_read_psl();
-	x86_disable_intr();
-
-	/* Disable write protection in supervisor mode. */
-	cr0 = rcr0();
-	lcr0(cr0 & ~CR0_WP);
-
-	for (; fbt != NULL; fbt = fbt->fbtp_next)
-		*fbt->fbtp_patchpoint = fbt->fbtp_patchval;
-
-	/* Write back and invalidate cache, flush pipelines. */
-	wbinvd();
-	x86_flush();
-	x86_write_psl(psl);
-
-	/* Re-enable write protection. */
-	lcr0(cr0);
-}
-
-#elif defined(__arm__)
-
-static int
-fbt_enable(void *arg, dtrace_id_t id, void *parg)
-{
-	fbt_probe_t *fbt = parg;
-#if 0
-	dtrace_modctl_t *ctl = fbt->fbtp_ctl;
-#endif
-	dtrace_icookie_t c;
-
-
-#if 0	/* XXX TBD */
-	ctl->nenabled++;
-
-	/*
-	 * Now check that our modctl has the expected load count.  If it
-	 * doesn't, this module must have been unloaded and reloaded -- and
-	 * we're not going to touch it.
-	 */
-	if (ctl->loadcnt != fbt->fbtp_loadcnt) {
-		if (fbt_verbose) {
-			printf("fbt is failing for probe %s "
-			    "(module %s reloaded)",
-			    fbt->fbtp_name, ctl->filename);
-		}
-
-		return;
-	}
-#endif
-
-	c = dtrace_interrupt_disable();
-
-	for (fbt = parg; fbt != NULL; fbt = fbt->fbtp_next) {
-		*fbt->fbtp_patchpoint = fbt->fbtp_patchval;
-		cpu_idcache_wbinv_range((vaddr_t)fbt->fbtp_patchpoint, 4);
-	}
-
-	dtrace_interrupt_enable(c);
-
-	return 0;
-}
-
-static void
-fbt_disable(void *arg, dtrace_id_t id, void *parg)
-{
-	fbt_probe_t *fbt = parg;
-#if 0
-	dtrace_modctl_t *ctl = fbt->fbtp_ctl;
-#endif
-	dtrace_icookie_t c;
-
-#if 0	/* XXX TBD */
-	ASSERT(ctl->nenabled > 0);
-	ctl->nenabled--;
-
-	if ((ctl->loadcnt != fbt->fbtp_loadcnt))
-		return;
-#endif
-
-	c = dtrace_interrupt_disable();
-
-	for (; fbt != NULL; fbt = fbt->fbtp_next) {
-		*fbt->fbtp_patchpoint = fbt->fbtp_savedval;
-		cpu_idcache_wbinv_range((vaddr_t)fbt->fbtp_patchpoint, 4);
-	}
-
-	dtrace_interrupt_enable(c);
-}
-
-static void
-fbt_suspend(void *arg, dtrace_id_t id, void *parg)
-{
-	fbt_probe_t *fbt = parg;
-#if 0
-	dtrace_modctl_t *ctl = fbt->fbtp_ctl;
-#endif
-	dtrace_icookie_t c;
-
-#if 0	/* XXX TBD */
-	ASSERT(ctl->nenabled > 0);
-
-	if ((ctl->loadcnt != fbt->fbtp_loadcnt))
-		return;
-#endif
-
-	c = dtrace_interrupt_disable();
-
-	for (; fbt != NULL; fbt = fbt->fbtp_next) {
-		*fbt->fbtp_patchpoint = fbt->fbtp_savedval;
-		cpu_idcache_wbinv_range((vaddr_t)fbt->fbtp_patchpoint, 4);
-	}
-
-	dtrace_interrupt_enable(c);
-}
-
-static void
-fbt_resume(void *arg, dtrace_id_t id, void *parg)
-{
-	fbt_probe_t *fbt = parg;
-#if 0
-	dtrace_modctl_t *ctl = fbt->fbtp_ctl;
-#endif
-	dtrace_icookie_t c;
-
-#if 0	/* XXX TBD */
-	ASSERT(ctl->nenabled > 0);
-
-	if ((ctl->loadcnt != fbt->fbtp_loadcnt))
-		return;
-#endif
-
-	c = dtrace_interrupt_disable();
-
-	for (; fbt != NULL; fbt = fbt->fbtp_next) {
-		*fbt->fbtp_patchpoint = fbt->fbtp_patchval;
-		cpu_idcache_wbinv_range((vaddr_t)fbt->fbtp_patchpoint, 4);
-	}
-
-	dtrace_interrupt_enable(c);
-}
-
+#ifdef __NetBSD__
+	module_hold(ctl);
 #else
-#error "architecture not supported"
+	ctl->nenabled++;
+
+	/*
+	 * Now check that our modctl has the expected load count.  If it
+	 * doesn't, this module must have been unloaded and reloaded -- and
+	 * we're not going to touch it.
+	 */
+	if (ctl->loadcnt != fbt->fbtp_loadcnt) {
+		if (fbt_verbose) {
+			printf("fbt is failing for probe %s "
+			    "(module %s reloaded)",
+			    fbt->fbtp_name, module_name(ctl));
+		}
+
+		return 0;
+	}
 #endif
 
+	for (; fbt != NULL; fbt = fbt->fbtp_next)
+		fbt_patch_tracepoint(fbt, fbt->fbtp_patchval);
+	return 0;
+}
+
+static void
+fbt_disable(void *arg, dtrace_id_t id, void *parg)
+{
+	fbt_probe_t *fbt = parg;
+	modctl_t *ctl = fbt->fbtp_ctl;
+
+#ifndef __NetBSD__
+	ASSERT(ctl->nenabled > 0);
+	ctl->nenabled--;
+
+	if ((ctl->loadcnt != fbt->fbtp_loadcnt))
+		return;
+#endif
+
+	for (; fbt != NULL; fbt = fbt->fbtp_next)
+		fbt_patch_tracepoint(fbt, fbt->fbtp_savedval);
+
+#ifdef __NetBSD__
+	module_rele(ctl);
+#endif
+}
+
+static void
+fbt_suspend(void *arg, dtrace_id_t id, void *parg)
+{
+	fbt_probe_t *fbt = parg;
+#ifndef __NetBSD__
+	modctl_t *ctl = fbt->fbtp_ctl;
+
+	ASSERT(ctl->nenabled > 0);
+
+	if ((ctl->loadcnt != fbt->fbtp_loadcnt))
+		return;
+#endif
+
+	for (; fbt != NULL; fbt = fbt->fbtp_next)
+		fbt_patch_tracepoint(fbt, fbt->fbtp_savedval);
+}
+
+static void
+fbt_resume(void *arg, dtrace_id_t id, void *parg)
+{
+	fbt_probe_t *fbt = parg;
+#ifndef __NetBSD__
+	modctl_t *ctl = fbt->fbtp_ctl;
+
+	ASSERT(ctl->nenabled > 0);
+
+	if ((ctl->loadcnt != fbt->fbtp_loadcnt))
+		return;
+#endif
+
+	for (; fbt != NULL; fbt = fbt->fbtp_next)
+		fbt_patch_tracepoint(fbt, fbt->fbtp_patchval);
+}
+
 static int
-fbt_ctfoff_init(dtrace_modctl_t *mod, mod_ctf_t *mc)
+fbt_ctfoff_init(modctl_t *mod, mod_ctf_t *mc)
 {
 	const Elf_Sym *symp = mc->symtab;
 	const ctf_header_t *hp = (const ctf_header_t *) mc->ctftab;
@@ -1322,19 +462,16 @@ fbt_ctfoff_init(dtrace_modctl_t *mod, mod_ctf_t *mc)
 	/* Sanity check. */
 	if (hp->cth_magic != CTF_MAGIC) {
 		printf("Bad magic value in CTF data of '%s'\n",
-			mod->mod_info->mi_name);
+		    module_name(mod));
 		return (EINVAL);
 	}
 
 	if (mc->symtab == NULL) {
-		printf("No symbol table in '%s'\n",
-			mod->mod_info->mi_name);
+		printf("No symbol table in '%s'\n", module_name(mod));
 		return (EINVAL);
 	}
 
-	if ((ctfoff = malloc(sizeof(uint32_t) * nsyms, M_FBT, M_WAITOK)) == NULL)
-		return (ENOMEM);
-
+	ctfoff = malloc(sizeof(uint32_t) * nsyms, M_FBT, M_WAITOK);
 	mc->ctfoffp = ctfoff;
 
 	for (i = 0; i < nsyms; i++, ctfoff++, symp++) {
@@ -1345,9 +482,10 @@ fbt_ctfoff_init(dtrace_modctl_t *mod, mod_ctf_t *mc)
 				continue;
 			}
 
-			/* CTF expects the pre-sorted symbol ordering, 
+			/*
+			 * CTF expects the unsorted symbol ordering,
 			 * so map it from that to the current sorted
-			 * and trimmed symbol table.
+			 * symbol table.
 			 * ctfoff[new-ind] = oldind symbol info.
 			 */
 
@@ -1357,6 +495,12 @@ fbt_ctfoff_init(dtrace_modctl_t *mod, mod_ctf_t *mc)
 			/* map old index to new ctfoff index */
 			ctfoff = &mc->ctfoffp[mc->nmap[i]-1];
 		}
+
+		/*
+		 * Note that due to how kern_ksyms.c adjusts st_name
+		 * to be the offset into a virtual combined strtab,
+		 * st_name will never be 0 for loaded modules.
+		 */
 
 		if (symp->st_name == 0 || symp->st_shndx == SHN_UNDEF) {
 			*ctfoff = 0xffffffff;
@@ -1407,12 +551,12 @@ fbt_ctfoff_init(dtrace_modctl_t *mod, mod_ctf_t *mc)
 }
 
 static ssize_t
-fbt_get_ctt_size(uint8_t xversion, const ctf_type_t *tp, ssize_t *sizep,
+fbt_get_ctt_size(uint8_t version, const ctf_type_t *tp, ssize_t *sizep,
     ssize_t *incrementp)
 {
 	ssize_t size, increment;
 
-	if (xversion > CTF_VERSION_1 &&
+	if (version > CTF_VERSION_1 &&
 	    tp->ctt_size == CTF_LSIZE_SENT) {
 		size = CTF_TYPE_LSIZE(tp);
 		increment = sizeof (ctf_type_t);
@@ -1440,6 +584,7 @@ fbt_typoff_init(mod_ctf_t *mc)
 	int ctf_typemax = 0;
 	uint32_t *xp;
 	ulong_t pop[CTF_K_MAX + 1] = { 0 };
+
 
 	/* Sanity check. */
 	if (hp->cth_magic != CTF_MAGIC)
@@ -1521,17 +666,19 @@ fbt_typoff_init(mod_ctf_t *mc)
 			vbytes = 0;
 			break;
 		default:
-			printf("%s(%d): detected invalid CTF kind -- %u\n", __func__, __LINE__, kind);
+			printf("%s(%d): detected invalid CTF kind -- %u\n",
+			       __func__, __LINE__, kind);
 			return (EIO);
 		}
 		tp = (ctf_type_t *)((uintptr_t)tp + increment + vbytes);
 		pop[kind]++;
 	}
 
+	/* account for a sentinel value below */
+	ctf_typemax++;
 	mc->typlen = ctf_typemax;
 
-	if ((xp = malloc(sizeof(uint32_t) * ctf_typemax, M_FBT, M_ZERO | M_WAITOK)) == NULL)
-		return (ENOMEM);
+	xp = malloc(sizeof(uint32_t) * ctf_typemax, M_FBT, M_ZERO | M_WAITOK);
 
 	mc->typoffp = xp;
 
@@ -1853,11 +1000,7 @@ ctf_decl_push(ctf_decl_t *cd, mod_ctf_t *mc, ctf_id_t type)
 		prec = CTF_PREC_BASE;
 	}
 
-	if ((cdp = malloc(sizeof (ctf_decl_node_t), M_FBT, M_WAITOK)) == NULL) {
-		cd->cd_err = EAGAIN;
-		return;
-	}
-
+	cdp = malloc(sizeof(*cdp), M_FBT, M_WAITOK);
 	cdp->cd_type = type;
 	cdp->cd_kind = kind;
 	cdp->cd_n = n;
@@ -2001,8 +1144,8 @@ fbt_getargdesc(void *arg __unused, dtrace_id_t id __unused, void *parg, dtrace_a
 {
 	const ushort_t *dp;
 	fbt_probe_t *fbt = parg;
-	mod_ctf_t mc;
-	dtrace_modctl_t *ctl = fbt->fbtp_ctl;
+	mod_ctf_t *mc;
+	modctl_t *ctl = fbt->fbtp_ctl;
 	int ndx = desc->dtargd_ndx;
 	int symindx = fbt->fbtp_symindx;
 	uint32_t *ctfoff;
@@ -2010,41 +1153,44 @@ fbt_getargdesc(void *arg __unused, dtrace_id_t id __unused, void *parg, dtrace_a
 	ushort_t info, kind, n;
 	int nsyms;
 
+	if (fbt->fbtp_roffset != 0 && desc->dtargd_ndx == 0) {
+		(void) strcpy(desc->dtargd_native, "int");
+		return;
+	}
+
 	desc->dtargd_ndx = DTRACE_ARGNONE;
 
-	/* Get a pointer to the CTF data and it's length. */
+	/* Get a pointer to the CTF data and its length. */
 	if (mod_ctf_get(ctl, &mc) != 0) {
-		static int report=0;
+		static int report = 0;
 		if (report < 1) {
-		    report++;
-		    printf("FBT: Error no CTF section found in module \"%s\"\n",
-			    ctl->mod_info->mi_name);
+			report++;
+			printf("FBT: Error no CTF section found in module \"%s\"\n",
+			    module_name(ctl));
 		}
 		/* No CTF data? Something wrong? *shrug* */
 		return;
 	}
 
-	nsyms = (mc.nmap != NULL) ? mc.nmapsize : mc.nsym;
+	nsyms = (mc->nmap != NULL) ? mc->nmapsize : mc->nsym;
 
 	/* Check if this module hasn't been initialised yet. */
-	if (mc.ctfoffp == NULL) {
+	if (mc->ctfoffp == NULL) {
 		/*
 		 * Initialise the CTF object and function symindx to
 		 * byte offset array.
 		 */
-		if (fbt_ctfoff_init(ctl, &mc) != 0) {
+		if (fbt_ctfoff_init(ctl, mc) != 0)
 			return;
-		}
 
 		/* Initialise the CTF type to byte offset array. */
-		if (fbt_typoff_init(&mc) != 0) {
+		if (fbt_typoff_init(mc) != 0)
 			return;
-		}
 	}
 
-	ctfoff = mc.ctfoffp;
+	ctfoff = mc->ctfoffp;
 
-	if (ctfoff == NULL || mc.typoffp == NULL) {
+	if (ctfoff == NULL || mc->typoffp == NULL) {
 		return;
 	}
 
@@ -2056,7 +1202,7 @@ fbt_getargdesc(void *arg __unused, dtrace_id_t id __unused, void *parg, dtrace_a
 	if ((offset = ctfoff[symindx]) == 0xffffffff)
 		return;
 
-	dp = (const ushort_t *)(mc.ctftab + offset + sizeof(ctf_header_t));
+	dp = (const ushort_t *)(mc->ctftab + offset + sizeof(ctf_header_t));
 
 	info = *dp++;
 	kind = CTF_INFO_KIND(info);
@@ -2074,23 +1220,50 @@ fbt_getargdesc(void *arg __unused, dtrace_id_t id __unused, void *parg, dtrace_a
 		return;
 	}
 
-	/* Check if the requested argument doesn't exist. */
-	if (ndx >= n)
-		return;
+	if (fbt->fbtp_roffset != 0) {
+		/* Only return type is available for args[1] in return probe. */
+		if (ndx > 1)
+			return;
+		ASSERT(ndx == 1);
+	} else {
+		/* Check if the requested argument doesn't exist. */
+		if (ndx >= n)
+			return;
 
-	/* Skip the return type and arguments up to the one requested. */
-	dp += ndx + 1;
-
-	if (fbt_type_name(&mc, *dp, desc->dtargd_native, sizeof(desc->dtargd_native)) > 0) {
-		desc->dtargd_ndx = ndx;
+		/* Skip the return type and arguments up to the one requested. */
+		dp += ndx + 1;
 	}
+
+	if (fbt_type_name(mc, *dp, desc->dtargd_native, sizeof(desc->dtargd_native)) > 0)
+		desc->dtargd_ndx = ndx;
 
 	return;
 }
 
+#ifdef __FreeBSD__
+static int
+fbt_linker_file_cb(linker_file_t lf, void *arg)
+{
+
+	fbt_provide_module(arg, lf);
+
+	return (0);
+}
+#endif
+
 static void
 fbt_load(void)
 {
+
+#ifdef __FreeBSD__
+	/* Create the /dev/dtrace/fbt entry. */
+	fbt_cdev = make_dev(&fbt_cdevsw, 0, UID_ROOT, GID_WHEEL, 0600,
+	    "dtrace/fbt");
+#endif
+#ifdef __NetBSD__
+	(void) module_specific_key_create(&fbt_module_key, fbt_module_dtor);
+#endif
+
 	/* Default the probe table size if not specified. */
 	if (fbt_probetab_size == 0)
 		fbt_probetab_size = FBT_PROBETAB_SIZE;
@@ -2104,9 +1277,6 @@ fbt_load(void)
 
 	dtrace_doubletrap_func = fbt_doubletrap;
 	dtrace_invop_add(fbt_invop);
-#ifdef __arm__
-	dtrace_emulation_jump_addr = fbt_emulate;
-#endif
 
 	if (dtrace_register("fbt", &fbt_attr, DTRACE_PRIV_USER,
 	    NULL, &fbt_pops, NULL, &fbt_id) != 0)
@@ -2119,9 +1289,6 @@ fbt_unload(void)
 {
 	int error = 0;
 
-#ifdef __arm__
-	dtrace_emulation_jump_addr = NULL;
-#endif
 	/* De-register the invalid opcode handler. */
 	dtrace_invop_remove(fbt_invop);
 
@@ -2136,6 +1303,12 @@ fbt_unload(void)
 	fbt_probetab = NULL;
 	fbt_probetab_mask = 0;
 
+#ifdef __FreeBSD__
+	destroy_dev(fbt_cdev);
+#endif
+#ifdef __NetBSD__
+	(void) module_specific_key_delete(fbt_module_key);
+#endif
 	return (error);
 }
 
@@ -2169,4 +1342,15 @@ fbt_open(dev_t dev, int flags, int mode, struct lwp *l)
 	return (0);
 }
 
+#ifdef __FreeBSD__
+SYSINIT(fbt_load, SI_SUB_DTRACE_PROVIDER, SI_ORDER_ANY, fbt_load, NULL);
+SYSUNINIT(fbt_unload, SI_SUB_DTRACE_PROVIDER, SI_ORDER_ANY, fbt_unload, NULL);
+
+DEV_MODULE(fbt, fbt_modevent, NULL);
+MODULE_VERSION(fbt, 1);
+MODULE_DEPEND(fbt, dtrace, 1, 1, 1);
+MODULE_DEPEND(fbt, opensolaris, 1, 1, 1);
+#endif
+#ifdef __NetBSD__
 MODULE(MODULE_CLASS_MISC, dtrace_fbt, "dtrace,zlib");
+#endif

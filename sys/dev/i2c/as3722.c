@@ -1,4 +1,4 @@
-/* $NetBSD: as3722.c,v 1.12 2017/05/28 15:55:11 jmcneill Exp $ */
+/* $NetBSD: as3722.c,v 1.12.10.1 2018/06/25 07:25:50 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: as3722.c,v 1.12 2017/05/28 15:55:11 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: as3722.c,v 1.12.10.1 2018/06/25 07:25:50 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,6 +50,8 @@ __KERNEL_RCSID(0, "$NetBSD: as3722.c,v 1.12 2017/05/28 15:55:11 jmcneill Exp $")
 #ifdef FDT
 #include <dev/fdt/fdtvar.h>
 #endif
+
+#define	AS3722_I2C_ADDR			0x40
 
 #define AS3722_START_YEAR		2000
 
@@ -225,27 +227,34 @@ static const char * as3722_compats[] = {
 	NULL
 };
 
+static const struct device_compatible_entry as3722_compat_data[] = {
+	DEVICE_COMPAT_ENTRY(as3722_compats),
+	DEVICE_COMPAT_TERMINATOR
+};
+
 static int
 as3722_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct i2c_attach_args *ia = aux;
 	uint8_t reg, id1;
-	int error;
+	int error, match_result;
 
-	if (ia->ia_name == NULL) {
-		iic_acquire_bus(ia->ia_tag, I2C_F_POLL);
-		reg = AS3722_ASIC_ID1_REG;
-		error = iic_exec(ia->ia_tag, I2C_OP_READ_WITH_STOP, ia->ia_addr,
-		    &reg, 1, &id1, 1, I2C_F_POLL);
-		iic_release_bus(ia->ia_tag, I2C_F_POLL);
-
-		if (error == 0 && id1 == 0x0c)
-			return 1;
-
+	if (iic_use_direct_match(ia, match, as3722_compat_data, &match_result))
+		return match_result;
+	
+	if (ia->ia_addr != AS3722_I2C_ADDR)
 		return 0;
-	} else {
-		return iic_compat_match(ia, as3722_compats);
-	}
+	
+	iic_acquire_bus(ia->ia_tag, I2C_F_POLL);
+	reg = AS3722_ASIC_ID1_REG;
+	error = iic_exec(ia->ia_tag, I2C_OP_READ_WITH_STOP, ia->ia_addr,
+	    &reg, 1, &id1, 1, I2C_F_POLL);
+	iic_release_bus(ia->ia_tag, I2C_F_POLL);
+
+	if (error == 0 && id1 == 0x0c)
+		return I2C_MATCH_ADDRESS_AND_PROBE;
+
+	return 0;
 }
 
 static void

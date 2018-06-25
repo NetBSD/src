@@ -20,8 +20,7 @@
  */
 
 /*
- * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
- * Use is subject to license terms.
+ * Copyright (c) 2000, 2010, Oracle and/or its affiliates. All rights reserved.
  */
 
 #ifndef	_SYS_SYSEVENT_H
@@ -77,8 +76,8 @@ extern "C" {
 #define	SUNW_VENDOR	"SUNW"
 #define	SE_USR_PUB	"usr:"
 #define	SE_KERN_PUB	"kern:"
-#define	SUNW_KERN_PUB	SUNW_VENDOR":"SE_KERN_PUB
-#define	SUNW_USR_PUB	SUNW_VENDOR":"SE_USR_PUB
+#define	SUNW_KERN_PUB	SUNW_VENDOR ":" SE_KERN_PUB
+#define	SUNW_USR_PUB	SUNW_VENDOR ":" SE_USR_PUB
 
 /*
  * Event header and attribute value limits
@@ -215,20 +214,25 @@ typedef struct sysevent_value {
 #define	EVCH_SET_CHAN_LEN	 3	/* Set event queue length */
 #define	EVCH_CMD_LAST		 EVCH_SET_CHAN_LEN	/* Last command */
 
+#ifdef illumos
 /*
  * Shared user/kernel event channel interface definitions
  */
-/*int sysevent_evc_bind(const char *, evchan_t **, uint32_t);*/
-/*void sysevent_evc_unbind(evchan_t *);*/
-int sysevent_evc_subscribe(evchan_t *, const char *, const char *,
+extern int sysevent_evc_bind(const char *, evchan_t **, uint32_t);
+extern int sysevent_evc_unbind(evchan_t *);
+extern int sysevent_evc_subscribe(evchan_t *, const char *, const char *,
     int (*)(sysevent_t *, void *), void *, uint32_t);
 extern int sysevent_evc_unsubscribe(evchan_t *, const char *);
 extern int sysevent_evc_publish(evchan_t *, const char *, const char *,
     const char *, const char *, nvlist_t *, uint32_t);
-/*int sysevent_evc_control(evchan_t *, int, ...);*/
+extern int sysevent_evc_control(evchan_t *, int, ...);
+extern int sysevent_evc_setpropnvl(evchan_t *, nvlist_t *);
+extern int sysevent_evc_getpropnvl(evchan_t *, nvlist_t **);
+#endif	/* illumos */
 
 #ifndef	_KERNEL
 
+#ifdef illumos
 /*
  * Userland-only event channel interfaces
  */
@@ -250,6 +254,7 @@ extern void sysevent_subattr_thrsetup(sysevent_subattr_t *,
 
 extern int sysevent_evc_xsubscribe(evchan_t *, const char *, const char *,
     int (*)(sysevent_t *, void *), void *, uint32_t, sysevent_subattr_t *);
+#endif	/* illumos */
 
 #else
 
@@ -265,6 +270,7 @@ extern int sysevent_add_attr(sysevent_attr_list_t **, char *,
 extern void sysevent_free_attr(sysevent_attr_list_t *);
 extern int sysevent_attach_attributes(sysevent_t *, sysevent_attr_list_t *);
 extern void sysevent_detach_attributes(sysevent_t *);
+#ifdef illumos
 extern char *sysevent_get_class_name(sysevent_t *);
 extern char *sysevent_get_subclass_name(sysevent_t *);
 extern uint64_t sysevent_get_seq(sysevent_t *);
@@ -272,6 +278,7 @@ extern void sysevent_get_time(sysevent_t *, hrtime_t *);
 extern size_t sysevent_get_size(sysevent_t *);
 extern char *sysevent_get_pub(sysevent_t *);
 extern int sysevent_get_attr_list(sysevent_t *, nvlist_t **);
+#endif	/* illumos */
 
 #endif	/* _KERNEL */
 

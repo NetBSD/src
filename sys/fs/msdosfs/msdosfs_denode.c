@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.56 2017/05/26 14:34:19 riastradh Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.56.8.1 2018/06/25 07:26:03 pgoyette Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.56 2017/05/26 14:34:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.56.8.1 2018/06/25 07:26:03 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,6 +125,7 @@ static const struct genfs_ops msdosfs_genfsops = {
 	.gop_alloc = msdosfs_gop_alloc,
 	.gop_write = genfs_gop_write,
 	.gop_markupdate = msdosfs_gop_markupdate,
+	.gop_putrange = genfs_gop_putrange,
 };
 
 MALLOC_DECLARE(M_MSDOSFSFAT);

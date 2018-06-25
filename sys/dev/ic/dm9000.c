@@ -1,4 +1,4 @@
-/*	$NetBSD: dm9000.c,v 1.12 2017/07/29 01:31:20 riastradh Exp $	*/
+/*	$NetBSD: dm9000.c,v 1.12.2.1 2018/06/25 07:25:50 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2009 Paul Fleischer
@@ -102,13 +102,12 @@
 #include <net/if.h>
 #include <net/if_ether.h>
 #include <net/if_media.h>
+#include <net/bpf.h>
+
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_inarp.h>
 #endif
-
-#include <net/bpf.h>
-#include <net/bpfdesc.h>
 
 #include <sys/bus.h>
 #include <sys/intr.h>
@@ -651,8 +650,7 @@ dme_prepare(struct dme_softc *sc, struct ifnet *ifp)
 
 	/* Element has now been removed from the queue, so we better send it */
 
-	if (ifp->if_bpf)
-		bpf_mtap(ifp, bufChain);
+	bpf_mtap(ifp, bufChain);
 
 	/* Setup the DM9000 to accept the writes, and then write each buf in
 	   the chain. */

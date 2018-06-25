@@ -1,5 +1,6 @@
-# $NetBSD: Makefile,v 1.1 2013/11/22 16:00:45 christos Exp $
+# $NetBSD: Makefile,v 1.1.28.1 2018/06/25 07:25:13 pgoyette Exp $
 
-SUBDIR= USD.doc info
+SUBDIR= info
+SUBDIR.roff= USD.doc
 
 .include <bsd.subdir.mk>

@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100_subr.c,v 1.21 2017/05/19 19:22:33 macallan Exp $ */
+/* $NetBSD: wsemul_vt100_subr.c,v 1.21.8.1 2018/06/25 07:26:03 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100_subr.c,v 1.21 2017/05/19 19:22:33 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100_subr.c,v 1.21.8.1 2018/06/25 07:26:03 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -516,11 +516,17 @@ wsemul_vt100_handle_csi(struct vt100base_data *edp, u_char c)
 				flags |= WSATTR_WSCOLORS;
 				fgcol = ARG(edp, n) - 30;
 				break;
+			    case 39:
+				fgcol = edp->msgattrs.default_fg;
+				break;
 			    case 40: case 41: case 42: case 43:
 			    case 44: case 45: case 46: case 47:
 				/* bg color */
 				flags |= WSATTR_WSCOLORS;
 				bgcol = ARG(edp, n) - 40;
+				break;
+			    case 49:
+				bgcol = edp->msgattrs.default_bg;
 				break;
 			    default:
 #ifdef VT100_PRINTUNKNOWN

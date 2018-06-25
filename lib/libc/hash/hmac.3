@@ -1,4 +1,4 @@
-.\" $NetBSD: hmac.3,v 1.5 2016/07/02 16:04:47 wiz Exp $
+.\" $NetBSD: hmac.3,v 1.5.14.1 2018/06/25 07:25:34 pgoyette Exp $
 .\"
 .\" Copyright (c) 2016 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 1, 2016
+.Dd May 22, 2018
 .Dt HMAC 3
 .Os
 .Sh NAME
@@ -69,6 +69,10 @@ This length depends on the hashing function selected.
 .Xr md2 3 ,
 .Xr md4 3 ,
 .Xr md5 3 ,
+.Xr openssl_HMAC 3 ,
+.Xr openssl_MD2 3 ,
+.Xr openssl_MD4 3 ,
+.Xr openssl_MD5 3 ,
 .Xr rmd160 3 ,
 .Xr sha1 3 ,
 .Xr sha2 3

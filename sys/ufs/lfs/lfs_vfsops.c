@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.361 2017/10/28 00:37:13 pgoyette Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.361.2.1 2018/06/25 07:26:08 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.361 2017/10/28 00:37:13 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.361.2.1 2018/06/25 07:26:08 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -176,6 +176,7 @@ const struct genfs_ops lfs_genfsops = {
 	.gop_alloc = ulfs_gop_alloc,
 	.gop_write = lfs_gop_write,
 	.gop_markupdate = ulfs_gop_markupdate,
+	.gop_putrange = genfs_gop_putrange,
 };
 
 struct shortlong {

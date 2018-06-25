@@ -1,4 +1,4 @@
-/* $NetBSD: table.h,v 1.3 1999/10/20 15:10:00 hubertf Exp $ */
+/* $NetBSD: table.h,v 1.3.104.1 2018/06/25 07:25:04 pgoyette Exp $ */
 
 /*
  * generic hashed associative table for commands and variables.
@@ -127,7 +127,7 @@ struct block {
 #define BF_DOGETOPTS	BIT(0)	/* save/restore getopts state */
 
 /*
- * Used by twalk() and tnext() routines.
+ * Used by ksh_twalk() and tnext() routines.
  */
 struct tstate {
 	int left;

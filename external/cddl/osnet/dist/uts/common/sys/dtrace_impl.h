@@ -18,17 +18,17 @@
  *
  * CDDL HEADER END
  *
- * $FreeBSD: head/sys/cddl/contrib/opensolaris/uts/common/sys/dtrace_impl.h 277300 2015-01-17 14:44:59Z smh $
+ * $FreeBSD: head/sys/cddl/contrib/opensolaris/uts/common/sys/dtrace_impl.h 313176 2017-02-03 22:26:19Z gnn $
  */
 
 /*
  * Copyright 2007 Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2012 by Delphix. All rights reserved.
  * Use is subject to license terms.
  */
 
 /*
- * Copyright (c) 2011, Joyent, Inc. All rights reserved.
+ * Copyright 2016 Joyent, Inc.
+ * Copyright (c) 2012 by Delphix. All rights reserved.
  */
 
 #ifndef _SYS_DTRACE_IMPL_H
@@ -50,6 +50,7 @@ extern "C" {
  */
 
 #include <sys/dtrace.h>
+
 #ifndef illumos
 #ifdef __sparcv9
 typedef uint32_t		pc_t;
@@ -64,6 +65,13 @@ typedef	u_long			greg_t;
  */
 #define	DTRACE_MAXPROPLEN		128
 #define	DTRACE_DYNVAR_CHUNKSIZE		256
+
+#ifdef __FreeBSD__
+#define	NCPU		MAXCPU
+#endif /* __FreeBSD__ */
+#ifdef __NetBSD__
+#define	NCPU		MAXCPUS
+#endif /* __NetBSD__ */
 
 struct dtrace_probe;
 struct dtrace_ecb;
@@ -932,6 +940,7 @@ typedef struct dtrace_mstate {
 	int dtms_ipl;				/* cached interrupt pri lev */
 	int dtms_fltoffs;			/* faulting DIFO offset */
 	uintptr_t dtms_strtok;			/* saved strtok() pointer */
+	uintptr_t dtms_strtok_limit;		/* upper bound of strtok ptr */
 	uint32_t dtms_access;			/* memory access rights */
 	dtrace_difo_t *dtms_difo;		/* current dif object */
 	file_t *dtms_getf;			/* cached rval of getf() */
@@ -1122,10 +1131,10 @@ typedef struct dtrace_cred {
  * dtrace_state structure.
  */
 struct dtrace_state {
-#if defined(illumos) || defined(__NetBSD__)
-	dev_t dts_dev;				/* device */
-#else
+#ifdef __FreeBSD__
 	struct cdev *dts_dev;			/* device */
+#else
+	dev_t dts_dev;				/* device */
 #endif
 	int dts_necbs;				/* total number of ECBs */
 	dtrace_ecb_t **dts_ecbs;		/* array of ECBs */
@@ -1140,10 +1149,10 @@ struct dtrace_state {
 	int dts_nspeculations;			/* number of speculations */
 	int dts_naggregations;			/* number of aggregations */
 	dtrace_aggregation_t **dts_aggregations; /* aggregation array */
-#if defined(illumos) || defined(__NetBSD__)
-	vmem_t *dts_aggid_arena;		/* arena for aggregation IDs */
-#else
+#ifdef __FreeBSD__
 	struct unrhdr *dts_aggid_arena;		/* arena for aggregation IDs */
+#else
+	vmem_t *dts_aggid_arena;		/* arena for aggregation IDs */
 #endif
 	uint64_t dts_errors;			/* total number of errors */
 	uint32_t dts_speculations_busy;		/* number of spec. busy */
@@ -1152,15 +1161,17 @@ struct dtrace_state {
 	uint32_t dts_dblerrors;			/* errors in ERROR probes */
 	uint32_t dts_reserve;			/* space reserved for END */
 	hrtime_t dts_laststatus;		/* time of last status */
-#if defined(illumos)
+#ifdef illumos
 	cyclic_id_t dts_cleaner;		/* cleaning cyclic */
 	cyclic_id_t dts_deadman;		/* deadman cyclic */
-#elif defined(__NetBSD__)
-	struct dtrace_state_worker *dts_cleaner;/* cleaning cyclic */
-	struct dtrace_state_worker *dts_deadman;/* deadman cyclic */
-#else
+#endif
+#ifdef __FreeBSD__
 	struct callout dts_cleaner;		/* Cleaning callout. */
 	struct callout dts_deadman;		/* Deadman callout. */
+#endif
+#ifdef __NetBSD__
+	struct dtrace_state_worker *dts_cleaner;/* cleaning cyclic */
+	struct dtrace_state_worker *dts_deadman;/* deadman cyclic */
 #endif
 	hrtime_t dts_alive;			/* time last alive */
 	char dts_speculates;			/* boolean: has speculations */
@@ -1171,6 +1182,7 @@ struct dtrace_state {
 	dtrace_cred_t dts_cred;			/* credentials */
 	size_t dts_nretained;			/* number of retained enabs */
 	int dts_getf;				/* number of getf() calls */
+	uint64_t dts_rstate[NCPU][2];		/* per-CPU random state */
 };
 
 struct dtrace_provider {
@@ -1320,16 +1332,19 @@ extern void dtrace_copystr(uintptr_t, uintptr_t, size_t, volatile uint16_t *);
 /*
  * DTrace Assertions
  *
- * DTrace calls ASSERT from probe context.  To assure that a failed ASSERT
- * does not induce a markedly more catastrophic failure (e.g., one from which
- * a dump cannot be gleaned), DTrace must define its own ASSERT to be one that
- * may safely be called from probe context.  This header file must thus be
- * included by any DTrace component that calls ASSERT from probe context, and
- * _only_ by those components.  (The only exception to this is kernel
- * debugging infrastructure at user-level that doesn't depend on calling
- * ASSERT.)
+ * DTrace calls ASSERT and VERIFY from probe context.  To assure that a failed
+ * ASSERT or VERIFY does not induce a markedly more catastrophic failure (e.g.,
+ * one from which a dump cannot be gleaned), DTrace must define its own ASSERT
+ * and VERIFY macros to be ones that may safely be called from probe context.
+ * This header file must thus be included by any DTrace component that calls
+ * ASSERT and/or VERIFY from probe context, and _only_ by those components.
+ * (The only exception to this is kernel debugging infrastructure at user-level
+ * that doesn't depend on calling ASSERT.)
  */
 #undef ASSERT
+#undef VERIFY
+#define	VERIFY(EX)	((void)((EX) || \
+			dtrace_assfail(#EX, __FILE__, __LINE__)))
 #ifdef DEBUG
 #define	ASSERT(EX)	((void)((EX) || \
 			dtrace_assfail(#EX, __FILE__, __LINE__)))

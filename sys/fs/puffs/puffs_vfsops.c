@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.120 2017/04/01 19:35:56 riastradh Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.120.12.1 2018/06/25 07:26:03 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.120 2017/04/01 19:35:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.120.12.1 2018/06/25 07:26:03 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -76,6 +76,7 @@ static const struct genfs_ops puffs_genfsops = {
 #if 0
 	.gop_alloc, should ask userspace
 #endif
+	.gop_putrange = genfs_gop_putrange,
 };
 
 /*

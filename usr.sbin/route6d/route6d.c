@@ -1,4 +1,4 @@
-/*	$NetBSD: route6d.c,v 1.68.14.1 2018/05/21 04:36:19 pgoyette Exp $	*/
+/*	$NetBSD: route6d.c,v 1.68.14.2 2018/06/25 07:26:12 pgoyette Exp $	*/
 /*	$KAME: route6d.c,v 1.94 2002/10/26 20:08:55 itojun Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef	lint
-__RCSID("$NetBSD: route6d.c,v 1.68.14.1 2018/05/21 04:36:19 pgoyette Exp $");
+__RCSID("$NetBSD: route6d.c,v 1.68.14.2 2018/06/25 07:26:12 pgoyette Exp $");
 #endif
 
 #include <stdbool.h>
@@ -594,6 +594,7 @@ init(void)
 		fatal("rip IPV6_RECVPKTINFO");
 	}
 
+	freeaddrinfo(res);
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = PF_INET6;
 	hints.ai_socktype = SOCK_DGRAM;
@@ -605,6 +606,7 @@ init(void)
 		fatal("%s resolved to multiple address", RIP6_DEST);
 	}
 	memcpy(&ripsin, res->ai_addr, res->ai_addrlen);
+	freeaddrinfo(res);
 
 	set[0].fd = ripsock;
 	set[0].events = POLLIN;

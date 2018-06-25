@@ -1,4 +1,4 @@
-/*	$NetBSD: mntent.h,v 1.2 2010/02/21 01:46:36 darran Exp $	*/
+/*	$NetBSD: mntent.h,v 1.2.44.1 2018/06/25 07:25:26 pgoyette Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -21,7 +21,7 @@
  *
  * CDDL HEADER END
  *
- * $FreeBSD: src/sys/cddl/compat/opensolaris/sys/mntent.h,v 1.4.2.1 2009/08/03 08:13:06 kensmith Exp $
+ * $FreeBSD: head/sys/cddl/compat/opensolaris/sys/mntent.h 185029 2008-11-17 20:49:29Z pjd $
  */
 /*
  * Copyright 2005 Sun Microsystems, Inc.  All rights reserved.

@@ -1,4 +1,4 @@
-/*	$NetBSD: servconf.c,v 1.25.2.2 2018/04/16 01:57:31 pgoyette Exp $	*/
+/*	$NetBSD: servconf.c,v 1.25.2.3 2018/06/25 07:25:05 pgoyette Exp $	*/
 
 /* $OpenBSD: servconf.c,v 1.326 2018/03/01 20:32:16 markus Exp $ */
 /*
@@ -13,7 +13,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: servconf.c,v 1.25.2.2 2018/04/16 01:57:31 pgoyette Exp $");
+__RCSID("$NetBSD: servconf.c,v 1.25.2.3 2018/06/25 07:25:05 pgoyette Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/queue.h>
@@ -294,10 +294,6 @@ fill_default_server_options(ServerOptions *options)
 		    _PATH_HOST_ECDSA_KEY_FILE);
 		servconf_add_hostkey("[default]", 0, options,
 		    _PATH_HOST_ED25519_KEY_FILE);
-#ifdef WITH_XMSS
-		servconf_add_hostkey("[default]", 0, options,
-		    _PATH_HOST_XMSS_KEY_FILE);
-#endif /* WITH_XMSS */
 	}
 	/* No certificates by default */
 	if (options->num_ports == 0)

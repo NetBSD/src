@@ -1,4 +1,4 @@
-/*	$NetBSD: headers.c,v 1.62 2017/06/23 15:29:21 joerg Exp $	 */
+/*	$NetBSD: headers.c,v 1.62.4.1 2018/06/25 07:25:35 pgoyette Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: headers.c,v 1.62 2017/06/23 15:29:21 joerg Exp $");
+__RCSID("$NetBSD: headers.c,v 1.62.4.1 2018/06/25 07:25:35 pgoyette Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -316,7 +316,7 @@ _rtld_digest_dynamic(const char *execname, Obj_Entry *obj)
 #endif
 		case DT_FLAGS_1:
 			obj->z_now =
-			    ((dynp->d_un.d_val & DF_1_BIND_NOW) != 0);
+			    ((dynp->d_un.d_val & DF_1_NOW) != 0);
 			obj->z_nodelete =
 			    ((dynp->d_un.d_val & DF_1_NODELETE) != 0);
 			obj->z_initfirst =

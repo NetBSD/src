@@ -1,4 +1,4 @@
-/*	$NetBSD: modctl.h,v 1.5 2010/03/01 11:19:40 darran Exp $	*/
+/*	$NetBSD: modctl.h,v 1.5.44.1 2018/06/25 07:25:26 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 2007 John Birrell <jb@freebsd.org>
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/compat/opensolaris/sys/modctl.h,v 1.1 2007/11/28 21:50:40 jb Exp $
+ * $FreeBSD: head/sys/cddl/compat/opensolaris/sys/modctl.h 177698 2008-03-28 22:16:18Z jb $
  *
  */
 
@@ -35,6 +35,6 @@
 #include <sys/param.h>
 #include <sys/linker.h>
 
-typedef struct module dtrace_modctl_t;
+typedef struct module modctl_t;
 
 #endif /* _COMPAT_OPENSOLARIS_SYS_MODCTL_H */

@@ -1,4 +1,4 @@
-/* $NetBSD: axp809.c,v 1.1 2014/12/07 00:33:26 jmcneill Exp $ */
+/* $NetBSD: axp809.c,v 1.1.20.1 2018/06/25 07:25:50 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #define AXP_DEBUG
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: axp809.c,v 1.1 2014/12/07 00:33:26 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: axp809.c,v 1.1.20.1 2018/06/25 07:25:50 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,7 +105,15 @@ CFATTACH_DECL_NEW(axp809pm, sizeof(struct axp809_softc),
 static int
 axp809_match(device_t parent, cfdata_t match, void *aux)
 {
-	return 1;
+	struct i2c_attach_args *ia = aux;
+	int match_result;
+
+	if (iic_use_direct_match(ia, match, NULL, &match_result))
+		return match_result;
+	
+	/* This device is direct-config only. */
+
+	return 0;
 }
 
 static void

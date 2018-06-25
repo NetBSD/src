@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_dai.c,v 1.1.2.2 2018/05/21 04:36:05 pgoyette Exp $ */
+/* $NetBSD: fdt_dai.c,v 1.1.2.3 2018/06/25 07:25:49 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_dai.c,v 1.1.2.2 2018/05/21 04:36:05 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_dai.c,v 1.1.2.3 2018/06/25 07:25:49 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -35,8 +35,6 @@ __KERNEL_RCSID(0, "$NetBSD: fdt_dai.c,v 1.1.2.2 2018/05/21 04:36:05 pgoyette Exp
 
 #include <libfdt.h>
 #include <dev/fdt/fdtvar.h>
-
-#include <dev/audio_dai.h>
 
 struct fdtbus_dai_controller {
 	device_t dc_dev;

@@ -1,4 +1,4 @@
-/*	$NetBSD: uio.h,v 1.10 2018/01/07 20:02:52 christos Exp $	*/
+/*	$NetBSD: uio.h,v 1.10.2.1 2018/06/25 07:25:26 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -54,15 +54,14 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/compat/opensolaris/sys/uio.h,v 1.1 2007/04/06 01:09:06 pjd Exp $
+ * $FreeBSD: head/sys/cddl/compat/opensolaris/sys/uio.h 219089 2011-02-27 19:41:40Z pjd $
  */
 
 #ifndef _OPENSOLARIS_SYS_UIO_H_
 #define	_OPENSOLARIS_SYS_UIO_H_
 
 #include_next <sys/uio.h>
-#include <sys/sysmacros.h>
-
+#include <sys/debug.h>
 
 #ifndef _KERNEL
 #include <assert.h>
@@ -124,6 +123,8 @@ zfs_uiocopy(void *cp, size_t n, enum uio_rw dir, uio_t *uio, size_t *cbytes)
 	return (0);
 }
 
+#define	ZFS_MIN(a,b)	((/*CONSTCOND*/(a)<(b))?(a):(b))
+
 static __inline void
 zfs_uioskip(uio_t *uiop, size_t n)
 {
@@ -131,7 +132,7 @@ zfs_uioskip(uio_t *uiop, size_t n)
 		return;
 	while (n != 0) {
 		iovec_t        *iovp = uiop->uio_iov;
-		size_t         niovb = MIN(iovp->iov_len, n);
+		size_t         niovb = ZFS_MIN(iovp->iov_len, n);
 
 		if (niovb == 0) {
 			uiop->uio_iov++;

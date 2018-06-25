@@ -19,9 +19,12 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2010 Sun Microsystems, Inc.  All rights reserved.
- * Use is subject to license terms.
+ * Copyright (c) 2005, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012 by Delphix. All rights reserved.
+ * Copyright (c) 2014 Integros [integros.com]
  */
+
+/* Portions Copyright 2010 Robert Milkowski */
 
 #ifndef	_SYS_ZIL_H
 #define	_SYS_ZIL_H
@@ -34,6 +37,9 @@
 #ifdef	__cplusplus
 extern "C" {
 #endif
+
+struct dsl_pool;
+struct dsl_dataset;
 
 /*
  * Intent log format:
@@ -88,7 +94,6 @@ typedef struct zil_chain {
 } zil_chain_t;
 
 #define	ZIL_MIN_BLKSZ	4096ULL
-#define	ZIL_MAX_BLKSZ	SPA_MAXBLOCKSIZE
 
 /*
  * The words of a log block checksum.
@@ -168,18 +173,14 @@ typedef enum zil_create {
 	(txtype) == TX_ACL ||		\
 	(txtype) == TX_WRITE2)
 
-
 /*
  * Format of log records.
  * The fields are carefully defined to allow them to be aligned
  * and sized the same on sparc & intel architectures.
  * Each log record has a common structure at the beginning.
  *
- * Note, lrc_seq holds two different sequence numbers. Whilst in memory
- * it contains the transaction sequence number.  The log record on
- * disk holds the sequence number of all log records which is used to
- * ensure we don't replay the same record.  The two sequence numbers are
- * different because the transactions can now be pushed out of order.
+ * The log record on disk (lrc_seq) holds the sequence number of all log
+ * records which is used to ensure we don't replay the same record.
  */
 typedef struct {			/* common log record header */
 	uint64_t	lrc_txtype;	/* intent log transaction type */
@@ -244,6 +245,12 @@ typedef struct {
  * information needed for replaying the create.  If the
  * file doesn't have any actual ACEs then the lr_aclcnt
  * would be zero.
+ *
+ * After lr_acl_flags, there are a lr_acl_bytes number of variable sized ace's.
+ * If create is also setting xvattr's, then acl data follows xvattr.
+ * If ACE FUIDs are needed then they will follow the xvattr_t.  Following
+ * the FUIDs will be the domain table information.  The FUIDs for the owner
+ * and group will be in lr_create.  Name follows ACL data.
  */
 typedef struct {
 	lr_create_t	lr_create;	/* common create portion */
@@ -252,13 +259,6 @@ typedef struct {
 	uint64_t	lr_fuidcnt;	/* number of real fuids */
 	uint64_t	lr_acl_bytes;	/* number of bytes in ACL */
 	uint64_t	lr_acl_flags;	/* ACL flags */
-	/* lr_acl_bytes number of variable sized ace's follows */
-	/* if create is also setting xvattr's, then acl data follows xvattr */
-	/* if ACE FUIDs are needed then they will follow the xvattr_t */
-	/* Following the FUIDs will be the domain table information. */
-	/* The FUIDs for the owner and group will be in the lr_create */
-	/* portion of the record. */
-	/* name follows ACL data */
 } lr_acl_create_t;
 
 typedef struct {
@@ -369,7 +369,7 @@ typedef struct itx {
 	void		*itx_private;	/* type-specific opaque data */
 	itx_wr_state_t	itx_wr_state;	/* write state */
 	uint8_t		itx_sync;	/* synchronous transaction */
-	uint64_t	itx_sod;	/* record size on disk */
+	uint64_t	itx_oid;	/* object id */
 	lr_t		itx_lr;		/* common part of log record */
 	/* followed by type-specific part of lr_xx_t and its immediate data */
 } itx_t;
@@ -397,29 +397,35 @@ extern void	zil_replay(objset_t *os, void *arg,
     zil_replay_func_t *replay_func[TX_MAX_TYPE]);
 extern boolean_t zil_replaying(zilog_t *zilog, dmu_tx_t *tx);
 extern void	zil_destroy(zilog_t *zilog, boolean_t keep_first);
+extern void	zil_destroy_sync(zilog_t *zilog, dmu_tx_t *tx);
 extern void	zil_rollback_destroy(zilog_t *zilog, dmu_tx_t *tx);
 
 extern itx_t	*zil_itx_create(uint64_t txtype, size_t lrsize);
 extern void	zil_itx_destroy(itx_t *itx);
-extern uint64_t zil_itx_assign(zilog_t *zilog, itx_t *itx, dmu_tx_t *tx);
+extern void	zil_itx_assign(zilog_t *zilog, itx_t *itx, dmu_tx_t *tx);
 
-extern void	zil_commit(zilog_t *zilog, uint64_t seq, uint64_t oid);
+extern void	zil_async_to_sync(zilog_t *zilog, uint64_t oid);
+extern void	zil_commit(zilog_t *zilog, uint64_t oid);
 
 extern int	zil_vdev_offline(const char *osname, void *txarg);
-extern int	zil_claim(const char *osname, void *txarg);
-extern int	zil_check_log_chain(const char *osname, void *txarg);
+extern int	zil_claim(struct dsl_pool *dp,
+    struct dsl_dataset *ds, void *txarg);
+extern int 	zil_check_log_chain(struct dsl_pool *dp,
+    struct dsl_dataset *ds, void *tx);
 extern void	zil_sync(zilog_t *zilog, dmu_tx_t *tx);
-extern void	zil_clean(zilog_t *zilog);
+extern void	zil_clean(zilog_t *zilog, uint64_t synced_txg);
 
-extern int	zil_suspend(zilog_t *zilog);
-extern void	zil_resume(zilog_t *zilog);
+extern int	zil_suspend(const char *osname, void **cookiep);
+extern void	zil_resume(void *cookie);
 
 extern void	zil_add_block(zilog_t *zilog, const blkptr_t *bp);
 extern int	zil_bp_tree_add(zilog_t *zilog, const blkptr_t *bp);
 
+extern void	zil_set_sync(zilog_t *zilog, uint64_t syncval);
+
 extern void	zil_set_logbias(zilog_t *zilog, uint64_t slogval);
 
-extern int zil_disable;
+extern int zil_replay_disable;
 
 #ifdef	__cplusplus
 }

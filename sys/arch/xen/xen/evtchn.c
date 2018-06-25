@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.79 2017/12/13 16:30:18 bouyer Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.79.2.1 2018/06/25 07:25:48 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.79 2017/12/13 16:30:18 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.79.2.1 2018/06/25 07:25:48 pgoyette Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -69,6 +69,7 @@ __KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.79 2017/12/13 16:30:18 bouyer Exp $");
 #include <sys/kmem.h>
 #include <sys/reboot.h>
 #include <sys/mutex.h>
+#include <sys/interrupt.h>
 
 #include <uvm/uvm.h>
 
@@ -733,7 +734,7 @@ unbind_pirq_from_evtch(int pirq)
 
 struct pintrhand *
 pirq_establish(int pirq, int evtch, int (*func)(void *), void *arg, int level,
-    const char *evname)
+    const char *intrname, const char *xname)
 {
 	struct pintrhand *ih;
 	physdev_op_t physdev_op;
@@ -752,7 +753,8 @@ pirq_establish(int pirq, int evtch, int (*func)(void *), void *arg, int level,
 	ih->func = func;
 	ih->arg = arg;
 
-	if (event_set_handler(evtch, pirq_interrupt, ih, level, evname) != 0) {
+	if (event_set_handler(evtch, pirq_interrupt, ih, level, intrname,
+	    xname) != 0) {
 		kmem_free(ih, sizeof(struct pintrhand));
 		return NULL;
 	}
@@ -788,7 +790,6 @@ pirq_interrupt(void *arg)
 {
 	struct pintrhand *ih = arg;
 	int ret;
-
 
 	ret = ih->func(ih->arg);
 #ifdef IRQ_DEBUG
@@ -832,7 +833,7 @@ intr_calculatemasks(struct evtsource *evts, int evtch, struct cpu_info *ci)
 
 int
 event_set_handler(int evtch, int (*func)(void *), void *arg, int level,
-    const char *evname)
+    const char *intrname, const char *xname)
 {
 	struct cpu_info *ci = curcpu(); /* XXX: pass in ci ? */
 	struct evtsource *evts;
@@ -849,6 +850,7 @@ event_set_handler(int evtch, int (*func)(void *), void *arg, int level,
 	KASSERTMSG(evtch >= 0, "negative evtch: %d", evtch);
 	KASSERTMSG(evtch < NR_EVENT_CHANNELS,
 	    "evtch number %d > NR_EVENT_CHANNELS", evtch);
+	KASSERT(intrname != NULL && xname != NULL);
 
 #if 0
 	printf("event_set_handler evtch %d handler %p level %d\n", evtch,
@@ -894,14 +896,10 @@ event_set_handler(int evtch, int (*func)(void *), void *arg, int level,
 		evts->ev_cpu = ci;
 		mutex_init(&evtlock[evtch], MUTEX_DEFAULT, IPL_HIGH);
 		evtsource[evtch] = evts;
-		if (evname)
-			strncpy(evts->ev_evname, evname,
-			    sizeof(evts->ev_evname));
-		else
-			snprintf(evts->ev_evname, sizeof(evts->ev_evname),
-			    "evt%d", evtch);
+		strlcpy(evts->ev_intrname, intrname, sizeof(evts->ev_intrname));
+
 		evcnt_attach_dynamic(&evts->ev_evcnt, EVCNT_TYPE_INTR, NULL,
-		    device_xname(ci->ci_dev), evts->ev_evname);
+		    device_xname(ci->ci_dev), evts->ev_intrname);
 	} else {
 		evts = evtsource[evtch];
 		/* sort by IPL order, higher first */
@@ -920,6 +918,12 @@ event_set_handler(int evtch, int (*func)(void *), void *arg, int level,
 		}
 		mutex_spin_exit(&evtlock[evtch]);
 	}
+
+
+	// append device name
+	if (evts->ev_xname[0] != '\0')
+		strlcat(evts->ev_xname, ", ", sizeof(evts->ev_xname));
+	strlcat(evts->ev_xname, xname, sizeof(evts->ev_xname));
 
 	intr_calculatemasks(evts, evtch, ci);
 	splx(s);
@@ -1058,4 +1062,132 @@ xen_debug_handler(void *arg)
 		printf(" %lx", (u_long)evtchn_pending[i]);
 	printf("\n");
 	return 0;
+}
+
+static struct evtsource *
+event_get_handler(const char *intrid)
+{
+	for (int i = 0; i < NR_EVENT_CHANNELS; i++) {
+		if (evtsource[i] == NULL || i == debug_port)
+			continue;
+
+		struct evtsource *evp = evtsource[i];
+
+		if (strcmp(evp->ev_intrname, intrid) == 0)
+			return evp;
+	}
+
+	return NULL;
+}
+
+/*
+ * MI interface for subr_interrupt.c
+ */
+uint64_t
+interrupt_get_count(const char *intrid, u_int cpu_idx)
+{
+	int count = 0;
+	struct evtsource *evp;
+
+	mutex_spin_enter(&evtchn_lock);
+
+	evp = event_get_handler(intrid);
+	if (evp != NULL && cpu_idx == cpu_index(evp->ev_cpu))
+		count = evp->ev_evcnt.ev_count;
+
+	mutex_spin_exit(&evtchn_lock);
+
+	return count;
+}
+
+/*
+ * MI interface for subr_interrupt.c
+ */
+void
+interrupt_get_assigned(const char *intrid, kcpuset_t *cpuset)
+{
+	struct evtsource *evp;
+
+	kcpuset_zero(cpuset);
+
+	mutex_spin_enter(&evtchn_lock);
+
+	evp = event_get_handler(intrid);
+	if (evp != NULL)
+		kcpuset_set(cpuset, cpu_index(evp->ev_cpu));
+
+	mutex_spin_exit(&evtchn_lock);
+}
+
+/*
+ * MI interface for subr_interrupt.c
+ */
+void
+interrupt_get_devname(const char *intrid, char *buf, size_t len)
+{
+	struct evtsource *evp;
+
+	mutex_spin_enter(&evtchn_lock);
+
+	evp = event_get_handler(intrid);
+	strlcpy(buf, evp ? evp->ev_xname : "unknown", len);
+
+	mutex_spin_exit(&evtchn_lock);
+}
+
+/*
+ * MI interface for subr_interrupt.
+ */
+struct intrids_handler *
+interrupt_construct_intrids(const kcpuset_t *cpuset)
+{
+	struct intrids_handler *ii_handler;
+	intrid_t *ids;
+	int i, count, off;
+	struct evtsource *evp;
+
+	if (kcpuset_iszero(cpuset))
+		return 0;
+
+	/*
+	 * Count the number of interrupts which affinity to any cpu of "cpuset".
+	 */
+	count = 0;
+	for (i = 0; i < NR_EVENT_CHANNELS; i++) {
+		evp = evtsource[i];
+
+		if (evp == NULL || i == debug_port)
+			continue;
+
+		if (!kcpuset_isset(cpuset, cpu_index(evp->ev_cpu)))
+			continue;
+
+		count++;
+	}
+
+	ii_handler = kmem_zalloc(sizeof(int) + sizeof(intrid_t) * count,
+	    KM_SLEEP);
+	if (ii_handler == NULL)
+		return NULL;
+	ii_handler->iih_nids = count;
+	if (count == 0)
+		return ii_handler;
+
+	ids = ii_handler->iih_intrids;
+	mutex_spin_enter(&evtchn_lock);
+	for (i = 0, off = 0; i < NR_EVENT_CHANNELS && off < count; i++) {
+		evp = evtsource[i];
+
+		if (evp == NULL || i == debug_port)
+			continue;
+
+		if (!kcpuset_isset(cpuset, cpu_index(evp->ev_cpu)))
+			continue;
+
+		snprintf(ids[off], sizeof(intrid_t), "%s", evp->ev_intrname);
+		off++;
+	}
+	mutex_spin_exit(&evtchn_lock);
+
+	return ii_handler;
 }

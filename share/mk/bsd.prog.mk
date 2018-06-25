@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.311.2.1 2018/03/15 09:12:01 pgoyette Exp $
+#	$NetBSD: bsd.prog.mk,v 1.311.2.2 2018/06/25 07:25:37 pgoyette Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -6,6 +6,12 @@
 .include <bsd.init.mk>
 .include <bsd.shlib.mk>
 .include <bsd.gcc.mk>
+
+##### Sanitizer specific flags.
+
+CFLAGS+=	${SANITIZERFLAGS}
+CXXFLAGS+=	${SANITIZERFLAGS}
+LDFLAGS+=	${SANITIZERFLAGS}
 
 #
 # Definitions and targets shared among all programs built by a single
@@ -462,7 +468,10 @@ PAXCTL_FLAGS.${_P}?= ${PAXCTL_FLAGS}
 _DPADD.${_P}=		${DPADD}    ${DPADD.${_P}}
 _LDADD.${_P}=		${LDADD}    ${LDADD.${_P}}
 _LDFLAGS.${_P}=		${LDFLAGS}  ${LDFLAGS.${_P}}
+.if ${MKSANITIZER} != "yes"
+# Sanitizers don't support static build.
 _LDSTATIC.${_P}=	${LDSTATIC} ${LDSTATIC.${_P}}
+.endif
 
 ##### Build and install rules
 .if !empty(_APPEND_SRCS:M[Yy][Ee][Ss])

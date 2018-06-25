@@ -1,4 +1,4 @@
-/*	$NetBSD: cyclic.c,v 1.7 2017/02/01 21:59:09 chs Exp $	*/
+/*	$NetBSD: cyclic.c,v 1.7.10.1 2018/06/25 07:25:13 pgoyette Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -23,7 +23,7 @@
  *
  * Portions Copyright 2008 John Birrell <jb@freebsd.org>
  *
- * $FreeBSD$
+ * $FreeBSD: head/sys/cddl/dev/cyclic/cyclic.c 227293 2011-11-07 06:44:47Z ed $
  *
  * This is a simplified version of the cyclic timer subsystem from
  * OpenSolaris. In the FreeBSD version, we don't use interrupt levels.
@@ -352,7 +352,6 @@
 #define mtx_unlock_spin(x) mutex_spin_exit(x)
 #define mtx_destroy(x) mutex_destroy(x)
 
-#define ASSERT(x) KASSERT(x)
 #define SYSINIT(a1, a2, a3, a4, a5)
 #define SYSUNINIT(a1, a2, a3, a4, a5)
 #define CPU_FOREACH(var) \

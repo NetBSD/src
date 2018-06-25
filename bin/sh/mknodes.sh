@@ -1,5 +1,5 @@
 #! /bin/sh
-#	$NetBSD: mknodes.sh,v 1.2 2008/04/29 06:53:00 martin Exp $
+#	$NetBSD: mknodes.sh,v 1.2.62.1 2018/06/25 07:25:04 pgoyette Exp $
 
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -111,8 +111,12 @@ echo "	union node *n;"
 echo "};"
 echo
 echo
-echo "union node *copyfunc(union node *);"
-echo "void freefunc(union node *);"
+echo 'struct funcdef;'
+echo 'struct funcdef *copyfunc(union node *);'
+echo 'union node *getfuncnode(struct funcdef *);'
+echo 'void reffunc(struct funcdef *);'
+echo 'void unreffunc(struct funcdef *);'
+echo 'void freefunc(struct funcdef *);'
 
 mv $objdir/nodes.h.tmp $objdir/nodes.h || exit 1
 
@@ -140,7 +144,7 @@ while IFS=; read -r line; do
 	'%CALCSIZE' )
 		echo "      if (n == NULL)"
 		echo "	    return;"
-		echo "      funcblocksize += nodesize[n->type];"
+		echo "      res->bsize += nodesize[n->type];"
 		echo "      switch (n->type) {"
 		IFS=' '
 		for struct in $struct_list; do
@@ -157,11 +161,11 @@ while IFS=; read -r line; do
 				IFS=' '
 				set -- $line
 				name=$1
-				cl=")"
+				cl=", res)"
 				case $2 in
 				nodeptr ) fn=calcsize;;
 				nodelist ) fn=sizenodelist;;
-				string ) fn="funcstringsize += strlen"
+				string ) fn="res->ssize += strlen"
 					cl=") + 1";;
 				* ) continue;;
 				esac
@@ -174,8 +178,8 @@ while IFS=; read -r line; do
 	'%COPY' )
 		echo "      if (n == NULL)"
 		echo "	    return NULL;"
-		echo "      new = funcblock;"
-		echo "      funcblock = (char *) funcblock + nodesize[n->type];"
+		echo "      new = st->block;"
+		echo "      st->block = (char *) st->block + nodesize[n->type];"
 		echo "      switch (n->type) {"
 		IFS=' '
 		for struct in $struct_list; do
@@ -200,7 +204,7 @@ while IFS=; read -r line; do
 				* ) continue;;
 				esac
 				f="$struct.$name"
-				echo "	    new->$f = ${fn}n->$f${fn:+)};"
+				echo "	    new->$f = ${fn}n->$f${fn:+, st)};"
 			done
 			echo "	    break;"
 		done

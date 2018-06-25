@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.192.10.2 2018/05/21 04:35:50 pgoyette Exp $
+#	 $NetBSD: mi,v 1.192.10.3 2018/06/25 07:25:10 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -726,7 +726,10 @@
 ./usr/X11R7/include/xcb/damage.h			-unknown-	xorg
 ./usr/X11R7/include/xcb/dpms.h				-unknown-	xorg
 ./usr/X11R7/include/xcb/dri2.h				-unknown-	xorg
+./usr/X11R7/include/xcb/dri3.h				-unknown-	xorg
+./usr/X11R7/include/xcb/ge.h				-unknown-	xorg
 ./usr/X11R7/include/xcb/glx.h				-unknown-	xorg
+./usr/X11R7/include/xcb/present.h			-unknown-	xorg
 ./usr/X11R7/include/xcb/randr.h				-unknown-	xorg
 ./usr/X11R7/include/xcb/record.h			-unknown-	xorg
 ./usr/X11R7/include/xcb/render.h			-unknown-	xorg
@@ -751,6 +754,7 @@
 ./usr/X11R7/include/xcb/xcbext.h			-unknown-	xorg
 ./usr/X11R7/include/xcb/xevie.h				-unknown-	obsolete
 ./usr/X11R7/include/xcb/xf86dri.h			-unknown-	xorg
+./usr/X11R7/include/xcb/xf86vidmode.h			-unknown-	xorg
 ./usr/X11R7/include/xcb/xfixes.h			-unknown-	xorg
 ./usr/X11R7/include/xcb/xinerama.h			-unknown-	xorg
 ./usr/X11R7/include/xcb/xinput.h			-unknown-	xorg

@@ -26,13 +26,14 @@
 #ifndef	_SYS_FS_ZFS_FUID_H
 #define	_SYS_FS_ZFS_FUID_H
 
+#include <sys/types.h>
 #ifdef _KERNEL
 #include <sys/kidmap.h>
-#include <sys/sid.h>
 #include <sys/dmu.h>
 #include <sys/zfs_vfsops.h>
 #endif
 #include <sys/avl.h>
+#include <sys/list.h>
 
 #ifdef	__cplusplus
 extern "C" {

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.7 2017/12/22 07:37:27 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.7.2.1 2018/06/25 07:25:38 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2007, 2008, 2016, 2017 The NetBSD Foundation, Inc.
@@ -230,7 +230,7 @@ ENTRY(start)
 	/* Load 'bootinfo' */
 	movl	12(%esp),%eax
 	testl	%eax,%eax		/* bootinfo = NULL? */
-	jz	bootinfo_finished
+	jz	.Lbootinfo_finished
 
 	movl	(%eax),%ebx		/* number of entries */
 	movl	$_C_LABEL(bootinfo),%ebp
@@ -239,9 +239,9 @@ ENTRY(start)
 	movl	%ebx,(%edx)
 	addl	$4,%edx
 
-bootinfo_entryloop:
+.Lbootinfo_entryloop:
 	testl	%ebx,%ebx		/* no remaining entries? */
-	jz	bootinfo_finished
+	jz	.Lbootinfo_finished
 
 	addl	$4,%eax
 	movl	(%eax),%ecx		/* address of entry */
@@ -253,7 +253,7 @@ bootinfo_entryloop:
 	movl	%edx,%edi
 	addl	(%ecx),%edx		/* update dest pointer */
 	cmpl	%ebp,%edx		/* beyond bootinfo+BOOTINFO_MAXSIZE? */
-	jg	bootinfo_overflow
+	jg	.Lbootinfo_overflow
 
 	movl	%ecx,%esi
 	movl	%eax,%ecx
@@ -280,9 +280,9 @@ bootinfo_entryloop:
 	popl	%esi
 	popl	%edi
 	subl	$1,%ebx			/* decrement the # of entries */
-	jmp	bootinfo_entryloop
+	jmp	.Lbootinfo_entryloop
 
-bootinfo_overflow:
+.Lbootinfo_overflow:
 	/*
 	 * Cleanup for overflow case. Pop the registers, and correct the number
 	 * of entries.
@@ -294,7 +294,7 @@ bootinfo_overflow:
 	movl	%ebp,%edx
 	subl	%ebx,(%edx)		/* correct the number of entries */
 
-bootinfo_finished:
+.Lbootinfo_finished:
 	/* Load 'esym' */
 	movl	16(%esp),%eax
 	movl	$_C_LABEL(esym),%ebp
@@ -331,9 +331,9 @@ bootinfo_finished:
 	movl	$0x80000001,%eax
 	cpuid
 	andl	$CPUID_NOX,%edx
-	jz	no_NOX
+	jz	.Lno_NOX
 	movl	$PG_NX32,_C_LABEL(nox_flag)
-no_NOX:
+.Lno_NOX:
 
 /*
  * There are four levels of pages in amd64: PML4 -> PDP -> PD -> PT. They will
@@ -517,9 +517,9 @@ no_NOX:
 	orl	$(EFER_LME|EFER_SCE),%eax
 	movl	_C_LABEL(nox_flag),%ebx
 	cmpl	$0,%ebx
-	je 	skip_NOX
+	je 	.Lskip_NOX
 	orl	$(EFER_NXE),%eax
-skip_NOX:
+.Lskip_NOX:
 	wrmsr
 
 	/*

@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.65 2017/11/11 21:03:01 riastradh Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.65.2.1 2018/06/25 07:25:48 pgoyette Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.65 2017/11/11 21:03:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.65.2.1 2018/06/25 07:25:48 pgoyette Exp $");
 
 #include <sys/atomic.h>
 #include <sys/buf.h>
@@ -212,7 +212,8 @@ do {                                                         \
                xbdback_finish_disconnect(xbdip);             \
 } while (/* CONSTCOND */ 0)
 
-SLIST_HEAD(, xbdback_instance) xbdback_instances;
+static SLIST_HEAD(, xbdback_instance) xbdback_instances;
+static kmutex_t xbdback_lock;
 
 /*
  * For each request from a guest, a xbdback_request is allocated from
@@ -281,6 +282,7 @@ struct xbdback_fragment {
  * Pools to manage the chain of block requests and I/Os fragments
  * submitted by frontend.
  */
+/* XXXSMP */
 struct xbdback_pool {
 	struct pool_cache pc;
 	struct timeval last_warning;
@@ -308,7 +310,7 @@ static int  xbdback_connect(struct xbdback_instance *);
 static void xbdback_disconnect(struct xbdback_instance *);
 static void xbdback_finish_disconnect(struct xbdback_instance *);
 
-static struct xbdback_instance *xbdif_lookup(domid_t, uint32_t);
+static bool xbdif_lookup(domid_t, uint32_t);
 
 static void *xbdback_co_main(struct xbdback_instance *, void *);
 static void *xbdback_co_main_loop(struct xbdback_instance *, void *);
@@ -363,6 +365,7 @@ xbdbackattach(int n)
 	 * and send driver up message.
 	 */
 	SLIST_INIT(&xbdback_instances);
+	mutex_init(&xbdback_lock, MUTEX_DEFAULT, IPL_NONE);
 	SIMPLEQ_INIT(&xbdback_shmq);
 	xbdback_shmcb = 0;
 
@@ -424,7 +427,7 @@ xbdback_xenbus_create(struct xenbus_device *xbusd)
 		return EFTYPE;
 	}
 			
-	if (xbdif_lookup(domid, handle) != NULL) {
+	if (xbdif_lookup(domid, handle)) {
 		return EEXIST;
 	}
 	xbdi = kmem_zalloc(sizeof(*xbdi), KM_SLEEP);
@@ -440,7 +443,9 @@ xbdback_xenbus_create(struct xenbus_device *xbusd)
 
 	mutex_init(&xbdi->xbdi_lock, MUTEX_DEFAULT, IPL_BIO);
 	cv_init(&xbdi->xbdi_cv, xbdi->xbdi_name);
+	mutex_enter(&xbdback_lock);
 	SLIST_INSERT_HEAD(&xbdback_instances, xbdi, next);
+	mutex_exit(&xbdback_lock);
 
 	xbusd->xbusd_u.b.b_cookie = xbdi;	
 	xbusd->xbusd_u.b.b_detach = xbdback_xenbus_destroy;
@@ -512,7 +517,9 @@ xbdback_xenbus_destroy(void *arg)
 		    name, xbdi->xbdi_domid);
 		vn_close(xbdi->xbdi_vp, FREAD, NOCRED);
 	}
+	mutex_enter(&xbdback_lock);
 	SLIST_REMOVE(&xbdback_instances, xbdi, xbdback_instance, next);
+	mutex_exit(&xbdback_lock);
 	mutex_destroy(&xbdi->xbdi_lock);
 	cv_destroy(&xbdi->xbdi_cv);
 	kmem_free(xbdi, sizeof(*xbdi));
@@ -894,16 +901,22 @@ xbdback_finish_disconnect(struct xbdback_instance *xbdi)
 	cv_signal(&xbdi->xbdi_cv);
 }
 
-static struct xbdback_instance *
+static bool
 xbdif_lookup(domid_t dom , uint32_t handle)
 {
 	struct xbdback_instance *xbdi;
+	bool found = false;
 
+	mutex_enter(&xbdback_lock);
 	SLIST_FOREACH(xbdi, &xbdback_instances, next) {
-		if (xbdi->xbdi_domid == dom && xbdi->xbdi_handle == handle)
-			return xbdi;
+		if (xbdi->xbdi_domid == dom && xbdi->xbdi_handle == handle) {
+			found = true;
+			break;
+		}
 	}
-	return NULL;
+	mutex_exit(&xbdback_lock);
+
+	return found;
 }
 
 static int
@@ -1770,7 +1783,7 @@ xbdback_map_shm(struct xbdback_io *xbd_io)
 		xbd_io->xio_mapped = 1;
 		return xbdi;
 	case ENOMEM:
-		s = splvm();
+		s = splvm(); /* XXXSMP */
 		if (!xbdback_shmcb) {
 			if (xen_shm_callback(xbdback_shm_callback, xbdi)
 			    != 0) {
@@ -1806,7 +1819,7 @@ xbdback_shm_callback(void *arg)
 	 * IPL_BIO and IPL_NET levels. Raise to the lowest priority level
 	 * that can mask both.
 	 */
-	s = splvm();
+	s = splvm(); /* XXXSMP */
 	while(!SIMPLEQ_EMPTY(&xbdback_shmq)) {
 		struct xbdback_instance *xbdi;
 		struct xbdback_io *xbd_io;

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.275 2017/08/20 00:03:12 maya Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.275.2.1 2018/06/25 07:26:08 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.275 2017/08/20 00:03:12 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.275.2.1 2018/06/25 07:26:08 pgoyette Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -499,7 +499,7 @@ lfs_writevnodes_selector(void *cl, struct vnode *vp)
 	}
 	if (op == VN_EMPTY && !VPISEMPTY(vp)) {
 		vndebug(vp,"empty");
-		return false;;
+		return false;
 	}
 	if (op == VN_CLEAN && ip->i_number != LFS_IFILE_INUM &&
 	    vp != c->fs->lfs_flushvp && !(ip->i_state & IN_CLEANING)) {
@@ -1408,13 +1408,13 @@ loop:
 			continue;
 		}
 #ifdef DIAGNOSTIC
-# ifdef LFS_USE_B_INVAL
-		if ((bp->b_flags & BC_INVAL) != 0 && bp->b_iodone == NULL) {
+# ifdef LFS_USE_BC_INVAL
+		if ((bp->b_cflags & BC_INVAL) != 0 && bp->b_iodone == NULL) {
 			DLOG((DLOG_SEG, "lfs_gather: lbn %" PRId64
 			      " is BC_INVAL\n", bp->b_lblkno));
 			VOP_PRINT(bp->b_vp);
 		}
-# endif /* LFS_USE_B_INVAL */
+# endif /* LFS_USE_BC_INVAL */
 		if (!(bp->b_oflags & BO_DELWRI))
 			panic("lfs_gather: bp not BO_DELWRI");
 		if (!(bp->b_flags & B_LOCKED)) {
@@ -2106,7 +2106,7 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 	LFS_WRITESEGENTRY(sup, fs, sp->seg_number, bp); /* Ifile */
 
 	/*
-	 * Mark blocks B_BUSY, to prevent then from being changed between
+	 * Mark blocks BC_BUSY, to prevent then from being changed between
 	 * the checksum computation and the actual write.
 	 *
 	 * If we are cleaning, check indirect blocks for UNWRITTEN, and if
@@ -2217,7 +2217,7 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 		/* Loop through gop_write cluster blocks */
 		for (byteoffset = 0; byteoffset < (*bpp)->b_bcount;
 		     byteoffset += lfs_sb_getbsize(fs)) {
-#ifdef LFS_USE_B_INVAL
+#ifdef LFS_USE_BC_INVAL
 			if (((*bpp)->b_cflags & BC_INVAL) != 0 &&
 			    (*bpp)->b_iodone != NULL) {
 				if (copyin((void *)(*bpp)->b_saveaddr +
@@ -2228,7 +2228,7 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 						(*bpp)->b_lblkno);
 				}
 			} else
-#endif /* LFS_USE_B_INVAL */
+#endif /* LFS_USE_BC_INVAL */
 			{
 				sum = lfs_cksum_part((char *)
 				    (*bpp)->b_data + byteoffset, el_size, sum);
@@ -2320,9 +2320,9 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 			    bp->b_bcount, bp->b_blkno,
 			    sp->seg_number);
 
-#ifdef LFS_USE_B_INVAL
+#ifdef LFS_USE_BC_INVAL
 			/*
-			 * Fake buffers from the cleaner are marked as B_INVAL.
+			 * Fake buffers from the cleaner are marked as BC_INVAL.
 			 * We need to copy the data from user space rather than
 			 * from the buffer indicated.
 			 * XXX == what do I do on an error?
@@ -2333,7 +2333,7 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 					panic("lfs_writeseg: "
 					    "copyin failed [2]");
 			} else
-#endif /* LFS_USE_B_INVAL */
+#endif /* LFS_USE_BC_INVAL */
 			if (cl->flags & LFS_CL_MALLOC) {
 				/* copy data into our cluster. */
 				memcpy(p, bp->b_data, bp->b_bcount);
@@ -2590,8 +2590,7 @@ lfs_cluster_aiodone(struct buf *bp)
 			tbp->b_flags |= B_ASYNC; /* for biodone */
 		}
 
-		if (((tbp->b_flags | tbp->b_oflags) &
-		    (B_LOCKED | BO_DELWRI)) == B_LOCKED)
+		if ((tbp->b_flags & B_LOCKED) && !(tbp->b_oflags & BO_DELWRI))
 			LFS_UNLOCK_BUF(tbp);
 
 		if (tbp->b_oflags & BO_DONE) {

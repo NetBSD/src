@@ -1,4 +1,4 @@
-/*	$NetBSD: ichlpcib.c,v 1.51 2016/08/06 21:57:04 jakllsch Exp $	*/
+/*	$NetBSD: ichlpcib.c,v 1.51.14.1 2018/06/25 07:25:47 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.51 2016/08/06 21:57:04 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.51.14.1 2018/06/25 07:25:47 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -163,7 +163,7 @@ struct lpcib_softc *speedstep_cookie;	/* XXX */
 CFATTACH_DECL2_NEW(ichlpcib, sizeof(struct lpcib_softc),
     lpcibmatch, lpcibattach, lpcibdetach, NULL, lpcibrescan, lpcibchilddet);
 
-static struct lpcib_device {
+static const struct lpcib_device {
 	pcireg_t vendor, product;
 	int has_rcba;
 	int has_ich5_hpet;
@@ -291,7 +291,7 @@ static int
 lpcibmatch(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
-	struct lpcib_device *lpcib_dev;
+	const struct lpcib_device *lpcib_dev;
 
 	/* We are ISA bridge, of course */
 	if (PCI_CLASS(pa->pa_class) != PCI_CLASS_BRIDGE ||
@@ -312,7 +312,7 @@ lpcibattach(device_t parent, device_t self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	struct lpcib_softc *sc = device_private(self);
-	struct lpcib_device *lpcib_dev;
+	const struct lpcib_device *lpcib_dev;
 	pcireg_t pmbase;
 
 	sc->sc_pa = *pa;

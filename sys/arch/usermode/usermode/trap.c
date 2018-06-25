@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.66.38.1 2018/05/21 04:36:02 pgoyette Exp $ */
+/* $NetBSD: trap.c,v 1.66.38.2 2018/06/25 07:25:46 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.66.38.1 2018/05/21 04:36:02 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.66.38.2 2018/06/25 07:25:46 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -335,7 +335,9 @@ handle_signal(int sig, siginfo_t *info, void *ctx)
 	if (sig == SIGILL)
 		print_illegal_instruction_siginfo(sig, info, ctx, pc, va, sp);
 
-	/* if we're running on a stack of our own, use the system stack */
+	/* currently running on the dedicated signal stack */
+
+	/* if we're running on a userland stack, switch to the system stack */
 	from_userland = 0;
 	if ((sp < (vaddr_t) pcb->sys_stack) ||
 	    (sp > (vaddr_t) pcb->sys_stack_top)) {
@@ -361,7 +363,11 @@ handle_signal(int sig, siginfo_t *info, void *ctx)
 	jump_ucp.uc_stack.ss_size = sp - (vaddr_t) pcb->sys_stack;
 	jump_ucp.uc_link = (void *) fp;	/* link to old frame on stack */
 
-	thunk_sigemptyset(&jump_ucp.uc_sigmask);
+	/* prevent multiple nested SIGIOs */
+	if (sig == SIGIO)
+		thunk_sigfillset(&jump_ucp.uc_sigmask);
+	else
+		thunk_sigemptyset(&jump_ucp.uc_sigmask);
 	jump_ucp.uc_flags = _UC_STACK | _UC_CPU | _UC_SIGMASK;
 
 	thunk_makecontext(&jump_ucp,

@@ -80,7 +80,11 @@ typedef struct dt_bkpt {
 	dt_bkpt_f *dbp_func;		/* callback function to execute */
 	void *dbp_data;			/* callback function private data */
 	uintptr_t dbp_addr;		/* virtual address of breakpoint */
+#ifdef __NetBSD__
 	proc_breakpoint_t dbp_instr;	/* saved instruction from breakpoint */
+#else
+	ulong_t dbp_instr;		/* saved instruction from breakpoint */
+#endif
 	ulong_t dbp_hits;		/* count of breakpoint hits for debug */
 	int dbp_active;			/* flag indicating breakpoint is on */
 } dt_bkpt_t;

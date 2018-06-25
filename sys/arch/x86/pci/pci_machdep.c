@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.79.8.1 2018/04/16 01:59:56 pgoyette Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.79.8.2 2018/06/25 07:25:47 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.79.8.1 2018/04/16 01:59:56 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.79.8.2 2018/06/25 07:25:47 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -204,6 +204,7 @@ const struct {
 	/* XXX Triflex2 not tested */
 	_qe(0, 0, 0, PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_TRIFLEX2),
 	_qe(0, 0, 0, PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_TRIFLEX4),
+#if 0
 	/* Triton needed for Connectix Virtual PC */
 	_qe(0, 0, 0, PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82437FX),
 	/* Connectix Virtual PC 5 has a 440BX */
@@ -217,6 +218,7 @@ const struct {
 	_qe(0, 0, 0, PCI_VENDOR_SIS, PCI_PRODUCT_SIS_741),
 	/* VIA Technologies VX900 */
 	_qe(0, 0, 0, PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VX900_HB)
+#endif
 };
 #undef _tag
 #undef _qe
@@ -433,6 +435,30 @@ pci_conf_select(uint32_t sel)
 	}
 }
 
+static int
+pci_mode_check(void)
+{
+	pcireg_t x;
+	pcitag_t t;
+	int device;
+	const int maxdev = pci_bus_maxdevs(NULL, 0);
+
+	for (device = 0; device < maxdev; device++) {
+		t = pci_make_tag(NULL, 0, device, 0);
+		x = pci_conf_read(NULL, t, PCI_CLASS_REG);
+		if (PCI_CLASS(x) == PCI_CLASS_BRIDGE &&
+		    PCI_SUBCLASS(x) == PCI_SUBCLASS_BRIDGE_HOST)
+			return 0;
+		x = pci_conf_read(NULL, t, PCI_ID_REG);
+		switch (PCI_VENDOR(x)) {
+		case PCI_VENDOR_COMPAQ:
+		case PCI_VENDOR_INTEL:
+		case PCI_VENDOR_VIATECH:
+			return 0;
+		}
+	}
+	return -1;
+}
 #ifdef __HAVE_PCI_MSI_MSIX
 static int
 pci_has_msi_quirk(pcireg_t id, int type)
@@ -706,7 +732,6 @@ pci_mode_detect(void)
 	uint32_t sav, val;
 	int i;
 	pcireg_t idreg;
-	extern char cpu_brand_string[];
 
 	if (pci_mode != -1)
 		return pci_mode;
@@ -737,6 +762,8 @@ pci_mode_detect(void)
 		}
 	}
 
+#if 0
+	extern char cpu_brand_string[];
 	const char *reason, *system_vendor, *system_product;
 	if (memcmp(cpu_brand_string, "QEMU", 4) == 0)
 		/* PR 45671, https://bugs.launchpad.net/qemu/+bug/897771 */
@@ -755,7 +782,7 @@ pci_mode_detect(void)
 #endif
 		return (pci_mode);
 	}
-
+#endif
 	/*
 	 * Strong check for standard compliant mode 1:
 	 * 1. bit 31 ("enable") can be set
@@ -769,6 +796,13 @@ pci_mode_detect(void)
 #ifdef DEBUG
 		printf("%s: mode 1 enable failed (%x)\n", __func__, val);
 #endif
+		/* Try out mode 1 to see if we can find a host bridge. */
+		if (pci_mode_check() == 0) {
+#ifdef DEBUG
+			printf("%s: mode 1 functional, using\n", __func__);
+#endif
+			return (pci_mode);
+		}
 		goto not1;
 	}
 	outl(PCI_MODE1_ADDRESS_REG, 0);

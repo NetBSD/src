@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_machdep.c,v 1.42 2018/01/04 01:01:59 knakahara Exp $	*/
+/*	$NetBSD: pci_intr_machdep.c,v 1.42.2.1 2018/06/25 07:25:47 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2009 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.42 2018/01/04 01:01:59 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.42.2.1 2018/06/25 07:25:47 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -348,7 +348,6 @@ pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih,
 	return pci_intr_establish_xname_internal(pc, ih, level, func, arg, "unknown");
 }
 
-#ifdef __HAVE_PCI_MSI_MSIX
 void *
 pci_intr_establish_xname(pci_chipset_tag_t pc, pci_intr_handle_t ih,
     int level, int (*func)(void *), void *arg, const char *xname)
@@ -356,7 +355,6 @@ pci_intr_establish_xname(pci_chipset_tag_t pc, pci_intr_handle_t ih,
 
 	return pci_intr_establish_xname_internal(pc, ih, level, func, arg, xname);
 }
-#endif
 
 
 void

@@ -1,4 +1,4 @@
-#	$NetBSD: files.powerpc,v 1.89 2014/03/04 08:25:11 matt Exp $
+#	$NetBSD: files.powerpc,v 1.89.28.1 2018/06/25 07:25:45 pgoyette Exp $
 
 defflag	opt_altivec.h	ALTIVEC K_ALTIVEC PPC_HAVE_SPE
 defflag	opt_openpic.h	OPENPIC_DISTRIBUTE
@@ -51,6 +51,7 @@ file	arch/powerpc/ibm4xx/copyoutstr.c		ppc_ibm4xx
 defparam opt_oea.h EXTMAP_RANGES=20
 file	arch/powerpc/oea/altivec.c			(ppc_oea |ppc_oea64 | ppc_oea64_bridge) & altivec
 file	arch/powerpc/oea/cpu_subr.c			ppc_oea | ppc_oea64 | ppc_oea64_bridge | ppc_oea601
+file	arch/powerpc/oea/cpu_speedctl.c			ppc_oea64 | ppc_oea64_bridge
 file	arch/powerpc/oea/oea_machdep.c			ppc_oea | ppc_oea64 | ppc_oea64_bridge | ppc_oea601
 file	arch/powerpc/oea/pmap.c				ppc_oea | ppc_oea601
 file	arch/powerpc/oea/pmap64.c			ppc_oea64

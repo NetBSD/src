@@ -1,4 +1,4 @@
-/*	$NetBSD: dbcool.c,v 1.48 2018/02/06 10:02:09 mrg Exp $ */
+/*	$NetBSD: dbcool.c,v 1.48.2.1 2018/06/25 07:25:50 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.48 2018/02/06 10:02:09 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.48.2.1 2018/06/25 07:25:50 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -738,6 +738,12 @@ static const char * dbcool_compats[] = {
 	"adm1030",
 	NULL
 };
+
+static const struct device_compatible_entry dbcool_compat_data[] = {
+	DEVICE_COMPAT_ENTRY(dbcool_compats),
+	DEVICE_COMPAT_TERMINATOR
+};
+
 int
 dbcool_match(device_t parent, cfdata_t cf, void *aux)
 {
@@ -748,20 +754,16 @@ dbcool_match(device_t parent, cfdata_t cf, void *aux)
 	dc.dc_chip = NULL;
 	dc.dc_readreg = dbcool_readreg;
 	dc.dc_writereg = dbcool_writereg;
+	int match_result;
 
-	/* Direct config - match compats */
-	if (ia->ia_name) {
-		if (ia->ia_ncompat > 0) {
-			if (iic_compat_match(ia, dbcool_compats))
-				return 1;
-		}
-	/* Indirect config - check address and chip ID */
-	} else {
-		if ((ia->ia_addr & DBCOOL_ADDRMASK) != DBCOOL_ADDR)
-			return 0;
-		if (dbcool_chip_ident(&dc) >= 0)
-			return 1;
-	}
+	if (iic_use_direct_match(ia, cf, dbcool_compat_data, &match_result))
+		return match_result;
+
+	if ((ia->ia_addr & DBCOOL_ADDRMASK) != DBCOOL_ADDR)
+		return 0;
+	if (dbcool_chip_ident(&dc) >= 0)
+		return I2C_MATCH_ADDRESS_AND_PROBE;
+
 	return 0;
 }
 
@@ -777,8 +779,10 @@ dbcool_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dc.dc_chip = NULL;
 	sc->sc_dc.dc_readreg = dbcool_readreg;
 	sc->sc_dc.dc_writereg = dbcool_writereg;
-	(void)dbcool_chip_ident(&sc->sc_dc);
 	sc->sc_dev = self;
+
+	if (dbcool_chip_ident(&sc->sc_dc) < 0 || sc->sc_dc.dc_chip == NULL)
+		panic("could not identify chip at addr %d", args->ia_addr);
 
 	aprint_naive("\n");
 	aprint_normal("\n");

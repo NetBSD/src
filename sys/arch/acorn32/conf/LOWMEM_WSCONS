@@ -1,4 +1,4 @@
-#	$NetBSD: LOWMEM_WSCONS,v 1.72.2.1 2018/05/21 04:35:57 pgoyette Exp $
+#	$NetBSD: LOWMEM_WSCONS,v 1.72.2.2 2018/06/25 07:25:38 pgoyette Exp $
 #
 #	LOWMEM_WSCONS -- RiscPC config with wscons for SMALL machines
 #
@@ -126,7 +126,7 @@ iomdiic* at iomd?
 iic0 at iomdiic?
 
 # RTC device via IIC bus
-pcfrtc*	at iic0 addr 0x50
+pcfrtc*	at iic? addr 0x50
 
 # VIDC device
 vidc0		at mainbus?

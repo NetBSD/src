@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile,v 1.6 2017/12/23 06:48:30 ryoon Exp $
+#	$NetBSD: Makefile,v 1.6.2.1 2018/06/25 07:25:38 pgoyette Exp $
 
 PROG=		prekern
 SRCS=		locore.S trap.S prekern.c mm.c console.c elf.c prng.c
 
 NOSSP=		# defined
 NOPIE=		# defined
+NOSANITIZER=	# defined
 NOMAN=		1
 
 S=	${.CURDIR}/../../../..
@@ -14,7 +15,7 @@ S=	${.CURDIR}/../../../..
 BINDIR=		/usr/mdec
 BINMODE=	444
 
-.include <bsd.own.mk>
+.include <bsd.init.mk>
 
 CPPFLAGS+=	-I. -I${S} -I${.OBJDIR} -I${.CURDIR}
 CPPFLAGS+=	-D_STANDALONE

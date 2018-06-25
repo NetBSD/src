@@ -1,4 +1,4 @@
-/*	$NetBSD: disasm.c,v 1.1.2.2 2018/04/07 04:12:10 pgoyette Exp $	*/
+/*	$NetBSD: disasm.c,v 1.1.2.3 2018/06/25 07:25:37 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disasm.c,v 1.1.2.2 2018/04/07 04:12:10 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disasm.c,v 1.1.2.3 2018/06/25 07:25:37 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -568,7 +568,7 @@ sysregname(char *buf, size_t buflen, uint32_t rw,
 static uint64_t
 SignExtend(int bitwidth, uint64_t imm, unsigned int multiply)
 {
-	const uint64_t signbit = (1 << (bitwidth - 1));
+	const uint64_t signbit = ((uint64_t)1 << (bitwidth - 1));
 	const uint64_t immmax = signbit << 1;
 
 	if (imm & signbit)

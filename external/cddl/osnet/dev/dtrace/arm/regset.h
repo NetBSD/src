@@ -19,7 +19,7 @@
  *
  * CDDL HEADER END
  *
- * $FreeBSD$ 
+ * $FreeBSD: head/sys/cddl/dev/dtrace/arm/regset.h 278529 2015-02-10 19:41:30Z gnn $ 
  */
 /*
  * Copyright 2004 Sun Microsystems, Inc.  All rights reserved.
@@ -42,18 +42,13 @@
 extern "C" {
 #endif
 
-/*
- * XXX: define registers properly 
- */
-
 #if 0
-#define REG_PC  PC
-#define REG_FP  EBP
-#define REG_SP  SP
-#define REG_PS  EFL
-#define REG_R0  EAX
-#define REG_R1  EDX
-#endif
+#define REG_LINK  R14
+#define REG_SP  R12
+#define REG_PS  R0
+#define REG_R0  R0
+#define REG_R1  R1
+#endif 
 
 #ifdef	__cplusplus
 }

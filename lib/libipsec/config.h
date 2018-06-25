@@ -17,46 +17,46 @@
 #define ENABLE_NATT 
 
 /* Enable NAT-Traversal draft 00 */
-#define ENABLE_NATT_00 
+/* #define ENABLE_NATT_00  */
 
 /* Enable NAT-Traversal draft 01 */
-/* #undef ENABLE_NATT_01 */
+/* #define ENABLE_NATT_01 */
 
 /* Enable NAT-Traversal draft 02 */
 #define ENABLE_NATT_02 
 
 /* Enable NAT-Traversal draft 03 */
-/* #undef ENABLE_NATT_03 */
+/* #define ENABLE_NATT_03 */
 
 /* Enable NAT-Traversal draft 04 */
-/* #undef ENABLE_NATT_04 */
+/* #define ENABLE_NATT_04 */
 
 /* Enable NAT-Traversal draft 05 */
-/* #undef ENABLE_NATT_05 */
+/* #define ENABLE_NATT_05 */
 
 /* Enable NAT-Traversal draft 06 */
-/* #undef ENABLE_NATT_06 */
+/* #define ENABLE_NATT_06 */
 
 /* Enable NAT-Traversal draft 07 */
-/* #undef ENABLE_NATT_07 */
+/* #define ENABLE_NATT_07 */
 
 /* Enable NAT-Traversal draft 08 */
-/* #undef ENABLE_NATT_08 */
+/* #define ENABLE_NATT_08 */
 
 /* Enable NAT-Traversal RFC version */
 #define ENABLE_NATT_RFC 
 
 /* Enable samode-unspec */
-/* #undef ENABLE_SAMODE_UNSPECIFIED */
+/* #define ENABLE_SAMODE_UNSPECIFIED */
 
 /* Enable statictics */
-/* #undef ENABLE_STATS */
+/* #define ENABLE_STATS */
 
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #define HAVE_DLFCN_H 1
 
 /* Define to 1 if you don't have `vprintf' but do have `_doprnt.' */
-/* #undef HAVE_DOPRNT */
+/* #define HAVE_DOPRNT */
 
 /* Have __func__ macro */
 #define HAVE_FUNC_MACRO 
@@ -75,7 +75,7 @@
 #define HAVE_INTTYPES_H 1
 
 /* Have ipsec_policy_t */
-/* #undef HAVE_IPSEC_POLICY_T */
+/* #define HAVE_IPSEC_POLICY_T */
 
 /* Hybrid authentication uses PAM */
 /* NetBSD build: -DHAVE_LIBPAM is already supplied on the command line */
@@ -101,25 +101,25 @@
 #define HAVE_OPENSSL_ENGINE_H 1
 
 /* Define to 1 if you have the <openssl/idea.h> header file. */
-/* #undef HAVE_OPENSSL_IDEA_H */
+/* #define HAVE_OPENSSL_IDEA_H */
 
 /* Define to 1 if you have the <openssl/rc5.h> header file. */
-/* #undef HAVE_OPENSSL_RC5_H */
+/* #define HAVE_OPENSSL_RC5_H */
 
 /* Define to 1 if you have the `pam_start' function. */
 #define HAVE_PAM_START 1
 
 /* Are PF_KEY policy priorities supported? */
-/* #undef HAVE_PFKEY_POLICY_PRIORITY */
+/* #define HAVE_PFKEY_POLICY_PRIORITY */
 
 /* Have forward policy */
-/* #undef HAVE_POLICY_FWD */
+/* #define HAVE_POLICY_FWD */
 
 /* Define to 1 if you have the `rad_create_request' function. */
 #define HAVE_RAD_CREATE_REQUEST 1
 
 /* Is readline available? */
-/* #undef HAVE_READLINE */
+/* #define HAVE_READLINE */
 
 /* Define to 1 if you have the `select' function. */
 #define HAVE_SELECT 1
@@ -128,7 +128,7 @@
 #define HAVE_SHA2_IN_SHA_H 1
 
 /* Define to 1 if you have the <shadow.h> header file. */
-/* #undef HAVE_SHADOW_H */
+/* #define HAVE_SHADOW_H */
 
 /* Define to 1 if you have the `socket' function. */
 #define HAVE_SOCKET 1
@@ -182,7 +182,7 @@
 #define HAVE_UNISTD_H 1
 
 /* Define to 1 if you have the <varargs.h> header file. */
-/* #undef HAVE_VARARGS_H */
+/* #define HAVE_VARARGS_H */
 
 /* Define to 1 if you have the `vprintf' function. */
 #define HAVE_VPRINTF 1
@@ -222,7 +222,7 @@
 #define TIME_WITH_SYS_TIME 1
 
 /* Define to 1 if your <sys/time.h> declares `struct tm'. */
-/* #undef TM_IN_SYS_TIME */
+/* #define TM_IN_SYS_TIME */
 
 /* A 'va_copy' style function */
 #define VA_COPY va_copy
@@ -238,12 +238,12 @@
 #define YYTEXT_POINTER 1
 
 /* Define to empty if `const' does not conform to ANSI C. */
-/* #undef const */
+/* #define const */
 
 /* Define to `int' if <sys/types.h> does not define. */
-/* #undef pid_t */
+/* #define pid_t */
 
 /* Define to `unsigned' if <sys/types.h> does not define. */
-/* #undef size_t */
+/* #define size_t */
 
 #define PATH_IPSEC_H <netipsec/ipsec.h>

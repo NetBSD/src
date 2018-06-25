@@ -550,8 +550,8 @@ typedef UINT64                          ACPI_INTEGER;
 
 /* Pointer/Integer type conversions */
 
-#define ACPI_TO_POINTER(i)              ACPI_ADD_PTR (void, (void *) 0, (ACPI_SIZE) (i))
-#define ACPI_TO_INTEGER(p)              ACPI_PTR_DIFF (p, (void *) 0)
+#define ACPI_TO_POINTER(i)              ((void *)((uintptr_t)(ACPI_SIZE) (i)))
+#define ACPI_TO_INTEGER(p)              ((uintptr_t)(p))
 #define ACPI_OFFSET(d, f)               ACPI_PTR_DIFF (&(((d *) 0)->f), (void *) 0)
 #define ACPI_PHYSADDR_TO_PTR(i)         ACPI_TO_POINTER(i)
 #define ACPI_PTR_TO_PHYSADDR(i)         ACPI_TO_INTEGER(i)

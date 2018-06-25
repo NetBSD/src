@@ -1,4 +1,4 @@
-# $NetBSD: CUBOX,v 1.5.4.1 2018/05/21 04:36:00 pgoyette Exp $
+# $NetBSD: CUBOX,v 1.5.4.2 2018/06/25 07:25:40 pgoyette Exp $
 #
 #	CUBOX -- SolidRun Ltd. Cubox kernel
 #
@@ -250,9 +250,9 @@ spiflash0 at spiflashbus?
 gttwsi* at mvsoc? offset ? irq ?
 iic*	at gttwsi?
 
-#TDA998x at iic0 addr 0x34 # HDMI transmitters
-#Si5351A at iic0 addr 0x60 # Programmable Any-Frequency CMOS Clock Generator
-#lcdc at iic0 addr 0x70
+#TDA998x at iic? addr 0x34 # HDMI transmitters
+#Si5351A at iic? addr 0x60 # Programmable Any-Frequency CMOS Clock Generator
+#lcdc at iic? addr 0x70
 
 # On-chip UART Interface
 com*	at mvsoc? offset ? irq ?

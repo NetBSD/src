@@ -1,4 +1,4 @@
-/*	$NetBSD: dtrace_unload.c,v 1.6 2015/02/26 09:10:52 ozaki-r Exp $	*/
+/*	$NetBSD: dtrace_unload.c,v 1.6.14.1 2018/06/25 07:25:14 pgoyette Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -20,18 +20,24 @@
  *
  * CDDL HEADER END
  *
- * $FreeBSD: src/sys/cddl/dev/dtrace/dtrace_unload.c,v 1.2.2.1 2009/08/03 08:13:06 kensmith Exp $
+ * $FreeBSD: head/sys/cddl/dev/dtrace/dtrace_unload.c 278166 2015-02-03 19:39:53Z pfg $
  *
  */
-
-extern int dtrace_probes_size;
-extern int dtrace_helptrace_size;
 
 static int
 dtrace_unload()
 {
 	dtrace_state_t *state;
 	int error = 0;
+
+#ifdef __FreeBSD__
+	destroy_dev(dtrace_dev);
+	destroy_dev(helper_dev);
+#endif
+
+#ifdef __NetBSD__
+	module_unregister_callbacks(dtrace_modcb);
+#endif
 
 	mutex_enter(&dtrace_provider_lock);
 	mutex_enter(&dtrace_lock);
@@ -52,6 +58,10 @@ dtrace_unload()
 	}
 
 	dtrace_provider = NULL;
+#ifdef __FreeBSD__
+	EVENTHANDLER_DEREGISTER(kld_load, dtrace_kld_load_tag);
+	EVENTHANDLER_DEREGISTER(kld_unload_try, dtrace_kld_unload_try_tag);
+#endif
 
 	if ((state = dtrace_anon_grab()) != NULL) {
 		/*
@@ -67,13 +77,8 @@ dtrace_unload()
 
 	mutex_exit(&cpu_lock);
 
-	if (dtrace_helptrace_enabled) {
-		kmem_free(dtrace_helptrace_buffer, dtrace_helptrace_size);
-		dtrace_helptrace_buffer = NULL;
-	}
-
 	if (dtrace_probes != NULL) {
-		kmem_free(dtrace_probes, dtrace_probes_size);
+		kmem_free(dtrace_probes, dtrace_nprobes * sizeof (dtrace_probe_t *));
 		dtrace_probes = NULL;
 		dtrace_nprobes = 0;
 	}
@@ -87,7 +92,12 @@ dtrace_unload()
 
 	kmem_cache_destroy(dtrace_state_cache);
 
+#ifdef __FreeBSD__
+	delete_unrhdr(dtrace_arena);
+#endif
+#ifdef __NetBSD__
 	vmem_destroy(dtrace_arena);
+#endif
 
 	if (dtrace_toxrange != NULL) {
 		kmem_free(dtrace_toxrange,
@@ -107,10 +117,13 @@ dtrace_unload()
 	mutex_destroy(&dtrace_meta_lock);
 	mutex_destroy(&dtrace_provider_lock);
 	mutex_destroy(&dtrace_lock);
+#ifdef DEBUG
 	mutex_destroy(&dtrace_errlock);
+#endif
 
-	/* XXX Hack */
-	mutex_destroy(&mod_lock);
+#ifdef __FreeBSD__
+	taskq_destroy(dtrace_taskq);
+#endif
 
 	/* Reset our hook for exceptions. */
 	dtrace_invop_uninit();

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ODROID-C1,v 1.22 2017/03/20 14:06:43 skrll Exp $
+#	$NetBSD: ODROID-C1,v 1.22.14.1 2018/06/25 07:25:40 pgoyette Exp $
 #
 #	Hardkernel ODROID-C1 (Amlogic S805) based SBC (Single Board Computer)
 #
@@ -24,7 +24,7 @@ cpu*		at mainbus?
 armperiph0	at mainbus?
 arml2cc0	at armperiph?				# L2 Cache Controller
 armgic0		at armperiph?				# Interrupt Controller
-a9tmr0		at armperiph?				# Global Timer
+arma9tmr0	at armperiph?				# Global Timer
 a9wdt0		at armperiph?				# Watchdog
 
 # On-board I/O

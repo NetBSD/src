@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.80 2016/12/15 09:28:06 ozaki-r Exp $ */
+/*	$NetBSD: if_xi.c,v 1.80.14.1 2018/06/25 07:26:01 pgoyette Exp $ */
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.80 2016/12/15 09:28:06 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.80.14.1 2018/06/25 07:26:01 pgoyette Exp $");
 
 #include "opt_inet.h"
 
@@ -74,6 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.80 2016/12/15 09:28:06 ozaki-r Exp $");
 #include <net/if_media.h>
 #include <net/if_types.h>
 #include <net/if_ether.h>
+#include <net/bpf.h>
 
 #ifdef INET
 #include <netinet/in.h>
@@ -82,9 +83,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.80 2016/12/15 09:28:06 ozaki-r Exp $");
 #include <netinet/ip.h>
 #include <netinet/if_inarp.h>
 #endif
-
-#include <net/bpf.h>
-#include <net/bpfdesc.h>
 
 /*
  * Maximum number of bytes to read per interrupt.  Linux recommends

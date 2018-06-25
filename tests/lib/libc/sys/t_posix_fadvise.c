@@ -1,4 +1,4 @@
-/* $NetBSD: t_posix_fadvise.c,v 1.2 2017/01/13 21:30:41 christos Exp $ */
+/* $NetBSD: t_posix_fadvise.c,v 1.2.12.1 2018/06/25 07:26:09 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_posix_fadvise.c,v 1.2 2017/01/13 21:30:41 christos Exp $");
+__RCSID("$NetBSD: t_posix_fadvise.c,v 1.2.12.1 2018/06/25 07:26:09 pgoyette Exp $");
 
 #include <sys/fcntl.h>
 
@@ -112,7 +112,7 @@ ATF_TC_BODY(posix_fadvise, tc)
 		ATF_CHECK_EQ_MSG(ret = (x), exp, "got: %d", ret); \
 		ATF_CHECK_EQ_MSG(errno, 999, "got: %s", strerror(errno)); \
 		errno = save; \
-	} while (0);
+	} while (0)
 
 	CE(posix_fadvise(fd, 0, 0, -1), EINVAL);
 	CE(posix_fadvise(pipe_fds[0], 0, 0, POSIX_FADV_NORMAL), ESPIPE);

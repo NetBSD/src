@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_tables.c,v 1.12 2014/05/18 11:46:23 kardel Exp $ */
+/* $NetBSD: sysmon_envsys_tables.c,v 1.12.26.1 2018/06/25 07:26:02 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_tables.c,v 1.12 2014/05/18 11:46:23 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_tables.c,v 1.12.26.1 2018/06/25 07:26:02 pgoyette Exp $");
 
 #include <sys/types.h>
 
@@ -52,6 +52,7 @@ static const struct sme_descr_entry sme_units_description[] = {
 	{ ENVSYS_BATTERY_CAPACITY, PENVSYS_TYPE_BATTERY,"Battery capacity" },
 	{ ENVSYS_BATTERY_CHARGE, -1,			"Battery charge" },
 	{ ENVSYS_SRELHUMIDITY,	-1,			"relative Humidity" },
+	{ ENVSYS_LUX,		-1,			"Illuminance" },
 	{ -1,			-1,			"unknown" }
 };
 

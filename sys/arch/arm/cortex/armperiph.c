@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: armperiph.c,v 1.12 2017/12/29 11:06:26 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: armperiph.c,v 1.12.2.1 2018/06/25 07:25:39 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -62,11 +62,11 @@ struct armperiph_info {
 
 #ifdef CPU_CORTEXA5
 static const struct armperiph_info a5_devices[] = {
-	{ "armscu", 0x0000, 0 },
-	{ "armgic", 0x1000, 0x0100 },
-	{ "a9tmr",  0x0200, 0 },
-	{ "a9wdt",   0x0600, 0 },
-	{ "arml2cc", 0, 0 },	/* external; needs "offset" property */
+	{ "armscu",   0x0000, 0 },
+	{ "armgic",   0x1000, 0x0100 },
+	{ "arma9tmr", 0x0200, 0 },
+	{ "a9wdt",    0x0600, 0 },
+	{ "arml2cc",  0, 0 },	/* external; needs "offset" property */
 	{ "", 0, 0 },
 };
 #endif
@@ -81,11 +81,11 @@ static const struct armperiph_info a7_devices[] = {
 
 #ifdef CPU_CORTEXA9
 static const struct armperiph_info a9_devices[] = {
-	{ "armscu",  0x0000, 0 },
-	{ "arml2cc", 0x2000, 0 },
-	{ "armgic",  0x1000, 0x0100 },
-	{ "a9tmr",   0x0200, 0 },
-	{ "a9wdt",   0x0600, 0 },
+	{ "armscu",   0x0000, 0 },
+	{ "arml2cc",  0x2000, 0 },
+	{ "armgic",   0x1000, 0x0100 },
+	{ "arma9tmr", 0x0200, 0 },
+	{ "a9wdt",    0x0600, 0 },
 	{ "", 0, 0 },
 };
 #endif
@@ -229,6 +229,10 @@ armperiph_attach(device_t parent, device_t self, void *aux)
 			.mpcaa_off1 = cfg->cfg_devices[i].pi_off1,
 			.mpcaa_off2 = cfg->cfg_devices[i].pi_off2,
 		};
+#if defined(CPU_CORTEXA9)
+		if (strcmp(mpcaa.mpcaa_name, "arma9tmr") == 0)
+			mpcaa.mpcaa_irq = IRQ_A9TMR_PPI_GTIMER;
+#endif
 #if defined(CPU_CORTEXA7) || defined(CPU_CORTEXA15) || defined(CPU_CORTEXA57)
 		if (strcmp(mpcaa.mpcaa_name, "armgtmr") == 0) {
 			mpcaa.mpcaa_irq = IRQ_GTMR_PPI_VTIMER;

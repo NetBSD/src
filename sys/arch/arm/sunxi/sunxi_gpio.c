@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_gpio.c,v 1.19.2.1 2018/04/07 04:12:12 pgoyette Exp $ */
+/* $NetBSD: sunxi_gpio.c,v 1.19.2.2 2018/06/25 07:25:40 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_soc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_gpio.c,v 1.19.2.1 2018/04/07 04:12:12 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_gpio.c,v 1.19.2.2 2018/06/25 07:25:40 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -328,9 +328,12 @@ sunxi_gpio_acquire(device_t dev, const void *data, size_t len, int flags)
 static void
 sunxi_gpio_release(device_t dev, void *priv)
 {
+	struct sunxi_gpio_softc * const sc = device_private(dev);
 	struct sunxi_gpio_pin *pin = priv;
 
+	mutex_enter(&sc->sc_lock);
 	sunxi_gpio_ctl(pin->pin_sc, pin->pin_def, GPIO_PIN_INPUT);
+	mutex_exit(&sc->sc_lock);
 
 	kmem_free(pin, sizeof(*pin));
 }

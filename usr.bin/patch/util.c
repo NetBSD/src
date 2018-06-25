@@ -1,7 +1,7 @@
 /*
  * $OpenBSD: util.c,v 1.32 2006/03/11 19:41:30 otto Exp $
  * $DragonFly: src/usr.bin/patch/util.c,v 1.9 2007/09/29 23:11:10 swildner Exp $
- * $NetBSD: util.c,v 1.27 2015/11/07 18:11:21 joerg Exp $
+ * $NetBSD: util.c,v 1.27.14.1 2018/06/25 07:26:11 pgoyette Exp $
  */
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: util.c,v 1.27 2015/11/07 18:11:21 joerg Exp $");
+__RCSID("$NetBSD: util.c,v 1.27.14.1 2018/06/25 07:26:11 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -434,4 +434,14 @@ my_exit(int status)
 		unlink(TMPREJNAME);
 	unlink(TMPPATNAME);
 	exit(status);
+}
+
+void *
+pch_realloc(void *ptr, size_t number, size_t size)
+{
+	if (number > SIZE_MAX / size) {
+		errno = EOVERFLOW;
+		return NULL;
+	}
+	return realloc(ptr, number * size);
 }

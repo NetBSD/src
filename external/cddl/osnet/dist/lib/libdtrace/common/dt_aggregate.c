@@ -39,9 +39,7 @@
 #include <alloca.h>
 #else
 #include <sys/sysctl.h>
-#if defined(__FreeBSD__) || defined(__NetBSD__)
 #include <libproc_compat.h>
-#endif
 #endif
 #include <limits.h>
 
@@ -188,7 +186,7 @@ dt_aggregate_lquantizedcmp(int64_t *lhs, int64_t *rhs)
 {
 	long double lsum = dt_aggregate_lquantizedsum(lhs);
 	long double rsum = dt_aggregate_lquantizedsum(rhs);
-	int64_t lzero, rzero;
+	int64_t lzero = 0, rzero = 0;
 
 	if (lsum < rsum)
 		return (DT_LESSTHAN);

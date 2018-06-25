@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.379.2.1 2018/05/21 04:35:57 pgoyette Exp $
+# $NetBSD: GENERIC,v 1.379.2.2 2018/06/25 07:25:38 pgoyette Exp $
 #
 # This machine description file is used to generate the default NetBSD
 # kernel.
@@ -19,7 +19,7 @@ include 	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"GENERIC-$Revision: 1.379.2.1 $"
+ident		"GENERIC-$Revision: 1.379.2.2 $"
 
 maxusers 32
 
@@ -539,18 +539,18 @@ alipm* 	at pci? dev ? function ?
 iic* 	at alipm?
 
 # AlphaServer DS20L i2c devices
-#lmenv* 	at iic0 addr 0x2c
-#lmenv* 	at iic0 addr 0x2d
-#lmenv* 	at iic0 addr 0x2e
-#lmenv* 	at iic0 addr 0x2f
-#spdmem* 	at iic0 addr 0x50
-#spdmem* 	at iic0 addr 0x51
-#spdmem* 	at iic0 addr 0x52
-#spdmem* 	at iic0 addr 0x53
-#spdmem* 	at iic0 addr 0x54
-#spdmem* 	at iic0 addr 0x55
-#spdmem* 	at iic0 addr 0x56
-#spdmem* 	at iic0 addr 0x57
+#lmenv* 	at iic? addr 0x2c
+#lmenv* 	at iic? addr 0x2d
+#lmenv* 	at iic? addr 0x2e
+#lmenv* 	at iic? addr 0x2f
+#spdmem* 	at iic? addr 0x50
+#spdmem* 	at iic? addr 0x51
+#spdmem* 	at iic? addr 0x52
+#spdmem* 	at iic? addr 0x53
+#spdmem* 	at iic? addr 0x54
+#spdmem* 	at iic? addr 0x55
+#spdmem* 	at iic? addr 0x56
+#spdmem* 	at iic? addr 0x57
 #seeprom* 	at iic0 addr 0x51 flags 0x2
 
 # PCMCIA USB controllers

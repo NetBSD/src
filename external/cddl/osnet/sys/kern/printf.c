@@ -1,4 +1,4 @@
-/*	$NetBSD: printf.c,v 1.1 2009/08/07 20:57:57 haad Exp $	*/
+/*	$NetBSD: printf.c,v 1.1.44.1 2018/06/25 07:25:25 pgoyette Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -39,6 +39,7 @@ void
 vcmn_err(int ce, const char *fmt, va_list adx)
 {
 	char buf[256];
+	size_t len;
 
 	if (ce == CE_PANIC) {
 		vprintf(fmt, adx);
@@ -47,7 +48,8 @@ vcmn_err(int ce, const char *fmt, va_list adx)
 
 	if ((uint_t)ce < CE_IGNORE) {
 		strcpy(buf, ce_prefix[ce]);
-		vsnprintf(buf + strlen(ce_prefix[ce]), sizeof(buf),
+		len = strlen(buf);
+		vsnprintf(buf + len, sizeof(buf) - len,
 		    fmt, adx);
 		strlcat(buf, ce_suffix[ce], sizeof(buf));
 		printf("%s", buf);

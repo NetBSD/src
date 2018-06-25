@@ -1,9 +1,9 @@
-/*	$NetBSD: proto.h,v 1.12 2018/01/24 09:53:21 kamil Exp $	*/
+/*	$NetBSD: proto.h,v 1.12.2.1 2018/06/25 07:25:04 pgoyette Exp $	*/
 
 /*
  * prototypes for PD-KSH
  * originally generated using "cproto.c 3.5 92/04/11 19:28:01 cthuang "
- * $Id: proto.h,v 1.12 2018/01/24 09:53:21 kamil Exp $
+ * $Id: proto.h,v 1.12.2.1 2018/06/25 07:25:04 pgoyette Exp $
  */
 
 #include <stdbool.h>
@@ -219,7 +219,7 @@ void 	tinit		ARGS((struct table *, Area *, int));
 struct tbl *	mytsearch	ARGS((struct table *, const char *, unsigned int));
 struct tbl *	tenter	ARGS((struct table *, const char *, unsigned int));
 void 	mytdelete		ARGS((struct tbl *));
-void 	twalk		ARGS((struct tstate *, struct table *));
+void 	ksh_twalk		ARGS((struct tstate *, struct table *));
 struct tbl *	tnext	ARGS((struct tstate *));
 struct tbl **	tsort	ARGS((struct table *));
 /* trace.c */

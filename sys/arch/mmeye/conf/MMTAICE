@@ -1,4 +1,4 @@
-#	$NetBSD: MMTAICE,v 1.55 2017/09/14 07:58:42 mrg Exp $
+#	$NetBSD: MMTAICE,v 1.55.2.1 2018/06/25 07:25:44 pgoyette Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -27,7 +27,6 @@ options 	IOM_RAM_BEGIN=0x0c000000
 makeoptions	DEFTEXTADDR="0x8c010000"
 
 # CPU-related options.
-#options 	MATH_EMULATE	# floating point emulation
 # eliminate delay no-ops in I/O; recommended on all but very old machines
 #options 	DUMMY_NOPS
 

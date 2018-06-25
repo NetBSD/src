@@ -582,6 +582,7 @@ int
 dt_printf(dtrace_hdl_t *dtp, FILE *fp, const char *format, ...)
 {
 	va_list ap;
+	va_list ap2;
 	int n;
 
 #ifndef illumos
@@ -606,11 +607,13 @@ dt_printf(dtrace_hdl_t *dtp, FILE *fp, const char *format, ...)
 		len = dtp->dt_sprintf_buflen - len;
 		assert(len >= 0);
 
-		if ((n = vsnprintf(buf, len, format, ap)) < 0)
+		va_copy(ap2, ap);
+		if ((n = vsnprintf(buf, len, format, ap2)) < 0)
 			n = dt_set_errno(dtp, errno);
 
+		va_end(ap2);
 		va_end(ap);
-
+		
 		return (n);
 	}
 
@@ -641,11 +644,14 @@ dt_printf(dtrace_hdl_t *dtp, FILE *fp, const char *format, ...)
 			dtp->dt_buffered_buf[0] = '\0';
 		}
 
-		if ((needed = vsnprintf(NULL, 0, format, ap)) < 0) {
+		va_copy(ap2, ap);
+		if ((needed = vsnprintf(NULL, 0, format, ap2)) < 0) {
 			rval = dt_set_errno(dtp, errno);
+			va_end(ap2);
 			va_end(ap);
 			return (rval);
 		}
+		va_end(ap2);
 
 		if (needed == 0) {
 			va_end(ap);
@@ -671,12 +677,15 @@ dt_printf(dtrace_hdl_t *dtp, FILE *fp, const char *format, ...)
 			dtp->dt_buffered_size <<= 1;
 		}
 
+		va_copy(ap2, ap);
 		if (vsnprintf(&dtp->dt_buffered_buf[dtp->dt_buffered_offs],
-		    avail, format, ap) < 0) {
+		    avail, format, ap2) < 0) {
 			rval = dt_set_errno(dtp, errno);
+			va_end(ap2);
 			va_end(ap);
 			return (rval);
 		}
+		va_end(ap2);
 
 		dtp->dt_buffered_offs += needed;
 		assert(dtp->dt_buffered_buf[dtp->dt_buffered_offs] == '\0');
@@ -684,8 +693,10 @@ dt_printf(dtrace_hdl_t *dtp, FILE *fp, const char *format, ...)
 		return (0);
 	}
 
-	n = vfprintf(fp, format, ap);
+	va_copy(ap2, ap);
+	n = vfprintf(fp, format, ap2);
 	fflush(fp);
+	va_end(ap2);
 	va_end(ap);
 
 	if (n < 0) {
@@ -920,7 +931,7 @@ dtrace_addr2str(dtrace_hdl_t *dtp, uint64_t addr, char *str, int nbytes)
 
 	if (err == 0 && addr != sym.st_value) {
 		(void) snprintf(s, n, "%s`%s+0x%llx", dts.dts_object,
-		    dts.dts_name, (unsigned long long)addr - sym.st_value);
+		    dts.dts_name, (u_longlong_t)addr - sym.st_value);
 	} else if (err == 0) {
 		(void) snprintf(s, n, "%s`%s",
 		    dts.dts_object, dts.dts_name);
@@ -932,9 +943,9 @@ dtrace_addr2str(dtrace_hdl_t *dtp, uint64_t addr, char *str, int nbytes)
 		 */
 		if (dtrace_lookup_by_addr(dtp, addr, NULL, &dts) == 0) {
 			(void) snprintf(s, n, "%s`0x%llx", dts.dts_object,
-			    (unsigned long long)addr);
+			    (u_longlong_t)addr);
 		} else {
-			(void) snprintf(s, n, "0x%llx", (unsigned long long)addr);
+			(void) snprintf(s, n, "0x%llx", (u_longlong_t)addr);
 		}
 	}
 
@@ -967,7 +978,7 @@ dtrace_uaddr2str(dtrace_hdl_t *dtp, pid_t pid,
 
 		if (addr > sym.st_value) {
 			(void) snprintf(c, sizeof (c), "%s`%s+0x%llx", obj,
-			    name, (unsigned long long)(addr - sym.st_value));
+			    name, (u_longlong_t)(addr - sym.st_value));
 		} else {
 			(void) snprintf(c, sizeof (c), "%s`%s", obj, name);
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.69.2.2 2018/04/07 04:12:14 pgoyette Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.69.2.3 2018/06/25 07:25:47 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.69.2.2 2018/04/07 04:12:14 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.69.2.3 2018/06/25 07:25:47 pgoyette Exp $");
 
 #include "opt_xen.h"
 
@@ -679,23 +679,17 @@ cpu_probe_vortex86(struct cpu_info *ci)
 	outl(PCI_MODE1_ADDRESS_REG, PCI_MODE1_ENABLE | 0x90);
 	reg = inl(PCI_MODE1_DATA_REG);
 
-	switch(reg) {
-	case 0x31504d44:
-		strcpy(cpu_brand_string, "Vortex86SX");
-		break;
-	case 0x32504d44:
-		strcpy(cpu_brand_string, "Vortex86DX");
-		break;
-	case 0x33504d44:
-		strcpy(cpu_brand_string, "Vortex86MX");
-		break;
-	case 0x37504d44:
-		strcpy(cpu_brand_string, "Vortex86EX");
-		break;
-	default:
-		strcpy(cpu_brand_string, "Unknown Vortex86");
-		break;
+	if ((reg & 0xf8ffffff) != 0x30504d44) {
+		reg = 0;
+	} else {
+		reg = (reg >> 24) & 7;
 	}
+
+	static const char *cpu_vortex86_flavor[] = {
+	    "??", "SX", "DX", "MX", "DX2", "MX+", "DX3", "EX",
+	};
+	snprintf(cpu_brand_string, sizeof(cpu_brand_string), "Vortex86%s",
+	    cpu_vortex86_flavor[reg]);
 
 #undef PCI_MODE1_ENABLE
 #undef PCI_MODE1_ADDRESS_REG
@@ -719,10 +713,58 @@ cpu_probe_old_fpu(struct cpu_info *ci)
 #endif
 }
 
+#ifndef XEN
+static void
+cpu_probe_fpu_leak(struct cpu_info *ci)
+{
+	/*
+	 * INTEL-SA-00145. Affected CPUs are from Family 6.
+	 */
+	if (cpu_vendor != CPUVENDOR_INTEL) {
+		return;
+	}
+	if (CPUID_TO_FAMILY(ci->ci_signature) != 6) {
+		return;
+	}
+
+	switch (CPUID_TO_MODEL(ci->ci_signature)) {
+	/* Atom CPUs are not vulnerable. */
+	case 0x1c: /* Pineview */
+	case 0x26: /* Lincroft */
+	case 0x27: /* Penwell */
+	case 0x35: /* Cloverview */
+	case 0x36: /* Cedarview */
+	case 0x37: /* Baytrail / Valleyview (Silvermont) */
+	case 0x4d: /* Avaton / Rangely (Silvermont) */
+	case 0x4c: /* Cherrytrail / Brasswell */
+	case 0x4a: /* Merrifield */
+	case 0x5a: /* Moorefield */
+	case 0x5c: /* Goldmont */
+	case 0x5f: /* Denverton */
+	case 0x7a: /* Gemini Lake */
+		break;
+
+	/* Knights CPUs are not vulnerable. */
+	case 0x57: /* Knights Landing */
+	case 0x85: /* Knights Mill */
+		break;
+
+	/* The rest is vulnerable. */
+	default:
+		x86_fpu_eager = true;
+		break;
+	}
+}
+#endif
+
 static void
 cpu_probe_fpu(struct cpu_info *ci)
 {
 	u_int descs[4];
+
+#ifndef XEN
+	cpu_probe_fpu_leak(ci);
+#endif
 
 	x86_fpu_save = FPU_SAVE_FSAVE;
 
@@ -757,10 +799,22 @@ cpu_probe_fpu(struct cpu_info *ci)
 	if ((ci->ci_feat_val[1] & CPUID2_XSAVE) == 0)
 		return;
 
+#ifdef XEN
+	/*
+	 * Xen kernel can disable XSAVE via "no-xsave" option, in that case
+	 * XSAVE instructions like xrstor become privileged and trigger
+	 * supervisor trap. OSXSAVE flag seems to be reliably set according
+	 * to whether XSAVE is actually available.
+	 */
+#ifdef XEN_USE_XSAVE
+	if ((ci->ci_feat_val[1] & CPUID2_OSXSAVE) == 0)
+#endif
+		return;
+#endif
+
 	x86_fpu_save = FPU_SAVE_XSAVE;
 
 #if 0 /* XXX PR 52966 */
-	/* xsaveopt ought to be faster than xsave */
 	x86_cpuid2(0xd, 1, descs);
 	if (descs[0] & CPUID_PES1_XSAVEOPT)
 		x86_fpu_save = FPU_SAVE_XSAVEOPT;
@@ -771,12 +825,7 @@ cpu_probe_fpu(struct cpu_info *ci)
 	if (descs[2] > 512)
 		x86_fpu_save_size = descs[2];
 
-#ifdef XEN
-	/* Don't use xsave, force fxsave with x86_xsave_features = 0. */
-	x86_fpu_save = FPU_SAVE_FXSAVE;
-#else
 	x86_xsave_features = (uint64_t)descs[3] << 32 | descs[0];
-#endif
 }
 
 void

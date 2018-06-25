@@ -1,4 +1,4 @@
-/* $NetBSD: envstat.c,v 1.95 2014/05/18 11:46:24 kardel Exp $ */
+/* $NetBSD: envstat.c,v 1.95.22.1 2018/06/25 07:26:11 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: envstat.c,v 1.95 2014/05/18 11:46:24 kardel Exp $");
+__RCSID("$NetBSD: envstat.c,v 1.95.22.1 2018/06/25 07:26:11 pgoyette Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -958,6 +958,52 @@ do {									\
 		} else if (strcmp(sensor->type, "Battery capacity") == 0) {
 
 			(void)printf(":%10s", sensor->battcap);
+
+		/* Illuminance */
+		} else if (strcmp(sensor->type, "Illuminance") == 0) {
+
+			stype = "lux";
+
+			(void)printf(":%10u ", sensor->cur_value);
+
+			ilen = 8;
+			if (statistics) {
+				/* show statistics if flag set */
+				(void)printf("%8u %8u %8u ",
+				    stats->max, stats->min, stats->avg);
+				ilen += 2;
+			} else {
+				if (sensor->critmax_value) {
+					(void)printf("%*u ", (int)ilen,
+					    sensor->critmax_value);
+					ilen = 8;
+				} else
+					ilen += 9;
+
+				if (sensor->warnmax_value) {
+					(void)printf("%*u ", (int)ilen,
+					    sensor->warnmax_value);
+					ilen = 8;
+				} else
+					ilen += 9;
+
+				if (sensor->warnmin_value) {
+					(void)printf("%*u ", (int)ilen,
+					    sensor->warnmin_value);
+					ilen = 8;
+				} else
+					ilen += 9;
+
+				if (sensor->critmin_value) {
+					(void)printf( "%*u ", (int)ilen,
+					    sensor->critmin_value);
+					ilen = 8;
+				} else
+					ilen += 9;
+
+			}
+
+			(void)printf("%*s", (int)ilen - 3, stype);
 
 		/* everything else */
 		} else {

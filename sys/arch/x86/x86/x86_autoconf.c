@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_autoconf.c,v 1.76 2017/11/09 01:02:56 christos Exp $	*/
+/*	$NetBSD: x86_autoconf.c,v 1.76.2.1 2018/06/25 07:25:47 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.76 2017/11/09 01:02:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.76.2.1 2018/06/25 07:25:47 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,6 +53,8 @@ __KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.76 2017/11/09 01:02:56 christos E
 #include <machine/autoconf.h>
 #include <machine/bootinfo.h>
 #include <machine/pio.h>
+
+#include <dev/i2c/i2cvar.h>
 
 #include "acpica.h"
 #include "wsdisplay.h"
@@ -546,6 +548,36 @@ void
 device_register(device_t dev, void *aux)
 {
 	device_t isaboot, pciboot;
+
+	/*
+	 * The Intel Integrated Memory Controller has a built-in i2c
+	 * controller that's rather limited in capability; it is intended
+	 * only for reading memory module EERPOMs and sensors.
+	 */
+	if (device_is_a(dev, "iic") &&
+	    device_is_a(dev->dv_parent, "imcsmb")) {
+		static const char *imcsmb_device_whitelist[] = {
+			"spdmem",
+			"sdtemp",
+			NULL,
+		};
+		prop_array_t whitelist = prop_array_create();
+		prop_dictionary_t props = device_properties(dev);
+		int i;
+
+		for (i = 0; imcsmb_device_whitelist[i] != NULL; i++) {
+			prop_string_t pstr = prop_string_create_cstring_nocopy(
+			    imcsmb_device_whitelist[i]);
+			(void) prop_array_add(whitelist, pstr);
+			prop_object_release(pstr);
+		}
+		(void) prop_dictionary_set(props,
+					   I2C_PROP_INDIRECT_DEVICE_WHITELIST,
+					   whitelist);
+		(void) prop_dictionary_set_cstring_nocopy(props,
+					   I2C_PROP_INDIRECT_PROBE_STRATEGY,
+					   I2C_PROBE_STRATEGY_NONE);
+	}
 
 	device_acpi_register(dev, aux);
 

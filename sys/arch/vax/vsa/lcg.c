@@ -1,4 +1,4 @@
-/*	$NetBSD: lcg.c,v 1.3 2018/02/08 09:05:18 dholland Exp $ */
+/*	$NetBSD: lcg.c,v 1.3.2.1 2018/06/25 07:25:46 pgoyette Exp $ */
 /*
  * LCG accelerated framebuffer driver
  * Copyright (c) 2003, 2004 Blaz Antonic
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lcg.c,v 1.3 2018/02/08 09:05:18 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lcg.c,v 1.3.2.1 2018/06/25 07:25:46 pgoyette Exp $");
 
 #define LCG_NO_ACCEL
 
@@ -271,7 +271,7 @@ void fifo_put(long data)
 int fifo_fill(int iterations)
 {
 	long status;
-	int counter = 0;;
+	int counter = 0;
 
 	while (fifo_counter % 4)
 		fifo_put(0);

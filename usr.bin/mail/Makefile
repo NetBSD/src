@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.36 2014/07/05 19:22:04 dholland Exp $
+#	$NetBSD: Makefile,v 1.36.22.1 2018/06/25 07:26:10 pgoyette Exp $
 #	@(#)Makefile	8.3 (Berkeley) 4/20/95
 
 .include <bsd.own.mk>
@@ -26,8 +26,8 @@ SRCS=	version.c support.c cmd1.c cmd2.c cmd3.c cmd4.c cmdtab.c collect.c \
 	dotlock.c edit.c fio.c format.c getname.c head.c v7.local.c lex.c \
 	list.c main.c names.c popen.c quit.c send.c sig.c strings.c temp.c \
 	tty.c vars.c
-LINKS=	${BINDIR}/mail ${BINDIR}/Mail ${BINDIR}/mail ${BINDIR}/mailx
-MLINKS=	mail.1 Mail.1 mail.1 mailx.1
+LINKS=	${BINDIR}/mail ${BINDIR}/mailx
+MLINKS=	mail.1 mailx.1
 
 LDADD+=		-lutil
 DPADD+=		${LIBUTIL}
@@ -71,7 +71,7 @@ FILESDIR=		/usr/share/misc
 FILES=			mail.help mail.tildehelp
 .endif
 
-SUBDIR+= USD.doc
+SUBDIR.roff+= USD.doc
 
 CONFIGFILES=		mail.rc
 FILESDIR_mail.rc=	/etc

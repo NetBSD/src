@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.h,v 1.65 2018/01/01 00:51:36 christos Exp $	*/
+/*	$NetBSD: in_pcb.h,v 1.65.2.1 2018/06/25 07:26:06 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -113,7 +113,6 @@ struct inpcb {
 /* XXX should move to an UDP control block */
 #define INP_ESPINUDP		0x0100	/* ESP over UDP for NAT-T */
 #define INP_ESPINUDP_NON_IKE	0x0200	/* ESP over UDP for NAT-T */
-#define INP_ESPINUDP_ALL	(INP_ESPINUDP|INP_ESPINUDP_NON_IKE)
 #define INP_NOHEADER		0x0400	/* Kernel removes IP header
 					 * before feeding a packet
 					 * to the raw socket user.

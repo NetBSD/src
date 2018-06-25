@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.58 2017/04/20 19:09:29 uwe Exp $
+#	$NetBSD: Makefile,v 1.58.10.1 2018/06/25 07:25:44 pgoyette Exp $
 
 S=	${.CURDIR}/../../../..
 
 PROG=		ofwboot
 FILES=		${PROG}.elf ${PROG}.xcf
-SRCS=		Locore.c boot.c ofdev.c hfs.c net.c netif_of.c alloc.c
+SRCS=		Locore.c boot.c ofdev.c hfs.c net.c netif_of.c
 XCOFFXTRA=	Xcoffxtra.c
 XCOFFXTRAOBJ=	Xcoffxtra.o
 CFLAGS+=	-ffreestanding
@@ -15,6 +15,10 @@ CFLAGS+=	-Wall -Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith
 CPPFLAGS+=	-D_STANDALONE -DSUPPORT_DHCP
 CPPFLAGS+=	-DSUPPORT_USTARFS -DHAVE_CHANGEDISK_HOOK
 DBG=		-Os
+
+# PR port-macppc/44895
+SRCS+=		alloc.c			# use ./alloc.c
+#CPPFLAGS+=	-DHEAP_VARIABLE		# use libsa alloc.c
 
 LIBCRT0=	# nothing
 LIBCRTI=	# nothing

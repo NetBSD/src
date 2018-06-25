@@ -1,4 +1,4 @@
-/* $NetBSD: t_strptime.c,v 1.14 2017/10/27 05:14:11 kre Exp $ */
+/* $NetBSD: t_strptime.c,v 1.14.2.1 2018/06/25 07:26:09 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_strptime.c,v 1.14 2017/10/27 05:14:11 kre Exp $");
+__RCSID("$NetBSD: t_strptime.c,v 1.14.2.1 2018/06/25 07:26:09 pgoyette Exp $");
 
 #include <time.h>
 #include <stdlib.h>
@@ -51,12 +51,12 @@ h_pass(const char *buf, const char *fmt, int len,
 	exp = buf + len;
 	ret = strptime(buf, fmt, &tm);
 
-	ATF_REQUIRE_MSG(ret == exp,
+	ATF_CHECK_MSG(ret == exp,
 	    "strptime(\"%s\", \"%s\", tm): incorrect return code: "
 	    "expected: %p, got: %p", buf, fmt, exp, ret);
 
 #define H_REQUIRE_FIELD(field)						\
-		ATF_REQUIRE_MSG(tm.field == field,			\
+		ATF_CHECK_MSG(tm.field == field,			\
 		    "strptime(\"%s\", \"%s\", tm): incorrect %s: "	\
 		    "expected: %d, but got: %d", buf, fmt,		\
 		    ___STRING(field), field, tm.field)
@@ -78,7 +78,7 @@ h_fail(const char *buf, const char *fmt)
 {
 	struct tm tm = { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, NULL };
 
-	ATF_REQUIRE_MSG(strptime(buf, fmt, &tm) == NULL, "strptime(\"%s\", "
+	ATF_CHECK_MSG(strptime(buf, fmt, &tm) == NULL, "strptime(\"%s\", "
 	    "\"%s\", &tm) should fail, but it didn't", buf, fmt);
 }
 
@@ -182,7 +182,7 @@ ztest1(const char *name, const char *fmt, long value)
 		break;
 	}
 
-	ATF_REQUIRE_MSG(tm.tm_gmtoff == value,
+	ATF_CHECK_MSG(tm.tm_gmtoff == value,
 	    "strptime(\"%s\", \"%s\", &tm): "
 	    "expected: tm.tm_gmtoff=%ld, got: tm.tm_gmtoff=%ld",
 	    name, fmt, value, tm.tm_gmtoff);

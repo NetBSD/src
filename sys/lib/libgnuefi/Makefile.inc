@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.4 2017/01/24 11:09:14 nonaka Exp $
+#	$NetBSD: Makefile.inc,v 1.4.12.1 2018/06/25 07:26:04 pgoyette Exp $
 #
 #	Configuration variables (default values are below):
 #
@@ -23,7 +23,7 @@ GNUEFIDOTDIR?= ../../.
 
 CWARNFLAGS.clang+=	-Wno-format-extra-args
 
-GNUEFIDIR=		${S:S@^.@${GNUEFIDOTDIR}@:Q}/lib/libgnuefi
+GNUEFIDIR=		${S:S@^.@${GNUEFIDOTDIR}@:q}/lib/libgnuefi
 .if (${GNUEFI_AS} == "obj")
 GNUEFILIB=		${GNUEFIDST}/libgnuefi.o
 GNUEFILIB_PROF=	${GNUEFIDST}/libgnuefi.po
@@ -35,19 +35,19 @@ ZLIBSRCDIR:=	${.PARSEDIR}/../../../common/dist/zlib
 GNUEFIMISCCPPFLAGS+=-I${ZLIBSRCDIR}
 
 GNUEFIMAKE= \
-	cd ${GNUEFIDST} && ${MAKE} -f ${GNUEFIDIR:Q}/Makefile \
-	    GNUEFIDIR=${GNUEFIDIR:Q} \
-	    CC=${CC:Q} CFLAGS=${CFLAGS:Q} CPUFLAGS= \
-	    AS=${AS:Q} AFLAGS=${AFLAGS:Q} \
-	    LORDER=${LORDER:Q} \
-	    TSORT=${TSORT:Q} \
-	    LD=${LD:Q} STRIP=${STRIP:Q} \
-	    AR=${AR:Q} NM=${NM:Q} \
-	    RANLIB=${RANLIB:Q} SIZE=${SIZE:Q} \
-	    MACHINE=${MACHINE} MACHINE_ARCH=${MACHINE_ARCH:Q} \
-	    GNUEFICPPFLAGS=${CPPFLAGS:S@^-I.@-I${GNUEFIDOTDIR}@g:Q} \
-	    GNUEFIMISCCPPFLAGS=${GNUEFIMISCCPPFLAGS:Q} \
-	    LIBGNUEFI_ARCH=${LIBGNUEFI_ARCH:Q} \
+	cd ${GNUEFIDST} && ${MAKE} -f ${GNUEFIDIR:q}/Makefile \
+	    GNUEFIDIR=${GNUEFIDIR:q} \
+	    CC=${CC:q} CFLAGS=${CFLAGS:q} CPUFLAGS= \
+	    AS=${AS:q} AFLAGS=${AFLAGS:q} \
+	    LORDER=${LORDER:q} \
+	    TSORT=${TSORT:q} \
+	    LD=${LD:q} STRIP=${STRIP:q} \
+	    AR=${AR:q} NM=${NM:q} \
+	    RANLIB=${RANLIB:q} SIZE=${SIZE:q} \
+	    MACHINE=${MACHINE} MACHINE_ARCH=${MACHINE_ARCH:q} \
+	    GNUEFICPPFLAGS=${CPPFLAGS:S@^-I.@-I${GNUEFIDOTDIR}@g:q} \
+	    GNUEFIMISCCPPFLAGS=${GNUEFIMISCCPPFLAGS:q} \
+	    LIBGNUEFI_ARCH=${LIBGNUEFI_ARCH:q} \
 	    ${GNUEFIMISCMAKEFLAGS}
 
 ${GNUEFILIB}:		.NOTMAIN .MAKE __always_make_gnuefilib

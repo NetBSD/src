@@ -1,4 +1,4 @@
-/*	$NetBSD: em3027.c,v 1.1 2018/01/05 03:07:15 uwe Exp $ */
+/*	$NetBSD: em3027.c,v 1.1.2.1 2018/06/25 07:25:50 pgoyette Exp $ */
 /*
  * Copyright (c) 2018 Valery Ushakov
  * All rights reserved.
@@ -28,7 +28,7 @@
  * EM Microelectronic EM3027 RTC
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: em3027.c,v 1.1 2018/01/05 03:07:15 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: em3027.c,v 1.1.2.1 2018/06/25 07:25:50 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,7 +128,7 @@ em3027rtc_match(device_t parent, cfdata_t cf, void *aux)
 	if (error)
 		return 0;
 
-	return 1;
+	return I2C_MATCH_ADDRESS_AND_PROBE;
 }
 
 

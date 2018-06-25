@@ -1,4 +1,4 @@
-/*	$NetBSD: random.h,v 1.5 2013/01/03 17:12:05 dsl Exp $	*/
+/*	$NetBSD: random.h,v 1.5.28.1 2018/06/25 07:25:26 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007 Pawel Jakub Dawidek <pjd@FreeBSD.org>
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/compat/opensolaris/sys/random.h,v 1.1 2007/04/06 01:09:06 pjd Exp $
+ * $FreeBSD: head/sys/cddl/compat/opensolaris/sys/random.h 305679 2016-09-10 09:37:41Z mav $
  */
 
 #ifndef _OPENSOLARIS_SYS_RANDOM_H_
@@ -33,7 +33,8 @@
 
 #include <sys/cprng.h>
 
-#define	random_get_bytes(p, s)		cprng_fast(p, s)
-#define	random_get_pseudo_bytes(p, s)	cprng_fast(p, s)
+#define	random_get_bytes(p, s)		cprng_fast((p), (s))
+#define	random_get_pseudo_bytes(p, s)	cprng_fast((p), (s))
+#define	read_random(p, s)		cprng_fast((p), (s))
 
 #endif	/* !_OPENSOLARIS_SYS_RANDOM_H_ */

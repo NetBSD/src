@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cnw.c,v 1.61 2016/12/15 09:28:06 ozaki-r Exp $	*/
+/*	$NetBSD: if_cnw.c,v 1.61.14.1 2018/06/25 07:26:01 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.61 2016/12/15 09:28:06 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.61.14.1 2018/06/25 07:26:01 pgoyette Exp $");
 
 #include "opt_inet.h"
 
@@ -129,6 +129,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.61 2016/12/15 09:28:06 ozaki-r Exp $");
 
 #include <net/if_dl.h>
 #include <net/if_ether.h>
+#include <net/bpf.h>
 
 #ifdef INET
 #include <netinet/in.h>
@@ -137,9 +138,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.61 2016/12/15 09:28:06 ozaki-r Exp $");
 #include <netinet/ip.h>
 #include <netinet/if_inarp.h>
 #endif
-
-#include <net/bpf.h>
-#include <net/bpfdesc.h>
 
 /*
  * Let these be patchable variables, initialized from macros that can

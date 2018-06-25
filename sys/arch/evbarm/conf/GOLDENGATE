@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GOLDENGATE,v 1.16 2017/09/14 07:58:40 mrg Exp $
+#	$NetBSD: GOLDENGATE,v 1.16.2.1 2018/06/25 07:25:40 pgoyette Exp $
 #
 #	GOLDENGATE -- Cortina GOLDENGATE Eval Board Kernel
 #
@@ -167,7 +167,7 @@ cpu0		at mainbus?
 armperiph0	at mainbus?		# A9 On-Chip Peripherals
 armgic0		at armperiph?		# ARM Generic Interrupt Controller
 arml2cc0	at armperiph? flags 0	# ARM PL310 L2CC
-a9tmr0		at armperiph?		# A9 Global Timer
+arma9tmr0	at armperiph?		# A9 Global Timer
 a9wdt0		at armperiph? flags 1	# A9 Watchdog Timer
 
 # Peripherals

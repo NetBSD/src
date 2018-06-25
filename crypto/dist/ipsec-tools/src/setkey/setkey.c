@@ -1,4 +1,4 @@
-/*	$NetBSD: setkey.c,v 1.16 2013/06/14 16:29:14 christos Exp $	*/
+/*	$NetBSD: setkey.c,v 1.16.26.1 2018/06/25 07:25:05 pgoyette Exp $	*/
 
 /*	$KAME: setkey.c,v 1.36 2003/09/24 23:52:51 itojun Exp $	*/
 
@@ -71,20 +71,20 @@
 
 #define strlcpy(d,s,l) (strncpy(d,s,l), (d)[(l)-1] = '\0')
 
-void usage __P((int));
-int main __P((int, char **));
-int get_supported __P((void));
-void sendkeyshort __P((u_int));
-void promisc __P((void));
-int postproc __P((struct sadb_msg *, int));
-int verifypriority __P((struct sadb_msg *m));
-int fileproc __P((const char *));
-const char *numstr __P((int));
-void shortdump_hdr __P((void));
-void shortdump __P((struct sadb_msg *));
-static void printdate __P((void));
-static int32_t gmt2local __P((time_t));
-void stdin_loop __P((void));
+void usage(int);
+int main(int, char **);
+int get_supported(void);
+void sendkeyshort(u_int);
+void promisc(void);
+int postproc(struct sadb_msg *, int);
+int verifypriority(struct sadb_msg *m);
+int fileproc(const char *);
+const char *numstr(int);
+void shortdump_hdr(void);
+void shortdump(struct sadb_msg *);
+static void printdate(void);
+static int32_t gmt2local(time_t);
+void stdin_loop(void);
 
 #define MODE_SCRIPT	1
 #define MODE_CMDDUMP	2
@@ -140,9 +140,7 @@ usage(int only_version)
 }
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	FILE *fp = stdin;
 	int c;
@@ -286,7 +284,7 @@ main(argc, argv)
 }
 
 int
-get_supported()
+get_supported(void)
 {
 
 	if (pfkey_send_register(so, SADB_SATYPE_UNSPEC) < 0)
@@ -299,7 +297,7 @@ get_supported()
 }
 
 void
-stdin_loop()
+stdin_loop(void)
 {
 	char line[1024], *semicolon, *comment;
 	size_t linelen = 0;
@@ -361,8 +359,7 @@ stdin_loop()
 }
 
 void
-sendkeyshort(type)
-        u_int type;
+sendkeyshort(u_int type)
 {
 	struct sadb_msg msg;
 
@@ -381,7 +378,7 @@ sendkeyshort(type)
 }
 
 void
-promisc()
+promisc(void)
 {
 	struct sadb_msg msg;
 	u_char rbuf[1024 * 32];	/* XXX: Enough ? Should I do MSG_PEEK ? */
@@ -452,11 +449,8 @@ promisc()
  * On any error, set *num_spi to 0 and return NULL.
  */
 u_int32_t *
-sendkeymsg_spigrep(satype, srcs, dsts, num_spi)
-	unsigned int satype;
-	struct addrinfo *srcs;
-	struct addrinfo *dsts;
-	int *num_spi;
+sendkeymsg_spigrep(unsigned int satype, struct addrinfo *srcs,
+    struct addrinfo *dsts, int *num_spi)
 {
 	struct sadb_msg msg, *m;
 	char *buf;
@@ -608,9 +602,7 @@ sendkeymsg_spigrep(satype, srcs, dsts, num_spi)
 }
 
 int
-sendkeymsg(buf, len)
-	char *buf;
-	size_t len;
+sendkeymsg(char *buf, size_t len)
 {
 	u_char rbuf[1024 * 32];	/* XXX: Enough ? Should I do MSG_PEEK ? */
 	ssize_t l;
@@ -686,9 +678,7 @@ end:
 }
 
 int
-postproc(msg, len)
-	struct sadb_msg *msg;
-	int len;
+postproc(struct sadb_msg *msg, int len)
 {
 #ifdef HAVE_PFKEY_POLICY_PRIORITY
 	static int priority_support_check = 0;
@@ -787,8 +777,7 @@ postproc(msg, len)
 
 #ifdef HAVE_PFKEY_POLICY_PRIORITY
 int
-verifypriority(m)
-	struct sadb_msg *m;
+verifypriority(struct sadb_msg *m)
 {
 	caddr_t mhp[SADB_EXT_MAX + 1];
 	struct sadb_x_policy *xpl;
@@ -819,8 +808,7 @@ verifypriority(m)
 #endif
 
 int
-fileproc(filename)
-	const char *filename;
+fileproc(const char *filename)
 {
 	int fd;
 	ssize_t len, l;
@@ -895,8 +883,7 @@ static const char *ipproto[] = {
 	(((x) < sizeof(tab)/sizeof(tab[0]) && tab[(x)])	? tab[(x)] : numstr(x))
 
 const char *
-numstr(x)
-	int x;
+numstr(int x)
 {
 	static char buf[20];
 	snprintf(buf, sizeof(buf), "#%d", x);
@@ -904,15 +891,14 @@ numstr(x)
 }
 
 void
-shortdump_hdr()
+shortdump_hdr(void)
 {
 	printf("%-4s %-3s %-1s %-8s %-7s %s -> %s\n",
 		"time", "p", "s", "spi", "ltime", "src", "dst");
 }
 
 void
-shortdump(msg)
-	struct sadb_msg *msg;
+shortdump(struct sadb_msg *msg)
 {
 	caddr_t mhp[SADB_EXT_MAX + 1];
 	char buf[NI_MAXHOST], pbuf[NI_MAXSERV];
@@ -998,7 +984,7 @@ shortdump(msg)
  * Print the timestamp
  */
 static void
-printdate()
+printdate(void)
 {
 	struct timeval tp;
 	int s;

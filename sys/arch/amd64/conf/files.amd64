@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.101.2.1 2018/04/16 01:59:52 pgoyette Exp $
+#	$NetBSD: files.amd64,v 1.101.2.2 2018/06/25 07:25:38 pgoyette Exp $
 #
 # new style config file for amd64 architecture
 #
@@ -56,7 +56,7 @@ file	arch/amd64/amd64/process_machdep.c	machdep
 file	arch/amd64/amd64/trap.c			machdep
 file	arch/x86/x86/fpu.c			machdep
 file	arch/x86/x86/dbregs.c			machdep
-file	arch/x86/x86/convert_xmm_s87.c		machdep
+file	arch/x86/x86/spectre.c			machdep
 file	arch/amd64/amd64/lock_stubs.S		machdep
 file	dev/cons.c				machdep
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mips,v 1.67 2017/02/22 13:34:39 maya Exp $
+#	$NetBSD: Makefile.mips,v 1.67.12.1 2018/06/25 07:25:44 pgoyette Exp $
 
 # Makefile for NetBSD
 #
@@ -59,14 +59,14 @@ CFLAGS+=	-msym32 -mabi=64
 AFLAGS+=	-msym32 -mabi=64
 .endif
 .if ${MACHINE_ARCH} == "mips64eb"
-LDFLAGS+=	-m elf64btsmip
+LDFLAGS+=	-Wl,-m,elf64btsmip
 LINKFORMAT+=	-m elf64btsmip
 SYSTEM_LD_TAIL_EXTRA+= \
 		;echo ${OBJCOPY} -O elf32-ntradbigmips $@ $@.elf32; \
 		${OBJCOPY} -O elf32-ntradbigmips $@ $@.elf32
 .endif
 .if ${MACHINE_ARCH} == "mips64el"
-LDFLAGS+=	-m elf64ltsmip
+LDFLAGS+=	-Wl,-m,elf64ltsmip
 LINKFORMAT+=	-m elf64ltsmip
 SYSTEM_LD_TAIL_EXTRA+= \
 		;echo ${OBJCOPY} -O elf32-ntradlittlemips $@ $@.elf32; \

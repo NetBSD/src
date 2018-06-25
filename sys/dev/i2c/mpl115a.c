@@ -1,4 +1,4 @@
-/*	$NetBSD: mpl115a.c,v 1.1 2013/09/08 14:59:42 rkujawa Exp $ */
+/*	$NetBSD: mpl115a.c,v 1.1.34.1 2018/06/25 07:25:50 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpl115a.c,v 1.1 2013/09/08 14:59:42 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpl115a.c,v 1.1.34.1 2018/06/25 07:25:50 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,7 +97,7 @@ mpl115a_match(device_t parent, cfdata_t cf, void *aux)
 	struct i2c_attach_args *ia = aux;
 
 	if (ia->ia_addr == MPL115A_ADDR) 
-		return 1;
+		return I2C_MATCH_ADDRESS_ONLY;
 	return 0;
 }
 

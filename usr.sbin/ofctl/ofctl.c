@@ -1,4 +1,4 @@
-/*	$NetBSD: ofctl.c,v 1.12 2015/12/23 13:42:24 jmcneill Exp $	*/
+/*	$NetBSD: ofctl.c,v 1.12.14.1 2018/06/25 07:26:12 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 2006, 2007\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: ofctl.c,v 1.12 2015/12/23 13:42:24 jmcneill Exp $");
+__RCSID("$NetBSD: ofctl.c,v 1.12.14.1 2018/06/25 07:26:12 pgoyette Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -62,6 +62,7 @@ static int isstrprint(const char *, size_t, int);
 
 static int lflag;
 static int pflag;
+static int vflag;
 
 struct of_node {
 	TAILQ_ENTRY(of_node) of_sibling;
@@ -500,10 +501,11 @@ main(int argc, char **argv)
 	const char *propfilein = NULL;
 	const char *propfileout = NULL;
 
-	while ((c = getopt(argc, argv, "f:lpr:w:")) != EOF) {
+	while ((c = getopt(argc, argv, "f:lpr:vw:")) != EOF) {
 		switch (c) {
 		case 'l': lflag++; break;
 		case 'p': pflag++; break;
+		case 'v': vflag++; break;
 		case 'f': file = optarg; break;
 		case 'r': propfilein = optarg; break;
 		case 'w': propfileout = optarg; break;
@@ -511,7 +513,7 @@ main(int argc, char **argv)
 		}
 	}
 	if (errflag)
-		errx(1, "usage: ofctl [-pl] [-f file] [-r propfile] [-w propfile] [node...]");
+		errx(1, "usage: ofctl [-lpv] [-f file] [-r propfile] [-w propfile] [node...]");
 
 	if (propfilein != NULL) {
 		of_proplib = prop_dictionary_internalize_from_file(propfilein);
@@ -694,7 +696,7 @@ oflist(int node, const char *parent_device_type, int depth,
 	int len;
 	while (node != 0) {
 		int child;
-		if (pflag == 0) {
+		if (pflag == 0 && vflag == 0) {
 			len = ofname(node, of_buf, of_buflen-1);
 			printf("%08x: %*s%s", node, depth * 2, "",
 			    (char *) of_buf);

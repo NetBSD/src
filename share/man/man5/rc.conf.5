@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.168 2018/01/09 09:17:52 wiz Exp $
+.\"	$NetBSD: rc.conf.5,v 1.168.2.1 2018/06/25 07:25:36 pgoyette Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -55,7 +55,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd January 8, 2018
+.Dd June 22, 2018
 .Dt RC.CONF 5
 .Os
 .Sh NAME
@@ -638,6 +638,12 @@ with the
 .Dq Li -l
 flag and suppresses warnings about interfaces in this list that
 do not have an ifconfig file or variable.
+.It Sy blacklistd
+Boolean value.
+Runs
+.Xr blacklistd 8
+to dynamically block hosts on a DoS according to configuration set in
+.Xr blacklistd.conf 5
 .It Sy dhclient
 Boolean value.
 Set true to configure some or all network interfaces using
@@ -787,12 +793,6 @@ you can configure your node as a router,
 a non-autoconfigured host, or an autoconfigured host.
 Invalid values will be ignored, and the node will be configured as
 a non-autoconfigured host.
-You may want to check
-.Sy rtsol
-and
-.Sy rtsold
-as well, if you set the variable to
-.Dq Li autohost .
 .It Sy ip6uniquelocal
 Boolean value.
 If
@@ -874,6 +874,17 @@ Runs
 to load in IPsec manual keys and policies from
 .Pa /etc/ipsec.conf
 at network boot time, before any interfaces are configured.
+.It Sy npf
+Boolean value.
+Loads
+.Xr npf.conf 5
+at network boot time, and starts
+.Xr npf 7 .
+.It Sy npfd
+Boolean value.
+Runs
+.Xr npfd 8 ,
+the NPF packet filter logging and state synchronization daemon.
 .It Sy net_interfaces
 A string.
 The list of network interfaces to be configured at boot time.
@@ -967,21 +978,6 @@ Boolean value.
 Runs
 .Xr racoon 8 ,
 the IKE (ISAKMP/Oakley) key management daemon.
-.It Sy rtsol
-Boolean value.
-Run
-.Xr rtsol 8 ,
-router solicitation command for IPv6 hosts.
-On nomadic hosts like notebook computers, you may want to enable
-.Sy rtsold
-as well.
-Passes
-.Sy rtsol_flags .
-This is only for autoconfigured IPv6 hosts, so set
-.Sy ip6mode
-to
-.Dq Li autohost
-if you use it.
 .It Sy wpa_supplicant
 Boolean value.
 Run
@@ -1194,24 +1190,6 @@ Passes
 .\" if
 .\" .Sy gated
 .\" is true.
-.It Sy rtsold
-Boolean value.
-Runs
-.Xr rtsold 8 ,
-the IPv6 router solicitation daemon.
-.Xr rtsold 8
-periodically transmits router solicitation packets
-to find IPv6 routers on the network.
-This configuration is mainly for nomadic hosts like notebook computers.
-Stationary hosts should work fine with just
-.Sy rtsol .
-Passes
-.Sy rtsold_flags .
-This is only for autoconfigured IPv6 hosts, so set
-.Sy ip6mode
-to
-.Dq Li autohost
-if you use it.
 .El
 .Ss Daemons used to boot other hosts over a network
 .Bl -tag -width net_interfaces

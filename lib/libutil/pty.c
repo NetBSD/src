@@ -1,4 +1,4 @@
-/*	$NetBSD: pty.c,v 1.31 2009/02/20 16:44:06 christos Exp $	*/
+/*	$NetBSD: pty.c,v 1.31.44.1 2018/06/25 07:25:35 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pty.c	8.3 (Berkeley) 5/16/94";
 #else
-__RCSID("$NetBSD: pty.c,v 1.31 2009/02/20 16:44:06 christos Exp $");
+__RCSID("$NetBSD: pty.c,v 1.31.44.1 2018/06/25 07:25:35 pgoyette Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -70,6 +70,7 @@ openpty(int *amaster, int *aslave, char *name, struct termios *term,
 	mode_t mode;
 	struct group grs, *grp;
 	char grbuf[1024];
+	struct ptmget pt;
 
 	_DIAGASSERT(amaster != NULL);
 	_DIAGASSERT(aslave != NULL);
@@ -78,7 +79,6 @@ openpty(int *amaster, int *aslave, char *name, struct termios *term,
 	/* winp may be NULL */
 
 	if ((master = open("/dev/ptm", O_RDWR)) != -1) {
-		struct ptmget pt;
 		if (ioctl(master, TIOCPTMGET, &pt) != -1) {
 			(void)close(master);
 			master = pt.cfd;

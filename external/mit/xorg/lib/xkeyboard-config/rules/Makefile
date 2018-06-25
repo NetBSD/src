@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2010/05/29 07:58:24 ghen Exp $
+#	$NetBSD: Makefile,v 1.3.44.1 2018/06/25 07:25:32 pgoyette Exp $
 #
 #	When upgrading, re-assemble the files base, base.lst, evdev and
 #	evdev.lst by running ./configure && make in the dist directory,
@@ -7,14 +7,14 @@
 .include <bsd.own.mk>
 
 XKBNAME=	rules
-FILES=		README base base.lst base.extras.xml.in base.xml.in \
-		evdev evdev.lst evdev.extras.xml.in evdev.xml.in \
-		xfree98 xkb.dtd
+GENFILES=	base.extras.xml base.xml evdev.extras.xml evdev.xml
+FILES=		README base base.lst evdev evdev.lst xfree98 xkb.dtd
+FILES+=		${GENFILES}
+CLEAN+=		${GENFILES}
 
-FILESNAME_base.xml.in=		base.xml
-FILESNAME_base.extras.xml.in=	base.extras.xml
-FILESNAME_evdev.xml.in=		evdev.xml
-FILESNAME_evdev.extras.xml.in=	evdev.extras.xml
+.for i in ${GENFILES}
+FILESBUILD_${i}=	yes
+.endfor
 
 SYMLINKS=	base ${FILESDIR}/xorg \
 		base.lst ${FILESDIR}/xorg.lst \

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2016/08/04 17:07:24 christos Exp $
+#	$NetBSD: Makefile,v 1.11.12.1 2018/06/25 07:25:25 pgoyette Exp $
 
 .include <bsd.init.mk>
 
@@ -20,13 +20,15 @@ LIBDPLIBS+= \
 
 LIB=		zpool
 CPPFLAGS+=	-std=c99
-#CPPFLAGS+=-Wall -Wno-unknown-pragmas
+
+CWARNFLAGS+=	-Wno-missing-field-initializers
+CWARNFLAGS+=	-Wno-parentheses
 
 # Local stuff
-SRCS=		kernel.c kernel2.c atomic.c
+SRCS+=		kernel.c atomic.c
 
 # Sun stuff
-SRCS+=		${ZFS_COMMON_OBJS:C/.o$/.c/}
+SRCS+=		${ZFS_COMMON_OBJS:C/.o$/.c/} vdev_file.c trim_map.c
 SRCS+=		${ZFS_SHARED_OBJS:C/.o$/.c/}
 SRCS+=		taskq.c util.c list.c u8_textprep.c
 

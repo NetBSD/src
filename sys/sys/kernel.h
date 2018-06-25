@@ -1,4 +1,4 @@
-/*	$NetBSD: kernel.h,v 1.29 2013/07/30 13:14:30 matt Exp $	*/
+/*	$NetBSD: kernel.h,v 1.29.28.1 2018/06/25 07:26:07 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -40,6 +40,8 @@
 #define _SYS_KERNEL_H_
 
 #if defined(_KERNEL) || defined(_STANDALONE)
+#include <sys/param.h>
+
 /* Global variables for the kernel. */
 
 extern long hostid;

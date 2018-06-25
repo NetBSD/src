@@ -1,4 +1,4 @@
-/*	$NetBSD: synaptics.c,v 1.36 2017/12/05 18:04:21 jmcneill Exp $	*/
+/*	$NetBSD: synaptics.c,v 1.36.2.1 2018/06/25 07:26:01 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -48,7 +48,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.36 2017/12/05 18:04:21 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.36.2.1 2018/06/25 07:26:01 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -297,6 +297,24 @@ pms_synaptics_probe_extended(struct pms_softc *psc)
 	}
 }
 
+static const struct {
+	int bit;
+	const char *desc;
+} syn_flags[] = {
+	{ SYN_FLAG_HAS_EXTENDED_WMODE, "Extended W mode", },
+	{ SYN_FLAG_HAS_PASSTHROUGH, "Passthrough", },
+	{ SYN_FLAG_HAS_MIDDLE_BUTTON, "Middle button", },
+	{ SYN_FLAG_HAS_BUTTONS_4_5, "Buttons 4/5", },
+	{ SYN_FLAG_HAS_UP_DOWN_BUTTONS, "Up/down buttons", },
+	{ SYN_FLAG_HAS_PALM_DETECT, "Palm detect", },
+	{ SYN_FLAG_HAS_ONE_BUTTON_CLICKPAD, "One button click pad", },
+	{ SYN_FLAG_HAS_TWO_BUTTON_CLICKPAD, "Two button click pad", },
+	{ SYN_FLAG_HAS_VERTICAL_SCROLL, "Vertical scroll", },
+	{ SYN_FLAG_HAS_HORIZONTAL_SCROLL, "Horizontal scroll", },
+	{ SYN_FLAG_HAS_MULTI_FINGER_REPORT, "Multi-finger Report", },
+	{ SYN_FLAG_HAS_MULTI_FINGER, "Multi-finger", },
+};
+
 int
 pms_synaptics_probe_init(void *vsc)
 {
@@ -368,53 +386,12 @@ pms_synaptics_probe_init(void *vsc)
 		const char comma[] = ", ";
 		const char *sep = "";
 		aprint_normal_dev(psc->sc_dev, "");
-		if (sc->flags & SYN_FLAG_HAS_EXTENDED_WMODE) {
-			aprint_normal("%sExtended W mode", sep);
-			sep = comma;
+		for (size_t f = 0; f < __arraycount(syn_flags); f++) {
+			if (sc->flags & syn_flags[f].bit) {
+				aprint_normal("%s%s", sep, syn_flags[f].desc);
+				sep = comma;
+			}
 		}
-		if (sc->flags & SYN_FLAG_HAS_PASSTHROUGH) {
-			aprint_normal("%sPassthrough", sep);
-			sep = comma;
-		}
-		if (sc->flags & SYN_FLAG_HAS_MIDDLE_BUTTON) {
-			aprint_normal("%sMiddle button", sep);
-			sep = comma;
-		}
-		if (sc->flags & SYN_FLAG_HAS_BUTTONS_4_5) {
-			aprint_normal("%sButtons 4/5", sep);
-			sep = comma;
-		}
-		if (sc->flags & SYN_FLAG_HAS_UP_DOWN_BUTTONS) {
-			aprint_normal("%sUp/down buttons", sep);
-			sep = comma;
-		}
-		if (sc->flags & SYN_FLAG_HAS_PALM_DETECT) {
-			aprint_normal("%sPalm detect", sep);
-			sep = comma;
-		}
-		if (sc->flags & SYN_FLAG_HAS_ONE_BUTTON_CLICKPAD) {
-			aprint_normal("%sOne button click pad", sep);
-			sep = comma;
-		}
-		if (sc->flags & SYN_FLAG_HAS_TWO_BUTTON_CLICKPAD) {
-			aprint_normal("%sTwo button click pad", sep);
-			sep = comma;
-		}
-		if (sc->flags & SYN_FLAG_HAS_VERTICAL_SCROLL) {
-			aprint_normal("%sVertical scroll", sep);
-			sep = comma;
-		}
-		if (sc->flags & SYN_FLAG_HAS_HORIZONTAL_SCROLL) {
-			aprint_normal("%sHorizontal scroll", sep);
-			sep = comma;
-		}
-		if (sc->flags & SYN_FLAG_HAS_MULTI_FINGER_REPORT) {
-			aprint_normal("%sMulti-finger Report", sep);
-			sep = comma;
-		}
-		if (sc->flags & SYN_FLAG_HAS_MULTI_FINGER)
-			aprint_normal("%sMulti-finger", sep);
-
 		aprint_normal("\n");
 	}
 
@@ -433,11 +410,12 @@ pms_synaptics_enable(void *vsc)
 	struct synaptics_softc *sc = &psc->u.synaptics;
 	u_char enable_modes;
 	int res;
+	u_char cmd[1], resp[3];
 
 	if (sc->flags & SYN_FLAG_HAS_PASSTHROUGH) {
 		/*
-		 * Extended capability probes can confuse the passthrough device;
-		 * reset the touchpad now to cure that.
+		 * Extended capability probes can confuse the passthrough
+		 * device; reset the touchpad now to cure that.
 		 */
 		res = synaptics_poll_reset(psc);
 	}
@@ -451,7 +429,7 @@ pms_synaptics_enable(void *vsc)
 	enable_modes =
 	   SYNAPTICS_MODE_ABSOLUTE | SYNAPTICS_MODE_W | SYNAPTICS_MODE_RATE;
 
-	if (sc->flags & SYN_FLAG_HAS_EXTENDED_WMODE) 
+	if (sc->flags & SYN_FLAG_HAS_EXTENDED_WMODE)
 		enable_modes |= SYNAPTICS_MODE_EXTENDED_W;
 
 	/*
@@ -469,10 +447,31 @@ pms_synaptics_enable(void *vsc)
 		aprint_error("synaptics: set mode error\n");
 
 	synaptics_poll_cmd(psc, PMS_SET_SAMPLE, SYNAPTICS_CMD_SET_MODE2, 0);
-	
+
 	/* a couple of set scales to clear out pending commands */
 	for (int i = 0; i < 2; i++)
 		synaptics_poll_cmd(psc, PMS_SET_SCALE11, 0);
+
+	/*
+	 * Enable multi-finger capability in cold boot case with
+	 * undocumented sequence.
+	 * Parameters from
+	 * https://github.com/RehabMan/OS-X-Voodoo-PS2-Controller/
+	 * VoodooPS2Trackpad/VoodooPS2SynapticsTouchPad.cpp
+	 * setTouchPadModeByte function.
+	 */
+	if (sc->flags & SYN_FLAG_HAS_EXTENDED_WMODE) {
+		static const uint8_t seq[] = {
+		    0xe6, 0xe8, 0x00, 0xe8, 0x00,
+		    0xe8, 0x00, 0xe8, 0x03, 0xf3,
+		    0xc8,
+		};
+		for (size_t s = 0; s < __arraycount(seq); s++) {
+			cmd[0] = seq[s];
+			(void)pckbport_poll_cmd(psc->sc_kbctag, psc->sc_kbcslot,
+				cmd, 1, 3, resp, 0);
+		}
+	}
 
 	synaptics_poll_cmd(psc, PMS_DEV_ENABLE, 0);
 
@@ -823,7 +822,7 @@ pms_sysctl_synaptics_verify(SYSCTLFN_ARGS)
 			return (EINVAL);
 	} else
 	if (node.sysctl_num == synaptics_button_boundary_nodenum) {
-		if (t < 0 || t < SYNAPTICS_EDGE_BOTTOM || 
+		if (t < 0 || t < SYNAPTICS_EDGE_BOTTOM ||
 		    t > SYNAPTICS_EDGE_TOP)
 			return (EINVAL);
 	} else
@@ -862,7 +861,7 @@ pms_synaptics_parse(struct pms_softc *psc)
 	   ((psc->packet[0] & 0x04) >> 1) +
 	   ((psc->packet[3] & 0x04) >> 2);
 	sp.sp_finger = 0;
-	if (sp.sp_w ==  SYNAPTICS_WIDTH_EXTENDED_W) {
+	if (sp.sp_w == SYNAPTICS_WIDTH_EXTENDED_W) {
 		ew_mode = psc->packet[5] >> 4;
 		switch (ew_mode)
 		{
@@ -936,7 +935,7 @@ pms_synaptics_parse(struct pms_softc *psc)
 		new_buttons = 0;
 		if(sc->flags & SYN_FLAG_HAS_ONE_BUTTON_CLICKPAD) {
 			/* This is not correctly specified. Read this button press
-		 	* from L/U bit.  Emulate 3 buttons by checking the 
+		 	* from L/U bit.  Emulate 3 buttons by checking the
 		 	* coordinates of the click and returning the appropriate
 		 	* button code.  Outside the button region default to a
 		 	* left click.

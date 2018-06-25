@@ -1,4 +1,4 @@
-/*	$NetBSD: si70xx.c,v 1.3 2017/12/30 03:18:26 christos Exp $	*/
+/*	$NetBSD: si70xx.c,v 1.3.2.1 2018/06/25 07:25:50 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2017 Brad Spencer <brad@anduin.eldar.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: si70xx.c,v 1.3 2017/12/30 03:18:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: si70xx.c,v 1.3.2.1 2018/06/25 07:25:50 pgoyette Exp $");
 
 /*
   Driver for the Silicon Labs SI7013/SI7020/SI7021
@@ -563,21 +563,16 @@ si70xx_sysctl_init(struct si70xx_sc *sc)
 static int
 si70xx_match(device_t parent, cfdata_t match, void *aux)
 {
-	struct i2c_attach_args *ia;
-	int error;
+	struct i2c_attach_args *ia = aux;
+	int error, match_result;
 	const bool matchdebug = false;
 
-	ia = aux;
+	if (iic_use_direct_match(ia, match, NULL, &match_result))
+		return match_result;
 
-	if (ia->ia_name) {
-		/* direct config - check name */
-		if (strcmp(ia->ia_name, "si70xxtemp") != 0)
-			return 0;
-	} else {
-		/* indirect config - check for configured address */
-		if (ia->ia_addr != SI70XX_TYPICAL_ADDR)
-			return 0;
-	}
+	/* indirect config - check for configured address */
+	if (ia->ia_addr != SI70XX_TYPICAL_ADDR)
+		return 0;
 
 	/*
 	 * Check to see if something is really at this i2c address. This will
@@ -592,7 +587,7 @@ si70xx_match(device_t parent, cfdata_t match, void *aux)
 	error = si70xx_poke(ia->ia_tag, ia->ia_addr, matchdebug);
 	iic_release_bus(ia->ia_tag, 0);
 
-	return error == 0;
+	return error == 0 ? I2C_MATCH_ADDRESS_AND_PROBE : 0;
 }
 
 static void

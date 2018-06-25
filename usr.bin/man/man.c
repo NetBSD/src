@@ -1,4 +1,4 @@
-/*	$NetBSD: man.c,v 1.66 2017/05/02 14:19:23 abhinav Exp $	*/
+/*	$NetBSD: man.c,v 1.66.8.1 2018/06/25 07:26:11 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994, 1995\
 #if 0
 static char sccsid[] = "@(#)man.c	8.17 (Berkeley) 1/31/95";
 #else
-__RCSID("$NetBSD: man.c,v 1.66 2017/05/02 14:19:23 abhinav Exp $");
+__RCSID("$NetBSD: man.c,v 1.66.8.1 2018/06/25 07:26:11 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -128,6 +128,7 @@ int
 main(int argc, char **argv)
 {
 	static struct manstate m;
+	struct utsname utsname;
 	int ch, abs_section, found;
 	ENTRY *esubd, *epath;
 	char *p, **ap, *cmd;
@@ -204,8 +205,6 @@ main(int argc, char **argv)
 	config(m.conffile);    /* exits on error ... */
 
 	if ((m.machine = getenv("MACHINE")) == NULL) {
-		struct utsname utsname;
-
 		if (uname(&utsname) == -1)
 			err(EXIT_FAILURE, "uname");
 		m.machine = utsname.machine;

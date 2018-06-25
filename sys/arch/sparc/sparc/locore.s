@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.269.2.1 2018/03/22 01:44:46 pgoyette Exp $	*/
+/*	$NetBSD: locore.s,v 1.269.2.2 2018/06/25 07:25:45 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -5754,24 +5754,20 @@ Lfp_finish:
 	retl
 	 std	%f30, [%o0 + FS_REGS + (4*30)]
 
-/*
- * We really should panic here but while we figure out what the bug is
- * that a remote CPU gets a NULL struct fpstate *, this lets the system
- * work at least seemingly stably.
- */
+/* Handle NULL fpstate argument for savefpstate */
 Lfp_null_fpstate:
-#if 1
+#ifdef DIAGNOSTIC
+	ld	[%o5 + CPUINFO_CPUNO], %o1
+	sethi	%hi(Lpanic_savefpstate), %o0
+	call	_C_LABEL(panic)
+	 or	%o0, %lo(Lpanic_savefpstate), %o0
+#else
 	sethi	%hi(CPUINFO_VA), %o5
 	ldd	[%o5 + CPUINFO_SAVEFPSTATE_NULL], %o2
 	inccc   %o3
 	addx    %o2, 0, %o2
 	retl
 	 std	%o2, [%o5 + CPUINFO_SAVEFPSTATE_NULL]
-#else
-	ld	[%o5 + CPUINFO_CPUNO], %o1
-	sethi	%hi(Lpanic_savefpstate), %o0
-	call	_C_LABEL(panic)
-	 or	%o0, %lo(Lpanic_savefpstate), %o0
 #endif
 
 /*

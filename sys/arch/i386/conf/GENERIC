@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1174.2.2 2018/05/21 04:36:00 pgoyette Exp $
+# $NetBSD: GENERIC,v 1.1174.2.3 2018/06/25 07:25:42 pgoyette Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.1174.2.2 $"
+#ident		"GENERIC-$Revision: 1.1174.2.3 $"
 
 maxusers	64		# estimated number of users
 
@@ -31,6 +31,7 @@ options 	USER_LDT	# user-settable LDT; used by WINE
 #options 	PAE		# PAE mode (36 bits physical addressing)
 makeoptions	SPECTRE_V2_GCC_MITIGATION=1	# GCC Spectre variant 2
 						# migitation
+options 	SPECTRE_V2_GCC_MITIGATION
 
 # CPU features
 acpicpu*	at cpu?		# ACPI CPU (including frequency scaling)
@@ -660,9 +661,9 @@ dwiic*		at pci?			# I2C controller
 iic*		at dwiic?
 
 # dbCool Thermal monitor and fan controller
-#dbcool* at iic0 addr 0x2C		# Unknown other motherboard(s)
-#dbcool* at iic0 addr 0x2D		# Tyan S2881
-#dbcool* at iic0 addr 0x2E		# Tyan S2882-D
+#dbcool* at iic? addr 0x2C		# Unknown other motherboard(s)
+#dbcool* at iic? addr 0x2D		# Tyan S2881
+#dbcool* at iic? addr 0x2E		# Tyan S2882-D
 
 # IBM Thinkpad Active Protection System
 #aps0	at isa? port 0x1600
@@ -678,7 +679,7 @@ iic*		at dwiic?
 #wbsio*	at isa? port 0x4e
 
 # IBM Hawk Integrated Systems Management Processor
-#ibmhawk0	at iic0	addr 0x37
+#ibmhawk0	at iic?	addr 0x37
 
 # LM7[89] and compatible hardware monitors
 # Use flags to select temp sensor type (see lm(4) man page for details)
@@ -689,8 +690,8 @@ iic*		at dwiic?
 #smsc0	at isa? port 0x02e
 
 # SMSC LPC47M192 hardware monitor
-#smscmon*	at iic0 addr 0x2c
-#smscmon*	at iic0 addr 0x2d	# (alternate address)
+#smscmon*	at iic? addr 0x2c
+#smscmon*	at iic? addr 0x2d	# (alternate address)
 
 # PC87366 hardware monitor
 nsclpcsio*	at isa?
@@ -702,22 +703,22 @@ nsclpcsio*	at isa?
 #viaenv* 	at pci? dev ? function ?
 
 # Serial Presence Detect capable memory modules
-#spdmem* at iic0 addr 0x50
-#spdmem* at iic0 addr 0x51
-#spdmem* at iic0 addr 0x52
-#spdmem* at iic0 addr 0x53
-#spdmem* at iic0 addr 0x54
-#spdmem* at iic0 addr 0x55
-#spdmem* at iic0 addr 0x56
-#spdmem* at iic0 addr 0x57
-#sdtemp* at iic0 addr 0x18
-#sdtemp* at iic0 addr 0x19
-#sdtemp* at iic0 addr 0x1a
-#sdtemp* at iic0 addr 0x1b
-#sdtemp* at iic0 addr 0x1c
-#sdtemp* at iic0 addr 0x1d
-#sdtemp* at iic0 addr 0x1e
-#sdtemp* at iic0 addr 0x1f
+#spdmem* at iic? addr 0x50
+#spdmem* at iic? addr 0x51
+#spdmem* at iic? addr 0x52
+#spdmem* at iic? addr 0x53
+#spdmem* at iic? addr 0x54
+#spdmem* at iic? addr 0x55
+#spdmem* at iic? addr 0x56
+#spdmem* at iic? addr 0x57
+#sdtemp* at iic? addr 0x18
+#sdtemp* at iic? addr 0x19
+#sdtemp* at iic? addr 0x1a
+#sdtemp* at iic? addr 0x1b
+#sdtemp* at iic? addr 0x1c
+#sdtemp* at iic? addr 0x1d
+#sdtemp* at iic? addr 0x1e
+#sdtemp* at iic? addr 0x1f
 
 # I2C HID devices
 ihidev* at iic?

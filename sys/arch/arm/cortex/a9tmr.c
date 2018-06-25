@@ -1,4 +1,4 @@
-/*	$NetBSD: a9tmr.c,v 1.14 2015/07/24 05:20:01 ryo Exp $	*/
+/*	$NetBSD: a9tmr.c,v 1.14.16.1 2018/06/25 07:25:39 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: a9tmr.c,v 1.14 2015/07/24 05:20:01 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a9tmr.c,v 1.14.16.1 2018/06/25 07:25:39 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -52,8 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: a9tmr.c,v 1.14 2015/07/24 05:20:01 ryo Exp $");
 static int a9tmr_match(device_t, cfdata_t, void *);
 static void a9tmr_attach(device_t, device_t, void *);
 
-static int clockhandler(void *);
-
 static u_int a9tmr_get_timecount(struct timecounter *);
 
 static struct a9tmr_softc a9tmr_sc;
@@ -69,7 +67,7 @@ static struct timecounter a9tmr_timecounter = {
 	.tc_next = NULL,
 };
 
-CFATTACH_DECL_NEW(a9tmr, 0, a9tmr_match, a9tmr_attach, NULL, NULL);
+CFATTACH_DECL_NEW(arma9tmr, 0, a9tmr_match, a9tmr_attach, NULL, NULL);
 
 static inline uint32_t
 a9tmr_global_read(struct a9tmr_softc *sc, bus_size_t o)
@@ -126,7 +124,10 @@ a9tmr_attach(device_t parent, device_t self, void *aux)
 	 * This runs at the ARM PERIPHCLOCK which should be 1/2 of the CPU clock.
 	 * The MD code should have setup our frequency for us.
 	 */
-	prop_dictionary_get_uint32(dict, "frequency", &sc->sc_freq);
+	if (!prop_dictionary_get_uint32(dict, "frequency", &sc->sc_freq)) {
+		dict = device_properties(parent);
+		prop_dictionary_get_uint32(dict, "frequency", &sc->sc_freq);
+	}
 
 	humanize_number(freqbuf, sizeof(freqbuf), sc->sc_freq, "Hz", 1000);
 
@@ -146,19 +147,17 @@ a9tmr_attach(device_t parent, device_t self, void *aux)
 	evcnt_attach_dynamic(&sc->sc_ev_missing_ticks, EVCNT_TYPE_MISC, NULL,
 	    device_xname(self), "missing interrupts");
 
-	bus_space_subregion(sc->sc_memt, sc->sc_memh, 
-	    TMR_GLOBAL_BASE, TMR_GLOBAL_SIZE, &sc->sc_global_memh);
-	bus_space_subregion(sc->sc_memt, sc->sc_memh, 
-	    TMR_PRIVATE_BASE, TMR_PRIVATE_SIZE, &sc->sc_private_memh);
-	bus_space_subregion(sc->sc_memt, sc->sc_memh, 
-	    TMR_WDOG_BASE, TMR_WDOG_SIZE, &sc->sc_wdog_memh);
+	bus_space_subregion(sc->sc_memt, sc->sc_memh,
+	    mpcaa->mpcaa_off1, TMR_GLOBAL_SIZE, &sc->sc_global_memh);
 
-	sc->sc_global_ih = intr_establish(IRQ_A9TMR_PPI_GTIMER, IPL_CLOCK,
-	    IST_EDGE | IST_MPSAFE, clockhandler, NULL);
-	if (sc->sc_global_ih == NULL)
-		panic("%s: unable to register timer interrupt", __func__);
-	aprint_normal_dev(sc->sc_dev, "interrupting on irq %d\n",
-	    IRQ_A9TMR_PPI_GTIMER);
+	if (mpcaa->mpcaa_irq != -1) {
+		sc->sc_global_ih = intr_establish(mpcaa->mpcaa_irq, IPL_CLOCK,
+		    IST_EDGE | IST_MPSAFE, a9tmr_intr, NULL);
+		if (sc->sc_global_ih == NULL)
+			panic("%s: unable to register timer interrupt", __func__);
+		aprint_normal_dev(sc->sc_dev, "interrupting on irq %d\n",
+		    mpcaa->mpcaa_irq);
+	}
 }
 
 static inline uint64_t
@@ -241,7 +240,7 @@ a9tmr_init_cpu_clock(struct cpu_info *ci)
 }
 
 void
-cpu_initclocks(void)
+a9tmr_cpu_initclocks(void)
 {
 	struct a9tmr_softc * const sc = &a9tmr_sc;
 
@@ -312,12 +311,12 @@ a9tmr_delay(unsigned int n)
 }
 
 /*
- * clockhandler:
+ * a9tmr_intr:
  *
  *	Handle the hardclock interrupt.
  */
-static int
-clockhandler(void *arg)
+int
+a9tmr_intr(void *arg)
 {
 	struct clockframe * const cf = arg;
 	struct a9tmr_softc * const sc = &a9tmr_sc;

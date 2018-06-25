@@ -1,4 +1,4 @@
-/*	$NetBSD: m41t00.c,v 1.20 2017/10/28 04:53:55 riastradh Exp $	*/
+/*	$NetBSD: m41t00.c,v 1.20.2.1 2018/06/25 07:25:50 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m41t00.c,v 1.20 2017/10/28 04:53:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m41t00.c,v 1.20.2.1 2018/06/25 07:25:50 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,7 +102,7 @@ m41t00_match(device_t parent, cfdata_t cf, void *aux)
 	struct i2c_attach_args *ia = aux;
 
 	if (ia->ia_addr == M41T00_ADDR) {
-		return 1;
+		return I2C_MATCH_ADDRESS_ONLY;
 	}
 
 	return 0;

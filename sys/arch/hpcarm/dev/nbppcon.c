@@ -1,4 +1,4 @@
-/*	$NetBSD: nbppcon.c,v 1.2 2012/06/16 05:58:03 kiyohara Exp $ */
+/*	$NetBSD: nbppcon.c,v 1.2.38.1 2018/06/25 07:25:41 pgoyette Exp $ */
 /*
  * Copyright (c) 2011 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nbppcon.c,v 1.2 2012/06/16 05:58:03 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nbppcon.c,v 1.2.38.1 2018/06/25 07:25:41 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -78,7 +78,7 @@ nbppcon_match(device_t parent, cfdata_t match, void *aux)
 	    !platid_match(&platid, &platid_mask_MACH_PSIONTEKLOGIX_NETBOOK_PRO))
 		 return 0;
 
-	return 1;
+	return I2C_MATCH_ADDRESS_AND_PROBE;
 }
 
 /* ARGSUSED */

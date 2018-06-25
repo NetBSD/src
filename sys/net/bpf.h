@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.h,v 1.69.12.1 2018/04/22 07:20:27 pgoyette Exp $	*/
+/*	$NetBSD: bpf.h,v 1.69.12.2 2018/06/25 07:26:06 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -417,7 +417,6 @@ struct bpf_ops {
 	void (*bpf_detach)(struct ifnet *);
 	void (*bpf_change_type)(struct ifnet *, u_int, u_int);
 
-	void (*bpf_tap)(struct bpf_if *, u_char *, u_int);
 	void (*bpf_mtap)(struct bpf_if *, struct mbuf *);
 	void (*bpf_mtap2)(struct bpf_if *, void *, u_int, struct mbuf *);
 	void (*bpf_mtap_af)(struct bpf_if *, uint32_t, struct mbuf *);
@@ -440,13 +439,6 @@ static __inline void
 bpf_attach2(struct ifnet *_ifp, u_int _dlt, u_int _hdrlen, struct bpf_if **_dp)
 {
 	bpf_ops->bpf_attach(_ifp, _dlt, _hdrlen, _dp);
-}
-
-static __inline void
-bpf_tap(struct ifnet *_ifp, u_char *_pkt, u_int _len)
-{
-	if (_ifp->if_bpf)
-		bpf_ops->bpf_tap(_ifp->if_bpf, _pkt, _len);
 }
 
 static __inline void

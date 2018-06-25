@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.84.2.3 2018/05/21 04:36:05 pgoyette Exp $
+#	$NetBSD: files.i2c,v 1.84.2.4 2018/06/25 07:25:50 pgoyette Exp $
 
 obsolete defflag	opt_i2cbus.h		I2C_SCAN
 define	i2cbus { }
@@ -334,3 +334,8 @@ file	dev/i2c/ims.c				ims
 device	imt: hid, hidmt, wsmousedev
 attach	imt at ihidbus
 file	dev/i2c/imt.c				imt
+
+# Taos TSL256x ambient light sensor
+device	tsllux: sysmon_envsys
+attach	tsllux at iic
+file	dev/i2c/tsl256x.c			tsllux

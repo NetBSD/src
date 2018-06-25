@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_tftp_pxy.c,v 1.5 2012/07/30 19:27:47 pgoyette Exp $	*/
+/*	$NetBSD: ip_tftp_pxy.c,v 1.5.38.1 2018/06/25 07:26:03 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -49,7 +49,7 @@ typedef struct tftpinfo {
 	ipnat_t		*ti_rule;
 } tftpinfo_t;
 
-static  ipftuneable_t   ipf_tftp_tuneables[] = {
+static  const ipftuneable_t   ipf_tftp_tuneables[] = {
 	{ { (void *)offsetof(ipf_tftp_softc_t, ipf_p_tftp_readonly) },
 		"tftp_read_only",	0,	1,
 		stsizeof(ipf_tftp_softc_t, ipf_p_tftp_readonly),

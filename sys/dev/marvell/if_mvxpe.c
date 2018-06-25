@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvxpe.c,v 1.17 2016/12/15 09:28:05 ozaki-r Exp $	*/
+/*	$NetBSD: if_mvxpe.c,v 1.17.16.1 2018/06/25 07:25:51 pgoyette Exp $	*/
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvxpe.c,v 1.17 2016/12/15 09:28:05 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvxpe.c,v 1.17.16.1 2018/06/25 07:25:51 pgoyette Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -2239,7 +2239,7 @@ mvxpe_tx_set_csumflag(struct ifnet *ifp,
 		t->command |= MVXPE_TX_CMD_L3_IP4;
 	}
 	else if (csum_flags & (M_CSUM_TCPv6|M_CSUM_UDPv6)) {
-		iphl = M_CSUM_DATA_IPv6_HL(m->m_pkthdr.csum_data);
+		iphl = M_CSUM_DATA_IPv6_IPHL(m->m_pkthdr.csum_data);
 		t->command |= MVXPE_TX_CMD_L3_IP6;
 	}
 	else {

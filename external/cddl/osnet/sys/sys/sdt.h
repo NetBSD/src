@@ -1,4 +1,4 @@
-/*	$NetBSD: sdt.h,v 1.7 2015/10/02 17:28:57 christos Exp $	*/
+/*	$NetBSD: sdt.h,v 1.7.14.1 2018/06/25 07:25:26 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007 Pawel Jakub Dawidek <pjd@FreeBSD.org>
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/compat/opensolaris/sys/sdt.h,v 1.1 2007/04/06 01:09:06 pjd Exp $
+ * $FreeBSD: head/sys/cddl/compat/opensolaris/sys/sdt.h 271802 2014-09-18 20:00:36Z smh $
  */
 
 #ifndef _OPENSOLARIS_SYS_SDT_H_
@@ -54,5 +54,16 @@
 	type4, arg4, type5, arg5, type6, arg6)
 #define	DTRACE_PROBE7(name, type1, arg1, type2, arg2, type3, arg3, \
 	type4, arg4, type5, arg5, type6, arg6, type7, arg7)
+
+#ifdef KDTRACE_HOOKS
+SDT_PROBE_DECLARE(sdt, , , set__error);
+
+#define SET_ERROR(err) \
+	((sdt_sdt___set__error->id ? \
+	(*sdt_probe_func)(sdt_sdt___set__error->id, \
+	    (uintptr_t)err, 0, 0, 0, 0) : 0), err)
+#else
+#define SET_ERROR(err) (err)
+#endif
 
 #endif	/* _OPENSOLARIS_SYS_SDT_H_ */

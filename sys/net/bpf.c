@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.223.2.1 2018/05/21 04:36:15 pgoyette Exp $	*/
+/*	$NetBSD: bpf.c,v 1.223.2.2 2018/06/25 07:26:06 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.223.2.1 2018/05/21 04:36:15 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.223.2.2 2018/06/25 07:26:06 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -1608,19 +1608,6 @@ bpf_deliver(struct bpf_if *bp, void *(*cpfn)(void *, const void *, size_t),
 }
 
 /*
- * Incoming linkage from device drivers.  Process the packet pkt, of length
- * pktlen, which is stored in a contiguous buffer.  The packet is parsed
- * by each process' filter, and if accepted, stashed into the corresponding
- * buffer.
- */
-static void
-_bpf_tap(struct bpf_if *bp, u_char *pkt, u_int pktlen)
-{
-
-	bpf_deliver(bp, memcpy, pkt, pktlen, pktlen, true);
-}
-
-/*
  * Incoming linkage from device drivers, when the head of the packet is in
  * a buffer, and the tail is in an mbuf chain.
  */
@@ -2453,7 +2440,6 @@ struct bpf_ops bpf_ops_kernel = {
 	.bpf_detach =		_bpfdetach,
 	.bpf_change_type =	_bpf_change_type,
 
-	.bpf_tap =		_bpf_tap,
 	.bpf_mtap =		_bpf_mtap,
 	.bpf_mtap2 =		_bpf_mtap2,
 	.bpf_mtap_af =		_bpf_mtap_af,

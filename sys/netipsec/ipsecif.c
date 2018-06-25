@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsecif.c,v 1.2.2.4 2018/05/21 04:36:16 pgoyette Exp $  */
+/*	$NetBSD: ipsecif.c,v 1.2.2.5 2018/06/25 07:26:07 pgoyette Exp $  */
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsecif.c,v 1.2.2.4 2018/05/21 04:36:16 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsecif.c,v 1.2.2.5 2018/06/25 07:26:07 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -173,8 +173,7 @@ ipsecif4_needfrag(struct mbuf *m, struct ipsecrequest *isr)
 	if (sav == NULL)
 		return 0;
 
-	if (!(sav->natt_type & UDP_ENCAP_ESPINUDP) &&
-	    !(sav->natt_type & UDP_ENCAP_ESPINUDP_NON_IKE)) {
+	if (!(sav->natt_type & UDP_ENCAP_ESPINUDP)) {
 		mtu = 0;
 		goto out;
 	}

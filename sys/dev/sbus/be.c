@@ -1,4 +1,4 @@
-/*	$NetBSD: be.c,v 1.86 2017/06/25 12:02:59 maxv Exp $	*/
+/*	$NetBSD: be.c,v 1.86.4.1 2018/06/25 07:26:01 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.86 2017/06/25 12:02:59 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.86.4.1 2018/06/25 07:26:01 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -80,6 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: be.c,v 1.86 2017/06/25 12:02:59 maxv Exp $");
 #include <net/netisr.h>
 #include <net/if_media.h>
 #include <net/if_ether.h>
+#include <net/bpf.h>
 
 #ifdef INET
 #include <netinet/in.h>
@@ -88,10 +89,6 @@ __KERNEL_RCSID(0, "$NetBSD: be.c,v 1.86 2017/06/25 12:02:59 maxv Exp $");
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
 #endif
-
-
-#include <net/bpf.h>
-#include <net/bpfdesc.h>
 
 #include <sys/bus.h>
 #include <sys/intr.h>

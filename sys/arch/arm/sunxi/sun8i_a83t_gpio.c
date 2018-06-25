@@ -1,4 +1,4 @@
-/* $NetBSD: sun8i_a83t_gpio.c,v 1.1.10.1 2018/04/07 04:12:12 pgoyette Exp $ */
+/* $NetBSD: sun8i_a83t_gpio.c,v 1.1.10.2 2018/06/25 07:25:39 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2016-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sun8i_a83t_gpio.c,v 1.1.10.1 2018/04/07 04:12:12 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sun8i_a83t_gpio.c,v 1.1.10.2 2018/06/25 07:25:39 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,9 +146,9 @@ static const struct sunxi_gpio_pins a83t_pins[] = {
 	{ "PH3",  7, 3,   { "gpio_in", "gpio_out", "i2c1", NULL, NULL, NULL, "irq" } },
 	{ "PH4",  7, 4,   { "gpio_in", "gpio_out", "i2c2", NULL, NULL, NULL, "irq" } },
 	{ "PH5",  7, 5,   { "gpio_in", "gpio_out", "i2c2", NULL, NULL, NULL, "irq" } },
-	{ "PH6",  7, 6,   { "gpio_in", "gpio_out", "hdmiddc", NULL, NULL, NULL, "irq" } },
-	{ "PH7",  7, 7,   { "gpio_in", "gpio_out", "hdmiddc", NULL, NULL, NULL, "irq" } },
-	{ "PH8",  7, 8,   { "gpio_in", "gpio_out", "hdmiddc", NULL, NULL, NULL, "irq" } },
+	{ "PH6",  7, 6,   { "gpio_in", "gpio_out", "hdmi", NULL, NULL, NULL, "irq" } },
+	{ "PH7",  7, 7,   { "gpio_in", "gpio_out", "hdmi", NULL, NULL, NULL, "irq" } },
+	{ "PH8",  7, 8,   { "gpio_in", "gpio_out", "hdmi", NULL, NULL, NULL, "irq" } },
 	{ "PH9",  7, 9,   { "gpio_in", "gpio_out", NULL, NULL, NULL, NULL, "irq" } },
 	{ "PH10", 7, 10,  { "gpio_in", "gpio_out", NULL, NULL, NULL, NULL, "irq" } },
 	{ "PH11", 7, 11,  { "gpio_in", "gpio_out", NULL, NULL, NULL, NULL, "irq" } },

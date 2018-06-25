@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.260.2.3 2018/05/21 04:36:15 pgoyette Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.260.2.4 2018/06/25 07:26:06 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.260.2.3 2018/05/21 04:36:15 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.260.2.4 2018/06/25 07:26:06 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -307,9 +307,6 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 		KERNEL_LOCK(1, NULL);
 
 		if (!aarpresolve(ifp, m, (const struct sockaddr_at *)dst, edst)) {
-#ifdef NETATALKDEBUG
-			printf("aarpresolve failed\n");
-#endif
 			KERNEL_UNLOCK_ONE(NULL);
 			return 0;
 		}
@@ -329,8 +326,6 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 		/*
 		 * In the phase 2 case, we need to prepend an mbuf for the
 		 * llc header.
-		 *
-		 * XXX XXX: Do we need to preserve the value of m?
 		 */
 		if (aa->aa_flags & AFA_PHASE2) {
 			struct llc llc;
@@ -588,11 +583,15 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 
 	KASSERT(!cpu_intr_p());
 	KASSERT((m->m_flags & M_PKTHDR) != 0);
-	KASSERT(m->m_len >= sizeof(*eh));
 
 	if ((ifp->if_flags & IFF_UP) == 0) {
 		m_freem(m);
 		return;
+	}
+	if (m->m_len < sizeof(*eh)) {
+		m = m_pullup(m, sizeof(*eh));
+		if (m == NULL)
+			return;
 	}
 
 #ifdef MBUFTRACE
@@ -1022,6 +1021,7 @@ ether_ifdetach(struct ifnet *ifp)
 	struct ethercom *ec = (void *) ifp;
 	struct ether_multi *enm;
 
+	IFNET_ASSERT_UNLOCKED(ifp);
 	/*
 	 * Prevent further calls to ioctl (for example turning off
 	 * promiscuous mode from the bridge code), which eventually can
@@ -1282,7 +1282,7 @@ ether_addmulti(const struct sockaddr *sa, struct ethercom *ec)
 	/*
 	 * See if the address range is already in the list.
 	 */
-	ETHER_LOOKUP_MULTI(addrlo, addrhi, ec, _enm);
+	_enm = ether_lookup_multi(addrlo, addrhi, ec);
 	if (_enm != NULL) {
 		/*
 		 * Found it; just increment the reference count.
@@ -1334,7 +1334,7 @@ ether_delmulti(const struct sockaddr *sa, struct ethercom *ec)
 	/*
 	 * Look up the address in our list.
 	 */
-	ETHER_LOOKUP_MULTI(addrlo, addrhi, ec, enm);
+	enm = ether_lookup_multi(addrlo, addrhi, ec);
 	if (enm == NULL) {
 		error = ENXIO;
 		goto error;

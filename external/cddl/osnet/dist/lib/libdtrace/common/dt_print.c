@@ -190,7 +190,7 @@ print_bitfield(dt_printarg_t *pap, ulong_t off, ctf_encoding_t *ep)
 		value >>= shift;
 	value &= mask;
 
-	(void) fprintf(fp, "%#llx", (unsigned long long)value);
+	(void) fprintf(fp, "%#llx", (u_longlong_t)value);
 }
 
 /*

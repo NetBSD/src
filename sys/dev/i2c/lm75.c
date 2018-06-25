@@ -1,4 +1,4 @@
-/*	$NetBSD: lm75.c,v 1.30 2017/10/01 05:12:18 macallan Exp $	*/
+/*	$NetBSD: lm75.c,v 1.30.2.1 2018/06/25 07:25:50 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lm75.c,v 1.30 2017/10/01 05:12:18 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lm75.c,v 1.30.2.1 2018/06/25 07:25:50 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,6 +111,11 @@ static const char * lmtemp_compats[] = {
 	NULL
 };
 
+static const struct device_compatible_entry lmtemp_compat_data[] = {
+	DEVICE_COMPAT_ENTRY(lmtemp_compats),
+	DEVICE_COMPAT_TERMINATOR
+};
+
 enum {
 	lmtemp_lm75 = 0,
 	lmtemp_ds75,
@@ -146,35 +151,23 @@ static int
 lmtemp_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct i2c_attach_args *ia = aux;
-	int i;
+	int i, match_result;
 
-	if (ia->ia_name == NULL) {
-		/*
-		 * Indirect config - not much we can do!
-		 */
-		for (i = 0; lmtemptbl[i].lmtemp_type != -1 ; i++)
-			if (lmtemptbl[i].lmtemp_type == cf->cf_flags)
-				break;
-		if (lmtemptbl[i].lmtemp_type == -1)
-			return 0;
+	if (iic_use_direct_match(ia, cf, lmtemp_compat_data, &match_result))
+		return match_result;
 
-		if ((ia->ia_addr & lmtemptbl[i].lmtemp_addrmask) ==
-		    lmtemptbl[i].lmtemp_addr)
-			return 1;
-	} else {
-		/*
-		 * Direct config - match via the list of compatible
-		 * hardware or simply match the device name.
-		 */
-		if (ia->ia_ncompat > 0) {
-			if (iic_compat_match(ia, lmtemp_compats))
-				return 1;
-		} else {
-			if (strcmp(ia->ia_name, "lmtemp") == 0)
-				return 1;
-		}
-	}
+	/*
+	 * Indirect config - not much we can do!
+	 */
+	for (i = 0; lmtemptbl[i].lmtemp_type != -1 ; i++)
+		if (lmtemptbl[i].lmtemp_type == cf->cf_flags)
+			break;
+	if (lmtemptbl[i].lmtemp_type == -1)
+		return 0;
 
+	if ((ia->ia_addr & lmtemptbl[i].lmtemp_addrmask) ==
+	    lmtemptbl[i].lmtemp_addr)
+		return I2C_MATCH_ADDRESS_ONLY;
 
 	return 0;
 }

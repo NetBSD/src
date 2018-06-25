@@ -1,4 +1,4 @@
-/*	$NetBSD: aarp.c,v 1.41 2018/02/17 19:10:18 rjs Exp $	*/
+/*	$NetBSD: aarp.c,v 1.41.2.1 2018/06/25 07:26:06 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aarp.c,v 1.41 2018/02/17 19:10:18 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aarp.c,v 1.41.2.1 2018/06/25 07:26:06 pgoyette Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_atalk.h"
@@ -672,16 +672,4 @@ aarpprobe(void *arp)
 	(*ifp->if_output) (ifp, m, &sa, NULL);	/* XXX */
 	aa->aa_probcnt--;
 	mutex_exit(softnet_lock);
-}
-
-void
-aarp_clean(void)
-{
-	struct aarptab *aat;
-	int             i;
-
-	callout_stop(&aarptimer_callout);
-	for (i = 0, aat = aarptab; i < AARPTAB_SIZE; i++, aat++)
-		if (aat->aat_hold)
-			m_freem(aat->aat_hold);
 }

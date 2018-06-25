@@ -1,4 +1,4 @@
-/*	$NetBSD: pl310.c,v 1.17 2015/02/27 20:40:09 jmcneill Exp $	*/
+/*	$NetBSD: pl310.c,v 1.17.16.1 2018/06/25 07:25:39 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pl310.c,v 1.17 2015/02/27 20:40:09 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pl310.c,v 1.17.16.1 2018/06/25 07:25:39 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -47,7 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: pl310.c,v 1.17 2015/02/27 20:40:09 jmcneill Exp $");
 static int arml2cc_match(device_t, cfdata_t, void *);
 static void arml2cc_attach(device_t, device_t, void *);
 
-#define	L2CC_BASE	0x2000
 #define	L2CC_SIZE	0x1000
 
 struct arml2cc_softc {
@@ -150,7 +149,7 @@ arml2cc_attach(device_t parent, device_t self, void *aux)
 			aprint_normal(": not configured\n");
 			return;
 		}
-		off = L2CC_BASE;
+		off = mpcaa->mpcaa_off1;
 	}
 
 	arml2cc_sc = sc;

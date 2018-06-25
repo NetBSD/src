@@ -1,4 +1,4 @@
-/*	$NetBSD: dtrace_subr.c,v 1.8 2017/02/27 06:46:59 chs Exp $	*/
+/*	$NetBSD: dtrace_subr.c,v 1.8.10.1 2018/06/25 07:25:14 pgoyette Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -21,12 +21,16 @@
  *
  * CDDL HEADER END
  *
- * $FreeBSD: src/sys/cddl/dev/dtrace/amd64/dtrace_subr.c,v 1.3.2.1 2009/08/03 08:13:06 kensmith Exp $
+ * $FreeBSD: head/sys/cddl/dev/dtrace/amd64/dtrace_subr.c 313850 2017-02-17 03:27:20Z markj $
  *
  */
 /*
  * Copyright 2005 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
+ */
+
+/*
+ * Copyright (c) 2011, Joyent, Inc. All rights reserved.
  */
 
 #include <sys/param.h>
@@ -38,18 +42,13 @@
 #include <sys/xcall.h>
 #include <sys/cpu.h>
 #include <sys/cpuvar.h>
-//#include <sys/smp.h>
 #include <sys/dtrace_impl.h>
 #include <sys/dtrace_bsd.h>
 #include <machine/frame.h>
 #include <machine/cpu_counter.h>
-#include <uvm/uvm_pglist.h>
-#include <uvm/uvm_prot.h>
-#include <uvm/uvm_pmap.h>
+#include <machine/cpufunc.h>
 
 extern uintptr_t 	kernelbase;
-extern uintptr_t 	dtrace_in_probe_addr;
-extern int		dtrace_in_probe;
 
 int dtrace_invop(uintptr_t, struct trapframe *, uintptr_t);
 
@@ -61,6 +60,7 @@ typedef struct dtrace_invop_hdlr {
 dtrace_invop_hdlr_t *dtrace_invop_hdlr;
 
 void dtrace_gethrtime_init(void *);
+void dtrace_getnanotime(struct timespec *);
 
 int
 dtrace_invop(uintptr_t addr, struct trapframe *frame, uintptr_t eax)
@@ -160,122 +160,6 @@ dtrace_sync(void)
 }
 
 #ifdef notyet
-int (*dtrace_fasttrap_probe_ptr)(struct regs *);
-int (*dtrace_pid_probe_ptr)(struct regs *);
-int (*dtrace_return_probe_ptr)(struct regs *);
-
-void
-dtrace_user_probe(struct regs *rp, caddr_t addr, processorid_t cpuid)
-{
-	krwlock_t *rwp;
-	proc_t *p = curproc;
-	extern void trap(struct regs *, caddr_t, processorid_t);
-
-	if (USERMODE(rp->r_cs) || (rp->r_ps & PS_VM)) {
-		if (curthread->t_cred != p->p_cred) {
-			cred_t *oldcred = curthread->t_cred;
-			/*
-			 * DTrace accesses t_cred in probe context.  t_cred
-			 * must always be either NULL, or point to a valid,
-			 * allocated cred structure.
-			 */
-			curthread->t_cred = crgetcred();
-			crfree(oldcred);
-		}
-	}
-
-	if (rp->r_trapno == T_DTRACE_RET) {
-		uint8_t step = curthread->t_dtrace_step;
-		uint8_t ret = curthread->t_dtrace_ret;
-		uintptr_t npc = curthread->t_dtrace_npc;
-
-		if (curthread->t_dtrace_ast) {
-			aston(curthread);
-			curthread->t_sig_check = 1;
-		}
-
-		/*
-		 * Clear all user tracing flags.
-		 */
-		curthread->t_dtrace_ft = 0;
-
-		/*
-		 * If we weren't expecting to take a return probe trap, kill
-		 * the process as though it had just executed an unassigned
-		 * trap instruction.
-		 */
-		if (step == 0) {
-			tsignal(curthread, SIGILL);
-			return;
-		}
-
-		/*
-		 * If we hit this trap unrelated to a return probe, we're
-		 * just here to reset the AST flag since we deferred a signal
-		 * until after we logically single-stepped the instruction we
-		 * copied out.
-		 */
-		if (ret == 0) {
-			rp->r_pc = npc;
-			return;
-		}
-
-		/*
-		 * We need to wait until after we've called the
-		 * dtrace_return_probe_ptr function pointer to set %pc.
-		 */
-		rwp = &CPU->cpu_ft_lock;
-		rw_enter(rwp, RW_READER);
-		if (dtrace_return_probe_ptr != NULL)
-			(void) (*dtrace_return_probe_ptr)(rp);
-		rw_exit(rwp);
-		rp->r_pc = npc;
-
-	} else if (rp->r_trapno == T_DTRACE_PROBE) {
-		rwp = &CPU->cpu_ft_lock;
-		rw_enter(rwp, RW_READER);
-		if (dtrace_fasttrap_probe_ptr != NULL)
-			(void) (*dtrace_fasttrap_probe_ptr)(rp);
-		rw_exit(rwp);
-
-	} else if (rp->r_trapno == T_BPTFLT) {
-		uint8_t instr;
-		rwp = &CPU->cpu_ft_lock;
-
-		/*
-		 * The DTrace fasttrap provider uses the breakpoint trap
-		 * (int 3). We let DTrace take the first crack at handling
-		 * this trap; if it's not a probe that DTrace knowns about,
-		 * we call into the trap() routine to handle it like a
-		 * breakpoint placed by a conventional debugger.
-		 */
-		rw_enter(rwp, RW_READER);
-		if (dtrace_pid_probe_ptr != NULL &&
-		    (*dtrace_pid_probe_ptr)(rp) == 0) {
-			rw_exit(rwp);
-			return;
-		}
-		rw_exit(rwp);
-
-		/*
-		 * If the instruction that caused the breakpoint trap doesn't
-		 * look like an int 3 anymore, it may be that this tracepoint
-		 * was removed just after the user thread executed it. In
-		 * that case, return to user land to retry the instuction.
-		 */
-		if (fuword8((void *)(rp->r_pc - 1), &instr) == 0 &&
-		    instr != FASTTRAP_INSTR) {
-			rp->r_pc--;
-			return;
-		}
-
-		trap(rp, addr, cpuid);
-
-	} else {
-		trap(rp, addr, cpuid);
-	}
-}
-
 void
 dtrace_safe_synchronous_signal(void)
 {
@@ -321,14 +205,15 @@ dtrace_safe_defer_signal(void)
 	}
 
 	/*
-	 * If we've executed the original instruction, but haven't performed
-	 * the jmp back to t->t_dtrace_npc or the clean up of any registers
-	 * used to emulate %rip-relative instructions in 64-bit mode, do that
-	 * here and take the signal right away. We detect this condition by
-	 * seeing if the program counter is the range [scrpc + isz, astpc).
+	 * If we have executed the original instruction, but we have performed
+	 * neither the jmp back to t->t_dtrace_npc nor the clean up of any
+	 * registers used to emulate %rip-relative instructions in 64-bit mode,
+	 * we'll save ourselves some effort by doing that here and taking the
+	 * signal right away.  We detect this condition by seeing if the program
+	 * counter is the range [scrpc + isz, astpc).
 	 */
-	if (t->t_dtrace_astpc - rp->r_pc <
-	    t->t_dtrace_astpc - t->t_dtrace_scrpc - isz) {
+	if (rp->r_pc >= t->t_dtrace_scrpc + isz &&
+	    rp->r_pc < t->t_dtrace_astpc) {
 #ifdef __amd64
 		/*
 		 * If there is a scratch register and we're on the
@@ -451,7 +336,6 @@ dtrace_gethrtime_init(void *arg)
 	 * another 32-bit integer without overflowing 64-bit.
 	 * Thus minimum supported TSC frequency is 62.5MHz.
 	 */
-	//KASSERT(tsc_f > (NANOSEC >> (32 - SCALE_SHIFT)), ("TSC frequency is too low"));
 	KASSERT(tsc_f > (NANOSEC >> (32 - SCALE_SHIFT)));
 
 	/*
@@ -472,27 +356,6 @@ dtrace_gethrtime_init(void *arg)
 		/* use skew relative to cpu 0 */
 		tsc_skew[cpu_index(cinfo)] = cinfo->ci_data.cpu_cc_skew;
 	}
-
-	/* Already handled in x86/tsc.c for ci_data.cpu_cc_skew */
-#if 0
-	for (i = 0; i <= mp_maxid; i++) {
-		if (i == curcpu)
-			continue;
-
-		if (pcpu_find(i) == NULL)
-			continue;
-
-		map = 0;
-		map |= (1 << curcpu);
-		map |= (1 << i);
-
-		smp_rendezvous_cpus(map, dtrace_gethrtime_init_sync,
-		    dtrace_gethrtime_init_cpu,
-		    smp_no_rendevous_barrier, (void *)(uintptr_t) i);
-
-		tsc_skew[i] = tgt_cpu_tsc - hst_cpu_tsc;
-	}
-#endif
 }
 
 /*
@@ -525,14 +388,20 @@ dtrace_gethrtime()
 uint64_t
 dtrace_gethrestime(void)
 {
-	printf("%s(%d): XXX\n",__func__,__LINE__);
-	return (0);
+	struct timespec current_time;
+
+	dtrace_getnanotime(&current_time);
+
+	return (current_time.tv_sec * 1000000000ULL + current_time.tv_nsec);
 }
 
 /* Function to handle DTrace traps during probes. See amd64/amd64/trap.c */
 int
 dtrace_trap(struct trapframe *frame, u_int type)
 {
+	bool nofault;
+	cpuid_t cpuid = cpu_number();	/* current cpu id */
+
 	/*
 	 * A trap can occur while DTrace executes a probe. Before
 	 * executing the probe, DTrace blocks re-scheduling and sets
@@ -543,19 +412,19 @@ dtrace_trap(struct trapframe *frame, u_int type)
 	 * Check if DTrace has enabled 'no-fault' mode:
 	 *
 	 */
-	if ((cpu_core[cpu_number()].cpuc_dtrace_flags & CPU_DTRACE_NOFAULT) != 0) {
+	nofault = (cpu_core[cpuid].cpuc_dtrace_flags & CPU_DTRACE_NOFAULT) != 0;
+	if (nofault) {
+		KASSERTMSG((read_rflags() & PSL_I) == 0, "interrupts enabled");
+
 		/*
 		 * There are only a couple of trap types that are expected.
 		 * All the rest will be handled in the usual way.
 		 */
 		switch (type) {
-		/* Privilieged instruction fault. */
-		case T_PRIVINFLT:
-			break;
 		/* General protection fault. */
 		case T_PROTFLT:
 			/* Flag an illegal operation. */
-			cpu_core[cpu_number()].cpuc_dtrace_flags |= CPU_DTRACE_ILLOP;
+			cpu_core[cpuid].cpuc_dtrace_flags |= CPU_DTRACE_ILLOP;
 
 			/*
 			 * Offset the instruction pointer to the instruction
@@ -566,8 +435,8 @@ dtrace_trap(struct trapframe *frame, u_int type)
 		/* Page fault. */
 		case T_PAGEFLT:
 			/* Flag a bad address. */
-			cpu_core[cpu_number()].cpuc_dtrace_flags |= CPU_DTRACE_BADADDR;
-			cpu_core[cpu_number()].cpuc_dtrace_illval = rcr2();
+			cpu_core[cpuid].cpuc_dtrace_flags |= CPU_DTRACE_BADADDR;
+			cpu_core[cpuid].cpuc_dtrace_illval = rcr2();
 
 			/*
 			 * Offset the instruction pointer to the instruction
