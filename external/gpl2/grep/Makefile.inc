@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile.inc,v 1.1 2016/01/10 22:16:40 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2018/06/25 18:02:49 kamil Exp $
 
 .include <bsd.own.mk>
+
+SANITIZER_RENAME_SYMBOL+=	regcomp regerror regexec regfree
 
 WARNS=	0
 
