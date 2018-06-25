@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.376 2018/06/24 20:40:58 kamil Exp $
+#	$NetBSD: bsd.README,v 1.377 2018/06/25 09:38:46 kamil Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -392,7 +392,7 @@ MKSANITIZER	if "yes", use the selected sanitizer to compile userland
 		"address". A selection of available sanitizers:
 			address:	A memory error detector (default)
 			thread:		A data race detector
-			memory:		An uninitializer read detector
+			memory:		An uninitialized memory read detector
 			undefined:	An undefined behavior detector
 			leak:		A memory leak detector
 			dataflow:	A general data flow analysis
@@ -400,12 +400,11 @@ MKSANITIZER	if "yes", use the selected sanitizer to compile userland
 			safe-stack:	Protect against stack-based corruption
 			scudo:		The Scudo Hardened allocator
 		It's possible to specify multiple sanitizers within the
-		USE_SANITIZER option (comma separated) and some combinations of
-		them work. The USE_SANITIZER value is passed to the -fsanitize=
-		argument to a compiler.
+		USE_SANITIZER option (comma separated). The USE_SANITIZER value
+		is passed to the -fsanitize= argument to the compiler.
 		Additional arguments can be passed through SANITIZERFLAGS.
-		The list of supported features depends on the compiler version
-		and target CPU architecture.
+		The list of supported features and their valid combinations
+		depends on the compiler version and target CPU architecture.
 
 MKSHARE		If "no", act as "MKCATPAGES=no MKDOC=no MKHTML=no MKINFO=no
 		MKMAN=no MKNLS=no".
