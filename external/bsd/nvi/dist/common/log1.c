@@ -1,4 +1,4 @@
-/*	$NetBSD: log1.c,v 1.4 2014/01/26 21:43:45 christos Exp $	*/
+/*	$NetBSD: log1.c,v 1.5 2018/06/25 17:42:34 kamil Exp $	*/
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -16,7 +16,7 @@
 static const char sccsid[] = "Id: log.c,v 10.26 2002/03/02 23:12:13 skimo Exp  (Berkeley) Date: 2002/03/02 23:12:13 ";
 #endif /* not lint */
 #else
-__RCSID("$NetBSD: log1.c,v 1.4 2014/01/26 21:43:45 christos Exp $");
+__RCSID("$NetBSD: log1.c,v 1.5 2018/06/25 17:42:34 kamil Exp $");
 #endif
 
 #include <sys/types.h>
@@ -88,7 +88,7 @@ typedef struct {
     char    data[sizeof(u_char) /* type */ + sizeof(db_recno_t)];
     CHAR_T  str[1];
 } log_t;
-#define CHAR_T_OFFSET ((char *)(((log_t*)0)->str) - (char *)0)
+#define CHAR_T_OFFSET (offsetof(log_t, str))
 
 /*
  * log_init --
