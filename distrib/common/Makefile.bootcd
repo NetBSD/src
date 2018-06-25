@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootcd,v 1.38 2017/02/16 02:37:32 christos Exp $
+#	$NetBSD: Makefile.bootcd,v 1.38.4.1 2018/06/25 12:59:27 martin Exp $
 #
 # Makefile snipped to create a CD/DVD ISO
 #
@@ -185,6 +185,8 @@ copy-releasedir:
 		${TOOL_PAX} ${PAX_TIMESTAMP}				\
 			-rw -pe ${PAX_v}				\
 			${CDRELEASE_EXCLUDE}				\
+			-s ',./binary/sets/debug.tgz,,gp'		\
+			-s ',./binary/sets/xdebug.tgz,,gp'		\
 			. $$release_destdir; 				\
 		cd "${CUROBJDIR}";					\
 	fi
