@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2363.2.8 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2363.2.9 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -80,7 +80,6 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	kernhist(9): Reworked the export-via-sysctl code to use uintptr_t
 		arguments, PR kern/52639.  Requires contemporaneous update
 		of vmstat(1). [pgoyette 20171028]
-	x86: Add support for XSAVEOPT [maxv 20171104]
 	acpi(4): Updated ACPICA to 20171110. [christos 20171111]
 	sunxinand(4): Add driver for Allwinner NAND Flash Controller.
 		[jmcneill 20171113]
@@ -150,9 +149,19 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	netpgp(3lua): Add Lua binding for libnetpgp(3). [sevan 20180429]
 	arm: Add support for Allwinner H6 SoC. [jmcneill 20180501]
 	dhcpcd: Import 7.0.4. [roy 20180502]
+	libbozohttpd(3): Add the embeddable version of bozohttpd [sevan 20180503]
+	bozohttpd(3lua): Add Lua binding for libbozohttpd(3lua) [sevan 20180503]
 	tzdata: updated to 2017e [kre 20180504]
 	libc: Update to tzcode2018e. [christos 20180504]
 	acpi(4): Updated ACPICA to 20180427. [christos 20180504]
 	gpio(4): Overhauled interrupt support.  Added GPIO interrupt
 		capability for Broadcom BCM283x SoCs (e.g.
 		Raspberry Pi). [thorpej 20180519]
+	x86: Add SpectreV4 mitigations. [maxv 20180522]
+	macppc: Enable ipsec(4) and ipsecif(4) support in GENERIC kernel by
+		default. [sevan 20180602]
+	dhcpcd: Import 7.0.5b. [roy 20180604]
+	virtio(4): Add MMIO transport and fdt(4) attachment. [jakllsch 20180606]
+	arm: Add support for QEMU ARM Virtual Machine ("virt"). [jmcneill 20180614]
+	arm: Add support for Rockchip RK3328 SoC. [jmcneill 20180615]
+	dhcpcd: Import 7.0.6. [roy 20180621]

@@ -1,4 +1,4 @@
-/*	$NetBSD: dfa.c,v 1.2 2016/01/10 22:16:40 christos Exp $	*/
+/*	$NetBSD: dfa.c,v 1.2.14.1 2018/06/25 07:25:27 pgoyette Exp $	*/
 
 /* dfa.c - deterministic extended regexp routines for GNU
    Copyright 1988, 1998, 2000 Free Software Foundation, Inc.
@@ -223,19 +223,19 @@ prtok (token t)
 static int
 tstbit (unsigned b, charclass c)
 {
-  return c[b / INTBITS] & 1 << b % INTBITS;
+  return c[b / INTBITS] & 1U << b % INTBITS;
 }
 
 static void
 setbit (unsigned b, charclass c)
 {
-  c[b / INTBITS] |= 1 << b % INTBITS;
+  c[b / INTBITS] |= 1U << b % INTBITS;
 }
 
 static void
 clrbit (unsigned b, charclass c)
 {
-  c[b / INTBITS] &= ~(1 << b % INTBITS);
+  c[b / INTBITS] &= ~(1U << b % INTBITS);
 }
 
 static void
@@ -2203,7 +2203,7 @@ dfastate (int s, struct dfa *d, int trans[])
       /* Set the transitions for each character in the current label. */
       for (j = 0; j < CHARCLASS_INTS; ++j)
 	for (k = 0; k < INTBITS; ++k)
-	  if (labels[i][j] & 1 << k)
+	  if (labels[i][j] & 1U << k)
 	    {
 	      int c = j * INTBITS + k;
 

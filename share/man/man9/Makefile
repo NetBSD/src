@@ -1,9 +1,9 @@
-#       $NetBSD: Makefile,v 1.418.2.2 2018/05/21 04:35:57 pgoyette Exp $
+#       $NetBSD: Makefile,v 1.418.2.3 2018/06/25 07:25:37 pgoyette Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
 MAN=	accept_filter.9 accf_data.9 accf_http.9 \
-	altq.9 arp.9 audio.9 autoconf.9 \
+	altq.9 arp.9 audio.9 audio_system.9 autoconf.9 \
 	bcdtobin.9 bcmp.9 bcopy.9 bintime_add.9 bluetooth.9 boothowto.9 bpf.9 \
 	buffercache.9 bufferio.9 bufq.9 bus_dma.9 bus_space.9 byteorder.9 \
 	bzero.9 \
@@ -51,7 +51,8 @@ MAN=	accept_filter.9 accf_data.9 accf_http.9 \
 	secmodel_bsd44.9 secmodel_extensions.9 \
 	secmodel_overlay.9 secmodel_securelevel.9 secmodel_suser.9 \
 	SET.9 setbit.9 setjmp.9 shutdownhook_establish.9 \
-	signal.9 skpc.9 sockopt.9 softintr.9 spl.9 splraiseipl.9 \
+	signal.9 skpc.9 sockopt.9 softintr.9 spl.9 specificdata.9 \
+	splraiseipl.9 \
 	store.9 suspendsched.9 \
 	sysctl.9 sysmon_envsys.9 sysmon_pswitch.9 sysmon_taskq.9 tc.9 \
 	tcp_congctl.9 timecounter.9 time_second.9 todr.9 ts2timo.9 tvtohz.9 \
@@ -456,8 +457,8 @@ MLINKS+=kpreempt.9 kpreempt_disable.9 \
 	kpreempt.9 kpreempt_disabled.9 \
 	kpreempt.9 kpreempt_enable.9
 MLINKS+=proc_find.9 pgrp_find.9
-MLINKS+=kprintf.9 printf.9 kprintf.9 printf_nolog.9 kprintf.9 sprintf.9 \
-	kprintf.9 snprintf.9 kprintf.9 vprintf.9 kprintf.9 vsprintf.9 \
+MLINKS+=kprintf.9 printf.9 kprintf.9 printf_nolog.9 \
+	kprintf.9 snprintf.9 kprintf.9 vprintf.9 \
 	kprintf.9 vsnprintf.9 kprintf.9 uprintf.9 kprintf.9 ttyprintf.9 \
 	kprintf.9 tprintf.9 kprintf.9 tprintf_open.9 kprintf.9 tprintf_close.9 \
 	kprintf.9 aprint_normal.9 kprintf.9 aprint_naive.9 \
@@ -521,14 +522,23 @@ MLINKS+=microuptime.9 binuptime.9 \
 MLINKS+=module.9 module_autoload.9 \
 	module.9 module_builtin_require_force.9 \
 	module.9 module_find_section.9 \
+	module.9 module_getspecific.9 \
 	module.9 module_hold.9 \
 	module.9 module_init.9 \
 	module.9 module_init_class.9 \
+	module.9 module_kernel.9 \
 	module.9 module_load.9 \
 	module.9 module_load_vfs_init.9 \
+	module.9 module_name.9 \
 	module.9 module_rele.9 \
+	module.9 module_setspecific.9 \
+	module.9 module_source.9 \
+	module.9 module_specific_key_create.9 \
+	module.9 module_specific_key_delete.9 \
 	module.9 module_start_unload_thread.9 \
-	module.9 module_unload.9
+	module.9 module_unload.9 \
+	module.9 module_register_callbacks.9 \
+	module.9 module_unregister_callbacks.9
 MLINKS+=mstohz.9 hztoms.9
 MLINKS+=mutex.9 mutex_init.9 mutex.9 mutex_destroy.9 mutex.9 mutex_enter.9 \
 	mutex.9 mutex_exit.9 mutex.9 mutex_tryenter.9 mutex.9 mutex_owned.9 \
@@ -868,6 +878,16 @@ MLINKS+=softintr.9 softintr_establish.9 softintr.9 softintr_disestablish.9 \
 	softintr.9 softintr_schedule.9 softintr.9 softint.9 \
 	softintr.9 softint_establish.9 softintr.9 softint_disestablish.9 \
 	softintr.9 softint_schedule.9
+MLINKS+=specificdata.9 specificdata_domain_create.9 \
+	specificdata.9 specificdata_domain_delete.9 \
+	specificdata.9 specificdata_key_create.9 \
+	specificdata.9 specificdata_key_delete.9 \
+	specificdata.9 specificdata_init.9 \
+	specificdata.9 specificdata_fini.9 \
+	specificdata.9 specificdata_getspecific.9 \
+	specificdata.9 specificdata_getspecific_unlocked.9 \
+	specificdata.9 specificdata_setspecific.9 \
+	specificdata.9 specificdata_setspecific_nowait.9
 MLINKS+=spl.9 spl0.9 spl.9 splbio.9 spl.9 splclock.9 spl.9 splhigh.9 \
 	spl.9 splimp.9 \
 	spl.9 spllowersoftclock.9 spl.9 splnet.9 \

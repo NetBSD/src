@@ -1,4 +1,4 @@
-/*	$NetBSD: aarch64_reboot.c,v 1.1.2.2 2018/04/07 04:12:10 pgoyette Exp $	*/
+/*	$NetBSD: aarch64_reboot.c,v 1.1.2.3 2018/06/25 07:25:37 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -122,7 +122,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aarch64_reboot.c,v 1.1.2.2 2018/04/07 04:12:10 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aarch64_reboot.c,v 1.1.2.3 2018/06/25 07:25:37 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -142,7 +142,7 @@ void (*cpu_reset_address0)(void);
 void (*cpu_reset_address)(void);
 void (*cpu_powerdown_address)(void);
 
-static int
+static void
 docpureset(int howto)
 {
 	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {

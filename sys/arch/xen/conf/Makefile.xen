@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.xen,v 1.45 2018/01/21 08:33:46 maxv Exp $
+#	$NetBSD: Makefile.xen,v 1.45.2.1 2018/06/25 07:25:47 pgoyette Exp $
 #	NetBSD: Makefile.i386,v 1.132 2003/07/05 16:56:10 simonb Exp 
 
 # Makefile for NetBSD
@@ -21,7 +21,9 @@
 .include "$S/arch/xen/conf/Makefile.arch.inc"
 USETOOLS?=	no
 NEED_OWN_INSTALL_TARGET?=no
-.include <bsd.own.mk>
+NORELRO=
+NOSANITIZER=
+.include <bsd.init.mk>
 
 USE_SSP?=	yes
 

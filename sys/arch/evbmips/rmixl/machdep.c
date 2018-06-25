@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.18 2016/12/22 14:47:57 cherry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.18.14.1 2018/06/25 07:25:41 pgoyette Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.18 2016/12/22 14:47:57 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.18.14.1 2018/06/25 07:25:41 pgoyette Exp $");
 
 #define __INTR_PRIVATE
 
@@ -888,7 +888,7 @@ rmixl_get_wakeup_info(struct rmixl_config *rcp)
 
 	wip = (volatile rmixlfw_cpu_wakeup_info_t *)
 			(intptr_t)scratch_7;
-	end = wip->entry.gp - (wip->master_cpu & (PAGE_SIZE * 2));;
+	end = wip->entry.gp - (wip->master_cpu & (PAGE_SIZE * 2));
 
 	if (wip->valid == 1) {
 		rcp->rc_cpu_wakeup_end = (const void *)end;

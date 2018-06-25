@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.258.2.11 2018/05/02 07:20:22 pgoyette Exp $	*/
+/*	$NetBSD: if.h,v 1.258.2.12 2018/06/25 07:26:06 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -535,6 +535,11 @@ if_is_link_state_changeable(struct ifnet *ifp)
 #define SOFTNET_LOCK_UNLESS_NET_MPSAFE()	do { } while (0)
 #define SOFTNET_UNLOCK_UNLESS_NET_MPSAFE()	do { } while (0)
 
+#define SOFTNET_LOCK_IF_NET_MPSAFE()					\
+	do { mutex_enter(softnet_lock); } while (0)
+#define SOFTNET_UNLOCK_IF_NET_MPSAFE()					\
+	do { mutex_exit(softnet_lock); } while (0)
+
 #else /* NET_MPSAFE */
 
 #define KERNEL_LOCK_UNLESS_NET_MPSAFE()					\
@@ -546,6 +551,9 @@ if_is_link_state_changeable(struct ifnet *ifp)
 	do { mutex_enter(softnet_lock); } while (0)
 #define SOFTNET_UNLOCK_UNLESS_NET_MPSAFE()				\
 	do { mutex_exit(softnet_lock); } while (0)
+
+#define SOFTNET_LOCK_IF_NET_MPSAFE()		do { } while (0)
+#define SOFTNET_UNLOCK_IF_NET_MPSAFE()		do { } while (0)
 
 #endif /* NET_MPSAFE */
 
@@ -1299,6 +1307,9 @@ __END_DECLS
 #define IFNET_LOCK(ifp)		mutex_enter((ifp)->if_ioctl_lock)
 #define IFNET_UNLOCK(ifp)	mutex_exit((ifp)->if_ioctl_lock)
 #define IFNET_LOCKED(ifp)	mutex_owned((ifp)->if_ioctl_lock)
+
+#define IFNET_ASSERT_UNLOCKED(ifp)	\
+	KDASSERT(mutex_ownable((ifp)->if_ioctl_lock))
 
 extern struct pslist_head ifnet_pslist;
 extern kmutex_t ifnet_mtx;

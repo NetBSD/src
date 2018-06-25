@@ -1,4 +1,4 @@
-.\"	$NetBSD: udp.4,v 1.14 2012/11/12 05:13:28 christos Exp $
+.\"	$NetBSD: udp.4,v 1.14.28.1 2018/06/25 07:25:36 pgoyette Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)udp.4	8.1 (Berkeley) 6/5/93
 .\"
-.Dd June 20, 2012
+.Dd May 31, 2018
 .Dt UDP 4
 .Os
 .Sh NAME
@@ -111,11 +111,9 @@ option can be used to encapsulate
 .Tn ESP
 packets in
 .Tn UDP .
-There are two valid encapsulation options:
-.Tn UDP_ENCAP_ESPINUDP_NON_IKE
-from draft-ietf-ipsec-nat-t-ike-00/01 and
+There is one valid encapsulation option:
 .Tn UDP_ENCAP_ESPINUDP
-from draft-ietf-ipsec-udp-encaps-06
+from RFC3948
 defined in
 .In netinet/udp.h .
 .Pp
@@ -130,17 +128,6 @@ or
 .Sh DIAGNOSTICS
 A socket operation may fail with one of the following errors returned:
 .Bl -tag -width [EADDRNOTAVAIL]
-.It Bq Er EISCONN
-when trying to establish a connection on a socket which
-already has one, or when trying to send a datagram with the destination
-address specified and the socket is already connected;
-.It Bq Er ENOTCONN
-when trying to send a datagram, but
-no destination address is specified, and the socket hasn't been
-connected;
-.It Bq Er ENOBUFS
-when the system runs out of memory for
-an internal data structure;
 .It Bq Er EADDRINUSE
 when an attempt
 is made to create a socket with a port which has already been
@@ -148,6 +135,17 @@ allocated;
 .It Bq Er EADDRNOTAVAIL
 when an attempt is made to create a socket with a network address
 for which no network interface exists.
+.It Bq Er EISCONN
+when trying to establish a connection on a socket which
+already has one, or when trying to send a datagram with the destination
+address specified and the socket is already connected;
+.It Bq Er ENOBUFS
+when the system runs out of memory for
+an internal data structure;
+.It Bq Er ENOTCONN
+when trying to send a datagram, but
+no destination address is specified, and the socket hasn't been
+connected;
 .El
 .Sh SEE ALSO
 .Xr getsockopt 2 ,
@@ -171,7 +169,7 @@ for which no network interface exists.
 .%R RFC
 .%N 1122
 .%D October 1989
-.%T "Requirements for Internet Hosts -- Communication Layers"
+.%T "Requirements for Internet Hosts \(em Communication Layers"
 .Re
 .Sh HISTORY
 The

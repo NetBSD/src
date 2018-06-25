@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2012/07/22 20:38:20 joerg Exp $
+# $NetBSD: Makefile,v 1.1.32.1 2018/06/25 07:26:09 pgoyette Exp $
 
 NOMAN=		# defined
 
@@ -10,6 +10,7 @@ TESTS_SH=	t_nbperf
 
 SCRIPTSDIR=	${TESTSDIR}
 SCRIPTS+=	h_nbperf
+CLEANFILES+=	h_nbperf
 
 FILESDIR=		${TESTSDIR}
 FILES=			hash_driver.c

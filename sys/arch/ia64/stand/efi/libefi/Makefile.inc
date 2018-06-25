@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.4 2016/03/22 08:25:22 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.4.16.1 2018/06/25 07:25:43 pgoyette Exp $
 #
 #	Configuration variables (default values are below):
 #
@@ -22,12 +22,12 @@ EFILIB=			${EFIDST}/libefi.a
 EFIMAKE= \
 	cd ${EFIDIR} && MAKEOBJDIRPREFIX= && unset MAKEOBJDIRPREFIX && \
 	    MAKEOBJDIR=${EFIDST} ${MAKE} \
-	    CC=${CC:Q} CFLAGS=${CFLAGS:Q} \
-	    AS=${AS:Q} AFLAGS=${AFLAGS:Q} \
-	    LD=${LD:Q} STRIP=${STRIP:Q} \
-	    MACHINE=${MACHINE} MACHINE_ARCH=${MACHINE_ARCH:Q} \
-	    EFICPPFLAGS=${CPPFLAGS:S@^-I.@-I../../.@g:Q} \
-	    EFIMISCCPPFLAGS=${EFIMISCCPPFLAGS:Q} \
+	    CC=${CC:q} CFLAGS=${CFLAGS:q} \
+	    AS=${AS:q} AFLAGS=${AFLAGS:q} \
+	    LD=${LD:q} STRIP=${STRIP:q} \
+	    MACHINE=${MACHINE} MACHINE_ARCH=${MACHINE_ARCH:q} \
+	    EFICPPFLAGS=${CPPFLAGS:S@^-I.@-I../../.@g:q} \
+	    EFIMISCCPPFLAGS=${EFIMISCCPPFLAGS:q} \
 	    ${EFIMISCMAKEFLAGS}
 
 ${EFILIB}:		.NOTMAIN __always_make_efilib

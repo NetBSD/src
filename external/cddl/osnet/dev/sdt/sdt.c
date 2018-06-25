@@ -20,7 +20,7 @@
  *
  * Portions Copyright 2006-2008 John Birrell jb@freebsd.org
  *
- * $FreeBSD: head/sys/cddl/dev/sdt/sdt.c 285703 2015-07-19 22:14:09Z markj $
+ * $FreeBSD: head/sys/cddl/dev/sdt/sdt.c 297771 2016-04-10 01:24:27Z markj $
  *
  */
 
@@ -39,9 +39,10 @@
  * unloaded; in particular, probes may not span multiple kernel modules.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdt.c,v 1.18 2017/01/07 21:39:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdt.c,v 1.18.12.1 2018/06/25 07:25:15 pgoyette Exp $");
 
 #include <sys/cdefs.h>
+#include <sys/proc.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 
@@ -72,7 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: sdt.c,v 1.18 2017/01/07 21:39:52 christos Exp $");
 
 /* DTrace methods. */
 static void	sdt_getargdesc(void *, dtrace_id_t, void *, dtrace_argdesc_t *);
-static void	sdt_provide_probes(void *, const dtrace_probedesc_t *);
+static void	sdt_provide_probes(void *, dtrace_probedesc_t *);
 static void	sdt_destroy(void *, dtrace_id_t, void *);
 static int	sdt_enable(void *, dtrace_id_t, void *);
 static void	sdt_disable(void *, dtrace_id_t, void *);
@@ -115,7 +116,7 @@ static dtrace_pops_t sdt_pops = {
 static int
 sdt_open(dev_t dev, int flags, int mode, struct lwp *l)
 {
-	return (0);
+	return 0;
 }
 
 static const struct cdevsw sdt_cdevsw = {
@@ -137,8 +138,8 @@ static const struct cdevsw sdt_cdevsw = {
 static TAILQ_HEAD(, sdt_provider) sdt_prov_list;
 
 #ifdef __FreeBSD__
-eventhandler_tag	sdt_kld_load_tag;
-eventhandler_tag	sdt_kld_unload_try_tag;
+static eventhandler_tag	sdt_kld_load_tag;
+static eventhandler_tag	sdt_kld_unload_try_tag;
 #endif
 
 #ifdef __NetBSD__
@@ -191,6 +192,12 @@ sdt_create_probe(struct sdt_probe *probe)
 	char *to;
 	size_t len;
 
+	if (probe->version != (int)sizeof(*probe)) {
+		printf("ignoring probe %p, version %u expected %u\n",
+		    probe, probe->version, (int)sizeof(*probe));
+		return;
+	}
+
 	TAILQ_FOREACH(prov, &sdt_prov_list, prov_entry)
 		if (strcmp(prov->name, probe->prov->name) == 0)
 			break;
@@ -214,6 +221,8 @@ sdt_create_probe(struct sdt_probe *probe)
 	 * in the C compiler, so we have to respect const vs non-const.
 	 */
 	strlcpy(func, probe->func, sizeof(func));
+	if (func[0] == '\0')
+		strcpy(func, "none");
 
 	from = probe->name;
 	to = name;
@@ -239,7 +248,7 @@ sdt_create_probe(struct sdt_probe *probe)
  * requires one of provide_probes and provide_module to be defined.
  */
 static void
-sdt_provide_probes(void *arg, const dtrace_probedesc_t *desc)
+sdt_provide_probes(void *arg, dtrace_probedesc_t *desc)
 {
 }
 
@@ -247,10 +256,6 @@ static int
 sdt_enable(void *arg __unused, dtrace_id_t id, void *parg)
 {
 	struct sdt_probe *probe = parg;
-
-#ifdef SDT_DEBUG
-	printf("sdt: %s\n", __func__);
-#endif
 
 	probe->id = id;
 #ifdef __FreeBSD__
@@ -268,13 +273,6 @@ sdt_disable(void *arg __unused, dtrace_id_t id, void *parg)
 
 #ifdef __FreeBSD__
 	SDT_KASSERT(probe->sdtp_lf->nenabled > 0, ("no probes enabled"));
-#endif
-
-#ifdef SDT_DEBUG
-	printf("sdt: %s\n", __func__);
-#endif
-
-#ifdef __FreeBSD__
 	if (strcmp(probe->prov->name, "lockstat") == 0)
 		lockstat_enabled--;
 	probe->sdtp_lf->nenabled--;
@@ -288,16 +286,6 @@ sdt_getargdesc(void *arg, dtrace_id_t id, void *parg, dtrace_argdesc_t *desc)
 	struct sdt_argtype *argtype;
 	struct sdt_probe *probe = parg;
 
-#ifdef SDT_DEBUG
-	printf("sdt: %s probe %d\n", __func__, id);
-	printf("%s: probe %d (%s:%s:%s:%s).%d\n",
-		__func__, id,
-		probe->provider,
-		probe->module,
-		probe->function,
-		probe->name,
-		desc->dtargd_ndx);
-#endif
 	if (desc->dtargd_ndx >= probe->n_args) {
 		desc->dtargd_ndx = DTRACE_ARGNONE;
 		return;
@@ -488,12 +476,19 @@ sdt_load(void)
 {
 	TAILQ_INIT(&sdt_prov_list);
 
-	sdt_init(dtrace_probe);
 #ifdef __FreeBSD__
+	sdt_probe_func = dtrace_probe;
+
+	sdt_kld_load_tag = EVENTHANDLER_REGISTER(kld_load, sdt_kld_load, NULL,
+	    EVENTHANDLER_PRI_ANY);
+	sdt_kld_unload_try_tag = EVENTHANDLER_REGISTER(kld_unload_try,
+	    sdt_kld_unload_try, NULL, EVENTHANDLER_PRI_ANY);
+
 	/* Pick up probes from the kernel and already-loaded linker files. */
 	linker_file_foreach(sdt_linker_file_cb, NULL);
 #endif
 #ifdef __NetBSD__
+	sdt_init(dtrace_probe);
 	sdt_link_set_load();
 #endif
 }
@@ -504,53 +499,51 @@ sdt_unload(void)
 	struct sdt_provider *prov, *tmp;
 	int ret;
 
-	sdt_exit();
+#ifdef __FreeBSD__
+	EVENTHANDLER_DEREGISTER(kld_load, sdt_kld_load_tag);
+	EVENTHANDLER_DEREGISTER(kld_unload_try, sdt_kld_unload_try_tag);
+
+	sdt_probe_func = sdt_probe_stub;
+#endif
 
 #ifdef __NetBSD__
+	sdt_exit();
+
 	sdt_link_set_unload();
 #endif
 	TAILQ_FOREACH_SAFE(prov, &sdt_prov_list, prov_entry, tmp) {
 		ret = dtrace_unregister(prov->id);
 		if (ret != 0)
-			return ret;
+			return (ret);
 		TAILQ_REMOVE(&sdt_prov_list, prov, prov_entry);
 		free(__UNCONST(prov->name), M_SDT);
 		free(prov, M_SDT);
 	}
 
-	return 0;
+	return (0);
 }
 
 #ifdef __FreeBSD__
 static int
 sdt_modevent(module_t mod __unused, int type, void *data __unused)
 {
-	int error = 0;
 
 	switch (type) {
 	case MOD_LOAD:
-		sdt_load();
-		break;
-
 	case MOD_UNLOAD:
-		error = sdt_unload();
-		break;
-
 	case MOD_SHUTDOWN:
-		break;
-
+		return (0);
 	default:
-		error = EOPNOTSUPP;
-		break;
+		return (EOPNOTSUPP);
 	}
-
-	return (error);
 }
+
+SYSINIT(sdt_load, SI_SUB_DTRACE_PROVIDER, SI_ORDER_ANY, sdt_load, NULL);
+SYSUNINIT(sdt_unload, SI_SUB_DTRACE_PROVIDER, SI_ORDER_ANY, sdt_unload, NULL);
 
 DEV_MODULE(sdt, sdt_modevent, NULL);
 MODULE_VERSION(sdt, 1);
 MODULE_DEPEND(sdt, dtrace, 1, 1, 1);
-MODULE_DEPEND(sdt, opensolaris, 1, 1, 1);
 #endif
 
 #ifdef __NetBSD__

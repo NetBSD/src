@@ -1,4 +1,4 @@
-/*      $NetBSD: xen_shm_machdep.c,v 1.10 2011/09/02 22:25:08 dyoung Exp $      */
+/*      $NetBSD: xen_shm_machdep.c,v 1.10.52.1 2018/06/25 07:25:47 pgoyette Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_shm_machdep.c,v 1.10 2011/09/02 22:25:08 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_shm_machdep.c,v 1.10.52.1 2018/06/25 07:25:47 pgoyette Exp $");
 
 
 #include <sys/types.h>
@@ -132,6 +132,7 @@ xen_shm_map(int nentries, int domid, grant_ref_t *grefp, vaddr_t *vap,
 		panic("xen_shm_map");
 	}
 #endif
+	/* XXXSMP */
 	s = splvm(); /* splvm is the lowest level blocking disk and net IRQ */
 	/*
 	 * if a driver is waiting for ressources, don't try to allocate
@@ -211,6 +212,7 @@ xen_shm_unmap(vaddr_t va, int nentries, grant_handle_t *handlep)
 	if (__predict_false(ret))
 		panic("xen_shm_unmap: unmap failed");
 	va = va >> PAGE_SHIFT;
+	/* XXXSMP */
 	s = splvm(); /* splvm is the lowest level blocking disk and net IRQ */
 	vmem_free(xen_shm_arena, va, nentries);
 	while (__predict_false((xshmc = SIMPLEQ_FIRST(&xen_shm_callbacks))
@@ -219,11 +221,11 @@ xen_shm_unmap(vaddr_t va, int nentries, grant_handle_t *handlep)
 		splx(s);
 		if (xshmc->xshmc_callback(xshmc->xshmc_arg) == 0) {
 			/* callback succeeded */
-			s = splvm();
+			s = splvm(); /* XXXSMP */
 			pool_put(&xen_shm_callback_pool, xshmc);
 		} else {
 			/* callback failed, probably out of ressources */
-			s = splvm();
+			s = splvm(); /* XXXSMP */
 			SIMPLEQ_INSERT_TAIL(&xen_shm_callbacks, xshmc,
 					    xshmc_entries);
 
@@ -239,7 +241,7 @@ xen_shm_callback(int (*callback)(void *), void *arg)
 	struct xen_shm_callback_entry *xshmc;
 	int s;
 
-	s = splvm();
+	s = splvm(); /* XXXSMP */
 	xshmc = pool_get(&xen_shm_callback_pool, PR_NOWAIT);
 	if (xshmc == NULL) {
 		splx(s);

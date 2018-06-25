@@ -103,6 +103,11 @@ extern size_t snprintf(char *, size_t, const char *, ...)
     __KPRINTFLIKE(3);
 extern size_t vsnprintf(char *, size_t, const char *, __va_list)
     __KVPRINTFLIKE(3);
+/*PRINTFLIKE2*/
+extern char *sprintf(char *, const char *, ...)
+    __KPRINTFLIKE(2);
+extern char *vsprintf(char *, const char *, __va_list)
+    __KVPRINTFLIKE(2);
 
 /*PRINTFLIKE1*/
 extern void panic(const char *, ...)

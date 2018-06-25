@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.i386,v 1.189.2.2 2018/04/22 07:20:17 pgoyette Exp $
+#	$NetBSD: Makefile.i386,v 1.189.2.3 2018/06/25 07:25:42 pgoyette Exp $
 
 # Makefile for NetBSD
 #
@@ -17,6 +17,7 @@
 #
 #	makeoptions DEBUGLIST="uvm* trap if_*"
 
+NOSANITIZER=	# defined
 MACHINE_ARCH=	i386
 USETOOLS?=	no
 NEED_OWN_INSTALL_TARGET?=no

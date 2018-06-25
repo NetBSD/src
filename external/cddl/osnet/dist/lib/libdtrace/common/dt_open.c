@@ -22,7 +22,7 @@
 /*
  * Copyright (c) 2003, 2010, Oracle and/or its affiliates. All rights reserved.
  * Copyright (c) 2013, Joyent, Inc. All rights reserved.
- * Copyright (c) 2012 by Delphix. All rights reserved.
+ * Copyright (c) 2012, 2016 by Delphix. All rights reserved.
  */
 
 #include <sys/types.h>
@@ -130,8 +130,9 @@
 #define	DT_VERS_1_11	DT_VERSION_NUMBER(1, 11, 0)
 #define	DT_VERS_1_12	DT_VERSION_NUMBER(1, 12, 0)
 #define	DT_VERS_1_12_1	DT_VERSION_NUMBER(1, 12, 1)
-#define	DT_VERS_LATEST	DT_VERS_1_12_1
-#define	DT_VERS_STRING	"Sun D 1.12.1"
+#define	DT_VERS_1_13	DT_VERSION_NUMBER(1, 13, 0)
+#define	DT_VERS_LATEST	DT_VERS_1_13
+#define	DT_VERS_STRING	"Sun D 1.13"
 
 const dt_version_t _dtrace_versions[] = {
 	DT_VERS_1_0,	/* D API 1.0.0 (PSARC 2001/466) Solaris 10 FCS */
@@ -157,6 +158,7 @@ const dt_version_t _dtrace_versions[] = {
 	DT_VERS_1_11,	/* D API 1.11 */
 	DT_VERS_1_12,	/* D API 1.12 */
 	DT_VERS_1_12_1,	/* D API 1.12.1 */
+	DT_VERS_1_13,	/* D API 1.13 */
 	0
 };
 
@@ -390,8 +392,6 @@ static const dt_ident_t _dtrace_globals[] = {
 	&dt_idops_func, "void(@, ...)" },
 { "printm", DT_IDENT_ACTFUNC, 0, DT_ACT_PRINTM, DT_ATTR_STABCMN, DT_VERS_1_0,
 	&dt_idops_func, "void(size_t, uintptr_t *)" },
-{ "printt", DT_IDENT_ACTFUNC, 0, DT_ACT_PRINTT, DT_ATTR_STABCMN, DT_VERS_1_0,
-	&dt_idops_func, "void(size_t, uintptr_t *)" },
 { "probefunc", DT_IDENT_SCALAR, 0, DIF_VAR_PROBEFUNC,
 	DT_ATTR_STABCMN, DT_VERS_1_0, &dt_idops_type, "string" },
 { "probemod", DT_IDENT_SCALAR, 0, DIF_VAR_PROBEMOD,
@@ -503,8 +503,6 @@ static const dt_ident_t _dtrace_globals[] = {
 	&dt_idops_func, "void(@, size_t, ...)" },
 { "trunc", DT_IDENT_ACTFUNC, 0, DT_ACT_TRUNC, DT_ATTR_STABCMN,
 	DT_VERS_1_0, &dt_idops_func, "void(...)" },
-{ "typeref", DT_IDENT_FUNC, 0, DIF_SUBR_TYPEREF, DT_ATTR_STABCMN, DT_VERS_1_1,
-	&dt_idops_func, "uintptr_t *(void *, size_t, string, size_t)" },
 { "uaddr", DT_IDENT_ACTFUNC, 0, DT_ACT_UADDR, DT_ATTR_STABCMN,
 	DT_VERS_1_2, &dt_idops_func, "_usymaddr(uintptr_t)" },
 { "ucaller", DT_IDENT_SCALAR, 0, DIF_VAR_UCALLER, DT_ATTR_STABCMN,
@@ -941,9 +939,11 @@ dt_provmod_open(dt_provmod_t **provmod, dt_fdlist_t *dfp)
 			 * reallocate it. We normally won't need to do this
 			 * because providers aren't being loaded all the time.
 			 */
-			if ((p = realloc(p_providers,len)) == NULL)
+			if ((p = realloc(p_providers,len)) == NULL) {
+				free(p_providers);
 				/* How do we report errors here? */
 				return;
+			}
 			p_providers = p;
 		} else
 			break;
@@ -1190,8 +1190,10 @@ dt_vopen(int version, int flags, int *errp,
 	(void) fcntl(ftfd, F_SETFD, FD_CLOEXEC);
 
 alloc:
-	if ((dtp = malloc(sizeof (dtrace_hdl_t))) == NULL)
+	if ((dtp = malloc(sizeof (dtrace_hdl_t))) == NULL) {
+	        dt_provmod_destroy(&provmod);
 		return (set_open_errno(dtp, errp, EDT_NOMEM));
+	}
 
 	bzero(dtp, sizeof (dtrace_hdl_t));
 	dtp->dt_oflags = flags;
@@ -1339,8 +1341,8 @@ alloc:
 
 	/*
 	 * On FreeBSD the kernel module name can't be hard-coded. The
-	 * 'kern.bootfile' sysctl value tells us exactly which file is
-	 * being used as the kernel.
+	 * 'kern.bootfile' sysctl value tells us exactly which file is being
+	 * used as the kernel.
 	 */
 #ifndef illumos
 # ifdef __FreeBSD__

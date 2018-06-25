@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.xmlsrcs,v 1.5 2017/03/05 09:27:53 mrg Exp $
+#	$NetBSD: Makefile.xmlsrcs,v 1.5.10.1 2018/06/25 07:25:32 pgoyette Exp $
 
 # list of the libxcb xml-generated .c files.
 
@@ -9,6 +9,7 @@ XMLSRCS= \
 	dpms.c \
 	dri2.c \
 	dri3.c \
+	ge.c \
 	glx.c \
 	present.c \
 	randr.c \
@@ -21,6 +22,7 @@ XMLSRCS= \
 	sync.c \
 	xc_misc.c \
 	xf86dri.c \
+	xf86vidmode.c \
 	xfixes.c \
 	xinerama.c \
 	xinput.c \

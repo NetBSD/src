@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2860.c,v 1.30 2018/01/14 18:23:03 maxv Exp $	*/
+/*	$NetBSD: rt2860.c,v 1.30.2.1 2018/06/25 07:25:50 pgoyette Exp $	*/
 /*	$OpenBSD: rt2860.c,v 1.90 2016/04/13 10:49:26 mpi Exp $	*/
 /*	$FreeBSD: head/sys/dev/ral/rt2860.c 306591 2016-10-02 20:35:55Z avos $ */
 
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2860.c,v 1.30 2018/01/14 18:23:03 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2860.c,v 1.30.2.1 2018/06/25 07:25:50 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -196,7 +196,7 @@ static const struct rfprog {
 	RT2860_RF2850
 };
 
-struct {
+static const struct {
 	uint8_t	n, r, k;
 } rt3090_freqs[] = {
 	RT3070_RF3052

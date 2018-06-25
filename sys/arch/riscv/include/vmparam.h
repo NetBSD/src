@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.3 2017/06/24 13:43:36 joerg Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.3.6.1 2018/06/25 07:25:45 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  * page-aligned.
  */
 #define	USRSTACK	(VM_MAXUSER_ADDRESS-PAGE_SIZE) /* Start of user stack */
-#define	USRSTACK32	((uint32_t)VM_MAXUSER32_ADDRESS-PAGE_SIZE)
+#define	USRSTACK32	((uint32_t)VM_MAXUSER_ADDRESS32-PAGE_SIZE)
 
 /*
  * Virtual memory related constants, all in bytes
@@ -129,7 +129,7 @@
 #define VM_MAX_KERNEL_ADDRESS	((vaddr_t)-0x40000000)	/* 0xFFFFFFFFC0000000 */
 #endif
 #define VM_MAX_ADDRESS		VM_MAXUSER_ADDRESS
-#define VM_MAXUSER32_ADDRESS	((vaddr_t)(1UL << 31))/* 0x0000000080000000 */
+#define VM_MAXUSER_ADDRESS32	((vaddr_t)(1UL << 31))/* 0x0000000080000000 */
 
 /*
  * The address to which unspecified mapping requests default

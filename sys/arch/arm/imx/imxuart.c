@@ -1,4 +1,4 @@
-/* $NetBSD: imxuart.c,v 1.20 2017/09/08 05:29:12 hkenken Exp $ */
+/* $NetBSD: imxuart.c,v 1.20.2.1 2018/06/25 07:25:39 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2009, 2010  Genetec Corporation.  All rights reserved.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imxuart.c,v 1.20 2017/09/08 05:29:12 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imxuart.c,v 1.20.2.1 2018/06/25 07:25:39 pgoyette Exp $");
 
 #include "opt_imxuart.h"
 #include "opt_ddb.h"
@@ -306,6 +306,13 @@ imxuart_attach_common(device_t parent, device_t self,
 	}
 	regsp->ur_ioh = ioh;
 
+	sc->sc_ih = intr_establish(sc->sc_intr, IPL_SERIAL, IST_LEVEL,
+	    imxuintr, sc);
+	if (sc->sc_ih == NULL) {
+		aprint_error_dev(sc->sc_dev, "intr_establish failed\n");
+		return;
+	}
+
 	imxuart_attach_subr(sc);
 }
 
@@ -376,11 +383,6 @@ imxuart_attach_subr(struct imxuart_softc *sc)
 			aprint_normal_dev(sc->sc_dev, "console\n");
 		}
 	}
-
-	sc->sc_ih = intr_establish(sc->sc_intr, IPL_SERIAL, IST_LEVEL,
-	    imxuintr, sc);
-	if (sc->sc_ih == NULL)
-		aprint_error_dev(sc->sc_dev, "intr_establish failed\n");
 
 #ifdef KGDB
 	/*

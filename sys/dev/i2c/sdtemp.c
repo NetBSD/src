@@ -1,4 +1,4 @@
-/*      $NetBSD: sdtemp.c,v 1.33 2018/02/22 10:09:12 msaitoh Exp $        */
+/*      $NetBSD: sdtemp.c,v 1.33.2.1 2018/06/25 07:25:50 pgoyette Exp $        */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdtemp.c,v 1.33 2018/02/22 10:09:12 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdtemp.c,v 1.33.2.1 2018/06/25 07:25:50 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -240,7 +240,7 @@ sdtemp_match(device_t parent, cfdata_t cf, void *aux)
 	if ((cap & SDTEMP_CAP_HAS_ALARM) == 0)
 		return 0;
 
-	return 1;
+	return I2C_MATCH_ADDRESS_AND_PROBE;
 }
 
 static void

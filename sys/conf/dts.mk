@@ -1,4 +1,4 @@
-# $NetBSD: dts.mk,v 1.8 2017/12/10 14:29:47 christos Exp $
+# $NetBSD: dts.mk,v 1.8.2.1 2018/06/25 07:25:48 pgoyette Exp $
 
 DTSARCH?=${MACHINE_CPU}
 DTSGNUARCH?=${DTSARCH}
@@ -33,7 +33,7 @@ DTSPATH=${DTSINC} ${DTSDIR} dts
 	(${CPP} -P -xassembler-with-cpp ${DTSPATH:@v@-I ${v}@} \
 	    -include ${.IMPSRC} /dev/null | \
 	${TOOL_DTC} ${DTSPATH:@v@-i ${v}@} -I dts -O dtb \
-	    -p ${DTSPADDING} -b 0 -o /dev/null -d /dev/stdout | \
+	    -p ${DTSPADDING} -b 0 -@ -o /dev/null -d /dev/stdout | \
 	${TOOL_SED} -e 's@/dev/null@${.TARGET:.dtd=.dtb}@' \
 	    -e 's@<stdin>@${.IMPSRC}@' && \
 	${CPP} -P -xassembler-with-cpp ${DTSPATH:@v@-I ${v}@} \
@@ -46,7 +46,7 @@ DTSPATH=${DTSINC} ${DTSDIR} dts
 	${CPP} -P -xassembler-with-cpp ${DTSPATH:@v@-I ${v}@} \
 	    -include ${.IMPSRC} /dev/null | \
 	${TOOL_DTC} ${DTSPATH:@v@-i ${v}@} -I dts -O dtb \
-	    -p ${DTSPADDING} -b 0 -o ${.TARGET}
+	    -p ${DTSPADDING} -b 0 -@ -o ${.TARGET}
 
 .PATH.dts: ${DTSDIR}
 

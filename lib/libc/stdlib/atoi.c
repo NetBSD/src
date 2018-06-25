@@ -1,4 +1,4 @@
-/*	$NetBSD: atoi.c,v 1.14 2018/01/07 15:28:33 kamil Exp $	*/
+/*	$NetBSD: atoi.c,v 1.14.2.1 2018/06/25 07:25:34 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)atoi.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: atoi.c,v 1.14 2018/01/07 15:28:33 kamil Exp $");
+__RCSID("$NetBSD: atoi.c,v 1.14.2.1 2018/06/25 07:25:34 pgoyette Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -46,5 +46,5 @@ atoi(const char *str)
 {
 	_DIAGASSERT(str != NULL);
 
-	return((int)strtol(str, (char **)NULL, 10));
+	return((int)strtol(str, NULL, 10));
 }

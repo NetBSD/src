@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_output.c,v 1.71.2.3 2018/05/21 04:36:16 pgoyette Exp $	*/
+/*	$NetBSD: ipsec_output.c,v 1.71.2.4 2018/06/25 07:26:07 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.71.2.3 2018/05/21 04:36:16 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.71.2.4 2018/06/25 07:26:07 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -151,7 +151,6 @@ ipsec_process_done(struct mbuf *m, const struct ipsecrequest *isr,
 #endif
 	struct mbuf *mo;
 	struct udphdr *udp = NULL;
-	uint64_t *data = NULL;
 	int hlen, roff;
 
 	KASSERT(m != NULL);
@@ -164,8 +163,6 @@ ipsec_process_done(struct mbuf *m, const struct ipsecrequest *isr,
 		ip = mtod(m, struct ip *);
 
 		hlen = sizeof(struct udphdr);
-		if (sav->natt_type == UDP_ENCAP_ESPINUDP_NON_IKE)
-			hlen += sizeof(uint64_t);
 
 		mo = m_makespace(m, sizeof(struct ip), hlen, &roff);
 		if (mo == NULL) {
@@ -179,16 +176,7 @@ ipsec_process_done(struct mbuf *m, const struct ipsecrequest *isr,
 		}
 
 		udp = (struct udphdr *)(mtod(mo, char *) + roff);
-		data = (uint64_t *)(udp + 1);
-
-		if (sav->natt_type == UDP_ENCAP_ESPINUDP_NON_IKE)
-			*data = 0; /* NON-IKE Marker */
-
-		if (sav->natt_type == UDP_ENCAP_ESPINUDP_NON_IKE)
-			udp->uh_sport = htons(UDP_ENCAP_ESPINUDP_PORT);
-		else
-			udp->uh_sport = key_portfromsaddr(&saidx->src);
-
+		udp->uh_sport = key_portfromsaddr(&saidx->src);
 		udp->uh_dport = key_portfromsaddr(&saidx->dst);
 		udp->uh_sum = 0;
 		udp->uh_ulen = htons(m->m_pkthdr.len - (ip->ip_hl << 2));
@@ -495,8 +483,7 @@ ipsec4_process_packet(struct mbuf *m, const struct ipsecrequest *isr,
 	if (isr == isr->sp->req) { /* Check only if called from ipsec4_output */
 		KASSERT(mtu != NULL);
 		ip = mtod(m, struct ip *);
-		if (!(sav->natt_type &
-		    (UDP_ENCAP_ESPINUDP|UDP_ENCAP_ESPINUDP_NON_IKE))) {
+		if (!(sav->natt_type & UDP_ENCAP_ESPINUDP)) {
 			goto noneed;
 		}
 		if (ntohs(ip->ip_len) <= sav->esp_frag)
@@ -637,39 +624,39 @@ compute_ipsec_pos(struct mbuf *m, int *i, int *off)
 	 *     IPv6 hbh dest1 rthdr ah* [esp* dest2 payload]
 	 */
 	while (1) {
-		if (*i + sizeof(ip6e) > m->m_pkthdr.len) {
-			return EINVAL;
-		}
-
 		switch (nxt) {
 		case IPPROTO_AH:
 		case IPPROTO_ESP:
 		case IPPROTO_IPCOMP:
-		/*
-		 * we should not skip security header added
-		 * beforehand.
-		 */
+			/*
+			 * We should not skip security header added
+			 * beforehand.
+			 */
 			return 0;
 
 		case IPPROTO_HOPOPTS:
 		case IPPROTO_DSTOPTS:
 		case IPPROTO_ROUTING:
-		/*
-		 * if we see 2nd destination option header,
-		 * we should stop there.
-		 */
+			if (*i + sizeof(ip6e) > m->m_pkthdr.len) {
+				return EINVAL;
+			}
+
+			/*
+			 * If we see 2nd destination option header,
+			 * we should stop there.
+			 */
 			if (nxt == IPPROTO_DSTOPTS && dstopt)
 				return 0;
 
 			if (nxt == IPPROTO_DSTOPTS) {
 				/*
-				 * seen 1st or 2nd destination option.
+				 * Seen 1st or 2nd destination option.
 				 * next time we see one, it must be 2nd.
 				 */
 				dstopt = 1;
 			} else if (nxt == IPPROTO_ROUTING) {
 				/*
-				 * if we see destination option next
+				 * If we see destination option next
 				 * time, it must be dest2.
 				 */
 				dstopt = 2;
@@ -680,6 +667,9 @@ compute_ipsec_pos(struct mbuf *m, int *i, int *off)
 			nxt = ip6e.ip6e_nxt;
 			*off = *i + offsetof(struct ip6_ext, ip6e_nxt);
 			*i += (ip6e.ip6e_len + 1) << 3;
+			if (*i > m->m_pkthdr.len) {
+				return EINVAL;
+			}
 			break;
 		default:
 			return 0;

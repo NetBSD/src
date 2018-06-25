@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.h,v 1.25 2017/11/04 14:56:48 cherry Exp $	*/
+/*	$NetBSD: evtchn.h,v 1.25.2.1 2018/06/25 07:25:47 pgoyette Exp $	*/
 
 /*
  *
@@ -41,7 +41,8 @@ bool events_resume(void);
 unsigned int evtchn_do_event(int, struct intrframe *);
 void call_evtchn_do_event(int, struct intrframe *);
 void call_xenevt_event(int);
-int event_set_handler(int, int (*func)(void *), void *, int, const char *);
+int event_set_handler(int, int (*func)(void *), void *, int, const char *,
+    const char *);
 int event_remove_handler(int, int (*func)(void *), void *);
 
 struct cpu_info;
@@ -69,7 +70,7 @@ struct pintrhand {
 };
 
 struct pintrhand *pirq_establish(int, int, int (*)(void *), void *, int,
-     const char *);
+     const char *, const char *);
 void pirq_disestablish(struct pintrhand *);
 
 #endif /*  _XEN_EVENTS_H_ */

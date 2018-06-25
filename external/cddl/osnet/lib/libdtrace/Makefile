@@ -1,13 +1,11 @@
-#	$NetBSD: Makefile,v 1.16 2016/12/19 01:26:31 christos Exp $
+#	$NetBSD: Makefile,v 1.16.12.1 2018/06/25 07:25:24 pgoyette Exp $
 
-# $FreeBSD: src/cddl/lib/libdtrace/Makefile,v 1.2.2.1 2009/08/03 08:13:06 kensmith Exp $
+# $FreeBSD: head/cddl/lib/libdtrace/Makefile 314654 2017-03-04 11:30:04Z ngie $
 
 WARNS=1
 .include <bsd.init.mk>
 
 LIB=		dtrace
-
-#WARNS=		1
 
 SRCS=		dt_aggregate.c \
 		dt_as.c \
@@ -24,6 +22,7 @@ SRCS=		dt_aggregate.c \
 		dt_handle.c \
 		dt_ident.c \
 		dt_inttab.c \
+		dt_isadep.c \
 		dt_lex.l \
 		dt_link.c \
 		dt_list.c \
@@ -46,6 +45,7 @@ SRCS=		dt_aggregate.c \
 		dt_string.c \
 		dt_strtab.c \
 		dt_subr.c \
+		dt_sugar.c \
 		dt_work.c \
 		dt_xlator.c \
 		gmatch.c
@@ -54,6 +54,9 @@ DSRCS=		errno.d			\
 		psinfo.d		\
 		signal.d		\
 		unistd.d
+
+FILES=		${DSRCS}
+FILESDIR=	/usr/lib/dtrace
 
 .PATH:		${.CURDIR}/../../dist/lib/libgen/common
 .PATH:		${.CURDIR}/../../dist/lib/libdtrace/common
@@ -66,10 +69,6 @@ CPPFLAGS+=	-I${.OBJDIR} \
 		-I${OPENSOLARIS_USR_DISTDIR}/lib/libctf/common \
 		-I${OPENSOLARIS_USR_DISTDIR}/lib/libdtrace/common \
 		-I${OPENSOLARIS_SYS_DISTDIR}/uts/common
-
-# XXX need new libelf (not GPL)
-
-#CFLAGS+=	-DYYDEBUG
 
 COPTS.dt_aggregate.c	+= -Wno-stack-protector
 COPTS.dt_consume.c	+= -Wno-stack-protector
@@ -87,17 +86,24 @@ COPTS.dt_program.c	+= -Wno-stack-protector
 COPTS.dt_provider.c	+= -Wno-stack-protector
 COPTS.dt_subr.c		+= -Wno-stack-protector
 
+COPTS.dt_consume.c	+= -Wno-parentheses
+COPTS.dt_consume.c	+= ${${ACTIVE_CC} == "gcc" :? -Wno-maybe-uninitialized :}
+COPTS.dt_options.c	+= -Wno-parentheses
+COPTS.dt_pid.c		+= ${${ACTIVE_CC} == "gcc" :? -Wno-unused-but-set-variable :}
+COPTS.dt_isadep.c	+= -Wno-unused-variable
+
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 CPPFLAGS+=	-I${OPENSOLARIS_SYS_DISTDIR}/uts/intel
-CPPFLAGS+=	-I${.CURDIR}/../../dev/dtrace/i386
-.PATH:		${.CURDIR}/../../dist/lib/libdtrace/i386 ${.CURDIR}/../../dev/dtrace/i386
-SRCS+=	dt_isadep.c # dis_tables.c
+CPPFLAGS+=	-I${.CURDIR}/../../dev/dtrace/x86
+.PATH:		${.CURDIR}/../../dist/lib/libdtrace/i386 ${.CURDIR}/../../dev/dtrace/x86
+SRCS+=		dis_tables.c
+COPTS.dis_tables.c	+= -Wno-parentheses
+COPTS.dis_tables.c	+= ${${ACTIVE_CC} == "gcc" :? -Wno-maybe-uninitialized :}
 .elif ${MACHINE_ARCH} == "sparc64"
 CPPFLAGS+=	-I${OPENSOLARIS_SYS_DISTDIR}/uts/sparc
 .elif ${MACHINE_CPU} == "arm"
 CPPFLAGS+=	-I${OPENSOLARIS_SYS_DISTDIR}/uts/arm
 .PATH:		${.CURDIR}/../../dist/lib/libdtrace/arm
-SRCS+=	dt_isadep.c
 .endif
 
 LFLAGS+=-l
@@ -116,17 +122,11 @@ dt_names.c: ${MKNAMES} ${OPENSOLARIS_SYS_DISTDIR}/uts/common/sys/dtrace.h
 
 beforedepend:	dt_errtags.c dt_names.c
 
-foo:
-	echo ${OPENSOLARIS_USR_DISTDIR}
-
 .SUFFIXES: .in
 .in:
 	${CPP} -D_KERNEL ${CPPFLAGS} $< | tr -d ' ' | tr '"' '@' | \
 	    ${TOOL_SED} -e 's/\&/\\\&/g' | grep '^s/' > ${.TARGET}
 
-
-FILES=		${DSRCS}
-FILESDIR=	/usr/lib/dtrace
 
 LIBDPLIBS=	proc	${NETBSDSRCDIR}/external/bsd/libproc/lib
 

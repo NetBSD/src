@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.78 2017/11/11 21:03:01 riastradh Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.78.2.1 2018/06/25 07:25:48 pgoyette Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.78 2017/11/11 21:03:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.78.2.1 2018/06/25 07:25:48 pgoyette Exp $");
 
 #include "opt_xen.h"
 
@@ -323,14 +323,16 @@ xbd_xenbus_detach(device_t dev, int flags)
 	if (rc != 0)
 		return rc;
 
-	s = splbio();
+	s = splbio(); /* XXXSMP */
 	DPRINTF(("%s: xbd_detach\n", device_xname(dev)));
 	if (sc->sc_shutdown == BLKIF_SHUTDOWN_RUN) {
 		sc->sc_shutdown = BLKIF_SHUTDOWN_LOCAL;
 		/* wait for requests to complete */
 		while (sc->sc_backend_status == BLKIF_STATE_CONNECTED &&
-		    disk_isbusy(&sc->sc_dksc.sc_dkdev))
+		    disk_isbusy(&sc->sc_dksc.sc_dkdev)) {
+			/* XXXSMP */
 			tsleep(xbd_xenbus_detach, PRIBIO, "xbddetach", hz/2);
+		}
 
 		xenbus_switch_state(sc->sc_xbusd, NULL, XenbusStateClosing);
 	}
@@ -341,8 +343,10 @@ xbd_xenbus_detach(device_t dev, int flags)
 		return EALREADY;
 	}
 	while (xenbus_read_driver_state(sc->sc_xbusd->xbusd_otherend)
-	    != XenbusStateClosed)
+	    != XenbusStateClosed) {
+		/* XXXSMP */
 		tsleep(xbd_xenbus_detach, PRIBIO, "xbddetach2", hz/2);
+	}
 	splx(s);
 
 	/* locate the major number */
@@ -373,6 +377,7 @@ xbd_xenbus_detach(device_t dev, int flags)
 	intr_disestablish(sc->sc_ih);
 
 	while (xengnt_status(sc->sc_ring_gntref)) {
+		/* XXXSMP */
 		tsleep(xbd_xenbus_detach, PRIBIO, "xbd_ref", hz/2);
 	}
 	xengnt_revoke_access(sc->sc_ring_gntref);
@@ -392,11 +397,13 @@ xbd_xenbus_suspend(device_t dev, const pmf_qual_t *qual) {
 
 	sc = device_private(dev);
 
-	s = splbio();
+	s = splbio(); /* XXXSMP */
 	/* wait for requests to complete, then suspend device */
 	while (sc->sc_backend_status == BLKIF_STATE_CONNECTED &&
-	    disk_isbusy(&sc->sc_dksc.sc_dkdev))
+	    disk_isbusy(&sc->sc_dksc.sc_dkdev)) {
+		/* XXXSMP */
 		tsleep(xbd_xenbus_suspend, PRIBIO, "xbdsuspend", hz/2);
+	}
 
 	hypervisor_mask_event(sc->sc_evtchn);
 	sc->sc_backend_status = BLKIF_STATE_SUSPENDED;
@@ -529,13 +536,15 @@ static void xbd_backend_changed(void *arg, XenbusState new_state)
 	case XenbusStateInitialised:
 		break;
 	case XenbusStateClosing:
-		s = splbio();
+		s = splbio(); /* XXXSMP */
 		if (sc->sc_shutdown == BLKIF_SHUTDOWN_RUN)
 			sc->sc_shutdown = BLKIF_SHUTDOWN_REMOTE;
 		/* wait for requests to complete */
 		while (sc->sc_backend_status == BLKIF_STATE_CONNECTED &&
-		    disk_isbusy(&sc->sc_dksc.sc_dkdev))
+		    disk_isbusy(&sc->sc_dksc.sc_dkdev)) {
+			/* XXXSMP */
 			tsleep(xbd_xenbus_detach, PRIBIO, "xbddetach", hz/2);
+		}
 		splx(s);
 		xenbus_switch_state(sc->sc_xbusd, NULL, XenbusStateClosed);
 		break;
@@ -846,10 +855,11 @@ xbdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			return EOPNOTSUPP;
 		}
 
-		s = splbio();
+		s = splbio(); /* XXXSMP */
 
 		while (RING_FULL(&sc->sc_ring)) {
 			sc->sc_xbdreq_wait = 1;
+			/* XXXSMP */
 			tsleep(&sc->sc_xbdreq_wait, PRIBIO, "xbdreq", 0);
 		}
 		sc->sc_xbdreq_wait = 0;
@@ -873,6 +883,7 @@ xbdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 				hypervisor_notify_via_evtchn(sc->sc_evtchn);
 			/* request sent, no wait for completion */
 			while (xbdreq->req_sync.s_done == 0) {
+				/* XXXSMP */
 				tsleep(xbdreq, PRIBIO, "xbdsync", 0);
 			}
 			if (xbdreq->req_sync.s_error == BLKIF_RSP_EOPNOTSUPP)
@@ -1019,7 +1030,7 @@ err:
 static int
 xbd_map_align(struct xbd_req *req)
 {
-	int s = splvm();
+	int s = splvm(); /* XXXSMP - bogus? */
 	int rc;
 
 	rc = uvm_km_kmem_alloc(kmem_va_arena,
@@ -1041,7 +1052,7 @@ xbd_unmap_align(struct xbd_req *req)
 	if (req->req_bp->b_flags & B_READ)
 		memcpy(req->req_bp->b_data, req->req_data,
 		    req->req_bp->b_bcount);
-	s = splvm();
+	s = splvm(); /* XXXSMP - bogus? */
 	uvm_km_kmem_free(kmem_va_arena, (vaddr_t)req->req_data, req->req_bp->b_bcount);
 	splx(s);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwm.c,v 1.78 2018/01/21 18:12:37 christos Exp $	*/
+/*	$NetBSD: if_iwm.c,v 1.78.2.1 2018/06/25 07:25:51 pgoyette Exp $	*/
 /*	OpenBSD: if_iwm.c,v 1.148 2016/11/19 21:07:08 stsp Exp	*/
 #define IEEE80211_NO_HT
 /*
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.78 2018/01/21 18:12:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.78.2.1 2018/06/25 07:25:51 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -7729,6 +7729,7 @@ static int
 iwm_preinit(struct iwm_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
+	struct ifnet *ifp = IC2IFP(&sc->sc_ic);
 	int err;
 
 	if (ISSET(sc->sc_flags, IWM_FLAG_ATTACHED))
@@ -7760,6 +7761,12 @@ iwm_preinit(struct iwm_softc *sc)
 	if (sc->sc_nvm.sku_cap_band_52GHz_enable)
 		ic->ic_sup_rates[IEEE80211_MODE_11A] = ieee80211_std_rateset_11a;
 
+	ether_ifdetach(ifp);
+	/*
+	 * XXX
+	 * ether_ifdetach() overwrites ifp->if_ioctl, so restore it here.
+	 */
+	ifp->if_ioctl = iwm_ioctl;
 	ieee80211_ifattach(ic);
 
 	ic->ic_node_alloc = iwm_node_alloc;
@@ -8133,7 +8140,13 @@ iwm_attach(device_t parent, device_t self, void *aux)
 #if 0
 	ieee80211_ifattach(ic);
 #else
-	ether_ifattach(ifp, ic->ic_myaddr);	/* XXX */
+	/*
+	 * XXX
+	 * To avoid setting ifp->if_hwdl in if_set_sadl(), we fake
+	 *  ic->ic_myaddr as local address.
+	 */
+	ic->ic_myaddr[0] = 0x02;
+	ether_ifattach(ifp,  ic->ic_myaddr);	/* XXX */
 #endif
 	/* Use common softint-based if_input */
 	ifp->if_percpuq = if_percpuq_create(ifp);

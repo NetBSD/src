@@ -1,8 +1,12 @@
-#	$NetBSD: Makefile,v 1.3 2012/06/01 13:19:39 nonaka Exp $
+#	$NetBSD: Makefile,v 1.3.38.1 2018/06/25 07:25:51 pgoyette Exp $
 
 NOMAN=	# defined
 
+.include <bsd.own.mk>
+
+.if ${MKFIRMWARE} != "no"
 FILES=	rum-rt2573 rum-license
+.endif
 
 # XXX
 includes:

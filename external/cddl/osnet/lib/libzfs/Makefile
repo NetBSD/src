@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2016/08/04 17:07:24 christos Exp $
+#	$NetBSD: Makefile,v 1.8.12.1 2018/06/25 07:25:25 pgoyette Exp $
 
 .include <bsd.init.mk>
 
@@ -15,26 +15,51 @@ LIBDPLIBS+= \
 	pthread	${NETBSDSRCDIR}/lib/libpthread \
 	umem	${.CURDIR}/../libumem \
 	util	${NETBSDSRCDIR}/lib/libutil \
-	uutil	${.CURDIR}/../libuutil
+	uutil	${.CURDIR}/../libuutil \
+	z	${NETBSDSRCDIR}/lib/libz \
+	zfs_core ${.CURDIR}/../libzfs_core
 
 # Local
-SRCS=	deviceid.c mnttab.c mkdirp.c zmount.c fsshare.c zone.c efi.c ucred.c stubs.c
+SRCS+=	deviceid.c
+SRCS+=	fsshare.c
+SRCS+=	mkdirp.c
+SRCS+=	mnttab.c
+SRCS+=	thread_pool.c
+SRCS+=	zmount.c
+SRCS+=	zone.c
 
 # Sun
-SRCS+=	zfs_namecheck.c zprop_common.c zfs_prop.c zpool_prop.c
-SRCS+=	zfs_deleg.c zfs_fletcher.c zfs_comutil.c
-SRCS+=	libzfs_dataset.c libzfs_util.c libzfs_graph.c libzfs_mount.c
-SRCS+=	libzfs_pool.c libzfs_changelist.c libzfs_config.c libzfs_import.c
-SRCS+=	libzfs_status.c libzfs_sendrecv.c
+SRCS+=	libzfs_changelist.c
+SRCS+=	libzfs_config.c
+SRCS+=	libzfs_dataset.c
+SRCS+=	libzfs_diff.c
+#SRCS+=	libzfs_fru.c
+#SRCS+=	libzfs_graph.c
+SRCS+=	libzfs_import.c
+SRCS+=	libzfs_iter.c
+SRCS+=	libzfs_mount.c
+SRCS+=	libzfs_pool.c
+SRCS+=	libzfs_sendrecv.c
+SRCS+=	libzfs_status.c
+SRCS+=	libzfs_util.c
+SRCS+=	zfeature_common.c
+SRCS+=	zfs_comutil.c
+SRCS+=	zfs_deleg.c
+SRCS+=	zfs_fletcher.c
+SRCS+=	zfs_namecheck.c
+SRCS+=	zfs_prop.c
+SRCS+=	zpool_prop.c
+SRCS+=	zprop_common.c
 
 CPPFLAGS+=	-I${NETBSDSRCDIR}/sbin/mount
-# CPPFLAGS+=	-Wall -Wno-unknown-pragmas
 
 # Avoid conflict with libprop
 CPPFLAGS+=	-D_PROPLIB_ZFS_CONFLICT
 
 # Avoid internal header conflicts
 CPPFLAGS+=	-D_ZFS_CONTEXT_NO_VERIFY -D_ZFS_CONTEXT_NO_DEBUG
+
+CWARNFLAGS+=	-Wno-parentheses
 
 .include "../../Makefile.zfs"
 .include <bsd.lib.mk>

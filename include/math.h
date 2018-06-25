@@ -1,4 +1,4 @@
-/*	$NetBSD: math.h,v 1.63 2013/09/16 15:54:42 martin Exp $	*/
+/*	$NetBSD: math.h,v 1.63.24.1 2018/06/25 07:25:33 pgoyette Exp $	*/
 
 /*
  * ====================================================
@@ -253,6 +253,19 @@ double	y1(double);
 double	yn(int, double);
 
 #if (_XOPEN_SOURCE - 0) >= 500 || defined(_NETBSD_SOURCE)
+double	scalb(double, double);
+#endif /* (_XOPEN_SOURCE - 0) >= 500 || defined(_NETBSD_SOURCE)*/
+#endif /* _XOPEN_SOURCE || _NETBSD_SOURCE */
+
+/*
+ * ISO C99
+ */
+#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
+    !defined(_XOPEN_SOURCE) || \
+    ((__STDC_VERSION__ - 0) >= 199901L) || \
+    ((_POSIX_C_SOURCE - 0) >= 200809L) || \
+    ((_XOPEN_SOURCE  - 0) >= 500) || \
+    defined(_ISOC99_SOURCE) || defined(_NETBSD_SOURCE)
 double	acosh(double);
 double	asinh(double);
 double	atanh(double);
@@ -264,13 +277,8 @@ double	logb(double);
 double	nextafter(double, double);
 double	remainder(double, double);
 double	rint(double);
-double	scalb(double, double);
-#endif /* (_XOPEN_SOURCE - 0) >= 500 || defined(_NETBSD_SOURCE)*/
-#endif /* _XOPEN_SOURCE || _NETBSD_SOURCE */
+#endif
 
-/*
- * ISO C99
- */
 #if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
     !defined(_XOPEN_SOURCE) || \
     ((__STDC_VERSION__ - 0) >= 199901L) || \

@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_subr.c,v 1.20.2.1 2018/03/15 09:12:05 pgoyette Exp $ */
+/* $NetBSD: fdt_subr.c,v 1.20.2.2 2018/06/25 07:25:49 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_subr.c,v 1.20.2.1 2018/03/15 09:12:05 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_subr.c,v 1.20.2.2 2018/06/25 07:25:49 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -156,7 +156,7 @@ fdtbus_get_cells(const uint8_t *buf, int cells)
 	switch (cells) {
 	case 0:		return 0;
 	case 1: 	return be32dec(buf);
-	case 2: 	return be64dec(buf);
+	case 2:		return ((uint64_t)be32dec(buf)<<32)|be32dec(buf+4);
 	default:	panic("fdtbus_get_cells: bad cells val %d\n", cells);
 	}
 }

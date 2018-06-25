@@ -1,4 +1,4 @@
-/*	$NetBSD: xform.h,v 1.14.2.3 2018/05/21 04:36:16 pgoyette Exp $	*/
+/*	$NetBSD: xform.h,v 1.14.2.4 2018/06/25 07:26:07 pgoyette Exp $	*/
 /*	$FreeBSD: xform.h,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ipsp.h,v 1.119 2002/03/14 01:27:11 millert Exp $	*/
 /*
@@ -96,6 +96,7 @@ int ipip_output(struct mbuf *, struct secasvar *, struct mbuf **);
 int ah_init0(struct secasvar *, const struct xformsw *, struct cryptoini *);
 int ah_zeroize(struct secasvar *);
 const struct auth_hash *ah_algorithm_lookup(int);
+size_t ah_authsiz(const struct secasvar *);
 size_t ah_hdrsiz(const struct secasvar *);
 
 /* XF_ESP */

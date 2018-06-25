@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.301.2.3 2018/05/21 04:35:57 pgoyette Exp $	*/
+/*	$NetBSD: machdep.c,v 1.301.2.4 2018/06/25 07:25:38 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,9 +110,6 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.301.2.3 2018/05/21 04:35:57 pgoyette Exp $");
-
-/* #define XENDEBUG_LOW  */
 
 #include "opt_modular.h"
 #include "opt_user_ldt.h"
@@ -261,11 +258,9 @@ paddr_t gdt_paddr;
 vaddr_t ldt_vaddr;
 paddr_t ldt_paddr;
 
-vaddr_t module_start, module_end;
 static struct vm_map module_map_store;
 extern struct vm_map *module_map;
 extern struct bootspace bootspace;
-vaddr_t kern_end;
 
 struct vm_map *phys_map = NULL;
 
@@ -374,15 +369,15 @@ cpu_startup(void)
 	 * Create the module map.
 	 *
 	 * The kernel uses RIP-relative addressing with a maximum offset of
-	 * 2GB. The problem is, kernel_map is too far away in memory from
-	 * the kernel .text. So we cannot use it, and have to create a
-	 * special module_map.
+	 * 2GB. Because of that, we can't put the kernel modules in kernel_map
+	 * (like i386 does), since kernel_map is too far away in memory from
+	 * the kernel sections. So we have to create a special module_map.
 	 *
 	 * The module map is taken as what is left of the bootstrap memory
-	 * created in locore.S. This memory is right above the kernel
-	 * image, so this is the best place to put our modules.
+	 * created in locore/prekern.
 	 */
-	uvm_map_setup(&module_map_store, module_start, module_end, 0);
+	uvm_map_setup(&module_map_store, bootspace.smodule,
+	    bootspace.emodule, 0);
 	module_map_store.pmap = pmap_kernel();
 	module_map = &module_map_store;
 
@@ -1577,9 +1572,11 @@ init_bootspace(void)
 	/* In locore.S, we allocated a tmp va. We will use it now. */
 	bootspace.spareva = KERNBASE + NKL2_KIMG_ENTRIES * NBPD_L2;
 
-	/* Virtual address of the L4 page */
+	/* Virtual address of the L4 page. */
 	bootspace.pdir = (vaddr_t)(PDPpaddr + KERNBASE);
 
+	/* Kernel module map. */
+	bootspace.smodule = (vaddr_t)atdevbase + IOM_SIZE;
 	bootspace.emodule = KERNBASE + NKL2_KIMG_ENTRIES * NBPD_L2;
 }
 
@@ -1664,13 +1661,6 @@ init_x86_64(paddr_t first_avail)
 	pmap_pa_start = (KERNTEXTOFF - KERNBASE);
 	pmap_pa_end = avail_end;
 #endif
-
-	/* End of the virtual space we have created so far. */
-	kern_end = (vaddr_t)atdevbase + IOM_SIZE;
-
-	/* The area for the module map. */
-	module_start = kern_end;
-	module_end = bootspace.emodule;
 
 	/*
 	 * Call pmap initialization to make new kernel address space.
@@ -2123,7 +2113,7 @@ mm_md_kernacc(void *ptr, vm_prot_t prot, bool *handled)
 		return 0;
 	}
 
-	if (v >= module_start && v < module_end) {
+	if (v >= bootspace.smodule && v < bootspace.emodule) {
 		*handled = true;
 		if (!uvm_map_checkprot(module_map, v, v + 1, prot))
 			return EFAULT;

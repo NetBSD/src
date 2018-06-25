@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_mmc_var.h,v 1.6 2017/06/19 22:03:02 jmcneill Exp $ */
+/* $NetBSD: dwc_mmc_var.h,v 1.6.6.1 2018/06/25 07:25:50 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -69,6 +69,7 @@ struct dwc_mmc_softc {
 	int (*sc_card_detect)(struct dwc_mmc_softc *);
 	int (*sc_write_protect)(struct dwc_mmc_softc *);
 	void (*sc_set_led)(struct dwc_mmc_softc *, int);
+	int (*sc_bus_clock)(struct dwc_mmc_softc *, int);
 };
 
 int	dwc_mmc_init(struct dwc_mmc_softc *);

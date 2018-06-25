@@ -1,4 +1,4 @@
-/*	$NetBSD: mb8795.c,v 1.58 2017/03/31 08:38:13 msaitoh Exp $	*/
+/*	$NetBSD: mb8795.c,v 1.58.12.1 2018/06/25 07:25:44 pgoyette Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb8795.c,v 1.58 2017/03/31 08:38:13 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb8795.c,v 1.58.12.1 2018/06/25 07:25:44 pgoyette Exp $");
 
 #include "opt_inet.h"
 
@@ -43,8 +43,8 @@ __KERNEL_RCSID(0, "$NetBSD: mb8795.c,v 1.58 2017/03/31 08:38:13 msaitoh Exp $");
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_ether.h>
-
 #include <net/if_media.h>
+#include <net/bpf.h>
 
 #ifdef INET
 #include <netinet/in.h>
@@ -53,11 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: mb8795.c,v 1.58 2017/03/31 08:38:13 msaitoh Exp $");
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
 #endif
-
-
-
-#include <net/bpf.h>
-#include <net/bpfdesc.h>
 
 #include <machine/cpu.h>
 #include <machine/bus.h>

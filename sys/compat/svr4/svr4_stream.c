@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stream.c,v 1.92.2.1 2018/05/21 04:36:04 pgoyette Exp $	 */
+/*	$NetBSD: svr4_stream.c,v 1.92.2.2 2018/06/25 07:25:48 pgoyette Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2008 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_stream.c,v 1.92.2.1 2018/05/21 04:36:04 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_stream.c,v 1.92.2.2 2018/06/25 07:25:48 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1790,6 +1790,10 @@ svr4_sys_getmsg(struct lwp *l, const struct svr4_sys_getmsg_args *uap, register_
 		}
 
 		sc.cmd = SVR4_TI_RECVFROM_IND;
+
+		/*
+		 * XXX: name = NULL?
+		 */
 
 		switch (st->s_family) {
 		case AF_INET:

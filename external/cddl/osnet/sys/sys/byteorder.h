@@ -1,4 +1,4 @@
-/*	$NetBSD: byteorder.h,v 1.4 2010/02/28 14:45:47 haad Exp $	*/
+/*	$NetBSD: byteorder.h,v 1.4.44.1 2018/06/25 07:25:25 pgoyette Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -19,6 +19,8 @@
  * information: Portions Copyright [yyyy] [name of copyright owner]
  *
  * CDDL HEADER END
+ *
+ * $FreeBSD: head/sys/cddl/compat/opensolaris/sys/byteorder.h 246586 2013-02-09 06:39:28Z delphij $
  */
 
 /*
@@ -59,15 +61,6 @@
  * Macros to convert from a specific byte order to/from native byte order
  */
 #if _BYTE_ORDER == _BIG_ENDIAN
-#define	LE_64(x)	BSWAP_64(x)
-#else
-#define	LE_64(x)	BMASK_64(x)
-#endif
-
-/*
- * Macros to convert from a specific byte order to/from native byte order
- */
-#ifdef _BIG_ENDIAN
 #define	BE_8(x)		BMASK_8(x)
 #define	BE_16(x)	BMASK_16(x)
 #define	BE_32(x)	BMASK_32(x)
@@ -86,5 +79,15 @@
 #define	BE_32(x)	BSWAP_32(x)
 #define	BE_64(x)	BSWAP_64(x)
 #endif
+
+#if _BYTE_ORDER == _BIG_ENDIAN
+#define	htonll(x)	BMASK_64(x)
+#define	ntohll(x)	BMASK_64(x)
+#else
+#define	htonll(x)	BSWAP_64(x)
+#define	ntohll(x)	BSWAP_64(x)
+#endif
+
+#define BE_IN32(xa)	htonl(*((uint32_t *)(void *)(xa)))
 
 #endif /* _OPENSOLARIS_SYS_BYTEORDER_H_ */

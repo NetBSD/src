@@ -1,9 +1,9 @@
-# $NetBSD: Makefile,v 1.1 2010/11/03 18:52:45 christos Exp $
+# $NetBSD: Makefile,v 1.1.46.1 2018/06/25 07:25:11 pgoyette Exp $
 
 NOMAN=	# define
 
 FILES=	dist/otus-init dist/otus-license dist/otus-main
 
-FILESDIR=	/libdata/firmware/if_otus
+FILESDIR=	${FIRMWAREDIR}/if_otus
 
 .include <bsd.files.mk>

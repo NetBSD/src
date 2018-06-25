@@ -1,4 +1,4 @@
-/*	$NetBSD: dtrace_debug.c,v 1.8 2014/03/05 06:06:42 ozaki-r Exp $	*/
+/*	$NetBSD: dtrace_debug.c,v 1.8.24.1 2018/06/25 07:25:14 pgoyette Exp $	*/
 
 /*-
  * Copyright (C) 2008 John Birrell <jb@freebsd.org>.
@@ -27,33 +27,35 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
  * DAMAGE.
  *
- * $FreeBSD: src/sys/cddl/dev/dtrace/dtrace_debug.c,v 1.1.4.1 2009/08/03 08:13:06 kensmith Exp $
+ * $FreeBSD: head/sys/cddl/dev/dtrace/dtrace_debug.c 315208 2017-03-13 18:43:00Z markj $
  *
  */
 
 static char const hex2ascii_data[] = "0123456789abcdefghijklmnopqrstuvwxyz";
 #define	hex2ascii(hex)	(hex2ascii_data[hex])
+#define MAXCPU MAXCPUS
 
 #ifdef DEBUG
 
 #define DTRACE_DEBUG_BUFR_SIZE	(32 * 1024)
 
 struct dtrace_debug_data {
+	u_long lock __aligned(CACHE_LINE_SIZE);
 	char bufr[DTRACE_DEBUG_BUFR_SIZE];
 	char *first;
 	char *last;
 	char *next;
-} dtrace_debug_data[MAXCPUS];
+} dtrace_debug_data[MAXCPU];
 
 static char dtrace_debug_bufr[DTRACE_DEBUG_BUFR_SIZE];
-
-static volatile u_long	dtrace_debug_flag[MAXCPUS];
 
 static void
 dtrace_debug_lock(int cpu)
 {
-	/* FIXME: use atomic_cmpset_ulong once we have it  */
-	while (atomic_cas_ulong(&dtrace_debug_flag[cpu], 0, 1) == 0)
+	void *tid;
+
+	tid = curlwp;
+	while (atomic_cas_ptr(&dtrace_debug_data[cpu].lock, 0, tid) == 0)
 		/* Loop until the lock is obtained. */
 		;
 }
@@ -61,7 +63,9 @@ dtrace_debug_lock(int cpu)
 static void
 dtrace_debug_unlock(int cpu)
 {
-	dtrace_debug_flag[cpu] = 0;
+
+	membar_producer();
+	dtrace_debug_data[cpu].lock = 0;
 }
 
 static void
@@ -83,25 +87,26 @@ dtrace_debug_init(void *dummy)
 	}
 }
 
-//SYSINIT(dtrace_debug_init, SI_SUB_KDTRACE, SI_ORDER_ANY, dtrace_debug_init, NULL);
-//SYSINIT(dtrace_debug_smpinit, SI_SUB_SMP, SI_ORDER_ANY, dtrace_debug_init, NULL);
+#ifdef __FreeBSD__
+SYSINIT(dtrace_debug_init, SI_SUB_KDTRACE, SI_ORDER_ANY, dtrace_debug_init, NULL);
+SYSINIT(dtrace_debug_smpinit, SI_SUB_SMP, SI_ORDER_ANY, dtrace_debug_init, NULL);
+#endif
 
 static void
 dtrace_debug_output(void)
 {
 	char *p;
+	int i;
 	struct dtrace_debug_data *d;
 	uintptr_t count;
 	CPU_INFO_ITERATOR cpuind;
 	struct cpu_info *cinfo;
-	cpuid_t cpuid;
 
 	for (CPU_INFO_FOREACH(cpuind, cinfo)) {
-	    	cpuid = cpu_index(cinfo);
+	    	i = cpu_index(cinfo);
+		dtrace_debug_lock(i);
 
-		dtrace_debug_lock(cpuid);
-
-		d = &dtrace_debug_data[cpuid];
+		d = &dtrace_debug_data[i];
 
 		count = 0;
 
@@ -129,7 +134,7 @@ dtrace_debug_output(void)
 		d->first = d->bufr;
 		d->next = d->bufr;
 
-		dtrace_debug_unlock(cpuid);
+		dtrace_debug_unlock(i);
 
 		if (count > 0) {
 			char *last = dtrace_debug_bufr + count;
@@ -158,10 +163,11 @@ dtrace_debug_output(void)
  */
 
 static __inline void
-dtrace_debug__putc(char c)
+dtrace_debug__putc(int cpu, char c)
 {
-	struct dtrace_debug_data *d = &dtrace_debug_data[cpu_number()];
+	struct dtrace_debug_data *d;
 
+	d = &dtrace_debug_data[cpu];
 	*d->next++ = c;
 
 	if (d->next == d->last)
@@ -179,24 +185,30 @@ dtrace_debug__putc(char c)
 static void __used
 dtrace_debug_putc(char c)
 {
-	dtrace_debug_lock(cpu_number());
+	int cpu;
 
-	dtrace_debug__putc(c);
+	cpu = cpu_number();
+	dtrace_debug_lock(cpu);
 
-	dtrace_debug_unlock(cpu_number());
+	dtrace_debug__putc(cpu, c);
+
+	dtrace_debug_unlock(cpu);
 }
 
 static void __used
 dtrace_debug_puts(const char *s)
 {
-	dtrace_debug_lock(cpu_number());
+	int cpu;
+
+	cpu = cpu_number();
+	dtrace_debug_lock(cpu);
 
 	while (*s != '\0')
-		dtrace_debug__putc(*s++);
+		dtrace_debug__putc(cpu, *s++);
 
-	dtrace_debug__putc('\0');
+	dtrace_debug__putc(cpu, '\0');
 
-	dtrace_debug_unlock(cpu_number());
+	dtrace_debug_unlock(cpu);
 }
 
 /*
@@ -205,30 +217,30 @@ dtrace_debug_puts(const char *s)
  * Put a NUL-terminated ASCII number (base <= 36) in a buffer in reverse
  * order; return an optional length and a pointer to the last character
  * written in the buffer (i.e., the first character of the string).
- * The buffer pointed to by `xbuf' must have length >= MAXNBUF.
+ * The buffer pointed to by `nbuf' must have length >= MAXNBUF.
  */
 static char *
-dtrace_debug_ksprintn(char *xbuf, uintmax_t num, int base, int *lenp, int upper)
+dtrace_debug_ksprintn(char *nbuf, uintmax_t num, int base, int *lenp, int upper)
 {
 	char *p, c;
 
-	p = xbuf;
+	p = nbuf;
 	*p = '\0';
 	do {
 		c = hex2ascii(num % base);
 		*++p = upper ? toupper(c) : c;
 	} while (num /= base);
 	if (lenp)
-		*lenp = p - xbuf;
+		*lenp = p - nbuf;
 	return (p);
 }
 
 #define MAXNBUF (sizeof(intmax_t) * NBBY + 1)
 
 static void
-dtrace_debug_vprintf(const char *fmt, va_list ap)
+dtrace_debug_vprintf(int cpu, const char *fmt, va_list ap)
 {
-	char xbuf[MAXNBUF];
+	char nbuf[MAXNBUF];
 	const char *p, *percent, *q;
 	u_char *up;
 	int ch, n;
@@ -250,10 +262,10 @@ dtrace_debug_vprintf(const char *fmt, va_list ap)
 		width = 0;
 		while ((ch = (u_char)*fmt++) != '%' || stop) {
 			if (ch == '\0') {
-				dtrace_debug__putc('\0');
+				dtrace_debug__putc(cpu, '\0');
 				return;
 			}
-			dtrace_debug__putc(ch);
+			dtrace_debug__putc(cpu, ch);
 		}
 		percent = fmt - 1;
 		qflag = 0; lflag = 0; ladjust = 0; sharpflag = 0; neg = 0;
@@ -273,7 +285,7 @@ reswitch:	switch (ch = (u_char)*fmt++) {
 			ladjust = 1;
 			goto reswitch;
 		case '%':
-			dtrace_debug__putc(ch);
+			dtrace_debug__putc(cpu, ch);
 			break;
 		case '*':
 			if (!dot) {
@@ -307,8 +319,8 @@ reswitch:	switch (ch = (u_char)*fmt++) {
 		case 'b':
 			num = (u_int)va_arg(ap, int);
 			p = va_arg(ap, char *);
-			for (q = dtrace_debug_ksprintn(xbuf, num, *p++, NULL, 0); *q;)
-				dtrace_debug__putc(*q--);
+			for (q = dtrace_debug_ksprintn(nbuf, num, *p++, NULL, 0); *q;)
+				dtrace_debug__putc(cpu, *q--);
 
 			if (num == 0)
 				break;
@@ -316,19 +328,19 @@ reswitch:	switch (ch = (u_char)*fmt++) {
 			for (tmp = 0; *p;) {
 				n = *p++;
 				if (num & (1 << (n - 1))) {
-					dtrace_debug__putc(tmp ? ',' : '<');
+					dtrace_debug__putc(cpu, tmp ? ',' : '<');
 					for (; (n = *p) > ' '; ++p)
-						dtrace_debug__putc(n);
+						dtrace_debug__putc(cpu, n);
 					tmp = 1;
 				} else
 					for (; *p > ' '; ++p)
 						continue;
 			}
 			if (tmp)
-				dtrace_debug__putc('>');
+				dtrace_debug__putc(cpu, '>');
 			break;
 		case 'c':
-			dtrace_debug__putc(va_arg(ap, int));
+			dtrace_debug__putc(cpu, va_arg(ap, int));
 			break;
 		case 'D':
 			up = va_arg(ap, u_char *);
@@ -336,12 +348,12 @@ reswitch:	switch (ch = (u_char)*fmt++) {
 			if (!width)
 				width = 16;
 			while(width--) {
-				dtrace_debug__putc(hex2ascii(*up >> 4));
-				dtrace_debug__putc(hex2ascii(*up & 0x0f));
+				dtrace_debug__putc(cpu, hex2ascii(*up >> 4));
+				dtrace_debug__putc(cpu, hex2ascii(*up & 0x0f));
 				up++;
 				if (width)
 					for (q=p;*q;q++)
-						dtrace_debug__putc(*q);
+						dtrace_debug__putc(cpu, *q);
 			}
 			break;
 		case 'd':
@@ -413,12 +425,12 @@ reswitch:	switch (ch = (u_char)*fmt++) {
 
 			if (!ladjust && width > 0)
 				while (width--)
-					dtrace_debug__putc(padc);
+					dtrace_debug__putc(cpu, padc);
 			while (n--)
-				dtrace_debug__putc(*p++);
+				dtrace_debug__putc(cpu, *p++);
 			if (ladjust && width > 0)
 				while (width--)
-					dtrace_debug__putc(padc);
+					dtrace_debug__putc(cpu, padc);
 			break;
 		case 't':
 			tflag = 1;
@@ -479,7 +491,7 @@ number:
 				neg = 1;
 				num = -(intmax_t)num;
 			}
-			p = dtrace_debug_ksprintn(xbuf, num, base, &tmp, upper);
+			p = dtrace_debug_ksprintn(nbuf, num, base, &tmp, upper);
 			if (sharpflag && num != 0) {
 				if (base == 8)
 					tmp++;
@@ -492,32 +504,32 @@ number:
 			if (!ladjust && padc != '0' && width
 			    && (width -= tmp) > 0)
 				while (width--)
-					dtrace_debug__putc(padc);
+					dtrace_debug__putc(cpu, padc);
 			if (neg)
-				dtrace_debug__putc('-');
+				dtrace_debug__putc(cpu, '-');
 			if (sharpflag && num != 0) {
 				if (base == 8) {
-					dtrace_debug__putc('0');
+					dtrace_debug__putc(cpu, '0');
 				} else if (base == 16) {
-					dtrace_debug__putc('0');
-					dtrace_debug__putc('x');
+					dtrace_debug__putc(cpu, '0');
+					dtrace_debug__putc(cpu, 'x');
 				}
 			}
 			if (!ladjust && width && (width -= tmp) > 0)
 				while (width--)
-					dtrace_debug__putc(padc);
+					dtrace_debug__putc(cpu, padc);
 
 			while (*p)
-				dtrace_debug__putc(*p--);
+				dtrace_debug__putc(cpu, *p--);
 
 			if (ladjust && width && (width -= tmp) > 0)
 				while (width--)
-					dtrace_debug__putc(padc);
+					dtrace_debug__putc(cpu, padc);
 
 			break;
 		default:
 			while (percent < fmt)
-				dtrace_debug__putc(*percent++);
+				dtrace_debug__putc(cpu, *percent++);
 			/*
 			 * Since we ignore an formatting argument it is no 
 			 * longer safe to obey the remaining formatting
@@ -529,23 +541,25 @@ number:
 		}
 	}
 
-	dtrace_debug__putc('\0');
+	dtrace_debug__putc(cpu, '\0');
 }
 
 void
 dtrace_debug_printf(const char *fmt, ...)
 {
 	va_list ap;
+	int cpu;
 
-	dtrace_debug_lock(cpu_number());
+	cpu = cpu_number();
+	dtrace_debug_lock(cpu);
 
 	va_start(ap, fmt);
 
-	dtrace_debug_vprintf(fmt, ap);
+	dtrace_debug_vprintf(cpu, fmt, ap);
 
 	va_end(ap);
 
-	dtrace_debug_unlock(cpu_number());
+	dtrace_debug_unlock(cpu);
 }
 
 #else
@@ -553,5 +567,10 @@ dtrace_debug_printf(const char *fmt, ...)
 #define dtrace_debug_output()
 #define dtrace_debug_puts(_s)
 #define dtrace_debug_printf(fmt, ...)
+
+static void
+dtrace_debug_init(void *dummy)
+{
+}
 
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.438 2018/01/07 11:37:30 mlelstv Exp $ */
+/*	$NetBSD: wd.c,v 1.438.2.1 2018/06/25 07:25:49 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.438 2018/01/07 11:37:30 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.438.2.1 2018/06/25 07:25:49 pgoyette Exp $");
 
 #include "opt_ata.h"
 #include "opt_wd.h"
@@ -765,6 +765,8 @@ wdstart(device_t self)
 	if (!device_is_active(dksc->sc_dev))
 		return;
 
+	mutex_enter(&wd->sc_lock);
+
 	/*
 	 * Do not queue any transfers until flush is finished, so that
 	 * once flush is pending, it will get handled as soon as xfer
@@ -773,8 +775,11 @@ wdstart(device_t self)
 	if (ISSET(wd->sc_flags, WDF_FLUSH_PEND)) {
 		ATADEBUG_PRINT(("wdstart %s flush pend\n",
 		    dksc->sc_xname), DEBUG_XFERS);
+		mutex_exit(&wd->sc_lock);
 		return;
 	}
+
+	mutex_exit(&wd->sc_lock);
 
 	dk_start(dksc, NULL);
 }

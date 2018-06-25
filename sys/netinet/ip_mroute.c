@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.154.2.3 2018/05/21 04:36:16 pgoyette Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.154.2.4 2018/06/25 07:26:06 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.154.2.3 2018/05/21 04:36:16 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.154.2.4 2018/06/25 07:26:06 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -3165,6 +3165,11 @@ pim_input_to_daemon:
 	 * XXX: the outer IP header pkt size of a Register is not adjust to
 	 * reflect the fact that the inner multicast data is truncated.
 	 */
+	/*
+	 * Currently, pim_input() is always called holding softnet_lock
+	 * by ipintr()(!NET_MPSAFE) or PR_INPUT_WRAP()(NET_MPSAFE).
+	 */
+	KASSERT(mutex_owned(softnet_lock));
 	rip_input(m, iphlen, proto);
 
 	return;

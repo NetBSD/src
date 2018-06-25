@@ -1,4 +1,4 @@
-/*	$NetBSD: feature_tests.h,v 1.2 2010/02/21 01:46:36 darran Exp $	*/
+/*	$NetBSD: feature_tests.h,v 1.2.44.1 2018/06/25 07:25:26 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 2007 John Birrell <jb@freebsd.org>
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/cddl/compat/opensolaris/sys/feature_tests.h,v 1.1.4.1 2009/08/03 08:13:06 kensmith Exp $
+ * $FreeBSD: head/sys/cddl/compat/opensolaris/sys/feature_tests.h 179204 2008-05-22 09:08:41Z jb $
  *
  */
 

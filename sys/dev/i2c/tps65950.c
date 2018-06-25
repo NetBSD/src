@@ -1,4 +1,4 @@
-/* $NetBSD: tps65950.c,v 1.5 2014/11/20 16:34:26 christos Exp $ */
+/* $NetBSD: tps65950.c,v 1.5.18.1 2018/06/25 07:25:50 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2012 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tps65950.c,v 1.5 2014/11/20 16:34:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tps65950.c,v 1.5.18.1 2018/06/25 07:25:50 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,7 +131,7 @@ tps65950_match(device_t parent, cfdata_t match, void *aux)
 	case TPS65950_ADDR_ID3:
 	case TPS65950_ADDR_ID4:
 	case TPS65950_ADDR_ID5:
-		return 1;
+		return I2C_MATCH_ADDRESS_ONLY;
 	default:
 		return 0;
 	}

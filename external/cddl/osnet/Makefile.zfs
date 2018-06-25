@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.zfs,v 1.4 2012/09/05 23:08:42 riz Exp $
+#	$NetBSD: Makefile.zfs,v 1.4.30.1 2018/06/25 07:25:13 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -6,15 +6,13 @@
 NOGCCERROR=	yes
 
 # Basic compilation stuff.
-CPPFLAGS+=	"-D__va_list=va_list"
-CPPFLAGS+=	"-Doffsetof(s, m)=((size_t)(&(((s *)0)->m)))"
 CPPFLAGS+=	-std=c99
 
 # Pick a VTOC format - ick.
 CPPFLAGS+=	-D_SUNOS_VTOC_16
 CPPFLAGS+=	-D_PROPLIB_ZFS_CONFLICT
 
-CFLAGS+=	 -O0 -fno-inline
+#CFLAGS+=	 -O0 -fno-inline
 
 #DBG=	-g
 
@@ -36,14 +34,24 @@ CPPFLAGS+=	-I${ZFSDIR}/dist/lib/libshare/common
 CPPFLAGS+=	-I${ZFSDIR}/dist/lib/libumem
 CPPFLAGS+=	-I${ZFSDIR}/dist/lib/libuutil/common
 CPPFLAGS+=	-I${ZFSDIR}/dist/lib/libzfs/common
+CPPFLAGS+=	-I${ZFSDIR}/dist/lib/libzfs_core/common
 CPPFLAGS+=	-I${ZFSDIR}/dist/lib/libzpool/common
 
 CPPFLAGS+=      -I${ZFSDIR}/dist/common
+
+CWARNFLAGS+=	-Wno-missing-field-initializers
+CWARNFLAGS+=	-Wno-strict-prototypes
+CWARNFLAGS+=	-Wno-cast-qual
+CWARNFLAGS+=	${${ACTIVE_CC} == "gcc" :? -Wno-discarded-qualifiers :}
+CWARNFLAGS+=	-Wno-switch
+CWARNFLAGS+=	-Wno-missing-prototypes
+CWARNFLAGS+=	-Wno-unused-variable
+CWARNFLAGS+=	-Wno-shadow
 
 LIBAVL_SRCDIR= ${ZFSDIR}/lib/libavl
 LIBNVPAIR_SRCDIR= ${ZFSDIR}/lib/libnvpair
 LIBUMEM_SRCDIR= ${ZFSDIR}/lib/libumem
 LIBUUTIL_SRCDIR= ${ZFSDIR}/lib/libuutil
 LIBZFS_SRCDIR= ${ZFSDIR}/lib/libzfs
+LIBZFS_CORE_SRCDIR= ${ZFSDIR}/lib/libzfs_core
 LIBZPOOL_SRCDIR= ${ZFSDIR}/lib/libzpool
-

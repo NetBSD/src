@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.344.2.1 2018/03/22 01:44:46 pgoyette Exp $
+# $NetBSD: GENERIC,v 1.344.2.2 2018/06/25 07:25:43 pgoyette Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.344.2.1 $"
+#ident 		"GENERIC-$Revision: 1.344.2.2 $"
 
 maxusers	32
 
@@ -119,7 +119,7 @@ options 	NFS_BOOT_DHCP	# Support DHCP NFS root
 #options 	GATEWAY		# packet forwarding
 options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
-#options 	IPSEC		# IP security
+options 	IPSEC		# IP security
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
@@ -654,6 +654,7 @@ pseudo-device	tun			# network tunneling over tty
 pseudo-device	tap			# virtual Ethernet
 #pseudo-device	gre			# generic L3 over IP tunnel
 pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
+pseudo-device	ipsecif			# tunnel interface for routing based ipsec
 #pseudo-device	faith			# IPv[46] tcp relay translation i/f
 pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation

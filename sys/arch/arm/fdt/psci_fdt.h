@@ -1,4 +1,4 @@
-/* $NetBSD: psci_fdt.h,v 1.1 2017/06/28 23:48:22 jmcneill Exp $ */
+/* $NetBSD: psci_fdt.h,v 1.1.10.1 2018/06/25 07:25:39 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -31,5 +31,8 @@
 
 /* Initialize PSCI and boot APs */
 void	psci_fdt_bootstrap(void);
+
+/* Board reset */
+void	psci_fdt_reset(void);
 
 #endif /* !_ARM_PSCI_FDT_H */

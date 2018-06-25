@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.126 2017/10/28 00:37:13 pgoyette Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.126.2.1 2018/06/25 07:26:08 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.126 2017/10/28 00:37:13 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.126.2.1 2018/06/25 07:26:08 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_uvmhist.h"
@@ -408,12 +408,12 @@ uao_free(struct uvm_aobj *aobj)
  */
 
 struct uvm_object *
-uao_create(vsize_t size, int flags)
+uao_create(voff_t size, int flags)
 {
 	static struct uvm_aobj kernel_object_store;
 	static kmutex_t kernel_object_lock;
 	static int kobj_alloced __diagused = 0;
-	pgoff_t pages = round_page(size) >> PAGE_SHIFT;
+	pgoff_t pages = round_page((uint64_t)size) >> PAGE_SHIFT;
 	struct uvm_aobj *aobj;
 	int refs;
 
@@ -700,9 +700,11 @@ uao_put(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 		} else {
 			stop = round_page(stop);
 		}
-		if (stop > (aobj->u_pages << PAGE_SHIFT)) {
-			printf("uao_flush: strange, got an out of range "
-			    "flush (fixed)\n");
+		if (stop > (uint64_t)(aobj->u_pages << PAGE_SHIFT)) {
+			printf("uao_put: strange, got an out of range "
+			    "flush 0x%jx > 0x%jx (fixed)\n",
+			    (uintmax_t)stop,
+			    (uintmax_t)(aobj->u_pages << PAGE_SHIFT));
 			stop = aobj->u_pages << PAGE_SHIFT;
 		}
 		by_list = (uobj->uo_npages <=

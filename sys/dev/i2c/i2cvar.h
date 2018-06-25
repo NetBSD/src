@@ -1,4 +1,4 @@
-/*	$NetBSD: i2cvar.h,v 1.10 2017/12/10 16:53:32 bouyer Exp $	*/
+/*	$NetBSD: i2cvar.h,v 1.10.2.1 2018/06/25 07:25:50 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -38,6 +38,7 @@
 #ifndef _DEV_I2C_I2CVAR_H_
 #define	_DEV_I2C_I2CVAR_H_
 
+#include <sys/device.h>
 #include <dev/i2c/i2c_io.h>
 #include <prop/proplib.h>
 
@@ -48,6 +49,20 @@
 #define	I2C_F_STOP		0x04	/* send stop after byte */
 #define	I2C_F_POLL		0x08	/* poll, don't sleep */
 #define	I2C_F_PEC		0x10	/* smbus packet error checking */
+
+/* i2c bus instance properties */
+#define	I2C_PROP_INDIRECT_PROBE_STRATEGY	\
+				"i2c-indirect-probe-strategy"
+#define	I2C_PROBE_STRATEGY_QUICK_WRITE		\
+				"smbus-quick-write"
+#define	I2C_PROBE_STRATEGY_RECEIVE_BYTE		\
+				"smbus-receive-byte"
+#define	I2C_PROBE_STRATEGY_NONE			\
+				"none"
+
+#define	I2C_PROP_INDIRECT_DEVICE_WHITELIST	\
+				"i2c-indirect-device-whitelist"
+	/* value is a prop_array of prop_strings */
 
 struct ic_intr_list {
 	LIST_ENTRY(ic_intr_list) il_next;
@@ -145,7 +160,33 @@ struct i2c_attach_args {
  * API presented to i2c controllers.
  */
 int	iicbus_print(void *, const char *);
-int	iic_compat_match(struct i2c_attach_args*, const char **);
+
+/*
+ * API presented to i2c devices.
+ */
+const struct device_compatible_entry *
+	iic_compatible_match(const struct i2c_attach_args *,
+			     const struct device_compatible_entry *, int *);
+bool	iic_use_direct_match(const struct i2c_attach_args *, const cfdata_t,
+			     const struct device_compatible_entry *, int *);
+
+/*
+ * Constants to indicate the quality of a match made by a driver's
+ * match routine, from lowest to higest:
+ *
+ *	-- Address only; no other checks were made.
+ *
+ *	-- Address + device probed and recognized.
+ *
+ *	-- Direct-config match by "compatible" string.
+ *
+ *	-- Direct-config match by specific driver name.
+ */
+#define	I2C_MATCH_ADDRESS_ONLY		1
+#define	I2C_MATCH_ADDRESS_AND_PROBE	2
+#define	I2C_MATCH_DIRECT_COMPATIBLE	10
+#define	I2C_MATCH_DIRECT_COMPATIBLE_MAX	99
+#define	I2C_MATCH_DIRECT_SPECIFIC	100
 
 #ifdef _I2C_PRIVATE
 /*

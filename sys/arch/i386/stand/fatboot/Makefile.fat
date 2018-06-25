@@ -1,9 +1,11 @@
-#	$NetBSD: Makefile.fat,v 1.7 2014/01/12 15:26:29 tsutsui Exp $
+#	$NetBSD: Makefile.fat,v 1.7.28.1 2018/06/25 07:25:43 pgoyette Exp $
 
 S=		${.CURDIR}/../../../../..
 
 PROG?=		fatboot
 NOMAN=		# defined
+NOPIE=		# defined
+NOSANITIZER=	# defined
 
 LIBCRT0=	# nothing
 LIBCRTI=	# nothing
@@ -13,11 +15,7 @@ LIBC=		# nothing
 
 AFLAGS.fatboot.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 
-PIE_CFLAGS=
-PIE_LDFLAGS=
-PIE_AFLAGS=
-
-.include <bsd.own.mk>
+.include <bsd.init.mk>
 
 STRIPFLAG=	# override
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.268.2.2 2018/05/21 04:36:05 pgoyette Exp $	*/
+/*	$NetBSD: acpi.c,v 1.268.2.3 2018/06/25 07:25:49 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.268.2.2 2018/05/21 04:36:05 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.268.2.3 2018/06/25 07:25:49 pgoyette Exp $");
 
 #include "pci.h"
 #include "opt_acpi.h"
@@ -1195,7 +1195,7 @@ acpi_register_fixed_button(struct acpi_softc *sc, int event)
 		goto fail;
 	}
 
-	aprint_debug_dev(sc->sc_dev, "fixed %s button present\n",
+	aprint_normal_dev(sc->sc_dev, "fixed %s button present\n",
 	    (type != ACPI_EVENT_SLEEP_BUTTON) ? "power" : "sleep");
 
 	return;

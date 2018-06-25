@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.158.2.1 2018/04/16 02:00:09 pgoyette Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.158.2.2 2018/06/25 07:26:07 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -723,11 +723,34 @@ typedef struct {
 #define DF_BIND_NOW	0x00000008	/* */
 #define DF_STATIC_TLS	0x00000010	/* */
 
-/* Flag values for DT_FLAGS_1 (incomplete) */
-#define DF_1_BIND_NOW	0x00000001	/* Same as DF_BIND_NOW */
-#define DF_1_NODELETE	0x00000008	/* Set the RTLD_NODELETE for object */
-#define DF_1_INITFIRST	0x00000020	/* Object's init/fini take priority */
-#define DF_1_NOOPEN	0x00000040	/* Do not allow loading on dlopen() */
+/* Flag values for DT_FLAGS_1 */
+#define	DF_1_NOW	0x00000001	/* Same as DF_BIND_NOW */
+#define	DF_1_GLOBAL	0x00000002	/* Unused */
+#define	DF_1_GROUP	0x00000004	/* Is member of group */
+#define	DF_1_NODELETE	0x00000008	/* Cannot be deleted from process */
+#define	DF_1_LOADFLTR	0x00000010	/* Immediate loading of filters */
+#define	DF_1_INITFIRST	0x00000020	/* init/fini takes priority */
+#define	DF_1_NOOPEN	0x00000040	/* Do not allow loading on dlopen() */
+#define	DF_1_ORIGIN	0x00000080 	/* Require $ORIGIN processing */
+#define	DF_1_DIRECT	0x00000100	/* Enable direct bindings */
+#define	DF_1_INTERPOSE 	0x00000400	/* Is an interposer */
+#define	DF_1_NODEFLIB	0x00000800 	/* Ignore default library search path */
+#define	DF_1_NODUMP	0x00001000 	/* Cannot be dumped with dldump(3C) */
+#define	DF_1_CONFALT	0x00002000 	/* Configuration alternative */
+#define	DF_1_ENDFILTEE	0x00004000	/* Filtee ends filter's search */
+#define	DF_1_DISPRELDNE	0x00008000	/* Did displacement relocation */
+#define	DF_1_DISPRELPND 0x00010000	/* Pending displacement relocation */
+#define	DF_1_NODIRECT	0x00020000 	/* Has non-direct bindings */
+#define	DF_1_IGNMULDEF	0x00040000	/* Used internally */
+#define	DF_1_NOKSYMS	0x00080000	/* Used internally */
+#define	DF_1_NOHDR	0x00100000	/* Used internally */
+#define	DF_1_EDITED	0x00200000	/* Has been modified since build */
+#define	DF_1_NORELOC	0x00400000 	/* Used internally */
+#define	DF_1_SYMINTPOSE 0x00800000 	/* Has individual symbol interposers */
+#define	DF_1_GLOBAUDIT	0x01000000	/* Require global auditing */
+#define	DF_1_SINGLETON	0x02000000	/* Has singleton symbols */
+#define	DF_1_STUB	0x04000000	/* Stub */
+#define	DF_1_PIE	0x08000000	/* Position Independent Executable */
 
 /*
  * Auxiliary Vectors

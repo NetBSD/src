@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.84.2.7 2018/05/21 04:36:12 pgoyette Exp $*/
+/*$NetBSD: ixv.c,v 1.84.2.8 2018/06/25 07:26:01 pgoyette Exp $*/
 
 /******************************************************************************
 
@@ -46,7 +46,7 @@
 /************************************************************************
  * Driver version
  ************************************************************************/
-char ixv_driver_version[] = "2.0.1-k";
+static const char ixv_driver_version[] = "2.0.1-k";
 
 /************************************************************************
  * PCI Device ID Table
@@ -57,7 +57,7 @@ char ixv_driver_version[] = "2.0.1-k";
  *
  *   { Vendor ID, Device ID, SubVendor ID, SubDevice ID, String Index }
  ************************************************************************/
-static ixgbe_vendor_info_t ixv_vendor_info_array[] =
+static const ixgbe_vendor_info_t ixv_vendor_info_array[] =
 {
 	{IXGBE_INTEL_VENDOR_ID, IXGBE_DEV_ID_82599_VF, 0, 0, 0},
 	{IXGBE_INTEL_VENDOR_ID, IXGBE_DEV_ID_X540_VF, 0, 0, 0},
@@ -136,6 +136,7 @@ static void	ixv_add_stats_sysctls(struct adapter *);
 static void	ixv_set_sysctl_value(struct adapter *, const char *,
 		    const char *, int *, int);
 static int      ixv_sysctl_interrupt_rate_handler(SYSCTLFN_PROTO);
+static int      ixv_sysctl_next_to_check_handler(SYSCTLFN_PROTO);
 static int      ixv_sysctl_rdh_handler(SYSCTLFN_PROTO);
 static int      ixv_sysctl_rdt_handler(SYSCTLFN_PROTO);
 static int      ixv_sysctl_tdt_handler(SYSCTLFN_PROTO);
@@ -153,7 +154,7 @@ static void     ixv_handle_link(void *);
 static void	ixv_handle_que_work(struct work *, void *);
 
 const struct sysctlnode *ixv_sysctl_instance(struct adapter *);
-static ixgbe_vendor_info_t *ixv_lookup(const struct pci_attach_args *);
+static const ixgbe_vendor_info_t *ixv_lookup(const struct pci_attach_args *);
 
 /************************************************************************
  * FreeBSD Device Interface Entry Points
@@ -258,10 +259,10 @@ ixv_probe(device_t dev, cfdata_t cf, void *aux)
 #endif
 } /* ixv_probe */
 
-static ixgbe_vendor_info_t *
+static const ixgbe_vendor_info_t *
 ixv_lookup(const struct pci_attach_args *pa)
 {
-	ixgbe_vendor_info_t *ent;
+	const ixgbe_vendor_info_t *ent;
 	pcireg_t subid;
 
 	INIT_DEBUGOUT("ixv_lookup: begin");
@@ -301,7 +302,7 @@ ixv_attach(device_t parent, device_t dev, void *aux)
 	struct ixgbe_hw *hw;
 	int             error = 0;
 	pcireg_t	id, subid;
-	ixgbe_vendor_info_t *ent;
+	const ixgbe_vendor_info_t *ent;
 	const struct pci_attach_args *pa = aux;
 	const char *apivstr;
 	const char *str;
@@ -718,7 +719,7 @@ ixv_init_locked(struct adapter *adapter)
 	struct ifnet	*ifp = adapter->ifp;
 	device_t 	dev = adapter->dev;
 	struct ixgbe_hw *hw = &adapter->hw;
-	struct ix_queue	*que = adapter->queues;
+	struct ix_queue	*que;
 	int             error = 0;
 	uint32_t mask;
 	int i;
@@ -728,6 +729,8 @@ ixv_init_locked(struct adapter *adapter)
 	hw->adapter_stopped = FALSE;
 	hw->mac.ops.stop_adapter(hw);
 	callout_stop(&adapter->timer);
+	for (i = 0, que = adapter->queues; i < adapter->num_queues; i++, que++)
+		que->disabled_count = 0;
 
 	/* reprogram the RAR[0] in case user changed it. */
 	hw->mac.ops.set_rar(hw, 0, hw->mac.addr, 0, IXGBE_RAH_AV);
@@ -797,7 +800,7 @@ ixv_init_locked(struct adapter *adapter)
 
 	/* Set up auto-mask */
 	mask = (1 << adapter->vector);
-	for (i = 0; i < adapter->num_queues; i++, que++)
+	for (i = 0, que = adapter->queues; i < adapter->num_queues; i++, que++)
 		mask |= (1 << que->msix);
 	IXGBE_WRITE_REG(hw, IXGBE_VTEIAM, mask);
 
@@ -870,12 +873,14 @@ out:
 	mutex_exit(&que->dc_mtx);
 } /* ixv_disable_queue */
 
+#if 0
 static inline void
 ixv_rearm_queues(struct adapter *adapter, u64 queues)
 {
 	u32 mask = (IXGBE_EIMS_RTX_QUEUE & queues);
 	IXGBE_WRITE_REG(&adapter->hw, IXGBE_VTEICS, mask);
 } /* ixv_rearm_queues */
+#endif
 
 
 /************************************************************************
@@ -1263,9 +1268,11 @@ ixv_local_timer_locked(void *arg)
 	/* Only truly watchdog if all queues show hung */
 	if (hung == adapter->num_queues)
 		goto watchdog;
+#if 0
 	else if (queues != 0) { /* Force an IRQ on queues with work */
 		ixv_rearm_queues(adapter, queues);
 	}
+#endif
 
 	callout_reset(&adapter->timer, hz, ixv_local_timer, adapter);
 
@@ -1518,7 +1525,6 @@ ixv_setup_interface(device_t dev, struct adapter *adapter)
 	 * We use per TX queue softint, so if_deferred_start_init() isn't
 	 * used.
 	 */
-	if_register(ifp);
 	ether_set_ifflags_cb(ec, ixv_ifflags_cb);
 
 	adapter->max_frame_size = ifp->if_mtu + IXGBE_MTU_HDR;
@@ -1557,6 +1563,8 @@ ixv_setup_interface(device_t dev, struct adapter *adapter)
 	ifmedia_add(&adapter->media, IFM_ETHER | IFM_AUTO, 0, NULL);
 	ifmedia_set(&adapter->media, IFM_ETHER | IFM_AUTO);
 
+	if_register(ifp);
+
 	return 0;
 } /* ixv_setup_interface */
 
@@ -1587,6 +1595,8 @@ ixv_initialize_transmit_units(struct adapter *adapter)
 
 		/* Set Tx Tail register */
 		txr->tail = IXGBE_VFTDT(j);
+
+		txr->txr_no_space = false;
 
 		/* Set Ring parameters */
 		IXGBE_WRITE_REG(hw, IXGBE_VFTDBAL(j),
@@ -1876,6 +1886,27 @@ ixv_sysctl_tdt_handler(SYSCTLFN_ARGS)
 	node.sysctl_data = &val;
 	return sysctl_lookup(SYSCTLFN_CALL(&node));
 } /* ixv_sysctl_tdt_handler */
+
+/************************************************************************
+ * ixv_sysctl_next_to_check_handler - Receive Descriptor next to check
+ * handler function
+ *
+ *   Retrieves the next_to_check value
+ ************************************************************************/
+static int 
+ixv_sysctl_next_to_check_handler(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node = *rnode;
+	struct rx_ring *rxr = (struct rx_ring *)node.sysctl_data;
+	uint32_t val;
+
+	if (!rxr)
+		return (0);
+
+	val = rxr->next_to_check;
+	node.sysctl_data = &val;
+	return sysctl_lookup(SYSCTLFN_CALL(&node));
+} /* ixv_sysctl_next_to_check_handler */
 
 /************************************************************************
  * ixv_sysctl_rdh_handler - Receive Descriptor Head handler function
@@ -2446,6 +2477,14 @@ ixv_add_stats_sysctls(struct adapter *adapter)
 #ifdef LRO
 		struct lro_ctrl *lro = &rxr->lro;
 #endif /* LRO */
+
+		if (sysctl_createv(log, 0, &rnode, &cnode,
+		    CTLFLAG_READONLY,
+		    CTLTYPE_INT,
+		    "rxd_nxck", SYSCTL_DESCR("Receive Descriptor next to check"),
+			ixv_sysctl_next_to_check_handler, 0, (void *)rxr, 0,
+		    CTL_CREATE, CTL_EOL) != 0)
+			break;
 
 		if (sysctl_createv(log, 0, &rnode, &cnode,
 		    CTLFLAG_READONLY,

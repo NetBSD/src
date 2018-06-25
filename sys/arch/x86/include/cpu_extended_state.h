@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_extended_state.h,v 1.15 2017/11/08 17:55:54 maxv Exp $	*/
+/*	$NetBSD: cpu_extended_state.h,v 1.15.2.1 2018/06/25 07:25:47 pgoyette Exp $	*/
 
 #ifndef _X86_CPU_EXTENDED_STATE_H_
 #define _X86_CPU_EXTENDED_STATE_H_
@@ -18,8 +18,8 @@
  * This includes registers (etc) used by SSE/SSE2/SSE3/SSSE3/SSE4 and the later
  * AVX instructions.
  *
- * The definitions are such that any future 'extended state' should be handled
- * (provided the kernel doesn't need to know the actual contents).
+ * The definitions are such that any future 'extended state' should be handled,
+ * provided the kernel doesn't need to know the actual contents.
  *
  * The actual structures the cpu accesses must be aligned to 16 bytes for FXSAVE
  * and 64 for XSAVE. The types aren't aligned because copies do not need extra
@@ -30,18 +30,18 @@
  * support the fxsave instruction.
  *
  * Associated save instructions:
- * FNSAVE:   Saves x87 state in 108 bytes (original i387 layout).
- *           Then reinitializes the fpu.
+ * FNSAVE:   Saves x87 state in 108 bytes (original i387 layout). Then
+ *           reinitializes the fpu.
  * FSAVE:    Encodes to FWAIT followed by FNSAVE.
- * FXSAVE:   Saves the x87 state and XMM (aka SSE) registers to the
- *           first 448 (max) bytes of a 512 byte area.
- *           This layout does not match that written by FNSAVE.
- * XSAVE:    Uses the same layout for the x87 and XMM registers,
- *           followed by a 64byte header and separate save areas
- *           for additional extended cpu state.
- *           The x87 state is always saved, the others conditionally.
- * XSAVEOPT: As XSAVE but only writes the registers blocks that have been
- *           modified.
+ * FXSAVE:   Saves the x87 state and XMM (aka SSE) registers to the first
+ *           448 (max) bytes of a 512 byte area. This layout does not match
+ *           that written by FNSAVE.
+ * XSAVE:    Uses the same layout for the x87 and XMM registers, followed by
+ *           a 64byte header and separate save areas for additional extended
+ *           cpu states. The x87 state is always saved, the others
+ *           conditionally.
+ * XSAVEOPT: Same as XSAVE but only writes the registers blocks that have
+ *           been modified.
  */
 
 /*
@@ -80,10 +80,11 @@ struct ymmreg {
 };
 
 /*
- * Floating point unit registers (fsave instruction).
- * The s87_ac[] and fx_87_ac[] are relative to the stack top.
- * The 'tag word' contains 2 bits per register and refers to absolute register
- * numbers.
+ * Floating point unit registers (FSAVE instruction).
+ *
+ * The s87_ac[] and fx_87_ac[] are relative to the stack top. The 'tag word'
+ * contains 2 bits per register and refers to absolute register numbers.
+ *
  * The cpu sets the tag values 0b01 (zero) and 0b10 (special) when a value
  * is loaded. The software need only set 0b00 (used) and 0xb11 (unused).
  * The fxsave 'Abridged tag word' in inverted.
@@ -100,7 +101,7 @@ struct save87 {
 __CTASSERT_NOLINT(sizeof(struct save87) == 108);
 
 /*
- * FPU/MMX/SSE/SSE2 context
+ * FPU/MMX/SSE/SSE2 context (FXSAVE instruction).
  */
 struct fxsave {
 	uint16_t fx_cw;		/* FPU Control Word */
@@ -122,7 +123,7 @@ __CTASSERT_NOLINT(sizeof(struct fxsave) == 512);
  * For XSAVE, a 64byte header follows the fxsave data.
  */
 struct xsave_header {
-	uint8_t xsh_fxsave[512];	/* to align in the union */
+	uint8_t xsh_fxsave[512];	/* struct fxsave */
 	uint64_t xsh_xstate_bv;		/* bitmap of saved sub structures */
 	uint64_t xsh_xcomp_bv;		/* bitmap of compact sub structures */
 	uint8_t xsh_rsrvd[8];		/* must be zero */
@@ -145,10 +146,10 @@ __CTASSERT(sizeof(struct xsave_ymm) == 256);
  * NB: Some userspace stuff (eg firefox) uses it to parse ucontext.
  */
 union savefpu {
-	struct save87		sv_87;
-	struct fxsave		sv_xmm;
+	struct save87 sv_87;
+	struct fxsave sv_xmm;
 #ifdef _KERNEL
-	struct xsave_header	sv_xsave_hdr;
+	struct xsave_header sv_xsave_hdr;
 #endif
 };
 

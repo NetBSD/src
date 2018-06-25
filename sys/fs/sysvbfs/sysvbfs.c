@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs.c,v 1.16 2017/02/17 08:31:24 hannken Exp $	*/
+/*	$NetBSD: sysvbfs.c,v 1.16.12.1 2018/06/25 07:26:04 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs.c,v 1.16 2017/02/17 08:31:24 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs.c,v 1.16.12.1 2018/06/25 07:26:04 pgoyette Exp $");
 
 #include <sys/resource.h>
 #include <sys/param.h>
@@ -108,6 +108,7 @@ const struct genfs_ops sysvbfs_genfsops = {
 	.gop_size = genfs_size,
 	.gop_alloc = sysvbfs_gop_alloc,
 	.gop_write = genfs_gop_write,
+	.gop_putrange = genfs_gop_putrange,
 };
 
 struct vfsops sysvbfs_vfsops = {

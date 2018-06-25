@@ -1,4 +1,4 @@
-/* $NetBSD: wsevent.c,v 1.37.2.1 2018/03/24 23:52:19 pgoyette Exp $ */
+/* $NetBSD: wsevent.c,v 1.37.2.2 2018/06/25 07:26:03 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2006, 2008 The NetBSD Foundation, Inc.
@@ -104,7 +104,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsevent.c,v 1.37.2.1 2018/03/24 23:52:19 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsevent.c,v 1.37.2.2 2018/06/25 07:26:03 pgoyette Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_compat_netbsd.h"
+#include "opt_modular.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/kernel.h>

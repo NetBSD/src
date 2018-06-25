@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.54.2.1 2018/04/07 04:12:14 pgoyette Exp $	*/
+/*	$NetBSD: intr.h,v 1.54.2.2 2018/06/25 07:25:47 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -222,9 +222,7 @@ int intr_find_mpmapping(int, int, intr_handle_t *);
 struct pic *intr_findpic(int);
 void intr_printconfig(void);
 
-#if !defined(XEN)
 const char *intr_create_intrid(int, struct pic *, int, char *, size_t);
-#endif /* XEN */
 struct intrsource *intr_allocate_io_intrsource(const char *);
 void intr_free_io_intrsource(const char *);
 

@@ -19,7 +19,7 @@
  *
  * CDDL HEADER END
  *
- * $FreeBSD$
+ * $FreeBSD: head/sys/cddl/dev/dtrace/arm/dtrace_isa.c 295882 2016-02-22 09:08:04Z skra $
  */
 /*
  * Copyright 2005 Sun Microsystems, Inc.  All rights reserved.
@@ -100,8 +100,6 @@ dtrace_getpcstack(pc_t *pcstack, int pcstack_limit, int aframes,
 		 * that generated the stack frame.  We hope for the best.
 		 */
 		scp = frame[FR_SCP];
-		printf("--> %08x\n", (uint32_t)scp);
-
 		if (aframes > 0) {
 			aframes--;
 			if ((aframes == 0) && (caller != 0)) {
@@ -109,7 +107,6 @@ dtrace_getpcstack(pc_t *pcstack, int pcstack_limit, int aframes,
 			}
 		}
 		else {
-			printf("++ --> %08x\n", (uint32_t)scp);
 			pcstack[depth++] = scp;
 		}
 
@@ -154,13 +151,13 @@ dtrace_getpcstack(pc_t *pcstack, int pcstack_limit, int aframes,
 void
 dtrace_getupcstack(uint64_t *pcstack, int pcstack_limit)
 {
-	printf("unimplemented\n");
+	printf("IMPLEMENT ME: %s\n", __func__);
 }
 
 int
 dtrace_getustackdepth(void)
 {
-	printf("unimplemented\n");
+	printf("IMPLEMENT ME: %s\n", __func__);
 	return (0);
 }
 
@@ -174,8 +171,9 @@ dtrace_getufpstack(uint64_t *pcstack, uint64_t *fpstack, int pcstack_limit)
 uint64_t
 dtrace_getarg(int arg, int aframes)
 {
-	printf("unimplemented\n");
+/*	struct arm_frame *fp = (struct arm_frame *)dtrace_getfp();*/
 
+	printf("IMPLEMENT ME: %s\n", __func__);
 	return (0);
 }
 
@@ -227,6 +225,7 @@ dtrace_getstackdepth(int aframes)
 ulong_t
 dtrace_getreg(struct trapframe *rp, uint_t reg)
 {
+	printf("IMPLEMENT ME: %s\n", __func__);
 
 	return (0);
 }

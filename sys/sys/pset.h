@@ -1,4 +1,4 @@
-/*	$NetBSD: pset.h,v 1.5 2016/04/02 20:38:40 christos Exp $	*/
+/*	$NetBSD: pset.h,v 1.5.16.1 2018/06/25 07:26:08 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2008, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -38,9 +38,6 @@
 #define	PS_NONE			0
 #define	PS_MYID			-1
 #define	PS_QUERY		-2
-
-/* For compatibility only */
-typedef	cpuid_t		processorid_t;
 
 __BEGIN_DECLS
 int	pset_assign(psetid_t, cpuid_t, psetid_t *);

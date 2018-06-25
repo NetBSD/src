@@ -1,4 +1,4 @@
-.\"	$NetBSD: module.9,v 1.42.2.6 2018/03/16 11:52:53 pgoyette Exp $
+.\"	$NetBSD: module.9,v 1.42.2.7 2018/06/25 07:25:37 pgoyette Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 14, 2018
+.Dd June 19, 2018
 .Dt MODULE 9
 .Os
 .Sh NAME
@@ -38,7 +38,16 @@
 .Nm module_init_class ,
 .Nm module_hold ,
 .Nm module_rele ,
-.Nm module_find_section
+.Nm module_find_section ,
+.Nm module_kernel ,
+.Nm module_name ,
+.Nm module_source ,
+.Nm module_register_callbacks ,
+.Nm module_unregister_callbacks ,
+.Nm module_specific_key_create ,
+.Nm module_specific_key_delete ,
+.Nm module_getspecific ,
+.Nm module_setspecific
 .Nd kernel module loader
 .Sh SYNOPSIS
 .In sys/module.h
@@ -54,11 +63,17 @@
 .Ft void
 .Fn module_init_class "modclass_t class"
 .Ft int
-.Fn module_hold "const char *name"
+.Fn module_hold "module_t *module"
 .Ft void
-.Fn module_rele "const char *"
+.Fn module_rele "module_t *module"
 .Ft int
 .Fn module_find_section "const char *" "void **" "size_t *"
+.Ft "module_t *"
+.Fn module_kernel "void"
+.Ft "const char *"
+.Fn module_name "struct module *module"
+.Ft modsrc_t
+.Fn module_source "struct module *module"
 .Ft void
 .Fn module_init "void"
 .Ft void
@@ -67,6 +82,20 @@
 .Fn module_builtin_require_force "void"
 .Ft void
 .Fn module_load_vfs_init "void"
+.Ft "void *"
+.Fn module_register_callbacks "void (*)(struct module *)" \
+"void (*unload)(struct module *)"
+.Ft void
+.Fn module_unregister_callbacks "void *"
+.Ft specificdata_key_t
+.Fn module_specific_key_create "specificdata_key_t *keyp" \
+"specificdata_dtor_t dtor"
+.Ft void
+.Fn module_specific_key_delete "specificdata_key_t key"
+.Ft "void *"
+.Fn module_getspecific "module_t *mod" "specificdata_key_t key"
+.Ft "void *"
+.Fn module_setspecific "module_t *mod" "specificdata_key_t key" "void *data"
 .Sh DESCRIPTION
 Modules are sections of code that can be independently linked and selectively
 loaded into or unloaded from a running kernel.
@@ -177,7 +206,7 @@ macro creates a reference to the module's
 function.
 This function is defined as:
 .Bl -tag -width modcmd -offset indent
-.It Ft int
+.It Ft modcmd_t
 .Fn xxx_modcmd "modcmd_t cmd" "void *data"
 .El
 .Pp
@@ -410,10 +439,10 @@ Load and initialize all available modules of the specified
 .Fa class .
 Any built-in modules that have not been disabled, and any modules provided
 by the boot loader are loaded.
-.It Fn module_hold "name"
+.It Fn module_hold "module"
 Increment the reference count of a module.
 A module cannot be unloaded if its reference count is non-zero.
-.It Fn module_rele "name"
+.It Fn module_rele "module"
 Decrement the reference count of a module.
 .It Fn module_find_section "name" "addr" "size"
 Find the start address and size of linker section
@@ -423,6 +452,18 @@ The miniroot module uses this routine to find the address and size of the
 embedded file system image.
 This routine can only examine the linker data for the module that is
 currently being initialized;  it cannot examine data for any other module.
+.It Fn module_kernel "void"
+Returns a pointer to a
+.Ft module_t
+structure describing the kernel module.
+.It Fn module_name module
+Returns a pointer to the module's name.
+.It Fn module_source module
+Returns the source of the module, one of
+.Dv MODULE_SOURCE_KERNEL ,
+.Dv MODULE_SOURCE_BOOT ,
+or
+.Dv MODULE_SOURCE_FILESYS .
 .It Fn module_init "void"
 Initialize the module subsystem.
 Creates and initializes various data structures, locates all built-in
@@ -449,14 +490,60 @@ is specified.
 is called near the end of system initialization, after the
 .Xr init 8
 process is created.
-.It Fn module_load_vfs_init
+.It Fn module_load_vfs_init "void"
 The module subsystem is initialized early, long before any file systems
 are available.
 After the root file system is mounted,
-.Fn module_load_vfs_init
+.Fn module_load_vfs_init "void"
 is used to enable loading modules from the file system.
 Until this routine is called, modules can only be loaded if they were
 built-in to the kernel image or provided by the boot loader.
+.It Fn module_register_callbacks "void (*load)(struct module *)" \
+"void (*unload)(struct module *)"
+Register a new set of callbacks.
+The
+.Fa load
+callback is invoked after any module (including this module) is
+successfully loaded; the
+.Fa unload
+callback is invoked before any module is unloaded.
+Each load or unload event can result in multiple invocations of the
+callback routines.
+An opaque cookie is returned which can be passed to
+.Fn module_unregister_callbacks .
+.It Fn module_unregister_callbacks "void *opaque"
+Unregister a set of callback routines previously registered with
+.Fn module_register_callbacks .
+The
+.Fa opaque
+argument should be the return value from the previous
+.Fn module_register_callbacks
+call.
+.It Fn module_specific_key_create "specificdata_key_t *keyp" \
+"specificdata_dtor_t dtor"
+Creates a new specificdata_key for use within the
+.Nm
+domain.
+The key identifier is returned in
+.Fa keyp .
+.It Fn module_specific_key_delete "specificdata_key_t key"
+Deletes the specified specificdata_key
+.Fa key
+from the
+.Nm
+domain.
+.It Fn module_getspecific "module_t *mod" "specificdata_key_t key"
+Retrieves the value associated with
+.Fa key
+from module
+.Fa mod .
+.It Fn module_setspecific "module_t *mod" "specificdata_key_t key" "void *data"
+Stores
+.Fa data
+as the value associated with
+.Fa key
+for module
+.Fa mod .
 .El
 .Sh PROGRAMMING CONSIDERATIONS
 The module subsystem is designed to be called recursively, but only within
@@ -531,6 +618,7 @@ is for finding modules passed in by the boot loader.
 .Sh SEE ALSO
 .Xr modctl 2 ,
 .Xr module 7 ,
+.Xr specificdata 9 ,
 .Xr intro 9lua
 .Sh HISTORY
 The kernel module subsystem first appeared in

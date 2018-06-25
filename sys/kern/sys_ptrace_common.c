@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace_common.c,v 1.35.2.3 2018/05/21 04:36:15 pgoyette Exp $	*/
+/*	$NetBSD: sys_ptrace_common.c,v 1.35.2.4 2018/06/25 07:26:04 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.35.2.3 2018/05/21 04:36:15 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.35.2.4 2018/06/25 07:26:04 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -154,8 +154,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.35.2.3 2018/05/21 04:36:15 p
 #include <machine/reg.h>
 
 #ifdef PTRACE
-
-# ifdef DEBUG
+# ifdef PTRACE_DEBUG
 #  define DPRINTF(a) uprintf a
 # else
 #  define DPRINTF(a)
@@ -403,7 +402,7 @@ ptrace_allowed(struct lwp *l, int req, struct proc *t, struct proc *p)
 		 * You can't attach to a process if:
 		 *	(1) it's the process that's doing the attaching,
 		 */
-		if (t->p_pid == p->p_pid)
+		if (t == p)
 			return EINVAL;
 
 		/*
@@ -419,13 +418,19 @@ ptrace_allowed(struct lwp *l, int req, struct proc *t, struct proc *p)
 			return EPERM;
 
 		/*
-		 *	(4) it's already being traced, or
+		 *	(4) it's already being traced,
 		 */
 		if (ISSET(t->p_slflag, PSL_TRACED))
 			return EBUSY;
 
 		/*
-		 * 	(5) the tracer is chrooted, and its root directory is
+		 *	(5) it's a vfork(2)ed parent of the current process, or
+		 */
+		if (ISSET(p->p_lflag, PL_PPWAIT) && p->p_pptr == t)
+			return EPERM;
+
+		/*
+		 * 	(6) the tracer is chrooted, and its root directory is
 		 * 	    not at or above the root directory of the tracee
 		 */
 		mutex_exit(t->p_lock);	/* XXXSMP */
@@ -567,6 +572,8 @@ ptrace_get_siginfo(struct proc *t, struct ptrace_methods *ptm, void *addr,
 
 	psi.psi_siginfo._info = t->p_sigctx.ps_info;
 	psi.psi_lwpid = t->p_sigctx.ps_lwp;
+	DPRINTF(("%s: lwp=%d signal=%d\n", __func__, psi.psi_lwpid,
+	    psi.psi_siginfo.si_signo));
 
 	return ptm->ptm_copyout_siginfo(&psi, addr, data);
 }
@@ -591,6 +598,8 @@ ptrace_set_siginfo(struct proc *t, struct lwp **lt, struct ptrace_methods *ptm,
 	t->p_sigctx.ps_faked = true;
 	t->p_sigctx.ps_info = psi.psi_siginfo._info;
 	t->p_sigctx.ps_lwp = psi.psi_lwpid;
+	DPRINTF(("%s: lwp=%d signal=%d\n", __func__, psi.psi_lwpid,
+	    psi.psi_siginfo.si_signo));
 	return 0;
 }
 
@@ -614,6 +623,8 @@ ptrace_get_event_mask(struct proc *t, void *addr, size_t data)
 	    PTRACE_LWP_CREATE : 0;
 	pe.pe_set_event |= ISSET(t->p_slflag, PSL_TRACELWP_EXIT) ?
 	    PTRACE_LWP_EXIT : 0;
+	DPRINTF(("%s: lwp=%d event=%#x\n", __func__,
+	    t->p_sigctx.ps_lwp, pe.pe_set_event));
 	return copyout(&pe, addr, sizeof(pe));
 }
 
@@ -630,6 +641,8 @@ ptrace_set_event_mask(struct proc *t, void *addr, size_t data)
 	if ((error = copyin(addr, &pe, sizeof(pe))) != 0)
 		return error;
 
+	DPRINTF(("%s: lwp=%d event=%#x\n", __func__,
+	    t->p_sigctx.ps_lwp, pe.pe_set_event));
 	if (pe.pe_set_event & PTRACE_FORK)
 		SET(t->p_slflag, PSL_TRACEFORK);
 	else
@@ -684,6 +697,9 @@ ptrace_get_process_state(struct proc *t, void *addr, size_t data)
 		ps.pe_report_event = PTRACE_LWP_EXIT;
 		ps.pe_lwp = t->p_lwp_exited;
 	}
+	DPRINTF(("%s: lwp=%d event=%#x pid=%d lwp=%d\n", __func__,
+	    t->p_sigctx.ps_lwp, ps.pe_report_event,
+	    ps.pe_other_pid, ps.pe_lwp));
 	return copyout(&ps, addr, sizeof(ps));
 }
 
@@ -733,10 +749,16 @@ ptrace_lwpinfo(struct proc *t, struct lwp **lt, void *addr, size_t data)
 		 */
 		else if ((*lt)->l_lid == t->p_sigctx.ps_lwp
 			 || (t->p_sigctx.ps_lwp == 0 &&
-			     t->p_sigctx.ps_info._signo))
+			     t->p_sigctx.ps_info._signo)) {
+			DPRINTF(("%s: lwp=%d siglwp=%d signo %d\n", __func__,
+			    pl.pl_lwpid, t->p_sigctx.ps_lwp,
+			    t->p_sigctx.ps_info._signo));
 			pl.pl_event = PL_EVENT_SIGNAL;
+		}
 	}
 	mutex_exit(t->p_lock);
+	DPRINTF(("%s: lwp=%d event=%#x\n", __func__,
+	    pl.pl_lwpid, pl.pl_event));
 
 	return copyout(&pl, addr, sizeof(pl));
 }
@@ -750,6 +772,7 @@ ptrace_startstop(struct proc *t, struct lwp **lt, int rq, void *addr,
 	if ((error = ptrace_update_lwp(t, lt, data)) != 0)
 		return error;
 
+	DPRINTF(("%s: lwp=%d request=%d\n", __func__, (*lt)->l_lid, rq));
 	lwp_lock(*lt);
 	if (rq == PT_SUSPEND)
 		(*lt)->l_flag |= LW_WSUSPEND;
@@ -791,6 +814,8 @@ ptrace_regs(struct lwp *l, struct lwp **lt, int rq, struct ptrace_methods *ptm,
 	int dir = ptrace_uio_dir(rq);
 	size_t size;
 	int (*func)(struct lwp *, struct lwp *, struct uio *);
+
+	DPRINTF(("%s: lwp=%d request=%d\n", __func__, l->l_lid, rq));
 
 	switch (rq) {
 #if defined(PT_SETREGS) || defined(PT_GETREGS)
@@ -893,6 +918,8 @@ ptrace_sendsig(struct proc *t, struct lwp *lt, int signo, int resume_all)
 	} else {
 		ksi.ksi_signo = signo;
 	}
+	DPRINTF(("%s: pid=%d.%d signal=%d resume_all=%d\n", __func__, t->p_pid,
+	    t->p_sigctx.ps_lwp, signo, resume_all));
 
 	kpsignal2(t, &ksi);
 	return 0;
@@ -914,6 +941,7 @@ ptrace_dumpcore(struct lwp *lt, char *path, size_t len)
 			goto out;
 		path[len] = '\0';
 	}
+	DPRINTF(("%s: lwp=%d\n", __func__, lt->l_lid));
 	error = (*coredump_vec)(lt, path);
 out:
 	if (path)
@@ -936,6 +964,8 @@ ptrace_doio(struct lwp *l, struct proc *t, struct lwp *lt,
 	uio.uio_iovcnt = 1;
 	uio.uio_offset = (off_t)(unsigned long)piod->piod_offs;
 	uio.uio_resid = piod->piod_len;
+
+	DPRINTF(("%s: lwp=%d request=%d\n", __func__, l->l_lid, piod->piod_op));
 
 	switch (piod->piod_op) {
 	case PIOD_READ_D:

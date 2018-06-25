@@ -1,4 +1,4 @@
-/*	$NetBSD: sig.h,v 1.2 2010/02/21 01:46:36 darran Exp $	*/
+/*	$NetBSD: sig.h,v 1.2.44.1 2018/06/25 07:25:26 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 Pawel Jakub Dawidek <pjd@FreeBSD.org>
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/cddl/compat/opensolaris/sys/sig.h,v 1.2.2.1 2009/08/03 08:13:06 kensmith Exp $
+ * $FreeBSD: head/sys/cddl/compat/opensolaris/sys/sig.h 248470 2013-03-18 17:23:58Z jhb $
  */
 
 #ifndef _OPENSOLARIS_SYS_SIG_H_

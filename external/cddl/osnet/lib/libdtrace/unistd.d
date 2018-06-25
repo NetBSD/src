@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.d,v 1.2 2010/02/21 01:46:35 darran Exp $	*/
+/*	$NetBSD: unistd.d,v 1.2.44.1 2018/06/25 07:25:24 pgoyette Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -20,7 +20,7 @@
  *
  * CDDL HEADER END
  *
- * $FreeBSD: src/cddl/lib/libdtrace/unistd.d,v 1.1.4.1 2009/08/03 08:13:06 kensmith Exp $
+ * $FreeBSD: head/cddl/lib/libdtrace/unistd.d 179189 2008-05-22 04:26:42Z jb $
  */
 /*
  * Copyright 2007 Sun Microsystems, Inc.  All rights reserved.

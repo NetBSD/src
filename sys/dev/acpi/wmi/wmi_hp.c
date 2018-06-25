@@ -1,4 +1,4 @@
-/*	$NetBSD: wmi_hp.c,v 1.10 2017/06/01 02:45:09 chs Exp $ */
+/*	$NetBSD: wmi_hp.c,v 1.10.8.1 2018/06/25 07:25:49 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wmi_hp.c,v 1.10 2017/06/01 02:45:09 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wmi_hp.c,v 1.10.8.1 2018/06/25 07:25:49 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -720,7 +720,7 @@ sysctl_wmi_hp_set_als(SYSCTLFN_ARGS)
 	err = sysctl_lookup(SYSCTLFN_CALL(&node));
 
 	if (err != 0 || newp == NULL)
-		return err;;
+		return err;
 
 	if (als < 0 || als > 1)
 		return EINVAL;

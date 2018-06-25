@@ -22,6 +22,9 @@
  * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  */
+/*
+ * Copyright (c) 2013 by Delphix. All rights reserved.
+ */
 
 /*
  * Common name validation routines for ZFS.  These routines are shared by the
@@ -62,11 +65,11 @@ valid_char(char c)
  * 	[-_.: ]
  */
 int
-snapshot_namecheck(const char *path, namecheck_err_t *why, char *what)
+zfs_component_namecheck(const char *path, namecheck_err_t *why, char *what)
 {
 	const char *loc;
 
-	if (strlen(path) >= MAXNAMELEN) {
+	if (strlen(path) >= ZFS_MAX_DATASET_NAME_LEN) {
 		if (why)
 			*why = NAME_ERR_TOOLONG;
 		return (-1);
@@ -113,7 +116,7 @@ permset_namecheck(const char *path, namecheck_err_t *why, char *what)
 		return (-1);
 	}
 
-	return (snapshot_namecheck(&path[1], why, what));
+	return (zfs_component_namecheck(&path[1], why, what));
 }
 
 /*
@@ -137,14 +140,9 @@ dataset_namecheck(const char *path, namecheck_err_t *why, char *what)
 
 	/*
 	 * Make sure the name is not too long.
-	 *
-	 * ZFS_MAXNAMELEN is the maximum dataset length used in the userland
-	 * which is the same as MAXNAMELEN used in the kernel.
-	 * If ZFS_MAXNAMELEN value is changed, make sure to cleanup all
-	 * places using MAXNAMELEN.
 	 */
 
-	if (strlen(path) >= MAXNAMELEN) {
+	if (strlen(path) >= ZFS_MAX_DATASET_NAME_LEN) {
 		if (why)
 			*why = NAME_ERR_TOOLONG;
 		return (-1);
@@ -273,7 +271,7 @@ mountpoint_namecheck(const char *path, namecheck_err_t *why)
 		while (*end != '/' && *end != '\0')
 			end++;
 
-		if (end - start >= MAXNAMELEN) {
+		if (end - start >= ZFS_MAX_DATASET_NAME_LEN) {
 			if (why)
 				*why = NAME_ERR_TOOLONG;
 			return (-1);
@@ -298,13 +296,8 @@ pool_namecheck(const char *pool, namecheck_err_t *why, char *what)
 
 	/*
 	 * Make sure the name is not too long.
-	 *
-	 * ZPOOL_MAXNAMELEN is the maximum pool length used in the userland
-	 * which is the same as MAXNAMELEN used in the kernel.
-	 * If ZPOOL_MAXNAMELEN value is changed, make sure to cleanup all
-	 * places using MAXNAMELEN.
 	 */
-	if (strlen(pool) >= MAXNAMELEN) {
+	if (strlen(pool) >= ZFS_MAX_DATASET_NAME_LEN) {
 		if (why)
 			*why = NAME_ERR_TOOLONG;
 		return (-1);

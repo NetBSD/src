@@ -115,7 +115,7 @@ options         NFS_BOOT_DHCP
 
 mainbus* at root
 
-cpu* 		at mainbus?
+cpu0 	at mainbus?
 uni_n*	at mainbus?
 memory* at mainbus?
 spdmem* at memory? addr ?
@@ -126,7 +126,8 @@ uninorth* 	at mainbus?
 smu* 		at mainbus?
 #options 	SMU_DEBUG
 smuiic* 	at smu?
-smusat* 	at smuiic?
+iic* 		at smuiic?
+
 
 pci*	at ibmcpc? bus ?
 pci*	at uninorth? bus ?
@@ -147,6 +148,7 @@ lmtemp* 	at iic?
 dstemp* 	at iic?
 adadc* 		at iic?
 fcu* 		at iic?
+smusat* 	at iic?
 deq* 		at iic?
 
 pmu* 		at obio?	# Apple PMU

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_l2tp.c,v 1.20.2.3 2018/05/21 04:36:15 pgoyette Exp $	*/
+/*	$NetBSD: if_l2tp.c,v 1.20.2.4 2018/06/25 07:26:06 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.20.2.3 2018/05/21 04:36:15 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.20.2.4 2018/06/25 07:26:06 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -91,8 +91,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.20.2.3 2018/05/21 04:36:15 pgoyette Ex
 #ifdef IP_TCPMSS
 #include <netinet/ip_tcpmss.h>
 #endif
-
-#include <net/bpf.h>
 
 /*
  * l2tp global variable definitions

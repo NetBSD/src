@@ -38,7 +38,7 @@
 #if 0
 __FBSDID("$FreeBSD: head/sys/contrib/ena-com/ena_plat.h 333453 2018-05-10 09:25:51Z mw $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: ena_plat.h,v 1.2.2.2 2018/05/21 04:36:14 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ena_plat.h,v 1.2.2.3 2018/06/25 07:26:03 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -324,7 +324,7 @@ int	ena_dma_alloc(device_t dmadev, bus_size_t size, ena_mem_handle_t *dma,
 #define time_after(a,b)	((long)((unsigned long)(b) - (unsigned long)(a)) < 0)
 
 #define VLAN_HLEN 	sizeof(struct ether_vlan_header)
-#define CSUM_OFFLOAD 	(CSUM_IP|CSUM_TCP|CSUM_UDP)
+#define CSUM_OFFLOAD 	(M_CSUM_IPv4|M_CSUM_TCPv4|M_CSUM_UDPv4)
 
 #if defined(__i386__) || defined(__amd64__)
 static __inline

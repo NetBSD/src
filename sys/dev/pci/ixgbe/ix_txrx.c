@@ -1,4 +1,4 @@
-/* $NetBSD: ix_txrx.c,v 1.34.2.6 2018/05/21 04:36:12 pgoyette Exp $ */
+/* $NetBSD: ix_txrx.c,v 1.34.2.7 2018/06/25 07:26:01 pgoyette Exp $ */
 
 /******************************************************************************
 
@@ -146,7 +146,9 @@ ixgbe_legacy_start_locked(struct ifnet *ifp, struct tx_ring *txr)
 	}
 	if ((ifp->if_flags & IFF_RUNNING) == 0)
 		return (ENETDOWN);
-
+	if (txr->txr_no_space)
+		return (ENETDOWN);
+	
 	while (!IFQ_IS_EMPTY(&ifp->if_snd)) {
 		if (txr->tx_avail <= IXGBE_QUEUE_MIN_FREE)
 			break;
@@ -290,6 +292,8 @@ ixgbe_mq_start_locked(struct ifnet *ifp, struct tx_ring *txr)
 		return (ENETDOWN);
 	}
 	if ((ifp->if_flags & IFF_RUNNING) == 0)
+		return (ENETDOWN);
+	if (txr->txr_no_space)
 		return (ENETDOWN);
 
 	/* Process the queue */
@@ -461,6 +465,7 @@ retry:
 
 	/* Make certain there are enough descriptors */
 	if (txr->tx_avail < (map->dm_nsegs + 2)) {
+		txr->txr_no_space = true;
 		txr->no_desc_avail.ev_count++;
 		ixgbe_dmamap_unload(txr->txtag, txbuf->map);
 		return EAGAIN;
@@ -1159,6 +1164,7 @@ ixgbe_txeof(struct tx_ring *txr)
 			buf->m_head = NULL;
 		}
 		buf->eop = NULL;
+		txr->txr_no_space = false;
 		++txr->tx_avail;
 
 		/* We clean the range if multi segment */
@@ -1832,8 +1838,6 @@ ixgbe_rxeof(struct ix_queue *que)
 #endif
 
 		if ((staterr & IXGBE_RXD_STAT_DD) == 0)
-			break;
-		if ((ifp->if_flags & IFF_RUNNING) == 0)
 			break;
 
 		count--;

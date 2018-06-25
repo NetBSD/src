@@ -1,4 +1,4 @@
-/*	$NetBSD: key_debug.c,v 1.11 2017/04/26 03:16:06 ozaki-r Exp $	*/
+/*	$NetBSD: key_debug.c,v 1.11.10.1 2018/06/25 07:25:05 pgoyette Exp $	*/
 
 /*	$KAME: key_debug.c,v 1.29 2001/08/16 14:25:41 itojun Exp $	*/
 
@@ -71,35 +71,35 @@
 #include "config.h"
 #include "libpfkey.h"
 
-static void kdebug_sadb_prop __P((struct sadb_ext *));
-static void kdebug_sadb_identity __P((struct sadb_ext *));
-static void kdebug_sadb_supported __P((struct sadb_ext *));
-static void kdebug_sadb_lifetime __P((struct sadb_ext *));
-static void kdebug_sadb_sa __P((struct sadb_ext *));
-static void kdebug_sadb_address __P((struct sadb_ext *));
-static void kdebug_sadb_key __P((struct sadb_ext *));
-static void kdebug_sadb_x_sa2 __P((struct sadb_ext *));
-static void kdebug_sadb_x_policy __P((struct sadb_ext *ext));
-static void kdebug_sockaddr __P((struct sockaddr *addr));
+static void kdebug_sadb_prop(struct sadb_ext *);
+static void kdebug_sadb_identity(struct sadb_ext *);
+static void kdebug_sadb_supported(struct sadb_ext *);
+static void kdebug_sadb_lifetime(struct sadb_ext *);
+static void kdebug_sadb_sa(struct sadb_ext *);
+static void kdebug_sadb_address(struct sadb_ext *);
+static void kdebug_sadb_key(struct sadb_ext *);
+static void kdebug_sadb_x_sa2(struct sadb_ext *);
+static void kdebug_sadb_x_policy(struct sadb_ext *ext);
+static void kdebug_sockaddr(struct sockaddr *addr);
 
 #ifdef SADB_X_EXT_NAT_T_TYPE
-static void kdebug_sadb_x_nat_t_type __P((struct sadb_ext *ext));
-static void kdebug_sadb_x_nat_t_port __P((struct sadb_ext *ext));
+static void kdebug_sadb_x_nat_t_type(struct sadb_ext *ext);
+static void kdebug_sadb_x_nat_t_port(struct sadb_ext *ext);
 #ifdef SADB_X_EXT_NAT_T_FRAG
-static void kdebug_sadb_x_nat_t_frag __P((struct sadb_ext *ext));
+static void kdebug_sadb_x_nat_t_frag(struct sadb_ext *ext);
 #endif
 #endif
 
 #ifdef SADB_X_EXT_PACKET
-static void kdebug_sadb_x_packet __P((struct sadb_ext *));
+static void kdebug_sadb_x_packet(struct sadb_ext *);
 #endif
 
 #ifdef SADB_X_EXT_KMADDRESS
-static void kdebug_sadb_x_kmaddress __P((struct sadb_ext *));
+static void kdebug_sadb_x_kmaddress(struct sadb_ext *);
 #endif
 
 #ifdef _KERNEL
-static void kdebug_secreplay __P((struct secreplay *));
+static void kdebug_secreplay(struct secreplay *);
 #endif
 
 #ifndef _KERNEL
@@ -111,8 +111,7 @@ static void kdebug_secreplay __P((struct secreplay *));
 
 /* %%%: about struct sadb_msg */
 void
-kdebug_sadb(base)
-	struct sadb_msg *base;
+kdebug_sadb(struct sadb_msg *base)
 {
 	struct sadb_ext *ext;
 	int tlen, extlen;
@@ -226,8 +225,7 @@ kdebug_sadb(base)
 }
 
 static void
-kdebug_sadb_prop(ext)
-	struct sadb_ext *ext;
+kdebug_sadb_prop(struct sadb_ext *ext)
 {
 	struct sadb_prop *prop = (void *)ext;
 	struct sadb_comb *comb;
@@ -276,8 +274,7 @@ kdebug_sadb_prop(ext)
 }
 
 static void
-kdebug_sadb_identity(ext)
-	struct sadb_ext *ext;
+kdebug_sadb_identity(struct sadb_ext *ext)
 {
 	struct sadb_ident *id = (void *)ext;
 	int len;
@@ -319,8 +316,7 @@ kdebug_sadb_identity(ext)
 }
 
 static void
-kdebug_sadb_supported(ext)
-	struct sadb_ext *ext;
+kdebug_sadb_supported(struct sadb_ext *ext)
 {
 	struct sadb_supported *sup = (void *)ext;
 	struct sadb_alg *alg;
@@ -346,8 +342,7 @@ kdebug_sadb_supported(ext)
 }
 
 static void
-kdebug_sadb_lifetime(ext)
-	struct sadb_ext *ext;
+kdebug_sadb_lifetime(struct sadb_ext *ext)
 {
 	struct sadb_lifetime *lft = (void *)ext;
 
@@ -366,8 +361,7 @@ kdebug_sadb_lifetime(ext)
 }
 
 static void
-kdebug_sadb_sa(ext)
-	struct sadb_ext *ext;
+kdebug_sadb_sa(struct sadb_ext *ext)
 {
 	struct sadb_sa *sa = (void *)ext;
 
@@ -385,8 +379,7 @@ kdebug_sadb_sa(ext)
 }
 
 static void
-kdebug_sadb_address(ext)
-	struct sadb_ext *ext;
+kdebug_sadb_address(struct sadb_ext *ext)
 {
 	struct sadb_address *addr = (void *)ext;
 
@@ -405,8 +398,7 @@ kdebug_sadb_address(ext)
 }
 
 static void
-kdebug_sadb_key(ext)
-	struct sadb_ext *ext;
+kdebug_sadb_key(struct sadb_ext *ext)
 {
 	struct sadb_key *key = (void *)ext;
 
@@ -433,8 +425,7 @@ kdebug_sadb_key(ext)
 }
 
 static void
-kdebug_sadb_x_sa2(ext)
-	struct sadb_ext *ext;
+kdebug_sadb_x_sa2(struct sadb_ext *ext)
 {
 	struct sadb_x_sa2 *sa2 = (void *)ext;
 
@@ -452,8 +443,7 @@ kdebug_sadb_x_sa2(ext)
 }
 
 void
-kdebug_sadb_x_policy(ext)
-	struct sadb_ext *ext;
+kdebug_sadb_x_policy(struct sadb_ext *ext)
 {
 	struct sadb_x_policy *xpl = (void *)ext;
 	struct sockaddr *addr;
@@ -569,8 +559,7 @@ static void kdebug_sadb_x_nat_t_frag (struct sadb_ext *ext)
 
 #ifdef SADB_X_EXT_PACKET
 static void
-kdebug_sadb_x_packet(ext)
-	struct sadb_ext *ext;
+kdebug_sadb_x_packet(struct sadb_ext *ext)
 {
 	struct sadb_x_packet *pkt = (struct sadb_x_packet *)ext;
 
@@ -589,8 +578,7 @@ kdebug_sadb_x_packet(ext)
 
 #ifdef SADB_X_EXT_KMADDRESS
 static void
-kdebug_sadb_x_kmaddress(ext)
-	struct sadb_ext *ext;
+kdebug_sadb_x_kmaddress(struct sadb_ext *ext)
 {
 	struct sadb_x_kmaddress *kma = (struct sadb_x_kmaddress *)ext;
 	struct sockaddr * sa;
@@ -633,8 +621,7 @@ kdebug_sadb_x_kmaddress(ext)
 #ifdef _KERNEL
 /* %%%: about SPD and SAD */
 void
-kdebug_secpolicy(sp)
-	struct secpolicy *sp;
+kdebug_secpolicy(struct secpolicy *sp)
 {
 	/* sanity check */
 	if (sp == NULL)
@@ -682,8 +669,7 @@ kdebug_secpolicy(sp)
 }
 
 void
-kdebug_secpolicyindex(spidx)
-	struct secpolicyindex *spidx;
+kdebug_secpolicyindex(struct secpolicyindex *spidx)
 {
 	/* sanity check */
 	if (spidx == NULL)
@@ -703,8 +689,7 @@ kdebug_secpolicyindex(spidx)
 }
 
 void
-kdebug_secasindex(saidx)
-	struct secasindex *saidx;
+kdebug_secasindex(struct secasindex *saidx)
 {
 	/* sanity check */
 	if (saidx == NULL)
@@ -724,8 +709,7 @@ kdebug_secasindex(saidx)
 }
 
 void
-kdebug_secasv(sav)
-	struct secasvar *sav;
+kdebug_secasv(struct secasvar *sav)
 {
 	/* sanity check */
 	if (sav == NULL)
@@ -766,8 +750,7 @@ kdebug_secasv(sav)
 }
 
 static void
-kdebug_secreplay(rpl)
-	struct secreplay *rpl;
+kdebug_secreplay(struct secreplay *rpl)
 {
 	int len, l;
 
@@ -795,8 +778,7 @@ kdebug_secreplay(rpl)
 }
 
 void
-kdebug_mbufhdr(m)
-	struct mbuf *m;
+kdebug_mbufhdr(struct mbuf *m)
 {
 	/* sanity check */
 	if (m == NULL)
@@ -825,8 +807,7 @@ kdebug_mbufhdr(m)
 }
 
 void
-kdebug_mbuf(m0)
-	struct mbuf *m0;
+kdebug_mbuf(struct mbuf *m0)
 {
 	struct mbuf *m = m0;
 	int i, j;
@@ -850,8 +831,7 @@ kdebug_mbuf(m0)
 #endif /* _KERNEL */
 
 static void
-kdebug_sockaddr(addr)
-	struct sockaddr *addr;
+kdebug_sockaddr(struct sockaddr *addr)
 {
 	struct sockaddr_in *sin4;
 #ifdef INET6
@@ -888,23 +868,7 @@ kdebug_sockaddr(addr)
 }
 
 void
-ipsec_bindump(buf, len)
-	caddr_t buf;
-	int len;
-{
-	int i;
-
-	for (i = 0; i < len; i++)
-		printf("%c", (unsigned char)buf[i]);
-
-	return;
-}
-
-
-void
-ipsec_hexdump(buf, len)
-	const void *buf;
-	int len;
+ipsec_hexdump(const void *buf, int len)
 {
 	int i;
 

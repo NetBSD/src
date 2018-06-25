@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_genfs.c,v 1.1 2007/06/29 23:30:28 rumble Exp $	*/
+/*	$NetBSD: efs_genfs.c,v 1.1.124.1 2018/06/25 07:26:03 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efs_genfs.c,v 1.1 2007/06/29 23:30:28 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efs_genfs.c,v 1.1.124.1 2018/06/25 07:26:03 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,6 +42,7 @@ const struct genfs_ops efs_genfsops = {
 	.gop_size  = genfs_size,
 	.gop_alloc = efs_gop_alloc,
 	.gop_write = genfs_gop_write,
+	.gop_putrange = genfs_gop_putrange,
 };
 
 int

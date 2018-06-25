@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunner.c,v 1.85 2017/10/28 04:53:55 riastradh Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.85.2.1 2018/06/25 07:25:50 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.85 2017/10/28 04:53:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.85.2.1 2018/06/25 07:25:50 pgoyette Exp $");
 
 #include "opt_inet.h"
 
@@ -62,6 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.85 2017/10/28 04:53:55 riastradh Exp $
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/route.h>
+#include <net/bpf.h>
 
 #include <net/if_hippi.h>
 #include <net/if_media.h>
@@ -73,10 +74,6 @@ __KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.85 2017/10/28 04:53:55 riastradh Exp $
 #include <netinet/ip.h>
 #include <netinet/if_inarp.h>
 #endif
-
-
-#include <net/bpf.h>
-#include <net/bpfdesc.h>
 
 #include <sys/cpu.h>
 #include <sys/bus.h>

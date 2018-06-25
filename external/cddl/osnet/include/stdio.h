@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.h,v 1.3 2010/02/21 01:46:34 darran Exp $	*/
+/*	$NetBSD: stdio.h,v 1.3.44.1 2018/06/25 07:25:24 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 2007 John Birrell <jb@freebsd.org>
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/compat/opensolaris/include/stdio.h,v 1.1 2007/11/28 21:40:07 jb Exp $
+ * $FreeBSD: head/cddl/compat/opensolaris/include/stdio.h 177698 2008-03-28 22:16:18Z jb $
  *
  */
 

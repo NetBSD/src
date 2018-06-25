@@ -1,4 +1,4 @@
-/*	$NetBSD: rwlock.h,v 1.3 2010/02/21 01:46:36 darran Exp $	*/
+/*	$NetBSD: rwlock.h,v 1.3.44.1 2018/06/25 07:25:26 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/compat/opensolaris/sys/rwlock.h,v 1.4 2007/11/05 18:40:55 pjd Exp $
+ * $FreeBSD: head/sys/cddl/compat/opensolaris/sys/rwlock.h 253996 2013-08-06 15:51:56Z avg $
  */
 
 #ifndef _OPENSOLARIS_SYS_RWLOCK_H_

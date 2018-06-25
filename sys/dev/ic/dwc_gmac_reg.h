@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac_reg.h,v 1.15 2015/11/21 16:04:11 martin Exp $ */
+/* $NetBSD: dwc_gmac_reg.h,v 1.15.18.1 2018/06/25 07:25:50 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -141,7 +141,9 @@
 #define	GMAC_DMA_OP_TXSTOREFORWARD	__BIT(21) /* start TX when a
  						    full frame is available */
 #define	GMAC_DMA_OP_FLUSHTX		__BIT(20) /* flush TX fifo */
+#define	GMAC_DMA_OP_TTC			__BITS(16,14) /* TX thresh control */
 #define	GMAC_DMA_OP_TXSTART		__BIT(13) /* start TX DMA engine */
+#define	GMAC_DMA_OP_RTC			__BITS(4,3) /* RX thres control */
 #define	GMAC_DMA_OP_RXSTART		__BIT(1)  /* start RX DMA engine */
 
 #define	GMAC_DMA_INT_NIE		__BIT(16) /* Normal/Summary */

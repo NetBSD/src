@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnxreg.h,v 1.18 2014/07/01 17:11:35 msaitoh Exp $	*/
+/*	$NetBSD: if_bnxreg.h,v 1.18.26.1 2018/06/25 07:25:51 pgoyette Exp $	*/
 /*	$OpenBSD: if_bnxreg.h,v 1.33 2009/09/05 16:02:28 claudio Exp $  */
 
 /*-
@@ -4643,31 +4643,31 @@ struct fw_info {
 	uint32_t text_addr;
 	uint32_t text_len;
 	uint32_t text_index;
-	uint32_t *text;
+	const uint32_t *text;
 
 	/* Data section. */
 	uint32_t data_addr;
 	uint32_t data_len;
 	uint32_t data_index;
-	uint32_t *data;
+	const uint32_t *data;
 
 	/* SBSS section. */
 	uint32_t sbss_addr;
 	uint32_t sbss_len;
 	uint32_t sbss_index;
-	uint32_t *sbss;
+	const uint32_t *sbss;
 
 	/* BSS section. */
 	uint32_t bss_addr;
 	uint32_t bss_len;
 	uint32_t bss_index;
-	uint32_t *bss;
+	const uint32_t *bss;
 
 	/* Read-only section. */
 	uint32_t rodata_addr;
 	uint32_t rodata_len;
 	uint32_t rodata_index;
-	uint32_t *rodata;
+	const uint32_t *rodata;
 };
 
 struct bnx_rv2p_header {

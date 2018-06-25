@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.h,v 1.5 2013/06/29 21:06:57 rmind Exp $	*/
+/*	$NetBSD: ip_fil.h,v 1.5.30.1 2018/06/25 07:26:03 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -1881,7 +1881,7 @@ extern	int	ipf_tune_array_link(ipf_main_softc_t *, ipftuneable_t *);
 extern	int	ipf_tune_array_unlink(ipf_main_softc_t *,
 					   ipftuneable_t *);
 extern	ipftuneable_t *ipf_tune_array_copy(void *, size_t,
-						ipftuneable_t *);
+						const ipftuneable_t *);
 
 extern int	ipf_pr_pullup(fr_info_t *, int);
 

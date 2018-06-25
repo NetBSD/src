@@ -1,4 +1,4 @@
-.\"	$NetBSD: atomic_and.3,v 1.1 2008/06/23 10:22:40 ad Exp $
+.\"	$NetBSD: atomic_and.3,v 1.1.62.1 2018/06/25 07:25:34 pgoyette Exp $
 .\"
 .\" Copyright (c) 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -40,7 +40,7 @@
 .Nm atomic_and_uint_nv ,
 .Nm atomic_and_ulong_nv ,
 .Nm atomic_and_64_nv
-.Nd atomic logical
+.Nd atomic bitwise
 .Sq and
 operations
 .\" .Sh LIBRARY
@@ -68,7 +68,7 @@ The
 .Nm atomic_and
 family of functions load the value of the variable referenced by
 .Fa ptr ,
-perform a logical
+perform a bitwise
 .Sq and
 with the value
 .Fa bits ,

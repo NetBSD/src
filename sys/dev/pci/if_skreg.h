@@ -1,4 +1,4 @@
-/* $NetBSD: if_skreg.h,v 1.15 2014/10/10 14:23:06 christos Exp $ */
+/* $NetBSD: if_skreg.h,v 1.15.18.1 2018/06/25 07:25:52 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -388,9 +388,15 @@
 #define SK_YUKON_LP		0xB2
 #define SK_YUKON_XL		0xB3
 #define SK_YUKON_EC_U		0xB4
+#define SK_YUKON_EX		0xB5
 #define SK_YUKON_EC		0xB6
 #define SK_YUKON_FE		0xB7
 #define SK_YUKON_FE_P		0xB8
+#define SK_YUKON_SUPR		0xB9
+#define SK_YUKON_ULTRA2		0xBA
+#define SK_YUKON_OPTIMA		0xBC
+#define SK_YUKON_PRM		0xBD
+#define SK_YUKON_OPTIMA2	0xBE
 #define SK_YUKON_FAMILY(x) ((x) & 0xB0)
 
 #define SK_IS_GENESIS(sc) \
@@ -398,7 +404,7 @@
 #define SK_IS_YUKON(sc) \
     ((sc)->sk_type >= SK_YUKON && (sc)->sk_type <= SK_YUKON_LP)
 #define SK_IS_YUKON2(sc) \
-    ((sc)->sk_type >= SK_YUKON_XL && (sc)->sk_type <= SK_YUKON_FE_P)
+    ((sc)->sk_type >= SK_YUKON_XL && (sc)->sk_type <= SK_YUKON_OPTIMA2)
 
 /* Known revisions in SK_CONFIG */
 #define SK_YUKON_LITE_REV_A0	0x0 /* invented, see test in skc_attach */
@@ -417,9 +423,22 @@
 #define SK_YUKON_EC_U_REV_A0	0x1
 #define SK_YUKON_EC_U_REV_A1	0x2
 #define SK_YUKON_EC_U_REV_B0	0x3
+#define SK_YUKON_EC_U_REV_B1	0x5
 
 #define SK_YUKON_FE_REV_A1	0x1
-#define SK_YUKON_FE_REV_A2	0x3
+#define SK_YUKON_FE_REV_A2	0x2
+
+#define SK_YUKON_FE_P_REV_A0	0x0
+
+#define SK_YUKON_EX_REV_A0	0x1
+#define SK_YUKON_EX_REV_B0	0x2
+
+#define SK_YUKON_SUPR_REV_A0	0x0
+#define SK_YUKON_SUPR_REV_B0	0x1
+#define SK_YUKON_SUPR_REV_B1	0x3
+
+#define SK_YUKON_PRM_REV_Z1	0x1
+#define SK_YUKON_PRM_REV_A0	0x2
 
 /* Workaround */
 #define SK_WA_43_418	0x01
@@ -430,6 +449,7 @@
 #define SK_IMCTL_START		0x04
 
 /* Number of ticks per usec for interrupt moderation */
+#define SK_IMTIMER_TICKS_YUKON_FE_P	50
 #define SK_IMTIMER_TICKS_GENESIS	53
 #define SK_IMTIMER_TICKS_YUKON		156
 #define SK_IMTIMER_TICKS_YUKON_EC	125
@@ -1059,7 +1079,7 @@
 #define SK_RBCTL_STORENFWD_OFF	0x10
 #define SK_RBCTL_STORENFWD_ON	0x20
 
-/* Block 24 -- RX MAC FIFO 1 regisrers and LINK_SYNC counter */
+/* Block 24 -- RX MAC FIFO 1 registers and LINK_SYNC counter */
 #define SK_RXF1_END		0x0C00
 #define SK_RXF1_WPTR		0x0C04
 #define SK_RXF1_RPTR		0x0C0C
@@ -1108,7 +1128,7 @@
 
 #define SK_RFCTL_FIFO_THRESHOLD 0x0a    /* flush threshold (default) */
 
-/* Block 25 -- RX MAC FIFO 2 regisrers and LINK_SYNC counter */
+/* Block 25 -- RX MAC FIFO 2 registers and LINK_SYNC counter */
 #define SK_RXF2_END		0x0C80
 #define SK_RXF2_WPTR		0x0C84
 #define SK_RXF2_RPTR		0x0C8C
@@ -1154,7 +1174,7 @@
 #define SK_LINKLED_BLINK_OFF		0x0010
 #define SK_LINKLED_BLINK_ON		0x0020
 
-/* Block 26 -- TX MAC FIFO 1 regisrers  */
+/* Block 26 -- TX MAC FIFO 1 registers  */
 #define SK_TXF1_END		0x0D00
 #define SK_TXF1_WPTR		0x0D04
 #define SK_TXF1_RPTR		0x0D0C
@@ -1193,7 +1213,7 @@
 #define SK_TFCTL_RESET_CLEAR	0x00000002	/* MAC FIFO Reset Clear */
 #define SK_TFCTL_RESET_SET	0x00000001	/* MAC FIFO Reset Set */
 
-/* Block 27 -- TX MAC FIFO 2 regisrers  */
+/* Block 27 -- TX MAC FIFO 2 registers  */
 #define SK_TXF2_END		0x0D80
 #define SK_TXF2_WPTR		0x0D84
 #define SK_TXF2_RPTR		0x0D8C
@@ -1323,6 +1343,9 @@
 #define SK_PAT_CTR6		0x0f3e	/* Pattern Counter 6 */
 #define SK_PAT_CTR7		0x0f3f	/* Pattern Counter 7 */
 
+#define SK_GMAC_BYP_MACSECRX	0x00002000	/* Bypass macsec for Rx */
+#define SK_GMAC_BYP_MACSECTX	0x00000800	/* Bypass macsec for Tx */
+#define SK_GMAC_BYP_RETR_FIFO	0x00000200	/* Bypass retransmit FIFO */
 #define SK_GMAC_LOOP_ON		0x00000020	/* Loopback mode for testing */
 #define SK_GMAC_LOOP_OFF	0x00000010	/* purposes */
 #define SK_GMAC_PAUSE_ON	0x00000008	/* enable forward of pause */
@@ -2322,4 +2345,6 @@ struct msk_status_desc {
 #define XM_RESAB_FDMODESEL	0x0020
 #define XM_RESAB_HDMODESEL	0x0040
 #define XM_RESAB_PAUSEBITS	0x0180
+
+#define SK_HASH_BITS		6
 #endif /* _DEV_PCI_IF_SKREG_H_ */

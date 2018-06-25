@@ -1,4 +1,4 @@
-/* $NetBSD: gpiopps.c,v 1.1.2.2 2018/05/21 04:36:05 pgoyette Exp $ */
+/* $NetBSD: gpiopps.c,v 1.1.2.3 2018/06/25 07:25:50 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2016 Brad Spencer <brad@anduin.eldar.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpiopps.c,v 1.1.2.2 2018/05/21 04:36:05 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpiopps.c,v 1.1.2.3 2018/06/25 07:25:50 pgoyette Exp $");
 
 /*
  * GPIO interface to the pps subsystem for ntp support.
@@ -213,9 +213,9 @@ gpiopps_attach(device_t parent, device_t self, void *aux)
 			return;
 		}
 		sc->sc_intrs[1].sc_irqmode = clear_edge;
-		if (!gpio_intr_str(sc->sc_gpio, &sc->sc_map, 0,
-				   sc->sc_intrs[0].sc_irqmode,
-				   sc->sc_intrs[0].sc_intrstr,
+		if (!gpio_intr_str(sc->sc_gpio, &sc->sc_map, 1,
+				   sc->sc_intrs[1].sc_irqmode,
+				   sc->sc_intrs[1].sc_intrstr,
 				   sizeof(sc->sc_intrs[1].sc_intrstr))) {
 			aprint_error_dev(self,
 			    "failed to decode CLEAR interrupt\n");

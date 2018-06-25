@@ -1,4 +1,4 @@
-/*	$NetBSD: pfilter.c,v 1.4.10.1 2018/04/07 04:11:48 pgoyette Exp $	*/
+/*	$NetBSD: pfilter.c,v 1.4.10.2 2018/06/25 07:25:05 pgoyette Exp $	*/
 #include "namespace.h"
 #include "includes.h"
 #include "ssh.h"
@@ -12,7 +12,7 @@ static struct blacklist *blstate;
 #endif
 
 #include "includes.h"
-__RCSID("$NetBSD: pfilter.c,v 1.4.10.1 2018/04/07 04:11:48 pgoyette Exp $");
+__RCSID("$NetBSD: pfilter.c,v 1.4.10.2 2018/06/25 07:25:05 pgoyette Exp $");
 
 void
 pfilter_init()
@@ -27,6 +27,8 @@ pfilter_notify(int a)
 {
 #ifndef SMALL
 	int fd;
+	if (active_state == NULL)
+		return;
 	if (blstate == NULL)
 		pfilter_init();
 	if (blstate == NULL)

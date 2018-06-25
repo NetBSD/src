@@ -1,4 +1,4 @@
-/*	$NetBSD: virtiovar.h,v 1.10 2017/08/02 08:39:14 cherry Exp $	*/
+/*	$NetBSD: virtiovar.h,v 1.10.2.1 2018/06/25 07:26:01 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -125,24 +125,33 @@ struct virtio_attach_args {
 typedef int (*virtio_callback)(struct virtio_softc*);
 
 #ifdef VIRTIO_PRIVATE
+struct virtio_ops {
+	void		(*kick)(struct virtio_softc *, uint16_t);
+	uint8_t		(*read_dev_cfg_1)(struct virtio_softc *, int);
+	uint16_t	(*read_dev_cfg_2)(struct virtio_softc *, int);
+	uint32_t	(*read_dev_cfg_4)(struct virtio_softc *, int);
+	uint64_t	(*read_dev_cfg_8)(struct virtio_softc *, int);
+	void		(*write_dev_cfg_1)(struct virtio_softc *, int, uint8_t);
+	void		(*write_dev_cfg_2)(struct virtio_softc *, int, uint16_t);
+	void		(*write_dev_cfg_4)(struct virtio_softc *, int, uint32_t);
+	void		(*write_dev_cfg_8)(struct virtio_softc *, int, uint64_t);
+	uint16_t	(*read_queue_size)(struct virtio_softc *, uint16_t);
+	void		(*setup_queue)(struct virtio_softc *, uint16_t, uint32_t);
+	void		(*set_status)(struct virtio_softc *, int);
+	uint32_t	(*neg_features)(struct virtio_softc *, uint32_t);
+	int		(*setup_interrupts)(struct virtio_softc *);
+	void		(*free_interrupts)(struct virtio_softc *);
+};
+
 struct virtio_softc {
 	device_t		sc_dev;
-	pci_chipset_tag_t	sc_pc;
-	pcitag_t		sc_tag;
+	const struct virtio_ops *sc_ops;
 	bus_dma_tag_t		sc_dmat;
 
 	int			sc_ipl; /* set by child */
-	pci_intr_handle_t	*sc_ihp;
-	void			**sc_ihs;
-	int			sc_ihs_num;
 	void			*sc_soft_ih;
 
 	int			sc_flags; /* set by child */
-
-	bus_space_tag_t		sc_iot;
-	bus_space_handle_t	sc_ioh;
-	bus_size_t		sc_iosize;
-	int			sc_config_offset;
 
 	uint32_t		sc_features;
 	bool			sc_indirect;
@@ -154,7 +163,6 @@ struct virtio_softc {
 	device_t		sc_child; 		/* set by child */
 	virtio_callback		sc_config_change; 	/* set by child */
 	virtio_callback		sc_intrhand;		/* set by child */
-	struct pci_attach_args	sc_pa;	/* need for rescan to set interrupts */
 };
 #else
 struct virtio_softc;
@@ -216,6 +224,7 @@ uint32_t	virtio_features(struct virtio_softc *);
 
 /* autoconf(9) common */
 void virtio_set_status(struct virtio_softc *, int);
+int virtiobusprint(void *aux, const char *);
 
 #define virtio_device_reset(sc)	virtio_set_status((sc), 0)
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwnreg.h,v 1.10 2016/10/12 03:23:29 nat Exp $	*/
+/*	$NetBSD: if_urtwnreg.h,v 1.10.14.1 2018/06/25 07:26:02 pgoyette Exp $	*/
 /*	$OpenBSD: if_urtwnreg.h,v 1.3 2010/11/16 18:02:59 damien Exp $	*/
 
 /*-
@@ -83,6 +83,7 @@
 #define R92C_FSISR			0x054
 #define R92C_HSIMR			0x058
 #define R92C_HSISR			0x05c
+#define R92C_PAD_CTRL			0x064
 #define R92C_AFE_CTRL4			0x078
 #define R92C_MCUFWDL			0x080
 #define R92C_HMEBOX_EXT(idx)		(0x088 + (idx) * 2)

@@ -1,4 +1,4 @@
-/* $NetBSD: ac100.c,v 1.1 2014/12/07 14:24:11 jmcneill Exp $ */
+/* $NetBSD: ac100.c,v 1.1.20.1 2018/06/25 07:25:50 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ac100.c,v 1.1 2014/12/07 14:24:11 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ac100.c,v 1.1.20.1 2018/06/25 07:25:50 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,7 +109,7 @@ CFATTACH_DECL_NEW(ac100ic, sizeof(struct ac100_softc),
 static int
 ac100_match(device_t parent, cfdata_t match, void *aux)
 {
-	return 1;
+	return I2C_MATCH_ADDRESS_ONLY;	/* XXX */
 }
 
 static void

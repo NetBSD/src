@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.117 2018/01/13 14:48:13 bouyer Exp $	*/
+/*	$NetBSD: cpu.c,v 1.117.2.1 2018/06/25 07:25:47 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.117 2018/01/13 14:48:13 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.117.2.1 2018/06/25 07:25:47 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -527,22 +527,50 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 void
 cpu_init(struct cpu_info *ci)
 {
+	uint32_t cr4 = 0;
 
 	/*
 	 * If we have FXSAVE/FXRESTOR, use them.
 	 */
 	if (cpu_feature[0] & CPUID_FXSR) {
-		lcr4(rcr4() | CR4_OSFXSR);
+		cr4 |= CR4_OSFXSR;
 
 		/*
 		 * If we have SSE/SSE2, enable XMM exceptions.
 		 */
 		if (cpu_feature[0] & (CPUID_SSE|CPUID_SSE2))
-			lcr4(rcr4() | CR4_OSXMMEXCPT);
+			cr4 |= CR4_OSXMMEXCPT;
+	}
+
+	/* If xsave is supported, enable it */
+	if (cpu_feature[1] & CPUID2_XSAVE && x86_fpu_save >= FPU_SAVE_XSAVE)
+		cr4 |= CR4_OSXSAVE;
+
+	if (cr4) {
+		cr4 |= rcr4();
+		lcr4(cr4);
 	}
 
 	if (x86_fpu_save >= FPU_SAVE_FXSAVE) {
 		fpuinit_mxcsr_mask();
+	}
+
+	/*
+	 * Changing CR4 register may change cpuid values. For example, setting
+	 * CR4_OSXSAVE sets CPUID2_OSXSAVE. The CPUID2_OSXSAVE is in
+	 * ci_feat_val[1], so update it.
+	 * XXX Other than ci_feat_val[1] might be changed.
+	 */
+	if (cpuid_level >= 1) {
+		u_int descs[4];
+
+		x86_cpuid(1, descs);
+		ci->ci_feat_val[1] = descs[2];
+	}
+
+	/* If xsave is enabled, enable all fpu features */
+	if (cr4 & CR4_OSXSAVE) {
+		wrxcr(0, x86_xsave_features & XCR0_FPU);
 	}
 
 	atomic_or_32(&ci->ci_flags, CPUF_RUNNING);

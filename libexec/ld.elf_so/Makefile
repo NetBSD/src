@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.137 2017/06/19 11:57:01 joerg Exp $
+#	$NetBSD: Makefile,v 1.137.4.1 2018/06/25 07:25:35 pgoyette Exp $
 #
 # NOTE: when changing ld.so, ensure that ldd still compiles.
 #
-
+NOSANITIZER=	# defined
 WARNS?=4
 
 LDELFSO_MACHINE_ARCH?= ${MACHINE_ARCH}

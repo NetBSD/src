@@ -19,14 +19,12 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
- * Use is subject to license terms.
+ * Copyright (c) 2005, 2010, Oracle and/or its affiliates. All rights reserved.
  */
 
 #ifndef	_ZFS_CTLDIR_H
 #define	_ZFS_CTLDIR_H
 
-#include <sys/pathname.h>
 #include <sys/vnode.h>
 #include <sys/zfs_vfsops.h>
 #include <sys/zfs_znode.h>
@@ -46,25 +44,19 @@ extern "C" {
 
 void zfsctl_create(zfsvfs_t *);
 void zfsctl_destroy(zfsvfs_t *);
-vnode_t *zfsctl_root(znode_t *);
+int zfsctl_root(zfsvfs_t *, int, vnode_t **);
 void zfsctl_init(void);
 void zfsctl_fini(void);
+boolean_t zfsctl_is_node(vnode_t *);
 
 int zfsctl_rename_snapshot(const char *from, const char *to);
 int zfsctl_destroy_snapshot(const char *snapname, int force);
 int zfsctl_umount_snapshots(vfs_t *, int, cred_t *);
 
-int zfsctl_root_lookup(vnode_t *dvp, char *nm, vnode_t **vpp, pathname_t *pnp,
-    int flags, vnode_t *rdir, cred_t *cr, caller_context_t *ct,
-    int *direntflags, pathname_t *realpnp);
-
-int zfsctl_make_fid(zfsvfs_t *zfsvfsp, uint64_t object, uint32_t gen,
-    fid_t *fidp);
 int zfsctl_lookup_objset(vfs_t *vfsp, uint64_t objsetid, zfsvfs_t **zfsvfsp);
 
 #define	ZFSCTL_INO_ROOT		0x1
 #define	ZFSCTL_INO_SNAPDIR	0x2
-#define	ZFSCTL_INO_SHARES	0x3
 
 #ifdef	__cplusplus
 }

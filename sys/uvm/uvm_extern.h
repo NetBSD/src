@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.208.2.2 2018/05/21 04:36:17 pgoyette Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.208.2.3 2018/06/25 07:26:08 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -603,9 +603,10 @@ extern struct vm_map *phys_map;
 /* vm_machdep.c */
 int		vmapbuf(struct buf *, vsize_t);
 void		vunmapbuf(struct buf *, vsize_t);
+void		ktext_write(void *, const void *, size_t);
 
 /* uvm_aobj.c */
-struct uvm_object	*uao_create(vsize_t, int);
+struct uvm_object	*uao_create(voff_t, int);
 void			uao_set_pgfl(struct uvm_object *, int);
 void			uao_detach(struct uvm_object *);
 void			uao_reference(struct uvm_object *);

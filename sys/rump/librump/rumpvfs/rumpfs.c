@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.152 2017/11/20 17:00:35 martin Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.152.2.1 2018/06/25 07:26:07 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.152 2017/11/20 17:00:35 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.152.2.1 2018/06/25 07:26:07 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -164,6 +164,7 @@ struct rumpfs_dent {
 struct genfs_ops rumpfs_genfsops = {
 	.gop_size = genfs_size,
 	.gop_write = genfs_gop_write,
+	.gop_putrange = genfs_gop_putrange,
 
 	/* optional */
 	.gop_alloc = NULL,

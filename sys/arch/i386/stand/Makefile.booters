@@ -1,5 +1,6 @@
-#	$NetBSD: Makefile.booters,v 1.91 2017/04/08 19:53:21 christos Exp $
+#	$NetBSD: Makefile.booters,v 1.91.12.1 2018/06/25 07:25:42 pgoyette Exp $
 
+NOSANITIZER=
 .include <bsd.own.mk>
 
 STRIPFLAG=

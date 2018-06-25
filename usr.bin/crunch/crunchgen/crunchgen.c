@@ -1,4 +1,4 @@
-/*	$NetBSD: crunchgen.c,v 1.85.2.1 2018/05/21 04:36:18 pgoyette Exp $	*/
+/*	$NetBSD: crunchgen.c,v 1.85.2.2 2018/06/25 07:26:09 pgoyette Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: crunchgen.c,v 1.85.2.1 2018/05/21 04:36:18 pgoyette Exp $");
+__RCSID("$NetBSD: crunchgen.c,v 1.85.2.2 2018/06/25 07:26:09 pgoyette Exp $");
 #endif
 
 #include <stdlib.h>
@@ -102,7 +102,7 @@ static int goterror = 0;
 
 static const char *pname = "crunchgen";
 
-static int verbose, readcache, useobjs, oneobj, pie;	/* options */
+static int verbose, readcache, useobjs, oneobj, pie, sanitizer;	/* options */
 static int reading_cache;
 static char *machine;
 static char *makeobjdirprefix;
@@ -157,13 +157,14 @@ main(int argc, char **argv)
     if (argc > 0)
 	pname = argv[0];
 
-    while ((optc = getopt(argc, argv, "m:c:d:e:fopqD:L:Ov:")) != -1) {
+    while ((optc = getopt(argc, argv, "m:c:d:e:fopqsD:L:Ov:")) != -1) {
 	switch(optc) {
 	case 'f':	readcache = 0; break;
 	case 'p':	pie = 1; break;
 	case 'q':	verbose = 0; break;
 	case 'O':	oneobj = 0; break;
 	case 'o':       useobjs = 1, oneobj = 0; break;
+	case 's':       sanitizer = 1; break;
 
 	case 'm':	(void)estrlcpy(outmkname, optarg, sizeof(outmkname)); break;
 	case 'c':	(void)estrlcpy(outcfname, optarg, sizeof(outcfname)); break;
@@ -922,6 +923,8 @@ top_makefile_rules(FILE *outmk)
 
     if (!pie)
 	    fprintf(outmk, "NOPIE=\n");
+    if (!sanitizer)
+	    fprintf(outmk, "NOSANITIZER=\n");
     fprintf(outmk, "NOMAN=\n\n");
 
     fprintf(outmk, "DBG=%s\n", dbg);
@@ -1017,7 +1020,7 @@ prog_makefile_rules(FILE *outmk, prog_t *p)
 	for (lst = vars; lst != NULL; lst = lst->next)
 	    fprintf(outmk, "%s\\n", lst->str);
 	fprintf(outmk, "'\\\n");
-	fprintf(outmk, MAKECMD);
+	fprintf(outmk, MAKECMD "%s ", sanitizer ? "" : "NOSANITIZER=");
 	if (p->objs)
 	    fprintf(outmk, "${%s_OBJS} ) \n\n", p->ident);
 	else

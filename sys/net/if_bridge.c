@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.148.2.3 2018/05/21 04:36:15 pgoyette Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.148.2.4 2018/06/25 07:26:06 pgoyette Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.148.2.3 2018/05/21 04:36:15 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.148.2.4 2018/06/25 07:26:06 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bridge_ipf.h"
@@ -470,9 +470,8 @@ bridge_clone_create(struct if_clone *ifc, int unit)
 
 		return error;
 	}
-	if_register(ifp);
-
 	if_alloc_sadl(ifp);
+	if_register(ifp);
 
 	return 0;
 }

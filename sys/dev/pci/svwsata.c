@@ -1,4 +1,4 @@
-/*	$NetBSD: svwsata.c,v 1.20 2017/10/07 16:05:33 jdolecek Exp $	*/
+/*	$NetBSD: svwsata.c,v 1.20.2.1 2018/06/25 07:26:01 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svwsata.c,v 1.20 2017/10/07 16:05:33 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svwsata.c,v 1.20.2.1 2018/06/25 07:26:01 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,6 +39,7 @@ static void svwsata_chip_map(struct pciide_softc *,
 static void svwsata_mapreg_dma(struct pciide_softc *,
     const struct pci_attach_args *);
 static void svwsata_mapchan(struct pciide_channel *);
+int svwsata_intr(void *);
 
 CFATTACH_DECL_NEW(svwsata, sizeof(struct pciide_softc),
     svwsata_match, svwsata_attach, pciide_detach, NULL);
@@ -161,7 +162,7 @@ svwsata_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 	}
 	intrstr = pci_intr_string(pa->pa_pc, intrhandle, intrbuf, sizeof(intrbuf));
 	sc->sc_pci_ih = pci_intr_establish(pa->pa_pc, intrhandle, IPL_BIO,
-	    pciide_pci_intr, sc);
+	    svwsata_intr, sc);
 	if (sc->sc_pci_ih != NULL) {
 		aprint_normal_dev(sc->sc_wdcdev.sc_atac.atac_dev,
 		    "using %s for native-PCI interrupt\n",
@@ -177,7 +178,6 @@ svwsata_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 
 	interface = PCIIDE_INTERFACE_BUS_MASTER_DMA |
 	    PCIIDE_INTERFACE_PCI(0) | PCIIDE_INTERFACE_PCI(1);
-
 
 	for (channel = 0; channel < sc->sc_wdcdev.sc_atac.atac_nchannels;
 	     channel++) {
@@ -322,9 +322,61 @@ svwsata_mapchan(struct pciide_channel *cp)
 	bus_space_write_4(sc->sc_ba5_st, sc->sc_ba5_sh,
 	    (wdc_cp->ch_channel << 8) + SVWSATA_SIM, 0);
 
+	cp->ata_channel.ch_flags |= ATACH_DMA_BEFORE_CMD;
+
 	wdcattach(wdc_cp);
 	return;
 
  bad:
 	cp->ata_channel.ch_flags |= ATACH_DISABLED;
+}
+
+int
+svwsata_intr(void *arg)
+{
+	struct pciide_softc *sc = arg;
+	struct pciide_channel *cp;
+	struct ata_channel *wdc_cp;
+	struct wdc_regs *wdr;
+	int i, rv, crv;
+	uint8_t dmastat;
+
+	rv = 0;
+	for (i = 0; i < sc->sc_wdcdev.sc_atac.atac_nchannels; i++) {
+		volatile uint32_t status;
+		cp = &sc->pciide_channels[i];
+		wdc_cp = &cp->ata_channel;
+		wdr = CHAN_TO_WDC_REGS(wdc_cp);
+
+		/*
+		 * from FreeBSD's ata-serverworks.c:
+		 * We need to do a 4-byte read on the status reg before the
+		 * values will report correctly
+		 */
+		bus_space_read_4(wdr->cmd_iot,
+		    wdr->cmd_iohs[wd_status], 0);
+		__USE(status);
+
+		dmastat = bus_space_read_1(sc->sc_dma_iot,
+		   cp->dma_iohs[IDEDMA_CTL], 0);
+
+		/* If a compat channel skip. */
+		if (cp->compat)
+			continue;
+
+		/* if this channel not waiting for intr, skip */
+		if ((wdc_cp->ch_flags & ATACH_IRQ_WAIT) == 0) {
+			continue;
+		}
+		crv = wdcintr(wdc_cp);
+		if (crv == 0) {
+			bus_space_write_1(sc->sc_dma_iot, 
+			    cp->dma_iohs[IDEDMA_CTL], 0, dmastat);
+		}
+		else if (crv == 1)
+			rv = 1;		/* claim the intr */
+		else if (rv == 0)	/* crv should be -1 in this case */
+			rv = crv;	/* if we've done no better, take it */
+	}
+	return (rv);
 }

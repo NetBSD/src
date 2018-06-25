@@ -1,4 +1,4 @@
-/*	$NetBSD: libproc.h,v 1.3 2015/09/24 14:17:20 christos Exp $	*/
+/*	$NetBSD: libproc.h,v 1.3.14.1 2018/06/25 07:25:24 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 2008 John Birrell <jb@freebsd.org>
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/cddl/compat/opensolaris/include/libproc.h,v 1.1.4.1 2009/08/03 08:13:06 kensmith Exp $
+ * $FreeBSD: head/cddl/compat/opensolaris/include/libproc.h 309597 2016-12-06 04:22:38Z markj $
  *
  */
 
@@ -39,20 +39,6 @@
 
 #define PR_RLC		0x0001
 #define PR_KLC		0x0002
-
-#define	PGRAB_RDONLY	O_RDONLY
-#define	PGRAB_FORCE	0
-
-struct proc_handle;
-typedef void (*proc_child_func)(void *);
-
-/* Values returned by proc_state(). */
-#define PS_IDLE         1
-#define PS_STOP         2
-#define PS_RUN          3
-#define PS_UNDEAD       4
-#define PS_DEAD         5
-#define PS_LOST         6
 
 #include_next <libproc.h>
 

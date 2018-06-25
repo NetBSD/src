@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.2.2.2 2018/04/16 01:59:46 pgoyette Exp $	*/
+/*	$NetBSD: bpf.c,v 1.2.2.3 2018/06/25 07:25:32 pgoyette Exp $	*/
 
 /* bpf.c
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bpf.c,v 1.2.2.2 2018/04/16 01:59:46 pgoyette Exp $");
+__RCSID("$NetBSD: bpf.c,v 1.2.2.3 2018/06/25 07:25:32 pgoyette Exp $");
 
 #include "dhcpd.h"
 #if defined (USE_BPF_SEND) || defined (USE_BPF_RECEIVE)	\
@@ -674,6 +674,9 @@ get_hw_addr(const char *name, struct hardware *hw) {
 	 */
         switch (sa->sdl_type) {
                 case IFT_ETHER:
+#ifdef IFT_CARP
+		case IFT_CARP:
+#endif
 #if defined (IFT_L2VLAN)
 		case IFT_L2VLAN:
 #endif

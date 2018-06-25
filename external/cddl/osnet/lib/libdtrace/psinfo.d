@@ -1,4 +1,4 @@
-/*	$NetBSD: psinfo.d,v 1.5 2015/10/07 00:35:23 christos Exp $	*/
+/*	$NetBSD: psinfo.d,v 1.5.14.1 2018/06/25 07:25:24 pgoyette Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -23,7 +23,7 @@
  *
  * Portions Copyright 2006 John Birrell jb@freebsd.org
  *
- * $FreeBSD: src/cddl/lib/libdtrace/psinfo.d,v 1.1.4.1 2009/08/03 08:13:06 kensmith Exp $
+ * $FreeBSD: head/cddl/lib/libdtrace/psinfo.d 304825 2016-08-25 23:24:57Z gnn $
  */
 /*
  * Copyright 2004 Sun Microsystems, Inc.  All rights reserved.

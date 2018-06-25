@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.h,v 1.1.14.3 2018/05/21 04:36:17 pgoyette Exp $	*/
+/*	$NetBSD: t_ptrace_wait.h,v 1.1.14.4 2018/06/25 07:26:09 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -476,7 +476,7 @@ check_happy(unsigned n)
 }
 
 #if defined(HAVE_DBREGS)
-static bool
+static bool __used
 can_we_set_dbregs(void)
 {
 	static long euid = -1;
@@ -503,6 +503,89 @@ can_we_set_dbregs(void)
 		return false;
 }
 #endif
+
+static bool __used
+can_we_write_to_text(pid_t pid)
+{
+	int mib[3];
+	int paxflags;
+	size_t len = sizeof(int);
+
+	mib[0] = CTL_PROC;
+	mib[1] = pid;
+	mib[2] = PROC_PID_PAXFLAGS;
+
+	if (sysctl(mib, 3, &paxflags, &len, NULL, 0) == -1)
+		return false;
+
+	return !(paxflags & CTL_PROC_PAXFLAGS_MPROTECT);
+}
+
+static void __used
+trigger_trap(void)
+{
+
+	/* Software breakpoint causes CPU trap, translated to SIGTRAP */
+#ifdef PTRACE_BREAKPOINT_ASM
+	PTRACE_BREAKPOINT_ASM;
+#else
+	/* port me */
+#endif
+}
+
+static void __used
+trigger_segv(void)
+{
+	static volatile char *ptr = NULL;
+
+	/* Access to unmapped memory causes CPU trap, translated to SIGSEGV */
+	*ptr = 1;
+}
+
+static void __used
+trigger_ill(void)
+{
+
+	/* Illegal instruction causes CPU trap, translated to SIGILL */
+#ifdef PTRACE_ILLEGAL_ASM
+	PTRACE_ILLEGAL_ASM;
+#else
+	/* port me */
+#endif
+}
+
+static void __used
+trigger_fpe(void)
+{
+	volatile int a = getpid();
+	volatile int b = atoi("0");
+
+	/* Division by zero causes CPU trap, translated to SIGFPE */
+	usleep(a / b);
+}
+
+static void __used
+trigger_bus(void)
+{
+	FILE *fp;
+	char *p;
+
+	/* Open an empty file for writing. */
+	fp = tmpfile();
+	FORKEE_ASSERT_NEQ((uintptr_t)fp, (uintptr_t)NULL);
+
+	/*
+	 * Map an empty file with mmap(2) to a pointer.
+	 *
+	 * PROT_READ handles read-modify-write sequences emitted for
+	 * certain combinations of CPUs and compilers (e.g. Alpha AXP).
+	 */
+	p = mmap(0, 1, PROT_READ|PROT_WRITE, MAP_PRIVATE, fileno(fp), 0);
+	FORKEE_ASSERT_NEQ((uintptr_t)p, (uintptr_t)MAP_FAILED);
+
+	/* Invalid memory access causes CPU trap, translated to SIGBUS */
+	*p = 'a';
+}
 
 #if defined(TWAIT_HAVE_PID)
 #define ATF_TP_ADD_TC_HAVE_PID(a,b)	ATF_TP_ADD_TC(a,b)

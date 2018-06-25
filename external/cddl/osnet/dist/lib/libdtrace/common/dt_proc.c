@@ -98,10 +98,6 @@
 #define	IS_SYS_EXEC(w)	(w == SYS_execve)
 #define	IS_SYS_FORK(w)	(w == SYS_vfork || w == SYS_forksys)
 
-#if !defined(__DECONST) && defined(__UNCONST)
-#define __DECONST(a, b) __UNCONST(b)
-#endif
-
 static dt_bkpt_t *
 dt_proc_bpcreate(dt_proc_t *dpr, uintptr_t addr, dt_bkpt_f *func, void *data)
 {
@@ -115,7 +111,11 @@ dt_proc_bpcreate(dt_proc_t *dpr, uintptr_t addr, dt_bkpt_f *func, void *data)
 		dbp->dbp_data = data;
 		dbp->dbp_addr = addr;
 
+#ifdef __NetBSD__
 		if (Psetbkpt(P, dbp->dbp_addr, &dbp->dbp_instr) == 0)
+#else
+		if (Psetbkpt(P, dbp->dbp_addr, dbp->dbp_instr) == 0)
+#endif
 			dbp->dbp_active = B_TRUE;
 
 		dt_list_append(&dpr->dpr_bps, dbp);
@@ -186,7 +186,11 @@ dt_proc_bpmatch(dtrace_hdl_t *dtp, dt_proc_t *dpr)
 	    (int)dpr->dpr_pid, (ulong_t)dbp->dbp_addr, ++dbp->dbp_hits);
 
 	dbp->dbp_func(dtp, dpr, dbp->dbp_data);
+#ifdef __NetBSD__
 	(void) Pxecbkpt(dpr->dpr_proc, &dbp->dbp_instr);
+#else
+	(void) Pxecbkpt(dpr->dpr_proc, dbp->dbp_instr);
+#endif
 }
 
 static void

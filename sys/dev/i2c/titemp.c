@@ -1,4 +1,4 @@
-/* $NetBSD: titemp.c,v 1.3.16.1 2018/05/02 07:20:06 pgoyette Exp $ */
+/* $NetBSD: titemp.c,v 1.3.16.2 2018/06/25 07:25:50 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: titemp.c,v 1.3.16.1 2018/05/02 07:20:06 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: titemp.c,v 1.3.16.2 2018/06/25 07:25:50 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,30 +89,34 @@ static const char * titemp_compats[] = {
 	NULL
 };
 
+static const struct device_compatible_entry titemp_compat_data[] = {
+	DEVICE_COMPAT_ENTRY(titemp_compats),
+	DEVICE_COMPAT_TERMINATOR
+};
+
 static int
 titemp_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct i2c_attach_args *ia = aux;
 	uint8_t mfid;
-	int error;
+	int error, match_result;
 
-	if (ia->ia_name == NULL) {
-		if (ia->ia_addr != 0x4c)
-			return 0;
+	if (iic_use_direct_match(ia, match, titemp_compat_data, &match_result))
+		return match_result;
+	
+	if (ia->ia_addr != 0x4c)
+		return 0;
 
-		if (iic_acquire_bus(ia->ia_tag, I2C_F_POLL) != 0)
-			return 0;
-		error = iic_smbus_read_byte(ia->ia_tag, ia->ia_addr,
-		    TITEMP_MFID_REG, &mfid, I2C_F_POLL);
-		iic_release_bus(ia->ia_tag, I2C_F_POLL);
+	if (iic_acquire_bus(ia->ia_tag, I2C_F_POLL) != 0)
+		return 0;
+	error = iic_smbus_read_byte(ia->ia_tag, ia->ia_addr,
+	    TITEMP_MFID_REG, &mfid, I2C_F_POLL);
+	iic_release_bus(ia->ia_tag, I2C_F_POLL);
 
-		if (error || mfid != TITEMP_MFID_TMP451)
-			return 0;
+	if (error || mfid != TITEMP_MFID_TMP451)
+		return 0;
 
-		return 1;
-	} else {
-		return iic_compat_match(ia, titemp_compats);
-	}
+	return I2C_MATCH_ADDRESS_AND_PROBE;
 }
 
 static void

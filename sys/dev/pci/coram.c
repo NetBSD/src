@@ -1,4 +1,4 @@
-/* $NetBSD: coram.c,v 1.14 2017/06/01 02:45:11 chs Exp $ */
+/* $NetBSD: coram.c,v 1.14.8.1 2018/06/25 07:25:51 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2008, 2011 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coram.c,v 1.14 2017/06/01 02:45:11 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coram.c,v 1.14.8.1 2018/06/25 07:25:51 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -714,7 +714,7 @@ coram_dtv_get_status(void *cookie)
 	if (sc->sc_demod == NULL)
 		return ENXIO;
 
-	return cx24227_get_dtv_status(sc->sc_demod);;
+	return cx24227_get_dtv_status(sc->sc_demod);
 }
 
 static uint16_t

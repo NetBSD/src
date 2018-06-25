@@ -1,4 +1,4 @@
-/*	$NetBSD: funcs.h,v 1.5 2017/08/17 08:53:00 christos Exp $	*/
+/*	$NetBSD: funcs.h,v 1.5.2.1 2018/06/25 07:25:12 pgoyette Exp $	*/
 
 /*
  * Id: funcs.h,v 1.9 2004/01/23 18:56:42 vixie Exp
@@ -55,6 +55,7 @@ int		job_runqueue(void),
 		get_string(char *, int, FILE *, const char *),
 		load_env(char *, FILE *),
 		cron_pclose(FILE *),
+		cron_pabort(FILE *),
 		glue_strings(char *, size_t, const char *, const char *, char),
 		strcmp_until(const char *, const char *, char),
 		strdtb(char *);

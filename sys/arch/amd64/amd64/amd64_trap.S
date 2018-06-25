@@ -1,4 +1,4 @@
-/*	$NetBSD: amd64_trap.S,v 1.37.2.3 2018/05/21 04:35:57 pgoyette Exp $	*/
+/*	$NetBSD: amd64_trap.S,v 1.37.2.4 2018/06/25 07:25:38 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008, 2017 The NetBSD Foundation, Inc.
@@ -121,6 +121,7 @@
 		movq	PCB_RSP0(%rax),%rax
 	.else
 		movq	TF_RSP(%rsp),%rax
+		andq	$(~0xF),%rax
 	.endif
 
 	subq	$(5*8),%rax

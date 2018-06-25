@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.108.10.1 2018/04/22 07:20:27 pgoyette Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.108.10.2 2018/06/25 07:26:06 pgoyette Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.108.10.1 2018/04/22 07:20:27 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.108.10.2 2018/06/25 07:26:06 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1268,7 +1268,7 @@ int
 stripioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct ifaddr *ifa = (struct ifaddr *)data;
-	struct ifreq *ifr = (struct ifreq *)data;;
+	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
 	s = splnet();

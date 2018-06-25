@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.7 2014/03/04 09:24:42 ozaki-r Exp $	*/
+/*	$NetBSD: mount.h,v 1.7.24.1 2018/06/25 07:25:26 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007 Pawel Jakub Dawidek <pjd@FreeBSD.org>
@@ -25,15 +25,16 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/compat/opensolaris/sys/mount.h,v 1.1 2007/04/06 01:09:06 pjd Exp $
+ * $FreeBSD: head/sys/cddl/compat/opensolaris/sys/mount.h 219089 2011-02-27 19:41:40Z pjd $
  */
-
-#include_next <sys/mount.h>
 
 #ifndef _OPENSOLARIS_SYS_MOUNT_H_
 #define	_OPENSOLARIS_SYS_MOUNT_H_
 
+#include_next <sys/mount.h>
+
 #define	MS_OVERLAY	0
+#define MS_RDONLY	MNT_RDONLY
 #define	MS_FORCE	MNT_FORCE
 #define	MS_REMOUNT	MNT_UPDATE
 #define	MS_OPTIONSTR	__MNT_UNUSED1

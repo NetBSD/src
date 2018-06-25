@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.8 2018/01/20 13:56:08 skrll Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.8.2.1 2018/06/25 07:25:40 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2006 Izumi Tsutsui.  All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.8 2018/01/20 13:56:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.8.2.1 2018/06/25 07:25:40 pgoyette Exp $");
 
 #define __INTR_PRIVATE
 
@@ -174,7 +174,7 @@ intr_init(void)
 	/*
 	 * Initialize ICU interrupts.
 	 */
-	icu_bst = &cobalt_bs;;
+	icu_bst = &cobalt_bs;
 	bus_space_map(icu_bst, PCIB_BASE + IO_ICU1, IO_ICUSIZE, 0, &icu1_bsh);
 	bus_space_map(icu_bst, PCIB_BASE + IO_ICU2, IO_ICUSIZE, 0, &icu2_bsh);
 	bus_space_map(icu_bst, PCIB_BASE + IO_ELCR, IO_ELCRSIZE, 0, &elcr_bsh);

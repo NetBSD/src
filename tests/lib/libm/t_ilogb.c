@@ -1,4 +1,4 @@
-/* $NetBSD: t_ilogb.c,v 1.7 2017/01/13 19:23:40 christos Exp $ */
+/* $NetBSD: t_ilogb.c,v 1.7.12.1 2018/06/25 07:26:09 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ilogb.c,v 1.7 2017/01/13 19:23:40 christos Exp $");
+__RCSID("$NetBSD: t_ilogb.c,v 1.7.12.1 2018/06/25 07:26:09 pgoyette Exp $");
 
 #include <atf-c.h>
 #include <fenv.h>
@@ -44,7 +44,9 @@ __RCSID("$NetBSD: t_ilogb.c,v 1.7 2017/01/13 19:23:40 christos Exp $");
 #else
 # define ATF_CHECK_RAISED_INVALID do { \
 	int r = fetestexcept(FE_ALL_EXCEPT); \
-	ATF_CHECK_MSG(r == FE_INVALID, "r=%#x != %#x\n", r, FE_INVALID); \
+	ATF_CHECK_MSG((r & FE_INVALID) != 0, \
+	    "r & FE_INVALID == 0 (r=%#x, FE_INVALID=%#x)\n", \
+	     r, FE_INVALID); \
 	(void)feclearexcept(FE_ALL_EXCEPT); \
 } while (/*CONSTCOND*/0)
 

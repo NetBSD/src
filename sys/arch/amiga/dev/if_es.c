@@ -1,4 +1,4 @@
-/*	$NetBSD: if_es.c,v 1.57 2017/02/22 09:45:15 nonaka Exp $ */
+/*	$NetBSD: if_es.c,v 1.57.12.1 2018/06/25 07:25:38 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1995 Michael L. Hitch
@@ -33,7 +33,7 @@
 #include "opt_ns.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_es.c,v 1.57 2017/02/22 09:45:15 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_es.c,v 1.57.12.1 2018/06/25 07:25:38 pgoyette Exp $");
 
 
 #include <sys/param.h>
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_es.c,v 1.57 2017/02/22 09:45:15 nonaka Exp $");
 #include <net/if_dl.h>
 #include <net/if_ether.h>
 #include <net/if_media.h>
+#include <net/bpf.h>
 
 #ifdef INET
 #include <netinet/in.h>
@@ -91,9 +92,6 @@ struct	es_softc {
 	short	sc_smcbusy;		/* counter for other rentry checks */
 #endif
 };
-
-#include <net/bpf.h>
-#include <net/bpfdesc.h>
 
 #ifdef ESDEBUG
 /* console error messages */

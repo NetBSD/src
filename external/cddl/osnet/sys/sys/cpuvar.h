@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.7 2010/03/13 22:31:15 christos Exp $	*/
+/*	$NetBSD: cpuvar.h,v 1.7.44.1 2018/06/25 07:25:25 pgoyette Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -29,6 +29,7 @@
 #ifndef _COMPAT_OPENSOLARIS_SYS_CPUVAR_H
 #define	_COMPAT_OPENSOLARIS_SYS_CPUVAR_H
 
+#include <sys/processor.h>
 #include <sys/mutex.h>
 #include <sys/cpuvar_defs.h>
 

@@ -1,4 +1,4 @@
-/* $NetBSD: t_dir.c,v 1.10 2017/01/11 18:15:02 christos Exp $ */
+/* $NetBSD: t_dir.c,v 1.10.12.1 2018/06/25 07:26:08 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@ ATF_TC_BODY(seekdir_basic, tc)
 		    "creat(%s, %x) failed: %s", (x), (m),		\
 		    strerror(errno));					\
 		(void)close(_creat_fd);					\
-	} while(0);
+	} while (0)
 
 	ATF_REQUIRE_MSG(mkdir("t", 0755) == 0,
 	    "mkdir failed: %s", strerror(errno));

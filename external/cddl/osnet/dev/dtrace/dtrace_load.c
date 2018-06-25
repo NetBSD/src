@@ -1,4 +1,4 @@
-/*	$NetBSD: dtrace_load.c,v 1.3 2011/08/31 21:57:16 christos Exp $	*/
+/*	$NetBSD: dtrace_load.c,v 1.3.40.1 2018/06/25 07:25:14 pgoyette Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -20,7 +20,7 @@
  *
  * CDDL HEADER END
  *
- * $FreeBSD: src/sys/cddl/dev/dtrace/dtrace_load.c,v 1.2.2.1 2009/08/03 08:13:06 kensmith Exp $
+ * $FreeBSD: head/sys/cddl/dev/dtrace/dtrace_load.c 309069 2016-11-23 22:50:20Z gnn $
  *
  */
 
@@ -30,8 +30,32 @@ void dtrace_gethrtime_init(void *);
 
 int dtrace_helptrace_size=0;
 
-#ifndef mutex_init
-#define	mutex_init(a, b, c, d)	mutex_init(a, c, IPL_NONE)
+#ifdef __FreeBSD__
+#ifndef EARLY_AP_STARTUP
+static void
+dtrace_ap_start(void *dummy)
+{
+	int i;
+
+	mutex_enter(&cpu_lock);
+
+	/* Setup the rest of the CPUs. */
+	CPU_FOREACH(i) {
+		if (i == 0)
+			continue;
+
+		(void) dtrace_cpu_setup(CPU_CONFIG, i);
+	}
+
+	mutex_exit(&cpu_lock);
+}
+
+SYSINIT(dtrace_ap_start, SI_SUB_SMP, SI_ORDER_ANY, dtrace_ap_start, NULL);
+#endif
+#endif
+
+#ifdef __NetBSD__
+void *dtrace_modcb;
 #endif
 
 static void
@@ -44,6 +68,17 @@ dtrace_load(void *dummy)
 	dtrace_debug_init(NULL);
 	dtrace_gethrtime_init(NULL);
 
+#ifdef __FreeBSD__
+	/*
+	 * DTrace uses negative logic for the destructive mode switch, so it
+	 * is required to translate from the sysctl which uses positive logic.
+	 */ 
+	if (dtrace_allow_destructive)
+		dtrace_destructive_disallow = 0;
+	else
+		dtrace_destructive_disallow = 1;
+#endif
+
 	/* Hook into the trap handler. */
 	dtrace_trap_func = dtrace_trap;
 
@@ -53,11 +88,23 @@ dtrace_load(void *dummy)
 	/* Hang our hook for exceptions. */
 	dtrace_invop_init();
 
-	/*
-	 * XXX This is a short term hack to avoid having to comment
-	 * out lots and lots of lock/unlock calls.
-	 */
-	mutex_init(&mod_lock,"XXX mod_lock hack", MUTEX_DEFAULT, NULL);
+#ifdef __FreeBSD__
+	dtrace_taskq = taskq_create("dtrace_taskq", 1, maxclsyspri, 0, 0, 0);
+
+	dtrace_arena = new_unrhdr(1, INT_MAX, &dtrace_unr_mtx);
+
+	/* Register callbacks for linker file load and unload events. */
+	dtrace_kld_load_tag = EVENTHANDLER_REGISTER(kld_load,
+	    dtrace_kld_load, NULL, EVENTHANDLER_PRI_ANY);
+	dtrace_kld_unload_try_tag = EVENTHANDLER_REGISTER(kld_unload_try,
+	    dtrace_kld_unload_try, NULL, EVENTHANDLER_PRI_ANY);
+#endif
+
+#ifdef __NetBSD__
+	dtrace_arena = vmem_create("dtrace", 1, INT_MAX, 1,
+			NULL, NULL, NULL, 0, VM_SLEEP, IPL_NONE);
+
+#endif
 
 	/*
 	 * Initialise the mutexes without 'witness' because the dtrace
@@ -70,16 +117,15 @@ dtrace_load(void *dummy)
 	mutex_init(&dtrace_lock,"dtrace probe state", MUTEX_DEFAULT, NULL);
 	mutex_init(&dtrace_provider_lock,"dtrace provider state", MUTEX_DEFAULT, NULL);
 	mutex_init(&dtrace_meta_lock,"dtrace meta-provider state", MUTEX_DEFAULT, NULL);
+#ifdef DEBUG
 	mutex_init(&dtrace_errlock,"dtrace error lock", MUTEX_DEFAULT, NULL);
+#endif
 
 	mutex_enter(&dtrace_provider_lock);
 	mutex_enter(&dtrace_lock);
 	mutex_enter(&cpu_lock);
 
 	ASSERT(MUTEX_HELD(&cpu_lock));
-
-	dtrace_arena = vmem_create("dtrace", 1, INT_MAX, 1,
-			NULL, NULL, NULL, 0, VM_SLEEP, IPL_NONE);
 
 	dtrace_state_cache = kmem_cache_create(__UNCONST("dtrace_state_cache"),
 	    sizeof (dtrace_dstate_percpu_t) * NCPU, DTRACE_STATE_ALIGN,
@@ -130,19 +176,6 @@ dtrace_load(void *dummy)
 	    dtrace_provider, NULL, NULL, "ERROR", 1, NULL);
 
 	mutex_exit(&cpu_lock);
-
-	/*
-	 * If DTrace helper tracing is enabled, we need to allocate the
-	 * trace buffer and initialize the values.
-	 */
-	if (dtrace_helptrace_enabled) {
-		ASSERT(dtrace_helptrace_buffer == NULL);
-		dtrace_helptrace_buffer =
-		    kmem_zalloc(dtrace_helptrace_bufsize, KM_SLEEP);
-		dtrace_helptrace_next = 0;
-		dtrace_helptrace_size = dtrace_helptrace_bufsize;
-	}
-
 	mutex_exit(&dtrace_lock);
 	mutex_exit(&dtrace_provider_lock);
 
@@ -155,9 +188,17 @@ dtrace_load(void *dummy)
 
 	mutex_exit(&cpu_lock);
 
+#ifdef __NetBSD__
 	dtrace_anon_init(NULL);
-#if 0
-	dtrace_dev = make_dev(&dtrace_cdevsw, 0, UID_ROOT, GID_WHEEL, 0600, "dtrace/dtrace");
+
+	dtrace_modcb = module_register_callbacks(dtrace_module_loaded,
+						 dtrace_module_unloaded);
+#endif
+#ifdef __FreeBSD__
+	dtrace_dev = make_dev(&dtrace_cdevsw, 0, UID_ROOT, GID_WHEEL, 0600,
+	    "dtrace/dtrace");
+	helper_dev = make_dev(&helper_cdevsw, 0, UID_ROOT, GID_WHEEL, 0660,
+	    "dtrace/helper");
 #endif
 
 	return;

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.775.2.5 2018/05/21 04:35:50 pgoyette Exp $
+# $NetBSD: mi,v 1.775.2.6 2018/06/25 07:25:10 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -161,6 +161,7 @@
 ./usr/libdata/debug/usr/tests/net/icmp					tests-net-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/net/if					tests-net-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/net/if_loop				tests-net-debug		compattestfile,atf
+./usr/libdata/debug/usr/tests/net/if_vlan				tests-net-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/net/in_cksum				tests-net-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/net/ipsec					tests-net-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/net/mcast					tests-net-debug		compattestfile,atf
@@ -2813,6 +2814,7 @@
 ./usr/tests/lib/libc/sys/t_socketpair		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/sys/t_stat			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/sys/t_swapcontext		tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libc/sys/t_syscall		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/sys/t_timer_create		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/sys/t_truncate		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/sys/t_ucontext		tests-lib-tests		compattestfile,atf
@@ -2992,6 +2994,7 @@
 ./usr/tests/lib/libm/t_acos			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libm/t_asin			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libm/t_atan			tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libm/t_cabsl			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libm/t_casinh			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libm/t_cbrt			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libm/t_ceil			tests-lib-tests		compattestfile,atf
@@ -3331,6 +3334,7 @@
 ./usr/tests/net/if_vlan				tests-net-tests		compattestfile,atf
 ./usr/tests/net/if_vlan/Atffile			tests-net-tests		atf,rump
 ./usr/tests/net/if_vlan/Kyuafile		tests-net-tests		atf,rump,kyua
+./usr/tests/net/if_vlan/siocXmulti		tests-net-tests		atf,rump
 ./usr/tests/net/if_vlan/t_vlan			tests-net-tests		atf,rump
 ./usr/tests/net/in_cksum			tests-net-tests		compattestfile,atf
 ./usr/tests/net/in_cksum/Atffile		tests-net-tests		compattestfile,atf
@@ -3900,6 +3904,8 @@
 ./usr/tests/usr.bin/make/unit-tests/varcmd.mk	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/varmisc.exp	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/varmisc.mk	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/varquote.exp	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/varquote.mk	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/varshell.exp	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/varshell.mk	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/mixerctl			tests-usr.bin-tests	compattestfile,atf

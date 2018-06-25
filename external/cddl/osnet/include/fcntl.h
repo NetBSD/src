@@ -1,4 +1,4 @@
-/*	$NetBSD: fcntl.h,v 1.3 2010/02/21 01:46:34 darran Exp $	*/
+/*	$NetBSD: fcntl.h,v 1.3.44.1 2018/06/25 07:25:24 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 2007 John Birrell <jb@freebsd.org>
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/compat/opensolaris/include/fcntl.h,v 1.1 2007/11/28 21:40:07 jb Exp $
+ * $FreeBSD: head/cddl/compat/opensolaris/include/fcntl.h 219089 2011-02-27 19:41:40Z pjd $
  *
  */
 
@@ -34,6 +34,7 @@
 
 #include_next <fcntl.h>
 
-#define open64	open
+#define open64(...)	open(__VA_ARGS__)
+#define openat64(...)	openat(__VA_ARGS__)
 
 #endif

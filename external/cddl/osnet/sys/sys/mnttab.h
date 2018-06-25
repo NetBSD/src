@@ -1,4 +1,4 @@
-/*	$NetBSD: mnttab.h,v 1.4 2010/12/14 01:00:26 haad Exp $	*/
+/*	$NetBSD: mnttab.h,v 1.4.44.1 2018/06/25 07:25:26 pgoyette Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -32,6 +32,12 @@
 
 #ifndef _SYS_MNTTAB_H
 #define	_SYS_MNTTAB_H
+
+#ifndef	_KERNEL
+#include <mnttab.h>
+#endif
+
+#if 0
 
 #pragma ident	"%Z%%M%	%I%	%E% SMI"
 
@@ -100,6 +106,8 @@ extern char	*mntopt();
 
 #ifdef	__cplusplus
 }
+#endif
+
 #endif
 
 #endif	/* _SYS_MNTTAB_H */

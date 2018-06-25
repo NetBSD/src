@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.394.2.1 2018/05/21 04:36:05 pgoyette Exp $
+#	$NetBSD: files.pci,v 1.394.2.2 2018/06/25 07:25:51 pgoyette Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -1148,9 +1148,6 @@ file	dev/pci/ibmcd.c		ibmcd
 device  sisfb: wsemuldisplaydev, rasops8, rasops15, rasops16, rasops32, vcons
 attach  sisfb at pci
 file    dev/pci/sisfb.c		sisfb	needs-flag
-
-# VirtIO: XXX: move to dev/vmm/virtio
-include "dev/pci/files.virtio"
 
 attach	virtio at pci with virtio_pci
 file	dev/pci/virtio_pci.c	virtio_pci

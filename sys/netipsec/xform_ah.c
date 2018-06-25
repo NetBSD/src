@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ah.c,v 1.87.2.4 2018/05/21 04:36:16 pgoyette Exp $	*/
+/*	$NetBSD: xform_ah.c,v 1.87.2.5 2018/06/25 07:26:07 pgoyette Exp $	*/
 /*	$FreeBSD: xform_ah.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ah.c,v 1.63 2001/06/26 06:18:58 angelos Exp $ */
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.87.2.4 2018/05/21 04:36:16 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.87.2.5 2018/06/25 07:26:07 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -104,7 +104,7 @@ percpu_t *ahstat_percpu;
 int ah_enable = 1;			/* control flow of packets with AH */
 int ip4_ah_cleartos = 1;		/* clear ip_tos when doing AH calc */
 
-static unsigned char ipseczeroes[256];	/* larger than an ip6 extension hdr */
+static const char ipseczeroes[256];
 
 int ah_max_authsize;			/* max authsize over all algorithms */
 
@@ -149,16 +149,39 @@ ah_algorithm_lookup(int alg)
 }
 
 size_t
+ah_authsiz(const struct secasvar *sav)
+{
+	size_t size;
+
+	if (sav == NULL) {
+		return ah_max_authsize;
+	}
+
+	size = AUTHSIZE(sav);
+	return roundup(size, sizeof(uint32_t));
+}
+
+size_t
 ah_hdrsiz(const struct secasvar *sav)
 {
 	size_t size;
 
 	if (sav != NULL) {
-		int authsize;
+		int authsize, rplen, align;
+
 		KASSERT(sav->tdb_authalgxform != NULL);
 		/*XXX not right for null algorithm--does it matter??*/
+
+		/* RFC4302: use the correct alignment. */
+		align = sizeof(uint32_t);
+#ifdef INET6
+		if (sav->sah->saidx.dst.sa.sa_family == AF_INET6) {
+			align = sizeof(uint64_t);
+		}
+#endif
+		rplen = HDRSIZE(sav);
 		authsize = AUTHSIZE(sav);
-		size = roundup(authsize, sizeof(uint32_t)) + HDRSIZE(sav);
+		size = roundup(rplen + authsize, align);
 	} else {
 		/* default guess */
 		size = sizeof(struct ah) + sizeof(uint32_t) + ah_max_authsize;
@@ -266,11 +289,12 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 {
 	struct mbuf *m = *m0;
 	unsigned char *ptr;
-	int off, count, optlen;
+	int off, optlen;
 #ifdef INET
 	struct ip *ip;
 #endif
 #ifdef INET6
+	int count, ip6optlen;
 	struct ip6_ext *ip6e;
 	struct ip6_hdr ip6;
 	int alloc, nxt;
@@ -351,7 +375,7 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 
 			default:
 				/* Zeroize all other options. */
-				memcpy(ptr + off, ipseczeroes, optlen);
+				memset(ptr + off, 0, optlen);
 				break;
 			}
 
@@ -393,11 +417,12 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 		/* Done with IPv6 header. */
 		m_copyback(m, 0, sizeof(struct ip6_hdr), &ip6);
 
+		ip6optlen = skip - sizeof(struct ip6_hdr);
+
 		/* Let's deal with the remaining headers (if any). */
-		if (skip - sizeof(struct ip6_hdr) > 0) {
+		if (ip6optlen > 0) {
 			if (m->m_len <= skip) {
-				ptr = malloc(skip - sizeof(struct ip6_hdr),
-				    M_XDATA, M_NOWAIT);
+				ptr = malloc(ip6optlen, M_XDATA, M_NOWAIT);
 				if (ptr == NULL) {
 					DPRINTF(("%s: failed to allocate "
 					    "memory for IPv6 headers\n",
@@ -411,7 +436,7 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 				 * the IPv6 header.
 				 */
 				m_copydata(m, sizeof(struct ip6_hdr),
-				    skip - sizeof(struct ip6_hdr), ptr);
+				    ip6optlen, ptr);
 				alloc = 1;
 			} else {
 				/* No need to allocate memory. */
@@ -424,23 +449,22 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 
 		nxt = ip6.ip6_nxt & 0xff; /* Next header type. */
 
-		for (off = 0; off < skip - sizeof(struct ip6_hdr);) {
+		for (off = 0; off < ip6optlen;) {
 			int noff;
+
+			if (off + sizeof(*ip6e) > ip6optlen) {
+				goto error6;
+			}
+			ip6e = (struct ip6_ext *)(ptr + off);
+			noff = off + ((ip6e->ip6e_len + 1) << 3);
+			if (noff > ip6optlen) {
+				goto error6;
+			}
 
 			switch (nxt) {
 			case IPPROTO_HOPOPTS:
 			case IPPROTO_DSTOPTS:
-				ip6e = (struct ip6_ext *)(ptr + off);
-				noff = off + ((ip6e->ip6e_len + 1) << 3);
-
-				/* Sanity check. */
-				if (noff > skip - sizeof(struct ip6_hdr)) {
-					goto error6;
-				}
-
-				/*
-				 * Zero out mutable options.
-				 */
+				/* Zero out mutable options. */
 				for (count = off + sizeof(struct ip6_ext);
 				     count < noff;) {
 					if (ptr[count] == IP6OPT_PAD1) {
@@ -463,27 +487,18 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 
 					count += optlen;
 				}
-
 				if (count != noff) {
 					goto error6;
 				}
-
-				/* Advance. */
-				off += ((ip6e->ip6e_len + 1) << 3);
-				nxt = ip6e->ip6e_nxt;
-				break;
+				/* FALLTHROUGH */
 
 			case IPPROTO_ROUTING:
-				ip6e = (struct ip6_ext *)(ptr + off);
-
-				/* advance */
-				off += ((ip6e->ip6e_len + 1) << 3);
+				/* Advance. */
+				off = noff;
 				nxt = ip6e->ip6e_nxt;
 				break;
 
 			default:
-				DPRINTF(("%s: unexpected IPv6 header type %d\n",
-				    __func__, off));
 error6:
 				if (alloc)
 					free(ptr, M_XDATA);
@@ -494,8 +509,7 @@ error6:
 
 		/* Copyback and free, if we allocated. */
 		if (alloc) {
-			m_copyback(m, sizeof(struct ip6_hdr),
-			    skip - sizeof(struct ip6_hdr), ptr);
+			m_copyback(m, sizeof(struct ip6_hdr), ip6optlen, ptr);
 			free(ptr, M_XDATA);
 		}
 
@@ -516,7 +530,7 @@ ah_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 	const struct auth_hash *ahx;
 	struct tdb_crypto *tc = NULL;
 	struct newah *ah;
-	int hl, rplen, authsize, error, stat = AH_STAT_HDROPS;
+	int hl, rplen, authsize, ahsize, error, stat = AH_STAT_HDROPS;
 	struct cryptodesc *crda;
 	struct cryptop *crp = NULL;
 	bool pool_used;
@@ -549,25 +563,26 @@ ah_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 	}
 
 	/* Verify AH header length. */
-	hl = ah->ah_len * sizeof(uint32_t);
+	hl = sizeof(struct ah) + (ah->ah_len * sizeof(uint32_t));
 	ahx = sav->tdb_authalgxform;
 	authsize = AUTHSIZE(sav);
-	if (hl != authsize + rplen - sizeof(struct ah)) {
+	ahsize = ah_hdrsiz(sav);
+	if (hl != ahsize) {
 		char buf[IPSEC_ADDRSTRLEN];
 		DPRINTF(("%s: bad authenticator length %u (expecting %lu)"
 			" for packet in SA %s/%08lx\n", __func__,
-			hl, (u_long) (authsize + rplen - sizeof(struct ah)),
+			hl, (u_long)ahsize,
 			ipsec_address(&sav->sah->saidx.dst, buf, sizeof(buf)),
 			(u_long) ntohl(sav->spi)));
 		stat = AH_STAT_BADAUTHL;
 		error = EACCES;
 		goto bad;
 	}
-	if (skip + authsize + rplen > m->m_pkthdr.len) {
+	if (skip + ahsize > m->m_pkthdr.len) {
 		char buf[IPSEC_ADDRSTRLEN];
 		DPRINTF(("%s: bad mbuf length %u (expecting >= %lu)"
 			" for packet in SA %s/%08lx\n", __func__,
-			m->m_pkthdr.len, (u_long)(skip + authsize + rplen),
+			m->m_pkthdr.len, (u_long)(skip + ahsize),
 			ipsec_address(&sav->sah->saidx.dst, buf, sizeof(buf)),
 			(u_long) ntohl(sav->spi)));
 		stat = AH_STAT_BADAUTHL;
@@ -716,7 +731,7 @@ static int
 ah_input_cb(struct cryptop *crp)
 {
 	char buf[IPSEC_ADDRSTRLEN];
-	int rplen, error, skip, protoff;
+	int rplen, ahsize, error, skip, protoff;
 	unsigned char calc[AH_ALEN_MAX];
 	struct mbuf *m;
 	struct tdb_crypto *tc;
@@ -747,6 +762,7 @@ ah_input_cb(struct cryptop *crp)
 	/* Figure out header size. */
 	rplen = HDRSIZE(sav);
 	authsize = AUTHSIZE(sav);
+	ahsize = ah_hdrsiz(sav);
 
 	size = sizeof(*tc) + skip + rplen + authsize;
 	if (__predict_true(size <= ah_pool_item_size))
@@ -840,7 +856,7 @@ ah_input_cb(struct cryptop *crp)
 	/*
 	 * Remove the AH header and authenticator from the mbuf.
 	 */
-	error = m_striphdr(m, skip, rplen + authsize);
+	error = m_striphdr(m, skip, ahsize);
 	if (error) {
 		DPRINTF(("%s: mangled mbuf chain for SA %s/%08lx\n", __func__,
 		    ipsec_address(&saidx->dst, buf, sizeof(buf)),
@@ -887,7 +903,7 @@ ah_output(struct mbuf *m, const struct ipsecrequest *isr, struct secasvar *sav,
 	struct mbuf *mi;
 	struct cryptop *crp;
 	uint16_t iplen;
-	int error, rplen, authsize, maxpacketsize, roff;
+	int error, rplen, authsize, ahsize, maxpacketsize, roff;
 	uint8_t prot;
 	struct newah *ah;
 	size_t ipoffs;
@@ -901,6 +917,8 @@ ah_output(struct mbuf *m, const struct ipsecrequest *isr, struct secasvar *sav,
 
 	/* Figure out header size. */
 	rplen = HDRSIZE(sav);
+	authsize = AUTHSIZE(sav);
+	ahsize = ah_hdrsiz(sav);
 
 	/* Check for maximum packet size violations. */
 	switch (sav->sah->saidx.dst.sa.sa_family) {
@@ -926,13 +944,12 @@ ah_output(struct mbuf *m, const struct ipsecrequest *isr, struct secasvar *sav,
 		error = EPFNOSUPPORT;
 		goto bad;
 	}
-	authsize = AUTHSIZE(sav);
-	if (rplen + authsize + m->m_pkthdr.len > maxpacketsize) {
+	if (ahsize + m->m_pkthdr.len > maxpacketsize) {
 		DPRINTF(("%s: packet in SA %s/%08lx got too big "
 		    "(len %u, max len %u)\n", __func__,
 		    ipsec_address(&sav->sah->saidx.dst, buf, sizeof(buf)),
 		    (u_long) ntohl(sav->spi),
-		    rplen + authsize + m->m_pkthdr.len, maxpacketsize));
+		    ahsize + m->m_pkthdr.len, maxpacketsize));
 		AH_STATINC(AH_STAT_TOOBIG);
 		error = EMSGSIZE;
 		goto bad;
@@ -952,11 +969,10 @@ ah_output(struct mbuf *m, const struct ipsecrequest *isr, struct secasvar *sav,
 	}
 
 	/* Inject AH header. */
-	mi = m_makespace(m, skip, rplen + authsize, &roff);
+	mi = m_makespace(m, skip, ahsize, &roff);
 	if (mi == NULL) {
 		DPRINTF(("%s: failed to inject %u byte AH header for SA "
-		    "%s/%08lx\n", __func__,
-		    rplen + authsize,
+		    "%s/%08lx\n", __func__, ahsize,
 		    ipsec_address(&sav->sah->saidx.dst, buf, sizeof(buf)),
 		    (u_long) ntohl(sav->spi)));
 		AH_STATINC(AH_STAT_HDROPS);
@@ -972,12 +988,16 @@ ah_output(struct mbuf *m, const struct ipsecrequest *isr, struct secasvar *sav,
 
 	/* Initialize the AH header. */
 	m_copydata(m, protoff, sizeof(uint8_t), &ah->ah_nxt);
-	ah->ah_len = (rplen + authsize - sizeof(struct ah)) / sizeof(uint32_t);
+	ah->ah_len = (ahsize - sizeof(struct ah)) / sizeof(uint32_t);
 	ah->ah_reserve = 0;
 	ah->ah_spi = sav->spi;
 
 	/* Zeroize authenticator. */
 	m_copyback(m, skip + rplen, authsize, ipseczeroes);
+
+	/* Zeroize padding. */
+	m_copyback(m, skip + rplen + authsize, ahsize - (rplen + authsize),
+	    ipseczeroes);
 
 	/* Insert packet replay counter, as requested.  */
 	if (sav->replay) {
@@ -1047,7 +1067,7 @@ ah_output(struct mbuf *m, const struct ipsecrequest *isr, struct secasvar *sav,
 	 * header length as it will be fixed by our caller.
 	 */
 	memcpy(&iplen, pext + ipoffs, sizeof(iplen));
-	iplen = htons(ntohs(iplen) + rplen + authsize);
+	iplen = htons(ntohs(iplen) + ahsize);
 	m_copyback(m, ipoffs, sizeof(iplen), &iplen);
 
 	/* Fix the Next Header field in saved header. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.122.2.3 2018/05/21 04:36:16 pgoyette Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.122.2.4 2018/06/25 07:26:07 pgoyette Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.49 2001/07/25 09:21:18 jinmei Exp $	*/
 
 /*
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.122.2.3 2018/05/21 04:36:16 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.122.2.4 2018/06/25 07:26:07 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1931,6 +1931,11 @@ pim6_input(struct mbuf **mp, int *offp, int proto)
 	 * encapsulated ip6 header.
 	 */
 pim6_input_to_daemon:
+	/*
+	 * Currently, rip6_input() is always called holding softnet_lock
+	 * by ipintr()(!NET_MPSAFE) or PR_INPUT_WRAP()(NET_MPSAFE).
+	 */
+	KASSERT(mutex_owned(softnet_lock));
 	rip6_input(&m, offp, proto);
 	return IPPROTO_DONE;
 }

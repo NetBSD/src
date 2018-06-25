@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kobj.c,v 1.65 2017/11/04 22:17:55 christos Exp $	*/
+/*	$NetBSD: subr_kobj.c,v 1.65.2.1 2018/06/25 07:26:04 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.65 2017/11/04 22:17:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.65.2.1 2018/06/25 07:26:04 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_modular.h"
@@ -889,6 +889,7 @@ kobj_sym_lookup(kobj_t ko, uintptr_t symidx, Elf_Addr *val)
 		 * Don't even try to lookup the symbol if the index is
 		 * bogus.
 		 */
+		kobj_error(ko, "symbol index out of range");
 		return EINVAL;
 	}
 

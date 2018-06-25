@@ -1,4 +1,4 @@
-/*	$NetBSD: zynq7000_board.c,v 1.2 2016/10/20 09:53:07 skrll Exp $	*/
+/*	$NetBSD: zynq7000_board.c,v 1.2.16.1 2018/06/25 07:25:40 pgoyette Exp $	*/
 /*-
  * Copyright (c) 2015  Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: zynq7000_board.c,v 1.2 2016/10/20 09:53:07 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: zynq7000_board.c,v 1.2.16.1 2018/06/25 07:25:40 pgoyette Exp $");
 
 #include "opt_zynq.h"
 #include "arml2cc.h"
@@ -124,7 +124,7 @@ zynq7000_device_register(device_t self, void *aux)
 	 * We need to tell the A9 Global/Watchdog Timer
 	 * what frequency it runs at.
 	 */
-	if (device_is_a(self, "a9tmr") || device_is_a(self, "a9wdt")) {
+	if (device_is_a(self, "arma9tmr") || device_is_a(self, "a9wdt")) {
 		prop_dictionary_set_uint32(dict, "frequency",
 		    666666666 / PERIPHCLK_N);
 		return;

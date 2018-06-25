@@ -19,7 +19,7 @@
  *
  * CDDL HEADER END
  *
- * $FreeBSD$
+ * $FreeBSD: head/sys/cddl/dev/dtrace/arm/dtrace_asm.S 308427 2016-11-07 20:02:18Z gonzo $
  */
 /*
  * Copyright 2004 Sun Microsystems, Inc.  All rights reserved.
@@ -28,13 +28,22 @@
 
 #define _ASM
 #define _LOCORE
-#define LOCORE
 
 #include <sys/cpuvar_defs.h>
 #include <sys/dtrace.h>
 
 #include <machine/asm.h>
 #include <arm/armreg.h>
+
+#define	PSR_I	I32_bit
+#define	PSR_F	F32_bit
+
+#ifdef	__ARM_BIG_ENDIAN
+#define	__BIG_ENDIAN 1
+#endif
+
+#define EENTRY(x)	ENTRY_NP(x)
+#define EEND(x)		/* nothing */
 
 /*
 void dtrace_membar_producer(void)
@@ -56,7 +65,7 @@ dtrace_icookie_t dtrace_interrupt_disable(void)
 ENTRY(dtrace_interrupt_disable)
 	mrs	r0, cpsr
 	mov	r1, r0
-	orr	r1, r1, #(I32_bit|F32_bit)
+	orr	r1, r1, #(PSR_I | PSR_F)
 	msr	cpsr_c, r1
 	RET
 END(dtrace_interrupt_disable)
@@ -65,42 +74,13 @@ END(dtrace_interrupt_disable)
 void dtrace_interrupt_enable(dtrace_icookie_t cookie)
 */
 ENTRY(dtrace_interrupt_enable)
-	and	r0, r0, #(I32_bit|F32_bit)
+	and	r0, r0, #(PSR_I | PSR_F)
 	mrs	r1, cpsr
-	bic	r1, r1, #(I32_bit|F32_bit)
+	bic	r1, r1, #(PSR_I | PSR_F)
 	orr	r1, r1, r0
 	msr	cpsr_c, r1
 	RET
 END(dtrace_interrupt_enable)
-
-/*
-uint32_t dtrace_cas32(uint32_t *target, uint32_t cmp, uint32_t new)
-XXX: just disable interrupts for now, add proper implementation for
-ARMv6/ARMv7 later
-*/
-ENTRY_NP(dtrace_casptr)
-ENTRY(dtrace_cas32)
-	stmfd	sp!, {r4, r5}
-
-	mrs	r3, cpsr
-	mov	r4, r3
-	orr	r4, r4, #(I32_bit|F32_bit)
-	msr	cpsr_c, r4
-
-	ldr	r5, [r0]
-	cmp	r5, r1
-	movne	r0, r5
-	bne	2f
-
-	str	r2, [r0]
-	mov	r0, r5
-
-2:
-	msr	cpsr_c, r3
-	ldmfd	sp!, {r4, r5}
-	RET
-END(dtrace_cas32)
-END(dtrace_casptr)
 
 /*
 uint8_t
@@ -135,20 +115,21 @@ END(dtrace_fuword32_nocheck)
 /*
 uint64_t
 dtrace_fuword64_nocheck(void *addr)
-XXX: add byteorder check
 */
 ENTRY(dtrace_fuword64_nocheck)
 	ldm	r0, {r2, r3}
 
 	mov	r0, r2
 	mov	r1, r3
-#if 0
-/* little endian */
-	mov	r0, r2
-	mov	r1, r3
+#if defined(__BIG_ENDIAN__)
 /* big endian */
 	mov	r0, r3
 	mov	r1, r2
+#else
+/* little endian */
+	mov	r0, r2
+	mov	r1, r3
+
 #endif
 	RET
 END(dtrace_fuword64_nocheck)
@@ -159,20 +140,19 @@ dtrace_copy(uintptr_t uaddr, uintptr_t kaddr, size_t size)
 */
 ENTRY(dtrace_copy)
 	stmfd   sp!, {r4-r5}			/* stack is 8 byte aligned */
-	teq     r2, #0x00000000
-	mov     r5, #0x00000000
-	beq     2f
+	teq	r2, #0x00000000
+	mov	r5, #0x00000000
+	beq	2f
 
-1:	ldrb    r4, [r0], #0x0001
-	add     r5, r5, #0x00000001
-	strb    r4, [r1], #0x0001
-	teqne   r5, r2
-	bne     1b
+1:	ldrb	r4, [r0], #0x0001
+	add	r5, r5, #0x00000001
+	strb	r4, [r1], #0x0001
+	teqne	r5, r2
+	bne	1b
 
-2:	ldmfd   sp!, {r4-r5}			/* stack is 8 byte aligned */
+2:	ldmfd	sp!, {r4-r5}			/* stack is 8 byte aligned */
 	RET
 END(dtrace_copy)
-
 
 /*
 void
@@ -181,47 +161,21 @@ dtrace_copystr(uintptr_t uaddr, uintptr_t kaddr, size_t size,
 XXX: Check for flags?
 */
 ENTRY(dtrace_copystr)
-	stmfd   sp!, {r4-r5}			/* stack is 8 byte aligned */
-	teq     r2, #0x00000000
-	mov     r5, #0x00000000
-	beq     2f
+	stmfd	sp!, {r4-r5}			/* stack is 8 byte aligned */
+	teq	r2, #0x00000000
+	mov	r5, #0x00000000
+	beq	2f
 
-1:	ldrb    r4, [r0], #0x0001
-	add     r5, r5, #0x00000001
-	teq     r4, #0x00000000
-	strb    r4, [r1], #0x0001
-	teqne   r5, r2
-	bne     1b
+1:	ldrb	r4, [r0], #0x0001
+	add	r5, r5, #0x00000001
+	teq	r4, #0x00000000
+	strb	r4, [r1], #0x0001
+	teqne	r5, r2
+	bne	1b
 
-2:	ldmfd   sp!, {r4-r5}			/* stack is 8 byte aligned */
+2:	ldmfd	sp!, {r4-r5}			/* stack is 8 byte aligned */
 	RET
 END(dtrace_copystr)
-
-
-/*
-void dtrace_invop_init(void)
-*/
-ENTRY(dtrace_invop_init)
-	ldr	r1, .Ldtrace_invop
-	ldr	r2, .Ldtrace_invop_jump_addr
-	str	r1, [r2]
-	RET
-	.align	0
-.Ldtrace_invop:
-	.word	dtrace_invop
-.Ldtrace_invop_jump_addr:
-	.word	dtrace_invop_jump_addr
-END(dtrace_invop_init)
-
-/*
-void dtrace_invop_uninit(void)
-*/
-ENTRY(dtrace_invop_uninit)
-	mov	r0, #0
-	ldr	r1, .Ldtrace_invop_jump_addr
-	str	r0, [r1]
-	RET
-END(dtrace_invop_uninit)
 
 /*
 uintptr_t
@@ -231,3 +185,53 @@ ENTRY(dtrace_caller)
 	mov	r0, #-1
 	RET
 END(dtrace_caller)
+
+/*
+uint32_t
+dtrace_cas32(uint32_t *target, uint32_t cmp, uint32_t new)
+
+void *
+dtrace_casptr(volatile void *target, volatile void *cmp, volatile void *new)
+*/
+EENTRY(dtrace_casptr)
+ENTRY(dtrace_cas32)
+#if __ARM_ARCH >= 6
+
+1:	ldrex	r3, [r0]	/* Load target */
+	cmp	r3, r1		/* Check if *target == cmp */
+	bne	2f		/* No, return */
+	strex	ip, r2, [r0]	/* Store new to target */
+	cmp	ip, #0		/* Did the store succeed? */
+	bne	1b		/* No, try again */
+2:	mov	r0, r3		/* Return the value loaded from target */
+	RET
+
+#else
+
+	/*
+	 * We don't support MP on CPUs older than v6, so just disable interrupts
+	 * and use non-atomic instructions.
+	 */
+
+	stmfd	sp!, {r4, r5}
+
+	mrs	r3, cpsr
+	mov	r4, r3
+	orr	r4, r4, #(PSR_I | PSR_F)
+	msr	cpsr_c, r4
+
+	ldr	r5, [r0]
+	cmp	r5, r1
+	movne	r0, r5
+	bne	2f
+
+	str	r2, [r0]
+	mov	r0, r5
+
+2:
+	msr	cpsr_c, r3
+	ldmfd	sp!, {r4, r5}
+	RET
+#endif
+END(dtrace_cas32)
+EEND(dtrace_casptr)

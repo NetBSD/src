@@ -1,4 +1,4 @@
-/*	$NetBSD: elf.h,v 1.5 2010/03/01 11:19:40 darran Exp $	*/
+/*	$NetBSD: elf.h,v 1.5.44.1 2018/06/25 07:25:26 pgoyette Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -20,7 +20,7 @@
  *
  * CDDL HEADER END
  *
- * $FreeBSD: src/sys/compat/opensolaris/sys/elf.h,v 1.1 2007/11/28 21:50:40 jb Exp $
+ * $FreeBSD: head/sys/cddl/compat/opensolaris/sys/elf.h 177698 2008-03-28 22:16:18Z jb $
  *
  * ELF compatibility definitions for OpenSolaris source.
  *

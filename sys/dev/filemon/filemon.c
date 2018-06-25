@@ -1,4 +1,4 @@
-/*      $NetBSD: filemon.c,v 1.29 2017/11/30 20:25:55 christos Exp $ */
+/*      $NetBSD: filemon.c,v 1.29.2.1 2018/06/25 07:25:49 pgoyette Exp $ */
 /*
  * Copyright (c) 2010, Juniper Networks, Inc.
  *
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filemon.c,v 1.29 2017/11/30 20:25:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filemon.c,v 1.29.2.1 2018/06/25 07:25:49 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -289,7 +289,7 @@ filemon_ioctl(struct file * fp, u_long cmd, void *data)
 	struct proc *tp;
 
 #ifdef DEBUG
-	log(logLevel, "filemon_ioctl(%lu)", cmd);;
+	log(logLevel, "filemon_ioctl(%lu)", cmd);
 #endif
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_ccm.c,v 1.7 2017/11/09 05:57:23 hkenken Exp $	*/
+/*	$NetBSD: imx6_ccm.c,v 1.7.4.1 2018/06/25 07:25:39 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2010-2012, 2014  Genetec Corporation.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_ccm.c,v 1.7 2017/11/09 05:57:23 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_ccm.c,v 1.7.4.1 2018/06/25 07:25:39 pgoyette Exp $");
 
 #include "opt_imx.h"
 #include "opt_imx6clk.h"
@@ -539,7 +539,7 @@ imx6_get_clock(enum imx6_clock_id clk)
 	case IMX6CLK_PLL6:
 		/* XXX: iMX6UL has 2 div. which? */
 		v = imx6_ccm_analog_read(CCM_ANALOG_PLL_ENET);
-		switch (v & CCM_ANALOG_PLL_ENET_DIV_SELECT_MASK) {
+		switch (v & CCM_ANALOG_PLL_ENET_DIV_SELECT) {
 		case 0:
 			freq = 25 * 1000 * 1000;
 			break;
@@ -556,7 +556,7 @@ imx6_get_clock(enum imx6_clock_id clk)
 		break;
 	case IMX6CLK_PLL7:
 		v = imx6_ccm_analog_read(CCM_ANALOG_PLL_USB2);
-		freq = IMX6_OSC_FREQ * ((v & CCM_ANALOG_PLL_USBn_DIV_SELECT) ? 22 : 20);
+		freq = IMX6_OSC_FREQ * ((v & CCM_ANALOG_PLL_DIV_SELECT) ? 22 : 20);
 		break;
 
 #if 0
@@ -899,7 +899,7 @@ imx6_pll_power(uint32_t pllreg, int on, uint32_t en)
 		v = imx6_ccm_analog_read(pllreg);
 		if (on) {
 			v |= en;
-			v &= ~CCM_ANALOG_PLL_USBn_BYPASS;
+			v &= ~CCM_ANALOG_PLL_BYPASS;
 		} else {
 			v &= ~en;
 		}

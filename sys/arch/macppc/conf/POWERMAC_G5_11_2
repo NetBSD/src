@@ -82,25 +82,10 @@ options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 #options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 options 	FONT_GALLANT12x22
 
-# Optional Mac keyboard tweaks
-
-# Tweak the keyboard driver to treat the caps lock key on an ADB
-# keyboard as a control key; requires special remapping because of
-# ADB's strange emulation of a mechanically-locked key.
-#options 	CAPS_IS_CONTROL
-
-# On Mac laptops, several function keys double as "hot keys"
-# (brightness, volume, eject) when the Fn modifier is held down.  Mac
-# OS X likes to reprogram the keyboard controller to send hot key
-# events when Fn is not held down and send function key events when it
-# is.  This option transforms the non-keyboard "button" events back
-# into function key events.
-#options 	FORCE_FUNCTION_KEYS
-
 # Kernel root file system and dump configuration.
 config		netbsd	root on ? type ?
 #config		netbsd	root on gem0 type nfs
-#options         NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
+#options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
 
 #
 # Device configuration
@@ -109,6 +94,7 @@ config		netbsd	root on ? type ?
 mainbus* at root
 
 cpu*	at mainbus?
+options 	MULTIPROCESSOR
 ibmcpc* at mainbus?
 uninorth*	at mainbus?
 memory* at mainbus?
@@ -168,7 +154,7 @@ wsmouse* at ums?
 
 genfb*	at pci? dev ? function ?
 wdc* 	at pci? dev ? function ?		# Kauai ATA
-#svwsata* at pci? dev ? function ?		# ServerWorks SATA controllers
+svwsata* at pci? dev ? function ?		# ServerWorks SATA controllers
 obio*	at pci? dev ? function ?
 zsc*	at obio?
 zstty*	at zsc? channel ?

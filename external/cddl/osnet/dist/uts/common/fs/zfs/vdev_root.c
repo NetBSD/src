@@ -19,8 +19,12 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright 2010 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
+ */
+
+/*
+ * Copyright (c) 2013 by Delphix. All rights reserved.
  */
 
 #include <sys/zfs_context.h>
@@ -50,14 +54,15 @@ too_many_errors(vdev_t *vd, int numerrors)
 }
 
 static int
-vdev_root_open(vdev_t *vd, uint64_t *asize, uint64_t *ashift)
+vdev_root_open(vdev_t *vd, uint64_t *asize, uint64_t *max_asize,
+    uint64_t *logical_ashift, uint64_t *physical_ashift)
 {
 	int lasterror = 0;
 	int numerrors = 0;
 
 	if (vd->vdev_children == 0) {
 		vd->vdev_stat.vs_aux = VDEV_AUX_BAD_LABEL;
-		return (EINVAL);
+		return (SET_ERROR(EINVAL));
 	}
 
 	vdev_open_children(vd);
@@ -77,7 +82,9 @@ vdev_root_open(vdev_t *vd, uint64_t *asize, uint64_t *ashift)
 	}
 
 	*asize = 0;
-	*ashift = 0;
+	*max_asize = 0;
+	*logical_ashift = 0;
+	*physical_ashift = 0;
 
 	return (0);
 }
@@ -109,6 +116,8 @@ vdev_ops_t vdev_root_ops = {
 	NULL,			/* io_start - not applicable to the root */
 	NULL,			/* io_done - not applicable to the root */
 	vdev_root_state_change,
+	NULL,
+	NULL,
 	VDEV_TYPE_ROOT,		/* name of this vdev type */
 	B_FALSE			/* not a leaf vdev */
 };

@@ -1,4 +1,4 @@
-/* $NetBSD: omrasops.c,v 1.19 2014/10/04 16:58:17 tsutsui Exp $ */
+/* $NetBSD: omrasops.c,v 1.19.18.1 2018/06/25 07:25:43 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: omrasops.c,v 1.19 2014/10/04 16:58:17 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omrasops.c,v 1.19.18.1 2018/06/25 07:25:43 pgoyette Exp $");
 
 /*
  * Designed speficically for 'm68k bitorder';
@@ -316,7 +316,7 @@ om1_erasecols(void *cookie, int row, int startcol, int ncols, long attr)
 	int scanspan, startx, height, width, align, w, y;
 	uint32_t lmask, rmask, fill;
 
-	scanspan = ri->ri_stride;;
+	scanspan = ri->ri_stride;
 	y = ri->ri_font->fontheight * row;
 	startx = ri->ri_font->fontwidth * startcol;
 	height = ri->ri_font->fontheight;
@@ -364,7 +364,7 @@ om4_erasecols(void *cookie, int row, int startcol, int ncols, long attr)
 	int scanspan, startx, height, width, align, w, y, fg, bg;
 	uint32_t lmask, rmask, fill0, fill1, fill2, fill3;
 
-	scanspan = ri->ri_stride;;
+	scanspan = ri->ri_stride;
 	y = ri->ri_font->fontheight * row;
 	startx = ri->ri_font->fontwidth * startcol;
 	height = ri->ri_font->fontheight;

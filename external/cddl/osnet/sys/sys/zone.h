@@ -1,4 +1,4 @@
-/*	$NetBSD: zone.h,v 1.3 2010/02/21 01:46:36 darran Exp $	*/
+/*	$NetBSD: zone.h,v 1.3.44.1 2018/06/25 07:25:26 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007 Pawel Jakub Dawidek <pjd@FreeBSD.org>
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/compat/opensolaris/sys/zone.h,v 1.1 2007/04/06 01:09:06 pjd Exp $
+ * $FreeBSD: head/sys/cddl/compat/opensolaris/sys/zone.h 219089 2011-02-27 19:41:40Z pjd $
  */
 
 #ifndef _OPENSOLARIS_SYS_ZONE_H_
@@ -47,12 +47,12 @@ struct ucred;
 /*
  * Attach the given dataset to the given jail.
  */
-extern int zone_dataset_attach(struct kauth_cred *, const char *, int);
+extern int zone_dataset_attach(cred_t *, const char *, int);
 
 /*
  * Detach the given dataset to the given jail.
  */
-extern int zone_dataset_detach(struct kauth_cred *, const char *, int);
+extern int zone_dataset_detach(cred_t *, const char *, int);
 
 /*
  * Returns true if the named pool/dataset is visible in the current zone.

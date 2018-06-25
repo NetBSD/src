@@ -1,4 +1,4 @@
-/*	$NetBSD: do_command.c,v 1.12 2018/02/04 03:37:59 christos Exp $	*/
+/*	$NetBSD: do_command.c,v 1.12.2.1 2018/06/25 07:25:12 pgoyette Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -25,7 +25,7 @@
 #if 0
 static char rcsid[] = "Id: do_command.c,v 1.9 2004/01/23 18:56:42 vixie Exp";
 #else
-__RCSID("$NetBSD: do_command.c,v 1.12 2018/02/04 03:37:59 christos Exp $");
+__RCSID("$NetBSD: do_command.c,v 1.12.2.1 2018/06/25 07:25:12 pgoyette Exp $");
 #endif
 #endif
 
@@ -50,7 +50,9 @@ do_command(entry *e, user *u) {
 	 * vfork() is unsuitable, since we have much to do, and the parent
 	 * needs to be able to run off and fork other processes.
 	 */
-	switch (fork()) {
+
+	pid_t	jobpid;
+	switch (jobpid = fork()) {
 	case -1:
 		log_it("CRON", getpid(), "error", "can't fork");
 		break;
@@ -144,7 +146,7 @@ write_data(char *volatile input_data, int *stdin_pipe, int *stdout_pipe)
 
 static int
 read_data(entry *e, const char *mailto, const char *usernm, char **envp,
-    int *stdout_pipe)
+    int *stdout_pipe, pid_t jobpid)
 {
 	FILE	*in = fdopen(stdout_pipe[READ_PIPE], "r");
 	FILE	*mail = NULL;
@@ -241,14 +243,43 @@ read_data(entry *e, const char *mailto, const char *usernm, char **envp,
 	 */
 
 	if (mailto) {
-		Debug(DPROC, ("[%ld] closing pipe to mail\n", (long)getpid()));
-		/* Note: the pclose will probably see
-		 * the termination of the grandchild
-		 * in addition to the mail process, since
-		 * it (the grandchild) is likely to exit
-		 * after closing its stdout.
-		 */
-		status = cron_pclose(mail);
+		if (e->flags & MAIL_WHEN_ERR) {
+			int jstatus = -1;
+			if (jobpid <= 0)
+				log_it("CRON", getpid(), "error",
+				    "no job pid");
+			else {
+				while (waitpid(jobpid, &jstatus, WNOHANG) == -1)
+					if (errno != EINTR) {
+						log_it("CRON", getpid(),
+						    "error", "no job pid");
+						break;
+					}
+			}
+			/* If everything went well, and -n was set, _and_ we
+			 * have mail, we won't be mailing... so shoot the
+			 * messenger!
+			 */
+			if (WIFEXITED(jstatus) && WEXITSTATUS(jstatus) == 0) {
+				Debug(DPROC, ("[%ld] aborting pipe to mail\n",
+				    (long)getpid()));
+				status = cron_pabort(mail);
+				mailto = NULL;
+			}
+		}
+
+		if (mailto) {
+			Debug(DPROC, ("[%ld] closing pipe to mail\n",
+			    (long)getpid()));
+			/* Note: the pclose will probably see
+			 * the termination of the grandchild
+			 * in addition to the mail process, since
+			 * it (the grandchild) is likely to exit
+			 * after closing its stdout.
+			 */
+			status = cron_pclose(mail);
+			mail = NULL;
+		}
 		(void) signal(SIGCHLD, oldchld);
 	}
 
@@ -273,15 +304,16 @@ out:
 extern char **environ;
 static int
 exec_user_command(entry *e, char **envp, char *usernm, int *stdin_pipe,
-    int *stdout_pipe)
+    int *stdout_pipe, pid_t *jobpid)
 {
 	char *homedir;
-	char * volatile *ep = envp;
+	char * volatile *ep;
 
-	switch (vfork()) {
+	switch (*jobpid = vfork()) {
 	case -1:
 		return -1;
 	case 0:
+		ep = envp;
 		Debug(DPROC, ("[%ld] grandchild process vfork()'ed\n",
 			      (long)getpid()));
 
@@ -455,6 +487,7 @@ child_process(entry *e) {
 	struct sigaction sact;
 	char **envp = e->envp;
 	int retval = OK_EXIT;
+	pid_t jobpid = 0;
 
 	Debug(DPROC, ("[%ld] child_process('%s')\n", (long)getpid(), e->cmd));
 
@@ -538,7 +571,8 @@ child_process(entry *e) {
 
 	/* fork again, this time so we can exec the user's command.
 	 */
-	if (exec_user_command(e, envp, usernm, stdin_pipe, stdout_pipe) == -1) {
+	if (exec_user_command(e, envp, usernm, stdin_pipe, stdout_pipe,
+	    &jobpid) == -1) {
 		retval = ERROR_EXIT;
 		goto child_process_end;
 	}
@@ -595,7 +629,7 @@ child_process(entry *e) {
 	Debug(DPROC, ("[%ld] child reading output from grandchild\n",
 		      (long)getpid()));
 
-	retval = read_data(e, mailto, usernm, envp, stdout_pipe);
+	retval = read_data(e, mailto, usernm, envp, stdout_pipe, jobpid);
 	if (retval)
 		goto child_process_end;
 

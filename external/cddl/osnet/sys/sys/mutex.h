@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.3 2010/02/21 01:46:36 darran Exp $	*/
+/*	$NetBSD: mutex.h,v 1.3.44.1 2018/06/25 07:25:26 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #define	MUTEX_HELD(x)		(mutex_owned(x))
 #define	MUTEX_NOT_HELD(x)	(!mutex_owned(x) || panicstr != NULL)
-#define	mutex_init(a, b, c, d)	mutex_init(a, c, IPL_NONE)
+#define	mutex_init(a, b, c, d)	mutex_init(a, MUTEX_DEFAULT, IPL_NONE)
 
 #endif	/* _KERNEL */
 

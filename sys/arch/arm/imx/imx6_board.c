@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_board.c,v 1.9 2017/11/09 05:57:23 hkenken Exp $	*/
+/*	$NetBSD: imx6_board.c,v 1.9.4.1 2018/06/25 07:25:39 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2012  Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: imx6_board.c,v 1.9 2017/11/09 05:57:23 hkenken Exp $");
+__KERNEL_RCSID(1, "$NetBSD: imx6_board.c,v 1.9.4.1 2018/06/25 07:25:39 pgoyette Exp $");
 
 #include "opt_imx.h"
 #include "arml2cc.h"
@@ -219,7 +219,8 @@ imx6_device_register(device_t self, void *aux)
 	 * We need to tell the A9 Global/Watchdog Timer
 	 * what frequency it runs at.
 	 */
-	if (device_is_a(self, "a9tmr") || device_is_a(self, "a9wdt")) {
+	if (device_is_a(self, "arma9tmr") ||
+	    device_is_a(self, "a9wdt")) {
 		prop_dictionary_set_uint32(dict, "frequency",
 		   imx6_armrootclk() / IMX6_PERIPHCLK_N);
 		return;

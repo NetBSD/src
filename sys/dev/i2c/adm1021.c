@@ -1,4 +1,4 @@
-/*	$NetBSD: adm1021.c,v 1.16 2017/09/29 14:17:47 macallan Exp $ */
+/*	$NetBSD: adm1021.c,v 1.16.2.1 2018/06/25 07:25:50 pgoyette Exp $ */
 /*	$OpenBSD: adm1021.c,v 1.27 2007/06/24 05:34:35 dlg Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adm1021.c,v 1.16 2017/09/29 14:17:47 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adm1021.c,v 1.16.2.1 2018/06/25 07:25:50 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,33 +158,28 @@ static const char * admtemp_compats[] = {
 	NULL
 };
 
+static const struct device_compatible_entry admtemp_compat_data[] = {
+	DEVICE_COMPAT_ENTRY(admtemp_compats),
+	DEVICE_COMPAT_TERMINATOR
+};
+
 int
 admtemp_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct i2c_attach_args *ia = aux;
+	int match_result;
 
-	if (ia->ia_name == NULL) {
-		/*
-		 * Indirect config - not much we can do!
-		 * Check typical addresses.
-		 */
-		if (((ia->ia_addr >= 0x18) && (ia->ia_addr <= 0x1a)) ||
-		    ((ia->ia_addr >= 0x29) && (ia->ia_addr <= 0x2b)) ||
-		    ((ia->ia_addr >= 0x48) && (ia->ia_addr <= 0x4e)))
-			return (1);
-	} else {
-		/*
-		 * Direct config - match via the list of compatible
-		 * hardware or simply match the device name.
-		 */
-		if (ia->ia_ncompat > 0) {
-			if (iic_compat_match(ia, admtemp_compats))
-				return 1;
-		} else {
-			if (strcmp(ia->ia_name, "admtemp") == 0)
-				return 1;
-		}
-	}
+	if (iic_use_direct_match(ia, match, admtemp_compat_data, &match_result))
+		return match_result;
+	
+	/*
+	 * Indirect config - not much we can do!
+	 * Check typical addresses.
+	 */
+	if (((ia->ia_addr >= 0x18) && (ia->ia_addr <= 0x1a)) ||
+	    ((ia->ia_addr >= 0x29) && (ia->ia_addr <= 0x2b)) ||
+	    ((ia->ia_addr >= 0x48) && (ia->ia_addr <= 0x4e)))
+		return I2C_MATCH_ADDRESS_ONLY;
 
 	return 0;
 }

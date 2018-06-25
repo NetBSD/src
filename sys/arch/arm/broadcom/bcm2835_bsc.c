@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_bsc.c,v 1.10.2.1 2018/05/21 04:35:58 pgoyette Exp $	*/
+/*	$NetBSD: bcm2835_bsc.c,v 1.10.2.2 2018/06/25 07:25:39 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2012 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_bsc.c,v 1.10.2.1 2018/05/21 04:35:58 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_bsc.c,v 1.10.2.2 2018/06/25 07:25:39 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_kernhist.h"
@@ -242,7 +242,14 @@ bsciic_exec(void *v, i2c_op_t op, i2c_addr_t addr, const void *cmdbuf,
 	size_t len;
 	size_t pos;
 	int error = 0;
+	int whichbuf = 0;
 	const bool isread = I2C_OP_READ_P(op);
+
+	/*
+	 * XXX We don't do 10-bit addressing correctly yet.
+	 */
+	if (addr > 0x7f)
+		return (ENOTSUP);
 
 	flags |= I2C_F_POLL;
 
@@ -312,10 +319,13 @@ flood_again:
 	KERNHIST_LOG(bsciichist, "flood bot %#jx %ju",
 	    (uintptr_t)buf, len, 0, 0);
 
-	if (buf == cmdbuf && !isread) {
+	if (whichbuf == 0 && !isread) {
+		KASSERT(buf == cmdbuf);
+		whichbuf++;
 		buf = databuf;
 		len = datalen;
-		goto flood_again;
+		if (len)
+			goto flood_again;
 	}
 
 	do {

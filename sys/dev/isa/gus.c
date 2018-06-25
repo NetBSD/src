@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.112 2017/10/31 21:53:48 nat Exp $	*/
+/*	$NetBSD: gus.c,v 1.112.2.1 2018/06/25 07:25:50 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1999, 2008 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.112 2017/10/31 21:53:48 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.112.2.1 2018/06/25 07:25:50 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3239,7 +3239,7 @@ gus_halt_in_dma(void *addr)
 }
 
 
-static ad1848_devmap_t gusmapping[] = {
+static const ad1848_devmap_t gusmapping[] = {
 	{ GUSMAX_DAC_LVL, AD1848_KIND_LVL, AD1848_AUX1_CHANNEL },
 	{ GUSMAX_LINE_IN_LVL, AD1848_KIND_LVL, AD1848_LINE_CHANNEL },
 	{ GUSMAX_MONO_LVL, AD1848_KIND_LVL, AD1848_MONO_CHANNEL },
@@ -3255,7 +3255,7 @@ static ad1848_devmap_t gusmapping[] = {
 	{ GUSMAX_RECORD_SOURCE, AD1848_KIND_RECORDSOURCE, -1 }
 };
 
-static int nummap = sizeof(gusmapping) / sizeof(gusmapping[0]);
+static const int nummap = sizeof(gusmapping) / sizeof(gusmapping[0]);
 
 STATIC int
 gusmax_mixer_get_port(void *addr, mixer_ctrl_t *cp)

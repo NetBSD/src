@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.150.14.1 2018/03/22 01:44:48 pgoyette Exp $	*/
+/*	$NetBSD: if_de.c,v 1.150.14.2 2018/06/25 07:25:51 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -37,7 +37,7 @@
  *   board which support 21040, 21041, or 21140 (mostly).
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.150.14.1 2018/03/22 01:44:48 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.150.14.2 2018/06/25 07:25:51 pgoyette Exp $");
 
 #define	TULIP_HDR_DATA
 
@@ -74,14 +74,12 @@ __KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.150.14.1 2018/03/22 01:44:48 pgoyette Ex
 #include <net/if_dl.h>
 #include <net/route.h>
 #include <net/netisr.h>
+#include <net/bpf.h>
 
 #if defined(__bsdi__) && _BSDI_VERSION >= 199701
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 #endif
-
-#include <net/bpf.h>
-#include <net/bpfdesc.h>
 
 #ifdef INET
 #include <netinet/in.h>
@@ -3641,10 +3639,6 @@ tulip_rx_intr(
 #endif /* TULIP_BUS_DMA */
 
 	    eh = *mtod(ms, struct ether_header *);
-	    if (sc->tulip_bpf != NULL) {
-		if (me == ms)
-		    bpf_tap(ifp, mtod(ms, void *), total_len);
-	    }
 	    sc->tulip_flags |= TULIP_RXACT;
 	    if ((sc->tulip_flags & (TULIP_PROMISC|TULIP_HASHONLY))
 		    && (eh.ether_dhost[0] & 1) == 0

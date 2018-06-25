@@ -1,5 +1,4 @@
-/*	$NetBSD: pfkey.c,v 1.24 2012/02/13 13:03:06 wiz Exp $	*/
-
+/*	$NetBSD: pfkey.c,v 1.24.40.1 2018/06/25 07:25:05 pgoyette Exp $	*/
 /*	$KAME: pfkey.c,v 1.47 2003/10/02 19:52:12 itojun Exp $	*/
 
 /*
@@ -53,46 +52,46 @@
 
 #define CALLOC(size, cast) (cast)calloc(1, (size))
 
-static int findsupportedmap __P((int));
-static int setsupportedmap __P((struct sadb_supported *));
-static struct sadb_alg *findsupportedalg __P((u_int, u_int));
-static int pfkey_send_x1 __P((struct pfkey_send_sa_args *));
-static int pfkey_send_x2 __P((int, u_int, u_int, u_int,
-	struct sockaddr *, struct sockaddr *, u_int32_t));
-static int pfkey_send_x3 __P((int, u_int, u_int));
-static int pfkey_send_x4 __P((int, u_int, struct sockaddr *, u_int,
+static int findsupportedmap(int);
+static int setsupportedmap(struct sadb_supported *);
+static struct sadb_alg *findsupportedalg(u_int, u_int);
+static int pfkey_send_x1(struct pfkey_send_sa_args *);
+static int pfkey_send_x2(int, u_int, u_int, u_int,
+	struct sockaddr *, struct sockaddr *, u_int32_t);
+static int pfkey_send_x3(int, u_int, u_int);
+static int pfkey_send_x4(int, u_int, struct sockaddr *, u_int,
 	struct sockaddr *, u_int, u_int, u_int64_t, u_int64_t,
-	char *, int, u_int32_t));
-static int pfkey_send_x5 __P((int, u_int, u_int32_t));
+	char *, int, u_int32_t);
+static int pfkey_send_x5(int, u_int, u_int32_t);
 
-static caddr_t pfkey_setsadbmsg __P((caddr_t, caddr_t, u_int, u_int,
-	u_int, u_int32_t, pid_t));
-static caddr_t pfkey_setsadbsa __P((caddr_t, caddr_t, u_int32_t, u_int,
-	u_int, u_int, u_int32_t));
-static caddr_t pfkey_setsadbaddr __P((caddr_t, caddr_t, u_int,
-	struct sockaddr *, u_int, u_int));
+static caddr_t pfkey_setsadbmsg(caddr_t, caddr_t, u_int, u_int,
+	u_int, u_int32_t, pid_t);
+static caddr_t pfkey_setsadbsa(caddr_t, caddr_t, u_int32_t, u_int,
+	u_int, u_int, u_int32_t);
+static caddr_t pfkey_setsadbaddr(caddr_t, caddr_t, u_int,
+	struct sockaddr *, u_int, u_int);
 
 #ifdef SADB_X_EXT_KMADDRESS
-static caddr_t pfkey_setsadbkmaddr __P((caddr_t, caddr_t, struct sockaddr *,
-	struct sockaddr *));
+static caddr_t pfkey_setsadbkmaddr(caddr_t, caddr_t, struct sockaddr *,
+	struct sockaddr *);
 #endif
 
-static caddr_t pfkey_setsadbkey __P((caddr_t, caddr_t, u_int, caddr_t, u_int));
-static caddr_t pfkey_setsadblifetime __P((caddr_t, caddr_t, u_int, u_int32_t,
-	u_int32_t, u_int32_t, u_int32_t));
-static caddr_t pfkey_setsadbxsa2 __P((caddr_t, caddr_t, u_int32_t, u_int32_t));
+static caddr_t pfkey_setsadbkey(caddr_t, caddr_t, u_int, caddr_t, u_int);
+static caddr_t pfkey_setsadblifetime(caddr_t, caddr_t, u_int, u_int32_t,
+	u_int32_t, u_int32_t, u_int32_t);
+static caddr_t pfkey_setsadbxsa2(caddr_t, caddr_t, u_int32_t, u_int32_t);
 
 #ifdef SADB_X_EXT_NAT_T_TYPE
-static caddr_t pfkey_set_natt_type __P((caddr_t, caddr_t, u_int, u_int8_t));
-static caddr_t pfkey_set_natt_port __P((caddr_t, caddr_t, u_int, u_int16_t));
+static caddr_t pfkey_set_natt_type(caddr_t, caddr_t, u_int, u_int8_t);
+static caddr_t pfkey_set_natt_port(caddr_t, caddr_t, u_int, u_int16_t);
 #endif
 #ifdef SADB_X_EXT_NAT_T_FRAG
-static caddr_t pfkey_set_natt_frag __P((caddr_t, caddr_t, u_int, u_int16_t));
+static caddr_t pfkey_set_natt_frag(caddr_t, caddr_t, u_int, u_int16_t);
 #endif
 
 #ifdef SADB_X_EXT_SEC_CTX
-static caddr_t pfkey_setsecctx __P((caddr_t, caddr_t, u_int, u_int8_t, u_int8_t,
-				    caddr_t, u_int16_t));
+static caddr_t pfkey_setsecctx(caddr_t, caddr_t, u_int, u_int8_t, u_int8_t,
+				    caddr_t, u_int16_t);
 #endif
 
 int libipsec_opt = 0
@@ -126,8 +125,7 @@ static int supported_map[] = {
 };
 
 static int
-findsupportedmap(satype)
-	int satype;
+findsupportedmap(int satype)
 {
 	int i;
 
@@ -138,8 +136,7 @@ findsupportedmap(satype)
 }
 
 static struct sadb_alg *
-findsupportedalg(satype, alg_id)
-	u_int satype, alg_id;
+findsupportedalg(u_int satype, u_int alg_id)
 {
 	int algno;
 	int tlen;
@@ -176,8 +173,7 @@ findsupportedalg(satype, alg_id)
 }
 
 static int
-setsupportedmap(sup)
-	struct sadb_supported *sup;
+setsupportedmap(struct sadb_supported *sup)
 {
 	struct sadb_supported **ipsup;
 
@@ -216,10 +212,7 @@ setsupportedmap(sup)
  *	 0: valid.
  */
 int
-ipsec_check_keylen(supported, alg_id, keylen)
-	u_int supported;
-	u_int alg_id;
-	u_int keylen;
+ipsec_check_keylen(u_int supported, u_int alg_id, u_int keylen)
 {
 	u_int satype;
 
@@ -248,10 +241,7 @@ ipsec_check_keylen(supported, alg_id, keylen)
  *	 0: valid.
  */
 int
-ipsec_check_keylen2(satype, alg_id, keylen)
-	u_int satype;
-	u_int alg_id;
-	u_int keylen;
+ipsec_check_keylen2(u_int satype, u_int alg_id, u_int keylen)
 {
 	struct sadb_alg *alg;
 
@@ -279,9 +269,7 @@ ipsec_check_keylen2(satype, alg_id, keylen)
  *	 0: valid.
  */
 int
-ipsec_get_keylen(supported, alg_id, alg0)
-	u_int supported, alg_id;
-	struct sadb_alg *alg0;
+ipsec_get_keylen(u_int supported, u_int alg_id, struct sadb_alg *alg0)
 {
 	struct sadb_alg *alg;
 	u_int satype;
@@ -324,8 +312,7 @@ static u_int soft_lifetime_addtime_rate = PFKEY_SOFT_LIFETIME_RATE;
 static u_int soft_lifetime_usetime_rate = PFKEY_SOFT_LIFETIME_RATE;
 
 u_int
-pfkey_set_softrate(type, rate)
-	u_int type, rate;
+pfkey_set_softrate(u_int type, u_int rate)
 {
 	__ipsec_errcode = EIPSEC_NO_ERROR;
 
@@ -356,8 +343,7 @@ pfkey_set_softrate(type, rate)
  * ATTENTION: ~0 is returned if invalid type was passed.
  */
 u_int
-pfkey_get_softrate(type)
-	u_int type;
+pfkey_get_softrate(u_int type)
 {
 	switch (type) {
 	case SADB_X_LIFETIME_ALLOCATIONS:
@@ -1826,7 +1812,6 @@ pfkey_open(void)
 int
 pfkey_set_buffer_size(int so, int size)
 {
-	int newsize;
 	int actual_bufsiz;
 	socklen_t sizebufsiz;
 	int desired_bufsiz;

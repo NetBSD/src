@@ -1,4 +1,4 @@
-/* $NetBSD: adadc.c,v 1.2.2.3 2018/03/22 01:44:48 pgoyette Exp $ */
+/* $NetBSD: adadc.c,v 1.2.2.4 2018/06/25 07:25:50 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2018 Michael Lorenz
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adadc.c,v 1.2.2.3 2018/03/22 01:44:48 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adadc.c,v 1.2.2.4 2018/06/25 07:25:50 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,9 +93,14 @@ static void	adadc_sensors_refresh(struct sysmon_envsys *, envsys_data_t *);
 CFATTACH_DECL_NEW(adadc, sizeof(struct adadc_softc),
     adadc_match, adadc_attach, NULL, NULL);
 
-static const char * dstemp_compats[] = {
+static const char * adadc_compats[] = {
 	"ad7417",
 	NULL
+};
+
+static const struct device_compatible_entry adadc_compat_data[] = {
+	DEVICE_COMPAT_ENTRY(adadc_compats),
+	DEVICE_COMPAT_TERMINATOR
 };
 
 /* calibaration table from Darwin via Linux */
@@ -105,19 +110,20 @@ static int
 adadc_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct i2c_attach_args *ia = aux;
+	int match_result;
 
-	if (ia->ia_name == NULL) {
-		/*
-		 * XXX
-		 * this driver is pretty much useless without OF, should
-		 * probably remove this
-		 */
-		if ((ia->ia_addr & 0x2b) == 0x2b)
-			return 1;
-		return 0;
-	} else {
-		return iic_compat_match(ia, dstemp_compats);
-	}
+	if (iic_use_direct_match(ia, match, adadc_compat_data, &match_result))
+		return match_result;
+
+	/*
+	 * XXX
+	 * this driver is pretty much useless without OF, should
+	 * probably remove this
+	 */
+	if ((ia->ia_addr & 0x2b) == 0x2b)
+		return I2C_MATCH_ADDRESS_ONLY;
+
+	return 0;
 }
 
 static void

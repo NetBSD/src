@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.84 2017/01/24 17:27:30 roy Exp $
+#	$NetBSD: Makefile,v 1.84.10.1 2018/06/25 07:25:35 pgoyette Exp $
 #	@(#)Makefile	8.2 (Berkeley) 1/2/94
 
 .include <bsd.own.mk>
@@ -198,7 +198,7 @@ MLINKS+= curses_addch.3 addch.3 curses_addchstr.3 addchnstr.3 \
 	 curses_touch.3 wtouchln.3 curses_underscore.3 wunderend.3 \
 	 curses_underscore.3 wunderscore.3 curses_line.3 wvline.3
 
-SUBDIR+= PSD.doc
+SUBDIR.roff+= PSD.doc
 
 fileio.h: shlib_version genfileioh.awk
 	${TOOL_AWK} -f ${.CURDIR}/genfileioh.awk < ${.CURDIR}/shlib_version > ${.CURDIR}/fileio.h

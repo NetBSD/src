@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2185.2.4 2018/05/21 04:35:49 pgoyette Exp $
+#	$NetBSD: mi,v 1.2185.2.5 2018/06/25 07:25:09 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -3772,6 +3772,8 @@
 ./usr/lib/libz_p.a				comp-c-proflib		compatfile,profile
 ./usr/lib/libzfs.a				comp-zfs-lib		compatfile,zfs
 ./usr/lib/libzfs_p.a				comp-zfs-proflib	compatfile,zfs,profile
+./usr/lib/libzfs_core.a				comp-zfs-lib		compatfile,zfs
+./usr/lib/libzfs_core_p.a			comp-zfs-proflib	compatfile,zfs,profile
 ./usr/lib/libzpool.a				comp-zfs-lib		compatfile,zfs
 ./usr/lib/libzpool_p.a				comp-zfs-proflib	compatfile,zfs,profile
 ./usr/lib/pkgconfig				comp-c-lib
@@ -4568,7 +4570,7 @@
 ./usr/share/man/cat3/CTLOG_new.0		comp-c-catman		.cat,openssl=11
 ./usr/share/man/cat3/CT_POLICY_EVAL_CTX_new.0	comp-c-catman		.cat,openssl=11
 ./usr/share/man/cat3/DEFINE_STACK_OF.0		comp-c-catman		.cat,openssl=11
-./usr/share/man/cat3/DES_random_key.0		comp-c-catman		.cat,openssl=11
+./usr/share/man/cat3/DES_random_key.0		comp-obsolete		obsolete
 ./usr/share/man/cat3/DH_generate_key.0		comp-c-catman		.cat
 ./usr/share/man/cat3/DH_generate_parameters.0	comp-c-catman		.cat
 ./usr/share/man/cat3/DH_get0_pqg.0		comp-c-catman		.cat,openssl=11
@@ -4699,7 +4701,7 @@
 ./usr/share/man/cat3/GCQ_INIT.0			comp-sys-catman		.cat
 ./usr/share/man/cat3/GCQ_INIT_HEAD.0		comp-sys-catman		.cat
 ./usr/share/man/cat3/GCQ_ITEM.0			comp-sys-catman		.cat
-./usr/share/man/cat3/HMAC.0			comp-c-catman		.cat,openssl=11
+./usr/share/man/cat3/HMAC.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/IFTODT.0			comp-c-catman		.cat
 ./usr/share/man/cat3/LIST.0			comp-c-catman		.cat
 ./usr/share/man/cat3/LIST_EMPTY.0		comp-c-catman		.cat
@@ -4731,7 +4733,7 @@
 ./usr/share/man/cat3/MD4Final.0			comp-c-catman		.cat
 ./usr/share/man/cat3/MD4Init.0			comp-c-catman		.cat
 ./usr/share/man/cat3/MD4Update.0		comp-c-catman		.cat
-./usr/share/man/cat3/MD5.0			comp-c-catman		.cat,openssl=11
+./usr/share/man/cat3/MD5.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/MD5Data.0			comp-c-catman		.cat
 ./usr/share/man/cat3/MD5End.0			comp-c-catman		.cat
 ./usr/share/man/cat3/MD5File.0			comp-c-catman		.cat
@@ -8413,6 +8415,10 @@
 ./usr/share/man/cat3/openpam_ttyconv.0		comp-c-catman		.cat,pam
 ./usr/share/man/cat3/openpgpsdk.0		comp-obsolete		obsolete
 ./usr/share/man/cat3/openpty.0			comp-c-catman		.cat
+./usr/share/man/cat3/openssl_HMAC.0		comp-c-catman		.cat,openssl=11
+./usr/share/man/cat3/openssl_MD2.0		comp-c-catman		.cat,openssl=11
+./usr/share/man/cat3/openssl_MD4.0		comp-c-catman		.cat,openssl=11
+./usr/share/man/cat3/openssl_MD5.0		comp-c-catman		.cat,openssl=11
 ./usr/share/man/cat3/openssl_bio.0		comp-c-catman		.cat
 ./usr/share/man/cat3/openssl_blowfish.0	comp-c-catman	.cat,openssl=10
 ./usr/share/man/cat3/openssl_bn.0	comp-c-catman	.cat,openssl=10
@@ -10411,6 +10417,7 @@
 ./usr/share/man/cat9/arpresolve.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/atop.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/audio.0			comp-sys-catman		.cat
+./usr/share/man/cat9/audio_system.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/autoconf.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/bawrite.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/bcdtobin.0			comp-sys-catman		.cat
@@ -11114,14 +11121,23 @@
 ./usr/share/man/cat9/module_autoload.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/module_builtin_require_force.0 comp-sys-catman	.cat
 ./usr/share/man/cat9/module_find_section.0	comp-sys-catman		.cat
+./usr/share/man/cat9/module_getspecific.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/module_hold.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/module_init.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/module_init_class.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/module_load.0		comp-sys-catman		.cat
+./usr/share/man/cat9/module_kernel.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/module_load_vfs_init.0	comp-sys-catman		.cat
+./usr/share/man/cat9/module_name.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/module_rele.0		comp-sys-catman		.cat
+./usr/share/man/cat9/module_register_callbacks.0 	comp-sys-catman		.cat
+./usr/share/man/cat9/module_setspecific.0	comp-sys-catman		.cat
+./usr/share/man/cat9/module_source.0		comp-sys-catman		.cat
+./usr/share/man/cat9/module_specific_key_create.0 comp-sys-catman	.cat
+./usr/share/man/cat9/module_specific_key_delete.0 comp-sys-catman	.cat
 ./usr/share/man/cat9/module_start_unload_thread.0 comp-sys-catman	.cat
 ./usr/share/man/cat9/module_unload.0		comp-sys-catman		.cat
+./usr/share/man/cat9/module_unregister_callbacks.0 comp-sys-catman		.cat
 ./usr/share/man/cat9/mono_time.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/mstohz.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/mtocl.0			comp-sys-catman		.cat
@@ -11534,6 +11550,17 @@
 ./usr/share/man/cat9/softintr_disestablish.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/softintr_establish.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/softintr_schedule.0	comp-sys-catman		.cat
+./usr/share/man/cat9/specificdata.0		comp-sys-catman		.cat
+./usr/share/man/cat9/specificdata_domain_create.0 comp-sys-catman	.cat
+./usr/share/man/cat9/specificdata_domain_delete.0 comp-sys-catman	.cat
+./usr/share/man/cat9/specificdata_fini.0	comp-sys-catman		.cat
+./usr/share/man/cat9/specificdata_getspecific.0	comp-sys-catman		.cat
+./usr/share/man/cat9/specificdata_getspecific_unlocked.0 comp-sys-catman .cat
+./usr/share/man/cat9/specificdata_init.0	comp-sys-catman		.cat
+./usr/share/man/cat9/specificdata_key_create.0	comp-sys-catman		.cat
+./usr/share/man/cat9/specificdata_key_delete.0	comp-sys-catman		.cat
+./usr/share/man/cat9/specificdata_setspecific.0	comp-sys-catman		.cat
+./usr/share/man/cat9/specificdata_setspecific_nowait.0 comp-sys-catman	.cat
 ./usr/share/man/cat9/spinlockinit.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/spinlockmgr.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/spl.0			comp-sys-catman		.cat
@@ -11557,7 +11584,7 @@
 ./usr/share/man/cat9/spltty.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/splvm.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/splx.0			comp-sys-catman		.cat
-./usr/share/man/cat9/sprintf.0			comp-sys-catman		.cat
+./usr/share/man/cat9/sprintf.0			comp-obsolete		obsolete
 ./usr/share/man/cat9/stathz.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/store.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/subyte.0			comp-sys-catman		.cat
@@ -11832,7 +11859,7 @@
 ./usr/share/man/cat9/vrele_async.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/vslock.0			comp-obsolete		obsolete
 ./usr/share/man/cat9/vsnprintf.0		comp-sys-catman		.cat
-./usr/share/man/cat9/vsprintf.0			comp-sys-catman		.cat
+./usr/share/man/cat9/vsprintf.0			comp-obsolete		obsolete
 ./usr/share/man/cat9/vsunlock.0			comp-obsolete		obsolete
 ./usr/share/man/cat9/vtruncbuf.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/vwakeup.0			comp-sys-catman		.cat
@@ -12382,7 +12409,7 @@
 ./usr/share/man/html3/CTLOG_new.html	comp-c-htmlman	html,openssl=11
 ./usr/share/man/html3/CT_POLICY_EVAL_CTX_new.html	comp-c-htmlman	html,openssl=11
 ./usr/share/man/html3/DEFINE_STACK_OF.html	comp-c-htmlman	html,openssl=11
-./usr/share/man/html3/DES_random_key.html	comp-c-htmlman	html,openssl=11
+./usr/share/man/html3/DES_random_key.html	comp-obsolete	obsolete
 ./usr/share/man/html3/DH_generate_key.html	comp-c-htmlman	html
 ./usr/share/man/html3/DH_generate_parameters.html	comp-c-htmlman	html
 ./usr/share/man/html3/DH_get0_pqg.html	comp-c-htmlman	html,openssl=11
@@ -12516,7 +12543,7 @@
 ./usr/share/man/html3/GCQ_INIT.html		comp-sys-htmlman	html
 ./usr/share/man/html3/GCQ_INIT_HEAD.html	comp-sys-htmlman	html
 ./usr/share/man/html3/GCQ_ITEM.html		comp-sys-htmlman	html
-./usr/share/man/html3/HMAC.html	comp-c-htmlman	html,openssl=11
+./usr/share/man/html3/HMAC.html			comp-obsolete		obsolete
 ./usr/share/man/html3/IFTODT.html		comp-c-htmlman		html
 ./usr/share/man/html3/LIST.html			comp-c-htmlman		html
 ./usr/share/man/html3/LIST_EMPTY.html		comp-c-htmlman		html
@@ -12548,7 +12575,7 @@
 ./usr/share/man/html3/MD4Final.html		comp-c-htmlman		html
 ./usr/share/man/html3/MD4Init.html		comp-c-htmlman		html
 ./usr/share/man/html3/MD4Update.html		comp-c-htmlman		html
-./usr/share/man/html3/MD5.html	comp-c-htmlman	html,openssl=11
+./usr/share/man/html3/MD5.html			comp-obsolete		obsolete
 ./usr/share/man/html3/MD5Data.html		comp-c-htmlman		html
 ./usr/share/man/html3/MD5End.html		comp-c-htmlman		html
 ./usr/share/man/html3/MD5File.html		comp-c-htmlman		html
@@ -16154,6 +16181,10 @@
 ./usr/share/man/html3/openpam_ttyconv.html	comp-c-htmlman		html,pam
 ./usr/share/man/html3/openpgpsdk.html		comp-obsolete		obsolete
 ./usr/share/man/html3/openpty.html		comp-c-htmlman		html
+./usr/share/man/html3/openssl_HMAC.html		comp-c-htmlman		html,openssl=11
+./usr/share/man/html3/openssl_MD2.html		comp-c-htmlman		html,openssl=11
+./usr/share/man/html3/openssl_MD4.html		comp-c-htmlman		html,openssl=11
+./usr/share/man/html3/openssl_MD5.html		comp-c-htmlman		html,openssl=11
 ./usr/share/man/html3/openssl_bio.html		comp-c-htmlman		html
 ./usr/share/man/html3/openssl_blowfish.html	comp-c-htmlman	html,openssl=10
 ./usr/share/man/html3/openssl_blowfish.html	comp-obsolete	openssl=11,obsolete
@@ -18115,6 +18146,7 @@
 ./usr/share/man/html9/arpresolve.html		comp-sys-htmlman	html
 ./usr/share/man/html9/atop.html			comp-sys-htmlman	html
 ./usr/share/man/html9/audio.html		comp-sys-htmlman	html
+./usr/share/man/html9/audio_system.html		comp-sys-htmlman	html
 ./usr/share/man/html9/autoconf.html		comp-sys-htmlman	html
 ./usr/share/man/html9/bawrite.html		comp-sys-htmlman	html
 ./usr/share/man/html9/bcdtobin.html		comp-sys-htmlman	html
@@ -18792,15 +18824,24 @@
 ./usr/share/man/html9/module.html		comp-sys-htmlman	html
 ./usr/share/man/html9/module_autoload.html	comp-sys-htmlman	html
 ./usr/share/man/html9/module_builtin_require_force.html comp-sys-htmlman html
+./usr/share/man/html9/module_specific_key_create.html comp-sys-htmlman	html
+./usr/share/man/html9/module_specific_key_delete.html comp-sys-htmlman	html
 ./usr/share/man/html9/module_find_section.html	comp-sys-htmlman	html
+./usr/share/man/html9/module_getspecific.html	comp-sys-htmlman	html
 ./usr/share/man/html9/module_hold.html		comp-sys-htmlman	html
 ./usr/share/man/html9/module_init.html		comp-sys-htmlman	html
 ./usr/share/man/html9/module_init_class.html	comp-sys-htmlman	html
 ./usr/share/man/html9/module_load.html		comp-sys-htmlman	html
+./usr/share/man/html9/module_kernel.html	comp-sys-htmlman	html
 ./usr/share/man/html9/module_load_vfs_init.html comp-sys-htmlman	html
+./usr/share/man/html9/module_name.html		comp-sys-htmlman	html
 ./usr/share/man/html9/module_rele.html		comp-sys-htmlman	html
+./usr/share/man/html9/module_register_callbacks.html comp-sys-htmlman	html
+./usr/share/man/html9/module_setspecific.html	comp-sys-htmlman	html
+./usr/share/man/html9/module_source.html	comp-sys-htmlman	html
 ./usr/share/man/html9/module_start_unload_thread.html comp-sys-htmlman	html
 ./usr/share/man/html9/module_unload.html	comp-sys-htmlman	html
+./usr/share/man/html9/module_unregister_callbacks.html comp-sys-htmlman	html
 ./usr/share/man/html9/mstohz.html		comp-sys-htmlman	html
 ./usr/share/man/html9/mtocl.html		comp-sys-htmlman	html
 ./usr/share/man/html9/mtod.html			comp-sys-htmlman	html
@@ -19191,6 +19232,17 @@
 ./usr/share/man/html9/softintr_disestablish.html	comp-sys-htmlman	html
 ./usr/share/man/html9/softintr_establish.html	comp-sys-htmlman	html
 ./usr/share/man/html9/softintr_schedule.html	comp-sys-htmlman	html
+./usr/share/man/html9/specificdata.html		comp-sys-htmlman	html
+./usr/share/man/html9/specificdata_domain_create.html comp-sys-htmlman	html
+./usr/share/man/html9/specificdata_domain_delete.html comp-sys-htmlman	html
+./usr/share/man/html9/specificdata_fini.html	comp-sys-htmlman	html
+./usr/share/man/html9/specificdata_getspecific.html comp-sys-htmlman	html
+./usr/share/man/html9/specificdata_getspecific_unlocked.html comp-sys-htmlman html
+./usr/share/man/html9/specificdata_init.html	comp-sys-htmlman	html
+./usr/share/man/html9/specificdata_key_create.html comp-sys-htmlman	html
+./usr/share/man/html9/specificdata_key_delete.html comp-sys-htmlman	html
+./usr/share/man/html9/specificdata_setspecific.html comp-sys-htmlman	html
+./usr/share/man/html9/specificdata_setspecific_nowait.html comp-sys-htmlman html
 ./usr/share/man/html9/spinlockinit.html		comp-sys-htmlman	html
 ./usr/share/man/html9/spinlockmgr.html		comp-sys-htmlman	html
 ./usr/share/man/html9/spl.html			comp-sys-htmlman	html
@@ -19214,7 +19266,7 @@
 ./usr/share/man/html9/spltty.html		comp-sys-htmlman	html
 ./usr/share/man/html9/splvm.html		comp-sys-htmlman	html
 ./usr/share/man/html9/splx.html			comp-sys-htmlman	html
-./usr/share/man/html9/sprintf.html		comp-sys-htmlman	html
+./usr/share/man/html9/sprintf.html		comp-obsolete		obsolete
 ./usr/share/man/html9/stathz.html		comp-sys-htmlman	html
 ./usr/share/man/html9/store.html		comp-sys-htmlman	html
 ./usr/share/man/html9/subyte.html		comp-sys-htmlman	html
@@ -19463,7 +19515,7 @@
 ./usr/share/man/html9/vrele.html		comp-sys-htmlman	html
 ./usr/share/man/html9/vrele_async.html		comp-sys-htmlman	html
 ./usr/share/man/html9/vsnprintf.html		comp-sys-htmlman	html
-./usr/share/man/html9/vsprintf.html		comp-sys-htmlman	html
+./usr/share/man/html9/vsprintf.html		comp-obsolete		obsolete
 ./usr/share/man/html9/vtruncbuf.html		comp-sys-htmlman	html
 ./usr/share/man/html9/vwakeup.html		comp-sys-htmlman	html
 ./usr/share/man/html9/wakeup.html		comp-sys-htmlman	html
@@ -20039,7 +20091,7 @@
 ./usr/share/man/man3/CTLOG_new.3	comp-c-man	.man,openssl=11
 ./usr/share/man/man3/CT_POLICY_EVAL_CTX_new.3	comp-c-man	.man,openssl=11
 ./usr/share/man/man3/DEFINE_STACK_OF.3	comp-c-man	.man,openssl=11
-./usr/share/man/man3/DES_random_key.3	comp-c-man	.man,openssl=11
+./usr/share/man/man3/DES_random_key.3		comp-obsolete		obsolete
 ./usr/share/man/man3/DH_generate_key.3		comp-c-man		.man
 ./usr/share/man/man3/DH_generate_parameters.3	comp-c-man		.man
 ./usr/share/man/man3/DH_get0_pqg.3	comp-c-man	.man,openssl=11
@@ -20173,7 +20225,7 @@
 ./usr/share/man/man3/GCQ_INIT.3			comp-sys-man		.man
 ./usr/share/man/man3/GCQ_INIT_HEAD.3		comp-sys-man		.man
 ./usr/share/man/man3/GCQ_ITEM.3			comp-sys-man		.man
-./usr/share/man/man3/HMAC.3	comp-c-man	.man,openssl=11
+./usr/share/man/man3/HMAC.3			comp-obsolete		obsolete
 ./usr/share/man/man3/IFTODT.3			comp-c-man		.man
 ./usr/share/man/man3/LIST.3			comp-c-man		.man
 ./usr/share/man/man3/LIST_EMPTY.3		comp-c-man		.man
@@ -20205,7 +20257,7 @@
 ./usr/share/man/man3/MD4Final.3			comp-c-man		.man
 ./usr/share/man/man3/MD4Init.3			comp-c-man		.man
 ./usr/share/man/man3/MD4Update.3		comp-c-man		.man
-./usr/share/man/man3/MD5.3	comp-c-man	.man,openssl=11
+./usr/share/man/man3/MD5.3			comp-obsolete		obsolete
 ./usr/share/man/man3/MD5Data.3			comp-c-man		.man
 ./usr/share/man/man3/MD5End.3			comp-c-man		.man
 ./usr/share/man/man3/MD5File.3			comp-c-man		.man
@@ -23907,6 +23959,10 @@
 ./usr/share/man/man3/openpam_ttyconv.3		comp-c-man		.man,pam
 ./usr/share/man/man3/openpgpsdk.3		comp-obsolete		obsolete
 ./usr/share/man/man3/openpty.3			comp-c-man		.man
+./usr/share/man/man3/openssl_HMAC.3		comp-c-man		.man,openssl=11
+./usr/share/man/man3/openssl_MD2.3		comp-c-man		.man,openssl=11
+./usr/share/man/man3/openssl_MD4.3		comp-c-man		.man,openssl=11
+./usr/share/man/man3/openssl_MD5.3		comp-c-man		.man,openssl=11
 ./usr/share/man/man3/openssl_bio.3		comp-c-man		.man
 ./usr/share/man/man3/openssl_blowfish.3	comp-c-man	.man,openssl=10
 ./usr/share/man/man3/openssl_blowfish.3	comp-obsolete	openssl=11,obsolete
@@ -25923,6 +25979,7 @@
 ./usr/share/man/man9/arpresolve.9		comp-sys-man		.man
 ./usr/share/man/man9/atop.9			comp-sys-man		.man
 ./usr/share/man/man9/audio.9			comp-sys-man		.man
+./usr/share/man/man9/audio_system.9		comp-sys-man		.man
 ./usr/share/man/man9/autoconf.9			comp-sys-man		.man
 ./usr/share/man/man9/bawrite.9			comp-sys-man		.man
 ./usr/share/man/man9/bcdtobin.9			comp-sys-man		.man
@@ -26626,14 +26683,23 @@
 ./usr/share/man/man9/module_autoload.9		comp-sys-man		.man
 ./usr/share/man/man9/module_builtin_require_force.9 comp-sys-man	.man
 ./usr/share/man/man9/module_find_section.9	comp-sys-man		.man
+./usr/share/man/man9/module_getspecific.9	comp-sys-man		.man
 ./usr/share/man/man9/module_hold.9		comp-sys-man		.man
 ./usr/share/man/man9/module_init.9		comp-sys-man		.man
 ./usr/share/man/man9/module_init_class.9	comp-sys-man		.man
 ./usr/share/man/man9/module_load.9		comp-sys-man		.man
+./usr/share/man/man9/module_kernel.9		comp-sys-man		.man
 ./usr/share/man/man9/module_load_vfs_init.9	comp-sys-man		.man
+./usr/share/man/man9/module_name.9		comp-sys-man		.man
 ./usr/share/man/man9/module_rele.9		comp-sys-man		.man
+./usr/share/man/man9/module_register_callbacks.9 	comp-sys-man		.man
+./usr/share/man/man9/module_setspecific.9	comp-sys-man		.man
+./usr/share/man/man9/module_source.9		comp-sys-man		.man
+./usr/share/man/man9/module_specific_key_create.9 comp-sys-man		.man
+./usr/share/man/man9/module_specific_key_delete.9 comp-sys-man		.man
 ./usr/share/man/man9/module_start_unload_thread.9 comp-sys-man		.man
 ./usr/share/man/man9/module_unload.9		comp-sys-man		.man
+./usr/share/man/man9/module_unregister_callbacks.9 comp-sys-man		.man
 ./usr/share/man/man9/mono_time.9		comp-obsolete		obsolete
 ./usr/share/man/man9/mstohz.9			comp-sys-man		.man
 ./usr/share/man/man9/mtocl.9			comp-sys-man		.man
@@ -27046,6 +27112,17 @@
 ./usr/share/man/man9/softintr_disestablish.9	comp-sys-man		.man
 ./usr/share/man/man9/softintr_establish.9	comp-sys-man		.man
 ./usr/share/man/man9/softintr_schedule.9	comp-sys-man		.man
+./usr/share/man/man9/specificdata.9		comp-sys-man		.man
+./usr/share/man/man9/specificdata_domain_create.9 comp-sys-man		.man
+./usr/share/man/man9/specificdata_domain_delete.9 comp-sys-man		.man
+./usr/share/man/man9/specificdata_fini.9	comp-sys-man		.man
+./usr/share/man/man9/specificdata_getspecific.9	comp-sys-man		.man
+./usr/share/man/man9/specificdata_getspecific_unlocked.9 comp-sys-man	.man
+./usr/share/man/man9/specificdata_init.9	comp-sys-man		.man
+./usr/share/man/man9/specificdata_key_create.9	comp-sys-man		.man
+./usr/share/man/man9/specificdata_key_delete.9	comp-sys-man		.man
+./usr/share/man/man9/specificdata_setspecific.9	comp-sys-man		.man
+./usr/share/man/man9/specificdata_setspecific_nowait.9 comp-sys-man	.man
 ./usr/share/man/man9/spinlockinit.9		comp-sys-man		.man
 ./usr/share/man/man9/spinlockmgr.9		comp-sys-man		.man
 ./usr/share/man/man9/spl.9			comp-sys-man		.man
@@ -27069,7 +27146,7 @@
 ./usr/share/man/man9/spltty.9			comp-sys-man		.man
 ./usr/share/man/man9/splvm.9			comp-sys-man		.man
 ./usr/share/man/man9/splx.9			comp-sys-man		.man
-./usr/share/man/man9/sprintf.9			comp-sys-man		.man
+./usr/share/man/man9/sprintf.9			comp-obsolete		obsolete
 ./usr/share/man/man9/stathz.9			comp-sys-man		.man
 ./usr/share/man/man9/store.9			comp-sys-man		.man
 ./usr/share/man/man9/subyte.9			comp-sys-man		.man
@@ -27344,7 +27421,7 @@
 ./usr/share/man/man9/vrele_async.9		comp-sys-man		.man
 ./usr/share/man/man9/vslock.9			comp-obsolete		obsolete
 ./usr/share/man/man9/vsnprintf.9		comp-sys-man		.man
-./usr/share/man/man9/vsprintf.9			comp-sys-man		.man
+./usr/share/man/man9/vsprintf.9			comp-obsolete		obsolete
 ./usr/share/man/man9/vsunlock.9			comp-obsolete		obsolete
 ./usr/share/man/man9/vtruncbuf.9		comp-sys-man		.man
 ./usr/share/man/man9/vwakeup.9			comp-sys-man		.man

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.subdir.mk,v 1.52 2010/05/26 00:48:15 uwe Exp $
+#	$NetBSD: bsd.subdir.mk,v 1.52.44.1 2018/06/25 07:25:37 pgoyette Exp $
 #	@(#)bsd.subdir.mk	8.1 (Berkeley) 6/8/93
 
 .include <bsd.init.mk>
@@ -27,6 +27,10 @@ __REALSUBDIR+=${dir}
 .endif
 .endif
 .endfor
+
+.if ${MKGROFF} == "yes"
+__REALSUBDIR+=${SUBDIR.roff}
+.endif
 
 __recurse: .USE
 	@${MAKEDIRTARGET} ${.TARGET:C/^[^-]*-//} ${.TARGET:C/-.*$//}

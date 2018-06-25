@@ -1,4 +1,4 @@
-/*	$NetBSD: an.c,v 1.66 2017/10/23 09:24:34 msaitoh Exp $	*/
+/*	$NetBSD: an.c,v 1.66.2.1 2018/06/25 07:25:50 pgoyette Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.66 2017/10/23 09:24:34 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.66.2.1 2018/06/25 07:25:50 pgoyette Exp $");
 
 
 #include <sys/param.h>
@@ -104,13 +104,11 @@ __KERNEL_RCSID(0, "$NetBSD: an.c,v 1.66 2017/10/23 09:24:34 msaitoh Exp $");
 #include <net/if_llc.h>
 #include <net/if_media.h>
 #include <net/if_types.h>
+#include <net/bpf.h>
 
 #include <net80211/ieee80211_netbsd.h>
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_radiotap.h>
-
-#include <net/bpf.h>
-#include <net/bpfdesc.h>
 
 #include <dev/ic/anreg.h>
 #include <dev/ic/anvar.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.4 2012/06/05 22:51:47 jym Exp $	*/
+/*	$NetBSD: misc.c,v 1.4.30.1 2018/06/25 07:25:25 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -56,7 +56,8 @@
  */
 
 #include <sys/cdefs.h>
-/* __FBSDID("$FreeBSD: src/sys/compat/opensolaris/kern/opensolaris_misc.c,v 1.2 2007/04/23 00:52:06 pjd Exp $"); */
+/* __FBSDID("$FreeBSD: head/sys/cddl/compat/opensolaris/kern/opensolaris_misc.c 219089 2011-02-27 19:41:40Z pjd $"); */
+
 
 #include <sys/mount.h>
 #include <sys/param.h>
@@ -72,9 +73,18 @@
 
 char hw_serial[11] = "0";
 
-struct utsname utsname = {
-	.nodename = "XXXNETBSD"
-};
+struct utsname utsname;
+
+void
+opensolaris_utsname_init(void *arg)
+{
+
+	strlcpy(utsname.sysname, ostype, sizeof(utsname.sysname));
+	strlcpy(utsname.nodename, hostname, sizeof(utsname.nodename));
+	strlcpy(utsname.release, osrelease, sizeof(utsname.release));
+	strlcpy(utsname.version, "OpenSolaris", sizeof(utsname.version));
+	strlcpy(utsname.machine, machine, sizeof(utsname.machine));
+}
 
 int
 vn_is_readonly(vnode_t *vp)
@@ -114,21 +124,6 @@ thread_join(uint64_t kid)
 	return;
 }
 
-int
-newproc(void (*pc)(), caddr_t arg, id_t cid, int pri, struct contract **ct,
-    pid_t pid)
-{
-	int error;
-
-	ASSERT(cid == PRI_NONE);
-	
-	error = kthread_create(pri, KTHREAD_MPSAFE, NULL,
-	    pc, arg, NULL, "zfs_proc");
-	KASSERT(error == 0);
-
-	return 0;
-}
-
 void
 kmem_reap(void)
 {
@@ -138,6 +133,7 @@ kmem_reap(void)
 	bufcnt = uvmexp.freetarg - uvmexp.free;
 	if (bufcnt < 0)
 		bufcnt = 0;
+
 	/*
 	 * kill unused metadata buffers.
 	 */
@@ -149,7 +145,6 @@ kmem_reap(void)
 	 * drain the pools.
 	 */
 	pool_drain(&pp);
-//	printf("XXXNETBSD kmem_reap called, write me\n");
 }
 
 /*

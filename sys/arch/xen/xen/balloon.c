@@ -1,4 +1,4 @@
-/* $NetBSD: balloon.c,v 1.18 2016/12/23 17:01:10 cherry Exp $ */
+/* $NetBSD: balloon.c,v 1.18.14.1 2018/06/25 07:25:48 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: balloon.c,v 1.18 2016/12/23 17:01:10 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: balloon.c,v 1.18.14.1 2018/06/25 07:25:48 pgoyette Exp $");
 
 #include <sys/inttypes.h>
 #include <sys/device.h>
@@ -275,7 +275,7 @@ xenmem_get_maxreservation(void)
 	int s;
 	unsigned int ret;
 
-	s = splvm();
+	s = splvm(); /* XXXSMP */
 	ret = HYPERVISOR_memory_op(XENMEM_maximum_reservation, 
 	    & (domid_t) { DOMID_SELF });
 
@@ -295,7 +295,7 @@ xenmem_get_currentreservation(void)
 {
 	int s, ret;
 
-	s = splvm();
+	s = splvm(); /* XXXSMP */
 	ret = HYPERVISOR_memory_op(XENMEM_current_reservation,
 				   & (domid_t) { DOMID_SELF });
 	splx(s);
@@ -401,7 +401,7 @@ balloon_inflate(struct balloon_xenbus_softc *sc, size_t tpages)
 
 		mfn_list[rpages] = xpmap_ptom(pa) >> PAGE_SHIFT;
 
-		s = splvm();
+		s = splvm(); /* XXXSMP */
 		/* Invalidate pg */
 		xpmap_ptom_unmap(pa);
 		splx(s);
@@ -415,7 +415,7 @@ balloon_inflate(struct balloon_xenbus_softc *sc, size_t tpages)
 	set_xen_guest_handle(reservation.extent_start, mfn_list);
 	reservation.nr_extents = rpages;
 
-	s = splvm();
+	s = splvm(); /* XXXSMP */
 	ret = HYPERVISOR_memory_op(XENMEM_decrease_reservation,
 				   &reservation);
 	splx(s);
@@ -481,7 +481,7 @@ balloon_deflate(struct balloon_xenbus_softc *sc, size_t tpages)
 	set_xen_guest_handle(reservation.extent_start, mfn_list);
 	reservation.nr_extents = tpages;
 
-	s = splvm();
+	s = splvm(); /* XXXSMP */
 	ret = HYPERVISOR_memory_op(XENMEM_increase_reservation, &reservation);
 	splx(s);
 
@@ -505,7 +505,7 @@ balloon_deflate(struct balloon_xenbus_softc *sc, size_t tpages)
 			pa = pmap_pa_end;
 
 			/* P2M update */
-			s = splvm();
+			s = splvm(); /* XXXSMP */
 			pmap_pa_end += PAGE_SIZE; /* XXX: TLB flush ?*/
 			xpmap_ptom_map(pa, ptoa(mfn_list[rpages]));
 			xpq_queue_machphys_update(ptoa(mfn_list[rpages]), pa);
@@ -513,7 +513,7 @@ balloon_deflate(struct balloon_xenbus_softc *sc, size_t tpages)
 
 			if (uvm_physseg_plug(atop(pa), 1, NULL) == false) {
 				/* Undo P2M */
-				s = splvm();
+				s = splvm(); /* XXXSMP */
 				xpmap_ptom_unmap(pa);
 				xpq_queue_machphys_update(ptoa(mfn_list[rpages]), 0);
 				pmap_pa_end -= PAGE_SIZE; /* XXX: TLB flush ?*/
@@ -540,7 +540,7 @@ balloon_deflate(struct balloon_xenbus_softc *sc, size_t tpages)
 		/* Update P->M */
 		pa = VM_PAGE_TO_PHYS(bpg_entry->pg);
 
-		s = splvm();
+		s = splvm(); /* XXXSMP */
 
 		xpmap_ptom_map(pa, ptoa(mfn_list[rpages]));
 		xpq_queue_machphys_update(ptoa(mfn_list[rpages]), pa);

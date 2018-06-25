@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_sysctl.c,v 1.38 2017/10/31 16:10:25 kre Exp $	*/
+/*	$NetBSD: netbsd32_sysctl.c,v 1.38.2.1 2018/06/25 07:25:48 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.38 2017/10/31 16:10:25 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.38.2.1 2018/06/25 07:25:48 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -147,6 +147,18 @@ netbsd32_sysctl_init(void)
 		       netbsd32_sysctl_vm_loadavg, 0, NULL,
 		       sizeof(struct netbsd32_loadavg),
 		       CTL_VM, VM_LOADAVG, CTL_EOL);
+	sysctl_createv(&netbsd32_clog, 0, &_root, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
+		       CTLTYPE_INT, "maxaddress",
+		       SYSCTL_DESCR("Maximum user address"),
+		       NULL, VM_MAXUSER_ADDRESS32, NULL, 0,
+		       CTL_VM, VM_MAXADDRESS, CTL_EOL);
+	sysctl_createv(&netbsd32_clog, 0, &_root, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
+		       CTLTYPE_INT, "minaddress",
+		       SYSCTL_DESCR("Minimum user address"),
+		       NULL, VM_MIN_ADDRESS, NULL, 0,
+		       CTL_VM, VM_MINADDRESS, CTL_EOL);
 
 	sysctl_createv(&netbsd32_clog, 0, &_root, NULL,
 		       CTLFLAG_PERMANENT,

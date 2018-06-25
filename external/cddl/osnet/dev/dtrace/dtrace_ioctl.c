@@ -1,4 +1,4 @@
-/*	$NetBSD: dtrace_ioctl.c,v 1.6 2015/09/30 20:59:13 christos Exp $	*/
+/*	$NetBSD: dtrace_ioctl.c,v 1.6.14.1 2018/06/25 07:25:14 pgoyette Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -20,18 +20,106 @@
  *
  * CDDL HEADER END
  *
- * $FreeBSD: src/sys/cddl/dev/dtrace/dtrace_ioctl.c,v 1.2.2.1 2009/08/03 08:13:06 kensmith Exp $
+ * $FreeBSD: head/sys/cddl/dev/dtrace/dtrace_ioctl.c 313262 2017-02-05 02:39:12Z markj $
  *
  */
 
-static int dtrace_verbose_ioctl=0;
-//SYSCTL_INT(_debug_dtrace, OID_AUTO, verbose_ioctl, CTLFLAG_RW, &dtrace_verbose_ioctl, 0, "");
+static int dtrace_verbose_ioctl;
+SYSCTL_INT(_debug_dtrace, OID_AUTO, verbose_ioctl, CTLFLAG_RW,
+    &dtrace_verbose_ioctl, 0, "log DTrace ioctls");
+
+#define pfind(pid) proc_find((pid))
 
 #define DTRACE_IOCTL_PRINTF(fmt, ...)	if (dtrace_verbose_ioctl) printf(fmt, ## __VA_ARGS__ )
 
+#ifdef __FreeBSD__
+static int
+dtrace_ioctl_helper(struct cdev *dev, u_long cmd, caddr_t addr, int flags,
+    struct thread *td)
+#endif
+#ifdef __NetBSD__
+static int
+dtrace_ioctl_helper(dev_t dev, u_long cmd, caddr_t addr, int flags)
+#endif
+{
+	struct proc *p;
+	dof_helper_t *dhp;
+	dof_hdr_t *dof;
+	int rval;
+
+	dhp = NULL;
+	dof = NULL;
+	rval = 0;
+	switch (cmd) {
+	case DTRACEHIOC_ADDDOF:
+		dhp = (dof_helper_t *)addr;
+		addr = (caddr_t)(uintptr_t)dhp->dofhp_dof;
+		p = curproc;
+		if (p->p_pid == dhp->dofhp_pid) {
+			dof = dtrace_dof_copyin((uintptr_t)addr, &rval);
+		} else {
+#ifdef __FreeBSD__
+			p = pfind(dhp->dofhp_pid);
+			if (p == NULL)
+				return (EINVAL);
+			if (!P_SHOULDSTOP(p) ||
+			    (p->p_flag & (P_TRACED | P_WEXIT)) != P_TRACED ||
+			    p->p_pptr != curproc) {
+				PROC_UNLOCK(p);
+				return (EINVAL);
+			}
+			_PHOLD(p);
+			PROC_UNLOCK(p);
+			dof = dtrace_dof_copyin_proc(p, (uintptr_t)addr, &rval);
+#endif
+#ifdef __NetBSD__
+			dof = dtrace_dof_copyin_pid(dhp->dofhp_pid, addr, &rval);
+#endif
+		}
+
+		if (dof == NULL) {
+#ifdef __FreeBSD__
+			if (p != curproc)
+				PRELE(p);
+#endif
+			break;
+		}
+
+		mutex_enter(&dtrace_lock);
+		if ((rval = dtrace_helper_slurp(dof, dhp, p)) != -1) {
+			dhp->dofhp_gen = rval;
+			rval = 0;
+		} else {
+			rval = EINVAL;
+		}
+		mutex_exit(&dtrace_lock);
+#ifdef __FreeBSD__
+		if (p != curproc)
+			PRELE(p);
+#endif
+		break;
+	case DTRACEHIOC_REMOVE:
+		mutex_enter(&dtrace_lock);
+		rval = dtrace_helper_destroygen(NULL, *(int *)(uintptr_t)addr);
+		mutex_exit(&dtrace_lock);
+		break;
+	default:
+		rval = ENOTTY;
+		break;
+	}
+	return (rval);
+}
+
 /* ARGSUSED */
+#ifdef __FreeBSD__
+static int
+dtrace_ioctl(struct cdev *dev, u_long cmd, caddr_t addr,
+    int flags __unused, struct thread *td)
+#endif
+#ifdef __NetBSD__
 static int
 dtrace_ioctl(struct file *fp, u_long cmd, void *addr)
+#endif
 {
 	dtrace_state_t *state = (dtrace_state_t *)fp->f_data;
 	int error = 0;
@@ -224,6 +312,7 @@ dtrace_ioctl(struct file *fp, u_long cmd, void *addr)
 			desc.dtbd_drops = buf->dtb_drops;
 			desc.dtbd_errors = buf->dtb_errors;
 			desc.dtbd_oldest = buf->dtb_xamot_offset;
+			desc.dtbd_timestamp = dtrace_gethrtime();
 
 			mutex_exit(&dtrace_lock);
 
@@ -278,6 +367,7 @@ dtrace_ioctl(struct file *fp, u_long cmd, void *addr)
 		desc.dtbd_drops = buf->dtb_xamot_drops;
 		desc.dtbd_errors = buf->dtb_xamot_errors;
 		desc.dtbd_oldest = 0;
+		desc.dtbd_timestamp = buf->dtb_switched;
 
 		mutex_exit(&dtrace_lock);
 
@@ -361,7 +451,8 @@ dtrace_ioctl(struct file *fp, u_long cmd, void *addr)
 			return (EBUSY);
 		}
 
-		if (dtrace_dof_slurp(dof, vstate, curlwp->l_cred, &enab, 0, B_TRUE) != 0) {
+		if (dtrace_dof_slurp(dof, vstate, CRED(), &enab, 0, 0,
+		    B_TRUE) != 0) {
 			mutex_exit(&dtrace_lock);
 			mutex_exit(&cpu_lock);
 			dtrace_dof_destroy(dof);
@@ -528,19 +619,25 @@ dtrace_ioctl(struct file *fp, u_long cmd, void *addr)
 			return (EINVAL);
 
 		mutex_enter(&dtrace_provider_lock);
+#ifdef illumos
 		mutex_enter(&mod_lock);
+#endif
 		mutex_enter(&dtrace_lock);
 
 		if (desc->dtargd_id > dtrace_nprobes) {
 			mutex_exit(&dtrace_lock);
+#ifdef illumos
 			mutex_exit(&mod_lock);
+#endif
 			mutex_exit(&dtrace_provider_lock);
 			return (EINVAL);
 		}
 
 		if ((probe = dtrace_probes[desc->dtargd_id - 1]) == NULL) {
 			mutex_exit(&dtrace_lock);
+#ifdef illumos
 			mutex_exit(&mod_lock);
+#endif
 			mutex_exit(&dtrace_provider_lock);
 			return (EINVAL);
 		}
@@ -564,7 +661,9 @@ dtrace_ioctl(struct file *fp, u_long cmd, void *addr)
 			    probe->dtpr_id, probe->dtpr_arg, desc);
 		}
 
+#ifdef illumos
 		mutex_exit(&mod_lock);
+#endif
 		mutex_exit(&dtrace_provider_lock);
 
 		return (0);
@@ -710,7 +809,7 @@ again:
 	case DTRACEIOC_STATUS: {
 		dtrace_status_t *stat = (dtrace_status_t *) addr;
 		dtrace_dstate_t *dstate;
-		int j;
+		int i, j;
 		uint64_t nerrs;
 		CPU_INFO_ITERATOR cpuind;
 		struct cpu_info *cinfo;
@@ -742,24 +841,25 @@ again:
 		dstate = &state->dts_vstate.dtvs_dynvars;
 
 		for (CPU_INFO_FOREACH(cpuind, cinfo)) {
-		    	int ci = cpu_index(cinfo);
-			dtrace_dstate_percpu_t *dcpu = &dstate->dtds_percpu[ci];
+		    	i = cpu_index(cinfo);
+
+			dtrace_dstate_percpu_t *dcpu = &dstate->dtds_percpu[i];
 
 			stat->dtst_dyndrops += dcpu->dtdsc_drops;
 			stat->dtst_dyndrops_dirty += dcpu->dtdsc_dirty_drops;
 			stat->dtst_dyndrops_rinsing += dcpu->dtdsc_rinsing_drops;
 
-			if (state->dts_buffer[ci].dtb_flags & DTRACEBUF_FULL)
+			if (state->dts_buffer[i].dtb_flags & DTRACEBUF_FULL)
 				stat->dtst_filled++;
 
-			nerrs += state->dts_buffer[ci].dtb_errors;
+			nerrs += state->dts_buffer[i].dtb_errors;
 
 			for (j = 0; j < state->dts_nspeculations; j++) {
 				dtrace_speculation_t *spec;
 				dtrace_buffer_t *buf;
 
 				spec = &state->dts_speculations[j];
-				buf = &spec->dtsp_buffer[ci];
+				buf = &spec->dtsp_buffer[i];
 				stat->dtst_specdrops += buf->dtb_xamot_drops;
 			}
 		}
@@ -777,15 +877,16 @@ again:
 		return (0);
 	}
 	case DTRACEIOC_STOP: {
+		int rval;
 		processorid_t *cpuid = (processorid_t *) addr;
 
 		DTRACE_IOCTL_PRINTF("%s(%d): DTRACEIOC_STOP\n",__func__,__LINE__);
 
 		mutex_enter(&dtrace_lock);
-		error = dtrace_state_stop(state, cpuid);
+		rval = dtrace_state_stop(state, cpuid);
 		mutex_exit(&dtrace_lock);
 
-		return (error);
+		return (rval);
 	}
 	default:
 		error = ENOTTY;

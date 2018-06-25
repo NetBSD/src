@@ -1,4 +1,4 @@
-/*	$NetBSD: am2315.c,v 1.2 2017/12/30 03:18:26 christos Exp $	*/
+/*	$NetBSD: am2315.c,v 1.2.2.1 2018/06/25 07:25:50 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2017 Brad Spencer <brad@anduin.eldar.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: am2315.c,v 1.2 2017/12/30 03:18:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am2315.c,v 1.2.2.1 2018/06/25 07:25:50 pgoyette Exp $");
 
 /*
  * Driver for the Aosong AM2315
@@ -170,42 +170,17 @@ am2315_poke_m(i2c_tag_t tag, i2c_addr_t addr, const char *name, bool debug)
 static int
 am2315_match(device_t parent, cfdata_t match, void *aux)
 {
-	struct i2c_attach_args *ia;
-	int rv;
-	const bool matchdebug = false;
+	struct i2c_attach_args *ia = aux;
+	int match_result;
 
-	ia = aux;
+	if (iic_use_direct_match(ia, match, NULL, &match_result))
+		return match_result;
 
-	if (ia->ia_name) {
-		/* direct config - check name */
-		if (strcmp(ia->ia_name, "am2315temp") != 0)
-			return 0;
-	} else {
-		/* indirect config - check for configured address */
-		if (ia->ia_addr != AM2315_TYPICAL_ADDR)
-			return 0;
-	}
+	/* indirect config - check for standard address */
+	if (ia->ia_addr == AM2315_TYPICAL_ADDR)
+		return I2C_MATCH_ADDRESS_ONLY;
 
-	/*
-	 * Check to see if something is really at this i2c address. This will
-	 * keep phantom devices from appearing
-	 */
-	if (iic_acquire_bus(ia->ia_tag, 0) != 0) {
-		if (matchdebug)
-			printf("in match acquire bus failed\n");
-		return 0;
-	}
-
-	if ((rv = am2315_poke_m(ia->ia_tag, ia->ia_addr, __func__, matchdebug))
-	    != 0) {
-		if (matchdebug)
-			printf("match rv poke %d\n", rv);
-		iic_release_bus(ia->ia_tag, 0);
-		return 0;
-	}
-
-	iic_release_bus(ia->ia_tag, 0);
-	return 1;
+	return 0;
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.412.2.1 2018/04/16 01:59:56 pgoyette Exp $	*/
+/*	$NetBSD: locore.s,v 1.412.2.2 2018/06/25 07:25:45 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -7452,7 +7452,7 @@ ENTRY(next_stick)
 	sllx	%o3, 63, %o3
 	andn	%o1, %o3, %o1
 	andn	%o2, %o3, %o2
-	cmp	%o1, %o2	! Did we wrap?  (tick < tick_cmpr)
+	cmp	%o1, %o2	! Did we wrap?  (stick < stick_cmpr)
 	bgt,pt	%icc, 1f
 	 add	%o1, 1000, %o1	! Need some slack so we don't lose intrs.
 

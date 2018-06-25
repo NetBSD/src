@@ -1,4 +1,4 @@
-/* $NetBSD: types.h,v 1.12 2017/01/26 15:55:10 christos Exp $ */
+/* $NetBSD: types.h,v 1.12.12.1 2018/06/25 07:25:46 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -40,9 +40,31 @@ typedef struct label_t {
 #endif
 
 #if defined(_KERNEL) || defined(_KMEMUSER) || defined(_KERNTYPES) || defined(_STANDALONE)
+#if defined(__i386__) || defined(__arm__)
 typedef unsigned long	paddr_t;
 typedef unsigned long	psize_t;
-typedef unsigned long	vaddr_t;
+typedef unsigned long	__vaddr_t;
+typedef unsigned long	vsize_t;
+typedef int		register_t;
+
+#ifndef __x86_64__
+// XXX hack to allow for amd64->i386 crosscompile, why?
+#define	PRIxPADDR	"lx"
+#define	PRIxPSIZE	"lx"
+#define	PRIuPSIZE	"lu"
+#else
+#define	PRIxPADDR	"llx"
+#define	PRIxPSIZE	"llx"
+#define	PRIuPSIZE	"llu"
+#endif
+#define	PRIxVADDR	"lx"
+#define	PRIxVSIZE	"lx"
+#define	PRIuVSIZE	"lu"
+#define	PRIxREGISTER	"lx"
+#elif defined(__x86_64__)
+typedef unsigned long	paddr_t;
+typedef unsigned long	psize_t;
+typedef unsigned long	__vaddr_t;
 typedef unsigned long	vsize_t;
 typedef long int	register_t;
 #define	PRIxPADDR	"lx"
@@ -53,9 +75,11 @@ typedef long int	register_t;
 #define	PRIuVSIZE	"lu"
 #define	PRIxREGISTER	"lx"
 #endif
+#endif
 
+typedef __vaddr_t	vaddr_t;
 typedef unsigned char	__cpu_simple_lock_nv_t;
-typedef long int	__register_t;
+typedef register_t	__register_t;
 
 #define __CPU_SIMPLE_LOCK_PAD
 
@@ -67,6 +91,7 @@ typedef long int	__register_t;
 #endif
 
 #define __HAVE_CPU_DATA_FIRST
+#define __HAVE_CPU_LWP_SETPRIVATE
 #define __HAVE_MM_MD_KERNACC
 #define	__HAVE_COMPAT_NETBSD32
 

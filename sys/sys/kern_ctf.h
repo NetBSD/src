@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ctf.h,v 1.1 2010/03/12 21:43:10 darran Exp $	*/
+/*	$NetBSD: kern_ctf.h,v 1.1.64.1 2018/06/25 07:26:07 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  * Modules CTF section
  */
 typedef struct mod_ctf {
-	const uint8_t 	*ctftab;	/* Decompressed CTF data. */
+	uint8_t 	*ctftab;	/* Decompressed CTF data. */
 	int 		ctfcnt;		/* Number of CTF data bytes. */
 	const Elf_Sym	*symtab;	/* Ptr to the symbol table. */
 	int		nsym;		/* Number of symbols. */
@@ -45,9 +45,11 @@ typedef struct mod_ctf {
 	uint32_t	*typoffp;	/* Ptr to array of type offsets. */
 	long		typlen;		/* number of type data entries. */
 	int		ctfalloc;	/* ctftab is alloced */
+	bool		fbt_provided;
+	int		nenabled;
 } mod_ctf_t;
 
 int
-mod_ctf_get(struct module *, mod_ctf_t *);
+mod_ctf_get(struct module *, mod_ctf_t **);
 
 #endif

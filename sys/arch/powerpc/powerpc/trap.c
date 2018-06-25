@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.153 2017/03/16 16:13:20 chs Exp $	*/
+/*	$NetBSD: trap.c,v 1.153.12.1 2018/06/25 07:25:45 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.153 2017/03/16 16:13:20 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.153.12.1 2018/06/25 07:25:45 pgoyette Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -1062,6 +1062,9 @@ emulated_opcode(struct lwp *l, struct trapframe *tf)
 		 * user code isn't allowed to change it.
 		 */
 		msr &= ~PSL_FP;
+#ifdef ALTIVEC
+		msr &= ~PSL_VEC;
+#endif
 
 		/*
 		 * Don't let the user muck with bits he's not allowed to.

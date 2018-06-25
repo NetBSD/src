@@ -1,4 +1,4 @@
-/* $NetBSD: fcu.c,v 1.1.2.3 2018/03/22 01:44:48 pgoyette Exp $ */
+/* $NetBSD: fcu.c,v 1.1.2.4 2018/06/25 07:25:50 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2018 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fcu.c,v 1.1.2.3 2018/03/22 01:44:48 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fcu.c,v 1.1.2.4 2018/06/25 07:25:50 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,19 +120,24 @@ static const char * fcu_compats[] = {
 	NULL
 };
 
+static const struct device_compatible_entry fcu_compat_data[] = {
+	DEVICE_COMPAT_ENTRY(fcu_compats),
+	DEVICE_COMPAT_TERMINATOR
+};
+
 static int
 fcu_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct i2c_attach_args *ia = aux;
+	int match_result;
 
-	if (ia->ia_name == NULL) {
-		/* no ID registers on this chip */
-		if (ia->ia_addr == 0x2f)
-			return 1;
-		return 0;
-	} else {
-		return iic_compat_match(ia, fcu_compats);
-	}
+	if (iic_use_direct_match(ia, match, fcu_compat_data, &match_result))
+		return match_result;
+	
+	if (ia->ia_addr == 0x2f)
+		return I2C_MATCH_ADDRESS_ONLY;
+	
+	return 0;
 }
 
 static void

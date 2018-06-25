@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.h,v 1.7 2011/12/29 21:22:49 jmcneill Exp $ */
+/* $NetBSD: mainbus.h,v 1.7.46.1 2018/06/25 07:25:46 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -38,8 +38,13 @@ struct thunkbus_attach_args {
 #define THUNKBUS_TYPE_VNCFB	4
 #define THUNKBUS_TYPE_VETH	5
 #define THUNKBUS_TYPE_VAUDIO	6
+#define THUNKBUS_TYPE_VATAPI	7
+#define THUNKBUS_TYPE_VSCSI	8
 
 	union {
+		struct {
+			const char *path;
+		} vdev;
 		struct {
 			const char *path;
 		} diskimage;

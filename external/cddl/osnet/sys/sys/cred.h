@@ -1,4 +1,4 @@
-/*	$NetBSD: cred.h,v 1.4 2010/03/13 22:31:15 christos Exp $	*/
+/*	$NetBSD: cred.h,v 1.4.44.1 2018/06/25 07:25:25 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007 Pawel Jakub Dawidek <pjd@FreeBSD.org>
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/compat/opensolaris/sys/cred.h,v 1.1 2007/04/06 01:09:06 pjd Exp $
+ * $FreeBSD: head/sys/cddl/compat/opensolaris/sys/cred.h 248571 2013-03-21 08:38:03Z mm $
  */
 
 #ifndef _OPENSOLARIS_SYS_CRED_H_
@@ -38,16 +38,17 @@
 #include <sys/kauth.h>
 
 #define	CRED()		(kauth_cred_get())
-#define KCRED()		(cred0)
 #define	kcred		cred0
 
 extern kauth_cred_t	cred0;
 
-#define	crget(cr)		cr = kauth_cred_get()
-#define	crgetuid(cr)		kauth_cred_getuid(cr)
-#define	crgetgid(cr)		kauth_cred_getgid(cr)
+#define	crgetuid(cr)		kauth_cred_geteuid(cr)
+#define	crgetruid(cr)		kauth_cred_getuid(cr)
+#define	crgetgid(cr)		kauth_cred_getegid(cr)
+#define	crgetrgid(cr)		kauth_cred_getgid(cr)
 #define	crgetngroups(cr) 	kauth_cred_ngroups(cr)
 #define	cralloc()		kauth_cred_alloc()
+#define crhold(cr)		kauth_cred_hold(cr)
 #define	crfree(cr)		kauth_cred_free(cr)
 #define	crsetugid(cr, u, g)	( \
 	kauth_cred_setuid(cr, u), \
@@ -75,11 +76,10 @@ crgetgroups(cred_t *cr)
 static __inline int
 groupmember(gid_t gid, cred_t *cr) 
 {
-  int result;
+	int result;
 
-  kauth_cred_ismember_gid(cr, gid, &result);
-
-  return result;
+	kauth_cred_ismember_gid(cr, gid, &result);
+	return result;
 }
 
 #endif	/* _KERNEL */

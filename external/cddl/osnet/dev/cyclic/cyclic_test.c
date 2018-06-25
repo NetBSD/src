@@ -1,4 +1,4 @@
-/*	$NetBSD: cyclic_test.c,v 1.2 2010/02/21 01:46:33 darran Exp $	*/
+/*	$NetBSD: cyclic_test.c,v 1.2.44.1 2018/06/25 07:25:13 pgoyette Exp $	*/
 
 /*-
  * Copyright 2007 John Birrell <jb@FreeBSD.org>
@@ -24,7 +24,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/cddl/dev/cyclic/cyclic_test.c,v 1.1.4.1 2009/08/03 08:13:06 kensmith Exp $
+ * $FreeBSD: head/sys/cddl/dev/cyclic/cyclic_test.c 179260 2008-05-23 22:21:58Z jb $
  *
  */
 

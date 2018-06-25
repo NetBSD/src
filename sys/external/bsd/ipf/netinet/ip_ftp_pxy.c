@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_ftp_pxy.c,v 1.6 2016/10/16 05:11:34 mrg Exp $	*/
+/*	$NetBSD: ip_ftp_pxy.c,v 1.6.14.1 2018/06/25 07:26:03 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -12,7 +12,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ip_ftp_pxy.c,v 1.6 2016/10/16 05:11:34 mrg Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ip_ftp_pxy.c,v 1.6.14.1 2018/06/25 07:26:03 pgoyette Exp $");
 
 #define	IPF_FTP_PROXY
 
@@ -120,7 +120,7 @@ void ipf_p_ftp_setpending(ipf_main_softc_t *, ftpinfo_t *);
 
 static	int	ipf_p_ftp_proxy_init = 0;
 static	frentry_t	ftppxyfr;
-static	ipftuneable_t	ipf_ftp_tuneables[] = {
+static	const ipftuneable_t	ipf_ftp_tuneables[] = {
 	{ { (void *)offsetof(ipf_ftp_softc_t, ipf_p_ftp_debug) },
 		"ftp_debug",	0,	0x7f,
 		stsizeof(ipf_ftp_softc_t, ipf_p_ftp_debug),

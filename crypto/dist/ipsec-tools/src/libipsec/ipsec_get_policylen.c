@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_get_policylen.c,v 1.7 2007/07/18 12:07:50 vanhu Exp $	*/
+/*	$NetBSD: ipsec_get_policylen.c,v 1.7.68.1 2018/06/25 07:25:05 pgoyette Exp $	*/
 
 /*	$KAME: ipsec_get_policylen.c,v 1.5 2000/05/07 05:25:03 itojun Exp $	*/
 
@@ -47,8 +47,7 @@
 #include "ipsec_strerror.h"
 
 int
-ipsec_get_policylen(policy)
-	ipsec_policy_t policy;
+ipsec_get_policylen(ipsec_policy_t policy)
 {
 	return policy ? PFKEY_EXTLEN(policy) : -1;
 }

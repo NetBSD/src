@@ -1,5 +1,5 @@
 #
-#	$NetBSD: PANDABOARD,v 1.24 2017/09/14 07:58:40 mrg Exp $
+#	$NetBSD: PANDABOARD,v 1.24.2.1 2018/06/25 07:25:40 pgoyette Exp $
 #
 #	PANDABOARD -- TI OMAP 4430 Eval Board Kernel
 #
@@ -153,7 +153,7 @@ cpu0		at mainbus?
 armperiph0	at mainbus?
 arml2cc0	at armperiph?				# L2 Cache Controller
 armgic0		at armperiph?				# Interrupt Controller
-a9tmr0		at armperiph?				# Global Timer
+arma9tmr0	at armperiph?				# Global Timer
 a9wdt0		at armperiph?				# Watchdog
 
 # Specify the memory size in megabytes.

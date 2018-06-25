@@ -303,7 +303,7 @@ int ZEXPORT deflateInit2_(strm, level, method, windowBits, memLevel, strategy,
     if (s->window == Z_NULL || s->prev == Z_NULL || s->head == Z_NULL ||
         s->pending_buf == Z_NULL) {
         s->status = FINISH_STATE;
-        strm->msg = zError(Z_MEM_ERROR);
+        strm->msg = (char*)ERR_MSG(Z_MEM_ERROR);
         (void) deflateEnd (strm);
         return Z_MEM_ERROR;
     }

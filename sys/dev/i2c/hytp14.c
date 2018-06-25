@@ -37,7 +37,7 @@
  */ 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hytp14.c,v 1.7 2016/07/03 12:26:55 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hytp14.c,v 1.7.16.1 2018/06/25 07:25:50 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,19 +98,25 @@ static struct hytp14_sensor hytp14_sensors[] = {
 static int
 hytp14_match(device_t parent, cfdata_t match, void *aux)
 {
-	struct i2c_attach_args *ia;
+	struct i2c_attach_args *ia = aux;
+	int match_result;
 
-	ia = aux;
+	if (iic_use_direct_match(ia, match, NULL, &match_result))
+		return match_result;
 
-	if (ia->ia_name) {
-		/* direct config - check name */
-		if (strcmp(ia->ia_name, "hythygtemp") == 0)
-			return 1;
-	} else {
-		/* indirect config - check for configured address */
-		if ((ia->ia_addr > 0) && (ia->ia_addr <= 0x7F))
-			return 1;
-	}
+	if (ia->ia_addr == 0x28)
+		return I2C_MATCH_ADDRESS_ONLY;
+	
+	/*
+	 * XXXJRT
+	 * This device is an odd-ball; the i2c address can be changed
+	 * at run-time using a command sequence documented in the
+	 * application note, but the timing is critical (within 10ms
+	 * after power-on of the device), and the device always starts
+	 * up at address 0x28.
+	 *
+	 * How should we handle this?
+	 */
 	return 0;
 }
 

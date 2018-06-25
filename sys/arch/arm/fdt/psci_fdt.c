@@ -1,4 +1,4 @@
-/* $NetBSD: psci_fdt.c,v 1.3 2017/09/11 09:21:56 jmcneill Exp $ */
+/* $NetBSD: psci_fdt.c,v 1.3.4.1 2018/06/25 07:25:39 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psci_fdt.c,v 1.3 2017/09/11 09:21:56 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psci_fdt.c,v 1.3.4.1 2018/06/25 07:25:39 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -60,22 +60,22 @@ static const char * const compatible[] = {
 CFATTACH_DECL_NEW(psci_fdt, 0, psci_fdt_match, psci_fdt_attach, NULL, NULL);
 
 static void
-psci_fdt_reset(device_t dev)
+psci_fdt_power_reset(device_t dev)
 {
 	delay(500000);
 	psci_system_reset();
 }
 
 static void
-psci_fdt_poweroff(device_t dev)
+psci_fdt_power_poweroff(device_t dev)
 {
 	delay(500000);
 	psci_system_off();
 }
 
 static const struct fdtbus_power_controller_func psci_power_funcs = {
-	.reset = psci_fdt_reset,
-	.poweroff = psci_fdt_poweroff,
+	.reset = psci_fdt_power_reset,
+	.poweroff = psci_fdt_power_poweroff,
 };
 
 static int
@@ -126,14 +126,25 @@ psci_fdt_init(const int phandle)
 		return EINVAL;
 	}
 
-	const char * const compat_0_1[] = { "arm,psci", NULL };
-	if (of_match_compatible(phandle, compat_0_1)) {
+	if (of_match_compatible(phandle, compatible) == 1) {
 		psci_clearfunc();
 		if (of_getprop_uint32(phandle, "cpu_on", &val) == 0)
 			psci_setfunc(PSCI_FUNC_CPU_ON, val);
 	}
 
 	return 0;
+}
+
+static int
+psci_fdt_preinit(void)
+{
+	const int phandle = OF_finddevice("/psci");
+	if (phandle == -1) {
+		aprint_error("PSCI: no /psci node found\n");
+		return ENODEV;
+	}
+
+	return psci_fdt_init(phandle);
 }
 
 void
@@ -158,13 +169,7 @@ psci_fdt_bootstrap(void)
 		if (fdtbus_status_okay(child))
 			arm_cpu_max++;
 
-	const int phandle = OF_finddevice("/psci");
-	if (phandle == -1) {
-		aprint_error("PSCI: no /psci node found\n");
-		return;
-	}
-
-	if (psci_fdt_init(phandle) != 0)
+	if (psci_fdt_preinit() != 0)
 		return;
 
 	/* MPIDR affinity levels of boot processor. */
@@ -199,4 +204,15 @@ psci_fdt_bootstrap(void)
 			break;
 	}
 #endif
+}
+
+void
+psci_fdt_reset(void)
+{
+	if (psci_fdt_preinit() != 0) {
+		aprint_error("PSCI: reset failed\n");
+		return;
+	}
+
+	psci_system_reset();
 }

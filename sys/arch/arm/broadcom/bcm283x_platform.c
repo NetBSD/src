@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm283x_platform.c,v 1.2.2.2 2018/04/07 04:12:11 pgoyette Exp $	*/
+/*	$NetBSD: bcm283x_platform.c,v 1.2.2.3 2018/06/25 07:25:39 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.2.2.2 2018/04/07 04:12:11 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.2.2.3 2018/06/25 07:25:39 pgoyette Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bcm283x.h"
@@ -136,6 +136,8 @@ struct bus_space bcm2836_bs_tag;
 struct bus_space bcm2836_a4x_bs_tag;
 
 int bcm283x_bs_map(void *, bus_addr_t, bus_size_t, int, bus_space_handle_t *);
+paddr_t bcm283x_bs_mmap(void *, bus_addr_t, off_t, int, int);
+paddr_t bcm283x_a4x_bs_mmap(void *, bus_addr_t, off_t, int, int);
 
 int
 bcm283x_bs_map(void *t, bus_addr_t ba, bus_size_t size, int flag,
@@ -159,16 +161,45 @@ bcm283x_bs_map(void *t, bus_addr_t ba, bus_size_t size, int flag,
 
 	*bshp = (bus_space_handle_t)(va + (pa - startpa));
 
-	const int pmapflags =
-	    (flag & (BUS_SPACE_MAP_CACHEABLE|BUS_SPACE_MAP_PREFETCHABLE))
-		? 0
-		: PMAP_NOCACHE;
+	int pmapflags;
+	if (flag & BUS_SPACE_MAP_PREFETCHABLE)
+		pmapflags = PMAP_WRITE_COMBINE;
+	else if (flag & BUS_SPACE_MAP_CACHEABLE)
+		pmapflags = 0;
+	else
+		pmapflags = PMAP_NOCACHE;
 	for (pa = startpa; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
 		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE, pmapflags);
 	}
 	pmap_update(pmap_kernel());
 
 	return 0;
+}
+
+paddr_t
+bcm283x_bs_mmap(void *t, bus_addr_t bpa, off_t offset, int prot, int flags)
+{
+	/* Convert BA to PA */
+	const paddr_t pa = bpa & ~BCM2835_BUSADDR_CACHE_MASK;
+	paddr_t bus_flags = 0;
+
+	if (flags & BUS_SPACE_MAP_PREFETCHABLE)
+		bus_flags |= ARM_MMAP_WRITECOMBINE;
+
+	return arm_btop(pa + offset) | bus_flags;
+}
+
+paddr_t
+bcm283x_a4x_bs_mmap(void *t, bus_addr_t bpa, off_t offset, int prot, int flags)
+{
+	/* Convert BA to PA */
+	const paddr_t pa = bpa & ~BCM2835_BUSADDR_CACHE_MASK;
+	paddr_t bus_flags = 0;
+
+	if (flags & BUS_SPACE_MAP_PREFETCHABLE)
+		bus_flags |= ARM_MMAP_WRITECOMBINE;
+
+	return arm_btop(pa + 4 * offset) | bus_flags;
 }
 
 int
@@ -1163,7 +1194,9 @@ bcm2835_platform_bootstrap(void)
 	bcm2835_a4x_bs_tag = arm_generic_a4x_bs_tag;
 
 	bcm2835_bs_tag.bs_map = bcm2835_bs_map;
+	bcm2835_bs_tag.bs_mmap = bcm283x_bs_mmap;
 	bcm2835_a4x_bs_tag.bs_map = bcm2835_bs_map;
+	bcm2835_a4x_bs_tag.bs_mmap = bcm283x_a4x_bs_mmap;
 
 	fdtbus_set_decoderegprop(false);
 
@@ -1182,7 +1215,9 @@ bcm2836_platform_bootstrap(void)
 	bcm2836_a4x_bs_tag = arm_generic_a4x_bs_tag;
 
 	bcm2836_bs_tag.bs_map = bcm2836_bs_map;
+	bcm2836_bs_tag.bs_mmap = bcm283x_bs_mmap;
 	bcm2836_a4x_bs_tag.bs_map = bcm2836_bs_map;
+	bcm2836_a4x_bs_tag.bs_mmap = bcm283x_a4x_bs_mmap;
 
 	fdtbus_set_decoderegprop(false);
 

@@ -1,4 +1,4 @@
-/* $NetBSD: genfs_node.h,v 1.21 2013/06/06 02:00:59 dholland Exp $ */
+/* $NetBSD: genfs_node.h,v 1.21.32.1 2018/06/25 07:26:05 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2001 Chuck Silvers.
@@ -46,6 +46,7 @@ struct genfs_ops {
 	    struct kauth_cred *);
 	int	(*gop_write)(struct vnode *, struct vm_page **, int, int);
 	void	(*gop_markupdate)(struct vnode *, int);
+	void	(*gop_putrange)(struct vnode *, off_t, off_t *, off_t *);
 };
 
 #define GOP_SIZE(vp, size, eobp, flags) \
@@ -54,6 +55,8 @@ struct genfs_ops {
 	(*VTOG(vp)->g_op->gop_alloc)((vp), (off), (len), (flags), (cred))
 #define GOP_WRITE(vp, pgs, npages, flags) \
 	(*VTOG(vp)->g_op->gop_write)((vp), (pgs), (npages), (flags))
+#define GOP_PUTRANGE(vp, off, lop, hip) \
+	(*VTOG(vp)->g_op->gop_putrange)((vp), (off), (lop), (hip))
 
 /*
  * GOP_MARKUPDATE: mark vnode's timestamps for update.
@@ -85,6 +88,7 @@ struct genfs_node {
 void	genfs_size(struct vnode *, off_t, off_t *, int);
 void	genfs_node_init(struct vnode *, const struct genfs_ops *);
 void	genfs_node_destroy(struct vnode *);
+void	genfs_gop_putrange(struct vnode *, off_t, off_t *, off_t *);
 int	genfs_gop_write(struct vnode *, struct vm_page **, int, int);
 int	genfs_gop_write_rwmap(struct vnode *, struct vm_page **, int, int);
 int	genfs_compat_gop_write(struct vnode *, struct vm_page **, int, int);

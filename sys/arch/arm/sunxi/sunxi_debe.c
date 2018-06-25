@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_debe.c,v 1.2.2.2 2018/04/16 01:59:53 pgoyette Exp $ */
+/* $NetBSD: sunxi_debe.c,v 1.2.2.3 2018/06/25 07:25:39 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2018 Manuel Bouyer <bouyer@antioche.eu.org>
@@ -38,7 +38,7 @@
 #define SUNXI_DEBE_CURMAX	64
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_debe.c,v 1.2.2.2 2018/04/16 01:59:53 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_debe.c,v 1.2.2.3 2018/06/25 07:25:39 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -76,6 +76,8 @@ struct sunxi_debe_softc {
 	struct clk *sc_clk_ahb;
 	struct clk *sc_clk_mod;
 	struct clk *sc_clk_ram;
+
+	struct fdtbus_reset *sc_rst;
 
 	bus_dma_segment_t sc_dmasegs[1];
 	bus_size_t sc_dmasize;
@@ -152,7 +154,6 @@ sunxi_debe_attach(device_t parent, device_t self, void *aux)
 	const int phandle = faa->faa_phandle;
 	bus_addr_t addr;
 	bus_size_t size;
-	struct fdtbus_reset *rst;
 	int error;
 
 	sc->sc_dev = self;
@@ -171,21 +172,6 @@ sunxi_debe_attach(device_t parent, device_t self, void *aux)
 	sc->sc_clk_mod = fdtbus_clock_get(phandle, "mod");
 	sc->sc_clk_ram = fdtbus_clock_get(phandle, "ram");
 
-	rst = fdtbus_reset_get_index(phandle, 0);
-	if (rst == NULL) {
-		aprint_error(": couldn't get reset\n");
-		return;
-	}
-	if (fdtbus_reset_assert(rst) != 0) {
-		aprint_error(": couldn't assert reset\n");
-		return;
-	}
-	delay(1);
-	if (fdtbus_reset_deassert(rst) != 0) {
-		aprint_error(": couldn't de-assert reset\n");
-		return;
-	}
-
 	if (sc->sc_clk_ahb == NULL || sc->sc_clk_mod == NULL
 	    || sc->sc_clk_ram == NULL) {
 		aprint_error(": couldn't get clocks\n");
@@ -196,19 +182,10 @@ sunxi_debe_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	error = clk_set_rate(sc->sc_clk_mod, 300000000);
-	if (error) {
-		aprint_error("couln't set mod clock rate (%d)\n", error);
+	sc->sc_rst = fdtbus_reset_get_index(phandle, 0);
+	if (sc->sc_rst == NULL) {
+		aprint_error(": couldn't get reset\n");
 		return;
-	}
-
-	if (clk_enable(sc->sc_clk_ahb) != 0 ||
-	    clk_enable(sc->sc_clk_mod) != 0) {
-		aprint_error(": couldn't enable clocks\n");
-		return;
-	}
-	if (clk_disable(sc->sc_clk_ram) != 0) {
-		aprint_error(": couldn't disable ram clock\n");
 	}
 
 	sc->sc_type = of_search_compatible(faa->faa_phandle, compat_data)->data;
@@ -218,15 +195,7 @@ sunxi_debe_attach(device_t parent, device_t self, void *aux)
 	    fdtbus_get_string(phandle, "name"));
 
 
-	for (unsigned int reg = 0x800; reg < 0x1000; reg += 4) {
-		DEBE_WRITE(sc, reg, 0);
-	}
-
-	DEBE_WRITE(sc, SUNXI_DEBE_MODCTL_REG, SUNXI_DEBE_MODCTL_EN);
-
 	sc->sc_dmasize = SUNXI_DEBE_VIDEOMEM;
-
-	DEBE_WRITE(sc, SUNXI_DEBE_HWC_PALETTE_TABLE, 0);
 
 	error = sunxi_debe_alloc_videomem(sc);
 	if (error) {
@@ -239,11 +208,61 @@ sunxi_debe_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ports.dp_ep_connect = sunxi_debe_ep_connect;
 	sc->sc_ports.dp_ep_enable = sunxi_debe_ep_enable;
 	fdt_ports_register(&sc->sc_ports, self, phandle, EP_OTHER);
+}
 
-	if (clk_disable(sc->sc_clk_ahb) != 0 ||
-	    clk_disable(sc->sc_clk_mod) != 0) {
-		aprint_error(": couldn't disable clocks\n");
-		return;
+static void
+sunxi_debe_doreset(void)
+{
+	device_t dev;
+	struct sunxi_debe_softc *sc;
+	int error;
+
+	for (int i = 0;;i++) {
+		dev = device_find_by_driver_unit("sunxidebe", i);
+		if (dev == NULL)
+			return;
+		sc = device_private(dev);
+
+		if (fdtbus_reset_assert(sc->sc_rst) != 0) {
+			aprint_error_dev(dev, ": couldn't assert reset\n");
+			return;
+		}
+		delay(1);
+		if (fdtbus_reset_deassert(sc->sc_rst) != 0) {
+			aprint_error_dev(dev, ": couldn't de-assert reset\n");
+			return;
+		}
+
+
+		error = clk_set_rate(sc->sc_clk_mod, 300000000);
+		if (error) {
+			aprint_error_dev(dev,
+			    "couln't set mod clock rate (%d)\n", error);
+			return;
+		}
+
+		if (clk_enable(sc->sc_clk_ahb) != 0 ||
+		    clk_enable(sc->sc_clk_mod) != 0) {
+			aprint_error_dev(dev, ": couldn't enable clocks\n");
+			return;
+		}
+		if (clk_disable(sc->sc_clk_ram) != 0) {
+			aprint_error_dev(dev, ": couldn't disable ram clock\n");
+		}
+
+		for (unsigned int reg = 0x800; reg < 0x1000; reg += 4) {
+			DEBE_WRITE(sc, reg, 0);
+		}
+
+		DEBE_WRITE(sc, SUNXI_DEBE_MODCTL_REG, SUNXI_DEBE_MODCTL_EN);
+
+		DEBE_WRITE(sc, SUNXI_DEBE_HWC_PALETTE_TABLE, 0);
+
+		if (clk_disable(sc->sc_clk_ahb) != 0 ||
+		    clk_disable(sc->sc_clk_mod) != 0) {
+			aprint_error_dev(sc->sc_dev,
+			    ": couldn't disable clocks\n");
+		}
 	}
 }
 
@@ -841,6 +860,7 @@ sunxi_debe_pipeline(int phandle, bool active)
 	struct sunxi_debe_softc *sc;
 	struct fdt_endpoint *ep;
 	int i, error;
+	static bool reset_done = false;
 
 	if (!active)
 		return EOPNOTSUPP;
@@ -853,6 +873,13 @@ sunxi_debe_pipeline(int phandle, bool active)
 		if (sc->sc_phandle == phandle)
 			break;
 	}
+	if (!reset_done) {
+		sunxi_debe_doreset();
+		sunxi_tcon_doreset();
+		sunxi_hdmi_doreset();
+		reset_done = true;
+	}
+
 	aprint_normal("activate %s\n", device_xname(dev));
 	if (clk_enable(sc->sc_clk_ahb) != 0 ||
 	    clk_enable(sc->sc_clk_mod) != 0) {

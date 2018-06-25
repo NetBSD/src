@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17.14.1 2018/05/21 04:35:54 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.17.14.2 2018/06/25 07:25:31 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -18,7 +18,7 @@ INCS=	ft2build.h
 SRCS=	ftapi.c ftbase.c ftbbox.c ftbdf.c ftdebug.c ftfstype.c \
 	ftglyph.c ftinit.c ftmm.c ftpfr.c ftstroke.c ftsynth.c \
 	ftsystem.c fttype1.c ftwinfnt.c ftbitmap.c ftcid.c \
-	ftgasp.c ftgxval.c ftotval.c ftpatent.c ftpfr.c
+	ftgasp.c ftgxval.c ftotval.c ftpatent.c
 
 .PATH:	${FREETYPE}/src/autofit
 SRCS+=	autofit.c
@@ -60,7 +60,7 @@ SRCS+=	psaux.c
 SRCS+=	pshinter.c
 
 .PATH:	${FREETYPE}/src/psnames
-SRCS+=	psmodule.c
+SRCS+=	psnames.c
 
 .PATH:	${FREETYPE}/src/raster
 SRCS+=	raster.c

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2017/05/21 15:28:43 riastradh Exp $
+#	$NetBSD: Makefile,v 1.3.8.1 2018/06/25 07:26:10 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -9,7 +9,7 @@ WARNS=6
 LDADD=	-lcrypto
 DPADD=	${LIBCRYPTO}
 
-SUBDIR+=USD.doc
+SUBDIR.roff+=USD.doc
 
 .include <bsd.prog.mk>
 .include <bsd.subdir.mk>

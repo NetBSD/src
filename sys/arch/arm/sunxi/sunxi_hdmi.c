@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_hdmi.c,v 1.3.2.2 2018/04/07 04:12:12 pgoyette Exp $ */
+/* $NetBSD: sunxi_hdmi.c,v 1.3.2.3 2018/06/25 07:25:40 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_hdmi.c,v 1.3.2.2 2018/04/07 04:12:12 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_hdmi.c,v 1.3.2.3 2018/06/25 07:25:40 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -165,7 +165,6 @@ sunxi_hdmi_attach(device_t parent, device_t self, void *aux)
 	bus_addr_t addr;
 	bus_size_t size;
 	uint32_t ver;
-	int error;
 
 	sc->sc_dev = self;
 	sc->sc_phandle = phandle;
@@ -197,28 +196,10 @@ sunxi_hdmi_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	error = clk_disable(sc->sc_clk_mod);
-	if (error) {
-		aprint_error(": couldn't disable mod clock\n");
-		return;
-	}
-
 	if (clk_enable(sc->sc_clk_ahb) != 0) {
 		aprint_error(": couldn't enable ahb clock\n");
 		return;
 	}
-#if defined(SUNXI_HDMI_DEBUG)
-	sunxi_hdmi_dump_regs();
-#endif
-
-	/*
-	 * reset device, in case it has been setup by firmware in an
-	 * incompatible way
-	 */
-	for (int i = 0; i <= 0x500; i += 4) {
-		HDMI_WRITE(sc, i, 0);
-	}
-
 	ver = HDMI_READ(sc, SUNXI_HDMI_VERSION_ID_REG);
 
 	const int vmaj = __SHIFTOUT(ver, SUNXI_HDMI_VERSION_ID_H);
@@ -236,10 +217,43 @@ sunxi_hdmi_attach(device_t parent, device_t self, void *aux)
 
 	mutex_init(&sc->sc_pwr_lock, MUTEX_DEFAULT, IPL_NONE);
 	sunxi_hdmi_i2c_init(sc);
+}
 
-	if (clk_disable(sc->sc_clk_ahb) != 0) {
-		aprint_error(": couldn't disable ahb clock\n");
-		return;
+void
+sunxi_hdmi_doreset(void)
+{
+	device_t dev;
+	struct sunxi_hdmi_softc *sc;
+	int error;
+
+	for (int i = 0;;i++) {
+		dev = device_find_by_driver_unit("sunxihdmi", i);
+		if (dev == NULL)
+			return;
+		sc = device_private(dev);
+	
+		error = clk_disable(sc->sc_clk_mod);
+		if (error) {
+			aprint_error_dev(dev, ": couldn't disable mod clock\n");
+			return;
+		}
+
+#if defined(SUNXI_HDMI_DEBUG)
+		sunxi_hdmi_dump_regs();
+#endif
+
+		/*
+		 * reset device, in case it has been setup by firmware in an
+		 * incompatible way
+		 */
+		for (int j = 0; j <= 0x500; j += 4) {
+			HDMI_WRITE(sc, j, 0);
+		}
+
+		if (clk_disable(sc->sc_clk_ahb) != 0) {
+			aprint_error_dev(dev, ": couldn't disable ahb clock\n");
+			return;
+		}
 	}
 }
 

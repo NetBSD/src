@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_priq.c,v 1.24 2017/07/28 13:53:17 riastradh Exp $	*/
+/*	$NetBSD: altq_priq.c,v 1.24.2.1 2018/06/25 07:25:37 pgoyette Exp $	*/
 /*	$KAME: altq_priq.c,v 1.13 2005/04/13 03:44:25 suz Exp $	*/
 /*
  * Copyright (C) 2000-2003
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_priq.c,v 1.24 2017/07/28 13:53:17 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_priq.c,v 1.24.2.1 2018/06/25 07:25:37 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -317,8 +317,10 @@ priq_class_create(struct priq_if *pif, int pri, int qlimit, int flags, int qid)
 
 		cl->cl_q = malloc(sizeof(class_queue_t), M_DEVBUF,
 		    M_WAITOK|M_ZERO);
-		if (cl->cl_q == NULL)
-			goto err_ret;
+		if (cl->cl_q == NULL) {
+			free(cl, M_DEVBUF);
+			return (NULL);
+		}
 	}
 
 	pif->pif_classes[pri] = cl;
@@ -372,22 +374,6 @@ priq_class_create(struct priq_if *pif, int pri, int qlimit, int flags, int qid)
 #endif /* ALTQ_RED */
 
 	return (cl);
-
- err_ret:
-	if (cl->cl_red != NULL) {
-#ifdef ALTQ_RIO
-		if (q_is_rio(cl->cl_q))
-			rio_destroy((rio_t *)cl->cl_red);
-#endif
-#ifdef ALTQ_RED
-		if (q_is_red(cl->cl_q))
-			red_destroy(cl->cl_red);
-#endif
-	}
-	if (cl->cl_q != NULL)
-		free(cl->cl_q, M_DEVBUF);
-	free(cl, M_DEVBUF);
-	return (NULL);
 }
 
 static int

@@ -1,7 +1,7 @@
 /*
  * $OpenBSD: util.h,v 1.15 2005/06/20 07:14:06 otto Exp $
  * $DragonFly: src/usr.bin/patch/util.h,v 1.2 2007/09/29 23:11:10 swildner Exp $
- * $NetBSD: util.h,v 1.12 2011/09/06 18:25:14 joerg Exp $
+ * $NetBSD: util.h,v 1.12.40.1 2018/06/25 07:26:11 pgoyette Exp $
  */
 
 /*
@@ -45,6 +45,7 @@ void		ignore_signals(void);
 void		makedirs(const char *, bool);
 void		version(void) __dead;
 void		my_exit(int) __dead;
+void		*pch_realloc(void *, size_t, size_t);
 
 /* in mkpath.c */
 extern int mkpath(char *);

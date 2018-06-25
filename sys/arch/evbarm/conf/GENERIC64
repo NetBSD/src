@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.1.2.4 2018/05/21 04:36:00 pgoyette Exp $
+#	$NetBSD: GENERIC64,v 1.1.2.5 2018/06/25 07:25:40 pgoyette Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -14,9 +14,13 @@ include	"arch/evbarm/conf/GENERIC.common"
 #
 makeoptions 	DTSARCH="arm aarch64"
 makeoptions	DTSGNUARCH="arm arm64"
-makeoptions	DTSSUBDIR="allwinner broadcom nvidia"
+makeoptions	DTSSUBDIR="allwinner broadcom nvidia rockchip"
 makeoptions	DTS="
 	bcm2837-rpi-3-b.dts
+
+	rk3328-evb.dts
+	rk3328-roc-cc.dts
+	rk3328-rock64.dts
 
 	sun50i-a64-bananapi-m64.dts
 	sun50i-a64-nanopi-a64.dts
@@ -45,10 +49,12 @@ makeoptions	DTS="
 options 	CPU_CORTEXA53
 options 	CPU_CORTEXA57
 options 	SOC_BCM2837
+options 	SOC_RK3328
 options 	SOC_TEGRA210
 options 	SOC_SUN50I_A64
 options 	SOC_SUN50I_H5
 options 	SOC_SUN50I_H6
+options 	SOC_VIRT
 #options 	MULTIPROCESSOR
 
 pseudo-device 	openfirm	# /dev/openfirm
@@ -61,8 +67,10 @@ options 	DEBUG
 options 	VERBOSE_INIT_ARM # verbose bootstrapping messages
 # EARLYCONS is required for early init messages from VERBOSE_INIT_ARM.
 #options 	EARLYCONS=bcm2837
+#options 	EARLYCONS=rk3328, CONSADDR=0xff130000
 #options 	EARLYCONS=sunxi, CONSADDR=0x01c28000
 #options 	EARLYCONS=tegra, CONSADDR=0x70006000
+#options 	EARLYCONS=virt
 
 makeoptions	DEBUG="-g"	# compile full symbol table
 makeoptions	COPY_SYMTAB=1
@@ -129,6 +137,7 @@ tegrapmc*	at fdt? pass 4		# NVIDIA Tegra PMC
 # Clock and Reset controller
 bcmcprman*	at fdt? pass 1		# Broadcom BCM283x Clock Manager
 bcmaux*		at fdt? pass 1		# Broadcom BCM283x Aux Periph Clocks
+rkcru*		at fdt? pass 2		# Rockchip RK3328 CRU
 sun8ih3ccu*	at fdt? pass 2		# Allwinner H3/H5 CCU
 sun8ih3rccu*	at fdt? pass 2		# Allwinner H3/H5 CCU (PRCM)
 sun50ia64ccu*	at fdt? pass 2		# Allwinner A64 CCU
@@ -144,12 +153,14 @@ tegra210car*	at fdt? pass 3		# NVIDIA Tegra CAR (T210)
 bcmgpio*	at fdt?			# Broadcom BCM283x GPIO
 sunxigpio*	at fdt? pass 3		# Allwinner GPIO
 tegragpio*	at fdt? pass 2		# NVIDIA Tegra GPIO
+rkgpio*		at rkiomux?		# Rockchip GPIO
 gpio*		at gpiobus?
 
 # PWM controller
 sunxipwm*	at fdt? pass 3		# Allwinner PWM
 
 # MPIO / Pinmux
+rkiomux*	at fdt?	pass 2		# Rockchip IOMUX
 tegrapinmux*	at fdt?			# NVIDIA Tegra MPIO
 
 # XUSB PADCTL
@@ -163,6 +174,7 @@ ppb*		at pci? dev ? function ?
 pci*		at ppb?
 
 # Ethernet
+awge*		at fdt?				# DesignWare Gigabit Ethernet
 emac*		at fdt?				# Allwinner Gigabit Ethernet (EMAC)
 re*		at pci? dev ? function ?	# Realtek RTL8111GS
 
@@ -227,6 +239,7 @@ sunxirtc*	at fdt?			# Allwinner RTC
 tegrartc*	at fdt?			# NVIDIA Tegra RTC
 
 # SDMMC
+dwcmmc*		at fdt?			# Designware SD/MMC
 mmcpwrseq*	at fdt?			# Simple MMC power sequence provider
 sdhc*		at fdt?			# SD Host Controller Interface
 sdhost*		at fdt?			# Broadcom BCM283x SD Host Interface
@@ -300,6 +313,8 @@ sunxithermal*	at fdt?			# Allwinner thermal sensor controller
 tegrasoctherm*	at fdt?			# NVIDIA Tegra SOC_THERM
 
 # USB
+rkusb*		at fdt? pass 9		# Rockchip USB PHY
+rkusbphy*	at rkusb?
 sunxiusbphy*	at fdt? pass 9		# Allwinner USB PHY
 sunxiusb3phy*	at fdt? pass 9		# Allwinner USB3 PHY
 tegrausbphy*	at fdt?			# NVIDIA Tegra USB PHY

@@ -1,4 +1,4 @@
-.\"	$NetBSD: atoi.3,v 1.10 2003/08/07 16:43:38 agc Exp $
+.\"	$NetBSD: atoi.3,v 1.10.96.1 2018/06/25 07:25:34 pgoyette Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     from: @(#)atoi.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd June 4, 1993
+.Dd June 13, 2018
 .Dt ATOI 3
 .Os
 .Sh NAME
@@ -58,7 +58,7 @@ representation.
 .Pp
 It is equivalent to:
 .Bd -literal -offset indent
-(int)strtol(nptr, (char **)NULL, 10);
+(int)strtol(nptr, NULL, 10);
 .Ed
 .Sh SEE ALSO
 .Xr atof 3 ,

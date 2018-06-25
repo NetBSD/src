@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.71 2017/10/28 00:37:13 pgoyette Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.71.2.1 2018/06/25 07:26:05 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.71 2017/10/28 00:37:13 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.71.2.1 2018/06/25 07:26:05 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1120,10 +1120,29 @@ retry:
 			UVM_PAGE_OWN(pg, "genfs_putpages");
 
 			/*
+			 * let the fs constrain the offset range of the cluster.
+			 * we additionally constrain the range here such that
+			 * it fits in the "pgs" pages array.
+			 */
+
+			off_t fslo, fshi, genlo, lo;
+			GOP_PUTRANGE(vp, off, &fslo, &fshi);
+			KASSERT(fslo == trunc_page(fslo));
+			KASSERT(fslo <= off);
+			KASSERT(fshi == trunc_page(fshi));
+			KASSERT(fshi == 0 || off < fshi);
+
+			if (off > MAXPHYS / 2)
+				genlo = trunc_page(off - (MAXPHYS / 2));
+			else
+				genlo = 0;
+			lo = MAX(fslo, genlo);
+
+			/*
 			 * first look backward.
 			 */
 
-			npages = MIN(MAXPAGES >> 1, off >> PAGE_SHIFT);
+			npages = (off - lo) >> PAGE_SHIFT;
 			nback = npages;
 			uvn_findpages(uobj, off - PAGE_SIZE, &nback, &pgs[0],
 			    UFP_NOWAIT|UFP_NOALLOC|UFP_DIRTYONLY|UFP_BACKWARD);
@@ -1150,6 +1169,9 @@ retry:
 			 */
 
 			npages = MAXPAGES - nback - 1;
+			if (fshi)
+				npages = MIN(npages,
+					     (fshi - off - 1) >> PAGE_SHIFT);
 			uvn_findpages(uobj, off + PAGE_SIZE, &npages,
 			    &pgs[nback + 1],
 			    UFP_NOWAIT|UFP_NOALLOC|UFP_DIRTYONLY);
@@ -1312,6 +1334,18 @@ skip_scan:
 	}
 
 	return (error);
+}
+
+/*
+ * Default putrange method for file systems that do not care
+ * how many pages are given to one GOP_WRITE() call.
+ */
+void
+genfs_gop_putrange(struct vnode *vp, off_t off, off_t *lop, off_t *hip)
+{
+
+	*lop = 0;
+	*hip = 0;
 }
 
 int

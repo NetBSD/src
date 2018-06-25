@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_layout.h,v 1.17 2007/03/04 06:02:38 christos Exp $	*/
+/*	$NetBSD: rf_layout.h,v 1.17.128.1 2018/06/25 07:26:01 pgoyette Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -88,7 +88,7 @@ struct RF_RaidLayout_s {
  * The mapping code returns a pointer to a list of AccessStripeMap structures, which
  * describes all the mapping information about an access.  The list contains one
  * AccessStripeMap structure per stripe touched by the access.  Each element in the list
- * contains a stripe identifier and a pointer to a list of PhysDiskAddr structuress.  Each
+ * contains a stripe identifier and a pointer to a list of PhysDiskAddr structures.  Each
  * element in this latter list describes the physical location of a stripe unit accessed
  * within the corresponding stripe.
  *
@@ -192,7 +192,7 @@ typedef struct RF_FailedStripe_s RF_FailedStripe_t;
 struct RF_FailedStripe_s {
 	RF_VoidFunctionPointerListElem_t *vfple;   /* linked list of pointers to DAG creation
 						      functions for stripes */
-	RF_VoidFunctionPointerListElem_t *bvfple;  /* linked list of poitners to DAG creation
+	RF_VoidFunctionPointerListElem_t *bvfple;  /* linked list of pointers to DAG creation
 						      functions for blocks */
 	RF_ASMHeaderListElem_t *asmh_u;            /* Access Stripe Map Headers for regular
 						      stripes */

@@ -1,4 +1,4 @@
-/*	$NetBSD: tda.c,v 1.11 2016/07/07 06:55:38 msaitoh Exp $	*/
+/*	$NetBSD: tda.c,v 1.11.16.1 2018/06/25 07:25:45 pgoyette Exp $	*/
 /*	$OpenBSD: tda.c,v 1.4 2008/02/27 17:25:00 robert Exp $ */
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tda.c,v 1.11 2016/07/07 06:55:38 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tda.c,v 1.11.16.1 2018/06/25 07:25:45 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,7 +100,9 @@ tda_match(device_t parent, cfdata_t match, void *aux)
 	 */
 	if (ia->ia_name == NULL)
 		return(0);
-	return strcmp(ia->ia_name, "fan-control") == 0;
+
+	return strcmp(ia->ia_name, "fan-control") == 0 ?
+	    I2C_MATCH_DIRECT_SPECIFIC : 0;
 }
 
 void

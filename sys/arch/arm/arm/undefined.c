@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.61 2018/01/24 09:04:44 skrll Exp $	*/
+/*	$NetBSD: undefined.c,v 1.61.2.1 2018/06/25 07:25:38 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris.
@@ -55,7 +55,7 @@
 #include <sys/kgdb.h>
 #endif
 
-__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.61 2018/01/24 09:04:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.61.2.1 2018/06/25 07:25:38 pgoyette Exp $");
 
 #include <sys/kmem.h>
 #include <sys/queue.h>
@@ -221,34 +221,26 @@ static struct undefined_handler gdb_uh_thumb;
 dtrace_doubletrap_func_t	dtrace_doubletrap_func = NULL;
 dtrace_trap_func_t		dtrace_trap_func = NULL;
 
-int (* dtrace_invop_jump_addr)(uintptr_t, struct trapframe *, uintptr_t);
-void (* dtrace_emulation_jump_addr)(int, struct trapframe *);
+int (* dtrace_invop_jump_addr)(struct trapframe *);
 
 static int
 dtrace_trapper(u_int addr, struct trapframe *frame)
 {
-	int op;
-	struct trapframe back;
 	u_int insn = read_insn(addr, false);
 
-	if (dtrace_invop_jump_addr == NULL || dtrace_emulation_jump_addr == NULL)
+	if (dtrace_invop_jump_addr == NULL)
 		return 1;
 
 	if (!DTRACE_IS_BREAKPOINT(insn))
 		return 1;
 
-	/* cond value is encoded in the first byte */
+	/* cond value is encoded in the low nibble */
 	if (!arm_cond_ok_p(__SHIFTIN(insn, INSN_COND_MASK), frame->tf_spsr)) {
 		frame->tf_pc += INSN_SIZE;
 		return 0;
 	}
 
-	back = *frame;
-	op = dtrace_invop_jump_addr(addr, frame, frame->tf_r0);
-	*frame = back;
-
-	dtrace_emulation_jump_addr(op, frame);
-
+	dtrace_invop_jump_addr(frame);
 	return 0;
 }
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.26 2017/06/07 05:08:32 kre Exp $	*/
+/*	$NetBSD: exec.h,v 1.26.4.1 2018/06/25 07:25:04 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -49,7 +49,7 @@ struct cmdentry {
 	union param {
 		int index;
 		int (*bltin)(int, char**);
-		union node *func;
+		struct funcdef *func;
 	} u;
 };
 
@@ -72,6 +72,7 @@ void hashcd(void);
 void changepath(const char *);
 void deletefuncs(void);
 void getcmdentry(char *, struct cmdentry *);
+union node;
 void defun(char *, union node *, int);
 int unsetfunc(char *);
 void hash_special_builtins(void);

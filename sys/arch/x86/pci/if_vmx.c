@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vmx.c,v 1.21.2.1 2018/04/22 07:20:19 pgoyette Exp $	*/
+/*	$NetBSD: if_vmx.c,v 1.21.2.2 2018/06/25 07:25:47 pgoyette Exp $	*/
 /*	$OpenBSD: if_vmx.c,v 1.16 2014/01/22 06:04:17 brad Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.21.2.1 2018/04/22 07:20:19 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.21.2.2 2018/06/25 07:25:47 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -2536,7 +2536,7 @@ vmxnet3_txq_offload_ctx(struct vmxnet3_txqueue *txq, struct mbuf *m,
 		iphl = M_CSUM_DATA_IPv4_IPHL(m->m_pkthdr.csum_data);
 		v4 = true;
 	} else {
-		iphl = M_CSUM_DATA_IPv6_HL(m->m_pkthdr.csum_data);
+		iphl = M_CSUM_DATA_IPv6_IPHL(m->m_pkthdr.csum_data);
 		v4 = false;
 	}
 	*start = offset + iphl;

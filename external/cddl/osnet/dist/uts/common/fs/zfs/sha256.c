@@ -22,19 +22,34 @@
  * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  */
+/*
+ * Copyright 2013 Saso Kiselkov. All rights reserved.
+ */
 #include <sys/zfs_context.h>
 #include <sys/zio.h>
+#ifdef __FreeBSD__
+#ifdef _KERNEL
+#include <crypto/sha2/sha256.h>
+#include <crypto/sha2/sha512t.h>
+#else
+#include <sha256.h>
+#include <sha512t.h>
+#endif
+#else
 #include <sys/sha2.h>
+#endif
 
+/*ARGSUSED*/
 void
-zio_checksum_SHA256(const void *buf, uint64_t size, zio_cksum_t *zcp)
+zio_checksum_SHA256(const void *buf, uint64_t size,
+    const void *ctx_template, zio_cksum_t *zcp)
 {
-	SHA2_CTX ctx;
+	SHA256_CTX ctx;
 	zio_cksum_t tmp;
 
-	SHA2Init(SHA256, &ctx);
-	SHA2Update(&ctx, buf, size);
-	SHA2Final(&tmp, &ctx);
+	SHA256_Init(&ctx);
+	SHA256_Update(&ctx, buf, size);
+	SHA256_Final((unsigned char *)&tmp, &ctx);
 
 	/*
 	 * A prior implementation of this function had a
@@ -48,3 +63,31 @@ zio_checksum_SHA256(const void *buf, uint64_t size, zio_cksum_t *zcp)
 	zcp->zc_word[2] = BE_64(tmp.zc_word[2]);
 	zcp->zc_word[3] = BE_64(tmp.zc_word[3]);
 }
+
+#ifndef __NetBSD__
+/*ARGSUSED*/
+void
+zio_checksum_SHA512_native(const void *buf, uint64_t size,
+    const void *ctx_template, zio_cksum_t *zcp)
+{
+	SHA512_CTX	ctx;
+
+	SHA512_256_Init(&ctx);
+	SHA512_256_Update(&ctx, buf, size);
+	SHA512_256_Final((unsigned char *)zcp, &ctx);
+}
+
+/*ARGSUSED*/
+void
+zio_checksum_SHA512_byteswap(const void *buf, uint64_t size,
+    const void *ctx_template, zio_cksum_t *zcp)
+{
+	zio_cksum_t	tmp;
+
+	zio_checksum_SHA512_native(buf, size, ctx_template, &tmp);
+	zcp->zc_word[0] = BSWAP_64(tmp.zc_word[0]);
+	zcp->zc_word[1] = BSWAP_64(tmp.zc_word[1]);
+	zcp->zc_word[2] = BSWAP_64(tmp.zc_word[2]);
+	zcp->zc_word[3] = BSWAP_64(tmp.zc_word[3]);
+}
+#endif

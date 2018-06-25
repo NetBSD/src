@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mkioctls,v 1.46 2017/11/05 17:44:28 christos Exp $
+#	$NetBSD: mkioctls,v 1.46.2.1 2018/06/25 07:26:10 pgoyette Exp $
 #
 # Copyright (c) 1994
 #	The Regents of the University of California.  All rights reserved.
@@ -52,6 +52,7 @@ echo "struct map_info { int _xxx[22]; };" # XXX Xorg lossage
 echo "#include <stdio.h>"
 echo "#include <sys/types.h>"
 echo "#include <sys/param.h>"
+echo "#include <sys/mutex.h>"
 echo "#ifndef NBPG"
 echo "#define NBPG 4096 /* workaround / dummy for sparc */"
 echo "#endif /* NBPG */"
@@ -93,19 +94,16 @@ do
 		fi;;
 	esac
 	echo "#include <$i>"
-done | ${SED} -e "s,${DESTDIR}/usr/include/,,g"
+done | ${SED} -e "s,${DESTDIR}/usr/include/,,g" \
+	-e "s,${DESTDIR}/usr/X11R7/include/,,g" \
+	-e "s,${NETBSDSRCDIR}/external/cddl/osnet/dist/uts/common/,,g"
 
 if ! $needundef; then
     echo "#define bool _Bool"
 fi
 
-${CC} -E -nostdinc -isystem ${DESTDIR}/usr/include \
-    -I${DESTDIR}/usr/X11R7/include \
-    -I${DESTDIR}/usr/X11R7/include/pixman-1 \
-    -I${DESTDIR}/usr/X11R7/include/libdrm \
-    -D_VIA_DRM_H_ \
-    -dM "${@}" | \
-${AWK} '
+${CC} -E -nostdinc -isystem ${DESTDIR}/usr/include ${CPPFLAGS} -dM "${@}" | \
+    ${AWK} '
 BEGIN {
 	keep["SLIOCGUNIT"] = 1;	# Same as PPPIOCGASYNCMAP
 	keep["TUNSLMODE"] = 1;	# Same as PPPIOCGASYNCMAP

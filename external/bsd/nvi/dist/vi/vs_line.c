@@ -1,4 +1,4 @@
-/*	$NetBSD: vs_line.c,v 1.4 2017/11/10 14:44:13 rin Exp $ */
+/*	$NetBSD: vs_line.c,v 1.4.2.1 2018/06/25 07:25:13 pgoyette Exp $ */
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -16,7 +16,7 @@
 static const char sccsid[] = "Id: vs_line.c,v 10.38 2002/01/19 21:59:07 skimo Exp  (Berkeley) Date: 2002/01/19 21:59:07 ";
 #endif /* not lint */
 #else
-__RCSID("$NetBSD: vs_line.c,v 1.4 2017/11/10 14:44:13 rin Exp $");
+__RCSID("$NetBSD: vs_line.c,v 1.4.2.1 2018/06/25 07:25:13 pgoyette Exp $");
 #endif
 
 #include <sys/types.h>
@@ -497,10 +497,23 @@ display:
 
 			/* XXXX this needs some rethinking */
 			if (INTISWIDE(ch)) {
-				/* Put a space before non-spacing char. */
-				if (CHAR_WIDTH(sp, ch) <= 0)
+				/*
+				 * We ensure that every wide char occupies at
+				 * least one display width, as noted in conv.h:
+				 *   - Replace non-printable char with ?-symbol.
+				 *   - Put space before non-spacing char.
+				 */
+				switch (CHAR_WIDTH(sp, ch)) {
+				case -1:
+					*cbp++ = L('?');
+					break;
+				case 0:
 					*cbp++ = L(' ');
-				*cbp++ = ch;
+					/* FALLTHROUGH */
+				default:
+					*cbp++ = ch;
+					break;
+				}
 			} else
 				for (kp = KEY_NAME(sp, ch) + offset_in_char; 
 				     chlen--;)

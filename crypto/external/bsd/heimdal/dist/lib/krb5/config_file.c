@@ -1,4 +1,4 @@
-/*	$NetBSD: config_file.c,v 1.3 2017/09/08 15:29:43 christos Exp $	*/
+/*	$NetBSD: config_file.c,v 1.3.2.1 2018/06/25 07:25:05 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2004 Kungliga Tekniska Högskolan
@@ -430,6 +430,8 @@ krb5_config_parse_file_multi (krb5_context context,
     if (ISTILDE(fname[0]) && ISPATHSEP(fname[1])) {
 #ifndef KRB5_USE_PATH_TOKENS
 	const char *home = NULL;
+	struct passwd pw, *pwd = NULL;
+	char pwbuf[2048];
 
 	if (!_krb5_homedir_access(context)) {
 	    krb5_set_error_message(context, EPERM,
@@ -441,9 +443,6 @@ krb5_config_parse_file_multi (krb5_context context,
 	    home = getenv("HOME");
 
 	if (home == NULL) {
-	    struct passwd pw, *pwd = NULL;
-	    char pwbuf[2048];
-
 	    if (rk_getpwuid_r(getuid(), &pw, pwbuf, sizeof(pwbuf), &pwd) == 0)
 		home = pwd->pw_dir;
 	}

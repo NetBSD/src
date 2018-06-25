@@ -1,4 +1,4 @@
-/* $NetBSD: aarch64_machdep.c,v 1.1.28.2 2018/05/21 04:35:57 pgoyette Exp $ */
+/* $NetBSD: aarch64_machdep.c,v 1.1.28.3 2018/06/25 07:25:37 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.1.28.2 2018/05/21 04:35:57 pgoyette Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.1.28.3 2018/06/25 07:25:37 pgoyette Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -268,11 +268,12 @@ static int
 aarch64_sysctl_machdep_sysreg_helper(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node;
-	uint64_t databuf[8];
+#define MAX_SYSCTLREGS	8
+	uint64_t databuf[MAX_SYSCTLREGS];
 	void *data;
 
 	node = *rnode;
-	node.sysctl_data = data = &databuf;
+	node.sysctl_data = data = (void *)databuf;
 
 	/*
 	 * Don't keep values in advance due to system registers may have

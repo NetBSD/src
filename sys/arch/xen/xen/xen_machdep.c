@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_machdep.c,v 1.15 2016/06/08 01:59:06 jnemeth Exp $	*/
+/*	$NetBSD: xen_machdep.c,v 1.15.16.1 2018/06/25 07:25:48 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.15 2016/06/08 01:59:06 jnemeth Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.15.16.1 2018/06/25 07:25:48 pgoyette Exp $");
 
 #include "opt_xen.h"
 
@@ -352,7 +352,7 @@ static void
 xen_suspend_domain(void)
 {
 	paddr_t mfn;
-	int s = splvm();
+	int s = splvm(); /* XXXSMP */
 
 	/*
 	 * console becomes unavailable when suspended, so

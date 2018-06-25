@@ -1,4 +1,4 @@
-/*	$NetBSD: prekern.h,v 1.19 2018/01/15 22:38:01 christos Exp $	*/
+/*	$NetBSD: prekern.h,v 1.19.2.1 2018/06/25 07:25:38 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
@@ -75,6 +75,7 @@ struct bootspace {
 	} boot;
 	vaddr_t spareva;
 	vaddr_t pdir;
+	vaddr_t smodule;
 	vaddr_t emodule;
 };
 

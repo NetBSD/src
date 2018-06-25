@@ -1,10 +1,9 @@
-#	$NetBSD: Makefile,v 1.30 2016/01/23 22:29:29 christos Exp $
+#	$NetBSD: Makefile,v 1.30.16.1 2018/06/25 07:25:42 pgoyette Exp $
 
 S=	${.CURDIR}/../../../..
 
 BASE= dosboot
 PROG= ${BASE}.com
-NOMAN=	# defined
 NEWVERSWHAT=	"DOS Boot"
 STARTFILE=	${DOSSTART}
 RELOC=		0x100
@@ -33,11 +32,7 @@ I386MISCMAKEFLAGS= I386_INCLUDE_DOS=yes
 
 VERSIONFILE= ${.CURDIR}/version
 
-PIE_CFLAGS=
-PIE_LDFLAGS=
-PIE_AFLAGS=
-
-.include <bsd.own.mk>
+.include <bsd.init.mk>
 
 release: check_RELEASEDIR
 	${HOST_INSTALL_FILE} -m ${BINMODE} dosboot.com \

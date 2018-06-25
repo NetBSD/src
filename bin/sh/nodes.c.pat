@@ -1,4 +1,4 @@
-/*	$NetBSD: nodes.c.pat,v 1.13 2012/03/20 18:42:29 matt Exp $	*/
+/*	$NetBSD: nodes.c.pat,v 1.13.32.1 2018/06/25 07:25:04 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -35,6 +35,8 @@
  */
 
 #include <stdlib.h>
+#include <stddef.h>
+
 /*
  * Routine for dealing with parsed shell commands.
  */
@@ -46,43 +48,70 @@
 #include "mystring.h"
 
 
-int     funcblocksize;		/* size of structures in function */
-int     funcstringsize;		/* size of strings in node */
-pointer funcblock;		/* block to allocate function from */
-char   *funcstring;		/* block to allocate strings from */
+/* used to accumulate sizes of nodes */
+struct nodesize {
+	int bsize;		/* size of structures in function */
+	int ssize;		/* size of strings in node */
+};
+
+/* provides resources for node copies */
+struct nodecopystate {
+	pointer block;		/* block to allocate function from */
+	char *string;		/* block to allocate strings from */
+};
+
 
 %SIZES
 
 
-STATIC void calcsize(union node *);
-STATIC void sizenodelist(struct nodelist *);
-STATIC union node *copynode(union node *);
-STATIC struct nodelist *copynodelist(struct nodelist *);
-STATIC char *nodesavestr(char *);
 
+STATIC void calcsize(union node *, struct nodesize *);
+STATIC void sizenodelist(struct nodelist *, struct nodesize *);
+STATIC union node *copynode(union node *, struct nodecopystate *);
+STATIC struct nodelist *copynodelist(struct nodelist *, struct nodecopystate *);
+STATIC char *nodesavestr(char *, struct nodecopystate *);
+
+struct funcdef {
+	unsigned int refcount;
+	union node n;		/* must be last */
+};
 
 
 /*
  * Make a copy of a parse tree.
  */
 
-union node *
+struct funcdef *
 copyfunc(union node *n)
 {
+	struct nodesize sz;
+	struct nodecopystate st;
+	struct funcdef *fn;
+
 	if (n == NULL)
 		return NULL;
-	funcblocksize = 0;
-	funcstringsize = 0;
-	calcsize(n);
-	funcblock = ckmalloc(funcblocksize + funcstringsize);
-	funcstring = (char *) funcblock + funcblocksize;
-	return copynode(n);
+	sz.bsize = offsetof(struct funcdef, n);
+	sz.ssize = 0;
+	calcsize(n, &sz);
+	fn = ckmalloc(sz.bsize + sz.ssize);
+	fn->refcount = 1;
+	st.block = (char *)fn + offsetof(struct funcdef, n);
+	st.string = (char *)fn + sz.bsize;
+	copynode(n, &st);
+	return fn;
+}
+
+union node *
+getfuncnode(struct funcdef *fn)
+{
+	if (fn == NULL)
+		return NULL;
+	return &fn->n;
 }
 
 
-
 STATIC void
-calcsize(union node *n)
+calcsize(union node *n, struct nodesize *res)
 {
 	%CALCSIZE
 }
@@ -90,11 +119,11 @@ calcsize(union node *n)
 
 
 STATIC void
-sizenodelist(struct nodelist *lp)
+sizenodelist(struct nodelist *lp, struct nodesize *res)
 {
 	while (lp) {
-		funcblocksize += SHELL_ALIGN(sizeof(struct nodelist));
-		calcsize(lp->n);
+		res->bsize += SHELL_ALIGN(sizeof(struct nodelist));
+		calcsize(lp->n, res);
 		lp = lp->next;
 	}
 }
@@ -102,7 +131,7 @@ sizenodelist(struct nodelist *lp)
 
 
 STATIC union node *
-copynode(union node *n)
+copynode(union node *n, struct nodecopystate *st)
 {
 	union node *new;
 
@@ -112,17 +141,17 @@ copynode(union node *n)
 
 
 STATIC struct nodelist *
-copynodelist(struct nodelist *lp)
+copynodelist(struct nodelist *lp, struct nodecopystate *st)
 {
 	struct nodelist *start;
 	struct nodelist **lpp;
 
 	lpp = &start;
 	while (lp) {
-		*lpp = funcblock;
-		funcblock = (char *) funcblock +
+		*lpp = st->block;
+		st->block = (char *)st->block +
 		    SHELL_ALIGN(sizeof(struct nodelist));
-		(*lpp)->n = copynode(lp->n);
+		(*lpp)->n = copynode(lp->n, st);
 		lp = lp->next;
 		lpp = &(*lpp)->next;
 	}
@@ -133,27 +162,49 @@ copynodelist(struct nodelist *lp)
 
 
 STATIC char *
-nodesavestr(char *s)
+nodesavestr(char *s, struct nodecopystate *st)
 {
 	register char *p = s;
-	register char *q = funcstring;
-	char   *rtn = funcstring;
+	register char *q = st->string;
+	char   *rtn = st->string;
 
 	while ((*q++ = *p++) != 0)
 		continue;
-	funcstring = q;
+	st->string = q;
 	return rtn;
 }
 
 
 
 /*
- * Free a parse tree.
+ * Handle making a reference to a function, and releasing it.
+ * Free the func code when there are no remaining references.
  */
 
 void
-freefunc(union node *n)
+reffunc(struct funcdef *fn)
 {
-	if (n)
-		ckfree(n);
+	if (fn != NULL)
+		fn->refcount++;
+}
+
+void
+unreffunc(struct funcdef *fn)
+{
+	if (fn != NULL) {
+		if (--fn->refcount > 0)
+			return;
+		ckfree(fn);
+	}
+}
+
+/*
+ * this is used when we need to free the func, regardless of refcount
+ * which only happens when re-initing the shell for a SHELLPROC
+ */
+void
+freefunc(struct funcdef *fn)
+{
+	if (fn != NULL)
+		ckfree(fn);
 }

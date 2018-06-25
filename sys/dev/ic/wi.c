@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.244 2017/10/23 09:31:17 msaitoh Exp $	*/
+/*	$NetBSD: wi.c,v 1.244.2.1 2018/06/25 07:25:50 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.244 2017/10/23 09:31:17 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.244.2.1 2018/06/25 07:25:50 pgoyette Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -126,15 +126,13 @@ __KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.244 2017/10/23 09:31:17 msaitoh Exp $");
 #include <net/if_media.h>
 #include <net/if_ether.h>
 #include <net/route.h>
+#include <net/bpf.h>
 
 #include <net80211/ieee80211_netbsd.h>
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_ioctl.h>
 #include <net80211/ieee80211_radiotap.h>
 #include <net80211/ieee80211_rssadapt.h>
-
-#include <net/bpf.h>
-#include <net/bpfdesc.h>
 
 #include <sys/bus.h>
 #include <sys/intr.h>
@@ -245,8 +243,7 @@ static int wi_sysctl_verify_debug(SYSCTLFN_PROTO);
 #define WI_INTRS	(WI_EV_RX | WI_EV_ALLOC | WI_EV_INFO | \
 			 WI_EV_TX | WI_EV_TX_EXC | WI_EV_CMD)
 
-struct wi_card_ident
-wi_card_ident[] = {
+static const struct wi_card_ident wi_card_ident[] = {
 	/* CARD_ID			CARD_NAME		FIRM_TYPE */
 	{ WI_NIC_LUCENT_ID,		WI_NIC_LUCENT_STR,	WI_LUCENT },
 	{ WI_NIC_SONY_ID,		WI_NIC_SONY_STR,	WI_LUCENT },
@@ -2146,7 +2143,7 @@ allmulti:
 STATIC void
 wi_read_nicid(struct wi_softc *sc)
 {
-	struct wi_card_ident *id;
+	const struct wi_card_ident *id;
 	char *p;
 	int len;
 	u_int16_t ver[4];

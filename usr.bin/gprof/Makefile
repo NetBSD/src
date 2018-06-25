@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.29 2014/07/05 19:22:43 dholland Exp $
+#	$NetBSD: Makefile,v 1.29.22.1 2018/06/25 07:26:10 pgoyette Exp $
 
-SUBDIR=PSD.doc
+SUBDIR.roff=PSD.doc
 
 .include <bsd.subdir.mk>

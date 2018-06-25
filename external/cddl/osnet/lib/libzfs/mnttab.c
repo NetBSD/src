@@ -1,4 +1,4 @@
-/*     $NetBSD: mnttab.c,v 1.2 2010/02/28 17:36:51 haad Exp $  */
+/*     $NetBSD: mnttab.c,v 1.2.44.1 2018/06/25 07:25:25 pgoyette Exp $  */
 
 /*-
  * Copyright (c) 2006 Pawel Jakub Dawidek <pjd@FreeBSD.org>
@@ -32,20 +32,20 @@
  */
 
 #include <sys/cdefs.h>
-/* __FBSDID("$FreeBSD: src/compat/opensolaris/misc/mnttab.c,v 1.1 2007/04/06 01:08:59 pjd Exp $"); */
-__RCSID("$NetBSD: mnttab.c,v 1.2 2010/02/28 17:36:51 haad Exp $");
+__FBSDID("$FreeBSD: head/cddl/compat/opensolaris/misc/mnttab.c 209962 2010-07-12 23:49:04Z mm $");
+__RCSID("$NetBSD: mnttab.c,v 1.2.44.1 2018/06/25 07:25:25 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/statvfs.h>
 #include <sys/mntent.h>
+#include <sys/mnttab.h>
 
 #include <stdio.h>
-#include <string.h>
+#include <errno.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <ctype.h>
-#include <err.h>
-
-#include <sys/mnttab.h>
 
 char *
 mntopt(char **p)
@@ -95,110 +95,124 @@ optadd(char *mntopts, size_t size, const char *opt)
 	strlcat(mntopts, opt, size);
 }
 
-int
-getmntany(FILE *fd __unused, struct mnttab *mgetp, struct mnttab *mrefp)
+void
+statvfs2mnttab(struct statvfs *sfs, struct mnttab *mp)
 {
-	static struct statvfs *sfs;
 	static char mntopts[MNTMAXSTR];
-	struct opt *o;
-	static int i, n;
-	int flags;
+	long flags;
 
-	if (sfs == NULL) {
-		n = getmntinfo(&sfs, ST_WAIT);
-		if (n == -1)
-			return -1;
+	mntopts[0] = '\0';
+
+	flags = sfs->f_flag;
+#define	OPTADD(opt)	optadd(mntopts, sizeof(mntopts), (opt))
+	if (flags & MNT_RDONLY)
+		OPTADD(MNTOPT_RO);
+	else
+		OPTADD(MNTOPT_RW);
+	if (flags & MNT_NOSUID)
+		OPTADD(MNTOPT_NOSUID);
+	else
+		OPTADD(MNTOPT_SETUID);
+	if (flags & MNT_UPDATE)
+		OPTADD(MNTOPT_REMOUNT);
+	if (flags & MNT_NOATIME)
+		OPTADD(MNTOPT_NOATIME);
+	else
+		OPTADD(MNTOPT_ATIME);
+	OPTADD(MNTOPT_NOXATTR);
+	if (flags & MNT_NOEXEC)
+		OPTADD(MNTOPT_NOEXEC);
+	else
+		OPTADD(MNTOPT_EXEC);
+#undef	OPTADD
+	mp->mnt_special = sfs->f_mntfromname;
+	mp->mnt_mountp = sfs->f_mntonname;
+	mp->mnt_fstype = sfs->f_fstypename;
+	mp->mnt_mntopts = mntopts;
+}
+
+static struct statvfs *gsfs;
+static int allfs;
+
+static int
+statvfs_init(void)
+{
+	struct statvfs *sfs;
+	int error;
+
+	if (gsfs != NULL) {
+		free(gsfs);
+		gsfs = NULL;
 	}
-	for (i = 0; i < n; i++) {
+	allfs = getvfsstat(NULL, 0, ST_WAIT);
+	if (allfs == -1)
+		goto fail;
+	gsfs = malloc(sizeof(gsfs[0]) * allfs * 2);
+	if (gsfs == NULL)
+		goto fail;
+	allfs = getvfsstat(gsfs, sizeof(gsfs[0]) * allfs * 2, ST_WAIT);
+	if (allfs == -1)
+		goto fail;
+	sfs = realloc(gsfs, allfs * sizeof(gsfs[0]));
+	if (sfs != NULL)
+		gsfs = sfs;
+	return (0);
+fail:
+	error = errno;
+	if (gsfs != NULL)
+		free(gsfs);
+	gsfs = NULL;
+	allfs = 0;
+	return (error);
+}
+
+int
+getmntany(FILE *fd, struct mnttab *mgetp, struct mnttab *mrefp)
+{
+	int i, error;
+
+	error = statvfs_init();
+	if (error != 0)
+		return (error);
+
+	for (i = 0; i < allfs; i++) {
 		if (mrefp->mnt_special != NULL &&
-		    strcmp(mrefp->mnt_special, sfs[i].f_mntfromname) != 0) {
+		    strcmp(mrefp->mnt_special, gsfs[i].f_mntfromname) != 0) {
 			continue;
 		}
 		if (mrefp->mnt_mountp != NULL &&
-		    strcmp(mrefp->mnt_mountp, sfs[i].f_mntonname) != 0) {
+		    strcmp(mrefp->mnt_mountp, gsfs[i].f_mntonname) != 0) {
 			continue;
 		}
 		if (mrefp->mnt_fstype != NULL &&
-		    strcmp(mrefp->mnt_fstype, sfs[i].f_fstypename) != 0) {
+		    strcmp(mrefp->mnt_fstype, gsfs[i].f_fstypename) != 0) {
 			continue;
 		}
-		flags = sfs[i].f_flag;
-#define	OPTADD(opt)	optadd(mntopts, sizeof(mntopts), (opt))
-		if (flags & MNT_RDONLY)
-			OPTADD(MNTOPT_RO);
-		else
-			OPTADD(MNTOPT_RW);
-		if (flags & MNT_NOSUID)
-			OPTADD(MNTOPT_NOSUID);
-		else
-			OPTADD(MNTOPT_SETUID);
-		if (flags & MNT_UPDATE)
-			OPTADD(MNTOPT_REMOUNT);
-		if (flags & MNT_NOATIME)
-			OPTADD(MNTOPT_NOATIME);
-		else
-			OPTADD(MNTOPT_ATIME);
-		OPTADD(MNTOPT_NOXATTR);
-		if (flags & MNT_NOEXEC)
-			OPTADD(MNTOPT_NOEXEC);
-		else
-			OPTADD(MNTOPT_EXEC);
-#undef	OPTADD
-		mgetp->mnt_special = sfs[i].f_mntfromname;
-		mgetp->mnt_mountp = sfs[i].f_mntonname;
-		mgetp->mnt_fstype = sfs[i].f_fstypename;
-		mgetp->mnt_mntopts = mntopts;
+		statvfs2mnttab(&gsfs[i], mgetp);
 		return (0);
 	}
-	sfs = NULL;
 	return (-1);
 }
 
 int
-getstatfs(struct statvfs *stat, const char *path)
+getmntent(FILE *fp, struct mnttab *mp)
 {
-	int fs_num, i;
-	struct statvfs *statvfs;
+	struct statvfs *sfs;
+	int error, nfs;
 
-	fs_num = 0;
-	
-	if (path == NULL)
-		return (-1);
-
-	fs_num = getvfsstat(NULL, 0, ST_WAIT);
-
-	if ((statvfs = malloc(fs_num * sizeof(struct statvfs))) == NULL)
-	    return (-1);
-	    
-	memset(statvfs, 0, fs_num * sizeof(struct statvfs));
-	    
-	if (getvfsstat(statvfs, fs_num * sizeof(struct statvfs), ST_WAIT) != 0) {
-		free(statvfs);
-		return (-1);
+	nfs = (int)lseek(fileno(fp), 0, SEEK_CUR);
+	if (nfs == -1)
+		return (errno);
+	/* If nfs is 0, we want to refresh our cache. */
+	if (nfs == 0 || gsfs == NULL) {
+		error = statvfs_init();
+		if (error != 0)
+			return (error);
 	}
-	
-	for( i = 0; i < fs_num; i++) {
-		
-		if (statvfs[i].f_fstypename != NULL &&
-		    strcmp(statvfs[i].f_fstypename, MNTTYPE_ZFS) != 0) {
-			continue;
-		}
-		
-		if (statvfs[i].f_mntonname != NULL &&
-		    strcmp(statvfs[i].f_mntonname, path) != 0) {
-			continue;
-		}
-		
-		memcpy(stat, &statvfs[i], sizeof(struct statvfs));
-	}
-
-	free(statvfs);
+	if (nfs >= allfs)
+		return (-1);
+	statvfs2mnttab(&gsfs[nfs], mp);
+	if (lseek(fileno(fp), 1, SEEK_CUR) == -1)
+		return (errno);
 	return (0);
-}
-
-int
-getmntent(FILE *file, struct mnttab *mnttab) {
-
-
-	return 1;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: scores.c,v 1.23 2018/02/04 08:48:05 mrg Exp $	*/
+/*	$NetBSD: scores.c,v 1.23.2.1 2018/06/25 07:25:33 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -830,9 +830,8 @@ checkscores(struct highscore *hs, int num)
 				continue;
 			}
 		}
-	}
-        if (sp->hs_level < NLEVELS && sp->hs_level >= 0) {
-    		levelfound[sp->hs_level] = 1;
+		if (sp->hs_level < NLEVELS && sp->hs_level >= 0)
+			levelfound[sp->hs_level] = 1;
 		i++, sp++;
 	}
 	return (num > MAXHISCORES ? MAXHISCORES : num);

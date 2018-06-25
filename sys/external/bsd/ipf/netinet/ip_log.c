@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_log.c,v 1.6.34.1 2018/05/21 04:36:14 pgoyette Exp $	*/
+/*	$NetBSD: ip_log.c,v 1.6.34.2 2018/06/25 07:26:03 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_log.c,v 1.6.34.1 2018/05/21 04:36:14 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_log.c,v 1.6.34.2 2018/06/25 07:26:03 pgoyette Exp $");
 
 #include <sys/param.h>
 #if defined(KERNEL) || defined(_KERNEL)
@@ -174,7 +174,7 @@ static int magic[IPL_LOGSIZE] = { IPL_MAGIC, IPL_MAGIC_NAT, IPL_MAGIC_STATE,
 				  IPL_MAGIC, IPL_MAGIC, IPL_MAGIC,
 				  IPL_MAGIC, IPL_MAGIC };
 
-static ipftuneable_t ipf_log_tuneables[] = {
+static const ipftuneable_t ipf_log_tuneables[] = {
 	/* log */
 	{ { (void *)offsetof(ipf_log_softc_t, ipl_suppress) },
 		"log_suppress",		0,	1,

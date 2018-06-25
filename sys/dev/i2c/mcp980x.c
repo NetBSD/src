@@ -1,4 +1,4 @@
-/*	$NetBSD: mcp980x.c,v 1.5 2013/10/28 11:24:08 rkujawa Exp $ */
+/*	$NetBSD: mcp980x.c,v 1.5.30.1 2018/06/25 07:25:50 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcp980x.c,v 1.5 2013/10/28 11:24:08 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcp980x.c,v 1.5.30.1 2018/06/25 07:25:50 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,12 +106,12 @@ CFATTACH_DECL_NEW(mcp980x, sizeof (struct mcp980x_softc),
 static int
 mcp980x_match(device_t parent, cfdata_t cf, void *aux)
 {
-	/*
-	 * No sane way to probe? Perhaps at least try to match constant part
-	 * of the I2Caddress.
-	 */
 
-	return 1;
+	if (ia->ia_addr >= MCP980X_ADDR_CONST &&
+	    ia->ia_addr <= (MCP980X_ADDR_CONST + MCP980X_ADDR_VAR))
+		return I2C_MATCH_ADDRESS_ONLY;
+
+	return 0;
 }
 
 static void

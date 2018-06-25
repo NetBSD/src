@@ -1,4 +1,4 @@
-.\"	$NetBSD: atomic_ops.3,v 1.7 2018/02/07 09:59:56 martin Exp $
+.\"	$NetBSD: atomic_ops.3,v 1.7.2.1 2018/06/25 07:25:34 pgoyette Exp $
 .\"
 .\" Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -47,7 +47,7 @@ There are 7 classes of atomic memory operations available:
 .It Xr atomic_add 3
 These functions perform atomic addition.
 .It Xr atomic_and 3
-These functions perform atomic logical
+These functions perform atomic bitwise
 .Dq and .
 .It Xr atomic_cas 3
 These functions perform atomic compare-and-swap.
@@ -56,7 +56,7 @@ These functions perform atomic decrement.
 .It Xr atomic_inc 3
 These functions perform atomic increment.
 .It Xr atomic_or 3
-These functions perform atomic logical
+These functions perform atomic bitwise
 .Dq or .
 .It Xr atomic_swap 3
 These functions perform atomic swap.

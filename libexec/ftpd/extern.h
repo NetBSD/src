@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.63 2013/03/21 05:53:01 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.63.28.1 2018/06/25 07:25:35 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -358,7 +358,7 @@ extern	struct tab	cmdtab[];
 
 #define	CPUTC(c, f)	do { \
 				putc(c, f); total_bytes++; total_bytes_out++; \
-			} while (0);
+			} while (0)
 
 #define CURCLASSTYPE	curclass.type == CLASS_GUEST  ? "GUEST"  : \
 			curclass.type == CLASS_CHROOT ? "CHROOT" : \

@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.9 2016/02/04 17:47:17 roy Exp $
+#	$NetBSD: Makefile,v 1.9.14.1 2018/06/25 07:25:26 pgoyette Exp $
 
-# $FreeBSD: src/cddl/usr.bin/ctfmerge/Makefile,v 1.1.4.1 2009/08/03 08:13:06 kensmith Exp $
+# $FreeBSD: head/cddl/usr.bin/ctfmerge/Makefile 314654 2017-03-04 11:30:04Z ngie $
 
 .include <bsd.own.mk>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: dumplfs.c,v 1.63 2016/08/12 08:22:13 dholland Exp $	*/
+/*	$NetBSD: dumplfs.c,v 1.63.12.1 2018/06/25 07:26:11 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)dumplfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: dumplfs.c,v 1.63 2016/08/12 08:22:13 dholland Exp $");
+__RCSID("$NetBSD: dumplfs.c,v 1.63.12.1 2018/06/25 07:26:11 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,6 +61,7 @@ __RCSID("$NetBSD: dumplfs.c,v 1.63 2016/08/12 08:22:13 dholland Exp $");
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <util.h>
 #include "extern.h"
 
 static void	addseg(char *);
@@ -226,10 +227,7 @@ main(int argc, char **argv)
 	if ((fd = open(special, O_RDONLY, 0)) < 0)
 		err(1, "%s", special);
 
-	sbuf = malloc(LFS_SBPAD);
-	if (sbuf == NULL)
-		err(1, "malloc");
-
+	sbuf = emalloc(LFS_SBPAD);
 	if (sbdaddr == 0x0) {
 		/* Read the proto-superblock */
 		__CTASSERT(sizeof(struct dlfs) == sizeof(struct dlfs64));
@@ -332,8 +330,7 @@ dump_ifile(int fd, struct lfs *lfsp, int do_ientries, int do_segentries, daddr_t
 	if (!addr)
 		addr = lfs_sb_getidaddr(lfsp);
 
-	if (!(dpage = malloc(psize)))
-		err(1, "malloc");
+	dpage = emalloc(psize);
 	get(fd, fsbtobyte(lfsp, addr), dpage, psize);
 
 	dip = NULL;
@@ -363,8 +360,7 @@ dump_ifile(int fd, struct lfs *lfsp, int do_ientries, int do_segentries, daddr_t
 	block_limit = MIN(nblocks, ULFS_NDADDR);
 
 	/* Get the direct block */
-	if ((ipage = malloc(psize)) == NULL)
-		err(1, "malloc");
+	ipage = emalloc(psize);
 	for (inum = 0, i = 0; i < block_limit; i++) {
 		pdb = lfs_dino_getdb(lfsp, dip, i);
 		get(fd, fsbtobyte(lfsp, pdb), ipage, psize);
@@ -395,8 +391,7 @@ dump_ifile(int fd, struct lfs *lfsp, int do_ientries, int do_segentries, daddr_t
 		goto e0;
 
 	/* Dump out blocks off of single indirect block */
-	if (!(indir = malloc(psize)))
-		err(1, "malloc");
+	indir = emalloc(psize);
 	get(fd, fsbtobyte(lfsp, lfs_dino_getib(lfsp, dip, 0)), indir, psize);
 	block_limit = MIN(i + lfs_sb_getnindir(lfsp), nblocks);
 	for (offset = 0; i < block_limit; i++, offset++) {
@@ -429,8 +424,7 @@ dump_ifile(int fd, struct lfs *lfsp, int do_ientries, int do_segentries, daddr_t
 		goto e1;
 
 	/* Get the double indirect block */
-	if (!(dindir = malloc(psize)))
-		err(1, "malloc");
+	dindir = emalloc(psize);
 	get(fd, fsbtobyte(lfsp, lfs_dino_getib(lfsp, dip, 1)), dindir, psize);
 	for (j = 0; j < lfs_sb_getnindir(lfsp); j++) {
 		thisblock = lfs_iblock_get(lfsp, dindir, j);
@@ -617,7 +611,7 @@ dump_sum(int fd, struct lfs *lfsp, SEGSUM *sp, int segnum, daddr_t addr)
 
 	/* Dump out inode disk addresses */
 	iip = SEGSUM_IINFOSTART(lfsp, sp);
-	diblock = malloc(lfs_sb_getbsize(lfsp));
+	diblock = emalloc(lfs_sb_getbsize(lfsp));
 	printf("    Inode addresses:");
 	numbytes = 0;
 	numblocks = 0;
@@ -680,11 +674,11 @@ dump_sum(int fd, struct lfs *lfsp, SEGSUM *sp, int segnum, daddr_t addr)
 	} else {
 		el_size = sizeof(u_int32_t);
 	}
-	datap = (char *)malloc(el_size * numblocks);
-	memset(datap, 0, el_size * numblocks);
+	datap = ecalloc(numblocks, el_size);
+
 	acc = 0;
 	addr += lfs_btofsb(lfsp, lfs_sb_getsumsize(lfsp));
-	buf = malloc(lfs_sb_getbsize(lfsp));
+	buf = emalloc(lfs_sb_getbsize(lfsp));
 	for (i = 0; i < lfs_ss_getnfinfo(lfsp, sp); i++) {
 		while (addr == lfs_ii_getblock(lfsp, iip2)) {
 			get(fd, fsbtobyte(lfsp, addr), buf, lfs_sb_getibsize(lfsp));
@@ -737,7 +731,7 @@ dump_segment(int fd, int segnum, daddr_t addr, struct lfs *lfsp, int dump_sb)
 	(void)printf("\nSEGMENT %lld (Disk Address 0x%llx)\n",
 		     (long long)lfs_dtosn(lfsp, addr), (long long)addr);
 	sum_offset = fsbtobyte(lfsp, addr);
-	sumblock = malloc(lfs_sb_getsumsize(lfsp));
+	sumblock = emalloc(lfs_sb_getsumsize(lfsp));
 
 	if (lfs_sb_getversion(lfsp) > 1 && segnum == 0) {
 		if (lfs_fsbtob(lfsp, lfs_sb_gets0addr(lfsp)) < LFS_LABELPAD) {
@@ -897,8 +891,7 @@ addseg(char *arg)
 {
 	SEGLIST *p;
 
-	if ((p = malloc(sizeof(SEGLIST))) == NULL)
-		err(1, "malloc");
+	p = emalloc(sizeof(*p));
 	p->next = seglist;
 	p->num = atoi(arg);
 	seglist = p;

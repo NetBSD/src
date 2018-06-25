@@ -1,4 +1,4 @@
-/* $NetBSD: ibmhawk.c,v 1.4.16.1 2018/05/21 04:36:05 pgoyette Exp $ */
+/* $NetBSD: ibmhawk.c,v 1.4.16.2 2018/06/25 07:25:50 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -109,7 +109,8 @@ ibmhawk_match(device_t parent, cfdata_t match, void *aux)
 	sc.sc_addr = ia->ia_addr;
 	if (ibmhawk_request(&sc, IHR_EQUIP, &resp))
 		return 0;
-	return 1;
+
+	return I2C_MATCH_ADDRESS_AND_PROBE;
 }
 
 static void
@@ -210,7 +211,7 @@ static int
 ibmhawk_request(struct ibmhawk_softc *sc, uint8_t request,
     ibmhawk_response_t *response)
 {
-	int i, error, retries;;
+	int i, error, retries;
 	uint8_t buf[sizeof(ibmhawk_response_t)+3], dummy;
 
 	error = EIO;	/* Fail until we have a valid response. */

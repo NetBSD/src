@@ -1,4 +1,4 @@
-/*	$NetBSD: viomb.c,v 1.8 2017/03/25 18:02:06 jdolecek Exp $	*/
+/*	$NetBSD: viomb.c,v 1.8.12.1 2018/06/25 07:26:01 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viomb.c,v 1.8 2017/03/25 18:02:06 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viomb.c,v 1.8.12.1 2018/06/25 07:26:01 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,10 +39,6 @@ __KERNEL_RCSID(0, "$NetBSD: viomb.c,v 1.8 2017/03/25 18:02:06 jdolecek Exp $");
 #include <sys/sysctl.h>
 #include <uvm/uvm_page.h>
 #include <sys/module.h>
-
-#include <dev/pci/pcidevs.h>
-#include <dev/pci/pcireg.h>
-#include <dev/pci/pcivar.h>
 
 #include <dev/pci/virtioreg.h>
 #include <dev/pci/virtiovar.h>

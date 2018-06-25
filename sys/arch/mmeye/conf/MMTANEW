@@ -1,9 +1,7 @@
-#	$NetBSD: MMTANEW,v 1.19 2011/02/19 10:46:27 kiyohara Exp $
+#	$NetBSD: MMTANEW,v 1.19.54.1 2018/06/25 07:25:44 pgoyette Exp $
 #
 
 include "arch/mmeye/conf/MMTA"
 
 options 	MMEYE_NEW_INT=0xb000000e
 #options 	MMEYE_NO_CACHE
-
-#options 	MATH_EMULATE	# floating point emulation

@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_l2tp.c,v 1.14.2.1 2018/05/02 07:20:23 pgoyette Exp $	*/
+/*	$NetBSD: in6_l2tp.c,v 1.14.2.2 2018/06/25 07:26:07 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_l2tp.c,v 1.14.2.1 2018/05/02 07:20:23 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_l2tp.c,v 1.14.2.2 2018/06/25 07:26:07 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_l2tp.h"
@@ -267,11 +267,15 @@ in6_l2tp_input(struct mbuf **mp, int *offp, int proto, void *eparg __unused)
 	log(LOG_DEBUG, "%s: sess_id = %" PRIu32 "\n", __func__, sess_id);
 #endif
 	if (sess_id == 0) {
+		int rv;
 		/*
 		 * L2TPv3 control packet received.
 		 * userland daemon(l2tpd?) should process.
 		 */
-		return rip6_input(mp, offp, proto);
+		SOFTNET_LOCK_IF_NET_MPSAFE();
+		rv = rip6_input(mp, offp, proto);
+		SOFTNET_UNLOCK_IF_NET_MPSAFE();
+		return rv;
 	}
 
 	var = l2tp_lookup_session_ref(sess_id, &psref);

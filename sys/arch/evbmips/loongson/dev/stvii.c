@@ -1,4 +1,4 @@
-/*	$NetBSD: stvii.c,v 1.5 2016/02/29 18:24:31 christos Exp $	*/
+/*	$NetBSD: stvii.c,v 1.5.16.1 2018/06/25 07:25:41 pgoyette Exp $	*/
 
 /*-
  * Copyright (C) 2011 Michael Lorenz.
@@ -30,7 +30,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stvii.c,v 1.5 2016/02/29 18:24:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stvii.c,v 1.5.16.1 2018/06/25 07:25:41 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,7 +136,7 @@ stvii_match(device_t parent, cfdata_t cf, void *aux)
 		DPRINTF("%02x\n", in);
 		iic_release_bus(args->ia_tag, 0);
 	}
-	return (ret >= 0);
+	return (ret >= 0) ? I2C_MATCH_ADDRESS_AND_PROBE : 0;
 }
 
 static void

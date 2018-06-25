@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.289.2.1 2018/05/21 04:36:03 pgoyette Exp $	*/
+/*	$NetBSD: pmap.c,v 1.289.2.2 2018/06/25 07:25:47 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -170,7 +170,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.289.2.1 2018/05/21 04:36:03 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.289.2.2 2018/06/25 07:25:47 pgoyette Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -3091,7 +3091,7 @@ pmap_extract(struct pmap *pmap, vaddr_t va, paddr_t *pap)
 #ifdef __HAVE_DIRECT_MAP
 	if (va >= PMAP_DIRECT_BASE && va < PMAP_DIRECT_END) {
 		if (pap != NULL) {
-			*pap = va - PMAP_DIRECT_BASE;
+			*pap = PMAP_DIRECT_UNMAP(va);
 		}
 		return true;
 	}

@@ -1,4 +1,4 @@
-/* $NetBSD: smscmon.c,v 1.2 2011/06/20 20:16:19 pgoyette Exp $ */
+/* $NetBSD: smscmon.c,v 1.2.52.1 2018/06/25 07:25:50 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2009 Takahiro Hayashi
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smscmon.c,v 1.2 2011/06/20 20:16:19 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smscmon.c,v 1.2.52.1 2018/06/25 07:25:50 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -183,7 +183,7 @@ smscmon_match(device_t parent, cfdata_t match, void *aux)
 	}
 
 	iic_release_bus(ia->ia_tag, 0);
-	return 1;
+	return I2C_MATCH_ADDRESS_AND_PROBE;
 }
 
 static void

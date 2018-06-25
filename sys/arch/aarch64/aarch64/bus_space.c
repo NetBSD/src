@@ -1,4 +1,4 @@
-/* $NetBSD: bus_space.c,v 1.1.28.2 2018/04/16 01:59:52 pgoyette Exp $ */
+/* $NetBSD: bus_space.c,v 1.1.28.3 2018/06/25 07:25:37 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: bus_space.c,v 1.1.28.2 2018/04/16 01:59:52 pgoyette Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bus_space.c,v 1.1.28.3 2018/06/25 07:25:37 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -166,6 +166,8 @@ struct bus_space arm_generic_bs_tag = {
 };
 
 struct bus_space aarch64_generic_dsb_bs_tag = {
+	.bs_cookie = &aarch64_generic_dsb_bs_tag,
+
 	.bs_stride = 0,
 	.bs_flags = 0,
 
@@ -408,6 +410,8 @@ struct bus_space arm_generic_a4x_bs_tag = {
 };
 
 struct bus_space aarch64_generic_a4x_dsb_bs_tag = {
+	.bs_cookie = &aarch64_generic_a4x_dsb_bs_tag,
+
 	.bs_stride = 2,
 	.bs_flags = 0,
 
@@ -616,11 +620,11 @@ generic_bs_mmap(void *t, bus_addr_t bpa, off_t offset, int prot, int flags)
 	paddr_t bus_flags = 0;
 
 	if ((flags & BUS_SPACE_MAP_CACHEABLE) != 0)
-		bus_flags |= (AARCH64_MMAP_WRITEBACK << AARCH64_MMAP_FLAG_SHIFT);
+		bus_flags |= ARM_MMAP_WRITEBACK;
 	else if ((flags & BUS_SPACE_MAP_PREFETCHABLE) != 0)
-		bus_flags |= (AARCH64_MMAP_WRITECOMBINE << AARCH64_MMAP_FLAG_SHIFT);
+		bus_flags |= ARM_MMAP_WRITECOMBINE;
 	else
-		bus_flags |= (AARCH64_MMAP_DEVICE << AARCH64_MMAP_FLAG_SHIFT);
+		bus_flags |= ARM_MMAP_DEVICE;
 
 	return (atop(bpa + (offset << ((struct bus_space *)t)->bs_stride)) |
 	    bus_flags);

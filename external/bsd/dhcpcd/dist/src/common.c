@@ -140,10 +140,15 @@ hwaddr_aton(uint8_t *buffer, const char *addr)
 	size_t len = 0;
 
 	c[2] = '\0';
-	while (*p) {
+	while (*p != '\0') {
+		/* Skip separators */
 		c[0] = *p++;
-		if (c[0] == '\n')
+		switch (c[0]) {
+		case '\n':	/* long duid split on lines */
+		case ':':	/* typical mac address */
+		case '-':	/* uuid */
 			continue;
+		}
 		c[1] = *p++;
 		/* Ensure that digits are hex */
 		if (isxdigit((unsigned char)c[0]) == 0 ||
@@ -157,15 +162,6 @@ hwaddr_aton(uint8_t *buffer, const char *addr)
 			errno = EINVAL;
 			return 0;
 		}
-		/* Ensure that next data is EOL or a seperator with data */
-		if (!(*p == '\0' || *p == '\n' ||
-		    (*p == ':' && *(p + 1) != '\0')))
-		{
-			errno = EINVAL;
-			return 0;
-		}
-		if (*p)
-			p++;
 		if (bp)
 			*bp++ = (uint8_t)strtol(c, NULL, 16);
 		len++;

@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.7 2017/08/17 23:00:38 mrg Exp $
+$NetBSD: README,v 1.7.2.1 2018/06/25 07:25:31 pgoyette Exp $
 
 GMP in NetBSD.  We need GMP for GCC >= 4.2.
 
@@ -25,11 +25,11 @@ There are a few steps to this:
 
 	  some of these files might have src/obj references.  in particular
 	  fix GMP_MPARAM_H_SUGGEST to start from ./mpn/... and make sure
-	  we #define __GMP_CC to "gcc -std=gnu99", and make sure that
+	  we #define __GMP_CC to just "gcc", and make sure that
 	  CONFIG_TOP_SRCDIR is not defined in config.m4
 
-	  XXX  make this automatic
-
+	  the "Makefile.netbsd-gmp" has a "copy-files" target that performs
+	  these tasks.
 
 	- parse the ./configure output and note all created symlinks
 	  for mpn.  these need to be converted into a new Makefile.inc.
@@ -43,12 +43,15 @@ There are a few steps to this:
 	  used is m4 to parse, and we and create .s files from the .asm
 	  files that we then we feed into $CC.
 
-The amd64 port is a good reference to compare.
+	  this part needs to be automated, but requires that the first
+	  part's ./configure output be stored for it.  this is not done.
 
-This mips64* ports need some minor hacks to the generated gmp*.h
-files to fix their library builds for compat issues.  See these
-files in:
-	http://mail-index.netbsd.org/source-changes/2011/07/10/msg024467.html
+	  it would be good to convert the Makefile.inc into a pair of
+	  files -- srcs.mk generated from build-gmp-Makefile.inc.awk, and
+	  the remaining static part of the Makefile.inc left with the
+	  include of srcs.mk.
+
+The amd64 port is a good reference to compare.
 
 
 This is still a work in progress and methods used to build may be
@@ -56,4 +59,4 @@ changed at any time.
 
 
 mrg@netbsd.org
-- 2011/06/22
+- 2017/08/22

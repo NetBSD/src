@@ -1,4 +1,4 @@
-/*	$NetBSD: kobj.h,v 1.3 2010/02/21 01:46:36 darran Exp $	*/
+/*	$NetBSD: kobj.h,v 1.3.44.1 2018/06/25 07:25:26 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007 Pawel Jakub Dawidek <pjd@FreeBSD.org>
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/compat/opensolaris/sys/kobj.h,v 1.2 2007/04/08 23:57:08 pjd Exp $
+ * $FreeBSD: head/sys/cddl/compat/opensolaris/sys/kobj.h 177698 2008-03-28 22:16:18Z jb $
  */
 
 #ifndef _OPENSOLARIS_SYS_KOBJ_H_
@@ -33,6 +33,7 @@
 
 #include <sys/types.h>
 #include <sys/kmem.h>
+#include_next <sys/kobj.h>
 #ifdef AT_UID
 #undef AT_UID
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: kstat.c,v 1.2 2012/06/19 21:25:26 njoly Exp $	*/
+/*	$NetBSD: kstat.c,v 1.2.30.1 2018/06/25 07:25:25 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -125,4 +125,20 @@ kstat_delete(kstat_t *ks)
 
 	sysctl_teardown(&ks->ks_clog);
 	kmem_free(ks, sizeof(*ks));
+}
+
+void
+kstat_set_string(char *dst, const char *src)
+{
+
+	memset(dst, 0, KSTAT_STRLEN);
+	(void) strncpy(dst, src, KSTAT_STRLEN - 1);
+}
+
+void
+kstat_named_init(kstat_named_t *knp, const char *name, uchar_t data_type)
+{
+
+	kstat_set_string(knp->name, name);
+	knp->data_type = data_type;
 }

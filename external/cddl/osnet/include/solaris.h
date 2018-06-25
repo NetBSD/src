@@ -1,4 +1,4 @@
-/*	$NetBSD: solaris.h,v 1.3 2010/02/21 01:46:34 darran Exp $	*/
+/*	$NetBSD: solaris.h,v 1.3.44.1 2018/06/25 07:25:24 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -29,11 +29,17 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+/* $FreeBSD: head/cddl/compat/opensolaris/include/solaris.h 219089 2011-02-27 19:41:40Z pjd $ */
+
 #ifndef	_SOLARIS_H_
 #define	_SOLARIS_H_
 
 #include <sys/ccompile.h>
 
-#define	dirent64	dirent
+#include <fcntl.h>
+
+#define	NOTE(s)
+
+int mkdirp(const char *, mode_t);
 
 #endif	/* !_SOLARIS_H_ */

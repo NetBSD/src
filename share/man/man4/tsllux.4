@@ -1,0 +1,132 @@
+.\"	$NetBSD: tsllux.4,v 1.2.2.2 2018/06/25 07:25:36 pgoyette Exp $
+.\"
+.\" Copyright (c) 2018 Jason R Thorpe
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd May 21, 2018
+.Dt TSLLUX 4
+.Os
+.Sh NAME
+.Nm tsllux
+.Nd Taos TSL256x Light-to-Digital Coverter
+.Sh SYNOPSIS
+.Cd "tsllux* at iic? addr 0x29 flags 0x0"
+.Cd "tsllux* at iic? addr 0x39 flags 0x0"
+.Cd "tsllux* at iic? addr 0x49 flags 0x0"
+.Sh DESCRIPTION
+The
+.Nm
+driver provides support for the
+.Tn Taos
+TSL2560 and TSL2561 light-to-digital converter
+.Pq ambient light sensor
+with the
+.Xr envsys 4
+API.
+.Pp
+The TSL2560 is designed to work with SMBus at 100 kHz.
+The TSL2561 is designed to work with I2C Fast-Mode at 400 kHz.
+The sensors come in a variety of packages, including 6-lead Chipscale
+.Pq CS ,
+6-lead TMB
+.Pq T ,
+dual flat no-lead
+.Pq FN ,
+and 6-lead ChipLED
+.Pq CL .
+The
+.Sq CS
+package requires a different set of coefficients for calculating
+the Lux value from the raw sensor data.
+This behavior is enabled by specifying the flag
+.Dv 0x1
+in the kernel configuration file or by using a
+.Xr sysctl 8
+variable; see below.
+.Pp
+The
+.Nm
+driver exports some
+.Xr sysctl 8
+variables to control the behavior of the sensor and driver:
+.Bl -tag -width "XX"
+.It hw.tsllux0.cs_package Pq boolean, read-write
+This variable indicates if the driver instance has been configured
+to use the coeffecients appropriate for the
+.Sq CS
+package variant.
+.It hw.tsllux0.auto_gain Pq boolean, read-write
+This variable indicates if the driver has been configured to use
+an auto-gain algorithm to improve sensitivity of the sensor while
+taking care to avoid sensor saturation.
+Auto-gain is disabled by default.
+.It hw.tsllux0.gain Pq integer, read-write
+This variable indicates the selected sensor gain.
+If auto-gain is enabled, this will reflect the current gain setting
+selected by the auto-gain algorithm.
+Otherwise, it reflects the previously-configured gain.
+Valid values are
+.Dv 1
+and
+.Dv 16 .
+The default gain is
+.Dv 1 .
+Writing to this variable implicitly disables auto-gain.
+.It hw.tsllux0.integration_time Pq integer, read-write
+This variable indicates the selected analog-to-digital converter
+integration time.
+Longer integration times correspond to more accurate readings, at the
+cost of more costly read operation.
+Valid values are
+.Dv 13 Pq 13.7ms ,
+.Dv 101 Pq 101ms ,
+and
+.Dv 402 Pq 402ms .
+The default value is
+.Dv 101 .
+Note that that due to the granularity of sleep timing in the kernel,
+the
+.Nm
+driver will busy-wait for wait times less than 1 Hz, and add an additional
+sleep clock tick for wait times greater than 1 Hz.
+See
+.Xr hz 9 .
+.El
+.Sh SEE ALSO
+.Xr envsys 4 ,
+.Xr iic 4
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Nx 9.0 .
+.Sh AUTHORS
+.An -nosplit
+The
+.Nm
+driver was written by
+.An Jason R Thorpe Aq Mt thorpej@NetBSD.org .
+.Sh BUGS
+The driver does not currently support the sensor's interrupt features
+or the sensor's manual integration timing feature.

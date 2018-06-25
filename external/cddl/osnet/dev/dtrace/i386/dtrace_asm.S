@@ -1,4 +1,4 @@
-/*	$NetBSD: dtrace_asm.S,v 1.6 2017/02/27 06:47:00 chs Exp $	*/
+/*	$NetBSD: dtrace_asm.S,v 1.6.10.1 2018/06/25 07:25:14 pgoyette Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -21,7 +21,7 @@
  *
  * CDDL HEADER END
  *
- * $FreeBSD: src/sys/cddl/dev/dtrace/i386/dtrace_asm.S,v 1.1.4.1 2009/08/03 08:13:06 kensmith Exp $
+ * $FreeBSD: head/sys/cddl/dev/dtrace/i386/dtrace_asm.S 298171 2016-04-17 23:08:47Z markj $
  */
 /*
  * Copyright 2004 Sun Microsystems, Inc.  All rights reserved.
@@ -146,11 +146,11 @@ invop_leave:
 	movl	8(%esp), %eax		/* load calling EIP */
 	incl	%eax			/* increment over LOCK prefix */
 	movl	%eax, -8(%ebx)		/* store calling EIP */
-	movl	%ebx, -4(%esp)		/* temporarily store new %esp */
+	subl	$8, %ebx		/* adjust for three pushes, one pop */
+	movl	%ebx, 8(%esp)		/* temporarily store new %esp */
 	popl	%ebx			/* pop off temp */
 	popl	%eax			/* pop off temp */
-	movl	-12(%esp), %esp		/* set stack pointer */
-	subl	$8, %esp		/* adjust for three pushes, one pop */
+	movl	(%esp), %esp		/* set stack pointer */
 	iret				/* return from interrupt */
 invop_nop:
 	/*
@@ -193,19 +193,7 @@ uint32_t dtrace_cas32(uint32_t *target, uint32_t cmp, uint32_t new)
 */
 
 	ENTRY(dtrace_cas32)
-	movl	4(%esp), %edx
-	movl	8(%esp), %eax
-	movl	12(%esp), %ecx
-	lock
-	cmpxchgl %ecx, (%edx)
-	ret
-	END(dtrace_cas32)
-
-/*
-uint32_t dtrace_casptr(uint32_t *target, uint32_t cmp, uint32_t new)
-*/
-
-	ENTRY(dtrace_casptr)
+	ALTENTRY(dtrace_casptr)
 	movl	4(%esp), %edx
 	movl	8(%esp), %eax
 	movl	12(%esp), %ecx
@@ -213,7 +201,7 @@ uint32_t dtrace_casptr(uint32_t *target, uint32_t cmp, uint32_t new)
 	cmpxchgl %ecx, (%edx)
 	ret
 	END(dtrace_casptr)
-
+	END(dtrace_cas32)
 
 /*
 uintptr_t dtrace_caller(int aframes)

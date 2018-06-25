@@ -1,4 +1,4 @@
-/*	$NetBSD: bootconfig.h,v 1.8.4.1 2018/04/07 04:12:13 pgoyette Exp $	*/
+/*	$NetBSD: bootconfig.h,v 1.8.4.2 2018/06/25 07:25:41 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -41,6 +41,7 @@
 
 #ifdef _KERNEL_OPT
 #include "opt_machdep.h"
+#include "opt_bootconfig.h"
 #endif
 
 #include <arm/bootconfig.h>

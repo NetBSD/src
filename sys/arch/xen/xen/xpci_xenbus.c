@@ -1,4 +1,4 @@
-/*      $NetBSD: xpci_xenbus.c,v 1.15 2017/03/29 09:04:35 msaitoh Exp $      */
+/*      $NetBSD: xpci_xenbus.c,v 1.15.12.1 2018/06/25 07:25:48 pgoyette Exp $      */
 
 /*
  * Copyright (c) 2009 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xpci_xenbus.c,v 1.15 2017/03/29 09:04:35 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xpci_xenbus.c,v 1.15.12.1 2018/06/25 07:25:48 pgoyette Exp $");
 
 #include "opt_xen.h"
 
@@ -256,12 +256,13 @@ xpci_backend_changed(void *arg, XenbusState new_state)
 	case XenbusStateInitialised:
 		break;
 	case XenbusStateClosing:
-		s = splbio();
+		s = splbio(); /* XXXSMP */
 		sc->sc_shutdown = 1;
 		/* wait for requests to complete */
 #if 0
 		while (sc->sc_backend_status == XPCI_STATE_CONNECTED &&
 		   sc->sc_dksc.sc_dkdev.dk_stats->io_busy > 0)
+			/* XXXSMP */
 			tsleep(xpci_xenbus_detach, PRIBIO, "xpcidetach",
 			   hz/2);
 #endif

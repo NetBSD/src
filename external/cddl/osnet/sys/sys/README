@@ -1,0 +1,41 @@
+# $NetBSD: README,v 1.1.2.2 2018/06/25 07:25:25 pgoyette Exp $
+
+General guidelines for system wrapper header maintainance.
+
+There are two kinds of system header files:
+        1. "infrastructure" headers that provide base definitions and
+           other stuff that other headers use (systm.h)
+        2.  "feature" headers that provide a specific feature (proc.h).
+
+The solaris ones generally augment ours; the template should be:
+
+solaris/foo.h:
+
+    #ifndef SOLARIS_SYS_FOO_H
+    #define SOLARIS_SYS_FOO_H
+
+    /*
+     * This include should not be in #ifdef KERNEL.
+     * It is the job of the header itself to protect itself.
+     * Unless Solaris exposes this header in userland, where
+     * it is probably better to fix our header...
+     */
+    #include_next <sys/foo.h>
+
+    /* More Solaris-specific definitions */
+
+    #endif /* SOLARIS_SYS_FOO_H */
+
+Now there caaes where the solaris headers expose more stuff than ours,
+so we need to include more of our system headers from theirs. When that
+happens the rule should be that:
+
+Their infrastructure headers should not include our feature headers,
+but can include our infrastructure headers, otherwise we end up with
+circular dependencies. Violations to the rule should be kept to a minimum
+and tested carefully.
+
+In the general case, if we want the augmented symbols we should include
+the solaris ones first in the search path.
+
+

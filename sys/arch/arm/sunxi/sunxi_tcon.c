@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_tcon.c,v 1.5.2.3 2018/04/16 01:59:53 pgoyette Exp $ */
+/* $NetBSD: sunxi_tcon.c,v 1.5.2.4 2018/06/25 07:25:40 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2018 Manuel Bouyer <bouyer@antioche.eu.org>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_tcon.c,v 1.5.2.3 2018/04/16 01:59:53 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_tcon.c,v 1.5.2.4 2018/06/25 07:25:40 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -65,6 +65,7 @@ struct sunxi_tcon_softc {
 	struct clk *sc_clk_ahb;
 	struct clk *sc_clk_ch0;
 	struct clk *sc_clk_ch1;
+	struct fdtbus_reset *sc_rst, *sc_lvds_rst;
 	unsigned int sc_output_type;
 #define OUTPUT_HDMI 0
 #define OUTPUT_LVDS 1
@@ -120,8 +121,6 @@ sunxi_tcon_attach(device_t parent, device_t self, void *aux)
 	const int phandle = faa->faa_phandle;
 	bus_addr_t addr;
 	bus_size_t size;
-	struct fdtbus_reset *rst, *lvds_rst;
-
 
 	sc->sc_dev = self;
 	sc->sc_phandle = phandle;
@@ -149,54 +148,13 @@ sunxi_tcon_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	rst = fdtbus_reset_get(phandle, "lcd");
-	if (rst == NULL) {
+	sc->sc_rst = fdtbus_reset_get(phandle, "lcd");
+	if (sc->sc_rst == NULL) {
 		aprint_error(": couldn't get lcd reset\n");
 		return;
 	}
 
-	lvds_rst = fdtbus_reset_get(phandle, "lvds");
-
-	if (clk_disable(sc->sc_clk_ahb) != 0) {
-		aprint_error(": couldn't disable ahb clock\n");
-		return;
-	}
-	if (clk_disable(sc->sc_clk_ch0) != 0) {
-		aprint_error(": couldn't disable ch0 clock\n");
-		return;
-	}
-
-	if (clk_disable(sc->sc_clk_ch1) != 0) {
-		aprint_error(": couldn't disable ch1 clock\n");
-		return;
-	}
-
-	if (fdtbus_reset_assert(rst) != 0) {
-		aprint_error(": couldn't assert lcd reset\n");
-		return;
-	}
-	if (lvds_rst != NULL) {
-		if (fdtbus_reset_assert(lvds_rst) != 0) {
-			aprint_error(": couldn't assert lvds reset\n");
-			return;
-		}
-	}
-	delay(1);
-	if (fdtbus_reset_deassert(rst) != 0) {
-		aprint_error(": couldn't de-assert lcd reset\n");
-		return;
-	}
-	if (lvds_rst != NULL) {
-		if (fdtbus_reset_deassert(lvds_rst) != 0) {
-			aprint_error(": couldn't de-assert lvds reset\n");
-			return;
-		}
-	}
-
-	if (clk_enable(sc->sc_clk_ahb) != 0) {
-		aprint_error(": couldn't enable ahb clock\n");
-		return;
-	}
+	sc->sc_lvds_rst = fdtbus_reset_get(phandle, "lvds");
 
 	sc->sc_type = of_search_compatible(faa->faa_phandle, compat_data)->data;
 
@@ -209,23 +167,81 @@ sunxi_tcon_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ports.dp_ep_activate = sunxi_tcon_ep_activate;
 	sc->sc_ports.dp_ep_enable = sunxi_tcon_ep_enable;
 	fdt_ports_register(&sc->sc_ports, self, phandle, EP_OTHER);
+}
 
-	TCON_WRITE(sc, SUNXI_TCON_GINT0_REG, 0);
-	TCON_WRITE(sc, SUNXI_TCON_GINT1_REG,
-	    __SHIFTIN(0x20, SUNXI_TCON_GINT1_TCON0_LINENO));
-	TCON_WRITE(sc, SUNXI_TCON0_DCLK_REG, 0xf0000000);
-	TCON_WRITE(sc, SUNXI_TCON0_LVDS_IF_REG, 0x0);
-	TCON_WRITE(sc, SUNXI_TCON0_CTL_REG, 0);
-	TCON_WRITE(sc, SUNXI_TCON0_IO_TRI_REG, 0xffffffff);
-	TCON_WRITE(sc, SUNXI_TCON1_CTL_REG, 0);
-	TCON_WRITE(sc, SUNXI_TCON1_IO_TRI_REG, 0xffffffff);
-	TCON_WRITE(sc, SUNXI_TCON_GCTL_REG, 0);
-
-	/* clock needed for the mux in unit 0 */
-	if (sc->sc_unit != 0) {
-		if (clk_disable(sc->sc_clk_ahb) != 0) {
-			aprint_error(": couldn't disable ahb clock\n");
+void
+sunxi_tcon_doreset(void)
+{
+	device_t dev;
+	struct sunxi_tcon_softc *sc;
+	for (int i = 0;;i++) {
+		dev = device_find_by_driver_unit("sunxitcon", i);
+		if (dev == NULL)
 			return;
+		sc = device_private(dev);
+
+		if (clk_disable(sc->sc_clk_ahb) != 0) {
+			aprint_error_dev(dev, ": couldn't disable ahb clock\n");
+			return;
+		}
+		if (clk_disable(sc->sc_clk_ch0) != 0) {
+			aprint_error_dev(dev, ": couldn't disable ch0 clock\n");
+			return;
+		}
+
+		if (clk_disable(sc->sc_clk_ch1) != 0) {
+			aprint_error_dev(dev, ": couldn't disable ch1 clock\n");
+			return;
+		}
+
+		if (fdtbus_reset_assert(sc->sc_rst) != 0) {
+			aprint_error_dev(dev, ": couldn't assert lcd reset\n");
+			return;
+		}
+		if (sc->sc_lvds_rst != NULL) {
+			if (fdtbus_reset_assert(sc->sc_lvds_rst) != 0) {
+				aprint_error_dev(dev,
+				    ": couldn't assert lvds reset\n");
+				return;
+			}
+		}
+		delay(1);
+		if (fdtbus_reset_deassert(sc->sc_rst) != 0) {
+			aprint_error_dev(dev,
+			    ": couldn't de-assert lcd reset\n");
+			return;
+		}
+		if (sc->sc_lvds_rst != NULL) {
+			if (fdtbus_reset_deassert(sc->sc_lvds_rst) != 0) {
+				aprint_error_dev(dev,
+				    ": couldn't de-assert lvds reset\n");
+				return;
+			}
+		}
+
+		if (clk_enable(sc->sc_clk_ahb) != 0) {
+			aprint_error_dev(dev, ": couldn't enable ahb clock\n");
+			return;
+		}
+
+		TCON_WRITE(sc, SUNXI_TCON_GINT0_REG, 0);
+		TCON_WRITE(sc, SUNXI_TCON_GINT1_REG,
+		    __SHIFTIN(0x20, SUNXI_TCON_GINT1_TCON0_LINENO));
+		TCON_WRITE(sc, SUNXI_TCON0_DCLK_REG, 0xf0000000);
+		TCON_WRITE(sc, SUNXI_TCON0_LVDS_IF_REG, 0x0);
+		TCON_WRITE(sc, SUNXI_TCON0_CTL_REG, 0);
+		TCON_WRITE(sc, SUNXI_TCON0_IO_TRI_REG, 0xffffffff);
+		TCON_WRITE(sc, SUNXI_TCON1_CTL_REG, 0);
+		TCON_WRITE(sc, SUNXI_TCON1_IO_TRI_REG, 0xffffffff);
+		TCON_WRITE(sc, SUNXI_TCON_GCTL_REG, 0);
+
+		/* clock needed for the mux in unit 0 */
+		if (sc->sc_unit != 0) {
+			if (clk_disable(sc->sc_clk_ahb) != 0) {
+				aprint_error_dev(dev,
+				    ": couldn't disable ahb clock\n");
+				return;
+			}
 		}
 	}
 }

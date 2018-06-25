@@ -49,13 +49,6 @@ extern "C" {
 typedef int bool_t;
 typedef int enum_t;
 
-/*
- * The ulonglong_t type was introduced to workaround an rpcgen bug
- * that has been fixed, this next typedef will be removed in a future release.
- * Do *NOT* use!
- */
-typedef u_longlong_t ulonglong_t;
-
 #if defined(_LP64) || defined(_I32LPx)
 typedef	uint32_t rpcprog_t;
 typedef	uint32_t rpcvers_t;

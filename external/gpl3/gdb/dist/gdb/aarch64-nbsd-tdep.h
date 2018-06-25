@@ -19,10 +19,10 @@
 
 #include "regset.h"
 
-/* The general-purpose regset consists of 30 X registers, plus LR, SP,
-   ELR, and SPSR registers.  SPSR is 32 bits but the structure is
+/* The general-purpose regset consists of 31 registers (30 X , plus LR), SP,
+   ELR (PC), SPSR register, and TPIDR.  SPSR is 32 bits but the structure is
    passed to 64 bit alignment.  */
-#define AARCH64_NBSD_SIZEOF_GREGSET  (34 * X_REGISTER_SIZE)
+#define AARCH64_NBSD_SIZEOF_GREGSET  (35 * X_REGISTER_SIZE)
 
 /* The fp regset consists of 32 V registers, plus FPSR and FPCR which
    are 4 bytes wide each, and the whole structure is padded to 128 bit

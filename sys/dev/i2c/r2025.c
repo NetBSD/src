@@ -1,4 +1,4 @@
-/* $NetBSD: r2025.c,v 1.7 2014/11/20 16:34:26 christos Exp $ */
+/* $NetBSD: r2025.c,v 1.7.18.1 2018/06/25 07:25:50 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2006 Shigeyuki Fukushima.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: r2025.c,v 1.7 2014/11/20 16:34:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: r2025.c,v 1.7.18.1 2018/06/25 07:25:50 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,7 +76,7 @@ r2025rtc_match(device_t parent, cfdata_t cf, void *arg)
 
 	/* match only R2025 RTC devices */
 	if (ia->ia_addr == R2025_ADDR)
-		return 1;
+		return I2C_MATCH_ADDRESS_ONLY;
 
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.h,v 1.7 2017/11/03 07:14:24 maxv Exp $	*/
+/*	$NetBSD: fpu.h,v 1.7.2.1 2018/06/25 07:25:47 pgoyette Exp $	*/
 
 #ifndef	_X86_FPU_H_
 #define	_X86_FPU_H_
@@ -16,13 +16,12 @@ void fpuinit_mxcsr_mask(void);
 void fpusave_lwp(struct lwp *, bool);
 void fpusave_cpu(bool);
 
+void fpu_eagerswitch(struct lwp *, struct lwp *);
+
 void fpu_set_default_cw(struct lwp *, unsigned int);
 
 void fputrap(struct trapframe *);
 void fpudna(struct trapframe *);
-
-void process_xmm_to_s87(const struct fxsave *, struct save87 *);
-void process_s87_to_xmm(const struct save87 *, struct fxsave *);
 
 /* Set all to defaults (eg during exec) */
 void fpu_save_area_clear(struct lwp *, unsigned int);

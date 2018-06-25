@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.109 2017/10/17 18:52:50 jdolecek Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.109.2.1 2018/06/25 07:25:49 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.109 2017/10/17 18:52:50 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.109.2.1 2018/06/25 07:25:49 pgoyette Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -455,6 +455,10 @@ _wdc_ata_bio_start(struct ata_channel *chp, struct ata_xfer *xfer)
 			case WDCWAIT_THR:
 				return ATASTART_TH;
 			}
+			/* start the DMA channel before */
+			if ((chp->ch_flags & ATACH_DMA_BEFORE_CMD) != 0)
+				(*wdc->dma_start)(wdc->dma_arg,
+				    chp->ch_channel, xfer->c_drive);
 			if (ata_bio->flags & ATA_LBA48) {
 			    uint8_t device = WDSD_LBA;
 			    cmd = atacmd_to48(cmd);
@@ -468,9 +472,10 @@ _wdc_ata_bio_start(struct ata_channel *chp, struct ata_xfer *xfer)
 			    wdccommand(chp, xfer->c_drive, cmd, cyl,
 				head, sect, count, features);
 			}
-			/* start the DMA channel */
-			(*wdc->dma_start)(wdc->dma_arg,
-			    chp->ch_channel, xfer->c_drive);
+			/* start the DMA channel after */
+			if ((chp->ch_flags & ATACH_DMA_BEFORE_CMD) == 0)
+				(*wdc->dma_start)(wdc->dma_arg,
+				    chp->ch_channel, xfer->c_drive);
 			chp->ch_flags |= ATACH_DMA_WAIT;
 			/* start timeout machinery */
 			if ((xfer->c_flags & C_POLL) == 0)

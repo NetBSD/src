@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.138.2.1 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.138.2.2 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -12229,3 +12229,5 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	amd64: Backport SVS (Meltdown mitigation). [maxv 20180404]
 	x86: Backport retpoline (SpectreV2 mitigation). [mrg 20180411]
 	amd64: Backport SMAP. [maxv 20180414]
+	x86: Backport SpectreV2 mitigations (hardware). [maxv 20180609]
+	x86: Backport SpectreV4 mitigations. [maxv 20180609]

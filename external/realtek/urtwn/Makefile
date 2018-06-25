@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2016/10/12 06:49:40 nat Exp $
+# $NetBSD: Makefile,v 1.3.12.1 2018/06/25 07:25:33 pgoyette Exp $
 
 NOMAN=	# define
 
@@ -8,6 +8,6 @@ FILES+=	dist/rtl8192cfw.bin
 FILES+=	dist/rtl8192cfwU.bin
 FILES+=	dist/rtl8192eefw.bin
 
-FILESDIR=	/libdata/firmware/if_urtwn
+FILESDIR=	${FIRMWAREDIR}/if_urtwn
 
 .include <bsd.files.mk>

@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.257 2018/03/04 07:12:18 mlelstv Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.257.2.1 2018/06/25 07:26:04 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.257 2018/03/04 07:12:18 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.257.2.1 2018/06/25 07:26:04 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -2272,6 +2272,70 @@ device_find_by_driver_unit(const char *name, int unit)
 	if ((cd = config_cfdriver_lookup(name)) == NULL)
 		return NULL;
 	return device_lookup(cd, unit);
+}
+
+/*
+ * device_compatible_entry_matches:
+ *
+ *	Helper function to determine if a device_compatible_entry
+ *	contains a match for the specified "compatible" string.
+ */
+static bool
+device_compatible_entry_matches(const struct device_compatible_entry *dce,
+				const char *compatible)
+{
+	const char **cpp = DEVICE_COMPAT_ENTRY_GET_STRINGS(dce);
+
+	if (dce == NULL || cpp == NULL)
+		return false;
+	
+	for (; *cpp != NULL; cpp++) {
+		if (strcmp(*cpp, compatible) == 0)
+			return true;
+	}
+
+	return false;
+}
+
+/*
+ * device_compatible_match:
+ *
+ *	Match a driver's "compatible" data against a device's
+ *	"compatible" strings.  If a match is found, we return
+ *	the matching device_compatible_entry, along with a
+ *	matching weight.
+ */
+const struct device_compatible_entry *
+device_compatible_match(const char **device_compats, int ndevice_compats,
+			const struct device_compatible_entry *driver_compats,
+			int *match_weightp)
+{
+	const struct device_compatible_entry *dce = NULL;
+	int i, match_weight;
+
+	if (ndevice_compats == 0 || device_compats == NULL ||
+	    driver_compats == NULL)
+		return NULL;
+	
+	/*
+	 * We take the first match because we start with the most-specific
+	 * device compatible string.
+	 */
+	for (i = 0, match_weight = ndevice_compats - 1;
+	     i < ndevice_compats;
+	     i++, match_weight--) {
+		for (dce = driver_compats;
+		     DEVICE_COMPAT_ENTRY_IS_TERMINATOR(dce) == false; dce++) {
+			if (device_compatible_entry_matches(dce,
+							 device_compats[i])) {
+				KASSERT(match_weight >= 0);
+				if (match_weightp)
+					*match_weightp = match_weight;
+				return dce;
+			}
+		}
+	}
+	return NULL;
 }
 
 /*

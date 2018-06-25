@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2018/01/22 01:34:42 joerg Exp $
+#	$NetBSD: Makefile,v 1.2.2.1 2018/06/25 07:26:12 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -15,13 +15,15 @@ WARNS?=	6
 
 .if (${MKZFS} != "no")
 CFLAGS+=	-DHAVE_ZFS
-CFLAGS+=	-Wno-unknown-pragmas
-CFLAGS+=	-I${NETBSDSRCDIR}/external
-CFLAGS+=	-I${NETBSDSRCDIR}/external/cddl/osnet/include
-CFLAGS+=	-I${NETBSDSRCDIR}/external/cddl/osnet/sys
-CFLAGS+=	-I${NETBSDSRCDIR}/external/cddl/osnet/dist/uts/common
-CFLAGS+=	-I${NETBSDSRCDIR}/external/cddl/osnet/dist/uts/common/fs/zfs
-CFLAGS+=	-I${NETBSDSRCDIR}/external/cddl/osnet/dist/lib/libnvpair
+COPTS.zfs.c+=	-Wno-unknown-pragmas
+COPTS.zfs.c+=	-Wno-sign-conversion
+COPTS.zfs.c+=	-Wno-strict-prototypes
+COPTS.zfs.c+=	-I${NETBSDSRCDIR}/external
+COPTS.zfs.c+=	-I${NETBSDSRCDIR}/external/cddl/osnet/include
+COPTS.zfs.c+=	-I${NETBSDSRCDIR}/external/cddl/osnet/sys
+COPTS.zfs.c+=	-I${NETBSDSRCDIR}/external/cddl/osnet/dist/uts/common
+COPTS.zfs.c+=	-I${NETBSDSRCDIR}/external/cddl/osnet/dist/uts/common/fs/zfs
+COPTS.zfs.c+=	-I${NETBSDSRCDIR}/external/cddl/osnet/dist/lib/libnvpair
 LDADD+=	-lnvpair -lzfs
 .endif
 

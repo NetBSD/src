@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.5 2015/04/10 20:34:16 riastradh Exp $
+#	$NetBSD: Makefile,v 1.5.14.1 2018/06/25 07:25:25 pgoyette Exp $
 
 .include "../../Makefile.zfs"
 
 PROG=	zpool
-MAN=	zpool.8
+MAN=	zpool.8 zpool-features.7
 USETBL=	yes
 SRCS=	zpool_main.c zpool_iter.c zpool_util.c zpool_vdev.c
 
@@ -19,6 +19,9 @@ LDADD+=         -L${LIBNVPAIR_OBJDIR} -lnvpair
 
 LIBUUTIL_OBJDIR!=  cd ${LIBUUTIL_SRCDIR} && ${PRINTOBJDIR}
 LDADD+=         -L${LIBUUTIL_OBJDIR} -luutil
+
+LIBZFS_CORE_OBJDIR!=  cd ${LIBZFS_CORE_SRCDIR} && ${PRINTOBJDIR}
+LDADD+=         -L${LIBZFS_CORE_OBJDIR} -lzfs_core
 
 LIBZFS_OBJDIR!=  cd ${LIBZFS_SRCDIR} && ${PRINTOBJDIR}
 LDADD+=         -L${LIBZFS_OBJDIR} -lzfs

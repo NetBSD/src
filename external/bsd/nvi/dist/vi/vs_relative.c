@@ -1,4 +1,4 @@
-/*	$NetBSD: vs_relative.c,v 1.4 2017/11/10 14:44:13 rin Exp $ */
+/*	$NetBSD: vs_relative.c,v 1.4.2.1 2018/06/25 07:25:13 pgoyette Exp $ */
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -16,7 +16,7 @@
 static const char sccsid[] = "Id: vs_relative.c,v 10.18 2001/07/08 13:02:48 skimo Exp  (Berkeley) Date: 2001/07/08 13:02:48 ";
 #endif /* not lint */
 #else
-__RCSID("$NetBSD: vs_relative.c,v 1.4 2017/11/10 14:44:13 rin Exp $");
+__RCSID("$NetBSD: vs_relative.c,v 1.4.2.1 2018/06/25 07:25:13 pgoyette Exp $");
 #endif
 
 #include <sys/types.h>
@@ -178,7 +178,7 @@ done:		if (diffp != NULL)		/* XXX */
 			}
 
 			/* multibyte case */
-			chlen = CHAR_WIDTH(sp, ch);
+			chlen = WIDE_COL(sp, ch);
 			last = scno;
 			scno += chlen;
 			len--;
@@ -216,7 +216,7 @@ done:		if (diffp != NULL)		/* XXX */
 			}
 
 			/* multibyte case */
-			chlen = CHAR_WIDTH(sp, ch);
+			chlen = WIDE_COL(sp, ch);
 			last = scno;
 			scno += chlen;
 			p++;

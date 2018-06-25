@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.88 2017/12/09 00:53:55 christos Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.88.2.1 2018/06/25 07:26:01 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2000 Christian E. Hopps
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.88 2017/12/09 00:53:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.88.2.1 2018/06/25 07:26:01 pgoyette Exp $");
 
 #include "opt_inet.h"
 
@@ -80,6 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.88 2017/12/09 00:53:55 christos Exp $")
 #include <net80211/ieee80211.h>
 #include <net80211/ieee80211_ioctl.h>
 #include <net/if_media.h>
+#include <net/bpf.h>
 
 #ifdef INET
 #include <netinet/in.h>
@@ -88,9 +89,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.88 2017/12/09 00:53:55 christos Exp $")
 #include <netinet/ip.h>
 #include <netinet/if_inarp.h>
 #endif
-
-#include <net/bpf.h>
-#include <net/bpfdesc.h>
 
 #include <sys/cpu.h>
 #include <sys/bus.h>

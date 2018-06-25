@@ -22,7 +22,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd April 29, 2018
+.Dd June 5, 2018
 .Dt DHCPCD.CONF 5
 .Os
 .Sh NAME
@@ -188,18 +188,17 @@ sends a default
 .Ar clientid
 of the hardware family and the hardware address.
 .It Ic duid
-Generate an
-.Rs
-.%T "RFC 4361"
-.Re
-compliant DHCP Unique Identifier.
-If persistent storage is available then a DUID-LLT (link local address + time)
-is generated, otherwise DUID-LL is generated (link local address).
+Use a DHCP Unique Identifier.
+If a system UUID is available, that will be used to create a DUID-UUID,
+otheriwse if persistent storage is available then a DUID-LLT
+(link local address + time) is generated,
+otherwise DUID-LL is generated (link local address).
 This, plus the IAID will be used as the
 .Ic clientid .
-The DUID-LLT generated will be held in
+The DUID generated will be held in
 .Pa @DBDIR@/duid
 and should not be copied to other hosts.
+This file also takes precedence over the above rules.
 .It Ic iaid Ar iaid
 Set the Interface Association Identifier to
 .Ar iaid .
@@ -385,7 +384,8 @@ interface eth0
 Only configure IPv4.
 .It Ic ipv6only
 Only configure IPv6.
-.It Ic fqdn Op disable | ptr | both
+.It Ic fqdn Op disable | none | ptr | both
+none will not ask the DHCP server to update DNS.
 ptr just asks the DHCP server to update the PTR
 record of the host in DNS whereas both also updates the A record.
 disable will disable the FQDN option.

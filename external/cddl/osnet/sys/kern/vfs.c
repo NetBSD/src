@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs.c,v 1.6 2015/05/06 15:57:07 hannken Exp $	*/
+/*	$NetBSD: vfs.c,v 1.6.14.1 2018/06/25 07:25:25 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2006-2007 Pawel Jakub Dawidek <pjd@FreeBSD.org>
@@ -27,7 +27,8 @@
  */
 
 #include <sys/cdefs.h>
-/* __FBSDID("$FreeBSD: src/sys/compat/opensolaris/kern/opensolaris_vfs.c,v 1.7 2007/11/01 08:58:29 pjd Exp $"); */
+#define __FBSDID(x)
+__FBSDID("$FreeBSD: head/sys/cddl/compat/opensolaris/kern/opensolaris_lookup.c 314194 2017-02-24 07:53:56Z avg $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -36,28 +37,17 @@
 #include <sys/cred.h>
 #include <sys/vfs.h>
 #include <sys/pathname.h>
-#include <sys/priv.h>
 #include <lib/libkern/libkern.h>
 
 int
-lookupname(char *dirname, enum uio_seg seg, vnode_t **dirvpp, vnode_t **compvpp)
+lookupname(char *dirname, enum uio_seg seg, enum symfollow follow, vnode_t **dirvpp, vnode_t **compvpp)
 {
-	struct nameidata nd;
-	int error;
-
-	error = 0;
-
-	KASSERT(dirvpp == NULL);
-
-	error = namei_simple_kernel(dirname,  NSM_FOLLOW_NOEMULROOT, compvpp);
-	
-	return error;
+        return (lookupnameat(dirname, seg, follow, dirvpp, compvpp, NULL));
 }
 
-
 int
-lookupnameat(char *dirname, enum uio_seg seg, vnode_t **dirvpp, 
-	vnode_t **compvpp, vnode_t *startvp)
+lookupnameat(char *dirname, enum uio_seg seg, enum symfollow follow,
+    vnode_t **dirvpp, vnode_t **compvpp, vnode_t *startvp)
 {
 
 	struct nameidata nd;
@@ -179,170 +169,3 @@ vfs_optionisset(const vfs_t *vfsp, const char *name, char **argp)
 	
 	return 0;
 }
-
-#ifdef PORT_FREEBSD
-int
-traverse(vnode_t **cvpp, int lktype)
-{
-	kthread_t *td = curthread;
-	vnode_t *cvp;
-	vnode_t *tvp;
-	vfs_t *vfsp;
-	int error;
-
-	cvp = *cvpp;
-	tvp = NULL;
-
-	/*
-	 * If this vnode is mounted on, then we transparently indirect
-	 * to the vnode which is the root of the mounted file system.
-	 * Before we do this we must check that an unmount is not in
-	 * progress on this vnode.
-	 */
-
-	for (;;) {
-		/*
-		 * Reached the end of the mount chain?
-		 */
-		vfsp = vn_mountedvfs(cvp);
-		if (vfsp == NULL)
-			break;
-		/*
-		 * tvp is NULL for *cvpp vnode, which we can't unlock.
-		 */
-		if (tvp != NULL)
-			vput(cvp);
-		else
-			vrele(cvp);
-
-		/*
-		 * The read lock must be held across the call to VFS_ROOT() to
-		 * prevent a concurrent unmount from destroying the vfs.
-		 */
-		error = VFS_ROOT(vfsp, &tvp);
-		if (error != 0)
-			return (error);
-		cvp = tvp;
-	}
-
-	*cvpp = cvp;
-	return (0);
-}
-
-int
-domount(kthread_t *td, vnode_t *vp, const char *fstype, char *fspath,
-    char *fspec, int fsflags)
-{
-	struct mount *mp;
-	struct vfsconf *vfsp;
-	struct ucred *newcr, *oldcr;
-	int error;
-	
-	/*
-	 * Be ultra-paranoid about making sure the type and fspath
-	 * variables will fit in our mp buffers, including the
-	 * terminating NUL.
-	 */
-	if (strlen(fstype) >= MFSNAMELEN || strlen(fspath) >= MNAMELEN)
-		return (ENAMETOOLONG);
-
-	vfsp = vfs_byname_kld(fstype, td, &error);
-	if (vfsp == NULL)
-		return (ENODEV);
-
-	if (vp->v_type != VDIR)
-		return (ENOTDIR);
-	simple_lock(&vp->v_interlock);
-	if ((vp->v_iflag & VI_MOUNT) != 0 ||
-	    vp->v_mountedhere != NULL) {
-		simple_unlock(&vp->v_interlock);
-		return (EBUSY);
-	}
-	vp->v_iflag |= VI_MOUNT;
-	simple_unlock(&vp->v_interlock);
-
-	/*
-	 * Allocate and initialize the filesystem.
-	 */
-	vn_lock(vp, LK_SHARED | LK_RETRY);
-	mp = vfs_mount_alloc(vp, vfsp, fspath, td);
-	VOP_UNLOCK(vp);
-
-	mp->mnt_optnew = NULL;
-	vfs_setmntopt(mp, "from", fspec, 0);
-	mp->mnt_optnew = mp->mnt_opt;
-	mp->mnt_opt = NULL;
-
-	/*
-	 * Set the mount level flags.
-	 * crdup() can sleep, so do it before acquiring a mutex.
-	 */
-	newcr = crdup(kcred);
-	MNT_ILOCK(mp);
-	if (fsflags & MNT_RDONLY)
-		mp->mnt_flag |= MNT_RDONLY;
-	mp->mnt_flag &=~ MNT_UPDATEMASK;
-	mp->mnt_flag |= fsflags & (MNT_UPDATEMASK | MNT_FORCE | MNT_ROOTFS);
-	/*
-	 * Unprivileged user can trigger mounting a snapshot, but we don't want
-	 * him to unmount it, so we switch to privileged credentials.
-	 */
-	oldcr = mp->mnt_cred;
-	mp->mnt_cred = newcr;
-	mp->mnt_stat.f_owner = mp->mnt_cred->cr_uid;
-	MNT_IUNLOCK(mp);
-	crfree(oldcr);
-	/*
-	 * Mount the filesystem.
-	 * XXX The final recipients of VFS_MOUNT just overwrite the ndp they
-	 * get.  No freeing of cn_pnbuf.
-	 */
-	error = VFS_MOUNT(mp, td);
-
-	if (!error) {
-		if (mp->mnt_opt != NULL)
-			vfs_freeopts(mp->mnt_opt);
-		mp->mnt_opt = mp->mnt_optnew;
-		(void)VFS_STATFS(mp, &mp->mnt_stat, td);
-	}
-	/*
-	 * Prevent external consumers of mount options from reading
-	 * mnt_optnew.
-	*/
-	mp->mnt_optnew = NULL;
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-	/*
-	 * Put the new filesystem on the mount list after root.
-	 */
-#ifdef FREEBSD_NAMECACHE
-	cache_purge(vp);
-#endif
-	if (!error) {
-		vnode_t *mvp;
-
-		simple_lock(&vp->v_interlock);
-		vp->v_iflag &= ~VI_MOUNT;
-		simple_unlock(&vp->v_interlock);
-		vp->v_mountedhere = mp;
-		mountlist_append(mp);
-		vfs_event_signal(NULL, VQ_MOUNT, 0);
-		if (VFS_ROOT(mp, LK_EXCLUSIVE, &mvp, td))
-			panic("mount: lost mount");
-		mountcheckdirs(vp, mvp);
-		vput(mvp);
-		VOP_UNLOCK(vp);
-		if ((mp->mnt_flag & MNT_RDONLY) == 0)
-			vfs_syncer_add_to_worklist(mp);
-		vfs_unbusy(mp, td);
-		vfs_mountedfrom(mp, fspec);
-	} else {
-		simple_lock(&vp->v_interlock);
-		vp->v_iflag &= ~VI_MOUNT;
-		simple_unlock(&vp->v_interlock);
-		VOP_UNLOCK(vp);
-		vfs_unbusy(mp, td);
-		vfs_mount_destroy(mp);
-	}
-	return (error);
-}
-#endif

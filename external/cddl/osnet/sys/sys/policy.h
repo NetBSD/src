@@ -1,4 +1,4 @@
-/*	$NetBSD: policy.h,v 1.7 2012/10/19 19:58:33 riastradh Exp $	*/
+/*	$NetBSD: policy.h,v 1.7.28.1 2018/06/25 07:25:26 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007 Pawel Jakub Dawidek <pjd@FreeBSD.org>
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- $ $FreeBSD: src/sys/compat/opensolaris/sys/policy.h,v 1.1 2007/04/06 01:09:06 pjd Exp $
+ $ $FreeBSD: head/sys/cddl/compat/opensolaris/sys/policy.h 219089 2011-02-27 19:41:40Z pjd $
  */
 
 #ifndef _OPENSOLARIS_SYS_POLICY_H_
@@ -39,35 +39,43 @@
 
 struct mount;
 struct vattr;
-struct vnode;
 
-int	secpolicy_zfs(kauth_cred_t cred);
-int	secpolicy_sys_config(kauth_cred_t cred, int checkonly);
-int	secpolicy_zinject(kauth_cred_t cred);
-int 	secpolicy_fs_mount(kauth_cred_t cred, struct vnode *mvp,
-	    struct mount *vfsp);
-int	secpolicy_fs_unmount(kauth_cred_t cred, struct mount *vfsp);
-int	secpolicy_basic_link(kauth_cred_t cred);
-int	secpolicy_vnode_stky_modify(kauth_cred_t cred);
-int 	secpolicy_vnode_owner(kauth_cred_t cred, uid_t owner);
-int	secpolicy_vnode_remove(kauth_cred_t cred);
-int	secpolicy_vnode_access(kauth_cred_t cred, struct vnode *vp,
-	    uid_t owner, int mode);
-int 	secpolicy_vnode_chown(kauth_cred_t cred,
-            boolean_t check_self);
-int	secpolicy_vnode_setdac(kauth_cred_t cred, uid_t owner);
-int	secpolicy_vnode_setattr(kauth_cred_t cred, struct vnode *vp,
-	    struct vattr *vap, const struct vattr *ovap, int flags,
-	    int unlocked_access(void *, int, kauth_cred_t), void *node);
-int	secpolicy_vnode_create_gid(kauth_cred_t cred);
-int	secpolicy_vnode_utime_modify(kauth_cred_t cred);
-int	secpolicy_vnode_setids_setgids(kauth_cred_t cred, gid_t gid);
-int	secpolicy_vnode_setid_retain(kauth_cred_t cred, boolean_t issuidroot);
-void	secpolicy_setid_clear(struct vattr *vap, kauth_cred_t cred);
-int	secpolicy_setid_setsticky_clear(struct vnode *vp, struct vattr *vap,
-	    const struct vattr *ovap, kauth_cred_t cred);
-int     secpolicy_xvattr(xvattr_t *xvap, uid_t owner, kauth_cred_t cred,
+typedef int accmode_t;
+
+int	secpolicy_nfs(cred_t *cr);
+int	secpolicy_zfs(cred_t *crd);
+int	secpolicy_sys_config(cred_t *cr, int checkonly);
+int	secpolicy_zinject(cred_t *cr);
+int	secpolicy_fs_unmount(cred_t *cr, struct mount *vfsp);
+int	secpolicy_basic_link(vnode_t *vp, cred_t *cr);
+int	secpolicy_vnode_owner(vnode_t *vp, cred_t *cr, uid_t owner);
+int	secpolicy_vnode_chown(vnode_t *vp, cred_t *cr, uid_t owner);
+int	secpolicy_vnode_stky_modify(cred_t *cr);
+int	secpolicy_vnode_remove(vnode_t *vp, cred_t *cr);
+int	secpolicy_vnode_access(cred_t *cr, vnode_t *vp, uid_t owner,
+	    accmode_t accmode);
+int	secpolicy_vnode_access2(cred_t *cr, vnode_t *vp, uid_t owner,
+	    accmode_t curmode, accmode_t wantmode);
+int	secpolicy_vnode_any_access(cred_t *cr, vnode_t *vp, uid_t owner);
+int	secpolicy_vnode_setdac(vnode_t *vp, cred_t *cr, uid_t owner);
+int	secpolicy_vnode_setattr(cred_t *cr, vnode_t *vp, struct vattr *vap,
+	    const struct vattr *ovap, int flags,
+	    int unlocked_access(void *, int, cred_t *), void *node);
+int	secpolicy_vnode_create_gid(cred_t *cr);
+int	secpolicy_vnode_setids_setgids(vnode_t *vp, cred_t *cr, gid_t gid);
+int	secpolicy_vnode_setid_retain(vnode_t *vp, cred_t *cr,
+	    boolean_t issuidroot);
+void	secpolicy_setid_clear(struct vattr *vap, vnode_t *vp, cred_t *cr);
+int	secpolicy_setid_setsticky_clear(vnode_t *vp, struct vattr *vap,
+	    const struct vattr *ovap, cred_t *cr);
+int	secpolicy_fs_owner(struct mount *vfsp, cred_t *cr);
+int	secpolicy_fs_mount(cred_t *cr, vnode_t *mvp, struct mount *vfsp);
+void	secpolicy_fs_mount_clearopts(cred_t *cr, struct mount *vfsp);
+int	secpolicy_xvattr(vnode_t *vp, xvattr_t *xvap, uid_t owner, cred_t *cr,
 	    vtype_t vtype);
+int	secpolicy_smb(cred_t *cr);
+
+int	secpolicy_vnode_utime_modify(cred_t *cr);
 
 #endif	/* _KERNEL */
 

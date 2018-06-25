@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.149.2.4 2018/04/07 04:12:14 pgoyette Exp $	*/
+/*	$NetBSD: cpu.c,v 1.149.2.5 2018/06/25 07:25:47 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2000-2012 NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.149.2.4 2018/04/07 04:12:14 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.149.2.5 2018/06/25 07:25:47 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */

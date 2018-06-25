@@ -1,4 +1,4 @@
-/*	$NetBSD: cyclic.h,v 1.4 2012/12/02 00:05:39 chs Exp $	*/
+/*	$NetBSD: cyclic.h,v 1.4.28.1 2018/06/25 07:25:25 pgoyette Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -21,7 +21,7 @@
  *
  * CDDL HEADER END
  *
- * $FreeBSD$
+ * $FreeBSD: head/sys/cddl/compat/opensolaris/sys/cyclic.h 179202 2008-05-22 08:33:24Z jb $
  *
  */
 /*
@@ -40,7 +40,14 @@ typedef	void	cpu_t;
 #ifndef _ASM
 #include <sys/time.h>
 #include <sys/cpuvar.h>
+#include <sys/cpupart.h>
 #endif /* !_ASM */
+
+#define	CY_LOW_LEVEL		0
+#define	CY_LOCK_LEVEL		1
+#define	CY_HIGH_LEVEL		2
+#define	CY_SOFT_LEVELS		2
+#define	CY_LEVELS		3
 
 #ifndef _ASM
 
@@ -55,6 +62,7 @@ typedef void *cyb_arg_t;
 typedef struct cyc_handler {
 	cyc_func_t cyh_func;
 	void *cyh_arg;
+	cyc_level_t cyh_level;
 } cyc_handler_t;
 
 typedef struct cyc_time {
@@ -68,11 +76,14 @@ typedef struct cyc_omni_handler {
 	void *cyo_arg;
 } cyc_omni_handler_t;
 
+#define	CY_INFINITY	INT64_MAX
+
 #ifdef _KERNEL
 
 cyclic_id_t cyclic_add(cyc_handler_t *, cyc_time_t *);
 cyclic_id_t cyclic_add_omni(cyc_omni_handler_t *);
 void cyclic_remove(cyclic_id_t);
+int cyclic_reprogram(cyclic_id_t, hrtime_t);
 
 #endif /* _KERNEL */
 

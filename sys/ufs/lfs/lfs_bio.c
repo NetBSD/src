@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.141 2017/06/10 05:29:36 maya Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.141.4.1 2018/06/25 07:26:08 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2008 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.141 2017/06/10 05:29:36 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.141.4.1 2018/06/25 07:26:08 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -420,8 +420,7 @@ lfs_bwrite_ext(struct buf *bp, int flags)
 	ASSERT_MAYBE_SEGLOCK(fs);
 	KASSERT(bp->b_cflags & BC_BUSY);
 	KASSERT(flags & BW_CLEAN || !LFS_IS_MALLOC_BUF(bp));
-	KASSERT(((bp->b_oflags | bp->b_flags) & (BO_DELWRI|B_LOCKED))
-	    != BO_DELWRI);
+	KASSERT((bp->b_flags & B_LOCKED) || !(bp->b_oflags & BO_DELWRI));
 
 	/*
 	 * Don't write *any* blocks if we're mounted read-only, or

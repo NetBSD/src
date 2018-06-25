@@ -1,9 +1,9 @@
-# $NetBSD: GENERIC.common,v 1.27 2018/01/13 16:20:33 reinoud Exp $
+# $NetBSD: GENERIC.common,v 1.27.2.1 2018/06/25 07:25:46 pgoyette Exp $
 
 include "arch/usermode/conf/std.usermode"
 
 options 	INCLUDE_CONFIG_FILE
-#ident 		"GENERIC-$Revision: 1.27 $"
+#ident 		"GENERIC-$Revision: 1.27.2.1 $"
 maxusers 	32
 
 makeoptions	DEBUG="-O1 -g3"
@@ -64,7 +64,6 @@ ld*		at mainbus?
 veth0		at mainbus?
 vaudio0		at mainbus?
 audio0		at vaudio0
-
 spkr*		at audio?		# PC speaker (synthesized)
 
 vncfb0		at mainbus?
@@ -77,6 +76,17 @@ options 	WSKBD_DEFAULT_KEYREPEAT_DEL1=1000
 options 	WSKBD_DEFAULT_KEYREPEAT_DELN=200
 options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 
+# virtual devices */
+vatapi*		at mainbus?
+atapibus*	at vatapi?
+
+# cd, sd, and the like
+cd*		at atapibus?
+sd*		at atapibus?
+st*		at atapibus?
+uk*		at atapibus?
+
+# pseudo devices
 pseudo-device	loop
 pseudo-device	pty
 pseudo-device	bpfilter

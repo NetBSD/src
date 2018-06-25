@@ -1,21 +1,21 @@
-/*	$NetBSD: extern.h,v 1.5 2009/03/06 11:45:03 tteras Exp $	*/
+/*	$NetBSD: extern.h,v 1.5.48.1 2018/06/25 07:25:05 pgoyette Exp $	*/
 
 
 
-void parse_init __P((void));
-int parse __P((FILE **));
-int parse_string __P((char *));
+void parse_init(void);
+int parse(FILE **);
+int parse_string(char *);
 
-int setkeymsg __P((char *, size_t *));
-int sendkeymsg __P((char *, size_t));
+int setkeymsg(char *, size_t *);
+int sendkeymsg(char *, size_t);
 
-int yylex __P((void));
-int yyparse __P((void));
-void yyfatal __P((const char *));
-void yyerror __P((const char *));
+int yylex(void);
+int yyparse(void);
+void yyfatal(const char *);
+void yyerror(const char *);
 
-u_int32_t *sendkeymsg_spigrep __P((unsigned int, struct addrinfo *,
-				   struct addrinfo *, int *));
+u_int32_t *sendkeymsg_spigrep(unsigned int, struct addrinfo *,
+				   struct addrinfo *, int *);
 
 extern int f_rfcmode;
 extern int lineno;

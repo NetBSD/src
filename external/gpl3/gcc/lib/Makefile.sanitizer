@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sanitizer,v 1.4 2018/02/14 02:12:07 christos Exp $
+#	$NetBSD: Makefile.sanitizer,v 1.4.2.1 2018/06/25 07:25:28 pgoyette Exp $
 
 SANITIZER=${GCCDIST}/libsanitizer
 .PATH: ${SANITIZER}/interception ${SANITIZER}/sanitizer_common
@@ -70,7 +70,6 @@ CPPFLAGS+=-D__STDC_LIMIT_MACROS -DSANITIZER_HAS_EXCEPTIONS=1
 CPPFLAGS+=-DSANITIZER_NEEDS_SEGV=1
 #CPPFLAGS+=-DCAN_SANITIZE_UB=0
 
-LIBDPLIBS+=    stdc++ ${.CURDIR}/../libstdc++-v3
 LIBDPLIBS+=    pthread ${.CURDIR}/../../../../../lib/libpthread
 COPTS+=-std=gnu++11 -fsized-deallocation -fvisibility=hidden
 COPTS+=-fno-builtin -fno-exceptions -fno-rtti -funwind-tables

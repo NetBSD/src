@@ -1,4 +1,4 @@
-/*	$NetBSD: mm.c,v 1.21 2017/12/21 14:32:06 maxv Exp $	*/
+/*	$NetBSD: mm.c,v 1.21.2.1 2018/06/25 07:25:38 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
@@ -420,6 +420,7 @@ mm_map_boot(void)
 	extern uint64_t PDPpaddr;
 	bootspace.spareva = bootspace.boot.va + NKL2_KIMG_ENTRIES * NBPD_L2;
 	bootspace.pdir = bootspace.boot.va + (PDPpaddr - bootspace.boot.pa);
+	bootspace.smodule = (vaddr_t)iom_base + IOM_SIZE;
 	bootspace.emodule = bootspace.boot.va + NKL2_KIMG_ENTRIES * NBPD_L2;
 }
 

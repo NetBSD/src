@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.22.4.1 2018/05/21 04:35:48 pgoyette Exp $	*/
+/*	$NetBSD: eval.c,v 1.22.4.2 2018/06/25 07:25:04 pgoyette Exp $	*/
 
 /*
  * Expansion - quoting, separation, substitution, globbing
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: eval.c,v 1.22.4.1 2018/05/21 04:35:48 pgoyette Exp $");
+__RCSID("$NetBSD: eval.c,v 1.22.4.2 2018/06/25 07:25:04 pgoyette Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -50,7 +50,7 @@ typedef struct Expand {
 static	int	varsub ARGS((Expand *xp, char *sp, char *word, int *stypep, int *slenp));
 static	int	comsub ARGS((Expand *xp, char *cp));
 static	char   *trimsub ARGS((char *str, char *pat, int how));
-static	void	glob ARGS((char *cp, XPtrV *wp, int markdirs));
+static	void	ksh_glob ARGS((char *cp, XPtrV *wp, int markdirs));
 static	void	globit ARGS((XString *xs, char **xpp, char *sp, XPtrV *wp,
 			     int check));
 static char	*maybe_expand_tilde ARGS((char *p, XString *dsp, char **dpp,
@@ -173,7 +173,8 @@ expand(cp, wp, f)
 	Expand x;		/* expansion variables */
 	SubType st_head, *st;
 	int UNINITIALIZED(newlines); /* For trailing newlines in COMSUB */
-	int saw_eq, tilde_ok;
+	int saw_eq;
+	unsigned int tilde_ok;
 	int make_magic;
 	size_t len;
 
@@ -578,7 +579,7 @@ expand(cp, wp, f)
 				else
 #endif /* BRACE_EXPAND */
 				if (fdo & DOGLOB)
-					glob(p, wp, f & DOMARKDIRS);
+					ksh_glob(p, wp, f & DOMARKDIRS);
 				else if ((f & DOPAT) || !(fdo & DOMAGIC_))
 					XPput(*wp, p);
 				else
@@ -945,13 +946,13 @@ trimsub(str, pat, how)
 }
 
 /*
- * glob
+ * ksh_glob
  * Name derived from V6's /etc/glob, the program that expanded filenames.
  */
 
 /* XXX cp not const 'cause slashes are temporarily replaced with nulls... */
 static void
-glob(cp, wp, markdirs)
+ksh_glob(cp, wp, markdirs)
 	char *cp;
 	XPtrV *wp;
 	int markdirs;
@@ -1340,7 +1341,7 @@ alt_expand(wp, start, exp_start, end, fdo)
 		 * expansion. }
 		 */
 		if (fdo & DOGLOB)
-			glob(start, wp, fdo & DOMARKDIRS);
+			ksh_glob(start, wp, fdo & DOMARKDIRS);
 		else
 			XPput(*wp, debunk(start, start, end - start));
 		return;

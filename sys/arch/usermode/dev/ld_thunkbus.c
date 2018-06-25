@@ -1,4 +1,4 @@
-/* $NetBSD: ld_thunkbus.c,v 1.32 2018/01/13 10:27:58 reinoud Exp $ */
+/* $NetBSD: ld_thunkbus.c,v 1.32.2.1 2018/06/25 07:25:46 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_thunkbus.c,v 1.32 2018/01/13 10:27:58 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_thunkbus.c,v 1.32.2.1 2018/06/25 07:25:46 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -271,6 +271,9 @@ ld_thunkbus_complete(void *arg)
 	//    bp->b_flags & B_READ ? "read" : "write",
 	//    (unsigned int)bp->b_bcount, (long long)offset, bp->b_data, bp->b_flags);
 
+	/* this is silly, but better make sure */
+	thunk_assert_presence((vaddr_t) bp->b_data, (size_t) bp->b_bcount);
+
 	/* read/write the request */
 	if (bp->b_flags & B_READ) {
 		ret = thunk_pread(sc->sc_fd, bp->b_data, bp->b_bcount, offset);
@@ -285,6 +288,7 @@ ld_thunkbus_complete(void *arg)
 	if ((ret >= 0) && (ret == bp->b_bcount)) {
 		bp->b_resid = 0;
 	} else {
+		// printf("ret = %d, errno %d?\n",(int) ret, thunk_geterrno());
 		bp->b_error = thunk_geterrno();
 		bp->b_resid = bp->b_bcount;
 	}

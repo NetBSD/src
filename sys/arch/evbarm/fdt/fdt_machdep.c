@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.20.2.1 2018/04/07 04:12:12 pgoyette Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.20.2.2 2018/06/25 07:25:41 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.20.2.1 2018/04/07 04:12:12 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.20.2.2 2018/06/25 07:25:41 pgoyette Exp $");
 
 #include "opt_machdep.h"
 #include "opt_bootconfig.h"
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.20.2.1 2018/04/07 04:12:12 pgoyett
 #include <sys/termios.h>
 #include <sys/extent.h>
 
+#include <dev/cons.h>
 #include <uvm/uvm_extern.h>
 
 #include <sys/conf.h>
@@ -107,7 +108,7 @@ static uint64_t initrd_start, initrd_end;
 
 #include <libfdt.h>
 #include <dev/fdt/fdtvar.h>
-#define FDT_BUF_SIZE	(128*1024)
+#define FDT_BUF_SIZE	(256*1024)
 static uint8_t fdt_data[FDT_BUF_SIZE];
 
 extern char KERNEL_BASE_phys[];
@@ -118,43 +119,46 @@ static void fdt_device_register(device_t, void *);
 static void fdt_reset(void);
 static void fdt_powerdown(void);
 
-#ifdef VERBOSE_INIT_ARM
+static dev_type_cnputc(earlyconsputc);
+static dev_type_cngetc(earlyconsgetc);
+
+static struct consdev earlycons = {
+	.cn_putc = earlyconsputc,
+	.cn_getc = earlyconsgetc,
+	.cn_pollc = nullcnpollc,
+};
+
 static void
 fdt_putchar(char c)
 {
 	const struct arm_platform *plat = arm_fdt_platform();
-	if (plat && plat->early_putchar)
+	if (plat && plat->early_putchar) {
 		plat->early_putchar(c);
+	}
+#ifdef EARLYCONS
+	else {
+		void uartputc(int);	/* evbarm/fdt/fdt_start.S */
+		uartputc(c);
+	}
+#endif
 }
 
 static void
-fdt_putstr(const char *s)
+earlyconsputc(dev_t dev, int c)
 {
-	for (const char *p = s; *p; p++)
-		fdt_putchar(*p);
+	fdt_putchar(c);
 }
 
-static void
-fdt_printn(unsigned long n, int base)
+static int
+earlyconsgetc(dev_t dev)
 {
-	char *p, buf[(sizeof(unsigned long) * NBBY / 3) + 1 + 2 /* ALT + SIGN */];
-
-	p = buf;
-	do {
-		*p++ = hexdigits[n % base];
-	} while (n /= base);
-
-	do {
-		fdt_putchar(*--p);
-	} while (p > buf);
+	return 0;	/* XXX */
 }
-#define DPRINTF(...)		printf(__VA_ARGS__)
-#define DPRINT(x)		fdt_putstr(x)
-#define DPRINTN(x,b)		fdt_printn((x), (b))
+
+#ifdef VERBOSE_INIT_ARM
+#define DPRINTF(...)	printf(__VA_ARGS__)
 #else
 #define DPRINTF(...)
-#define DPRINT(x)
-#define DPRINTN(x,b)
 #endif
 
 /*
@@ -354,6 +358,9 @@ initarm(void *arg)
 	const struct arm_platform *plat;
 	uint64_t memory_start, memory_end;
 
+	/* set temporally to work printf()/panic() even before consinit() */
+	cn_tab = &earlycons;
+
 	/* Load FDT */
 	int error = fdt_check_header(fdt_addr_r);
 	if (error == 0) {
@@ -371,27 +378,25 @@ initarm(void *arg)
 		panic("Kernel does not support this device");
 
 	/* Early console may be available, announce ourselves. */
-	DPRINT("FDT<");
-	DPRINTN((uintptr_t)fdt_addr_r, 16);
-	DPRINT(">");
+	DPRINTF("FDT<%p>\n", fdt_addr_r);
 
 	const int chosen = OF_finddevice("/chosen");
 	if (chosen >= 0)
 		OF_getprop(chosen, "bootargs", bootargs, sizeof(bootargs));
 	boot_args = bootargs;
 
-	DPRINT(" devmap");
+	DPRINTF("devmap\n");
 	pmap_devmap_register(plat->devmap());
 #ifdef __aarch64__
 	pmap_devmap_bootstrap(plat->devmap());
 #endif
 
 	/* Heads up ... Setup the CPU / MMU / TLB functions. */
-	DPRINT(" cpufunc");
+	DPRINTF("cpufunc\n");
 	if (set_cpufuncs())
 		panic("cpu not recognized!");
 
-	DPRINT(" bootstrap");
+	DPRINTF("bootstrap\n");
 	plat->bootstrap();
 
 	/*
@@ -400,10 +405,9 @@ initarm(void *arg)
 	 */
 	fdt_update_stdout_path();
 
-	DPRINT(" consinit");
+	DPRINTF("consinit ");
 	consinit();
-
-	DPRINTF(" ok\n");
+	DPRINTF("ok\n");
 
 	DPRINTF("uboot: args %#lx, %#lx, %#lx, %#lx\n",
 	    uboot_args[0], uboot_args[1], uboot_args[2], uboot_args[3]);

@@ -25,11 +25,7 @@
  * Copyright (c) 2013 by Delphix. All rights reserved.
  */
 
-#ifdef illumos
 #include <sys/sysmacros.h>
-#else
-#define	ABS(a)		((a) < 0 ? -(a) : (a))
-#endif
 #include <string.h>
 #include <strings.h>
 #include <stdlib.h>
@@ -301,7 +297,8 @@ pfprint_fp(dtrace_hdl_t *dtp, FILE *fp, const char *format,
     const dt_pfargd_t *pfd, const void *addr, size_t size, uint64_t normal)
 {
 	double n = (double)normal;
-#if !defined(__arm__) && !defined(__powerpc__) && !defined(__mips__)
+#if !defined(__arm__) && !defined(__powerpc__) && \
+    !defined(__mips__) && !defined(__riscv__)
 	long double ldn = (long double)normal;
 #endif
 
@@ -312,7 +309,8 @@ pfprint_fp(dtrace_hdl_t *dtp, FILE *fp, const char *format,
 	case sizeof (double):
 		return (dt_printf(dtp, fp, format,
 		    *((double *)addr) / n));
-#if !defined(__arm__) && !defined(__powerpc__) && !defined(__mips__)
+#if !defined(__arm__) && !defined(__powerpc__) && \
+    !defined(__mips__) && !defined(__riscv__)
 	case sizeof (long double):
 		return (dt_printf(dtp, fp, format,
 		    *((long double *)addr) / ldn));
@@ -524,6 +522,7 @@ pfprint_port(dtrace_hdl_t *dtp, FILE *fp, const char *format,
 
 #ifdef illumos
 	if ((sv = getservbyport_r(port, NULL, &res, buf, sizeof (buf))) != NULL)
+		return (dt_printf(dtp, fp, format, sv->s_name));
 #elif defined(__FreeBSD__)
 	if (getservbyport_r(port, NULL, &res, buf, sizeof (buf), &sv) > 0)
 		return (dt_printf(dtp, fp, format, sv->s_name));

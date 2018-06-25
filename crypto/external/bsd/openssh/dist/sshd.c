@@ -1,4 +1,4 @@
-/*	$NetBSD: sshd.c,v 1.28.2.2 2018/04/16 01:57:31 pgoyette Exp $	*/
+/*	$NetBSD: sshd.c,v 1.28.2.3 2018/06/25 07:25:05 pgoyette Exp $	*/
 /* $OpenBSD: sshd.c,v 1.506 2018/03/03 03:15:51 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -44,7 +44,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshd.c,v 1.28.2.2 2018/04/16 01:57:31 pgoyette Exp $");
+__RCSID("$NetBSD: sshd.c,v 1.28.2.3 2018/06/25 07:25:05 pgoyette Exp $");
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -344,6 +344,7 @@ main_sigchld_handler(int sig)
 __dead static void
 grace_alarm_handler(int sig)
 {
+	pfilter_notify(1);
 	if (use_privsep && pmonitor != NULL && pmonitor->m_pid > 0)
 		kill(pmonitor->m_pid, SIGALRM);
 
@@ -356,7 +357,6 @@ grace_alarm_handler(int sig)
 		killpg(0, SIGTERM);
 	}
 
-	pfilter_notify(1);
 	/* Log error and exit. */
 	sigdie("Timeout before authentication for %s port %d",
 	    ssh_remote_ipaddr(active_state), ssh_remote_port(active_state));
@@ -2192,6 +2192,9 @@ void
 cleanup_exit(int i)
 {
 	struct ssh *ssh = active_state; /* XXX */
+
+	if (i == 255)
+		pfilter_notify(1);
 
 	if (the_authctxt) {
 		do_cleanup(ssh, the_authctxt);

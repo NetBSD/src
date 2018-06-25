@@ -1,4 +1,4 @@
-/*	$NetBSD: dtmalloc.c,v 1.2 2010/02/21 01:46:33 darran Exp $	*/
+/*	$NetBSD: dtmalloc.c,v 1.2.44.1 2018/06/25 07:25:14 pgoyette Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -22,7 +22,7 @@
  *
  * Portions Copyright 2006-2008 John Birrell jb@freebsd.org
  *
- * $FreeBSD: src/sys/cddl/dev/dtmalloc/dtmalloc.c,v 1.1.4.1 2009/08/03 08:13:06 kensmith Exp $
+ * $FreeBSD: head/sys/cddl/dev/dtmalloc/dtmalloc.c 252325 2013-06-28 03:14:40Z markj $
  *
  */
 
@@ -30,6 +30,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
+#include <sys/ctype.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/module.h>
@@ -113,8 +114,17 @@ dtmalloc_type_cb(struct malloc_type *mtp, void *arg __unused)
 {
 	char name[DTRACE_FUNCNAMELEN];
 	struct malloc_type_internal *mtip = mtp->ks_handle;
+	int i;
 
+	/*
+	 * malloc_type descriptions are allowed to contain whitespace, but
+	 * DTrace probe identifiers are not, so replace the whitespace with
+	 * underscores.
+	 */
 	strlcpy(name, mtp->ks_shortdesc, sizeof(name));
+	for (i = 0; name[i] != 0; i++)
+		if (isspace(name[i]))
+			name[i] = '_';
 
 	if (dtrace_probe_lookup(dtmalloc_id, NULL, name, "malloc") != 0)
 		return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: x1226.c,v 1.20 2017/10/28 04:53:55 riastradh Exp $	*/
+/*	$NetBSD: x1226.c,v 1.20.2.1 2018/06/25 07:25:50 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2003 Shigeyuki Fukushima.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x1226.c,v 1.20 2017/10/28 04:53:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x1226.c,v 1.20.2.1 2018/06/25 07:25:50 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,7 +103,7 @@ xrtc_match(device_t parent, cfdata_t cf, void *arg)
 
 	/* match only this RTC devices */
 	if (ia->ia_addr == X1226_ADDR)
-		return (1);
+		return (I2C_MATCH_ADDRESS_ONLY);
 
 	return (0);
 }

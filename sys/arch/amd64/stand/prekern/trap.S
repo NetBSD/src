@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.2 2017/12/22 07:37:27 maxv Exp $	*/
+/*	$NetBSD: trap.S,v 1.2.2.1 2018/06/25 07:25:38 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
@@ -90,91 +90,72 @@ IDTVEC(trap09)
 	ZTRAPENTRY(T_FPOPFLT)
 IDTVEC_END(trap09)
 
-IDTVEC(trap0a)
-	TRAPENTRY(T_TSSFLT)
-IDTVEC_END(trap0a)
-
-IDTVEC(trap0b)		/* #NP() Segment not present */
-	ZTRAPENTRY(T_SEGNPFLT)
-IDTVEC_END(trap0b)
-
-IDTVEC(trap0c)		/* #SS() Stack exception */
-	ZTRAPENTRY(T_STKFLT)
-IDTVEC_END(trap0c)
-
-IDTVEC(trap0d)		/* #GP() General protection */
-	ZTRAPENTRY(T_PROTFLT)
-IDTVEC_END(trap0d)
-
-IDTVEC(trap0e)
-	TRAPENTRY(T_PAGEFLT)
-IDTVEC_END(trap0e)
-
-IDTVEC(trap0f)
-	ZTRAPENTRY(T_ASTFLT)
-IDTVEC_END(trap0f)
-
 IDTVEC(trap10)
-	ZTRAPENTRY(T_ARITHTRAP)
+	TRAPENTRY(T_TSSFLT)
 IDTVEC_END(trap10)
 
 IDTVEC(trap11)
-	TRAPENTRY(T_ALIGNFLT)
+	ZTRAPENTRY(T_SEGNPFLT)
 IDTVEC_END(trap11)
 
 IDTVEC(trap12)
-	ZTRAPENTRY(T_MCA)
+	ZTRAPENTRY(T_STKFLT)
 IDTVEC_END(trap12)
 
 IDTVEC(trap13)
-	ZTRAPENTRY(T_XMM)
+	ZTRAPENTRY(T_PROTFLT)
 IDTVEC_END(trap13)
 
 IDTVEC(trap14)
-IDTVEC(trap15)
-IDTVEC(trap16)
-IDTVEC(trap17)
-IDTVEC(trap18)
-IDTVEC(trap19)
-IDTVEC(trap1a)
-IDTVEC(trap1b)
-IDTVEC(trap1c)
-IDTVEC(trap1d)
-IDTVEC(trap1e)
-IDTVEC(trap1f)
-	/* 20 - 31 reserved for future exp */
-	ZTRAPENTRY(T_RESERVED)
-IDTVEC_END(trap1f)
-IDTVEC_END(trap1e)
-IDTVEC_END(trap1d)
-IDTVEC_END(trap1c)
-IDTVEC_END(trap1b)
-IDTVEC_END(trap1a)
-IDTVEC_END(trap19)
-IDTVEC_END(trap18)
-IDTVEC_END(trap17)
-IDTVEC_END(trap16)
-IDTVEC_END(trap15)
+	TRAPENTRY(T_PAGEFLT)
 IDTVEC_END(trap14)
 
-IDTVEC(exceptions)
-	.quad	_C_LABEL(Xtrap00), _C_LABEL(Xtrap01)
-	.quad	_C_LABEL(Xtrap02), _C_LABEL(Xtrap03)
-	.quad	_C_LABEL(Xtrap04), _C_LABEL(Xtrap05)
-	.quad	_C_LABEL(Xtrap06), _C_LABEL(Xtrap07)
-	.quad	_C_LABEL(Xtrap08), _C_LABEL(Xtrap09)
-	.quad	_C_LABEL(Xtrap0a), _C_LABEL(Xtrap0b)
-	.quad	_C_LABEL(Xtrap0c), _C_LABEL(Xtrap0d)
-	.quad	_C_LABEL(Xtrap0e), _C_LABEL(Xtrap0f)
-	.quad	_C_LABEL(Xtrap10), _C_LABEL(Xtrap11)
-	.quad	_C_LABEL(Xtrap12), _C_LABEL(Xtrap13)
-	.quad	_C_LABEL(Xtrap14), _C_LABEL(Xtrap15)
-	.quad	_C_LABEL(Xtrap16), _C_LABEL(Xtrap17)
-	.quad	_C_LABEL(Xtrap18), _C_LABEL(Xtrap19)
-	.quad	_C_LABEL(Xtrap1a), _C_LABEL(Xtrap1b)
-	.quad	_C_LABEL(Xtrap1c), _C_LABEL(Xtrap1d)
-	.quad	_C_LABEL(Xtrap1e), _C_LABEL(Xtrap1f)
-IDTVEC_END(exceptions)
+IDTVEC(trap15)
+	ZTRAPENTRY(T_ASTFLT)
+IDTVEC_END(trap15)
+
+IDTVEC(trap16)
+	ZTRAPENTRY(T_ARITHTRAP)
+IDTVEC_END(trap16)
+
+IDTVEC(trap17)
+	TRAPENTRY(T_ALIGNFLT)
+IDTVEC_END(trap17)
+
+IDTVEC(trap18)
+	ZTRAPENTRY(T_MCA)
+IDTVEC_END(trap18)
+
+IDTVEC(trap19)
+	ZTRAPENTRY(T_XMM)
+IDTVEC_END(trap19)
+
+IDTVEC(trap20)
+IDTVEC(trap21)
+IDTVEC(trap22)
+IDTVEC(trap23)
+IDTVEC(trap24)
+IDTVEC(trap25)
+IDTVEC(trap26)
+IDTVEC(trap27)
+IDTVEC(trap28)
+IDTVEC(trap29)
+IDTVEC(trap30)
+IDTVEC(trap31)
+	/* 20 - 31 reserved for future exp */
+	ZTRAPENTRY(T_RESERVED)
+IDTVEC_END(trap31)
+IDTVEC_END(trap30)
+IDTVEC_END(trap29)
+IDTVEC_END(trap28)
+IDTVEC_END(trap27)
+IDTVEC_END(trap26)
+IDTVEC_END(trap25)
+IDTVEC_END(trap24)
+IDTVEC_END(trap23)
+IDTVEC_END(trap22)
+IDTVEC_END(trap21)
+IDTVEC_END(trap20)
 
 /*
  * Arguments pushed on the stack:
@@ -191,3 +172,24 @@ NENTRY(alltraps)
 	call	_C_LABEL(trap)
 	/* NOTREACHED */
 END(alltraps)
+
+	.section .rodata
+
+LABEL(x86_exceptions)
+	.quad	_C_LABEL(Xtrap00), _C_LABEL(Xtrap01)
+	.quad	_C_LABEL(Xtrap02), _C_LABEL(Xtrap03)
+	.quad	_C_LABEL(Xtrap04), _C_LABEL(Xtrap05)
+	.quad	_C_LABEL(Xtrap06), _C_LABEL(Xtrap07)
+	.quad	_C_LABEL(Xtrap08), _C_LABEL(Xtrap09)
+	.quad	_C_LABEL(Xtrap10), _C_LABEL(Xtrap11)
+	.quad	_C_LABEL(Xtrap12), _C_LABEL(Xtrap13)
+	.quad	_C_LABEL(Xtrap14), _C_LABEL(Xtrap15)
+	.quad	_C_LABEL(Xtrap16), _C_LABEL(Xtrap17)
+	.quad	_C_LABEL(Xtrap18), _C_LABEL(Xtrap19)
+	.quad	_C_LABEL(Xtrap20), _C_LABEL(Xtrap21)
+	.quad	_C_LABEL(Xtrap22), _C_LABEL(Xtrap23)
+	.quad	_C_LABEL(Xtrap24), _C_LABEL(Xtrap25)
+	.quad	_C_LABEL(Xtrap26), _C_LABEL(Xtrap27)
+	.quad	_C_LABEL(Xtrap28), _C_LABEL(Xtrap29)
+	.quad	_C_LABEL(Xtrap30), _C_LABEL(Xtrap31)
+END(x86_exceptions)

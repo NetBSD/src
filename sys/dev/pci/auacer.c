@@ -1,4 +1,4 @@
-/*	$NetBSD: auacer.c,v 1.33 2017/06/01 02:45:10 chs Exp $	*/
+/*	$NetBSD: auacer.c,v 1.33.8.1 2018/06/25 07:25:51 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2008 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auacer.c,v 1.33 2017/06/01 02:45:10 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auacer.c,v 1.33.8.1 2018/06/25 07:25:51 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -189,7 +189,7 @@ static int	auacer_set_rate(struct auacer_softc *, int, u_int);
 
 static void auacer_reset(struct auacer_softc *sc);
 
-static struct audio_hw_if auacer_hw_if = {
+static const struct audio_hw_if auacer_hw_if = {
 	NULL,			/* open */
 	NULL,			/* close */
 	NULL,			/* drain */

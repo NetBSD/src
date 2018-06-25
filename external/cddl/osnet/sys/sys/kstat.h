@@ -1,4 +1,4 @@
-/*	$NetBSD: kstat.h,v 1.3 2010/02/21 01:46:36 darran Exp $	*/
+/*	$NetBSD: kstat.h,v 1.3.44.1 2018/06/25 07:25:26 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/compat/opensolaris/sys/kstat.h,v 1.1 2007/04/06 01:09:06 pjd Exp $
+ * $FreeBSD: head/sys/cddl/compat/opensolaris/sys/kstat.h 315896 2017-03-24 09:37:00Z mav $
  */
 
 #ifndef _OPENSOLARIS_SYS_KSTAT_H_
@@ -66,11 +66,18 @@
 
 #define	KSTAT_FLAG_VIRTUAL	0x01
 
+#define	KSTAT_READ	0
+#define	KSTAT_WRITE	1
+
 typedef struct kstat {
 	void	*ks_data;
 	u_int	 ks_ndata;
+#ifdef _KERNEL
 	struct sysctllog *ks_clog;
 	const struct sysctlnode *ks_node;
+#endif
+	int		(*ks_update)(struct kstat *, int); /* dynamic update */
+	void		*ks_private;	/* arbitrary provider-private data */
 } kstat_t;
 
 typedef struct kstat_named {
@@ -82,6 +89,8 @@ typedef struct kstat_named {
 #define	KSTAT_DATA_INT64	3
 #define	KSTAT_DATA_UINT64	4
 	uchar_t	data_type;
+#define	KSTAT_DESCLEN		128
+	char	desc[KSTAT_DESCLEN];
 	union {
 		uint64_t	ui64;
 	} value;
@@ -91,5 +100,7 @@ kstat_t *kstat_create(char *module, int instance, char *name, char *class,
     uchar_t type, ulong_t ndata, uchar_t flags);
 void kstat_install(kstat_t *ksp);
 void kstat_delete(kstat_t *ksp);
+void kstat_set_string(char *, const char *);
+void kstat_named_init(kstat_named_t *, const char *, uchar_t);
 
 #endif	/* _OPENSOLARIS_SYS_KSTAT_H_ */

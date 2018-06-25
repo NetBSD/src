@@ -1,4 +1,4 @@
-/*	$NetBSD: cyclic_impl.h,v 1.4 2012/12/02 01:05:16 chs Exp $	*/
+/*	$NetBSD: cyclic_impl.h,v 1.4.28.1 2018/06/25 07:25:25 pgoyette Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -21,7 +21,7 @@
  *
  * CDDL HEADER END
  *
- * $FreeBSD$
+ * $FreeBSD: head/sys/cddl/compat/opensolaris/sys/cyclic_impl.h 216254 2010-12-07 12:25:26Z avg $
  *
  */
 /*

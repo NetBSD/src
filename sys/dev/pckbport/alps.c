@@ -1,4 +1,4 @@
-/* $NetBSD: alps.c,v 1.4 2017/08/16 21:18:58 nat Exp $ */
+/* $NetBSD: alps.c,v 1.4.6.1 2018/06/25 07:26:01 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2017 Ryo ONODERA <ryo@tetera.org>
@@ -30,7 +30,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: alps.c,v 1.4 2017/08/16 21:18:58 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: alps.c,v 1.4.6.1 2018/06/25 07:26:01 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -159,15 +159,17 @@ pms_alps_e6sig(struct pms_softc *psc, uint8_t *e6sig)
 		goto err;
 	e6sig[0] = e6sig[1] = e6sig[2] = 0;
 	/* Get E6 signature */
-	cmd[0] = PMS_GET_SCALE; /* E9 */
+	cmd[0] = PMS_SEND_DEV_STATUS; /* E9 */
 	if ((res = pckbport_poll_cmd(psc->sc_kbctag, psc->sc_kbcslot,
 	    cmd, 1, 3, e6sig, 0)) != 0)
 		goto err;
 
 	/* ALPS input device returns 00-00-64 as E6 signature */
-	if (e6sig[0] != 0x00 || e6sig[1] != 0x00 ||
-		e6sig[2] != 0x64) {
-		return EINVAL;
+	if ((e6sig[0] & ~0x07u) != 0x00 || /* ignore buttons */
+	    e6sig[1] != 0x00 ||
+	    e6sig[2] != 0x64)
+	{
+		return ENODEV;	/* This is not an ALPS device */
 	}
 
 	aprint_debug_dev(psc->sc_dev,
@@ -207,7 +209,7 @@ pms_alps_e7sig(struct pms_softc *psc, uint8_t *e7sig)
 	    cmd, 1, 0, NULL, 0)) != 0)
 		goto err;
 	e7sig[0] = e7sig[1] = e7sig[2] = 0;
-	cmd[0] = PMS_GET_SCALE; /* E9 */
+	cmd[0] = PMS_SEND_DEV_STATUS; /* E9 */
 	if ((res = pckbport_poll_cmd(psc->sc_kbctag, psc->sc_kbcslot,
 	    cmd, 1, 3, e7sig, 0)) != 0)
 		goto err;
@@ -215,6 +217,9 @@ pms_alps_e7sig(struct pms_softc *psc, uint8_t *e7sig)
 	aprint_debug_dev(psc->sc_dev,
 		"ALPS PS/2 E7 signature: 0x%X 0x%X 0x%X\n",
 		e7sig[0], e7sig[1], e7sig[2]);
+
+	if (e7sig[0] != 0x73)
+		return ENODEV;	/* This is not an ALPS device */
 
 	return 0;
 err:
@@ -249,7 +254,7 @@ pms_alps_ecsig(struct pms_softc *psc, uint8_t *ecsig)
 	    cmd, 1, 0, NULL, 0)) != 0)
 		goto err;
 	ecsig[0] = ecsig[1] = ecsig[2] = 0;
-	cmd[0] = PMS_GET_SCALE; /* E9 */
+	cmd[0] = PMS_SEND_DEV_STATUS; /* E9 */
 	if ((res = pckbport_poll_cmd(psc->sc_kbctag, psc->sc_kbcslot,
 	    cmd, 1, 3, ecsig, 0)) != 0)
 		goto err;
@@ -261,7 +266,7 @@ pms_alps_ecsig(struct pms_softc *psc, uint8_t *ecsig)
 	return 0;
 
 err:
-	aprint_error_dev(psc->sc_dev, "Failed to get EC signature.\n");
+	aprint_debug_dev(psc->sc_dev, "Failed to get EC signature.\n");
 	return res;
 }
 
@@ -288,7 +293,7 @@ pms_alps_start_command_mode(struct pms_softc *psc)
 	    cmd, 1, 0, NULL, 0)) != 0)
 		goto err;
 	resp[0] = resp[1] = resp[2] = 0;
-	cmd[0] = PMS_GET_SCALE; /* E9 */
+	cmd[0] = PMS_SEND_DEV_STATUS; /* E9 */
 	if ((res = pckbport_poll_cmd(psc->sc_kbctag, psc->sc_kbcslot,
 	    cmd, 1, 3, resp, 0)) != 0)
 		goto err;
@@ -685,7 +690,7 @@ pms_alps_probe_init(void *opaque)
 	uint8_t e7sig[3];
 	uint8_t ecsig[3];
 	int res;
-	u_char cmd[1], resp[3];
+	u_char cmd[1];
 
 	sc->last_x1 = 0;
 	sc->last_y1 = 0;
@@ -696,7 +701,7 @@ pms_alps_probe_init(void *opaque)
 	pckbport_flush(psc->sc_kbctag, psc->sc_kbcslot);
 
 	if ((res = pms_alps_e6sig(psc, e6sig)) != 0)
-		return res; /* This is not ALPS device */
+		goto err;
 
 	if ((res = pms_alps_e7sig(psc, e7sig)) != 0)
 		goto err;
@@ -750,9 +755,10 @@ pms_alps_probe_init(void *opaque)
 
 err:
 	cmd[0] = PMS_RESET;
-	(void)pckbport_poll_cmd(psc->sc_kbctag, psc->sc_kbcslot, cmd,
-	    1, 2, resp, 1);
-	aprint_error_dev(psc->sc_dev, "Failed to initialize an ALPS device.\n");
+	(void)pckbport_poll_cmd(psc->sc_kbctag, psc->sc_kbcslot,
+	    cmd, 1, 2, NULL, 1);
+	if (res != ENODEV)
+		aprint_error_dev(psc->sc_dev, "Failed to initialize an ALPS device.\n");
 	return res;
 }
 

@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.9 2012/01/07 18:10:18 jmcneill Exp $ */
+/* $NetBSD: mainbus.c,v 1.9.46.1 2018/06/25 07:25:46 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.9 2012/01/07 18:10:18 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.9.46.1 2018/06/25 07:25:46 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -52,6 +52,9 @@ CFATTACH_DECL_NEW(mainbus, sizeof(mainbus_softc_t),
 
 extern char *usermode_disk_image_path[];
 extern int usermode_disk_image_path_count;
+extern int   usermode_vdev_type[];
+extern char *usermode_vdev_path[];
+extern int usermode_vdev_count;
 extern char *usermode_tap_device;
 extern char *usermode_tap_eaddr;
 extern char *usermode_audio_device;
@@ -109,6 +112,12 @@ mainbus_attach(device_t parent, device_t self, void *opaque)
 	for (i = 0; i < usermode_disk_image_path_count; i++) {
 		taa.taa_type = THUNKBUS_TYPE_DISKIMAGE;
 		taa.u.diskimage.path = usermode_disk_image_path[i];
+		config_found_ia(self, "thunkbus", &taa, mainbus_print);
+	}
+
+	for (i = 0; i < usermode_vdev_count; i++) {
+		taa.taa_type = usermode_vdev_type[i];
+		taa.u.vdev.path = usermode_vdev_path[i];
 		config_found_ia(self, "thunkbus", &taa, mainbus_print);
 	}
 }

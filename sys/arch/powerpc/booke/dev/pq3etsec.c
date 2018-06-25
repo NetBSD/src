@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3etsec.c,v 1.32 2017/10/23 09:23:48 msaitoh Exp $	*/
+/*	$NetBSD: pq3etsec.c,v 1.32.2.1 2018/06/25 07:25:44 pgoyette Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.32 2017/10/23 09:23:48 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.32.2.1 2018/06/25 07:25:44 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -2063,7 +2063,7 @@ pq3etsec_tx_offload(
 	if (csum_flags & M_CSUM_IPv4)
 		fcb.txfcb_l4os = M_CSUM_DATA_IPv4_IPHL(m->m_pkthdr.csum_data);
 	else
-		fcb.txfcb_l4os = M_CSUM_DATA_IPv6_HL(m->m_pkthdr.csum_data);
+		fcb.txfcb_l4os = M_CSUM_DATA_IPv6_IPHL(m->m_pkthdr.csum_data);
 	fcb.txfcb_l3os = ETHER_HDR_LEN;
 	fcb.txfcb_phcs = 0;
 	fcb.txfcb_vlctl = vtag;

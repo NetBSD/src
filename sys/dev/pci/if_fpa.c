@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fpa.c,v 1.60 2015/01/25 07:33:24 martin Exp $	*/
+/*	$NetBSD: if_fpa.c,v 1.60.16.1 2018/06/25 07:25:51 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fpa.c,v 1.60 2015/01/25 07:33:24 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fpa.c,v 1.60.16.1 2018/06/25 07:25:51 pgoyette Exp $");
 
 #ifdef __NetBSD__
 #include "opt_inet.h"
@@ -58,9 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_fpa.c,v 1.60 2015/01/25 07:33:24 martin Exp $");
 #include <net/if_types.h>
 #include <net/if_dl.h>
 #include <net/route.h>
-
 #include <net/bpf.h>
-#include <net/bpfdesc.h>
 
 #if defined(__FreeBSD__)
 #include <netinet/if_fddi.h>

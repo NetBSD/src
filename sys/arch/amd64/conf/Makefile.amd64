@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amd64,v 1.66.2.2 2018/04/22 07:20:17 pgoyette Exp $
+#	$NetBSD: Makefile.amd64,v 1.66.2.3 2018/06/25 07:25:38 pgoyette Exp $
 
 # Makefile for NetBSD
 #
@@ -20,7 +20,8 @@
 MACHINE_ARCH=x86_64
 USETOOLS?=	no
 NEED_OWN_INSTALL_TARGET?=no
-.include <bsd.own.mk>
+NOSANITIZER=
+.include <bsd.init.mk>
 
 USE_SSP?=	yes
 

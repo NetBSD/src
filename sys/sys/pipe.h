@@ -1,4 +1,4 @@
-/* $NetBSD: pipe.h,v 1.33.16.1 2018/05/21 04:36:17 pgoyette Exp $ */
+/* $NetBSD: pipe.h,v 1.33.16.2 2018/06/25 07:26:08 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -43,10 +43,9 @@
 #endif
 
 /*
- * Maximum size of kva for direct write transfer. If the amount
+ * Maximum size of transfer for direct write transfer. If the amount
  * of data in buffer is larger, it would be transferred in chunks of this
- * size. This kva memory is freed after use if amount of pipe kva memory
- * is bigger than limitpipekva.
+ * size.
  */
 #ifndef PIPE_DIRECT_CHUNK
 #define PIPE_DIRECT_CHUNK	(1*1024*1024)
@@ -77,10 +76,10 @@ struct pipebuf {
  * Information to support direct transfers between processes for pipes.
  */
 struct pipemapping {
-	vaddr_t		kva;		/* kernel virtual address */
 	vsize_t		cnt;		/* number of chars in buffer */
 	voff_t		pos;		/* current position within page */
-	int		npages;		/* how many pages allocated */
+	u_int		npages;		/* how many pages available */
+	u_int		maxpages;	/* how many pages allocated */
 	struct vm_page	**pgs;		/* pointers to the pages */
 };
 
@@ -124,8 +123,8 @@ struct pipe {
 /*
  * KERN_PIPE subtypes
  */
-#define	KERN_PIPE_MAXKVASZ		1	/* maximum kva size */
-#define	KERN_PIPE_LIMITKVA		2	/* */
+#define	KERN_PIPE_MAXKVASZ		1	/* maximum kva size (obsolete) */
+#define	KERN_PIPE_LIMITKVA		2	/* limit kva for laons (obsolete) */
 #define	KERN_PIPE_MAXBIGPIPES		3	/* maximum # of "big" pipes */
 #define	KERN_PIPE_NBIGPIPES		4	/* current number of "big" p. */
 #define	KERN_PIPE_KVASIZE		5	/* current pipe kva size */

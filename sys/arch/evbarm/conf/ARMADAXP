@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ARMADAXP,v 1.21.2.1 2018/05/21 04:36:00 pgoyette Exp $
+#	$NetBSD: ARMADAXP,v 1.21.2.2 2018/06/25 07:25:40 pgoyette Exp $
 #
 #	ARMADA XP DEV BOARD
 #
@@ -185,7 +185,7 @@ spiflash0	at spiflashbus?
 m25p0		at spi? slave 0
 
 # TWSI SDRAM Serial Presence Detect
-spdmem0		at iic0 addr 0x56
+spdmem0		at iic? addr 0x56
 
 # On-chip Cryptographic Engines and Security Accelerator (S/W chaining)
 mvcesa* 	at mvsoc? offset ? irq ?

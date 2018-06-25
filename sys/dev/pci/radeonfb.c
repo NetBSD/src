@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.94 2018/01/24 05:35:58 riastradh Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.94.2.1 2018/06/25 07:26:01 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.94 2018/01/24 05:35:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.94.2.1 2018/06/25 07:26:01 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -873,7 +873,7 @@ radeonfb_attach(device_t parent, device_t dev, void *aux)
 		/* N.B.: radeon wants 64-byte aligned stride */
 		dp->rd_stride = dp->rd_virtx * dp->rd_bpp / 8;
 		dp->rd_stride = ROUNDUP(dp->rd_stride, RADEON_STRIDEALIGN);
-		DPRINTF(("stride: %d\n", dp->rd_stride));
+		DPRINTF(("stride: %d %d\n", dp->rd_stride, dp->rd_virtx));
 
 		dp->rd_offset = sc->sc_fboffset * i;
 		dp->rd_fbptr = (vaddr_t)bus_space_vaddr(sc->sc_memt,
@@ -1642,7 +1642,19 @@ radeonfb_calc_dividers(struct radeonfb_softc *sc, uint32_t dotclock,
 
 	DPRINTF(("dot clock: %u\n", dotclock));
 	for (i = 0; (div = radeonfb_dividers[i].divider) != 0; i++) {
-		if ((flags & NO_ODD_FBDIV) && ((div & 1) != 0)) continue;
+
+		if ((flags & NO_ODD_FBDIV) && ((div & 1) != 0))
+			continue;
+
+		/*
+		 * XXX
+		 * the rv350 in my last generation 14" iBook G4 produces
+		 * garbage with dividers > 4. No idea if this is a hardware
+		 * limitation or an error in the divider table.
+		 */
+		if ((sc->sc_family == RADEON_RV350) && (div > 4))
+			continue;
+
 		outfreq = div * dotclock;
 		if ((outfreq >= sc->sc_minpll) &&
 		    (outfreq <= sc->sc_maxpll)) {
@@ -1833,6 +1845,12 @@ nobios:
 			sc->sc_ports[0].rp_conn_type = RADEON_CONN_DVI_I;
 			sc->sc_ports[0].rp_tmds_type = RADEON_TMDS_INT;
 			sc->sc_ports[0].rp_number = 0;
+			sc->sc_ports[1].rp_mon_type = RADEON_MT_UNKNOWN;
+			sc->sc_ports[1].rp_ddc_type = RADEON_DDC_NONE;
+			sc->sc_ports[1].rp_dac_type = RADEON_DAC_UNKNOWN;
+			sc->sc_ports[1].rp_conn_type = RADEON_CONN_NONE;
+			sc->sc_ports[1].rp_tmds_type = RADEON_TMDS_UNKNOWN;
+			sc->sc_ports[1].rp_number = 1;
 		} else if IS_MOBILITY(sc) {
 			/* default, port 0 = internal TMDS, port 1 = CRT */
 			sc->sc_ports[0].rp_mon_type = RADEON_MT_UNKNOWN;
@@ -2035,25 +2053,38 @@ radeonfb_program_vclk(struct radeonfb_softc *sc, int dotclock, int crtc, int fla
 {
 	uint32_t	pbit = 0;
 	uint32_t	feed = 0;
-	uint32_t	data, refdiv, div0;
+	uint32_t	data, refdiv, div0, r2xxref;
 
 	radeonfb_calc_dividers(sc, dotclock, &pbit, &feed, flags);
 
 	if (crtc == 0) {
 
 		refdiv = GETPLL(sc, RADEON_PPLL_REF_DIV);
-		if (IS_R300(sc)) {
+		
+		/*
+		 * XXX
+		 * the RV350 in my last generation iBook G4 behaves like an
+		 * r2xx here - try to detect that and not screw up the reference
+		 * divider.
+		 * xf86-video-radeon just skips PLL programming altogether
+		 * on iBooks, probably for this reason.
+		 */
+		r2xxref = (refdiv & ~RADEON_PPLL_REF_DIV_MASK) | sc->sc_refdiv;
+		if (IS_R300(sc) && (r2xxref != refdiv)) {
 			refdiv = (refdiv & ~R300_PPLL_REF_DIV_ACC_MASK) |
 			    (sc->sc_refdiv << R300_PPLL_REF_DIV_ACC_SHIFT);
 		} else {
 			refdiv = (refdiv & ~RADEON_PPLL_REF_DIV_MASK) |
 			    sc->sc_refdiv;
 		}
+		DPRINTF(("refdiv %08x\n", refdiv));
 		div0 = GETPLL(sc, RADEON_PPLL_DIV_0);
+		DPRINTF(("div0 %08x\n", div0));
 		div0 &= ~(RADEON_PPLL_FB3_DIV_MASK |
 		    RADEON_PPLL_POST3_DIV_MASK);
 		div0 |= pbit;
 		div0 |= (feed & RADEON_PPLL_FB3_DIV_MASK);
+		DPRINTF(("div0 %08x\n", div0));
 
 		if ((refdiv == GETPLL(sc, RADEON_PPLL_REF_DIV)) &&
 		    (div0 == GETPLL(sc, RADEON_PPLL_DIV_0))) {
@@ -2195,7 +2226,11 @@ radeonfb_modeswitch(struct radeonfb_display *dp)
 	PUT32(sc, RADEON_GEN_INT_CNTL, 0);
 	PUT32(sc, RADEON_CAP0_TRIG_CNTL, 0);
 	PUT32(sc, RADEON_CAP1_TRIG_CNTL, 0);
-	PUT32(sc, RADEON_SURFACE_CNTL, 0);
+	/*
+	 * Apple OF hands us R3xx radeons with tiling enabled - explicitly
+	 * disable it here
+	 */
+	PUT32(sc, RADEON_SURFACE_CNTL, RADEON_SURF_TRANSLATION_DIS);
 
 	for (i = 0; i < dp->rd_ncrtcs; i++)
 		radeonfb_setcrtc(dp, i);
@@ -3026,10 +3061,8 @@ radeonfb_putchar_aa32(void *cookie, int row, int col, u_int c, long attr)
 	}
 	if (rv == GC_ADD) {
 		glyphcache_add(&dp->rd_gc, c, xd, yd);
-	} else
-		if (attr & 1)
-			radeonfb_rectfill(dp, xd, yd + h - 2, w, 1, fg);
-
+	} else if (attr & 1)
+		radeonfb_rectfill(dp, xd, yd + h - 2, w, 1, fg);
 }
 
 static void
@@ -3157,7 +3190,6 @@ radeonfb_putchar_aa8(void *cookie, int row, int col, u_int c, long attr)
 	} else
 		if (attr & 1)
 			radeonfb_rectfill(dp, x, y + he - 2, wi, 1, fg);
-
 }
 
 /*
@@ -3321,7 +3353,6 @@ radeonfb_rectfill(struct radeonfb_display *dp, int dstx, int dsty,
 	    RADEON_DST_Y_TOP_TO_BOTTOM);
 	PUT32(sc, RADEON_DST_Y_X, (dsty << 16) | dstx);
 	PUT32(sc, RADEON_DST_WIDTH_HEIGHT, (width << 16) | (height));
-
 }
 
 static void
@@ -4201,7 +4232,7 @@ radeonfb_switch_backlight(struct radeonfb_display *dp, int on)
 static int 
 radeonfb_set_backlight(struct radeonfb_display *dp, int level)
 {
-	struct radeonfb_softc *sc = dp->rd_softc;;
+	struct radeonfb_softc *sc = dp->rd_softc;
 	int rlevel, s;
 	uint32_t lvds;
 

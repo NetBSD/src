@@ -1,4 +1,4 @@
-	$NetBSD: README,v 1.4.12.2 2018/04/22 07:20:27 pgoyette Exp $
+	$NetBSD: README,v 1.4.12.3 2018/06/25 07:26:05 pgoyette Exp $
 
                            Kernel Developer's Manual
 
@@ -10,8 +10,9 @@ DESCRIPTION
      * hello           - the simplest `hello world' module
      * luahello        - the simplest `hello world' Lua module
      * luareadhappy    - demonstrates calling Lua code from C
-     * properties      - handle incoming properties during the module load
+     * panic_string    - shows how panic is being called through a device
      * ping            - basic ioctl(9)
+     * properties      - handle incoming properties during the module load
      * readhappy       - basic implementation of read(9) with happy numbers
      * readhappy_mpsafe- demonstrates how to make a module MPSAFE
      * sysctl          - demonstrates adding a sysctl handle dynamically
@@ -61,6 +62,9 @@ HISTORY
 
      The readhappy_mpsafe, executor and sysctls modules first appeared in NetBSD
      9.0 and were authored by Siddharth Muralee.
+
+     The panic_string module first appeared in NetBSD 9.0 and was authored by
+     Harry Pantazis.
 
 AUTHORS
      This document was written by Kamil Rytarowski.

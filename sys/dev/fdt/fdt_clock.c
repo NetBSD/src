@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_clock.c,v 1.1 2015/12/22 21:42:11 jmcneill Exp $ */
+/* $NetBSD: fdt_clock.c,v 1.1.20.1 2018/06/25 07:25:49 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_clock.c,v 1.1 2015/12/22 21:42:11 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_clock.c,v 1.1.20.1 2018/06/25 07:25:49 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -35,6 +35,8 @@ __KERNEL_RCSID(0, "$NetBSD: fdt_clock.c,v 1.1 2015/12/22 21:42:11 jmcneill Exp $
 
 #include <libfdt.h>
 #include <dev/fdt/fdtvar.h>
+
+#include <dev/clk/clk_backend.h>
 
 struct fdtbus_clock_controller {
 	device_t cc_dev;
@@ -60,6 +62,8 @@ fdtbus_register_clock_controller(device_t dev, int phandle,
 	cc->cc_next = fdtbus_cc;
 	fdtbus_cc = cc;
 
+	fdtbus_clock_assign(phandle);
+
 	return 0;
 }
 
@@ -77,27 +81,19 @@ fdtbus_get_clock_controller(int phandle)
 	return NULL;
 }
 
-struct clk *
-fdtbus_clock_get_index(int phandle, u_int index)
+static struct clk *
+fdtbus_clock_get_index_prop(int phandle, u_int index, const char *prop)
 {
 	struct fdtbus_clock_controller *cc;
 	struct clk *clk = NULL;
-	uint32_t *clocks = NULL;
-	uint32_t *p;
+	const u_int *p;
 	u_int n, clock_cells;
 	int len, resid;
 
-	len = OF_getproplen(phandle, "clocks");
-	if (len <= 0)
+	p = fdtbus_get_prop(phandle, prop, &len);
+	if (p == NULL)
 		return NULL;
 
-	clocks = kmem_alloc(len, KM_SLEEP);
-	if (OF_getprop(phandle, "clocks", clocks, len) != len) {
-		kmem_free(clocks, len);
-		return NULL;
-	}
-
-	p = clocks;
 	for (n = 0, resid = len; resid > 0; n++) {
 		const int cc_phandle =
 		    fdtbus_get_phandle_from_native(be32toh(p[0]));
@@ -106,7 +102,7 @@ fdtbus_clock_get_index(int phandle, u_int index)
 		if (n == index) {
 			cc = fdtbus_get_clock_controller(cc_phandle);
 			if (cc == NULL)
-				goto done;
+				break;
 			clk = cc->cc_funcs->decode(cc->cc_dev,
 			    clock_cells > 0 ? &p[1] : NULL, clock_cells * 4);
 			break;
@@ -115,33 +111,27 @@ fdtbus_clock_get_index(int phandle, u_int index)
 		p += clock_cells + 1;
 	}
 
-done:
-	if (clocks)
-		kmem_free(clocks, len);
-
 	return clk;
 }
 
 struct clk *
-fdtbus_clock_get(int phandle, const char *clkname)
+fdtbus_clock_get_index(int phandle, u_int index)
+{
+	return fdtbus_clock_get_index_prop(phandle, index, "clocks");
+}
+
+static struct clk *
+fdtbus_clock_get_prop(int phandle, const char *clkname, const char *prop)
 {
 	struct clk *clk = NULL;
-	char *clock_names = NULL;
 	const char *p;
 	u_int index;
 	int len, resid;
 
-	len = OF_getproplen(phandle, "clock-names");
-	if (len <= 0)
+	p = fdtbus_get_prop(phandle, prop, &len);
+	if (p == NULL)
 		return NULL;
 
-	clock_names = kmem_alloc(len, KM_SLEEP);
-	if (OF_getprop(phandle, "clock-names", clock_names, len) != len) {
-		kmem_free(clock_names, len);
-		return NULL;
-	}
-
-	p = clock_names;
 	for (index = 0, resid = len; resid > 0; index++) {
 		if (strcmp(p, clkname) == 0) {
 			clk = fdtbus_clock_get_index(phandle, index);
@@ -151,8 +141,120 @@ fdtbus_clock_get(int phandle, const char *clkname)
 		p += strlen(p) + 1;
 	}
 
-	if (clock_names)
-		kmem_free(clock_names, len);
-
 	return clk;
+}
+
+static u_int
+fdtbus_clock_count_prop(int phandle, const char *prop)
+{
+	u_int n, clock_cells;
+	int len, resid;
+
+	const u_int *p = fdtbus_get_prop(phandle, prop, &len);
+	if (p == NULL)
+		return 0;
+
+	for (n = 0, resid = len; resid > 0; n++) {
+		const int cc_phandle =
+		    fdtbus_get_phandle_from_native(be32toh(p[0]));
+		if (of_getprop_uint32(cc_phandle, "#clock-cells", &clock_cells))
+			break;
+		resid -= (clock_cells + 1) * 4;
+		p += clock_cells + 1;
+	}
+
+	return n;
+}
+
+struct clk *
+fdtbus_clock_get(int phandle, const char *clkname)
+{
+	return fdtbus_clock_get_prop(phandle, clkname, "clock-names");
+}
+
+/*
+ * Search the DT for a clock by "clock-output-names" property.
+ *
+ * This should only be used by clk backends. Not for use by ordinary
+ * clock consumers!
+ */
+struct clk *
+fdtbus_clock_byname(const char *clkname)
+{
+	struct fdtbus_clock_controller *cc;
+	u_int len, resid, index, clock_cells;
+	const char *p;
+
+	for (cc = fdtbus_cc; cc; cc = cc->cc_next) {
+		if (!of_hasprop(cc->cc_phandle, "clock-output-names"))
+			continue;
+		p = fdtbus_get_prop(cc->cc_phandle, "clock-output-names", &len);
+		for (index = 0, resid = len; resid > 0; index++) {
+			if (strcmp(p, clkname) == 0) {
+				if (of_getprop_uint32(cc->cc_phandle, "#clock-cells", &clock_cells))
+					break;
+				const u_int index_raw = htobe32(index);
+				return cc->cc_funcs->decode(cc->cc_dev,
+				    clock_cells > 0 ? &index_raw : NULL,
+				    clock_cells > 0 ? 4 : 0);
+			}
+			resid -= strlen(p) + 1;
+			p += strlen(p) + 1;
+		}
+	}
+
+	return NULL;
+}
+
+/*
+ * Apply assigned clock parents and rates.
+ *
+ * This is automatically called by fdtbus_register_clock_controller, so clock
+ * drivers likely don't need to call this directly.
+ */
+void
+fdtbus_clock_assign(int phandle)
+{
+	u_int index, rates_len;
+	struct clk *clk, *clk_parent;
+	int error;
+
+	const u_int *rates = fdtbus_get_prop(phandle, "assigned-clock-rates", &rates_len);
+	if (rates == NULL)
+		rates_len = 0;
+
+	const u_int nclocks = fdtbus_clock_count_prop(phandle, "assigned-clocks");
+	const u_int nparents = fdtbus_clock_count_prop(phandle, "assigned-clock-parents");
+	const u_int nrates = rates_len / sizeof(*rates);
+
+	for (index = 0; index < nclocks; index++) {
+		clk = fdtbus_clock_get_index_prop(phandle, index, "assigned-clocks");
+		if (clk == NULL) {
+			aprint_debug("clk: assigned clock (%u) not found, skipping...\n", index);
+			continue;
+		}
+
+		if (index < nparents) {
+			clk_parent = fdtbus_clock_get_index_prop(phandle, index, "assigned-clock-parents");
+			if (clk_parent != NULL) {
+				error = clk_set_parent(clk, clk_parent);
+				if (error != 0) {
+					aprint_error("clk: failed to set %s parent to %s, error %d\n",
+					    clk->name, clk_parent->name, error);
+				}
+			} else {
+				aprint_debug("clk: failed to set %s parent (not found)\n", clk->name);
+			}
+		}
+
+		if (index < nrates) {
+			const u_int rate = be32toh(rates[index]);
+			if (rate != 0) {
+				error = clk_set_rate(clk, rate);
+				if (error != 0)
+					aprint_error("clk: failed to set %s rate to %u Hz, error %d\n",
+					    clk->name, rate, error);
+			}
+		}
+	}
 }

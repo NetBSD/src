@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.es,v 1.6 2015/05/17 10:13:24 martin Exp $	*/
+/*	$NetBSD: msg.mi.es,v 1.6.14.1 2018/06/25 07:26:12 pgoyette Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1241,4 +1241,14 @@ message addusername {8 character username to add}
 message addusertowheel {Do you wish to add this user to group wheel?}
 message Delete_partition
 {Borrar partición}
+
+
+message No_filesystem_newfs
+{The selected partition does not seem to have a valid file system. 
+Do you want to newfs (format) it?}
+
+message Auto_add_swap_part
+{A swap partition (named %s) seems to exist on %s. 
+Do you want to use that?}
+
 

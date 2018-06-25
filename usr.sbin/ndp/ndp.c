@@ -1,4 +1,4 @@
-/*	$NetBSD: ndp.c,v 1.50 2017/06/28 08:17:50 ozaki-r Exp $	*/
+/*	$NetBSD: ndp.c,v 1.50.4.1 2018/06/25 07:26:12 pgoyette Exp $	*/
 /*	$KAME: ndp.c,v 1.121 2005/07/13 11:30:13 keiichi Exp $	*/
 
 /*
@@ -376,6 +376,7 @@ set(int argc, char **argv)
 		return 1;
 	}
 	makeaddr(mysin, res->ai_addr);
+	freeaddrinfo(res);
 	ea = (u_char *)LLADDR(&sdl_m);
 	if (ndp_ether_aton(eaddr, ea) == 0)
 		sdl_m.sdl_alen = 6;
@@ -441,6 +442,7 @@ get(char *host)
 		return;
 	}
 	makeaddr(mysin, res->ai_addr);
+	freeaddrinfo(res);
 	do_foreach(&mysin->sin6_addr, host, 0);
 	if (found_entry == 0) {
 		(void)getnameinfo((struct sockaddr *)(void *)mysin,
@@ -467,6 +469,7 @@ delete_one(char *host)
 		return;
 	}
 	makeaddr(mysin, res->ai_addr);
+	freeaddrinfo(res);
 	do_foreach(&mysin->sin6_addr, host, NDP_F_DELETE);
 }
 

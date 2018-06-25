@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.28 2016/06/11 06:32:45 dholland Exp $	*/
+/*	$NetBSD: boot.c,v 1.28.16.1 2018/06/25 07:25:44 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -181,7 +181,9 @@ chain(boot_entry_t entry, char *args, void *ssym, void *esym)
 	extern char end[];
 	int l;
 
+#if !defined(HEAP_VARIABLE)
 	freeall();
+#endif
 
 	/*
 	 * Stash pointer to end of symbol table after the argument

@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.13.12.1 2018/05/02 07:20:28 pgoyette Exp $ */
+/*	$NetBSD: disks.c,v 1.13.12.2 2018/06/25 07:26:12 pgoyette Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -68,7 +68,7 @@
 struct disk_desc {
 	char	dd_name[SSTRSIZE];
 	char	dd_descr[70];
-	uint	dd_no_mbr;
+	bool	dd_no_mbr, dd_no_part;
 	uint	dd_cyl;
 	uint	dd_head;
 	uint	dd_sec;
@@ -104,7 +104,7 @@ static int foundffs(struct data *, size_t);
 #ifdef USE_SYSVBFS
 static int foundsysvbfs(struct data *, size_t);
 #endif
-static int fsck_preen(const char *, int, const char *);
+static int fsck_preen(const char *, int, const char *, bool silent);
 static void fixsb(const char *, const char *, char);
 static bool is_gpt(const char *);
 static int incoregpt(pm_devs_t *, partinfo *);
@@ -113,7 +113,8 @@ static int incoregpt(pm_devs_t *, partinfo *);
 #define DISK_NAMES "wd", "sd", "ld", "raid"
 #endif
 
-static const char *disk_names[] = { DISK_NAMES, "vnd", "cgd", NULL };
+static const char *disk_names[] = { DISK_NAMES,
+				    "vnd", "cgd", "dk:no_part", NULL };
 
 static bool tmpfs_on_var_shm(void);
 
@@ -396,8 +397,118 @@ get_default_cdrom(void)
 	return cdrom_devices[0];
 }
 
+static void
+get_wedge_descr(struct disk_desc *dd)
+{
+	struct dkwedge_info dkw;
+	char buf[MAXPATHLEN];
+	int fd;
+
+	fd = opendisk(dd->dd_name, O_RDONLY, buf, sizeof(buf), 0);
+	if (fd == -1)
+		return;
+
+	if (ioctl(fd, DIOCGWEDGEINFO, &dkw) == 0) {
+		fprintf(stderr, "device %s\n", dd->dd_name);
+		sprintf(dd->dd_descr, "%s (%s@%s)",
+		    dkw.dkw_wname, dkw.dkw_devname, dkw.dkw_parent);
+	}
+	close(fd);
+}
+
+static bool
+get_name_and_parent(const char *dev, char *name, char *parent)
+{
+	struct dkwedge_info dkw;
+	char buf[MAXPATHLEN];
+	int fd;
+	bool res = false;
+
+	fd = opendisk(dev, O_RDONLY, buf, sizeof(buf), 0);
+	if (fd == -1)
+		return false;
+
+	if (ioctl(fd, DIOCGWEDGEINFO, &dkw) == 0) {
+		strcpy(name, (const char *)dkw.dkw_wname);
+		strcpy(parent, dkw.dkw_parent);
+		res = true;
+	}
+	close(fd);
+	return res;
+}
+
+static bool
+find_swap_part_on(const char *dev, char *swap_name)
+{
+	struct dkwedge_info *dkw;
+	struct dkwedge_list dkwl;
+	char buf[MAXPATHLEN];
+	size_t bufsize;
+	int fd;
+	u_int i;
+	bool res = false;
+
+	dkw = NULL;
+	dkwl.dkwl_buf = dkw;
+	dkwl.dkwl_bufsize = 0;
+
+	fd = opendisk(dev, O_RDONLY, buf, sizeof(buf), 0);
+	if (fd == -1)
+		return false;
+
+	for (;;) {
+		if (ioctl(fd, DIOCLWEDGES, &dkwl) == -1) {
+			dkwl.dkwl_ncopied = 0;
+			break;
+		}
+		if (dkwl.dkwl_nwedges == dkwl.dkwl_ncopied)
+			break;
+		bufsize = dkwl.dkwl_nwedges * sizeof(*dkw);
+		if (dkwl.dkwl_bufsize < bufsize) {
+			dkw = realloc(dkwl.dkwl_buf, bufsize);
+			if (dkw == NULL)
+				break;
+			dkwl.dkwl_buf = dkw;
+			dkwl.dkwl_bufsize = bufsize;
+		}
+	}
+
+	for (i = 0; i < dkwl.dkwl_nwedges; i++) {
+		res = strcmp(dkw[i].dkw_ptype, DKW_PTYPE_SWAP) == 0;
+		if (res) {
+			strcpy(swap_name, (const char*)dkw[i].dkw_wname);
+			break;
+		}
+	}
+
+	close(fd);
+
+	return res;
+}
+
+static bool
+is_ffs_wedge(const char *dev)
+{
+	struct dkwedge_info dkw;
+	char buf[MAXPATHLEN];
+	int fd;
+	bool res;
+
+	fd = opendisk(dev, O_RDONLY, buf, sizeof(buf), 0);
+	if (fd == -1)
+		return false;
+
+	if (ioctl(fd, DIOCGWEDGEINFO, &dkw) == -1)
+		return false;
+
+	res = strcmp(dkw.dkw_ptype, DKW_PTYPE_FFS) == 0;
+	close(fd);
+
+	return res;
+}
+
 static int
-get_disks(struct disk_desc *dd)
+get_disks(struct disk_desc *dd, bool with_non_partitionable)
 {
 	const char **xd;
 	char *cp;
@@ -412,18 +523,33 @@ get_disks(struct disk_desc *dd)
 		for (i = 0; i < MAX_DISKS; i++) {
 			strlcpy(dd->dd_name, *xd, sizeof dd->dd_name - 2);
 			cp = strchr(dd->dd_name, ':');
-			if (cp != NULL)
+			if (cp != NULL) {
 				dd->dd_no_mbr = !strcmp(cp, ":no_mbr");
-			else {
-				dd->dd_no_mbr = 0;
+				dd->dd_no_part = !strcmp(cp, ":no_part");
+			} else {
+				dd->dd_no_mbr = false;
+				dd->dd_no_part = false;
 				cp = strchr(dd->dd_name, 0);
 			}
+			if (dd->dd_no_part && !with_non_partitionable)
+				continue;
 
 			snprintf(cp, 2 + 1, "%d", i);
 			if (!get_geom(dd->dd_name, &l)) {
 				if (errno == ENOENT)
 					break;
-				continue;
+				if (errno != ENOTTY || !dd->dd_no_part)
+					/*
+					 * Allow plain partitions,
+					 * like already existing wedges
+					 * (like dk0) if marked as
+					 * non-partitioning device.
+					 * For all other cases, continue
+					 * with the next disk.
+					 */
+					continue;
+				if (!is_ffs_wedge(dd->dd_name))
+					continue;
 			}
 
 			/*
@@ -433,12 +559,17 @@ get_disks(struct disk_desc *dd)
 			if (is_active_rootpart(dd->dd_name, 0))
 				continue;
 
-			dd->dd_cyl = l.d_ncylinders;
-			dd->dd_head = l.d_ntracks;
-			dd->dd_sec = l.d_nsectors;
-			dd->dd_secsize = l.d_secsize;
-			dd->dd_totsec = l.d_secperunit;
-			get_descr(dd);
+			if (!dd->dd_no_part) {
+				dd->dd_cyl = l.d_ncylinders;
+				dd->dd_head = l.d_ntracks;
+				dd->dd_sec = l.d_nsectors;
+				dd->dd_secsize = l.d_secsize;
+				dd->dd_totsec = l.d_secperunit;
+			}
+			if (dd->dd_no_part)
+				get_wedge_descr(dd);
+			else
+				get_descr(dd);
 			dd++;
 			numdisks++;
 			if (numdisks >= MAX_DISKS)
@@ -454,13 +585,13 @@ find_disks(const char *doingwhat)
 	struct disk_desc disks[MAX_DISKS];
 	menu_ent dsk_menu[nelem(disks) + 1]; // + 1 for extended partitioning entry
 	struct disk_desc *disk;
-	int i, already_found;
-	int numdisks, selected_disk = -1;
+	int i = 0, skipped = 0;
+	int already_found, numdisks, selected_disk = -1;
 	int menu_no;
 	pm_devs_t *pm_i, *pm_last = NULL;
 
 	/* Find disks. */
-	numdisks = get_disks(disks);
+	numdisks = get_disks(disks, partman_go <= 0);
 
 	/* need a redraw here, kernel messages hose everything */
 	touchwin(stdscr);
@@ -484,7 +615,8 @@ find_disks(const char *doingwhat)
 		} else {
 			/* One or more disks found! */
 			for (i = 0; i < numdisks; i++) {
-				dsk_menu[i].opt_name = disks[i].dd_descr;
+				dsk_menu[i].opt_name =
+				    disks[i].dd_descr;
 				dsk_menu[i].opt_menu = OPT_NOMENU;
 				dsk_menu[i].opt_flags = OPT_EXIT;
 				dsk_menu[i].opt_action = set_menu_select;
@@ -496,7 +628,9 @@ find_disks(const char *doingwhat)
 				dsk_menu[i].opt_action = set_menu_select;
 			}
 			menu_no = new_menu(MSG_Available_disks,
-				dsk_menu, numdisks + ((partman_go<0)?1:0), -1, 4, 0, 0, MC_SCROLL,
+				dsk_menu, numdisks
+				 + ((partman_go<0)?1:0), -1,
+				 4, 0, 0, MC_SCROLL,
 				NULL, NULL, NULL, NULL, NULL);
 			if (menu_no == -1)
 				return -1;
@@ -545,20 +679,32 @@ find_disks(const char *doingwhat)
 
 		pm->gpt = is_gpt(pm->diskdev);
 		pm->no_mbr = disk->dd_no_mbr || pm->gpt;
-		pm->sectorsize = disk->dd_secsize;
-		pm->dlcyl = disk->dd_cyl;
-		pm->dlhead = disk->dd_head;
-		pm->dlsec = disk->dd_sec;
-		pm->dlsize = disk->dd_totsec;
-		if (pm->dlsize == 0)
-			pm->dlsize = disk->dd_cyl * disk->dd_head * disk->dd_sec;
-		if (pm->dlsize > UINT32_MAX && ! partman_go) {
-			if (logfp)
-				fprintf(logfp, "Cannot process disk %s: too big size (%d)\n",
-					pm->diskdev, (int)pm->dlsize);
-			msg_display(MSG_toobigdisklabel);
-			process_menu(MENU_ok, NULL);
-			return -1;
+		pm->no_part = disk->dd_no_part;
+		if (!pm->no_part) {
+			pm->sectorsize = disk->dd_secsize;
+			pm->dlcyl = disk->dd_cyl;
+			pm->dlhead = disk->dd_head;
+			pm->dlsec = disk->dd_sec;
+			pm->dlsize = disk->dd_totsec;
+			if (pm->dlsize == 0)
+				pm->dlsize = disk->dd_cyl * disk->dd_head * disk->dd_sec;
+			if (pm->dlsize > UINT32_MAX && ! partman_go) {
+				if (logfp)
+					fprintf(logfp, "Cannot process disk %s: too big size (%d)\n",
+						pm->diskdev, (int)pm->dlsize);
+				msg_display(MSG_toobigdisklabel);
+				process_menu(MENU_ok, NULL);
+				return -1;
+			}
+		} else {
+			pm->sectorsize = 0;
+			pm->dlcyl = 0;
+			pm->dlhead = 0;
+			pm->dlsec = 0;
+			pm->dlsize = 0;
+			pm->rootpart = -1;
+			pm->no_mbr = 1;
+			memset(&pm->bsdlabel, 0, sizeof(pm->bsdlabel));
 		}
 		pm->dlcylsize = pm->dlhead * pm->dlsec;
 
@@ -576,13 +722,17 @@ find_disks(const char *doingwhat)
 			break;
 	}
 
-	return numdisks;
+	return numdisks-skipped;
 }
 
 
 void
 label_read(void)
 {
+
+	if (pm->no_part)
+		return;
+
 	check_available_binaries();
 
 	/* Get existing/default label */
@@ -659,6 +809,9 @@ write_disklabel (void)
 {
 	int rv = 0;
 
+	if (pm && pm->no_part)
+		return 0;
+
 #ifdef DISKLABEL_CMD
 	/* disklabel the disk */
 	rv = run_program(RUN_DISPLAY, "%s -f /tmp/disktab %s '%s'",
@@ -687,6 +840,32 @@ make_filesystems(void)
 	unsigned int maxpart = getmaxpartitions();
 	char *newfs = NULL, *dev = NULL, *devdev = NULL;
 	partinfo *lbl;
+
+	if (pm->no_part) {
+		/* check if this target device already has a ffs */
+		error = fsck_preen(pm->diskdev, -1, "ffs", true);
+		if (error) {
+			if (!ask_noyes(MSG_No_filesystem_newfs))
+				return EINVAL;
+			error = run_program(RUN_DISPLAY | RUN_PROGRESS,
+			    "/sbin/newfs -V2 -O2 /dev/r%s", pm->diskdev);
+		}
+
+		md_pre_mount();
+
+		make_target_dir("/");
+		asprintf(&devdev, "/dev/%s", pm->diskdev);
+		if (devdev == NULL)
+			return (ENOMEM);
+		error = target_mount_do("-o async", devdev, "/");
+		if (error) {
+			msg_display(MSG_mountfail, devdev, ' ',
+			    "/");
+			process_menu(MENU_ok, NULL);
+		}
+		free(devdev);
+		return error;
+	}
 
 	if (maxpart > nelem(pm->bsdlabel))
 		maxpart = nelem(pm->bsdlabel);
@@ -797,7 +976,7 @@ make_filesystems(void)
 			    "%s /dev/r%s", newfs, dev);
 		} else {
 			/* We'd better check it isn't dirty */
-			error = fsck_preen(pm->diskdev, ptn, lbl->fsname);
+			error = fsck_preen(pm->diskdev, ptn, lbl->fsname, false);
 		}
 		free(newfs);
 		if (error != 0) {
@@ -860,8 +1039,30 @@ make_fstab(void)
 #endif
 	}
 
-	scripting_fprintf(f, "# NetBSD %s/etc/fstab\n# See /usr/share/examples/"
-			"fstab/ for more examples.\n", target_prefix());
+	scripting_fprintf(f, "# NetBSD /etc/fstab\n# See /usr/share/examples/"
+			"fstab/ for more examples.\n");
+
+	if (pm->no_part) {
+		/* single dk? target */
+		char buf[200], parent[200], swap[200], *prompt;
+		int res;
+
+		if (!get_name_and_parent(pm->diskdev, buf, parent))
+			goto done_with_disks;
+		scripting_fprintf(f, "NAME=%s\t/\tffs\trw\t\t1 1\n",
+		    buf);
+		if (!find_swap_part_on(parent, swap))
+			goto done_with_disks;
+		asprintf(&prompt, msg_string(MSG_Auto_add_swap_part),
+		    swap, parent);
+		res = ask_yesno(prompt);
+		free(prompt);
+		if (res)
+			scripting_fprintf(f, "NAME=%s\tnone"
+			    "\tswap\tsw,dp\t\t0 0\n", swap);
+		goto done_with_disks;
+	}
+
 	if (! partman_go) {
 		/* We want to process only one disk... */
 		pm_i = pm;
@@ -959,6 +1160,7 @@ make_fstab(void)
 		if (!partman_go)
 			break;
 	}
+done_with_disks:
 	if (tmp_ramdisk_size != 0) {
 #ifdef HAVE_TMPFS
 		scripting_fprintf(f, "tmpfs\t\t/tmp\ttmpfs\trw,-m=1777,-s=%"
@@ -1011,7 +1213,7 @@ foundffs(struct data *list, size_t num)
 	    strstr(list[2].u.s_val, "noauto") != NULL)
 		return 0;
 
-	error = fsck_preen(list[0].u.s_val, ' '-'a', "ffs");
+	error = fsck_preen(list[0].u.s_val, ' '-'a', "ffs", false);
 	if (error != 0)
 		return error;
 
@@ -1048,7 +1250,7 @@ foundsysvbfs(struct data *list, size_t num)
  * Returns 0 on success, or nonzero return code from fsck() on failure.
  */
 static int
-fsck_preen(const char *disk, int ptn, const char *fsname)
+fsck_preen(const char *disk, int ptn, const char *fsname, bool silent)
 {
 	char *prog;
 	int error;
@@ -1066,9 +1268,9 @@ fsck_preen(const char *disk, int ptn, const char *fsname)
 	}
 	if (!strcmp(fsname,"ffs"))
 		fixsb(prog, disk, ptn);
-	error = run_program(0, "%s -p -q /dev/r%s%c", prog, disk, ptn);
+	error = run_program(silent? RUN_SILENT|RUN_ERROR_OK : 0, "%s -p -q /dev/r%s%c", prog, disk, ptn);
 	free(prog);
-	if (error != 0) {
+	if (error != 0 && !silent) {
 		msg_display(MSG_badfs, disk, ptn, error);
 		if (ask_noyes(NULL))
 			error = 0;
@@ -1140,7 +1342,7 @@ mount_root(void)
 	int	error;
 	int ptn = (pm->isspecial)? 0 - 'a' : pm->rootpart;
 
-	error = fsck_preen(pm->diskdev, ptn, "ffs");
+	error = fsck_preen(pm->diskdev, ptn, "ffs", false);
 	if (error != 0)
 		return error;
 

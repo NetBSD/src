@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_pcie.c,v 1.5 2017/11/09 05:57:23 hkenken Exp $	*/
+/*	$NetBSD: imx6_pcie.c,v 1.5.4.1 2018/06/25 07:25:39 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2016  Genetec Corporation.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_pcie.c,v 1.5 2017/11/09 05:57:23 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_pcie.c,v 1.5.4.1 2018/06/25 07:25:39 pgoyette Exp $");
 
 #include "opt_pci.h"
 
@@ -178,12 +178,12 @@ imx6pcie_clock_enable(struct imx6pcie_softc *sc)
 
 	/* AHCISATA clock enable */
 	v = imx6_ccm_read(CCM_CCGR5);
-	v |= CCM_CCGR5_100M_CLK_ENABLE(3);
+	v |= __SHIFTIN(3, CCM_CCGR5_SATA_CLK_ENABLE);
 	imx6_ccm_write(CCM_CCGR5, v);
 
 	/* PCIe clock enable */
 	v = imx6_ccm_read(CCM_CCGR4);
-	v |= CCM_CCGR4_125M_ROOT_ENABLE(3);
+	v |= __SHIFTIN(3, CCM_CCGR4_PCIE_ROOT_ENABLE);
 	imx6_ccm_write(CCM_CCGR4, v);
 
 	/* PLL power up */

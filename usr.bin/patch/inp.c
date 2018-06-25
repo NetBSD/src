@@ -1,7 +1,7 @@
 /*
  * $OpenBSD: inp.c,v 1.34 2006/03/11 19:41:30 otto Exp $
  * $DragonFly: src/usr.bin/patch/inp.c,v 1.6 2007/09/29 23:11:10 swildner Exp $
- * $NetBSD: inp.c,v 1.24 2015/07/24 18:56:00 christos Exp $
+ * $NetBSD: inp.c,v 1.24.14.1 2018/06/25 07:26:11 pgoyette Exp $
  */
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: inp.c,v 1.24 2015/07/24 18:56:00 christos Exp $");
+__RCSID("$NetBSD: inp.c,v 1.24.14.1 2018/06/25 07:26:11 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/file.h>
@@ -122,7 +122,7 @@ reallocate_lines(size_t *lines_allocated)
 	size_t	new_size;
 
 	new_size = *lines_allocated * 3 / 2;
-	p = realloc(i_ptr, (new_size + 2) * sizeof(char *));
+	p = pch_realloc(i_ptr, new_size + 2,  sizeof(char *));
 	if (p == NULL) {	/* shucks, it was a near thing */
 		munmap(i_womp, i_size);
 		i_womp = NULL;

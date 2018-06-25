@@ -1,4 +1,4 @@
-/*	$NetBSD: ioexp.c,v 1.1 2011/06/19 16:20:09 nonaka Exp $	*/
+/*	$NetBSD: ioexp.c,v 1.1.54.1 2018/06/25 07:25:48 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioexp.c,v 1.1 2011/06/19 16:20:09 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioexp.c,v 1.1.54.1 2018/06/25 07:25:48 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,20 +86,19 @@ static int
 ioexp_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct i2c_attach_args *ia = aux;
+	int match_result;
 
 	/* only for SL-C1000 */
 	if (!ZAURUS_ISC1000)
 		return 0;
 
-	if (ia->ia_name) {
-		/* direct config - check name */
-		if (strcmp(ia->ia_name, "ioexp") == 0)
-			return 1;
-	} else {
-		/* indirect config - check typical address */
-		if (ia->ia_addr == IOEXP_ADDRESS)
-			return 1;
-	}
+	if (iic_use_direct_match(ia, cf, NULL, &match_result))
+		return match_result;
+	
+	/* indirect config - check typical address */
+	if (ia->ia_addr == IOEXP_ADDRESS)
+		return I2C_MATCH_ADDRESS_ONLY;
+
 	return 0;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.178.2.6 2018/05/21 04:36:17 pgoyette Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.178.2.7 2018/06/25 07:26:07 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -166,7 +166,7 @@ struct m_hdr {
  *  o For the out-bound direction, the low 16 bits indicates the offset after
  *    the L4 header where the final L4 checksum value is to be stored and the
  *    high 16 bits is the length of the L3 header (the start of the data to
- *    be checksummed):
+ *    be checksummed).
  *
  *  o For the in-bound direction, it is only valid if the M_CSUM_DATA flag is
  *    set. In this case, an L4 checksum has been calculated by hardware and
@@ -227,24 +227,18 @@ struct pkthdr {
     "\11TSOv4\12TSOv6\40NO_PSEUDOHDR"
 
 /*
- * Macros for manipulating csum_data on outgoing packets.  These are
+ * Macros for manipulating csum_data on outgoing packets. These are
  * used to pass information down from the L4/L3 to the L2.
+ *
+ *   _IPHL:   Length of the IPv{4/6} header, plus the options; in other
+ *            words the offset of the UDP/TCP header in the packet.
+ *   _OFFSET: Offset of the checksum field in the UDP/TCP header.
  */
 #define	M_CSUM_DATA_IPv4_IPHL(x)	((x) >> 16)
 #define	M_CSUM_DATA_IPv4_OFFSET(x)	((x) & 0xffff)
-
-/*
- * Macros for M_CSUM_TCPv6 and M_CSUM_UDPv6
- *
- * M_CSUM_DATA_IPv6_HL: length of ip6_hdr + ext header.
- * ie. offset of UDP/TCP header in the packet.
- *
- * M_CSUM_DATA_IPv6_OFFSET: offset of the checksum field in UDP/TCP header.
- */
-
-#define	M_CSUM_DATA_IPv6_HL(x)		((x) >> 16)
-#define	M_CSUM_DATA_IPv6_HL_SET(x, v)	(x) = ((x) & 0xffff) | ((v) << 16)
+#define	M_CSUM_DATA_IPv6_IPHL(x)	((x) >> 16)
 #define	M_CSUM_DATA_IPv6_OFFSET(x)	((x) & 0xffff)
+#define	M_CSUM_DATA_IPv6_SET(x, v)	(x) = ((x) & 0xffff) | ((v) << 16)
 
 /*
  * Max # of pages we can attach to m_ext.  This is carefully chosen

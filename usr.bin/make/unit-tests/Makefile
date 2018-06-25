@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.52 2015/05/05 21:51:09 sjg Exp $
+# $NetBSD: Makefile,v 1.52.14.1 2018/06/25 07:26:11 pgoyette Exp $
 #
 # Unit tests for make(1)
 # The main targets are:
@@ -50,6 +50,7 @@ TESTNAMES= \
 	unexport-env \
 	varcmd \
 	varmisc \
+	varquote \
 	varshell
 
 # these tests were broken by referting POSIX chanegs

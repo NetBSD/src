@@ -111,19 +111,24 @@ static const char * smusat_compats[] = {
 	NULL
 };
 
+static const struct device_compatible_entry smusat_compat_data[] = {
+	DEVICE_COMPAT_ENTRY(smusat_compats),
+	DEVICE_COMPAT_TERMINATOR
+};
+
 static int
 smusat_match(device_t parent, struct cfdata *cf, void *aux)
 {
 	struct i2c_attach_args *ia = aux;
+	int match_result;
 
-	if (ia->ia_name == NULL) {
-		/* no ID registers on this chip */
-		if (ia->ia_addr == 0x58)
-			return 1;
-		return 0;
-	} else {
-		return iic_compat_match(ia, smusat_compats);
-	}
+	if (iic_use_direct_match(ia, cf, smusat_compat_data, &match_result))
+		return match_result;
+
+	if (ia->ia_addr == 0x58)
+		return I2C_MATCH_ADDRESS_ONLY;
+
+	return 0;
 }
 
 static void

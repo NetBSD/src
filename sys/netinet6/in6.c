@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.260.2.3 2018/05/02 07:20:23 pgoyette Exp $	*/
+/*	$NetBSD: in6.c,v 1.260.2.4 2018/06/25 07:26:07 pgoyette Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.260.2.3 2018/05/02 07:20:23 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.260.2.4 2018/06/25 07:26:07 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1405,9 +1405,11 @@ in6_purgeaddr(struct ifaddr *ifa)
     again:
 	mutex_enter(&in6_ifaddr_lock);
 	while ((imm = LIST_FIRST(&ia->ia6_memberships)) != NULL) {
+		struct in6_multi *in6m __diagused = imm->i6mm_maddr;
+		KASSERT(in6m == NULL || in6m->in6m_ifp == ifp);
 		LIST_REMOVE(imm, i6mm_chain);
 		mutex_exit(&in6_ifaddr_lock);
-		KASSERT(imm->i6mm_maddr->in6m_ifp == ifp);
+
 		in6_leavegroup(imm);
 		goto again;
 	}

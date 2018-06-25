@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.146.2.4 2018/05/21 04:36:17 pgoyette Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.146.2.5 2018/06/25 07:26:08 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -160,6 +160,7 @@ struct socket {
 	short		so_qlimit;	/* max number queued connections */
 	short		so_timeo;	/* connection timeout */
 	u_short		so_error;	/* error affecting connection */
+	u_short		so_rerror;	/* error affecting receiving */
 	u_short		so_aborting;	/* references from soabort() */
 	pid_t		so_pgid;	/* pgid for signals */
 	u_long		so_oobmark;	/* chars to oob mark */

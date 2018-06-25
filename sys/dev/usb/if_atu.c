@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atu.c,v 1.56.2.1 2018/05/02 07:20:11 pgoyette Exp $ */
+/*	$NetBSD: if_atu.c,v 1.56.2.2 2018/06/25 07:26:02 pgoyette Exp $ */
 /*	$OpenBSD: if_atu.c,v 1.48 2004/12/30 01:53:21 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.56.2.1 2018/05/02 07:20:11 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.56.2.2 2018/06/25 07:26:02 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -79,8 +79,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.56.2.1 2018/05/02 07:20:11 pgoyette Exp
 #include <dev/microcode/atmel/atmel_rfmd_fw.h>
 
 #include <net/bpf.h>
-#include <net/bpfdesc.h>
-
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>
@@ -108,7 +106,7 @@ int atudebug = 1;
 /*
  * Various supported device vendors/products/radio type.
  */
-struct atu_type atu_devs[] = {
+static const struct atu_type atu_devs[] = {
 	{ USB_VENDOR_3COM,	USB_PRODUCT_3COM_3CRSHEW696,
 	  RadioRFMD,		ATU_NO_QUIRK },
 	{ USB_VENDOR_ABOCOM,	USB_PRODUCT_ABOCOM_BWU613,
@@ -211,7 +209,7 @@ struct atu_type atu_devs[] = {
 	  RadioIntersil,	ATU_NO_QUIRK },
 };
 
-struct atu_radfirm {
+static const struct atu_radfirm {
 	enum	atu_radio_type atur_type;
 	unsigned char	*atur_internal;
 	size_t		atur_internal_sz;
@@ -1101,7 +1099,7 @@ atu_match(device_t parent, cfdata_t match, void *aux)
 	int			i;
 
 	for (i = 0; i < __arraycount(atu_devs); i++) {
-		struct atu_type *t = &atu_devs[i];
+		const struct atu_type *t = &atu_devs[i];
 
 		if (uaa->uaa_vendor == t->atu_vid &&
 		    uaa->uaa_product == t->atu_pid) {
@@ -1280,7 +1278,7 @@ atu_attach(device_t parent, device_t self, void *aux)
 	 * basically does the same as atu_match
 	 */
 	for (i = 0; i < __arraycount(atu_devs); i++) {
-		struct atu_type *t = &atu_devs[i];
+		const struct atu_type *t = &atu_devs[i];
 
 		if (uaa->uaa_vendor == t->atu_vid &&
 		    uaa->uaa_product == t->atu_pid) {

@@ -1,4 +1,4 @@
-/* $NetBSD: i386.c,v 1.40 2013/06/14 03:54:43 msaitoh Exp $ */
+/* $NetBSD: i386.c,v 1.40.26.1 2018/06/25 07:26:12 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: i386.c,v 1.40 2013/06/14 03:54:43 msaitoh Exp $");
+__RCSID("$NetBSD: i386.c,v 1.40.26.1 2018/06/25 07:26:12 pgoyette Exp $");
 #endif /* !__lint */
 
 #include <sys/param.h>
@@ -418,8 +418,19 @@ i386_setboot(ib_params *params)
 			return 0;
 		}
 
-		/* Find size of old BPB, and copy into new bootcode */
-		if (!is_zero(disk_buf.b + 3 + 8, disk_buf.b[1] - 1 - 8)) {
+		/*
+		 * Find size of old BPB, and copy into new bootcode
+		 *
+		 * The 2nd byte (b[1]) contains jmp short relative offset.
+		 * If it is zero or some invalid input that is smaller than 9,
+		 * it will cause overflow and call is_zero() with enormous size.
+		 * Add a paranoid check to prevent this scenario.
+		 *
+		 * Verify that b[0] contains JMP (0xeb) and b[2] NOP (0x90).
+		 */
+		if (disk_buf.b[0] == 0xeb && disk_buf.b[1] >= 9 &&
+		    disk_buf.b[2] == 0x90 &&
+		    !is_zero(disk_buf.b + 3 + 8, disk_buf.b[1] - 1 - 8)) {
 			struct mbr_bpbFAT16 *bpb = (void *)(disk_buf.b + 3 + 8);
 			/* Check enough space before the FAT for the bootcode */
 			u = le16toh(bpb->bpbBytesPerSec)

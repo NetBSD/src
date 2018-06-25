@@ -1,4 +1,4 @@
-/*	$NetBSD: kern.ldscript,v 1.21 2018/01/07 12:42:47 maxv Exp $	*/
+/*	$NetBSD: kern.ldscript,v 1.21.2.1 2018/06/25 07:25:42 pgoyette Exp $	*/
 
 #include "assym.h"
 
@@ -62,7 +62,7 @@ SECTIONS
 		*(.bss)
 		*(.bss.*)
 		*(COMMON)
-		. = ALIGN(32 / 8);
+		. = ALIGN(__PAGE_SIZE);
 	}
 
 	. = ALIGN(__PAGE_SIZE);

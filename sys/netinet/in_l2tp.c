@@ -1,4 +1,4 @@
-/*	$NetBSD: in_l2tp.c,v 1.12.2.1 2018/05/02 07:20:23 pgoyette Exp $	*/
+/*	$NetBSD: in_l2tp.c,v 1.12.2.2 2018/06/25 07:26:06 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_l2tp.c,v 1.12.2.1 2018/05/02 07:20:23 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_l2tp.c,v 1.12.2.2 2018/06/25 07:26:06 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_l2tp.h"
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: in_l2tp.c,v 1.12.2.1 2018/05/02 07:20:23 pgoyette Ex
 #include <sys/ioctl.h>
 #include <sys/syslog.h>
 #include <sys/kernel.h>
+#include <sys/socketvar.h> /* For softnet_lock */
 
 #include <net/if.h>
 #include <net/route.h>
@@ -275,7 +276,9 @@ in_l2tp_input(struct mbuf *m, int off, int proto, void *eparg __unused)
 		 * L2TPv3 control packet received.
 		 * userland daemon(l2tpd?) should process.
 		 */
+		SOFTNET_LOCK_IF_NET_MPSAFE();
 		rip_input(m, off, proto);
+		SOFTNET_UNLOCK_IF_NET_MPSAFE();
 		return;
 	}
 

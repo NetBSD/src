@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_strerror.h,v 1.4 2006/09/09 16:22:09 manu Exp $	*/
+/*	$NetBSD: ipsec_strerror.h,v 1.4.86.1 2018/06/25 07:25:05 pgoyette Exp $	*/
 
 /* Id: ipsec_strerror.h,v 1.4 2004/06/07 09:18:46 ludvigm Exp */
 
@@ -35,7 +35,7 @@
 #define _IPSEC_STRERROR_H
 
 extern int __ipsec_errcode;
-extern void __ipsec_set_strerror __P((const char *));
+extern void __ipsec_set_strerror(const char *);
 
 #define EIPSEC_NO_ERROR		0	/*success*/
 #define EIPSEC_NOT_SUPPORTED	1	/*not supported*/

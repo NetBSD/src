@@ -1,4 +1,4 @@
-/*	$NetBSD: dtrace_isa.c,v 1.5 2017/02/27 06:47:00 chs Exp $	*/
+/*	$NetBSD: dtrace_isa.c,v 1.5.10.1 2018/06/25 07:25:14 pgoyette Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -21,7 +21,7 @@
  *
  * CDDL HEADER END
  *
- * $FreeBSD: src/sys/cddl/dev/dtrace/i386/dtrace_isa.c,v 1.1.4.1 2009/08/03 08:13:06 kensmith Exp $
+ * $FreeBSD: head/sys/cddl/dev/dtrace/i386/dtrace_isa.c 298171 2016-04-17 23:08:47Z markj $
  */
 /*
  * Copyright 2005 Sun Microsystems, Inc.  All rights reserved.
@@ -35,6 +35,8 @@
 
 #include <machine/vmparam.h>
 #include <machine/pmap.h>
+
+#include "regset.h"
 
 uintptr_t kernelbase = (uintptr_t)KERNBASE;
 
@@ -53,6 +55,8 @@ uint8_t dtrace_fuword8_nocheck(void *);
 uint16_t dtrace_fuword16_nocheck(void *);
 uint32_t dtrace_fuword32_nocheck(void *);
 uint64_t dtrace_fuword64_nocheck(void *);
+
+int	dtrace_ustackdepth_max = 2048;
 
 void
 dtrace_getpcstack(pc_t *pcstack, int pcstack_limit, int aframes,
@@ -112,11 +116,13 @@ dtrace_getustack_common(uint64_t *pcstack, int pcstack_limit, uintptr_t pc,
 	uintptr_t oldcontext = lwp->lwp_oldcontext; /* XXX signal stack. */
 	size_t s1, s2;
 #endif
+	uintptr_t oldsp;
 	volatile uint16_t *flags =
 	    (volatile uint16_t *)&cpu_core[cpu_number()].cpuc_dtrace_flags;
 	int ret = 0;
 
 	ASSERT(pcstack == NULL || pcstack_limit > 0);
+	ASSERT(dtrace_ustackdepth_max > 0);
 
 #ifdef notyet /* XXX signal stack. */
 	if (p->p_model == DATAMODEL_NATIVE) {
@@ -129,7 +135,16 @@ dtrace_getustack_common(uint64_t *pcstack, int pcstack_limit, uintptr_t pc,
 #endif
 
 	while (pc != 0) {
-		ret++;
+		/*
+		 * We limit the number of times we can go around this
+		 * loop to account for a circular stack.
+		 */
+		if (ret++ >= dtrace_ustackdepth_max) {
+			*flags |= CPU_DTRACE_BADSTACK;
+			cpu_core[cpu_number()].cpuc_dtrace_illval = sp;
+			break;
+		}
+
 		if (pcstack != NULL) {
 			*pcstack++ = (uint64_t)pc;
 			pcstack_limit--;
@@ -139,6 +154,8 @@ dtrace_getustack_common(uint64_t *pcstack, int pcstack_limit, uintptr_t pc,
 
 		if (sp == 0)
 			break;
+
+		oldsp = sp;
 
 #ifdef notyet /* XXX signal stack. */ 
 		if (oldcontext == sp + s1 || oldcontext == sp + s2) {
@@ -177,6 +194,12 @@ dtrace_getustack_common(uint64_t *pcstack, int pcstack_limit, uintptr_t pc,
 			offsetof(struct i386_frame, f_retaddr)));
 		sp = dtrace_fuword32((void *)sp);
 #endif /* ! notyet */
+
+		if (sp == oldsp) {
+			*flags |= CPU_DTRACE_BADSTACK;
+			cpu_core[cpu_number()].cpuc_dtrace_illval = sp;
+			break;
+		}
 
 		/*
 		 * This is totally bogus:  if we faulted, we're going to clear
@@ -242,7 +265,7 @@ dtrace_getupcstack(uint64_t *pcstack, int pcstack_limit)
 		pc = dtrace_fuword32((void *) sp);
 	}
 
-	n = dtrace_getustack_common(pcstack, pcstack_limit, pc, fp);
+	n = dtrace_getustack_common(pcstack, pcstack_limit, pc, sp);
 	ASSERT(n >= 0);
 	ASSERT(n <= pcstack_limit);
 
@@ -429,6 +452,7 @@ dtrace_getarg(int arg, int aframes)
 			stack = (uintptr_t *)&frame->tf_esp + 1;
 			goto load;
 		}
+
 	}
 
 	/*
@@ -480,112 +504,102 @@ dtrace_getstackdepth(int aframes)
 		return depth - aframes;
 }
 
-#ifdef notyet
 ulong_t
-dtrace_getreg(struct regs *rp, uint_t reg)
+dtrace_getreg(struct trapframe *rp, uint_t reg)
 {
-#if defined(__amd64)
-	int regmap[] = {
-		REG_GS,		/* GS */
-		REG_FS,		/* FS */
-		REG_ES,		/* ES */
-		REG_DS,		/* DS */
-		REG_RDI,	/* EDI */
-		REG_RSI,	/* ESI */
-		REG_RBP,	/* EBP */
-		REG_RSP,	/* ESP */
-		REG_RBX,	/* EBX */
-		REG_RDX,	/* EDX */
-		REG_RCX,	/* ECX */
-		REG_RAX,	/* EAX */
-		REG_TRAPNO,	/* TRAPNO */
-		REG_ERR,	/* ERR */
-		REG_RIP,	/* EIP */
-		REG_CS,		/* CS */
-		REG_RFL,	/* EFL */
-		REG_RSP,	/* UESP */
-		REG_SS		/* SS */
+	struct pcb *pcb;
+	int regmap[] = {  /* Order is dependent on reg.d */
+		REG_GS,		/* 0  GS */
+		REG_FS,		/* 1  FS */
+		REG_ES,		/* 2  ES */
+		REG_DS,		/* 3  DS */
+		REG_RDI,	/* 4  EDI */
+		REG_RSI,	/* 5  ESI */
+		REG_RBP,	/* 6  EBP, REG_FP */
+		REG_RSP,	/* 7  ESP */
+		REG_RBX,	/* 8  EBX */
+		REG_RDX,	/* 9  EDX, REG_R1 */
+		REG_RCX,	/* 10 ECX */
+		REG_RAX,	/* 11 EAX, REG_R0 */
+		REG_TRAPNO,	/* 12 TRAPNO */
+		REG_ERR,	/* 13 ERR */
+		REG_RIP,	/* 14 EIP, REG_PC */
+		REG_CS,		/* 15 CS */
+		REG_RFL,	/* 16 EFL, REG_PS */
+		REG_RSP,	/* 17 UESP, REG_SP */
+		REG_SS		/* 18 SS */
 	};
 
-	if (reg <= SS) {
-		if (reg >= sizeof (regmap) / sizeof (int)) {
-			DTRACE_CPUFLAG_SET(CPU_DTRACE_ILLOP);
-			return (0);
-		}
-
-		reg = regmap[reg];
-	} else {
-		reg -= SS + 1;
-	}
-
-	switch (reg) {
-	case REG_RDI:
-		return (rp->r_rdi);
-	case REG_RSI:
-		return (rp->r_rsi);
-	case REG_RDX:
-		return (rp->r_rdx);
-	case REG_RCX:
-		return (rp->r_rcx);
-	case REG_R8:
-		return (rp->r_r8);
-	case REG_R9:
-		return (rp->r_r9);
-	case REG_RAX:
-		return (rp->r_rax);
-	case REG_RBX:
-		return (rp->r_rbx);
-	case REG_RBP:
-		return (rp->r_rbp);
-	case REG_R10:
-		return (rp->r_r10);
-	case REG_R11:
-		return (rp->r_r11);
-	case REG_R12:
-		return (rp->r_r12);
-	case REG_R13:
-		return (rp->r_r13);
-	case REG_R14:
-		return (rp->r_r14);
-	case REG_R15:
-		return (rp->r_r15);
-	case REG_DS:
-		return (rp->r_ds);
-	case REG_ES:
-		return (rp->r_es);
-	case REG_FS:
-		return (rp->r_fs);
-	case REG_GS:
-		return (rp->r_gs);
-	case REG_TRAPNO:
-		return (rp->r_trapno);
-	case REG_ERR:
-		return (rp->r_err);
-	case REG_RIP:
-		return (rp->r_rip);
-	case REG_CS:
-		return (rp->r_cs);
-	case REG_SS:
-		return (rp->r_ss);
-	case REG_RFL:
-		return (rp->r_rfl);
-	case REG_RSP:
-		return (rp->r_rsp);
-	default:
-		DTRACE_CPUFLAG_SET(CPU_DTRACE_ILLOP);
-		return (0);
-	}
-
-#else
 	if (reg > SS) {
 		DTRACE_CPUFLAG_SET(CPU_DTRACE_ILLOP);
 		return (0);
 	}
 
-	return ((&rp->r_gs)[reg]);
+	if (reg >= sizeof (regmap) / sizeof (int)) {
+		DTRACE_CPUFLAG_SET(CPU_DTRACE_ILLOP);
+		return (0);
+	}
+
+	reg = regmap[reg];
+
+	switch(reg) {
+	case REG_GS:
+#ifdef __FreeBSD__
+		if ((pcb = curthread->td_pcb) == NULL) {
+			DTRACE_CPUFLAG_SET(CPU_DTRACE_ILLOP);
+			return (0);
+		}
+		return (pcb->pcb_gs);
 #endif
+#ifdef __NetBSD__
+		return (rp->tf_gs);
+#endif
+	case REG_FS:
+		return (rp->tf_fs);
+	case REG_ES:
+		return (rp->tf_es);
+	case REG_DS:
+		return (rp->tf_ds);
+	case REG_RDI:
+		return (rp->tf_edi);
+	case REG_RSI:
+		return (rp->tf_esi);
+	case REG_RBP:
+		return (rp->tf_ebp);
+	case REG_RSP:
+#ifdef __FreeBSD__
+		return (rp->tf_isp);
+#endif
+#ifdef __NetBSD__
+		return (rp->tf_esp);
+#endif
+	case REG_RBX:
+		return (rp->tf_ebx);
+	case REG_RCX:
+		return (rp->tf_ecx);
+	case REG_RAX:
+		return (rp->tf_eax);
+	case REG_TRAPNO:
+		return (rp->tf_trapno);
+	case REG_ERR:
+		return (rp->tf_err);
+	case REG_RIP:
+		return (rp->tf_eip);
+	case REG_CS:
+		return (rp->tf_cs);
+	case REG_RFL:
+		return (rp->tf_eflags);
+#if 0
+	case REG_RSP:
+		return (rp->tf_esp);
+#endif
+	case REG_SS:
+		return (rp->tf_ss);
+	default:
+		DTRACE_CPUFLAG_SET(CPU_DTRACE_ILLOP);
+		return (0);
+	}
 }
-#endif
 
 static int
 dtrace_copycheck(uintptr_t uaddr, uintptr_t kaddr, size_t size)

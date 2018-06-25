@@ -20,14 +20,11 @@
  */
 
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All rights reserved.
- * Use is subject to license terms.
+ * Copyright (c) 2004, 2010, Oracle and/or its affiliates. All rights reserved.
  */
 
 #ifndef	_SYS_FM_UTIL_H
 #define	_SYS_FM_UTIL_H
-
-#pragma ident	"%Z%%M%	%I%	%E% SMI"
 
 #ifdef	__cplusplus
 extern "C" {
@@ -89,13 +86,12 @@ extern size_t ereport_dumplen;
 extern void fm_init(void);
 extern void fm_nvprint(nvlist_t *);
 extern void fm_panic(const char *, ...);
-/*extern void fm_banner(void);*/
+extern void fm_banner(void);
 
-/*extern void fm_ereport_dump(void);*/
+extern void fm_ereport_dump(void);
 extern void fm_ereport_post(nvlist_t *, int);
 
-/*extern void fm_payload_stack_add(nvlist_t *, const pc_t *, int);*/
-
+extern int is_fm_panic();
 #endif  /* _KERNEL */
 
 #ifdef	__cplusplus

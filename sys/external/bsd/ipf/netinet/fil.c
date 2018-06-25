@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.22 2018/02/04 08:19:42 mrg Exp $	*/
+/*	$NetBSD: fil.c,v 1.22.2.1 2018/06/25 07:26:03 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -138,7 +138,7 @@ extern struct timeout ipf_slowtimer_ch;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.22 2018/02/04 08:19:42 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.22.2.1 2018/06/25 07:26:03 pgoyette Exp $");
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: fil.c,v 1.1.1.2 2012/07/22 13:45:07 darrenr Exp $";
@@ -304,7 +304,7 @@ static ipfunc_resolve_t ipf_availfuncs[] = {
 	{ "",	       NULL,	      NULL,	      NULL }
 };
 
-static ipftuneable_t ipf_main_tuneables[] = {
+static const ipftuneable_t ipf_main_tuneables[] = {
 	{ { (void *)offsetof(struct ipf_main_softc_s, ipf_flags) },
 		"ipf_flags",		0,	0xffffffff,
 		stsizeof(ipf_main_softc_t, ipf_flags),
@@ -6923,7 +6923,7 @@ ipf_tune_array_unlink(ipf_main_softc_t *softc, ipftuneable_t *array)
 /* ipftp_void that points to the stored value.                              */
 /* ------------------------------------------------------------------------ */
 ipftuneable_t *
-ipf_tune_array_copy(void *base, size_t size, ipftuneable_t *template)
+ipf_tune_array_copy(void *base, size_t size, const ipftuneable_t *template)
 {
 	ipftuneable_t *copy;
 	int i;

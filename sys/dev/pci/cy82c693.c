@@ -1,4 +1,4 @@
-/* $NetBSD: cy82c693.c,v 1.9 2014/03/20 06:48:54 skrll Exp $ */
+/* $NetBSD: cy82c693.c,v 1.9.28.1 2018/06/25 07:25:51 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cy82c693.c,v 1.9 2014/03/20 06:48:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cy82c693.c,v 1.9.28.1 2018/06/25 07:25:51 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -78,13 +78,13 @@ cy82c693_init(bus_space_tag_t iot)
 	mutex_spin_enter(&cyhc_slock);
 
 	if (cyhc_initialized) {
-		mutex_spin_exit(&cyhc_slock);;
+		mutex_spin_exit(&cyhc_slock);
 		KASSERT(bus_space_is_equal(iot, cyhc_handle.cyhc_iot));
 		return &cyhc_handle;
 	}
 
 	if (bus_space_map(iot, CYHC_CONFIG_ADDR, 2, 0, &ioh) != 0) {
-		mutex_spin_exit(&cyhc_slock);;
+		mutex_spin_exit(&cyhc_slock);
 		return NULL;
 	}
 
@@ -93,7 +93,7 @@ cy82c693_init(bus_space_tag_t iot)
 
 	cyhc_initialized = 1;
 
-	mutex_spin_exit(&cyhc_slock);;
+	mutex_spin_exit(&cyhc_slock);
 
 	return &cyhc_handle;
 }
@@ -106,14 +106,14 @@ cy82c693_read(const struct cy82c693_handle *cyhc, int reg)
 	mutex_spin_enter(&cyhc_slock);
 
 	if (cyhc_initialized == 0) {
-		mutex_spin_exit(&cyhc_slock);;
+		mutex_spin_exit(&cyhc_slock);
 		panic("cy82c693_read");
 	}
 
 	bus_space_write_1(cyhc->cyhc_iot, cyhc->cyhc_ioh, 0, reg);
 	rv = bus_space_read_1(cyhc->cyhc_iot, cyhc->cyhc_ioh, 1);
 
-	mutex_spin_exit(&cyhc_slock);;
+	mutex_spin_exit(&cyhc_slock);
 
 	return rv;
 }
@@ -125,12 +125,12 @@ cy82c693_write(const struct cy82c693_handle *cyhc, int reg, u_int8_t val)
 	mutex_spin_enter(&cyhc_slock);
 
 	if (cyhc_initialized == 0) {
-		mutex_spin_exit(&cyhc_slock);;
+		mutex_spin_exit(&cyhc_slock);
 		panic("cy82c693_write");
 	}
 
 	bus_space_write_1(cyhc->cyhc_iot, cyhc->cyhc_ioh, 0, reg);
 	bus_space_write_1(cyhc->cyhc_iot, cyhc->cyhc_ioh, 1, val);
 
-	mutex_spin_exit(&cyhc_slock);;
+	mutex_spin_exit(&cyhc_slock);
 }

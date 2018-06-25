@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.71.2.1 2018/04/22 07:20:27 pgoyette Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.71.2.2 2018/06/25 07:26:06 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -205,6 +205,13 @@ struct eccapreq {
 	int		eccr_capenable;		/* capabilities enabled */
 };
 
+/* sysctl for Ethernet multicast addresses */
+struct ether_multi_sysctl {
+	u_int   enm_refcount;
+	uint8_t enm_addrlo[ETHER_ADDR_LEN];
+	uint8_t enm_addrhi[ETHER_ADDR_LEN];
+};
+
 #ifdef	_KERNEL
 extern const uint8_t etherbroadcastaddr[ETHER_ADDR_LEN];
 extern const uint8_t ethermulticastaddr_slowprotocols[ETHER_ADDR_LEN];
@@ -217,7 +224,6 @@ int	ether_addmulti(const struct sockaddr *, struct ethercom *);
 int	ether_delmulti(const struct sockaddr *, struct ethercom *);
 int	ether_multiaddr(const struct sockaddr *, uint8_t[], uint8_t[]);
 void    ether_input(struct ifnet *, struct mbuf *);
-#endif /* _KERNEL */
 
 /*
  * Ethernet multicast address structure.  There is one of these for each
@@ -232,12 +238,6 @@ struct ether_multi {
 	LIST_ENTRY(ether_multi) enm_list;
 };
 
-struct ether_multi_sysctl {
-	u_int   enm_refcount;
-	uint8_t enm_addrlo[ETHER_ADDR_LEN];
-	uint8_t enm_addrhi[ETHER_ADDR_LEN];
-};
-
 /*
  * Structure used by macros below to remember position when stepping through
  * all of the ether_multi records.
@@ -247,48 +247,65 @@ struct ether_multistep {
 };
 
 /*
- * Macro for looking up the ether_multi record for a given range of Ethernet
- * multicast addresses connected to a given ethercom structure.  If no matching
- * record is found, "enm" returns NULL.
+ * lookup the ether_multi record for a given range of Ethernet
+ * multicast addresses connected to a given ethercom structure.
+ * If no matching record is found, NULL is returned.
  */
-#define ETHER_LOOKUP_MULTI(addrlo, addrhi, ec, enm)			\
-	/* uint8_t addrlo[ETHER_ADDR_LEN]; */				\
-	/* uint8_t addrhi[ETHER_ADDR_LEN]; */				\
-	/* struct ethercom *ec; */					\
-	/* struct ether_multi *enm; */					\
-{									\
-	for ((enm) = LIST_FIRST(&(ec)->ec_multiaddrs);			\
-	    (enm) != NULL &&						\
-	    (memcmp((enm)->enm_addrlo, (addrlo), ETHER_ADDR_LEN) != 0 ||	\
-	     memcmp((enm)->enm_addrhi, (addrhi), ETHER_ADDR_LEN) != 0);	\
-		(enm) = LIST_NEXT((enm), enm_list));			\
+static __inline struct ether_multi *
+ether_lookup_multi(const uint8_t *addrlo, const uint8_t *addrhi,
+    const struct ethercom *ec)
+{
+	struct ether_multi *enm;
+
+	LIST_FOREACH(enm, &ec->ec_multiaddrs, enm_list) {
+		if (memcmp(enm->enm_addrlo, addrlo, ETHER_ADDR_LEN) != 0)
+			continue;
+		if (memcmp(enm->enm_addrhi, addrhi, ETHER_ADDR_LEN) != 0)
+			continue;
+
+		break;
+	}
+
+	return enm;
 }
 
 /*
- * Macro to step through all of the ether_multi records, one at a time.
+ * step through all of the ether_multi records, one at a time.
  * The current position is remembered in "step", which the caller must
- * provide.  ETHER_FIRST_MULTI(), below, must be called to initialize "step"
- * and get the first record.  Both macros return a NULL "enm" when there
+ * provide.  ether_first_multi(), below, must be called to initialize "step"
+ * and get the first record.  Both functions return a NULL when there
  * are no remaining records.
  */
+static __inline struct ether_multi *
+ether_next_multi(struct ether_multistep *step)
+{
+	struct ether_multi *enm;
+
+	enm = step->e_enm;
+	if (enm != NULL)
+		step->e_enm = LIST_NEXT(enm, enm_list);
+
+	return enm;
+}
 #define ETHER_NEXT_MULTI(step, enm) \
 	/* struct ether_multistep step; */  \
 	/* struct ether_multi *enm; */  \
-{ \
-	if (((enm) = (step).e_enm) != NULL) \
-		(step).e_enm = LIST_NEXT((enm), enm_list); \
+	(enm) = ether_next_multi(&(step))
+
+static __inline struct ether_multi *
+ether_first_multi(struct ether_multistep *step, const struct ethercom *ec)
+{
+
+	step->e_enm = LIST_FIRST(&ec->ec_multiaddrs);
+
+	return ether_next_multi(step);
 }
 
 #define ETHER_FIRST_MULTI(step, ec, enm) \
 	/* struct ether_multistep step; */ \
 	/* struct ethercom *ec; */ \
 	/* struct ether_multi *enm; */ \
-{ \
-	(step).e_enm = LIST_FIRST(&(ec)->ec_multiaddrs); \
-	ETHER_NEXT_MULTI((step), (enm)); \
-}
-
-#ifdef _KERNEL
+	(enm) = ether_first_multi(&(step), (ec))
 
 #define ETHER_LOCK(ec)		mutex_enter((ec)->ec_lock)
 #define ETHER_UNLOCK(ec)	mutex_exit((ec)->ec_lock)

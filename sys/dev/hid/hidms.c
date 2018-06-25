@@ -1,4 +1,4 @@
-/*	$NetBSD: hidms.c,v 1.1 2017/12/10 17:03:07 bouyer Exp $	*/
+/*	$NetBSD: hidms.c,v 1.1.2.1 2018/06/25 07:25:50 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2017 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hidms.c,v 1.1 2017/12/10 17:03:07 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hidms.c,v 1.1.2.1 2018/06/25 07:25:50 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -211,6 +211,9 @@ hidms_attach(device_t self, struct hidms *ms,
     const struct wsmouse_accessops *ops)
 {
 	struct wsmousedev_attach_args a;
+#ifdef HIDMS_DEBUG
+	int i;
+#endif
 	aprint_normal(": %d button%s%s%s%s%s%s%s%s%s\n",
 	    ms->nbuttons, ms->nbuttons == 1 ? "" : "s",
 	    ms->flags & HIDMS_W ? ", W" : "",

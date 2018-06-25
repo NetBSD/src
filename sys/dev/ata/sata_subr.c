@@ -1,4 +1,4 @@
-/*	$NetBSD: sata_subr.c,v 1.23 2017/10/07 16:05:32 jdolecek Exp $	*/
+/*	$NetBSD: sata_subr.c,v 1.23.2.1 2018/06/25 07:25:49 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  * Common functions for Serial ATA.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sata_subr.c,v 1.23 2017/10/07 16:05:32 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sata_subr.c,v 1.23.2.1 2018/06/25 07:25:49 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -121,6 +121,14 @@ sata_reset_interface(struct ata_channel *chp, bus_space_tag_t sata_t,
 		}
 	}
 
+	sata_interpret_det(chp, sstatus);
+
+	return (sstatus & SStatus_DET_mask);
+}
+
+void
+sata_interpret_det(struct ata_channel *chp, uint32_t sstatus)
+{ 
 	switch (sstatus & SStatus_DET_mask) {
 	case SStatus_DET_NODEV:
 		/* No Device; be silent.  */
@@ -133,7 +141,7 @@ sata_reset_interface(struct ata_channel *chp, bus_space_tag_t sata_t,
 		break;
 
 	case SStatus_DET_OFFLINE:
-		aprint_error("%s port %d: PHY offline\n",
+		aprint_normal("%s port %d: PHY offline\n",
 		    device_xname(chp->ch_atac->atac_dev), chp->ch_channel);
 		break;
 
@@ -147,7 +155,6 @@ sata_reset_interface(struct ata_channel *chp, bus_space_tag_t sata_t,
 		    device_xname(chp->ch_atac->atac_dev), chp->ch_channel,
 		    sstatus);
 	}
-	return(sstatus & SStatus_DET_mask);
 }
 
 void

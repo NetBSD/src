@@ -1,4 +1,4 @@
-/*	$NetBSD: nitrogen6_usb.c,v 1.3 2017/11/09 05:57:23 hkenken Exp $	*/
+/*	$NetBSD: nitrogen6_usb.c,v 1.3.4.1 2018/06/25 07:25:41 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2013  Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nitrogen6_usb.c,v 1.3 2017/11/09 05:57:23 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nitrogen6_usb.c,v 1.3.4.1 2018/06/25 07:25:41 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,13 +127,13 @@ init_otg(struct imxehci_softc *sc)
 	imx6_ccm_analog_write(USB_ANALOG_USB1_CHRG_DETECT,
 	    USB_ANALOG_USB_CHRG_DETECT_EN_B |
 	    USB_ANALOG_USB_CHRG_DETECT_CHK_CHRG_B);
-	imx6_pll_power(CCM_ANALOG_PLL_USB1, 1, CCM_ANALOG_PLL_USBn_ENABLE);
+	imx6_pll_power(CCM_ANALOG_PLL_USB1, 1, CCM_ANALOG_PLL_ENABLE);
 	imx6_ccm_analog_write(CCM_ANALOG_PLL_USB1_CLR,
-	    CCM_ANALOG_PLL_USBn_BYPASS);
+	    CCM_ANALOG_PLL_BYPASS);
 	imx6_ccm_analog_write(CCM_ANALOG_PLL_USB1_SET,
-	   CCM_ANALOG_PLL_USBn_ENABLE |
-	   CCM_ANALOG_PLL_USBn_POWER |
-	   CCM_ANALOG_PLL_USBn_EN_USB_CLK);
+	   CCM_ANALOG_PLL_ENABLE |
+	   CCM_ANALOG_PLL_POWER |
+	   CCM_ANALOG_PLL_EN_USB_CLK);
 
 	imxehci_reset(sc);
 
@@ -157,11 +157,11 @@ init_h1(struct imxehci_softc *sc)
 	    USB_ANALOG_USB_CHRG_DETECT_EN_B |
 	    USB_ANALOG_USB_CHRG_DETECT_CHK_CHRG_B);
 	imx6_ccm_analog_write(CCM_ANALOG_PLL_USB2_CLR,
-	    CCM_ANALOG_PLL_USBn_BYPASS);
+	    CCM_ANALOG_PLL_BYPASS);
 	imx6_ccm_analog_write(CCM_ANALOG_PLL_USB2_SET,
-	    CCM_ANALOG_PLL_USBn_ENABLE |
-	    CCM_ANALOG_PLL_USBn_POWER |
-	    CCM_ANALOG_PLL_USBn_EN_USB_CLK);
+	    CCM_ANALOG_PLL_ENABLE |
+	    CCM_ANALOG_PLL_POWER |
+	    CCM_ANALOG_PLL_EN_USB_CLK);
 
 	v = bus_space_read_4(usbc->sc_iot, usbc->sc_ioh, USBNC_USB_UH1_CTRL);
 	v |= USBNC_USB_UH1_CTRL_OVER_CUR_POL;

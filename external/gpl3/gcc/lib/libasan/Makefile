@@ -1,6 +1,7 @@
-# $NetBSD: Makefile,v 1.21.2.1 2018/04/07 04:12:08 pgoyette Exp $
+# $NetBSD: Makefile,v 1.21.2.2 2018/06/25 07:25:28 pgoyette Exp $
 
 UNSUPPORTED_COMPILER.clang=	# defined
+NOSANITIZER=	# defined
 
 .include <bsd.own.mk>
 

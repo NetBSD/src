@@ -24,6 +24,7 @@
  */
 /*
  * Copyright (c) 2013, Joyent, Inc.  All rights reserved.
+ * Copyright (c) 2016, Pedro Giffuni.  All rights reserved.
  */
 
 #include <sys/types.h>
@@ -36,7 +37,7 @@
 #include <sys/task.h>
 #else
 #include <sys/param.h>
-#include <sys/linker.h>
+//#include <sys/linker.h>
 #include <sys/module.h>
 #include <sys/stat.h>
 #endif
@@ -93,7 +94,7 @@ dt_module_syminit32(dt_module_t *dmp)
 	uint_t i, n = dmp->dm_nsymelems;
 	uint_t asrsv = 0;
 
-#if defined(__FreeBSD__) || defined(__NetBSD__)
+#if defined(__FreeBSD__)
 	GElf_Ehdr ehdr;
 	int is_elf_obj;
 
@@ -115,12 +116,15 @@ dt_module_syminit32(dt_module_t *dmp)
 		    (ELF32_ST_BIND(sym->st_info) != STB_LOCAL || sym->st_size)) {
 			asrsv++; /* reserve space in the address map */
 
-#if defined(__FreeBSD__) || defined(__NetBSD__)
+#if defined(__FreeBSD__)
 			sym->st_value += (Elf_Addr) dmp->dm_reloc_offset;
 			if (is_elf_obj && sym->st_shndx != SHN_UNDEF &&
 			    sym->st_shndx < ehdr.e_shnum)
 				sym->st_value +=
 				    dmp->dm_sec_offsets[sym->st_shndx];
+#endif
+#ifdef __NetBSD__
+			sym->st_value += (Elf_Addr) dmp->dm_reloc_offset;
 #endif
 		}
 
@@ -143,7 +147,7 @@ dt_module_syminit64(dt_module_t *dmp)
 	uint_t i, n = dmp->dm_nsymelems;
 	uint_t asrsv = 0;
 
-#if defined(__FreeBSD__) || defined(__NetBSD__)
+#if defined(__FreeBSD__)
 	GElf_Ehdr ehdr;
 	int is_elf_obj;
 
@@ -164,12 +168,15 @@ dt_module_syminit64(dt_module_t *dmp)
 		if (sym->st_value != 0 &&
 		    (ELF64_ST_BIND(sym->st_info) != STB_LOCAL || sym->st_size)) {
 			asrsv++; /* reserve space in the address map */
-#if defined(__FreeBSD__) || defined(__NetBSD__)
+#if defined(__FreeBSD__)
 			sym->st_value += (Elf_Addr) dmp->dm_reloc_offset;
 			if (is_elf_obj && sym->st_shndx != SHN_UNDEF &&
 			    sym->st_shndx < ehdr.e_shnum)
 				sym->st_value +=
 				    dmp->dm_sec_offsets[sym->st_shndx];
+#endif
+#ifdef __NetBSD__
+			sym->st_value += (Elf_Addr) dmp->dm_reloc_offset;
 #endif
 		}
 
@@ -725,22 +732,20 @@ dt_module_load_proc(dtrace_hdl_t *dtp, dt_module_t *dmp)
 		return (dt_set_errno(dtp, EDT_CANTLOAD));
 	}
 
-	dmp->dm_libctfp = malloc(sizeof (ctf_file_t *) * arg.dpa_count);
+	dmp->dm_libctfp = calloc(arg.dpa_count, sizeof (ctf_file_t *));
 	if (dmp->dm_libctfp == NULL) {
 		dt_proc_unlock(dtp, p);
 		dt_proc_release(dtp, p);
 		return (dt_set_errno(dtp, EDT_NOMEM));
 	}
-	bzero(dmp->dm_libctfp, sizeof (ctf_file_t *) * arg.dpa_count);
 
-	dmp->dm_libctfn = malloc(sizeof (char *) * arg.dpa_count);
+	dmp->dm_libctfn = calloc(arg.dpa_count, sizeof (char *));
 	if (dmp->dm_libctfn == NULL) {
 		free(dmp->dm_libctfp);
 		dt_proc_unlock(dtp, p);
 		dt_proc_release(dtp, p);
 		return (dt_set_errno(dtp, EDT_NOMEM));
 	}
-	bzero(dmp->dm_libctfn, sizeof (char *) * arg.dpa_count);
 
 	dmp->dm_nctflibs = arg.dpa_count;
 
@@ -821,16 +826,13 @@ dt_module_load(dtrace_hdl_t *dtp, dt_module_t *dmp)
 	dmp->dm_nsymbuckets = _dtrace_strbuckets;
 	dmp->dm_symfree = 1;		/* first free element is index 1 */
 
-	dmp->dm_symbuckets = malloc(sizeof (uint_t) * dmp->dm_nsymbuckets);
-	dmp->dm_symchains = malloc(sizeof (dt_sym_t) * dmp->dm_nsymelems + 1);
+	dmp->dm_symbuckets = calloc(dmp->dm_nsymbuckets, sizeof (uint_t));
+	dmp->dm_symchains = calloc(dmp->dm_nsymelems + 1, sizeof (dt_sym_t));
 
 	if (dmp->dm_symbuckets == NULL || dmp->dm_symchains == NULL) {
 		dt_module_unload(dtp, dmp);
 		return (dt_set_errno(dtp, EDT_NOMEM));
 	}
-
-	bzero(dmp->dm_symbuckets, sizeof (uint_t) * dmp->dm_nsymbuckets);
-	bzero(dmp->dm_symchains, sizeof (dt_sym_t) * dmp->dm_nsymelems + 1);
 
 	/*
 	 * Iterate over the symbol table data buffer and insert each symbol
@@ -983,7 +985,7 @@ dt_module_unload(dtrace_hdl_t *dtp, dt_module_t *dmp)
 		free(dmp->dm_asmap);
 		dmp->dm_asmap = NULL;
 	}
-#if defined(__FreeBSD__) || defined(__NetBSD__)
+#if defined(__FreeBSD__)
 	if (dmp->dm_sec_offsets != NULL) {
 		free(dmp->dm_sec_offsets);
 		dmp->dm_sec_offsets = NULL;
@@ -1145,7 +1147,7 @@ dt_module_update(dtrace_hdl_t *dtp, struct kld_file_stat *k_stat)
 	char fname[MAXPATHLEN];
 	struct stat64 st;
 	int fd, err, bits;
-#if defined(__FreeBSD__) 
+#ifdef __FreeBSD__
 	struct module_stat ms;
 	dt_kmodule_t *dkmp;
 	uint_t h;
@@ -1178,11 +1180,15 @@ dt_module_update(dtrace_hdl_t *dtp, struct kld_file_stat *k_stat)
 	char osrel[64];
 	char machine[64];
 	size_t len;
+	uintptr_t mapbase;
+	int i;
+	bool ismod;
 
 	if (strcmp("netbsd", name) == 0) {
 		/* want the kernel, but it is not absolute */
 		dt_bootfile(machine, sizeof(machine));
 		snprintf(fname, sizeof(fname), "/%s", machine);
+		ismod = false;
 	} else {
 
 		/* build stand module path from system */
@@ -1202,6 +1208,7 @@ dt_module_update(dtrace_hdl_t *dtp, struct kld_file_stat *k_stat)
 
 		(void) snprintf(fname, sizeof (fname),
 		    "/stand/%s/%s/modules/%s/%s.kmod", machine, osrel, name, name);
+		ismod = true;
 	}
 #endif
 
@@ -1258,6 +1265,34 @@ dt_module_update(dtrace_hdl_t *dtp, struct kld_file_stat *k_stat)
 		}
 	}
 #endif
+#ifdef __NetBSD__
+	mapbase = 0;
+	if (ismod) {
+#define	MAXMODULES 512
+		modstat_t modstat_buf[MAXMODULES], *ms;
+		struct iovec iov = { modstat_buf, sizeof(modstat_buf) };
+
+		if (modctl(MODCTL_STAT, &iov) < 0) {
+			dt_dprintf("failed to get list of kernel modules: %s\n",
+				   strerror(errno));
+			return;
+		}
+
+		for (i = 0; i < MAXMODULES; i++) {
+			ms = &modstat_buf[i];
+			if (!strcmp(name, ms->ms_name)) {
+				mapbase = ms->ms_addr;
+				break;
+			}
+		}
+		if (i == MAXMODULES) {
+			dt_dprintf("module %s not found\n", name);
+			return;
+		}
+		dmp->dm_reloc_offset = (void *)mapbase;
+	}
+#endif
+
 	/*
 	 * Iterate over the section headers locating various sections of
 	 * interest and use their attributes to flesh out the dt_module_t.
@@ -1302,7 +1337,8 @@ dt_module_update(dtrace_hdl_t *dtp, struct kld_file_stat *k_stat)
 	dmp->dm_flags |= DT_DM_KERNEL;
 #ifdef illumos
 	dmp->dm_modid = (int)OBJFS_MODID(st.st_ino);
-#else
+#endif /* illumos */
+#ifdef __FreeBSD__
 	/*
 	 * Include .rodata and special sections into .text.
 	 * This depends on default section layout produced by GNU ld
@@ -1310,7 +1346,7 @@ dt_module_update(dtrace_hdl_t *dtp, struct kld_file_stat *k_stat)
 	 * [Text][R/O data][R/W data][Dynamic][BSS][Non loadable]
 	 */
 	dmp->dm_text_size = dmp->dm_data_va - dmp->dm_text_va;
-#if defined(__i386__) && !defined(__NetBSD__)
+#if defined(__i386__)
 	/*
 	 * Find the first load section and figure out the relocation
 	 * offset for the symbols. The kernel module will not need
@@ -1323,12 +1359,21 @@ dt_module_update(dtrace_hdl_t *dtp, struct kld_file_stat *k_stat)
 		}
 	}
 #endif
-#endif /* illumos */
+#endif /* __FreeBSD__ */
+#ifdef __NetBSD__
+	if (ismod) {
+		dmp->dm_text_va = mapbase;
+		dmp->dm_data_va = 0;
+		dmp->dm_data_size = 0;
+		dmp->dm_bss_va = 0;
+		dmp->dm_bss_size = 0;
+	}
+#endif
 
 	if (dmp->dm_info.objfs_info_primary)
 		dmp->dm_flags |= DT_DM_PRIMARY;
 
-#if defined(__FreeBSD__)
+#ifdef __FreeBSD__
 	ms.version = sizeof(ms);
 	for (modid = kldfirstmod(k_stat->id); modid > 0;
 	    modid = modnext(modid)) {
@@ -1405,8 +1450,31 @@ dtrace_update(dtrace_hdl_t *dtp)
 			dt_module_update(dtp, &k_stat);
 	}
 #elif defined(__NetBSD__)
-	/* XXX just the kernel for now */
+	size_t len;
+	struct iovec iov;
+	modstat_t *ms;
+
 	dt_module_update(dtp, "netbsd");
+	for (len = 8192;;) {
+		iov.iov_base = malloc(len);
+		iov.iov_len = len;
+		if (modctl(MODCTL_STAT, &iov)) {
+			free(iov.iov_base);
+			iov.iov_len = 0;
+			break;
+		}
+		if (len >= iov.iov_len) {
+			break;
+		}
+		free(iov.iov_base);
+		len = iov.iov_len;
+	}
+	len = iov.iov_len / sizeof(modstat_t);
+	for (ms = iov.iov_base; len != 0; ms++, len--) {
+		if (ms->ms_source != MODULE_SOURCE_FILESYS)
+			continue;
+		dt_module_update(dtp, ms->ms_name);
+	}
 #endif
 
 	/*
@@ -1583,6 +1651,7 @@ dtrace_lookup_by_addr(dtrace_hdl_t *dtp, GElf_Addr addr,
 
 	for (dmp = dt_list_next(&dtp->dt_modlist); dmp != NULL;
 	    dmp = dt_list_next(dmp)) {
+
 		if (addr - dmp->dm_text_va < dmp->dm_text_size ||
 		    addr - dmp->dm_data_va < dmp->dm_data_size ||
 		    addr - dmp->dm_bss_va < dmp->dm_bss_size)

@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf_stub.c,v 1.7 2017/01/25 01:04:23 ozaki-r Exp $	*/
+/*	$NetBSD: bpf_stub.c,v 1.7.12.1 2018/06/25 07:26:06 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf_stub.c,v 1.7 2017/01/25 01:04:23 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf_stub.c,v 1.7.12.1 2018/06/25 07:26:06 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -61,7 +61,6 @@ struct bpf_ops bpf_ops_stub = {
 	.bpf_detach =		bpf_stub_detach,
 	.bpf_change_type =	(void *)bpf_stub_null,
 
-	.bpf_tap = 		(void *)bpf_stub_warn,
 	.bpf_mtap = 		(void *)bpf_stub_warn,
 	.bpf_mtap2 = 		(void *)bpf_stub_warn,
 	.bpf_mtap_af = 		(void *)bpf_stub_warn,

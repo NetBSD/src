@@ -1,4 +1,4 @@
-.\"	$NetBSD: envsys.4,v 1.51 2017/07/03 21:30:58 wiz Exp $
+.\"	$NetBSD: envsys.4,v 1.51.4.1 2018/06/25 07:25:36 pgoyette Exp $
 .\"
 .\" Copyright (c) 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -65,7 +65,6 @@ for communication between kernel and user space.
 The following
 .Xr ioctl 2
 types are available:
-.Pp
 .Bl -tag -width XX
 .It Dv ENVSYS_GETDICTIONARY Pq prop_dictionary_t
 .Pp
@@ -87,7 +86,6 @@ with one entry for sensor
 and all available properties set on it, plus another entry for the
 .Dq device-properties
 dictionary (which contains specific properties for a device):
-.Pp
 .Bd -literal
 \&<key\&>device0\&<\&/key\&>
 \&<array\&>
@@ -110,7 +108,7 @@ dictionary (which contains specific properties for a device):
 		\&<string\&>CPU Temp\&<\&/string\&>
 		\&<key\&>high-capacity\&<\&/key\&>
 		\&<integer\&>21417\&<\&/integer\&>
-		\&<string\&>index\&<\&/string\&>
+		\&<key\&>index\&<\&/key\&>
 		\&<string\&>sensor0\&<\&/string\&>
 		\&<key\&>max-value\&<\&/key\&>
 		\&<integer\&>3894000\&<\&/integer\&>

@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_mmc_reg.h,v 1.6 2017/06/19 22:03:02 jmcneill Exp $ */
+/* $NetBSD: dwc_mmc_reg.h,v 1.6.6.1 2018/06/25 07:25:50 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -149,6 +149,9 @@
 #define DWC_MMC_DMAC_IDMA_ON		__BIT(7)
 #define DWC_MMC_DMAC_FIX_BURST		__BIT(1)
 #define DWC_MMC_DMAC_SOFTRESET		__BIT(0)
+
+#define DWC_MMC_VERID_ID		__BITS(15,0)
+#define DWC_MMC_VERID_240A		0x240a
 
 #define DWC_MMC_IDST_HOST_ABT		__BIT(10)
 #define DWC_MMC_IDST_ABNORMAL_INT_SUM	__BIT(9)

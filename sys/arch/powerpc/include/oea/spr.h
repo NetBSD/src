@@ -1,7 +1,16 @@
-/*	$NetBSD: spr.h,v 1.4.2.1 2018/05/21 04:36:01 pgoyette Exp $	*/
+/*	$NetBSD: spr.h,v 1.4.2.2 2018/06/25 07:25:45 pgoyette Exp $	*/
 
 #ifndef _POWERPC_OEA_SPR_H_
 #define	_POWERPC_OEA_SPR_H_
+
+#if !defined(_LOCORE) && defined(_KERNEL)
+#if defined(PPC_OEA64_BRIDGE) || defined (_ARCH_PPC64)
+
+#include <powerpc/psl.h>
+#include <powerpc/spr.h>
+
+#endif
+#endif
 
 /*
  * Special Purpose Register declarations.
@@ -298,5 +307,51 @@
 #define	PMCN_ICOMP		 2 /* Instructions completed */
 #define	PMCN_TBLTRANS		 3 /* TBL bit transitions */
 #define	PCMN_IDISPATCH		 4 /* Instructions dispatched */
+
+#if !defined(_LOCORE) && defined(_KERNEL)
+
+#if defined(PPC_OEA64_BRIDGE) || defined (_ARCH_PPC64)
+
+static inline uint64_t
+scom_read(register_t address)
+{
+	register_t msr;
+	uint64_t ret;
+
+	msr = mfmsr();
+	mtmsr(msr & ~PSL_EE);
+	__asm volatile("isync;");
+
+	mtspr(SPR_SCOMC, address | SCOMC_READ);
+	__asm volatile("isync;");
+
+	ret = mfspr(SPR_SCOMD);
+	mtmsr(msr);
+	__asm volatile("isync;");
+
+	return ret;
+}
+
+static inline void
+scom_write(register_t address, uint64_t data)
+{
+	register_t msr;
+
+	msr = mfmsr();
+	mtmsr(msr & ~PSL_EE);
+	__asm volatile("isync;");
+
+	mtspr(SPR_SCOMD, data);
+	__asm volatile("isync;");
+	mtspr(SPR_SCOMC, address | SCOMC_WRITE);
+	__asm volatile("isync;");
+	
+	mtmsr(msr);
+	__asm volatile("isync;");
+}
+
+#endif /* defined(PPC_OEA64_BRIDGE) || defined (_ARCH_PPC64) */
+
+#endif /* !defined(_LOCORE) && defined(_KERNEL) */
 
 #endif /* !_POWERPC_SPR_H_ */

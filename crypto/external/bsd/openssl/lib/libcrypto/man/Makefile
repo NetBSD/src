@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2018/02/08 21:57:26 christos Exp $
+#	$NetBSD: Makefile,v 1.4.2.1 2018/06/25 07:25:05 pgoyette Exp $
 
 # the makefile is not, and should not be visited during normal build process.
 # try to use latest pod2man, which comes with the latest perl.
@@ -47,9 +47,10 @@ make-manpages:
 			perl libcrypto.pl >`basename $$i .pod`.$$sec; \
 		fi \
 	done
-	for i in bio evp x509; do \
+	for i in bio evp x509 MD5 HMAC; do \
 		mv $$i.3 openssl_$$i.3; \
 	done
+
 
 clean:
 	-/bin/rm -f *.[0-9]

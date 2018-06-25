@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.86 2017/12/04 09:55:37 bouyer Exp $	*/
+/*	$NetBSD: comvar.h,v 1.86.2.1 2018/06/25 07:25:50 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -91,10 +91,10 @@ int com_is_console(bus_space_tag_t, bus_addr_t, bus_space_handle_t *);
 #define	COM_REG_MCR		9
 #define	COM_REG_LSR		10
 #define	COM_REG_MSR		11
-#define	COM_REG_USR		31	/* 16750/SUNXI */
-#define	COM_REG_TFL		com_tfl		/* SUNXI */
-#define	COM_REG_RFL		com_rfl		/* SUNXI */
-#define	COM_REG_HALT		com_halt	/* SUNXI */
+#define	COM_REG_USR		31	/* 16750/DW APB */
+#define	COM_REG_TFL		com_tfl		/* DW APB */
+#define	COM_REG_RFL		com_rfl		/* DW APB */
+#define	COM_REG_HALT		com_halt	/* DW APB */
 
 struct com_regs {
 	bus_space_tag_t		cr_iot;
@@ -131,10 +131,10 @@ extern const bus_size_t com_std_map[42];
 #define	COM_REG_TCR		com_msr
 #define	COM_REG_TLR		com_scratch
 #define	COM_REG_MDR1		8
-#define COM_REG_USR		com_usr		/* 16750/SUNXI */
-#define	COM_REG_TFL		com_tfl		/* SUNXI */
-#define	COM_REG_RFL		com_rfl		/* SUNXI */
-#define	COM_REG_HALT		com_halt	/* SUNXI */
+#define COM_REG_USR		com_usr		/* 16750/DW APB */
+#define	COM_REG_TFL		com_tfl		/* DW APB */
+#define	COM_REG_RFL		com_rfl		/* DW APB */
+#define	COM_REG_HALT		com_halt	/* DW APB */
 
 struct com_regs {
 	bus_space_tag_t		cr_iot;
@@ -230,7 +230,7 @@ struct com_softc {
 #define	COM_TYPE_BCMAUXUART	8	/* BCM2835 AUX UART */
 #define	COM_TYPE_16650		9
 #define	COM_TYPE_16750		10
-#define	COM_TYPE_SUNXI		11	/* Allwinner built-in */
+#define	COM_TYPE_DW_APB		11	/* DesignWare APB UART */
 
 	/* power management hooks */
 	int (*enable)(struct com_softc *);

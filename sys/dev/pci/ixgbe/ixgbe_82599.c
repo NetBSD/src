@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_82599.c,v 1.16.2.1 2018/04/07 04:12:18 pgoyette Exp $ */
+/* $NetBSD: ixgbe_82599.c,v 1.16.2.2 2018/06/25 07:26:01 pgoyette Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -565,6 +565,9 @@ enum ixgbe_media_type ixgbe_get_media_type_82599(struct ixgbe_hw *hw)
 		break;
 	case IXGBE_DEV_ID_82599_T3_LOM:
 		media_type = ixgbe_media_type_copper;
+		break;
+	case IXGBE_DEV_ID_82599_LS:
+		media_type = ixgbe_media_type_fiber_lco;
 		break;
 	case IXGBE_DEV_ID_82599_QSFP_SF_QP:
 		media_type = ixgbe_media_type_fiber_qsfp;

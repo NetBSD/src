@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.8 2017/01/19 11:10:38 maya Exp $
+# $NetBSD: Makefile,v 1.8.10.1 2018/06/25 07:25:33 pgoyette Exp $
 
 .include <bsd.init.mk>
 
@@ -15,7 +15,9 @@ INCS+=	base.h bcj.h block.h check.h container.h delta.h \
 INCSDIR_lzma.h=	/usr/include
 INCSDIR=	/usr/include/lzma
 
+.if ${MKSANITIZER} != "yes"
 LDFLAGS+=	-Wl,-z,defs
+.endif
 
 CPPFLAGS+=	-I${XZSRCDIR}/src/liblzma/check
 CPPFLAGS+=	-I${XZSRCDIR}/src/liblzma/common

@@ -1,4 +1,4 @@
-/*	$NetBSD: vioscsi.c,v 1.19 2017/05/15 21:30:37 jdolecek Exp $	*/
+/*	$NetBSD: vioscsi.c,v 1.19.10.1 2018/06/25 07:26:01 pgoyette Exp $	*/
 /*	$OpenBSD: vioscsi.c,v 1.3 2015/03/14 03:38:49 jsg Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vioscsi.c,v 1.19 2017/05/15 21:30:37 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vioscsi.c,v 1.19.10.1 2018/06/25 07:26:01 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -26,10 +26,6 @@ __KERNEL_RCSID(0, "$NetBSD: vioscsi.c,v 1.19 2017/05/15 21:30:37 jdolecek Exp $"
 #include <sys/bus.h>
 #include <sys/buf.h>
 #include <sys/module.h>
-
-#include <dev/pci/pcidevs.h>
-#include <dev/pci/pcireg.h>
-#include <dev/pci/pcivar.h>
 
 #include <dev/pci/vioscsireg.h>
 #include <dev/pci/virtiovar.h>

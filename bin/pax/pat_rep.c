@@ -1,4 +1,4 @@
-/*	$NetBSD: pat_rep.c,v 1.29 2009/04/07 19:52:35 perry Exp $	*/
+/*	$NetBSD: pat_rep.c,v 1.29.46.1 2018/06/25 07:25:04 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)pat_rep.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: pat_rep.c,v 1.29 2009/04/07 19:52:35 perry Exp $");
+__RCSID("$NetBSD: pat_rep.c,v 1.29.46.1 2018/06/25 07:25:04 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -924,7 +924,7 @@ rep_name(char *name, size_t namelen, int *nlen, int flags)
 	 * (the user already saw that substitution go by)
 	 */
 	pt = rephead;
-	(void)strcpy(buf1, name);
+	(void)strlcpy(buf1, name, sizeof(buf1));
 	inpt = buf1;
 	outpt = nname;
 	endpt = outpt + PAXPATHLEN;

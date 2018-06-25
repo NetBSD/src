@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipsec.4,v 1.43 2018/01/10 12:16:39 wiz Exp $
+.\"	$NetBSD: ipsec.4,v 1.43.2.1 2018/06/25 07:25:36 pgoyette Exp $
 .\"	$KAME: ipsec.4,v 1.17 2001/06/27 15:25:10 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -28,12 +28,15 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd January 10, 2018
+.Dd June 13, 2018
 .Dt IPSEC 4
 .Os
 .Sh NAME
 .Nm ipsec
 .Nd IP security protocol
+.Sh SYNOPSIS
+.Cd "options IPSEC"
+.Cd "options IPSEC_DEBUG"
 .Sh DESCRIPTION
 This manual pages describes the IPsec protocol.
 For the network device driver please see
@@ -49,7 +52,7 @@ and
 .Xr inet6 4
 .Pc .
 .Nm
-consists of two sub-protocols:
+consists of three sub-protocols:
 .Bl -hang
 .It Em Encapsulated Security Payload Pq ESP
 protects IP payloads from wire-tapping (interception) by encrypting them with
@@ -58,6 +61,8 @@ secret key cryptography algorithms.
 guarantees the integrity of IP packets
 and protects them from intermediate alteration or impersonation,
 by attaching cryptographic checksums computed by one-way hash functions.
+.It Em IP Payload Compression Protocol Pq IPComp
+increases the communication performance by compressing the datagrams.
 .El
 .Pp
 .Nm
@@ -70,13 +75,6 @@ includes IP-in-IP encapsulation operation
 and is designed for security gateways, as in Virtual Private Network (VPN)
 configurations.
 .El
-.Pp
-Since version 6,
-.Nx
-uses the IPsec implementation formerly known as FAST_IPSEC.
-Its specifics and kernel options are described in the
-.Xr fast_ipsec 4
-manual page.
 .Ss Kernel interface
 .Nm
 is controlled by two engines in the kernel: one for key management
@@ -252,6 +250,22 @@ Variables under the
 tree have similar meanings to their
 .Li net.inet.ipsec
 counterparts.
+.Ss Cryptographic operations
+The current IPsec implementation, formerly called Fast IPsec,
+uses the
+.Xr opencrypto 9
+subsystem to carry out cryptographic operations.
+This means, in particular, that cryptographic hardware devices are
+employed whenever possible to optimize the performance of sub-protocols.
+.Pp
+System configuration requires the
+.Xr opencrypto 9
+subsystem.
+When the
+Fast IPsec
+protocols are configured for use, all protocols are included in the system.
+To selectively enable/disable protocols, use
+.Xr sysctl 8 .
 .\"
 .Sh PROTOCOLS
 The
@@ -282,7 +296,6 @@ routines from looking into IP payload.
 .Xr ioctl 2 ,
 .Xr socket 2 ,
 .Xr ipsec_set_policy 3 ,
-.Xr fast_ipsec 4 ,
 .Xr icmp6 4 ,
 .Xr intro 4 ,
 .Xr ip6 4 ,
@@ -299,6 +312,40 @@ routines from looking into IP payload.
 .%R RFC
 .%N 2367
 .Re
+.Sh HISTORY
+The protocols draw heavily on the
+.Ox
+implementation of the
+.Tn IPsec
+protocols.
+The policy management code is derived from the
+.Tn KAME
+implementation found in their
+.Tn IPsec
+protocols.
+The
+Fast IPsec
+protocols are based on code which appeared in
+.Fx 4.7 .
+The
+.Nx
+version is a close copy of the
+.Fx
+original, and first appeared in
+.Nx 2.0 .
+.Pp
+Support for IPv6 and
+.Tn IPcomp
+protocols has been added in
+.Nx 4.0 .
+.Pp
+Support for Network Address Translator Traversal as
+described in RFCs 3947 and 3948 has been added in
+.Nx 5.0 .
+.Pp
+Since
+.Nx 6.0 ,
+the IPsec implementation formerly known as Fast IPsec is used.
 .Sh BUGS
 IPsec support is subject to change as the IPsec protocols develop.
 .Pp
@@ -344,3 +391,8 @@ If you manipulate many IPsec key/policy database entries,
 increase the size of socket buffer or use
 .Xr sysctl 8
 interface.
+.Pp
+Certain legacy authentication algorithms are not supported because of
+issues with the
+.Xr opencrypto 9
+subsystem.

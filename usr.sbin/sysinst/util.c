@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.7.14.1 2018/05/21 04:36:19 pgoyette Exp $	*/
+/*	$NetBSD: util.c,v 1.7.14.2 2018/06/25 07:26:12 pgoyette Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1010,16 +1010,15 @@ get_and_unpack_sets(int update, msg setupdone_msg, msg success_msg, msg failure_
 
 	/* Accurately count selected sets */
 	for (dist = dist_list; (set = dist->set) != SET_LAST; dist++) {
+		if (dist->name == NULL)
+			continue;
 		if ((set_status[set] & (SET_VALID | SET_SELECTED))
 		    == (SET_VALID | SET_SELECTED))
 			tarstats.nselected++;
 	}
 
 	status = SET_RETRY;
-	for (dist = dist_list; ; dist++) {
-		set = dist->set;
-		if (set == SET_LAST)
-			break;
+	for (dist = dist_list; (set = dist->set) != SET_LAST; dist++) {
 		if (dist->name == NULL)
 			continue;
 		if (set_status[set] != (SET_VALID | SET_SELECTED))
@@ -1681,14 +1680,16 @@ set_menu_select(menudesc *m, void *arg)
 int
 binary_available(const char *prog)
 {
-        char *p, tmp[MAXPATHLEN], *path = getenv("PATH");
+        char *p, tmp[MAXPATHLEN], *path = getenv("PATH"), *opath;
  
         if (path == NULL)
                 return access(prog, X_OK) == 0;
         path = strdup(path);
         if (path == NULL)
                 return 0;
- 
+
+	opath = path;
+
         while ((p = strsep(&path, ":")) != NULL) {
                 if (strlcpy(tmp, p, MAXPATHLEN) >= MAXPATHLEN)
                         continue;
@@ -1697,11 +1698,11 @@ binary_available(const char *prog)
                 if (strlcat(tmp, prog, MAXPATHLEN) >= MAXPATHLEN)
                         continue;
                 if (access(tmp, X_OK) == 0) {
-                        free(path);
+                        free(opath);
                         return 1;
                 }
         }
-        free(path);
+        free(opath);
         return 0;
 }
 

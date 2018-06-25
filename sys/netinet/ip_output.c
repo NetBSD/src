@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.298.2.4 2018/05/02 07:20:23 pgoyette Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.298.2.5 2018/06/25 07:26:07 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.298.2.4 2018/05/02 07:20:23 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.298.2.5 2018/06/25 07:26:07 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -820,16 +820,14 @@ ip_fragment(struct mbuf *m, struct ifnet *ifp, u_long mtu)
 	int sw_csum = m->m_pkthdr.csum_flags;
 	int fragments = 0;
 	int error = 0;
-	int ipoff;
-	bool mff;
+	int ipoff, ipflg;
 
 	ip = mtod(m, struct ip *);
 	hlen = ip->ip_hl << 2;
 
-	/* XXX: Why don't we remove IP_RF? */
-	ipoff = ntohs(ip->ip_off) & ~IP_MF;
-
-	mff = (ip->ip_off & htons(IP_MF)) != 0;
+	/* Preserve the offset and flags. */
+	ipoff = ntohs(ip->ip_off) & IP_OFFMASK;
+	ipflg = ntohs(ip->ip_off) & (IP_RF|IP_DF|IP_MF);
 
 	if (ifp != NULL)
 		sw_csum &= ~ifp->if_csum_flags_tx;
@@ -865,8 +863,8 @@ ip_fragment(struct mbuf *m, struct ifnet *ifp, u_long mtu)
 		mhip = mtod(m, struct ip *);
 		*mhip = *ip;
 
-		/* we must inherit MCAST and BCAST flags */
-		m->m_flags |= m0->m_flags & (M_MCAST|M_BCAST);
+		/* we must inherit the flags */
+		m->m_flags |= m0->m_flags & M_COPYFLAGS;
 
 		if (hlen > sizeof(struct ip)) {
 			mhlen = ip_optcopy(ip, mhip) + sizeof(struct ip);
@@ -875,8 +873,7 @@ ip_fragment(struct mbuf *m, struct ifnet *ifp, u_long mtu)
 		m->m_len = mhlen;
 
 		mhip->ip_off = ((off - hlen) >> 3) + ipoff;
-		if (mff)
-			mhip->ip_off |= IP_MF;
+		mhip->ip_off |= ipflg;
 		if (off + len >= ntohs(ip->ip_len))
 			len = ntohs(ip->ip_len) - off;
 		else

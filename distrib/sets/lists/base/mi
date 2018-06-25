@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1172.2.2 2018/05/21 04:35:49 pgoyette Exp $
+# $NetBSD: mi,v 1.1172.2.3 2018/06/25 07:25:09 pgoyette Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -135,122 +135,122 @@
 ./libdata					base-sys-root
 ./libdata/firmware				base-firmware-root
 ./libdata/firmware/if_athn			base-firmware-root
-./libdata/firmware/if_athn/athn-ar7010		base-firmware-root
-./libdata/firmware/if_athn/athn-ar7010-11	base-firmware-root
-./libdata/firmware/if_athn/athn-ar9271		base-firmware-root
-./libdata/firmware/if_athn/athn-license		base-firmware-root
+./libdata/firmware/if_athn/athn-ar7010		base-firmware-root	firmware
+./libdata/firmware/if_athn/athn-ar7010-11	base-firmware-root	firmware
+./libdata/firmware/if_athn/athn-ar9271		base-firmware-root	firmware
+./libdata/firmware/if_athn/athn-license		base-firmware-root	firmware
 ./libdata/firmware/if_bwfm			base-firmware-root
-./libdata/firmware/if_bwfm/LICENCE.broadcom_bcm43xx	base-firmware-root
-./libdata/firmware/if_bwfm/brcmfmac43143.bin	base-firmware-root
-./libdata/firmware/if_bwfm/brcmfmac43236b.bin	base-firmware-root
-./libdata/firmware/if_bwfm/brcmfmac43242a.bin	base-firmware-root
-./libdata/firmware/if_bwfm/brcmfmac43569.bin	base-firmware-root
-./libdata/firmware/if_bwfm/brcmfmac4350-pcie.bin	base-firmware-root
-./libdata/firmware/if_bwfm/brcmfmac4350c2-pcie.bin	base-firmware-root
-./libdata/firmware/if_bwfm/brcmfmac43602-pcie.bin	base-firmware-root
+./libdata/firmware/if_bwfm/LICENCE.broadcom_bcm43xx	base-firmware-root	firmware
+./libdata/firmware/if_bwfm/brcmfmac43143.bin	base-firmware-root	firmware
+./libdata/firmware/if_bwfm/brcmfmac43236b.bin	base-firmware-root	firmware
+./libdata/firmware/if_bwfm/brcmfmac43242a.bin	base-firmware-root	firmware
+./libdata/firmware/if_bwfm/brcmfmac43569.bin	base-firmware-root	firmware
+./libdata/firmware/if_bwfm/brcmfmac4350-pcie.bin	base-firmware-root	firmware
+./libdata/firmware/if_bwfm/brcmfmac4350c2-pcie.bin	base-firmware-root	firmware
+./libdata/firmware/if_bwfm/brcmfmac43602-pcie.bin	base-firmware-root	firmware
 ./libdata/firmware/if_ipw			base-firmware-root
-./libdata/firmware/if_ipw/LICENSE		base-firmware-root
-./libdata/firmware/if_ipw/ipw2100-1.2-i.fw	base-firmware-root
-./libdata/firmware/if_ipw/ipw2100-1.2-p.fw	base-firmware-root
-./libdata/firmware/if_ipw/ipw2100-1.2.fw	base-firmware-root
+./libdata/firmware/if_ipw/LICENSE		base-firmware-root	firmware
+./libdata/firmware/if_ipw/ipw2100-1.2-i.fw	base-firmware-root	firmware
+./libdata/firmware/if_ipw/ipw2100-1.2-p.fw	base-firmware-root	firmware
+./libdata/firmware/if_ipw/ipw2100-1.2.fw	base-firmware-root	firmware
 ./libdata/firmware/if_iwi			base-firmware-root
-./libdata/firmware/if_iwi/LICENSE.ipw2200-fw	base-firmware-root
-./libdata/firmware/if_iwi/ipw2200-bss.fw	base-firmware-root
-./libdata/firmware/if_iwi/ipw2200-ibss.fw	base-firmware-root
-./libdata/firmware/if_iwi/ipw2200-sniffer.fw	base-firmware-root
+./libdata/firmware/if_iwi/LICENSE.ipw2200-fw	base-firmware-root	firmware
+./libdata/firmware/if_iwi/ipw2200-bss.fw	base-firmware-root	firmware
+./libdata/firmware/if_iwi/ipw2200-ibss.fw	base-firmware-root	firmware
+./libdata/firmware/if_iwi/ipw2200-sniffer.fw	base-firmware-root	firmware
 ./libdata/firmware/if_iwm			base-firmware-root
-./libdata/firmware/if_iwm/LICENSE.iwlwifi-3160-ucode	base-firmware-root
-./libdata/firmware/if_iwm/LICENSE.iwlwifi-3168-ucode	base-firmware-root
-./libdata/firmware/if_iwm/LICENSE.iwlwifi-7260-ucode	base-firmware-root
-./libdata/firmware/if_iwm/LICENSE.iwlwifi-7265-ucode	base-firmware-root
-./libdata/firmware/if_iwm/LICENSE.iwlwifi-8000-ucode	base-firmware-root
-./libdata/firmware/if_iwm/LICENSE.iwlwifi-8265-ucode	base-firmware-root
-./libdata/firmware/if_iwm/README.iwlwifi-3160-ucode	base-firmware-root
-./libdata/firmware/if_iwm/README.iwlwifi-3168-ucode	base-firmware-root
-./libdata/firmware/if_iwm/README.iwlwifi-7260-ucode	base-firmware-root
-./libdata/firmware/if_iwm/README.iwlwifi-7265-ucode	base-firmware-root
-./libdata/firmware/if_iwm/README.iwlwifi-8000-ucode	base-firmware-root
-./libdata/firmware/if_iwm/README.iwlwifi-8265-ucode	base-firmware-root
+./libdata/firmware/if_iwm/LICENSE.iwlwifi-3160-ucode	base-firmware-root	firmware
+./libdata/firmware/if_iwm/LICENSE.iwlwifi-3168-ucode	base-firmware-root	firmware
+./libdata/firmware/if_iwm/LICENSE.iwlwifi-7260-ucode	base-firmware-root	firmware
+./libdata/firmware/if_iwm/LICENSE.iwlwifi-7265-ucode	base-firmware-root	firmware
+./libdata/firmware/if_iwm/LICENSE.iwlwifi-8000-ucode	base-firmware-root	firmware
+./libdata/firmware/if_iwm/LICENSE.iwlwifi-8265-ucode	base-firmware-root	firmware
+./libdata/firmware/if_iwm/README.iwlwifi-3160-ucode	base-firmware-root	firmware
+./libdata/firmware/if_iwm/README.iwlwifi-3168-ucode	base-firmware-root	firmware
+./libdata/firmware/if_iwm/README.iwlwifi-7260-ucode	base-firmware-root	firmware
+./libdata/firmware/if_iwm/README.iwlwifi-7265-ucode	base-firmware-root	firmware
+./libdata/firmware/if_iwm/README.iwlwifi-8000-ucode	base-firmware-root	firmware
+./libdata/firmware/if_iwm/README.iwlwifi-8265-ucode	base-firmware-root	firmware
 ./libdata/firmware/if_iwm/iwlwifi-3160-16.ucode	base-obsolete	obsolete
-./libdata/firmware/if_iwm/iwlwifi-3160-17.ucode	base-firmware-root
+./libdata/firmware/if_iwm/iwlwifi-3160-17.ucode	base-firmware-root	firmware
 ./libdata/firmware/if_iwm/iwlwifi-3160-9.ucode	base-obsolete	obsolete
-./libdata/firmware/if_iwm/iwlwifi-3168-22.ucode	base-firmware-root
+./libdata/firmware/if_iwm/iwlwifi-3168-22.ucode	base-firmware-root	firmware
 ./libdata/firmware/if_iwm/iwlwifi-7260-16.ucode	base-obsolete	obsolete
-./libdata/firmware/if_iwm/iwlwifi-7260-17.ucode	base-firmware-root
+./libdata/firmware/if_iwm/iwlwifi-7260-17.ucode	base-firmware-root	firmware
 ./libdata/firmware/if_iwm/iwlwifi-7260-9.ucode	base-obsolete	obsolete
 ./libdata/firmware/if_iwm/iwlwifi-7265-16.ucode	base-obsolete	obsolete
-./libdata/firmware/if_iwm/iwlwifi-7265-17.ucode	base-firmware-root
+./libdata/firmware/if_iwm/iwlwifi-7265-17.ucode	base-firmware-root	firmware
 ./libdata/firmware/if_iwm/iwlwifi-7265-9.ucode	base-obsolete	obsolete
 ./libdata/firmware/if_iwm/iwlwifi-7265D-16.ucode	base-obsolete	obsolete
 ./libdata/firmware/if_iwm/iwlwifi-7265D-17.ucode	base-obsolete	obsolete
-./libdata/firmware/if_iwm/iwlwifi-7265D-22.ucode	base-firmware-root
+./libdata/firmware/if_iwm/iwlwifi-7265D-22.ucode	base-firmware-root	firmware
 ./libdata/firmware/if_iwm/iwlwifi-8000C-16.ucode	base-obsolete	obsolete
-./libdata/firmware/if_iwm/iwlwifi-8000C-22.ucode	base-firmware-root
-./libdata/firmware/if_iwm/iwlwifi-8265-22.ucode	base-firmware-root
+./libdata/firmware/if_iwm/iwlwifi-8000C-22.ucode	base-firmware-root	firmware
+./libdata/firmware/if_iwm/iwlwifi-8265-22.ucode	base-firmware-root	firmware
 ./libdata/firmware/if_iwn			base-firmware-root
-./libdata/firmware/if_iwn/LICENSE.iwlwifi-100-ucode	base-firmware-root
-./libdata/firmware/if_iwn/LICENSE.iwlwifi-1000-ucode	base-firmware-root
-./libdata/firmware/if_iwn/LICENSE.iwlwifi-105-ucode	base-firmware-root
-./libdata/firmware/if_iwn/LICENSE.iwlwifi-135-ucode	base-firmware-root
-./libdata/firmware/if_iwn/LICENSE.iwlwifi-2000-ucode	base-firmware-root
-./libdata/firmware/if_iwn/LICENSE.iwlwifi-2030-ucode	base-firmware-root
-./libdata/firmware/if_iwn/LICENSE.iwlwifi-4965-ucode	base-firmware-root
-./libdata/firmware/if_iwn/LICENSE.iwlwifi-5000-ucode	base-firmware-root
-./libdata/firmware/if_iwn/LICENSE.iwlwifi-5150-ucode	base-firmware-root
-./libdata/firmware/if_iwn/LICENSE.iwlwifi-6000-ucode	base-firmware-root
-./libdata/firmware/if_iwn/LICENSE.iwlwifi-6000g2a-ucode	base-firmware-root
-./libdata/firmware/if_iwn/LICENSE.iwlwifi-6000g2b-ucode	base-firmware-root
-./libdata/firmware/if_iwn/LICENSE.iwlwifi-6050-ucode	base-firmware-root
-./libdata/firmware/if_iwn/README.iwlwifi-100-ucode	base-firmware-root
-./libdata/firmware/if_iwn/README.iwlwifi-1000-ucode	base-firmware-root
-./libdata/firmware/if_iwn/README.iwlwifi-105-ucode	base-firmware-root
-./libdata/firmware/if_iwn/README.iwlwifi-135-ucode	base-firmware-root
-./libdata/firmware/if_iwn/README.iwlwifi-2000-ucode	base-firmware-root
-./libdata/firmware/if_iwn/README.iwlwifi-2030-ucode	base-firmware-root
-./libdata/firmware/if_iwn/README.iwlwifi-4965-ucode	base-firmware-root
-./libdata/firmware/if_iwn/README.iwlwifi-5000-ucode	base-firmware-root
-./libdata/firmware/if_iwn/README.iwlwifi-5150-ucode	base-firmware-root
-./libdata/firmware/if_iwn/README.iwlwifi-6000-ucode	base-firmware-root
-./libdata/firmware/if_iwn/README.iwlwifi-6000g2a-ucode	base-firmware-root
-./libdata/firmware/if_iwn/README.iwlwifi-6000g2b-ucode	base-firmware-root
-./libdata/firmware/if_iwn/README.iwlwifi-6050-ucode	base-firmware-root
-./libdata/firmware/if_iwn/iwlwifi-100-5.ucode	base-firmware-root
-./libdata/firmware/if_iwn/iwlwifi-1000-3.ucode	base-firmware-root
-./libdata/firmware/if_iwn/iwlwifi-105-6.ucode	base-firmware-root
-./libdata/firmware/if_iwn/iwlwifi-135-6.ucode	base-firmware-root
-./libdata/firmware/if_iwn/iwlwifi-2000-6.ucode	base-firmware-root
-./libdata/firmware/if_iwn/iwlwifi-2030-6.ucode	base-firmware-root
+./libdata/firmware/if_iwn/LICENSE.iwlwifi-100-ucode	base-firmware-root	firmware
+./libdata/firmware/if_iwn/LICENSE.iwlwifi-1000-ucode	base-firmware-root	firmware
+./libdata/firmware/if_iwn/LICENSE.iwlwifi-105-ucode	base-firmware-root	firmware
+./libdata/firmware/if_iwn/LICENSE.iwlwifi-135-ucode	base-firmware-root	firmware
+./libdata/firmware/if_iwn/LICENSE.iwlwifi-2000-ucode	base-firmware-root	firmware
+./libdata/firmware/if_iwn/LICENSE.iwlwifi-2030-ucode	base-firmware-root	firmware
+./libdata/firmware/if_iwn/LICENSE.iwlwifi-4965-ucode	base-firmware-root	firmware
+./libdata/firmware/if_iwn/LICENSE.iwlwifi-5000-ucode	base-firmware-root	firmware
+./libdata/firmware/if_iwn/LICENSE.iwlwifi-5150-ucode	base-firmware-root	firmware
+./libdata/firmware/if_iwn/LICENSE.iwlwifi-6000-ucode	base-firmware-root	firmware
+./libdata/firmware/if_iwn/LICENSE.iwlwifi-6000g2a-ucode	base-firmware-root	firmware
+./libdata/firmware/if_iwn/LICENSE.iwlwifi-6000g2b-ucode	base-firmware-root	firmware
+./libdata/firmware/if_iwn/LICENSE.iwlwifi-6050-ucode	base-firmware-root	firmware
+./libdata/firmware/if_iwn/README.iwlwifi-100-ucode	base-firmware-root	firmware
+./libdata/firmware/if_iwn/README.iwlwifi-1000-ucode	base-firmware-root	firmware
+./libdata/firmware/if_iwn/README.iwlwifi-105-ucode	base-firmware-root	firmware
+./libdata/firmware/if_iwn/README.iwlwifi-135-ucode	base-firmware-root	firmware
+./libdata/firmware/if_iwn/README.iwlwifi-2000-ucode	base-firmware-root	firmware
+./libdata/firmware/if_iwn/README.iwlwifi-2030-ucode	base-firmware-root	firmware
+./libdata/firmware/if_iwn/README.iwlwifi-4965-ucode	base-firmware-root	firmware
+./libdata/firmware/if_iwn/README.iwlwifi-5000-ucode	base-firmware-root	firmware
+./libdata/firmware/if_iwn/README.iwlwifi-5150-ucode	base-firmware-root	firmware
+./libdata/firmware/if_iwn/README.iwlwifi-6000-ucode	base-firmware-root	firmware
+./libdata/firmware/if_iwn/README.iwlwifi-6000g2a-ucode	base-firmware-root	firmware
+./libdata/firmware/if_iwn/README.iwlwifi-6000g2b-ucode	base-firmware-root	firmware
+./libdata/firmware/if_iwn/README.iwlwifi-6050-ucode	base-firmware-root	firmware
+./libdata/firmware/if_iwn/iwlwifi-100-5.ucode	base-firmware-root	firmware
+./libdata/firmware/if_iwn/iwlwifi-1000-3.ucode	base-firmware-root	firmware
+./libdata/firmware/if_iwn/iwlwifi-105-6.ucode	base-firmware-root	firmware
+./libdata/firmware/if_iwn/iwlwifi-135-6.ucode	base-firmware-root	firmware
+./libdata/firmware/if_iwn/iwlwifi-2000-6.ucode	base-firmware-root	firmware
+./libdata/firmware/if_iwn/iwlwifi-2030-6.ucode	base-firmware-root	firmware
 ./libdata/firmware/if_iwn/iwlwifi-4965-1.ucode	base-obsolete		obsolete
-./libdata/firmware/if_iwn/iwlwifi-4965-2.ucode	base-firmware-root
+./libdata/firmware/if_iwn/iwlwifi-4965-2.ucode	base-firmware-root	firmware
 ./libdata/firmware/if_iwn/iwlwifi-5000-1.ucode	base-obsolete		obsolete
-./libdata/firmware/if_iwn/iwlwifi-5000-2.ucode	base-firmware-root
-./libdata/firmware/if_iwn/iwlwifi-5150-2.ucode	base-firmware-root
-./libdata/firmware/if_iwn/iwlwifi-6000-4.ucode	base-firmware-root
-./libdata/firmware/if_iwn/iwlwifi-6000g2a-5.ucode	base-firmware-root
-./libdata/firmware/if_iwn/iwlwifi-6000g2b-6.ucode	base-firmware-root
-./libdata/firmware/if_iwn/iwlwifi-6050-5.ucode	base-firmware-root
+./libdata/firmware/if_iwn/iwlwifi-5000-2.ucode	base-firmware-root	firmware
+./libdata/firmware/if_iwn/iwlwifi-5150-2.ucode	base-firmware-root	firmware
+./libdata/firmware/if_iwn/iwlwifi-6000-4.ucode	base-firmware-root	firmware
+./libdata/firmware/if_iwn/iwlwifi-6000g2a-5.ucode	base-firmware-root	firmware
+./libdata/firmware/if_iwn/iwlwifi-6000g2b-6.ucode	base-firmware-root	firmware
+./libdata/firmware/if_iwn/iwlwifi-6050-5.ucode	base-firmware-root	firmware
 ./libdata/firmware/if_otus			base-firmware-root
-./libdata/firmware/if_otus/otus-init		base-firmware-root
-./libdata/firmware/if_otus/otus-license		base-firmware-root
-./libdata/firmware/if_otus/otus-main		base-firmware-root
+./libdata/firmware/if_otus/otus-init		base-firmware-root	firmware
+./libdata/firmware/if_otus/otus-license		base-firmware-root	firmware
+./libdata/firmware/if_otus/otus-main		base-firmware-root	firmware
 ./libdata/firmware/if_rtwn			base-firmware-root
-./libdata/firmware/if_rtwn/Realtek-Firmware-License.txt	base-firmware-root
-./libdata/firmware/if_rtwn/rtl8192cfw.bin	base-firmware-root
-./libdata/firmware/if_rtwn/rtl8192cfwU.bin	base-firmware-root
-./libdata/firmware/if_rtwn/rtl8192cfwU_B.bin	base-firmware-root
+./libdata/firmware/if_rtwn/Realtek-Firmware-License.txt	base-firmware-root	firmware
+./libdata/firmware/if_rtwn/rtl8192cfw.bin	base-firmware-root	firmware
+./libdata/firmware/if_rtwn/rtl8192cfwU.bin	base-firmware-root	firmware
+./libdata/firmware/if_rtwn/rtl8192cfwU_B.bin	base-firmware-root	firmware
 ./libdata/firmware/if_urtwn			base-firmware-root
-./libdata/firmware/if_urtwn/Realtek-Firmware-License.txt	base-firmware-root
-./libdata/firmware/if_urtwn/rtl8188eufw.bin	base-firmware-root
-./libdata/firmware/if_urtwn/rtl8192cfw.bin	base-firmware-root
-./libdata/firmware/if_urtwn/rtl8192cfwU.bin	base-firmware-root
-./libdata/firmware/if_urtwn/rtl8192eefw.bin	base-firmware-root
+./libdata/firmware/if_urtwn/Realtek-Firmware-License.txt	base-firmware-root	firmware
+./libdata/firmware/if_urtwn/rtl8188eufw.bin	base-firmware-root	firmware
+./libdata/firmware/if_urtwn/rtl8192cfw.bin	base-firmware-root	firmware
+./libdata/firmware/if_urtwn/rtl8192cfwU.bin	base-firmware-root	firmware
+./libdata/firmware/if_urtwn/rtl8192eefw.bin	base-firmware-root	firmware
 ./libdata/firmware/if_wpi			base-firmware-root
-./libdata/firmware/if_wpi/LICENSE.ipw3945-ucode	base-obsolete	obsolete
-./libdata/firmware/if_wpi/LICENSE.iwlwifi-3945-ucode	base-firmware-root
-./libdata/firmware/if_wpi/README.ipw3945-ucode	base-obsolete	obsolete
-./libdata/firmware/if_wpi/README.iwlwifi-3945-ucode	base-firmware-root
-./libdata/firmware/if_wpi/ipw3945.ucode		base-obsolete	obsolete
-./libdata/firmware/if_wpi/iwlwifi-3945.ucode		base-firmware-root
+./libdata/firmware/if_wpi/LICENSE.ipw3945-ucode	base-obsolete	obsolete	firmware
+./libdata/firmware/if_wpi/LICENSE.iwlwifi-3945-ucode	base-firmware-root	firmware
+./libdata/firmware/if_wpi/README.ipw3945-ucode	base-obsolete	obsolete	firmware
+./libdata/firmware/if_wpi/README.iwlwifi-3945-ucode	base-firmware-root	firmware
+./libdata/firmware/if_wpi/ipw3945.ucode		base-obsolete	obsolete	firmware
+./libdata/firmware/if_wpi/iwlwifi-3945.ucode		base-firmware-root	firmware
 ./libdata/firmware/nvidia			base-firmware-root
 ./libdata/firmware/nvidia/tegra124		base-firmware-root
 ./libdata/firmware/nvidia/tegra124/LICENCE.nvidia	base-firmware-root	tegrafirmware
@@ -414,27 +414,27 @@
 ./libdata/firmware/radeon/VERDE_rlc.bin		base-firmware-usr	radeonfirmware
 ./libdata/firmware/radeon/VERDE_smc.bin		base-firmware-usr	radeonfirmware
 ./libdata/firmware/ral				base-firmware-root
-./libdata/firmware/ral/ral-license		base-firmware-root
-./libdata/firmware/ral/ral-rt2561		base-firmware-root
-./libdata/firmware/ral/ral-rt2561s		base-firmware-root
-./libdata/firmware/ral/ral-rt2661		base-firmware-root
-./libdata/firmware/ral/ral-rt2860		base-firmware-root
+./libdata/firmware/ral/ral-license		base-firmware-root	firmware
+./libdata/firmware/ral/ral-rt2561		base-firmware-root	firmware
+./libdata/firmware/ral/ral-rt2561s		base-firmware-root	firmware
+./libdata/firmware/ral/ral-rt2661		base-firmware-root	firmware
+./libdata/firmware/ral/ral-rt2860		base-firmware-root	firmware
 ./libdata/firmware/rum				base-firmware-root
-./libdata/firmware/rum/rum-license		base-firmware-root
-./libdata/firmware/rum/rum-rt2573		base-firmware-root
-./libdata/firmware/rum/run-rt2870		base-obsolete	obsolete
-./libdata/firmware/rum/run-rt3071		base-obsolete	obsolete
+./libdata/firmware/rum/rum-license		base-firmware-root	firmware
+./libdata/firmware/rum/rum-rt2573		base-firmware-root	firmware
+./libdata/firmware/rum/run-rt2870		base-obsolete	obsolete	firmware
+./libdata/firmware/rum/run-rt3071		base-obsolete	obsolete	firmware
 ./libdata/firmware/run				base-firmware-root
-./libdata/firmware/run/run-license		base-firmware-root
-./libdata/firmware/run/run-rt2870		base-firmware-root
-./libdata/firmware/run/run-rt3071		base-firmware-root
+./libdata/firmware/run/run-license		base-firmware-root	firmware
+./libdata/firmware/run/run-rt2870		base-firmware-root	firmware
+./libdata/firmware/run/run-rt3071		base-firmware-root	firmware
 ./libdata/firmware/upgt				base-firmware-root
 ./libdata/firmware/urtwn			base-obsolete obsolete
 ./libdata/firmware/zyd				base-firmware-root
 ./libdata/firmware/zyd/zd1211-licence		base-obsolete			obsolete
-./libdata/firmware/zyd/zd1211-license		base-firmware-root
-./libdata/firmware/zyd/zyd-zd1211		base-firmware-root
-./libdata/firmware/zyd/zyd-zd1211b		base-firmware-root
+./libdata/firmware/zyd/zd1211-license		base-firmware-root	firmware
+./libdata/firmware/zyd/zyd-zd1211		base-firmware-root	firmware
+./libdata/firmware/zyd/zyd-zd1211b		base-firmware-root	firmware
 ./libexec					base-sys-root
 ./libexec/blacklistd-helper			base-sysutil-root
 ./libexec/devpubd-hooks				base-sysutil-root
@@ -628,7 +628,7 @@
 ./tmp						base-sys-root
 ./usr						base-sys-root
 ./usr/bin					base-sys-usr
-./usr/bin/Mail					base-mail-bin
+./usr/bin/Mail					base-obsolete		obsolete
 ./usr/bin/agrep					base-util-bin
 ./usr/bin/apply					base-util-bin
 ./usr/bin/apropos				base-man-bin
@@ -1314,8 +1314,8 @@
 ./usr/libdata/debug/usr/sbin			base-sys-usr
 ./usr/libdata/firmware				base-firmware-usr
 ./usr/libdata/firmware/bcm43xx			base-firmware-usr
-./usr/libdata/firmware/bcm43xx/BCM43430A1.hcd	base-firmware-usr
-./usr/libdata/firmware/bcm43xx/LICENCE.broadcom_bcm43xx		base-firmware-usr
+./usr/libdata/firmware/bcm43xx/BCM43430A1.hcd	base-firmware-usr	firmware
+./usr/libdata/firmware/bcm43xx/LICENCE.broadcom_bcm43xx		base-firmware-usr	firmware
 ./usr/libdata/firmware/radeon			base-obsolete	obsolete
 ./usr/libdata/firmware/radeon/ARUBA_me.bin	base-obsolete	obsolete
 ./usr/libdata/firmware/radeon/ARUBA_pfp.bin	base-obsolete	obsolete
@@ -4784,6 +4784,7 @@
 ./usr/share/mk/bsd.files.mk			base-mk-share		share
 ./usr/share/mk/bsd.gcc.mk			base-mk-share		share
 ./usr/share/mk/bsd.host.mk			base-mk-share		share
+./usr/share/mk/bsd.hostinit.mk			base-mk-share		share
 ./usr/share/mk/bsd.hostlib.mk			base-mk-share		share
 ./usr/share/mk/bsd.hostprog.mk			base-mk-share		share
 ./usr/share/mk/bsd.inc.mk			base-mk-share		share

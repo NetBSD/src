@@ -1,4 +1,4 @@
-# $NetBSD: files.usermode,v 1.16 2011/12/30 20:08:36 jmcneill Exp $
+# $NetBSD: files.usermode,v 1.16.46.1 2018/06/25 07:25:46 pgoyette Exp $
 
 maxpartitions 8
 maxusers 8 16 64
@@ -41,6 +41,16 @@ device	vncfb { } : wsemuldisplaydev, rasops32, vcons, wskbddev, wsmousedev
 attach	vncfb at thunkbus
 file	arch/usermode/dev/vncfb.c		vncfb
 file	arch/usermode/dev/vnckbdmap.c		vncfb
+
+include "dev/scsipi/files.scsipi"
+#device	vscsi: scsi
+#file	arch/usermode/dev/vscsi.c		vscsi needs-flag
+#attach	vscsi at thunkbus with vscsi_thunkbus
+#file	atch/usermode/dev/vscsi_thunkbus.c	vscsi_thunkbus
+
+device	vatapi { } : atapi, atapibus
+attach	vatapi at thunkbus with vatapi_thunkbus
+file	arch/usermode/dev/vatapi.c		vatapi_thunkbus
 
 file	arch/usermode/usermode/copy.c
 file	arch/usermode/usermode/intr.c

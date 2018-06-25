@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.434.2.5 2018/05/21 04:36:00 pgoyette Exp $
+# $NetBSD: ALL,v 1.434.2.6 2018/06/25 07:25:42 pgoyette Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"ALL-$Revision: 1.434.2.5 $"
+#ident		"ALL-$Revision: 1.434.2.6 $"
 
 maxusers	64		# estimated number of users
 
@@ -712,20 +712,20 @@ dwiic*		at pci?			# I2C controller
 iic*		at dwiic?
 
 # dbCool Thermal monitor and fan controller
-dbcool* at iic0 addr 0x2C		# Unknown other motherboard(s)
-dbcool* at iic0 addr 0x2D		# Tyan S2881
-dbcool* at iic0 addr 0x2E		# Tyan S2882-D
+dbcool* at iic? addr 0x2C		# Unknown other motherboard(s)
+dbcool* at iic? addr 0x2D		# Tyan S2881
+dbcool* at iic? addr 0x2E		# Tyan S2882-D
 
 # IBM Hawk Integrated Systems Management Processor
-ibmhawk0	at iic0	addr 0x37
+ibmhawk0	at iic?	addr 0x37
 
 # LM7[89] and compatible hardware monitors
 # Use flags to select temp sensor type (see lm(4) man page for details)
-lm0	at iic0	addr 0x2e flags 0x0
+lm0	at iic?	addr 0x2e flags 0x0
 
 # SMSC LPC47M192 hardware monitor
-smscmon*	at iic0 addr 0x2c
-#smscmon*	at iic0 addr 0x2d	# (alternate address)
+smscmon*	at iic? addr 0x2c
+#smscmon*	at iic? addr 0x2d	# (alternate address)
 
 # IBM Thinkpad Active Protection System
 aps0	at isa? port 0x1600
@@ -758,22 +758,22 @@ ug0	at isa? port 0xe0
 viaenv* 	at pci? dev ? function ?
 
 # Serial Presence Detect capable memory modules and optional temp sensors
-spdmem* at iic0 addr 0x50
-spdmem* at iic0 addr 0x51
-spdmem* at iic0 addr 0x52
-spdmem* at iic0 addr 0x53
-spdmem* at iic0 addr 0x54
-spdmem* at iic0 addr 0x55
-spdmem* at iic0 addr 0x56
-spdmem* at iic0 addr 0x57
-sdtemp* at iic0 addr 0x18
-sdtemp* at iic0 addr 0x19
-sdtemp* at iic0 addr 0x1a
-sdtemp* at iic0 addr 0x1b
-sdtemp* at iic0 addr 0x1c
-sdtemp* at iic0 addr 0x1d
-sdtemp* at iic0 addr 0x1e
-sdtemp* at iic0 addr 0x1f
+spdmem* at iic? addr 0x50
+spdmem* at iic? addr 0x51
+spdmem* at iic? addr 0x52
+spdmem* at iic? addr 0x53
+spdmem* at iic? addr 0x54
+spdmem* at iic? addr 0x55
+spdmem* at iic? addr 0x56
+spdmem* at iic? addr 0x57
+sdtemp* at iic? addr 0x18
+sdtemp* at iic? addr 0x19
+sdtemp* at iic? addr 0x1a
+sdtemp* at iic? addr 0x1b
+sdtemp* at iic? addr 0x1c
+sdtemp* at iic? addr 0x1d
+sdtemp* at iic? addr 0x1e
+sdtemp* at iic? addr 0x1f
 
 # I2C HID devices
 ihidev* at iic?

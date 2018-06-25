@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.solmod,v 1.4 2012/11/21 17:48:05 pooka Exp $
+#	$NetBSD: Makefile.solmod,v 1.4.36.1 2018/06/25 07:26:06 pgoyette Exp $
 
 ZFSDIR=	${S}/../external/cddl/osnet
 
@@ -8,6 +8,7 @@ SRCS=	avl.c
 
 .PATH:	${ZFSDIR}/dist/common/nvpair
 
+SRCS+=	fnvpair.c
 SRCS+=	nvpair.c
 SRCS+=	nvpair_alloc_fixed.c
 
@@ -46,19 +47,21 @@ SRCS+= acl_common.c
 
 .PATH:	${ZFSDIR}/sys/kern
 
+SRCS+=	callb.c
+SRCS+=	ddi.c
+SRCS+=	kmem.c
 SRCS+=	kobj.c
 SRCS+=	kstat.c
 SRCS+=	misc.c
-SRCS+=	policy.c
-SRCS+=	string.c
-SRCS+=	zone.c
-SRCS+=	callb.c
-SRCS+=	ddi.c
 SRCS+=	mod.c
+SRCS+=	opensolaris.c
+SRCS+=	policy.c
 SRCS+=	printf.c
+SRCS+=	string.c
+SRCS+=	sysevent.c
 SRCS+=	taskq.c
 SRCS+=	vfs.c
-SRCS+=	opensolaris.c
+SRCS+=	zone.c
 
 WARNS=		0
 NOGCCERROR=	yes
@@ -76,14 +79,9 @@ CWARNFLAGS+=	-Wno-format
 
 CPPFLAGS+=	-I${ZFSDIR}/sys
 CPPFLAGS+=	-I${ZFSDIR}/dist/common/acl
+CPPFLAGS+=	-I${ZFSDIR}/dist/common
 CPPFLAGS+=	-I${ZFSDIR}/dist/uts/common/zmod
 CPPFLAGS+=	-I${ZFSDIR}/dist/uts/common
 CPPFLAGS+=      -I${ZFSDIR}/sys/sys
-
-CPPFLAGS+=	-Dcaddr_t=__caddr_t "-D__va_list=va_list"
-CPPFLAGS+=	-std=c99
-# CPPFLAGS+=	-D_NFS_NFS_H_
-# CPPFLAGS+=	-D_PROPLIB_ZFS_CONFLICT
-CPPFLAGS+=	-DDIAGNOSTIC
 
 NEED_ISYSTEM=   # duplicate headers, depends on -isystem to build

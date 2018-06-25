@@ -1,4 +1,4 @@
-/*	$NetBSD: wm8750_zaudio.c,v 1.1 2014/09/23 14:49:46 nonaka Exp $	*/
+/*	$NetBSD: wm8750_zaudio.c,v 1.1.20.1 2018/06/25 07:25:48 pgoyette Exp $	*/
 /*	$OpenBSD: zaurus_audio.c,v 1.8 2005/08/18 13:23:02 robert Exp $	*/
 
 /*
@@ -51,7 +51,7 @@
 #include "opt_zaudio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wm8750_zaudio.c,v 1.1 2014/09/23 14:49:46 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wm8750_zaudio.c,v 1.1.20.1 2018/06/25 07:25:48 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -276,19 +276,18 @@ wm8750_write(struct zaudio_softc *sc, int reg, int val)
 int
 wm8750_match(device_t parent, cfdata_t cf, struct i2c_attach_args *ia)
 {
+	int match_result;
 
 	if (ZAURUS_ISC860)
 		return 0;
 
-	if (ia->ia_name) {
-		/* direct config - check name */
-		if (strcmp(ia->ia_name, "zaudio") == 0)
-			return 1;
-	} else {
-		/* indirect config - check typical address */
-		if (ia->ia_addr == WM8750_ADDRESS)
-			return 1;
-	}
+	if (iic_use_direct_match(ia, cf, NULL, &match_result))
+		return match_result;
+	
+	/* indirect config - check typical address */
+	if (ia->ia_addr == WM8750_ADDRESS)
+		return I2C_MATCH_ADDRESS_ONLY;
+
 	return 0;
 }
 
