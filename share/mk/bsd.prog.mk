@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.314 2018/06/21 11:24:38 kamil Exp $
+#	$NetBSD: bsd.prog.mk,v 1.315 2018/06/25 17:58:36 kamil Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -12,6 +12,13 @@
 CFLAGS+=	${SANITIZERFLAGS}
 CXXFLAGS+=	${SANITIZERFLAGS}
 LDFLAGS+=	${SANITIZERFLAGS}
+
+# Rename the local function definitions to not conflict with libc/rt/pthread/m.
+.if ${MKSANITIZER:Uno} == "yes" && defined(SANITIZER_RENAME_SYMBOL)
+.	for _symbol in ${SANITIZER_RENAME_SYMBOL}
+CPPFLAGS+=	-D${_symbol}=__mksanitizer_${_symbol}
+.	endfor
+.endif
 
 #
 # Definitions and targets shared among all programs built by a single
