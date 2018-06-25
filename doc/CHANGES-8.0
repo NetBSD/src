@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.218 2018/06/24 09:51:46 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.219 2018/06/25 13:01:26 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -13994,8 +13994,10 @@ crypto/external/bsd/openssl/dist/crypto/x509v3/x509v3.h	(patch)
 
 
 lib/libc/sys/sched.c				1.5
+tests/lib/libc/gen/posix_spawn/t_spawnattr.c	1.2,1.3
 
 	Return PRI_NONE for sched_get_priority_m{in,ax} and SCHED_OTHER.
+	Fix broken test, don't use SCHED_OTHER.
 	[maya, ticket #892]
 
 sys/netinet6/icmp6.c				1.228,1.230
@@ -14106,3 +14108,13 @@ sys/sys/param.h					changed manually
 
 	Welcome to 8.0 RC2
 
+distrib/common/Makefile.bootcd			1.40
+
+	Do not put debug.tgz and xdebug.tgz onto install CDs.
+	[martin, ticket #904]
+
+tests/lib/libc/gen/posix_spawn/t_spawnattr.c
+distrib/common/Makefile.bootcd
+doc/CHANGES-8.0
+
+	Tag moved for additional RC2 pullups (#892, #904)
