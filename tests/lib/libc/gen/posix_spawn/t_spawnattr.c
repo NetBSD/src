@@ -1,4 +1,4 @@
-/* $NetBSD: t_spawnattr.c,v 1.1 2012/02/13 21:03:08 martin Exp $ */
+/* $NetBSD: t_spawnattr.c,v 1.1.34.1 2018/06/25 12:55:01 martin Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -45,37 +45,33 @@
 #define MAX(a, b)	(a) > (b) ? (a) : (b)
 #define MIN(a, b)	(a) > (b) ? (b) : (a)
 
-static int get_different_scheduler(void);
-static int get_different_priority(void);
-
 static int
-get_different_scheduler()
+get_different_scheduler(void)
 {
-	int scheduler, max, min, new;
-
-	max = MAX(MAX(SCHED_FIFO, SCHED_OTHER), SCHED_RR);
-	min = MIN(MIN(SCHED_FIFO, SCHED_OTHER), SCHED_RR);
+	/*
+	 * We don't want to use SCHED_OTHER because it does not have
+	 * different priorities.
+	 */
 
 	/* get current schedule policy */
-	scheduler = sched_getscheduler(0);
-					
-	/* new scheduler */
-	new = (scheduler + 1);
-	if (new > max)
-		new = min;
-								
-	return new;
+	switch (sched_getscheduler(0)) {
+	case SCHED_RR:
+		return SCHED_FIFO;
+	case SCHED_FIFO:
+	case SCHED_OTHER:
+		return SCHED_RR;
+	default:
+		abort();
+	}
 }
 
 static int
-get_different_priority()
+get_different_priority(int scheduler)
 {
-	int scheduler, max, min, new, priority;
+	int min, max, new, priority;
 	struct sched_param param;
 
-	/* get current schedule policy */
-	scheduler = sched_getscheduler(0);
-
+	/* Get the priority range for the new scheduler */
 	max = sched_get_priority_max(scheduler);
 	min = sched_get_priority_min(scheduler);
 
@@ -83,10 +79,13 @@ get_different_priority()
 	priority = param.sched_priority;
 	
 	/* new schedule policy */
-	new = (priority + 1);
-	if (new > max)
-		new = min;
+	for (new = min; new <= max; new++)
+		if (priority != new)
+			break;
 	
+	ATF_REQUIRE_MSG(priority != new, "could not find different priority");
+	printf("min %d max %d for scheduler %d, returning %d\n",
+	    min, max, scheduler, new);
 	return new;
 }
 
@@ -119,8 +118,9 @@ ATF_TC_BODY(t_spawnattr, tc)
 	posix_spawnattr_init(&attr);
 
 	scheduler = get_different_scheduler();
-	priority = get_different_priority();
+	priority = get_different_priority(scheduler);
 	sp.sched_priority = priority;
+	printf("using scheduler %d, priority %d\n", scheduler, priority);
 	
 	sigemptyset(&sig);
 	sigaddset(&sig, SIGUSR1);
