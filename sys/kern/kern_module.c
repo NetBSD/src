@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.130.2.9 2018/06/25 07:22:54 pgoyette Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.130.2.10 2018/06/25 08:50:10 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.130.2.9 2018/06/25 07:22:54 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.130.2.10 2018/06/25 08:50:10 pgoyette Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -1105,7 +1105,6 @@ module_do_load(const char *name, bool isdep, int flags,
 #endif
 			SLIST_REMOVE_HEAD(&pend_stack, pe_entry);
 			module_free(mod);
-			depth--;
 			return error;
 		}
 		TAILQ_INSERT_TAIL(pending, mod, mod_chain);
@@ -1332,7 +1331,6 @@ module_do_load(const char *name, bool isdep, int flags,
 	TAILQ_REMOVE(pending, mod, mod_chain);
 	SLIST_REMOVE_HEAD(&pend_stack, pe_entry);
 	module_free(mod);
-	depth--;
 	return error;
 }
 
