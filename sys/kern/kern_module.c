@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.130.2.8 2018/04/02 00:18:43 pgoyette Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.130.2.9 2018/06/25 07:22:54 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.130.2.8 2018/04/02 00:18:43 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.130.2.9 2018/06/25 07:22:54 pgoyette Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -65,6 +65,21 @@ struct modlist        module_list = TAILQ_HEAD_INITIALIZER(module_list);
 struct modlist        module_builtins = TAILQ_HEAD_INITIALIZER(module_builtins);
 static struct modlist module_bootlist = TAILQ_HEAD_INITIALIZER(module_bootlist);
 
+struct module_callbacks {
+	TAILQ_ENTRY(module_callbacks) modcb_list;
+	void (*modcb_load)(struct module *);
+	void (*modcb_unload)(struct module *);
+};
+TAILQ_HEAD(modcblist, module_callbacks);
+static struct modcblist modcblist;
+
+static module_t *module_netbsd;
+static const modinfo_t module_netbsd_modinfo = {
+	.mi_version = __NetBSD_Version__,
+	.mi_class = MODULE_CLASS_MISC,
+	.mi_name = "netbsd"
+};
+
 static module_t	*module_active;
 bool		module_verbose_on;
 #ifdef MODULAR_DEFAULT_AUTOLOAD
@@ -84,11 +99,14 @@ int (*module_load_vfs_vec)(const char *, int, bool, module_t *,
 
 static kauth_listener_t	module_listener;
 
+static specificdata_domain_t module_specificdata_domain;
+
 /* Ensure that the kernel's link set isn't empty. */
 static modinfo_t module_dummy;
 __link_set_add_rodata(modules, module_dummy);
 
 static module_t	*module_newmodule(modsrc_t);
+static void	module_free(module_t *);
 static void	module_require_force(module_t *);
 static int	module_do_load(const char *, bool, int, prop_dictionary_t,
 		    module_t **, modclass_t modclass, bool);
@@ -107,6 +125,9 @@ static bool	module_merge_dicts(prop_dictionary_t, const prop_dictionary_t);
 static void	sysctl_module_setup(void);
 static int	sysctl_module_autotime(SYSCTLFN_PROTO);
 
+static void	module_callback_load(struct module *);
+static void	module_callback_unload(struct module *);
+
 #define MODULE_CLASS_MATCH(mi, modclass) \
 	((modclass) == MODULE_CLASS_ANY || (modclass) == (mi)->mi_class)
 
@@ -115,6 +136,13 @@ module_incompat(const modinfo_t *mi, int modclass)
 {
 	module_error("incompatible module class for `%s' (%d != %d)",
 	    mi->mi_name, modclass, mi->mi_class);
+}
+
+struct module *
+module_kernel(void)
+{
+
+	return module_netbsd;
 }
 
 /*
@@ -153,6 +181,30 @@ module_print(const char *fmt, ...)
 	}
 }
 
+/*
+ * module_name:
+ *
+ *	Utility function: return the module's name.
+ */
+const char *
+module_name(struct module *mod)
+{
+
+	return mod->mod_info->mi_name;
+}
+
+/*
+ * module_source:
+ *
+ *	Utility function: return the module's source.
+ */
+modsrc_t
+module_source(struct module *mod)
+{
+
+	return mod->mod_source;
+}
+
 static int
 module_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
     void *arg0, void *arg1, void *arg2, void *arg3)
@@ -180,9 +232,22 @@ module_newmodule(modsrc_t source)
 
 	mod = kmem_zalloc(sizeof(*mod), KM_SLEEP);
 	mod->mod_source = source;
-	mod->mod_info = NULL;
-	mod->mod_flags = 0;
+	specificdata_init(module_specificdata_domain, &mod->mod_sdref);
 	return mod;
+}
+
+/*
+ * Free a module_t
+ */
+static void
+module_free(module_t *mod)
+{
+
+	specificdata_fini(module_specificdata_domain, &mod->mod_sdref);
+	if (mod->mod_required)
+		kmem_free(mod->mod_required, mod->mod_arequired *
+		    sizeof(module_t));
+	kmem_free(mod, sizeof(*mod));
 }
 
 /*
@@ -281,7 +346,7 @@ module_builtin_add(modinfo_t *const *mip, size_t nmodinfo, bool init)
 	if (rv != 0) {
 		for (i = 0; i < nmodinfo; i++) {
 			if (modp[i])
-				kmem_free(modp[i], sizeof(*modp[i]));
+				module_free(modp[i]);
 		}
 	}
 	kmem_free(modp, sizeof(*modp) * nmodinfo);
@@ -348,6 +413,7 @@ module_init(void)
 	}
 	cv_init(&module_thread_cv, "mod_unld");
 	mutex_init(&module_thread_lock, MUTEX_DEFAULT, IPL_NONE);
+	TAILQ_INIT(&modcblist);
 
 #ifdef MODULAR	/* XXX */
 	module_init_md();
@@ -374,6 +440,11 @@ module_init(void)
 	}
 
 	sysctl_module_setup();
+	module_specificdata_domain = specificdata_domain_create();
+
+	module_netbsd = module_newmodule(MODULE_SOURCE_KERNEL);
+	module_netbsd->mod_refcnt = 1;
+	module_netbsd->mod_info = &module_netbsd_modinfo;
 }
 
 /*
@@ -707,21 +778,13 @@ module_lookup(const char *name)
  *	responsibility to ensure that the reference is dropped
  *	later.
  */
-int
-module_hold(const char *name)
+void
+module_hold(module_t *mod)
 {
-	module_t *mod;
 
 	kernconfig_lock();
-	mod = module_lookup(name);
-	if (mod == NULL) {
-		kernconfig_unlock();
-		return ENOENT;
-	}
 	mod->mod_refcnt++;
 	kernconfig_unlock();
-
-	return 0;
 }
 
 /*
@@ -730,16 +793,11 @@ module_hold(const char *name)
  *	Release a reference acquired with module_hold().
  */
 void
-module_rele(const char *name)
+module_rele(module_t *mod)
 {
-	module_t *mod;
 
 	kernconfig_lock();
-	mod = module_lookup(name);
-	if (mod == NULL) {
-		kernconfig_unlock();
-		panic("%s: gone", __func__);
-	}
+	KASSERT(mod->mod_refcnt > 0);
 	mod->mod_refcnt--;
 	kernconfig_unlock();
 }
@@ -1045,8 +1103,9 @@ module_do_load(const char *name, bool isdep, int flags,
 				module_error("vfs load failed for `%s', "
 				    "error %d", name, error);
 #endif
-			kmem_free(mod, sizeof(*mod));
 			SLIST_REMOVE_HEAD(&pend_stack, pe_entry);
+			module_free(mod);
+			depth--;
 			return error;
 		}
 		TAILQ_INSERT_TAIL(pending, mod, mod_chain);
@@ -1258,6 +1317,7 @@ module_do_load(const char *name, bool isdep, int flags,
 	}
 	SLIST_REMOVE_HEAD(&pend_stack, pe_entry);
 	module_print("module `%s' loaded successfully", mi->mi_name);
+	module_callback_load(mod);
 	return 0;
 
  fail1:
@@ -1270,11 +1330,9 @@ module_do_load(const char *name, bool isdep, int flags,
 		filedict = NULL;
 	}
 	TAILQ_REMOVE(pending, mod, mod_chain);
-	if (mod->mod_required)
-		kmem_free(mod->mod_required, mod->mod_arequired *
-		    sizeof(module_t));
-	kmem_free(mod, sizeof(*mod));
 	SLIST_REMOVE_HEAD(&pend_stack, pe_entry);
+	module_free(mod);
+	depth--;
 	return error;
 }
 
@@ -1318,6 +1376,7 @@ module_do_unload(const char *name, bool load_requires_force)
 
 	prev_active = module_active;
 	module_active = mod;
+	module_callback_unload(mod);
 	error = (*mod->mod_info->mi_modcmd)(MODULE_CMD_FINI, NULL);
 	module_active = prev_active;
 	if (error != 0) {
@@ -1345,7 +1404,7 @@ module_do_unload(const char *name, bool load_requires_force)
 		TAILQ_INSERT_TAIL(&module_builtins, mod, mod_chain);
 		module_builtinlist++;
 	} else {
-		kmem_free(mod, sizeof(*mod));
+		module_free(mod);
 	}
 	module_gen++;
 
@@ -1395,7 +1454,7 @@ module_prime(const char *name, void *base, size_t size)
 
 	error = kobj_load_mem(&mod->mod_kobj, name, base, size);
 	if (error != 0) {
-		kmem_free(mod, sizeof(*mod));
+		module_free(mod);
 		module_error("unable to load `%s' pushed by boot loader, "
 		    "error %d", name, error);
 		return error;
@@ -1403,7 +1462,7 @@ module_prime(const char *name, void *base, size_t size)
 	error = module_fetch_info(mod);
 	if (error != 0) {
 		kobj_unload(mod->mod_kobj);
-		kmem_free(mod, sizeof(*mod));
+		module_free(mod);
 		module_error("unable to fetch_info for `%s' pushed by boot "
 		    "loader, error %d", name, error);
 		return error;
@@ -1648,4 +1707,132 @@ out:
 	prop_object_iterator_release(props_iter);
 
 	return !error;
+}
+
+/*
+ * module_specific_key_create:
+ *
+ *	Create a key for subsystem module-specific data.
+ */
+specificdata_key_t
+module_specific_key_create(specificdata_key_t *keyp, specificdata_dtor_t dtor)
+{
+
+	return specificdata_key_create(module_specificdata_domain, keyp, dtor);
+}
+
+/*
+ * module_specific_key_delete:
+ *
+ *	Delete a key for subsystem module-specific data.
+ */
+void
+module_specific_key_delete(specificdata_key_t key)
+{
+
+	return specificdata_key_delete(module_specificdata_domain, key);
+}
+
+/*
+ * module_getspecific:
+ *
+ *	Return module-specific data corresponding to the specified key.
+ */
+void *
+module_getspecific(module_t *mod, specificdata_key_t key)
+{
+
+	return specificdata_getspecific(module_specificdata_domain,
+	    &mod->mod_sdref, key);
+}
+
+/*
+ * module_setspecific:
+ *
+ *	Set module-specific data corresponding to the specified key.
+ */
+void
+module_setspecific(module_t *mod, specificdata_key_t key, void *data)
+{
+
+	specificdata_setspecific(module_specificdata_domain,
+	    &mod->mod_sdref, key, data);
+}
+
+/*
+ * module_register_callbacks:
+ *
+ *	Register a new set of callbacks to be called on module load/unload.
+ *	Call the load callback on each existing module.
+ *	Return an opaque handle for unregistering these later.
+ */
+void *
+module_register_callbacks(void (*load)(struct module *),
+    void (*unload)(struct module *))
+{
+	struct module_callbacks *modcb;
+	struct module *mod;
+
+	modcb = kmem_alloc(sizeof(*modcb), KM_SLEEP);
+	modcb->modcb_load = load;
+	modcb->modcb_unload = unload;
+
+	kernconfig_lock();
+	TAILQ_INSERT_TAIL(&modcblist, modcb, modcb_list);
+	TAILQ_FOREACH(mod, &module_list, mod_chain)
+		load(mod);
+	kernconfig_unlock();
+
+	return modcb;
+}
+
+/*
+ * module_unregister_callbacks:
+ *
+ *	Unregister a previously-registered set of module load/unload callbacks.
+ *	Call the unload callback on each existing module.
+ */
+void
+module_unregister_callbacks(void *opaque)
+{
+	struct module_callbacks *modcb;
+	struct module *mod;
+
+	modcb = opaque;
+	kernconfig_lock();
+	TAILQ_FOREACH(mod, &module_list, mod_chain)
+		modcb->modcb_unload(mod);
+	TAILQ_REMOVE(&modcblist, modcb, modcb_list);
+	kernconfig_unlock();
+	kmem_free(modcb, sizeof(*modcb));
+}
+
+/*
+ * module_callback_load:
+ *
+ *	Helper routine: call all load callbacks on a module being loaded.
+ */
+static void
+module_callback_load(struct module *mod)
+{
+	struct module_callbacks *modcb;
+
+	TAILQ_FOREACH(modcb, &modcblist, modcb_list) {
+		modcb->modcb_load(mod);
+	}
+}
+
+/*
+ * module_callback_unload:
+ *
+ *	Helper routine: call all unload callbacks on a module being unloaded.
+ */
+static void
+module_callback_unload(struct module *mod)
+{
+	struct module_callbacks *modcb;
+
+	TAILQ_FOREACH(modcb, &modcblist, modcb_list) {
+		modcb->modcb_unload(mod);
+	}
 }
