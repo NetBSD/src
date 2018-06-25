@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.207 2018/06/24 19:48:46 sevan Exp $
+$NetBSD: acronyms.comp,v 1.208 2018/06/25 19:56:54 sevan Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -590,6 +590,7 @@ HTT	hyper-threading technology
 HTTP	Hypertext Transfer Protocol
 HTTPS	Hypertext Transfer Protocol Secure
 HVM	hardware virtual machine
+HVDS	High-Voltage Differential Signaling
 HZ	Hertz
 I2O	intelligent input/output
 IA	information assurance
@@ -771,6 +772,7 @@ LUN	logical unit number
 LV	logical volume
 LVM	logical volume management
 LVT	local vector table
+LVDS	Low-Voltage Differential Signaling
 LWP	light-weight process
 LZW	Lempel Ziv Welch
 MAC	mandatory access control
@@ -1130,6 +1132,7 @@ RDBMS	relational database management system
 RDF	Resource Description Framework
 RDM	relational data model
 RDMA	remote direct memory access
+RDRAM	Rambus DRAM
 RE	regular expression
 REST	representational state transfer
 RF	radio frequency
