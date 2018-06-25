@@ -1,4 +1,4 @@
-.\"     $NetBSD: bpf.9,v 1.4 2018/06/25 03:22:14 msaitoh Exp $
+.\"     $NetBSD: bpf.9,v 1.5 2018/06/25 10:53:47 wiz Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -36,7 +36,6 @@
 .Sh DESCRIPTION
 .Nm
 is called via an operations vector described by the following struct:
-.Pp
 .Bd -literal
 struct bpf_ops {
         void (*bpf_attach)(struct ifnet *, u_int, u_int, struct bpf_if **);
