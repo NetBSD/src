@@ -1,4 +1,4 @@
-/* $NetBSD: sun4i_emac.c,v 1.3 2018/02/12 17:04:58 maxv Exp $ */
+/* $NetBSD: sun4i_emac.c,v 1.4 2018/06/26 06:47:58 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2013-2017 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sun4i_emac.c,v 1.3 2018/02/12 17:04:58 maxv Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun4i_emac.c,v 1.4 2018/06/26 06:47:58 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -614,7 +614,7 @@ sun4i_emac_tx_enqueue(struct sun4i_emac_softc *sc, struct mbuf *m, u_int slot)
 	sun4i_emac_write(sc, pl_reg, len);
 	sun4i_emac_clear_set(sc, ctl_reg, 0, EMAC_TX_CTL_START);
 
-	bpf_mtap(ifp, m);
+	bpf_mtap(ifp, m, BPF_D_OUT);
 
 	m_freem(m);
 }

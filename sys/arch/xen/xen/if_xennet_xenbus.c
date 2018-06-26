@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.76 2018/06/24 20:28:58 jdolecek Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.77 2018/06/26 06:48:00 msaitoh Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.76 2018/06/24 20:28:58 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.77 2018/06/26 06:48:00 msaitoh Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -1326,7 +1326,7 @@ xennet_softstart(void *arg)
 		/*
 		 * Pass packet to bpf if there is a listener.
 		 */
-		bpf_mtap(ifp, m);
+		bpf_mtap(ifp, m, BPF_D_OUT);
 	}
 
 	if (do_notify) {

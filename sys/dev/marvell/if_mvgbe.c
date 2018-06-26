@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvgbe.c,v 1.49 2017/06/01 02:45:10 chs Exp $	*/
+/*	$NetBSD: if_mvgbe.c,v 1.50 2018/06/26 06:48:01 msaitoh Exp $	*/
 /*
  * Copyright (c) 2007, 2008, 2013 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.49 2017/06/01 02:45:10 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.50 2018/06/26 06:48:01 msaitoh Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -1096,7 +1096,7 @@ mvgbe_start(struct ifnet *ifp)
 		 * If there's a BPF listener, bounce a copy of this frame
 		 * to him.
 		 */
-		bpf_mtap(ifp, m_head);
+		bpf_mtap(ifp, m_head, BPF_D_OUT);
 	}
 	if (pkts == 0)
 		return;

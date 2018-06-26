@@ -1,4 +1,4 @@
-/* $NetBSD: if_plip.c,v 1.29 2018/06/25 13:28:12 msaitoh Exp $ */
+/* $NetBSD: if_plip.c,v 1.30 2018/06/26 06:48:02 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 1997 Poul-Henning Kamp
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_plip.c,v 1.29 2018/06/25 13:28:12 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_plip.c,v 1.30 2018/06/26 06:48:02 msaitoh Exp $");
 
 /*
  * Parallel port TCP/IP interfaces added.  I looked at the driver from
@@ -512,7 +512,7 @@ clpinbyte(int spin, device_t ppbus)
 }
 
 static void
-lptap(struct ifnet *ifp, struct mbuf *m)
+lptap(struct ifnet *ifp, struct mbuf *m, u_int direction)
 {
 	/*
 	 * Send a packet through bpf. We need to prepend the address family
@@ -526,7 +526,7 @@ lptap(struct ifnet *ifp, struct mbuf *m)
 	m0.m_next = m;
 	m0.m_len = sizeof(u_int32_t);
 	m0.m_data = (char *)&af;
-	bpf_mtap(ifp, &m0);
+	bpf_mtap(ifp, &m0, direction);
 }
 
 /* Soft interrupt handler called by hardware interrupt handler */
@@ -644,7 +644,7 @@ end:
 		goto err;
 	}
 	if (ifp->if_bpf) {
-		lptap(ifp, top);
+		lptap(ifp, top, BPF_D_IN);
 	}
 	if (__predict_false(!pktq_enqueue(ip_pktq, top, 0))) {
 		ifp->if_iqdrops++;
@@ -927,8 +927,8 @@ nend:
 		} else {
 			/* Dequeue packet on success */
 			IFQ_DEQUEUE(&ifp->if_snd, m);
-			if (ifp->if_bpf)
-				lptap(ifp, m);
+			if(ifp->if_bpf)
+				lptap(ifp, m, BPF_D_OUT);
 			ifp->if_opackets++;
 			ifp->if_obytes += m->m_pkthdr.len;
 			m_freem(m);

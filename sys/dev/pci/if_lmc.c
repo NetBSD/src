@@ -1,4 +1,4 @@
-/* $NetBSD: if_lmc.c,v 1.65 2018/06/25 09:32:28 msaitoh Exp $ */
+/* $NetBSD: if_lmc.c,v 1.66 2018/06/26 06:48:01 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2002-2006 David Boggs. <boggs@boggs.palo-alto.ca.us>
@@ -74,7 +74,7 @@
  */
 
 # include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lmc.c,v 1.65 2018/06/25 09:32:28 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lmc.c,v 1.66 2018/06/26 06:48:01 msaitoh Exp $");
 # include <sys/param.h>	/* OS version */
 # include "opt_inet.h"	/* INET6, INET */
 # include "opt_altq_enabled.h" /* ALTQ */
@@ -4596,7 +4596,7 @@ txintr_setup(softc_t *sc)
   mbuf_enqueue(ring, sc->tx_mbuf);
 
   /* Berkeley Packet Filter */
-  bpf_mtap(sc->ifp, sc->tx_mbuf);
+  bpf_mtap(sc->ifp, sc->tx_mbuf, BPF_D_OUT);
 
   /* The transmitter has room for another packet. */
   sc->tx_mbuf = NULL;

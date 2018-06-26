@@ -1,4 +1,4 @@
-/*	$NetBSD: if_el.c,v 1.95 2018/06/22 04:17:42 msaitoh Exp $	*/
+/*	$NetBSD: if_el.c,v 1.96 2018/06/26 06:48:01 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1994, Matthew E. Kimmel.  Permission is hereby granted
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_el.c,v 1.95 2018/06/22 04:17:42 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_el.c,v 1.96 2018/06/26 06:48:01 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -381,7 +381,7 @@ elstart(struct ifnet *ifp)
 			break;
 
 		/* Give the packet to the bpf, if any. */
-		bpf_mtap(ifp, m0);
+		bpf_mtap(ifp, m0, BPF_D_OUT);
 
 		/* Disable the receiver. */
 		bus_space_write_1(iot, ioh, EL_AC, EL_AC_HOST);

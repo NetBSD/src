@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.64 2018/06/24 19:53:50 jdolecek Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.65 2018/06/26 06:48:00 msaitoh Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.64 2018/06/24 19:53:50 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.65 2018/06/26 06:48:00 msaitoh Exp $");
 
 #include "opt_xen.h"
 
@@ -1096,7 +1096,7 @@ xennetback_ifsoftstart_transfer(void *arg)
 			resp_prod++;
 			i++; /* this packet has been queued */
 			ifp->if_opackets++;
-			bpf_mtap(ifp, m);
+			bpf_mtap(ifp, m, BPF_D_OUT);
 		}
 		if (i != 0) {
 			/*
@@ -1367,7 +1367,7 @@ xennetback_ifsoftstart_copy(void *arg)
 			resp_prod++;
 			i++; /* this packet has been queued */
 			ifp->if_opackets++;
-			bpf_mtap(ifp, m);
+			bpf_mtap(ifp, m, BPF_D_OUT);
 		}
 		if (i != 0) {
 			if (HYPERVISOR_grant_table_op(GNTTABOP_copy,

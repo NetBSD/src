@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.101 2018/06/22 04:17:42 msaitoh Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.102 2018/06/26 06:48:01 msaitoh Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.101 2018/06/22 04:17:42 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.102 2018/06/26 06:48:01 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -679,7 +679,7 @@ iystart(struct ifnet *ifp)
 			continue;
         	}
 
-		bpf_mtap(ifp, m0);
+		bpf_mtap(ifp, m0, BPF_D_OUT);
 
 		avail = sc->tx_start - sc->tx_end;
 		if (avail <= 0)

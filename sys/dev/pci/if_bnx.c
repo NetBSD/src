@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.64 2018/05/08 04:11:09 msaitoh Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.65 2018/06/26 06:48:01 msaitoh Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.85 2009/11/09 14:32:41 dlg Exp $ */
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.64 2018/05/08 04:11:09 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.65 2018/06/26 06:48:01 msaitoh Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -5132,7 +5132,7 @@ bnx_start(struct ifnet *ifp)
 		count++;
 
 		/* Send a copy of the frame to any BPF listeners. */
-		bpf_mtap(ifp, m_head);
+		bpf_mtap(ifp, m_head, BPF_D_OUT);
 	}
 
 	if (count == 0) {

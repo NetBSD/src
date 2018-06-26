@@ -1,4 +1,4 @@
-/*	$NetBSD: ofnet.c,v 1.58 2018/06/22 04:17:42 msaitoh Exp $	*/
+/*	$NetBSD: ofnet.c,v 1.59 2018/06/26 06:48:01 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofnet.c,v 1.58 2018/06/22 04:17:42 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofnet.c,v 1.59 2018/06/26 06:48:01 msaitoh Exp $");
 
 #include "ofnet.h"
 #include "opt_inet.h"
@@ -319,7 +319,7 @@ ofnet_start(struct ifnet *ifp)
 			panic("ofnet_start: no header mbuf");
 		len = m0->m_pkthdr.len;
 
-		bpf_mtap(ifp, m0);
+		bpf_mtap(ifp, m0, BPF_D_OUT);
 
 		if (len > ETHERMTU + sizeof(struct ether_header)) {
 			/* packet too large, toss it */

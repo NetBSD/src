@@ -1,4 +1,4 @@
-/*	$NetBSD: midway.c,v 1.101 2017/10/28 04:53:55 riastradh Exp $	*/
+/*	$NetBSD: midway.c,v 1.102 2018/06/26 06:48:00 msaitoh Exp $	*/
 /*	(sync'd to midway.c 1.68)	*/
 
 /*
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.101 2017/10/28 04:53:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.102 2018/06/26 06:48:00 msaitoh Exp $");
 
 #include "opt_natm.h"
 
@@ -2181,7 +2181,7 @@ again:
       launch.t->m_data += size;
       launch.t->m_len -= size;
 
-      bpf_mtap(ifp, launch.t);
+      bpf_mtap(ifp, launch.t, BPF_D_OUT);
 
       launch.t->m_data -= size;
       launch.t->m_len += size;

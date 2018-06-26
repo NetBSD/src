@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atu.c,v 1.60 2018/06/23 06:57:24 maxv Exp $ */
+/*	$NetBSD: if_atu.c,v 1.61 2018/06/26 06:48:02 msaitoh Exp $ */
 /*	$OpenBSD: if_atu.c,v 1.48 2004/12/30 01:53:21 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.60 2018/06/23 06:57:24 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.61 2018/06/26 06:48:02 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1914,7 +1914,7 @@ atu_start(struct ifnet *ifp)
 				splx(s);
 				break;
 			}
-			bpf_mtap(ifp, m);
+			bpf_mtap(ifp, m, BPF_D_OUT);
 			ni = ieee80211_find_txnode(ic,
 			    mtod(m, struct ether_header *)->ether_dhost);
 			if (ni == NULL) {
@@ -1943,7 +1943,7 @@ atu_start(struct ifnet *ifp)
 			/* sc->sc_stats.ast_tx_mgmt++; */
 		}
 
-		bpf_mtap3(ic->ic_rawbpf, m);
+		bpf_mtap3(ic->ic_rawbpf, m, BPF_D_OUT);
 
 		if (atu_tx_start(sc, ni, c, m)) {
 bad:

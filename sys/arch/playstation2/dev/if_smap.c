@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smap.c,v 1.26 2018/06/22 04:41:57 msaitoh Exp $	*/
+/*	$NetBSD: if_smap.c,v 1.27 2018/06/26 06:47:59 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_smap.c,v 1.26 2018/06/22 04:41:57 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_smap.c,v 1.27 2018/06/26 06:47:59 msaitoh Exp $");
 
 #include "debug_playstation2.h"
 
@@ -497,7 +497,7 @@ smap_start(struct ifnet *ifp)
 
 		IFQ_DEQUEUE(&ifp->if_snd, m0);
 		KDASSERT(m0 != NULL);
-		bpf_mtap(ifp, m0);
+		bpf_mtap(ifp, m0, BPF_D_OUT);
 
 		p = (u_int8_t *)sc->tx_buf;
 		q = p + sz;

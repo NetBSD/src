@@ -1,4 +1,4 @@
-/* $NetBSD: gemini_gmac.c,v 1.15 2018/05/09 06:55:26 maxv Exp $ */
+/* $NetBSD: gemini_gmac.c,v 1.16 2018/06/26 06:47:57 msaitoh Exp $ */
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -49,7 +49,7 @@
 
 #include <sys/gpio.h>
 
-__KERNEL_RCSID(0, "$NetBSD: gemini_gmac.c,v 1.15 2018/05/09 06:55:26 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_gmac.c,v 1.16 2018/06/26 06:47:57 msaitoh Exp $");
 
 #define	SWFREEQ_DESCS	256	/* one page worth */
 #define	HWFREEQ_DESCS	256	/* one page worth */
@@ -548,7 +548,7 @@ gmac_hwqueue_txconsume(gmac_hwqueue_t *hwq, const gmac_desc_t *d)
 	aprint_debug("gmac_hwqueue_txconsume(%p): %zu@%p: %s m=%p\n",
 	    hwq, d - hwq->hwq_base, d, ifp->if_xname, m);
 
-	bpf_mtap(ifp, m);
+	bpf_mtap(ifp, m, BPF_D_OUT);
 	m_freem(m);
 }
 

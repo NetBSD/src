@@ -1,4 +1,4 @@
-/*	$NetBSD: if_jme.c,v 1.34 2018/06/22 04:17:42 msaitoh Exp $	*/
+/*	$NetBSD: if_jme.c,v 1.35 2018/06/26 06:48:01 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2008 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.34 2018/06/22 04:17:42 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.35 2018/06/26 06:48:01 msaitoh Exp $");
 
 
 #include <sys/param.h>
@@ -1678,7 +1678,7 @@ nexttx:
 			break;
 		}
 		/* Pass packet to bpf if there is a listener */
-		bpf_mtap(ifp, mb_head);
+		bpf_mtap(ifp, mb_head, BPF_D_OUT);
 	}
 #ifdef JMEDEBUG_TX
 	printf("jme_ifstart enq %d\n", enq);

@@ -1,4 +1,4 @@
-/*	$NetBSD: dm9000.c,v 1.14 2018/06/22 04:41:57 msaitoh Exp $	*/
+/*	$NetBSD: dm9000.c,v 1.15 2018/06/26 06:48:00 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2009 Paul Fleischer
@@ -650,7 +650,7 @@ dme_prepare(struct dme_softc *sc, struct ifnet *ifp)
 
 	/* Element has now been removed from the queue, so we better send it */
 
-	bpf_mtap(ifp, bufChain);
+	bpf_mtap(ifp, bufChain, BPF_D_OUT);
 
 	/* Setup the DM9000 to accept the writes, and then write each buf in
 	   the chain. */

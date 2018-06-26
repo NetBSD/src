@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.123 2018/02/28 18:03:48 flxd Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.124 2018/06/26 06:48:01 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.123 2018/02/28 18:03:48 flxd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.124 2018/06/26 06:48:01 msaitoh Exp $");
 
 
 
@@ -1095,7 +1095,7 @@ vr_start(struct ifnet *ifp)
 		 * If there's a BPF listener, bounce a copy of this frame
 		 * to him.
 		 */
-		bpf_mtap(ifp, m0);
+		bpf_mtap(ifp, m0, BPF_D_OUT);
 
 		/*
 		 * Fill in the transmit descriptor.

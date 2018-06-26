@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.427 2018/06/01 07:16:23 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.428 2018/06/26 06:48:02 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.427 2018/06/01 07:16:23 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.428 2018/06/26 06:48:02 msaitoh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -810,7 +810,7 @@ if_percpuq_softint(void *arg)
 
 	while ((m = if_percpuq_dequeue(ipq)) != NULL) {
 		ifp->if_ipackets++;
-		bpf_mtap(ifp, m);
+		bpf_mtap(ifp, m, BPF_D_IN);
 
 		ifp->_if_input(ifp, m);
 	}
@@ -1103,7 +1103,7 @@ if_input(struct ifnet *ifp, struct mbuf *m)
 	KASSERT(!cpu_intr_p());
 
 	ifp->if_ipackets++;
-	bpf_mtap(ifp, m);
+	bpf_mtap(ifp, m, BPF_D_IN);
 
 	ifp->_if_input(ifp, m);
 }

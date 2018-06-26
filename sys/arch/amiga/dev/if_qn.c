@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qn.c,v 1.45 2018/06/22 04:17:40 msaitoh Exp $ */
+/*	$NetBSD: if_qn.c,v 1.46 2018/06/26 06:47:57 msaitoh Exp $ */
 
 /*
  * Copyright (c) 1995 Mika Kortelainen
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qn.c,v 1.45 2018/06/22 04:17:40 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qn.c,v 1.46 2018/06/26 06:47:57 msaitoh Exp $");
 
 #include "qn.h"
 #if NQN > 0
@@ -400,7 +400,7 @@ qnstart(struct ifnet *ifp)
 	 * (can't give the copy in QuickNet card RAM to bpf, because
 	 * that RAM is not visible to the host but is read from FIFO)
 	 */
-	bpf_mtap(ifp, m);
+	bpf_mtap(ifp, m, BPF_D_OUT);
 	len = qn_put(sc->nic_fifo, m);
 	m_freem(m);
 
