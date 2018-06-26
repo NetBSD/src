@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2661.c,v 1.37 2018/05/01 16:18:13 maya Exp $	*/
+/*	$NetBSD: rt2661.c,v 1.38 2018/06/26 06:16:09 msaitoh Exp $	*/
 /*	$OpenBSD: rt2661.c,v 1.17 2006/05/01 08:41:11 damien Exp $	*/
 /*	$FreeBSD: rt2560.c,v 1.5 2006/06/02 19:59:31 csjp Exp $	*/
 
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2661.c,v 1.37 2018/05/01 16:18:13 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2661.c,v 1.38 2018/06/26 06:16:09 msaitoh Exp $");
 
 
 #include <sys/param.h>
@@ -1878,7 +1878,7 @@ rt2661_start(struct ifnet *ifp)
 				continue;
 			}
 
-			bpf_mtap3(ifp->if_bpf, m0);
+			bpf_mtap(ifp, m0);
 			m0 = ieee80211_encap(ic, m0, ni);
 			if (m0 == NULL) {
 				ieee80211_free_node(ni);
