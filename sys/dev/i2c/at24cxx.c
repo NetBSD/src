@@ -1,4 +1,4 @@
-/*	$NetBSD: at24cxx.c,v 1.28 2018/06/26 06:03:57 thorpej Exp $	*/
+/*	$NetBSD: at24cxx.c,v 1.29 2018/06/26 06:21:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at24cxx.c,v 1.28 2018/06/26 06:03:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at24cxx.c,v 1.29 2018/06/26 06:21:23 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,20 +111,11 @@ const struct cdevsw seeprom_cdevsw = {
 
 static int seeprom_wait_idle(struct seeprom_softc *);
 
-static const struct seeprom_size {
-	const char *name;
-	int size;
-} seeprom_sizes[] = {
-	{ "atmel,24c02", 256 },
-	{ "atmel,24c16", 2048 },
-};
-
-/* XXXJRT collapse seeprom_size stuff into compat_data; see also ofw code  */
 static const struct device_compatible_entry compat_data[] = {
-	{ "i2c-at24c64",		0 },
-	{ "i2c-at34c02",		0 },
-	{ "atmel,24c02",		0 },
-	{ "atmel,24c16",		0 },
+	{ "i2c-at24c64",		8192 },
+	{ "i2c-at34c02",		256 },
+	{ "atmel,24c02",		256 },
+	{ "atmel,24c16",		2048 },
 	{ NULL,				0 }
 };
 
@@ -148,7 +139,7 @@ seeprom_attach(device_t parent, device_t self, void *aux)
 {
 	struct seeprom_softc *sc = device_private(self);
 	struct i2c_attach_args *ia = aux;
-	u_int n, m;
+	const struct device_compatible_entry *dce;
 
 	sc->sc_tag = ia->ia_tag;
 	sc->sc_address = ia->ia_addr;
@@ -182,15 +173,8 @@ seeprom_attach(device_t parent, device_t self, void *aux)
 		sc->sc_size = ia->ia_size;
 
 	if (sc->sc_size <= 0 && ia->ia_ncompat > 0) {
-		for (n = 0; n < __arraycount(seeprom_sizes); n++) {
-			for (m = 0; m < ia->ia_ncompat; m++) {
-				if (!strcmp(seeprom_sizes[n].name,
-				    ia->ia_compat[m])) {
-					sc->sc_size = seeprom_sizes[n].size;
-					break;
-				}
-			}
-		}
+		if (iic_compatible_match(ia, compat_data, &dce))
+			sc->sc_size = dce->data;
 	}
 
 	switch (sc->sc_size) {
