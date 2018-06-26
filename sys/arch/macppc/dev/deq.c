@@ -1,4 +1,4 @@
-/*	$NetBSD: deq.c,v 1.15 2018/06/18 17:07:07 thorpej Exp $	*/
+/*	$NetBSD: deq.c,v 1.16 2018/06/26 06:03:57 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 2005 Michael Lorenz
@@ -32,7 +32,7 @@
  */
  
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: deq.c,v 1.15 2018/06/18 17:07:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: deq.c,v 1.16 2018/06/26 06:03:57 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,18 +52,13 @@ static int deq_match(device_t, struct cfdata *, void *);
 CFATTACH_DECL_NEW(deq, sizeof(struct deq_softc),
     deq_match, deq_attach, NULL, NULL);
 
-static const char * deq_compats[] = {
-	"deq",
-	"tas3004",
-	"pcm3052",
-	"cs8416",
-	"codec",
-	NULL
-};
-
-static const struct device_compatible_entry deq_compat_data[] = {
-	DEVICE_COMPAT_ENTRY(deq_compats),
-	DEVICE_COMPAT_TERMINATOR
+static const struct device_compatible_entry compat_data[] = {
+	{ "deq",		0 },
+	{ "tas3004",		0 },
+	{ "pcm3052",		0 },
+	{ "cs8416",		0 },
+	{ "codec",		0 },
+	{ NULL,			0 }
 };
 
 int
@@ -72,7 +67,7 @@ deq_match(device_t parent, struct cfdata *cf, void *aux)
 	struct i2c_attach_args *ia = aux;
 	int match_result;
 
-	if (iic_use_direct_match(ia, cf, deq_compat_data, &match_result))
+	if (iic_use_direct_match(ia, cf, compat_data, &match_result))
 		return match_result;
 
 	/* This driver is direct-config only. */

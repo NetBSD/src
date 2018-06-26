@@ -105,15 +105,10 @@ static int smusat_sysctl_sensor_value(SYSCTLFN_ARGS);
 CFATTACH_DECL_NEW(smusat, sizeof(struct smusat_softc),
     smusat_match, smusat_attach, NULL, NULL);
 
-static const char * smusat_compats[] = {
-	"sat",	
-	"smu-sat",
-	NULL
-};
-
-static const struct device_compatible_entry smusat_compat_data[] = {
-	DEVICE_COMPAT_ENTRY(smusat_compats),
-	DEVICE_COMPAT_TERMINATOR
+static const struct device_compatible_entry compat_data[] = {
+	{ "sat",		0 },
+	{ "smu-sat",		0 },
+	{ NULL,			0 }
 };
 
 static int
@@ -122,7 +117,7 @@ smusat_match(device_t parent, struct cfdata *cf, void *aux)
 	struct i2c_attach_args *ia = aux;
 	int match_result;
 
-	if (iic_use_direct_match(ia, cf, smusat_compat_data, &match_result))
+	if (iic_use_direct_match(ia, cf, compat_data, &match_result))
 		return match_result;
 
 	if (ia->ia_addr == 0x58)
