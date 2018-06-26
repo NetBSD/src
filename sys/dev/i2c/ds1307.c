@@ -1,4 +1,4 @@
-/*	$NetBSD: ds1307.c,v 1.27 2018/06/18 17:07:07 thorpej Exp $	*/
+/*	$NetBSD: ds1307.c,v 1.28 2018/06/26 04:32:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ds1307.c,v 1.27 2018/06/18 17:07:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ds1307.c,v 1.28 2018/06/26 04:32:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -249,8 +249,7 @@ dsrtc_model_by_compat(const struct i2c_attach_args *ia)
 	const struct dsrtc_model *dm = NULL;
 	const struct device_compatible_entry *dce;
 
-	dce = iic_compatible_match(ia, dsrtc_compat_data, NULL);
-	if (dce != NULL)
+	if (iic_compatible_match(ia, dsrtc_compat_data, &dce))
 		dm = DEVICE_COMPAT_ENTRY_GET_PTR(dce);
 
 	return dm;
