@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.88 2018/06/22 04:17:42 msaitoh Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.89 2018/06/26 06:48:00 msaitoh Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -14,7 +14,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.88 2018/06/22 04:17:42 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.89 2018/06/26 06:48:00 msaitoh Exp $");
 
 #include "opt_ipkdb.h"
 #include "opt_inet.h"
@@ -472,7 +472,7 @@ dp8390_start(struct ifnet *ifp)
 		panic("dp8390_start: no header mbuf");
 
 	/* Tap off here if there is a BPF listener. */
-	bpf_mtap(ifp, m0);
+	bpf_mtap(ifp, m0, BPF_D_OUT);
 
 	/* txb_new points to next open buffer slot. */
 	buffer = sc->mem_start +

@@ -1,4 +1,4 @@
-/* $NetBSD: if_txp.c,v 1.48 2017/09/26 07:42:06 knakahara Exp $ */
+/* $NetBSD: if_txp.c,v 1.49 2018/06/26 06:48:01 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.48 2017/09/26 07:42:06 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.49 2018/06/26 06:48:01 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -1517,7 +1517,7 @@ txp_start(struct ifnet *ifp)
 
 		ifp->if_timer = 5;
 
-		bpf_mtap(ifp, m);
+		bpf_mtap(ifp, m, BPF_D_OUT);
 
 		txd->tx_flags |= TX_FLAGS_VALID;
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_txhiring_dma.dma_map,

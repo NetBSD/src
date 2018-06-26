@@ -31,7 +31,7 @@
 #if 0
 __FBSDID("$FreeBSD: head/sys/dev/ena/ena.c 333456 2018-05-10 09:37:54Z mw $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_ena.c,v 1.4 2018/06/16 15:00:35 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ena.c,v 1.5 2018/06/26 06:48:01 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2866,7 +2866,7 @@ ena_start_xmit(struct ena_ring *tx_ring)
 		 * If there's a BPF listener, bounce a copy of this frame
 		 * to him.
 		 */
-		bpf_mtap(adapter->ifp, mbuf); /* XXX already in if_input? */
+		bpf_mtap(adapter->ifp, mbuf, BPF_D_OUT);
 
 		if (unlikely(acum_pkts == DB_THRESHOLD)) {
 			acum_pkts = 0;

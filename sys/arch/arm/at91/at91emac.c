@@ -1,5 +1,5 @@
-/*	$Id: at91emac.c,v 1.20 2018/06/22 04:17:40 msaitoh Exp $	*/
-/*	$NetBSD: at91emac.c,v 1.20 2018/06/22 04:17:40 msaitoh Exp $	*/
+/*	$Id: at91emac.c,v 1.21 2018/06/26 06:47:57 msaitoh Exp $	*/
+/*	$NetBSD: at91emac.c,v 1.21 2018/06/26 06:47:57 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91emac.c,v 1.20 2018/06/22 04:17:40 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91emac.c,v 1.21 2018/06/26 06:47:57 msaitoh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -673,7 +673,7 @@ start:
 		IFQ_DEQUEUE(&ifp->if_snd, m);
 	}
 
-	bpf_mtap(ifp, m);
+	bpf_mtap(ifp, m, BPF_D_OUT);
 
 	nsegs = sc->txq[bi].m_dmamap->dm_nsegs;
 	segs = sc->txq[bi].m_dmamap->dm_segs;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ste.c,v 1.50 2016/12/15 09:28:05 ozaki-r Exp $	*/
+/*	$NetBSD: if_ste.c,v 1.51 2018/06/26 06:48:01 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ste.c,v 1.50 2016/12/15 09:28:05 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ste.c,v 1.51 2018/06/26 06:48:01 msaitoh Exp $");
 
 
 #include <sys/param.h>
@@ -708,7 +708,7 @@ ste_start(struct ifnet *ifp)
 		/*
 		 * Pass the packet to any BPF listeners.
 		 */
-		bpf_mtap(ifp, m0);
+		bpf_mtap(ifp, m0, BPF_D_OUT);
 	}
 
 	if (sc->sc_txpending == STE_NTXDESC) {

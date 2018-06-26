@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.64 2018/06/22 09:31:04 msaitoh Exp $ */
+/*	$NetBSD: if_ie.c,v 1.65 2018/06/26 06:47:59 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.
@@ -98,7 +98,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.64 2018/06/22 09:31:04 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.65 2018/06/26 06:47:59 msaitoh Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -979,7 +979,7 @@ iestart(struct ifnet *ifp)
 			panic("%s: no header mbuf", __func__);
 
 		/* Tap off here if there is a BPF listener. */
-		bpf_mtap(ifp, m0);
+		bpf_mtap(ifp, m0, BPF_D_OUT);
 
 #ifdef IEDEBUG
 		if (sc->sc_debug & IED_ENQ)

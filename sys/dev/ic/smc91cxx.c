@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.96 2018/06/22 04:17:42 msaitoh Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.97 2018/06/26 06:48:00 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.96 2018/06/22 04:17:42 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.97 2018/06/26 06:48:00 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -785,7 +785,7 @@ smc91cxx_start(struct ifnet *ifp)
 	ifp->if_timer = 5;
 
 	/* Hand off a copy to the bpf. */
-	bpf_mtap(ifp, m);
+	bpf_mtap(ifp, m, BPF_D_OUT);
 
 	ifp->if_opackets++;
 	m_freem(m);
