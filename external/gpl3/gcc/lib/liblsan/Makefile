@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2018/06/26 20:54:32 christos Exp $
+# $NetBSD: Makefile,v 1.2 2018/06/26 21:06:45 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -8,7 +8,6 @@
 .PATH: ${SANITIZER}/lsan ${SANITIZER}/asan
 
 LSAN_SRCS+= \
-sanitizer_stoptheworld_linux_libcdep.cc \
 lsan.cc \
 lsan_allocator.cc \
 lsan_common.cc \
