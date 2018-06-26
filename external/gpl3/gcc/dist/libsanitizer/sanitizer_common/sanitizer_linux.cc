@@ -633,6 +633,16 @@ int internal_fork() {
 #endif
 }
 
+#if SANITIZER_NETBSD
+#include <signal.h>
+extern "C" int __sigaction14(int, const struct sigaction *, struct sigaction *);
+int internal_sigaction_norestorer(int signum, const void *act, void *oldact) {
+
+    return __sigaction14(signum,
+	reinterpret_cast<const struct sigaction *>(act),
+	reinterpret_cast<struct sigaction *>(oldact));
+}
+#endif
 #if SANITIZER_LINUX
 #define SA_RESTORER 0x04000000
 // Doesn't set sa_restorer, use with caution (see below).
