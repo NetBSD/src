@@ -1,4 +1,4 @@
-/*	$NetBSD: at24cxx.c,v 1.29 2018/06/26 06:21:23 thorpej Exp $	*/
+/*	$NetBSD: at24cxx.c,v 1.30 2018/06/26 06:34:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at24cxx.c,v 1.29 2018/06/26 06:21:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at24cxx.c,v 1.30 2018/06/26 06:34:55 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -169,8 +169,6 @@ seeprom_attach(device_t parent, device_t self, void *aux)
 	 */
 	if (device_cfdata(self)->cf_flags)
 		sc->sc_size = (device_cfdata(self)->cf_flags << 7);
-	else
-		sc->sc_size = ia->ia_size;
 
 	if (sc->sc_size <= 0 && ia->ia_ncompat > 0) {
 		if (iic_compatible_match(ia, compat_data, &dce))
