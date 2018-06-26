@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.64 2018/06/22 15:52:00 martin Exp $	*/
+/*	$NetBSD: i2c.c,v 1.65 2018/06/26 04:32:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.64 2018/06/22 15:52:00 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.65 2018/06/26 04:32:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -695,22 +695,22 @@ iic_fill_compat(struct i2c_attach_args *ia, const char *compat, size_t len,
  *	Match a device's "compatible" property against the list
  *	of compatible strings provided by the driver.
  */
-const struct device_compatible_entry *
+int
 iic_compatible_match(const struct i2c_attach_args *ia,
 		     const struct device_compatible_entry *compats,
-		     int *match_resultp)
+		     const struct device_compatible_entry **matching_entryp)
 {
-	const struct device_compatible_entry *dce;
-	int match_weight;
+	int match_result;
 
-	dce = device_compatible_match(ia->ia_compat, ia->ia_ncompat,
-				      compats, &match_weight);
-	if (dce != NULL && match_resultp != NULL) {
-		*match_resultp = MIN(I2C_MATCH_DIRECT_COMPATIBLE + match_weight,
-				     I2C_MATCH_DIRECT_COMPATIBLE_MAX);
+	match_result = device_compatible_match(ia->ia_compat, ia->ia_ncompat,
+					       compats, matching_entryp);
+	if (match_result) {
+		match_result =
+		    MIN(I2C_MATCH_DIRECT_COMPATIBLE + match_result - 1,
+			I2C_MATCH_DIRECT_COMPATIBLE_MAX);
 	}
 
-	return dce;
+	return match_result;
 }
 
 /*
@@ -735,8 +735,7 @@ iic_use_direct_match(const struct i2c_attach_args *ia, const cfdata_t cf,
 	}
 
 	if (ia->ia_ncompat > 0 && ia->ia_compat != NULL) {
-		if (iic_compatible_match(ia, compats, match_resultp) == NULL)
-			*match_resultp = 0;
+		*match_resultp = iic_compatible_match(ia, compats, NULL);
 		return true;
 	}
 
