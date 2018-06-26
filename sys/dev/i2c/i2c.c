@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.65 2018/06/26 04:32:35 thorpej Exp $	*/
+/*	$NetBSD: i2c.c,v 1.66 2018/06/26 06:34:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.65 2018/06/26 04:32:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.66 2018/06/26 06:34:55 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -285,7 +285,6 @@ iic_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	}
 
 	ia.ia_tag = sc->sc_tag;
-	ia.ia_size = cf->cf_loc[IICCF_SIZE];
 	ia.ia_type = sc->sc_type;
 
 	ia.ia_name = NULL;
@@ -441,7 +440,7 @@ iic_attach(device_t parent, device_t self, void *aux)
 		unsigned int i, count;
 		prop_dictionary_t dev;
 		prop_data_t cdata;
-		uint32_t addr, size;
+		uint32_t addr;
 		uint64_t cookie;
 		const char *name;
 		struct i2c_attach_args ia;
@@ -462,10 +461,6 @@ iic_attach(device_t parent, device_t self, void *aux)
 			if (!prop_dictionary_get_uint64(dev, "cookie", &cookie))
 				cookie = 0;
 			loc[IICCF_ADDR] = addr;
-			if (prop_dictionary_get_uint32(dev, "size", &size))
-				loc[IICCF_SIZE] = size;
-			else
-				size = loc[IICCF_SIZE] = IICCF_SIZE_DEFAULT;
 
 			memset(&ia, 0, sizeof ia);
 			ia.ia_addr = addr;
@@ -473,7 +468,6 @@ iic_attach(device_t parent, device_t self, void *aux)
 			ia.ia_tag = ic;
 			ia.ia_name = name;
 			ia.ia_cookie = cookie;
-			ia.ia_size = size;
 			ia.ia_prop = dev;
 
 			buf = NULL;
