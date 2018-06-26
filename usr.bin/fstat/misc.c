@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.18 2018/06/04 01:42:49 nat Exp $	*/
+/*	$NetBSD: misc.c,v 1.19 2018/06/26 06:48:03 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: misc.c,v 1.18 2018/06/04 01:42:49 nat Exp $");
+__RCSID("$NetBSD: misc.c,v 1.19 2018/06/26 06:48:03 msaitoh Exp $");
 
 #include <stdbool.h>
 #include <sys/param.h>
@@ -142,8 +142,8 @@ p_bpf(struct file *f)
 		(void)printf(", promisc");
 	if (bpf.bd_immediate)
 		(void)printf(", immed");
-	if (bpf.bd_seesent)
-		(void)printf(", seesent");
+	if (bpf.bd_direction)
+		(void)printf(", direction");
 	if (bpf.bd_jitcode != NULL)
 		(void)printf(", jit");
 	if (bpf.bd_async)

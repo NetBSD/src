@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwm.c,v 1.82 2018/06/08 11:18:23 knakahara Exp $	*/
+/*	$NetBSD: if_iwm.c,v 1.83 2018/06/26 06:48:01 msaitoh Exp $	*/
 /*	OpenBSD: if_iwm.c,v 1.148 2016/11/19 21:07:08 stsp Exp	*/
 #define IEEE80211_NO_HT
 /*
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.82 2018/06/08 11:18:23 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.83 2018/06/26 06:48:01 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -4003,7 +4003,7 @@ iwm_rx_rx_mpdu(struct iwm_softc *sc, struct iwm_rx_packet *pkt,
 			}
 		}
 
-		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_rxtap_len, m);
+		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_rxtap_len, m, BPF_D_IN);
 	}
 	ieee80211_input(ic, m, ni, rssi, device_timestamp);
 	ieee80211_free_node(ni);
@@ -4640,7 +4640,7 @@ iwm_tx(struct iwm_softc *sc, struct mbuf *m, struct ieee80211_node *ni, int ac)
 		if (wh->i_fc[1] & IEEE80211_FC1_WEP)
 			tap->wt_flags |= IEEE80211_RADIOTAP_F_WEP;
 
-		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_txtap_len, m);
+		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_txtap_len, m, BPF_D_OUT);
 	}
 
 	/* Encrypt the frame if need be. */
@@ -6848,7 +6848,7 @@ iwm_start(struct ifnet *ifp)
 		ac = (eh->ether_type != htons(ETHERTYPE_PAE)) ?
 		    M_WME_GETAC(m) : WME_AC_BE;
 
-		bpf_mtap(ifp, m);
+		bpf_mtap(ifp, m, BPF_D_OUT);
 
 		if ((m = ieee80211_encap(ic, m, ni)) == NULL) {
 			ieee80211_free_node(ni);
@@ -6857,7 +6857,7 @@ iwm_start(struct ifnet *ifp)
 		}
 
  sendit:
-		bpf_mtap3(ic->ic_rawbpf, m);
+		bpf_mtap3(ic->ic_rawbpf, m, BPF_D_OUT);
 
 		if (iwm_tx(sc, m, ni, ac) != 0) {
 			ieee80211_free_node(ni);

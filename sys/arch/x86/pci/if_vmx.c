@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vmx.c,v 1.25 2018/06/01 08:56:00 maxv Exp $	*/
+/*	$NetBSD: if_vmx.c,v 1.26 2018/06/26 06:48:00 msaitoh Exp $	*/
 /*	$OpenBSD: if_vmx.c,v 1.16 2014/01/22 06:04:17 brad Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.25 2018/06/01 08:56:00 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.26 2018/06/26 06:48:00 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -2765,7 +2765,7 @@ vmxnet3_start_locked(struct ifnet *ifp)
 		}
 
 		tx++;
-		bpf_mtap(ifp, m_head);
+		bpf_mtap(ifp, m_head, BPF_D_OUT);
 	}
 
 	if (tx > 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axen.c,v 1.12 2018/01/21 13:57:11 skrll Exp $	*/
+/*	$NetBSD: if_axen.c,v 1.13 2018/06/26 06:48:02 msaitoh Exp $	*/
 /*	$OpenBSD: if_axen.c,v 1.3 2013/10/21 10:10:22 yuo Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.12 2018/01/21 13:57:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.13 2018/06/26 06:48:02 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1300,7 +1300,7 @@ axen_start(struct ifnet *ifp)
 	 * If there's a BPF listener, bounce a copy of this frame
 	 * to him.
 	 */
-	bpf_mtap(ifp, m);
+	bpf_mtap(ifp, m, BPF_D_OUT);
 	m_freem(m);
 
 	ifp->if_flags |= IFF_OACTIVE;

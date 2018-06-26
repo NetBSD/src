@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.582 2018/06/20 05:19:12 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.583 2018/06/26 06:48:01 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.582 2018/06/20 05:19:12 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.583 2018/06/26 06:48:01 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -7447,7 +7447,7 @@ wm_send_common_locked(struct ifnet *ifp, struct wm_txqueue *txq,
 		txq->txq_snext = WM_NEXTTXS(txq, txq->txq_snext);
 
 		/* Pass the packet to any BPF listeners. */
-		bpf_mtap(ifp, m0);
+		bpf_mtap(ifp, m0, BPF_D_OUT);
 	}
 
 	if (m0 != NULL) {
@@ -8020,7 +8020,7 @@ wm_nq_send_common_locked(struct ifnet *ifp, struct wm_txqueue *txq,
 		txq->txq_snext = WM_NEXTTXS(txq, txq->txq_snext);
 
 		/* Pass the packet to any BPF listeners. */
-		bpf_mtap(ifp, m0);
+		bpf_mtap(ifp, m0, BPF_D_OUT);
 	}
 
 	if (m0 != NULL) {

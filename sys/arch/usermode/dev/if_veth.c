@@ -1,4 +1,4 @@
-/* $NetBSD: if_veth.c,v 1.9 2017/10/23 09:31:17 msaitoh Exp $ */
+/* $NetBSD: if_veth.c,v 1.10 2018/06/26 06:48:00 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_veth.c,v 1.9 2017/10/23 09:31:17 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_veth.c,v 1.10 2018/06/26 06:48:00 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -287,7 +287,7 @@ veth_start(struct ifnet *ifp)
 		}
 
 		IFQ_DEQUEUE(&ifp->if_snd, m0);
-		bpf_mtap(ifp, m0);
+		bpf_mtap(ifp, m0, BPF_D_OUT);
 
 		m_copydata(m0, 0, m0->m_pkthdr.len, sc->sc_tx_buf);
 
