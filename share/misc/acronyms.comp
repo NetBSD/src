@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.208 2018/06/25 19:56:54 sevan Exp $
+$NetBSD: acronyms.comp,v 1.209 2018/06/26 00:06:08 kamil Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -77,6 +77,7 @@ ARR	address range register
 ARU	audio response unit
 AS	autonomous system
 ASA	Adaptive Security Appliance
+ASAN	Address Sanitizer
 ASC	advanced smart cache
 ASCII	American Standard Code for Information Interchange
 ASD	agile software development
@@ -204,6 +205,7 @@ CF	compact flash
 CFB	cipher feedback
 CFG	context-free grammar
 CFG	control-flow graph
+CFI	control-flow integrity sanitizer
 CG	control gate
 CGA	Color Graphics Adapter
 CGI	common gateway interface
@@ -336,6 +338,7 @@ DFA	deterministic finite automaton
 DFC	data flow control
 DFS	depth first search
 DFS	distributed file system
+DFSAN	Data Flow Sanitizer
 DFT	diagnostic function test
 DFT	discrete Fourier transform
 DGL	data generation language
@@ -459,6 +462,7 @@ ERD	emergency recovery disk
 ERD	entity relationship diagram
 ERE	extended regular expression
 ERST	error record serialization table
+ESAN	Efficiency Sanitizer
 ESB	enterprise service bus
 ESDRAM	enhanced synchronous dynamic random access memory
 ESS	electronic switching system
@@ -591,6 +595,7 @@ HTTP	Hypertext Transfer Protocol
 HTTPS	Hypertext Transfer Protocol Secure
 HVM	hardware virtual machine
 HVDS	High-Voltage Differential Signaling
+HWASAN	Hardware-assisted Address Sanitizer
 HZ	Hertz
 I2O	intelligent input/output
 IA	information assurance
@@ -753,6 +758,7 @@ LRC	longitudinal redundancy check
 LRM	left-to-right mark
 LRO	left-to-right override
 LRU	least recently used
+LSAN	Leak Sanitizer
 LSB	Linux standards base
 LSB	least significant {bit,byte}
 LSI	large scale integration
@@ -856,6 +862,7 @@ MQTT	Message Queuing Telemetry Transport
 MR	modem ready
 MRU	most recently used
 MS	Microsoft
+MSAN	Memory Sanitizer
 MSB	most significant {bit,byte}
 MSE	mean square error
 MSF	minutes seconds frames
@@ -1398,6 +1405,7 @@ TS	terminal services
 TS	time series
 TS	time stamp
 TS	transport stream
+TSAN	Thread Sanitizer
 TSC	time stamp counter
 TSD	time stamp disable
 TSDB	time series database
@@ -1421,6 +1429,7 @@ UAF	use-after-free
 UART	universal asynchronous receiver/transmitter
 UAT	user acceptance testing
 UB	undefined behavior
+UBSAN	Undefined Behavior Sanitizer
 UC	uncacheable
 UCS	uniform-cost search
 UDMA	ultra DMA
