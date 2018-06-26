@@ -48,6 +48,15 @@ uptr internal_clone(int (*fn)(void *), void *child_stack, int flags, void *arg,
 #endif
 #endif  // SANITIZER_LINUX
 
+#ifdef SANITIZER_NETBSD
+int internal_sigaction_norestorer(int signum, const void *act, void *oldact);
+#define internal_sigdelset(set, signum) \
+    __sigdelset(set, signum)
+#define internal_clone(fn, child_stack, flags, arg, \
+    parent_tidptr, newtls, child_tidptr) \
+    __clone(fn, child_stack, flags, arg)
+#endif
+
 // This class reads thread IDs from /proc/<pid>/task using only syscalls.
 class ThreadLister {
  public:
