@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.260 2018/06/19 04:10:51 thorpej Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.261 2018/06/26 04:32:35 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.260 2018/06/19 04:10:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.261 2018/06/26 04:32:35 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -2302,20 +2302,20 @@ device_compatible_entry_matches(const struct device_compatible_entry *dce,
  *
  *	Match a driver's "compatible" data against a device's
  *	"compatible" strings.  If a match is found, we return
- *	the matching device_compatible_entry, along with a
- *	matching weight.
+ *	a weighted match result, and optionally the matching
+ *	entry.
  */
-const struct device_compatible_entry *
+int
 device_compatible_match(const char **device_compats, int ndevice_compats,
 			const struct device_compatible_entry *driver_compats,
-			int *match_weightp)
+			const struct device_compatible_entry **matching_entryp)
 {
 	const struct device_compatible_entry *dce = NULL;
 	int i, match_weight;
 
 	if (ndevice_compats == 0 || device_compats == NULL ||
 	    driver_compats == NULL)
-		return NULL;
+		return 0;
 	
 	/*
 	 * We take the first match because we start with the most-specific
@@ -2329,13 +2329,13 @@ device_compatible_match(const char **device_compats, int ndevice_compats,
 			if (device_compatible_entry_matches(dce,
 							 device_compats[i])) {
 				KASSERT(match_weight >= 0);
-				if (match_weightp)
-					*match_weightp = match_weight;
-				return dce;
+				if (matching_entryp)
+					*matching_entryp = dce;
+				return 1 + match_weight;
 			}
 		}
 	}
-	return NULL;
+	return 0;
 }
 
 /*
