@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.209 2018/06/26 00:06:08 kamil Exp $
+$NetBSD: acronyms.comp,v 1.210 2018/06/26 22:16:45 sevan Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -68,6 +68,7 @@ APT	advanced persistent threat
 AQM	active queue management
 ARAT	always running APIC timer
 ARC	adaptive replacement cache
+ARC	Advanced RISC Computing
 ARC	automatic reference counting
 ARM	Advanced RISC Machines
 ARP	Address Resolution Protocol
@@ -313,6 +314,7 @@ DCC	direct cable connect
 DCD	data carrier detect
 DCE	data control equipment
 DCE	distributed computing environment
+DCL	Digital Command Language
 DCOM	distributed component object model
 DCOP	Desktop COmmunication Protocol
 DCS	data collection systems
@@ -450,6 +452,7 @@ ELS	entry level system
 EMI	electro-magnetic interference
 EMP	electro-magnetic pulse
 EMR	electro-magnetic radiation
+EMACS	Editor MACroS
 EOF	end of file
 EOI	end of interrupt
 EOL	end of line
