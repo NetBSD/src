@@ -1,4 +1,4 @@
-/*	$NetBSD: malo.c,v 1.10 2017/10/23 09:31:17 msaitoh Exp $ */
+/*	$NetBSD: malo.c,v 1.11 2018/06/26 06:17:40 msaitoh Exp $ */
 /*	$OpenBSD: malo.c,v 1.92 2010/08/27 17:08:00 jsg Exp $ */
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: malo.c,v 1.10 2017/10/23 09:31:17 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: malo.c,v 1.11 2018/06/26 06:17:40 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1074,7 +1074,7 @@ malo_start(struct ifnet *ifp)
 			m0 = ieee80211_encap(ic, m0, ni);
 			if (m0 == NULL)
 				continue;
-			bpf_mtap(ifp, m0);
+			bpf_mtap3(ic->ic_rawbpf, m0);
 
 			if (malo_tx_data(sc, m0, ni) != 0) {
 				ieee80211_free_node(ni);
