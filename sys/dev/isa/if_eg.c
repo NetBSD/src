@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.93 2018/06/22 04:17:42 msaitoh Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.94 2018/06/26 06:48:01 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.93 2018/06/22 04:17:42 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.94 2018/06/26 06:48:01 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -576,7 +576,7 @@ loop:
 	}
 	len = max(m0->m_pkthdr.len, ETHER_MIN_LEN - ETHER_CRC_LEN);
 
-	bpf_mtap(ifp, m0);
+	bpf_mtap(ifp, m0, BPF_D_OUT);
 
 	sc->eg_pcb[0] = EG_CMD_SENDPACKET;
 	sc->eg_pcb[1] = 0x06;

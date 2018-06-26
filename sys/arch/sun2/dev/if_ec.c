@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ec.c,v 1.28 2018/06/22 04:17:41 msaitoh Exp $	*/
+/*	$NetBSD: if_ec.c,v 1.29 2018/06/26 06:47:59 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ec.c,v 1.28 2018/06/22 04:17:41 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ec.c,v 1.29 2018/06/26 06:47:59 msaitoh Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -316,7 +316,7 @@ ec_start(struct ifnet *ifp)
 	}
 
 	/* The BPF tap. */
-	bpf_mtap(ifp, m0);
+	bpf_mtap(ifp, m0, BPF_D_OUT);
 
 	/* Size the packet. */
 	count = EC_BUF_SZ - m0->m_pkthdr.len;

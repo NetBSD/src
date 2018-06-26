@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.108 2018/06/22 04:17:42 msaitoh Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.109 2018/06/26 06:48:01 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.108 2018/06/22 04:17:42 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.109 2018/06/26 06:48:01 msaitoh Exp $");
 
 #undef TLDEBUG
 #define TL_PRIV_STATS
@@ -1402,7 +1402,7 @@ tbdinit:
 #endif
 	}
 	/* Pass packet to bpf if there is a listener */
-	bpf_mtap(ifp, mb_head);
+	bpf_mtap(ifp, mb_head, BPF_D_OUT);
 	/*
 	 * Set a 5 second timer just in case we don't hear from the card again.
 	 */

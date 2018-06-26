@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac.c,v 1.49 2018/06/18 23:50:35 jmcneill Exp $ */
+/* $NetBSD: dwc_gmac.c,v 1.50 2018/06/26 06:48:00 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.49 2018/06/18 23:50:35 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.50 2018/06/26 06:48:00 msaitoh Exp $");
 
 /* #define	DWC_GMAC_DEBUG	1 */
 
@@ -876,7 +876,7 @@ dwc_gmac_start_locked(struct ifnet *ifp)
 			break;
 		}
 		IFQ_DEQUEUE(&ifp->if_snd, m0);
-		bpf_mtap(ifp, m0);
+		bpf_mtap(ifp, m0, BPF_D_OUT);
 		if (sc->sc_txq.t_queued == AWGE_TX_RING_COUNT) {
 			ifp->if_flags |= IFF_OACTIVE;
 			break;

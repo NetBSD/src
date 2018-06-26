@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.153 2018/06/01 09:10:52 maxv Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.154 2018/06/26 06:48:00 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.153 2018/06/01 09:10:52 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.154 2018/06/26 06:48:00 msaitoh Exp $");
 /* $FreeBSD: /repoman/r/ncvs/src/sys/dev/re/if_re.c,v 1.20 2004/04/11 20:34:08 ru Exp $ */
 
 /*
@@ -1726,7 +1726,7 @@ re_start(struct ifnet *ifp)
 		 * If there's a BPF listener, bounce a copy of this frame
 		 * to him.
 		 */
-		bpf_mtap(ifp, m);
+		bpf_mtap(ifp, m, BPF_D_OUT);
 	}
 
 	if (sc->re_ldata.re_txq_free < ofree) {
