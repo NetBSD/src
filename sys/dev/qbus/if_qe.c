@@ -1,4 +1,4 @@
-/*      $NetBSD: if_qe.c,v 1.78 2018/06/22 04:17:42 msaitoh Exp $ */
+/*      $NetBSD: if_qe.c,v 1.79 2018/06/26 06:48:02 msaitoh Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qe.c,v 1.78 2018/06/22 04:17:42 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qe.c,v 1.79 2018/06/26 06:48:02 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -488,7 +488,7 @@ qestart(struct ifnet *ifp)
 
 		IFQ_DEQUEUE(&ifp->if_snd, m);
 
-		bpf_mtap(ifp, m);
+		bpf_mtap(ifp, m, BPF_D_OUT);
 		/*
 		 * m now points to a mbuf chain that can be loaded.
 		 * Loop around and set it.

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pfsync.c,v 1.15 2016/06/21 03:28:27 ozaki-r Exp $	*/
+/*	$NetBSD: if_pfsync.c,v 1.16 2018/06/26 06:48:02 msaitoh Exp $	*/
 /*	$OpenBSD: if_pfsync.c,v 1.83 2007/06/26 14:44:12 mcbride Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pfsync.c,v 1.15 2016/06/21 03:28:27 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pfsync.c,v 1.16 2018/06/26 06:48:02 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1530,7 +1530,7 @@ pfsync_sendout(struct pfsync_softc *sc)
 	sc->sc_mbuf = NULL;
 	sc->sc_statep.s = NULL;
 
-	bpf_mtap(ifp, m);
+	bpf_mtap(ifp, m, BPF_D_OUT);
 
 	if (sc->sc_mbuf_net) {
 		m_freem(m);

@@ -1,4 +1,4 @@
-/* $NetBSD: bwfm.c,v 1.11 2018/05/11 07:41:11 maya Exp $ */
+/* $NetBSD: bwfm.c,v 1.12 2018/06/26 06:48:00 msaitoh Exp $ */
 /* $OpenBSD: bwfm.c,v 1.5 2017/10/16 22:27:16 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -350,7 +350,7 @@ bwfm_start(struct ifnet *ifp)
 			if (ni != NULL)
 				ieee80211_free_node(ni);
 		} else {
-			bpf_mtap3(ic->ic_rawbpf, m);
+			bpf_mtap3(ic->ic_rawbpf, m, BPF_D_OUT);
 		}
 	}
 }

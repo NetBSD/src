@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gfe.c,v 1.48 2016/12/15 09:28:05 ozaki-r Exp $	*/
+/*	$NetBSD: if_gfe.c,v 1.49 2018/06/26 06:48:01 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.48 2016/12/15 09:28:05 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.49 2018/06/26 06:48:01 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -1338,7 +1338,7 @@ gfe_tx_enqueue(struct gfe_softc *sc, enum gfe_txprio txprio)
 	 * Move mbuf from the pending queue to the snd queue.
 	 */
 	IF_DEQUEUE(&txq->txq_pendq, m);
-	bpf_mtap(ifp, m);
+	bpf_mtap(ifp, m, BPF_D_OUT);
 	m_freem(m);
 	ifp->if_flags &= ~IFF_OACTIVE;
 

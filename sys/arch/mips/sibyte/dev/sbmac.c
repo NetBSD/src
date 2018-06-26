@@ -1,4 +1,4 @@
-/* $NetBSD: sbmac.c,v 1.49 2017/07/24 09:56:46 mrg Exp $ */
+/* $NetBSD: sbmac.c,v 1.50 2018/06/26 06:47:59 msaitoh Exp $ */
 
 /*
  * Copyright 2000, 2001, 2004
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.49 2017/07/24 09:56:46 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.50 2018/06/26 06:47:59 msaitoh Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -1805,7 +1805,7 @@ sbmac_start(struct ifnet *ifp)
 			 * If there's a BPF listener, bounce a copy of this
 			 * frame to it.
 			 */
-			bpf_mtap(ifp, m_head);
+			bpf_mtap(ifp, m_head, BPF_D_OUT);
 			if (!sc->sbm_pass3_dma) {
 				/*
 				 * Don't free mbuf if we're not copying to new
