@@ -1,4 +1,4 @@
-/* $NetBSD: axppmic.c,v 1.12 2018/06/19 02:08:12 thorpej Exp $ */
+/* $NetBSD: axppmic.c,v 1.13 2018/06/26 04:32:35 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: axppmic.c,v 1.12 2018/06/19 02:08:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: axppmic.c,v 1.13 2018/06/26 04:32:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -694,7 +694,7 @@ static void
 axppmic_attach(device_t parent, device_t self, void *aux)
 {
 	struct axppmic_softc *sc = device_private(self);
-	const struct device_compatible_entry *dce;
+	const struct device_compatible_entry *dce = NULL;
 	const struct axppmic_config *c;
 	struct axpreg_attach_args aaa;
 	struct i2c_attach_args *ia = aux;
@@ -702,7 +702,7 @@ axppmic_attach(device_t parent, device_t self, void *aux)
 	uint32_t irq_mask;
 	void *ih;
 
-	dce = iic_compatible_match(ia, axppmic_compat_data, NULL);
+	(void) iic_compatible_match(ia, axppmic_compat_data, &dce);
 	KASSERT(dce != NULL);
 	c = DEVICE_COMPAT_ENTRY_GET_PTR(dce);
 
