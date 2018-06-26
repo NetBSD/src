@@ -1,4 +1,4 @@
-/* $NetBSD: fcu.c,v 1.5 2018/06/18 17:07:07 thorpej Exp $ */
+/* $NetBSD: fcu.c,v 1.6 2018/06/26 06:03:57 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fcu.c,v 1.5 2018/06/18 17:07:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fcu.c,v 1.6 2018/06/26 06:03:57 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,14 +115,9 @@ static void fcu_adjust(void *);
 CFATTACH_DECL_NEW(fcu, sizeof(struct fcu_softc),
     fcu_match, fcu_attach, NULL, NULL);
 
-static const char * fcu_compats[] = {
-	"fcu",
-	NULL
-};
-
-static const struct device_compatible_entry fcu_compat_data[] = {
-	DEVICE_COMPAT_ENTRY(fcu_compats),
-	DEVICE_COMPAT_TERMINATOR
+static const struct device_compatible_entry compat_data[] = {
+	{ "fcu",			0 },
+	{ NULL,				0 }
 };
 
 static int
@@ -131,7 +126,7 @@ fcu_match(device_t parent, cfdata_t match, void *aux)
 	struct i2c_attach_args *ia = aux;
 	int match_result;
 
-	if (iic_use_direct_match(ia, match, fcu_compat_data, &match_result))
+	if (iic_use_direct_match(ia, match, compat_data, &match_result))
 		return match_result;
 	
 	if (ia->ia_addr == 0x2f)

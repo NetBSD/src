@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adm1026.c,v 1.4 2018/06/18 17:07:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adm1026.c,v 1.5 2018/06/26 06:03:57 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,14 +122,9 @@ static int adm1026_write_reg(struct adm1026_softc *sc,
 CFATTACH_DECL_NEW(adm1026hm, sizeof(struct adm1026_softc),
 	adm1026_match, adm1026_attach, adm1026_detach, NULL);
 
-static const char * adm1026_compats[] = {
-	"i2c-adm1026",
-	NULL
-};
-
-static const struct device_compatible_entry adm1026_compat_data[] = {
-	DEVICE_COMPAT_ENTRY(adm1026_compats),
-	DEVICE_COMPAT_TERMINATOR
+static const struct device_compatible_entry compat_data[] = {
+	{ "i2c-adm1026",		0 },
+	{ NULL,				0 }
 };
 
 static int
@@ -143,7 +138,7 @@ adm1026_match(device_t parent, cfdata_t cf, void *aux)
 	sc.sc_address = ia->ia_addr;
 	sc.sc_iic_flags = 0;
 
-	if (iic_use_direct_match(ia, cf, adm1026_compat_data, &match_result))
+	if (iic_use_direct_match(ia, cf, compat_data, &match_result))
 		return match_result;
 
 	if ((ia->ia_addr & ADM1026_ADDRMASK) == ADM1026_ADDR &&
