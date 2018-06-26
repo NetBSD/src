@@ -1,4 +1,4 @@
-/*	$NetBSD: at24cxx.c,v 1.27 2018/06/18 17:07:07 thorpej Exp $	*/
+/*	$NetBSD: at24cxx.c,v 1.28 2018/06/26 06:03:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at24cxx.c,v 1.27 2018/06/18 17:07:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at24cxx.c,v 1.28 2018/06/26 06:03:57 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,14 +111,6 @@ const struct cdevsw seeprom_cdevsw = {
 
 static int seeprom_wait_idle(struct seeprom_softc *);
 
-static const char * seeprom_compats[] = {
-	"i2c-at24c64",
-	"i2c-at34c02",
-	"atmel,24c02",
-	"atmel,24c16",
-	NULL
-};
-
 static const struct seeprom_size {
 	const char *name;
 	int size;
@@ -127,9 +119,13 @@ static const struct seeprom_size {
 	{ "atmel,24c16", 2048 },
 };
 
-static const struct device_compatible_entry seeprom_compat_data[] = {
-	DEVICE_COMPAT_ENTRY(seeprom_compats),
-	DEVICE_COMPAT_TERMINATOR
+/* XXXJRT collapse seeprom_size stuff into compat_data; see also ofw code  */
+static const struct device_compatible_entry compat_data[] = {
+	{ "i2c-at24c64",		0 },
+	{ "i2c-at34c02",		0 },
+	{ "atmel,24c02",		0 },
+	{ "atmel,24c16",		0 },
+	{ NULL,				0 }
 };
 
 static int
@@ -138,7 +134,7 @@ seeprom_match(device_t parent, cfdata_t cf, void *aux)
 	struct i2c_attach_args *ia = aux;
 	int match_result;
 
-	if (iic_use_direct_match(ia, cf, seeprom_compat_data, &match_result))
+	if (iic_use_direct_match(ia, cf, compat_data, &match_result))
 		return match_result;
 
 	if ((ia->ia_addr & AT24CXX_ADDRMASK) == AT24CXX_ADDR)
