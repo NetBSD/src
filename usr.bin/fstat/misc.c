@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.19 2018/06/26 06:48:03 msaitoh Exp $	*/
+/*	$NetBSD: misc.c,v 1.20 2018/06/26 10:00:25 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: misc.c,v 1.19 2018/06/26 06:48:03 msaitoh Exp $");
+__RCSID("$NetBSD: misc.c,v 1.20 2018/06/26 10:00:25 msaitoh Exp $");
 
 #include <stdbool.h>
 #include <sys/param.h>
@@ -142,8 +142,12 @@ p_bpf(struct file *f)
 		(void)printf(", promisc");
 	if (bpf.bd_immediate)
 		(void)printf(", immed");
-	if (bpf.bd_direction)
-		(void)printf(", direction");
+	if (bpf.bd_direction == BPF_D_IN)
+		(void)printf(", in");
+	else if (bpf.bd_direction == BPF_D_INOUT)
+		(void)printf(", inout");
+	else if (bpf.bd_direction == BPF_D_OUT)
+		(void)printf(", out");
 	if (bpf.bd_jitcode != NULL)
 		(void)printf(", jit");
 	if (bpf.bd_async)
