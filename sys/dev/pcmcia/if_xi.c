@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.81 2018/06/22 04:17:42 msaitoh Exp $ */
+/*	$NetBSD: if_xi.c,v 1.82 2018/06/26 06:48:01 msaitoh Exp $ */
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.81 2018/06/22 04:17:42 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.82 2018/06/26 06:48:01 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -787,7 +787,7 @@ xi_start(struct ifnet *ifp)
 
 	IFQ_DEQUEUE(&ifp->if_snd, m0);
 
-	bpf_mtap(ifp, m0);
+	bpf_mtap(ifp, m0, BPF_D_OUT);
 
 	/*
 	 * Do the output at splhigh() so that an interrupt from another device

@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_emac.c,v 1.14 2018/05/01 21:18:23 jmcneill Exp $ */
+/* $NetBSD: sunxi_emac.c,v 1.15 2018/06/26 06:47:58 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2016-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "opt_net_mpsafe.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_emac.c,v 1.14 2018/05/01 21:18:23 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_emac.c,v 1.15 2018/06/26 06:47:58 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -471,7 +471,7 @@ sunxi_emac_start_locked(struct sunxi_emac_softc *sc)
 			break;
 		}
 		IFQ_DEQUEUE(&ifp->if_snd, m);
-		bpf_mtap(ifp, m);
+		bpf_mtap(ifp, m, BPF_D_OUT);
 
 		sc->tx.cur = TX_SKIP(sc->tx.cur, nsegs);
 	}

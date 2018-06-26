@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.102 2017/02/20 07:43:29 ozaki-r Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.103 2018/06/26 06:48:00 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.102 2017/02/20 07:43:29 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.103 2018/06/26 06:48:00 msaitoh Exp $");
 
 
 #include <sys/param.h>
@@ -1281,7 +1281,7 @@ rtk_start(struct ifnet *ifp)
 		 * If there's a BPF listener, bounce a copy of this frame
 		 * to him.
 		 */
-		bpf_mtap(ifp, m_head);
+		bpf_mtap(ifp, m_head, BPF_D_OUT);
 		if (m_new != NULL) {
 			m_freem(m_head);
 			m_head = m_new;

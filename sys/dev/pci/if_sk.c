@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.86 2018/06/12 21:36:34 jdolecek Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.87 2018/06/26 06:48:01 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.86 2018/06/12 21:36:34 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.87 2018/06/26 06:48:01 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1982,7 +1982,7 @@ sk_start(struct ifnet *ifp)
 		 * If there's a BPF listener, bounce a copy of this frame
 		 * to him.
 		 */
-		bpf_mtap(ifp, m_head);
+		bpf_mtap(ifp, m_head, BPF_D_OUT);
 	}
 	if (pkts == 0)
 		return;
