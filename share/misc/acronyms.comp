@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.210 2018/06/26 22:16:45 sevan Exp $
+$NetBSD: acronyms.comp,v 1.211 2018/06/27 23:26:13 sevan Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -741,6 +741,8 @@ LILO	LInux LOader
 LILO	last in, last out
 LINT	local interrupt
 LIR	local Internet registry
+LISP	LISt Processor
+LISP	Locator/ID Separation Protocol
 LKM	{Linux,loadable} kernel module
 LKML	Linux kernel mailing list
 LL	load linked
@@ -1484,6 +1486,7 @@ VG	volume group
 VGA	Video Graphics Array
 VHDCI	very high density cable interconnect
 VID	{VLAN,voltage level} identifier
+VIM	Vi IMproved
 VIPT	virtually indexed, physically tagged
 VIVT	virtually indexed, virtually tagged
 VLAN	virtual local area network
