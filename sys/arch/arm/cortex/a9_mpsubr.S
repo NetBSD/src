@@ -1,4 +1,4 @@
-/*	$NetBSD: a9_mpsubr.S,v 1.55 2018/01/18 12:49:09 skrll Exp $	*/
+/*	$NetBSD: a9_mpsubr.S,v 1.56 2018/06/27 11:05:50 ryo Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -351,6 +351,7 @@ xputc:
 //
 cortex_init:
 	mov	r10, lr				// save lr
+	mov	r9, sp				// save sp
 
 #if defined(CPU_CORTEXVIRT)
 	/* Leave HYP mode and move into supervisor mode with IRQs/FIQs disabled. */
@@ -379,6 +380,8 @@ cortex_init:
 2:
 	mov	r0, #0
 	msr	spsr_sxc, r0			// set SPSR[23:8] to known value
+
+	mov	sp, r9				// restore sp
 
 #if 0
 	mrc	p14, 0, r0, c0, c0, 0		// MIDR read
