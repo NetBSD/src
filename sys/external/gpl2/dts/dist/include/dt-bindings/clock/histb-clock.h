@@ -1,4 +1,4 @@
-/*	$NetBSD: histb-clock.h,v 1.1.1.3 2018/04/28 18:25:53 jmcneill Exp $	*/
+/*	$NetBSD: histb-clock.h,v 1.1.1.4 2018/06/27 16:27:08 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2016 HiSilicon Technologies Co., Ltd.
@@ -64,6 +64,14 @@
 #define HISTB_USB2_PHY1_REF_CLK		40
 #define HISTB_USB2_PHY2_REF_CLK		41
 #define HISTB_COMBPHY0_CLK		42
+#define HISTB_USB3_BUS_CLK		43
+#define HISTB_USB3_UTMI_CLK		44
+#define HISTB_USB3_PIPE_CLK		45
+#define HISTB_USB3_SUSPEND_CLK		46
+#define HISTB_USB3_BUS_CLK1		47
+#define HISTB_USB3_UTMI_CLK1		48
+#define HISTB_USB3_PIPE_CLK1		49
+#define HISTB_USB3_SUSPEND_CLK1		50
 
 /* clocks provided by mcu CRG */
 #define HISTB_MCE_CLK			1

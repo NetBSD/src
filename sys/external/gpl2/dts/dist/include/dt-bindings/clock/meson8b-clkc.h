@@ -1,4 +1,4 @@
-/*	$NetBSD: meson8b-clkc.h,v 1.1.1.3 2017/11/30 19:40:51 jmcneill Exp $	*/
+/*	$NetBSD: meson8b-clkc.h,v 1.1.1.4 2018/06/27 16:27:08 jmcneill Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
@@ -104,5 +104,6 @@
 #define CLKID_MPLL0		93
 #define CLKID_MPLL1		94
 #define CLKID_MPLL2		95
+#define CLKID_NAND_CLK		112
 
 #endif /* __MESON8B_CLKC_H */

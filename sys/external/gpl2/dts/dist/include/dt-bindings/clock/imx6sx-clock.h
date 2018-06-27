@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6sx-clock.h,v 1.1.1.1 2017/06/15 20:14:23 jmcneill Exp $	*/
+/*	$NetBSD: imx6sx-clock.h,v 1.1.1.2 2018/06/27 16:27:08 jmcneill Exp $	*/
 
 /*
  * Copyright (C) 2014 Freescale Semiconductor, Inc.
@@ -277,6 +277,10 @@
 #define IMX6SX_PLL6_BYPASS		262
 #define IMX6SX_PLL7_BYPASS		263
 #define IMX6SX_CLK_SPDIF_GCLK		264
-#define IMX6SX_CLK_CLK_END		265
+#define IMX6SX_CLK_LVDS2_SEL		265
+#define IMX6SX_CLK_LVDS2_OUT		266
+#define IMX6SX_CLK_LVDS2_IN		267
+#define IMX6SX_CLK_ANACLK2		268
+#define IMX6SX_CLK_CLK_END		269
 
 #endif /* __DT_BINDINGS_CLOCK_IMX6SX_H */

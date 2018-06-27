@@ -1,4 +1,4 @@
-/*	$NetBSD: fsl-imx-audmux.h,v 1.1.1.2 2017/11/30 19:40:51 jmcneill Exp $	*/
+/*	$NetBSD: fsl-imx-audmux.h,v 1.1.1.3 2018/06/27 16:27:08 jmcneill Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 */
 #ifndef __DT_FSL_IMX_AUDMUX_H
@@ -26,6 +26,13 @@
 #define MX51_AUDMUX_PORT5		4
 #define MX51_AUDMUX_PORT6		5
 #define MX51_AUDMUX_PORT7		6
+
+/*
+ * TFCSEL/RFCSEL (i.MX27) or TFSEL/TCSEL/RFSEL/RCSEL (i.MX31/51/53/6Q)
+ * can be sourced from Rx/Tx.
+ */
+#define IMX_AUDMUX_RXFS			0x8
+#define IMX_AUDMUX_RXCLK		0x8
 
 /* Register definitions for the i.MX21/27 Digital Audio Multiplexer */
 #define IMX_AUDMUX_V1_PCR_INMMASK(x)	((x) & 0xff)
