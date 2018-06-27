@@ -1,5 +1,5 @@
 #
-#	$NetBSD: SUNXI,v 1.73 2018/05/10 00:05:22 jmcneill Exp $
+#	$NetBSD: SUNXI,v 1.74 2018/06/27 16:38:11 jmcneill Exp $
 #
 #	Allwinner sunxi family
 #
@@ -68,6 +68,7 @@ makeoptions	DTS="
 	sun7i-a20-lamobo-r1.dts
 	sun7i-a20-m3.dts
 	sun7i-a20-mk808c.dts
+	sun7i-a20-olimex-som-evb-emmc.dts
 	sun7i-a20-olimex-som-evb.dts
 	sun7i-a20-olimex-som204-evb-emmc.dts
 	sun7i-a20-olimex-som204-evb.dts
@@ -89,6 +90,7 @@ makeoptions	DTS="
 	sun8i-a83t-tbs-a711.dts
 
 	sun8i-h2-plus-bananapi-m2-zero.dts
+	sun8i-h2-plus-libretech-all-h3-cc.dts
 	sun8i-h2-plus-orangepi-r1.dts
 	sun8i-h2-plus-orangepi-zero.dts
 
@@ -120,6 +122,7 @@ makeoptions	DTS="
 	sun50i-a64-sopine-baseboard.dts
 	sun50i-a64-teres-i.dts
 
+	sun50i-h5-libretech-all-h3-cc.dts
 	sun50i-h5-nanopi-neo-plus2.dts
 	sun50i-h5-nanopi-neo2.dts
 	sun50i-h5-orangepi-pc2.dts
