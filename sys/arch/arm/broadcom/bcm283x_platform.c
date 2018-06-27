@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm283x_platform.c,v 1.5 2018/06/08 18:09:43 jmcneill Exp $	*/
+/*	$NetBSD: bcm283x_platform.c,v 1.6 2018/06/27 11:12:14 ryo Exp $	*/
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.5 2018/06/08 18:09:43 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.6 2018/06/27 11:12:14 ryo Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bcm283x.h"
@@ -819,6 +819,10 @@ bcm2836_bootstrap(void)
 			    __func__, i);
 		}
 	}
+#if defined(VERBOSE_INIT_ARM) && defined(EARLYCONS)
+	/* for viewability of secondary processor's debug outputs */
+	printf("\n");
+#endif
 #endif
 }
 

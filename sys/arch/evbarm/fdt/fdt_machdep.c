@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.23 2018/06/21 11:57:05 ryo Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.24 2018/06/27 11:12:15 ryo Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.23 2018/06/21 11:57:05 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.24 2018/06/27 11:12:15 ryo Exp $");
 
 #include "opt_machdep.h"
 #include "opt_bootconfig.h"
@@ -137,8 +137,9 @@ fdt_putchar(char c)
 	}
 #ifdef EARLYCONS
 	else {
-		void uartputc(int);	/* evbarm/fdt/fdt_start.S */
-		uartputc(c);
+#define PLATFORM_EARLY_PUTCHAR ___CONCAT(EARLYCONS, _platform_early_putchar)
+		void PLATFORM_EARLY_PUTCHAR(char);
+		PLATFORM_EARLY_PUTCHAR(c);
 	}
 #endif
 }
