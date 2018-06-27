@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2018/06/27 01:25:49 kre Exp $
+#	$NetBSD: Makefile,v 1.15 2018/06/27 06:06:39 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -6,7 +6,7 @@
 SUBDIR+= libgcc .WAIT
 SUBDIR+= libiberty libobjc libgomp
 SUBDIR+= libbacktrace
-SUBDIR+= liblsan
+# SUBDIR+= liblsan
 SUBDIR+= liblto_plugin
 
 .if (${MKLIBSTDCXX} != "no") && (${MKCXX} != "no")
