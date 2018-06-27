@@ -11,7 +11,6 @@ Short term:
  - upstream local patches, mostly to compiler-rt
  - develop fts(3) interceptors (MSan, for ls(1), find(1), mtree(8)
  - investigate and address the libcxx failing tests on NetBSD
- - expr(1) fixes for issue detected with libFuzzer, addition of new ATF tests
  - no-ASLR boot.cfg option, required for MKSANITIZER
 
 Long term:
@@ -34,7 +33,7 @@ Long term:
  - make MKSANITIZER usable with any supported by a compiler combination of
    sanitizers
  - detect and fix more bugs in basesystem
- - pkgsrc integration with sanitizers and MKSANITIER (PKGSANITIER?)
+ - pkgsrc integration with sanitizers and MKSANITIZER (PKGSANITIZER?)
  - port what possible to !amd64
  - fixes with the signal code
  - attach a NetBSD buildbot testing build of compiler-rt and executing tests
