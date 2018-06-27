@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.18 2018/06/16 14:41:25 jmcneill Exp $
+#	$NetBSD: GENERIC64,v 1.19 2018/06/27 16:38:40 jmcneill Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -32,6 +32,7 @@ makeoptions	DTS="
 	sun50i-a64-sopine-baseboard.dts
 	sun50i-a64-teres-i.dts
 
+	sun50i-h5-libretech-all-h3-cc.dts
 	sun50i-h5-nanopi-neo-plus2.dts
 	sun50i-h5-nanopi-neo2.dts
 	sun50i-h5-orangepi-pc2.dts
