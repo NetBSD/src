@@ -1,4 +1,4 @@
-/*	$NetBSD: a9_mpsubr.S,v 1.56 2018/06/27 11:05:50 ryo Exp $	*/
+/*	$NetBSD: a9_mpsubr.S,v 1.57 2018/06/27 11:12:14 ryo Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -589,6 +589,16 @@ cortex_mpfault:
 	.global	cortex_mpstart
 	.type	cortex_mpstart,%object
 
+#ifdef VERBOSE_INIT_ARM
+	.pushsection .bss
+	/* temporary stack for secondary CPUs (for XPUTC) */
+#define BOOT_STACKSIZE	256
+	.align	3
+	.space	BOOT_STACKSIZE * (MAXCPUS - 1)
+bootstk_cpus:
+	.popsection
+#endif
+
 cortex_mpstart:
 #ifndef MULTIPROCESSOR
 	//
@@ -600,6 +610,21 @@ cortex_mpstart:
 #ifdef __ARMEB__
 	setend	be				// switch to BE now
 #endif
+
+#ifdef VERBOSE_INIT_ARM
+	mrc	p15, 0, r1, c0, c0, 5		// MPIDR get
+	and	r1, r1, #7			// get our cpu numder
+
+	mov	r0, #BOOT_STACKSIZE
+	mul	r1, r1, r0			// r1 = BOOT_STACKSIZE * cpuid
+
+	movw	r0, #:lower16:bootstk_cpus
+	movt	r0, #:upper16:bootstk_cpus
+#if !defined(KERNEL_BASES_EQUAL)
+	sub	r0, r0, #KERNEL_BASE_VOFFSET
+#endif
+	sub	sp, r0, r1			// sp = bootstk_cpus - r1
+#endif /* VERBOSE_INIT_ARM */
 
 	// We haven't used anything from memory yet so we can invalidate the
 	// L1 cache without fear of losing valuable data.  Afterwards, we can
