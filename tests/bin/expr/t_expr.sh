@@ -1,4 +1,4 @@
-# $NetBSD: t_expr.sh,v 1.5 2018/06/27 17:14:47 kamil Exp $
+# $NetBSD: t_expr.sh,v 1.6 2018/06/27 17:39:30 kamil Exp $
 #
 # Copyright (c) 2007 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -96,6 +96,9 @@ overflow_body() {
 	          "expr: integer overflow or underflow occurred for operation '-4611686018427387904 * -2'"
 	test_expr '-4611686018427387904 \* -3' \
 	          "expr: integer overflow or underflow occurred for operation '-4611686018427387904 * -3'"
+	test_expr '0 \* -1' '0'
+	test_expr '0 \* 0' '0'
+	test_expr '0 \* 1' '0'
 }
 
 atf_test_case gtkmm
