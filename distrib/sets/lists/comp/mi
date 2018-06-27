@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2204 2018/06/26 21:01:33 christos Exp $
+#	$NetBSD: mi,v 1.2205 2018/06/27 06:08:15 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -3423,8 +3423,8 @@
 ./usr/lib/libldap_p.a				comp-ldap-proflib	compatfile,ldap,profile
 ./usr/lib/libldap_r.a				comp-ldap-lib		compatfile,ldap
 ./usr/lib/libldap_r_p.a				comp-ldap-proflib	compatfile,ldap,profile
-./usr/lib/liblsan.a				comp-c-lib		compatfile,gcc
-./usr/lib/liblsan_p.a				comp-c-proflib		compatfile,profile,gcc
+#./usr/lib/liblsan.a				comp-c-lib		compatfile,gcc
+#./usr/lib/liblsan_p.a				comp-c-proflib		compatfile,profile,gcc
 ./usr/lib/liblua.a				comp-c-lib		compatfile
 ./usr/lib/liblua_p.a				comp-c-proflib		compatfile,profile
 ./usr/lib/liblutok.a				comp-c-lib		compatfile,kyua
