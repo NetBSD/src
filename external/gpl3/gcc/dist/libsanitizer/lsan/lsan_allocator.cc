@@ -26,7 +26,11 @@ namespace __lsan {
 struct ChunkMetadata {
   u8 allocated : 8;  // Must be first.
   ChunkTag tag : 2;
+#ifdef _LP64
   uptr requested_size : 54;
+#else
+  uptr requested_size : 30;
+#endif
   u32 stack_trace_id;
 };
 
@@ -40,9 +44,15 @@ typedef SizeClassAllocator32<0, SANITIZER_MMAP_RANGE_SIZE,
     sizeof(ChunkMetadata), SizeClassMap, kRegionSizeLog, ByteMap>
     PrimaryAllocator;
 #else
+#if _LP64
 static const uptr kMaxAllowedMallocSize = 8UL << 30;
 static const uptr kAllocatorSpace = 0x600000000000ULL;
 static const uptr kAllocatorSize = 0x40000000000ULL; // 4T.
+#else
+static const uptr kMaxAllowedMallocSize = 8UL << 20;
+static const uptr kAllocatorSpace = 0x60000000UL;
+static const uptr kAllocatorSize = 0x40000000ULL; // 2G.
+#endif
 typedef SizeClassAllocator64<kAllocatorSpace, kAllocatorSize,
         sizeof(ChunkMetadata), DefaultSizeClassMap> PrimaryAllocator;
 #endif
