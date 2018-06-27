@@ -1,4 +1,4 @@
-/*	$NetBSD: rgephyreg.h,v 1.10 2018/06/19 10:36:41 jmcneill Exp $	*/
+/*	$NetBSD: rgephyreg.h,v 1.11 2018/06/27 07:51:36 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -64,10 +64,6 @@
 #define RGEPHY_MII_PHYCR1	0x18	/* PHY Specific control register 1 */
 #define RGEPHY_PHYCR1_MDI_MMCE	__BIT(9)
 #define RGEPHY_PHYCR1_ALDPS_EN	__BIT(2)
-#define RGEPHY_MII_MACR		0x0d	/* MMD Access control register */
-#define RGEPHY_MACR_FUNCTION	__BITS(15,14)
-#define RGEPHY_MACR_DEVAD	__BITS(4,0)
-#define RGEPHY_MII_MAADR	0x0e	/* MMD Access address data register */
 
 #define RGEPHY_MII_PHYSR	0x1a	/* PHY Specific status register */
 #define RGEPHY_PHYSR_ALDPS	__BIT(14)
