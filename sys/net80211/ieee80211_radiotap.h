@@ -1,7 +1,9 @@
-/* $FreeBSD: src/sys/net80211/ieee80211_radiotap.h,v 1.11 2007/12/13 01:23:40 sam Exp $ */
-/* $NetBSD: ieee80211_radiotap.h,v 1.24 2011/02/25 10:45:57 tron Exp $ */
+/* $FreeBSD$ */
+/* $NetBSD: ieee80211_radiotap.h,v 1.24.56.1 2018/06/28 21:03:07 phil Exp $ */
 
 /*-
+ * SPDX-License-Identifier: BSD-3-Clause
+ *
  * Copyright (c) 2003, 2004 David Young.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -12,6 +14,9 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
+ * 3. The name of David Young may not be used to endorse or promote
+ *    products derived from this software without specific prior
+ *    written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY DAVID YOUNG ``AS IS'' AND ANY
  * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
@@ -49,10 +54,13 @@
 #endif
 #endif /* defined(__KERNEL__) || defined(_KERNEL) */
 
-/* XXX tcpdump/libpcap do not tolerate variable-length headers,
- * yet, so we pad every radiotap header to 64 bytes. Ugh.
- */
-#define IEEE80211_RADIOTAP_HDRLEN	64
+#define	IEEE80211_RADIOTAP_HDRLEN	64	/* XXX deprecated */
+
+struct ieee80211_radiotap_vendor_header {
+	uint8_t		vh_oui[3];	/* 3 byte vendor OUI */
+	uint8_t		vh_sub_ns;	/* Sub namespace of this section */
+	uint16_t	vh_skip_len;	/* Length of this vendor section */
+} __packed;
 
 /*
  * The radio capture header precedes the 802.11 header.
@@ -60,25 +68,25 @@
  * Note well: all radiotap fields are little-endian.
  */
 struct ieee80211_radiotap_header {
-	uint8_t	it_version;		/* Version 0. Only increases
+	uint8_t		it_version;	/* Version 0. Only increases
 					 * for drastic changes,
 					 * introduction of compatible
 					 * new fields does not count.
 					 */
-	uint8_t	it_pad;
-	uint16_t       it_len;		/* length of the whole
+	uint8_t		it_pad;
+	uint16_t	it_len;		/* length of the whole
 					 * header in bytes, including
 					 * it_version, it_pad,
 					 * it_len, and data fields.
 					 */
-	uint32_t       it_present;	/* A bitmap telling which
+	uint32_t	it_present;	/* A bitmap telling which
 					 * fields are present. Set bit 31
 					 * (0x80000000) to extend the
 					 * bitmap by another 32 bits.
 					 * Additional extensions are made
 					 * by setting bit 31.
 					 */
-} __packed __aligned(8);
+} __packed;
 
 /*
  * Name                                 Data type       Units
@@ -99,9 +107,10 @@ struct ieee80211_radiotap_header {
  *      For frequency-hopping radios, the hop set (first byte)
  *      and pattern (second byte).
  *
- * IEEE80211_RADIOTAP_RATE              uint8_t         500kb/s
+ * IEEE80211_RADIOTAP_RATE              uint8_t         500kb/s or index
  *
- *      Tx/Rx data rate
+ *      Tx/Rx data rate.  If bit 0x80 is set then it represents an
+ *	an MCS index and not an IEEE rate.
  *
  * IEEE80211_RADIOTAP_DBM_ANTSIGNAL     int8_t          decibels from
  *                                                      one milliwatt (dBm)
@@ -161,22 +170,6 @@ struct ieee80211_radiotap_header {
  *      Unitless indication of the Rx/Tx antenna for this packet.
  *      The first antenna is antenna 0.
  *
- * IEEE80211_RADIOTAP_RX_FLAGS          uint16_t        bitmap
- *
- *     Properties of received frames. See flags defined below.
- *
- * IEEE80211_RADIOTAP_TX_FLAGS          uint16_t        bitmap
- *
- *     Properties of transmitted frames. See flags defined below.
- *
- * IEEE80211_RADIOTAP_RTS_RETRIES       uint8_t         data
- *
- *     Number of rts retries a transmitted frame used.
- *
- * IEEE80211_RADIOTAP_DATA_RETRIES      uint8_t         data
- *
- *     Number of unicast retries a transmitted frame used.
- *
  * IEEE80211_RADIOTAP_XCHANNEL          uint32_t        bitmap
  *                                      uint16_t        MHz
  *                                      uint8_t         channel number
@@ -187,6 +180,30 @@ struct ieee80211_radiotap_header {
  *      finally the maximum regulatory transmit power cap in .5 dBm
  *      units.  This property supersedes IEEE80211_RADIOTAP_CHANNEL
  *      and only one of the two should be present.
+ * IEEE80211_RADIOTAP_RX_FLAGS          guint16       bitmap
+ *
+ *     Properties of received frames. See flags defined below.
+ *
+ * IEEE80211_RADIOTAP_TX_FLAGS          guint16       bitmap
+ *
+ *     Properties of transmitted frames. See flags defined below.
+ *
+ * IEEE80211_RADIOTAP_RTS_RETRIES       u8           data
+ *
+ *     Number of rts retries a transmitted frame used.
+ *
+ * IEEE80211_RADIOTAP_DATA_RETRIES      u8           data
+ *
+ *     Number of unicast retries a transmitted frame used.
+ *
+ * IEEE80211_RADIOTAP_MCS       u8, u8, u8              unitless
+ *
+ *     Contains a bitmap of known fields/flags, the flags, and
+ *     the MCS index.
+ *
+ * IEEE80211_RADIOTAP_AMPDU_STATUS      u32, u16, u8, u8        unitlesss
+ *
+ *      Contains the AMPDU information for the subframe.
  */
 enum ieee80211_radiotap_type {
 	IEEE80211_RADIOTAP_TSFT = 0,
@@ -203,13 +220,40 @@ enum ieee80211_radiotap_type {
 	IEEE80211_RADIOTAP_ANTENNA = 11,
 	IEEE80211_RADIOTAP_DB_ANTSIGNAL = 12,
 	IEEE80211_RADIOTAP_DB_ANTNOISE = 13,
+	/*
+	 * 14-17 are from Linux, they overlap the netbsd-specific
+	 * fields.
+	 */
 	IEEE80211_RADIOTAP_RX_FLAGS = 14,
 	IEEE80211_RADIOTAP_TX_FLAGS = 15,
 	IEEE80211_RADIOTAP_RTS_RETRIES = 16,
 	IEEE80211_RADIOTAP_DATA_RETRIES = 17,
+
 	IEEE80211_RADIOTAP_XCHANNEL = 18,
-	IEEE80211_RADIOTAP_EXT = 31
+	IEEE80211_RADIOTAP_MCS = 19,
+	IEEE80211_RADIOTAP_AMPDU_STATUS = 20,
+	IEEE80211_RADIOTAP_VHT = 21,
+
+        IEEE80211_RADIOTAP_RADIOTAP_NAMESPACE = 29,
+	IEEE80211_RADIOTAP_VENDOREXT = 30,
+	IEEE80211_RADIOTAP_EXT = 31,
 };
+
+#ifndef _KERNEL
+/* channel attributes */
+#define	IEEE80211_CHAN_TURBO	0x00000010 /* Turbo channel */
+#define	IEEE80211_CHAN_CCK	0x00000020 /* CCK channel */
+#define	IEEE80211_CHAN_OFDM	0x00000040 /* OFDM channel */
+#define	IEEE80211_CHAN_2GHZ	0x00000080 /* 2 GHz spectrum channel. */
+#define	IEEE80211_CHAN_5GHZ	0x00000100 /* 5 GHz spectrum channel */
+#define	IEEE80211_CHAN_PASSIVE	0x00000200 /* Only passive scan allowed */
+#define	IEEE80211_CHAN_DYN	0x00000400 /* Dynamic CCK-OFDM channel */
+#define	IEEE80211_CHAN_GFSK	0x00000800 /* GFSK channel (FHSS PHY) */
+#define	IEEE80211_CHAN_GSM	0x00001000 /* 900 MHz spectrum channel */
+#define	IEEE80211_CHAN_STURBO	0x00002000 /* 11a static turbo channel only */
+#define	IEEE80211_CHAN_HALF	0x00004000 /* Half rate channel */
+#define	IEEE80211_CHAN_QUARTER	0x00008000 /* Quarter rate channel */
+#endif /* !_KERNEL */
 
 /* For IEEE80211_RADIOTAP_FLAGS */
 #define	IEEE80211_RADIOTAP_F_CFP	0x01	/* sent/received
@@ -231,22 +275,97 @@ enum ieee80211_radiotap_type {
 						 * (to 32-bit boundary)
 						 */
 #define	IEEE80211_RADIOTAP_F_BADFCS	0x40	/* does not pass FCS check */
-#define IEEE80211_RADIOTAP_F_SHORTGI	0x80	/* HT short GI */
+#define	IEEE80211_RADIOTAP_F_SHORTGI	0x80	/* HT short GI */
 
 /* For IEEE80211_RADIOTAP_RX_FLAGS */
-#define IEEE80211_RADIOTAP_F_RX_BADFCS 0x0001  /* Frame failed CRC check.
-						*
-						* Deprecated: use the flag
-						* IEEE80211_RADIOTAP_F_BADFCS in
-						* the IEEE80211_RADIOTAP_FLAGS
-						* field, instead.
-						*/
+#define	IEEE80211_RADIOTAP_F_RX_BADPLCP	0x0002	/* bad PLCP */
 
 /* For IEEE80211_RADIOTAP_TX_FLAGS */
-#define IEEE80211_RADIOTAP_F_TX_FAIL   0x0001  /* failed due to excessive
-						* retries
-						*/
-#define IEEE80211_RADIOTAP_F_TX_CTS    0x0002  /* used cts 'protection' */
-#define IEEE80211_RADIOTAP_F_TX_RTS    0x0004  /* used rts/cts handshake */
+#define	IEEE80211_RADIOTAP_F_TX_FAIL	0x0001	/* failed due to excessive
+						 * retries */
+#define	IEEE80211_RADIOTAP_F_TX_CTS	0x0002	/* used cts 'protection' */
+#define	IEEE80211_RADIOTAP_F_TX_RTS	0x0004	/* used rts/cts handshake */
+
+
+/* For IEEE80211_RADIOTAP_MCS */
+#define	IEEE80211_RADIOTAP_MCS_HAVE_BW		0x01
+#define	IEEE80211_RADIOTAP_MCS_HAVE_MCS		0x02
+#define	IEEE80211_RADIOTAP_MCS_HAVE_GI		0x04
+#define	IEEE80211_RADIOTAP_MCS_HAVE_FMT		0x08
+#define	IEEE80211_RADIOTAP_MCS_HAVE_FEC		0x10
+#define	IEEE80211_RADIOTAP_MCS_HAVE_STBC	0x20
+#define	IEEE80211_RADIOTAP_MCS_HAVE_NESS	0x40
+#define	IEEE80211_RADIOTAP_MCS_NESS_BIT1	0x80
+
+#define	IEEE80211_RADIOTAP_MCS_BW_MASK		0x03
+#define	    IEEE80211_RADIOTAP_MCS_BW_20	0
+#define	    IEEE80211_RADIOTAP_MCS_BW_40	1
+#define	 IEEE80211_RADIOTAP_MCS_BW_20L		2
+#define	    IEEE80211_RADIOTAP_MCS_BW_20U	3
+#define	IEEE80211_RADIOTAP_MCS_SGI		0x04
+#define	IEEE80211_RADIOTAP_MCS_FMT_GF		0x08
+#define	IEEE80211_RADIOTAP_MCS_FEC_LDPC		0x10
+#define	IEEE80211_RADIOTAP_MCS_STBC_MASK	0x60
+#define	IEEE80211_RADIOTAP_MCS_STBC_SHIFT	5
+#define	    IEEE80211_RADIOTAP_MCS_STBC_1	1
+#define	    IEEE80211_RADIOTAP_MCS_STBC_2	2
+#define	    IEEE80211_RADIOTAP_MCS_STBC_3	3
+#define	IEEE80211_RADIOTAP_MCS_NESS_BIT0	0x80
+
+/* For IEEE80211_RADIOTAP_AMPDU_STATUS */
+#define	IEEE80211_RADIOTAP_AMPDU_REPORT_ZEROLEN		0x0001
+#define	IEEE80211_RADIOTAP_AMPDU_IS_ZEROLEN		0x0002
+#define	IEEE80211_RADIOTAP_AMPDU_LAST_KNOWN		0x0004
+#define	IEEE80211_RADIOTAP_AMPDU_IS_LAST		0x0008
+#define	IEEE80211_RADIOTAP_AMPDU_DELIM_CRC_ERR		0x0010
+#define	IEEE80211_RADIOTAP_AMPDU_DELIM_CRC_KNOWN	0x0020
+
+/* For IEEE80211_RADIOTAP_VHT */
+#define	IEEE80211_RADIOTAP_VHT_HAVE_STBC	0x0001
+#define	IEEE80211_RADIOTAP_VHT_HAVE_TXOP_PS	0x0002
+#define	IEEE80211_RADIOTAP_VHT_HAVE_GI		0x0004
+#define	IEEE80211_RADIOTAP_VHT_HAVE_SGI_NSYM_DA	0x0008
+#define	IEEE80211_RADIOTAP_VHT_HAVE_LDPC_EXTRA	0x0010
+#define	IEEE80211_RADIOTAP_VHT_HAVE_BF		0x0020
+#define	IEEE80211_RADIOTAP_VHT_HAVE_BW		0x0040
+#define	IEEE80211_RADIOTAP_VHT_HAVE_GID		0x0080
+#define	IEEE80211_RADIOTAP_VHT_HAVE_PAID	0x0100
+#define	IEEE80211_RADIOTAP_VHT_STBC		0x01
+#define	IEEE80211_RADIOTAP_VHT_TXOP_PS		0x02
+#define	IEEE80211_RADIOTAP_VHT_SGI		0x04
+#define	IEEE80211_RADIOTAP_VHT_SGI_NSYM_DA	0x08
+#define	IEEE80211_RADIOTAP_VHT_LDPC_EXTRA	0x10
+#define	IEEE80211_RADIOTAP_VHT_BF		0x20
+#define	IEEE80211_RADIOTAP_VHT_NSS		0x0f
+#define	IEEE80211_RADIOTAP_VHT_MCS		0xf0
+#define	IEEE80211_RADIOTAP_VHT_CODING_LDPC	0x01
+
+#define	IEEE80211_RADIOTAP_VHT_BW_MASK		0x1f
+#define	IEEE80211_RADIOTAP_VHT_BW_20		IEEE80211_RADIOTAP_MCS_BW_20
+#define	IEEE80211_RADIOTAP_VHT_BW_40		IEEE80211_RADIOTAP_MCS_BW_40
+#define	IEEE80211_RADIOTAP_VHT_BW_20L		IEEE80211_RADIOTAP_MCS_BW_20L
+#define	IEEE80211_RADIOTAP_VHT_BW_20U		IEEE80211_RADIOTAP_MCS_BW_20U
+#define	IEEE80211_RADIOTAP_VHT_BW_80		4
+#define	IEEE80211_RADIOTAP_VHT_BW_40L		5
+#define	IEEE80211_RADIOTAP_VHT_BW_40U		6
+#define	IEEE80211_RADIOTAP_VHT_BW_20LL		7
+#define	IEEE80211_RADIOTAP_VHT_BW_20LU		8
+#define	IEEE80211_RADIOTAP_VHT_BW_20UL		9
+#define	IEEE80211_RADIOTAP_VHT_BW_20UU		10
+#define	IEEE80211_RADIOTAP_VHT_BW_160		11
+#define	IEEE80211_RADIOTAP_VHT_BW_80L		12
+#define	IEEE80211_RADIOTAP_VHT_BW_80U		13
+#define	IEEE80211_RADIOTAP_VHT_BW_40LL		14
+#define	IEEE80211_RADIOTAP_VHT_BW_40LU		15
+#define	IEEE80211_RADIOTAP_VHT_BW_40UL		16
+#define	IEEE80211_RADIOTAP_VHT_BW_40UU		17
+#define	IEEE80211_RADIOTAP_VHT_BW_20LLL		18
+#define	IEEE80211_RADIOTAP_VHT_BW_20LLU		19
+#define	IEEE80211_RADIOTAP_VHT_BW_20LUL		20
+#define	IEEE80211_RADIOTAP_VHT_BW_20LUU		21
+#define	IEEE80211_RADIOTAP_VHT_BW_20ULL		22
+#define	IEEE80211_RADIOTAP_VHT_BW_20ULU		23
+#define	IEEE80211_RADIOTAP_VHT_BW_20UUL		24
+#define	IEEE80211_RADIOTAP_VHT_BW_20UUU		25
 
 #endif /* !_NET80211_IEEE80211_RADIOTAP_H_ */
