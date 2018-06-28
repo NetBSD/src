@@ -1,5 +1,5 @@
+/* $FreeBSD$ */
 /*	$OpenBSD: ieee80211_amrr.h,v 1.3 2006/06/17 19:34:31 damien Exp $	*/
-/*	$NetBSD: ieee80211_amrr.h,v 1.1 2006/10/31 21:53:41 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -32,9 +32,12 @@
 /*
  * Rate control settings.
  */
+struct ieee80211vap;
+
 struct ieee80211_amrr {
 	u_int	amrr_min_success_threshold;
 	u_int	amrr_max_success_threshold;
+	int	amrr_interval;		/* update interval (ticks) */
 };
 
 #define IEEE80211_AMRR_MIN_SUCCESS_THRESHOLD	 1
@@ -44,16 +47,15 @@ struct ieee80211_amrr {
  * Rate control state for a given node.
  */
 struct ieee80211_amrr_node {
-	u_int	amn_success;
-	u_int	amn_recovery;
-	u_int	amn_success_threshold;
+	struct ieee80211_amrr *amn_amrr;/* backpointer */
+	int	amn_rix;		/* current rate index */
+	int	amn_ticks;		/* time of last update */
+	/* statistics */
 	u_int	amn_txcnt;
+	u_int	amn_success;
+	u_int	amn_success_threshold;
+	u_int	amn_recovery;
 	u_int	amn_retrycnt;
 };
-
-void	ieee80211_amrr_node_init(struct ieee80211_amrr *,
-	    struct ieee80211_amrr_node *);
-void	ieee80211_amrr_choose(struct ieee80211_amrr *, struct ieee80211_node *,
-	    struct ieee80211_amrr_node *);
 
 #endif /* _NET80211_IEEE80211_AMRR_H_ */

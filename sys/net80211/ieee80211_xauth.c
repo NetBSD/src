@@ -1,6 +1,8 @@
 /*-
+ * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
+ *
  * Copyright (c) 2004 Video54 Technologies, Inc.
- * Copyright (c) 2004-2005 Sam Leffler, Errno Consulting
+ * Copyright (c) 2004-2008 Sam Leffler, Errno Consulting
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -11,12 +13,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
- *
- * Alternatively, this software may be distributed under the terms of the
- * GNU General Public License ("GPL") version 2 as published by the Free
- * Software Foundation.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -31,12 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-#ifdef __FreeBSD__
-__FBSDID("$FreeBSD: src/sys/net80211/ieee80211_xauth.c,v 1.2 2004/12/31 22:42:38 sam Exp $");
-#endif
-#ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_xauth.c,v 1.5 2006/02/27 01:08:28 dyoung Exp $");
-#endif
+__FBSDID("$FreeBSD$");
 
 /*
  * External authenticator placeholder module.
@@ -50,19 +41,26 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_xauth.c,v 1.5 2006/02/27 01:08:28 dyoung E
  * of the available callbacks--the user mode authenticator process works
  * entirely from messages about stations joining and leaving.
  */
+#include "opt_wlan.h"
+
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h> 
+#include <sys/malloc.h>   
 #include <sys/mbuf.h>   
+#include <sys/module.h>
 
 #include <sys/socket.h>
 
 #include <net/if.h>
 #include <net/if_media.h>
-#include <net/if_ether.h>
+#include <net/ethernet.h>
 #include <net/route.h>
 
 #include <net80211/ieee80211_var.h>
+
+/* XXX number of references from net80211 layer; needed for module code */
+static	int nrefs = 0;
 
 /*
  * One module handles everything for now.  May want
@@ -76,8 +74,6 @@ static const struct ieee80211_authenticator xauth = {
 	.ia_node_leave	= NULL,
 };
 
-IEEE80211_CRYPTO_SETUP(ieee80211_external_auth_setup)
-{
-	ieee80211_authenticator_register(IEEE80211_AUTH_8021X, &xauth);
-	ieee80211_authenticator_register(IEEE80211_AUTH_WPA, &xauth);
-}
+IEEE80211_AUTH_MODULE(xauth, 1);
+IEEE80211_AUTH_ALG(x8021x, IEEE80211_AUTH_8021X, xauth);
+IEEE80211_AUTH_ALG(wpa, IEEE80211_AUTH_WPA, xauth);

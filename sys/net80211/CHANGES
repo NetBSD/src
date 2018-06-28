@@ -1,3 +1,11 @@
+*** Changes in 2018 for WiFi refresh.
+
+2018-06-28 13:47 Phil 
+
+Copy FreeBSD version in total, git repo mirror had commit Id of
+09e3123164ec345822e00465039503686efde455.  Moved ieee80211_freebsd.[ch]
+to ieee80211_netbsd.[ch].
+
 ***
 *** Summary of changes between 2005-05-18 and 2005-11-01.
 ***
