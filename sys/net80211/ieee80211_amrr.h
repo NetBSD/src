@@ -1,3 +1,5 @@
+/*	$NetBSD: ieee80211_amrr.h,v 1.1.148.2 2018/06/28 21:23:01 phil Exp $ */
+
 /* $FreeBSD$ */
 /*	$OpenBSD: ieee80211_amrr.h,v 1.3 2006/06/17 19:34:31 damien Exp $	*/
 

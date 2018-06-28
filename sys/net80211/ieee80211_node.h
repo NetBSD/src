@@ -1,3 +1,5 @@
+/*	$NetBSD: ieee80211_node.h,v 1.30.2.2 2018/06/28 21:23:01 phil Exp $ */
+
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
  *
