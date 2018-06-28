@@ -1,5 +1,4 @@
-/* $FreeBSD$ */
-/* $NetBSD: ieee80211_radiotap.h,v 1.24.56.1 2018/06/28 21:03:07 phil Exp $ */
+/*	$NetBSD: ieee80211_radiotap.h,v 1.24.56.2 2018/06/28 21:23:01 phil Exp $ */
 
 /*-
  * SPDX-License-Identifier: BSD-3-Clause

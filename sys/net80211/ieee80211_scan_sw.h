@@ -1,3 +1,5 @@
+/*	$NetBSD: ieee80211_scan_sw.h,v 1.1.2.2 2018/06/28 21:23:01 phil Exp $ */
+
 /*-
  * Copyright (c) 2015 Adrian Chadd <adrian@FreeBSD.org>
  * All rights reserved.
