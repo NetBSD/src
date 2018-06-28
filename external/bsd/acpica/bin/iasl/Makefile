@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.20 2018/06/27 16:13:43 maya Exp $
+# $NetBSD: Makefile,v 1.21 2018/06/28 07:56:22 maya Exp $
 
 .if (${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64")
 PROG=	iasl
@@ -264,7 +264,7 @@ SRCS+=	osunixxf.c
 
 YHEADER=	# Generate headers
 YFLAGS+=-v	# Require debugging
-FLAGS+=-i	# Case insensitivive parser
+LFLAGS+=-i	# Case insensitivive parser
 
 
 # Prevent rules from firing.
