@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1594 2018/06/13 03:28:36 ozaki-r Exp $
+# $NetBSD: mi,v 1.1595 2018/06/29 12:34:14 roy Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2086,9 +2086,9 @@
 ./usr/share/man/cat5/ctf.0			man-sys-catman		ctf,.cat
 ./usr/share/man/cat5/daily.0			man-sys-catman		.cat
 ./usr/share/man/cat5/daily.conf.0		man-sys-catman		.cat
-./usr/share/man/cat5/dhclient.conf.0		man-dhclient-catman	.cat
-./usr/share/man/cat5/dhclient.leases.0		man-dhclient-catman	.cat
-./usr/share/man/cat5/dhcp-eval.0		man-dhclient-catman	.cat
+./usr/share/man/cat5/dhclient.conf.0		man-obsolete		obsolete
+./usr/share/man/cat5/dhclient.leases.0		man-obsolete		obsolete
+./usr/share/man/cat5/dhcp-eval.0		man-dhcpd-catman	.cat
 ./usr/share/man/cat5/dhcp-options.0		man-dhcpd-catman	.cat
 ./usr/share/man/cat5/dhcpcd.conf.0		man-dhcpcd-catman	.cat
 ./usr/share/man/cat5/dhcpd.conf.0		man-dhcpd-catman	.cat
@@ -2454,8 +2454,8 @@
 ./usr/share/man/cat8/defer.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat8/dev_mkdb.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/devpubd.0			man-sysutil-catman	.cat
-./usr/share/man/cat8/dhclient-script.0		man-dhclient-catman	.cat
-./usr/share/man/cat8/dhclient.0			man-dhclient-catman	.cat
+./usr/share/man/cat8/dhclient-script.0		man-obsolete		obsolete
+./usr/share/man/cat8/dhclient.0			man-obsolete		obsolete
 ./usr/share/man/cat8/dhcpcd-run-hooks.0		man-dhcpcd-catman	.cat
 ./usr/share/man/cat8/dhcpcd.0			man-dhcpcd-catman	.cat
 ./usr/share/man/cat8/dhcpd.0			man-dhcpd-catman	.cat
@@ -5150,9 +5150,9 @@
 ./usr/share/man/html5/ctf.html			man-sys-catman		ctf,html
 ./usr/share/man/html5/daily.conf.html		man-sys-htmlman		html
 ./usr/share/man/html5/daily.html		man-sys-htmlman		html
-./usr/share/man/html5/dhclient.conf.html	man-dhclient-htmlman	html
-./usr/share/man/html5/dhclient.leases.html	man-dhclient-htmlman	html
-./usr/share/man/html5/dhcp-eval.html		man-dhclient-htmlman	html
+./usr/share/man/html5/dhclient.conf.html	man-obsolete		obsolete
+./usr/share/man/html5/dhclient.leases.html	man-obsolete		obsolete
+./usr/share/man/html5/dhcp-eval.html		man-dhcpd-htmlman	html
 ./usr/share/man/html5/dhcp-options.html		man-dhcpd-htmlman	html
 ./usr/share/man/html5/dhcpcd.conf.html		man-dhcpcd-htmlman	html
 ./usr/share/man/html5/dhcpd.conf.html		man-dhcpd-htmlman	html
@@ -5458,8 +5458,8 @@
 ./usr/share/man/html8/defer.html		man-postfix-htmlman	postfix,html
 ./usr/share/man/html8/dev_mkdb.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/devpubd.html		man-sysutil-htmlman	html
-./usr/share/man/html8/dhclient-script.html	man-dhclient-htmlman	html
-./usr/share/man/html8/dhclient.html		man-dhclient-htmlman	html
+./usr/share/man/html8/dhclient-script.html	man-obsolete		obsolete
+./usr/share/man/html8/dhclient.html		man-obsolete		obsolete
 ./usr/share/man/html8/dhcpcd-run-hooks.html	man-dhcpcd-htmlman	html
 ./usr/share/man/html8/dhcpcd.html		man-dhcpcd-htmlman	html
 ./usr/share/man/html8/dhcpd.html		man-dhcpd-htmlman	html
@@ -8148,9 +8148,9 @@
 ./usr/share/man/man5/ctf.5			man-sys-man		ctf,.man
 ./usr/share/man/man5/daily.5			man-sys-man		.man
 ./usr/share/man/man5/daily.conf.5		man-sys-man		.man
-./usr/share/man/man5/dhclient.conf.5		man-dhclient-man	.man
-./usr/share/man/man5/dhclient.leases.5		man-dhclient-man	.man
-./usr/share/man/man5/dhcp-eval.5		man-dhclient-man	.man
+./usr/share/man/man5/dhclient.conf.5		man-obsolete		obsolete
+./usr/share/man/man5/dhclient.leases.5		man-obsolete		obsolete
+./usr/share/man/man5/dhcp-eval.5		man-dhcpd-man		.man
 ./usr/share/man/man5/dhcp-options.5		man-dhcpd-man		.man
 ./usr/share/man/man5/dhcpcd.conf.5		man-dhcpcd-man		.man
 ./usr/share/man/man5/dhcpd.conf.5		man-dhcpd-man		.man
@@ -8515,8 +8515,8 @@
 ./usr/share/man/man8/defer.8			man-postfix-man		postfix,.man
 ./usr/share/man/man8/dev_mkdb.8			man-sysutil-man		.man
 ./usr/share/man/man8/devpubd.8			man-sysutil-man		.man
-./usr/share/man/man8/dhclient-script.8		man-dhclient-man	.man
-./usr/share/man/man8/dhclient.8			man-dhclient-man	.man
+./usr/share/man/man8/dhclient-script.8		man-obsolete		obsolete
+./usr/share/man/man8/dhclient.8			man-obsolete		obsolete
 ./usr/share/man/man8/dhcpcd-run-hooks.8		man-dhcpcd-man		.man
 ./usr/share/man/man8/dhcpcd.8			man-dhcpcd-man		.man
 ./usr/share/man/man8/dhcpd.8			man-dhcpd-man		.man
