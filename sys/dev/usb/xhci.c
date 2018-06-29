@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.92 2018/05/14 00:26:02 jakllsch Exp $	*/
+/*	$NetBSD: xhci.c,v 1.93 2018/06/29 17:48:24 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.92 2018/05/14 00:26:02 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.93 2018/06/29 17:48:24 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -911,7 +911,6 @@ xhci_init(struct xhci_softc *sc)
 	/* Set up the bus struct for the usb 3 and usb 2 buses */
 	sc->sc_bus.ub_methods = &xhci_bus_methods;
 	sc->sc_bus.ub_pipesize = sizeof(struct xhci_pipe);
-	sc->sc_bus.ub_revision = USBREV_3_0;
 	sc->sc_bus.ub_usedma = true;
 	sc->sc_bus.ub_hcpriv = sc;
 
