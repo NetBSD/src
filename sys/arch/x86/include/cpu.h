@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.92 2018/06/14 14:36:46 maxv Exp $	*/
+/*	$NetBSD: cpu.h,v 1.93 2018/06/29 21:53:12 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -235,6 +235,32 @@ struct cpu_info {
 	union descriptor *ci_gdt;
 	struct cpu_tss	*ci_tss;	/* Per-cpu TSSes; shared among LWPs */
 	int ci_tss_sel;			/* TSS selector of this cpu */
+
+#ifdef XEN
+	/* Xen raw system time at which we last ran hardclock.  */
+	uint64_t	ci_xen_hardclock_systime_ns;
+
+	/*
+	 * Last TSC-adjusted local Xen system time we observed.  Used
+	 * to detect whether the Xen clock has gone backwards.
+	 */
+	uint64_t	ci_xen_last_systime_ns;
+
+	/*
+	 * Distance in nanoseconds from the local view of system time
+	 * to the global view of system time, if the local time is
+	 * behind the global time.
+	 */
+	uint64_t	ci_xen_systime_ns_skew;
+
+	/* Event counters for various pathologies that might happen.  */
+	struct evcnt	ci_xen_cpu_tsc_backwards_evcnt;
+	struct evcnt	ci_xen_tsc_delta_negative_evcnt;
+	struct evcnt	ci_xen_raw_systime_wraparound_evcnt;
+	struct evcnt	ci_xen_raw_systime_backwards_evcnt;
+	struct evcnt	ci_xen_systime_backwards_hardclock_evcnt;
+	struct evcnt	ci_xen_missed_hardclock_evcnt;
+#endif
 
 	/*
 	 * The following two are actually region_descriptors,
