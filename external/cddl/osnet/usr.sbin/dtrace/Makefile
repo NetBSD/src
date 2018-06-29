@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2018/06/07 13:21:44 kamil Exp $
+#	$NetBSD: Makefile,v 1.13 2018/06/29 11:33:47 kamil Exp $
 
 # $FreeBSD: head/cddl/usr.sbin/dtrace/Makefile 314654 2017-03-04 11:30:04Z ngie $
 
@@ -34,6 +34,7 @@ COPTS.dtrace.c += -Wno-format-extra-args
 COPTS.dtrace.c += -Wno-shadow
 COPTS.dtrace.c += ${${ACTIVE_CC} == "gcc" :? -Wno-discarded-qualifiers :}
 COPTS.dtrace.c += ${${ACTIVE_CC} == "gcc" :? -Wno-unused-but-set-variable :}
+COPTS.dtrace.c += ${${ACTIVE_CC} == "clang" :? -Wno-incompatible-pointer-types-discards-qualifiers :}
 COPTS.dtrace.c += -Wno-missing-field-initializers
 COPTS.dtrace.c += -Wno-format
 

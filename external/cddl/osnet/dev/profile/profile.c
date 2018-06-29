@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.c,v 1.9 2018/06/06 17:19:49 kamil Exp $	*/
+/*	$NetBSD: profile.c,v 1.10 2018/06/29 11:33:46 kamil Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -434,7 +434,7 @@ profile_provide(void *arg, dtrace_probedesc_t *desc)
 	char *name, *suffix = NULL;
 
 	const struct {
-		const char *prefix;
+		char *prefix;
 		int kind;
 	} types[] = {
 		{ PROF_PREFIX_PROFILE, PROF_PROFILE },
@@ -443,7 +443,7 @@ profile_provide(void *arg, dtrace_probedesc_t *desc)
 	};
 
 	const struct {
-		const char *name;
+		char *name;
 		hrtime_t mult;
 	} suffixes[] = {
 		{ "ns", 	NANOSEC / NANOSEC },
