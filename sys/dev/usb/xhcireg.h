@@ -1,4 +1,4 @@
-/* $NetBSD: xhcireg.h,v 1.10 2018/04/23 19:55:00 jdolecek Exp $ */
+/* $NetBSD: xhcireg.h,v 1.11 2018/06/29 17:48:24 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2010 Hans Petter Selasky. All rights reserved.
@@ -35,6 +35,7 @@
 #define	PCI_USBREV		0x60	/* RO USB protocol revision */
 #define	 PCI_USBREV_MASK	0xFF
 #define	 PCI_USBREV_3_0		0x30	/* USB 3.0 */
+#define	 PCI_USBREV_3_1		0x31	/* USB 3.1 */
 
 #define	PCI_XHCI_FLADJ		0x61	/* RW frame length adjust */
 
