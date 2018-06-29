@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.80 2018/01/15 21:58:54 christos Exp $ */
+/* $NetBSD: scan.l,v 1.81 2018/06/29 20:18:36 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: scan.l,v 1.80 2018/01/15 21:58:54 christos Exp $");
+__RCSID("$NetBSD: scan.l,v 1.81 2018/06/29 20:18:36 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -275,6 +275,7 @@ static	struct	kwtab {
 	{ "struct",	T_SOU,		0,	STRUCT,	0,	  0,0,0,0,1 },
 	{ "switch",	T_SWITCH,	0,	0,	0,	  0,0,0,0,1 },
 	{ "symbolrename", T_SYMBOLRENAME, 0,	0,	0,	  0,0,0,0,2 },
+	{ "syslog",	T_AT_FORMAT_SYSLOG,0,	0,	0,	  0,0,1,1,5 },
 	{ "transparent_union",T_AT_TUNION,0,	0,	0,	  0,0,1,1,5 },
 	{ "typedef",	T_SCLASS,	TYPEDEF, 0,	0,	  0,0,0,0,1 },
 	{ "typeof",	T_TYPEOF,	0,	0,	0,	  0,0,1,0,7 },
