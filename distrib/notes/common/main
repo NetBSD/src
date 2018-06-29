@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.547 2018/06/26 10:49:54 martin Exp $
+.\"	$NetBSD: main,v 1.548 2018/06/29 12:34:13 roy Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -511,10 +511,6 @@ The following features are to be removed from
 .Nx
 in the future:
 .(bullet
-.Xr dhclient 8
-in favor of
-.Xr dhcpcd 8 .
-.It
 .Xr groff 1 .
 Man pages are now handled with
 .Xr mandoc 1 ,

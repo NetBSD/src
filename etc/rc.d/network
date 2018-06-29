@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: network,v 1.73 2017/07/06 09:49:39 kre Exp $
+# $NetBSD: network,v 1.74 2018/06/29 12:34:15 roy Exp $
 #
 
 # PROVIDE: network
@@ -71,7 +71,7 @@ network_start_hostname()
 		# DHCP later, as we will probably get the
 		# hostname at that time.
 		#
-		if ! checkyesno dhclient && ! checkyesno dhcpcd && \
+		if ! checkyesno dhcpcd && \
 			[ -z "$(hostname)" ]
 		then
 			warn "\$hostname not set."
@@ -539,7 +539,6 @@ network_stop_route()
 }
 
 load_rc_config $name
-load_rc_config_var dhclient dhclient
 load_rc_config_var dhcpcd dhcpcd
 load_rc_config_var ipfilter ipfilter
 run_rc_command "$1"

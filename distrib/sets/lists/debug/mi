@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.255 2018/06/28 10:14:01 christos Exp $
+# $NetBSD: mi,v 1.256 2018/06/29 12:34:14 roy Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -319,7 +319,7 @@
 ./usr/libdata/debug/sbin/chown.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/clri.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/devpubd.debug		comp-sysutil-debug	debug
-./usr/libdata/debug/sbin/dhclient.debug		comp-dhclient-debug	debug
+./usr/libdata/debug/sbin/dhclient.debug		comp-obsolete		obsolete
 ./usr/libdata/debug/sbin/dhcpcd.debug		comp-dhcpcd-debug	debug
 ./usr/libdata/debug/sbin/disklabel.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/dkctl.debug		comp-sysutil-debug	debug

@@ -19,7 +19,6 @@ base-crypto-root	root file system directories required by cryptographic utilitie
 base-crypto-shlib	shared library providing cryptographic routines
 base-cxx-usr	/usr file system directories required by C++ programming language utilities
 base-debug-bin	debugging utilities
-base-dhclient-root	root file system support for DHCP client software
 base-dhcpd-bin	DHCP server
 base-dhcpd-examples	example configuration files for DHCP server
 base-efs-root		root file system support for efs file system
@@ -512,8 +511,6 @@ etc-bootserver-rc	startup script for diskless boot server utilities
 etc-cron-log	empty log file for cron(8)
 etc-cron-rc	startup script for cron(8) command scheduler
 etc-cron-root	root file system support for cron(8) command scheduler
-etc-dhclient-etc	configuration files for DHCP dyanamic host configuration protocol client utilities
-etc-dhclient-rc	startup script for DHCP dynamic host configuration protocol client
 etc-dhcpd-rc	startup script for DHCP dynamic host configuration protocol daemon
 etc-extsrc-rc	startup scripts for externally added programs
 etc-games-etc	configuration file for games
@@ -597,8 +594,6 @@ man-cxx-info	texinfo documentation for the C++ programming language
 man-debug-catman	formatted manual pages for debugging utilities
 man-debug-info	texinfo documentation for debugging utilities
 man-debug-man	manual pages source for debugging utilities
-man-dhclient-catman	formatted manual pages for DHCP (dynamic host configuration protocol) client utilities
-man-dhclient-man	manual pages source for DHCP (dynamic host configuration protocol) client utilities
 man-dhcpd-catman	formatted manual pages for DHCP (dynamic host configuration protocol) server utilities
 man-dhcpd-man	manual pages source for DHCP (dynamic host configuration protocol) server utilities
 man-efs-catman		formatted manual pages for the Silicon Graphics EFS file system support
