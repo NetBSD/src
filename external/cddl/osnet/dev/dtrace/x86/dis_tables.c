@@ -2345,7 +2345,7 @@ typedef struct dis_gather_regs {
 	uint_t dgr_arg0;	/* src reg */
 	uint_t dgr_arg1;	/* vsib reg */
 	uint_t dgr_arg2;	/* dst reg */
-	const char   *dgr_suffix;	/* suffix to append */
+	char   *dgr_suffix;	/* suffix to append */
 } dis_gather_regs_t;
 
 static dis_gather_regs_t dis_vgather[4][2][2] = {
