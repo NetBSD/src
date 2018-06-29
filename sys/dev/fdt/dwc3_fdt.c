@@ -1,4 +1,4 @@
-/* $NetBSD: dwc3_fdt.c,v 1.2 2018/06/21 10:45:25 jmcneill Exp $ */
+/* $NetBSD: dwc3_fdt.c,v 1.3 2018/06/29 17:48:24 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc3_fdt.c,v 1.2 2018/06/21 10:45:25 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc3_fdt.c,v 1.3 2018/06/29 17:48:24 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -268,6 +268,7 @@ dwc3_fdt_attach(device_t parent, device_t self, void *aux)
 	}
 	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
 
+	sc->sc_bus.ub_revision = USBREV_3_0;
 	error = xhci_init(sc);
 	if (error) {
 		aprint_error_dev(self, "init failed, error = %d\n", error);
