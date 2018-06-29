@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.166 2018/06/14 14:36:46 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.167 2018/06/29 19:21:43 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1106,18 +1106,6 @@ ENTRY(cpu_switchto)
 	pushq	%rdx
 	callq	_C_LABEL(speculation_barrier)
 	popq	%rdx
-
-	/* RDI/RSI got clobbered. */
-	movq	%r13,%rdi
-	movq	%r12,%rsi
-
-	pushq	%rdx
-	movb	_C_LABEL(x86_fpu_eager),%dl
-	testb	%dl,%dl
-	jz	.Lno_eagerfpu
-	callq	_C_LABEL(fpu_eagerswitch)
-.Lno_eagerfpu:
-	popq	%rdx
 #endif
 
 	/* Switch to newlwp's stack. */
@@ -1159,6 +1147,18 @@ ENTRY(cpu_switchto)
 	callq	_C_LABEL(x86_64_switch_context)
 #endif
 .Lring0_switched:
+
+#ifndef XEN
+	pushq	%rdx
+	movb	_C_LABEL(x86_fpu_eager),%dl
+	testb	%dl,%dl
+	jz	.Lno_eagerfpu
+	movq	%r13,%rdi
+	movq	%r12,%rsi
+	callq	_C_LABEL(fpu_eagerswitch)
+.Lno_eagerfpu:
+	popq	%rdx
+#endif
 
 	/* Don't bother with the rest if switching to a system process. */
 	testl	$LW_SYSTEM,L_FLAG(%r12)
