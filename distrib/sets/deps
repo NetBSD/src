@@ -18,7 +18,6 @@ base-crypto-root base-sys-root
 base-crypto-shlib base-sys-usr
 base-cxx-usr base-c-usr
 base-debug-bin base-sys-usr
-base-dhclient-root base-sys-root
 base-dhcpd-bin base-sys-share
 base-dhcpd-bin base-sys-usr
 base-dhcpd-examples base-sys-share
@@ -286,7 +285,6 @@ etc-bootserver-rc base-sys-root
 etc-cron-log base-sys-root
 etc-cron-rc base-sys-root
 etc-cron-root base-cron-root
-etc-dhclient-rc base-sys-root
 etc-dhcpd-rc base-sys-root
 etc-games-etc base-sys-root
 etc-games-scores base-games-root
@@ -367,8 +365,6 @@ man-cvs-info base-texinfo-share
 man-debug-catman base-man-share
 man-debug-info base-texinfo-share
 man-debug-man base-man-share
-man-dhclient-catman base-man-share
-man-dhclient-man base-man-share
 man-dhcpd-catman base-man-share
 man-dhcpd-man base-man-share
 man-efs-catman base-man-share
