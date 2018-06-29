@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2010/01/16 16:10:39 roy Exp $
+#	$NetBSD: Makefile,v 1.7 2018/06/29 12:34:14 roy Exp $
 
 SUBDIR+=man-adosfs-catman
 SUBDIR+=man-adosfs-man
@@ -24,8 +24,6 @@ SUBDIR+=man-cxx-info
 SUBDIR+=man-debug-catman
 SUBDIR+=man-debug-info
 SUBDIR+=man-debug-man
-SUBDIR+=man-dhclient-catman
-SUBDIR+=man-dhclient-man
 SUBDIR+=man-dhcpd-catman
 SUBDIR+=man-dhcpd-man
 SUBDIR+=man-ext2fs-catman

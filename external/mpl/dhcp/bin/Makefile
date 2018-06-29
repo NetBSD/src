@@ -1,5 +1,5 @@
-# $NetBSD: Makefile,v 1.1 2018/04/07 22:31:37 christos Exp $
+# $NetBSD: Makefile,v 1.2 2018/06/29 12:34:15 roy Exp $
 
-SUBDIR=	clientscript server client relay omshell
+SUBDIR=	server relay omshell
 
 .include <bsd.subdir.mk>
