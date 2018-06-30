@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.341 2018/06/07 18:03:14 martin Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.342 2018/06/30 11:42:34 martin Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -21280,4 +21280,9 @@ sys/arch/sparc64/conf/NONPLUS				(patch)
 	Disable autoload of modules for svr4/svr4_32/ibcs2/freebsd.
 	[maxv, ticket #1500]
 
+
+xsrc/xfree/xc/programs/mkfontscale/ident.c	(apply patch)
+
+	Pass gzFile, not gzFile * to gzio functions.
+	[mrg, ticket #1550]
 
