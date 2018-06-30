@@ -1,5 +1,5 @@
 #
-#	$NetBSD: RPI,v 1.78 2017/12/10 21:38:26 skrll Exp $
+#	$NetBSD: RPI,v 1.79 2018/06/30 16:22:56 jmcneill Exp $
 #
 #	RPi -- Raspberry Pi
 #
@@ -55,7 +55,7 @@ config		netbsd		root on ? type ?
 
 # Device tree support
 armfdt0		at root
-fdt*		at fdtbus?
+simplebus*	at fdt?
 
 # The CPU(s)
 cpus*		at fdt? pass 0

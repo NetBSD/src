@@ -1,5 +1,5 @@
 #
-#	$NetBSD: RPI64,v 1.1 2018/04/01 04:35:04 ryo Exp $
+#	$NetBSD: RPI64,v 1.2 2018/06/30 16:22:56 jmcneill Exp $
 #
 #	RPI64 - Raspberry Pi 3 and Pi 2 v1.2 in AARCH64 mode
 #
@@ -61,7 +61,7 @@ config		netbsd		root on ? type ?
 
 # Device tree support
 armfdt0 	at root
-fdt*		at fdtbus?
+simplebus*	at fdt?
 
 # The CPU(s)
 cpus*		at fdt? pass 0
