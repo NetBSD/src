@@ -1,4 +1,4 @@
-# $NetBSD: files.fdt,v 1.18 2018/06/30 16:22:56 jmcneill Exp $
+# $NetBSD: files.fdt,v 1.19 2018/06/30 16:30:35 jmcneill Exp $
 
 include	"dev/pckbport/files.pckbport"
 
@@ -6,7 +6,7 @@ device	armfdt { }: bus_space_generic, fdt
 attach	armfdt at root with arm_fdt
 file	arch/arm/fdt/arm_fdt.c			arm_fdt
 
-attach	cpu at cpus with cpu_fdt
+attach	cpu at fdt with cpu_fdt
 file	arch/arm/fdt/cpu_fdt.c			cpu_fdt
 
 device	cpufreqdt
