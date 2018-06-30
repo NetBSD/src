@@ -1,4 +1,4 @@
-/* $NetBSD: rk_gmac.c,v 1.3 2018/06/19 23:43:11 jmcneill Exp $ */
+/* $NetBSD: rk_gmac.c,v 1.4 2018/06/30 16:28:14 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rk_gmac.c,v 1.3 2018/06/19 23:43:11 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_gmac.c,v 1.4 2018/06/30 16:28:14 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -311,13 +311,14 @@ rk_gmac_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": GMAC\n");
 
+	if (dwc_gmac_attach(sc, GMAC_MII_CLK_150_250M_DIV102) != 0)
+		return;
+
 	if (fdtbus_intr_establish(phandle, 0, IPL_NET, 0, rk_gmac_intr, sc) == NULL) {
 		aprint_error_dev(self, "failed to establish interrupt on %s\n", intrstr);
 		return;
 	}
 	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
-
-	dwc_gmac_attach(sc, GMAC_MII_CLK_150_250M_DIV102);
 }
 
 CFATTACH_DECL_NEW(rk_gmac, sizeof(struct rk_gmac_softc),
