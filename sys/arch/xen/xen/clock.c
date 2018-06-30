@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.69 2018/06/30 14:21:19 riastradh Exp $	*/
+/*	$NetBSD: clock.c,v 1.70 2018/06/30 14:59:38 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2017, 2018 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.69 2018/06/30 14:21:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.70 2018/06/30 14:59:38 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -740,8 +740,8 @@ xen_suspendclocks(struct cpu_info *ci)
 /*
  * xen_resumeclocks(ci)
  *
- *	Start handling the Xen timer event on the CPU of ci.  Caller
- *	must be running on and bound to ci's CPU.
+ *	Start handling the Xen timer event on the CPU of ci.  Arm the
+ *	Xen timer.  Caller must be running on and bound to ci's CPU.
  *
  *	Actually, caller must have kpreemption disabled, because that's
  *	easier to assert at the moment.
@@ -751,6 +751,7 @@ xen_resumeclocks(struct cpu_info *ci)
 {
 	char intr_xname[INTRDEVNAMEBUF];
 	int evtch;
+	int error;
 
 	KASSERT(ci == curcpu());
 	KASSERT(kpreempt_disabled());
@@ -771,6 +772,21 @@ xen_resumeclocks(struct cpu_info *ci)
 	hypervisor_enable_event(evtch);
 
 	aprint_verbose("Xen %s: using event channel %d\n", intr_xname, evtch);
+
+	/* Disarm the periodic timer on Xen>=3.1 which is allegedly buggy.  */
+	if (XEN_MAJOR(xen_version) > 3 || XEN_MINOR(xen_version) > 0) {
+		error = HYPERVISOR_vcpu_op(VCPUOP_stop_periodic_timer,
+		    ci->ci_cpuid, NULL);
+		KASSERT(error == 0);
+	}
+
+	/* Pretend the last hardclock happened right now.  */
+	ci->ci_xen_hardclock_systime_ns = xen_vcputime_systime_ns();
+
+	/* Arm the one-shot timer.  */
+	error = HYPERVISOR_set_timer_op(ci->ci_xen_hardclock_systime_ns +
+	    NS_PER_TICK);
+	KASSERT(error == 0);
 
 	/* We'd better not have switched CPUs.  */
 	KASSERT(ci == curcpu());
@@ -848,7 +864,6 @@ void
 xen_initclocks(void)
 {
 	struct cpu_info *ci = curcpu();
-	int error;
 
 	/* If this is the primary CPU, do global initialization first.  */
 	if (ci == &cpu_info_primary) {
@@ -864,9 +879,6 @@ xen_initclocks(void)
 			xen_timepush_init();
 #endif
 	}
-
-	/* Pretend the last hardclock happened right now.  */
-	ci->ci_xen_hardclock_systime_ns = xen_vcputime_systime_ns();
 
 	/* Attach the event counters.  */
 	evcnt_attach_dynamic(&ci->ci_xen_cpu_tsc_backwards_evcnt,
@@ -887,18 +899,6 @@ xen_initclocks(void)
 	evcnt_attach_dynamic(&ci->ci_xen_missed_hardclock_evcnt,
 	    EVCNT_TYPE_INTR, NULL, device_xname(ci->ci_dev),
 	    "missed hardclock");
-
-	/* Disarm the periodic timer on Xen>=3.1 which is allegedly buggy.  */
-	if (XEN_MAJOR(xen_version) > 3 || XEN_MINOR(xen_version) > 0) {
-		error = HYPERVISOR_vcpu_op(VCPUOP_stop_periodic_timer,
-		    ci->ci_cpuid, NULL);
-		KASSERT(error == 0);
-	}
-
-	/* Arm the timer.  */
-	error = HYPERVISOR_set_timer_op(ci->ci_xen_hardclock_systime_ns +
-	    NS_PER_TICK);
-	KASSERT(error == 0);
 
 	/* Fire up the clocks.  */
 	xen_resumeclocks(ci);
