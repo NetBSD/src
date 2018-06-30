@@ -1,4 +1,4 @@
-/* $NetBSD: rk_gmac.c,v 1.5 2018/06/30 18:20:35 jmcneill Exp $ */
+/* $NetBSD: rk_gmac.c,v 1.6 2018/06/30 18:27:10 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rk_gmac.c,v 1.5 2018/06/30 18:20:35 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_gmac.c,v 1.6 2018/06/30 18:27:10 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -283,6 +283,9 @@ rk_gmac_attach(device_t parent, device_t self, void *aux)
 
 	if (rk_gmac_reset(phandle) != 0)
 		aprint_error_dev(self, "PHY reset failed\n");
+
+	/* Rock64 seems to need more time for the reset to complete */
+	delay(100000);
 
 #if notyet
 	if (of_hasprop(phandle, "snps,force_thresh_dma_mode"))
