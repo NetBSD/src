@@ -1,4 +1,4 @@
-/* $NetBSD: fdtvar.h,v 1.36 2018/06/30 16:22:56 jmcneill Exp $ */
+/* $NetBSD: fdtvar.h,v 1.37 2018/06/30 18:07:12 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -296,6 +296,7 @@ int		fdtbus_regulator_set_voltage(struct fdtbus_regulator *,
 int		fdtbus_regulator_get_voltage(struct fdtbus_regulator *,
 		    u_int *);
 struct syscon *	fdtbus_syscon_acquire(int, const char *);
+struct syscon *	fdtbus_syscon_lookup(int);
 
 struct fdtbus_dma *fdtbus_dma_get(int, const char *, void (*)(void *), void *);
 struct fdtbus_dma *fdtbus_dma_get_index(int, u_int, void (*)(void *),
