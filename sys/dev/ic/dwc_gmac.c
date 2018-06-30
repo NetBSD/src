@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac.c,v 1.50 2018/06/26 06:48:00 msaitoh Exp $ */
+/* $NetBSD: dwc_gmac.c,v 1.51 2018/06/30 16:27:48 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.50 2018/06/26 06:48:00 msaitoh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.51 2018/06/30 16:27:48 jmcneill Exp $");
 
 /* #define	DWC_GMAC_DEBUG	1 */
 
@@ -137,7 +137,7 @@ static void dwc_gmac_dump_ffilt(struct dwc_gmac_softc *sc, uint32_t ffilt);
 #define DWCGMAC_MPSAFE	1
 #endif
 
-void
+int
 dwc_gmac_attach(struct dwc_gmac_softc *sc, uint32_t mii_clk)
 {
 	uint8_t enaddr[ETHER_ADDR_LEN];
@@ -189,7 +189,7 @@ dwc_gmac_attach(struct dwc_gmac_softc *sc, uint32_t mii_clk)
 	 * Init chip and do initial setup
 	 */
 	if (dwc_gmac_reset(sc) != 0)
-		return;	/* not much to cleanup, haven't attached yet */
+		return ENXIO;	/* not much to cleanup, haven't attached yet */
 	dwc_gmac_write_hwaddr(sc, enaddr);
 	aprint_normal_dev(sc->sc_dev, "Ethernet address: %s\n",
 	    ether_sprintf(enaddr));
@@ -280,7 +280,8 @@ dwc_gmac_attach(struct dwc_gmac_softc *sc, uint32_t mii_clk)
 	    GMAC_DEF_DMA_INT_MASK);
 	mutex_exit(sc->sc_lock);
 
-	return;
+	return 0;
+
 fail_2:
 	ifmedia_removeall(&mii->mii_media);
 	mii_detach(mii, MII_PHY_ANY, MII_OFFSET_ANY);
@@ -292,6 +293,8 @@ fail:
 	dwc_gmac_free_tx_ring(sc, &sc->sc_txq);
 	dwc_gmac_free_dma_rings(sc);
 	mutex_destroy(&sc->sc_mdio_lock);
+
+	return ENXIO;
 }
 
 
