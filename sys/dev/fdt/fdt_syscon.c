@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_syscon.c,v 1.2 2018/06/30 18:07:12 jmcneill Exp $ */
+/* $NetBSD: fdt_syscon.c,v 1.3 2018/06/30 20:16:56 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_syscon.c,v 1.2 2018/06/30 18:07:12 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_syscon.c,v 1.3 2018/06/30 20:16:56 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -47,9 +47,8 @@ struct fdtbus_syscon {
 	LIST_ENTRY(fdtbus_syscon) sc_next;
 };
 
-LIST_HEAD(fdtbus_syscon_h, fdtbus_syscon);
-static struct fdtbus_syscon_h fdtbus_syscons =
-	LIST_HEAD_INITIALIZER(fdtbus_syscons);
+static LIST_HEAD(, fdtbus_syscon) fdtbus_syscons =
+    LIST_HEAD_INITIALIZER(fdtbus_syscons);
 
 int
 fdtbus_register_syscon(device_t dev, int phandle,
