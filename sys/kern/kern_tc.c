@@ -1,4 +1,4 @@
-/* $NetBSD: kern_tc.c,v 1.49 2018/02/13 09:26:17 maxv Exp $ */
+/* $NetBSD: kern_tc.c,v 1.50 2018/06/30 22:47:51 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_tc.c,v 1.166 2005/09/19 22:16:31 andre Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.49 2018/02/13 09:26:17 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.50 2018/06/30 22:47:51 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ntp.h"
@@ -572,7 +572,7 @@ tc_pick(void)
 {
 	struct timecounter *best, *tc;
 
-	KASSERT(mutex_owned(&timecounter_lock));
+	KASSERT(__predict_false(cold) || mutex_owned(&timecounter_lock));
 
 	for (best = tc = timecounters; tc != NULL; tc = tc->tc_next) {
 		if (tc->tc_quality > best->tc_quality)
@@ -731,7 +731,7 @@ tc_windup(void)
 	int i, s_update;
 	time_t t;
 
-	KASSERT(mutex_owned(&timecounter_lock));
+	KASSERT(__predict_false(cold) || mutex_owned(&timecounter_lock));
 
 	s_update = 0;
 
@@ -1308,7 +1308,8 @@ tc_ticktock(void)
 	if (++count < tc_tick)
 		return;
 	count = 0;
-	mutex_spin_enter(&timecounter_lock);
+	if (__predict_true(!cold))
+		mutex_spin_enter(&timecounter_lock);
 	if (timecounter_bad != 0) {
 		/* An existing timecounter has gone bad, pick a new one. */
 		(void)atomic_swap_uint(&timecounter_bad, 0);
@@ -1317,7 +1318,8 @@ tc_ticktock(void)
 		}
 	}
 	tc_windup();
-	mutex_spin_exit(&timecounter_lock);
+	if (__predict_true(!cold))
+		mutex_spin_exit(&timecounter_lock);
 }
 
 void
