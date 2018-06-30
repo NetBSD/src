@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.68 2018/06/29 21:53:12 riastradh Exp $	*/
+/*	$NetBSD: clock.c,v 1.69 2018/06/30 14:21:19 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2017, 2018 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.68 2018/06/29 21:53:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.69 2018/06/30 14:21:19 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -48,7 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.68 2018/06/29 21:53:12 riastradh Exp $")
 #include <sys/intr.h>
 #include <sys/kernel.h>
 #include <sys/lwp.h>
-#include <sys/percpu.h>
 #include <sys/proc.h>
 #include <sys/sysctl.h>
 #include <sys/systm.h>
@@ -110,11 +109,6 @@ static struct todr_chip_handle xen_todr_chip = {
 	.todr_gettime = xen_rtc_get,
 	.todr_settime = xen_rtc_set,
 };
-
-/*
- * xen timer interrupt handles -- per-CPU struct intrhand *
- */
-static struct percpu *xen_timer_ih_percpu __read_mostly;
 
 #ifdef DOM0OPS
 /*
@@ -724,22 +718,18 @@ xen_delay(unsigned n)
 void
 xen_suspendclocks(struct cpu_info *ci)
 {
-	struct intrhand **ihp, *ih;
 	int evtch;
 
 	KASSERT(ci == curcpu());
 	KASSERT(kpreempt_disabled());
+	KASSERT(ci->ci_xen_timer_intrhand != NULL);
 
 	evtch = unbind_virq_from_evtch(VIRQ_TIMER);
 	KASSERT(evtch != -1);
 
 	hypervisor_mask_event(evtch);
-	ihp = percpu_getref(xen_timer_ih_percpu);
-	ih = *ihp;
-	KASSERT(ih != NULL);
-	intr_disestablish(ih);
-	*ihp = NULL;
-	percpu_putref(xen_timer_ih_percpu);
+	intr_disestablish(ci->ci_xen_timer_intrhand);
+	ci->ci_xen_timer_intrhand = NULL;
 
 	aprint_verbose("Xen clock: removed event channel %d\n", evtch);
 
@@ -760,28 +750,23 @@ void
 xen_resumeclocks(struct cpu_info *ci)
 {
 	char intr_xname[INTRDEVNAMEBUF];
-	struct intrhand **ihp, *ih;
 	int evtch;
 
 	KASSERT(ci == curcpu());
 	KASSERT(kpreempt_disabled());
+	KASSERT(ci->ci_xen_timer_intrhand == NULL);
 
 	evtch = bind_virq_to_evtch(VIRQ_TIMER);
 	KASSERT(evtch != -1);
 
 	snprintf(intr_xname, sizeof(intr_xname), "%s clock",
 	    device_xname(ci->ci_dev));
-
-	ihp = percpu_getref(xen_timer_ih_percpu);
-	KASSERT(*ihp == NULL);
 	/* XXX sketchy function pointer cast -- fix the API, please */
-	ih = intr_establish_xname(0, &xen_pic, evtch, IST_LEVEL,
-	    IPL_CLOCK, (int (*)(void *))xen_timer_handler, ci, true,
+	ci->ci_xen_timer_intrhand = intr_establish_xname(0, &xen_pic, evtch,
+	    IST_LEVEL, IPL_CLOCK, (int (*)(void *))xen_timer_handler, ci, true,
 	    intr_xname);
-	if (ih == NULL)
+	if (ci->ci_xen_timer_intrhand == NULL)
 		panic("failed to establish timer interrupt handler");
-	*ihp = ih;
-	percpu_putref(xen_timer_ih_percpu);
 
 	hypervisor_enable_event(evtch);
 
@@ -867,10 +852,6 @@ xen_initclocks(void)
 
 	/* If this is the primary CPU, do global initialization first.  */
 	if (ci == &cpu_info_primary) {
-		/* Allocate the per-CPU interrupt handle array.  */
-		xen_timer_ih_percpu = percpu_alloc(sizeof(struct intrhand *));
-		KASSERT(xen_timer_ih_percpu != NULL);
-
 		/* Initialize the systemwide Xen timecounter.  */
 		tc_init(&xen_timecounter);
 
