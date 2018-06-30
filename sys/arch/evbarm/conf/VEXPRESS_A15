@@ -1,5 +1,5 @@
 #
-#	$NetBSD: VEXPRESS_A15,v 1.19 2018/06/11 19:49:18 jakllsch Exp $
+#	$NetBSD: VEXPRESS_A15,v 1.20 2018/06/30 16:22:56 jmcneill Exp $
 #
 #	ARM Versatile Express A15
 #
@@ -29,7 +29,7 @@ config		netbsd		root on ? type ?
 
 # Device tree support
 armfdt0		at root
-fdt*		at fdtbus?
+simplebus*	at fdt?
 
 # CPUs
 cpus*		at fdt? pass 0
