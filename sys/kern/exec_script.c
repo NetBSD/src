@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_script.c,v 1.76 2018/06/30 00:37:37 christos Exp $	*/
+/*	$NetBSD: exec_script.c,v 1.77 2018/06/30 11:10:54 kre Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,9 +31,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.76 2018/06/30 00:37:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.77 2018/06/30 11:10:54 kre Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_script.h"
+#endif
 
 #if defined(SETUIDSCRIPTS) && !defined(FDSCRIPTS)
 #define FDSCRIPTS		/* Need this for safe set-id scripts. */
