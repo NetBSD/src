@@ -1,5 +1,5 @@
 #
-#	$NetBSD: RPI64,v 1.2 2018/06/30 16:22:56 jmcneill Exp $
+#	$NetBSD: RPI64,v 1.3 2018/06/30 16:30:35 jmcneill Exp $
 #
 #	RPI64 - Raspberry Pi 3 and Pi 2 v1.2 in AARCH64 mode
 #
@@ -65,7 +65,7 @@ simplebus*	at fdt?
 
 # The CPU(s)
 cpus*		at fdt? pass 0
-cpu*		at cpus?
+cpu*		at fdt? pass 0
 
 gtmr*		at fdt? pass 1		# ARM Generic Timer
 armgtmr0	at gtmr?

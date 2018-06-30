@@ -1,5 +1,5 @@
 #
-#	$NetBSD: RPI,v 1.79 2018/06/30 16:22:56 jmcneill Exp $
+#	$NetBSD: RPI,v 1.80 2018/06/30 16:30:35 jmcneill Exp $
 #
 #	RPi -- Raspberry Pi
 #
@@ -59,7 +59,7 @@ simplebus*	at fdt?
 
 # The CPU(s)
 cpus*		at fdt? pass 0
-cpu*		at cpus?
+cpu*		at fdt? pass 0
 
 fclock*		at fdt? pass 0
 

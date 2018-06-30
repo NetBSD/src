@@ -1,5 +1,5 @@
 #
-#	$NetBSD: TEGRA,v 1.34 2018/06/30 16:22:56 jmcneill Exp $
+#	$NetBSD: TEGRA,v 1.35 2018/06/30 16:30:35 jmcneill Exp $
 #
 #	NVIDIA Tegra family SoCs
 #
@@ -50,7 +50,7 @@ simplebus*	at fdt?
 
 # CPUs
 cpus*		at fdt? pass 0
-cpu*		at cpus?
+cpu*		at fdt? pass 0
 
 # CPU frequency scaling
 tegra124cpu*	at cpu?

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: SUNXI,v 1.76 2018/06/30 16:22:56 jmcneill Exp $
+#	$NetBSD: SUNXI,v 1.77 2018/06/30 16:30:35 jmcneill Exp $
 #
 #	Allwinner sunxi family
 #
@@ -172,7 +172,7 @@ simplebus*	at fdt?
 
 # CPUs
 cpus*		at fdt? pass 0
-cpu*		at cpus?
+cpu*		at fdt? pass 0
 cpufreqdt*	at cpu?
 
 # Power state coordination interface

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: VEXPRESS_A15,v 1.20 2018/06/30 16:22:56 jmcneill Exp $
+#	$NetBSD: VEXPRESS_A15,v 1.21 2018/06/30 16:30:35 jmcneill Exp $
 #
 #	ARM Versatile Express A15
 #
@@ -33,7 +33,7 @@ simplebus*	at fdt?
 
 # CPUs
 cpus*		at fdt? pass 0
-cpu*		at cpus?
+cpu*		at fdt? pass 0
 
 fclock*		at fdt? pass 4
 fregulator*	at fdt? pass 4
