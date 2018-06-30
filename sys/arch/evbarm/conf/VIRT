@@ -1,5 +1,5 @@
 #
-#	$NetBSD: VIRT,v 1.4 2018/06/30 16:22:56 jmcneill Exp $
+#	$NetBSD: VIRT,v 1.5 2018/06/30 16:30:35 jmcneill Exp $
 #
 #	QEMU ARM 'virt' virtual machine
 #
@@ -34,7 +34,7 @@ simplebus*	at fdt?
 
 # CPUs
 cpus*		at fdt? pass 0
-cpu*		at cpus?
+cpu*		at fdt? pass 0
 
 fclock*		at fdt? pass 4
 fregulator*	at fdt? pass 4
