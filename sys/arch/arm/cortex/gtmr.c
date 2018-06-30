@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmr.c,v 1.31 2018/06/24 19:04:30 ryo Exp $	*/
+/*	$NetBSD: gtmr.c,v 1.32 2018/06/30 17:30:37 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.31 2018/06/24 19:04:30 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.32 2018/06/30 17:30:37 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -152,7 +152,7 @@ gtmr_attach(device_t parent, device_t self, void *aux)
 	humanize_number(freqbuf, sizeof(freqbuf), sc->sc_freq, "Hz", 1000);
 
 	aprint_naive("\n");
-	aprint_normal(": ARMv7 Generic 64-bit Timer (%s)\n", freqbuf);
+	aprint_normal(": ARM Generic Timer (%s)\n", freqbuf);
 
 	/*
 	 * Enable the virtual counter to be accessed from usermode.
