@@ -1,4 +1,4 @@
-/* $NetBSD: fdtbus.c,v 1.19 2018/06/20 19:11:01 thorpej Exp $ */
+/* $NetBSD: fdtbus.c,v 1.20 2018/06/30 13:44:50 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.19 2018/06/20 19:11:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.20 2018/06/30 13:44:50 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -228,6 +228,34 @@ fdt_scan_submatch(device_t parent, cfdata_t cf, const int *locs, void *aux)
 	return config_stdsubmatch(parent, cf, locs, aux);
 }
 
+static cfdata_t
+fdt_scan_best(struct fdt_softc *sc, struct fdt_node *node)
+{
+	struct fdt_attach_args faa;
+	cfdata_t cf, best_cf;
+	int match, best_match;
+
+	best_cf = NULL;
+	best_match = 0;
+
+	for (int pass = 0; pass <= FDTCF_PASS_DEFAULT; pass++) {
+		const int locs[FDTCF_NLOCS] = {
+			[FDTCF_PASS] = pass
+		};
+		fdt_init_attach_args(sc, node, true, &faa);
+		cf = config_search_loc(fdt_scan_submatch, node->n_bus, "fdt", locs, &faa);
+		if (cf == NULL)
+			continue;
+		match = config_match(node->n_bus, cf, &faa);
+		if (match > best_match) {
+			best_match = match;
+			best_cf = cf;
+		}
+	}
+
+	return best_cf;
+}
+
 static void
 fdt_scan(struct fdt_softc *sc, int pass)
 {
@@ -243,6 +271,15 @@ fdt_scan(struct fdt_softc *sc, int pass)
 			continue;
 
 		fdt_init_attach_args(sc, node, quiet, &faa);
+
+		/*
+		 * Make sure we don't attach before a better match in a later pass.
+		 */
+		cfdata_t cf_best = fdt_scan_best(sc, node);
+		cfdata_t cf_pass =
+		    config_search_loc(fdt_scan_submatch, node->n_bus, "fdt", locs, &faa);
+		if (cf_best != cf_pass)
+			continue;
 
 		/*
 		 * Attach the device.
