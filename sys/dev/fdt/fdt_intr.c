@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_intr.c,v 1.11 2017/06/11 12:56:36 jmcneill Exp $ */
+/* $NetBSD: fdt_intr.c,v 1.12 2018/06/30 20:34:43 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,11 +27,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_intr.c,v 1.11 2017/06/11 12:56:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_intr.c,v 1.12 2018/06/30 20:34:43 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
 #include <sys/kmem.h>
+#include <sys/queue.h>
 
 #include <libfdt.h>
 #include <dev/fdt/fdtvar.h>
@@ -41,15 +42,16 @@ struct fdtbus_interrupt_controller {
 	int ic_phandle;
 	const struct fdtbus_interrupt_controller_func *ic_funcs;
 
-	struct fdtbus_interrupt_controller *ic_next;
+	LIST_ENTRY(fdtbus_interrupt_controller) ic_next;
 };
+
+static LIST_HEAD(, fdtbus_interrupt_controller) fdtbus_interrupt_controllers =
+    LIST_HEAD_INITIALIZER(fdtbus_interrupt_controllers);
 
 struct fdtbus_interrupt_cookie {
 	struct fdtbus_interrupt_controller *c_ic;
 	void *c_ih;
 };
-
-static struct fdtbus_interrupt_controller *fdtbus_ic = NULL;
 
 static bool	has_interrupt_map(int);
 static u_int *	get_specifier_by_index(int, int, int *);
@@ -87,10 +89,9 @@ static struct fdtbus_interrupt_controller *
 fdtbus_get_interrupt_controller(int phandle)
 {
 	struct fdtbus_interrupt_controller * ic;
-	for (ic = fdtbus_ic; ic; ic = ic->ic_next) {
-		if (ic->ic_phandle == phandle) {
+	LIST_FOREACH(ic, &fdtbus_interrupt_controllers, ic_next) {
+		if (ic->ic_phandle == phandle)
 			return ic;
-		}
 	}
 	return NULL;
 }
@@ -106,8 +107,7 @@ fdtbus_register_interrupt_controller(device_t dev, int phandle,
 	ic->ic_phandle = phandle;
 	ic->ic_funcs = funcs;
 
-	ic->ic_next = fdtbus_ic;
-	fdtbus_ic = ic;
+	LIST_INSERT_HEAD(&fdtbus_interrupt_controllers, ic, ic_next);
 
 	return 0;
 }
