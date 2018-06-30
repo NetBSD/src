@@ -1,4 +1,4 @@
-/* $NetBSD: rk_gmac.c,v 1.4 2018/06/30 16:28:14 jmcneill Exp $ */
+/* $NetBSD: rk_gmac.c,v 1.5 2018/06/30 18:20:35 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rk_gmac.c,v 1.4 2018/06/30 16:28:14 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_gmac.c,v 1.5 2018/06/30 18:20:35 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: rk_gmac.c,v 1.4 2018/06/30 16:28:14 jmcneill Exp $")
 #include <dev/ic/dwc_gmac_reg.h>
 
 #include <dev/fdt/fdtvar.h>
+#include <dev/fdt/syscon.h>
 
 #define	RK3328_GRF_MAC_CON0	0x0900
 #define	 RK3328_GRF_MAC_CON0_RXDLY	__BITS(13,7)
@@ -73,7 +74,7 @@ static const char * compatible[] = {
 
 struct rk_gmac_softc {
 	struct dwc_gmac_softc	sc_base;
-	bus_space_handle_t	sc_grf_bsh;
+	struct syscon		*sc_syscon;
 };
 
 static int
@@ -119,23 +120,24 @@ rk3328_gmac_set_mode_rgmii(struct dwc_gmac_softc *sc, u_int tx_delay, u_int rx_d
 	struct rk_gmac_softc * const rk_sc = (struct rk_gmac_softc *)sc;
 	uint32_t write_mask, write_val;
 
+	syscon_lock(rk_sc->sc_syscon);
+
 	write_mask = (RK3328_GRF_MAC_CON1_MODE | RK3328_GRF_MAC_CON1_SEL) << 16;
 	write_val = __SHIFTIN(RK3328_GRF_MAC_CON1_SEL_RGMII, RK3328_GRF_MAC_CON1_SEL);
-	bus_space_write_4(sc->sc_bst, rk_sc->sc_grf_bsh, RK3328_GRF_MAC_CON1,
-	    write_mask | write_val);
+	syscon_write_4(rk_sc->sc_syscon, RK3328_GRF_MAC_CON1, write_mask | write_val);
 
 #if notyet
 	write_mask = (RK3328_GRF_MAC_CON0_TXDLY | RK3328_GRF_MAC_CON0_RXDLY) << 16;
 	write_val = __SHIFTIN(tx_delay, RK3328_GRF_MAC_CON0_TXDLY) |
 		    __SHIFTIN(rx_delay, RK3328_GRF_MAC_CON0_RXDLY);
-	bus_space_write_4(sc->sc_bst, rk_sc->sc_grf_bsh, RK3328_GRF_MAC_CON0,
-	    write_mask | write_val);
+	syscon_write_4(rk_sc->sc_syscon, RK3328_GRF_MAC_CON0, write_mask | write_val);
 
 	write_mask = (RK3328_GRF_MAC_CON1_RXDLY_EN | RK3328_GRF_MAC_CON1_TXDLY_EN) << 16;
 	write_val = RK3328_GRF_MAC_CON1_RXDLY_EN | RK3328_GRF_MAC_CON1_TXDLY_EN;
-	bus_space_write_4(sc->sc_bst, rk_sc->sc_grf_bsh, RK3328_GRF_MAC_CON1,
-	    write_mask | write_val);
+	syscon_write_4(rk_sc->sc_syscon, RK3328_GRF_MAC_CON1, write_mask | write_val);
 #endif
+
+	syscon_unlock(rk_sc->sc_syscon);
 }
 
 static void
@@ -156,9 +158,11 @@ rk3328_gmac_set_speed_rgmii(struct dwc_gmac_softc *sc, int speed)
 		break;
 	}
 
-	bus_space_write_4(sc->sc_bst, rk_sc->sc_grf_bsh, RK3328_GRF_MAC_CON1,
+	syscon_lock(rk_sc->sc_syscon);
+	syscon_write_4(rk_sc->sc_syscon, RK3328_GRF_MAC_CON1,
 	    (RK3328_GRF_MAC_CON1_CLKSEL << 16) |
 	    __SHIFTIN(RK3328_GRF_MAC_CON1_CLKSEL_125M, RK3328_GRF_MAC_CON1_CLKSEL));
+	syscon_unlock(rk_sc->sc_syscon);
 }
 
 static int
@@ -240,8 +244,8 @@ rk_gmac_attach(device_t parent, device_t self, void *aux)
 	const int phandle = faa->faa_phandle;
 	const char *phy_mode;
 	char intrstr[128];
-	bus_addr_t addr, grf_addr;
-	bus_size_t size, grf_size;
+	bus_addr_t addr;
+	bus_size_t size;
 	u_int tx_delay, rx_delay;
 
 	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
@@ -249,17 +253,9 @@ rk_gmac_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	const int grf_phandle = fdtbus_get_phandle(phandle, "rockchip,grf");
-	if (grf_phandle == -1) {
-		aprint_error(": couldn't get grf phandle\n");
-		return;
-	}
-	if (fdtbus_get_reg(grf_phandle, 0, &grf_addr, &grf_size) != 0) {
-		aprint_error(": couldn't get grf registers\n");
-		return;
-	}
-	if (bus_space_map(faa->faa_bst, grf_addr, grf_size, 0, &rk_sc->sc_grf_bsh) != 0) {
-		aprint_error(": couldn't map grf registers\n");
+	rk_sc->sc_syscon = fdtbus_syscon_acquire(phandle, "rockchip,grf");
+	if (rk_sc->sc_syscon == NULL) {
+		aprint_error(": couldn't get grf syscon\n");
 		return;
 	}
 
