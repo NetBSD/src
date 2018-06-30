@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_machdep.c,v 1.17 2018/06/30 14:55:13 riastradh Exp $	*/
+/*	$NetBSD: xen_machdep.c,v 1.18 2018/06/30 20:53:30 kre Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.17 2018/06/30 14:55:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.18 2018/06/30 20:53:30 kre Exp $");
 
 #include "opt_xen.h"
 
@@ -65,6 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.17 2018/06/30 14:55:13 riastradh E
 #include <sys/timetc.h>
 #include <sys/sysctl.h>
 #include <sys/pmf.h>
+#include <sys/xcall.h>
 
 #include <xen/hypervisor.h>
 #include <xen/shutdown_xenbus.h>
@@ -279,8 +280,8 @@ sysctl_xen_suspend(SYSCTLFN_ARGS)
 
 }
 
-static xcfunc_t xen_suspendclocks_xc;
-static xcfunc_t xen_resumeclocks_xc;
+static void xen_suspendclocks_xc(void *, void*);
+static void xen_resumeclocks_xc(void *, void*);
 
 /*
  * Last operations before suspending domain
