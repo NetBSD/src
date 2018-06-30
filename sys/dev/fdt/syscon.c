@@ -1,4 +1,4 @@
-/* $NetBSD: syscon.c,v 1.1 2018/06/30 12:35:18 jmcneill Exp $ */
+/* $NetBSD: syscon.c,v 1.2 2018/06/30 16:22:56 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscon.c,v 1.1 2018/06/30 12:35:18 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscon.c,v 1.2 2018/06/30 16:22:56 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -135,4 +135,6 @@ syscon_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": System Controller Registers\n");
 
 	fdtbus_register_syscon(self, phandle, &sc->sc_syscon);
+
+	fdt_add_bus(self, phandle, faa);
 }
