@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_syscon.c,v 1.1 2018/06/30 12:35:18 jmcneill Exp $ */
+/* $NetBSD: fdt_syscon.c,v 1.2 2018/06/30 18:07:12 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_syscon.c,v 1.1 2018/06/30 12:35:18 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_syscon.c,v 1.2 2018/06/30 18:07:12 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -91,6 +91,18 @@ fdtbus_syscon_acquire(int phandle, const char *prop)
 		return NULL;
 
 	sc = fdtbus_get_syscon(sc_phandle);
+	if (sc == NULL)
+		return NULL;
+
+	return sc->sc_syscon;
+}
+
+struct syscon *
+fdtbus_syscon_lookup(int phandle)
+{
+	struct fdtbus_syscon *sc;
+
+	sc = fdtbus_get_syscon(phandle);
 	if (sc == NULL)
 		return NULL;
 
