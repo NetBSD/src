@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1.6,v 1.1.2.144 2018/06/07 18:04:56 martin Exp $
+# $NetBSD: CHANGES-6.1.6,v 1.1.2.145 2018/06/30 11:43:53 martin Exp $
 
 A complete list of changes from the NetBSD 6.1.5 release to the NetBSD 6.1.6
 release:
@@ -15169,4 +15169,9 @@ sys/arch/sparc64/conf/NONPLUS				(patch)
 	Disable compat_ibcs2 everywhere but on Vax.
 	Disable autoload of modules for svr4/svr4_32/ibcs2/freebsd.
 	[maxv, ticket #1500]
+
+xsrc/xfree/xc/programs/mkfontscale/ident.c	(apply patch)
+
+	Pass gzFile, not gzFile * to gzio functions.
+	[mrg, ticket #1550]
 
