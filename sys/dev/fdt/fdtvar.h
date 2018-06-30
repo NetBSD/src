@@ -1,4 +1,4 @@
-/* $NetBSD: fdtvar.h,v 1.34 2018/06/12 10:28:55 jmcneill Exp $ */
+/* $NetBSD: fdtvar.h,v 1.35 2018/06/30 12:35:18 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -210,6 +210,8 @@ struct fdtbus_mmc_pwrseq_func {
 	void	(*reset)(device_t);
 };
 
+struct syscon;
+
 struct fdt_console {
 	int	(*match)(int);
 	void	(*consinit)(struct fdt_attach_args *, u_int);
@@ -256,6 +258,7 @@ int		fdtbus_register_pwm_controller(device_t, int,
 		    const struct fdtbus_pwm_controller_func *);
 int		fdtbus_register_mmc_pwrseq(device_t, int,
 		    const struct fdtbus_mmc_pwrseq_func *);
+int		fdtbus_register_syscon(device_t, int, struct syscon *);
 
 void		fdtbus_set_decoderegprop(bool);
 
@@ -292,6 +295,7 @@ int		fdtbus_regulator_set_voltage(struct fdtbus_regulator *,
 		    u_int, u_int);
 int		fdtbus_regulator_get_voltage(struct fdtbus_regulator *,
 		    u_int *);
+struct syscon *	fdtbus_syscon_acquire(int, const char *);
 
 struct fdtbus_dma *fdtbus_dma_get(int, const char *, void (*)(void *), void *);
 struct fdtbus_dma *fdtbus_dma_get_index(int, u_int, void (*)(void *),
