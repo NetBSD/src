@@ -1,5 +1,5 @@
 #
-#	$NetBSD: TEGRA,v 1.33 2017/09/26 16:12:45 jmcneill Exp $
+#	$NetBSD: TEGRA,v 1.34 2018/06/30 16:22:56 jmcneill Exp $
 #
 #	NVIDIA Tegra family SoCs
 #
@@ -46,7 +46,7 @@ config		netbsd		root on ? type ?
 
 # Device tree support
 armfdt0		at root
-fdt*		at fdtbus?
+simplebus*	at fdt?
 
 # CPUs
 cpus*		at fdt? pass 0
