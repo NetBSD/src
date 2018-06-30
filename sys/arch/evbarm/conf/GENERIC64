@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.19 2018/06/27 16:38:40 jmcneill Exp $
+#	$NetBSD: GENERIC64,v 1.20 2018/06/30 12:42:42 jmcneill Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -99,6 +99,9 @@ gregulator*	at fdt? pass 4
 gpiokeys*	at fdt?
 wskbd*		at gpiokeys? console ? mux 1
 gpioleds*	at fdt?
+
+# System Controller
+syscon*		at fdt? pass 1		# Generic System Controller
 
 # Timer
 gtmr*		at fdt? pass 1		# ARM Generic Timer
