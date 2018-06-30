@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_machdep.c,v 1.16 2018/06/24 20:28:58 jdolecek Exp $	*/
+/*	$NetBSD: xen_machdep.c,v 1.17 2018/06/30 14:55:13 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.16 2018/06/24 20:28:58 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.17 2018/06/30 14:55:13 riastradh Exp $");
 
 #include "opt_xen.h"
 
@@ -279,6 +279,9 @@ sysctl_xen_suspend(SYSCTLFN_ARGS)
 
 }
 
+static xcfunc_t xen_suspendclocks_xc;
+static xcfunc_t xen_resumeclocks_xc;
+
 /*
  * Last operations before suspending domain
  */
@@ -289,7 +292,7 @@ xen_prepare_suspend(void)
 	kpreempt_disable();
 
 	pmap_xen_suspend();
-	xen_suspendclocks(curcpu());
+	xc_wait(xc_broadcast(0, &xen_suspendclocks_xc, NULL, NULL));
 
 	/*
 	 * save/restore code does not translate these MFNs to their
@@ -310,6 +313,15 @@ xen_prepare_suspend(void)
 		HYPERVISOR_crash();
 	}
 
+}
+
+static void
+xen_suspendclocks_xc(void *a, void *b)
+{
+
+	kpreempt_disable();
+	xen_suspendclocks(curcpu());
+	kpreempt_enable();
 }
 
 /*
@@ -342,10 +354,19 @@ xen_prepare_resume(void)
 
 	xen_suspend_allow = false;
 
-	xen_resumeclocks(curcpu());
+	xc_wait(xc_broadcast(0, xen_resumeclocks_xc, NULL, NULL));
 
 	kpreempt_enable();
 
+}
+
+static void
+xen_resumeclocks_xc(void *a, void *b)
+{
+
+	kpreempt_disable();
+	xen_resumeclocks(curcpu());
+	kpreempt_enable();
 }
 
 static void
