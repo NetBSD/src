@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.93 2018/06/29 21:53:12 riastradh Exp $	*/
+/*	$NetBSD: cpu.h,v 1.94 2018/06/30 14:21:19 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -252,6 +252,9 @@ struct cpu_info {
 	 * behind the global time.
 	 */
 	uint64_t	ci_xen_systime_ns_skew;
+
+	/* Xen periodic timer interrupt handle.  */
+	struct intrhand	*ci_xen_timer_intrhand;
 
 	/* Event counters for various pathologies that might happen.  */
 	struct evcnt	ci_xen_cpu_tsc_backwards_evcnt;
