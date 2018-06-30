@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.3,v 1.1.2.107 2018/06/14 19:49:28 martin Exp $
+# $NetBSD: CHANGES-7.0.3,v 1.1.2.108 2018/06/30 11:37:26 martin Exp $
 
 A complete list of changes from the NetBSD 7.0.2 release to the NetBSD 7.0.3
 release:
@@ -5463,4 +5463,9 @@ share/i18n/esdb/ISO-8859/ISO-8859.alias		1.4
 
 	Add more aliases for Hebrew and Arabic ISO-8859-... encodings.
 	[maya, ticket #1616]
+
+xsrc/xfree/xc/programs/mkfontscale/ident.c	(apply patch)
+
+	Pass gzFile, not gzFile * to gzio functions.
+	[mrg, ticket #1618]
 
