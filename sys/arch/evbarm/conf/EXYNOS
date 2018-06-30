@@ -1,5 +1,5 @@
 #
-#	$NetBSD: EXYNOS,v 1.24 2018/06/30 16:30:35 jmcneill Exp $
+#	$NetBSD: EXYNOS,v 1.25 2018/06/30 16:48:49 jmcneill Exp $
 #
 #	Samsung Exynos SoC kernel
 #
@@ -38,7 +38,7 @@ config		netbsd		root on ? type ?
 
 # Device tree support
 armfdt0		at root
-simplebus*	at fdt?
+simplebus*	at fdt? pass 0
 
 # CPUs
 cpus*		at fdt? pass 0
