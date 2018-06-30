@@ -1,4 +1,4 @@
-# $NetBSD: files.fdt,v 1.32 2018/06/16 00:19:04 jmcneill Exp $
+# $NetBSD: files.fdt,v 1.33 2018/06/30 10:50:30 jmcneill Exp $
 
 include	"external/bsd/libfdt/conf/files.libfdt"
 
@@ -99,6 +99,11 @@ file	dev/fdt/dwc3_fdt.c			dwc3_fdt
 # Designware SD/MMC
 attach	dwcmmc at fdt with dwcmmc_fdt
 file	dev/fdt/dwcmmc_fdt.c			dwcmmc_fdt
+
+# Designware Watchdog Timer
+device	dwcwdt: sysmon_wdog
+attach	dwcwdt at fdt with dwcwdt_fdt
+file	dev/fdt/dwcwdt_fdt.c			dwcwdt_fdt
 
 # Virtio virtio,mmio
 attach	virtio at fdt with virtio_mmio_fdt:	virtio_mmio
