@@ -1,4 +1,4 @@
-/* $NetBSD: rk_cru.c,v 1.3 2018/06/26 17:44:04 jmcneill Exp $ */
+/* $NetBSD: rk_cru.c,v 1.4 2018/06/30 17:54:07 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_fdt_arm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_cru.c,v 1.3 2018/06/26 17:44:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_cru.c,v 1.4 2018/06/30 17:54:07 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -300,19 +300,9 @@ rk_cru_attach(struct rk_cru_softc *sc)
 	int i;
 
 	if (of_hasprop(sc->sc_phandle, "rockchip,grf")) {
-		const int grf_phandle = fdtbus_get_phandle(sc->sc_phandle, "rockchip,grf");
-		if (grf_phandle == -1) {
-			aprint_error(": couldn't get grf phandle\n");
-			return ENXIO;
-		}
-
-		if (fdtbus_get_reg(grf_phandle, 0, &addr, &size) != 0) {
-			aprint_error(": couldn't get grf registers\n");
-			return ENXIO;
-		}
-
-		if (bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh_grf) != 0) {
-			aprint_error(": couldn't map registers\n");
+		sc->sc_grf = fdtbus_syscon_acquire(sc->sc_phandle, "rockchip,grf");
+		if (sc->sc_grf == NULL) {
+			aprint_error(": couldn't get grf syscon\n");
 			return ENXIO;
 		}
 	}
