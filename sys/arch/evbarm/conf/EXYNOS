@@ -1,5 +1,5 @@
 #
-#	$NetBSD: EXYNOS,v 1.23 2018/06/30 16:22:56 jmcneill Exp $
+#	$NetBSD: EXYNOS,v 1.24 2018/06/30 16:30:35 jmcneill Exp $
 #
 #	Samsung Exynos SoC kernel
 #
@@ -42,7 +42,7 @@ simplebus*	at fdt?
 
 # CPUs
 cpus*		at fdt? pass 0
-cpu*		at cpus?
+cpu*		at fdt? pass 0
 
 fclock*		at fdt? pass 4
 fregulator*	at fdt? pass 4
