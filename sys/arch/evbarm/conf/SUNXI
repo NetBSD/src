@@ -1,5 +1,5 @@
 #
-#	$NetBSD: SUNXI,v 1.74 2018/06/27 16:38:11 jmcneill Exp $
+#	$NetBSD: SUNXI,v 1.75 2018/06/30 12:42:42 jmcneill Exp $
 #
 #	Allwinner sunxi family
 #
@@ -202,6 +202,9 @@ gregulator*	at fdt? pass 4
 gpiokeys*	at fdt?
 wskbd*		at gpiokeys? console ? mux 1
 gpioleds*	at fdt?
+
+# System Controller
+syscon*		at fdt? pass 1		# Generic System Controller
 
 # SRAM controller
 sunxisramc*	at fdt? pass 4		# SRAM controller
