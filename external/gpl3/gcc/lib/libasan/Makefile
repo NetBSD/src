@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.25 2018/06/28 10:15:01 christos Exp $
+# $NetBSD: Makefile,v 1.26 2018/07/01 17:41:49 christos Exp $
 
 UNSUPPORTED_COMPILER.clang=	# defined
 NOSANITIZER=	# defined
@@ -43,9 +43,6 @@ LIBDPLIBS+= rt ${NETBSDSRCDIR}/lib/librt
 .if ${MACHINE_ARCH} == "vax"
 COPTS.asan_allocator.cc += -O1
 COPTS.asan_report.cc += -O1
-COPTS.sanitizer_common.cc += -O1
-COPTS.sanitizer_common_libcdep.cc += -O1
-COPTS.sanitizer_posix.cc += -O1
 COPTS.ubsan_diag.cc += -O1
 COPTS.ubsan_init.cc += -O1
 .endif
