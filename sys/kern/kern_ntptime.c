@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ntptime.c,v 1.58 2018/06/30 22:47:51 riastradh Exp $	*/
+/*	$NetBSD: kern_ntptime.c,v 1.59 2018/07/01 15:12:06 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_ntptime.c,v 1.59 2005/05/28 14:34:41 rwatson Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.58 2018/06/30 22:47:51 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.59 2018/07/01 15:12:06 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ntp.h"
@@ -418,7 +418,7 @@ ntp_update_second(int64_t *adjustment, time_t *newsec)
 	int tickrate;
 	l_fp ftemp;		/* 32/64-bit temporary */
 
-	KASSERT(__predict_false(cold) || mutex_owned(&timecounter_lock));
+	KASSERT(mutex_owned(&timecounter_lock));
 
 #ifdef NTP
 
