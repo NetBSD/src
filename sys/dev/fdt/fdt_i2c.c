@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_i2c.c,v 1.3 2018/06/30 20:34:43 jmcneill Exp $ */
+/* $NetBSD: fdt_i2c.c,v 1.4 2018/07/01 18:16:40 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_i2c.c,v 1.3 2018/06/30 20:34:43 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_i2c.c,v 1.4 2018/07/01 18:16:40 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -87,4 +87,27 @@ fdtbus_get_i2c_tag(int phandle)
 		return NULL;
 
 	return i2c->i2c_funcs->get_tag(i2c->i2c_dev);
+}
+
+device_t
+fdtbus_attach_i2cbus(device_t dev, int phandle, i2c_tag_t tag, cfprint_t print)
+{
+	struct i2cbus_attach_args iba;
+	prop_dictionary_t devs;
+	u_int address_cells;
+
+	devs = prop_dictionary_create();
+	if (of_getprop_uint32(phandle, "#address-cells", &address_cells))
+		address_cells = 1;
+
+	of_enter_i2c_devs(devs, phandle, address_cells * 4, 0);
+
+	memset(&iba, 0, sizeof(iba));
+	iba.iba_tag = tag;
+	iba.iba_child_devices = prop_dictionary_get(devs, "i2c-child-devices");
+	if (iba.iba_child_devices)
+		prop_object_retain(iba.iba_child_devices);
+	prop_object_release(devs);
+
+	return config_found_ia(dev, "i2cbus", &iba, print);
 }
