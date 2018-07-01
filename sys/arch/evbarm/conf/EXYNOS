@@ -1,5 +1,5 @@
 #
-#	$NetBSD: EXYNOS,v 1.25 2018/06/30 16:48:49 jmcneill Exp $
+#	$NetBSD: EXYNOS,v 1.26 2018/07/01 23:27:43 jmcneill Exp $
 #
 #	Samsung Exynos SoC kernel
 #
@@ -64,10 +64,6 @@ exy5422clk*	at fdt? pass 3		# Exynos5422 clock controller
 # GPIO controller
 exyopctl*	at fdt? pass 2		# GPIO
 gpio*		at gpiobus?
-
-# Exynos SoC support
-chipid*		at fdt?
-sysmmu*		at fdt?
 
 # UART
 sscom*		at fdt?			# UART
