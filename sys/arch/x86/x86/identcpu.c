@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.77 2018/06/23 10:30:22 jdolecek Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.78 2018/07/01 07:59:30 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.77 2018/06/23 10:30:22 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.78 2018/07/01 07:59:30 maxv Exp $");
 
 #include "opt_xen.h"
 
@@ -66,7 +66,7 @@ int cpu_vendor;
 char cpu_brand_string[49];
 
 int x86_fpu_save __read_mostly;
-unsigned int x86_fpu_save_size __read_mostly = 512;
+unsigned int x86_fpu_save_size __read_mostly = sizeof(struct save87);
 uint64_t x86_xsave_features __read_mostly = 0;
 
 /*
@@ -768,7 +768,7 @@ cpu_probe_fpu(struct cpu_info *ci)
 
 	x86_fpu_save = FPU_SAVE_FSAVE;
 
-#ifdef i386 /* amd64 always has fxsave, sse and sse2 */
+#ifdef i386
 	/* If we have FXSAVE/FXRESTOR, use them. */
 	if ((ci->ci_feat_val[0] & CPUID_FXSR) == 0) {
 		i386_use_fxsave = 0;
@@ -789,11 +789,12 @@ cpu_probe_fpu(struct cpu_info *ci)
 #else
 	/*
 	 * For amd64 i386_use_fxsave, i386_has_sse and i386_has_sse2 are
-	 * #defined to 1.
+	 * #defined to 1, because fxsave/sse/sse2 are always present.
 	 */
-#endif	/* i386 */
+#endif
 
 	x86_fpu_save = FPU_SAVE_FXSAVE;
+	x86_fpu_save_size = sizeof(struct fxsave);
 
 	/* See if xsave (for AVX) is supported */
 	if ((ci->ci_feat_val[1] & CPUID2_XSAVE) == 0)
@@ -822,7 +823,7 @@ cpu_probe_fpu(struct cpu_info *ci)
 
 	/* Get features and maximum size of the save area */
 	x86_cpuid(0xd, descs);
-	if (descs[2] > 512)
+	if (descs[2] > sizeof(struct fxsave))
 		x86_fpu_save_size = descs[2];
 
 	x86_xsave_features = (uint64_t)descs[3] << 32 | descs[0];
