@@ -497,7 +497,9 @@ class SizeClassAllocator64 {
     uptr mapped_meta;  // Bytes mapped for metadata.
     uptr n_allocated, n_freed;  // Just stats.
   };
+#if _LP64
   COMPILER_CHECK(sizeof(RegionInfo) >= kCacheLineSize);
+#endif
 
   RegionInfo *GetRegionInfo(uptr class_id) {
     CHECK_LT(class_id, kNumClasses);
