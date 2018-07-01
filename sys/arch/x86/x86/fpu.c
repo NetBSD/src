@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.45 2018/07/01 07:18:56 maxv Exp $	*/
+/*	$NetBSD: fpu.c,v 1.46 2018/07/01 08:32:41 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.  All
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.45 2018/07/01 07:18:56 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.46 2018/07/01 08:32:41 maxv Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -723,17 +723,10 @@ fpu_save_area_reset(struct lwp *l)
 void
 fpu_save_area_fork(struct pcb *pcb2, const struct pcb *pcb1)
 {
-	ssize_t extra;
+	const uint8_t *src = (const uint8_t *)&pcb1->pcb_savefpu;
+	uint8_t *dst = (uint8_t *)&pcb2->pcb_savefpu;
 
-	/*
-	 * The pcb itself has been copied, but the xsave area
-	 * extends further.
-	 */
-	extra = offsetof(struct pcb, pcb_savefpu) + x86_fpu_save_size -
-	    sizeof (struct pcb);
-
-	if (extra > 0)
-		memcpy(pcb2 + 1, pcb1 + 1, extra);
+	memcpy(dst, src, x86_fpu_save_size);
 
 	KASSERT(pcb2->pcb_fpcpu == NULL);
 }
