@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.44 2018/06/29 19:34:35 maxv Exp $	*/
+/*	$NetBSD: fpu.c,v 1.45 2018/07/01 07:18:56 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.  All
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.44 2018/06/29 19:34:35 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.45 2018/07/01 07:18:56 maxv Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -661,24 +661,36 @@ fpu_save_area_clear(struct lwp *l, unsigned int x87_cw)
 	}
 	KASSERT(pcb->pcb_fpcpu == NULL);
 
-	if (i386_use_fxsave) {
+	switch (x86_fpu_save) {
+	case FPU_SAVE_FSAVE:
+		memset(&fpu_save->sv_87, 0, x86_fpu_save_size);
+		fpu_save->sv_87.s87_tw = 0xffff;
+		fpu_save->sv_87.s87_cw = x87_cw;
+		break;
+	case FPU_SAVE_FXSAVE:
+		memset(&fpu_save->sv_xmm, 0, x86_fpu_save_size);
+		fpu_save->sv_xmm.fx_mxcsr = __INITIAL_MXCSR__;
+		fpu_save->sv_xmm.fx_mxcsr_mask = x86_fpu_mxcsr_mask;
+		fpu_save->sv_xmm.fx_cw = x87_cw;
+		break;
+	case FPU_SAVE_XSAVE:
+	case FPU_SAVE_XSAVEOPT:
 		memset(&fpu_save->sv_xmm, 0, x86_fpu_save_size);
 		fpu_save->sv_xmm.fx_mxcsr = __INITIAL_MXCSR__;
 		fpu_save->sv_xmm.fx_mxcsr_mask = x86_fpu_mxcsr_mask;
 		fpu_save->sv_xmm.fx_cw = x87_cw;
 
-		/* Force a reload of CW */
-		if ((x87_cw != __INITIAL_NPXCW__) &&
-		    (x86_fpu_save == FPU_SAVE_XSAVE ||
-		    x86_fpu_save == FPU_SAVE_XSAVEOPT)) {
+		/*
+		 * Force a reload of CW if we're using the non-default
+		 * value.
+		 */
+		if (__predict_false(x87_cw != __INITIAL_NPXCW__)) {
 			fpu_save->sv_xsave_hdr.xsh_xstate_bv |=
 			    XCR0_X87;
 		}
-	} else {
-		memset(&fpu_save->sv_87, 0, x86_fpu_save_size);
-		fpu_save->sv_87.s87_tw = 0xffff;
-		fpu_save->sv_87.s87_cw = x87_cw;
+		break;
 	}
+
 	pcb->pcb_fpu_dflt_cw = x87_cw;
 
 	if (x86_fpu_eager) {
