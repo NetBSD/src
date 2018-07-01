@@ -1,4 +1,4 @@
-/*	$NetBSD: mct.c,v 1.12 2017/06/11 16:21:41 jmcneill Exp $	*/
+/*	$NetBSD: mct.c,v 1.13 2018/07/01 23:21:43 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: mct.c,v 1.12 2017/06/11 16:21:41 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: mct.c,v 1.13 2018/07/01 23:21:43 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -176,4 +176,5 @@ mct_attach(device_t parent, device_t self, void *aux)
 	config_found(self, &mpcaa, NULL);
 
 	arm_fdt_cpu_hatch_register(self, mct_fdt_cpu_hatch);
+	arm_fdt_timer_register(gtmr_cpu_initclocks);
 }
