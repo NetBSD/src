@@ -1,5 +1,5 @@
 #
-#	$NetBSD: RPI,v 1.81 2018/06/30 16:48:49 jmcneill Exp $
+#	$NetBSD: RPI,v 1.82 2018/07/01 15:33:29 skrll Exp $
 #
 #	RPi -- Raspberry Pi
 #
@@ -17,6 +17,7 @@ makeoptions	DTS="
 	bcm2835-rpi-b-plus.dts
 	bcm2835-rpi-b-rev2.dts
 	bcm2835-rpi-zero.dts
+	bcm2835-rpi-zero-w.dts
 "
 
 options 	CPU_ARM1176

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: RPI2,v 1.5 2018/06/27 11:12:14 ryo Exp $
+#	$NetBSD: RPI2,v 1.6 2018/07/01 15:33:29 skrll Exp $
 #
 #	RPi2 -- Raspberry Pi 2
 #
@@ -30,6 +30,7 @@ options 	__HAVE_GENERIC_CPU_INITCLOCKS
 makeoptions	DTS="
 	bcm2836-rpi-2-b.dts
 	bcm2837-rpi-3-b.dts
+	bcm2837-rpi-3-b-plus.dts
 "
 # Architecture options
 
