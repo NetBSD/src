@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.172 2018/06/30 17:15:01 jmcneill Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.173 2018/07/01 09:53:54 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.172 2018/06/30 17:15:01 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.173 2018/07/01 09:53:54 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -68,7 +68,6 @@ __KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.172 2018/06/30 17:15:01 jmcneill Exp 
 #include <sys/cpu.h>
 #include <sys/sha2.h>
 #include <sys/rndsource.h>
-#include <sys/timetc.h>
 
 #include <dev/cons.h>
 
@@ -503,9 +502,6 @@ addtstamp(int flags, struct tty *tp)
 		prec = 9;
 		log_ts_prec = prec;
 	}
-
-	if (cold)
-		tc_ticktock();
 
 	getnanouptime(&ts);
 
