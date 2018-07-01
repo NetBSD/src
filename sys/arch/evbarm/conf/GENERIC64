@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.23 2018/06/30 16:48:49 jmcneill Exp $
+#	$NetBSD: GENERIC64,v 1.24 2018/07/01 15:33:29 skrll Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -17,6 +17,7 @@ makeoptions	DTSGNUARCH="arm arm64"
 makeoptions	DTSSUBDIR="allwinner broadcom nvidia rockchip"
 makeoptions	DTS="
 	bcm2837-rpi-3-b.dts
+	bcm2837-rpi-3-b-plus.dts
 
 	rk3328-evb.dts
 	rk3328-roc-cc.dts
