@@ -1,5 +1,5 @@
 #
-#	$NetBSD: RPI64,v 1.4 2018/06/30 16:48:49 jmcneill Exp $
+#	$NetBSD: RPI64,v 1.5 2018/07/01 15:33:29 skrll Exp $
 #
 #	RPI64 - Raspberry Pi 3 and Pi 2 v1.2 in AARCH64 mode
 #
@@ -13,6 +13,7 @@ makeoptions DTSSUBDIR="broadcom"
 
 makeoptions	DTS="
 	bcm2837-rpi-3-b.dts
+	bcm2837-rpi-3-b-plus.dts
 "
 
 # CPU options
