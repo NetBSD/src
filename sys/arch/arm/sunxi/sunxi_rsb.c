@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_rsb.c,v 1.2 2018/05/09 02:53:00 thorpej Exp $ */
+/* $NetBSD: sunxi_rsb.c,v 1.3 2018/07/01 21:15:02 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_rsb.c,v 1.2 2018/05/09 02:53:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_rsb.c,v 1.3 2018/07/01 21:15:02 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -141,9 +141,6 @@ sunxi_rsb_attach(device_t parent, device_t self, void *aux)
 	struct sunxi_rsb_softc * const sc = device_private(self);
 	struct fdt_attach_args * const faa = aux;
 	const int phandle = faa->faa_phandle;
-	struct i2cbus_attach_args iba;
-	prop_dictionary_t devs;
-	uint32_t address_cells;
 	struct fdtbus_reset *rst;
 	struct clk *clk;
 	char intrstr[128];
@@ -209,20 +206,7 @@ sunxi_rsb_attach(device_t parent, device_t self, void *aux)
 
 	fdtbus_register_i2c_controller(self, phandle, &sunxi_rsb_funcs);
 
-	devs = prop_dictionary_create();
-	if (of_getprop_uint32(phandle, "#address-cells", &address_cells))
-		address_cells = 1;
-
-	of_enter_i2c_devs(devs, phandle, address_cells * 4, 0);
-
-	memset(&iba, 0, sizeof(iba));
-	iba.iba_tag = &sc->sc_ic;
-	iba.iba_child_devices = prop_dictionary_get(devs, "i2c-child-devices");
-	if (iba.iba_child_devices)
-		prop_object_retain(iba.iba_child_devices);
-	prop_object_release(devs);
-
-	sc->sc_i2cdev = config_found_ia(self, "i2cbus", &iba, iicbus_print);
+	fdtbus_attach_i2cbus(self, phandle, &sc->sc_ic, iicbus_print);
 }
 
 static int
