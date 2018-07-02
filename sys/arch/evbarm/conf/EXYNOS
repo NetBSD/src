@@ -1,5 +1,5 @@
 #
-#	$NetBSD: EXYNOS,v 1.26 2018/07/01 23:27:43 jmcneill Exp $
+#	$NetBSD: EXYNOS,v 1.27 2018/07/02 12:53:51 jmcneill Exp $
 #
 #	Samsung Exynos SoC kernel
 #
@@ -49,8 +49,9 @@ fregulator*	at fdt? pass 4
 gpiokeys*	at fdt?
 
 # Timer
-mct*		at fdt?			# Exynos Multi Core Timer (MCT)
-armgtmr0	at mct?			# ARM Generic Timer
+mct*		at fdt? pass 2		# Exynos Multi Core Timer (MCT)
+gtmr*		at fdt? pass 2
+armgtmr0	at gtmr?
 
 # Interrupt controller
 exyointr*	at fdt? pass 1
