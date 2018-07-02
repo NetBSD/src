@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_intr.c,v 1.14 2018/07/02 16:06:50 jmcneill Exp $ */
+/* $NetBSD: fdt_intr.c,v 1.15 2018/07/02 17:50:02 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_intr.c,v 1.14 2018/07/02 16:06:50 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_intr.c,v 1.15 2018/07/02 17:50:02 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -56,18 +56,42 @@ struct fdtbus_interrupt_cookie {
 static u_int *	get_specifier_by_index(int, int, int *);
 static u_int *	get_specifier_from_map(int, const u_int *, int *);
 
+/*
+ * Find the interrupt controller for a given node. This function will either
+ * return the phandle of the interrupt controller for this node, or the phandle
+ * of a node containing an interrupt-map table that can be used to find the
+ * real interrupt controller.
+ */
 static int
 fdtbus_get_interrupt_parent(int phandle)
 {
 	int iparent = phandle;
 
 	do {
+		/*
+		 * If the node is an interrupt-controller, we are done. Note that
+		 * a node cannot be an interrupt-controller for itself, so we skip
+		 * the leaf node here.
+		 */
+		if (phandle != iparent && of_hasprop(iparent, "interrupt-controller"))
+			return iparent;
+
+		/*
+		 * If the node has an explicit interrupt-parent, follow the reference.
+		 */
 		if (of_hasprop(iparent, "interrupt-parent"))
 			return fdtbus_get_phandle(iparent, "interrupt-parent");
-		else if (of_hasprop(iparent, "interrupt-controller"))
+
+		/*
+		 * If the node has an interrupt-map, use it. The caller is responsible
+		 * for parsing the interrupt-map and finding the real interrupt parent.
+		 */
+		if (of_hasprop(iparent, "interrupt-map"))
 			return iparent;
-		else if (of_hasprop(iparent, "interrupt-map"))
-			return iparent;
+
+		/*
+		 * Continue searching up the tree.
+		 */
 		iparent = OF_parent(iparent);
 	} while (iparent > 0);
 
