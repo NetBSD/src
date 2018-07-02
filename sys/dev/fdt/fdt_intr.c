@@ -1,7 +1,7 @@
-/* $NetBSD: fdt_intr.c,v 1.12 2018/06/30 20:34:43 jmcneill Exp $ */
+/* $NetBSD: fdt_intr.c,v 1.13 2018/07/02 12:17:05 jmcneill Exp $ */
 
 /*-
- * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
+ * Copyright (c) 2015-2018 Jared McNeill <jmcneill@invisible.ca>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_intr.c,v 1.12 2018/06/30 20:34:43 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_intr.c,v 1.13 2018/07/02 12:17:05 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -53,9 +53,8 @@ struct fdtbus_interrupt_cookie {
 	void *c_ih;
 };
 
-static bool	has_interrupt_map(int);
 static u_int *	get_specifier_by_index(int, int, int *);
-static u_int *	get_specifier_from_map(int, int, int *);
+static u_int *	get_specifier_from_map(int, const u_int *, int *);
 
 static int
 fdtbus_get_interrupt_parent(int phandle)
@@ -168,17 +167,6 @@ fdtbus_intr_str(int phandle, u_int index, char *buf, size_t buflen)
 }
 
 static int
-find_interrupt_map(int phandle)
-{
-	while (phandle > 0) {
-		if (of_hasprop(phandle, "interrupt-map"))
-			return phandle;
-		phandle = OF_parent(phandle);
-	}
-	return -1;
-}
-
-static int
 find_address_cells(int phandle)
 {
 	uint32_t cells;
@@ -202,49 +190,21 @@ find_interrupt_cells(int phandle)
 	return 0;
 }
 
-static bool
-has_interrupt_map(int phandle)
-{
-	return find_interrupt_map(OF_parent(phandle)) != -1;
-}
-
 static u_int *
-get_specifier_from_map(int phandle, int pindex, int *piphandle)
+get_specifier_from_map(int phandle, const u_int *interrupt_spec, int *piphandle)
 {
-	const u_int *node_specifier = NULL;
 	u_int *result = NULL;
 	int len, resid;
 
-	const u_int interrupt_cells = find_interrupt_cells(phandle);
-	if (interrupt_cells < 1)
+	const u_int *data = fdtbus_get_prop(phandle, "interrupt-map", &len);
+	if (data == NULL || len <= 0)
 		return NULL;
-
-	node_specifier = fdt_getprop(fdtbus_get_data(), fdtbus_phandle2offset(phandle),
-	    "interrupts", &len);
-	if (node_specifier == NULL)
-		return NULL;
-
-	const u_int spec_length = len / 4;
-	const u_int nintr = spec_length / interrupt_cells;
-	if (pindex >= nintr)
-		return NULL;
-
-	node_specifier += (interrupt_cells * pindex);
-
-	const int nexus_phandle = find_interrupt_map(OF_parent(phandle));
-
-	const u_int *data = fdt_getprop(fdtbus_get_data(), fdtbus_phandle2offset(nexus_phandle),
-	    "interrupt-map", &len);
-	if (data == NULL || len <= 0) {
-		printf("%s: can't get property interrupt-map.\n", __func__);
-		return NULL;
-	}
 	resid = len;
 
 	/* child unit address: #address-cells prop of child bus node */
-	const int cua_cells = find_address_cells(nexus_phandle);
+	const int cua_cells = find_address_cells(phandle);
 	/* child interrupt specifier: #interrupt-cells of the nexus node */
-	const int cis_cells = find_interrupt_cells(nexus_phandle);
+	const int cis_cells = find_interrupt_cells(phandle);
 
 	/* Offset (in cells) from map entry to child unit address specifier */
 	const u_int cua_off = 0;
@@ -254,17 +214,6 @@ get_specifier_from_map(int phandle, int pindex, int *piphandle)
 	const u_int ip_off = cis_off + cis_cells;
 	/* Offset (in cells) from map entry to parent unit specifier */
 	const u_int pus_off = ip_off + 1;
-
-#ifdef FDT_INTR_DEBUG
-	printf("%s: phandle=%s nexus_phandle=%s\n", __func__,
-	    fdt_get_name(fdtbus_get_data(), fdtbus_phandle2offset(phandle), NULL),
-	    fdt_get_name(fdtbus_get_data(), fdtbus_phandle2offset(nexus_phandle), NULL));
-	printf("cua_cells: %d, cis_cells: %d, ip_off = %d\n", cua_cells, cis_cells, ip_off);
-	printf("searching for interrupt in map (data %p, len %d):", data, len);
-	for (int i = 0; i < interrupt_cells; i++)
-		printf(" %08x", node_specifier[i]);
-	printf("\n");
-#endif
 
 	const u_int *p = (const u_int *)data;
 	while (resid > 0) {
@@ -286,7 +235,7 @@ get_specifier_from_map(int phandle, int pindex, int *piphandle)
 		printf("\n");
 #endif
 
-		if (cis_cells == interrupt_cells && memcmp(&p[cis_off], node_specifier, interrupt_cells * 4) == 0) {
+		if (memcmp(&p[cis_off], interrupt_spec, cis_cells * 4) == 0) {
 			const int slen = pus_cells + pis_cells;
 #ifdef FDT_INTR_DEBUG
 			printf(" intr map match iparent %08x slen %d:", iparent, slen);
@@ -318,20 +267,16 @@ get_specifier_by_index(int phandle, int pindex, int *piphandle)
 	u_int *specifier;
 	int interrupt_parent, interrupt_cells, len;
 
-	if (has_interrupt_map(phandle))
-		return get_specifier_from_map(phandle, pindex, piphandle);
-
 	interrupt_parent = fdtbus_get_interrupt_parent(phandle);
 	if (interrupt_parent <= 0)
 		return NULL;
 
-	interrupt_cells = find_interrupt_cells(interrupt_parent);
-	if (interrupt_cells <= 0)
+	node_specifier = fdtbus_get_prop(phandle, "interrupts", &len);
+	if (node_specifier == NULL)
 		return NULL;
 
-	node_specifier = fdt_getprop(fdtbus_get_data(), fdtbus_phandle2offset(phandle),
-	    "interrupts", &len);
-	if (node_specifier == NULL)
+	interrupt_cells = find_interrupt_cells(interrupt_parent);
+	if (interrupt_cells <= 0)
 		return NULL;
 
 	const u_int spec_length = len / 4;
@@ -340,6 +285,9 @@ get_specifier_by_index(int phandle, int pindex, int *piphandle)
 		return NULL;
 
 	node_specifier += (interrupt_cells * pindex);
+
+	if (of_hasprop(interrupt_parent, "interrupt-map"))
+		return get_specifier_from_map(interrupt_parent, node_specifier, piphandle);
 
 	specifier = kmem_alloc(interrupt_cells * sizeof(u_int), KM_SLEEP);
 	memcpy(specifier, node_specifier, interrupt_cells * 4);
