@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.132 2018/06/19 05:14:36 msaitoh Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.133 2018/07/02 09:02:18 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.129 2018/06/19 05:14:16 msaitoh Exp
+ *	NetBSD: miidevs,v 1.130 2018/07/02 09:01:59 msaitoh Exp
  */
 
 /*-
@@ -56,36 +56,36 @@
  * Use "make -f Makefile.miidevs" to regenerate miidevs.h and miidevs_data.h
  */
 
-#define	MII_OUI_AGERE	0x00053d	/* Agere */
-#define	MII_OUI_ALTIMA	0x0010a9	/* Altima Communications */
 #define	MII_OUI_AMD	0x00001a	/* Advanced Micro Devices */
-#define	MII_OUI_ATHEROS	0x001374	/* Atheros */
-#define	MII_OUI_ATTANSIC	0x00c82e	/* Attansic Technology */
-#define	MII_OUI_BROADCOM	0x001018	/* Broadcom Corporation */
+#define	MII_OUI_CICADA	0x0003f1	/* Cicada Semiconductor */
+#define	MII_OUI_AGERE	0x00053d	/* Agere */
 #define	MII_OUI_BROADCOM2	0x000af7	/* Broadcom Corporation */
-#define	MII_OUI_BROADCOM3	0x001be9	/* Broadcom Corporation */
-#define	MII_OUI_CICADA	0x0003F1	/* Cicada Semiconductor */
-#define	MII_OUI_DAVICOM	0x00606e	/* Davicom Semiconductor */
+#define	MII_OUI_BROADCOM	0x001018	/* Broadcom Corporation */
+#define	MII_OUI_MICREL	0x0010a1	/* Micrel */
+#define	MII_OUI_ALTIMA	0x0010a9	/* Altima Communications */
 #define	MII_OUI_ENABLESEMI	0x0010dd	/* Enable Semiconductor */
-#define	MII_OUI_ICPLUS	0x0090c3	/* IC Plus Corp. */
-#define	MII_OUI_ICS	0x00a0be	/* Integrated Circuit Systems */
-#define	MII_OUI_INTEL	0x00aa00	/* Intel */
-#define	MII_OUI_JMICRON	0x00d831	/* JMicron */
+#define	MII_OUI_ATHEROS	0x001374	/* Atheros */
+#define	MII_OUI_BROADCOM3	0x001be9	/* Broadcom Corporation */
 #define	MII_OUI_LEVEL1	0x00207b	/* Level 1 */
 #define	MII_OUI_MARVELL	0x005043	/* Marvell Semiconductor */
-#define	MII_OUI_MICREL	0x0010a1	/* Micrel */
-#define	MII_OUI_MYSON	0x00c0b4	/* Myson Technology */
-#define	MII_OUI_NATSEMI	0x080017	/* National Semiconductor */
-#define	MII_OUI_PMCSIERRA	0x00e004	/* PMC-Sierra */
-#define	MII_OUI_RDC	0x00d02d	/* RDC Semiconductor */
-#define	MII_OUI_REALTEK	0x00e04c	/* RealTek */
 #define	MII_OUI_QUALSEMI	0x006051	/* Quality Semiconductor */
-#define	MII_OUI_SEEQ	0x00a07d	/* Seeq */
-#define	MII_OUI_SIS	0x00e006	/* Silicon Integrated Systems */
+#define	MII_OUI_DAVICOM	0x00606e	/* Davicom Semiconductor */
 #define	MII_OUI_SMSC	0x00800f	/* SMSC */
-#define	MII_OUI_TI	0x080028	/* Texas Instruments */
+#define	MII_OUI_ICPLUS	0x0090c3	/* IC Plus Corp. */
+#define	MII_OUI_SEEQ	0x00a07d	/* Seeq */
+#define	MII_OUI_ICS	0x00a0be	/* Integrated Circuit Systems */
+#define	MII_OUI_INTEL	0x00aa00	/* Intel */
 #define	MII_OUI_TSC	0x00c039	/* TDK Semiconductor */
+#define	MII_OUI_MYSON	0x00c0b4	/* Myson Technology */
+#define	MII_OUI_ATTANSIC	0x00c82e	/* Attansic Technology */
+#define	MII_OUI_RDC	0x00d02d	/* RDC Semiconductor */
+#define	MII_OUI_JMICRON	0x00d831	/* JMicron */
+#define	MII_OUI_PMCSIERRA	0x00e004	/* PMC-Sierra */
+#define	MII_OUI_SIS	0x00e006	/* Silicon Integrated Systems */
+#define	MII_OUI_REALTEK	0x00e04c	/* RealTek */
 #define	MII_OUI_XAQTI	0x00e0ae	/* XaQti Corp. */
+#define	MII_OUI_NATSEMI	0x080017	/* National Semiconductor */
+#define	MII_OUI_TI	0x080028	/* Texas Instruments */
 
 /* Some Intel 82553's use an alternative OUI. */
 #define	MII_OUI_xxINTEL	0x001f00	/* Intel */
