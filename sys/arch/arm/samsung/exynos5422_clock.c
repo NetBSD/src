@@ -1,4 +1,4 @@
-/* $NetBSD: exynos5422_clock.c,v 1.6 2017/06/19 21:59:55 jmcneill Exp $ */
+/* $NetBSD: exynos5422_clock.c,v 1.7 2018/07/02 20:24:55 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos5422_clock.c,v 1.6 2017/06/19 21:59:55 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos5422_clock.c,v 1.7 2018/07/02 20:24:55 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -747,7 +747,7 @@ exynos5422_clock_set_rate_div(struct exynos5422_clock_softc *sc,
 	clk_parent = exynos5422_clock_get_parent(sc, &eclk->base);
 	const u_int parent_rate = exynos5422_clock_get_rate(sc, clk_parent);
 
-	for (tmp_div = 0; tmp_div < popcount32(ediv->bits); tmp_div++) {
+	for (tmp_div = 0; tmp_div < __SHIFTOUT_MASK(ediv->bits); tmp_div++) {
 		tmp_rate = parent_rate / (tmp_div + 1);
 		if (tmp_rate <= rate) {
 			new_div = tmp_div;
