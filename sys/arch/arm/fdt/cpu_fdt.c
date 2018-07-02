@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_fdt.c,v 1.7 2018/06/22 23:46:04 jmcneill Exp $ */
+/* $NetBSD: cpu_fdt.c,v 1.8 2018/07/02 16:36:49 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_fdt.c,v 1.7 2018/06/22 23:46:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_fdt.c,v 1.8 2018/07/02 16:36:49 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -146,4 +146,7 @@ cpu_fdt_attach(device_t parent, device_t self, void *aux)
 
 	/* Attach the CPU */
 	cpu_attach(self, cpuid);
+
+	/* Attach CPU frequency scaling provider */
+	config_found(self, faa, NULL);
 }
