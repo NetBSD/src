@@ -1,4 +1,4 @@
-/* $NetBSD: exynos_dwcmmc.c,v 1.6 2018/07/02 20:28:24 jmcneill Exp $ */
+/* $NetBSD: exynos_dwcmmc.c,v 1.7 2018/07/02 23:52:53 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_dwcmmc.c,v 1.6 2018/07/02 20:28:24 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_dwcmmc.c,v 1.7 2018/07/02 23:52:53 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -43,7 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: exynos_dwcmmc.c,v 1.6 2018/07/02 20:28:24 jmcneill E
 #include <dev/ic/dwc_mmc_var.h>
 #include <dev/fdt/fdtvar.h>
 
-#define	FIFO_REG	0x200
 #define	MPS_BEGIN	0x200
 #define	MPS_END		0x204
 #define	MPS_CTRL	0x20c
@@ -94,7 +93,6 @@ exynos_dwcmmc_attach(device_t parent, device_t self, void *aux)
 	char intrstr[128];
 	bus_addr_t addr;
 	bus_size_t size;
-	u_int fifo_depth;
 	int error;
 
 	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
@@ -102,9 +100,6 @@ exynos_dwcmmc_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	if (of_getprop_uint32(phandle, "fifo-depth", &fifo_depth)) {
-		fifo_depth = 64;
-	}
 	if (of_getprop_uint32(phandle, "samsung,dw-mshc-ciu-div", &esc->sc_ciu_div)) {
 		aprint_error(": missing samsung,dw-mshc-ciu-div property\n");
 		return;
@@ -143,9 +138,8 @@ exynos_dwcmmc_attach(device_t parent, device_t self, void *aux)
 	}
 
 	sc->sc_clock_freq = clk_get_rate(esc->sc_clk_ciu) / (esc->sc_ciu_div + 1);
-	sc->sc_fifo_depth = fifo_depth;
-	sc->sc_fifo_reg = FIFO_REG;
-	sc->sc_flags = DWC_MMC_F_USE_HOLD_REG | DWC_MMC_F_DMA;
+	of_getprop_uint32(phandle, "fifo-depth", &sc->sc_fifo_depth);
+	sc->sc_flags = DWC_MMC_F_DMA;
 	sc->sc_bus_clock = exynos_dwcmmc_bus_clock;
 
 	esc->sc_pin_cd = fdtbus_gpio_acquire(phandle, "cd-gpios",
