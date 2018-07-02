@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_mmc.c,v 1.13 2018/06/19 22:44:33 jmcneill Exp $ */
+/* $NetBSD: dwc_mmc.c,v 1.14 2018/07/02 12:47:19 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_mmc.c,v 1.13 2018/06/19 22:44:33 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_mmc.c,v 1.14 2018/07/02 12:47:19 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -316,7 +316,7 @@ dwc_mmc_update_clock(struct dwc_mmc_softc *sc)
 		cmd |= DWC_MMC_CMD_USE_HOLD_REG;
 	MMC_WRITE(sc, DWC_MMC_ARG, 0);
 	MMC_WRITE(sc, DWC_MMC_CMD, cmd);
-	retry = 0xfffff;
+	retry = 200000;
 	while (--retry > 0) {
 		if (!(MMC_READ(sc, DWC_MMC_CMD) & DWC_MMC_CMD_START))
 			break;
@@ -556,7 +556,7 @@ dwc_mmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 {
 	struct dwc_mmc_softc *sc = sch;
 	uint32_t cmdval = DWC_MMC_CMD_START;
-	int retry = 0xfffff;
+	int retry = 200000;
 
 #ifdef DWC_MMC_DEBUG
 	aprint_normal_dev(sc->sc_dev,
