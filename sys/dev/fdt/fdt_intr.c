@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_intr.c,v 1.13 2018/07/02 12:17:05 jmcneill Exp $ */
+/* $NetBSD: fdt_intr.c,v 1.14 2018/07/02 16:06:50 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_intr.c,v 1.13 2018/07/02 12:17:05 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_intr.c,v 1.14 2018/07/02 16:06:50 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -59,29 +59,19 @@ static u_int *	get_specifier_from_map(int, const u_int *, int *);
 static int
 fdtbus_get_interrupt_parent(int phandle)
 {
-	u_int interrupt_parent;
+	int iparent = phandle;
 
-	while (phandle >= 0) {
-		if (of_getprop_uint32(phandle, "interrupt-parent",
-		    &interrupt_parent) == 0) {
-			break;
-		}
-		if (phandle == 0) {
-			return -1;
-		}
-		phandle = OF_parent(phandle);
-	}
-	if (phandle < 0) {
-		return -1;
-	}
+	do {
+		if (of_hasprop(iparent, "interrupt-parent"))
+			return fdtbus_get_phandle(iparent, "interrupt-parent");
+		else if (of_hasprop(iparent, "interrupt-controller"))
+			return iparent;
+		else if (of_hasprop(iparent, "interrupt-map"))
+			return iparent;
+		iparent = OF_parent(iparent);
+	} while (iparent > 0);
 
-	const void *data = fdtbus_get_data();
-	const int off = fdt_node_offset_by_phandle(data, interrupt_parent);
-	if (off < 0) {
-		return -1;
-	}
-
-	return fdtbus_offset2phandle(off);
+	return 0;
 }
 
 static struct fdtbus_interrupt_controller *
