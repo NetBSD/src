@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.133 2018/07/02 09:02:18 msaitoh Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.134 2018/07/02 09:27:18 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.130 2018/07/02 09:01:59 msaitoh Exp
+ *	NetBSD: miidevs,v 1.131 2018/07/02 09:26:48 msaitoh Exp
  */
 
 /*-
@@ -110,6 +110,7 @@
 #define	MII_OUI_xxXAQTI	0xace000	/* XaQti Corp. */
 
 /* Don't know what's going on here. */
+#define	MII_OUI_xxASIX	0x000674	/* Asix Semiconductor */
 #define	MII_OUI_xxPMCSIERRA	0x0009c0	/* PMC-Sierra */
 #define	MII_OUI_xxPMCSIERRA2	0x009057	/* PMC-Sierra */
 
@@ -124,6 +125,10 @@
  */
 #define	MII_MODEL_AGERE_ET1011	0x0004
 #define	MII_STR_AGERE_ET1011	"Agere ET1011 10/100/1000baseT PHY"
+
+/* Asix semiconductor PHYs */
+#define	MII_MODEL_xxASIX_AX88X9X	0x0031
+#define	MII_STR_xxASIX_AX88X9X	"Ax88x9x internal PHY"
 
 /* Atheros PHYs */
 #define	MII_MODEL_ATHEROS_F1	0x0001
@@ -448,7 +453,7 @@
 #define	MII_MODEL_xxNATSEMI_DP83843	0x0001
 #define	MII_STR_xxNATSEMI_DP83843	"DP83843 10/100 media interface"
 #define	MII_MODEL_xxNATSEMI_DP83815	0x0002
-#define	MII_STR_xxNATSEMI_DP83815	"DP83815 10/100 media interface"
+#define	MII_STR_xxNATSEMI_DP83815	"DP83815/DP83846A 10/100 media interface"
 #define	MII_MODEL_xxNATSEMI_DP83847	0x0003
 #define	MII_STR_xxNATSEMI_DP83847	"DP83847 10/100 media interface"
 #define	MII_MODEL_xxNATSEMI_DP83891	0x0005
