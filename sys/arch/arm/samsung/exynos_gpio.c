@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_gpio.c,v 1.23 2015/12/31 03:50:34 marty Exp $ */
+/*	$NetBSD: exynos_gpio.c,v 1.24 2018/07/02 23:54:52 jmcneill Exp $ */
 
 /*-
 * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include "gpio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_gpio.c,v 1.23 2015/12/31 03:50:34 marty Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_gpio.c,v 1.24 2018/07/02 23:54:52 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -262,24 +262,46 @@ exynos_gpio_pin_ctl(void *cookie, int pin, int flags)
 	exynos_gpio_update_cfg_regs(bank, &ncfg);
 }
 
-void exynos_gpio_pin_ctl_read(const struct exynos_gpio_bank *bank,
-			      struct exynos_gpio_pin_cfg *cfg)
-{
-	cfg->cfg = GPIO_READ(bank, EXYNOS_GPIO_CON);
-	cfg->pud = GPIO_READ(bank, EXYNOS_GPIO_PUD);
-	cfg->drv = GPIO_READ(bank, EXYNOS_GPIO_DRV);
-	cfg->conpwd = GPIO_READ(bank, EXYNOS_GPIO_CONPWD);
-	cfg->pudpwd = GPIO_READ(bank, EXYNOS_GPIO_PUDPWD);
-}
-
 void exynos_gpio_pin_ctl_write(const struct exynos_gpio_bank *bank,
-			       const struct exynos_gpio_pin_cfg *cfg)
+			       const struct exynos_gpio_pin_cfg *cfg,
+			       int pin)
 {
-		GPIO_WRITE(bank, EXYNOS_GPIO_CON, cfg->cfg);
-		GPIO_WRITE(bank, EXYNOS_GPIO_PUD, cfg->pud);
-		GPIO_WRITE(bank, EXYNOS_GPIO_DRV, cfg->drv);
-		GPIO_WRITE(bank, EXYNOS_GPIO_CONPWD, cfg->conpwd);
-		GPIO_WRITE(bank, EXYNOS_GPIO_PUDPWD, cfg->pudpwd);
+	uint32_t val;
+
+	if (cfg->cfg_valid) {
+		val = GPIO_READ(bank, EXYNOS_GPIO_CON);
+		val &= ~(0xf << (pin * 4));
+		val |= (cfg->cfg << (pin * 4));
+		GPIO_WRITE(bank, EXYNOS_GPIO_CON, val);
+	}
+
+	if (cfg->pud_valid) {
+		val = GPIO_READ(bank, EXYNOS_GPIO_PUD);
+		val &= ~(0x3 << (pin * 2));
+		val |= (cfg->pud << (pin * 2));
+		GPIO_WRITE(bank, EXYNOS_GPIO_PUD, val);
+	}
+
+	if (cfg->drv_valid) {
+		val = GPIO_READ(bank, EXYNOS_GPIO_DRV);
+		val &= ~(0x3 << (pin * 2));
+		val |= (cfg->drv << (pin * 2));
+		GPIO_WRITE(bank, EXYNOS_GPIO_DRV, val);
+	}
+
+	if (cfg->conpwd_valid) {
+		val = GPIO_READ(bank, EXYNOS_GPIO_CONPWD);
+		val &= ~(0x3 << (pin * 2));
+		val |= (cfg->conpwd << (pin * 2));
+		GPIO_WRITE(bank, EXYNOS_GPIO_CONPWD, val);
+	}
+
+	if (cfg->pudpwd_valid) {
+		val = GPIO_READ(bank, EXYNOS_GPIO_PUDPWD);
+		val &= ~(0x3 << (pin * 2));
+		val |= (cfg->pudpwd << (pin * 2));
+		GPIO_WRITE(bank, EXYNOS_GPIO_PUDPWD, val);
+	}
 }
 
 struct exynos_gpio_softc *
