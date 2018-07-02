@@ -158,6 +158,7 @@ extern int exact_log2                  (unsigned HOST_WIDE_INT);
 /* Return floor of log2, with -1 for zero.  */
 extern int floor_log2                  (unsigned HOST_WIDE_INT);
 
+#if 0 /* these are not valid, and break in GCC 5. */
 /* Inline versions of the above for speed.  */
 #if GCC_VERSION >= 3004
 # if HOST_BITS_PER_WIDE_INT == HOST_BITS_PER_LONG
@@ -183,6 +184,7 @@ exact_log2 (unsigned HOST_WIDE_INT x)
   return x == (x & -x) && x ? (int) CTZ_HWI (x) : -1;
 }
 #endif /* GCC_VERSION >= 3004 */
+#endif
 
 /* Functions used to get and set GCC's notion of in what directory
    compilation was started.  */
