@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.7,v 1.1.2.147 2018/06/30 11:45:14 martin Exp $
+# $NetBSD: CHANGES-6.0.7,v 1.1.2.148 2018/07/02 14:40:25 martin Exp $
 
 A complete list of changes from the NetBSD 6.0.6 release to the NetBSD 6.0.7
 release:
@@ -15500,4 +15500,9 @@ xsrc/xfree/xc/programs/mkfontscale/ident.c	(apply patch)
 
 	Pass gzFile, not gzFile * to gzio functions.
 	[mrg, ticket #1550]
+
+gnu/dist/gcc4/gcc/toplev.h			(apply patch)
+
+	Avoid redefining functions.
+	[mrg, ticket #1551]
 
