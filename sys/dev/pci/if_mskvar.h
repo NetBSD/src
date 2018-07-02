@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_mskvar.h,v 1.3 2006/12/28 16:34:42 kettenis Exp $	*/
-/*	$NetBSD: if_mskvar.h,v 1.14 2018/06/13 19:37:23 jdolecek Exp $	*/
+/*	$NetBSD: if_mskvar.h,v 1.15 2018/07/02 06:03:13 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -223,7 +223,7 @@ struct sk_if_softc {
 	u_int32_t		sk_rx_ramend;
 	u_int32_t		sk_tx_ramstart;
 	u_int32_t		sk_tx_ramend;
-	int			sk_cnt;
+	int			sk_pktlen;	/* XXX set but unused for now */
 	int			sk_link;
 	struct callout		sk_tick_ch;
 	struct msk_chain_data	sk_cdata;
