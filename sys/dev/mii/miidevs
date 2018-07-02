@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.130 2018/07/02 09:01:59 msaitoh Exp $
+$NetBSD: miidevs,v 1.131 2018/07/02 09:26:48 msaitoh Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -103,6 +103,7 @@ oui xxLEVEL1			0x782000	Level 1
 oui xxXAQTI			0xace000	XaQti Corp.
 
 /* Don't know what's going on here. */
+oui xxASIX			0x000674	Asix Semiconductor
 oui xxPMCSIERRA			0x0009c0	PMC-Sierra
 oui xxPMCSIERRA2		0x009057	PMC-Sierra
 
@@ -116,6 +117,9 @@ oui yyREALTEK			0x000004	Realtek
  * Agere PHYs
  */
 model AGERE ET1011		0x0004 Agere ET1011 10/100/1000baseT PHY
+
+/* Asix semiconductor PHYs */
+model xxASIX AX88X9X		0x0031 Ax88x9x internal PHY
 
 /* Atheros PHYs */
 model ATHEROS F1		0x0001 F1 10/100/1000 PHY
@@ -296,7 +300,7 @@ model MYSON MTD803		0x0000 MTD803 3-in-1 media interface
 /* National Semiconductor PHYs */
 model xxNATSEMI DP83840		0x0000 DP83840 10/100 media interface
 model xxNATSEMI DP83843		0x0001 DP83843 10/100 media interface
-model xxNATSEMI DP83815		0x0002 DP83815 10/100 media interface
+model xxNATSEMI DP83815		0x0002 DP83815/DP83846A 10/100 media interface
 model xxNATSEMI DP83847		0x0003 DP83847 10/100 media interface
 model xxNATSEMI DP83891		0x0005 DP83891 1000BASE-T media interface
 model xxNATSEMI DP83861		0x0006 DP83861 1000BASE-T media interface
