@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.9 2008/09/06 21:46:14 tsutsui Exp $
+.\"	$NetBSD: install,v 1.9.54.1 2018/07/03 07:11:48 martin Exp $
 .\"
 .\" Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -29,7 +29,7 @@ The following steps describe how to set up a CompactFlash card for
 the TS-7200.  The TS-7200 can use the interactive
 installation program
 .Ic sysinst 
-to perform an internet installation from ftp.netbsd.org on the CompactFlash.  
+to perform an internet installation from ftp.NetBSD.org on the CompactFlash.  
 .Pp
 .(enum
 Place the netbsd-TS7200_INSTALL.bin kernel into the TFTP server's download
