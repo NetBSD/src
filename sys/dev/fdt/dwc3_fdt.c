@@ -1,4 +1,4 @@
-/* $NetBSD: dwc3_fdt.c,v 1.3 2018/06/29 17:48:24 msaitoh Exp $ */
+/* $NetBSD: dwc3_fdt.c,v 1.4 2018/07/03 08:52:36 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc3_fdt.c,v 1.3 2018/06/29 17:48:24 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc3_fdt.c,v 1.4 2018/07/03 08:52:36 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -136,7 +136,7 @@ dwc3_fdt_enable_phy(struct xhci_softc *sc, const int phandle)
 		val &= ~GUSB2PHYCFG_ENBLSLPM;
 	if (of_hasprop(phandle, "snps,dis-u2-freeclk-exists-quirk"))
 		val &= ~GUSB2PHYCFG_U2_FREECLK_EXISTS;
-	if (of_hasprop(phandle, "snps,dis-u2-susphy-quirk"))
+	if (of_hasprop(phandle, "snps,dis_u2_susphy_quirk"))
 		val &= ~GUSB2PHYCFG_SUSPHY;
 	WR4(sc, DWC3_GUSB2PHYCFG(0), val);
 
