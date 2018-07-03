@@ -1,4 +1,4 @@
-/*	$NetBSD: printf.c,v 1.37 2015/06/16 22:54:10 christos Exp $	*/
+/*	$NetBSD: printf.c,v 1.38 2018/07/03 01:54:42 kre Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)printf.c	8.2 (Berkeley) 3/22/95";
 #else
-__RCSID("$NetBSD: printf.c,v 1.37 2015/06/16 22:54:10 christos Exp $");
+__RCSID("$NetBSD: printf.c,v 1.38 2018/07/03 01:54:42 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -433,6 +433,13 @@ conv_escape(char *str, char *conv_ch)
 	ch = *str++;
 
 	switch (ch) {
+	case '\0':
+		warnx("incomplete escape sequence");
+		rval = 1;
+		value = '\\';
+		--str;
+		break;
+
 	case '0': case '1': case '2': case '3':
 	case '4': case '5': case '6': case '7':
 		num_buf[0] = ch;
