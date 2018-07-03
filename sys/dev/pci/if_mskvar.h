@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_mskvar.h,v 1.3 2006/12/28 16:34:42 kettenis Exp $	*/
-/*	$NetBSD: if_mskvar.h,v 1.15 2018/07/02 06:03:13 jdolecek Exp $	*/
+/*	$NetBSD: if_mskvar.h,v 1.16 2018/07/03 18:07:36 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -209,7 +209,8 @@ struct sk_softc {
 	int			sk_status_nseg;
 	int			sk_status_idx;
 	int			sk_status_own_idx;
-	krndsource_t     rnd_source;
+	u_int8_t		rnd_attached;
+	krndsource_t		rnd_source;
 };
 
 /* Softc for each logical interface */

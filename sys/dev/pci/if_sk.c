@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.87 2018/06/26 06:48:01 msaitoh Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.88 2018/07/03 18:07:36 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.87 2018/06/26 06:48:01 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.88 2018/07/03 18:07:36 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1462,8 +1462,10 @@ sk_attach(device_t parent, device_t self, void *aux)
 
 	ether_ifattach(ifp, sc_if->sk_enaddr);
 
-        rnd_attach_source(&sc->rnd_source, device_xname(sc->sk_dev),
-            RND_TYPE_NET, RND_FLAG_DEFAULT);
+	if (sc->rnd_attached++ == 0) {
+	        rnd_attach_source(&sc->rnd_source, device_xname(sc->sk_dev),
+		    RND_TYPE_NET, RND_FLAG_DEFAULT);
+	}
 
 	if (pmf_device_register(self, NULL, sk_resume))
 		pmf_class_network_register(self, ifp);
@@ -2400,6 +2402,7 @@ sk_intr(void *xsc)
 	if (ifp1 != NULL)
 		if_schedule_deferred_start(ifp1);
 
+	KASSERT(sc->rnd_attached > 0);
 	rnd_add_uint32(&sc->rnd_source, status);
 
 	if (sc->sk_int_mod_pending)
