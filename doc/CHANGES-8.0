@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.219 2018/06/25 13:01:26 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.220 2018/07/03 07:13:41 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -14118,3 +14118,9 @@ distrib/common/Makefile.bootcd
 doc/CHANGES-8.0
 
 	Tag moved for additional RC2 pullups (#892, #904)
+
+distrib/notes/amd64/prep			(manually edited)
+distrib/notes/evbarm/install			(manually edited)
+distrib/notes/i386/prep				(manually edited)
+
+	Fix NetBSD.org capitalization in some URLs.
