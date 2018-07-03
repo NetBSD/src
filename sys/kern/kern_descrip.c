@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.233 2018/07/03 22:49:51 kamil Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.234 2018/07/03 23:11:06 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.233 2018/07/03 22:49:51 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.234 2018/07/03 23:11:06 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1489,13 +1489,13 @@ fd_copy(void)
 
 		/* Fix up bitmaps. */
 		j = i >> NDENTRYSHIFT;
-		KASSERT((newfdp->fd_lomap[j] & (1 << (i & NDENTRYMASK))) == 0);
-		newfdp->fd_lomap[j] |= 1 << (i & NDENTRYMASK);
+		KASSERT((newfdp->fd_lomap[j] & (1U << (i & NDENTRYMASK))) == 0);
+		newfdp->fd_lomap[j] |= 1U << (i & NDENTRYMASK);
 		if (__predict_false(newfdp->fd_lomap[j] == ~0)) {
 			KASSERT((newfdp->fd_himap[j >> NDENTRYSHIFT] &
-			    (1 << (j & NDENTRYMASK))) == 0);
+			    (1U << (j & NDENTRYMASK))) == 0);
 			newfdp->fd_himap[j >> NDENTRYSHIFT] |=
-			    1 << (j & NDENTRYMASK);
+			    1U << (j & NDENTRYMASK);
 		}
 		newlast = i;
 	}
