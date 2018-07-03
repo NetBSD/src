@@ -1,4 +1,4 @@
-/* $NetBSD: exynos_usbdrdphy.c,v 1.1 2018/07/03 16:09:04 jmcneill Exp $ */
+/* $NetBSD: exynos_usbdrdphy.c,v 1.2 2018/07/03 16:22:48 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: exynos_usbdrdphy.c,v 1.1 2018/07/03 16:09:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_usbdrdphy.c,v 1.2 2018/07/03 16:22:48 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -55,7 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: exynos_usbdrdphy.c,v 1.1 2018/07/03 16:09:04 jmcneil
 #define	 PHY_CLK_RST_MPLL_MULT		__BITS(17,11)
 #define	  PHY_CLK_RST_MPLL_MULT_24M	0x68
 #define	 PHY_CLK_RST_FSEL		__BITS(10,5)
-#define	  PHY_CLK_RST_FSEL_24M		0x2a
+#define	  PHY_CLK_RST_FSEL_24M		0x5
 #define	 PHY_CLK_RST_RETENABLEN		__BIT(4)
 #define	 PHY_CLK_RST_REFCLKSEL		__BITS(3,2)
 #define	  PHY_CLK_RST_REFCLKSEL_EXT	3
