@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.234 2018/07/03 23:11:06 kamil Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.235 2018/07/03 23:14:57 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.234 2018/07/03 23:11:06 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.235 2018/07/03 23:14:57 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -338,12 +338,12 @@ fd_unused(filedesc_t *fdp, unsigned fd)
 
 	if (fdp->fd_lomap[off] == ~0) {
 		KASSERT((fdp->fd_himap[off >> NDENTRYSHIFT] &
-		    (1 << (off & NDENTRYMASK))) != 0);
+		    (1U << (off & NDENTRYMASK))) != 0);
 		fdp->fd_himap[off >> NDENTRYSHIFT] &=
-		    ~(1 << (off & NDENTRYMASK));
+		    ~(1U << (off & NDENTRYMASK));
 	}
-	KASSERT((fdp->fd_lomap[off] & (1 << (fd & NDENTRYMASK))) != 0);
-	fdp->fd_lomap[off] &= ~(1 << (fd & NDENTRYMASK));
+	KASSERT((fdp->fd_lomap[off] & (1U << (fd & NDENTRYMASK))) != 0);
+	fdp->fd_lomap[off] &= ~(1U << (fd & NDENTRYMASK));
 	ff->ff_allocated = false;
 
 	KASSERT(fd <= fdp->fd_lastfile);
