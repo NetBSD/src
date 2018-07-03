@@ -1,4 +1,4 @@
-/* $NetBSD: if_msk.c,v 1.68 2018/07/02 06:03:13 jdolecek Exp $ */
+/* $NetBSD: if_msk.c,v 1.69 2018/07/03 18:07:36 jdolecek Exp $ */
 /*	$OpenBSD: if_msk.c,v 1.79 2009/10/15 17:54:56 deraadt Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.68 2018/07/02 06:03:13 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.69 2018/07/03 18:07:36 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1199,8 +1199,10 @@ msk_attach(device_t parent, device_t self, void *aux)
 	else
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
-	rnd_attach_source(&sc->rnd_source, device_xname(sc->sk_dev),
-		RND_TYPE_NET, RND_FLAG_DEFAULT);
+	if (sc->rnd_attached++ == 0) {
+		rnd_attach_source(&sc->rnd_source, device_xname(sc->sk_dev),
+			RND_TYPE_NET, RND_FLAG_DEFAULT);
+	}
 
 	DPRINTFN(2, ("msk_attach: end\n"));
 	return;
@@ -1227,7 +1229,8 @@ msk_detach(device_t self, int flags)
 
 	msk_stop(ifp, 0);
 
-	rnd_detach_source(&sc->rnd_source);
+	if (--sc->rnd_attached == 0)
+		rnd_detach_source(&sc->rnd_source);
 
 	callout_halt(&sc_if->sk_tick_ch, NULL);
 	callout_destroy(&sc_if->sk_tick_ch);
@@ -2148,6 +2151,7 @@ msk_intr(void *xsc)
 	if (ifp1 != NULL && !IFQ_IS_EMPTY(&ifp1->if_snd))
 		if_schedule_deferred_start(ifp1);
 
+	KASSERT(sc->rnd_attached > 0);
 	rnd_add_uint32(&sc->rnd_source, status);
 
 	if (sc->sk_int_mod_pending)
