@@ -1,4 +1,4 @@
-/* $NetBSD: gic_fdt.c,v 1.10 2018/06/20 05:50:09 hkenken Exp $ */
+/* $NetBSD: gic_fdt.c,v 1.11 2018/07/03 12:12:03 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic_fdt.c,v 1.10 2018/06/20 05:50:09 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic_fdt.c,v 1.11 2018/07/03 12:12:03 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -75,6 +75,7 @@ struct gic_fdt_irqhandler {
 struct gic_fdt_irq {
 	struct gic_fdt_softc	*intr_sc;
 	void			*intr_ih;
+	void			*intr_arg;
 	int			intr_refcnt;
 	int			intr_ipl;
 	int			intr_level;
@@ -188,6 +189,7 @@ gic_fdt_establish(device_t dev, u_int *specifier, int ipl, int flags,
 		firq = kmem_alloc(sizeof(*firq), KM_SLEEP);
 		firq->intr_sc = sc;
 		firq->intr_refcnt = 0;
+		firq->intr_arg = arg;
 		firq->intr_ipl = ipl;
 		firq->intr_level = level;
 		firq->intr_mpsafe = mpsafe;
@@ -206,7 +208,7 @@ gic_fdt_establish(device_t dev, u_int *specifier, int ipl, int flags,
 		}
 		sc->sc_irq[irq] = firq;
 	} else {
-		if (arg) {
+		if (firq->intr_arg == NULL && arg != NULL) {
 			device_printf(dev, "cannot share irq with NULL arg\n");
 			return NULL;
 		}
