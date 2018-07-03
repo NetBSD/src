@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.428 2018/06/26 06:48:02 msaitoh Exp $	*/
+/*	$NetBSD: if.c,v 1.429 2018/07/03 03:37:03 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.428 2018/06/26 06:48:02 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.429 2018/07/03 03:37:03 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -279,8 +279,6 @@ void
 ifinit(void)
 {
 
-	if_sysctl_setup(NULL);
-
 #if (defined(INET) || defined(INET6))
 	encapinit();
 #endif
@@ -321,6 +319,14 @@ ifinit1(void)
 #if NETHER > 0 || NFDDI > 0 || defined(NETATALK) || NTOKEN > 0 || defined(WLAN)
 	etherinit();
 #endif
+}
+
+/* XXX must be after domaininit() */
+void
+ifinit_post(void)
+{
+
+	if_sysctl_setup(NULL);
 }
 
 ifnet_t *
