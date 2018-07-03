@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.232 2018/07/03 12:17:54 kamil Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.233 2018/07/03 22:49:51 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.232 2018/07/03 12:17:54 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.233 2018/07/03 22:49:51 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -185,7 +185,7 @@ fd_isused(filedesc_t *fdp, unsigned fd)
 
 	KASSERT(fd < fdp->fd_dt->dt_nfiles);
 
-	return (fdp->fd_lomap[off] & (1 << (fd & NDENTRYMASK))) != 0;
+	return (fdp->fd_lomap[off] & (1U << (fd & NDENTRYMASK))) != 0;
 }
 
 /*
