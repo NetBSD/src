@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.14.40.1 2018/06/24 09:11:28 martin Exp $
+.\"	$NetBSD: prep,v 1.14.40.2 2018/07/03 07:11:48 martin Exp $
 .
 First and foremost, before beginning the installation process,
 .Em make sure you have a reliable backup
@@ -135,10 +135,10 @@ A semi-manual mode of installation is supported and quite painless.
 This shortcoming will be addressesed in the upcoming next release.
 .Pp
 Please refer to 
-.Lk https://wiki.netbsd.org/Installation_on_UEFI_systems/
+.Lk https://wiki.NetBSD.org/Installation_on_UEFI_systems/
 when installing on
 .Sy UEFI
 systems. See this
-.Lk https://wiki.netbsd.org/users/spz/moderndisk/
+.Lk https://wiki.NetBSD.org/users/spz/moderndisk/
 for expert / manual installation suggestions on modern disk systems.
 
