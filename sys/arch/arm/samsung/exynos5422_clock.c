@@ -1,4 +1,4 @@
-/* $NetBSD: exynos5422_clock.c,v 1.9 2018/07/03 16:06:41 jmcneill Exp $ */
+/* $NetBSD: exynos5422_clock.c,v 1.10 2018/07/03 16:30:13 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos5422_clock.c,v 1.9 2018/07/03 16:06:41 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos5422_clock.c,v 1.10 2018/07/03 16:30:13 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -648,9 +648,9 @@ exynos5422_clock_find_by_id(u_int clock_id)
 static void
 exynos5422_clock_print_header(void)
 {
-	printf("  %-10s %2s %-10s %-5s %10s\n",
+	aprint_debug("  %-10s %2s %-10s %-5s %10s\n",
 	    "clock", "", "parent", "type", "rate");
-	printf("  %-10s %2s %-10s %-5s %10s\n",
+	aprint_debug("  %-10s %2s %-10s %-5s %10s\n",
 	    "=====", "", "======", "====", "====");
 }
 
@@ -683,7 +683,7 @@ exynos5422_clock_print(struct exynos5422_clock_softc *sc,
 	clk_parent = exynos5422_clock_get_parent(sc, &eclk->base);
 	eclk_parent = (struct exynos_clk *)clk_parent;
 
-	printf("  %-10s %2s %-10s %-5s %10d Hz\n",
+	aprint_debug("  %-10s %2s %-10s %-5s %10d Hz\n",
 	    eclk->base.name,
 	    eclk_parent ? "<-" : "",
 	    eclk_parent ? eclk_parent->base.name : "",
