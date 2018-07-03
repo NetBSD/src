@@ -1,4 +1,4 @@
-/* $NetBSD: exynos5422_clock.c,v 1.8 2018/07/03 09:39:32 jmcneill Exp $ */
+/* $NetBSD: exynos5422_clock.c,v 1.9 2018/07/03 16:06:41 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos5422_clock.c,v 1.8 2018/07/03 09:39:32 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos5422_clock.c,v 1.9 2018/07/03 16:06:41 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -378,6 +378,7 @@ static const struct clk_funcs exynos5422_clock_funcs = {
 #define EXYNOS5422_SRC_TOP12		0x10288
 
 #define EXYNOS5422_DIV_TOP0		0x10500
+#define EXYNOS5422_DIV_FSYS0		0x10548
 #define EXYNOS5422_DIV_FSYS1		0x1054c
 #define EXYNOS5422_DIV_PERIC0		0x10558
 
@@ -461,6 +462,10 @@ static struct exynos_clk exynos5422_clocks[] = {
 	CLK_MUX("mout_aclk200_fsys2", EXYNOS5422_SRC_TOP0, __BITS(13,12),
 	    mout_group1_p),
 
+	CLK_MUX("mout_usbd301", EXYNOS5422_SRC_FSYS, __BITS(6,4),
+	    mout_group2_p),
+	CLK_MUX("mout_usbd300", EXYNOS5422_SRC_FSYS, __BITS(22,20),
+	    mout_group2_p),
 	CLK_MUX("mout_mmc0", EXYNOS5422_SRC_FSYS, __BITS(10,8),
 	    mout_group2_p),
 	CLK_MUX("mout_mmc1", EXYNOS5422_SRC_FSYS, __BITS(14,12),
@@ -479,6 +484,10 @@ static struct exynos_clk exynos5422_clocks[] = {
 	CLK_DIV("dout_aclk200_fsys", "mout_aclk200_fsys", EXYNOS5422_DIV_TOP0, __BITS(30,28)),
 	CLK_DIV("dout_aclk200_fsys2", "mout_aclk200_fsys2", EXYNOS5422_DIV_TOP0, __BITS(14,12)),
 
+	CLK_DIV("dout_usbphy301", "mout_usbd301", EXYNOS5422_DIV_FSYS0, __BITS(15,12)),
+	CLK_DIV("dout_usbphy300", "mout_usbd300", EXYNOS5422_DIV_FSYS0, __BITS(19,16)),
+	CLK_DIV("dout_usbd301", "mout_usbd301", EXYNOS5422_DIV_FSYS0, __BITS(23,20)),
+	CLK_DIV("dout_usbd300", "mout_usbd300", EXYNOS5422_DIV_FSYS0, __BITS(27,24)),
 	CLK_DIV("dout_mmc0", "mout_mmc0", EXYNOS5422_DIV_FSYS1, __BITS(9,0)),
 	CLK_DIV("dout_mmc1", "mout_mmc1", EXYNOS5422_DIV_FSYS1, __BITS(19,10)),
 	CLK_DIV("dout_mmc2", "mout_mmc2", EXYNOS5422_DIV_FSYS1, __BITS(29,20)),
@@ -502,6 +511,14 @@ static struct exynos_clk exynos5422_clocks[] = {
 	    __BIT(1), CLK_SET_RATE_PARENT),
 	CLK_GATE("sclk_mmc2", "dout_mmc2", EXYNOS5422_GATE_TOP_SCLK_FSYS,
 	    __BIT(2), CLK_SET_RATE_PARENT),
+	CLK_GATE("sclk_usbphy301", "dout_usbphy301", EXYNOS5422_GATE_TOP_SCLK_FSYS,
+	    __BIT(7), CLK_SET_RATE_PARENT),
+	CLK_GATE("sclk_usbphy300", "dout_usbphy300", EXYNOS5422_GATE_TOP_SCLK_FSYS,
+	    __BIT(8), CLK_SET_RATE_PARENT),
+	CLK_GATE("sclk_usbd300", "dout_usbd300", EXYNOS5422_GATE_TOP_SCLK_FSYS,
+	    __BIT(9), CLK_SET_RATE_PARENT),
+	CLK_GATE("sclk_usbd301", "dout_usbd301", EXYNOS5422_GATE_TOP_SCLK_FSYS,
+	    __BIT(10), CLK_SET_RATE_PARENT),
 	CLK_GATE("sclk_uart0", "dout_uart0", EXYNOS5422_GATE_TOP_SCLK_PERIC,
 	    __BIT(0), CLK_SET_RATE_PARENT),
 	CLK_GATE("sclk_uart1", "dout_uart1", EXYNOS5422_GATE_TOP_SCLK_PERIC,
