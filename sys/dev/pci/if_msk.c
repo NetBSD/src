@@ -1,4 +1,4 @@
-/* $NetBSD: if_msk.c,v 1.69 2018/07/03 18:07:36 jdolecek Exp $ */
+/* $NetBSD: if_msk.c,v 1.70 2018/07/03 19:56:01 jdolecek Exp $ */
 /*	$OpenBSD: if_msk.c,v 1.79 2009/10/15 17:54:56 deraadt Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.69 2018/07/03 18:07:36 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.70 2018/07/03 19:56:01 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -539,22 +539,23 @@ msk_alloc_jumbo_mem(struct sk_if_softc *sc_if)
 {
 	struct sk_softc		*sc = sc_if->sk_softc;
 	char *ptr, *kva;
-	bus_dma_segment_t	seg;
-	int		i, rseg, state, error;
+	int		i, state, error;
 	struct sk_jpool_entry   *entry;
 
 	state = error = 0;
 
 	/* Grab a big chunk o' storage. */
 	if (bus_dmamem_alloc(sc->sc_dmatag, MSK_JMEM, PAGE_SIZE, 0,
-			     &seg, 1, &rseg, BUS_DMA_NOWAIT)) {
+	     &sc_if->sk_cdata.sk_jumbo_seg, 1, &sc_if->sk_cdata.sk_jumbo_nseg,
+	     BUS_DMA_NOWAIT)) {
 		aprint_error(": can't alloc rx buffers");
 		return (ENOBUFS);
 	}
 
 	state = 1;
-	if (bus_dmamem_map(sc->sc_dmatag, &seg, rseg, MSK_JMEM, (void **)&kva,
-			   BUS_DMA_NOWAIT)) {
+	if (bus_dmamem_map(sc->sc_dmatag, &sc_if->sk_cdata.sk_jumbo_seg,
+	    sc_if->sk_cdata.sk_jumbo_nseg, MSK_JMEM, (void **)&kva,
+	    BUS_DMA_NOWAIT)) {
 		aprint_error(": can't map dma buffers (%d bytes)", MSK_JMEM);
 		error = ENOBUFS;
 		goto out;
@@ -616,7 +617,9 @@ out:
 		case 2:
 			bus_dmamem_unmap(sc->sc_dmatag, kva, MSK_JMEM);
 		case 1:
-			bus_dmamem_free(sc->sc_dmatag, &seg, rseg);
+			bus_dmamem_free(sc->sc_dmatag,
+			    &sc_if->sk_cdata.sk_jumbo_seg,
+			    sc_if->sk_cdata.sk_jumbo_nseg);
 			break;
 		default:
 			break;
@@ -624,6 +627,18 @@ out:
 	}
 
 	return error;
+}
+
+static void
+msk_free_jumbo_mem(struct sk_if_softc *sc_if)
+{
+	struct sk_softc		*sc = sc_if->sk_softc;
+
+	bus_dmamap_unload(sc->sc_dmatag, sc_if->sk_cdata.sk_rx_jumbo_map);
+	bus_dmamap_destroy(sc->sc_dmatag, sc_if->sk_cdata.sk_rx_jumbo_map);
+	bus_dmamem_unmap(sc->sc_dmatag, sc_if->sk_cdata.sk_jumbo_buf, MSK_JMEM);
+	bus_dmamem_free(sc->sc_dmatag, &sc_if->sk_cdata.sk_jumbo_seg,
+	    sc_if->sk_cdata.sk_jumbo_nseg);
 }
 
 /*
@@ -1220,7 +1235,7 @@ fail:
 int
 msk_detach(device_t self, int flags)
 {
-	struct sk_if_softc *sc_if = (struct sk_if_softc *)self;
+	struct sk_if_softc *sc_if = device_private(self);
 	struct sk_softc *sc = sc_if->sk_softc;
 	struct ifnet *ifp = &sc_if->sk_ethercom.ec_if;
 
@@ -1246,6 +1261,8 @@ msk_detach(device_t self, int flags)
 
 	ether_ifdetach(ifp);
 	if_detach(ifp);
+
+	msk_free_jumbo_mem(sc_if);
 
 	bus_dmamem_unmap(sc->sc_dmatag, sc_if->sk_rdata,
 	    sizeof(struct msk_ring_data));
@@ -1670,7 +1687,7 @@ fail_1:
 int
 mskc_detach(device_t self, int flags)
 {
-	struct sk_softc *sc = (struct sk_softc *)self;
+	struct sk_softc *sc = device_private(self);
 	int rv;
 
 	if (sc->sk_intrhand)
@@ -2518,11 +2535,11 @@ msk_stop(struct ifnet *ifp, int disable)
 #endif
 }
 
-CFATTACH_DECL_NEW(mskc, sizeof(struct sk_softc), mskc_probe, mskc_attach,
-	mskc_detach, NULL);
+CFATTACH_DECL3_NEW(mskc, sizeof(struct sk_softc), mskc_probe, mskc_attach,
+	mskc_detach, NULL, NULL, NULL, DVF_DETACH_SHUTDOWN);
 
-CFATTACH_DECL_NEW(msk, sizeof(struct sk_if_softc), msk_probe, msk_attach,
-	msk_detach, NULL);
+CFATTACH_DECL3_NEW(msk, sizeof(struct sk_if_softc), msk_probe, msk_attach,
+	msk_detach, NULL, NULL, NULL, DVF_DETACH_SHUTDOWN);
 
 #ifdef MSK_DEBUG
 void
