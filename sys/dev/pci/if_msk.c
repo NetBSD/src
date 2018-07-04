@@ -1,4 +1,4 @@
-/* $NetBSD: if_msk.c,v 1.70 2018/07/03 19:56:01 jdolecek Exp $ */
+/* $NetBSD: if_msk.c,v 1.71 2018/07/04 19:26:09 jdolecek Exp $ */
 /*	$OpenBSD: if_msk.c,v 1.79 2009/10/15 17:54:56 deraadt Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.70 2018/07/03 19:56:01 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.71 2018/07/04 19:26:09 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1375,7 +1375,8 @@ mskc_attach(device_t parent, device_t self, void *aux)
 	}
 
 	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
-	sc->sk_intrhand = pci_intr_establish(pc, ih, IPL_NET, msk_intr, sc);
+	sc->sk_intrhand = pci_intr_establish_xname(pc, ih, IPL_NET, msk_intr,
+	    sc, device_xname(sc->sk_dev));
 	if (sc->sk_intrhand == NULL) {
 		aprint_error(": couldn't establish interrupt");
 		if (intrstr != NULL)
