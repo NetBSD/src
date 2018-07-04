@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.192 2018/04/23 15:51:00 christos Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.193 2018/07/04 18:13:01 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -211,7 +211,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.192 2018/04/23 15:51:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.193 2018/07/04 18:13:01 kamil Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -1846,7 +1846,7 @@ lwp_ctl_alloc(vaddr_t *uaddr)
 			i = 0;
 	}
 	bit = ffs(lcp->lcp_bitmap[i]) - 1;
-	lcp->lcp_bitmap[i] ^= (1 << bit);
+	lcp->lcp_bitmap[i] ^= (1U << bit);
 	lcp->lcp_rotor = i;
 	lcp->lcp_nfree--;
 	l->l_lcpage = lcp;
