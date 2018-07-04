@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_sscom.c,v 1.10 2017/06/19 21:58:13 jmcneill Exp $ */
+/*	$NetBSD: exynos_sscom.c,v 1.11 2018/07/04 13:14:51 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2014 Reinoud Zandijk
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_sscom.c,v 1.10 2017/06/19 21:58:13 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_sscom.c,v 1.11 2018/07/04 13:14:51 jmcneill Exp $");
 
 #include "opt_sscom.h"
 #include "opt_ddb.h"
@@ -95,27 +95,17 @@ sscom_match(device_t parent, cfdata_t cf, void *aux)
 static void
 exynos_unmask_interrupts(struct sscom_softc *sc, int intbits)
 {
-	int psw = disable_interrupts(IF32_bits);
-	uint32_t val;
-
-	val = bus_space_read_4(sc->sc_iot, sc->sc_ioh, SSCOM_UINTM);
+	uint32_t val = bus_space_read_4(sc->sc_iot, sc->sc_ioh, SSCOM_UINTM);
 	val &= ~intbits;
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SSCOM_UINTM, val);
-
-	restore_interrupts(psw);
 }
 
 static void
 exynos_mask_interrupts(struct sscom_softc *sc, int intbits)
 {
-	int psw = disable_interrupts(IF32_bits);
-	uint32_t val;
-
-	val = bus_space_read_4(sc->sc_iot, sc->sc_ioh, SSCOM_UINTM);
+	uint32_t val = bus_space_read_4(sc->sc_iot, sc->sc_ioh, SSCOM_UINTM);
 	val |= intbits;
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SSCOM_UINTM, val);
-
-	restore_interrupts(psw);
 }
 
 static void
@@ -132,6 +122,20 @@ exynos_change_txrx_interrupts(struct sscom_softc *sc, bool unmask_p,
 	} else {
 		exynos_mask_interrupts(sc, intbits);
 	}
+}
+
+static int
+exynos_pending_interrupts(struct sscom_softc *sc)
+{
+	uint32_t val, ret = 0;
+
+	val = bus_space_read_4(sc->sc_iot, sc->sc_ioh, SSCOM_UINTP);
+	if (val & UINT_RXD)
+		ret |= SSCOM_HW_RXINT;
+	if (val & UINT_TXD)
+		ret |= SSCOM_HW_TXINT;
+
+	return ret;
 }
 
 static void
@@ -193,6 +197,7 @@ sscom_attach(device_t parent, device_t self, void *aux)
 	sc->sc_frequency = clk_get_rate(clk_uart_baud0);
 
 	sc->sc_change_txrx_interrupts = exynos_change_txrx_interrupts;
+	sc->sc_pending_interrupts = exynos_pending_interrupts;
 	sc->sc_clear_interrupts = exynos_clear_interrupts;
 
 	/* not used here, but do initialise */
@@ -203,6 +208,11 @@ sscom_attach(device_t parent, device_t self, void *aux)
 		aprint_normal(" (console)");
 
 	aprint_normal("\n");
+
+	/* Disable interrupts */
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SSCOM_UINTM, 0);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SSCOM_UINTP,
+	    bus_space_read_4(sc->sc_iot, sc->sc_ioh, SSCOM_UINTP));
 
 	if (!fdtbus_intr_str(phandle, 0, intrstr, sizeof(intrstr))) {
 		aprint_error_dev(self, "failed to decode interrupt\n");
