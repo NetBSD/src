@@ -1,4 +1,4 @@
-#	$NetBSD: files.exynos,v 1.28 2018/07/03 16:09:04 jmcneill Exp $
+#	$NetBSD: files.exynos,v 1.29 2018/07/04 23:06:54 jmcneill Exp $
 #
 # Configuration info for Samsung Exynos SoC ARM Peripherals
 #
@@ -105,6 +105,11 @@ file	arch/arm/samsung/exynos_dwcmmc.c	exynos_dwcmmc
 device	exyoi2c: i2cbus, i2c_bitbang
 attach	exyoi2c at fdt with exynos_i2c
 file	arch/arm/samsung/exynos_i2c.c		exynos_i2c needs-flag
+
+# PWM timer
+device	expwm: pwm
+attach	expwm at fdt with exynos_pwm
+file	arch/arm/samsung/exynos_pwm.c		exynos_pwm
 
 device	exy5422clk: clk
 attach	exy5422clk at fdt with exynos5422_clock
