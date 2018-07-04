@@ -1,4 +1,4 @@
-# $NetBSD: files.fdt,v 1.35 2018/06/30 16:22:56 jmcneill Exp $
+# $NetBSD: files.fdt,v 1.36 2018/07/04 23:08:06 jmcneill Exp $
 
 include	"external/bsd/libfdt/conf/files.libfdt"
 
@@ -77,6 +77,10 @@ file	dev/fdt/syscon.c			syscon
 device	pwmbacklight
 attach	pwmbacklight at fdt
 file	dev/fdt/pwm_backlight.c			pwmbacklight
+
+device	pwmfan
+attach	pwmfan at fdt
+file	dev/fdt/pwm_fan.c			pwmfan
 
 device	ausoc: audiobus
 attach	ausoc at fdt
