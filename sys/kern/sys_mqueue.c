@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_mqueue.c,v 1.40 2017/11/30 20:25:55 christos Exp $	*/
+/*	$NetBSD: sys_mqueue.c,v 1.41 2018/07/04 17:39:12 kamil Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.40 2017/11/30 20:25:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.41 2018/07/04 17:39:12 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -709,7 +709,7 @@ mq_recv1(mqd_t mqdes, void *msg_ptr, size_t msg_len, u_int *msg_prio,
 	/* Unmark the bit, if last message. */
 	if (__predict_true(idx) && TAILQ_EMPTY(&mq->mq_head[idx])) {
 		KASSERT((MQ_PQSIZE - idx) == msg->msg_prio);
-		mq->mq_bitmap &= ~(1 << --idx);
+		mq->mq_bitmap &= ~(1U << --idx);
 	}
 
 	/* Decrement the counter and signal waiter, if any */
