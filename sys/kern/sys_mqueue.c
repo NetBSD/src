@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_mqueue.c,v 1.41 2018/07/04 17:39:12 kamil Exp $	*/
+/*	$NetBSD: sys_mqueue.c,v 1.42 2018/07/04 17:50:18 kamil Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.41 2018/07/04 17:39:12 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.42 2018/07/04 17:50:18 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -878,7 +878,7 @@ mq_send1(mqd_t mqdes, const char *msg_ptr, size_t msg_len, u_int msg_prio,
 
 		KASSERT(idx != MQ_PQRESQ);
 		TAILQ_INSERT_TAIL(&mq->mq_head[idx], msg, msg_queue);
-		mq->mq_bitmap |= (1 << --idx);
+		mq->mq_bitmap |= (1U << --idx);
 	} else {
 		mqueue_linear_insert(mq, msg);
 	}
