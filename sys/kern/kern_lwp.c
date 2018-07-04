@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.193 2018/07/04 18:13:01 kamil Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.194 2018/07/04 18:15:27 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -211,7 +211,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.193 2018/07/04 18:13:01 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.194 2018/07/04 18:15:27 kamil Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -1889,7 +1889,7 @@ lwp_ctl_free(lwp_t *l)
 	mutex_enter(&lp->lp_lock);
 	lcp->lcp_nfree++;
 	map = offset >> 5;
-	lcp->lcp_bitmap[map] |= (1 << (offset & 31));
+	lcp->lcp_bitmap[map] |= (1U << (offset & 31));
 	if (lcp->lcp_bitmap[lcp->lcp_rotor] == 0)
 		lcp->lcp_rotor = map;
 	if (TAILQ_FIRST(&lp->lp_pages)->lcp_nfree == 0) {
