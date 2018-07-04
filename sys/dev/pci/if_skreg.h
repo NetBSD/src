@@ -1,4 +1,4 @@
-/* $NetBSD: if_skreg.h,v 1.21 2018/06/14 07:19:47 msaitoh Exp $ */
+/* $NetBSD: if_skreg.h,v 1.22 2018/07/04 19:37:10 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -451,9 +451,9 @@
 /* Number of ticks per usec for interrupt moderation */
 #define SK_IMTIMER_TICKS_YUKON_FE_P	50
 #define SK_IMTIMER_TICKS_GENESIS	53
-#define SK_IMTIMER_TICKS_YUKON		156
-#define SK_IMTIMER_TICKS_YUKON_EC	125
+#define SK_IMTIMER_TICKS_YUKON		78
 #define SK_IMTIMER_TICKS_YUKON_FE	100
+#define SK_IMTIMER_TICKS_YUKON_EC	125
 #define SK_IMTIMER_TICKS_YUKON_XL	156
 #define SK_IM_USECS(x)		((x) * imtimer_ticks)
 
