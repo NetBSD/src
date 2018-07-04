@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.268 2018/05/29 09:10:39 prlw1 Exp $	*/
+/*	$NetBSD: in6.c,v 1.269 2018/07/04 00:35:33 kamil Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.268 2018/05/29 09:10:39 prlw1 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.269 2018/07/04 00:35:33 kamil Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -632,7 +632,7 @@ in6_control1(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 			 * signed.
 			 */
 			maxexpire = ((time_t)~0) &
-			    ~((time_t)1 << ((sizeof(maxexpire) * NBBY) - 1));
+			    (time_t)~(1ULL << ((sizeof(maxexpire) * NBBY) - 1));
 			if (ia->ia6_lifetime.ia6t_vltime <
 			    maxexpire - ia->ia6_updatetime) {
 				retlt->ia6t_expire = ia->ia6_updatetime +
@@ -653,7 +653,7 @@ in6_control1(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 			 * signed.
 			 */
 			maxexpire = ((time_t)~0) &
-			    ~((time_t)1 << ((sizeof(maxexpire) * NBBY) - 1));
+			    (time_t)~(1ULL << ((sizeof(maxexpire) * NBBY) - 1));
 			if (ia->ia6_lifetime.ia6t_pltime <
 			    maxexpire - ia->ia6_updatetime) {
 				retlt->ia6t_preferred = ia->ia6_updatetime +
