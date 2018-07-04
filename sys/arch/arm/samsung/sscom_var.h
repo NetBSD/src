@@ -1,4 +1,4 @@
-/* $NetBSD: sscom_var.h,v 1.4 2015/04/14 20:32:35 riastradh Exp $ */
+/* $NetBSD: sscom_var.h,v 1.5 2018/07/04 13:14:51 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -187,6 +187,7 @@ struct sscom_softc {
 	int	(*sc_read_modem_status)( struct sscom_softc * );
 	void	(*sc_set_modem_control)( struct sscom_softc * );
 	void	(*sc_change_txrx_interrupts)(struct sscom_softc *, bool, u_int);
+	int	(*sc_pending_interrupts)(struct sscom_softc *);
 	void	(*sc_clear_interrupts)(struct sscom_softc *, u_int);
 };
 
