@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_piix_reg.h,v 1.14 2009/10/19 18:41:16 bouyer Exp $	*/
+/*	$NetBSD: pciide_piix_reg.h,v 1.15 2018/07/04 03:00:46 kamil Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -49,9 +49,9 @@
 #define PIIX_IDETIM 0x40
 #define PIIX_IDETIM_READ(x, channel) (((x) >> (16 * (channel))) & 0x0000FFFF)
 #define PIIX_IDETIM_SET(x, bytes, channel) \
-	((x) | ((bytes) << (16 * (channel))))
+	((x) | ((unsigned int)(bytes) << (16 * (channel))))
 #define PIIX_IDETIM_CLEAR(x, bytes, channel) \
-	((x) & ~((bytes) << (16 * (channel))))
+	((x) & ~((unsigned int)(bytes) << (16 * (channel))))
 
 #define PIIX_IDETIM_IDE		0x8000 /* PIIX decode IDE registers */
 #define PIIX_IDETIM_SITRE	0x4000 /* slaves IDE timing registers
