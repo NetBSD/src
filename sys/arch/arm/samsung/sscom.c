@@ -1,4 +1,4 @@
-/*	$NetBSD: sscom.c,v 1.9 2017/06/10 15:13:18 jmcneill Exp $ */
+/*	$NetBSD: sscom.c,v 1.10 2018/07/04 13:14:51 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.9 2017/06/10 15:13:18 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.10 2018/07/04 13:14:51 jmcneill Exp $");
 
 #include "opt_sscom.h"
 #include "opt_ddb.h"
@@ -422,6 +422,7 @@ sscom_attach_subr(struct sscom_softc *sc)
 
 	/* Disable interrupts before configuring the device. */
 	KASSERT(sc->sc_change_txrx_interrupts != NULL);
+	KASSERT(sc->sc_pending_interrupts != NULL);
 	KASSERT(sc->sc_clear_interrupts != NULL);
 	sscom_disable_txrxint(sc);
 
@@ -1818,17 +1819,19 @@ int
 sscomintr(void *v)
 {
 	struct sscom_softc *sc = v;
-	int clear = 0;
+	int pend, rv = 0;
 
-	if (sscomrxintr(v))
-		clear |= SSCOM_HW_RXINT;
-	if (sscomtxintr(v))
-		clear |= SSCOM_HW_TXINT;
+	pend = sc->sc_pending_interrupts(sc);
 
-	if (clear)
-		sc->sc_clear_interrupts(sc, clear);
+	if (pend & SSCOM_HW_RXINT)
+		rv += sscomrxintr(v);
+	if (pend & SSCOM_HW_TXINT)
+		rv += sscomtxintr(v);
 
-	return clear? 1: 0;
+	if (pend)
+		sc->sc_clear_interrupts(sc, pend);
+
+	return rv;
 }
 
 
