@@ -1,3 +1,9 @@
+if test "${soc}" = "exynos" ; then
+	setenv kernel netbsd-EXYNOS.ub
+	setenv bootargs 'root=ld1a'
+	setenv mmcpart 0:1
+	setenv use_fdt 1
+fi
 if test "${soc}" = "sunxi" ; then
 	setenv kernel netbsd-SUNXI.ub
 	setenv bootargs 'root=ld0a'
