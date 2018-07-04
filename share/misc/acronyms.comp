@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.211 2018/06/27 23:26:13 sevan Exp $
+$NetBSD: acronyms.comp,v 1.212 2018/07/04 15:38:46 maya Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -416,6 +416,7 @@ EAI	Enterprise Application Integration
 EAP	Extensible Authentication Protocol
 EAPOL	EAP over Lan
 EBCDIC	Extended Binary Coded Decimal Interchange Code
+EBDA	Extended BIOS Data Area
 EBR	extended boot record
 EC	elliptic curve
 ECC	elliptic curve cryptography
