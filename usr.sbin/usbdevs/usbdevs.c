@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdevs.c,v 1.35 2016/09/07 08:09:59 skrll Exp $	*/
+/*	$NetBSD: usbdevs.c,v 1.36 2018/07/05 19:46:58 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: usbdevs.c,v 1.35 2016/09/07 08:09:59 skrll Exp $");
+__RCSID("$NetBSD: usbdevs.c,v 1.36 2018/07/05 19:46:58 jmcneill Exp $");
 #endif
 
 #include <stdio.h>
@@ -222,6 +222,7 @@ usbdev(int f, int a, int rec)
 		case USB_SPEED_FULL: printf("full speed, "); break;
 		case USB_SPEED_HIGH: printf("high speed, "); break;
 		case USB_SPEED_SUPER: printf("super speed, "); break;
+		case USB_SPEED_SUPER_PLUS: printf("super speed+, "); break;
 		default: break;
 		}
 		if (di.udi_power)
