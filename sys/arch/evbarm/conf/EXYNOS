@@ -1,5 +1,5 @@
 #
-#	$NetBSD: EXYNOS,v 1.29 2018/07/04 23:08:29 jmcneill Exp $
+#	$NetBSD: EXYNOS,v 1.30 2018/07/05 13:11:57 jmcneill Exp $
 #
 #	Samsung Exynos SoC kernel
 #
@@ -28,8 +28,6 @@ pseudo-device 	openfirm	# /dev/openfirm
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	IPKDB		# remote kernel debugging
 #options 	VERBOSE_INIT_ARM # verbose bootstrapping messages
-# SSCOMnCONSOLE is required for early init messages from VERBOSE_INIT_ARM.
-#options 	SSCOM2CONSOLE
 
 makeoptions	DEBUG="-g"	# compile full symbol table
 makeoptions	COPY_SYMTAB=1
@@ -76,7 +74,7 @@ expwm*		at fdt? pass 4		# PWM
 pwmfan*		at fdt?			# PWM Fan controls
 
 # UART
-sscom*		at fdt?			# UART
+exuart*		at fdt?			# UART
 
 # I2C
 exyoi2c*	at fdt?			# I2C
