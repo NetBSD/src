@@ -1,4 +1,4 @@
-/* $NetBSD: exynos5422_clock.c,v 1.11 2018/07/04 23:06:28 jmcneill Exp $ */
+/* $NetBSD: exynos5422_clock.c,v 1.12 2018/07/05 13:11:58 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos5422_clock.c,v 1.11 2018/07/04 23:06:28 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos5422_clock.c,v 1.12 2018/07/05 13:11:58 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -555,6 +555,24 @@ static struct exynos_clk exynos5422_clocks[] = {
 	CLK_GATE("usbd301", "aclk200_fsys", EXYNOS5422_GATE_IP_FSYS,
 	    __BIT(20), CLK_SET_RATE_PARENT),
 
+	CLK_GATE("uart0", "mout_user_aclk66_peric", EXYNOS5422_GATE_IP_PERIC,
+	    __BIT(0), CLK_SET_RATE_PARENT),
+	CLK_GATE("uart1", "mout_user_aclk66_peric", EXYNOS5422_GATE_IP_PERIC,
+	    __BIT(1), CLK_SET_RATE_PARENT),
+	CLK_GATE("uart2", "mout_user_aclk66_peric", EXYNOS5422_GATE_IP_PERIC,
+	    __BIT(2), CLK_SET_RATE_PARENT),
+	CLK_GATE("uart3", "mout_user_aclk66_peric", EXYNOS5422_GATE_IP_PERIC,
+	    __BIT(3), CLK_SET_RATE_PARENT),
+	CLK_GATE("i2c0", "mout_user_aclk66_peric", EXYNOS5422_GATE_IP_PERIC,
+	    __BIT(6), CLK_SET_RATE_PARENT),
+	CLK_GATE("i2c1", "mout_user_aclk66_peric", EXYNOS5422_GATE_IP_PERIC,
+	    __BIT(7), CLK_SET_RATE_PARENT),
+	CLK_GATE("i2c2", "mout_user_aclk66_peric", EXYNOS5422_GATE_IP_PERIC,
+	    __BIT(8), CLK_SET_RATE_PARENT),
+	CLK_GATE("i2c3", "mout_user_aclk66_peric", EXYNOS5422_GATE_IP_PERIC,
+	    __BIT(9), CLK_SET_RATE_PARENT),
+	CLK_GATE("i2c_hdmi", "mout_user_aclk66_peric", EXYNOS5422_GATE_IP_PERIC,
+	    __BIT(14), CLK_SET_RATE_PARENT),
 	CLK_GATE("pwm", "mout_user_aclk66_peric", EXYNOS5422_GATE_IP_PERIC,
 	    __BIT(24), CLK_SET_RATE_PARENT),
 };
