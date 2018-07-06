@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.162 2018/07/03 04:02:06 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.163 2018/07/06 02:36:35 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -3316,6 +3316,15 @@ ixgbe_add_device_sysctls(struct adapter *adapter)
 		    CTL_CREATE, CTL_EOL) != 0)
 			aprint_error_dev(dev, "could not create sysctl\n");
 	}
+
+	if ((hw->mac.type == ixgbe_mac_X550EM_a)
+	    && (hw->phy.type == ixgbe_phy_fw))
+		if (sysctl_createv(log, 0, &rnode, &cnode, CTLFLAG_READWRITE,
+		    CTLTYPE_BOOL, "force_10_100_autonego",
+		    SYSCTL_DESCR("Force autonego on 10M and 100M"),
+		    NULL, 0, &hw->phy.force_10_100_autonego, 0,
+		    CTL_CREATE, CTL_EOL) != 0)
+			aprint_error_dev(dev, "could not create sysctl\n");
 
 	if (adapter->feat_cap & IXGBE_FEATURE_EEE) {
 		if (sysctl_createv(log, 0, &rnode, &cnode, CTLFLAG_READWRITE,
