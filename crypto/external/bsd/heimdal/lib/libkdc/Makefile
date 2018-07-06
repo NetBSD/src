@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2017/01/28 21:31:52 christos Exp $
+# $NetBSD: Makefile,v 1.4 2018/07/06 08:54:30 martin Exp $
 
 .include <bsd.own.mk>
 .include <${.CURDIR}/../../Makefile.inc>
@@ -15,6 +15,7 @@ LIBDPLIBS+=	krb5		${.CURDIR}/../libkrb5		\
 		hdb		${.CURDIR}/../libhdb		\
 		hx509		${.CURDIR}/../libhx509		\
 		asn1		${.CURDIR}/../libasn1		\
+		heimbase	${.CURDIR}/../libheimbase	\
 		heimntlm	${.CURDIR}/../libheimntlm	\
 		roken		${.CURDIR}/../libroken
 
