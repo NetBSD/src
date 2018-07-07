@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_var.h,v 1.42 2017/09/24 20:09:53 jmcneill Exp $ */
+/* $NetBSD: tegra_var.h,v 1.43 2018/07/07 20:16:16 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -35,8 +35,8 @@
 
 #include "opt_tegra.h"
 
-extern struct bus_space armv7_generic_bs_tag;
-extern struct bus_space armv7_generic_a4x_bs_tag;
+extern struct bus_space arm_generic_bs_tag;
+extern struct bus_space arm_generic_a4x_bs_tag;
 extern bus_space_handle_t tegra_ppsb_bsh;
 extern bus_space_handle_t tegra_apb_bsh;
 
