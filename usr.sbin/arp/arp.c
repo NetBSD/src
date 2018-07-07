@@ -1,4 +1,4 @@
-/*	$NetBSD: arp.c,v 1.60 2018/07/06 00:50:05 christos Exp $ */
+/*	$NetBSD: arp.c,v 1.61 2018/07/07 15:44:27 christos Exp $ */
 
 /*
  * Copyright (c) 1984, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1984, 1993\
 #if 0
 static char sccsid[] = "@(#)arp.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: arp.c,v 1.60 2018/07/06 00:50:05 christos Exp $");
+__RCSID("$NetBSD: arp.c,v 1.61 2018/07/07 15:44:27 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -278,7 +278,7 @@ set(int argc, char **argv)
 
 	if (getinetaddr(host, &sin_m.sin_addr) == -1)
 		return (1);
-	if (!strcmp(eaddr, "auto") && atosdl(eaddr, &sdl_m))
+	if (strcmp(eaddr, "auto") != 0 && atosdl(eaddr, &sdl_m))
 		warnx("invalid link-level address '%s'", eaddr);
 	doing_proxy = flags = export_only = expire_time = 0;
 	for (; argc-- > 0; argv++) {
@@ -309,7 +309,7 @@ set(int argc, char **argv)
 		}
 
 	}
-	if (doing_proxy && !strcmp(eaddr, "auto")) {
+	if (doing_proxy && strcmp(eaddr, "auto") == 0) {
 		if (getetheraddr(sin_m.sin_addr, &sdl_m) == -1)
 			return 1;
 	}
