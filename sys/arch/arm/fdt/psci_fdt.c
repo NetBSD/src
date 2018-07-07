@@ -1,4 +1,4 @@
-/* $NetBSD: psci_fdt.c,v 1.5 2018/06/15 16:03:59 jakllsch Exp $ */
+/* $NetBSD: psci_fdt.c,v 1.6 2018/07/07 15:11:07 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psci_fdt.c,v 1.5 2018/06/15 16:03:59 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psci_fdt.c,v 1.6 2018/07/07 15:11:07 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -108,15 +108,16 @@ psci_fdt_attach(device_t parent, device_t self, void *aux)
 static int
 psci_fdt_init(const int phandle)
 {
-	char method[4];
+	const char *method, *psciver;
 	uint32_t val;
 
-	if (!of_hasprop(phandle, "method")) {
-		aprint_error("PSCI: missing 'method' property\n");
+	method = fdtbus_get_string(phandle, "method");
+	psciver = fdtbus_get_string(phandle, "compatible");
+	if (method == NULL || psciver == NULL) {
+		aprint_error("PSCI: missing required property on /psci\n");
 		return EINVAL;
 	}
 
-	OF_getprop(phandle, "method", method, sizeof(method));
 	if (strcmp(method, "smc") == 0)
 		psci_init(psci_call_smc);
 	else if (strcmp(method, "hvc") == 0)
@@ -126,7 +127,11 @@ psci_fdt_init(const int phandle)
 		return EINVAL;
 	}
 
-	if (of_match_compatible(phandle, compatible) == 1) {
+	/*
+	 * If the first compatible string is "arm,psci" then we
+	 * are dealing with PSCI 0.1
+	 */
+	if (strcmp(psciver, "arm,psci") == 0) {
 		psci_clearfunc();
 		if (of_getprop_uint32(phandle, "cpu_on", &val) == 0)
 			psci_setfunc(PSCI_FUNC_CPU_ON, val);
