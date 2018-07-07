@@ -1,4 +1,4 @@
-/* $NetBSD: soc_tegra210.c,v 1.1 2017/05/25 23:26:48 jmcneill Exp $ */
+/* $NetBSD: soc_tegra210.c,v 1.2 2018/07/07 20:16:16 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,18 +30,20 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: soc_tegra210.c,v 1.1 2017/05/25 23:26:48 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: soc_tegra210.c,v 1.2 2018/07/07 20:16:16 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
 #include <sys/cpu.h>
 #include <sys/device.h>
+#include <sys/atomic.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <dev/fdt/fdtvar.h>
 
 #include <arm/cpufunc.h>
+#include <arm/locore.h>
 
 #include <arm/nvidia/tegra_reg.h>
 #include <arm/nvidia/tegra_pmcreg.h>
@@ -54,7 +56,7 @@ tegra210_mpinit(void)
 {
 #if defined(MULTIPROCESSOR)
 	extern void cortex_mpstart(void);
-	bus_space_tag_t bst = &armv7_generic_bs_tag;
+	bus_space_tag_t bst = &arm_generic_bs_tag;
 	bus_space_handle_t bsh;
 
 	bus_space_subregion(bst, tegra_ppsb_bsh,
@@ -73,7 +75,7 @@ tegra210_mpinit(void)
 	tegra_pmc_power(PMC_PARTID_CPU3, true); started |= __BIT(3);
 
 	for (u_int i = 0x10000000; i > 0; i--) {
-		arm_dmb();
+		membar_consumer();
 		if (arm_cpu_hatched == started)
 			break;
 	}
