@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.99 2018/07/08 06:21:41 pgoyette Exp $	*/
+/*	$NetBSD: types.h,v 1.100 2018/07/08 21:59:12 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1994
@@ -345,7 +345,7 @@ struct	uio;
 #ifdef _KERNEL
 #define SET(t, f)	((t) |= (f))
 #define	ISSET(t, f)	((t) & (f))
-#define	CLR(t, f)	((t) = ~(~(t) | (f)))
+#define	CLR(t, f)	((t) &= ~(f))
 #endif
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
