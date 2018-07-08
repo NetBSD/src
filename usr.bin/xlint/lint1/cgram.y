@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.96 2018/06/29 20:18:36 christos Exp $ */
+/* $NetBSD: cgram.y,v 1.97 2018/07/08 17:48:42 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.96 2018/06/29 20:18:36 christos Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.97 2018/07/08 17:48:42 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -219,6 +219,7 @@ anonymize(sym_t *s)
 %token <y_type>		T_AT_MAY_ALIAS
 %token <y_type>		T_AT_MINBYTES
 %token <y_type>		T_AT_MODE
+%token <y_type>		T_AT_NOINLINE
 %token <y_type>		T_AT_NONNULL
 %token <y_type>		T_AT_NORETURN
 %token <y_type>		T_AT_NO_INSTRUMENT_FUNCTION
@@ -539,6 +540,7 @@ type_attribute_spec:
 	| T_AT_CONSTRUCTOR 
 	| T_AT_MAY_ALIAS
 	| T_AT_NO_INSTRUMENT_FUNCTION
+	| T_AT_NOINLINE
 	| T_AT_NORETURN
 	| T_AT_COLD
 	| T_AT_RETURNS_TWICE
