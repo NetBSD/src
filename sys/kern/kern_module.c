@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.130.2.10 2018/06/25 08:50:10 pgoyette Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.130.2.11 2018/07/08 07:33:14 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.130.2.10 2018/06/25 08:50:10 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.130.2.11 2018/07/08 07:33:14 pgoyette Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -256,7 +256,7 @@ module_free(module_t *mod)
 static void
 module_require_force(struct module *mod)
 {
-	mod->mod_flags |= MODFLG_MUST_FORCE;
+	SET(mod->mod_flags, MODFLG_MUST_FORCE);
 }
 
 /*
@@ -577,7 +577,7 @@ module_init_class(modclass_t modclass)
 			 * (If the module has previously been set to
 			 * MODFLG_MUST_FORCE, don't try to override that!)
 			 */
-			if ((mod->mod_flags & MODFLG_MUST_FORCE) ||
+			if (ISSET(mod->mod_flags, MODFLG_MUST_FORCE) ||
 			    module_do_builtin(mod, mi->mi_name, NULL,
 			    NULL) != 0) {
 				TAILQ_REMOVE(&module_builtins, mod, mod_chain);
@@ -1039,8 +1039,8 @@ module_do_load(const char *name, bool isdep, int flags,
 		}
 	}
 	if (mod) {
-		if ((mod->mod_flags & MODFLG_MUST_FORCE) &&
-		    (flags & MODCTL_LOAD_FORCE) == 0) {
+		if (ISSET(mod->mod_flags, MODFLG_MUST_FORCE)) &&
+		    !ISSET(flags, MODCTL_LOAD_FORCE)) {
 			if (!autoload) {
 				module_error("use -f to reinstate "
 				    "builtin module `%s'", name);
@@ -1130,7 +1130,7 @@ module_do_load(const char *name, bool isdep, int flags,
 	if (!module_compatible(mi->mi_version, __NetBSD_Version__)) {
 		module_error("module `%s' built for `%d', system `%d'",
 		    mi->mi_name, mi->mi_version, __NetBSD_Version__);
-		if ((flags & MODCTL_LOAD_FORCE) != 0) {
+		if (ISSET(flags, MODCTL_LOAD_FORCE)) {
 			module_error("forced load, system may be unstable");
 		} else {
 			error = EPROGMISMATCH;
@@ -1311,7 +1311,7 @@ module_do_load(const char *name, bool isdep, int flags,
 		 * a short delay unless auto-unload is disabled.
 		 */
 		mod->mod_autotime = time_second + module_autotime;
-		mod->mod_flags |= MODFLG_AUTO_LOADED;
+		SET(mod->mod_flags, MODFLG_AUTO_LOADED);
 		module_thread_kick();
 	}
 	SLIST_REMOVE_HEAD(&pend_stack, pe_entry);
@@ -1544,7 +1544,7 @@ module_thread(void *cookie)
 			if (mod->mod_source == MODULE_SOURCE_KERNEL)
 				continue;
 			/* skip modules that weren't auto-loaded */
-			if ((mod->mod_flags & MODFLG_AUTO_LOADED) == 0)
+			if (!ISSET(mod->mod_flags, MODFLG_AUTO_LOADED))
 				continue;
 
 			if (uvmexp.free < uvmexp.freemin) {
