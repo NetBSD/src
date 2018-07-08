@@ -1,4 +1,4 @@
-/*	$NetBSD: mpbios.c,v 1.67 2018/07/07 23:05:50 kamil Exp $	*/
+/*	$NetBSD: mpbios.c,v 1.68 2018/07/08 14:46:23 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.67 2018/07/07 23:05:50 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.68 2018/07/08 14:46:23 kamil Exp $");
 
 #include "acpica.h"
 #include "lapic.h"
@@ -305,8 +305,7 @@ mpbios_probe(device_t self)
 	ebda = *(const uint16_t *)(&mpbios_page[0x40e]);
 	ebda <<= 4;
 
-	memtop = mpbios_page[0x413];
-	memtop |= (uint16_t)mpbios_page[0x414] << 8;
+	memtop = *(const uint16_t *)(&mpbios_page[0x413]);
 	memtop <<= 10;
 
 	mpbios_page = NULL;
