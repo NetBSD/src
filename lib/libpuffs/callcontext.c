@@ -1,4 +1,4 @@
-/*	$NetBSD: callcontext.c,v 1.27 2011/12/06 21:15:39 skrll Exp $	*/
+/*	$NetBSD: callcontext.c,v 1.28 2018/07/08 16:39:27 christos Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: callcontext.c,v 1.27 2011/12/06 21:15:39 skrll Exp $");
+__RCSID("$NetBSD: callcontext.c,v 1.28 2018/07/08 16:39:27 christos Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -194,7 +194,7 @@ slowccalloc(struct puffs_usermount *pu)
 		return &fakecc;
 
 	sp = mmap(NULL, stacksize, PROT_READ|PROT_WRITE,
-	    MAP_ANON|MAP_PRIVATE|MAP_ALIGNED(pu->pu_cc_stackshift), -1, 0);
+	    MAP_ANON|MAP_PRIVATE|MAP_ALIGNED(pu->pu_cc_stackshift), -1, (off_t)0);
 	if (sp == MAP_FAILED)
 		return NULL;
 
