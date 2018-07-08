@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_module.c,v 1.23.2.6 2018/04/03 08:29:44 pgoyette Exp $	*/
+/*	$NetBSD: sys_module.c,v 1.23.2.7 2018/07/08 07:33:14 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_module.c,v 1.23.2.6 2018/04/03 08:29:44 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_module.c,v 1.23.2.7 2018/07/08 07:33:14 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_modular.h"
@@ -119,7 +119,8 @@ copy_alias(modstat_t *ms, const char * const *aliasp, modinfo_t *mi,
 	strlcpy(ms->ms_name, *aliasp, sizeof(ms->ms_name));
 	ms->ms_class = mi->mi_class;
 	ms->ms_source = mod->mod_source;
-	ms->ms_flags = mod->mod_flags | MODFLG_IS_ALIAS;
+	ms->ms_flags = mod->mod_flags;
+	SET(ms->ms_flags, MODFLG_IS_ALIAS);
 	ms->ms_reqoffset = 0;
 }
 

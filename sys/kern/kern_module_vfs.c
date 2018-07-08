@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module_vfs.c,v 1.16 2017/06/01 02:45:13 chs Exp $	*/
+/*	$NetBSD: kern_module_vfs.c,v 1.16.8.1 2018/07/08 07:33:14 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module_vfs.c,v 1.16 2017/06/01 02:45:13 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module_vfs.c,v 1.16.8.1 2018/07/08 07:33:14 pgoyette Exp $");
 
 #define _MODULE_INTERNAL
 #include <sys/param.h>
@@ -106,7 +106,7 @@ module_load_vfs(const char *name, int flags, bool autoload,
 	/*
 	 * Load and process <module>.plist if it exists.
 	 */
-	if (((flags & MODCTL_NO_PROP) == 0 && filedictp) || autoload) {
+	if ((!ISSET(flags, MODCTL_NO_PROP) && filedictp) || autoload) {
 		error = module_load_plist_vfs(path, nochroot, &moduledict);
 		if (error != 0) {
 			module_print("plist load returned error %d for `%s'",
@@ -124,7 +124,7 @@ module_load_vfs(const char *name, int flags, bool autoload,
 			}
 		}
 		if (error == 0) {	/* can get here if error == ENOENT */
-			if ((flags & MODCTL_NO_PROP) == 0 && filedictp)
+			if (!ISSET(flags, MODCTL_NO_PROP) && filedictp)
 				*filedictp = moduledict;
 			else 
 				prop_object_release(moduledict);
