@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.60 2017/11/11 16:49:13 jdolecek Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.61 2018/07/08 17:58:26 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.60 2017/11/11 16:49:13 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.61 2018/07/08 17:58:26 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -1501,9 +1501,9 @@ ahci_bio_complete(struct ata_channel *chp, struct ata_xfer *xfer, int tfd)
 		if (ata_bio->error == NOERROR)
 			ata_bio->bcount = 0;
 	} else {
-	    if ((ata_bio->flags & ATA_READ) || ata_bio->error == NOERROR)
-		ata_bio->bcount -=
-		    le32toh(achp->ahcic_cmdh[xfer->c_slot].cmdh_prdbc);
+		if ((ata_bio->flags & ATA_READ) || ata_bio->error == NOERROR)
+			ata_bio->bcount -=
+			    le32toh(achp->ahcic_cmdh[xfer->c_slot].cmdh_prdbc);
 	}
 	AHCIDEBUG_PRINT((" now %ld\n", ata_bio->bcount), DEBUG_XFERS);
 	(*chp->ch_drive[drive].drv_done)(chp->ch_drive[drive].drv_softc, xfer);
