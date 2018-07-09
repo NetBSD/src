@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.429 2018/07/03 03:37:03 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.430 2018/07/09 14:54:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.429 2018/07/03 03:37:03 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.430 2018/07/09 14:54:01 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -595,7 +595,7 @@ if_free_sadl(struct ifnet *ifp, int factory)
 	KASSERT(ifp->if_sadl != NULL);
 
 	s = splsoftnet();
-	rtinit(ifa, RTM_DELETE, 0);
+	KASSERT(ifa->ifa_addr->sa_family == AF_LINK);
 	ifa_remove(ifp, ifa);
 	if_deactivate_sadl(ifp);
 	splx(s);
