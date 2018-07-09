@@ -1,5 +1,5 @@
 #
-#	$NetBSD: RPI64,v 1.5 2018/07/01 15:33:29 skrll Exp $
+#	$NetBSD: RPI64,v 1.6 2018/07/09 09:55:58 ryo Exp $
 #
 #	RPI64 - Raspberry Pi 3 and Pi 2 v1.2 in AARCH64 mode
 #
@@ -19,6 +19,7 @@ makeoptions	DTS="
 # CPU options
 options 	CPU_CORTEXA53
 options 	SOC_BCM2836
+options 	MULTIPROCESSOR
 
 # verbose bootstraping messages
 options 	EARLYCONS=bcm2837
