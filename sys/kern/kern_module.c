@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.130.2.11 2018/07/08 07:33:14 pgoyette Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.130.2.12 2018/07/09 08:26:29 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.130.2.11 2018/07/08 07:33:14 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.130.2.12 2018/07/09 08:26:29 pgoyette Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -1039,8 +1039,8 @@ module_do_load(const char *name, bool isdep, int flags,
 		}
 	}
 	if (mod) {
-		if (ISSET(mod->mod_flags, MODFLG_MUST_FORCE)) &&
-		    !ISSET(flags, MODCTL_LOAD_FORCE)) {
+		if (!ISSET(flags, MODCTL_LOAD_FORCE) &&
+		    ISSET(mod->mod_flags, MODFLG_MUST_FORCE)) {
 			if (!autoload) {
 				module_error("use -f to reinstate "
 				    "builtin module `%s'", name);
