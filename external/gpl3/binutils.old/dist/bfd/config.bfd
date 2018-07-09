@@ -642,8 +642,8 @@ case "${targ}" in
     ;;
   i[3-7]86-*-netbsdelf* | i[3-7]86-*-netbsd*-gnu* | i[3-7]86-*-knetbsd*-gnu)
     targ_defvec=i386_elf32_vec
-    targ_selvecs="i386_aout_nbsd_vec iamcu_elf32_vec"
-    targ64_selvecs="x86_64_elf64_vec l1om_elf64_vec k1om_elf64_vec"
+    targ_selvecs="i386_aout_nbsd_vec iamcu_elf32_vec i386_coff_vec i386_pei_vec"
+    targ64_selvecs="x86_64_elf64_vec l1om_elf64_vec k1om_elf64_vec x86_64_pei_vec"
     ;;
   i[3-7]86-*-netbsdpe*)
     targ_defvec=i386_pe_vec
