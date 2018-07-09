@@ -1,4 +1,4 @@
-/*	$NetBSD: magmareg.h,v 1.18 2014/11/15 19:18:19 christos Exp $	*/
+/*	$NetBSD: magmareg.h,v 1.19 2018/07/09 08:51:19 kre Exp $	*/
 
 /*-
  *  Copyright (c) 1998 Iain Hibbert
@@ -189,9 +189,15 @@ struct mbpp_softc {
 /*
  * useful macros
  */
+#ifndef SET
 #define SET(t, f)	((t) |= (f))
+#endif
+#ifndef CLR
 #define CLR(t, f)	((t) &= ~(f))
+#endif
+#ifndef ISSET
 #define ISSET(t, f)	((t) & (f))
+#endif
 
 /* internal function prototypes */
 
