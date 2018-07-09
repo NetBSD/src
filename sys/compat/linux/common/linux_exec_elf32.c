@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_elf32.c,v 1.95 2018/07/08 17:58:39 christos Exp $	*/
+/*	$NetBSD: linux_exec_elf32.c,v 1.96 2018/07/09 05:43:35 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_elf32.c,v 1.95 2018/07/08 17:58:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_elf32.c,v 1.96 2018/07/09 05:43:35 msaitoh Exp $");
 
 #ifndef ELFSIZE
 /* XXX should die */
@@ -78,7 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_exec_elf32.c,v 1.95 2018/07/08 17:58:39 christ
 #ifdef DEBUG_LINUX
 #define DPRINTF(a)	uprintf a
 #else
-#define DPRINTF(a)
+#define DPRINTF(a)	do {} while (0)
 #endif
 
 #ifdef LINUX_ATEXIT_SIGNATURE
@@ -313,7 +313,7 @@ ELFNAME2(linux,go_rt0_signature)(struct lwp *l, struct exec_package *epp, Elf_Eh
 		if (error)
 			goto out;
 		if (!memcmp(tbuf, signature, sigsz)) {
-			DPRINTF(("linux_goplcntab_sig=%s\n", tbuf);
+			DPRINTF(("linux_goplcntab_sig=%s\n", tbuf));
 			break;
 		}
 	}
