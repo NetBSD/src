@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.167 2018/06/29 19:21:43 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.168 2018/07/09 18:43:05 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1088,26 +1088,6 @@ ENTRY(cpu_switchto)
 	movq	%rbp,PCB_RBP(%rax)
 .Lskip_save:
 
-#ifdef SVS
-	pushq	%rdx
-	movb	_C_LABEL(svs_enabled),%dl
-	testb	%dl,%dl
-	jz	.Lskip_svs
-	callq	_C_LABEL(svs_lwp_switch)
-.Lskip_svs:
-	popq	%rdx
-
-	/* RDI/RSI got clobbered. */
-	movq	%r13,%rdi
-	movq	%r12,%rsi
-#endif
-
-#ifndef XEN
-	pushq	%rdx
-	callq	_C_LABEL(speculation_barrier)
-	popq	%rdx
-#endif
-
 	/* Switch to newlwp's stack. */
 	movq	L_PCB(%r12),%r14
 	movq	PCB_RSP(%r14),%rsp
@@ -1123,6 +1103,24 @@ ENTRY(cpu_switchto)
 	/* Skip the rest if returning to a pinned LWP. */
 	testb	%dl,%dl		/* returning = true ? */
 	jnz	.Lswitch_return
+
+#ifdef SVS
+	pushq	%rdx
+	movb	_C_LABEL(svs_enabled),%dl
+	testb	%dl,%dl
+	jz	.Lskip_svs
+	callq	_C_LABEL(svs_lwp_switch)
+.Lskip_svs:
+	popq	%rdx
+#endif
+
+#ifndef XEN
+	pushq	%rdx
+	movq	%r13,%rdi
+	movq	%r12,%rsi
+	callq	_C_LABEL(speculation_barrier)
+	popq	%rdx
+#endif
 
 	/* Switch ring0 stack */
 #ifdef SVS
