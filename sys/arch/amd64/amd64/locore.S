@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.168 2018/07/09 18:43:05 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.169 2018/07/09 18:52:04 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1105,21 +1105,17 @@ ENTRY(cpu_switchto)
 	jnz	.Lswitch_return
 
 #ifdef SVS
-	pushq	%rdx
 	movb	_C_LABEL(svs_enabled),%dl
 	testb	%dl,%dl
 	jz	.Lskip_svs
 	callq	_C_LABEL(svs_lwp_switch)
 .Lskip_svs:
-	popq	%rdx
 #endif
 
 #ifndef XEN
-	pushq	%rdx
 	movq	%r13,%rdi
 	movq	%r12,%rsi
 	callq	_C_LABEL(speculation_barrier)
-	popq	%rdx
 #endif
 
 	/* Switch ring0 stack */
@@ -1147,7 +1143,6 @@ ENTRY(cpu_switchto)
 .Lring0_switched:
 
 #ifndef XEN
-	pushq	%rdx
 	movb	_C_LABEL(x86_fpu_eager),%dl
 	testb	%dl,%dl
 	jz	.Lno_eagerfpu
@@ -1155,7 +1150,6 @@ ENTRY(cpu_switchto)
 	movq	%r12,%rsi
 	callq	_C_LABEL(fpu_eagerswitch)
 .Lno_eagerfpu:
-	popq	%rdx
 #endif
 
 	/* Don't bother with the rest if switching to a system process. */
