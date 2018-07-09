@@ -1,4 +1,4 @@
-/* $NetBSD: sbjcnvar.h,v 1.6 2015/04/13 21:18:42 riastradh Exp $ */
+/* $NetBSD: sbjcnvar.h,v 1.7 2018/07/09 08:51:19 kre Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -171,6 +171,12 @@ struct sbjcn_softc {
 };
 
 /* Macros to clear/set/test flags. */
-#define	SET(t, f)	(t) |= (f)
-#define	CLR(t, f)	(t) &= ~(f)
+#ifndef SET
+#define	SET(t, f)	((t) |= (f))
+#endif
+#ifndef CLR
+#define	CLR(t, f)	((t) &= ~(f))
+#endif
+#ifndef ISSET
 #define	ISSET(t, f)	((t) & (f))
+#endif
