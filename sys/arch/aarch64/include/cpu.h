@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.2 2018/04/01 04:35:03 ryo Exp $ */
+/* $NetBSD: cpu.h,v 1.3 2018/07/09 06:19:53 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -95,23 +95,25 @@ void cpu_set_curpri(int);
 void cpu_proc_fork(struct proc *, struct proc *);
 void cpu_need_proftick(struct lwp *l);
 void cpu_boot_secondary_processors(void);
+void cpu_hatch(struct cpu_info *);
 
 extern struct cpu_info *cpu_info[];
-extern struct cpu_info cpu_info_store;	/* MULTIPROCESSOR */
 extern volatile u_int arm_cpu_hatched;	/* MULTIPROCESSOR */
+extern uint32_t cpus_midr[];		/* MULTIPROCESSOR */
+extern uint64_t cpus_mpidr[];		/* MULTIPROCESSOR */
 
 #define CPU_INFO_ITERATOR	cpuid_t
 #ifdef MULTIPROCESSOR
 #define cpu_number()		(curcpu()->ci_index)
 #define CPU_IS_PRIMARY(ci)	((ci)->ci_index == 0)
-#define CPU_INFO_FOREACH(cii, ci)				\
-	cii = 0, ci = cpu_info[0];				\
-	cii < ncpu && (ci = cpu_info[cii]) != NULL;		\
+#define CPU_INFO_FOREACH(cii, ci)					\
+	cii = 0, ci = cpu_info[0];					\
+	cii < (ncpu ? ncpu : 1) && (ci = cpu_info[cii]) != NULL;	\
 	cii++
 #else /* MULTIPROCESSOR */
 #define cpu_number()		0
 #define CPU_IS_PRIMARY(ci)	true
-#define CPU_INFO_FOREACH(cii, ci)				\
+#define CPU_INFO_FOREACH(cii, ci)					\
 	cii = 0, __USE(cii), ci = curcpu(); ci != NULL; ci = NULL
 #endif /* MULTIPROCESSOR */
 
