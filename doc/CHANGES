@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2405 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2406 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -168,3 +168,4 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	bpf(4): Add the BPF direction filter (BIOC[GS]DIRECTION).
 		[msaitoh 20180626]
 	gcc: add lsan the Leak Sanitizer [christos 20180626]
+	aarch64: Add support for SMP. [ryo 20180709]
