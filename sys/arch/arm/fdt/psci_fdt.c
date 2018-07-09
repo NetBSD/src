@@ -1,4 +1,4 @@
-/* $NetBSD: psci_fdt.c,v 1.6 2018/07/07 15:11:07 jmcneill Exp $ */
+/* $NetBSD: psci_fdt.c,v 1.7 2018/07/09 09:10:28 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,13 +29,14 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psci_fdt.c,v 1.6 2018/07/07 15:11:07 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psci_fdt.c,v 1.7 2018/07/09 09:10:28 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
 #include <sys/device.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/atomic.h>
 
 #include <dev/fdt/fdtvar.h>
 
@@ -152,13 +153,32 @@ psci_fdt_preinit(void)
 	return psci_fdt_init(phandle);
 }
 
+static bus_addr_t psci_fdt_read_mpidr_aff(void)
+{
+#ifdef __aarch64__
+	return reg_mpidr_el1_read() & (MPIDR_AFF3|MPIDR_AFF2|MPIDR_AFF1|MPIDR_AFF0);
+#else
+	return armreg_mpidr_read() & (MPIDR_AFF2|MPIDR_AFF1|MPIDR_AFF0);
+#endif
+}
+
+static register_t
+psci_fdt_mpstart_pa(void)
+{
+#ifdef __aarch64__
+	extern void aarch64_mpstart(void);
+	return (register_t)aarch64_kern_vtophys(aarch64_mpstart);
+#else
+	return (register_t)cortex_mpstart;
+#endif
+}
+
 void
 psci_fdt_bootstrap(void)
 {
 #ifdef MULTIPROCESSOR
 	extern void cortex_mpstart(void);
-	bus_addr_t mpidr;
-	uint32_t bp_mpidr;
+	bus_addr_t mpidr, bp_mpidr;
 	int child;
 
 	const int cpus = OF_finddevice("/cpus");
@@ -178,7 +198,7 @@ psci_fdt_bootstrap(void)
 		return;
 
 	/* MPIDR affinity levels of boot processor. */
-	bp_mpidr = armreg_mpidr_read() & (MPIDR_AFF2|MPIDR_AFF1|MPIDR_AFF0);
+	bp_mpidr = psci_fdt_read_mpidr_aff();
 
 	/* Boot APs */
 	uint32_t started = 0;
@@ -191,20 +211,18 @@ psci_fdt_bootstrap(void)
 			continue; 	/* BP already started */
 
 		/* XXX NetBSD requires all CPUs to be in the same cluster */
-		const u_int bp_clid = __SHIFTOUT(bp_mpidr, CORTEXA9_MPIDR_CLID);
-		const u_int clid = __SHIFTOUT(mpidr, CORTEXA9_MPIDR_CLID);
-		if (bp_clid != clid)
+		if ((mpidr & ~MPIDR_AFF0) != (bp_mpidr & ~MPIDR_AFF0))
 			continue;
 
-		const u_int cpuid = __SHIFTOUT(mpidr, CORTEXA9_MPIDR_CPUID);
-		int ret = psci_cpu_on(cpuid, (register_t)cortex_mpstart, 0);
+		const u_int cpuid = __SHIFTOUT(mpidr, MPIDR_AFF0);
+		int ret = psci_cpu_on(cpuid, psci_fdt_mpstart_pa(), 0);
 		if (ret == PSCI_SUCCESS)
 			started |= __BIT(cpuid);
 	}
 
 	/* Wait for APs to start */
 	for (u_int i = 0x10000000; i > 0; i--) {
-		arm_dmb();
+		membar_consumer();
 		if (arm_cpu_hatched == started)
 			break;
 	}
