@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.3 2018/04/01 04:35:03 ryo Exp $ */
+/* $NetBSD: locore.h,v 1.4 2018/07/09 06:19:53 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -50,11 +50,6 @@
 #include <sys/types.h>
 
 #include <aarch64/armreg.h>
-
-#ifdef MULTIPROCESSOR
-/* for compatibility arch/arm/pic/pic.c */
-extern u_int arm_cpu_max;
-#endif
 
 /* for compatibility arch/arm */
 #define I32_bit			DAIF_I
