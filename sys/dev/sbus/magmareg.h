@@ -1,4 +1,4 @@
-/*	$NetBSD: magmareg.h,v 1.19 2018/07/09 08:51:19 kre Exp $	*/
+/*	$NetBSD: magmareg.h,v 1.20 2018/07/09 14:07:37 christos Exp $	*/
 
 /*-
  *  Copyright (c) 1998 Iain Hibbert
@@ -185,19 +185,6 @@ struct mbpp_softc {
 	int ms_nports;			/* parallel ports */
 	struct mbpp_port ms_port[MAGMA_MAX_BPP];
 };
-
-/*
- * useful macros
- */
-#ifndef SET
-#define SET(t, f)	((t) |= (f))
-#endif
-#ifndef CLR
-#define CLR(t, f)	((t) &= ~(f))
-#endif
-#ifndef ISSET
-#define ISSET(t, f)	((t) & (f))
-#endif
 
 /* internal function prototypes */
 
