@@ -1,4 +1,4 @@
-/*	$NetBSD: spifreg.h,v 1.5 2014/11/15 19:18:19 christos Exp $	*/
+/*	$NetBSD: spifreg.h,v 1.6 2018/07/09 08:51:19 kre Exp $	*/
 /*	$OpenBSD: spifreg.h,v 1.5 2003/06/02 18:32:41 jason Exp $	*/
 
 /*
@@ -383,9 +383,15 @@
 /*
  * useful macros
  */
+#ifndef SET
 #define	SET(t, f)	((t) |= (f))
+#endif
+#ifndef CLR
 #define	CLR(t, f)	((t) &= ~(f))
+#endif
+#ifndef ISSET
 #define	ISSET(t, f)	((t) & (f))
+#endif
 
 /*
  * internal function prototypes
