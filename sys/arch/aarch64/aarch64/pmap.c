@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.7 2018/05/20 06:45:00 ryo Exp $	*/
+/*	$NetBSD: pmap.c,v 1.8 2018/07/09 06:14:38 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.7 2018/05/20 06:45:00 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.8 2018/07/09 06:14:38 ryo Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -1514,11 +1514,13 @@ _pmap_remove(struct pmap *pm, vaddr_t va, bool kremove)
 	UVMHIST_LOG(pmaphist, "pm=%p, va=%016lx, kremovemode=%d",
 	    pm, va, kremove, 0);
 
+	PM_LOCK(pm);
+
 	ptep = _pmap_pte_lookup(pm, va);
 	if (ptep != NULL) {
 		pte = *ptep;
 		if (!l3pte_valid(pte))
-			return;
+			goto done;
 
 		pa = l3pte_pa(pte);
 
@@ -1541,6 +1543,8 @@ _pmap_remove(struct pmap *pm, vaddr_t va, bool kremove)
 			pm->pm_stats.wired_count--;
 		pm->pm_stats.resident_count--;
 	}
+ done:
+	PM_UNLOCK(pm);
 }
 
 void
@@ -1550,14 +1554,10 @@ pmap_remove(struct pmap *pm, vaddr_t sva, vaddr_t eva)
 
 	PM_ADDR_CHECK(pm, sva);
 
-	PM_LOCK(pm);
-
 	KASSERT(!IN_KSEG_ADDR(sva));
 
 	for (va = sva; va < eva; va += PAGE_SIZE)
 		_pmap_remove(pm, va, false);
-
-	PM_UNLOCK(pm);
 }
 
 void
@@ -1651,6 +1651,7 @@ pmap_fault_fixup(struct pmap *pm, vaddr_t va, vm_prot_t accessprot, bool user)
 	pt_entry_t *ptep, pte;
 	vm_prot_t pmap_prot;
 	paddr_t pa;
+	bool fixed = false;
 
 	UVMHIST_FUNC(__func__);
 	UVMHIST_CALLED(pmaphist);
@@ -1674,25 +1675,27 @@ pmap_fault_fixup(struct pmap *pm, vaddr_t va, vm_prot_t accessprot, bool user)
 	}
 #endif
 
+	PM_LOCK(pm);
+
 	ptep = _pmap_pte_lookup(pm, va);
 	if (ptep == NULL) {
 		UVMHIST_LOG(pmaphist, "pte_lookup failure: va=%016lx",
 		    va, 0, 0, 0);
-		return false;
+		goto done;
 	}
 
 	pte = *ptep;
 	if (!l3pte_valid(pte)) {
 		UVMHIST_LOG(pmaphist, "invalid pte: %016llx: va=%016lx",
 		    pte, va, 0, 0);
-		return false;
+		goto done;
 	}
 
 	pa = l3pte_pa(*ptep);
 	pg = PHYS_TO_VM_PAGE(pa);
 	if (pg == NULL) {
 		UVMHIST_LOG(pmaphist, "pg not found: va=%016lx", va, 0, 0, 0);
-		return false;
+		goto done;
 	}
 	md = VM_PAGE_TO_MD(pg);
 
@@ -1722,7 +1725,7 @@ pmap_fault_fixup(struct pmap *pm, vaddr_t va, vm_prot_t accessprot, bool user)
 	/* no permission to read/write/execute for this page */
 	if ((pmap_prot & accessprot) != accessprot) {
 		UVMHIST_LOG(pmaphist, "no permission to access", 0, 0, 0, 0);
-		return false;
+		goto done;
 	}
 
 	if ((pte & LX_BLKPAG_AF) && ((pte & LX_BLKPAG_AP) == LX_BLKPAG_AP_RW)) {
@@ -1737,7 +1740,7 @@ pmap_fault_fixup(struct pmap *pm, vaddr_t va, vm_prot_t accessprot, bool user)
 			    __func__, va, pte, curlwp->l_md.md_onfault);
 		}
 #endif
-		return false;
+		goto done;
 	}
 	KASSERT(((pte & LX_BLKPAG_AF) == 0) ||
 	    ((pte & LX_BLKPAG_AP) == LX_BLKPAG_AP_RO));
@@ -1776,8 +1779,11 @@ pmap_fault_fixup(struct pmap *pm, vaddr_t va, vm_prot_t accessprot, bool user)
 #else
 	aarch64_tlbi_by_va(va);
 #endif
+	fixed = true;
 
-	return true;
+ done:
+	PM_UNLOCK(pm);
+	return fixed;
 }
 
 bool
@@ -1924,7 +1930,7 @@ static void
 pmap_db_pte_print(pt_entry_t pte, int level, void (*pr)(const char *, ...))
 {
 	if (pte == 0) {
-		pr("UNUSED\n");
+		pr(" UNUSED\n");
 
 	} else if (level == 0) {
 		/* L0 pde */
@@ -2089,7 +2095,9 @@ pmap_db_pteinfo(vaddr_t va, void (*pr)(const char *, ...))
 
 	pa = l3pte_pa(pte);
 	pg = PHYS_TO_VM_PAGE(pa);
-	if (pg != NULL) {
+	if (pg == NULL) {
+		pr("No VM_PAGE\n");
+	} else {
 		pg_dump(pg, pr);
 		md = VM_PAGE_TO_MD(pg);
 		pv_dump(md, pr);
