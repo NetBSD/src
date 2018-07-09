@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm283x_platform.c,v 1.6 2018/06/27 11:12:14 ryo Exp $	*/
+/*	$NetBSD: bcm283x_platform.c,v 1.7 2018/07/09 06:21:46 ryo Exp $	*/
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.6 2018/06/27 11:12:14 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.7 2018/07/09 06:21:46 ryo Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bcm283x.h"
@@ -774,18 +774,51 @@ bcm2836_bootstrap(void)
 {
 #define RPI_CPU_MAX	4
 
-#ifdef MULTIPROCESSOR
-	extern int cortex_mmuinfo;
-
-	arm_cpu_max = RPI_CPU_MAX;
-	cortex_mmuinfo = armreg_ttbr_read();
 #ifdef VERBOSE_INIT_ARM
-	printf("%s: %d cpus present\n", __func__, arm_cpu_max);
-	printf("%s: cortex_mmuinfo %x\n", __func__, cortex_mmuinfo);
-#endif
+#define DPRINTF(...)	printf(__VA_ARGS__)
+#else
+#define DPRINTF(...)
 #endif
 
-#ifndef __aarch64__
+#ifdef MULTIPROCESSOR
+	arm_cpu_max = RPI_CPU_MAX;
+	DPRINTF("%s: %d cpus present\n", __func__, arm_cpu_max);
+#ifdef __arm__
+	extern int cortex_mmuinfo;
+	cortex_mmuinfo = armreg_ttbr_read();
+	DPRINTF("%s: cortex_mmuinfo %x\n", __func__, cortex_mmuinfo);
+#endif
+#endif /* MULTIPROCESSOR */
+
+#ifdef __aarch64__
+	/*
+	 * XXX: use psci_fdt_bootstrap()
+	 */
+	extern void aarch64_mpstart(void);
+	for (int i = 1; i < RPI_CPU_MAX; i++) {
+		/*
+		 * Reference:
+		 *   armstubs/armstub8.S
+		 *   in https://github.com/raspberrypi/tools
+		 */
+		volatile uint64_t *cpu_release_addr;
+#define RPI3_ARMSTUB8_SPINADDR_BASE	0x000000d8
+		cpu_release_addr =
+		    AARCH64_PA_TO_KVA(RPI3_ARMSTUB8_SPINADDR_BASE + i * 8);
+		*cpu_release_addr = aarch64_kern_vtophys(aarch64_mpstart);
+
+		/* need flush cache. secondary processors are cache disabled */
+		cpu_dcache_wb_range(cpu_release_addr, sizeof(cpu_release_addr));
+		__asm __volatile("sev" ::: "memory");
+
+#if defined(VERBOSE_INIT_ARM) && defined(EARLYCONS)
+		/* wait secondary processor's debug output */
+		gtmr_delay(100000);
+#endif
+	}
+#endif /* __aarch64__ */
+
+#ifdef __arm__
 	/*
 	 * Even if no options MULTIPROCESSOR,
 	 * It is need to initialize the secondary CPU,
@@ -803,6 +836,7 @@ bcm2836_bootstrap(void)
 		    (uint32_t)cortex_mpstart);
 	}
 #endif
+
 #ifdef MULTIPROCESSOR
 	/* Wake up AP in case firmware has placed it in WFE state */
 	__asm __volatile("sev" ::: "memory");
