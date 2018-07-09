@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.c,v 1.3 2018/07/09 06:19:53 ryo Exp $ */
+/* $NetBSD: db_machdep.c,v 1.4 2018/07/09 06:33:08 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,13 +30,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.3 2018/07/09 06:19:53 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.4 2018/07/09 06:33:08 ryo Exp $");
 
 #include "opt_kernhist.h"
 #include "opt_uvmhist.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/atomic.h>
+#include <sys/cpu.h>
 #include <sys/lwp.h>
 #include <sys/intr.h>
 
