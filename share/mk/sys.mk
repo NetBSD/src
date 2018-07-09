@@ -1,4 +1,4 @@
-#	$NetBSD: sys.mk,v 1.133 2018/06/22 11:25:03 maya Exp $
+#	$NetBSD: sys.mk,v 1.134 2018/07/09 09:22:55 martin Exp $
 #	@(#)sys.mk	8.2 (Berkeley) 3/21/94
 #
 # This file contains the basic rules for make(1) and is read first
@@ -61,8 +61,8 @@ __ALLSRC4=	${empty(X11SRCDIR):?${__ALLSRC3}:${__ALLSRC3:S|^${X11SRCDIR}|^xsrc|}}
 __BUILDSEED=	${BUILDSEED}/${__ALLSRC4:O}/${.TARGET}
 _CXXSEED?=	${BUILDSEED:D-frandom-seed=${__BUILDSEED:hash}}
 
-COMPILE.cc?=	${CXX} ${_CXXSEED} ${CXXFLAGS} ${DTRACE_OPTS} ${CPPFLAGS} -c
-LINK.cc?=	${CXX} ${CXXFLAGS} ${CPPFLAGS} ${LDFLAGS}
+COMPILE.cc?=	echo "random-seed is ${__BUILDSEED}"; ${CXX} ${_CXXSEED} ${CXXFLAGS} ${DTRACE_OPTS} ${CPPFLAGS} -c
+LINK.cc?=	echo "random-seed is ${__BUILDSEED}"; ${CXX} ${CXXFLAGS} ${CPPFLAGS} ${LDFLAGS}
 
 OBJC?=		${CC}
 OBJCFLAGS?=	${CFLAGS}
