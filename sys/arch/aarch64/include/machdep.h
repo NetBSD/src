@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.1 2018/04/01 04:35:03 ryo Exp $	*/
+/*	$NetBSD: machdep.h,v 1.2 2018/07/09 06:19:53 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -64,6 +64,10 @@ extern void (*cpu_reset_address)(void);
 extern void (*cpu_powerdown_address)(void);
 
 extern char *booted_kernel;
+
+#ifdef MULTIPROCESSOR
+extern u_int arm_cpu_max;
+#endif
 
 vaddr_t initarm_common(vaddr_t, vsize_t, const struct boot_physmem *, size_t);
 
