@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1181 2018/07/10 17:01:43 maya Exp $
+# $NetBSD: GENERIC,v 1.1182 2018/07/10 19:58:13 maya Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.1181 $"
+#ident		"GENERIC-$Revision: 1.1182 $"
 
 maxusers	64		# estimated number of users
 
@@ -299,7 +299,6 @@ config		netbsd	root on ? type ?
 #options 	APM_V10_ONLY		# Use only the APM 1.0 calls
 #options 	APM_NO_POWEROFF		# Don't power off on halt(8)
 #options 	APM_POWER_PRINT		# Print stats on the console
-#options 	APM_DISABLE_INTERRUPTS=0 # Don't disable interrupts
 
 
 # Basic Bus Support
