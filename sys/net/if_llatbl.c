@@ -1,4 +1,4 @@
-/*	$NetBSD: if_llatbl.c,v 1.18.6.4 2018/06/09 14:44:33 martin Exp $	*/
+/*	$NetBSD: if_llatbl.c,v 1.18.6.5 2018/07/10 14:41:31 martin Exp $	*/
 /*
  * Copyright (c) 2004 Luigi Rizzo, Alessandro Cerri. All rights reserved.
  * Copyright (c) 2004-2008 Qing Li. All rights reserved.
@@ -677,7 +677,7 @@ lla_rt_output(const u_char rtm_type, const int rtm_flags, const time_t rtm_expir
 
 		/* Add static LLE */
 		IF_AFDATA_WLOCK(ifp);
-		lle = lla_lookup(llt, 0, dst);
+		lle = lla_lookup(llt, LLE_EXCLUSIVE, dst);
 
 		/* Cannot overwrite an existing static entry */
 		if (lle != NULL &&
@@ -689,8 +689,18 @@ lla_rt_output(const u_char rtm_type, const int rtm_flags, const time_t rtm_expir
 			error = EEXIST;
 			goto out;
 		}
-		if (lle != NULL)
-			LLE_RUNLOCK(lle);
+
+		/*
+		 * We can't overwrite an existing entry to avoid race
+		 * conditions so remove it first.
+		 */
+		if (lle != NULL) {
+			size_t pkts_dropped = llentry_free(lle);
+			if (dst->sa_family == AF_INET) {
+				arp_stat_add(ARP_STAT_DFRDROPPED,
+				    (uint64_t)pkts_dropped);
+			}
+		}
 
 		lle = lla_create(llt, 0, dst, rt);
 		if (lle == NULL) {
