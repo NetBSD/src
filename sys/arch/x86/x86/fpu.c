@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.12.8.2 2018/06/23 11:39:02 martin Exp $	*/
+/*	$NetBSD: fpu.c,v 1.12.8.3 2018/07/10 15:35:26 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.  All
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.12.8.2 2018/06/23 11:39:02 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.12.8.3 2018/07/10 15:35:26 martin Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -306,6 +306,20 @@ fpu_eagerswitch(struct lwp *oldlwp, struct lwp *newlwp)
 	int s;
 
 	s = splhigh();
+#ifdef DIAGNOSTIC
+	if (oldlwp != NULL) {
+		struct pcb *pcb = lwp_getpcb(oldlwp);
+		struct cpu_info *ci = curcpu();
+		if (pcb->pcb_fpcpu == NULL) {
+			KASSERT(ci->ci_fpcurlwp != oldlwp);
+		} else if (pcb->pcb_fpcpu == ci) {
+			KASSERT(ci->ci_fpcurlwp == oldlwp);
+		} else {
+			panic("%s: oldlwp's state installed elsewhere",
+			    __func__);
+		}
+	}
+#endif
 	fpusave_cpu(true);
 	if (!(newlwp->l_flag & LW_SYSTEM))
 		fpu_eagerrestore(newlwp);
