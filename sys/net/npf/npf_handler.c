@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_handler.c,v 1.43 2018/07/10 15:46:58 maxv Exp $	*/
+/*	$NetBSD: npf_handler.c,v 1.44 2018/07/10 16:49:09 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.43 2018/07/10 15:46:58 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.44 2018/07/10 16:49:09 maxv Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -79,20 +79,17 @@ npf_reassembly(npf_t *npf, npf_cache_t *npc, bool *mff)
 	*mff = false;
 	m = nbuf_head_mbuf(nbuf);
 
-	/* Reset the mbuf as it may have changed. */
-	nbuf_reset(nbuf);
-
 	if (npf_iscached(npc, NPC_IP4)) {
 		error = ip_reass_packet(&m);
-		KASSERT(!error || (m != NULL));
 	} else if (npf_iscached(npc, NPC_IP6)) {
 		error = ip6_reass_packet(&m, npc->npc_hlen);
-		if (error && m == NULL) {
-			memset(nbuf, 0, sizeof(nbuf_t));
-		}
 	}
+
 	if (error) {
+		/* Reass failed. Free the mbuf, clear the nbuf. */
 		npf_stats_inc(npf, NPF_STAT_REASSFAIL);
+		m_freem(m);
+		memset(nbuf, 0, sizeof(nbuf_t));
 		return error;
 	}
 	if (m == NULL) {
