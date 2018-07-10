@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_handler.c,v 1.37.6.1 2018/05/09 15:35:37 martin Exp $	*/
+/*	$NetBSD: npf_handler.c,v 1.37.6.2 2018/07/10 14:44:05 martin Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.37.6.1 2018/05/09 15:35:37 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.37.6.2 2018/07/10 14:44:05 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -159,6 +159,7 @@ npf_packet_handler(npf_t *npf, struct mbuf **mp, ifnet_t *ifp, int di)
 
 	/* If error on the format, leave quickly. */
 	if (flags & NPC_FMTERR) {
+		*mp = nbuf_head_mbuf(&nbuf);
 		error = EINVAL;
 		goto fastout;
 	}
