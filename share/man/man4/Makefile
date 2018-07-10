@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.656 2018/06/13 03:28:36 ozaki-r Exp $
+#	$NetBSD: Makefile,v 1.657 2018/07/10 17:01:43 maya Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 \
@@ -177,7 +177,6 @@ MLINKS+=drm.4 radeondrm.4
 MLINKS+=drm.4 savagedrm.4
 MLINKS+=drm.4 sisdrm.4
 MLINKS+=drm.4 tdfxdrm.4
-MLINKS+=drm.4 viadrm.4
 
 MLINKS+=acpiec.4 acpiecdt.4
 MLINKS+=acpivga.4 acpiout.4

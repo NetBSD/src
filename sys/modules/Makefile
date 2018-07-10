@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.205 2018/06/06 16:46:02 jakllsch Exp $
+#	$NetBSD: Makefile,v 1.206 2018/07/10 17:01:43 maya Exp $
 
 .include <bsd.own.mk>
 
@@ -284,7 +284,6 @@ SUBDIR+=	savagedrm
 SUBDIR+=	sisdrm
 SUBDIR+=	tdfxdrm
 SUBDIR+=	viac7temp
-SUBDIR+=	viadrm
 SUBDIR+=	viadrmums
 .endif
 

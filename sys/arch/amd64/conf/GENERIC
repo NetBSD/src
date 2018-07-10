@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.493 2018/06/07 13:36:28 thorpej Exp $
+# $NetBSD: GENERIC,v 1.494 2018/07/10 17:01:43 maya Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.493 $"
+#ident		"GENERIC-$Revision: 1.494 $"
 
 maxusers	64		# estimated number of users
 
@@ -418,7 +418,6 @@ sysbeep0	at pcppi?
 #savagedrm*	at drm?		# S3 Savage DRM driver
 #sisdrm* 	at drm?		# SiS DRM driver
 #tdfxdrm*	at drm?		# 3dfx (voodoo) DRM driver
-#viadrm* 	at drm?		# VIA DRM driver
 
 # DRMKMS drivers
 i915drmkms*	at pci? dev ? function ?
