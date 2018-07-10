@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_handler.c,v 1.42 2018/07/10 15:25:01 maxv Exp $	*/
+/*	$NetBSD: npf_handler.c,v 1.43 2018/07/10 15:46:58 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.42 2018/07/10 15:25:01 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.43 2018/07/10 15:46:58 maxv Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -83,8 +83,7 @@ npf_reassembly(npf_t *npf, npf_cache_t *npc, bool *mff)
 	nbuf_reset(nbuf);
 
 	if (npf_iscached(npc, NPC_IP4)) {
-		struct ip *ip = nbuf_dataptr(nbuf);
-		error = ip_reass_packet(&m, ip);
+		error = ip_reass_packet(&m);
 		KASSERT(!error || (m != NULL));
 	} else if (npf_iscached(npc, NPC_IP6)) {
 		error = ip6_reass_packet(&m, npc->npc_hlen);
