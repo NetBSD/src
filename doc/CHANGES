@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2406 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2407 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -169,3 +169,4 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 		[msaitoh 20180626]
 	gcc: add lsan the Leak Sanitizer [christos 20180626]
 	aarch64: Add support for SMP. [ryo 20180709]
+	viadrm(4): Removed, superseded by viadrmums. [maya 20180710]
