@@ -1,4 +1,4 @@
-# $NetBSD: genassym.cf,v 1.3 2018/07/09 06:19:53 ryo Exp $
+# $NetBSD: genassym.cf,v 1.4 2018/07/10 08:35:58 ryo Exp $
 #-
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -264,6 +264,7 @@ define	DAIF_SETCLR_SHIFT	DAIF_SETCLR_SHIFT
 
 define	CNTHCTL_EL1PCTEN	CNTHCTL_EL1PCTEN
 define	CNTHCTL_EL1PCEN		CNTHCTL_EL1PCEN
+define	CNTKCTL_EL0VCTEN	CNTKCTL_EL0VCTEN
 define	SPSR_F			SPSR_F
 define	SPSR_I			SPSR_I
 define	SPSR_A			SPSR_A

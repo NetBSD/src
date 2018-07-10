@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.9 2018/07/10 08:20:29 ryo Exp $	*/
+/*	$NetBSD: locore.S,v 1.10 2018/07/10 08:35:58 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -36,7 +36,7 @@
 #include <aarch64/pte.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.9 2018/07/10 08:20:29 ryo Exp $")
+RCSID("$NetBSD: locore.S,v 1.10 2018/07/10 08:35:58 ryo Exp $")
 
 /* #define DEBUG_LOCORE */
 /* #define DEBUG_MMU */
@@ -801,6 +801,11 @@ init_sysregs:
 
 	/* No trap system register access, and Trap FP/SIMD access */
 	msr	cpacr_el1, xzr
+
+	/* allow to read CNTVCT_EL0 and CNTFRQ_EL0 from EL0 */
+	mrs	x0, cntkctl_el1
+	orr	x0, x0, #CNTKCTL_EL0VCTEN
+	msr	cntkctl_el1, x0
 
 	/* any exception not masked */
 	msr	daif, xzr
