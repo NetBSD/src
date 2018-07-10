@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.750 2018/06/05 13:21:15 martin Exp $
+$NetBSD: usbdevs,v 1.751 2018/07/10 11:21:34 spz Exp $
 
 /*-
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -463,6 +463,7 @@ vendor QUALCOMM		0x1004	Qualcomm
 vendor MOTOROLA4	0x100d	Motorola
 vendor HP3		0x103c	Hewlett Packard
 vendor GIGABYTE		0x1044	GIGABYTE
+vendor YUBICO		0x1050  Yubico.se
 vendor WESTERN		0x1058	Western Digital
 vendor MOTOROLA		0x1063	Motorola
 vendor CCYU		0x1065	CCYU Technology
@@ -3486,6 +3487,11 @@ product YANO U640MO		0x0101	U640MO-03
 
 /* Y-E Data products */
 product YEDATA FLASHBUSTERU	0x0000	Flashbuster-U
+
+/* Yubico products */
+product YUBICO YUBIKEY4MODE1	0x0404	YubiKey 4 CCID
+product YUBICO YUBIKEY4MODE2	0x0405	YubiKey 4 OTP+CCID
+product YUBICO YUBIKEY4MODE6	0x0407	YubiKey 4 OTP+CCID+U2F
 
 /* Z-Com products */
 product ZCOM M4Y750		0x0001	M4Y-750
