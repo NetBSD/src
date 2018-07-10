@@ -1,4 +1,4 @@
-/* $NetBSD: if_skreg.h,v 1.22 2018/07/04 19:37:10 jdolecek Exp $ */
+/* $NetBSD: if_skreg.h,v 1.23 2018/07/10 22:52:38 kre Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -524,7 +524,7 @@
 #define SK_GPIO_DIR6		0x00400000
 #define SK_GPIO_DIR7		0x00800000
 #define SK_GPIO_DIR8		0x01000000
-#define SK_GPIO_DIR9           0x02000000
+#define SK_GPIO_DIR9		0x02000000
 
 #define	SK_Y2_CLKGATE_LINK2_INACTIVE	0x80	/* port 2 inactive */
 #define	SK_Y2_CLKGATE_LINK2_GATE_DIS	0x40	/* disable clock gate, 2 */
@@ -836,7 +836,7 @@
 #define SK_TXQS1_Y2_PREF_LIDX   0x0654
 #define SK_TXQS1_Y2_PREF_ADDRLO 0x0658
 #define SK_TXQS1_Y2_PREF_ADDRHI 0x065C
-#define SK_TXQS1_Y2_PREF_GETIDX 0x0660 
+#define SK_TXQS1_Y2_PREF_GETIDX 0x0660
 #define SK_TXQS1_Y2_PREF_PUTIDX 0x0664
 #define SK_TXQS1_Y2_PREF_FIFOWP 0x0670
 #define SK_TXQS1_Y2_PREF_FIFORP 0x0674
