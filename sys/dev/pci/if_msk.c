@@ -1,4 +1,4 @@
-/* $NetBSD: if_msk.c,v 1.74 2018/07/10 18:43:20 jdolecek Exp $ */
+/* $NetBSD: if_msk.c,v 1.75 2018/07/10 20:48:54 jdolecek Exp $ */
 /*	$OpenBSD: if_msk.c,v 1.79 2009/10/15 17:54:56 deraadt Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.74 2018/07/10 18:43:20 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.75 2018/07/10 20:48:54 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -975,15 +975,20 @@ mskc_reset(struct sk_softc *sc)
 	    sc->sk_status_map->dm_segs[0].ds_addr);
 	sk_win_write_4(sc, SK_STAT_BMU_ADDRHI,
 	    (u_int64_t)sc->sk_status_map->dm_segs[0].ds_addr >> 32);
-	if ((sc->sk_workaround & SK_STAT_BMU_FIFOIWM) != 0) {
+	if (sc->sk_type == SK_YUKON_EC &&
+	    sc->sk_rev == SK_YUKON_EC_REV_A1) {
+		/* WA for dev. #4.3 */
 		sk_win_write_2(sc, SK_STAT_BMU_TX_THRESH, SK_STAT_BMU_TXTHIDX_MSK);
+		/* WA for dev. #4.18 */
 		sk_win_write_1(sc, SK_STAT_BMU_FIFOWM, 0x21);
 		sk_win_write_1(sc, SK_STAT_BMU_FIFOIWM, 0x07);
 	} else {
 		sk_win_write_2(sc, SK_STAT_BMU_TX_THRESH, 0x000a);
 		sk_win_write_1(sc, SK_STAT_BMU_FIFOWM, 0x10);
-		sk_win_write_1(sc, SK_STAT_BMU_FIFOIWM,
-		    ((sc->sk_workaround & SK_WA_4109) != 0) ? 0x10 : 0x04);
+		if (sc->sk_type == SK_YUKON_XL)
+			sk_win_write_1(sc, SK_STAT_BMU_FIFOIWM, 0x04);
+		else
+			sk_win_write_1(sc, SK_STAT_BMU_FIFOIWM, 0x10);
 		sk_win_write_4(sc, SK_Y2_ISR_ITIMERINIT, 0x0190); /* 3.2us on Yukon-EC */
 	}
 
@@ -992,6 +997,7 @@ mskc_reset(struct sk_softc *sc)
 #endif
 	sk_win_write_4(sc, SK_Y2_TX_ITIMERINIT, SK_IM_USECS(1000));
 
+	/* Enable status unit. */
 	sk_win_write_4(sc, SK_STAT_BMU_CSR, SK_STAT_BMU_ON);
 
 	sk_win_write_1(sc, SK_Y2_LEV_ITIMERCTL, SK_IMCTL_START);
@@ -1473,23 +1479,18 @@ mskc_attach(device_t parent, device_t self, void *aux)
 	if (sc->sk_type == SK_YUKON_XL) {
 		switch (sc->sk_rev) {
 		case SK_YUKON_XL_REV_A0:
-			sc->sk_workaround = 0;
 			revstr = "A0";
 			break;
 		case SK_YUKON_XL_REV_A1:
-			sc->sk_workaround = SK_WA_4109;
 			revstr = "A1";
 			break;
 		case SK_YUKON_XL_REV_A2:
-			sc->sk_workaround = SK_WA_4109;
 			revstr = "A2";
 			break;
 		case SK_YUKON_XL_REV_A3:
-			sc->sk_workaround = SK_WA_4109;
 			revstr = "A3";
 			break;
 		default:
-			sc->sk_workaround = 0;
 			break;
 		}
 	}
@@ -1497,25 +1498,20 @@ mskc_attach(device_t parent, device_t self, void *aux)
 	if (sc->sk_type == SK_YUKON_EC) {
 		switch (sc->sk_rev) {
 		case SK_YUKON_EC_REV_A1:
-			sc->sk_workaround = SK_WA_43_418 | SK_WA_4109;
 			revstr = "A1";
 			break;
 		case SK_YUKON_EC_REV_A2:
-			sc->sk_workaround = SK_WA_4109;
 			revstr = "A2";
 			break;
 		case SK_YUKON_EC_REV_A3:
-			sc->sk_workaround = SK_WA_4109;
 			revstr = "A3";
 			break;
 		default:
-			sc->sk_workaround = 0;
 			break;
 		}
 	}
 
 	if (sc->sk_type == SK_YUKON_FE) {
-		sc->sk_workaround = SK_WA_4109;
 		switch (sc->sk_rev) {
 		case SK_YUKON_FE_REV_A1:
 			revstr = "A1";
@@ -1524,13 +1520,11 @@ mskc_attach(device_t parent, device_t self, void *aux)
 			revstr = "A2";
 			break;
 		default:
-			sc->sk_workaround = 0;
 			break;
 		}
 	}
 
 	if (sc->sk_type == SK_YUKON_EC_U) {
-		sc->sk_workaround = SK_WA_4109;
 		switch (sc->sk_rev) {
 		case SK_YUKON_EC_U_REV_A0:
 			revstr = "A0";
@@ -1545,7 +1539,6 @@ mskc_attach(device_t parent, device_t self, void *aux)
 			revstr = "B1";
 			break;
 		default:
-			sc->sk_workaround = 0;
 			break;
 		}
 	}
