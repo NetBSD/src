@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_handler.c,v 1.39 2018/03/13 09:04:02 maxv Exp $	*/
+/*	$NetBSD: npf_handler.c,v 1.40 2018/07/10 12:31:46 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.39 2018/03/13 09:04:02 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.40 2018/07/10 12:31:46 maxv Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -153,6 +153,7 @@ npf_packet_handler(npf_t *npf, struct mbuf **mp, ifnet_t *ifp, int di)
 	decision = NPF_DECISION_BLOCK;
 	error = 0;
 	rp = NULL;
+	con = NULL;
 
 	/* Cache everything. */
 	flags = npf_cache_all(&npc);
@@ -170,7 +171,6 @@ npf_packet_handler(npf_t *npf, struct mbuf **mp, ifnet_t *ifp, int di)
 		 */
 		error = npf_reassembly(npf, &npc, mp);
 		if (error) {
-			con = NULL;
 			goto out;
 		}
 		if (*mp == NULL) {
@@ -181,7 +181,6 @@ npf_packet_handler(npf_t *npf, struct mbuf **mp, ifnet_t *ifp, int di)
 
 	/* Just pass-through if specially tagged. */
 	if (nbuf_find_tag(&nbuf, &ntag) == 0 && (ntag & NPF_NTAG_PASS) != 0) {
-		con = NULL;
 		goto pass;
 	}
 
