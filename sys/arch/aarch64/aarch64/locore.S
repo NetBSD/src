@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.8 2018/07/09 06:19:53 ryo Exp $	*/
+/*	$NetBSD: locore.S,v 1.9 2018/07/10 08:20:29 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -36,7 +36,7 @@
 #include <aarch64/pte.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.8 2018/07/09 06:19:53 ryo Exp $")
+RCSID("$NetBSD: locore.S,v 1.9 2018/07/10 08:20:29 ryo Exp $")
 
 /* #define DEBUG_LOCORE */
 /* #define DEBUG_MMU */
@@ -922,6 +922,8 @@ sctlr_set:
 	    SCTLR_UCI |     /* Enables EL0 DC {CVAU,CIVAC,CVAC}, IC IVAU */ \
 	    SCTLR_SPAN |    /* This field resets to 1 */ \
 	    SCTLR_UCT |     /* Enables EL0 access to the CTR_EL0 */ \
+	    SCTLR_nTWE |    /* EL0 WFE non-trapping */ \
+	    SCTLR_nTWI |    /* EL0 WFI non-trapping */ \
 	    SCTLR_DZE |     /* Enables access to the DC ZVA instruction */ \
 	    SCTLR_I |       /* Instruction cache enable */ \
 	    SCTLR_SED |     /* SETEND instruction disable */ \
@@ -935,8 +937,6 @@ sctlr_clear:
 	.quad ( \
 	    SCTLR_IESB |    /* Enable Implicit ErrorSynchronizationBarrier */ \
 	    SCTLR_WXN |     /* Write permission implies Execute Never (W^X) */ \
-	    SCTLR_nTWE |    /* EL0 WFE non-trapping */ \
-	    SCTLR_nTWI |    /* EL0 WFI non-trapping */ \
 	    SCTLR_UMA |     /* EL0 Controls access to interrupt masks */ \
 	    SCTLR_ITD |     /* IT instruction disable */ \
 	    SCTLR_THEE |    /* T32EE is not implemented */ \
