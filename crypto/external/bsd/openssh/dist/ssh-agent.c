@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-agent.c,v 1.22 2018/04/06 18:59:00 christos Exp $	*/
+/*	$NetBSD: ssh-agent.c,v 1.23 2018/07/10 22:12:08 sevan Exp $	*/
 /* $OpenBSD: ssh-agent.c,v 1.228 2018/02/23 15:58:37 markus Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -36,7 +36,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-agent.c,v 1.22 2018/04/06 18:59:00 christos Exp $");
+__RCSID("$NetBSD: ssh-agent.c,v 1.23 2018/07/10 22:12:08 sevan Exp $");
 
 #include <sys/param.h>	/* MIN MAX */
 #include <sys/types.h>
@@ -82,7 +82,7 @@ __RCSID("$NetBSD: ssh-agent.c,v 1.22 2018/04/06 18:59:00 christos Exp $");
 #endif
 
 #ifndef DEFAULT_PKCS11_WHITELIST
-# define DEFAULT_PKCS11_WHITELIST "/usr/lib*/*,/usr/local/lib*/*"
+# define DEFAULT_PKCS11_WHITELIST "/usr/lib*/*,/usr/pkg/lib*/*"
 #endif
 
 /* Maximum accepted message length */
