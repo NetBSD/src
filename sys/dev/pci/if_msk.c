@@ -1,4 +1,4 @@
-/* $NetBSD: if_msk.c,v 1.73 2018/07/10 18:34:42 jdolecek Exp $ */
+/* $NetBSD: if_msk.c,v 1.74 2018/07/10 18:43:20 jdolecek Exp $ */
 /*	$OpenBSD: if_msk.c,v 1.79 2009/10/15 17:54:56 deraadt Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.73 2018/07/10 18:34:42 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.74 2018/07/10 18:43:20 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -837,12 +837,6 @@ mskc_reset(struct sk_softc *sc)
 	CSR_WRITE_1(sc, SK_CSR, SK_CSR_MASTER_UNRESET);
 	sk_win_write_1(sc, SK_TESTCTL1, 2);
 
-	reg1 = sk_win_read_4(sc, SK_Y2_PCI_REG(SK_PCI_OURREG1));
-	if (sc->sk_type == SK_YUKON_XL && sc->sk_rev > SK_YUKON_XL_REV_A1)
-		reg1 |= (SK_Y2_REG1_PHY1_COMA | SK_Y2_REG1_PHY2_COMA);
-	else
-		reg1 &= ~(SK_Y2_REG1_PHY1_COMA | SK_Y2_REG1_PHY2_COMA);
-
 	if (sc->sk_type == SK_YUKON_EC_U || sc->sk_type == SK_YUKON_EX ||
 	    sc->sk_type >= SK_YUKON_FE_P) {
 		uint32_t our;
@@ -860,6 +854,15 @@ mskc_reset(struct sk_softc *sc)
 		sk_win_write_4(sc, SK_Y2_PCI_REG(SK_PCI_OURREG4), our);
 		/* Set to default value */
 		sk_win_write_4(sc, SK_Y2_PCI_REG(SK_PCI_OURREG5), 0);
+
+		/*
+		 * Disable status race, workaround for Yukon EC Ultra &
+		 * Yukon EX.
+		 */
+		reg1 = sk_win_read_4(sc, SK_GPIO);
+		reg1 |= SK_Y2_GPIO_STAT_RACE_DIS;
+		sk_win_write_4(sc, SK_GPIO, reg1);
+		sk_win_read_4(sc, SK_GPIO);
 	}
 
 	/* release PHY from PowerDown/Coma mode. */
@@ -963,7 +966,6 @@ mskc_reset(struct sk_softc *sc)
 	bus_dmamap_sync(sc->sc_dmatag, sc->sk_status_map, 0,
 	    sc->sk_status_map->dm_mapsize, BUS_DMASYNC_PREREAD);
 	sc->sk_status_idx = 0;
-	sc->sk_status_own_idx = 0;
 
 	sk_win_write_4(sc, SK_STAT_BMU_CSR, SK_STAT_BMU_RESET);
 	sk_win_write_4(sc, SK_STAT_BMU_CSR, SK_STAT_BMU_UNRESET);
