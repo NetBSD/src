@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2014/04/24 13:50:53 pettai Exp $
+# $NetBSD: Makefile,v 1.5 2018/07/10 13:17:36 martin Exp $
 
 USE_FORT?= yes        # network protocol library
 
@@ -17,6 +17,7 @@ LIBDPLIBS+=	krb5		${HEIMBASE}/lib/libkrb5		\
 		asn1		${HEIMBASE}/lib/libasn1		\
 		com_err		${HEIMBASE}/lib/libcom_err	\
 		roken		${HEIMBASE}/lib/libroken	\
+		heimbase	${HEIMBASE}/lib/libheimbase	\
 		heimntlm	${HEIMBASE}/lib/libheimntlm	\
 		crypto		${SSLBASE}/lib/libcrypto
 
