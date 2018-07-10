@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.222 2018/07/10 15:32:28 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.223 2018/07/10 15:37:42 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -14136,4 +14136,13 @@ sys/net/npf/npf_handler.c			1.41
 
 	NPF: fix use-after-free.
 	[maxv, ticket #919]
+
+sys/arch/amd64/amd64/locore.S   		1.167 (patch)
+sys/arch/i386/i386/locore.S     		1.158 (patch)
+sys/arch/x86/x86/fpu.c          		1.44 (patch)
+
+	Don't switch the FPU when leaving a softint. This fixes
+	several problems when EagerFPU is enabled.
+	[maxv, ticket #910]
+
 
