@@ -1,4 +1,4 @@
-/* $NetBSD: if_msk.c,v 1.71 2018/07/04 19:26:09 jdolecek Exp $ */
+/* $NetBSD: if_msk.c,v 1.72 2018/07/10 18:32:25 jdolecek Exp $ */
 /*	$OpenBSD: if_msk.c,v 1.79 2009/10/15 17:54:56 deraadt Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.71 2018/07/04 19:26:09 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.72 2018/07/10 18:32:25 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,7 +114,7 @@ int msk_init(struct ifnet *);
 void msk_init_yukon(struct sk_if_softc *);
 void msk_stop(struct ifnet *, int);
 void msk_watchdog(struct ifnet *);
-int msk_newbuf(struct sk_if_softc *, struct mbuf *, bus_dmamap_t);
+int msk_newbuf(struct sk_if_softc *, bus_dmamap_t);
 int msk_alloc_jumbo_mem(struct sk_if_softc *);
 void *msk_jalloc(struct sk_if_softc *);
 void msk_jfree(struct mbuf *, void *, size_t, void *);
@@ -131,6 +131,7 @@ void msk_miibus_statchg(struct ifnet *);
 void msk_setmulti(struct sk_if_softc *);
 void msk_setpromisc(struct sk_if_softc *);
 void msk_tick(void *);
+static void msk_fill_rx_tick(void *);
 
 /* #define MSK_DEBUG 1 */
 #ifdef MSK_DEBUG
@@ -473,42 +474,30 @@ msk_init_tx_ring(struct sk_if_softc *sc_if)
 }
 
 int
-msk_newbuf(struct sk_if_softc *sc_if, struct mbuf *m,
-	  bus_dmamap_t dmamap)
+msk_newbuf(struct sk_if_softc *sc_if, bus_dmamap_t dmamap)
 {
 	struct mbuf		*m_new = NULL;
 	struct sk_chain		*c;
 	struct msk_rx_desc	*r;
+	void *buf = NULL;
 
-	if (m == NULL) {
-		void *buf = NULL;
+	MGETHDR(m_new, M_DONTWAIT, MT_DATA);
+	if (m_new == NULL)
+		return (ENOBUFS);
 
-		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
-		if (m_new == NULL)
-			return (ENOBUFS);
-
-		/* Allocate the jumbo buffer */
-		buf = msk_jalloc(sc_if);
-		if (buf == NULL) {
-			m_freem(m_new);
-			DPRINTFN(1, ("%s jumbo allocation failed -- packet "
-			    "dropped!\n", sc_if->sk_ethercom.ec_if.if_xname));
-			return (ENOBUFS);
-		}
-
-		/* Attach the buffer to the mbuf */
-		m_new->m_len = m_new->m_pkthdr.len = SK_JLEN;
-		MEXTADD(m_new, buf, SK_JLEN, 0, msk_jfree, sc_if);
-	} else {
-		/*
-	 	 * We're re-using a previously allocated mbuf;
-		 * be sure to re-init pointers and lengths to
-		 * default values.
-		 */
-		m_new = m;
-		m_new->m_len = m_new->m_pkthdr.len = SK_JLEN;
-		m_new->m_data = m_new->m_ext.ext_buf;
+	/* Allocate the jumbo buffer */
+	buf = msk_jalloc(sc_if);
+	if (buf == NULL) {
+		m_freem(m_new);
+		DPRINTFN(1, ("%s jumbo allocation failed -- packet "
+		    "dropped!\n", sc_if->sk_ethercom.ec_if.if_xname));
+		return (ENOBUFS);
 	}
+
+	/* Attach the buffer to the mbuf */
+	m_new->m_len = m_new->m_pkthdr.len = SK_JLEN;
+	MEXTADD(m_new, buf, SK_JLEN, 0, msk_jfree, sc_if);
+
 	m_adj(m_new, ETHER_ALIGN);
 
 	c = &sc_if->sk_cdata.sk_rx_chain[sc_if->sk_cdata.sk_rx_prod];
@@ -697,6 +686,11 @@ msk_jfree(struct mbuf *m, void *buf, size_t size, void *arg)
 
 	if (__predict_true(m != NULL))
 		pool_cache_put(mb_cache, m);
+
+	/* Now that we know we have a free RX buffer, refill if running out */
+	if ((sc->sk_ethercom.ec_if.if_flags & IFF_RUNNING) != 0
+	    && sc->sk_cdata.sk_rx_cnt < (MSK_RX_RING_CNT/3))
+		callout_schedule(&sc->sk_tick_rx, 0);
 }
 
 int
@@ -1202,6 +1196,9 @@ msk_attach(device_t parent, device_t self, void *aux)
 	callout_setfunc(&sc_if->sk_tick_ch, msk_tick, sc_if);
 	callout_schedule(&sc_if->sk_tick_ch, hz);
 
+	callout_init(&sc_if->sk_tick_rx, 0);
+	callout_setfunc(&sc_if->sk_tick_rx, msk_fill_rx_tick, sc_if);
+
 	/*
 	 * Call MI attach routines.
 	 */
@@ -1249,6 +1246,9 @@ msk_detach(device_t self, int flags)
 
 	callout_halt(&sc_if->sk_tick_ch, NULL);
 	callout_destroy(&sc_if->sk_tick_ch);
+
+	callout_halt(&sc_if->sk_tick_rx, NULL);
+	callout_destroy(&sc_if->sk_tick_rx);
 
 	/* Detach any PHYs we might have. */
 	if (LIST_FIRST(&sc_if->sk_mii.mii_phys) != NULL)
@@ -1954,31 +1954,12 @@ msk_rxeof(struct sk_if_softc *sc_if, u_int16_t len, u_int32_t rxstat)
 	    total_len > ETHER_MAX_LEN_JUMBO ||
 	    msk_rxvalid(sc, rxstat, total_len) == 0) {
 		ifp->if_ierrors++;
-		msk_newbuf(sc_if, m, dmamap);
+		m_freem(m);
 		return;
 	}
 
-	/*
-	 * Try to allocate a new jumbo buffer. If that fails, copy the
-	 * packet to mbufs and put the jumbo buffer back in the ring
-	 * so it can be re-used. If allocating mbufs fails, then we
-	 * have to drop the packet.
-	 */
-	if (msk_newbuf(sc_if, NULL, dmamap) == ENOBUFS) {
-		struct mbuf		*m0;
-		m0 = m_devget(mtod(m, char *) - ETHER_ALIGN,
-		    total_len + ETHER_ALIGN, 0, ifp, NULL);
-		msk_newbuf(sc_if, m, dmamap);
-		if (m0 == NULL) {
-			ifp->if_ierrors++;
-			return;
-		}
-		m_adj(m0, ETHER_ALIGN);
-		m = m0;
-	} else {
-		m_set_rcvif(m, ifp);
-		m->m_pkthdr.len = m->m_len = total_len;
-	}
+	m_set_rcvif(m, ifp);
+	m->m_pkthdr.len = m->m_len = total_len;
 
 	/* pass it on. */
 	if_percpuq_enqueue(ifp->if_percpuq, m);
@@ -2047,11 +2028,35 @@ msk_fill_rx_ring(struct sk_if_softc *sc_if)
 {
 	/* Make sure to not completely wrap around */
 	while (sc_if->sk_cdata.sk_rx_cnt < (MSK_RX_RING_CNT - 1)) {
-		if (msk_newbuf(sc_if, NULL,
+		if (msk_newbuf(sc_if,
 		    sc_if->sk_cdata.sk_rx_jumbo_map) == ENOBUFS) {
-			break;
+			goto schedretry;
 		}
 	}
+
+	return;
+
+schedretry:
+	/* Try later */
+	callout_schedule(&sc_if->sk_tick_rx, hz/2);
+}
+
+static void
+msk_fill_rx_tick(void *xsc_if)
+{
+	struct sk_if_softc *sc_if = xsc_if;
+	int s, rx_prod;
+
+	KASSERT(KERNEL_LOCKED_P()); 	/* XXXSMP */
+
+	s = splnet();
+	rx_prod = sc_if->sk_cdata.sk_rx_prod;
+	msk_fill_rx_ring(sc_if);
+	if (rx_prod != sc_if->sk_cdata.sk_rx_prod) {
+		SK_IF_WRITE_2(sc_if, 0, SK_RXQ1_Y2_PREF_PUTIDX,
+		    sc_if->sk_cdata.sk_rx_prod);
+	}
+	splx(s);
 }
 
 void
@@ -2136,9 +2141,8 @@ msk_intr(void *xsc)
 			sc_if = sc->sk_if[cur_st->sk_link & 0x01];
 			msk_rxeof(sc_if, letoh16(cur_st->sk_len),
 			    letoh32(cur_st->sk_status));
-			msk_fill_rx_ring(sc_if);
-			SK_IF_WRITE_2(sc_if, 0, SK_RXQ1_Y2_PREF_PUTIDX,
-			    sc_if->sk_cdata.sk_rx_prod);
+			if (sc_if->sk_cdata.sk_rx_cnt < (MSK_RX_RING_CNT/3))
+				msk_fill_rx_tick(sc_if);
 			break;
 		case SK_Y2_STOPC_TXSTAT:
 			if (sc_if0)
@@ -2471,6 +2475,7 @@ msk_stop(struct ifnet *ifp, int disable)
 	DPRINTFN(2, ("msk_stop\n"));
 
 	callout_stop(&sc_if->sk_tick_ch);
+	callout_stop(&sc_if->sk_tick_rx);
 
 	ifp->if_flags &= ~(IFF_RUNNING|IFF_OACTIVE);
 
