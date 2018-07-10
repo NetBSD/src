@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_handler.c,v 1.41 2018/07/10 14:04:07 maxv Exp $	*/
+/*	$NetBSD: npf_handler.c,v 1.42 2018/07/10 15:25:01 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.41 2018/07/10 14:04:07 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.42 2018/07/10 15:25:01 maxv Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -70,25 +70,25 @@ __KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.41 2018/07/10 14:04:07 maxv Exp $"
 #endif
 
 static int
-npf_reassembly(npf_t *npf, npf_cache_t *npc, struct mbuf **mp)
+npf_reassembly(npf_t *npf, npf_cache_t *npc, bool *mff)
 {
 	nbuf_t *nbuf = npc->npc_nbuf;
 	int error = EINVAL;
+	struct mbuf *m;
+
+	*mff = false;
+	m = nbuf_head_mbuf(nbuf);
 
 	/* Reset the mbuf as it may have changed. */
-	*mp = nbuf_head_mbuf(nbuf);
 	nbuf_reset(nbuf);
 
 	if (npf_iscached(npc, NPC_IP4)) {
 		struct ip *ip = nbuf_dataptr(nbuf);
-		error = ip_reass_packet(mp, ip);
+		error = ip_reass_packet(&m, ip);
+		KASSERT(!error || (m != NULL));
 	} else if (npf_iscached(npc, NPC_IP6)) {
-		/*
-		 * Note: ip6_reass_packet() offset is the start of
-		 * the fragment header.
-		 */
-		error = ip6_reass_packet(mp, npc->npc_hlen);
-		if (error && *mp == NULL) {
+		error = ip6_reass_packet(&m, npc->npc_hlen);
+		if (error && m == NULL) {
 			memset(nbuf, 0, sizeof(nbuf_t));
 		}
 	}
@@ -96,9 +96,10 @@ npf_reassembly(npf_t *npf, npf_cache_t *npc, struct mbuf **mp)
 		npf_stats_inc(npf, NPF_STAT_REASSFAIL);
 		return error;
 	}
-	if (*mp == NULL) {
+	if (m == NULL) {
 		/* More fragments should come. */
 		npf_stats_inc(npf, NPF_STAT_FRAGMENTS);
+		*mff = true;
 		return 0;
 	}
 
@@ -106,7 +107,7 @@ npf_reassembly(npf_t *npf, npf_cache_t *npc, struct mbuf **mp)
 	 * Reassembly is complete, we have the final packet.
 	 * Cache again, since layer 4 data is accessible now.
 	 */
-	nbuf_init(npf, nbuf, *mp, nbuf->nb_ifp);
+	nbuf_init(npf, nbuf, m, nbuf->nb_ifp);
 	npc->npc_info = 0;
 
 	if (npf_cache_all(npc) & (NPC_IPFRAG|NPC_FMTERR)) {
@@ -132,6 +133,7 @@ npf_packet_handler(npf_t *npf, struct mbuf **mp, ifnet_t *ifp, int di)
 	int error, decision, flags;
 	uint32_t ntag;
 	npf_match_info_t mi;
+	bool mff;
 
 	/* QSBR checkpoint. */
 	pserialize_checkpoint(npf->qsbr);
@@ -150,6 +152,7 @@ npf_packet_handler(npf_t *npf, struct mbuf **mp, ifnet_t *ifp, int di)
 	mi.mi_rid = 0;
 	mi.mi_retfl = 0;
 
+	*mp = NULL;
 	decision = NPF_DECISION_BLOCK;
 	error = 0;
 	rp = NULL;
@@ -160,22 +163,19 @@ npf_packet_handler(npf_t *npf, struct mbuf **mp, ifnet_t *ifp, int di)
 
 	/* If error on the format, leave quickly. */
 	if (flags & NPC_FMTERR) {
-		*mp = nbuf_head_mbuf(&nbuf);
 		error = EINVAL;
-		goto fastout;
+		goto out;
 	}
 
 	/* Determine whether it is an IP fragment. */
 	if (__predict_false(flags & NPC_IPFRAG)) {
-		/*
-		 * Pass to IPv4/IPv6 reassembly mechanism.
-		 */
-		error = npf_reassembly(npf, &npc, mp);
+		/* Pass to IPv4/IPv6 reassembly mechanism. */
+		error = npf_reassembly(npf, &npc, &mff);
 		if (error) {
 			goto out;
 		}
-		if (*mp == NULL) {
-			/* More fragments should come; return. */
+		if (mff) {
+			/* More fragments should come. */
 			return 0;
 		}
 	}
@@ -250,6 +250,7 @@ npf_packet_handler(npf_t *npf, struct mbuf **mp, ifnet_t *ifp, int di)
 			npf_conn_setpass(con, &mi, rp);
 		}
 	}
+
 pass:
 	decision = NPF_DECISION_PASS;
 	KASSERT(error == 0);
@@ -257,6 +258,7 @@ pass:
 	 * Perform NAT.
 	 */
 	error = npf_do_nat(&npc, con, di);
+
 block:
 	/*
 	 * Execute the rule procedure, if any is associated.
@@ -267,9 +269,10 @@ block:
 			npf_conn_release(con);
 		}
 		npf_rproc_release(rp);
-		*mp = NULL;
+		/* mbuf already freed */
 		return 0;
 	}
+
 out:
 	/*
 	 * Release the reference on a connection.  Release the reference
@@ -281,7 +284,7 @@ out:
 		npf_rproc_release(rp);
 	}
 
-	/* Reset mbuf pointer before returning to the caller. */
+	/* Get the new mbuf pointer. */
 	if ((*mp = nbuf_head_mbuf(&nbuf)) == NULL) {
 		return error ? error : ENOMEM;
 	}
@@ -309,7 +312,6 @@ out:
 		error = ENETUNREACH;
 	}
 
-fastout:
 	if (*mp) {
 		/* Free the mbuf chain. */
 		m_freem(*mp);
