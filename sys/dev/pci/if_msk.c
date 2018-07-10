@@ -1,4 +1,4 @@
-/* $NetBSD: if_msk.c,v 1.72 2018/07/10 18:32:25 jdolecek Exp $ */
+/* $NetBSD: if_msk.c,v 1.73 2018/07/10 18:34:42 jdolecek Exp $ */
 /*	$OpenBSD: if_msk.c,v 1.79 2009/10/15 17:54:56 deraadt Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.72 2018/07/10 18:32:25 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.73 2018/07/10 18:34:42 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2292,7 +2292,7 @@ msk_init_yukon(struct sk_if_softc *sc_if)
 	SK_IF_WRITE_2(sc_if, 0, SK_RXMF1_CTRL_TEST, SK_RFCTL_OPERATION_ON |
 	    SK_RFCTL_FIFO_FLUSH_ON);
 
-	/* Increase flush threshould to 64 bytes */
+	/* Increase flush threshold to 64 bytes */
 	SK_IF_WRITE_2(sc_if, 0, SK_RXMF1_FLUSH_THRESHOLD,
 	    SK_RFCTL_FIFO_THRESHOLD + 1);
 
