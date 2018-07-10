@@ -1,4 +1,4 @@
-#	$NetBSD: sys.mk,v 1.135 2018/07/10 16:53:16 christos Exp $
+#	$NetBSD: sys.mk,v 1.136 2018/07/10 23:25:27 christos Exp $
 #	@(#)sys.mk	8.2 (Berkeley) 3/21/94
 #
 # This file contains the basic rules for make(1) and is read first
@@ -54,10 +54,6 @@ CXX?=		c++
 # Remove -Wsystem-headers because C++ headers aren't clean of warnings
 CXXFLAGS?=	${CFLAGS:N-Wno-traditional:N-Wstrict-prototypes:N-Wmissing-prototypes:N-Wno-pointer-sign:N-ffreestanding:N-std=gnu[0-9][0-9]:N-Wold-style-definition:N-Wno-format-zero-length:N-Wsystem-headers}
 
-.if defined(MKREPRO_TIMESTAMP) && !empty(MKREPRO_TIMESTAMP)
-# Use the timestamp as a seed
-__INITSEED=${MKREPRO_TIMESTAMP}
-.else
 # Use the sources, as the seed... Normalize all paths...
 __ALLSRC1=	${empty(DESTDIR):?${.ALLSRC}:${.ALLSRC:S|^${DESTDIR}|^destdir|}}
 __ALLSRC2=	${empty(MAKEOBJDIR):?${__ALLSRC1}:${__ALLSRC1:S|^${MAKEOBJDIR}|^obj|}}
@@ -65,7 +61,6 @@ __ALLSRC3=	${empty(NETBSDSRCDIR):?${__ALLSRC2}:${__ALLSRC2:S|^${NETBSDSRCDIR}|^s
 __ALLSRC4=	${empty(X11SRCDIR):?${__ALLSRC3}:${__ALLSRC3:S|^${X11SRCDIR}|^xsrc|}}
 # Skip paths that contain relative components and can't be normalized, sort..
 __INITSEED=	${__ALLSRC4:N*/../*:O}
-.endif
 
 __BUILDSEED=	${BUILDSEED}/${__INITSEED}/${.TARGET}
 _CXXSEED?=	${BUILDSEED:D-frandom-seed=${__BUILDSEED:hash}}
