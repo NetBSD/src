@@ -35,12 +35,11 @@ mv $DRMDIR/*_drm.h $HDRDIR
 
 cd $DRMDIR
 rm -rf .tmp
-rm via_ds.[ch]
 rm sis_ds.[ch]
 rm amd*.[ch]
 rm radeon_ms*.[ch]
 
-for i in radeon mach64 r128 mga i915 i810 via savage sis xgi nouveau tdfx ffb imagine
+for i in radeon mach64 r128 mga i915 i810 savage sis xgi nouveau tdfx ffb imagine
 do
 mkdir ./$i
 mv $i*.[ch] $i/
