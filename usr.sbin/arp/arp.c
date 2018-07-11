@@ -1,4 +1,4 @@
-/*	$NetBSD: arp.c,v 1.61 2018/07/07 15:44:27 christos Exp $ */
+/*	$NetBSD: arp.c,v 1.62 2018/07/11 03:10:48 ozaki-r Exp $ */
 
 /*
  * Copyright (c) 1984, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1984, 1993\
 #if 0
 static char sccsid[] = "@(#)arp.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: arp.c,v 1.61 2018/07/07 15:44:27 christos Exp $");
+__RCSID("$NetBSD: arp.c,v 1.62 2018/07/11 03:10:48 ozaki-r Exp $");
 #endif
 #endif /* not lint */
 
@@ -502,6 +502,7 @@ delete(const char *host, const char *info)
 	struct rt_msghdr *rtm;
 	struct sockaddr_inarp *sina;
 	struct sockaddr_inarp sin_m = blank_sin; /* struct copy */
+	bool found = false;
 
 	if (host != NULL) {
 		int ret = getinetaddr(host, &sin_m.sin_addr);
@@ -539,12 +540,15 @@ retry:
 		if (host != NULL &&
 		    sina->sin_addr.s_addr != sin_m.sin_addr.s_addr)
 			continue;
+		found = true;
 		ret = delete_one(rtm);
 		if (vflag && ret == 0) {
 			(void)printf("%s (%s) deleted\n", host,
 			    inet_ntoa(sina->sin_addr));
 		}
 	}
+	if (host != NULL && !found)
+		warnx("delete: can't locate %s", host);
 	free(buf);
 }
 
