@@ -2425,7 +2425,7 @@ aarch64_software_single_step (struct regcache *regcache)
   const int insn_size = 4;
   const int atomic_sequence_length = 16; /* Instruction sequence length.  */
   CORE_ADDR pc = regcache_read_pc (regcache);
-  CORE_ADDR breaks[2] = { -1, -1 };
+  CORE_ADDR breaks[2] = { (ULONGEST)-1, (ULONGEST)-1 };
   CORE_ADDR loc = pc;
   CORE_ADDR closing_insn = 0;
   uint32_t insn = read_memory_unsigned_integer (loc, insn_size,
