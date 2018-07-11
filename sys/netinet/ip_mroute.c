@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.161 2018/07/11 05:25:45 maxv Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.162 2018/07/11 12:48:42 martin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.161 2018/07/11 05:25:45 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.162 2018/07/11 12:48:42 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -124,6 +124,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.161 2018/07/11 05:25:45 maxv Exp $")
 #include <netinet/in.h>
 #include <netinet/in_var.h>
 #include <netinet/in_systm.h>
+#include <netinet/in_offload.h>
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
 #include <netinet/in_pcb.h>
