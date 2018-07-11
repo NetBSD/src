@@ -1,6 +1,6 @@
-/*	$NetBSD: in_offload.c,v 1.9 2018/07/11 05:38:55 maxv Exp $	*/
+/*	$NetBSD: in_offload.c,v 1.10 2018/07/11 06:00:34 maxv Exp $	*/
 
-/*-
+/*
  * Copyright (c)2005, 2006 YAMAMOTO Takashi,
  * All rights reserved.
  *
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_offload.c,v 1.9 2018/07/11 05:38:55 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_offload.c,v 1.10 2018/07/11 06:00:34 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -50,11 +50,9 @@ tcp4_segment(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *sa,
     struct rtentry *rt)
 {
 	int mss;
-	int iphlen;
-	int thlen;
-	int hlen;
-	int len;
-	struct ip *iph;
+	int iphlen, thlen;
+	int hlen, len;
+	struct ip *ip;
 	struct tcphdr *th;
 	uint16_t ipid;
 	uint32_t tcpseq;
@@ -68,21 +66,21 @@ tcp4_segment(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *sa,
 	m->m_pkthdr.csum_flags = 0;
 
 	len = m->m_pkthdr.len;
-	KASSERT(len >= sizeof(*iph) + sizeof(*th));
+	KASSERT(len >= sizeof(*ip) + sizeof(*th));
 
-	if (m->m_len < sizeof(*iph)) {
-		m = m_pullup(m, sizeof(*iph));
+	if (m->m_len < sizeof(*ip)) {
+		m = m_pullup(m, sizeof(*ip));
 		if (m == NULL) {
 			error = ENOMEM;
 			goto quit;
 		}
 	}
-	iph = mtod(m, struct ip *);
-	iphlen = iph->ip_hl * 4;
-	KASSERT(iph->ip_v == IPVERSION);
-	KASSERT(iphlen >= sizeof(*iph));
-	KASSERT(iph->ip_p == IPPROTO_TCP);
-	ipid = ntohs(iph->ip_id);
+	ip = mtod(m, struct ip *);
+	iphlen = ip->ip_hl * 4;
+	KASSERT(ip->ip_v == IPVERSION);
+	KASSERT(iphlen >= sizeof(*ip));
+	KASSERT(ip->ip_p == IPPROTO_TCP);
+	ipid = ntohs(ip->ip_id);
 
 	hlen = iphlen + sizeof(*th);
 	if (m->m_len < hlen) {
@@ -132,14 +130,14 @@ tcp4_segment(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *sa,
 		KASSERT(n->m_len >= hlen); /* XXX */
 
 		n->m_pkthdr.len = hlen + mss;
-		iph = mtod(n, struct ip *);
-		KASSERT(iph->ip_v == IPVERSION);
-		iph->ip_len = htons(n->m_pkthdr.len);
-		iph->ip_id = htons(ipid);
+		ip = mtod(n, struct ip *);
+		KASSERT(ip->ip_v == IPVERSION);
+		ip->ip_len = htons(n->m_pkthdr.len);
+		ip->ip_id = htons(ipid);
 		th = (void *)(mtod(n, char *) + iphlen);
 		th->th_seq = htonl(tcpseq);
-		iph->ip_sum = 0;
-		iph->ip_sum = in_cksum(n, iphlen);
+		ip->ip_sum = 0;
+		ip->ip_sum = in_cksum(n, iphlen);
 		th->th_sum = 0;
 		th->th_sum = in4_cksum(n, IPPROTO_TCP, iphlen, thlen + mss);
 
@@ -224,7 +222,7 @@ in_undefer_cksum(struct mbuf *m, size_t hdrlen, int csum_flags)
 		if (__predict_true(l4offset + sizeof(uint16_t) <= m->m_len)) {
 			*(uint16_t *)(mtod(m, char *) + l4offset) = csum;
 		} else {
-			m_copyback(m, l4offset, sizeof(csum), (void *) &csum);
+			m_copyback(m, l4offset, sizeof(csum), (void *)&csum);
 		}
 	}
 
@@ -239,20 +237,20 @@ void
 in_undefer_cksum_tcpudp(struct mbuf *m)
 {
 	struct ip *ip;
-	u_int16_t csum, offset;
+	uint16_t csum, offset;
 
 	ip = mtod(m, struct ip *);
 	offset = ip->ip_hl << 2;
+
 	csum = in4_cksum(m, 0, offset, ntohs(ip->ip_len) - offset);
 	if (csum == 0 && (m->m_pkthdr.csum_flags & M_CSUM_UDPv4) != 0)
 		csum = 0xffff;
 
 	offset += M_CSUM_DATA_IPv4_OFFSET(m->m_pkthdr.csum_data);
 
-	if ((offset + sizeof(u_int16_t)) > m->m_len) {
-		/* This happens when ip options were inserted */
-		m_copyback(m, offset, sizeof(csum), (void *)&csum);
+	if ((offset + sizeof(uint16_t)) <= m->m_len) {
+		*(uint16_t *)(mtod(m, char *) + offset) = csum;
 	} else {
-		*(u_int16_t *)(mtod(m, char *) + offset) = csum;
+		m_copyback(m, offset, sizeof(csum), (void *)&csum);
 	}
 }
