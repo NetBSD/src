@@ -1,4 +1,4 @@
-/*	$NetBSD: in_offload.c,v 1.8 2018/07/11 05:25:45 maxv Exp $	*/
+/*	$NetBSD: in_offload.c,v 1.9 2018/07/11 05:38:55 maxv Exp $	*/
 
 /*-
  * Copyright (c)2005, 2006 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_offload.c,v 1.8 2018/07/11 05:25:45 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_offload.c,v 1.9 2018/07/11 05:38:55 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -41,46 +41,13 @@ __KERNEL_RCSID(0, "$NetBSD: in_offload.c,v 1.8 2018/07/11 05:25:45 maxv Exp $");
 #include <netinet/tcp.h>
 #include <netinet/in_offload.h>
 
-struct ip_tso_output_args {
-	struct ifnet *ifp;
-	const struct sockaddr *sa;
-	struct rtentry *rt;
-};
-
-static int ip_tso_output_callback(void *, struct mbuf *);
-
-static int
-ip_tso_output_callback(void *vp, struct mbuf *m)
-{
-	struct ip_tso_output_args *args = vp;
-	struct ifnet *ifp = args->ifp;
-
-	return ip_if_output(ifp, m, args->sa, args->rt);
-}
-
-int
-ip_tso_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *sa,
-    struct rtentry *rt)
-{
-	struct ip_tso_output_args args;
-
-	args.ifp = ifp;
-	args.sa = sa;
-	args.rt = rt;
-
-	return tcp4_segment(m, ip_tso_output_callback, &args);
-}
-
 /*
- * tcp4_segment: handle M_CSUM_TSOv4 by software.
- *
- * => always consume m.
- * => call output_func with output_arg for each segments.
+ * Handle M_CSUM_TSOv4 in software. Split the TCP payload in chunks of
+ * size MSS, and send them.
  */
-
-int
-tcp4_segment(struct mbuf *m, int (*output_func)(void *, struct mbuf *),
-    void *output_arg)
+static int
+tcp4_segment(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *sa,
+    struct rtentry *rt)
 {
 	int mss;
 	int iphlen;
@@ -176,7 +143,7 @@ tcp4_segment(struct mbuf *m, int (*output_func)(void *, struct mbuf *),
 		th->th_sum = 0;
 		th->th_sum = in4_cksum(n, IPPROTO_TCP, iphlen, thlen + mss);
 
-		error = (*output_func)(output_arg, n);
+		error = ip_if_output(ifp, n, sa, rt);
 		if (error) {
 			goto quit;
 		}
@@ -195,6 +162,13 @@ quit:
 	}
 
 	return error;
+}
+
+int
+ip_tso_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *sa,
+    struct rtentry *rt)
+{
+	return tcp4_segment(ifp, m, sa, rt);
 }
 
 /*
