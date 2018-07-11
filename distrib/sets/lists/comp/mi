@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2206 2018/06/28 10:14:01 christos Exp $
+#	$NetBSD: mi,v 1.2207 2018/07/11 11:13:16 kre Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -2388,6 +2388,7 @@
 ./usr/include/netinet/igmp_var.h		comp-c-include
 ./usr/include/netinet/in.h			comp-c-include
 ./usr/include/netinet/in_gif.h			comp-c-include
+./usr/include/netinet/in_offload.h		comp-c-include
 ./usr/include/netinet/in_l2tp.h			comp-c-include
 ./usr/include/netinet/in_pcb.h			comp-c-include
 ./usr/include/netinet/in_pcb_hdr.h		comp-c-include
