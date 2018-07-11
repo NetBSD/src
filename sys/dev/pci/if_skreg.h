@@ -1,4 +1,4 @@
-/* $NetBSD: if_skreg.h,v 1.23 2018/07/10 22:52:38 kre Exp $ */
+/* $NetBSD: if_skreg.h,v 1.24 2018/07/11 00:46:39 kre Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -515,6 +515,7 @@
 #define SK_GPIO_DAT7		0x00000080
 #define SK_GPIO_DAT8		0x00000100
 #define SK_GPIO_DAT9		0x00000200
+#define SK_Y2_GPIO_STAT_RACE_DIS	0x00002000
 #define SK_GPIO_DIR0		0x00010000
 #define SK_GPIO_DIR1		0x00020000
 #define SK_GPIO_DIR2		0x00040000
