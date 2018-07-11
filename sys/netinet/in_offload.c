@@ -1,4 +1,4 @@
-/*	$NetBSD: in_offload.c,v 1.7 2016/04/26 09:30:01 ozaki-r Exp $	*/
+/*	$NetBSD: in_offload.c,v 1.8 2018/07/11 05:25:45 maxv Exp $	*/
 
 /*-
  * Copyright (c)2005, 2006 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_offload.c,v 1.7 2016/04/26 09:30:01 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_offload.c,v 1.8 2018/07/11 05:25:45 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -197,8 +197,12 @@ quit:
 	return error;
 }
 
+/*
+ * Compute now in software the IP and TCP/UDP checksums. Cancel the
+ * hardware offloading.
+ */
 void
-ip_undefer_csum(struct mbuf *m, size_t hdrlen, int csum_flags)
+in_undefer_cksum(struct mbuf *m, size_t hdrlen, int csum_flags)
 {
 	const size_t iphdrlen = M_CSUM_DATA_IPv4_IPHL(m->m_pkthdr.csum_data);
 	uint16_t csum;
@@ -251,4 +255,30 @@ ip_undefer_csum(struct mbuf *m, size_t hdrlen, int csum_flags)
 	}
 
 	m->m_pkthdr.csum_flags ^= csum_flags;
+}
+
+/*
+ * Compute now in software the TCP/UDP checksum. Cancel the hardware
+ * offloading.
+ */
+void
+in_undefer_cksum_tcpudp(struct mbuf *m)
+{
+	struct ip *ip;
+	u_int16_t csum, offset;
+
+	ip = mtod(m, struct ip *);
+	offset = ip->ip_hl << 2;
+	csum = in4_cksum(m, 0, offset, ntohs(ip->ip_len) - offset);
+	if (csum == 0 && (m->m_pkthdr.csum_flags & M_CSUM_UDPv4) != 0)
+		csum = 0xffff;
+
+	offset += M_CSUM_DATA_IPv4_OFFSET(m->m_pkthdr.csum_data);
+
+	if ((offset + sizeof(u_int16_t)) > m->m_len) {
+		/* This happens when ip options were inserted */
+		m_copyback(m, offset, sizeof(csum), (void *)&csum);
+	} else {
+		*(u_int16_t *)(mtod(m, char *) + offset) = csum;
+	}
 }
