@@ -1,4 +1,4 @@
-/*	$NetBSD: in_offload.c,v 1.10 2018/07/11 06:00:34 maxv Exp $	*/
+/*	$NetBSD: in_offload.c,v 1.11 2018/07/11 06:25:05 maxv Exp $	*/
 
 /*
  * Copyright (c)2005, 2006 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_offload.c,v 1.10 2018/07/11 06:00:34 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_offload.c,v 1.11 2018/07/11 06:25:05 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -238,6 +238,10 @@ in_undefer_cksum_tcpudp(struct mbuf *m)
 {
 	struct ip *ip;
 	uint16_t csum, offset;
+
+	KASSERT((m->m_flags & M_PKTHDR) != 0);
+	KASSERT((m->m_pkthdr.csum_flags & (M_CSUM_TCPv4|M_CSUM_UDPv4)) != 0);
+	KASSERT((m->m_pkthdr.csum_flags & (M_CSUM_TCPv6|M_CSUM_UDPv6)) == 0);
 
 	ip = mtod(m, struct ip *);
 	offset = ip->ip_hl << 2;
