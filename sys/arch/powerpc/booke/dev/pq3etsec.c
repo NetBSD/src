@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3etsec.c,v 1.34 2018/06/26 06:47:59 msaitoh Exp $	*/
+/*	$NetBSD: pq3etsec.c,v 1.35 2018/07/11 05:25:45 maxv Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.34 2018/06/26 06:47:59 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.35 2018/07/11 05:25:45 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -2087,7 +2087,7 @@ pq3etsec_tx_offload(
 		if (mn == NULL) {
 			if (csum_flags & M_CSUM_IP4) {
 #ifdef INET
-				ip_undefer_csum(m, ETHER_HDR_LEN,
+				in_undefer_cksum(m, ETHER_HDR_LEN,
 				    csum_flags & M_CSUM_IP4);
 #else
 				panic("%s: impossible M_CSUM flags %#x",
