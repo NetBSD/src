@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.223 2018/07/10 15:37:42 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.224 2018/07/11 16:51:29 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -14126,7 +14126,7 @@ distrib/notes/i386/prep				(manually edited)
 
 	Fix NetBSD.org capitalization in some URLs.
 
-sys/net/if_llatbl.c				1.28,1.29
+sys/net/if_llatbl.c				1.28-1.30
 
 	Don't overwrite an existing llentry on RTM_ADD to avoid race
 	conditions.
