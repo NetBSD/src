@@ -1,4 +1,4 @@
-/*	$NetBSD: in_offload.h,v 1.8 2011/04/25 22:20:59 yamt Exp $	*/
+/*	$NetBSD: in_offload.h,v 1.9 2018/07/11 05:25:45 maxv Exp $	*/
 
 /*-
  * Copyright (c)2005, 2006 YAMAMOTO Takashi,
@@ -36,7 +36,8 @@
 int tcp4_segment(struct mbuf *, int (*)(void *, struct mbuf *), void *);
 int ip_tso_output(struct ifnet *, struct mbuf *, const struct sockaddr *,
     struct rtentry *);
-void ip_undefer_csum(struct mbuf *, size_t, int);        
+void in_undefer_cksum(struct mbuf *, size_t, int);
+void in_undefer_cksum_tcpudp(struct mbuf *m);
 
 /*
  * offloading related sysctl variables.

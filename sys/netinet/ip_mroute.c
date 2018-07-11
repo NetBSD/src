@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.160 2018/06/21 10:37:50 knakahara Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.161 2018/07/11 05:25:45 maxv Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.160 2018/06/21 10:37:50 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.161 2018/07/11 05:25:45 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1723,7 +1723,7 @@ encap_send(struct ip *ip, struct vif *vifp, struct mbuf *m)
 
 	/* Take care of delayed checksums */
 	if (m->m_pkthdr.csum_flags & (M_CSUM_TCPv4|M_CSUM_UDPv4)) {
-		in_delayed_cksum(m);
+		in_undefer_cksum_tcpudp(m);
 		m->m_pkthdr.csum_flags &= ~(M_CSUM_TCPv4|M_CSUM_UDPv4);
 	}
 
@@ -2743,7 +2743,7 @@ pim_register_prepare(struct ip *ip, struct mbuf *m)
 
 	/* Take care of delayed checksums */
 	if (m->m_pkthdr.csum_flags & (M_CSUM_TCPv4|M_CSUM_UDPv4)) {
-		in_delayed_cksum(m);
+		in_undefer_cksum_tcpudp(m);
 		m->m_pkthdr.csum_flags &= ~(M_CSUM_TCPv4|M_CSUM_UDPv4);
 	}
 
