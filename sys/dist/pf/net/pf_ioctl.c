@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_ioctl.c,v 1.53 2018/07/11 05:25:46 maxv Exp $	*/
+/*	$NetBSD: pf_ioctl.c,v 1.54 2018/07/11 11:13:16 kre Exp $	*/
 /*	$OpenBSD: pf_ioctl.c,v 1.182 2007/06/24 11:17:13 mcbride Exp $ */
 
 /*
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf_ioctl.c,v 1.53 2018/07/11 05:25:46 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf_ioctl.c,v 1.54 2018/07/11 11:13:16 kre Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -84,6 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: pf_ioctl.c,v 1.53 2018/07/11 05:25:46 maxv Exp $");
 #include <dev/rndvar.h>
 #include <crypto/md5.h>
 #else
+#include <netinet/in_offload.h>
 #include <sys/md5.h>
 #endif /* __NetBSD__ */
 #include <net/pfvar.h>
