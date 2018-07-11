@@ -1,4 +1,4 @@
-/*	$NetBSD: if_llatbl.c,v 1.18.6.6 2018/07/10 15:31:33 martin Exp $	*/
+/*	$NetBSD: if_llatbl.c,v 1.18.6.7 2018/07/11 16:50:46 martin Exp $	*/
 /*
  * Copyright (c) 2004 Luigi Rizzo, Alessandro Cerri. All rights reserved.
  * Copyright (c) 2004-2008 Qing Li. All rights reserved.
@@ -695,12 +695,14 @@ lla_rt_output(const u_char rtm_type, const int rtm_flags, const time_t rtm_expir
 		 * conditions so remove it first.
 		 */
 		if (lle != NULL) {
-			size_t pkts_dropped = llentry_free(lle);
 #if defined(INET) && NARP > 0
+			size_t pkts_dropped = llentry_free(lle);
 			if (dst->sa_family == AF_INET) {
 				arp_stat_add(ARP_STAT_DFRDROPPED,
 				    (uint64_t)pkts_dropped);
 			}
+#else
+			(void) llentry_free(lle);
 #endif
 		}
 
