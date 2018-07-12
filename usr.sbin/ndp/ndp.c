@@ -1,4 +1,4 @@
-/*	$NetBSD: ndp.c,v 1.51 2018/06/16 13:09:41 christos Exp $	*/
+/*	$NetBSD: ndp.c,v 1.52 2018/07/12 07:32:35 nonaka Exp $	*/
 /*	$KAME: ndp.c,v 1.121 2005/07/13 11:30:13 keiichi Exp $	*/
 
 /*
@@ -134,7 +134,6 @@ static void ifinfo(char *, int, char **);
 static void rtrlist(void);
 static void plist(void);
 static void pfx_flush(void);
-static void rtrlist(void);
 static void rtr_flush(void);
 static void harmonize_rtr(void);
 #ifdef SIOCSDEFIFACE_IN6	/* XXX: check SIOCGDEFIFACE_IN6 as well? */
