@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2207 2018/07/11 11:13:16 kre Exp $
+#	$NetBSD: mi,v 1.2208 2018/07/12 07:04:15 maxv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -24144,7 +24144,7 @@
 ./usr/share/man/man3/pmap_rmtcall.3		comp-c-man		.man
 ./usr/share/man/man3/pmap_set.3			comp-c-man		.man
 ./usr/share/man/man3/pmap_unset.3		comp-c-man		.man
-./usr/share/man/man3/pmc.3			comp-c-man		.man
+./usr/share/man/man3/pmc.3			comp-obsolete		obsolete
 ./usr/share/man/man3/pnoutrefresh.3		comp-c-man		.man
 ./usr/share/man/man3/popcount.3			comp-c-man		.man
 ./usr/share/man/man3/popcount32.3		comp-c-man		.man
