@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1066 2018/06/22 17:31:24 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.1067 2018/07/12 21:41:25 joerg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1054,8 +1054,8 @@ MKRELRO?=	partial
 MKRELRO?=	no
 .endif
 
-.if ${MACHINE_ARCH} == "x86_64"
-MKSTATICPIE?=	no
+.if ${MACHINE_ARCH} == "x86_64" || ${MACHINE_ARCH} == "i386"
+MKSTATICPIE?=	yes
 .else
 MKSTATICPIE?=	no
 .endif
