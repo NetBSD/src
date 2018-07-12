@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.210 2018/06/01 07:13:35 ozaki-r Exp $	*/
+/*	$NetBSD: route.c,v 1.211 2018/07/12 02:26:04 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.210 2018/06/01 07:13:35 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.211 2018/07/12 02:26:04 ozaki-r Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -509,27 +509,27 @@ dump_rt(const struct rtentry *rt)
 {
 	char buf[512];
 
-	aprint_normal("rt: ");
-	aprint_normal("p=%p ", rt);
+	log(LOG_DEBUG, "rt: ");
+	log(LOG_DEBUG, "p=%p ", rt);
 	if (rt->_rt_key == NULL) {
-		aprint_normal("dst=(NULL) ");
+		log(LOG_DEBUG, "dst=(NULL) ");
 	} else {
 		sockaddr_format(rt->_rt_key, buf, sizeof(buf));
-		aprint_normal("dst=%s ", buf);
+		log(LOG_DEBUG, "dst=%s ", buf);
 	}
 	if (rt->rt_gateway == NULL) {
-		aprint_normal("gw=(NULL) ");
+		log(LOG_DEBUG, "gw=(NULL) ");
 	} else {
 		sockaddr_format(rt->_rt_key, buf, sizeof(buf));
-		aprint_normal("gw=%s ", buf);
+		log(LOG_DEBUG, "gw=%s ", buf);
 	}
-	aprint_normal("flags=%x ", rt->rt_flags);
+	log(LOG_DEBUG, "flags=%x ", rt->rt_flags);
 	if (rt->rt_ifp == NULL) {
-		aprint_normal("if=(NULL) ");
+		log(LOG_DEBUG, "if=(NULL) ");
 	} else {
-		aprint_normal("if=%s ", rt->rt_ifp->if_xname);
+		log(LOG_DEBUG, "if=%s ", rt->rt_ifp->if_xname);
 	}
-	aprint_normal("\n");
+	log(LOG_DEBUG, "\n");
 }
 #endif /* RT_DEBUG */
 
