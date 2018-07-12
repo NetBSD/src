@@ -1,4 +1,4 @@
-/*	$NetBSD: arn5008.c,v 1.15 2018/06/26 06:48:00 msaitoh Exp $	*/
+/*	$NetBSD: arn5008.c,v 1.15.2.1 2018/07/12 16:35:33 phil Exp $	*/
 /*	$OpenBSD: ar5008.c,v 1.21 2012/08/25 12:14:31 kettenis Exp $	*/
 
 /*-
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arn5008.c,v 1.15 2018/06/26 06:48:00 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arn5008.c,v 1.15.2.1 2018/07/12 16:35:33 phil Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -235,7 +235,7 @@ ar5008_attach(struct athn_softc *sc)
 	if (base->opCapFlags & AR_OPFLAGS_11N)
 		sc->sc_flags |= ATHN_FLAG_11N;
 
-	IEEE80211_ADDR_COPY(ic->ic_myaddr, base->macAddr);
+	IEEE80211_ADDR_COPY(ic->ic_macaddr, base->macAddr);
 
 	/* Check if we have a hardware radio switch. */
 	if (base->rfSilent & AR_EEP_RFSILENT_ENABLED) {

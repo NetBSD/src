@@ -1,3 +1,5 @@
+/*	$NetBSD: ieee80211_adhoc.c,v 1.1.2.2 2018/07/12 16:35:34 phil Exp $ */
+
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
  *
@@ -50,12 +52,19 @@ __FBSDID("$FreeBSD$");
 #include <sys/sysctl.h>
 
 #include <net/if.h>
+#ifdef __FreeBSD__
 #include <net/if_var.h>
+#endif
 #include <net/if_media.h>
 #include <net/if_llc.h>
+#ifdef __FreeBSD__
 #include <net/ethernet.h>
-
+#endif
 #include <net/bpf.h>
+#ifdef __NetBSD__
+#include <net/route.h>
+#include <net/if_ether.h>
+#endif
 
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_adhoc.h>
@@ -69,6 +78,11 @@ __FBSDID("$FreeBSD$");
 #include <net80211/ieee80211_sta.h>
 
 #define	IEEE80211_RATE2MBS(r)	(((r) & IEEE80211_RATE_VAL) / 2)
+
+#ifdef __NetBSD__
+#undef  KASSERT
+#define KASSERT(__cond, __complaint) FBSDKASSERT(__cond, __complaint)
+#endif
 
 static	void adhoc_vattach(struct ieee80211vap *);
 static	int adhoc_newstate(struct ieee80211vap *, enum ieee80211_state, int);
@@ -982,7 +996,7 @@ ahdemo_recv_mgmt(struct ieee80211_node *ni, struct mbuf *m0,
 {
 	struct ieee80211vap *vap = ni->ni_vap;
 	struct ieee80211com *ic = ni->ni_ic;
-	struct ieee80211_frame *wh;
+	struct ieee80211_frame __unused *wh;
 
 	/*
 	 * Process management frames when scanning; useful for doing

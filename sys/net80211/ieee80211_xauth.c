@@ -1,3 +1,5 @@
+/*	$NetBSD: ieee80211_xauth.c,v 1.5.158.2 2018/07/12 16:35:34 phil Exp $ */
+
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
  *
@@ -27,7 +29,9 @@
  */
 
 #include <sys/cdefs.h>
+#ifdef __FreeBSD__
 __FBSDID("$FreeBSD$");
+#endif
 
 /*
  * External authenticator placeholder module.
@@ -54,19 +58,21 @@ __FBSDID("$FreeBSD$");
 
 #include <net/if.h>
 #include <net/if_media.h>
+#ifdef __FreeBSD__
 #include <net/ethernet.h>
+#endif
 #include <net/route.h>
 
 #include <net80211/ieee80211_var.h>
 
 /* XXX number of references from net80211 layer; needed for module code */
-static	int nrefs = 0;
+static	int nrefs __unused = 0;
 
 /*
  * One module handles everything for now.  May want
  * to split things up for embedded applications.
  */
-static const struct ieee80211_authenticator xauth = {
+static const struct ieee80211_authenticator xauth __unused = {
 	.ia_name	= "external",
 	.ia_attach	= NULL,
 	.ia_detach	= NULL,

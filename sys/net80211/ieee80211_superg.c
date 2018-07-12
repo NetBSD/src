@@ -1,3 +1,5 @@
+/*	$NetBSD: ieee80211_superg.c,v 1.1.2.2 2018/07/12 16:35:34 phil Exp $ */
+
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
  *
@@ -26,7 +28,9 @@
  */
 
 #include <sys/cdefs.h>
+#ifdef __FreeBSD__
 __FBSDID("$FreeBSD$");
+#endif
 
 #include "opt_wlan.h"
 
@@ -41,16 +45,25 @@ __FBSDID("$FreeBSD$");
 #include <sys/socket.h>
  
 #include <net/if.h>
+#ifdef __FreeBSD__
 #include <net/if_var.h>
+#endif
 #include <net/if_llc.h>
 #include <net/if_media.h>
 #include <net/bpf.h>
+#ifdef __FreeBSD__
 #include <net/ethernet.h>
+#endif
 
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_input.h>
 #include <net80211/ieee80211_phy.h>
 #include <net80211/ieee80211_superg.h>
+
+#ifdef __NetBSD__
+#undef  KASSERT
+#define KASSERT(__cond, __complaint) FBSDKASSERT(__cond, __complaint)
+#endif
 
 /*
  * Atheros fast-frame encapsulation format.

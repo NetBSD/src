@@ -1,3 +1,5 @@
+/*	$NetBSD: ieee80211_ht.c,v 1.1.56.3 2018/07/12 16:35:34 phil Exp $ */
+
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
  *
@@ -26,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-#ifdef __FreeBSD__
+#if __FreeBSD__
 __FBSDID("$FreeBSD$");
 #endif
 
@@ -46,13 +48,26 @@ __FBSDID("$FreeBSD$");
 #include <sys/socket.h>
 
 #include <net/if.h>
+#if __FreeBSD__
 #include <net/if_var.h>
+#endif
 #include <net/if_media.h>
+#if __FreeBSD__
 #include <net/ethernet.h>
+#endif
+#ifdef __NetBSD__
+#include <net/route.h>
+#include <net/if_ether.h>
+#endif
 
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_action.h>
 #include <net80211/ieee80211_input.h>
+
+#ifdef __NetBSD__
+#undef  KASSERT
+#define KASSERT(__cond, __complaint) FBSDKASSERT(__cond, __complaint)
+#endif
 
 /* define here, used throughout file */
 #define	MS(_v, _f)	(((_v) & _f) >> _f##_S)
@@ -172,7 +187,7 @@ static	ieee80211_send_action_func ht_send_action_ba_addba;
 static	ieee80211_send_action_func ht_send_action_ba_delba;
 static	ieee80211_send_action_func ht_send_action_ht_txchwidth;
 
-static void
+static __unused void
 ieee80211_ht_init(void)
 {
 	/*
@@ -2173,7 +2188,12 @@ ieee80211_addba_response(struct ieee80211_node *ni,
 	struct ieee80211_tx_ampdu *tap,
 	int status, int baparamset, int batimeout)
 {
+#if __FreeBSD__
 	int bufsiz, tid;
+#elif __NetBSD__
+	/* tid set but not used, error? */
+	int bufsiz;
+#endif
 
 	/* XXX locking */
 	addba_stop_timeout(tap);
@@ -2182,8 +2202,10 @@ ieee80211_addba_response(struct ieee80211_node *ni,
 		/* XXX override our request? */
 		tap->txa_wnd = (bufsiz == 0) ?
 		    IEEE80211_AGGR_BAWMAX : min(bufsiz, IEEE80211_AGGR_BAWMAX);
+#if __FreeBSD__
 		/* XXX AC/TID */
 		tid = MS(baparamset, IEEE80211_BAPS_TID);
+#endif
 		tap->txa_flags |= IEEE80211_AGGR_RUNNING;
 		tap->txa_attempts = 0;
 	} else {
@@ -2291,7 +2313,12 @@ ht_recv_action_ba_addba_response(struct ieee80211_node *ni,
 	struct ieee80211_tx_ampdu *tap;
 	uint8_t dialogtoken, policy;
 	uint16_t baparamset, batimeout, code;
+#if __FreeBSD__
 	int tid, bufsiz;
+#elif __NetBSD__
+	/* compiler complains about bufsiz as being unused. NNN */
+	int tid, bufsiz __unused;
+#endif
 
 	dialogtoken = frm[2];
 	code = le16dec(frm+3);
@@ -2363,7 +2390,7 @@ ht_recv_action_ba_delba(struct ieee80211_node *ni,
 	struct ieee80211com *ic = ni->ni_ic;
 	struct ieee80211_rx_ampdu *rap;
 	struct ieee80211_tx_ampdu *tap;
-	uint16_t baparamset, code;
+	uint16_t baparamset, code __unused;
 	int tid;
 
 	baparamset = le16dec(frm+2);

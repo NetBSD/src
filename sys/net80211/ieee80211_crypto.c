@@ -1,3 +1,5 @@
+/*	$NetBSD: ieee80211_crypto.c,v 1.23.2.2 2018/07/12 16:35:34 phil Exp $ */
+
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
  *
@@ -27,7 +29,9 @@
  */
 
 #include <sys/cdefs.h>
+#ifdef __FreeBSD__
 __FBSDID("$FreeBSD$");
+#endif
 
 /*
  * IEEE 802.11 generic crypto support.
@@ -43,9 +47,19 @@ __FBSDID("$FreeBSD$");
 
 #include <net/if.h>
 #include <net/if_media.h>
+#ifdef __FreeBSD__
 #include <net/ethernet.h>		/* XXX ETHER_HDR_LEN */
+#endif
+#ifdef __NetBSD__
+#include <net/route.h>
+#endif
 
 #include <net80211/ieee80211_var.h>
+
+#ifdef __NetBSD__
+#undef  KASSERT
+#define KASSERT(__cond, __complaint) FBSDKASSERT(__cond, __complaint)
+#endif
 
 MALLOC_DEFINE(M_80211_CRYPTO, "80211crypto", "802.11 crypto state");
 
@@ -234,6 +248,7 @@ ieee80211_crypto_available(u_int cipher)
 	return cipher < IEEE80211_CIPHER_MAX && ciphers[cipher] != NULL;
 }
 
+#ifdef __FreeBSD__ 
 /* XXX well-known names! */
 static const char *cipher_modnames[IEEE80211_CIPHER_MAX] = {
 	[IEEE80211_CIPHER_WEP]	   = "wlan_wep",
@@ -244,6 +259,7 @@ static const char *cipher_modnames[IEEE80211_CIPHER_MAX] = {
 	[IEEE80211_CIPHER_CKIP]	   = "wlan_ckip",
 	[IEEE80211_CIPHER_NONE]	   = "wlan_none",
 };
+#endif
 
 /* NB: there must be no overlap between user-supplied and device-owned flags */
 CTASSERT((IEEE80211_KEY_COMMON & IEEE80211_KEY_DEVICE) == 0);
@@ -285,6 +301,7 @@ ieee80211_crypto_newkey(struct ieee80211vap *vap,
 	}
 	cip = ciphers[cipher];
 	if (cip == NULL) {
+#if __FreeBSD__
 		/*
 		 * Auto-load cipher module if we have a well-known name
 		 * for it.  It might be better to use string names rather
@@ -308,6 +325,9 @@ ieee80211_crypto_newkey(struct ieee80211vap *vap,
 			vap->iv_stats.is_crypto_nocipher++;
 			return 0;
 		}
+#else
+		panic("wlan_cipher not usable.");    /* NNN NetBSD modules? */
+#endif
 	}
 
 	oflags = key->wk_flags;

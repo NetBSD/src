@@ -1,3 +1,5 @@
+/*	$NetBSD: ieee80211_tdma.c,v 1.1.2.2 2018/07/12 16:35:34 phil Exp $ */
+
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
  *
@@ -35,7 +37,9 @@ __FBSDID("$FreeBSD$");
  * IEEE 802.11 TDMA mode support.
  */
 #include "opt_inet.h"
+#ifdef notyet
 #include "opt_tdma.h"
+#endif
 #include "opt_wlan.h"
 
 #ifdef	IEEE80211_SUPPORT_TDMA
@@ -56,13 +60,20 @@ __FBSDID("$FreeBSD$");
 #include <net/if.h>
 #include <net/if_media.h>
 #include <net/if_llc.h>
+#ifdef __FreeBSD__
 #include <net/ethernet.h>
+#endif
 
 #include <net/bpf.h>
 
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_tdma.h>
 #include <net80211/ieee80211_input.h>
+
+#ifdef __NetBSD__
+#undef  KASSERT
+#define KASSERT(__cond, __complaint) FBSDKASSERT(__cond, __complaint)
+#endif
 
 #ifndef TDMA_SLOTLEN_DEFAULT
 #define	TDMA_SLOTLEN_DEFAULT	10*1000		/* 10ms */

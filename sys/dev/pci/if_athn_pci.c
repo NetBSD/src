@@ -1,4 +1,4 @@
-/*	$NetBSD: if_athn_pci.c,v 1.12 2015/11/24 18:17:37 jakllsch Exp $	*/
+/*	$NetBSD: if_athn_pci.c,v 1.12.18.1 2018/07/12 16:35:33 phil Exp $	*/
 /*	$OpenBSD: if_athn_pci.c,v 1.11 2011/01/08 10:02:32 damien Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_athn_pci.c,v 1.12 2015/11/24 18:17:37 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_athn_pci.c,v 1.12.18.1 2018/07/12 16:35:33 phil Exp $");
 
 #include "opt_inet.h"
 
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_athn_pci.c,v 1.12 2015/11/24 18:17:37 jakllsch Ex
 #include <net/if.h>
 #include <net/if_ether.h>
 #include <net/if_media.h>
+#include <net/route.h>
 
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_amrr.h>
@@ -213,7 +214,11 @@ athn_pci_attach(device_t parent, device_t self, void *aux)
 		goto fail1;
 	}
 
-	ic->ic_ifp = &sc->sc_if;
+#if notyet
+	/* NNN -- Does ic_vaps have anything yet???? */
+	TAILQ_FIRST(&(sc->sc_ic.ic_vaps))->iv_ifp = &sc->sc_if;
+#endif
+
 	if (athn_attach(sc) != 0)
 		goto fail2;
 
@@ -265,7 +270,7 @@ athn_pci_activate(device_t self, enum devact act)
 
 	switch (act) {
 	case DVACT_DEACTIVATE:
-		if_deactivate(sc->sc_ic.ic_ifp);
+		if_deactivate(TAILQ_FIRST(&(sc->sc_ic.ic_vaps))->iv_ifp);
 		break;
 	}
 	return 0;

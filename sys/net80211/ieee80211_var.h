@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_var.h,v 1.33.2.2 2018/06/28 21:23:01 phil Exp $ */
+/*	$NetBSD: ieee80211_var.h,v 1.33.2.3 2018/07/12 16:35:34 phil Exp $ */
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -146,6 +146,9 @@ struct ieee80211com {
 	enum ieee80211_phytype	ic_phytype;	/* XXX wrong for multi-mode */
 	enum ieee80211_opmode	ic_opmode;	/* operation mode */
 	struct callout		ic_inact;	/* inactivity processing */
+#ifdef __NetBSD__
+	struct ifqueue          ic_mgtq;	/* NNN Needed? */
+#endif
 	struct taskqueue	*ic_tq;		/* deferred state thread */
 	struct task		ic_parent_task;	/* deferred parent processing */
 	struct task		ic_promisc_task;/* deferred promisc update */
@@ -687,7 +690,11 @@ MALLOC_DECLARE(M_80211_VAP);
 #define	IEEE80211_VFHT_BITS \
 	"\20\1VHT\2VHT40\3VHT80\4VHT80P80\5VHT160"
 
+#ifdef __FreeBSD__
 int	ic_printf(struct ieee80211com *, const char *, ...) __printflike(2, 3);
+#elif __NetBSD__
+void	ic_printf(struct ieee80211com *, const char *, ...) __printflike(2, 3);
+#endif
 void	ieee80211_ifattach(struct ieee80211com *);
 void	ieee80211_ifdetach(struct ieee80211com *);
 int	ieee80211_vap_setup(struct ieee80211com *, struct ieee80211vap *,

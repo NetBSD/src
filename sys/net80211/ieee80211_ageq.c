@@ -1,3 +1,5 @@
+/*	$NetBSD: ieee80211_ageq.c,v 1.1.2.2 2018/07/12 16:35:34 phil Exp $ */
+
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
  *
@@ -26,7 +28,9 @@
  */
 
 #include <sys/cdefs.h>
+#ifdef __FreeBSD__
 __FBSDID("$FreeBSD$");
+#endif
 
 /*
  * IEEE 802.11 age queue support.
@@ -37,15 +41,30 @@ __FBSDID("$FreeBSD$");
 #include <sys/systm.h> 
 #include <sys/kernel.h>
 #include <sys/malloc.h>
+#ifdef __NetBSD__
+#include <sys/mbuf.h>
+#endif
  
 #include <sys/socket.h>
 
 #include <net/if.h>
+#ifdef __FreeBSD__
 #include <net/if_var.h>
+#endif
 #include <net/if_media.h>
+#ifdef __FreeBSD__
 #include <net/ethernet.h>
+#endif
+#ifdef __NetBSD__
+#include <net/route.h>
+#endif
 
 #include <net80211/ieee80211_var.h>
+
+#ifdef __NetBSD__
+#undef  KASSERT
+#define KASSERT(__cond, __complaint) FBSDKASSERT(__cond, __complaint)
+#endif
 
 /*
  * Initialize an ageq.
@@ -77,10 +96,15 @@ ieee80211_ageq_cleanup(struct ieee80211_ageq *aq)
 static void
 ageq_mfree(struct mbuf *m)
 {
+#ifdef __FreeBSD__		
 	if (m->m_flags & M_ENCAP) {
 		struct ieee80211_node *ni = (void *) m->m_pkthdr.rcvif;
 		ieee80211_free_node(ni);
 	}
+#elif __NetBSD__
+	/* NNN how does one free the rcvif??? */
+#endif
+
 	m->m_nextpkt = NULL;
 	m_freem(m);
 }
@@ -203,10 +227,22 @@ ieee80211_ageq_remove(struct ieee80211_ageq *aq,
 	prev = &aq->aq_head;
 	phead = &head;
 	while ((m = *prev) != NULL) {
+#ifdef __FreeBSD__		
 		if (match != NULL && m->m_pkthdr.rcvif != (void *) match) {
 			prev = &m->m_nextpkt;
 			continue;
 		}
+#elif __NetBSD__
+		int s;
+		struct ifnet *ifp = m_get_rcvif(m,&s);
+		if ((void *)match != (void *)ifp) {
+			prev = &m->m_nextpkt;
+			m_put_rcvif(ifp,&s);
+			continue;
+		}
+		m_put_rcvif(ifp,&s);
+			
+#endif
 		/*
 		 * Adjust q length.
 		 */

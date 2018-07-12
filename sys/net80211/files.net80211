@@ -1,17 +1,43 @@
-#	$NetBSD: files.net80211,v 1.3 2013/09/13 20:19:53 joerg Exp $
+#	$NetBSD: files.net80211,v 1.3.30.1 2018/07/12 16:35:34 phil Exp $
 
 file	net80211/ieee80211.c			wlan
+file	net80211/ieee80211_acl.c		wlan
+file	net80211/ieee80211_action.c		wlan
+file	net80211/ieee80211_adhoc.c		wlan
+file	net80211/ieee80211_ageq.c		wlan
+#file	net80211/ieee80211_alq.c		wlan
 file	net80211/ieee80211_amrr.c		wlan
 file	net80211/ieee80211_crypto.c		wlan
 file	net80211/ieee80211_crypto_ccmp.c	wlan
 file	net80211/ieee80211_crypto_none.c	wlan
 file	net80211/ieee80211_crypto_tkip.c	wlan
 file	net80211/ieee80211_crypto_wep.c		wlan
+#file	net80211/ieee80211_ddb.c		wlan
+file	net80211/ieee80211_dfs.c		wlan
+file	net80211/ieee80211_hostap.c		wlan
+file	net80211/ieee80211_ht.c			wlan
+file	net80211/ieee80211_hwmp.c		wlan
 file	net80211/ieee80211_input.c		wlan
 file	net80211/ieee80211_ioctl.c		wlan
+file	net80211/ieee80211_mesh.c		wlan
+file	net80211/ieee80211_monitor.c		wlan
 file	net80211/ieee80211_netbsd.c		wlan
 file	net80211/ieee80211_node.c		wlan
 file	net80211/ieee80211_output.c		wlan
+file	net80211/ieee80211_phy.c		wlan
+file	net80211/ieee80211_power.c		wlan
 file	net80211/ieee80211_proto.c		wlan
+file	net80211/ieee80211_radiotap.c		wlan
+file	net80211/ieee80211_ratectl.c		wlan
+file	net80211/ieee80211_ratectl_none.c	wlan
+file	net80211/ieee80211_regdomain.c		wlan
 file	net80211/ieee80211_rssadapt.c		wlan
+file	net80211/ieee80211_scan.c		wlan
+file	net80211/ieee80211_scan_sta.c		wlan
+file	net80211/ieee80211_scan_sw.c		wlan
+file	net80211/ieee80211_sta.c		wlan
+file	net80211/ieee80211_superg.c		wlan
+file	net80211/ieee80211_tdma.c		wlan
+file	net80211/ieee80211_vht.c		wlan
+file	net80211/ieee80211_wds.c		wlan
 file	net80211/ieee80211_xauth.c		wlan

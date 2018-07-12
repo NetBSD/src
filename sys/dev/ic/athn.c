@@ -1,4 +1,4 @@
-/*	$NetBSD: athn.c,v 1.18 2018/06/26 06:48:00 msaitoh Exp $	*/
+/*	$NetBSD: athn.c,v 1.18.2.1 2018/07/12 16:35:33 phil Exp $	*/
 /*	$OpenBSD: athn.c,v 1.83 2014/07/22 13:12:11 mpi Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: athn.c,v 1.18 2018/06/26 06:48:00 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: athn.c,v 1.18.2.1 2018/07/12 16:35:33 phil Exp $");
 
 #ifndef _MODULE
 #include "athn_usb.h"		/* for NATHN_USB */
@@ -379,6 +379,8 @@ athn_attach(struct athn_softc *sc)
 	/* Override 802.11 state transition machine. */
 	sc->sc_newstate = ic->ic_newstate;
 	ic->ic_newstate = athn_newstate;
+
+	/* XXX we should create at least one vap here??? */
 
 	if (sc->sc_media_change == NULL)
 		sc->sc_media_change = athn_media_change;

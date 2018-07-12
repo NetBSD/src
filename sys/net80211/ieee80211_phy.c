@@ -1,3 +1,5 @@
+/*	$NetBSD: ieee80211_phy.c,v 1.1.2.2 2018/07/12 16:35:34 phil Exp $ */
+
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
  *
@@ -26,7 +28,9 @@
  */
 
 #include <sys/cdefs.h>
+#ifdef __FreeBSD__
 __FBSDID("$FreeBSD$");
+#endif
 
 /*
  * IEEE 802.11 PHY-related support.
@@ -44,13 +48,19 @@ __FBSDID("$FreeBSD$");
 #include <net/if.h>
 #include <net/if_media.h>
 
+#ifdef __FreeBSD__
 #include <net/ethernet.h>
+#endif
 #include <net/route.h>
 
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_phy.h>
 
-#ifdef notyet
+#ifdef __NetBSD__
+#undef  KASSERT
+#define KASSERT(__cond, __complaint) FBSDKASSERT(__cond, __complaint)
+#endif
+
 struct ieee80211_ds_plcp_hdr {
 	uint8_t		i_signal;
 	uint8_t		i_service;
@@ -58,7 +68,6 @@ struct ieee80211_ds_plcp_hdr {
 	uint16_t	i_crc;
 } __packed;
 
-#endif	/* notyet */
 
 /* shorthands to compact tables for readability */
 #define	OFDM	IEEE80211_T_OFDM
@@ -349,7 +358,11 @@ ieee80211_setup_ratetable(struct ieee80211_rate_table *rt)
 }
 
 /* Setup all rate tables */
+#ifdef __NetBSD__
+static __unused void
+#else
 static void
+#endif
 ieee80211_phy_init(void)
 {
 	static struct ieee80211_rate_table * const ratetables[] = {

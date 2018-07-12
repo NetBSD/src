@@ -1,3 +1,5 @@
+/*	$NetBSD: sbuf.h,v 1.1.2.2 2018/07/12 16:35:34 phil Exp $	*/
+
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
  *
@@ -33,7 +35,9 @@
 #ifndef _SYS_SBUF_H_
 #define	_SYS_SBUF_H_
 
+#ifdef __FreeBSD__
 #include <sys/_types.h>
+#endif
 
 struct sbuf;
 typedef int (sbuf_drain_func)(void *, const char *, int);

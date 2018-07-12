@@ -1,3 +1,5 @@
+/*	$NetBSD: ieee80211_mesh.c,v 1.1.2.2 2018/07/12 16:35:34 phil Exp $ */
+
 /*- 
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
  *
@@ -29,7 +31,7 @@
  * SUCH DAMAGE. 
  */ 
 #include <sys/cdefs.h>
-#ifdef __FreeBSD__
+#if __FreeBSD__
 __FBSDID("$FreeBSD$");
 #endif
 
@@ -56,10 +58,18 @@ __FBSDID("$FreeBSD$");
 
 #include <net/bpf.h>
 #include <net/if.h>
+#if __FreeBSD__
 #include <net/if_var.h>
+#endif
 #include <net/if_media.h>
 #include <net/if_llc.h>
+#if __FreeBSD__
 #include <net/ethernet.h>
+#endif
+#ifdef __NetBSD__
+#include <net/if_ether.h>
+#include <net/route.h>
+#endif
 
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_action.h>
@@ -68,6 +78,11 @@ __FBSDID("$FreeBSD$");
 #endif
 #include <net80211/ieee80211_input.h>
 #include <net80211/ieee80211_mesh.h>
+
+#ifdef __NetBSD__
+#undef  KASSERT
+#define KASSERT(__cond, __complaint) FBSDKASSERT(__cond, __complaint)
+#endif
 
 static void	mesh_rt_flush_invalid(struct ieee80211vap *);
 static int	mesh_select_proto_path(struct ieee80211vap *, const char *);
@@ -547,7 +562,7 @@ mesh_gatemode_cb(void *arg)
 	mesh_gatemode_setup(vap);
 }
 
-static void
+static __unused void
 ieee80211_mesh_init(void)
 {
 
@@ -1116,7 +1131,11 @@ ieee80211_mesh_forward_to_gates(struct ieee80211vap *vap,
 		ieee80211_mesh_rt_update(rt_dest, ms->ms_ppath->mpp_inact);
 		MESH_RT_UNLOCK(ms);
 		/* XXX: lock?? */
+#if __FreeBSD__
 		mcopy = m_dup(m, M_NOWAIT);
+#elif __NetBSD__
+		mcopy = m_dup(m, 0, M_COPYALL, M_NOWAIT);
+#endif
 		for (; mcopy != NULL; mcopy = next) {
 			next = mcopy->m_nextpkt;
 			mcopy->m_nextpkt = NULL;
@@ -1172,7 +1191,11 @@ mesh_forward(struct ieee80211vap *vap, struct mbuf *m,
 		vap->iv_stats.is_mesh_fwd_disabled++;
 		return;
 	}
+#if __FreeBSD__
 	mcopy = m_dup(m, M_NOWAIT);
+#elif __NetBSD__
+	mcopy = m_dup(m, 0, M_COPYALL, M_NOWAIT);
+#endif
 	if (mcopy == NULL) {
 		IEEE80211_NOTE_FRAME(vap, IEEE80211_MSG_MESH, wh,
 		    "%s", "frame not fwd'd, cannot dup");
@@ -1225,7 +1248,11 @@ mesh_forward(struct ieee80211vap *vap, struct mbuf *m,
 	M_WME_SETAC(mcopy, WME_AC_BE);
 
 	/* XXX do we know m_nextpkt is NULL? */
+#if __FreeBSD__
 	mcopy->m_pkthdr.rcvif = (void *) ni;
+#elif __NetBSD__
+	m_set_rcvif(mcopy,(void *)ni);
+#endif
 
 	/*
 	 * XXX this bypasses all of the VAP TX handling; it passes frames
@@ -3299,7 +3326,11 @@ mesh_airtime_calc(struct ieee80211_node *ni)
 #define S_FACTOR (2 * M_BITS)
 	struct ieee80211com *ic = ni->ni_ic;
 	struct ifnet *ifp = ni->ni_vap->iv_ifp;
+#if __FreeBSD__
 	const static int nbits = 8192 << M_BITS;
+#elif __NetBSD__
+	static const int nbits = 8192 << M_BITS;
+#endif
 	uint32_t overhead, rate, errrate;
 	uint64_t res;
 
@@ -3309,9 +3340,15 @@ mesh_airtime_calc(struct ieee80211_node *ni)
 	    ifp->if_mtu + IEEE80211_MESH_MAXOVERHEAD, rate, 0) << M_BITS;
 	/* Error rate in percentage */
 	/* XXX assuming small failures are ok */
+#if __FreeBSD__
 	errrate = (((ifp->if_get_counter(ifp, IFCOUNTER_OERRORS) +
 	    ifp->if_get_counter(ifp, IFCOUNTER_IERRORS)) / 100) << M_BITS)
 	    / 100;
+#elif __NetBSD__
+	errrate = (((if_get_counter_default(ifp, IFCOUNTER_OERRORS) +
+	    if_get_counter_default(ifp, IFCOUNTER_IERRORS)) / 100) << M_BITS)
+	    / 100;
+#endif
 	res = (overhead + (nbits / rate)) *
 	    ((1 << S_FACTOR) / ((1 << M_BITS) - errrate));
 
@@ -3410,7 +3447,7 @@ ieee80211_mesh_update_beacon(struct ieee80211vap *vap,
 	}
 }
 
-static int
+static __unused int
 mesh_ioctl_get80211(struct ieee80211vap *vap, struct ieee80211req *ireq)
 {
 	struct ieee80211_mesh_state *ms = vap->iv_mesh;
@@ -3518,7 +3555,7 @@ mesh_ioctl_get80211(struct ieee80211vap *vap, struct ieee80211req *ireq)
 }
 IEEE80211_IOCTL_GET(mesh, mesh_ioctl_get80211);
 
-static int
+static __unused int
 mesh_ioctl_set80211(struct ieee80211vap *vap, struct ieee80211req *ireq)
 {
 	struct ieee80211_mesh_state *ms = vap->iv_mesh;

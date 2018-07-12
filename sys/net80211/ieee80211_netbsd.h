@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_netbsd.h,v 1.21.2.2 2018/06/28 21:23:01 phil Exp $ */
+/*	$NetBSD: ieee80211_netbsd.h,v 1.21.2.3 2018/07/12 16:35:34 phil Exp $ */
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -26,41 +26,169 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD$
+ * $FreeBSD:  ieee80211_freebsd.h$
  */
-#ifndef _NET80211_IEEE80211_FREEBSD_H_
-#define _NET80211_IEEE80211_FREEBSD_H_
+#ifndef _NET80211_IEEE80211_NETBSD_H_
+#define _NET80211_IEEE80211_NETBSD_H_
 
 #ifdef _KERNEL
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/counter.h>
+#include <sys/atomic.h>
+#include <sys/cprng.h>
 #include <sys/lock.h>
+#include <sys/mbuf.h>
+#include <sys/malloc.h>
+#include <sys/mallocvar.h>
 #include <sys/mutex.h>
 #include <sys/rwlock.h>
 #include <sys/sysctl.h>
-#include <sys/taskqueue.h>
+#include <sys/workqueue.h>
+
+// #include <net80211/_ieee80211.h>
+
+#include <net/if.h>
+
+/*
+ * Defines to make the FreeBSD code work on NetBSD
+ */
+
+#define PI_NET IPL_NET
+#define EDOOFUS EINVAL
+#define IFF_PPROMISC IFF_PROMISC
+
+#define __offsetof(type, field)  __builtin_offsetof(type, field)
+#define arc4random  cprng_fast32
+#define atomic_subtract_int(var,val) atomic_add_int(var,-(val))
+#define caddr_t __caddr_t
+#define callout_drain(x)  callout_halt(x, NULL)
+#define m_catpkt(x,y)    m_cat(x,y)
+#define mtx_lock(mtx) 		mutex_enter(mtx)
+#define mtx_unlock(mtx)		mutex_exit(mtx)
+#define mtx_owned(mtx)		mutex_owned(mtx)
+#define mtx_destroy(mtx)	mutex_destroy(mtx)
+#define mtx_sleep(a1, a2, a3, a4, a5) /* NNN not sure what it should be. */
+#define nitems(x)    (sizeof((x)) / sizeof((x)[0]))
+#define ovbcopy(dst,src,size)  memmove(dst,src,size)
+#define ticks   hardclock_ticks
+
+/*
+ * task stuff needs major work NNN! 
+ */
+static __inline int dummy(void);
+static __inline int dummy(void) { return 0; }
+
+struct timeout_task { int needsWork; };
+
+typedef void task_fn_t(void *context, int pending);
+
+struct task {
+	/* some kind of queue entry? */
+	task_fn_t *t_func;
+	void *t_arg;
+	int  t_pri;
+};
+#define TASK_INIT(var, pri, func, arg) do { \
+	(var)->t_func = func; \
+	(var)->t_arg = arg; \
+        (var)->t_pri = pri; \
+} while(0)
+
+#define taskqueue workqueue
+#define taskqueue_enqueue(queue,task) /* workqueue_enqueue(queue, task, NULL) */
+#define taskqueue_drain(queue,task)   /* workqueue_wait(queue, task) */
+#define taskqueue_free(queue)         /* workqueue_destroy(queue)  */
+#define taskqueue_block(queue)        /* */
+#define taskqueue_unblock(queue)      /* */
+#define taskqueue_drain_timeout(queue, x) /* */
+#define taskqueue_enqueue_timeout(queue, x, y) { int __unused zzz = 0; }
+#define taskqueue_cancel_timeout(queue, x, y)  dummy()
+#define TIMEOUT_TASK_INIT(queue, a2, a3, a4, a5) /* */
+
+/*  Other stuff that needs to be fixed NNN */
+#define priv_check(x,y) 1
+
+/* Coult it be this simple? */
+#define if_addr_rlock(ifp) IFNET_LOCK(ifp)
+#define if_addr_runlock(x) IFNET_UNLOCK(ifp)
+
+/* VNET defines to remove them ... NNN may need a lot of work! */
+
+#define CURVNET_SET(x)		/* */
+#define CURVNET_RESTORE() 	/* */
+#define CURVNET_SET_QUIET(x) 	/* */
+
+/* counters */
+typedef uint64_t counter_u64_t;
+#define counter_u64_free(x) /* */
+#define counter_u64_fetch(x) x
+#define counter_u64_alloc(x) 0
+
+typedef enum {
+        IFCOUNTER_IPACKETS = 0,
+        IFCOUNTER_IERRORS,
+        IFCOUNTER_OPACKETS,
+        IFCOUNTER_OERRORS,
+        IFCOUNTER_COLLISIONS,
+        IFCOUNTER_IBYTES,
+        IFCOUNTER_OBYTES,
+        IFCOUNTER_IMCASTS,
+        IFCOUNTER_OMCASTS,
+        IFCOUNTER_IQDROPS,
+        IFCOUNTER_OQDROPS,
+        IFCOUNTER_NOPROTO,
+        IFCOUNTERS /* Array size. */
+} ift_counter;
+void       if_inc_counter(struct ifnet *, ift_counter, int64_t);
+
+#define if_get_counter_default(ipf,cnt)                 \
+	(cnt == IFCOUNTER_OERRORS ? ipf->if_oerrors :   \
+	    (cnt == IFCOUNTER_IERRORS ? ipf->if_ierrors : 0 ))
+
+#define IF_LLADDR(ifp)     IFADDR_FIRST(ifp)
+
+/*
+ *  Sysctl support??? BBB
+ */
+
+#define SYSCTL_INT(a1, a2, a3, a4, a5, a6, a7)  /* notyet */
+#define SYSCTL_PROC(a1, a2, a3, a4, a5, a6, a7, a8, a9)  /* notyet */
+#undef SYSCTL_NODE
+#define SYSCTL_NODE(a1, a2, a3, a4, a5, a6) int a2 __unused
+
+/* another unknown macro ... at least notyet */
+#define SYSINIT(a1, a2, a3, a4, a5)  /* notyet */
+#define TEXT_SET(set, sym)   /* notyet ... linker magic, supported?  */
+
+/*
+ * FreeBSD code uses KASSERT but different from NetBSD so ...
+ */
+#define FBSDKASSERT(_cond, _complaint)        \
+        do {                                  \
+                if (!(_cond))                 \
+                        panic _complaint;     \
+        } while (/*CONSTCOND*/0)
 
 /*
  * Common state locking definitions.
  */
 typedef struct {
 	char		name[16];		/* e.g. "ath0_com_lock" */
-	struct mtx	mtx;
+	kmutex_t	mtx;
 } ieee80211_com_lock_t;
 #define	IEEE80211_LOCK_INIT(_ic, _name) do {				\
 	ieee80211_com_lock_t *cl = &(_ic)->ic_comlock;			\
 	snprintf(cl->name, sizeof(cl->name), "%s_com_lock", _name);	\
-	mtx_init(&cl->mtx, cl->name, NULL, MTX_DEF | MTX_RECURSE);	\
+        mutex_init(&cl->mtx, MUTEX_DEFAULT, IPL_NET);                   \
 } while (0)
 #define	IEEE80211_LOCK_OBJ(_ic)	(&(_ic)->ic_comlock.mtx)
-#define	IEEE80211_LOCK_DESTROY(_ic) mtx_destroy(IEEE80211_LOCK_OBJ(_ic))
-#define	IEEE80211_LOCK(_ic)	   mtx_lock(IEEE80211_LOCK_OBJ(_ic))
-#define	IEEE80211_UNLOCK(_ic)	   mtx_unlock(IEEE80211_LOCK_OBJ(_ic))
-#define	IEEE80211_LOCK_ASSERT(_ic) \
-	mtx_assert(IEEE80211_LOCK_OBJ(_ic), MA_OWNED)
-#define	IEEE80211_UNLOCK_ASSERT(_ic) \
-	mtx_assert(IEEE80211_LOCK_OBJ(_ic), MA_NOTOWNED)
+#define	IEEE80211_LOCK_DESTROY(_ic) mutex_destroy(IEEE80211_LOCK_OBJ(_ic))
+#define	IEEE80211_LOCK(_ic)	   mutex_enter(IEEE80211_LOCK_OBJ(_ic))
+#define	IEEE80211_UNLOCK(_ic)	   mutex_exit(IEEE80211_LOCK_OBJ(_ic))
+#define	IEEE80211_LOCK_ASSERT(_ic)    \
+        FBSDKASSERT(mutex_owned(IEEE80211_LOCK_OBJ(_ic)), ("Lock is not owned"))
+#define	IEEE80211_UNLOCK_ASSERT(_ic)  \
+	FBSDKASSERT(!mutex_owned(IEEE80211_LOCK_OBJ(_ic)), ("Lock is owned"))
 
 /*
  * Transmit lock.
@@ -70,74 +198,74 @@ typedef struct {
  */
 typedef struct {
 	char		name[16];		/* e.g. "ath0_tx_lock" */
-	struct mtx	mtx;
+	kmutex_t	mtx;
 } ieee80211_tx_lock_t;
 #define	IEEE80211_TX_LOCK_INIT(_ic, _name) do {				\
 	ieee80211_tx_lock_t *cl = &(_ic)->ic_txlock;			\
 	snprintf(cl->name, sizeof(cl->name), "%s_tx_lock", _name);	\
-	mtx_init(&cl->mtx, cl->name, NULL, MTX_DEF);	\
+	mutex_init(&cl->mtx, MUTEX_DEFAULT, IPL_NET);			\
 } while (0)
 #define	IEEE80211_TX_LOCK_OBJ(_ic)	(&(_ic)->ic_txlock.mtx)
-#define	IEEE80211_TX_LOCK_DESTROY(_ic) mtx_destroy(IEEE80211_TX_LOCK_OBJ(_ic))
-#define	IEEE80211_TX_LOCK(_ic)	   mtx_lock(IEEE80211_TX_LOCK_OBJ(_ic))
-#define	IEEE80211_TX_UNLOCK(_ic)	   mtx_unlock(IEEE80211_TX_LOCK_OBJ(_ic))
+#define	IEEE80211_TX_LOCK_DESTROY(_ic) mutex_destroy(IEEE80211_TX_LOCK_OBJ(_ic))
+#define	IEEE80211_TX_LOCK(_ic)	   mutex_enter(IEEE80211_TX_LOCK_OBJ(_ic))
+#define	IEEE80211_TX_UNLOCK(_ic)	   mutex_exit(IEEE80211_TX_LOCK_OBJ(_ic))
 #define	IEEE80211_TX_LOCK_ASSERT(_ic) \
-	mtx_assert(IEEE80211_TX_LOCK_OBJ(_ic), MA_OWNED)
+	FBSDKASSERT(mutex_owned(IEEE80211_TX_LOCK_OBJ(_ic)), ("lock not owned"))
 #define	IEEE80211_TX_UNLOCK_ASSERT(_ic) \
-	mtx_assert(IEEE80211_TX_LOCK_OBJ(_ic), MA_NOTOWNED)
+	FBSDKASSERT(!mutex_owned(IEEE80211_TX_LOCK_OBJ(_ic)), ("lock is owned"))
 
 /*
  * Stageq / ni_tx_superg lock
  */
 typedef struct {
 	char		name[16];		/* e.g. "ath0_ff_lock" */
-	struct mtx	mtx;
+	kmutex_t	mtx;
 } ieee80211_ff_lock_t;
 #define IEEE80211_FF_LOCK_INIT(_ic, _name) do {				\
 	ieee80211_ff_lock_t *fl = &(_ic)->ic_fflock;			\
 	snprintf(fl->name, sizeof(fl->name), "%s_ff_lock", _name);	\
-	mtx_init(&fl->mtx, fl->name, NULL, MTX_DEF);			\
+	mutex_init(&fl->mtx, MUTEX_DEFAULT, IPL_NET);                   \
 } while (0)
 #define IEEE80211_FF_LOCK_OBJ(_ic)	(&(_ic)->ic_fflock.mtx)
-#define IEEE80211_FF_LOCK_DESTROY(_ic)	mtx_destroy(IEEE80211_FF_LOCK_OBJ(_ic))
-#define IEEE80211_FF_LOCK(_ic)		mtx_lock(IEEE80211_FF_LOCK_OBJ(_ic))
-#define IEEE80211_FF_UNLOCK(_ic)	mtx_unlock(IEEE80211_FF_LOCK_OBJ(_ic))
+#define IEEE80211_FF_LOCK_DESTROY(_ic)	mutex_destroy(IEEE80211_FF_LOCK_OBJ(_ic))
+#define IEEE80211_FF_LOCK(_ic)		mutex_enter(IEEE80211_FF_LOCK_OBJ(_ic))
+#define IEEE80211_FF_UNLOCK(_ic)	mutex_exit(IEEE80211_FF_LOCK_OBJ(_ic))
 #define IEEE80211_FF_LOCK_ASSERT(_ic) \
-	mtx_assert(IEEE80211_FF_LOCK_OBJ(_ic), MA_OWNED)
+	FBSDKASSERT(mutex_owned(IEEE80211_FF_LOCK_OBJ(_ic)), ("lock not owned"))
 
 /*
  * Node locking definitions.
  */
 typedef struct {
 	char		name[16];		/* e.g. "ath0_node_lock" */
-	struct mtx	mtx;
+	kmutex_t	mtx;
 } ieee80211_node_lock_t;
 #define	IEEE80211_NODE_LOCK_INIT(_nt, _name) do {			\
 	ieee80211_node_lock_t *nl = &(_nt)->nt_nodelock;		\
 	snprintf(nl->name, sizeof(nl->name), "%s_node_lock", _name);	\
-	mtx_init(&nl->mtx, nl->name, NULL, MTX_DEF | MTX_RECURSE);	\
+	mutex_init(&nl->mtx, MUTEX_DEFAULT, IPL_NET);                   \
 } while (0)
 #define	IEEE80211_NODE_LOCK_OBJ(_nt)	(&(_nt)->nt_nodelock.mtx)
 #define	IEEE80211_NODE_LOCK_DESTROY(_nt) \
-	mtx_destroy(IEEE80211_NODE_LOCK_OBJ(_nt))
+	mutex_destroy(IEEE80211_NODE_LOCK_OBJ(_nt))
 #define	IEEE80211_NODE_LOCK(_nt) \
-	mtx_lock(IEEE80211_NODE_LOCK_OBJ(_nt))
+	mutex_enter(IEEE80211_NODE_LOCK_OBJ(_nt))
 #define	IEEE80211_NODE_IS_LOCKED(_nt) \
 	mtx_owned(IEEE80211_NODE_LOCK_OBJ(_nt))
 #define	IEEE80211_NODE_UNLOCK(_nt) \
-	mtx_unlock(IEEE80211_NODE_LOCK_OBJ(_nt))
+	mutex_exit(IEEE80211_NODE_LOCK_OBJ(_nt))
 #define	IEEE80211_NODE_LOCK_ASSERT(_nt)	\
-	mtx_assert(IEEE80211_NODE_LOCK_OBJ(_nt), MA_OWNED)
+	FBSDKASSERT(mutex_owned(IEEE80211_NODE_LOCK_OBJ(_nt)), ("lock not owned"))
 
 /*
  * Power-save queue definitions. 
  */
-typedef struct mtx ieee80211_psq_lock_t;
+typedef kmutex_t ieee80211_psq_lock_t;
 #define	IEEE80211_PSQ_INIT(_psq, _name) \
-	mtx_init(&(_psq)->psq_lock, _name, "802.11 ps q", MTX_DEF)
-#define	IEEE80211_PSQ_DESTROY(_psq)	mtx_destroy(&(_psq)->psq_lock)
-#define	IEEE80211_PSQ_LOCK(_psq)	mtx_lock(&(_psq)->psq_lock)
-#define	IEEE80211_PSQ_UNLOCK(_psq)	mtx_unlock(&(_psq)->psq_lock)
+	mutex_init(&(_psq)->psq_lock, MUTEX_DEFAULT, IPL_NET)
+#define	IEEE80211_PSQ_DESTROY(_psq)	mutex_destroy(&(_psq)->psq_lock)
+#define	IEEE80211_PSQ_LOCK(_psq)	mutex_enter(&(_psq)->psq_lock)
+#define	IEEE80211_PSQ_UNLOCK(_psq)	mutex_exit(&(_psq)->psq_lock)
 
 #ifndef IF_PREPEND_LIST
 #define _IF_PREPEND_LIST(ifq, mhead, mtail, mcount) do {	\
@@ -157,62 +285,64 @@ typedef struct mtx ieee80211_psq_lock_t;
 /*
  * Age queue definitions.
  */
-typedef struct mtx ieee80211_ageq_lock_t;
+typedef kmutex_t ieee80211_ageq_lock_t;
 #define	IEEE80211_AGEQ_INIT(_aq, _name) \
-	mtx_init(&(_aq)->aq_lock, _name, "802.11 age q", MTX_DEF)
-#define	IEEE80211_AGEQ_DESTROY(_aq)	mtx_destroy(&(_aq)->aq_lock)
-#define	IEEE80211_AGEQ_LOCK(_aq)	mtx_lock(&(_aq)->aq_lock)
-#define	IEEE80211_AGEQ_UNLOCK(_aq)	mtx_unlock(&(_aq)->aq_lock)
+	mutex_init(&(_aq)->aq_lock, MUTEX_DEFAULT, IPL_NET)
+#define	IEEE80211_AGEQ_DESTROY(_aq)	mutex_destroy(&(_aq)->aq_lock)
+#define	IEEE80211_AGEQ_LOCK(_aq)	mutex_enter(&(_aq)->aq_lock)
+#define	IEEE80211_AGEQ_UNLOCK(_aq)	mutex_exit(&(_aq)->aq_lock)
 
 /*
  * 802.1x MAC ACL database locking definitions.
  */
-typedef struct mtx acl_lock_t;
+typedef kmutex_t acl_lock_t;
 #define	ACL_LOCK_INIT(_as, _name) \
-	mtx_init(&(_as)->as_lock, _name, "802.11 ACL", MTX_DEF)
-#define	ACL_LOCK_DESTROY(_as)		mtx_destroy(&(_as)->as_lock)
-#define	ACL_LOCK(_as)			mtx_lock(&(_as)->as_lock)
-#define	ACL_UNLOCK(_as)			mtx_unlock(&(_as)->as_lock)
+	mutex_init(&(_as)->as_lock, MUTEX_DEFAULT, IPL_NET)
+#define	ACL_LOCK_DESTROY(_as)		mutex_destroy(&(_as)->as_lock)
+#define	ACL_LOCK(_as)			mutex_enter(&(_as)->as_lock)
+#define	ACL_UNLOCK(_as)			mutex_exit(&(_as)->as_lock)
 #define	ACL_LOCK_ASSERT(_as) \
-	mtx_assert((&(_as)->as_lock), MA_OWNED)
+	FBSDKASSERT(mutex_owned((&(_as)->as_lock)), ("lock not owned"))
 
 /*
  * Scan table definitions.
  */
-typedef struct mtx ieee80211_scan_table_lock_t;
+typedef kmutex_t ieee80211_scan_table_lock_t;
 #define	IEEE80211_SCAN_TABLE_LOCK_INIT(_st, _name) \
-	mtx_init(&(_st)->st_lock, _name, "802.11 scan table", MTX_DEF)
-#define	IEEE80211_SCAN_TABLE_LOCK_DESTROY(_st)	mtx_destroy(&(_st)->st_lock)
-#define	IEEE80211_SCAN_TABLE_LOCK(_st)		mtx_lock(&(_st)->st_lock)
-#define	IEEE80211_SCAN_TABLE_UNLOCK(_st)	mtx_unlock(&(_st)->st_lock)
+	mutex_init(&(_st)->st_lock, MUTEX_DEFAULT, IPL_NET)
+#define	IEEE80211_SCAN_TABLE_LOCK_DESTROY(_st)	mutex_destroy(&(_st)->st_lock)
+#define	IEEE80211_SCAN_TABLE_LOCK(_st)		mutex_enter(&(_st)->st_lock)
+#define	IEEE80211_SCAN_TABLE_UNLOCK(_st)	mutex_exit(&(_st)->st_lock)
 
-typedef struct mtx ieee80211_scan_iter_lock_t;
+typedef kmutex_t ieee80211_scan_iter_lock_t;
 #define	IEEE80211_SCAN_ITER_LOCK_INIT(_st, _name) \
-	mtx_init(&(_st)->st_scanlock, _name, "802.11 scangen", MTX_DEF)
-#define	IEEE80211_SCAN_ITER_LOCK_DESTROY(_st)	mtx_destroy(&(_st)->st_scanlock)
-#define	IEEE80211_SCAN_ITER_LOCK(_st)		mtx_lock(&(_st)->st_scanlock)
-#define	IEEE80211_SCAN_ITER_UNLOCK(_st)	mtx_unlock(&(_st)->st_scanlock)
+	mutex_init(&(_st)->st_scanlock, MUTEX_DEFAULT, IPL_NET)
+#define	IEEE80211_SCAN_ITER_LOCK_DESTROY(_st)	mutex_destroy(&(_st)->st_scanlock)
+#define	IEEE80211_SCAN_ITER_LOCK(_st)		mutex_enter(&(_st)->st_scanlock)
+#define	IEEE80211_SCAN_ITER_UNLOCK(_st)	mutex_exit(&(_st)->st_scanlock)
 
 /*
  * Mesh node/routing definitions.
  */
-typedef struct mtx ieee80211_rte_lock_t;
+typedef kmutex_t ieee80211_rte_lock_t;
 #define	MESH_RT_ENTRY_LOCK_INIT(_rt, _name) \
-	mtx_init(&(rt)->rt_lock, _name, "802.11s route entry", MTX_DEF)
+	mutex_init(&(rt)->rt_lock, MUTEX_DEFAULT, IPL_NET)
 #define	MESH_RT_ENTRY_LOCK_DESTROY(_rt) \
-	mtx_destroy(&(_rt)->rt_lock)
-#define	MESH_RT_ENTRY_LOCK(rt)	mtx_lock(&(rt)->rt_lock)
-#define	MESH_RT_ENTRY_LOCK_ASSERT(rt) mtx_assert(&(rt)->rt_lock, MA_OWNED)
-#define	MESH_RT_ENTRY_UNLOCK(rt)	mtx_unlock(&(rt)->rt_lock)
+	mutex_destroy(&(_rt)->rt_lock)
+#define	MESH_RT_ENTRY_LOCK(rt)	mutex_enter(&(rt)->rt_lock)
+#define	MESH_RT_ENTRY_LOCK_ASSERT(rt)   \
+	FBSDKASSERT(mutex_owned(&(rt)->rt_lock), ("mutex not owned"))
+#define	MESH_RT_ENTRY_UNLOCK(rt)	mutex_exit(&(rt)->rt_lock)
 
-typedef struct mtx ieee80211_rt_lock_t;
-#define	MESH_RT_LOCK(ms)	mtx_lock(&(ms)->ms_rt_lock)
-#define	MESH_RT_LOCK_ASSERT(ms)	mtx_assert(&(ms)->ms_rt_lock, MA_OWNED)
-#define	MESH_RT_UNLOCK(ms)	mtx_unlock(&(ms)->ms_rt_lock)
+typedef kmutex_t ieee80211_rt_lock_t;
+#define	MESH_RT_LOCK(ms)	mutex_enter(&(ms)->ms_rt_lock)
+#define	MESH_RT_LOCK_ASSERT(ms)	\
+	FBSDKASSERT(mutex_owned(&(ms)->ms_rt_lock), ("lock not owned"))
+#define	MESH_RT_UNLOCK(ms)	mutex_exit(&(ms)->ms_rt_lock)
 #define	MESH_RT_LOCK_INIT(ms, name) \
-	mtx_init(&(ms)->ms_rt_lock, name, "802.11s routing table", MTX_DEF)
+	mutex_init(&(ms)->ms_rt_lock, MUTEX_DEFAULT, IPL_NET)
 #define	MESH_RT_LOCK_DESTROY(ms) \
-	mtx_destroy(&(ms)->ms_rt_lock)
+	mutex_destroy(&(ms)->ms_rt_lock)
 
 /*
  * Node reference counting definitions.
@@ -224,7 +354,6 @@ typedef struct mtx ieee80211_rt_lock_t;
  *				is the last reference, otherwise 0
  * ieee80211_node_refcnt	reference count for printing (only)
  */
-#include <machine/atomic.h>
 
 #define ieee80211_node_initref(_ni) \
 	do { ((_ni)->ni_refcnt = 1); } while (0)
@@ -245,7 +374,7 @@ void	ieee80211_vap_destroy(struct ieee80211vap *);
 
 #define	IFNET_IS_UP_RUNNING(_ifp) \
 	(((_ifp)->if_flags & IFF_UP) && \
-	 ((_ifp)->if_drv_flags & IFF_DRV_RUNNING))
+	 ((_ifp)->if_flags & IFF_RUNNING))
 
 /* XXX TODO: cap these at 1, as hz may not be 1000 */
 #define	msecs_to_ticks(ms)	(((ms)*hz)/1000)
@@ -260,26 +389,26 @@ void	ieee80211_vap_destroy(struct ieee80211vap *);
 struct mbuf *ieee80211_getmgtframe(uint8_t **frm, int headroom, int pktlen);
 
 /* tx path usage */
-#define	M_ENCAP		M_PROTO1		/* 802.11 encap done */
-#define	M_EAPOL		M_PROTO3		/* PAE/EAPOL frame */
-#define	M_PWR_SAV	M_PROTO4		/* bypass PS handling */
-#define	M_MORE_DATA	M_PROTO5		/* more data frames to follow */
-#define	M_FF		M_PROTO6		/* fast frame / A-MSDU */
-#define	M_TXCB		M_PROTO7		/* do tx complete callback */
-#define	M_AMPDU_MPDU	M_PROTO8		/* ok for A-MPDU aggregation */
-#define	M_FRAG		M_PROTO9		/* frame fragmentation */
-#define	M_FIRSTFRAG	M_PROTO10		/* first frame fragment */
-#define	M_LASTFRAG	M_PROTO11		/* last frame fragment */
+#define	M_ENCAP		M_LINK0		/* 802.11 encap done */
+#define	M_EAPOL		M_LINK3		/* PAE/EAPOL frame */
+#define	M_PWR_SAV	M_LINK4		/* bypass PS handling */
+#define	M_MORE_DATA	M_LINK5		/* more data frames to follow */
+#define	M_FF		M_LINK6		/* fast frame / A-MSDU */
+#define	M_TXCB		M_LINK7		/* do tx complete callback */
+#define	M_AMPDU_MPDU	M_LINK8		/* ok for A-MPDU aggregation */
+#define	M_FRAG		M_LINK9		/* frame fragmentation */
+#define	M_FIRSTFRAG	M_LINK10	/* first frame fragment */
+#define	M_LASTFRAG	M_LINK11	/* last frame fragment */
 
 #define	M_80211_TX \
 	(M_ENCAP|M_EAPOL|M_PWR_SAV|M_MORE_DATA|M_FF|M_TXCB| \
 	 M_AMPDU_MPDU|M_FRAG|M_FIRSTFRAG|M_LASTFRAG)
 
 /* rx path usage */
-#define	M_AMPDU		M_PROTO1		/* A-MPDU subframe */
-#define	M_WEP		M_PROTO2		/* WEP done by hardware */
+#define	M_AMPDU		M_LINK1		/* A-MPDU subframe */
+#define	M_WEP		M_LINK2		/* WEP done by hardware */
 #if 0
-#define	M_AMPDU_MPDU	M_PROTO8		/* A-MPDU re-order done */
+#define	M_AMPDU_MPDU	M_LINK8		/* A-MPDU re-order done */
 #endif
 #define	M_80211_RX	(M_AMPDU|M_WEP|M_AMPDU_MPDU)
 
@@ -313,11 +442,11 @@ struct mbuf *ieee80211_getmgtframe(uint8_t **frm, int headroom, int pktlen);
 #define	M_AGE_SUB(m,adj)	(m->m_pkthdr.csum_data -= adj)
 
 /*
- * Store the sequence number.
+ * Store the sequence number.  XXX?  correct to use segsz?
  */
 #define	M_SEQNO_SET(m, seqno) \
-	((m)->m_pkthdr.tso_segsz = (seqno))
-#define	M_SEQNO_GET(m)	((m)->m_pkthdr.tso_segsz)
+	((m)->m_pkthdr.segsz = (seqno))
+#define	M_SEQNO_GET(m)	((m)->m_pkthdr.segsz)
 
 #define	MTAG_ABI_NET80211	1132948340	/* net80211 ABI */
 
@@ -348,10 +477,14 @@ void	ieee80211_sysctl_detach(struct ieee80211com *);
 void	ieee80211_sysctl_vattach(struct ieee80211vap *);
 void	ieee80211_sysctl_vdetach(struct ieee80211vap *);
 
+#if notyet
 SYSCTL_DECL(_net_wlan);
 int	ieee80211_sysctl_msecs_ticks(SYSCTL_HANDLER_ARGS);
+#endif 
 
 void	ieee80211_load_module(const char *);
+
+#ifdef notyet
 
 /*
  * A "policy module" is an adjunct module to net80211 that provides
@@ -479,16 +612,37 @@ alg##_modevent(int type)						\
 }									\
 TEXT_SET(ratectl##_set, alg##_modevent)
 
+#else
+/* NNN This looks like module load/unload support ... notyet supported  */
+#define _IEEE80211_POLICY_MODULE(policy, name, version)	/* unsupported */
+#define IEEE80211_CRYPTO_MODULE(name, version) 		/* unsupported */
+#define IEEE80211_SCANNER_MODULE(name, version) 	/* unsupported */
+#define IEEE80211_SCANNER_ALG(name, alg, v) 		/* unsupported */
+#define IEEE80211_ACL_MODULE(name, alg, version) 	const void *const temp = &alg
+#define IEEE80211_AUTH_MODULE(name, version)          	/* unsupported */
+#define IEEE80211_AUTH_ALG(name, alg, v) 		/* unsupported */
+#define IEEE80211_RATECTL_MODULE(alg, version)          /* unsupported */
+#define IEEE80211_RATECTL_ALG(name, alg, v)  		/* unsupported */
+#endif
+
+/*
+ * IOCTL support
+ */
+
 struct ieee80211req;
-typedef int ieee80211_ioctl_getfunc(struct ieee80211vap *,
-    struct ieee80211req *);
+
+typedef int ieee80211_ioctl_getfunc(struct ieee80211vap *,  struct ieee80211req *);
+#if notyet
 SET_DECLARE(ieee80211_ioctl_getset, ieee80211_ioctl_getfunc);
+#endif 
 #define	IEEE80211_IOCTL_GET(_name, _get) TEXT_SET(ieee80211_ioctl_getset, _get)
 
-typedef int ieee80211_ioctl_setfunc(struct ieee80211vap *,
-    struct ieee80211req *);
+typedef int ieee80211_ioctl_setfunc(struct ieee80211vap *,  struct ieee80211req *);
+#if notyet
 SET_DECLARE(ieee80211_ioctl_setset, ieee80211_ioctl_setfunc);
+#endif
 #define	IEEE80211_IOCTL_SET(_name, _set) TEXT_SET(ieee80211_ioctl_setset, _set)
+
 #endif /* _KERNEL */
 
 /* XXX this stuff belongs elsewhere */
@@ -671,4 +825,41 @@ struct ieee80211_channel_survey {
 
 /* XXX TODO: the type fields */
 
-#endif /* _NET80211_IEEE80211_FREEBSD_H_ */
+/*
+ * Functions FreeBSD uses that NetBSD doesn't have ...
+ */
+
+int	if_printf(struct ifnet *ifp, const char *fmt, ...)  __printflike(2, 3);
+void	m_align(struct mbuf *m, int len);
+int	m_append(struct mbuf *m0, int len, const void *cpv);
+struct mbuf * m_unshare(struct mbuf *m0, int how);
+
+static __inline void m_clrprotoflags(struct mbuf *m)
+{
+	m->m_flags &= ~(M_LINK0|M_LINK1|M_LINK2|M_LINK3|M_LINK4|M_LINK5
+	    |M_LINK6|M_LINK7|M_LINK8|M_LINK9|M_LINK10|M_LINK11);
+}
+
+/*-
+ * Macro for type conversion: convert mbuf pointer to data pointer of correct
+ * type:
+ *
+ * mtod(m, t)   -- Convert mbuf pointer to data pointer of correct type.
+ * mtodo(m, o) -- Same as above but with offset 'o' into data.
+ */
+#define mtod(m, t)      ((t)((m)->m_data))
+#define mtodo(m, o)     ((void *)(((m)->m_data) + (o)))
+
+/* Berkeley Packet Filter shim  */
+
+#define BPF_MTAP(_ifp,_m) do {                          \
+	bpf_mtap((_ifp), (_m), BPF_D_INOUT);            \
+} while (0)
+
+/*  Missing define in net/if_ether.h   */
+
+#define ETHER_IS_BROADCAST(addr) \
+        (((addr)[0] & (addr)[1] & (addr)[2] & \
+          (addr)[3] & (addr)[4] & (addr)[5]) == 0xff)
+
+#endif /* _NET80211_IEEE80211_NETBSD_H_ */

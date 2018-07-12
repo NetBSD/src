@@ -1,3 +1,5 @@
+/*	$NetBSD: ieee80211_ratectl.c,v 1.1.2.2 2018/07/12 16:35:34 phil Exp $ */
+
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
  *
@@ -26,7 +28,9 @@
  */
 
 #include <sys/cdefs.h>
+#ifdef __FreeBSD__
 __FBSDID("$FreeBSD$");
+#endif
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -37,7 +41,9 @@ __FBSDID("$FreeBSD$");
 
 #include <net/if.h>
 #include <net/if_media.h>
+#ifdef __FreeBSD__
 #include <net/ethernet.h>
+#endif
 #include <net/route.h>
 
 #include <net80211/ieee80211_var.h>
@@ -45,7 +51,7 @@ __FBSDID("$FreeBSD$");
 
 static const struct ieee80211_ratectl *ratectls[IEEE80211_RATECTL_MAX];
 
-static const char *ratectl_modnames[IEEE80211_RATECTL_MAX] = {
+static const char *ratectl_modnames[IEEE80211_RATECTL_MAX] __unused = {
 	[IEEE80211_RATECTL_AMRR]	= "wlan_amrr",
 	[IEEE80211_RATECTL_RSSADAPT]	= "wlan_rssadapt",
 	[IEEE80211_RATECTL_ONOE]	= "wlan_onoe",
@@ -71,6 +77,7 @@ ieee80211_ratectl_unregister(int type)
 	ratectls[type] = NULL;
 }
 
+#ifdef notyet
 static void
 ieee80211_ratectl_sysctl_stats_node_iter(void *arg, struct ieee80211_node *ni)
 {
@@ -105,6 +112,7 @@ ieee80211_ratectl_sysctl_stats(SYSCTL_HANDLER_ARGS)
 	sbuf_delete(&sb);
 	return (error);
 }
+#endif
 
 void
 ieee80211_ratectl_init(struct ieee80211vap *vap)
@@ -113,10 +121,12 @@ ieee80211_ratectl_init(struct ieee80211vap *vap)
 		ieee80211_ratectl_set(vap, IEEE80211_RATECTL_AMRR);
 	vap->iv_rate->ir_init(vap);
 
+#ifdef notyet
 	/* Attach generic stats sysctl */
 	SYSCTL_ADD_PROC(vap->iv_sysctl, SYSCTL_CHILDREN(vap->iv_oid), OID_AUTO,
 	    "rate_stats", CTLTYPE_STRING | CTLFLAG_RD | CTLFLAG_MPSAFE, vap,
 	    0, ieee80211_ratectl_sysctl_stats, "A", "ratectl node stats");
+#endif
 }
 
 void
@@ -124,6 +134,7 @@ ieee80211_ratectl_set(struct ieee80211vap *vap, int type)
 {
 	if (type >= IEEE80211_RATECTL_MAX)
 		return;
+#ifdef notyet
 	if (ratectls[type] == NULL) {
 		ieee80211_load_module(ratectl_modnames[type]);
 		if (ratectls[type] == NULL) {
@@ -134,5 +145,6 @@ ieee80211_ratectl_set(struct ieee80211vap *vap, int type)
 			return;
 		}
 	}
+#endif
 	vap->iv_rate = ratectls[type];
 }

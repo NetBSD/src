@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_phy.h,v 1.1.2.2 2018/06/28 21:23:01 phil Exp $ */
+/*	$NetBSD: ieee80211_phy.h,v 1.1.2.3 2018/07/12 16:35:34 phil Exp $ */
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -98,10 +98,21 @@ ieee80211_ack_rate(const struct ieee80211_rate_table *rt, uint8_t rate)
 	 * If the caller wishes to use it for a basic rate, they should
 	 * clear the high bit first.
 	 */
+#if __FreeBSD__ 
 	KASSERT(! (rate & 0x80), ("rate %d is basic/mcs?", rate));
-
+#elif __NetBSD__
+	FBSDKASSERT(! (rate & 0x80), ("rate %d is basic/mcs?", rate));
+#else
+#error
+#endif
 	uint8_t cix = rt->info[rt->rateCodeToIndex[rate & IEEE80211_RATE_VAL]].ctlRateIndex;
+#if __FreeBSD__
 	KASSERT(cix != (uint8_t)-1, ("rate %d has no info", rate));
+#elif __NetBSD__
+	FBSDKASSERT(cix != (uint8_t)-1, ("rate %d has no info", rate));
+#else
+#error
+#endif
 	return rt->info[cix].dot11Rate;
 }
 
@@ -113,10 +124,22 @@ ieee80211_ctl_rate(const struct ieee80211_rate_table *rt, uint8_t rate)
 	 * If the caller wishes to use it for a basic rate, they should
 	 * clear the high bit first.
 	 */
+#if __FreeBSD__
 	KASSERT(! (rate & 0x80), ("rate %d is basic/mcs?", rate));
+#elif __NetBSD__
+	FBSDKASSERT(! (rate & 0x80), ("rate %d is basic/mcs?", rate));
+#else
+#error
+#endif
 
 	uint8_t cix = rt->info[rt->rateCodeToIndex[rate & IEEE80211_RATE_VAL]].ctlRateIndex;
+#if __FreeBSD__
 	KASSERT(cix != (uint8_t)-1, ("rate %d has no info", rate));
+#elif __NetBSD__
+	FBSDKASSERT(cix != (uint8_t)-1, ("rate %d has no info", rate));
+#else
+#error
+#endif
 	return rt->info[cix].dot11Rate;
 }
 
@@ -128,10 +151,22 @@ ieee80211_rate2phytype(const struct ieee80211_rate_table *rt, uint8_t rate)
 	 * If the caller wishes to use it for a basic rate, they should
 	 * clear the high bit first.
 	 */
+#if __FreeBSD__
 	KASSERT(! (rate & 0x80), ("rate %d is basic/mcs?", rate));
+#elif __NetBSD__
+	FBSDKASSERT(! (rate & 0x80), ("rate %d is basic/mcs?", rate));
+#else
+#error
+#endif
 
 	uint8_t rix = rt->rateCodeToIndex[rate & IEEE80211_RATE_VAL];
+#if __FreeBSD__
 	KASSERT(rix != (uint8_t)-1, ("rate %d has no info", rate));
+#elif __NetBSD__
+	FBSDKASSERT(rix != (uint8_t)-1, ("rate %d has no info", rate));
+#else
+#error
+#endif
 	return rt->info[rix].phy;
 }
 
@@ -143,7 +178,13 @@ ieee80211_isratevalid(const struct ieee80211_rate_table *rt, uint8_t rate)
 	 * If the caller wishes to use it for a basic rate, they should
 	 * clear the high bit first.
 	 */
+#if __FreeBSD__
 	KASSERT(! (rate & 0x80), ("rate %d is basic/mcs?", rate));
+#elif __NetBSD__
+	FBSDKASSERT(! (rate & 0x80), ("rate %d is basic/mcs?", rate));
+#else
+#error
+#endif
 
 	return rt->rateCodeToIndex[rate] != (uint8_t)-1;
 }
@@ -160,14 +201,34 @@ ieee80211_ack_duration(const struct ieee80211_rate_table *rt,
 {
 	uint8_t rix = rt->rateCodeToIndex[rate];
 
+#if __FreeBSD__
 	KASSERT(rix != (uint8_t)-1, ("rate %d has no info", rate));
+#elif __NetBSD__
+	FBSDKASSERT(rix != (uint8_t)-1, ("rate %d has no info", rate));
+#else
+#error
+#endif
 	if (isShortPreamble) {
+#if __FreeBSD__
 		KASSERT(rt->info[rix].spAckDuration != 0,
 			("shpreamble ack dur is not computed!\n"));
+#elif __NetBSD__
+		FBSDKASSERT(rt->info[rix].spAckDuration != 0,
+			("shpreamble ack dur is not computed!\n"));
+#else
+#error
+#endif
 		return rt->info[rix].spAckDuration;
 	} else {
+#if __FreeBSD__
 		KASSERT(rt->info[rix].lpAckDuration != 0,
 			("lgpreamble ack dur is not computed!\n"));
+#elif __NetBSD__
+		FBSDKASSERT(rt->info[rix].lpAckDuration != 0,
+			("lgpreamble ack dur is not computed!\n"));
+#else
+#error
+#endif
 		return rt->info[rix].lpAckDuration;
 	}
 }

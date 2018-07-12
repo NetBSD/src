@@ -1,4 +1,4 @@
-/*	$NetBSD: arn9380.c,v 1.3 2014/01/22 17:29:29 matt Exp $	*/
+/*	$NetBSD: arn9380.c,v 1.3.32.1 2018/07/12 16:35:33 phil Exp $	*/
 /*	$OpenBSD: ar9380.c,v 1.17 2012/10/20 09:54:20 stsp Exp $	*/
 
 /*-
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arn9380.c,v 1.3 2014/01/22 17:29:29 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arn9380.c,v 1.3.32.1 2018/07/12 16:35:33 phil Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -142,7 +142,7 @@ ar9380_setup(struct athn_softc *sc)
 	if (base->opFlags & AR_OPFLAGS_11N)
 		sc->sc_flags |= ATHN_FLAG_11N;
 
-	IEEE80211_ADDR_COPY(ic->ic_myaddr, eep->macAddr);
+	IEEE80211_ADDR_COPY(TAILQ_FIRST(&ic->ic_vaps)->iv_myaddr, eep->macAddr);
 	sc->sc_led_pin = base->wlanLedGpio;
 
 	/* Check if we have a hardware radio switch. */
