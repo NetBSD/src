@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.7.8.2 2018/06/23 11:09:24 martin Exp $	*/
+/*	$NetBSD: util.c,v 1.7.8.3 2018/07/12 15:18:45 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1010,16 +1010,15 @@ get_and_unpack_sets(int update, msg setupdone_msg, msg success_msg, msg failure_
 
 	/* Accurately count selected sets */
 	for (dist = dist_list; (set = dist->set) != SET_LAST; dist++) {
+		if (dist->name == NULL)
+			continue;
 		if ((set_status[set] & (SET_VALID | SET_SELECTED))
 		    == (SET_VALID | SET_SELECTED))
 			tarstats.nselected++;
 	}
 
 	status = SET_RETRY;
-	for (dist = dist_list; ; dist++) {
-		set = dist->set;
-		if (set == SET_LAST)
-			break;
+	for (dist = dist_list; (set = dist->set) != SET_LAST; dist++) {
 		if (dist->name == NULL)
 			continue;
 		if (set_status[set] != (SET_VALID | SET_SELECTED))
