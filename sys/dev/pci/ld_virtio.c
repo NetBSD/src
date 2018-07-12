@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_virtio.c,v 1.24 2018/07/12 12:48:50 jakllsch Exp $	*/
+/*	$NetBSD: ld_virtio.c,v 1.25 2018/07/12 13:05:39 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.24 2018/07/12 12:48:50 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.25 2018/07/12 13:05:39 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -38,7 +38,6 @@ __KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.24 2018/07/12 12:48:50 jakllsch Exp 
 #include <sys/disk.h>
 #include <sys/mutex.h>
 #include <sys/module.h>
-#include <sys/sysctl.h>
 
 #include <dev/ldvar.h>
 #include <dev/pci/virtioreg.h>
@@ -144,25 +143,6 @@ struct ld_virtio_softc {
 	kmutex_t		sc_sync_wait_lock;
 	uint8_t			sc_sync_status;
 };
-
-int ld_virtio_notify_threshold = 0;
-
-static void
-setup_sysctl(void)
-{
-	static bool done;
-
-	if (done)
-		return;
-
-	done = true;
-
-	sysctl_createv(NULL, 0, NULL, NULL,
-	    CTLFLAG_READWRITE, CTLTYPE_INT, "ld_virtio_notify_threshold",
-	    SYSCTL_DESCR(""),
-	    NULL, 0, &ld_virtio_notify_threshold, 0,
-	    CTL_HW, CTL_CREATE, CTL_EOL);
-}
 
 static int	ld_virtio_match(device_t, cfdata_t, void *);
 static void	ld_virtio_attach(device_t, device_t, void *);
@@ -296,7 +276,7 @@ ld_virtio_attach(device_t parent, device_t self, void *aux)
 	sc->sc_virtio = vsc;
 
 	virtio_child_attach_start(vsc, self, IPL_BIO, &sc->sc_vq,
-	    NULL, virtio_vq_intr, VIRTIO_F_PCI_INTR_MPSAFE|VIRTIO_F_PCI_INTR_MSIX,
+	    NULL, virtio_vq_intr, 0,
 	    (VIRTIO_BLK_F_SIZE_MAX | VIRTIO_BLK_F_SEG_MAX |
 	     VIRTIO_BLK_F_GEOMETRY | VIRTIO_BLK_F_RO | VIRTIO_BLK_F_BLK_SIZE |
 	     VIRTIO_BLK_F_FLUSH | VIRTIO_BLK_F_CONFIG_WCE),
@@ -389,8 +369,6 @@ ld_virtio_attach(device_t parent, device_t self, void *aux)
 	ld->sc_flags = LDF_ENABLED | LDF_MPSAFE;
 	ldattach(ld, BUFQ_DISK_DEFAULT_STRAT);
 
-	setup_sysctl();
-
 	return;
 
 err:
@@ -463,10 +441,7 @@ ld_virtio_start(struct ld_softc *ld, struct buf *bp)
 			 offsetof(struct virtio_blk_req, vr_status),
 			 sizeof(uint8_t),
 			 false);
-	const bool notify = !dk_strategy_pending(&sc->sc_ld.sc_dksc) ||
-	    sc->sc_ld.sc_queuecnt + 1 >= sc->sc_ld.sc_maxqueuecnt ||
-	    sc->sc_ld.sc_queuecnt + 1 >= (sc->sc_ld.sc_maxqueuecnt * ld_virtio_notify_threshold / 1000);
-	virtio_enqueue_commit(vsc, vq, slot, notify);
+	virtio_enqueue_commit(vsc, vq, slot, true);
 
 	return 0;
 }
