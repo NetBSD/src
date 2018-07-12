@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.84 2018/03/20 10:14:29 ryo Exp $
+# $NetBSD: ad.arm,v 1.85 2018/07/12 06:52:49 maxv Exp $
 ./usr/include/acorn26				comp-obsolete		obsolete
 ./usr/include/acorn26/ansi.h			comp-obsolete		obsolete
 ./usr/include/acorn26/aout_machdep.h		comp-obsolete		obsolete
@@ -678,8 +678,8 @@
 ./usr/lib/libarm_p.a				comp-c-lib		profile,compatfile
 ./usr/lib/libc_vfp.a				comp-c-lib		softfloat
 ./usr/lib/libc_vfp_p.a				comp-c-lib		profile,softfloat
-./usr/lib/libpmc.a				comp-c-lib		compatfile
-./usr/lib/libpmc_p.a				comp-c-proflib		profile,compatfile
+./usr/lib/libpmc.a				comp-obsolete		obsolete
+./usr/lib/libpmc_p.a				comp-obsolete		obsolete
 ./usr/lib/oabi/libc_vfp.a			comp-c-lib		compat
 ./usr/lib/oabi/libc_vfp.so			base-sys-shlib		compat,pic
 ./usr/lib/oabi/libc_vfp_p.a			comp-c-proflib		compat,profile
