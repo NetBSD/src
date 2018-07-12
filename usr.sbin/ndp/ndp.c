@@ -1,4 +1,4 @@
-/*	$NetBSD: ndp.c,v 1.52 2018/07/12 07:32:35 nonaka Exp $	*/
+/*	$NetBSD: ndp.c,v 1.53 2018/07/12 08:16:14 nonaka Exp $	*/
 /*	$KAME: ndp.c,v 1.121 2005/07/13 11:30:13 keiichi Exp $	*/
 
 /*
@@ -478,6 +478,7 @@ delete_one(char *host)
 static int
 delete(struct rt_msghdr *rtm, char *host)
 {
+	char delete_host_buf[NI_MAXHOST];
 	struct sockaddr_in6 *mysin = &sin_m;
 	struct sockaddr_dl *sdl;
 
@@ -496,10 +497,10 @@ delete(struct rt_msghdr *rtm, char *host)
 		mysin->sin6_scope_id = 0;
 		inet6_putscopeid(mysin, INET6_IS_ADDR_LINKLOCAL);
 		(void)getnameinfo((struct sockaddr *)(void *)&s6,
-		    (socklen_t)s6.sin6_len, host_buf,
-		    sizeof(host_buf), NULL, 0,
+		    (socklen_t)s6.sin6_len, delete_host_buf,
+		    sizeof(delete_host_buf), NULL, 0,
 		    (nflag ? NI_NUMERICHOST : 0));
-		(void)printf("%s (%s) deleted\n", host, host_buf);
+		(void)printf("%s (%s) deleted\n", host, delete_host_buf);
 	}
 
 	return 0;
