@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.50 2018/03/20 10:14:29 ryo Exp $
+#	$NetBSD: Makefile,v 1.51 2018/07/12 10:46:42 maxv Exp $
 
 INCSDIR= /usr/include/arm
 
@@ -14,7 +14,7 @@ INCS=	aeabi.h ansi.h aout_machdep.h apmvar.h armreg.h asm.h atomic.h \
 	kcore.h \
 	limits.h lock.h \
 	math.h mcontext.h mutex.h \
-	param.h pcb.h pmc.h proc.h profile.h rwlock.h \
+	param.h pcb.h proc.h profile.h rwlock.h \
 	ptrace.h \
 	reg.h rwlock.h \
 	setjmp.h signal.h sljit_machdep.h swi.h sysarch.h \

@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.291 2018/01/06 16:41:23 kamil Exp $
+	$NetBSD: syscalls.master,v 1.292 2018/07/12 10:46:48 maxv Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -674,8 +674,8 @@
 			    const struct sigaction *nsa, \
 			    struct sigaction *osa, \
 			    const void *tramp, int vers); }
-341	STD		{ int|sys||pmc_get_info(int ctr, int op, void *args); }
-342	STD		{ int|sys||pmc_control(int ctr, int op, void *args); }
+341	OBSOL		sys_pmc_get_info
+342	OBSOL		sys_pmc_control
 343	STD 		{ int|sys||rasctl(void *addr, size_t len, int op); }
 344	STD	RUMP	{ int|sys||kqueue(void); }
 345	COMPAT_50 MODULAR compat RUMP { int|sys||kevent(int fd, \
