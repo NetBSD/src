@@ -1,4 +1,4 @@
-# $NetBSD: ad.powerpc,v 1.90 2018/02/13 10:02:12 mrg Exp $
+# $NetBSD: ad.powerpc,v 1.91 2018/07/12 10:46:40 maxv Exp $
 ./usr/bin/elf2aout				comp-sysutil-bin
 ./usr/bin/psim					comp-debug-bin		gdb
 ./usr/include/altivec.h				comp-obsolete		obsolete
@@ -120,7 +120,7 @@
 ./usr/include/powerpc/param.h			comp-c-include
 ./usr/include/powerpc/pcb.h			comp-c-include
 ./usr/include/powerpc/pmap.h			comp-c-include
-./usr/include/powerpc/pmc.h			comp-c-include
+./usr/include/powerpc/pmc.h			comp-obsolete		obsolete
 ./usr/include/powerpc/proc.h			comp-c-include
 ./usr/include/powerpc/profile.h			comp-c-include
 ./usr/include/powerpc/psl.h			comp-c-include

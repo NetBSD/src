@@ -1,4 +1,4 @@
-# $NetBSD: CUBOX,v 1.7 2018/06/07 13:36:28 thorpej Exp $
+# $NetBSD: CUBOX,v 1.8 2018/07/12 10:46:43 maxv Exp $
 #
 #	CUBOX -- SolidRun Ltd. Cubox kernel
 #
@@ -48,7 +48,6 @@ options 	BUFQ_PRIOCSCAN
 
 # Diagnostic/debugging support options
 #options 	VERBOSE_INIT_ARM # verbose bootstraping messages
-#options 	PERFCTRS	# performance counters
 options 	DIAGNOSTIC	# internally consistency checks
 
 #options 	DEBUG

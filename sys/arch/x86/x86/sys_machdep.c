@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.46 2018/01/04 14:02:23 maxv Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.47 2018/07/12 10:46:48 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2009, 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.46 2018/01/04 14:02:23 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.47 2018/07/12 10:46:48 maxv Exp $");
 
 #include "opt_mtrr.h"
 #include "opt_pmc.h"
@@ -77,10 +77,6 @@ __KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.46 2018/01/04 14:02:23 maxv Exp $"
 #ifdef XEN
 #undef	USER_LDT
 #undef	PMC
-#endif
-
-#ifdef PMC
-#include <machine/pmc.h>
 #endif
 
 extern struct vm_map *kernel_map;

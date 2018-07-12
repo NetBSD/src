@@ -1,5 +1,5 @@
 #
-#	$NetBSD: VTC100,v 1.17 2018/06/07 13:36:28 thorpej Exp $
+#	$NetBSD: VTC100,v 1.18 2018/07/12 10:46:43 maxv Exp $
 #
 #	VTC100 -- NEXCOM VTC100 Kernel
 #
@@ -114,7 +114,6 @@ options 	KTRACE		# system call tracing, a la ktrace(1)
 
 # Development and Debugging options
 
-#options 	PERFCTRS	# performance counters
 options 	DIAGNOSTIC	# internal consistency checks
 options 	DEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code

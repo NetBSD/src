@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ARMADAXP,v 1.23 2018/06/07 13:36:28 thorpej Exp $
+#	$NetBSD: ARMADAXP,v 1.24 2018/07/12 10:46:43 maxv Exp $
 #
 #	ARMADA XP DEV BOARD
 #
@@ -112,7 +112,6 @@ options 	KTRACE		# system call tracing, a la ktrace(1)
 
 # Development and Debugging options
 options 	LOCKDEBUG
-#options 	PERFCTRS		# performance counters
 options 	DIAGNOSTIC		# internal consistency checks
 #options 	DEBUG
 #options 	PMAP_DEBUG		# Enable pmap_debug_level code

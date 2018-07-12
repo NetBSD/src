@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.257 2018/02/13 10:02:12 mrg Exp $
+# $NetBSD: md.amd64,v 1.258 2018/07/12 10:46:40 maxv Exp $
 
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
@@ -48,7 +48,7 @@
 ./usr/include/amd64/pci_machdep.h		comp-c-include
 ./usr/include/amd64/pio.h			comp-c-include
 ./usr/include/amd64/pmap.h			comp-c-include
-./usr/include/amd64/pmc.h			comp-c-include
+./usr/include/amd64/pmc.h			comp-obsolete		obsolete
 ./usr/include/amd64/proc.h			comp-c-include
 ./usr/include/amd64/profile.h			comp-c-include
 ./usr/include/amd64/psl.h			comp-c-include
@@ -570,7 +570,7 @@
 ./usr/include/i386/pcb.h			comp-c-include
 ./usr/include/i386/pio.h			comp-c-include
 ./usr/include/i386/pmap.h			comp-c-include
-./usr/include/i386/pmc.h			comp-c-include
+./usr/include/i386/pmc.h			comp-obsolete		obsolete
 ./usr/include/i386/proc.h			comp-c-include
 ./usr/include/i386/profile.h			comp-c-include
 ./usr/include/i386/psl.h			comp-c-include

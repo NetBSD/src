@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_syscalls.c,v 1.133 2018/05/10 02:36:26 christos Exp $ */
+/* $NetBSD: netbsd32_syscalls.c,v 1.134 2018/07/12 10:46:48 maxv Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_syscalls.c,v 1.133 2018/05/10 02:36:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_syscalls.c,v 1.134 2018/07/12 10:46:48 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #if defined(_KERNEL_OPT)
@@ -374,8 +374,8 @@ const char *const netbsd32_syscallnames[] = {
 	/* 338 */	"#338 (unimplemented)",
 	/* 339 */	"#339 (unimplemented)",
 	/* 340 */	"netbsd32___sigaction_sigtramp",
-	/* 341 */	"#341 (unimplemented { int | netbsd32 | | pmc_get_info ( int ctr , int op , void * args ) ; })",
-	/* 342 */	"#342 (unimplemented { int | netbsd32 | | pmc_control ( int ctr , int op , void * args ) ; })",
+	/* 341 */	"#341 (obsolete netbsd32_pmc_get_info)",
+	/* 342 */	"#342 (obsolete netbsd32_pmc_control)",
 	/* 343 */	"netbsd32_rasctl",
 	/* 344 */	"kqueue",
 	/* 345 */	"compat_50_netbsd32_kevent",
@@ -904,8 +904,8 @@ const char *const altnetbsd32_syscallnames[] = {
 	/* 338 */	NULL, /* unimplemented */
 	/* 339 */	NULL, /* unimplemented */
 	/* 340 */	"__sigaction_sigtramp",
-	/* 341 */	NULL, /* unimplemented { int | netbsd32 | | pmc_get_info ( int ctr , int op , void * args ) ; } */
-	/* 342 */	NULL, /* unimplemented { int | netbsd32 | | pmc_control ( int ctr , int op , void * args ) ; } */
+	/* 341 */	NULL, /* obsolete netbsd32_pmc_get_info */
+	/* 342 */	NULL, /* obsolete netbsd32_pmc_control */
 	/* 343 */	"rasctl",
 	/* 344 */	NULL, /* kqueue */
 	/* 345 */	NULL, /* compat_50_netbsd32_kevent */
