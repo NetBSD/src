@@ -10041,6 +10041,7 @@ elfcore_grok_netbsd_note (bfd *abfd, Elf_Internal_Note *note)
       /* On the Alpha, SPARC (32-bit and 64-bit), PT_GETREGS == mach+0 and
 	 PT_GETFPREGS == mach+2.  */
 
+    case bfd_arch_aarch64:
     case bfd_arch_alpha:
     case bfd_arch_sparc:
       switch (note->type)
