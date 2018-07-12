@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.315 2018/06/25 17:58:36 kamil Exp $
+#	$NetBSD: bsd.prog.mk,v 1.316 2018/07/12 10:46:41 maxv Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -172,7 +172,6 @@ LIBCRTI=	${DESTDIR}/usr/lib/${MLIBDIR:D${MLIBDIR}/}crti.o
 	pam \
 	pcap \
 	pci \
-	pmc \
 	posix \
 	pthread \
 	puffs \

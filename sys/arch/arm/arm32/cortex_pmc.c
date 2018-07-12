@@ -1,4 +1,4 @@
-/*	$NetBSD: cortex_pmc.c,v 1.5 2017/12/04 08:24:35 skrll Exp $	*/
+/*	$NetBSD: cortex_pmc.c,v 1.6 2018/07/12 10:46:42 maxv Exp $	*/
 
 /* Copyright (c) 2007 Microsoft
  * All rights reserved.
@@ -35,8 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-/* __KERNEL_RCSID(0, "$NetBSD: cortex_pmc.c,v 1.5 2017/12/04 08:24:35 skrll Exp $"); */
-#include "opt_perfctrs.h"
+/* __KERNEL_RCSID(0, "$NetBSD: cortex_pmc.c,v 1.6 2018/07/12 10:46:42 maxv Exp $"); */
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>

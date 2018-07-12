@@ -1,4 +1,4 @@
-/*	$NetBSD: pmc.c,v 1.11 2017/08/07 17:31:11 maxv Exp $	*/
+/*	$NetBSD: pmc.c,v 1.12 2018/07/12 10:46:48 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmc.c,v 1.11 2017/08/07 17:31:11 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmc.c,v 1.12 2018/07/12 10:46:48 maxv Exp $");
 
 #include "opt_pmc.h"
 
@@ -88,7 +88,6 @@ __KERNEL_RCSID(0, "$NetBSD: pmc.c,v 1.11 2017/08/07 17:31:11 maxv Exp $");
 #include <machine/cpuvar.h>
 #include <machine/specialreg.h>
 #include <machine/sysarch.h>
-#include <machine/pmc.h>
 #include <machine/cputypes.h>
 #include <machine/i82489reg.h>
 #include <machine/i82489var.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.73 2018/05/28 21:05:00 chs Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.74 2018/07/12 10:46:42 maxv Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -44,11 +44,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.73 2018/05/28 21:05:00 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.74 2018/07/12 10:46:42 maxv Exp $");
 
 #include "opt_armfpe.h"
 #include "opt_pmap_debug.h"
-#include "opt_perfctrs.h"
 #include "opt_cputypes.h"
 
 #include <sys/param.h>
@@ -84,15 +83,6 @@ void lwp_trampoline(void);
 void
 cpu_proc_fork(struct proc *p1, struct proc *p2)
 {
-
-#if defined(PERFCTRS)
-	if (PMC_ENABLED(p1))
-		pmc_md_fork(p1, p2);
-	else {
-		p2->p_md.pmc_enabled = 0;
-		p2->p_md.pmc_state = NULL;
-	}
-#endif
 	/*
 	 * Copy machine arch string (it's small so just memcpy it).
 	 */

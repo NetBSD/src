@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.180 2018/02/17 21:32:22 mrg Exp $
+# $NetBSD: md.i386,v 1.181 2018/07/12 10:46:40 maxv Exp $
 ./usr/include/clang-3.4/__wmmintrin_aes.h	comp-obsolete		obsolete
 ./usr/include/clang-3.4/__wmmintrin_pclmul.h	comp-obsolete		obsolete
 ./usr/include/clang-3.4/ammintrin.h		comp-obsolete		obsolete
@@ -502,7 +502,7 @@
 ./usr/include/i386/pccons.h			comp-obsolete		obsolete
 ./usr/include/i386/pio.h			comp-c-include
 ./usr/include/i386/pmap.h			comp-c-include
-./usr/include/i386/pmc.h			comp-c-include
+./usr/include/i386/pmc.h			comp-obsolete		obsolete
 ./usr/include/i386/proc.h			comp-c-include
 ./usr/include/i386/profile.h			comp-c-include
 ./usr/include/i386/psl.h			comp-c-include

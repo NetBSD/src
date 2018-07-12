@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips,v 1.73 2018/02/13 10:02:12 mrg Exp $
+# $NetBSD: ad.mips,v 1.74 2018/07/12 10:46:40 maxv Exp $
 -./usr/lib/64/libgomp.a
 -./usr/lib/64/libgomp.so
 -./usr/lib/64/libgomp.so.1
@@ -60,7 +60,7 @@
 ./usr/include/mips/mutex.h			comp-c-include
 ./usr/include/mips/pcb.h			comp-c-include
 ./usr/include/mips/pmap.h			comp-c-include
-./usr/include/mips/pmc.h			comp-c-include
+./usr/include/mips/pmc.h			comp-obsolete		obsolete
 ./usr/include/mips/proc.h			comp-c-include
 ./usr/include/mips/profile.h			comp-c-include
 ./usr/include/mips/psl.h			comp-c-include

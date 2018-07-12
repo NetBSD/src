@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.2 2018/04/01 04:35:03 ryo Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.3 2018/07/12 10:46:41 maxv Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.2 2018/04/01 04:35:03 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.3 2018/07/12 10:46:41 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,7 +39,6 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.2 2018/04/01 04:35:03 ryo Exp $");
 #include <sys/vnode.h>
 #include <sys/cpu.h>
 #include <sys/buf.h>
-#include <sys/pmc.h>
 #include <sys/exec.h>
 #include <sys/syslog.h>
 

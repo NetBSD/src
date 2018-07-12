@@ -1,4 +1,4 @@
-#	$NetBSD: files.kern,v 1.17 2018/06/30 00:37:38 christos Exp $
+#	$NetBSD: files.kern,v 1.18 2018/07/12 10:46:48 maxv Exp $
 
 #
 # kernel sources
@@ -151,7 +151,6 @@ file	kern/sys_module.c		kern
 file	kern/sys_mqueue.c		mqueue
 file	kern/sys_lwp.c			kern
 file	kern/sys_pipe.c			!pipe_socketpair
-file	kern/sys_pmc.c			kern
 file	kern/sys_process.c		ptrace_hooks | ktrace
 file	kern/sys_ptrace.c		ptrace
 file	kern/sys_ptrace_common.c	ptrace

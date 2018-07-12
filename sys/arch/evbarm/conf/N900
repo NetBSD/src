@@ -1,5 +1,5 @@
 #
-#	$NetBSD: N900,v 1.27 2018/03/13 06:20:41 ryo Exp $
+#	$NetBSD: N900,v 1.28 2018/07/12 10:46:43 maxv Exp $
 #
 #	N900 -- Nokia N900 Kernel
 #
@@ -108,7 +108,6 @@ options 	KTRACE		# system call tracing, a la ktrace(1)
 
 # Development and Debugging options
 
-#options 	PERFCTRS	# performance counters
 options 	DIAGNOSTIC	# internal consistency checks
 #options 	DEBUG
 #options 	LOCKDEBUG	# expensive locking checks/support

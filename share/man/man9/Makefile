@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.427 2018/06/03 12:54:51 gson Exp $
+#       $NetBSD: Makefile,v 1.428 2018/07/12 10:46:41 maxv Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -41,7 +41,7 @@ MAN=	accept_filter.9 accf_data.9 accf_http.9 \
 	namei.9 nullop.9 opencrypto.9 optstr.9 \
 	panic.9 pathbuf.9 pci.9 pci_configure_bus.9 pci_intr.9 \
 	pci_msi.9 pckbport.9 pcmcia.9 pcq.9 pcu.9 \
-	percpu.9 pfil.9 physio.9 pmap.9 pmatch.9 pmc.9 pmf.9 pool.9 \
+	percpu.9 pfil.9 physio.9 pmap.9 pmatch.9 pmf.9 pool.9 \
 	pool_cache.9 powerhook_establish.9 ppsratecheck.9 preempt.9 \
 	proc_find.9 pserialize.9 pslist.9 psref.9 putter.9 \
 	radio.9 ras.9 rasops.9 ratecheck.9 resettodr.9 rnd.9 rndsink.9 \
@@ -715,22 +715,6 @@ MLINKS+=pmap.9 pmap_init.9 \
 	pmap.9 PMAP_MAP_POOLPAGE.9 \
 	pmap.9 PMAP_UNMAP_POOLPAGE.9 \
 	pmap.9 PMAP_PREFER.9
-MLINKS+=pmc.9 pmc_get_num_counters.9 \
-	pmc.9 pmc_get_counter_type.9 \
-	pmc.9 pmc_save_context.9 \
-	pmc.9 pmc_restore_context.9 \
-	pmc.9 pmc_enable_counter.9 \
-	pmc.9 pmc_disable_counter.9 \
-	pmc.9 pmc_counter_isrunning.9 \
-	pmc.9 pmc_counter_isconfigured.9 \
-	pmc.9 pmc_configure_counter.9 \
-	pmc.9 pmc_get_counter_value.9 \
-	pmc.9 pmc_accumulate.9 \
-	pmc.9 pmc_alloc_kernel_counter.9 \
-	pmc.9 pmc_free_kernel_counter.9 \
-	pmc.9 pmc_start_profiling.9 \
-	pmc.9 pmc_stop_profiling.9 \
-	pmc.9 PMC_ENABLED.9
 MLINKS+=pcq.9 pcq_create.9 \
 	pcq.9 pcq_destroy.9 \
 	pcq.9 pcq_get.9 \

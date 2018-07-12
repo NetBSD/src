@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1200 2018/06/06 18:10:36 jakllsch Exp $
+#	$NetBSD: files,v 1.1201 2018/07/12 10:46:48 maxv Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20171118
@@ -313,10 +313,6 @@ defparam opt_md.h		MEMORY_DISK_SERVER=1 MEMORY_DISK_ROOT_SIZE
 defparam opt_memory_disk_image.h	makeoptions_MEMORY_DISK_IMAGE
 
 defflag opt_tftproot.h		TFTPROOT TFTPROOT_DEBUG
-
-# Support for hardware performance monitoring counters
-#
-defflag	opt_perfctrs.h		PERFCTRS
 
 defflag	opt_wlan.h		WLAN
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 2018/03/02 23:11:42 uwe Exp $
+#	$NetBSD: Makefile,v 1.29 2018/07/12 10:46:47 maxv Exp $
 
 INCSDIR= /usr/include/sh3
 
@@ -13,7 +13,7 @@ INCS=	ansi.h aout_machdep.h asm.h \
 	intr.h \
 	limits.h lock.h \
 	math.h mcontext.h mutex.h \
-	param.h pcb.h pmap.h pmc.h proc.h profile.h psl.h \
+	param.h pcb.h pmap.h proc.h profile.h psl.h \
 	pte.h ptrace.h \
 	reg.h rwlock.h \
 	setjmp.h sh_opcode.h \

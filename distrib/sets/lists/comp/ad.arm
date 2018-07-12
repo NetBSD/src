@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.85 2018/07/12 06:52:49 maxv Exp $
+# $NetBSD: ad.arm,v 1.86 2018/07/12 10:46:40 maxv Exp $
 ./usr/include/acorn26				comp-obsolete		obsolete
 ./usr/include/acorn26/ansi.h			comp-obsolete		obsolete
 ./usr/include/acorn26/aout_machdep.h		comp-obsolete		obsolete
@@ -165,7 +165,7 @@
 ./usr/include/arm/mutex.h			comp-c-include
 ./usr/include/arm/param.h			comp-c-include
 ./usr/include/arm/pcb.h				comp-c-include
-./usr/include/arm/pmc.h				comp-c-include
+./usr/include/arm/pmc.h				comp-obsolete		obsolete
 ./usr/include/arm/proc.h			comp-c-include
 ./usr/include/arm/profile.h			comp-c-include
 ./usr/include/arm/ptrace.h			comp-c-include
@@ -570,7 +570,7 @@
 ./usr/include/netwinder/varargs.h		comp-obsolete		obsolete
 ./usr/include/netwinder/vmparam.h		comp-obsolete		obsolete
 ./usr/include/netwinder/wchar_limits.h		comp-obsolete		obsolete
-./usr/include/pmc.h				comp-c-include
+./usr/include/pmc.h				comp-obsolete		obsolete
 ./usr/include/shark				comp-c-include
 ./usr/include/shark/ansi.h			comp-obsolete		obsolete
 ./usr/include/shark/aout_machdep.h		comp-obsolete		obsolete
