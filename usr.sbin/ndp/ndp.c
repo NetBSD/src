@@ -1,4 +1,4 @@
-/*	$NetBSD: ndp.c,v 1.53 2018/07/12 08:16:14 nonaka Exp $	*/
+/*	$NetBSD: ndp.c,v 1.54 2018/07/12 08:20:49 nonaka Exp $	*/
 /*	$KAME: ndp.c,v 1.121 2005/07/13 11:30:13 keiichi Exp $	*/
 
 /*
@@ -494,8 +494,8 @@ delete(struct rt_msghdr *rtm, char *host)
 	if (rtmsg(RTM_DELETE, rtm) == 0) {
 		struct sockaddr_in6 s6 = *mysin; /* XXX: for safety */
 
-		mysin->sin6_scope_id = 0;
-		inet6_putscopeid(mysin, INET6_IS_ADDR_LINKLOCAL);
+		s6.sin6_scope_id = 0;
+		inet6_putscopeid(&s6, INET6_IS_ADDR_LINKLOCAL);
 		(void)getnameinfo((struct sockaddr *)(void *)&s6,
 		    (socklen_t)s6.sin6_len, delete_host_buf,
 		    sizeof(delete_host_buf), NULL, 0,
