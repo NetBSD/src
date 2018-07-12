@@ -1,4 +1,4 @@
-/* $NetBSD: crt0-common.c,v 1.16 2018/03/29 13:23:39 joerg Exp $ */
+/* $NetBSD: crt0-common.c,v 1.17 2018/07/12 21:35:12 joerg Exp $ */
 
 /*
  * Copyright (c) 1998 Christos Zoulas
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: crt0-common.c,v 1.16 2018/03/29 13:23:39 joerg Exp $");
+__RCSID("$NetBSD: crt0-common.c,v 1.17 2018/07/12 21:35:12 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/exec.h>
@@ -215,9 +215,7 @@ ___start(void (*cleanup)(void),			/* from shared loader */
 		__progname = empty_string;
 	}
 
-	if (&rtld_DYNAMIC != NULL) {
-		if (obj == NULL)
-			_FATAL("NULL Obj_Entry pointer in GOT\n");
+	if (&rtld_DYNAMIC != NULL && obj != NULL) {
 		if (obj->magic != RTLD_MAGIC)
 			_FATAL("Corrupt Obj_Entry pointer in GOT\n");
 		if (obj->version != RTLD_VERSION)
