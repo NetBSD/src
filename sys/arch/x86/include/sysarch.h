@@ -1,4 +1,4 @@
-/*	$NetBSD: sysarch.h,v 1.12 2017/07/12 17:33:29 maxv Exp $	*/
+/*	$NetBSD: sysarch.h,v 1.13 2018/07/12 10:46:47 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -186,6 +186,14 @@ int x86_set_ldt(struct lwp *, void *, register_t *);
 int x86_set_ldt1(struct lwp *, struct x86_set_ldt_args *, union descriptor *);
 int x86_set_sdbase(void *, char, lwp_t *, bool);
 int x86_get_sdbase(void *, char);
+
+void pmc_init(void);
+int sys_pmc_info(struct lwp *, struct x86_pmc_info_args *,
+    register_t *);
+int sys_pmc_startstop(struct lwp *, struct x86_pmc_startstop_args *,
+    register_t *);
+int sys_pmc_read(struct lwp *, struct x86_pmc_read_args *,
+    register_t *);
 #else
 #include <sys/cdefs.h>
 __BEGIN_DECLS

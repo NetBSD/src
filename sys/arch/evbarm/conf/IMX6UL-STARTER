@@ -1,4 +1,4 @@
-#	$NetBSD: IMX6UL-STARTER,v 1.5 2017/11/09 05:57:23 hkenken Exp $
+#	$NetBSD: IMX6UL-STARTER,v 1.6 2018/07/12 10:46:43 maxv Exp $
 #
 #	IMX6UL-STARTER - Freescale i.MX6UL Evaluation Board
 #
@@ -48,7 +48,6 @@ options 	BUFQ_PRIOCSCAN
 
 # Diagnostic/debugging support options
 options 	VERBOSE_INIT_ARM # verbose bootstraping messages
-#options 	PERFCTRS	# performance counters
 options 	DIAGNOSTIC	# internally consistency checks
 
 #options 	DEBUG

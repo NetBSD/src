@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BCM56340,v 1.15 2018/06/05 08:03:28 hkenken Exp $
+#	$NetBSD: BCM56340,v 1.16 2018/07/12 10:46:43 maxv Exp $
 #
 #	BCM5301X -- Broadcom BCM5301X Eval Board Kernel
 #
@@ -125,7 +125,6 @@ options 	RNDVERBOSE	# Verbose rnd messages
 
 # Development and Debugging options
 
-#options 	PERFCTRS	# performance counters
 options 	DIAGNOSTIC	# internal consistency checks
 options 	DEBUG
 #options 	LOCKDEBUG	# Enable lock debugging
