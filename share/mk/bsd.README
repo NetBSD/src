@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.377 2018/06/25 09:38:46 kamil Exp $
+#	$NetBSD: bsd.README,v 1.378 2018/07/12 06:52:49 maxv Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -1644,7 +1644,6 @@ DPADD		Additional dependencies for the program.  Usually used for
 		LIBPANEL?=	${DESTDIR}/usr/lib/libpanel.a
 		LIBPCAP?=	${DESTDIR}/usr/lib/libpcap.a
 		LIBPCI?=	${DESTDIR}/usr/lib/libpci.a
-		LIBPMC?=	${DESTDIR}/usr/lib/libpmc.a
 		LIBPOSIX?=	${DESTDIR}/usr/lib/libposix.a
 		LIBPTHREAD?=	${DESTDIR}/usr/lib/libpthread.a
 		LIBPUFFS?=	${DESTDIR}/usr/lib/libpuffs.a
