@@ -1,5 +1,5 @@
 #
-#	$NetBSD: PEPPER,v 1.7 2017/09/14 07:58:40 mrg Exp $
+#	$NetBSD: PEPPER,v 1.8 2018/07/12 10:46:43 maxv Exp $
 #
 #	PEPPER -- Gumstix. Inc. Pepper Single Board Computer platforms kernel
 #
@@ -127,7 +127,6 @@ options 	IRQSTATS	# manage IRQ statistics
 
 # Development and Debugging options
 
-#options 	PERFCTRS	# performance counters
 options 	DIAGNOSTIC	# internal consistency checks
 options 	DEBUG
 #options 	LOCKDEBUG
