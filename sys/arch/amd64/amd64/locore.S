@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.169 2018/07/09 18:52:04 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.170 2018/07/12 19:48:16 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1633,6 +1633,13 @@ LABEL(svs_enter_altstack)
 1234:
 LABEL(svs_enter_altstack_end)
 
+LABEL(svs_enter_nmi)
+	movq	%cr3,%rax
+	movq	%rax,(FRAMESIZE+1*8)(%rsp)	/* nmistore->scratch */
+	movq	(FRAMESIZE+0*8)(%rsp),%rax	/* nmistore->cr3 */
+	movq	%rax,%cr3
+LABEL(svs_enter_nmi_end)
+
 LABEL(svs_leave)
 	testb	$SEL_UPL,TF_CS(%rsp)
 	jz	1234f
@@ -1650,6 +1657,11 @@ LABEL(svs_leave_altstack)
 1234:
 LABEL(svs_leave_altstack_end)
 
+LABEL(svs_leave_nmi)
+	movq	(FRAMESIZE+1*8)(%rsp),%rax	/* nmistore->scratch */
+	movq	%rax,%cr3
+LABEL(svs_leave_nmi_end)
+
 LABEL(nosvs_enter)
 	NOSVS_ENTER
 LABEL(nosvs_enter_end)
@@ -1658,6 +1670,10 @@ LABEL(nosvs_enter_altstack)
 	NOSVS_ENTER_ALTSTACK
 LABEL(nosvs_enter_altstack_end)
 
+LABEL(nosvs_enter_nmi)
+	NOSVS_ENTER_NMI
+LABEL(nosvs_enter_nmi_end)
+
 LABEL(nosvs_leave)
 	NOSVS_LEAVE
 LABEL(nosvs_leave_end)
@@ -1665,6 +1681,10 @@ LABEL(nosvs_leave_end)
 LABEL(nosvs_leave_altstack)
 	NOSVS_LEAVE_ALTSTACK
 LABEL(nosvs_leave_altstack_end)
+
+LABEL(nosvs_leave_nmi)
+	NOSVS_LEAVE_NMI
+LABEL(nosvs_leave_nmi_end)
 #endif
 
 	.globl	ibrs_enter, ibrs_enter_end
