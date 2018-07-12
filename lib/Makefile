@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.258 2018/06/28 10:14:27 christos Exp $
+#	$NetBSD: Makefile,v 1.259 2018/07/12 06:52:49 maxv Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -24,7 +24,7 @@ SUBDIR+=	libarch \
 		libbluetooth libbsdmalloc libbz2 \
 		libcompat libcrypt \
 		libintl libipsec libkvm libm \
-		libossaudio libpci libpmc libposix libprop libpthread \
+		libossaudio libpci libposix libprop libpthread \
 		libpuffs libresolv librmt librpcsvc librt \
 		libtelnet libterminfo \
 		libusbhid libutil libwrap liby libz
