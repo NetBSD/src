@@ -89,7 +89,7 @@ along with GCC; see the file COPYING3.  If not see
        %{rdynamic:-export-dynamic} \
        %(netbsd_link_ld_elf_so)} \
      %{static:-static \
-       %{pie: %(netbsd_link_ld_elf_so)}}} \
+       %{pie: --no-dynamic-linker}}} \
    %{!shared:%{!nostdlib:%{!nodefaultlibs:\
      %{%:sanitize(address): -lasan } \
      %{%:sanitize(undefined): -lubsan}}}}"
