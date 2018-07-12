@@ -1,4 +1,4 @@
-/*	$NetBSD: printf.c,v 1.36 2013/07/16 17:48:22 christos Exp $	*/
+/*	$NetBSD: printf.c,v 1.36.12.1 2018/07/12 14:58:23 martin Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)printf.c	8.2 (Berkeley) 3/22/95";
 #else
-__RCSID("$NetBSD: printf.c,v 1.36 2013/07/16 17:48:22 christos Exp $");
+__RCSID("$NetBSD: printf.c,v 1.36.12.1 2018/07/12 14:58:23 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -65,8 +65,8 @@ __RCSID("$NetBSD: printf.c,v 1.36 2013/07/16 17:48:22 christos Exp $");
 #define ESCAPE 033
 #endif
 
-static void	 conv_escape_str(char *, void (*)(int));
-static char	*conv_escape(char *, char *);
+static void	 conv_escape_str(char *, void (*)(int), int);
+static char	*conv_escape(char *, char *, int);
 static char	*conv_expand(const char *);
 static char	 getchr(void);
 static double	 getdouble(void);
@@ -170,7 +170,7 @@ int main(int argc, char *argv[])
 		for (fmt = format; (ch = *fmt++) != '\0';) {
 			if (ch == '\\') {
 				char c_ch;
-				fmt = conv_escape(fmt, &c_ch);
+				fmt = conv_escape(fmt, &c_ch, 0);
 				putchar(c_ch);
 				continue;
 			}
@@ -241,7 +241,7 @@ int main(int argc, char *argv[])
 				t = NULL;
 				/* Count number of bytes we want to output */
 				b_length = 0;
-				conv_escape_str(cp, b_count);
+				conv_escape_str(cp, b_count, 0);
 				t = malloc(b_length + 1);
 				if (t == NULL)
 					goto out;
@@ -254,7 +254,7 @@ int main(int argc, char *argv[])
 					goto out;
 				b_fmt = a;
 				/* Output leading spaces and data bytes */
-				conv_escape_str(cp, b_output);
+				conv_escape_str(cp, b_output, 1);
 				/* Add any trailing spaces */
 				printf("%s", b_fmt);
 				break;
@@ -357,7 +357,7 @@ b_output(int ch)
  *	Halts processing string if a \c escape is encountered.
  */
 static void
-conv_escape_str(char *str, void (*do_putchar)(int))
+conv_escape_str(char *str, void (*do_putchar)(int), int quiet)
 {
 	int value;
 	int ch;
@@ -415,7 +415,7 @@ conv_escape_str(char *str, void (*do_putchar)(int))
 		}
 
 		/* Finally test for sequences valid in the format string */
-		str = conv_escape(str - 1, &c);
+		str = conv_escape(str - 1, &c, quiet);
 		do_putchar(c);
 	}
 }
@@ -424,7 +424,7 @@ conv_escape_str(char *str, void (*do_putchar)(int))
  * Print "standard" escape characters 
  */
 static char *
-conv_escape(char *str, char *conv_ch)
+conv_escape(char *str, char *conv_ch, int quiet)
 {
 	char value;
 	char ch;
@@ -433,6 +433,14 @@ conv_escape(char *str, char *conv_ch)
 	ch = *str++;
 
 	switch (ch) {
+	case '\0':
+		if (!quiet)
+			warnx("incomplete escape sequence");
+		rval = 1;
+		value = '\\';
+		--str;
+		break;
+
 	case '0': case '1': case '2': case '3':
 	case '4': case '5': case '6': case '7':
 		num_buf[0] = ch;
@@ -470,7 +478,8 @@ conv_escape(char *str, char *conv_ch)
 	case 'v':	value = '\v';	break;	/* vertical-tab */
 
 	default:
-		warnx("unknown escape sequence `\\%c'", ch);
+		if (!quiet)
+			warnx("unknown escape sequence `\\%c'", ch);
 		rval = 1;
 		value = ch;
 		break;
@@ -553,7 +562,7 @@ mklong(const char *str, char ch)
 
 	len = strlen(str) + 2;
 	if (len > sizeof copy) {
-		warnx("format %s too complex\n", str);
+		warnx("format %s too complex", str);
 		len = 4;
 	}
 	(void)memmove(copy, str, len - 3);
