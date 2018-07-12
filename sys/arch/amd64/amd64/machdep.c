@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.305 2018/06/20 11:49:37 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.306 2018/07/12 19:48:16 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.305 2018/06/20 11:49:37 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.306 2018/07/12 19:48:16 maxv Exp $");
 
 #include "opt_modular.h"
 #include "opt_user_ldt.h"
@@ -280,6 +280,11 @@ void (*initclock_func)(void) = xen_initclocks;
 #endif
 
 struct pool x86_dbregspl;
+
+struct nmistore {
+	uint64_t cr3;
+	uint64_t scratch;
+} __packed;
 
 /*
  * Size of memory segments, before any memory is stolen.
@@ -506,6 +511,7 @@ cpu_init_tss(struct cpu_info *ci)
 	const cpuid_t cid = cpu_index(ci);
 #endif
 	struct cpu_tss *cputss;
+	struct nmistore *store;
 	uintptr_t p;
 
 #ifdef __HAVE_PCPU_AREA
@@ -533,13 +539,15 @@ cpu_init_tss(struct cpu_info *ci)
 #endif
 	cputss->tss.tss_ist[1] = p + PAGE_SIZE - 16;
 
-	/* NMI */
+	/* NMI - store a structure at the top of the stack */
 #ifdef __HAVE_PCPU_AREA
 	p = (vaddr_t)&pcpuarea->ent[cid].ist2;
 #else
 	p = uvm_km_alloc(kernel_map, PAGE_SIZE, 0, UVM_KMF_WIRED|UVM_KMF_ZERO);
 #endif
-	cputss->tss.tss_ist[2] = p + PAGE_SIZE - 16;
+	cputss->tss.tss_ist[2] = p + PAGE_SIZE - sizeof(struct nmistore);
+	store = (struct nmistore *)(p + PAGE_SIZE - sizeof(struct nmistore));
+	store->cr3 = pmap_pdirpa(pmap_kernel(), 0);
 
 	/* DB */
 #ifdef __HAVE_PCPU_AREA
