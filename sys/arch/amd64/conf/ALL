@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.92 2018/07/10 19:58:13 maya Exp $
+# $NetBSD: ALL,v 1.93 2018/07/12 10:39:06 maya Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"ALL-$Revision: 1.92 $"
+#ident		"ALL-$Revision: 1.93 $"
 
 maxusers	64		# estimated number of users
 
@@ -520,6 +520,9 @@ radeondrmkmsfb* at radeonfbbus?
 
 nouveau*	at pci? dev ? function ?
 nouveaufb*	at nouveaufbbus?
+
+# DRMUMS drivers
+viadrmums*	at drm?
 
 attimer0	at isa?
 pcppi0		at isa?
