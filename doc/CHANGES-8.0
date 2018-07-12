@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.224 2018/07/11 16:51:29 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.225 2018/07/12 15:26:11 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -14145,4 +14145,20 @@ sys/arch/x86/x86/fpu.c          		1.44 (patch)
 	several problems when EagerFPU is enabled.
 	[maxv, ticket #910]
 
+sys/net/if_pppoe.c				1.137,1.139,1.140
+
+	Drop early if there's no PPPoE interface.
+	Fix pppoe_softc vs. pppoe_softc_list_lock locking order.
+	Aquire pppoe_softc_list_lock before read and write of the list.
+	[yamaguchi, ticket #890]
+
+usr.sbin/sysinst/util.c				1.10,1.11
+
+	Avoid access to out of bounds elements in the sets array.
+	[kamil, ticket #900]
+
+lib/libutil/pty.c				1.32
+
+	Fix stack use after scope in libutil/pty.
+	[kamil, ticket #901]
 
