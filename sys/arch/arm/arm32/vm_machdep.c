@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.74 2018/07/12 10:46:42 maxv Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.75 2018/07/12 12:48:50 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.74 2018/07/12 10:46:42 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.75 2018/07/12 12:48:50 jakllsch Exp $");
 
 #include "opt_armfpe.h"
 #include "opt_pmap_debug.h"
@@ -57,7 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.74 2018/07/12 10:46:42 maxv Exp $")
 #include <sys/vnode.h>
 #include <sys/cpu.h>
 #include <sys/buf.h>
-#include <sys/pmc.h>
 #include <sys/exec.h>
 #include <sys/syslog.h>
 
