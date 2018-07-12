@@ -1,4 +1,4 @@
-/* $NetBSD: types.h,v 1.8 2018/04/28 12:33:17 jmcneill Exp $ */
+/* $NetBSD: types.h,v 1.9 2018/07/12 10:46:41 maxv Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -59,9 +59,6 @@ typedef unsigned int register32_t;
 #define PRIxREGISTER	"llx"
 #define PRIxREGISTER32	"lx"
 
-typedef unsigned long	pmc_evid_t;
-#define PMC_INVALID_EVID	(-1)
-typedef unsigned long	pmc_ctr_t;
 typedef unsigned short	tlb_asid_t;
 
 #if defined(_KERNEL)

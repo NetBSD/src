@@ -1,5 +1,5 @@
 #
-#	$NetBSD: IGEPV2,v 1.31 2017/09/14 07:58:40 mrg Exp $
+#	$NetBSD: IGEPV2,v 1.32 2018/07/12 10:46:43 maxv Exp $
 #
 #	IGEPv2 -- TI OMAP 3530 Eval Board Kernel
 #
@@ -109,7 +109,6 @@ options 	KTRACE		# system call tracing, a la ktrace(1)
 
 # Development and Debugging options
 
-#options 	PERFCTRS	# performance counters
 options 	DIAGNOSTIC	# internal consistency checks
 #options 	DEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code

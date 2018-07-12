@@ -1,4 +1,4 @@
-# $NetBSD: ad.aarch64,v 1.19 2018/04/29 18:29:29 jmcneill Exp $
+# $NetBSD: ad.aarch64,v 1.20 2018/07/12 10:46:40 maxv Exp $
 ./usr/include/aarch64				comp-c-include
 ./usr/include/aarch64/ansi.h			comp-c-include
 ./usr/include/aarch64/aout_machdep.h		comp-c-include
@@ -98,7 +98,7 @@
 ./usr/include/arm/mutex.h			comp-c-include
 ./usr/include/arm/param.h			comp-c-include
 ./usr/include/arm/pcb.h				comp-c-include
-./usr/include/arm/pmc.h				comp-c-include
+./usr/include/arm/pmc.h				comp-obsolete		obsolete
 ./usr/include/arm/proc.h			comp-c-include
 ./usr/include/arm/profile.h			comp-c-include
 ./usr/include/arm/ptrace.h			comp-c-include
