@@ -1,4 +1,4 @@
-/*	$NetBSD: if_athn_usb.c,v 1.27 2018/06/26 06:48:02 msaitoh Exp $	*/
+/*	$NetBSD: if_athn_usb.c,v 1.27.2.1 2018/07/12 16:35:33 phil Exp $	*/
 /*	$OpenBSD: if_athn_usb.c,v 1.12 2013/01/14 09:50:31 jsing Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_athn_usb.c,v 1.27 2018/06/26 06:48:02 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_athn_usb.c,v 1.27.2.1 2018/07/12 16:35:33 phil Exp $");
 
 #ifdef	_KERNEL_OPT
 #include "opt_inet.h"
@@ -154,7 +154,7 @@ Static int	athn_usb_tx(struct athn_softc *, struct mbuf *,
 		    struct ieee80211_node *, struct athn_usb_tx_data *);
 Static void	athn_usb_txeof(struct usbd_xfer *, void *,
 		    usbd_status);
-Static void	athn_usb_updateslot(struct ifnet *);
+Static void	athn_usb_updateslot(struct ieee80211com *);
 Static void	athn_usb_updateslot_cb(struct athn_usb_softc *, void *);
 Static void	athn_usb_wait_async(struct athn_usb_softc *);
 Static int	athn_usb_wait_msg(struct athn_usb_softc *);
@@ -367,7 +367,7 @@ athn_usb_node_cleanup(struct ieee80211_node *ni)
 	struct ieee80211com *ic;
 	uint8_t sta_index;
 
-	usc = ATHN_USB_SOFTC(ni->ni_ic->ic_ifp->if_softc);
+	usc = ATHN_USB_SOFTC(TAILQ_FIRST(&(ni->ni_ic->ic_vaps))->iv_ifp->if_softc);
 	ic = &ATHN_SOFTC(usc)->sc_ic;
 
 	DPRINTFN(DBG_FN, usc, "\n");
@@ -411,7 +411,7 @@ athn_usb_attachhook(device_t arg)
 		return;
 
 	/* We're now ready to attach the bus agnostic driver. */
-	ic->ic_ifp = ifp;
+	TAILQ_FIRST(&(ic->ic_vaps))->iv_ifp = ifp;
 	ic->ic_updateslot = athn_usb_updateslot;
 	sc->sc_max_aid = AR_USB_MAX_STA;  /* Firmware is limited to 8 STA */
 	sc->sc_media_change = athn_usb_media_change;
@@ -442,8 +442,8 @@ athn_usb_attachhook(device_t arg)
 	ic->ic_delete_key = athn_usb_delete_key;
 	ic->ic_ampdu_tx_start = athn_usb_ampdu_tx_start;
 	ic->ic_ampdu_tx_stop = athn_usb_ampdu_tx_stop;
+	ic->ic_newstate = athn_usb_newstate;   /* XXX should we have this one? */ 
 #endif
-	ic->ic_newstate = athn_usb_newstate;
 
 	ops->rx_enable = athn_usb_rx_enable;
 
@@ -545,7 +545,7 @@ athn_usb_activate(device_t self, enum devact act)
 
 	switch (act) {
 	case DVACT_DEACTIVATE:
-		if_deactivate(sc->sc_ic.ic_ifp);
+		if_deactivate(TAILQ_FIRST(&(sc->sc_ic.ic_vaps))->iv_ifp);
 		usc->usc_dying = 1;
 		return 0;
 	default:
@@ -1399,7 +1399,7 @@ Static int
 athn_usb_newstate(struct ieee80211com *ic, enum ieee80211_state nstate,
     int arg)
 {
-	struct athn_softc *sc = ic->ic_ifp->if_softc;
+	struct athn_softc *sc = TAILQ_FIRST(&(ic->ic_vaps))->iv_ifp->if_softc;
 	struct athn_usb_softc *usc = ATHN_USB_SOFTC(sc);
 	struct athn_usb_cmd_newstate cmd;
 
@@ -1428,7 +1428,7 @@ athn_usb_newstate_cb(struct athn_usb_softc *usc, void *arg)
 
 	s = splnet();
 
-	ostate = ic->ic_state;
+	ostate = TAILQ_FIRST(&(ic->ic_vaps))->iv_state;
 	nstate = cmd->state;
 	DPRINTFN(DBG_STM, usc, "newstate %s(%d) -> %s(%d)\n",
 		    ieee80211_state_name[ostate], ostate,
@@ -1437,7 +1437,7 @@ athn_usb_newstate_cb(struct athn_usb_softc *usc, void *arg)
 	if (ostate == IEEE80211_S_RUN) {
 		uint8_t sta_index;
 
-		sta_index = ATHN_NODE(ic->ic_bss)->sta_index;
+		sta_index = ATHN_NODE(TAILQ_FIRST(&(ic->ic_vaps))->iv_bss)->sta_index;
 		DPRINTFN(DBG_NODES, usc, "removing node %u\n", sta_index);
 		athn_usb_remove_hw_node(usc, &sta_index);
 	}
@@ -1468,9 +1468,9 @@ athn_usb_newstate_cb(struct athn_usb_softc *usc, void *arg)
 		/* Create node entry for our BSS. */
 		DPRINTFN(DBG_NODES, sc, "create node for AID=0x%x\n",
 		    ic->ic_bss->ni_associd);
-		athn_usb_create_node(usc, ic->ic_bss);	/* XXX: handle error? */
+		athn_usb_create_node(usc, TAILQ_FIRST(&(ic->ic_vaps))->iv_bss);	/* XXX: handle error? */
 
-		athn_set_bss(sc, ic->ic_bss);
+		athn_set_bss(sc, TAILQ_FIRST(&(ic->ic_vaps))->iv_bss);
 		athn_usb_wmi_cmd(usc, AR_WMI_CMD_DISABLE_INTR);
 #ifndef IEEE80211_STA_ONLY
 		if (ic->ic_opmode == IEEE80211_M_HOSTAP) {
@@ -1494,6 +1494,11 @@ athn_usb_newstate_cb(struct athn_usb_softc *usc, void *arg)
 		athn_usb_wmi_xcmd(usc, AR_WMI_CMD_ENABLE_INTR,
 		    &imask, sizeof(imask), NULL);
 		break;
+	case IEEE80211_S_CAC:
+	case IEEE80211_S_CSA:
+	case IEEE80211_S_SLEEP:
+		/* XXX -- new during wif refresh ... need new code.. */
+		break;
 	}
 	if (!usc->usc_dying)
 		(void)sc->sc_newstate(ic, nstate, cmd->arg);
@@ -1504,7 +1509,7 @@ Static void
 athn_usb_newassoc(struct ieee80211_node *ni, int isnew)
 {
 	struct ieee80211com *ic = ni->ni_ic;
-	struct athn_softc *sc = ic->ic_ifp->if_softc;
+	struct athn_softc *sc = TAILQ_FIRST(&(ic->ic_vaps))->iv_ifp->if_softc;
 	struct athn_usb_softc *usc = ATHN_USB_SOFTC(sc);
 
 	DPRINTFN(DBG_FN, sc, "\n");
@@ -1802,8 +1807,9 @@ athn_usb_updateedca_cb(struct athn_usb_softc *usc, void *arg)
 #endif /* notyet_edca */
 
 Static void
-athn_usb_updateslot(struct ifnet *ifp)
+athn_usb_updateslot(struct ieee80211com *ic)
 {
+	struct ifnet *ifp = TAILQ_FIRST(&(ic->ic_vaps))->iv_ifp;
 	struct athn_softc *sc = ifp->if_softc;
 	struct athn_usb_softc *usc = ATHN_USB_SOFTC(sc);
 
@@ -1936,11 +1942,11 @@ athn_usb_swba(struct athn_usb_softc *usc)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct athn_usb_tx_data *data;
 	struct ieee80211_frame *wh;
-	struct ieee80211_beacon_offsets bo;
 	struct ar_stream_hdr *hdr;
 	struct ar_htc_frame_hdr *htc;
 	struct ar_tx_bcn *bcn;
 	struct mbuf *m;
+	struct ieee80211vap *vap = TAILQ_FIRST(&(ic->ic_vaps));
 	int error;
 
 	if (usc->usc_dying)
@@ -1948,10 +1954,10 @@ athn_usb_swba(struct athn_usb_softc *usc)
 
 	DPRINTFN(DBG_FN, sc, "\n");
 
-	if (ic->ic_dtim_count == 0)
-		ic->ic_dtim_count = ic->ic_dtim_period - 1;
+	if (vap->iv_dtim_count == 0)
+		vap->iv_dtim_count = vap->iv_dtim_period - 1;
 	else
-		ic->ic_dtim_count--;
+		vap->iv_dtim_count--;
 
 	/* Make sure previous beacon has been sent. */
 	if (usc->usc_tx_bcn == NULL)
@@ -1959,18 +1965,15 @@ athn_usb_swba(struct athn_usb_softc *usc)
 	data = usc->usc_tx_bcn;
 
 	/* Get new beacon. */
-#ifdef ATHN_DEBUG
-	memset(&bo, 0, sizeof(bo));
-#endif
-	m = ieee80211_beacon_alloc(ic, ic->ic_bss, &bo);
+	m = ieee80211_beacon_alloc(vap->iv_bss);
 	if (__predict_false(m == NULL))
 		return;
 	/* Assign sequence number. */
 	/* XXX: use non-QoS tid? */
 	wh = mtod(m, struct ieee80211_frame *);
 	*(uint16_t *)&wh->i_seq[0] =
-	    htole16(ic->ic_bss->ni_txseqs[0] << IEEE80211_SEQ_SEQ_SHIFT);
-	ic->ic_bss->ni_txseqs[0]++;
+	    htole16(vap->iv_bss->ni_txseqs[0] << IEEE80211_SEQ_SEQ_SHIFT);
+	vap->iv_bss->ni_txseqs[0]++;
 
 	hdr = (struct ar_stream_hdr *)data->buf;
 	hdr->tag = htole16(AR_USB_TX_STREAM_TAG);
@@ -2270,7 +2273,7 @@ athn_usb_rx_frame(struct athn_usb_softc *usc, struct mbuf *m)
 	m_adj(m, -IEEE80211_CRC_LEN);
 
 	/* Send the frame to the 802.11 layer. */
-	ieee80211_input(ic, m, ni, rs->rs_rssi + AR_USB_DEFAULT_NF, 0);
+	ieee80211_input(ni, m, rs->rs_rssi + AR_USB_DEFAULT_NF, 0);
 
 	/* Node is no longer needed. */
 	ieee80211_free_node(ni);
@@ -2454,7 +2457,7 @@ athn_usb_tx(struct athn_softc *sc, struct mbuf *m, struct ieee80211_node *ni,
 
 	wh = mtod(m, struct ieee80211_frame *);
 	if (wh->i_fc[1] & IEEE80211_FC1_PROTECTED) {
-		k = ieee80211_crypto_encap(ic, ni, m);
+		k = ieee80211_crypto_encap(ni, m);
 		if (k == NULL)
 			return ENOBUFS;
 
@@ -2505,7 +2508,8 @@ athn_usb_tx(struct athn_softc *sc, struct mbuf *m, struct ieee80211_node *ni,
 		txf->node_idx = sta_index;
 		txf->vif_idx = 0;
 		txf->tid = tid;
-		if (m->m_pkthdr.len + IEEE80211_CRC_LEN > ic->ic_rtsthreshold)
+		if (m->m_pkthdr.len + IEEE80211_CRC_LEN
+		    > TAILQ_FIRST(&(ic->ic_vaps))->iv_rtsthreshold)
 			txf->flags |= htobe32(AR_HTC_TX_RTSCTS);
 		else if (ic->ic_flags & IEEE80211_F_USEPROT) {
 			if (ic->ic_protmode == IEEE80211_PROT_CTSONLY)

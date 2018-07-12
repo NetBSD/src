@@ -1,3 +1,5 @@
+/*	$NetBSD: ieee80211_radiotap.c,v 1.1.2.2 2018/07/12 16:35:34 phil Exp $ */
+
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
  *
@@ -26,7 +28,9 @@
  */
 
 #include <sys/cdefs.h>
+#if __FreeBSD__
 __FBSDID("$FreeBSD$");
+#endif
 
 /*
  * IEEE 802.11 radiotap support.
@@ -44,11 +48,27 @@ __FBSDID("$FreeBSD$");
  
 #include <net/bpf.h>
 #include <net/if.h>
+#if __FreeBSD__
 #include <net/if_var.h>
+#endif
 #include <net/if_media.h>
+#if __FreeBSD__
 #include <net/ethernet.h>
+#endif
+#if __NetBSD__
+#include <net/route.h>
+#endif
 
 #include <net80211/ieee80211_var.h>
+
+#if __NetBSD__
+#undef  KASSERT
+#define KASSERT(__cond, __complaint) FBSDKASSERT(__cond, __complaint)
+#define bpfattach2(_ifp, _dlt, _hdrlen, _dp) \
+	bpf_attach2(_ifp, _dlt, _hdrlen, _dp)
+#define bpf_mtap2(_bpf, _data, _dlen, _m) \
+	bpf_mtap2(_bpf, _data, _dlen, _m, BPF_D_INOUT)
+#endif
 
 static int radiotap_offset(struct ieee80211_radiotap_header *, int, int);
 

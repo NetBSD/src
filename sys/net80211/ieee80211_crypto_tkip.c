@@ -1,3 +1,5 @@
+/*	$NetBSD: ieee80211_crypto_tkip.c,v 1.14.4.2 2018/07/12 16:35:34 phil Exp $ */
+
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
  *
@@ -26,7 +28,9 @@
  */
 
 #include <sys/cdefs.h>
+#if __FreeBSD__
 __FBSDID("$FreeBSD$");
+#endif
 
 /*
  * IEEE 802.11i TKIP crypto support.
@@ -49,9 +53,19 @@ __FBSDID("$FreeBSD$");
 
 #include <net/if.h>
 #include <net/if_media.h>
+#if __FreeBSD__
 #include <net/ethernet.h>
+#endif
+#ifdef __NetBSD__
+#include <net/route.h>
+#endif
 
 #include <net80211/ieee80211_var.h>
+
+#ifdef __NetBSD__
+#undef  KASSERT
+#define KASSERT(__cond, __complaint) FBSDKASSERT(__cond, __complaint)
+#endif
 
 static	void *tkip_attach(struct ieee80211vap *, struct ieee80211_key *);
 static	void tkip_detach(struct ieee80211_key *);
@@ -256,7 +270,11 @@ tkip_enmic(struct ieee80211_key *k, struct mbuf *m, int force)
 		return 1;
 
 	if (force || (k->wk_flags & IEEE80211_KEY_SWENMIC)) {
+#if __FreeBSD__
 		struct ieee80211_frame *wh = mtod(m, struct ieee80211_frame *);
+#elif __NetBSD__
+		wh = mtod(m, struct ieee80211_frame *);
+#endif
 		struct ieee80211vap *vap = ctx->tc_vap;
 		struct ieee80211com *ic = vap->iv_ic;
 		int hdrlen;

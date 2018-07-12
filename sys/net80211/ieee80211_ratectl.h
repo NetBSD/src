@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_ratectl.h,v 1.1.2.2 2018/06/28 21:23:01 phil Exp $ */
+/*	$NetBSD: ieee80211_ratectl.h,v 1.1.2.3 2018/07/12 16:35:34 phil Exp $ */
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -128,7 +128,7 @@ ieee80211_ratectl_node_deinit(struct ieee80211_node *ni)
 	vap->iv_rate->ir_node_deinit(ni);
 }
 
-static int __inline
+static __inline int
 ieee80211_ratectl_rate(struct ieee80211_node *ni, void *arg, uint32_t iarg)
 {
 	const struct ieee80211vap *vap = ni->ni_vap;

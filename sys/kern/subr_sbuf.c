@@ -1,3 +1,5 @@
+/*	$NetBSD: subr_sbuf.c,v 1.1.2.2 2018/07/12 16:35:34 phil Exp $	*/
+
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
  *
@@ -29,19 +31,32 @@
  */
 
 #include <sys/cdefs.h>
+#if __FreeBSD__
 __FBSDID("$FreeBSD$");
+#endif
 
 #include <sys/param.h>
 
 #ifdef _KERNEL
+#if __FreeBSD__
 #include <sys/ctype.h>
+#endif
 #include <sys/errno.h>
 #include <sys/kernel.h>
+#if __NetBSD__
+#include <sys/kmem.h>
+#endif
+#if __FreeBSD__
 #include <sys/limits.h>
+#endif
 #include <sys/malloc.h>
 #include <sys/systm.h>
 #include <sys/uio.h>
+#if __FreeBSD__
 #include <machine/stdarg.h>
+#elif __NetBSD__
+#include <sys/stdarg.h>
+#endif
 #else /* _KERNEL */
 #include <ctype.h>
 #include <errno.h>
@@ -54,6 +69,7 @@ __FBSDID("$FreeBSD$");
 
 #include <sys/sbuf.h>
 
+#if __FreeBSD__
 #ifdef _KERNEL
 static MALLOC_DEFINE(M_SBUF, "sbuf", "string buffers");
 #define	SBMALLOC(size)		malloc(size, M_SBUF, M_WAITOK|M_ZERO)
@@ -63,6 +79,17 @@ static MALLOC_DEFINE(M_SBUF, "sbuf", "string buffers");
 #define	SBMALLOC(size)		calloc(1, size)
 #define	SBFREE(buf)		free(buf)
 #endif /* _KERNEL */
+#elif __NetBSD__
+#define SBMALLOC(size)		kmem_zalloc(size,KM_SLEEP)
+#define	SBFREE(buf)		kmem_free(buf,sizeof(*buf))
+#undef KASSERT
+#define KASSERT(_cond, _complaint)            \
+        do {                                  \
+                if (!(_cond))                 \
+                        panic _complaint;     \
+        } while (/*CONSTCOND*/0)
+
+#endif
 
 /*
  * Predicates
@@ -176,7 +203,11 @@ sbuf_extend(struct sbuf *s, int addlen)
 		return (-1);
 	memcpy(newbuf, s->s_buf, s->s_size);
 	if (SBUF_ISDYNAMIC(s))
+#if __FreeBSD__
 		SBFREE(s->s_buf);
+#elif __NetBSD__
+		kmem_free(s->s_buf, s->s_size);
+#endif
 	else
 		SBUF_SETFLAG(s, SBUF_DYNAMIC);
 	s->s_buf = newbuf;
@@ -571,7 +602,7 @@ sbuf_cpy(struct sbuf *s, const char *str)
 /*
  * Format the given argument list and append the resulting string to an sbuf.
  */
-#ifdef _KERNEL
+#if defined(_KERNEL) && defined(__FreeBSD__)
 
 /*
  * Append a non-NUL character to an sbuf.  This prototype signature is
@@ -633,7 +664,9 @@ sbuf_vprintf(struct sbuf *s, const char *fmt, va_list ap)
 		len = vsnprintf(&s->s_buf[s->s_len], SBUF_FREESPACE(s) + 1,
 		    fmt, ap_copy);
 		if (len < 0) {
+#if __FreeBSD__
 			s->s_error = errno;
+#endif
 			return (-1);
 		}
 		va_end(ap_copy);
@@ -662,8 +695,13 @@ sbuf_vprintf(struct sbuf *s, const char *fmt, va_list ap)
 	if (SBUF_ISSECTION(s))
 		s->s_sect_len += len;
 
+#if __FreeBSD__
 	KASSERT(s->s_len < s->s_size,
 	    ("wrote past end of sbuf (%d >= %d)", s->s_len, s->s_size));
+#elif __NetBSD__
+	KASSERT(s->s_len < s->s_size,
+	    ("wrote past end of sbuf (%ld >= %ld)", s->s_len, s->s_size));
+#endif
 
 	if (s->s_error != 0)
 		return (-1);
@@ -810,7 +848,11 @@ sbuf_delete(struct sbuf *s)
 	/* don't care if it's finished or not */
 
 	if (SBUF_ISDYNAMIC(s))
+#if __FreeBSD__
 		SBFREE(s->s_buf);
+#elif __NetBSD__
+		kmem_free(s->s_buf, s->s_size);
+#endif
 	isdyn = SBUF_ISDYNSTRUCT(s);
 	memset(s, 0, sizeof(*s));
 	if (isdyn)

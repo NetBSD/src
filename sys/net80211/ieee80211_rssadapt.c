@@ -1,5 +1,5 @@
-/*	$FreeBSD$	*/
-/* $NetBSD: ieee80211_rssadapt.c,v 1.21.16.1 2018/06/28 21:03:07 phil Exp $ */
+/*	$NetBSD: ieee80211_rssadapt.c,v 1.21.16.2 2018/07/12 16:35:34 phil Exp $ */
+
 /*-
  * SPDX-License-Identifier: BSD-3-Clause
  *
@@ -39,17 +39,33 @@
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/module.h>
+#ifdef __NetBSD__
+/* Why doesn't FreeBSD have this?  */
+#include <sys/sbuf.h>
+#endif
 #include <sys/socket.h>
 #include <sys/sysctl.h>
 
 #include <net/if.h>
+#ifdef __FreeBSD__
 #include <net/if_var.h>
+#endif
 #include <net/if_media.h>
+#ifdef __FreeBSD__
 #include <net/ethernet.h>
+#endif
+#ifdef __NetBSD__
+#include <net/route.h>
+#endif
 
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_rssadapt.h>
 #include <net80211/ieee80211_ratectl.h>
+
+#ifdef __NetBSD__
+#undef  KASSERT
+#define KASSERT(__cond, __complaint) FBSDKASSERT(__cond, __complaint)
+#endif
 
 struct rssadapt_expavgctl {
 	/* RSS threshold decay. */
@@ -97,7 +113,7 @@ static void	rssadapt_sysctlattach(struct ieee80211vap *,
 /* number of references from net80211 layer */
 static	int nrefs = 0;
 
-static const struct ieee80211_ratectl rssadapt = {
+static const struct ieee80211_ratectl rssadapt __unused = {
 	.ir_name	= "rssadapt",
 	.ir_attach	= NULL,
 	.ir_detach	= NULL,
@@ -339,6 +355,7 @@ rssadapt_tx_complete(const struct ieee80211_node *ni,
 	}
 }
 
+#ifdef notyet
 static int
 rssadapt_sysctl_interval(SYSCTL_HANDLER_ARGS)
 {
@@ -353,13 +370,15 @@ rssadapt_sysctl_interval(SYSCTL_HANDLER_ARGS)
 	rssadapt_setinterval(vap, msecs);
 	return 0;
 }
+#endif
 
 static void
 rssadapt_sysctlattach(struct ieee80211vap *vap,
     struct sysctl_ctx_list *ctx, struct sysctl_oid *tree)
 {
-
+#ifdef notyet
 	SYSCTL_ADD_PROC(ctx, SYSCTL_CHILDREN(tree), OID_AUTO,
 	    "rssadapt_rate_interval", CTLTYPE_INT | CTLFLAG_RW, vap,
 	    0, rssadapt_sysctl_interval, "I", "rssadapt operation interval (ms)");
+#endif
 }

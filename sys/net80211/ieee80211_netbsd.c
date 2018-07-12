@@ -1,3 +1,5 @@
+/*	$NetBSD: ieee80211_netbsd.c,v 1.31.2.2 2018/07/12 16:35:34 phil Exp $ */
+
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
  *
@@ -26,40 +28,40 @@
  */
 
 #include <sys/cdefs.h>
-__FBSDID("$FreeBSD$");
+/*  __FBSDID("$FreeBSD$");  */
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.31.2.2 2018/07/12 16:35:34 phil Exp $");
 
 /*
- * IEEE 802.11 support (FreeBSD-specific code)
+ * IEEE 802.11 support (NetBSD-specific code)
  */
+
 #include "opt_wlan.h"
 
+#include <sys/atomic.h>
 #include <sys/param.h>
 #include <sys/systm.h> 
-#include <sys/eventhandler.h>
 #include <sys/kernel.h>
-#include <sys/linker.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>   
 #include <sys/module.h>
 #include <sys/proc.h>
 #include <sys/sysctl.h>
+#include <sys/syslog.h>
 
 #include <sys/socket.h>
 
 #include <net/bpf.h>
 #include <net/if.h>
-#include <net/if_var.h>
 #include <net/if_dl.h>
-#include <net/if_clone.h>
+#include <net/if_ether.h>
 #include <net/if_media.h>
 #include <net/if_types.h>
-#include <net/ethernet.h>
 #include <net/route.h>
-#include <net/vnet.h>
 
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_input.h>
 
+#ifdef notyet
 SYSCTL_NODE(_net, OID_AUTO, wlan, CTLFLAG_RD, 0, "IEEE 80211 parameters");
 
 #ifdef IEEE80211_DEBUG
@@ -67,9 +69,11 @@ static int	ieee80211_debug = 0;
 SYSCTL_INT(_net_wlan, OID_AUTO, debug, CTLFLAG_RW, &ieee80211_debug,
 	    0, "debugging printfs");
 #endif
+#endif /* notyet */
 
-static MALLOC_DEFINE(M_80211_COM, "80211com", "802.11 com state");
+/* static MALLOC_DEFINE(M_80211_COM, "80211com", "802.11 com state"); NNN */
 
+#ifdef notyet
 static const char wlanname[] = "wlan";
 static struct if_clone *wlan_cloner;
 
@@ -123,15 +127,21 @@ wlan_clone_destroy(struct ifnet *ifp)
 
 	ic->ic_vap_delete(vap);
 }
+#endif 
 
 void
 ieee80211_vap_destroy(struct ieee80211vap *vap)
 {
+#ifdef notyet
 	CURVNET_SET(vap->iv_ifp->if_vnet);
 	if_clone_destroyif(wlan_cloner, vap->iv_ifp);
 	CURVNET_RESTORE();
+#else
+	panic("ieee80211_vap_destroy");
+#endif
 }
 
+#ifdef notyet 
 int
 ieee80211_sysctl_msecs_ticks(SYSCTL_HANDLER_ARGS)
 {
@@ -201,6 +211,7 @@ ieee80211_sysctl_vap_restart(SYSCTL_HANDLER_ARGS)
 	ieee80211_restart_all(vap->iv_ic);
 	return 0;
 }
+#endif /* notyet */
 
 void
 ieee80211_sysctl_attach(struct ieee80211com *ic)
@@ -215,6 +226,7 @@ ieee80211_sysctl_detach(struct ieee80211com *ic)
 void
 ieee80211_sysctl_vattach(struct ieee80211vap *vap)
 {
+#ifdef notyet
 	struct ifnet *ifp = vap->iv_ifp;
 	struct sysctl_ctx_list *ctx;
 	struct sysctl_oid *oid;
@@ -294,25 +306,28 @@ ieee80211_sysctl_vattach(struct ieee80211vap *vap)
 	}
 	vap->iv_sysctl = ctx;
 	vap->iv_oid = oid;
+#endif
 }
 
 void
 ieee80211_sysctl_vdetach(struct ieee80211vap *vap)
 {
-
+#ifdef notyet
 	if (vap->iv_sysctl != NULL) {
 		sysctl_ctx_free(vap->iv_sysctl);
 		IEEE80211_FREE(vap->iv_sysctl, M_DEVBUF);
 		vap->iv_sysctl = NULL;
 	}
+#endif
 }
+
 
 int
 ieee80211_node_dectestref(struct ieee80211_node *ni)
 {
 	/* XXX need equivalent of atomic_dec_and_test */
 	atomic_subtract_int(&ni->ni_refcnt, 1);
-	return atomic_cmpset_int(&ni->ni_refcnt, 0, 1);
+	return atomic_cas_uint(&ni->ni_refcnt, 0, 1) == 0;
 }
 
 void
@@ -326,12 +341,10 @@ ieee80211_drain_ifq(struct ifqueue *ifq)
 		if (m == NULL)
 			break;
 
-		ni = (struct ieee80211_node *)m->m_pkthdr.rcvif;
-		KASSERT(ni != NULL, ("frame w/o node"));
+		ni = (struct ieee80211_node *)m_get_rcvif_NOMPSAFE(m);
+		FBSDKASSERT(ni != NULL, ("frame w/o node"));
 		ieee80211_free_node(ni);
-		m->m_pkthdr.rcvif = NULL;
-
-		m_freem(m);
+		ieee80211_free_mbuf(m);
 	}
 }
 
@@ -341,16 +354,16 @@ ieee80211_flush_ifq(struct ifqueue *ifq, struct ieee80211vap *vap)
 	struct ieee80211_node *ni;
 	struct mbuf *m, **mprev;
 
-	IF_LOCK(ifq);
+	IFQ_LOCK(ifq);
 	mprev = &ifq->ifq_head;
 	while ((m = *mprev) != NULL) {
-		ni = (struct ieee80211_node *)m->m_pkthdr.rcvif;
+		ni = (struct ieee80211_node *)m_get_rcvif_NOMPSAFE(m);
 		if (ni != NULL && ni->ni_vap == vap) {
 			*mprev = m->m_nextpkt;		/* remove from list */
 			ifq->ifq_len--;
 
-			m_freem(m);
 			ieee80211_free_node(ni);	/* reclaim ref */
+			ieee80211_free_mbuf(m);
 		} else
 			mprev = &m->m_nextpkt;
 	}
@@ -359,7 +372,7 @@ ieee80211_flush_ifq(struct ifqueue *ifq, struct ieee80211vap *vap)
 	for (; m != NULL && m->m_nextpkt != NULL; m = m->m_nextpkt)
 		;
 	ifq->ifq_tail = m;
-	IF_UNLOCK(ifq);
+	IFQ_UNLOCK(ifq);
 }
 
 /*
@@ -391,7 +404,7 @@ ieee80211_getmgtframe(uint8_t **frm, int headroom, int pktlen)
 	 *     so we don't need to do anything special.
 	 */
 	len = roundup2(headroom + pktlen, 4);
-	KASSERT(len <= MCLBYTES, ("802.11 mgt frame too large: %u", len));
+	FBSDKASSERT(len <= MCLBYTES, ("802.11 mgt frame too large: %u", len));
 	if (len < MINCLSIZE) {
 		m = m_gethdr(M_NOWAIT, MT_DATA);
 		/*
@@ -460,7 +473,7 @@ ieee80211_add_callback(struct mbuf *m,
 	struct m_tag *mtag;
 	struct ieee80211_cb *cb;
 
-	mtag = m_tag_alloc(MTAG_ABI_NET80211, NET80211_TAG_CALLBACK,
+	mtag = m_tag_get(/*MTAG_ABI_NET80211*/ NET80211_TAG_CALLBACK,
 			sizeof(struct ieee80211_cb), M_NOWAIT);
 	if (mtag == NULL)
 		return 0;
@@ -480,7 +493,7 @@ ieee80211_add_xmit_params(struct mbuf *m,
 	struct m_tag *mtag;
 	struct ieee80211_tx_params *tx;
 
-	mtag = m_tag_alloc(MTAG_ABI_NET80211, NET80211_TAG_XMIT_PARAMS,
+	mtag = m_tag_get(/*MTAG_ABI_NET80211*/ NET80211_TAG_XMIT_PARAMS,
 	    sizeof(struct ieee80211_tx_params), M_NOWAIT);
 	if (mtag == NULL)
 		return (0);
@@ -498,7 +511,7 @@ ieee80211_get_xmit_params(struct mbuf *m,
 	struct m_tag *mtag;
 	struct ieee80211_tx_params *tx;
 
-	mtag = m_tag_locate(m, MTAG_ABI_NET80211, NET80211_TAG_XMIT_PARAMS,
+	mtag = m_tag_find(m, /*MTAG_ABI_NET80211,*/ NET80211_TAG_XMIT_PARAMS,
 	    NULL);
 	if (mtag == NULL)
 		return (-1);
@@ -513,7 +526,7 @@ ieee80211_process_callback(struct ieee80211_node *ni,
 {
 	struct m_tag *mtag;
 
-	mtag = m_tag_locate(m, MTAG_ABI_NET80211, NET80211_TAG_CALLBACK, NULL);
+	mtag = m_tag_find(m, /*MTAG_ABI_NET80211,*/ NET80211_TAG_CALLBACK, NULL);
 	if (mtag != NULL) {
 		struct ieee80211_cb *cb = (struct ieee80211_cb *)(mtag+1);
 		cb->func(ni, cb->arg, status);
@@ -531,7 +544,7 @@ ieee80211_add_rx_params(struct mbuf *m, const struct ieee80211_rx_stats *rxs)
 	struct m_tag *mtag;
 	struct ieee80211_rx_params *rx;
 
-	mtag = m_tag_alloc(MTAG_ABI_NET80211, NET80211_TAG_RECV_PARAMS,
+	mtag = m_tag_get(/*MTAG_ABI_NET80211,*/ NET80211_TAG_RECV_PARAMS,
 	    sizeof(struct ieee80211_rx_stats), M_NOWAIT);
 	if (mtag == NULL)
 		return (0);
@@ -548,7 +561,7 @@ ieee80211_get_rx_params(struct mbuf *m, struct ieee80211_rx_stats *rxs)
 	struct m_tag *mtag;
 	struct ieee80211_rx_params *rx;
 
-	mtag = m_tag_locate(m, MTAG_ABI_NET80211, NET80211_TAG_RECV_PARAMS,
+	mtag = m_tag_find(m, /*MTAG_ABI_NET80211,*/ NET80211_TAG_RECV_PARAMS,
 	    NULL);
 	if (mtag == NULL)
 		return (-1);
@@ -563,7 +576,7 @@ ieee80211_get_rx_params_ptr(struct mbuf *m)
 	struct m_tag *mtag;
 	struct ieee80211_rx_params *rx;
 
-	mtag = m_tag_locate(m, MTAG_ABI_NET80211, NET80211_TAG_RECV_PARAMS,
+	mtag = m_tag_find(m, /*MTAG_ABI_NET80211,*/ NET80211_TAG_RECV_PARAMS,
 	    NULL);
 	if (mtag == NULL)
 		return (NULL);
@@ -581,7 +594,7 @@ ieee80211_add_toa_params(struct mbuf *m, const struct ieee80211_toa_params *p)
 	struct m_tag *mtag;
 	struct ieee80211_toa_params *rp;
 
-	mtag = m_tag_alloc(MTAG_ABI_NET80211, NET80211_TAG_TOA_PARAMS,
+	mtag = m_tag_get(/*MTAG_ABI_NET80211,*/ NET80211_TAG_TOA_PARAMS,
 	    sizeof(struct ieee80211_toa_params), M_NOWAIT);
 	if (mtag == NULL)
 		return (0);
@@ -598,7 +611,7 @@ ieee80211_get_toa_params(struct mbuf *m, struct ieee80211_toa_params *p)
 	struct m_tag *mtag;
 	struct ieee80211_toa_params *rp;
 
-	mtag = m_tag_locate(m, MTAG_ABI_NET80211, NET80211_TAG_TOA_PARAMS,
+	mtag = m_tag_find(m, /*MTAG_ABI_NET80211,*/ NET80211_TAG_TOA_PARAMS,
 	    NULL);
 	if (mtag == NULL)
 		return (0);
@@ -625,7 +638,7 @@ ieee80211_parent_xmitpkt(struct ieee80211com *ic, struct mbuf *m)
 	if (error) {
 		struct ieee80211_node *ni;
 
-		ni = (struct ieee80211_node *)m->m_pkthdr.rcvif;
+		ni = (struct ieee80211_node *)m_get_rcvif_NOMPSAFE(m);
 
 		/* XXX number of fragments */
 		if_inc_counter(ni->ni_vap->iv_ifp, IFCOUNTER_OERRORS, 1);
@@ -652,8 +665,6 @@ ieee80211_vap_xmitpkt(struct ieee80211vap *vap, struct mbuf *m)
 	return (ifp->if_transmit(ifp, m));
 
 }
-
-#include <sys/libkern.h>
 
 void
 get_random_bytes(void *p, size_t n)
@@ -923,12 +934,19 @@ ieee80211_load_module(const char *modname)
 {
 
 #ifdef notyet
-	(void)kern_kldload(curthread, modname, NULL);
+	struct thread *td = curthread;
+
+	if (suser(td) == 0 && securelevel_gt(td->td_ucred, 0) == 0) {
+		mtx_lock(&Giant);
+		(void) linker_load_module(modname, NULL, NULL, NULL, NULL);
+		mtx_unlock(&Giant);
+	}
 #else
 	printf("%s: load the %s module by hand for now.\n", __func__, modname);
 #endif
 }
 
+#ifdef notyet
 static eventhandler_tag wlan_bpfevent;
 static eventhandler_tag wlan_ifllevent;
 
@@ -972,7 +990,55 @@ wlan_iflladdr(void *arg __unused, struct ifnet *ifp)
 		IEEE80211_ADDR_COPY(vap->iv_myaddr, IF_LLADDR(ifp));
 	}
 }
+#endif
 
+void
+if_inc_counter(struct ifnet *ifp, ift_counter ifc, int64_t value)
+{
+	switch (ifc) {
+	case IFCOUNTER_IPACKETS:
+		ifp->if_data.ifi_ipackets += value;
+		break;
+	case IFCOUNTER_IERRORS:
+		ifp->if_data.ifi_ierrors += value;
+		break;
+	case IFCOUNTER_OPACKETS:
+		ifp->if_data.ifi_opackets += value;
+		break;
+	case IFCOUNTER_OERRORS:
+		ifp->if_data.ifi_oerrors += value;
+		break;
+        case IFCOUNTER_COLLISIONS:
+		ifp->if_data.ifi_collisions += value;
+		break;
+        case IFCOUNTER_IBYTES:
+		ifp->if_data.ifi_ibytes += value;
+		break;
+        case IFCOUNTER_OBYTES:
+		ifp->if_data.ifi_obytes += value;
+		break;
+        case IFCOUNTER_IMCASTS:
+		ifp->if_data.ifi_imcasts += value;
+		break;
+        case IFCOUNTER_OMCASTS:
+		ifp->if_data.ifi_omcasts += value;
+		break;
+        case IFCOUNTER_IQDROPS:
+		ifp->if_data.ifi_iqdrops += value;
+		break;
+        case IFCOUNTER_OQDROPS:
+		/* ifp->if_data.ifi_oqdrops += value; No such field, just ignore it q*/
+		break;
+        case IFCOUNTER_NOPROTO:
+		ifp->if_data.ifi_noproto += value;
+		break;
+	default:
+		panic("if_inc_counter: non-existant counter");
+	} 
+}
+
+
+#ifdef notyet
 /*
  * Module glue.
  *
@@ -1009,7 +1075,218 @@ static moduledata_t wlan_mod = {
 DECLARE_MODULE(wlan, wlan_mod, SI_SUB_DRIVERS, SI_ORDER_FIRST);
 MODULE_VERSION(wlan, 1);
 MODULE_DEPEND(wlan, ether, 1, 1, 1);
+#endif
+
 #ifdef	IEEE80211_ALQ
 MODULE_DEPEND(wlan, alq, 1, 1, 1);
 #endif	/* IEEE80211_ALQ */
 
+/* Missing support for if_printf in NetBSD ... */
+int
+if_printf(struct ifnet *ifp, const char *fmt, ...)
+{
+        char if_fmt[256];
+        va_list ap;
+
+        snprintf(if_fmt, sizeof(if_fmt), "%s: %s", ifp->if_xname, fmt);
+        va_start(ap, fmt);
+        vlog(LOG_INFO, if_fmt, ap);
+        va_end(ap);
+        return (0);
+}
+
+/*
+ * Set the m_data pointer of a newly-allocated mbuf
+ * to place an object of the specified size at the
+ * end of the mbuf, longword aligned.
+ */
+void
+m_align(struct mbuf *m, int len)
+{
+	int adjust;
+
+	KASSERT(len != M_COPYALL);
+
+	if (m->m_flags & M_EXT)
+		adjust = m->m_ext.ext_size - len;
+	else if (m->m_flags & M_PKTHDR)
+		adjust = MHLEN - len;
+	else
+		adjust = MLEN - len;
+	m->m_data += adjust &~ (sizeof(long)-1);
+}
+
+/*
+ * Append the specified data to the indicated mbuf chain,
+ * Extend the mbuf chain if the new data does not fit in
+ * existing space.
+ *
+ * Return 1 if able to complete the job; otherwise 0.
+ */
+int
+m_append(struct mbuf *m0, int len, const void *cpv)
+{
+	struct mbuf *m, *n;
+	int remainder, space;
+	const char *cp = cpv;
+
+	KASSERT(len != M_COPYALL);
+	for (m = m0; m->m_next != NULL; m = m->m_next)
+		continue;
+	remainder = len;
+	space = M_TRAILINGSPACE(m);
+	if (space > 0) {
+		/*
+		 * Copy into available space.
+		 */
+		if (space > remainder)
+			space = remainder;
+		memmove(mtod(m, char *) + m->m_len, cp, space);
+		m->m_len += space;
+		cp = cp + space, remainder -= space;
+	}
+	while (remainder > 0) {
+		/*
+		 * Allocate a new mbuf; could check space
+		 * and allocate a cluster instead.
+		 */
+		n = m_get(M_DONTWAIT, m->m_type);
+		if (n == NULL)
+			break;
+		n->m_len = min(MLEN, remainder);
+		memmove(mtod(n, void *), cp, n->m_len);
+		cp += n->m_len, remainder -= n->m_len;
+		m->m_next = n;
+		m = n;
+	}
+	if (m0->m_flags & M_PKTHDR)
+		m0->m_pkthdr.len += len - remainder;
+	return (remainder == 0);
+}
+
+/*
+ * Create a writable copy of the mbuf chain.  While doing this
+ * we compact the chain with a goal of producing a chain with
+ * at most two mbufs.  The second mbuf in this chain is likely
+ * to be a cluster.  The primary purpose of this work is to create
+ * a writable packet for encryption, compression, etc.  The
+ * secondary goal is to linearize the data so the data can be
+ * passed to crypto hardware in the most efficient manner possible.
+ */
+struct mbuf *
+m_unshare(struct mbuf *m0, int how)
+{
+	struct mbuf *m, *mprev;
+	struct mbuf *n, *mfirst, *mlast;
+	int len, off;
+
+	mprev = NULL;
+	for (m = m0; m != NULL; m = mprev->m_next) {
+		/*
+		 * Regular mbufs are ignored unless there's a cluster
+		 * in front of it that we can use to coalesce.  We do
+		 * the latter mainly so later clusters can be coalesced
+		 * also w/o having to handle them specially (i.e. convert
+		 * mbuf+cluster -> cluster).  This optimization is heavily
+		 * influenced by the assumption that we're running over
+		 * Ethernet where MCLBYTES is large enough that the max
+		 * packet size will permit lots of coalescing into a
+		 * single cluster.  This in turn permits efficient
+		 * crypto operations, especially when using hardware.
+		 */
+		if ((m->m_flags & M_EXT) == 0) {
+			if (mprev && (mprev->m_flags & M_EXT) &&
+			    m->m_len <= M_TRAILINGSPACE(mprev)) {
+				/* XXX: this ignores mbuf types */
+				memcpy(mtod(mprev, caddr_t) + mprev->m_len,
+				    mtod(m, caddr_t), m->m_len);
+				mprev->m_len += m->m_len;
+				mprev->m_next = m->m_next;	/* unlink from chain */
+				m_free(m);			/* reclaim mbuf */
+			} else {
+				mprev = m;
+			}
+			continue;
+		}
+		/*
+		 * Writable mbufs are left alone (for now).
+		 */
+		if (!M_READONLY(m)) {
+			mprev = m;
+			continue;
+		}
+
+		/*
+		 * Not writable, replace with a copy or coalesce with
+		 * the previous mbuf if possible (since we have to copy
+		 * it anyway, we try to reduce the number of mbufs and
+		 * clusters so that future work is easier).
+		 */
+		FBSDKASSERT(m->m_flags & M_EXT, ("m_flags 0x%x", m->m_flags));
+		/* NB: we only coalesce into a cluster or larger */
+		if (mprev != NULL && (mprev->m_flags & M_EXT) &&
+		    m->m_len <= M_TRAILINGSPACE(mprev)) {
+			/* XXX: this ignores mbuf types */
+			memcpy(mtod(mprev, caddr_t) + mprev->m_len,
+			    mtod(m, caddr_t), m->m_len);
+			mprev->m_len += m->m_len;
+			mprev->m_next = m->m_next;	/* unlink from chain */
+			m_free(m);			/* reclaim mbuf */
+			continue;
+		}
+
+		/*
+		 * Allocate new space to hold the copy and copy the data.
+		 * We deal with jumbo mbufs (i.e. m_len > MCLBYTES) by
+		 * splitting them into clusters.  We could just malloc a
+		 * buffer and make it external but too many device drivers
+		 * don't know how to break up the non-contiguous memory when
+		 * doing DMA.
+		 */
+		n = m_getcl(how, m->m_type, m->m_flags & M_COPYFLAGS);
+		if (n == NULL) {
+			m_freem(m0);
+			return (NULL);
+		}
+		if (m->m_flags & M_PKTHDR) {
+			FBSDKASSERT(mprev == NULL, ("%s: m0 %p, m %p has M_PKTHDR",
+			    __func__, m0, m));
+			m_move_pkthdr(n, m);
+		}
+		len = m->m_len;
+		off = 0;
+		mfirst = n;
+		mlast = NULL;
+		for (;;) {
+			int cc = min(len, MCLBYTES);
+			memcpy(mtod(n, caddr_t), mtod(m, caddr_t) + off, cc);
+			n->m_len = cc;
+			if (mlast != NULL)
+				mlast->m_next = n;
+			mlast = n;
+#if 0
+			newipsecstat.ips_clcopied++;
+#endif
+
+			len -= cc;
+			if (len <= 0)
+				break;
+			off += cc;
+
+			n = m_getcl(how, m->m_type, m->m_flags & M_COPYFLAGS);
+			if (n == NULL) {
+				m_freem(mfirst);
+				m_freem(m0);
+				return (NULL);
+			}
+		}
+		n->m_next = m->m_next;
+		if (mprev == NULL)
+			m0 = mfirst;		/* new head of chain */
+		else
+			mprev->m_next = mfirst;	/* replace old mbuf */
+		m_free(m);			/* release old mbuf */
+		mprev = mfirst;
+	}
+	return (m0);
+}

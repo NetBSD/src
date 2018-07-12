@@ -1,3 +1,5 @@
+/*	$NetBSD: ieee80211_ioctl.c,v 1.60.18.2 2018/07/12 16:35:34 phil Exp $ */
+
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
  *
@@ -27,7 +29,9 @@
  */
 
 #include <sys/cdefs.h>
+#if __FreeBSD__
 __FBSDID("$FreeBSD$");
+#endif
 
 /*
  * IEEE 802.11 ioctl support (FreeBSD-specific)
@@ -40,26 +44,45 @@ __FBSDID("$FreeBSD$");
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
+#if __FreeBSD__
 #include <sys/priv.h>
+#endif
 #include <sys/socket.h>
 #include <sys/sockio.h>
 #include <sys/systm.h>
  
 #include <net/if.h>
+#if __FreeBSD__
 #include <net/if_var.h>
+#endif
 #include <net/if_dl.h>
 #include <net/if_media.h>
+#if __FreeBSD__
 #include <net/ethernet.h>
+#endif
+#if __NetBSD__
+#include <net/if_ether.h>
+#endif
 
 #ifdef INET
 #include <netinet/in.h>
+#if __FreeBSD__
 #include <netinet/if_ether.h>
+#endif
+#if __NetBSD__
+#include <netinet/if_inarp.h>
+#endif
 #endif
 
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_ioctl.h>
 #include <net80211/ieee80211_regdomain.h>
 #include <net80211/ieee80211_input.h>
+
+#ifdef __NetBSD__
+#undef  KASSERT
+#define KASSERT(__cond, __complaint) FBSDKASSERT(__cond, __complaint)
+#endif
 
 #define	IS_UP_AUTO(_vap) \
 	(IFNET_IS_UP_RUNNING((_vap)->iv_ifp) && \
@@ -751,7 +774,7 @@ ieee80211_ioctl_getstavlan(struct ieee80211vap *vap, struct ieee80211req *ireq)
 /*
  * Dummy ioctl get handler so the linker set is defined.
  */
-static int
+static __unused int
 dummy_ioctl_get(struct ieee80211vap *vap, struct ieee80211req *ireq)
 {
 	return ENOSYS;
@@ -761,6 +784,7 @@ IEEE80211_IOCTL_GET(dummy, dummy_ioctl_get);
 static int
 ieee80211_ioctl_getdefault(struct ieee80211vap *vap, struct ieee80211req *ireq)
 {
+#ifdef notyet
 	ieee80211_ioctl_getfunc * const *get;
 	int error;
 
@@ -769,6 +793,7 @@ ieee80211_ioctl_getdefault(struct ieee80211vap *vap, struct ieee80211req *ireq)
 		if (error != ENOSYS)
 			return error;
 	}
+#endif
 	return EINVAL;
 }
 
@@ -2668,7 +2693,7 @@ isvapht(const struct ieee80211vap *vap)
 /*
  * Dummy ioctl set handler so the linker set is defined.
  */
-static int
+static __unused int
 dummy_ioctl_set(struct ieee80211vap *vap, struct ieee80211req *ireq)
 {
 	return ENOSYS;
@@ -2678,6 +2703,7 @@ IEEE80211_IOCTL_SET(dummy, dummy_ioctl_set);
 static int
 ieee80211_ioctl_setdefault(struct ieee80211vap *vap, struct ieee80211req *ireq)
 {
+#ifdef notyet
 	ieee80211_ioctl_setfunc * const *set;
 	int error;
 
@@ -2686,6 +2712,7 @@ ieee80211_ioctl_setdefault(struct ieee80211vap *vap, struct ieee80211req *ireq)
 		if (error != ENOSYS)
 			return error;
 	}
+#endif
 	return EINVAL;
 }
 
@@ -3520,7 +3547,11 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 					wait = 1;
 				ieee80211_start_locked(vap);
 			}
+#if __FreeBSD__
 		} else if (ifp->if_drv_flags & IFF_DRV_RUNNING) {
+#elif __NetBSD__
+		} else if (ifp->if_flags & IFF_RUNNING) {
+#endif
 			/*
 			 * Stop ourself.  If we are the last vap to be
 			 * marked down the parent will also be taken down.
@@ -3567,8 +3598,12 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 	case SIOCG80211STATS:
 		ifr = (struct ifreq *)data;
+#if __FreeBSD__
 		copyout(&vap->iv_stats, ifr_data_get_ptr(ifr),
 		    sizeof (vap->iv_stats));
+#elif__NetBSD__
+		copyout(&vap->iv_stats, ifr->ifr_data, sizeof (vap->iv_stats));
+#endif
 		break;
 	case SIOCSIFMTU:
 		ifr = (struct ifreq *)data;

@@ -1,3 +1,5 @@
+/*	$NetBSD: ieee80211_wds.c,v 1.1.2.2 2018/07/12 16:35:34 phil Exp $ */
+
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
  *
@@ -50,10 +52,18 @@ __FBSDID("$FreeBSD$");
 #include <sys/sysctl.h>
 
 #include <net/if.h>
+#ifdef __FreeBSD__
 #include <net/if_var.h>
+#endif
 #include <net/if_media.h>
 #include <net/if_llc.h>
+#ifdef __FreeBSD__
 #include <net/ethernet.h>
+#endif
+#ifdef __NetBSD__
+#include <net/if_ether.h>
+#include <net/route.h>
+#endif
 
 #include <net/bpf.h>
 
@@ -62,6 +72,11 @@ __FBSDID("$FreeBSD$");
 #include <net80211/ieee80211_input.h>
 #ifdef IEEE80211_SUPPORT_SUPERG
 #include <net80211/ieee80211_superg.h>
+#endif
+
+#ifdef __NetBSD__
+#undef  KASSERT
+#define KASSERT(__cond, __complaint) FBSDKASSERT(__cond, __complaint)
 #endif
 
 static void wds_vattach(struct ieee80211vap *);
@@ -254,8 +269,13 @@ ieee80211_dwds_mcast(struct ieee80211vap *vap0, struct mbuf *m)
 			continue;
 		/* if it came in this interface, don't send it back out */
 		ifp = vap->iv_ifp;
+#ifdef __FreeBSD__
 		if (ifp == m->m_pkthdr.rcvif)
 			continue;
+#elif __NetBSD__
+		if (ifp == m_get_rcvif_NOMPSAFE(m))
+			continue;
+#endif
 		/*
 		 * Duplicate the frame and send it.
 		 */
@@ -299,7 +319,11 @@ ieee80211_dwds_mcast(struct ieee80211vap *vap0, struct mbuf *m)
 			continue;
 		}
 		mcopy->m_flags |= M_MCAST;
+#ifdef __FreeBSD__		
 		mcopy->m_pkthdr.rcvif = (void *) ni;
+#elif __NetBSD__
+		m_set_rcvif(mcopy, (void *)ni);
+#endif
 
 		err = ieee80211_parent_xmitpkt(ic, mcopy);
 		IEEE80211_TX_UNLOCK(ic);
@@ -332,8 +356,13 @@ ieee80211_dwds_discover(struct ieee80211_node *ni, struct mbuf *m)
 	 * XXX handle overflow?
 	 * XXX per/vap beacon interval?
 	 */
+#ifdef __FreeBSD__
 	m->m_pkthdr.rcvif = (void *)(uintptr_t)
 	    ieee80211_mac_hash(ic, ni->ni_macaddr);
+#elif __NetBSD__
+	m_set_rcvif(m, (void *)(uintptr_t)
+	    ieee80211_mac_hash(ic, ni->ni_macaddr));
+#endif
 	(void) ieee80211_ageq_append(&ic->ic_stageq, m,
 	    ((ni->ni_intval * ic->ic_lintval) << 2) / 1024);
 	ieee80211_notify_wds_discover(ni);

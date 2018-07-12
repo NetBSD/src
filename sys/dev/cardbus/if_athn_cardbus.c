@@ -1,4 +1,4 @@
-/*	$NetBSD: if_athn_cardbus.c,v 1.2 2013/04/03 14:20:02 christos Exp $	*/
+/*	$NetBSD: if_athn_cardbus.c,v 1.2.40.1 2018/07/12 16:35:33 phil Exp $	*/
 /*	$OpenBSD: if_athn_cardbus.c,v 1.13 2011/01/08 10:02:32 damien Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_athn_cardbus.c,v 1.2 2013/04/03 14:20:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_athn_cardbus.c,v 1.2.40.1 2018/07/12 16:35:33 phil Exp $");
 
 #include "opt_inet.h"
 
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_athn_cardbus.c,v 1.2 2013/04/03 14:20:02 christos
 #include <net/if.h>
 #include <net/if_ether.h>
 #include <net/if_media.h>
+#include <net/route.h>
 
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_amrr.h>

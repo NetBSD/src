@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_sysctl.h,v 1.9 2009/10/19 23:19:39 rmind Exp $ */
+/*	$NetBSD: ieee80211_sysctl.h,v 1.9.64.1 2018/07/12 16:35:34 phil Exp $ */
 /*-
  * Copyright (c) 2005 David Young.  All rights reserved.
  *

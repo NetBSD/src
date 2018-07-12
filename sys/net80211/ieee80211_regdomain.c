@@ -1,3 +1,5 @@
+/*	$NetBSD: ieee80211_regdomain.c,v 1.1.56.3 2018/07/12 16:35:34 phil Exp $ */
+
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
  *
@@ -26,7 +28,9 @@
  */
 
 #include <sys/cdefs.h>
+#ifdef __FreeBSD__
 __FBSDID("$FreeBSD$");
+#endif
 
 /*
  * IEEE 802.11 regdomain support.
@@ -40,12 +44,24 @@ __FBSDID("$FreeBSD$");
 #include <sys/socket.h>
 
 #include <net/if.h>
+#ifdef __FreeBSD__
 #include <net/if_var.h>
+#endif
 #include <net/if_media.h>
+#ifdef __FreeBSD__
 #include <net/ethernet.h>
+#endif
+#ifdef __NetBSD__
+#include <net/route.h>
+#endif
 
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_regdomain.h>
+
+#ifdef __NetBSD__
+#undef  KASSERT
+#define KASSERT(__cond, __complaint) FBSDKASSERT(__cond, __complaint)
+#endif
 
 static void
 null_getradiocaps(struct ieee80211com *ic, int maxchan,

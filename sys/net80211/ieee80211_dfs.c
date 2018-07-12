@@ -1,3 +1,5 @@
+/*	$NetBSD: ieee80211_dfs.c,v 1.1.2.2 2018/07/12 16:35:34 phil Exp $ */
+
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
  *
@@ -50,22 +52,35 @@ __FBSDID("$FreeBSD$");
 #include <sys/sysctl.h>
 
 #include <net/if.h>
+#ifdef __FreeBSD__
 #include <net/if_var.h>
+#endif
 #include <net/if_media.h>
+#ifdef __FreeBSD__
 #include <net/ethernet.h>
+#endif
+#ifdef __NetBSD__
+#include <net/route.h>
+#endif
 
 #include <net80211/ieee80211_var.h>
 
+#ifdef __FreeBSD__
 static MALLOC_DEFINE(M_80211_DFS, "80211dfs", "802.11 DFS state");
+#endif
 
 static	int ieee80211_nol_timeout = 30*60;		/* 30 minutes */
+#if notyet
 SYSCTL_INT(_net_wlan, OID_AUTO, nol_timeout, CTLFLAG_RW,
 	&ieee80211_nol_timeout, 0, "NOL timeout (secs)");
+#endif
 #define	NOL_TIMEOUT	msecs_to_ticks(ieee80211_nol_timeout*1000)
 
 static	int ieee80211_cac_timeout = 60;		/* 60 seconds */
+#ifdef notyet
 SYSCTL_INT(_net_wlan, OID_AUTO, cac_timeout, CTLFLAG_RW,
 	&ieee80211_cac_timeout, 0, "CAC timeout (secs)");
+#endif
 #define	CAC_TIMEOUT	msecs_to_ticks(ieee80211_cac_timeout*1000)
 
 /*
@@ -99,10 +114,12 @@ null_set_quiet(struct ieee80211_node *ni, u_int8_t *quiet_elm)
 void
 ieee80211_dfs_attach(struct ieee80211com *ic)
 {
+#ifdef __FreeBSD__
 	struct ieee80211_dfs_state *dfs = &ic->ic_dfs;
 
 	callout_init_mtx(&dfs->nol_timer, IEEE80211_LOCK_OBJ(ic), 0);
 	callout_init_mtx(&dfs->cac_timer, IEEE80211_LOCK_OBJ(ic), 0);
+#endif
 
 	ic->ic_set_quiet = null_set_quiet;
 }

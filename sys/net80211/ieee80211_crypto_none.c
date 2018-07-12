@@ -1,3 +1,5 @@
+/*	$NetBSD: ieee80211_crypto_none.c,v 1.8.4.2 2018/07/12 16:35:34 phil Exp $ */
+
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
  *
@@ -26,7 +28,9 @@
  */
 
 #include <sys/cdefs.h>
+#ifdef __FreeBSD__
 __FBSDID("$FreeBSD$");
+#endif
 
 /*
  * IEEE 802.11 NULL crypto support.
@@ -44,7 +48,12 @@ __FBSDID("$FreeBSD$");
 
 #include <net/if.h>
 #include <net/if_media.h>
+#ifdef __FreeBSD__
 #include <net/ethernet.h>
+#endif
+#ifdef __NetBSD__
+#include <net/route.h>
+#endif
 
 #include <net80211/ieee80211_var.h>
 

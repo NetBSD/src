@@ -1,3 +1,5 @@
+/*	$NetBSD: ieee80211_proto.c,v 1.34.14.2 2018/07/12 16:35:34 phil Exp $ */
+
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
  *
@@ -28,7 +30,9 @@
  */
 
 #include <sys/cdefs.h>
+#if __FreeBSD__
 __FBSDID("$FreeBSD$");
+#endif
 
 /*
  * IEEE 802.11 protocol support.
@@ -41,14 +45,25 @@ __FBSDID("$FreeBSD$");
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
+#ifdef __NetBSD__
+#include <sys/mbuf.h>
+#endif
 
 #include <sys/socket.h>
 #include <sys/sockio.h>
 
 #include <net/if.h>
+#if __FreeBSD__
 #include <net/if_var.h>
+#endif
 #include <net/if_media.h>
+#if __FreeBSD__
 #include <net/ethernet.h>		/* XXX for ether_sprintf */
+#endif
+#ifdef __NetBSD__
+#include <net/if_ether.h>
+#include <net/route.h>
+#endif
 
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_adhoc.h>
@@ -60,6 +75,11 @@ __FBSDID("$FreeBSD$");
 #endif
 #include <net80211/ieee80211_monitor.h>
 #include <net80211/ieee80211_input.h>
+
+#ifdef __NetBSD__
+#undef  KASSERT
+#define KASSERT(__cond, __complaint) FBSDKASSERT(__cond, __complaint)
+#endif
 
 /* XXX tunables */
 #define	AGGRESSIVE_MODE_SWITCH_HYSTERESIS	3	/* pkts / 100ms */
@@ -335,7 +355,9 @@ ieee80211_proto_vattach(struct ieee80211vap *vap)
 	vap->iv_rtsthreshold = IEEE80211_RTS_DEFAULT;
 	vap->iv_fragthreshold = IEEE80211_FRAG_DEFAULT;
 	vap->iv_bmiss_max = IEEE80211_BMISS_MAX;
+#if __FreeBSD__
 	callout_init_mtx(&vap->iv_swbmiss, IEEE80211_LOCK_OBJ(ic), 0);
+#endif
 	callout_init(&vap->iv_mgtsend, 1);
 	TASK_INIT(&vap->iv_nstate_task, 0, ieee80211_newstate_cb, vap);
 	TASK_INIT(&vap->iv_swbmiss_task, 0, beacon_swmiss, vap);
@@ -449,7 +471,7 @@ static const struct ieee80211_authenticator auth_internal = {
 /*
  * Setup internal authenticators once; they are never unregistered.
  */
-static void
+static __unused void
 ieee80211_auth_setup(void)
 {
 	ieee80211_authenticator_register(IEEE80211_AUTH_OPEN, &auth_internal);
@@ -1498,7 +1520,11 @@ ieee80211_start_locked(struct ieee80211vap *vap)
 		IEEE80211_MSG_STATE | IEEE80211_MSG_DEBUG,
 		"start running, %d vaps running\n", ic->ic_nrunning);
 
+#if __FreeBSD__
 	if ((ifp->if_drv_flags & IFF_DRV_RUNNING) == 0) {
+#elif __NetBSD__
+	if ((ifp->if_flags & IFF_RUNNING) == 0) {
+#endif
 		/*
 		 * Mark us running.  Note that it's ok to do this first;
 		 * if we need to bring the parent device up we defer that
@@ -1507,7 +1533,11 @@ ieee80211_start_locked(struct ieee80211vap *vap)
 		 * through ieee80211_start_all at which point we'll come
 		 * back in here and complete the work.
 		 */
+#if __FreeBSD__
 		ifp->if_drv_flags |= IFF_DRV_RUNNING;
+#elif __NetBSD__
+		ifp->if_flags |= IFF_RUNNING;
+#endif
 		/*
 		 * We are not running; if this we are the first vap
 		 * to be brought up auto-up the parent if necessary.
@@ -1619,8 +1649,13 @@ ieee80211_stop_locked(struct ieee80211vap *vap)
 	    "stop running, %d vaps running\n", ic->ic_nrunning);
 
 	ieee80211_new_state_locked(vap, IEEE80211_S_INIT, -1);
+#if __FreeBSD__
 	if (ifp->if_drv_flags & IFF_DRV_RUNNING) {
 		ifp->if_drv_flags &= ~IFF_DRV_RUNNING;	/* mark us stopped */
+#elif __NetBSD__
+	if (ifp->if_flags & IFF_RUNNING) {
+		ifp->if_flags &= ~IFF_RUNNING;	/* mark us stopped */
+#endif
 		if (--ic->ic_nrunning == 0) {
 			IEEE80211_DPRINTF(vap,
 			    IEEE80211_MSG_STATE | IEEE80211_MSG_DEBUG,
@@ -2061,7 +2096,11 @@ ieee80211_newstate_cb(void *xvap, int npending)
 		 * Note this can also happen as a result of SLEEP->RUN
 		 * (i.e. coming out of power save mode).
 		 */
+#if __FreeBSD__
 		vap->iv_ifp->if_drv_flags &= ~IFF_DRV_OACTIVE;
+#elif __NetBSD__
+		vap->iv_ifp->if_flags &= ~IFF_OACTIVE;
+#endif
 
 		/*
 		 * XXX TODO Kick-start a VAP queue - this should be a method!

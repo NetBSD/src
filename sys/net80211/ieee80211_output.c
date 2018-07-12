@@ -1,3 +1,5 @@
+/*	$NetBSD: ieee80211_output.c,v 1.63.2.2 2018/07/12 16:35:34 phil Exp $ */
+
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
  *
@@ -27,7 +29,9 @@
  */
 
 #include <sys/cdefs.h>
+#if __FreeBSD__
 __FBSDID("$FreeBSD$");
+#endif
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -43,12 +47,22 @@ __FBSDID("$FreeBSD$");
 #include <sys/socket.h>
  
 #include <net/bpf.h>
+#if __FreeBSD__
 #include <net/ethernet.h>
+#endif
 #include <net/if.h>
+#if __FreeBSD__
 #include <net/if_var.h>
+#endif
 #include <net/if_llc.h>
 #include <net/if_media.h>
+#if __FreeBSD__
 #include <net/if_vlan_var.h>
+#endif
+#ifdef __NetBSD__
+#include <net/if_ether.h>
+#include <net/route.h>
+#endif
 
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_regdomain.h>
@@ -67,7 +81,9 @@ __FBSDID("$FreeBSD$");
 #endif
 
 #ifdef INET
+#if __FreeBSD__
 #include <netinet/if_ether.h>
+#endif
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #endif
@@ -75,7 +91,14 @@ __FBSDID("$FreeBSD$");
 #include <netinet/ip6.h>
 #endif
 
+#if __FreeBSD__
 #include <security/mac/mac_framework.h>
+#endif
+
+#ifdef __NetBSD__
+#undef  KASSERT
+#define KASSERT(__cond, __complaint) FBSDKASSERT(__cond, __complaint)
+#endif
 
 #define	ETHER_HEADER_COPY(dst, src) \
 	memcpy(dst, src, sizeof(struct ether_header))
@@ -163,7 +186,11 @@ ieee80211_vap_pkt_send_dest(struct ieee80211vap *vap, struct mbuf *m,
 	 * uses any existing value for rcvif to identify the
 	 * interface it (might have been) received on.
 	 */
+#if __FreeBSD__
 	m->m_pkthdr.rcvif = (void *)ni;
+#elif __NetBSD__
+	m_set_rcvif(m, (void *)ni);
+#endif
 	mcast = (m->m_flags & (M_MCAST | M_BCAST)) ? 1: 0;
 
 	BPF_MTAP(ifp, m);		/* 802.3 tx */
@@ -473,7 +500,11 @@ ieee80211_vap_transmit(struct ifnet *ifp, struct mbuf *m)
 			    __func__, ieee80211_state_name[vap->iv_state]);
 			vap->iv_stats.is_tx_badstate++;
 			IEEE80211_UNLOCK(ic);
+#if __FreeBSD__
 			ifp->if_drv_flags |= IFF_DRV_OACTIVE;
+#elif __NetBSD__
+			ifp->if_flags |= IFF_OACTIVE;
+#endif
 			m_freem(m);
 			if_inc_counter(ifp, IFCOUNTER_OERRORS, 1);
 			return (ENETDOWN);
@@ -528,7 +559,11 @@ ieee80211_raw_output(struct ieee80211vap *vap, struct ieee80211_node *ni,
 	 * that the mbuf has the same node value that
 	 * it would if it were going via the normal path.
 	 */
+#if __FreeBSD__
 	m->m_pkthdr.rcvif = (void *)ni;
+#elif __NetBSD__
+	m_set_rcvif(m, (void*)ni);
+#endif
 
 	/*
 	 * Attempt to add bpf transmit parameters.
@@ -622,7 +657,11 @@ ieee80211_output(struct ifnet *ifp, struct mbuf *m,
 	int error;
 	int ret;
 
+#if __FreeBSD__
 	if (ifp->if_drv_flags & IFF_DRV_OACTIVE) {
+#elif __NetBSD__
+	if (ifp->if_flags & IFF_OACTIVE) {
+#endif
 		/*
 		 * Short-circuit requests if the vap is marked OACTIVE
 		 * as this can happen because a packet came down through
@@ -646,8 +685,10 @@ ieee80211_output(struct ifnet *ifp, struct mbuf *m,
 	if (error)
 		senderr(error);
 #endif
+#if __FreeBSD__
 	if (ifp->if_flags & IFF_MONITOR)
 		senderr(ENETDOWN);
+#endif
 	if (!IFNET_IS_UP_RUNNING(ifp))
 		senderr(ENETDOWN);
 	if (vap->iv_state == IEEE80211_S_CAC) {
@@ -1248,8 +1289,13 @@ ieee80211_mbuf_adjust(struct ieee80211vap *vap, int hdrsize,
 			m_freem(m);
 			return NULL;
 		}
+#if __FreeBSD__
 		KASSERT(needed_space <= MHLEN,
 		    ("not enough room, need %u got %d\n", needed_space, MHLEN));
+#elif __NetBSD__
+		KASSERT(needed_space <= MHLEN,
+		    ("not enough room, need %u got %lu\n", needed_space, MHLEN));
+#endif
 		/*
 		 * Setup new mbuf to have leading space to prepend the
 		 * 802.11 header and any crypto header bits that are
@@ -1838,7 +1884,11 @@ ieee80211_fragment(struct ieee80211vap *vap, struct mbuf *m0,
 	prev = m0;
 	do {
 		fragsize = MIN(totalhdrsize + remainder, mtu);
+#if __FreeBSD__
 		m = m_get2(fragsize, M_NOWAIT, MT_DATA, M_PKTHDR);
+#elif __NetBSD__
+		m = m_get(M_NOWAIT, MT_DATA);
+#endif
 		if (m == NULL)
 			goto bad;
 		/* leave room to prepend any cipher header */

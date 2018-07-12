@@ -1,3 +1,5 @@
+/*	$NetBSD: ieee80211_hostap.c,v 1.1.2.2 2018/07/12 16:35:34 phil Exp $ */
+
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
  *
@@ -26,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-#ifdef __FreeBSD__
+#if __FreeBSD__
 __FBSDID("$FreeBSD$");
 #endif
 
@@ -50,10 +52,19 @@ __FBSDID("$FreeBSD$");
 #include <sys/sysctl.h>
 
 #include <net/if.h>
+#if __FreeBSD__
 #include <net/if_var.h>
+#endif
 #include <net/if_media.h>
 #include <net/if_llc.h>
+#if __FreeBSD__
 #include <net/ethernet.h>
+#endif
+#ifdef __NetBSD__
+#include <net/if_ether.h>
+#include <net/route.h>
+#endif
+
 
 #include <net/bpf.h>
 
@@ -67,6 +78,11 @@ __FBSDID("$FreeBSD$");
 #include <net80211/ieee80211_vht.h>
 
 #define	IEEE80211_RATE2MBS(r)	(((r) & IEEE80211_RATE_VAL) / 2)
+
+#ifdef __NetBSD__
+#undef  KASSERT
+#define KASSERT(__cond, __complaint) FBSDKASSERT(__cond, __complaint)
+#endif
 
 static	void hostap_vattach(struct ieee80211vap *);
 static	int hostap_newstate(struct ieee80211vap *, enum ieee80211_state, int);
@@ -384,7 +400,12 @@ hostap_deliver_data(struct ieee80211vap *vap,
 		struct mbuf *mcopy = NULL;
 
 		if (m->m_flags & M_MCAST) {
+#if __FreeBSD__
 			mcopy = m_dup(m, M_NOWAIT);
+#elif __NetBSD__
+			mcopy = m_dup(m, 0, M_COPYALL, M_NOWAIT);
+
+#endif
 			if (mcopy == NULL)
 				if_inc_counter(ifp, IFCOUNTER_OERRORS, 1);
 			else
@@ -424,7 +445,11 @@ hostap_deliver_data(struct ieee80211vap *vap,
 		/*
 		 * Mark frame as coming from vap's interface.
 		 */
+#if __FreeBSD__
 		m->m_pkthdr.rcvif = ifp;
+#elif __NetBSD__
+		m_set_rcvif(m,ifp);
+#endif
 		if (m->m_flags & M_MCAST) {
 			/*
 			 * Spam DWDS vap's w/ multicast traffic.
@@ -437,7 +462,11 @@ hostap_deliver_data(struct ieee80211vap *vap,
 			m->m_pkthdr.ether_vtag = ni->ni_vlan;
 			m->m_flags |= M_VLANTAG;
 		}
+#if __FreeBSD__		
 		ifp->if_input(ifp, m);
+#elif __NetBSD__
+		if_input(ifp, m);
+#endif
 	}
 }
 
@@ -984,14 +1013,14 @@ hostap_auth_open(struct ieee80211_node *ni, struct ieee80211_frame *wh,
 	}
 }
 
-static void
+static __unused void
 hostap_auth_shared(struct ieee80211_node *ni, struct ieee80211_frame *wh,
     uint8_t *frm, uint8_t *efrm, int rssi, int nf,
     uint16_t seq, uint16_t status)
 {
 	struct ieee80211vap *vap = ni->ni_vap;
 	uint8_t *challenge;
-	int allocbs, estatus;
+	int __unused allocbs, estatus;
 
 	KASSERT(vap->iv_state == IEEE80211_S_RUN, ("state %d", vap->iv_state));
 
@@ -2279,7 +2308,7 @@ hostap_recv_mgmt(struct ieee80211_node *ni, struct mbuf *m0,
 
 	case IEEE80211_FC0_SUBTYPE_DEAUTH:
 	case IEEE80211_FC0_SUBTYPE_DISASSOC: {
-		uint16_t reason;
+		uint16_t __unused reason;
 
 		if (vap->iv_state != IEEE80211_S_RUN ||
 		    /* NB: can happen when in promiscuous mode */

@@ -1,4 +1,4 @@
-#	$NetBSD: files.kern,v 1.16 2017/12/16 10:15:12 maxv Exp $
+#	$NetBSD: files.kern,v 1.16.4.1 2018/07/12 16:35:34 phil Exp $
 
 #
 # kernel sources
@@ -136,6 +136,7 @@ file	kern/subr_prf.c			kern
 file	kern/subr_prof.c		kern
 file	kern/subr_pserialize.c		kern
 file	kern/subr_psref.c		kern
+file	kern/subr_sbuf.c		wlan
 file	kern/subr_specificdata.c	kern
 file	kern/subr_tftproot.c		tftproot
 file	kern/subr_time.c		kern

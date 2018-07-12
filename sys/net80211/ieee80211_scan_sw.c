@@ -1,3 +1,5 @@
+/*	$NetBSD: ieee80211_scan_sw.c,v 1.1.2.2 2018/07/12 16:35:34 phil Exp $ */
+
 /*-
  * Copyright (c) 2002-2008 Sam Leffler, Errno Consulting
  * All rights reserved.
@@ -24,7 +26,9 @@
  */
 
 #include <sys/cdefs.h>
+#ifdef __FreeBSD__
 __FBSDID("$FreeBSD$");
+#endif
 
 /*
  * IEEE 802.11 scanning support.
@@ -41,15 +45,27 @@ __FBSDID("$FreeBSD$");
 #include <sys/socket.h>
 
 #include <net/if.h>
+#ifdef __FreeBSD__
 #include <net/if_var.h>
+#endif
 #include <net/if_media.h>
+#ifdef __FreeBSD__
 #include <net/ethernet.h>
+#endif
+#ifdef __NetBSD__
+#include <net/route.h>
+#endif
 
 #include <net80211/ieee80211_var.h>
 
 #include <net80211/ieee80211_scan_sw.h>
 
 #include <net/bpf.h>
+
+#ifdef __NetBSD__
+#undef  KASSERT
+#define KASSERT(__cond, __complaint) FBSDKASSERT(__cond, __complaint)
+#endif
 
 struct scan_state {
 	struct ieee80211_scan_state base;	/* public state */
@@ -584,7 +600,7 @@ static void
 scan_signal_locked(struct ieee80211_scan_state *ss, int iflags)
 {
 	struct scan_state *ss_priv = SCAN_PRIVATE(ss);
-	struct timeout_task *scan_task = &ss_priv->ss_scan_curchan;
+	struct timeout_task *scan_task __unused = &ss_priv->ss_scan_curchan;
 	struct ieee80211com *ic = ss->ss_ic;
 
 	IEEE80211_LOCK_ASSERT(ic);
@@ -610,7 +626,7 @@ scan_mindwell(struct ieee80211_scan_state *ss)
 	scan_signal(ss, 0);
 }
 
-static void
+static __unused void
 scan_start(void *arg, int pending)
 {
 #define	ISCAN_REP	(ISCAN_MINDWELL | ISCAN_DISCARD)

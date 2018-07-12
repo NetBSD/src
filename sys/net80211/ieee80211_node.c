@@ -1,3 +1,5 @@
+/*	$NetBSD: ieee80211_node.c,v 1.75.4.2 2018/07/12 16:35:34 phil Exp $ */
+
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
  *
@@ -27,7 +29,9 @@
  */
 
 #include <sys/cdefs.h>
+#if __FreeBSD__
 __FBSDID("$FreeBSD$");
+#endif
 
 #include "opt_wlan.h"
 
@@ -36,13 +40,24 @@ __FBSDID("$FreeBSD$");
 #include <sys/mbuf.h>   
 #include <sys/malloc.h>
 #include <sys/kernel.h>
+#ifdef __NetBSD__
+#include <sys/sbuf.h>
+#endif
 
 #include <sys/socket.h>
  
 #include <net/if.h>
+#if __FreeBSD__
 #include <net/if_var.h>
+#endif
 #include <net/if_media.h>
+#if __FreeBSD__
 #include <net/ethernet.h>
+#endif
+#ifdef __NetBSD__
+#include <net/if_ether.h>
+#include <net/route.h>
+#endif
 
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_input.h>
@@ -58,6 +73,11 @@ __FBSDID("$FreeBSD$");
 #include <net80211/ieee80211_vht.h>
 
 #include <net/bpf.h>
+
+#ifdef __NetBSD__
+#undef  KASSERT
+#define KASSERT(__cond, __complaint) FBSDKASSERT(__cond, __complaint)
+#endif
 
 /*
  * IEEE80211_NODE_HASHSIZE must be a power of 2.
@@ -1002,11 +1022,17 @@ ieee80211_sta_join(struct ieee80211vap *vap, struct ieee80211_channel *chan,
 	if (ni->ni_ies.vhtopmode_ie != NULL &&
 	    ni->ni_ies.vhtcap_ie != NULL &&
 	    vap->iv_flags_vht & IEEE80211_FVHT_VHT) {
+#if __FreeBSD__
 		if (IEEE80211_IS_CHAN_2GHZ(ni->ni_chan)) {
 			printf("%s: BSS %6D: 2GHz channel, VHT info; ignoring\n",
 			    __func__,
 			    ni->ni_macaddr,
 			    ":");
+#elif __NetBSD__
+		if (IEEE80211_IS_CHAN_2GHZ(ni->ni_chan)) {
+			printf("%s: BSS %6ld: 2GHz channel, VHT info; ignoring\n",
+			    __func__, (long int)ni->ni_macaddr);
+#endif
 		} else {
 			ieee80211_vht_node_init(ni);
 			ieee80211_vht_updateparams(ni,
@@ -1811,10 +1837,15 @@ ieee80211_init_neighbor(struct ieee80211_node *ni,
 
 		if (do_vht_setup) {
 			if (IEEE80211_IS_CHAN_2GHZ(ni->ni_chan)) {
+#if __FreeBSD__
 				printf("%s: BSS %6D: 2GHz channel, VHT info; ignoring\n",
 				    __func__,
 				    ni->ni_macaddr,
 				    ":");
+#elif __NetBSD__
+				printf("%s: BSS %6ld: 2GHz channel, VHT info; ignoring\n",
+				    __func__, (long int)ni->ni_macaddr);
+#endif
 			} else {
 				ieee80211_vht_node_init(ni);
 				ieee80211_vht_updateparams(ni,

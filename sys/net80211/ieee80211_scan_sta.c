@@ -1,3 +1,5 @@
+/*	$NetBSD: ieee80211_scan_sta.c,v 1.1.56.3 2018/07/12 16:35:34 phil Exp $ */
+
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
  *
@@ -26,7 +28,9 @@
  */
 
 #include <sys/cdefs.h>
+#ifdef __FreeBSD__
 __FBSDID("$FreeBSD$");
+#endif
 
 /*
  * IEEE 802.11 station scanning support.
@@ -39,13 +43,23 @@ __FBSDID("$FreeBSD$");
 #include <sys/endian.h>
 #include <sys/malloc.h>
 #include <sys/module.h>
-
+#ifdef __NetBSD__
+/* Why doesn't FreeBSD have this?  */
+#include <sys/sbuf.h>
+#endif
 #include <sys/socket.h>
 
 #include <net/if.h>
+#ifdef __FreeBSD__
 #include <net/if_var.h>
+#endif
 #include <net/if_media.h>
+#ifdef __FreeBSD__
 #include <net/ethernet.h>
+#endif
+#ifdef __NetBSD__
+#include <net/route.h>
+#endif
 
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_input.h>
@@ -60,6 +74,12 @@ __FBSDID("$FreeBSD$");
 #include <net80211/ieee80211_vht.h>
 
 #include <net/bpf.h>
+
+#ifdef __NetBSD__
+#undef  KASSERT
+#define KASSERT(__cond, __complaint) FBSDKASSERT(__cond, __complaint)
+#endif
+
 
 /*
  * Parameters for managing cache entries:
@@ -1481,7 +1501,7 @@ sta_assoc_success(struct ieee80211_scan_state *ss,
 	}
 }
 
-static const struct ieee80211_scanner sta_default = {
+static const struct ieee80211_scanner sta_default __unused = {
 	.scan_name		= "default",
 	.scan_attach		= sta_attach,
 	.scan_detach		= sta_detach,
@@ -1713,7 +1733,7 @@ adhoc_age(struct ieee80211_scan_state *ss)
 	IEEE80211_SCAN_TABLE_UNLOCK(st);
 }
 
-static const struct ieee80211_scanner adhoc_default = {
+static const struct ieee80211_scanner adhoc_default __unused = {
 	.scan_name		= "default",
 	.scan_attach		= sta_attach,
 	.scan_detach		= sta_detach,
@@ -1845,7 +1865,7 @@ ap_end(struct ieee80211_scan_state *ss, struct ieee80211vap *vap)
 	return 1;
 }
 
-static const struct ieee80211_scanner ap_default = {
+static const struct ieee80211_scanner ap_default __unused = {
 	.scan_name		= "default",
 	.scan_attach		= sta_attach,
 	.scan_detach		= sta_detach,
@@ -1952,7 +1972,7 @@ notfound:
 	return 1;				/* terminate scan */
 }
 
-static const struct ieee80211_scanner mesh_default = {
+static const struct ieee80211_scanner mesh_default __unused = {
 	.scan_name		= "default",
 	.scan_attach		= sta_attach,
 	.scan_detach		= sta_detach,

@@ -1,3 +1,5 @@
+/*	$NetBSD: ieee80211_acl.c,v 1.9.54.2 2018/07/12 16:35:34 phil Exp $ */
+
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
  *
@@ -26,7 +28,9 @@
  */
 
 #include <sys/cdefs.h>
+#ifdef __FreeBSD__
 __FBSDID("$FreeBSD$");
+#endif
 
 /*
  * IEEE 802.11 MAC ACL support.
@@ -53,10 +57,17 @@ __FBSDID("$FreeBSD$");
 
 #include <net/if.h>
 #include <net/if_media.h>
+#ifdef __FreeBSD__
 #include <net/ethernet.h>
+#endif
 #include <net/route.h>
 
 #include <net80211/ieee80211_var.h>
+
+#ifdef __NetBSD__
+#undef KASSERT
+#define KASSERT(__cond, __complaint) FBSDKASSERT(__cond, __complaint)
+#endif
 
 enum {
 	ACL_POLICY_OPEN		= 0,	/* open, don't check ACL's */
@@ -90,7 +101,9 @@ struct aclstate {
 #define	ACL_HASH(addr)	\
 	(((const uint8_t *)(addr))[IEEE80211_ADDR_LEN - 1] % ACL_HASHSIZE)
 
+#ifdef __FreeBSD__
 static MALLOC_DEFINE(M_80211_ACL, "acl", "802.11 station acl");
+#endif
 
 static	int acl_free_all(struct ieee80211vap *);
 

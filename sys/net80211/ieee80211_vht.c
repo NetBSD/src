@@ -1,3 +1,5 @@
+/*	$NetBSD: ieee80211_vht.c,v 1.1.2.2 2018/07/12 16:35:34 phil Exp $ */
+
 /*-
  * Copyright (c) 2017 Adrian Chadd <adrian@FreeBSD.org>
  * All rights reserved.
@@ -44,9 +46,16 @@ __FBSDID("$FreeBSD$");
 #include <sys/socket.h>
 
 #include <net/if.h>
+#ifdef __FreeBSD__
 #include <net/if_var.h>
+#endif
 #include <net/if_media.h>
+#ifdef __FreeBSD__
 #include <net/ethernet.h>
+#endif
+#ifdef __NetBSD__
+#include <net/route.h>
+#endif
 
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_action.h>
@@ -114,8 +123,8 @@ vht_send_action_placeholder(struct ieee80211_node *ni,
 	return (EINVAL);
 }
 
-static void
-ieee80211_vht_init(void)
+static __unused void
+ieee80211_vht_init(void) 
 {
 
 	ieee80211_recv_action_register(IEEE80211_ACTION_CAT_VHT,
@@ -212,8 +221,13 @@ ieee80211_vht_announce(struct ieee80211com *ic)
 	printf("\n");
 
 	/* Features */
+#ifdef __FreeBSD__
 	ic_printf(ic, "[VHT] Features: %b\n", ic->ic_vhtcaps,
 	    IEEE80211_VHTCAP_BITS);
+#elfi __NetBSD__
+	ic_printf(ic, "[VHT] Features: 0x%x\n", ic->ic_vhtcaps,
+	    IEEE80211_VHTCAP_BITS);
+#endif
 
 	/* For now, just 5GHz VHT.  Worry about 2GHz VHT later */
 	for (i = 0; i < 7; i++) {

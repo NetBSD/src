@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.207 2018/06/01 08:56:00 maxv Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.207.2.1 2018/07/12 16:35:34 phil Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -352,15 +352,19 @@ MBUF_DEFINE(mbuf, MHLEN, MLEN);
 #define	M_LINK5		0x00020000	/* link layer specific flag */
 #define	M_LINK6		0x00040000	/* link layer specific flag */
 #define	M_LINK7		0x00080000	/* link layer specific flag */
+#define	M_LINK8		0x00100000	/* link layer specific flag */
+#define	M_LINK9		0x00200000	/* link layer specific flag */
+#define	M_LINK10	0x00400000	/* link layer specific flag */
+#define	M_LINK11	0x00800000	/* link layer specific flag */
 
-#define	M_VLANTAG	0x00100000	/* ether_vtag is valid */
+#define	M_VLANTAG	0x01000000	/* ether_vtag is valid */
 
 /* additional flags for M_EXT mbufs */
-#define	M_EXT_FLAGS	0xff000000
-#define	M_EXT_CLUSTER	0x01000000	/* ext is a cluster */
-#define	M_EXT_PAGES	0x02000000	/* ext_pgs is valid */
-#define	M_EXT_ROMAP	0x04000000	/* ext mapping is r-o at MMU */
-#define	M_EXT_RW	0x08000000	/* ext storage is writable */
+#define	M_EXT_FLAGS	0xfc000000
+#define	M_EXT_CLUSTER	0x04000000	/* ext is a cluster */
+#define	M_EXT_PAGES	0x08000000	/* ext_pgs is valid */
+#define	M_EXT_ROMAP	0x10000000	/* ext mapping is r-o at MMU */
+#define	M_EXT_RW	0x20000000	/* ext storage is writable */
 
 /* for source-level compatibility */
 #define	M_NOTIFICATION	M_PROTO1
@@ -368,14 +372,15 @@ MBUF_DEFINE(mbuf, MHLEN, MLEN);
 #define M_FLAGS_BITS \
     "\20\1EXT\2PKTHDR\3EOR\4PROTO1\5AUTHIPHDR\6DECRYPTED\7LOOP\10NONE" \
     "\11BCAST\12MCAST\13CANFASTFWD\14ANYCAST6\15LINK0\16LINK1\17LINK2\20LINK3" \
-    "\21LINK4\22LINK5\23LINK6\24LINK7" \
-    "\25VLANTAG" \
-    "\31EXT_CLUSTER\32EXT_PAGES\33EXT_ROMAP\34EXT_RW"
+    "\21LINK4\22LINK5\23LINK6\24LINK7\25LINK8\26LINK9\27LINK10\30LINK11" \
+    "\31VLANTAG" \
+    "\33EXT_CLUSTER\34EXT_PAGES\35EXT_ROMAP\36EXT_RW"
 
 /* flags copied when copying m_pkthdr */
-#define	M_COPYFLAGS	(M_PKTHDR|M_EOR|M_BCAST|M_MCAST|M_CANFASTFWD| \
-    M_ANYCAST6|M_LINK0|M_LINK1|M_LINK2|M_AUTHIPHDR|M_DECRYPTED|M_LOOP| \
-    M_VLANTAG)
+#define	M_COPYFLAGS	(M_PKTHDR|M_EOR|M_BCAST|M_MCAST|M_CANFASTFWD|   \
+    M_ANYCAST6|M_LINK0|M_LINK1|M_LINK2|M_LINK3|M_LINK4|M_LINK5|M_LINK6| \
+    M_LINK7|M_LINK8|M_LINK9|M_LINK10|M_LINK11|M_AUTHIPHDR|M_DECRYPTED|  \
+    M_LOOP|M_VLANTAG)
 
 /* flag copied when shallow-copying external storage */
 #define	M_EXTCOPYFLAGS	(M_EXT|M_EXT_FLAGS)

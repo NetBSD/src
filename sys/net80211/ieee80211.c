@@ -1,3 +1,5 @@
+/*	$NetBSD: ieee80211.c,v 1.56.18.2 2018/07/12 16:35:34 phil Exp $ */
+
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
  *
@@ -27,7 +29,9 @@
  */
 
 #include <sys/cdefs.h>
+#ifdef __FreeBSD__
 __FBSDID("$FreeBSD$");
+#endif
 
 /*
  * IEEE 802.11 generic handler
@@ -41,14 +45,28 @@ __FBSDID("$FreeBSD$");
 #include <sys/socket.h>
 #include <sys/sbuf.h>
 
+#ifdef __FreeBSD__
 #include <machine/stdarg.h>
+#elif __NetBSD__
+#include <sys/stdarg.h>
+#else
+#error
+#endif
 
 #include <net/if.h>
+#ifdef __FreeBSD__
 #include <net/if_var.h>
+#endif
 #include <net/if_dl.h>
 #include <net/if_media.h>
 #include <net/if_types.h>
+#ifdef __FreeBSD__
 #include <net/ethernet.h>
+#endif
+#ifdef __NetBSD__
+#include <net/route.h>
+#include <net/if_ether.h>
+#endif
 
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_regdomain.h>
@@ -59,6 +77,11 @@ __FBSDID("$FreeBSD$");
 #include <net80211/ieee80211_vht.h>
 
 #include <net/bpf.h>
+
+#ifdef __NetBSD__
+#undef  KASSERT
+#define KASSERT(__cond, __complaint) FBSDKASSERT(__cond, __complaint)
+#endif
 
 const char *ieee80211_phymode_name[IEEE80211_MODE_MAX] = {
 	[IEEE80211_MODE_AUTO]	  = "auto",
@@ -102,6 +125,7 @@ static	int ieee80211_media_setup(struct ieee80211com *ic,
 static	int media_status(enum ieee80211_opmode,
 		const struct ieee80211_channel *);
 static uint64_t ieee80211_get_counter(struct ifnet *, ift_counter);
+
 
 MALLOC_DEFINE(M_80211_VAP, "80211vap", "802.11 vap state");
 
@@ -274,6 +298,7 @@ null_update_chw(struct ieee80211com *ic)
 	ic_printf(ic, "%s: need callback\n", __func__);
 }
 
+#ifdef __FreeBSD__
 int
 ic_printf(struct ieee80211com *ic, const char * fmt, ...)
 { 
@@ -286,11 +311,28 @@ ic_printf(struct ieee80211com *ic, const char * fmt, ...)
 	va_end(ap);  
 	return (retval);
 }
+#elif __NetBSD__
+void
+ic_printf(struct ieee80211com *ic, const char * fmt, ...)
+{ 
+	va_list ap;
+
+	printf("%s: ", ic->ic_name);
+	va_start(ap, fmt);
+	vprintf(fmt, ap);
+	va_end(ap);  
+}
+#endif
 
 static LIST_HEAD(, ieee80211com) ic_head = LIST_HEAD_INITIALIZER(ic_head);
+#ifdef __FreeBSD__
 static struct mtx ic_list_mtx;
 MTX_SYSINIT(ic_list, &ic_list_mtx, "ieee80211com list", MTX_DEF);
+#elif __NetBSD__
+static kmutex_t ic_list_mtx;
+#endif
 
+#if notyet
 static int
 sysctl_ieee80211coms(SYSCTL_HANDLER_ARGS)
 {
@@ -319,6 +361,7 @@ sysctl_ieee80211coms(SYSCTL_HANDLER_ARGS)
 SYSCTL_PROC(_net_wlan, OID_AUTO, devices,
     CTLTYPE_STRING | CTLFLAG_RD | CTLFLAG_MPSAFE, NULL, 0,
     sysctl_ieee80211coms, "A", "names of available 802.11 devices");
+#endif
 
 /*
  * Attach/setup the common net80211 state.  Called by
@@ -332,6 +375,7 @@ ieee80211_ifattach(struct ieee80211com *ic)
 	IEEE80211_TX_LOCK_INIT(ic, ic->ic_name);
 	TAILQ_INIT(&ic->ic_vaps);
 
+#ifdef notyet
 	/* Create a taskqueue for all state changes */
 	ic->ic_tq = taskqueue_create("ic_taskq", M_WAITOK | M_ZERO,
 	    taskqueue_thread_enqueue, &ic->ic_tq);
@@ -339,6 +383,7 @@ ieee80211_ifattach(struct ieee80211com *ic)
 	    ic->ic_name);
 	ic->ic_ierrors = counter_u64_alloc(M_WAITOK);
 	ic->ic_oerrors = counter_u64_alloc(M_WAITOK);
+#endif
 	/*
 	 * Fill in 802.11 available channel set, mark all
 	 * available channels as active, and pick a default
@@ -482,7 +527,7 @@ default_update_deftxkey(struct ieee80211vap *vap, ieee80211_keyix kid)
 /*
  * Add underlying device errors to vap errors.
  */
-static uint64_t
+static __unused uint64_t
 ieee80211_get_counter(struct ifnet *ifp, ift_counter cnt)
 {
 	struct ieee80211vap *vap = ifp->if_softc;
@@ -526,10 +571,16 @@ ieee80211_vap_setup(struct ieee80211com *ic, struct ieee80211vap *vap,
 	ifp->if_softc = vap;			/* back pointer */
 	ifp->if_flags = IFF_SIMPLEX | IFF_BROADCAST | IFF_MULTICAST;
 	ifp->if_transmit = ieee80211_vap_transmit;
+#ifdef __FreeBSD__
 	ifp->if_qflush = ieee80211_vap_qflush;
+#endif
+#ifdef notyet
 	ifp->if_ioctl = ieee80211_ioctl;
 	ifp->if_init = ieee80211_init;
+#endif
+#ifdef __FreeBSD__
 	ifp->if_get_counter = ieee80211_get_counter;
+#endif
 
 	vap->iv_ifp = ifp;
 	vap->iv_ic = ic;
@@ -677,8 +728,10 @@ ieee80211_vap_attach(struct ieee80211vap *vap, ifm_change_cb_t media_change,
 	ether_ifattach(ifp, macaddr);
 	IEEE80211_ADDR_COPY(vap->iv_myaddr, IF_LLADDR(ifp));
 	/* hook output method setup by ether_ifattach */
+#ifdef notyet
 	vap->iv_output = ifp->if_output;
 	ifp->if_output = ieee80211_output;
+#endif
 	/* NB: if_mtu set by ether_ifattach to ETHERMTU */
 
 	IEEE80211_LOCK(ic);

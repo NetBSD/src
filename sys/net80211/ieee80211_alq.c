@@ -1,3 +1,5 @@
+/*	$NetBSD: ieee80211_alq.c,v 1.1.2.2 2018/07/12 16:35:34 phil Exp $ */
+
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
  *
@@ -46,20 +48,38 @@ __FBSDID("$FreeBSD$");
 #include <sys/endian.h>
 #include <sys/kernel.h>
 #include <sys/sysctl.h>
+#ifdef __FreeBSD__
 #include <sys/pcpu.h>
+#endif
 #include <sys/proc.h>
 #include <sys/ucred.h>
+
+#ifdef __FreeBSD__
 #include <sys/alq.h>
+#endif
 
 #include <sys/socket.h>
 
 #include <net/if.h>
+#ifdef __FreeBSD__
 #include <net/if_var.h>
+#endif
 #include <net/if_media.h>
+#ifdef __FreeBSD__
 #include <net/ethernet.h>
+#endif
+#ifdef __NetBSD__
+#include <net/route.h>
+#endif
 
 #include <net80211/ieee80211_var.h>
+#ifdef __FreeBSD__
 #include <net80211/ieee80211_freebsd.h>
+#elif __NetBSD__
+#include <net80211/ieee80211_netbsd.h>
+#else
+#error
+#endif
 #include <net80211/ieee80211_alq.h>
 
 static struct alq *ieee80211_alq;
@@ -72,7 +92,7 @@ static int
 ieee80211_alq_setlogging(int enable)
 {
 	int error;
-
+#ifdef notyet
 	if (enable) {
 		if (ieee80211_alq)
 			alq_close(ieee80211_alq);
@@ -96,8 +116,12 @@ ieee80211_alq_setlogging(int enable)
 		error = 0;
 	}
 	return (error);
+#else
+	return 1;
+#endif
 }
 
+#ifdef notyet
 static int
 sysctl_ieee80211_alq_log(SYSCTL_HANDLER_ARGS)
 {

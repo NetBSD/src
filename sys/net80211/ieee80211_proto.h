@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_proto.h,v 1.23.16.2 2018/06/28 21:23:01 phil Exp $ */
+/*	$NetBSD: ieee80211_proto.h,v 1.23.16.3 2018/07/12 16:35:34 phil Exp $ */
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -174,8 +174,15 @@ ieee80211_hdrsize(const void *data)
 	int size = sizeof(struct ieee80211_frame);
 
 	/* NB: we don't handle control frames */
+#if __FreeBSD__
 	KASSERT((wh->i_fc[0]&IEEE80211_FC0_TYPE_MASK) != IEEE80211_FC0_TYPE_CTL,
 		("%s: control frame", __func__));
+#elif __NetBSD__
+	FBSDKASSERT((wh->i_fc[0]&IEEE80211_FC0_TYPE_MASK) != IEEE80211_FC0_TYPE_CTL,
+		("%s: control frame", __func__));
+#else
+#error
+#endif
 	if (IEEE80211_IS_DSTODS(wh))
 		size += IEEE80211_ADDR_LEN;
 	if (IEEE80211_QOS_HAS_SEQ(wh))

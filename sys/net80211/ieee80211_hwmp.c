@@ -1,3 +1,5 @@
+/*	$NetBSD: ieee80211_hwmp.c,v 1.1.2.2 2018/07/12 16:35:34 phil Exp $ */
+
 /*- 
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
  *
@@ -57,7 +59,12 @@ __FBSDID("$FreeBSD$");
 #include <net/if.h>
 #include <net/if_media.h>
 #include <net/if_llc.h>
+#ifdef __FreeBSD__
 #include <net/ethernet.h>
+#endif
+#ifdef __NetBSD__
+#include <net/route.h>
+#endif
 
 #include <net/bpf.h>
 
@@ -65,6 +72,11 @@ __FBSDID("$FreeBSD$");
 #include <net80211/ieee80211_action.h>
 #include <net80211/ieee80211_input.h>
 #include <net80211/ieee80211_mesh.h>
+
+#ifdef __NetBSD__
+#undef  KASSERT
+#define KASSERT(__cond, __complaint) FBSDKASSERT(__cond, __complaint)
+#endif
 
 static void	hwmp_vattach(struct ieee80211vap *);
 static void	hwmp_vdetach(struct ieee80211vap *);
@@ -210,7 +222,7 @@ SYSCTL_PROC(_net_wlan_hwmp, OID_AUTO, inact, CTLTYPE_INT | CTLFLAG_RW,
 	"mesh route inactivity timeout (ms)");
 
 
-static void
+static __unused void
 ieee80211_hwmp_init(void)
 {
 	/* Default values as per amendment */
@@ -2015,8 +2027,13 @@ done:
 			 */
 			IEEE80211_NOTE_MAC(vap, IEEE80211_MSG_HWMP, dest,
 			    "%s", "queue frame until path found");
+#ifdef __FreeBSD__
 			m->m_pkthdr.rcvif = (void *)(uintptr_t)
 			    ieee80211_mac_hash(ic, dest);
+#elif __NetBSD__
+			m_set_rcvif(m,  (void *)(uintptr_t)
+			    ieee80211_mac_hash(ic, dest));
+#endif			      
 			/* XXX age chosen randomly */
 			ieee80211_ageq_append(&ic->ic_stageq, m,
 			    IEEE80211_INACT_WAIT);
@@ -2032,7 +2049,7 @@ done:
 #undef	PREQ_TADDR
 #undef	PREQ_TSEQ
 
-static int
+static __unused int
 hwmp_ioctl_get80211(struct ieee80211vap *vap, struct ieee80211req *ireq)
 {
 	struct ieee80211_hwmp_state *hs = vap->iv_hwmp;
@@ -2055,7 +2072,7 @@ hwmp_ioctl_get80211(struct ieee80211vap *vap, struct ieee80211req *ireq)
 }
 IEEE80211_IOCTL_GET(hwmp, hwmp_ioctl_get80211);
 
-static int
+static __unused int
 hwmp_ioctl_set80211(struct ieee80211vap *vap, struct ieee80211req *ireq)
 {
 	struct ieee80211_hwmp_state *hs = vap->iv_hwmp;

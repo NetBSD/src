@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_ioctl.h,v 1.24.2.2 2018/06/28 21:23:01 phil Exp $ */
+/*	$NetBSD: ieee80211_ioctl.h,v 1.24.2.3 2018/07/12 16:35:34 phil Exp $ */
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -587,7 +587,6 @@ struct ieee80211req_sta_vlan {
 	uint16_t	sv_vlan;
 };
 
-#ifdef __FreeBSD__
 /*
  * FreeBSD-style ioctls.
  */
@@ -599,9 +598,25 @@ struct ieee80211req {
 	uint16_t	i_len;			/* Index or simple value */
 	void		*i_data;		/* Extra data */
 };
+
+#ifdef __FreeBSD__
 #define	SIOCS80211		 _IOW('i', 234, struct ieee80211req)
 #define	SIOCG80211		_IOWR('i', 235, struct ieee80211req)
 #define	SIOCG80211STATS		_IOWR('i', 236, struct ifreq)
+
+#elif __NetBSD__
+#define SIOCS80211               _IOW('i', 244, struct ieee80211req)
+#define SIOCG80211              _IOWR('i', 245, struct ieee80211req)
+#define SIOCG80211STATS         _IOWR('i', 246, struct ifreq)
+#define SIOCG80211ZSTATS        _IOWR('i', 247, struct ifreq)
+#ifdef COMPAT_20
+#define OSIOCG80211STATS        _IOWR('i', 242, struct ifreq)
+#define OSIOCG80211ZSTATS       _IOWR('i', 243, struct ifreq)
+#endif /* COMPAT_20 */
+
+#else
+#error
+#endif
 
 #define IEEE80211_IOC_SSID		1
 #define IEEE80211_IOC_NUMSSIDS		2
@@ -872,6 +887,73 @@ struct ieee80211_clone_params {
 #define	IEEE80211_CLONE_WDSLEGACY	0x0004	/* legacy WDS processing */
 #define	IEEE80211_CLONE_MACADDR		0x0008	/* use specified mac addr */
 #define	IEEE80211_CLONE_TDMA		0x0010	/* operate in TDMA mode */
-#endif /* __FreeBSD__ */
+
+#ifdef __NetBSD__
+/* nwid is pointed at by ifr.ifr_data */
+struct ieee80211_nwid {
+	u_int8_t	i_len;
+	u_int8_t	i_nwid[IEEE80211_NWID_LEN];
+};
+
+#define	SIOCS80211NWID		_IOWR('i', 230, struct ifreq)
+#define	SIOCG80211NWID		_IOWR('i', 231, struct ifreq)
+
+/* the first member must be matched with struct ifreq */
+struct ieee80211_nwkey {
+	char		i_name[IFNAMSIZ];	/* if_name, e.g. "wi0" */
+	int		i_wepon;		/* wep enabled flag */
+	int		i_defkid;		/* default encrypt key id */
+	struct {
+		int		i_keylen;
+		u_int8_t	*i_keydat;
+	}		i_key[IEEE80211_WEP_NKID];
+};
+#define	SIOCS80211NWKEY		 _IOW('i', 232, struct ieee80211_nwkey)
+#define	SIOCG80211NWKEY		_IOWR('i', 233, struct ieee80211_nwkey)
+/* i_wepon */
+#define	IEEE80211_NWKEY_OPEN	0		/* No privacy */
+#define	IEEE80211_NWKEY_WEP	1		/* WEP enabled */
+#define	IEEE80211_NWKEY_EAP	2		/* EAP enabled */
+#define	IEEE80211_NWKEY_PERSIST	0x100		/* designate persist keyset */
+
+/* power management parameters */
+struct ieee80211_power {
+	char		i_name[IFNAMSIZ];	/* if_name, e.g. "wi0" */
+	int		i_enabled;		/* 1 == on, 0 == off */
+	int		i_maxsleep;		/* max sleep in ms */
+};
+#define	SIOCS80211POWER		 _IOW('i', 234, struct ieee80211_power)
+#define	SIOCG80211POWER		_IOWR('i', 235, struct ieee80211_power)
+
+struct ieee80211_auth {
+	char		i_name[IFNAMSIZ];	/* if_name, e.g. "wi0" */
+	int		i_authtype;
+};
+
+#define	SIOCS80211AUTH		 _IOW('i', 236, struct ieee80211_auth)
+#define	SIOCG80211AUTH		_IOWR('i', 237, struct ieee80211_auth)
+
+struct ieee80211chanreq {
+	char		i_name[IFNAMSIZ];	/* if_name, e.g. "wi0" */
+	u_int16_t	i_channel;
+};
+
+#ifndef IEEE80211_CHAN_ANY
+#define	IEEE80211_CHAN_ANY	0xffff
+#endif
+
+#define	SIOCS80211CHANNEL	 _IOW('i', 238, struct ieee80211chanreq)
+#define	SIOCG80211CHANNEL	_IOWR('i', 239, struct ieee80211chanreq)
+
+struct ieee80211_bssid {
+	char		i_name[IFNAMSIZ];	/* if_name, e.g. "wi0" */
+	u_int8_t	i_bssid[IEEE80211_ADDR_LEN];
+};
+
+#define	SIOCS80211BSSID		 _IOW('i', 240, struct ieee80211_bssid)
+#define	SIOCG80211BSSID		_IOWR('i', 241, struct ieee80211_bssid)
+
+#endif
+
 
 #endif /* _NET80211_IEEE80211_IOCTL_H_ */

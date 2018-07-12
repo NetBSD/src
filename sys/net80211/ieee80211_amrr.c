@@ -1,3 +1,5 @@
+/*	$NetBSD: ieee80211_amrr.c,v 1.3.18.2 2018/07/12 16:35:34 phil Exp $ */
+
 /*	$OpenBSD: ieee80211_amrr.c,v 1.1 2006/06/17 19:07:19 damien Exp $	*/
 
 /*-
@@ -19,7 +21,9 @@
  */
 
 #include <sys/cdefs.h>
+#ifdef __FreeBSD__
 __FBSDID("$FreeBSD$");
+#endif
 
 /*-
  * Naive implementation of the Adaptive Multi Rate Retry algorithm:
@@ -40,9 +44,16 @@ __FBSDID("$FreeBSD$");
 #include <sys/sysctl.h>
 
 #include <net/if.h>
+#ifdef __FreeBSD__
 #include <net/if_var.h>
+#endif
 #include <net/if_media.h>
+#ifdef __FreeBSD__
 #include <net/ethernet.h>
+#endif
+#ifdef __NetBSD__
+#include <net/route.h>
+#endif
 
 #ifdef INET
 #include <netinet/in.h>
@@ -53,6 +64,11 @@ __FBSDID("$FreeBSD$");
 #include <net80211/ieee80211_ht.h>
 #include <net80211/ieee80211_amrr.h>
 #include <net80211/ieee80211_ratectl.h>
+
+#ifdef __NetBSD__
+#undef  KASSERT
+#define KASSERT(__cond, __complaint) FBSDKASSERT(__cond, __complaint)
+#endif
 
 #define is_success(amn)	\
 	((amn)->amn_retrycnt < (amn)->amn_txcnt / 10)
@@ -81,7 +97,11 @@ static void	amrr_node_stats(struct ieee80211_node *ni, struct sbuf *s);
 /* number of references from net80211 layer */
 static	int nrefs = 0;
 
+#ifdef notyet
 static const struct ieee80211_ratectl amrr = {
+#else
+static const struct ieee80211_ratectl __unused amrr = {
+#endif
 	.ir_name	= "amrr",
 	.ir_attach	= NULL,
 	.ir_detach	= NULL,
@@ -97,6 +117,10 @@ static const struct ieee80211_ratectl amrr = {
 };
 IEEE80211_RATECTL_MODULE(amrr, 1);
 IEEE80211_RATECTL_ALG(amrr, IEEE80211_RATECTL_AMRR, amrr);
+
+#ifdef __NetBSD__
+#define amrr amrr0
+#endif
 
 static void
 amrr_setinterval(const struct ieee80211vap *vap, int msecs)
@@ -415,6 +439,7 @@ amrr_tx_update(struct ieee80211vap *vap,
 	}
 }
 
+#ifdef notyet
 static int
 amrr_sysctl_interval(SYSCTL_HANDLER_ARGS)
 {
@@ -429,11 +454,13 @@ amrr_sysctl_interval(SYSCTL_HANDLER_ARGS)
 	amrr_setinterval(vap, msecs);
 	return 0;
 }
+#endif
 
 static void
 amrr_sysctlattach(struct ieee80211vap *vap,
     struct sysctl_ctx_list *ctx, struct sysctl_oid *tree)
 {
+#ifdef notyet
 	struct ieee80211_amrr *amrr = vap->iv_rs;
 
 	SYSCTL_ADD_PROC(ctx, SYSCTL_CHILDREN(tree), OID_AUTO,
@@ -446,6 +473,7 @@ amrr_sysctlattach(struct ieee80211vap *vap,
 	SYSCTL_ADD_UINT(ctx, SYSCTL_CHILDREN(tree), OID_AUTO,
 	    "amrr_min_sucess_threshold", CTLFLAG_RW,
 	    &amrr->amrr_min_success_threshold, 0, "");
+#endif
 }
 
 static void
@@ -475,3 +503,4 @@ amrr_node_stats(struct ieee80211_node *ni, struct sbuf *s)
 	sbuf_printf(s, "recovery: %u\n", amn->amn_recovery);
 	sbuf_printf(s, "retry_cnt: %u\n", amn->amn_retrycnt);
 }
+

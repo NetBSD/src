@@ -1,3 +1,5 @@
+/*	$NetBSD: ieee80211_sta.c,v 1.1.2.2 2018/07/12 16:35:34 phil Exp $ */
+
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
  *
@@ -47,14 +49,24 @@ __FBSDID("$FreeBSD$");
 #include <sys/endian.h>
 #include <sys/errno.h>
 #include <sys/proc.h>
+#ifdef __NetBSD__
+#include <sys/sbuf.h>
+#endif
 #include <sys/sysctl.h>
 
 #include <net/if.h>
 #include <net/if_media.h>
 #include <net/if_llc.h>
 #include <net/if_dl.h>
+#ifdef __FreeBSD__
 #include <net/if_var.h>
 #include <net/ethernet.h>
+#endif
+#ifdef __NetBSD__
+#include <net/if_ether.h>
+#include <net/route.h>
+#endif
+
 
 #include <net/bpf.h>
 
@@ -69,6 +81,11 @@ __FBSDID("$FreeBSD$");
 #include <net80211/ieee80211_vht.h>
 
 #define	IEEE80211_RATE2MBS(r)	(((r) & IEEE80211_RATE_VAL) / 2)
+
+#ifdef __NetBSD__
+#undef  KASSERT
+#define KASSERT(__cond, __complaint) FBSDKASSERT(__cond, __complaint)
+#endif
 
 static	void sta_vattach(struct ieee80211vap *);
 static	void sta_beacon_miss(struct ieee80211vap *);
@@ -1505,7 +1522,11 @@ sta_recv_mgmt(struct ieee80211_node *ni, struct mbuf *m0, int subtype,
 				int ix = aid / NBBY;
 				int min = tim->tim_bitctl &~ 1;
 				int max = tim->tim_len + min - 4;
+#ifdef __FreeBSD__
 				int tim_ucast = 0, tim_mcast = 0;
+#elif __NetBSD__
+				int tim_ucast = 0;  /* tim_mcast not used! */
+#endif
 
 				/*
 				 * Only do this for unicast traffic in the TIM
@@ -1518,6 +1539,7 @@ sta_recv_mgmt(struct ieee80211_node *ni, struct mbuf *m0, int subtype,
 					tim_ucast = 1;
 				}
 
+#ifdef __FreeBSD__
 				/*
 				 * Do a separate notification
 				 * for the multicast bit being set.
@@ -1525,6 +1547,9 @@ sta_recv_mgmt(struct ieee80211_node *ni, struct mbuf *m0, int subtype,
 				if (tim->tim_bitctl & 1) {
 					tim_mcast = 1;
 				}
+#elif __NetBSD__
+				/* XXX What was wanted here? Var set does nothing! */
+#endif
 
 				/*
 				 * If the TIM indicates there's traffic for
@@ -1808,10 +1833,16 @@ sta_recv_mgmt(struct ieee80211_node *ni, struct mbuf *m0, int subtype,
 				 * We aren't ready for 2GHz VHT support.
 				 */
 				if (IEEE80211_IS_CHAN_2GHZ(ni->ni_chan)) {
+#ifdef __FreeBSD__
 					printf("%s: peer %6D: VHT on 2GHz, ignoring\n",
 					    __func__,
 					    ni->ni_macaddr,
 					    ":");
+#elif __NetBSD__
+					printf("%s: peer %6ld: VHT on 2GHz, ignoring\n",
+					    __func__, (long int)ni->ni_macaddr );
+
+#endif
 				} else {
 					ieee80211_vht_node_init(ni);
 					ieee80211_vht_updateparams(ni, vhtcap, vhtopmode);

@@ -1,3 +1,5 @@
+/*	$NetBSD: ieee80211_scan.c,v 1.1.56.3 2018/07/12 16:35:34 phil Exp $ */
+
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
  *
@@ -26,7 +28,9 @@
  */
 
 #include <sys/cdefs.h>
+#ifdef __FreeBSD__
 __FBSDID("$FreeBSD$");
+#endif
 
 /*
  * IEEE 802.11 scanning support.
@@ -43,9 +47,16 @@ __FBSDID("$FreeBSD$");
 #include <sys/socket.h>
 
 #include <net/if.h>
+#ifdef __FreeBSD__
 #include <net/if_var.h>
+#endif
 #include <net/if_media.h>
+#ifdef __FreeBSD__
 #include <net/ethernet.h>
+#endif
+#ifdef __NetBSD__
+#include <net/route.h>
+#endif
 
 #include <net80211/ieee80211_var.h>
 
@@ -162,6 +173,7 @@ ieee80211_scan_vdetach(struct ieee80211vap *vap)
 	IEEE80211_UNLOCK(ic);
 }
 
+#ifdef notyet
 /*
  * Simple-minded scanner module support.
  */
@@ -174,6 +186,7 @@ static const char *scan_modnames[IEEE80211_OPMODE_MAX] = {
 	"wlan_scan_monitor",	/* IEEE80211_M_MONITOR */
 	"wlan_scan_sta",	/* IEEE80211_M_MBSS */
 };
+#endif
 static const struct ieee80211_scanner *scanners[IEEE80211_OPMODE_MAX];
 
 const struct ieee80211_scanner *
@@ -181,8 +194,10 @@ ieee80211_scanner_get(enum ieee80211_opmode mode)
 {
 	if (mode >= IEEE80211_OPMODE_MAX)
 		return NULL;
+#ifdef notyet
 	if (scanners[mode] == NULL)
 		ieee80211_load_module(scan_modnames[mode]);
+#endif
 	return scanners[mode];
 }
 

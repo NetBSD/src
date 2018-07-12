@@ -1,3 +1,5 @@
+/*	$NetBSD: ieee80211_input.c,v 1.114.2.2 2018/07/12 16:35:34 phil Exp $ */
+
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
  *
@@ -27,7 +29,9 @@
  */
 
 #include <sys/cdefs.h>
+#if __FreeBSD__
 __FBSDID("$FreeBSD$");
+#endif
 
 #include "opt_wlan.h"
 
@@ -40,12 +44,23 @@ __FBSDID("$FreeBSD$");
  
 #include <sys/socket.h>
  
+#if __FreeBSD__
 #include <net/ethernet.h>
+#endif
 #include <net/if.h>
+#if __FreeBSD__
 #include <net/if_var.h>
+#endif
 #include <net/if_llc.h>
 #include <net/if_media.h>
+#if __FreeBSD__
 #include <net/if_vlan_var.h>
+#endif
+#ifdef __NetBSD__
+#include <net/ethertypes.h>
+#include <net/if_ether.h>
+#include <net/route.h>
+#endif
 
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_input.h>
@@ -58,6 +73,11 @@ __FBSDID("$FreeBSD$");
 #ifdef INET
 #include <netinet/in.h>
 #include <net/ethernet.h>
+#endif
+
+#ifdef __NetBSD__
+#undef  KASSERT
+#define KASSERT(__cond, __complaint) FBSDKASSERT(__cond, __complaint)
 #endif
 
 static void
@@ -146,7 +166,11 @@ ieee80211_input_mimo_all(struct ieee80211com *ic, struct mbuf *m)
 			 * so do a deep copy of the packet.
 			 * NB: tags are copied too.
 			 */
+#if __FreeBSD__
 			mcopy = m_dup(m, M_NOWAIT);
+#elif __NetBSD__
+			mcopy = m_dup(m, 0, M_COPYALL, M_NOWAIT);
+#endif
 			if (mcopy == NULL) {
 				/* XXX stat+msg */
 				continue;
@@ -283,14 +307,22 @@ ieee80211_deliver_data(struct ieee80211vap *vap,
 		IEEE80211_NODE_STAT(ni, rx_mcast);
 	} else
 		IEEE80211_NODE_STAT(ni, rx_ucast);
+#if __FreeBSD__
 	m->m_pkthdr.rcvif = ifp;
+#elif __NetBSD__
+	m_set_rcvif(m,ifp);
+#endif
 
 	if (ni->ni_vlan != 0) {
 		/* attach vlan tag */
 		m->m_pkthdr.ether_vtag = ni->ni_vlan;
 		m->m_flags |= M_VLANTAG;
 	}
+#if __FreeBSD__
 	ifp->if_input(ifp, m);
+#elif __NetBSD__
+	if_input(ifp, m);
+#endif
 }
 
 struct mbuf *

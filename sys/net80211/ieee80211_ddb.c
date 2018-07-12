@@ -1,3 +1,5 @@
+/*	$NetBSD: ieee80211_ddb.c,v 1.1.2.2 2018/07/12 16:35:34 phil Exp $ */
+
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
  *
@@ -26,7 +28,9 @@
  */
 
 #include <sys/cdefs.h>
+#ifdef __FreeBSD__
 __FBSDID("$FreeBSD$");
+#endif
 
 #include "opt_ddb.h"
 #include "opt_wlan.h"
@@ -42,12 +46,19 @@ __FBSDID("$FreeBSD$");
 #include <sys/socket.h>
 
 #include <net/if.h>
+#ifdef __FreeBSD__
 #include <net/if_var.h>
+#endif
 #include <net/if_dl.h>
 #include <net/if_media.h>
 #include <net/if_types.h>
+#ifdef __FreeBSD__
 #include <net/ethernet.h>
 #include <net/vnet.h>
+#endif
+#ifdef __NetBSD__
+#include <net/route.h>
+#endif
 
 #include <net80211/ieee80211_var.h>
 #ifdef IEEE80211_SUPPORT_TDMA

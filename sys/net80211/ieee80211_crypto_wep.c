@@ -1,3 +1,5 @@
+/*	$NetBSD: ieee80211_crypto_wep.c,v 1.12.2.2 2018/07/12 16:35:34 phil Exp $ */
+
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
  *
@@ -26,7 +28,9 @@
  */
 
 #include <sys/cdefs.h>
+#if  __FreeBSD__
 __FBSDID("$FreeBSD$");
+#endif
 
 /*
  * IEEE 802.11 WEP crypto support.
@@ -45,9 +49,19 @@ __FBSDID("$FreeBSD$");
 
 #include <net/if.h>
 #include <net/if_media.h>
+#if  __FreeBSD__
 #include <net/ethernet.h>
+#endif
+#ifdef __NetBSD__
+#include <net/route.h>
+#endif
 
 #include <net80211/ieee80211_var.h>
+
+#ifdef __NetBSD__
+#undef  KASSERT
+#define KASSERT(__cond, __complaint) FBSDKASSERT(__cond, __complaint)
+#endif
 
 static	void *wep_attach(struct ieee80211vap *, struct ieee80211_key *);
 static	void wep_detach(struct ieee80211_key *);
@@ -241,7 +255,12 @@ wep_decap(struct ieee80211_key *k, struct mbuf *m, int hdrlen)
 {
 	struct wep_ctx *ctx = k->wk_private;
 	struct ieee80211vap *vap = ctx->wc_vap;
+#if  __FreeBSD__
 	struct ieee80211_frame *wh;
+#elif __NetBSD__
+	/* Compiler complains even though it looks used below. */
+	struct ieee80211_frame *wh __unused;  
+#endif
 	const struct ieee80211_rx_stats *rxs;
 
 	wh = mtod(m, struct ieee80211_frame *);
