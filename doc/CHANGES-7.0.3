@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.3,v 1.1.2.108 2018/06/30 11:37:26 martin Exp $
+# $NetBSD: CHANGES-7.0.3,v 1.1.2.109 2018/07/12 14:59:58 martin Exp $
 
 A complete list of changes from the NetBSD 7.0.2 release to the NetBSD 7.0.3
 release:
@@ -5468,4 +5468,14 @@ xsrc/xfree/xc/programs/mkfontscale/ident.c	(apply patch)
 
 	Pass gzFile, not gzFile * to gzio functions.
 	[mrg, ticket #1618]
+
+usr.bin/printf/printf.c				1.37-1.39
+
+	Fix some error handling.
+	Avoid running off into oblivion when a format string,
+	or arg to a %b conversion ends in an unescaped backslash.
+	Avoid printing error messages twice when an invalid
+	escape sequence (\ sequence) is present in an arg to a %b
+	conversion.
+	[kre, ticket #1619]
 
