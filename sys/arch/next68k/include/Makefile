@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2015/12/24 14:13:36 christos Exp $
+#	$NetBSD: Makefile,v 1.23 2018/07/12 10:46:46 maxv Exp $
 
 INCSDIR= /usr/include/next68k
 
@@ -14,7 +14,7 @@ INCS=	ansi.h aout_machdep.h asm.h autoconf.h \
 	kcore.h \
 	limits.h lock.h \
 	math.h mcontext.h mutex.h \
-	param.h pcb.h pmap.h pmc.h proc.h profile.h psl.h pte.h ptrace.h \
+	param.h pcb.h pmap.h proc.h profile.h psl.h pte.h ptrace.h \
 	reg.h rwlock.h \
 	setjmp.h signal.h \
 	trap.h types.h \

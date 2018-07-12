@@ -1,4 +1,4 @@
-#	$NetBSD: MARVELL_NAS,v 1.29 2018/02/17 01:31:02 sevan Exp $
+#	$NetBSD: MARVELL_NAS,v 1.30 2018/07/12 10:46:43 maxv Exp $
 #
 #  This configuration supports for generically Marvell NAS.
 
@@ -231,7 +231,6 @@ options 	BUFQ_PRIOCSCAN
 
 # Development and Debugging options
 
-#options 	PERFCTRS	# performance counters
 #options 	DIAGNOSTIC	# internal consistency checks
 #options 	DEBUG
 #options 	LOCKDEBUG

@@ -1,4 +1,4 @@
-#	$NetBSD: GUMSTIX,v 1.96 2018/06/07 13:36:28 thorpej Exp $
+#	$NetBSD: GUMSTIX,v 1.97 2018/07/12 10:46:43 maxv Exp $
 #
 #	GUMSTIX -- Gumstix. Inc. gumstix platforms kernel
 #
@@ -131,7 +131,6 @@ options 	MIIVERBOSE	# Verbose MII autoconfuration messages
 
 # Development and Debugging options
 
-#options 	PERFCTRS	# performance counters
 options 	DIAGNOSTIC	# internal consistency checks
 options 	DEBUG
 #options 	LOCKDEBUG

@@ -1,4 +1,4 @@
-#	$NetBSD: ARMADILLO210,v 1.41 2018/06/28 15:21:52 thorpej Exp $
+#	$NetBSD: ARMADILLO210,v 1.42 2018/07/12 10:46:43 maxv Exp $
 #
 #	ARMADILLO210 -- Atmark Techno, Armadillo-210
 #
@@ -107,7 +107,6 @@ options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Development and Debugging options
 
-#options 	PERFCTRS	# performance counters
 #options 	DIAGNOSTIC	# internal consistency checks
 #options 	DEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code

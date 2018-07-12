@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2015/12/21 17:02:32 christos Exp $
+#	$NetBSD: Makefile,v 1.24 2018/07/12 10:46:42 maxv Exp $
 
 INCSDIR= /usr/include/cobalt
 
@@ -15,7 +15,7 @@ INCS=	ansi.h asm.h autoconf.h \
 	limits.h lock.h locore.h \
 	math.h mcontext.h mips_opcode.h mutex.h \
 	nvram.h \
-	param.h pcb.h pmap.h pmc.h proc.h profile.h psl.h pte.h ptrace.h \
+	param.h pcb.h pmap.h proc.h profile.h psl.h pte.h ptrace.h \
 	reg.h regdef.h regnum.h reloc.h rwlock.h \
 	setjmp.h signal.h sljit_machdep.h \
 	trap.h types.h \
