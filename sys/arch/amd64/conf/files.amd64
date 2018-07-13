@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.104 2018/05/23 07:45:35 maxv Exp $
+#	$NetBSD: files.amd64,v 1.105 2018/07/13 09:37:32 maxv Exp $
 #
 # new style config file for amd64 architecture
 #
@@ -27,7 +27,6 @@ defflag opt_spectre.h	SPECTRE_V2_GCC_MITIGATION
 # with the i386 (they include the opt_*.h for these)
 #
 
-defflag			PMC
 defflag			USER_LDT
 defflag			KASLR
 defflag eisa.h EISA
