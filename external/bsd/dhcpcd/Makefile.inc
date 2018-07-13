@@ -1,11 +1,11 @@
-# $NetBSD: Makefile.inc,v 1.1.8.1 2017/06/15 05:33:49 snj Exp $
+# $NetBSD: Makefile.inc,v 1.1.8.2 2018/07/13 15:55:25 martin Exp $
 
 SRCDIR=		${NETBSDSRCDIR}/external/bsd/dhcpcd
 DIST=		${SRCDIR}/dist
 
 SED_SYS=	-e 's:@SYSCONFDIR@:/etc:g' \
 		-e 's:@DATADIR@:/usr/share/examples:g' \
-		-e 's:@DBDIR@:/var/db:g' \
+		-e 's:@DBDIR@:/var/db/dhcpcd:g' \
 		-e 's:@LIBDIR@:/lib:g' \
 		-e 's:@RUNDIR@:/var/run:g' \
 		-e 's:@HOOKDIR@:/libexec/dhcpcd-hooks:g' \
