@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1596 2018/07/10 17:01:42 maya Exp $
+# $NetBSD: mi,v 1.1597 2018/07/13 09:15:56 maxv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -436,7 +436,7 @@
 ./usr/share/man/cat1/pkg_view.0			man-obsolete		obsolete
 ./usr/share/man/cat1/pkill.0			man-util-catman		.cat
 ./usr/share/man/cat1/pmap.0			man-util-catman		.cat
-./usr/share/man/cat1/pmc.0			man-util-catman		.cat
+./usr/share/man/cat1/pmc.0			man-obsolete		obsolete
 ./usr/share/man/cat1/popd.0			man-util-catman		.cat
 ./usr/share/man/cat1/postalias.0		man-postfix-catman	postfix,.cat
 ./usr/share/man/cat1/postcat.0			man-postfix-catman	postfix,.cat
@@ -3644,7 +3644,7 @@
 ./usr/share/man/html1/pkg_view.html		man-obsolete		obsolete
 ./usr/share/man/html1/pkill.html		man-util-htmlman	html
 ./usr/share/man/html1/pmap.html			man-util-htmlman	html
-./usr/share/man/html1/pmc.html			man-util-htmlman	html
+./usr/share/man/html1/pmc.html			man-obsolete		obsolete
 ./usr/share/man/html1/popd.html			man-util-htmlman	html
 ./usr/share/man/html1/postalias.html		man-postfix-htmlman	postfix,html
 ./usr/share/man/html1/postcat.html		man-postfix-htmlman	postfix,html
@@ -6498,7 +6498,7 @@
 ./usr/share/man/man1/pkg_view.1			man-obsolete		obsolete
 ./usr/share/man/man1/pkill.1			man-util-man		.man
 ./usr/share/man/man1/pmap.1			man-util-man		.man
-./usr/share/man/man1/pmc.1			man-util-man		.man
+./usr/share/man/man1/pmc.1			man-obsolete		obsolete
 ./usr/share/man/man1/popd.1			man-util-man		.man
 ./usr/share/man/man1/postalias.1		man-postfix-man		postfix,.man
 ./usr/share/man/man1/postcat.1			man-postfix-man		postfix,.man
