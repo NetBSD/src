@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof_analyze.c,v 1.1 2018/07/13 11:03:36 maxv Exp $	*/
+/*	$NetBSD: tprof_analyze.c,v 1.2 2018/07/13 12:04:50 maxv Exp $	*/
 
 /*
  * Copyright (c) 2010,2011,2012 YAMAMOTO Takashi,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: tprof_analyze.c,v 1.1 2018/07/13 11:03:36 maxv Exp $");
+__RCSID("$NetBSD: tprof_analyze.c,v 1.2 2018/07/13 12:04:50 maxv Exp $");
 #endif /* not lint */
 
 #include <assert.h>
@@ -283,6 +283,7 @@ tprof_analyze(int argc, char **argv)
 	bool kernel_only = false;
 	extern char *optarg;
 	extern int optind;
+	FILE *f;
 
 	while ((ch = getopt(argc, argv, "CkLPp:s")) != -1) {
 		uintmax_t val;
@@ -321,6 +322,15 @@ tprof_analyze(int argc, char **argv)
 	argc -= optind;
 	argv += optind;
 
+	if (argc == 0) {
+		errx(EXIT_FAILURE, "missing file name");
+	}
+
+	f = fopen(argv[0], "rb");
+	if (f == NULL) {
+		errx(EXIT_FAILURE, "fopen");
+	}
+
 	ksymload();
 	rb_tree_init(&addrtree, &addrtree_ops);
 
@@ -332,14 +342,14 @@ tprof_analyze(int argc, char **argv)
 	while (/*CONSTCOND*/true) {
 		struct addr *o;
 		tprof_sample_t sample;
-		size_t n = fread(&sample, sizeof(sample), 1, stdin);
+		size_t n = fread(&sample, sizeof(sample), 1, f);
 		bool in_kernel;
 
 		if (n == 0) {
-			if (feof(stdin)) {
+			if (feof(f)) {
 				break;
 			}
-			if (ferror(stdin)) {
+			if (ferror(f)) {
 				err(EXIT_FAILURE, "fread");
 			}
 		}
@@ -434,4 +444,6 @@ tprof_analyze(int argc, char **argv)
 		    a->nsamples, a->pid, a->lwpid, a->cpuid, a->in_kernel,
 		    a->addr, name);
 	}
+
+	fclose(f);
 }
