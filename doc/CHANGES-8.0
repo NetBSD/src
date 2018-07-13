@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.226 2018/07/13 14:43:46 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.227 2018/07/13 16:16:32 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -14201,4 +14201,54 @@ usr.bin/calendar/calendars/calendar.usholiday	1.8
 
 	Various calendar fixes and floating holidays.
 	[jnemeth, ticket #908]
+
+sys/kern/init_main.c				1.498
+sys/net/if.c					1.429
+sys/net/if.h					1.264
+sys/rump/net/lib/libnet/net_component.c		1.10
+
+	Fix setup of net.inet6.ip6.ifq sysctl node.
+	[ozaki-r, ticket #911]
+
+sys/arch/x86/include/specialreg.h		1.127
+sys/arch/x86/x86/identcpu.c			1.79
+
+	Disable MWAIT/MONITOR on Apollo Lake CPUs to workaround APL30 errata.
+	[maya, ticket #912]
+
+external/bsd/dhcpcd/Makefile.inc		1.3
+
+	Fix an inconsistency that showed /var/db/duid in the man page while the
+	binary opened /var/db/dhcpcd/duid.
+	[triaxx, ticket #913]
+
+usr.bin/printf/printf.c				1.38,1.39
+
+	Avoid running off into oblivion when a format string,
+	or arg to a %b conversion ends in an unescaped backslash.
+	Avoid printing error messages twice when an invalid
+	escape sequence (\ sequence) is present in an arg to a %b
+	conversion.
+	[kre, ticket #914]
+
+sys/net/if.c					1.424
+
+	Print "NET_MPSAFE enabled" if it's enabled.
+	[msaitoh, ticket #915]
+
+external/bsd/ppp/usr.sbin/pppd/sys-bsd.c	1.5
+
+	Fix deletion of a proxy arp entry.
+	[christos, ticket #916]
+
+external/gpl3/binutils.old/dist/bfd/peXXigen.c	1.6
+(applied to external/gpl3/binutils/dist/bfd/peXXigen.c)
+
+	Fix reproducible builds for EFI boot blocks.
+	[christos, ticket #917]
+
+usr.sbin/ndp/ndp.c				1.52-1.54
+
+	Fix the host and address output when neighbor cache entry is deleted.
+	[nonaka, ticket #921]
 
