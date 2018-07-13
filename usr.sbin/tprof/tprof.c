@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof.c,v 1.7 2018/07/13 09:04:31 maxv Exp $	*/
+/*	$NetBSD: tprof.c,v 1.8 2018/07/13 11:03:36 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: tprof.c,v 1.7 2018/07/13 09:04:31 maxv Exp $");
+__RCSID("$NetBSD: tprof.c,v 1.8 2018/07/13 11:03:36 maxv Exp $");
 #endif /* not lint */
 
 #include <sys/ioctl.h>
@@ -94,6 +94,7 @@ static struct cmdtab {
 } const tprof_cmdtab[] = {
 	{ "list",	false, false, tprof_list },
 	{ "monitor",	true,  false, tprof_monitor },
+	{ "analyze",	true,  true,  tprof_analyze },
 	{ NULL,		false, false, NULL },
 };
 
@@ -101,13 +102,15 @@ __dead static void
 usage(void)
 {
 
-	fprintf(stderr, "%s [op] [options] [command]\n", getprogname());
+	fprintf(stderr, "%s op [arguments]\n", getprogname());
 	fprintf(stderr, "\n");
 	fprintf(stderr, "\tlist\n");
 	fprintf(stderr, "\t\tList the available events.\n");
 	fprintf(stderr, "\tmonitor -e name:option [-o outfile] command\n");
 	fprintf(stderr, "\t\tMonitor the event 'name' with option 'option'\n"
 	    "\t\tcounted during the execution of 'command'.\n");
+	fprintf(stderr, "\tanalyze [-C] [-k] [-L] [-P] [-p pid] [-s]\n");
+	fprintf(stderr, "\t\tAnalyze the samples from stdin.\n");
 
 	exit(EXIT_FAILURE);
 }
