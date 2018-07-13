@@ -1,4 +1,4 @@
-/* $NetBSD: crt0-common.c,v 1.18 2018/07/12 21:36:45 joerg Exp $ */
+/* $NetBSD: crt0-common.c,v 1.19 2018/07/13 01:00:17 kre Exp $ */
 
 /*
  * Copyright (c) 1998 Christos Zoulas
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: crt0-common.c,v 1.18 2018/07/12 21:36:45 joerg Exp $");
+__RCSID("$NetBSD: crt0-common.c,v 1.19 2018/07/13 01:00:17 kre Exp $");
 
 #include <sys/types.h>
 #include <sys/exec.h>
@@ -214,9 +214,9 @@ relocate_self(struct ps_strings *ps_strings)
 {
 	AuxInfo *aux = (AuxInfo *)(ps_strings->ps_argvstr + ps_strings->ps_nargvstr +
 	    ps_strings->ps_nenvstr + 2);
-	uintptr_t relocbase;
-	const Elf_Phdr *phdr;
-	Elf_Half phnum;
+	uintptr_t relocbase = (uintptr_t)~0U;
+	const Elf_Phdr *phdr = NULL;
+	Elf_Half phnum = (Elf_Half)~0;
 
 	for (; aux->a_type != AT_NULL; ++aux) {
 		switch (aux->a_type) {
@@ -232,7 +232,11 @@ relocate_self(struct ps_strings *ps_strings)
 			break;
 		}
 	}
-	const Elf_Phdr *phlimit = phdr + phnum, *dynphdr;
+
+	if (phdr == NULL || phnum == (Elf_Half)~0)
+		return;
+
+	const Elf_Phdr *phlimit = phdr + phnum, *dynphdr = NULL;
 
 	for (; phdr < phlimit; ++phdr) {
 		if (phdr->p_type == PT_DYNAMIC)
@@ -240,6 +244,9 @@ relocate_self(struct ps_strings *ps_strings)
 		if (phdr->p_type == PT_PHDR)
 			relocbase = (uintptr_t)phdr - phdr->p_vaddr;
 	}
+	if (dynphdr == NULL || relocbase == (uintptr_t)~0U)
+		return;
+
 	Elf_Dyn *dynp = (Elf_Dyn *)((uint8_t *)dynphdr->p_vaddr + relocbase);
 
 	const REL_TYPE *relocs = 0, *relocslim;
