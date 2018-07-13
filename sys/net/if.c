@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.394.2.12 2018/07/13 15:49:55 martin Exp $	*/
+/*	$NetBSD: if.c,v 1.394.2.13 2018/07/13 16:01:12 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.394.2.12 2018/07/13 15:49:55 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.394.2.13 2018/07/13 16:01:12 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -309,6 +309,11 @@ ifinit(void)
 void
 ifinit1(void)
 {
+
+#ifdef NET_MPSAFE
+	printf("NET_MPSAFE enabled\n");
+#endif
+
 	mutex_init(&if_clone_mtx, MUTEX_DEFAULT, IPL_NONE);
 
 	TAILQ_INIT(&ifnet_list);
