@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof.c,v 1.9 2018/07/13 12:04:50 maxv Exp $	*/
+/*	$NetBSD: tprof.c,v 1.10 2018/07/13 19:54:53 joerg Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: tprof.c,v 1.9 2018/07/13 12:04:50 maxv Exp $");
+__RCSID("$NetBSD: tprof.c,v 1.10 2018/07/13 19:54:53 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/ioctl.h>
@@ -84,7 +84,7 @@ int devfd;
 int outfd;
 
 static void tprof_list(int, char **);
-static void tprof_monitor(int, char **);
+static void tprof_monitor(int, char **) __dead;
 
 static struct cmdtab {
 	const char *label;
