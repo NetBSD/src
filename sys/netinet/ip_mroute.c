@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.146.6.3 2018/04/09 13:34:10 bouyer Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.146.6.4 2018/07/13 14:26:47 martin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.146.6.3 2018/04/09 13:34:10 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.146.6.4 2018/07/13 14:26:47 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2363,6 +2363,7 @@ rsvp_input(struct mbuf *m, struct ifnet *ifp)
 	if (ip_rsvpd != NULL) {
 		RSVP_DPRINTF(("%s: Sending packet up old-style socket\n",
 		    __func__));
+		/* rsvp_input() is not called, not care */
 		rip_input(m);	/*XXX*/
 		return;
 	}
@@ -3463,6 +3464,11 @@ pim_input_to_daemon:
      * XXX: the outer IP header pkt size of a Register is not adjust to
      * reflect the fact that the inner multicast data is truncated.
      */
+    /*
+     * Currently, pim_input() is always called holding softnet_lock
+     * by ipintr()(!NET_MPSAFE) or PR_INPUT_WRAP()(NET_MPSAFE).
+     */
+    KASSERT(mutex_owned(softnet_lock));
     rip_input(m, iphlen, proto);
 
     return;

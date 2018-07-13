@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.239.2.5 2018/04/14 10:16:19 martin Exp $	*/
+/*	$NetBSD: if.h,v 1.239.2.6 2018/07/13 14:26:48 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -534,6 +534,11 @@ if_is_link_state_changeable(struct ifnet *ifp)
 #define SOFTNET_LOCK_UNLESS_NET_MPSAFE()	do { } while (0)
 #define SOFTNET_UNLOCK_UNLESS_NET_MPSAFE()	do { } while (0)
 
+#define SOFTNET_LOCK_IF_NET_MPSAFE()					\
+	do { mutex_enter(softnet_lock); } while (0)
+#define SOFTNET_UNLOCK_IF_NET_MPSAFE()					\
+	do { mutex_exit(softnet_lock); } while (0)
+
 #else /* NET_MPSAFE */
 
 #define KERNEL_LOCK_UNLESS_NET_MPSAFE()					\
@@ -545,6 +550,9 @@ if_is_link_state_changeable(struct ifnet *ifp)
 	do { mutex_enter(softnet_lock); } while (0)
 #define SOFTNET_UNLOCK_UNLESS_NET_MPSAFE()				\
 	do { mutex_exit(softnet_lock); } while (0)
+
+#define SOFTNET_LOCK_IF_NET_MPSAFE()		do { } while (0)
+#define SOFTNET_UNLOCK_IF_NET_MPSAFE()		do { } while (0)
 
 #endif /* NET_MPSAFE */
 
