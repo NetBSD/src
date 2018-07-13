@@ -1,4 +1,4 @@
-/* $NetBSD: kauth.h,v 1.76 2018/04/26 18:54:09 alnsn Exp $ */
+/* $NetBSD: kauth.h,v 1.77 2018/07/13 09:58:49 maxv Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>  
@@ -320,7 +320,6 @@ enum {
 	KAUTH_MACHDEP_NVRAM,
 	KAUTH_MACHDEP_UNMANAGEDMEM,
 	KAUTH_MACHDEP_PXG,
-	KAUTH_MACHDEP_X86PMC,
 	KAUTH_MACHDEP_SVS_DISABLE
 };
 
