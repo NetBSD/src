@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1597 2018/07/13 09:15:56 maxv Exp $
+# $NetBSD: mi,v 1.1598 2018/07/13 11:14:14 maxv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -573,7 +573,7 @@
 ./usr/share/man/cat1/tn3270.0			man-obsolete		obsolete
 ./usr/share/man/cat1/top.0			man-util-catman		.cat
 ./usr/share/man/cat1/touch.0			man-util-catman		.cat
-./usr/share/man/cat1/tpfmt.0			man-util-catman		.cat
+./usr/share/man/cat1/tpfmt.0			man-obsolete		obsolete
 ./usr/share/man/cat1/tpm_sealdata.0		man-tpm-catman		tpm,.cat
 ./usr/share/man/cat1/tpm_version.0		man-tpm-catman		tpm,.cat
 ./usr/share/man/cat1/tput.0			man-util-catman		.cat
@@ -3777,7 +3777,7 @@
 ./usr/share/man/html1/tn3270.html		man-obsolete		obsolete
 ./usr/share/man/html1/top.html			man-util-htmlman	html
 ./usr/share/man/html1/touch.html		man-util-htmlman	html
-./usr/share/man/html1/tpfmt.html		man-util-htmlman	html
+./usr/share/man/html1/tpfmt.html		man-obsolete		obsolete
 ./usr/share/man/html1/tpm_sealdata.html		man-tpm-htmlman		tpm,html
 ./usr/share/man/html1/tpm_version.html		man-tpm-htmlman		tpm,html
 ./usr/share/man/html1/tput.html			man-util-htmlman	html
@@ -6635,7 +6635,7 @@
 ./usr/share/man/man1/tn3270.1			man-obsolete		obsolete
 ./usr/share/man/man1/top.1			man-util-man		.man
 ./usr/share/man/man1/touch.1			man-util-man		.man
-./usr/share/man/man1/tpfmt.1			man-util-man		.man
+./usr/share/man/man1/tpfmt.1			man-obsolete		obsolete
 ./usr/share/man/man1/tpm_sealdata.1		man-tpm-man		tpm,.man
 ./usr/share/man/man1/tpm_version.1		man-tpm-man		tpm,.man
 ./usr/share/man/man1/tput.1			man-util-man		.man
