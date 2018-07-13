@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.225 2018/07/12 15:26:11 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.226 2018/07/13 14:43:46 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -14161,4 +14161,44 @@ lib/libutil/pty.c				1.32
 
 	Fix stack use after scope in libutil/pty.
 	[kamil, ticket #901]
+
+sys/net/if.h					1.263 (patch)
+sys/netinet/igmp.c				1.68 (patch)
+sys/netinet/in_l2tp.c				1.15 (patch)
+sys/netinet/ip_encap.c				1.69 (patch)
+sys/netinet/ip_icmp.c				1.172 (patch)
+sys/netinet/ip_mroute.c				1.160 (patch)
+sys/netinet6/in6_l2tp.c				1.16 (patch)
+sys/netinet6/ip6_mroute.c			1.129 (patch)
+
+	Fix a panic if the system receives l2tpv3 packets before setting up
+	an l2tp(4) interface.
+	[knakahara, ticket #905]
+
+bin/sh/eval.c					1.155
+bin/sh/exec.c					1.52
+bin/sh/exec.h					1.27
+bin/sh/mknodes.sh				1.3
+bin/sh/nodes.c.pat				1.14
+
+	Deal with ref after free found by ASAN when a function redefines
+	itself, or some other function which is still active.
+	[kre, ticket #906]
+
+bin/sh/expand.c					1.122
+
+	Fix matching of character classes  [[:xxx:]] in shell patterns
+	so that '[' is not always considered a member of the class.
+	[kre, ticket #907]
+
+usr.bin/calendar/calendars/calendar.birthday	1.27
+usr.bin/calendar/calendars/calendar.christian	1.7
+usr.bin/calendar/calendars/calendar.history	1.35
+usr.bin/calendar/calendars/calendar.holiday	1.28,1.29
+usr.bin/calendar/calendars/calendar.judaic	1.7
+usr.bin/calendar/calendars/calendar.netbsd	1.39
+usr.bin/calendar/calendars/calendar.usholiday	1.8
+
+	Various calendar fixes and floating holidays.
+	[jnemeth, ticket #908]
 
