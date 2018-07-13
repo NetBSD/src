@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof_ioctl.h,v 1.3 2011/04/14 16:23:59 yamt Exp $	*/
+/*	$NetBSD: tprof_ioctl.h,v 1.4 2018/07/13 07:56:29 maxv Exp $	*/
 
 /*-
  * Copyright (c)2008,2010 YAMAMOTO Takashi,
@@ -37,14 +37,15 @@
 
 #include <dev/tprof/tprof_types.h>
 
-#define	TPROF_VERSION	3	/* kernel-userland ABI version */
+#define	TPROF_VERSION	4	/* kernel-userland ABI version */
 
-#define	TPROF_IOC_GETVERSION	_IOR('T', 1, int)
-
-struct tprof_param {
-	int dummy;
+struct tprof_info {
+	uint32_t ti_version;
+	uint32_t ti_ident;
 };
-#define	TPROF_IOC_START		_IOW('T', 2, struct tprof_param)
+#define	TPROF_IOC_GETINFO	_IOR('T', 1, struct tprof_info)
+
+#define	TPROF_IOC_START		_IOW('T', 2, tprof_param_t)
 
 #define	TPROF_IOC_STOP		_IO('T', 3)
 
