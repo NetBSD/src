@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.230 2018/07/13 11:13:10 mrg Exp $
+#	$NetBSD: Makefile,v 1.231 2018/07/13 11:14:14 maxv Exp $
 #	from: @(#)Makefile	8.3 (Berkeley) 1/7/94
 
 .include <bsd.own.mk>
@@ -28,7 +28,7 @@ SUBDIR= apply asa at audio audiocfg \
 	showmount shuffle sockstat sort sortinfo \
 	spell split stat su sys_info systat \
 	tabs tail talk tcopy tee telnet tftp tic time timeout tip touch \
-	tpfmt tput \
+	tput \
 	tr true tset tsort tty ul uname unexpand unifdef \
 	uniq units unvis unzip usbhidaction usbhidctl users utoppya \
 	uudecode uuencode uuidgen vacation vgrind videoctl vis \
