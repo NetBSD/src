@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof.h,v 1.1 2018/07/13 07:56:29 maxv Exp $	*/
+/*	$NetBSD: tprof.h,v 1.2 2018/07/13 11:03:36 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -33,3 +33,4 @@ int tprof_event_init(uint32_t);
 void tprof_event_list(void);
 void tprof_event_lookup(const char *, struct tprof_param *);
 
+void tprof_analyze(int, char **);
