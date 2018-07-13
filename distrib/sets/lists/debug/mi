@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.256 2018/06/29 12:34:14 roy Exp $
+# $NetBSD: mi,v 1.257 2018/07/13 11:14:14 maxv Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -803,7 +803,7 @@
 ./usr/libdata/debug/usr/bin/tn3270.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/bin/top.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/touch.debug		comp-util-debug		debug
-./usr/libdata/debug/usr/bin/tpfmt.debug		comp-util-debug		debug
+./usr/libdata/debug/usr/bin/tpfmt.debug		comp-obsolete		obsolete
 ./usr/libdata/debug/usr/bin/tpm_sealdata.debug	comp-tpm-debug		tpm,debug
 ./usr/libdata/debug/usr/bin/tpm_unsealdata.debug	comp-tpm-debug		tpm,debug
 ./usr/libdata/debug/usr/bin/tpm_version.debug	comp-tpm-debug		tpm,debug
