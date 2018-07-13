@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.47.2.2 2017/07/23 14:58:14 snj Exp $	*/
+/*	$NetBSD: exec.c,v 1.47.2.3 2018/07/13 14:29:15 martin Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.4 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: exec.c,v 1.47.2.2 2017/07/23 14:58:14 snj Exp $");
+__RCSID("$NetBSD: exec.c,v 1.47.2.3 2018/07/13 14:29:15 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -481,8 +481,9 @@ printentry(struct tblentry *cmdp, int verbose)
 		out1fmt("%s", cmdp->cmdname);
 		if (verbose) {
 			struct procstat ps;
+
 			INTOFF;
-			commandtext(&ps, cmdp->param.func);
+			commandtext(&ps, getfuncnode(cmdp->param.func));
 			INTON;
 			out1str("() { ");
 			out1str(ps.cmd);
@@ -989,9 +990,8 @@ addcmdentry(char *name, struct cmdentry *entry)
 	INTOFF;
 	cmdp = cmdlookup(name, 1);
 	if (cmdp->cmdtype != CMDSPLBLTIN) {
-		if (cmdp->cmdtype == CMDFUNCTION) {
-			freefunc(cmdp->param.func);
-		}
+		if (cmdp->cmdtype == CMDFUNCTION)
+			unreffunc(cmdp->param.func);
 		cmdp->cmdtype = entry->cmdtype;
 		cmdp->lineno = entry->lineno;
 		cmdp->fn_ln1 = entry->lno_frel;
@@ -1031,7 +1031,7 @@ unsetfunc(char *name)
 
 	if ((cmdp = cmdlookup(name, 0)) != NULL &&
 	    cmdp->cmdtype == CMDFUNCTION) {
-		freefunc(cmdp->param.func);
+		unreffunc(cmdp->param.func);
 		delete_cmd_entry();
 	}
 	return 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.140.2.2 2017/07/23 14:58:14 snj Exp $	*/
+/*	$NetBSD: eval.c,v 1.140.2.3 2018/07/13 14:29:15 martin Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.140.2.2 2017/07/23 14:58:14 snj Exp $");
+__RCSID("$NetBSD: eval.c,v 1.140.2.3 2018/07/13 14:29:15 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -1067,6 +1067,7 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 		INTOFF;
 		savelocalvars = localvars;
 		localvars = NULL;
+		reffunc(cmdentry.u.func);
 		INTON;
 		if (setjmp(jmploc.loc)) {
 			if (exception == EXSHELLPROC) {
@@ -1076,6 +1077,7 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 				freeparam(&shellparam);
 				shellparam = saveparam;
 			}
+			unreffunc(cmdentry.u.func);
 			poplocalvars();
 			localvars = savelocalvars;
 			funclinebase = savefuncline;
@@ -1094,8 +1096,8 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 
 			VTRACE(DBG_EVAL,
 			  ("function: node: %d '%s' # %d%s; funclinebase=%d\n",
-			    cmdentry.u.func->type,
-			    NODETYPENAME(cmdentry.u.func->type),
+			    getfuncnode(cmdentry.u.func)->type,
+			    NODETYPENAME(getfuncnode(cmdentry.u.func)->type),
 			    cmdentry.lineno, cmdentry.lno_frel?" (=1)":"",
 			    funclinebase));
 		}
@@ -1103,9 +1105,10 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 		/* stop shell blowing its stack */
 		if (++funcnest > 1000)
 			error("too many nested function calls");
-		evaltree(cmdentry.u.func, flags & EV_TESTED);
+		evaltree(getfuncnode(cmdentry.u.func), flags & EV_TESTED);
 		funcnest--;
 		INTOFF;
+		unreffunc(cmdentry.u.func);
 		poplocalvars();
 		localvars = savelocalvars;
 		funclinebase = savefuncline;
