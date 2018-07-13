@@ -1,6 +1,35 @@
-/*	$NetBSD: tprof_amdpmi.c,v 1.7 2017/05/23 08:54:39 nonaka Exp $	*/
+/*	$NetBSD: tprof_amdpmi.c,v 1.8 2018/07/13 07:56:29 maxv Exp $	*/
 
-/*-
+/*
+ * Copyright (c) 2018 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Maxime Villard.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
  * Copyright (c)2008,2009 YAMAMOTO Takashi,
  * All rights reserved.
  *
@@ -27,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tprof_amdpmi.c,v 1.7 2017/05/23 08:54:39 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tprof_amdpmi.c,v 1.8 2018/07/13 07:56:29 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,66 +107,53 @@ __KERNEL_RCSID(0, "$NetBSD: tprof_amdpmi.c,v 1.7 2017/05/23 08:54:39 nonaka Exp 
  * http://developer.amd.com/wordpress/media/2012/10/Basic_Performance_Measurements.pdf
  */
 
-/* Event flags - abbreviations as found in the documents */
-#define CPU_clocks__EVENT	0x76
-#define CPU_clocks__UNIT	0x00
-#define DC_refills_L2__EVENT	0x42
-#define DC_refills_L2__UNIT	0x1E
-#define DC_refills_sys__EVENT	0x43
-#define DC_refills_sys__UNIT	0x1E
-
-/*
- * Hardcode your counter here. There is no detection, so make sure it is
- * supported by your CPU family.
- */
-static uint32_t event = CPU_clocks__EVENT;
-static uint32_t unit = CPU_clocks__UNIT;
 static int ctrno = 0;
-
 static uint64_t counter_val = 5000000;
 static uint64_t counter_reset_val;
-static uint32_t tprof_amdpmi_lapic_saved[MAXCPUS];
-
-static nmi_handler_t *tprof_amdpmi_nmi_handle;
-static tprof_backend_cookie_t *tprof_cookie;
+static uint32_t amd_lapic_saved[MAXCPUS];
+static nmi_handler_t *amd_nmi_handle;
+static tprof_param_t amd_param;
 
 static void
-tprof_amdpmi_start_cpu(void *arg1, void *arg2)
+tprof_amd_start_cpu(void *arg1, void *arg2)
 {
 	struct cpu_info * const ci = curcpu();
 	uint64_t pesr;
 	uint64_t event_lo;
 	uint64_t event_hi;
 
-	event_hi = event >> 8;
-	event_lo = event & 0xff;
-	pesr = PESR_USR | PESR_OS | PESR_INT |
+	event_hi = amd_param.p_event >> 8;
+	event_lo = amd_param.p_event & 0xff;
+	pesr =
+	    ((amd_param.p_flags & TPROF_PARAM_USER) ? PESR_USR : 0) |
+	    ((amd_param.p_flags & TPROF_PARAM_KERN) ? PESR_OS : 0) |
+	    PESR_INT |
 	    __SHIFTIN(event_lo, PESR_EVENT_MASK_LO) |
 	    __SHIFTIN(event_hi, PESR_EVENT_MASK_HI) |
 	    __SHIFTIN(0, PESR_COUNTER_MASK) |
-	    __SHIFTIN(unit, PESR_UNIT_MASK);
+	    __SHIFTIN(amd_param.p_unit, PESR_UNIT_MASK);
 
 	wrmsr(PERFCTR(ctrno), counter_reset_val);
 	wrmsr(PERFEVTSEL(ctrno), pesr);
 
-	tprof_amdpmi_lapic_saved[cpu_index(ci)] = lapic_readreg(LAPIC_PCINT);
+	amd_lapic_saved[cpu_index(ci)] = lapic_readreg(LAPIC_PCINT);
 	lapic_writereg(LAPIC_PCINT, LAPIC_DLMODE_NMI);
 
 	wrmsr(PERFEVTSEL(ctrno), pesr | PESR_EN);
 }
 
 static void
-tprof_amdpmi_stop_cpu(void *arg1, void *arg2)
+tprof_amd_stop_cpu(void *arg1, void *arg2)
 {
 	struct cpu_info * const ci = curcpu();
 
 	wrmsr(PERFEVTSEL(ctrno), 0);
 
-	lapic_writereg(LAPIC_PCINT, tprof_amdpmi_lapic_saved[cpu_index(ci)]);
+	lapic_writereg(LAPIC_PCINT, amd_lapic_saved[cpu_index(ci)]);
 }
 
 static int
-tprof_amdpmi_nmi(const struct trapframe *tf, void *dummy)
+tprof_amd_nmi(const struct trapframe *tf, void *dummy)
 {
 	tprof_frame_info_t tfi;
 	uint64_t ctr;
@@ -154,11 +170,11 @@ tprof_amdpmi_nmi(const struct trapframe *tf, void *dummy)
 	/* record a sample */
 #if defined(__x86_64__)
 	tfi.tfi_pc = tf->tf_rip;
-#else /* defined(__x86_64__) */
+#else
 	tfi.tfi_pc = tf->tf_eip;
-#endif /* defined(__x86_64__) */
+#endif
 	tfi.tfi_inkernel = tfi.tfi_pc >= VM_MIN_KERNEL_ADDRESS;
-	tprof_sample(tprof_cookie, &tfi);
+	tprof_sample(NULL, &tfi);
 
 	/* reset counter */
 	wrmsr(PERFCTR(ctrno), counter_reset_val);
@@ -167,7 +183,7 @@ tprof_amdpmi_nmi(const struct trapframe *tf, void *dummy)
 }
 
 static uint64_t
-tprof_amdpmi_estimate_freq(void)
+tprof_amd_estimate_freq(void)
 {
 	uint64_t cpufreq = curcpu()->ci_data.cpu_cc_freq;
 	uint64_t freq = 10000;
@@ -175,52 +191,66 @@ tprof_amdpmi_estimate_freq(void)
 	counter_val = cpufreq / freq;
 	if (counter_val == 0) {
 		counter_val = UINT64_C(4000000000) / freq;
-		return freq;
 	}
 	return freq;
 }
 
+static uint32_t
+tprof_amd_ident(void)
+{
+	struct cpu_info *ci = curcpu();
+
+	if (cpu_vendor != CPUVENDOR_AMD) {
+		return TPROF_IDENT_NONE;
+	}
+
+	switch (CPUID_TO_FAMILY(ci->ci_signature)) {
+	case 0x10:
+		return TPROF_IDENT_AMD_GENERIC;
+	}
+
+	return TPROF_IDENT_NONE;
+}
+
 static int
-tprof_amdpmi_start(tprof_backend_cookie_t *cookie)
+tprof_amd_start(const tprof_param_t *param)
 {
 	uint64_t xc;
 
-	if (cpu_vendor != CPUVENDOR_AMD) {
+	if (tprof_amd_ident() == TPROF_IDENT_NONE) {
 		return ENOTSUP;
 	}
 
-	KASSERT(tprof_amdpmi_nmi_handle == NULL);
-	tprof_amdpmi_nmi_handle = nmi_establish(tprof_amdpmi_nmi, NULL);
+	KASSERT(amd_nmi_handle == NULL);
+	amd_nmi_handle = nmi_establish(tprof_amd_nmi, NULL);
 
 	counter_reset_val = - counter_val + 1;
-	xc = xc_broadcast(0, tprof_amdpmi_start_cpu, NULL, NULL);
-	xc_wait(xc);
+	memcpy(&amd_param, param, sizeof(*param));
 
-	KASSERT(tprof_cookie == NULL);
-	tprof_cookie = cookie;
+	xc = xc_broadcast(0, tprof_amd_start_cpu, NULL, NULL);
+	xc_wait(xc);
 
 	return 0;
 }
 
 static void
-tprof_amdpmi_stop(tprof_backend_cookie_t *cookie)
+tprof_amd_stop(const tprof_param_t *param)
 {
 	uint64_t xc;
 
-	xc = xc_broadcast(0, tprof_amdpmi_stop_cpu, NULL, NULL);
+	xc = xc_broadcast(0, tprof_amd_stop_cpu, NULL, NULL);
 	xc_wait(xc);
 
-	KASSERT(tprof_amdpmi_nmi_handle != NULL);
-	KASSERT(tprof_cookie == cookie);
-	nmi_disestablish(tprof_amdpmi_nmi_handle);
-	tprof_amdpmi_nmi_handle = NULL;
-	tprof_cookie = NULL;
+	KASSERT(amd_nmi_handle != NULL);
+	nmi_disestablish(amd_nmi_handle);
+	amd_nmi_handle = NULL;
 }
 
-static const tprof_backend_ops_t tprof_amdpmi_ops = {
-	.tbo_estimate_freq = tprof_amdpmi_estimate_freq,
-	.tbo_start = tprof_amdpmi_start,
-	.tbo_stop = tprof_amdpmi_stop,
+static const tprof_backend_ops_t tprof_amd_ops = {
+	.tbo_estimate_freq = tprof_amd_estimate_freq,
+	.tbo_ident = tprof_amd_ident,
+	.tbo_start = tprof_amd_start,
+	.tbo_stop = tprof_amd_stop,
 };
 
 MODULE(MODULE_CLASS_DRIVER, tprof_amdpmi, "tprof");
@@ -231,7 +261,7 @@ tprof_amdpmi_modcmd(modcmd_t cmd, void *arg)
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		return tprof_backend_register("tprof_amd", &tprof_amdpmi_ops,
+		return tprof_backend_register("tprof_amd", &tprof_amd_ops,
 		    TPROF_BACKEND_VERSION);
 
 	case MODULE_CMD_FINI:
