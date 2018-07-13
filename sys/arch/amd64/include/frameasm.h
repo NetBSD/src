@@ -1,4 +1,4 @@
-/*	$NetBSD: frameasm.h,v 1.39 2018/07/12 19:48:16 maxv Exp $	*/
+/*	$NetBSD: frameasm.h,v 1.40 2018/07/13 14:11:02 martin Exp $	*/
 
 #ifndef _AMD64_MACHINE_FRAMEASM_H
 #define _AMD64_MACHINE_FRAMEASM_H
@@ -185,7 +185,9 @@
 
 #else
 #define SVS_ENTER	/* nothing */
+#define SVS_ENTER_NMI	/* nothing */
 #define SVS_LEAVE	/* nothing */
+#define SVS_LEAVE_NMI	/* nothing */
 #define SVS_ENTER_ALTSTACK	/* nothing */
 #define SVS_LEAVE_ALTSTACK	/* nothing */
 #endif
