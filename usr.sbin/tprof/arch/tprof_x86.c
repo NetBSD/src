@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof_x86.c,v 1.2 2018/07/13 08:09:21 maxv Exp $	*/
+/*	$NetBSD: tprof_x86.c,v 1.3 2018/07/13 09:53:42 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -162,13 +162,15 @@ init_intel_generic(void)
 	edx = 0;
 	x86_cpuid(&eax, &ebx, &ecx, &edx);
 
-	switch (CPUID_TO_MODEL(eax)) {
-	case 0x4E: /* Skylake */
-	case 0x5E: /* Skylake */
-	case 0x8E: /* Kabylake */
-	case 0x9E: /* Kabylake */
-		table->next = init_intel_skylake_kabylake();
-		break;
+	if (CPUID_TO_FAMILY(eax) == 6) {
+		switch (CPUID_TO_MODEL(eax)) {
+		case 0x4E: /* Skylake */
+		case 0x5E: /* Skylake */
+		case 0x8E: /* Kabylake */
+		case 0x9E: /* Kabylake */
+			table->next = init_intel_skylake_kabylake();
+			break;
+		}
 	}
 
 	return table;
@@ -314,7 +316,6 @@ recursive_event_list(struct event_table *table)
 			continue;
 		printf("\t%s\n", table->names[i].name);
 	}
-	printf("\n");
 
 	if (table->next != NULL) {
 		recursive_event_list(table->next);
