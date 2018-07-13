@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1178 2018/06/29 12:34:14 roy Exp $
+# $NetBSD: mi,v 1.1179 2018/07/13 11:14:14 maxv Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -974,7 +974,7 @@
 ./usr/bin/tn3270				base-obsolete		obsolete
 ./usr/bin/top					base-util-bin
 ./usr/bin/touch					base-util-bin
-./usr/bin/tpfmt					base-util-bin
+./usr/bin/tpfmt					base-obsolete		obsolete
 ./usr/bin/tpm_sealdata				base-tpm-bin		tpm
 ./usr/bin/tpm_unsealdata			base-tpm-bin		tpm
 ./usr/bin/tpm_version				base-tpm-bin		tpm
