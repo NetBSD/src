@@ -1,4 +1,4 @@
-.\"	$NetBSD: tprof.8,v 1.4 2018/07/13 07:56:29 maxv Exp $
+.\"	$NetBSD: tprof.8,v 1.5 2018/07/13 09:04:31 maxv Exp $
 .\"
 .\" Copyright (c)2011 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -32,16 +32,15 @@
 .Nd record tprof profiling samples
 .Sh SYNOPSIS
 .Nm
-.Op Fl l
-.Op Fl e Ar name:option
-.Op Fl c
-.Op Fl o Ar file
-.Ar command ...
+.Ar op
+.Op Ar arguments
 .Sh DESCRIPTION
 The
 .Nm
-is a sampling based profiler.
+tool can be used to monitor hardware events (PMCs) during the execution of
+certain commands.
 .Pp
+The
 .Nm
 utility makes the kernel driver start profiling,
 executes the specified command,
@@ -55,10 +54,21 @@ pseudo driver and a suitable backend should be loaded beforehand.
 The
 .Nm
 utility accepts the following options.
-.Bl -tag -width hogehoge
-.It Fl l
+The first argument,
+.Ar op ,
+specifies the action to take.
+Valid actions are:
+.Bl -tag -width offline
+.It list
 Display a list of performance counter events available on the system.
-.It Fl e Ar name:option
+.It monitor Xo
+.Fl e
+.Ar name:option
+.Op Fl o Ar outfile
+.Ar command
+.Xc
+Monitor the execution of command
+.Ar command .
 .Ar name
 specifies the name of the event to count; it must be taken from the list of
 available events.
@@ -68,20 +78,16 @@ specifies the source of the event; it must be a combination of
 (userland) and
 .Ar k
 (kernel).
-.It Fl o Ar file
-Write the collected samples to the file named
-.Ar file .
+The collected samples are written into the file
+.Ar outfile
+if specified.
 The default is
 .Dq Pa tprof.out .
-.It Fl c
-Write the collected samples to the standard output.
-Note that the output is a binary stream.
 .El
 .Sh EXAMPLES
-The following command profiles the system during 1 second and shows
-the top-10 kernel functions which likely caused LLC misses.
-.Bd -literal
-	tprof -e llc-misses:k -c sleep 1 2>/dev/null | tpfmt -skCLP | head -10
+The following command profiles the system during 20 seconds and writes the
+samples into the file myfile.out.
+.Dl # tprof monitor -e llc-misses:k -o myfile.out sleep 20
 .Ed
 .Sh DIAGNOSTICS
 The
