@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.118 2018/07/12 10:46:48 maxv Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.119 2018/07/13 09:37:32 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.118 2018/07/12 10:46:48 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.119 2018/07/13 09:37:32 maxv Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -68,7 +68,6 @@ __KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.118 2018/07/12 10:46:48 maxv Exp $
 
 #include <machine/bootinfo.h>
 #include <machine/vmparam.h>
-#include <machine/sysarch.h> /* PMC... */
 
 #include <uvm/uvm_extern.h>
 
@@ -1093,7 +1092,6 @@ x86_startup(void)
 {
 #if !defined(XEN)
 	nmi_init();
-	pmc_init();
 #endif
 }
 

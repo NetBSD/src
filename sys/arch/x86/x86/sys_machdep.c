@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.47 2018/07/12 10:46:48 maxv Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.48 2018/07/13 09:37:32 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2009, 2017 The NetBSD Foundation, Inc.
@@ -30,10 +30,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.47 2018/07/12 10:46:48 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.48 2018/07/13 09:37:32 maxv Exp $");
 
 #include "opt_mtrr.h"
-#include "opt_pmc.h"
 #include "opt_user_ldt.h"
 #include "opt_compat_netbsd.h"
 #include "opt_xen.h"
@@ -76,7 +75,6 @@ __KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.47 2018/07/12 10:46:48 maxv Exp $"
 
 #ifdef XEN
 #undef	USER_LDT
-#undef	PMC
 #endif
 
 extern struct vm_map *kernel_map;
@@ -760,20 +758,6 @@ sys_sysarch(struct lwp *l, const struct sys_sysarch_args *uap, register_t *retva
 	case X86_SET_MTRR:
 		error = x86_set_mtrr(l, SCARG(uap, parms), retval);
 		break;
-
-#ifdef PMC
-	case X86_PMC_INFO:
-		error = sys_pmc_info(l, SCARG(uap, parms), retval);
-		break;
-
-	case X86_PMC_STARTSTOP:
-		error = sys_pmc_startstop(l, SCARG(uap, parms), retval);
-		break;
-
-	case X86_PMC_READ:
-		error = sys_pmc_read(l, SCARG(uap, parms), retval);
-		break;
-#endif
 
 	case X86_SET_FSBASE:
 		error = x86_set_sdbase(SCARG(uap, parms), 'f', curlwp, false);
