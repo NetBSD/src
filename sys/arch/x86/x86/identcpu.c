@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.55.2.4 2018/06/23 11:39:02 martin Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.55.2.5 2018/07/13 15:51:28 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.55.2.4 2018/06/23 11:39:02 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.55.2.5 2018/07/13 15:51:28 martin Exp $");
 
 #include "opt_xen.h"
 
@@ -189,6 +189,24 @@ cpu_probe_intel_cache(struct cpu_info *ci)
 }
 
 static void
+cpu_probe_intel_errata(struct cpu_info *ci)
+{
+	u_int family, model, stepping;
+
+	family = CPUID_TO_FAMILY(ci->ci_signature);
+	model = CPUID_TO_MODEL(ci->ci_signature);
+	stepping = CPUID_TO_STEPPING(ci->ci_signature);
+
+	if (family == 0x6 && model == 0x5C && stepping == 0x9) { /* Apollo Lake */
+		wrmsr(MSR_MISC_ENABLE,
+		    rdmsr(MSR_MISC_ENABLE) & ~IA32_MISC_MWAIT_EN);
+
+		cpu_feature[1] &= ~CPUID2_MONITOR;
+		ci->ci_feat_val[1] &= ~CPUID2_MONITOR;
+	}
+}
+
+static void
 cpu_probe_intel(struct cpu_info *ci)
 {
 
@@ -196,6 +214,7 @@ cpu_probe_intel(struct cpu_info *ci)
 		return;
 
 	cpu_probe_intel_cache(ci);
+	cpu_probe_intel_errata(ci);
 }
 
 static void
