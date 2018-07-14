@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.158 2018/06/29 19:21:43 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.159 2018/07/14 14:29:40 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -128,7 +128,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.158 2018/06/29 19:21:43 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.159 2018/07/14 14:29:40 maxv Exp $");
 
 #include "opt_copy_symtab.h"
 #include "opt_ddb.h"
@@ -934,7 +934,7 @@ END(hypercall_page)
  * this only happens at run time when the GDT is resized.
  */
 /* LINTSTUB: Func: void lgdt_finish(void) */
-NENTRY(lgdt_finish)
+ENTRY(lgdt_finish)
 	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax
 	movw	%ax,%ds
 	movw	%ax,%es
@@ -961,7 +961,7 @@ END(lgdt_finish)
  * stub to call.
  * NOTE: This function does not have a normal calling sequence!
  */
-NENTRY(lwp_trampoline)
+ENTRY(lwp_trampoline)
 	movl	%ebp,%edi	/* for .Lsyscall_checkast */
 	xorl	%ebp,%ebp
 	pushl	%edi
@@ -981,7 +981,7 @@ END(lwp_trampoline)
  * Signal trampoline; copied to top of user stack.  Used only for
  * compatibility with old releases of NetBSD.
  */
-NENTRY(sigcode)
+ENTRY(sigcode)
 	/*
 	 * Handler has returned here as if we called it.  The sigcontext
 	 * is on the stack after the 3 args "we" pushed.
@@ -1336,7 +1336,7 @@ IDTVEC_END(syscall)
  * Used when checking for the FDIV bug on first generations pentiums.
  * Anything 120MHz or above is fine.
  */
-NENTRY(npx586bug1)
+ENTRY(npx586bug1)
 	fildl	4(%esp)		/* x */
 	fildl	8(%esp)		/* y */
 	fld	%st(1)
