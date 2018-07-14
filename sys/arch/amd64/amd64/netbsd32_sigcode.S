@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_sigcode.S,v 1.8 2017/11/01 09:38:43 maxv Exp $	*/
+/*	$NetBSD: netbsd32_sigcode.S,v 1.9 2018/07/14 14:29:40 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  * Signal trampoline for 1.6 compatibility; copied to top of user stack.
  */
 	.code32
-NENTRY(netbsd32_sigcode)
+ENTRY(netbsd32_sigcode)
 	/*
 	 * Handler has returned here as if we called it.  The sigcontext
 	 * is on the stack after the 3 args "we" pushed.
