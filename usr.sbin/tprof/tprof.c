@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof.c,v 1.10 2018/07/13 19:54:53 joerg Exp $	*/
+/*	$NetBSD: tprof.c,v 1.11 2018/07/14 16:34:15 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: tprof.c,v 1.10 2018/07/13 19:54:53 joerg Exp $");
+__RCSID("$NetBSD: tprof.c,v 1.11 2018/07/14 16:34:15 jmcneill Exp $");
 #endif /* not lint */
 
 #include <sys/ioctl.h>
@@ -286,6 +286,9 @@ main(int argc, char *argv[])
 	if (tprof_event_init(info.ti_ident) == -1) {
 		err(EXIT_FAILURE, "cpu not supported");
 	}
+
+	if (argc == 0)
+		usage();
 
 	for (ct = tprof_cmdtab; ct->label != NULL; ct++) {
 		if (strcmp(argv[0], ct->label) == 0) {
