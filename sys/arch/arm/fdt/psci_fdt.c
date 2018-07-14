@@ -1,4 +1,4 @@
-/* $NetBSD: psci_fdt.c,v 1.8 2018/07/09 09:13:20 jmcneill Exp $ */
+/* $NetBSD: psci_fdt.c,v 1.9 2018/07/14 15:06:05 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psci_fdt.c,v 1.8 2018/07/09 09:13:20 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psci_fdt.c,v 1.9 2018/07/14 15:06:05 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -153,6 +153,7 @@ psci_fdt_preinit(void)
 	return psci_fdt_init(phandle);
 }
 
+#ifdef MULTIPROCESSOR
 static bus_addr_t psci_fdt_read_mpidr_aff(void)
 {
 #ifdef __aarch64__
@@ -173,6 +174,7 @@ psci_fdt_mpstart_pa(void)
 	return (register_t)cortex_mpstart;
 #endif
 }
+#endif
 
 void
 psci_fdt_bootstrap(void)
