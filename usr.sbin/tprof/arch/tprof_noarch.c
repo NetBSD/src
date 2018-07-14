@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof_noarch.c,v 1.2 2018/07/14 07:54:37 maxv Exp $	*/
+/*	$NetBSD: tprof_noarch.c,v 1.3 2018/07/14 15:38:59 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -43,19 +43,19 @@ int tprof_event_init(uint32_t);
 void tprof_event_list(void);
 void tprof_event_lookup(const char *, struct tprof_param *);
 
-int
+__dead int
 tprof_event_init(uint32_t ident)
 {
 	errx(EXIT_FAILURE, "architecture not supported");
 }
 
-void
+__dead void
 tprof_event_list(void)
 {
 	errx(EXIT_FAILURE, "architecture not supported");
 }
 
-void
+__dead void
 tprof_event_lookup(const char *name, struct tprof_param *param)
 {
 	errx(EXIT_FAILURE, "architecture not supported");
