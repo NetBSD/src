@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof_analyze.c,v 1.2 2018/07/13 12:04:50 maxv Exp $	*/
+/*	$NetBSD: tprof_analyze.c,v 1.3 2018/07/14 07:54:04 maxv Exp $	*/
 
 /*
  * Copyright (c) 2010,2011,2012 YAMAMOTO Takashi,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: tprof_analyze.c,v 1.2 2018/07/13 12:04:50 maxv Exp $");
+__RCSID("$NetBSD: tprof_analyze.c,v 1.3 2018/07/14 07:54:04 maxv Exp $");
 #endif /* not lint */
 
 #include <assert.h>
@@ -275,7 +275,8 @@ tprof_analyze(int argc, char **argv)
 	struct addr *a;
 	struct addr **l;
 	struct addr **p;
-	size_t naddrs, i;
+	size_t naddrs, nsamples, i;
+	float perc;
 	int ch;
 	bool distinguish_processes = true;
 	bool distinguish_cpus = true;
@@ -339,6 +340,7 @@ tprof_analyze(int argc, char **argv)
 	 */
 
 	naddrs = 0;
+	nsamples = 0;
 	while (/*CONSTCOND*/true) {
 		struct addr *o;
 		tprof_sample_t sample;
@@ -400,6 +402,7 @@ tprof_analyze(int argc, char **argv)
 		} else {
 			naddrs++;
 		}
+		nsamples++;
 	}
 
 	/*
@@ -418,7 +421,10 @@ tprof_analyze(int argc, char **argv)
 	 * print addresses and number of samples, preferably with
 	 * resolved symbol names.
 	 */
-
+	printf("File: %s\n", argv[0]);
+	printf("Number of samples: %zu\n\n", nsamples);
+	printf("percentage   nsamples pid    lwp  cpu  k address          symbol\n");
+	printf("------------ -------- ------ ---- ---- - ---------------- ------\n");
 	for (i = 0; i < naddrs; i++) {
 		const char *name;
 		char buf[100];
@@ -439,8 +445,12 @@ tprof_analyze(int argc, char **argv)
 			    offset);
 			name = buf;
 		}
-		printf("%8u %6" PRIu32 " %4" PRIu32 " %2" PRIu32 " %u %016"
+
+		perc = ((float)a->nsamples / (float)nsamples) * 100.0;
+
+		printf("%11f%% %8u %6" PRIu32 " %4" PRIu32 " %4" PRIu32 " %u %016"
 		    PRIx64 " %s\n",
+		    perc,
 		    a->nsamples, a->pid, a->lwpid, a->cpuid, a->in_kernel,
 		    a->addr, name);
 	}
