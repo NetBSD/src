@@ -26,6 +26,8 @@ OPTIONS_H_EXTRA += $(srcdir)/config/aarch64/aarch64-cores.def \
 
 $(srcdir)/config/aarch64/aarch64-tune.md: $(srcdir)/config/aarch64/gentune.sh \
 	$(srcdir)/config/aarch64/aarch64-cores.def
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_aarch64-tune.md:
 	$(SHELL) $(srcdir)/config/aarch64/gentune.sh \
 		$(srcdir)/config/aarch64/aarch64-cores.def > \
 		$(srcdir)/config/aarch64/aarch64-tune.md
