@@ -1,5 +1,5 @@
 #
-#	$NetBSD: VEXPRESS_A15,v 1.22 2018/06/30 16:48:49 jmcneill Exp $
+#	$NetBSD: VEXPRESS_A15,v 1.23 2018/07/14 15:09:41 maxv Exp $
 #
 #	ARM Versatile Express A15
 #
@@ -18,7 +18,6 @@ pseudo-device 	openfirm	# /dev/openfirm
 #options 	DEBUG
 #options 	LOCKDEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
-#options 	IPKDB		# remote kernel debugging
 #options 	VERBOSE_INIT_ARM # verbose bootstrapping messages
 #options 	CONSADDR=0x1c090000
 
