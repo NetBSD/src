@@ -1,10 +1,10 @@
-/*	$NetBSD: linux32_sigcode.S,v 1.5 2017/11/01 09:38:43 maxv Exp $ */
+/*	$NetBSD: linux32_sigcode.S,v 1.6 2018/07/14 14:29:40 maxv Exp $ */
 
 #include "assym.h"
 #include <machine/asm.h>
 
 	.code32
-NENTRY(linux32_sigcode)
+ENTRY(linux32_sigcode)
 	call	*LINUX32_SF_HANDLER(%esp)
 	leal	LINUX32_SF_SC(%esp),%ebx	/* scp */
 	pushl	%eax
@@ -15,7 +15,7 @@ NENTRY(linux32_sigcode)
 END(linux32_sigcode)
 
 	.balign	16
-NENTRY(linux32_rt_sigcode)
+ENTRY(linux32_rt_sigcode)
 	call	*LINUX32_RT_SF_HANDLER(%esp)
 	leal	LINUX32_RT_SF_UC(%esp),%ebx	/* scp */
 	pushl	%eax

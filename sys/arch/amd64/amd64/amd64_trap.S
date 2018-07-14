@@ -1,4 +1,4 @@
-/*	$NetBSD: amd64_trap.S,v 1.43 2018/07/12 19:48:16 maxv Exp $	*/
+/*	$NetBSD: amd64_trap.S,v 1.44 2018/07/14 14:29:40 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008, 2017 The NetBSD Foundation, Inc.
@@ -626,7 +626,7 @@ END(kernuser_reenter)
  * All traps go through here. Call the generic trap handler, and
  * check for ASTs afterwards.
  */
-NENTRY(alltraps)
+ENTRY(alltraps)
 	INTRENTRY
 .Lalltraps_noentry:
 	STI(si)

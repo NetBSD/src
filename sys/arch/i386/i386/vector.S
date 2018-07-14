@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.77 2018/04/03 07:20:52 christos Exp $	*/
+/*	$NetBSD: vector.S,v 1.78 2018/07/14 14:29:40 maxv Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.77 2018/04/03 07:20:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.78 2018/07/14 14:29:40 maxv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -1017,7 +1017,7 @@ END(xenev_stubs)
  * existing activation in its critical region -- if so, we pop the current
  * activation and restart the handler using the previous one.
  */
-NENTRY(hypervisor_callback)
+ENTRY(hypervisor_callback)
 	pushl	$0			/* dummy error code */
 	pushl	$T_ASTFLT
 	INTRENTRY
@@ -1084,7 +1084,7 @@ END(hypervisor_callback)
 /*
  * Hypervisor uses this for application faults while it executes.
  */
-NENTRY(failsafe_callback)
+ENTRY(failsafe_callback)
 	pop	%ds
 	pop	%es
 	pop	%fs

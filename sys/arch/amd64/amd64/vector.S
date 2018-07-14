@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.63 2018/06/20 11:45:25 maxv Exp $	*/
+/*	$NetBSD: vector.S,v 1.64 2018/07/14 14:29:40 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -755,7 +755,7 @@ END(xenev_stubs)
  */
 
 /* Hypervisor callback */
-NENTRY(hypervisor_callback)
+ENTRY(hypervisor_callback)
 	movq	(%rsp),%rcx
 	movq	8(%rsp),%r11
 	addq	$16,%rsp
@@ -773,7 +773,7 @@ NENTRY(hypervisor_callback)
 END(hypervisor_callback)
 
 /* Panic? */
-NENTRY(failsafe_callback)
+ENTRY(failsafe_callback)
 	movq	(%rsp),%rcx
 	movq	8(%rsp),%r11
 	addq	$16,%rsp

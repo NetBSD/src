@@ -1,4 +1,4 @@
-/*	$NetBSD: i386_trap.S,v 1.14 2018/05/16 08:16:36 maxv Exp $	*/
+/*	$NetBSD: i386_trap.S,v 1.15 2018/07/14 14:29:40 maxv Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -66,7 +66,7 @@
 
 #if 0
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: i386_trap.S,v 1.14 2018/05/16 08:16:36 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i386_trap.S,v 1.15 2018/07/14 14:29:40 maxv Exp $");
 #endif
 
 /*
@@ -403,7 +403,7 @@ LABEL(trap_return_fault_return)
 END(trap_return_fault_return)
 
 /* LINTSTUB: Ignore */
-NENTRY(alltraps)
+ENTRY(alltraps)
 	INTRENTRY
 	STI(%eax)
 calltrap:

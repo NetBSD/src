@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.3 2018/05/25 15:52:11 maxv Exp $	*/
+/*	$NetBSD: trap.S,v 1.4 2018/07/14 14:29:40 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
@@ -167,7 +167,7 @@ IDTVEC_END(trap20)
  *  sf_rsp
  *  sf_ss
  */
-NENTRY(alltraps)
+ENTRY(alltraps)
 	movq	%rsp,%rdi
 	call	_C_LABEL(trap)
 	/* NOTREACHED */

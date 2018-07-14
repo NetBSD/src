@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.170 2018/07/12 19:48:16 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.171 2018/07/14 14:29:40 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1278,7 +1278,7 @@ END(savectx)
 /*
  * Syscall handler.
  */
-NENTRY(handle_syscall)
+ENTRY(handle_syscall)
 	STI(si)
 
 	movq	CPUVAR(CURLWP),%r14
@@ -1356,7 +1356,7 @@ END(handle_syscall)
  * This is a trampoline function pushed run by newly created LWPs
  * in order to do additional setup in their context.
  */
-NENTRY(lwp_trampoline)
+ENTRY(lwp_trampoline)
 	movq	%rbp,%rsi
 	movq	%rbp,%r14	/* for .Lsyscall_checkast */
 	movq	%rax,%rdi
