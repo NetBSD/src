@@ -1,5 +1,5 @@
 #
-#	$NetBSD: EXYNOS,v 1.30 2018/07/05 13:11:57 jmcneill Exp $
+#	$NetBSD: EXYNOS,v 1.31 2018/07/14 15:09:41 maxv Exp $
 #
 #	Samsung Exynos SoC kernel
 #
@@ -26,7 +26,6 @@ pseudo-device 	openfirm	# /dev/openfirm
 #options 	DEBUG
 #options 	LOCKDEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
-#options 	IPKDB		# remote kernel debugging
 #options 	VERBOSE_INIT_ARM # verbose bootstrapping messages
 
 makeoptions	DEBUG="-g"	# compile full symbol table
