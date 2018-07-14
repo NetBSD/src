@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof_noarch.c,v 1.1 2018/07/13 07:56:29 maxv Exp $	*/
+/*	$NetBSD: tprof_noarch.c,v 1.2 2018/07/14 07:54:37 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -36,7 +36,6 @@
 #include <string.h>
 #include <unistd.h>
 #include <err.h>
-#include <machine/specialreg.h>
 #include <dev/tprof/tprof_ioctl.h>
 #include "../tprof.h"
 
