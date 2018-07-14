@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.62 2017/09/14 07:58:39 mrg Exp $
+#	$NetBSD: INSTALL,v 1.63 2018/07/14 14:56:02 maxv Exp $
 #
 # First try for BeBox config file
 #
@@ -19,7 +19,6 @@ options 	MEMORY_DISK_ROOT_SIZE=4096	# size of memory disk, in blocks
 options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 
 #options 	IPKDBUSERHACK	# Allow access to mapped memory via kgdb
-#options 	DEBUG_BY_TOOLS	# Allow debugging from toolsnet
 # HMAC key to be used for debugging sessions
 #options 	IPKDBKEY="\"HMAC pass phrase text\""
 #options 	IPKDBSECURE	# Allow debugging even when securelevel > 0
