@@ -1,4 +1,4 @@
-# $NetBSD: NITROGEN6X,v 1.16 2018/07/12 10:46:43 maxv Exp $
+# $NetBSD: NITROGEN6X,v 1.17 2018/07/14 15:09:41 maxv Exp $
 #
 # Nitrogen6X
 # - http://boundarydevices.com/products/nitrogen6x-board-imx6-arm-cortex-a9-sbc/
@@ -61,7 +61,6 @@ options 	DDB			# in-kernel debugger
 options 	DDB_ONPANIC=1		# see also sysctl(7): `ddb.onpanic'
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 options 	DDB_VERBOSE_HELP
-#options 	IPKDB			# remote kernel debugging
 #options	KGDB
 #options 	KGDB_DEVNAME="\"imxuart\""
 #options 	KGDB_DEVADDR=0x021e8000
