@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sigcode.S,v 1.9 2017/08/12 07:21:57 maxv Exp $	*/
+/*	$NetBSD: linux_sigcode.S,v 1.10 2018/07/14 14:29:40 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sigcode.S,v 1.9 2017/08/12 07:21:57 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sigcode.S,v 1.10 2018/07/14 14:29:40 maxv Exp $");
 
 #include "assym.h"
 
@@ -76,7 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_sigcode.S,v 1.9 2017/08/12 07:21:57 maxv Exp $
  * Signal trampoline; copied to top of user stack.
  */
 /* LINTSTUB: Var: char linux_sigcode[1], linux_esigcode[1]; */
-NENTRY(linux_sigcode)
+ENTRY(linux_sigcode)
 	call	*LINUX_SIGF_HANDLER(%esp)
 	leal	LINUX_SIGF_SC(%esp),%ebx # scp (the call may have clobbered the
 					# copy at SIGF_SCP(%esp))
@@ -87,7 +87,7 @@ NENTRY(linux_sigcode)
 	int	$0x80			# exit if sigreturn fails
 
 /* LINTSTUB: Var: char linux_rt_sigcode[1]; */
-NENTRY(linux_rt_sigcode)
+ENTRY(linux_rt_sigcode)
 	call	*LINUX_RT_SIGF_HANDLER(%esp)
 	leal	LINUX_RT_SIGF_UC(%esp),%ebx # scp (the call may have clobbered the
 					# copy at SIGF_SCP(%esp))

@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.28 2018/01/07 13:43:24 maxv Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.29 2018/07/14 14:29:40 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: lock_stubs.S,v 1.28 2018/01/07 13:43:24 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lock_stubs.S,v 1.29 2018/07/14 14:29:40 maxv Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -329,7 +329,7 @@ ENTRY(__cpu_simple_lock_init)
 	ret
 END(__cpu_simple_lock_init)
 
-NENTRY(__cpu_simple_lock)
+ENTRY(__cpu_simple_lock)
 	movl	4(%esp), %edx
 	movl	$0x0100, %eax
 1:
