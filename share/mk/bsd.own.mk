@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1067 2018/07/12 21:41:25 joerg Exp $
+#	$NetBSD: bsd.own.mk,v 1.1068 2018/07/14 22:57:47 maya Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -125,7 +125,7 @@ HAVE_LIBGCC?=	yes
 .endif
 
 
-# ia64 is not support
+# Should libgcc have unwinding code?
 .if ${HAVE_LLVM:Uno} == "yes" || !empty(MACHINE_ARCH:Mearm*)
 HAVE_LIBGCC_EH?=	no
 .else
