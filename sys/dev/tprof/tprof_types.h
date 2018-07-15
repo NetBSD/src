@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof_types.h,v 1.3 2018/07/13 07:56:29 maxv Exp $	*/
+/*	$NetBSD: tprof_types.h,v 1.4 2018/07/15 18:55:05 jmcneill Exp $	*/
 
 /*-
  * Copyright (c)2010,2011 YAMAMOTO Takashi,
@@ -64,5 +64,6 @@ typedef struct tprof_param {
 #define	TPROF_IDENT_NONE		0x00
 #define	TPROF_IDENT_INTEL_GENERIC	0x01
 #define	TPROF_IDENT_AMD_GENERIC		0x02
+#define	TPROF_IDENT_ARMV8_GENERIC	0x03
 
 #endif /* _DEV_TPROF_TPROF_TYPES_H_ */
