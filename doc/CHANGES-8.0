@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.227 2018/07/13 16:16:32 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.228 2018/07/15 11:03:13 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -14251,4 +14251,18 @@ usr.sbin/ndp/ndp.c				1.52-1.54
 
 	Fix the host and address output when neighbor cache entry is deleted.
 	[nonaka, ticket #921]
+
+sys/arch/xen/xen/xennetback_xenbus.c		1.64 (patch)
+
+	Fix panic of DOM0 in xennetback_xenbus_destroy() on xl destroy of
+	DOMU with created, but non CONNECTED xennet.
+	[jdolecek, ticket #909]
+
+crypto/external/bsd/openssh/dist/ssh-agent.1	1.13
+crypto/external/bsd/openssh/dist/ssh-agent.c	1.23
+
+	Add /usr/pkg/lib and remove /usr/local/lib/ to/from the
+	whitelisted filesystem paths ssh-agent will look for PKCS11
+	related libraries.
+	[sevan, ticket #922]
 
