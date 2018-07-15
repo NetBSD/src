@@ -1,4 +1,4 @@
-/*	$NetBSD: pic.c,v 1.43 2018/07/09 06:08:42 ryo Exp $	*/
+/*	$NetBSD: pic.c,v 1.44 2018/07/15 16:03:24 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,7 +33,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.43 2018/07/09 06:08:42 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.44 2018/07/15 16:03:24 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.43 2018/07/09 06:08:42 ryo Exp $");
 #include <sys/kmem.h>
 #include <sys/mutex.h>
 #include <sys/once.h>
+#include <sys/interrupt.h>
 #include <sys/xcall.h>
 #include <sys/ipi.h>
 
@@ -881,3 +882,26 @@ intr_disestablish(void *ih)
 
 	pic_disestablish_source(is);
 }
+
+#ifdef MULTIPROCESSOR
+int
+interrupt_distribute(void *ih, const kcpuset_t *newset, kcpuset_t *oldset)
+{
+	struct intrsource * const is = ih;
+	struct pic_softc * const pic = is->is_pic;
+
+	if (pic == NULL)
+		return EOPNOTSUPP;
+	if (pic->pic_ops->pic_set_affinity == NULL ||
+	    pic->pic_ops->pic_get_affinity == NULL)
+		return EOPNOTSUPP;
+
+	if (!is->is_mpsafe)
+		return EINVAL;
+
+	if (oldset != NULL)
+		pic->pic_ops->pic_get_affinity(pic, is->is_irq, oldset);
+
+	return pic->pic_ops->pic_set_affinity(pic, is->is_irq, newset);
+}
+#endif
