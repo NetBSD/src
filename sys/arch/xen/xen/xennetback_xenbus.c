@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.58 2016/12/15 09:28:04 ozaki-r Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.58.8.1 2018/07/15 10:54:03 martin Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.58 2016/12/15 09:28:04 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.58.8.1 2018/07/15 10:54:03 martin Exp $");
 
 #include "opt_xen.h"
 
@@ -34,6 +34,7 @@ __KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.58 2016/12/15 09:28:04 ozaki
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/queue.h>
 #include <sys/kernel.h>
 #include <sys/mbuf.h>
@@ -140,9 +141,10 @@ static inline void xennetback_tx_response(struct xnetback_instance *,
     int, int);
 static void xennetback_tx_free(struct mbuf * , void *, size_t, void *);
 
-SLIST_HEAD(, xnetback_instance) xnetback_instances;
+static SLIST_HEAD(, xnetback_instance) xnetback_instances;
+static kmutex_t xnetback_lock;
 
-static struct xnetback_instance *xnetif_lookup(domid_t, uint32_t);
+static bool xnetif_lookup(domid_t, uint32_t);
 static int  xennetback_evthandler(void *);
 
 static struct xenbus_backend_driver xvif_backend_driver = {
@@ -176,12 +178,13 @@ pool_cache_t xmit_pages_cache;
 pool_cache_t xmit_pages_cachep;
 
 /* arrays used in xennetback_ifstart(), too large to allocate on stack */
+/* XXXSMP */
 static mmu_update_t xstart_mmu[NB_XMIT_PAGES_BATCH];
 static multicall_entry_t xstart_mcl[NB_XMIT_PAGES_BATCH + 1];
 static gnttab_transfer_t xstart_gop_transfer[NB_XMIT_PAGES_BATCH];
 static gnttab_copy_t     xstart_gop_copy[NB_XMIT_PAGES_BATCH];
-struct mbuf *mbufs_sent[NB_XMIT_PAGES_BATCH];
-struct _pages_pool_free {
+static struct mbuf *mbufs_sent[NB_XMIT_PAGES_BATCH];
+static struct _pages_pool_free {
 	vaddr_t va;
 	paddr_t pa;
 } pages_pool_free[NB_XMIT_PAGES_BATCH];
@@ -229,6 +232,8 @@ xvifattach(int n)
 #endif
 
 	SLIST_INIT(&xnetback_instances);
+	mutex_init(&xnetback_lock, MUTEX_DEFAULT, IPL_NONE);
+
 	xenbus_backend_register(&xvif_backend_driver);
 }
 
@@ -256,14 +261,10 @@ xennetback_xenbus_create(struct xenbus_device *xbusd)
 		return err;
 	}
 
-	if (xnetif_lookup(domid, handle) != NULL) {
+	if (xnetif_lookup(domid, handle)) {
 		return EEXIST;
 	}
-	xneti = malloc(sizeof(struct xnetback_instance), M_DEVBUF,
-	    M_NOWAIT | M_ZERO);
-	if (xneti == NULL) {
-		return ENOMEM;
-	}
+	xneti = kmem_zalloc(sizeof(*xneti), KM_SLEEP);
 	xneti->xni_domid = domid;
 	xneti->xni_handle = handle;
 	xneti->xni_status = DISCONNECTED;
@@ -317,7 +318,9 @@ xennetback_xenbus_create(struct xenbus_device *xbusd)
 	if_attach(ifp);
 	ether_ifattach(&xneti->xni_if, xneti->xni_enaddr);
 
+	mutex_enter(&xnetback_lock);
 	SLIST_INSERT_HEAD(&xnetback_instances, xneti, next);
+	mutex_exit(&xnetback_lock);
 
 	xbusd->xbusd_otherend_changed = xennetback_frontend_changed;
 
@@ -371,7 +374,7 @@ xennetback_xenbus_create(struct xenbus_device *xbusd)
 abort_xbt:
 	xenbus_transaction_end(xbt, 1);
 fail:
-	free(xneti, M_DEVBUF);
+	kmem_free(xneti, sizeof(*xneti));
 	return err;
 }
 
@@ -382,21 +385,22 @@ xennetback_xenbus_destroy(void *arg)
 	struct gnttab_unmap_grant_ref op;
 	int err;
 
-#if 0
-	if (xneti->xni_status == CONNECTED) {
-		return EBUSY;
-	}
-#endif
 	aprint_verbose_ifnet(&xneti->xni_if, "disconnecting\n");
-	hypervisor_mask_event(xneti->xni_evtchn);
-	event_remove_handler(xneti->xni_evtchn, xennetback_evthandler, xneti);
-	if (xneti->xni_softintr) {
-		softint_disestablish(xneti->xni_softintr);
-		xneti->xni_softintr = NULL;
+
+	if (xneti->xni_status == CONNECTED) {
+		hypervisor_mask_event(xneti->xni_evtchn);
+		event_remove_handler(xneti->xni_evtchn, xennetback_evthandler,
+		    xneti);
+		if (xneti->xni_softintr) {
+			softint_disestablish(xneti->xni_softintr);
+			xneti->xni_softintr = NULL;
+		}
 	}
 
+ 	mutex_enter(&xnetback_lock);
 	SLIST_REMOVE(&xnetback_instances,
 	    xneti, xnetback_instance, next);
+ 	mutex_exit(&xnetback_lock);
 
 	ether_ifdetach(&xneti->xni_if);
 	if_detach(&xneti->xni_if);
@@ -421,11 +425,17 @@ xennetback_xenbus_destroy(void *arg)
 			aprint_error_ifnet(&xneti->xni_if,
 					"unmap_grant_ref failed: %d\n", err);
 	}
-	uvm_km_free(kernel_map, xneti->xni_tx_ring_va,
-	    PAGE_SIZE, UVM_KMF_VAONLY);
-	uvm_km_free(kernel_map, xneti->xni_rx_ring_va,
-	    PAGE_SIZE, UVM_KMF_VAONLY);
-	free(xneti, M_DEVBUF);
+	if (xneti->xni_tx_ring_va != 0) {
+		uvm_km_free(kernel_map, xneti->xni_tx_ring_va,
+		    PAGE_SIZE, UVM_KMF_VAONLY);
+		xneti->xni_tx_ring_va = 0;
+	}
+	if (xneti->xni_rx_ring_va != 0) {
+		uvm_km_free(kernel_map, xneti->xni_rx_ring_va,
+		    PAGE_SIZE, UVM_KMF_VAONLY);
+		xneti->xni_rx_ring_va = 0;
+	}
+	kmem_free(xneti, sizeof(*xneti));
 	return 0;
 }
 
@@ -636,16 +646,22 @@ xennetback_frontend_changed(void *arg, XenbusState new_state)
 }
 
 /* lookup a xneti based on domain id and interface handle */
-static struct xnetback_instance *
+static bool
 xnetif_lookup(domid_t dom , uint32_t handle)
 {
 	struct xnetback_instance *xneti;
+	bool found = false;
 
+	mutex_enter(&xnetback_lock);
 	SLIST_FOREACH(xneti, &xnetback_instances, next) {
-		if (xneti->xni_domid == dom && xneti->xni_handle == handle)
-			return xneti;
+		if (xneti->xni_domid == dom && xneti->xni_handle == handle) {
+			found = true;
+			break;
+		}
 	}
-	return NULL;
+	mutex_exit(&xnetback_lock);
+
+	return found;
 }
 
 
