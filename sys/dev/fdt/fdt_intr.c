@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_intr.c,v 1.16 2018/07/15 13:24:05 jmcneill Exp $ */
+/* $NetBSD: fdt_intr.c,v 1.17 2018/07/15 16:59:16 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_intr.c,v 1.16 2018/07/15 13:24:05 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_intr.c,v 1.17 2018/07/15 16:59:16 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -58,8 +58,8 @@ struct fdtbus_interrupt_cookie {
 static LIST_HEAD(, fdtbus_interrupt_cookie) fdtbus_interrupt_cookies =
     LIST_HEAD_INITIALIZER(fdtbus_interrupt_cookies);
 
-static u_int *	get_specifier_by_index(int, int, int *);
-static u_int *	get_specifier_from_map(int, const u_int *, int *);
+static const u_int *	get_specifier_by_index(int, int, int *);
+static const u_int *	get_specifier_from_map(int, const u_int *, int *);
 
 /*
  * Find the interrupt controller for a given node. This function will either
@@ -136,7 +136,7 @@ fdtbus_intr_establish(int phandle, u_int index, int ipl, int flags,
 {
 	struct fdtbus_interrupt_controller *ic;
 	struct fdtbus_interrupt_cookie *c = NULL;
-	u_int *specifier;
+	const u_int *specifier;
 	int ihandle;
 	void *ih;
 
@@ -148,7 +148,7 @@ fdtbus_intr_establish(int phandle, u_int index, int ipl, int flags,
 	if (ic == NULL)
 		return NULL;
 
-	ih = ic->ic_funcs->establish(ic->ic_dev, specifier,
+	ih = ic->ic_funcs->establish(ic->ic_dev, __UNCONST(specifier),
 	    ipl, flags, func, arg);
 	if (ih != NULL) {
 		c = kmem_alloc(sizeof(*c), KM_SLEEP);
@@ -185,7 +185,7 @@ bool
 fdtbus_intr_str(int phandle, u_int index, char *buf, size_t buflen)
 {
 	struct fdtbus_interrupt_controller *ic;
-	u_int *specifier;
+	const u_int *specifier;
 	int ihandle;
 
 	specifier = get_specifier_by_index(phandle, index, &ihandle);
@@ -194,7 +194,7 @@ fdtbus_intr_str(int phandle, u_int index, char *buf, size_t buflen)
 	if (ic == NULL)
 		return false;
 
-	return ic->ic_funcs->intrstr(ic->ic_dev, specifier, buf, buflen);
+	return ic->ic_funcs->intrstr(ic->ic_dev, __UNCONST(specifier), buf, buflen);
 }
 
 static int
@@ -221,10 +221,10 @@ find_interrupt_cells(int phandle)
 	return 0;
 }
 
-static u_int *
+static const u_int *
 get_specifier_from_map(int phandle, const u_int *interrupt_spec, int *piphandle)
 {
-	u_int *result = NULL;
+	const u_int *result = NULL;
 	int len, resid;
 
 	const u_int *data = fdtbus_get_prop(phandle, "interrupt-map", &len);
@@ -267,15 +267,14 @@ get_specifier_from_map(int phandle, const u_int *interrupt_spec, int *piphandle)
 #endif
 
 		if (memcmp(&p[cis_off], interrupt_spec, cis_cells * 4) == 0) {
-			const int slen = pus_cells + pis_cells;
 #ifdef FDT_INTR_DEBUG
+			const int slen = pus_cells + pis_cells;
 			printf(" intr map match iparent %08x slen %d:", iparent, slen);
 			for (int i = 0; i < slen; i++)
 				printf(" %08x", p[pus_off + i]);
 			printf("\n");
 #endif
-			result = kmem_alloc(slen, KM_SLEEP);
-			memcpy(result, &p[pus_off], slen * 4);
+			result = &p[pus_off];
 			*piphandle = iparent;
 			goto done;
 		}
@@ -291,11 +290,10 @@ done:
 	return result;
 }
 
-static u_int *
+static const u_int *
 get_specifier_by_index(int phandle, int pindex, int *piphandle)
 {
 	const u_int *node_specifier;
-	u_int *specifier;
 	int interrupt_parent, interrupt_cells, len;
 
 	interrupt_parent = fdtbus_get_interrupt_parent(phandle);
@@ -320,10 +318,7 @@ get_specifier_by_index(int phandle, int pindex, int *piphandle)
 	if (of_hasprop(interrupt_parent, "interrupt-map"))
 		return get_specifier_from_map(interrupt_parent, node_specifier, piphandle);
 
-	specifier = kmem_alloc(interrupt_cells * sizeof(u_int), KM_SLEEP);
-	memcpy(specifier, node_specifier, interrupt_cells * 4);
-
 	*piphandle = interrupt_parent;
 
-	return specifier;
+	return node_specifier;
 }
