@@ -1,4 +1,4 @@
-/* $NetBSD: pmu_fdt.c,v 1.1 2018/07/15 16:07:49 jmcneill Exp $ */
+/* $NetBSD: pmu_fdt.c,v 1.2 2018/07/15 23:48:08 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmu_fdt.c,v 1.1 2018/07/15 16:07:49 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmu_fdt.c,v 1.2 2018/07/15 23:48:08 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -39,10 +39,14 @@ __KERNEL_RCSID(0, "$NetBSD: pmu_fdt.c,v 1.1 2018/07/15 16:07:49 jmcneill Exp $")
 
 #include <dev/fdt/fdtvar.h>
 
-#if defined(__aarch64__)
+#if defined(_ARM_ARCH_8)
 #include <dev/tprof/tprof_armv8.h>
 #define arm_pmu_intr armv8_pmu_intr
 #define arm_pmu_init armv8_pmu_init
+#elif defined(_ARM_ARCH_7)
+#include <dev/tprof/tprof_armv7.h>
+#define arm_pmu_intr armv7_pmu_intr
+#define arm_pmu_init armv7_pmu_init
 #endif
 
 #include <arm/armreg.h>
@@ -59,6 +63,15 @@ static const char * const compatible[] = {
 	"arm,cortex-a72-pmu",
 	"arm,cortex-a57-pmu",
 	"arm,cortex-a53-pmu",
+
+	"arm,cortex-a35-pmu",
+	"arm,cortex-a17-pmu",
+	"arm,cortex-a12-pmu",
+	"arm,cortex-a9-pmu",
+	"arm,cortex-a8-pmu",
+	"arm,cortex-a7-pmu",
+	"arm,cortex-a5-pmu",
+
 	NULL
 };
 
