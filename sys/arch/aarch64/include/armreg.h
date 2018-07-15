@@ -1,4 +1,4 @@
-/* $NetBSD: armreg.h,v 1.10 2018/05/14 17:15:54 joerg Exp $ */
+/* $NetBSD: armreg.h,v 1.11 2018/07/15 16:08:30 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -836,6 +836,70 @@ static const uintmax_t
     PMCCFILTR_M	  = __BIT(26);	 // Don't count cycles in EL3
 
 AARCH64REG_READ_INLINE(pmccntr_el0)
+
+AARCH64REG_READ_INLINE(pmceid0_el0);
+AARCH64REG_READ_INLINE(pmceid1_el0);
+
+AARCH64REG_WRITE_INLINE(pmcntenclr_el0);
+AARCH64REG_WRITE_INLINE(pmcntenset_el0);
+
+AARCH64REG_READ_INLINE(pmcr_el0)
+AARCH64REG_WRITE_INLINE(pmcr_el0)
+
+static const uintmax_t
+    PMCR_IMP      = __BITS(31,24),	// Implementor code
+    PMCR_IDCODE   = __BITS(23,16),	// Identification code
+    PMCR_N        = __BITS(15,11),	// Number of event counters
+    PMCR_LC       = __BIT(6),		// Long cycle counter enable
+    PMCR_DP       = __BIT(5),		// Disable cycle counter when event
+					// counting is prohibited
+    PMCR_X        = __BIT(4),		// Enable export of events
+    PMCR_D        = __BIT(3),		// Clock divider
+    PMCR_C        = __BIT(2),		// Cycle counter reset
+    PMCR_P        = __BIT(1),		// Event counter reset
+    PMCR_E        = __BIT(0);		// Enable
+
+
+AARCH64REG_READ_INLINE(pmevcntr1_el0);
+AARCH64REG_WRITE_INLINE(pmevcntr1_el0);
+
+AARCH64REG_READ_INLINE(pmevtyper1_el0)
+AARCH64REG_WRITE_INLINE(pmevtyper1_el0)
+
+static uintmax_t 
+    PMEVTYPER_P   = __BIT(31),		// Don't count events in EL1
+    PMEVTYPER_U   = __BIT(30),		// Don't count events in EL0
+    PMEVTYPER_NSK = __BIT(29),		// Don't count events in NS EL1
+    PMEVTYPER_NSU = __BIT(28),		// Don't count events in NS EL0
+    PMEVTYPER_NSH = __BIT(27),		// Count events in NS EL2
+    PMEVTYPER_M   = __BIT(26),		// Don't count events in EL3
+    PMEVTYPER_MT  = __BIT(25),		// Count events on all CPUs with same
+					// aff1 level
+    PMEVTYPER_EVTCOUNT = __BITS(15,0);	// Event to count
+
+AARCH64REG_WRITE_INLINE(pmintenclr_el1);
+AARCH64REG_WRITE_INLINE(pmintenset_el1);
+
+AARCH64REG_WRITE_INLINE(pmovsclr_el0);
+AARCH64REG_READ_INLINE(pmovsset_el0);
+AARCH64REG_WRITE_INLINE(pmovsset_el0);
+
+AARCH64REG_WRITE_INLINE(pmselr_el0);
+
+AARCH64REG_WRITE_INLINE(pmswinc_el0);
+
+AARCH64REG_READ_INLINE(pmuserenr_el0);
+AARCH64REG_WRITE_INLINE(pmuserenr_el0);
+
+AARCH64REG_READ_INLINE(pmxevcntr_el0);
+AARCH64REG_WRITE_INLINE(pmxevcntr_el0);
+
+AARCH64REG_READ_INLINE(pmxevtyper_el0);
+AARCH64REG_WRITE_INLINE(pmxevtyper_el0);
+
+/*
+ * Generic timer registers
+ */
 
 AARCH64REG_READ_INLINE(cntfrq_el0)
 
