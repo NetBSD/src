@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.2,v 1.1.2.95 2018/07/12 14:57:57 martin Exp $
+# $NetBSD: CHANGES-7.2,v 1.1.2.96 2018/07/15 10:49:02 martin Exp $
 
 A complete list of changes from the NetBSD 7.1 release to the NetBSD 7.2
 release:
@@ -5565,4 +5565,9 @@ usr.bin/printf/printf.c				1.37-1.39
 	escape sequence (\ sequence) is present in an arg to a %b
 	conversion.
 	[kre, ticket #1619]
+
+usr.bin/units/units.c				1.26,1.27
+
+	Fix negative exponents and improve handling of negative numbers.
+	[dholland, ticket #1620]
 
