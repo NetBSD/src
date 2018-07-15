@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.428 2018/07/12 10:46:41 maxv Exp $
+#       $NetBSD: Makefile,v 1.429 2018/07/15 05:16:41 maxv Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -28,7 +28,7 @@ MAN=	accept_filter.9 accf_data.9 accf_http.9 \
 	ieee80211_radiotap.9 iic.9 imax.9 \
 	in_getifa.9 \
 	in4_cksum.9 inittodr.9 interrupt_distribute.9 intro.9 ioasic.9 \
-	ioctl.9 ipkdb.9 ipi.9 isa.9 isapnp.9 itimerfix.9 kauth.9 kcopy.9 \
+	ioctl.9 ipi.9 isa.9 isapnp.9 itimerfix.9 kauth.9 kcopy.9 \
 	kcpuset.9 kernhist.9 klua_lock.9 klua_mod_register.9 kmem.9 kpause.9 \
 	kfilter_register.9 knote.9 \
 	kprintf.9 kthread.9 linedisc.9 lock.9 locking.9 log.9 ltsleep.9 \
@@ -395,9 +395,6 @@ MLINKS+=ioasic.9 ioasic_intr_establish.9 \
 	ioasic.9 ioasic_intr_evcnt.9 \
 	ioasic.9 ioasic_attach_devs.9 \
 	ioasic.9 ioasic_submatch.9
-MLINKS+=ipkdb.9 ipkdb_init.9 ipkdb.9 ipkdb_connect.9 ipkdb.9 ipkdbinit.9 \
-	ipkdb.9 ipkdbcmds.9 ipkdb.9 ipkdb_trap.9 ipkdb.9 ipkdb_poll.9 \
-	ipkdb.9 ipkdbif_init.9 ipkdb.9 ipkdbfbyte.9 ipkdb.9 ipkdbsbyte.9
 MLINKS+=isa.9 isa_intr_alloc.9 \
 	isa.9 isa_intr_establish.9 \
 	isa.9 isa_intr_disestablish.9 \
