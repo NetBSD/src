@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.106 2018/05/25 23:00:34 macallan Exp $	*/
+/*	$NetBSD: cpu.h,v 1.107 2018/07/15 05:16:44 maxv Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -95,7 +95,7 @@ struct cpu_info {
 #endif
 #define	CI_SAVETEMP	(0*CPUSAVE_LEN)
 #define	CI_SAVEDDB	(1*CPUSAVE_LEN)
-#define	CI_SAVEIPKDB	(2*CPUSAVE_LEN)
+#define	CI_SAVEIPKDB	(2*CPUSAVE_LEN)	/* obsolete */
 #define	CI_SAVEMMU	(3*CPUSAVE_LEN)
 #define	CI_SAVEMAX	(4*CPUSAVE_LEN)
 #define	CPUSAVE_LEN	8

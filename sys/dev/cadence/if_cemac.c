@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cemac.c,v 1.13 2018/06/26 06:48:00 msaitoh Exp $	*/
+/*	$NetBSD: if_cemac.c,v 1.14 2018/07/15 05:16:44 maxv Exp $	*/
 
 /*
  * Copyright (c) 2015  Genetec Corporation.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cemac.c,v 1.13 2018/06/26 06:48:00 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cemac.c,v 1.14 2018/07/15 05:16:44 maxv Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -74,10 +74,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_cemac.c,v 1.13 2018/06/26 06:48:00 msaitoh Exp $"
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/if_inarp.h>
-#endif
-
-#ifdef IPKDB_AT91	// @@@
-#include <ipkdb/ipkdb.h>
 #endif
 
 #include <dev/cadence/cemacreg.h>
