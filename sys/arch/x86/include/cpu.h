@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.94 2018/06/30 14:21:19 riastradh Exp $	*/
+/*	$NetBSD: cpu.h,v 1.95 2018/07/15 08:47:43 maxv Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -135,16 +135,6 @@ struct cpu_info {
 	volatile int	ci_mtx_count;	/* Negative count of spin mutexes */
 	volatile int	ci_mtx_oldspl;	/* Old SPL at this ci_idepth */
 
-#ifndef __HAVE_DIRECT_MAP
-#define VPAGE_SRC 0
-#define VPAGE_DST 1
-#define VPAGE_ZER 2
-#define VPAGE_PTP 3
-#define VPAGE_MAX 4
-	vaddr_t		vpage[VPAGE_MAX];
-	pt_entry_t	*vpage_pte[VPAGE_MAX];
-#endif
-
 	/* The following must be aligned for cmpxchg8b. */
 	struct {
 		uint32_t	ipending;
@@ -183,6 +173,16 @@ struct cpu_info {
 
 	u_int ci_cflush_lsize;	/* CLFLUSH insn line size */
 	struct x86_cache_info ci_cinfo[CAI_COUNT];
+
+#ifndef __HAVE_DIRECT_MAP
+#define VPAGE_SRC 0
+#define VPAGE_DST 1
+#define VPAGE_ZER 2
+#define VPAGE_PTP 3
+#define VPAGE_MAX 4
+	vaddr_t		vpage[VPAGE_MAX];
+	pt_entry_t	*vpage_pte[VPAGE_MAX];
+#endif
 
 #ifdef PAE
 	uint32_t	ci_pae_l3_pdirpa; /* PA of L3 PD */
