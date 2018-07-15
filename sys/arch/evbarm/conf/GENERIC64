@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.27 2018/07/14 15:09:41 maxv Exp $
+#	$NetBSD: GENERIC64,v 1.28 2018/07/15 16:09:05 jmcneill Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -85,6 +85,9 @@ simplebus*	at fdt? pass 0
 # CPUs
 cpus*		at fdt? pass 0
 cpu*		at fdt? pass 0
+
+# Performance monitors
+armpmu*		at fdt?
 
 # CPU frequency scaling
 cpufreqdt*	at cpu?
