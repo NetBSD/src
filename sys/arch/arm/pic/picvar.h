@@ -1,4 +1,4 @@
-/*	$NetBSD: picvar.h,v 1.16 2015/07/07 21:43:46 matt Exp $	*/
+/*	$NetBSD: picvar.h,v 1.17 2018/07/15 16:03:24 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -76,6 +76,10 @@ void	*pic_establish_intr(struct pic_softc *pic, int irq, int ipl, int type,
 	    int (*func)(void *), void *arg);
 int	pic_alloc_irq(struct pic_softc *pic);
 void	pic_disestablish_source(struct intrsource *is);
+#ifdef MULTIPROCESSOR
+void	pic_distribute_source(struct intrsource *is, const kcpuset_t *,
+	    kcpuset_t *);
+#endif
 void	pic_do_pending_ints(register_t psw, int newipl, void *frame);
 void	pic_dispatch(struct intrsource *is, void *frame);
 
@@ -114,6 +118,9 @@ struct intrsource {
 	uint8_t is_iplidx;
 	bool is_mpsafe;
 	char is_source[16];
+#ifdef MULTIPROCESSOR
+	kcpuset_t *is_affinity;
+#endif
 };
 
 struct pic_percpu {
@@ -156,6 +163,8 @@ struct pic_ops {
 #ifdef MULTIPROCESSOR
 	void (*pic_cpu_init)(struct pic_softc *, struct cpu_info *);
 	void (*pic_ipi_send)(struct pic_softc *, const kcpuset_t *, u_long);
+	int (*pic_set_affinity)(struct pic_softc *, size_t, const kcpuset_t *);
+	void (*pic_get_affinity)(struct pic_softc *, size_t, kcpuset_t *);
 #endif
 };
 
