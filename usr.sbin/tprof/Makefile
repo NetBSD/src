@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2018/07/13 11:03:36 maxv Exp $
+#	$NetBSD: Makefile,v 1.6 2018/07/15 16:25:31 jmcneill Exp $
 
 .PATH:	${.CURDIR}/arch
 
@@ -8,6 +8,8 @@ SRCS=	tprof.c tprof_analyze.c
 
 .if	${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 SRCS+=	tprof_x86.c
+.elif	${MACHINE_ARCH} == "aarch64"
+SRCS+=	tprof_armv8.c
 .else
 SRCS+=	tprof_noarch.c
 .endif
