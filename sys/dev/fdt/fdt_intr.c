@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_intr.c,v 1.15 2018/07/02 17:50:02 jmcneill Exp $ */
+/* $NetBSD: fdt_intr.c,v 1.16 2018/07/15 13:24:05 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_intr.c,v 1.15 2018/07/02 17:50:02 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_intr.c,v 1.16 2018/07/15 13:24:05 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -51,7 +51,12 @@ static LIST_HEAD(, fdtbus_interrupt_controller) fdtbus_interrupt_controllers =
 struct fdtbus_interrupt_cookie {
 	struct fdtbus_interrupt_controller *c_ic;
 	void *c_ih;
+
+	LIST_ENTRY(fdtbus_interrupt_cookie) c_next;
 };
+
+static LIST_HEAD(, fdtbus_interrupt_cookie) fdtbus_interrupt_cookies =
+    LIST_HEAD_INITIALIZER(fdtbus_interrupt_cookies);
 
 static u_int *	get_specifier_by_index(int, int, int *);
 static u_int *	get_specifier_from_map(int, const u_int *, int *);
@@ -149,19 +154,31 @@ fdtbus_intr_establish(int phandle, u_int index, int ipl, int flags,
 		c = kmem_alloc(sizeof(*c), KM_SLEEP);
 		c->c_ic = ic;
 		c->c_ih = ih;
+		LIST_INSERT_HEAD(&fdtbus_interrupt_cookies, c, c_next);
 	}
 
-	return c;
+	return ih;
 }
 
 void
 fdtbus_intr_disestablish(int phandle, void *cookie)
 {
-	struct fdtbus_interrupt_cookie *c = cookie;
-	struct fdtbus_interrupt_controller *ic = c->c_ic;
-	void *ih = c->c_ih;
+	struct fdtbus_interrupt_controller *ic = NULL;
+	struct fdtbus_interrupt_cookie *c;
 
-	return ic->ic_funcs->disestablish(ic->ic_dev, ih);
+	LIST_FOREACH(c, &fdtbus_interrupt_cookies, c_next) {
+		if (c->c_ih == cookie) {
+			ic = c->c_ic;
+			LIST_REMOVE(c, c_next);
+			kmem_free(c, sizeof(*c));
+			break;
+		}
+	}
+
+	if (ic != NULL)
+		panic("%s: interrupt handle not valid", __func__);
+
+	return ic->ic_funcs->disestablish(ic->ic_dev, cookie);
 }
 
 bool
