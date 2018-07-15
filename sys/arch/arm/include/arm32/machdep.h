@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.h,v 1.21 2017/02/20 17:23:54 skrll Exp $ */
+/* $NetBSD: machdep.h,v 1.22 2018/07/15 05:16:41 maxv Exp $ */
 
 #ifndef _ARM32_BOOT_MACHDEP_H_
 #define _ARM32_BOOT_MACHDEP_H_
@@ -11,11 +11,7 @@
 #define ABT_STACK_SIZE	1
 #endif
 #ifndef UND_STACK_SIZE
-#ifdef IPKDB
-#define UND_STACK_SIZE	2
-#else
 #define UND_STACK_SIZE	1
-#endif
 #endif
 #ifndef FIQ_STACK_SIZE
 #define FIQ_STACK_SIZE	1

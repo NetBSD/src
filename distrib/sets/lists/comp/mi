@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2210 2018/07/12 10:46:40 maxv Exp $
+#	$NetBSD: mi,v 1.2211 2018/07/15 05:16:40 maxv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -10942,16 +10942,16 @@
 ./usr/share/man/cat9/ioctl_copyin.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/ioctl_copyout.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/ipi.0			comp-sys-catman		.cat
-./usr/share/man/cat9/ipkdb.0			comp-sys-catman		.cat
-./usr/share/man/cat9/ipkdb_connect.0		comp-sys-catman		.cat
-./usr/share/man/cat9/ipkdb_init.0		comp-sys-catman		.cat
-./usr/share/man/cat9/ipkdb_poll.0		comp-sys-catman		.cat
-./usr/share/man/cat9/ipkdb_trap.0		comp-sys-catman		.cat
-./usr/share/man/cat9/ipkdbcmds.0		comp-sys-catman		.cat
-./usr/share/man/cat9/ipkdbfbyte.0		comp-sys-catman		.cat
-./usr/share/man/cat9/ipkdbif_init.0		comp-sys-catman		.cat
-./usr/share/man/cat9/ipkdbinit.0		comp-sys-catman		.cat
-./usr/share/man/cat9/ipkdbsbyte.0		comp-sys-catman		.cat
+./usr/share/man/cat9/ipkdb.0			comp-obsolete		obsolete
+./usr/share/man/cat9/ipkdb_connect.0		comp-obsolete		obsolete
+./usr/share/man/cat9/ipkdb_init.0		comp-obsolete		obsolete
+./usr/share/man/cat9/ipkdb_poll.0		comp-obsolete		obsolete
+./usr/share/man/cat9/ipkdb_trap.0		comp-obsolete		obsolete
+./usr/share/man/cat9/ipkdbcmds.0		comp-obsolete		obsolete
+./usr/share/man/cat9/ipkdbfbyte.0		comp-obsolete		obsolete
+./usr/share/man/cat9/ipkdbif_init.0		comp-obsolete		obsolete
+./usr/share/man/cat9/ipkdbinit.0		comp-obsolete		obsolete
+./usr/share/man/cat9/ipkdbsbyte.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/is_leap_year.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/isa.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/isa_dmaabort.0		comp-sys-catman		.cat
@@ -18649,16 +18649,16 @@
 ./usr/share/man/html9/ioctl_copyin.html		comp-sys-htmlman	html
 ./usr/share/man/html9/ioctl_copyout.html	comp-sys-htmlman	html
 ./usr/share/man/html9/ipi.html			comp-sys-htmlman	html
-./usr/share/man/html9/ipkdb.html		comp-sys-htmlman	html
-./usr/share/man/html9/ipkdb_connect.html	comp-sys-htmlman	html
-./usr/share/man/html9/ipkdb_init.html		comp-sys-htmlman	html
-./usr/share/man/html9/ipkdb_poll.html		comp-sys-htmlman	html
-./usr/share/man/html9/ipkdb_trap.html		comp-sys-htmlman	html
-./usr/share/man/html9/ipkdbcmds.html		comp-sys-htmlman	html
-./usr/share/man/html9/ipkdbfbyte.html		comp-sys-htmlman	html
-./usr/share/man/html9/ipkdbif_init.html		comp-sys-htmlman	html
-./usr/share/man/html9/ipkdbinit.html		comp-sys-htmlman	html
-./usr/share/man/html9/ipkdbsbyte.html		comp-sys-htmlman	html
+./usr/share/man/html9/ipkdb.html		comp-obsolete		obsolete
+./usr/share/man/html9/ipkdb_connect.html	comp-obsolete		obsolete
+./usr/share/man/html9/ipkdb_init.html		comp-obsolete		obsolete
+./usr/share/man/html9/ipkdb_poll.html		comp-obsolete		obsolete
+./usr/share/man/html9/ipkdb_trap.html		comp-obsolete		obsolete
+./usr/share/man/html9/ipkdbcmds.html		comp-obsolete		obsolete
+./usr/share/man/html9/ipkdbfbyte.html		comp-obsolete		obsolete
+./usr/share/man/html9/ipkdbif_init.html		comp-obsolete		obsolete
+./usr/share/man/html9/ipkdbinit.html		comp-obsolete		obsolete
+./usr/share/man/html9/ipkdbsbyte.html		comp-obsolete		obsolete
 ./usr/share/man/html9/is_leap_year.html		comp-sys-htmlman	html
 ./usr/share/man/html9/isa.html			comp-sys-htmlman	html
 ./usr/share/man/html9/isa_dmaabort.html		comp-sys-htmlman	html
@@ -26504,16 +26504,16 @@
 ./usr/share/man/man9/ioctl_copyin.9		comp-sys-man		.man
 ./usr/share/man/man9/ioctl_copyout.9		comp-sys-man		.man
 ./usr/share/man/man9/ipi.9			comp-sys-man		.man
-./usr/share/man/man9/ipkdb.9			comp-sys-man		.man
-./usr/share/man/man9/ipkdb_connect.9		comp-sys-man		.man
-./usr/share/man/man9/ipkdb_init.9		comp-sys-man		.man
-./usr/share/man/man9/ipkdb_poll.9		comp-sys-man		.man
-./usr/share/man/man9/ipkdb_trap.9		comp-sys-man		.man
-./usr/share/man/man9/ipkdbcmds.9		comp-sys-man		.man
-./usr/share/man/man9/ipkdbfbyte.9		comp-sys-man		.man
-./usr/share/man/man9/ipkdbif_init.9		comp-sys-man		.man
-./usr/share/man/man9/ipkdbinit.9		comp-sys-man		.man
-./usr/share/man/man9/ipkdbsbyte.9		comp-sys-man		.man
+./usr/share/man/man9/ipkdb.9			comp-obsolete		obsolete
+./usr/share/man/man9/ipkdb_connect.9		comp-obsolete		obsolete
+./usr/share/man/man9/ipkdb_init.9		comp-obsolete		obsolete
+./usr/share/man/man9/ipkdb_poll.9		comp-obsolete		obsolete
+./usr/share/man/man9/ipkdb_trap.9		comp-obsolete		obsolete
+./usr/share/man/man9/ipkdbcmds.9		comp-obsolete		obsolete
+./usr/share/man/man9/ipkdbfbyte.9		comp-obsolete		obsolete
+./usr/share/man/man9/ipkdbif_init.9		comp-obsolete		obsolete
+./usr/share/man/man9/ipkdbinit.9		comp-obsolete		obsolete
+./usr/share/man/man9/ipkdbsbyte.9		comp-obsolete		obsolete
 ./usr/share/man/man9/is_leap_year.9		comp-sys-man		.man
 ./usr/share/man/man9/isa.9			comp-sys-man		.man
 ./usr/share/man/man9/isa_dmaabort.9		comp-sys-man		.man
