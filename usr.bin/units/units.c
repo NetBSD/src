@@ -1,4 +1,4 @@
-/*	$NetBSD: units.c,v 1.25 2014/01/07 02:07:09 joerg Exp $	*/
+/*	$NetBSD: units.c,v 1.25.4.1 2018/07/15 10:47:54 martin Exp $	*/
 
 /*
  * units.c   Copyright (c) 1993 by Adrian Mariano (adrian@cam.cornell.edu)
@@ -17,6 +17,7 @@
  * improvements you might make to this program.
  */
 
+#include <assert.h>
 #include <ctype.h>
 #include <err.h>
 #include <float.h>
@@ -344,14 +345,41 @@ addunit(struct unittype * theunit, const char *toadd, int flip)
 	char *scratch, *savescr;
 	char *item;
 	char *divider, *slash;
+	char *minus;
+	size_t pos, len;
 	int doingtop;
 
 	savescr = scratch = dupstr(toadd);
-	for (slash = scratch + 1; *slash; slash++)
-		if (*slash == '-' &&
-		    (tolower((unsigned char)*(slash - 1)) != 'e' ||
-		    !strchr(".0123456789", *(slash + 1))))
-			*slash = ' ';
+
+	/*
+	 * "foot-pound" is the same as "foot pound". But don't
+	 * trash minus signs on numbers.
+	 *
+	 * 20160204 dholland: this used to let through only minus
+	 * signs at the beginning of the string or in the middle of a
+	 * floating constant (e.g. 3.6e-5), and a minus sign at the
+	 * beginning of the string failed further on. I have changed
+	 * it so any minus sign before a digit (or decimal point) is
+	 * treated as going with that digit.
+	 *
+	 * Note that this changed the interpretation of certain
+	 * marginally valid inputs like "3 N-5 s"; that used to be
+	 * interpreted as "3 N 5 s" or 15 N s, but now it reads as
+	 * "3 N -5 s" or -15 N s. However, it also makes negative
+	 * exponents on units work, which used to be silently trashed.
+	 */
+	for (minus = scratch + 1; *minus; minus++) {
+		if (*minus != '-') {
+			continue;
+		}
+		if (strchr(".0123456789", *(minus + 1))) {
+			continue;
+		}
+		*minus = ' ';
+	}
+
+	/* Process up to the next / in one go. */
+
 	slash = strchr(scratch, '/');
 	if (slash)
 		*slash = 0;
@@ -359,7 +387,9 @@ addunit(struct unittype * theunit, const char *toadd, int flip)
 	do {
 		item = strtok(scratch, " *\t\n/");
 		while (item) {
-			if (strchr("0123456789.", *item)) {
+			if ((*item == '-' && strchr("0123456789.", *(item+1)))
+			    || strchr("0123456789.", *item)) {
+			    
 				/* item starts with a number */
 				char *endptr;
 				double num;
@@ -415,14 +445,37 @@ addunit(struct unittype * theunit, const char *toadd, int flip)
 			}
 			else {	/* item is not a number */
 				int repeat = 1;
+				int flipthis = 0;
 
-				if (strchr("23456789",
-				    item[strlen(item) - 1])) {
-					repeat = item[strlen(item) - 1] - '0';
-					item[strlen(item) - 1] = 0;
+				pos = len = strlen(item);
+				assert(pos > 0);
+				while (strchr("0123456789", item[pos - 1])) {
+					pos--;
+					/* string began with non-digit */
+					assert(pos > 0);
 				}
+				if (pos < len) {
+					if (pos > 1 && item[pos - 1] == '-' &&
+					    item[pos - 2] == '^') {
+						/* allow negative exponents */
+						pos--;
+					}
+					/* have an exponent */
+					repeat = strtol(item + pos, NULL, 10);
+					item[pos] = 0;
+					if (repeat == 0) {
+						/* not really the right msg */
+						zeroerror();
+						return 1;
+					}
+					if (repeat < 0) {
+						flipthis = 1;
+						repeat = -repeat;
+					}
+				}
+				flipthis ^= doingtop ^ flip;
 				for (; repeat; repeat--)
-					if (addsubunit(doingtop ^ flip ? theunit->numerator : theunit->denominator, item))
+					if (addsubunit(flipthis ? theunit->numerator : theunit->denominator, item))
 						return 1;
 			}
 			item = strtok(NULL, " *\t/\n");
