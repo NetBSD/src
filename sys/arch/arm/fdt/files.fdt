@@ -1,4 +1,4 @@
-# $NetBSD: files.fdt,v 1.20 2018/07/15 16:07:49 jmcneill Exp $
+# $NetBSD: files.fdt,v 1.21 2018/07/15 23:48:08 jmcneill Exp $
 
 include	"dev/pckbport/files.pckbport"
 
@@ -53,6 +53,7 @@ file	arch/arm/fdt/psci_fdt.c			psci_fdt
 device	armpmu
 attach	armpmu at fdt with pmu_fdt
 file	arch/arm/fdt/pmu_fdt.c			pmu_fdt
+file	dev/tprof/tprof_armv7.c			pmu_fdt & arm32
 file	dev/tprof/tprof_armv8.c			pmu_fdt & aarch64
 
 attach	genfb at fdt with plfb_fdt: fdt_display_timing
