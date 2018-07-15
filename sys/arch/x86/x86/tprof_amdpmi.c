@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof_amdpmi.c,v 1.8 2018/07/13 07:56:29 maxv Exp $	*/
+/*	$NetBSD: tprof_amdpmi.c,v 1.9 2018/07/15 06:14:21 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tprof_amdpmi.c,v 1.8 2018/07/13 07:56:29 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tprof_amdpmi.c,v 1.9 2018/07/15 06:14:21 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,7 +70,6 @@ __KERNEL_RCSID(0, "$NetBSD: tprof_amdpmi.c,v 1.8 2018/07/13 07:56:29 maxv Exp $"
 
 #include <uvm/uvm.h>		/* VM_MIN_KERNEL_ADDRESS */
 
-#include <x86/tprof.h>
 #include <x86/nmi.h>
 
 #include <machine/cpufunc.h>
