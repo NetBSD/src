@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_elf32.c,v 1.96 2018/07/09 05:43:35 msaitoh Exp $	*/
+/*	$NetBSD: linux_exec_elf32.c,v 1.97 2018/07/15 21:31:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_elf32.c,v 1.96 2018/07/09 05:43:35 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_elf32.c,v 1.97 2018/07/15 21:31:00 christos Exp $");
 
 #ifndef ELFSIZE
 /* XXX should die */
@@ -323,8 +323,9 @@ ELFNAME2(linux,go_rt0_signature)(struct lwp *l, struct exec_package *epp, Elf_Eh
 		goto out;
 	}
 
-	if (sh[i].sh_size > 1024 * 1014)
-		sh[i].sh_size = 1014 * 1014;
+	// Don't scan more than 1MB
+	if (sh[i].sh_size > 1024 * 1024)
+		sh[i].sh_size = 1024 * 1024;
 
 	tmp = malloc(sh[i].sh_size, M_TEMP, M_WAITOK);
 	error = exec_read_from(l, epp->ep_vp, sh[i].sh_offset, tmp,
@@ -333,8 +334,9 @@ ELFNAME2(linux,go_rt0_signature)(struct lwp *l, struct exec_package *epp, Elf_Eh
 		goto out;
 
 #if (ELFSIZE == 32)
-	if (strcmp(machine, "amd64") == 0)
-		m = "i386";
+	extern const char machine32[] __weak;
+	if (machine32 != NULL)
+		m = machine32;
 	else
 		m = machine;
 #else
