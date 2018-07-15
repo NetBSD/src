@@ -1,4 +1,4 @@
-/* $NetBSD: ofwoea_machdep.c,v 1.44 2018/03/03 22:50:17 macallan Exp $ */
+/* $NetBSD: ofwoea_machdep.c,v 1.45 2018/07/15 05:16:44 maxv Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,13 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.44 2018/03/03 22:50:17 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.45 2018/07/15 05:16:44 maxv Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
-#include "opt_ipkdb.h"
 #include "opt_modular.h"
 
 #include "wsdisplay.h"
@@ -79,10 +78,6 @@ __KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.44 2018/03/03 22:50:17 macallan
 
 #ifdef KGDB
 #include <sys/kgdb.h>
-#endif
-
-#ifdef IPKDB
-#include <ipkdb/ipkdb.h>
 #endif
 
 #include "opt_ofwoea.h"
