@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1201 2018/07/12 10:46:48 maxv Exp $
+#	$NetBSD: files,v 1.1202 2018/07/15 07:07:15 martin Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20171118
@@ -443,11 +443,6 @@ define	arp
 #
 include "altq/files.altq"
 
-#
-# IPKDB kernel debugger
-#
-include "ipkdb/files.ipkdb"
-
 # Logical disk
 #
 device	ld: disk
@@ -742,9 +737,8 @@ file	dev/ic/dwc_gmac.c		awge
 
 # 8390-family Ethernet controllers
 #
-defflag	opt_ipkdb.h		IPKDB_DP8390
 define	dp8390nic
-file	dev/ic/dp8390.c			dp8390nic | ipkdb_dp8390
+file	dev/ic/dp8390.c			dp8390nic
 
 # National Semiconductor DP83905 AT/LANTIC Ethernet media support
 #
@@ -884,9 +878,8 @@ file	dev/ic/tms320av110.c		tms320av110
 # Novell NE2000-compatible Ethernet cards, based on the
 # National Semiconductor DS8390.
 #
-defflag	opt_ipkdb.h		IPKDB_NE			: IPKDB_DP8390
 device	ne: ether, ifnet, arp, dp8390nic, mii
-file	dev/ic/ne2000.c			ne | ipkdb_ne
+file	dev/ic/ne2000.c			ne
 
 # 8250/16[45]50-based "com" ports
 #
