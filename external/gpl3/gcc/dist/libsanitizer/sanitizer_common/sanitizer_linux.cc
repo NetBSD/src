@@ -1018,7 +1018,7 @@ uptr internal_clone(int (*fn)(void *), void *child_stack, int flags, void *arg,
                        : "memory", "$29" );
   return res;
 }
-#elif defined(__aarch64__)
+#elif defined(__aarch64__) && SANITIZER_LINUX
 uptr internal_clone(int (*fn)(void *), void *child_stack, int flags, void *arg,
                     int *parent_tidptr, void *newtls, int *child_tidptr) {
   long long res;
@@ -1171,9 +1171,15 @@ void GetPcSpBp(void *context, uptr *pc, uptr *sp, uptr *bp) {
 # endif
 #elif defined(__aarch64__)
   ucontext_t *ucontext = (ucontext_t*)context;
+# if SANITIZER_NETBSD
+  *pc = _UC_MACHINE_PC(ucontext);
+  *sp = _UC_MACHINE_SP(ucontext);
+  *bp = ucontext->uc_mcontext.__gregs[29]; /* XXX */
+# else
   *pc = ucontext->uc_mcontext.pc;
   *bp = ucontext->uc_mcontext.regs[29];
   *sp = ucontext->uc_mcontext.sp;
+# endif
 #elif defined(__hppa__)
   ucontext_t *ucontext = (ucontext_t*)context;
 # if SANITIZER_NETBSD
