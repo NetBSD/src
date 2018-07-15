@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1598 2018/07/13 11:14:14 maxv Exp $
+# $NetBSD: mi,v 1.1599 2018/07/15 05:16:40 maxv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1327,7 +1327,7 @@
 ./usr/share/man/cat4/ipf.0			man-ipf-catman		ipfilter,.cat
 ./usr/share/man/cat4/ipfilter.0			man-ipf-catman		ipfilter,.cat
 ./usr/share/man/cat4/ipip.0			man-obsolete		obsolete
-./usr/share/man/cat4/ipkdb.0			man-sys-catman		.cat
+./usr/share/man/cat4/ipkdb.0			man-obsolete		obsolete
 ./usr/share/man/cat4/ipl.0			man-ipf-catman		ipfilter,.cat
 ./usr/share/man/cat4/ipmi.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ipnat.0			man-ipf-catman		ipfilter,.cat
@@ -4439,7 +4439,7 @@
 ./usr/share/man/html4/ip6.html			man-sys-htmlman		html
 ./usr/share/man/html4/ipf.html			man-ipf-htmlman		ipfilter,html
 ./usr/share/man/html4/ipfilter.html		man-ipf-htmlman		ipfilter,html
-./usr/share/man/html4/ipkdb.html		man-sys-htmlman		html
+./usr/share/man/html4/ipkdb.html		man-obsolete		obsolete
 ./usr/share/man/html4/ipl.html			man-ipf-htmlman		ipfilter,html
 ./usr/share/man/html4/ipmi.html			man-sys-htmlman		html
 ./usr/share/man/html4/ipnat.html		man-ipf-htmlman		ipfilter,html
@@ -7389,7 +7389,7 @@
 ./usr/share/man/man4/ipf.4			man-sys-man		ipfilter,.man
 ./usr/share/man/man4/ipfilter.4			man-sys-man		ipfilter,.man
 ./usr/share/man/man4/ipip.4			man-obsolete		obsolete
-./usr/share/man/man4/ipkdb.4			man-sys-man		.man
+./usr/share/man/man4/ipkdb.4			man-obsolete		obsolete
 ./usr/share/man/man4/ipl.4			man-sys-man		ipfilter,.man
 ./usr/share/man/man4/ipmi.4			man-sys-man		.man
 ./usr/share/man/man4/ipnat.4			man-sys-man		ipfilter,.man
