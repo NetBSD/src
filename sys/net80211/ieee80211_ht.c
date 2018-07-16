@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_ht.c,v 1.1.56.3 2018/07/12 16:35:34 phil Exp $ */
+/*	$NetBSD: ieee80211_ht.c,v 1.1.56.4 2018/07/16 20:11:11 phil Exp $ */
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -2023,7 +2023,11 @@ ieee80211_setup_basic_htrates(struct ieee80211_node *ni, const uint8_t *ie)
 static void
 ampdu_tx_setup(struct ieee80211_tx_ampdu *tap)
 {
+#if __FreeBSD__
 	callout_init(&tap->txa_timer, 1);
+#elif __NetBSD__
+	callout_init(&tap->txa_timer, CALLOUT_MPSAFE);
+#endif
 	tap->txa_flags |= IEEE80211_AGGR_SETUP;
 	tap->txa_lastsample = ticks;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_ratectl_none.c,v 1.1.2.2 2018/07/12 16:35:34 phil Exp $ */
+/*	$NetBSD: ieee80211_ratectl_none.c,v 1.1.2.3 2018/07/16 20:11:11 phil Exp $ */
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -114,7 +114,11 @@ none_setinterval(const struct ieee80211vap *vap, int msecs)
 /* number of references from net80211 layer */
 static	int nrefs __unused = 0;
 
-static const struct ieee80211_ratectl none __unused = {
+#if __FreeBSD__
+static const struct ieee80211_ratectl none = {
+#elif __NetBSD__
+const struct ieee80211_ratectl ratectl_none = {
+#endif
 	.ir_name	= "none",
 	.ir_attach	= NULL,
 	.ir_detach	= NULL,
@@ -127,7 +131,8 @@ static const struct ieee80211_ratectl none __unused = {
 	.ir_tx_update	= none_tx_update,
 	.ir_setinterval	= none_setinterval,
 };
-#ifdef notyet
+
+#if __FreeBSD__
 IEEE80211_RATECTL_MODULE(ratectl_none, 1);
 IEEE80211_RATECTL_ALG(none, IEEE80211_RATECTL_NONE, none);
 #endif

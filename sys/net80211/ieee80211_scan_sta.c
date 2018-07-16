@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_scan_sta.c,v 1.1.56.3 2018/07/12 16:35:34 phil Exp $ */
+/*	$NetBSD: ieee80211_scan_sta.c,v 1.1.56.4 2018/07/16 20:11:11 phil Exp $ */
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-#ifdef __FreeBSD__
+#if __FreeBSD__
 __FBSDID("$FreeBSD$");
 #endif
 
@@ -50,14 +50,15 @@ __FBSDID("$FreeBSD$");
 #include <sys/socket.h>
 
 #include <net/if.h>
-#ifdef __FreeBSD__
+#if __FreeBSD__
 #include <net/if_var.h>
 #endif
 #include <net/if_media.h>
-#ifdef __FreeBSD__
+#if __FreeBSD__
 #include <net/ethernet.h>
 #endif
-#ifdef __NetBSD__
+#if __NetBSD__
+#include <net/if_ether.h>
 #include <net/route.h>
 #endif
 

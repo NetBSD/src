@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_var.h,v 1.33.2.3 2018/07/12 16:35:34 phil Exp $ */
+/*	$NetBSD: ieee80211_var.h,v 1.33.2.4 2018/07/16 20:11:11 phil Exp $ */
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -560,9 +560,14 @@ struct ieee80211vap {
 	int			(*iv_newstate)(struct ieee80211vap *,
 				    enum ieee80211_state, int);
 	/* 802.3 output method for raw frame xmit */
+#if __FreeBSD__
 	int			(*iv_output)(struct ifnet *, struct mbuf *,
 				    const struct sockaddr *, struct route *);
-
+#elif __NetBSD__
+	int			(*iv_output)(struct ifnet *, struct mbuf *,
+				    const struct sockaddr *,
+				    const struct rtentry *);
+#endif
 	int			(*iv_wme_update)(struct ieee80211vap *,
 				    const struct wmeParams *wme_params);
 	struct task		iv_wme_task;	/* deferred VAP WME update */

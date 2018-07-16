@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.c,v 1.56.18.2 2018/07/12 16:35:34 phil Exp $ */
+/*	$NetBSD: ieee80211.c,v 1.56.18.3 2018/07/16 20:11:11 phil Exp $ */
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -330,6 +330,8 @@ static struct mtx ic_list_mtx;
 MTX_SYSINIT(ic_list, &ic_list_mtx, "ieee80211com list", MTX_DEF);
 #elif __NetBSD__
 static kmutex_t ic_list_mtx;
+static uint     ic_list_mtx_needsinit = 1;
+static uint     ic_list_mtx_ready = 0;
 #endif
 
 #if notyet
@@ -370,12 +372,29 @@ SYSCTL_PROC(_net_wlan, OID_AUTO, devices,
 void
 ieee80211_ifattach(struct ieee80211com *ic)
 {
+#if __NetBSD__
+	/* Initialize the ic_list_mtx the first time here.
+	 * Only want to use the big lock on first try to initialize.
+         * Once initialized, it won't use the big lock any more.
+         */
+	if (ic_list_mtx_needsinit) {
+		KERNEL_LOCK(1, NULL);
+		if (!ic_list_mtx_ready) {
+			mutex_init(&ic_list_mtx, MUTEX_DEFAULT, IPL_NET);
+			ic_list_mtx_ready = 1;
+			ic_list_mtx_needsinit = 0;
+			/* Doing this one-time initialization here also. */
+			ieee80211_auth_setup();
+		}
+		KERNEL_UNLOCK_ONE(NULL);
+	}
+#endif
 
 	IEEE80211_LOCK_INIT(ic, ic->ic_name);
 	IEEE80211_TX_LOCK_INIT(ic, ic->ic_name);
 	TAILQ_INIT(&ic->ic_vaps);
 
-#ifdef notyet
+#if __FreeBSD__
 	/* Create a taskqueue for all state changes */
 	ic->ic_tq = taskqueue_create("ic_taskq", M_WAITOK | M_ZERO,
 	    taskqueue_thread_enqueue, &ic->ic_tq);
@@ -383,7 +402,12 @@ ieee80211_ifattach(struct ieee80211com *ic)
 	    ic->ic_name);
 	ic->ic_ierrors = counter_u64_alloc(M_WAITOK);
 	ic->ic_oerrors = counter_u64_alloc(M_WAITOK);
+#elif__NetBSD__
+	/* NNN task/workqueue get it ready.... */
+	ic->ic_ierrors = 0;
+	ic->ic_oerrors = 0;
 #endif
+
 	/*
 	 * Fill in 802.11 available channel set, mark all
 	 * available channels as active, and pick a default
@@ -567,21 +591,22 @@ ieee80211_vap_setup(struct ieee80211com *ic, struct ieee80211vap *vap,
 		    __func__);
 		return ENOMEM;
 	}
+#if __NetBSD__
+	if_initialize(ifp);
+#endif
 	if_initname(ifp, name, unit);
 	ifp->if_softc = vap;			/* back pointer */
 	ifp->if_flags = IFF_SIMPLEX | IFF_BROADCAST | IFF_MULTICAST;
 	ifp->if_transmit = ieee80211_vap_transmit;
-#ifdef __FreeBSD__
+#if __FreeBSD__
 	ifp->if_qflush = ieee80211_vap_qflush;
 #endif
-#ifdef notyet
 	ifp->if_ioctl = ieee80211_ioctl;
 	ifp->if_init = ieee80211_init;
-#endif
-#ifdef __FreeBSD__
+
+#if notyet
 	ifp->if_get_counter = ieee80211_get_counter;
 #endif
-
 	vap->iv_ifp = ifp;
 	vap->iv_ic = ic;
 	vap->iv_flags = ic->ic_flags;		/* propagate common flags */
@@ -728,10 +753,9 @@ ieee80211_vap_attach(struct ieee80211vap *vap, ifm_change_cb_t media_change,
 	ether_ifattach(ifp, macaddr);
 	IEEE80211_ADDR_COPY(vap->iv_myaddr, IF_LLADDR(ifp));
 	/* hook output method setup by ether_ifattach */
-#ifdef notyet
 	vap->iv_output = ifp->if_output;
 	ifp->if_output = ieee80211_output;
-#endif
+
 	/* NB: if_mtu set by ether_ifattach to ETHERMTU */
 
 	IEEE80211_LOCK(ic);
@@ -751,6 +775,10 @@ ieee80211_vap_attach(struct ieee80211vap *vap, ifm_change_cb_t media_change,
 	ieee80211_syncflag_vht_locked(ic, IEEE80211_FVHT_USEVHT80P80);
 	ieee80211_syncflag_vht_locked(ic, IEEE80211_FVHT_USEVHT160);
 	IEEE80211_UNLOCK(ic);
+
+#if __NetBSD__
+	if_register(ifp);
+#endif
 
 	return 1;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_rssadapt.c,v 1.21.16.2 2018/07/12 16:35:34 phil Exp $ */
+/*	$NetBSD: ieee80211_rssadapt.c,v 1.21.16.3 2018/07/16 20:11:11 phil Exp $ */
 
 /*-
  * SPDX-License-Identifier: BSD-3-Clause
@@ -113,7 +113,11 @@ static void	rssadapt_sysctlattach(struct ieee80211vap *,
 /* number of references from net80211 layer */
 static	int nrefs = 0;
 
-static const struct ieee80211_ratectl rssadapt __unused = {
+#if __FreeBSD__
+static const struct ieee80211_ratectl rssadapt = {
+#elif __NetBSD__
+const struct ieee80211_ratectl ratectl_rssadapt = {
+#endif
 	.ir_name	= "rssadapt",
 	.ir_attach	= NULL,
 	.ir_detach	= NULL,
@@ -126,8 +130,10 @@ static const struct ieee80211_ratectl rssadapt __unused = {
 	.ir_tx_update	= NULL,
 	.ir_setinterval	= rssadapt_setinterval,
 };
+#if __FreeBSD__
 IEEE80211_RATECTL_MODULE(rssadapt, 1);
 IEEE80211_RATECTL_ALG(rssadapt, IEEE80211_RATECTL_RSSADAPT, rssadapt);
+#endif
 
 static void
 rssadapt_setinterval(const struct ieee80211vap *vap, int msecs)

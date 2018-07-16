@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_ratectl.c,v 1.1.2.2 2018/07/12 16:35:34 phil Exp $ */
+/*	$NetBSD: ieee80211_ratectl.c,v 1.1.2.3 2018/07/16 20:11:11 phil Exp $ */
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -49,17 +49,32 @@ __FBSDID("$FreeBSD$");
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_ratectl.h>
 
+#if __FreeBSD__
 static const struct ieee80211_ratectl *ratectls[IEEE80211_RATECTL_MAX];
 
-static const char *ratectl_modnames[IEEE80211_RATECTL_MAX] __unused = {
+static const char *ratectl_modnames[IEEE80211_RATECTL_MAX] = {
 	[IEEE80211_RATECTL_AMRR]	= "wlan_amrr",
 	[IEEE80211_RATECTL_RSSADAPT]	= "wlan_rssadapt",
 	[IEEE80211_RATECTL_ONOE]	= "wlan_onoe",
 	[IEEE80211_RATECTL_SAMPLE]	= "wlan_sample",
 	[IEEE80211_RATECTL_NONE]	= "wlan_none",
-};
 
 MALLOC_DEFINE(M_80211_RATECTL, "80211ratectl", "802.11 rate control");
+};
+#elif __NetBSD__
+extern const struct ieee80211_ratectl ratectl_amrr;
+extern const struct ieee80211_ratectl ratectl_rssadapt;
+extern const struct ieee80211_ratectl ratectl_none;
+
+static const struct ieee80211_ratectl *ratectls[IEEE80211_RATECTL_MAX] = {
+	[IEEE80211_RATECTL_AMRR]	= &ratectl_amrr,
+	[IEEE80211_RATECTL_RSSADAPT]	= &ratectl_rssadapt,
+	[IEEE80211_RATECTL_ONOE]	= NULL,
+	[IEEE80211_RATECTL_SAMPLE]	= NULL,
+	[IEEE80211_RATECTL_NONE]	= &ratectl_none,
+};
+#endif
+
 
 void
 ieee80211_ratectl_register(int type, const struct ieee80211_ratectl *ratectl)
@@ -117,9 +132,12 @@ ieee80211_ratectl_sysctl_stats(SYSCTL_HANDLER_ARGS)
 void
 ieee80211_ratectl_init(struct ieee80211vap *vap)
 {
+	printf ("ratectl_init enter\n");
 	if (vap->iv_rate == ratectls[IEEE80211_RATECTL_NONE])
 		ieee80211_ratectl_set(vap, IEEE80211_RATECTL_AMRR);
+	printf ("ratectl_init middle\n");
 	vap->iv_rate->ir_init(vap);
+	printf ("ratectl_init end\n");
 
 #ifdef notyet
 	/* Attach generic stats sysctl */
@@ -134,8 +152,8 @@ ieee80211_ratectl_set(struct ieee80211vap *vap, int type)
 {
 	if (type >= IEEE80211_RATECTL_MAX)
 		return;
-#ifdef notyet
 	if (ratectls[type] == NULL) {
+#if __FreeBSD__
 		ieee80211_load_module(ratectl_modnames[type]);
 		if (ratectls[type] == NULL) {
 			IEEE80211_DPRINTF(vap, IEEE80211_MSG_RATECTL,
@@ -144,7 +162,11 @@ ieee80211_ratectl_set(struct ieee80211vap *vap, int type)
 			vap->iv_rate = ratectls[IEEE80211_RATECTL_NONE];
 			return;
 		}
-	}
+#elsif __NetBSD__
+		type = IEEE80211_RATECTL_NONE;
 #endif
+	}
+
+
 	vap->iv_rate = ratectls[type];
 }

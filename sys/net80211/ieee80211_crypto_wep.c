@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_crypto_wep.c,v 1.12.2.2 2018/07/12 16:35:34 phil Exp $ */
+/*	$NetBSD: ieee80211_crypto_wep.c,v 1.12.2.3 2018/07/16 20:11:11 phil Exp $ */
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -53,6 +53,7 @@ __FBSDID("$FreeBSD$");
 #include <net/ethernet.h>
 #endif
 #ifdef __NetBSD__
+#include <net/if_ether.h>
 #include <net/route.h>
 #endif
 
@@ -413,8 +414,13 @@ wep_encrypt(struct ieee80211_key *key, struct mbuf *m0, int hdrlen)
 		if (m->m_next == NULL) {
 			if (data_len != 0) {		/* out of data */
 				IEEE80211_NOTE_MAC(vap, IEEE80211_MSG_CRYPTO,
+#if __FreeBSD__
 				    ether_sprintf(mtod(m0,
 					struct ieee80211_frame *)->i_addr2),
+#elif __NetBSD__
+				    ether_sprintf((const __uint8_t *)mtod(m0,
+					struct ieee80211_frame *)->i_addr2),
+#endif
 				    "out of data for WEP (data_len %zu)",
 				    data_len);
 				/* XXX stat */

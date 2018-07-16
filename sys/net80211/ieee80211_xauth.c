@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_xauth.c,v 1.5.158.2 2018/07/12 16:35:34 phil Exp $ */
+/*	$NetBSD: ieee80211_xauth.c,v 1.5.158.3 2018/07/16 20:11:12 phil Exp $ */
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -72,7 +72,11 @@ static	int nrefs __unused = 0;
  * One module handles everything for now.  May want
  * to split things up for embedded applications.
  */
-static const struct ieee80211_authenticator xauth __unused = {
+#if __FreeBSD__
+static const struct ieee80211_authenticator xauth = {
+#elif __NetBSD__
+const struct ieee80211_authenticator auth_xauth = {
+#endif
 	.ia_name	= "external",
 	.ia_attach	= NULL,
 	.ia_detach	= NULL,
@@ -80,6 +84,8 @@ static const struct ieee80211_authenticator xauth __unused = {
 	.ia_node_leave	= NULL,
 };
 
+#if __FreeBSD__
 IEEE80211_AUTH_MODULE(xauth, 1);
 IEEE80211_AUTH_ALG(x8021x, IEEE80211_AUTH_8021X, xauth);
 IEEE80211_AUTH_ALG(wpa, IEEE80211_AUTH_WPA, xauth);
+#endif
