@@ -1,12 +1,12 @@
-#	$NetBSD: Makefile,v 1.1 2009/03/10 14:49:50 yamt Exp $
+#	$NetBSD: Makefile,v 1.2 2018/07/16 06:18:31 maxv Exp $
 
 .include "../Makefile.inc"
 
 CPPFLAGS+=
 
-.PATH:	${S}/arch/x86/x86
+.PATH:	${S}/dev/tprof
 
 KMOD=	tprof_pmi
-SRCS=	tprof_pmi.c
+SRCS=	tprof_x86_intel.c
 
 .include <bsd.kmodule.mk>
