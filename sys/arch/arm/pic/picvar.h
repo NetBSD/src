@@ -1,4 +1,4 @@
-/*	$NetBSD: picvar.h,v 1.17 2018/07/15 16:03:24 jmcneill Exp $	*/
+/*	$NetBSD: picvar.h,v 1.18 2018/07/16 10:13:34 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -118,9 +118,6 @@ struct intrsource {
 	uint8_t is_iplidx;
 	bool is_mpsafe;
 	char is_source[16];
-#ifdef MULTIPROCESSOR
-	kcpuset_t *is_affinity;
-#endif
 };
 
 struct pic_percpu {
