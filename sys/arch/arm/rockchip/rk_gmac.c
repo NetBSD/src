@@ -1,4 +1,4 @@
-/* $NetBSD: rk_gmac.c,v 1.6 2018/06/30 18:27:10 jmcneill Exp $ */
+/* $NetBSD: rk_gmac.c,v 1.7 2018/07/16 23:11:47 christos Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rk_gmac.c,v 1.6 2018/06/30 18:27:10 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_gmac.c,v 1.7 2018/07/16 23:11:47 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -144,6 +144,7 @@ static void
 rk3328_gmac_set_speed_rgmii(struct dwc_gmac_softc *sc, int speed)
 {
 	struct rk_gmac_softc * const rk_sc = (struct rk_gmac_softc *)sc;
+#if 0
 	u_int clksel;
 
 	switch (speed) {
@@ -157,6 +158,7 @@ rk3328_gmac_set_speed_rgmii(struct dwc_gmac_softc *sc, int speed)
 		clksel = RK3328_GRF_MAC_CON1_CLKSEL_125M;
 		break;
 	}
+#endif
 
 	syscon_lock(rk_sc->sc_syscon);
 	syscon_write_4(rk_sc->sc_syscon, RK3328_GRF_MAC_CON1,
