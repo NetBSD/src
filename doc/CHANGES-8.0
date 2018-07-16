@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.229 2018/07/16 13:21:39 sborrill Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.230 2018/07/16 13:33:04 sborrill Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -14271,4 +14271,13 @@ etc/Makefile.params				1.20
 	Drop output for MAKECONF MAKEOBJDIR MAKEOBJDIRPREFIX MAKEVERBOSE
 	in MKREPRO=yes builds.
 	[martin, ticket #923]
+
+crypto/external/bsd/heimdal/lib/libheimntlm/Makefile		1.3
+crypto/external/bsd/heimdal/lib/libkdc/Makefile			1.4
+crypto/external/bsd/heimdal/lib/libgssapi/Makefile		1.5
+crypto/external/bsd/heimdal/lib/libkadm5srv/Makefile		1.5
+
+	Improve MKREPRO builds for architectures with compat (like
+	amd64).
+	[martin, ticket #924]
 
