@@ -1,4 +1,4 @@
-#	$NetBSD: archdirs.mk,v 1.10 2015/05/27 15:35:23 matt Exp $
+#	$NetBSD: archdirs.mk,v 1.11 2018/07/16 00:33:00 christos Exp $
 
 # list of subdirs used per-platform
 
@@ -26,10 +26,12 @@ ARCHDIR_SUBDIR= powerpc64/powerpc
 ARCHDIR_SUBDIR= riscv64/rv32
 .endif
 
+.if ${ACTIVE_CC} == "clang"
 .if (${MACHINE_ARCH} == "aarch64")
 ARCHDIR_SUBDIR+= arm/eabi
 ARCHDIR_SUBDIR+= arm/eabihf
 ARCHDIR_SUBDIR+= arm/oabi
 .elif (${MACHINE_ARCH} == "aarch64eb")
 ARCHDIR_SUBDIR= arm/eabi
+.endif
 .endif
