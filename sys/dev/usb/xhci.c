@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.93 2018/06/29 17:48:24 msaitoh Exp $	*/
+/*	$NetBSD: xhci.c,v 1.94 2018/07/16 23:07:31 christos Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.93 2018/06/29 17:48:24 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.94 2018/07/16 23:07:31 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2175,12 +2175,12 @@ xhci_poll(struct usbd_bus *bus)
 
 	XHCIHIST_FUNC(); XHCIHIST_CALLED();
 
-	mutex_spin_enter(&sc->sc_intr_lock);
+	mutex_enter(&sc->sc_intr_lock);
 	int ret = xhci_intr1(sc);
 	if (ret) {
 		xhci_softintr(bus);
 	}
-	mutex_spin_exit(&sc->sc_intr_lock);
+	mutex_exit(&sc->sc_intr_lock);
 
 	return;
 }
@@ -3983,6 +3983,7 @@ xhci_device_intr_start(struct usbd_xfer *xfer)
 	struct xhci_ring * const tr = &xs->xs_ep[dci].xe_tr;
 	struct xhci_xfer * const xx = XHCI_XFER2XXFER(xfer);
 	const uint32_t len = xfer->ux_length;
+	const bool polling = xhci_polling_p(sc);
 	usb_dma_t * const dma = &xfer->ux_dmabuf;
 	uint64_t parameter;
 	uint32_t status;
@@ -4009,13 +4010,15 @@ xhci_device_intr_start(struct usbd_xfer *xfer)
 	    XHCI_TRB_3_IOC_BIT;
 	xhci_trb_put(&xx->xx_trb[i++], parameter, status, control);
 
-	mutex_enter(&tr->xr_lock);
+	if (!polling)
+		mutex_enter(&tr->xr_lock);
 	xhci_ring_put(sc, tr, xfer, xx->xx_trb, i);
-	mutex_exit(&tr->xr_lock);
+	if (!polling)
+		mutex_exit(&tr->xr_lock);
 
 	xhci_db_write_4(sc, XHCI_DOORBELL(xs->xs_idx), dci);
 
-	if (xfer->ux_timeout && !xhci_polling_p(sc)) {
+	if (xfer->ux_timeout && !polling) {
 		callout_reset(&xfer->ux_callout, mstohz(xfer->ux_timeout),
 		    xhci_timeout, xfer);
 	}
