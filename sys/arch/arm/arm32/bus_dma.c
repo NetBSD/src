@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.108 2018/04/27 07:53:07 maxv Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.109 2018/07/16 23:10:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include "opt_cputypes.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.108 2018/04/27 07:53:07 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.109 2018/07/16 23:10:41 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -1496,7 +1496,7 @@ _bus_dmamem_mmap(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 
 	for (i = 0; i < nsegs; i++) {
 		KASSERTMSG((off & PAGE_MASK) == 0,
-		    "off %#qx (%#x)", off, (int)off & PAGE_MASK);
+		    "off %#tx (%#x)", off, (int)off & PAGE_MASK);
 		KASSERTMSG((segs[i].ds_addr & PAGE_MASK) == 0,
 		    "ds_addr %#lx (%#x)", segs[i].ds_addr,
 		    (int)segs[i].ds_addr & PAGE_MASK);
