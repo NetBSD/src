@@ -1,4 +1,4 @@
-/* $NetBSD: pmu_fdt.c,v 1.2 2018/07/15 23:48:08 jmcneill Exp $ */
+/* $NetBSD: pmu_fdt.c,v 1.3 2018/07/16 10:49:52 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmu_fdt.c,v 1.2 2018/07/15 23:48:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmu_fdt.c,v 1.3 2018/07/16 10:49:52 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -39,7 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmu_fdt.c,v 1.2 2018/07/15 23:48:08 jmcneill Exp $")
 
 #include <dev/fdt/fdtvar.h>
 
-#if defined(_ARM_ARCH_8)
+#if defined(__aarch64__)
 #include <dev/tprof/tprof_armv8.h>
 #define arm_pmu_intr armv8_pmu_intr
 #define arm_pmu_init armv8_pmu_init
