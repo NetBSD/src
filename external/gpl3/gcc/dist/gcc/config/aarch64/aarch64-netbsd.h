@@ -84,11 +84,6 @@
 #define TARGET_BINDS_LOCAL_P default_binds_local_p_2
 #endif
 
-/* Use the AAPCS type for wchar_t, override the one from
-   config/netbsd.h.  */
-#undef  WCHAR_TYPE
-#define WCHAR_TYPE  "unsigned int"
-
 #if 0
 #undef MCOUNT_NAME
 #define MCOUNT_NAME ".mcount"
