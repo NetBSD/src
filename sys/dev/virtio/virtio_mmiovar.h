@@ -1,4 +1,4 @@
-/* $NetBSD: virtio_mmiovar.h,v 1.1 2018/06/06 20:35:36 jakllsch Exp $ */
+/* $NetBSD: virtio_mmiovar.h,v 1.2 2018/07/16 00:33:00 kre Exp $ */
 /*
  * Copyright (c) 2018 Jonathan A. Kollasch
  * All rights reserved.
@@ -25,7 +25,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _VIRTIO_MMIOVAR_H_
+#ifndef _VIRTIO_MMIOREG_H_
 #define _VIRTIO_MMIOREG_H_
 
 #include <dev/pci/virtiovar.h> /* XXX: move to non-pci */
