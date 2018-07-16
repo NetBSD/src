@@ -1,4 +1,4 @@
-/* $NetBSD: tprof_armv7.c,v 1.1 2018/07/15 23:47:29 jmcneill Exp $ */
+/* $NetBSD: tprof_armv7.c,v 1.2 2018/07/16 10:56:42 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tprof_armv7.c,v 1.1 2018/07/15 23:47:29 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tprof_armv7.c,v 1.2 2018/07/16 10:56:42 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -227,6 +227,18 @@ armv7_pmu_intr(void *priv)
 int
 armv7_pmu_init(void)
 {
+	/* Disable user mode access to performance monitors */
+	armreg_pmuserenr_write(0);
+
+	/* Disable interrupts */
+	armreg_pmintenclr_write(~0U);
+
+	/* Disable counters */
+	armreg_pmcntenclr_write(~0U);
+
+	/* Disable performance monitor */
+	armreg_pmcr_write(0);
+
 	return tprof_backend_register("tprof_armv7", &tprof_armv7_pmu_ops,
 	    TPROF_BACKEND_VERSION);
 }
