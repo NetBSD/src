@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1068 2018/07/14 22:57:47 maya Exp $
+#	$NetBSD: bsd.own.mk,v 1.1069 2018/07/16 14:14:37 christos Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -64,12 +64,7 @@ MKGCC?=		no
 #
 # What GCC is used?
 #
-.if \
-    ${MACHINE_CPU} == "aarch64"
-HAVE_GCC?=	0
-.else
 HAVE_GCC?=	6
-.endif
 
 #
 # Platforms that can't run a modern GCC natively
