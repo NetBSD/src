@@ -190,8 +190,8 @@ atf_init_test_cases()
 		return 0
 	}
 	atf_add_test_case int_neg_overflow
-	atf_add_test_case int_neg_overflow_profile
+#	atf_add_test_case int_neg_overflow_profile
 	atf_add_test_case int_neg_overflow_pie
 	atf_add_test_case int_neg_overflow_pic
-	atf_add_test_case int_neg_overflow32
+#	atf_add_test_case int_neg_overflow32
 }
