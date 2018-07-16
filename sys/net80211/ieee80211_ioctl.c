@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_ioctl.c,v 1.60.18.2 2018/07/12 16:35:34 phil Exp $ */
+/*	$NetBSD: ieee80211_ioctl.c,v 1.60.18.3 2018/07/16 20:11:11 phil Exp $ */
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -784,7 +784,7 @@ IEEE80211_IOCTL_GET(dummy, dummy_ioctl_get);
 static int
 ieee80211_ioctl_getdefault(struct ieee80211vap *vap, struct ieee80211req *ireq)
 {
-#ifdef notyet
+#if notyet
 	ieee80211_ioctl_getfunc * const *get;
 	int error;
 
@@ -793,6 +793,8 @@ ieee80211_ioctl_getdefault(struct ieee80211vap *vap, struct ieee80211req *ireq)
 		if (error != ENOSYS)
 			return error;
 	}
+#else
+	printf ("i33380211_ioctl_getdefault called\n");
 #endif
 	return EINVAL;
 }
@@ -2712,6 +2714,8 @@ ieee80211_ioctl_setdefault(struct ieee80211vap *vap, struct ieee80211req *ireq)
 		if (error != ENOSYS)
 			return error;
 	}
+#else
+	printf ("ieee80211_ioctl_setdefault called\n");
 #endif
 	return EINVAL;
 }
@@ -3496,7 +3500,12 @@ ieee80211_ioctl_set80211(struct ieee80211vap *vap, u_long cmd, struct ieee80211r
 	if (error == ENETRESET) {
 		/* XXX need to re-think AUTO handling */
 		if (IS_UP_AUTO(vap))
+#if __FreeBSD__
 			ieee80211_init(vap);
+#elif __NetBSD__
+			/* arg is a vap in 802.11 code */ 
+			ieee80211_init((struct ifnet *)vap);
+#endif
 		error = 0;
 	}
 	return error;

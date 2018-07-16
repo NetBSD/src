@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_crypto.c,v 1.23.2.2 2018/07/12 16:35:34 phil Exp $ */
+/*	$NetBSD: ieee80211_crypto.c,v 1.23.2.3 2018/07/16 20:11:11 phil Exp $ */
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-#ifdef __FreeBSD__
+#if __FreeBSD__
 __FBSDID("$FreeBSD$");
 #endif
 
@@ -47,10 +47,11 @@ __FBSDID("$FreeBSD$");
 
 #include <net/if.h>
 #include <net/if_media.h>
-#ifdef __FreeBSD__
+#if __FreeBSD__
 #include <net/ethernet.h>		/* XXX ETHER_HDR_LEN */
 #endif
-#ifdef __NetBSD__
+#if __NetBSD__
+#include <net/if_ether.h>
 #include <net/route.h>
 #endif
 
@@ -248,7 +249,7 @@ ieee80211_crypto_available(u_int cipher)
 	return cipher < IEEE80211_CIPHER_MAX && ciphers[cipher] != NULL;
 }
 
-#ifdef __FreeBSD__ 
+#if __FreeBSD__ 
 /* XXX well-known names! */
 static const char *cipher_modnames[IEEE80211_CIPHER_MAX] = {
 	[IEEE80211_CIPHER_WEP]	   = "wlan_wep",

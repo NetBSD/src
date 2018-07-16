@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_acl.c,v 1.9.54.2 2018/07/12 16:35:34 phil Exp $ */
+/*	$NetBSD: ieee80211_acl.c,v 1.9.54.3 2018/07/16 20:11:11 phil Exp $ */
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-#ifdef __FreeBSD__
+#if __FreeBSD__
 __FBSDID("$FreeBSD$");
 #endif
 
@@ -57,8 +57,10 @@ __FBSDID("$FreeBSD$");
 
 #include <net/if.h>
 #include <net/if_media.h>
-#ifdef __FreeBSD__
+#if __FreeBSD__
 #include <net/ethernet.h>
+#elif __NetBSD__
+#include <net/if_ether.h>
 #endif
 #include <net/route.h>
 
@@ -101,7 +103,7 @@ struct aclstate {
 #define	ACL_HASH(addr)	\
 	(((const uint8_t *)(addr))[IEEE80211_ADDR_LEN - 1] % ACL_HASHSIZE)
 
-#ifdef __FreeBSD__
+#if __FreeBSD__
 static MALLOC_DEFINE(M_80211_ACL, "acl", "802.11 station acl");
 #endif
 

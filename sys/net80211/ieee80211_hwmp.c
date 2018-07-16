@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_hwmp.c,v 1.1.2.2 2018/07/12 16:35:34 phil Exp $ */
+/*	$NetBSD: ieee80211_hwmp.c,v 1.1.2.3 2018/07/16 20:11:11 phil Exp $ */
 
 /*- 
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -63,6 +63,7 @@ __FBSDID("$FreeBSD$");
 #include <net/ethernet.h>
 #endif
 #ifdef __NetBSD__
+#include <net/if_ether.h>
 #include <net/route.h>
 #endif
 
@@ -276,7 +277,11 @@ hwmp_vattach(struct ieee80211vap *vap)
 		return;
 	}
 	hs->hs_maxhops = IEEE80211_HWMP_DEFAULT_MAXHOPS;
+#if __FreeBSD__
 	callout_init(&hs->hs_roottimer, 1);
+#elif __NetBSD__
+	callout_init(&hs->hs_roottimer, CALLOUT_MPSAFE);
+#endif
 	vap->iv_hwmp = hs;
 }
 

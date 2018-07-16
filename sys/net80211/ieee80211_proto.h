@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_proto.h,v 1.23.16.3 2018/07/12 16:35:34 phil Exp $ */
+/*	$NetBSD: ieee80211_proto.h,v 1.23.16.4 2018/07/16 20:11:11 phil Exp $ */
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -70,6 +70,10 @@ ieee80211_ctl_subtype_name(uint8_t subtype)
 		   IEEE80211_FC0_SUBTYPE_SHIFT];
 }
 
+#if __NetBSD__
+void	ieee80211_auth_setup(void);
+#endif
+
 const char *ieee80211_reason_to_string(uint16_t);
 
 void	ieee80211_proto_attach(struct ieee80211com *);
@@ -96,8 +100,13 @@ int	ieee80211_mgmt_output(struct ieee80211_node *, struct mbuf *, int,
 		struct ieee80211_bpf_params *);
 int	ieee80211_raw_xmit(struct ieee80211_node *, struct mbuf *,
 		const struct ieee80211_bpf_params *);
+#if __FreeBSD__
 int	ieee80211_output(struct ifnet *, struct mbuf *,
                const struct sockaddr *, struct route *ro);
+#elif __NetBSD__
+int	ieee80211_output(struct ifnet *, struct mbuf *,
+               const struct sockaddr *, const struct rtentry *ro);
+#endif
 int	ieee80211_vap_pkt_send_dest(struct ieee80211vap *, struct mbuf *,
 		struct ieee80211_node *);
 int	ieee80211_raw_output(struct ieee80211vap *, struct ieee80211_node *,
@@ -334,7 +343,11 @@ ieee80211_gettid(const struct ieee80211_frame *wh)
 
 void	ieee80211_waitfor_parent(struct ieee80211com *);
 void	ieee80211_start_locked(struct ieee80211vap *);
+#if __FreeBSD__
 void	ieee80211_init(void *);
+#elif __NetBSD__
+int	ieee80211_init(struct ifnet *);
+#endif
 void	ieee80211_start_all(struct ieee80211com *);
 void	ieee80211_stop_locked(struct ieee80211vap *);
 void	ieee80211_stop(struct ieee80211vap *);

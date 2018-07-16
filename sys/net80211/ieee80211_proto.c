@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_proto.c,v 1.34.14.2 2018/07/12 16:35:34 phil Exp $ */
+/*	$NetBSD: ieee80211_proto.c,v 1.34.14.3 2018/07/16 20:11:11 phil Exp $ */
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -79,6 +79,10 @@ __FBSDID("$FreeBSD$");
 #ifdef __NetBSD__
 #undef  KASSERT
 #define KASSERT(__cond, __complaint) FBSDKASSERT(__cond, __complaint)
+#endif
+
+#if __NetBSD__
+extern const struct ieee80211_authenticator auth_xauth;
 #endif
 
 /* XXX tunables */
@@ -357,8 +361,11 @@ ieee80211_proto_vattach(struct ieee80211vap *vap)
 	vap->iv_bmiss_max = IEEE80211_BMISS_MAX;
 #if __FreeBSD__
 	callout_init_mtx(&vap->iv_swbmiss, IEEE80211_LOCK_OBJ(ic), 0);
-#endif
 	callout_init(&vap->iv_mgtsend, 1);
+#elif __NetBSD__
+	/* NNN need to do something with iv_swbmiss ... */
+	callout_init(&vap->iv_mgtsend, CALLOUT_MPSAFE);
+#endif
 	TASK_INIT(&vap->iv_nstate_task, 0, ieee80211_newstate_cb, vap);
 	TASK_INIT(&vap->iv_swbmiss_task, 0, beacon_swmiss, vap);
 	TASK_INIT(&vap->iv_wme_task, 0, vap_update_wme, vap);
@@ -450,6 +457,7 @@ ieee80211_proto_vdetach(struct ieee80211vap *vap)
 
 #define	IEEE80211_AUTH_MAX	(IEEE80211_AUTH_WPA+1)
 /* XXX well-known names */
+#if __FreeBSD__
 static const char *auth_modnames[IEEE80211_AUTH_MAX] = {
 	"wlan_internal",	/* IEEE80211_AUTH_NONE */
 	"wlan_internal",	/* IEEE80211_AUTH_OPEN */
@@ -458,6 +466,8 @@ static const char *auth_modnames[IEEE80211_AUTH_MAX] = {
 	"wlan_internal",	/* IEEE80211_AUTH_AUTO */
 	"wlan_xauth",		/* IEEE80211_AUTH_WPA */
 };
+#endif
+
 static const struct ieee80211_authenticator *authenticators[IEEE80211_AUTH_MAX];
 
 static const struct ieee80211_authenticator auth_internal = {
@@ -468,15 +478,24 @@ static const struct ieee80211_authenticator auth_internal = {
 	.ia_node_leave		= NULL,
 };
 
+
 /*
  * Setup internal authenticators once; they are never unregistered.
  */
-static __unused void
+#if __FreeBSD__
+static void
+#elif __NetBSD__
+void
+#endif
 ieee80211_auth_setup(void)
 {
 	ieee80211_authenticator_register(IEEE80211_AUTH_OPEN, &auth_internal);
 	ieee80211_authenticator_register(IEEE80211_AUTH_SHARED, &auth_internal);
 	ieee80211_authenticator_register(IEEE80211_AUTH_AUTO, &auth_internal);
+#if __NetBSD__
+	ieee80211_authenticator_register(IEEE80211_AUTH_8021X, &auth_xauth);
+	ieee80211_authenticator_register(IEEE80211_AUTH_WPA, &auth_xauth);
+#endif
 }
 SYSINIT(wlan_auth, SI_SUB_DRIVERS, SI_ORDER_FIRST, ieee80211_auth_setup, NULL);
 
@@ -485,8 +504,10 @@ ieee80211_authenticator_get(int auth)
 {
 	if (auth >= IEEE80211_AUTH_MAX)
 		return NULL;
+#if __FreeBSD__
 	if (authenticators[auth] == NULL)
 		ieee80211_load_module(auth_modnames[auth]);
+#endif
 	return authenticators[auth];
 }
 
@@ -532,8 +553,10 @@ ieee80211_aclator_unregister(const struct ieee80211_aclator *iac)
 const struct ieee80211_aclator *
 ieee80211_aclator_get(const char *name)
 {
+#if __FreeBSD__
 	if (acl == NULL)
 		ieee80211_load_module("wlan_acl");
+#endif
 	return acl != NULL && strcmp(acl->iac_name, name) == 0 ? acl : NULL;
 }
 
@@ -1600,6 +1623,7 @@ ieee80211_start_locked(struct ieee80211vap *vap)
 /*
  * Start a single vap.
  */
+#if __FreeBSD__
 void
 ieee80211_init(void *arg)
 {
@@ -1612,6 +1636,21 @@ ieee80211_init(void *arg)
 	ieee80211_start_locked(vap);
 	IEEE80211_UNLOCK(vap->iv_ic);
 }
+#elif __NetBSD__
+int
+ieee80211_init(struct ifnet *ifp)
+{
+	struct ieee80211vap *vap = ifp->if_softc;
+
+	IEEE80211_DPRINTF(vap, IEEE80211_MSG_STATE | IEEE80211_MSG_DEBUG,
+	    "%s\n", __func__);
+
+	IEEE80211_LOCK(vap->iv_ic);
+	ieee80211_start_locked(vap);
+	IEEE80211_UNLOCK(vap->iv_ic);
+	return 0;
+}
+#endif
 
 /*
  * Start all runnable vap's on a device.

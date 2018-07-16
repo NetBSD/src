@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_netbsd.c,v 1.31.2.2 2018/07/12 16:35:34 phil Exp $ */
+/*	$NetBSD: ieee80211_netbsd.c,v 1.31.2.3 2018/07/16 20:11:11 phil Exp $ */
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 /*  __FBSDID("$FreeBSD$");  */
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.31.2.2 2018/07/12 16:35:34 phil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.31.2.3 2018/07/16 20:11:11 phil Exp $");
 
 /*
  * IEEE 802.11 support (NetBSD-specific code)
@@ -69,16 +69,15 @@ static int	ieee80211_debug = 0;
 SYSCTL_INT(_net_wlan, OID_AUTO, debug, CTLFLAG_RW, &ieee80211_debug,
 	    0, "debugging printfs");
 #endif
-#endif /* notyet */
 
-/* static MALLOC_DEFINE(M_80211_COM, "80211com", "802.11 com state"); NNN */
-
-#ifdef notyet
-static const char wlanname[] = "wlan";
 static struct if_clone *wlan_cloner;
+#endif 
+/* notyet */
 
-static int
-wlan_clone_create(struct if_clone *ifc, int unit, caddr_t params)
+static const char wlanname[] = "wlan";
+
+static __unused int
+wlan_clone_create(struct if_clone *ifc, int unit, void * params)
 {
 	struct ieee80211_clone_params cp;
 	struct ieee80211vap *vap;
@@ -119,7 +118,7 @@ wlan_clone_create(struct if_clone *ifc, int unit, caddr_t params)
 	return (vap == NULL ? EIO : 0);
 }
 
-static void
+static __unused void
 wlan_clone_destroy(struct ifnet *ifp)
 {
 	struct ieee80211vap *vap = ifp->if_softc;
@@ -127,7 +126,6 @@ wlan_clone_destroy(struct ifnet *ifp)
 
 	ic->ic_vap_delete(vap);
 }
-#endif 
 
 void
 ieee80211_vap_destroy(struct ieee80211vap *vap)
@@ -137,7 +135,7 @@ ieee80211_vap_destroy(struct ieee80211vap *vap)
 	if_clone_destroyif(wlan_cloner, vap->iv_ifp);
 	CURVNET_RESTORE();
 #else
-	panic("ieee80211_vap_destroy");
+	printf ("vap_destroy called ... what next?\n");
 #endif
 }
 
@@ -929,11 +927,10 @@ ieee80211_notify_radio(struct ieee80211com *ic, int state)
 	}
 }
 
+#ifdef notyet
 void
 ieee80211_load_module(const char *modname)
 {
-
-#ifdef notyet
 	struct thread *td = curthread;
 
 	if (suser(td) == 0 && securelevel_gt(td->td_ucred, 0) == 0) {
@@ -941,10 +938,8 @@ ieee80211_load_module(const char *modname)
 		(void) linker_load_module(modname, NULL, NULL, NULL, NULL);
 		mtx_unlock(&Giant);
 	}
-#else
-	printf("%s: load the %s module by hand for now.\n", __func__, modname);
-#endif
 }
+#endif
 
 #ifdef notyet
 static eventhandler_tag wlan_bpfevent;
@@ -1198,8 +1193,8 @@ m_unshare(struct mbuf *m0, int how)
 			if (mprev && (mprev->m_flags & M_EXT) &&
 			    m->m_len <= M_TRAILINGSPACE(mprev)) {
 				/* XXX: this ignores mbuf types */
-				memcpy(mtod(mprev, caddr_t) + mprev->m_len,
-				    mtod(m, caddr_t), m->m_len);
+				memcpy(mtod(mprev, __uint8_t *) + mprev->m_len,
+				    mtod(m, __uint8_t *), m->m_len);
 				mprev->m_len += m->m_len;
 				mprev->m_next = m->m_next;	/* unlink from chain */
 				m_free(m);			/* reclaim mbuf */
@@ -1227,8 +1222,8 @@ m_unshare(struct mbuf *m0, int how)
 		if (mprev != NULL && (mprev->m_flags & M_EXT) &&
 		    m->m_len <= M_TRAILINGSPACE(mprev)) {
 			/* XXX: this ignores mbuf types */
-			memcpy(mtod(mprev, caddr_t) + mprev->m_len,
-			    mtod(m, caddr_t), m->m_len);
+			memcpy(mtod(mprev, __uint8_t *) + mprev->m_len,
+			    mtod(m, __uint8_t *), m->m_len);
 			mprev->m_len += m->m_len;
 			mprev->m_next = m->m_next;	/* unlink from chain */
 			m_free(m);			/* reclaim mbuf */
@@ -1259,7 +1254,7 @@ m_unshare(struct mbuf *m0, int how)
 		mlast = NULL;
 		for (;;) {
 			int cc = min(len, MCLBYTES);
-			memcpy(mtod(n, caddr_t), mtod(m, caddr_t) + off, cc);
+			memcpy(mtod(n, __uint8_t *), mtod(m, __uint8_t *) + off, cc);
 			n->m_len = cc;
 			if (mlast != NULL)
 				mlast->m_next = n;

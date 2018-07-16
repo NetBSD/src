@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_netbsd.h,v 1.21.2.3 2018/07/12 16:35:34 phil Exp $ */
+/*	$NetBSD: ieee80211_netbsd.h,v 1.21.2.4 2018/07/16 20:11:11 phil Exp $ */
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -60,7 +60,7 @@
 #define __offsetof(type, field)  __builtin_offsetof(type, field)
 #define arc4random  cprng_fast32
 #define atomic_subtract_int(var,val) atomic_add_int(var,-(val))
-#define caddr_t __caddr_t
+#define caddr_t void *
 #define callout_drain(x)  callout_halt(x, NULL)
 #define m_catpkt(x,y)    m_cat(x,y)
 #define mtx_lock(mtx) 		mutex_enter(mtx)
@@ -482,7 +482,6 @@ SYSCTL_DECL(_net_wlan);
 int	ieee80211_sysctl_msecs_ticks(SYSCTL_HANDLER_ARGS);
 #endif 
 
-void	ieee80211_load_module(const char *);
 
 #ifdef notyet
 

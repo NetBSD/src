@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_output.c,v 1.63.2.2 2018/07/12 16:35:34 phil Exp $ */
+/*	$NetBSD: ieee80211_output.c,v 1.63.2.3 2018/07/16 20:11:11 phil Exp $ */
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -644,9 +644,15 @@ ieee80211_validate_frame(struct mbuf *m,
  * connect bpf write calls to the 802.11 layer for injecting
  * raw 802.11 frames.
  */
+#if __FreeBSD__
 int
 ieee80211_output(struct ifnet *ifp, struct mbuf *m,
 	const struct sockaddr *dst, struct route *ro)
+#elif __NetBSD__
+int
+ieee80211_output(struct ifnet *ifp, struct mbuf *m,
+	const struct sockaddr *dst, const struct rtentry *ro)
+#endif
 {
 #define senderr(e) do { error = (e); goto bad;} while (0)
 	const struct ieee80211_bpf_params *params = NULL;

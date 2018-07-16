@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_amrr.c,v 1.3.18.2 2018/07/12 16:35:34 phil Exp $ */
+/*	$NetBSD: ieee80211_amrr.c,v 1.3.18.3 2018/07/16 20:11:11 phil Exp $ */
 
 /*	$OpenBSD: ieee80211_amrr.c,v 1.1 2006/06/17 19:07:19 damien Exp $	*/
 
@@ -97,10 +97,10 @@ static void	amrr_node_stats(struct ieee80211_node *ni, struct sbuf *s);
 /* number of references from net80211 layer */
 static	int nrefs = 0;
 
-#ifdef notyet
+#if __FreeBSD__
 static const struct ieee80211_ratectl amrr = {
 #else
-static const struct ieee80211_ratectl __unused amrr = {
+const struct ieee80211_ratectl ratectl_amrr = {
 #endif
 	.ir_name	= "amrr",
 	.ir_attach	= NULL,
@@ -115,11 +115,9 @@ static const struct ieee80211_ratectl __unused amrr = {
 	.ir_setinterval	= amrr_setinterval,
 	.ir_node_stats	= amrr_node_stats,
 };
+#if __FreeBSD__
 IEEE80211_RATECTL_MODULE(amrr, 1);
 IEEE80211_RATECTL_ALG(amrr, IEEE80211_RATECTL_AMRR, amrr);
-
-#ifdef __NetBSD__
-#define amrr amrr0
 #endif
 
 static void

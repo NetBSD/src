@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.114.2.2 2018/07/12 16:35:34 phil Exp $ */
+/*	$NetBSD: ieee80211_input.c,v 1.114.2.3 2018/07/16 20:11:11 phil Exp $ */
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -342,7 +342,11 @@ ieee80211_decap(struct ieee80211vap *vap, struct mbuf *m, int hdrlen)
 		return NULL;
 	}
 	memcpy(&wh, mtod(m, caddr_t), hdrlen);
+#if __FreeBSD__
 	llc = (struct llc *)(mtod(m, caddr_t) + hdrlen);
+#elif __NetBSD__
+	llc = (struct llc *)(mtod(m, __uint8_t *) + hdrlen);
+#endif
 	if (llc->llc_dsap == LLC_SNAP_LSAP && llc->llc_ssap == LLC_SNAP_LSAP &&
 	    llc->llc_control == LLC_UI && llc->llc_snap.org_code[0] == 0 &&
 	    llc->llc_snap.org_code[1] == 0 && llc->llc_snap.org_code[2] == 0 &&
@@ -932,7 +936,11 @@ ieee80211_getbssid(const struct ieee80211vap *vap,
 	return wh->i_addr3;
 }
 
+#if __FreeBSD__
 #include <machine/stdarg.h>
+#elif __NetBSD__
+#include <sys/stdarg.h>
+#endif
 
 void
 ieee80211_note(const struct ieee80211vap *vap, const char *fmt, ...)

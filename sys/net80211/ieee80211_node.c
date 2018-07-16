@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.c,v 1.75.4.2 2018/07/12 16:35:34 phil Exp $ */
+/*	$NetBSD: ieee80211_node.c,v 1.75.4.3 2018/07/16 20:11:11 phil Exp $ */
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -131,7 +131,11 @@ ieee80211_node_attach(struct ieee80211com *ic)
 	    "802.11 staging q");
 	ieee80211_node_table_init(ic, &ic->ic_sta, "station",
 		IEEE80211_INACT_INIT, ic->ic_max_keyix);
+#if __FreeBSD__
 	callout_init(&ic->ic_inact, 1);
+#elif __NetBSD__
+	callout_init(&ic->ic_inact, CALLOUT_MPSAFE);
+#endif
 	callout_reset(&ic->ic_inact, IEEE80211_INACT_WAIT*hz,
 		ieee80211_node_timeout, ic);
 
@@ -460,16 +464,27 @@ ieee80211_create_ibss(struct ieee80211vap* vap, struct ieee80211_channel *chan)
 void
 ieee80211_reset_bss(struct ieee80211vap *vap)
 {
+	printf ("reset_bss: vap is 0x%lx\n", (unsigned long) vap);
 	struct ieee80211com *ic = vap->iv_ic;
 	struct ieee80211_node *ni, *obss;
 
+	printf ("reset_bss: ic is 0x%lx\n", (unsigned long) ic);
+
 	ieee80211_node_table_reset(&ic->ic_sta, vap);
+
+	printf ("reset_bss: after table_reset\n");
 	/* XXX multi-bss: wrong */
 	ieee80211_reset_erp(ic);
 
+	printf ("reset_bss: after reset_erp\n");
+
 	ni = ieee80211_alloc_node(&ic->ic_sta, vap, vap->iv_myaddr);
 	KASSERT(ni != NULL, ("unable to setup initial BSS node"));
+
+	printf ("reset_bss: after alloc_node\n");
+
 	obss = vap->iv_bss;
+printf ("reset_bss: obss is 0x%lx\n", (unsigned long int)obss);
 	vap->iv_bss = ieee80211_ref_node(ni);
 	if (obss != NULL) {
 		copy_bss(ni, obss);
@@ -1442,7 +1457,9 @@ ieee80211_alloc_node(struct ieee80211_node_table *nt,
 	IEEE80211_NOTE(vap, IEEE80211_MSG_INACT, ni,
 	    "%s: inact_reload %u", __func__, ni->ni_inact_reload);
 
+	printf ("before ratectl_node_init call\n");
 	ieee80211_ratectl_node_init(ni);
+	printf ("after ratectl_node_init\n");
 
 	return ni;
 }

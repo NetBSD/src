@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_crypto_tkip.c,v 1.14.4.2 2018/07/12 16:35:34 phil Exp $ */
+/*	$NetBSD: ieee80211_crypto_tkip.c,v 1.14.4.3 2018/07/16 20:11:11 phil Exp $ */
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -205,12 +205,22 @@ tkip_encap(struct ieee80211_key *k, struct mbuf *m)
 	 * Handle TKIP counter measures requirement.
 	 */
 	if (vap->iv_flags & IEEE80211_F_COUNTERM) {
+#if __FreeBSD__
 #ifdef IEEE80211_DEBUG
 		struct ieee80211_frame *wh = mtod(m, struct ieee80211_frame *);
 #endif
 
 		IEEE80211_NOTE_MAC(vap, IEEE80211_MSG_CRYPTO, wh->i_addr2,
 		    "discard frame due to countermeasures (%s)", __func__);
+#elif __NetBSD__
+#ifdef IEEE80211_DEBUG
+		struct ieee80211_frame *wh1 = mtod(m, struct ieee80211_frame *);
+#endif
+
+		IEEE80211_NOTE_MAC(vap, IEEE80211_MSG_CRYPTO, 
+		    (const __uint8_t *)wh1->i_addr2,
+		    "discard frame due to countermeasures (%s)", __func__);
+#endif
 		vap->iv_stats.is_crypto_tkipcm++;
 		return 0;
 	}

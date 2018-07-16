@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_mesh.c,v 1.1.2.2 2018/07/12 16:35:34 phil Exp $ */
+/*	$NetBSD: ieee80211_mesh.c,v 1.1.2.3 2018/07/16 20:11:11 phil Exp $ */
 
 /*- 
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -228,7 +228,11 @@ mesh_rt_add_locked(struct ieee80211vap *vap,
 		IEEE80211_ADDR_COPY(rt->rt_dest, dest);
 		rt->rt_priv = (void *)ALIGN(&rt[1]);
 		MESH_RT_ENTRY_LOCK_INIT(rt, "MBSS_RT");
+#if __FreeBSD__
 		callout_init(&rt->rt_discovery, 1);
+#elif __NetBSD__
+		callout_init(&rt->rt_discovery, CALLOUT_MPSAFE);
+#endif
 		rt->rt_updtime = ticks;	/* create time */
 		TAILQ_INSERT_TAIL(&ms->ms_routes, rt, rt_next);
 	}
@@ -688,8 +692,13 @@ mesh_vattach(struct ieee80211vap *vap)
 	TAILQ_INIT(&ms->ms_known_gates);
 	TAILQ_INIT(&ms->ms_routes);
 	MESH_RT_LOCK_INIT(ms, "MBSS");
+#if __FreeBSD__
 	callout_init(&ms->ms_cleantimer, 1);
 	callout_init(&ms->ms_gatetimer, 1);
+#elif __NetBSD__
+	callout_init(&ms->ms_cleantimer, CALLOUT_MPSAFE);
+	callout_init(&ms->ms_gatetimer, CALLOUT_MPSAFE);
+#endif
 	ms->ms_gateseq = 0;
 	mesh_select_proto_metric(vap, "AIRTIME");
 	KASSERT(ms->ms_pmetric, ("ms_pmetric == NULL"));
@@ -1298,7 +1307,11 @@ mesh_decap(struct ieee80211vap *vap, struct mbuf *m, int hdrlen, int meshdrlen)
 		WHDIR(wh) == IEEE80211_FC1_DIR_DSTODS,
 	    ("bogus dir, fc 0x%x:0x%x", wh->i_fc[0], wh->i_fc[1]));
 
+#if __FreeBSD__
 	llc = (struct llc *)(mtod(m, caddr_t) + hdrlen);
+#elif __NetBSD__
+	llc = (struct llc *)(mtod(m, __uint8_t *) + hdrlen);
+#endif
 	if (llc->llc_dsap == LLC_SNAP_LSAP && llc->llc_ssap == LLC_SNAP_LSAP &&
 	    llc->llc_control == LLC_UI && llc->llc_snap.org_code[0] == 0 &&
 	    llc->llc_snap.org_code[1] == 0 && llc->llc_snap.org_code[2] == 0 &&
@@ -3397,8 +3410,13 @@ void
 ieee80211_mesh_node_init(struct ieee80211vap *vap, struct ieee80211_node *ni)
 {
 	ni->ni_flags |= IEEE80211_NODE_QOS;
+#if __FreeBSD__
 	callout_init(&ni->ni_mltimer, 1);
 	callout_init(&ni->ni_mlhtimer, 1);
+#elif __NetBSD__
+	callout_init(&ni->ni_mltimer, CALLOUT_MPSAFE);
+	callout_init(&ni->ni_mlhtimer, CALLOUT_MPSAFE);
+#endif
 }
 
 /*
