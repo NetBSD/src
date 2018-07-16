@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_rsb.c,v 1.4 2018/07/09 10:24:44 jmcneill Exp $ */
+/* $NetBSD: sunxi_rsb.c,v 1.5 2018/07/16 23:11:47 christos Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_rsb.c,v 1.4 2018/07/09 10:24:44 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_rsb.c,v 1.5 2018/07/16 23:11:47 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -283,8 +283,8 @@ sunxi_rsb_wait(struct sunxi_rsb_softc *sc, int flags)
 		return EBUSY;
 	}
 	if (sc->sc_stat & RSB_STAT_TRANS_ERR) {
-		device_printf(sc->sc_dev, "transfer error, id 0x%02llx\n",
-		    __SHIFTOUT(sc->sc_stat, RSB_STAT_TRANS_ERR_ID));
+		device_printf(sc->sc_dev, "transfer error, id 0x%02" PRIx64
+		    "\n", __SHIFTOUT(sc->sc_stat, RSB_STAT_TRANS_ERR_ID));
 		return EIO;
 	}
 

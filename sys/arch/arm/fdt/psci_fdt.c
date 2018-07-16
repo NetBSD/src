@@ -1,4 +1,4 @@
-/* $NetBSD: psci_fdt.c,v 1.9 2018/07/14 15:06:05 jmcneill Exp $ */
+/* $NetBSD: psci_fdt.c,v 1.10 2018/07/16 23:11:47 christos Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psci_fdt.c,v 1.9 2018/07/14 15:06:05 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psci_fdt.c,v 1.10 2018/07/16 23:11:47 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -168,7 +168,7 @@ psci_fdt_mpstart_pa(void)
 {
 #ifdef __aarch64__
 	extern void aarch64_mpstart(void);
-	return (register_t)aarch64_kern_vtophys(aarch64_mpstart);
+	return (register_t)aarch64_kern_vtophys((vaddr_t)aarch64_mpstart);
 #else
 	extern void cortex_mpstart(void);
 	return (register_t)cortex_mpstart;
