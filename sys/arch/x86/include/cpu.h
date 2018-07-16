@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.95 2018/07/15 08:47:43 maxv Exp $	*/
+/*	$NetBSD: cpu.h,v 1.96 2018/07/16 07:07:30 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -127,9 +127,6 @@ struct cpu_info {
 	uint64_t ci_scratch;
 	uintptr_t ci_pmap_data[128 / sizeof(uintptr_t)];
 
-#ifdef XEN
-	u_long ci_evtmask[NR_EVENT_CHANNELS]; /* events allowed on this CPU */
-#endif
 	struct intrsource *ci_isources[MAX_INTR_SOURCES];
 
 	volatile int	ci_mtx_count;	/* Negative count of spin mutexes */
@@ -174,6 +171,44 @@ struct cpu_info {
 	u_int ci_cflush_lsize;	/* CLFLUSH insn line size */
 	struct x86_cache_info ci_cinfo[CAI_COUNT];
 
+	device_t	ci_frequency;	/* Frequency scaling technology */
+	device_t	ci_padlock;	/* VIA PadLock private storage */
+	device_t	ci_temperature;	/* Intel coretemp(4) or equivalent */
+	device_t	ci_vm;		/* Virtual machine guest driver */
+
+	/*
+	 * Segmentation-related data.
+	 */
+	union descriptor *ci_gdt;
+	struct cpu_tss	*ci_tss;	/* Per-cpu TSSes; shared among LWPs */
+	int ci_tss_sel;			/* TSS selector of this cpu */
+
+	/*
+	 * The following two are actually region_descriptors,
+	 * but that would pollute the namespace.
+	 */
+	uintptr_t	ci_suspend_gdt;
+	uint16_t	ci_suspend_gdt_padding;
+	uintptr_t	ci_suspend_idt;
+	uint16_t	ci_suspend_idt_padding;
+
+	uint16_t	ci_suspend_tr;
+	uint16_t	ci_suspend_ldt;
+	uintptr_t	ci_suspend_fs;
+	uintptr_t	ci_suspend_gs;
+	uintptr_t	ci_suspend_kgs;
+	uintptr_t	ci_suspend_efer;
+	uintptr_t	ci_suspend_reg[12];
+	uintptr_t	ci_suspend_cr0;
+	uintptr_t	ci_suspend_cr2;
+	uintptr_t	ci_suspend_cr3;
+	uintptr_t	ci_suspend_cr4;
+	uintptr_t	ci_suspend_cr8;
+
+	/* The following must be in a single cache line. */
+	int		ci_want_resched __aligned(64);
+	int		ci_padout __aligned(64);
+
 #ifndef __HAVE_DIRECT_MAP
 #define VPAGE_SRC 0
 #define VPAGE_DST 1
@@ -201,42 +236,24 @@ struct cpu_info {
 	vaddr_t		ci_svs_utls;
 #endif
 
-#if defined(XEN) && (defined(PAE) || defined(__x86_64__))
+#if defined(XEN)
+#if defined(PAE) || defined(__x86_64__)
 	/* Currently active user PGD (can't use rcr3() with Xen) */
 	pd_entry_t *	ci_kpm_pdir;	/* per-cpu PMD (va) */
 	paddr_t		ci_kpm_pdirpa;  /* per-cpu PMD (pa) */
 	kmutex_t	ci_kpm_mtx;
+#endif /* defined(PAE) || defined(__x86_64__) */
+
 #if defined(__x86_64__)
 	/* per-cpu version of normal_pdes */
 	pd_entry_t *	ci_normal_pdes[3]; /* Ok to hardcode. only for x86_64 && XEN */
 	paddr_t		ci_xen_current_user_pgd;
-#endif /* __x86_64__ */
-#endif /* XEN et.al */
+#endif	/* defined(__x86_64__) */
 
-#ifdef XEN
-	size_t		ci_xpq_idx;
-#endif
-
-#ifndef XEN
-	struct evcnt ci_ipi_events[X86_NIPI];
-#else   /* XEN */
+	u_long ci_evtmask[NR_EVENT_CHANNELS]; /* events allowed on this CPU */
 	struct evcnt ci_ipi_events[XEN_NIPIS];
 	evtchn_port_t ci_ipi_evtchn;
-#endif  /* XEN */
-
-	device_t	ci_frequency;	/* Frequency scaling technology */
-	device_t	ci_padlock;	/* VIA PadLock private storage */
-	device_t	ci_temperature;	/* Intel coretemp(4) or equivalent */
-	device_t	ci_vm;		/* Virtual machine guest driver */
-
-	/*
-	 * Segmentation-related data.
-	 */
-	union descriptor *ci_gdt;
-	struct cpu_tss	*ci_tss;	/* Per-cpu TSSes; shared among LWPs */
-	int ci_tss_sel;			/* TSS selector of this cpu */
-
-#ifdef XEN
+	size_t		ci_xpq_idx;
 	/* Xen raw system time at which we last ran hardclock.  */
 	uint64_t	ci_xen_hardclock_systime_ns;
 
@@ -263,33 +280,10 @@ struct cpu_info {
 	struct evcnt	ci_xen_raw_systime_backwards_evcnt;
 	struct evcnt	ci_xen_systime_backwards_hardclock_evcnt;
 	struct evcnt	ci_xen_missed_hardclock_evcnt;
-#endif
+#else   /* defined(XEN) */
+	struct evcnt ci_ipi_events[X86_NIPI];
+#endif	/* defined(XEN) */
 
-	/*
-	 * The following two are actually region_descriptors,
-	 * but that would pollute the namespace.
-	 */
-	uintptr_t	ci_suspend_gdt;
-	uint16_t	ci_suspend_gdt_padding;
-	uintptr_t	ci_suspend_idt;
-	uint16_t	ci_suspend_idt_padding;
-
-	uint16_t	ci_suspend_tr;
-	uint16_t	ci_suspend_ldt;
-	uintptr_t	ci_suspend_fs;
-	uintptr_t	ci_suspend_gs;
-	uintptr_t	ci_suspend_kgs;
-	uintptr_t	ci_suspend_efer;
-	uintptr_t	ci_suspend_reg[12];
-	uintptr_t	ci_suspend_cr0;
-	uintptr_t	ci_suspend_cr2;
-	uintptr_t	ci_suspend_cr3;
-	uintptr_t	ci_suspend_cr4;
-	uintptr_t	ci_suspend_cr8;
-
-	/* The following must be in a single cache line. */
-	int		ci_want_resched __aligned(64);
-	int		ci_padout __aligned(64);
 };
 
 /*
