@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_pwm.c,v 1.1 2018/05/06 10:34:34 jmcneill Exp $ */
+/* $NetBSD: sunxi_pwm.c,v 1.2 2018/07/16 23:11:47 christos Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sunxi_pwm.c,v 1.1 2018/05/06 10:34:34 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sunxi_pwm.c,v 1.2 2018/07/16 23:11:47 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -213,7 +213,8 @@ sunxi_pwm_attach(device_t parent, device_t self, void *aux)
 	sc->sc_bst = faa->faa_bst;
 	error = bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh);
 	if (error) {
-		aprint_error(": couldn't map %#llx: %d", (uint64_t)addr, error);
+		aprint_error(": couldn't map %#" PRIx64 ": %d",
+		    (uint64_t)addr, error);
 		return;
 	}
 
