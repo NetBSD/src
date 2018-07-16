@@ -1,4 +1,4 @@
-/* $NetBSD: tprof_armv8.c,v 1.1 2018/07/15 16:05:24 jmcneill Exp $ */
+/* $NetBSD: tprof_armv8.c,v 1.2 2018/07/16 10:56:42 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tprof_armv8.c,v 1.1 2018/07/15 16:05:24 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tprof_armv8.c,v 1.2 2018/07/16 10:56:42 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -220,6 +220,18 @@ armv8_pmu_intr(void *priv)
 int
 armv8_pmu_init(void)
 {
+        /* Disable EL0 access to performance monitors */
+	reg_pmuserenr_el0_write(0);
+
+	/* Disable interrupts */
+	reg_pmintenclr_el1_write(~0U);
+
+	/* Disable counters */
+	reg_pmcntenclr_el0_write(~0U);
+
+	/* Disable performance monitor */
+	reg_pmcr_el0_write(0);
+
 	return tprof_backend_register("tprof_armv8", &tprof_armv8_pmu_ops,
 	    TPROF_BACKEND_VERSION);
 }
