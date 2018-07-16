@@ -183,8 +183,8 @@ atf_init_test_cases()
 		return 0
 	}
 	atf_add_test_case int_divzero
-	atf_add_test_case int_divzero_profile
+#	atf_add_test_case int_divzero_profile
 	atf_add_test_case int_divzero_pie
 	atf_add_test_case int_divzero_pic
-	atf_add_test_case int_divzero32
+#	atf_add_test_case int_divzero32
 }
