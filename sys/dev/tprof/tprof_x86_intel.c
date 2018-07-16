@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof_pmi.c,v 1.16 2018/07/15 06:14:21 maxv Exp $	*/
+/*	$NetBSD: tprof_x86_intel.c,v 1.1 2018/07/16 06:18:31 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tprof_pmi.c,v 1.16 2018/07/15 06:14:21 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tprof_x86_intel.c,v 1.1 2018/07/16 06:18:31 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
