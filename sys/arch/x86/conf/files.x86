@@ -1,4 +1,4 @@
-#	$NetBSD: files.x86,v 1.102 2018/07/13 09:37:32 maxv Exp $
+#	$NetBSD: files.x86,v 1.103 2018/07/16 06:18:31 maxv Exp $
 
 # options for MP configuration through the MP spec
 defflag opt_mpbios.h MPBIOS MPDEBUG MPBIOS_SCANPCI
@@ -148,9 +148,6 @@ attach	ipmi at ipmibus
 file	arch/x86/x86/ipmi.c		ipmi needs-flag
 
 file	arch/x86/x86/vga_post.c		vga_post
-
-file	arch/x86/x86/tprof_pmi.c	tprof_pmi
-file	arch/x86/x86/tprof_amdpmi.c	tprof_amdpmi
 
 file	arch/x86/pci/pci_machdep.c	pci
 #file	arch/x86/pci/pci_ranges.c	pci
