@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2017/08/01 20:07:42 joerg Exp $
+#	$NetBSD: Makefile,v 1.8 2018/07/17 18:55:29 joerg Exp $
 
 LIB=	LLVMVectorize
 
@@ -7,9 +7,14 @@ LIB=	LLVMVectorize
 .PATH: ${LLVM_SRCDIR}/lib/Transforms/Vectorize
 
 SRCS+=	LoadStoreVectorizer.cpp \
+	LoopVectorizationLegality.cpp \
 	LoopVectorize.cpp \
 	SLPVectorizer.cpp \
-	Vectorize.cpp
+	Vectorize.cpp \
+	VPlan.cpp \
+	VPlanHCFGBuilder.cpp \
+	VPlanHCFGTransforms.cpp \
+	VPlanVerifier.cpp
 
 .if defined(HOSTLIB)
 .include <bsd.hostlib.mk>

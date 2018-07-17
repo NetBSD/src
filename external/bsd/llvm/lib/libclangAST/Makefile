@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2017/08/01 20:07:42 joerg Exp $
+#	$NetBSD: Makefile,v 1.16 2018/07/17 18:55:29 joerg Exp $
 
 LIB=	clangAST
 
@@ -22,6 +22,8 @@ SRCS+=	APValue.cpp \
 	CommentLexer.cpp \
 	CommentParser.cpp \
 	CommentSema.cpp \
+	ComparisonCategories.cpp \
+	DataCollection.cpp \
 	Decl.cpp \
 	DeclarationName.cpp \
 	DeclBase.cpp \
@@ -50,6 +52,7 @@ SRCS+=	APValue.cpp \
 	ODRHash.cpp \
 	OpenMPClause.cpp \
 	ParentMap.cpp \
+	QualTypeNames.cpp \
 	RawCommentList.cpp \
 	RecordLayout.cpp \
 	RecordLayoutBuilder.cpp \
