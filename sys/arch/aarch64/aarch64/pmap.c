@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.8 2018/07/09 06:14:38 ryo Exp $	*/
+/*	$NetBSD: pmap.c,v 1.9 2018/07/17 00:33:32 christos Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.8 2018/07/09 06:14:38 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.9 2018/07/17 00:33:32 christos Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -285,7 +285,7 @@ pmap_devmap_bootstrap(const struct pmap_devmap *table)
 
 	pmap_devmap_register(table);
 
-	l0 = AARCH64_PA_TO_KVA(reg_ttbr1_el1_read());
+	l0 = (void *)AARCH64_PA_TO_KVA(reg_ttbr1_el1_read());
 
 #ifdef VERBOSE_INIT_ARM
 	printf("%s:\n", __func__);
@@ -316,15 +316,15 @@ pmap_devmap_bootstrap(const struct pmap_devmap *table)
 			}
 		}
 
-		l1 = l0pde_pa(l0[l0pde_index(va)]);
+		l1 = (void *)l0pde_pa(l0[l0pde_index(va)]);
 		KASSERT(l1 != NULL);
-		l1 = AARCH64_PA_TO_KVA((paddr_t)l1);
+		l1 = (void *)AARCH64_PA_TO_KVA((paddr_t)l1);
 
-		l2 = l1pde_pa(l1[l1pde_index(va)]);
+		l2 = (void *)l1pde_pa(l1[l1pde_index(va)]);
 		if (l2 == NULL)
 			panic("L2 table for devmap is not allocated");
 
-		l2 = AARCH64_PA_TO_KVA((paddr_t)l2);
+		l2 = (void *)AARCH64_PA_TO_KVA((paddr_t)l2);
 
 		_pmap_map_chunk(l2,
 		    table[i].pd_va,
@@ -406,7 +406,6 @@ pmap_bootstrap(vaddr_t vstart, vaddr_t vend)
 {
 	struct pmap *kpm;
 	pd_entry_t *l0;
-	vaddr_t va;
 	paddr_t l0pa;
 
 	PMAP_HIST_INIT();	/* init once */
@@ -429,9 +428,8 @@ pmap_bootstrap(vaddr_t vstart, vaddr_t vend)
 
 	aarch64_tlbi_all();
 
-	va = vstart;
 	l0pa = reg_ttbr1_el1_read();
-	l0 = AARCH64_PA_TO_KVA(l0pa);
+	l0 = (void *)AARCH64_PA_TO_KVA(l0pa);
 
 	memset(&kernel_pmap, 0, sizeof(kernel_pmap));
 	kpm = pmap_kernel();
@@ -580,7 +578,7 @@ _pmap_alloc_pdp(struct pmap *pm, paddr_t *pap)
 	UVMHIST_LOG(pmaphist, "pa=%llx, va=%llx",
 	    pa, AARCH64_PA_TO_KVA(pa), 0, 0);
 
-	return AARCH64_PA_TO_KVA(pa);
+	return (void *)AARCH64_PA_TO_KVA(pa);
 }
 
 static void
@@ -656,7 +654,7 @@ pmap_extract(struct pmap *pm, vaddr_t va, paddr_t *pap)
 				goto done;
 			}
 
-			l1 = AARCH64_PA_TO_KVA(l0pde_pa(pde));
+			l1 = (void *)AARCH64_PA_TO_KVA(l0pde_pa(pde));
 			pde = l1[l1pde_index(va)];
 			if (!l1pde_valid(pde)) {
 				found = false;
@@ -670,7 +668,7 @@ pmap_extract(struct pmap *pm, vaddr_t va, paddr_t *pap)
 
 			KASSERT(l1pde_is_table(pde));
 
-			l2 = AARCH64_PA_TO_KVA(l1pde_pa(pde));
+			l2 = (void *)AARCH64_PA_TO_KVA(l1pde_pa(pde));
 			pde = l2[l2pde_index(va)];
 			if (!l2pde_valid(pde)) {
 				found = false;
@@ -684,7 +682,7 @@ pmap_extract(struct pmap *pm, vaddr_t va, paddr_t *pap)
 
 			KASSERT(l2pde_is_table(pde));
 
-			l3 = AARCH64_PA_TO_KVA(l2pde_pa(pde));
+			l3 = (void *)AARCH64_PA_TO_KVA(l2pde_pa(pde));
 			pte = l3[l3pte_index(va)];
 
 		} else {
@@ -751,7 +749,7 @@ _pmap_pte_lookup(struct pmap *pm, vaddr_t va)
 		if (!l0pde_valid(pde))
 			return NULL;
 
-		l1 = AARCH64_PA_TO_KVA(l0pde_pa(pde));
+		l1 = (void *)AARCH64_PA_TO_KVA(l0pde_pa(pde));
 		idx = l1pde_index(va);
 		pde = l1[idx];
 		if (!l1pde_valid(pde))
@@ -760,7 +758,7 @@ _pmap_pte_lookup(struct pmap *pm, vaddr_t va)
 		if (l1pde_is_block(pde))
 			return NULL;
 
-		l2 = AARCH64_PA_TO_KVA(l1pde_pa(pde));
+		l2 = (void *)AARCH64_PA_TO_KVA(l1pde_pa(pde));
 		idx = l2pde_index(va);
 		pde = l2[idx];
 		if (!l2pde_valid(pde))
@@ -768,7 +766,7 @@ _pmap_pte_lookup(struct pmap *pm, vaddr_t va)
 		if (l2pde_is_block(pde))
 			return NULL;
 
-		l3 = AARCH64_PA_TO_KVA(l2pde_pa(pde));
+		l3 = (void *)AARCH64_PA_TO_KVA(l2pde_pa(pde));
 		idx = l3pte_index(va);
 		ptep = &l3[idx];	/* as PTE */
 
@@ -1286,7 +1284,6 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 	int error = 0;
 	int pm_locked;
 	const bool user = (pm != pmap_kernel());
-	bool badcolor;
 	bool executable;
 
 	UVMHIST_FUNC(__func__);
@@ -1307,14 +1304,12 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 			PMAP_COUNT(kern_mappings);
 		}
 	} else if (flags & PMAP_WIRED) {
-		badcolor = true;
 		if (user) {
 			PMAP_COUNT(user_mappings_bad_wired);
 		} else {
 			PMAP_COUNT(kern_mappings_bad_wired);
 		}
 	} else {
-		badcolor = true;
 		if (user) {
 			PMAP_COUNT(user_mappings_bad);
 		} else {
@@ -1358,7 +1353,7 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 	} else {
 		pdppa = l0pde_pa(pde);
 	}
-	l1 = AARCH64_PA_TO_KVA(pdppa);
+	l1 = (void *)AARCH64_PA_TO_KVA(pdppa);
 
 	idx = l1pde_index(va);
 	pde = l1[idx];
@@ -1369,7 +1364,7 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 	} else {
 		pdppa = l1pde_pa(pde);
 	}
-	l2 = AARCH64_PA_TO_KVA(pdppa);
+	l2 = (void *)AARCH64_PA_TO_KVA(pdppa);
 
 	idx = l2pde_index(va);
 	pde = l2[idx];
@@ -1380,7 +1375,7 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 	} else {
 		pdppa = l2pde_pa(pde);
 	}
-	l3 = AARCH64_PA_TO_KVA(pdppa);
+	l3 = (void *)AARCH64_PA_TO_KVA(pdppa);
 
 	idx = l3pte_index(va);
 	ptep = &l3[idx];	/* as PTE */
@@ -1735,7 +1730,8 @@ pmap_fault_fixup(struct pmap *pm, vaddr_t va, vm_prot_t accessprot, bool user)
 			 * pte is readable and writable, but occured fault?
 			 * unprivileged load/store, or else ?
 			 */
-			printf("%s: fault: va=%016lx pte=%08llx: pte is rw."
+			printf("%s: fault: va=%016lx pte=%08" PRIx64
+			    ": pte is rw."
 			    " unprivileged load/store ? (onfault=%p)\n",
 			    __func__, va, pte, curlwp->l_md.md_onfault);
 		}
@@ -1789,7 +1785,6 @@ pmap_fault_fixup(struct pmap *pm, vaddr_t va, vm_prot_t accessprot, bool user)
 bool
 pmap_clear_modify(struct vm_page *pg)
 {
-	struct pmap *pm;
 	struct pv_entry *pv;
 	struct vm_page_md * const md = VM_PAGE_TO_MD(pg);
 	pt_entry_t *ptep, pte, opte;
@@ -1814,7 +1809,6 @@ pmap_clear_modify(struct vm_page *pg)
 	TAILQ_FOREACH(pv, &md->mdpg_pvhead, pv_link) {
 		PMAP_COUNT(clear_modify_pages);
 
-		pm = pv->pv_pmap;
 		va = pv->pv_va;
 
 		ptep = pv->pv_ptep;
@@ -1852,7 +1846,6 @@ pmap_clear_modify(struct vm_page *pg)
 bool
 pmap_clear_reference(struct vm_page *pg)
 {
-	struct pmap *pm;
 	struct pv_entry *pv;
 	struct vm_page_md * const md = VM_PAGE_TO_MD(pg);
 	pt_entry_t *ptep, pte, opte;
@@ -1876,7 +1869,6 @@ pmap_clear_reference(struct vm_page *pg)
 	TAILQ_FOREACH(pv, &md->mdpg_pvhead, pv_link) {
 		PMAP_COUNT(clear_reference_pages);
 
-		pm = pv->pv_pmap;
 		va = pv->pv_va;
 
 		ptep = pv->pv_ptep;
@@ -2066,7 +2058,7 @@ pmap_db_pteinfo(vaddr_t va, void (*pr)(const char *, ...))
 	if (!l0pde_valid(pde))
 		return;
 
-	l1 = AARCH64_PA_TO_KVA(l0pde_pa(pde));
+	l1 = (void *)AARCH64_PA_TO_KVA(l0pde_pa(pde));
 	idx = l1pde_index(va);
 	pde = l1[idx];
 
@@ -2076,7 +2068,7 @@ pmap_db_pteinfo(vaddr_t va, void (*pr)(const char *, ...))
 	if (!l1pde_valid(pde) || l1pde_is_block(pde))
 		return;
 
-	l2 = AARCH64_PA_TO_KVA(l1pde_pa(pde));
+	l2 = (void *)AARCH64_PA_TO_KVA(l1pde_pa(pde));
 	idx = l2pde_index(va);
 	pde = l2[idx];
 
@@ -2086,7 +2078,7 @@ pmap_db_pteinfo(vaddr_t va, void (*pr)(const char *, ...))
 	if (!l2pde_valid(pde) || l2pde_is_block(pde))
 		return;
 
-	l3 = AARCH64_PA_TO_KVA(l2pde_pa(pde));
+	l3 = (void *)AARCH64_PA_TO_KVA(l2pde_pa(pde));
 	idx = l3pte_index(va);
 	pte = l3[idx];
 
