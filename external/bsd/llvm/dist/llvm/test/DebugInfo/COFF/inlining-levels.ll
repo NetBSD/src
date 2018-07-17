@@ -59,7 +59,7 @@ attributes #0 = { norecurse nounwind uwtable "disable-tail-calls"="false" "less-
 !llvm.module.flags = !{!8, !9, !10}
 !llvm.ident = !{!11}
 
-!0 = !DIGlobalVariableExpression(var: !1)
+!0 = !DIGlobalVariableExpression(var: !1, expr: !DIExpression())
 !1 = !DIGlobalVariable(name: "x", linkageName: "\01?x@@3HC", scope: !2, file: !3, line: 1, type: !6, isLocal: false, isDefinition: true)
 !2 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !3, producer: "clang version 3.9.0 ", isOptimized: true, runtimeVersion: 0, emissionKind: FullDebug, enums: !4, globals: !5)
 !3 = !DIFile(filename: "t.cpp", directory: "D:\5Csrc\5Cllvm\5Cbuild")
@@ -71,17 +71,17 @@ attributes #0 = { norecurse nounwind uwtable "disable-tail-calls"="false" "less-
 !9 = !{i32 2, !"Debug Info Version", i32 3}
 !10 = !{i32 1, !"PIC Level", i32 2}
 !11 = !{!"clang version 3.9.0 "}
-!12 = distinct !DISubprogram(name: "main", scope: !3, file: !3, line: 12, type: !13, isLocal: false, isDefinition: true, scopeLine: 12, flags: DIFlagPrototyped, isOptimized: true, unit: !2, variables: !4)
+!12 = distinct !DISubprogram(name: "main", scope: !3, file: !3, line: 12, type: !13, isLocal: false, isDefinition: true, scopeLine: 12, flags: DIFlagPrototyped, isOptimized: true, unit: !2, retainedNodes: !4)
 !13 = !DISubroutineType(types: !14)
 !14 = !{!7}
 !15 = !DILocation(line: 4, column: 3, scope: !16, inlinedAt: !19)
-!16 = distinct !DISubprogram(name: "f", linkageName: "\01?f@@YAXXZ", scope: !3, file: !3, line: 2, type: !17, isLocal: true, isDefinition: true, scopeLine: 2, flags: DIFlagPrototyped, isOptimized: true, unit: !2, variables: !4)
+!16 = distinct !DISubprogram(name: "f", linkageName: "\01?f@@YAXXZ", scope: !3, file: !3, line: 2, type: !17, isLocal: true, isDefinition: true, scopeLine: 2, flags: DIFlagPrototyped, isOptimized: true, unit: !2, retainedNodes: !4)
 !17 = !DISubroutineType(types: !18)
 !18 = !{null}
 !19 = distinct !DILocation(line: 7, column: 3, scope: !20, inlinedAt: !21)
-!20 = distinct !DISubprogram(name: "g", linkageName: "\01?g@@YAXXZ", scope: !3, file: !3, line: 6, type: !17, isLocal: true, isDefinition: true, scopeLine: 6, flags: DIFlagPrototyped, isOptimized: true, unit: !2, variables: !4)
+!20 = distinct !DISubprogram(name: "g", linkageName: "\01?g@@YAXXZ", scope: !3, file: !3, line: 6, type: !17, isLocal: true, isDefinition: true, scopeLine: 6, flags: DIFlagPrototyped, isOptimized: true, unit: !2, retainedNodes: !4)
 !21 = distinct !DILocation(line: 10, column: 3, scope: !22, inlinedAt: !23)
-!22 = distinct !DISubprogram(name: "h", linkageName: "\01?h@@YAXXZ", scope: !3, file: !3, line: 9, type: !17, isLocal: true, isDefinition: true, scopeLine: 9, flags: DIFlagPrototyped, isOptimized: true, unit: !2, variables: !4)
+!22 = distinct !DISubprogram(name: "h", linkageName: "\01?h@@YAXXZ", scope: !3, file: !3, line: 9, type: !17, isLocal: true, isDefinition: true, scopeLine: 9, flags: DIFlagPrototyped, isOptimized: true, unit: !2, retainedNodes: !4)
 !23 = distinct !DILocation(line: 13, column: 3, scope: !12)
 !24 = !{!25, !25, i64 0}
 !25 = !{!"int", !26, i64 0}

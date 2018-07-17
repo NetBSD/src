@@ -17,12 +17,12 @@ entry:
   %1 = tail call i64 @llvm.coro.size.i64(), !dbg !26
   %call = tail call i8* @malloc(i64 %1), !dbg !26
   %2 = tail call i8* @llvm.coro.begin(token %0, i8* %call) #9, !dbg !26
-  tail call void @llvm.dbg.value(metadata i8* %2, i64 0, metadata !21, metadata !12), !dbg !26
+  tail call void @llvm.dbg.value(metadata i8* %2, metadata !21, metadata !12), !dbg !26
   br label %for.cond, !dbg !27
 
 for.cond:                                         ; preds = %for.cond, %entry
-  tail call void @llvm.dbg.value(metadata i32 undef, i64 0, metadata !22, metadata !12), !dbg !28
-  tail call void @llvm.dbg.value(metadata i32 undef, i64 0, metadata !11, metadata !12) #7, !dbg !29
+  tail call void @llvm.dbg.value(metadata i32 undef, metadata !22, metadata !12), !dbg !28
+  tail call void @llvm.dbg.value(metadata i32 undef, metadata !11, metadata !12) #7, !dbg !29
   tail call void (...) @bar() #7, !dbg !33
   %3 = tail call token @llvm.coro.save(i8* null), !dbg !34
   %4 = tail call i8 @llvm.coro.suspend(token %3, i1 false), !dbg !34
@@ -60,7 +60,7 @@ declare void @free(i8* nocapture) local_unnamed_addr #6
 declare i1 @llvm.coro.end(i8*, i1) #7
 declare i8* @llvm.coro.subfn.addr(i8* nocapture readonly, i8) #5
 
-declare void @llvm.dbg.value(metadata, i64, metadata, metadata) #1
+declare void @llvm.dbg.value(metadata, metadata, metadata) #1
 
 attributes #0 = { nounwind uwtable "correctly-rounded-divide-sqrt-fp-math"="false" "disable-tail-calls"="false" "less-precise-fpmad"="false" "no-frame-pointer-elim"="false" "no-infs-fp-math"="false" "no-jump-tables"="false" "no-nans-fp-math"="false" "no-signed-zeros-fp-math"="false" "no-trapping-math"="false" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+fxsr,+mmx,+sse,+sse2,+x87" "unsafe-fp-math"="false" "use-soft-float"="false" }
 attributes #1 = { nounwind readnone }
@@ -83,7 +83,7 @@ attributes #9 = { noduplicate }
 !3 = !{i32 2, !"Dwarf Version", i32 4}
 !4 = !{i32 2, !"Debug Info Version", i32 3}
 !5 = !{!"clang version 4.0.0 (http://llvm.org/git/clang.git 6c405f93921ac99ff5b8521bb1b3df4449deede4) (http://llvm.org/git/llvm.git 6e6d3247102a0f87ce14e906dcf6a3a5ed3faa65)"}
-!6 = distinct !DISubprogram(name: "print", scope: !1, file: !1, line: 6, type: !7, isLocal: false, isDefinition: true, scopeLine: 6, flags: DIFlagPrototyped, isOptimized: true, unit: !0, variables: !10)
+!6 = distinct !DISubprogram(name: "print", scope: !1, file: !1, line: 6, type: !7, isLocal: false, isDefinition: true, scopeLine: 6, flags: DIFlagPrototyped, isOptimized: true, unit: !0, retainedNodes: !10)
 !7 = !DISubroutineType(types: !8)
 !8 = !{null, !9}
 !9 = !DIBasicType(name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
@@ -93,7 +93,7 @@ attributes #9 = { noduplicate }
 !13 = !DILocation(line: 6, column: 16, scope: !6)
 !14 = !DILocation(line: 6, column: 19, scope: !6)
 !15 = !DILocation(line: 6, column: 25, scope: !6)
-!16 = distinct !DISubprogram(name: "f", scope: !1, file: !1, line: 8, type: !17, isLocal: false, isDefinition: true, scopeLine: 8, isOptimized: true, unit: !0, variables: !20)
+!16 = distinct !DISubprogram(name: "f", scope: !1, file: !1, line: 8, type: !17, isLocal: false, isDefinition: true, scopeLine: 8, isOptimized: true, unit: !0, retainedNodes: !20)
 !17 = !DISubroutineType(types: !18)
 !18 = !{!19}
 !19 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64, align: 64)

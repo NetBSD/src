@@ -1,4 +1,4 @@
-;  REQUIRES: x86_64-linux
+;  REQUIRES: shell
 ;  RUN: sed -e "s,SRC_COMPDIR,%p/Inputs,g" %s > %t.ll
 ;  RUN: llc  -o %t.o -filetype=obj -mtriple=x86_64-pc-linux  %t.ll
 ;  RUN: llvm-objdump -d -l %t.o | FileCheck --check-prefix="LINES" %t.ll
@@ -46,17 +46,17 @@ attributes #1 = { nounwind readnone }
 !1 = !DIFile(filename: "source-interleave-x86_64.c", directory: "SRC_COMPDIR")
 !2 = !{}
 !3 = !{!4}
-!4 = !DIGlobalVariableExpression(var: !DIGlobalVariable(name: "a", scope: !0, file: !1, line: 1, type: !5, isLocal: false, isDefinition: true))
+!4 = !DIGlobalVariableExpression(var: !DIGlobalVariable(name: "a", scope: !0, file: !1, line: 1, type: !5, isLocal: false, isDefinition: true), expr: !DIExpression())
 !5 = !DIBasicType(name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
 !6 = !{i32 2, !"Dwarf Version", i32 4}
 !7 = !{i32 2, !"Debug Info Version", i32 3}
 !8 = !{!"clang version 4.0.0 (http://llvm.org/git/clang d19a95e94dc57c5a72fd25d64f26134aa7d25fa0) (http://llvm.org/git/llvm.git 313924e6ff8a332063f61d3fda03812c220762f6)"}
-!9 = distinct !DISubprogram(name: "foo", scope: !1, file: !1, line: 2, type: !10, isLocal: false, isDefinition: true, scopeLine: 2, isOptimized: false, unit: !0, variables: !2)
+!9 = distinct !DISubprogram(name: "foo", scope: !1, file: !1, line: 2, type: !10, isLocal: false, isDefinition: true, scopeLine: 2, isOptimized: false, unit: !0, retainedNodes: !2)
 !10 = !DISubroutineType(types: !11)
 !11 = !{!5}
 !12 = !DILocation(line: 3, column: 10, scope: !9)
 !13 = !DILocation(line: 3, column: 3, scope: !9)
-!14 = distinct !DISubprogram(name: "main", scope: !1, file: !1, line: 6, type: !10, isLocal: false, isDefinition: true, scopeLine: 6, isOptimized: false, unit: !0, variables: !2)
+!14 = distinct !DISubprogram(name: "main", scope: !1, file: !1, line: 6, type: !10, isLocal: false, isDefinition: true, scopeLine: 6, isOptimized: false, unit: !0, retainedNodes: !2)
 !15 = !DILocalVariable(name: "b", scope: !14, file: !1, line: 7, type: !16)
 !16 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: !5, size: 64, align: 64)
 !17 = !DIExpression()
