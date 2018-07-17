@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.2 2018/07/09 06:19:53 ryo Exp $ */
+/* $NetBSD: cpu.c,v 1.3 2018/07/17 00:29:55 christos Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.2 2018/07/09 06:19:53 ryo Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.3 2018/07/17 00:29:55 christos Exp $");
 
 #include "locators.h"
 #include "opt_arm_debug.h"
@@ -227,6 +227,10 @@ prt_cache(device_t self, int level)
 			cunit = &cinfo->dcache;
 			cacheable = "Unified";
 			break;
+		default:
+			cunit = &cinfo->dcache;
+			cacheable = "*UNK*";
+			break;
 		}
 
 		switch (cunit->cache_type) {
@@ -238,6 +242,9 @@ prt_cache(device_t self, int level)
 			break;
 		case CACHE_TYPE_PIPT:
 			cachetype = "PIPT";
+			break;
+		default:
+			cachetype = "*UNK*";
 			break;
 		}
 
@@ -318,8 +325,8 @@ cpu_identify1(device_t self, struct cpu_info *ci)
 	 * CTR - Cache Type Register
 	 */
 	ctr = reg_ctr_el0_read();
-	aprint_normal_dev(self, "Cache Writeback Granule %lluB,"
-	    " Exclusives Reservation Granule %lluB\n",
+	aprint_normal_dev(self, "Cache Writeback Granule %" PRIu64 "B,"
+	    " Exclusives Reservation Granule %" PRIu64 "B\n",
 	    __SHIFTOUT(ctr, CTR_EL0_CWG_LINE) * 4,
 	    __SHIFTOUT(ctr, CTR_EL0_ERG_LINE) * 4);
 
@@ -356,7 +363,7 @@ cpu_identify2(device_t self, struct cpu_info *ci)
 	mvfr1 = reg_mvfr1_el1_read();
 
 
-	aprint_normal_dev(self, "revID=0x%llx", revidr);
+	aprint_normal_dev(self, "revID=0x%" PRIx64, revidr);
 
 	/* ID_AA64DFR0_EL1 */
 	switch (__SHIFTOUT(dfr0, ID_AA64DFR0_EL1_PMUVER)) {
@@ -397,7 +404,7 @@ cpu_identify2(device_t self, struct cpu_info *ci)
 
 
 
-	aprint_normal_dev(self, "auxID=0x%llx", aidr);
+	aprint_normal_dev(self, "auxID=0x%" PRIx64, aidr);
 
 	/* PFR0 */
 	switch (__SHIFTOUT(pfr0, ID_AA64PFR0_EL1_GIC)) {
