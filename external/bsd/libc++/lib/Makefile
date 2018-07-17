@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2018/06/06 12:02:43 kamil Exp $
+#	$NetBSD: Makefile,v 1.12 2018/07/17 18:58:10 joerg Exp $
 
 LIB=		c++
 WARNS=		4
@@ -46,6 +46,10 @@ CWARNFLAGS.clang+=	-Wno-error=implicit-exception-spec-mismatch
 
 .if ${MKSANITIZER} != "yes"
 LDFLAGS+=	-Wl,-z,defs
+.endif
+
+.if !empty(MACHINE_ARCH:Marm*) || !empty(MACHINE_ARCH:Mearm*)
+CWARNFLAGS+=		-Wno-atomic-alignment
 .endif
 
 .include <bsd.lib.mk>
