@@ -30,7 +30,7 @@
 #include <arm/asm.h>
 #include <arm/vfpreg.h>
 
-RCSID("$NetBSD: vfpsf.S,v 1.2 2013/06/23 06:19:55 matt Exp $")
+RCSID("$NetBSD: vfpsf.S,v 1.3 2018/07/17 15:03:48 joerg Exp $")
 
 /*
  * This file provides softfloat compatible routines which use VFP instructions
@@ -39,6 +39,8 @@ RCSID("$NetBSD: vfpsf.S,v 1.2 2013/06/23 06:19:55 matt Exp $")
  *
  * This file implements the single precision floating point routines.
  */
+
+.fpu vfp2
 
 #ifdef __ARM_EABI__
 #define	__addsf3	__aeabi_fadd
