@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.9 2018/07/17 00:33:32 christos Exp $	*/
+/*	$NetBSD: pmap.c,v 1.10 2018/07/17 09:58:14 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.9 2018/07/17 00:33:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.10 2018/07/17 09:58:14 ryo Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -235,7 +235,7 @@ static vsize_t
 _pmap_map_chunk(pd_entry_t *l2, vaddr_t va, paddr_t pa, vsize_t size,
     vm_prot_t prot, u_int flags)
 {
-	pd_entry_t oldpte;
+	pd_entry_t oldpte __debugused;
 	pt_entry_t attr;
 	vsize_t resid;
 
