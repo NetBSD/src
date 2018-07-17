@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2211 2018/07/15 05:16:40 maxv Exp $
+#	$NetBSD: mi,v 1.2212 2018/07/17 18:55:24 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -363,7 +363,8 @@
 ./usr/include/clang-4.0/stdalign.h		comp-obsolete		obsolete
 ./usr/include/clang-4.0/stdatomic.h		comp-obsolete		obsolete
 ./usr/include/clang-4.0/stdnoreturn.h		comp-obsolete		obsolete
-./usr/include/clang-5.0/stdatomic.h		comp-c-include		llvm
+./usr/include/clang-5.0/stdatomic.h		comp-obsolete		obsolete
+./usr/include/clang-7.0/stdatomic.h		comp-c-include		llvm
 ./usr/include/complex.h				comp-c-include
 ./usr/include/cpio.h				comp-c-include
 ./usr/include/crypto/cryptodev.h		comp-c-include

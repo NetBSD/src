@@ -1,12 +1,15 @@
-#	$NetBSD: Makefile,v 1.17 2017/08/01 20:07:40 joerg Exp $
+#	$NetBSD: Makefile,v 1.18 2018/07/17 18:55:27 joerg Exp $
 
 LIB=	LLVMARMCodeGen
 
 .include <bsd.init.mk>
 
+CPPFLAGS+=	-I${LLVM_SRCDIR}/lib/Target/ARM
+
 .PATH: ${LLVM_SRCDIR}/lib/Target/ARM
 
 SRCS+=	ARMAsmPrinter.cpp \
+	A15SDOptimizer.cpp \
 	ARMBaseInstrInfo.cpp \
 	ARMBaseRegisterInfo.cpp \
 	ARMCallLowering.cpp \
@@ -17,16 +20,17 @@ SRCS+=	ARMAsmPrinter.cpp \
 	ARMFastISel.cpp \
 	ARMFrameLowering.cpp \
 	ARMHazardRecognizer.cpp \
-	ARMISelDAGToDAG.cpp \
-	ARMISelLowering.cpp \
 	ARMInstrInfo.cpp \
 	ARMInstructionSelector.cpp \
+	ARMISelDAGToDAG.cpp \
+	ARMISelLowering.cpp \
 	ARMLegalizerInfo.cpp \
 	ARMLoadStoreOptimizer.cpp \
-	ARMMCInstLower.cpp \
 	ARMMachineFunctionInfo.cpp \
 	ARMMacroFusion.cpp \
+	ARMMCInstLower.cpp \
 	ARMOptimizeBarriersPass.cpp \
+	ARMParallelDSP.cpp \
 	ARMRegisterBankInfo.cpp \
 	ARMRegisterInfo.cpp \
 	ARMSelectionDAGInfo.cpp \
@@ -34,14 +38,13 @@ SRCS+=	ARMAsmPrinter.cpp \
 	ARMTargetMachine.cpp \
 	ARMTargetObjectFile.cpp \
 	ARMTargetTransformInfo.cpp \
-	A15SDOptimizer.cpp \
 	MLxExpansionPass.cpp \
-	ThumbRegisterInfo.cpp \
-	Thumb1InstrInfo.cpp \
 	Thumb1FrameLowering.cpp \
-	Thumb2ITBlockPass.cpp \
+	Thumb1InstrInfo.cpp \
 	Thumb2InstrInfo.cpp \
-	Thumb2SizeReduction.cpp
+	Thumb2ITBlockPass.cpp \
+	Thumb2SizeReduction.cpp \
+	ThumbRegisterInfo.cpp
 
 TABLEGEN_SRC=		ARM.td
 TABLEGEN_INCLUDES=	-I${LLVM_SRCDIR}/lib/Target/ARM
@@ -59,7 +62,9 @@ TABLEGEN_OUTPUT= \
 	ARMGenMCPseudoLowering.inc|-gen-pseudo-lowering \
 	ARMGenRegisterBank.inc|-gen-register-bank \
 	ARMGenRegisterInfo.inc|-gen-register-info \
-	ARMGenSubtargetInfo.inc|-gen-subtarget
+	ARMGenSubtargetInfo.inc|-gen-subtarget \
+	ARMGenSystemRegister.inc|-gen-searchable-tables
+
 
 .include "${.PARSEDIR}/../../tablegen.mk"
 
