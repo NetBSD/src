@@ -1,4 +1,4 @@
-/* $NetBSD: types.h,v 1.10 2018/07/17 00:34:11 christos Exp $ */
+/* $NetBSD: types.h,v 1.11 2018/07/17 11:55:55 joerg Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -55,9 +55,9 @@ typedef unsigned long	vsize_t;
 #define PRIuVSIZE	"lu"
 
 typedef __uint64_t register_t;
-typedef unsigned int register32_t;
+typedef __uint32_t register32_t;
 #define PRIxREGISTER	PRIx64
-#define PRIxREGISTER32	"x"
+#define PRIxREGISTER32	PRIx32
 
 typedef unsigned short	tlb_asid_t;
 
