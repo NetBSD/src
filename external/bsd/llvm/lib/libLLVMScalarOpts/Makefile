@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2017/08/01 20:07:42 joerg Exp $
+#	$NetBSD: Makefile,v 1.24 2018/07/17 18:55:29 joerg Exp $
 
 LIB=	LLVMScalarOpts
 
@@ -9,28 +9,31 @@ LIB=	LLVMScalarOpts
 SRCS+=	ADCE.cpp \
 	AlignmentFromAssumptions.cpp \
 	BDCE.cpp \
+	CallSiteSplitting.cpp \
 	ConstantHoisting.cpp \
 	ConstantProp.cpp \
 	CorrelatedValuePropagation.cpp \
 	DCE.cpp \
 	DeadStoreElimination.cpp \
+	DivRemPairs.cpp \
 	EarlyCSE.cpp \
 	FlattenCFGPass.cpp \
 	Float2Int.cpp \
+	GuardWidening.cpp \
 	GVN.cpp \
 	GVNHoist.cpp \
 	GVNSink.cpp \
-	GuardWidening.cpp \
-	IVUsersPrinter.cpp \
-	IndVarSimplify.cpp \
 	InductiveRangeCheckElimination.cpp \
+	IndVarSimplify.cpp \
 	InferAddressSpaces.cpp \
+	InstSimplifyPass.cpp \
+	IVUsersPrinter.cpp \
 	JumpThreading.cpp \
 	LICM.cpp \
 	LoopAccessAnalysisPrinter.cpp \
 	LoopDataPrefetch.cpp \
-	LoopDistribute.cpp \
 	LoopDeletion.cpp \
+	LoopDistribute.cpp \
 	LoopIdiomRecognize.cpp \
 	LoopInstSimplify.cpp \
 	LoopInterchange.cpp \
@@ -42,6 +45,7 @@ SRCS+=	ADCE.cpp \
 	LoopSimplifyCFG.cpp \
 	LoopSink.cpp \
 	LoopStrengthReduce.cpp \
+	LoopUnrollAndJamPass.cpp \
 	LoopUnrollPass.cpp \
 	LoopUnswitch.cpp \
 	LoopVersioningLICM.cpp \
@@ -50,6 +54,7 @@ SRCS+=	ADCE.cpp \
 	LowerGuardIntrinsic.cpp \
 	MemCpyOptimizer.cpp \
 	MergedLoadStoreMotion.cpp \
+	MergeICmps.cpp \
 	NaryReassociate.cpp \
 	NewGVN.cpp \
 	PartiallyInlineLibCalls.cpp \
@@ -57,15 +62,16 @@ SRCS+=	ADCE.cpp \
 	Reassociate.cpp \
 	Reg2Mem.cpp \
 	RewriteStatepointsForGC.cpp \
-	SCCP.cpp \
-	SROA.cpp \
 	Scalar.cpp \
 	Scalarizer.cpp \
+	SCCP.cpp \
 	SeparateConstOffsetFromGEP.cpp \
 	SimpleLoopUnswitch.cpp \
 	SimplifyCFGPass.cpp \
 	Sink.cpp \
+	SpeculateAroundPHIs.cpp \
 	SpeculativeExecution.cpp \
+	SROA.cpp \
 	StraightLineStrengthReduce.cpp \
 	StructurizeCFG.cpp \
 	TailRecursionElimination.cpp

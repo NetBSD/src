@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2017/08/01 20:07:42 joerg Exp $
+#	$NetBSD: Makefile,v 1.17 2018/07/17 18:55:29 joerg Exp $
 
 LIB=	LLVMX86CodeGen
 
@@ -6,25 +6,31 @@ LIB=	LLVMX86CodeGen
 
 .PATH: ${LLVM_SRCDIR}/lib/Target/X86
 
-SRCS+=	X86AsmPrinter.cpp \
+SRCS+=	ShadowCallStack.cpp \
+	X86AsmPrinter.cpp \
+	X86AvoidStoreForwardingBlocks.cpp \
 	X86CallFrameOptimization.cpp \
-	X86CallLowering.cpp \
 	X86CallingConv.cpp \
+	X86CallLowering.cpp \
 	X86CmovConversion.cpp \
+	X86DomainReassignment.cpp \
 	X86EvexToVex.cpp\
 	X86ExpandPseudo.cpp \
 	X86FastISel.cpp \
 	X86FixupBWInsts.cpp \
 	X86FixupLEAs.cpp \
 	X86FixupSetCC.cpp \
+	X86FlagsCopyLowering.cpp \
 	X86FloatingPoint.cpp \
 	X86FrameLowering.cpp \
-	X86ISelDAGToDAG.cpp \
-	X86ISelLowering.cpp \
+	X86IndirectBranchTracking.cpp \
 	X86InstrFMA3Info.cpp \
+	X86InstrFoldTables.cpp \
 	X86InstrInfo.cpp \
 	X86InstructionSelector.cpp \
 	X86InterleavedAccess.cpp \
+	X86ISelDAGToDAG.cpp \
+	X86ISelLowering.cpp \
 	X86LegalizerInfo.cpp \
 	X86MachineFunctionInfo.cpp \
 	X86MacroFusion.cpp \
@@ -33,8 +39,10 @@ SRCS+=	X86AsmPrinter.cpp \
 	X86PadShortFunction.cpp \
 	X86RegisterBankInfo.cpp \
 	X86RegisterInfo.cpp \
+	X86RetpolineThunks.cpp \
 	X86SelectionDAGInfo.cpp \
 	X86ShuffleDecodeConstantPool.cpp \
+	X86SpeculativeLoadHardening.cpp \
 	X86Subtarget.cpp \
 	X86TargetMachine.cpp \
 	X86TargetObjectFile.cpp \
