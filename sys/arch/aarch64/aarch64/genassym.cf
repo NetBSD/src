@@ -1,4 +1,4 @@
-# $NetBSD: genassym.cf,v 1.4 2018/07/10 08:35:58 ryo Exp $
+# $NetBSD: genassym.cf,v 1.5 2018/07/17 10:01:59 ryo Exp $
 #-
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -50,6 +50,7 @@ include <arm/bus_defs.h>
 include <aarch64/vmparam.h>
 include <aarch64/frame.h>
 include <aarch64/armreg.h>
+include <aarch64/pte.h>
 
 if defined(_KERNEL_OPT)
 include "opt_multiprocessor.h"
@@ -101,6 +102,61 @@ define	USPACE			(UPAGES * PAGE_SIZE)
 #define	L2_S_SIZE		L2_S_SIZE
 #define	L2_C			L2_C
 #define	L2_AP_KRW		L2_AP(AP_KRW)
+
+define	L0_ADDR_BITS		L0_ADDR_BITS
+define	L0_SHIFT		L0_SHIFT
+define	L0_TABLE		L0_TABLE
+define	L1_ADDR_BITS		L1_ADDR_BITS
+define	L1_BLOCK		L1_BLOCK
+define	L1_SHIFT		L1_SHIFT
+define	L1_SIZE			L1_SIZE
+define	L1_TABLE		L1_TABLE
+define	L2_ADDR_BITS		L2_ADDR_BITS
+define	L2_BLK_OA		L2_BLK_OA
+define	L2_BLOCK		L2_BLOCK
+define	L2_BLOCK_MASK		L2_BLOCK_MASK
+define	L2_SHIFT		L2_SHIFT
+define	L2_SIZE			L2_SIZE
+define	LX_BLKPAG_UXN		LX_BLKPAG_UXN
+define	LX_BLKPAG_PXN		LX_BLKPAG_PXN
+define	LX_BLKPAG_AF		LX_BLKPAG_AF
+define	LX_BLKPAG_AP_RW		LX_BLKPAG_AP_RW
+define	LX_BLKPAG_SH_IS		LX_BLKPAG_SH_IS
+define	LX_BLKPAG_ATTR_INDX_0	LX_BLKPAG_ATTR_INDX_0
+define	LX_BLKPAG_ATTR_INDX_1	LX_BLKPAG_ATTR_INDX_1
+define	LX_BLKPAG_ATTR_INDX_2	LX_BLKPAG_ATTR_INDX_2
+define	LX_BLKPAG_ATTR_INDX_3	LX_BLKPAG_ATTR_INDX_3
+define	Ln_ENTRIES		Ln_ENTRIES
+
+define	TCR_AS64K		TCR_AS64K
+define	TCR_TG1_16KB		TCR_TG1_16KB
+define	TCR_TG1_4KB		TCR_TG1_4KB
+define	TCR_TG1_64KB		TCR_TG1_64KB
+define	TCR_TG0_16KB		TCR_TG0_16KB
+define	TCR_TG0_4KB		TCR_TG0_4KB
+define	TCR_TG0_64KB		TCR_TG0_64KB
+define	TCR_SH1_OUTER		TCR_SH1_OUTER
+define	TCR_SH1_INNER		TCR_SH1_INNER
+define	TCR_ORGN1_NC		TCR_ORGN1_NC
+define	TCR_ORGN1_WB_WA		TCR_ORGN1_WB_WA
+define	TCR_ORGN1_WT		TCR_ORGN1_WT
+define	TCR_ORGN1_WB		TCR_ORGN1_WB
+define	TCR_IRGN1_NC		TCR_IRGN1_NC
+define	TCR_IRGN1_WB_WA		TCR_IRGN1_WB_WA
+define	TCR_IRGN1_WT		TCR_IRGN1_WT
+define	TCR_IRGN1_WB		TCR_IRGN1_WB
+define	TCR_T1SZ		TCR_T1SZ
+define	TCR_SH0_OUTER		TCR_SH0_OUTER
+define	TCR_SH0_INNER		TCR_SH0_INNER
+define	TCR_ORGN0_NC		TCR_ORGN0_NC
+define	TCR_ORGN0_WB_WA		TCR_ORGN0_WB_WA
+define	TCR_ORGN0_WT		TCR_ORGN0_WT
+define	TCR_ORGN0_WB		TCR_ORGN0_WB
+define	TCR_IRGN0_NC		TCR_IRGN0_NC
+define	TCR_IRGN0_WB_WA		TCR_IRGN0_WB_WA
+define	TCR_IRGN0_WT		TCR_IRGN0_WT
+define	TCR_IRGN0_WB		TCR_IRGN0_WB
+define	TCR_T0SZ		TCR_T0SZ
 
 define	EFAULT			EFAULT
 
