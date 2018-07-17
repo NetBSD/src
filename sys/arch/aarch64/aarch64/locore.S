@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.11 2018/07/17 00:32:28 christos Exp $	*/
+/*	$NetBSD: locore.S,v 1.12 2018/07/17 10:01:59 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -33,10 +33,9 @@
 
 #include <aarch64/asm.h>
 #include <aarch64/hypervisor.h>
-#include <aarch64/pte.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.11 2018/07/17 00:32:28 christos Exp $")
+RCSID("$NetBSD: locore.S,v 1.12 2018/07/17 10:01:59 ryo Exp $")
 
 /* #define DEBUG_LOCORE */
 /* #define DEBUG_MMU */
@@ -48,10 +47,10 @@ RCSID("$NetBSD: locore.S,v 1.11 2018/07/17 00:32:28 christos Exp $")
 #define LOCORE_EL2
 
 /* attributes are defined in MAIR_EL1 */
-#define L2_BLKPAG_ATTR_NORMAL_WB	__SHIFTIN(0, LX_BLKPAG_ATTR_INDX)
-#define L2_BLKPAG_ATTR_NORMAL_NC	__SHIFTIN(1, LX_BLKPAG_ATTR_INDX)
-#define L2_BLKPAG_ATTR_NORMAL_WT	__SHIFTIN(2, LX_BLKPAG_ATTR_INDX)
-#define L2_BLKPAG_ATTR_DEVICE_MEM	__SHIFTIN(3, LX_BLKPAG_ATTR_INDX)
+#define L2_BLKPAG_ATTR_NORMAL_WB	LX_BLKPAG_ATTR_INDX_0
+#define L2_BLKPAG_ATTR_NORMAL_NC	LX_BLKPAG_ATTR_INDX_1
+#define L2_BLKPAG_ATTR_NORMAL_WT	LX_BLKPAG_ATTR_INDX_2
+#define L2_BLKPAG_ATTR_DEVICE_MEM	LX_BLKPAG_ATTR_INDX_3
 
 #define PRINT(string)	bl xprint;.asciz string;.align 2
 
@@ -60,6 +59,9 @@ RCSID("$NetBSD: locore.S,v 1.11 2018/07/17 00:32:28 christos Exp $")
 #else
 #define VERBOSE(string)
 #endif
+
+#define fp	x29
+#define lr	x30
 
 /* load far effective address (pc relative) */
 .macro	ADDR, reg, addr
