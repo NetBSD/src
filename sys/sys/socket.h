@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.124 2018/04/19 21:19:07 christos Exp $	*/
+/*	$NetBSD: socket.h,v 1.125 2018/07/17 05:52:07 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -222,7 +222,8 @@ struct	accept_filter_arg {
 #define	AF_MPLS		33		/* MultiProtocol Label Switching */
 #define	AF_ROUTE	34		/* Internal Routing Protocol */
 #define	AF_CAN		35
-#define	AF_MAX		36
+#define	AF_ETHER	36
+#define	AF_MAX		37
 
 /*
  * Structure used by kernel to store most
@@ -332,6 +333,7 @@ struct sockaddr_storage {
 #define	PF_MPLS		AF_MPLS
 #define	PF_ROUTE	AF_ROUTE
 #define	PF_CAN		AF_CAN
+#define	PF_ETHER	AF_ETHER
 
 #define	PF_MAX		AF_MAX
 

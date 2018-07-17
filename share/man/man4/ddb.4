@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.178 2018/03/19 08:41:21 ozaki-r Exp $
+.\"	$NetBSD: ddb.4,v 1.179 2018/07/17 05:52:07 msaitoh Exp $
 .\"
 .\" Copyright (c) 1997 - 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,7 +56,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd March 19, 2018
+.Dd July 17, 2018
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -673,12 +673,20 @@ Print the mount structure at
 If
 .Cm /f
 is specified, the complete vnode list is printed.
-.It Ic show mbuf Ns Oo Cm /c Oc Ar address
+.It Ic show mbuf Ns Oo Cm /cdv Oc Ar address
 Print the mbuf structure at
 .Ar address .
-If
-.Cm /c
-is specified, the mbufs in the chain are followed.
+Valid modifiers:
+.Bl -tag -width 4n -compact
+.It Cm /c
+The mbufs in the chain are followed.
+.It Cm /d
+The data is dumped.
+.It Cm /v
+Decode the mbuf chain as a packet.
+It currently supports Ethernet, PPP, PPPoE, ARP, IPv4, ICMP, IPv6, ICMP6, TCP
+and UDP.
+.El
 .It Ic show ncache Ar address
 Dump the namecache list associated with vnode at
 .Ar address .

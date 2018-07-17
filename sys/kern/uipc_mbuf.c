@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.215 2018/05/07 09:57:37 maxv Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.216 2018/07/17 05:52:07 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.215 2018/05/07 09:57:37 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.216 2018/07/17 05:52:07 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
@@ -1646,7 +1646,11 @@ void
 m_print(const struct mbuf *m, const char *modif, void (*pr)(const char *, ...))
 {
 	char ch;
+	const struct mbuf *m0 = NULL;
 	bool opt_c = false;
+	bool opt_d = false;
+	bool opt_v = false;
+	int no = 0;
 	char buf[512];
 
 	while ((ch = *(modif++)) != '\0') {
@@ -1654,14 +1658,35 @@ m_print(const struct mbuf *m, const char *modif, void (*pr)(const char *, ...))
 		case 'c':
 			opt_c = true;
 			break;
+		case 'd':
+			opt_d = true;
+			break;
+		case 'v':
+			opt_v = true;
+			m0 = m;
+			break;
 		}
 	}
 
 nextchain:
-	(*pr)("MBUF %p\n", m);
+	(*pr)("MBUF(%d) %p\n", no, m);
 	snprintb(buf, sizeof(buf), M_FLAGS_BITS, (u_int)m->m_flags);
 	(*pr)("  data=%p, len=%d, type=%d, flags=%s\n",
 	    m->m_data, m->m_len, m->m_type, buf);
+	if (opt_d) {
+		int i;
+		unsigned char *p = m->m_data;
+
+		(*pr)("  data:");
+
+		for (i = 0; i < m->m_len; i++) {
+			if (i % 16 == 0)
+				(*pr)("\n");
+			(*pr)(" %02x", p[i]);
+		}
+
+		(*pr)("\n");
+	}
 	(*pr)("  owner=%p, next=%p, nextpkt=%p\n", m->m_owner, m->m_next,
 	    m->m_nextpkt);
 	(*pr)("  leadingspace=%u, trailingspace=%u, readonly=%u\n",
@@ -1697,8 +1722,13 @@ nextchain:
 	if (opt_c) {
 		m = m->m_next;
 		if (m != NULL) {
+			no++;
 			goto nextchain;
 		}
+	}
+
+	if (opt_v && m0) {
+		m_examine(m0, AF_ETHER, modif, pr);
 	}
 }
 #endif /* defined(DDB) */
