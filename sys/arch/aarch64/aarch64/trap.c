@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.4 2018/04/01 04:35:03 ryo Exp $ */
+/* $NetBSD: trap.c,v 1.5 2018/07/17 00:35:51 christos Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.4 2018/04/01 04:35:03 ryo Exp $");
+__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.5 2018/07/17 00:35:51 christos Exp $");
 
 #include "opt_arm_intr_impl.h"
 #include "opt_compat_netbsd32.h"
@@ -217,8 +217,8 @@ trap_el1h_sync(struct trapframe *tf)
 	case ESR_EC_SP_ALIGNMENT:
 	case ESR_EC_ILL_STATE:
 	default:
-		panic("Trap: fatal %s: pc=%016llx sp=%016llx esr=%08x",
-		    trapname, tf->tf_pc, tf->tf_sp, esr);
+		panic("Trap: fatal %s: pc=%016" PRIx64 "sp=%016" PRIx64
+		    "esr=%08x", trapname, tf->tf_pc, tf->tf_sp, esr);
 		break;
 	}
 }
@@ -256,11 +256,11 @@ trap_el0_sync(struct trapframe *tf)
 		break;
 
 	case ESR_EC_PC_ALIGNMENT:
-		do_trapsignal(l, SIGBUS, BUS_ADRALN, tf->tf_pc, esr);
+		do_trapsignal(l, SIGBUS, BUS_ADRALN, (void *)tf->tf_pc, esr);
 		userret(l);
 		break;
 	case ESR_EC_SP_ALIGNMENT:
-		do_trapsignal(l, SIGBUS, BUS_ADRALN, tf->tf_sp, esr);
+		do_trapsignal(l, SIGBUS, BUS_ADRALN, (void *)tf->tf_sp, esr);
 		userret(l);
 		break;
 
@@ -269,7 +269,7 @@ trap_el0_sync(struct trapframe *tf)
 	case ESR_EC_SW_STEP_EL0:
 	case ESR_EC_WTCHPNT_EL0:
 		/* XXX notyet */
-		do_trapsignal(l, SIGTRAP, TRAP_BRKPT, tf->tf_pc, esr);
+		do_trapsignal(l, SIGTRAP, TRAP_BRKPT, (void *)tf->tf_pc, esr);
 		userret(l);
 		break;
 
@@ -277,7 +277,7 @@ trap_el0_sync(struct trapframe *tf)
 		/* XXX notyet */
 	case ESR_EC_UNKNOWN:
 		/* illegal or not implemented instruction */
-		do_trapsignal(l, SIGILL, ILL_ILLTRP, tf->tf_pc, esr);
+		do_trapsignal(l, SIGILL, ILL_ILLTRP, (void *)tf->tf_pc, esr);
 		userret(l);
 		break;
 	}
@@ -324,11 +324,11 @@ trap_el0_32sync(struct trapframe *tf)
 		break;
 
 	case ESR_EC_PC_ALIGNMENT:
-		do_trapsignal(l, SIGBUS, BUS_ADRALN, tf->tf_pc, esr);
+		do_trapsignal(l, SIGBUS, BUS_ADRALN, (void *)tf->tf_pc, esr);
 		userret(l);
 		break;
 	case ESR_EC_SP_ALIGNMENT:
-		do_trapsignal(l, SIGBUS, BUS_ADRALN, tf->tf_sp, esr);
+		do_trapsignal(l, SIGBUS, BUS_ADRALN, (void *)tf->tf_sp, esr);
 		userret(l);
 		break;
 
@@ -345,14 +345,14 @@ trap_el0_32sync(struct trapframe *tf)
 	case ESR_EC_BKPT_INSN_A32:
 		/* XXX notyet */
 		printf("%s:%d: %s\n", __func__, __LINE__, trapname);
-		do_trapsignal(l, SIGILL, ILL_ILLTRP, tf->tf_pc, esr);
+		do_trapsignal(l, SIGILL, ILL_ILLTRP, (void *)tf->tf_pc, esr);
 		userret(l);
 		break;
 #endif /* COMPAT_NETBSD32 */
 	default:
 		/* XXX notyet */
 		printf("%s:%d: %s\n", __func__, __LINE__, trapname);
-		do_trapsignal(l, SIGILL, ILL_ILLTRP, tf->tf_pc, esr);
+		do_trapsignal(l, SIGILL, ILL_ILLTRP, (void *)tf->tf_pc, esr);
 		userret(l);
 		break;
 	}
