@@ -1,4 +1,4 @@
-/*	$NetBSD: fdt_start.S,v 1.1 2018/04/01 04:35:04 ryo Exp $	*/
+/*	$NetBSD: fdt_start.S,v 1.2 2018/07/17 00:37:42 christos Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -32,7 +32,7 @@
 
 #include <aarch64/asm.h>
 
-RCSID("$NetBSD: fdt_start.S,v 1.1 2018/04/01 04:35:04 ryo Exp $")
+RCSID("$NetBSD: fdt_start.S,v 1.2 2018/07/17 00:37:42 christos Exp $")
 
 #define PRINT(string)	\
 	bl xprint;.asciz string;.align 2
@@ -47,7 +47,13 @@ start:
 
 	sub	x10, x10, x9
 
+#ifdef __clang__
 	ldr	x8, =(kern_vtopdiff - start)
+#else
+	ldr     x7, =start
+	ldr	x8, =kern_vtopdiff
+	sub	x8, x8, x7
+#endif
 	add	x8, x8, x9
 	str	x10, [x8]
 
@@ -56,7 +62,12 @@ start:
 	 */
 
 	/* offset of uboot_args from start */
+#ifdef __clang__
 	ldr	x8, =(uboot_args - start)
+#else
+	ldr	x8, =uboot_args
+	sub	x8, x8, x7
+#endif
 	add	x8, x8, x9		/* add load address to offset */
 
 	str	x0, [x8, #(8*0)]
@@ -67,7 +78,12 @@ start:
 	/*
 	 * ARM64 boot protocol has FDT address in x0 *
 	 */
+#ifdef __clang__
 	ldr	x8, =(fdt_addr_r - start)
+#else
+	ldr	x8, =fdt_addr_r
+	sub	x8, x8, x7
+#endif
 	add	x8, x8, x9
 	str	x0, [x8]
 
