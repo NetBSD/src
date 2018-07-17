@@ -8,7 +8,7 @@ declare void @bar() nounwind optsize
 define void @foo() nounwind optsize "no-frame-pointer-elim"="true" {
 ; CHECK-LABEL: foo:
 ; CHECK: push
-; CHECK: mov r7, sp
+; CHECK: add r7, sp
 ; CHECK: sub sp, #4
 entry:
   %m.i = alloca %struct.buf*, align 4
@@ -25,7 +25,7 @@ bb3:
   br i1 undef, label %return, label %bb
 
 return:
-; CHECK: %return
+; CHECK: %bb3
 ; 'mov sp, r7' would have left sp in an invalid state
 ; CHECK-NOT: mov sp, r7
 ; CHECK-NOT: sub, sp, #4

@@ -40,6 +40,50 @@ define i32 @test4(i32 %A, i32 %x) {
   ret i32 %C
 }
 
+; (~X) - (~Y) --> Y - X
+; Also, show that we can handle extra uses and vectors.
+
+declare void @use8(i8)
+
+define i8 @notnotsub(i8 %x, i8 %y) {
+; CHECK-LABEL: @notnotsub(
+; CHECK-NEXT:    [[NX:%.*]] = xor i8 [[X:%.*]], -1
+; CHECK-NEXT:    [[NY:%.*]] = xor i8 [[Y:%.*]], -1
+; CHECK-NEXT:    [[SUB:%.*]] = sub i8 [[Y]], [[X]]
+; CHECK-NEXT:    call void @use8(i8 [[NX]])
+; CHECK-NEXT:    call void @use8(i8 [[NY]])
+; CHECK-NEXT:    ret i8 [[SUB]]
+;
+  %nx = xor i8 %x, -1
+  %ny = xor i8 %y, -1
+  %sub = sub i8 %nx, %ny
+  call void @use8(i8 %nx)
+  call void @use8(i8 %ny)
+  ret i8 %sub
+}
+
+define <2 x i8> @notnotsub_vec(<2 x i8> %x, <2 x i8> %y) {
+; CHECK-LABEL: @notnotsub_vec(
+; CHECK-NEXT:    [[SUB:%.*]] = sub <2 x i8> [[Y:%.*]], [[X:%.*]]
+; CHECK-NEXT:    ret <2 x i8> [[SUB]]
+;
+  %nx = xor <2 x i8> %x, <i8 -1, i8 -1>
+  %ny = xor <2 x i8> %y, <i8 -1, i8 -1>
+  %sub = sub <2 x i8> %nx, %ny
+  ret <2 x i8> %sub
+}
+
+define <2 x i8> @notnotsub_vec_undef_elts(<2 x i8> %x, <2 x i8> %y) {
+; CHECK-LABEL: @notnotsub_vec_undef_elts(
+; CHECK-NEXT:    [[SUB:%.*]] = sub <2 x i8> [[Y:%.*]], [[X:%.*]]
+; CHECK-NEXT:    ret <2 x i8> [[SUB]]
+;
+  %nx = xor <2 x i8> %x, <i8 undef, i8 -1>
+  %ny = xor <2 x i8> %y, <i8 -1, i8 undef>
+  %sub = sub <2 x i8> %nx, %ny
+  ret <2 x i8> %sub
+}
+
 define i32 @test5(i32 %A, i32 %B, i32 %C) {
 ; CHECK-LABEL: @test5(
 ; CHECK-NEXT:    [[D1:%.*]] = sub i32 [[C:%.*]], [[B:%.*]]
@@ -100,27 +144,6 @@ define i32 @test9(i32 %A) {
   %B = mul i32 3, %A
   %C = sub i32 %A, %B
   ret i32 %C
-}
-
-define i32 @test10(i32 %A, i32 %B) {
-; CHECK-LABEL: @test10(
-; CHECK-NEXT:    [[E:%.*]] = mul i32 [[A:%.*]], [[B:%.*]]
-; CHECK-NEXT:    ret i32 [[E]]
-;
-  %C = sub i32 0, %A
-  %D = sub i32 0, %B
-  %E = mul i32 %C, %D
-  ret i32 %E
-}
-
-define i32 @test10a(i32 %A) {
-; CHECK-LABEL: @test10a(
-; CHECK-NEXT:    [[E:%.*]] = mul i32 [[A:%.*]], -7
-; CHECK-NEXT:    ret i32 [[E]]
-;
-  %C = sub i32 0, %A
-  %E = mul i32 %C, 7
-  ret i32 %E
 }
 
 define i1 @test11(i8 %A, i8 %B) {
@@ -225,15 +248,6 @@ define i64 @test18(i64 %Y) {
   %tmp.12 = shl i64 %Y, 2
   %tmp.8 = sub i64 %tmp.4, %tmp.12
   ret i64 %tmp.8
-}
-
-define i32 @test19(i32 %X, i32 %Y) {
-; CHECK-LABEL: @test19(
-; CHECK-NEXT:    ret i32 [[X:%.*]]
-;
-  %Z = sub i32 %X, %Y
-  %Q = add i32 %Z, %Y
-  ret i32 %Q
 }
 
 define i1 @test20(i32 %g, i32 %h) {
@@ -570,26 +584,6 @@ define <2 x i64> @test32(<2 x i64> %A) {
   ret <2 x i64> %sub
 }
 
-define <2 x i64> @test33(<2 x i1> %A) {
-; CHECK-LABEL: @test33(
-; CHECK-NEXT:    [[SUB:%.*]] = sext <2 x i1> [[A:%.*]] to <2 x i64>
-; CHECK-NEXT:    ret <2 x i64> [[SUB]]
-;
-  %ext = zext <2 x i1> %A to <2 x i64>
-  %sub = sub <2 x i64> zeroinitializer, %ext
-  ret <2 x i64> %sub
-}
-
-define <2 x i64> @test34(<2 x i1> %A) {
-; CHECK-LABEL: @test34(
-; CHECK-NEXT:    [[SUB:%.*]] = zext <2 x i1> [[A:%.*]] to <2 x i64>
-; CHECK-NEXT:    ret <2 x i64> [[SUB]]
-;
-  %ext = sext <2 x i1> %A to <2 x i64>
-  %sub = sub <2 x i64> zeroinitializer, %ext
-  ret <2 x i64> %sub
-}
-
 define <2 x i64> @test35(<2 x i64> %A) {
 ; CHECK-LABEL: @test35(
 ; CHECK-NEXT:    [[SUB:%.*]] = mul <2 x i64> [[A:%.*]], <i64 -2, i64 -3>
@@ -771,58 +765,6 @@ define i32 @test48(i1 %A, i32 %B, i32 %C, i32 %D) {
   ret i32 %sub
 }
 
-; Zext+add is more canonical than sext+sub.
-
-define i8 @bool_sext_sub(i8 %x, i1 %y) {
-; CHECK-LABEL: @bool_sext_sub(
-; CHECK-NEXT:    [[TMP1:%.*]] = zext i1 [[Y:%.*]] to i8
-; CHECK-NEXT:    [[SUB:%.*]] = add i8 [[TMP1]], [[X:%.*]]
-; CHECK-NEXT:    ret i8 [[SUB]]
-;
-  %sext = sext i1 %y to i8
-  %sub = sub i8 %x, %sext
-  ret i8 %sub
-}
-
-; Vectors get the same transform.
-
-define <2 x i8> @bool_sext_sub_vec(<2 x i8> %x, <2 x i1> %y) {
-; CHECK-LABEL: @bool_sext_sub_vec(
-; CHECK-NEXT:    [[TMP1:%.*]] = zext <2 x i1> [[Y:%.*]] to <2 x i8>
-; CHECK-NEXT:    [[SUB:%.*]] = add <2 x i8> [[TMP1]], [[X:%.*]]
-; CHECK-NEXT:    ret <2 x i8> [[SUB]]
-;
-  %sext = sext <2 x i1> %y to <2 x i8>
-  %sub = sub <2 x i8> %x, %sext
-  ret <2 x i8> %sub
-}
-
-; NSW is preserved.
-
-define <2 x i8> @bool_sext_sub_vec_nsw(<2 x i8> %x, <2 x i1> %y) {
-; CHECK-LABEL: @bool_sext_sub_vec_nsw(
-; CHECK-NEXT:    [[TMP1:%.*]] = zext <2 x i1> [[Y:%.*]] to <2 x i8>
-; CHECK-NEXT:    [[SUB:%.*]] = add nsw <2 x i8> [[TMP1]], [[X:%.*]]
-; CHECK-NEXT:    ret <2 x i8> [[SUB]]
-;
-  %sext = sext <2 x i1> %y to <2 x i8>
-  %sub = sub nsw <2 x i8> %x, %sext
-  ret <2 x i8> %sub
-}
-
-; We favor the canonical zext+add over keeping the NUW.
-
-define i8 @bool_sext_sub_nuw(i8 %x, i1 %y) {
-; CHECK-LABEL: @bool_sext_sub_nuw(
-; CHECK-NEXT:    [[TMP1:%.*]] = zext i1 [[Y:%.*]] to i8
-; CHECK-NEXT:    [[SUB:%.*]] = add i8 [[TMP1]], [[X:%.*]]
-; CHECK-NEXT:    ret i8 [[SUB]]
-;
-  %sext = sext i1 %y to i8
-  %sub = sub nuw i8 %x, %sext
-  ret i8 %sub
-}
-
 define i32 @test49(i32 %X) {
 ; CHECK-LABEL: @test49(
 ; CHECK-NEXT:    [[SUB:%.*]] = sub i32 1, [[X:%.*]]
@@ -989,3 +931,128 @@ define i32 @test57(i32 %A, i32 %B) {
   %X = add i32 %B, %A
   %Y = sub i32 %A, %X
   ret i32 %Y                                                                                                                                                                                                                                             }
+
+@dummy_global1 = external global i8*
+@dummy_global2 = external global i8*
+
+define i64 @test58([100 x [100 x i8]]* %foo, i64 %i, i64 %j) {
+; CHECK-LABEL: @test58(
+; CHECK-NEXT:    [[TMP1:%.*]] = add i64 [[J:%.*]], 4200
+; CHECK-NEXT:    [[TMP2:%.*]] = add i64 [[I:%.*]], 4200
+; CHECK-NEXT:    [[TMP3:%.*]] = sub i64 [[TMP2:%.*]] [[TMP1:%.*]]
+; CHECK-NEXT:    ret i64 [[TMP3]]
+;
+; Note the reassociate pass and another instcombine pass will further optimize this to
+; "%sub = i64 %i, %j, ret i64 %sub"
+;
+; gep1 and gep2 have only one use
+  %gep1 = getelementptr inbounds [100 x [100 x i8]], [100 x [100 x i8]]* %foo, i64 0, i64 42, i64 %i
+  %gep2 = getelementptr inbounds [100 x [100 x i8]], [100 x [100 x i8]]* %foo, i64 0, i64 42, i64 %j
+  %cast1 = ptrtoint i8* %gep1 to i64
+  %cast2 = ptrtoint i8* %gep2 to i64
+  %sub = sub i64 %cast1, %cast2
+  ret i64 %sub
+}
+
+define i64 @test59([100 x [100 x i8]]* %foo, i64 %i) {
+; CHECK-LABEL: @test59(
+; CHECK-NEXT:    [[GEP1:%.*]] = getelementptr inbounds [100 x [100 x i8]], [100 x [100 x i8]]* %foo, i64 0, i64 42, i64 %i
+; CHECK-NEXT:    [[GEP2:%.*]] = getelementptr inbounds [100 x [100 x i8]], [100 x [100 x i8]]* %foo, i64 0, i64 42, i64 0
+; CHECK-NEXT:    store i8* [[GEP1]], i8** @dummy_global1, align 8
+; CHECK-NEXT:    store i8* [[GEP2]], i8** @dummy_global2, align 8
+; CHECK-NEXT:    ret i64 %i
+;
+; gep1 and gep2 have more than one uses
+  %gep1 = getelementptr inbounds [100 x [100 x i8]], [100 x [100 x i8]]* %foo, i64 0, i64 42, i64 %i
+  %gep2 = getelementptr inbounds [100 x [100 x i8]], [100 x [100 x i8]]* %foo, i64 0, i64 42, i64 0
+  %cast1 = ptrtoint i8* %gep1 to i64
+  %cast2 = ptrtoint i8* %gep2 to i64
+  %sub = sub i64 %cast1, %cast2
+  store i8* %gep1, i8** @dummy_global1
+  store i8* %gep2, i8** @dummy_global2
+  ret i64 %sub
+}
+
+define i64 @test60([100 x [100 x i8]]* %foo, i64 %i, i64 %j) {
+; CHECK-LABEL: @test60(
+; CHECK-NEXT:    [[GEP1:%.*]] = getelementptr inbounds [100 x [100 x i8]], [100 x [100 x i8]]* %foo, i64 0, i64 %j, i64 %i
+; CHECK-NEXT:    [[GEP2:%.*]] = getelementptr inbounds [100 x [100 x i8]], [100 x [100 x i8]]* %foo, i64 0, i64 42, i64 0
+; CHECK-NEXT:    [[CAST1:%.*]] = ptrtoint i8* [[GEP1]] to i64
+; CHECK-NEXT:    [[CAST2:%.*]] = ptrtoint i8* [[GEP2]] to i64
+; CHECK-NEXT:    [[SUB:%.*]] = sub i64 [[CAST1]], [[CAST2]]
+; CHECK-NEXT:    store i8* [[GEP1]], i8** @dummy_global1, align 8
+; CHECK-NEXT:    ret i64 [[SUB]]
+;
+; gep1 has a non-constant index and more than one uses. Shouldn't duplicate the arithmetic.
+  %gep1 = getelementptr inbounds [100 x [100 x i8]], [100 x [100 x i8]]* %foo, i64 0, i64 %j, i64 %i
+  %gep2 = getelementptr inbounds [100 x [100 x i8]], [100 x [100 x i8]]* %foo, i64 0, i64 42, i64 0
+  %cast1 = ptrtoint i8* %gep1 to i64
+  %cast2 = ptrtoint i8* %gep2 to i64
+  %sub = sub i64 %cast1, %cast2
+  store i8* %gep1, i8** @dummy_global1
+  ret i64 %sub
+}
+
+define i64 @test61([100 x [100 x i8]]* %foo, i64 %i, i64 %j) {
+; CHECK-LABEL: @test61(
+; CHECK-NEXT:    [[GEP1:%.*]] = getelementptr inbounds [100 x [100 x i8]], [100 x [100 x i8]]* %foo, i64 0, i64 42, i64 0
+; CHECK-NEXT:    [[GEP2:%.*]] = getelementptr inbounds [100 x [100 x i8]], [100 x [100 x i8]]* %foo, i64 0, i64 %j, i64 %i
+; CHECK-NEXT:    [[CAST1:%.*]] = ptrtoint i8* [[GEP1]] to i64
+; CHECK-NEXT:    [[CAST2:%.*]] = ptrtoint i8* [[GEP2]] to i64
+; CHECK-NEXT:    [[SUB:%.*]] = sub i64 [[CAST1]], [[CAST2]]
+; CHECK-NEXT:    store i8* [[GEP2]], i8** @dummy_global2, align 8
+; CHECK-NEXT:    ret i64 [[SUB]]
+;
+; gep2 has a non-constant index and more than one uses. Shouldn't duplicate the arithmetic.
+  %gep1 = getelementptr inbounds [100 x [100 x i8]], [100 x [100 x i8]]* %foo, i64 0, i64 42, i64 0
+  %gep2 = getelementptr inbounds [100 x [100 x i8]], [100 x [100 x i8]]* %foo, i64 0, i64 %j, i64 %i
+  %cast1 = ptrtoint i8* %gep1 to i64
+  %cast2 = ptrtoint i8* %gep2 to i64
+  %sub = sub i64 %cast1, %cast2
+  store i8* %gep2, i8** @dummy_global2
+  ret i64 %sub
+}
+
+define i32 @test62(i32 %A) {
+; CHECK-LABEL: @test62(
+; CHECK-NEXT:    [[B:%.*]] = shl i32 [[A:%.*]], 1
+; CHECK-NEXT:    [[C:%.*]] = sub i32 2, [[B]]
+; CHECK-NEXT:    ret i32 [[C]]
+;
+  %B = sub i32 1, %A
+  %C = shl i32 %B, 1
+  ret i32 %C
+}
+
+define <2 x i32> @test62vec(<2 x i32> %A) {
+; CHECK-LABEL: @test62vec(
+; CHECK-NEXT:    [[B:%.*]] = shl <2 x i32> [[A:%.*]], <i32 1, i32 1>
+; CHECK-NEXT:    [[C:%.*]] = sub <2 x i32> <i32 2, i32 2>, [[B]]
+; CHECK-NEXT:    ret <2 x i32> [[C]]
+;
+  %B = sub <2 x i32> <i32 1, i32 1>, %A
+  %C = shl <2 x i32> %B, <i32 1, i32 1>
+  ret <2 x i32> %C
+}
+
+define i32 @test63(i32 %A) {
+; CHECK-LABEL: @test63(
+; CHECK-NEXT:    [[B:%.*]] = shl i32 [[A:%.*]], 1
+; CHECK-NEXT:    ret i32 [[B]]
+;
+  %B = sub i32 1, %A
+  %C = shl i32 %B, 1
+  %D = sub i32 2, %C
+  ret i32 %D
+}
+
+define <2 x i32> @test63vec(<2 x i32> %A) {
+; CHECK-LABEL: @test63vec(
+; CHECK-NEXT:    [[B:%.*]] = shl <2 x i32> [[A:%.*]], <i32 1, i32 1>
+; CHECK-NEXT:    ret <2 x i32> [[B]]
+;
+  %B = sub <2 x i32> <i32 1, i32 1>, %A
+  %C = shl <2 x i32> %B, <i32 1, i32 1>
+  %D = sub <2 x i32> <i32 2, i32 2>, %C
+  ret <2 x i32> %D
+}

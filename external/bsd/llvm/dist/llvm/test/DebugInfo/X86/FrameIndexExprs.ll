@@ -1,10 +1,9 @@
 ; PR31381: An assertion in the DWARF backend when fragments in MMI slots are
 ; sorted by largest offset first.
-; RUN: llc -mtriple=x86_64-apple-darwin -filetype=obj < %s | llvm-dwarfdump -debug-dump=info - | FileCheck %s
+; RUN: llc -mtriple=x86_64-apple-darwin -filetype=obj < %s | llvm-dwarfdump -v -debug-info - | FileCheck %s
 ; CHECK: DW_TAG_formal_parameter
 ; CHECK: DW_TAG_formal_parameter
-; CHECK-NEXT: DW_AT_location [DW_FORM_exprloc]  (<0xa> 91 78 93 03 93 06 91 7d 93 03 )
-;           fbreg -8, piece 0x00000003, piece 0x00000006, fbreg -3, piece 0x00000003 
+; CHECK-NEXT: DW_AT_location [DW_FORM_exprloc] (DW_OP_fbreg -8, DW_OP_piece 0x3, DW_OP_piece 0x6, DW_OP_fbreg -3, DW_OP_piece 0x3)
 ; CHECK-NEXT: DW_AT_abstract_origin {{.*}}"p"
 source_filename = "bugpoint-reduced-simplified.ll"
 target triple = "x86_64-apple-darwin"
@@ -47,23 +46,23 @@ attributes #0 = { nounwind readnone }
 !llvm.dbg.cu = !{!2}
 !llvm.module.flags = !{!9, !10, !11}
 
-!0 = !DIGlobalVariableExpression(var: !1)
+!0 = !DIGlobalVariableExpression(var: !1, expr: !DIExpression())
 !1 = distinct !DIGlobalVariable(name: "f", scope: !2, file: !3, line: 8, type: !8, isLocal: false, isDefinition: true)
 !2 = distinct !DICompileUnit(language: DW_LANG_C99, file: !3, isOptimized: true, runtimeVersion: 0, emissionKind: FullDebug, enums: !4, globals: !5)
 !3 = !DIFile(filename: "PR31381.c", directory: "/")
 !4 = !{}
 !5 = !{!0, !6}
-!6 = !DIGlobalVariableExpression(var: !7)
+!6 = !DIGlobalVariableExpression(var: !7, expr: !DIExpression())
 !7 = distinct !DIGlobalVariable(name: "h", scope: !2, file: !3, line: 8, type: !8, isLocal: false, isDefinition: true)
 !8 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
 !9 = !{i32 2, !"Dwarf Version", i32 4}
 !10 = !{i32 2, !"Debug Info Version", i32 3}
 !11 = !{i32 1, !"PIC Level", i32 2}
-!12 = distinct !DISubprogram(name: "fn4", scope: !3, file: !3, line: 31, type: !13, isLocal: false, isDefinition: true, scopeLine: 32, isOptimized: true, unit: !2, variables: !4)
+!12 = distinct !DISubprogram(name: "fn4", scope: !3, file: !3, line: 31, type: !13, isLocal: false, isDefinition: true, scopeLine: 32, isOptimized: true, unit: !2, retainedNodes: !4)
 !13 = !DISubroutineType(types: !14)
 !14 = !{null}
 !15 = !DILocalVariable(name: "p", arg: 1, scope: !16, file: !3, line: 19, type: !19)
-!16 = distinct !DISubprogram(name: "fn2", scope: !3, file: !3, line: 19, type: !17, isLocal: false, isDefinition: true, scopeLine: 20, flags: DIFlagPrototyped, isOptimized: true, unit: !2, variables: !25)
+!16 = distinct !DISubprogram(name: "fn2", scope: !3, file: !3, line: 19, type: !17, isLocal: false, isDefinition: true, scopeLine: 20, flags: DIFlagPrototyped, isOptimized: true, unit: !2, retainedNodes: !25)
 !17 = !DISubroutineType(types: !18)
 !18 = !{null, !19}
 !19 = distinct !DICompositeType(tag: DW_TAG_structure_type, name: "S", file: !3, line: 1, size: 96, elements: !20)
@@ -76,7 +75,7 @@ attributes #0 = { nounwind readnone }
 !26 = !DIExpression(DW_OP_LLVM_fragment, 72, 24)
 !27 = !DILocation(line: 19, column: 20, scope: !16, inlinedAt: !28)
 !28 = distinct !DILocation(line: 27, column: 3, scope: !29, inlinedAt: !30)
-!29 = distinct !DISubprogram(name: "fn3", scope: !3, file: !3, line: 24, type: !13, isLocal: false, isDefinition: true, scopeLine: 25, isOptimized: true, unit: !2, variables: !4)
+!29 = distinct !DISubprogram(name: "fn3", scope: !3, file: !3, line: 24, type: !13, isLocal: false, isDefinition: true, scopeLine: 25, isOptimized: true, unit: !2, retainedNodes: !4)
 !30 = distinct !DILocation(line: 34, column: 7, scope: !31)
 !31 = distinct !DILexicalBlock(scope: !12, file: !3, line: 33, column: 5)
 !32 = !DIExpression(DW_OP_LLVM_fragment, 0, 24)

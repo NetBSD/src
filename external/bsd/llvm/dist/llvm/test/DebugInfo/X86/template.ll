@@ -1,6 +1,6 @@
 ; REQUIRES: object-emission
 
-; RUN: llc -mtriple=x86_64-linux -O0 -filetype=obj < %s | llvm-dwarfdump -debug-dump=info - | FileCheck %s
+; RUN: llc -mtriple=x86_64-linux -O0 -filetype=obj < %s | llvm-dwarfdump -v -debug-info - | FileCheck %s
 
 ; IR generated with `clang++ -g -emit-llvm -S` from the following code:
 ; template<int x, int*, template<typename> class y, decltype(nullptr) n, int ...z>  int func() { return 3; }
@@ -29,7 +29,7 @@
 ; The address of the global 'glbl', followed by DW_OP_stack_value (9f), to use
 ; the value immediately, rather than indirecting through the address.
 
-; CHECK-NEXT: DW_AT_location [DW_FORM_exprloc]{{ *}}(<0xa> 03 00 00 00 00 00 00 00 00 9f )
+; CHECK-NEXT: DW_AT_location [DW_FORM_exprloc]{{ *}}(DW_OP_addr 0x0, DW_OP_stack_value)
 ; CHECK-NOT: NULL
 
 ; CHECK: DW_TAG_GNU_template_template_param
@@ -91,11 +91,11 @@ attributes #0 = { nounwind uwtable "less-precise-fpmad"="false" "no-frame-pointe
 !llvm.module.flags = !{!14, !15}
 !llvm.ident = !{!16}
 
-!0 = !DIGlobalVariableExpression(var: !1)
+!0 = !DIGlobalVariableExpression(var: !1, expr: !DIExpression())
 !1 = !DIGlobalVariable(name: "glbl", scope: null, file: !2, line: 3, type: !3, isLocal: false, isDefinition: true)
 !2 = !DIFile(filename: "template.cpp", directory: "/tmp/dbginfo")
 !3 = !DIBasicType(name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
-!4 = !DIGlobalVariableExpression(var: !5)
+!4 = !DIGlobalVariableExpression(var: !5, expr: !DIExpression())
 !5 = !DIGlobalVariable(name: "n", scope: null, file: !2, line: 4, type: !6, isLocal: false, isDefinition: true)
 !6 = !DICompositeType(tag: DW_TAG_structure_type, name: "nested", scope: !7, file: !2, line: 2, size: 8, align: 8, elements: !8, identifier: "_ZTSN6y_implIiE6nestedE")
 !7 = !DICompositeType(tag: DW_TAG_structure_type, name: "y_impl<int>", file: !2, line: 2, size: 8, align: 8, elements: !8, templateParams: !9, identifier: "_ZTS6y_implIiE")
@@ -108,11 +108,11 @@ attributes #0 = { nounwind uwtable "less-precise-fpmad"="false" "no-frame-pointe
 !14 = !{i32 2, !"Dwarf Version", i32 4}
 !15 = !{i32 2, !"Debug Info Version", i32 3}
 !16 = !{!"clang version 3.6.0 (trunk 224394) (llvm/trunk 224384)"}
-!17 = distinct !DISubprogram(name: "__cxx_global_var_init", scope: !2, file: !2, line: 3, type: !18, isLocal: true, isDefinition: true, scopeLine: 3, flags: DIFlagPrototyped, isOptimized: false, unit: !11, variables: !8)
+!17 = distinct !DISubprogram(name: "__cxx_global_var_init", scope: !2, file: !2, line: 3, type: !18, isLocal: true, isDefinition: true, scopeLine: 3, flags: DIFlagPrototyped, isOptimized: false, unit: !11, retainedNodes: !8)
 !18 = !DISubroutineType(types: !19)
 !19 = !{null}
 !20 = !DILocation(line: 3, column: 12, scope: !17)
-!21 = distinct !DISubprogram(name: "func<3, &glbl, y_impl, nullptr, 1, 2>", linkageName: "_Z4funcILi3EXadL_Z4glblEE6y_implLDn0EJLi1ELi2EEEiv", scope: !2, file: !2, line: 1, type: !22, isLocal: false, isDefinition: true, scopeLine: 1, flags: DIFlagPrototyped, isOptimized: false, unit: !11, templateParams: !24, variables: !8)
+!21 = distinct !DISubprogram(name: "func<3, &glbl, y_impl, nullptr, 1, 2>", linkageName: "_Z4funcILi3EXadL_Z4glblEE6y_implLDn0EJLi1ELi2EEEiv", scope: !2, file: !2, line: 1, type: !22, isLocal: false, isDefinition: true, scopeLine: 1, flags: DIFlagPrototyped, isOptimized: false, unit: !11, templateParams: !24, retainedNodes: !8)
 !22 = !DISubroutineType(types: !23)
 !23 = !{!3}
 !24 = !{!25, !26, !28, !29, !31}
@@ -128,6 +128,6 @@ attributes #0 = { nounwind uwtable "less-precise-fpmad"="false" "no-frame-pointe
 !34 = !DITemplateValueParameter(type: !3, value: i32 2)
 !35 = !DILocation(line: 1, column: 96, scope: !21)
 !36 = !DILocation(line: 0, scope: !37)
-!37 = distinct !DISubprogram(linkageName: "_GLOBAL__sub_I_template.cpp", scope: !2, file: !2, type: !38, isLocal: true, isDefinition: true, flags: DIFlagArtificial, isOptimized: false, unit: !11, variables: !8)
+!37 = distinct !DISubprogram(linkageName: "_GLOBAL__sub_I_template.cpp", scope: !2, file: !2, type: !38, isLocal: true, isDefinition: true, flags: DIFlagArtificial, isOptimized: false, unit: !11, retainedNodes: !8)
 !38 = !DISubroutineType(types: !8)
 

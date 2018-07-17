@@ -1,4 +1,4 @@
-; RUN: llc < %s -filetype=obj | llvm-dwarfdump - -debug-dump=info | FileCheck %s
+; RUN: llc < %s -filetype=obj | llvm-dwarfdump -v - --debug-info | FileCheck %s
 ;
 ; IR module created as follows:
 ;   clang -emit-llvm -S -O2 foo.cpp -o foo.ll -g
@@ -38,7 +38,7 @@ target triple = "x86_64-unknown-linux-gnu"
 ; Function Attrs: uwtable
 define void @_Z3fooi(i32 %param) local_unnamed_addr #0 !dbg !8 {
 entry:
-  tail call void @llvm.dbg.value(metadata i32 %param, i64 0, metadata !13, metadata !14), !dbg !15
+  tail call void @llvm.dbg.value(metadata i32 %param, metadata !13, metadata !14), !dbg !15
   %tobool = icmp eq i32 %param, 0, !dbg !16
   br i1 %tobool, label %if.end, label %if.then, !dbg !18
 
@@ -51,14 +51,14 @@ if.end:                                           ; preds = %if.then, %entry
 }
 
 ; Function Attrs: nounwind readnone
-declare void @llvm.dbg.value(metadata, i64, metadata, metadata) #1
+declare void @llvm.dbg.value(metadata, metadata, metadata) #1
 
 declare void @_Z1fv() local_unnamed_addr #2
 
 ; Function Attrs: nounwind readnone uwtable
 define void @_Z3barv() local_unnamed_addr #3 !dbg !22 {
 entry:
-  tail call void @llvm.dbg.value(metadata i32 0, i64 0, metadata !13, metadata !14), !dbg !24
+  tail call void @llvm.dbg.value(metadata i32 0, metadata !13, metadata !14), !dbg !24
   ret void, !dbg !26
 }
 
@@ -79,7 +79,7 @@ attributes #3 = { nounwind readnone uwtable }
 !5 = !{!"clang version 5.0.0 (trunk 293745)"}
 !6 = !{i32 2, !"Dwarf Version", i32 4}
 !7 = !{i32 2, !"Debug Info Version", i32 3}
-!8 = distinct !DISubprogram(name: "foo", linkageName: "_Z3fooi", scope: !1, file: !1, line: 2, type: !9, isLocal: false, isDefinition: true, scopeLine: 2, flags: DIFlagPrototyped, isOptimized: true, unit: !0, variables: !12)
+!8 = distinct !DISubprogram(name: "foo", linkageName: "_Z3fooi", scope: !1, file: !1, line: 2, type: !9, isLocal: false, isDefinition: true, scopeLine: 2, flags: DIFlagPrototyped, isOptimized: true, unit: !0, retainedNodes: !12)
 !9 = !DISubroutineType(types: !10)
 !10 = !{null, !11}
 !11 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
@@ -93,7 +93,7 @@ attributes #3 = { nounwind readnone uwtable }
 !19 = !DILocation(line: 3, column: 14, scope: !20)
 !20 = !DILexicalBlockFile(scope: !17, file: !1, discriminator: 1)
 !21 = !DILocation(line: 4, column: 1, scope: !8)
-!22 = distinct !DISubprogram(name: "bar", scope: !4, file: !4, line: 2, type: !23, isLocal: false, isDefinition: true, scopeLine: 2, flags: DIFlagPrototyped, isOptimized: true, unit: !3, variables: !2)
+!22 = distinct !DISubprogram(name: "bar", scope: !4, file: !4, line: 2, type: !23, isLocal: false, isDefinition: true, scopeLine: 2, flags: DIFlagPrototyped, isOptimized: true, unit: !3, retainedNodes: !2)
 !23 = !DISubroutineType(types: !2)
 !24 = !DILocation(line: 2, column: 14, scope: !8, inlinedAt: !25)
 !25 = distinct !DILocation(line: 3, column: 3, scope: !22)

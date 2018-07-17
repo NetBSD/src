@@ -11,7 +11,6 @@
 ; GCN-NEXT: ; %else
 
 ; GCN: s_and_saveexec_b64 [[SAVE_EXEC:s\[[0-9]+:[0-9]+\]]], vcc
-; GCN-NEXT: s_xor_b64 [[XOR_EXEC:s\[[0-9]+:[0-9]+\]]], exec, [[SAVE_EXEC]]
 ; GCN-NEXT: ; mask branch [[FLOW:BB[0-9]+_[0-9]+]]
 
 ; GCN: BB{{[0-9]+_[0-9]+}}: ; %unreachable.bb
@@ -30,21 +29,21 @@ entry:
   %i.f.i = bitcast i32 %i.i to float
   %j.f.i = bitcast i32 %j.i to float
   %p1.i = call float @llvm.amdgcn.interp.p1(float %i.f.i, i32 1, i32 0, i32 %arg5) #2
-  %p2.i = call float @llvm.amdgcn.interp.p2(float %p1.i, float %j.f.i, i32 1, i32 0, i32 %arg5) #2
-  %p87 = fmul float undef, %p2.i
-  %p88 = fadd float %p87, undef
-  %p93 = fadd float %p88, undef
-  %p97 = fmul float %p93, undef
-  %p102 = fsub float %p97, undef
-  %p104 = fmul float %p102, undef
+  %p2 = call float @llvm.amdgcn.interp.p2(float %p1.i, float %j.f.i, i32 1, i32 0, i32 %arg5) #2
+  %p87 = fmul float %p2, %p2
+  %p88 = fadd float %p87, %p87
+  %p93 = fadd float %p88, %p88
+  %p97 = fmul float %p93, %p93
+  %p102 = fsub float %p97, %p97
+  %p104 = fmul float %p102, %p102
   %p106 = fadd float 0.000000e+00, %p104
-  %p108 = fadd float undef, %p106
+  %p108 = fadd float %p106, %p106
   %uniform.cond = icmp slt i32 %arg17, 0
   br i1 %uniform.cond, label %ret.bb, label %else
 
 else:                                             ; preds = %main_body
   %p124 = fmul float %p108, %p108
-  %p125 = fsub float %p124, undef
+  %p125 = fsub float %p124, %p124
   %divergent.cond = fcmp olt float %p125, 0.000000e+00
   br i1 %divergent.cond, label %ret.bb, label %unreachable.bb
 
@@ -58,9 +57,8 @@ ret.bb:                                          ; preds = %else, %main_body
 ; GCN-LABEL: {{^}}uniform_br_nontrivial_ret_divergent_br_nontrivial_unreachable:
 ; GCN: s_cbranch_vccnz [[RET_BB:BB[0-9]+_[0-9]+]]
 
-; GCN: ; BB#{{[0-9]+}}: ; %else
+; GCN: ; %bb.{{[0-9]+}}: ; %else
 ; GCN: s_and_saveexec_b64 [[SAVE_EXEC:s\[[0-9]+:[0-9]+\]]], vcc
-; GCN-NEXT: s_xor_b64 [[XOR_EXEC:s\[[0-9]+:[0-9]+\]]], exec, [[SAVE_EXEC]]
 ; GCN-NEXT: ; mask branch [[FLOW1:BB[0-9]+_[0-9]+]]
 
 ; GCN-NEXT:  ; %unreachable.bb
@@ -82,21 +80,21 @@ main_body:
   %i.f.i = bitcast i32 %i.i to float
   %j.f.i = bitcast i32 %j.i to float
   %p1.i = call float @llvm.amdgcn.interp.p1(float %i.f.i, i32 1, i32 0, i32 %arg5) #2
-  %p2.i = call float @llvm.amdgcn.interp.p2(float %p1.i, float %j.f.i, i32 1, i32 0, i32 %arg5) #2
-  %p87 = fmul float undef, %p2.i
-  %p88 = fadd float %p87, undef
-  %p93 = fadd float %p88, undef
-  %p97 = fmul float %p93, undef
-  %p102 = fsub float %p97, undef
-  %p104 = fmul float %p102, undef
+  %p2 = call float @llvm.amdgcn.interp.p2(float %p1.i, float %j.f.i, i32 1, i32 0, i32 %arg5) #2
+  %p87 = fmul float %p2, %p2
+  %p88 = fadd float %p87, %p87
+  %p93 = fadd float %p88, %p88
+  %p97 = fmul float %p93, %p93
+  %p102 = fsub float %p97, %p97
+  %p104 = fmul float %p102, %p102
   %p106 = fadd float 0.000000e+00, %p104
-  %p108 = fadd float undef, %p106
+  %p108 = fadd float %p106, %p106
   %uniform.cond = icmp slt i32 %arg18, 0
   br i1 %uniform.cond, label %ret.bb, label %else
 
 else:                                             ; preds = %main_body
   %p124 = fmul float %p108, %p108
-  %p125 = fsub float %p124, undef
+  %p125 = fsub float %p124, %p124
   %divergent.cond = fcmp olt float %p125, 0.000000e+00
   br i1 %divergent.cond, label %ret.bb, label %unreachable.bb
 

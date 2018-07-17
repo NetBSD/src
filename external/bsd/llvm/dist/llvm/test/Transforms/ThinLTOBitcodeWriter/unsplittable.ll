@@ -5,6 +5,7 @@
 ; copy of the regular module.
 ; RUN: diff %t %t2
 
+; BCA: <FULL_LTO_GLOBALVAL_SUMMARY_BLOCK
 ; BCA-NOT: <GLOBALVAL_SUMMARY_BLOCK
 
 ; CHECK: @llvm.global_ctors = appending global
@@ -20,5 +21,14 @@ define internal void @f() {
   call void @sink(i8* @g)
   ret void
 }
+
+$h = comdat any
+; CHECK: define void @h() comdat
+define void @h() comdat {
+  ret void
+}
+
+; CHECK: !llvm.module.flags = !{![[FLAG:[0-9]+]]}
+; CHECK: ![[FLAG]] = !{i32 1, !"ThinLTO", i32 0}
 
 !0 = !{i32 0, !"typeid"}

@@ -1,6 +1,6 @@
 ; REQUIRES: object-emission
 
-; RUN: %llc_dwarf -O0 -filetype=obj %s -o - | llvm-dwarfdump -debug-dump=info - | FileCheck %s
+; RUN: %llc_dwarf -O0 -filetype=obj %s -o - | llvm-dwarfdump -v -debug-info - | FileCheck %s
 ; Use correct signedness when emitting constants of derived (sugared) types.
 
 ; CHECK: DW_AT_const_value [DW_FORM_sdata] (42)
@@ -10,14 +10,14 @@
 ; Function Attrs: uwtable
 define void @main() #0 !dbg !4 {
 entry:
-  tail call void @llvm.dbg.value(metadata i32 42, i64 0, metadata !10, metadata !DIExpression()), !dbg !21
-  tail call void @llvm.dbg.value(metadata i32 117, i64 0, metadata !12, metadata !DIExpression()), !dbg !24
-  tail call void @llvm.dbg.value(metadata i16 7, i64 0, metadata !15, metadata !DIExpression()), !dbg !27
+  tail call void @llvm.dbg.value(metadata i32 42, metadata !10, metadata !DIExpression()), !dbg !21
+  tail call void @llvm.dbg.value(metadata i32 117, metadata !12, metadata !DIExpression()), !dbg !24
+  tail call void @llvm.dbg.value(metadata i16 7, metadata !15, metadata !DIExpression()), !dbg !27
   ret void, !dbg !29
 }
 
 ; Function Attrs: nounwind readnone
-declare void @llvm.dbg.value(metadata, i64, metadata, metadata) #2
+declare void @llvm.dbg.value(metadata, metadata, metadata) #2
 
 attributes #0 = { uwtable }
 attributes #2 = { nounwind readnone }
@@ -29,7 +29,7 @@ attributes #2 = { nounwind readnone }
 !0 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.5.0 ", isOptimized: true, emissionKind: FullDebug, file: !1, enums: !2, retainedTypes: !2, globals: !2, imports: !2)
 !1 = !DIFile(filename: "const.cpp", directory: "/tmp/dbginfo")
 !2 = !{}
-!4 = distinct !DISubprogram(name: "main", line: 4, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, unit: !0, scopeLine: 4, file: !1, scope: !5, type: !6, variables: !9)
+!4 = distinct !DISubprogram(name: "main", line: 4, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, unit: !0, scopeLine: 4, file: !1, scope: !5, type: !6, retainedNodes: !9)
 !5 = !DIFile(filename: "const.cpp", directory: "/tmp/dbginfo")
 !6 = !DISubroutineType(types: !7)
 !7 = !{!8}

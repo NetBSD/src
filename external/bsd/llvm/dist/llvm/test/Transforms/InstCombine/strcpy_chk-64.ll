@@ -4,6 +4,17 @@ target triple = "x86_64-apple-darwin10.0.0"
 
 define void @func(i8* %i) nounwind ssp {
 ; CHECK-LABEL: @func(
+; CHECK: @__strcpy_chk(i8* nonnull %arraydecay, i8* %i, i64 32)
+entry:
+  %s = alloca [32 x i8], align 16
+  %arraydecay = getelementptr inbounds [32 x i8], [32 x i8]* %s, i32 0, i32 0
+  %call = call i8* @__strcpy_chk(i8* %arraydecay, i8* %i, i64 32)
+  call void @func2(i8* %arraydecay)
+  ret void
+}
+
+define void @func_no_null_opt(i8* %i) nounwind ssp #0 {
+; CHECK-LABEL: @func_no_null_opt(
 ; CHECK: @__strcpy_chk(i8* %arraydecay, i8* %i, i64 32)
 entry:
   %s = alloca [32 x i8], align 16
@@ -16,3 +27,5 @@ entry:
 declare i8* @__strcpy_chk(i8*, i8*, i64) nounwind
 
 declare void @func2(i8*)
+
+attributes #0 = { "null-pointer-is-valid"="true" }

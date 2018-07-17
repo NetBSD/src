@@ -1,5 +1,5 @@
-; RUN: llc < %s -O0 -fast-isel-abort=1 -march=x86 -mtriple=i686-apple-darwin8 2>/dev/null | FileCheck %s
-; RUN: llc < %s -O0 -fast-isel-abort=1 -march=x86 -mtriple=i686-apple-darwin8 2>&1 >/dev/null | FileCheck -check-prefix=STDERR -allow-empty %s
+; RUN: llc < %s -O0 -fast-isel-abort=1 -mtriple=i686-apple-darwin8 2>/dev/null | FileCheck %s
+; RUN: llc < %s -O0 -fast-isel-abort=1 -mtriple=i686-apple-darwin8 2>&1 >/dev/null | FileCheck -check-prefix=STDERR -allow-empty %s
 
 %struct.s = type {i32, i32, i32}
 
@@ -31,10 +31,10 @@ define void @test2(%struct.s* %d) nounwind {
 ; CHECK: movl	%eax, 8(%esp)
 }
 
-declare void @llvm.memset.p0i8.i32(i8* nocapture, i8, i32, i32, i1) nounwind
+declare void @llvm.memset.p0i8.i32(i8* nocapture, i8, i32, i1) nounwind
 
 define void @test3(i8* %a) {
-  call void @llvm.memset.p0i8.i32(i8* %a, i8 0, i32 100, i32 1, i1 false)
+  call void @llvm.memset.p0i8.i32(i8* %a, i8 0, i32 100, i1 false)
   ret void
 ; CHECK-LABEL: test3:
 ; CHECK:   movl	{{.*}}, (%esp)
@@ -43,10 +43,10 @@ define void @test3(i8* %a) {
 ; CHECK:   calll {{.*}}memset
 }
 
-declare void @llvm.memcpy.p0i8.p0i8.i32(i8* nocapture, i8* nocapture, i32, i32, i1) nounwind
+declare void @llvm.memcpy.p0i8.p0i8.i32(i8* nocapture, i8* nocapture, i32, i1) nounwind
 
 define void @test4(i8* %a, i8* %b) {
-  call void @llvm.memcpy.p0i8.p0i8.i32(i8* %a, i8* %b, i32 100, i32 1, i1 false)
+  call void @llvm.memcpy.p0i8.p0i8.i32(i8* %a, i8* %b, i32 100, i1 false)
   ret void
 ; CHECK-LABEL: test4:
 ; CHECK:   movl	{{.*}}, (%esp)

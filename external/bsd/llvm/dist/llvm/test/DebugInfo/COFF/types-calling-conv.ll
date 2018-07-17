@@ -165,7 +165,7 @@ target triple = "i386-pc-windows-msvc19.0.23918"
 ; Function Attrs: nounwind readnone
 define x86_thiscallcc void @"\01?thiscallcc@A@@QAEXXZ"(%struct.A* nocapture %this) #0 align 2 !dbg !6 {
 entry:
-  tail call void @llvm.dbg.value(metadata %struct.A* %this, i64 0, metadata !14, metadata !16), !dbg !17
+  tail call void @llvm.dbg.value(metadata %struct.A* %this, metadata !14, metadata !16), !dbg !17
   ret void, !dbg !18
 }
 
@@ -194,7 +194,7 @@ entry:
 }
 
 ; Function Attrs: nounwind readnone
-declare void @llvm.dbg.value(metadata, i64, metadata, metadata) #2
+declare void @llvm.dbg.value(metadata, metadata, metadata) #2
 
 attributes #0 = { nounwind readnone "disable-tail-calls"="false" "less-precise-fpmad"="false" "no-frame-pointer-elim"="false" "no-infs-fp-math"="false" "no-jump-tables"="false" "no-nans-fp-math"="false" "stack-protector-buffer-size"="8" "target-cpu"="pentium4" "target-features"="+fxsr,+mmx,+sse,+sse2,+x87" "unsafe-fp-math"="false" "use-soft-float"="false" }
 attributes #1 = { norecurse nounwind readnone "disable-tail-calls"="false" "less-precise-fpmad"="false" "no-frame-pointer-elim"="false" "no-infs-fp-math"="false" "no-jump-tables"="false" "no-nans-fp-math"="false" "stack-protector-buffer-size"="8" "target-cpu"="pentium4" "target-features"="+fxsr,+mmx,+sse,+sse2,+x87" "unsafe-fp-math"="false" "use-soft-float"="false" }
@@ -210,7 +210,7 @@ attributes #2 = { nounwind readnone }
 !3 = !{i32 2, !"CodeView", i32 1}
 !4 = !{i32 2, !"Debug Info Version", i32 3}
 !5 = !{!"clang version 3.9.0 (trunk 272067)"}
-!6 = distinct !DISubprogram(name: "A::thiscallcc", linkageName: "\01?thiscallcc@A@@QAEXXZ", scope: !7, file: !1, line: 4, type: !10, isLocal: false, isDefinition: true, scopeLine: 4, flags: DIFlagPrototyped, isOptimized: true, unit: !0, declaration: !9, variables: !13)
+!6 = distinct !DISubprogram(name: "A::thiscallcc", linkageName: "\01?thiscallcc@A@@QAEXXZ", scope: !7, file: !1, line: 4, type: !10, isLocal: false, isDefinition: true, scopeLine: 4, flags: DIFlagPrototyped, isOptimized: true, unit: !0, declaration: !9, retainedNodes: !13)
 !7 = distinct !DICompositeType(tag: DW_TAG_structure_type, name: "A", file: !1, line: 1, size: 8, align: 8, elements: !8)
 !8 = !{!9}
 !9 = !DISubprogram(name: "A::thiscallcc", linkageName: "\01?thiscallcc@A@@QAEXXZ", scope: !7, file: !1, line: 2, type: !10, isLocal: false, isDefinition: false, scopeLine: 2, flags: DIFlagPrototyped, isOptimized: true)
@@ -223,14 +223,14 @@ attributes #2 = { nounwind readnone }
 !16 = !DIExpression()
 !17 = !DILocation(line: 0, scope: !6)
 !18 = !DILocation(line: 4, column: 23, scope: !6)
-!19 = distinct !DISubprogram(name: "cdeclcc", linkageName: "\01?cdeclcc@@YAXXZ", scope: !1, file: !1, line: 5, type: !20, isLocal: false, isDefinition: true, scopeLine: 5, flags: DIFlagPrototyped, isOptimized: true, unit: !0, variables: !2)
+!19 = distinct !DISubprogram(name: "cdeclcc", linkageName: "\01?cdeclcc@@YAXXZ", scope: !1, file: !1, line: 5, type: !20, isLocal: false, isDefinition: true, scopeLine: 5, flags: DIFlagPrototyped, isOptimized: true, unit: !0, retainedNodes: !2)
 !21 = !{null}
 !22 = !DILocation(line: 5, column: 17, scope: !19)
-!23 = distinct !DISubprogram(name: "fastcallcc", linkageName: "\01?fastcallcc@@YIXXZ", scope: !1, file: !1, line: 6, type: !29, isLocal: false, isDefinition: true, scopeLine: 6, flags: DIFlagPrototyped, isOptimized: true, unit: !0, variables: !2)
+!23 = distinct !DISubprogram(name: "fastcallcc", linkageName: "\01?fastcallcc@@YIXXZ", scope: !1, file: !1, line: 6, type: !29, isLocal: false, isDefinition: true, scopeLine: 6, flags: DIFlagPrototyped, isOptimized: true, unit: !0, retainedNodes: !2)
 !24 = !DILocation(line: 6, column: 31, scope: !23)
-!25 = distinct !DISubprogram(name: "stdcallcc", linkageName: "\01?stdcallcc@@YGXXZ", scope: !1, file: !1, line: 7, type: !30, isLocal: false, isDefinition: true, scopeLine: 7, flags: DIFlagPrototyped, isOptimized: true, unit: !0, variables: !2)
+!25 = distinct !DISubprogram(name: "stdcallcc", linkageName: "\01?stdcallcc@@YGXXZ", scope: !1, file: !1, line: 7, type: !30, isLocal: false, isDefinition: true, scopeLine: 7, flags: DIFlagPrototyped, isOptimized: true, unit: !0, retainedNodes: !2)
 !26 = !DILocation(line: 7, column: 29, scope: !25)
-!27 = distinct !DISubprogram(name: "vectorcallcc", linkageName: "\01?vectorcallcc@@YQXXZ", scope: !1, file: !1, line: 8, type: !31, isLocal: false, isDefinition: true, scopeLine: 8, flags: DIFlagPrototyped, isOptimized: true, unit: !0, variables: !2)
+!27 = distinct !DISubprogram(name: "vectorcallcc", linkageName: "\01?vectorcallcc@@YQXXZ", scope: !1, file: !1, line: 8, type: !31, isLocal: false, isDefinition: true, scopeLine: 8, flags: DIFlagPrototyped, isOptimized: true, unit: !0, retainedNodes: !2)
 !28 = !DILocation(line: 8, column: 35, scope: !27)
 
 !20 = !DISubroutineType(cc: DW_CC_normal, types: !21)

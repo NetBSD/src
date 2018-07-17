@@ -10,6 +10,10 @@ define i32 @sanitize_address_callee(i32 %i) sanitize_address {
   ret i32 %i
 }
 
+define i32 @sanitize_hwaddress_callee(i32 %i) sanitize_hwaddress {
+  ret i32 %i
+}
+
 define i32 @sanitize_thread_callee(i32 %i) sanitize_thread {
   ret i32 %i
 }
@@ -27,6 +31,10 @@ define i32 @alwaysinline_callee(i32 %i) alwaysinline {
 }
 
 define i32 @alwaysinline_sanitize_address_callee(i32 %i) alwaysinline sanitize_address {
+  ret i32 %i
+}
+
+define i32 @alwaysinline_sanitize_hwaddress_callee(i32 %i) alwaysinline sanitize_hwaddress {
   ret i32 %i
 }
 
@@ -56,6 +64,17 @@ define i32 @test_no_sanitize_address(i32 %arg) {
   ret i32 %x4
 ; CHECK-LABEL: @test_no_sanitize_address(
 ; CHECK-NEXT: @sanitize_address_callee
+; CHECK-NEXT: ret i32
+}
+
+define i32 @test_no_sanitize_hwaddress(i32 %arg) {
+  %x1 = call i32 @noattr_callee(i32 %arg)
+  %x2 = call i32 @sanitize_hwaddress_callee(i32 %x1)
+  %x3 = call i32 @alwaysinline_callee(i32 %x2)
+  %x4 = call i32 @alwaysinline_sanitize_hwaddress_callee(i32 %x3)
+  ret i32 %x4
+; CHECK-LABEL: @test_no_sanitize_hwaddress(
+; CHECK-NEXT: @sanitize_hwaddress_callee
 ; CHECK-NEXT: ret i32
 }
 
@@ -94,6 +113,17 @@ define i32 @test_sanitize_address(i32 %arg) sanitize_address {
   %x4 = call i32 @alwaysinline_sanitize_address_callee(i32 %x3)
   ret i32 %x4
 ; CHECK-LABEL: @test_sanitize_address(
+; CHECK-NEXT: @noattr_callee
+; CHECK-NEXT: ret i32
+}
+
+define i32 @test_sanitize_hwaddress(i32 %arg) sanitize_hwaddress {
+  %x1 = call i32 @noattr_callee(i32 %arg)
+  %x2 = call i32 @sanitize_hwaddress_callee(i32 %x1)
+  %x3 = call i32 @alwaysinline_callee(i32 %x2)
+  %x4 = call i32 @alwaysinline_sanitize_hwaddress_callee(i32 %x3)
+  ret i32 %x4
+; CHECK-LABEL: @test_sanitize_hwaddress(
 ; CHECK-NEXT: @noattr_callee
 ; CHECK-NEXT: ret i32
 }
@@ -300,6 +330,50 @@ define i32 @test_no-use-jump-tables3(i32 %i) "no-jump-tables"="true" {
   %1 = call i32 @no-use-jump-tables_callee1(i32 %i)
   ret i32 %1
 ; CHECK: @test_no-use-jump-tables3(i32 %i) [[NOUSEJUMPTABLES]] {
+; CHECK-NEXT: ret i32
+}
+
+; Calle with "null-pointer-is-valid"="true" attribute should not be inlined
+; into a caller without this attribute. Exception: alwaysinline callee
+; can still be inlined.
+
+define i32 @null-pointer-is-valid_callee0(i32 %i) "null-pointer-is-valid"="true" {
+  ret i32 %i
+; CHECK: @null-pointer-is-valid_callee0(i32 %i)
+; CHECK-NEXT: ret i32
+}
+
+define i32 @null-pointer-is-valid_callee1(i32 %i) alwaysinline "null-pointer-is-valid"="true" {
+  ret i32 %i
+; CHECK: @null-pointer-is-valid_callee1(i32 %i)
+; CHECK-NEXT: ret i32
+}
+
+define i32 @null-pointer-is-valid_callee2(i32 %i)  {
+  ret i32 %i
+; CHECK: @null-pointer-is-valid_callee2(i32 %i)
+; CHECK-NEXT: ret i32
+}
+
+define i32 @test_null-pointer-is-valid0(i32 %i) {
+  %1 = call i32 @null-pointer-is-valid_callee0(i32 %i)
+  ret i32 %1
+; CHECK: @test_null-pointer-is-valid0(
+; CHECK: call i32 @null-pointer-is-valid_callee0
+; CHECK-NEXT: ret i32
+}
+
+define i32 @test_null-pointer-is-valid1(i32 %i) {
+  %1 = call i32 @null-pointer-is-valid_callee1(i32 %i)
+  ret i32 %1
+; CHECK: @test_null-pointer-is-valid1(
+; CHECK-NEXT: ret i32
+}
+
+define i32 @test_null-pointer-is-valid2(i32 %i) "null-pointer-is-valid"="true" {
+  %1 = call i32 @null-pointer-is-valid_callee2(i32 %i)
+  ret i32 %1
+; CHECK: @test_null-pointer-is-valid2(
 ; CHECK-NEXT: ret i32
 }
 

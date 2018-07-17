@@ -80,7 +80,7 @@ entry:
 ; Function Attrs: inlinehint noinline nounwind uwtable
 define linkonce_odr void @f(i32 %c) #2 comdat personality i8* bitcast (i32 (...)* @__C_specific_handler to i8*) !dbg !22 {
 entry:
-  tail call void @llvm.dbg.value(metadata i32 %c, i64 0, metadata !26, metadata !27), !dbg !28
+  tail call void @llvm.dbg.value(metadata i32 %c, metadata !26, metadata !27), !dbg !28
   %0 = load volatile i32, i32* @x, align 4, !dbg !29, !tbaa !11
   %inc = add nsw i32 %0, 1, !dbg !29
   store volatile i32 %inc, i32* @x, align 4, !dbg !29, !tbaa !11
@@ -114,8 +114,8 @@ if.end:                                           ; preds = %if.else, %invoke.co
 ; Function Attrs: nounwind
 define internal fastcc void @"\01?fin$0@0@f@@"() unnamed_addr #3 comdat($f) !dbg !41 {
 entry:
-  tail call void @llvm.dbg.value(metadata i8* null, i64 0, metadata !44, metadata !27), !dbg !48
-  tail call void @llvm.dbg.value(metadata i8 0, i64 0, metadata !46, metadata !27), !dbg !48
+  tail call void @llvm.dbg.value(metadata i8* null, metadata !44, metadata !27), !dbg !48
+  tail call void @llvm.dbg.value(metadata i8 0, metadata !46, metadata !27), !dbg !48
   %0 = load volatile i32, i32* @x, align 4, !dbg !49, !tbaa !11
   %inc = add nsw i32 %0, 1, !dbg !49
   store volatile i32 %inc, i32* @x, align 4, !dbg !49, !tbaa !11
@@ -127,7 +127,7 @@ declare void @foo(...) #4
 declare i32 @__C_specific_handler(...)
 
 ; Function Attrs: nounwind readnone
-declare void @llvm.dbg.value(metadata, i64, metadata, metadata) #5
+declare void @llvm.dbg.value(metadata, metadata, metadata) #5
 
 attributes #0 = { norecurse nounwind uwtable "disable-tail-calls"="false" "less-precise-fpmad"="false" "no-frame-pointer-elim"="false" "no-infs-fp-math"="false" "no-jump-tables"="false" "no-nans-fp-math"="false" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+fxsr,+mmx,+sse,+sse2,+x87" "unsafe-fp-math"="false" "use-soft-float"="false" }
 attributes #1 = { nounwind uwtable "disable-tail-calls"="false" "less-precise-fpmad"="false" "no-frame-pointer-elim"="false" "no-infs-fp-math"="false" "no-jump-tables"="false" "no-nans-fp-math"="false" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+fxsr,+mmx,+sse,+sse2,+x87" "unsafe-fp-math"="false" "use-soft-float"="false" }
@@ -149,7 +149,7 @@ attributes #7 = { nounwind }
 !4 = !{i32 2, !"Debug Info Version", i32 3}
 !5 = !{i32 1, !"PIC Level", i32 2}
 !6 = !{!"clang version 3.9.0 "}
-!7 = distinct !DISubprogram(name: "bar", scope: !1, file: !1, line: 19, type: !8, isLocal: false, isDefinition: true, scopeLine: 19, isOptimized: true, unit: !0, variables: !2)
+!7 = distinct !DISubprogram(name: "bar", scope: !1, file: !1, line: 19, type: !8, isLocal: false, isDefinition: true, scopeLine: 19, isOptimized: true, unit: !0, retainedNodes: !2)
 !8 = !DISubroutineType(types: !9)
 !9 = !{null}
 !10 = !DILocation(line: 20, column: 4, scope: !7)
@@ -158,13 +158,13 @@ attributes #7 = { nounwind }
 !13 = !{!"omnipotent char", !14, i64 0}
 !14 = !{!"Simple C/C++ TBAA"}
 !15 = !DILocation(line: 21, column: 1, scope: !7)
-!16 = distinct !DISubprogram(name: "main", scope: !1, file: !1, line: 22, type: !17, isLocal: false, isDefinition: true, scopeLine: 22, isOptimized: true, unit: !0, variables: !2)
+!16 = distinct !DISubprogram(name: "main", scope: !1, file: !1, line: 22, type: !17, isLocal: false, isDefinition: true, scopeLine: 22, isOptimized: true, unit: !0, retainedNodes: !2)
 !17 = !DISubroutineType(types: !18)
 !18 = !{!19}
 !19 = !DIBasicType(name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
 !20 = !DILocation(line: 23, column: 3, scope: !16)
 !21 = !DILocation(line: 24, column: 1, scope: !16)
-!22 = distinct !DISubprogram(name: "f", scope: !1, file: !1, line: 5, type: !23, isLocal: false, isDefinition: true, scopeLine: 5, flags: DIFlagPrototyped, isOptimized: true, unit: !0, variables: !25)
+!22 = distinct !DISubprogram(name: "f", scope: !1, file: !1, line: 5, type: !23, isLocal: false, isDefinition: true, scopeLine: 5, flags: DIFlagPrototyped, isOptimized: true, unit: !0, retainedNodes: !25)
 !23 = !DISubroutineType(types: !24)
 !24 = !{null, !19}
 !25 = !{!26}
@@ -183,7 +183,7 @@ attributes #7 = { nounwind }
 !38 = !DILocation(line: 14, column: 5, scope: !31)
 !39 = !DILocation(line: 15, column: 4, scope: !22)
 !40 = !DILocation(line: 16, column: 1, scope: !22)
-!41 = distinct !DISubprogram(linkageName: "\01?fin$0@0@f@@", scope: !1, file: !1, line: 10, type: !42, isLocal: true, isDefinition: true, scopeLine: 10, flags: DIFlagArtificial, isOptimized: true, unit: !0, variables: !43)
+!41 = distinct !DISubprogram(linkageName: "\01?fin$0@0@f@@", scope: !1, file: !1, line: 10, type: !42, isLocal: true, isDefinition: true, scopeLine: 10, flags: DIFlagArtificial, isOptimized: true, unit: !0, retainedNodes: !43)
 !42 = !DISubroutineType(types: !2)
 !43 = !{!44, !46}
 !44 = !DILocalVariable(name: "frame_pointer", arg: 2, scope: !41, type: !45, flags: DIFlagArtificial)

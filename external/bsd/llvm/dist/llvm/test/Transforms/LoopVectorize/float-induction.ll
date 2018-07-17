@@ -1,7 +1,7 @@
 ; RUN: opt < %s  -loop-vectorize -force-vector-interleave=1 -force-vector-width=4 -dce -instcombine -S | FileCheck --check-prefix VEC4_INTERL1 %s
 ; RUN: opt < %s  -loop-vectorize -force-vector-interleave=2 -force-vector-width=4 -dce -instcombine -S | FileCheck --check-prefix VEC4_INTERL2 %s
 ; RUN: opt < %s  -loop-vectorize -force-vector-interleave=2 -force-vector-width=1 -dce -instcombine -S | FileCheck --check-prefix VEC1_INTERL2 %s
-; RUN: opt < %s  -loop-vectorize -force-vector-interleave=1 -force-vector-width=2 -dce -simplifycfg -instcombine -latesimplifycfg -S | FileCheck --check-prefix VEC2_INTERL1_PRED_STORE %s
+; RUN: opt < %s  -loop-vectorize -force-vector-interleave=1 -force-vector-width=2 -dce -simplifycfg -instcombine -simplifycfg -keep-loops=false -S | FileCheck --check-prefix VEC2_INTERL1_PRED_STORE %s
 
 @fp_inc = common global float 0.000000e+00, align 4
 
@@ -54,7 +54,7 @@
 ; VEC4_INTERL2-NEXT:    [[TMP9:%.*]] = getelementptr inbounds float, float* %A, i64 [[INDEX]]
 ; VEC4_INTERL2-NEXT:    [[TMP10:%.*]] = bitcast float* [[TMP9]] to <4 x float>*
 ; VEC4_INTERL2-NEXT:    store <4 x float> [[VEC_IND]], <4 x float>* [[TMP10]], align 4
-; VEC4_INTERL2-NEXT:    [[TMP11:%.*]] = getelementptr float, float* [[TMP9]], i64 4
+; VEC4_INTERL2-NEXT:    [[TMP11:%.*]] = getelementptr inbounds float, float* [[TMP9]], i64 4
 ; VEC4_INTERL2-NEXT:    [[TMP12:%.*]] = bitcast float* [[TMP11]] to <4 x float>*
 ; VEC4_INTERL2-NEXT:    store <4 x float> [[STEP_ADD]], <4 x float>* [[TMP12]], align 4
 ; VEC4_INTERL2-NEXT:    [[INDEX_NEXT]] = add i64 [[INDEX]], 8

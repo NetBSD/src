@@ -1,5 +1,5 @@
 ; RUN: llc -mtriple=x86_64-apple-darwin -O0 -filetype=obj -o %t < %s
-; RUN: llvm-dwarfdump -debug-dump=info %t | FileCheck %s
+; RUN: llvm-dwarfdump -v -debug-info %t | FileCheck %s
 ; <rdar://problem/12566646>
 
 %struct.foo = type { i32, [1 x i32] }
@@ -65,7 +65,7 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 
 !0 = distinct !DICompileUnit(language: DW_LANG_C99, producer: "clang version 3.3 (trunk 169136)", isOptimized: false, emissionKind: FullDebug, file: !32, enums: !1, retainedTypes: !1, globals: !1, imports:  !1)
 !1 = !{}
-!5 = distinct !DISubprogram(name: "func", line: 11, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, unit: !0, scopeLine: 11, file: !6, scope: !6, type: !7, variables: !1)
+!5 = distinct !DISubprogram(name: "func", line: 11, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, unit: !0, scopeLine: 11, file: !6, scope: !6, type: !7, retainedNodes: !1)
 !6 = !DIFile(filename: "test.c", directory: "/Volumes/Sandbox/llvm")
 !7 = !DISubroutineType(types: !8)
 !8 = !{!9}

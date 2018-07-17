@@ -19,14 +19,10 @@
 ; parameter. It can reference the register it's in directly without masking off
 ; high bits or anything
 
-; CHECK: call void @llvm.dbg.value(metadata i8 %g.coerce0, i64 0, metadata ![[VAR_STRUCT:[0-9]+]], metadata ![[EXPR_STRUCT1:[0-9]+]])
-; CHECK: call void @llvm.dbg.value(metadata i64 %g.coerce1, i64 0, metadata ![[VAR_STRUCT]], metadata ![[EXPR_STRUCT2:[0-9]+]])
-; CHECK: call void @llvm.dbg.value(metadata i1 %b, i64 0, metadata ![[VAR_BOOL:[0-9]+]], metadata ![[EXPR_BOOL:[0-9]+]])
-; CHECK: call void @llvm.dbg.value(metadata i1 %frag, i64 0, metadata ![[FRAG_BOOL:[0-9]+]], metadata ![[FRAG_BOOL:[0-9]+]])
-; CHECK: ![[EXPR_STRUCT1]] = !DIExpression(DW_OP_LLVM_fragment, 0, 8)
-; CHECK: ![[EXPR_STRUCT2]] = !DIExpression(DW_OP_LLVM_fragment, 32, 64)
-; CHECK: ![[EXPR_BOOL]] = !DIExpression()
-; CHECK: ![[FRAG_BOOL]] = !DIExpression(DW_OP_LLVM_fragment, 0, 1)
+; CHECK: call void @llvm.dbg.value(metadata i8 %g.coerce0, metadata ![[VAR_STRUCT:[0-9]+]], metadata !DIExpression(DW_OP_LLVM_fragment, 0, 8))
+; CHECK: call void @llvm.dbg.value(metadata i64 %g.coerce1, metadata ![[VAR_STRUCT]], metadata !DIExpression(DW_OP_LLVM_fragment, 32, 64))
+; CHECK: call void @llvm.dbg.value(metadata i1 %b, metadata ![[VAR_BOOL:[0-9]+]], metadata !DIExpression())
+; CHECK: call void @llvm.dbg.value(metadata i1 %frag, metadata ![[VAR_FRAG:[0-9]+]], metadata !DIExpression(DW_OP_LLVM_fragment, 0, 1))
 
 %struct.foo = type { i8, i64 }
 
@@ -67,7 +63,7 @@ attributes #1 = { nounwind readnone speculatable }
 !3 = !{i32 2, !"Dwarf Version", i32 4}
 !4 = !{i32 2, !"Debug Info Version", i32 3}
 !5 = !{!"clang version 5.0.0 (trunk 303077) (llvm/trunk 303098)"}
-!6 = distinct !DISubprogram(name: "f", linkageName: "_Z1fbb3foo", scope: !1, file: !1, line: 2, type: !7, isLocal: false, isDefinition: true, scopeLine: 2, flags: DIFlagPrototyped, isOptimized: false, unit: !0, variables: !2)
+!6 = distinct !DISubprogram(name: "f", linkageName: "_Z1fbb3foo", scope: !1, file: !1, line: 2, type: !7, isLocal: false, isDefinition: true, scopeLine: 2, flags: DIFlagPrototyped, isOptimized: false, unit: !0, retainedNodes: !2)
 !7 = !DISubroutineType(types: !8)
 !8 = !{null, !9, !9, !10}
 !9 = !DIBasicType(name: "bool", size: 8, encoding: DW_ATE_boolean)

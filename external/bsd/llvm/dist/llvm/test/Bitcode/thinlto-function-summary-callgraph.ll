@@ -18,7 +18,7 @@
 ; CHECK:       <GLOBALVAL_SUMMARY_BLOCK
 ; CHECK-NEXT:    <VERSION
 ; See if the call to func is registered.
-; CHECK-NEXT:    <PERMODULE {{.*}} op3=1
+; CHECK-NEXT:    <PERMODULE {{.*}} op4=1
 ; CHECK-NEXT:  </GLOBALVAL_SUMMARY_BLOCK>
 ; CHECK: <STRTAB_BLOCK
 ; CHECK-NEXT: blob data = 'undefinedglobmainfunc{{.*}}'
@@ -26,13 +26,14 @@
 
 ; COMBINED:       <GLOBALVAL_SUMMARY_BLOCK
 ; COMBINED-NEXT:    <VERSION
+; COMBINED-NEXT:    <FLAGS
 ; Only 2 VALUE_GUID since reference to undefinedglob should not be included in
 ; combined index.
 ; COMBINED-NEXT:    <VALUE_GUID op0=[[FUNCID:[0-9]+]] op1=7289175272376759421/>
 ; COMBINED-NEXT:    <VALUE_GUID
 ; COMBINED-NEXT:    <COMBINED
 ; See if the call to func is registered.
-; COMBINED-NEXT:    <COMBINED {{.*}} op5=[[FUNCID]]/>
+; COMBINED-NEXT:    <COMBINED {{.*}} op6=[[FUNCID]]/>
 ; COMBINED-NEXT:  </GLOBALVAL_SUMMARY_BLOCK>
 
 ; ModuleID = 'thinlto-function-summary-callgraph.ll'

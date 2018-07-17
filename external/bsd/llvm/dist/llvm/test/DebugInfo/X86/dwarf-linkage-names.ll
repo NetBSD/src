@@ -55,7 +55,7 @@ attributes #0 = { nounwind uwtable "disable-tail-calls"="false" "less-precise-fp
 !llvm.module.flags = !{!8, !9}
 !llvm.ident = !{!10}
 
-!0 = !DIGlobalVariableExpression(var: !1)
+!0 = !DIGlobalVariableExpression(var: !1, expr: !DIExpression())
 !1 = !DIGlobalVariable(name: "global_var", linkageName: "_ZN4test10global_varE", scope: !2, file: !3, line: 2, type: !4, isLocal: false, isDefinition: true)
 !2 = !DINamespace(name: "test", scope: null)
 !3 = !DIFile(filename: "dwarf-linkage-names.cpp", directory: "/home/probinson/projects/scratch")
@@ -66,7 +66,7 @@ attributes #0 = { nounwind uwtable "disable-tail-calls"="false" "less-precise-fp
 !8 = !{i32 2, !"Dwarf Version", i32 4}
 !9 = !{i32 2, !"Debug Info Version", i32 3}
 !10 = !{!"clang version 3.8.0 (trunk 244662)"}
-!11 = distinct !DISubprogram(name: "bar", linkageName: "_ZN4test3barEv", scope: !2, file: !3, line: 3, type: !12, isLocal: false, isDefinition: true, scopeLine: 3, flags: DIFlagPrototyped, isOptimized: false, unit: !5, variables: !6)
+!11 = distinct !DISubprogram(name: "bar", linkageName: "_ZN4test3barEv", scope: !2, file: !3, line: 3, type: !12, isLocal: false, isDefinition: true, scopeLine: 3, flags: DIFlagPrototyped, isOptimized: false, unit: !5, retainedNodes: !6)
 !12 = !DISubroutineType(types: !13)
 !13 = !{!4}
 !14 = !DILocation(line: 3, column: 21, scope: !11)

@@ -1,7 +1,7 @@
 ; RUN: llc -march=hexagon < %s | FileCheck %s
 ;
 ; Check that the stack is aligned according to the outgoing function arguments.
-; CHECK: r29 = and(r29,#-128)
+; CHECK: r29 = and(r29,#-64)
 
 target triple = "hexagon-unknown--elf"
 
@@ -27,4 +27,4 @@ b0:
 declare i32 @printf(i8*, ...) #0
 declare void @VarVec1(i8*, i32, ...) #0
 
-attributes #0 = { nounwind "target-cpu"="hexagonv60" "target-features"="+hvx" }
+attributes #0 = { nounwind "target-cpu"="hexagonv60" "target-features"="+hvxv60,+hvx-length64b" }
