@@ -1,4 +1,4 @@
-/* $NetBSD: aarch64_machdep.c,v 1.6 2018/07/17 11:12:41 ryo Exp $ */
+/* $NetBSD: aarch64_machdep.c,v 1.7 2018/07/17 12:40:00 christos Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.6 2018/07/17 11:12:41 ryo Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.7 2018/07/17 12:40:00 christos Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -82,7 +82,8 @@ struct vm_map *phys_map;
 /* XXX */
 vaddr_t physical_start;
 vaddr_t physical_end;
-u_long kern_vtopdiff = 0; /* filled in before cleaning bss. keep in .data */
+/* filled in before cleaning bss. keep in .data */
+u_long kern_vtopdiff __attribute__((__section__(".data")));
 
 
 /*
