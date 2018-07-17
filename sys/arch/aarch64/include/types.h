@@ -1,4 +1,4 @@
-/* $NetBSD: types.h,v 1.9 2018/07/12 10:46:41 maxv Exp $ */
+/* $NetBSD: types.h,v 1.10 2018/07/17 00:34:11 christos Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -54,10 +54,10 @@ typedef unsigned long	vsize_t;
 #define PRIxVSIZE	"lx"
 #define PRIuVSIZE	"lu"
 
-typedef unsigned long long int register_t;
+typedef __uint64_t register_t;
 typedef unsigned int register32_t;
-#define PRIxREGISTER	"llx"
-#define PRIxREGISTER32	"lx"
+#define PRIxREGISTER	PRIx64
+#define PRIxREGISTER32	"x"
 
 typedef unsigned short	tlb_asid_t;
 
@@ -87,7 +87,7 @@ typedef struct label_t {	/* Used by setjmp & longjmp */
  * This should have always been an 8-bit type.
  */
 typedef	unsigned char	__cpu_simple_lock_nv_t;
-typedef unsigned long long int __register_t;
+typedef __uint64_t __register_t;
 
 #define __SIMPLELOCK_LOCKED	1
 #define __SIMPLELOCK_UNLOCKED	0
