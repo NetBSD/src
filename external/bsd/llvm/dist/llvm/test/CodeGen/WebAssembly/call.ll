@@ -1,10 +1,10 @@
-; RUN: llc < %s -asm-verbose=false -disable-wasm-fallthrough-return-opt | FileCheck %s
-; RUN: llc < %s -asm-verbose=false -disable-wasm-fallthrough-return-opt -fast-isel -fast-isel-abort=1 | FileCheck %s
+; RUN: llc < %s -asm-verbose=false -disable-wasm-fallthrough-return-opt -wasm-temporary-workarounds=false | FileCheck %s
+; RUN: llc < %s -asm-verbose=false -disable-wasm-fallthrough-return-opt -fast-isel -fast-isel-abort=1 -wasm-temporary-workarounds=false | FileCheck %s
 
 ; Test that basic call operations assemble as expected.
 
 target datalayout = "e-m:e-p:32:32-i64:64-n32:64-S128"
-target triple = "wasm32-unknown-unknown-wasm"
+target triple = "wasm32-unknown-unknown"
 
 declare i32 @i32_nullary()
 declare i32 @i32_unary(i32)
@@ -147,6 +147,27 @@ define void @fastcc_tail_call_void_nullary() {
 ; CHECK-NEXT: return{{$}}
 define void @coldcc_tail_call_void_nullary() {
   tail call coldcc void @void_nullary()
+  ret void
+}
+
+; CHECK-LABEL: call_constexpr:
+; CHECK-NEXT: i32.const $push[[L0:[0-9]+]]=, 2{{$}}
+; CHECK-NEXT: i32.const $push[[L1:[0-9]+]]=, 3{{$}}
+; CHECK-NEXT: call .Lbitcast@FUNCTION, $pop[[L0]], $pop[[L1]]{{$}}
+; CHECK-NEXT: call other_void_nullary@FUNCTION{{$}}
+; CHECK-NEXT: call void_nullary@FUNCTION{{$}}
+; CHECK-NEXT: return{{$}}
+declare void @vararg_func(...)
+declare void @other_void_nullary()
+define void @call_constexpr() {
+bb0:
+  call void bitcast (void (...)* @vararg_func to void (i32, i32)*)(i32 2, i32 3)
+  br label %bb1
+bb1:
+  call void select (i1 0, void ()* @void_nullary, void ()* @other_void_nullary)()
+  br label %bb2
+bb2:
+  call void inttoptr (i32 ptrtoint (void ()* @void_nullary to i32) to void ()*)()
   ret void
 }
 

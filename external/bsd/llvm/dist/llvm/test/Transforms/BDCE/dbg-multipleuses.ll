@@ -14,7 +14,7 @@ define void @f() !dbg !6 {
 entry:
   tail call void (...) @h(), !dbg !9
   %call = tail call i32 (...) @g(), !dbg !10
-  tail call void @llvm.dbg.value(metadata i32 %call, i64 0, metadata !11, metadata !13), !dbg !14
+  tail call void @llvm.dbg.value(metadata i32 %call, metadata !11, metadata !13), !dbg !14
   %patatino = xor i32 %call, %call
   tail call void (...) @h(), !dbg !15
   ret void, !dbg !16
@@ -22,7 +22,7 @@ entry:
 
 declare void @h(...)
 declare i32 @g(...)
-declare void @llvm.dbg.value(metadata, i64, metadata, metadata)
+declare void @llvm.dbg.value(metadata, metadata, metadata)
 
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!3, !4}
@@ -34,7 +34,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata)
 !3 = !{i32 2, !"Dwarf Version", i32 4}
 !4 = !{i32 2, !"Debug Info Version", i32 3}
 !5 = !{!"clang version 4.0.0 (trunk 288665) (llvm/trunk 288725)"}
-!6 = distinct !DISubprogram(name: "f", scope: !1, file: !1, line: 3, type: !7, isLocal: false, isDefinition: true, scopeLine: 3, isOptimized: false, unit: !0, variables: !2)
+!6 = distinct !DISubprogram(name: "f", scope: !1, file: !1, line: 3, type: !7, isLocal: false, isDefinition: true, scopeLine: 3, isOptimized: false, unit: !0, retainedNodes: !2)
 !7 = !DISubroutineType(types: !8)
 !8 = !{null}
 !9 = !DILocation(line: 4, column: 3, scope: !6)

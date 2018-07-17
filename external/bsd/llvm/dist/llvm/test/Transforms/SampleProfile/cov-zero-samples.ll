@@ -1,5 +1,5 @@
-; RUN: opt < %s -instcombine -sample-profile -sample-profile-file=%S/Inputs/cov-zero-samples.prof -sample-profile-check-record-coverage=100 -pass-remarks=sample-profile -o /dev/null 2>&1 | FileCheck %s
-; RUN: opt < %s -passes="function(instcombine),sample-profile" -sample-profile-file=%S/Inputs/cov-zero-samples.prof -sample-profile-check-record-coverage=100 -pass-remarks=sample-profile -o /dev/null 2>&1 | FileCheck %s
+; RUN: opt < %s -instcombine -sample-profile -sample-profile-file=%S/Inputs/cov-zero-samples.prof -sample-profile-check-record-coverage=100 -pass-remarks=sample-profile -pass-remarks-analysis=sample-profile -o /dev/null 2>&1 | FileCheck %s
+; RUN: opt < %s -passes="function(instcombine),sample-profile" -sample-profile-file=%S/Inputs/cov-zero-samples.prof -sample-profile-check-record-coverage=100 -pass-remarks=sample-profile -pass-remarks-analysis=sample-profile -o /dev/null 2>&1 | FileCheck %s
 ;
 ; CHECK: remark: cov-zero-samples.cc:9:29: Applied 404065 samples from profile (offset: 2.1)
 ; CHECK: remark: cov-zero-samples.cc:10:9: Applied 443089 samples from profile (offset: 3)
@@ -90,7 +90,7 @@ attributes #0 = { nounwind readnone }
 !llvm.module.flags = !{!8, !9}
 !llvm.ident = !{!10}
 
-!0 = !DIGlobalVariableExpression(var: !1)
+!0 = !DIGlobalVariableExpression(var: !1, expr: !DIExpression())
 !1 = !DIGlobalVariable(name: "N", scope: !2, file: !3, line: 3, type: !6, isLocal: false, isDefinition: true)
 !2 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !3, producer: "clang version 3.8.0 (trunk 253667) (llvm/trunk 253670)", isOptimized: false, runtimeVersion: 0, emissionKind: NoDebug, enums: !4, globals: !5)
 !3 = !DIFile(filename: "cov-zero-samples.cc", directory: ".")
@@ -101,13 +101,13 @@ attributes #0 = { nounwind readnone }
 !8 = !{i32 2, !"Dwarf Version", i32 4}
 !9 = !{i32 2, !"Debug Info Version", i32 3}
 !10 = !{!"clang version 3.8.0 (trunk 253667) (llvm/trunk 253670)"}
-!11 = distinct !DISubprogram(name: "never_called", linkageName: "_Z12never_calledi", scope: !3, file: !3, line: 5, type: !12, isLocal: false, isDefinition: true, scopeLine: 5, flags: DIFlagPrototyped, isOptimized: false, unit: !2, variables: !4)
+!11 = distinct !DISubprogram(name: "never_called", linkageName: "_Z12never_calledi", scope: !3, file: !3, line: 5, type: !12, isLocal: false, isDefinition: true, scopeLine: 5, flags: DIFlagPrototyped, isOptimized: false, unit: !2, retainedNodes: !4)
 !12 = !DISubroutineType(types: !13)
 !13 = !{!14, !14}
 !14 = !DIBasicType(name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
 !15 = !DILocation(line: 5, column: 27, scope: !16)
 !16 = !DILexicalBlockFile(scope: !11, file: !3, discriminator: 6)
-!17 = distinct !DISubprogram(name: "main", scope: !3, file: !3, line: 7, type: !18, isLocal: false, isDefinition: true, scopeLine: 7, flags: DIFlagPrototyped, isOptimized: false, unit: !2, variables: !4)
+!17 = distinct !DISubprogram(name: "main", scope: !3, file: !3, line: 7, type: !18, isLocal: false, isDefinition: true, scopeLine: 7, flags: DIFlagPrototyped, isOptimized: false, unit: !2, retainedNodes: !4)
 !18 = !DISubroutineType(types: !19)
 !19 = !{!14}
 !20 = !DILocalVariable(name: "sum", scope: !17, file: !3, line: 8, type: !14)

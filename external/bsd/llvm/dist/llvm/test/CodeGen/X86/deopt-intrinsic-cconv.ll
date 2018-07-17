@@ -1,5 +1,6 @@
 ; RUN: llc < %s | FileCheck %s
 ; RUN: llc -debug-only=stackmaps < %s 2>&1 | FileCheck --check-prefix=STACKMAPS %s
+; RUN: opt -disable-output -debugify < %s
 ; REQUIRES: asserts
 
 target datalayout = "e-m:o-i64:64-f80:128-n8:16:32:64-S128"
@@ -12,7 +13,6 @@ define i64 @caller_1() {
 ; CHECK-NEXT: {{.+cfi.+}}
 ; CHECK-NEXT: ##{{.+}}
 ; CHECK-NEXT: pushq	%rax
-; CHECK-NEXT: {{Lcfi[0-9]+}}:
 ; CHECK-NEXT: {{.+cfi.+}}
 ; CHECK-NEXT: movl	$1140457472, (%rsp)     ## imm = 0x43FA0000
 ; CHECK-NEXT: movl	$42, %eax
