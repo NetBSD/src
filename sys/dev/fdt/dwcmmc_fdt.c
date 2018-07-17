@@ -1,4 +1,4 @@
-/* $NetBSD: dwcmmc_fdt.c,v 1.5 2018/07/02 13:45:23 jmcneill Exp $ */
+/* $NetBSD: dwcmmc_fdt.c,v 1.6 2018/07/17 00:42:06 christos Exp $ */
 
 /*-
  * Copyright (c) 2015-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwcmmc_fdt.c,v 1.5 2018/07/02 13:45:23 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwcmmc_fdt.c,v 1.6 2018/07/17 00:42:06 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -129,7 +129,7 @@ dwcmmc_fdt_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dmat = faa->faa_dmat;
 	error = bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh);
 	if (error) {
-		aprint_error(": couldn't map %#llx: %d\n",
+		aprint_error(": couldn't map %#" PRIx64 ": %d\n",
 		    (uint64_t)addr, error);
 		return;
 	}
