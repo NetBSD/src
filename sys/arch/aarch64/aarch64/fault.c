@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.2 2018/07/17 00:31:46 christos Exp $	*/
+/*	$NetBSD: fault.c,v 1.3 2018/07/17 10:07:49 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.2 2018/07/17 00:31:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.3 2018/07/17 10:07:49 ryo Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -128,11 +128,12 @@ data_abort_handler(struct trapframe *tf, uint32_t eclass, const char *trapname)
 	vaddr_t va;
 	uint32_t esr, fsc, rw;
 	vm_prot_t ftype;
-	int error = 0;
+	int error = 0, len;
 	const bool user = (__SHIFTOUT(tf->tf_spsr, SPSR_M) == SPSR_M_EL0T) ?
 	    true : false;
 	bool fatalabort;
 	const char *faultstr;
+	static char panicinfo[256];
 
 	UVMHIST_FUNC(__func__);
 	UVMHIST_CALLED(pmaphist);
@@ -294,36 +295,56 @@ data_abort_handler(struct trapframe *tf, uint32_t eclass, const char *trapname)
 	}
 
 	/*
-	 * fatal abort. dump trapframe and panic
+	 * fatal abort. analyze fault status code to show by panic()
 	 */
-	printf("Trap: %s:", trapname);
+	len = snprintf(panicinfo, sizeof(panicinfo), "Trap: %s:", trapname);
 
 	if ((fsc >= __arraycount(fault_status_code)) ||
 	    ((faultstr = fault_status_code[fsc]) == NULL))
-		printf(" unknown fault status 0x%x ", fsc);
+		len += snprintf(panicinfo + len, sizeof(panicinfo) - len,
+		    " unknown fault status 0x%x ", fsc);
 	else
-		printf(" %s", faultstr);
+		len += snprintf(panicinfo + len, sizeof(panicinfo) - len,
+		    " %s", faultstr);
 
 	if ((__SHIFTOUT(esr, ESR_EC) == ESR_EC_DATA_ABT_EL1) ||
 	    (__SHIFTOUT(esr, ESR_EC) == ESR_EC_DATA_ABT_EL0))
-		printf(" with %s access", (rw == 0) ? "read" : "write");
+		len += snprintf(panicinfo + len, sizeof(panicinfo) - len,
+		    " with %s access", (rw == 0) ? "read" : "write");
+
+	len += snprintf(panicinfo + len, sizeof(panicinfo) - len,
+	    " for %016"PRIxREGISTER, tf->tf_far);
 
 	if (__SHIFTOUT(esr, ESR_ISS_DATAABORT_EA) != 0)
-		printf(", External abort");
+		len += snprintf(panicinfo + len, sizeof(panicinfo) - len,
+		    ", External abort");
 
 	if (__SHIFTOUT(esr, ESR_ISS_DATAABORT_S1PTW) != 0)
-		printf(", State 2 Fault");
+		len += snprintf(panicinfo + len, sizeof(panicinfo) - len,
+		    ", State 2 Fault");
 
-	printf("\n");
+	len += snprintf(panicinfo + len, sizeof(panicinfo) - len,
+	    ": pc %016"PRIxREGISTER, tf->tf_pc);
+
+	len += snprintf(panicinfo + len, sizeof(panicinfo) - len,
+	    ": opcode %08x", *(uint32_t *)tf->tf_pc);
+
 #ifdef DDB
-	dump_trapframe(tf, printf);
+	/* ...and disassemble the instruction */
+	len += snprintf(panicinfo + len, sizeof(panicinfo) - len,
+	    ": %s", strdisasm(tf->tf_pc));
 #endif
 
-#ifdef DEBUG_DDB_ON_USERFAULT
-	if (user)
+	if (user) {
+#if defined(DEBUG_DDB_ON_USERFAULT) && defined(DDB)
+		printf("%s\n", panicinfo);
 		Debugger();
+#elif defined(DEBUG_DUMP_ON_USERFAULT)
+		printf("%s\n", panicinfo);
+		dump_trapframe(tf, printf);
 #endif
+	}
 
 	if (!user)
-		panic("Fatal abort: %s", trapname);
+		panic("%s\n", panicinfo);
 }
