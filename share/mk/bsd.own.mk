@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1069 2018/07/16 14:14:37 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.1070 2018/07/17 18:04:57 christos Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -781,8 +781,7 @@ MKGCC:= no
 MKGCC:= no
 .endif
 
-# No GDB support for aarch64
-MKGDB.aarch64=	no
+# No GDB support for aarch64eb
 MKGDB.aarch64eb=no
 MKGDB.or1k=	no
 MKGDB.riscv32=	no
