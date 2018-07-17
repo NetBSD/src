@@ -1531,7 +1531,7 @@ define void @merge_zr64_unalign(<2 x i64>* %p) {
 ; CHECK-LABEL: merge_zr64_unalign:
 ; CHECK: // %entry
 ; NOSTRICTALIGN-NEXT: stp xzr, xzr, [x{{[0-9]+}}]
-; STRICTALIGN: strb wzr,
+; STRICTALIGN: strb
 ; STRICTALIGN: strb
 ; STRICTALIGN: strb
 ; STRICTALIGN: strb
@@ -1671,7 +1671,7 @@ entry:
 ; CHECK-LABEL: bug34674:
 ; CHECK: // %entry
 ; CHECK-NEXT: mov [[ZREG:x[0-9]+]], xzr
-; CHECK-DAG: stp [[ZREG]], [[ZREG]], [x0]
+; CHECK-DAG: stp xzr, xzr, [x0]
 ; CHECK-DAG: add x{{[0-9]+}}, [[ZREG]], #1
 define i64 @bug34674(<2 x i64>* %p) {
 entry:

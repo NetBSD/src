@@ -14,7 +14,7 @@
 ;   auto pr = &A::r;
 ; }
 ;
-; RUN: %llc_dwarf -filetype=obj -O0 < %s | llvm-dwarfdump - | FileCheck %s
+; RUN: %llc_dwarf -filetype=obj -O0 < %s | llvm-dwarfdump -v - | FileCheck %s
 ; CHECK: DW_TAG_subroutine_type     DW_CHILDREN_yes
 ; CHECK-NEXT: DW_AT_reference  DW_FORM_flag_present
 ; CHECK: DW_TAG_subroutine_type     DW_CHILDREN_yes
@@ -75,7 +75,7 @@ attributes #1 = { nounwind readnone }
 !11 = !DIDerivedType(tag: DW_TAG_const_type, baseType: !4)
 !13 = !DISubprogram(name: "r", linkageName: "_ZNKO1A1rEv", line: 7, isLocal: false, isDefinition: false, virtualIndex: 6, flags: DIFlagObjectPointer | DIFlagRValueReference, isOptimized: false, scopeLine: 7, file: !5, scope: !4, type: !14)
 !14 = !DISubroutineType(flags: DIFlagRValueReference, types: !9)
-!17 = distinct !DISubprogram(name: "g", linkageName: "_Z1gv", line: 10, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, unit: !0, scopeLine: 10, file: !5, scope: !18, type: !19, variables: !2)
+!17 = distinct !DISubprogram(name: "g", linkageName: "_Z1gv", line: 10, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, unit: !0, scopeLine: 10, file: !5, scope: !18, type: !19, retainedNodes: !2)
 !18 = !DIFile(filename: "debug-info-qualifiers.cpp", directory: "")
 !19 = !DISubroutineType(types: !20)
 !20 = !{null}

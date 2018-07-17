@@ -1,7 +1,6 @@
-; RUN: llc %s -filetype=obj -o - | llvm-dwarfdump --debug-dump=info - | FileCheck %s
+; RUN: llc %s -filetype=obj -o - | llvm-dwarfdump -v --debug-info - | FileCheck %s
 ; CHECK: DW_TAG_variable
-;                                                      DW_OP_fbreg
-; CHECK-NEXT: DW_AT_location [DW_FORM_exprloc]      (<0x2> 91 00 )
+; CHECK-NEXT: DW_AT_location [DW_FORM_exprloc]      (DW_OP_fbreg +0)
 ; CHECK-NEXT: DW_AT_name {{.*}}"i"
 
 target datalayout = "e-m:e-p:32:32-i64:64-f80:128-n8:16:32:64-S128"
@@ -36,12 +35,12 @@ attributes #1 = { nounwind readnone }
 !0 = distinct !DICompileUnit(language: DW_LANG_C99, producer: "clang version 3.7.0", isOptimized: false, emissionKind: FullDebug, file: !1, enums: !2, retainedTypes: !2, globals: !2, imports: !2)
 !1 = !DIFile(filename: "x.c", directory: "")
 !2 = !{}
-!4 = distinct !DISubprogram(name: "foo", line: 2, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: false, unit: !0, scopeLine: 3, file: !1, scope: !5, type: !6, variables: !2)
+!4 = distinct !DISubprogram(name: "foo", line: 2, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: false, unit: !0, scopeLine: 3, file: !1, scope: !5, type: !6, retainedNodes: !2)
 !5 = !DIFile(filename: "x.c", directory: "")
 !6 = !DISubroutineType(types: !7)
 !7 = !{!8, !8}
 !8 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
-!9 = distinct !DISubprogram(name: "main", line: 8, isLocal: false, isDefinition: true, isOptimized: false, unit: !0, scopeLine: 9, file: !1, scope: !5, type: !10, variables: !2)
+!9 = distinct !DISubprogram(name: "main", line: 8, isLocal: false, isDefinition: true, isOptimized: false, unit: !0, scopeLine: 9, file: !1, scope: !5, type: !10, retainedNodes: !2)
 !10 = !DISubroutineType(types: !11)
 !11 = !{!8}
 !12 = !{i32 2, !"Dwarf Version", i32 4}
