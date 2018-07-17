@@ -1,4 +1,4 @@
-/* $NetBSD: reg.h,v 1.2 2018/04/01 04:35:03 ryo Exp $ */
+/* $NetBSD: reg.h,v 1.3 2018/07/17 16:21:43 kamil Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -44,14 +44,16 @@ struct reg {
 
 union fpelem {
 	uint64_t u64[2];
-	__uint128_t u128[1] __aligned(16);
+#ifdef __SIZEOF_INT128__
+	__uint128_t u128[1];
+#endif
 };
 
 struct fpreg {
 	union fpelem fp_reg[32];
 	uint32_t fpcr;
 	uint32_t fpsr;
-};
+} __aligned(16);
 
 #elif defined(__arm__)
 
