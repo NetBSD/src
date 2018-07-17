@@ -3,6 +3,11 @@
 ; RUN:    -pass-remarks-with-hotness 2>&1 | FileCheck %s
 ; RUN: cat %t | FileCheck -check-prefix=YAML %s
 
+; RUN: opt < %s -S -passes=inline -pass-remarks-output=%t -pass-remarks=inline \
+; RUN:    -pass-remarks-missed=inline -pass-remarks-analysis=inline \
+; RUN:    -pass-remarks-with-hotness 2>&1 | FileCheck %s
+; RUN: cat %t | FileCheck -check-prefix=YAML %s
+
 ; Check the YAML file for inliner-generated passed and analysis remarks.  This
 ; is the input:
 
@@ -12,28 +17,9 @@
 ;  4       return foo();
 ;  5     }
 
-; CHECK:      remark: /tmp/s.c:4:10: foo can be inlined into bar with cost={{[0-9\-]+}} (threshold={{[0-9]+}}) (hotness: 30)
-; CHECK-NEXT: remark: /tmp/s.c:4:10: foo inlined into bar (hotness: 30)
+; CHECK: remark: /tmp/s.c:4:10: foo inlined into bar with cost={{[0-9\-]+}} (threshold={{[0-9]+}}) (hotness: 30)
 
-; YAML:      --- !Analysis
-; YAML-NEXT: Pass:            inline
-; YAML-NEXT: Name:            CanBeInlined
-; YAML-NEXT: DebugLoc:        { File: /tmp/s.c, Line: 4, Column: 10 }
-; YAML-NEXT: Function:        bar
-; YAML-NEXT: Hotness:         30
-; YAML-NEXT: Args:
-; YAML-NEXT:   - Callee: foo
-; YAML-NEXT:     DebugLoc:        { File: /tmp/s.c, Line: 1, Column: 0 }
-; YAML-NEXT:   - String: ' can be inlined into '
-; YAML-NEXT:   - Caller: bar
-; YAML-NEXT:     DebugLoc:        { File: /tmp/s.c, Line: 3, Column: 0 }
-; YAML-NEXT:   - String: ' with cost='
-; YAML-NEXT:   - Cost: '{{[0-9\-]+}}'
-; YAML-NEXT:   - String: ' (threshold='
-; YAML-NEXT:   - Threshold: '{{[0-9]+}}'
-; YAML-NEXT:   - String: ')'
-; YAML-NEXT: ...
-; YAML-NEXT: --- !Passed
+; YAML:      --- !Passed
 ; YAML-NEXT: Pass:            inline
 ; YAML-NEXT: Name:            Inlined
 ; YAML-NEXT: DebugLoc:        { File: /tmp/s.c, Line: 4, Column: 10 }
@@ -45,6 +31,11 @@
 ; YAML-NEXT:   - String: ' inlined into '
 ; YAML-NEXT:   - Caller: bar
 ; YAML-NEXT:     DebugLoc:        { File: /tmp/s.c, Line: 3, Column: 0 }
+; YAML-NEXT:   - String: ' with cost='
+; YAML-NEXT:   - Cost: '{{[0-9\-]+}}'
+; YAML-NEXT:   - String: ' (threshold='
+; YAML-NEXT:   - Threshold: '{{[0-9]+}}'
+; YAML-NEXT:   - String: ')'
 ; YAML-NEXT: ...
 
 ; ModuleID = '/tmp/s.c'
@@ -78,10 +69,10 @@ attributes #0 = { nounwind ssp uwtable "correctly-rounded-divide-sqrt-fp-math"="
 !4 = !{i32 2, !"Debug Info Version", i32 3}
 !5 = !{i32 1, !"PIC Level", i32 2}
 !6 = !{!"clang version 4.0.0 (trunk 282540) (llvm/trunk 282542)"}
-!7 = distinct !DISubprogram(name: "foo", scope: !1, file: !1, line: 1, type: !8, isLocal: false, isDefinition: true, scopeLine: 1, isOptimized: true, unit: !0, variables: !2)
+!7 = distinct !DISubprogram(name: "foo", scope: !1, file: !1, line: 1, type: !8, isLocal: false, isDefinition: true, scopeLine: 1, isOptimized: true, unit: !0, retainedNodes: !2)
 !8 = !DISubroutineType(types: !2)
 !9 = !DILocation(line: 1, column: 13, scope: !7)
-!10 = distinct !DISubprogram(name: "bar", scope: !1, file: !1, line: 3, type: !8, isLocal: false, isDefinition: true, scopeLine: 3, isOptimized: true, unit: !0, variables: !2)
+!10 = distinct !DISubprogram(name: "bar", scope: !1, file: !1, line: 3, type: !8, isLocal: false, isDefinition: true, scopeLine: 3, isOptimized: true, unit: !0, retainedNodes: !2)
 !11 = !DILocation(line: 4, column: 10, scope: !10)
 !12 = !DILocation(line: 4, column: 3, scope: !10)
 !13 = !{!"function_entry_count", i64 30}

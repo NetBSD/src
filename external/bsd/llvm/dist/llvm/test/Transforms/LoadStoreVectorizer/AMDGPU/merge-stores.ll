@@ -504,8 +504,7 @@ define amdgpu_kernel void @merge_local_store_2_constants_i32_align_2(i32 addrspa
 }
 
 ; CHECK-LABEL: @merge_local_store_4_constants_i32
-; CHECK: store <2 x i32> <i32 456, i32 333>, <2 x i32> addrspace(3)*
-; CHECK: store <2 x i32> <i32 1234, i32 123>, <2 x i32> addrspace(3)*
+; CHECK: store <4 x i32> <i32 1234, i32 123, i32 456, i32 333>, <4 x i32> addrspace(3)*
 define amdgpu_kernel void @merge_local_store_4_constants_i32(i32 addrspace(3)* %out) #0 {
   %out.gep.1 = getelementptr i32, i32 addrspace(3)* %out, i32 1
   %out.gep.2 = getelementptr i32, i32 addrspace(3)* %out, i32 2
@@ -629,6 +628,26 @@ define amdgpu_kernel void @copy_v3f64_align4(<3 x double> addrspace(1)* noalias 
   %vec = load <3 x double>, <3 x double> addrspace(1)* %in, align 4
   %fadd = fadd <3 x double> %vec, <double 1.0, double 2.0, double 4.0>
   store <3 x double> %fadd, <3 x double> addrspace(1)* %out
+  ret void
+}
+
+; Verify that we no longer hit asserts for this test case. No change expected.
+; CHECK-LABEL: @copy_vec_of_ptrs
+; CHECK: %in.gep.1 = getelementptr <2 x i16*>, <2 x i16*> addrspace(1)* %in, i32 1
+; CHECK: %vec1 = load <2 x i16*>, <2 x i16*> addrspace(1)* %in.gep.1
+; CHECK: %vec2 = load <2 x i16*>, <2 x i16*> addrspace(1)* %in, align 4
+; CHECK: %out.gep.1 = getelementptr <2 x i16*>, <2 x i16*> addrspace(1)* %out, i32 1
+; CHECK: store <2 x i16*> %vec1, <2 x i16*> addrspace(1)* %out.gep.1
+; CHECK: store <2 x i16*> %vec2, <2 x i16*> addrspace(1)* %out, align 4
+define amdgpu_kernel void @copy_vec_of_ptrs(<2 x i16*> addrspace(1)* %out,
+                                            <2 x i16*> addrspace(1)* %in ) #0 {
+  %in.gep.1 = getelementptr <2 x i16*>, <2 x i16*> addrspace(1)* %in, i32 1
+  %vec1 = load <2 x i16*>, <2 x i16*> addrspace(1)* %in.gep.1
+  %vec2 = load <2 x i16*>, <2 x i16*> addrspace(1)* %in, align 4
+
+  %out.gep.1 = getelementptr <2 x i16*>, <2 x i16*> addrspace(1)* %out, i32 1
+  store <2 x i16*> %vec1, <2 x i16*> addrspace(1)* %out.gep.1
+  store <2 x i16*> %vec2, <2 x i16*> addrspace(1)* %out, align 4
   ret void
 }
 

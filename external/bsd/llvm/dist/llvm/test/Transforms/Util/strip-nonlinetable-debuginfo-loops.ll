@@ -10,7 +10,7 @@ target triple = "x86_64-apple-macosx10.12.0"
 
 define void @f(i32* %i) local_unnamed_addr #0 !dbg !7 {
 entry:
-  tail call void @llvm.dbg.value(metadata i32* %i, i64 0, metadata !14, metadata !15), !dbg !16
+  tail call void @llvm.dbg.value(metadata i32* %i, metadata !14, metadata !15), !dbg !16
   br label %while.cond, !dbg !17
 
 while.cond:                                       ; preds = %while.cond, %entry
@@ -26,7 +26,7 @@ while.end:                                        ; preds = %while.cond
 }
 
 ; Function Attrs: nounwind readnone
-declare void @llvm.dbg.value(metadata, i64, metadata, metadata) #1
+declare void @llvm.dbg.value(metadata, metadata, metadata) #1
 
 attributes #0 = { nounwind ssp uwtable }
 attributes #1 = { nounwind readnone }
@@ -46,7 +46,7 @@ attributes #1 = { nounwind readnone }
 !5 = !{i32 1, !"PIC Level", i32 2}
 !6 = !{!"clang version 5.0.0 (trunk 298880) (llvm/trunk 298875)"}
 ; CHECK: ![[F:[0-9]]] = distinct !DISubprogram(name: "f", scope: !1
-!7 = distinct !DISubprogram(name: "f", scope: !1, file: !1, line: 1, type: !8, isLocal: false, isDefinition: true, scopeLine: 1, flags: DIFlagPrototyped, isOptimized: true, unit: !0, variables: !13)
+!7 = distinct !DISubprogram(name: "f", scope: !1, file: !1, line: 1, type: !8, isLocal: false, isDefinition: true, scopeLine: 1, flags: DIFlagPrototyped, isOptimized: true, unit: !0, retainedNodes: !13)
 !8 = !DISubroutineType(types: !9)
 !9 = !{null, !10}
 !10 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: !11, size: 64)

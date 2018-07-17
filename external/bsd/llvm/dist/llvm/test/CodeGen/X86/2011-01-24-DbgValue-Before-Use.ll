@@ -1,5 +1,5 @@
-; RUN: llc < %s -filetype=obj | llvm-dwarfdump -debug-dump=info - | FileCheck %s
-; RUN: llc < %s -filetype=obj -regalloc=basic | llvm-dwarfdump -debug-dump=info -  | FileCheck %s
+; RUN: llc < %s -filetype=obj | llvm-dwarfdump -v -debug-info - | FileCheck %s
+; RUN: llc < %s -filetype=obj -regalloc=basic | llvm-dwarfdump -v -debug-info -  | FileCheck %s
 target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64"
 target triple = "x86_64-apple-darwin10.0.0"
 
@@ -9,7 +9,8 @@ target triple = "x86_64-apple-darwin10.0.0"
 ; CHECK: DW_TAG_variable
 ; CHECK: DW_TAG_variable
 ; CHECK-NEXT:   DW_AT_location
-; CHECK-NEXT:   DW_AT_name {{.*}} "z_s"
+; CHECK-NOT: DW_{{TAG|AT}}
+; CHECK:   DW_AT_name {{.*}} "z_s"
 ; CHECK-NEXT:   DW_AT_decl_file
 ; CHECK-NEXT:   DW_AT_decl_line
 ; CHECK-NEXT:   DW_AT_type{{.*}}{[[TYPE:.*]]}
@@ -78,13 +79,13 @@ declare i32 @puts(i8* nocapture) nounwind
 !llvm.dbg.cu = !{!2}
 !llvm.module.flags = !{!33}
 
-!0 = distinct !DISubprogram(name: "gcd", line: 5, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, unit: !2, file: !31, scope: !1, type: !3, variables: !29)
+!0 = distinct !DISubprogram(name: "gcd", line: 5, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, unit: !2, file: !31, scope: !1, type: !3, retainedNodes: !29)
 !1 = !DIFile(filename: "rem_small.c", directory: "/private/tmp")
 !2 = distinct !DICompileUnit(language: DW_LANG_C99, producer: "clang version 2.9 (trunk 124117)", isOptimized: true, emissionKind: FullDebug, file: !31, enums: !32, retainedTypes: !32, imports:  null)
 !3 = !DISubroutineType(types: !4)
 !4 = !{!5}
 !5 = !DIBasicType(tag: DW_TAG_base_type, name: "long int", size: 64, align: 64, encoding: DW_ATE_signed)
-!6 = distinct !DISubprogram(name: "main", line: 25, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: true, unit: !2, file: !31, scope: !1, type: !7, variables: !30)
+!6 = distinct !DISubprogram(name: "main", line: 25, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: true, unit: !2, file: !31, scope: !1, type: !7, retainedNodes: !30)
 !7 = !DISubroutineType(types: !8)
 !8 = !{!9}
 !9 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
