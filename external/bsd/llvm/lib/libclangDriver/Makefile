@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2017/08/01 20:07:42 joerg Exp $
+#	$NetBSD: Makefile,v 1.13 2018/07/17 18:55:30 joerg Exp $
 
 LIB=	clangDriver
 
@@ -28,7 +28,6 @@ SRCS+=	AMDGPU.cpp \
 	AVR.cpp \
 	Ananas.cpp \
 	BareMetal.cpp \
-	Bitrig.cpp \
 	Clang.cpp \
 	CloudABI.cpp \
 	CommonArgs.cpp \
@@ -41,6 +40,7 @@ SRCS+=	AMDGPU.cpp \
 	Fuchsia.cpp \
 	Gnu.cpp \
 	Haiku.cpp \
+	HIP.cpp \
 	Hexagon.cpp \
 	Linux.cpp \
 	MinGW.cpp \
@@ -63,6 +63,7 @@ SRCS+=	AArch64.cpp \
 	ARM.cpp \
 	Mips.cpp \
 	PPC.cpp \
+	RISCV.cpp \
 	Sparc.cpp \
 	SystemZ.cpp \
 	X86.cpp
