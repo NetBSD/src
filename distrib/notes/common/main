@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.535.2.2 2018/06/24 09:23:48 martin Exp $
+.\"	$NetBSD: main,v 1.535.2.3 2018/07/17 14:54:09 martin Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -50,7 +50,7 @@
 .as MACHINE_LIST " sgimips shark sparc sparc64 sun2 sun3 vax x68k xen zaurus .
 .so \*[.CURDIR]/../common/macros
 .
-.Dd May 9, 2015
+.Dd July 17, 2018
 .Dt INSTALL 8
 .Os NetBSD
 .Sh NAME
@@ -513,10 +513,10 @@ went into the
 \*V release.
 The complete list of changes can be found in the
 CHANGES:
-.Lk https://cdn.netbsd.org/pub/NetBSD/NetBSD-8.0_RC2/CHANGES
+.Lk https://cdn.netbsd.org/pub/NetBSD/NetBSD-8.0/CHANGES
 and
 CHANGES-8.0:
-.Lk https://cdn.netbsd.org/pub/NetBSD/NetBSD-8.0_RC2/CHANGES-8.0
+.Lk https://cdn.netbsd.org/pub/NetBSD/NetBSD-8.0/CHANGES-8.0
 files in the top level directory of the NetBSD 8.0 release tree.
 .Pp
 The release anouncements, status, updates and links to other resources
