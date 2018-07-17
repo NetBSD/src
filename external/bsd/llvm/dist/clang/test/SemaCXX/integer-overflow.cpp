@@ -164,8 +164,23 @@ uint64_t check_integer_overflows(int i) { //expected-note {{declared here}}
 // expected-warning@+3 {{array index 536870912 is past the end of the array (which contains 10 elements)}}
 // expected-note@+1 {{array 'a' declared here}}
   uint64_t a[10];
-  a[4608 * 1024 * 1024] = 1i;
+  a[4608 * 1024 * 1024] = 1;
 
 // expected-warning@+1 2{{overflow in expression; result is 536870912 with type 'int'}}
   return ((4608 * 1024 * 1024) + ((uint64_t)(4608 * 1024 * 1024)));
+}
+
+void check_integer_overflows_in_function_calls() {
+// expected-warning@+1 {{overflow in expression; result is 536870912 with type 'int'}}
+  (void)f0(4608 * 1024 * 1024);
+
+// expected-warning@+1 {{overflow in expression; result is 536870912 with type 'int'}}
+  uint64_t x = f0(4608 * 1024 * 1024);
+
+// expected-warning@+2 {{overflow in expression; result is 536870912 with type 'int'}}
+  uint64_t (*f0_ptr)(uint64_t) = &f0;
+  (void)(*f0_ptr)(4608 * 1024 * 1024);
+
+// expected-warning@+1 {{overflow in expression; result is 536870912 with type 'int'}}
+  (void)f2(0, f0(4608 * 1024 * 1024));
 }

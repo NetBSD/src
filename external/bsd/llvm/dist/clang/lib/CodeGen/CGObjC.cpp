@@ -162,7 +162,7 @@ llvm::Value *CodeGenFunction::EmitObjCCollectionLiteral(const Expr *E,
       const Expr *Rhs = ALE->getElement(i);
       LValue LV = MakeAddrLValue(
           Builder.CreateConstArrayGEP(Objects, i, getPointerSize()),
-          ElementType, LValueBaseInfo(AlignmentSource::Decl, false));
+          ElementType, AlignmentSource::Decl);
 
       llvm::Value *value = EmitScalarExpr(Rhs);
       EmitStoreThroughLValue(RValue::get(value), LV, true);
@@ -174,7 +174,7 @@ llvm::Value *CodeGenFunction::EmitObjCCollectionLiteral(const Expr *E,
       const Expr *Key = DLE->getKeyValueElement(i).Key;
       LValue KeyLV = MakeAddrLValue(
           Builder.CreateConstArrayGEP(Keys, i, getPointerSize()),
-          ElementType, LValueBaseInfo(AlignmentSource::Decl, false));
+          ElementType, AlignmentSource::Decl);
       llvm::Value *keyValue = EmitScalarExpr(Key);
       EmitStoreThroughLValue(RValue::get(keyValue), KeyLV, /*isInit=*/true);
 
@@ -182,7 +182,7 @@ llvm::Value *CodeGenFunction::EmitObjCCollectionLiteral(const Expr *E,
       const Expr *Value = DLE->getKeyValueElement(i).Value;
       LValue ValueLV = MakeAddrLValue(
           Builder.CreateConstArrayGEP(Objects, i, getPointerSize()),
-          ElementType, LValueBaseInfo(AlignmentSource::Decl, false));
+          ElementType, AlignmentSource::Decl);
       llvm::Value *valueValue = EmitScalarExpr(Value);
       EmitStoreThroughLValue(RValue::get(valueValue), ValueLV, /*isInit=*/true);
       if (TrackNeededObjects) {
@@ -259,7 +259,7 @@ llvm::Value *CodeGenFunction::EmitObjCProtocolExpr(const ObjCProtocolExpr *E) {
   return CGM.getObjCRuntime().GenerateProtocolRef(*this, E->getProtocol());
 }
 
-/// \brief Adjust the type of an Objective-C object that doesn't match up due
+/// Adjust the type of an Objective-C object that doesn't match up due
 /// to type erasure at various points, e.g., related result types or the use
 /// of parameterized classes.
 static RValue AdjustObjCObjectType(CodeGenFunction &CGF, QualType ExpT,
@@ -803,7 +803,7 @@ PropertyImplStrategy::PropertyImplStrategy(CodeGenModule &CGM,
   Kind = Native;
 }
 
-/// \brief Generate an Objective-C property getter function.
+/// Generate an Objective-C property getter function.
 ///
 /// The given Decl must be an ObjCImplementationDecl. \@synthesize
 /// is illegal within a category.
@@ -1008,12 +1008,14 @@ CodeGenFunction::generateObjCGetterBody(const ObjCImplementationDecl *classImpl,
                          /*init*/ true);
       return;
     }
-    case TEK_Aggregate:
+    case TEK_Aggregate: {
       // The return value slot is guaranteed to not be aliased, but
       // that's not necessarily the same as "on the stack", so
       // we still potentially need objc_memmove_collectable.
-      EmitAggregateCopy(ReturnValue, LV.getAddress(), ivarType);
+      EmitAggregateCopy(/* Dest= */ MakeAddrLValue(ReturnValue, ivarType),
+                        /* Src= */ LV, ivarType, overlapForReturnValue());
       return;
+    }
     case TEK_Scalar: {
       llvm::Value *value;
       if (propType->isReferenceType()) {
@@ -1334,7 +1336,7 @@ CodeGenFunction::generateObjCSetterBody(const ObjCImplementationDecl *classImpl,
   EmitStmt(&assign);
 }
 
-/// \brief Generate an Objective-C property setter function.
+/// Generate an Objective-C property setter function.
 ///
 /// The given Decl must be an ObjCImplementationDecl. \@synthesize
 /// is illegal within a category.
@@ -1438,7 +1440,8 @@ void CodeGenFunction::GenerateObjCCtorDtorMethod(ObjCImplementationDecl *IMP,
       EmitAggExpr(IvarInit->getInit(),
                   AggValueSlot::forLValue(LV, AggValueSlot::IsDestructed,
                                           AggValueSlot::DoesNotNeedGCBarriers,
-                                          AggValueSlot::IsNotAliased));
+                                          AggValueSlot::IsNotAliased,
+                                          AggValueSlot::DoesNotOverlap));
     }
     // constructor returns 'self'.
     CodeGenTypes &Types = CGM.getTypes();
@@ -1546,16 +1549,15 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
            getContext().getPointerType(ItemsTy));
 
   // The third argument is the capacity of that temporary array.
-  llvm::Type *UnsignedLongLTy = ConvertType(getContext().UnsignedLongTy);
-  llvm::Constant *Count = llvm::ConstantInt::get(UnsignedLongLTy, NumItems);
-  Args.add(RValue::get(Count), getContext().UnsignedLongTy);
+  llvm::Type *NSUIntegerTy = ConvertType(getContext().getNSUIntegerType());
+  llvm::Constant *Count = llvm::ConstantInt::get(NSUIntegerTy, NumItems);
+  Args.add(RValue::get(Count), getContext().getNSUIntegerType());
 
   // Start the enumeration.
   RValue CountRV =
-    CGM.getObjCRuntime().GenerateMessageSend(*this, ReturnValueSlot(),
-                                             getContext().UnsignedLongTy,
-                                             FastEnumSel,
-                                             Collection, Args);
+      CGM.getObjCRuntime().GenerateMessageSend(*this, ReturnValueSlot(),
+                                               getContext().getNSUIntegerType(),
+                                               FastEnumSel, Collection, Args);
 
   // The initial number of objects that were returned in the buffer.
   llvm::Value *initialBufferLimit = CountRV.getScalarVal();
@@ -1563,7 +1565,7 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
   llvm::BasicBlock *EmptyBB = createBasicBlock("forcoll.empty");
   llvm::BasicBlock *LoopInitBB = createBasicBlock("forcoll.loopinit");
 
-  llvm::Value *zero = llvm::Constant::getNullValue(UnsignedLongLTy);
+  llvm::Value *zero = llvm::Constant::getNullValue(NSUIntegerTy);
 
   // If the limit pointer was zero to begin with, the collection is
   // empty; skip all this. Set the branch weight assuming this has the same
@@ -1595,11 +1597,11 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
   EmitBlock(LoopBodyBB);
 
   // The current index into the buffer.
-  llvm::PHINode *index = Builder.CreatePHI(UnsignedLongLTy, 3, "forcoll.index");
+  llvm::PHINode *index = Builder.CreatePHI(NSUIntegerTy, 3, "forcoll.index");
   index->addIncoming(zero, LoopInitBB);
 
   // The current buffer size.
-  llvm::PHINode *count = Builder.CreatePHI(UnsignedLongLTy, 3, "forcoll.count");
+  llvm::PHINode *count = Builder.CreatePHI(NSUIntegerTy, 3, "forcoll.count");
   count->addIncoming(initialBufferLimit, LoopInitBB);
 
   incrementProfileCounter(&S);
@@ -1709,8 +1711,8 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
   llvm::BasicBlock *FetchMoreBB = createBasicBlock("forcoll.refetch");
 
   // First we check in the local buffer.
-  llvm::Value *indexPlusOne
-    = Builder.CreateAdd(index, llvm::ConstantInt::get(UnsignedLongLTy, 1));
+  llvm::Value *indexPlusOne =
+      Builder.CreateAdd(index, llvm::ConstantInt::get(NSUIntegerTy, 1));
 
   // If we haven't overrun the buffer yet, we can continue.
   // Set the branch weights based on the simplifying assumption that this is
@@ -1727,10 +1729,9 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
   EmitBlock(FetchMoreBB);
 
   CountRV =
-    CGM.getObjCRuntime().GenerateMessageSend(*this, ReturnValueSlot(),
-                                             getContext().UnsignedLongTy,
-                                             FastEnumSel,
-                                             Collection, Args);
+      CGM.getObjCRuntime().GenerateMessageSend(*this, ReturnValueSlot(),
+                                               getContext().getNSUIntegerType(),
+                                               FastEnumSel, Collection, Args);
 
   // If we got a zero count, we're done.
   llvm::Value *refetchCount = CountRV.getScalarVal();
@@ -1816,22 +1817,6 @@ void CodeGenFunction::EmitARCIntrinsicUse(ArrayRef<llvm::Value*> values) {
 }
 
 
-static bool IsForwarding(StringRef Name) {
-  return llvm::StringSwitch<bool>(Name)
-      .Cases("objc_autoreleaseReturnValue",             // ARCInstKind::AutoreleaseRV
-             "objc_autorelease",                        // ARCInstKind::Autorelease
-             "objc_retainAutoreleaseReturnValue",       // ARCInstKind::FusedRetainAutoreleaseRV
-             "objc_retainAutoreleasedReturnValue",      // ARCInstKind::RetainRV
-             "objc_retainAutorelease",                  // ARCInstKind::FusedRetainAutorelease
-             "objc_retainedObject",                     // ARCInstKind::NoopCast
-             "objc_retain",                             // ARCInstKind::Retain
-             "objc_unretainedObject",                   // ARCInstKind::NoopCast
-             "objc_unretainedPointer",                  // ARCInstKind::NoopCast
-             "objc_unsafeClaimAutoreleasedReturnValue", // ARCInstKind::ClaimRV
-             true)
-      .Default(false);
-}
-
 static llvm::Constant *createARCRuntimeFunction(CodeGenModule &CGM,
                                                 llvm::FunctionType *FTy,
                                                 StringRef Name) {
@@ -1849,9 +1834,6 @@ static llvm::Constant *createARCRuntimeFunction(CodeGenModule &CGM,
       // performance.
       F->addFnAttr(llvm::Attribute::NonLazyBind);
     }
-
-    if (IsForwarding(Name))
-      F->arg_begin()->addAttr(llvm::Attribute::Returned);
   }
 
   return RTF;
@@ -2054,7 +2036,7 @@ static void emitAutoreleasedReturnValueMarker(CodeGenFunction &CGF) {
 
   // Call the marker asm if we made one, which we do only at -O0.
   if (marker)
-    CGF.Builder.CreateCall(marker);
+    CGF.Builder.CreateCall(marker, None, CGF.getBundlesForFunclet(marker));
 }
 
 /// Retain the given object which is the result of a function call.
@@ -2072,7 +2054,7 @@ CodeGenFunction::EmitARCRetainAutoreleasedReturnValue(llvm::Value *value) {
 
 /// Claim a possibly-autoreleased return value at +0.  This is only
 /// valid to do in contexts which do not rely on the retain to keep
-/// the object valid for for all of its uses; for example, when
+/// the object valid for all of its uses; for example, when
 /// the value is ignored, or when it is being assigned to an
 /// __unsafe_unretained variable.
 ///
@@ -2325,6 +2307,21 @@ void CodeGenFunction::EmitARCCopyWeak(Address dst, Address src) {
   emitARCCopyOperation(*this, dst, src,
                        CGM.getObjCEntrypoints().objc_copyWeak,
                        "objc_copyWeak");
+}
+
+void CodeGenFunction::emitARCCopyAssignWeak(QualType Ty, Address DstAddr,
+                                            Address SrcAddr) {
+  llvm::Value *Object = EmitARCLoadWeakRetained(SrcAddr);
+  Object = EmitObjCConsumeObject(Ty, Object);
+  EmitARCStoreWeak(DstAddr, Object, false);
+}
+
+void CodeGenFunction::emitARCMoveAssignWeak(QualType Ty, Address DstAddr,
+                                            Address SrcAddr) {
+  llvm::Value *Object = EmitARCLoadWeakRetained(SrcAddr);
+  Object = EmitObjCConsumeObject(Ty, Object);
+  EmitARCStoreWeak(DstAddr, Object, false);
+  EmitARCDestroyWeak(SrcAddr);
 }
 
 /// Produce the code to do a objc_autoreleasepool_push.
@@ -3263,19 +3260,19 @@ CodeGenFunction::GenerateObjCAtomicSetterCopyHelperFunction(
                            "__assign_helper_atomic_property_",
                            &CGM.getModule());
 
-  CGM.SetInternalFunctionAttributes(nullptr, Fn, FI);
+  CGM.SetInternalFunctionAttributes(GlobalDecl(), Fn, FI);
 
   StartFunction(FD, C.VoidTy, Fn, FI, args);
   
   DeclRefExpr DstExpr(&DstDecl, false, DestTy,
                       VK_RValue, SourceLocation());
   UnaryOperator DST(&DstExpr, UO_Deref, DestTy->getPointeeType(),
-                    VK_LValue, OK_Ordinary, SourceLocation());
+                    VK_LValue, OK_Ordinary, SourceLocation(), false);
   
   DeclRefExpr SrcExpr(&SrcDecl, false, SrcTy,
                       VK_RValue, SourceLocation());
   UnaryOperator SRC(&SrcExpr, UO_Deref, SrcTy->getPointeeType(),
-                    VK_LValue, OK_Ordinary, SourceLocation());
+                    VK_LValue, OK_Ordinary, SourceLocation(), false);
   
   Expr *Args[2] = { &DST, &SRC };
   CallExpr *CalleeExp = cast<CallExpr>(PID->getSetterCXXAssignment());
@@ -3344,8 +3341,8 @@ CodeGenFunction::GenerateObjCAtomicGetterCopyHelperFunction(
   llvm::Function *Fn =
   llvm::Function::Create(LTy, llvm::GlobalValue::InternalLinkage,
                          "__copy_helper_atomic_property_", &CGM.getModule());
-  
-  CGM.SetInternalFunctionAttributes(nullptr, Fn, FI);
+
+  CGM.SetInternalFunctionAttributes(GlobalDecl(), Fn, FI);
 
   StartFunction(FD, C.VoidTy, Fn, FI, args);
   
@@ -3353,7 +3350,7 @@ CodeGenFunction::GenerateObjCAtomicGetterCopyHelperFunction(
                       VK_RValue, SourceLocation());
   
   UnaryOperator SRC(&SrcExpr, UO_Deref, SrcTy->getPointeeType(),
-                    VK_LValue, OK_Ordinary, SourceLocation());
+                    VK_LValue, OK_Ordinary, SourceLocation(), false);
   
   CXXConstructExpr *CXXConstExpr = 
     cast<CXXConstructExpr>(PID->getGetterCXXConstructor());
@@ -3386,7 +3383,8 @@ CodeGenFunction::GenerateObjCAtomicGetterCopyHelperFunction(
                                     Qualifiers(),
                                     AggValueSlot::IsDestructed,
                                     AggValueSlot::DoesNotNeedGCBarriers,
-                                    AggValueSlot::IsNotAliased));
+                                    AggValueSlot::IsNotAliased,
+                                    AggValueSlot::DoesNotOverlap));
   
   FinishFunction();
   HelperFn = llvm::ConstantExpr::getBitCast(Fn, VoidPtrTy);
