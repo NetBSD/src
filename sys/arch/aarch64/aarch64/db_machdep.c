@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.c,v 1.4 2018/07/09 06:33:08 ryo Exp $ */
+/* $NetBSD: db_machdep.c,v 1.5 2018/07/17 00:31:03 christos Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.4 2018/07/09 06:33:08 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.5 2018/07/17 00:31:03 christos Exp $");
 
 #include "opt_kernhist.h"
 #include "opt_uvmhist.h"
@@ -239,7 +239,7 @@ db_md_cpuinfo_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 	int i;
 
 	ci = curcpu();
-	db_read_bytes(ci, sizeof(cpuinfobuf), (char *)&cpuinfobuf);
+	db_read_bytes((db_addr_t)ci, sizeof(cpuinfobuf), (char *)&cpuinfobuf);
 
 	cpuid = cpuinfobuf.ci_cpuid;
 	db_printf("cpu_info=%p\n", ci);
@@ -251,7 +251,7 @@ db_md_cpuinfo_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 		db_printf("%p cpu[%lu].ci_softlwps[%d] = %p\n",
 		    &ci->ci_softlwps[i], cpuid, i, cpuinfobuf.ci_softlwps[i]);
 	}
-	db_printf("%p cpu[%lu].ci_lastintr     = %llu\n",
+	db_printf("%p cpu[%lu].ci_lastintr     = %" PRIu64 "\n",
 	    &ci->ci_lastintr, cpuid, cpuinfobuf.ci_lastintr);
 	db_printf("%p cpu[%lu].ci_want_resched = %d\n",
 	    &ci->ci_want_resched, cpuid, cpuinfobuf.ci_want_resched);
@@ -304,7 +304,7 @@ db_md_lwp_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 	db_printf("\tl->l_md.md_ktf    =%p\n", l->l_md.md_ktf);
 	if (l->l_md.md_ktf != l->l_md.md_utf)
 		dump_trapframe(l->l_md.md_ktf, db_printf);
-	db_printf("\tl->l_md.md_cpacr  =%016llx\n", l->l_md.md_cpacr);
+	db_printf("\tl->l_md.md_cpacr  =%016" PRIx64 "\n", l->l_md.md_cpacr);
 	db_printf("\tl->l_md.md_flags  =%08x\n", l->l_md.md_flags);
 
 	db_printf("\tl->l_cpu          =%p\n", l->l_cpu);
@@ -435,7 +435,7 @@ db_md_sysreg_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
     const char *modif)
 {
 #define SHOW_ARMREG(x)	\
-	db_printf("%-16s = %016llx\n", #x, reg_ ## x ## _read())
+	db_printf("%-16s = %016" PRIx64 "x\n", #x, reg_ ## x ## _read())
 
 	SHOW_ARMREG(cbar_el1);
 	SHOW_ARMREG(ccsidr_el1);
@@ -714,14 +714,14 @@ show_watchpoints(void)
 		if (wcr & DBGWCR_E) {
 			bas = __SHIFTOUT(wcr, DBGWCR_BAS);
 			if (bas == 0) {
-				db_printf("%d: disabled %016llx", i, addr);
+				db_printf("%d: disabled %016" PRIx64, i, addr);
 			} else {
 				offset = ffs(bas) - 1;
 				addr += offset;
 				bas >>= offset;
 				size = ffs(~bas) - 1;
 
-				db_printf("%d: watching %016llx, %d bytes", i,
+				db_printf("%d: watching %016" PRIx64 ", %d bytes", i,
 				    addr, size);
 
 				switch (__SHIFTOUT(wcr, DBGWCR_LSC)) {
