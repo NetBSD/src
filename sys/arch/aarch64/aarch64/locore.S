@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.10 2018/07/10 08:35:58 ryo Exp $	*/
+/*	$NetBSD: locore.S,v 1.11 2018/07/17 00:32:28 christos Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -36,7 +36,7 @@
 #include <aarch64/pte.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.10 2018/07/10 08:35:58 ryo Exp $")
+RCSID("$NetBSD: locore.S,v 1.11 2018/07/17 00:32:28 christos Exp $")
 
 /* #define DEBUG_LOCORE */
 /* #define DEBUG_MMU */
@@ -181,7 +181,7 @@ ENTRY_NP(aarch64_start)
 	VERBOSE("OK\r\n")
 
 	/* set exception vector */
-	ldr	x2, =el1_vectors	# el1_vectors is in kva
+	ldr	x2, =el1_vectors	/* el1_vectors is in kva */
 	msr	vbar_el1, x2
 
 #ifdef DEBUG_LOCORE
@@ -194,12 +194,12 @@ ENTRY_NP(aarch64_start)
 	bl	print_x0
 
 	PRINT("VSTART          = ")
-	ldr	x0, =vstart	# virtual address of vstart
+	ldr	x0, =vstart	/* virtual address of vstart */
 	bl	print_x0
 #endif
 
-	ldr	x0, =vstart	# virtual address of vstart
-	br	x0		# jump to the kernel virtual address
+	ldr	x0, =vstart	/* virtual address of vstart */
+	br	x0		/* jump to the kernel virtual address */
 
 /*
  * vstart is in kernel virtual address
@@ -221,8 +221,10 @@ vstart:
 	msr	tpidr_el1, x0		/* curcpu is cpu_info[0] */
 
 	mov	fp, #0			/* trace back starts here */
+	PRINT("initarm\r\n")
 	bl	_C_LABEL(initarm)	/* Off we go */
 
+	PRINT("main\r\n")
 	bl	_C_LABEL(main)		/* call main() */
 
 	adr	x0, .Lmainreturned
@@ -247,30 +249,30 @@ printcpu:
 	stp	x0, lr, [sp, #-16]!
 	stp	x25, x26, [sp, #-16]!
 	PRINT("[CPU")
-	mov	x26, x27		# n = cpuid
-	mov	x25, xzr		# zeropad = 0
+	mov	x26, x27		/* n = cpuid */
+	mov	x25, xzr		/* zeropad = 0 */
 	mov	x1, #1000
-	udiv	x0, x26, x1		# x0 = n / 1000
-	msub	x26, x0, x1, x26	# n %= 1000
-	cbz	x0, 1f			# if (x0 == 0) goto 1f
+	udiv	x0, x26, x1		/* x0 = n / 1000 */
+	msub	x26, x0, x1, x26	/* n %= 1000 */
+	cbz	x0, 1f			/* if (x0 == 0) goto 1f */
 	add	x0, x0, #'0'
 	bl	uartputc
-	mov	x25, #1			# zeropad = 1
+	mov	x25, #1			/* zeropad = 1 */
 1:
 	mov	x1, #100
-	udiv	x0, x26, x1		# x0 = n / 100
-	msub	x26, x0, x1, x26	# n %= 100
-	adds	x25, x25, x0		# if ((zeropad + x0) == 0)
-	beq	1f			#   goto 1f
+	udiv	x0, x26, x1		/* x0 = n / 100 */
+	msub	x26, x0, x1, x26	/* n %= 100 */
+	adds	x25, x25, x0		/* if ((zeropad + x0) == 0) */
+	beq	1f			/*   goto 1f */
 	add	x0, x0, #'0'
 	bl	uartputc
-	mov	x25, #1			# zeropad = 1
+	mov	x25, #1			/* zeropad = 1 */
 1:
 	mov	x1, #10
-	udiv	x0, x26, x1		# x0 = n / 10
-	msub	x26, x0, x1, x26	# n %= 10
-	adds	x25, x25, x0		# if ((zeropad + x0) == 0)
-	beq	1f			#   goto 1f
+	udiv	x0, x26, x1		/* x0 = n / 10 */
+	msub	x26, x0, x1, x26	/* n %= 10 */
+	adds	x25, x25, x0		/* if ((zeropad + x0) == 0) */
+	beq	1f			/*   goto 1f */
 	add	x0, x0, #'0'
 	bl	uartputc
 1:
