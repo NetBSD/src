@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.46 2017/08/01 21:40:03 joerg Exp $
+# $NetBSD: Makefile,v 1.47 2018/07/17 18:55:27 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -35,6 +35,7 @@ SUBDIR=	\
 	libLLVMSupport \
 	libLLVMTableGen \
 	libLLVMTarget \
+	libLLVMTransformsAggressiveInstCombine \
 	libLLVMTransformsCoroutines \
 	libLLVMTransformsUtils \
 	libLLVMVectorize \
@@ -60,7 +61,8 @@ SUBDIR+= \
 	libLLVMARMAsmPrinter \
 	libLLVMARMDisassembler \
 	libLLVMARMMCTargetDesc \
-	libLLVMARMTargetInfo
+	libLLVMARMTargetInfo \
+	libLLVMARMUtils
 
 SUBDIR+= \
 	libLLVMMipsAsmParser \
@@ -126,11 +128,13 @@ SUBDIR+= \
 	libclangASTMatchers \
 	libclangBasic \
 	libclangCodeGen \
+	libclangCrossTU \
 	libclangDriver \
 	libclangEdit \
 	libclangFrontend \
 	libclangFrontendRewrite \
 	libclangFrontendTool \
+	libclangIndex \
 	libclangLex \
 	libclangParse \
 	libclangRewrite \
@@ -145,9 +149,9 @@ SUBDIR+= \
 SUBDIR+= \
 	libclangASTMatchersDynamic \
 	libclangFormat \
-	libclangIndex \
 	libclangTooling \
 	libclangToolingCore \
+	libclangToolingInclusions \
 	libclangToolingRefactoring
 .endif
 

@@ -1,10 +1,14 @@
-#	$NetBSD: Makefile,v 1.1 2011/02/06 01:13:57 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2018/07/17 18:55:28 joerg Exp $
 
 LIB=	LLVMInstCombine
 
 .include <bsd.init.mk>
 
 .PATH: ${LLVM_SRCDIR}/lib/Transforms/InstCombine
+
+TABLEGEN_SRC=		InstCombineTables.td
+TABLEGEN_OUTPUT= \
+	InstCombineTables.inc|-gen-searchable-tables
 
 SRCS+=	InstructionCombining.cpp \
 	InstCombineAddSub.cpp \
@@ -19,6 +23,8 @@ SRCS+=	InstructionCombining.cpp \
 	InstCombineShifts.cpp \
 	InstCombineSimplifyDemanded.cpp \
 	InstCombineVectorOps.cpp
+
+.include "${.PARSEDIR}/../../tablegen.mk"
 
 .if defined(HOSTLIB)
 .include <bsd.hostlib.mk>

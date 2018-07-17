@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2017/08/01 20:07:41 joerg Exp $
+#	$NetBSD: Makefile,v 1.21 2018/07/17 18:55:28 joerg Exp $
 
 LIB=	LLVMMC
 
@@ -8,15 +8,18 @@ LIB=	LLVMMC
 
 SRCS+=	ConstantPools.cpp \
 	ELFObjectWriter.cpp \
+	MachObjectWriter.cpp \
 	MCAsmBackend.cpp \
-	MCAsmInfo.cpp \
 	MCAsmInfoCOFF.cpp \
+	MCAsmInfo.cpp \
 	MCAsmInfoDarwin.cpp \
 	MCAsmInfoELF.cpp \
 	MCAsmInfoWasm.cpp \
+	MCAsmMacro.cpp \
 	MCAsmStreamer.cpp \
 	MCAssembler.cpp \
 	MCCodeEmitter.cpp \
+	MCCodePadder.cpp \
 	MCCodeView.cpp \
 	MCContext.cpp \
 	MCDwarf.cpp \
@@ -25,21 +28,21 @@ SRCS+=	ConstantPools.cpp \
 	MCExpr.cpp \
 	MCFragment.cpp \
 	MCInst.cpp \
+	MCInstPrinter.cpp \
 	MCInstrAnalysis.cpp \
 	MCInstrDesc.cpp \
-	MCInstPrinter.cpp \
 	MCLabel.cpp \
 	MCLinkerOptimizationHint.cpp \
-	MCMachOStreamer.cpp \
 	MCMachObjectTargetWriter.cpp \
+	MCMachOStreamer.cpp \
 	MCNullStreamer.cpp \
 	MCObjectFileInfo.cpp \
 	MCObjectStreamer.cpp \
 	MCObjectWriter.cpp \
 	MCRegisterInfo.cpp \
 	MCSchedule.cpp \
-	MCSection.cpp \
 	MCSectionCOFF.cpp \
+	MCSection.cpp \
 	MCSectionELF.cpp \
 	MCSectionMachO.cpp \
 	MCSectionWasm.cpp \
@@ -54,7 +57,6 @@ SRCS+=	ConstantPools.cpp \
 	MCWin64EH.cpp \
 	MCWinCOFFStreamer.cpp \
 	MCWinEH.cpp \
-	MachObjectWriter.cpp \
 	StringTableBuilder.cpp \
 	SubtargetFeature.cpp \
 	WasmObjectWriter.cpp \

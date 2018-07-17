@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2017/08/01 20:07:39 joerg Exp $
+#	$NetBSD: Makefile,v 1.12 2018/07/17 18:55:26 joerg Exp $
 
 PROG_CXX=	llvm-readobj
 NOMAN=		yes
@@ -16,9 +16,11 @@ SRCS=	llvm-readobj.cpp \
 	MachODumper.cpp \
 	ObjDumper.cpp \
 	WasmDumper.cpp \
-	Win64EHDumper.cpp
+	Win64EHDumper.cpp \
+	WindowsResourceDumper.cpp
 
 LLVM_LIBS+= \
+	DebugInfoDWARF \
 	AArch64TargetInfo \
 	ARMTargetInfo \
 	MipsTargetInfo \
@@ -28,8 +30,8 @@ LLVM_LIBS+= \
 	DebugInfoCodeView \
 	DebugInfoMSF \
 	Object \
-	MC \
 	MCParser \
+	MC \
 	BitReader \
 	IR \
 	BinaryFormat \

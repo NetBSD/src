@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 2017/08/01 20:07:40 joerg Exp $
+#	$NetBSD: Makefile,v 1.25 2018/07/17 18:55:27 joerg Exp $
 
 LIB=	LLVMAnalysis
 
@@ -16,15 +16,16 @@ SRCS+=	AliasAnalysis.cpp \
 	BlockFrequencyInfo.cpp \
 	BlockFrequencyInfoImpl.cpp \
 	BranchProbabilityInfo.cpp \
+	CallGraph.cpp \
+	CallGraphSCCPass.cpp \
+	CallPrinter.cpp \
+	CaptureTracking.cpp \
 	CFG.cpp \
 	CFGPrinter.cpp \
 	CFLAndersAliasAnalysis.cpp \
 	CFLSteensAliasAnalysis.cpp \
 	CGSCCPassManager.cpp \
-	CallGraphSCCPass.cpp \
-	CallGraph.cpp \
-	CallPrinter.cpp \
-	CaptureTracking.cpp \
+	CmpInstAnalysis.cpp \
 	CodeMetrics.cpp \
 	ConstantFolding.cpp \
 	CostModel.cpp \
@@ -32,11 +33,10 @@ SRCS+=	AliasAnalysis.cpp \
 	DemandedBits.cpp \
 	DependenceAnalysis.cpp \
 	DivergenceAnalysis.cpp \
-	DomPrinter.cpp \
 	DominanceFrontier.cpp \
+	DomPrinter.cpp \
 	EHPersonalities.cpp \
 	GlobalsModRef.cpp \
-	IVUsers.cpp \
 	IndirectCallPromotionAnalysis.cpp \
 	InlineCost.cpp \
 	InstCount.cpp \
@@ -44,6 +44,7 @@ SRCS+=	AliasAnalysis.cpp \
 	Interval.cpp \
 	IntervalPartition.cpp \
 	IteratedDominanceFrontier.cpp \
+	IVUsers.cpp \
 	LazyBlockFrequencyInfo.cpp \
 	LazyBranchProbabilityInfo.cpp \
 	LazyCallGraph.cpp \
@@ -60,33 +61,37 @@ SRCS+=	AliasAnalysis.cpp \
 	MemoryBuiltins.cpp \
 	MemoryDependenceAnalysis.cpp \
 	MemoryLocation.cpp \
-	MemorySSAUpdater.cpp \
 	MemorySSA.cpp \
+	MemorySSAUpdater.cpp \
 	ModuleDebugInfoPrinter.cpp \
 	ModuleSummaryAnalysis.cpp \
+	MustExecute.cpp \
 	ObjCARCAliasAnalysis.cpp \
 	ObjCARCAnalysisUtils.cpp \
 	ObjCARCInstKind.cpp \
-	OptimizationDiagnosticInfo.cpp \
+	OptimizationRemarkEmitter.cpp \
 	OrderedBasicBlock.cpp \
 	PHITransAddr.cpp \
+	PhiValues.cpp \
 	PostDominators.cpp \
 	ProfileSummaryInfo.cpp \
 	PtrUseVisitor.cpp \
 	RegionInfo.cpp \
 	RegionPass.cpp \
 	RegionPrinter.cpp \
-	ScalarEvolution.cpp \
 	ScalarEvolutionAliasAnalysis.cpp \
+	ScalarEvolution.cpp \
 	ScalarEvolutionExpander.cpp \
 	ScalarEvolutionNormalization.cpp \
 	ScopedNoAliasAA.cpp \
-	SparsePropagation.cpp \
+	SyntheticCountsUtils.cpp \
 	TargetLibraryInfo.cpp \
 	TargetTransformInfo.cpp \
 	Trace.cpp \
 	TypeBasedAliasAnalysis.cpp \
 	TypeMetadataUtils.cpp \
+	ValueLattice.cpp \
+	ValueLatticeUtils.cpp \
 	ValueTracking.cpp \
 	VectorUtils.cpp
 

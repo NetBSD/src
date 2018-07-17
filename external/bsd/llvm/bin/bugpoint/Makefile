@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2017/08/01 20:07:37 joerg Exp $
+#	$NetBSD: Makefile,v 1.12 2018/07/17 18:55:25 joerg Exp $
 
 PROG_CXX=	bugpoint
 NOMAN=		yes
@@ -18,6 +18,7 @@ SRCS=	BugDriver.cpp \
 	bugpoint.cpp
 
 LLVM_LIBS+= \
+	TransformsAggressiveInstCombine \
 	ObjCARC \
 	ipo \
 	IRReader \
@@ -35,6 +36,7 @@ LLVM_LIBS+= \
 	ARMMCTargetDesc \
 	ARMAsmParser \
 	ARMAsmPrinter \
+	ARMUtils \
 	MipsCodeGen \
 	MipsTargetInfo \
 	MipsAsmPrinter \

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2017/08/01 20:07:39 joerg Exp $
+#	$NetBSD: Makefile,v 1.4 2018/07/17 18:55:26 joerg Exp $
 
 PROG_CXX=	sancov
 NOMAN=		yes
@@ -19,6 +19,7 @@ LLVM_LIBS+= \
 	ARMMCTargetDesc \
 	ARMAsmPrinter \
 	ARMTargetInfo \
+	ARMUtils \
 	MipsDisassembler \
 	MipsMCTargetDesc \
 	MipsAsmPrinter \

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2017/08/01 20:07:39 joerg Exp $
+#	$NetBSD: Makefile,v 1.19 2018/07/17 18:55:26 joerg Exp $
 
 PROG_CXX=	opt
 NOMAN=		yes
@@ -9,6 +9,7 @@ NOMAN=		yes
 
 SRCS=	AnalysisWrappers.cpp \
 	BreakpointPrinter.cpp \
+	Debugify.cpp \
 	GraphPrinters.cpp \
 	NewPMDriver.cpp \
 	PassPrinters.cpp \
@@ -16,6 +17,7 @@ SRCS=	AnalysisWrappers.cpp \
 	opt.cpp
 
 LLVM_LIBS+= \
+	TransformsAggressiveInstCombine \
 	Passes \
 	ObjCARC \
 	ipo \
@@ -36,6 +38,7 @@ LLVM_LIBS+= \
 	ARMAsmParser \
 	ARMMCTargetDesc \
 	ARMAsmPrinter \
+	ARMUtils \
 	MipsCodeGen \
 	MipsTargetInfo \
 	MipsAsmParser \

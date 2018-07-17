@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2016/02/27 21:47:35 joerg Exp $
+#	$NetBSD: Makefile,v 1.4 2018/07/17 18:55:29 joerg Exp $
 
 LIB=	LLVMX86AsmPrinter
 
@@ -10,8 +10,9 @@ CPPFLAGS+=	-I${X86_OBJDIR} -I${LLVM_SRCDIR}/lib/Target/X86
 .PATH: ${LLVM_SRCDIR}/lib/Target/X86/InstPrinter
 
 SRCS+=	X86ATTInstPrinter.cpp \
-	X86IntelInstPrinter.cpp \
-	X86InstComments.cpp
+	X86InstComments.cpp \
+	X86InstPrinterCommon.cpp \
+	X86IntelInstPrinter.cpp
 
 .if defined(HOSTLIB)
 .include <bsd.hostlib.mk>

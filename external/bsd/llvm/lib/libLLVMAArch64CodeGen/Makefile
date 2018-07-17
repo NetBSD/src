@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2017/08/01 20:07:40 joerg Exp $
+#	$NetBSD: Makefile,v 1.9 2018/07/17 18:55:27 joerg Exp $
 
 LIB=	LLVMAArch64CodeGen
 
@@ -16,8 +16,8 @@ SRCS+=	AArch64A53Fix835769.cpp \
 	AArch64CleanupLocalDynamicTLSPass.cpp \
 	AArch64CollectLOH.cpp \
 	AArch64CondBrTuning.cpp \
-	AArch64ConditionOptimizer.cpp \
 	AArch64ConditionalCompares.cpp \
+	AArch64ConditionOptimizer.cpp \
 	AArch64DeadRegisterDefinitionsPass.cpp \
 	AArch64ExpandPseudoInsts.cpp \
 	AArch64FalkorHWPFFix.cpp \
@@ -29,20 +29,20 @@ SRCS+=	AArch64A53Fix835769.cpp \
 	AArch64ISelLowering.cpp \
 	AArch64LegalizerInfo.cpp \
 	AArch64LoadStoreOptimizer.cpp \
-	AArch64MCInstLower.cpp \
 	AArch64MacroFusion.cpp \
+	AArch64MCInstLower.cpp \
 	AArch64PBQPRegAlloc.cpp \
 	AArch64PromoteConstant.cpp \
 	AArch64RedundantCopyElimination.cpp \
 	AArch64RegisterBankInfo.cpp \
 	AArch64RegisterInfo.cpp \
 	AArch64SelectionDAGInfo.cpp \
+	AArch64SIMDInstrOpt.cpp \
 	AArch64StorePairSuppress.cpp \
 	AArch64Subtarget.cpp \
 	AArch64TargetMachine.cpp \
 	AArch64TargetObjectFile.cpp \
-	AArch64TargetTransformInfo.cpp \
-	AArch64VectorByElementOpt.cpp
+	AArch64TargetTransformInfo.cpp
 
 TABLEGEN_SRC=		AArch64.td
 TABLEGEN_INCLUDES=	-I${LLVM_SRCDIR}/lib/Target/AArch64

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2017/08/01 20:07:42 joerg Exp $
+#	$NetBSD: Makefile,v 1.16 2018/07/17 18:55:30 joerg Exp $
 
 LIB=	clangCodeGen
 
@@ -30,6 +30,7 @@ SRCS+=	BackendUtil.cpp \
 	CGExprScalar.cpp \
 	CGGPUBuiltin.cpp \
 	CGLoopInfo.cpp \
+	CGNonTrivialStruct.cpp \
 	CGObjC.cpp \
 	CGObjCGNU.cpp \
 	CGObjCMac.cpp \

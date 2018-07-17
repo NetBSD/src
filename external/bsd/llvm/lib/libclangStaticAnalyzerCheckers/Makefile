@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 2017/08/01 20:07:43 joerg Exp $
+#	$NetBSD: Makefile,v 1.28 2018/07/17 18:55:30 joerg Exp $
 
 LIB=	clangStaticAnalyzerCheckers
 
@@ -16,23 +16,25 @@ SRCS+=	AllocationDiagnostics.cpp \
 	BlockInCriticalSectionChecker.cpp \
 	BoolAssignmentChecker.cpp \
 	BuiltinFunctionChecker.cpp \
-	CXXSelfAssignmentChecker.cpp \
-	ClangCheckers.cpp \
-	CStringChecker.cpp \
-	CStringSyntaxChecker.cpp \
 	CallAndMessageChecker.cpp \
 	CastSizeChecker.cpp \
 	CastToStructChecker.cpp \
+	CheckerDocumentation.cpp \
 	CheckObjCDealloc.cpp \
 	CheckObjCInstMethSignature.cpp \
 	CheckSecuritySyntaxOnly.cpp \
 	CheckSizeofPointer.cpp \
-	CheckerDocumentation.cpp \
 	ChrootChecker.cpp \
+	ClangCheckers.cpp \
 	CloneChecker.cpp \
 	ConversionChecker.cpp \
+	CStringChecker.cpp \
+	CStringSyntaxChecker.cpp \
+	CXXSelfAssignmentChecker.cpp \
+	DanglingInternalBufferChecker.cpp \
 	DeadStoresChecker.cpp \
 	DebugCheckers.cpp \
+	DeleteWithNonVirtualDtorChecker.cpp \
 	DereferenceChecker.cpp \
 	DirectIvarAssignment.cpp \
 	DivZeroChecker.cpp \
@@ -40,29 +42,33 @@ SRCS+=	AllocationDiagnostics.cpp \
 	DynamicTypePropagation.cpp \
 	ExprInspectionChecker.cpp \
 	FixedAddressChecker.cpp \
-	GTestChecker.cpp \
+	GCDAntipatternChecker.cpp \
 	GenericTaintChecker.cpp \
+	GTestChecker.cpp \
 	IdenticalExprChecker.cpp \
 	IteratorChecker.cpp \
 	IvarInvalidationChecker.cpp \
 	LLVMConventionsChecker.cpp \
 	LocalizationChecker.cpp \
-	MPIBugReporter.cpp \
-	MPIChecker.cpp \
-	MPIFunctionClassifier.cpp \
 	MacOSKeychainAPIChecker.cpp \
 	MacOSXAPIChecker.cpp \
 	MallocChecker.cpp \
 	MallocOverflowSecurityChecker.cpp \
 	MallocSizeofChecker.cpp \
 	MisusedMovedObjectChecker.cpp \
+	MmapWriteExecChecker.cpp \
+	MPIBugReporter.cpp \
+	MPIChecker.cpp \
+	MPIFunctionClassifier.cpp \
+	NonnullGlobalConstantsChecker.cpp \
+	NonNullParamChecker.cpp \
+	NoReturnFunctionChecker.cpp \
 	NSAutoreleasePoolChecker.cpp \
 	NSErrorChecker.cpp \
-	NoReturnFunctionChecker.cpp \
-	NonNullParamChecker.cpp \
 	NullabilityChecker.cpp \
 	NumberObjectConversionChecker.cpp \
 	ObjCAtSyncChecker.cpp \
+	ObjCAutoreleaseWriteChecker.cpp \
 	ObjCContainersASTChecker.cpp \
 	ObjCContainersChecker.cpp \
 	ObjCMissingSuperCallChecker.cpp \
@@ -84,17 +90,19 @@ SRCS+=	AllocationDiagnostics.cpp \
 	TaintTesterChecker.cpp \
 	TestAfterDivZeroChecker.cpp \
 	TraversalChecker.cpp \
+	TrustNonnullChecker.cpp \
 	UndefBranchChecker.cpp \
 	UndefCapturedBlockVarChecker.cpp \
-	UndefResultChecker.cpp \
 	UndefinedArraySubscriptChecker.cpp \
 	UndefinedAssignmentChecker.cpp \
+	UndefResultChecker.cpp \
+	UninitializedObjectChecker.cpp \
 	UnixAPIChecker.cpp \
 	UnreachableCodeChecker.cpp \
-	VLASizeChecker.cpp \
 	ValistChecker.cpp \
 	VforkChecker.cpp \
-	VirtualCallChecker.cpp
+	VirtualCallChecker.cpp \
+	VLASizeChecker.cpp
 
 .include "${.PARSEDIR}/../../tablegen.mk"
 

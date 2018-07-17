@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2017/08/01 20:07:39 joerg Exp $
+#	$NetBSD: Makefile,v 1.3 2018/07/17 18:55:26 joerg Exp $
 
 PROG_CXX=	llvm-xray
 NOMAN=		yes
@@ -7,15 +7,16 @@ NOMAN=		yes
 
 .PATH: ${LLVM_SRCDIR}/tools/llvm-xray
 
-SRCS=	func-id-helper.cc \
-	llvm-xray.cc \
-	xray-account.cc \
-	xray-color-helper.cc \
-	xray-converter.cc \
-	xray-extract.cc \
-	xray-graph.cc \
-	xray-graph-diff.cc \
-	xray-registry.cc
+SRCS=	func-id-helper.cpp \
+	llvm-xray.cpp \
+	xray-account.cpp \
+	xray-color-helper.cpp \
+	xray-converter.cpp \
+	xray-extract.cpp \
+	xray-graph-diff.cpp \
+	xray-graph.cpp \
+	xray-registry.cpp \
+	xray-stacks.cpp
 
 LLVM_LIBS+= \
 	XRay \
