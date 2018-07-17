@@ -105,3 +105,56 @@ define i64 @f9(i64 %cmp, i64 *%ptr) {
   %val = extractvalue { i64, i1 } %pairval, 0
   ret i64 %val
 }
+
+; Check generating the comparison result.
+; CHECK-LABEL: f10
+; CHECK: csg %r2, %r3, 0(%r4)
+; CHECK-NEXT: ipm %r2
+; CHECK-NEXT: afi %r2, -268435456
+; CHECK-NEXT: srl %r2, 31
+; CHECK: br %r14
+define i32 @f10(i64 %cmp, i64 %swap, i64 *%src) {
+  %pairval = cmpxchg i64 *%src, i64 %cmp, i64 %swap seq_cst seq_cst
+  %val = extractvalue { i64, i1 } %pairval, 1
+  %res = zext i1 %val to i32
+  ret i32 %res
+}
+
+declare void @g()
+
+; Check using the comparison result for a branch.
+; CHECK-LABEL: f11
+; CHECK: csg %r2, %r3, 0(%r4)
+; CHECK-NEXT: jge g
+; CHECK: br %r14
+define void @f11(i64 %cmp, i64 %swap, i64 *%src) {
+  %pairval = cmpxchg i64 *%src, i64 %cmp, i64 %swap seq_cst seq_cst
+  %cond = extractvalue { i64, i1 } %pairval, 1
+  br i1 %cond, label %call, label %exit
+
+call:
+  tail call void @g()
+  br label %exit
+
+exit:
+  ret void
+}
+
+; ... and the same with the inverted direction.
+; CHECK-LABEL: f12
+; CHECK: csg %r2, %r3, 0(%r4)
+; CHECK-NEXT: jgl g
+; CHECK: br %r14
+define void @f12(i64 %cmp, i64 %swap, i64 *%src) {
+  %pairval = cmpxchg i64 *%src, i64 %cmp, i64 %swap seq_cst seq_cst
+  %cond = extractvalue { i64, i1 } %pairval, 1
+  br i1 %cond, label %exit, label %call
+
+call:
+  tail call void @g()
+  br label %exit
+
+exit:
+  ret void
+}
+
