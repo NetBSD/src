@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.24 2018/06/27 11:12:15 ryo Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.25 2018/07/17 00:38:27 christos Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.24 2018/06/27 11:12:15 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.25 2018/07/17 00:38:27 christos Exp $");
 
 #include "opt_machdep.h"
 #include "opt_bootconfig.h"
@@ -209,10 +209,10 @@ fdt_add_reserved_memory_range(uint64_t addr, uint64_t size)
 	int error = extent_free(fdt_memory_ext, start,
 	     end - start, EX_NOWAIT);
 	if (error != 0)
-		printf("MEM ERROR: res %llx-%llx failed: %d\n",
+		printf("MEM ERROR: res %" PRIx64 "-%" PRIx64 " failed: %d\n",
 		    start, end, error);
 	else
-		DPRINTF("MEM: res %llx-%llx\n", start, end);
+		DPRINTF("MEM: res %" PRIx64 "-%" PRIx64 "\n", start, end);
 }
 
 /*
@@ -264,9 +264,9 @@ fdt_build_bootconfig(uint64_t mem_start, uint64_t mem_end)
 		error = extent_alloc_region(fdt_memory_ext, addr, size,
 		    EX_NOWAIT);
 		if (error != 0)
-			printf("MEM ERROR: add %llx-%llx failed: %d\n",
+			printf("MEM ERROR: add %" PRIx64 "-%" PRIx64 " failed: %d\n",
 			    addr, addr + size, error);
-		DPRINTF("MEM: add %llx-%llx\n", addr, addr + size);
+		DPRINTF("MEM: add %" PRIx64 "-%" PRIx64 "\n", addr, addr + size);
 	}
 
 	fdt_add_reserved_memory(mem_end);
