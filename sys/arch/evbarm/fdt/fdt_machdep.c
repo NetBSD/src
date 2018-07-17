@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.25 2018/07/17 00:38:27 christos Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.26 2018/07/17 18:41:01 christos Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.25 2018/07/17 00:38:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.26 2018/07/17 18:41:01 christos Exp $");
 
 #include "opt_machdep.h"
 #include "opt_bootconfig.h"
@@ -95,10 +95,10 @@ __KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.25 2018/07/17 00:38:27 christos Ex
 BootConfig bootconfig;
 char bootargs[FDT_MAX_BOOT_STRING] = "";
 char *boot_args = NULL;
-/*
- * filled in by xxx_start.S (must not be in bss)
- */
-unsigned long  uboot_args[4] = { 0 };
+
+/* filled in before cleaning bss. keep in .data */
+u_int uboot_args[4] __attribute__((__section__(".data")));
+
 const uint8_t *fdt_addr_r = (const uint8_t *)0xdeadc0de;
 
 static char fdt_memory_ext_storage[EXTENT_FIXED_STORAGE_SIZE(DRAM_BLOCKS)];

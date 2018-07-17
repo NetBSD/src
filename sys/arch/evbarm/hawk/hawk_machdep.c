@@ -26,7 +26,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: hawk_machdep.c,v 1.1 2013/10/02 16:48:26 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hawk_machdep.c,v 1.2 2018/07/17 18:41:01 christos Exp $");
 
 #include "opt_timer.h"
 #include "opt_machdep.h"
@@ -83,7 +83,8 @@ BootConfig bootconfig;		/* Boot config storage */
 static char bootargs[MAX_BOOT_STRING];
 char *boot_args = NULL;
 
-u_int uboot_args[4] = { 0 };
+/* filled in before cleaning bss. keep in .data */
+u_int uboot_args[4] __attribute__((__section__(".data")));
 
 static struct arm32_dma_range omapl1x_dma_ranges[4];
 extern char KERNEL_BASE_phys[];
