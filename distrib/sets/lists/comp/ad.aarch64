@@ -1,4 +1,4 @@
-# $NetBSD: ad.aarch64,v 1.21 2018/07/17 01:47:20 christos Exp $
+# $NetBSD: ad.aarch64,v 1.22 2018/07/17 18:27:31 christos Exp $
 ./usr/include/aarch64				comp-c-include
 ./usr/include/aarch64/ansi.h			comp-c-include
 ./usr/include/aarch64/aout_machdep.h		comp-c-include
@@ -123,9 +123,9 @@
 ./usr/include/evbarm64				comp-obsolete		obsolete
 ./usr/include/evbarm64/disklabel.h		comp-obsolete		obsolete
 ./usr/include/evbarm64/intr.h			comp-obsolete		obsolete
-./usr/include/g++/bits/aarch64			comp-c-include		gcccmds,gcc=6
+./usr/include/g++/bits/aarch64			comp-c-include		
 ./usr/include/g++/bits/aarch64/c++config.h	comp-c-include		gcccmds,gcc=6
-./usr/include/g++/bits/arm			comp-c-include		gcccmds,gcc=6
+./usr/include/g++/bits/arm			comp-c-include
 ./usr/include/g++/bits/arm/c++config.h		comp-c-include		gcccmds,gcc=6
 ./usr/include/gcc-4.8/arm_neon.h		comp-c-include		gcccmds,gcc=48
 ./usr/include/gcc-4.8/mmintrin.h		comp-c-include		gcccmds,gcc=48
