@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.12 2018/07/17 10:01:59 ryo Exp $	*/
+/*	$NetBSD: locore.S,v 1.13 2018/07/17 18:08:36 christos Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -35,7 +35,7 @@
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.12 2018/07/17 10:01:59 ryo Exp $")
+RCSID("$NetBSD: locore.S,v 1.13 2018/07/17 18:08:36 christos Exp $")
 
 /* #define DEBUG_LOCORE */
 /* #define DEBUG_MMU */
@@ -59,9 +59,6 @@ RCSID("$NetBSD: locore.S,v 1.12 2018/07/17 10:01:59 ryo Exp $")
 #else
 #define VERBOSE(string)
 #endif
-
-#define fp	x29
-#define lr	x30
 
 /* load far effective address (pc relative) */
 .macro	ADDR, reg, addr
