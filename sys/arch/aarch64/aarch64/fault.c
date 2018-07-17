@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.1 2018/04/01 04:35:03 ryo Exp $	*/
+/*	$NetBSD: fault.c,v 1.2 2018/07/17 00:31:46 christos Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.1 2018/04/01 04:35:03 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.2 2018/07/17 00:31:46 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -128,7 +128,7 @@ data_abort_handler(struct trapframe *tf, uint32_t eclass, const char *trapname)
 	vaddr_t va;
 	uint32_t esr, fsc, rw;
 	vm_prot_t ftype;
-	int error;
+	int error = 0;
 	const bool user = (__SHIFTOUT(tf->tf_spsr, SPSR_M) == SPSR_M_EL0T) ?
 	    true : false;
 	bool fatalabort;
@@ -216,11 +216,12 @@ data_abort_handler(struct trapframe *tf, uint32_t eclass, const char *trapname)
 				    l->l_proc->p_pid, l->l_proc->p_comm,
 				    l->l_cred ?
 				    kauth_cred_geteuid(l->l_cred) : -1);
-				do_trapsignal(l, SIGKILL, 0, tf->tf_far, esr);
+				do_trapsignal(l, SIGKILL, 0,
+				    (void *)tf->tf_far, esr);
 				goto done_userfault;
 			} else if (error == EACCES) {
 				do_trapsignal(l, SIGSEGV, SEGV_ACCERR,
-				    tf->tf_far, esr);
+				    (void *)tf->tf_far, esr);
 				goto done_userfault;
 			}
 			/* if other error, select signal by ESR */
@@ -238,7 +239,8 @@ data_abort_handler(struct trapframe *tf, uint32_t eclass, const char *trapname)
 		case ESR_ISS_FSC_PERM_FAULT_1:
 		case ESR_ISS_FSC_PERM_FAULT_2:
 		case ESR_ISS_FSC_PERM_FAULT_3:
-			do_trapsignal(l, SIGSEGV, SEGV_ACCERR, tf->tf_far, esr);
+			do_trapsignal(l, SIGSEGV, SEGV_ACCERR,
+			    (void *)tf->tf_far, esr);
 			break;
 		case ESR_ISS_FSC_TRANSLATION_FAULT_0:
 		case ESR_ISS_FSC_TRANSLATION_FAULT_1:
@@ -250,13 +252,15 @@ data_abort_handler(struct trapframe *tf, uint32_t eclass, const char *trapname)
 		case ESR_ISS_FSC_FIRST_LEVEL_DOMAIN_FAULT:
 		case ESR_ISS_FSC_SECOND_LEVEL_DOMAIN_FAULT:
 		default:
-			do_trapsignal(l, SIGSEGV, SEGV_MAPERR, tf->tf_far, esr);
+			do_trapsignal(l, SIGSEGV, SEGV_MAPERR,
+			    (void *)tf->tf_far, esr);
 			break;
 		case ESR_ISS_FSC_ADDRESS_SIZE_FAULT_0:
 		case ESR_ISS_FSC_ADDRESS_SIZE_FAULT_1:
 		case ESR_ISS_FSC_ADDRESS_SIZE_FAULT_2:
 		case ESR_ISS_FSC_ADDRESS_SIZE_FAULT_3:
-			do_trapsignal(l, SIGBUS, BUS_ADRERR, tf->tf_far, esr);
+			do_trapsignal(l, SIGBUS, BUS_ADRERR,
+			    (void *)tf->tf_far, esr);
 			break;
 		case ESR_ISS_FSC_SYNC_EXTERNAL_ABORT:
 		case ESR_ISS_FSC_SYNC_EXTERNAL_ABORT_TTWALK_0:
@@ -268,10 +272,12 @@ data_abort_handler(struct trapframe *tf, uint32_t eclass, const char *trapname)
 		case ESR_ISS_FSC_SYNC_PARITY_ERROR_ON_TTWALK_1:
 		case ESR_ISS_FSC_SYNC_PARITY_ERROR_ON_TTWALK_2:
 		case ESR_ISS_FSC_SYNC_PARITY_ERROR_ON_TTWALK_3:
-			do_trapsignal(l, SIGBUS, BUS_OBJERR, tf->tf_far, esr);
+			do_trapsignal(l, SIGBUS, BUS_OBJERR,
+			    (void *)tf->tf_far, esr);
 			break;
 		case ESR_ISS_FSC_ALIGNMENT_FAULT:
-			do_trapsignal(l, SIGBUS, BUS_ADRALN, tf->tf_far, esr);
+			do_trapsignal(l, SIGBUS, BUS_ADRALN,
+			    (void *)tf->tf_far, esr);
 			break;
 		}
  done_userfault:
