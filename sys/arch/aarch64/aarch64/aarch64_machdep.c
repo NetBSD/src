@@ -1,4 +1,4 @@
-/* $NetBSD: aarch64_machdep.c,v 1.4 2018/05/23 08:20:12 ryo Exp $ */
+/* $NetBSD: aarch64_machdep.c,v 1.5 2018/07/17 00:29:20 christos Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.4 2018/05/23 08:20:12 ryo Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.5 2018/07/17 00:29:20 christos Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -124,7 +124,6 @@ initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
 	psize_t memsize_total;
 	vaddr_t kernstart, kernend;
 	vaddr_t kernstart_l2, kernend_l2;	/* L2 table 2MB aligned */
-	paddr_t kstartp, kendp;			/* physical page of kernel */
 	int i;
 
 	aarch64_getcacheinfo();
@@ -179,7 +178,7 @@ initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
 	 */
 	physical_end -= round_page(MSGBUFSIZE);
 	bootconfig.dram[0].pages -= atop(round_page(MSGBUFSIZE));
-	initmsgbuf(AARCH64_PA_TO_KVA(physical_end), MSGBUFSIZE);
+	initmsgbuf((void *)AARCH64_PA_TO_KVA(physical_end), MSGBUFSIZE);
 
 #ifdef DDB
 	db_machdep_init();
@@ -189,8 +188,6 @@ initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
 
 	/* register free physical memory blocks */
 	memsize_total = 0;
-	kstartp = atop(kernstart_phys);
-	kendp = atop(kernend_phys);
 
 	KASSERT(bp != NULL || nbp == 0);
 	KASSERT(bp == NULL || nbp != 0);
@@ -249,7 +246,7 @@ initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
 	/*
 	 * setup lwp0
 	 */
-	uvm_lwp_setuarea(&lwp0, lwp0uspace);
+	uvm_lwp_setuarea(&lwp0, (vaddr_t)lwp0uspace);
 	memset(&lwp0.l_md, 0, sizeof(lwp0.l_md));
 	memset(lwp_getpcb(&lwp0), 0, sizeof(struct pcb));
 
@@ -258,7 +255,7 @@ initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
 	tf->tf_spsr = SPSR_M_EL0T;
 	lwp0.l_md.md_utf = lwp0.l_md.md_ktf = tf;
 
-	return tf;
+	return (vaddr_t)tf;
 }
 
 /*
