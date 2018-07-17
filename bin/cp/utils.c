@@ -1,4 +1,4 @@
-/* $NetBSD: utils.c,v 1.45 2016/02/29 04:22:21 mrg Exp $ */
+/* $NetBSD: utils.c,v 1.46 2018/07/17 13:04:58 darcy Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utils.c	8.3 (Berkeley) 4/1/94";
 #else
-__RCSID("$NetBSD: utils.c,v 1.45 2016/02/29 04:22:21 mrg Exp $");
+__RCSID("$NetBSD: utils.c,v 1.46 2018/07/17 13:04:58 darcy Exp $");
 #endif
 #endif /* not lint */
 
@@ -99,7 +99,17 @@ copy_file(FTSENT *entp, int dne)
 	int ch, checkch, from_fd, rcount, rval, to_fd, tolnk, wcount;
 	char *p;
 	off_t ptotal = 0;
-	
+
+	/* if hard linking then simply link and return */
+	if (lflag) {
+		(void)unlink(to.p_path);
+		if (link(entp->fts_path, to.p_path)) {
+			warn("%s", to.p_path);
+			return (1);
+		}
+		return (0);
+	}
+
 	if ((from_fd = open(entp->fts_path, O_RDONLY, 0)) == -1) {
 		warn("%s", entp->fts_path);
 		return (1);
@@ -163,18 +173,6 @@ copy_file(FTSENT *entp, int dne)
 	}
 
 	rval = 0;
-
-	/* if hard linking then simply close the open fds, link and return */
-	if (lflag) {
-		(void)close(from_fd);
-		(void)close(to_fd);
-		(void)unlink(to.p_path);
-		if (link(entp->fts_path, to.p_path)) {
-			warn("%s", to.p_path);
-			return (1);
-		}
-		return (0);
-	}
 
 	/*
 	 * There's no reason to do anything other than close the file
