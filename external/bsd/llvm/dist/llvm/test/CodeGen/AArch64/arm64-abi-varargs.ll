@@ -13,9 +13,8 @@ define void @fn9(i32* %a1, i32 %a2, i32 %a3, i32 %a4, i32 %a5, i32 %a6, i32 %a7,
 ; CHECK: ldr {{w[0-9]+}}, [sp, #72]
 ; Second vararg
 ; CHECK: ldr {{w[0-9]+}}, [{{x[0-9]+}}], #8
-; CHECK: add {{x[0-9]+}}, {{x[0-9]+}}, #8
 ; Third vararg
-; CHECK: ldr {{w[0-9]+}}, [{{x[0-9]+}}]
+; CHECK: ldr {{w[0-9]+}}, [{{x[0-9]+}}], #8
   %1 = alloca i32, align 4
   %2 = alloca i32, align 4
   %3 = alloca i32, align 4
@@ -101,9 +100,8 @@ define i32 @main() nounwind ssp {
 define void @foo(i8* %fmt, ...) nounwind {
 entry:
 ; CHECK-LABEL: foo:
-; CHECK: orr {{x[0-9]+}}, {{x[0-9]+}}, #0x8
 ; CHECK: ldr {{w[0-9]+}}, [sp, #48]
-; CHECK: add {{x[0-9]+}}, {{x[0-9]+}}, #15
+; CHECK: add {{x[0-9]+}}, {{x[0-9]+}}, #23
 ; CHECK: and x[[ADDR:[0-9]+]], {{x[0-9]+}}, #0xfffffffffffffff0
 ; CHECK: ldr {{q[0-9]+}}, [x[[ADDR]]]
   %fmt.addr = alloca i8*, align 8
@@ -142,9 +140,8 @@ entry:
 define void @foo2(i8* %fmt, ...) nounwind {
 entry:
 ; CHECK-LABEL: foo2:
-; CHECK: orr {{x[0-9]+}}, {{x[0-9]+}}, #0x8
 ; CHECK: ldr {{w[0-9]+}}, [sp, #48]
-; CHECK: add {{x[0-9]+}}, {{x[0-9]+}}, #15
+; CHECK: add {{x[0-9]+}}, {{x[0-9]+}}, #23
 ; CHECK: and x[[ADDR:[0-9]+]], {{x[0-9]+}}, #0xfffffffffffffff0
 ; CHECK: ldr {{q[0-9]+}}, [x[[ADDR]]]
   %fmt.addr = alloca i8*, align 8
@@ -166,10 +163,10 @@ entry:
   %4 = bitcast i8* %ap.align to %struct.s41*
   %5 = bitcast %struct.s41* %vs to i8*
   %6 = bitcast %struct.s41* %4 to i8*
-  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %5, i8* %6, i64 16, i32 16, i1 false)
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 16 %5, i8* align 16 %6, i64 16, i1 false)
   ret void
 }
-declare void @llvm.memcpy.p0i8.p0i8.i64(i8* nocapture, i8* nocapture, i64, i32, i1) nounwind
+declare void @llvm.memcpy.p0i8.p0i8.i64(i8* nocapture, i8* nocapture, i64, i1) nounwind
 
 define void @bar2(i32 %x, i128 %s41.coerce) nounwind {
 entry:
