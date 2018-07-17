@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.5 2018/04/28 17:42:07 ryo Exp $ */
+/* $NetBSD: db_machdep.h,v 1.6 2018/07/17 10:07:49 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -201,9 +201,7 @@ db_addr_t db_branch_taken(db_expr_t, db_addr_t, db_regs_t *);
 
 #define DB_MACHINE_COMMANDS
 void dump_trapframe(struct trapframe *, void (*)(const char *, ...));
-
-
-
+const char *strdisasm(vaddr_t);
 void db_machdep_init(void);
 
 /* hardware breakpoint/watchpoint functions */
