@@ -45,6 +45,30 @@ def RetCC_PPC64_AnyReg : CallingConv<[
   CCCustom<"CC_PPC_AnyReg_Error">
 ]>;
 
+// Return-value convention for PowerPC coldcc.
+def RetCC_PPC_Cold : CallingConv<[
+  // Use the same return registers as RetCC_PPC, but limited to only
+  // one return value. The remaining return values will be saved to
+  // the stack.
+  CCIfType<[i32, i1], CCIfSubtarget<"isPPC64()", CCPromoteToType<i64>>>,
+  CCIfType<[i1], CCIfNotSubtarget<"isPPC64()", CCPromoteToType<i32>>>,
+
+  CCIfType<[i32], CCAssignToReg<[R3]>>,
+  CCIfType<[i64], CCAssignToReg<[X3]>>,
+  CCIfType<[i128], CCAssignToReg<[X3]>>,
+
+  CCIfType<[f32], CCAssignToReg<[F1]>>,
+  CCIfType<[f64], CCAssignToReg<[F1]>>,
+  CCIfType<[f128], CCIfSubtarget<"hasP9Vector()", CCAssignToReg<[V2]>>>,
+
+  CCIfType<[v4f64, v4f32, v4i1],
+           CCIfSubtarget<"hasQPX()", CCAssignToReg<[QF1]>>>,
+
+  CCIfType<[v16i8, v8i16, v4i32, v2i64, v1i128, v4f32, v2f64],
+           CCIfSubtarget<"hasAltivec()",
+           CCAssignToReg<[V2]>>>
+]>;
+
 // Return-value convention for PowerPC
 def RetCC_PPC : CallingConv<[
   CCIfCC<"CallingConv::AnyReg", CCDelegateTo<RetCC_PPC64_AnyReg>>,
@@ -61,6 +85,11 @@ def RetCC_PPC : CallingConv<[
   // only the ELFv2 ABI fully utilizes all these registers.
   CCIfType<[f32], CCAssignToReg<[F1, F2, F3, F4, F5, F6, F7, F8]>>,
   CCIfType<[f64], CCAssignToReg<[F1, F2, F3, F4, F5, F6, F7, F8]>>,
+
+  // For P9, f128 are passed in vector registers.
+  CCIfType<[f128],
+           CCIfSubtarget<"hasP9Vector()",
+           CCAssignToReg<[V2, V3, V4, V5, V6, V7, V8, V9]>>>,
 
   // QPX vectors are returned in QF1 and QF2. 
   CCIfType<[v4f64, v4f32, v4i1],
@@ -117,6 +146,9 @@ def RetCC_PPC64_ELF_FIS : CallingConv<[
   CCIfType<[i128], CCAssignToReg<[X3, X4, X5, X6]>>,
   CCIfType<[f32],  CCAssignToReg<[F1, F2, F3, F4, F5, F6, F7, F8]>>,
   CCIfType<[f64],  CCAssignToReg<[F1, F2, F3, F4, F5, F6, F7, F8]>>,
+  CCIfType<[f128],
+           CCIfSubtarget<"hasP9Vector()",
+           CCAssignToReg<[V2, V3, V4, V5, V6, V7, V8, V9]>>>,
   CCIfType<[v4f64, v4f32, v4i1],
            CCIfSubtarget<"hasQPX()", CCAssignToReg<[QF1, QF2]>>>,
   CCIfType<[v16i8, v8i16, v4i32, v2i64, v1i128, v4f32, v2f64],
@@ -170,8 +202,9 @@ def CC_PPC32_SVR4_Common : CallingConv<[
   // QPX vectors that are stored in double precision need 32-byte alignment.
   CCIfType<[v4f64, v4i1], CCAssignToStack<32, 32>>,
 
-  // Vectors get 16-byte stack slots that are 16-byte aligned.
-  CCIfType<[v16i8, v8i16, v4i32, v4f32, v2f64, v2i64], CCAssignToStack<16, 16>>
+  // Vectors and float128 get 16-byte stack slots that are 16-byte aligned.
+  CCIfType<[v16i8, v8i16, v4i32, v4f32, v2f64, v2i64], CCAssignToStack<16, 16>>,
+  CCIfType<[f128], CCIfSubtarget<"hasP9Vector()", CCAssignToStack<16, 16>>>
 ]>;
 
 // This calling convention puts vector arguments always on the stack. It is used
@@ -191,6 +224,11 @@ def CC_PPC32_SVR4 : CallingConv<[
   // The first 12 Vector arguments are passed in AltiVec registers.
   CCIfType<[v16i8, v8i16, v4i32, v2i64, v1i128, v4f32, v2f64],
            CCIfSubtarget<"hasAltivec()", CCAssignToReg<[V2, V3, V4, V5, V6, V7,
+                          V8, V9, V10, V11, V12, V13]>>>,
+
+  // Float128 types treated as vector arguments.
+  CCIfType<[f128],
+           CCIfSubtarget<"hasP9Vector()", CCAssignToReg<[V2, V3, V4, V5, V6, V7,
                           V8, V9, V10, V11, V12, V13]>>>,
            
   CCDelegateTo<CC_PPC32_SVR4_Common>
@@ -270,6 +308,36 @@ def CSR_SVR464_R2_Altivec : CalleeSavedRegs<(add CSR_SVR464_Altivec, X2)>;
 def CSR_SVR464_R2_Altivec_ViaCopy : CalleeSavedRegs<(add CSR_SVR464_R2_Altivec)>;
 
 def CSR_NoRegs : CalleeSavedRegs<(add)>;
+
+// coldcc calling convection marks most registers as non-volatile.
+// Do not include r1 since the stack pointer is never considered a CSR.
+// Do not include r2, since it is the TOC register and is added depending
+// on wether or not the function uses the TOC and is a non-leaf.
+// Do not include r0,r11,r13 as they are optional in functional linkage
+// and value may be altered by inter-library calls.
+// Do not include r12 as it is used as a scratch register.
+// Do not include return registers r3, f1, v2.
+def CSR_SVR32_ColdCC : CalleeSavedRegs<(add (sequence "R%u", 4, 10),
+                                          (sequence "R%u", 14, 31),
+                                          F0, (sequence "F%u", 2, 31),
+                                          (sequence "CR%u", 0, 7))>;
+
+def CSR_SVR32_ColdCC_Altivec : CalleeSavedRegs<(add CSR_SVR32_ColdCC,
+                                            (sequence "V%u", 0, 1),
+                                            (sequence "V%u", 3, 31))>;
+
+def CSR_SVR64_ColdCC : CalleeSavedRegs<(add  (sequence "X%u", 4, 10),
+                                             (sequence "X%u", 14, 31),
+                                             F0, (sequence "F%u", 2, 31),
+                                             (sequence "CR%u", 0, 7))>;
+
+def CSR_SVR64_ColdCC_R2: CalleeSavedRegs<(add CSR_SVR64_ColdCC, X2)>;
+
+def CSR_SVR64_ColdCC_Altivec : CalleeSavedRegs<(add CSR_SVR64_ColdCC,
+                                             (sequence "V%u", 0, 1),
+                                             (sequence "V%u", 3, 31))>;
+
+def CSR_SVR64_ColdCC_R2_Altivec : CalleeSavedRegs<(add CSR_SVR64_ColdCC_Altivec, X2)>;
 
 def CSR_64_AllRegs: CalleeSavedRegs<(add X0, (sequence "X%u", 3, 10),
                                              (sequence "X%u", 14, 31),
