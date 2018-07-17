@@ -187,7 +187,7 @@ typedef volatile struct {
  void *opaque1;
  long opaque2;
 } OSQueueHead;
-void OSAtomicEnqueue( OSQueueHead *__list, void *__new, size_t __offset) __attribute__((weak_import));
+extern "C" void OSAtomicEnqueue( OSQueueHead *__list, void *__new, size_t __offset) __attribute__((weak_import));
 static inline void radar11111210(OSQueueHead *pool) {
     void *newItem = malloc(4);
     OSAtomicEnqueue(pool, newItem, 4);
@@ -319,4 +319,14 @@ void test12365078_check_positive() {
   unichar *characters = (unichar*)malloc(12);
   NSString *string = [[NSString alloc] initWithCharactersNoCopy:characters length:12 freeWhenDone:1];
   if (string) free(characters); // expected-warning{{Attempt to free non-owned memory}}
+}
+
+void *test_reinterpret_cast_to_block() {
+  // Used to leak because the pointer was disappearing
+  // during the reinterpret_cast.
+  using BlockPtrTy = void (^)();
+  struct Block {};
+  Block* block = static_cast<Block*>(malloc(sizeof(Block)));
+  BlockPtrTy blockPtr = reinterpret_cast<BlockPtrTy>(block); // no-warning
+  return blockPtr;
 }

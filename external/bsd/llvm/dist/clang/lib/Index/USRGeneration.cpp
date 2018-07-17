@@ -99,9 +99,11 @@ public:
   void VisitVarDecl(const VarDecl *D);
   void VisitNonTypeTemplateParmDecl(const NonTypeTemplateParmDecl *D);
   void VisitTemplateTemplateParmDecl(const TemplateTemplateParmDecl *D);
+  void VisitUnresolvedUsingValueDecl(const UnresolvedUsingValueDecl *D);
+  void VisitUnresolvedUsingTypenameDecl(const UnresolvedUsingTypenameDecl *D);
 
   void VisitLinkageSpecDecl(const LinkageSpecDecl *D) {
-    IgnoreResults = true;
+    IgnoreResults = true; // No USRs for linkage specs themselves.
   }
 
   void VisitUsingDirectiveDecl(const UsingDirectiveDecl *D) {
@@ -109,14 +111,6 @@ public:
   }
 
   void VisitUsingDecl(const UsingDecl *D) {
-    IgnoreResults = true;
-  }
-
-  void VisitUnresolvedUsingValueDecl(const UnresolvedUsingValueDecl *D) {
-    IgnoreResults = true;
-  }
-
-  void VisitUnresolvedUsingTypenameDecl(const UnresolvedUsingTypenameDecl *D) {
     IgnoreResults = true;
   }
 
@@ -198,6 +192,8 @@ bool USRGenerator::ShouldGenerateLocation(const NamedDecl *D) {
 void USRGenerator::VisitDeclContext(const DeclContext *DC) {
   if (const NamedDecl *D = dyn_cast<NamedDecl>(DC))
     Visit(D);
+  else if (isa<LinkageSpecDecl>(DC)) // Linkage specs are transparent in USRs.
+    VisitDeclContext(DC->getParent());
 }
 
 void USRGenerator::VisitFieldDecl(const FieldDecl *D) {
@@ -609,6 +605,16 @@ bool USRGenerator::GenLoc(const Decl *D, bool IncludeOffset) {
   return IgnoreResults;
 }
 
+static void printQualifier(llvm::raw_ostream &Out, ASTContext &Ctx, NestedNameSpecifier *NNS) {
+  // FIXME: Encode the qualifier, don't just print it.
+  PrintingPolicy PO(Ctx.getLangOpts());
+  PO.SuppressTagKeyword = true;
+  PO.SuppressUnwrittenScope = true;
+  PO.ConstantArraySizeAsWritten = false;
+  PO.AnonymousTagLocations = false;
+  NNS->print(Out, PO);
+}
+
 void USRGenerator::VisitType(QualType T) {
   // This method mangles in USR information for types.  It can possibly
   // just reuse the naming-mangling logic used by codegen, although the
@@ -644,6 +650,8 @@ void USRGenerator::VisitType(QualType T) {
           c = 'b'; break;
         case BuiltinType::UChar:
           c = 'c'; break;
+        case BuiltinType::Char8:
+          c = 'u'; break; // FIXME: Check this doesn't collide
         case BuiltinType::Char16:
           c = 'q'; break;
         case BuiltinType::Char32:
@@ -676,6 +684,7 @@ void USRGenerator::VisitType(QualType T) {
           c = 'K'; break;
         case BuiltinType::Int128:
           c = 'J'; break;
+        case BuiltinType::Float16:
         case BuiltinType::Half:
           c = 'h'; break;
         case BuiltinType::Float:
@@ -700,6 +709,30 @@ void USRGenerator::VisitType(QualType T) {
         case BuiltinType::OCLQueue:
         case BuiltinType::OCLReserveID:
         case BuiltinType::OCLSampler:
+        case BuiltinType::ShortAccum:
+        case BuiltinType::Accum:
+        case BuiltinType::LongAccum:
+        case BuiltinType::UShortAccum:
+        case BuiltinType::UAccum:
+        case BuiltinType::ULongAccum:
+        case BuiltinType::ShortFract:
+        case BuiltinType::Fract:
+        case BuiltinType::LongFract:
+        case BuiltinType::UShortFract:
+        case BuiltinType::UFract:
+        case BuiltinType::ULongFract:
+        case BuiltinType::SatShortAccum:
+        case BuiltinType::SatAccum:
+        case BuiltinType::SatLongAccum:
+        case BuiltinType::SatUShortAccum:
+        case BuiltinType::SatUAccum:
+        case BuiltinType::SatULongAccum:
+        case BuiltinType::SatShortFract:
+        case BuiltinType::SatFract:
+        case BuiltinType::SatLongFract:
+        case BuiltinType::SatUShortFract:
+        case BuiltinType::SatUFract:
+        case BuiltinType::SatULongFract:
           IgnoreResults = true;
           return;
         case BuiltinType::ObjCId:
@@ -749,8 +782,12 @@ void USRGenerator::VisitType(QualType T) {
     if (const FunctionProtoType *FT = T->getAs<FunctionProtoType>()) {
       Out << 'F';
       VisitType(FT->getReturnType());
-      for (const auto &I : FT->param_types())
+      Out << '(';
+      for (const auto &I : FT->param_types()) {
+        Out << '#';
         VisitType(I);
+      }
+      Out << ')';
       if (FT->isVariadic())
         Out << '.';
       return;
@@ -797,13 +834,7 @@ void USRGenerator::VisitType(QualType T) {
     }
     if (const DependentNameType *DNT = T->getAs<DependentNameType>()) {
       Out << '^';
-      // FIXME: Encode the qualifier, don't just print it.
-      PrintingPolicy PO(Ctx.getLangOpts());
-      PO.SuppressTagKeyword = true;
-      PO.SuppressUnwrittenScope = true;
-      PO.ConstantArraySizeAsWritten = false;
-      PO.AnonymousTagLocations = false;
-      DNT->getQualifier()->print(Out, PO);
+      printQualifier(Out, Ctx, DNT->getQualifier());
       Out << ':' << DNT->getIdentifier()->getName();
       return;
     }
@@ -815,6 +846,25 @@ void USRGenerator::VisitType(QualType T) {
       Out << (T->isExtVectorType() ? ']' : '[');
       Out << VT->getNumElements();
       T = VT->getElementType();
+      continue;
+    }
+    if (const auto *const AT = dyn_cast<ArrayType>(T)) {
+      Out << '{';
+      switch (AT->getSizeModifier()) {
+      case ArrayType::Static:
+        Out << 's';
+        break;
+      case ArrayType::Star:
+        Out << '*';
+        break;
+      case ArrayType::Normal:
+        Out << 'n';
+        break;
+      }
+      if (const auto *const CAT = dyn_cast<ConstantArrayType>(T))
+        Out << CAT->getSize();
+
+      T = AT->getElementType();
       continue;
     }
 
@@ -911,6 +961,26 @@ void USRGenerator::VisitTemplateArgument(const TemplateArgument &Arg) {
     break;
   }
 }
+
+void USRGenerator::VisitUnresolvedUsingValueDecl(const UnresolvedUsingValueDecl *D) {
+  if (ShouldGenerateLocation(D) && GenLoc(D, /*IncludeOffset=*/isLocal(D)))
+    return;
+  VisitDeclContext(D->getDeclContext());
+  Out << "@UUV@";
+  printQualifier(Out, D->getASTContext(), D->getQualifier());
+  EmitDeclName(D);
+}
+
+void USRGenerator::VisitUnresolvedUsingTypenameDecl(const UnresolvedUsingTypenameDecl *D) {
+  if (ShouldGenerateLocation(D) && GenLoc(D, /*IncludeOffset=*/isLocal(D)))
+    return;
+  VisitDeclContext(D->getDeclContext());
+  Out << "@UUT@";
+  printQualifier(Out, D->getASTContext(), D->getQualifier());
+  Out << D->getName(); // Simple name.
+}
+
+
 
 //===----------------------------------------------------------------------===//
 // USR generation functions.
