@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_machdep.c,v 1.4 2018/07/09 06:19:53 ryo Exp $ */
+/* $NetBSD: cpu_machdep.c,v 1.5 2018/07/17 00:30:11 christos Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: cpu_machdep.c,v 1.4 2018/07/09 06:19:53 ryo Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cpu_machdep.c,v 1.5 2018/07/17 00:30:11 christos Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -204,7 +204,7 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 			return error;
 
 		memcpy(&tf->tf_regs, mcp->__gregs, sizeof(tf->tf_regs));
-		l->l_private = mcp->__gregs[_REG_TPIDR];
+		l->l_private = (void *)mcp->__gregs[_REG_TPIDR];
 	}
 
 	if (flags & _UC_FPU) {
