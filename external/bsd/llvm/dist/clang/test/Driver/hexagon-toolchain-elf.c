@@ -99,19 +99,27 @@
 
 // RUN: %clang -### -target hexagon-unknown-elf \
 // RUN:   -ccc-install-dir %S/Inputs/hexagon_tree/Tools/bin \
-// RUN:   -O3 \
+// RUN:   -mcpu=hexagonv65 \
 // RUN:   %s 2>&1 \
 // RUN:   | FileCheck -check-prefix=CHECK025 %s
-// CHECK025: "-ffp-contract=fast"
-// CHECK025: hexagon-link
+// CHECK025: "-cc1" {{.*}} "-target-cpu" "hexagonv65"
+// CHECK025: hexagon-link{{.*}}/Inputs/hexagon_tree/Tools/bin/../target/hexagon/lib/v65/crt0
+
+// RUN: %clang -### -target hexagon-unknown-elf \
+// RUN:   -ccc-install-dir %S/Inputs/hexagon_tree/Tools/bin \
+// RUN:   -O3 \
+// RUN:   %s 2>&1 \
+// RUN:   | FileCheck -check-prefix=CHECK026 %s
+// CHECK026: "-ffp-contract=fast"
+// CHECK026: hexagon-link
 
 // RUN: %clang -### -target hexagon-unknown-elf \
 // RUN:   -ccc-install-dir %S/Inputs/hexagon_tree/Tools/bin \
 // RUN:   -O3 -ffp-contract=off \
 // RUN:   %s 2>&1 \
-// RUN:   | FileCheck -check-prefix=CHECK026 %s
-// CHECK026-NOT: "-ffp-contract=fast"
-// CHECK026: hexagon-link
+// RUN:   | FileCheck -check-prefix=CHECK027 %s
+// CHECK027-NOT: "-ffp-contract=fast"
+// CHECK027: hexagon-link
 
 // -----------------------------------------------------------------------------
 // Test Linker related args
@@ -496,12 +504,22 @@
 // CHECK060-NEXT: hexagon-link
 
 // -----------------------------------------------------------------------------
+// ffixed-r19
+// -----------------------------------------------------------------------------
+// RUN: %clang -### -target hexagon-unknown-elf -ffixed-r19 %s 2>&1 \
+// RUN:        | FileCheck --check-prefix=CHECK070 %s
+// CHECK070: "-target-feature" "+reserved-r19"
+// RUN: %clang -### -target hexagon-unknown-elf %s 2>&1 \
+// RUN:        | FileCheck --check-prefix=CHECK071 %s
+// CHECK071-NOT: "+reserved-r19"
+
+// -----------------------------------------------------------------------------
 // Misc Defaults
 // -----------------------------------------------------------------------------
 // RUN: %clang -### -target hexagon-unknown-elf \
 // RUN:   -ccc-install-dir %S/Inputs/hexagon_tree/Tools/bin \
 // RUN:   -mcpu=hexagonv60 \
 // RUN:   %s 2>&1 \
-// RUN:   | FileCheck -check-prefix=CHECK070 %s
-// CHECK070:      "-cc1"
-// CHECK070:      "-Wreturn-type"
+// RUN:   | FileCheck -check-prefix=CHECK080 %s
+// CHECK080:      "-cc1"
+// CHECK080:      "-Wreturn-type"
