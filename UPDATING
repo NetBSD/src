@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.296 2018/07/16 11:45:01 martin Exp $
+$NetBSD: UPDATING,v 1.297 2018/07/17 19:13:53 joerg Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -18,6 +18,10 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20180717:
+	On aarch64 int64_t and related types have changed from long long
+	to long. This requires recompiling all C++ binaries.
 
 20180713:
 	On amd64 and i386 static binaries are now build position
