@@ -1,4 +1,4 @@
-/*	$NetBSD: imx7_machdep.c,v 1.6 2017/09/08 05:29:12 hkenken Exp $	*/
+/*	$NetBSD: imx7_machdep.c,v 1.7 2018/07/17 18:41:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx7_machdep.c,v 1.6 2017/09/08 05:29:12 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx7_machdep.c,v 1.7 2018/07/17 18:41:01 christos Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_arm_debug.h"
@@ -73,7 +73,8 @@ BootConfig bootconfig;
 static char bootargs[MAX_BOOT_STRING];
 char *boot_args = NULL;
 
-u_int uboot_args[4] = { 0 };
+/* filled in before cleaning bss. keep in .data */
+u_int uboot_args[4] __attribute__((__section__(".data")));
 
 /*
  * Macros to translate between physical and virtual for a subset of the

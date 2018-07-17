@@ -1,4 +1,4 @@
-/*	$NetBSD: amlogic_machdep.c,v 1.22 2018/06/05 08:03:28 hkenken Exp $ */
+/*	$NetBSD: amlogic_machdep.c,v 1.23 2018/07/17 18:41:00 christos Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amlogic_machdep.c,v 1.22 2018/06/05 08:03:28 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amlogic_machdep.c,v 1.23 2018/07/17 18:41:00 christos Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -200,7 +200,9 @@ BootConfig bootconfig;		/* Boot config storage */
 static char bootargs[AMLOGIC_MAX_BOOT_STRING];
 char *boot_args = NULL;
 char *boot_file = NULL;
-u_int uboot_args[4] = { 0 };	/* filled in by amlogic_start.S (not in bss) */
+
+/* filled in before cleaning bss. keep in .data */
+u_int uboot_args[4] __attribute__((__section__(".data")));
 
 /* Same things, but for the free (unused by the kernel) memory. */
 
