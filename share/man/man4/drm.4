@@ -1,4 +1,4 @@
-.\"	$NetBSD: drm.4,v 1.16 2018/07/10 17:01:43 maya Exp $
+.\"	$NetBSD: drm.4,v 1.17 2018/07/18 16:41:53 wiz Exp $
 .\"
 .\" Copyright (c) 2007, 2013 Thomas Klausner
 .\" All rights reserved.
@@ -42,11 +42,9 @@
 .Cd options        DRM_DEBUG
 .Cd options        DRM_NO_AGP
 .Sh DESCRIPTION
-The
-.Tn Direct Rendering Manager
-is part of the
-.Tn Direct Rendering Infrastructure
-for supporting video acceleration (3d acceleration, mostly).
+The Direct Rendering Manager is part of the Direct Rendering
+Infrastructure for supporting video acceleration (3d acceleration,
+mostly).
 .Pp
 The
 .Nm
@@ -195,7 +193,6 @@ drivers appeared in
 .An Daryll Strauss ,
 .An Keith Whitwell
 .Sh CAVEATS
-.Pp
 In case of errors,
 .Pa /dev/dri/card0
 may be changed, make sure to recreate it in that case.
