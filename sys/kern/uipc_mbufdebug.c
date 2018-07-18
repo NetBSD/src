@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbufdebug.c,v 1.1 2018/07/17 05:52:07 msaitoh Exp $	*/
+/*	$NetBSD: uipc_mbufdebug.c,v 1.2 2018/07/18 07:06:40 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$SEIL: uipc_mbufseil.c$");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbufdebug.c,v 1.2 2018/07/18 07:06:40 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
