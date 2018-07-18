@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.216 2018/07/17 05:52:07 msaitoh Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.217 2018/07/18 07:06:40 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,12 +62,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.216 2018/07/17 05:52:07 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.217 2018/07/18 07:06:40 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
 #include "opt_nmbclusters.h"
 #include "opt_ddb.h"
+#include "ether.h"
 #endif
 
 #include <sys/param.h>
@@ -1646,10 +1647,12 @@ void
 m_print(const struct mbuf *m, const char *modif, void (*pr)(const char *, ...))
 {
 	char ch;
-	const struct mbuf *m0 = NULL;
 	bool opt_c = false;
 	bool opt_d = false;
+#if NETHER > 0
 	bool opt_v = false;
+	const struct mbuf *m0 = NULL;
+#endif
 	int no = 0;
 	char buf[512];
 
@@ -1661,9 +1664,13 @@ m_print(const struct mbuf *m, const char *modif, void (*pr)(const char *, ...))
 		case 'd':
 			opt_d = true;
 			break;
+#if NETHER > 0
 		case 'v':
 			opt_v = true;
 			m0 = m;
+			break;
+#endif
+		default:
 			break;
 		}
 	}
@@ -1727,9 +1734,10 @@ nextchain:
 		}
 	}
 
-	if (opt_v && m0) {
+#if NETHER > 0
+	if (opt_v && m0)
 		m_examine(m0, AF_ETHER, modif, pr);
-	}
+#endif
 }
 #endif /* defined(DDB) */
 
