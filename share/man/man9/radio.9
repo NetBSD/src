@@ -1,4 +1,4 @@
-.\"	$NetBSD: radio.9,v 1.5 2018/07/09 10:36:30 rkujawa Exp $
+.\"	$NetBSD: radio.9,v 1.6 2018/07/18 16:40:30 wiz Exp $
 .\"	$OpenBSD: radio.9,v 1.2 2001/10/08 08:52:50 mpech Exp $
 .\"
 .\" Copyright (c) Maxim Tsyplakov <tm@oganer.net>
@@ -29,7 +29,7 @@
 .Os
 .Sh NAME
 .Nm radio
-.Nd interface between low and high level FM radio drivers
+.Nd interface between low- and high-level FM radio drivers
 .Sh SYNOPSIS
 .In dev/radio_if.h
 .Ft device_t
@@ -43,22 +43,22 @@ The
 .Nm
 layer provides support for digitally programmable FM radio tuners.
 .Pp
-It is divided into a machine independent, high level part responsible for
-managing device file, and low level hardware drivers.
+It is divided into a machine independent, high-level part responsible for
+managing device files, and low-level hardware drivers.
 .Pp
-The high level radio driver attaches to the low level driver
+The high-level radio driver attaches to the low-level driver
 when the latter calls
 .Fn radio_attach_mi .
 .Pp
 The
 .Fa radio_hw_if
-struct is contains pointers to functions provided by the low level driver.
+struct contains pointers to functions provided by the low-level driver.
 The
 .Fa hdlp
-argument is a handle to a low level driver's softc structure.
+argument is a handle to a low-level driver's softc structure.
 It is sent as the first argument to all the functions in
 .Fa radio_hw_if
-when the high level driver calls them.
+when the high-level driver calls them.
 .Fa dev
 is the device struct for the hardware device.
 .Pp
@@ -74,24 +74,27 @@ struct radio_hw_if {
 	int     (*search)(void *, int);
 };
 .Ed
-.Pp
 .Bl -tag -width XXXX
 .It Fn (*open) "sc" "flags" "fmt" "lwp"
 Called when the radio device is opened.
-Optional, if there is no need to call a driver's function when device file is
-opened, NULL should be passed in this field.
+Optionally, if there is no need to call a driver's function when the device file is
+opened,
+.Dv NULL
+should be passed in this field.
 Returns 0 on success, otherwise an error code.
 .It Fn (*close) "sc" "flags" "fmt" "lwp"
 Called when the radio device is closed.
-Optional, if there is no need to call a driver's function when device file is
-closed, NULL should be passed in thie field.
+Optionally, if there is no need to call a driver's function when the device file is
+closed,
+.Dv NULL
+should be passed in thie field.
 Returns 0 on success, otherwise an error code.
 .It Fn (*get_info) "sc" "ri"
 Fills the radio_info struct.
 This function is used to obtain the current state of a hardware device.
 It is executed as a result of calling
 .Dv RIOCGINFO
-on a device file managed by the high level driver.
+on a device file managed by the high-level driver.
 Returns 0 on success, otherwise an error code.
 .It Fn (*set_info) "sc" "ri"
 Set values from the radio_info struct.
@@ -99,18 +102,19 @@ This function is used to modify the current state of a hardware device
 (enable/disable various modes and parameters).
 It is executed as a result of calling
 .Dv RIOCSINFO
-on a device file managed by the high level driver.
+on a device file managed by the high-level driver.
 Returns 0 on success, otherwise an error code.
 .It Fn (*search) "sc" "ri"
-Initiates an automatic search for the radio station.
+Initiates automatic search for the radio station.
 It is executed as a result of calling
 .Dv RIOCSSRCH
-on a device file managed by the high level driver.
+on a device file managed by the high-level driver.
 Returns 0 on success, otherwise an error code.
 .El
 .Sh SEE ALSO
 .Xr radio 4
 .Sh AUTHORS
+.An -nosplit
 The
 .Nm
 API was written by
