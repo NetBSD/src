@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof.c,v 1.11 2018/07/14 16:34:15 jmcneill Exp $	*/
+/*	$NetBSD: tprof.c,v 1.12 2018/07/18 16:50:05 wiz Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: tprof.c,v 1.11 2018/07/14 16:34:15 jmcneill Exp $");
+__RCSID("$NetBSD: tprof.c,v 1.12 2018/07/18 16:50:05 wiz Exp $");
 #endif /* not lint */
 
 #include <sys/ioctl.h>
@@ -109,7 +109,7 @@ usage(void)
 	fprintf(stderr, "\tmonitor -e name:option [-o outfile] command\n");
 	fprintf(stderr, "\t\tMonitor the event 'name' with option 'option'\n"
 	    "\t\tcounted during the execution of 'command'.\n");
-	fprintf(stderr, "\tanalyze [-C] [-k] [-L] [-P] [-p pid] [-s] file\n");
+	fprintf(stderr, "\tanalyze [-CkLPs] [-p pid] file\n");
 	fprintf(stderr, "\t\tAnalyze the samples of the file 'file'.\n");
 
 	exit(EXIT_FAILURE);

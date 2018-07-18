@@ -1,4 +1,4 @@
-.\"	$NetBSD: tprof.8,v 1.8 2018/07/13 12:04:50 maxv Exp $
+.\"	$NetBSD: tprof.8,v 1.9 2018/07/18 16:50:05 wiz Exp $
 .\"
 .\" Copyright (c)2011 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -58,7 +58,7 @@ The first argument,
 .Ar op ,
 specifies the action to take.
 Valid actions are:
-.Bl -tag -width offline
+.Bl -tag -width offline -offset indent
 .It list
 Display a list of performance counter events available on the system.
 .It monitor Xo
@@ -84,12 +84,8 @@ if specified.
 The default is
 .Dq Pa tprof.out .
 .It analyze Xo
-.Op Fl C
-.Op Fl k
-.Op Fl L
-.Op Fl P
+.Op Fl CkLPs
 .Op Fl p Ar pid
-.Op Fl s
 .Ar file
 .Xc
 Analyze the samples produced by a previous run of
@@ -97,6 +93,7 @@ Analyze the samples produced by a previous run of
 stored in
 .Ar file ,
 and generate a plain text representation of them.
+.Bl -tag -width XPXpidXX -offset indent
 .It Fl C
 Don't distinguish CPUs.
 All samples are treated as its CPU number is 0.
@@ -116,13 +113,13 @@ and ignore the rest.
 .It Fl s
 Per symbol.
 .El
+.El
 .Sh EXAMPLES
 The following command profiles the system during 20 seconds and writes the
 samples into the file myfile.out.
 .Dl # tprof monitor -e llc-misses:k -o myfile.out sleep 20
 The following command displays the results of the sampling.
 .Dl # tprof analyze myfile.out
-.Ed
 .Sh DIAGNOSTICS
 The
 .Nm
@@ -148,6 +145,7 @@ were dropped.
 .Sh SEE ALSO
 .Xr tprof 4
 .Sh AUTHORS
+.An -nosplit
 The
 .Nm
 utility is written by
