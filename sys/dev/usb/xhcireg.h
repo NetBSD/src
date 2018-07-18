@@ -1,4 +1,4 @@
-/* $NetBSD: xhcireg.h,v 1.11 2018/06/29 17:48:24 msaitoh Exp $ */
+/* $NetBSD: xhcireg.h,v 1.12 2018/07/18 10:44:17 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2010 Hans Petter Selasky. All rights reserved.
@@ -51,6 +51,7 @@
 #define	 XHCI_HCIVERSION_0_9	0x0090	/* xHCI version 0.9 */
 #define	 XHCI_HCIVERSION_0_96	0x0096	/* xHCI version 0.96 */
 #define	 XHCI_HCIVERSION_1_0	0x0100	/* xHCI version 1.0 */
+#define	 XHCI_HCIVERSION_1_1	0x0110	/* xHCI version 1.1 */
 
 #define	XHCI_HCSPARAMS1		0x04	/* RO structual parameters 1 */
 #define	 XHCI_HCS1_MAXSLOTS(x)	((x) & 0xFF)
@@ -89,6 +90,15 @@
 
 #define	 XHCI_DBOFF		0x14	/* RO doorbell offset */
 #define	 XHCI_RTSOFF		0x18	/* RO runtime register space offset */
+#define XHCI_HCCPARAMS2	0x1c	/* RO capability parameters 2 */
+#define	 XHCI_HCC2_U3C(x)	(((x) >> 0) & 0x1)	/* U3 Entry capable */
+#define	 XHCI_HCC2_CMC(x)	(((x) >> 1) & 0x1)	/* CEC MaxExLatTooLg */
+#define	 XHCI_HCC2_FSC(x)	(((x) >> 2) & 0x1)	/* Foce Save Context */
+#define	 XHCI_HCC2_CTC(x)	(((x) >> 3) & 0x1)	/* Compliance Transc */
+#define	 XHCI_HCC2_LEC(x)	(((x) >> 4) & 0x1)	/* Large ESIT Paylod */
+#define	 XHCI_HCC2_CIC(x)	(((x) >> 5) & 0x1)	/* Configuration Inf */
+#define	 XHCI_HCC2_ETC(x)	(((x) >> 6) & 0x1)	/* Extended TBC */
+#define	 XHCI_HCC2_ETC_TSC(x)	(((x) >> 7) & 0x1)	/* ExtTBC TRB Status */
 
 /* XHCI operational registers.  Offset given by XHCI_CAPLENGTH register */
 #define	XHCI_USBCMD		0x00	/* XHCI command */
