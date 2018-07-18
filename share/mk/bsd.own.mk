@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1070 2018/07/17 18:04:57 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.1071 2018/07/18 02:18:45 christos Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -49,12 +49,6 @@ NEED_OWN_INSTALL_TARGET?=	yes
 # .endif
 
 TOOLCHAIN_MISSING?=	no
-
-.if ${MACHINE_CPU} == "aarch64" && !defined(EXTERNAL_TOOLCHAIN) && ${MKLLVM:Uyes} != "no"
-MKLLVM?=	yes
-HAVE_LLVM?=	yes
-MKGCC?=		no
-.endif
 
 #
 # GCC Using platforms.
