@@ -1,4 +1,4 @@
-/*	$NetBSD: fdt_start.S,v 1.2 2018/07/17 00:37:42 christos Exp $	*/
+/*	$NetBSD: fdt_start.S,v 1.3 2018/07/18 06:50:48 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -32,10 +32,16 @@
 
 #include <aarch64/asm.h>
 
-RCSID("$NetBSD: fdt_start.S,v 1.2 2018/07/17 00:37:42 christos Exp $")
+RCSID("$NetBSD: fdt_start.S,v 1.3 2018/07/18 06:50:48 ryo Exp $")
 
 #define PRINT(string)	\
 	bl xprint;.asciz string;.align 2
+
+/* load far effective address (pc relative) */
+.macro	ADDR, reg, addr
+	adrp	\reg, \addr
+	add	\reg, \reg, #:lo12:\addr
+.endm
 
 /*
  * Kernel start routine for aarch64 boards.
@@ -47,29 +53,16 @@ start:
 
 	sub	x10, x10, x9
 
-#ifdef __clang__
-	ldr	x8, =(kern_vtopdiff - start)
-#else
-	ldr     x7, =start
-	ldr	x8, =kern_vtopdiff
-	sub	x8, x8, x7
-#endif
-	add	x8, x8, x9
-	str	x10, [x8]
+	/* address of kern_vtopdiff (relative) */
+	ADDR	x8, kern_vtopdiff
+	str	x10, [x8]	/* kern_vtopdiff = start(virt) - start(phys) */
 
 	/*
 	 * store uboot arguments to uboot_args[4]
 	 */
 
-	/* offset of uboot_args from start */
-#ifdef __clang__
-	ldr	x8, =(uboot_args - start)
-#else
-	ldr	x8, =uboot_args
-	sub	x8, x8, x7
-#endif
-	add	x8, x8, x9		/* add load address to offset */
-
+	/* address of uboot_args (relative) */
+	ADDR	x8, uboot_args
 	str	x0, [x8, #(8*0)]
 	str	x1, [x8, #(8*1)]
 	str	x2, [x8, #(8*2)]
@@ -78,13 +71,7 @@ start:
 	/*
 	 * ARM64 boot protocol has FDT address in x0 *
 	 */
-#ifdef __clang__
-	ldr	x8, =(fdt_addr_r - start)
-#else
-	ldr	x8, =fdt_addr_r
-	sub	x8, x8, x7
-#endif
-	add	x8, x8, x9
+	ADDR	x8, fdt_addr_r
 	str	x0, [x8]
 
 
