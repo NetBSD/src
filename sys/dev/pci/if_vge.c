@@ -1,4 +1,4 @@
-/* $NetBSD: if_vge.c,v 1.63 2018/06/26 06:48:01 msaitoh Exp $ */
+/* $NetBSD: if_vge.c,v 1.64 2018/07/18 23:10:28 sevan Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.63 2018/06/26 06:48:01 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.64 2018/07/18 23:10:28 sevan Exp $");
 
 /*
  * VIA Networking Technologies VT612x PCI gigabit ethernet NIC driver.
@@ -938,7 +938,7 @@ vge_attach(device_t parent, device_t self, void *aux)
 	eaddr[4] = val & 0xff;
 	eaddr[5] = val >> 8;
 
-	aprint_normal_dev(self, "Ethernet address: %s\n",
+	aprint_normal_dev(self, "Ethernet address %s\n",
 	    ether_sprintf(eaddr));
 
 	/*

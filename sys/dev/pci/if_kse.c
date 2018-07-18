@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kse.c,v 1.32 2018/06/26 06:48:01 msaitoh Exp $	*/
+/*	$NetBSD: if_kse.c,v 1.33 2018/07/18 23:10:28 sevan Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.32 2018/06/26 06:48:01 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.33 2018/07/18 23:10:28 sevan Exp $");
 
 
 #include <sys/param.h>
@@ -404,7 +404,7 @@ kse_attach(device_t parent, device_t self, void *aux)
 	enaddr[3] = i; enaddr[2] = i >> 8;
 	i = CSR_READ_2(sc, MARH);
 	enaddr[1] = i; enaddr[0] = i >> 8;
-	printf("%s: Ethernet address: %s\n",
+	printf("%s: Ethernet address %s\n",
 		device_xname(sc->sc_dev), ether_sprintf(enaddr));
 
 	/*

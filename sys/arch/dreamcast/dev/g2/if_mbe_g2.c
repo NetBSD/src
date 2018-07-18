@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mbe_g2.c,v 1.8 2011/07/19 15:52:30 dyoung Exp $	*/
+/*	$NetBSD: if_mbe_g2.c,v 1.9 2018/07/18 23:10:27 sevan Exp $	*/
 
 /*
  * Copyright (c) 2002 Christian Groessler
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mbe_g2.c,v 1.8 2011/07/19 15:52:30 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mbe_g2.c,v 1.9 2018/07/18 23:10:27 sevan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -171,7 +171,7 @@ mbe_g2_detect(bus_space_tag_t iot, bus_space_handle_t ioh, uint8_t *enaddr)
 	mb86965_read_eeprom(iot, ioh, eeprom);
 	memcpy(enaddr, eeprom, ETHER_ADDR_LEN);
 
-	DPRINTF("Ethernet address: %s\n", ether_sprintf(enaddr));
+	DPRINTF("Ethernet address %s\n", ether_sprintf(enaddr));
 
 	/* Make sure we got a valid station address. */
 	if ((enaddr[0] & 0x03) != 0x00 ||

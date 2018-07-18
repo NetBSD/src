@@ -1,4 +1,4 @@
-/*	$NetBSD: nextrom.c,v 1.26 2018/03/08 03:12:02 mrg Exp $	*/
+/*	$NetBSD: nextrom.c,v 1.27 2018/07/18 23:10:27 sevan Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nextrom.c,v 1.26 2018/03/08 03:12:02 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nextrom.c,v 1.27 2018/07/18 23:10:27 sevan Exp $");
 
 #include "opt_ddb.h"
 #include "opt_serial.h"
@@ -354,7 +354,7 @@ next68k_bootargs(unsigned char **args)
 	 */
 	{
 		int j;
-		ROM_PUTS("Ethernet address: ");
+		ROM_PUTS("Ethernet address ");
 		for (j = 0; j < 6; j++) {
 			RELOC(rom_enetaddr[j], uint8_t) =
 			    MONRELOC(uint8_t *, MG_clientetheraddr)[j];

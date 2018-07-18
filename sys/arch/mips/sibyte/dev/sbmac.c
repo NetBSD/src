@@ -1,4 +1,4 @@
-/* $NetBSD: sbmac.c,v 1.50 2018/06/26 06:47:59 msaitoh Exp $ */
+/* $NetBSD: sbmac.c,v 1.51 2018/07/18 23:10:27 sevan Exp $ */
 
 /*
  * Copyright 2000, 2001, 2004
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.50 2018/06/26 06:47:59 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.51 2018/07/18 23:10:27 sevan Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -2303,7 +2303,7 @@ sbmac_attach(device_t parent, device_t self, void *aux)
 	 */
 	aprint_normal(": Ethernet%s\n",
 	    sc->sbm_pass3_dma ? ", using unaligned tx DMA" : "");
-	aprint_normal_dev(self, "Ethernet address: %s\n", ether_sprintf(eaddr));
+	aprint_normal_dev(self, "Ethernet address %s\n", ether_sprintf(eaddr));
 
 
 	/*

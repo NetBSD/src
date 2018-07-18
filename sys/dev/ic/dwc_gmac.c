@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac.c,v 1.51 2018/06/30 16:27:48 jmcneill Exp $ */
+/* $NetBSD: dwc_gmac.c,v 1.52 2018/07/18 23:10:27 sevan Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.51 2018/06/30 16:27:48 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.52 2018/07/18 23:10:27 sevan Exp $");
 
 /* #define	DWC_GMAC_DEBUG	1 */
 
@@ -191,7 +191,7 @@ dwc_gmac_attach(struct dwc_gmac_softc *sc, uint32_t mii_clk)
 	if (dwc_gmac_reset(sc) != 0)
 		return ENXIO;	/* not much to cleanup, haven't attached yet */
 	dwc_gmac_write_hwaddr(sc, enaddr);
-	aprint_normal_dev(sc->sc_dev, "Ethernet address: %s\n",
+	aprint_normal_dev(sc->sc_dev, "Ethernet address %s\n",
 	    ether_sprintf(enaddr));
 
 	/*
