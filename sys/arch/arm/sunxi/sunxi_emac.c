@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_emac.c,v 1.16 2018/06/30 12:36:13 jmcneill Exp $ */
+/* $NetBSD: sunxi_emac.c,v 1.17 2018/07/19 19:52:00 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2016-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "opt_net_mpsafe.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_emac.c,v 1.16 2018/06/30 12:36:13 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_emac.c,v 1.17 2018/07/19 19:52:00 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -1398,6 +1398,7 @@ sunxi_emac_attach(device_t parent, device_t self, void *aux)
 
 	/* Read MAC address before resetting the chip */
 	sunxi_emac_get_eaddr(sc, eaddr);
+	aprint_normal_dev(self, "Ethernet address %s\n", ether_sprintf(eaddr));
 
 	/* Soft reset EMAC core */
 	if (sunxi_emac_reset(sc) != 0)
