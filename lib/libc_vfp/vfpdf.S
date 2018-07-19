@@ -29,7 +29,7 @@
 
 #include <arm/asm.h>
 
-RCSID("$NetBSD: vfpdf.S,v 1.3 2018/07/17 15:03:48 joerg Exp $")
+RCSID("$NetBSD: vfpdf.S,v 1.4 2018/07/19 19:35:02 joerg Exp $")
 
 /*
  * This file provides softfloat compatible routines which use VFP instructions
@@ -39,7 +39,7 @@ RCSID("$NetBSD: vfpdf.S,v 1.3 2018/07/17 15:03:48 joerg Exp $")
  * This file implements the double precision floating point routines.
  */
 
-.fpu vfp2
+.fpu vfp
 
 #ifdef	__ARMEL__
 #define	vmov_arg0	vmov	d0, r0, r1
