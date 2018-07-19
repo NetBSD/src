@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.2 2018/07/09 06:19:53 ryo Exp $	*/
+/*	$NetBSD: machdep.h,v 1.3 2018/07/19 18:27:26 christos Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -77,7 +77,7 @@ void dumpsys(void);
 struct trapframe;
 
 /* fault.c */
-void data_abort_handler(struct trapframe *, uint32_t, const char *);
+void data_abort_handler(struct trapframe *, uint32_t);
 
 /* trap.c */
 void lwp_trampoline(void);
@@ -134,18 +134,21 @@ struct fpreg;
 void load_fpregs(struct fpreg *);
 void save_fpregs(struct fpreg *);
 
-static inline void
-do_trapsignal(struct lwp *l, int signo, int code, void *addr, int trap)
-{
-	ksiginfo_t ksi;
+#ifdef TRAP_SIGDEBUG
+#define do_trapsignal(l, signo, code, addr, trap) \
+    do_trapsignal1(__func__, __LINE__, tf, l, signo, code, addr, trap)
+#else
+#define do_trapsignal(l, signo, code, addr, trap) \
+    do_trapsignal1(l, signo, code, addr, trap)
+#endif
 
-	KSI_INIT_TRAP(&ksi);
-	ksi.ksi_signo = signo;
-	ksi.ksi_code = code;
-	ksi.ksi_addr = addr;
-	ksi.ksi_trap = trap;
-	(*l->l_proc->p_emul->e_trapsignal)(l, &ksi);
-}
+void do_trapsignal1(
+#ifdef TRAP_SIGDEBUG
+    const char *func, size_t line, struct trapframe *tf,
+#endif
+    struct lwp *l, int signo, int code, void *addr, int trap);
+
+const char *eclass_trapname(uint32_t);
 
 #include <sys/pcu.h>
 
