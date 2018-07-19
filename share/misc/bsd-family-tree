@@ -751,6 +751,7 @@ DragonFly 5.2.0		2018-04-10 [DFB]
 DragonFly 5.2.1		2018-05-20 [DFB]
 DragonFly 5.2.2		2018-06-18 [DFB]
 FreeBSD 11.2		2018-06-27 [FBD]
+NetBSD 8.0		2018-07-17 [NBD]
 
 Bibliography
 ------------------------
@@ -816,4 +817,4 @@ Copyright (c) 1997-2012 Wolfram Schneider <wosch@FreeBSD.ORG>
 URL: http://svnweb.freebsd.org/base/head/share/misc/bsd-family-tree
 
 $FreeBSD: head/share/misc/bsd-family-tree 335811 2018-06-30 01:04:37Z eadler $
-$NetBSD: bsd-family-tree,v 1.67 2018/06/30 01:08:39 eadler Exp $
+$NetBSD: bsd-family-tree,v 1.68 2018/07/19 09:02:32 martin Exp $
