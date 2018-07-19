@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.3 2018/07/17 10:07:49 ryo Exp $	*/
+/*	$NetBSD: fault.c,v 1.4 2018/07/19 18:27:26 christos Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.3 2018/07/17 10:07:49 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.4 2018/07/19 18:27:26 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -119,7 +119,7 @@ is_fatal_abort(uint32_t esr)
 }
 
 void
-data_abort_handler(struct trapframe *tf, uint32_t eclass, const char *trapname)
+data_abort_handler(struct trapframe *tf, uint32_t eclass)
 {
 	struct proc *p;
 	struct lwp *l;
@@ -297,7 +297,8 @@ data_abort_handler(struct trapframe *tf, uint32_t eclass, const char *trapname)
 	/*
 	 * fatal abort. analyze fault status code to show by panic()
 	 */
-	len = snprintf(panicinfo, sizeof(panicinfo), "Trap: %s:", trapname);
+	len = snprintf(panicinfo, sizeof(panicinfo), "Trap: %s:",
+	    eclass_trapname(eclass));
 
 	if ((fsc >= __arraycount(fault_status_code)) ||
 	    ((faultstr = fault_status_code[fsc]) == NULL))
