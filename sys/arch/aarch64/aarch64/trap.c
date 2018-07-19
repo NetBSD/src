@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.6 2018/07/19 18:27:26 christos Exp $ */
+/* $NetBSD: trap.c,v 1.7 2018/07/19 18:30:28 christos Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.6 2018/07/19 18:27:26 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.7 2018/07/19 18:30:28 christos Exp $");
 
 #include "opt_arm_intr_impl.h"
 #include "opt_compat_netbsd32.h"
@@ -454,7 +454,7 @@ frame_dump(const struct trapframe *tf)
 
 	printf("trapframe %p\n", tf);
 	for (size_t i = 0; i < __arraycount(r->r_reg); i++) {
-		printf(" r%.2zu %#018%s" PRIx64, i, r->r_reg[i],
+		printf(" r%.2zu %#018" PRIx64 "%c", i, r->r_reg[i],
 		    " \n"[i && (i & 1) == 0]);
 	}
 
