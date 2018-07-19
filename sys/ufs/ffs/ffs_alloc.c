@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.159 2017/12/07 21:53:41 chs Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.160 2018/07/19 05:09:34 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.159 2017/12/07 21:53:41 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.160 2018/07/19 05:09:34 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1641,7 +1641,7 @@ ffs_discard_init(struct vnode *devvp, struct fs *fs)
 
 	ts = kmem_zalloc(sizeof (*ts), KM_SLEEP);
 	error = workqueue_create(&ts->wq, "trimwq", ffs_discardcb, ts,
-				 0, 0, 0);
+				 PRI_USER, IPL_NONE, 0);
 	if (error) {
 		kmem_free(ts, sizeof (*ts));
 		return NULL;
