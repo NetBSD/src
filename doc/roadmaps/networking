@@ -1,4 +1,4 @@
-$NetBSD: networking,v 1.13 2017/01/13 10:14:58 dholland Exp $
+$NetBSD: networking,v 1.14 2018/07/20 01:43:31 maya Exp $
 
 NetBSD Networking Roadmap
 =========================
@@ -39,7 +39,7 @@ Status: committed, done
 
 Resync FreeBSD stack to get support for n, ac, VAP
 
-Responsible: christos
+Responsible: phil
 Status: started porting FreeBSD code
 Comment[christos]: This will add VAP support too, and needs changes to all
 the specific drivers.
