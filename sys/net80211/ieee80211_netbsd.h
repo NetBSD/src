@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_netbsd.h,v 1.21.2.4 2018/07/16 20:11:11 phil Exp $ */
+/*	$NetBSD: ieee80211_netbsd.h,v 1.21.2.5 2018/07/20 20:33:05 phil Exp $ */
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -823,6 +823,13 @@ struct ieee80211_channel_survey {
 #define	IEEE80211_M_ZERO	M_ZERO
 
 /* XXX TODO: the type fields */
+
+/*
+ * Startup function for NetBSD
+ */
+
+int ieee80211_init0(void);
+
 
 /*
  * Functions FreeBSD uses that NetBSD doesn't have ...

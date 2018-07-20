@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_amrr.c,v 1.3.18.3 2018/07/16 20:11:11 phil Exp $ */
+/*	$NetBSD: ieee80211_amrr.c,v 1.3.18.4 2018/07/20 20:33:05 phil Exp $ */
 
 /*	$OpenBSD: ieee80211_amrr.c,v 1.1 2006/06/17 19:07:19 damien Exp $	*/
 
@@ -90,8 +90,10 @@ static void	amrr_tx_complete(const struct ieee80211_node *,
 static void	amrr_tx_update_cb(void *, struct ieee80211_node *);
 static void	amrr_tx_update(struct ieee80211vap *vap,
 			struct ieee80211_ratectl_tx_stats *);
+#ifdef notyet
 static void	amrr_sysctlattach(struct ieee80211vap *,
 			struct sysctl_ctx_list *, struct sysctl_oid *);
+#endif
 static void	amrr_node_stats(struct ieee80211_node *ni, struct sbuf *s);
 
 /* number of references from net80211 layer */
@@ -149,7 +151,9 @@ amrr_init(struct ieee80211vap *vap)
 	amrr->amrr_min_success_threshold = IEEE80211_AMRR_MIN_SUCCESS_THRESHOLD;
 	amrr->amrr_max_success_threshold = IEEE80211_AMRR_MAX_SUCCESS_THRESHOLD;
 	amrr_setinterval(vap, 500 /* ms */);
+#ifdef notyet
 	amrr_sysctlattach(vap, vap->iv_sysctl, vap->iv_oid);
+#endif
 }
 
 static void
@@ -454,11 +458,11 @@ amrr_sysctl_interval(SYSCTL_HANDLER_ARGS)
 }
 #endif
 
+#ifdef notyet
 static void
 amrr_sysctlattach(struct ieee80211vap *vap,
     struct sysctl_ctx_list *ctx, struct sysctl_oid *tree)
 {
-#ifdef notyet
 	struct ieee80211_amrr *amrr = vap->iv_rs;
 
 	SYSCTL_ADD_PROC(ctx, SYSCTL_CHILDREN(tree), OID_AUTO,
@@ -471,8 +475,8 @@ amrr_sysctlattach(struct ieee80211vap *vap,
 	SYSCTL_ADD_UINT(ctx, SYSCTL_CHILDREN(tree), OID_AUTO,
 	    "amrr_min_sucess_threshold", CTLFLAG_RW,
 	    &amrr->amrr_min_success_threshold, 0, "");
-#endif
 }
+#endif
 
 static void
 amrr_node_stats(struct ieee80211_node *ni, struct sbuf *s)

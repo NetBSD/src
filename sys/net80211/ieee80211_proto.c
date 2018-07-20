@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_proto.c,v 1.34.14.3 2018/07/16 20:11:11 phil Exp $ */
+/*	$NetBSD: ieee80211_proto.c,v 1.34.14.4 2018/07/20 20:33:05 phil Exp $ */
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -47,6 +47,7 @@ __FBSDID("$FreeBSD$");
 #include <sys/malloc.h>
 #ifdef __NetBSD__
 #include <sys/mbuf.h>
+#include <sys/once.h>
 #endif
 
 #include <sys/socket.h>
@@ -1543,6 +1544,9 @@ ieee80211_start_locked(struct ieee80211vap *vap)
 		IEEE80211_MSG_STATE | IEEE80211_MSG_DEBUG,
 		"start running, %d vaps running\n", ic->ic_nrunning);
 
+        printf ("returning from start_locked too soon.\n");
+        return;
+
 #if __FreeBSD__
 	if ((ifp->if_drv_flags & IFF_DRV_RUNNING) == 0) {
 #elif __NetBSD__
@@ -1566,7 +1570,7 @@ ieee80211_start_locked(struct ieee80211vap *vap)
 		 * to be brought up auto-up the parent if necessary.
 		 */
 		if (ic->ic_nrunning++ == 0) {
-
+			printf ("   calling start_check_reset_chan\n");
 			/* reset the channel to a known good channel */
 			if (ieee80211_start_check_reset_chan(vap))
 				ieee80211_start_reset_chan(vap);
@@ -1601,6 +1605,7 @@ ieee80211_start_locked(struct ieee80211vap *vap)
 				ieee80211_new_state_locked(vap,
 				    IEEE80211_S_SCAN, 0);
 		} else {
+			printf ("   first vap??? \n");
 			/*
 			 * For monitor+wds mode there's nothing to do but
 			 * start running.  Otherwise if this is the first
@@ -1641,9 +1646,12 @@ int
 ieee80211_init(struct ifnet *ifp)
 {
 	struct ieee80211vap *vap = ifp->if_softc;
+	static ONCE_DECL(ieee80211_init_once);
 
 	IEEE80211_DPRINTF(vap, IEEE80211_MSG_STATE | IEEE80211_MSG_DEBUG,
 	    "%s\n", __func__);
+
+	RUN_ONCE(&ieee80211_init_once, ieee80211_init0);
 
 	IEEE80211_LOCK(vap->iv_ic);
 	ieee80211_start_locked(vap);

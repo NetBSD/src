@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_ioctl.c,v 1.60.18.3 2018/07/16 20:11:11 phil Exp $ */
+/*	$NetBSD: ieee80211_ioctl.c,v 1.60.18.4 2018/07/20 20:33:05 phil Exp $ */
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -784,9 +784,9 @@ IEEE80211_IOCTL_GET(dummy, dummy_ioctl_get);
 static int
 ieee80211_ioctl_getdefault(struct ieee80211vap *vap, struct ieee80211req *ireq)
 {
+	int error;
 #if notyet
 	ieee80211_ioctl_getfunc * const *get;
-	int error;
 
 	SET_FOREACH(get, ieee80211_ioctl_getset) {
 		error = (*get)(vap, ireq);
@@ -794,9 +794,10 @@ ieee80211_ioctl_getdefault(struct ieee80211vap *vap, struct ieee80211req *ireq)
 			return error;
 	}
 #else
-	printf ("i33380211_ioctl_getdefault called\n");
+	printf ("ieee80211_ioctl_getdefault called\n");
+	error = dummy_ioctl_get(vap, ireq);
 #endif
-	return EINVAL;
+	return error;
 }
 
 static int
@@ -3044,7 +3045,14 @@ ieee80211_ioctl_set80211(struct ieee80211vap *vap, u_long cmd, struct ieee80211r
 	case IEEE80211_IOC_SCAN_CANCEL:
 		IEEE80211_DPRINTF(vap, IEEE80211_MSG_SCAN,
 		    "%s: cancel scan\n", __func__);
+#if __NetBSD__
+		/* Bug in FreeBSD? */
+		IEEE80211_LOCK(ic);
+#endif
 		ieee80211_cancel_scan(vap);
+#if __NetBSD__
+		IEEE80211_UNLOCK(ic);
+#endif
 		break;
 	case IEEE80211_IOC_HTCONF:
 		if (ireq->i_val & 1)
@@ -3519,11 +3527,23 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	int error = 0, wait = 0;
 	struct ifreq *ifr;
 	struct ifaddr *ifa;			/* XXX */
+#if __NetBSD__
+	struct ieee80211_nwid nwid;
+	//	struct ieee80211_nwkey *nwkey;
+	//	struct ieee80211_power *power;
+	//	struct ieee80211chanreq *chanreq;
+
+	ifr = (struct ifreq *)data;
+#endif
+
+	printf ("ieee80211_ioctl: cmd is 0x%lx. ('%c', %ld)\n", cmd,
+ 		(char) ((cmd>>8) & 0xff), cmd & 0xff );
 
 	switch (cmd) {
 	case SIOCSIFFLAGS:
 		IEEE80211_LOCK(ic);
 		if ((ifp->if_flags ^ vap->iv_ifflags) & IFF_PROMISC) {
+			printf ("    promisc mode\n");
 			/*
 			 * Enable promiscuous mode when:
 			 * 1. Interface is not a member of bridge, or
@@ -3541,10 +3561,12 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			}
 		}
 		if ((ifp->if_flags ^ vap->iv_ifflags) & IFF_ALLMULTI) {
+			printf ("    allmulti\n");
 			ieee80211_allmulti(vap, ifp->if_flags & IFF_ALLMULTI);
 			vap->iv_ifflags ^= IFF_ALLMULTI;
 		}
 		if (ifp->if_flags & IFF_UP) {
+			printf ("    up flag\n");
 			/*
 			 * Bring ourself up unless we're already operational.
 			 * If we're the first vap and the parent is not up
@@ -3554,7 +3576,9 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			if (vap->iv_state == IEEE80211_S_INIT) {
 				if (ic->ic_nrunning == 0)
 					wait = 1;
-				ieee80211_start_locked(vap);
+				printf ("Should call start_locked ...\n");
+				wait = 0;
+				// ieee80211_start_locked(vap);
 			}
 #if __FreeBSD__
 		} else if (ifp->if_drv_flags & IFF_DRV_RUNNING) {
@@ -3649,6 +3673,45 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			break;
 		}
 		break;
+#if __NetBSD__
+	case SIOCS80211NWID:
+		if ((error = copyin(ifr->ifr_data, &nwid, sizeof(nwid))) != 0)
+			break;
+		if (nwid.i_len > IEEE80211_NWID_LEN) {
+			error = EINVAL;
+			break;
+		}
+		memset(vap->iv_des_ssid, 0, IEEE80211_NWID_LEN);
+		vap->iv_des_ssid[0].len = nwid.i_len;
+		memcpy(vap->iv_des_ssid[0].ssid, nwid.i_nwid, nwid.i_len);
+		error = ENETRESET;
+		break;
+	case SIOCG80211NWID:
+		memset(&nwid, 0, sizeof(nwid));
+		switch (vap->iv_state) {
+		case IEEE80211_S_INIT:
+		case IEEE80211_S_SCAN:
+			nwid.i_len  = vap->iv_des_ssid[0].len;
+			memcpy(nwid.i_nwid, vap->iv_des_ssid[0].ssid,
+			    nwid.i_len);
+			break;
+		default:
+			nwid.i_len = vap->iv_bss->ni_esslen;
+			memcpy(nwid.i_nwid, vap->iv_bss->ni_essid, nwid.i_len);
+			break;
+		}
+		error = copyout(&nwid, ifr->ifr_data, sizeof(nwid));
+		break;
+	case SIOCS80211NWKEY:
+	case SIOCG80211NWKEY:
+		printf ("NetBSD NWKEY ioctl\n");
+		error = ENOTTY;
+	        break;
+	case SIOCS80211POWER:
+		printf ("NEtBSD POWER ioctl\n");
+		error = ENOTTY;
+		break;
+#endif
 	default:
 		/*
 		 * Pass unknown ioctls first to the driver, and if it
@@ -3658,6 +3721,8 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		    (error = ic->ic_ioctl(ic, cmd, data)) != ENOTTY)
 			break;
 		error = ether_ioctl(ifp, cmd, data);
+		if (error == ENOTTY)
+			printf ("Unknown 802.11 IOCTL.\n"); /* NNN */
 		break;
 	}
 	return (error);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_var.h,v 1.33.2.4 2018/07/16 20:11:11 phil Exp $ */
+/*	$NetBSD: ieee80211_var.h,v 1.33.2.5 2018/07/20 20:33:05 phil Exp $ */
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -387,8 +387,12 @@ struct ieee80211vap {
 	struct ifmedia		iv_media;	/* interface media config */
 	struct ifnet		*iv_ifp;	/* associated device */
 	struct bpf_if		*iv_rawbpf;	/* packet filter structure */
+#if __FreeBSD__
 	struct sysctl_ctx_list	*iv_sysctl;	/* dynamic sysctl context */
 	struct sysctl_oid	*iv_oid;	/* net.wlan.X sysctl oid */
+#elif __NetBSD__
+	struct sysctllog	*iv_sysctllog;	/* for destroying sysctl tree */
+#endif
 
 	TAILQ_ENTRY(ieee80211vap) iv_next;	/* list of vap instances */
 	struct ieee80211com	*iv_ic;		/* back ptr to common state */

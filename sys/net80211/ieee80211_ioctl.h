@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_ioctl.h,v 1.24.2.3 2018/07/12 16:35:34 phil Exp $ */
+/*	$NetBSD: ieee80211_ioctl.h,v 1.24.2.4 2018/07/20 20:33:05 phil Exp $ */
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -888,7 +888,7 @@ struct ieee80211_clone_params {
 #define	IEEE80211_CLONE_MACADDR		0x0008	/* use specified mac addr */
 #define	IEEE80211_CLONE_TDMA		0x0010	/* operate in TDMA mode */
 
-#ifdef __NetBSD__
+#if __NetBSD__
 /* nwid is pointed at by ifr.ifr_data */
 struct ieee80211_nwid {
 	u_int8_t	i_len;

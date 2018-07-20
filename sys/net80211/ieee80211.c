@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.c,v 1.56.18.3 2018/07/16 20:11:11 phil Exp $ */
+/*	$NetBSD: ieee80211.c,v 1.56.18.4 2018/07/20 20:33:05 phil Exp $ */
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -48,6 +48,7 @@ __FBSDID("$FreeBSD$");
 #ifdef __FreeBSD__
 #include <machine/stdarg.h>
 #elif __NetBSD__
+#include <sys/once.h>
 #include <sys/stdarg.h>
 #else
 #error
@@ -330,8 +331,6 @@ static struct mtx ic_list_mtx;
 MTX_SYSINIT(ic_list, &ic_list_mtx, "ieee80211com list", MTX_DEF);
 #elif __NetBSD__
 static kmutex_t ic_list_mtx;
-static uint     ic_list_mtx_needsinit = 1;
-static uint     ic_list_mtx_ready = 0;
 #endif
 
 #if notyet
@@ -365,6 +364,16 @@ SYSCTL_PROC(_net_wlan, OID_AUTO, devices,
     sysctl_ieee80211coms, "A", "names of available 802.11 devices");
 #endif
 
+#if __NetBSD__
+static int
+ic_list_mtx_init (void)
+{
+	mutex_init(&ic_list_mtx, MUTEX_DEFAULT, IPL_NET);
+	ieee80211_auth_setup();
+	return 0;
+}		
+#endif
+
 /*
  * Attach/setup the common net80211 state.  Called by
  * the driver on attach to prior to creating any vap's.
@@ -373,21 +382,8 @@ void
 ieee80211_ifattach(struct ieee80211com *ic)
 {
 #if __NetBSD__
-	/* Initialize the ic_list_mtx the first time here.
-	 * Only want to use the big lock on first try to initialize.
-         * Once initialized, it won't use the big lock any more.
-         */
-	if (ic_list_mtx_needsinit) {
-		KERNEL_LOCK(1, NULL);
-		if (!ic_list_mtx_ready) {
-			mutex_init(&ic_list_mtx, MUTEX_DEFAULT, IPL_NET);
-			ic_list_mtx_ready = 1;
-			ic_list_mtx_needsinit = 0;
-			/* Doing this one-time initialization here also. */
-			ieee80211_auth_setup();
-		}
-		KERNEL_UNLOCK_ONE(NULL);
-	}
+	static ONCE_DECL(ic_list_mtx_once);
+	RUN_ONCE(&ic_list_mtx_once, ic_list_mtx_init);
 #endif
 
 	IEEE80211_LOCK_INIT(ic, ic->ic_name);
@@ -2011,6 +2007,7 @@ ieee80211_announce(struct ieee80211com *ic)
 	for (mode = IEEE80211_MODE_AUTO+1; mode < IEEE80211_MODE_11NA; mode++) {
 		if (isclr(ic->ic_modecaps, mode))
 			continue;
+		printf ("[%d/%s]", mode, ieee80211_phymode_name[mode]);
 		ic_printf(ic, "%s rates: ", ieee80211_phymode_name[mode]);
 		rs = &ic->ic_sup_rates[mode];
 		for (i = 0; i < rs->rs_nrates; i++) {
