@@ -31,7 +31,7 @@
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/lib/libproc/proc_bkpt.c 287106 2015-08-24 12:17:15Z andrew $");
 #else
-__RCSID("$NetBSD: proc_bkpt.c,v 1.5 2017/12/08 13:36:22 rin Exp $");
+__RCSID("$NetBSD: proc_bkpt.c,v 1.6 2018/07/20 20:50:34 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -218,10 +218,12 @@ proc_bkptexec(struct proc_handle *phdl, proc_breakpoint_t *saved)
 	 * set up by proc_bkptdel().
 	 */
 	proc_regset(phdl, REG_PC, pc);
+#ifdef PT_STEP
 	if (ptrace(PT_STEP, proc_getpid(phdl), (void *)(intptr_t)1, 0) < 0) {
 		DPRINTFX("ERROR: ptrace step failed");
 		return (-1);
 	}
+#endif
 	proc_wstatus(phdl);
 	status = proc_getwstat(phdl);
 	if (!WIFSTOPPED(status)) {
