@@ -1,4 +1,4 @@
-$NetBSD: desktop,v 1.4 2017/01/22 19:47:00 dholland Exp $
+$NetBSD: desktop,v 1.5 2018/07/20 01:40:30 maya Exp $
 
 NetBSD Desktop Roadmap
 ======================
@@ -51,7 +51,6 @@ into one of the following three broad categories:
 
 The following elements, projects, and goals are relatively near-term:
 
- 0. dmrkms for nvidia cards (will be in -8)
  1. Don't ship twm as the default X window manager
  2. Making removable media work using GNOME/KDE infrastructure
  3. Making wireless config work using GNOME/KDE infrastructure
@@ -79,15 +78,6 @@ The following elements, projects, and goals are rather blue-sky so far:
 
 Explanations
 ============
-
-
- 0. drmkms for nvidia cards
-
-Until recently the nvidia drmkms driver (nouveau) was disabled by
-default. This is no longer the case in -current and it is believed to
-more or less work. This change will be in -8. It might also make it
-into a future release of -7; it is not currently clear what would be
-involved in that.
 
 
  1. Don't ship twm as the default X window manager
