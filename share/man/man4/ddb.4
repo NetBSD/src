@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.179 2018/07/17 05:52:07 msaitoh Exp $
+.\"	$NetBSD: ddb.4,v 1.180 2018/07/20 08:26:25 msaitoh Exp $
 .\"
 .\" Copyright (c) 1997 - 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,7 +56,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd July 17, 2018
+.Dd July 20, 2018
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -750,6 +750,25 @@ of LWPs will be shown.
 If the run queue has LWPs, but the sched_whichqs bit is not set for that
 queue, the queue index will be prefixed with a
 .Sq \&! .
+.It Ic show socket Ns Oo Cm /ampv Oc
+Print usage of system's socket buffers.
+By default, empty socket isn't printed.
+.Bl -tag -width 4n -compact
+.It Cm /a
+Print all processes which use the socket.
+.It Cm /m
+Print mbuf chain in the socket buffer.
+.It Cm /p
+By default, a process which use the socket is printed (only one socket).
+If
+.Cm /p
+is specified, the process isn't printed.
+.It Cm /v
+Verbose mode.
+If
+.Cm /v
+is specified, all sockets are printed.
+.El
 .It Ic show uvmexp
 Print a selection of UVM counters and statistics.
 .It Ic show kernhist Oo Ar addr Oc

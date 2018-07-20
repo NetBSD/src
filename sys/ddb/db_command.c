@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.153 2018/03/19 08:41:21 ozaki-r Exp $	*/
+/*	$NetBSD: db_command.c,v 1.154 2018/07/20 08:26:25 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2009 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.153 2018/03/19 08:41:21 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.154 2018/07/20 08:26:25 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_aio.h"
@@ -89,6 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.153 2018/03/19 08:41:21 ozaki-r Exp
 #include <sys/buf.h>
 #include <sys/module.h>
 #include <sys/kernhist.h>
+#include <sys/socketvar.h>
 
 /*include queue macros*/
 #include <sys/queue.h>
@@ -203,6 +204,7 @@ static void	db_show_all_pages(db_expr_t, bool, db_expr_t, const char *);
 static void	db_pool_print_cmd(db_expr_t, bool, db_expr_t, const char *);
 static void	db_reboot_cmd(db_expr_t, bool, db_expr_t, const char *);
 static void	db_sifting_cmd(db_expr_t, bool, db_expr_t, const char *);
+static void	db_socket_print_cmd(db_expr_t, bool, db_expr_t, const char *);
 static void	db_stack_trace_cmd(db_expr_t, bool, db_expr_t, const char *);
 static void	db_sync_cmd(db_expr_t, bool, db_expr_t, const char *);
 static void	db_whatis_cmd(db_expr_t, bool, db_expr_t, const char *);
@@ -257,6 +259,7 @@ static const struct db_command db_show_cmds[] = {
 	    "Print statistics of locks", NULL, NULL) },
 	{ DDB_ADD_CMD("map",	db_map_print_cmd,	0,
 	    "Print the vm_map at address.", "[/f] address",NULL) },
+	{ DDB_ADD_CMD("socket",	db_socket_print_cmd,	0,NULL,NULL,NULL) },
 	{ DDB_ADD_CMD("module", db_show_module_cmd,	0,
 	    "Print kernel modules", NULL, NULL) },
 	{ DDB_ADD_CMD("mount",	db_mount_print_cmd,	0,
@@ -1208,6 +1211,17 @@ db_uvmexp_print_cmd(db_expr_t addr, bool have_addr,
 
 #ifdef _KERNEL	/* XXX CRASH(8) */
 	uvmexp_print(db_printf);
+#endif
+}
+
+/*ARGSUSED */
+static void
+db_socket_print_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
+    const char *modif)
+{
+
+#ifdef _KERNEL	/* XXX CRASH(8) */
+	socket_print(modif, db_printf);
 #endif
 }
 
