@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.123 2018/06/22 18:19:41 kre Exp $	*/
+/*	$NetBSD: expand.c,v 1.124 2018/07/20 22:47:26 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.123 2018/06/22 18:19:41 kre Exp $");
+__RCSID("$NetBSD: expand.c,v 1.124 2018/07/20 22:47:26 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -1109,7 +1109,7 @@ varvalue(const char *name, int quoted, int subtype, int flag)
 	int num;
 	char *p;
 	int i;
-	char sep;
+	int sep;
 	char **ap;
 	char const *syntax;
 
@@ -1167,10 +1167,14 @@ varvalue(const char *name, int quoted, int subtype, int flag)
 			STRTODEST(p);
 			if (!*ap)
 				break;
-			if (sep)
+			if (sep) {
+				if (quoted && (flag & (EXP_GLOB|EXP_CASE)) &&
+				    (SQSYNTAX[sep] == CCTL || SQSYNTAX[sep] == CSBACK))
+					STPUTC(CTLESC, expdest);
 				STPUTC(sep, expdest);
-			else if ((flag & (EXP_SPLIT|EXP_IN_QUOTES)) == EXP_SPLIT
-			    && !quoted && **ap != '\0')
+			} else
+			    if ((flag & (EXP_SPLIT|EXP_IN_QUOTES)) == EXP_SPLIT
+			      && !quoted && **ap != '\0')
 				STPUTC('\0', expdest);
 		}
 		return;
@@ -1749,19 +1753,31 @@ patmatch(const char *pattern, const char *string, int squoted)
 			int invert, found;
 			unsigned char chr;
 
+			/*
+			 * First quick check to see if there is a
+			 * possible matching ']' - if not, then this
+			 * is not a char class, and the '[' is just
+			 * a literal '['.
+			 *
+			 * This check will not detect all non classes, but
+			 * that's OK - It just means that we execute the
+			 * harder code sometimes when it it cannot succeed.
+			 */
 			endp = p;
-			if (*endp == '!')
+			if (*endp == '!' || *endp == '^')
 				endp++;
 			for (;;) {
 				while (*endp == CTLQUOTEMARK || *endp==CTLNONL)
 					endp++;
 				if (*endp == '\0')
-					goto dft;		/* no matching ] */
+					goto dft;	/* no matching ] */
 				if (*endp == CTLESC)
 					endp++;
 				if (*++endp == ']')
 					break;
 			}
+			/* end shortcut */
+
 			invert = 0;
 			savep = p, saveq = q;
 			invert = 0;
@@ -1789,12 +1805,12 @@ patmatch(const char *pattern, const char *string, int squoted)
 						continue;
 					}
 				}
-				if (c == CTLESC)
+				if (c == CTLESC || c == '\\')
 					c = *p++;
 				wc = (unsigned char)c;
 				if (*p == '-' && p[1] != ']') {
 					p++;
-					if (*p == CTLESC)
+					if (*p == CTLESC || *p == '\\')
 						p++;
 					wc2 = (unsigned char)*p++;
 					if (   collate_range_cmp(chr, wc) >= 0
