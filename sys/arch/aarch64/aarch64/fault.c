@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.4 2018/07/19 18:27:26 christos Exp $	*/
+/*	$NetBSD: fault.c,v 1.5 2018/07/20 07:12:50 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.4 2018/07/19 18:27:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.5 2018/07/20 07:12:50 ryo Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -327,14 +327,19 @@ data_abort_handler(struct trapframe *tf, uint32_t eclass)
 	len += snprintf(panicinfo + len, sizeof(panicinfo) - len,
 	    ": pc %016"PRIxREGISTER, tf->tf_pc);
 
-	len += snprintf(panicinfo + len, sizeof(panicinfo) - len,
-	    ": opcode %08x", *(uint32_t *)tf->tf_pc);
-
+	if (tf->tf_pc == tf->tf_far) {	/* XXX? */
+		/* fault address is pc. the causal instruction cannot be read */
+		len += snprintf(panicinfo + len, sizeof(panicinfo) - len,
+		    ": opcode unknown");
+	} else {
+		len += snprintf(panicinfo + len, sizeof(panicinfo) - len,
+		    ": opcode %08x", *(uint32_t *)tf->tf_pc);
 #ifdef DDB
-	/* ...and disassemble the instruction */
-	len += snprintf(panicinfo + len, sizeof(panicinfo) - len,
-	    ": %s", strdisasm(tf->tf_pc));
+		/* ...and disassemble the instruction */
+		len += snprintf(panicinfo + len, sizeof(panicinfo) - len,
+		    ": %s", strdisasm(tf->tf_pc));
 #endif
+	}
 
 	if (user) {
 #if defined(DEBUG_DDB_ON_USERFAULT) && defined(DDB)
