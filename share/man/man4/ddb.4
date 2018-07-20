@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.180 2018/07/20 08:26:25 msaitoh Exp $
+.\"	$NetBSD: ddb.4,v 1.181 2018/07/20 08:34:24 wiz Exp $
 .\"
 .\" Copyright (c) 1997 - 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -752,14 +752,14 @@ queue, the queue index will be prefixed with a
 .Sq \&! .
 .It Ic show socket Ns Oo Cm /ampv Oc
 Print usage of system's socket buffers.
-By default, empty socket isn't printed.
+By default, empty sockets aren't printed.
 .Bl -tag -width 4n -compact
 .It Cm /a
 Print all processes which use the socket.
 .It Cm /m
 Print mbuf chain in the socket buffer.
 .It Cm /p
-By default, a process which use the socket is printed (only one socket).
+By default, a process which uses the socket is printed (only one socket).
 If
 .Cm /p
 is specified, the process isn't printed.
