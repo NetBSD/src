@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_scan_sw.c,v 1.1.2.2 2018/07/12 16:35:34 phil Exp $ */
+/*	$NetBSD: ieee80211_scan_sw.c,v 1.1.2.3 2018/07/20 20:33:05 phil Exp $ */
 
 /*-
  * Copyright (c) 2002-2008 Sam Leffler, Errno Consulting
@@ -442,7 +442,12 @@ cancel_scan(struct ieee80211vap *vap, int any, const char *func)
 	struct scan_state *ss_priv = SCAN_PRIVATE(ss);
 	int signal;
 
+#if __FreeBSD__
 	IEEE80211_LOCK(ic);
+#elif __NetBSD__
+	/* Is this a lock bug in FreeBSD? */
+	IEEE80211_LOCK_ASSERT(ic);
+#endif
 	signal = any ? ISCAN_PAUSE : ISCAN_CANCEL;
 	if ((ic->ic_flags & IEEE80211_F_SCAN) &&
 	    (any || ss->ss_vap == vap) &&
@@ -465,7 +470,9 @@ cancel_scan(struct ieee80211vap *vap, int any, const char *func)
 			(ss->ss_vap == vap ? "match" : "nomatch"),
 			!! (ss_priv->ss_iflags & signal));
 	}
+#if __FreeBSD__
 	IEEE80211_UNLOCK(ic);
+#endif
 }
 
 /*

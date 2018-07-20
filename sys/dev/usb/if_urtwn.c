@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.59.2.2 2018/07/16 20:11:11 phil Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.59.2.3 2018/07/20 20:33:05 phil Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.42 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.59.2.2 2018/07/16 20:11:11 phil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.59.2.3 2018/07/20 20:33:05 phil Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -311,6 +311,7 @@ static int	urtwn_reset(struct ieee80211vap *, u_long);
 static void	urtwn_chip_stop(struct urtwn_softc *);
 static void	urtwn_newassoc(struct ieee80211_node *, int);
 static void	urtwn_delay_ms(struct urtwn_softc *, int ms);
+/* Functions for wifi refresh */
 static struct ieee80211vap *
 		urtwn_vap_create(struct ieee80211com *,
 		    const char [IFNAMSIZ], int, enum ieee80211_opmode, int,
@@ -318,6 +319,14 @@ static struct ieee80211vap *
 		    const uint8_t [IEEE80211_ADDR_LEN]);
 static void	urtwn_vap_delete(struct ieee80211vap *);
 static int	urtwn_ioctl(struct ifnet *, u_long, void *);
+static void	urtwn_parent(struct ieee80211com *);
+static void	urtwn_scan_start(struct ieee80211com *);
+static void	urtwn_scan_end(struct ieee80211com *);
+static void	urtwn_set_channel(struct ieee80211com *);
+static int	urtwn_transmit(struct ieee80211com *, struct mbuf *);
+static int	urtwn_raw_xmit(struct ieee80211_node *, struct mbuf *,
+		    const struct ieee80211_bpf_params *);
+
 
 /* Aliases. */
 #define	urtwn_bb_write	urtwn_write_4
@@ -356,6 +365,9 @@ urtwn_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	sc->sc_udev = uaa->uaa_device;
+
+	/* Name the ic. */
+	ic->ic_name = "urtwn";
 
 	sc->chip = 0;
 	dev = urtwn_lookup(urtwn_devs, uaa->uaa_vendor, uaa->uaa_product);
@@ -491,6 +503,13 @@ urtwn_attach(device_t parent, device_t self, void *aux)
 	ic->ic_wme.wme_update = urtwn_wme_update;
 	ic->ic_vap_create = urtwn_vap_create;
 	ic->ic_vap_delete = urtwn_vap_delete;
+	ic->ic_parent = urtwn_parent;
+	ic->ic_scan_start = urtwn_scan_start;
+	ic->ic_scan_end = urtwn_scan_end;
+	ic->ic_set_channel = urtwn_set_channel;
+	ic->ic_transmit = urtwn_transmit;
+	ic->ic_raw_xmit = urtwn_raw_xmit;
+	
 
 	/* Shouldn't do it, but call vap_create??? */
 	uint8_t bssid[IEEE80211_ADDR_LEN] = {0};
@@ -506,6 +525,9 @@ urtwn_attach(device_t parent, device_t self, void *aux)
 		ieee80211_ifdetach(ic);
 		goto fail;
 	}
+
+	/* Debug all! NNN */
+	vap->iv_debug = IEEE80211_MSG_ANY;
 
 	bpf_attach2(vap->iv_ifp, DLT_IEEE802_11_RADIO,
 	    sizeof(struct ieee80211_frame) + IEEE80211_RADIOTAP_HDRLEN,
@@ -1489,7 +1511,8 @@ static __unused int
 urtwn_media_change(struct ifnet *ifp)
 {
 #ifdef URTWN_DEBUG
-	struct urtwn_softc *sc = ifp->if_softc;
+	struct ieee80211vap *vap = ifp->if_softc;
+	struct urtwn_softc *sc = vap->iv_ic->ic_softc;
 #endif
 	int error;
 
@@ -1808,6 +1831,7 @@ urtwn_calib_to_cb(struct urtwn_softc *sc, void *arg)
 static void
 urtwn_next_scan(void *arg)
 {
+	printf ("urtwn_next_scan called....\n");
 #ifdef notyet
 	struct urtwn_softc *sc = arg;
 	int s;
@@ -1942,6 +1966,7 @@ urtwn_newstate_cb(struct urtwn_softc *sc, void *arg)
 	case IEEE80211_S_CAC:
 	case IEEE80211_S_CSA:
 	case IEEE80211_S_SLEEP:
+		printf ("URTWN UNKNOWN oSTATE: %d\n", ostate);
 		/* NNN what do we do in these states? XXX */
 		break;
 	}
@@ -2151,6 +2176,7 @@ urtwn_newstate_cb(struct urtwn_softc *sc, void *arg)
 	case IEEE80211_S_CSA:
 	case IEEE80211_S_SLEEP:
 		/* NNN what do we do in these states? XXX */
+		printf ("URTWN UNKNOWN nSTATE: %d\n", nstate);
 		break;
 	}
 
@@ -2824,27 +2850,18 @@ urtwn_get_tx_data(struct urtwn_softc *sc, size_t pidx)
 static void
 urtwn_start(struct ifnet *ifp)
 {
-	struct urtwn_softc *sc = ifp->if_softc;
-	struct ieee80211com *ic = &sc->sc_ic;
+	struct ieee80211vap *vap = ifp->if_softc;
+	struct ieee80211com *ic = vap->iv_ic;
+	struct urtwn_softc *sc = ic->ic_softc;
 	struct urtwn_tx_data *data;
 	struct ether_header *eh;
 	struct ieee80211_node *ni;
-	struct ieee80211vap *vap;
 	struct mbuf *m;
 
 	DPRINTFN(DBG_FN, ("%s: %s\n", device_xname(sc->sc_dev), __func__));
 
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
-
-	/* Find the associated vap. NEED A BETTER WAY! */
-	vap = TAILQ_FIRST(&ic->ic_vaps);
-	while (vap != NULL) {
-		if (vap->iv_ifp == ifp)
-			break;
-		vap = TAILQ_NEXT(vap, iv_next);
-	}
-	KASSERT(vap != NULL);
 
 	data = NULL;
 	for (;;) {
@@ -2939,7 +2956,8 @@ urtwn_start(struct ifnet *ifp)
 static void
 urtwn_watchdog(struct ifnet *ifp)
 {
-	struct urtwn_softc *sc = ifp->if_softc;
+	struct ieee80211vap *vap = ifp->if_softc;
+	struct urtwn_softc *sc = vap->iv_ic->ic_softc;
 
 	DPRINTFN(DBG_FN, ("%s: %s\n", device_xname(sc->sc_dev), __func__));
 
@@ -2955,7 +2973,7 @@ urtwn_watchdog(struct ifnet *ifp)
 		}
 		ifp->if_timer = 1;
 	}
-//NNN	ieee80211_watchdog(&sc->sc_ic);  Not sure what is happening!
+	//  ieee80211_watchdog(&sc->sc_ic); 
 }
 
 /*
@@ -2998,11 +3016,9 @@ urtwn_vap_create(struct ieee80211com *ic,  const char name[IFNAMSIZ],
 	ifp->if_ioctl = urtwn_ioctl;
 	ifp->if_start = urtwn_start;
 	ifp->if_watchdog = urtwn_watchdog;
+	ifp->if_extflags |= IFEF_MPSAFE;
 	IFQ_SET_READY(&ifp->if_snd);
 	memcpy(ifp->if_xname, device_xname(sc->sc_dev), IFNAMSIZ);
-
-	/* NNN needed ??? */
-	/* if_attach(ifp); */
 
 	/* Override state transition machine. */
 	sc->sc_newstate = vap->iv_newstate;
@@ -3031,6 +3047,69 @@ urtwn_vap_delete(struct ieee80211vap *vap)
 	kmem_free(vap, sizeof(struct ieee80211vap));
 }
 
+static void
+urtwn_parent(struct ieee80211com *ic)
+{
+	struct urtwn_softc *sc __unused = ic->ic_softc;
+
+	DPRINTFN(DBG_FN, ("%s: %s\n",device_xname(sc->sc_dev), __func__));
+
+	/* Not sure what to do here yet. */
+} 
+
+static void
+urtwn_scan_start(struct ieee80211com *ic)
+{
+	struct urtwn_softc *sc __unused = ic->ic_softc;
+
+	DPRINTFN(DBG_FN, ("%s: %s\n",device_xname(sc->sc_dev), __func__));
+
+	/* Not sure what to do here yet. */
+} 
+
+static void
+urtwn_scan_end(struct ieee80211com *ic)
+{
+	struct urtwn_softc *sc __unused = ic->ic_softc;
+
+	DPRINTFN(DBG_FN, ("%s: %s\n",device_xname(sc->sc_dev), __func__));
+
+	/* Not sure what to do here yet. */
+} 
+
+static void
+urtwn_set_channel(struct ieee80211com *ic)
+{
+	struct urtwn_softc *sc = ic->ic_softc;
+
+	DPRINTFN(DBG_FN, ("%s: %s\n",device_xname(sc->sc_dev), __func__));
+
+	urtwn_set_chan(sc, ic->ic_curchan, IEEE80211_HTINFO_2NDCHAN_NONE);
+} 
+
+static int
+urtwn_transmit(struct ieee80211com *ic, struct mbuf *m)
+{
+	struct urtwn_softc *sc = ic->ic_softc;
+
+	DPRINTFN(DBG_FN, ("%s: %s\n",device_xname(sc->sc_dev), __func__));
+
+	return EIO;
+}
+
+static int
+urtwn_raw_xmit(struct ieee80211_node *ni , struct mbuf *m,
+    const struct ieee80211_bpf_params *bpfp)
+{
+	struct ieee80211com *ic = ni->ni_ic;
+	struct urtwn_softc *sc = ic->ic_softc;
+
+	DPRINTFN(DBG_FN, ("%s: %s\n",device_xname(sc->sc_dev), __func__));
+
+	return EIO;
+}
+
+
 static int
 urtwn_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
@@ -3050,11 +3129,14 @@ urtwn_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			break;
 		switch (ifp->if_flags & (IFF_UP | IFF_RUNNING)) {
 		case IFF_UP | IFF_RUNNING:
+			printf (" up and running...\n");
 			break;
 		case IFF_UP:
+			printf (" just up ... will start\n");
 			urtwn_init(ifp);
 			break;
 		case IFF_RUNNING:
+			printf (" just running .. will stop\n");
 			urtwn_stop(ifp, 1);
 			break;
 		case 0:
@@ -4765,9 +4847,9 @@ urtwn_temp_calib(struct urtwn_softc *sc)
 static int
 urtwn_init(struct ifnet *ifp)
 {
-	struct urtwn_softc *sc = ifp->if_softc;
-	struct ieee80211com *ic = &sc->sc_ic;
-	struct ieee80211vap *vap = TAILQ_FIRST(&ic->ic_vaps);
+	struct ieee80211vap *vap = ifp->if_softc;
+	struct ieee80211com *ic = vap->iv_ic;
+	struct urtwn_softc *sc = ic->ic_softc;
 	struct urtwn_rx_data *data;
 	uint32_t reg;
 	size_t i;
@@ -5036,9 +5118,9 @@ urtwn_init(struct ifnet *ifp)
 static void
 urtwn_stop(struct ifnet *ifp, int disable)
 {
-	struct urtwn_softc *sc = ifp->if_softc;
-	struct ieee80211com *ic = &sc->sc_ic;
-	struct ieee80211vap *vap = TAILQ_FIRST(&ic->ic_vaps);
+	struct ieee80211vap *vap = ifp->if_softc;
+	struct ieee80211com *ic = vap->iv_ic;
+	struct urtwn_softc *sc = ic->ic_softc;
 	size_t i;
 	int s;
 

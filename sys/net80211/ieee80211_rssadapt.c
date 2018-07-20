@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_rssadapt.c,v 1.21.16.3 2018/07/16 20:11:11 phil Exp $ */
+/*	$NetBSD: ieee80211_rssadapt.c,v 1.21.16.4 2018/07/20 20:33:05 phil Exp $ */
 
 /*-
  * SPDX-License-Identifier: BSD-3-Clause
@@ -107,8 +107,10 @@ static void	rssadapt_raise_rate(struct ieee80211_rssadapt_node *,
 			int, int);
 static void	rssadapt_tx_complete(const struct ieee80211_node *,
 			const struct ieee80211_ratectl_tx_status *);
+#ifdef notyet
 static void	rssadapt_sysctlattach(struct ieee80211vap *,
 			struct sysctl_ctx_list *, struct sysctl_oid *);
+#endif
 
 /* number of references from net80211 layer */
 static	int nrefs = 0;
@@ -164,7 +166,9 @@ rssadapt_init(struct ieee80211vap *vap)
 	}
 	rs->vap = vap;
 	rssadapt_setinterval(vap, 500 /* msecs */);
+#ifdef notyet
 	rssadapt_sysctlattach(vap, vap->iv_sysctl, vap->iv_oid);
+#endif
 }
 
 static void
@@ -376,15 +380,13 @@ rssadapt_sysctl_interval(SYSCTL_HANDLER_ARGS)
 	rssadapt_setinterval(vap, msecs);
 	return 0;
 }
-#endif
 
 static void
 rssadapt_sysctlattach(struct ieee80211vap *vap,
     struct sysctl_ctx_list *ctx, struct sysctl_oid *tree)
 {
-#ifdef notyet
 	SYSCTL_ADD_PROC(ctx, SYSCTL_CHILDREN(tree), OID_AUTO,
 	    "rssadapt_rate_interval", CTLTYPE_INT | CTLFLAG_RW, vap,
 	    0, rssadapt_sysctl_interval, "I", "rssadapt operation interval (ms)");
-#endif
 }
+#endif

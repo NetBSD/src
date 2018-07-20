@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_netbsd.c,v 1.31.2.3 2018/07/16 20:11:11 phil Exp $ */
+/*	$NetBSD: ieee80211_netbsd.c,v 1.31.2.4 2018/07/20 20:33:05 phil Exp $ */
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 /*  __FBSDID("$FreeBSD$");  */
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.31.2.3 2018/07/16 20:11:11 phil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.31.2.4 2018/07/20 20:33:05 phil Exp $");
 
 /*
  * IEEE 802.11 support (NetBSD-specific code)
@@ -61,20 +61,30 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.31.2.3 2018/07/16 20:11:11 ph
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_input.h>
 
-#ifdef notyet
-SYSCTL_NODE(_net, OID_AUTO, wlan, CTLFLAG_RD, 0, "IEEE 80211 parameters");
+static const struct sysctlnode *
+    ieee80211_sysctl_treetop(struct sysctllog **log);
+static void ieee80211_sysctl_setup(void);
+
+/* NNN in .h file? */
+#define SYSCTL_HANDLER_ARGS SYSCTLFN_ARGS
 
 #ifdef IEEE80211_DEBUG
 static int	ieee80211_debug = 0;
-SYSCTL_INT(_net_wlan, OID_AUTO, debug, CTLFLAG_RW, &ieee80211_debug,
-	    0, "debugging printfs");
 #endif
 
+#ifdef notyet
 static struct if_clone *wlan_cloner;
 #endif 
 /* notyet */
 
 static const char wlanname[] = "wlan";
+
+int
+ieee80211_init0(void)
+{
+	ieee80211_sysctl_setup();
+	return 0;
+}
 
 static __unused int
 wlan_clone_create(struct if_clone *ifc, int unit, void * params)
@@ -166,15 +176,23 @@ ieee80211_sysctl_inact(SYSCTL_HANDLER_ARGS)
 	*(int *)arg1 = inact / IEEE80211_INACT_WAIT;
 	return 0;
 }
+#endif
 
 static int
-ieee80211_sysctl_parent(SYSCTL_HANDLER_ARGS)
+ieee80211_sysctl_parent(SYSCTLFN_ARGS)
 {
-	struct ieee80211com *ic = arg1;
+	struct ieee80211vap *vap;
+	char pname[IFNAMSIZ];
+	struct sysctlnode node;
 
-	return SYSCTL_OUT_STR(req, ic->ic_name);
+	node = *rnode;
+	vap = node.sysctl_data;
+	strlcpy(pname, vap->iv_ifp->if_xname, IFNAMSIZ);
+	node.sysctl_data = pname;
+	return sysctl_lookup(SYSCTLFN_CALL(&node));
 }
 
+#ifdef notyet
 static int
 ieee80211_sysctl_radar(SYSCTL_HANDLER_ARGS)
 {
@@ -221,9 +239,99 @@ ieee80211_sysctl_detach(struct ieee80211com *ic)
 {
 }
 
+/*
+ * Setup sysctl(3) MIB, net.ieee80211.*
+ *
+ * TBD condition CTLFLAG_PERMANENT on being a module or not
+ */
+static struct sysctllog *ieee80211_sysctllog;
+static void
+ieee80211_sysctl_setup(void)
+{
+	int rc;
+	const struct sysctlnode *rnode;
+
+	if ((rnode = ieee80211_sysctl_treetop(&ieee80211_sysctllog)) == NULL)
+		return;
+
+#ifdef notyet
+	if ((rc = sysctl_createv(&ieee80211_sysctllog, 0, &rnode, NULL,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "nodes", "client/peer stations",
+	    ieee80211_sysctl_node, 0, NULL, 0, CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+#endif
+
+#ifdef IEEE80211_DEBUG
+	/* control debugging printfs */
+	if ((rc = sysctl_createv(&ieee80211_sysctllog, 0, &rnode, NULL,
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT,
+	    "debug", SYSCTL_DESCR("control debugging printfs"),
+	    NULL, 0, &ieee80211_debug, 0, CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+#endif
+
+#ifdef notyet
+	ieee80211_rssadapt_sysctl_setup(&ieee80211_sysctllog);
+#endif
+
+	return;
+err:
+	printf("%s: sysctl_createv failed (rc = %d)\n", __func__, rc);
+}
+
+/*
+ * Create or get top of sysctl tree net.link.ieee80211.
+ */
+static const struct sysctlnode *
+ieee80211_sysctl_treetop(struct sysctllog **log)
+{
+	int rc;
+	const struct sysctlnode *rnode;
+
+	if ((rc = sysctl_createv(log, 0, NULL, &rnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "link",
+	    "link-layer statistics and controls",
+	    NULL, 0, NULL, 0, CTL_NET, PF_LINK, CTL_EOL)) != 0)
+		goto err;
+
+	if ((rc = sysctl_createv(log, 0, &rnode, &rnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "ieee80211",
+	    "IEEE 802.11 WLAN statistics and controls",
+	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+
+	return rnode;
+err:
+	printf("%s: sysctl_createv failed, rc = %d\n", __func__, rc);
+	return NULL;
+}
+
 void
 ieee80211_sysctl_vattach(struct ieee80211vap *vap)
 {
+	int rc;
+	const struct sysctlnode *cnode, *rnode;
+	char num[sizeof("vap") + 14];		/* sufficient for 32 bits */
+
+	if ((rnode = ieee80211_sysctl_treetop(NULL)) == NULL)
+		return;
+
+	snprintf(num, sizeof(num), "vap%u", vap->iv_ifp->if_index);
+
+	if ((rc = sysctl_createv(&vap->iv_sysctllog, 0, &rnode, &rnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, num, SYSCTL_DESCR("virtual AP"),
+	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+
+	/* control debugging printfs */
+	if ((rc = sysctl_createv(&vap->iv_sysctllog, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT|CTLFLAG_READONLY, CTLTYPE_STRING,
+	    "parent", SYSCTL_DESCR("parent device"),
+	    ieee80211_sysctl_parent, 0, (void *)vap, IFNAMSIZ,
+	    CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+
+
 #ifdef notyet
 	struct ifnet *ifp = vap->iv_ifp;
 	struct sysctl_ctx_list *ctx;
@@ -305,6 +413,9 @@ ieee80211_sysctl_vattach(struct ieee80211vap *vap)
 	vap->iv_sysctl = ctx;
 	vap->iv_oid = oid;
 #endif
+	return;
+err:
+	printf("%s: sysctl_createv failed, rc = %d\n", __func__, rc);
 }
 
 void
