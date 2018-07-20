@@ -1,4 +1,4 @@
-# $NetBSD: t_patterns.sh,v 1.1 2018/07/10 06:49:29 kre Exp $
+# $NetBSD: t_patterns.sh,v 1.2 2018/07/20 18:25:56 kre Exp $
 #
 # Copyright (c) 2018 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -491,6 +491,10 @@ filename_expansion_body() {
 
 	# '^' as the first char in a bracket expr is unspecified by POSIX,
 	# but for compat with REs everyone (sane) makes it the same as !
+
+	# But just in case we are testing an insane shell ...
+    ${TEST_SH} -c 'case "^" in ([^V^]) exit 1;; (*) exit 0;; esac' && {
+
 	check 'printf "%s\n" [^ab] | wc -l'		'24'	0
 	check 'printf "%s\n" [^ab]* | wc -l'		'5281'	0
 	check 'printf "%s\n" [^A-D]* | wc -l'		'5692'	0
@@ -514,6 +518,8 @@ filename_expansion_body() {
 	check 'printf "%s\n" [^^!]? | wc -l'		'508'	0	#165
 	check 'printf "%s\n" [!^-b]? | wc -l'		'487'	0
 	check 'printf "%s\n" [^!-b]? | wc -l'		'63'	0
+
+    }
 
 	# No need to clean up the directory, we're in the ATF working
 	# directory, and ATF cleans up for us.
@@ -630,7 +636,7 @@ case_matching_body() {
 
 	cm "'\z'" '"\z"'; cf z; cm '\\z'; cm '$var' '' 'var="\z"'	#144
 	cm '${var}' '' "var='\z'"; cm '"${var}"'			#146
-	cf '${var}' '${var}' "var='\z'"; cf '${var}' '"${var}"' "var='\z'" #148
+	cf '${var}' '${var}' "var='\z'"; cm '${var}' '"${var}"' "var='\z'" #148
 	cf "'${var}'"; cm "'${var}'" "'${var}'" "var='\z'"		#150
 
 	cf abc '"$*"' 'IFS=?; set -- a c';cf '"a c"';cm "'a?c'";cm '"$*"' #154
@@ -694,82 +700,87 @@ var_substring_matching_body() {
 	reset var_substring_matching
 
 	vm abc \# a bc; vm aaab \# a aab; vm aaab \## 'a*a' b		#  3
-	vm aaab % ab aa; vm xawab %% 'a*ab' x; vm abcd \# xyz abcd	#  6
-	vm file.c % .c 'f le' IFS=i ; vm file.c % .c file IFS=i Q	#  8
-	vm file.c % ?c file ; vm file.c % '"?c"' file.c			# 10
+	vm aaab % ab aa; vm xawab %% 'a*ab' x; vm abcd \# xyz abcd
+	vm file.c % .c 'f le' IFS=i ; vm file.c % .c file IFS=i Q
+	vm file.c % ?c file ; vm file.c % '"?c"' file.c			# 9 10
 
-	vm abcabcabcded \# 'a*b' cabcabcded; vm abcabcabcded \## 'a*b' cded # 12
-	vm abcabcabcded % 'c*d' abcabcab; vm abcabcabcded %% 'c*d' ab	# 14
+	vm abcabcabcded \# 'a*b' cabcabcded; vm abcabcabcded \## 'a*b' cded
+	vm abcabcabcded % 'c*d' abcabcab; vm abcabcabcded %% 'c*d' ab
 
 	vm abc.jpg % '.[a-z][!0-9]?' abc				# 15
 
-	vm xxxyyy \# '${P}' yyy P=xxx; vm xxxyyy \# '${P}' yyy 'P=x?x'	# 17
-	vm xxxyyy \# '${P}' yyy 'P=x?x' Q				# 18
-	vm 'x?xyyy' \# '${P}' yyy 'P=x[?]x';vm xxxyyy \# '${P}' xxxyyy 'P=x[?]x'
-	vm 'x?xyyy' \# '${P}' yyy 'P=x?x' Q;vm xxxyyy \# '${P}' yyy 'P=x?x' Q
-	vm 'x?xyyy' \# '${P}' 'x?xyyy' 'P="x\?x"'			# 23
-	vm 'x?xyyy' \# '${P}' 'x?xyyy' 'P="x\?x"' Q			# 24
+	vm xxxyyy \# '${P}' yyy P=xxx; vm xxxyyy \# '${P}' yyy 'P=x?x'
+	vm xxxyyy \# '${P}' yyy 'P=x?x' Q
+	vm 'x?xyyy' \# '${P}' yyy 'P=x[?]x'
+	vm xxxyyy \# '${P}' xxxyyy 'P=x[?]x'				# 20
+	vm 'x?xyyy' \# '${P}' yyy 'P=x?x' Q
+	vm xxxyyy \# '${P}' yyy 'P=x?x' Q
+	vm 'x?xyyy' \# '${P}' yyy 'P="x\?x"'
+	vm 'x?xyyy' \# '${P}' yyy 'P="x\?x"' Q
 	vm 'x?xyyy' \# '${P}' yyy 'P="x?x"' 				# 25
-	vm 'x?xyyy' \# '${P}' yyy 'P="x?x"' Q				# 26
+	vm 'x?xyyy' \# '${P}' yyy 'P="x?x"' Q
+	vm 'x?xyyy' \# '"${P}"' 'x?xyyy' 'P="x\?x"'
+	vm 'x?xyyy' \# '"${P}"' 'x?xyyy' 'P="x\?x"' Q
+	vm 'x?xyyy' \# '"${P}"' yyy 'P="x?x"'
+	vm 'x?xyyy' \# '"${P}"' yyy 'P="x?x"' Q				# 30
+	vm 'x%xyyy' \# '${P}' 'x%xyyy' 'P="x\?x"'
+	vm 'x%xyyy' \# '${P}' 'x%xyyy' 'P="x\?x"' Q
+	vm 'x%xyyy' \# '${P}' yyy 'P="x?x"'
+	vm 'x%xyyy' \# '${P}' yyy 'P="x?x"' Q
+	vm 'x%xyyy' \# '"${P}"' 'x%xyyy' 'P="x\?x"'			# 35
+	vm 'x%xyyy' \# '"${P}"' 'x%xyyy' 'P="x\?x"' Q
+	vm 'x%xyyy' \# '"${P}"' 'x%xyyy' 'P="x?x"'
+	vm 'x%xyyy' \# '"${P}"' 'x%xyyy' 'P="x?x"' Q
 
-	vm abc \# '*' abc; vm abc \# '*' abc '' Q			# 28
-	vm abc \# '"*"' abc; vm abc \# '"*"' abc '' Q			# 30
-	vm abc \# '"a"' bc; vm abc \# '"a"' bc '' Q			# 32
-	vm abc \## '*' ''; vm abc \## '*' '' '' Q			# 34
-	vm abc % '*' abc; vm abc % '*' abc '' Q				# 36
-	vm abc %% '*' ''; vm abc %% '*' '' '' Q				# 38
-	vm abc \# '$P' abc 'P="*"'; vm abc \# '$P' abc 'P="*"' Q	# 40
-	vm abc \# '"$P"' abc 'P="*"'; vm abc \# '"$P"' abc 'P="*"' Q	# 42
-	vm abc \# '$P' bc 'P="[a]"'; vm abc \# '$P' bc 'P="[a]"' Q	# 44
-	vm abc \# '"$P"' abc 'P="[a]"'; vm abc \# '"$P"' abc 'P="[a]"' Q # 46
-	vm '[a]bc' \# '$P' '[a]bc' 'P="[a]"'				# 47
-	vm '[a]bc' \# '"$P"' bc 'P="[a]"'				# 48
-	vm '[a]bc' \# '"$P"' bc 'P="[a]"' Q				# 49
+	vm abc \# '*' abc; vm abc \# '*' abc '' Q			# 39 40
+	vm abc \# '"*"' abc; vm abc \# '"*"' abc '' Q
+	vm abc \# '"a"' bc; vm abc \# '"a"' bc '' Q
+	vm abc \## '*' ''; vm abc \## '*' '' '' Q
+	vm abc % '*' abc; vm abc % '*' abc '' Q
+	vm abc %% '*' ''; vm abc %% '*' '' '' Q				# 49 50
+	vm abc \# '$P' abc 'P="*"'; vm abc \# '$P' abc 'P="*"' Q
+	vm abc \# '"$P"' abc 'P="*"'; vm abc \# '"$P"' abc 'P="*"' Q
+	vm abc \# '$P' bc 'P="[a]"'; vm abc \# '$P' bc 'P="[a]"' Q
+	vm abc \# '"$P"' abc 'P="[a]"'; vm abc \# '"$P"' abc 'P="[a]"' Q
+	vm '[a]bc' \# '$P' '[a]bc' 'P="[a]"'
+	vm '[a]bc' \# '"$P"' bc 'P="[a]"'				# 60
+	vm '[a]bc' \# '"$P"' bc 'P="[a]"' Q
 
-	# The following two (50 & 51) are actually the same test.
-	# Technically #50 is unspecified, not in the matching, but
-	# in the assignment to P, in a "" string a \ not followed
-	# by one of a specific set of chars has unspecified results.
-	# However, sane shells simply leave the pair of chars as is.
-	# #51 is just the way that #50 should be written (the \\ in
-	# the string is assigned as a single \ which is what is wanted)
-	# Tests 52 & 53 have the same issue as #50, but unless 50
-	# fails and 51 succeeds (which is unlikely) we won't worry.
+	# The following two (62 & 63) are actually the same test.
+	# The double \\ turns into a single \ when parsed.
+	vm '[a]bc' \# '$P' bc 'P="\[a]"';  vm '[a]bc' \# '$P' bc 'P="\\[a]"'
+	vm '[a]bc' \# '"$P"' '[a]bc' 'P="\[a]"'
+	vm '\[a]bc' \# '"$P"' bc 'P="\[a]"'				# 65
 
-	vm '[a]bc' \# '$P' bc 'P="\[a]"'				# 50
-	vm '[a]bc' \# '$P' bc 'P="\\[a]"'				# 51
-	vm '[a]bc' \# '"$P"' '[a]bc' 'P="\[a]"'				# 52
-	vm '\[a]bc' \# '"$P"' bc 'P="\[a]"'				# 53
+	vm ababcdabcd \#  '[ab]*[ab]' abcdabcd
+	vm ababcdabcd \## '[ab]*[ab]' cd
+	vm ababcdabcd \#  '$P'  abcdabcd  'P="[ab]*[ab]"'
+	vm ababcdabcd \## '$P'  cd	    "P='[ab]*[ab]'"
+	vm ababcdabcd \#  '$P' 'ab dab d' 'P="[ab]*[ab]"; IFS=c'	# 70
+	vm ababcdabcd \#  '$P'  abcdabcd  'P="[ab]*[ab]"; IFS=c' Q
 
-	vm ababcdabcd \# '[ab]*[ab]' abcdabcd				# 54
-	vm ababcdabcd \## '[ab]*[ab]' cd				# 55
-	vm ababcdabcd \# '$P' abcdabcd 'P="[ab]*[ab]"'			# 56
-	vm ababcdabcd \## '$P' cd "P='[ab]*[ab]'"			# 57
-	vm ababcdabcd \# '$P' 'ab dab d' 'P="[ab]*[ab]";IFS=c'		# 58
-	vm ababcdabcd \# '$P' abcdabcd 'P="[ab]*[ab]";IFS=c' Q		# 59
+	vm ababcdabcd \#  '[ab]*[ba]'  abcdabcd
+	vm ababcdabcd \#  '[ab]*[a-b]' abcdabcd
+	vm ababcdabcd \## '[ba]*[ba]'  cd
+	vm ababcdabcd \## '[a-b]*[ab]' cd				# 75
 
-	vm ababcdabcd \# '[ab]*[ba]' abcdabcd				# 60
-	vm ababcdabcd \# '[ab]*[a-b]' abcdabcd				# 61
-	vm ababcdabcd \## '[ba]*[ba]' cd				# 62
-	vm ababcdabcd \## '[a-b]*[ab]' cd				# 63
+	vm abcde \# '?[b-d]?' de; vm abcde \## '?[b-d]?' de
+	vm abcde % '?[b-d]?' ab; vm abcde %% '?[b-d]?' ab
 
-	vm abcde \# '?[b-d]?' de; vm abcde \## '?[b-d]?' de		# 65
-	vm abcde % '?[b-d]?' ab; vm abcde %% '?[b-d]?' ab		# 67
+	vm .123. \# '.[0-9][1-8]' 3.; vm .123. % '[0-9][1-8].' .1	# 80 81
+	vm .123. \# '?[0-9][1-8]' 3.; vm .123. % '[0-9][1-8]?' .1
+	vm .123. \# '*[0-9][1-8]' 3.; vm .123. % '[0-9][1-8]*' .1	# 85
+	vm .123. \## '*[0-9][1-8]' .; vm .123. %% '[0-9][1-8]*' .
+	vm .123. \# '[.][1][2]' 3.  ; vm .123. % '[2][3][.]' .1
+	vm .123. \# '[?]1[2]' .123. ; vm .123. % '2[3][?]' .123.	# 90 91
+	vm .123. \# '\.[0-9][1-8]' 3.;vm .123. % '[0-9][1-8]\.' .1
 
-	vm .123. \# '.[0-9][1-8]' 3.; vm .123. % '[0-9][1-8].' .1	# 69
-	vm .123. \# '?[0-9][1-8]' 3.; vm .123. % '[0-9][1-8]?' .1	# 71
-	vm .123. \# '*[0-9][1-8]' 3.; vm .123. % '[0-9][1-8]*' .1	# 73
-	vm .123. \## '*[0-9][1-8]' .; vm .123. %% '[0-9][1-8]*' .	# 75
-	vm .123. \# '[.][1][2]' 3.  ; vm .123. % '[2][3][.]' .1		# 77
-	vm .123. \# '[?]1[2]' .123. ; vm .123. % '2[3][?]' .123.	# 79
-	vm .123. \# '\.[0-9][1-8]' 3.;vm .123. % '[0-9][1-8]\.' .1	# 81
-
-	vm '[a-c]d-f' \# '[a-c\]' d-f					# 82
-	vm '[abcd]' \# '[[:alpha:]]' '[abcd]'				# 83
-	vm '[1?234' \# '[[-\]]?\?' 234					# 84
-	vm '1-2-3-\?' % '-${P}' '1-2-3-\?' 'P="\\?"'			# 85
-	vm '1-2-3-\?' % '${P}' '1-2-3-\' 'P="\\?"'			# 86
-	vm '1-2-3-\?' % '-"${P}"' 1-2-3 'P="\\?"'			# 87
+	vm '[a-c]d-f' \# '[a-c\]' d-f
+	vm '[abcd]' \# '[[:alpha:]]' '[abcd]'				# 95
+	vm '[1?234' \# '[[-\]]?\?' 234
+	vm '1-2-3-\?' % '-${P}' '1-2-3-\?' 'P="\\?"'
+	vm '1-2-3-\?' % '${P}' '1-2-3-\' 'P="\\?"'
+	vm '1-2-3-\?' % '-"${P}"' 1-2-3 'P="\\?"'			# 99
 
 	results
 }
