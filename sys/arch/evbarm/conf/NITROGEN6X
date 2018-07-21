@@ -1,4 +1,4 @@
-# $NetBSD: NITROGEN6X,v 1.17 2018/07/14 15:09:41 maxv Exp $
+# $NetBSD: NITROGEN6X,v 1.18 2018/07/21 19:39:44 maya Exp $
 #
 # Nitrogen6X
 # - http://boundarydevices.com/products/nitrogen6x-board-imx6-arm-cortex-a9-sbc/
@@ -370,7 +370,6 @@ pseudo-device	accf_http		# "httpready" accept filter
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	sequencer		# MIDI sequencer
-# rnd works; RND_COM does not on port i386 yet.
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
