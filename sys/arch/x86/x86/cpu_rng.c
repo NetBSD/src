@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_rng.c,v 1.7 2018/07/21 14:46:41 kre Exp $ */
+/* $NetBSD: cpu_rng.c,v 1.8 2018/07/21 16:21:27 maxv Exp $ */
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -34,8 +34,6 @@
  * Theo de Raadt's OpenBSD version but has been rewritten in light of
  * comments from Henric Jungheim on the tech@openbsd.org mailing list.
  */
-
-#include "opt_xen.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -237,11 +235,7 @@ cpu_earlyrng(void *out, size_t sz)
 		}
 		SHA512_Update(&ctx, (uint8_t *)buf, i * sizeof(cpu_rng_t));
 	}
-#ifndef XEN
 	val = rdtsc();
-#else
-	val = 0;		/* XXX */
-#endif
 	SHA512_Update(&ctx, (uint8_t *)&val, sizeof(val));
 
 	SHA512_Final(digest, &ctx);
