@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.306 2018/07/12 19:48:16 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.307 2018/07/21 06:09:13 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.306 2018/07/12 19:48:16 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.307 2018/07/21 06:09:13 maxv Exp $");
 
 #include "opt_modular.h"
 #include "opt_user_ldt.h"
@@ -262,6 +262,7 @@ paddr_t ldt_paddr;
 static struct vm_map module_map_store;
 extern struct vm_map *module_map;
 extern struct bootspace bootspace;
+extern struct slotspace slotspace;
 
 struct vm_map *phys_map = NULL;
 
@@ -322,6 +323,7 @@ int dump_seg_count_range(paddr_t, paddr_t);
 int dumpsys_seg(paddr_t, paddr_t);
 
 void init_bootspace(void);
+void init_slotspace(void);
 void init_x86_64(paddr_t);
 
 /*
@@ -1587,6 +1589,58 @@ init_bootspace(void)
 	/* Kernel module map. */
 	bootspace.smodule = (vaddr_t)atdevbase + IOM_SIZE;
 	bootspace.emodule = KERNBASE + NKL2_KIMG_ENTRIES * NBPD_L2;
+}
+
+void
+init_slotspace(void)
+{
+	memset(&slotspace, 0, sizeof(slotspace));
+
+	/* User. */
+	slotspace.area[SLAREA_USER].sslot = 0;
+	slotspace.area[SLAREA_USER].mslot = PDIR_SLOT_PTE;
+	slotspace.area[SLAREA_USER].nslot = PDIR_SLOT_PTE;
+	slotspace.area[SLAREA_USER].active = true;
+	slotspace.area[SLAREA_USER].dropmax = false;
+
+	/* PTE. */
+	slotspace.area[SLAREA_PTE].sslot = PDIR_SLOT_PTE;
+	slotspace.area[SLAREA_PTE].mslot = 1;
+	slotspace.area[SLAREA_PTE].nslot = 1;
+	slotspace.area[SLAREA_PTE].active = true;
+	slotspace.area[SLAREA_PTE].dropmax = false;
+
+	/* Main. */
+	slotspace.area[SLAREA_MAIN].sslot = PDIR_SLOT_KERN;
+	slotspace.area[SLAREA_MAIN].mslot = NKL4_MAX_ENTRIES;
+	slotspace.area[SLAREA_MAIN].nslot = 0 /* variable */;
+	slotspace.area[SLAREA_MAIN].active = true;
+	slotspace.area[SLAREA_MAIN].dropmax = false;
+
+#ifdef __HAVE_PCPU_AREA
+	/* Per-CPU. */
+	slotspace.area[SLAREA_PCPU].sslot = PDIR_SLOT_PCPU;
+	slotspace.area[SLAREA_PCPU].mslot = 1;
+	slotspace.area[SLAREA_PCPU].nslot = 1;
+	slotspace.area[SLAREA_PCPU].active = true;
+	slotspace.area[SLAREA_PCPU].dropmax = false;
+#endif
+
+#ifdef __HAVE_DIRECT_MAP
+	/* Direct Map. */
+	slotspace.area[SLAREA_DMAP].sslot = PDIR_SLOT_DIRECT;
+	slotspace.area[SLAREA_DMAP].mslot = NL4_SLOT_DIRECT+1;
+	slotspace.area[SLAREA_DMAP].nslot = 0 /* variable */;
+	slotspace.area[SLAREA_DMAP].active = false;
+	slotspace.area[SLAREA_DMAP].dropmax = true;
+#endif
+
+	/* Kernel. */
+	slotspace.area[SLAREA_KERN].sslot = L4_SLOT_KERNBASE;
+	slotspace.area[SLAREA_KERN].mslot = 1;
+	slotspace.area[SLAREA_KERN].nslot = 1;
+	slotspace.area[SLAREA_KERN].active = true;
+	slotspace.area[SLAREA_KERN].dropmax = false;
 }
 
 void
