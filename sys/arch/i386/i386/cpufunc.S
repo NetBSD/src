@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.22 2018/07/14 14:29:40 maxv Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.23 2018/07/21 16:21:27 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/errno.h>
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.S,v 1.22 2018/07/14 14:29:40 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.S,v 1.23 2018/07/21 16:21:27 maxv Exp $");
 
 #include "opt_xen.h"
 
@@ -208,6 +208,11 @@ ENTRY(rdpmc)
 	rdpmc
 	ret
 END(rdpmc)
+
+ENTRY(rdtsc)
+	rdtsc
+	ret
+END(rdtsc)
 
 ENTRY(breakpoint)
 	pushl	%ebp
