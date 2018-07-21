@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.32 2018/07/14 14:29:40 maxv Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.33 2018/07/21 06:09:13 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -382,6 +382,14 @@ ENTRY(rdpmc)
 	orq	%rdx, %rax
 	ret
 END(rdpmc)
+
+ENTRY(rdtsc)
+	xorq	%rax,%rax
+	rdtsc
+	shlq	$32,%rdx
+	orq	%rdx,%rax
+	ret
+END(rdtsc)
 
 ENTRY(breakpoint)
 	pushq	%rbp
