@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1599 2018/07/15 05:16:40 maxv Exp $
+# $NetBSD: mi,v 1.1600 2018/07/21 06:25:29 maxv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2033,8 +2033,8 @@
 ./usr/share/man/cat4/x86/powernow.0		man-sys-catman		.cat
 ./usr/share/man/cat4/x86/soekrisgpio.0		man-sys-catman		.cat
 ./usr/share/man/cat4/x86/tco.0			man-sys-catman		.cat
-./usr/share/man/cat4/x86/tprof_amdpmi.0		man-sys-catman		.cat
-./usr/share/man/cat4/x86/tprof_pmi.0		man-sys-catman		.cat
+./usr/share/man/cat4/x86/tprof_amdpmi.0		man-obsolete		obsolete
+./usr/share/man/cat4/x86/tprof_pmi.0		man-obsolete		obsolete
 ./usr/share/man/cat4/x86/vmt.0			man-sys-catman		.cat
 ./usr/share/man/cat4/x86/vmx.0			man-sys-catman		.cat
 ./usr/share/man/cat4/xbd.0			man-sys-catman		.cat
@@ -5098,8 +5098,8 @@
 ./usr/share/man/html4/x86/powernow.html		man-sys-htmlman		html
 ./usr/share/man/html4/x86/soekrisgpio.html	man-sys-htmlman		html
 ./usr/share/man/html4/x86/tco.html		man-sys-htmlman		html
-./usr/share/man/html4/x86/tprof_amdpmi.html	man-sys-htmlman		html
-./usr/share/man/html4/x86/tprof_pmi.html	man-sys-htmlman		html
+./usr/share/man/html4/x86/tprof_amdpmi.html	man-obsolete		obsolete
+./usr/share/man/html4/x86/tprof_pmi.html	man-obsolete		obsolete
 ./usr/share/man/html4/x86/vmt.html		man-sys-htmlman		html
 ./usr/share/man/html4/x86/vmx.html		man-sys-htmlman		html
 ./usr/share/man/html4/xbd.html			man-sys-htmlman		html
@@ -8095,8 +8095,8 @@
 ./usr/share/man/man4/x86/powernow.4		man-sys-man		.man
 ./usr/share/man/man4/x86/soekrisgpio.4		man-sys-man		.man
 ./usr/share/man/man4/x86/tco.4			man-sys-man		.man
-./usr/share/man/man4/x86/tprof_amdpmi.4		man-sys-man		.man
-./usr/share/man/man4/x86/tprof_pmi.4		man-sys-man		.man
+./usr/share/man/man4/x86/tprof_amdpmi.4		man-obsolete		obsolete
+./usr/share/man/man4/x86/tprof_pmi.4		man-obsolete		obsolete
 ./usr/share/man/man4/x86/vmt.4			man-sys-man		.man
 ./usr/share/man/man4/x86/vmx.4			man-sys-man		.man
 ./usr/share/man/man4/xbd.4			man-sys-man		.man
