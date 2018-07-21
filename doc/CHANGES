@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2412 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2413 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -173,8 +173,8 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	ssh-agent(1): /usr/pkg/lib* whitelisted by default for PKCS11 related
 		libraries, in place of /usr/local/lib*. [sevan 20180710]
 	x86: Support for -static -pie binaries. [joerg 20180712]
-	kernel: Remove pmc(9) and X86PMC. Replaced by a revamped
-		tprof(4). [maxv 20180714]
+	kernel: Remove pmc(9) and X86PMC. [maxv 20180714]
+	tprof(4): Revamped. tpfmt(1) merged into tprof(8). [maxv 20180714]
 	ipkdb(4): Removed. [maxv 20180714]
 	arm: Add support for ARMv8 performance event monitoring with tprof(4).
 		[jmcneill 20180715]
