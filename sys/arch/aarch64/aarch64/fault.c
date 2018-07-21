@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.5 2018/07/20 07:12:50 ryo Exp $	*/
+/*	$NetBSD: fault.c,v 1.6 2018/07/21 13:23:48 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.5 2018/07/20 07:12:50 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.6 2018/07/21 13:23:48 ryo Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -160,6 +160,7 @@ data_abort_handler(struct trapframe *tf, uint32_t eclass)
 		UVMHIST_LOG(pmaphist, "use user vm_map %p (kernel_map=%p)",
 		   map, kernel_map, 0, 0);
 	} else {
+		error = EINVAL;
 		goto do_fault;
 	}
 
@@ -211,7 +212,8 @@ data_abort_handler(struct trapframe *tf, uint32_t eclass)
 	fsc = __SHIFTOUT(esr, ESR_ISS_DATAABORT_DFSC); /* also IFSC */
 	if (user) {
 		if (!fatalabort) {
-			if (error == ENOMEM) {
+			switch (error) {
+			case ENOMEM:
 				printf("UVM: pid %d (%s), uid %d killed: "
 				    "out of swap\n",
 				    l->l_proc->p_pid, l->l_proc->p_comm,
@@ -219,69 +221,60 @@ data_abort_handler(struct trapframe *tf, uint32_t eclass)
 				    kauth_cred_geteuid(l->l_cred) : -1);
 				do_trapsignal(l, SIGKILL, 0,
 				    (void *)tf->tf_far, esr);
-				goto done_userfault;
-			} else if (error == EACCES) {
+				break;
+			case EACCES:
 				do_trapsignal(l, SIGSEGV, SEGV_ACCERR,
 				    (void *)tf->tf_far, esr);
-				goto done_userfault;
+				break;
+			case EINVAL:
+				do_trapsignal(l, SIGBUS, BUS_ADRERR,
+				    (void *)tf->tf_far, esr);
+				break;
+			default:
+				do_trapsignal(l, SIGSEGV, SEGV_MAPERR,
+				    (void *)tf->tf_far, esr);
+				break;
 			}
-			/* if other error, select signal by ESR */
+		} else {
+			/*
+			 * fatal abort in usermode
+			 */
+			switch (esr) {
+			case ESR_ISS_FSC_TLB_CONFLICT_FAULT:
+			case ESR_ISS_FSC_LOCKDOWN_ABORT:
+			case ESR_ISS_FSC_UNSUPPORTED_EXCLUSIVE:
+			case ESR_ISS_FSC_FIRST_LEVEL_DOMAIN_FAULT:
+			case ESR_ISS_FSC_SECOND_LEVEL_DOMAIN_FAULT:
+			default:
+				do_trapsignal(l, SIGSEGV, SEGV_MAPERR,
+				    (void *)tf->tf_far, esr);
+				break;
+			case ESR_ISS_FSC_ADDRESS_SIZE_FAULT_0:
+			case ESR_ISS_FSC_ADDRESS_SIZE_FAULT_1:
+			case ESR_ISS_FSC_ADDRESS_SIZE_FAULT_2:
+			case ESR_ISS_FSC_ADDRESS_SIZE_FAULT_3:
+				do_trapsignal(l, SIGBUS, BUS_ADRERR,
+				    (void *)tf->tf_far, esr);
+				break;
+			case ESR_ISS_FSC_SYNC_EXTERNAL_ABORT:
+			case ESR_ISS_FSC_SYNC_EXTERNAL_ABORT_TTWALK_0:
+			case ESR_ISS_FSC_SYNC_EXTERNAL_ABORT_TTWALK_1:
+			case ESR_ISS_FSC_SYNC_EXTERNAL_ABORT_TTWALK_2:
+			case ESR_ISS_FSC_SYNC_EXTERNAL_ABORT_TTWALK_3:
+			case ESR_ISS_FSC_SYNC_PARITY_ERROR:
+			case ESR_ISS_FSC_SYNC_PARITY_ERROR_ON_TTWALK_0:
+			case ESR_ISS_FSC_SYNC_PARITY_ERROR_ON_TTWALK_1:
+			case ESR_ISS_FSC_SYNC_PARITY_ERROR_ON_TTWALK_2:
+			case ESR_ISS_FSC_SYNC_PARITY_ERROR_ON_TTWALK_3:
+				do_trapsignal(l, SIGBUS, BUS_OBJERR,
+				    (void *)tf->tf_far, esr);
+				break;
+			case ESR_ISS_FSC_ALIGNMENT_FAULT:
+				do_trapsignal(l, SIGBUS, BUS_ADRALN,
+				    (void *)tf->tf_far, esr);
+				break;
+			}
 		}
-
-		/*
-		 * fatal abort in usermode
-		 */
-		switch (esr) {
-		case ESR_ISS_FSC_ACCESS_FAULT_0:
-		case ESR_ISS_FSC_ACCESS_FAULT_1:
-		case ESR_ISS_FSC_ACCESS_FAULT_2:
-		case ESR_ISS_FSC_ACCESS_FAULT_3:
-		case ESR_ISS_FSC_PERM_FAULT_0:
-		case ESR_ISS_FSC_PERM_FAULT_1:
-		case ESR_ISS_FSC_PERM_FAULT_2:
-		case ESR_ISS_FSC_PERM_FAULT_3:
-			do_trapsignal(l, SIGSEGV, SEGV_ACCERR,
-			    (void *)tf->tf_far, esr);
-			break;
-		case ESR_ISS_FSC_TRANSLATION_FAULT_0:
-		case ESR_ISS_FSC_TRANSLATION_FAULT_1:
-		case ESR_ISS_FSC_TRANSLATION_FAULT_2:
-		case ESR_ISS_FSC_TRANSLATION_FAULT_3:
-		case ESR_ISS_FSC_TLB_CONFLICT_FAULT:
-		case ESR_ISS_FSC_LOCKDOWN_ABORT:
-		case ESR_ISS_FSC_UNSUPPORTED_EXCLUSIVE:
-		case ESR_ISS_FSC_FIRST_LEVEL_DOMAIN_FAULT:
-		case ESR_ISS_FSC_SECOND_LEVEL_DOMAIN_FAULT:
-		default:
-			do_trapsignal(l, SIGSEGV, SEGV_MAPERR,
-			    (void *)tf->tf_far, esr);
-			break;
-		case ESR_ISS_FSC_ADDRESS_SIZE_FAULT_0:
-		case ESR_ISS_FSC_ADDRESS_SIZE_FAULT_1:
-		case ESR_ISS_FSC_ADDRESS_SIZE_FAULT_2:
-		case ESR_ISS_FSC_ADDRESS_SIZE_FAULT_3:
-			do_trapsignal(l, SIGBUS, BUS_ADRERR,
-			    (void *)tf->tf_far, esr);
-			break;
-		case ESR_ISS_FSC_SYNC_EXTERNAL_ABORT:
-		case ESR_ISS_FSC_SYNC_EXTERNAL_ABORT_TTWALK_0:
-		case ESR_ISS_FSC_SYNC_EXTERNAL_ABORT_TTWALK_1:
-		case ESR_ISS_FSC_SYNC_EXTERNAL_ABORT_TTWALK_2:
-		case ESR_ISS_FSC_SYNC_EXTERNAL_ABORT_TTWALK_3:
-		case ESR_ISS_FSC_SYNC_PARITY_ERROR:
-		case ESR_ISS_FSC_SYNC_PARITY_ERROR_ON_TTWALK_0:
-		case ESR_ISS_FSC_SYNC_PARITY_ERROR_ON_TTWALK_1:
-		case ESR_ISS_FSC_SYNC_PARITY_ERROR_ON_TTWALK_2:
-		case ESR_ISS_FSC_SYNC_PARITY_ERROR_ON_TTWALK_3:
-			do_trapsignal(l, SIGBUS, BUS_OBJERR,
-			    (void *)tf->tf_far, esr);
-			break;
-		case ESR_ISS_FSC_ALIGNMENT_FAULT:
-			do_trapsignal(l, SIGBUS, BUS_ADRALN,
-			    (void *)tf->tf_far, esr);
-			break;
-		}
- done_userfault:
 
 #undef DEBUG_DUMP_ON_USERFAULT		/* DEBUG */
 #undef DEBUG_DDB_ON_USERFAULT		/* DEBUG */
