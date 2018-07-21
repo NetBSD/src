@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.292 2018/07/21 06:09:13 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.293 2018/07/21 21:26:30 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -170,7 +170,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.292 2018/07/21 06:09:13 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.293 2018/07/21 21:26:30 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1405,7 +1405,7 @@ slotspace_copy(int type, pd_entry_t *dst, pd_entry_t *src)
 }
 #endif
 
-#if defined(__HAVE_DIRECT_MAP) && defined(X86ASLR)
+#if defined(__HAVE_DIRECT_MAP)
 /*
  * Randomize the location of an area. We count the holes in the VM space. We
  * randomly select one hole, and then randomly select an area within that hole.
@@ -1601,11 +1601,7 @@ pmap_init_directmap(struct pmap *kpm)
 		panic("pmap_init_directmap: lastpa incorrect");
 	}
 
-#ifdef X86ASLR
 	startva = slotspace_rand(SLAREA_DMAP, lastpa, NBPD_L2);
-#else
-	startva = PMAP_DIRECT_DEFAULT_BASE;
-#endif
 	endva = startva + lastpa;
 
 	/* We will use this temporary va. */
