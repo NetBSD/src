@@ -1,12 +1,9 @@
-# $NetBSD: GENERIC_KASLR,v 1.4 2018/02/04 17:54:34 maxv Exp $
+# $NetBSD: GENERIC_KASLR,v 1.5 2018/07/21 06:30:27 maxv Exp $
 
 include "arch/amd64/conf/GENERIC"
 
 # KDTRACE_HOOKS does not support multiple CTF sections.
 no options	KDTRACE_HOOKS
-
-# The kernel-mode GPROF does not support multiple .text sections.
-no options	GPROF
 
 makeoptions 	KASLR=1		# Kernel ASLR
 options 	KASLR
