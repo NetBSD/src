@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.10 2018/07/17 09:58:14 ryo Exp $	*/
+/*	$NetBSD: pmap.c,v 1.11 2018/07/21 13:08:35 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.10 2018/07/17 09:58:14 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.11 2018/07/21 13:08:35 ryo Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -149,6 +149,10 @@ PMAP_COUNTER(unwire_failure, "pmap_unwire failure");
 #define LX_BLKPAG_ATTR_DEVICE_MEM	__SHIFTIN(3, LX_BLKPAG_ATTR_INDX)
 #define LX_BLKPAG_ATTR_MASK		LX_BLKPAG_ATTR_INDX
 
+/* flags for cpu_info->ci_pmap_flags */
+#define CI_PMAP_FLAGS_KPM_OWNLOCKED	0x00000001
+
+
 struct pv_entry {
 	TAILQ_ENTRY(pv_entry) pv_link;
 	struct pmap *pv_pmap;
@@ -189,16 +193,36 @@ pmap_pv_unlock(struct vm_page_md *md)
 	mutex_exit(&md->mdpg_pvlock);
 }
 
-#define PM_LOCKED(pm)				\
-	mutex_owned(&(pm)->pm_lock)
-#define PM_LOCK(pm)				\
-	do {					\
-		mutex_enter(&(pm)->pm_lock);	\
-	} while (0 /*CONSTCOND*/)
-#define PM_UNLOCK(pm)				\
-	do {					\
-		mutex_exit(&(pm)->pm_lock);	\
-	} while (0 /*CONSTCOND*/)
+
+static inline int
+pm_kpm_ownlocked(struct pmap *pm)
+{
+	if (pm != pmap_kernel())
+		return false;
+
+	return curcpu()->ci_pmap_flags & CI_PMAP_FLAGS_KPM_OWNLOCKED;
+}
+
+static inline void
+pm_lock(struct pmap *pm)
+{
+	mutex_enter(&pm->pm_lock);
+
+	/*
+	 * remember locking myself if pm is pmap_kernel.
+	 * mutex_owned() works only for adaptive lock, therefore we cannot use.
+	 */
+	if (pm == pmap_kernel())
+		curcpu()->ci_pmap_flags |= CI_PMAP_FLAGS_KPM_OWNLOCKED;
+}
+
+static inline void
+pm_unlock(struct pmap *pm)
+{
+	if (pm == pmap_kernel())
+		curcpu()->ci_pmap_flags &= ~CI_PMAP_FLAGS_KPM_OWNLOCKED;
+	mutex_exit(&pm->pm_lock);
+}
 
 static void __unused
 pm_addr_check(struct pmap *pm, vaddr_t va, const char *prefix)
@@ -881,7 +905,8 @@ _pmap_remove_pv(struct vm_page *pg, struct pmap *pm, vaddr_t va, pt_entry_t pte)
 
 	pmap_pv_unlock(md);
 
-	pool_cache_put(&_pmap_pv_pool, pv);
+	if (pv != NULL)
+		pool_cache_put(&_pmap_pv_pool, pv);
 }
 
 #if defined(PMAP_PV_DEBUG) || defined(DDB)
@@ -1055,7 +1080,7 @@ _pmap_protect_pv(struct vm_page *pg, struct pv_entry *pv, vm_prot_t prot)
 	mdattr = VM_PAGE_TO_MD(pg)->mdpg_flags &
 	    (VM_PROT_READ | VM_PROT_WRITE);
 
-	PM_LOCK(pv->pv_pmap);
+	pm_lock(pv->pv_pmap);
 
 	ptep = pv->pv_ptep;
 	pte = *ptep;
@@ -1079,7 +1104,7 @@ _pmap_protect_pv(struct vm_page *pg, struct pv_entry *pv, vm_prot_t prot)
 	aarch64_tlbi_by_va(pv->pv_va);
 #endif
 
-	PM_UNLOCK(pv->pv_pmap);
+	pm_unlock(pv->pv_pmap);
 }
 
 void
@@ -1109,7 +1134,7 @@ pmap_protect(struct pmap *pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 	KDASSERT((sva & PAGE_MASK) == 0);
 	KDASSERT((eva & PAGE_MASK) == 0);
 
-	PM_LOCK(pm);
+	pm_lock(pm);
 
 	for (va = sva; va < eva; va += PAGE_SIZE) {
 		pt_entry_t *ptep, pte;
@@ -1162,7 +1187,7 @@ pmap_protect(struct pmap *pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 		}
 	}
 
-	PM_UNLOCK(pm);
+	pm_unlock(pm);
 }
 
 void
@@ -1335,9 +1360,9 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 	 * _pmap_enter() may be called recursively. In case of
 	 * pmap_enter() -> _pmap_enter_pv() -> pool_cache_get() -> pmap_kenter()
 	 */
-	pm_locked = PM_LOCKED(pm);
+	pm_locked = pm_kpm_ownlocked(pm);
 	if (!pm_locked)
-		PM_LOCK(pm);
+		pm_lock(pm);
 
 	/*
 	 * traverse L0 -> L1 -> L2 -> L3 table with growing pdp if needed.
@@ -1422,13 +1447,27 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 	 */
 	mdattr = VM_PROT_READ | VM_PROT_WRITE;
 	if (pg != NULL) {
+		if (pm != pmap_kernel()) {
+			/* avoid deadlock (see above comment) */
+			pm_lock(pmap_kernel());
+		}
 		error = _pmap_enter_pv(pg, pm, va, ptep, pa, flags);
+		if (pm != pmap_kernel()) {
+			pm_unlock(pmap_kernel());
+		}
+
 		if (error != 0) {
+			/*
+			 * If pmap_enter() fails,
+			 * it must not leave behind an existing pmap entry.
+			 */
+			if (!kenter && ((pte & LX_BLKPAG_OS_WIRED) == 0))
+				atomic_swap_64(ptep, 0);
+
 			PMAP_COUNT(pv_entry_cannotalloc);
 			if (flags & PMAP_CANFAIL)
 				goto done;
-			panic(
-			    "pmap_enter: failed to allocate pv_entry");
+			panic("pmap_enter: failed to allocate pv_entry");
 		}
 
 		/* update referenced/modified flags */
@@ -1477,7 +1516,7 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 
  done:
 	if (!pm_locked)
-		PM_UNLOCK(pm);
+		pm_unlock(pm);
 	return error;
 }
 
@@ -1509,7 +1548,7 @@ _pmap_remove(struct pmap *pm, vaddr_t va, bool kremove)
 	UVMHIST_LOG(pmaphist, "pm=%p, va=%016lx, kremovemode=%d",
 	    pm, va, kremove, 0);
 
-	PM_LOCK(pm);
+	pm_lock(pm);
 
 	ptep = _pmap_pte_lookup(pm, va);
 	if (ptep != NULL) {
@@ -1539,7 +1578,7 @@ _pmap_remove(struct pmap *pm, vaddr_t va, bool kremove)
 		pm->pm_stats.resident_count--;
 	}
  done:
-	PM_UNLOCK(pm);
+	pm_unlock(pm);
 }
 
 void
@@ -1618,7 +1657,7 @@ pmap_unwire(struct pmap *pm, vaddr_t va)
 
 	PM_ADDR_CHECK(pm, va);
 
-	PM_LOCK(pm);
+	pm_lock(pm);
 	ptep = _pmap_pte_lookup(pm, va);
 	if (ptep != NULL) {
 		pte = *ptep;
@@ -1626,7 +1665,7 @@ pmap_unwire(struct pmap *pm, vaddr_t va)
 		    ((pte & LX_BLKPAG_OS_WIRED) == 0)) {
 			/* invalid pte, or pte is not wired */
 			PMAP_COUNT(unwire_failure);
-			PM_UNLOCK(pm);
+			pm_unlock(pm);
 			return;
 		}
 
@@ -1635,7 +1674,7 @@ pmap_unwire(struct pmap *pm, vaddr_t va)
 
 		pm->pm_stats.wired_count--;
 	}
-	PM_UNLOCK(pm);
+	pm_unlock(pm);
 }
 
 bool
@@ -1670,7 +1709,7 @@ pmap_fault_fixup(struct pmap *pm, vaddr_t va, vm_prot_t accessprot, bool user)
 	}
 #endif
 
-	PM_LOCK(pm);
+	pm_lock(pm);
 
 	ptep = _pmap_pte_lookup(pm, va);
 	if (ptep == NULL) {
@@ -1778,7 +1817,7 @@ pmap_fault_fixup(struct pmap *pm, vaddr_t va, vm_prot_t accessprot, bool user)
 	fixed = true;
 
  done:
-	PM_UNLOCK(pm);
+	pm_unlock(pm);
 	return fixed;
 }
 

@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.3 2018/07/09 06:19:53 ryo Exp $ */
+/* $NetBSD: cpu.h,v 1.4 2018/07/21 13:08:35 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -78,6 +78,9 @@ struct cpu_info {
 	struct evcnt ci_vfp_reuse;
 	struct evcnt ci_vfp_save;
 	struct evcnt ci_vfp_release;
+
+	/* per cpu pmap private */
+	uint64_t ci_pmap_flags;
 };
 
 static inline struct cpu_info *
